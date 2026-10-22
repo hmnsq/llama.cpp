@@ -20,113 +20,113 @@
  * IN THE SOFTWARE.
  */
 
-#include "acl_tensor.h"
+#అన్తర్భావ "acl_tensor.h"
 
-#include <algorithm>
-#include <cstring>
+#అన్తర్భావ <algorithm>
+#అన్తర్భావ <cstring>
 
-aclDataType ggml_cann_type_mapping(ggml_type type) {
-    switch (type) {
-        case GGML_TYPE_F32:
-            return ACL_FLOAT;
-        case GGML_TYPE_F16:
-            return ACL_FLOAT16;
-        case GGML_TYPE_BF16:
-            return ACL_BF16;
-        case GGML_TYPE_I8:
-            return ACL_INT8;
-        case GGML_TYPE_I16:
-            return ACL_INT16;
-        case GGML_TYPE_I32:
-            return ACL_INT32;
-        case GGML_TYPE_Q4_0:
-            return ACL_INT4;
-        case GGML_TYPE_Q8_0:
-            return ACL_INT8;
-        case GGML_TYPE_I64:
-            return ACL_INT64;
-        default:
-            return ACL_DT_UNDEFINED;
+acl_దత్తాంశం_Type ggml_cann_type_mapping(ggml_type type) {
+    ఎంపిక (type) {
+        స్థితి GGML_TYPE_F32:
+            తిరిగి ACL_FLOAT;
+        స్థితి GGML_TYPE_F16:
+            తిరిగి ACL_FLOAT16;
+        స్థితి GGML_TYPE_BF16:
+            తిరిగి ACL_BF16;
+        స్థితి GGML_TYPE_I8:
+            తిరిగి ACL_INT8;
+        స్థితి GGML_TYPE_I16:
+            తిరిగి ACL_INT16;
+        స్థితి GGML_TYPE_I32:
+            తిరిగి ACL_INT32;
+        స్థితి GGML_TYPE_Q4_0:
+            తిరిగి ACL_INT4;
+        స్థితి GGML_TYPE_Q8_0:
+            తిరిగి ACL_INT8;
+        స్థితి GGML_TYPE_I64:
+            తిరిగి ACL_INT64;
+        అప్రమేయ:
+            తిరిగి ACL_DT_UNDEFINED;
     }
 }
 
-acl_tensor_ptr ggml_cann_create_tensor(const ggml_tensor * tensor,
+acl_tensor_ptr ggml_cann_create_tensor(స్థిరరాశి ggml_tensor * tensor,
                                        int64_t *           ne,
                                        size_t *            nb,
                                        int64_t             dims,
                                        aclFormat           format,
-                                       size_t              offset) {
+                                       size_t              స్థానభ్రంశం) {
     // If tensor is bcasted, Up to GGML_MAX_DIMS additional dimensions will be
     // added.
     int64_t acl_ne[GGML_MAX_DIMS * 2], acl_stride[GGML_MAX_DIMS * 2];
 
-    if (ne == nullptr) {
-        for (int i = 0; i < GGML_MAX_DIMS; i++) {
+    ఒకవేళ (ne == శూన్యసూచిక) {
+        కొరకు (పూర్ణాంకం i = 0; i < GGML_MAX_DIMS; i++) {
             acl_ne[i]     = tensor->ne[i];
             // The step size of acl is in elements.
-            acl_stride[i] = tensor->nb[i] / ggml_element_size(tensor);
+            acl_stride[i] = tensor->nb[i] / ggml_element_కొలత(tensor);
         }
-    } else {
+    } లేకపోతే {
         // With bcast
-        for (int i = 0; i < dims; i++) {
+        కొరకు (పూర్ణాంకం i = 0; i < dims; i++) {
             acl_ne[i]     = ne[i];
-            acl_stride[i] = nb[i] / ggml_element_size(tensor);
+            acl_stride[i] = nb[i] / ggml_element_కొలత(tensor);
         }
     }
 
     int64_t final_dims      = (dims == 0 ? GGML_MAX_DIMS : dims);
     int64_t acl_storage_len = 1;
-    for (int i = 0; i < final_dims; i++) {
+    కొరకు (పూర్ణాంకం i = 0; i < final_dims; i++) {
         acl_storage_len += (acl_ne[i] - 1) * acl_stride[i];
     }
-    size_t elem_offset = offset / ggml_element_size(tensor);
-    acl_storage_len += elem_offset;
+    size_t elem_స్థానభ్రంశం = స్థానభ్రంశం / ggml_element_కొలత(tensor);
+    acl_storage_len += elem_స్థానభ్రంశం;
 
     // Reverse ne and stride.
     std::reverse(acl_ne, acl_ne + final_dims);
     std::reverse(acl_stride, acl_stride + final_dims);
 
-    aclTensor * raw = aclCreateTensor(acl_ne, final_dims, ggml_cann_type_mapping(tensor->type), acl_stride, elem_offset,
-                                      format, &acl_storage_len, 1, tensor->data);
+    aclTensor * raw = aclCreateTensor(acl_ne, final_dims, ggml_cann_type_mapping(tensor->type), acl_stride, elem_స్థానభ్రంశం,
+                                      format, &acl_storage_len, 1, tensor->దత్తాంశం);
 
-    return acl_tensor_ptr(raw);
+    తిరిగి acl_tensor_ptr(raw);
 }
 
-acl_int_array_ptr ggml_cann_create_int_array(const int64_t * value, uint64_t size) {
+acl_int_array_ptr ggml_cann_create_int_array(స్థిరరాశి int64_t * value, uint64_t size) {
     aclIntArray * raw = aclCreateIntArray(value, size);
-    return acl_int_array_ptr(raw);
+    తిరిగి acl_int_array_ptr(raw);
 }
 
-acl_scalar_ptr ggml_cann_create_scalar(void * value, aclDataType dataType) {
-    aclScalar * raw = aclCreateScalar(value, dataType);
-    return acl_scalar_ptr(raw);
+acl_scalar_ptr ggml_cann_create_scalar(శూన్య * value, acl_దత్తాంశం_Type దత్తాంశం_Type) {
+    aclScalar * raw = aclCreateScalar(value, దత్తాంశం_Type);
+    తిరిగి acl_scalar_ptr(raw);
 }
 
-bool ggml_cann_need_bcast(const ggml_tensor * t0, const ggml_tensor * t1) {
-    for (int i = 0; i < GGML_MAX_DIMS; i++) {
-        if (t1->ne[i] != t0->ne[i] && t1->ne[i] != 1) {
-            return true;
+తార్కిక ggml_cann_need_bcast(స్థిరరాశి ggml_tensor * t0, స్థిరరాశి ggml_tensor * t1) {
+    కొరకు (పూర్ణాంకం i = 0; i < GGML_MAX_DIMS; i++) {
+        ఒకవేళ (t1->ne[i] != t0->ne[i] && t1->ne[i] != 1) {
+            తిరిగి నిజం;
         }
     }
-    return false;
+    తిరిగి అబద్ధం;
 }
 
-int64_t ggml_cann_get_bcast_shape(const ggml_tensor * src0,
-                                  const ggml_tensor * src1,
+int64_t ggml_cann_get_bcast_shape(స్థిరరాశి ggml_tensor * src0,
+                                  స్థిరరాశి ggml_tensor * src1,
                                   int64_t *           bcast_src0_ne,
                                   int64_t *           bcast_src1_ne,
                                   size_t *            bcast_src0_nb,
                                   size_t *            bcast_src1_nb) {
     GGML_ASSERT(ggml_can_repeat(src1, src0));
-    int bcast_dim_cnt = 0;
-    for (int i = 0; i < GGML_MAX_DIMS; i++) {
+    పూర్ణాంకం bcast_dim_cnt = 0;
+    కొరకు (పూర్ణాంకం i = 0; i < GGML_MAX_DIMS; i++) {
         int64_t nr                   = src0->ne[i] / src1->ne[i];
         bcast_src0_ne[bcast_dim_cnt] = src0->ne[i] / nr;
         bcast_src1_ne[bcast_dim_cnt] = src1->ne[i];
         bcast_src0_nb[bcast_dim_cnt] = src0->nb[i];
         bcast_src1_nb[bcast_dim_cnt] = src1->nb[i];
         bcast_dim_cnt++;
-        if (nr != 1) {
+        ఒకవేళ (nr != 1) {
             // Need to add an extra dim.
             bcast_src0_ne[bcast_dim_cnt] = nr;
             bcast_src1_ne[bcast_dim_cnt] = 1;
@@ -135,61 +135,61 @@ int64_t ggml_cann_get_bcast_shape(const ggml_tensor * src0,
             bcast_dim_cnt++;
         }
     }
-    return bcast_dim_cnt;
+    తిరిగి bcast_dim_cnt;
 }
 
-int64_t ggml_cann_get_mulmat_bcast_shape(const int64_t * input_ne,
-                                         const int64_t * weight_ne,
-                                         const int64_t * dst_ne,
-                                         const size_t *  input_nb,
-                                         const size_t *  weight_nb,
-                                         const size_t *  dst_nb,
-                                         int64_t *       bcast_input_ne,
-                                         int64_t *       bcast_weight_ne,
+int64_t ggml_cann_get_mulmat_bcast_shape(స్థిరరాశి int64_t * ఆదానం_ne,
+                                         స్థిరరాశి int64_t * బరువు_ne,
+                                         స్థిరరాశి int64_t * dst_ne,
+                                         స్థిరరాశి size_t *  ఆదానం_nb,
+                                         స్థిరరాశి size_t *  బరువు_nb,
+                                         స్థిరరాశి size_t *  dst_nb,
+                                         int64_t *       bcast_ఆదానం_ne,
+                                         int64_t *       bcast_బరువు_ne,
                                          int64_t *       bcast_dst_ne,
-                                         size_t *        bcast_input_nb,
-                                         size_t *        bcast_weight_nb,
+                                         size_t *        bcast_ఆదానం_nb,
+                                         size_t *        bcast_బరువు_nb,
                                          size_t *        bcast_dst_nb) {
     // input and dst shoule in same shape, except first two dims.
-    GGML_ASSERT(input_ne[2] == dst_ne[2]);
-    GGML_ASSERT(input_ne[3] == dst_ne[3]);
+    GGML_ASSERT(ఆదానం_ne[2] == dst_ne[2]);
+    GGML_ASSERT(ఆదానం_ne[3] == dst_ne[3]);
 
-    int bcast_dim_cnt = 0;
+    పూర్ణాంకం bcast_dim_cnt = 0;
 
     // For mul_mat, a dimension needs to be added before the dimension that
     // weight needs to be expanded to satisfy the bcast rule of matrix
     // multiplication.
-    for (int i = 0; i < GGML_MAX_DIMS; i++) {
-        int64_t nr = input_ne[i] / weight_ne[i];
+    కొరకు (పూర్ణాంకం i = 0; i < GGML_MAX_DIMS; i++) {
+        int64_t nr = ఆదానం_ne[i] / బరువు_ne[i];
         // Do not use bcast in the first two dimensions because we only support
         // the bcast batch dimension. Just copy them.
-        if (i < 2 || nr == 1) {
-            bcast_input_ne[bcast_dim_cnt]  = input_ne[i];
-            bcast_weight_ne[bcast_dim_cnt] = weight_ne[i];
+        ఒకవేళ (i < 2 || nr == 1) {
+            bcast_ఆదానం_ne[bcast_dim_cnt]  = ఆదానం_ne[i];
+            bcast_బరువు_ne[bcast_dim_cnt] = బరువు_ne[i];
             bcast_dst_ne[bcast_dim_cnt]    = dst_ne[i];
 
-            bcast_input_nb[bcast_dim_cnt]  = input_nb[i];
-            bcast_weight_nb[bcast_dim_cnt] = weight_nb[i];
+            bcast_ఆదానం_nb[bcast_dim_cnt]  = ఆదానం_nb[i];
+            bcast_బరువు_nb[bcast_dim_cnt] = బరువు_nb[i];
             bcast_dst_nb[bcast_dim_cnt]    = dst_nb[i];
             bcast_dim_cnt++;
-        } else {
+        } లేకపోతే {
             // Need to add an extra dim.
-            bcast_input_ne[bcast_dim_cnt]  = nr;
+            bcast_ఆదానం_ne[bcast_dim_cnt]  = nr;
             bcast_dst_ne[bcast_dim_cnt]    = nr;
-            bcast_weight_ne[bcast_dim_cnt] = 1;
-            bcast_input_nb[bcast_dim_cnt]  = input_nb[i];
+            bcast_బరువు_ne[bcast_dim_cnt] = 1;
+            bcast_ఆదానం_nb[bcast_dim_cnt]  = ఆదానం_nb[i];
             bcast_dst_nb[bcast_dim_cnt]    = dst_nb[i];
-            bcast_weight_nb[bcast_dim_cnt] = weight_nb[i];
+            bcast_బరువు_nb[bcast_dim_cnt] = బరువు_nb[i];
             bcast_dim_cnt++;
 
-            bcast_input_ne[bcast_dim_cnt]  = input_ne[i] / nr;
+            bcast_ఆదానం_ne[bcast_dim_cnt]  = ఆదానం_ne[i] / nr;
             bcast_dst_ne[bcast_dim_cnt]    = dst_ne[i] / nr;
-            bcast_weight_ne[bcast_dim_cnt] = weight_ne[i];
-            bcast_input_nb[bcast_dim_cnt]  = bcast_input_nb[bcast_dim_cnt - 1] * bcast_input_ne[bcast_dim_cnt - 1];
+            bcast_బరువు_ne[bcast_dim_cnt] = బరువు_ne[i];
+            bcast_ఆదానం_nb[bcast_dim_cnt]  = bcast_ఆదానం_nb[bcast_dim_cnt - 1] * bcast_ఆదానం_ne[bcast_dim_cnt - 1];
             bcast_dst_nb[bcast_dim_cnt]    = bcast_dst_nb[bcast_dim_cnt - 1] * bcast_dst_ne[bcast_dim_cnt - 1];
-            bcast_weight_nb[bcast_dim_cnt] = bcast_weight_nb[bcast_dim_cnt - 1] * bcast_weight_ne[bcast_dim_cnt - 1];
+            bcast_బరువు_nb[bcast_dim_cnt] = bcast_బరువు_nb[bcast_dim_cnt - 1] * bcast_బరువు_ne[bcast_dim_cnt - 1];
             bcast_dim_cnt++;
         }
     }
-    return bcast_dim_cnt;
+    తిరిగి bcast_dim_cnt;
 }

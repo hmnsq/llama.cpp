@@ -1,8 +1,8 @@
-#include "ggml-backend.h"
-#include "ggml-cpu-impl.h"
+#అన్తర్భావ "ggml-backend.h"
+#అన్తర్భావ "ggml-cpu-impl.h"
 
 // GGML internal header
 
-#if defined(__AMX_INT8__) && defined(__AVX512VNNI__)
-ggml_backend_buffer_type_t ggml_backend_amx_buffer_type(void);
-#endif
+#ఒకవేళ defined(__AMX_INT8__) && defined(__AVX512VNNI__)
+ggml_backend_బఫరు_type_t ggml_backend_amx_బఫరు_type(శూన్య);
+#అయితే_ముగింపు

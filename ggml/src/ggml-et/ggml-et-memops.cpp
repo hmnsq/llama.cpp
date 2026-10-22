@@ -1,20 +1,20 @@
-#include "ggml-et-memops.h"
+#అన్తర్భావ "ggml-et-memops.h"
 
-#include "ggml-et-kernels.h"
-#include "ggml-impl.h"
+#అన్తర్భావ "ggml-et-kernels.h"
+#అన్తర్భావ "ggml-impl.h"
 
 // Kernel parameter structure for memset operation
-struct memset_params {
+నిర్మాణం memset_params {
     uint32_t op_type;  // GGML_ET_MEMOP_MEMSET
     uint32_t value;    // Value to set (extended to uint32_t for alignment)
-    void *   dst_ptr;  // Destination device pointer
+    శూన్య *   dst_ptr;  // Destination device pointer
     size_t   size;     // Number of bytes to set
 };
 
-bool ggml_et_memset(ggml_backend_et_device_context * dev_ctx, void * dst_ptr, uint8_t value, size_t size) {
-    if (!dev_ctx || !dst_ptr || size == 0) {
+తార్కిక ggml_et_memset(ggml_backend_et_device_context * dev_ctx, శూన్య * dst_ptr, uint8_t value, size_t size) {
+    ఒకవేళ (!dev_ctx || !dst_ptr || size == 0) {
         GGML_LOG_ERROR("ET: Invalid memset parameters\n");
-        return false;
+        తిరిగి అబద్ధం;
     }
 
     // Prepare kernel parameters
@@ -25,12 +25,12 @@ bool ggml_et_memset(ggml_backend_et_device_context * dev_ctx, void * dst_ptr, ui
     params.size    = size;
 
     // Launch memops kernel (will lazy-load if not already loaded)
-    bool success = ggml_et_launch_kernel(dev_ctx, "memops", &params, sizeof(params));
+    తార్కిక success = ggml_et_launch_kernel(dev_ctx, "memops", &params, పరిమాణం(params));
 
-    if (!success) {
+    ఒకవేళ (!success) {
         GGML_LOG_ERROR("ET: memset kernel launch failed\n");
-        return false;
+        తిరిగి అబద్ధం;
     }
 
-    return true;
+    తిరిగి నిజం;
 }

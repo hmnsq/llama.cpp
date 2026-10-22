@@ -1,88 +1,88 @@
-#include "norm.hpp"
-#include "ggml-sycl/common.hpp"
-#include "ggml-sycl/presets.hpp"
+#అన్తర్భావ "norm.hpp"
+#అన్తర్భావ "ggml-sycl/common.hpp"
+#అన్తర్భావ "ggml-sycl/presets.hpp"
 
-static void norm_f32(const float* x, float* dst, const int ncols,
-    const int64_t src_stride_col, const int64_t src_stride_row, const int64_t src_stride_channel, const int64_t src_stride_sample,
-    const int64_t dst_stride_col, const int64_t dst_stride_row, const int64_t dst_stride_channel, const int64_t dst_stride_sample,
-    const float eps, const sycl::nd_item<3>& item_ct1, sycl::float2* s_sum, int block_size) {
+స్థిర శూన్య norm_f32(స్థిరరాశి దశాంశం* x, దశాంశం* dst, స్థిరరాశి పూర్ణాంకం ncols,
+    స్థిరరాశి int64_t src_stride_నిలువు, స్థిరరాశి int64_t src_stride_అడ్డువరుస, స్థిరరాశి int64_t src_stride_channel, స్థిరరాశి int64_t src_stride_sample,
+    స్థిరరాశి int64_t dst_stride_నిలువు, స్థిరరాశి int64_t dst_stride_అడ్డువరుస, స్థిరరాశి int64_t dst_stride_channel, స్థిరరాశి int64_t dst_stride_sample,
+    స్థిరరాశి దశాంశం eps, స్థిరరాశి sycl::nd_అంశం<3>& అంశం_ct1, sycl::float2* s_కూడిక, పూర్ణాంకం ఖండం_కొలత_3) {
 
-    const int nthreads = item_ct1.get_local_range(2);
-    const int sample  = item_ct1.get_group(0);
-    const int channel = item_ct1.get_group(1);
-    const int row     = item_ct1.get_group(2);
+    స్థిరరాశి పూర్ణాంకం nthreads = అంశం_ct1.get_local_range(2);
+    స్థిరరాశి పూర్ణాంకం sample  = అంశం_ct1.get_సమూహం(0);
+    స్థిరరాశి పూర్ణాంకం channel = అంశం_ct1.get_సమూహం(1);
+    స్థిరరాశి పూర్ణాంకం అడ్డువరుస     = అంశం_ct1.get_సమూహం(2);
 
-    const int tid = item_ct1.get_local_id(2);
-    const int nwarps = nthreads / WARP_SIZE;
+    స్థిరరాశి పూర్ణాంకం tid = అంశం_ct1.get_local_id(2);
+    స్థిరరాశి పూర్ణాంకం nwarps = nthreads / WARP_కొలత;
 
-    const auto src_offset = calculate_offset<3>({src_stride_sample, src_stride_channel, src_stride_row}, {sample, channel, row});
-    const auto dst_offset = calculate_offset<3>({dst_stride_sample, dst_stride_channel, dst_stride_row}, {sample, channel, row});
+    స్థిరరాశి స్వయంచాలక src_స్థానభ్రంశం = calculate_స్థానభ్రంశం<3>({src_stride_sample, src_stride_channel, src_stride_అడ్డువరుస}, {sample, channel, అడ్డువరుస});
+    స్థిరరాశి స్వయంచాలక dst_స్థానభ్రంశం = calculate_స్థానభ్రంశం<3>({dst_stride_sample, dst_stride_channel, dst_stride_అడ్డువరుస}, {sample, channel, అడ్డువరుస});
 
-    x += src_offset;
-    dst += dst_offset;
+    x += src_స్థానభ్రంశం;
+    dst += dst_స్థానభ్రంశం;
 
-    sycl::float2 mean_var = sycl::float2(0.f, 0.f);
+    sycl::float2 సగటు_var = sycl::float2(0.f, 0.f);
 
-    for (int col = tid; col < ncols; col += block_size) {
-        const float xi = x[col * src_stride_col];
-        mean_var.x() += xi;
-        mean_var.y() += xi * xi;
+    కొరకు (పూర్ణాంకం నిలువు = tid; నిలువు < ncols; నిలువు += ఖండం_కొలత_3) {
+        స్థిరరాశి దశాంశం xi = x[నిలువు * src_stride_నిలువు];
+        సగటు_var.x() += xi;
+        సగటు_var.y() += xi * xi;
     }
 
     // sum up partial sums
-    mean_var = warp_reduce_sum(mean_var, item_ct1);
-    if  (block_size > WARP_SIZE) {
-        const auto sub_group = item_ct1.get_sub_group();
-        const auto sg_id = sub_group.get_group_linear_id();
-        const auto wi_in_sg = sub_group.get_local_linear_id();
-        if (wi_in_sg == 0) {
-            s_sum[sg_id] = mean_var;
+    సగటు_var = warp_reduce_కూడిక(సగటు_var, అంశం_ct1);
+    ఒకవేళ  (ఖండం_కొలత_3 > WARP_కొలత) {
+        స్థిరరాశి స్వయంచాలక sub_సమూహం = అంశం_ct1.get_sub_సమూహం();
+        స్థిరరాశి స్వయంచాలక sg_id = sub_సమూహం.get_సమూహం_రేఖీయ_id();
+        స్థిరరాశి స్వయంచాలక wi_లోపల_sg = sub_సమూహం.get_local_రేఖీయ_id();
+        ఒకవేళ (wi_లోపల_sg == 0) {
+            s_కూడిక[sg_id] = సగటు_var;
         }
-        item_ct1.barrier(sycl::access::fence_space::local_space);
-        mean_var = 0.f;
-        const size_t nreduce = ceil_div(nwarps, WARP_SIZE);
-        for (size_t i = 0; i < nreduce; i += 1)
+        అంశం_ct1.barrier(sycl::access::fence_space::local_space);
+        సగటు_var = 0.f;
+        స్థిరరాశి size_t nreduce = ceil_div(nwarps, WARP_కొలత);
+        కొరకు (size_t i = 0; i < nreduce; i += 1)
         {
-            mean_var += s_sum[wi_in_sg + i * WARP_SIZE];
+            సగటు_var += s_కూడిక[wi_లోపల_sg + i * WARP_కొలత];
         }
-        mean_var = warp_reduce_sum(mean_var, item_ct1);
+        సగటు_var = warp_reduce_కూడిక(సగటు_var, అంశం_ct1);
     }
 
-    const float mean = mean_var.x() / ncols;
-    const float var = mean_var.y() / ncols - mean * mean;
-    const float inv_std = sycl::rsqrt(var + eps);
+    స్థిరరాశి దశాంశం సగటు_2 = సగటు_var.x() / ncols;
+    స్థిరరాశి దశాంశం var = సగటు_var.y() / ncols - సగటు_2 * సగటు_2;
+    స్థిరరాశి దశాంశం inv_std = sycl::rsqrt(var + eps);
 
-    for (int col = tid; col < ncols; col += block_size) {
-        dst[col * dst_stride_col] = (x[col * src_stride_col] - mean) * inv_std;
+    కొరకు (పూర్ణాంకం నిలువు = tid; నిలువు < ncols; నిలువు += ఖండం_కొలత_3) {
+        dst[నిలువు * dst_stride_నిలువు] = (x[నిలువు * src_stride_నిలువు] - సగటు_2) * inv_std;
     }
 }
 
-static void group_norm_f32(const float* x, float* dst, const int group_size, const int ne_elements, const float eps,
-    const sycl::nd_item<3>& item_ct1, float* s_sum, int block_size) {
-    int start = item_ct1.get_group(2) * group_size;
-    int end = start + group_size;
-    const int nthreads = item_ct1.get_local_range(2);
-    const int nwarps = nthreads / WARP_SIZE;
-    start += item_ct1.get_local_id(2);
-    size_t nreduce = nwarps / WARP_SIZE;
+స్థిర శూన్య సమూహం_norm_f32(స్థిరరాశి దశాంశం* x, దశాంశం* dst, స్థిరరాశి పూర్ణాంకం సమూహం_కొలత, స్థిరరాశి పూర్ణాంకం ne_elements, స్థిరరాశి దశాంశం eps,
+    స్థిరరాశి sycl::nd_అంశం<3>& అంశం_ct1, దశాంశం* s_కూడిక, పూర్ణాంకం ఖండం_కొలత_3) {
+    పూర్ణాంకం start = అంశం_ct1.get_సమూహం(2) * సమూహం_కొలత;
+    పూర్ణాంకం end = start + సమూహం_కొలత;
+    స్థిరరాశి పూర్ణాంకం nthreads = అంశం_ct1.get_local_range(2);
+    స్థిరరాశి పూర్ణాంకం nwarps = nthreads / WARP_కొలత;
+    start += అంశం_ct1.get_local_id(2);
+    size_t nreduce = nwarps / WARP_కొలత;
 
-    if (end >= ne_elements) {
+    ఒకవేళ (end >= ne_elements) {
         end = ne_elements;
     }
 
-    float tmp = 0.0f; // partial sum for thread in warp
+    దశాంశం tmp = 0.0f; // partial sum for thread in warp
 
-    for (int j = start; j < end; j += block_size) {
+    కొరకు (పూర్ణాంకం j = start; j < end; j += ఖండం_కొలత_3) {
         tmp += x[j];
     }
 
-    tmp = warp_reduce_sum(tmp, item_ct1);
-    if (block_size > WARP_SIZE) {
+    tmp = warp_reduce_కూడిక(tmp, అంశం_ct1);
+    ఒకవేళ (ఖండం_కొలత_3 > WARP_కొలత) {
 
-        int warp_id = item_ct1.get_local_id(2) / WARP_SIZE;
-        int lane_id = item_ct1.get_local_id(2) % WARP_SIZE;
-        if (lane_id == 0) {
-            s_sum[warp_id] = tmp;
+        పూర్ణాంకం warp_id = అంశం_ct1.get_local_id(2) / WARP_కొలత;
+        పూర్ణాంకం lane_id = అంశం_ct1.get_local_id(2) % WARP_కొలత;
+        ఒకవేళ (lane_id == 0) {
+            s_కూడిక[warp_id] = tmp;
         }
         /*
         DPCT1118:1: SYCL group functions and algorithms must be encountered in
@@ -93,31 +93,31 @@ static void group_norm_f32(const float* x, float* dst, const int group_size, con
         sycl::nd_item::barrier(sycl::access::fence_space::local_space) for
         better performance if there is no access to global memory.
         */
-        item_ct1.barrier();
+        అంశం_ct1.barrier();
         tmp = 0.f;
-        for (size_t i = 0; i < nreduce; i += 1)
+        కొరకు (size_t i = 0; i < nreduce; i += 1)
         {
-            tmp += s_sum[lane_id + i * WARP_SIZE];
+            tmp += s_కూడిక[lane_id + i * WARP_కొలత];
         }
-        tmp = warp_reduce_sum(tmp, item_ct1);
+        tmp = warp_reduce_కూడిక(tmp, అంశం_ct1);
     }
 
-    float mean = tmp / group_size;
+    దశాంశం సగటు_2 = tmp / సమూహం_కొలత;
     tmp = 0.0f;
 
-    for (int j = start; j < end; j += block_size) {
-        float xi = x[j] - mean;
+    కొరకు (పూర్ణాంకం j = start; j < end; j += ఖండం_కొలత_3) {
+        దశాంశం xi = x[j] - సగటు_2;
         dst[j] = xi;
         tmp += xi * xi;
     }
 
-    tmp = warp_reduce_sum(tmp, item_ct1);
-    if (block_size > WARP_SIZE) {
+    tmp = warp_reduce_కూడిక(tmp, అంశం_ct1);
+    ఒకవేళ (ఖండం_కొలత_3 > WARP_కొలత) {
 
-        int warp_id = item_ct1.get_local_id(2) / WARP_SIZE;
-        int lane_id = item_ct1.get_local_id(2) % WARP_SIZE;
-        if (lane_id == 0) {
-            s_sum[warp_id] = tmp;
+        పూర్ణాంకం warp_id = అంశం_ct1.get_local_id(2) / WARP_కొలత;
+        పూర్ణాంకం lane_id = అంశం_ct1.get_local_id(2) % WARP_కొలత;
+        ఒకవేళ (lane_id == 0) {
+            s_కూడిక[warp_id] = tmp;
         }
         /*
         DPCT1118:2: SYCL group functions and algorithms must be encountered in
@@ -128,206 +128,206 @@ static void group_norm_f32(const float* x, float* dst, const int group_size, con
         sycl::nd_item::barrier(sycl::access::fence_space::local_space) for
         better performance if there is no access to global memory.
         */
-        item_ct1.barrier();
+        అంశం_ct1.barrier();
         tmp = 0.f;
-        for (size_t i = 0; i < nreduce; i += 1)
+        కొరకు (size_t i = 0; i < nreduce; i += 1)
         {
-            tmp += s_sum[lane_id + i * WARP_SIZE];
+            tmp += s_కూడిక[lane_id + i * WARP_కొలత];
         }
-        tmp = warp_reduce_sum(tmp, item_ct1);
+        tmp = warp_reduce_కూడిక(tmp, అంశం_ct1);
     }
 
-    float variance = tmp / group_size;
-    float scale = sycl::rsqrt(variance + eps);
-    for (int j = start; j < end; j += block_size) {
+    దశాంశం variance = tmp / సమూహం_కొలత;
+    దశాంశం scale = sycl::rsqrt(variance + eps);
+    కొరకు (పూర్ణాంకం j = start; j < end; j += ఖండం_కొలత_3) {
         dst[j] *= scale;
     }
 }
 
-template <bool do_multiply = false, bool do_add = false>
-static void rms_norm_f32(const float* x, float* dst, const int ncols,
-    const int64_t src_stride_col, const int64_t src_stride_row, const int64_t src_stride_channel, const int64_t src_stride_sample,
-    const int64_t dst_stride_col, const int64_t dst_stride_row, const int64_t dst_stride_channel, const int64_t dst_stride_sample,
-    const float eps, const sycl::nd_item<3>& item_ct1, float* s_sum, int block_size,
-    const float* mul = nullptr, const int64_t mul_stride_row = 0, const int64_t mul_stride_channel = 0,
-    const int64_t mul_stride_sample = 0, const int mul_nrows = 0, const int mul_nchannels = 0, const int mul_nsamples = 0,
-    const float* add = nullptr, const int64_t add_stride_row = 0, const int64_t add_stride_channel = 0,
-    const int64_t add_stride_sample = 0, const int add_nrows = 0, const int add_nchannels = 0, const int add_nsamples = 0,
-    const float scale_mul = 1.0f) {
+మూస <తార్కిక do_multiply = అబద్ధం, తార్కిక do_కూడు = అబద్ధం>
+స్థిర శూన్య rms_norm_f32(స్థిరరాశి దశాంశం* x, దశాంశం* dst, స్థిరరాశి పూర్ణాంకం ncols,
+    స్థిరరాశి int64_t src_stride_నిలువు, స్థిరరాశి int64_t src_stride_అడ్డువరుస, స్థిరరాశి int64_t src_stride_channel, స్థిరరాశి int64_t src_stride_sample,
+    స్థిరరాశి int64_t dst_stride_నిలువు, స్థిరరాశి int64_t dst_stride_అడ్డువరుస, స్థిరరాశి int64_t dst_stride_channel, స్థిరరాశి int64_t dst_stride_sample,
+    స్థిరరాశి దశాంశం eps, స్థిరరాశి sycl::nd_అంశం<3>& అంశం_ct1, దశాంశం* s_కూడిక, పూర్ణాంకం ఖండం_కొలత_3,
+    స్థిరరాశి దశాంశం* mul = శూన్యసూచిక, స్థిరరాశి int64_t mul_stride_అడ్డువరుస = 0, స్థిరరాశి int64_t mul_stride_channel = 0,
+    స్థిరరాశి int64_t mul_stride_sample = 0, స్థిరరాశి పూర్ణాంకం mul_nrows = 0, స్థిరరాశి పూర్ణాంకం mul_nchannels = 0, స్థిరరాశి పూర్ణాంకం mul_nsamples = 0,
+    స్థిరరాశి దశాంశం* కూడు_2 = శూన్యసూచిక, స్థిరరాశి int64_t కూడు_stride_అడ్డువరుస = 0, స్థిరరాశి int64_t కూడు_stride_channel = 0,
+    స్థిరరాశి int64_t కూడు_stride_sample = 0, స్థిరరాశి పూర్ణాంకం కూడు_nrows = 0, స్థిరరాశి పూర్ణాంకం కూడు_nchannels = 0, స్థిరరాశి పూర్ణాంకం కూడు_nsamples = 0,
+    స్థిరరాశి దశాంశం scale_mul = 1.0f) {
 
-    static_assert(!do_add || do_multiply, "fusing add is not supported without multiplying");
+    static_assert(!do_కూడు || do_multiply, "fusing add is not supported without multiplying");
 
-    const int sample  = item_ct1.get_group(0);
-    const int channel = item_ct1.get_group(1);
-    const int row     = item_ct1.get_group(2);
+    స్థిరరాశి పూర్ణాంకం sample  = అంశం_ct1.get_సమూహం(0);
+    స్థిరరాశి పూర్ణాంకం channel = అంశం_ct1.get_సమూహం(1);
+    స్థిరరాశి పూర్ణాంకం అడ్డువరుస     = అంశం_ct1.get_సమూహం(2);
 
-    const int nthreads = item_ct1.get_local_range(2);
+    స్థిరరాశి పూర్ణాంకం nthreads = అంశం_ct1.get_local_range(2);
 
-    const int tid = item_ct1.get_local_id(2);
-    const int nwarps = nthreads / WARP_SIZE;
+    స్థిరరాశి పూర్ణాంకం tid = అంశం_ct1.get_local_id(2);
+    స్థిరరాశి పూర్ణాంకం nwarps = nthreads / WARP_కొలత;
 
-    const auto src_offset = calculate_offset<3>({src_stride_sample, src_stride_channel, src_stride_row}, {sample, channel, row});
-    const auto dst_offset = calculate_offset<3>({dst_stride_sample, dst_stride_channel, dst_stride_row}, {sample, channel, row});
+    స్థిరరాశి స్వయంచాలక src_స్థానభ్రంశం = calculate_స్థానభ్రంశం<3>({src_stride_sample, src_stride_channel, src_stride_అడ్డువరుస}, {sample, channel, అడ్డువరుస});
+    స్థిరరాశి స్వయంచాలక dst_స్థానభ్రంశం = calculate_స్థానభ్రంశం<3>({dst_stride_sample, dst_stride_channel, dst_stride_అడ్డువరుస}, {sample, channel, అడ్డువరుస});
 
-    x   += src_offset;
-    dst += dst_offset;
+    x   += src_స్థానభ్రంశం;
+    dst += dst_స్థానభ్రంశం;
 
-    if constexpr (do_multiply) {
-        const int mul_row     = row     % mul_nrows;
-        const int mul_channel = channel % mul_nchannels;
-        const int mul_sample  = sample  % mul_nsamples;
-        mul += mul_sample * mul_stride_sample + mul_channel * mul_stride_channel + mul_row * mul_stride_row;
+    ఒకవేళ constexpr (do_multiply) {
+        స్థిరరాశి పూర్ణాంకం mul_అడ్డువరుస     = అడ్డువరుస     % mul_nrows;
+        స్థిరరాశి పూర్ణాంకం mul_channel = channel % mul_nchannels;
+        స్థిరరాశి పూర్ణాంకం mul_sample  = sample  % mul_nsamples;
+        mul += mul_sample * mul_stride_sample + mul_channel * mul_stride_channel + mul_అడ్డువరుస * mul_stride_అడ్డువరుస;
     }
 
-    if constexpr (do_add) {
-        const int add_row     = row     % add_nrows;
-        const int add_channel = channel % add_nchannels;
-        const int add_sample  = sample  % add_nsamples;
-        add += add_sample * add_stride_sample + add_channel * add_stride_channel + add_row * add_stride_row;
+    ఒకవేళ constexpr (do_కూడు) {
+        స్థిరరాశి పూర్ణాంకం కూడు_అడ్డువరుస     = అడ్డువరుస     % కూడు_nrows;
+        స్థిరరాశి పూర్ణాంకం కూడు_channel = channel % కూడు_nchannels;
+        స్థిరరాశి పూర్ణాంకం కూడు_sample  = sample  % కూడు_nsamples;
+        కూడు_2 += కూడు_sample * కూడు_stride_sample + కూడు_channel * కూడు_stride_channel + కూడు_అడ్డువరుస * కూడు_stride_అడ్డువరుస;
     }
 
-    float tmp = 0.0f; // partial sum for thread in warp
+    దశాంశం tmp = 0.0f; // partial sum for thread in warp
 
-    for (int col = tid; col < ncols; col += block_size) {
-        const float xi = x[col * src_stride_col];
+    కొరకు (పూర్ణాంకం నిలువు = tid; నిలువు < ncols; నిలువు += ఖండం_కొలత_3) {
+        స్థిరరాశి దశాంశం xi = x[నిలువు * src_stride_నిలువు];
         tmp += xi * xi;
     }
 
     // sum up partial sums
-    tmp = warp_reduce_sum(tmp, item_ct1);
-    if (block_size > WARP_SIZE) {
-        const auto sub_group = item_ct1.get_sub_group();
-        const auto sg_id = sub_group.get_group_linear_id();
-        const auto wi_in_sg = sub_group.get_local_linear_id();
-        if (wi_in_sg == 0) {
-            s_sum[sg_id] = tmp;
+    tmp = warp_reduce_కూడిక(tmp, అంశం_ct1);
+    ఒకవేళ (ఖండం_కొలత_3 > WARP_కొలత) {
+        స్థిరరాశి స్వయంచాలక sub_సమూహం = అంశం_ct1.get_sub_సమూహం();
+        స్థిరరాశి స్వయంచాలక sg_id = sub_సమూహం.get_సమూహం_రేఖీయ_id();
+        స్థిరరాశి స్వయంచాలక wi_లోపల_sg = sub_సమూహం.get_local_రేఖీయ_id();
+        ఒకవేళ (wi_లోపల_sg == 0) {
+            s_కూడిక[sg_id] = tmp;
         }
 
-        item_ct1.barrier(sycl::access::fence_space::local_space);
-        const size_t nreduce = ceil_div(nwarps, WARP_SIZE);
+        అంశం_ct1.barrier(sycl::access::fence_space::local_space);
+        స్థిరరాశి size_t nreduce = ceil_div(nwarps, WARP_కొలత);
         tmp = 0.f;
-        for (size_t i = 0; i < nreduce; i += 1)
+        కొరకు (size_t i = 0; i < nreduce; i += 1)
         {
-            tmp += s_sum[wi_in_sg + i * WARP_SIZE];
+            tmp += s_కూడిక[wi_లోపల_sg + i * WARP_కొలత];
         }
-        tmp = warp_reduce_sum(tmp, item_ct1);
+        tmp = warp_reduce_కూడిక(tmp, అంశం_ct1);
     }
 
-    const float mean = tmp / ncols;
-    const float scale = sycl::rsqrt(mean + eps);
+    స్థిరరాశి దశాంశం సగటు_2 = tmp / ncols;
+    స్థిరరాశి దశాంశం scale = sycl::rsqrt(సగటు_2 + eps);
 
-    for (int col = tid; col < ncols; col += block_size) {
-        if constexpr (do_multiply && do_add) {
-            dst[col * dst_stride_col] = scale * x[col * src_stride_col] * mul[col] + add[col];
-        } else if constexpr (do_multiply) {
-            dst[col * dst_stride_col] = scale * x[col * src_stride_col] * mul[col];
-        } else {
+    కొరకు (పూర్ణాంకం నిలువు = tid; నిలువు < ncols; నిలువు += ఖండం_కొలత_3) {
+        ఒకవేళ constexpr (do_multiply && do_కూడు) {
+            dst[నిలువు * dst_stride_నిలువు] = scale * x[నిలువు * src_stride_నిలువు] * mul[నిలువు] + కూడు_2[నిలువు];
+        } లేకపోతే ఒకవేళ constexpr (do_multiply) {
+            dst[నిలువు * dst_stride_నిలువు] = scale * x[నిలువు * src_stride_నిలువు] * mul[నిలువు];
+        } లేకపోతే {
             // folded epilogue of a fused GGML_OP_SCALE consumer (qwen35 GDN l2 norms);
             // the explicit temporary keeps the float evaluation order identical to
             // running rms_norm and scale as two separate kernels
-            const float v = scale * x[col * src_stride_col];
-            dst[col * dst_stride_col] = v * scale_mul;
+            స్థిరరాశి దశాంశం v = scale * x[నిలువు * src_stride_నిలువు];
+            dst[నిలువు * dst_stride_నిలువు] = v * scale_mul;
         }
     }
 }
 
-template<int warp_size>
-static void l2_norm_f32(const float * x, float * dst, const int ncols,
-    const int64_t src_stride_col, const int64_t src_stride_row, const int64_t src_stride_channel,
-    const int64_t src_stride_sample, const int64_t dst_stride_col, const int64_t dst_stride_row,
-    const int64_t dst_stride_channel, const int64_t dst_stride_sample, const float eps,
-    const sycl::nd_item<3>& item_ct1, float* s_sum, const int block_size) {
+మూస<పూర్ణాంకం warp_కొలత>
+స్థిర శూన్య l2_norm_f32(స్థిరరాశి దశాంశం * x, దశాంశం * dst, స్థిరరాశి పూర్ణాంకం ncols,
+    స్థిరరాశి int64_t src_stride_నిలువు, స్థిరరాశి int64_t src_stride_అడ్డువరుస, స్థిరరాశి int64_t src_stride_channel,
+    స్థిరరాశి int64_t src_stride_sample, స్థిరరాశి int64_t dst_stride_నిలువు, స్థిరరాశి int64_t dst_stride_అడ్డువరుస,
+    స్థిరరాశి int64_t dst_stride_channel, స్థిరరాశి int64_t dst_stride_sample, స్థిరరాశి దశాంశం eps,
+    స్థిరరాశి sycl::nd_అంశం<3>& అంశం_ct1, దశాంశం* s_కూడిక, స్థిరరాశి పూర్ణాంకం ఖండం_కొలత_3) {
 
-    const int row     = item_ct1.get_group(2);
-    const int channel = item_ct1.get_group(1);
-    const int sample  = item_ct1.get_group(0);
-    const int tid     = item_ct1.get_local_id(2);
+    స్థిరరాశి పూర్ణాంకం అడ్డువరుస     = అంశం_ct1.get_సమూహం(2);
+    స్థిరరాశి పూర్ణాంకం channel = అంశం_ct1.get_సమూహం(1);
+    స్థిరరాశి పూర్ణాంకం sample  = అంశం_ct1.get_సమూహం(0);
+    స్థిరరాశి పూర్ణాంకం tid     = అంశం_ct1.get_local_id(2);
 
-    x   += sample*src_stride_sample + channel*src_stride_channel + row*src_stride_row;
-    dst += sample*dst_stride_sample + channel*dst_stride_channel + row*dst_stride_row;
+    x   += sample*src_stride_sample + channel*src_stride_channel + అడ్డువరుస*src_stride_అడ్డువరుస;
+    dst += sample*dst_stride_sample + channel*dst_stride_channel + అడ్డువరుస*dst_stride_అడ్డువరుస;
 
-    float tmp = 0.0f; // partial sum for thread in warp
+    దశాంశం tmp = 0.0f; // partial sum for thread in warp
 
-    for (int col = tid; col < ncols; col += block_size) {
-        const float xi = x[col * src_stride_col];
+    కొరకు (పూర్ణాంకం నిలువు = tid; నిలువు < ncols; నిలువు += ఖండం_కొలత_3) {
+        స్థిరరాశి దశాంశం xi = x[నిలువు * src_stride_నిలువు];
         tmp += xi * xi;
     }
 
-    tmp = block_reduce<block_reduce_method::SUM, warp_size>(tmp, s_sum, block_size);
-    const float scale = sycl::rsqrt(sycl::fmax(tmp, eps * eps));
+    tmp = ఖండం_reduce<ఖండం_reduce_పద్ధతి::కూడిక_3, warp_కొలత>(tmp, s_కూడిక, ఖండం_కొలత_3);
+    స్థిరరాశి దశాంశం scale = sycl::rsqrt(sycl::fmax(tmp, eps * eps));
 
-    for (int col = tid; col < ncols; col += block_size) {
-        dst[col * dst_stride_col] = scale * x[col * src_stride_col];
+    కొరకు (పూర్ణాంకం నిలువు = tid; నిలువు < ncols; నిలువు += ఖండం_కొలత_3) {
+        dst[నిలువు * dst_stride_నిలువు] = scale * x[నిలువు * src_stride_నిలువు];
     }
 }
 
-static void norm_f32_sycl(const float * x, float * dst, const int ncols, const int nrows, const int nchannels, const int nsamples,
-    const int64_t src_stride_col, const int64_t src_stride_row, const int64_t src_stride_channel, const int64_t src_stride_sample,
-    const int64_t dst_stride_col, const int64_t dst_stride_row, const int64_t dst_stride_channel, const int64_t dst_stride_sample,
-        const float eps, queue_ptr stream, int device) {
+స్థిర శూన్య norm_f32_sycl(స్థిరరాశి దశాంశం * x, దశాంశం * dst, స్థిరరాశి పూర్ణాంకం ncols, స్థిరరాశి పూర్ణాంకం nrows, స్థిరరాశి పూర్ణాంకం nchannels, స్థిరరాశి పూర్ణాంకం nsamples,
+    స్థిరరాశి int64_t src_stride_నిలువు, స్థిరరాశి int64_t src_stride_అడ్డువరుస, స్థిరరాశి int64_t src_stride_channel, స్థిరరాశి int64_t src_stride_sample,
+    స్థిరరాశి int64_t dst_stride_నిలువు, స్థిరరాశి int64_t dst_stride_అడ్డువరుస, స్థిరరాశి int64_t dst_stride_channel, స్థిరరాశి int64_t dst_stride_sample,
+        స్థిరరాశి దశాంశం eps, వరుస_ptr stream, పూర్ణాంకం device) {
 
-    const sycl::range<3> global_dims(nsamples, nchannels, nrows);
-    if (ncols < 1024) {
-        const sycl::range<3> block_dims(1, 1, WARP_SIZE);
+    స్థిరరాశి sycl::range<3> global_dims(nsamples, nchannels, nrows);
+    ఒకవేళ (ncols < 1024) {
+        స్థిరరాశి sycl::range<3> ఖండం_dims(1, 1, WARP_కొలత);
         stream->submit([&](sycl::handler& cgh) {
             cgh.parallel_for(
-                sycl::nd_range<3>(global_dims * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+                sycl::nd_range<3>(global_dims * ఖండం_dims, ఖండం_dims),
+                [=](sycl::nd_అంశం<3> అంశం_ct1)
+                [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]] {
                     norm_f32(x, dst, ncols,
-                        src_stride_col, src_stride_row, src_stride_channel, src_stride_sample,
-                        dst_stride_col, dst_stride_row, dst_stride_channel, dst_stride_sample,
-                        eps, item_ct1, nullptr, WARP_SIZE);
+                        src_stride_నిలువు, src_stride_అడ్డువరుస, src_stride_channel, src_stride_sample,
+                        dst_stride_నిలువు, dst_stride_అడ్డువరుస, dst_stride_channel, dst_stride_sample,
+                        eps, అంశం_ct1, శూన్యసూచిక, WARP_కొలత);
                 });
             });
     }
-    else {
-        const int work_group_size = ggml_sycl_info().max_work_group_sizes[device];
-        assert(work_group_size % (WARP_SIZE * WARP_SIZE) == 0);
-        const sycl::range<3> block_dims(1, 1, work_group_size);
+    లేకపోతే {
+        స్థిరరాశి పూర్ణాంకం work_సమూహం_కొలత = ggml_sycl_info().max_work_సమూహం_sizes[device];
+        ప్రతిజ్ఞా(work_సమూహం_కొలత % (WARP_కొలత * WARP_కొలత) == 0);
+        స్థిరరాశి sycl::range<3> ఖండం_dims(1, 1, work_సమూహం_కొలత);
         /*
         DPCT1049:17: The work-group size passed to the SYCL kernel may exceed
         the limit. To get the device limit, query
         info::device::max_work_group_size. Adjust the work-group size if needed.
         */
         stream->submit([&](sycl::handler& cgh) {
-            sycl::local_accessor<sycl::float2, 1> s_sum_acc_ct1(
-                            sycl::range<1>(work_group_size / WARP_SIZE), cgh);
+            sycl::local_accessor<sycl::float2, 1> s_కూడిక_acc_ct1(
+                            sycl::range<1>(work_సమూహం_కొలత / WARP_కొలత), cgh);
             cgh.parallel_for(
-                sycl::nd_range<3>(global_dims * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+                sycl::nd_range<3>(global_dims * ఖండం_dims, ఖండం_dims),
+                [=](sycl::nd_అంశం<3> అంశం_ct1)
+                [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]] {
                     norm_f32(x, dst, ncols,
-                        src_stride_col, src_stride_row, src_stride_channel, src_stride_sample,
-                        dst_stride_col, dst_stride_row, dst_stride_channel, dst_stride_sample,
-                        eps, item_ct1, get_pointer(s_sum_acc_ct1), work_group_size);
+                        src_stride_నిలువు, src_stride_అడ్డువరుస, src_stride_channel, src_stride_sample,
+                        dst_stride_నిలువు, dst_stride_అడ్డువరుస, dst_stride_channel, dst_stride_sample,
+                        eps, అంశం_ct1, get_సూచిక(s_కూడిక_acc_ct1), work_సమూహం_కొలత);
                 });
             });
     }
 }
 
-static void group_norm_f32_sycl(const float* x, float* dst,
-    const int num_groups, const float eps, const int group_size,
-    const int ne_elements, queue_ptr stream, int device) {
-    if (group_size < 1024) {
-        const sycl::range<3> block_dims(1, 1, WARP_SIZE);
+స్థిర శూన్య సమూహం_norm_f32_sycl(స్థిరరాశి దశాంశం* x, దశాంశం* dst,
+    స్థిరరాశి పూర్ణాంకం అంకె_groups, స్థిరరాశి దశాంశం eps, స్థిరరాశి పూర్ణాంకం సమూహం_కొలత,
+    స్థిరరాశి పూర్ణాంకం ne_elements, వరుస_ptr stream, పూర్ణాంకం device) {
+    ఒకవేళ (సమూహం_కొలత < 1024) {
+        స్థిరరాశి sycl::range<3> ఖండం_dims(1, 1, WARP_కొలత);
         stream->submit([&](sycl::handler& cgh) {
-            const float eps_ct4 = eps;
+            స్థిరరాశి దశాంశం eps_ct4 = eps;
             cgh.parallel_for(
-                sycl::nd_range<3>(sycl::range<3>(1, 1, num_groups) * block_dims,
-                    block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    group_norm_f32(
-                        x, dst, group_size, ne_elements, eps_ct4, item_ct1,
-                        nullptr, WARP_SIZE);
+                sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_groups) * ఖండం_dims,
+                    ఖండం_dims),
+                [=](sycl::nd_అంశం<3> అంశం_ct1)
+                [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]] {
+                    సమూహం_norm_f32(
+                        x, dst, సమూహం_కొలత, ne_elements, eps_ct4, అంశం_ct1,
+                        శూన్యసూచిక, WARP_కొలత);
                 });
             });
     }
-    else {
-        const int work_group_size = ggml_sycl_info().max_work_group_sizes[device];
-        assert(work_group_size % (WARP_SIZE * WARP_SIZE) == 0);
-        const sycl::range<3> block_dims(1, 1, work_group_size);
+    లేకపోతే {
+        స్థిరరాశి పూర్ణాంకం work_సమూహం_కొలత = ggml_sycl_info().max_work_సమూహం_sizes[device];
+        ప్రతిజ్ఞా(work_సమూహం_కొలత % (WARP_కొలత * WARP_కొలత) == 0);
+        స్థిరరాశి sycl::range<3> ఖండం_dims(1, 1, work_సమూహం_కొలత);
         /*
         DPCT1049:18: The work-group size passed to the SYCL kernel may exceed
         the limit. To get the device limit, query
@@ -335,260 +335,260 @@ static void group_norm_f32_sycl(const float* x, float* dst,
         */
 
         stream->submit([&](sycl::handler& cgh) {
-            sycl::local_accessor<float, 1> s_sum_acc_ct1(sycl::range<1>(work_group_size / WARP_SIZE),
+            sycl::local_accessor<దశాంశం, 1> s_కూడిక_acc_ct1(sycl::range<1>(work_సమూహం_కొలత / WARP_కొలత),
                 cgh);
 
-            const float eps_ct4 = eps;
+            స్థిరరాశి దశాంశం eps_ct4 = eps;
 
             cgh.parallel_for(
-                sycl::nd_range<3>(sycl::range<3>(1, 1, num_groups) * block_dims,
-                    block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    group_norm_f32(x, dst, group_size, ne_elements,
-                        eps_ct4, item_ct1,
-                        get_pointer(s_sum_acc_ct1), work_group_size);
+                sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_groups) * ఖండం_dims,
+                    ఖండం_dims),
+                [=](sycl::nd_అంశం<3> అంశం_ct1)
+                [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]] {
+                    సమూహం_norm_f32(x, dst, సమూహం_కొలత, ne_elements,
+                        eps_ct4, అంశం_ct1,
+                        get_సూచిక(s_కూడిక_acc_ct1), work_సమూహం_కొలత);
                 });
             });
     }
 }
 
-static void rms_norm_f32_sycl(const float* x, float* dst, const int ncols, const int nrows, const int nchannels, const int nsamples,
-    const int64_t src_stride_col, const int64_t src_stride_row, const int64_t src_stride_channel, const int64_t src_stride_sample,
-    const int64_t dst_stride_col, const int64_t dst_stride_row, const int64_t dst_stride_channel, const int64_t dst_stride_sample,
-    const float eps, queue_ptr stream, int device) {
+స్థిర శూన్య rms_norm_f32_sycl(స్థిరరాశి దశాంశం* x, దశాంశం* dst, స్థిరరాశి పూర్ణాంకం ncols, స్థిరరాశి పూర్ణాంకం nrows, స్థిరరాశి పూర్ణాంకం nchannels, స్థిరరాశి పూర్ణాంకం nsamples,
+    స్థిరరాశి int64_t src_stride_నిలువు, స్థిరరాశి int64_t src_stride_అడ్డువరుస, స్థిరరాశి int64_t src_stride_channel, స్థిరరాశి int64_t src_stride_sample,
+    స్థిరరాశి int64_t dst_stride_నిలువు, స్థిరరాశి int64_t dst_stride_అడ్డువరుస, స్థిరరాశి int64_t dst_stride_channel, స్థిరరాశి int64_t dst_stride_sample,
+    స్థిరరాశి దశాంశం eps, వరుస_ptr stream, పూర్ణాంకం device) {
     // printf("%s ncols=%d, nrows=%d, WARP_SIZE=%d\n", __func__, ncols, nrows, WARP_SIZE);
 
-    const sycl::range<3> global_dims(nsamples, nchannels, nrows);
-    if (ncols < 1024) {
-        const sycl::range<3> block_dims(1, 1, WARP_SIZE);
+    స్థిరరాశి sycl::range<3> global_dims(nsamples, nchannels, nrows);
+    ఒకవేళ (ncols < 1024) {
+        స్థిరరాశి sycl::range<3> ఖండం_dims(1, 1, WARP_కొలత);
         stream->submit([&](sycl::handler& cgh) {
             cgh.parallel_for(
-                sycl::nd_range<3>(global_dims * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+                sycl::nd_range<3>(global_dims * ఖండం_dims, ఖండం_dims),
+                [=](sycl::nd_అంశం<3> అంశం_ct1)
+                [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]] {
                     rms_norm_f32(x, dst, ncols,
-                        src_stride_col, src_stride_row, src_stride_channel, src_stride_sample,
-                        dst_stride_col, dst_stride_row, dst_stride_channel, dst_stride_sample,
-                        eps, item_ct1, nullptr, WARP_SIZE);
+                        src_stride_నిలువు, src_stride_అడ్డువరుస, src_stride_channel, src_stride_sample,
+                        dst_stride_నిలువు, dst_stride_అడ్డువరుస, dst_stride_channel, dst_stride_sample,
+                        eps, అంశం_ct1, శూన్యసూచిక, WARP_కొలత);
                 });
             });
     }
-    else {
-        const int work_group_size = ggml_sycl_info().max_work_group_sizes[device];
-        assert(work_group_size % (WARP_SIZE * WARP_SIZE) == 0);
-        const sycl::range<3> block_dims(1, 1, work_group_size);
+    లేకపోతే {
+        స్థిరరాశి పూర్ణాంకం work_సమూహం_కొలత = ggml_sycl_info().max_work_సమూహం_sizes[device];
+        ప్రతిజ్ఞా(work_సమూహం_కొలత % (WARP_కొలత * WARP_కొలత) == 0);
+        స్థిరరాశి sycl::range<3> ఖండం_dims(1, 1, work_సమూహం_కొలత);
         /*
         DPCT1049:19: The work-group size passed to the SYCL kernel may exceed
         the limit. To get the device limit, query
         info::device::max_work_group_size. Adjust the work-group size if needed.
         */
         stream->submit([&](sycl::handler& cgh) {
-            sycl::local_accessor<float, 1> s_sum_acc_ct1(sycl::range<1>(work_group_size / WARP_SIZE),
+            sycl::local_accessor<దశాంశం, 1> s_కూడిక_acc_ct1(sycl::range<1>(work_సమూహం_కొలత / WARP_కొలత),
                 cgh);
             cgh.parallel_for(
-                sycl::nd_range<3>(global_dims * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+                sycl::nd_range<3>(global_dims * ఖండం_dims, ఖండం_dims),
+                [=](sycl::nd_అంశం<3> అంశం_ct1)
+                [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]] {
                     rms_norm_f32(x, dst, ncols,
-                        src_stride_col, src_stride_row, src_stride_channel, src_stride_sample,
-                        dst_stride_col, dst_stride_row, dst_stride_channel, dst_stride_sample,
-                        eps, item_ct1, get_pointer(s_sum_acc_ct1), work_group_size);
+                        src_stride_నిలువు, src_stride_అడ్డువరుస, src_stride_channel, src_stride_sample,
+                        dst_stride_నిలువు, dst_stride_అడ్డువరుస, dst_stride_channel, dst_stride_sample,
+                        eps, అంశం_ct1, get_సూచిక(s_కూడిక_acc_ct1), work_సమూహం_కొలత);
                 });
             });
     }
 }
 
-static void rms_norm_scale_f32_sycl(const float* x, float* dst, const int ncols, const int nrows,
-    const int nchannels, const int nsamples,
-    const int64_t src_stride_col, const int64_t src_stride_row, const int64_t src_stride_channel, const int64_t src_stride_sample,
-    const int64_t dst_stride_col, const int64_t dst_stride_row, const int64_t dst_stride_channel, const int64_t dst_stride_sample,
-    const float eps, const float scale_mul, queue_ptr stream, int device) {
-    const sycl::range<3> global_dims(nsamples, nchannels, nrows);
-    if (ncols < 1024) {
-        const sycl::range<3> block_dims(1, 1, WARP_SIZE);
+స్థిర శూన్య rms_norm_scale_f32_sycl(స్థిరరాశి దశాంశం* x, దశాంశం* dst, స్థిరరాశి పూర్ణాంకం ncols, స్థిరరాశి పూర్ణాంకం nrows,
+    స్థిరరాశి పూర్ణాంకం nchannels, స్థిరరాశి పూర్ణాంకం nsamples,
+    స్థిరరాశి int64_t src_stride_నిలువు, స్థిరరాశి int64_t src_stride_అడ్డువరుస, స్థిరరాశి int64_t src_stride_channel, స్థిరరాశి int64_t src_stride_sample,
+    స్థిరరాశి int64_t dst_stride_నిలువు, స్థిరరాశి int64_t dst_stride_అడ్డువరుస, స్థిరరాశి int64_t dst_stride_channel, స్థిరరాశి int64_t dst_stride_sample,
+    స్థిరరాశి దశాంశం eps, స్థిరరాశి దశాంశం scale_mul, వరుస_ptr stream, పూర్ణాంకం device) {
+    స్థిరరాశి sycl::range<3> global_dims(nsamples, nchannels, nrows);
+    ఒకవేళ (ncols < 1024) {
+        స్థిరరాశి sycl::range<3> ఖండం_dims(1, 1, WARP_కొలత);
         stream->submit([&](sycl::handler& cgh) {
             cgh.parallel_for(
-                sycl::nd_range<3>(global_dims * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+                sycl::nd_range<3>(global_dims * ఖండం_dims, ఖండం_dims),
+                [=](sycl::nd_అంశం<3> అంశం_ct1)
+                [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]] {
                     rms_norm_f32(x, dst, ncols,
-                        src_stride_col, src_stride_row, src_stride_channel, src_stride_sample,
-                        dst_stride_col, dst_stride_row, dst_stride_channel, dst_stride_sample,
-                        eps, item_ct1, nullptr, WARP_SIZE,
-                        nullptr, 0, 0, 0, 0, 0, 0,
-                        nullptr, 0, 0, 0, 0, 0, 0,
+                        src_stride_నిలువు, src_stride_అడ్డువరుస, src_stride_channel, src_stride_sample,
+                        dst_stride_నిలువు, dst_stride_అడ్డువరుస, dst_stride_channel, dst_stride_sample,
+                        eps, అంశం_ct1, శూన్యసూచిక, WARP_కొలత,
+                        శూన్యసూచిక, 0, 0, 0, 0, 0, 0,
+                        శూన్యసూచిక, 0, 0, 0, 0, 0, 0,
                         scale_mul);
                 });
             });
     }
-    else {
-        const int work_group_size = ggml_sycl_info().max_work_group_sizes[device];
-        assert(work_group_size % (WARP_SIZE * WARP_SIZE) == 0);
-        const sycl::range<3> block_dims(1, 1, work_group_size);
+    లేకపోతే {
+        స్థిరరాశి పూర్ణాంకం work_సమూహం_కొలత = ggml_sycl_info().max_work_సమూహం_sizes[device];
+        ప్రతిజ్ఞా(work_సమూహం_కొలత % (WARP_కొలత * WARP_కొలత) == 0);
+        స్థిరరాశి sycl::range<3> ఖండం_dims(1, 1, work_సమూహం_కొలత);
         stream->submit([&](sycl::handler& cgh) {
-            sycl::local_accessor<float, 1> s_sum_acc_ct1(sycl::range<1>(work_group_size / WARP_SIZE),
+            sycl::local_accessor<దశాంశం, 1> s_కూడిక_acc_ct1(sycl::range<1>(work_సమూహం_కొలత / WARP_కొలత),
                 cgh);
             cgh.parallel_for(
-                sycl::nd_range<3>(global_dims * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+                sycl::nd_range<3>(global_dims * ఖండం_dims, ఖండం_dims),
+                [=](sycl::nd_అంశం<3> అంశం_ct1)
+                [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]] {
                     rms_norm_f32(x, dst, ncols,
-                        src_stride_col, src_stride_row, src_stride_channel, src_stride_sample,
-                        dst_stride_col, dst_stride_row, dst_stride_channel, dst_stride_sample,
-                        eps, item_ct1, get_pointer(s_sum_acc_ct1), work_group_size,
-                        nullptr, 0, 0, 0, 0, 0, 0,
-                        nullptr, 0, 0, 0, 0, 0, 0,
+                        src_stride_నిలువు, src_stride_అడ్డువరుస, src_stride_channel, src_stride_sample,
+                        dst_stride_నిలువు, dst_stride_అడ్డువరుస, dst_stride_channel, dst_stride_sample,
+                        eps, అంశం_ct1, get_సూచిక(s_కూడిక_acc_ct1), work_సమూహం_కొలత,
+                        శూన్యసూచిక, 0, 0, 0, 0, 0, 0,
+                        శూన్యసూచిక, 0, 0, 0, 0, 0, 0,
                         scale_mul);
                 });
             });
     }
 }
 
-static void rms_norm_mul_f32_sycl(const float* x, const float* mul, float* dst, const int ncols, const int nrows,
-        const int nchannels, const int nsamples,
-        const int64_t src_stride_col, const int64_t src_stride_row, const int64_t src_stride_channel, const int64_t src_stride_sample,
-        const int64_t dst_stride_col, const int64_t dst_stride_row, const int64_t dst_stride_channel, const int64_t dst_stride_sample,
-        const int64_t mul_stride_row, const int64_t mul_stride_channel, const int64_t mul_stride_sample,
-        const int mul_nrows, const int mul_nchannels, const int mul_nsamples,
-        const float eps, queue_ptr stream, int device) {
-    const sycl::range<3> global_dims(nsamples, nchannels, nrows);
-    if (ncols < 1024) {
-        const sycl::range<3> block_dims(1, 1, WARP_SIZE);
+స్థిర శూన్య rms_norm_mul_f32_sycl(స్థిరరాశి దశాంశం* x, స్థిరరాశి దశాంశం* mul, దశాంశం* dst, స్థిరరాశి పూర్ణాంకం ncols, స్థిరరాశి పూర్ణాంకం nrows,
+        స్థిరరాశి పూర్ణాంకం nchannels, స్థిరరాశి పూర్ణాంకం nsamples,
+        స్థిరరాశి int64_t src_stride_నిలువు, స్థిరరాశి int64_t src_stride_అడ్డువరుస, స్థిరరాశి int64_t src_stride_channel, స్థిరరాశి int64_t src_stride_sample,
+        స్థిరరాశి int64_t dst_stride_నిలువు, స్థిరరాశి int64_t dst_stride_అడ్డువరుస, స్థిరరాశి int64_t dst_stride_channel, స్థిరరాశి int64_t dst_stride_sample,
+        స్థిరరాశి int64_t mul_stride_అడ్డువరుస, స్థిరరాశి int64_t mul_stride_channel, స్థిరరాశి int64_t mul_stride_sample,
+        స్థిరరాశి పూర్ణాంకం mul_nrows, స్థిరరాశి పూర్ణాంకం mul_nchannels, స్థిరరాశి పూర్ణాంకం mul_nsamples,
+        స్థిరరాశి దశాంశం eps, వరుస_ptr stream, పూర్ణాంకం device) {
+    స్థిరరాశి sycl::range<3> global_dims(nsamples, nchannels, nrows);
+    ఒకవేళ (ncols < 1024) {
+        స్థిరరాశి sycl::range<3> ఖండం_dims(1, 1, WARP_కొలత);
         stream->submit([&](sycl::handler& cgh) {
             cgh.parallel_for(
-                sycl::nd_range<3>(global_dims * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    rms_norm_f32<true>(x, dst, ncols,
-                        src_stride_col, src_stride_row, src_stride_channel, src_stride_sample,
-                        dst_stride_col, dst_stride_row, dst_stride_channel, dst_stride_sample,
-                        eps, item_ct1, nullptr, WARP_SIZE,
-                        mul, mul_stride_row, mul_stride_channel, mul_stride_sample, mul_nrows, mul_nchannels, mul_nsamples);
+                sycl::nd_range<3>(global_dims * ఖండం_dims, ఖండం_dims),
+                [=](sycl::nd_అంశం<3> అంశం_ct1)
+                [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]] {
+                    rms_norm_f32<నిజం>(x, dst, ncols,
+                        src_stride_నిలువు, src_stride_అడ్డువరుస, src_stride_channel, src_stride_sample,
+                        dst_stride_నిలువు, dst_stride_అడ్డువరుస, dst_stride_channel, dst_stride_sample,
+                        eps, అంశం_ct1, శూన్యసూచిక, WARP_కొలత,
+                        mul, mul_stride_అడ్డువరుస, mul_stride_channel, mul_stride_sample, mul_nrows, mul_nchannels, mul_nsamples);
                 });
             });
     }
-    else {
-        const int work_group_size = ggml_sycl_info().max_work_group_sizes[device];
-        assert(work_group_size % (WARP_SIZE * WARP_SIZE) == 0);
-        const sycl::range<3> block_dims(1, 1, work_group_size);
+    లేకపోతే {
+        స్థిరరాశి పూర్ణాంకం work_సమూహం_కొలత = ggml_sycl_info().max_work_సమూహం_sizes[device];
+        ప్రతిజ్ఞా(work_సమూహం_కొలత % (WARP_కొలత * WARP_కొలత) == 0);
+        స్థిరరాశి sycl::range<3> ఖండం_dims(1, 1, work_సమూహం_కొలత);
         stream->submit([&](sycl::handler& cgh) {
-            sycl::local_accessor<float, 1> s_sum_acc_ct1(sycl::range<1>(work_group_size / WARP_SIZE), cgh);
+            sycl::local_accessor<దశాంశం, 1> s_కూడిక_acc_ct1(sycl::range<1>(work_సమూహం_కొలత / WARP_కొలత), cgh);
             cgh.parallel_for(
-                sycl::nd_range<3>(global_dims * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    rms_norm_f32<true>(x, dst, ncols,
-                        src_stride_col, src_stride_row, src_stride_channel, src_stride_sample,
-                        dst_stride_col, dst_stride_row, dst_stride_channel, dst_stride_sample,
-                        eps, item_ct1, get_pointer(s_sum_acc_ct1), work_group_size,
-                        mul, mul_stride_row, mul_stride_channel, mul_stride_sample, mul_nrows, mul_nchannels, mul_nsamples);
-                });
-            });
-    }
-}
-
-static void rms_norm_mul_add_f32_sycl(const float* x, const float* mul, const float* add, float* dst,
-        const int ncols, const int nrows, const int nchannels, const int nsamples,
-        const int64_t src_stride_col, const int64_t src_stride_row, const int64_t src_stride_channel, const int64_t src_stride_sample,
-        const int64_t dst_stride_col, const int64_t dst_stride_row, const int64_t dst_stride_channel, const int64_t dst_stride_sample,
-        const int64_t mul_stride_row, const int64_t mul_stride_channel, const int64_t mul_stride_sample,
-        const int mul_nrows, const int mul_nchannels, const int mul_nsamples,
-        const int64_t add_stride_row, const int64_t add_stride_channel, const int64_t add_stride_sample,
-        const int add_nrows, const int add_nchannels, const int add_nsamples,
-        const float eps, queue_ptr stream, int device) {
-    const sycl::range<3> global_dims(nsamples, nchannels, nrows);
-    if (ncols < 1024) {
-        const sycl::range<3> block_dims(1, 1, WARP_SIZE);
-        stream->submit([&](sycl::handler& cgh) {
-            cgh.parallel_for(
-                sycl::nd_range<3>(global_dims * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    rms_norm_f32<true, true>(x, dst, ncols,
-                        src_stride_col, src_stride_row, src_stride_channel, src_stride_sample,
-                        dst_stride_col, dst_stride_row, dst_stride_channel, dst_stride_sample,
-                        eps, item_ct1, nullptr, WARP_SIZE,
-                        mul, mul_stride_row, mul_stride_channel, mul_stride_sample, mul_nrows, mul_nchannels, mul_nsamples,
-                        add, add_stride_row, add_stride_channel, add_stride_sample, add_nrows, add_nchannels, add_nsamples);
-                });
-            });
-    }
-    else {
-        const int work_group_size = ggml_sycl_info().max_work_group_sizes[device];
-        assert(work_group_size % (WARP_SIZE * WARP_SIZE) == 0);
-        const sycl::range<3> block_dims(1, 1, work_group_size);
-        stream->submit([&](sycl::handler& cgh) {
-            sycl::local_accessor<float, 1> s_sum_acc_ct1(sycl::range<1>(work_group_size / WARP_SIZE), cgh);
-            cgh.parallel_for(
-                sycl::nd_range<3>(global_dims * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    rms_norm_f32<true, true>(x, dst, ncols,
-                        src_stride_col, src_stride_row, src_stride_channel, src_stride_sample,
-                        dst_stride_col, dst_stride_row, dst_stride_channel, dst_stride_sample,
-                        eps, item_ct1, get_pointer(s_sum_acc_ct1), work_group_size,
-                        mul, mul_stride_row, mul_stride_channel, mul_stride_sample, mul_nrows, mul_nchannels, mul_nsamples,
-                        add, add_stride_row, add_stride_channel, add_stride_sample, add_nrows, add_nchannels, add_nsamples);
+                sycl::nd_range<3>(global_dims * ఖండం_dims, ఖండం_dims),
+                [=](sycl::nd_అంశం<3> అంశం_ct1)
+                [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]] {
+                    rms_norm_f32<నిజం>(x, dst, ncols,
+                        src_stride_నిలువు, src_stride_అడ్డువరుస, src_stride_channel, src_stride_sample,
+                        dst_stride_నిలువు, dst_stride_అడ్డువరుస, dst_stride_channel, dst_stride_sample,
+                        eps, అంశం_ct1, get_సూచిక(s_కూడిక_acc_ct1), work_సమూహం_కొలత,
+                        mul, mul_stride_అడ్డువరుస, mul_stride_channel, mul_stride_sample, mul_nrows, mul_nchannels, mul_nsamples);
                 });
             });
     }
 }
 
-template<int warp_size>
-static void l2_norm_f32_sycl(const float *   x,
-                             float *         dst,
-                             const int       ncols,
-                             const int       nrows,
-                             const int       nchannels,
-                             const int       nsamples,
-                             const int64_t   src_stride_col,
-                             const int64_t   src_stride_row,
-                             const int64_t   src_stride_channel,
-                             const int64_t   src_stride_sample,
-                             const int64_t   dst_stride_col,
-                             const int64_t   dst_stride_row,
-                             const int64_t   dst_stride_channel,
-                             const int64_t   dst_stride_sample,
-                             const float     eps,
-                             queue_ptr       stream,
-                             int             device) {
-    const dpct::dim3 blocks_num(nrows, nchannels, nsamples);
-
-    if (ncols < 1024) {
-        const dpct::dim3 block_dims(warp_size, 1, 1);
+స్థిర శూన్య rms_norm_mul_కూడు_f32_sycl(స్థిరరాశి దశాంశం* x, స్థిరరాశి దశాంశం* mul, స్థిరరాశి దశాంశం* కూడు_2, దశాంశం* dst,
+        స్థిరరాశి పూర్ణాంకం ncols, స్థిరరాశి పూర్ణాంకం nrows, స్థిరరాశి పూర్ణాంకం nchannels, స్థిరరాశి పూర్ణాంకం nsamples,
+        స్థిరరాశి int64_t src_stride_నిలువు, స్థిరరాశి int64_t src_stride_అడ్డువరుస, స్థిరరాశి int64_t src_stride_channel, స్థిరరాశి int64_t src_stride_sample,
+        స్థిరరాశి int64_t dst_stride_నిలువు, స్థిరరాశి int64_t dst_stride_అడ్డువరుస, స్థిరరాశి int64_t dst_stride_channel, స్థిరరాశి int64_t dst_stride_sample,
+        స్థిరరాశి int64_t mul_stride_అడ్డువరుస, స్థిరరాశి int64_t mul_stride_channel, స్థిరరాశి int64_t mul_stride_sample,
+        స్థిరరాశి పూర్ణాంకం mul_nrows, స్థిరరాశి పూర్ణాంకం mul_nchannels, స్థిరరాశి పూర్ణాంకం mul_nsamples,
+        స్థిరరాశి int64_t కూడు_stride_అడ్డువరుస, స్థిరరాశి int64_t కూడు_stride_channel, స్థిరరాశి int64_t కూడు_stride_sample,
+        స్థిరరాశి పూర్ణాంకం కూడు_nrows, స్థిరరాశి పూర్ణాంకం కూడు_nchannels, స్థిరరాశి పూర్ణాంకం కూడు_nsamples,
+        స్థిరరాశి దశాంశం eps, వరుస_ptr stream, పూర్ణాంకం device) {
+    స్థిరరాశి sycl::range<3> global_dims(nsamples, nchannels, nrows);
+    ఒకవేళ (ncols < 1024) {
+        స్థిరరాశి sycl::range<3> ఖండం_dims(1, 1, WARP_కొలత);
         stream->submit([&](sycl::handler& cgh) {
             cgh.parallel_for(
-                sycl::nd_range<3>(blocks_num * block_dims,
-                    block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(warp_size)]] {
-                    l2_norm_f32<warp_size>(x, dst, ncols,
-                        src_stride_col, src_stride_row, src_stride_channel, src_stride_sample,
-                        dst_stride_col, dst_stride_row, dst_stride_channel, dst_stride_sample,
-                        eps, item_ct1,
-                        nullptr, warp_size);
+                sycl::nd_range<3>(global_dims * ఖండం_dims, ఖండం_dims),
+                [=](sycl::nd_అంశం<3> అంశం_ct1)
+                [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]] {
+                    rms_norm_f32<నిజం, నిజం>(x, dst, ncols,
+                        src_stride_నిలువు, src_stride_అడ్డువరుస, src_stride_channel, src_stride_sample,
+                        dst_stride_నిలువు, dst_stride_అడ్డువరుస, dst_stride_channel, dst_stride_sample,
+                        eps, అంశం_ct1, శూన్యసూచిక, WARP_కొలత,
+                        mul, mul_stride_అడ్డువరుస, mul_stride_channel, mul_stride_sample, mul_nrows, mul_nchannels, mul_nsamples,
+                        కూడు_2, కూడు_stride_అడ్డువరుస, కూడు_stride_channel, కూడు_stride_sample, కూడు_nrows, కూడు_nchannels, కూడు_nsamples);
                 });
             });
     }
-    else {
-        const int work_group_size = ggml_sycl_info().max_work_group_sizes[device];
-        assert(work_group_size % (warp_size * warp_size) == 0);
-        const sycl::range<3> block_dims(1, 1, work_group_size);
-        int lsm_size =  block_dims[2] > warp_size ? work_group_size / warp_size * sizeof(float): 0;
+    లేకపోతే {
+        స్థిరరాశి పూర్ణాంకం work_సమూహం_కొలత = ggml_sycl_info().max_work_సమూహం_sizes[device];
+        ప్రతిజ్ఞా(work_సమూహం_కొలత % (WARP_కొలత * WARP_కొలత) == 0);
+        స్థిరరాశి sycl::range<3> ఖండం_dims(1, 1, work_సమూహం_కొలత);
         stream->submit([&](sycl::handler& cgh) {
-            sycl::local_accessor<float, 1> s_sum_acc_ct1(sycl::range<1>(lsm_size),
+            sycl::local_accessor<దశాంశం, 1> s_కూడిక_acc_ct1(sycl::range<1>(work_సమూహం_కొలత / WARP_కొలత), cgh);
+            cgh.parallel_for(
+                sycl::nd_range<3>(global_dims * ఖండం_dims, ఖండం_dims),
+                [=](sycl::nd_అంశం<3> అంశం_ct1)
+                [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]] {
+                    rms_norm_f32<నిజం, నిజం>(x, dst, ncols,
+                        src_stride_నిలువు, src_stride_అడ్డువరుస, src_stride_channel, src_stride_sample,
+                        dst_stride_నిలువు, dst_stride_అడ్డువరుస, dst_stride_channel, dst_stride_sample,
+                        eps, అంశం_ct1, get_సూచిక(s_కూడిక_acc_ct1), work_సమూహం_కొలత,
+                        mul, mul_stride_అడ్డువరుస, mul_stride_channel, mul_stride_sample, mul_nrows, mul_nchannels, mul_nsamples,
+                        కూడు_2, కూడు_stride_అడ్డువరుస, కూడు_stride_channel, కూడు_stride_sample, కూడు_nrows, కూడు_nchannels, కూడు_nsamples);
+                });
+            });
+    }
+}
+
+మూస<పూర్ణాంకం warp_కొలత>
+స్థిర శూన్య l2_norm_f32_sycl(స్థిరరాశి దశాంశం *   x,
+                             దశాంశం *         dst,
+                             స్థిరరాశి పూర్ణాంకం       ncols,
+                             స్థిరరాశి పూర్ణాంకం       nrows,
+                             స్థిరరాశి పూర్ణాంకం       nchannels,
+                             స్థిరరాశి పూర్ణాంకం       nsamples,
+                             స్థిరరాశి int64_t   src_stride_నిలువు,
+                             స్థిరరాశి int64_t   src_stride_అడ్డువరుస,
+                             స్థిరరాశి int64_t   src_stride_channel,
+                             స్థిరరాశి int64_t   src_stride_sample,
+                             స్థిరరాశి int64_t   dst_stride_నిలువు,
+                             స్థిరరాశి int64_t   dst_stride_అడ్డువరుస,
+                             స్థిరరాశి int64_t   dst_stride_channel,
+                             స్థిరరాశి int64_t   dst_stride_sample,
+                             స్థిరరాశి దశాంశం     eps,
+                             వరుస_ptr       stream,
+                             పూర్ణాంకం             device) {
+    స్థిరరాశి dpct::dim3 ఖండాలు_అంకె(nrows, nchannels, nsamples);
+
+    ఒకవేళ (ncols < 1024) {
+        స్థిరరాశి dpct::dim3 ఖండం_dims(warp_కొలత, 1, 1);
+        stream->submit([&](sycl::handler& cgh) {
+            cgh.parallel_for(
+                sycl::nd_range<3>(ఖండాలు_అంకె * ఖండం_dims,
+                    ఖండం_dims),
+                [=](sycl::nd_అంశం<3> అంశం_ct1)
+                [[sycl::reqd_sub_సమూహం_కొలత(warp_కొలత)]] {
+                    l2_norm_f32<warp_కొలత>(x, dst, ncols,
+                        src_stride_నిలువు, src_stride_అడ్డువరుస, src_stride_channel, src_stride_sample,
+                        dst_stride_నిలువు, dst_stride_అడ్డువరుస, dst_stride_channel, dst_stride_sample,
+                        eps, అంశం_ct1,
+                        శూన్యసూచిక, warp_కొలత);
+                });
+            });
+    }
+    లేకపోతే {
+        స్థిరరాశి పూర్ణాంకం work_సమూహం_కొలత = ggml_sycl_info().max_work_సమూహం_sizes[device];
+        ప్రతిజ్ఞా(work_సమూహం_కొలత % (warp_కొలత * warp_కొలత) == 0);
+        స్థిరరాశి sycl::range<3> ఖండం_dims(1, 1, work_సమూహం_కొలత);
+        పూర్ణాంకం lsm_కొలత =  ఖండం_dims[2] > warp_కొలత ? work_సమూహం_కొలత / warp_కొలత * పరిమాణం(దశాంశం): 0;
+        stream->submit([&](sycl::handler& cgh) {
+            sycl::local_accessor<దశాంశం, 1> s_కూడిక_acc_ct1(sycl::range<1>(lsm_కొలత),
                 cgh);
 
             cgh.parallel_for(
-                sycl::nd_range<3>(blocks_num * block_dims,
-                    block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(warp_size)]] {
-                    l2_norm_f32<warp_size>(x, dst, ncols,
-                        src_stride_col, src_stride_row, src_stride_channel, src_stride_sample,
-                        dst_stride_col, dst_stride_row, dst_stride_channel, dst_stride_sample,
-                        eps, item_ct1, get_pointer(s_sum_acc_ct1), work_group_size);
+                sycl::nd_range<3>(ఖండాలు_అంకె * ఖండం_dims,
+                    ఖండం_dims),
+                [=](sycl::nd_అంశం<3> అంశం_ct1)
+                [[sycl::reqd_sub_సమూహం_కొలత(warp_కొలత)]] {
+                    l2_norm_f32<warp_కొలత>(x, dst, ncols,
+                        src_stride_నిలువు, src_stride_అడ్డువరుస, src_stride_channel, src_stride_sample,
+                        dst_stride_నిలువు, dst_stride_అడ్డువరుస, dst_stride_channel, dst_stride_sample,
+                        eps, అంశం_ct1, get_సూచిక(s_కూడిక_acc_ct1), work_సమూహం_కొలత);
                 });
             });
     }
@@ -597,541 +597,541 @@ static void l2_norm_f32_sycl(const float *   x,
 // Batched L2 norm: N independent same-shape F32 tensors in one launch; the tensor
 // index is folded into grid dim0 and each row's reduction is identical to the
 // single-tensor kernel, so the result is bit-exact.
-struct l2_batch_ptrs {
-    const float * src[GGML_SYCL_L2_BATCH_MAX];
-    float *       dst[GGML_SYCL_L2_BATCH_MAX];
+నిర్మాణం l2_batch_ptrs {
+    స్థిరరాశి దశాంశం * src[GGML_SYCL_L2_BATCH_MAX];
+    దశాంశం *       dst[GGML_SYCL_L2_BATCH_MAX];
 };
 
 // One stride set shared by the whole batch: the caller only groups tensors whose nb[]
 // all match, so per-tensor state stays two pointers.
-struct l2_batch_strides {
-    int     ne1, ne2;
+నిర్మాణం l2_batch_strides {
+    పూర్ణాంకం     ne1, ne2;
     int64_t ss0, ss1, ss2, ss3;
     int64_t ds0, ds1, ds2, ds3;
 };
 
-template <int warp_size>
-static void l2_norm_f32_batch(l2_batch_ptrs p, l2_batch_strides st, const int ncols, const float eps,
-                              const sycl::nd_item<3> & item_ct1) {
-    const int t   = item_ct1.get_group(0);  // tensor index
-    const int r   = item_ct1.get_group(2);  // flattened row over ne1*ne2*ne3
-    const int tid = item_ct1.get_local_id(2);
+మూస <పూర్ణాంకం warp_కొలత>
+స్థిర శూన్య l2_norm_f32_batch(l2_batch_ptrs p, l2_batch_strides st, స్థిరరాశి పూర్ణాంకం ncols, స్థిరరాశి దశాంశం eps,
+                              స్థిరరాశి sycl::nd_అంశం<3> & అంశం_ct1) {
+    స్థిరరాశి పూర్ణాంకం t   = అంశం_ct1.get_సమూహం(0);  // tensor index
+    స్థిరరాశి పూర్ణాంకం r   = అంశం_ct1.get_సమూహం(2);  // flattened row over ne1*ne2*ne3
+    స్థిరరాశి పూర్ణాంకం tid = అంశం_ct1.get_local_id(2);
 
-    const int i1 = r % st.ne1;
-    const int i2 = (r / st.ne1) % st.ne2;
-    const int i3 = r / (st.ne1 * st.ne2);
+    స్థిరరాశి పూర్ణాంకం i1 = r % st.ne1;
+    స్థిరరాశి పూర్ణాంకం i2 = (r / st.ne1) % st.ne2;
+    స్థిరరాశి పూర్ణాంకం i3 = r / (st.ne1 * st.ne2);
 
-    const float * x   = p.src[t] + i3 * st.ss3 + i2 * st.ss2 + i1 * st.ss1;
-    float *       dst = p.dst[t] + i3 * st.ds3 + i2 * st.ds2 + i1 * st.ds1;
+    స్థిరరాశి దశాంశం * x   = p.src[t] + i3 * st.ss3 + i2 * st.ss2 + i1 * st.ss1;
+    దశాంశం *       dst = p.dst[t] + i3 * st.ds3 + i2 * st.ds2 + i1 * st.ds1;
 
-    float tmp = 0.0f;
-    for (int col = tid; col < ncols; col += warp_size) {
-        const float xi = x[col * st.ss0];
+    దశాంశం tmp = 0.0f;
+    కొరకు (పూర్ణాంకం నిలువు = tid; నిలువు < ncols; నిలువు += warp_కొలత) {
+        స్థిరరాశి దశాంశం xi = x[నిలువు * st.ss0];
         tmp += xi * xi;
     }
-    tmp = block_reduce<block_reduce_method::SUM, warp_size>(tmp, (float *) nullptr, warp_size);
-    const float scale = sycl::rsqrt(sycl::fmax(tmp, eps * eps));
-    for (int col = tid; col < ncols; col += warp_size) {
-        dst[col * st.ds0] = scale * x[col * st.ss0];
+    tmp = ఖండం_reduce<ఖండం_reduce_పద్ధతి::కూడిక_3, warp_కొలత>(tmp, (దశాంశం *) శూన్యసూచిక, warp_కొలత);
+    స్థిరరాశి దశాంశం scale = sycl::rsqrt(sycl::fmax(tmp, eps * eps));
+    కొరకు (పూర్ణాంకం నిలువు = tid; నిలువు < ncols; నిలువు += warp_కొలత) {
+        dst[నిలువు * st.ds0] = scale * x[నిలువు * st.ss0];
     }
 }
 
-template <int warp_size>
-static void l2_norm_f32_batch_sycl(l2_batch_ptrs p, l2_batch_strides st, const int n_tensors,
-                                   const int ncols, const int nrows_total, const float eps,
-                                   queue_ptr stream) {
-    const dpct::dim3 blocks_num(nrows_total, 1, n_tensors);
-    const dpct::dim3 block_dims(warp_size, 1, 1);
+మూస <పూర్ణాంకం warp_కొలత>
+స్థిర శూన్య l2_norm_f32_batch_sycl(l2_batch_ptrs p, l2_batch_strides st, స్థిరరాశి పూర్ణాంకం n_tensors,
+                                   స్థిరరాశి పూర్ణాంకం ncols, స్థిరరాశి పూర్ణాంకం nrows_మొత్తం, స్థిరరాశి దశాంశం eps,
+                                   వరుస_ptr stream) {
+    స్థిరరాశి dpct::dim3 ఖండాలు_అంకె(nrows_మొత్తం, 1, n_tensors);
+    స్థిరరాశి dpct::dim3 ఖండం_dims(warp_కొలత, 1, 1);
     stream->submit([&](sycl::handler & cgh) {
-        cgh.parallel_for(sycl::nd_range<3>(blocks_num * block_dims, block_dims),
-            [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(warp_size)]] {
-                l2_norm_f32_batch<warp_size>(p, st, ncols, eps, item_ct1);
+        cgh.parallel_for(sycl::nd_range<3>(ఖండాలు_అంకె * ఖండం_dims, ఖండం_dims),
+            [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(warp_కొలత)]] {
+                l2_norm_f32_batch<warp_కొలత>(p, st, ncols, eps, అంశం_ct1);
             });
     });
 }
 
-void ggml_sycl_op_norm(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
-    const ggml_tensor * src0 = dst->src[0];
+శూన్య ggml_sycl_op_norm(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
+    స్థిరరాశి ggml_tensor * src0 = dst->src[0];
 
     GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32);
     GGML_ASSERT(dst->type == GGML_TYPE_F32);
 
     GGML_TENSOR_UNARY_OP_LOCALS
-    dpct::queue_ptr main_stream = ctx.stream();
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
-    const float * src0_dd = static_cast<const float *>(dst->src[0]->data);
-    float *       dst_dd  = static_cast<float *>(dst->data);
+    dpct::వరుస_ptr main_ప్రవాహం = ctx.stream();
+    SYCL_CHECK(ggml_sycl_సమితి_device(ctx.device));
+    స్థిరరాశి దశాంశం * src0_dd = static_cast<స్థిరరాశి దశాంశం *>(dst->src[0]->దత్తాంశం);
+    దశాంశం *       dst_dd  = static_cast<దశాంశం *>(dst->దత్తాంశం);
 
-    float eps;
-    memcpy(&eps, dst->op_params, sizeof(float));
+    దశాంశం eps;
+    జ్ఞాపకం_నకలు(&eps, dst->op_params, పరిమాణం(దశాంశం));
     GGML_ASSERT(eps >= 0.0f);
-    const size_t ts0 = ggml_type_size(src0->type);
-    const size_t tdst = ggml_type_size(dst->type);
+    స్థిరరాశి size_t ts0 = ggml_type_కొలత(src0->type);
+    స్థిరరాశి size_t tdst = ggml_type_కొలత(dst->type);
     GGML_ASSERT(nb00 % ts0 == 0 && nb01 % ts0 == 0 && nb02 % ts0 == 0 && nb03 % ts0 == 0);
     GGML_ASSERT(nb0 % tdst == 0 && nb1 % tdst == 0 && nb2 % tdst == 0 && nb3 % tdst == 0);
-    const int64_t ss0 = nb00 / ts0;
-    const int64_t ss1 = nb01 / ts0;
-    const int64_t ss2 = nb02 / ts0;
-    const int64_t ss3 = nb03 / ts0;
-    const int64_t ds0 = nb0 / tdst;
-    const int64_t ds1 = nb1 / tdst;
-    const int64_t ds2 = nb2 / tdst;
-    const int64_t ds3 = nb3 / tdst;
+    స్థిరరాశి int64_t ss0 = nb00 / ts0;
+    స్థిరరాశి int64_t ss1 = nb01 / ts0;
+    స్థిరరాశి int64_t ss2 = nb02 / ts0;
+    స్థిరరాశి int64_t ss3 = nb03 / ts0;
+    స్థిరరాశి int64_t ds0 = nb0 / tdst;
+    స్థిరరాశి int64_t ds1 = nb1 / tdst;
+    స్థిరరాశి int64_t ds2 = nb2 / tdst;
+    స్థిరరాశి int64_t ds3 = nb3 / tdst;
 
     norm_f32_sycl(src0_dd, dst_dd, ne00, ne01, ne02, ne03,
-        ss0, ss1, ss2, ss3, ds0, ds1, ds2, ds3, eps, main_stream, ctx.device);
+        ss0, ss1, ss2, ss3, ds0, ds1, ds2, ds3, eps, main_ప్రవాహం, ctx.device);
 }
 
-void ggml_sycl_op_group_norm(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
+శూన్య ggml_sycl_op_సమూహం_norm(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
 
     GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32);
     GGML_ASSERT(dst->type == GGML_TYPE_F32);
 
-    int num_groups = dst->op_params[0];
-    dpct::queue_ptr main_stream = ctx.stream();
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
+    పూర్ణాంకం అంకె_groups = dst->op_params[0];
+    dpct::వరుస_ptr main_ప్రవాహం = ctx.stream();
+    SYCL_CHECK(ggml_sycl_సమితి_device(ctx.device));
 
-    const float * src0_dd = static_cast<const float *>(dst->src[0]->data);
-    float *       dst_dd  = static_cast<float *>(dst->data);
+    స్థిరరాశి దశాంశం * src0_dd = static_cast<స్థిరరాశి దశాంశం *>(dst->src[0]->దత్తాంశం);
+    దశాంశం *       dst_dd  = static_cast<దశాంశం *>(dst->దత్తాంశం);
 
-    float eps;
-    memcpy(&eps, dst->op_params + 1, sizeof(float));
+    దశాంశం eps;
+    జ్ఞాపకం_నకలు(&eps, dst->op_params + 1, పరిమాణం(దశాంశం));
 
-    int group_size = dst->src[0]->ne[0] * dst->src[0]->ne[1] * ((dst->src[0]->ne[2] + num_groups - 1) / num_groups);
-    group_norm_f32_sycl(src0_dd, dst_dd, num_groups, eps, group_size, dst->src[0]->ne[0] * dst->src[0]->ne[1] * dst->src[0]->ne[2], main_stream, ctx.device);
+    పూర్ణాంకం సమూహం_కొలత = dst->src[0]->ne[0] * dst->src[0]->ne[1] * ((dst->src[0]->ne[2] + అంకె_groups - 1) / అంకె_groups);
+    సమూహం_norm_f32_sycl(src0_dd, dst_dd, అంకె_groups, eps, సమూహం_కొలత, dst->src[0]->ne[0] * dst->src[0]->ne[1] * dst->src[0]->ne[2], main_ప్రవాహం, ctx.device);
 }
 
-void ggml_sycl_op_rms_norm(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+శూన్య ggml_sycl_op_rms_norm(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    స్థిరరాశి ggml_tensor * src0 = dst->src[0];
     GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32);
     GGML_ASSERT(dst->type == GGML_TYPE_F32);
 
-    dpct::queue_ptr main_stream = ctx.stream();
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
+    dpct::వరుస_ptr main_ప్రవాహం = ctx.stream();
+    SYCL_CHECK(ggml_sycl_సమితి_device(ctx.device));
 
-    const float * src0_dd = static_cast<const float *>(dst->src[0]->data);
-    float *       dst_dd  = static_cast<float *>(dst->data);
+    స్థిరరాశి దశాంశం * src0_dd = static_cast<స్థిరరాశి దశాంశం *>(dst->src[0]->దత్తాంశం);
+    దశాంశం *       dst_dd  = static_cast<దశాంశం *>(dst->దత్తాంశం);
 
-    float eps;
-    memcpy(&eps, dst->op_params, sizeof(float));
+    దశాంశం eps;
+    జ్ఞాపకం_నకలు(&eps, dst->op_params, పరిమాణం(దశాంశం));
 
     GGML_TENSOR_UNARY_OP_LOCALS
-    const size_t ts0 = ggml_type_size(src0->type);
-    const size_t tdst = ggml_type_size(dst->type);
+    స్థిరరాశి size_t ts0 = ggml_type_కొలత(src0->type);
+    స్థిరరాశి size_t tdst = ggml_type_కొలత(dst->type);
     GGML_ASSERT(nb00 % ts0 == 0 && nb01 % ts0 == 0 && nb02 % ts0 == 0 && nb03 % ts0 == 0);
     GGML_ASSERT(nb0 % tdst == 0 && nb1 % tdst == 0 && nb2 % tdst == 0 && nb3 % tdst == 0);
-    const int64_t ss0 = nb00 / ts0;
-    const int64_t ss1 = nb01 / ts0;
-    const int64_t ss2 = nb02 / ts0;
-    const int64_t ss3 = nb03 / ts0;
-    const int64_t ds0 = nb0 / tdst;
-    const int64_t ds1 = nb1 / tdst;
-    const int64_t ds2 = nb2 / tdst;
-    const int64_t ds3 = nb3 / tdst;
+    స్థిరరాశి int64_t ss0 = nb00 / ts0;
+    స్థిరరాశి int64_t ss1 = nb01 / ts0;
+    స్థిరరాశి int64_t ss2 = nb02 / ts0;
+    స్థిరరాశి int64_t ss3 = nb03 / ts0;
+    స్థిరరాశి int64_t ds0 = nb0 / tdst;
+    స్థిరరాశి int64_t ds1 = nb1 / tdst;
+    స్థిరరాశి int64_t ds2 = nb2 / tdst;
+    స్థిరరాశి int64_t ds3 = nb3 / tdst;
     rms_norm_f32_sycl(src0_dd, dst_dd, ne00, ne01, ne02, ne03,
-        ss0, ss1, ss2, ss3, ds0, ds1, ds2, ds3, eps, main_stream, ctx.device);
+        ss0, ss1, ss2, ss3, ds0, ds1, ds2, ds3, eps, main_ప్రవాహం, ctx.device);
 }
 
 // Fused rms_norm + scale (the qwen35 GDN l2-norm pair build_gdn_l2_norm emits):
 // the scale factor is a host scalar in the GGML_OP_SCALE node's op_params, so
 // unlike the mul variants there is no second device tensor to wire up.
-void ggml_sycl_op_rms_norm_scale_fused(ggml_backend_sycl_context & ctx, ggml_tensor * dst,
+శూన్య ggml_sycl_op_rms_norm_scale_fused(ggml_backend_sycl_context & ctx, ggml_tensor * dst,
                                        ggml_tensor * scale_tensor) {
-    const ggml_tensor * src0 = dst->src[0];
+    స్థిరరాశి ggml_tensor * src0 = dst->src[0];
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
     GGML_ASSERT(dst->type == GGML_TYPE_F32);
     GGML_ASSERT(scale_tensor->type == GGML_TYPE_F32);
 
-    dpct::queue_ptr main_stream = ctx.stream();
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
+    dpct::వరుస_ptr main_ప్రవాహం = ctx.stream();
+    SYCL_CHECK(ggml_sycl_సమితి_device(ctx.device));
 
-    const float * src0_dd = static_cast<const float *>(src0->data);
-    float *       dst_dd  = static_cast<float *>(scale_tensor->data);
+    స్థిరరాశి దశాంశం * src0_dd = static_cast<స్థిరరాశి దశాంశం *>(src0->దత్తాంశం);
+    దశాంశం *       dst_dd  = static_cast<దశాంశం *>(scale_tensor->దత్తాంశం);
 
-    float eps;
-    memcpy(&eps, dst->op_params, sizeof(float));
-    float scale_mul;
-    memcpy(&scale_mul, scale_tensor->op_params, sizeof(float));
+    దశాంశం eps;
+    జ్ఞాపకం_నకలు(&eps, dst->op_params, పరిమాణం(దశాంశం));
+    దశాంశం scale_mul;
+    జ్ఞాపకం_నకలు(&scale_mul, scale_tensor->op_params, పరిమాణం(దశాంశం));
     GGML_ASSERT(scale_mul >= 0.0f);
 
     GGML_TENSOR_UNARY_OP_LOCALS
-    const size_t ts0 = ggml_type_size(src0->type);
-    const size_t tdst = ggml_type_size(scale_tensor->type);
+    స్థిరరాశి size_t ts0 = ggml_type_కొలత(src0->type);
+    స్థిరరాశి size_t tdst = ggml_type_కొలత(scale_tensor->type);
     GGML_ASSERT(nb00 % ts0 == 0 && nb01 % ts0 == 0 && nb02 % ts0 == 0 && nb03 % ts0 == 0);
     GGML_ASSERT(scale_tensor->nb[0] % tdst == 0 && scale_tensor->nb[1] % tdst == 0 &&
                 scale_tensor->nb[2] % tdst == 0 && scale_tensor->nb[3] % tdst == 0);
-    const int64_t ss0 = nb00 / ts0;
-    const int64_t ss1 = nb01 / ts0;
-    const int64_t ss2 = nb02 / ts0;
-    const int64_t ss3 = nb03 / ts0;
-    const int64_t ds0 = scale_tensor->nb[0] / tdst;
-    const int64_t ds1 = scale_tensor->nb[1] / tdst;
-    const int64_t ds2 = scale_tensor->nb[2] / tdst;
-    const int64_t ds3 = scale_tensor->nb[3] / tdst;
+    స్థిరరాశి int64_t ss0 = nb00 / ts0;
+    స్థిరరాశి int64_t ss1 = nb01 / ts0;
+    స్థిరరాశి int64_t ss2 = nb02 / ts0;
+    స్థిరరాశి int64_t ss3 = nb03 / ts0;
+    స్థిరరాశి int64_t ds0 = scale_tensor->nb[0] / tdst;
+    స్థిరరాశి int64_t ds1 = scale_tensor->nb[1] / tdst;
+    స్థిరరాశి int64_t ds2 = scale_tensor->nb[2] / tdst;
+    స్థిరరాశి int64_t ds3 = scale_tensor->nb[3] / tdst;
     rms_norm_scale_f32_sycl(src0_dd, dst_dd, ne00, ne01, ne02, ne03,
-        ss0, ss1, ss2, ss3, ds0, ds1, ds2, ds3, eps, scale_mul, main_stream, ctx.device);
+        ss0, ss1, ss2, ss3, ds0, ds1, ds2, ds3, eps, scale_mul, main_ప్రవాహం, ctx.device);
 }
 
-void ggml_sycl_op_rms_norm_fused(ggml_backend_sycl_context & ctx, ggml_tensor * dst, ggml_tensor * mul_tensor) {
-    const ggml_tensor * rms_norm_src = dst->src[0];
-    float eps = 0.0f;
-    memcpy(&eps, dst->op_params, sizeof(float));
+శూన్య ggml_sycl_op_rms_norm_fused(ggml_backend_sycl_context & ctx, ggml_tensor * dst, ggml_tensor * mul_tensor) {
+    స్థిరరాశి ggml_tensor * rms_norm_src = dst->src[0];
+    దశాంశం eps = 0.0f;
+    జ్ఞాపకం_నకలు(&eps, dst->op_params, పరిమాణం(దశాంశం));
 
-    const float *       src0_dd = static_cast<const float *>(rms_norm_src->data);
-    const float *       mul_dd  = nullptr;
-    const ggml_tensor * mul_src = nullptr;
-    if (mul_tensor->src[0] == dst) {
-        mul_dd  = static_cast<const float *>(mul_tensor->src[1]->data);
+    స్థిరరాశి దశాంశం *       src0_dd = static_cast<స్థిరరాశి దశాంశం *>(rms_norm_src->దత్తాంశం);
+    స్థిరరాశి దశాంశం *       mul_dd  = శూన్యసూచిక;
+    స్థిరరాశి ggml_tensor * mul_src = శూన్యసూచిక;
+    ఒకవేళ (mul_tensor->src[0] == dst) {
+        mul_dd  = static_cast<స్థిరరాశి దశాంశం *>(mul_tensor->src[1]->దత్తాంశం);
         mul_src = mul_tensor->src[1];
-    } else if (mul_tensor->src[1] == dst) {
-        mul_dd  = static_cast<const float *>(mul_tensor->src[0]->data);
+    } లేకపోతే ఒకవేళ (mul_tensor->src[1] == dst) {
+        mul_dd  = static_cast<స్థిరరాశి దశాంశం *>(mul_tensor->src[0]->దత్తాంశం);
         mul_src = mul_tensor->src[0];
-    } else {
-        GGML_ASSERT(false);
+    } లేకపోతే {
+        GGML_ASSERT(అబద్ధం);
     }
-    float * dst_dd = static_cast<float *>(mul_tensor->data);
+    దశాంశం * dst_dd = static_cast<దశాంశం *>(mul_tensor->దత్తాంశం);
 
-    dpct::queue_ptr main_stream = ctx.stream();
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
+    dpct::వరుస_ptr main_ప్రవాహం = ctx.stream();
+    SYCL_CHECK(ggml_sycl_సమితి_device(ctx.device));
 
     GGML_ASSERT(rms_norm_src->type == GGML_TYPE_F32);
     GGML_ASSERT(dst->type == GGML_TYPE_F32);
     GGML_ASSERT(mul_tensor->type == GGML_TYPE_F32);
     GGML_ASSERT(eps >= 0.0f);
 
-    const int64_t ne00 = rms_norm_src->ne[0];
-    const int64_t ne01 = rms_norm_src->ne[1];
-    const int64_t ne02 = rms_norm_src->ne[2];
-    const int64_t ne03 = rms_norm_src->ne[3];
+    స్థిరరాశి int64_t ne00 = rms_norm_src->ne[0];
+    స్థిరరాశి int64_t ne01 = rms_norm_src->ne[1];
+    స్థిరరాశి int64_t ne02 = rms_norm_src->ne[2];
+    స్థిరరాశి int64_t ne03 = rms_norm_src->ne[3];
 
-    const size_t ts0 = ggml_type_size(rms_norm_src->type);
+    స్థిరరాశి size_t ts0 = ggml_type_కొలత(rms_norm_src->type);
     GGML_ASSERT(rms_norm_src->nb[0] == ts0);
-    const int64_t s00 = rms_norm_src->nb[0] / ts0;
-    const int64_t s01 = rms_norm_src->nb[1] / ts0;
-    const int64_t s02 = rms_norm_src->nb[2] / ts0;
-    const int64_t s03 = rms_norm_src->nb[3] / ts0;
+    స్థిరరాశి int64_t s00 = rms_norm_src->nb[0] / ts0;
+    స్థిరరాశి int64_t s01 = rms_norm_src->nb[1] / ts0;
+    స్థిరరాశి int64_t s02 = rms_norm_src->nb[2] / ts0;
+    స్థిరరాశి int64_t s03 = rms_norm_src->nb[3] / ts0;
 
-    const size_t tdst = ggml_type_size(mul_tensor->type);
+    స్థిరరాశి size_t tdst = ggml_type_కొలత(mul_tensor->type);
     GGML_ASSERT(mul_tensor->nb[0] == tdst);
-    const int64_t d00 = mul_tensor->nb[0] / tdst;
-    const int64_t d01 = mul_tensor->nb[1] / tdst;
-    const int64_t d02 = mul_tensor->nb[2] / tdst;
-    const int64_t d03 = mul_tensor->nb[3] / tdst;
+    స్థిరరాశి int64_t d00 = mul_tensor->nb[0] / tdst;
+    స్థిరరాశి int64_t d01 = mul_tensor->nb[1] / tdst;
+    స్థిరరాశి int64_t d02 = mul_tensor->nb[2] / tdst;
+    స్థిరరాశి int64_t d03 = mul_tensor->nb[3] / tdst;
 
-    const size_t ts_mul = ggml_type_size(mul_src->type);
+    స్థిరరాశి size_t ts_mul = ggml_type_కొలత(mul_src->type);
     GGML_ASSERT(mul_src->nb[0] == ts_mul);
-    const int64_t mul_s01 = mul_src->nb[1] / ts_mul;
-    const int64_t mul_s02 = mul_src->nb[2] / ts_mul;
-    const int64_t mul_s03 = mul_src->nb[3] / ts_mul;
-    const int mul_nrows     = mul_src->ne[1];
-    const int mul_nchannels = mul_src->ne[2];
-    const int mul_nsamples  = mul_src->ne[3];
+    స్థిరరాశి int64_t mul_s01 = mul_src->nb[1] / ts_mul;
+    స్థిరరాశి int64_t mul_s02 = mul_src->nb[2] / ts_mul;
+    స్థిరరాశి int64_t mul_s03 = mul_src->nb[3] / ts_mul;
+    స్థిరరాశి పూర్ణాంకం mul_nrows     = mul_src->ne[1];
+    స్థిరరాశి పూర్ణాంకం mul_nchannels = mul_src->ne[2];
+    స్థిరరాశి పూర్ణాంకం mul_nsamples  = mul_src->ne[3];
 
     rms_norm_mul_f32_sycl(src0_dd, mul_dd, dst_dd, ne00, ne01, ne02, ne03,
         s00, s01, s02, s03, d00, d01, d02, d03,
-        mul_s01, mul_s02, mul_s03, mul_nrows, mul_nchannels, mul_nsamples, eps, main_stream, ctx.device);
+        mul_s01, mul_s02, mul_s03, mul_nrows, mul_nchannels, mul_nsamples, eps, main_ప్రవాహం, ctx.device);
 }
 
-void ggml_sycl_op_rms_norm_fused_add(ggml_backend_sycl_context & ctx, ggml_tensor * dst,
-                                     ggml_tensor * mul_tensor, ggml_tensor * add_tensor) {
-    const ggml_tensor * rms_norm_src = dst->src[0];
-    float eps = 0.0f;
-    memcpy(&eps, dst->op_params, sizeof(float));
+శూన్య ggml_sycl_op_rms_norm_fused_కూడు(ggml_backend_sycl_context & ctx, ggml_tensor * dst,
+                                     ggml_tensor * mul_tensor, ggml_tensor * కూడు_tensor) {
+    స్థిరరాశి ggml_tensor * rms_norm_src = dst->src[0];
+    దశాంశం eps = 0.0f;
+    జ్ఞాపకం_నకలు(&eps, dst->op_params, పరిమాణం(దశాంశం));
 
-    const float *       src0_dd = static_cast<const float *>(rms_norm_src->data);
-    const float *       mul_dd  = nullptr;
-    const ggml_tensor * mul_src = nullptr;
-    if (mul_tensor->src[0] == dst) {
-        mul_dd  = static_cast<const float *>(mul_tensor->src[1]->data);
+    స్థిరరాశి దశాంశం *       src0_dd = static_cast<స్థిరరాశి దశాంశం *>(rms_norm_src->దత్తాంశం);
+    స్థిరరాశి దశాంశం *       mul_dd  = శూన్యసూచిక;
+    స్థిరరాశి ggml_tensor * mul_src = శూన్యసూచిక;
+    ఒకవేళ (mul_tensor->src[0] == dst) {
+        mul_dd  = static_cast<స్థిరరాశి దశాంశం *>(mul_tensor->src[1]->దత్తాంశం);
         mul_src = mul_tensor->src[1];
-    } else if (mul_tensor->src[1] == dst) {
-        mul_dd  = static_cast<const float *>(mul_tensor->src[0]->data);
+    } లేకపోతే ఒకవేళ (mul_tensor->src[1] == dst) {
+        mul_dd  = static_cast<స్థిరరాశి దశాంశం *>(mul_tensor->src[0]->దత్తాంశం);
         mul_src = mul_tensor->src[0];
-    } else {
-        GGML_ASSERT(false);
+    } లేకపోతే {
+        GGML_ASSERT(అబద్ధం);
     }
 
-    const float *       add_dd  = nullptr;
-    const ggml_tensor * add_src = nullptr;
-    if (add_tensor->src[0] == mul_tensor) {
-        add_dd  = static_cast<const float *>(add_tensor->src[1]->data);
-        add_src = add_tensor->src[1];
-    } else if (add_tensor->src[1] == mul_tensor) {
-        add_dd  = static_cast<const float *>(add_tensor->src[0]->data);
-        add_src = add_tensor->src[0];
-    } else {
-        GGML_ASSERT(false);
+    స్థిరరాశి దశాంశం *       కూడు_dd  = శూన్యసూచిక;
+    స్థిరరాశి ggml_tensor * కూడు_src = శూన్యసూచిక;
+    ఒకవేళ (కూడు_tensor->src[0] == mul_tensor) {
+        కూడు_dd  = static_cast<స్థిరరాశి దశాంశం *>(కూడు_tensor->src[1]->దత్తాంశం);
+        కూడు_src = కూడు_tensor->src[1];
+    } లేకపోతే ఒకవేళ (కూడు_tensor->src[1] == mul_tensor) {
+        కూడు_dd  = static_cast<స్థిరరాశి దశాంశం *>(కూడు_tensor->src[0]->దత్తాంశం);
+        కూడు_src = కూడు_tensor->src[0];
+    } లేకపోతే {
+        GGML_ASSERT(అబద్ధం);
     }
 
-    float * dst_dd = static_cast<float *>(add_tensor->data);
+    దశాంశం * dst_dd = static_cast<దశాంశం *>(కూడు_tensor->దత్తాంశం);
 
-    dpct::queue_ptr main_stream = ctx.stream();
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
+    dpct::వరుస_ptr main_ప్రవాహం = ctx.stream();
+    SYCL_CHECK(ggml_sycl_సమితి_device(ctx.device));
 
     GGML_ASSERT(rms_norm_src->type == GGML_TYPE_F32);
     GGML_ASSERT(dst->type == GGML_TYPE_F32);
     GGML_ASSERT(mul_tensor->type == GGML_TYPE_F32);
-    GGML_ASSERT(add_tensor->type == GGML_TYPE_F32);
+    GGML_ASSERT(కూడు_tensor->type == GGML_TYPE_F32);
     GGML_ASSERT(eps >= 0.0f);
 
-    const int64_t ne00 = rms_norm_src->ne[0];
-    const int64_t ne01 = rms_norm_src->ne[1];
-    const int64_t ne02 = rms_norm_src->ne[2];
-    const int64_t ne03 = rms_norm_src->ne[3];
+    స్థిరరాశి int64_t ne00 = rms_norm_src->ne[0];
+    స్థిరరాశి int64_t ne01 = rms_norm_src->ne[1];
+    స్థిరరాశి int64_t ne02 = rms_norm_src->ne[2];
+    స్థిరరాశి int64_t ne03 = rms_norm_src->ne[3];
 
-    const size_t ts0 = ggml_type_size(rms_norm_src->type);
+    స్థిరరాశి size_t ts0 = ggml_type_కొలత(rms_norm_src->type);
     GGML_ASSERT(rms_norm_src->nb[0] == ts0);
-    const int64_t s00 = rms_norm_src->nb[0] / ts0;
-    const int64_t s01 = rms_norm_src->nb[1] / ts0;
-    const int64_t s02 = rms_norm_src->nb[2] / ts0;
-    const int64_t s03 = rms_norm_src->nb[3] / ts0;
+    స్థిరరాశి int64_t s00 = rms_norm_src->nb[0] / ts0;
+    స్థిరరాశి int64_t s01 = rms_norm_src->nb[1] / ts0;
+    స్థిరరాశి int64_t s02 = rms_norm_src->nb[2] / ts0;
+    స్థిరరాశి int64_t s03 = rms_norm_src->nb[3] / ts0;
 
-    const size_t tdst = ggml_type_size(add_tensor->type);
-    GGML_ASSERT(add_tensor->nb[0] == tdst);
-    const int64_t d00 = add_tensor->nb[0] / tdst;
-    const int64_t d01 = add_tensor->nb[1] / tdst;
-    const int64_t d02 = add_tensor->nb[2] / tdst;
-    const int64_t d03 = add_tensor->nb[3] / tdst;
+    స్థిరరాశి size_t tdst = ggml_type_కొలత(కూడు_tensor->type);
+    GGML_ASSERT(కూడు_tensor->nb[0] == tdst);
+    స్థిరరాశి int64_t d00 = కూడు_tensor->nb[0] / tdst;
+    స్థిరరాశి int64_t d01 = కూడు_tensor->nb[1] / tdst;
+    స్థిరరాశి int64_t d02 = కూడు_tensor->nb[2] / tdst;
+    స్థిరరాశి int64_t d03 = కూడు_tensor->nb[3] / tdst;
 
-    const size_t ts_mul = ggml_type_size(mul_src->type);
+    స్థిరరాశి size_t ts_mul = ggml_type_కొలత(mul_src->type);
     GGML_ASSERT(mul_src->nb[0] == ts_mul);
-    const int64_t mul_s01 = mul_src->nb[1] / ts_mul;
-    const int64_t mul_s02 = mul_src->nb[2] / ts_mul;
-    const int64_t mul_s03 = mul_src->nb[3] / ts_mul;
-    const int mul_nrows     = mul_src->ne[1];
-    const int mul_nchannels = mul_src->ne[2];
-    const int mul_nsamples  = mul_src->ne[3];
+    స్థిరరాశి int64_t mul_s01 = mul_src->nb[1] / ts_mul;
+    స్థిరరాశి int64_t mul_s02 = mul_src->nb[2] / ts_mul;
+    స్థిరరాశి int64_t mul_s03 = mul_src->nb[3] / ts_mul;
+    స్థిరరాశి పూర్ణాంకం mul_nrows     = mul_src->ne[1];
+    స్థిరరాశి పూర్ణాంకం mul_nchannels = mul_src->ne[2];
+    స్థిరరాశి పూర్ణాంకం mul_nsamples  = mul_src->ne[3];
 
-    const size_t ts_add = ggml_type_size(add_src->type);
-    GGML_ASSERT(add_src->nb[0] == ts_add);
-    const int64_t add_s01 = add_src->nb[1] / ts_add;
-    const int64_t add_s02 = add_src->nb[2] / ts_add;
-    const int64_t add_s03 = add_src->nb[3] / ts_add;
-    const int add_nrows     = add_src->ne[1];
-    const int add_nchannels = add_src->ne[2];
-    const int add_nsamples  = add_src->ne[3];
+    స్థిరరాశి size_t ts_కూడు = ggml_type_కొలత(కూడు_src->type);
+    GGML_ASSERT(కూడు_src->nb[0] == ts_కూడు);
+    స్థిరరాశి int64_t కూడు_s01 = కూడు_src->nb[1] / ts_కూడు;
+    స్థిరరాశి int64_t కూడు_s02 = కూడు_src->nb[2] / ts_కూడు;
+    స్థిరరాశి int64_t కూడు_s03 = కూడు_src->nb[3] / ts_కూడు;
+    స్థిరరాశి పూర్ణాంకం కూడు_nrows     = కూడు_src->ne[1];
+    స్థిరరాశి పూర్ణాంకం కూడు_nchannels = కూడు_src->ne[2];
+    స్థిరరాశి పూర్ణాంకం కూడు_nsamples  = కూడు_src->ne[3];
 
-    rms_norm_mul_add_f32_sycl(src0_dd, mul_dd, add_dd, dst_dd, ne00, ne01, ne02, ne03,
+    rms_norm_mul_కూడు_f32_sycl(src0_dd, mul_dd, కూడు_dd, dst_dd, ne00, ne01, ne02, ne03,
         s00, s01, s02, s03, d00, d01, d02, d03,
         mul_s01, mul_s02, mul_s03, mul_nrows, mul_nchannels, mul_nsamples,
-        add_s01, add_s02, add_s03, add_nrows, add_nchannels, add_nsamples, eps, main_stream, ctx.device);
+        కూడు_s01, కూడు_s02, కూడు_s03, కూడు_nrows, కూడు_nchannels, కూడు_nsamples, eps, main_ప్రవాహం, ctx.device);
 }
 
-void ggml_sycl_op_rms_norm_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+శూన్య ggml_sycl_op_rms_norm_వెనుక(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
 
     GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32); // dz
     GGML_ASSERT(dst->src[1]->type == GGML_TYPE_F32); // x
     GGML_ASSERT(dst->type         == GGML_TYPE_F32);
 
-    float eps = 1e-5f;
-    std::memcpy(&eps, dst->op_params, sizeof(float));
-    if (!(eps > 0.0f) || !std::isfinite(eps)) eps = 1e-5f;
+    దశాంశం eps = 1e-5f;
+    std::జ్ఞాపకం_నకలు(&eps, dst->op_params, పరిమాణం(దశాంశం));
+    ఒకవేళ (!(eps > 0.0f) || !std::isfinite(eps)) eps = 1e-5f;
 
-    const float * g_base  = static_cast<const float *>(dst->src[0]->data); // dz
-    const float * x_base  = static_cast<const float *>(dst->src[1]->data); // x
-          float * dx_base = static_cast<      float *>(dst->data);
+    స్థిరరాశి దశాంశం * g_పునాది  = static_cast<స్థిరరాశి దశాంశం *>(dst->src[0]->దత్తాంశం); // dz
+    స్థిరరాశి దశాంశం * x_పునాది  = static_cast<స్థిరరాశి దశాంశం *>(dst->src[1]->దత్తాంశం); // x
+          దశాంశం * dx_పునాది = static_cast<      దశాంశం *>(dst->దత్తాంశం);
 
-    const int64_t D  = dst->ne[0];
-    const int64_t n1 = dst->ne[1], n2 = dst->ne[2], n3 = dst->ne[3]; (void) n3;
-    const int64_t N  = ggml_nrows(dst);
-    if (D == 0 || N == 0) return;
+    స్థిరరాశి int64_t D  = dst->ne[0];
+    స్థిరరాశి int64_t n1 = dst->ne[1], n2 = dst->ne[2], n3 = dst->ne[3]; (శూన్య) n3;
+    స్థిరరాశి int64_t N  = ggml_nrows(dst);
+    ఒకవేళ (D == 0 || N == 0) తిరిగి;
 
-    const ggml_tensor *G = dst->src[0];
-    const ggml_tensor *X = dst->src[1];
-    const int ts = (int) ggml_type_size(X->type);
+    స్థిరరాశి ggml_tensor *G = dst->src[0];
+    స్థిరరాశి ggml_tensor *X = dst->src[1];
+    స్థిరరాశి పూర్ణాంకం ts = (పూర్ణాంకం) ggml_type_కొలత(X->type);
     GGML_ASSERT((size_t) X->nb[0]   == (size_t) ts);
     GGML_ASSERT((size_t) G->nb[0]   == (size_t) ts);
     GGML_ASSERT((size_t) dst->nb[0] == (size_t) ts);
 
-    const int64_t xs1 = X->nb[1] / ts, xs2 = X->nb[2] / ts, xs3 = X->nb[3] / ts;
-    const int64_t gs1 = G->nb[1] / ts, gs2 = G->nb[2] / ts, gs3 = G->nb[3] / ts;
-    const int64_t ds1 = dst->nb[1] / ts, ds2 = dst->nb[2] / ts, ds3 = dst->nb[3] / ts;
+    స్థిరరాశి int64_t xs1 = X->nb[1] / ts, xs2 = X->nb[2] / ts, xs3 = X->nb[3] / ts;
+    స్థిరరాశి int64_t gs1 = G->nb[1] / ts, gs2 = G->nb[2] / ts, gs3 = G->nb[3] / ts;
+    స్థిరరాశి int64_t ds1 = dst->nb[1] / ts, ds2 = dst->nb[2] / ts, ds3 = dst->nb[3] / ts;
 
-    dpct::queue_ptr q = ctx.stream();
+    dpct::వరుస_ptr q = ctx.stream();
 
     // work-group size: multiple of WARP_SIZE, capped by device and 256, and not larger than D
-    const int device_max_wg = ggml_sycl_info().max_work_group_sizes[ctx.device];
-    auto roundup = [](int v, int m) { return ((v + m - 1) / m) * m; };
-    int wg_cap = 256;
-    if (device_max_wg > 0) wg_cap = std::min(wg_cap, device_max_wg);
-    int WG = std::max(WARP_SIZE, std::min(roundup((int)std::min<int64_t>(D, wg_cap), WARP_SIZE), wg_cap));
+    స్థిరరాశి పూర్ణాంకం device_max_wg = ggml_sycl_info().max_work_సమూహం_sizes[ctx.device];
+    స్వయంచాలక roundup = [](పూర్ణాంకం v, పూర్ణాంకం m) { తిరిగి ((v + m - 1) / m) * m; };
+    పూర్ణాంకం wg_cap = 256;
+    ఒకవేళ (device_max_wg > 0) wg_cap = std::min(wg_cap, device_max_wg);
+    పూర్ణాంకం WG = std::max(WARP_కొలత, std::min(roundup((పూర్ణాంకం)std::min<int64_t>(D, wg_cap), WARP_కొలత), wg_cap));
 
     // FP32 path: per-thread compensated accumulation + hierarchical reduction
     q->submit([&](sycl::handler &cgh) {
-        const int nwarps_loc = std::max(1, WG / WARP_SIZE);
+        స్థిరరాశి పూర్ణాంకం nwarps_loc = std::max(1, WG / WARP_కొలత);
         // store one partial value per warp (xx and xg) for cross-warp reduction
-        auto l_xx   = sycl::local_accessor<sycl::float2, 1>(sycl::range<1>(nwarps_loc), cgh);
-        auto l_xg   = sycl::local_accessor<sycl::float2, 1>(sycl::range<1>(nwarps_loc), cgh);
+        స్వయంచాలక l_xx   = sycl::local_accessor<sycl::float2, 1>(sycl::range<1>(nwarps_loc), cgh);
+        స్వయంచాలక l_xg   = sycl::local_accessor<sycl::float2, 1>(sycl::range<1>(nwarps_loc), cgh);
 
         cgh.parallel_for(
             sycl::nd_range<3>(sycl::range<3>(1, 1, N) * sycl::range<3>(1, 1, WG),
                               sycl::range<3>(1, 1, WG)),
-            [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                const int row = item_ct1.get_group(2);
-                const int tid = item_ct1.get_local_id(2);
+            [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]] {
+                స్థిరరాశి పూర్ణాంకం అడ్డువరుస = అంశం_ct1.get_సమూహం(2);
+                స్థిరరాశి పూర్ణాంకం tid = అంశం_ct1.get_local_id(2);
 
-                const int64_t i1 = row % n1;
-                const int64_t i2 = (row / n1) % n2;
-                const int64_t i3 = row / (n1 * n2);
+                స్థిరరాశి int64_t i1 = అడ్డువరుస % n1;
+                స్థిరరాశి int64_t i2 = (అడ్డువరుస / n1) % n2;
+                స్థిరరాశి int64_t i3 = అడ్డువరుస / (n1 * n2);
 
-                const float *__restrict x_row = x_base + i3 * xs3 + i2 * xs2 + i1 * xs1;
-                const float *__restrict g_row = g_base + i3 * gs3 + i2 * gs2 + i1 * gs1;
-                float *__restrict d_row       = dx_base + i3 * ds3 + i2 * ds2 + i1 * ds1;
+                స్థిరరాశి దశాంశం *__restrict x_అడ్డువరుస = x_పునాది + i3 * xs3 + i2 * xs2 + i1 * xs1;
+                స్థిరరాశి దశాంశం *__restrict g_అడ్డువరుస = g_పునాది + i3 * gs3 + i2 * gs2 + i1 * gs1;
+                దశాంశం *__restrict d_అడ్డువరుస       = dx_పునాది + i3 * ds3 + i2 * ds2 + i1 * ds1;
 
                 // per-thread accumulation (compensated by default)
-                float sum_xx = 0.f, sum_xg = 0.f;
-#ifndef GGML_SYCL_RMS_BACK_FAST
-                float c_xx = 0.f, c_xg = 0.f;
-#endif
-                for (int64_t col = tid; col < D; col += WG) {
-                    const float xv = x_row[col];
-                    const float gv = g_row[col];
-#ifdef GGML_SYCL_RMS_BACK_FAST
-                    sum_xx += xv * xv;
-                    sum_xg += xv * gv;
-#else
-                    float y1 = xv * xv - c_xx;
-                    float t1 = sum_xx + y1;
-                    c_xx = (t1 - sum_xx) - y1;
-                    sum_xx = t1;
+                దశాంశం కూడిక_xx = 0.f, కూడిక_xg = 0.f;
+#నిర్వచితం_కాకపోతే GGML_SYCL_RMS_వెనుక_FAST
+                దశాంశం c_xx = 0.f, c_xg = 0.f;
+#అయితే_ముగింపు
+                కొరకు (int64_t నిలువు = tid; నిలువు < D; నిలువు += WG) {
+                    స్థిరరాశి దశాంశం xv = x_అడ్డువరుస[నిలువు];
+                    స్థిరరాశి దశాంశం gv = g_అడ్డువరుస[నిలువు];
+#నిర్వచితమైతే GGML_SYCL_RMS_వెనుక_FAST
+                    కూడిక_xx += xv * xv;
+                    కూడిక_xg += xv * gv;
+#లేకపోతే
+                    దశాంశం y1 = xv * xv - c_xx;
+                    దశాంశం t1 = కూడిక_xx + y1;
+                    c_xx = (t1 - కూడిక_xx) - y1;
+                    కూడిక_xx = t1;
 
-                    float y2 = xv * gv - c_xg;
-                    float t2 = sum_xg + y2;
-                    c_xg = (t2 - sum_xg) - y2;
-                    sum_xg = t2;
-#endif
+                    దశాంశం y2 = xv * gv - c_xg;
+                    దశాంశం t2 = కూడిక_xg + y2;
+                    c_xg = (t2 - కూడిక_xg) - y2;
+                    కూడిక_xg = t2;
+#అయితే_ముగింపు
                 }
 
                 // warp-level reduction
-                sycl::float2 xx = sycl::float2(sum_xx,
-#ifndef GGML_SYCL_RMS_BACK_FAST
+                sycl::float2 xx = sycl::float2(కూడిక_xx,
+#నిర్వచితం_కాకపోతే GGML_SYCL_RMS_వెనుక_FAST
                     c_xx
-#else
+#లేకపోతే
                     0.f
-#endif
+#అయితే_ముగింపు
                 );
-                sycl::float2 xg = sycl::float2(sum_xg,
-#ifndef GGML_SYCL_RMS_BACK_FAST
+                sycl::float2 xg = sycl::float2(కూడిక_xg,
+#నిర్వచితం_కాకపోతే GGML_SYCL_RMS_వెనుక_FAST
                     c_xg
-#else
+#లేకపోతే
                     0.f
-#endif
+#అయితే_ముగింపు
                 );
-                xx = warp_reduce_sum(xx, item_ct1);
-                xg = warp_reduce_sum(xg, item_ct1);
+                xx = warp_reduce_కూడిక(xx, అంశం_ct1);
+                xg = warp_reduce_కూడిక(xg, అంశం_ct1);
 
                 // cross-warp reduction using local memory (single barrier)
-                const auto sub_group = item_ct1.get_sub_group();
-                const auto sg_id     = sub_group.get_group_linear_id();
-                const auto wi_in_sg  = sub_group.get_local_linear_id();
-                const int nthreads   = item_ct1.get_local_range(2);
-                const int nwarps     = nthreads / WARP_SIZE;
+                స్థిరరాశి స్వయంచాలక sub_సమూహం = అంశం_ct1.get_sub_సమూహం();
+                స్థిరరాశి స్వయంచాలక sg_id     = sub_సమూహం.get_సమూహం_రేఖీయ_id();
+                స్థిరరాశి స్వయంచాలక wi_లోపల_sg  = sub_సమూహం.get_local_రేఖీయ_id();
+                స్థిరరాశి పూర్ణాంకం nthreads   = అంశం_ct1.get_local_range(2);
+                స్థిరరాశి పూర్ణాంకం nwarps     = nthreads / WARP_కొలత;
 
-                sycl::float2 xx_total = xx;
-                sycl::float2 xg_total = xg;
-                if (nwarps > 1) {
-                    if (wi_in_sg == 0) {
+                sycl::float2 xx_మొత్తం = xx;
+                sycl::float2 xg_మొత్తం = xg;
+                ఒకవేళ (nwarps > 1) {
+                    ఒకవేళ (wi_లోపల_sg == 0) {
                         l_xx[sg_id] = xx;
                         l_xg[sg_id] = xg;
                     }
-                    item_ct1.barrier(sycl::access::fence_space::local_space);
+                    అంశం_ct1.barrier(sycl::access::fence_space::local_space);
 
-                    if (sg_id == 0) {
-                        const unsigned wi_u = wi_in_sg;
-                        sycl::float2 xx_first = (wi_u < static_cast<unsigned>(nwarps)) ? l_xx[wi_u] : sycl::float2(0.f, 0.f);
-                        sycl::float2 xg_first = (wi_u < static_cast<unsigned>(nwarps)) ? l_xg[wi_u] : sycl::float2(0.f, 0.f);
-                        xx_total = warp_reduce_sum(xx_first, item_ct1);
-                        xg_total = warp_reduce_sum(xg_first, item_ct1);
-                    } else {
+                    ఒకవేళ (sg_id == 0) {
+                        స్థిరరాశి గుర్తులేని wi_u = wi_లోపల_sg;
+                        sycl::float2 xx_మొదటి = (wi_u < static_cast<గుర్తులేని>(nwarps)) ? l_xx[wi_u] : sycl::float2(0.f, 0.f);
+                        sycl::float2 xg_మొదటి = (wi_u < static_cast<గుర్తులేని>(nwarps)) ? l_xg[wi_u] : sycl::float2(0.f, 0.f);
+                        xx_మొత్తం = warp_reduce_కూడిక(xx_మొదటి, అంశం_ct1);
+                        xg_మొత్తం = warp_reduce_కూడిక(xg_మొదటి, అంశం_ct1);
+                    } లేకపోతే {
                         // other subgroups keep their local totals; they'll be ignored
-                        xx_total = xx;
-                        xg_total = xg;
+                        xx_మొత్తం = xx;
+                        xg_మొత్తం = xg;
                     }
                     // ensure all threads see the first-subgroup result via broadcast below
                 }
 
                 // compute inv_r and coeff once per row and broadcast to the whole work-group
-                float inv_r = 0.f;
-                float coeff = 0.f;
-                if (tid == 0) {
-                    const float sum_xx_f  = xx_total.x() + xx_total.y();
-                    const float sum_xdz_f = xg_total.x() + xg_total.y();
-                    const float mean_eps  = sum_xx_f / (float) D + eps;
-                    const float sum_eps   = sum_xx_f + eps * (float) D;
-                    inv_r = sycl::rsqrt(mean_eps);
-                    coeff = -sum_xdz_f / sum_eps;
+                దశాంశం inv_r = 0.f;
+                దశాంశం coeff = 0.f;
+                ఒకవేళ (tid == 0) {
+                    స్థిరరాశి దశాంశం కూడిక_xx_f  = xx_మొత్తం.x() + xx_మొత్తం.y();
+                    స్థిరరాశి దశాంశం కూడిక_xdz_f = xg_మొత్తం.x() + xg_మొత్తం.y();
+                    స్థిరరాశి దశాంశం సగటు_eps  = కూడిక_xx_f / (దశాంశం) D + eps;
+                    స్థిరరాశి దశాంశం కూడిక_eps   = కూడిక_xx_f + eps * (దశాంశం) D;
+                    inv_r = sycl::rsqrt(సగటు_eps);
+                    coeff = -కూడిక_xdz_f / కూడిక_eps;
                 }
-                inv_r = sycl::group_broadcast(item_ct1.get_group(), inv_r);
-                coeff = sycl::group_broadcast(item_ct1.get_group(), coeff);
+                inv_r = sycl::సమూహం_ప్రసారం(అంశం_ct1.get_సమూహం(), inv_r);
+                coeff = sycl::సమూహం_ప్రసారం(అంశం_ct1.get_సమూహం(), coeff);
 
-                for (int64_t col = tid; col < D; col += WG) {
-                    d_row[col] = (g_row[col] + coeff * x_row[col]) * inv_r;
+                కొరకు (int64_t నిలువు = tid; నిలువు < D; నిలువు += WG) {
+                    d_అడ్డువరుస[నిలువు] = (g_అడ్డువరుస[నిలువు] + coeff * x_అడ్డువరుస[నిలువు]) * inv_r;
                 }
             });
     });
 
 }
 
-void ggml_sycl_op_l2_norm(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
-    const ggml_tensor * src0 = dst->src[0];
-    const float * src0_d = (const float *) src0->data;
-    float * dst_d = (float *) dst->data;
-    dpct::queue_ptr     stream = ctx.stream();
+శూన్య ggml_sycl_op_l2_norm(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
+    స్థిరరాశి ggml_tensor * src0 = dst->src[0];
+    స్థిరరాశి దశాంశం * src0_d = (స్థిరరాశి దశాంశం *) src0->దత్తాంశం;
+    దశాంశం * dst_d = (దశాంశం *) dst->దత్తాంశం;
+    dpct::వరుస_ptr     stream = ctx.stream();
 
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
 
     GGML_TENSOR_UNARY_OP_LOCALS;
 
-    float eps;
-    memcpy(&eps, dst->op_params, sizeof(float));
+    దశాంశం eps;
+    జ్ఞాపకం_నకలు(&eps, dst->op_params, పరిమాణం(దశాంశం));
     GGML_ASSERT(eps >= 0.0f);
 
-    const size_t ts0 = ggml_type_size(src0->type);
-    const size_t tdst = ggml_type_size(dst->type);
+    స్థిరరాశి size_t ts0 = ggml_type_కొలత(src0->type);
+    స్థిరరాశి size_t tdst = ggml_type_కొలత(dst->type);
     GGML_ASSERT(nb00 % ts0 == 0 && nb01 % ts0 == 0 && nb02 % ts0 == 0 && nb03 % ts0 == 0);
     GGML_ASSERT(nb0 % tdst == 0 && nb1 % tdst == 0 && nb2 % tdst == 0 && nb3 % tdst == 0);
-    const int64_t ss0 = nb00 / ts0;
-    const int64_t ss1 = nb01 / ts0;
-    const int64_t ss2 = nb02 / ts0;
-    const int64_t ss3 = nb03 / ts0;
-    const int64_t ds0 = nb0 / tdst;
-    const int64_t ds1 = nb1 / tdst;
-    const int64_t ds2 = nb2 / tdst;
-    const int64_t ds3 = nb3 / tdst;
+    స్థిరరాశి int64_t ss0 = nb00 / ts0;
+    స్థిరరాశి int64_t ss1 = nb01 / ts0;
+    స్థిరరాశి int64_t ss2 = nb02 / ts0;
+    స్థిరరాశి int64_t ss3 = nb03 / ts0;
+    స్థిరరాశి int64_t ds0 = nb0 / tdst;
+    స్థిరరాశి int64_t ds1 = nb1 / tdst;
+    స్థిరరాశి int64_t ds2 = nb2 / tdst;
+    స్థిరరాశి int64_t ds3 = nb3 / tdst;
 
     /*support both WARP_SIZE or WARP_32_SIZE in code
       choose by hardware for better performance
     */
-    l2_norm_f32_sycl<WARP_SIZE>(src0_d, dst_d, ne00, ne01, ne02, ne03,
+    l2_norm_f32_sycl<WARP_కొలత>(src0_d, dst_d, ne00, ne01, ne02, ne03,
             ss0, ss1, ss2, ss3, ds0, ds1, ds2, ds3, eps, stream, ctx.device);
 }
 
 // nodes[0..count) are independent, same-shape, same-eps, same-nb L2_NORM ops validated
 // by the caller; requires ncols < 1024 (the warp reduction path).
-void ggml_sycl_l2_norm_batch(ggml_backend_sycl_context & ctx, ggml_tensor ** nodes, int count) {
-    const ggml_tensor * s0 = nodes[0]->src[0];
-    const int ncols       = (int) s0->ne[0];
-    const int nrows_total = (int) ggml_nrows(s0);
-    float eps;
-    memcpy(&eps, nodes[0]->op_params, sizeof(float));
+శూన్య ggml_sycl_l2_norm_batch(ggml_backend_sycl_context & ctx, ggml_tensor ** nodes, పూర్ణాంకం count) {
+    స్థిరరాశి ggml_tensor * s0 = nodes[0]->src[0];
+    స్థిరరాశి పూర్ణాంకం ncols       = (పూర్ణాంకం) s0->ne[0];
+    స్థిరరాశి పూర్ణాంకం nrows_మొత్తం = (పూర్ణాంకం) ggml_nrows(s0);
+    దశాంశం eps;
+    జ్ఞాపకం_నకలు(&eps, nodes[0]->op_params, పరిమాణం(దశాంశం));
     GGML_ASSERT(eps >= 0.0f);
 
     l2_batch_ptrs p{};
-    for (int t = 0; t < count; ++t) {
-        p.src[t] = (const float *) nodes[t]->src[0]->data;
-        p.dst[t] = (float *) nodes[t]->data;
+    కొరకు (పూర్ణాంకం t = 0; t < count; ++t) {
+        p.src[t] = (స్థిరరాశి దశాంశం *) nodes[t]->src[0]->దత్తాంశం;
+        p.dst[t] = (దశాంశం *) nodes[t]->దత్తాంశం;
     }
 
-    const ggml_tensor * d0 = nodes[0];
-    const size_t        ts = ggml_type_size(GGML_TYPE_F32);
+    స్థిరరాశి ggml_tensor * d0 = nodes[0];
+    స్థిరరాశి size_t        ts = ggml_type_కొలత(GGML_TYPE_F32);
     l2_batch_strides    st{};
-    st.ne1 = (int) s0->ne[1];
-    st.ne2 = (int) s0->ne[2];
+    st.ne1 = (పూర్ణాంకం) s0->ne[1];
+    st.ne2 = (పూర్ణాంకం) s0->ne[2];
     st.ss0 = s0->nb[0] / ts; st.ss1 = s0->nb[1] / ts; st.ss2 = s0->nb[2] / ts; st.ss3 = s0->nb[3] / ts;
     st.ds0 = d0->nb[0] / ts; st.ds1 = d0->nb[1] / ts; st.ds2 = d0->nb[2] / ts; st.ds3 = d0->nb[3] / ts;
 
-    l2_norm_f32_batch_sycl<WARP_SIZE>(p, st, count, ncols, nrows_total, eps, ctx.stream());
+    l2_norm_f32_batch_sycl<WARP_కొలత>(p, st, count, ncols, nrows_మొత్తం, eps, ctx.stream());
 }

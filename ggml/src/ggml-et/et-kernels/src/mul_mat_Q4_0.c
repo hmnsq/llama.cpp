@@ -3,63 +3,63 @@
 // Matrix multiplication: C[M,N] = A[M,K] * B[K,N]
 //******************************************************************************
 
-#include "block_ops.h"
-#include "ggml_tensor.h"
-#include "math_fp.h"
-#include "platform.h"
-#include "quants.h"
+#అన్తర్భావ "block_ops.h"
+#అన్తర్భావ "ggml_tensor.h"
+#అన్తర్భావ "math_fp.h"
+#అన్తర్భావ "platform.h"
+#అన్తర్భావ "quants.h"
 
-#include <stdint.h>
+#అన్తర్భావ <stdint.h>
 
-#define STRIDE_M                   2048 /* 32 shires x 32 minions x 2 harts */
-#define STRIDE_M_KSPLIT            1024 /* 32 shires x 32 minions (both harts share rows) */
-#define KSPLIT_MIN_K_BLOCKS        256  /* K >= 8192 elements */
-#define KSPLIT_SMALL_ROWS_K_BLOCKS 64   /* K >= 2048 elements for very small M */
-#define KSPLIT_MAX_ROWS            8    /* max rows per minion for K-split */
-#define TILE_KB                    256  /* K-tile size in Q4_0 blocks (8192 elems, 32KB B data) */
-#define KSPLIT_GROUP_ROWS          4
-#define SIMPLE_X2_ROWS             2
+#నిర్వచించు STRIDE_M                   2048 /* 32 shires x 32 minions x 2 harts */
+#నిర్వచించు STRIDE_M_KSPLIT            1024 /* 32 shires x 32 minions (both harts share rows) */
+#నిర్వచించు KSPLIT_MIN_K_ఖండాలు        256  /* K >= 8192 elements */
+#నిర్వచించు KSPLIT_SMALL_అడ్డువరుసలు_K_ఖండాలు 64   /* K >= 2048 elements for very small M */
+#నిర్వచించు KSPLIT_MAX_అడ్డువరుసలు            8    /* max rows per minion for K-split */
+#నిర్వచించు TILE_KB                    256  /* K-tile size in Q4_0 blocks (8192 elems, 32KB B data) */
+#నిర్వచించు KSPLIT_సమూహం_అడ్డువరుసలు          4
+#నిర్వచించు SIMPLE_X2_అడ్డువరుసలు             2
 
-int entry_point(struct ggml_et_binary_params * params, void * env) {
+పూర్ణాంకం నమోదు_బిందువు(నిర్మాణం ggml_et_ద్విమాన_params * params, శూన్య * env) {
     uint64_t hart_id = get_hart_id();
 
     // Matrix dimensions
-    const int64_t K    = params->src0.ne[0];
-    const int64_t M    = params->src0.ne[1];
-    const int64_t N    = params->src1.ne[1];
-    const int64_t ne02 = params->src0.ne[2];
-    const int64_t ne03 = params->src0.ne[3];
-    const int64_t ne12 = params->src1.ne[2];
-    const int64_t ne13 = params->src1.ne[3];
+    స్థిరరాశి int64_t K    = params->src0.ne[0];
+    స్థిరరాశి int64_t M    = params->src0.ne[1];
+    స్థిరరాశి int64_t N    = params->src1.ne[1];
+    స్థిరరాశి int64_t ne02 = params->src0.ne[2];
+    స్థిరరాశి int64_t ne03 = params->src0.ne[3];
+    స్థిరరాశి int64_t ne12 = params->src1.ne[2];
+    స్థిరరాశి int64_t ne13 = params->src1.ne[3];
 
     // Strides (in bytes)
-    const size_t nb01 = params->src0.nb[1];
-    const size_t nb02 = params->src0.nb[2];
-    const size_t nb03 = params->src0.nb[3];
+    స్థిరరాశి size_t nb01 = params->src0.nb[1];
+    స్థిరరాశి size_t nb02 = params->src0.nb[2];
+    స్థిరరాశి size_t nb03 = params->src0.nb[3];
 
-    const size_t nb11 = params->src1.nb[1];
-    const size_t nb12 = params->src1.nb[2];
-    const size_t nb13 = params->src1.nb[3];
+    స్థిరరాశి size_t nb11 = params->src1.nb[1];
+    స్థిరరాశి size_t nb12 = params->src1.nb[2];
+    స్థిరరాశి size_t nb13 = params->src1.nb[3];
 
-    const size_t nbd1 = params->dst.nb[1];
-    const size_t nbd2 = params->dst.nb[2];
-    const size_t nbd3 = params->dst.nb[3];
+    స్థిరరాశి size_t nbd1 = params->dst.nb[1];
+    స్థిరరాశి size_t nbd2 = params->dst.nb[2];
+    స్థిరరాశి size_t nbd3 = params->dst.nb[3];
 
     // Q4_0 block size is 32
-    const int64_t K_blocks      = K / 32;
-    const int     use_simple_x2 = ((nb01 & 31) == 0);
+    స్థిరరాశి int64_t K_ఖండాలు      = K / 32;
+    స్థిరరాశి పూర్ణాంకం     use_simple_x2 = ((nb01 & 31) == 0);
 
     // Broadcasting ratios
-    const int64_t r2 = ne12 / ne02;
-    const int64_t r3 = ne13 / ne03;
+    స్థిరరాశి int64_t r2 = ne12 / ne02;
+    స్థిరరాశి int64_t r3 = ne13 / ne03;
 
     // K-split decision
-    const int64_t minion_id             = hart_id >> 1;          /* 0..1023 global */
-    const int64_t local_minion          = (hart_id >> 1) & 0x1F; /* 0..31 within shire */
-    const int     is_hart1              = hart_id & 1;
-    const int64_t rows_per_minion       = (M + STRIDE_M_KSPLIT - 1) / STRIDE_M_KSPLIT;
-    const int64_t k_half                = K_blocks / 2;
-    const int     use_ksplit_small_rows = (rows_per_minion <= 2) && (K_blocks >= KSPLIT_SMALL_ROWS_K_BLOCKS);
+    స్థిరరాశి int64_t minion_id             = hart_id >> 1;          /* 0..1023 global */
+    స్థిరరాశి int64_t local_minion          = (hart_id >> 1) & 0x1F; /* 0..31 within shire */
+    స్థిరరాశి పూర్ణాంకం     is_hart1              = hart_id & 1;
+    స్థిరరాశి int64_t అడ్డువరుసలు_చొప్పున_minion       = (M + STRIDE_M_KSPLIT - 1) / STRIDE_M_KSPLIT;
+    స్థిరరాశి int64_t k_half                = K_ఖండాలు / 2;
+    స్థిరరాశి పూర్ణాంకం     use_ksplit_small_అడ్డువరుసలు = (అడ్డువరుసలు_చొప్పున_minion <= 2) && (K_ఖండాలు >= KSPLIT_SMALL_అడ్డువరుసలు_K_ఖండాలు);
     /*
      * K-split when K is large enough to benefit, and either:
      *   - few rows (≤4): always safe, proven working
@@ -70,60 +70,60 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
      * that case the simple row-striped path leaves half the machine idle, so
      * using both harts on each row pays off even for moderate K.
      */
-    const int     use_ksplit            = ((K_blocks >= KSPLIT_MIN_K_BLOCKS) && (rows_per_minion <= KSPLIT_MAX_ROWS) &&
-                                           (rows_per_minion <= 4 || k_half <= TILE_KB)) ||
-                                          use_ksplit_small_rows;
-    const int     use_ksplit_group      = !use_ksplit && (K_blocks >= KSPLIT_MIN_K_BLOCKS) && (rows_per_minion > 4) &&
-                                          (rows_per_minion <= KSPLIT_MAX_ROWS);
+    స్థిరరాశి పూర్ణాంకం     use_ksplit            = ((K_ఖండాలు >= KSPLIT_MIN_K_ఖండాలు) && (అడ్డువరుసలు_చొప్పున_minion <= KSPLIT_MAX_అడ్డువరుసలు) &&
+                                           (అడ్డువరుసలు_చొప్పున_minion <= 4 || k_half <= TILE_KB)) ||
+                                          use_ksplit_small_అడ్డువరుసలు;
+    స్థిరరాశి పూర్ణాంకం     use_ksplit_సమూహం      = !use_ksplit && (K_ఖండాలు >= KSPLIT_MIN_K_ఖండాలు) && (అడ్డువరుసలు_చొప్పున_minion > 4) &&
+                                          (అడ్డువరుసలు_చొప్పున_minion <= KSPLIT_MAX_అడ్డువరుసలు);
 
-    if (use_ksplit) {
+    ఒకవేళ (use_ksplit) {
         /* Each hart processes half the K dimension */
-        const int64_t k_start = is_hart1 ? k_half : 0;
-        const int64_t k_len   = is_hart1 ? (K_blocks - k_half) : k_half;
+        స్థిరరాశి int64_t k_ప్రారంభం = is_hart1 ? k_half : 0;
+        స్థిరరాశి int64_t k_len   = is_hart1 ? (K_ఖండాలు - k_half) : k_half;
 
         /* One cache-line-aligned L2SCP slot per minion for exchange */
-        volatile float * l2scp_slot = (volatile float *) et_shire_l2scp_local(local_minion * 64);
+        అస్థిర దశాంశం * l2scp_స్థానం = (అస్థిర దశాంశం *) et_shire_l2scp_local(local_minion * 64);
 
-        for (int64_t i3 = 0; i3 < ne13; i3++) {
-            const int64_t i03       = i3 / r3;
-            const char *  src0_ptr3 = (const char *) params->src0.data + i03 * nb03;
-            const char *  src1_ptr3 = (const char *) params->src1.data + i3 * nb13;
-            char *        dst_ptr3  = (char *) params->dst.data + i3 * nbd3;
+        కొరకు (int64_t i3 = 0; i3 < ne13; i3++) {
+            స్థిరరాశి int64_t i03       = i3 / r3;
+            స్థిరరాశి అక్షరం *  src0_ptr3 = (స్థిరరాశి అక్షరం *) params->src0.దత్తాంశం + i03 * nb03;
+            స్థిరరాశి అక్షరం *  src1_ptr3 = (స్థిరరాశి అక్షరం *) params->src1.దత్తాంశం + i3 * nb13;
+            అక్షరం *        dst_ptr3  = (అక్షరం *) params->dst.దత్తాంశం + i3 * nbd3;
 
-            for (int64_t i2 = 0; i2 < ne12; i2++) {
-                const int64_t i02       = i2 / r2;
-                const char *  src0_ptr2 = src0_ptr3 + i02 * nb02;
-                const char *  src1_ptr2 = src1_ptr3 + i2 * nb12;
-                char *        dst_ptr2  = dst_ptr3 + i2 * nbd2;
+            కొరకు (int64_t i2 = 0; i2 < ne12; i2++) {
+                స్థిరరాశి int64_t i02       = i2 / r2;
+                స్థిరరాశి అక్షరం *  src0_ptr2 = src0_ptr3 + i02 * nb02;
+                స్థిరరాశి అక్షరం *  src1_ptr2 = src1_ptr3 + i2 * nb12;
+                అక్షరం *        dst_ptr2  = dst_ptr3 + i2 * nbd2;
 
-                for (int64_t n = 0; n < N; n++) {
-                    const float * b_col_base = (const float *) (src1_ptr2 + n * nb11);
+                కొరకు (int64_t n = 0; n < N; n++) {
+                    స్థిరరాశి దశాంశం * b_నిలువు_పునాది = (స్థిరరాశి దశాంశం *) (src1_ptr2 + n * nb11);
 
-                    for (int64_t m = minion_id; m < M; m += STRIDE_M_KSPLIT) {
-                        const block_q4_0 * q_row = (const block_q4_0 *) (src0_ptr2 + m * nb01);
+                    కొరకు (int64_t m = minion_id; m < M; m += STRIDE_M_KSPLIT) {
+                        స్థిరరాశి ఖండం_q4_0 * q_అడ్డువరుస = (స్థిరరాశి ఖండం_q4_0 *) (src0_ptr2 + m * nb01);
 
-                        float partial = compute_row_dot_q4_0(q_row + k_start, b_col_base + k_start * 32, k_len);
+                        దశాంశం partial = compute_అడ్డువరుస_dot_q4_0(q_అడ్డువరుస + k_ప్రారంభం, b_నిలువు_పునాది + k_ప్రారంభం * 32, k_len);
 
-                        if (is_hart1) {
-                            *l2scp_slot = partial;
+                        ఒకవేళ (is_hart1) {
+                            *l2scp_స్థానం = partial;
                             FENCE;
-                            flush_to_l2((const void *) l2scp_slot, 1, 64);
+                            flush_గమ్యం_l2((స్థిరరాశి శూన్య *) l2scp_స్థానం, 1, 64);
                             WAIT_CACHEOPS;
                             et_sem_post(ET_BARRIER_MINION);
                             et_sem_wait(ET_BARRIER_MINION);
-                        } else {
+                        } లేకపోతే {
                             et_sem_wait(ET_BARRIER_MINION);
-                            float other = *l2scp_slot;
+                            దశాంశం other = *l2scp_స్థానం;
                             et_sem_post(ET_BARRIER_MINION);
 
-                            float * dst_entry = (float *) (dst_ptr2 + n * nbd1 + m * sizeof(float));
-                            atomic_store_f32((volatile float *) dst_entry, partial + other);
+                            దశాంశం * dst_నమోదు = (దశాంశం *) (dst_ptr2 + n * nbd1 + m * పరిమాణం(దశాంశం));
+                            atomic_store_f32((అస్థిర దశాంశం *) dst_నమోదు, partial + other);
                         }
                     }
                 }
             }
         }
-    } else if (use_ksplit_group) {
+    } లేకపోతే ఒకవేళ (use_ksplit_సమూహం) {
         /*
          * Grouped K-split for the 5-8 rows/minion regime.
          *
@@ -132,99 +132,99 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
          * This keeps the K-split bandwidth benefit while cutting semaphore
          * traffic by 4x relative to the old per-row exchange.
          */
-        const int64_t    k_start    = is_hart1 ? k_half : 0;
-        const int64_t    k_len      = is_hart1 ? (K_blocks - k_half) : k_half;
-        volatile float * l2scp_slot = (volatile float *) et_shire_l2scp_local(local_minion * 64);
+        స్థిరరాశి int64_t    k_ప్రారంభం    = is_hart1 ? k_half : 0;
+        స్థిరరాశి int64_t    k_len      = is_hart1 ? (K_ఖండాలు - k_half) : k_half;
+        అస్థిర దశాంశం * l2scp_స్థానం = (అస్థిర దశాంశం *) et_shire_l2scp_local(local_minion * 64);
 
-        for (int64_t i3 = 0; i3 < ne13; i3++) {
-            const int64_t i03       = i3 / r3;
-            const char *  src0_ptr3 = (const char *) params->src0.data + i03 * nb03;
-            const char *  src1_ptr3 = (const char *) params->src1.data + i3 * nb13;
-            char *        dst_ptr3  = (char *) params->dst.data + i3 * nbd3;
+        కొరకు (int64_t i3 = 0; i3 < ne13; i3++) {
+            స్థిరరాశి int64_t i03       = i3 / r3;
+            స్థిరరాశి అక్షరం *  src0_ptr3 = (స్థిరరాశి అక్షరం *) params->src0.దత్తాంశం + i03 * nb03;
+            స్థిరరాశి అక్షరం *  src1_ptr3 = (స్థిరరాశి అక్షరం *) params->src1.దత్తాంశం + i3 * nb13;
+            అక్షరం *        dst_ptr3  = (అక్షరం *) params->dst.దత్తాంశం + i3 * nbd3;
 
-            for (int64_t i2 = 0; i2 < ne12; i2++) {
-                const int64_t i02       = i2 / r2;
-                const char *  src0_ptr2 = src0_ptr3 + i02 * nb02;
-                const char *  src1_ptr2 = src1_ptr3 + i2 * nb12;
-                char *        dst_ptr2  = dst_ptr3 + i2 * nbd2;
+            కొరకు (int64_t i2 = 0; i2 < ne12; i2++) {
+                స్థిరరాశి int64_t i02       = i2 / r2;
+                స్థిరరాశి అక్షరం *  src0_ptr2 = src0_ptr3 + i02 * nb02;
+                స్థిరరాశి అక్షరం *  src1_ptr2 = src1_ptr3 + i2 * nb12;
+                అక్షరం *        dst_ptr2  = dst_ptr3 + i2 * nbd2;
 
-                for (int64_t n = 0; n < N; n++) {
-                    const float * b_col_base = (const float *) (src1_ptr2 + n * nb11);
+                కొరకు (int64_t n = 0; n < N; n++) {
+                    స్థిరరాశి దశాంశం * b_నిలువు_పునాది = (స్థిరరాశి దశాంశం *) (src1_ptr2 + n * nb11);
 
-                    for (int64_t m_base = minion_id; m_base < M; m_base += STRIDE_M_KSPLIT * KSPLIT_GROUP_ROWS) {
-                        const int64_t m0 = m_base;
-                        const int64_t m1 = m0 + STRIDE_M_KSPLIT;
-                        const int64_t m2 = m1 + STRIDE_M_KSPLIT;
-                        const int64_t m3 = m2 + STRIDE_M_KSPLIT;
+                    కొరకు (int64_t m_పునాది = minion_id; m_పునాది < M; m_పునాది += STRIDE_M_KSPLIT * KSPLIT_సమూహం_అడ్డువరుసలు) {
+                        స్థిరరాశి int64_t m0 = m_పునాది;
+                        స్థిరరాశి int64_t m1 = m0 + STRIDE_M_KSPLIT;
+                        స్థిరరాశి int64_t m2 = m1 + STRIDE_M_KSPLIT;
+                        స్థిరరాశి int64_t m3 = m2 + STRIDE_M_KSPLIT;
 
-                        float s0 = 0.0f, s1 = 0.0f, s2 = 0.0f, s3 = 0.0f;
+                        దశాంశం s0 = 0.0f, s1 = 0.0f, s2 = 0.0f, s3 = 0.0f;
 
-                        for (int64_t kb = 0; kb < K_blocks; kb += TILE_KB) {
+                        కొరకు (int64_t kb = 0; kb < K_ఖండాలు; kb += TILE_KB) {
                             int64_t tile_len = k_len - kb;
-                            if (tile_len > TILE_KB) {
+                            ఒకవేళ (tile_len > TILE_KB) {
                                 tile_len = TILE_KB;
                             }
-                            if (tile_len <= 0) {
-                                break;
+                            ఒకవేళ (tile_len <= 0) {
+                                ఆపు;
                             }
-                            const float * b_tile = b_col_base + (k_start + kb) * 32;
-                            const int64_t row_kb = k_start + kb;
+                            స్థిరరాశి దశాంశం * b_tile = b_నిలువు_పునాది + (k_ప్రారంభం + kb) * 32;
+                            స్థిరరాశి int64_t అడ్డువరుస_kb = k_ప్రారంభం + kb;
 
-                            if (m0 < M) {
-                                s0 += compute_row_dot_q4_0((const block_q4_0 *) (src0_ptr2 + m0 * nb01) + row_kb,
+                            ఒకవేళ (m0 < M) {
+                                s0 += compute_అడ్డువరుస_dot_q4_0((స్థిరరాశి ఖండం_q4_0 *) (src0_ptr2 + m0 * nb01) + అడ్డువరుస_kb,
                                                            b_tile, tile_len);
                             }
-                            if (m1 < M) {
-                                s1 += compute_row_dot_q4_0((const block_q4_0 *) (src0_ptr2 + m1 * nb01) + row_kb,
+                            ఒకవేళ (m1 < M) {
+                                s1 += compute_అడ్డువరుస_dot_q4_0((స్థిరరాశి ఖండం_q4_0 *) (src0_ptr2 + m1 * nb01) + అడ్డువరుస_kb,
                                                            b_tile, tile_len);
                             }
-                            if (m2 < M) {
-                                s2 += compute_row_dot_q4_0((const block_q4_0 *) (src0_ptr2 + m2 * nb01) + row_kb,
+                            ఒకవేళ (m2 < M) {
+                                s2 += compute_అడ్డువరుస_dot_q4_0((స్థిరరాశి ఖండం_q4_0 *) (src0_ptr2 + m2 * nb01) + అడ్డువరుస_kb,
                                                            b_tile, tile_len);
                             }
-                            if (m3 < M) {
-                                s3 += compute_row_dot_q4_0((const block_q4_0 *) (src0_ptr2 + m3 * nb01) + row_kb,
+                            ఒకవేళ (m3 < M) {
+                                s3 += compute_అడ్డువరుస_dot_q4_0((స్థిరరాశి ఖండం_q4_0 *) (src0_ptr2 + m3 * nb01) + అడ్డువరుస_kb,
                                                            b_tile, tile_len);
                             }
                         }
 
-                        if (is_hart1) {
-                            l2scp_slot[0] = s0;
-                            l2scp_slot[1] = s1;
-                            l2scp_slot[2] = s2;
-                            l2scp_slot[3] = s3;
+                        ఒకవేళ (is_hart1) {
+                            l2scp_స్థానం[0] = s0;
+                            l2scp_స్థానం[1] = s1;
+                            l2scp_స్థానం[2] = s2;
+                            l2scp_స్థానం[3] = s3;
                             FENCE;
-                            flush_to_l2((const void *) l2scp_slot, 1, 64);
+                            flush_గమ్యం_l2((స్థిరరాశి శూన్య *) l2scp_స్థానం, 1, 64);
                             WAIT_CACHEOPS;
                             et_sem_post(ET_BARRIER_MINION);
                             et_sem_wait(ET_BARRIER_MINION);
-                        } else {
+                        } లేకపోతే {
                             et_sem_wait(ET_BARRIER_MINION);
-                            const float p0 = l2scp_slot[0];
-                            const float p1 = l2scp_slot[1];
-                            const float p2 = l2scp_slot[2];
-                            const float p3 = l2scp_slot[3];
+                            స్థిరరాశి దశాంశం p0 = l2scp_స్థానం[0];
+                            స్థిరరాశి దశాంశం p1 = l2scp_స్థానం[1];
+                            స్థిరరాశి దశాంశం p2 = l2scp_స్థానం[2];
+                            స్థిరరాశి దశాంశం p3 = l2scp_స్థానం[3];
                             et_sem_post(ET_BARRIER_MINION);
 
-                            float * c_base = (float *) (dst_ptr2 + n * nbd1);
-                            if (m0 < M) {
-                                atomic_store_f32((volatile float *) (c_base + m0), s0 + p0);
+                            దశాంశం * c_పునాది = (దశాంశం *) (dst_ptr2 + n * nbd1);
+                            ఒకవేళ (m0 < M) {
+                                atomic_store_f32((అస్థిర దశాంశం *) (c_పునాది + m0), s0 + p0);
                             }
-                            if (m1 < M) {
-                                atomic_store_f32((volatile float *) (c_base + m1), s1 + p1);
+                            ఒకవేళ (m1 < M) {
+                                atomic_store_f32((అస్థిర దశాంశం *) (c_పునాది + m1), s1 + p1);
                             }
-                            if (m2 < M) {
-                                atomic_store_f32((volatile float *) (c_base + m2), s2 + p2);
+                            ఒకవేళ (m2 < M) {
+                                atomic_store_f32((అస్థిర దశాంశం *) (c_పునాది + m2), s2 + p2);
                             }
-                            if (m3 < M) {
-                                atomic_store_f32((volatile float *) (c_base + m3), s3 + p3);
+                            ఒకవేళ (m3 < M) {
+                                atomic_store_f32((అస్థిర దశాంశం *) (c_పునాది + m3), s3 + p3);
                             }
                         }
                     }
                 }
             }
         }
-    } else if (K_blocks > TILE_KB) {
+    } లేకపోతే ఒకవేళ (K_ఖండాలు > TILE_KB) {
         /*
          * Tile-outer with scalar row groups: process up to 4 rows per
          * hart sharing each B tile before advancing to the next tile.
@@ -232,67 +232,67 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
          * tiles — avoids the flw/fadd.s/fsw stack ops that corrupt vector
          * register state on ET-SoC-1's MMX-style shared FP file.
          */
-        for (int64_t i3 = 0; i3 < ne13; i3++) {
-            const int64_t i03       = i3 / r3;
-            const char *  src0_ptr3 = (const char *) params->src0.data + i03 * nb03;
-            const char *  src1_ptr3 = (const char *) params->src1.data + i3 * nb13;
-            char *        dst_ptr3  = (char *) params->dst.data + i3 * nbd3;
+        కొరకు (int64_t i3 = 0; i3 < ne13; i3++) {
+            స్థిరరాశి int64_t i03       = i3 / r3;
+            స్థిరరాశి అక్షరం *  src0_ptr3 = (స్థిరరాశి అక్షరం *) params->src0.దత్తాంశం + i03 * nb03;
+            స్థిరరాశి అక్షరం *  src1_ptr3 = (స్థిరరాశి అక్షరం *) params->src1.దత్తాంశం + i3 * nb13;
+            అక్షరం *        dst_ptr3  = (అక్షరం *) params->dst.దత్తాంశం + i3 * nbd3;
 
-            for (int64_t i2 = 0; i2 < ne12; i2++) {
-                const int64_t i02       = i2 / r2;
-                const char *  src0_ptr2 = src0_ptr3 + i02 * nb02;
-                const char *  src1_ptr2 = src1_ptr3 + i2 * nb12;
-                char *        dst_ptr2  = dst_ptr3 + i2 * nbd2;
+            కొరకు (int64_t i2 = 0; i2 < ne12; i2++) {
+                స్థిరరాశి int64_t i02       = i2 / r2;
+                స్థిరరాశి అక్షరం *  src0_ptr2 = src0_ptr3 + i02 * nb02;
+                స్థిరరాశి అక్షరం *  src1_ptr2 = src1_ptr3 + i2 * nb12;
+                అక్షరం *        dst_ptr2  = dst_ptr3 + i2 * nbd2;
 
-                for (int64_t n = 0; n < N; n++) {
-                    const float * b_col_base = (const float *) (src1_ptr2 + n * nb11);
+                కొరకు (int64_t n = 0; n < N; n++) {
+                    స్థిరరాశి దశాంశం * b_నిలువు_పునాది = (స్థిరరాశి దశాంశం *) (src1_ptr2 + n * nb11);
 
-                    for (int64_t m0 = hart_id; m0 < M; m0 += STRIDE_M * 4) {
-                        const int64_t m1 = m0 + STRIDE_M;
-                        const int64_t m2 = m0 + STRIDE_M * 2;
-                        const int64_t m3 = m0 + STRIDE_M * 3;
+                    కొరకు (int64_t m0 = hart_id; m0 < M; m0 += STRIDE_M * 4) {
+                        స్థిరరాశి int64_t m1 = m0 + STRIDE_M;
+                        స్థిరరాశి int64_t m2 = m0 + STRIDE_M * 2;
+                        స్థిరరాశి int64_t m3 = m0 + STRIDE_M * 3;
 
-                        float s0 = 0.0f, s1 = 0.0f, s2 = 0.0f, s3 = 0.0f;
+                        దశాంశం s0 = 0.0f, s1 = 0.0f, s2 = 0.0f, s3 = 0.0f;
 
-                        for (int64_t kb = 0; kb < K_blocks; kb += TILE_KB) {
-                            int64_t tile_len = K_blocks - kb;
-                            if (tile_len > TILE_KB) {
+                        కొరకు (int64_t kb = 0; kb < K_ఖండాలు; kb += TILE_KB) {
+                            int64_t tile_len = K_ఖండాలు - kb;
+                            ఒకవేళ (tile_len > TILE_KB) {
                                 tile_len = TILE_KB;
                             }
-                            const float * b_tile = b_col_base + kb * 32;
+                            స్థిరరాశి దశాంశం * b_tile = b_నిలువు_పునాది + kb * 32;
 
-                            s0 += compute_row_dot_q4_0((const block_q4_0 *) (src0_ptr2 + m0 * nb01) + kb, b_tile,
+                            s0 += compute_అడ్డువరుస_dot_q4_0((స్థిరరాశి ఖండం_q4_0 *) (src0_ptr2 + m0 * nb01) + kb, b_tile,
                                                        tile_len);
-                            if (m1 < M) {
-                                s1 += compute_row_dot_q4_0((const block_q4_0 *) (src0_ptr2 + m1 * nb01) + kb, b_tile,
+                            ఒకవేళ (m1 < M) {
+                                s1 += compute_అడ్డువరుస_dot_q4_0((స్థిరరాశి ఖండం_q4_0 *) (src0_ptr2 + m1 * nb01) + kb, b_tile,
                                                            tile_len);
                             }
-                            if (m2 < M) {
-                                s2 += compute_row_dot_q4_0((const block_q4_0 *) (src0_ptr2 + m2 * nb01) + kb, b_tile,
+                            ఒకవేళ (m2 < M) {
+                                s2 += compute_అడ్డువరుస_dot_q4_0((స్థిరరాశి ఖండం_q4_0 *) (src0_ptr2 + m2 * nb01) + kb, b_tile,
                                                            tile_len);
                             }
-                            if (m3 < M) {
-                                s3 += compute_row_dot_q4_0((const block_q4_0 *) (src0_ptr2 + m3 * nb01) + kb, b_tile,
+                            ఒకవేళ (m3 < M) {
+                                s3 += compute_అడ్డువరుస_dot_q4_0((స్థిరరాశి ఖండం_q4_0 *) (src0_ptr2 + m3 * nb01) + kb, b_tile,
                                                            tile_len);
                             }
                         }
 
-                        float * dst_base = (float *) (dst_ptr2 + n * nbd1);
-                        atomic_store_f32((volatile float *) (dst_base + m0), s0);
-                        if (m1 < M) {
-                            atomic_store_f32((volatile float *) (dst_base + m1), s1);
+                        దశాంశం * dst_పునాది = (దశాంశం *) (dst_ptr2 + n * nbd1);
+                        atomic_store_f32((అస్థిర దశాంశం *) (dst_పునాది + m0), s0);
+                        ఒకవేళ (m1 < M) {
+                            atomic_store_f32((అస్థిర దశాంశం *) (dst_పునాది + m1), s1);
                         }
-                        if (m2 < M) {
-                            atomic_store_f32((volatile float *) (dst_base + m2), s2);
+                        ఒకవేళ (m2 < M) {
+                            atomic_store_f32((అస్థిర దశాంశం *) (dst_పునాది + m2), s2);
                         }
-                        if (m3 < M) {
-                            atomic_store_f32((volatile float *) (dst_base + m3), s3);
+                        ఒకవేళ (m3 < M) {
+                            atomic_store_f32((అస్థిర దశాంశం *) (dst_పునాది + m3), s3);
                         }
                     }
                 }
             }
         }
-    } else {
+    } లేకపోతే {
         /*
          * Simple path for small K.
          *
@@ -300,59 +300,59 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
          * pattern. That lets us compute two rows together and reuse each loaded
          * B chunk across both rows instead of reloading it in a second dot call.
          */
-        for (int64_t i3 = 0; i3 < ne13; i3++) {
-            const int64_t i03       = i3 / r3;
-            const char *  src0_ptr3 = (const char *) params->src0.data + i03 * nb03;
-            const char *  src1_ptr3 = (const char *) params->src1.data + i3 * nb13;
-            char *        dst_ptr3  = (char *) params->dst.data + i3 * nbd3;
+        కొరకు (int64_t i3 = 0; i3 < ne13; i3++) {
+            స్థిరరాశి int64_t i03       = i3 / r3;
+            స్థిరరాశి అక్షరం *  src0_ptr3 = (స్థిరరాశి అక్షరం *) params->src0.దత్తాంశం + i03 * nb03;
+            స్థిరరాశి అక్షరం *  src1_ptr3 = (స్థిరరాశి అక్షరం *) params->src1.దత్తాంశం + i3 * nb13;
+            అక్షరం *        dst_ptr3  = (అక్షరం *) params->dst.దత్తాంశం + i3 * nbd3;
 
-            for (int64_t i2 = 0; i2 < ne12; i2++) {
-                const int64_t i02       = i2 / r2;
-                const char *  src0_ptr2 = src0_ptr3 + i02 * nb02;
-                const char *  src1_ptr2 = src1_ptr3 + i2 * nb12;
-                char *        dst_ptr2  = dst_ptr3 + i2 * nbd2;
+            కొరకు (int64_t i2 = 0; i2 < ne12; i2++) {
+                స్థిరరాశి int64_t i02       = i2 / r2;
+                స్థిరరాశి అక్షరం *  src0_ptr2 = src0_ptr3 + i02 * nb02;
+                స్థిరరాశి అక్షరం *  src1_ptr2 = src1_ptr3 + i2 * nb12;
+                అక్షరం *        dst_ptr2  = dst_ptr3 + i2 * nbd2;
 
-                for (int64_t n = 0; n < N; n++) {
-                    const float * b_col_base = (const float *) (src1_ptr2 + n * nb11);
+                కొరకు (int64_t n = 0; n < N; n++) {
+                    స్థిరరాశి దశాంశం * b_నిలువు_పునాది = (స్థిరరాశి దశాంశం *) (src1_ptr2 + n * nb11);
                     q4_dot_state  q4_state;
                     q4_dot_begin(&q4_state);
 
-                    if (use_simple_x2) {
-                        for (int64_t m0 = hart_id; m0 < M; m0 += STRIDE_M * SIMPLE_X2_ROWS) {
-                            const int64_t      m1     = m0 + STRIDE_M;
-                            const block_q4_0 * q_row0 = (const block_q4_0 *) (src0_ptr2 + m0 * nb01);
+                    ఒకవేళ (use_simple_x2) {
+                        కొరకు (int64_t m0 = hart_id; m0 < M; m0 += STRIDE_M * SIMPLE_X2_అడ్డువరుసలు) {
+                            స్థిరరాశి int64_t      m1     = m0 + STRIDE_M;
+                            స్థిరరాశి ఖండం_q4_0 * q_row0 = (స్థిరరాశి ఖండం_q4_0 *) (src0_ptr2 + m0 * nb01);
 
-                            if (m1 < M) {
-                                const block_q4_0 * q_row1 = (const block_q4_0 *) (src0_ptr2 + m1 * nb01);
-                                float              s0, s1;
-                                q4_dot_compute_x2_aligned(q_row0, q_row1, b_col_base, K_blocks, &s0, &s1);
+                            ఒకవేళ (m1 < M) {
+                                స్థిరరాశి ఖండం_q4_0 * q_row1 = (స్థిరరాశి ఖండం_q4_0 *) (src0_ptr2 + m1 * nb01);
+                                దశాంశం              s0, s1;
+                                q4_dot_compute_x2_aligned(q_row0, q_row1, b_నిలువు_పునాది, K_ఖండాలు, &s0, &s1);
 
-                                float * dst0 = (float *) (dst_ptr2 + n * nbd1 + m0 * sizeof(float));
-                                float * dst1 = (float *) (dst_ptr2 + n * nbd1 + m1 * sizeof(float));
-                                atomic_store_f32((volatile float *) dst0, s0);
-                                atomic_store_f32((volatile float *) dst1, s1);
-                            } else {
-                                float   sum = q4_dot_compute(q_row0, b_col_base, K_blocks);
-                                float * dst = (float *) (dst_ptr2 + n * nbd1 + m0 * sizeof(float));
-                                atomic_store_f32((volatile float *) dst, sum);
+                                దశాంశం * dst0 = (దశాంశం *) (dst_ptr2 + n * nbd1 + m0 * పరిమాణం(దశాంశం));
+                                దశాంశం * dst1 = (దశాంశం *) (dst_ptr2 + n * nbd1 + m1 * పరిమాణం(దశాంశం));
+                                atomic_store_f32((అస్థిర దశాంశం *) dst0, s0);
+                                atomic_store_f32((అస్థిర దశాంశం *) dst1, s1);
+                            } లేకపోతే {
+                                దశాంశం   కూడిక = q4_dot_compute(q_row0, b_నిలువు_పునాది, K_ఖండాలు);
+                                దశాంశం * dst = (దశాంశం *) (dst_ptr2 + n * nbd1 + m0 * పరిమాణం(దశాంశం));
+                                atomic_store_f32((అస్థిర దశాంశం *) dst, కూడిక);
                             }
                         }
-                    } else {
-                        for (int64_t m = hart_id; m < M; m += STRIDE_M) {
-                            const block_q4_0 * q_row = (const block_q4_0 *) (src0_ptr2 + m * nb01);
+                    } లేకపోతే {
+                        కొరకు (int64_t m = hart_id; m < M; m += STRIDE_M) {
+                            స్థిరరాశి ఖండం_q4_0 * q_అడ్డువరుస = (స్థిరరాశి ఖండం_q4_0 *) (src0_ptr2 + m * nb01);
 
-                            float sum = q4_dot_compute(q_row, b_col_base, K_blocks);
+                            దశాంశం కూడిక = q4_dot_compute(q_అడ్డువరుస, b_నిలువు_పునాది, K_ఖండాలు);
 
-                            float * dst_entry = (float *) (dst_ptr2 + n * nbd1 + m * sizeof(float));
-                            atomic_store_f32((volatile float *) dst_entry, sum);
+                            దశాంశం * dst_నమోదు = (దశాంశం *) (dst_ptr2 + n * nbd1 + m * పరిమాణం(దశాంశం));
+                            atomic_store_f32((అస్థిర దశాంశం *) dst_నమోదు, కూడిక);
                         }
                     }
 
-                    q4_dot_end(&q4_state);
+                    q4_dot_చివర(&q4_state);
                 }
             }
         }
     }
 
-    return 0;
+    తిరిగి 0;
 }

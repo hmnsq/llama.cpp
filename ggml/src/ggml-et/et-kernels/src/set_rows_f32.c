@@ -26,36 +26,36 @@
 // - Sequential source reads, scattered destination writes
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "math_fp.h"
-#include "platform.h"
+#అన్తర్భావ "ggml_tensor.h"
+#అన్తర్భావ "math_fp.h"
+#అన్తర్భావ "platform.h"
 
-#include <assert.h>
-#include <stdbool.h>
-#include <stdint.h>
+#అన్తర్భావ <assert.h>
+#అన్తర్భావ <stdbool.h>
+#అన్తర్భావ <stdint.h>
 
-#define CACHE_LINE_SIZE_BYTES 64
-#define CACHE_LINE_F32_ELEMS  16  // 64 / 4
-#define CACHE_LINE_F16_ELEMS  32  // 64 / 2
+#నిర్వచించు CACHE_పంక్తి_కొలత_బైట్లు 64
+#నిర్వచించు CACHE_పంక్తి_F32_ELEMS  16  // 64 / 4
+#నిర్వచించు CACHE_పంక్తి_F16_ELEMS  32  // 64 / 2
 
-static int64_t gcd64(int64_t a, int64_t b) {
-    while (b) {
+స్థిర int64_t gcd64(int64_t a, int64_t b) {
+    అయితే (b) {
         int64_t t = b;
         b         = a % b;
         a         = t;
     }
-    return a;
+    తిరిగి a;
 }
 
-struct ggml_et_set_rows_params {
-    struct ggml_tensor src0;  // F32 source data tensor
-    struct ggml_tensor src1;  // I64 row indices tensor
-    struct ggml_tensor dst;   // F32/F16 destination tensor
+నిర్మాణం ggml_et_సమితి_అడ్డువరుసలు_params {
+    నిర్మాణం ggml_tensor src0;  // F32 source data tensor
+    నిర్మాణం ggml_tensor src1;  // I64 row indices tensor
+    నిర్మాణం ggml_tensor dst;   // F32/F16 destination tensor
 };
 
 // Copy exactly one cache line (64 bytes = 16 F32 elements) using wide loads/stores
-static void copy_cache_aligned_f32(float * dst, const float * src) {
-    __asm__ volatile(
+స్థిర శూన్య copy_cache_aligned_f32(దశాంశం * dst, స్థిరరాశి దశాంశం * src) {
+    __asm__ అస్థిర(
         "flq2 f0, 0(%[src]) \n\t"   // Load 32 bytes
         "flq2 f1, 32(%[src]) \n\t"  // Load next 32 bytes
         "fsq2 f0, 0(%[dst]) \n\t"   // Store 32 bytes
@@ -66,27 +66,27 @@ static void copy_cache_aligned_f32(float * dst, const float * src) {
 }
 
 // Convert and copy one dst cache line worth of F32->F16 (32 elements src -> 64 bytes dst)
-static void copy_cache_aligned_f16(uint16_t * dst, const float * src) {
-    unsigned long mask_temp;
+స్థిర శూన్య copy_cache_aligned_f16(uint16_t * dst, స్థిరరాశి దశాంశం * src) {
+    గుర్తులేని దీర్ఘ ముసుగు_తాత్కాలిక;
 
     // Build offset vector for consecutive 16-bit stores: [0, 2, 4, 6, 8, 10, 12, 14]
-    float      offset_vec_storage[8];
-    uint32_t * offsets = (uint32_t *) offset_vec_storage;
-    for (int j = 0; j < 8; j++) {
+    దశాంశం      స్థానభ్రంశం_vec_storage[8];
+    uint32_t * offsets = (uint32_t *) స్థానభ్రంశం_vec_storage;
+    కొరకు (పూర్ణాంకం j = 0; j < 8; j++) {
         offsets[j] = j * 2;
     }
 
-    __asm__ volatile(
+    __asm__ అస్థిర(
         "mova.x.m  %[mask_temp]         \n\t"
         "mov.m.x   m0, x0, 0xFF         \n\t"
         "flw.ps    f1, 0(%[offsets])    \n\t"
-        : [mask_temp] "=&r"(mask_temp)
-        : [offsets] "r"(offset_vec_storage)
+        : [ముసుగు_తాత్కాలిక] "=&r"(ముసుగు_తాత్కాలిక)
+        : [offsets] "r"(స్థానభ్రంశం_vec_storage)
         : "f1");
 
     // 4 iterations of 8 elements = 32 F16 elements = 64 bytes = 1 cache line
-    for (int i = 0; i < 32; i += 8) {
-        __asm__ volatile(
+    కొరకు (పూర్ణాంకం i = 0; i < 32; i += 8) {
+        __asm__ అస్థిర(
             "flw.ps    f2, 0(%[src_ptr])    \n\t"
             "fcvt.f16.ps f3, f2             \n\t"
             "fsch.ps   f3, f1(%[dst_ptr])   \n\t"
@@ -95,300 +95,300 @@ static void copy_cache_aligned_f16(uint16_t * dst, const float * src) {
             : "f2", "f3", "memory");
     }
 
-    __asm__ volatile("mova.m.x  %[mask_temp]         \n\t" : : [mask_temp] "r"(mask_temp));
+    __asm__ అస్థిర("mova.m.x  %[mask_temp]         \n\t" : : [ముసుగు_తాత్కాలిక] "r"(ముసుగు_తాత్కాలిక));
 }
 
-static inline size_t tensor_bytes(const struct ggml_tensor * t) {
-    return (size_t) t->ne[0] * t->ne[1] * t->ne[2] * t->ne[3] * t->nb[0];
+స్థిర అంతఃవరుస size_t tensor_బైట్లు(స్థిరరాశి నిర్మాణం ggml_tensor * t) {
+    తిరిగి (size_t) t->ne[0] * t->ne[1] * t->ne[2] * t->ne[3] * t->nb[0];
 }
 
-int entry_point(struct ggml_et_set_rows_params * params, void * env) {
+పూర్ణాంకం నమోదు_బిందువు(నిర్మాణం ggml_et_సమితి_అడ్డువరుసలు_params * params, శూన్య * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    ఒకవేళ (!kernel_env) {
+        తిరిగి -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    పూర్ణాంకం thread_id   = get_relative_thread_id(kernel_env->shire_ముసుగు);
+    పూర్ణాంకం అంకె_దారాలు = get_అంకె_దారాలు(kernel_env->shire_ముసుగు);
 
-    if (thread_id < 0) {
-        return 0;
+    ఒకవేళ (thread_id < 0) {
+        తిరిగి 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;  // Invalid pointer
+    ఒకవేళ (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        తిరిగి -1;  // Invalid pointer
     }
 
-    struct ggml_tensor * src0 = &params->src0;  // Source data tensor (F32)
-    struct ggml_tensor * src1 = &params->src1;  // Row indices tensor (I64)
-    struct ggml_tensor * dst  = &params->dst;   // Destination tensor (F32/F16)
+    నిర్మాణం ggml_tensor * src0 = &params->src0;  // Source data tensor (F32)
+    నిర్మాణం ggml_tensor * src1 = &params->src1;  // Row indices tensor (I64)
+    నిర్మాణం ggml_tensor * dst  = &params->dst;   // Destination tensor (F32/F16)
 
-    if (src0->type != GGML_TYPE_F32 || src1->type != GGML_TYPE_I64) {
-        return -1;  // Invalid source types
+    ఒకవేళ (src0->type != GGML_TYPE_F32 || src1->type != GGML_TYPE_I64) {
+        తిరిగి -1;  // Invalid source types
     }
 
-    if (dst->type != GGML_TYPE_F32 && dst->type != GGML_TYPE_F16) {
-        return -1;  // Unsupported destination type
+    ఒకవేళ (dst->type != GGML_TYPE_F32 && dst->type != GGML_TYPE_F16) {
+        తిరిగి -1;  // Unsupported destination type
     }
 
-    float *   src0_data = (float *) src0->data;
-    int64_t * src1_data = (int64_t *) src1->data;
-    void *    dst_data  = dst->data;
+    దశాంశం *   src0_దత్తాంశం = (దశాంశం *) src0->దత్తాంశం;
+    int64_t * src1_దత్తాంశం = (int64_t *) src1->దత్తాంశం;
+    శూన్య *    dst_దత్తాంశం  = dst->దత్తాంశం;
 
-    if (!src0_data || !src1_data || !dst_data) {
-        return -1;  // Null data pointer
+    ఒకవేళ (!src0_దత్తాంశం || !src1_దత్తాంశం || !dst_దత్తాంశం) {
+        తిరిగి -1;  // Null data pointer
     }
 
-    const int64_t ne00 = src0->ne[0];  // Source columns (row width)
-    const int64_t ne01 = src0->ne[1];  // Source rows (number of rows to write)
-    const int64_t ne02 = src0->ne[2];  // Source batch dimension
-    const int64_t ne03 = src0->ne[3];  // Source outer batch dimension
+    స్థిరరాశి int64_t ne00 = src0->ne[0];  // Source columns (row width)
+    స్థిరరాశి int64_t ne01 = src0->ne[1];  // Source rows (number of rows to write)
+    స్థిరరాశి int64_t ne02 = src0->ne[2];  // Source batch dimension
+    స్థిరరాశి int64_t ne03 = src0->ne[3];  // Source outer batch dimension
 
-    const int64_t nb01 = src0->nb[1];
-    const int64_t nb02 = src0->nb[2];
-    const int64_t nb03 = src0->nb[3];
+    స్థిరరాశి int64_t nb01 = src0->nb[1];
+    స్థిరరాశి int64_t nb02 = src0->nb[2];
+    స్థిరరాశి int64_t nb03 = src0->nb[3];
 
-    const int64_t ne10 = src1->ne[0];  // Number of indices in dimension 0
-    const int64_t ne11 = src1->ne[1];  // Number of indices in dimension 1
-    const int64_t ne12 = src1->ne[2];  // Batch dimension for indices
+    స్థిరరాశి int64_t ne10 = src1->ne[0];  // Number of indices in dimension 0
+    స్థిరరాశి int64_t ne11 = src1->ne[1];  // Number of indices in dimension 1
+    స్థిరరాశి int64_t ne12 = src1->ne[2];  // Batch dimension for indices
 
-    const int64_t nb10 = src1->nb[0];
-    const int64_t nb11 = src1->nb[1];
-    const int64_t nb12 = src1->nb[2];
+    స్థిరరాశి int64_t nb10 = src1->nb[0];
+    స్థిరరాశి int64_t nb11 = src1->nb[1];
+    స్థిరరాశి int64_t nb12 = src1->nb[2];
 
-    const int64_t ne_dst1 = dst->ne[1];  // Number of rows in destination (for bounds checking)
+    స్థిరరాశి int64_t ne_dst1 = dst->ne[1];  // Number of rows in destination (for bounds checking)
 
-    const int64_t nb1 = dst->nb[1];
-    const int64_t nb2 = dst->nb[2];
-    const int64_t nb3 = dst->nb[3];
+    స్థిరరాశి int64_t nb1 = dst->nb[1];
+    స్థిరరాశి int64_t nb2 = dst->nb[2];
+    స్థిరరాశి int64_t nb3 = dst->nb[3];
 
     // Validate that number of indices matches number of source rows
-    if (ne10 != ne01) {
-        return -1;  // Number of indices must match number of source rows
+    ఒకవేళ (ne10 != ne01) {
+        తిరిగి -1;  // Number of indices must match number of source rows
     }
-#ifdef ET_UBERKERNEL
-    evict_region_past_l2(params->src0.data, tensor_bytes(&params->src0));
-    evict_region_past_l2(params->src1.data, tensor_bytes(&params->src1));
+#నిర్వచితమైతే ET_UBERKERNEL
+    evict_region_past_l2(params->src0.దత్తాంశం, tensor_బైట్లు(&params->src0));
+    evict_region_past_l2(params->src1.దత్తాంశం, tensor_బైట్లు(&params->src1));
     FENCE;
     et_barrier(ET_BARRIER_GLOBAL);
-#endif
-    const int64_t total_rows = ne01 * ne02 * ne03;
+#అయితే_ముగింపు
+    స్థిరరాశి int64_t మొత్తం_అడ్డువరుసలు = ne01 * ne02 * ne03;
 
     // Determine cache-line element count based on destination type
-    const int64_t dst_cl_elems = (dst->type == GGML_TYPE_F16) ? CACHE_LINE_F16_ELEMS : CACHE_LINE_F32_ELEMS;
+    స్థిరరాశి int64_t dst_cl_elems = (dst->type == GGML_TYPE_F16) ? CACHE_పంక్తి_F16_ELEMS : CACHE_పంక్తి_F32_ELEMS;
 
     // Check if rows are cache-line aligned in the destination
-    const bool row_cache_aligned = (ne00 >= dst_cl_elems) && (ne00 % dst_cl_elems == 0);
+    స్థిరరాశి bool అడ్డువరుస_cache_aligned = (ne00 >= dst_cl_elems) && (ne00 % dst_cl_elems == 0);
 
-    if (row_cache_aligned) {
+    ఒకవేళ (అడ్డువరుస_cache_aligned) {
         // Cache-aligned path: distribute dst cache lines across threads
         // Each thread owns complete cache lines -> no coherence conflicts
-        const int64_t cls_per_row    = ne00 / dst_cl_elems;
-        const int64_t total_cls      = total_rows * cls_per_row;
-        const int64_t cls_per_thread = (total_cls + num_threads - 1) / num_threads;
-        const int64_t my_start       = thread_id * cls_per_thread;
-        int64_t       my_end         = my_start + cls_per_thread;
-        if (my_end > total_cls) {
-            my_end = total_cls;
+        స్థిరరాశి int64_t cls_చొప్పున_అడ్డువరుస    = ne00 / dst_cl_elems;
+        స్థిరరాశి int64_t మొత్తం_cls      = మొత్తం_అడ్డువరుసలు * cls_చొప్పున_అడ్డువరుస;
+        స్థిరరాశి int64_t cls_చొప్పున_thread = (మొత్తం_cls + అంకె_దారాలు - 1) / అంకె_దారాలు;
+        స్థిరరాశి int64_t my_ప్రారంభం       = thread_id * cls_చొప్పున_thread;
+        int64_t       my_చివర         = my_ప్రారంభం + cls_చొప్పున_thread;
+        ఒకవేళ (my_చివర > మొత్తం_cls) {
+            my_చివర = మొత్తం_cls;
         }
-        if (my_start >= total_cls) {
-            return 0;
+        ఒకవేళ (my_ప్రారంభం >= మొత్తం_cls) {
+            తిరిగి 0;
         }
 
-        for (int64_t cl = my_start; cl < my_end; cl++) {
+        కొరకు (int64_t cl = my_ప్రారంభం; cl < my_చివర; cl++) {
             // Map flat cache-line index -> (row, offset within row)
-            const int64_t row_flat  = cl / cls_per_row;
-            const int64_t cl_in_row = cl % cls_per_row;
+            స్థిరరాశి int64_t అడ్డువరుస_flat  = cl / cls_చొప్పున_అడ్డువరుస;
+            స్థిరరాశి int64_t cl_లోపల_అడ్డువరుస = cl % cls_చొప్పున_అడ్డువరుస;
 
             // Decompose flat row -> (i03, i02, i01)
-            const int64_t i01 = row_flat % ne01;
-            const int64_t tmp = row_flat / ne01;
-            const int64_t i02 = tmp % ne02;
-            const int64_t i03 = tmp / ne02;
+            స్థిరరాశి int64_t i01 = అడ్డువరుస_flat % ne01;
+            స్థిరరాశి int64_t tmp = అడ్డువరుస_flat / ne01;
+            స్థిరరాశి int64_t i02 = tmp % ne02;
+            స్థిరరాశి int64_t i03 = tmp / ne02;
 
             // Look up destination row index
-            const int64_t i12               = i03 % ne12;
-            const int64_t i11               = i02 % ne11;
-            const int64_t i10               = i01;
-            const int64_t index_byte_offset = i10 * nb10 + i11 * nb11 + i12 * nb12;
-            const int64_t dst_row_index     = *(int64_t *) ((char *) src1_data + index_byte_offset);
+            స్థిరరాశి int64_t i12               = i03 % ne12;
+            స్థిరరాశి int64_t i11               = i02 % ne11;
+            స్థిరరాశి int64_t i10               = i01;
+            స్థిరరాశి int64_t సూచీ_byte_స్థానభ్రంశం = i10 * nb10 + i11 * nb11 + i12 * nb12;
+            స్థిరరాశి int64_t dst_అడ్డువరుస_సూచీ     = *(int64_t *) ((అక్షరం *) src1_దత్తాంశం + సూచీ_byte_స్థానభ్రంశం);
 
-            if (dst_row_index < 0 || dst_row_index >= ne_dst1) {
-                return -1;
+            ఒకవేళ (dst_అడ్డువరుస_సూచీ < 0 || dst_అడ్డువరుస_సూచీ >= ne_dst1) {
+                తిరిగి -1;
             }
 
             // Source pointer: row base + cache-line offset (always F32 source)
-            const int64_t elem_offset = cl_in_row * dst_cl_elems;
-            const float * src_ptr =
-                (const float *) ((char *) src0_data + i01 * nb01 + i02 * nb02 + i03 * nb03) + elem_offset;
+            స్థిరరాశి int64_t elem_స్థానభ్రంశం = cl_లోపల_అడ్డువరుస * dst_cl_elems;
+            స్థిరరాశి దశాంశం * src_ptr =
+                (స్థిరరాశి దశాంశం *) ((అక్షరం *) src0_దత్తాంశం + i01 * nb01 + i02 * nb02 + i03 * nb03) + elem_స్థానభ్రంశం;
 
             // Destination pointer: scattered row base + cache-line offset
-            char * dst_row_base = (char *) dst_data + dst_row_index * nb1 + i02 * nb2 + i03 * nb3;
+            అక్షరం * dst_అడ్డువరుస_పునాది = (అక్షరం *) dst_దత్తాంశం + dst_అడ్డువరుస_సూచీ * nb1 + i02 * nb2 + i03 * nb3;
 
-            if (dst->type == GGML_TYPE_F32) {
-                float * dst_ptr = (float *) dst_row_base + elem_offset;
+            ఒకవేళ (dst->type == GGML_TYPE_F32) {
+                దశాంశం * dst_ptr = (దశాంశం *) dst_అడ్డువరుస_పునాది + elem_స్థానభ్రంశం;
                 copy_cache_aligned_f32(dst_ptr, src_ptr);
-            } else {
-                uint16_t * dst_ptr = (uint16_t *) dst_row_base + elem_offset;
+            } లేకపోతే {
+                uint16_t * dst_ptr = (uint16_t *) dst_అడ్డువరుస_పునాది + elem_స్థానభ్రంశం;
                 copy_cache_aligned_f16(dst_ptr, src_ptr);
             }
         }
-    } else if (nb1 % CACHE_LINE_SIZE_BYTES == 0) {
+    } లేకపోతే ఒకవేళ (nb1 % CACHE_పంక్తి_కొలత_బైట్లు == 0) {
         // LCM-aligned path: destination row stride is cache-line-aligned, so
         // scattered rows never share a cache line even though ne00 doesn't
         // fill complete cache lines.  Group rows via lcm(ne00, dst_cl_elems)
         // and distribute cache lines across threads — each thread exclusively
         // owns its cache lines, so normal stores are safe (no atomics needed).
-        const int64_t g              = gcd64(ne00, dst_cl_elems);
-        const int64_t rows_per_group = dst_cl_elems / g;  // lcm / ne00
-        const int64_t cls_per_group  = ne00 / g;          // lcm / dst_cl_elems
+        స్థిరరాశి int64_t g              = gcd64(ne00, dst_cl_elems);
+        స్థిరరాశి int64_t అడ్డువరుసలు_చొప్పున_సమూహం = dst_cl_elems / g;  // lcm / ne00
+        స్థిరరాశి int64_t cls_చొప్పున_సమూహం  = ne00 / g;          // lcm / dst_cl_elems
 
-        const int64_t total_groups   = (total_rows + rows_per_group - 1) / rows_per_group;
-        const int64_t total_cls      = total_groups * cls_per_group;
-        const int64_t cls_per_thread = (total_cls + num_threads - 1) / num_threads;
-        const int64_t my_start       = thread_id * cls_per_thread;
-        int64_t       my_end         = my_start + cls_per_thread;
-        if (my_end > total_cls) {
-            my_end = total_cls;
+        స్థిరరాశి int64_t మొత్తం_groups   = (మొత్తం_అడ్డువరుసలు + అడ్డువరుసలు_చొప్పున_సమూహం - 1) / అడ్డువరుసలు_చొప్పున_సమూహం;
+        స్థిరరాశి int64_t మొత్తం_cls      = మొత్తం_groups * cls_చొప్పున_సమూహం;
+        స్థిరరాశి int64_t cls_చొప్పున_thread = (మొత్తం_cls + అంకె_దారాలు - 1) / అంకె_దారాలు;
+        స్థిరరాశి int64_t my_ప్రారంభం       = thread_id * cls_చొప్పున_thread;
+        int64_t       my_చివర         = my_ప్రారంభం + cls_చొప్పున_thread;
+        ఒకవేళ (my_చివర > మొత్తం_cls) {
+            my_చివర = మొత్తం_cls;
         }
-        if (my_start >= total_cls) {
-            return 0;
+        ఒకవేళ (my_ప్రారంభం >= మొత్తం_cls) {
+            తిరిగి 0;
         }
 
-#ifdef BUILD_FOR_UBERKERNEL
+#నిర్వచితమైతే BUILD_FOR_UBERKERNEL
     et_barrier(ET_BARRIER_GLOBAL);
     // evict_region_past_l2(src0_data, tensor_bytes(src0));
     // evict_region_past_l2(src1_data, tensor_bytes(src1));
     // // et_barrier(ET_BARRIER_GLOBAL);
     // FENCE;
-#endif
+#అయితే_ముగింపు
 
 
-        for (int64_t cl = my_start; cl < my_end; cl++) {
-            const int64_t group_idx   = cl / cls_per_group;
-            const int64_t cl_in_group = cl % cls_per_group;
+        కొరకు (int64_t cl = my_ప్రారంభం; cl < my_చివర; cl++) {
+            స్థిరరాశి int64_t సమూహం_idx   = cl / cls_చొప్పున_సమూహం;
+            స్థిరరాశి int64_t cl_లోపల_సమూహం = cl % cls_చొప్పున_సమూహం;
 
             // Element range [elem_start, elem_end) within the flattened group
-            const int64_t elem_start = cl_in_group * dst_cl_elems;
-            const int64_t elem_end   = elem_start + dst_cl_elems;
+            స్థిరరాశి int64_t elem_ప్రారంభం = cl_లోపల_సమూహం * dst_cl_elems;
+            స్థిరరాశి int64_t elem_చివర   = elem_ప్రారంభం + dst_cl_elems;
 
             // Which row(s) inside this group does the cache line touch?
-            const int64_t r_first = elem_start / ne00;
-            const int64_t r_last  = (elem_end - 1) / ne00;
+            స్థిరరాశి int64_t r_మొదటి = elem_ప్రారంభం / ne00;
+            స్థిరరాశి int64_t r_చివరి  = (elem_చివర - 1) / ne00;
 
-            for (int64_t r = r_first; r <= r_last; r++) {
-                const int64_t row_flat = group_idx * rows_per_group + r;
-                if (row_flat >= total_rows) {
-                    break;
+            కొరకు (int64_t r = r_మొదటి; r <= r_చివరి; r++) {
+                స్థిరరాశి int64_t అడ్డువరుస_flat = సమూహం_idx * అడ్డువరుసలు_చొప్పున_సమూహం + r;
+                ఒకవేళ (అడ్డువరుస_flat >= మొత్తం_అడ్డువరుసలు) {
+                    ఆపు;
                 }
 
                 // Column range within this row
-                int64_t col_begin = (r == r_first) ? (elem_start - r * ne00) : 0;
-                int64_t col_end   = (r == r_last) ? (elem_end - r * ne00) : ne00;
-                if (col_end > ne00) {
-                    col_end = ne00;
+                int64_t నిలువు_begin = (r == r_మొదటి) ? (elem_ప్రారంభం - r * ne00) : 0;
+                int64_t నిలువు_చివర   = (r == r_చివరి) ? (elem_చివర - r * ne00) : ne00;
+                ఒకవేళ (నిలువు_చివర > ne00) {
+                    నిలువు_చివర = ne00;
                 }
 
                 // Decompose flat row -> (i03, i02, i01)
-                const int64_t i01 = row_flat % ne01;
-                const int64_t tmp = row_flat / ne01;
-                const int64_t i02 = tmp % ne02;
-                const int64_t i03 = tmp / ne02;
+                స్థిరరాశి int64_t i01 = అడ్డువరుస_flat % ne01;
+                స్థిరరాశి int64_t tmp = అడ్డువరుస_flat / ne01;
+                స్థిరరాశి int64_t i02 = tmp % ne02;
+                స్థిరరాశి int64_t i03 = tmp / ne02;
 
                 // Look up destination row index
-                const int64_t i12               = i03 % ne12;
-                const int64_t i11               = i02 % ne11;
-                const int64_t i10               = i01;
-                const int64_t index_byte_offset = i10 * nb10 + i11 * nb11 + i12 * nb12;
-                const int64_t dst_row_index     = *(int64_t *) ((char *) src1_data + index_byte_offset);
+                స్థిరరాశి int64_t i12               = i03 % ne12;
+                స్థిరరాశి int64_t i11               = i02 % ne11;
+                స్థిరరాశి int64_t i10               = i01;
+                స్థిరరాశి int64_t సూచీ_byte_స్థానభ్రంశం = i10 * nb10 + i11 * nb11 + i12 * nb12;
+                స్థిరరాశి int64_t dst_అడ్డువరుస_సూచీ     = *(int64_t *) ((అక్షరం *) src1_దత్తాంశం + సూచీ_byte_స్థానభ్రంశం);
 
-                if (dst_row_index < 0 || dst_row_index >= ne_dst1) {
-                    return -1;
+                ఒకవేళ (dst_అడ్డువరుస_సూచీ < 0 || dst_అడ్డువరుస_సూచీ >= ne_dst1) {
+                    తిరిగి -1;
                 }
 
-                const float * src_row = (const float *) ((char *) src0_data + i01 * nb01 + i02 * nb02 + i03 * nb03);
-                char *        dst_row_base = (char *) dst_data + dst_row_index * nb1 + i02 * nb2 + i03 * nb3;
+                స్థిరరాశి దశాంశం * src_అడ్డువరుస = (స్థిరరాశి దశాంశం *) ((అక్షరం *) src0_దత్తాంశం + i01 * nb01 + i02 * nb02 + i03 * nb03);
+                అక్షరం *        dst_అడ్డువరుస_పునాది = (అక్షరం *) dst_దత్తాంశం + dst_అడ్డువరుస_సూచీ * nb1 + i02 * nb2 + i03 * nb3;
 
                 // nb1 is cache-line-aligned, so dst_row_base is too.
                 // Use aligned copy when the column range fills a complete
                 // cache line at a cache-line-aligned offset within the row.
-                const bool full_cl = (col_begin % dst_cl_elems == 0) && (col_end - col_begin == dst_cl_elems);
+                స్థిరరాశి bool నిండిన_cl = (నిలువు_begin % dst_cl_elems == 0) && (నిలువు_చివర - నిలువు_begin == dst_cl_elems);
 
-                if (dst->type == GGML_TYPE_F32) {
-                    float * dp = (float *) dst_row_base;
-                    if (full_cl) {
-                        copy_cache_aligned_f32(dp + col_begin, src_row + col_begin);
-                    } else {
-                        for (int64_t i = col_begin; i < col_end; i++) {
-                            dp[i] = src_row[i];
+                ఒకవేళ (dst->type == GGML_TYPE_F32) {
+                    దశాంశం * dp = (దశాంశం *) dst_అడ్డువరుస_పునాది;
+                    ఒకవేళ (నిండిన_cl) {
+                        copy_cache_aligned_f32(dp + నిలువు_begin, src_అడ్డువరుస + నిలువు_begin);
+                    } లేకపోతే {
+                        కొరకు (int64_t i = నిలువు_begin; i < నిలువు_చివర; i++) {
+                            dp[i] = src_అడ్డువరుస[i];
                         }
                     }
-                } else {
-                    uint16_t * dp = (uint16_t *) dst_row_base;
-                    if (full_cl) {
-                        copy_cache_aligned_f16(dp + col_begin, src_row + col_begin);
-                    } else {
-                        for (int64_t i = col_begin; i < col_end; i++) {
-                            dp[i] = fp32_to_fp16(src_row[i]);
+                } లేకపోతే {
+                    uint16_t * dp = (uint16_t *) dst_అడ్డువరుస_పునాది;
+                    ఒకవేళ (నిండిన_cl) {
+                        copy_cache_aligned_f16(dp + నిలువు_begin, src_అడ్డువరుస + నిలువు_begin);
+                    } లేకపోతే {
+                        కొరకు (int64_t i = నిలువు_begin; i < నిలువు_చివర; i++) {
+                            dp[i] = fp32_గమ్యం_fp16(src_అడ్డువరుస[i]);
                         }
                     }
                 }
             }
         }
 
-#ifdef BUILD_FOR_UBERKERNEL
+#నిర్వచితమైతే BUILD_FOR_UBERKERNEL
     et_barrier(ET_BARRIER_GLOBAL);
     // evict_region_past_l2(src0_data, tensor_bytes(src0));
     // evict_region_past_l2(src1_data, tensor_bytes(src1));
     // // et_barrier(ET_BARRIER_GLOBAL);
     // FENCE;
-#endif
+#అయితే_ముగింపు
 
 
-    } else {
+    } లేకపోతే {
         // Fallback: nb1 not cache-line-aligned, so scattered destination rows
         // may share a cache line.  Use atomic global stores to bypass L1D.
-        for (int64_t row_flat = thread_id; row_flat < total_rows; row_flat += num_threads) {
-            const int64_t i01 = row_flat % ne01;
-            const int64_t tmp = row_flat / ne01;
-            const int64_t i02 = tmp % ne02;
-            const int64_t i03 = tmp / ne02;
+        కొరకు (int64_t అడ్డువరుస_flat = thread_id; అడ్డువరుస_flat < మొత్తం_అడ్డువరుసలు; అడ్డువరుస_flat += అంకె_దారాలు) {
+            స్థిరరాశి int64_t i01 = అడ్డువరుస_flat % ne01;
+            స్థిరరాశి int64_t tmp = అడ్డువరుస_flat / ne01;
+            స్థిరరాశి int64_t i02 = tmp % ne02;
+            స్థిరరాశి int64_t i03 = tmp / ne02;
 
             // Look up destination row index
-            const int64_t i12               = i03 % ne12;
-            const int64_t i11               = i02 % ne11;
-            const int64_t i10               = i01;
-            const int64_t index_byte_offset = i10 * nb10 + i11 * nb11 + i12 * nb12;
-            const int64_t dst_row_index     = *(int64_t *) ((char *) src1_data + index_byte_offset);
+            స్థిరరాశి int64_t i12               = i03 % ne12;
+            స్థిరరాశి int64_t i11               = i02 % ne11;
+            స్థిరరాశి int64_t i10               = i01;
+            స్థిరరాశి int64_t సూచీ_byte_స్థానభ్రంశం = i10 * nb10 + i11 * nb11 + i12 * nb12;
+            స్థిరరాశి int64_t dst_అడ్డువరుస_సూచీ     = *(int64_t *) ((అక్షరం *) src1_దత్తాంశం + సూచీ_byte_స్థానభ్రంశం);
 
-            if (dst_row_index < 0 || dst_row_index >= ne_dst1) {
-                return -1;
+            ఒకవేళ (dst_అడ్డువరుస_సూచీ < 0 || dst_అడ్డువరుస_సూచీ >= ne_dst1) {
+                తిరిగి -1;
             }
 
-            const float * src_row      = (const float *) ((char *) src0_data + i01 * nb01 + i02 * nb02 + i03 * nb03);
-            char *        dst_row_base = (char *) dst_data + dst_row_index * nb1 + i02 * nb2 + i03 * nb3;
+            స్థిరరాశి దశాంశం * src_అడ్డువరుస      = (స్థిరరాశి దశాంశం *) ((అక్షరం *) src0_దత్తాంశం + i01 * nb01 + i02 * nb02 + i03 * nb03);
+            అక్షరం *        dst_అడ్డువరుస_పునాది = (అక్షరం *) dst_దత్తాంశం + dst_అడ్డువరుస_సూచీ * nb1 + i02 * nb2 + i03 * nb3;
 
-            if (dst->type == GGML_TYPE_F32) {
-                volatile float * dst_row = (volatile float *) dst_row_base;
-                for (int64_t i = 0; i < ne00; i++) {
-                    atomic_store_f32(dst_row + i, src_row[i]);
+            ఒకవేళ (dst->type == GGML_TYPE_F32) {
+                అస్థిర దశాంశం * dst_అడ్డువరుస = (అస్థిర దశాంశం *) dst_అడ్డువరుస_పునాది;
+                కొరకు (int64_t i = 0; i < ne00; i++) {
+                    atomic_store_f32(dst_అడ్డువరుస + i, src_అడ్డువరుస[i]);
                 }
-            } else {
-                volatile uint16_t * dst_row = (volatile uint16_t *) dst_row_base;
-                for (int64_t i = 0; i < ne00; i++) {
-                    atomic_store_f16(dst_row + i, fp32_to_fp16(src_row[i]));
+            } లేకపోతే {
+                అస్థిర uint16_t * dst_అడ్డువరుస = (అస్థిర uint16_t *) dst_అడ్డువరుస_పునాది;
+                కొరకు (int64_t i = 0; i < ne00; i++) {
+                    atomic_store_f16(dst_అడ్డువరుస + i, fp32_గమ్యం_fp16(src_అడ్డువరుస[i]));
                 }
             }
         }
     }
 
-#ifdef BUILD_FOR_UBERKERNEL
+#నిర్వచితమైతే BUILD_FOR_UBERKERNEL
     et_barrier(ET_BARRIER_GLOBAL);
     // evict_region_past_l2(src0_data, tensor_bytes(src0));
     // evict_region_past_l2(src1_data, tensor_bytes(src1));
     // // et_barrier(ET_BARRIER_GLOBAL);
     // FENCE;
-#endif
-    return 0;
+#అయితే_ముగింపు
+    తిరిగి 0;
 }

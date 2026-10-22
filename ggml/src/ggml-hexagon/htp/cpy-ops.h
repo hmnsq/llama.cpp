@@ -1,108 +1,108 @@
-#ifndef HTP_CPY_OPS_H
-#define HTP_CPY_OPS_H
+#నిర్వచితం_కాకపోతే HTP_CPY_OPS_H
+#నిర్వచించు HTP_CPY_OPS_H
 
-#include "hex-common.h"
-#include "hex-fastdiv.h"
-#include "gather-rows.h"
-#include <stdint.h>
+#అన్తర్భావ "hex-common.h"
+#అన్తర్భావ "hex-fastdiv.h"
+#అన్తర్భావ "gather-rows.h"
+#అన్తర్భావ <stdint.h>
 
-enum htp_copy_kernel_type {
+గణన htp_copy_kernel_type {
     HTP_COPY_KERNEL_UNSUPPORTED        = 0,
     HTP_COPY_KERNEL_1D_CONTIG          = 1,
     HTP_COPY_KERNEL_SAMESHAPE_SAMETYPE = 2,
     HTP_COPY_KERNEL_SAMESHAPE_CONVERT  = 3,
     HTP_COPY_KERNEL_RESHAPE            = 4,
     HTP_COPY_KERNEL_SCALAR             = 5,
-    HTP_COPY_KERNEL_GATHER_ROWS        = 6,
+    HTP_COPY_KERNEL_GATHER_అడ్డువరుసలు        = 6,
 };
 
-struct htp_copy_convert_params {
-    uint32_t              src0_buf_size;
-    uint32_t              dst_buf_size;
-    uint32_t              spad0_size_per_thread;
-    uint32_t              spad1_size_per_thread;
-    uint32_t              src0_row_stride;  // row pitch in the VTCM buffers
-    uint32_t              dst_row_stride;
-    uint32_t              blk_rows;         // rows moved per DMA descriptor
-    struct fastdiv_values div_ne01;
-    struct fastdiv_values div_ne02_ne01;
+నిర్మాణం htp_copy_convert_params {
+    uint32_t              src0_buf_కొలత;
+    uint32_t              dst_buf_కొలత;
+    uint32_t              spad0_కొలత_చొప్పున_thread;
+    uint32_t              spad1_కొలత_చొప్పున_thread;
+    uint32_t              src0_అడ్డువరుస_stride;  // row pitch in the VTCM buffers
+    uint32_t              dst_అడ్డువరుస_stride;
+    uint32_t              blk_అడ్డువరుసలు;         // rows moved per DMA descriptor
+    నిర్మాణం fastdiv_విలువలు div_ne01;
+    నిర్మాణం fastdiv_విలువలు div_ne02_ne01;
 };
 
-struct htp_copy_reshape_params {
-    struct fastdiv_values div_ne0;
-    struct fastdiv_values div_ne1_ne0;
-    struct fastdiv_values div_ne2_ne1_ne0;
-    struct fastdiv_values div_ne00;
-    struct fastdiv_values div_ne01_ne00;
-    struct fastdiv_values div_ne02_ne01_ne00;
+నిర్మాణం htp_copy_reshape_params {
+    నిర్మాణం fastdiv_విలువలు div_ne0;
+    నిర్మాణం fastdiv_విలువలు div_ne1_ne0;
+    నిర్మాణం fastdiv_విలువలు div_ne2_ne1_ne0;
+    నిర్మాణం fastdiv_విలువలు div_ne00;
+    నిర్మాణం fastdiv_విలువలు div_ne01_ne00;
+    నిర్మాణం fastdiv_విలువలు div_ne02_ne01_ne00;
 };
 
-struct htp_copy_kernel_params {
+నిర్మాణం htp_copy_kernel_params {
     uint8_t  kernel_type;
-    uint8_t  src0_type_size;
-    uint8_t  dst_type_size;
-    uint8_t  n_threads;
+    uint8_t  src0_type_కొలత;
+    uint8_t  dst_type_కొలత;
+    uint8_t  n_దారాలు;
 
-    uint32_t total_elems;
-    uint32_t total_rows;
-    uint32_t vtcm_size;
+    uint32_t మొత్తం_elems;
+    uint32_t మొత్తం_అడ్డువరుసలు;
+    uint32_t vtcm_కొలత;
 
-    union {
-        struct htp_copy_convert_params convert;
-        struct htp_copy_reshape_params reshape;
-        struct htp_gather_rows_params  gather;
+    సంఘం {
+        నిర్మాణం htp_copy_convert_params convert;
+        నిర్మాణం htp_copy_reshape_params reshape;
+        నిర్మాణం htp_gather_అడ్డువరుసలు_params  gather;
     } u;
 };
 
 // Size of one VTCM staging buffer: big enough that a DMA descriptor moves many short
 // rows at once. The copy kernels keep four per thread (two in flight each way), about
 // 1 MB of VTCM with 8 threads.
-#define HTP_COPY_VTCM_BLK_BYTES (32 * 1024)
+#నిర్వచించు HTP_COPY_VTCM_BLK_బైట్లు (32 * 1024)
 
-struct htp_copy_convert_vtcm_layout {
-    uint32_t src0_row_stride;
-    uint32_t dst_row_stride;
-    uint32_t blk_rows;
-    uint32_t src0_buf_size;
-    uint32_t dst_buf_size;
-    uint32_t spad0_size_per_thread;
-    uint32_t spad1_size_per_thread;
-    uint32_t total_bytes;
+నిర్మాణం htp_copy_convert_vtcm_layout {
+    uint32_t src0_అడ్డువరుస_stride;
+    uint32_t dst_అడ్డువరుస_stride;
+    uint32_t blk_అడ్డువరుసలు;
+    uint32_t src0_buf_కొలత;
+    uint32_t dst_buf_కొలత;
+    uint32_t spad0_కొలత_చొప్పున_thread;
+    uint32_t spad1_కొలత_చొప్పున_thread;
+    uint32_t మొత్తం_బైట్లు;
 };
 
 // ne01 bounds a block: rows of one block share the dim-1 stride.
-static inline void htp_copy_convert_vtcm_layout_build(
-    struct htp_copy_convert_vtcm_layout * layout,
+స్థిర అంతఃవరుస శూన్య htp_copy_convert_vtcm_layout_build(
+    నిర్మాణం htp_copy_convert_vtcm_layout * layout,
     uint32_t ne00,
     uint32_t ne01,
-    uint32_t src_type_size,
-    uint32_t dst_type_size,
-    uint32_t n_threads) {
+    uint32_t src_type_కొలత,
+    uint32_t dst_type_కొలత,
+    uint32_t n_దారాలు) {
 
-    layout->src0_row_stride = hex_round_up(ne00 * src_type_size, 256);
-    layout->dst_row_stride  = hex_round_up(ne00 * dst_type_size, 256);
+    layout->src0_అడ్డువరుస_stride = hex_విడత_పైకి(ne00 * src_type_కొలత, 256);
+    layout->dst_అడ్డువరుస_stride  = hex_విడత_పైకి(ne00 * dst_type_కొలత, 256);
 
-    const uint32_t max_row = layout->src0_row_stride > layout->dst_row_stride ? layout->src0_row_stride : layout->dst_row_stride;
-    uint32_t blk_rows = HTP_COPY_VTCM_BLK_BYTES / max_row;
-    if (blk_rows > ne01) {
-        blk_rows = ne01;
+    స్థిరరాశి uint32_t max_అడ్డువరుస = layout->src0_అడ్డువరుస_stride > layout->dst_అడ్డువరుస_stride ? layout->src0_అడ్డువరుస_stride : layout->dst_అడ్డువరుస_stride;
+    uint32_t blk_అడ్డువరుసలు = HTP_COPY_VTCM_BLK_బైట్లు / max_అడ్డువరుస;
+    ఒకవేళ (blk_అడ్డువరుసలు > ne01) {
+        blk_అడ్డువరుసలు = ne01;
     }
-    if (blk_rows == 0) {
-        blk_rows = 1;
+    ఒకవేళ (blk_అడ్డువరుసలు == 0) {
+        blk_అడ్డువరుసలు = 1;
     }
-    layout->blk_rows = blk_rows;
+    layout->blk_అడ్డువరుసలు = blk_అడ్డువరుసలు;
 
-    layout->src0_buf_size = blk_rows * layout->src0_row_stride;
-    layout->dst_buf_size  = blk_rows * layout->dst_row_stride;
-    layout->spad0_size_per_thread = 2 * layout->src0_buf_size;
-    layout->spad1_size_per_thread = 2 * layout->dst_buf_size;
-    layout->total_bytes = n_threads * (layout->spad0_size_per_thread + layout->spad1_size_per_thread);
+    layout->src0_buf_కొలత = blk_అడ్డువరుసలు * layout->src0_అడ్డువరుస_stride;
+    layout->dst_buf_కొలత  = blk_అడ్డువరుసలు * layout->dst_అడ్డువరుస_stride;
+    layout->spad0_కొలత_చొప్పున_thread = 2 * layout->src0_buf_కొలత;
+    layout->spad1_కొలత_చొప్పున_thread = 2 * layout->dst_buf_కొలత;
+    layout->మొత్తం_బైట్లు = n_దారాలు * (layout->spad0_కొలత_చొప్పున_thread + layout->spad1_కొలత_చొప్పున_thread);
 }
 
-#if defined(__cplusplus)
-static_assert(sizeof(struct htp_copy_kernel_params) <= 128, "htp_copy_kernel_params is too large for kernel_params blob");
-#else
-_Static_assert(sizeof(struct htp_copy_kernel_params) <= 128, "htp_copy_kernel_params is too large for kernel_params blob");
-#endif
+#ఒకవేళ defined(__cplusplus)
+static_assert(పరిమాణం(నిర్మాణం htp_copy_kernel_params) <= 128, "htp_copy_kernel_params is too large for kernel_params blob");
+#లేకపోతే
+_Static_assert(పరిమాణం(నిర్మాణం htp_copy_kernel_params) <= 128, "htp_copy_kernel_params is too large for kernel_params blob");
+#అయితే_ముగింపు
 
-#endif // HTP_CPY_OPS_H
+#అయితే_ముగింపు // HTP_CPY_OPS_H

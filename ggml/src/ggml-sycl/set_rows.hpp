@@ -1,8 +1,8 @@
-#ifndef GGML_SYCL_SET_ROWS_HPP
-#define GGML_SYCL_SET_ROWS_HPP
+#నిర్వచితం_కాకపోతే GGML_SYCL_సమితి_అడ్డువరుసలు_HPP
+#నిర్వచించు GGML_SYCL_సమితి_అడ్డువరుసలు_HPP
 
-#include "common.hpp"
+#అన్తర్భావ "common.hpp"
 
-void ggml_sycl_op_set_rows(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+శూన్య ggml_sycl_op_సమితి_అడ్డువరుసలు(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-#endif // GGML_SYCL_SET_ROWS_HPP
+#అయితే_ముగింపు // GGML_SYCL_SET_ROWS_HPP

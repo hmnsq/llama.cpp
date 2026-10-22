@@ -1,57 +1,57 @@
-#ifdef GGML_USE_CPU_HBM
+#నిర్వచితమైతే GGML_USE_CPU_HBM
 
-#include "ggml-backend.h"
-#include "ggml-backend-impl.h"
-#include "ggml-cpu.h"
-#include "ggml-impl.h"
+#అన్తర్భావ "ggml-backend.h"
+#అన్తర్భావ "ggml-backend-impl.h"
+#అన్తర్భావ "ggml-cpu.h"
+#అన్తర్భావ "ggml-impl.h"
 
-#include "hbm.h"
+#అన్తర్భావ "hbm.h"
 
 // buffer type HBM
 
-#include <hbwmalloc.h>
+#అన్తర్భావ <hbwmalloc.h>
 
-static const char * ggml_backend_cpu_hbm_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
-    return "CPU_HBM";
+స్థిర స్థిరరాశి అక్షరం * ggml_backend_cpu_hbm_బఫరు_type_get_name(ggml_backend_బఫరు_type_t buft) {
+    తిరిగి "CPU_HBM";
 
-    GGML_UNUSED(buft);
+    GGML_వాడని(buft);
 }
 
-static void ggml_backend_cpu_hbm_buffer_free_buffer(ggml_backend_buffer_t buffer) {
-    hbw_free(buffer->context);
+స్థిర శూన్య ggml_backend_cpu_hbm_బఫరు_free_బఫరు(ggml_backend_బఫరు_t బఫరు) {
+    hbw_free(బఫరు->context);
 }
 
-static ggml_backend_buffer_t ggml_backend_cpu_hbm_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft,
+స్థిర ggml_backend_బఫరు_t ggml_backend_cpu_hbm_బఫరు_type_alloc_బఫరు(ggml_backend_బఫరు_type_t buft,
                                                                            size_t                     size) {
-    void * ptr;
-    int    result = hbw_posix_memalign(&ptr, ggml_backend_cpu_buffer_type_get_alignment(buft), size);
-    if (result != 0) {
+    శూన్య * ptr;
+    పూర్ణాంకం    ఫలితం = hbw_posix_memalign(&ptr, ggml_backend_cpu_బఫరు_type_get_alignment(buft), size);
+    ఒకవేళ (ఫలితం != 0) {
         GGML_LOG_ERROR("failed to allocate HBM buffer of size %zu\n", size);
-        return NULL;
+        తిరిగి ఖాళీ;
     }
 
-    ggml_backend_buffer_t buffer = ggml_backend_cpu_buffer_from_ptr(ptr, size);
-    buffer->buft                 = buft;
-    buffer->iface.free_buffer    = ggml_backend_cpu_hbm_buffer_free_buffer;
+    ggml_backend_బఫరు_t బఫరు = ggml_backend_cpu_బఫరు_from_ptr(ptr, size);
+    బఫరు->buft                 = buft;
+    బఫరు->iface.free_బఫరు    = ggml_backend_cpu_hbm_బఫరు_free_బఫరు;
 
-    return buffer;
+    తిరిగి బఫరు;
 }
 
-ggml_backend_buffer_type_t ggml_backend_cpu_hbm_buffer_type(void) {
-    static struct ggml_backend_buffer_type ggml_backend_cpu_buffer_type_hbm = {
+ggml_backend_బఫరు_type_t ggml_backend_cpu_hbm_బఫరు_type(శూన్య) {
+    స్థిర నిర్మాణం ggml_backend_బఫరు_type ggml_backend_cpu_బఫరు_type_hbm = {
         /* .iface    = */ {
-                           /* .get_name             = */ ggml_backend_cpu_hbm_buffer_type_get_name,
-                           /* .alloc_buffer         = */ ggml_backend_cpu_hbm_buffer_type_alloc_buffer,
-                           /* .alloc_buffer_n       = */ nullptr,
-                           /* .get_alignment        = */ ggml_backend_cpu_buffer_type_get_alignment,
-                           /* .get_max_size         = */ nullptr,  // defaults to SIZE_MAX
-                           /* .get_alloc_size       = */ nullptr,  // defaults to ggml_nbytes
-                           /* .get_alloc_size_n     = */ NULL,
-                           /* .is_host              = */ ggml_backend_cpu_buffer_type_is_host,
+                           /* .get_name             = */ ggml_backend_cpu_hbm_బఫరు_type_get_name,
+                           /* .alloc_buffer         = */ ggml_backend_cpu_hbm_బఫరు_type_alloc_బఫరు,
+                           /* .alloc_buffer_n       = */ శూన్యసూచిక,
+                           /* .get_alignment        = */ ggml_backend_cpu_బఫరు_type_get_alignment,
+                           /* .get_max_size         = */ శూన్యసూచిక,  // defaults to SIZE_MAX
+                           /* .get_alloc_size       = */ శూన్యసూచిక,  // defaults to ggml_nbytes
+                           /* .get_alloc_size_n     = */ ఖాళీ,
+                           /* .is_host              = */ ggml_backend_cpu_బఫరు_type_is_host,
                            },
-        /* .context  = */ nullptr,
+        /* .context  = */ శూన్యసూచిక,
     };
 
-    return &ggml_backend_cpu_buffer_type_hbm;
+    తిరిగి &ggml_backend_cpu_బఫరు_type_hbm;
 }
-#endif
+#అయితే_ముగింపు

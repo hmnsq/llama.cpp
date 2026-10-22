@@ -1,38 +1,38 @@
-#ifndef HTP_WORK_QUEUE_H
-#define HTP_WORK_QUEUE_H
+#నిర్వచితం_కాకపోతే HTP_WORK_వరుస_H
+#నిర్వచించు HTP_WORK_వరుస_H
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <stddef.h>
+#అన్తర్భావ <stdbool.h>
+#అన్తర్భావ <stdint.h>
+#అన్తర్భావ <stddef.h>
 
-typedef void (*work_queue_func_t)(unsigned int n, unsigned int i, void *);
+రకనిర్వచనం శూన్య (*work_వరుస_func_t)(గుర్తులేని పూర్ణాంకం n, గుర్తులేని పూర్ణాంకం i, శూన్య *);
 
-struct work_queue_s;
-typedef struct work_queue_s * work_queue_t;
+నిర్మాణం work_వరుస_s;
+రకనిర్వచనం నిర్మాణం work_వరుస_s * work_వరుస_t;
 
-#define WORK_QUEUE_MAX_N_THREADS      10
+#నిర్వచించు WORK_వరుస_MAX_N_దారాలు      10
 
-size_t       work_queue_sizeof(uint32_t n_threads, uint32_t capacity, uint32_t stack_size);
-size_t       work_queue_alignof(void);
-work_queue_t work_queue_init(void * ptr, uint32_t n_threads, uint32_t capacity, uint32_t stack_size);
-void         work_queue_free(work_queue_t q);
+size_t       work_వరుస_sizeof(uint32_t n_దారాలు, uint32_t సామర్థ్యం, uint32_t దొంతర_కొలత);
+size_t       work_వరుస_alignof(శూన్య);
+work_వరుస_t work_వరుస_init(శూన్య * ptr, uint32_t n_దారాలు, uint32_t సామర్థ్యం, uint32_t దొంతర_కొలత);
+శూన్య         work_వరుస_free(work_వరుస_t q);
 
-void work_queue_wakeup(work_queue_t q);
-void work_queue_suspend(work_queue_t q);
+శూన్య work_వరుస_wakeup(work_వరుస_t q);
+శూన్య work_వరుస_suspend(work_వరుస_t q);
 
-bool work_queue_run_async(work_queue_t q, work_queue_func_t func, void * data, unsigned int n);
+bool work_వరుస_నిరంతరం_async(work_వరుస_t q, work_వరుస_func_t func, శూన్య * దత్తాంశం, గుర్తులేని పూర్ణాంకం n);
 
-static inline bool work_queue_run(work_queue_t q, work_queue_func_t func, void * data, unsigned int n) {
-    if (n <= 1) {
-        func(n, 0, data);
-        return true;
+స్థిర అంతఃవరుస bool work_వరుస_నిరంతరం(work_వరుస_t q, work_వరుస_func_t func, శూన్య * దత్తాంశం, గుర్తులేని పూర్ణాంకం n) {
+    ఒకవేళ (n <= 1) {
+        func(n, 0, దత్తాంశం);
+        తిరిగి true;
     }
-    return work_queue_run_async(q, func, data, n);
+    తిరిగి work_వరుస_నిరంతరం_async(q, func, దత్తాంశం, n);
 }
 
 // Legacy compatibility
-typedef work_queue_func_t     worker_callback_t;
-#define worker_pool_run_func  work_queue_run
-#define worker_pool           work_queue
+రకనిర్వచనం work_వరుస_func_t     కార్మికుడు_callback_t;
+#నిర్వచించు కార్మికుడు_pool_నిరంతరం_func  work_వరుస_నిరంతరం
+#నిర్వచించు కార్మికుడు_pool           work_వరుస
 
-#endif  // #ifndef HTP_WORK_QUEUE_H
+#అయితే_ముగింపు  // #ifndef HTP_WORK_QUEUE_H

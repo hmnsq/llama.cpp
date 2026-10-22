@@ -1,11 +1,11 @@
-#include "sycl_hw.hpp"
+#అన్తర్భావ "sycl_hw.hpp"
 
-using namespace std;
+ఉపయోగించి నామాకాశ std;
 
 /*defined in
 * /opt/intel/oneapi/compiler/latest/include/sycl/ext/oneapi/experimental/device_architecture.def
 */
-static map<gpu_arch, std::pair<const char*, sycl_intel_gpu_family>> arch2name = {
+స్థిర map<gpu_arch, std::pair<స్థిరరాశి అక్షరం*, sycl_intel_gpu_family>> arch2name = {
     {gpu_arch::intel_gpu_bdw,     {"intel_gpu_bdw",     GPU_FAMILY_IGPU_NON_XE}},
     {gpu_arch::intel_gpu_skl,     {"intel_gpu_skl",     GPU_FAMILY_IGPU_NON_XE}},
     {gpu_arch::intel_gpu_kbl,     {"intel_gpu_kbl",     GPU_FAMILY_IGPU_NON_XE}},
@@ -53,15 +53,15 @@ sycl_hw_info get_device_hw_info(sycl::device* device_ptr) {
     res.arch = arch;
 
     map<syclex::architecture,
-        std::pair<const char*, sycl_intel_gpu_family>>::iterator it =
+        std::pair<స్థిరరాశి అక్షరం*, sycl_intel_gpu_family>>::iterator it =
         arch2name.find(res.arch);
-    if (it != arch2name.end()) {
-        res.arch_name = it->second.first;
+    ఒకవేళ (it != arch2name.end()) {
+        res.arch_name = it->second.మొదటి;
         res.gpu_family = it->second.second;
-    } else {
+    } లేకపోతే {
         res.arch_name = "unknown";
         res.gpu_family = GPU_FAMILY_UKNOWN;
     }
 
-    return res;
+    తిరిగి res;
 }

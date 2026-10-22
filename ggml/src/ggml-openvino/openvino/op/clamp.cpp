@@ -1,30 +1,30 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#అన్తర్భావ "../node_context.h"
+#అన్తర్భావ "../op_table.h"
+#అన్తర్భావ "../utils.h"
 
-#include <cstring>
-#include <openvino/op/clamp.hpp>
+#అన్తర్భావ <cstring>
+#అన్తర్భావ <openvino/op/clamp.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+నామాకాశ ov {
+నామాకాశ frontend {
+నామాకాశ ggml {
+నామాకాశ op {
 
-OutputVector translate_clamp(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+Output_సదిశ translate_clamp(స్థిరరాశి కణుపు_Context & context) {
+    అంకె_inputs_check(context, 1, 1);
 
-    auto input = process_view_input_new(context, 0);
+    స్వయంచాలక ఆదానం = process_view_ఆదానం_new(context, 0);
 
-    const int32_t * op_params = context.get_output_op_params();
-    FRONT_END_CHECK_IMPLEMENTED(op_params != nullptr, "CLAMP requires output op params");
+    స్థిరరాశి int32_t * op_params = context.get_output_op_params();
+    FRONT_చివర_CHECK_IMPLEMENTED(op_params != శూన్యసూచిక, "CLAMP requires output op params");
 
-    float min;
-    float max;
-    std::memcpy(&min, reinterpret_cast<const float *>(op_params) + 0, sizeof(float));
-    std::memcpy(&max, reinterpret_cast<const float *>(op_params) + 1, sizeof(float));
+    దశాంశం min;
+    దశాంశం max;
+    std::జ్ఞాపకం_నకలు(&min, reinterpret_cast<స్థిరరాశి దశాంశం *>(op_params) + 0, పరిమాణం(దశాంశం));
+    std::జ్ఞాపకం_నకలు(&max, reinterpret_cast<స్థిరరాశి దశాంశం *>(op_params) + 1, పరిమాణం(దశాంశం));
 
-    auto res = std::make_shared<ov::op::v0::Clamp>(input, min, max);
-    return rename_outputs_with_suffix({res}, context.get_name());
+    స్వయంచాలక res = std::make_shared<ov::op::v0::Clamp>(ఆదానం, min, max);
+    తిరిగి rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

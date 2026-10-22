@@ -1,45 +1,45 @@
-#include "ggml.h"
-#include "scratch.hpp"
+#అన్తర్భావ "ggml.h"
+#అన్తర్భావ "scratch.hpp"
 
-#include <algorithm>
-#include <cstdint>
-#include <cstdlib>
+#అన్తర్భావ <algorithm>
+#అన్తర్భావ <cstdint>
+#అన్తర్భావ <cstdlib>
 
 ggml_zdnn_pool::~ggml_zdnn_pool() {
-    for (const buffer & b : cached) {
-        std::free(b.ptr);
+    కొరకు (స్థిరరాశి బఫరు & b : cached) {
+        std::విడుదల(b.ptr);
     }
 }
 
-void * ggml_zdnn_pool::alloc(size_t size, size_t * actual_size) {
+శూన్య * ggml_zdnn_pool::alloc(size_t size, size_t * actual_కొలత) {
     int64_t ibest = -1;
-    for (int64_t i = 0; i < (int64_t)cached.size(); i++) {
-        if (cached[i].size >= size && (ibest < 0 || cached[i].size < cached[ibest].size)) {
+    కొరకు (int64_t i = 0; i < (int64_t)cached.size(); i++) {
+        ఒకవేళ (cached[i].size >= size && (ibest < 0 || cached[i].size < cached[ibest].size)) {
             ibest = i;
         }
     }
 
-    if (ibest >= 0) {
-        void * ptr   = cached[ibest].ptr;
-        *actual_size = cached[ibest].size;
+    ఒకవేళ (ibest >= 0) {
+        శూన్య * ptr   = cached[ibest].ptr;
+        *actual_కొలత = cached[ibest].size;
         cached.erase(cached.begin() + ibest);
-        return ptr;
+        తిరిగి ptr;
     }
 
     // every cached buffer is too small, free the largest so the pool does not grow while sizes grow with the context
-    if (!cached.empty()) {
-        const auto largest = std::max_element(cached.begin(), cached.end(), [](const buffer & a, const buffer & b) { return a.size < b.size; });
-        std::free(largest->ptr);
-        cached.erase(largest);
+    ఒకవేళ (!cached.ఖాళీలు()) {
+        స్థిరరాశి స్వయంచాలక అతిపెద్ద = std::max_element(cached.begin(), cached.end(), [](స్థిరరాశి బఫరు & a, స్థిరరాశి బఫరు & b) { తిరిగి a.size < b.size; });
+        std::విడుదల(అతిపెద్ద->ptr);
+        cached.erase(అతిపెద్ద);
     }
 
     // 5% more, so slowly growing sizes do not allocate every time
-    *actual_size = GGML_PAD(std::max<size_t>(1, (size_t)(1.05 * size)), 4096);
-    void * ptr   = std::aligned_alloc(4096, *actual_size);
-    GGML_ASSERT(ptr != nullptr);
-    return ptr;
+    *actual_కొలత = GGML_PAD(std::max<size_t>(1, (size_t)(1.05 * size)), 4096);
+    శూన్య * ptr   = std::aligned_alloc(4096, *actual_కొలత);
+    GGML_ASSERT(ptr != శూన్యసూచిక);
+    తిరిగి ptr;
 }
 
-void ggml_zdnn_pool::free(void * ptr, size_t size) {
+శూన్య ggml_zdnn_pool::విడుదల(శూన్య * ptr, size_t size) {
     cached.push_back({ ptr, size });
 }

@@ -1,12 +1,12 @@
-#include "ggml-threading.h"
-#include <mutex>
+#అన్తర్భావ "ggml-threading.h"
+#అన్తర్భావ <mutex>
 
 std::mutex ggml_critical_section_mutex;
 
-void ggml_critical_section_start() {
-    ggml_critical_section_mutex.lock();
+శూన్య ggml_critical_section_ప్రారంభం() {
+    ggml_critical_section_mutex.తాళం();
 }
 
-void ggml_critical_section_end(void) {
+శూన్య ggml_critical_section_చివర(శూన్య) {
     ggml_critical_section_mutex.unlock();
 }

@@ -1,38 +1,38 @@
-#include "ggml-backend-impl.h"
+#అన్తర్భావ "ggml-backend-impl.h"
 
-#if defined(__riscv) && __riscv_xlen == 64
-#include <asm/hwprobe.h>
-#include <asm/unistd.h>
-#include <unistd.h>
+#ఒకవేళ defined(__riscv) && __riscv_xlen == 64
+#అన్తర్భావ <asm/hwprobe.h>
+#అన్తర్భావ <asm/unistd.h>
+#అన్తర్భావ <unistd.h>
 
-struct riscv64_features {
-    bool has_rvv = false;
+నిర్మాణం riscv64_features {
+    తార్కిక has_rvv = అబద్ధం;
 
     riscv64_features() {
-        struct riscv_hwprobe probe;
-        probe.key = RISCV_HWPROBE_KEY_IMA_EXT_0;
+        నిర్మాణం riscv_hwprobe probe;
+        probe.కీలకం = RISCV_HWPROBE_కీలకం_IMA_EXT_0;
         probe.value = 0;
 
-        int ret = syscall(__NR_riscv_hwprobe, &probe, 1, 0, NULL, 0);
+        పూర్ణాంకం ret = syscall(__NR_riscv_hwprobe, &probe, 1, 0, ఖాళీ, 0);
 
-        if (0 == ret) {
+        ఒకవేళ (0 == ret) {
             has_rvv = !!(probe.value & RISCV_HWPROBE_IMA_V);
         }
     }
 };
 
-static int ggml_backend_cpu_riscv64_score() {
-    int score = 1;
+స్థిర పూర్ణాంకం ggml_backend_cpu_riscv64_score() {
+    పూర్ణాంకం score = 1;
     riscv64_features rf;
 
-#ifdef GGML_USE_RVV
-    if (!rf.has_rvv) { return 0; }
+#నిర్వచితమైతే GGML_USE_RVV
+    ఒకవేళ (!rf.has_rvv) { తిరిగి 0; }
     score += 1 << 1;
-#endif
+#అయితే_ముగింపు
 
-    return score;
+    తిరిగి score;
 }
 
 GGML_BACKEND_DL_SCORE_IMPL(ggml_backend_cpu_riscv64_score)
 
-#endif  // __riscv && __riscv_xlen == 64
+#అయితే_ముగింపు  // __riscv && __riscv_xlen == 64

@@ -1,21 +1,21 @@
-#pragma once
-#include "ggml-vulkan-types.h"
+#సూచన once
+#అన్తర్భావ "ggml-vulkan-types.h"
 
-uint32_t get_misalign_bytes(const ggml_backend_vk_context * ctx, const ggml_tensor * t);
+uint32_t get_misalign_బైట్లు(స్థిరరాశి ggml_backend_vk_context * ctx, స్థిరరాశి ggml_tensor * t);
 
-uint32_t ggml_vk_concat_unit_size(ggml_type type);
+uint32_t ggml_vk_concat_unit_కొలత(ggml_type type);
 
-struct vk_mat_mat_push_constants {
+నిర్మాణం vk_mat_mat_నెట్టు_constants {
     uint32_t M; uint32_t N; uint32_t K;
     uint32_t stride_a; uint32_t stride_b; uint32_t stride_d;
     uint32_t batch_stride_a; uint32_t batch_stride_b; uint32_t batch_stride_d;
-    uint32_t base_work_group_z; uint32_t num_batches;
-    uint32_t k_split;
+    uint32_t పునాది_work_సమూహం_z; uint32_t అంకె_batches;
+    uint32_t k_విభజించు;
     uint32_t ne02; uint32_t ne12; uint32_t broadcast2; uint32_t broadcast3;
     uint32_t padded_N;
 };
 
-struct vk_mat_vec_push_constants {
+నిర్మాణం vk_mat_vec_నెట్టు_constants {
     uint32_t ncols;
     uint32_t stride_a;
     uint32_t stride_b;
@@ -24,49 +24,49 @@ struct vk_mat_vec_push_constants {
     uint32_t batch_stride_b;
     uint32_t batch_stride_d;
     uint32_t fusion_flags;
-    uint32_t base_work_group_y;
+    uint32_t పునాది_work_సమూహం_y;
     uint32_t ne02;
     uint32_t ne12;
     uint32_t broadcast2;
     uint32_t broadcast3;
 };
 
-struct vk_mat_vec_p021_push_constants {
+నిర్మాణం vk_mat_vec_p021_నెట్టు_constants {
     uint32_t ncols_x;
     uint32_t nrows_x;
     uint32_t nchannels_x;
     uint32_t nchannels_y;
-    uint32_t b_offset;
-    uint32_t d_offset;
+    uint32_t b_స్థానభ్రంశం;
+    uint32_t d_స్థానభ్రంశం;
     uint32_t fusion_flags;
 };
 
-struct vk_mat_vec_nc_push_constants {
+నిర్మాణం vk_mat_vec_nc_నెట్టు_constants {
     uint32_t ncols_x;
     uint32_t nrows_x;
-    uint32_t row_stride_x;
+    uint32_t అడ్డువరుస_stride_x;
     uint32_t channel_stride_x;
     uint32_t channel_stride_y;
-    uint32_t channel_x_divisor;
+    uint32_t channel_x_భాజకం;
     uint32_t ne12;
-    uint32_t b_offset;
-    uint32_t d_offset;
+    uint32_t b_స్థానభ్రంశం;
+    uint32_t d_స్థానభ్రంశం;
     uint32_t nb03;
     uint32_t nb13;
     uint32_t nb23;
     uint32_t fusion_flags;
 };
 
-struct vk_mat_mat_id_push_constants {
+నిర్మాణం vk_mat_mat_id_నెట్టు_constants {
     uint32_t M; uint32_t N; uint32_t K;
     uint32_t stride_a; uint32_t stride_b; uint32_t stride_d;
     uint32_t batch_stride_a; uint32_t batch_stride_b; uint32_t batch_stride_d;
     uint32_t nei0; uint32_t nei1; uint32_t nbi1; uint32_t ne11;
     uint32_t n_experts;
-    uint32_t row_ids_offset;
+    uint32_t అడ్డువరుస_ids_స్థానభ్రంశం;
 };
 
-struct vk_mat_vec_id_push_constants {
+నిర్మాణం vk_mat_vec_id_నెట్టు_constants {
     uint32_t ncols;
     uint32_t stride_a;
     uint32_t stride_b;
@@ -81,7 +81,7 @@ struct vk_mat_vec_id_push_constants {
     uint32_t nbi1;
 };
 
-struct vk_flash_attn_push_constants {
+నిర్మాణం vk_flash_attn_నెట్టు_constants {
     uint32_t N;
     uint32_t KV;
 
@@ -109,90 +109,90 @@ struct vk_flash_attn_push_constants {
     uint32_t nb22;
     uint32_t nb23;
 
-    float scale;
-    float max_bias;
-    float logit_softcap;
+    దశాంశం scale;
+    దశాంశం max_bias;
+    దశాంశం logit_softcap;
 
-    uint32_t mask_n_head_log2;
-    float m0;
-    float m1;
+    uint32_t ముసుగు_n_తల_log2;
+    దశాంశం m0;
+    దశాంశం m1;
 
-    uint32_t gqa_ratio;
-    uint32_t split_kv;
-    uint32_t k_num;
+    uint32_t gqa_నిష్పత్తి;
+    uint32_t విభజించు_kv;
+    uint32_t k_అంకె;
 };
 
-static_assert(sizeof(vk_flash_attn_push_constants) <= 128, "sizeof(vk_flash_attn_push_constants) must be <= 128");
+static_assert(పరిమాణం(vk_flash_attn_నెట్టు_constants) <= 128, "sizeof(vk_flash_attn_push_constants) must be <= 128");
 
-struct vk_fa_xe_opt_push_constants {
+నిర్మాణం vk_fa_xe_opt_నెట్టు_constants {
     uint32_t kv_seq_len;
-    uint32_t activation_length;
-    uint32_t q_head;
-    uint32_t kv_head;
-    uint32_t qk_ratio;
+    uint32_t activation_నిడివి;
+    uint32_t q_తల;
+    uint32_t kv_తల;
+    uint32_t qk_నిష్పత్తి;
     uint32_t qk_sub_groups;
     uint32_t flag;
     uint32_t nbkv_tok;
-    uint32_t nbkv_head;
+    uint32_t nbkv_తల;
     uint32_t batch_stride_q;
     uint32_t batch_stride_k;
     uint32_t batch_stride_v;
     uint32_t batch_stride_m;
     uint32_t batch_stride_o;
-    float softmax_scale;
+    దశాంశం softmax_scale;
 };
 
-struct vk_op_push_constants {
+నిర్మాణం vk_op_నెట్టు_constants {
     uint32_t KX;
     uint32_t KY;
-    float param1;
-    float param2;
-    float param3;
-    float param4;
+    దశాంశం param1;
+    దశాంశం param2;
+    దశాంశం param3;
+    దశాంశం param4;
 };
 
-struct vk_op_fwht_push_constants {
-    uint32_t n_rows;
-    uint32_t src_offset;
-    uint32_t dst_offset;
-    float scale;
+నిర్మాణం vk_op_fwht_నెట్టు_constants {
+    uint32_t n_అడ్డువరుసలు;
+    uint32_t src_స్థానభ్రంశం;
+    uint32_t dst_స్థానభ్రంశం;
+    దశాంశం scale;
 };
 
-struct vk_op_dsv4_hc_comb_push_constants {
-    uint32_t n_tokens;
+నిర్మాణం vk_op_dsv4_hc_comb_నెట్టు_constants {
+    uint32_t n_టోకెన్లు;
 
     uint32_t nbm0; uint32_t nbm1;
     uint32_t nbs0;
     uint32_t nbb0;
     uint32_t nbd0; uint32_t nbd1; uint32_t nbd2;
 
-    uint32_t m_offset;
-    uint32_t s_offset;
-    uint32_t b_offset;
-    uint32_t d_offset;
+    uint32_t m_స్థానభ్రంశం;
+    uint32_t s_స్థానభ్రంశం;
+    uint32_t b_స్థానభ్రంశం;
+    uint32_t d_స్థానభ్రంశం;
 
-    float eps;
+    దశాంశం eps;
     uint32_t n_iter;
 };
 
-struct vk_op_dsv4_hc_pre_push_constants {
+నిర్మాణం vk_op_dsv4_hc_pre_నెట్టు_constants {
     uint32_t n_embd;
-    uint32_t n_tokens;
+    uint32_t n_టోకెన్లు;
 
     uint32_t nbx0; uint32_t nbx1; uint32_t nbx2;
     uint32_t nbw0; uint32_t nbw1; uint32_t nbw2;
     uint32_t nbd0; uint32_t nbd1;
 
-    uint32_t x_offset;
-    uint32_t w_offset;
-    uint32_t d_offset;
+    uint32_t x_స్థానభ్రంశం;
+    uint32_t w_స్థానభ్రంశం;
+    uint32_t d_స్థానభ్రంశం;
 
-    float scale;
+    దశాంశం scale;
 };
 
-struct vk_op_dsv4_hc_post_push_constants {
+నిర్మాణం vk_op_dsv4_hc_post_నెట్టు_constants {
     uint32_t n_embd;
-    uint32_t n_tokens;
+    uint32_t n_టోకెన్లు;
 
     uint32_t nbx0; uint32_t nbx1;
     uint32_t nbr0; uint32_t nbr1; uint32_t nbr2;
@@ -200,37 +200,37 @@ struct vk_op_dsv4_hc_post_push_constants {
     uint32_t nbc0; uint32_t nbc1; uint32_t nbc2;
     uint32_t nbd0; uint32_t nbd1; uint32_t nbd2;
 
-    uint32_t x_offset;
-    uint32_t r_offset;
-    uint32_t p_offset;
-    uint32_t c_offset;
-    uint32_t d_offset;
+    uint32_t x_స్థానభ్రంశం;
+    uint32_t r_స్థానభ్రంశం;
+    uint32_t p_స్థానభ్రంశం;
+    uint32_t c_స్థానభ్రంశం;
+    uint32_t d_స్థానభ్రంశం;
 
     uint32_t gate;
-    float    gate_scale_in;
-    float    gate_scale_out;
+    దశాంశం    gate_scale_లోపల;
+    దశాంశం    gate_scale_బహిర్గతం;
 };
 
-struct vk_op_count_experts_push_constants {
+నిర్మాణం vk_op_లెక్క_experts_నెట్టు_constants {
     uint32_t ne00;
     uint32_t ne01;
     uint32_t nb00;
     uint32_t nb01;
-    uint32_t a_offset;
+    uint32_t a_స్థానభ్రంశం;
     uint32_t n_experts;
     uint32_t ne00mp;
     uint32_t ne00L;
-    uint32_t row_tile_size;
-    uint32_t row_ids_offset;
+    uint32_t అడ్డువరుస_tile_కొలత;
+    uint32_t అడ్డువరుస_ids_స్థానభ్రంశం;
 };
 
-struct vk_op_glu_push_constants {
+నిర్మాణం vk_op_glu_నెట్టు_constants {
     uint32_t N;
     uint32_t ne00;
     uint32_t ne20;
-    uint32_t mode;  // 0: default, 1: swapped, 2: split
-    float alpha; // for swiglu_oai
-    float limit;
+    uint32_t బహుళకం;  // 0: default, 1: swapped, 2: split
+    దశాంశం alpha; // for swiglu_oai
+    దశాంశం హద్దు;
     uint32_t nb00;
     uint32_t nb01;
     uint32_t nb02;
@@ -251,29 +251,29 @@ struct vk_op_glu_push_constants {
     uint32_t ne2_0mp;   uint32_t ne2_0L;
 };
 
-static_assert(sizeof(vk_op_glu_push_constants) <= 128, "sizeof(vk_op_glu_push_constants) must be <= 128");
+static_assert(పరిమాణం(vk_op_glu_నెట్టు_constants) <= 128, "sizeof(vk_op_glu_push_constants) must be <= 128");
 
-struct vk_op_unary_push_constants {
+నిర్మాణం vk_op_unary_నెట్టు_constants {
     uint32_t ne;
     uint32_t ne00; uint32_t ne01; uint32_t ne02; uint32_t ne03; uint32_t nb00; uint32_t nb01; uint32_t nb02; uint32_t nb03;
     uint32_t ne10; uint32_t ne11; uint32_t ne12; uint32_t ne13; uint32_t nb10; uint32_t nb11; uint32_t nb12; uint32_t nb13;
     uint32_t misalign_offsets;
-    float param1; float param2; float param3; float param4;
+    దశాంశం param1; దశాంశం param2; దశాంశం param3; దశాంశం param4;
     uint32_t ne0_012mp; uint32_t ne0_01mp; uint32_t ne0_0mp; uint32_t ne0_Ls;
     uint32_t ne1_012mp; uint32_t ne1_01mp; uint32_t ne1_0mp; uint32_t ne1_Ls;
 };
 
-static_assert(sizeof(vk_op_unary_push_constants) <= 128, "sizeof(vk_op_unary_push_constants) must be <= 128");
+static_assert(పరిమాణం(vk_op_unary_నెట్టు_constants) <= 128, "sizeof(vk_op_unary_push_constants) must be <= 128");
 
-static vk_op_unary_push_constants vk_op_unary_push_constants_init(const ggml_tensor * src0, const ggml_tensor * dst, int64_t ne = 0) {
+స్థిర vk_op_unary_నెట్టు_constants vk_op_unary_నెట్టు_constants_init(స్థిరరాశి ggml_tensor * src0, స్థిరరాశి ggml_tensor * dst, int64_t ne = 0) {
     GGML_ASSERT(ne != 0 || (ggml_nelements(src0) == ggml_nelements(dst)));
     ne = ne != 0 ? ne : ggml_nelements(dst);
     GGML_ASSERT(ne <= (int64_t)std::numeric_limits<uint32_t>::max());
 
-    vk_op_unary_push_constants p{};
+    vk_op_unary_నెట్టు_constants p{};
     p.ne = (uint32_t)ne;
 
-    size_t src0_tsize = ggml_type_size(src0->type);
+    size_t src0_tsize = ggml_type_కొలత(src0->type);
     p.ne00 = (uint32_t)src0->ne[0];
     p.ne01 = (uint32_t)src0->ne[1];
     p.ne02 = (uint32_t)src0->ne[2];
@@ -283,7 +283,7 @@ static vk_op_unary_push_constants vk_op_unary_push_constants_init(const ggml_ten
     p.nb02 = (uint32_t)(src0->nb[2] / src0_tsize);
     p.nb03 = (uint32_t)(src0->nb[3] / src0_tsize);
 
-    size_t dst_tsize = ggml_type_size(dst->type);
+    size_t dst_tsize = ggml_type_కొలత(dst->type);
     p.ne10 = (uint32_t)dst->ne[0];
     p.ne11 = (uint32_t)dst->ne[1];
     p.ne12 = (uint32_t)dst->ne[2];
@@ -293,10 +293,10 @@ static vk_op_unary_push_constants vk_op_unary_push_constants_init(const ggml_ten
     p.nb12 = (uint32_t)(dst->nb[2] / dst_tsize);
     p.nb13 = (uint32_t)(dst->nb[3] / dst_tsize);
 
-    return p; // offsets are initialized later in ggml_vk_op
+    తిరిగి p; // offsets are initialized later in ggml_vk_op
 }
 
-struct vk_op_pad_push_constants {
+నిర్మాణం vk_op_pad_నెట్టు_constants {
     uint32_t ne;
     uint32_t ne00; uint32_t ne01; uint32_t ne02; uint32_t ne03; uint32_t nb00; uint32_t nb01; uint32_t nb02; uint32_t nb03;
     uint32_t ne10; uint32_t ne11; uint32_t ne12; uint32_t ne13; uint32_t nb10; uint32_t nb11; uint32_t nb12; uint32_t nb13;
@@ -309,14 +309,14 @@ struct vk_op_pad_push_constants {
     uint32_t lp3; uint32_t rp3;
 };
 
-static vk_op_pad_push_constants vk_op_pad_push_constants_init(const ggml_tensor * src0, const ggml_tensor * dst) {
+స్థిర vk_op_pad_నెట్టు_constants vk_op_pad_నెట్టు_constants_init(స్థిరరాశి ggml_tensor * src0, స్థిరరాశి ggml_tensor * dst) {
     int64_t ne = ggml_nelements(dst);
     GGML_ASSERT(ne <= (int64_t)std::numeric_limits<uint32_t>::max());
 
-    vk_op_pad_push_constants p{};
+    vk_op_pad_నెట్టు_constants p{};
     p.ne = (uint32_t)ne;
 
-    size_t src0_tsize = ggml_type_size(src0->type);
+    size_t src0_tsize = ggml_type_కొలత(src0->type);
     p.ne00 = (uint32_t)src0->ne[0];
     p.ne01 = (uint32_t)src0->ne[1];
     p.ne02 = (uint32_t)src0->ne[2];
@@ -326,7 +326,7 @@ static vk_op_pad_push_constants vk_op_pad_push_constants_init(const ggml_tensor 
     p.nb02 = (uint32_t)(src0->nb[2] / src0_tsize);
     p.nb03 = (uint32_t)(src0->nb[3] / src0_tsize);
 
-    size_t dst_tsize = ggml_type_size(dst->type);
+    size_t dst_tsize = ggml_type_కొలత(dst->type);
     p.ne10 = (uint32_t)dst->ne[0];
     p.ne11 = (uint32_t)dst->ne[1];
     p.ne12 = (uint32_t)dst->ne[2];
@@ -346,30 +346,30 @@ static vk_op_pad_push_constants vk_op_pad_push_constants_init(const ggml_tensor 
     p.rp3 = dst->op_params[7];
     p.circular = dst->op_params[8];
 
-    return p; // fastdiv values and offsets are initialized later in ggml_vk_op
+    తిరిగి p; // fastdiv values and offsets are initialized later in ggml_vk_op
 }
 
-static void init_fastdiv_values(uint32_t d, uint32_t &mp, uint32_t &L)
+స్థిర శూన్య init_fastdiv_విలువలు(uint32_t d, uint32_t &mp, uint32_t &L)
 {
     // compute L = ceil(log2(d));
     L = 0;
-    while (L < 32 && (uint32_t{1} << L) < d) {
+    అయితే (L < 32 && (uint32_t{1} << L) < d) {
         L++;
     }
 
     mp = (uint32_t)((uint64_t{1} << 32) * ((uint64_t{1} << L) - d) / d + 1);
 }
 
-static uint32_t pack_fastdiv_L(uint32_t L0, uint32_t L1, uint32_t L2) {
-    return L0 | (L1 << 8) | (L2 << 16);
+స్థిర uint32_t pack_fastdiv_L(uint32_t L0, uint32_t L1, uint32_t L2) {
+    తిరిగి L0 | (L1 << 8) | (L2 << 16);
 }
 
-template <typename T> void init_pushconst_fastdiv(T &p) {
-    GGML_UNUSED(p);
-    static_assert(!std::is_const<T>::value, "unexpected type");
+మూస <typename T> శూన్య init_pushconst_fastdiv(T &p) {
+    GGML_వాడని(p);
+    static_assert(!std::is_const<T>::విలువ, "unexpected type");
 }
 
-template <> inline void init_pushconst_fastdiv(vk_op_unary_push_constants &p) {
+మూస <> అంతఃవరుస శూన్య init_pushconst_fastdiv(vk_op_unary_నెట్టు_constants &p) {
     // Compute magic values to divide by these six numbers.
     uint32_t ne0_012L;
     uint32_t ne0_01L;
@@ -378,71 +378,71 @@ template <> inline void init_pushconst_fastdiv(vk_op_unary_push_constants &p) {
     uint32_t ne1_01L;
     uint32_t ne1_0L;
 
-    init_fastdiv_values(p.ne02*p.ne01*p.ne00,  p.ne0_012mp,    ne0_012L);
-    init_fastdiv_values(p.ne01*p.ne00,         p.ne0_01mp,     ne0_01L);
-    init_fastdiv_values(p.ne00,                p.ne0_0mp,      ne0_0L);
-    init_fastdiv_values(p.ne12*p.ne11*p.ne10,  p.ne1_012mp,    ne1_012L);
-    init_fastdiv_values(p.ne11*p.ne10,         p.ne1_01mp,     ne1_01L);
-    init_fastdiv_values(p.ne10,                p.ne1_0mp,      ne1_0L);
+    init_fastdiv_విలువలు(p.ne02*p.ne01*p.ne00,  p.ne0_012mp,    ne0_012L);
+    init_fastdiv_విలువలు(p.ne01*p.ne00,         p.ne0_01mp,     ne0_01L);
+    init_fastdiv_విలువలు(p.ne00,                p.ne0_0mp,      ne0_0L);
+    init_fastdiv_విలువలు(p.ne12*p.ne11*p.ne10,  p.ne1_012mp,    ne1_012L);
+    init_fastdiv_విలువలు(p.ne11*p.ne10,         p.ne1_01mp,     ne1_01L);
+    init_fastdiv_విలువలు(p.ne10,                p.ne1_0mp,      ne1_0L);
 
     p.ne0_Ls = pack_fastdiv_L(ne0_012L, ne0_01L, ne0_0L);
     p.ne1_Ls = pack_fastdiv_L(ne1_012L, ne1_01L, ne1_0L);
 }
 
-template <> inline void init_pushconst_fastdiv(vk_op_glu_push_constants &p) {
+మూస <> అంతఃవరుస శూన్య init_pushconst_fastdiv(vk_op_glu_నెట్టు_constants &p) {
     // GLU linearizes over dst, then uses dst coordinates for src0/src1.
-    init_fastdiv_values(p.ne22*p.ne21*p.ne20,  p.ne2_012mp,    p.ne2_012L);
-    init_fastdiv_values(p.ne21*p.ne20,         p.ne2_01mp,     p.ne2_01L);
-    init_fastdiv_values(p.ne20,                p.ne2_0mp,      p.ne2_0L);
+    init_fastdiv_విలువలు(p.ne22*p.ne21*p.ne20,  p.ne2_012mp,    p.ne2_012L);
+    init_fastdiv_విలువలు(p.ne21*p.ne20,         p.ne2_01mp,     p.ne2_01L);
+    init_fastdiv_విలువలు(p.ne20,                p.ne2_0mp,      p.ne2_0L);
 }
 
-template <> inline void init_pushconst_fastdiv(vk_op_count_experts_push_constants &p) {
-    init_fastdiv_values(p.ne00, p.ne00mp, p.ne00L);
+మూస <> అంతఃవరుస శూన్య init_pushconst_fastdiv(vk_op_లెక్క_experts_నెట్టు_constants &p) {
+    init_fastdiv_విలువలు(p.ne00, p.ne00mp, p.ne00L);
 }
 
-struct vk_op_binary_push_constants {
+నిర్మాణం vk_op_ద్విమాన_నెట్టు_constants {
     uint32_t ne;
     uint32_t ne00; uint32_t ne01; uint32_t ne02; uint32_t ne03; uint32_t nb00; uint32_t nb01; uint32_t nb02; uint32_t nb03;
     uint32_t ne10; uint32_t ne11; uint32_t ne12; uint32_t ne13; uint32_t nb10; uint32_t nb11; uint32_t nb12; uint32_t nb13;
     uint32_t ne20; uint32_t ne21; uint32_t ne22; uint32_t ne23; uint32_t nb20; uint32_t nb21; uint32_t nb22; uint32_t nb23;
     uint32_t misalign_offsets;
-    float param1; float param2; int32_t param3;
+    దశాంశం param1; దశాంశం param2; int32_t param3;
 };
 
-struct vk_op_concat_push_constants : vk_op_binary_push_constants {};
+నిర్మాణం vk_op_concat_నెట్టు_constants : vk_op_ద్విమాన_నెట్టు_constants {};
 
-static_assert(sizeof(vk_op_concat_push_constants) == sizeof(vk_op_binary_push_constants));
+static_assert(పరిమాణం(vk_op_concat_నెట్టు_constants) == పరిమాణం(vk_op_ద్విమాన_నెట్టు_constants));
 
-static_assert(std::is_standard_layout_v<vk_op_concat_push_constants>);
+static_assert(std::is_standard_layout_v<vk_op_concat_నెట్టు_constants>);
 
-struct vk_op_multi_add_push_constants {
+నిర్మాణం vk_op_multi_కూడు_నెట్టు_constants {
     // shape for dst
     uint32_t ne20; uint32_t ne21; uint32_t ne22; uint32_t ne23;
 
     // strides for srcs+dst
-    uint32_t nb[MAX_PARAMETER_COUNT][4];
+    uint32_t nb[MAX_PARAMETER_లెక్క][4];
 
     uint32_t rms_partials;
 };
 
-static_assert(MAX_PARAMETER_COUNT == 12);
+static_assert(MAX_PARAMETER_లెక్క == 12);
 
-static_assert(sizeof(vk_op_multi_add_push_constants) <= 256);
+static_assert(పరిమాణం(vk_op_multi_కూడు_నెట్టు_constants) <= 256);
 
-struct vk_op_topk_moe_push_constants {
-    uint32_t n_rows;
-    uint32_t n_experts_push;
-    uint32_t n_expert_used;
-    float clamp_min;
-    float clamp_max;
+నిర్మాణం vk_op_topk_moe_నెట్టు_constants {
+    uint32_t n_అడ్డువరుసలు;
+    uint32_t n_experts_నెట్టు;
+    uint32_t n_expert_వాడిన;
+    దశాంశం clamp_min;
+    దశాంశం clamp_max;
     uint32_t gating_func;
     uint32_t has_bias;
     uint32_t with_norm;
-    float output_scale;
-    float output_bias;
+    దశాంశం output_scale;
+    దశాంశం output_bias;
 };
 
-struct vk_op_add_id_push_constants {
+నిర్మాణం vk_op_కూడు_id_నెట్టు_constants {
     uint32_t ne0;
     uint32_t ne1;
     uint32_t s01;
@@ -451,28 +451,28 @@ struct vk_op_add_id_push_constants {
     uint32_t s21;
 };
 
-struct vk_op_diag_mask_push_constants {
+నిర్మాణం vk_op_diag_ముసుగు_నెట్టు_constants {
     uint32_t ncols;
-    uint32_t rows_per_channel;
+    uint32_t అడ్డువరుసలు_చొప్పున_channel;
     int32_t n_past;
 };
 
-struct vk_op_rope_push_constants {
-    uint32_t rope_mode;
+నిర్మాణం vk_op_rope_నెట్టు_constants {
+    uint32_t rope_బహుళకం;
     uint32_t nrows;
     uint32_t n_dims;
     uint32_t n_offs;
-    float freq_scale;
-    float freq_base;
-    float ext_factor;
-    float attn_factor;
-    float corr_dims[2];
-    float theta_scale;
+    దశాంశం freq_scale;
+    దశాంశం freq_పునాది;
+    దశాంశం ext_గుణకం;
+    దశాంశం attn_గుణకం;
+    దశాంశం corr_dims[2];
+    దశాంశం theta_scale;
     uint32_t has_ff;
     int32_t sections[4];
     uint32_t is_imrope;
-    uint32_t is_back;
-    uint32_t set_rows_stride;
+    uint32_t is_వెనుక;
+    uint32_t సమితి_అడ్డువరుసలు_stride;
     uint32_t ne00;
     uint32_t ne01;
     uint32_t ne02;
@@ -482,18 +482,18 @@ struct vk_op_rope_push_constants {
     uint32_t nb11;
     uint32_t nb12;
     uint32_t nb13;
-    uint32_t a_offset;
-    uint32_t d_offset;
+    uint32_t a_స్థానభ్రంశం;
+    uint32_t d_స్థానభ్రంశం;
 };
 
-static_assert(sizeof(vk_op_rope_push_constants) <= 128, "sizeof(vk_op_rope_push_constants) must be <= 128");
+static_assert(పరిమాణం(vk_op_rope_నెట్టు_constants) <= 128, "sizeof(vk_op_rope_push_constants) must be <= 128");
 
-struct vk_op_rms_norm_mul_rope_push_constants {
-    vk_op_binary_push_constants bin;
-    vk_op_rope_push_constants rope;
+నిర్మాణం vk_op_rms_norm_mul_rope_నెట్టు_constants {
+    vk_op_ద్విమాన_నెట్టు_constants bin;
+    vk_op_rope_నెట్టు_constants rope;
 };
 
-struct vk_op_soft_max_push_constants {
+నిర్మాణం vk_op_soft_max_నెట్టు_constants {
     uint32_t KX;
     uint32_t KY;
     uint32_t ne00;
@@ -504,49 +504,49 @@ struct vk_op_soft_max_push_constants {
     uint32_t nb11;
     uint32_t nb12;
     uint32_t nb13;
-    float scale;
-    float max_bias;
-    float m0;
-    float m1;
-    uint32_t n_head_log2;
+    దశాంశం scale;
+    దశాంశం max_bias;
+    దశాంశం m0;
+    దశాంశం m1;
+    uint32_t n_తల_log2;
     uint32_t nrows_x;
     uint32_t has_sinks;
 };
 
-struct vk_op_argsort_push_constants {
+నిర్మాణం vk_op_argsort_నెట్టు_constants {
     uint32_t ncols;
     uint32_t ncols_padded;
     uint32_t ncols_padded_log2;
     uint32_t nrows;
-    uint32_t order;
-    uint32_t outer_start;
-    uint32_t outer_end;
-    uint32_t inner_start;
-    uint32_t inner_end;
+    uint32_t క్రమం;
+    uint32_t outer_ప్రారంభం;
+    uint32_t outer_చివర;
+    uint32_t inner_ప్రారంభం;
+    uint32_t inner_చివర;
 };
 
-struct vk_op_topk_push_constants {
+నిర్మాణం vk_op_topk_నెట్టు_constants {
     uint32_t orig_ncols;
-    uint32_t ncols_input;
+    uint32_t ncols_ఆదానం;
     uint32_t ncols_output;
     uint32_t k;
     uint32_t nrows;
-    uint32_t first_pass;
-    uint32_t last_pass;
+    uint32_t మొదటి_pass;
+    uint32_t చివరి_pass;
 };
 
-struct vk_op_topk_radix_push_constants {
+నిర్మాణం vk_op_topk_radix_నెట్టు_constants {
     uint32_t ncols;
     uint32_t k;
     uint32_t nrows;
     uint32_t n_tps;    // QSA only
-    uint32_t n_blocks; // QSA only
-    uint32_t n_stream; // QSA only
+    uint32_t n_ఖండాలు; // QSA only
+    uint32_t n_ప్రవాహం; // QSA only
 };
 
-struct vk_op_im2col_push_constants {
+నిర్మాణం vk_op_im2col_నెట్టు_constants {
     uint64_t dst_addr;
-    uint32_t batch_offset; uint32_t offset_delta;
+    uint32_t batch_స్థానభ్రంశం; uint32_t స్థానభ్రంశం_delta;
     uint32_t IC;
     uint32_t IW; uint32_t IH;
     uint32_t OW; uint32_t OH;
@@ -559,7 +559,7 @@ struct vk_op_im2col_push_constants {
     uint32_t batch_IC;
 };
 
-struct vk_op_im2col_3d_push_constants {
+నిర్మాణం vk_op_im2col_3d_నెట్టు_constants {
     uint64_t dst_addr;
     uint32_t nb10;
     uint32_t nb11;
@@ -591,23 +591,23 @@ struct vk_op_im2col_3d_push_constants {
     uint32_t misalign_offsets;
 };
 
-struct vk_op_timestep_embedding_push_constants {
+నిర్మాణం vk_op_timestep_embedding_నెట్టు_constants {
     uint32_t nb1;
     uint32_t dim;
     uint32_t max_period;
 };
 
-struct vk_op_col2im_1d_push_constants {
-    uint32_t T_out;
+నిర్మాణం vk_op_col2im_1d_నెట్టు_constants {
+    uint32_t T_బహిర్గతం;
     uint32_t OC;
     uint32_t K_OC;
-    uint32_t T_in;
+    uint32_t T_లోపల;
     uint32_t K;
     int32_t  stride;
     int32_t  p0;
 };
 
-struct vk_op_conv_transpose_1d_push_constants {
+నిర్మాణం vk_op_conv_transpose_1d_నెట్టు_constants {
     uint32_t Cout;
     uint32_t Cin;
     uint32_t K;
@@ -622,12 +622,12 @@ struct vk_op_conv_transpose_1d_push_constants {
     int32_t s0;
 };
 
-struct vk_op_snake_push_constants {
+నిర్మాణం vk_op_snake_నెట్టు_constants {
     uint32_t ne0;
     uint32_t ne1;
 };
 
-struct vk_op_pool1d_push_constants {
+నిర్మాణం vk_op_pool1d_నెట్టు_constants {
     uint32_t IL;
     uint32_t OL;
     uint32_t OC;
@@ -638,7 +638,7 @@ struct vk_op_pool1d_push_constants {
     int32_t p0;
 };
 
-struct vk_op_pool2d_push_constants {
+నిర్మాణం vk_op_pool2d_నెట్టు_constants {
     uint32_t IW; uint32_t IH;
     uint32_t OW; uint32_t OH;
     uint32_t OC;
@@ -649,32 +649,32 @@ struct vk_op_pool2d_push_constants {
     int32_t p0; int32_t p1;
 };
 
-struct vk_op_rwkv_wkv6_push_constants {
+నిర్మాణం vk_op_rwkv_wkv6_నెట్టు_constants {
     uint32_t B;
     uint32_t T;
     uint32_t C;
     uint32_t H;
 };
 
-struct vk_op_rwkv_wkv7_push_constants {
+నిర్మాణం vk_op_rwkv_wkv7_నెట్టు_constants {
     uint32_t B;
     uint32_t T;
     uint32_t C;
     uint32_t H;
 };
 
-struct vk_op_gated_linear_attn_push_constants {
+నిర్మాణం vk_op_gated_రేఖీయ_attn_నెట్టు_constants {
     uint32_t B;
     uint32_t T;
     uint32_t C;
     uint32_t H;
-    float scale;
+    దశాంశం scale;
 };
 
-struct vk_op_lightning_indexer_push_constants {
+నిర్మాణం vk_op_lightning_indexer_నెట్టు_constants {
     uint32_t n_kv;
     uint32_t n_heads;
-    uint32_t n_tokens;
+    uint32_t n_టోకెన్లు;
     uint32_t n_masks;
     uint32_t q_nb1;
     uint32_t q_nb2;
@@ -689,38 +689,38 @@ struct vk_op_lightning_indexer_push_constants {
     uint32_t d_nb3;
 };
 
-static_assert(sizeof(vk_op_lightning_indexer_push_constants) <= 128);
+static_assert(పరిమాణం(vk_op_lightning_indexer_నెట్టు_constants) <= 128);
 
-struct vk_op_gated_delta_net_push_constants {
+నిర్మాణం vk_op_gated_delta_net_నెట్టు_constants {
     uint32_t H;
-    uint32_t n_tokens;
+    uint32_t n_టోకెన్లు;
     uint32_t n_seqs;
     uint32_t s_off;
     uint32_t sq1, sq2, sq3;
     uint32_t sv1, sv2, sv3;
     uint32_t sb1, sb2, sb3;
     uint32_t neq1, rq3;
-    float scale;
+    దశాంశం scale;
     uint32_t K;
 };
 
-struct vk_op_ssm_scan_push_constants {
+నిర్మాణం vk_op_ssm_పరిశీలన_నెట్టు_constants {
     uint32_t nb02, nb03, nb12, nb13;
     uint32_t nb21, nb22, nb31;
     uint32_t nb42, nb43, nb52, nb53;
     uint32_t s_off;
-    uint32_t n_head, d_head, n_group, n_tok;
+    uint32_t n_తల, d_తల, n_సమూహం, n_tok;
     uint32_t n_seq, K;
 };
 
-struct vk_op_ssm_conv_push_constants {
+నిర్మాణం vk_op_ssm_conv_నెట్టు_constants {
     uint32_t nb01, nb02;
     uint32_t nb11;
     uint32_t dst_nb0, dst_nb1, dst_nb2;
     uint32_t nc, ncs, nr, n_t, n_s;
 };
 
-struct vk_op_conv2d_push_constants {
+నిర్మాణం vk_op_conv2d_నెట్టు_constants {
     uint32_t Cout;
     uint32_t Cin;
     uint32_t N;
@@ -746,18 +746,18 @@ struct vk_op_conv2d_push_constants {
     uint32_t OWmp;   uint32_t OWL;
     uint32_t OWOHmp; uint32_t OWOHL;
 
-    uint32_t knl_offset;
-    uint32_t src_offset;
-    uint32_t dst_offset;
+    uint32_t knl_స్థానభ్రంశం;
+    uint32_t src_స్థానభ్రంశం;
+    uint32_t dst_స్థానభ్రంశం;
 };
 
-template <> inline void init_pushconst_fastdiv(vk_op_conv2d_push_constants &p) {
+మూస <> అంతఃవరుస శూన్య init_pushconst_fastdiv(vk_op_conv2d_నెట్టు_constants &p) {
     // Compute magic values to divide by OW, OW*OH
-    init_fastdiv_values(p.OW,       p.OWmp,    p.OWL);
-    init_fastdiv_values(p.OW*p.OH,  p.OWOHmp,  p.OWOHL);
+    init_fastdiv_విలువలు(p.OW,       p.OWmp,    p.OWL);
+    init_fastdiv_విలువలు(p.OW*p.OH,  p.OWOHmp,  p.OWOHL);
 }
 
-struct vk_op_conv3d_push_constants {
+నిర్మాణం vk_op_conv3d_నెట్టు_constants {
     uint32_t OC;
     uint32_t IC;
     uint32_t N;
@@ -785,18 +785,18 @@ struct vk_op_conv3d_push_constants {
     uint32_t OWOHmp;   uint32_t OWOHL;
     uint32_t OWOHODmp; uint32_t OWOHODL;
 
-    uint32_t knl_offset;
-    uint32_t src_offset;
-    uint32_t dst_offset;
+    uint32_t knl_స్థానభ్రంశం;
+    uint32_t src_స్థానభ్రంశం;
+    uint32_t dst_స్థానభ్రంశం;
 };
 
-template <> inline void init_pushconst_fastdiv(vk_op_conv3d_push_constants &p) {
-    init_fastdiv_values(p.OW,             p.OWmp,     p.OWL);
-    init_fastdiv_values(p.OW*p.OH,        p.OWOHmp,   p.OWOHL);
-    init_fastdiv_values(p.OW*p.OH*p.OD,   p.OWOHODmp, p.OWOHODL);
+మూస <> అంతఃవరుస శూన్య init_pushconst_fastdiv(vk_op_conv3d_నెట్టు_constants &p) {
+    init_fastdiv_విలువలు(p.OW,             p.OWmp,     p.OWL);
+    init_fastdiv_విలువలు(p.OW*p.OH,        p.OWOHmp,   p.OWOHL);
+    init_fastdiv_విలువలు(p.OW*p.OH*p.OD,   p.OWOHODmp, p.OWOHODL);
 }
 
-struct vk_op_conv2d_dw_push_constants {
+నిర్మాణం vk_op_conv2d_dw_నెట్టు_constants {
     uint32_t ne;
     uint32_t batches;
     uint32_t channels;
@@ -814,63 +814,63 @@ struct vk_op_conv2d_dw_push_constants {
     int32_t dilation_y;
 };
 
-struct vk_op_upscale_push_constants {
-    uint32_t ne; uint32_t a_offset; uint32_t d_offset;
+నిర్మాణం vk_op_upscale_నెట్టు_constants {
+    uint32_t ne; uint32_t a_స్థానభ్రంశం; uint32_t d_స్థానభ్రంశం;
     uint32_t ne00; uint32_t ne01;
     uint32_t nb00; uint32_t nb01; uint32_t nb02; uint32_t nb03;
     uint32_t ne10; uint32_t ne11; uint32_t ne12; uint32_t ne13;
-    float sf0; float sf1; float sf2; float sf3;
-    float pixel_offset;
+    దశాంశం sf0; దశాంశం sf1; దశాంశం sf2; దశాంశం sf3;
+    దశాంశం pixel_స్థానభ్రంశం;
 };
 
-struct vk_op_sum_rows_push_constants
+నిర్మాణం vk_op_కూడిక_అడ్డువరుసలు_నెట్టు_constants
 {
-    uint32_t n_cols;
+    uint32_t n_నిలువుల_సంఖ్య;
     uint32_t ne01, ne02;
     uint32_t nb01, nb02, nb03;
     uint32_t nb11, nb12, nb13;
-    float weight;
+    దశాంశం బరువు;
     uint32_t misalign_offsets;
     uint32_t ne0_12mp, ne0_12L;
     uint32_t ne0_1mp, ne0_1L;
 };
 
-static vk_op_sum_rows_push_constants vk_op_sum_rows_push_constants_init(const ggml_tensor * src, const ggml_tensor * dst, int64_t n_cols) {
-    uint32_t type_size = (uint32_t)ggml_type_size(src->type);
-    vk_op_sum_rows_push_constants p = {};
-    p.n_cols = (uint32_t)n_cols;
+స్థిర vk_op_కూడిక_అడ్డువరుసలు_నెట్టు_constants vk_op_కూడిక_అడ్డువరుసలు_నెట్టు_constants_init(స్థిరరాశి ggml_tensor * src, స్థిరరాశి ggml_tensor * dst, int64_t n_నిలువుల_సంఖ్య) {
+    uint32_t type_కొలత = (uint32_t)ggml_type_కొలత(src->type);
+    vk_op_కూడిక_అడ్డువరుసలు_నెట్టు_constants p = {};
+    p.n_నిలువుల_సంఖ్య = (uint32_t)n_నిలువుల_సంఖ్య;
     p.ne01 = (uint32_t)src->ne[1];
     p.ne02 = (uint32_t)src->ne[2];
-    p.nb01 = (uint32_t)src->nb[1] / type_size;
-    p.nb02 = (uint32_t)src->nb[2] / type_size;
-    p.nb03 = (uint32_t)src->nb[3] / type_size;
-    p.nb11 = (uint32_t)dst->nb[1] / type_size;
-    p.nb12 = (uint32_t)dst->nb[2] / type_size;
-    p.nb13 = (uint32_t)dst->nb[3] / type_size;
-    p.weight = 1.0f;
-    return p;
+    p.nb01 = (uint32_t)src->nb[1] / type_కొలత;
+    p.nb02 = (uint32_t)src->nb[2] / type_కొలత;
+    p.nb03 = (uint32_t)src->nb[3] / type_కొలత;
+    p.nb11 = (uint32_t)dst->nb[1] / type_కొలత;
+    p.nb12 = (uint32_t)dst->nb[2] / type_కొలత;
+    p.nb13 = (uint32_t)dst->nb[3] / type_కొలత;
+    p.బరువు = 1.0f;
+    తిరిగి p;
 }
 
-template <> inline void init_pushconst_fastdiv(vk_op_sum_rows_push_constants &p) {
-    init_fastdiv_values(p.ne01*p.ne02, p.ne0_12mp, p.ne0_12L);
-    init_fastdiv_values(p.ne01,        p.ne0_1mp,  p.ne0_1L);
+మూస <> అంతఃవరుస శూన్య init_pushconst_fastdiv(vk_op_కూడిక_అడ్డువరుసలు_నెట్టు_constants &p) {
+    init_fastdiv_విలువలు(p.ne01*p.ne02, p.ne0_12mp, p.ne0_12L);
+    init_fastdiv_విలువలు(p.ne01,        p.ne0_1mp,  p.ne0_1L);
 }
 
-struct vk_quantize_q8_1_push_constants {
+నిర్మాణం vk_quantize_q8_1_నెట్టు_constants {
     uint32_t ne;
-    uint32_t num_blocks;
+    uint32_t అంకె_ఖండాలు;
 };
 
-struct vk_op_flash_attn_split_k_reduce_push_constants {
+నిర్మాణం vk_op_flash_attn_విభజించు_k_reduce_నెట్టు_constants {
     uint32_t D;
     uint32_t ne1;
     uint32_t ne2;
     uint32_t ne3;
-    uint32_t k_num;
+    uint32_t k_అంకె;
     uint32_t sinks;
 };
 
-struct vk_op_flash_attn_mask_opt_push_constants {
+నిర్మాణం vk_op_flash_attn_ముసుగు_opt_నెట్టు_constants {
     uint32_t nem0;
     uint32_t nem1;
     uint32_t nem2;
@@ -882,7 +882,7 @@ struct vk_op_flash_attn_mask_opt_push_constants {
     uint32_t nbd3;
 };
 
-struct vk_op_flash_attn_sparse_compact_push_constants {
+నిర్మాణం vk_op_flash_attn_sparse_compact_నెట్టు_constants {
     uint32_t KV;
     uint32_t nem1;
     uint32_t nem2;
@@ -892,248 +892,248 @@ struct vk_op_flash_attn_sparse_compact_push_constants {
     uint32_t n_kv_max;
 };
 
-template <typename T> void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, T &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {
-    GGML_UNUSED(p);
-    GGML_UNUSED(src0);
-    GGML_UNUSED(src1);
-    GGML_UNUSED(src2);
-    GGML_UNUSED(src3);
-    GGML_UNUSED(dst);
-    static_assert(!std::is_const<T>::value, "unexpected type");
-    GGML_ASSERT(!src0 || get_misalign_bytes(ctx, src0) == 0);
-    GGML_ASSERT(!src1 || get_misalign_bytes(ctx, src1) == 0);
-    GGML_ASSERT(!src2 || get_misalign_bytes(ctx, src2) == 0);
-    GGML_ASSERT(!src3 || get_misalign_bytes(ctx, src3) == 0);
-    GGML_ASSERT(!dst  || get_misalign_bytes(ctx, dst) == 0);
+మూస <typename T> శూన్య init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, T &p, స్థిరరాశి ggml_tensor * src0, స్థిరరాశి ggml_tensor * src1, స్థిరరాశి ggml_tensor * src2, స్థిరరాశి ggml_tensor * src3, ggml_tensor * dst) {
+    GGML_వాడని(p);
+    GGML_వాడని(src0);
+    GGML_వాడని(src1);
+    GGML_వాడని(src2);
+    GGML_వాడని(src3);
+    GGML_వాడని(dst);
+    static_assert(!std::is_const<T>::విలువ, "unexpected type");
+    GGML_ASSERT(!src0 || get_misalign_బైట్లు(ctx, src0) == 0);
+    GGML_ASSERT(!src1 || get_misalign_బైట్లు(ctx, src1) == 0);
+    GGML_ASSERT(!src2 || get_misalign_బైట్లు(ctx, src2) == 0);
+    GGML_ASSERT(!src3 || get_misalign_బైట్లు(ctx, src3) == 0);
+    GGML_ASSERT(!dst  || get_misalign_బైట్లు(ctx, dst) == 0);
 }
 
-template <> inline void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_mat_vec_p021_push_constants &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {
-    const uint32_t b_offset = get_misalign_bytes(ctx, src1) / ggml_type_size(src1->type);
-    const uint32_t d_offset = get_misalign_bytes(ctx, dst) / ggml_type_size(dst->type);
+మూస <> అంతఃవరుస శూన్య init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_mat_vec_p021_నెట్టు_constants &p, స్థిరరాశి ggml_tensor * src0, స్థిరరాశి ggml_tensor * src1, స్థిరరాశి ggml_tensor * src2, స్థిరరాశి ggml_tensor * src3, ggml_tensor * dst) {
+    స్థిరరాశి uint32_t b_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, src1) / ggml_type_కొలత(src1->type);
+    స్థిరరాశి uint32_t d_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, dst) / ggml_type_కొలత(dst->type);
 
-    p.b_offset = b_offset;
-    p.d_offset = d_offset;
+    p.b_స్థానభ్రంశం = b_స్థానభ్రంశం;
+    p.d_స్థానభ్రంశం = d_స్థానభ్రంశం;
 
-    GGML_UNUSED(src0);
-    GGML_UNUSED(src2);
-    GGML_UNUSED(src3);
+    GGML_వాడని(src0);
+    GGML_వాడని(src2);
+    GGML_వాడని(src3);
 }
 
-template <> inline void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_mat_vec_nc_push_constants &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {
-    const uint32_t b_offset = get_misalign_bytes(ctx, src1) / ggml_type_size(src1->type);
-    const uint32_t d_offset = get_misalign_bytes(ctx, dst) / ggml_type_size(dst->type);
+మూస <> అంతఃవరుస శూన్య init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_mat_vec_nc_నెట్టు_constants &p, స్థిరరాశి ggml_tensor * src0, స్థిరరాశి ggml_tensor * src1, స్థిరరాశి ggml_tensor * src2, స్థిరరాశి ggml_tensor * src3, ggml_tensor * dst) {
+    స్థిరరాశి uint32_t b_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, src1) / ggml_type_కొలత(src1->type);
+    స్థిరరాశి uint32_t d_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, dst) / ggml_type_కొలత(dst->type);
 
-    p.b_offset = b_offset;
-    p.d_offset = d_offset;
+    p.b_స్థానభ్రంశం = b_స్థానభ్రంశం;
+    p.d_స్థానభ్రంశం = d_స్థానభ్రంశం;
 
-    GGML_UNUSED(src0);
-    GGML_UNUSED(src2);
-    GGML_UNUSED(src3);
+    GGML_వాడని(src0);
+    GGML_వాడని(src2);
+    GGML_వాడని(src3);
 }
 
-template <> inline void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_fwht_push_constants &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {
-    p.src_offset = get_misalign_bytes(ctx, src0) / ggml_type_size(src0->type);
-    p.dst_offset = get_misalign_bytes(ctx, dst)  / ggml_type_size(dst->type);
+మూస <> అంతఃవరుస శూన్య init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_fwht_నెట్టు_constants &p, స్థిరరాశి ggml_tensor * src0, స్థిరరాశి ggml_tensor * src1, స్థిరరాశి ggml_tensor * src2, స్థిరరాశి ggml_tensor * src3, ggml_tensor * dst) {
+    p.src_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, src0) / ggml_type_కొలత(src0->type);
+    p.dst_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, dst)  / ggml_type_కొలత(dst->type);
 
-    GGML_UNUSED(src1);
-    GGML_UNUSED(src2);
-    GGML_UNUSED(src3);
+    GGML_వాడని(src1);
+    GGML_వాడని(src2);
+    GGML_వాడని(src3);
 }
 
-template <> inline void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_dsv4_hc_comb_push_constants &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {
-    p.m_offset = get_misalign_bytes(ctx, src0) / ggml_type_size(src0->type);
-    p.s_offset = get_misalign_bytes(ctx, src1) / ggml_type_size(src1->type);
-    p.b_offset = get_misalign_bytes(ctx, src2) / ggml_type_size(src2->type);
-    p.d_offset = get_misalign_bytes(ctx, dst)  / ggml_type_size(dst->type);
+మూస <> అంతఃవరుస శూన్య init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_dsv4_hc_comb_నెట్టు_constants &p, స్థిరరాశి ggml_tensor * src0, స్థిరరాశి ggml_tensor * src1, స్థిరరాశి ggml_tensor * src2, స్థిరరాశి ggml_tensor * src3, ggml_tensor * dst) {
+    p.m_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, src0) / ggml_type_కొలత(src0->type);
+    p.s_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, src1) / ggml_type_కొలత(src1->type);
+    p.b_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, src2) / ggml_type_కొలత(src2->type);
+    p.d_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, dst)  / ggml_type_కొలత(dst->type);
 
-    GGML_UNUSED(src3);
+    GGML_వాడని(src3);
 }
 
-template <> inline void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_dsv4_hc_pre_push_constants &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {
-    p.x_offset = get_misalign_bytes(ctx, src0) / ggml_type_size(src0->type);
-    p.w_offset = get_misalign_bytes(ctx, src1) / ggml_type_size(src1->type);
-    p.d_offset = get_misalign_bytes(ctx, dst)  / ggml_type_size(dst->type);
+మూస <> అంతఃవరుస శూన్య init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_dsv4_hc_pre_నెట్టు_constants &p, స్థిరరాశి ggml_tensor * src0, స్థిరరాశి ggml_tensor * src1, స్థిరరాశి ggml_tensor * src2, స్థిరరాశి ggml_tensor * src3, ggml_tensor * dst) {
+    p.x_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, src0) / ggml_type_కొలత(src0->type);
+    p.w_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, src1) / ggml_type_కొలత(src1->type);
+    p.d_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, dst)  / ggml_type_కొలత(dst->type);
 
-    GGML_UNUSED(src2);
-    GGML_UNUSED(src3);
+    GGML_వాడని(src2);
+    GGML_వాడని(src3);
 }
 
-template <> inline void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_dsv4_hc_post_push_constants &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {
-    p.x_offset = get_misalign_bytes(ctx, src0) / ggml_type_size(src0->type);
-    p.r_offset = get_misalign_bytes(ctx, src1) / ggml_type_size(src1->type);
-    p.p_offset = get_misalign_bytes(ctx, src2) / ggml_type_size(src2->type);
-    p.c_offset = src3 ? get_misalign_bytes(ctx, src3) / ggml_type_size(src3->type) : 0;
-    p.d_offset = get_misalign_bytes(ctx, dst)  / ggml_type_size(dst->type);
+మూస <> అంతఃవరుస శూన్య init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_dsv4_hc_post_నెట్టు_constants &p, స్థిరరాశి ggml_tensor * src0, స్థిరరాశి ggml_tensor * src1, స్థిరరాశి ggml_tensor * src2, స్థిరరాశి ggml_tensor * src3, ggml_tensor * dst) {
+    p.x_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, src0) / ggml_type_కొలత(src0->type);
+    p.r_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, src1) / ggml_type_కొలత(src1->type);
+    p.p_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, src2) / ggml_type_కొలత(src2->type);
+    p.c_స్థానభ్రంశం = src3 ? get_misalign_బైట్లు(ctx, src3) / ggml_type_కొలత(src3->type) : 0;
+    p.d_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, dst)  / ggml_type_కొలత(dst->type);
 }
 
-template <typename T> size_t push_constant_size(const T &t) {
-    static_assert(std::is_class<T>::value, "T must be a struct/class");
-    GGML_UNUSED(t);
-    return sizeof(T);
+మూస <typename T> size_t నెట్టు_constant_కొలత(స్థిరరాశి T &t) {
+    static_assert(std::is_class<T>::విలువ, "T must be a struct/class");
+    GGML_వాడని(t);
+    తిరిగి పరిమాణం(T);
 }
 
-template <typename T> size_t push_constant_size(const std::vector<T> &t) {
-    GGML_UNUSED(t);
-    return sizeof(T) * t.size();
+మూస <typename T> size_t నెట్టు_constant_కొలత(స్థిరరాశి std::సదిశ<T> &t) {
+    GGML_వాడని(t);
+    తిరిగి పరిమాణం(T) * t.కొలత();
 }
 
-template <typename T, uint32_t N> size_t push_constant_size(const std::array<T, N> &t) {
-    GGML_UNUSED(t);
-    return sizeof(T) * N;
+మూస <typename T, uint32_t N> size_t నెట్టు_constant_కొలత(స్థిరరాశి std::array<T, N> &t) {
+    GGML_వాడని(t);
+    తిరిగి పరిమాణం(T) * N;
 }
 
-template <typename T> const T *push_constant_data(const T &t) {
-    static_assert(std::is_class<T>::value, "T must be a struct/class");
-    return &t;
+మూస <typename T> స్థిరరాశి T *నెట్టు_constant_దత్తాంశం(స్థిరరాశి T &t) {
+    static_assert(std::is_class<T>::విలువ, "T must be a struct/class");
+    తిరిగి &t;
 }
 
-template <typename T> const T *push_constant_data(const std::vector<T> &t) {
-    return t.data();
+మూస <typename T> స్థిరరాశి T *నెట్టు_constant_దత్తాంశం(స్థిరరాశి std::సదిశ<T> &t) {
+    తిరిగి t.దత్తాంశం();
 }
 
-template <typename T, uint32_t N> const T *push_constant_data(const std::array<T, N> &t) {
-    return t.data();
+మూస <typename T, uint32_t N> స్థిరరాశి T *నెట్టు_constant_దత్తాంశం(స్థిరరాశి std::array<T, N> &t) {
+    తిరిగి t.దత్తాంశం();
 }
 
-template <> inline void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_unary_push_constants &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {
-    const uint32_t a_offset = get_misalign_bytes(ctx, src0) / ggml_type_size(src0->type);
-    const uint32_t d_offset = get_misalign_bytes(ctx, dst) / ggml_type_size(dst->type);
+మూస <> అంతఃవరుస శూన్య init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_unary_నెట్టు_constants &p, స్థిరరాశి ggml_tensor * src0, స్థిరరాశి ggml_tensor * src1, స్థిరరాశి ggml_tensor * src2, స్థిరరాశి ggml_tensor * src3, ggml_tensor * dst) {
+    స్థిరరాశి uint32_t a_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, src0) / ggml_type_కొలత(src0->type);
+    స్థిరరాశి uint32_t d_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, dst) / ggml_type_కొలత(dst->type);
 
-    p.misalign_offsets = (a_offset << 16) | d_offset;
+    p.misalign_offsets = (a_స్థానభ్రంశం << 16) | d_స్థానభ్రంశం;
 
-    GGML_UNUSED(src1);
-    GGML_UNUSED(src2);
-    GGML_UNUSED(src3);
+    GGML_వాడని(src1);
+    GGML_వాడని(src2);
+    GGML_వాడని(src3);
 }
 
-template <> inline void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_glu_push_constants &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {
-    const uint32_t a_offset = get_misalign_bytes(ctx, src0) / ggml_type_size(src0->type);
-    const uint32_t b_offset = src1 ? get_misalign_bytes(ctx, src1) / ggml_type_size(src1->type) : a_offset;
-    const uint32_t d_offset = get_misalign_bytes(ctx, dst) / ggml_type_size(dst->type);
+మూస <> అంతఃవరుస శూన్య init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_glu_నెట్టు_constants &p, స్థిరరాశి ggml_tensor * src0, స్థిరరాశి ggml_tensor * src1, స్థిరరాశి ggml_tensor * src2, స్థిరరాశి ggml_tensor * src3, ggml_tensor * dst) {
+    స్థిరరాశి uint32_t a_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, src0) / ggml_type_కొలత(src0->type);
+    స్థిరరాశి uint32_t b_స్థానభ్రంశం = src1 ? get_misalign_బైట్లు(ctx, src1) / ggml_type_కొలత(src1->type) : a_స్థానభ్రంశం;
+    స్థిరరాశి uint32_t d_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, dst) / ggml_type_కొలత(dst->type);
 
-    GGML_ASSERT(a_offset < (1u << 8));
-    GGML_ASSERT(b_offset < (1u << 8));
-    GGML_ASSERT(d_offset < (1u << 8));
+    GGML_ASSERT(a_స్థానభ్రంశం < (1u << 8));
+    GGML_ASSERT(b_స్థానభ్రంశం < (1u << 8));
+    GGML_ASSERT(d_స్థానభ్రంశం < (1u << 8));
 
-    p.misalign_offsets = (a_offset << 16) | (b_offset << 8) | d_offset;
+    p.misalign_offsets = (a_స్థానభ్రంశం << 16) | (b_స్థానభ్రంశం << 8) | d_స్థానభ్రంశం;
 
-    GGML_UNUSED(src2);
-    GGML_UNUSED(src3);
+    GGML_వాడని(src2);
+    GGML_వాడని(src3);
 }
 
-template <> inline void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_sum_rows_push_constants &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {
-    const uint32_t a_offset = get_misalign_bytes(ctx, src0) / ggml_type_size(src0->type);
-    const uint32_t d_offset = get_misalign_bytes(ctx, dst) / ggml_type_size(dst->type);
+మూస <> అంతఃవరుస శూన్య init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_కూడిక_అడ్డువరుసలు_నెట్టు_constants &p, స్థిరరాశి ggml_tensor * src0, స్థిరరాశి ggml_tensor * src1, స్థిరరాశి ggml_tensor * src2, స్థిరరాశి ggml_tensor * src3, ggml_tensor * dst) {
+    స్థిరరాశి uint32_t a_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, src0) / ggml_type_కొలత(src0->type);
+    స్థిరరాశి uint32_t d_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, dst) / ggml_type_కొలత(dst->type);
 
-    p.misalign_offsets = (a_offset << 16) | d_offset;
+    p.misalign_offsets = (a_స్థానభ్రంశం << 16) | d_స్థానభ్రంశం;
 
-    GGML_UNUSED(src1);
-    GGML_UNUSED(src2);
-    GGML_UNUSED(src3);
+    GGML_వాడని(src1);
+    GGML_వాడని(src2);
+    GGML_వాడని(src3);
 }
 
-template <> inline void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_pad_push_constants &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {
-    const uint32_t a_offset = get_misalign_bytes(ctx, src0) / ggml_type_size(src0->type);
-    const uint32_t d_offset = get_misalign_bytes(ctx, dst) / ggml_type_size(dst->type);
+మూస <> అంతఃవరుస శూన్య init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_pad_నెట్టు_constants &p, స్థిరరాశి ggml_tensor * src0, స్థిరరాశి ggml_tensor * src1, స్థిరరాశి ggml_tensor * src2, స్థిరరాశి ggml_tensor * src3, ggml_tensor * dst) {
+    స్థిరరాశి uint32_t a_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, src0) / ggml_type_కొలత(src0->type);
+    స్థిరరాశి uint32_t d_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, dst) / ggml_type_కొలత(dst->type);
 
-    p.misalign_offsets = (a_offset << 16) | d_offset;
+    p.misalign_offsets = (a_స్థానభ్రంశం << 16) | d_స్థానభ్రంశం;
 
-    GGML_UNUSED(src1);
-    GGML_UNUSED(src2);
-    GGML_UNUSED(src3);
+    GGML_వాడని(src1);
+    GGML_వాడని(src2);
+    GGML_వాడని(src3);
 }
 
-template <> inline void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_conv2d_push_constants &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {
-    p.knl_offset = get_misalign_bytes(ctx, src0) / ggml_type_size(src0->type);
-    p.src_offset = get_misalign_bytes(ctx, src1) / ggml_type_size(src1->type);
-    p.dst_offset = get_misalign_bytes(ctx, dst)  / ggml_type_size(dst->type);
+మూస <> అంతఃవరుస శూన్య init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_conv2d_నెట్టు_constants &p, స్థిరరాశి ggml_tensor * src0, స్థిరరాశి ggml_tensor * src1, స్థిరరాశి ggml_tensor * src2, స్థిరరాశి ggml_tensor * src3, ggml_tensor * dst) {
+    p.knl_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, src0) / ggml_type_కొలత(src0->type);
+    p.src_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, src1) / ggml_type_కొలత(src1->type);
+    p.dst_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, dst)  / ggml_type_కొలత(dst->type);
 
-    GGML_UNUSED(src2);
-    GGML_UNUSED(src3);
+    GGML_వాడని(src2);
+    GGML_వాడని(src3);
 }
 
-template <> inline void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_conv3d_push_constants &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {
-    p.knl_offset = get_misalign_bytes(ctx, src0) / ggml_type_size(src0->type);
-    p.src_offset = get_misalign_bytes(ctx, src1) / ggml_type_size(src1->type);
-    p.dst_offset = get_misalign_bytes(ctx, dst)  / ggml_type_size(dst->type);
+మూస <> అంతఃవరుస శూన్య init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_conv3d_నెట్టు_constants &p, స్థిరరాశి ggml_tensor * src0, స్థిరరాశి ggml_tensor * src1, స్థిరరాశి ggml_tensor * src2, స్థిరరాశి ggml_tensor * src3, ggml_tensor * dst) {
+    p.knl_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, src0) / ggml_type_కొలత(src0->type);
+    p.src_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, src1) / ggml_type_కొలత(src1->type);
+    p.dst_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, dst)  / ggml_type_కొలత(dst->type);
 
-    GGML_UNUSED(src2);
-    GGML_UNUSED(src3);
+    GGML_వాడని(src2);
+    GGML_వాడని(src3);
 }
 
-template <> inline void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_im2col_3d_push_constants &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {
-    const uint32_t a_offset = get_misalign_bytes(ctx, src1) / ggml_type_size(src1->type);
-    const uint32_t d_offset = get_misalign_bytes(ctx, dst) / ggml_type_size(dst->type);
+మూస <> అంతఃవరుస శూన్య init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_im2col_3d_నెట్టు_constants &p, స్థిరరాశి ggml_tensor * src0, స్థిరరాశి ggml_tensor * src1, స్థిరరాశి ggml_tensor * src2, స్థిరరాశి ggml_tensor * src3, ggml_tensor * dst) {
+    స్థిరరాశి uint32_t a_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, src1) / ggml_type_కొలత(src1->type);
+    స్థిరరాశి uint32_t d_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, dst) / ggml_type_కొలత(dst->type);
 
-    p.misalign_offsets = (a_offset << 16) | d_offset;
+    p.misalign_offsets = (a_స్థానభ్రంశం << 16) | d_స్థానభ్రంశం;
 
-    GGML_UNUSED(src0);
-    GGML_UNUSED(src2);
-    GGML_UNUSED(src3);
+    GGML_వాడని(src0);
+    GGML_వాడని(src2);
+    GGML_వాడని(src3);
 }
 
-template <> inline void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_binary_push_constants &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {
-    const uint32_t a_offset = get_misalign_bytes(ctx, src0) / ggml_type_size(src0->type);
-    const uint32_t b_offset = get_misalign_bytes(ctx, src1) / ggml_type_size(src1->type);
-    const uint32_t d_offset = get_misalign_bytes(ctx, dst) / ggml_type_size(dst->type);
+మూస <> అంతఃవరుస శూన్య init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_ద్విమాన_నెట్టు_constants &p, స్థిరరాశి ggml_tensor * src0, స్థిరరాశి ggml_tensor * src1, స్థిరరాశి ggml_tensor * src2, స్థిరరాశి ggml_tensor * src3, ggml_tensor * dst) {
+    స్థిరరాశి uint32_t a_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, src0) / ggml_type_కొలత(src0->type);
+    స్థిరరాశి uint32_t b_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, src1) / ggml_type_కొలత(src1->type);
+    స్థిరరాశి uint32_t d_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, dst) / ggml_type_కొలత(dst->type);
 
-    GGML_ASSERT(a_offset <= 0xFFFF);
-    GGML_ASSERT(b_offset <= 0xFF);
-    GGML_ASSERT(d_offset <= 0xFF);
+    GGML_ASSERT(a_స్థానభ్రంశం <= 0xFFFF);
+    GGML_ASSERT(b_స్థానభ్రంశం <= 0xFF);
+    GGML_ASSERT(d_స్థానభ్రంశం <= 0xFF);
 
-    p.misalign_offsets = (a_offset << 16) | (b_offset << 8) | d_offset;
+    p.misalign_offsets = (a_స్థానభ్రంశం << 16) | (b_స్థానభ్రంశం << 8) | d_స్థానభ్రంశం;
 
-    GGML_UNUSED(src2);
-    GGML_UNUSED(src3);
+    GGML_వాడని(src2);
+    GGML_వాడని(src3);
 }
 
-template <> inline void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_concat_push_constants &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {
-    const uint32_t unit_size = ggml_vk_concat_unit_size(dst->type);
-    const uint32_t a_offset = get_misalign_bytes(ctx, src0) / unit_size;
-    const uint32_t b_offset = get_misalign_bytes(ctx, src1) / unit_size;
-    const uint32_t d_offset = get_misalign_bytes(ctx, dst) / unit_size;
+మూస <> అంతఃవరుస శూన్య init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_concat_నెట్టు_constants &p, స్థిరరాశి ggml_tensor * src0, స్థిరరాశి ggml_tensor * src1, స్థిరరాశి ggml_tensor * src2, స్థిరరాశి ggml_tensor * src3, ggml_tensor * dst) {
+    స్థిరరాశి uint32_t unit_కొలత = ggml_vk_concat_unit_కొలత(dst->type);
+    స్థిరరాశి uint32_t a_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, src0) / unit_కొలత;
+    స్థిరరాశి uint32_t b_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, src1) / unit_కొలత;
+    స్థిరరాశి uint32_t d_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, dst) / unit_కొలత;
 
-    p.misalign_offsets = (a_offset << 16) | (b_offset << 8) | d_offset;
+    p.misalign_offsets = (a_స్థానభ్రంశం << 16) | (b_స్థానభ్రంశం << 8) | d_స్థానభ్రంశం;
 
-    GGML_UNUSED(src2);
-    GGML_UNUSED(src3);
+    GGML_వాడని(src2);
+    GGML_వాడని(src3);
 }
 
-template <> inline void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_upscale_push_constants &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {
-    const uint32_t a_offset = get_misalign_bytes(ctx, src0) / ggml_type_size(src0->type);
-    const uint32_t d_offset = get_misalign_bytes(ctx, dst) / ggml_type_size(dst->type);
+మూస <> అంతఃవరుస శూన్య init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_upscale_నెట్టు_constants &p, స్థిరరాశి ggml_tensor * src0, స్థిరరాశి ggml_tensor * src1, స్థిరరాశి ggml_tensor * src2, స్థిరరాశి ggml_tensor * src3, ggml_tensor * dst) {
+    స్థిరరాశి uint32_t a_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, src0) / ggml_type_కొలత(src0->type);
+    స్థిరరాశి uint32_t d_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, dst) / ggml_type_కొలత(dst->type);
 
-    p.a_offset = a_offset;
-    p.d_offset = d_offset;
+    p.a_స్థానభ్రంశం = a_స్థానభ్రంశం;
+    p.d_స్థానభ్రంశం = d_స్థానభ్రంశం;
 
-    GGML_UNUSED(src1);
-    GGML_UNUSED(src2);
-    GGML_UNUSED(src3);
+    GGML_వాడని(src1);
+    GGML_వాడని(src2);
+    GGML_వాడని(src3);
 }
 
-template <> inline void init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_rope_push_constants &p, const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * src2, const ggml_tensor * src3, ggml_tensor * dst) {
-    p.a_offset = get_misalign_bytes(ctx, src0) / ggml_type_size(src0->type);
-    p.d_offset = get_misalign_bytes(ctx, dst)  / ggml_type_size(dst->type);
+మూస <> అంతఃవరుస శూన్య init_pushconst_tensor_offsets(ggml_backend_vk_context * ctx, vk_op_rope_నెట్టు_constants &p, స్థిరరాశి ggml_tensor * src0, స్థిరరాశి ggml_tensor * src1, స్థిరరాశి ggml_tensor * src2, స్థిరరాశి ggml_tensor * src3, ggml_tensor * dst) {
+    p.a_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, src0) / ggml_type_కొలత(src0->type);
+    p.d_స్థానభ్రంశం = get_misalign_బైట్లు(ctx, dst)  / ggml_type_కొలత(dst->type);
 
-    GGML_UNUSED(src1);
-    GGML_UNUSED(src2);
-    GGML_UNUSED(src3);
+    GGML_వాడని(src1);
+    GGML_వాడని(src2);
+    GGML_వాడని(src3);
 }
 
-static vk_op_binary_push_constants ggml_vk_rms_norm_push_constants(
-        const ggml_tensor * src0, const ggml_tensor * src1, const ggml_tensor * dst,
-        float eps, uint32_t num_partials) {
-    const uint32_t src0_type_size = ggml_type_size(src0->type);
-    const uint32_t src1_type_size = ggml_type_size(src1->type);
-    const uint32_t dst_type_size = ggml_type_size(dst->type);
+స్థిర vk_op_ద్విమాన_నెట్టు_constants ggml_vk_rms_norm_నెట్టు_constants(
+        స్థిరరాశి ggml_tensor * src0, స్థిరరాశి ggml_tensor * src1, స్థిరరాశి ggml_tensor * dst,
+        దశాంశం eps, uint32_t అంకె_partials) {
+    స్థిరరాశి uint32_t src0_type_కొలత = ggml_type_కొలత(src0->type);
+    స్థిరరాశి uint32_t src1_type_కొలత = ggml_type_కొలత(src1->type);
+    స్థిరరాశి uint32_t dst_type_కొలత = ggml_type_కొలత(dst->type);
 
-    return {
+    తిరిగి {
         (uint32_t)ggml_nelements(src0),
-        (uint32_t)src0->ne[0], (uint32_t)src0->ne[1], (uint32_t)src0->ne[2],(uint32_t)src0->ne[3], (uint32_t)src0->nb[0] / src0_type_size, (uint32_t)src0->nb[1] / src0_type_size, (uint32_t)src0->nb[2] / src0_type_size, (uint32_t)src0->nb[3] / src0_type_size,
-        (uint32_t)src1->ne[0], (uint32_t)src1->ne[1], (uint32_t)src1->ne[2],(uint32_t)src1->ne[3], (uint32_t)src1->nb[0] / src1_type_size, (uint32_t)src1->nb[1] / src1_type_size, (uint32_t)src1->nb[2] / src1_type_size, (uint32_t)src1->nb[3] / src1_type_size,
-        (uint32_t) dst->ne[0], (uint32_t) dst->ne[1], (uint32_t) dst->ne[2],(uint32_t) dst->ne[3], (uint32_t) dst->nb[0] /  dst_type_size, (uint32_t) dst->nb[1] /  dst_type_size, (uint32_t) dst->nb[2] /  dst_type_size, (uint32_t) dst->nb[3] /  dst_type_size,
+        (uint32_t)src0->ne[0], (uint32_t)src0->ne[1], (uint32_t)src0->ne[2],(uint32_t)src0->ne[3], (uint32_t)src0->nb[0] / src0_type_కొలత, (uint32_t)src0->nb[1] / src0_type_కొలత, (uint32_t)src0->nb[2] / src0_type_కొలత, (uint32_t)src0->nb[3] / src0_type_కొలత,
+        (uint32_t)src1->ne[0], (uint32_t)src1->ne[1], (uint32_t)src1->ne[2],(uint32_t)src1->ne[3], (uint32_t)src1->nb[0] / src1_type_కొలత, (uint32_t)src1->nb[1] / src1_type_కొలత, (uint32_t)src1->nb[2] / src1_type_కొలత, (uint32_t)src1->nb[3] / src1_type_కొలత,
+        (uint32_t) dst->ne[0], (uint32_t) dst->ne[1], (uint32_t) dst->ne[2],(uint32_t) dst->ne[3], (uint32_t) dst->nb[0] /  dst_type_కొలత, (uint32_t) dst->nb[1] /  dst_type_కొలత, (uint32_t) dst->nb[2] /  dst_type_కొలత, (uint32_t) dst->nb[3] /  dst_type_కొలత,
         0,
-        eps, 0.0f, (int32_t)num_partials,
+        eps, 0.0f, (int32_t)అంకె_partials,
     };
 }
 

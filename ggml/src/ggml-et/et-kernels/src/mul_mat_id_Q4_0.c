@@ -11,159 +11,159 @@
 // expert lookups and 2-row x2 dot products.
 //******************************************************************************
 
-#include "block_ops.h"
-#include "ggml_tensor.h"
-#include "math_fp.h"
-#include "platform.h"
-#include "quants.h"
+#అన్తర్భావ "block_ops.h"
+#అన్తర్భావ "ggml_tensor.h"
+#అన్తర్భావ "math_fp.h"
+#అన్తర్భావ "platform.h"
+#అన్తర్భావ "quants.h"
 
-#include <stdint.h>
+#అన్తర్భావ <stdint.h>
 
-int entry_point(struct ggml_et_mul_mat_id_params * params, void * env) {
+పూర్ణాంకం నమోదు_బిందువు(నిర్మాణం ggml_et_mul_mat_id_params * params, శూన్య * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
-    if (!kernel_env || !params) {
-        return -1;
+    ఒకవేళ (!kernel_env || !params) {
+        తిరిగి -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
-    if (thread_id < 0) {
-        return 0;
+    పూర్ణాంకం thread_id   = get_relative_thread_id(kernel_env->shire_ముసుగు);
+    పూర్ణాంకం అంకె_దారాలు = get_అంకె_దారాలు(kernel_env->shire_ముసుగు);
+    ఒకవేళ (thread_id < 0) {
+        తిరిగి 0;
     }
 
-    struct ggml_tensor * src0 = &params->src0;
-    struct ggml_tensor * src1 = &params->src1;
-    struct ggml_tensor * src2 = &params->src2;
-    struct ggml_tensor * dst  = &params->dst;
+    నిర్మాణం ggml_tensor * src0 = &params->src0;
+    నిర్మాణం ggml_tensor * src1 = &params->src1;
+    నిర్మాణం ggml_tensor * src2 = &params->src2;
+    నిర్మాణం ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_Q4_0 || src1->type != GGML_TYPE_F32 || src2->type != GGML_TYPE_I32 ||
+    ఒకవేళ (src0->type != GGML_TYPE_Q4_0 || src1->type != GGML_TYPE_F32 || src2->type != GGML_TYPE_I32 ||
         dst->type != GGML_TYPE_F32) {
-        return -1;
+        తిరిగి -1;
     }
 
-    const void *    src0_data = src0->data;
-    const float *   src1_data = (const float *) src1->data;
-    const int32_t * src2_data = (const int32_t *) src2->data;
-    float *         dst_data  = (float *) dst->data;
-    if (!src0_data || !src1_data || !src2_data || !dst_data) {
-        return -1;
+    స్థిరరాశి శూన్య *    src0_దత్తాంశం = src0->దత్తాంశం;
+    స్థిరరాశి దశాంశం *   src1_దత్తాంశం = (స్థిరరాశి దశాంశం *) src1->దత్తాంశం;
+    స్థిరరాశి int32_t * src2_దత్తాంశం = (స్థిరరాశి int32_t *) src2->దత్తాంశం;
+    దశాంశం *         dst_దత్తాంశం  = (దశాంశం *) dst->దత్తాంశం;
+    ఒకవేళ (!src0_దత్తాంశం || !src1_దత్తాంశం || !src2_దత్తాంశం || !dst_దత్తాంశం) {
+        తిరిగి -1;
     }
 
-    const int64_t K             = src0->ne[0];
-    const int64_t M             = src0->ne[1];
-    const int64_t n_expert      = src0->ne[2];
-    const int64_t n_expert_used = src2->ne[0];
-    const int64_t batch         = src2->ne[1];
-    const int64_t ne11          = src1->ne[1];
+    స్థిరరాశి int64_t K             = src0->ne[0];
+    స్థిరరాశి int64_t M             = src0->ne[1];
+    స్థిరరాశి int64_t n_expert      = src0->ne[2];
+    స్థిరరాశి int64_t n_expert_వాడిన = src2->ne[0];
+    స్థిరరాశి int64_t batch         = src2->ne[1];
+    స్థిరరాశి int64_t ne11          = src1->ne[1];
 
-    if (K % QK4_0 != 0) {
-        return -1;
+    ఒకవేళ (K % QK4_0 != 0) {
+        తిరిగి -1;
     }
 
-    const size_t nb01 = src0->nb[1];  // Q4_0 row stride
-    const size_t nb02 = src0->nb[2];  // expert stride
-    const size_t nb11 = src1->nb[1];  // activation column stride
-    const size_t nb12 = src1->nb[2];  // activation batch stride
-    const size_t nb20 = src2->nb[0];
-    const size_t nb21 = src2->nb[1];
-    const size_t nbd0 = dst->nb[0];
-    const size_t nbd1 = dst->nb[1];
-    const size_t nbd2 = dst->nb[2];
+    స్థిరరాశి size_t nb01 = src0->nb[1];  // Q4_0 row stride
+    స్థిరరాశి size_t nb02 = src0->nb[2];  // expert stride
+    స్థిరరాశి size_t nb11 = src1->nb[1];  // activation column stride
+    స్థిరరాశి size_t nb12 = src1->nb[2];  // activation batch stride
+    స్థిరరాశి size_t nb20 = src2->nb[0];
+    స్థిరరాశి size_t nb21 = src2->nb[1];
+    స్థిరరాశి size_t nbd0 = dst->nb[0];
+    స్థిరరాశి size_t nbd1 = dst->nb[1];
+    స్థిరరాశి size_t nbd2 = dst->nb[2];
 
-    if (src0->nb[0] != sizeof(block_q4_0) || src1->nb[0] != sizeof(float) || src2->nb[0] != sizeof(int32_t) ||
-        nbd0 != sizeof(float)) {
-        return -1;
+    ఒకవేళ (src0->nb[0] != పరిమాణం(ఖండం_q4_0) || src1->nb[0] != పరిమాణం(దశాంశం) || src2->nb[0] != పరిమాణం(int32_t) ||
+        nbd0 != పరిమాణం(దశాంశం)) {
+        తిరిగి -1;
     }
 
-    const int64_t K_blocks = K / QK4_0;
-    const int     use_x2   = ((nb01 & 31) == 0);
+    స్థిరరాశి int64_t K_ఖండాలు = K / QK4_0;
+    స్థిరరాశి పూర్ణాంకం     use_x2   = ((nb01 & 31) == 0);
 
-    const uint64_t total_outputs = (uint64_t) M * (uint64_t) n_expert_used * (uint64_t) batch;
-    if (total_outputs == 0) {
-        return 0;
+    స్థిరరాశి uint64_t మొత్తం_outputs = (uint64_t) M * (uint64_t) n_expert_వాడిన * (uint64_t) batch;
+    ఒకవేళ (మొత్తం_outputs == 0) {
+        తిరిగి 0;
     }
 
     // Even partition: hart h owns outputs [h*chunk, (h+1)*chunk).
-    const uint64_t chunk    = (total_outputs + (uint64_t) num_threads - 1) / (uint64_t) num_threads;
-    const uint64_t my_start = (uint64_t) thread_id * chunk;
-    if (my_start >= total_outputs) {
-        return 0;
+    స్థిరరాశి uint64_t chunk    = (మొత్తం_outputs + (uint64_t) అంకె_దారాలు - 1) / (uint64_t) అంకె_దారాలు;
+    స్థిరరాశి uint64_t my_ప్రారంభం = (uint64_t) thread_id * chunk;
+    ఒకవేళ (my_ప్రారంభం >= మొత్తం_outputs) {
+        తిరిగి 0;
     }
-    uint64_t my_end = my_start + chunk;
-    if (my_end > total_outputs) {
-        my_end = total_outputs;
+    uint64_t my_చివర = my_ప్రారంభం + chunk;
+    ఒకవేళ (my_చివర > మొత్తం_outputs) {
+        my_చివర = మొత్తం_outputs;
     }
 
     // Save mask register once; full lanes for vector dot.
     q4_dot_state q4_state;
     q4_dot_begin(&q4_state);
 
-    const uint64_t per_batch = (uint64_t) M * (uint64_t) n_expert_used;
+    స్థిరరాశి uint64_t చొప్పున_batch = (uint64_t) M * (uint64_t) n_expert_వాడిన;
 
-    uint64_t idx = my_start;
-    while (idx < my_end) {
+    uint64_t idx = my_ప్రారంభం;
+    అయితే (idx < my_చివర) {
         // Decode (m, slot, batch) from the m-major linear index.
-        const int64_t  batch_idx = (int64_t) (idx / per_batch);
-        const uint64_t rem       = idx - (uint64_t) batch_idx * per_batch;
-        const int64_t  slot_idx  = (int64_t) (rem / (uint64_t) M);
-        const int64_t  m0        = (int64_t) (rem - (uint64_t) slot_idx * (uint64_t) M);
+        స్థిరరాశి int64_t  batch_idx = (int64_t) (idx / చొప్పున_batch);
+        స్థిరరాశి uint64_t rem       = idx - (uint64_t) batch_idx * చొప్పున_batch;
+        స్థిరరాశి int64_t  స్థానం_idx  = (int64_t) (rem / (uint64_t) M);
+        స్థిరరాశి int64_t  m0        = (int64_t) (rem - (uint64_t) స్థానం_idx * (uint64_t) M);
 
         // How many outputs left in this (slot, batch) run AND in my range.
-        const uint64_t run_end_global =
-            (uint64_t) batch_idx * per_batch + (uint64_t) slot_idx * (uint64_t) M + (uint64_t) M;
-        const uint64_t end_in_my = (run_end_global < my_end) ? run_end_global : my_end;
-        int64_t        run_len   = (int64_t) (end_in_my - idx);
+        స్థిరరాశి uint64_t నిరంతరం_చివర_global =
+            (uint64_t) batch_idx * చొప్పున_batch + (uint64_t) స్థానం_idx * (uint64_t) M + (uint64_t) M;
+        స్థిరరాశి uint64_t చివర_లోపల_my = (నిరంతరం_చివర_global < my_చివర) ? నిరంతరం_చివర_global : my_చివర;
+        int64_t        నిరంతరం_len   = (int64_t) (చివర_లోపల_my - idx);
 
         // Resolve expert + B column + dst slot for this run.
-        const int32_t expert_id =
-            *(const int32_t *) ((const char *) src2_data + slot_idx * (int64_t) nb20 + batch_idx * (int64_t) nb21);
+        స్థిరరాశి int32_t expert_id =
+            *(స్థిరరాశి int32_t *) ((స్థిరరాశి అక్షరం *) src2_దత్తాంశం + స్థానం_idx * (int64_t) nb20 + batch_idx * (int64_t) nb21);
 
-        char * dst_slot = (char *) dst_data + slot_idx * (int64_t) nbd1 + batch_idx * (int64_t) nbd2;
+        అక్షరం * dst_స్థానం = (అక్షరం *) dst_దత్తాంశం + స్థానం_idx * (int64_t) nbd1 + batch_idx * (int64_t) nbd2;
 
-        if (expert_id < 0 || expert_id >= n_expert) {
+        ఒకవేళ (expert_id < 0 || expert_id >= n_expert) {
             // Invalid expert id — zero out this run's outputs.
             int64_t m = m0;
-            for (int64_t i = 0; i < run_len; i++, m++) {
-                atomic_store_f32((volatile float *) (dst_slot + m * (int64_t) nbd0), 0.0f);
+            కొరకు (int64_t i = 0; i < నిరంతరం_len; i++, m++) {
+                atomic_store_f32((అస్థిర దశాంశం *) (dst_స్థానం + m * (int64_t) nbd0), 0.0f);
             }
-            idx += (uint64_t) run_len;
-            continue;
+            idx += (uint64_t) నిరంతరం_len;
+            కొనసాగు;
         }
 
-        const int64_t col_idx = slot_idx % ne11;
-        const float * b_col_base =
-            (const float *) ((const char *) src1_data + col_idx * (int64_t) nb11 + batch_idx * (int64_t) nb12);
-        const char * expert_base = (const char *) src0_data + expert_id * (int64_t) nb02;
+        స్థిరరాశి int64_t నిలువు_idx = స్థానం_idx % ne11;
+        స్థిరరాశి దశాంశం * b_నిలువు_పునాది =
+            (స్థిరరాశి దశాంశం *) ((స్థిరరాశి అక్షరం *) src1_దత్తాంశం + నిలువు_idx * (int64_t) nb11 + batch_idx * (int64_t) nb12);
+        స్థిరరాశి అక్షరం * expert_పునాది = (స్థిరరాశి అక్షరం *) src0_దత్తాంశం + expert_id * (int64_t) nb02;
 
         int64_t m    = m0;
-        int64_t left = run_len;
+        int64_t ఎడమ_2 = నిరంతరం_len;
 
         // Paired-row dots: halves B bandwidth for runs >= 2.
-        if (use_x2) {
-            while (left >= 2) {
-                const block_q4_0 * row0 = (const block_q4_0 *) (expert_base + m * (int64_t) nb01);
-                const block_q4_0 * row1 = (const block_q4_0 *) (expert_base + (m + 1) * (int64_t) nb01);
-                float              s0, s1;
-                q4_dot_compute_x2_aligned(row0, row1, b_col_base, K_blocks, &s0, &s1);
-                atomic_store_f32((volatile float *) (dst_slot + m * (int64_t) nbd0), s0);
-                atomic_store_f32((volatile float *) (dst_slot + (m + 1) * (int64_t) nbd0), s1);
+        ఒకవేళ (use_x2) {
+            అయితే (ఎడమ_2 >= 2) {
+                స్థిరరాశి ఖండం_q4_0 * row0 = (స్థిరరాశి ఖండం_q4_0 *) (expert_పునాది + m * (int64_t) nb01);
+                స్థిరరాశి ఖండం_q4_0 * row1 = (స్థిరరాశి ఖండం_q4_0 *) (expert_పునాది + (m + 1) * (int64_t) nb01);
+                దశాంశం              s0, s1;
+                q4_dot_compute_x2_aligned(row0, row1, b_నిలువు_పునాది, K_ఖండాలు, &s0, &s1);
+                atomic_store_f32((అస్థిర దశాంశం *) (dst_స్థానం + m * (int64_t) nbd0), s0);
+                atomic_store_f32((అస్థిర దశాంశం *) (dst_స్థానం + (m + 1) * (int64_t) nbd0), s1);
                 m += 2;
-                left -= 2;
+                ఎడమ_2 -= 2;
             }
         }
 
         // Tail / non-aligned fallback: single-row dots.
-        while (left > 0) {
-            const block_q4_0 * row = (const block_q4_0 *) (expert_base + m * (int64_t) nb01);
-            float              s   = q4_dot_compute(row, b_col_base, K_blocks);
-            atomic_store_f32((volatile float *) (dst_slot + m * (int64_t) nbd0), s);
+        అయితే (ఎడమ_2 > 0) {
+            స్థిరరాశి ఖండం_q4_0 * అడ్డువరుస = (స్థిరరాశి ఖండం_q4_0 *) (expert_పునాది + m * (int64_t) nb01);
+            దశాంశం              s   = q4_dot_compute(అడ్డువరుస, b_నిలువు_పునాది, K_ఖండాలు);
+            atomic_store_f32((అస్థిర దశాంశం *) (dst_స్థానం + m * (int64_t) nbd0), s);
             m++;
-            left--;
+            ఎడమ_2--;
         }
 
-        idx += (uint64_t) run_len;
+        idx += (uint64_t) నిరంతరం_len;
     }
 
-    q4_dot_end(&q4_state);
-    return 0;
+    q4_dot_చివర(&q4_state);
+    తిరిగి 0;
 }

@@ -13,153 +13,153 @@
 //   Small   (16 % ne0 == 0): cache-line distributed, scalar per-element.
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "platform.h"
+#అన్తర్భావ "ggml_tensor.h"
+#అన్తర్భావ "platform.h"
 
-#include <stdint.h>
+#అన్తర్భావ <stdint.h>
 
-struct ggml_et_pad_params {
-    struct ggml_tensor src0;
-    struct ggml_tensor dst;
+నిర్మాణం ggml_et_pad_params {
+    నిర్మాణం ggml_tensor src0;
+    నిర్మాణం ggml_tensor dst;
     int32_t            lp[4];
     int32_t            rp[4];
 };
 
 // Vectorized copy with scalar tail
-static inline void vec_copy_f32(float * dst, const float * src, int32_t n) {
+స్థిర అంతఃవరుస శూన్య vec_copy_f32(దశాంశం * dst, స్థిరరాశి దశాంశం * src, int32_t n) {
     int32_t       i       = 0;
-    const int32_t vec_end = (n / 8) * 8;
-    for (; i < vec_end; i += 8) {
-        __asm__ volatile(
+    స్థిరరాశి int32_t vec_చివర = (n / 8) * 8;
+    కొరకు (; i < vec_చివర; i += 8) {
+        __asm__ అస్థిర(
             "flw.ps f10, %[s]\n"
             "fsw.ps f10, %[d]\n"
-            : [d] "=m"(*(float (*)[8]) & dst[i])
-            : [s] "m"(*(const float (*)[8]) & src[i])
+            : [d] "=m"(*(దశాంశం (*)[8]) & dst[i])
+            : [s] "m"(*(స్థిరరాశి దశాంశం (*)[8]) & src[i])
             : "f10");
     }
-    for (; i < n; i++) {
+    కొరకు (; i < n; i++) {
         dst[i] = src[i];
     }
 }
 
-int entry_point(struct ggml_et_pad_params * params, void * env) {
+పూర్ణాంకం నమోదు_బిందువు(నిర్మాణం ggml_et_pad_params * params, శూన్య * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    ఒకవేళ (!kernel_env) {
+        తిరిగి -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    పూర్ణాంకం thread_id   = get_relative_thread_id(kernel_env->shire_ముసుగు);
+    పూర్ణాంకం అంకె_దారాలు = get_అంకె_దారాలు(kernel_env->shire_ముసుగు);
 
-    if (thread_id < 0) {
-        return 0;
+    ఒకవేళ (thread_id < 0) {
+        తిరిగి 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    ఒకవేళ (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        తిరిగి -1;
     }
 
-    struct ggml_tensor * src0 = &params->src0;
-    struct ggml_tensor * dst  = &params->dst;
+    నిర్మాణం ggml_tensor * src0 = &params->src0;
+    నిర్మాణం ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+    ఒకవేళ (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        తిరిగి -1;
     }
 
-    const float * src0_data = (const float *) src0->data;
-    float *       dst_data  = (float *) dst->data;
+    స్థిరరాశి దశాంశం * src0_దత్తాంశం = (స్థిరరాశి దశాంశం *) src0->దత్తాంశం;
+    దశాంశం *       dst_దత్తాంశం  = (దశాంశం *) dst->దత్తాంశం;
 
-    if (!src0_data || !dst_data) {
-        return -1;
+    ఒకవేళ (!src0_దత్తాంశం || !dst_దత్తాంశం) {
+        తిరిగి -1;
     }
 
     // Dst dimensions
-    const int64_t ne0 = dst->ne[0];
-    const int64_t ne1 = dst->ne[1];
-    const int64_t ne2 = dst->ne[2];
-    const int64_t ne3 = dst->ne[3];
+    స్థిరరాశి int64_t ne0 = dst->ne[0];
+    స్థిరరాశి int64_t ne1 = dst->ne[1];
+    స్థిరరాశి int64_t ne2 = dst->ne[2];
+    స్థిరరాశి int64_t ne3 = dst->ne[3];
 
     // Src strides (byte offsets)
-    const int64_t nb1_src = src0->nb[1];
-    const int64_t nb2_src = src0->nb[2];
-    const int64_t nb3_src = src0->nb[3];
+    స్థిరరాశి int64_t nb1_src = src0->nb[1];
+    స్థిరరాశి int64_t nb2_src = src0->nb[2];
+    స్థిరరాశి int64_t nb3_src = src0->nb[3];
 
     // Padding values
-    const int32_t lp1 = params->lp[1];
-    const int32_t rp1 = params->rp[1];
-    const int32_t lp2 = params->lp[2];
-    const int32_t rp2 = params->rp[2];
-    const int32_t lp3 = params->lp[3];
-    const int32_t rp3 = params->rp[3];
+    స్థిరరాశి int32_t lp1 = params->lp[1];
+    స్థిరరాశి int32_t rp1 = params->rp[1];
+    స్థిరరాశి int32_t lp2 = params->lp[2];
+    స్థిరరాశి int32_t rp2 = params->rp[2];
+    స్థిరరాశి int32_t lp3 = params->lp[3];
+    స్థిరరాశి int32_t rp3 = params->rp[3];
 
-    const int64_t total_rows     = ne1 * ne2 * ne3;
-    const int64_t total_elements = ne0 * total_rows;
+    స్థిరరాశి int64_t మొత్తం_అడ్డువరుసలు     = ne1 * ne2 * ne3;
+    స్థిరరాశి int64_t మొత్తం_elements = ne0 * మొత్తం_అడ్డువరుసలు;
 
-    if (total_elements == 0) {
-        return 0;
+    ఒకవేళ (మొత్తం_elements == 0) {
+        తిరిగి 0;
     }
 
     // Broadcast 0.0f to SIMD register for vectorized zero-fill
-    float zero = 0.0f;
-    __asm__ volatile("fbc.ps f12, %[v]\n" : : [v] "m"(zero) : "f12");
+    దశాంశం zero = 0.0f;
+    __asm__ అస్థిర("fbc.ps f12, %[v]\n" : : [v] "m"(zero) : "f12");
 
     // Aligned: ne0 % 16 == 0 -> row-based distribution, vectorized
-    if (ne0 % 16 == 0) {
-        for (int64_t row = thread_id; row < total_rows; row += num_threads) {
-            const int64_t i3 = row / (ne1 * ne2);
-            const int64_t i2 = (row / ne1) % ne2;
-            const int64_t i1 = row % ne1;
+    ఒకవేళ (ne0 % 16 == 0) {
+        కొరకు (int64_t అడ్డువరుస = thread_id; అడ్డువరుస < మొత్తం_అడ్డువరుసలు; అడ్డువరుస += అంకె_దారాలు) {
+            స్థిరరాశి int64_t i3 = అడ్డువరుస / (ne1 * ne2);
+            స్థిరరాశి int64_t i2 = (అడ్డువరుస / ne1) % ne2;
+            స్థిరరాశి int64_t i1 = అడ్డువరుస % ne1;
 
-            float * dst_row = dst_data + row * ne0;
+            దశాంశం * dst_అడ్డువరుస = dst_దత్తాంశం + అడ్డువరుస * ne0;
 
-            if (i1 >= lp1 && i1 < ne1 - rp1 && i2 >= lp2 && i2 < ne2 - rp2 && i3 >= lp3 && i3 < ne3 - rp3) {
-                const float * src_row = (const float *) ((const char *) src0_data + (i1 - lp1) * nb1_src +
+            ఒకవేళ (i1 >= lp1 && i1 < ne1 - rp1 && i2 >= lp2 && i2 < ne2 - rp2 && i3 >= lp3 && i3 < ne3 - rp3) {
+                స్థిరరాశి దశాంశం * src_అడ్డువరుస = (స్థిరరాశి దశాంశం *) ((స్థిరరాశి అక్షరం *) src0_దత్తాంశం + (i1 - lp1) * nb1_src +
                                                          (i2 - lp2) * nb2_src + (i3 - lp3) * nb3_src);
-                vec_copy_f32(dst_row, src_row, (int32_t) ne0);
-            } else {
+                vec_copy_f32(dst_అడ్డువరుస, src_అడ్డువరుస, (int32_t) ne0);
+            } లేకపోతే {
                 int64_t       i       = 0;
-                const int64_t vec_end = (ne0 / 8) * 8;
-                for (; i < vec_end; i += 8) {
-                    __asm__ volatile("fsw.ps f12, %[d]\n" : [d] "=m"(*(float (*)[8]) & dst_row[i])::"f12");
+                స్థిరరాశి int64_t vec_చివర = (ne0 / 8) * 8;
+                కొరకు (; i < vec_చివర; i += 8) {
+                    __asm__ అస్థిర("fsw.ps f12, %[d]\n" : [d] "=m"(*(దశాంశం (*)[8]) & dst_అడ్డువరుస[i])::"f12");
                 }
             }
         }
-        return 0;
+        తిరిగి 0;
     }
 
     // Small-ne0 path: 16 % ne0 == 0 -> cache-line distributed, scalar
-    const int64_t elems_per_cl = 16;
-    const int64_t total_cl     = (total_elements + elems_per_cl - 1) / elems_per_cl;
+    స్థిరరాశి int64_t elems_చొప్పున_cl = 16;
+    స్థిరరాశి int64_t మొత్తం_cl     = (మొత్తం_elements + elems_చొప్పున_cl - 1) / elems_చొప్పున_cl;
 
-    const int64_t ne1_data_end = ne1 - rp1;
-    const int64_t ne2_data_end = ne2 - rp2;
-    const int64_t ne3_data_end = ne3 - rp3;
+    స్థిరరాశి int64_t ne1_దత్తాంశం_చివర = ne1 - rp1;
+    స్థిరరాశి int64_t ne2_దత్తాంశం_చివర = ne2 - rp2;
+    స్థిరరాశి int64_t ne3_దత్తాంశం_చివర = ne3 - rp3;
 
-    for (int64_t cl = thread_id; cl < total_cl; cl += num_threads) {
-        const int64_t elem_start = cl * elems_per_cl;
-        int64_t       elem_end   = elem_start + elems_per_cl;
-        if (elem_end > total_elements) {
-            elem_end = total_elements;
+    కొరకు (int64_t cl = thread_id; cl < మొత్తం_cl; cl += అంకె_దారాలు) {
+        స్థిరరాశి int64_t elem_ప్రారంభం = cl * elems_చొప్పున_cl;
+        int64_t       elem_చివర   = elem_ప్రారంభం + elems_చొప్పున_cl;
+        ఒకవేళ (elem_చివర > మొత్తం_elements) {
+            elem_చివర = మొత్తం_elements;
         }
 
-        for (int64_t idx = elem_start; idx < elem_end; idx++) {
-            const int64_t i0   = idx % ne0;
-            const int64_t rem  = idx / ne0;
-            const int64_t i1   = rem % ne1;
-            const int64_t rem2 = rem / ne1;
-            const int64_t i2   = rem2 % ne2;
-            const int64_t i3   = rem2 / ne2;
+        కొరకు (int64_t idx = elem_ప్రారంభం; idx < elem_చివర; idx++) {
+            స్థిరరాశి int64_t i0   = idx % ne0;
+            స్థిరరాశి int64_t rem  = idx / ne0;
+            స్థిరరాశి int64_t i1   = rem % ne1;
+            స్థిరరాశి int64_t rem2 = rem / ne1;
+            స్థిరరాశి int64_t i2   = rem2 % ne2;
+            స్థిరరాశి int64_t i3   = rem2 / ne2;
 
-            if (i1 >= lp1 && i1 < ne1_data_end && i2 >= lp2 && i2 < ne2_data_end && i3 >= lp3 && i3 < ne3_data_end) {
-                const float * sp = (const float *) ((const char *) src0_data + i0 * 4 + (i1 - lp1) * nb1_src +
+            ఒకవేళ (i1 >= lp1 && i1 < ne1_దత్తాంశం_చివర && i2 >= lp2 && i2 < ne2_దత్తాంశం_చివర && i3 >= lp3 && i3 < ne3_దత్తాంశం_చివర) {
+                స్థిరరాశి దశాంశం * sp = (స్థిరరాశి దశాంశం *) ((స్థిరరాశి అక్షరం *) src0_దత్తాంశం + i0 * 4 + (i1 - lp1) * nb1_src +
                                                     (i2 - lp2) * nb2_src + (i3 - lp3) * nb3_src);
-                dst_data[idx]    = *sp;
-            } else {
-                dst_data[idx] = 0.0f;
+                dst_దత్తాంశం[idx]    = *sp;
+            } లేకపోతే {
+                dst_దత్తాంశం[idx] = 0.0f;
             }
         }
     }
 
-    return 0;
+    తిరిగి 0;
 }

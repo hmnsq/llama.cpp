@@ -1,10 +1,10 @@
-#ifndef GGML_SYCL_CONV2D_DW_HPP
-#define GGML_SYCL_CONV2D_DW_HPP
+#నిర్వచితం_కాకపోతే GGML_SYCL_CONV2D_DW_HPP
+#నిర్వచించు GGML_SYCL_CONV2D_DW_HPP
 
-#include "common.hpp"
+#అన్తర్భావ "common.hpp"
 
-#define SYCL_CONV2D_DW_BLOCK_SIZE 256
+#నిర్వచించు SYCL_CONV2_D_DW_ఖండం_కొలత 256
 
-void ggml_sycl_op_conv2d_dw(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+శూన్య ggml_sycl_op_conv2d_dw(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-#endif // GGML_SYCL_CONV2D_DW_HPP
+#అయితే_ముగింపు // GGML_SYCL_CONV2D_DW_HPP

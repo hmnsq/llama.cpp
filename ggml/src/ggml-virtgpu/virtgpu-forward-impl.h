@@ -1,36 +1,36 @@
-#pragma once
+#సూచన once
 
 // clang-format off
-#include "virtgpu.h"
-#include "ggml-remoting.h"
-#include "backend/shared/apir_backend.h"
-#include "backend/shared/apir_cs_ggml.h"
-#include "ggml-backend-impl.h"
+#అన్తర్భావ "virtgpu.h"
+#అన్తర్భావ "ggml-remoting.h"
+#అన్తర్భావ "backend/shared/apir_backend.h"
+#అన్తర్భావ "backend/shared/apir_cs_ggml.h"
+#అన్తర్భావ "ggml-backend-impl.h"
 // clang-format on
 
-#define REMOTE_CALL_PREPARE(gpu_dev_name, encoder_name, apir_command_type__)                                           \
+#నిర్వచించు REMOTE_CALL_PREPARE(gpu_dev_name, encoder_name, apir_command_type__)                                           \
     int32_t      REMOTE_CALL_PREPARE_forward_flag = (int32_t) apir_command_type__;                                     \
-    const char * REMOTE_CALL_PREPARE_command_name = apir_dispatch_command_name(apir_command_type__);                   \
-    do {                                                                                                               \
+    స్థిరరాశి అక్షరం * REMOTE_CALL_PREPARE_command_name = apir_dispatch_command_name(apir_command_type__);                   \
+    చేయి {                                                                                                               \
         encoder_name = remote_call_prepare(gpu_dev_name, APIR_COMMAND_TYPE_FORWARD, REMOTE_CALL_PREPARE_forward_flag); \
-        if (!encoder_name) {                                                                                           \
+        ఒకవేళ (!encoder_name) {                                                                                           \
             GGML_ABORT(GGML_VIRTGPU "%s: failed to prepare the remote call encoder", __func__);                        \
         }                                                                                                              \
-    } while (0)
+    } అయితే (0)
 
-#define REMOTE_CALL(gpu_dev_name, encoder_name, decoder_name, ret_name)                                     \
-    do {                                                                                                    \
-        ret_name = (ApirForwardReturnCode) remote_call(gpu_dev_name, encoder_name, &decoder_name, 0, NULL); \
-        if (!decoder_name) {                                                                                \
+#నిర్వచించు REMOTE_CALL(gpu_dev_name, encoder_name, decoder_name, ret_name)                                     \
+    చేయి {                                                                                                    \
+        ret_name = (Apir_Forward_Return_సంకేతం) remote_call(gpu_dev_name, encoder_name, &decoder_name, 0, ఖాళీ); \
+        ఒకవేళ (!decoder_name) {                                                                                \
             GGML_ABORT(GGML_VIRTGPU "%s: failed to kick the remote call", __func__);                        \
         }                                                                                                   \
-        if (ret_name < APIR_FORWARD_BASE_INDEX) {                                                           \
+        ఒకవేళ (ret_name < APIR_FORWARD_పునాది_సూచీ) {                                                           \
             GGML_ABORT(GGML_VIRTGPU "%s: failed to forward the API call: %s: code %d", __func__,            \
                        apir_forward_error(ret_name), ret_name);                                             \
         }                                                                                                   \
-        ret_name = (ApirForwardReturnCode) (ret_name - APIR_FORWARD_BASE_INDEX);                            \
-        if (ret_name != 0) {                                                                                \
+        ret_name = (Apir_Forward_Return_సంకేతం) (ret_name - APIR_FORWARD_పునాది_సూచీ);                            \
+        ఒకవేళ (ret_name != 0) {                                                                                \
             GGML_ABORT(GGML_VIRTGPU "backend function '%s' failed (return code: %d)",                       \
                        REMOTE_CALL_PREPARE_command_name, ret_name);                                         \
         }                                                                                                   \
-    } while (0)
+    } అయితే (0)

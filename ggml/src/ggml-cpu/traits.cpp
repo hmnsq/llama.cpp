@@ -1,36 +1,36 @@
-#include "traits.h"
+#అన్తర్భావ "traits.h"
 
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
+#అన్తర్భావ "ggml-backend-impl.h"
+#అన్తర్భావ "ggml-backend.h"
 
-namespace ggml::cpu {
+నామాకాశ ggml::cpu {
 tensor_traits::~tensor_traits() {}
 
-extra_buffer_type::~extra_buffer_type() {}
+extra_బఫరు_type::~extra_బఫరు_type() {}
 }  // namespace ggml::cpu
 
-bool ggml_cpu_extra_compute_forward(struct ggml_compute_params * params, struct ggml_tensor * op) {
-    for (auto extra : ggml_backend_cpu_get_extra_buffer_types()) {
-        if (extra && extra->context) {
-            auto buf_extra     = (ggml::cpu::extra_buffer_type *) extra->context;
-            auto tensor_traits = buf_extra->get_tensor_traits(op);
-            if (tensor_traits && tensor_traits->compute_forward(params, op)) {
-                return true;
+తార్కిక ggml_cpu_extra_compute_forward(నిర్మాణం ggml_compute_params * params, నిర్మాణం ggml_tensor * op) {
+    కొరకు (స్వయంచాలక extra : ggml_backend_cpu_get_extra_బఫరు_types()) {
+        ఒకవేళ (extra && extra->context) {
+            స్వయంచాలక buf_extra     = (ggml::cpu::extra_బఫరు_type *) extra->context;
+            స్వయంచాలక tensor_traits = buf_extra->get_tensor_traits(op);
+            ఒకవేళ (tensor_traits && tensor_traits->compute_forward(params, op)) {
+                తిరిగి నిజం;
             }
         }
     }
-    return false;
+    తిరిగి అబద్ధం;
 }
 
-bool ggml_cpu_extra_work_size(int n_threads, const struct ggml_tensor * op, size_t * size) {
-    for (auto extra : ggml_backend_cpu_get_extra_buffer_types()) {
-        if (extra && extra->context) {
-            auto buf_extra     = (ggml::cpu::extra_buffer_type *) extra->context;
-            auto tensor_traits = buf_extra->get_tensor_traits(op);
-            if (tensor_traits && tensor_traits->work_size(n_threads, op, *size)) {
-                return true;
+తార్కిక ggml_cpu_extra_work_కొలత(పూర్ణాంకం n_దారాలు, స్థిరరాశి నిర్మాణం ggml_tensor * op, size_t * size) {
+    కొరకు (స్వయంచాలక extra : ggml_backend_cpu_get_extra_బఫరు_types()) {
+        ఒకవేళ (extra && extra->context) {
+            స్వయంచాలక buf_extra     = (ggml::cpu::extra_బఫరు_type *) extra->context;
+            స్వయంచాలక tensor_traits = buf_extra->get_tensor_traits(op);
+            ఒకవేళ (tensor_traits && tensor_traits->work_కొలత(n_దారాలు, op, *size)) {
+                తిరిగి నిజం;
             }
         }
     }
-    return false;
+    తిరిగి అబద్ధం;
 }

@@ -1,29 +1,29 @@
-#include "../op_table.h"
-#include "../utils.h"
+#అన్తర్భావ "../op_table.h"
+#అన్తర్భావ "../utils.h"
 
-#include <openvino/op/concat.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/gather.hpp>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/shape_of.hpp>
-#include <openvino/op/slice.hpp>
+#అన్తర్భావ <openvino/op/concat.hpp>
+#అన్తర్భావ <openvino/op/constant.hpp>
+#అన్తర్భావ <openvino/op/gather.hpp>
+#అన్తర్భావ <openvino/op/reshape.hpp>
+#అన్తర్భావ <openvino/op/shape_of.hpp>
+#అన్తర్భావ <openvino/op/slice.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+నామాకాశ ov {
+నామాకాశ frontend {
+నామాకాశ ggml {
+నామాకాశ op {
 
-OutputVector translate_view(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+Output_సదిశ translate_view(స్థిరరాశి కణుపు_Context & context) {
+    అంకె_inputs_check(context, 1, 1);
 
-    if (context.get_op_case() == 1) {
+    ఒకవేళ (context.get_op_case() == 1) {
         // Static-mode identity pass-through for VIEWs over a GATED_DELTA_NET combined output or
         // the conv_input CONCAT; the consuming op (CPY/RMS_NORM) does its own runtime-correct
         // slicing on the full tensor (see ggml-decoder.cpp compute_op_case, GGML_OP_VIEW).
-        return {context.get_input(0)};
+        తిరిగి {context.get_ఆదానం(0)};
     }
 
-    if (!context.is_static()) {
+    ఒకవేళ (!context.is_static()) {
         // On the stateless/non-static path VIEW is normally a no-op (consumers re-slice).
         // EXCEPTION: the MoE expert aggregation slices each expert plane out of
         // ffn_moe_weighted [n_embd, n_expert_used, n_tokens] with ggml_view_2d and then
@@ -32,80 +32,80 @@ OutputVector translate_view(const NodeContext & context) {
         // makes every plane the full tensor and the expert sum collapses. Materialize the
         // single-expert slice here. Gated by name (ffn_moe_weighted...view) so it can't
         // affect any other view.
-        const std::string & vname = context.get_name();
-        if (vname.find("ffn_moe_weighted") != std::string::npos) {
-            auto src_ps = context.get_input_shape(0);
-            auto dst_ps = context.get_output_shape();
-            if (src_ps.rank().is_static() && dst_ps.rank().is_static() && src_ps.rank() == dst_ps.rank() &&
+        స్థిరరాశి std::string & vname = context.get_name();
+        ఒకవేళ (vname.find("ffn_moe_weighted") != std::string::npos) {
+            స్వయంచాలక src_ps = context.get_ఆదానం_shape(0);
+            స్వయంచాలక dst_ps = context.get_output_shape();
+            ఒకవేళ (src_ps.rank().is_static() && dst_ps.rank().is_static() && src_ps.rank() == dst_ps.rank() &&
                 src_ps.is_static() && dst_ps.is_static()) {
-                auto sst = context.get_input_stride(0);
-                auto dst = context.get_output_stride();
-                size_t voff = context.get_output_op_offset();
-                auto ss = src_ps.to_shape();
-                auto dd = dst_ps.to_shape();
-                const size_t nd = ss.size();
+                స్వయంచాలక sst = context.get_ఆదానం_stride(0);
+                స్వయంచాలక dst = context.get_output_stride();
+                size_t voff = context.get_output_op_స్థానభ్రంశం();
+                స్వయంచాలక ss = src_ps.గమ్యం_shape();
+                స్వయంచాలక dd = dst_ps.గమ్యం_shape();
+                స్థిరరాశి size_t nd = ss.size();
                 // Stateful models drop the leading size-1 batch dim, so the real OV tensor can
                 // be one rank lower than the ggml shape metadata above. Axis indices derived
                 // from that metadata must be shifted down by the difference before they are
                 // used as OV axes. Bail out if the dims we would drop are not all 1.
-                const auto in_rank = context.get_input(0).get_partial_shape().rank();
-                const int axis_shift =
-                    in_rank.is_static() ? (int) nd - (int) in_rank.get_length() : 0;
-                bool shift_ok = axis_shift >= 0 && (size_t) axis_shift < nd;
-                for (int a = 0; a < axis_shift && shift_ok; ++a) {
-                    shift_ok = (ss[a] == 1 && dd[a] == 1);
+                స్థిరరాశి స్వయంచాలక లోపల_rank = context.get_ఆదానం(0).get_partial_shape().rank();
+                స్థిరరాశి పూర్ణాంకం axis_జరుపు =
+                    లోపల_rank.is_static() ? (పూర్ణాంకం) nd - (పూర్ణాంకం) లోపల_rank.get_నిడివి() : 0;
+                తార్కిక జరుపు_ok = axis_జరుపు >= 0 && (size_t) axis_జరుపు < nd;
+                కొరకు (పూర్ణాంకం a = 0; a < axis_జరుపు && జరుపు_ok; ++a) {
+                    జరుపు_ok = (ss[a] == 1 && dd[a] == 1);
                 }
-                if (shift_ok && sst.size() == nd && dst.size() == nd) {
+                ఒకవేళ (జరుపు_ok && sst.size() == nd && dst.size() == nd) {
                     // Map each dst axis of size>1 to a src axis with equal (size,stride);
                     // the unmatched src axis of size>1 is the indexed expert axis.
                     // dst_to_src[d] records which src axis each dst axis came from, so we can
                     // later pull the dynamic (token) dim from the right source axis at runtime.
-                    std::vector<bool> used(nd, false);
-                    std::vector<int> dst_to_src(nd, -1);
-                    bool ok = true;
-                    for (size_t d = 0; d < nd; ++d) {
-                        if (dd[d] == 1) {
-                            continue;
+                    std::vector<తార్కిక> వాడిన(nd, అబద్ధం);
+                    std::vector<పూర్ణాంకం> dst_గమ్యం_src(nd, -1);
+                    తార్కిక ok = నిజం;
+                    కొరకు (size_t d = 0; d < nd; ++d) {
+                        ఒకవేళ (dd[d] == 1) {
+                            కొనసాగు;
                         }
-                        int found = -1;
-                        for (size_t s = 0; s < nd; ++s) {
-                            if (!used[s] && ss[s] == dd[d] && sst[s] == dst[d]) {
-                                found = (int) s;
-                                break;
+                        పూర్ణాంకం దొరికింది = -1;
+                        కొరకు (size_t s = 0; s < nd; ++s) {
+                            ఒకవేళ (!వాడిన[s] && ss[s] == dd[d] && sst[s] == dst[d]) {
+                                దొరికింది = (పూర్ణాంకం) s;
+                                ఆపు;
                             }
                         }
-                        if (found < 0) {
-                            ok = false;
-                            break;
+                        ఒకవేళ (దొరికింది < 0) {
+                            ok = అబద్ధం;
+                            ఆపు;
                         }
-                        used[found] = true;
-                        dst_to_src[d] = found;
+                        వాడిన[దొరికింది] = నిజం;
+                        dst_గమ్యం_src[d] = దొరికింది;
                     }
-                    int dropped = -1;
-                    if (ok) {
-                        for (size_t s = 0; s < nd; ++s) {
-                            if (!used[s] && ss[s] > 1) {
-                                if (dropped >= 0) {
-                                    ok = false;
-                                    break;
+                    పూర్ణాంకం dropped = -1;
+                    ఒకవేళ (ok) {
+                        కొరకు (size_t s = 0; s < nd; ++s) {
+                            ఒకవేళ (!వాడిన[s] && ss[s] > 1) {
+                                ఒకవేళ (dropped >= 0) {
+                                    ok = అబద్ధం;
+                                    ఆపు;
                                 }
-                                dropped = (int) s;
+                                dropped = (పూర్ణాంకం) s;
                             }
                         }
                     }
-                    if (ok && dropped >= 0) {
-                        const size_t dstr = sst[dropped];
-                        const int64_t dsz = (int64_t) ss[dropped];
-                        if (dstr > 0 && voff % dstr == 0) {
-                            const int64_t sel = (int64_t) (voff / dstr);
-                            if (sel >= 0 && sel < dsz) {
-                                ov::Output<ov::Node> sl = std::make_shared<ov::op::v8::Slice>(
-                                    context.get_input(0),
+                    ఒకవేళ (ok && dropped >= 0) {
+                        స్థిరరాశి size_t dstr = sst[dropped];
+                        స్థిరరాశి int64_t dsz = (int64_t) ss[dropped];
+                        ఒకవేళ (dstr > 0 && voff % dstr == 0) {
+                            స్థిరరాశి int64_t sel = (int64_t) (voff / dstr);
+                            ఒకవేళ (sel >= 0 && sel < dsz) {
+                                ov::Output<ov::Node> sl = std::make_shared<ov::op::v8::ముక్క>(
+                                    context.get_ఆదానం(0),
                                     ov::op::v0::Constant::create(ov::element::i64, {1}, {sel}),
                                     ov::op::v0::Constant::create(ov::element::i64, {1}, {sel + 1}),
                                     ov::op::v0::Constant::create(ov::element::i64, {1}, {1}),
                                     ov::op::v0::Constant::create(ov::element::i64, {1},
-                                                                 {dropped - axis_shift}));
+                                                                 {dropped - axis_జరుపు}));
                                 // Build the reshape target from the (concrete) dst shape, but
                                 // keep the dynamic token axis dynamic instead of freezing it
                                 // to the captured n_tokens. Without this the constant dst
@@ -117,140 +117,140 @@ OutputVector translate_view(const NodeContext & context) {
                                 // (which copies the same-position dim) is not enough: pull the
                                 // dynamic dim from the correct SOURCE axis via ShapeOf+Gather
                                 // and place it at the dst token position.
-                                const int32_t dyn = context.get_op_dynamic_dim();  // output ggml axis, -1 if none
+                                స్థిరరాశి int32_t dyn = context.get_op_dynamic_dim();  // output ggml axis, -1 if none
                                 // still in ggml metadata axis space; get_shape() reverses ggml order
-                                int dst_ov_axis = (dyn != -1) ? ((int) nd - 1 - (int) dyn) : -1;
-                                int src_ov_axis = (dst_ov_axis >= axis_shift && dst_ov_axis < (int) nd)
-                                                      ? dst_to_src[dst_ov_axis]
+                                పూర్ణాంకం dst_ov_axis = (dyn != -1) ? ((పూర్ణాంకం) nd - 1 - (పూర్ణాంకం) dyn) : -1;
+                                పూర్ణాంకం src_ov_axis = (dst_ov_axis >= axis_జరుపు && dst_ov_axis < (పూర్ణాంకం) nd)
+                                                      ? dst_గమ్యం_src[dst_ov_axis]
                                                       : -1;
-                                if (dst_ov_axis >= 0 && src_ov_axis >= axis_shift) {
+                                ఒకవేళ (dst_ov_axis >= 0 && src_ov_axis >= axis_జరుపు) {
                                     // target = concat of per-axis scalars; the token axis is a
                                     // runtime Gather of the slice's shape, the rest are constants.
-                                    auto sl_shape = std::make_shared<ov::op::v3::ShapeOf>(sl, ov::element::i64);
-                                    auto tok_dim = std::make_shared<ov::op::v8::Gather>(
+                                    స్వయంచాలక sl_shape = std::make_shared<ov::op::v3::Shape_యొక్క>(sl, ov::element::i64);
+                                    స్వయంచాలక tok_dim = std::make_shared<ov::op::v8::Gather>(
                                         sl_shape,
                                         ov::op::v0::Constant::create(ov::element::i64, {1},
-                                                                     {src_ov_axis - axis_shift}),
+                                                                     {src_ov_axis - axis_జరుపు}),
                                         ov::op::v0::Constant::create(ov::element::i64, {}, {0}));
-                                    ov::OutputVector parts;
-                                    for (int a = axis_shift; a < (int) nd; ++a) {
-                                        if (a == dst_ov_axis) {
+                                    ov::Output_సదిశ parts;
+                                    కొరకు (పూర్ణాంకం a = axis_జరుపు; a < (పూర్ణాంకం) nd; ++a) {
+                                        ఒకవేళ (a == dst_ov_axis) {
                                             parts.push_back(tok_dim);
-                                        } else {
+                                        } లేకపోతే {
                                             parts.push_back(ov::op::v0::Constant::create(
                                                 ov::element::i64, {1}, {(int64_t) dd[a]}));
                                         }
                                     }
-                                    auto dc = std::make_shared<ov::op::v0::Concat>(parts, 0);
-                                    auto rs = std::make_shared<ov::op::v1::Reshape>(sl, dc, false);
-                                    return rename_outputs_with_suffix({rs}, context.get_name());
+                                    స్వయంచాలక dc = std::make_shared<ov::op::v0::Concat>(parts, 0);
+                                    స్వయంచాలక rs = std::make_shared<ov::op::v1::Reshape>(sl, dc, అబద్ధం);
+                                    తిరిగి rename_outputs_with_suffix({rs}, context.get_name());
                                 }
-                                std::vector<int64_t> dd_ov(dd.begin() + axis_shift, dd.end());
-                                auto dc = ov::op::v0::Constant::create(ov::element::i64, {dd_ov.size()}, dd_ov);
-                                auto rs = std::make_shared<ov::op::v1::Reshape>(sl, dc, false);
-                                return rename_outputs_with_suffix({rs}, context.get_name());
+                                std::vector<int64_t> dd_ov(dd.begin() + axis_జరుపు, dd.end());
+                                స్వయంచాలక dc = ov::op::v0::Constant::create(ov::element::i64, {dd_ov.size()}, dd_ov);
+                                స్వయంచాలక rs = std::make_shared<ov::op::v1::Reshape>(sl, dc, అబద్ధం);
+                                తిరిగి rename_outputs_with_suffix({rs}, context.get_name());
                             }
                         }
                     }
                 }
             }
         }
-        return {context.get_input(0)};
+        తిరిగి {context.get_ఆదానం(0)};
     }
 
-    auto input = context.get_input(0);
-    auto src_shape = context.get_input_shape(0);
-    auto dst_shape = context.get_output_shape();
+    స్వయంచాలక ఆదానం = context.get_ఆదానం(0);
+    స్వయంచాలక src_shape = context.get_ఆదానం_shape(0);
+    స్వయంచాలక dst_shape = context.get_output_shape();
 
-    if (src_shape.rank().is_dynamic() || dst_shape.rank().is_dynamic()) {
-        return {input};
+    ఒకవేళ (src_shape.rank().is_dynamic() || dst_shape.rank().is_dynamic()) {
+        తిరిగి {ఆదానం};
     }
 
     int64_t src_elems = 1;
     int64_t dst_elems = 1;
-    for (int64_t i = 0; i < src_shape.rank().get_length(); ++i) {
-        if (src_shape[i].is_dynamic()) {
-            return {input};
+    కొరకు (int64_t i = 0; i < src_shape.rank().get_నిడివి(); ++i) {
+        ఒకవేళ (src_shape[i].is_dynamic()) {
+            తిరిగి {ఆదానం};
         }
-        src_elems *= src_shape[i].get_length();
+        src_elems *= src_shape[i].get_నిడివి();
     }
-    for (int64_t i = 0; i < dst_shape.rank().get_length(); ++i) {
-        if (dst_shape[i].is_dynamic()) {
-            return {input};
+    కొరకు (int64_t i = 0; i < dst_shape.rank().get_నిడివి(); ++i) {
+        ఒకవేళ (dst_shape[i].is_dynamic()) {
+            తిరిగి {ఆదానం};
         }
-        dst_elems *= dst_shape[i].get_length();
+        dst_elems *= dst_shape[i].get_నిడివి();
     }
 
-    if (dst_elems >= src_elems) {
-        return {input};
+    ఒకవేళ (dst_elems >= src_elems) {
+        తిరిగి {ఆదానం};
     }
 
-    auto src_stride = context.get_input_stride(0);
-    auto dst_stride = context.get_output_stride();
-    size_t view_offset = context.get_output_op_offset();
+    స్వయంచాలక src_stride = context.get_ఆదానం_stride(0);
+    స్వయంచాలక dst_stride = context.get_output_stride();
+    size_t view_స్థానభ్రంశం = context.get_output_op_స్థానభ్రంశం();
 
-    bool same_stride = (src_stride.size() == dst_stride.size());
-    if (same_stride) {
-        for (size_t i = 0; i < src_stride.size(); ++i) {
-            if (src_stride[i] != dst_stride[i]) {
-                same_stride = false;
-                break;
+    తార్కిక same_stride = (src_stride.size() == dst_stride.size());
+    ఒకవేళ (same_stride) {
+        కొరకు (size_t i = 0; i < src_stride.size(); ++i) {
+            ఒకవేళ (src_stride[i] != dst_stride[i]) {
+                same_stride = అబద్ధం;
+                ఆపు;
             }
         }
     }
 
-    if (!same_stride) {
-        return {input};
+    ఒకవేళ (!same_stride) {
+        తిరిగి {ఆదానం};
     }
 
-    auto src_ov_shape = src_shape.to_shape();
-    auto dst_ov_shape = dst_shape.to_shape();
+    స్వయంచాలక src_ov_shape = src_shape.గమ్యం_shape();
+    స్వయంచాలక dst_ov_shape = dst_shape.గమ్యం_shape();
     size_t ndims = src_ov_shape.size();
-    if (dst_ov_shape.size() != ndims) {
-        return {input};
+    ఒకవేళ (dst_ov_shape.size() != ndims) {
+        తిరిగి {ఆదానం};
     }
 
-    std::vector<int> diff_dims;
-    for (size_t i = 0; i < ndims; ++i) {
-        if (src_ov_shape[i] != dst_ov_shape[i]) {
-            diff_dims.push_back(static_cast<int>(i));
+    std::vector<పూర్ణాంకం> diff_dims;
+    కొరకు (size_t i = 0; i < ndims; ++i) {
+        ఒకవేళ (src_ov_shape[i] != dst_ov_shape[i]) {
+            diff_dims.push_back(static_cast<పూర్ణాంకం>(i));
         }
     }
 
-    if (diff_dims.size() != 1) {
-        return {input};
+    ఒకవేళ (diff_dims.size() != 1) {
+        తిరిగి {ఆదానం};
     }
 
-    int slice_dim = diff_dims[0];
-    int64_t dim_size = static_cast<int64_t>(src_ov_shape[slice_dim]);
+    పూర్ణాంకం ముక్క_dim = diff_dims[0];
+    int64_t dim_కొలత = static_cast<int64_t>(src_ov_shape[ముక్క_dim]);
 
     size_t ov_stride_for_dim = 1;
-    for (size_t i = slice_dim + 1; i < ndims; ++i) {
+    కొరకు (size_t i = ముక్క_dim + 1; i < ndims; ++i) {
         ov_stride_for_dim *= src_ov_shape[i];
     }
-    size_t elem_size = src_stride.back();
-    if (elem_size == 0) {
-        elem_size = 1;
+    size_t elem_కొలత = src_stride.back();
+    ఒకవేళ (elem_కొలత == 0) {
+        elem_కొలత = 1;
     }
 
     int64_t begin_val = 0;
-    if (ov_stride_for_dim > 0 && elem_size > 0) {
-        begin_val = static_cast<int64_t>((view_offset / elem_size) / ov_stride_for_dim);
+    ఒకవేళ (ov_stride_for_dim > 0 && elem_కొలత > 0) {
+        begin_val = static_cast<int64_t>((view_స్థానభ్రంశం / elem_కొలత) / ov_stride_for_dim);
     }
-    int64_t end_val = begin_val + static_cast<int64_t>(dst_ov_shape[slice_dim]);
+    int64_t చివర_val = begin_val + static_cast<int64_t>(dst_ov_shape[ముక్క_dim]);
 
-    if (begin_val < 0 || end_val > dim_size) {
-        return {input};
+    ఒకవేళ (begin_val < 0 || చివర_val > dim_కొలత) {
+        తిరిగి {ఆదానం};
     }
 
-    auto sliced =
-        std::make_shared<ov::op::v8::Slice>(input, ov::op::v0::Constant::create(ov::element::i64, {1}, {begin_val}),
-                                            ov::op::v0::Constant::create(ov::element::i64, {1}, {end_val}),
+    స్వయంచాలక sliced =
+        std::make_shared<ov::op::v8::ముక్క>(ఆదానం, ov::op::v0::Constant::create(ov::element::i64, {1}, {begin_val}),
+                                            ov::op::v0::Constant::create(ov::element::i64, {1}, {చివర_val}),
                                             ov::op::v0::Constant::create(ov::element::i64, {1}, {1}),
-                                            ov::op::v0::Constant::create(ov::element::i64, {1}, {slice_dim}));
+                                            ov::op::v0::Constant::create(ov::element::i64, {1}, {ముక్క_dim}));
 
-    sliced->set_friendly_name(context.get_output_name());
-    return {sliced->output(0)};
+    sliced->సమితి_friendly_name(context.get_output_name());
+    తిరిగి {sliced->output(0)};
 }
 
 }  // namespace op

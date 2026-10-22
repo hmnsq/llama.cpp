@@ -1,151 +1,151 @@
-#include <sycl/ext/oneapi/backend/level_zero.hpp>
-#include <sycl/sycl.hpp>
+#అన్తర్భావ <sycl/ext/oneapi/backend/level_zero.hpp>
+#అన్తర్భావ <sycl/sycl.hpp>
 
-#ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
-#include <level_zero/ze_api.h>
-#include <level_zero/zes_api.h>
-#endif
+#నిర్వచితమైతే GGML_SYCL_SUPPORT_LEVEL_ZERO_API
+#అన్తర్భావ <level_zero/ze_api.h>
+#అన్తర్భావ <level_zero/zes_api.h>
+#అయితే_ముగింపు
 
-#include <cstdint>
-#include <iostream>
-#include <vector>
+#అన్తర్భావ <cstdint>
+#అన్తర్భావ <iostream>
+#అన్తర్భావ <vector>
 
-#include "base.hpp"
-#include "mem.hpp"
+#అన్తర్భావ "base.hpp"
+#అన్తర్భావ "mem.hpp"
 
-const char * mem_api_int2str(int mem_api) {
-    if (mem_api == MEMORY_API_TYPE_SYCL) {
-        return "SYCL API";
-    } else if (mem_api == MEMORY_API_TYPE_LEVEL_ZERO) {
-        return "Level Zero API";
-    } else {
-        return "Unknown";
+స్థిరరాశి అక్షరం * mem_api_int2str(పూర్ణాంకం mem_api) {
+    ఒకవేళ (mem_api == జ్ఞాపకం_API_TYPE_SYCL) {
+        తిరిగి "SYCL API";
+    } లేకపోతే ఒకవేళ (mem_api == జ్ఞాపకం_API_TYPE_LEVEL_ZERO) {
+        తిరిగి "Level Zero API";
+    } లేకపోతే {
+        తిరిగి "Unknown";
     }
 }
 
-#ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
+#నిర్వచితమైతే GGML_SYCL_SUPPORT_LEVEL_ZERO_API
 /*
 * Depend on to call zesInit(0) before any other Level Zero API calls, otherwise the Level Zero API calls may fail.
 */
-static bool query_free_memory_by_ze(sycl::device dev, size_t & free_bytes, size_t & total_bytes) {
+స్థిర తార్కిక query_free_జ్ఞాపకం_by_ze(sycl::device dev, size_t & free_బైట్లు, size_t & మొత్తం_బైట్లు) {
     GGML_SYCL_DEBUG("[SYCL] call %s: Querying free memory using Level Zero API.\n", __func__);
 
-    free_bytes  = 0;
-    total_bytes = 0;
+    free_బైట్లు  = 0;
+    మొత్తం_బైట్లు = 0;
 
-    uint32_t module_count = 0;
+    uint32_t module_లెక్క = 0;
 
-#if defined(SYCL_EXT_ONEAPI_BACKEND_LEVEL_ZERO)
+#ఒకవేళ defined(SYCL_EXT_ONEAPI_BACKEND_LEVEL_ZERO)
     constexpr sycl::backend kL0Backend = sycl::backend::ext_oneapi_level_zero;
-#else
+#లేకపోతే
     constexpr sycl::backend kL0Backend = sycl::backend::level_zero;
-#endif
+#అయితే_ముగింపు
 
-    try {
+    ప్రయత్నించు {
 
-        if (dev.get_platform().get_backend() != kL0Backend) {
+        ఒకవేళ (dev.get_platform().get_backend() != kL0Backend) {
             GGML_SYCL_DEBUG("Device backend is not Level Zero.\n");
-            return false;
+            తిరిగి అబద్ధం;
         }
 
         ze_device_handle_t ze_dev = sycl::get_native<kL0Backend>(dev);
-        if (ze_dev == nullptr) {
+        ఒకవేళ (ze_dev == శూన్యసూచిక) {
             GGML_SYCL_DEBUG("Level Zero device handle is null.\n");
-            return false;
+            తిరిగి అబద్ధం;
         }
 
-        ze_result_t r = zesDeviceEnumMemoryModules(ze_dev, &module_count, nullptr);
-        if (r != ZE_RESULT_SUCCESS || module_count == 0) {
+        ze_ఫలితం_t r = zes_Device_Enum_జ్ఞాపకం_Modules(ze_dev, &module_లెక్క, శూన్యసూచిక);
+        ఒకవేళ (r != ZE_ఫలితం_SUCCESS || module_లెక్క == 0) {
             GGML_SYCL_DEBUG("Failed to enumerate Level Zero memory modules.\n");
-            return false;
+            తిరిగి అబద్ధం;
         }
 
-        std::vector<zes_mem_handle_t> modules(module_count);
-        r = zesDeviceEnumMemoryModules(ze_dev, &module_count, modules.data());
-        if (r != ZE_RESULT_SUCCESS || module_count == 0) {
+        std::vector<zes_mem_handle_t> modules(module_లెక్క);
+        r = zes_Device_Enum_జ్ఞాపకం_Modules(ze_dev, &module_లెక్క, modules.దత్తాంశం());
+        ఒకవేళ (r != ZE_ఫలితం_SUCCESS || module_లెక్క == 0) {
             GGML_SYCL_DEBUG("Failed to enumerate Level Zero memory modules.\n");
-            return false;
+            తిరిగి అబద్ధం;
         }
 
-        for (uint32_t i = 0; i < module_count; ++i) {
+        కొరకు (uint32_t i = 0; i < module_లెక్క; ++i) {
             zes_mem_state_t state = {};
             state.stype           = ZES_STRUCTURE_TYPE_MEM_STATE;
-            state.pNext           = nullptr;
+            state.p_తదుపరి           = శూన్యసూచిక;
 
-            r = zesMemoryGetState(modules[i], &state);
-            if (r != ZE_RESULT_SUCCESS) {
-                continue;
+            r = zes_జ్ఞాపకం_Get_State(modules[i], &state);
+            ఒకవేళ (r != ZE_ఫలితం_SUCCESS) {
+                కొనసాగు;
             }
 
-            free_bytes += state.free;
-            total_bytes += state.size;
+            free_బైట్లు += state.విడుదల;
+            మొత్తం_బైట్లు += state.size;
         }
 
-        if (total_bytes == 0) {
+        ఒకవేళ (మొత్తం_బైట్లు == 0) {
             GGML_SYCL_DEBUG("Level Zero memory query returned zero total bytes.\n");
-            return false;
+            తిరిగి అబద్ధం;
         }
-        return total_bytes >= free_bytes;
+        తిరిగి మొత్తం_బైట్లు >= free_బైట్లు;
 
-    } catch (const sycl::exception & e) {
+    } పట్టుకో (స్థిరరాశి sycl::exception & e) {
         GGML_SYCL_DEBUG("Level Zero memory query failed: %s\n", e.what());
-        return false;
+        తిరిగి అబద్ధం;
     }
 }
-#endif
+#అయితే_ముగింపు
 
-static bool get_memory_size_by_sycl_api(sycl::device dev, size_t & free_bytes, size_t & total_bytes) {
+స్థిర తార్కిక get_జ్ఞాపకం_కొలత_by_sycl_api(sycl::device dev, size_t & free_బైట్లు, size_t & మొత్తం_బైట్లు) {
     GGML_SYCL_DEBUG("[SYCL] call %s: Querying free memory using SYCL API.\n", __func__);
-    total_bytes = dev.get_info<sycl::info::device::global_mem_size>();
+    మొత్తం_బైట్లు = dev.get_info<sycl::info::device::global_mem_కొలత>();
 
-#if (defined(__SYCL_COMPILER_VERSION) && __SYCL_COMPILER_VERSION >= 20221105)
-    if (dev.has(sycl::aspect::ext_intel_free_memory)) {
-        try {
+#ఒకవేళ (defined(__SYCL_COMPILER_VERSION) && __SYCL_COMPILER_VERSION >= 20221105)
+    ఒకవేళ (dev.has(sycl::aspect::ext_intel_free_జ్ఞాపకం)) {
+        ప్రయత్నించు {
             GGML_SYCL_DEBUG("Querying free memory using SYCL aspect::ext_intel_free_memory.\n");
-            free_bytes = dev.get_info<sycl::ext::intel::info::device::free_memory>();
-            return true;
-        } catch (const sycl::exception &) {
+            free_బైట్లు = dev.get_info<sycl::ext::intel::info::device::free_జ్ఞాపకం>();
+            తిరిగి నిజం;
+        } పట్టుకో (స్థిరరాశి sycl::exception &) {
             GGML_SYCL_DEBUG(
                 "Failed to query free memory using SYCL aspect::ext_intel_free_memory.\n");
-            return false;
+            తిరిగి అబద్ధం;
         }
-    } else {
+    } లేకపోతే {
         GGML_SYCL_DEBUG(
             "Device does not support SYCL aspect::ext_intel_free_memory.\n");
     }
-#else
+#లేకపోతే
     GGML_SYCL_DEBUG("SYCL Compiler version is older than 20221105.\n");
-#endif
-    return false;
+#అయితే_ముగింపు
+    తిరిగి అబద్ధం;
 }
 
-bool get_memory_size(sycl::device dev, size_t & free_bytes, size_t & total_bytes, MemoryAPIType api_type) {
+తార్కిక get_జ్ఞాపకం_కొలత(sycl::device dev, size_t & free_బైట్లు, size_t & మొత్తం_బైట్లు, జ్ఞాపకం_APIType api_type) {
 
     GGML_SYCL_DEBUG("[%s]GPU Name:          %s\n", __func__,
         dev.get_info<sycl::info::device::name>().c_str());
     GGML_SYCL_DEBUG("[%s]GPU Vendor:        %s\n", __func__,
         dev.get_info<sycl::info::device::vendor>().c_str());
 
-    if (api_type == MEMORY_API_TYPE_LEVEL_ZERO) {
-#ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
+    ఒకవేళ (api_type == జ్ఞాపకం_API_TYPE_LEVEL_ZERO) {
+#నిర్వచితమైతే GGML_SYCL_SUPPORT_LEVEL_ZERO_API
         GGML_SYCL_DEBUG("[%s] Querying free memory using Level Zero API.\n", __func__);
-        if (query_free_memory_by_ze(dev, free_bytes, total_bytes)) {
-            return true;
+        ఒకవేళ (query_free_జ్ఞాపకం_by_ze(dev, free_బైట్లు, మొత్తం_బైట్లు)) {
+            తిరిగి నిజం;
         }
         //fallback to SYCL API if Level Zero API fails
         GGML_SYCL_DEBUG("[%s] Falling back to SYCL API for memory query.\n", __func__);
-#endif
+#అయితే_ముగింపు
     }
 
     //MEMORY_API_TYPE_SYCL
-    if(get_memory_size_by_sycl_api(dev, free_bytes, total_bytes)){
-        return true;
+    ఒకవేళ(get_జ్ఞాపకం_కొలత_by_sycl_api(dev, free_బైట్లు, మొత్తం_బైట్లు)){
+        తిరిగి నిజం;
     }
 
     //Todo, fallback to other methods to get free memory size, such as using OS-specific APIs (e.g., /proc/meminfo on Linux, GlobalMemoryStatusEx on Windows, etc.)
     GGML_SYCL_DEBUG(
         "[%s] Can't get free mem size by Level Zero and SYCL API. Using total memory as free memory.\n", __func__);
-    free_bytes = total_bytes;
+    free_బైట్లు = మొత్తం_బైట్లు;
 
-    return true;
+    తిరిగి నిజం;
 }

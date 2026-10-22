@@ -1,13 +1,13 @@
-#include "shared/apir_backend.h"
+#అన్తర్భావ "shared/apir_backend.h"
 
-#define BUFFER_TO_HOST_HANDLE(name) ggml_buffer_to_apir_handle(name)
+#నిర్వచించు బఫరు_గమ్యం_HOST_HANDLE(name) ggml_బఫరు_గమ్యం_apir_handle(name)
 
-static inline apir_buffer_host_handle_t ggml_buffer_to_apir_handle(ggml_backend_buffer_t buffer) {
+స్థిర అంతఃవరుస apir_బఫరు_host_handle_t ggml_బఫరు_గమ్యం_apir_handle(ggml_backend_బఫరు_t బఫరు) {
     // in the backend, the buffer handle is the buffer pointer
-    return (apir_buffer_host_handle_t) buffer;
+    తిరిగి (apir_బఫరు_host_handle_t) బఫరు;
 }
 
-static inline apir_buffer_type_host_handle_t ggml_buffer_type_to_apir_handle(ggml_backend_buffer_type_t buft) {
+స్థిర అంతఃవరుస apir_బఫరు_type_host_handle_t ggml_బఫరు_type_గమ్యం_apir_handle(ggml_backend_బఫరు_type_t buft) {
     // in the backend, the buffer handle is the buffer pointer
-    return (apir_buffer_type_host_handle_t) buft;
+    తిరిగి (apir_బఫరు_type_host_handle_t) buft;
 }

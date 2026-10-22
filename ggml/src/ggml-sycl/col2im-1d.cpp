@@ -1,102 +1,102 @@
-#include "col2im-1d.hpp"
+#అన్తర్భావ "col2im-1d.hpp"
 
-template <typename T>
-static void col2im_1d_sycl(
-        const T * col,
+మూస <రకం_పేరు T>
+స్థిర శూన్య col2im_1d_sycl(
+        స్థిరరాశి T * నిలువు,
         T * dst,
-        const int T_in,
-        const sycl::uint3 T_out_fd,
-        const int K,
-        const int K_OC,
-        const int32_t s0,
-        const int32_t p0,
-        const int total,
-        dpct::queue_ptr stream) {
+        స్థిరరాశి పూర్ణాంకం T_లోపల,
+        స్థిరరాశి sycl::uint3 T_బహిర్గతం_fd,
+        స్థిరరాశి పూర్ణాంకం K,
+        స్థిరరాశి పూర్ణాంకం K_OC,
+        స్థిరరాశి int32_t s0,
+        స్థిరరాశి int32_t p0,
+        స్థిరరాశి పూర్ణాంకం మొత్తం,
+        dpct::వరుస_ptr stream) {
 
-    const uint32_t block_size = SYCL_COL2IM_1D_BLOCK_SIZE;
-    const uint32_t num_blocks = (uint32_t) ((total + block_size - 1) / block_size);
+    స్థిరరాశి uint32_t ఖండం_కొలత_3 = SYCL_COL2_IM_1_D_ఖండం_కొలత;
+    స్థిరరాశి uint32_t అంకె_ఖండాలు = (uint32_t) ((మొత్తం + ఖండం_కొలత_3 - 1) / ఖండం_కొలత_3);
 
     stream->parallel_for(
         sycl::nd_range<3>(
-            sycl::range<3>(1, 1, num_blocks * block_size),
-            sycl::range<3>(1, 1, block_size)),
-        [=](sycl::nd_item<3> item_ct1) {
-            const int idx = (int) item_ct1.get_global_id(2);
-            if (idx >= total) {
-                return;
+            sycl::range<3>(1, 1, అంకె_ఖండాలు * ఖండం_కొలత_3),
+            sycl::range<3>(1, 1, ఖండం_కొలత_3)),
+        [=](sycl::nd_అంశం<3> అంశం_ct1) {
+            స్థిరరాశి పూర్ణాంకం idx = (పూర్ణాంకం) అంశం_ct1.get_global_id(2);
+            ఒకవేళ (idx >= మొత్తం) {
+                తిరిగి;
             }
 
-            const sycl::uint2 qr = fast_div_modulo((uint32_t) idx, T_out_fd);
-            const int oc    = (int) qr.x();
-            const int t_out = (int) qr.y();
-            const int t_abs = t_out + p0;
+            స్థిరరాశి sycl::uint2 qr = fast_div_modulo((uint32_t) idx, T_బహిర్గతం_fd);
+            స్థిరరాశి పూర్ణాంకం oc    = (పూర్ణాంకం) qr.x();
+            స్థిరరాశి పూర్ణాంకం t_బహిర్గతం = (పూర్ణాంకం) qr.y();
+            స్థిరరాశి పూర్ణాంకం t_abs = t_బహిర్గతం + p0;
 
-            int t_in_min = (t_abs - K + s0) / s0;
-            if (t_in_min < 0) {
-                t_in_min = 0;
+            పూర్ణాంకం t_లోపల_min = (t_abs - K + s0) / s0;
+            ఒకవేళ (t_లోపల_min < 0) {
+                t_లోపల_min = 0;
             }
-            int t_in_max = t_abs / s0;
-            if (t_in_max >= T_in) {
-                t_in_max = T_in - 1;
-            }
-
-            float sum = 0.0f;
-            for (int t_in = t_in_min; t_in <= t_in_max; ++t_in) {
-                const int k = t_abs - t_in * s0;
-                sum += static_cast<float>(col[(oc * K + k) + t_in * K_OC]);
+            పూర్ణాంకం t_లోపల_max = t_abs / s0;
+            ఒకవేళ (t_లోపల_max >= T_లోపల) {
+                t_లోపల_max = T_లోపల - 1;
             }
 
-            dst[idx] = static_cast<T>(sum);
+            దశాంశం కూడిక = 0.0f;
+            కొరకు (పూర్ణాంకం t_లోపల = t_లోపల_min; t_లోపల <= t_లోపల_max; ++t_లోపల) {
+                స్థిరరాశి పూర్ణాంకం k = t_abs - t_లోపల * s0;
+                కూడిక += static_cast<దశాంశం>(నిలువు[(oc * K + k) + t_లోపల * K_OC]);
+            }
+
+            dst[idx] = static_cast<T>(కూడిక);
         });
 }
 
-void ggml_sycl_op_col2im_1d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    const ggml_tensor * src0 = dst->src[0];
+శూన్య ggml_sycl_op_col2im_1d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    స్థిరరాశి ggml_tensor * src0 = dst->src[0];
 
-    GGML_ASSERT(src0 != nullptr);
+    GGML_ASSERT(src0 != శూన్యసూచిక);
     GGML_ASSERT(ggml_is_contiguous(src0));
     GGML_ASSERT(src0->type == dst->type);
 
-    const int32_t s0 = ((const int32_t *) dst->op_params)[0];
-    const int32_t OC = ((const int32_t *) dst->op_params)[1];
-    const int32_t p0 = ((const int32_t *) dst->op_params)[2];
+    స్థిరరాశి int32_t s0 = ((స్థిరరాశి int32_t *) dst->op_params)[0];
+    స్థిరరాశి int32_t OC = ((స్థిరరాశి int32_t *) dst->op_params)[1];
+    స్థిరరాశి int32_t p0 = ((స్థిరరాశి int32_t *) dst->op_params)[2];
 
-    const int K_OC  = (int) src0->ne[0];
-    const int T_in  = (int) src0->ne[1];
-    const int K     = K_OC / OC;
-    const int T_out = (int) dst->ne[0];
+    స్థిరరాశి పూర్ణాంకం K_OC  = (పూర్ణాంకం) src0->ne[0];
+    స్థిరరాశి పూర్ణాంకం T_లోపల  = (పూర్ణాంకం) src0->ne[1];
+    స్థిరరాశి పూర్ణాంకం K     = K_OC / OC;
+    స్థిరరాశి పూర్ణాంకం T_బహిర్గతం = (పూర్ణాంకం) dst->ne[0];
 
     GGML_ASSERT(OC > 0);
     GGML_ASSERT(K_OC % OC == 0);
 
-    const sycl::uint3 T_out_fd = init_fastdiv_values((uint32_t) T_out);
+    స్థిరరాశి sycl::uint3 T_బహిర్గతం_fd = init_fastdiv_విలువలు((uint32_t) T_బహిర్గతం);
 
-    const int total = T_out * OC;
+    స్థిరరాశి పూర్ణాంకం మొత్తం = T_బహిర్గతం * OC;
 
-    dpct::queue_ptr stream = ctx.stream();
+    dpct::వరుస_ptr stream = ctx.stream();
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
-            col2im_1d_sycl<float>(
-                (const float *) src0->data,
-                (float *) dst->data,
-                T_in, T_out_fd, K, K_OC, s0, p0, total, stream);
-            break;
-        case GGML_TYPE_F16:
+    ఎంపిక (src0->type) {
+        స్థితి GGML_TYPE_F32:
+            col2im_1d_sycl<దశాంశం>(
+                (స్థిరరాశి దశాంశం *) src0->దత్తాంశం,
+                (దశాంశం *) dst->దత్తాంశం,
+                T_లోపల, T_బహిర్గతం_fd, K, K_OC, s0, p0, మొత్తం, stream);
+            ఆపు;
+        స్థితి GGML_TYPE_F16:
             col2im_1d_sycl<sycl::half>(
-                (const sycl::half *) src0->data,
-                (sycl::half *) dst->data,
-                T_in, T_out_fd, K, K_OC, s0, p0, total, stream);
-            break;
-#ifdef GGML_SYCL_HAS_BF16
-        case GGML_TYPE_BF16:
+                (స్థిరరాశి sycl::half *) src0->దత్తాంశం,
+                (sycl::half *) dst->దత్తాంశం,
+                T_లోపల, T_బహిర్గతం_fd, K, K_OC, s0, p0, మొత్తం, stream);
+            ఆపు;
+#నిర్వచితమైతే GGML_SYCL_HAS_BF16
+        స్థితి GGML_TYPE_BF16:
             col2im_1d_sycl<sycl::ext::oneapi::bfloat16>(
-                (const sycl::ext::oneapi::bfloat16 *) src0->data,
-                (sycl::ext::oneapi::bfloat16 *) dst->data,
-                T_in, T_out_fd, K, K_OC, s0, p0, total, stream);
-            break;
-#endif
-        default:
+                (స్థిరరాశి sycl::ext::oneapi::bfloat16 *) src0->దత్తాంశం,
+                (sycl::ext::oneapi::bfloat16 *) dst->దత్తాంశం,
+                T_లోపల, T_బహిర్గతం_fd, K, K_OC, s0, p0, మొత్తం, stream);
+            ఆపు;
+#అయితే_ముగింపు
+        అప్రమేయ:
             GGML_ABORT("col2im_1d: unsupported type %d", src0->type);
     }
 }

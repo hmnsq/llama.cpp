@@ -1,33 +1,33 @@
-#ifndef HTP_SSM_CONV_H
-#define HTP_SSM_CONV_H
+#నిర్వచితం_కాకపోతే HTP_SSM_CONV_H
+#నిర్వచించు HTP_SSM_CONV_H
 
-#include <stdint.h>
+#అన్తర్భావ <stdint.h>
 
-#include "hex-fastdiv.h"
-#include "htp-ops.h"
+#అన్తర్భావ "hex-fastdiv.h"
+#అన్తర్భావ "htp-ops.h"
 
-struct htp_ssm_conv_kernel_params {
-    uint32_t n_threads;
+నిర్మాణం htp_ssm_conv_kernel_params {
+    uint32_t n_దారాలు;
     uint32_t d_conv;
     uint32_t d_inner;
     uint32_t n_t;
     uint32_t n_s;
     uint32_t d_inner_tile;
 
-    uint32_t vtcm_src0_size_per_thread;
-    uint32_t vtcm_src1_size_per_thread;
-    uint32_t vtcm_dst_size_per_thread;
+    uint32_t vtcm_src0_కొలత_చొప్పున_thread;
+    uint32_t vtcm_src1_కొలత_చొప్పున_thread;
+    uint32_t vtcm_dst_కొలత_చొప్పున_thread;
 
-    uint32_t vtcm_src0_size;
-    uint32_t vtcm_src1_size;
-    uint32_t vtcm_dst_size;
-    uint32_t vtcm_size;
+    uint32_t vtcm_src0_కొలత;
+    uint32_t vtcm_src1_కొలత;
+    uint32_t vtcm_dst_కొలత;
+    uint32_t vtcm_కొలత;
 };
 
-#if defined(__cplusplus)
-static_assert(sizeof(struct htp_ssm_conv_kernel_params) <= 128, "htp_ssm_conv_kernel_params is too large for kernel_params blob");
-#else
-_Static_assert(sizeof(struct htp_ssm_conv_kernel_params) <= 128, "htp_ssm_conv_kernel_params is too large for kernel_params blob");
-#endif
+#ఒకవేళ defined(__cplusplus)
+static_assert(పరిమాణం(నిర్మాణం htp_ssm_conv_kernel_params) <= 128, "htp_ssm_conv_kernel_params is too large for kernel_params blob");
+#లేకపోతే
+_Static_assert(పరిమాణం(నిర్మాణం htp_ssm_conv_kernel_params) <= 128, "htp_ssm_conv_kernel_params is too large for kernel_params blob");
+#అయితే_ముగింపు
 
-#endif // HTP_SSM_CONV_H
+#అయితే_ముగింపు // HTP_SSM_CONV_H

@@ -1,112 +1,112 @@
-#include "translate_session.h"
+#అన్తర్భావ "translate_session.h"
 
-#include "ggml-impl.h"
-#include "ggml-openvino/ggml-openvino-extra.h"
-#include "ggml-openvino/openvino/node_context.h"
-#include "ggml-openvino/openvino/utils.h"
-#include "input_model.h"
-#include "pass/fuse_argsort_topk.h"
-#include "pass/fuse_moe_router.h"
-#include "pass/align_eltwise_ranks.h"
-#include "pass/fuse_moe_compressed.h"
-#include "pass/fuse_to_conv.h"
-#include "pass/kv_state_seq_axis.h"
-#include "pass/mark_decompression_convert_constant_folding.h"
-#include "pass/mark_dequantization_subgraph.h"
-#include "pass/squeeze_matmul.h"
-#include "rt_info/weightless_caching_attributes.hpp"
+#అన్తర్భావ "ggml-impl.h"
+#అన్తర్భావ "ggml-openvino/ggml-openvino-extra.h"
+#అన్తర్భావ "ggml-openvino/openvino/node_context.h"
+#అన్తర్భావ "ggml-openvino/openvino/utils.h"
+#అన్తర్భావ "input_model.h"
+#అన్తర్భావ "pass/fuse_argsort_topk.h"
+#అన్తర్భావ "pass/fuse_moe_router.h"
+#అన్తర్భావ "pass/align_eltwise_ranks.h"
+#అన్తర్భావ "pass/fuse_moe_compressed.h"
+#అన్తర్భావ "pass/fuse_to_conv.h"
+#అన్తర్భావ "pass/kv_state_seq_axis.h"
+#అన్తర్భావ "pass/mark_decompression_convert_constant_folding.h"
+#అన్తర్భావ "pass/mark_dequantization_subgraph.h"
+#అన్తర్భావ "pass/squeeze_matmul.h"
+#అన్తర్భావ "rt_info/weightless_caching_attributes.hpp"
 
-#include <algorithm>
-#include <cstdint>
-#include <cstdlib>
-#include <map>
-#include <memory>
-#include <openvino/core/node.hpp>
-#include <openvino/core/preprocess/pre_post_process.hpp>
-#include <openvino/core/shape.hpp>
-#include <openvino/core/type.hpp>
-#include <openvino/core/type/element_type.hpp>
-#include <openvino/op/add.hpp>
-#include <openvino/op/broadcast.hpp>
-#include <openvino/op/concat.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/convert_like.hpp>
-#include <openvino/op/cos.hpp>
-#include <openvino/op/divide.hpp>
-#include <openvino/op/gather.hpp>
-#include <openvino/op/greater_eq.hpp>
-#include <openvino/op/less.hpp>
-#include <openvino/op/logical_and.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/parameter.hpp>
-#include <openvino/op/range.hpp>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/result.hpp>
-#include <openvino/op/select.hpp>
-#include <openvino/op/sin.hpp>
-#include <openvino/op/slice.hpp>
-#include <openvino/op/squeeze.hpp>
-#include <openvino/op/strided_slice.hpp>
-#include <openvino/op/subtract.hpp>
-#include <openvino/op/transpose.hpp>
-#include <openvino/op/unsqueeze.hpp>
-#include <openvino/pass/constant_folding.hpp>
-#include <openvino/pass/make_stateful.hpp>
-#include <limits>
-#include <sstream>
+#అన్తర్భావ <algorithm>
+#అన్తర్భావ <cstdint>
+#అన్తర్భావ <cstdlib>
+#అన్తర్భావ <map>
+#అన్తర్భావ <memory>
+#అన్తర్భావ <openvino/core/node.hpp>
+#అన్తర్భావ <openvino/core/preprocess/pre_post_process.hpp>
+#అన్తర్భావ <openvino/core/shape.hpp>
+#అన్తర్భావ <openvino/core/type.hpp>
+#అన్తర్భావ <openvino/core/type/element_type.hpp>
+#అన్తర్భావ <openvino/op/add.hpp>
+#అన్తర్భావ <openvino/op/broadcast.hpp>
+#అన్తర్భావ <openvino/op/concat.hpp>
+#అన్తర్భావ <openvino/op/constant.hpp>
+#అన్తర్భావ <openvino/op/convert.hpp>
+#అన్తర్భావ <openvino/op/convert_like.hpp>
+#అన్తర్భావ <openvino/op/cos.hpp>
+#అన్తర్భావ <openvino/op/divide.hpp>
+#అన్తర్భావ <openvino/op/gather.hpp>
+#అన్తర్భావ <openvino/op/greater_eq.hpp>
+#అన్తర్భావ <openvino/op/less.hpp>
+#అన్తర్భావ <openvino/op/logical_and.hpp>
+#అన్తర్భావ <openvino/op/multiply.hpp>
+#అన్తర్భావ <openvino/op/parameter.hpp>
+#అన్తర్భావ <openvino/op/range.hpp>
+#అన్తర్భావ <openvino/op/reshape.hpp>
+#అన్తర్భావ <openvino/op/result.hpp>
+#అన్తర్భావ <openvino/op/select.hpp>
+#అన్తర్భావ <openvino/op/sin.hpp>
+#అన్తర్భావ <openvino/op/slice.hpp>
+#అన్తర్భావ <openvino/op/squeeze.hpp>
+#అన్తర్భావ <openvino/op/strided_slice.hpp>
+#అన్తర్భావ <openvino/op/subtract.hpp>
+#అన్తర్భావ <openvino/op/transpose.hpp>
+#అన్తర్భావ <openvino/op/unsqueeze.hpp>
+#అన్తర్భావ <openvino/pass/constant_folding.hpp>
+#అన్తర్భావ <openvino/pass/make_stateful.hpp>
+#అన్తర్భావ <limits>
+#అన్తర్భావ <sstream>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
+నామాకాశ ov {
+నామాకాశ frontend {
+నామాకాశ ggml {
 
-using namespace ov::op;
+ఉపయోగించి నామాకాశ ov::op;
 
-namespace {
+నామాకాశ {
 
-std::shared_ptr<ov::op::v0::Parameter> create_parameter(const std::string & name,
-                                                        const ModelInputInfo & input_info) {
-    auto param_node = std::make_shared<ov::op::v0::Parameter>(input_info.type, input_info.shape);
-    param_node->set_friendly_name(name);
-    param_node->output(0).get_tensor().set_names({name});
-    return param_node;
+std::shared_ptr<ov::op::v0::Parameter> create_parameter(స్థిరరాశి std::string & name,
+                                                        స్థిరరాశి Model_ఆదానం_Info & ఆదానం_info) {
+    స్వయంచాలక param_కణుపు = std::make_shared<ov::op::v0::Parameter>(ఆదానం_info.type, ఆదానం_info.shape);
+    param_కణుపు->సమితి_friendly_name(name);
+    param_కణుపు->output(0).get_tensor().సమితి_పేర్లు({name});
+    తిరిగి param_కణుపు;
 }
 
-std::shared_ptr<ov::Node> create_extra_input(const std::string & name, const ModelExtraInputInfo & input_info) {
-    if (input_info.is_parameter) {
-        auto param_node = std::make_shared<ov::op::v0::Parameter>(input_info.type, input_info.shape);
-        param_node->set_friendly_name(name);
-        param_node->output(0).get_tensor().set_names({name});
-        return param_node;
+std::shared_ptr<ov::Node> create_extra_ఆదానం(స్థిరరాశి std::string & name, స్థిరరాశి Model_Extra_ఆదానం_Info & ఆదానం_info) {
+    ఒకవేళ (ఆదానం_info.is_parameter) {
+        స్వయంచాలక param_కణుపు = std::make_shared<ov::op::v0::Parameter>(ఆదానం_info.type, ఆదానం_info.shape);
+        param_కణుపు->సమితి_friendly_name(name);
+        param_కణుపు->output(0).get_tensor().సమితి_పేర్లు({name});
+        తిరిగి param_కణుపు;
     }
 
-    auto constant = std::make_shared<ov::op::v0::Constant>(input_info.type, input_info.shape,
-                                                          std::vector<int64_t>{input_info.value});
-    constant->set_friendly_name(name);
-    return constant;
+    స్వయంచాలక constant = std::make_shared<ov::op::v0::Constant>(ఆదానం_info.type, ఆదానం_info.shape,
+                                                          std::vector<int64_t>{ఆదానం_info.value});
+    constant->సమితి_friendly_name(name);
+    తిరిగి constant;
 }
 
-ov::pass::MakeStateful::ParamResPairs get_kv_param_res_pairs(
-    const std::shared_ptr<ov::Model> & model,
-    const std::map<std::string, std::string> & kv_param_res_names) {
-    ov::pass::MakeStateful::ParamResPairs pairs;
-    const auto & params = model->get_parameters();
-    const auto & results = model->get_results();
+ov::pass::MakeStateful::Param_Res_జతలు get_kv_param_res_జతలు(
+    స్థిరరాశి std::shared_ptr<ov::Model> & model,
+    స్థిరరాశి std::map<std::string, std::string> & kv_param_res_పేర్లు) {
+    ov::pass::MakeStateful::Param_Res_జతలు జతలు;
+    స్థిరరాశి స్వయంచాలక & params = model->get_parameters();
+    స్థిరరాశి స్వయంచాలక & results = model->get_results();
 
-    for (const auto & param_res : kv_param_res_names) {
-        const auto & param_name = param_res.first;
-        const auto & res_name = param_res.second;
+    కొరకు (స్థిరరాశి స్వయంచాలక & param_res : kv_param_res_పేర్లు) {
+        స్థిరరాశి స్వయంచాలక & param_name = param_res.మొదటి;
+        స్థిరరాశి స్వయంచాలక & res_name = param_res.second;
 
-        auto param_it = std::find_if(params.begin(), params.end(), [&](const std::shared_ptr<v0::Parameter> & node) {
-            return node->get_friendly_name() == param_name;
+        స్వయంచాలక param_it = std::find_if(params.begin(), params.end(), [&](స్థిరరాశి std::shared_ptr<v0::Parameter> & కణుపు) {
+            తిరిగి కణుపు->get_friendly_name() == param_name;
         });
 
         OPENVINO_ASSERT(param_it != params.end(), "The tensor name ", param_name,
                         " is not associated with any of "
                         "Parameters in the network.");
 
-        auto res_it = std::find_if(results.begin(), results.end(), [&](const std::shared_ptr<v0::Result> & node) {
-            return node->get_friendly_name() == res_name;
+        స్వయంచాలక res_it = std::find_if(results.begin(), results.end(), [&](స్థిరరాశి std::shared_ptr<v0::ఫలితం_2> & కణుపు) {
+            తిరిగి కణుపు->get_friendly_name() == res_name;
         });
 
         OPENVINO_ASSERT(res_it != results.end(), "The tensor name ", res_name,
@@ -114,51 +114,51 @@ ov::pass::MakeStateful::ParamResPairs get_kv_param_res_pairs(
                         "Results in the network.");
 
         std::shared_ptr<ov::op::v0::Parameter> param = *param_it;
-        std::shared_ptr<ov::op::v0::Result> res = *res_it;
-        pairs.emplace_back(param, res);
+        std::shared_ptr<ov::op::v0::ఫలితం_2> res = *res_it;
+        జతలు.emplace_back(param, res);
     }
-    return pairs;
+    తిరిగి జతలు;
 }
 
-void add_sliced_mask_stateful(TensorMap & tensor_map, bool imrope) {
-    auto create_sliced_mask = [&](const std::string & mask_name, const std::string & sliced_name) {
-        if ((tensor_map.find(mask_name) != tensor_map.end()) &&
+శూన్య కూడు_sliced_ముసుగు_stateful(TensorMap & tensor_map, తార్కిక imrope) {
+    స్వయంచాలక create_sliced_ముసుగు = [&](స్థిరరాశి std::string & ముసుగు_name, స్థిరరాశి std::string & sliced_name) {
+        ఒకవేళ ((tensor_map.find(ముసుగు_name) != tensor_map.end()) &&
             (tensor_map.find("token_len_per_seq") != tensor_map.end()) &&
             (tensor_map.find("inp_pos") != tensor_map.end())) {
-            auto token_len_per_seq = tensor_map.at("token_len_per_seq").get_node_shared_ptr();
-            auto mask = tensor_map.at(mask_name).get_node_shared_ptr();
-            std::shared_ptr<ov::Node> mask_sliced = mask;
-            auto one = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
-            auto zero = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
-            auto three = ov::op::v0::Constant::create(ov::element::i64, {1}, {3});
-            auto neg_one = ov::op::v0::Constant::create(ov::element::i64, {1}, {-1});
+            స్వయంచాలక token_len_చొప్పున_seq = tensor_map.at("token_len_per_seq").get_కణుపు_shared_ptr();
+            స్వయంచాలక ముసుగు = tensor_map.at(ముసుగు_name).get_కణుపు_shared_ptr();
+            std::shared_ptr<ov::Node> ముసుగు_sliced = ముసుగు;
+            స్వయంచాలక one = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
+            స్వయంచాలక zero = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
+            స్వయంచాలక three = ov::op::v0::Constant::create(ov::element::i64, {1}, {3});
+            స్వయంచాలక neg_one = ov::op::v0::Constant::create(ov::element::i64, {1}, {-1});
 
-            auto step = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
-            auto axes = ov::op::v0::Constant::create(ov::element::i64, {1}, {-1});
+            స్వయంచాలక అడుగు = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
+            స్వయంచాలక axes = ov::op::v0::Constant::create(ov::element::i64, {1}, {-1});
 
-            auto inp_pos = tensor_map.at("inp_pos").get_node_shared_ptr();
+            స్వయంచాలక inp_pos = tensor_map.at("inp_pos").get_కణుపు_shared_ptr();
             // IMROPE's fourth position plane is zero for text; use the token's first plane.
-            ov::Output<ov::Node> last_index = neg_one;
-            if (imrope) {
-                last_index = std::make_shared<ov::op::v1::Add>(token_len_per_seq, neg_one);
+            ov::Output<ov::Node> చివరి_సూచీ = neg_one;
+            ఒకవేళ (imrope) {
+                చివరి_సూచీ = std::make_shared<ov::op::v1::కూడు>(token_len_చొప్పున_seq, neg_one);
             }
-            auto last_inp_pos = std::make_shared<ov::op::v8::Gather>(inp_pos, last_index, three);
-            auto last_inp_pos_1d = std::make_shared<ov::op::v1::Reshape>(
-                last_inp_pos, ov::op::v0::Constant::create(ov::element::i64, {1}, {1}), false);
-            auto last_inp_pos_cvt = std::make_shared<ov::op::v0::Convert>(last_inp_pos_1d, ov::element::i64);
-            auto last_inp_pos_inc = std::make_shared<ov::op::v1::Add>(last_inp_pos_cvt, one);
+            స్వయంచాలక చివరి_inp_pos = std::make_shared<ov::op::v8::Gather>(inp_pos, చివరి_సూచీ, three);
+            స్వయంచాలక చివరి_inp_pos_1d = std::make_shared<ov::op::v1::Reshape>(
+                చివరి_inp_pos, ov::op::v0::Constant::create(ov::element::i64, {1}, {1}), అబద్ధం);
+            స్వయంచాలక చివరి_inp_pos_cvt = std::make_shared<ov::op::v0::Convert>(చివరి_inp_pos_1d, ov::element::i64);
+            స్వయంచాలక చివరి_inp_pos_inc = std::make_shared<ov::op::v1::కూడు>(చివరి_inp_pos_cvt, one);
 
-            mask_sliced = std::make_shared<ov::op::v8::Slice>(mask, zero, last_inp_pos_inc, step, axes);
-            mask_sliced = std::make_shared<ov::op::v0::Convert>(mask_sliced, ov::element::f16);
-            mask_sliced->set_friendly_name(sliced_name);
+            ముసుగు_sliced = std::make_shared<ov::op::v8::ముక్క>(ముసుగు, zero, చివరి_inp_pos_inc, అడుగు, axes);
+            ముసుగు_sliced = std::make_shared<ov::op::v0::Convert>(ముసుగు_sliced, ov::element::f16);
+            ముసుగు_sliced->సమితి_friendly_name(sliced_name);
 
-            tensor_map.insert({sliced_name, mask_sliced->output(0)});
+            tensor_map.insert({sliced_name, ముసుగు_sliced->output(0)});
         }
     };
 
-    create_sliced_mask("self_kq_mask", "KQ_mask_sliced");
-    create_sliced_mask("KQ_mask", "KQ_mask_sliced");
-    create_sliced_mask("self_kq_mask_swa", "KQ_mask_swa_sliced");
+    create_sliced_ముసుగు("self_kq_mask", "KQ_mask_sliced");
+    create_sliced_ముసుగు("KQ_mask", "KQ_mask_sliced");
+    create_sliced_ముసుగు("self_kq_mask_swa", "KQ_mask_swa_sliced");
 }
 
 // Rebuild the sliding-window mask from absolute positions.
@@ -167,91 +167,91 @@ void add_sliced_mask_stateful(TensorMap & tensor_map, bool imrope) {
 // mask add fails. A pure-Concat state is ordered by position, so positions can rebuild the mask.
 // swa_window holds the real n_swa, read back from the ggml mask in ggml-decoder.cpp.
 // No-op when the graph has no SWA mask, or when the window could not be read back.
-void add_position_mask_stateful_swa(TensorMap & tensor_map) {
-    if (tensor_map.find("self_kq_mask_swa") == tensor_map.end() || tensor_map.find("inp_pos") == tensor_map.end() ||
+శూన్య కూడు_position_ముసుగు_stateful_swa(TensorMap & tensor_map) {
+    ఒకవేళ (tensor_map.find("self_kq_mask_swa") == tensor_map.end() || tensor_map.find("inp_pos") == tensor_map.end() ||
         tensor_map.find("swa_window") == tensor_map.end()) {
-        return;
+        తిరిగి;
     }
 
-    auto inp_pos = tensor_map.at("inp_pos").get_node_shared_ptr();
+    స్వయంచాలక inp_pos = tensor_map.at("inp_pos").get_కణుపు_shared_ptr();
 
-    auto zero_i64 = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
-    auto one_i64 = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
-    auto three = ov::op::v0::Constant::create(ov::element::i64, {1}, {3});
-    auto neg_one = ov::op::v0::Constant::create(ov::element::i64, {1}, {-1});
+    స్వయంచాలక zero_i64 = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
+    స్వయంచాలక one_i64 = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
+    స్వయంచాలక three = ov::op::v0::Constant::create(ov::element::i64, {1}, {3});
+    స్వయంచాలక neg_one = ov::op::v0::Constant::create(ov::element::i64, {1}, {-1});
 
-    auto query_pos = std::make_shared<ov::op::v0::Convert>(inp_pos, ov::element::i64);
-    auto query_pos_1d = std::make_shared<ov::op::v1::Reshape>(
-        query_pos, ov::op::v0::Constant::create(ov::element::i64, {1}, {-1}), false);
+    స్వయంచాలక query_pos = std::make_shared<ov::op::v0::Convert>(inp_pos, ov::element::i64);
+    స్వయంచాలక query_pos_1d = std::make_shared<ov::op::v1::Reshape>(
+        query_pos, ov::op::v0::Constant::create(ov::element::i64, {1}, {-1}), అబద్ధం);
 
-    auto last_pos = std::make_shared<ov::op::v8::Gather>(inp_pos, neg_one, three);
-    auto last_pos_1d = std::make_shared<ov::op::v1::Reshape>(last_pos, one_i64, false);
-    auto last_pos_cvt = std::make_shared<ov::op::v0::Convert>(last_pos_1d, ov::element::i64);
-    auto total_len = std::make_shared<ov::op::v1::Add>(last_pos_cvt, one_i64);
-    auto total_len_scalar = std::make_shared<ov::op::v0::Squeeze>(total_len);
+    స్వయంచాలక చివరి_pos = std::make_shared<ov::op::v8::Gather>(inp_pos, neg_one, three);
+    స్వయంచాలక చివరి_pos_1d = std::make_shared<ov::op::v1::Reshape>(చివరి_pos, one_i64, అబద్ధం);
+    స్వయంచాలక చివరి_pos_cvt = std::make_shared<ov::op::v0::Convert>(చివరి_pos_1d, ov::element::i64);
+    స్వయంచాలక మొత్తం_len = std::make_shared<ov::op::v1::కూడు>(చివరి_pos_cvt, one_i64);
+    స్వయంచాలక మొత్తం_len_scalar = std::make_shared<ov::op::v0::Squeeze>(మొత్తం_len);
 
-    auto cached_pos = std::make_shared<ov::op::v4::Range>(
-        ov::op::v0::Constant::create(ov::element::i64, {}, {0}), total_len_scalar,
+    స్వయంచాలక cached_pos = std::make_shared<ov::op::v4::Range>(
+        ov::op::v0::Constant::create(ov::element::i64, {}, {0}), మొత్తం_len_scalar,
         ov::op::v0::Constant::create(ov::element::i64, {}, {1}), ov::element::i64);
 
-    auto query_col = std::make_shared<ov::op::v1::Reshape>(
-        query_pos_1d, ov::op::v0::Constant::create(ov::element::i64, {2}, {-1, 1}), false);
-    auto cached_row = std::make_shared<ov::op::v1::Reshape>(
-        cached_pos, ov::op::v0::Constant::create(ov::element::i64, {2}, {1, -1}), false);
-    auto diff = std::make_shared<ov::op::v1::Subtract>(query_col, cached_row);
+    స్వయంచాలక query_నిలువు = std::make_shared<ov::op::v1::Reshape>(
+        query_pos_1d, ov::op::v0::Constant::create(ov::element::i64, {2}, {-1, 1}), అబద్ధం);
+    స్వయంచాలక cached_అడ్డువరుస = std::make_shared<ov::op::v1::Reshape>(
+        cached_pos, ov::op::v0::Constant::create(ov::element::i64, {2}, {1, -1}), అబద్ధం);
+    స్వయంచాలక diff = std::make_shared<ov::op::v1::వ్యవకలనం>(query_నిలువు, cached_అడ్డువరుస);
 
-    auto swa_window = tensor_map.at("swa_window").get_node_shared_ptr();
-    auto window = std::make_shared<ov::op::v0::Convert>(swa_window, ov::element::i64);
-    auto causal_ok = std::make_shared<ov::op::v1::GreaterEqual>(diff, zero_i64);
-    auto window_ok = std::make_shared<ov::op::v1::Less>(diff, window);
-    auto keep = std::make_shared<ov::op::v1::LogicalAnd>(causal_ok, window_ok);
+    స్వయంచాలక swa_కిటికీ = tensor_map.at("swa_window").get_కణుపు_shared_ptr();
+    స్వయంచాలక కిటికీ = std::make_shared<ov::op::v0::Convert>(swa_కిటికీ, ov::element::i64);
+    స్వయంచాలక causal_ok = std::make_shared<ov::op::v1::GreaterEqual>(diff, zero_i64);
+    స్వయంచాలక కిటికీ_ok = std::make_shared<ov::op::v1::Less>(diff, కిటికీ);
+    స్వయంచాలక keep = std::make_shared<ov::op::v1::LogicalAnd>(causal_ok, కిటికీ_ok);
 
-    auto zero_f = ov::op::v0::Constant::create(ov::element::f32, {}, {0.0f});
-    auto neg_inf_f = ov::op::v0::Constant::create(ov::element::f32, {}, {-std::numeric_limits<float>::infinity()});
-    std::shared_ptr<ov::Node> mask = std::make_shared<ov::op::v1::Select>(keep, zero_f, neg_inf_f);
+    స్వయంచాలక zero_f = ov::op::v0::Constant::create(ov::element::f32, {}, {0.0f});
+    స్వయంచాలక neg_inf_f = ov::op::v0::Constant::create(ov::element::f32, {}, {-std::numeric_limits<దశాంశం>::infinity()});
+    std::shared_ptr<ov::Node> ముసుగు = std::make_shared<ov::op::v1::Select>(keep, zero_f, neg_inf_f);
 
-    auto batch_axis = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
-    mask = std::make_shared<ov::op::v0::Unsqueeze>(mask, batch_axis);
-    mask = std::make_shared<ov::op::v0::Unsqueeze>(mask, batch_axis);
-    mask = std::make_shared<ov::op::v0::Convert>(mask, ov::element::f16);
-    mask->set_friendly_name("KQ_mask_swa_sliced");
+    స్వయంచాలక batch_axis = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
+    ముసుగు = std::make_shared<ov::op::v0::Unsqueeze>(ముసుగు, batch_axis);
+    ముసుగు = std::make_shared<ov::op::v0::Unsqueeze>(ముసుగు, batch_axis);
+    ముసుగు = std::make_shared<ov::op::v0::Convert>(ముసుగు, ov::element::f16);
+    ముసుగు->సమితి_friendly_name("KQ_mask_swa_sliced");
 
-    tensor_map["KQ_mask_swa_sliced"] = mask->output(0);
+    tensor_map["KQ_mask_swa_sliced"] = ముసుగు->output(0);
 }
 
-void add_rope_sin_cos(TensorMap & tensor_map, GgmlDecoder & ggml_model_decoder) {
+శూన్య కూడు_rope_sin_cos(TensorMap & tensor_map, GgmlDecoder & ggml_model_decoder) {
     // When ROPE ops in the graph have divergent op_params (e.g. gemma4's mixed
     // SWA/non-SWA layers with different n_dims or freq_base), a shared sin/cos
     // precompute cannot broadcast across every ROPE use. Skip it here and let
     // translate_rope() build sin/cos per-op from its own op_params.
-    if (ggml_model_decoder.has_mixed_rope_params()) {
-        return;
+    ఒకవేళ (ggml_model_decoder.has_mixed_rope_params()) {
+        తిరిగి;
     }
     int32_t * rope_params = ggml_model_decoder.get_rope_params();
-    if (tensor_map.find("inp_pos") == tensor_map.end() || rope_params == nullptr) {
-        return;
+    ఒకవేళ (tensor_map.find("inp_pos") == tensor_map.end() || rope_params == శూన్యసూచిక) {
+        తిరిగి;
     }
-    auto inp_pos = tensor_map.at("inp_pos").get_node_shared_ptr();
-    std::shared_ptr<ov::Node> rope_freqs_weight;
-    if (tensor_map.find("rope_freqs.weight") != tensor_map.end()) {
-        rope_freqs_weight = tensor_map.at("rope_freqs.weight").get_node_shared_ptr();
+    స్వయంచాలక inp_pos = tensor_map.at("inp_pos").get_కణుపు_shared_ptr();
+    std::shared_ptr<ov::Node> rope_freqs_బరువు;
+    ఒకవేళ (tensor_map.find("rope_freqs.weight") != tensor_map.end()) {
+        rope_freqs_బరువు = tensor_map.at("rope_freqs.weight").get_కణుపు_shared_ptr();
     }
 
-    auto sin_cos = make_sin_cos(rope_params, inp_pos, rope_freqs_weight);
-    auto sin_theta = sin_cos.first;
-    auto cos_theta = sin_cos.second;
+    స్వయంచాలక sin_cos = make_sin_cos(rope_params, inp_pos, rope_freqs_బరువు);
+    స్వయంచాలక sin_theta = sin_cos.మొదటి;
+    స్వయంచాలక cos_theta = sin_cos.second;
 
-    cos_theta.get_node_shared_ptr()->set_friendly_name("rope_cos");
-    sin_theta.get_node_shared_ptr()->set_friendly_name("rope_sin");
+    cos_theta.get_కణుపు_shared_ptr()->సమితి_friendly_name("rope_cos");
+    sin_theta.get_కణుపు_shared_ptr()->సమితి_friendly_name("rope_sin");
     tensor_map.insert({"rope_cos", cos_theta});
     tensor_map.insert({"rope_sin", sin_theta});
 }
 
 // Create common patterns
-void preprocess(TensorMap & tensor_map, GgmlDecoder & ggml_model_decoder) {
-    if (ggml_model_decoder.is_stateful()) {
-        add_sliced_mask_stateful(tensor_map, ggml_model_decoder.get_rope_params()[2] == GGML_ROPE_TYPE_IMROPE);
-        add_position_mask_stateful_swa(tensor_map);
+శూన్య preprocess(TensorMap & tensor_map, GgmlDecoder & ggml_model_decoder) {
+    ఒకవేళ (ggml_model_decoder.is_stateful()) {
+        కూడు_sliced_ముసుగు_stateful(tensor_map, ggml_model_decoder.get_rope_params()[2] == GGML_ROPE_TYPE_IMROPE);
+        కూడు_position_ముసుగు_stateful_swa(tensor_map);
     }
     // This optimization is error-prone
     // add_rope_sin_cos(tensor_map, ggml_model_decoder);
@@ -259,82 +259,82 @@ void preprocess(TensorMap & tensor_map, GgmlDecoder & ggml_model_decoder) {
 
 }  // namespace
 
-TranslateSession::TranslateSession(const frontend::InputModel::Ptr & input_model,
-                                   const std::unordered_map<std::string, CreatorFunction> & translator_map,
-                                   bool naive) :
-    m_input_model(input_model),
+TranslateSession::TranslateSession(స్థిరరాశి frontend::ఆదానం_Model::Ptr & ఆదానం_model,
+                                   స్థిరరాశి std::unordered_map<std::string, CreatorFunction> & translator_map,
+                                   తార్కిక naive) :
+    m_ఆదానం_model(ఆదానం_model),
     m_translator_map(translator_map),
-    m_ov_model(nullptr),
+    m_ov_model(శూన్యసూచిక),
     m_naive(naive) {}
 
 std::shared_ptr<Model> TranslateSession::get_converted_model() {
-    if (m_ov_model) {
-        return m_ov_model;
+    ఒకవేళ (m_ov_model) {
+        తిరిగి m_ov_model;
     }
-    m_ov_model = translate_graph(m_input_model);
-    return m_ov_model;
+    m_ov_model = translate_లేఖాచిత్రం(m_ఆదానం_model);
+    తిరిగి m_ov_model;
 }
 
-std::shared_ptr<Model> TranslateSession::translate_graph(const frontend::InputModel::Ptr & input_model) {
-    ov::ParameterVector params;
-    ov::ResultVector results;
-    auto tensor_map = std::make_shared<TensorMap>();
+std::shared_ptr<Model> TranslateSession::translate_లేఖాచిత్రం(స్థిరరాశి frontend::ఆదానం_Model::Ptr & ఆదానం_model) {
+    ov::Parameter_సదిశ params;
+    ov::ఫలితం_సదిశ results;
+    స్వయంచాలక tensor_map = std::make_shared<TensorMap>();
     std::shared_ptr<Model> resulting_model;
 
-    const auto & ggml_model = ov::as_type_ptr<InputModel>(input_model);
+    స్థిరరాశి స్వయంచాలక & ggml_model = ov::as_type_ptr<ఆదానం_Model>(ఆదానం_model);
     std::shared_ptr<GgmlDecoder> ggml_model_decoder = ggml_model->get_model_decoder();
 
-    for (const auto & it : ggml_model_decoder->get_model_inputs()) {
-        auto param_node = create_parameter(it.first, it.second);
-        params.push_back(param_node);
-        (*tensor_map)[it.first] = param_node;
+    కొరకు (స్థిరరాశి స్వయంచాలక & it : ggml_model_decoder->get_model_inputs()) {
+        స్వయంచాలక param_కణుపు = create_parameter(it.మొదటి, it.second);
+        params.push_back(param_కణుపు);
+        (*tensor_map)[it.మొదటి] = param_కణుపు;
     }
 
-    for (const auto & it : ggml_model_decoder->get_model_extra_inputs()) {
-        auto input_node = create_extra_input(it.first, it.second);
-        if (it.second.is_parameter) {
-            params.push_back(ov::as_type_ptr<ov::op::v0::Parameter>(input_node));
+    కొరకు (స్థిరరాశి స్వయంచాలక & it : ggml_model_decoder->get_model_extra_inputs()) {
+        స్వయంచాలక ఆదానం_కణుపు = create_extra_ఆదానం(it.మొదటి, it.second);
+        ఒకవేళ (it.second.is_parameter) {
+            params.push_back(ov::as_type_ptr<ov::op::v0::Parameter>(ఆదానం_కణుపు));
         }
-        (*tensor_map)[it.first] = input_node;
+        (*tensor_map)[it.మొదటి] = ఆదానం_కణుపు;
     }
 
-    for (const auto & it : ggml_model_decoder->get_model_weights()) {
-        (*tensor_map)[it.first] = it.second;
+    కొరకు (స్థిరరాశి స్వయంచాలక & it : ggml_model_decoder->get_model_weights()) {
+        (*tensor_map)[it.మొదటి] = it.second;
     }
 
-    auto translate_node = [&](const std::shared_ptr<GgmlDecoder> & decoder, int node_idx) {
-        auto operation_type = decoder->get_op_type(node_idx);
-        if (operation_type == "GGML_OP_NONE") {
-            return ov::OutputVector{};
+    స్వయంచాలక translate_కణుపు = [&](స్థిరరాశి std::shared_ptr<GgmlDecoder> & decoder, పూర్ణాంకం కణుపు_idx) {
+        స్వయంచాలక operation_type = decoder->get_op_type(కణుపు_idx);
+        ఒకవేళ (operation_type == "GGML_OP_NONE") {
+            తిరిగి ov::Output_సదిశ{};
         }
 
-        const auto & node_output_names = decoder->get_output_names(node_idx);
-        if (operation_type == "GGML_OP_VIEW" && decoder->get_op_case(node_idx) == 2 && node_output_names.size() == 1) {
-            auto direct_output = tensor_map->find(node_output_names[0]);
-            if (direct_output != tensor_map->end()) {
+        స్థిరరాశి స్వయంచాలక & కణుపు_output_పేర్లు = decoder->get_output_పేర్లు(కణుపు_idx);
+        ఒకవేళ (operation_type == "GGML_OP_VIEW" && decoder->get_op_case(కణుపు_idx) == 2 && కణుపు_output_పేర్లు.size() == 1) {
+            స్వయంచాలక ప్రత్యక్ష_output = tensor_map->find(కణుపు_output_పేర్లు[0]);
+            ఒకవేళ (ప్రత్యక్ష_output != tensor_map->end()) {
                 // GDN publishes its native attention/state outputs under the two GGML VIEW names.
                 // Keep those mappings instead of rebuilding slices of a packed temporary.
-                return ov::OutputVector{direct_output->second};
+                తిరిగి ov::Output_సదిశ{ప్రత్యక్ష_output->second};
             }
         }
 
-        auto it = m_translator_map.find(operation_type);
-        FRONT_END_OP_CONVERSION_CHECK(it != m_translator_map.end(), "Translation for operation type ", operation_type,
+        స్వయంచాలక it = m_translator_map.find(operation_type);
+        FRONT_చివర_OP_CONVERSION_CHECK(it != m_translator_map.end(), "Translation for operation type ", operation_type,
                                       " is not implemented.");
-        NodeContext node_context(decoder, tensor_map, node_idx, this);
-        ov::OutputVector converted_outputs = it->second(node_context);
+        కణుపు_Context కణుపు_context(decoder, tensor_map, కణుపు_idx, ఇది);
+        ov::Output_సదిశ converted_outputs = it->second(కణుపు_context);
 
-        FRONT_END_OP_CONVERSION_CHECK(node_output_names.size() == converted_outputs.size(), "Number of ",
+        FRONT_చివర_OP_CONVERSION_CHECK(కణుపు_output_పేర్లు.size() == converted_outputs.size(), "Number of ",
                                       operation_type, " outputs greater than number of converted outputs, which are ",
-                                      node_output_names.size(), " and ", converted_outputs.size(), " respectively.");
+                                      కణుపు_output_పేర్లు.size(), " and ", converted_outputs.size(), " respectively.");
 
-        for (size_t i = 0; i < node_output_names.size(); ++i) {
-            auto output_name = node_output_names[i];
-            if (i < converted_outputs.size() && converted_outputs[i].get_node_shared_ptr() != nullptr) {
+        కొరకు (size_t i = 0; i < కణుపు_output_పేర్లు.size(); ++i) {
+            స్వయంచాలక output_name = కణుపు_output_పేర్లు[i];
+            ఒకవేళ (i < converted_outputs.size() && converted_outputs[i].get_కణుపు_shared_ptr() != శూన్యసూచిక) {
                 (*tensor_map)[output_name] = converted_outputs[i];
             }
         }
-        return converted_outputs;
+        తిరిగి converted_outputs;
     };
 
     // To handle cases like this
@@ -352,41 +352,41 @@ std::shared_ptr<Model> TranslateSession::translate_graph(const frontend::InputMo
     // The scale is in-place which modifies cache_r_l0 (reshaped)#3
     // The translation of scale overwrites cache_r in the tensor_map,
     // but we also need to overwrite the old cache_r_l0 (reshaped)#3
-    auto refresh_inplace_aliases = [&](const std::shared_ptr<GgmlDecoder> & decoder, int inplace_node_idx,
-                                       const std::string & view_src_name) {
-        for (int node_idx = 0; node_idx < inplace_node_idx; node_idx++) {
-            if (decoder->is_view_like_alias_of(node_idx, view_src_name)) {
-                translate_node(decoder, node_idx);
+    స్వయంచాలక refresh_inplace_aliases = [&](స్థిరరాశి std::shared_ptr<GgmlDecoder> & decoder, పూర్ణాంకం inplace_కణుపు_idx,
+                                       స్థిరరాశి std::string & view_src_name) {
+        కొరకు (పూర్ణాంకం కణుపు_idx = 0; కణుపు_idx < inplace_కణుపు_idx; కణుపు_idx++) {
+            ఒకవేళ (decoder->is_view_like_alias_యొక్క(కణుపు_idx, view_src_name)) {
+                translate_కణుపు(decoder, కణుపు_idx);
             }
         }
     };
 
-    auto node_visitor = [&](const std::shared_ptr<GgmlDecoder> & decoder, int node_idx) {
-        auto converted_outputs = translate_node(decoder, node_idx);
-        if (converted_outputs.empty()) {
-            return;
+    స్వయంచాలక కణుపు_visitor = [&](స్థిరరాశి std::shared_ptr<GgmlDecoder> & decoder, పూర్ణాంకం కణుపు_idx) {
+        స్వయంచాలక converted_outputs = translate_కణుపు(decoder, కణుపు_idx);
+        ఒకవేళ (converted_outputs.ఖాళీలు()) {
+            తిరిగి;
         }
-        const auto inplace_src = decoder->get_inplace_op_src(node_idx);
-        if (inplace_src.empty()) {
-            return;
+        స్థిరరాశి స్వయంచాలక inplace_src = decoder->get_inplace_op_src(కణుపు_idx);
+        ఒకవేళ (inplace_src.ఖాళీలు()) {
+            తిరిగి;
         }
-        if (converted_outputs[0].get_node_shared_ptr() != nullptr) {
+        ఒకవేళ (converted_outputs[0].get_కణుపు_shared_ptr() != శూన్యసూచిక) {
             (*tensor_map)[inplace_src] = converted_outputs[0];
         }
-        refresh_inplace_aliases(decoder, node_idx, inplace_src);
+        refresh_inplace_aliases(decoder, కణుపు_idx, inplace_src);
     };
 
-    if (!m_naive) {
+    ఒకవేళ (!m_naive) {
         preprocess(*tensor_map, *ggml_model_decoder);
     }
-    ggml_model_decoder->visit_subgraph(node_visitor);
+    ggml_model_decoder->సందర్శించు_subgraph(కణుపు_visitor);
 
-    for (const auto & name : ggml_model_decoder->get_model_output_names()) {
-        FRONT_END_GENERAL_CHECK(tensor_map->find(name) != tensor_map->end(),
+    కొరకు (స్థిరరాశి స్వయంచాలక & name : ggml_model_decoder->get_model_output_పేర్లు()) {
+        FRONT_చివర_GENERAL_CHECK(tensor_map->find(name) != tensor_map->end(),
                                 "Output name not found in tensor map: ", name);
-        auto result = std::make_shared<v0::Result>(tensor_map->at(name));
-        result->set_friendly_name(name);
-        results.push_back(result);
+        స్వయంచాలక ఫలితం = std::make_shared<v0::ఫలితం_2>(tensor_map->at(name));
+        ఫలితం->సమితి_friendly_name(name);
+        results.push_back(ఫలితం);
     }
 
     // Debug-only hook: GGML_OPENVINO_DEBUG_NODE=<name1>,<name2>,... adds extra
@@ -408,37 +408,37 @@ std::shared_ptr<Model> TranslateSession::translate_graph(const frontend::InputMo
     // name is matched either exactly, or as the "name" part before "#" of a
     // suffixed key (first match wins; ambiguous requests should include the
     // full "name#hash" form seen in a previous run's log/dump).
-    if (const char * debug_nodes = ggml_openvino_getenv_str("GGML_OPENVINO_DEBUG_NODE")) {
+    ఒకవేళ (స్థిరరాశి అక్షరం * debug_nodes = ggml_openvino_getenv_str("GGML_OPENVINO_DEBUG_NODE")) {
         std::stringstream ss(debug_nodes);
         std::string name;
-        while (std::getline(ss, name, ',')) {
-            auto it = tensor_map->find(name);
-            if (it == tensor_map->end()) {
-                it = std::find_if(tensor_map->begin(), tensor_map->end(), [&](const auto & entry) {
-                    return entry.first.compare(0, name.size(), name) == 0 && entry.first.size() > name.size() &&
-                           entry.first[name.size()] == '#';
+        అయితే (std::getline(ss, name, ',')) {
+            స్వయంచాలక it = tensor_map->find(name);
+            ఒకవేళ (it == tensor_map->end()) {
+                it = std::find_if(tensor_map->begin(), tensor_map->end(), [&](స్థిరరాశి స్వయంచాలక & నమోదు_2) {
+                    తిరిగి నమోదు_2.మొదటి.compare(0, name.size(), name) == 0 && నమోదు_2.మొదటి.size() > name.size() &&
+                           నమోదు_2.మొదటి[name.size()] == '#';
                 });
             }
-            if (it == tensor_map->end()) {
+            ఒకవేళ (it == tensor_map->end()) {
                 GGML_LOG_WARN("GGML_OPENVINO_DEBUG_NODE: node '%s' not found in tensor map, skipping\n", name.c_str());
-                continue;
+                కొనసాగు;
             }
-            auto result = std::make_shared<v0::Result>(it->second);
-            result->set_friendly_name("__debug_" + it->first);
-            results.push_back(result);
+            స్వయంచాలక ఫలితం = std::make_shared<v0::ఫలితం_2>(it->second);
+            ఫలితం->సమితి_friendly_name("__debug_" + it->మొదటి);
+            results.push_back(ఫలితం);
         }
     }
 
-    ov::ParameterVector used_params;
-    for (const auto & param : params) {
-        if (!param->output(0).get_target_inputs().empty()) {
-            used_params.push_back(param);
+    ov::Parameter_సదిశ వాడిన_params;
+    కొరకు (స్థిరరాశి స్వయంచాలక & param : params) {
+        ఒకవేళ (!param->output(0).get_లక్ష్యం_inputs().ఖాళీలు()) {
+            వాడిన_params.push_back(param);
         }
     }
     // if (auto diff = params.size() - used_params.size()) {
     //     GGML_LOG_INFO("%zu parameters are not used in the model.", diff);
     // }
-    resulting_model = std::make_shared<Model>(results, used_params);
+    resulting_model = std::make_shared<Model>(results, వాడిన_params);
 
     apply_transformations(resulting_model);
 
@@ -459,44 +459,44 @@ std::shared_ptr<Model> TranslateSession::translate_graph(const frontend::InputMo
     // Note: use shape_size() rather than byte_size()/element_type().size() - GatherMatmul's default
     // bias is a Constant(element::dynamic, Shape{0}), whose element_type().size() is 0 and would
     // divide by zero.
-    size_t offset = 0;
-    for (auto & node : resulting_model->get_ordered_ops()) {
-        if (auto cnst = ov::as_type_ptr<ov::op::v0::Constant>(node); cnst && ov::shape_size(cnst->get_shape()) >= 16) {
-            auto & rt_info = cnst->get_rt_info();
-            if (rt_info.find(ov::WeightlessCacheAttribute::get_type_info_static()) == rt_info.end()) {
+    size_t స్థానభ్రంశం = 0;
+    కొరకు (స్వయంచాలక & కణుపు : resulting_model->get_ordered_ops()) {
+        ఒకవేళ (స్వయంచాలక cnst = ov::as_type_ptr<ov::op::v0::Constant>(కణుపు); cnst && ov::shape_కొలత(cnst->get_shape()) >= 16) {
+            స్వయంచాలక & rt_info = cnst->get_rt_info();
+            ఒకవేళ (rt_info.find(ov::WeightlessCacheAttribute::get_type_info_static()) == rt_info.end()) {
                 rt_info[ov::WeightlessCacheAttribute::get_type_info_static()] =
-                    ov::WeightlessCacheAttribute(cnst->get_byte_size(), offset++, cnst->get_element_type());
+                    ov::WeightlessCacheAttribute(cnst->get_byte_కొలత(), స్థానభ్రంశం++, cnst->get_element_type());
             }
         }
     }
-    return resulting_model;
+    తిరిగి resulting_model;
 }
 
 std::shared_ptr<Model> TranslateSession::apply_transformations(std::shared_ptr<Model> model) {
-    auto ggml_model_decoder = ov::as_type_ptr<InputModel>(m_input_model)->get_model_decoder();
+    స్వయంచాలక ggml_model_decoder = ov::as_type_ptr<ఆదానం_Model>(m_ఆదానం_model)->get_model_decoder();
     {
         ov::pass::Manager manager;
-        manager.set_per_pass_validation(true);
-        manager.register_pass<ov::pass::MarkCompressedFloatConstants>();
+        manager.సమితి_చొప్పున_pass_validation(నిజం);
+        manager.రిజిస్టరు_pass<ov::pass::MarkCompressedFloatConstants>();
         // Marks the Convert/Subtract/Multiply nodes of our GatherMatmul dequantization chain
         // (make_int4_weights/make_int8_weights, for_gather_matmul=true) with disable_constant_folding,
         // so it survives ConstantFolding regardless of whether the target plugin's own
         // is_decompression_multiply() recognizes GatherMatmul as a valid consumer.
-        manager.register_pass<ov::pass::MarkDequantization>(
+        manager.రిజిస్టరు_pass<ov::pass::MarkDequantization>(
             std::vector<ov::element::Type>{ov::element::u8, ov::element::i8, ov::element::u4, ov::element::i4});
-        manager.register_pass<pass::FuseToConv>();
-        manager.register_pass<pass::FuseArgsortTopK>();
+        manager.రిజిస్టరు_pass<pass::Fuse_గమ్యం_Conv>();
+        manager.రిజిస్టరు_pass<pass::Fuse_Argsort_శిఖరం_K>();
 
         // MOECompressed has no CPU plugin implementation, so enable it by default only on GPU.
         // GGML_OPENVINO_MOE_OP=0 keeps the unfused GatherMatmul path for fallback/debugging.
-        if (ggml_openvino_is_gpu() &&
+        ఒకవేళ (ggml_openvino_is_gpu() &&
             ggml_openvino_getenv_int("GGML_OPENVINO_MOE_OP", 1) != 0) {
-            manager.register_pass<pass::FuseMoeRouter>();
-            manager.register_pass<pass::FuseMoeCompressed>();
+            manager.రిజిస్టరు_pass<pass::Fuse_Moe_మార్గనిర్దేశకం>();
+            manager.రిజిస్టరు_pass<pass::FuseMoeCompressed>();
             // Same fusion for models whose gate and up projections share one fused expert
             // weight (gemma-4). It only matches that shape and only when the experts carry an
             // integer zero point, so it is a no-op on the separate-gate/up models above.
-            manager.register_pass<pass::FuseMoeCompressedFusedGateUp>();
+            manager.రిజిస్టరు_pass<pass::Fuse_Moe_Compressed_Fused_Gate_పైకి>();
         }
 
         // Workaround for an OpenVINO GPU-plugin defect: an eltwise op whose operands differ in
@@ -506,39 +506,39 @@ std::shared_ptr<Model> TranslateSession::apply_transformations(std::shared_ptr<M
         // NUMPY broadcasting and makes the fused path correct.
         // Remove once the plugin guards that fusion. Opt out with
         // GGML_OPENVINO_DISABLE_ELTWISE_RANK_ALIGN=1.
-        if (ggml_openvino_is_gpu() && !ggml_openvino_getenv_int("GGML_OPENVINO_DISABLE_ELTWISE_RANK_ALIGN")) {
-            manager.register_pass<pass::AlignEltwiseOperandRanks>();
+        ఒకవేళ (ggml_openvino_is_gpu() && !ggml_openvino_getenv_int("GGML_OPENVINO_DISABLE_ELTWISE_RANK_ALIGN")) {
+            manager.రిజిస్టరు_pass<pass::Align_Eltwise_నిర్వాహ్యం_Ranks>();
         }
 
-        if (ggml_model_decoder->is_stateful()) {
-            const auto kv_param_res_names = ggml_model_decoder->get_kv_param_res_names();
-            const auto kv_param_res_pairs = get_kv_param_res_pairs(model, kv_param_res_names);
-            manager.register_pass<ov::pass::MakeStateful>(kv_param_res_pairs);
+        ఒకవేళ (ggml_model_decoder->is_stateful()) {
+            స్థిరరాశి స్వయంచాలక kv_param_res_పేర్లు = ggml_model_decoder->get_kv_param_res_పేర్లు();
+            స్థిరరాశి స్వయంచాలక kv_param_res_జతలు = get_kv_param_res_జతలు(model, kv_param_res_పేర్లు);
+            manager.రిజిస్టరు_pass<ov::pass::MakeStateful>(kv_param_res_జతలు);
             // Must run after MakeStateful, which is what creates the ReadValue/Assign pairs.
-            if (!ggml_openvino_getenv_int("GGML_OPENVINO_DISABLE_KV_STATE_RELAYOUT")) {
-                manager.register_pass<pass::KVStateSeqAxis>();
+            ఒకవేళ (!ggml_openvino_getenv_int("GGML_OPENVINO_DISABLE_KV_STATE_RELAYOUT")) {
+                manager.రిజిస్టరు_pass<pass::KVStateSeqAxis>();
             }
         }
 
-        if (ggml_model_decoder->is_static()) {
-            manager.register_pass<pass::SqueezeMatmul>();
+        ఒకవేళ (ggml_model_decoder->is_static()) {
+            manager.రిజిస్టరు_pass<pass::SqueezeMatmul>();
         }
-        manager.run_passes(model);
-        if (ggml_model_decoder->is_stateful()) {
+        manager.నిరంతరం_passes(model);
+        ఒకవేళ (ggml_model_decoder->is_stateful()) {
             ov::preprocess::PrePostProcessor ppp(model);
-            for (size_t i = 0; i < model->get_output_size(); i++) {
-                auto model_output_shape = model->output(i).get_partial_shape();
-                if (model_output_shape.rank().is_static() && model_output_shape.rank().get_length() == 3) {
-                    ppp.output(i).postprocess().custom([](const ov::Output<ov::Node>& node) {
-                        auto axes = ov::op::v0::Constant::create(ov::element::i32, ov::Shape{1}, {0});
-                        return std::make_shared<ov::op::v0::Unsqueeze>(node, axes);
+            కొరకు (size_t i = 0; i < model->get_output_కొలత(); i++) {
+                స్వయంచాలక model_output_shape = model->output(i).get_partial_shape();
+                ఒకవేళ (model_output_shape.rank().is_static() && model_output_shape.rank().get_నిడివి() == 3) {
+                    ppp.output(i).postprocess().custom([](స్థిరరాశి ov::Output<ov::Node>& కణుపు) {
+                        స్వయంచాలక axes = ov::op::v0::Constant::create(ov::element::i32, ov::Shape{1}, {0});
+                        తిరిగి std::make_shared<ov::op::v0::Unsqueeze>(కణుపు, axes);
                     });
                 }
             }
             model = ppp.build();
         }
     }
-    return model;
+    తిరిగి model;
 }
 
 }  // namespace ggml

@@ -1,160 +1,160 @@
-#include "ggml-remoting.h"
+#అన్తర్భావ "ggml-remoting.h"
 
-#include <mutex>
+#అన్తర్భావ <mutex>
 
-static const char * ggml_backend_remoting_device_get_name(ggml_backend_dev_t dev) {
-    virtgpu * gpu = DEV_TO_GPU(dev);
+స్థిర స్థిరరాశి అక్షరం * ggml_backend_remoting_device_get_name(ggml_backend_dev_t dev) {
+    virtgpu * gpu = DEV_గమ్యం_GPU(dev);
 
     // Return the prefixed name that was built once during initialization
-    return gpu->cached_device_info.name;
+    తిరిగి gpu->cached_device_info.name;
 }
 
-static const char * ggml_backend_remoting_device_get_description(ggml_backend_dev_t dev) {
-    virtgpu * gpu = DEV_TO_GPU(dev);
+స్థిర స్థిరరాశి అక్షరం * ggml_backend_remoting_device_get_description(ggml_backend_dev_t dev) {
+    virtgpu * gpu = DEV_గమ్యం_GPU(dev);
 
     // Return the pre-cached description from the virtgpu structure
-    return gpu->cached_device_info.description;
+    తిరిగి gpu->cached_device_info.description;
 }
 
-static enum ggml_backend_dev_type ggml_backend_remoting_device_get_type(ggml_backend_dev_t dev) {
-    virtgpu * gpu = DEV_TO_GPU(dev);
+స్థిర గణన ggml_backend_dev_type ggml_backend_remoting_device_get_type(ggml_backend_dev_t dev) {
+    virtgpu * gpu = DEV_గమ్యం_GPU(dev);
 
-    return (enum ggml_backend_dev_type) gpu->cached_device_info.type;
+    తిరిగి (గణన ggml_backend_dev_type) gpu->cached_device_info.type;
 }
 
-static void ggml_backend_remoting_device_get_memory(ggml_backend_dev_t dev, size_t * free, size_t * total) {
-    virtgpu * gpu = DEV_TO_GPU(dev);
+స్థిర శూన్య ggml_backend_remoting_device_get_జ్ఞాపకం(ggml_backend_dev_t dev, size_t * విడుదల, size_t * మొత్తం) {
+    virtgpu * gpu = DEV_గమ్యం_GPU(dev);
 
-    *free  = gpu->cached_device_info.memory_free;
-    *total = gpu->cached_device_info.memory_total;
+    *విడుదల  = gpu->cached_device_info.జ్ఞాపకం_free;
+    *మొత్తం = gpu->cached_device_info.జ్ఞాపకం_మొత్తం;
 }
 
-static bool ggml_backend_remoting_device_supports_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
-#if USE_ALWAYS_TRUE_SUPPORTS_OP == 1
+స్థిర తార్కిక ggml_backend_remoting_device_supports_op(ggml_backend_dev_t dev, స్థిరరాశి ggml_tensor * op) {
+#ఒకవేళ USE_ALWAYS_TRUE_SUPPORTS_OP == 1
     /* ggml-rpc cheats it like this */
     /* with the current implementation of serialize_tensor, the src/view aren't properly passed */
-    UNUSED(dev);
-    UNUSED(op);
+    వాడని(dev);
+    వాడని(op);
 
-    return true;
-#else
-    virtgpu * gpu = DEV_TO_GPU(dev);
+    తిరిగి నిజం;
+#లేకపోతే
+    virtgpu * gpu = DEV_గమ్యం_GPU(dev);
 
-    return apir_device_supports_op(gpu, op);
-#endif
+    తిరిగి apir_device_supports_op(gpu, op);
+#అయితే_ముగింపు
 }
 
-static bool ggml_backend_remoting_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
-    bool supported = buft->device == dev;
+స్థిర తార్కిక ggml_backend_remoting_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_బఫరు_type_t buft) {
+    తార్కిక supported = buft->device == dev;
 
-    return supported;
+    తిరిగి supported;
 }
 
-static bool ggml_backend_remoting_device_offload_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
-    UNUSED(dev);
-    UNUSED(op);
+స్థిర తార్కిక ggml_backend_remoting_device_offload_op(ggml_backend_dev_t dev, స్థిరరాశి ggml_tensor * op) {
+    వాడని(dev);
+    వాడని(op);
 
-    return false;
+    తిరిగి అబద్ధం;
 }
 
-static void ggml_backend_remoting_device_get_props(ggml_backend_dev_t dev, ggml_backend_dev_props * props) {
+స్థిర శూన్య ggml_backend_remoting_device_get_props(ggml_backend_dev_t dev, ggml_backend_dev_props * props) {
     props->name        = ggml_backend_remoting_device_get_name(dev);
     props->description = ggml_backend_remoting_device_get_description(dev);
     props->type        = ggml_backend_remoting_device_get_type(dev);
-    ggml_backend_remoting_device_get_memory(dev, &props->memory_free, &props->memory_total);
+    ggml_backend_remoting_device_get_జ్ఞాపకం(dev, &props->జ్ఞాపకం_free, &props->జ్ఞాపకం_మొత్తం);
 
-    virtgpu * gpu = DEV_TO_GPU(dev);
-    apir_device_get_props(gpu, &props->caps.async, &props->caps.host_buffer, &props->caps.buffer_from_host_ptr,
+    virtgpu * gpu = DEV_గమ్యం_GPU(dev);
+    apir_device_get_props(gpu, &props->caps.async, &props->caps.host_బఫరు, &props->caps.బఫరు_from_host_ptr,
                           &props->caps.events, &props->caps.mmap_support);
 
-    props->caps.buffer_from_host_ptr = false;
-    props->caps.async                = false;
-    props->caps.events               = false;
+    props->caps.బఫరు_from_host_ptr = అబద్ధం;
+    props->caps.async                = అబద్ధం;
+    props->caps.events               = అబద్ధం;
 }
 
-ggml_backend_buffer_type_t ggml_backend_remoting_device_get_buffer_type(ggml_backend_dev_t dev) {
-    virtgpu * gpu = DEV_TO_GPU(dev);
+ggml_backend_బఫరు_type_t ggml_backend_remoting_device_get_బఫరు_type(ggml_backend_dev_t dev) {
+    virtgpu * gpu = DEV_గమ్యం_GPU(dev);
 
-    static std::atomic<bool>        initialized = false;
-    static ggml_backend_buffer_type buft;
+    స్థిర std::atomic<తార్కిక>        initialized = అబద్ధం;
+    స్థిర ggml_backend_బఫరు_type buft;
 
-    if (!initialized) {
-        static std::mutex           mutex;
-        std::lock_guard<std::mutex> lock(mutex);
+    ఒకవేళ (!initialized) {
+        స్థిర std::mutex           mutex;
+        std::lock_guard<std::mutex> తాళం(mutex);
 
-        if (!initialized) {
+        ఒకవేళ (!initialized) {
             buft = {
-                /* .iface    = */ ggml_backend_remoting_buffer_type_interface,
+                /* .iface    = */ ggml_backend_remoting_బఫరు_type_interface,
                 /* .device   = */ dev,
-                /* .context  = */ (void *) gpu->cached_buffer_type.host_handle,
+                /* .context  = */ (శూన్య *) gpu->cached_బఫరు_type.host_handle,
             };
-            initialized = true;
+            initialized = నిజం;
         }
     }
 
-    return &buft;
+    తిరిగి &buft;
 }
 
-static ggml_backend_buffer_type_t ggml_backend_remoting_device_get_buffer_from_ptr_type(ggml_backend_dev_t dev) {
-    virtgpu * gpu = DEV_TO_GPU(dev);
+స్థిర ggml_backend_బఫరు_type_t ggml_backend_remoting_device_get_బఫరు_from_ptr_type(ggml_backend_dev_t dev) {
+    virtgpu * gpu = DEV_గమ్యం_GPU(dev);
 
-    static std::atomic<bool>        initialized = false;
-    static ggml_backend_buffer_type buft;
+    స్థిర std::atomic<తార్కిక>        initialized = అబద్ధం;
+    స్థిర ggml_backend_బఫరు_type buft;
 
-    if (!initialized) {
-        static std::mutex           mutex;
-        std::lock_guard<std::mutex> lock(mutex);
+    ఒకవేళ (!initialized) {
+        స్థిర std::mutex           mutex;
+        std::lock_guard<std::mutex> తాళం(mutex);
 
-        if (!initialized) {
+        ఒకవేళ (!initialized) {
             buft = {
-                /* .iface    = */ ggml_backend_remoting_buffer_from_ptr_type_interface,
+                /* .iface    = */ ggml_backend_remoting_బఫరు_from_ptr_type_interface,
                 /* .device   = */ dev,
-                /* .context  = */ (void *) gpu->cached_buffer_type.host_handle,
+                /* .context  = */ (శూన్య *) gpu->cached_బఫరు_type.host_handle,
             };
-            initialized = true;
+            initialized = నిజం;
         }
     }
 
-    return &buft;
+    తిరిగి &buft;
 }
 
-static ggml_backend_buffer_t ggml_backend_remoting_device_buffer_from_ptr(ggml_backend_dev_t dev,
-                                                                          void *             ptr,
+స్థిర ggml_backend_బఫరు_t ggml_backend_remoting_device_బఫరు_from_ptr(ggml_backend_dev_t dev,
+                                                                          శూన్య *             ptr,
                                                                           size_t             size,
-                                                                          size_t             max_tensor_size) {
-    virtgpu * gpu = DEV_TO_GPU(dev);
+                                                                          size_t             max_tensor_కొలత) {
+    virtgpu * gpu = DEV_గమ్యం_GPU(dev);
 
-    ggml_backend_remoting_buffer_context * context = (ggml_backend_remoting_buffer_context *) malloc(sizeof(*context));
-    if (!context) {
+    ggml_backend_remoting_బఫరు_context * context = (ggml_backend_remoting_బఫరు_context *) జ్ఞాపకం_ఇవ్వు(పరిమాణం(*context));
+    ఒకవేళ (!context) {
         GGML_ABORT(GGML_VIRTGPU "%s: Couldn't allocate the buffer context ...", __func__);
     }
 
     context->gpu          = gpu;
-    context->apir_context = apir_device_buffer_from_ptr(gpu, size, max_tensor_size);
-    context->base         = ptr;
-    context->is_from_ptr  = true;
+    context->apir_context = apir_device_బఫరు_from_ptr(gpu, size, max_tensor_కొలత);
+    context->పునాది         = ptr;
+    context->is_from_ptr  = నిజం;
 
-    ggml_backend_buffer_t buffer =
-        ggml_backend_buffer_init(ggml_backend_remoting_device_get_buffer_from_ptr_type(dev),
-                                 ggml_backend_remoting_buffer_from_ptr_interface, (void *) context, size);
+    ggml_backend_బఫరు_t బఫరు =
+        ggml_backend_బఫరు_init(ggml_backend_remoting_device_get_బఫరు_from_ptr_type(dev),
+                                 ggml_backend_remoting_బఫరు_from_ptr_interface, (శూన్య *) context, size);
 
-    return buffer;
+    తిరిగి బఫరు;
 }
 
-const ggml_backend_device_i ggml_backend_remoting_device_interface = {
+స్థిరరాశి ggml_backend_device_i ggml_backend_remoting_device_interface = {
     /* .get_name             = */ ggml_backend_remoting_device_get_name,
     /* .get_description      = */ ggml_backend_remoting_device_get_description,
-    /* .get_memory           = */ ggml_backend_remoting_device_get_memory,
+    /* .get_memory           = */ ggml_backend_remoting_device_get_జ్ఞాపకం,
     /* .get_type             = */ ggml_backend_remoting_device_get_type,
     /* .get_props            = */ ggml_backend_remoting_device_get_props,
     /* .init_backend         = */ ggml_backend_remoting_device_init,
-    /* .get_buffer_type      = */ ggml_backend_remoting_device_get_buffer_type,
-    /* .get_host_buffer_type = */ NULL,
-    /* .buffer_from_host_ptr = */ ggml_backend_remoting_device_buffer_from_ptr,
+    /* .get_buffer_type      = */ ggml_backend_remoting_device_get_బఫరు_type,
+    /* .get_host_buffer_type = */ ఖాళీ,
+    /* .buffer_from_host_ptr = */ ggml_backend_remoting_device_బఫరు_from_ptr,
     /* .supports_op          = */ ggml_backend_remoting_device_supports_op,
     /* .supports_buft        = */ ggml_backend_remoting_device_supports_buft,
     /* .offload_op           = */ ggml_backend_remoting_device_offload_op,
-    /* .event_new            = */ NULL,
-    /* .event_free           = */ NULL,
-    /* .event_synchronize    = */ NULL,
+    /* .event_new            = */ ఖాళీ,
+    /* .event_free           = */ ఖాళీ,
+    /* .event_synchronize    = */ ఖాళీ,
 };

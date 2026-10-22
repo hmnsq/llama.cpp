@@ -1,28 +1,28 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#అన్తర్భావ "../node_context.h"
+#అన్తర్భావ "../op_table.h"
+#అన్తర్భావ "../utils.h"
 
-#include <cstring>
-#include <memory>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/mvn.hpp>
+#అన్తర్భావ <cstring>
+#అన్తర్భావ <memory>
+#అన్తర్భావ <openvino/op/constant.hpp>
+#అన్తర్భావ <openvino/op/mvn.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+నామాకాశ ov {
+నామాకాశ frontend {
+నామాకాశ ggml {
+నామాకాశ op {
 
-OutputVector translate_norm(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+Output_సదిశ translate_norm(స్థిరరాశి కణుపు_Context & context) {
+    అంకె_inputs_check(context, 1, 1);
 
-    auto input_node = process_view_input_new(context, 0);
-    float eps;
-    memcpy(&eps, context.get_output_op_params(), sizeof(float));
+    స్వయంచాలక ఆదానం_కణుపు = process_view_ఆదానం_new(context, 0);
+    దశాంశం eps;
+    జ్ఞాపకం_నకలు(&eps, context.get_output_op_params(), పరిమాణం(దశాంశం));
 
-    auto axes = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{1}, {-1});
-    auto res = std::make_shared<ov::op::v6::MVN>(input_node, axes, true, eps, ov::op::MVNEpsMode::INSIDE_SQRT);
+    స్వయంచాలక axes = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{1}, {-1});
+    స్వయంచాలక res = std::make_shared<ov::op::v6::MVN>(ఆదానం_కణుపు, axes, నిజం, eps, ov::op::MVNEps_బహుళకం::INSIDE_SQRT);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    తిరిగి rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

@@ -1,16 +1,16 @@
-#pragma once
+#సూచన once
 
-#include "common.h"
+#అన్తర్భావ "common.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#నిర్వచితమైతే __cplusplus
+బాహ్య "C" {
+#అయితే_ముగింపు
 
-void ggml_compute_forward_add_non_quantized(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_sub(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_mul(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_div(const struct ggml_compute_params * params, struct ggml_tensor * dst);
+శూన్య ggml_compute_forward_కూడు_non_quantized(స్థిరరాశి నిర్మాణం ggml_compute_params * params, నిర్మాణం ggml_tensor * dst);
+శూన్య ggml_compute_forward_sub(స్థిరరాశి నిర్మాణం ggml_compute_params * params, నిర్మాణం ggml_tensor * dst);
+శూన్య ggml_compute_forward_mul(స్థిరరాశి నిర్మాణం ggml_compute_params * params, నిర్మాణం ggml_tensor * dst);
+శూన్య ggml_compute_forward_div(స్థిరరాశి నిర్మాణం ggml_compute_params * params, నిర్మాణం ggml_tensor * dst);
 
-#ifdef __cplusplus
+#నిర్వచితమైతే __cplusplus
 }
-#endif
+#అయితే_ముగింపు

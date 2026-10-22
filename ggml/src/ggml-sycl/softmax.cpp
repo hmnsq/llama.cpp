@@ -1,22 +1,22 @@
-#include "softmax.hpp"
-#include <cstdint>
-#include <utility>
-#include <cmath>
+#అన్తర్భావ "softmax.hpp"
+#అన్తర్భావ <cstdint>
+#అన్తర్భావ <utility>
+#అన్తర్భావ <cmath>
 
 
-template <typename T> static __dpct_inline__ float t2f32(T val) {
-    return (float) val;
+మూస <రకం_పేరు T> స్థిర __dpct_inline__ దశాంశం t2f32(T val) {
+    తిరిగి (దశాంశం) val;
 }
 
-template <> float __dpct_inline__ t2f32<sycl::half>(sycl::half val) {
-  return sycl::vec<sycl::half, 1>(val)
-      .convert<float, sycl::rounding_mode::automatic>()[0];
+మూస <> దశాంశం __dpct_inline__ t2f32<sycl::half>(sycl::half val) {
+  తిరిగి sycl::vec<sycl::half, 1>(val)
+      .convert<దశాంశం, sycl::rounding_బహుళకం::automatic>()[0];
 }
 
-struct soft_max_params {
+నిర్మాణం soft_max_params {
 
     int64_t nheads;
-    uint32_t n_head_log2;
+    uint32_t n_తల_log2;
     int64_t ncols;
     int64_t nrows_x;
     int64_t nrows_y;
@@ -30,211 +30,211 @@ struct soft_max_params {
 
     int64_t ne12;
     int64_t ne13;
-    float scale;
-    float max_bias;
-    float m0;
-    float m1;
+    దశాంశం scale;
+    దశాంశం max_bias;
+    దశాంశం m0;
+    దశాంశం m1;
 };
 
 // When ncols_template == 0 the bounds for the loops in this function are not known and can't be unrolled.
 // As we want to keep pragma unroll for all other cases we suppress the clang transformation warning here.
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpass-failed"
-#endif // __clang__
-template <bool use_shared, int ncols_template, int block_size_template, typename T>
-static void soft_max_f32(const float *         x,
-                         const T *             mask,
-                         const float *         sinks,
-                         float *               dst,
-                         const soft_max_params p,
+#నిర్వచితమైతే __clang__
+#సూచన clang diagnostic నెట్టు
+#సూచన clang diagnostic ignored "-Wpass-failed"
+#అయితే_ముగింపు // __clang__
+మూస <తార్కిక use_shared, పూర్ణాంకం ncols_template, పూర్ణాంకం ఖండం_కొలత_template, రకం_పేరు T>
+స్థిర శూన్య soft_max_f32(స్థిరరాశి దశాంశం *         x,
+                         స్థిరరాశి T *             ముసుగు,
+                         స్థిరరాశి దశాంశం *         sinks,
+                         దశాంశం *               dst,
+                         స్థిరరాశి soft_max_params p,
                          uint8_t *             dpct_local) {
-    auto      item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    const int ncols    = ncols_template == 0 ? p.ncols : ncols_template;
-    const int block_size = block_size_template == 0
-                               ? item_ct1.get_local_range(2)
-                               : block_size_template;
-    const int nthreads = block_size;
-    const int nwarps = nthreads / WARP_SIZE;
-    const size_t nreduce = nwarps / WARP_SIZE;
+    స్వయంచాలక      అంశం_ct1 = sycl::ext::oneapi::this_work_అంశం::get_nd_అంశం<3>();
+    స్థిరరాశి పూర్ణాంకం ncols    = ncols_template == 0 ? p.ncols : ncols_template;
+    స్థిరరాశి పూర్ణాంకం ఖండం_కొలత_3 = ఖండం_కొలత_template == 0
+                               ? అంశం_ct1.get_local_range(2)
+                               : ఖండం_కొలత_template;
+    స్థిరరాశి పూర్ణాంకం nthreads = ఖండం_కొలత_3;
+    స్థిరరాశి పూర్ణాంకం nwarps = nthreads / WARP_కొలత;
+    స్థిరరాశి size_t nreduce = nwarps / WARP_కొలత;
 
-    const int tid = item_ct1.get_local_id(2);
+    స్థిరరాశి పూర్ణాంకం tid = అంశం_ct1.get_local_id(2);
 
-    const int64_t i03 = item_ct1.get_group(0);
-    const int64_t i02 = item_ct1.get_group(1);
-    const int64_t i01 = item_ct1.get_group(2);
+    స్థిరరాశి int64_t i03 = అంశం_ct1.get_సమూహం(0);
+    స్థిరరాశి int64_t i02 = అంశం_ct1.get_సమూహం(1);
+    స్థిరరాశి int64_t i01 = అంశం_ct1.get_సమూహం(2);
 
     //TODO: noncontigous inputs/outputs
-    const int rowx = item_ct1.get_group(2) +
-                     item_ct1.get_group(1) * item_ct1.get_group_range(2) +
-                     item_ct1.get_group(0) * item_ct1.get_group_range(2) *
-                         item_ct1.get_group_range(1);
+    స్థిరరాశి పూర్ణాంకం rowx = అంశం_ct1.get_సమూహం(2) +
+                     అంశం_ct1.get_సమూహం(1) * అంశం_ct1.get_సమూహం_range(2) +
+                     అంశం_ct1.get_సమూహం(0) * అంశం_ct1.get_సమూహం_range(2) *
+                         అంశం_ct1.get_సమూహం_range(1);
 
-    const int64_t i11 = i01;
-    const int64_t i12 = i02 % p.ne12;
-    const int64_t i13 = i03 % p.ne13;
+    స్థిరరాశి int64_t i11 = i01;
+    స్థిరరాశి int64_t i12 = i02 % p.ne12;
+    స్థిరరాశి int64_t i13 = i03 % p.ne13;
 
     x    += int64_t(rowx)*ncols;
-    mask += (i11*p.nb11 + i12*p.nb12 + i13*p.nb13) / sizeof(T) * (mask != nullptr);
+    ముసుగు += (i11*p.nb11 + i12*p.nb12 + i13*p.nb13) / పరిమాణం(T) * (ముసుగు != శూన్యసూచిక);
     dst  += int64_t(rowx)*ncols;
 
-    const int warp_id = item_ct1.get_local_id(2) / WARP_SIZE;
-    const int lane_id = item_ct1.get_local_id(2) % WARP_SIZE;
+    స్థిరరాశి పూర్ణాంకం warp_id = అంశం_ct1.get_local_id(2) / WARP_కొలత;
+    స్థిరరాశి పూర్ణాంకం lane_id = అంశం_ct1.get_local_id(2) % WARP_కొలత;
 
-    const float slope = get_alibi_slope(p.max_bias, i02, p.n_head_log2, p.m0, p.m1);
+    స్థిరరాశి దశాంశం వాలు = get_alibi_వాలు(p.max_bias, i02, p.n_తల_log2, p.m0, p.m1);
 
-    float * buf_iw = (float *) dpct_local;
+    దశాంశం * buf_iw = (దశాంశం *) dpct_local;
 
     // shared memory buffer to cache values between iterations:
-    float *vals = use_shared ? buf_iw + sycl::max(nwarps, WARP_SIZE) : dst;
-    float max_val = sinks ? sinks[i02] : -INFINITY;
-#pragma unroll
-    for (int col0 = 0; col0 < ncols; col0 += block_size) {
-        const int col = col0 + tid;
+    దశాంశం *vals = use_shared ? buf_iw + sycl::max(nwarps, WARP_కొలత) : dst;
+    దశాంశం max_val = sinks ? sinks[i02] : -INFINITY;
+#సూచన unroll
+    కొరకు (పూర్ణాంకం col0 = 0; col0 < ncols; col0 += ఖండం_కొలత_3) {
+        స్థిరరాశి పూర్ణాంకం నిలువు = col0 + tid;
 
-        if (ncols_template == 0 && col >= ncols) {
-            break;
+        ఒకవేళ (ncols_template == 0 && నిలువు >= ncols) {
+            ఆపు;
         }
 
-        const float val = x[col]*p.scale + (mask ? slope*t2f32(mask[col]) : 0.0f);
+        స్థిరరాశి దశాంశం val = x[నిలువు]*p.scale + (ముసుగు ? వాలు*t2f32(ముసుగు[నిలువు]) : 0.0f);
 
-        vals[col] = val;
+        vals[నిలువు] = val;
         max_val   = sycl::max(max_val, val);
     }
     // find the max value in the block
-    max_val = warp_reduce_max<WARP_SIZE>(max_val);
+    max_val = warp_reduce_max<WARP_కొలత>(max_val);
 
-    if (block_size > WARP_SIZE) {
-        if (lane_id == 0) {
+    ఒకవేళ (ఖండం_కొలత_3 > WARP_కొలత) {
+        ఒకవేళ (lane_id == 0) {
             buf_iw[warp_id] = max_val;
         }
-        item_ct1.barrier();
+        అంశం_ct1.barrier();
 
         max_val = -INFINITY;
-        for (int i = lane_id; i < nwarps; i += WARP_SIZE) {
+        కొరకు (పూర్ణాంకం i = lane_id; i < nwarps; i += WARP_కొలత) {
             max_val = sycl::max(max_val, buf_iw[i]);
         }
-        max_val = warp_reduce_max<WARP_SIZE>(max_val);
+        max_val = warp_reduce_max<WARP_కొలత>(max_val);
     }
-    float tmp = 0.0f; // partial sum
+    దశాంశం tmp = 0.0f; // partial sum
 
-#pragma unroll
-    for (int col0 = 0; col0 < ncols; col0 += block_size) {
-        const int col = col0 + tid;
+#సూచన unroll
+    కొరకు (పూర్ణాంకం col0 = 0; col0 < ncols; col0 += ఖండం_కొలత_3) {
+        స్థిరరాశి పూర్ణాంకం నిలువు = col0 + tid;
 
-        if (ncols_template == 0 && col >= ncols) {
-            break;
+        ఒకవేళ (ncols_template == 0 && నిలువు >= ncols) {
+            ఆపు;
         }
 
-        const float val = sycl::native::exp(sycl::max(vals[col] - max_val, -80.0f));
+        స్థిరరాశి దశాంశం val = sycl::native::ఘాతాంకం(sycl::max(vals[నిలువు] - max_val, -80.0f));
         tmp += val;
-        vals[col] = val;
+        vals[నిలువు] = val;
     }
     // find the sum of exps in the block
-    tmp = warp_reduce_sum<WARP_SIZE>(tmp);
-    if (block_size > WARP_SIZE) {
-        item_ct1.barrier();
-        if (warp_id == 0) {
+    tmp = warp_reduce_కూడిక<WARP_కొలత>(tmp);
+    ఒకవేళ (ఖండం_కొలత_3 > WARP_కొలత) {
+        అంశం_ct1.barrier();
+        ఒకవేళ (warp_id == 0) {
             buf_iw[lane_id] = 0.0f;
-            for (size_t i = 1; i < nreduce; i += 1) {
-                buf_iw[lane_id + i * WARP_SIZE] = 0.f;
+            కొరకు (size_t i = 1; i < nreduce; i += 1) {
+                buf_iw[lane_id + i * WARP_కొలత] = 0.f;
             }
         }
-        item_ct1.barrier();
+        అంశం_ct1.barrier();
 
-        if (lane_id == 0) {
+        ఒకవేళ (lane_id == 0) {
             buf_iw[warp_id] = tmp;
         }
-        item_ct1.barrier();
+        అంశం_ct1.barrier();
 
         tmp = buf_iw[lane_id];
-        for (size_t i = 1; i < nreduce; i += 1) {
-            tmp += buf_iw[lane_id + i * WARP_SIZE];
+        కొరకు (size_t i = 1; i < nreduce; i += 1) {
+            tmp += buf_iw[lane_id + i * WARP_కొలత];
         }
-        tmp = warp_reduce_sum<WARP_SIZE>(tmp);
+        tmp = warp_reduce_కూడిక<WARP_కొలత>(tmp);
     }
-    if (sinks) {
-        tmp += sycl::native::exp(sycl::max(sinks[i02] - max_val, -80.0f));
+    ఒకవేళ (sinks) {
+        tmp += sycl::native::ఘాతాంకం(sycl::max(sinks[i02] - max_val, -80.0f));
     }
-    const float inv_sum = 1.0f / tmp;
+    స్థిరరాశి దశాంశం inv_కూడిక = 1.0f / tmp;
 
-#pragma unroll
-    for (int col0 = 0; col0 < ncols; col0 += block_size) {
-        const int col = col0 + tid;
+#సూచన unroll
+    కొరకు (పూర్ణాంకం col0 = 0; col0 < ncols; col0 += ఖండం_కొలత_3) {
+        స్థిరరాశి పూర్ణాంకం నిలువు = col0 + tid;
 
-        if (ncols_template == 0 && col >= ncols) {
-            return;
+        ఒకవేళ (ncols_template == 0 && నిలువు >= ncols) {
+            తిరిగి;
         }
 
-        dst[col] = vals[col] * inv_sum;
+        dst[నిలువు] = vals[నిలువు] * inv_కూడిక;
     }
 }
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif // __clang__
+#నిర్వచితమైతే __clang__
+#సూచన clang diagnostic తీయి
+#అయితే_ముగింపు // __clang__
 
-static void soft_max_back_f32(const float *grad, const float *dstf, float *dst,
-                              const int ncols, const float scale) {
-    auto      item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    const int tid      = item_ct1.get_local_id(2);
-    const int rowx     = item_ct1.get_group(2);
+స్థిర శూన్య soft_max_వెనుక_f32(స్థిరరాశి దశాంశం *grad, స్థిరరాశి దశాంశం *dstf, దశాంశం *dst,
+                              స్థిరరాశి పూర్ణాంకం ncols, స్థిరరాశి దశాంశం scale) {
+    స్వయంచాలక      అంశం_ct1 = sycl::ext::oneapi::this_work_అంశం::get_nd_అంశం<3>();
+    స్థిరరాశి పూర్ణాంకం tid      = అంశం_ct1.get_local_id(2);
+    స్థిరరాశి పూర్ణాంకం rowx     = అంశం_ct1.get_సమూహం(2);
 
     grad += int64_t(rowx)*ncols;
     dstf += int64_t(rowx)*ncols;
     dst  += int64_t(rowx)*ncols;
 
-    float dgf_dot = 0.0f; // dot product of dst from forward pass and gradients
+    దశాంశం dgf_dot = 0.0f; // dot product of dst from forward pass and gradients
 
-    for (int col = tid; col < ncols; col += WARP_SIZE) {
-        dgf_dot += dstf[col]*grad[col];
+    కొరకు (పూర్ణాంకం నిలువు = tid; నిలువు < ncols; నిలువు += WARP_కొలత) {
+        dgf_dot += dstf[నిలువు]*grad[నిలువు];
     }
 
-    dgf_dot = warp_reduce_sum<WARP_SIZE>(dgf_dot);
+    dgf_dot = warp_reduce_కూడిక<WARP_కొలత>(dgf_dot);
 
-    for (int col = tid; col < ncols; col += WARP_SIZE) {
-        dst[col] = scale * (grad[col] - dgf_dot) * dstf[col];
+    కొరకు (పూర్ణాంకం నిలువు = tid; నిలువు < ncols; నిలువు += WARP_కొలత) {
+        dst[నిలువు] = scale * (grad[నిలువు] - dgf_dot) * dstf[నిలువు];
     }
 }
 
-template <int... Ns, typename T>
-static void launch_soft_max_kernels(const float *           x,
-                                    const T *               mask,
-                                    const float *           sinks,
-                                    float *                 dst,
-                                    const soft_max_params & p,
-                                    dpct::queue_ptr         stream,
-                                    dpct::dim3              block_dims,
-                                    dpct::dim3              block_nums,
+మూస <పూర్ణాంకం... Ns, రకం_పేరు T>
+స్థిర శూన్య launch_soft_max_kernels(స్థిరరాశి దశాంశం *           x,
+                                    స్థిరరాశి T *               ముసుగు,
+                                    స్థిరరాశి దశాంశం *           sinks,
+                                    దశాంశం *                 dst,
+                                    స్థిరరాశి soft_max_params & p,
+                                    dpct::వరుస_ptr         stream,
+                                    dpct::dim3              ఖండం_dims,
+                                    dpct::dim3              ఖండం_nums,
                                     size_t                  nbytes_shared)
 {
-    auto launch_kernel = [=](auto I) -> bool {
-        constexpr int ncols = decltype(I)::value;
-        constexpr int block = (ncols > 1024 ? 1024 : ncols);
-        if (p.ncols == ncols) {
+    స్వయంచాలక launch_kernel = [=](స్వయంచాలక I) -> తార్కిక {
+        constexpr పూర్ణాంకం ncols = decltype(I)::value;
+        constexpr పూర్ణాంకం ఖండం = (ncols > 1024 ? 1024 : ncols);
+        ఒకవేళ (p.ncols == ncols) {
             stream->submit([&](sycl::handler &cgh) {
                 sycl::local_accessor<uint8_t, 1> dpct_local_acc_ct1(
                     sycl::range<1>(nbytes_shared), cgh);
 
                 cgh.parallel_for(
-                    sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                    [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(
-                        WARP_SIZE)]] {
-                        soft_max_f32<true, ncols, block>(
-                            x, mask, sinks, dst, p,
+                    sycl::nd_range<3>(ఖండం_nums * ఖండం_dims, ఖండం_dims),
+                    [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(
+                        WARP_కొలత)]] {
+                        soft_max_f32<నిజం, ncols, ఖండం>(
+                            x, ముసుగు, sinks, dst, p,
                             dpct_local_acc_ct1
                                 .get_multi_ptr<sycl::access::decorated::no>()
                                 .get());
-                        GGML_UNUSED(item_ct1);
+                        GGML_వాడని(అంశం_ct1);
                     });
             });
-            return true;
+            తిరిగి నిజం;
         }
-        return false;
+        తిరిగి అబద్ధం;
     };
 
     // unary fold over launch_kernel
-    if ((launch_kernel(std::integral_constant<int, Ns>{}) || ...)) {
-        return;
+    ఒకవేళ ((launch_kernel(std::integral_constant<పూర్ణాంకం, Ns>{}) || ...)) {
+        తిరిగి;
     }
 
     stream->submit([&](sycl::handler &cgh) {
@@ -242,95 +242,95 @@ static void launch_soft_max_kernels(const float *           x,
             sycl::range<1>(nbytes_shared), cgh);
 
         cgh.parallel_for(
-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
-            [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    soft_max_f32<true, 0, 0>(
-                        x, mask, sinks, dst, p,
+            sycl::nd_range<3>(ఖండం_nums * ఖండం_dims, ఖండం_dims),
+            [=](sycl::nd_అంశం<3> అంశం_ct1)
+                [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]] {
+                    soft_max_f32<నిజం, 0, 0>(
+                        x, ముసుగు, sinks, dst, p,
                         dpct_local_acc_ct1
                             .get_multi_ptr<sycl::access::decorated::no>()
                             .get());
-                    GGML_UNUSED(item_ct1);
+                    GGML_వాడని(అంశం_ct1);
                 });
     });
 }
 
-template <typename T>
-static void soft_max_f32_sycl(const float *x, const T *mask,
-                              const float *sinks, float *dst,
-                              const soft_max_params &params,
-                              dpct::queue_ptr stream, int device) {
-    int nth = WARP_SIZE;
-    int max_block_size = ggml_sycl_info().max_work_group_sizes[device];
-    const int64_t ncols_x = params.ncols;
+మూస <రకం_పేరు T>
+స్థిర శూన్య soft_max_f32_sycl(స్థిరరాశి దశాంశం *x, స్థిరరాశి T *ముసుగు,
+                              స్థిరరాశి దశాంశం *sinks, దశాంశం *dst,
+                              స్థిరరాశి soft_max_params &params,
+                              dpct::వరుస_ptr stream, పూర్ణాంకం device) {
+    పూర్ణాంకం nth = WARP_కొలత;
+    పూర్ణాంకం max_ఖండం_కొలత = ggml_sycl_info().max_work_సమూహం_sizes[device];
+    స్థిరరాశి int64_t ncols_x = params.ncols;
 
-    while (nth < ncols_x && nth < max_block_size) nth *= 2;
-    if (nth>max_block_size) nth = max_block_size;
+    అయితే (nth < ncols_x && nth < max_ఖండం_కొలత) nth *= 2;
+    ఒకవేళ (nth>max_ఖండం_కొలత) nth = max_ఖండం_కొలత;
 
-    const dpct::dim3 block_dims(nth, 1, 1);
-    const dpct::dim3 block_nums(params.ne01, params.ne02, params.ne03);
-    const size_t nbytes_shared =
-        (GGML_PAD(ncols_x, WARP_SIZE) + WARP_SIZE) * sizeof(float);
+    స్థిరరాశి dpct::dim3 ఖండం_dims(nth, 1, 1);
+    స్థిరరాశి dpct::dim3 ఖండం_nums(params.ne01, params.ne02, params.ne03);
+    స్థిరరాశి size_t nbytes_shared =
+        (GGML_PAD(ncols_x, WARP_కొలత) + WARP_కొలత) * పరిమాణం(దశాంశం);
 
-    const int id       = get_current_device_id();
-    const size_t smpbo = ggml_sycl_info().devices[id].smpbo;
+    స్థిరరాశి పూర్ణాంకం id       = get_current_device_id();
+    స్థిరరాశి size_t smpbo = ggml_sycl_info().devices[id].smpbo;
 
-    if (nbytes_shared <= smpbo && ncols_x <= max_block_size) {
+    ఒకవేళ (nbytes_shared <= smpbo && ncols_x <= max_ఖండం_కొలత) {
         launch_soft_max_kernels<32, 64, 128, 256, 512, 1024, 2048, 4096>(
-            x, mask, sinks, dst, params, stream, block_dims, block_nums,
+            x, ముసుగు, sinks, dst, params, stream, ఖండం_dims, ఖండం_nums,
             nbytes_shared);
-    } else {
-        const size_t nbytes_shared_low = WARP_SIZE * sizeof(float);
+    } లేకపోతే {
+        స్థిరరాశి size_t nbytes_shared_దిగువ = WARP_కొలత * పరిమాణం(దశాంశం);
 
         stream->submit([&](sycl::handler &cgh) {
             sycl::local_accessor<uint8_t, 1> dpct_local_acc_ct1(
-                sycl::range<1>(nbytes_shared_low), cgh);
+                sycl::range<1>(nbytes_shared_దిగువ), cgh);
 
             cgh.parallel_for(
-                sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                    [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    soft_max_f32<false, 0, 0>(
-                        x, mask, sinks, dst, params,
+                sycl::nd_range<3>(ఖండం_nums * ఖండం_dims, ఖండం_dims),
+                [=](sycl::nd_అంశం<3> అంశం_ct1)
+                    [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]] {
+                    soft_max_f32<అబద్ధం, 0, 0>(
+                        x, ముసుగు, sinks, dst, params,
                         dpct_local_acc_ct1
                             .get_multi_ptr<sycl::access::decorated::no>()
                             .get());
-                    GGML_UNUSED(item_ct1);
+                    GGML_వాడని(అంశం_ct1);
                 });
         });
     }
 }
 
-static void soft_max_back_f32_sycl(const float *   grad,
-                                   const float *   dstf,
-                                   float *         dst,
-                                   const int       ncols,
-                                   const int       nrows,
-                                   const float     scale,
-                                   dpct::queue_ptr stream) {
-    const dpct::dim3 block_dims(WARP_SIZE, 1, 1);
-    const dpct::dim3 block_nums(nrows, 1, 1);
+స్థిర శూన్య soft_max_వెనుక_f32_sycl(స్థిరరాశి దశాంశం *   grad,
+                                   స్థిరరాశి దశాంశం *   dstf,
+                                   దశాంశం *         dst,
+                                   స్థిరరాశి పూర్ణాంకం       ncols,
+                                   స్థిరరాశి పూర్ణాంకం       nrows,
+                                   స్థిరరాశి దశాంశం     scale,
+                                   dpct::వరుస_ptr stream) {
+    స్థిరరాశి dpct::dim3 ఖండం_dims(WARP_కొలత, 1, 1);
+    స్థిరరాశి dpct::dim3 ఖండం_nums(nrows, 1, 1);
 
-    stream->parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                         [=](sycl::nd_item<3> item_ct1) {
-                             soft_max_back_f32(grad, dstf, dst, ncols, scale);
-                             GGML_UNUSED(item_ct1);
+    stream->parallel_for(sycl::nd_range<3>(ఖండం_nums * ఖండం_dims, ఖండం_dims),
+                         [=](sycl::nd_అంశం<3> అంశం_ct1) {
+                             soft_max_వెనుక_f32(grad, dstf, dst, ncols, scale);
+                             GGML_వాడని(అంశం_ct1);
                          });
 }
 
-void ggml_sycl_op_soft_max(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+శూన్య ggml_sycl_op_soft_max(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
-    const ggml_tensor * src2 = dst->src[2];
+    స్థిరరాశి ggml_tensor * src0 = dst->src[0];
+    స్థిరరాశి ggml_tensor * src1 = dst->src[1];
+    స్థిరరాశి ggml_tensor * src2 = dst->src[2];
 
-    const float * src0_d = (const float *) src0->data;
-    const void  * src1_d = src1 ? (const void *) src1->data : nullptr;
-    const void  * src2_d = src2 ? (const void *) src2->data : nullptr;
-    float       *  dst_d = (float *) dst->data;
+    స్థిరరాశి దశాంశం * src0_d = (స్థిరరాశి దశాంశం *) src0->దత్తాంశం;
+    స్థిరరాశి శూన్య  * src1_d = src1 ? (స్థిరరాశి శూన్య *) src1->దత్తాంశం : శూన్యసూచిక;
+    స్థిరరాశి శూన్య  * src2_d = src2 ? (స్థిరరాశి శూన్య *) src2->దత్తాంశం : శూన్యసూచిక;
+    దశాంశం       *  dst_d = (దశాంశం *) dst->దత్తాంశం;
 
-    dpct::queue_ptr stream = ctx.stream();
+    dpct::వరుస_ptr stream = ctx.stream();
 
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
@@ -338,36 +338,36 @@ void ggml_sycl_op_soft_max(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     // src1 contains mask and it is optional
     GGML_ASSERT(!src1 || src1->type == GGML_TYPE_F16 || src1->type == GGML_TYPE_F32);
 
-    const int64_t nrows_x = ggml_nrows(src0);
-    const int64_t nrows_y = src0->ne[1];
+    స్థిరరాశి int64_t nrows_x = ggml_nrows(src0);
+    స్థిరరాశి int64_t nrows_y = src0->ne[1];
 
-    const int64_t ne00 = src0->ne[0];
+    స్థిరరాశి int64_t ne00 = src0->ne[0];
 
-    float scale    = 1.0f;
-    float max_bias = 0.0f;
+    దశాంశం scale    = 1.0f;
+    దశాంశం max_bias = 0.0f;
 
-    memcpy(&scale,    (const float *) dst->op_params + 0, sizeof(float));
-    memcpy(&max_bias, (const float *) dst->op_params + 1, sizeof(float));
+    జ్ఞాపకం_నకలు(&scale,    (స్థిరరాశి దశాంశం *) dst->op_params + 0, పరిమాణం(దశాంశం));
+    జ్ఞాపకం_నకలు(&max_bias, (స్థిరరాశి దశాంశం *) dst->op_params + 1, పరిమాణం(దశాంశం));
 
-    const bool use_f16 = (src1 && src1->type == GGML_TYPE_F16);
+    స్థిరరాశి తార్కిక use_f16 = (src1 && src1->type == GGML_TYPE_F16);
 
-    const int64_t nb11 = src1 ? src1->nb[1] : 1;
-    const int64_t nb12 = src1 ? src1->nb[2] : 1;
-    const int64_t nb13 = src1 ? src1->nb[3] : 1;
+    స్థిరరాశి int64_t nb11 = src1 ? src1->nb[1] : 1;
+    స్థిరరాశి int64_t nb12 = src1 ? src1->nb[2] : 1;
+    స్థిరరాశి int64_t nb13 = src1 ? src1->nb[3] : 1;
 
-    const int64_t ne12 = src1 ? src1->ne[2] : 1;
-    const int64_t ne13 = src1 ? src1->ne[3] : 1;
+    స్థిరరాశి int64_t ne12 = src1 ? src1->ne[2] : 1;
+    స్థిరరాశి int64_t ne13 = src1 ? src1->ne[3] : 1;
 
-    const uint32_t n_head      = src0->ne[2];
-    const uint32_t n_head_log2 = 1u << (uint32_t) floorf(log2f((float) n_head));
+    స్థిరరాశి uint32_t n_తల      = src0->ne[2];
+    స్థిరరాశి uint32_t n_తల_log2 = 1u << (uint32_t) floorf(log2f((దశాంశం) n_తల));
 
-    const float m0 = powf(2.0f, -(max_bias       ) / n_head_log2);
-    const float m1 = powf(2.0f, -(max_bias / 2.0f) / n_head_log2);
+    స్థిరరాశి దశాంశం m0 = powf(2.0f, -(max_bias       ) / n_తల_log2);
+    స్థిరరాశి దశాంశం m1 = powf(2.0f, -(max_bias / 2.0f) / n_తల_log2);
 
 
     soft_max_params params = {};
     params.nheads = src0->ne[2];
-    params.n_head_log2 = n_head_log2;
+    params.n_తల_log2 = n_తల_log2;
     params.ncols = ne00;
     params.nrows_x = nrows_x;
     params.nrows_y = nrows_y;
@@ -385,41 +385,41 @@ void ggml_sycl_op_soft_max(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     params.m0 = m0;
     params.m1 = m1;
 
-    if (use_f16) {
-        soft_max_f32_sycl(src0_d, (const sycl::half *)src1_d,
-                          (const float *)src2_d, dst_d, params, stream,
+    ఒకవేళ (use_f16) {
+        soft_max_f32_sycl(src0_d, (స్థిరరాశి sycl::half *)src1_d,
+                          (స్థిరరాశి దశాంశం *)src2_d, dst_d, params, stream,
                           ctx.device);
-    } else {
-        soft_max_f32_sycl(src0_d, (const float *)src1_d, (const float *)src2_d,
+    } లేకపోతే {
+        soft_max_f32_sycl(src0_d, (స్థిరరాశి దశాంశం *)src1_d, (స్థిరరాశి దశాంశం *)src2_d,
                           dst_d, params, stream, ctx.device);
     }
 }
 
-void ggml_sycl_op_soft_max_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+శూన్య ggml_sycl_op_soft_max_వెనుక(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
-    const ggml_tensor * src0 = dst->src[0]; // grad
-    const ggml_tensor * src1 = dst->src[1]; // forward pass output
+    స్థిరరాశి ggml_tensor * src0 = dst->src[0]; // grad
+    స్థిరరాశి ggml_tensor * src1 = dst->src[1]; // forward pass output
 
-    const float * src0_d = (const float *) src0->data;
-    const float * src1_d = (const float *) src1->data;
-    float       * dst_d  = (float       *) dst->data;
+    స్థిరరాశి దశాంశం * src0_d = (స్థిరరాశి దశాంశం *) src0->దత్తాంశం;
+    స్థిరరాశి దశాంశం * src1_d = (స్థిరరాశి దశాంశం *) src1->దత్తాంశం;
+    దశాంశం       * dst_d  = (దశాంశం       *) dst->దత్తాంశం;
 
-    dpct::queue_ptr stream = ctx.stream();
+    dpct::వరుస_ptr stream = ctx.stream();
 
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
 
-    const int64_t ncols = src0->ne[0];
-    const int64_t nrows = ggml_nrows(src0);
+    స్థిరరాశి int64_t ncols = src0->ne[0];
+    స్థిరరాశి int64_t nrows = ggml_nrows(src0);
 
-    float scale    = 1.0f;
-    float max_bias = 0.0f;
+    దశాంశం scale    = 1.0f;
+    దశాంశం max_bias = 0.0f;
 
-    memcpy(&scale,    (const float *) dst->op_params + 0, sizeof(float));
-    memcpy(&max_bias, (const float *) dst->op_params + 1, sizeof(float));
+    జ్ఞాపకం_నకలు(&scale,    (స్థిరరాశి దశాంశం *) dst->op_params + 0, పరిమాణం(దశాంశం));
+    జ్ఞాపకం_నకలు(&max_bias, (స్థిరరాశి దశాంశం *) dst->op_params + 1, పరిమాణం(దశాంశం));
 
     GGML_ASSERT(max_bias == 0.0f);
 
-    soft_max_back_f32_sycl(src0_d, src1_d, dst_d, ncols, nrows, scale, stream);
+    soft_max_వెనుక_f32_sycl(src0_d, src1_d, dst_d, ncols, nrows, scale, stream);
 }

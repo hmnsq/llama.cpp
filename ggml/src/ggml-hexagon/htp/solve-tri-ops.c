@@ -1,299 +1,299 @@
-#pragma clang diagnostic ignored "-Wunused-but-set-variable"
+#సూచన clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <string.h>
+#అన్తర్భావ <HAP_farf.h>
+#అన్తర్భావ <string.h>
 
-#include "hex-common.h"
-#include "hex-profile.h"
+#అన్తర్భావ "hex-common.h"
+#అన్తర్భావ "hex-profile.h"
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "htp-tensor.h"
-#include "hvx-types.h"
-#include "hvx-utils.h"
+#నిర్వచించు GGML_COMMON_DECL_C
+#అన్తర్భావ "ggml-common.h"
+#అన్తర్భావ "htp-ctx.h"
+#అన్తర్భావ "htp-ops.h"
+#అన్తర్భావ "htp-tensor.h"
+#అన్తర్భావ "hvx-types.h"
+#అన్తర్భావ "hvx-utils.h"
 
-struct htp_solve_tri_context {
-    struct htp_ops_context * octx;
-    uint32_t                 jobs_per_thread;
-    uint32_t                 total_jobs;
-    uint32_t                 job_start;
+నిర్మాణం htp_solve_tri_context {
+    నిర్మాణం htp_ops_context * octx;
+    uint32_t                 jobs_చొప్పున_thread;
+    uint32_t                 మొత్తం_jobs;
+    uint32_t                 పని_ప్రారంభం;
     uint32_t                 k_chunks;
-    uint32_t                 col_block;
+    uint32_t                 నిలువు_ఖండం;
 };
 
-static inline void solve_tri_row_scalar(const float * A_row,
-                                        const float * B_row,
-                                        float *       X,
-                                        uint32_t      row,
+స్థిర అంతఃవరుస శూన్య solve_tri_అడ్డువరుస_scalar(స్థిరరాశి దశాంశం * A_అడ్డువరుస,
+                                        స్థిరరాశి దశాంశం * B_అడ్డువరుస,
+                                        దశాంశం *       X,
+                                        uint32_t      అడ్డువరుస,
                                         uint32_t      k,
                                         uint32_t      col0,
                                         uint32_t      coln,
-                                        float         inv_diag) {
-    for (uint32_t col = col0; col < col0 + coln; ++col) {
-        float sum = 0.0f;
-        for (uint32_t t = 0; t < row; ++t) {
-            sum += A_row[t] * X[t * k + col];
+                                        దశాంశం         inv_diag) {
+    కొరకు (uint32_t నిలువు = col0; నిలువు < col0 + coln; ++నిలువు) {
+        దశాంశం కూడిక = 0.0f;
+        కొరకు (uint32_t t = 0; t < అడ్డువరుస; ++t) {
+            కూడిక += A_అడ్డువరుస[t] * X[t * k + నిలువు];
         }
-        X[row * k + col] = (B_row[col] - sum) * inv_diag;
+        X[అడ్డువరుస * k + నిలువు] = (B_అడ్డువరుస[నిలువు] - కూడిక) * inv_diag;
     }
 }
 
-static inline HVX_Vector hvx_load_partial_f32(const float * src, uint32_t n) {
-    HVX_Vector v = *((const HVX_UVector *) src);
-    HVX_VectorPred mask = Q6_Q_vsetq2_R(n * sizeof(float));
-    return Q6_V_vmux_QVV(mask, v, Q6_V_vzero());
+స్థిర అంతఃవరుస HVX_సదిశ hvx_ఎక్కించు_partial_f32(స్థిరరాశి దశాంశం * src, uint32_t n) {
+    HVX_సదిశ v = *((స్థిరరాశి HVX_UVector *) src);
+    HVX_సదిశ_Pred ముసుగు = Q6_Q_vsetq2_R(n * పరిమాణం(దశాంశం));
+    తిరిగి Q6_V_vmux_QVV(ముసుగు, v, Q6_V_vzero());
 }
 
-static inline void solve_tri_row_hvx(const float * A_row,
-                                     const float * B_row,
-                                     float *       X,
-                                     uint32_t      row,
+స్థిర అంతఃవరుస శూన్య solve_tri_అడ్డువరుస_hvx(స్థిరరాశి దశాంశం * A_అడ్డువరుస,
+                                     స్థిరరాశి దశాంశం * B_అడ్డువరుస,
+                                     దశాంశం *       X,
+                                     uint32_t      అడ్డువరుస,
                                      uint32_t      k,
                                      uint32_t      col0,
                                      uint32_t      coln,
-                                     float         inv_diag) {
-    const bool full = (coln == VLEN_FP32);
+                                     దశాంశం         inv_diag) {
+    స్థిరరాశి bool నిండిన = (coln == VLEN_FP32);
 
-    HVX_Vector sum_v = Q6_V_vzero();
-    for (uint32_t t = 0; t < row; ++t) {
-        const float   a         = A_row[t];
-        const float * x_row_col = X + t * k + col0;
+    HVX_సదిశ కూడిక_v = Q6_V_vzero();
+    కొరకు (uint32_t t = 0; t < అడ్డువరుస; ++t) {
+        స్థిరరాశి దశాంశం   a         = A_అడ్డువరుస[t];
+        స్థిరరాశి దశాంశం * x_అడ్డువరుస_నిలువు = X + t * k + col0;
 
-        HVX_Vector x_v = full ? *((const HVX_UVector *) x_row_col) : hvx_load_partial_f32(x_row_col, coln);
-        HVX_Vector a_v = hvx_vec_splat_f32(a);
-        sum_v          = hvx_vec_add_f32_f32(sum_v, hvx_vec_mul_f32_f32(x_v, a_v));
+        HVX_సదిశ x_v = నిండిన ? *((స్థిరరాశి HVX_UVector *) x_అడ్డువరుస_నిలువు) : hvx_ఎక్కించు_partial_f32(x_అడ్డువరుస_నిలువు, coln);
+        HVX_సదిశ a_v = hvx_vec_splat_f32(a);
+        కూడిక_v          = hvx_vec_కూడు_f32_f32(కూడిక_v, hvx_vec_mul_f32_f32(x_v, a_v));
     }
 
-    const float * b_row_col = B_row + col0;
-    float *       x_out_col = X + row * k + col0;
+    స్థిరరాశి దశాంశం * b_అడ్డువరుస_నిలువు = B_అడ్డువరుస + col0;
+    దశాంశం *       x_బహిర్గతం_నిలువు = X + అడ్డువరుస * k + col0;
 
-    HVX_Vector b_v        = full ? *((const HVX_UVector *) b_row_col) : hvx_load_partial_f32(b_row_col, coln);
-    HVX_Vector inv_diag_v = hvx_vec_splat_f32(inv_diag);
+    HVX_సదిశ b_v        = నిండిన ? *((స్థిరరాశి HVX_UVector *) b_అడ్డువరుస_నిలువు) : hvx_ఎక్కించు_partial_f32(b_అడ్డువరుస_నిలువు, coln);
+    HVX_సదిశ inv_diag_v = hvx_vec_splat_f32(inv_diag);
 
-    HVX_Vector out_v = hvx_vec_mul_f32_f32(hvx_vec_sub_f32_f32(b_v, sum_v), inv_diag_v);
-    hvx_vec_store_u((void *) x_out_col, coln * sizeof(float), out_v);
+    HVX_సదిశ బహిర్గతం_v = hvx_vec_mul_f32_f32(hvx_vec_sub_f32_f32(b_v, కూడిక_v), inv_diag_v);
+    hvx_vec_store_u((శూన్య *) x_బహిర్గతం_నిలువు, coln * పరిమాణం(దశాంశం), బహిర్గతం_v);
 }
 
 // Batch-level thread: each job is one full batch.
-static void solve_tri_batch_thread_f32(unsigned int nth, unsigned int ith, void * data) {
-    struct htp_solve_tri_context * sctx = (struct htp_solve_tri_context *) data;
-    struct htp_ops_context *       octx = sctx->octx;
+స్థిర శూన్య solve_tri_batch_thread_f32(గుర్తులేని పూర్ణాంకం nth, గుర్తులేని పూర్ణాంకం ith, శూన్య * దత్తాంశం) {
+    నిర్మాణం htp_solve_tri_context * sctx = (నిర్మాణం htp_solve_tri_context *) దత్తాంశం;
+    నిర్మాణం htp_ops_context *       octx = sctx->octx;
 
-    const struct htp_tensor * src0 = octx->src[0];  // A
-    const struct htp_tensor * src1 = octx->src[1];  // B
-    const struct htp_tensor * dst  = octx->dst;     // X
+    స్థిరరాశి నిర్మాణం htp_tensor * src0 = octx->src[0];  // A
+    స్థిరరాశి నిర్మాణం htp_tensor * src1 = octx->src[1];  // B
+    స్థిరరాశి నిర్మాణం htp_tensor * dst  = octx->dst;     // X
 
-    const uint32_t n = src0->ne[0];
-    const uint32_t k = src1->ne[0];
+    స్థిరరాశి uint32_t n = src0->ne[0];
+    స్థిరరాశి uint32_t k = src1->ne[0];
 
-    const uint32_t ne02 = src0->ne[2];
+    స్థిరరాశి uint32_t ne02 = src0->ne[2];
 
-    const uint32_t col_block = VLEN_FP32;
-    const uint32_t k_full    = (k / col_block) * col_block;
+    స్థిరరాశి uint32_t నిలువు_ఖండం = VLEN_FP32;
+    స్థిరరాశి uint32_t k_నిండిన    = (k / నిలువు_ఖండం) * నిలువు_ఖండం;
 
-    const uint32_t start_batch = sctx->job_start + sctx->jobs_per_thread * ith;
-    const uint32_t end_batch   = MIN(start_batch + sctx->jobs_per_thread, sctx->job_start + sctx->total_jobs);
+    స్థిరరాశి uint32_t ప్రారంభం_batch = sctx->పని_ప్రారంభం + sctx->jobs_చొప్పున_thread * ith;
+    స్థిరరాశి uint32_t చివర_batch   = MIN(ప్రారంభం_batch + sctx->jobs_చొప్పున_thread, sctx->పని_ప్రారంభం + sctx->మొత్తం_jobs);
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
-    htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) start_batch);
+    నిర్మాణం htp_thread_trace * tr = &octx->ctx->trace[ith];
+    htp_trace_event_ప్రారంభం(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ప్రారంభం_batch);
 
-    for (uint32_t batch = start_batch; batch < end_batch; ++batch) {
-        const uint32_t i03 = batch / ne02;
-        const uint32_t i02 = batch - i03 * ne02;
+    కొరకు (uint32_t batch = ప్రారంభం_batch; batch < చివర_batch; ++batch) {
+        స్థిరరాశి uint32_t i03 = batch / ne02;
+        స్థిరరాశి uint32_t i02 = batch - i03 * ne02;
 
-        const float * A_batch =
-            (const float *) ((const uint8_t *) (uintptr_t) src0->data + i02 * src0->nb[2] + i03 * src0->nb[3]);
-        const float * B_batch =
-            (const float *) ((const uint8_t *) (uintptr_t) src1->data + i02 * src1->nb[2] + i03 * src1->nb[3]);
-        float * X_batch = (float *) ((uint8_t *) (uintptr_t) dst->data + i02 * dst->nb[2] + i03 * dst->nb[3]);
+        స్థిరరాశి దశాంశం * A_batch =
+            (స్థిరరాశి దశాంశం *) ((స్థిరరాశి uint8_t *) (uintptr_t) src0->దత్తాంశం + i02 * src0->nb[2] + i03 * src0->nb[3]);
+        స్థిరరాశి దశాంశం * B_batch =
+            (స్థిరరాశి దశాంశం *) ((స్థిరరాశి uint8_t *) (uintptr_t) src1->దత్తాంశం + i02 * src1->nb[2] + i03 * src1->nb[3]);
+        దశాంశం * X_batch = (దశాంశం *) ((uint8_t *) (uintptr_t) dst->దత్తాంశం + i02 * dst->nb[2] + i03 * dst->nb[3]);
 
-        for (uint32_t row = 0; row < n; ++row) {
-            const float   diag     = A_batch[row * n + row];
-            const float   inv_diag = 1.0f / diag;
-            const float * A_row    = A_batch + row * n;
-            const float * B_row    = B_batch + row * k;
+        కొరకు (uint32_t అడ్డువరుస = 0; అడ్డువరుస < n; ++అడ్డువరుస) {
+            స్థిరరాశి దశాంశం   diag     = A_batch[అడ్డువరుస * n + అడ్డువరుస];
+            స్థిరరాశి దశాంశం   inv_diag = 1.0f / diag;
+            స్థిరరాశి దశాంశం * A_అడ్డువరుస    = A_batch + అడ్డువరుస * n;
+            స్థిరరాశి దశాంశం * B_అడ్డువరుస    = B_batch + అడ్డువరుస * k;
 
             uint32_t col0 = 0;
-            for (; col0 < k_full; col0 += col_block) {
-                solve_tri_row_hvx(A_row, B_row, X_batch, row, k, col0, col_block, inv_diag);
+            కొరకు (; col0 < k_నిండిన; col0 += నిలువు_ఖండం) {
+                solve_tri_అడ్డువరుస_hvx(A_అడ్డువరుస, B_అడ్డువరుస, X_batch, అడ్డువరుస, k, col0, నిలువు_ఖండం, inv_diag);
             }
 
-            if (col0 < k) {
-                const uint32_t coln = k - col0;
-                if (coln >= 8) {
-                    solve_tri_row_hvx(A_row, B_row, X_batch, row, k, col0, coln, inv_diag);
-                } else {
-                    solve_tri_row_scalar(A_row, B_row, X_batch, row, k, col0, coln, inv_diag);
+            ఒకవేళ (col0 < k) {
+                స్థిరరాశి uint32_t coln = k - col0;
+                ఒకవేళ (coln >= 8) {
+                    solve_tri_అడ్డువరుస_hvx(A_అడ్డువరుస, B_అడ్డువరుస, X_batch, అడ్డువరుస, k, col0, coln, inv_diag);
+                } లేకపోతే {
+                    solve_tri_అడ్డువరుస_scalar(A_అడ్డువరుస, B_అడ్డువరుస, X_batch, అడ్డువరుస, k, col0, coln, inv_diag);
                 }
             }
         }
     }
 
-    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) end_batch);
+    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) చివర_batch);
 
-    FARF(HIGH, "solve-tri-batch %d/%d: A=(%ux%u) B=(%ux%u) batch %u:%u\n",
-         ith, nth, n, n, k, n, start_batch, end_batch);
+    FARF(ఎగువ_2, "solve-tri-batch %d/%d: A=(%ux%u) B=(%ux%u) batch %u:%u\n",
+         ith, nth, n, n, k, n, ప్రారంభం_batch, చివర_batch);
 }
 
 // Chunk-level thread: each job is one (batch, col_chunk) pair.
-static void solve_tri_chunk_thread_f32(unsigned int nth, unsigned int ith, void * data) {
-    struct htp_solve_tri_context * sctx = (struct htp_solve_tri_context *) data;
-    struct htp_ops_context *       octx = sctx->octx;
+స్థిర శూన్య solve_tri_chunk_thread_f32(గుర్తులేని పూర్ణాంకం nth, గుర్తులేని పూర్ణాంకం ith, శూన్య * దత్తాంశం) {
+    నిర్మాణం htp_solve_tri_context * sctx = (నిర్మాణం htp_solve_tri_context *) దత్తాంశం;
+    నిర్మాణం htp_ops_context *       octx = sctx->octx;
 
-    const struct htp_tensor * src0 = octx->src[0];  // A
-    const struct htp_tensor * src1 = octx->src[1];  // B
-    const struct htp_tensor * dst  = octx->dst;     // X
+    స్థిరరాశి నిర్మాణం htp_tensor * src0 = octx->src[0];  // A
+    స్థిరరాశి నిర్మాణం htp_tensor * src1 = octx->src[1];  // B
+    స్థిరరాశి నిర్మాణం htp_tensor * dst  = octx->dst;     // X
 
-    const uint32_t n = src0->ne[0];
-    const uint32_t k = src1->ne[0];
+    స్థిరరాశి uint32_t n = src0->ne[0];
+    స్థిరరాశి uint32_t k = src1->ne[0];
 
-    const uint32_t ne02 = src0->ne[2];
+    స్థిరరాశి uint32_t ne02 = src0->ne[2];
 
-    const uint32_t start_job = sctx->job_start + sctx->jobs_per_thread * ith;
-    const uint32_t end_job   = MIN(start_job + sctx->jobs_per_thread, sctx->job_start + sctx->total_jobs);
+    స్థిరరాశి uint32_t ప్రారంభం_పని = sctx->పని_ప్రారంభం + sctx->jobs_చొప్పున_thread * ith;
+    స్థిరరాశి uint32_t చివర_పని   = MIN(ప్రారంభం_పని + sctx->jobs_చొప్పున_thread, sctx->పని_ప్రారంభం + sctx->మొత్తం_jobs);
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
-    htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) start_job);
+    నిర్మాణం htp_thread_trace * tr = &octx->ctx->trace[ith];
+    htp_trace_event_ప్రారంభం(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ప్రారంభం_పని);
 
-    for (uint32_t job = start_job; job < end_job; ++job) {
-        const uint32_t batch = job / sctx->k_chunks;
-        const uint32_t chunk = job - batch * sctx->k_chunks;
+    కొరకు (uint32_t పని = ప్రారంభం_పని; పని < చివర_పని; ++పని) {
+        స్థిరరాశి uint32_t batch = పని / sctx->k_chunks;
+        స్థిరరాశి uint32_t chunk = పని - batch * sctx->k_chunks;
 
-        const uint32_t i03 = batch / ne02;
-        const uint32_t i02 = batch - i03 * ne02;
+        స్థిరరాశి uint32_t i03 = batch / ne02;
+        స్థిరరాశి uint32_t i02 = batch - i03 * ne02;
 
-        const float * A_batch =
-            (const float *) ((const uint8_t *) (uintptr_t) src0->data + i02 * src0->nb[2] + i03 * src0->nb[3]);
-        const float * B_batch =
-            (const float *) ((const uint8_t *) (uintptr_t) src1->data + i02 * src1->nb[2] + i03 * src1->nb[3]);
-        float * X_batch = (float *) ((uint8_t *) (uintptr_t) dst->data + i02 * dst->nb[2] + i03 * dst->nb[3]);
+        స్థిరరాశి దశాంశం * A_batch =
+            (స్థిరరాశి దశాంశం *) ((స్థిరరాశి uint8_t *) (uintptr_t) src0->దత్తాంశం + i02 * src0->nb[2] + i03 * src0->nb[3]);
+        స్థిరరాశి దశాంశం * B_batch =
+            (స్థిరరాశి దశాంశం *) ((స్థిరరాశి uint8_t *) (uintptr_t) src1->దత్తాంశం + i02 * src1->nb[2] + i03 * src1->nb[3]);
+        దశాంశం * X_batch = (దశాంశం *) ((uint8_t *) (uintptr_t) dst->దత్తాంశం + i02 * dst->nb[2] + i03 * dst->nb[3]);
 
-        const uint32_t col0 = chunk * sctx->col_block;
-        const uint32_t coln = MIN(sctx->col_block, k - col0);
+        స్థిరరాశి uint32_t col0 = chunk * sctx->నిలువు_ఖండం;
+        స్థిరరాశి uint32_t coln = MIN(sctx->నిలువు_ఖండం, k - col0);
 
-        for (uint32_t row = 0; row < n; ++row) {
-            const float diag     = A_batch[row * n + row];
-            const float inv_diag = 1.0f / diag;
+        కొరకు (uint32_t అడ్డువరుస = 0; అడ్డువరుస < n; ++అడ్డువరుస) {
+            స్థిరరాశి దశాంశం diag     = A_batch[అడ్డువరుస * n + అడ్డువరుస];
+            స్థిరరాశి దశాంశం inv_diag = 1.0f / diag;
 
-            const float * A_row = A_batch + row * n;
-            const float * B_row = B_batch + row * k;
+            స్థిరరాశి దశాంశం * A_అడ్డువరుస = A_batch + అడ్డువరుస * n;
+            స్థిరరాశి దశాంశం * B_అడ్డువరుస = B_batch + అడ్డువరుస * k;
 
-            if (coln >= 8) {
-                solve_tri_row_hvx(A_row, B_row, X_batch, row, k, col0, coln, inv_diag);
-            } else {
-                solve_tri_row_scalar(A_row, B_row, X_batch, row, k, col0, coln, inv_diag);
+            ఒకవేళ (coln >= 8) {
+                solve_tri_అడ్డువరుస_hvx(A_అడ్డువరుస, B_అడ్డువరుస, X_batch, అడ్డువరుస, k, col0, coln, inv_diag);
+            } లేకపోతే {
+                solve_tri_అడ్డువరుస_scalar(A_అడ్డువరుస, B_అడ్డువరుస, X_batch, అడ్డువరుస, k, col0, coln, inv_diag);
             }
         }
     }
 
-    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) end_job);
+    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) చివర_పని);
 
-    FARF(HIGH, "solve-tri-chunk %d/%d: A=(%ux%u) B=(%ux%u) jobs %u:%u\n",
-         ith, nth, n, n, k, n, start_job, end_job);
+    FARF(ఎగువ_2, "solve-tri-chunk %d/%d: A=(%ux%u) B=(%ux%u) jobs %u:%u\n",
+         ith, nth, n, n, k, n, ప్రారంభం_పని, చివర_పని);
 }
 
-int op_solve_tri(struct htp_ops_context * octx) {
-    const struct htp_tensor * src0 = octx->src[0];  // A
-    const struct htp_tensor * src1 = octx->src[1];  // B
-    const struct htp_tensor * dst  = octx->dst;     // X
+పూర్ణాంకం op_solve_tri(నిర్మాణం htp_ops_context * octx) {
+    స్థిరరాశి నిర్మాణం htp_tensor * src0 = octx->src[0];  // A
+    స్థిరరాశి నిర్మాణం htp_tensor * src1 = octx->src[1];  // B
+    స్థిరరాశి నిర్మాణం htp_tensor * dst  = octx->dst;     // X
 
-    if (src0->type != HTP_TYPE_F32 || src1->type != HTP_TYPE_F32 || dst->type != HTP_TYPE_F32) {
-        return HTP_STATUS_NO_SUPPORT;
+    ఒకవేళ (src0->type != HTP_TYPE_F32 || src1->type != HTP_TYPE_F32 || dst->type != HTP_TYPE_F32) {
+        తిరిగి HTP_స్థితి_NO_SUPPORT;
     }
 
     // left=true, lower=true, uni=false only
-    if (src0->ne[0] != src0->ne[1]) {
-        return HTP_STATUS_INVAL_PARAMS;
+    ఒకవేళ (src0->ne[0] != src0->ne[1]) {
+        తిరిగి HTP_స్థితి_INVAL_PARAMS;
     }
-    if (src0->ne[1] != src1->ne[1]) {
-        return HTP_STATUS_INVAL_PARAMS;
+    ఒకవేళ (src0->ne[1] != src1->ne[1]) {
+        తిరిగి HTP_స్థితి_INVAL_PARAMS;
     }
-    if (src0->ne[2] != src1->ne[2] || src0->ne[3] != src1->ne[3]) {
-        return HTP_STATUS_INVAL_PARAMS;
+    ఒకవేళ (src0->ne[2] != src1->ne[2] || src0->ne[3] != src1->ne[3]) {
+        తిరిగి HTP_స్థితి_INVAL_PARAMS;
     }
-    if (dst->ne[0] != src1->ne[0] || dst->ne[1] != src1->ne[1] || dst->ne[2] != src1->ne[2] ||
+    ఒకవేళ (dst->ne[0] != src1->ne[0] || dst->ne[1] != src1->ne[1] || dst->ne[2] != src1->ne[2] ||
         dst->ne[3] != src1->ne[3]) {
-        return HTP_STATUS_INVAL_PARAMS;
+        తిరిగి HTP_స్థితి_INVAL_PARAMS;
     }
 
-    if (htp_tensor_is_extended(src0) || htp_tensor_is_extended(src1) || htp_tensor_is_extended(dst)) {
-        return HTP_STATUS_NO_SUPPORT;
+    ఒకవేళ (htp_tensor_is_extended(src0) || htp_tensor_is_extended(src1) || htp_tensor_is_extended(dst)) {
+        తిరిగి HTP_స్థితి_NO_SUPPORT;
     }
 
-    const uint32_t k = src1->ne[0];
+    స్థిరరాశి uint32_t k = src1->ne[0];
 
-    const uint32_t col_block     = VLEN_FP32;
-    const uint32_t k_chunks      = (k + col_block - 1) / col_block;
-    const uint32_t total_batches = src0->ne[2] * src0->ne[3];
-    const bool     batched       = total_batches >= (uint32_t) octx->n_threads;
+    స్థిరరాశి uint32_t నిలువు_ఖండం     = VLEN_FP32;
+    స్థిరరాశి uint32_t k_chunks      = (k + నిలువు_ఖండం - 1) / నిలువు_ఖండం;
+    స్థిరరాశి uint32_t మొత్తం_batches = src0->ne[2] * src0->ne[3];
+    స్థిరరాశి bool     batched       = మొత్తం_batches >= (uint32_t) octx->n_దారాలు;
 
-    FARF(HIGH, "solve-tri: (%ux%ux%ux%u) x (%ux%ux%ux%u) -> (%ux%ux%ux%u) : batched %d\n",
+    FARF(ఎగువ_2, "solve-tri: (%ux%ux%ux%u) x (%ux%ux%ux%u) -> (%ux%ux%ux%u) : batched %d\n",
          src0->ne[0], src0->ne[1], src0->ne[2], src0->ne[3],
          src1->ne[0], src1->ne[1], src1->ne[2], src1->ne[3],
          dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3], batched);
 
-    if (batched) {
-        uint32_t job_start = 0;
-        uint32_t njobs     = total_batches;
+    ఒకవేళ (batched) {
+        uint32_t పని_ప్రారంభం = 0;
+        uint32_t njobs     = మొత్తం_batches;
 
-        if (octx->ctx->mdev.count > 1) {
-            const uint32_t batch_size = dst->nb[2];
-            const uint32_t batches_per_chunk = (batch_size > 0) ? (HEX_L2_LINE_SIZE / hex_gcd_u32(batch_size, HEX_L2_LINE_SIZE)) : 1;
-            const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_batches, htp_tensor_mdev_data_aligned(dst) ? batches_per_chunk : 0, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
-            job_start = range.start;
-            njobs     = range.count;
+        ఒకవేళ (octx->ctx->mdev.లెక్క > 1) {
+            స్థిరరాశి uint32_t batch_కొలత = dst->nb[2];
+            స్థిరరాశి uint32_t batches_చొప్పున_chunk = (batch_కొలత > 0) ? (HEX_L2_పంక్తి_కొలత / hex_గరిష్ఠ_సామాన్య_భాజకం_u32(batch_కొలత, HEX_L2_పంక్తి_కొలత)) : 1;
+            స్థిరరాశి నిర్మాణం htp_tensor_mdev_range range = htp_tensor_mdev_విభజన(మొత్తం_batches, htp_tensor_mdev_దత్తాంశం_aligned(dst) ? batches_చొప్పున_chunk : 0, octx->ctx->mdev.idx, octx->ctx->mdev.లెక్క, &octx->ctx->mdev.లెక్క_div);
+            పని_ప్రారంభం = range.ప్రారంభం;
+            njobs     = range.లెక్క;
         }
 
-        if (njobs == 0) {
-            return HTP_STATUS_OK;
+        ఒకవేళ (njobs == 0) {
+            తిరిగి HTP_స్థితి_OK;
         }
 
         // Batch-level parallelism
-        const uint32_t n_threads = octx->n_threads;
+        స్థిరరాశి uint32_t n_దారాలు = octx->n_దారాలు;
 
-        struct htp_solve_tri_context sctx = {
+        నిర్మాణం htp_solve_tri_context sctx = {
             .octx            = octx,
-            .jobs_per_thread = fastdiv(njobs + n_threads - 1, &octx->n_threads_div),
-            .total_jobs      = njobs,
-            .job_start       = job_start,
+            .jobs_చొప్పున_thread = fastdiv(njobs + n_దారాలు - 1, &octx->n_దారాలు_div),
+            .మొత్తం_jobs      = njobs,
+            .పని_ప్రారంభం       = పని_ప్రారంభం,
             .k_chunks        = k_chunks,
-            .col_block       = col_block,
+            .నిలువు_ఖండం       = నిలువు_ఖండం,
         };
 
-        work_queue_run(octx->ctx->work_queue, solve_tri_batch_thread_f32, &sctx, n_threads);
-    } else {
+        work_వరుస_నిరంతరం(octx->ctx->work_వరుస, solve_tri_batch_thread_f32, &sctx, n_దారాలు);
+    } లేకపోతే {
         // Chunk-level parallelism
-        const uint32_t total_jobs = total_batches * k_chunks;
+        స్థిరరాశి uint32_t మొత్తం_jobs = మొత్తం_batches * k_chunks;
 
-        uint32_t job_start = 0;
-        uint32_t njobs     = total_jobs;
+        uint32_t పని_ప్రారంభం = 0;
+        uint32_t njobs     = మొత్తం_jobs;
 
-        if (octx->ctx->mdev.count > 1) {
-            const bool can_split = htp_tensor_mdev_data_aligned(dst) && ((dst->nb[1] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0);
-            const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_jobs, can_split ? 1 : 0, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
-            job_start = range.start;
-            njobs     = range.count;
+        ఒకవేళ (octx->ctx->mdev.లెక్క > 1) {
+            స్థిరరాశి bool can_విభజించు = htp_tensor_mdev_దత్తాంశం_aligned(dst) && ((dst->nb[1] & (HTP_TENSOR_MDEV_పంక్తి_కొలత - 1)) == 0);
+            స్థిరరాశి నిర్మాణం htp_tensor_mdev_range range = htp_tensor_mdev_విభజన(మొత్తం_jobs, can_విభజించు ? 1 : 0, octx->ctx->mdev.idx, octx->ctx->mdev.లెక్క, &octx->ctx->mdev.లెక్క_div);
+            పని_ప్రారంభం = range.ప్రారంభం;
+            njobs     = range.లెక్క;
         }
 
-        if (njobs == 0) {
-            return HTP_STATUS_OK;
+        ఒకవేళ (njobs == 0) {
+            తిరిగి HTP_స్థితి_OK;
         }
 
-        const uint32_t n_threads = octx->n_threads;
+        స్థిరరాశి uint32_t n_దారాలు = octx->n_దారాలు;
 
-        struct htp_solve_tri_context sctx = {
+        నిర్మాణం htp_solve_tri_context sctx = {
             .octx            = octx,
-            .jobs_per_thread = fastdiv(njobs + n_threads - 1, &octx->n_threads_div),
-            .total_jobs      = njobs,
-            .job_start       = job_start,
+            .jobs_చొప్పున_thread = fastdiv(njobs + n_దారాలు - 1, &octx->n_దారాలు_div),
+            .మొత్తం_jobs      = njobs,
+            .పని_ప్రారంభం       = పని_ప్రారంభం,
             .k_chunks        = k_chunks,
-            .col_block       = col_block,
+            .నిలువు_ఖండం       = నిలువు_ఖండం,
         };
 
-        work_queue_run(octx->ctx->work_queue, solve_tri_chunk_thread_f32, &sctx, n_threads);
+        work_వరుస_నిరంతరం(octx->ctx->work_వరుస, solve_tri_chunk_thread_f32, &sctx, n_దారాలు);
     }
 
-    return HTP_STATUS_OK;
+    తిరిగి HTP_స్థితి_OK;
 }

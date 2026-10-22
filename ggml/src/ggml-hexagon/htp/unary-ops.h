@@ -1,138 +1,138 @@
-#ifndef HTP_UNARY_OPS_H
-#define HTP_UNARY_OPS_H
+#నిర్వచితం_కాకపోతే HTP_UNARY_OPS_H
+#నిర్వచించు HTP_UNARY_OPS_H
 
-#include "hex-common.h"
-#include "htp-ops.h"
+#అన్తర్భావ "hex-common.h"
+#అన్తర్భావ "htp-ops.h"
 
 // Op-specific struct for precomputed unary params
-struct htp_unary_kernel_params {
-    uint32_t  n_threads;
-    uint32_t  col_tile;
-    uint32_t  vtcm_row_per_thread;
-    uint32_t  block;
-    uint32_t  broadcast_weight;
+నిర్మాణం htp_unary_kernel_params {
+    uint32_t  n_దారాలు;
+    uint32_t  నిలువు_tile;
+    uint32_t  vtcm_అడ్డువరుస_చొప్పున_thread;
+    uint32_t  ఖండం;
+    uint32_t  ప్రసారం_బరువు;
 
-    uint32_t  vtcm_src0_size_per_thread;
-    uint32_t  vtcm_src1_size_per_thread;
-    uint32_t  vtcm_dst_size_per_thread;
+    uint32_t  vtcm_src0_కొలత_చొప్పున_thread;
+    uint32_t  vtcm_src1_కొలత_చొప్పున_thread;
+    uint32_t  vtcm_dst_కొలత_చొప్పున_thread;
 
-    uint32_t  vtcm_src0_size;
-    uint32_t  vtcm_src1_size;
-    uint32_t  vtcm_dst_size;
+    uint32_t  vtcm_src0_కొలత;
+    uint32_t  vtcm_src1_కొలత;
+    uint32_t  vtcm_dst_కొలత;
 
-    uint32_t  src0_row_size_aligned;
-    uint32_t  src1_row_size_aligned;
-    uint32_t  dst_row_size_aligned;
+    uint32_t  src0_అడ్డువరుస_కొలత_aligned;
+    uint32_t  src1_అడ్డువరుస_కొలత_aligned;
+    uint32_t  dst_అడ్డువరుస_కొలత_aligned;
 
-    uint32_t  vtcm_size;
+    uint32_t  vtcm_కొలత;
 
     // Fastdiv helpers
-    struct fastdiv_values div_ne01;
-    struct fastdiv_values div_ne02;
-    struct fastdiv_values div_ne012;
-    struct fastdiv_values div_tpr;
+    నిర్మాణం fastdiv_విలువలు div_ne01;
+    నిర్మాణం fastdiv_విలువలు div_ne02;
+    నిర్మాణం fastdiv_విలువలు div_ne012;
+    నిర్మాణం fastdiv_విలువలు div_tpr;
 };
 
-#if defined(__cplusplus)
-static_assert(sizeof(struct htp_unary_kernel_params) <= 128, "htp_unary_kernel_params is too large for kernel_params blob");
-#else
-_Static_assert(sizeof(struct htp_unary_kernel_params) <= 128, "htp_unary_kernel_params is too large for kernel_params blob");
-#endif
+#ఒకవేళ defined(__cplusplus)
+static_assert(పరిమాణం(నిర్మాణం htp_unary_kernel_params) <= 128, "htp_unary_kernel_params is too large for kernel_params blob");
+#లేకపోతే
+_Static_assert(పరిమాణం(నిర్మాణం htp_unary_kernel_params) <= 128, "htp_unary_kernel_params is too large for kernel_params blob");
+#అయితే_ముగింపు
 
-static inline bool htp_op_is_unary(uint32_t opcode) {
-    switch (opcode) {
-        case HTP_OP_CLAMP:
-        case HTP_OP_LEAKY_RELU:
-        case HTP_OP_NORM:
-        case HTP_OP_RMS_NORM:
-        case HTP_OP_RMS_NORM_MUL:
-        case HTP_OP_SCALE:
-        case HTP_OP_SQR:
-        case HTP_OP_SQRT:
-        case HTP_OP_UNARY_NEG:
-        case HTP_OP_UNARY_EXP:
-        case HTP_OP_UNARY_SIGMOID:
-        case HTP_OP_UNARY_SILU:
-        case HTP_OP_UNARY_GELU:
-        case HTP_OP_UNARY_GELU_QUICK:
-        case HTP_OP_UNARY_GELU_ERF:
-        case HTP_OP_UNARY_SOFTPLUS:
-        case HTP_OP_UNARY_TANH:
-        case HTP_OP_UNARY_ABS:
-        case HTP_OP_UNARY_LOG:
-        case HTP_OP_UNARY_RELU:
-        case HTP_OP_UNARY_STEP:
-        case HTP_OP_L2_NORM:
-        case HTP_OP_TRI:
-        case HTP_OP_HADAMARD:
-            return true;
-        default:
-            return false;
+స్థిర అంతఃవరుస bool htp_op_is_unary(uint32_t opcode) {
+    ఎంపిక (opcode) {
+        స్థితి HTP_OP_CLAMP:
+        స్థితి HTP_OP_LEAKY_RELU:
+        స్థితి HTP_OP_NORM:
+        స్థితి HTP_OP_RMS_NORM:
+        స్థితి HTP_OP_RMS_NORM_MUL:
+        స్థితి HTP_OP_SCALE:
+        స్థితి HTP_OP_SQR:
+        స్థితి HTP_OP_SQRT:
+        స్థితి HTP_OP_UNARY_NEG:
+        స్థితి HTP_OP_UNARY_EXP:
+        స్థితి HTP_OP_UNARY_SIGMOID:
+        స్థితి HTP_OP_UNARY_SILU:
+        స్థితి HTP_OP_UNARY_GELU:
+        స్థితి HTP_OP_UNARY_GELU_శీఘ్ర:
+        స్థితి HTP_OP_UNARY_GELU_ERF:
+        స్థితి HTP_OP_UNARY_SOFTPLUS:
+        స్థితి HTP_OP_UNARY_TANH:
+        స్థితి HTP_OP_UNARY_ABS:
+        స్థితి HTP_OP_UNARY_LOG:
+        స్థితి HTP_OP_UNARY_RELU:
+        స్థితి HTP_OP_UNARY_అడుగు:
+        స్థితి HTP_OP_L2_NORM:
+        స్థితి HTP_OP_TRI:
+        స్థితి HTP_OP_HADAMARD:
+            తిరిగి true;
+        అప్రమేయ:
+            తిరిగి false;
     }
 }
 
-struct htp_unary_vtcm_layout {
-    size_t total_bytes;
+నిర్మాణం htp_unary_vtcm_layout {
+    size_t మొత్తం_బైట్లు;
     size_t off_src0;
     size_t off_src1;
     size_t off_dst;
 
-    size_t src0_bytes;
-    size_t src1_bytes;
-    size_t dst_bytes;
+    size_t src0_బైట్లు;
+    size_t src1_బైట్లు;
+    size_t dst_బైట్లు;
 };
 
-static inline void htp_unary_vtcm_layout_build(
-    struct htp_unary_vtcm_layout * L,
+స్థిర అంతఃవరుస శూన్య htp_unary_vtcm_layout_build(
+    నిర్మాణం htp_unary_vtcm_layout * L,
     uint32_t op,
     uint32_t ne00,
     uint32_t ne10,
     uint32_t ne11,
-    bool broadcast_weight,
-    uint32_t n_threads,
-    size_t vtcm_size,
-    size_t elem_size,
-    uint32_t * out_col_tile,
-    uint32_t * out_vtcm_row_per_thread
+    bool ప్రసారం_బరువు,
+    uint32_t n_దారాలు,
+    size_t vtcm_కొలత,
+    size_t elem_కొలత,
+    uint32_t * బహిర్గతం_నిలువు_tile,
+    uint32_t * బహిర్గతం_vtcm_అడ్డువరుస_చొప్పున_thread
 ) {
-    const size_t dst_elem_size      = (op == HTP_OP_HADAMARD) ? sizeof(float) : elem_size;
-    const size_t src0_data_row_size = ne00 * elem_size;
-    const size_t dst_data_row_size  = ne10 * dst_elem_size;
+    స్థిరరాశి size_t dst_elem_కొలత      = (op == HTP_OP_HADAMARD) ? పరిమాణం(దశాంశం) : elem_కొలత;
+    స్థిరరాశి size_t src0_దత్తాంశం_అడ్డువరుస_కొలత = ne00 * elem_కొలత;
+    స్థిరరాశి size_t dst_దత్తాంశం_అడ్డువరుస_కొలత  = ne10 * dst_elem_కొలత;
 
-    const size_t src0_row_size_aligned = hex_round_up(src0_data_row_size, 128);
-    const size_t dst_row_size_aligned  = hex_round_up(dst_data_row_size,  128);
+    స్థిరరాశి size_t src0_అడ్డువరుస_కొలత_aligned = hex_విడత_పైకి(src0_దత్తాంశం_అడ్డువరుస_కొలత, 128);
+    స్థిరరాశి size_t dst_అడ్డువరుస_కొలత_aligned  = hex_విడత_పైకి(dst_దత్తాంశం_అడ్డువరుస_కొలత,  128);
 
-    size_t src1_row_size_aligned = 0;
-    if (op == HTP_OP_RMS_NORM_MUL) {
+    size_t src1_అడ్డువరుస_కొలత_aligned = 0;
+    ఒకవేళ (op == HTP_OP_RMS_NORM_MUL) {
         // RMS_NORM_MUL fusion is F32-only; its weight tensor is always F32.
-        const size_t src1_data_row_size = ne11 * sizeof(float);
-        src1_row_size_aligned = hex_round_up(src1_data_row_size, 128);
+        స్థిరరాశి size_t src1_దత్తాంశం_అడ్డువరుస_కొలత = ne11 * పరిమాణం(దశాంశం);
+        src1_అడ్డువరుస_కొలత_aligned = hex_విడత_పైకి(src1_దత్తాంశం_అడ్డువరుస_కొలత, 128);
     }
 
-    size_t vtcm_size_per_row = 0;
-    size_t vtcm_row_per_thread = 0;
+    size_t vtcm_కొలత_చొప్పున_అడ్డువరుస = 0;
+    size_t vtcm_అడ్డువరుస_చొప్పున_thread = 0;
 
-    if (op == HTP_OP_RMS_NORM_MUL) {
-        if (broadcast_weight) {
-            size_t available_vtcm = vtcm_size;
-            size_t src1_vtcm_total = n_threads * src1_row_size_aligned;
-            if (available_vtcm > src1_vtcm_total) {
-                available_vtcm -= src1_vtcm_total;
-            } else {
-                available_vtcm = 0;
+    ఒకవేళ (op == HTP_OP_RMS_NORM_MUL) {
+        ఒకవేళ (ప్రసారం_బరువు) {
+            size_t అందుబాటు_vtcm = vtcm_కొలత;
+            size_t src1_vtcm_మొత్తం = n_దారాలు * src1_అడ్డువరుస_కొలత_aligned;
+            ఒకవేళ (అందుబాటు_vtcm > src1_vtcm_మొత్తం) {
+                అందుబాటు_vtcm -= src1_vtcm_మొత్తం;
+            } లేకపోతే {
+                అందుబాటు_vtcm = 0;
             }
-            vtcm_size_per_row = 2 * (src0_row_size_aligned + dst_row_size_aligned);
-            vtcm_row_per_thread = available_vtcm / (n_threads * vtcm_size_per_row);
-        } else {
-            vtcm_size_per_row = 2 * (src0_row_size_aligned + dst_row_size_aligned + src1_row_size_aligned);
-            vtcm_row_per_thread = vtcm_size / (n_threads * vtcm_size_per_row);
+            vtcm_కొలత_చొప్పున_అడ్డువరుస = 2 * (src0_అడ్డువరుస_కొలత_aligned + dst_అడ్డువరుస_కొలత_aligned);
+            vtcm_అడ్డువరుస_చొప్పున_thread = అందుబాటు_vtcm / (n_దారాలు * vtcm_కొలత_చొప్పున_అడ్డువరుస);
+        } లేకపోతే {
+            vtcm_కొలత_చొప్పున_అడ్డువరుస = 2 * (src0_అడ్డువరుస_కొలత_aligned + dst_అడ్డువరుస_కొలత_aligned + src1_అడ్డువరుస_కొలత_aligned);
+            vtcm_అడ్డువరుస_చొప్పున_thread = vtcm_కొలత / (n_దారాలు * vtcm_కొలత_చొప్పున_అడ్డువరుస);
         }
-    } else {
-        vtcm_size_per_row   = 2 * (src0_row_size_aligned + dst_row_size_aligned);
-        vtcm_row_per_thread = vtcm_size / (n_threads * vtcm_size_per_row);
+    } లేకపోతే {
+        vtcm_కొలత_చొప్పున_అడ్డువరుస   = 2 * (src0_అడ్డువరుస_కొలత_aligned + dst_అడ్డువరుస_కొలత_aligned);
+        vtcm_అడ్డువరుస_చొప్పున_thread = vtcm_కొలత / (n_దారాలు * vtcm_కొలత_చొప్పున_అడ్డువరుస);
     }
 
-    const bool is_reduction = (op == HTP_OP_NORM || op == HTP_OP_RMS_NORM ||
+    స్థిరరాశి bool is_reduction = (op == HTP_OP_NORM || op == HTP_OP_RMS_NORM ||
                                op == HTP_OP_RMS_NORM_MUL || op == HTP_OP_L2_NORM ||
                                op == HTP_OP_HADAMARD);
     // The tiled fallback path below only has F32 task functions (unary_task_f32_tiled_*);
@@ -141,44 +141,44 @@ static inline void htp_unary_vtcm_layout_build(
     // budget), execute_op_unary() will see BLOCK == 0 and skip computation for that op
     // (logged via FARF(ERROR, ...)) since there is no F16 tiled fallback. This is a known
     // limitation; supporting it would require adding F16 tiled kernels.
-    const bool is_f16 = (elem_size == sizeof(_Float16));
-    uint32_t col_tile = 0;
+    స్థిరరాశి bool is_f16 = (elem_కొలత == పరిమాణం(_Float16));
+    uint32_t నిలువు_tile = 0;
 
-    if (vtcm_row_per_thread == 0 && !is_reduction && !is_f16) {
-        const size_t per_thread_budget = vtcm_size / n_threads;
-        const size_t col_tile_bytes = hex_align_down(per_thread_budget / 4, 128);
-        col_tile = (uint32_t) (col_tile_bytes / elem_size);
+    ఒకవేళ (vtcm_అడ్డువరుస_చొప్పున_thread == 0 && !is_reduction && !is_f16) {
+        స్థిరరాశి size_t చొప్పున_thread_budget = vtcm_కొలత / n_దారాలు;
+        స్థిరరాశి size_t నిలువు_tile_బైట్లు = hex_align_కిందికి(చొప్పున_thread_budget / 4, 128);
+        నిలువు_tile = (uint32_t) (నిలువు_tile_బైట్లు / elem_కొలత);
 
-        L->src0_bytes = col_tile_bytes * 2;
-        L->dst_bytes  = col_tile_bytes * 2;
-        L->src1_bytes = 0;
-    } else {
-        L->src0_bytes = src0_row_size_aligned * vtcm_row_per_thread * 2;
-        L->dst_bytes  = dst_row_size_aligned * vtcm_row_per_thread * 2;
-        if (op == HTP_OP_RMS_NORM_MUL) {
-            if (broadcast_weight) {
-                L->src1_bytes = src1_row_size_aligned;
-            } else {
-                L->src1_bytes = src1_row_size_aligned * vtcm_row_per_thread * 2;
+        L->src0_బైట్లు = నిలువు_tile_బైట్లు * 2;
+        L->dst_బైట్లు  = నిలువు_tile_బైట్లు * 2;
+        L->src1_బైట్లు = 0;
+    } లేకపోతే {
+        L->src0_బైట్లు = src0_అడ్డువరుస_కొలత_aligned * vtcm_అడ్డువరుస_చొప్పున_thread * 2;
+        L->dst_బైట్లు  = dst_అడ్డువరుస_కొలత_aligned * vtcm_అడ్డువరుస_చొప్పున_thread * 2;
+        ఒకవేళ (op == HTP_OP_RMS_NORM_MUL) {
+            ఒకవేళ (ప్రసారం_బరువు) {
+                L->src1_బైట్లు = src1_అడ్డువరుస_కొలత_aligned;
+            } లేకపోతే {
+                L->src1_బైట్లు = src1_అడ్డువరుస_కొలత_aligned * vtcm_అడ్డువరుస_చొప్పున_thread * 2;
             }
-        } else {
-            L->src1_bytes = 0;
+        } లేకపోతే {
+            L->src1_బైట్లు = 0;
         }
     }
 
     L->off_src0 = 0;
-    if (op == HTP_OP_RMS_NORM_MUL) {
-        L->off_src1 = L->off_src0 + L->src0_bytes * n_threads;
-        L->off_dst  = L->off_src1 + L->src1_bytes * n_threads;
-    } else {
+    ఒకవేళ (op == HTP_OP_RMS_NORM_MUL) {
+        L->off_src1 = L->off_src0 + L->src0_బైట్లు * n_దారాలు;
+        L->off_dst  = L->off_src1 + L->src1_బైట్లు * n_దారాలు;
+    } లేకపోతే {
         L->off_src1 = 0;
-        L->off_dst  = L->off_src0 + L->src0_bytes * n_threads;
+        L->off_dst  = L->off_src0 + L->src0_బైట్లు * n_దారాలు;
     }
 
-    L->total_bytes = L->off_dst + L->dst_bytes * n_threads;
+    L->మొత్తం_బైట్లు = L->off_dst + L->dst_బైట్లు * n_దారాలు;
 
-    *out_col_tile = col_tile;
-    *out_vtcm_row_per_thread = vtcm_row_per_thread;
+    *బహిర్గతం_నిలువు_tile = నిలువు_tile;
+    *బహిర్గతం_vtcm_అడ్డువరుస_చొప్పున_thread = vtcm_అడ్డువరుస_చొప్పున_thread;
 }
 
-#endif /* HTP_UNARY_OPS_H */
+#అయితే_ముగింపు /* HTP_UNARY_OPS_H */

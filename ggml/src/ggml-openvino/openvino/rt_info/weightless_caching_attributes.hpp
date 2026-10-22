@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
-#pragma once
+#సూచన once
 
-#include <openvino/core/core_visibility.hpp>
-#include <openvino/core/node.hpp>
-#include <openvino/core/runtime_attribute.hpp>
+#అన్తర్భావ <openvino/core/core_visibility.hpp>
+#అన్తర్భావ <openvino/core/node.hpp>
+#అన్తర్భావ <openvino/core/runtime_attribute.hpp>
 
-namespace ov {
+నామాకాశ ov {
 
 /**
  * @brief Holds weightless caching attributes of a single constant.
@@ -20,21 +20,21 @@ namespace ov {
  * one produced during the tranformation pipeline) - in that case weightless caching
  * can't be used for that constant.
  */
-class OPENVINO_API WeightlessCacheAttribute : public RuntimeAttribute {
-public:
+తరగతి OPENVINO_API WeightlessCacheAttribute : బహిరంగ RuntimeAttribute {
+బహిరంగ:
     OPENVINO_RTTI("WeightlessCacheAttribute", "0", RuntimeAttribute)
 
-    WeightlessCacheAttribute() = delete;
+    WeightlessCacheAttribute() = తొలగించు;
 
-    WeightlessCacheAttribute(size_t original_size, size_t bin_offset, ov::element::Type original_dtype)
-        : original_size(original_size),
-          bin_offset(bin_offset),
+    WeightlessCacheAttribute(size_t original_కొలత, size_t bin_స్థానభ్రంశం, ov::element::Type original_dtype)
+        : original_కొలత(original_కొలత),
+          bin_స్థానభ్రంశం(bin_స్థానభ్రంశం),
           original_dtype(original_dtype) {}
 
-    bool is_copyable() const override;
+    తార్కిక is_copyable() స్థిరరాశి override;
 
-    size_t original_size;
-    size_t bin_offset;
+    size_t original_కొలత;
+    size_t bin_స్థానభ్రంశం;
     ov::element::Type original_dtype;
 };
 

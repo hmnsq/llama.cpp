@@ -1,23 +1,23 @@
-#pragma once
+#సూచన once
 
-#include "ggml-impl.h"
+#అన్తర్భావ "ggml-impl.h"
 
-#include <cassert>
-#include <cstring>
+#అన్తర్భావ <cassert>
+#అన్తర్భావ <cstring>
 
-#define likely(x)   __builtin_expect(!!(x), 1)
-#define unlikely(x) __builtin_expect(!!(x), 0)
+#నిర్వచించు likely(x)   __builtin_expect(!!(x), 1)
+#నిర్వచించు unlikely(x) __builtin_expect(!!(x), 0)
 
-struct apir_encoder {
-    char *       cur;
-    const char * start;
-    const char * end;
+నిర్మాణం apir_encoder {
+    అక్షరం *       cur;
+    స్థిరరాశి అక్షరం * ప్రారంభం;
+    స్థిరరాశి అక్షరం * చివర;
     bool         fatal;
 };
 
-struct apir_decoder {
-    const char * cur;
-    const char * end;
+నిర్మాణం apir_decoder {
+    స్థిరరాశి అక్షరం * cur;
+    స్థిరరాశి అక్షరం * చివర;
     bool         fatal;
 };
 
@@ -25,124 +25,124 @@ struct apir_decoder {
  * new encoder and decoder
  */
 
-static apir_decoder apir_new_decoder(const char * ptr, size_t size) {
+స్థిర apir_decoder apir_new_decoder(స్థిరరాశి అక్షరం * ptr, size_t కొలత) {
     apir_decoder dec = {
         .cur   = ptr,
-        .end   = ptr + size,
+        .చివర   = ptr + కొలత,
         .fatal = false,
     };
 
-    return dec;
+    తిరిగి dec;
 }
 
-static apir_encoder apir_new_encoder(char * ptr, size_t size) {
+స్థిర apir_encoder apir_new_encoder(అక్షరం * ptr, size_t కొలత) {
     apir_encoder enc = {
         .cur   = ptr,
-        .start = ptr,
-        .end   = ptr + size,
+        .ప్రారంభం = ptr,
+        .చివర   = ptr + కొలత,
         .fatal = false,
     };
 
-    return enc;
+    తిరిగి enc;
 }
 
 /*
  * fatal flag handling
  */
 
-static inline void apir_encoder_reset_fatal(apir_encoder * enc) {
+స్థిర అంతఃవరుస శూన్య apir_encoder_reset_fatal(apir_encoder * enc) {
     enc->fatal = false;
 }
 
-static inline void apir_encoder_set_fatal(apir_encoder * enc) {
+స్థిర అంతఃవరుస శూన్య apir_encoder_సమితి_fatal(apir_encoder * enc) {
     enc->fatal = true;
 }
 
-static inline bool apir_encoder_get_fatal(const apir_encoder * enc) {
-    return enc->fatal;
+స్థిర అంతఃవరుస bool apir_encoder_get_fatal(స్థిరరాశి apir_encoder * enc) {
+    తిరిగి enc->fatal;
 }
 
-static inline void apir_decoder_reset_fatal(apir_decoder * dec) {
+స్థిర అంతఃవరుస శూన్య apir_decoder_reset_fatal(apir_decoder * dec) {
     dec->fatal = false;
 }
 
-static inline void apir_decoder_set_fatal(apir_decoder * dec) {
+స్థిర అంతఃవరుస శూన్య apir_decoder_సమితి_fatal(apir_decoder * dec) {
     dec->fatal = true;
 }
 
-static inline bool apir_decoder_get_fatal(const apir_decoder * dec) {
-    return dec->fatal;
+స్థిర అంతఃవరుస bool apir_decoder_get_fatal(స్థిరరాశి apir_decoder * dec) {
+    తిరిగి dec->fatal;
 }
 
 /*
  * encode peek
  */
 
-static inline bool apir_decoder_peek_internal(apir_decoder * dec, size_t size, void * val, size_t val_size) {
-    assert(val_size <= size);
+స్థిర అంతఃవరుస bool apir_decoder_peek_అంతర్గత(apir_decoder * dec, size_t కొలత, శూన్య * val, size_t val_కొలత) {
+    ప్రతిజ్ఞా(val_కొలత <= కొలత);
 
-    if (unlikely(size > (size_t) (dec->end - dec->cur))) {
+    ఒకవేళ (unlikely(కొలత > (size_t) (dec->చివర - dec->cur))) {
         GGML_LOG_ERROR("%s: reading too much from the decoder ...\n", __func__);
-        apir_decoder_set_fatal(dec);
-        memset(val, 0, val_size);
-        return false;
+        apir_decoder_సమితి_fatal(dec);
+        memset(val, 0, val_కొలత);
+        తిరిగి false;
     }
 
     /* we should not rely on the compiler to optimize away memcpy... */
-    memcpy(val, dec->cur, val_size);
-    return true;
+    జ్ఞాపకం_నకలు(val, dec->cur, val_కొలత);
+    తిరిగి true;
 }
 
-static inline void apir_decoder_peek(apir_decoder * dec, size_t size, void * val, size_t val_size) {
-    apir_decoder_peek_internal(dec, size, val, val_size);
+స్థిర అంతఃవరుస శూన్య apir_decoder_peek(apir_decoder * dec, size_t కొలత, శూన్య * val, size_t val_కొలత) {
+    apir_decoder_peek_అంతర్గత(dec, కొలత, val, val_కొలత);
 }
 
-static inline const void * apir_decoder_use_inplace(apir_decoder * dec, size_t size) {
-    if (unlikely(size > (size_t) (dec->end - dec->cur))) {
+స్థిర అంతఃవరుస స్థిరరాశి శూన్య * apir_decoder_use_inplace(apir_decoder * dec, size_t కొలత) {
+    ఒకవేళ (unlikely(కొలత > (size_t) (dec->చివర - dec->cur))) {
         GGML_LOG_ERROR("%s: reading too much from the decoder ...\n", __func__);
-        apir_decoder_set_fatal(dec);
-        return NULL;
+        apir_decoder_సమితి_fatal(dec);
+        తిరిగి ఖాళీ;
     }
-    const void * addr = dec->cur;
-    dec->cur += size;
+    స్థిరరాశి శూన్య * addr = dec->cur;
+    dec->cur += కొలత;
 
-    return addr;
+    తిరిగి addr;
 }
 
 /*
  * read/write
  */
 
-static inline void apir_decoder_read(apir_decoder * dec, size_t size, void * val, size_t val_size) {
-    if (apir_decoder_peek_internal(dec, size, val, val_size)) {
-        dec->cur += size;
+స్థిర అంతఃవరుస శూన్య apir_decoder_read(apir_decoder * dec, size_t కొలత, శూన్య * val, size_t val_కొలత) {
+    ఒకవేళ (apir_decoder_peek_అంతర్గత(dec, కొలత, val, val_కొలత)) {
+        dec->cur += కొలత;
     }
 }
 
-static inline char * apir_encoder_write(apir_encoder * enc, size_t size, const void * val, size_t val_size) {
-    assert(val_size <= size);
-    assert(size <= ((size_t) (enc->end - enc->cur)));
+స్థిర అంతఃవరుస అక్షరం * apir_encoder_write(apir_encoder * enc, size_t కొలత, స్థిరరాశి శూన్య * val, size_t val_కొలత) {
+    ప్రతిజ్ఞా(val_కొలత <= కొలత);
+    ప్రతిజ్ఞా(కొలత <= ((size_t) (enc->చివర - enc->cur)));
 
-    char * write_addr = enc->cur;
+    అక్షరం * write_addr = enc->cur;
     /* we should not rely on the compiler to optimize away memcpy... */
-    memcpy(write_addr, val, val_size);
-    enc->cur += size;
+    జ్ఞాపకం_నకలు(write_addr, val, val_కొలత);
+    enc->cur += కొలత;
 
-    return write_addr;
+    తిరిగి write_addr;
 }
 
 /*
  * encode/decode
  */
 
-static inline void apir_decode(apir_decoder * dec, size_t size, void * data, size_t data_size) {
-    assert(size % 4 == 0);
-    apir_decoder_read(dec, size, data, data_size);
+స్థిర అంతఃవరుస శూన్య apir_decode(apir_decoder * dec, size_t కొలత, శూన్య * దత్తాంశం, size_t దత్తాంశం_కొలత) {
+    ప్రతిజ్ఞా(కొలత % 4 == 0);
+    apir_decoder_read(dec, కొలత, దత్తాంశం, దత్తాంశం_కొలత);
 }
 
-static inline void apir_encode(apir_encoder * enc, size_t size, const void * data, size_t data_size) {
-    assert(size % 4 == 0);
-    apir_encoder_write(enc, size, data, data_size);
+స్థిర అంతఃవరుస శూన్య apir_encode(apir_encoder * enc, size_t కొలత, స్థిరరాశి శూన్య * దత్తాంశం, size_t దత్తాంశం_కొలత) {
+    ప్రతిజ్ఞా(కొలత % 4 == 0);
+    apir_encoder_write(enc, కొలత, దత్తాంశం, దత్తాంశం_కొలత);
 }
 
 /*
@@ -151,228 +151,228 @@ static inline void apir_encode(apir_encoder * enc, size_t size, const void * dat
 
 /* uint8_t */
 
-static inline void apir_encode_uint8_t(apir_encoder * enc, const uint8_t * val) {
-    apir_encode(enc, sizeof(int), val, sizeof(*val));
+స్థిర అంతఃవరుస శూన్య apir_encode_uint8_t(apir_encoder * enc, స్థిరరాశి uint8_t * val) {
+    apir_encode(enc, పరిమాణం(పూర్ణాంకం), val, పరిమాణం(*val));
 }
 
-static inline void apir_decode_uint8_t(apir_decoder * dec, uint8_t * val) {
-    apir_decode(dec, sizeof(int), val, sizeof(*val));
+స్థిర అంతఃవరుస శూన్య apir_decode_uint8_t(apir_decoder * dec, uint8_t * val) {
+    apir_decode(dec, పరిమాణం(పూర్ణాంకం), val, పరిమాణం(*val));
 }
 
 /* uint64_t */
 
-static inline void apir_encode_uint64_t(apir_encoder * enc, const uint64_t * val) {
-    apir_encode(enc, 8, val, sizeof(*val));
+స్థిర అంతఃవరుస శూన్య apir_encode_uint64_t(apir_encoder * enc, స్థిరరాశి uint64_t * val) {
+    apir_encode(enc, 8, val, పరిమాణం(*val));
 }
 
-static inline void apir_decode_uint64_t(apir_decoder * dec, uint64_t * val) {
-    apir_decode(dec, 8, val, sizeof(*val));
+స్థిర అంతఃవరుస శూన్య apir_decode_uint64_t(apir_decoder * dec, uint64_t * val) {
+    apir_decode(dec, 8, val, పరిమాణం(*val));
 }
 
-static inline void apir_encode_uint64_t_array(apir_encoder * enc, const uint64_t * val, uint32_t count) {
-    const size_t size = sizeof(*val) * count;
-    assert(size >= count);
-    apir_encode(enc, size, val, size);
+స్థిర అంతఃవరుస శూన్య apir_encode_uint64_t_array(apir_encoder * enc, స్థిరరాశి uint64_t * val, uint32_t లెక్క) {
+    స్థిరరాశి size_t కొలత = పరిమాణం(*val) * లెక్క;
+    ప్రతిజ్ఞా(కొలత >= లెక్క);
+    apir_encode(enc, కొలత, val, కొలత);
 }
 
-static inline void apir_decode_uint64_t_array(apir_decoder * dec, uint64_t * val, uint32_t count) {
-    const size_t size = sizeof(*val) * count;
-    assert(size >= count);
-    apir_decode(dec, size, val, size);
+స్థిర అంతఃవరుస శూన్య apir_decode_uint64_t_array(apir_decoder * dec, uint64_t * val, uint32_t లెక్క) {
+    స్థిరరాశి size_t కొలత = పరిమాణం(*val) * లెక్క;
+    ప్రతిజ్ఞా(కొలత >= లెక్క);
+    apir_decode(dec, కొలత, val, కొలత);
 }
 
-static inline const uint64_t * apir_decode_uint64_t_array_inplace(apir_decoder * dec, uint32_t count) {
-    return (uint64_t *) (uintptr_t) apir_decoder_use_inplace(dec, count * sizeof(uint64_t));
+స్థిర అంతఃవరుస స్థిరరాశి uint64_t * apir_decode_uint64_t_array_inplace(apir_decoder * dec, uint32_t లెక్క) {
+    తిరిగి (uint64_t *) (uintptr_t) apir_decoder_use_inplace(dec, లెక్క * పరిమాణం(uint64_t));
 }
 
 /* int32_t */
 
-static inline void apir_encode_int32_t(apir_encoder * enc, const int32_t * val) {
-    apir_encode(enc, 4, val, sizeof(*val));
+స్థిర అంతఃవరుస శూన్య apir_encode_int32_t(apir_encoder * enc, స్థిరరాశి int32_t * val) {
+    apir_encode(enc, 4, val, పరిమాణం(*val));
 }
 
-static inline void apir_decode_int32_t(apir_decoder * dec, int32_t * val) {
-    apir_decode(dec, 4, val, sizeof(*val));
+స్థిర అంతఃవరుస శూన్య apir_decode_int32_t(apir_decoder * dec, int32_t * val) {
+    apir_decode(dec, 4, val, పరిమాణం(*val));
 }
 
-static inline void apir_encode_int32_t_array(apir_encoder * enc, const int32_t * val, uint32_t count) {
-    const size_t size = sizeof(*val) * count;
-    assert(size >= count);
-    apir_encode(enc, size, val, size);
+స్థిర అంతఃవరుస శూన్య apir_encode_int32_t_array(apir_encoder * enc, స్థిరరాశి int32_t * val, uint32_t లెక్క) {
+    స్థిరరాశి size_t కొలత = పరిమాణం(*val) * లెక్క;
+    ప్రతిజ్ఞా(కొలత >= లెక్క);
+    apir_encode(enc, కొలత, val, కొలత);
 }
 
-static inline void apir_decode_int32_t_array(apir_decoder * dec, int32_t * val, uint32_t count) {
-    const size_t size = sizeof(*val) * count;
-    assert(size >= count);
-    apir_decode(dec, size, val, size);
+స్థిర అంతఃవరుస శూన్య apir_decode_int32_t_array(apir_decoder * dec, int32_t * val, uint32_t లెక్క) {
+    స్థిరరాశి size_t కొలత = పరిమాణం(*val) * లెక్క;
+    ప్రతిజ్ఞా(కొలత >= లెక్క);
+    apir_decode(dec, కొలత, val, కొలత);
 }
 
 /* array size (uint64_t) */
 
-static inline void apir_encode_array_size(apir_encoder * enc, uint64_t size) {
-    apir_encode_uint64_t(enc, &size);
+స్థిర అంతఃవరుస శూన్య apir_encode_array_కొలత(apir_encoder * enc, uint64_t కొలత) {
+    apir_encode_uint64_t(enc, &కొలత);
 }
 
-static inline uint64_t apir_decode_array_size(apir_decoder * dec, uint64_t expected_size) {
-    uint64_t size;
-    apir_decode_uint64_t(dec, &size);
-    if (size != expected_size) {
+స్థిర అంతఃవరుస uint64_t apir_decode_array_కొలత(apir_decoder * dec, uint64_t expected_కొలత) {
+    uint64_t కొలత;
+    apir_decode_uint64_t(dec, &కొలత);
+    ఒకవేళ (కొలత != expected_కొలత) {
         GGML_LOG_ERROR("%s: Couldn't decode array from the decoder\n", __func__);
-        apir_decoder_set_fatal(dec);
-        size = 0;
+        apir_decoder_సమితి_fatal(dec);
+        కొలత = 0;
     }
-    return size;
+    తిరిగి కొలత;
 }
 
-static inline uint64_t apir_decode_array_size_unchecked(apir_decoder * dec) {
-    uint64_t size;
-    apir_decode_uint64_t(dec, &size);
-    return size;
+స్థిర అంతఃవరుస uint64_t apir_decode_array_కొలత_unchecked(apir_decoder * dec) {
+    uint64_t కొలత;
+    apir_decode_uint64_t(dec, &కొలత);
+    తిరిగి కొలత;
 }
 
 /* non-array pointer */
 
-static inline bool apir_encode_simple_pointer(apir_encoder * enc, const void * val) {
-    apir_encode_array_size(enc, val ? 1 : 0);
-    return val;
+స్థిర అంతఃవరుస bool apir_encode_simple_సూచిక(apir_encoder * enc, స్థిరరాశి శూన్య * val) {
+    apir_encode_array_కొలత(enc, val ? 1 : 0);
+    తిరిగి val;
 }
 
-static inline bool apir_decode_simple_pointer(apir_decoder * dec) {
-    return apir_decode_array_size_unchecked(dec);
+స్థిర అంతఃవరుస bool apir_decode_simple_సూచిక(apir_decoder * dec) {
+    తిరిగి apir_decode_array_కొలత_unchecked(dec);
 }
 
 /* uint32_t */
 
-static inline void apir_encode_uint32_t(apir_encoder * enc, const uint32_t * val) {
-    apir_encode(enc, 4, val, sizeof(*val));
+స్థిర అంతఃవరుస శూన్య apir_encode_uint32_t(apir_encoder * enc, స్థిరరాశి uint32_t * val) {
+    apir_encode(enc, 4, val, పరిమాణం(*val));
 }
 
-static inline void apir_decode_uint32_t(apir_decoder * dec, uint32_t * val) {
-    apir_decode(dec, 4, val, sizeof(*val));
+స్థిర అంతఃవరుస శూన్య apir_decode_uint32_t(apir_decoder * dec, uint32_t * val) {
+    apir_decode(dec, 4, val, పరిమాణం(*val));
 }
 
-static inline void apir_encode_uint32_t_array(apir_encoder * enc, const uint32_t * val, uint32_t count) {
-    const size_t size = sizeof(*val) * count;
-    assert(size >= count);
-    apir_encode(enc, size, val, size);
+స్థిర అంతఃవరుస శూన్య apir_encode_uint32_t_array(apir_encoder * enc, స్థిరరాశి uint32_t * val, uint32_t లెక్క) {
+    స్థిరరాశి size_t కొలత = పరిమాణం(*val) * లెక్క;
+    ప్రతిజ్ఞా(కొలత >= లెక్క);
+    apir_encode(enc, కొలత, val, కొలత);
 }
 
-static inline void apir_decode_uint32_t_array(apir_decoder * dec, uint32_t * val, uint32_t count) {
-    const size_t size = sizeof(*val) * count;
-    assert(size >= count);
-    apir_decode(dec, size, val, size);
+స్థిర అంతఃవరుస శూన్య apir_decode_uint32_t_array(apir_decoder * dec, uint32_t * val, uint32_t లెక్క) {
+    స్థిరరాశి size_t కొలత = పరిమాణం(*val) * లెక్క;
+    ప్రతిజ్ఞా(కొలత >= లెక్క);
+    apir_decode(dec, కొలత, val, కొలత);
 }
 
 /* size_t */
 
-static inline void apir_encode_size_t(apir_encoder * enc, const size_t * val) {
-    const uint64_t tmp = *val;
+స్థిర అంతఃవరుస శూన్య apir_encode_కొలత_t(apir_encoder * enc, స్థిరరాశి size_t * val) {
+    స్థిరరాశి uint64_t tmp = *val;
     apir_encode_uint64_t(enc, &tmp);
 }
 
-static inline void apir_decode_size_t(apir_decoder * dec, size_t * val) {
+స్థిర అంతఃవరుస శూన్య apir_decode_కొలత_t(apir_decoder * dec, size_t * val) {
     uint64_t tmp;
     apir_decode_uint64_t(dec, &tmp);
     *val = tmp;
 }
 
-static inline void apir_encode_size_t_array(apir_encoder * enc, const size_t * val, uint32_t count) {
-    if (sizeof(size_t) == sizeof(uint64_t)) {
-        apir_encode_uint64_t_array(enc, (const uint64_t *) val, count);
-    } else {
-        for (uint32_t i = 0; i < count; i++) {
-            apir_encode_size_t(enc, &val[i]);
+స్థిర అంతఃవరుస శూన్య apir_encode_కొలత_t_array(apir_encoder * enc, స్థిరరాశి size_t * val, uint32_t లెక్క) {
+    ఒకవేళ (పరిమాణం(size_t) == పరిమాణం(uint64_t)) {
+        apir_encode_uint64_t_array(enc, (స్థిరరాశి uint64_t *) val, లెక్క);
+    } లేకపోతే {
+        కొరకు (uint32_t i = 0; i < లెక్క; i++) {
+            apir_encode_కొలత_t(enc, &val[i]);
         }
     }
 }
 
-static inline void apir_decode_size_t_array(apir_decoder * dec, size_t * val, uint32_t count) {
-    if (sizeof(size_t) == sizeof(uint64_t)) {
-        apir_decode_uint64_t_array(dec, (uint64_t *) val, count);
-    } else {
-        for (uint32_t i = 0; i < count; i++) {
-            apir_decode_size_t(dec, &val[i]);
+స్థిర అంతఃవరుస శూన్య apir_decode_కొలత_t_array(apir_decoder * dec, size_t * val, uint32_t లెక్క) {
+    ఒకవేళ (పరిమాణం(size_t) == పరిమాణం(uint64_t)) {
+        apir_decode_uint64_t_array(dec, (uint64_t *) val, లెక్క);
+    } లేకపోతే {
+        కొరకు (uint32_t i = 0; i < లెక్క; i++) {
+            apir_decode_కొలత_t(dec, &val[i]);
         }
     }
 }
 
 /* opaque blob */
 
-static inline void apir_encode_blob_array(apir_encoder * enc, const void * val, size_t size) {
-    apir_encode(enc, (size + 3) & ~3, val, size);
+స్థిర అంతఃవరుస శూన్య apir_encode_blob_array(apir_encoder * enc, స్థిరరాశి శూన్య * val, size_t కొలత) {
+    apir_encode(enc, (కొలత + 3) & ~3, val, కొలత);
 }
 
-static inline void apir_decode_blob_array(apir_decoder * dec, void * val, size_t size) {
-    apir_decode(dec, (size + 3) & ~3, val, size);
+స్థిర అంతఃవరుస శూన్య apir_decode_blob_array(apir_decoder * dec, శూన్య * val, size_t కొలత) {
+    apir_decode(dec, (కొలత + 3) & ~3, val, కొలత);
 }
 
 /* string */
 
-static inline void apir_encode_char_array(apir_encoder * enc, const char * val, size_t size) {
-    assert(size && strlen(val) < size);
-    apir_encode_blob_array(enc, val, size);
+స్థిర అంతఃవరుస శూన్య apir_encode_char_array(apir_encoder * enc, స్థిరరాశి అక్షరం * val, size_t కొలత) {
+    ప్రతిజ్ఞా(కొలత && అక్షరశ్రేణి_పొడవు(val) < కొలత);
+    apir_encode_blob_array(enc, val, కొలత);
 }
 
-static inline void apir_decode_char_array(apir_decoder * dec, char * val, size_t size) {
-    apir_decode_blob_array(dec, val, size);
-    if (size) {
-        val[size - 1] = '\0';
-    } else {
+స్థిర అంతఃవరుస శూన్య apir_decode_char_array(apir_decoder * dec, అక్షరం * val, size_t కొలత) {
+    apir_decode_blob_array(dec, val, కొలత);
+    ఒకవేళ (కొలత) {
+        val[కొలత - 1] = '\0';
+    } లేకపోతే {
         GGML_LOG_ERROR("%s: Couldn't decode the blog array\n", __func__);
-        apir_decoder_set_fatal(dec);
+        apir_decoder_సమితి_fatal(dec);
     }
 }
 
 /* (temp) buffer allocation */
 
-static inline void * apir_decoder_alloc_array(size_t size, size_t count) {
-    size_t alloc_size;
-    if (unlikely(__builtin_mul_overflow(size, count, &alloc_size))) {
-        GGML_LOG_ERROR("%s: overflow in array allocation of %zu * %zu bytes\n", __func__, size, count);
-        return NULL;
+స్థిర అంతఃవరుస శూన్య * apir_decoder_alloc_array(size_t కొలత, size_t లెక్క) {
+    size_t alloc_కొలత;
+    ఒకవేళ (unlikely(__builtin_mul_overflow(కొలత, లెక్క, &alloc_కొలత))) {
+        GGML_LOG_ERROR("%s: overflow in array allocation of %zu * %zu bytes\n", __func__, కొలత, లెక్క);
+        తిరిగి ఖాళీ;
     }
 
-    return malloc(alloc_size);
+    తిరిగి జ్ఞాపకం_ఇవ్వు(alloc_కొలత);
 }
 
 /* bool */
 
-static inline void apir_encode_bool_t(apir_encoder * enc, const bool * val) {
-    apir_encode(enc, sizeof(int), val, sizeof(bool));
+స్థిర అంతఃవరుస శూన్య apir_encode_bool_t(apir_encoder * enc, స్థిరరాశి bool * val) {
+    apir_encode(enc, పరిమాణం(పూర్ణాంకం), val, పరిమాణం(bool));
 }
 
-static inline void apir_decode_bool_t(apir_decoder * dec, bool * val) {
-    apir_decode(dec, sizeof(int), val, sizeof(bool));
+స్థిర అంతఃవరుస శూన్య apir_decode_bool_t(apir_decoder * dec, bool * val) {
+    apir_decode(dec, పరిమాణం(పూర్ణాంకం), val, పరిమాణం(bool));
 }
 
 /* apir_buffer_type_host_handle_t */
 
-static inline void apir_encode_apir_buffer_type_host_handle_t(apir_encoder *                         enc,
-                                                              const apir_buffer_type_host_handle_t * val) {
-    apir_encode(enc, sizeof(apir_buffer_type_host_handle_t), val, sizeof(apir_buffer_type_host_handle_t));
+స్థిర అంతఃవరుస శూన్య apir_encode_apir_బఫరు_type_host_handle_t(apir_encoder *                         enc,
+                                                              స్థిరరాశి apir_బఫరు_type_host_handle_t * val) {
+    apir_encode(enc, పరిమాణం(apir_బఫరు_type_host_handle_t), val, పరిమాణం(apir_బఫరు_type_host_handle_t));
 }
 
-static inline void apir_decode_apir_buffer_type_host_handle_t(apir_decoder *                   dec,
-                                                              apir_buffer_type_host_handle_t * val) {
-    apir_decode(dec, sizeof(apir_buffer_type_host_handle_t), val, sizeof(apir_buffer_type_host_handle_t));
+స్థిర అంతఃవరుస శూన్య apir_decode_apir_బఫరు_type_host_handle_t(apir_decoder *                   dec,
+                                                              apir_బఫరు_type_host_handle_t * val) {
+    apir_decode(dec, పరిమాణం(apir_బఫరు_type_host_handle_t), val, పరిమాణం(apir_బఫరు_type_host_handle_t));
 }
 
 /* apir_buffer_host_handle_t */
 
-static inline void apir_encode_apir_buffer_host_handle_t(apir_encoder * enc, const apir_buffer_host_handle_t * val) {
-    apir_encode(enc, sizeof(apir_buffer_host_handle_t), val, sizeof(apir_buffer_host_handle_t));
+స్థిర అంతఃవరుస శూన్య apir_encode_apir_బఫరు_host_handle_t(apir_encoder * enc, స్థిరరాశి apir_బఫరు_host_handle_t * val) {
+    apir_encode(enc, పరిమాణం(apir_బఫరు_host_handle_t), val, పరిమాణం(apir_బఫరు_host_handle_t));
 }
 
-static inline void apir_decode_apir_buffer_host_handle_t(apir_decoder * dec, apir_buffer_host_handle_t * val) {
-    apir_decode(dec, sizeof(apir_buffer_host_handle_t), val, sizeof(apir_buffer_host_handle_t));
+స్థిర అంతఃవరుస శూన్య apir_decode_apir_బఫరు_host_handle_t(apir_decoder * dec, apir_బఫరు_host_handle_t * val) {
+    apir_decode(dec, పరిమాణం(apir_బఫరు_host_handle_t), val, పరిమాణం(apir_బఫరు_host_handle_t));
 }
 
 /* uintptr_t */
 
-static inline void apir_encode_uintptr_t(apir_encoder * enc, const uintptr_t * val) {
-    apir_encode(enc, sizeof(*val), val, sizeof(*val));
+స్థిర అంతఃవరుస శూన్య apir_encode_uintptr_t(apir_encoder * enc, స్థిరరాశి uintptr_t * val) {
+    apir_encode(enc, పరిమాణం(*val), val, పరిమాణం(*val));
 }
 
-static inline void apir_decode_uintptr_t(apir_decoder * dec, uintptr_t * val) {
-    apir_decode(dec, sizeof(*val), val, sizeof(*val));
+స్థిర అంతఃవరుస శూన్య apir_decode_uintptr_t(apir_decoder * dec, uintptr_t * val) {
+    apir_decode(dec, పరిమాణం(*val), val, పరిమాణం(*val));
 }

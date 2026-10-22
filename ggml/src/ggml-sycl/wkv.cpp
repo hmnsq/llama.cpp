@@ -1,68 +1,68 @@
-#include <sycl/sycl.hpp>
-#include "wkv.hpp"
+#అన్తర్భావ <sycl/sycl.hpp>
+#అన్తర్భావ "wkv.hpp"
 
-constexpr int WKV_BLOCK_SIZE = 64;
+constexpr పూర్ణాంకం WKV_ఖండం_కొలత = 64;
 
 // Helper function for the main kernel
-template <int block_size>
-static void rwkv_wkv6_f32_kernel(
-    const int B, const int T, const int C, const int H,
-    const float* k, const float* v, const float* r,
-    const float* tf, const float* td, const float* s,
-    float* dst, const sycl::nd_item<3>& item_ct1, float* shared_mem) {
+మూస <పూర్ణాంకం ఖండం_కొలత_3>
+స్థిర శూన్య rwkv_wkv6_f32_kernel(
+    స్థిరరాశి పూర్ణాంకం B, స్థిరరాశి పూర్ణాంకం T, స్థిరరాశి పూర్ణాంకం C, స్థిరరాశి పూర్ణాంకం H,
+    స్థిరరాశి దశాంశం* k, స్థిరరాశి దశాంశం* v, స్థిరరాశి దశాంశం* r,
+    స్థిరరాశి దశాంశం* tf, స్థిరరాశి దశాంశం* td, స్థిరరాశి దశాంశం* s,
+    దశాంశం* dst, స్థిరరాశి sycl::nd_అంశం<3>& అంశం_ct1, దశాంశం* shared_mem) {
 
-    const int tid = item_ct1.get_local_id(2);
-    const int bid = item_ct1.get_group(2);
+    స్థిరరాశి పూర్ణాంకం tid = అంశం_ct1.get_local_id(2);
+    స్థిరరాశి పూర్ణాంకం bid = అంశం_ct1.get_సమూహం(2);
 
-    const int head_size = block_size;
-    const int batch_i = bid / H;
-    const int head_i = bid % H;
-    const int state_size = C * head_size;
-    const int n_seq_tokens = T / B;
+    స్థిరరాశి పూర్ణాంకం తల_కొలత = ఖండం_కొలత_3;
+    స్థిరరాశి పూర్ణాంకం batch_i = bid / H;
+    స్థిరరాశి పూర్ణాంకం తల_i = bid % H;
+    స్థిరరాశి పూర్ణాంకం state_కొలత = C * తల_కొలత;
+    స్థిరరాశి పూర్ణాంకం n_seq_టోకెన్లు = T / B;
 
     // Set up shared memory pointers
-    float* _k = shared_mem;
-    float* _r = _k + head_size;
-    float* _tf = _r + head_size;
-    float* _td = _tf + head_size;
+    దశాంశం* _k = shared_mem;
+    దశాంశం* _r = _k + తల_కొలత;
+    దశాంశం* _tf = _r + తల_కొలత;
+    దశాంశం* _td = _tf + తల_కొలత;
 
     // Local state array
-    float state[block_size];
+    దశాంశం state[ఖండం_కొలత_3];
 
     // Load initial state
-    #pragma unroll
-    for (int i = 0; i < head_size; i++) {
-        state[i] = s[batch_i * state_size + head_i * head_size * head_size + i * head_size + tid];
+    #సూచన unroll
+    కొరకు (పూర్ణాంకం i = 0; i < తల_కొలత; i++) {
+        state[i] = s[batch_i * state_కొలత + తల_i * తల_కొలత * తల_కొలత + i * తల_కొలత + tid];
     }
 
     // Sync threads before shared memory operations
-    item_ct1.barrier(sycl::access::fence_space::local_space);
+    అంశం_ct1.barrier(sycl::access::fence_space::local_space);
 
     // Load time-mixing parameters
-    _tf[tid] = tf[head_i * head_size + tid];
-    item_ct1.barrier(sycl::access::fence_space::local_space);
+    _tf[tid] = tf[తల_i * తల_కొలత + tid];
+    అంశం_ct1.barrier(sycl::access::fence_space::local_space);
 
     // Main sequence processing loop
-    for (int t = batch_i * n_seq_tokens * C + head_i * head_size + tid;
-         t < (batch_i + 1) * n_seq_tokens * C + head_i * head_size + tid;
+    కొరకు (పూర్ణాంకం t = batch_i * n_seq_టోకెన్లు * C + తల_i * తల_కొలత + tid;
+         t < (batch_i + 1) * n_seq_టోకెన్లు * C + తల_i * తల_కొలత + tid;
          t += C) {
 
-        item_ct1.barrier(sycl::access::fence_space::local_space);
+        అంశం_ct1.barrier(sycl::access::fence_space::local_space);
 
         // Load current timestep data to shared memory
         _k[tid] = k[t];
         _r[tid] = r[t];
         _td[tid] = td[t];
 
-        item_ct1.barrier(sycl::access::fence_space::local_space);
+        అంశం_ct1.barrier(sycl::access::fence_space::local_space);
 
-        const float _v = v[t];
-        float y = 0;
+        స్థిరరాశి దశాంశం _v = v[t];
+        దశాంశం y = 0;
 
         // Process in chunks of 4 for better vectorization
         sycl::float4 k4, r4, tf4, td4, s4;
-        #pragma unroll
-        for (int j = 0; j < head_size; j += 4) {
+        #సూచన unroll
+        కొరకు (పూర్ణాంకం j = 0; j < తల_కొలత; j += 4) {
             // Load data in vec4 chunks
             k4 = sycl::float4(_k[j], _k[j+1], _k[j+2], _k[j+3]);
             r4 = sycl::float4(_r[j], _r[j+1], _r[j+2], _r[j+3]);
@@ -90,46 +90,46 @@ static void rwkv_wkv6_f32_kernel(
     }
 
     // Save final state
-    #pragma unroll
-    for (int i = 0; i < head_size; i++) {
-        dst[T * C + batch_i * state_size + head_i * head_size * head_size + i * head_size + tid] = state[i];
+    #సూచన unroll
+    కొరకు (పూర్ణాంకం i = 0; i < తల_కొలత; i++) {
+        dst[T * C + batch_i * state_కొలత + తల_i * తల_కొలత * తల_కొలత + i * తల_కొలత + tid] = state[i];
     }
 }
 
-template <int block_size>
-static void rwkv_wkv7_f32_kernel(
-    const int B, const int T, const int C, const int H,
-    const float* r, const float* w, const float* k, const float* v,
-    const float* a, const float* b, const float* s,
-    float* dst, const sycl::nd_item<3>& item_ct1, float* shared_mem) {
+మూస <పూర్ణాంకం ఖండం_కొలత_3>
+స్థిర శూన్య rwkv_wkv7_f32_kernel(
+    స్థిరరాశి పూర్ణాంకం B, స్థిరరాశి పూర్ణాంకం T, స్థిరరాశి పూర్ణాంకం C, స్థిరరాశి పూర్ణాంకం H,
+    స్థిరరాశి దశాంశం* r, స్థిరరాశి దశాంశం* w, స్థిరరాశి దశాంశం* k, స్థిరరాశి దశాంశం* v,
+    స్థిరరాశి దశాంశం* a, స్థిరరాశి దశాంశం* b, స్థిరరాశి దశాంశం* s,
+    దశాంశం* dst, స్థిరరాశి sycl::nd_అంశం<3>& అంశం_ct1, దశాంశం* shared_mem) {
 
-    const int tid = item_ct1.get_local_id(2);
-    const int bid = item_ct1.get_group(2);
+    స్థిరరాశి పూర్ణాంకం tid = అంశం_ct1.get_local_id(2);
+    స్థిరరాశి పూర్ణాంకం bid = అంశం_ct1.get_సమూహం(2);
 
-    const int head_size = block_size;
-    const int batch_i = bid / H;
-    const int head_i = bid % H;
-    const int state_size = C * head_size;
-    const int n_seq_tokens = T / B;
+    స్థిరరాశి పూర్ణాంకం తల_కొలత = ఖండం_కొలత_3;
+    స్థిరరాశి పూర్ణాంకం batch_i = bid / H;
+    స్థిరరాశి పూర్ణాంకం తల_i = bid % H;
+    స్థిరరాశి పూర్ణాంకం state_కొలత = C * తల_కొలత;
+    స్థిరరాశి పూర్ణాంకం n_seq_టోకెన్లు = T / B;
 
-    float* _r = shared_mem;
-    float* _w = _r + head_size;
-    float* _k = _w + head_size;
-    float* _a = _k + head_size;
-    float* _b = _a + head_size;
+    దశాంశం* _r = shared_mem;
+    దశాంశం* _w = _r + తల_కొలత;
+    దశాంశం* _k = _w + తల_కొలత;
+    దశాంశం* _a = _k + తల_కొలత;
+    దశాంశం* _b = _a + తల_కొలత;
 
-    float state[block_size];
+    దశాంశం state[ఖండం_కొలత_3];
 
-    #pragma unroll
-    for (int i = 0; i < head_size; i++) {
-        state[i] = s[batch_i * state_size + head_i * head_size * head_size + tid * head_size + i];
+    #సూచన unroll
+    కొరకు (పూర్ణాంకం i = 0; i < తల_కొలత; i++) {
+        state[i] = s[batch_i * state_కొలత + తల_i * తల_కొలత * తల_కొలత + tid * తల_కొలత + i];
     }
 
-    for (int t = batch_i * n_seq_tokens * C + head_i * head_size + tid;
-         t < (batch_i + 1) * n_seq_tokens * C + head_i * head_size + tid;
+    కొరకు (పూర్ణాంకం t = batch_i * n_seq_టోకెన్లు * C + తల_i * తల_కొలత + tid;
+         t < (batch_i + 1) * n_seq_టోకెన్లు * C + తల_i * తల_కొలత + tid;
          t += C) {
 
-        item_ct1.barrier(sycl::access::fence_space::local_space);
+        అంశం_ct1.barrier(sycl::access::fence_space::local_space);
 
         _r[tid] = r[t];
         _w[tid] = w[t];
@@ -137,22 +137,22 @@ static void rwkv_wkv7_f32_kernel(
         _a[tid] = a[t];
         _b[tid] = b[t];
 
-        item_ct1.barrier(sycl::access::fence_space::local_space);
+        అంశం_ct1.barrier(sycl::access::fence_space::local_space);
 
-        const float _v = v[t];
-        float y = 0, sa = 0;
+        స్థిరరాశి దశాంశం _v = v[t];
+        దశాంశం y = 0, sa = 0;
         sycl::float4 a4, s4;
 
-        #pragma unroll
-        for (int j = 0; j < head_size; j += 4) {
+        #సూచన unroll
+        కొరకు (పూర్ణాంకం j = 0; j < తల_కొలత; j += 4) {
             a4 = sycl::float4(_a[j], _a[j+1], _a[j+2], _a[j+3]);
             s4 = sycl::float4(state[j], state[j+1], state[j+2], state[j+3]);
             sa += sycl::dot(a4, s4);
         }
 
         sycl::float4 r4, w4, k4, b4;
-        #pragma unroll
-        for (int j = 0; j < head_size; j += 4) {
+        #సూచన unroll
+        కొరకు (పూర్ణాంకం j = 0; j < తల_కొలత; j += 4) {
             r4 = sycl::float4(_r[j], _r[j+1], _r[j+2], _r[j+3]);
             w4 = sycl::float4(_w[j], _w[j+1], _w[j+2], _w[j+3]);
             k4 = sycl::float4(_k[j], _k[j+1], _k[j+2], _k[j+3]);
@@ -173,119 +173,119 @@ static void rwkv_wkv7_f32_kernel(
         dst[t] = y;
     }
 
-    #pragma unroll
-    for (int i = 0; i < head_size; i++) {
-        dst[T * C + batch_i * state_size + head_i * head_size * head_size + tid * head_size + i] = state[i];
+    #సూచన unroll
+    కొరకు (పూర్ణాంకం i = 0; i < తల_కొలత; i++) {
+        dst[T * C + batch_i * state_కొలత + తల_i * తల_కొలత * తల_కొలత + tid * తల_కొలత + i] = state[i];
     }
 }
 
-void ggml_sycl_op_rwkv_wkv6(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
+శూన్య ggml_sycl_op_rwkv_wkv6(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/6);
-    const float* k_d = (const float*)dst->src[0]->data;
-    const float* v_d = (const float*)dst->src[1]->data;
-    const float* r_d = (const float*)dst->src[2]->data;
-    const float* tf_d = (const float*)dst->src[3]->data;
-    const float* td_d = (const float*)dst->src[4]->data;
-    const float* s_d = (const float*)dst->src[5]->data;
-    float* dst_d = (float*)dst->data;
+    స్థిరరాశి దశాంశం* k_d = (స్థిరరాశి దశాంశం*)dst->src[0]->దత్తాంశం;
+    స్థిరరాశి దశాంశం* v_d = (స్థిరరాశి దశాంశం*)dst->src[1]->దత్తాంశం;
+    స్థిరరాశి దశాంశం* r_d = (స్థిరరాశి దశాంశం*)dst->src[2]->దత్తాంశం;
+    స్థిరరాశి దశాంశం* tf_d = (స్థిరరాశి దశాంశం*)dst->src[3]->దత్తాంశం;
+    స్థిరరాశి దశాంశం* td_d = (స్థిరరాశి దశాంశం*)dst->src[4]->దత్తాంశం;
+    స్థిరరాశి దశాంశం* s_d = (స్థిరరాశి దశాంశం*)dst->src[5]->దత్తాంశం;
+    దశాంశం* dst_d = (దశాంశం*)dst->దత్తాంశం;
 
-    const int64_t B = dst->src[5]->ne[1];
-    const int64_t T = dst->src[0]->ne[2];
-    const int64_t C = dst->ne[0];
-    const int64_t H = dst->src[0]->ne[1];
+    స్థిరరాశి int64_t B = dst->src[5]->ne[1];
+    స్థిరరాశి int64_t T = dst->src[0]->ne[2];
+    స్థిరరాశి int64_t C = dst->ne[0];
+    స్థిరరాశి int64_t H = dst->src[0]->ne[1];
 
     GGML_ASSERT(dst->src[5]->type == GGML_TYPE_F32);
     GGML_ASSERT(C % H == 0);
-    GGML_ASSERT(C / H == WKV_BLOCK_SIZE || C / H == WKV_BLOCK_SIZE * 2); // The current sycl kernel is designed for RWKV6, HEAD_SIZE == 64
+    GGML_ASSERT(C / H == WKV_ఖండం_కొలత || C / H == WKV_ఖండం_కొలత * 2); // The current sycl kernel is designed for RWKV6, HEAD_SIZE == 64
 
-    dpct::queue_ptr stream = ctx.stream();
+    dpct::వరుస_ptr stream = ctx.stream();
 
     // Calculate execution configuration
-    const size_t shared_mem_size = C / H * 4 * sizeof(float); // For k, r, tf, td
-    sycl::range<3> block_dims(1, 1, C / H);
+    స్థిరరాశి size_t shared_mem_కొలత = C / H * 4 * పరిమాణం(దశాంశం); // For k, r, tf, td
+    sycl::range<3> ఖండం_dims(1, 1, C / H);
     sycl::range<3> grid_dims(1, 1, B * H);
 
     // Submit kernel
-    if (C / H == WKV_BLOCK_SIZE) {
+    ఒకవేళ (C / H == WKV_ఖండం_కొలత) {
         stream->submit([&](sycl::handler& cgh) {
-            sycl::local_accessor<float, 1> shared_mem_acc(shared_mem_size, cgh);
+            sycl::local_accessor<దశాంశం, 1> shared_mem_acc(shared_mem_కొలత, cgh);
 
             cgh.parallel_for(
-                sycl::nd_range<3>(grid_dims * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1) {
-                    rwkv_wkv6_f32_kernel<WKV_BLOCK_SIZE>(
+                sycl::nd_range<3>(grid_dims * ఖండం_dims, ఖండం_dims),
+                [=](sycl::nd_అంశం<3> అంశం_ct1) {
+                    rwkv_wkv6_f32_kernel<WKV_ఖండం_కొలత>(
                         B, T, C, H, k_d, v_d, r_d, tf_d, td_d, s_d, dst_d,
-                        item_ct1, (float*)shared_mem_acc.get_multi_ptr<sycl::access::decorated::no>().get()
+                        అంశం_ct1, (దశాంశం*)shared_mem_acc.get_multi_ptr<sycl::access::decorated::no>().get()
                     );
                 });
         });
-    } else {
+    } లేకపోతే {
         stream->submit([&](sycl::handler& cgh) {
-            sycl::local_accessor<float, 1> shared_mem_acc(shared_mem_size, cgh);
+            sycl::local_accessor<దశాంశం, 1> shared_mem_acc(shared_mem_కొలత, cgh);
 
             cgh.parallel_for(
-                sycl::nd_range<3>(grid_dims * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1) {
-                    rwkv_wkv6_f32_kernel<WKV_BLOCK_SIZE * 2>(
+                sycl::nd_range<3>(grid_dims * ఖండం_dims, ఖండం_dims),
+                [=](sycl::nd_అంశం<3> అంశం_ct1) {
+                    rwkv_wkv6_f32_kernel<WKV_ఖండం_కొలత * 2>(
                         B, T, C, H, k_d, v_d, r_d, tf_d, td_d, s_d, dst_d,
-                        item_ct1, (float*)shared_mem_acc.get_multi_ptr<sycl::access::decorated::no>().get()
+                        అంశం_ct1, (దశాంశం*)shared_mem_acc.get_multi_ptr<sycl::access::decorated::no>().get()
                     );
                 });
         });
     }
 }
 
-void ggml_sycl_op_rwkv_wkv7(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
+శూన్య ggml_sycl_op_rwkv_wkv7(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/7);
-    const float* r_d = (const float*)dst->src[0]->data;
-    const float* w_d = (const float*)dst->src[1]->data;
-    const float* k_d = (const float*)dst->src[2]->data;
-    const float* v_d = (const float*)dst->src[3]->data;
-    const float* a_d = (const float*)dst->src[4]->data;
-    const float* b_d = (const float*)dst->src[5]->data;
-    const float* s_d = (const float*)dst->src[6]->data;
-    float* dst_d = (float*)dst->data;
+    స్థిరరాశి దశాంశం* r_d = (స్థిరరాశి దశాంశం*)dst->src[0]->దత్తాంశం;
+    స్థిరరాశి దశాంశం* w_d = (స్థిరరాశి దశాంశం*)dst->src[1]->దత్తాంశం;
+    స్థిరరాశి దశాంశం* k_d = (స్థిరరాశి దశాంశం*)dst->src[2]->దత్తాంశం;
+    స్థిరరాశి దశాంశం* v_d = (స్థిరరాశి దశాంశం*)dst->src[3]->దత్తాంశం;
+    స్థిరరాశి దశాంశం* a_d = (స్థిరరాశి దశాంశం*)dst->src[4]->దత్తాంశం;
+    స్థిరరాశి దశాంశం* b_d = (స్థిరరాశి దశాంశం*)dst->src[5]->దత్తాంశం;
+    స్థిరరాశి దశాంశం* s_d = (స్థిరరాశి దశాంశం*)dst->src[6]->దత్తాంశం;
+    దశాంశం* dst_d = (దశాంశం*)dst->దత్తాంశం;
 
-    const int64_t B = dst->src[6]->ne[1];
-    const int64_t T = dst->src[0]->ne[2];
-    const int64_t C = dst->ne[0];
-    const int64_t H = dst->src[0]->ne[1];
+    స్థిరరాశి int64_t B = dst->src[6]->ne[1];
+    స్థిరరాశి int64_t T = dst->src[0]->ne[2];
+    స్థిరరాశి int64_t C = dst->ne[0];
+    స్థిరరాశి int64_t H = dst->src[0]->ne[1];
 
     GGML_ASSERT(dst->src[6]->type == GGML_TYPE_F32);
     GGML_ASSERT(C % H == 0);
-    GGML_ASSERT(C / H == WKV_BLOCK_SIZE || C / H == WKV_BLOCK_SIZE * 2);
+    GGML_ASSERT(C / H == WKV_ఖండం_కొలత || C / H == WKV_ఖండం_కొలత * 2);
 
-    dpct::queue_ptr stream = ctx.stream();
+    dpct::వరుస_ptr stream = ctx.stream();
 
     // Calculate execution configuration
-    const size_t shared_mem_size = C / H * 5 * sizeof(float); // For r, w, k, a, b
-    sycl::range<3> block_dims(1, 1, C / H);
+    స్థిరరాశి size_t shared_mem_కొలత = C / H * 5 * పరిమాణం(దశాంశం); // For r, w, k, a, b
+    sycl::range<3> ఖండం_dims(1, 1, C / H);
     sycl::range<3> grid_dims(1, 1, B * H);
 
     // Submit kernel
-    if (C / H == WKV_BLOCK_SIZE) {
+    ఒకవేళ (C / H == WKV_ఖండం_కొలత) {
         stream->submit([&](sycl::handler& cgh) {
-            sycl::local_accessor<float, 1> shared_mem_acc(shared_mem_size, cgh);
+            sycl::local_accessor<దశాంశం, 1> shared_mem_acc(shared_mem_కొలత, cgh);
 
             cgh.parallel_for(
-                sycl::nd_range<3>(grid_dims * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1) {
-                    rwkv_wkv7_f32_kernel<WKV_BLOCK_SIZE>(
+                sycl::nd_range<3>(grid_dims * ఖండం_dims, ఖండం_dims),
+                [=](sycl::nd_అంశం<3> అంశం_ct1) {
+                    rwkv_wkv7_f32_kernel<WKV_ఖండం_కొలత>(
                         B, T, C, H, r_d, w_d, k_d, v_d, a_d, b_d, s_d, dst_d,
-                        item_ct1, (float*)shared_mem_acc.get_multi_ptr<sycl::access::decorated::no>().get()
+                        అంశం_ct1, (దశాంశం*)shared_mem_acc.get_multi_ptr<sycl::access::decorated::no>().get()
                     );
                 });
         });
-    } else {
+    } లేకపోతే {
         stream->submit([&](sycl::handler& cgh) {
-            sycl::local_accessor<float, 1> shared_mem_acc(shared_mem_size, cgh);
+            sycl::local_accessor<దశాంశం, 1> shared_mem_acc(shared_mem_కొలత, cgh);
 
             cgh.parallel_for(
-                sycl::nd_range<3>(grid_dims * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1) {
-                    rwkv_wkv7_f32_kernel<WKV_BLOCK_SIZE * 2>(
+                sycl::nd_range<3>(grid_dims * ఖండం_dims, ఖండం_dims),
+                [=](sycl::nd_అంశం<3> అంశం_ct1) {
+                    rwkv_wkv7_f32_kernel<WKV_ఖండం_కొలత * 2>(
                         B, T, C, H, r_d, w_d, k_d, v_d, a_d, b_d, s_d, dst_d,
-                        item_ct1, (float*)shared_mem_acc.get_multi_ptr<sycl::access::decorated::no>().get()
+                        అంశం_ct1, (దశాంశం*)shared_mem_acc.get_multi_ptr<sycl::access::decorated::no>().get()
                     );
                 });
         });

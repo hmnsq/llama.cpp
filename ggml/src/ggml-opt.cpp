@@ -1,91 +1,91 @@
-#include "ggml-opt.h"
+#అన్తర్భావ "ggml-opt.h"
 
-#include "ggml.h"
-#include "ggml-alloc.h"
-#include "ggml-backend.h"
-#include "ggml-impl.h"
+#అన్తర్భావ "ggml.h"
+#అన్తర్భావ "ggml-alloc.h"
+#అన్తర్భావ "ggml-backend.h"
+#అన్తర్భావ "ggml-impl.h"
 
-#include <algorithm>
-#include <cmath>
-#include <cstdint>
-#include <cinttypes>
-#include <map>
-#include <random>
-#include <vector>
+#అన్తర్భావ <algorithm>
+#అన్తర్భావ <cmath>
+#అన్తర్భావ <cstdint>
+#అన్తర్భావ <cinttypes>
+#అన్తర్భావ <map>
+#అన్తర్భావ <random>
+#అన్తర్భావ <vector>
 
-struct ggml_opt_dataset {
-    struct ggml_context   * ctx    = nullptr;
-    ggml_backend_buffer_t   buf    = nullptr;
-    struct ggml_tensor    * data   = nullptr;
-    struct ggml_tensor    * labels = nullptr;
+నిర్మాణం ggml_opt_dataset {
+    నిర్మాణం ggml_context   * ctx    = శూన్యసూచిక;
+    ggml_backend_బఫరు_t   buf    = శూన్యసూచిక;
+    నిర్మాణం ggml_tensor    * దత్తాంశం   = శూన్యసూచిక;
+    నిర్మాణం ggml_tensor    * labels = శూన్యసూచిక;
 
     int64_t ndata       = -1;
     int64_t ndata_shard = -1;
-    size_t  nbs_data    = -1;
+    size_t  nbs_దత్తాంశం    = -1;
     size_t  nbs_labels  = -1;
 
     std::vector<int64_t> permutation;
 };
 
-struct ggml_opt_context {
-    ggml_backend_sched_t       backend_sched        = nullptr;
-    ggml_cgraph              * allocated_graph      = nullptr;
-    ggml_cgraph              * allocated_graph_copy = nullptr;
-    struct ggml_context      * ctx_static           = nullptr;
-    struct ggml_context      * ctx_cpu              = nullptr;
-    struct ggml_context      * ctx_compute          = nullptr;
-    struct ggml_context      * ctx_copy             = nullptr;
-    ggml_backend_buffer_t      buf_static           = nullptr;
-    ggml_backend_buffer_t      buf_cpu              = nullptr;
+నిర్మాణం ggml_opt_context {
+    ggml_backend_sched_t       backend_sched        = శూన్యసూచిక;
+    ggml_cgraph              * allocated_లేఖాచిత్రం      = శూన్యసూచిక;
+    ggml_cgraph              * allocated_లేఖాచిత్రం_copy = శూన్యసూచిక;
+    నిర్మాణం ggml_context      * ctx_static           = శూన్యసూచిక;
+    నిర్మాణం ggml_context      * ctx_cpu              = శూన్యసూచిక;
+    నిర్మాణం ggml_context      * ctx_compute          = శూన్యసూచిక;
+    నిర్మాణం ggml_context      * ctx_copy             = శూన్యసూచిక;
+    ggml_backend_బఫరు_t      buf_static           = శూన్యసూచిక;
+    ggml_backend_బఫరు_t      buf_cpu              = శూన్యసూచిక;
     std::mt19937               rng;
-    enum ggml_opt_loss_type    loss_type;
-    enum ggml_opt_build_type   build_type;
-    enum ggml_opt_build_type   build_type_alloc;
+    గణన ggml_opt_loss_type    loss_type;
+    గణన ggml_opt_build_type   build_type;
+    గణన ggml_opt_build_type   build_type_alloc;
 
-    struct ggml_tensor * inputs  = nullptr;
-    struct ggml_tensor * outputs = nullptr;
-    struct ggml_tensor * labels  = nullptr;
+    నిర్మాణం ggml_tensor * inputs  = శూన్యసూచిక;
+    నిర్మాణం ggml_tensor * outputs = శూన్యసూచిక;
+    నిర్మాణం ggml_tensor * labels  = శూన్యసూచిక;
 
-    struct ggml_tensor * loss     = nullptr;
-    struct ggml_tensor * pred     = nullptr;
-    struct ggml_tensor * ncorrect = nullptr;
+    నిర్మాణం ggml_tensor * loss     = శూన్యసూచిక;
+    నిర్మాణం ggml_tensor * pred     = శూన్యసూచిక;
+    నిర్మాణం ggml_tensor * ncorrect = శూన్యసూచిక;
 
-    struct ggml_cgraph * gf      = nullptr;
-    struct ggml_cgraph * gb_grad = nullptr;
-    struct ggml_cgraph * gb_opt  = nullptr;
-    bool static_graphs           = false;
-    bool eval_ready              = false;
-    std::vector<struct ggml_tensor *> grad_accs;
-    std::vector<struct ggml_tensor *> grad_m;
-    std::vector<struct ggml_tensor *> grad_v;
+    నిర్మాణం ggml_cgraph * gf      = శూన్యసూచిక;
+    నిర్మాణం ggml_cgraph * gb_grad = శూన్యసూచిక;
+    నిర్మాణం ggml_cgraph * gb_opt  = శూన్యసూచిక;
+    తార్కిక static_graphs           = అబద్ధం;
+    తార్కిక eval_ready              = అబద్ధం;
+    std::vector<నిర్మాణం ggml_tensor *> grad_accs;
+    std::vector<నిర్మాణం ggml_tensor *> grad_m;
+    std::vector<నిర్మాణం ggml_tensor *> grad_v;
 
     int64_t iter               = 1;
     int32_t opt_period         = 1;
     int32_t opt_i              = 0;
-    bool    loss_per_datapoint = false;
+    తార్కిక    loss_చొప్పున_datapoint = అబద్ధం;
 
-    ggml_opt_get_optimizer_params get_opt_pars    = nullptr;
-    void *                        get_opt_pars_ud = nullptr;
-    struct ggml_tensor *          opt_step_params = nullptr; // Stores output of get_opt_pars.
+    ggml_opt_get_optimizer_params get_opt_pars    = శూన్యసూచిక;
+    శూన్య *                        get_opt_pars_ud = శూన్యసూచిక;
+    నిర్మాణం ggml_tensor *          opt_అడుగు_params = శూన్యసూచిక; // Stores output of get_opt_pars.
 
-    enum ggml_opt_optimizer_type optimizer = GGML_OPT_OPTIMIZER_TYPE_ADAMW;
+    గణన ggml_opt_optimizer_type optimizer = GGML_OPT_OPTIMIZER_TYPE_ADAMW;
 };
 
-struct ggml_opt_result {
+నిర్మాణం ggml_opt_ఫలితం {
     int64_t              ndata    = 0;
-    std::vector<float>   loss;
+    std::vector<దశాంశం>   loss;
     std::vector<int32_t> pred;
     int64_t              ncorrect = 0;
 
     int64_t opt_period         = -1;
-    bool    loss_per_datapoint = false;
+    తార్కిక    loss_చొప్పున_datapoint = అబద్ధం;
 };
 
 // ====== Dataset ======
 
 ggml_opt_dataset_t ggml_opt_dataset_init(
-        enum ggml_type type_data,
-        enum ggml_type type_label,
+        గణన ggml_type type_దత్తాంశం,
+        గణన ggml_type type_label,
         int64_t        ne_datapoint,
         int64_t        ne_label,
         int64_t        ndata,
@@ -95,255 +95,255 @@ ggml_opt_dataset_t ggml_opt_dataset_init(
     GGML_ASSERT(ndata        >  0);
     GGML_ASSERT(ndata_shard  >  0);
 
-    ggml_opt_dataset_t result = new ggml_opt_dataset;
-    result->ndata       = ndata;
-    result->ndata_shard = ndata_shard;
+    ggml_opt_dataset_t ఫలితం = కొత్త ggml_opt_dataset;
+    ఫలితం->ndata       = ndata;
+    ఫలితం->ndata_shard = ndata_shard;
 
     {
-        struct ggml_init_params params = {
+        నిర్మాణం ggml_init_params params = {
             /*.mem_size   =*/ 2*ggml_tensor_overhead(),
-            /*.mem_buffer =*/ nullptr,
-            /*.no_alloc   =*/ true,
+            /*.mem_buffer =*/ శూన్యసూచిక,
+            /*.no_alloc   =*/ నిజం,
         };
-        result->ctx = ggml_init(params);
+        ఫలితం->ctx = ggml_init(params);
     }
 
-    result->data = ggml_new_tensor_2d(result->ctx, type_data, ne_datapoint, ndata);
-    result->nbs_data = ggml_nbytes(result->data) * ndata_shard/ndata;
+    ఫలితం->దత్తాంశం = ggml_new_tensor_2d(ఫలితం->ctx, type_దత్తాంశం, ne_datapoint, ndata);
+    ఫలితం->nbs_దత్తాంశం = ggml_nbytes(ఫలితం->దత్తాంశం) * ndata_shard/ndata;
 
-    if (ne_label > 0) {
-        result->labels = ggml_new_tensor_2d(result->ctx, type_label, ne_label, ndata);
-        result->nbs_labels = ggml_nbytes(result->labels) * ndata_shard/ndata;
-    } else {
-        result->labels = nullptr;
-        result->nbs_labels = 0;
+    ఒకవేళ (ne_label > 0) {
+        ఫలితం->labels = ggml_new_tensor_2d(ఫలితం->ctx, type_label, ne_label, ndata);
+        ఫలితం->nbs_labels = ggml_nbytes(ఫలితం->labels) * ndata_shard/ndata;
+    } లేకపోతే {
+        ఫలితం->labels = శూన్యసూచిక;
+        ఫలితం->nbs_labels = 0;
     }
 
-    result->buf = ggml_backend_alloc_ctx_tensors_from_buft(result->ctx, ggml_backend_cpu_buffer_type());
+    ఫలితం->buf = ggml_backend_alloc_ctx_tensors_from_buft(ఫలితం->ctx, ggml_backend_cpu_బఫరు_type());
 
-    const int64_t nshards = ndata/ndata_shard;
-    result->permutation.resize(nshards);
-    for (int64_t i = 0; i < nshards; ++i) {
-        result->permutation[i] = i;
+    స్థిరరాశి int64_t nshards = ndata/ndata_shard;
+    ఫలితం->permutation.resize(nshards);
+    కొరకు (int64_t i = 0; i < nshards; ++i) {
+        ఫలితం->permutation[i] = i;
     }
-    return result;
+    తిరిగి ఫలితం;
 }
 
-void ggml_opt_dataset_free(ggml_opt_dataset_t dataset) {
-    ggml_backend_buffer_free(dataset->buf);
+శూన్య ggml_opt_dataset_free(ggml_opt_dataset_t dataset) {
+    ggml_backend_బఫరు_free(dataset->buf);
     ggml_free(dataset->ctx);
-    delete dataset;
+    తొలగించు dataset;
 }
 
 int64_t ggml_opt_dataset_ndata(ggml_opt_dataset_t dataset) {
-    return dataset->ndata;
+    తిరిగి dataset->ndata;
 }
 
-struct ggml_tensor * ggml_opt_dataset_data(ggml_opt_dataset_t dataset) {
-    return dataset->data;
+నిర్మాణం ggml_tensor * ggml_opt_dataset_దత్తాంశం(ggml_opt_dataset_t dataset) {
+    తిరిగి dataset->దత్తాంశం;
 }
 
-struct ggml_tensor * ggml_opt_dataset_labels(ggml_opt_dataset_t dataset) {
-    return dataset->labels;
+నిర్మాణం ggml_tensor * ggml_opt_dataset_labels(ggml_opt_dataset_t dataset) {
+    తిరిగి dataset->labels;
 }
 
-void ggml_opt_dataset_shuffle(ggml_opt_context_t opt_ctx, ggml_opt_dataset_t dataset, int64_t idata) {
+శూన్య ggml_opt_dataset_shuffle(ggml_opt_context_t opt_ctx, ggml_opt_dataset_t dataset, int64_t idata) {
     GGML_ASSERT(idata <= dataset->ndata);
 
-    if (idata < 0) {
+    ఒకవేళ (idata < 0) {
         std::shuffle(dataset->permutation.begin(), dataset->permutation.end(), opt_ctx->rng);
-        return;
+        తిరిగి;
     }
 
     GGML_ASSERT(idata % dataset->ndata_shard == 0);
-    const int64_t ishard_max = idata / dataset->ndata_shard;
+    స్థిరరాశి int64_t ishard_max = idata / dataset->ndata_shard;
     std::shuffle(dataset->permutation.begin(), dataset->permutation.begin() + ishard_max, opt_ctx->rng);
 }
 
-void ggml_opt_dataset_get_batch(ggml_opt_dataset_t dataset, struct ggml_tensor * data_batch, struct ggml_tensor * labels_batch, int64_t ibatch) {
-    GGML_ASSERT(   data_batch && ggml_is_contiguous(data_batch));
+శూన్య ggml_opt_dataset_get_batch(ggml_opt_dataset_t dataset, నిర్మాణం ggml_tensor * దత్తాంశం_batch, నిర్మాణం ggml_tensor * labels_batch, int64_t ibatch) {
+    GGML_ASSERT(   దత్తాంశం_batch && ggml_is_contiguous(దత్తాంశం_batch));
     GGML_ASSERT(!labels_batch || ggml_is_contiguous(labels_batch));
-    GGML_ASSERT((labels_batch == nullptr) == (dataset->labels == nullptr));
-    GGML_ASSERT(                   data_batch->type == dataset->data->type);
+    GGML_ASSERT((labels_batch == శూన్యసూచిక) == (dataset->labels == శూన్యసూచిక));
+    GGML_ASSERT(                   దత్తాంశం_batch->type == dataset->దత్తాంశం->type);
     GGML_ASSERT(!labels_batch || labels_batch->type == dataset->labels->type);
 
-    const size_t nb_data_batch = ggml_nbytes(data_batch);
-    GGML_ASSERT(nb_data_batch % dataset->nbs_data == 0);
-    const int64_t shards_per_batch = nb_data_batch / dataset->nbs_data;
+    స్థిరరాశి size_t nb_దత్తాంశం_batch = ggml_nbytes(దత్తాంశం_batch);
+    GGML_ASSERT(nb_దత్తాంశం_batch % dataset->nbs_దత్తాంశం == 0);
+    స్థిరరాశి int64_t shards_చొప్పున_batch = nb_దత్తాంశం_batch / dataset->nbs_దత్తాంశం;
 
-    if (labels_batch) {
-        const size_t nb_labels_batch = ggml_nbytes(labels_batch);
-        GGML_ASSERT(nb_labels_batch == shards_per_batch*dataset->nbs_labels);
+    ఒకవేళ (labels_batch) {
+        స్థిరరాశి size_t nb_labels_batch = ggml_nbytes(labels_batch);
+        GGML_ASSERT(nb_labels_batch == shards_చొప్పున_batch*dataset->nbs_labels);
     }
 
-    GGML_ASSERT((ibatch + 1)*shards_per_batch <= int64_t(dataset->permutation.size()));
+    GGML_ASSERT((ibatch + 1)*shards_చొప్పున_batch <= int64_t(dataset->permutation.size()));
 
-    for (int64_t ishard_batch = 0; ishard_batch < shards_per_batch; ++ishard_batch) {
-        const int64_t ishard = dataset->permutation[ibatch*shards_per_batch + ishard_batch];
+    కొరకు (int64_t ishard_batch = 0; ishard_batch < shards_చొప్పున_batch; ++ishard_batch) {
+        స్థిరరాశి int64_t ishard = dataset->permutation[ibatch*shards_చొప్పున_batch + ishard_batch];
 
-        const char * ptr_data = (const char *) dataset->data->data + ishard*dataset->nbs_data;
-        ggml_backend_tensor_set(data_batch, ptr_data, ishard_batch*dataset->nbs_data, dataset->nbs_data);
+        స్థిరరాశి అక్షరం * ptr_దత్తాంశం = (స్థిరరాశి అక్షరం *) dataset->దత్తాంశం->దత్తాంశం + ishard*dataset->nbs_దత్తాంశం;
+        ggml_backend_tensor_సమితి(దత్తాంశం_batch, ptr_దత్తాంశం, ishard_batch*dataset->nbs_దత్తాంశం, dataset->nbs_దత్తాంశం);
 
-        if (!labels_batch) {
-            continue;
+        ఒకవేళ (!labels_batch) {
+            కొనసాగు;
         }
 
-        const char * ptr_labels = (const char *) dataset->labels->data + ishard*dataset->nbs_labels;
-        ggml_backend_tensor_set(labels_batch, ptr_labels, ishard_batch*dataset->nbs_labels, dataset->nbs_labels);
+        స్థిరరాశి అక్షరం * ptr_labels = (స్థిరరాశి అక్షరం *) dataset->labels->దత్తాంశం + ishard*dataset->nbs_labels;
+        ggml_backend_tensor_సమితి(labels_batch, ptr_labels, ishard_batch*dataset->nbs_labels, dataset->nbs_labels);
     }
 }
 
-void ggml_opt_dataset_get_batch_host(ggml_opt_dataset_t dataset, void * data_batch, size_t nb_data_batch, void * labels_batch, int64_t ibatch) {
-    GGML_ASSERT((labels_batch == nullptr) == (dataset->labels == nullptr));
-    GGML_ASSERT(nb_data_batch % dataset->nbs_data == 0);
+శూన్య ggml_opt_dataset_get_batch_host(ggml_opt_dataset_t dataset, శూన్య * దత్తాంశం_batch, size_t nb_దత్తాంశం_batch, శూన్య * labels_batch, int64_t ibatch) {
+    GGML_ASSERT((labels_batch == శూన్యసూచిక) == (dataset->labels == శూన్యసూచిక));
+    GGML_ASSERT(nb_దత్తాంశం_batch % dataset->nbs_దత్తాంశం == 0);
 
-    const int64_t shards_per_batch = nb_data_batch / dataset->nbs_data;
+    స్థిరరాశి int64_t shards_చొప్పున_batch = nb_దత్తాంశం_batch / dataset->nbs_దత్తాంశం;
 
-    GGML_ASSERT((ibatch + 1)*shards_per_batch <= int64_t(dataset->permutation.size()));
+    GGML_ASSERT((ibatch + 1)*shards_చొప్పున_batch <= int64_t(dataset->permutation.size()));
 
-    for (int64_t ishard_batch = 0; ishard_batch < shards_per_batch; ++ishard_batch) {
-        const int64_t ishard = dataset->permutation[ibatch*shards_per_batch + ishard_batch];
+    కొరకు (int64_t ishard_batch = 0; ishard_batch < shards_చొప్పున_batch; ++ishard_batch) {
+        స్థిరరాశి int64_t ishard = dataset->permutation[ibatch*shards_చొప్పున_batch + ishard_batch];
 
-        const char * ptr_data       = (const char *) dataset->data->data + ishard      *dataset->nbs_data;
-        char       * ptr_data_batch = (char       *) data_batch          + ishard_batch*dataset->nbs_data;
-        memcpy(ptr_data_batch, ptr_data, dataset->nbs_data);
+        స్థిరరాశి అక్షరం * ptr_దత్తాంశం       = (స్థిరరాశి అక్షరం *) dataset->దత్తాంశం->దత్తాంశం + ishard      *dataset->nbs_దత్తాంశం;
+        అక్షరం       * ptr_దత్తాంశం_batch = (అక్షరం       *) దత్తాంశం_batch          + ishard_batch*dataset->nbs_దత్తాంశం;
+        జ్ఞాపకం_నకలు(ptr_దత్తాంశం_batch, ptr_దత్తాంశం, dataset->nbs_దత్తాంశం);
 
-        if (!labels_batch) {
-            continue;
+        ఒకవేళ (!labels_batch) {
+            కొనసాగు;
         }
 
-        const char * ptr_labels       = (const char *) dataset->labels->data + ishard      *dataset->nbs_labels;
-        char       * ptr_labels_batch = (char       *) labels_batch          + ishard_batch*dataset->nbs_labels;
-        memcpy(ptr_labels_batch, ptr_labels, dataset->nbs_labels);
+        స్థిరరాశి అక్షరం * ptr_labels       = (స్థిరరాశి అక్షరం *) dataset->labels->దత్తాంశం + ishard      *dataset->nbs_labels;
+        అక్షరం       * ptr_labels_batch = (అక్షరం       *) labels_batch          + ishard_batch*dataset->nbs_labels;
+        జ్ఞాపకం_నకలు(ptr_labels_batch, ptr_labels, dataset->nbs_labels);
     }
 }
 
 // ====== Model / Context ======
 
-struct ggml_opt_optimizer_params ggml_opt_get_default_optimizer_params(void * userdata) {
-    GGML_UNUSED(userdata);
+నిర్మాణం ggml_opt_optimizer_params ggml_opt_get_default_optimizer_params(శూన్య * userdata) {
+    GGML_వాడని(userdata);
 
-    ggml_opt_optimizer_params result;
+    ggml_opt_optimizer_params ఫలితం;
 
-    result.adamw.alpha = 0.001f;
-    result.adamw.beta1 = 0.9f;
-    result.adamw.beta2 = 0.999f;
-    result.adamw.eps   = 1e-8f;
-    result.adamw.wd    = 0.0f;
+    ఫలితం.adamw.alpha = 0.001f;
+    ఫలితం.adamw.beta1 = 0.9f;
+    ఫలితం.adamw.beta2 = 0.999f;
+    ఫలితం.adamw.eps   = 1e-8f;
+    ఫలితం.adamw.wd    = 0.0f;
 
-    result.sgd.alpha   = 1e-3f;
-    result.sgd.wd      = 0.0f;
+    ఫలితం.sgd.alpha   = 1e-3f;
+    ఫలితం.sgd.wd      = 0.0f;
 
-    return result;
+    తిరిగి ఫలితం;
 }
 
 
-struct ggml_opt_optimizer_params ggml_opt_get_constant_optimizer_params(void * userdata) {
-    return *((struct ggml_opt_optimizer_params *) userdata);
+నిర్మాణం ggml_opt_optimizer_params ggml_opt_get_constant_optimizer_params(శూన్య * userdata) {
+    తిరిగి *((నిర్మాణం ggml_opt_optimizer_params *) userdata);
 }
 
-struct ggml_opt_params ggml_opt_default_params(
+నిర్మాణం ggml_opt_params ggml_opt_default_params(
         ggml_backend_sched_t      backend_sched,
-        enum ggml_opt_loss_type   loss_type) {
-    return {
+        గణన ggml_opt_loss_type   loss_type) {
+    తిరిగి {
         /*backend_sched   =*/ backend_sched,
-        /*ctx_compute     =*/ nullptr,
-        /*inputs          =*/ nullptr,
-        /*logits          =*/ nullptr,
+        /*ctx_compute     =*/ శూన్యసూచిక,
+        /*inputs          =*/ శూన్యసూచిక,
+        /*logits          =*/ శూన్యసూచిక,
         /*loss_type       =*/ loss_type,
         /*build_type      =*/ GGML_OPT_BUILD_TYPE_OPT,
         /*opt_period      =*/ 1,
         /*get_opt_pars    =*/ ggml_opt_get_default_optimizer_params,
-        /*get_opt_pars_ud =*/ nullptr,
+        /*get_opt_pars_ud =*/ శూన్యసూచిక,
         /*optimizer       =*/ GGML_OPT_OPTIMIZER_TYPE_ADAMW,
     };
 }
 
-static ggml_tensor * map_tensor(std::map<ggml_tensor *, ggml_tensor *> & tensor_map, ggml_context * ctx, ggml_tensor * tensor) {
-    if (!tensor) {
-        return nullptr;
+స్థిర ggml_tensor * map_tensor(std::map<ggml_tensor *, ggml_tensor *> & tensor_map, ggml_context * ctx, ggml_tensor * tensor) {
+    ఒకవేళ (!tensor) {
+        తిరిగి శూన్యసూచిక;
     }
 
-    if (tensor_map.find(tensor) != tensor_map.end()) {
-        return tensor_map[tensor];
+    ఒకవేళ (tensor_map.find(tensor) != tensor_map.end()) {
+        తిరిగి tensor_map[tensor];
     }
 
     ggml_tensor * new_tensor = ggml_dup_tensor(ctx, tensor);
     tensor_map[tensor] = new_tensor;
 
     new_tensor->op = tensor->op;
-    for (int i = 0; i < GGML_MAX_DIMS; i++) {
+    కొరకు (పూర్ణాంకం i = 0; i < GGML_MAX_DIMS; i++) {
         new_tensor->nb[i] = tensor->nb[i];
     }
     new_tensor->flags = tensor->flags;
-    memcpy(new_tensor->op_params, tensor->op_params, sizeof(tensor->op_params));
+    జ్ఞాపకం_నకలు(new_tensor->op_params, tensor->op_params, పరిమాణం(tensor->op_params));
     strcpy(new_tensor->name, tensor->name);
-    new_tensor->data = tensor->data;
-    new_tensor->buffer = tensor->buffer;
+    new_tensor->దత్తాంశం = tensor->దత్తాంశం;
+    new_tensor->బఫరు = tensor->బఫరు;
     new_tensor->extra = tensor->extra;
     new_tensor->view_offs = tensor->view_offs;
     new_tensor->view_src = map_tensor(tensor_map, ctx, tensor->view_src);
-    for (int i = 0; i < GGML_MAX_SRC; i++) {
+    కొరకు (పూర్ణాంకం i = 0; i < GGML_MAX_SRC; i++) {
         new_tensor->src[i] = map_tensor(tensor_map, ctx, tensor->src[i]);
     }
 
-    return new_tensor;
+    తిరిగి new_tensor;
 }
 
-static ggml_cgraph * dup_graph(ggml_context * ctx, ggml_cgraph * src) {
+స్థిర ggml_cgraph * dup_లేఖాచిత్రం(ggml_context * ctx, ggml_cgraph * src) {
     std::map<ggml_tensor *, ggml_tensor *> tensor_map;
 
-    ggml_cgraph * dst = ggml_new_graph_custom(ctx, src->size, /*grads =*/ true);
+    ggml_cgraph * dst = ggml_new_లేఖాచిత్రం_custom(ctx, src->size, /*grads =*/ నిజం);
 
-    for (int i = 0; i < src->n_leafs; i++) {
+    కొరకు (పూర్ణాంకం i = 0; i < src->n_leafs; i++) {
         ggml_build_forward_expand(dst, map_tensor(tensor_map, ctx, src->leafs[i]));
     }
     GGML_ASSERT(dst->n_leafs == src->n_leafs);
-    for (int i = 0; i < src->n_nodes; i++) {
+    కొరకు (పూర్ణాంకం i = 0; i < src->n_nodes; i++) {
         ggml_build_forward_expand(dst, map_tensor(tensor_map, ctx, src->nodes[i]));
     }
     GGML_ASSERT(dst->n_nodes == src->n_nodes);
-    for (int i = 0; i < src->n_nodes; ++i) {
-        const size_t igrad_src = ggml_hash_find(&src->visited_hash_set, src->nodes[i]);
-        const size_t igrad_dst = ggml_hash_find(&dst->visited_hash_set, dst->nodes[i]);
+    కొరకు (పూర్ణాంకం i = 0; i < src->n_nodes; ++i) {
+        స్థిరరాశి size_t igrad_src = ggml_hash_కనుగొను(&src->సందర్శించిన_hash_సమితి, src->nodes[i]);
+        స్థిరరాశి size_t igrad_dst = ggml_hash_కనుగొను(&dst->సందర్శించిన_hash_సమితి, dst->nodes[i]);
 
-        GGML_ASSERT(igrad_src != GGML_HASHSET_FULL);
-        GGML_ASSERT(ggml_bitset_get(src->visited_hash_set.used, igrad_src));
-        GGML_ASSERT(igrad_dst != GGML_HASHSET_FULL);
-        GGML_ASSERT(ggml_bitset_get(dst->visited_hash_set.used, igrad_dst));
+        GGML_ASSERT(igrad_src != GGML_HASHSET_నిండిన);
+        GGML_ASSERT(ggml_bitset_get(src->సందర్శించిన_hash_సమితి.వాడిన, igrad_src));
+        GGML_ASSERT(igrad_dst != GGML_HASHSET_నిండిన);
+        GGML_ASSERT(ggml_bitset_get(dst->సందర్శించిన_hash_సమితి.వాడిన, igrad_dst));
 
         dst->grads[igrad_dst]     = src->grads[igrad_src];
         dst->grad_accs[igrad_dst] = src->grad_accs[igrad_src];
     }
 
-    return dst;
+    తిరిగి dst;
 }
 
-static void ggml_opt_build(ggml_opt_context_t opt_ctx) {
+స్థిర శూన్య ggml_opt_build(ggml_opt_context_t opt_ctx) {
     GGML_ASSERT(opt_ctx->ctx_compute && "no compute context set, either use static graphs or set one with ggml_opt_prepare_alloc");
-    GGML_ASSERT((!opt_ctx->static_graphs || opt_ctx->inputs->data) && "when using static graphs the inputs must be allocated statically");
+    GGML_ASSERT((!opt_ctx->static_graphs || opt_ctx->inputs->దత్తాంశం) && "when using static graphs the inputs must be allocated statically");
 
-    const enum ggml_opt_optimizer_type optimizer = opt_ctx->optimizer;
+    స్థిరరాశి గణన ggml_opt_optimizer_type optimizer = opt_ctx->optimizer;
 
-    const bool accumulate = opt_ctx->build_type_alloc >= GGML_OPT_BUILD_TYPE_GRAD &&
+    స్థిరరాశి తార్కిక accumulate = opt_ctx->build_type_alloc >= GGML_OPT_BUILD_TYPE_GRAD &&
         !(opt_ctx->static_graphs && opt_ctx->build_type_alloc == GGML_OPT_BUILD_TYPE_OPT && opt_ctx->opt_period == 1);
 
-    const bool need_momenta = opt_ctx->build_type_alloc == GGML_OPT_BUILD_TYPE_OPT &&
+    స్థిరరాశి తార్కిక need_momenta = opt_ctx->build_type_alloc == GGML_OPT_BUILD_TYPE_OPT &&
         opt_ctx->optimizer == GGML_OPT_OPTIMIZER_TYPE_ADAMW;
 
-    ggml_set_input(opt_ctx->inputs);
-    ggml_set_output(opt_ctx->outputs);
+    ggml_సమితి_ఆదానం(opt_ctx->inputs);
+    ggml_సమితి_output(opt_ctx->outputs);
 
-    int n_param = 0;
-    for (int i = 0; i < opt_ctx->gf->n_nodes; ++i) {
-        const struct ggml_tensor * node = opt_ctx->gf->nodes[i];
-        if (node->flags & GGML_TENSOR_FLAG_PARAM) {
+    పూర్ణాంకం n_param = 0;
+    కొరకు (పూర్ణాంకం i = 0; i < opt_ctx->gf->n_nodes; ++i) {
+        స్థిరరాశి నిర్మాణం ggml_tensor * కణుపు = opt_ctx->gf->nodes[i];
+        ఒకవేళ (కణుపు->flags & GGML_TENSOR_FLAG_PARAM) {
             n_param++;
         }
-        GGML_ASSERT(!(node->flags & GGML_TENSOR_FLAG_LOSS) && "support for extra loss terms not implemented");
+        GGML_ASSERT(!(కణుపు->flags & GGML_TENSOR_FLAG_LOSS) && "support for extra loss terms not implemented");
     }
 
-    if (!opt_ctx->ctx_static) {
+    ఒకవేళ (!opt_ctx->ctx_static) {
         // The static context is used for:
         //   - gradients (1 per loss, 1 tensor per param if using gradient accumulation)
         //   - optimizer momenta (2 tensors per param)
@@ -352,13 +352,13 @@ static void ggml_opt_build(ggml_opt_context_t opt_ctx) {
         //   - pred (if using static graphs)
         //   - ncorrect (if using static graphs, 2 tensors).
         constexpr size_t n_loss = 1;
-        const size_t tensors_per_param = (accumulate ? 1 : 0) + (need_momenta ? 2 : 0);
-        const size_t tensors_const = opt_ctx->static_graphs ? 9 : 0;
-        const size_t size_meta = (n_loss + tensors_per_param*n_param + tensors_const) * ggml_tensor_overhead();
-        struct ggml_init_params params = {
-            /*.mem_size   =*/ size_meta,
-            /*.mem_buffer =*/ nullptr,
-            /*.no_alloc   =*/ true,
+        స్థిరరాశి size_t tensors_చొప్పున_param = (accumulate ? 1 : 0) + (need_momenta ? 2 : 0);
+        స్థిరరాశి size_t tensors_const = opt_ctx->static_graphs ? 9 : 0;
+        స్థిరరాశి size_t కొలత_meta = (n_loss + tensors_చొప్పున_param*n_param + tensors_const) * ggml_tensor_overhead();
+        నిర్మాణం ggml_init_params params = {
+            /*.mem_size   =*/ కొలత_meta,
+            /*.mem_buffer =*/ శూన్యసూచిక,
+            /*.no_alloc   =*/ నిజం,
         };
         opt_ctx->ctx_static = ggml_init(params);
     }
@@ -368,353 +368,353 @@ static void ggml_opt_build(ggml_opt_context_t opt_ctx) {
         // The cpu context is allocated statically if using static graphs, dynamically otherwise.
         // It is used for:
         //   - optimizer parameters (1 shared for all optimizer invocations)
-        const size_t size_meta = 1 * ggml_tensor_overhead();
-        struct ggml_init_params params = {
-            /*.mem_size   =*/ size_meta,
-            /*.mem_buffer =*/ nullptr,
-            /*.no_alloc   =*/ true,
+        స్థిరరాశి size_t కొలత_meta = 1 * ggml_tensor_overhead();
+        నిర్మాణం ggml_init_params params = {
+            /*.mem_size   =*/ కొలత_meta,
+            /*.mem_buffer =*/ శూన్యసూచిక,
+            /*.no_alloc   =*/ నిజం,
         };
         ggml_free(opt_ctx->ctx_cpu);
         opt_ctx->ctx_cpu = ggml_init(params);
 
-        ggml_backend_buffer_free(opt_ctx->buf_cpu);
-        opt_ctx->buf_cpu = nullptr;
+        ggml_backend_బఫరు_free(opt_ctx->buf_cpu);
+        opt_ctx->buf_cpu = శూన్యసూచిక;
     }
 
-    struct ggml_context * ctx_results = opt_ctx->static_graphs ? opt_ctx->ctx_static : opt_ctx->ctx_compute;
+    నిర్మాణం ggml_context * ctx_results = opt_ctx->static_graphs ? opt_ctx->ctx_static : opt_ctx->ctx_compute;
 
-    switch (opt_ctx->loss_type) {
-        case GGML_OPT_LOSS_TYPE_MEAN: {
-            opt_ctx->loss = ggml_sum(ctx_results, opt_ctx->outputs);
-            ggml_set_name(opt_ctx->loss, "loss_sum");
-            const float scale = 1.0f / (opt_ctx->opt_period * ggml_nelements(opt_ctx->outputs));
+    ఎంపిక (opt_ctx->loss_type) {
+        స్థితి GGML_OPT_LOSS_TYPE_సగటు: {
+            opt_ctx->loss = ggml_కూడిక(ctx_results, opt_ctx->outputs);
+            ggml_సమితి_name(opt_ctx->loss, "loss_sum");
+            స్థిరరాశి దశాంశం scale = 1.0f / (opt_ctx->opt_period * ggml_nelements(opt_ctx->outputs));
             opt_ctx->loss = ggml_scale(ctx_results, opt_ctx->loss, scale);
-            ggml_set_name(opt_ctx->loss, "loss_mean");
-            opt_ctx->loss_per_datapoint = true;
-            break;
+            ggml_సమితి_name(opt_ctx->loss, "loss_mean");
+            opt_ctx->loss_చొప్పున_datapoint = నిజం;
+            ఆపు;
         }
-        case GGML_OPT_LOSS_TYPE_SUM: {
-            opt_ctx->loss = ggml_sum(ctx_results, opt_ctx->outputs);
-            ggml_set_name(opt_ctx->loss, "loss_sum");
-            opt_ctx->loss_per_datapoint = false;
-            break;
+        స్థితి GGML_OPT_LOSS_TYPE_కూడిక: {
+            opt_ctx->loss = ggml_కూడిక(ctx_results, opt_ctx->outputs);
+            ggml_సమితి_name(opt_ctx->loss, "loss_sum");
+            opt_ctx->loss_చొప్పున_datapoint = అబద్ధం;
+            ఆపు;
         }
-        case GGML_OPT_LOSS_TYPE_CROSS_ENTROPY: {
+        స్థితి GGML_OPT_LOSS_TYPE_CROSS_ENTROPY: {
             opt_ctx->labels = ggml_dup_tensor(ctx_results, opt_ctx->outputs);
-            ggml_set_input(opt_ctx->labels);
-            ggml_set_name(opt_ctx->labels, "labels");
+            ggml_సమితి_ఆదానం(opt_ctx->labels);
+            ggml_సమితి_name(opt_ctx->labels, "labels");
             opt_ctx->loss = ggml_cross_entropy_loss(ctx_results, opt_ctx->outputs, opt_ctx->labels);
-            ggml_set_name(opt_ctx->loss, "loss_cross_entropy");
-            if (opt_ctx->opt_period > 1) {
+            ggml_సమితి_name(opt_ctx->loss, "loss_cross_entropy");
+            ఒకవేళ (opt_ctx->opt_period > 1) {
                 opt_ctx->loss = ggml_scale(ctx_results, opt_ctx->loss, 1.0f / opt_ctx->opt_period);
-                ggml_set_name(opt_ctx->loss, "loss_cross_entropy_scaled");
+                ggml_సమితి_name(opt_ctx->loss, "loss_cross_entropy_scaled");
             }
-            opt_ctx->loss_per_datapoint = true;
-            break;
+            opt_ctx->loss_చొప్పున_datapoint = నిజం;
+            ఆపు;
         }
-        case GGML_OPT_LOSS_TYPE_MEAN_SQUARED_ERROR: {
+        స్థితి GGML_OPT_LOSS_TYPE_సగటు_SQUARED_ERROR: {
             opt_ctx->labels = ggml_dup_tensor(ctx_results, opt_ctx->outputs);
-            ggml_set_input(opt_ctx->labels);
-            ggml_set_name(opt_ctx->labels, "labels");
+            ggml_సమితి_ఆదానం(opt_ctx->labels);
+            ggml_సమితి_name(opt_ctx->labels, "labels");
             opt_ctx->loss = ggml_sub(ctx_results, opt_ctx->outputs, opt_ctx->labels);
-            ggml_set_name(opt_ctx->loss, "loss_error");
+            ggml_సమితి_name(opt_ctx->loss, "loss_error");
             opt_ctx->loss = ggml_sqr(ctx_results, opt_ctx->loss);
-            ggml_set_name(opt_ctx->loss, "loss_squared_error");
-            opt_ctx->loss = ggml_sum(ctx_results, opt_ctx->loss);
-            ggml_set_name(opt_ctx->loss, "loss_sum_squared_error");
-            const float scale = 1.0f / (opt_ctx->opt_period * ggml_nelements(opt_ctx->outputs));
+            ggml_సమితి_name(opt_ctx->loss, "loss_squared_error");
+            opt_ctx->loss = ggml_కూడిక(ctx_results, opt_ctx->loss);
+            ggml_సమితి_name(opt_ctx->loss, "loss_sum_squared_error");
+            స్థిరరాశి దశాంశం scale = 1.0f / (opt_ctx->opt_period * ggml_nelements(opt_ctx->outputs));
             opt_ctx->loss = ggml_scale(ctx_results, opt_ctx->loss, scale);
-            ggml_set_name(opt_ctx->loss, "loss_mean_squared_error");
-            opt_ctx->loss_per_datapoint = true;
-            break;
+            ggml_సమితి_name(opt_ctx->loss, "loss_mean_squared_error");
+            opt_ctx->loss_చొప్పున_datapoint = నిజం;
+            ఆపు;
         }
     }
-    ggml_set_output(opt_ctx->loss);
-    ggml_set_loss(opt_ctx->loss);
+    ggml_సమితి_output(opt_ctx->loss);
+    ggml_సమితి_loss(opt_ctx->loss);
     ggml_build_forward_expand(opt_ctx->gf, opt_ctx->loss);
 
-    if (opt_ctx->loss_type == GGML_OPT_LOSS_TYPE_CROSS_ENTROPY) {
+    ఒకవేళ (opt_ctx->loss_type == GGML_OPT_LOSS_TYPE_CROSS_ENTROPY) {
         opt_ctx->pred = ggml_argmax(ctx_results, opt_ctx->outputs);
-        ggml_set_name(opt_ctx->pred, "pred");
-        ggml_set_output(opt_ctx->pred);
+        ggml_సమితి_name(opt_ctx->pred, "pred");
+        ggml_సమితి_output(opt_ctx->pred);
         ggml_build_forward_expand(opt_ctx->gf, opt_ctx->pred);
 
-        opt_ctx->ncorrect = ggml_count_equal(ctx_results, opt_ctx->pred, ggml_argmax(ctx_results, opt_ctx->labels));
-        ggml_set_name(opt_ctx->ncorrect, "ncorrect");
-        ggml_set_output(opt_ctx->ncorrect);
+        opt_ctx->ncorrect = ggml_లెక్క_equal(ctx_results, opt_ctx->pred, ggml_argmax(ctx_results, opt_ctx->labels));
+        ggml_సమితి_name(opt_ctx->ncorrect, "ncorrect");
+        ggml_సమితి_output(opt_ctx->ncorrect);
         ggml_build_forward_expand(opt_ctx->gf, opt_ctx->ncorrect);
     }
 
-    if (opt_ctx->buf_static) {
-        if (opt_ctx->build_type == GGML_OPT_BUILD_TYPE_FORWARD) {
-            return;
+    ఒకవేళ (opt_ctx->buf_static) {
+        ఒకవేళ (opt_ctx->build_type == GGML_OPT_BUILD_TYPE_FORWARD) {
+            తిరిగి;
         }
-    } else if (opt_ctx->build_type_alloc == GGML_OPT_BUILD_TYPE_FORWARD) {
+    } లేకపోతే ఒకవేళ (opt_ctx->build_type_alloc == GGML_OPT_BUILD_TYPE_FORWARD) {
         opt_ctx->buf_static = ggml_backend_alloc_ctx_tensors(
             opt_ctx->ctx_static, ggml_backend_sched_get_backend(opt_ctx->backend_sched, 0));
-        return;
+        తిరిగి;
     }
 
-    if (opt_ctx->grad_accs.empty()) {
+    ఒకవేళ (opt_ctx->grad_accs.ఖాళీలు()) {
         GGML_ASSERT(opt_ctx->build_type_alloc >= GGML_OPT_BUILD_TYPE_GRAD);
 
-        const int n_nodes = opt_ctx->gf->n_nodes;
+        స్థిరరాశి పూర్ణాంకం n_nodes = opt_ctx->gf->n_nodes;
         opt_ctx->grad_accs.resize(n_nodes);
-        for (int i = 0; i < n_nodes; ++i) {
-            ggml_tensor * node = opt_ctx->gf->nodes[i];
-            if ((accumulate && (node->flags & GGML_TENSOR_FLAG_PARAM)) || (node->flags & GGML_TENSOR_FLAG_LOSS)) {
-                opt_ctx->grad_accs[i] = ggml_new_tensor(opt_ctx->ctx_static, GGML_TYPE_F32, GGML_MAX_DIMS, node->ne);
-            } else {
-                opt_ctx->grad_accs[i] = nullptr;
+        కొరకు (పూర్ణాంకం i = 0; i < n_nodes; ++i) {
+            ggml_tensor * కణుపు = opt_ctx->gf->nodes[i];
+            ఒకవేళ ((accumulate && (కణుపు->flags & GGML_TENSOR_FLAG_PARAM)) || (కణుపు->flags & GGML_TENSOR_FLAG_LOSS)) {
+                opt_ctx->grad_accs[i] = ggml_new_tensor(opt_ctx->ctx_static, GGML_TYPE_F32, GGML_MAX_DIMS, కణుపు->ne);
+            } లేకపోతే {
+                opt_ctx->grad_accs[i] = శూన్యసూచిక;
             }
         }
 
-        if (need_momenta && opt_ctx->build_type_alloc >= GGML_OPT_BUILD_TYPE_OPT) {
+        ఒకవేళ (need_momenta && opt_ctx->build_type_alloc >= GGML_OPT_BUILD_TYPE_OPT) {
             opt_ctx->grad_m.resize(n_nodes);
             opt_ctx->grad_v.resize(n_nodes);
-            for (int i = 0; i < n_nodes; ++i) {
-                ggml_tensor * node = opt_ctx->gf->nodes[i];
-                if (node->flags & GGML_TENSOR_FLAG_PARAM) {
-                    opt_ctx->grad_m[i] = ggml_new_tensor(opt_ctx->ctx_static, GGML_TYPE_F32, GGML_MAX_DIMS, node->ne);
-                    opt_ctx->grad_v[i] = ggml_new_tensor(opt_ctx->ctx_static, GGML_TYPE_F32, GGML_MAX_DIMS, node->ne);
-                } else {
-                    opt_ctx->grad_m[i] = nullptr;
-                    opt_ctx->grad_v[i] = nullptr;
+            కొరకు (పూర్ణాంకం i = 0; i < n_nodes; ++i) {
+                ggml_tensor * కణుపు = opt_ctx->gf->nodes[i];
+                ఒకవేళ (కణుపు->flags & GGML_TENSOR_FLAG_PARAM) {
+                    opt_ctx->grad_m[i] = ggml_new_tensor(opt_ctx->ctx_static, GGML_TYPE_F32, GGML_MAX_DIMS, కణుపు->ne);
+                    opt_ctx->grad_v[i] = ggml_new_tensor(opt_ctx->ctx_static, GGML_TYPE_F32, GGML_MAX_DIMS, కణుపు->ne);
+                } లేకపోతే {
+                    opt_ctx->grad_m[i] = శూన్యసూచిక;
+                    opt_ctx->grad_v[i] = శూన్యసూచిక;
                 }
             }
         }
     }
 
     // gb_grad == graph backward gradients, forward pass, then backward pass to calculate gradients.
-    opt_ctx->gb_grad = ggml_graph_dup(opt_ctx->ctx_compute, opt_ctx->gf, /*force_grads =*/ true);
-    ggml_build_backward_expand(opt_ctx->ctx_compute, opt_ctx->gb_grad, opt_ctx->grad_accs.data());
+    opt_ctx->gb_grad = ggml_లేఖాచిత్రం_dup(opt_ctx->ctx_compute, opt_ctx->gf, /*force_grads =*/ నిజం);
+    ggml_build_backward_expand(opt_ctx->ctx_compute, opt_ctx->gb_grad, opt_ctx->grad_accs.దత్తాంశం());
 
-    if (opt_ctx->buf_static) {
-        if (opt_ctx->build_type == GGML_OPT_BUILD_TYPE_GRAD) {
-            return;
+    ఒకవేళ (opt_ctx->buf_static) {
+        ఒకవేళ (opt_ctx->build_type == GGML_OPT_BUILD_TYPE_GRAD) {
+            తిరిగి;
         }
-    } else if (opt_ctx->build_type_alloc == GGML_OPT_BUILD_TYPE_GRAD) {
+    } లేకపోతే ఒకవేళ (opt_ctx->build_type_alloc == GGML_OPT_BUILD_TYPE_GRAD) {
         opt_ctx->buf_static = ggml_backend_alloc_ctx_tensors(opt_ctx->ctx_static, ggml_backend_sched_get_backend(opt_ctx->backend_sched, 0));
-        ggml_graph_reset(opt_ctx->gb_grad);
+        ggml_లేఖాచిత్రం_reset(opt_ctx->gb_grad);
     }
 
     GGML_ASSERT(opt_ctx->build_type_alloc == GGML_OPT_BUILD_TYPE_OPT);
 
     // gb_opt == graph backward optimize, forward pass, then backward pass to calculate gradients, then optimizer step.
-    opt_ctx->gb_opt = ggml_graph_dup(opt_ctx->ctx_compute, opt_ctx->gb_grad, /*force_grads =*/ true);
+    opt_ctx->gb_opt = ggml_లేఖాచిత్రం_dup(opt_ctx->ctx_compute, opt_ctx->gb_grad, /*force_grads =*/ నిజం);
 
-    opt_ctx->opt_step_params = ggml_new_tensor_1d(opt_ctx->ctx_cpu, GGML_TYPE_F32, need_momenta ? 7 : 2);
-    ggml_tensor * adamw_params = opt_ctx->opt_step_params;
-    ggml_set_input(adamw_params);
-    const char * optimizer_name = ggml_opt_optimizer_name(opt_ctx->optimizer);
+    opt_ctx->opt_అడుగు_params = ggml_new_tensor_1d(opt_ctx->ctx_cpu, GGML_TYPE_F32, need_momenta ? 7 : 2);
+    ggml_tensor * adamw_params = opt_ctx->opt_అడుగు_params;
+    ggml_సమితి_ఆదానం(adamw_params);
+    స్థిరరాశి అక్షరం * optimizer_name = ggml_opt_optimizer_name(opt_ctx->optimizer);
     ggml_format_name(adamw_params, "%s_params", optimizer_name);
-    for (int i = opt_ctx->gf->n_nodes-1; i >= 0; --i) {
-        struct ggml_tensor * node = opt_ctx->gb_opt->nodes[i];
-        struct ggml_tensor * grad = ggml_graph_get_grad(opt_ctx->gb_opt, node);
+    కొరకు (పూర్ణాంకం i = opt_ctx->gf->n_nodes-1; i >= 0; --i) {
+        నిర్మాణం ggml_tensor * కణుపు = opt_ctx->gb_opt->nodes[i];
+        నిర్మాణం ggml_tensor * grad = ggml_లేఖాచిత్రం_get_grad(opt_ctx->gb_opt, కణుపు);
 
-        if (grad && (node->flags & GGML_TENSOR_FLAG_PARAM)) {
-            struct ggml_tensor * m = nullptr;
-            struct ggml_tensor * v = nullptr;
-            if (need_momenta) {
+        ఒకవేళ (grad && (కణుపు->flags & GGML_TENSOR_FLAG_PARAM)) {
+            నిర్మాణం ggml_tensor * m = శూన్యసూచిక;
+            నిర్మాణం ggml_tensor * v = శూన్యసూచిక;
+            ఒకవేళ (need_momenta) {
                 m = opt_ctx->grad_m[i];
                 v = opt_ctx->grad_v[i];
-                ggml_format_name(m, "AdamW m for %s", node->name);
-                ggml_format_name(v, "AdamW v for %s", node->name);
+                ggml_format_name(m, "AdamW m for %s", కణుపు->name);
+                ggml_format_name(v, "AdamW v for %s", కణుపు->name);
             }
-            struct ggml_tensor * opt_step;
-            switch (optimizer) {
-                case GGML_OPT_OPTIMIZER_TYPE_ADAMW:
-                    opt_step = ggml_opt_step_adamw(opt_ctx->ctx_compute, node, grad, m, v, adamw_params);
-                    break;
-                case GGML_OPT_OPTIMIZER_TYPE_SGD:
-                    opt_step = ggml_opt_step_sgd(opt_ctx->ctx_compute, node, grad, adamw_params);
-                    break;
-                default:
+            నిర్మాణం ggml_tensor * opt_అడుగు;
+            ఎంపిక (optimizer) {
+                స్థితి GGML_OPT_OPTIMIZER_TYPE_ADAMW:
+                    opt_అడుగు = ggml_opt_అడుగు_adamw(opt_ctx->ctx_compute, కణుపు, grad, m, v, adamw_params);
+                    ఆపు;
+                స్థితి GGML_OPT_OPTIMIZER_TYPE_SGD:
+                    opt_అడుగు = ggml_opt_అడుగు_sgd(opt_ctx->ctx_compute, కణుపు, grad, adamw_params);
+                    ఆపు;
+                అప్రమేయ:
                     GGML_ABORT("fatal error");
             }
-            ggml_format_name(opt_step, "%s step for %s", optimizer_name, node->name);
-            ggml_build_forward_expand(opt_ctx->gb_opt, opt_step);
+            ggml_format_name(opt_అడుగు, "%s step for %s", optimizer_name, కణుపు->name);
+            ggml_build_forward_expand(opt_ctx->gb_opt, opt_అడుగు);
         }
     }
 
-    if (!opt_ctx->buf_static) {
+    ఒకవేళ (!opt_ctx->buf_static) {
         opt_ctx->buf_static = ggml_backend_alloc_ctx_tensors(
             opt_ctx->ctx_static, ggml_backend_sched_get_backend(opt_ctx->backend_sched, 0));
-        ggml_graph_reset(opt_ctx->gb_opt);
+        ggml_లేఖాచిత్రం_reset(opt_ctx->gb_opt);
     }
 
-    opt_ctx->buf_cpu = ggml_backend_alloc_ctx_tensors_from_buft(opt_ctx->ctx_cpu, ggml_backend_cpu_buffer_type());
+    opt_ctx->buf_cpu = ggml_backend_alloc_ctx_tensors_from_buft(opt_ctx->ctx_cpu, ggml_backend_cpu_బఫరు_type());
 }
 
-ggml_opt_context_t ggml_opt_init(struct ggml_opt_params params) {
-    ggml_opt_context_t result = new struct ggml_opt_context;
-    result->backend_sched    = params.backend_sched;
-    result->ctx_compute      = params.ctx_compute;
-    result->loss_type        = params.loss_type;
-    result->build_type       = params.build_type;
-    result->build_type_alloc = params.build_type;
-    result->inputs           = params.inputs;
-    result->outputs          = params.outputs;
-    result->opt_period       = params.opt_period;
-    result->get_opt_pars     = params.get_opt_pars;
-    result->get_opt_pars_ud  = params.get_opt_pars_ud;
-    result->optimizer        = params.optimizer;
+ggml_opt_context_t ggml_opt_init(నిర్మాణం ggml_opt_params params) {
+    ggml_opt_context_t ఫలితం = కొత్త నిర్మాణం ggml_opt_context;
+    ఫలితం->backend_sched    = params.backend_sched;
+    ఫలితం->ctx_compute      = params.ctx_compute;
+    ఫలితం->loss_type        = params.loss_type;
+    ఫలితం->build_type       = params.build_type;
+    ఫలితం->build_type_alloc = params.build_type;
+    ఫలితం->inputs           = params.inputs;
+    ఫలితం->outputs          = params.outputs;
+    ఫలితం->opt_period       = params.opt_period;
+    ఫలితం->get_opt_pars     = params.get_opt_pars;
+    ఫలితం->get_opt_pars_ud  = params.get_opt_pars_ud;
+    ఫలితం->optimizer        = params.optimizer;
 
-    GGML_ASSERT(result->opt_period >= 1);
+    GGML_ASSERT(ఫలితం->opt_period >= 1);
 
-    result->static_graphs = result->ctx_compute;
+    ఫలితం->static_graphs = ఫలితం->ctx_compute;
 
-    if (!result->static_graphs) {
-        GGML_ASSERT(!result->inputs);
-        GGML_ASSERT(!result->outputs);
-        return result;
+    ఒకవేళ (!ఫలితం->static_graphs) {
+        GGML_ASSERT(!ఫలితం->inputs);
+        GGML_ASSERT(!ఫలితం->outputs);
+        తిరిగి ఫలితం;
     }
 
-    GGML_ASSERT(result->inputs);
-    GGML_ASSERT(result->outputs);
+    GGML_ASSERT(ఫలితం->inputs);
+    GGML_ASSERT(ఫలితం->outputs);
 
-    result->gf = ggml_new_graph_custom(result->ctx_compute, GGML_DEFAULT_GRAPH_SIZE, /*grads =*/ true); // Forward pass.
-    ggml_build_forward_expand(result->gf, result->outputs);
+    ఫలితం->gf = ggml_new_లేఖాచిత్రం_custom(ఫలితం->ctx_compute, GGML_DEFAULT_లేఖాచిత్రం_కొలత, /*grads =*/ నిజం); // Forward pass.
+    ggml_build_forward_expand(ఫలితం->gf, ఫలితం->outputs);
 
-    ggml_opt_build(result);
+    ggml_opt_build(ఫలితం);
 
-    return result;
+    తిరిగి ఫలితం;
 }
 
-void ggml_opt_free(ggml_opt_context_t opt_ctx) {
-    if (opt_ctx == nullptr) {
-        return;
+శూన్య ggml_opt_free(ggml_opt_context_t opt_ctx) {
+    ఒకవేళ (opt_ctx == శూన్యసూచిక) {
+        తిరిగి;
     }
-    ggml_backend_buffer_free(opt_ctx->buf_static);
-    ggml_backend_buffer_free(opt_ctx->buf_cpu);
+    ggml_backend_బఫరు_free(opt_ctx->buf_static);
+    ggml_backend_బఫరు_free(opt_ctx->buf_cpu);
     ggml_free(opt_ctx->ctx_static);
     ggml_free(opt_ctx->ctx_cpu);
     ggml_free(opt_ctx->ctx_copy);
-    delete opt_ctx;
+    తొలగించు opt_ctx;
 }
 
-void ggml_opt_reset(ggml_opt_context_t opt_ctx, bool optimizer) {
-    if (optimizer) {
-        ggml_graph_reset(opt_ctx->gb_opt);
+శూన్య ggml_opt_reset(ggml_opt_context_t opt_ctx, తార్కిక optimizer) {
+    ఒకవేళ (optimizer) {
+        ggml_లేఖాచిత్రం_reset(opt_ctx->gb_opt);
         opt_ctx->iter = 1;
-    } else {
-        ggml_graph_reset(opt_ctx->gb_grad);
+    } లేకపోతే {
+        ggml_లేఖాచిత్రం_reset(opt_ctx->gb_grad);
     }
 }
 
-bool ggml_opt_static_graphs(ggml_opt_context_t opt_ctx) {
-    return opt_ctx->static_graphs;
+తార్కిక ggml_opt_static_graphs(ggml_opt_context_t opt_ctx) {
+    తిరిగి opt_ctx->static_graphs;
 }
 
-struct ggml_tensor * ggml_opt_inputs(ggml_opt_context_t opt_ctx) {
-    return opt_ctx->inputs;
+నిర్మాణం ggml_tensor * ggml_opt_inputs(ggml_opt_context_t opt_ctx) {
+    తిరిగి opt_ctx->inputs;
 }
 
-struct ggml_tensor * ggml_opt_outputs(ggml_opt_context_t opt_ctx) {
-    return opt_ctx->outputs;
+నిర్మాణం ggml_tensor * ggml_opt_outputs(ggml_opt_context_t opt_ctx) {
+    తిరిగి opt_ctx->outputs;
 }
 
-struct ggml_tensor * ggml_opt_labels(ggml_opt_context_t opt_ctx) {
-    return opt_ctx->labels;
+నిర్మాణం ggml_tensor * ggml_opt_labels(ggml_opt_context_t opt_ctx) {
+    తిరిగి opt_ctx->labels;
 }
 
-struct ggml_tensor * ggml_opt_loss(ggml_opt_context_t opt_ctx) {
-    return opt_ctx->loss;
+నిర్మాణం ggml_tensor * ggml_opt_loss(ggml_opt_context_t opt_ctx) {
+    తిరిగి opt_ctx->loss;
 }
 
-struct ggml_tensor * ggml_opt_pred(ggml_opt_context_t opt_ctx) {
-    return opt_ctx->pred;
+నిర్మాణం ggml_tensor * ggml_opt_pred(ggml_opt_context_t opt_ctx) {
+    తిరిగి opt_ctx->pred;
 }
 
-struct ggml_tensor * ggml_opt_ncorrect(ggml_opt_context_t opt_ctx) {
-    return opt_ctx->ncorrect;
+నిర్మాణం ggml_tensor * ggml_opt_ncorrect(ggml_opt_context_t opt_ctx) {
+    తిరిగి opt_ctx->ncorrect;
 }
 
-struct ggml_tensor * ggml_opt_grad_acc(ggml_opt_context_t opt_ctx, struct ggml_tensor * node) {
-    return ggml_graph_get_grad_acc(opt_ctx->gb_opt, node);
+నిర్మాణం ggml_tensor * ggml_opt_grad_acc(ggml_opt_context_t opt_ctx, నిర్మాణం ggml_tensor * కణుపు) {
+    తిరిగి ggml_లేఖాచిత్రం_get_grad_acc(opt_ctx->gb_opt, కణుపు);
 }
 
 // ====== Optimization Result ======
 
-ggml_opt_result_t ggml_opt_result_init() {
-    return new ggml_opt_result;
+ggml_opt_ఫలితం_t ggml_opt_ఫలితం_init() {
+    తిరిగి కొత్త ggml_opt_ఫలితం;
 }
 
-void ggml_opt_result_free(ggml_opt_result_t result) {
-    delete result;
+శూన్య ggml_opt_ఫలితం_free(ggml_opt_ఫలితం_t ఫలితం) {
+    తొలగించు ఫలితం;
 }
 
-void ggml_opt_result_reset(ggml_opt_result_t result) {
-    result->ndata = 0;
-    result->loss.clear();
-    result->pred.clear();
-    result->ncorrect = 0;
+శూన్య ggml_opt_ఫలితం_reset(ggml_opt_ఫలితం_t ఫలితం) {
+    ఫలితం->ndata = 0;
+    ఫలితం->loss.clear();
+    ఫలితం->pred.clear();
+    ఫలితం->ncorrect = 0;
 }
 
-void ggml_opt_result_ndata(ggml_opt_result_t result, int64_t * ndata) {
-    *ndata = result->ndata;
+శూన్య ggml_opt_ఫలితం_ndata(ggml_opt_ఫలితం_t ఫలితం, int64_t * ndata) {
+    *ndata = ఫలితం->ndata;
 }
 
-void ggml_opt_result_loss(ggml_opt_result_t result, double * loss, double * unc) {
-    const int64_t nbatches = result->loss.size(); // Number of physical batches.
+శూన్య ggml_opt_ఫలితం_loss(ggml_opt_ఫలితం_t ఫలితం, ద్విగుణ * loss, ద్విగుణ * unc) {
+    స్థిరరాశి int64_t nbatches = ఫలితం->loss.size(); // Number of physical batches.
 
-    if (nbatches == 0) {
+    ఒకవేళ (nbatches == 0) {
         *loss = 0.0;
         *unc  = NAN;
-        return;
+        తిరిగి;
     }
 
-    double sum         = 0.0;
-    double sum_squared = 0.0;
+    ద్విగుణ కూడిక         = 0.0;
+    ద్విగుణ కూడిక_squared = 0.0;
 
-    for (const float & loss : result->loss) {
+    కొరకు (స్థిరరాశి దశాంశం & loss : ఫలితం->loss) {
         // If the loss is per datapoint it was scaled by 1.0f/opt_period for each physical batch.
-        const float loss_scaled = result->loss_per_datapoint ? loss*result->opt_period : loss;
-        sum         += loss_scaled;
-        sum_squared += loss_scaled*loss_scaled;
+        స్థిరరాశి దశాంశం loss_scaled = ఫలితం->loss_చొప్పున_datapoint ? loss*ఫలితం->opt_period : loss;
+        కూడిక         += loss_scaled;
+        కూడిక_squared += loss_scaled*loss_scaled;
     }
 
-    const double mean = sum/nbatches;
-    *loss = result->loss_per_datapoint ? mean : sum;
+    స్థిరరాశి ద్విగుణ సగటు_2 = కూడిక/nbatches;
+    *loss = ఫలితం->loss_చొప్పున_datapoint ? సగటు_2 : కూడిక;
 
-    if (!unc) {
-        return;
+    ఒకవేళ (!unc) {
+        తిరిగి;
     }
 
-    if (nbatches < 2) {
+    ఒకవేళ (nbatches < 2) {
         *unc = NAN;
-        return;
+        తిరిగి;
     }
 
-    const double var_sum = sum_squared/nbatches - mean*mean; // variance without Bessel's correction, i.e. nbatches/(nbatches-1)
-    *unc = result->loss_per_datapoint ? sqrt(var_sum / (nbatches - 1)) : sqrt(var_sum * nbatches/(nbatches - 1));
+    స్థిరరాశి ద్విగుణ var_కూడిక = కూడిక_squared/nbatches - సగటు_2*సగటు_2; // variance without Bessel's correction, i.e. nbatches/(nbatches-1)
+    *unc = ఫలితం->loss_చొప్పున_datapoint ? వర్గమూలం(var_కూడిక / (nbatches - 1)) : వర్గమూలం(var_కూడిక * nbatches/(nbatches - 1));
 }
 
-void ggml_opt_result_pred(ggml_opt_result_t result, int32_t * pred) {
-    for (size_t i = 0; i < result->pred.size(); ++i) {
-        pred[i] = result->pred[i];
+శూన్య ggml_opt_ఫలితం_pred(ggml_opt_ఫలితం_t ఫలితం, int32_t * pred) {
+    కొరకు (size_t i = 0; i < ఫలితం->pred.size(); ++i) {
+        pred[i] = ఫలితం->pred[i];
     }
 }
 
-void ggml_opt_result_accuracy(ggml_opt_result_t result, double * accuracy, double * unc) {
-    *accuracy = result->ncorrect >= 0 ? double(result->ncorrect) / double(result->ndata) : NAN;
+శూన్య ggml_opt_ఫలితం_accuracy(ggml_opt_ఫలితం_t ఫలితం, ద్విగుణ * accuracy, ద్విగుణ * unc) {
+    *accuracy = ఫలితం->ncorrect >= 0 ? ద్విగుణ(ఫలితం->ncorrect) / ద్విగుణ(ఫలితం->ndata) : NAN;
 
-    if (!unc) {
-        return;
+    ఒకవేళ (!unc) {
+        తిరిగి;
     }
 
-    *unc = result->ncorrect >= 0 && result->ndata >= 2 ?
-        sqrt((*accuracy) * (1.0 - (*accuracy)) / double(result->ndata - 1)) : NAN;
+    *unc = ఫలితం->ncorrect >= 0 && ఫలితం->ndata >= 2 ?
+        వర్గమూలం((*accuracy) * (1.0 - (*accuracy)) / ద్విగుణ(ఫలితం->ndata - 1)) : NAN;
 }
 
 // ====== Computation ======
 
-void ggml_opt_prepare_alloc(
+శూన్య ggml_opt_prepare_alloc(
         ggml_opt_context_t    opt_ctx,
-        struct ggml_context * ctx_compute,
-        struct ggml_cgraph  * gf,
-        struct ggml_tensor  * inputs,
-        struct ggml_tensor  * outputs) {
+        నిర్మాణం ggml_context * ctx_compute,
+        నిర్మాణం ggml_cgraph  * gf,
+        నిర్మాణం ggml_tensor  * inputs,
+        నిర్మాణం ggml_tensor  * outputs) {
     GGML_ASSERT(!opt_ctx->static_graphs);
     opt_ctx->ctx_compute = ctx_compute;
     opt_ctx->gf          = gf;
@@ -722,70 +722,70 @@ void ggml_opt_prepare_alloc(
     opt_ctx->outputs     = outputs;
 }
 
-void ggml_opt_alloc(ggml_opt_context_t opt_ctx, bool backward) {
+శూన్య ggml_opt_alloc(ggml_opt_context_t opt_ctx, తార్కిక backward) {
     GGML_ASSERT(!opt_ctx->eval_ready);
-    if (opt_ctx->build_type == GGML_OPT_BUILD_TYPE_OPT && opt_ctx->opt_period > 1 && opt_ctx->opt_i == 0) {
-        ggml_graph_reset(opt_ctx->gb_grad);
+    ఒకవేళ (opt_ctx->build_type == GGML_OPT_BUILD_TYPE_OPT && opt_ctx->opt_period > 1 && opt_ctx->opt_i == 0) {
+        ggml_లేఖాచిత్రం_reset(opt_ctx->gb_grad);
     }
-    if (backward) {
-        const int32_t opt_i_next = (opt_ctx->opt_i + 1) % opt_ctx->opt_period;
-        opt_ctx->build_type = opt_i_next == 0 ? GGML_OPT_BUILD_TYPE_OPT : GGML_OPT_BUILD_TYPE_GRAD;
-    } else {
+    ఒకవేళ (backward) {
+        స్థిరరాశి int32_t opt_i_తదుపరి = (opt_ctx->opt_i + 1) % opt_ctx->opt_period;
+        opt_ctx->build_type = opt_i_తదుపరి == 0 ? GGML_OPT_BUILD_TYPE_OPT : GGML_OPT_BUILD_TYPE_GRAD;
+    } లేకపోతే {
         opt_ctx->build_type = GGML_OPT_BUILD_TYPE_FORWARD;
     }
 
-    if (!opt_ctx->static_graphs) {
+    ఒకవేళ (!opt_ctx->static_graphs) {
         ggml_opt_build(opt_ctx);
     }
 
-    struct ggml_cgraph * graph = nullptr;
-    switch (opt_ctx->build_type) {
-        case GGML_OPT_BUILD_TYPE_FORWARD: {
+    నిర్మాణం ggml_cgraph * graph = శూన్యసూచిక;
+    ఎంపిక (opt_ctx->build_type) {
+        స్థితి GGML_OPT_BUILD_TYPE_FORWARD: {
             graph = opt_ctx->gf;
-        } break;
-        case GGML_OPT_BUILD_TYPE_GRAD: {
+        } ఆపు;
+        స్థితి GGML_OPT_BUILD_TYPE_GRAD: {
             graph = opt_ctx->gb_grad;
-        } break;
-        case GGML_OPT_BUILD_TYPE_OPT: {
+        } ఆపు;
+        స్థితి GGML_OPT_BUILD_TYPE_OPT: {
             graph = opt_ctx->gb_opt;
-        } break;
+        } ఆపు;
     }
     GGML_ASSERT(graph);
 
-    if (opt_ctx->allocated_graph == graph) {
-        opt_ctx->eval_ready = true;
-        return;
+    ఒకవేళ (opt_ctx->allocated_లేఖాచిత్రం == graph) {
+        opt_ctx->eval_ready = నిజం;
+        తిరిగి;
     }
 
     ggml_backend_sched_reset(opt_ctx->backend_sched); // clear allocation of previous graph
 
-    if (opt_ctx->static_graphs) {
+    ఒకవేళ (opt_ctx->static_graphs) {
         ggml_init_params params = {
-            /*.mem_size   =*/ graph->size*ggml_tensor_overhead() + ggml_graph_overhead_custom(graph->size, graph->grads),
-            /*.mem_buffer =*/ nullptr,
-            /*.no_alloc   =*/ true,
+            /*.mem_size   =*/ graph->size*ggml_tensor_overhead() + ggml_లేఖాచిత్రం_overhead_custom(graph->size, graph->grads),
+            /*.mem_buffer =*/ శూన్యసూచిక,
+            /*.no_alloc   =*/ నిజం,
         };
         ggml_free(opt_ctx->ctx_copy);
         opt_ctx->ctx_copy = ggml_init(params);
 
-        opt_ctx->allocated_graph_copy = dup_graph(opt_ctx->ctx_copy, graph);
-    } else {
-        opt_ctx->allocated_graph_copy = graph;
+        opt_ctx->allocated_లేఖాచిత్రం_copy = dup_లేఖాచిత్రం(opt_ctx->ctx_copy, graph);
+    } లేకపోతే {
+        opt_ctx->allocated_లేఖాచిత్రం_copy = graph;
     }
 
-    ggml_backend_sched_alloc_graph(opt_ctx->backend_sched, opt_ctx->allocated_graph_copy);
-    opt_ctx->allocated_graph = graph;
+    ggml_backend_sched_alloc_లేఖాచిత్రం(opt_ctx->backend_sched, opt_ctx->allocated_లేఖాచిత్రం_copy);
+    opt_ctx->allocated_లేఖాచిత్రం = graph;
 
-    opt_ctx->eval_ready = true;
+    opt_ctx->eval_ready = నిజం;
 }
 
-void ggml_opt_eval(ggml_opt_context_t opt_ctx, ggml_opt_result_t result) {
+శూన్య ggml_opt_eval(ggml_opt_context_t opt_ctx, ggml_opt_ఫలితం_t ఫలితం) {
     GGML_ASSERT(opt_ctx->eval_ready);
-    if (opt_ctx->allocated_graph == opt_ctx->gb_opt) {
-        const ggml_opt_optimizer_params & opt_pars = opt_ctx->get_opt_pars(opt_ctx->get_opt_pars_ud);
+    ఒకవేళ (opt_ctx->allocated_లేఖాచిత్రం == opt_ctx->gb_opt) {
+        స్థిరరాశి ggml_opt_optimizer_params & opt_pars = opt_ctx->get_opt_pars(opt_ctx->get_opt_pars_ud);
 
-        switch (opt_ctx->optimizer) {
-            case GGML_OPT_OPTIMIZER_TYPE_ADAMW: {
+        ఎంపిక (opt_ctx->optimizer) {
+            స్థితి GGML_OPT_OPTIMIZER_TYPE_ADAMW: {
                 GGML_ASSERT(opt_pars.adamw.alpha > 0.0f);
                 GGML_ASSERT(opt_pars.adamw.beta1 >= 0.0f);
                 GGML_ASSERT(opt_pars.adamw.beta1 <= 1.0f);
@@ -796,234 +796,234 @@ void ggml_opt_eval(ggml_opt_context_t opt_ctx, ggml_opt_result_t result) {
                 GGML_ASSERT(opt_pars.adamw.wd <= 1.0f);
 
                 // beta1, beta2 after applying warmup
-                const float beta1h = 1.0f / (1.0f - powf(opt_pars.adamw.beta1, opt_ctx->iter));
-                const float beta2h = 1.0f / (1.0f - powf(opt_pars.adamw.beta2, opt_ctx->iter));
+                స్థిరరాశి దశాంశం beta1h = 1.0f / (1.0f - powf(opt_pars.adamw.beta1, opt_ctx->iter));
+                స్థిరరాశి దశాంశం beta2h = 1.0f / (1.0f - powf(opt_pars.adamw.beta2, opt_ctx->iter));
 
-                float * adamw_par_data = ggml_get_data_f32(opt_ctx->opt_step_params);
-                adamw_par_data[0] = opt_pars.adamw.alpha;
-                adamw_par_data[1] = opt_pars.adamw.beta1;
-                adamw_par_data[2] = opt_pars.adamw.beta2;
-                adamw_par_data[3] = opt_pars.adamw.eps;
-                adamw_par_data[4] = opt_pars.adamw.wd;
-                adamw_par_data[5] = beta1h;
-                adamw_par_data[6] = beta2h;
-            } break;
-            case GGML_OPT_OPTIMIZER_TYPE_SGD: {
+                దశాంశం * adamw_par_దత్తాంశం = ggml_get_దత్తాంశం_f32(opt_ctx->opt_అడుగు_params);
+                adamw_par_దత్తాంశం[0] = opt_pars.adamw.alpha;
+                adamw_par_దత్తాంశం[1] = opt_pars.adamw.beta1;
+                adamw_par_దత్తాంశం[2] = opt_pars.adamw.beta2;
+                adamw_par_దత్తాంశం[3] = opt_pars.adamw.eps;
+                adamw_par_దత్తాంశం[4] = opt_pars.adamw.wd;
+                adamw_par_దత్తాంశం[5] = beta1h;
+                adamw_par_దత్తాంశం[6] = beta2h;
+            } ఆపు;
+            స్థితి GGML_OPT_OPTIMIZER_TYPE_SGD: {
                 GGML_ASSERT(opt_pars.sgd.alpha > 0.0f);
                 GGML_ASSERT(opt_pars.sgd.wd >= 0.0f);
                 GGML_ASSERT(opt_pars.sgd.wd <= 1.0f);
-                float * sgd = ggml_get_data_f32(opt_ctx->opt_step_params);
+                దశాంశం * sgd = ggml_get_దత్తాంశం_f32(opt_ctx->opt_అడుగు_params);
                 sgd[0] = opt_pars.sgd.alpha;
                 sgd[1] = opt_pars.sgd.wd;
-            } break;
-            default:
+            } ఆపు;
+            అప్రమేయ:
                 GGML_ABORT("fatal error");
         }
     }
 
-    ggml_backend_sched_graph_compute(opt_ctx->backend_sched, opt_ctx->allocated_graph_copy);
-    opt_ctx->iter += opt_ctx->allocated_graph == opt_ctx->gb_opt;
+    ggml_backend_sched_లేఖాచిత్రం_compute(opt_ctx->backend_sched, opt_ctx->allocated_లేఖాచిత్రం_copy);
+    opt_ctx->iter += opt_ctx->allocated_లేఖాచిత్రం == opt_ctx->gb_opt;
     opt_ctx->opt_i = (opt_ctx->opt_i + 1) % opt_ctx->opt_period;
 
-    if (!opt_ctx->static_graphs) {
-        opt_ctx->gf                   = nullptr;
-        opt_ctx->gb_grad              = nullptr;
-        opt_ctx->gb_opt               = nullptr;
-        opt_ctx->allocated_graph      = nullptr;
-        opt_ctx->allocated_graph_copy = nullptr;
+    ఒకవేళ (!opt_ctx->static_graphs) {
+        opt_ctx->gf                   = శూన్యసూచిక;
+        opt_ctx->gb_grad              = శూన్యసూచిక;
+        opt_ctx->gb_opt               = శూన్యసూచిక;
+        opt_ctx->allocated_లేఖాచిత్రం      = శూన్యసూచిక;
+        opt_ctx->allocated_లేఖాచిత్రం_copy = శూన్యసూచిక;
     }
 
-    opt_ctx->eval_ready = false;
+    opt_ctx->eval_ready = అబద్ధం;
 
-    if (!result) {
-        return;
+    ఒకవేళ (!ఫలితం) {
+        తిరిగి;
     }
 
-    if (result->ndata == 0) {
-        result->loss_per_datapoint = opt_ctx->loss_per_datapoint;
-        result->opt_period         = opt_ctx->opt_period;
-    } else {
-        GGML_ASSERT(result->loss_per_datapoint == opt_ctx->loss_per_datapoint);
-        GGML_ASSERT(result->opt_period         == opt_ctx->opt_period);
+    ఒకవేళ (ఫలితం->ndata == 0) {
+        ఫలితం->loss_చొప్పున_datapoint = opt_ctx->loss_చొప్పున_datapoint;
+        ఫలితం->opt_period         = opt_ctx->opt_period;
+    } లేకపోతే {
+        GGML_ASSERT(ఫలితం->loss_చొప్పున_datapoint == opt_ctx->loss_చొప్పున_datapoint);
+        GGML_ASSERT(ఫలితం->opt_period         == opt_ctx->opt_period);
     }
 
-    const int64_t ndata = opt_ctx->outputs->ne[1];
-    GGML_ASSERT(result->ndata == ndata*int64_t(result->loss.size()) && "varying batch size not supported");
-    result->ndata += ndata;
+    స్థిరరాశి int64_t ndata = opt_ctx->outputs->ne[1];
+    GGML_ASSERT(ఫలితం->ndata == ndata*int64_t(ఫలితం->loss.size()) && "varying batch size not supported");
+    ఫలితం->ndata += ndata;
 
     GGML_ASSERT(ggml_is_scalar(opt_ctx->loss));
     GGML_ASSERT(opt_ctx->loss->type == GGML_TYPE_F32);
-    float loss;
+    దశాంశం loss;
     ggml_backend_tensor_get(opt_ctx->loss, &loss, 0, ggml_nbytes(opt_ctx->loss));
-    result->loss.push_back(loss);
+    ఫలితం->loss.push_back(loss);
 
-    if (opt_ctx->pred) {
+    ఒకవేళ (opt_ctx->pred) {
         GGML_ASSERT(opt_ctx->pred->type == GGML_TYPE_I32);
         std::vector<int32_t> pred(ndata);
-        ggml_backend_tensor_get(opt_ctx->pred, pred.data(), 0, ggml_nbytes(opt_ctx->pred));
-        result->pred.insert(result->pred.end(), pred.begin(), pred.end());
+        ggml_backend_tensor_get(opt_ctx->pred, pred.దత్తాంశం(), 0, ggml_nbytes(opt_ctx->pred));
+        ఫలితం->pred.insert(ఫలితం->pred.end(), pred.begin(), pred.end());
     }
 
-    if (!opt_ctx->ncorrect || result->ncorrect < 0) {
-        result->ncorrect = -1;
-        return;
+    ఒకవేళ (!opt_ctx->ncorrect || ఫలితం->ncorrect < 0) {
+        ఫలితం->ncorrect = -1;
+        తిరిగి;
     }
 
     GGML_ASSERT(ggml_is_scalar(opt_ctx->ncorrect));
     GGML_ASSERT(opt_ctx->ncorrect->type == GGML_TYPE_I64);
     int64_t ncorrect;
     ggml_backend_tensor_get(opt_ctx->ncorrect, &ncorrect, 0, ggml_nbytes(opt_ctx->ncorrect));
-    result->ncorrect += ncorrect;
+    ఫలితం->ncorrect += ncorrect;
 }
 
 // ====== High-Level Functions ======
 
-void ggml_opt_epoch(
+శూన్య ggml_opt_epoch(
         ggml_opt_context_t      opt_ctx,
         ggml_opt_dataset_t      dataset,
-        ggml_opt_result_t       result_train,
-        ggml_opt_result_t       result_eval,
-        int64_t                 idata_split,
+        ggml_opt_ఫలితం_t       ఫలితం_train,
+        ggml_opt_ఫలితం_t       ఫలితం_eval,
+        int64_t                 idata_విభజించు,
         ggml_opt_epoch_callback callback_train,
         ggml_opt_epoch_callback callback_eval) {
     GGML_ASSERT(ggml_opt_static_graphs(opt_ctx) && "ggml_opt_epoch requires static graphs");
-    struct ggml_tensor * inputs = ggml_opt_inputs(opt_ctx);
-    struct ggml_tensor * labels = ggml_opt_labels(opt_ctx);
-    struct ggml_tensor * data   = ggml_opt_dataset_data(dataset);
-    GGML_ASSERT(data->ne[0] == inputs->ne[0]);
+    నిర్మాణం ggml_tensor * inputs = ggml_opt_inputs(opt_ctx);
+    నిర్మాణం ggml_tensor * labels = ggml_opt_labels(opt_ctx);
+    నిర్మాణం ggml_tensor * దత్తాంశం   = ggml_opt_dataset_దత్తాంశం(dataset);
+    GGML_ASSERT(దత్తాంశం->ne[0] == inputs->ne[0]);
 
-    const int64_t ndata       =   data->ne[1];
-    const int64_t ndata_batch = inputs->ne[1];
+    స్థిరరాశి int64_t ndata       =   దత్తాంశం->ne[1];
+    స్థిరరాశి int64_t ndata_batch = inputs->ne[1];
 
-    GGML_ASSERT(data->ne[1] % inputs->ne[1] == 0);
-    const int64_t nbatches = ndata/ndata_batch;
+    GGML_ASSERT(దత్తాంశం->ne[1] % inputs->ne[1] == 0);
+    స్థిరరాశి int64_t nbatches = ndata/ndata_batch;
 
-    idata_split = idata_split < 0 ? ndata : idata_split;
-    GGML_ASSERT(idata_split % ndata_batch == 0);
-    const int64_t ibatch_split = idata_split / ndata_batch;
+    idata_విభజించు = idata_విభజించు < 0 ? ndata : idata_విభజించు;
+    GGML_ASSERT(idata_విభజించు % ndata_batch == 0);
+    స్థిరరాశి int64_t ibatch_విభజించు = idata_విభజించు / ndata_batch;
 
     int64_t ibatch = 0;
-    int64_t t_loop_start = ggml_time_us();
-    for (; ibatch < ibatch_split; ++ibatch) {
-        ggml_opt_alloc(opt_ctx, /*backward =*/ true);
+    int64_t t_loop_ప్రారంభం = ggml_సమయం_us();
+    కొరకు (; ibatch < ibatch_విభజించు; ++ibatch) {
+        ggml_opt_alloc(opt_ctx, /*backward =*/ నిజం);
         ggml_opt_dataset_get_batch(dataset, inputs, labels, ibatch);
-        ggml_opt_eval(opt_ctx, result_train);
-        if (callback_train) {
-            callback_train(true, opt_ctx, dataset, result_train, ibatch+1, ibatch_split, t_loop_start);
+        ggml_opt_eval(opt_ctx, ఫలితం_train);
+        ఒకవేళ (callback_train) {
+            callback_train(నిజం, opt_ctx, dataset, ఫలితం_train, ibatch+1, ibatch_విభజించు, t_loop_ప్రారంభం);
         }
     }
-    t_loop_start = ggml_time_us();
-    for (; ibatch < nbatches; ++ibatch) {
-        ggml_opt_alloc(opt_ctx, /*backward =*/ false);
+    t_loop_ప్రారంభం = ggml_సమయం_us();
+    కొరకు (; ibatch < nbatches; ++ibatch) {
+        ggml_opt_alloc(opt_ctx, /*backward =*/ అబద్ధం);
         ggml_opt_dataset_get_batch(dataset, inputs, labels, ibatch);
-        ggml_opt_eval(opt_ctx, result_eval);
-        if (callback_eval) {
-            callback_eval(false, opt_ctx, dataset, result_eval, ibatch+1-ibatch_split, nbatches-ibatch_split, t_loop_start);
+        ggml_opt_eval(opt_ctx, ఫలితం_eval);
+        ఒకవేళ (callback_eval) {
+            callback_eval(అబద్ధం, opt_ctx, dataset, ఫలితం_eval, ibatch+1-ibatch_విభజించు, nbatches-ibatch_విభజించు, t_loop_ప్రారంభం);
         }
     }
 }
 
-void ggml_opt_epoch_callback_progress_bar(
-        bool               train,
+శూన్య ggml_opt_epoch_callback_పురోగతి_bar(
+        తార్కిక               train,
         ggml_opt_context_t opt_ctx,
         ggml_opt_dataset_t dataset,
-        ggml_opt_result_t  result,
+        ggml_opt_ఫలితం_t  ఫలితం,
         int64_t            ibatch,
         int64_t            ibatch_max,
-        int64_t            t_start_us) {
+        int64_t            t_ప్రారంభం_us) {
     fprintf(stderr, "%s[", train ? "train: " : "val:   ");
 
     // The progress bar consists of partially filled blocks, unicode has 8 separate fill levels.
-    constexpr int64_t bar_length = 8;
-    const int64_t ibatch8 = 8 * ibatch;
-    for (int64_t j = 0; j < bar_length; ++j) {
-        if        (ibatch_max * (8*j + 8) / bar_length < ibatch8) {
+    constexpr int64_t bar_నిడివి = 8;
+    స్థిరరాశి int64_t ibatch8 = 8 * ibatch;
+    కొరకు (int64_t j = 0; j < bar_నిడివి; ++j) {
+        ఒకవేళ        (ibatch_max * (8*j + 8) / bar_నిడివి < ibatch8) {
             fprintf(stderr, "\u2588"); // full block
-        } else if (ibatch_max * (8*j + 7) / bar_length < ibatch8) {
+        } లేకపోతే ఒకవేళ (ibatch_max * (8*j + 7) / bar_నిడివి < ibatch8) {
             fprintf(stderr, "\u2589"); // 7/8 filled
-        } else if (ibatch_max * (8*j + 6) / bar_length < ibatch8) {
+        } లేకపోతే ఒకవేళ (ibatch_max * (8*j + 6) / bar_నిడివి < ibatch8) {
             fprintf(stderr, "\u258A"); // 6/8 filled
-        } else if (ibatch_max * (8*j + 5) / bar_length < ibatch8) {
+        } లేకపోతే ఒకవేళ (ibatch_max * (8*j + 5) / bar_నిడివి < ibatch8) {
             fprintf(stderr, "\u258B"); // 5/8 filled
-        } else if (ibatch_max * (8*j + 4) / bar_length < ibatch8) {
+        } లేకపోతే ఒకవేళ (ibatch_max * (8*j + 4) / bar_నిడివి < ibatch8) {
             fprintf(stderr, "\u258C"); // 4/8 filled
-        } else if (ibatch_max * (8*j + 3) / bar_length < ibatch8) {
+        } లేకపోతే ఒకవేళ (ibatch_max * (8*j + 3) / bar_నిడివి < ibatch8) {
             fprintf(stderr, "\u258D"); // 3/8 filled
-        } else if (ibatch_max * (8*j + 2) / bar_length < ibatch8) {
+        } లేకపోతే ఒకవేళ (ibatch_max * (8*j + 2) / bar_నిడివి < ibatch8) {
             fprintf(stderr, "\u258E"); // 2/8 filled
-        } else if (ibatch_max * (8*j + 1) / bar_length < ibatch8) {
+        } లేకపోతే ఒకవేళ (ibatch_max * (8*j + 1) / bar_నిడివి < ibatch8) {
             fprintf(stderr, "\u258F"); // 1/8 filled
-        } else {
+        } లేకపోతే {
             fprintf(stderr, " ");
         }
     }
 
-    const int64_t batch_size = ggml_opt_inputs(opt_ctx)->ne[1];
-    const int64_t idata      = ibatch*batch_size;
-    const int64_t idata_max  = ibatch_max*batch_size;
+    స్థిరరాశి int64_t batch_కొలత = ggml_opt_inputs(opt_ctx)->ne[1];
+    స్థిరరాశి int64_t idata      = ibatch*batch_కొలత;
+    స్థిరరాశి int64_t idata_max  = ibatch_max*batch_కొలత;
 
-    double loss;
-    double loss_unc;
-    ggml_opt_result_loss(result, &loss, &loss_unc);
+    ద్విగుణ loss;
+    ద్విగుణ loss_unc;
+    ggml_opt_ఫలితం_loss(ఫలితం, &loss, &loss_unc);
 
-    double accuracy;
-    double accuracy_unc;
-    ggml_opt_result_accuracy(result, &accuracy, &accuracy_unc);
+    ద్విగుణ accuracy;
+    ద్విగుణ accuracy_unc;
+    ggml_opt_ఫలితం_accuracy(ఫలితం, &accuracy, &accuracy_unc);
 
-    const int64_t t_ibatch_us = ggml_time_us() - t_start_us;
+    స్థిరరాశి int64_t t_ibatch_us = ggml_సమయం_us() - t_ప్రారంభం_us;
     int64_t t_ibatch_s = t_ibatch_us / 1000000;
-    const int64_t t_ibatch_h = t_ibatch_s / 3600;
+    స్థిరరాశి int64_t t_ibatch_h = t_ibatch_s / 3600;
     t_ibatch_s -= t_ibatch_h * 3600;
-    const int64_t t_ibatch_m = t_ibatch_s / 60;
+    స్థిరరాశి int64_t t_ibatch_m = t_ibatch_s / 60;
     t_ibatch_s -= t_ibatch_m * 60;
 
-    const int64_t t_eta_us = t_ibatch_us * (ibatch_max - ibatch)/ibatch;
+    స్థిరరాశి int64_t t_eta_us = t_ibatch_us * (ibatch_max - ibatch)/ibatch;
     int64_t t_eta_s = t_eta_us / 1000000;
-    const int64_t t_eta_h = t_eta_s / 3600;
+    స్థిరరాశి int64_t t_eta_h = t_eta_s / 3600;
     t_eta_s -= t_eta_h * 3600;
-    const int64_t t_eta_m = t_eta_s / 60;
+    స్థిరరాశి int64_t t_eta_m = t_eta_s / 60;
     t_eta_s -= t_eta_m * 60;
 
     fprintf(stderr, "] data=%07" PRId64 "/%07" PRId64 " loss=%.5lf±%.5lf acc=%.2lf±%.2lf%% "
             "t=%02" PRId64 ":%02" PRId64 ":%02" PRId64 " ETA=%02" PRId64 ":%02" PRId64 ":%02" PRId64 " \r",
             idata, idata_max, loss, loss_unc, 100.0*accuracy, 100.0*accuracy_unc,
             t_ibatch_h, t_ibatch_m, t_ibatch_s, t_eta_h, t_eta_m, t_eta_s);
-    if (ibatch == ibatch_max) {
+    ఒకవేళ (ibatch == ibatch_max) {
         fprintf(stderr, "\n");
     }
     fflush(stderr);
 
-    GGML_UNUSED(dataset);
+    GGML_వాడని(dataset);
 }
 
-void ggml_opt_fit(
+శూన్య ggml_opt_fit(
         ggml_backend_sched_t            backend_sched,
         ggml_context                  * ctx_compute,
         ggml_tensor                   * inputs,
         ggml_tensor                   * outputs,
         ggml_opt_dataset_t              dataset,
-        enum ggml_opt_loss_type         loss_type,
-        enum ggml_opt_optimizer_type    optimizer,
+        గణన ggml_opt_loss_type         loss_type,
+        గణన ggml_opt_optimizer_type    optimizer,
         ggml_opt_get_optimizer_params   get_opt_pars,
         int64_t                         nepoch,
         int64_t                         nbatch_logical,
-        float                           val_split,
-        bool                            silent) {
-    ggml_time_init();
-    const int64_t t_start_us = ggml_time_us();
+        దశాంశం                           val_విభజించు,
+        తార్కిక                            silent) {
+    ggml_సమయం_init();
+    స్థిరరాశి int64_t t_ప్రారంభం_us = ggml_సమయం_us();
 
-    const int64_t ndata           = ggml_opt_dataset_data(dataset)->ne[1];
-    const int64_t nbatch_physical = inputs->ne[1];
+    స్థిరరాశి int64_t ndata           = ggml_opt_dataset_దత్తాంశం(dataset)->ne[1];
+    స్థిరరాశి int64_t nbatch_physical = inputs->ne[1];
     GGML_ASSERT(ndata          % nbatch_logical  == 0);
     GGML_ASSERT(nbatch_logical % nbatch_physical == 0);
 
-    const int64_t opt_period       = nbatch_logical / nbatch_physical;
-    const int64_t nbatches_logical = ndata / nbatch_logical;
+    స్థిరరాశి int64_t opt_period       = nbatch_logical / nbatch_physical;
+    స్థిరరాశి int64_t nbatches_logical = ndata / nbatch_logical;
 
-    GGML_ASSERT(val_split >= 0.0f);
-    GGML_ASSERT(val_split <  1.0f);
-    const int64_t ibatch_split = int64_t(((1.0f - val_split) * nbatches_logical)) * opt_period; // train <-> val split index (physical)
-    const int64_t idata_split  = ibatch_split * nbatch_physical;
+    GGML_ASSERT(val_విభజించు >= 0.0f);
+    GGML_ASSERT(val_విభజించు <  1.0f);
+    స్థిరరాశి int64_t ibatch_విభజించు = int64_t(((1.0f - val_విభజించు) * nbatches_logical)) * opt_period; // train <-> val split index (physical)
+    స్థిరరాశి int64_t idata_విభజించు  = ibatch_విభజించు * nbatch_physical;
 
     int64_t epoch = 1;
 
@@ -1038,57 +1038,57 @@ void ggml_opt_fit(
     ggml_opt_context_t opt_ctx = ggml_opt_init(params);
 
     // Shuffling the data is generally useful but there is only a point if not all data is used in a single batch.
-    if (nbatch_logical < ndata) {
+    ఒకవేళ (nbatch_logical < ndata) {
         ggml_opt_dataset_shuffle(opt_ctx, dataset, -1); // Shuffle all data (train + validation).
     }
 
-    ggml_opt_result_t result_train = ggml_opt_result_init();
-    ggml_opt_result_t result_val   = ggml_opt_result_init();
+    ggml_opt_ఫలితం_t ఫలితం_train = ggml_opt_ఫలితం_init();
+    ggml_opt_ఫలితం_t ఫలితం_val   = ggml_opt_ఫలితం_init();
 
-    ggml_opt_epoch_callback epoch_callback = silent ? nullptr : ggml_opt_epoch_callback_progress_bar;
+    ggml_opt_epoch_callback epoch_callback = silent ? శూన్యసూచిక : ggml_opt_epoch_callback_పురోగతి_bar;
 
-    for (; epoch <= nepoch; ++epoch) {
-        if (nbatch_logical < idata_split) {
-            ggml_opt_dataset_shuffle(opt_ctx, dataset, idata_split);
+    కొరకు (; epoch <= nepoch; ++epoch) {
+        ఒకవేళ (nbatch_logical < idata_విభజించు) {
+            ggml_opt_dataset_shuffle(opt_ctx, dataset, idata_విభజించు);
         }
 
-        ggml_opt_result_reset(result_train);
-        ggml_opt_result_reset(result_val);
+        ggml_opt_ఫలితం_reset(ఫలితం_train);
+        ggml_opt_ఫలితం_reset(ఫలితం_val);
 
-        if (!silent) {
+        ఒకవేళ (!silent) {
             fprintf(stderr, "%s: epoch %04" PRId64 "/%04" PRId64 ":\n", __func__, epoch, nepoch);
         }
-        ggml_opt_epoch(opt_ctx, dataset, result_train, result_val, idata_split, epoch_callback, epoch_callback);
-        if (!silent) {
+        ggml_opt_epoch(opt_ctx, dataset, ఫలితం_train, ఫలితం_val, idata_విభజించు, epoch_callback, epoch_callback);
+        ఒకవేళ (!silent) {
             fprintf(stderr, "\n");
         }
     }
 
-    if (!silent) {
-        int64_t t_total_s = (ggml_time_us() - t_start_us) / 1000000;
-        const int64_t t_total_h = t_total_s / 3600;
-        t_total_s -= t_total_h * 3600;
-        const int64_t t_total_m = t_total_s / 60;
-        t_total_s -= t_total_m * 60;
-        fprintf(stderr, "%s: training took %02" PRId64 ":%02" PRId64 ":%02" PRId64 "\n", __func__, t_total_h, t_total_m, t_total_s);
+    ఒకవేళ (!silent) {
+        int64_t t_మొత్తం_s = (ggml_సమయం_us() - t_ప్రారంభం_us) / 1000000;
+        స్థిరరాశి int64_t t_మొత్తం_h = t_మొత్తం_s / 3600;
+        t_మొత్తం_s -= t_మొత్తం_h * 3600;
+        స్థిరరాశి int64_t t_మొత్తం_m = t_మొత్తం_s / 60;
+        t_మొత్తం_s -= t_మొత్తం_m * 60;
+        fprintf(stderr, "%s: training took %02" PRId64 ":%02" PRId64 ":%02" PRId64 "\n", __func__, t_మొత్తం_h, t_మొత్తం_m, t_మొత్తం_s);
     }
 
     ggml_opt_free(opt_ctx);
-    ggml_opt_result_free(result_train);
-    ggml_opt_result_free(result_val);
+    ggml_opt_ఫలితం_free(ఫలితం_train);
+    ggml_opt_ఫలితం_free(ఫలితం_val);
 }
 
-enum ggml_opt_optimizer_type ggml_opt_context_optimizer_type(ggml_opt_context_t c) {
-    return c->optimizer;
+గణన ggml_opt_optimizer_type ggml_opt_context_optimizer_type(ggml_opt_context_t c) {
+    తిరిగి c->optimizer;
 }
 
-GGML_API const char * ggml_opt_optimizer_name(enum ggml_opt_optimizer_type o) {
-    switch (o) {
-        case GGML_OPT_OPTIMIZER_TYPE_ADAMW:
-            return "adamw";
-        case GGML_OPT_OPTIMIZER_TYPE_SGD:
-            return "sgd";
-        default:
-            return "undefined";
+GGML_API స్థిరరాశి అక్షరం * ggml_opt_optimizer_name(గణన ggml_opt_optimizer_type o) {
+    ఎంపిక (o) {
+        స్థితి GGML_OPT_OPTIMIZER_TYPE_ADAMW:
+            తిరిగి "adamw";
+        స్థితి GGML_OPT_OPTIMIZER_TYPE_SGD:
+            తిరిగి "sgd";
+        అప్రమేయ:
+            తిరిగి "undefined";
     };
 }

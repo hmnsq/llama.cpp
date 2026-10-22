@@ -10,24 +10,24 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#ifndef GGML_SYCL_MMQ_HPP
-#define GGML_SYCL_MMQ_HPP
+#నిర్వచితం_కాకపోతే GGML_SYCL_MMQ_HPP
+#నిర్వచించు GGML_SYCL_MMQ_HPP
 
-#include "common.hpp"
+#అన్తర్భావ "common.hpp"
 
-void ggml_sycl_op_mul_mat_q(
+శూన్య ggml_sycl_op_mul_mat_q(
     ggml_backend_sycl_context & ctx,
-    const ggml_tensor* src0,
-    const ggml_tensor* src1,
+    స్థిరరాశి ggml_tensor* src0,
+    స్థిరరాశి ggml_tensor* src1,
     ggml_tensor* dst,
-    const char* src0_dd_i,
-    const float* src1_ddf_i,
-    const char* src1_ddq_i,
-    float* dst_dd_i,
-    const int64_t row_low,
-    const int64_t row_high,
-    const int64_t src1_ncols,
-    const int64_t src1_padded_row_size,
-    const dpct::queue_ptr& stream);
+    స్థిరరాశి అక్షరం* src0_dd_i,
+    స్థిరరాశి దశాంశం* src1_ddf_i,
+    స్థిరరాశి అక్షరం* src1_ddq_i,
+    దశాంశం* dst_dd_i,
+    స్థిరరాశి int64_t అడ్డువరుస_దిగువ,
+    స్థిరరాశి int64_t అడ్డువరుస_ఎగువ,
+    స్థిరరాశి int64_t src1_ncols,
+    స్థిరరాశి int64_t src1_padded_అడ్డువరుస_కొలత,
+    స్థిరరాశి dpct::వరుస_ptr& stream);
 
-#endif // GGML_SYCL_MMQ_HPP
+#అయితే_ముగింపు // GGML_SYCL_MMQ_HPP

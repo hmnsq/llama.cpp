@@ -1,27 +1,27 @@
-#ifndef GGML_SYCL_MEMTRACE_HPP
-#define GGML_SYCL_MEMTRACE_HPP
+#నిర్వచితం_కాకపోతే GGML_SYCL_MEMTRACE_HPP
+#నిర్వచించు GGML_SYCL_MEMTRACE_HPP
 
-#include <cstddef>
+#అన్తర్భావ <cstddef>
 
-#define GGML_SYCL_MEMTRACE_TAG "[SYCL-MEMTRACE]"
+#నిర్వచించు GGML_SYCL_MEMTRACE_ట్యాగ్ "[SYCL-MEMTRACE]"
 
-enum ggml_sycl_mem_type {
-    GGML_SYCL_MEM_BUFFER = 0,
+గణన ggml_sycl_mem_type {
+    GGML_SYCL_MEM_బఫరు = 0,
     GGML_SYCL_MEM_POOL_LEG,
     GGML_SYCL_MEM_POOL_VMM,
     GGML_SYCL_MEM_ASYNC,
-    GGML_SYCL_MEM_DIRECT,
+    GGML_SYCL_MEM_ప్రత్యక్ష,
 
-    GGML_SYCL_MEM_TYPE_COUNT,
+    GGML_SYCL_MEM_TYPE_లెక్క,
 };
 
-bool ggml_sycl_memtrace_enabled();
+తార్కిక ggml_sycl_memtrace_enabled();
 
-void ggml_sycl_memtrace_add(ggml_sycl_mem_type type, const void * ptr, size_t bytes);
-void ggml_sycl_memtrace_del(const void * ptr);
+శూన్య ggml_sycl_memtrace_కూడు(ggml_sycl_mem_type type, స్థిరరాశి శూన్య * ptr, size_t బైట్లు);
+శూన్య ggml_sycl_memtrace_del(స్థిరరాశి శూన్య * ptr);
 
-void ggml_sycl_memtrace_report(const char * tag);
-void ggml_sycl_memtrace_report_device(const char * tag, int device, size_t dev_free, size_t dev_total);
-void ggml_sycl_memtrace_fail(ggml_sycl_mem_type type, size_t bytes);
+శూన్య ggml_sycl_memtrace_report(స్థిరరాశి అక్షరం * ట్యాగ్);
+శూన్య ggml_sycl_memtrace_report_device(స్థిరరాశి అక్షరం * ట్యాగ్, పూర్ణాంకం device, size_t dev_free, size_t dev_మొత్తం);
+శూన్య ggml_sycl_memtrace_fail(ggml_sycl_mem_type type, size_t బైట్లు);
 
-#endif  // GGML_SYCL_MEMTRACE_HPP
+#అయితే_ముగింపు  // GGML_SYCL_MEMTRACE_HPP

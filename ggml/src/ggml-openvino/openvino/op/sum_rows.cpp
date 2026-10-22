@@ -1,24 +1,24 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#అన్తర్భావ "../node_context.h"
+#అన్తర్భావ "../op_table.h"
+#అన్తర్భావ "../utils.h"
 
-#include <memory>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/reduce_sum.hpp>
+#అన్తర్భావ <memory>
+#అన్తర్భావ <openvino/op/constant.hpp>
+#అన్తర్భావ <openvino/op/reduce_sum.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+నామాకాశ ov {
+నామాకాశ frontend {
+నామాకాశ ggml {
+నామాకాశ op {
 
-OutputVector translate_sum_rows(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+Output_సదిశ translate_కూడిక_అడ్డువరుసలు(స్థిరరాశి కణుపు_Context & context) {
+    అంకె_inputs_check(context, 1, 1);
 
-    auto input = process_view_input_new(context, 0);
-    auto res = std::make_shared<ov::op::v1::ReduceSum>(
-        input, ov::op::v0::Constant::create(ov::element::i64, ov::Shape{1}, {-1}), true);
+    స్వయంచాలక ఆదానం = process_view_ఆదానం_new(context, 0);
+    స్వయంచాలక res = std::make_shared<ov::op::v1::Reduce_కూడిక>(
+        ఆదానం, ov::op::v0::Constant::create(ov::element::i64, ov::Shape{1}, {-1}), నిజం);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    తిరిగి rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

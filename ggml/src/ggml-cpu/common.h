@@ -1,95 +1,95 @@
-#pragma once
+#సూచన once
 
-#include "ggml.h"
-#include "traits.h"
-#include "ggml-cpu-impl.h"
-#include "ggml-impl.h"
-#include "simd-mappings.h"
+#అన్తర్భావ "ggml.h"
+#అన్తర్భావ "traits.h"
+#అన్తర్భావ "ggml-cpu-impl.h"
+#అన్తర్భావ "ggml-impl.h"
+#అన్తర్భావ "simd-mappings.h"
 
-#define GGML_FA_TILE_Q  64
-#define GGML_FA_TILE_KV 64
+#నిర్వచించు GGML_FA_TILE_Q  64
+#నిర్వచించు GGML_FA_TILE_KV 64
 
-#ifdef __cplusplus
+#నిర్వచితమైతే __cplusplus
 
-#include <utility>
+#అన్తర్భావ <utility>
 
 // convenience functions/macros for use in template calls
 // note: these won't be required after the 'traits' lookup table is used.
-static inline ggml_fp16_t f32_to_f16(float x) {
-    return GGML_CPU_FP32_TO_FP16(x);
+స్థిర అంతఃవరుస ggml_fp16_t f32_గమ్యం_f16(దశాంశం x) {
+    తిరిగి GGML_CPU_FP32_గమ్యం_FP16(x);
 }
 
-static inline float f16_to_f32(ggml_fp16_t x) {
-    return GGML_CPU_FP16_TO_FP32(x);
+స్థిర అంతఃవరుస దశాంశం f16_గమ్యం_f32(ggml_fp16_t x) {
+    తిరిగి GGML_CPU_FP16_గమ్యం_FP32(x);
 }
 
-static inline ggml_bf16_t f32_to_bf16(float x) {
-    return GGML_FP32_TO_BF16(x);
+స్థిర అంతఃవరుస ggml_bf16_t f32_గమ్యం_bf16(దశాంశం x) {
+    తిరిగి GGML_FP32_గమ్యం_BF16(x);
 }
 
-static inline float bf16_to_f32(ggml_bf16_t x) {
-    return GGML_BF16_TO_FP32(x);
+స్థిర అంతఃవరుస దశాంశం bf16_గమ్యం_f32(ggml_bf16_t x) {
+    తిరిగి GGML_BF16_గమ్యం_FP32(x);
 }
 
-static inline float i32_to_f32(int32_t x) {
-    return x;
+స్థిర అంతఃవరుస దశాంశం i32_గమ్యం_f32(int32_t x) {
+    తిరిగి x;
 }
 
-static inline int32_t f32_to_i32(float x) {
-    return x;
+స్థిర అంతఃవరుస int32_t f32_గమ్యం_i32(దశాంశం x) {
+    తిరిగి x;
 }
 
-static inline float f32_to_f32(float x) {
-    return x;
+స్థిర అంతఃవరుస దశాంశం f32_గమ్యం_f32(దశాంశం x) {
+    తిరిగి x;
 }
 
 // TODO - merge this into the traits table, after using row-based conversions
-template <class T>
-struct type_conversion_table;
+మూస <class T>
+నిర్మాణం type_conversion_పట్టిక;
 
-template <>
-struct type_conversion_table<ggml_fp16_t> {
-    static constexpr float (*to_f32)(ggml_fp16_t) = f16_to_f32;
-    static constexpr ggml_fp16_t (*from_f32)(float) = f32_to_f16;
+మూస <>
+నిర్మాణం type_conversion_పట్టిక<ggml_fp16_t> {
+    స్థిర constexpr దశాంశం (*గమ్యం_f32)(ggml_fp16_t) = f16_గమ్యం_f32;
+    స్థిర constexpr ggml_fp16_t (*from_f32)(దశాంశం) = f32_గమ్యం_f16;
 };
 
-template <>
-struct type_conversion_table<float> {
-    static constexpr float (*to_f32)(float) = f32_to_f32;
-    static constexpr float (*from_f32)(float) = f32_to_f32;
+మూస <>
+నిర్మాణం type_conversion_పట్టిక<దశాంశం> {
+    స్థిర constexpr దశాంశం (*గమ్యం_f32)(దశాంశం) = f32_గమ్యం_f32;
+    స్థిర constexpr దశాంశం (*from_f32)(దశాంశం) = f32_గమ్యం_f32;
 };
 
-template <>
-struct type_conversion_table<ggml_bf16_t> {
-    static constexpr float (*to_f32)(ggml_bf16_t) = bf16_to_f32;
-    static constexpr ggml_bf16_t (*from_f32)(float) = f32_to_bf16;
+మూస <>
+నిర్మాణం type_conversion_పట్టిక<ggml_bf16_t> {
+    స్థిర constexpr దశాంశం (*గమ్యం_f32)(ggml_bf16_t) = bf16_గమ్యం_f32;
+    స్థిర constexpr ggml_bf16_t (*from_f32)(దశాంశం) = f32_గమ్యం_bf16;
 };
 
-template <>
-struct type_conversion_table<int32_t> {
-    static constexpr float (*to_f32)(int32_t) = i32_to_f32;
-    static constexpr int32_t (*from_f32)(float) = f32_to_i32;
+మూస <>
+నిర్మాణం type_conversion_పట్టిక<int32_t> {
+    స్థిర constexpr దశాంశం (*గమ్యం_f32)(int32_t) = i32_గమ్యం_f32;
+    స్థిర constexpr int32_t (*from_f32)(దశాంశం) = f32_గమ్యం_i32;
 };
 
-static std::pair<int64_t, int64_t> get_thread_range(const struct ggml_compute_params * params, const struct ggml_tensor * src0) {
-    const int64_t ith = params->ith;
-    const int64_t nth = params->nth;
+స్థిర std::pair<int64_t, int64_t> get_thread_range(స్థిరరాశి నిర్మాణం ggml_compute_params * params, స్థిరరాశి నిర్మాణం ggml_tensor * src0) {
+    స్థిరరాశి int64_t ith = params->ith;
+    స్థిరరాశి int64_t nth = params->nth;
 
-    const int64_t nr  = ggml_nrows(src0);
+    స్థిరరాశి int64_t nr  = ggml_nrows(src0);
 
     // rows per thread
-    const int64_t dr = (nr + nth - 1)/nth;
+    స్థిరరాశి int64_t dr = (nr + nth - 1)/nth;
 
     // row range for this thread
-    const int64_t ir0 = dr*ith;
-    const int64_t ir1 = MIN(ir0 + dr, nr);
+    స్థిరరాశి int64_t ir0 = dr*ith;
+    స్థిరరాశి int64_t ir1 = MIN(ir0 + dr, nr);
 
-    return {ir0, ir1};
+    తిరిగి {ir0, ir1};
 }
 
-struct ggml_fa_tile_config {
-    static constexpr size_t Q  = GGML_FA_TILE_Q;
-    static constexpr size_t KV = GGML_FA_TILE_KV;
+నిర్మాణం ggml_fa_tile_config {
+    స్థిర constexpr size_t Q  = GGML_FA_TILE_Q;
+    స్థిర constexpr size_t KV = GGML_FA_TILE_KV;
 };
 
-#endif
+#అయితే_ముగింపు

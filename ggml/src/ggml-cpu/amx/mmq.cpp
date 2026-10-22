@@ -1,168 +1,168 @@
-#if defined(__GNUC__)
-#pragma GCC diagnostic ignored "-Wpedantic"
-#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
-#endif
+#ఒకవేళ defined(__GNUC__)
+#సూచన GCC diagnostic ignored "-Wpedantic"
+#సూచన GCC diagnostic ignored "-Wunused-local-typedefs"
+#అయితే_ముగింపు
 
-#include "amx.h"
-#include "mmq.h"
-#include "ggml-impl.h"
-#include "ggml-cpu-impl.h"
-#include "simd-mappings.h"
-#include "quants.h"
-#include "ggml-quants.h"
-#include <algorithm>
-#include <type_traits>
+#అన్తర్భావ "amx.h"
+#అన్తర్భావ "mmq.h"
+#అన్తర్భావ "ggml-impl.h"
+#అన్తర్భావ "ggml-cpu-impl.h"
+#అన్తర్భావ "simd-mappings.h"
+#అన్తర్భావ "quants.h"
+#అన్తర్భావ "ggml-quants.h"
+#అన్తర్భావ <algorithm>
+#అన్తర్భావ <type_traits>
 
-#if defined(__gnu_linux__)
-#include <sys/syscall.h>
-#include <unistd.h>
-#endif
+#ఒకవేళ defined(__gnu_linux__)
+#అన్తర్భావ <sys/syscall.h>
+#అన్తర్భావ <unistd.h>
+#అయితే_ముగింపు
 
-#if (defined(_WIN32) || defined(_WIN64))
-#define RESTRICT __restrict
-#else
-#define RESTRICT __restrict__
-#endif
+#ఒకవేళ (defined(_WIN32) || defined(_WIN64))
+#నిర్వచించు RESTRICT __restrict
+#లేకపోతే
+#నిర్వచించు RESTRICT __restrict__
+#అయితే_ముగింపు
 
-#if (defined(_WIN32) || defined(_WIN64))
-#define ALWAYS_INLINE __forceinline
-#elif __has_attribute(always_inline) || defined(__GNUC__)
-#define ALWAYS_INLINE __attribute__((__always_inline__)) inline
-#else
-#define ALWAYS_INLINE inline
-#endif
+#ఒకవేళ (defined(_WIN32) || defined(_WIN64))
+#నిర్వచించు ALWAYS_INLINE __forceinline
+#లేదావేళ __has_attribute(always_inline) || defined(__GNUC__)
+#నిర్వచించు ALWAYS_INLINE __attribute__((__always_inline__)) అంతఃవరుస
+#లేకపోతే
+#నిర్వచించు ALWAYS_INLINE అంతఃవరుస
+#అయితే_ముగింపు
 
-#if defined(__AMX_INT8__) && defined(__AVX512VNNI__)
+#ఒకవేళ defined(__AMX_INT8__) && defined(__AVX512VNNI__)
 
-namespace {
+నామాకాశ {
 
 // Forced unrolling
-template <int n>
-struct Unroll {
-    template <typename Func, typename... Args>
-    ALWAYS_INLINE void operator()(const Func& f, Args... args) const {
-        Unroll<n - 1>{}(f, args...);
-        f(std::integral_constant<int, n - 1>{}, args...);
+మూస <పూర్ణాంకం n>
+నిర్మాణం Unroll {
+    మూస <రకం_పేరు Func, రకం_పేరు... వాదనలు>
+    ALWAYS_INLINE శూన్య క్రియాకారకం()(స్థిరరాశి Func& f, వాదనలు... వాదనలు_2) స్థిరరాశి {
+        Unroll<n - 1>{}(f, వాదనలు_2...);
+        f(std::integral_constant<పూర్ణాంకం, n - 1>{}, వాదనలు_2...);
     }
 };
 
-template <>
-struct Unroll<1> {
-    template <typename Func, typename... Args>
-    ALWAYS_INLINE void operator()(const Func& f, Args... args) const {
-        f(std::integral_constant<int, 0>{}, args...);
+మూస <>
+నిర్మాణం Unroll<1> {
+    మూస <రకం_పేరు Func, రకం_పేరు... వాదనలు>
+    ALWAYS_INLINE శూన్య క్రియాకారకం()(స్థిరరాశి Func& f, వాదనలు... వాదనలు_2) స్థిరరాశి {
+        f(std::integral_constant<పూర్ణాంకం, 0>{}, వాదనలు_2...);
     }
 };
 
 // type traits
-template <typename T> struct PackedTypes {};
-template <> struct PackedTypes<block_q4_0> { using type = int8_t; };
-template <> struct PackedTypes<block_q4_1> { using type = uint8_t; };
-template <> struct PackedTypes<block_q8_0> { using type = int8_t; };
-template <typename T> using packed_B_type = typename PackedTypes<T>::type;
+మూస <రకం_పేరు T> నిర్మాణం PackedTypes {};
+మూస <> నిర్మాణం PackedTypes<ఖండం_q4_0> { ఉపయోగించి type = int8_t; };
+మూస <> నిర్మాణం PackedTypes<ఖండం_q4_1> { ఉపయోగించి type = uint8_t; };
+మూస <> నిర్మాణం PackedTypes<ఖండం_q8_0> { ఉపయోగించి type = int8_t; };
+మూస <రకం_పేరు T> ఉపయోగించి packed_B_type = రకం_పేరు PackedTypes<T>::type;
 
-template <typename T>
-struct do_compensate : std::integral_constant<bool,
-    std::is_same<T, block_q8_0>::value> {};
+మూస <రకం_పేరు T>
+నిర్మాణం do_compensate : std::integral_constant<తార్కిక,
+    std::is_same<T, ఖండం_q8_0>::value> {};
 
-template <typename T>
-struct do_unpack : std::integral_constant<bool,
-    std::is_same<T, block_q4_0>::value ||
-    std::is_same<T, block_q4_1>::value> {};
+మూస <రకం_పేరు T>
+నిర్మాణం do_unpack : std::integral_constant<తార్కిక,
+    std::is_same<T, ఖండం_q4_0>::value ||
+    std::is_same<T, ఖండం_q4_1>::value> {};
 
-template <typename T>
-struct is_type_qkk : std::integral_constant<bool,
-    std::is_same<T, block_q4_K>::value ||
-    std::is_same<T, block_q5_K>::value ||
-    std::is_same<T, block_q6_K>::value ||
-    std::is_same<T, block_iq4_xs>::value> {};
+మూస <రకం_పేరు T>
+నిర్మాణం is_type_qkk : std::integral_constant<తార్కిక,
+    std::is_same<T, ఖండం_q4_K>::value ||
+    std::is_same<T, ఖండం_q5_K>::value ||
+    std::is_same<T, ఖండం_q6_K>::value ||
+    std::is_same<T, ఖండం_iq4_xs>::value> {};
 
-#define GGML_DISPATCH_FLOATING_TYPES(TYPE, ...)                                        \
+#నిర్వచించు GGML_DISPATCH_FLOATING_TYPES(TYPE, ...)                                        \
     [&] {                                                                              \
-        switch (TYPE) {                                                                \
-            case GGML_TYPE_F16: {                                                      \
-                using type = ggml_fp16_t;                                              \
-                constexpr int blck_size = 16;                                          \
-                return __VA_ARGS__();                                                  \
+        ఎంపిక (TYPE) {                                                                \
+            స్థితి GGML_TYPE_F16: {                                                      \
+                ఉపయోగించి type = ggml_fp16_t;                                              \
+                constexpr పూర్ణాంకం blck_కొలత = 16;                                          \
+                తిరిగి __VA_ARGS__();                                                  \
             }                                                                          \
-            case GGML_TYPE_BF16: {                                                     \
-                using type = ggml_bf16_t;                                              \
-                constexpr int blck_size = 32;                                          \
-                return __VA_ARGS__();                                                  \
+            స్థితి GGML_TYPE_BF16: {                                                     \
+                ఉపయోగించి type = ggml_bf16_t;                                              \
+                constexpr పూర్ణాంకం blck_కొలత = 32;                                          \
+                తిరిగి __VA_ARGS__();                                                  \
             }                                                                          \
-            default:                                                                   \
+            అప్రమేయ:                                                                   \
                 fprintf(stderr, "Unsupported floating data type\n");                   \
         }                                                                              \
     }()
 
-#define GGML_DISPATCH_QTYPES(QT, ...)                                                  \
+#నిర్వచించు GGML_DISPATCH_QTYPES(QT, ...)                                                  \
     [&] {                                                                              \
-        switch (QT) {                                                                  \
-            case GGML_TYPE_Q4_0: {                                                     \
-                using type = block_q4_0;                                               \
-                using vec_dot_type = block_q8_0;                                       \
-                constexpr int blck_size = QK4_0;                                       \
-                return __VA_ARGS__();                                                  \
+        ఎంపిక (QT) {                                                                  \
+            స్థితి GGML_TYPE_Q4_0: {                                                     \
+                ఉపయోగించి type = ఖండం_q4_0;                                               \
+                ఉపయోగించి vec_dot_type = ఖండం_q8_0;                                       \
+                constexpr పూర్ణాంకం blck_కొలత = QK4_0;                                       \
+                తిరిగి __VA_ARGS__();                                                  \
             }                                                                          \
-            case GGML_TYPE_Q4_1: {                                                     \
-                using type = block_q4_1;                                               \
-                using vec_dot_type = block_q8_1;                                       \
-                constexpr int blck_size = QK4_1;                                       \
-                return __VA_ARGS__();                                                  \
+            స్థితి GGML_TYPE_Q4_1: {                                                     \
+                ఉపయోగించి type = ఖండం_q4_1;                                               \
+                ఉపయోగించి vec_dot_type = ఖండం_q8_1;                                       \
+                constexpr పూర్ణాంకం blck_కొలత = QK4_1;                                       \
+                తిరిగి __VA_ARGS__();                                                  \
             }                                                                          \
-            case GGML_TYPE_Q8_0: {                                                     \
-                using type = block_q8_0;                                               \
-                using vec_dot_type = block_q8_0;                                       \
-                constexpr int blck_size = QK8_0;                                       \
-                return __VA_ARGS__();                                                  \
+            స్థితి GGML_TYPE_Q8_0: {                                                     \
+                ఉపయోగించి type = ఖండం_q8_0;                                               \
+                ఉపయోగించి vec_dot_type = ఖండం_q8_0;                                       \
+                constexpr పూర్ణాంకం blck_కొలత = QK8_0;                                       \
+                తిరిగి __VA_ARGS__();                                                  \
             }                                                                          \
-            case GGML_TYPE_Q4_K: {                                                     \
-                using type = block_q4_K;                                               \
-                using vec_dot_type = block_q8_K;                                       \
-                constexpr int blck_size = QK_K;                                        \
-                return __VA_ARGS__();                                                  \
+            స్థితి GGML_TYPE_Q4_K: {                                                     \
+                ఉపయోగించి type = ఖండం_q4_K;                                               \
+                ఉపయోగించి vec_dot_type = ఖండం_q8_K;                                       \
+                constexpr పూర్ణాంకం blck_కొలత = QK_K;                                        \
+                తిరిగి __VA_ARGS__();                                                  \
             }                                                                          \
-            case GGML_TYPE_Q5_K: {                                                     \
-                using type = block_q5_K;                                               \
-                using vec_dot_type = block_q8_K;                                       \
-                constexpr int blck_size = QK_K;                                        \
-                return __VA_ARGS__();                                                  \
+            స్థితి GGML_TYPE_Q5_K: {                                                     \
+                ఉపయోగించి type = ఖండం_q5_K;                                               \
+                ఉపయోగించి vec_dot_type = ఖండం_q8_K;                                       \
+                constexpr పూర్ణాంకం blck_కొలత = QK_K;                                        \
+                తిరిగి __VA_ARGS__();                                                  \
             }                                                                          \
-            case GGML_TYPE_Q6_K: {                                                     \
-                using type = block_q6_K;                                               \
-                using vec_dot_type = block_q8_K;                                       \
-                constexpr int blck_size = QK_K;                                        \
-                return __VA_ARGS__();                                                  \
+            స్థితి GGML_TYPE_Q6_K: {                                                     \
+                ఉపయోగించి type = ఖండం_q6_K;                                               \
+                ఉపయోగించి vec_dot_type = ఖండం_q8_K;                                       \
+                constexpr పూర్ణాంకం blck_కొలత = QK_K;                                        \
+                తిరిగి __VA_ARGS__();                                                  \
             }                                                                          \
-            case GGML_TYPE_IQ4_XS: {                                                   \
-                using type = block_iq4_xs;                                             \
-                using vec_dot_type = block_q8_K;                                       \
-                constexpr int blck_size = QK_K;                                        \
-                return __VA_ARGS__();                                                  \
+            స్థితి GGML_TYPE_IQ4_XS: {                                                   \
+                ఉపయోగించి type = ఖండం_iq4_xs;                                             \
+                ఉపయోగించి vec_dot_type = ఖండం_q8_K;                                       \
+                constexpr పూర్ణాంకం blck_కొలత = QK_K;                                        \
+                తిరిగి __VA_ARGS__();                                                  \
             }                                                                          \
-            default:                                                                   \
-                fprintf(stderr, "Unsupported quantized data type: %d\n", int(TYPE));   \
+            అప్రమేయ:                                                                   \
+                fprintf(stderr, "Unsupported quantized data type: %d\n", పూర్ణాంకం(TYPE));   \
         }                                                                              \
     }()
 
-#define GGML_DISPATCH_BOOL(BOOL_V, BOOL_NAME, ...)                                     \
+#నిర్వచించు GGML_DISPATCH_BOOL(BOOL_V, BOOL_NAME, ...)                                     \
     [&] {                                                                              \
-        if (BOOL_V) {                                                                  \
-            constexpr bool BOOL_NAME = true;                                           \
-            return __VA_ARGS__();                                                      \
-        } else {                                                                       \
-            constexpr bool BOOL_NAME = false;                                          \
-            return __VA_ARGS__();                                                      \
+        ఒకవేళ (BOOL_V) {                                                                  \
+            constexpr తార్కిక BOOL_NAME = నిజం;                                           \
+            తిరిగి __VA_ARGS__();                                                      \
+        } లేకపోతే {                                                                       \
+            constexpr తార్కిక BOOL_NAME = అబద్ధం;                                          \
+            తిరిగి __VA_ARGS__();                                                      \
         }                                                                              \
     }()
 
 // define amx tile config data structure
-struct tile_config_t{
+నిర్మాణం tile_config_t{
     uint8_t palette_id = 0;
-    uint8_t start_row = 0;
+    uint8_t ప్రారంభం_అడ్డువరుస = 0;
     uint8_t reserved_0[14] = {0};
     uint16_t colsb[16] = {0};
-    uint8_t rows[16] = {0};
+    uint8_t అడ్డువరుసలు[16] = {0};
 };
 
 // Notes: amx tile config
@@ -201,68 +201,68 @@ struct tile_config_t{
 //    advanced-matrix-extensions-intrinsics-functions.html
 //
 
-inline void ggml_tile_config_init(void) {
-    static thread_local bool done = false;
+అంతఃవరుస శూన్య ggml_tile_config_init(శూన్య) {
+    స్థిర thread_local తార్కిక పూర్తి = అబద్ధం;
 
-    if (done) {
-        return;
+    ఒకవేళ (పూర్తి) {
+        తిరిగి;
     }
 
     alignas(64) tile_config_t tc = {};
     tc.palette_id = 1;
-    tc.start_row = 0;
-    tc.rows[0] = 8;   tc.colsb[0] = 64;
-    tc.rows[1] = 8;   tc.colsb[1] = 64;
-    tc.rows[2] = 16;  tc.colsb[2] = 32;
-    tc.rows[3] = 16;  tc.colsb[3] = 32;
-    tc.rows[4] = 16;  tc.colsb[4] = 64;
-    tc.rows[5] = 16;  tc.colsb[5] = 64;
-    tc.rows[6] = 16;  tc.colsb[6] = 64;
-    tc.rows[7] = 16;  tc.colsb[7] = 64;
+    tc.ప్రారంభం_అడ్డువరుస = 0;
+    tc.అడ్డువరుసలు[0] = 8;   tc.colsb[0] = 64;
+    tc.అడ్డువరుసలు[1] = 8;   tc.colsb[1] = 64;
+    tc.అడ్డువరుసలు[2] = 16;  tc.colsb[2] = 32;
+    tc.అడ్డువరుసలు[3] = 16;  tc.colsb[3] = 32;
+    tc.అడ్డువరుసలు[4] = 16;  tc.colsb[4] = 64;
+    tc.అడ్డువరుసలు[5] = 16;  tc.colsb[5] = 64;
+    tc.అడ్డువరుసలు[6] = 16;  tc.colsb[6] = 64;
+    tc.అడ్డువరుసలు[7] = 16;  tc.colsb[7] = 64;
 
     _tile_loadconfig(&tc);
-    done = true;
+    పూర్తి = నిజం;
 }
 
 // we need an extra 16 * 4B (TILE_N * int32_t) for each NB/KB block for compensation.
 // See the notes `s8s8 igemm compensation in avx512-vnni` for detail.
-template <typename TB>
-int get_tile_size() {
-    int tile_size = TILE_N * sizeof(TB);
-    if (do_compensate<TB>::value) {
-        tile_size += TILE_N * sizeof(int32_t);
+మూస <రకం_పేరు TB>
+పూర్ణాంకం get_tile_కొలత() {
+    పూర్ణాంకం tile_కొలత = TILE_N * పరిమాణం(TB);
+    ఒకవేళ (do_compensate<TB>::value) {
+        tile_కొలత += TILE_N * పరిమాణం(int32_t);
     }
-    if (std::is_same<TB, block_q4_K>::value ||
-        std::is_same<TB, block_q5_K>::value) {
-        tile_size += TILE_N * 4;
+    ఒకవేళ (std::is_same<TB, ఖండం_q4_K>::value ||
+        std::is_same<TB, ఖండం_q5_K>::value) {
+        tile_కొలత += TILE_N * 4;
     }
-    if (std::is_same<TB, block_iq4_xs>::value) {
-        tile_size += TILE_N * 2;
+    ఒకవేళ (std::is_same<TB, ఖండం_iq4_xs>::value) {
+        tile_కొలత += TILE_N * 2;
     }
-    return tile_size;
+    తిరిగి tile_కొలత;
 }
 
-template <typename TB, int BLOCK_K>
-int get_row_size(int K) {
-    int KB = K / BLOCK_K;
-    int row_size = KB * sizeof(TB);
-    if (do_compensate<TB>::value) {
-        row_size += KB * sizeof(int32_t);
+మూస <రకం_పేరు TB, పూర్ణాంకం ఖండం_K>
+పూర్ణాంకం get_అడ్డువరుస_కొలత(పూర్ణాంకం K) {
+    పూర్ణాంకం KB = K / ఖండం_K;
+    పూర్ణాంకం అడ్డువరుస_కొలత = KB * పరిమాణం(TB);
+    ఒకవేళ (do_compensate<TB>::value) {
+        అడ్డువరుస_కొలత += KB * పరిమాణం(int32_t);
     }
-    if (std::is_same<TB, block_q4_K>::value ||
-        std::is_same<TB, block_q5_K>::value) {
-        row_size += KB * 4;
+    ఒకవేళ (std::is_same<TB, ఖండం_q4_K>::value ||
+        std::is_same<TB, ఖండం_q5_K>::value) {
+        అడ్డువరుస_కొలత += KB * 4;
     }
-    if (std::is_same<TB, block_iq4_xs>::value) {
-        row_size += KB * 2;
+    ఒకవేళ (std::is_same<TB, ఖండం_iq4_xs>::value) {
+        అడ్డువరుస_కొలత += KB * 2;
     }
-    return row_size;
+    తిరిగి అడ్డువరుస_కొలత;
 }
 
 // transpose utils
-#define SHUFFLE_EPI32(a, b, mask) \
-    _mm256_castps_si256(_mm256_shuffle_ps(_mm256_castsi256_ps(a), _mm256_castsi256_ps(b), mask))
-inline void transpose_8x8_32bit(__m256i * v, __m256i * v1) {
+#నిర్వచించు SHUFFLE_EPI32(a, b, ముసుగు) \
+    _mm256_castps_si256(_mm256_shuffle_ps(_mm256_castsi256_ps(a), _mm256_castsi256_ps(b), ముసుగు))
+అంతఃవరుస శూన్య transpose_8x8_32bit(__m256i * v, __m256i * v1) {
     // unpacking and 32-bit elements
     v1[0] = _mm256_unpacklo_epi32(v[0], v[1]);
     v1[1] = _mm256_unpackhi_epi32(v[0], v[1]);
@@ -294,9 +294,9 @@ inline void transpose_8x8_32bit(__m256i * v, __m256i * v1) {
     v1[7] = _mm256_permute2f128_si256(v[7], v[5], 0x13);
 }
 
-inline void transpose_16x4_32bit(__m512i * r, __m512i * d) {
+అంతఃవరుస శూన్య transpose_16x4_32bit(__m512i * r, __m512i * d) {
 
-    static const __m512i index1 = _mm512_set_epi32(
+    స్థిర స్థిరరాశి __m512i index1 = mm512_సమితి_epi32(
         0x0f, 0x0b, 0x07, 0x03,
         0x0e, 0x0a, 0x06, 0x02,
         0x0d, 0x09, 0x05, 0x01,
@@ -318,7 +318,7 @@ inline void transpose_16x4_32bit(__m512i * r, __m512i * d) {
     d[3] = _mm512_shuffle_i32x4(r[1], r[3], 0xdd);
 }
 
-inline void transpose_16x16_32bit(__m512i * v) {
+అంతఃవరుస శూన్య transpose_16x16_32bit(__m512i * v) {
     __m512i v1[16];
     v1[0] = _mm512_unpacklo_epi32(v[0], v[1]);
     v1[1] = _mm512_unpackhi_epi32(v[0], v[1]);
@@ -389,12 +389,12 @@ inline void transpose_16x16_32bit(__m512i * v) {
     v[15] = _mm512_shuffle_i32x4(v1[7], v1[15], 0xdd);
 }
 
-void quantize_row_q8_K_vnni(const float * RESTRICT x, void * RESTRICT vy, int64_t k) {
-    assert(k % QK_K == 0);
-    const int KB = k / QK_K;
-    constexpr int kVecs = QK_K / 16;
+శూన్య quantize_అడ్డువరుస_q8_K_vnni(స్థిరరాశి దశాంశం * RESTRICT x, శూన్య * RESTRICT vy, int64_t k) {
+    ప్రతిజ్ఞా(k % QK_K == 0);
+    స్థిరరాశి పూర్ణాంకం KB = k / QK_K;
+    constexpr పూర్ణాంకం kVecs = QK_K / 16;
 
-    block_q8_K * y = reinterpret_cast<block_q8_K *>(vy);
+    ఖండం_q8_K * y = reinterpret_cast<ఖండం_q8_K *>(vy);
 
     // hold 16 float vecs from x
     __m512  v[kVecs];
@@ -405,31 +405,31 @@ void quantize_row_q8_K_vnni(const float * RESTRICT x, void * RESTRICT vy, int64_
     // hold the packed quants vecs
     __m512i vq_packed[kVecs / 4];
 
-    const __m512 signBit = _mm512_set1_ps(-0.f);
+    స్థిరరాశి __m512 sign_బిట్టు = _mm512_set1_ps(-0.f);
 
-    for (int i = 0; i < KB; ++i) {
+    కొరకు (పూర్ణాంకం i = 0; i < KB; ++i) {
         // Compute max(abs(e)) for the block
         __m512 vamax = _mm512_set1_ps(0.f);
-        for (int j = 0; j < kVecs; ++j) {
+        కొరకు (పూర్ణాంకం j = 0; j < kVecs; ++j) {
             v[j] = _mm512_loadu_ps(x); x += 16;
-            vamax = _mm512_max_ps(vamax, _mm512_andnot_ps(signBit, v[j]));
+            vamax = _mm512_max_ps(vamax, _mm512_andnot_ps(sign_బిట్టు, v[j]));
         }
-        const float amax = _mm512_reduce_max_ps(vamax);
+        స్థిరరాశి దశాంశం amax = _mm512_reduce_max_ps(vamax);
 
         // Quantize these floats
-        const float iscale = 127.f / amax;
-        y[i].d = GGML_CPU_FP32_TO_FP16(1 / iscale);
-        const float id = ( amax != 0.0f ) ? iscale : 0.f;
-        const __m512 vscale = _mm512_set1_ps(id);
+        స్థిరరాశి దశాంశం iscale = 127.f / amax;
+        y[i].d = GGML_CPU_FP32_గమ్యం_FP16(1 / iscale);
+        స్థిరరాశి దశాంశం id = ( amax != 0.0f ) ? iscale : 0.f;
+        స్థిరరాశి __m512 vscale = _mm512_set1_ps(id);
 
         // Apply multiplier and round to nearest integer
-        for (int j = 0; j < kVecs; ++j) {
+        కొరకు (పూర్ణాంకం j = 0; j < kVecs; ++j) {
             v[j] = _mm512_mul_ps(v[j], vscale);
             v[j] = _mm512_roundscale_ps(v[j], (_MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
         }
 
         // Pack to epi8 vecs
-        for (int j = 0; j < kVecs / 4; ++j) {
+        కొరకు (పూర్ణాంకం j = 0; j < kVecs / 4; ++j) {
             __m128i q8_0 = _mm512_cvtepi32_epi8(_mm512_cvtps_epi32(v[j * 4 + 0]));
             __m128i q8_1 = _mm512_cvtepi32_epi8(_mm512_cvtps_epi32(v[j * 4 + 1]));
             __m128i q8_2 = _mm512_cvtepi32_epi8(_mm512_cvtps_epi32(v[j * 4 + 2]));
@@ -445,262 +445,262 @@ void quantize_row_q8_K_vnni(const float * RESTRICT x, void * RESTRICT vy, int64_
         // Compute the bsums with vnni
         transpose_16x4_32bit(vq, vq_packed);
 
-        const __m512i one = _mm512_set1_epi8(1);
-        __m512i sum = _mm512_setzero_si512();
-        for (int k = 0; k < 4; ++k) {
-            sum = _mm512_dpbusd_epi32(sum, one, vq_packed[k]);
+        స్థిరరాశి __m512i one = _mm512_set1_epi8(1);
+        __m512i కూడిక = _mm512_setzero_si512();
+        కొరకు (పూర్ణాంకం k = 0; k < 4; ++k) {
+            కూడిక = _mm512_dpbusd_epi32(కూడిక, one, vq_packed[k]);
         }
-        _mm256_storeu_si256((__m256i *)(y[i].bsums), _mm512_cvtepi32_epi16(sum));
+        _mm256_storeu_si256((__m256i *)(y[i].bsums), _mm512_cvtepi32_epi16(కూడిక));
     }
 }
 
 // quantize A from float to `vec_dot_type`
-template <typename T>
-inline void from_float(const float * x, char * vy, int64_t k);
+మూస <రకం_పేరు T>
+అంతఃవరుస శూన్య from_float(స్థిరరాశి దశాంశం * x, అక్షరం * vy, int64_t k);
 
-template <>
-inline void from_float<block_q8_0>(const float * x, char * vy, int64_t k) {
-    quantize_row_q8_0(x, (block_q8_0 *)vy, k);
+మూస <>
+అంతఃవరుస శూన్య from_float<ఖండం_q8_0>(స్థిరరాశి దశాంశం * x, అక్షరం * vy, int64_t k) {
+    quantize_అడ్డువరుస_q8_0(x, (ఖండం_q8_0 *)vy, k);
 }
 
-template <>
-inline void from_float<block_q8_1>(const float * x, char * vy, int64_t k) {
-    quantize_row_q8_1(x, (block_q8_1 *)vy, k);
+మూస <>
+అంతఃవరుస శూన్య from_float<ఖండం_q8_1>(స్థిరరాశి దశాంశం * x, అక్షరం * vy, int64_t k) {
+    quantize_అడ్డువరుస_q8_1(x, (ఖండం_q8_1 *)vy, k);
 }
 
-template <>
-inline void from_float<block_q8_K>(const float * x, char * vy, int64_t k) {
-#if 1
+మూస <>
+అంతఃవరుస శూన్య from_float<ఖండం_q8_K>(స్థిరరాశి దశాంశం * x, అక్షరం * vy, int64_t k) {
+#ఒకవేళ 1
     // TODO: this is reference impl!
-    quantize_row_q8_K_ref(x, (block_q8_K *)vy, k);
-#else
-    quantize_row_q8_K_vnni(x, vy, k);
-#endif
+    quantize_అడ్డువరుస_q8_K_ref(x, (ఖండం_q8_K *)vy, k);
+#లేకపోతే
+    quantize_అడ్డువరుస_q8_K_vnni(x, vy, k);
+#అయితే_ముగింపు
 }
 
 // load A from memory to array when nrows can not fill in whole tile
-void unpack_A(int8_t * RESTRICT tile, const block_q8_0 * RESTRICT A, int lda, int nr) {
-    assert(nr != TILE_M);
-    for (int m = 0; m < nr; ++m) {
-        const __m256i v = _mm256_loadu_si256((const __m256i *)(A[m * lda].qs));
+శూన్య unpack_A(int8_t * RESTRICT tile, స్థిరరాశి ఖండం_q8_0 * RESTRICT A, పూర్ణాంకం lda, పూర్ణాంకం nr) {
+    ప్రతిజ్ఞా(nr != TILE_M);
+    కొరకు (పూర్ణాంకం m = 0; m < nr; ++m) {
+        స్థిరరాశి __m256i v = _mm256_loadu_si256((స్థిరరాశి __m256i *)(A[m * lda].qs));
         _mm256_storeu_si256((__m256i *)(tile + m * TILE_K), v);
     }
 }
 
-void unpack_A(int8_t * RESTRICT tile, const block_q8_1 * RESTRICT A, int lda, int nr) {
-    assert(nr != TILE_M);
-    for (int m = 0; m < nr; ++m) {
-        const __m256i v = _mm256_loadu_si256((const __m256i *)(A[m * lda].qs));
+శూన్య unpack_A(int8_t * RESTRICT tile, స్థిరరాశి ఖండం_q8_1 * RESTRICT A, పూర్ణాంకం lda, పూర్ణాంకం nr) {
+    ప్రతిజ్ఞా(nr != TILE_M);
+    కొరకు (పూర్ణాంకం m = 0; m < nr; ++m) {
+        స్థిరరాశి __m256i v = _mm256_loadu_si256((స్థిరరాశి __m256i *)(A[m * lda].qs));
         _mm256_storeu_si256((__m256i *)(tile + m * TILE_K), v);
     }
 }
 
-template <typename TB>
-void unpack_A(int8_t * RESTRICT tile, const block_q8_K * RESTRICT A, int lda, int k, int nr) {
-    assert(nr <= TILE_M);
-    for (int m = 0; m < nr; ++m) {
-        const __m256i v = _mm256_loadu_si256((const __m256i *)(A[m * lda].qs + k * 32));
+మూస <రకం_పేరు TB>
+శూన్య unpack_A(int8_t * RESTRICT tile, స్థిరరాశి ఖండం_q8_K * RESTRICT A, పూర్ణాంకం lda, పూర్ణాంకం k, పూర్ణాంకం nr) {
+    ప్రతిజ్ఞా(nr <= TILE_M);
+    కొరకు (పూర్ణాంకం m = 0; m < nr; ++m) {
+        స్థిరరాశి __m256i v = _mm256_loadu_si256((స్థిరరాశి __m256i *)(A[m * lda].qs + k * 32));
         _mm256_storeu_si256((__m256i *)(tile + m * TILE_K), v);
     }
 }
 
-template <>
-void unpack_A<block_q6_K>(int8_t * RESTRICT tile, const block_q8_K * RESTRICT A, int lda, int k, int nr) {
-    assert(nr <= TILE_M);
+మూస <>
+శూన్య unpack_A<ఖండం_q6_K>(int8_t * RESTRICT tile, స్థిరరాశి ఖండం_q8_K * RESTRICT A, పూర్ణాంకం lda, పూర్ణాంకం k, పూర్ణాంకం nr) {
+    ప్రతిజ్ఞా(nr <= TILE_M);
     // zero padding k from 16 to 32, so that we don't have to re-config amx
-    const __m128i zero = _mm_setzero_si128();
-    for (int m = 0; m < nr; ++m) {
-        const __m128i v = _mm_loadu_si128((const __m128i *)(A[m * lda].qs + k * 16));
-        const __m256i r = _mm256_insertf128_si256(_mm256_castsi128_si256(v), zero, 1);
+    స్థిరరాశి __m128i zero = _mm_setzero_si128();
+    కొరకు (పూర్ణాంకం m = 0; m < nr; ++m) {
+        స్థిరరాశి __m128i v = _mm_loadu_si128((స్థిరరాశి __m128i *)(A[m * lda].qs + k * 16));
+        స్థిరరాశి __m256i r = _mm256_insertf128_si256(_mm256_castsi128_si256(v), zero, 1);
         _mm256_storeu_si256((__m256i *)(tile + m * TILE_K), r);
     }
 }
 
-#define MM256_SET_M128I(a, b) _mm256_insertf128_si256(_mm256_castsi128_si256(b), (a), 1)
-inline __m256i bytes_from_nibbles_32(const uint8_t * rsi) {
-    const __m128i tmp = _mm_loadu_si128((const __m128i *)rsi);
-    const __m256i bytes = MM256_SET_M128I(_mm_srli_epi16(tmp, 4), tmp);
-    const __m256i lowMask = _mm256_set1_epi8(0xF);
-    return _mm256_and_si256(lowMask, bytes);
+#నిర్వచించు MM256_సమితి_M128_I(a, b) _mm256_insertf128_si256(_mm256_castsi128_si256(b), (a), 1)
+అంతఃవరుస __m256i బైట్లు_from_nibbles_32(స్థిరరాశి uint8_t * rsi) {
+    స్థిరరాశి __m128i tmp = _mm_loadu_si128((స్థిరరాశి __m128i *)rsi);
+    స్థిరరాశి __m256i బైట్లు = MM256_సమితి_M128_I(_mm_srli_epi16(tmp, 4), tmp);
+    స్థిరరాశి __m256i దిగువ_ముసుగు = _mm256_set1_epi8(0xF);
+    తిరిగి _mm256_and_si256(దిగువ_ముసుగు, బైట్లు);
 }
 
 // used for block_q4_K
-inline __m512i bytes_from_nibbles_64(const uint8_t * rsi) {
-    const __m256i tmp = _mm256_loadu_si256((const __m256i *)rsi);
-    const __m256i lowMask = _mm256_set1_epi8(0xF);
-    const __m256i q4l = _mm256_and_si256(tmp, lowMask);
-    const __m256i q4h = _mm256_and_si256(_mm256_srli_epi16(tmp, 4), lowMask);
-    return _mm512_inserti32x8(_mm512_castsi256_si512(q4l), q4h, 1);
+అంతఃవరుస __m512i బైట్లు_from_nibbles_64(స్థిరరాశి uint8_t * rsi) {
+    స్థిరరాశి __m256i tmp = _mm256_loadu_si256((స్థిరరాశి __m256i *)rsi);
+    స్థిరరాశి __m256i దిగువ_ముసుగు = _mm256_set1_epi8(0xF);
+    స్థిరరాశి __m256i q4l = _mm256_and_si256(tmp, దిగువ_ముసుగు);
+    స్థిరరాశి __m256i q4h = _mm256_and_si256(_mm256_srli_epi16(tmp, 4), దిగువ_ముసుగు);
+    తిరిగి _mm512_inserti32x8(_mm512_castsi256_si512(q4l), q4h, 1);
 }
 
 // used for block_q5_K
-inline __m512i bytes_from_nibbles_64(const uint8_t * qs, const uint8_t * qh, int k) {
-    const __m256i lowMask = _mm256_set1_epi8(0xF);
+అంతఃవరుస __m512i బైట్లు_from_nibbles_64(స్థిరరాశి uint8_t * qs, స్థిరరాశి uint8_t * qh, పూర్ణాంకం k) {
+    స్థిరరాశి __m256i దిగువ_ముసుగు = _mm256_set1_epi8(0xF);
     __m256i hmask = _mm256_set1_epi8(1);
     hmask = _mm256_slli_epi16(hmask, k);
 
-    const __m256i q5bits = _mm256_loadu_si256((const __m256i *)qs);
-    const __m256i hbits = _mm256_loadu_si256((const __m256i *)qh);
+    స్థిరరాశి __m256i q5bits = _mm256_loadu_si256((స్థిరరాశి __m256i *)qs);
+    స్థిరరాశి __m256i hbits = _mm256_loadu_si256((స్థిరరాశి __m256i *)qh);
 
-    const __m256i q5l_0 = _mm256_and_si256(q5bits, lowMask);
-    const __m256i q5h_0 = _mm256_slli_epi16(_mm256_srli_epi16(_mm256_and_si256(hbits, hmask), k + 0), 4);
-    const __m256i q5_0  = _mm256_add_epi8(q5l_0, q5h_0);
+    స్థిరరాశి __m256i q5l_0 = _mm256_and_si256(q5bits, దిగువ_ముసుగు);
+    స్థిరరాశి __m256i q5h_0 = _mm256_slli_epi16(_mm256_srli_epi16(_mm256_and_si256(hbits, hmask), k + 0), 4);
+    స్థిరరాశి __m256i q5_0  = mm256_కూడు_epi8(q5l_0, q5h_0);
     hmask = _mm256_slli_epi16(hmask, 1);
 
-    const __m256i q5l_1 = _mm256_and_si256(_mm256_srli_epi16(q5bits, 4), lowMask);
-    const __m256i q5h_1 = _mm256_slli_epi16(_mm256_srli_epi16(_mm256_and_si256(hbits, hmask), k + 1), 4);
-    const __m256i q5_1  = _mm256_add_epi8(q5l_1, q5h_1);
+    స్థిరరాశి __m256i q5l_1 = _mm256_and_si256(_mm256_srli_epi16(q5bits, 4), దిగువ_ముసుగు);
+    స్థిరరాశి __m256i q5h_1 = _mm256_slli_epi16(_mm256_srli_epi16(_mm256_and_si256(hbits, hmask), k + 1), 4);
+    స్థిరరాశి __m256i q5_1  = mm256_కూడు_epi8(q5l_1, q5h_1);
 
-    return _mm512_inserti32x8(_mm512_castsi256_si512(q5_0), q5_1, 1);
+    తిరిగి _mm512_inserti32x8(_mm512_castsi256_si512(q5_0), q5_1, 1);
 }
 
 // used for block_q6_K
-inline void bytes_from_nibbles_128(__m512i& r0, __m512i& r1, const uint8_t * qs, const uint8_t * qh) {
-    const __m256i m4 = _mm256_set1_epi8(0xF);
-    const __m256i m2 = _mm256_set1_epi8(0x3);
+అంతఃవరుస శూన్య బైట్లు_from_nibbles_128(__m512i& r0, __m512i& r1, స్థిరరాశి uint8_t * qs, స్థిరరాశి uint8_t * qh) {
+    స్థిరరాశి __m256i m4 = _mm256_set1_epi8(0xF);
+    స్థిరరాశి __m256i m2 = _mm256_set1_epi8(0x3);
 
-    const __m256i q6bits1 = _mm256_loadu_si256((const __m256i *)qs);
-    const __m256i q6bits2 = _mm256_loadu_si256((const __m256i *)(qs + 32));
-    const __m256i q6bitsH = _mm256_loadu_si256((const __m256i *)qh);
+    స్థిరరాశి __m256i q6bits1 = _mm256_loadu_si256((స్థిరరాశి __m256i *)qs);
+    స్థిరరాశి __m256i q6bits2 = _mm256_loadu_si256((స్థిరరాశి __m256i *)(qs + 32));
+    స్థిరరాశి __m256i q6bitsH = _mm256_loadu_si256((స్థిరరాశి __m256i *)qh);
 
-    const __m256i q6h_0 = _mm256_slli_epi16(_mm256_and_si256(                  q6bitsH,     m2), 4);
-    const __m256i q6h_1 = _mm256_slli_epi16(_mm256_and_si256(_mm256_srli_epi16(q6bitsH, 2), m2), 4);
-    const __m256i q6h_2 = _mm256_slli_epi16(_mm256_and_si256(_mm256_srli_epi16(q6bitsH, 4), m2), 4);
-    const __m256i q6h_3 = _mm256_slli_epi16(_mm256_and_si256(_mm256_srli_epi16(q6bitsH, 6), m2), 4);
+    స్థిరరాశి __m256i q6h_0 = _mm256_slli_epi16(_mm256_and_si256(                  q6bitsH,     m2), 4);
+    స్థిరరాశి __m256i q6h_1 = _mm256_slli_epi16(_mm256_and_si256(_mm256_srli_epi16(q6bitsH, 2), m2), 4);
+    స్థిరరాశి __m256i q6h_2 = _mm256_slli_epi16(_mm256_and_si256(_mm256_srli_epi16(q6bitsH, 4), m2), 4);
+    స్థిరరాశి __m256i q6h_3 = _mm256_slli_epi16(_mm256_and_si256(_mm256_srli_epi16(q6bitsH, 6), m2), 4);
 
-    const __m256i q6_0 = _mm256_or_si256(_mm256_and_si256(q6bits1, m4), q6h_0);
-    const __m256i q6_1 = _mm256_or_si256(_mm256_and_si256(q6bits2, m4), q6h_1);
-    const __m256i q6_2 = _mm256_or_si256(_mm256_and_si256(_mm256_srli_epi16(q6bits1, 4), m4), q6h_2);
-    const __m256i q6_3 = _mm256_or_si256(_mm256_and_si256(_mm256_srli_epi16(q6bits2, 4), m4), q6h_3);
+    స్థిరరాశి __m256i q6_0 = _mm256_or_si256(_mm256_and_si256(q6bits1, m4), q6h_0);
+    స్థిరరాశి __m256i q6_1 = _mm256_or_si256(_mm256_and_si256(q6bits2, m4), q6h_1);
+    స్థిరరాశి __m256i q6_2 = _mm256_or_si256(_mm256_and_si256(_mm256_srli_epi16(q6bits1, 4), m4), q6h_2);
+    స్థిరరాశి __m256i q6_3 = _mm256_or_si256(_mm256_and_si256(_mm256_srli_epi16(q6bits2, 4), m4), q6h_3);
 
     r0 = _mm512_inserti32x8(_mm512_castsi256_si512(q6_0), q6_1, 1);
     r1 = _mm512_inserti32x8(_mm512_castsi256_si512(q6_2), q6_3, 1);
 }
 
-inline __m512i packNibbles(__m512i r0, __m512i r1) {
-    return _mm512_or_si512(r0, _mm512_slli_epi16(r1, 4));
+అంతఃవరుస __m512i packNibbles(__m512i r0, __m512i r1) {
+    తిరిగి _mm512_or_si512(r0, _mm512_slli_epi16(r1, 4));
 }
 
-template <typename TB>
-inline void pack_qs(void * RESTRICT packed_B, const TB * RESTRICT B, int KB) {
+మూస <రకం_పేరు TB>
+అంతఃవరుస శూన్య pack_qs(శూన్య * RESTRICT packed_B, స్థిరరాశి TB * RESTRICT B, పూర్ణాంకం KB) {
     int8_t tmp[8 * 64];
     __m256i v[8], v2[8];
-    for (int n = 0; n < 8; ++n) {
-        v[n] = bytes_from_nibbles_32(B[n * KB].qs);
+    కొరకు (పూర్ణాంకం n = 0; n < 8; ++n) {
+        v[n] = బైట్లు_from_nibbles_32(B[n * KB].qs);
     }
     transpose_8x8_32bit(v, v2);
-    for (int n = 0; n < 8; ++n) {
+    కొరకు (పూర్ణాంకం n = 0; n < 8; ++n) {
         _mm256_storeu_si256((__m256i *)(tmp + n * 64), v2[n]);
     }
-    for (int n = 0; n < 8; ++n) {
-        v[n] = bytes_from_nibbles_32(B[(n + 8) * KB].qs);
+    కొరకు (పూర్ణాంకం n = 0; n < 8; ++n) {
+        v[n] = బైట్లు_from_nibbles_32(B[(n + 8) * KB].qs);
     }
     transpose_8x8_32bit(v, v2);
-    for (int n = 0; n < 8; ++n) {
+    కొరకు (పూర్ణాంకం n = 0; n < 8; ++n) {
         _mm256_storeu_si256((__m256i *)(tmp + n * 64 + 32), v2[n]);
     }
 
     // pack again with 128 to fully utilize vector length
-    for (int n = 0; n < 8; n += 2) {
-        __m512i r0 = _mm512_loadu_si512((const __m512i *)(tmp + n * 64));
-        __m512i r1 = _mm512_loadu_si512((const __m512i *)(tmp + n * 64 + 64));
+    కొరకు (పూర్ణాంకం n = 0; n < 8; n += 2) {
+        __m512i r0 = _mm512_loadu_si512((స్థిరరాశి __m512i *)(tmp + n * 64));
+        __m512i r1 = _mm512_loadu_si512((స్థిరరాశి __m512i *)(tmp + n * 64 + 64));
         __m512i r1r0 = packNibbles(r0, r1);
-        _mm512_storeu_si512((__m512i *)((char *)packed_B + n * 32), r1r0);
+        _mm512_storeu_si512((__m512i *)((అక్షరం *)packed_B + n * 32), r1r0);
     }
 }
 
-template <>
-inline void pack_qs<block_q8_0>(void * RESTRICT packed_B, const block_q8_0 * RESTRICT B, int KB) {
+మూస <>
+అంతఃవరుస శూన్య pack_qs<ఖండం_q8_0>(శూన్య * RESTRICT packed_B, స్థిరరాశి ఖండం_q8_0 * RESTRICT B, పూర్ణాంకం KB) {
     __m256i v[8], v2[8];
-    for (int n = 0; n < 8; ++n) {
-        v[n] = _mm256_loadu_si256((const __m256i *)(B[n * KB].qs));
+    కొరకు (పూర్ణాంకం n = 0; n < 8; ++n) {
+        v[n] = _mm256_loadu_si256((స్థిరరాశి __m256i *)(B[n * KB].qs));
     }
     transpose_8x8_32bit(v, v2);
-    for (int n = 0; n < 8; ++n) {
-        _mm256_storeu_si256((__m256i *)((char *)packed_B + n * 64), v2[n]);
+    కొరకు (పూర్ణాంకం n = 0; n < 8; ++n) {
+        _mm256_storeu_si256((__m256i *)((అక్షరం *)packed_B + n * 64), v2[n]);
     }
-    for (int n = 0; n < 8; ++n) {
-        v[n] = _mm256_loadu_si256((const __m256i *)(B[(n + 8) * KB].qs));
+    కొరకు (పూర్ణాంకం n = 0; n < 8; ++n) {
+        v[n] = _mm256_loadu_si256((స్థిరరాశి __m256i *)(B[(n + 8) * KB].qs));
     }
     transpose_8x8_32bit(v, v2);
-    for (int n = 0; n < 8; ++n) {
-        _mm256_storeu_si256((__m256i *)((char *)packed_B + n * 64 + 32), v2[n]);
+    కొరకు (పూర్ణాంకం n = 0; n < 8; ++n) {
+        _mm256_storeu_si256((__m256i *)((అక్షరం *)packed_B + n * 64 + 32), v2[n]);
     }
 }
 
-template <>
-inline void pack_qs<block_q4_K>(void * RESTRICT packed_B, const block_q4_K * RESTRICT B, int KB) {
+మూస <>
+అంతఃవరుస శూన్య pack_qs<ఖండం_q4_K>(శూన్య * RESTRICT packed_B, స్థిరరాశి ఖండం_q4_K * RESTRICT B, పూర్ణాంకం KB) {
     __m512i v[16];
     // QK_K 256 with 8 groups, handle 2 groups at a time
-    char * pb = (char *)packed_B;
-    for (int k = 0; k < QK_K / 64; ++k) {
+    అక్షరం * pb = (అక్షరం *)packed_B;
+    కొరకు (పూర్ణాంకం k = 0; k < QK_K / 64; ++k) {
         // pack 2 groups { n, g,  k} to {g, k/4, 4n}
         //          e.g. {16, 2, 32} to {2,   8, 64}
-        for (int n = 0; n < TILE_N; ++n) {
-            v[n] = bytes_from_nibbles_64(B[n * KB].qs + k * 32);
+        కొరకు (పూర్ణాంకం n = 0; n < TILE_N; ++n) {
+            v[n] = బైట్లు_from_nibbles_64(B[n * KB].qs + k * 32);
         }
 
         transpose_16x16_32bit(v);
 
         // pack again with 128 to fully utilize vector length
-        for (int n = 0; n < TILE_N; n += 2) {
+        కొరకు (పూర్ణాంకం n = 0; n < TILE_N; n += 2) {
             _mm512_storeu_si512((__m512i *)pb, packNibbles(v[n], v[n + 1]));
             pb += 64;
         }
     }
 }
 
-template <>
-inline void pack_qs<block_q5_K>(void * RESTRICT packed_B, const block_q5_K * RESTRICT B, int KB) {
+మూస <>
+అంతఃవరుస శూన్య pack_qs<ఖండం_q5_K>(శూన్య * RESTRICT packed_B, స్థిరరాశి ఖండం_q5_K * RESTRICT B, పూర్ణాంకం KB) {
     __m512i v[16];
-    const __m512i lowMask = _mm512_set1_epi8(0xF);
+    స్థిరరాశి __m512i దిగువ_ముసుగు = _mm512_set1_epi8(0xF);
     // QK_K 256 with 8 groups, handle 2 groups at a time
-    char * pb = (char *)packed_B;
-    char * ph = (char *)packed_B + (QK_K / 2) * TILE_N;
-    for (int k = 0; k < QK_K / 64; ++k) {
+    అక్షరం * pb = (అక్షరం *)packed_B;
+    అక్షరం * ph = (అక్షరం *)packed_B + (QK_K / 2) * TILE_N;
+    కొరకు (పూర్ణాంకం k = 0; k < QK_K / 64; ++k) {
         // pack 2 groups { n, g,  k} to {g, k/4, 4n}
         //          e.g. {16, 2, 32} to {2,   8, 64}
-        for (int n = 0; n < TILE_N; ++n) {
-            v[n] = bytes_from_nibbles_64(B[n * KB].qs + k * 32, B[n * KB].qh, /* group */2 * k);
+        కొరకు (పూర్ణాంకం n = 0; n < TILE_N; ++n) {
+            v[n] = బైట్లు_from_nibbles_64(B[n * KB].qs + k * 32, B[n * KB].qh, /*సమూహం*/2 * k);
         }
 
         transpose_16x16_32bit(v);
 
         // 1. pack lower 4bits with 2 groups
-        for (int n = 0; n < TILE_N; n += 2) {
+        కొరకు (పూర్ణాంకం n = 0; n < TILE_N; n += 2) {
             // get lower 4 bits
-            const __m512i r0 = _mm512_and_si512(v[n], lowMask);
-            const __m512i r1 = _mm512_and_si512(v[n + 1], lowMask);
+            స్థిరరాశి __m512i r0 = _mm512_and_si512(v[n], దిగువ_ముసుగు);
+            స్థిరరాశి __m512i r1 = _mm512_and_si512(v[n + 1], దిగువ_ముసుగు);
             _mm512_storeu_si512((__m512i *)pb, packNibbles(r0, r1)); pb += 64;
         }
 
         // 2. pack higher 1bit with 2 groups
-        const __m512i hmask = _mm512_set1_epi8(0x10);
-        for (int g = 0; g < 2; ++g) {
+        స్థిరరాశి __m512i hmask = _mm512_set1_epi8(0x10);
+        కొరకు (పూర్ణాంకం g = 0; g < 2; ++g) {
             __m512i hbits = _mm512_setzero_si512();
-            hbits = _mm512_add_epi8(hbits, _mm512_srli_epi16(_mm512_and_si512(v[g * 8 + 0], hmask), 4));
-            hbits = _mm512_add_epi8(hbits, _mm512_srli_epi16(_mm512_and_si512(v[g * 8 + 1], hmask), 3));
-            hbits = _mm512_add_epi8(hbits, _mm512_srli_epi16(_mm512_and_si512(v[g * 8 + 2], hmask), 2));
-            hbits = _mm512_add_epi8(hbits, _mm512_srli_epi16(_mm512_and_si512(v[g * 8 + 3], hmask), 1));
-            hbits = _mm512_add_epi8(hbits,                   _mm512_and_si512(v[g * 8 + 4], hmask)    );
-            hbits = _mm512_add_epi8(hbits, _mm512_slli_epi16(_mm512_and_si512(v[g * 8 + 5], hmask), 1));
-            hbits = _mm512_add_epi8(hbits, _mm512_slli_epi16(_mm512_and_si512(v[g * 8 + 6], hmask), 2));
-            hbits = _mm512_add_epi8(hbits, _mm512_slli_epi16(_mm512_and_si512(v[g * 8 + 7], hmask), 3));
+            hbits = mm512_కూడు_epi8(hbits, _mm512_srli_epi16(_mm512_and_si512(v[g * 8 + 0], hmask), 4));
+            hbits = mm512_కూడు_epi8(hbits, _mm512_srli_epi16(_mm512_and_si512(v[g * 8 + 1], hmask), 3));
+            hbits = mm512_కూడు_epi8(hbits, _mm512_srli_epi16(_mm512_and_si512(v[g * 8 + 2], hmask), 2));
+            hbits = mm512_కూడు_epi8(hbits, _mm512_srli_epi16(_mm512_and_si512(v[g * 8 + 3], hmask), 1));
+            hbits = mm512_కూడు_epi8(hbits,                   _mm512_and_si512(v[g * 8 + 4], hmask)    );
+            hbits = mm512_కూడు_epi8(hbits, _mm512_slli_epi16(_mm512_and_si512(v[g * 8 + 5], hmask), 1));
+            hbits = mm512_కూడు_epi8(hbits, _mm512_slli_epi16(_mm512_and_si512(v[g * 8 + 6], hmask), 2));
+            hbits = mm512_కూడు_epi8(hbits, _mm512_slli_epi16(_mm512_and_si512(v[g * 8 + 7], hmask), 3));
             _mm512_storeu_si512((__m512i *)ph, hbits); ph += 64;
         }
     }
 }
 
-template <>
-inline void pack_qs<block_q6_K>(void * RESTRICT packed_B, const block_q6_K * RESTRICT B, int KB) {
+మూస <>
+అంతఃవరుస శూన్య pack_qs<ఖండం_q6_K>(శూన్య * RESTRICT packed_B, స్థిరరాశి ఖండం_q6_K * RESTRICT B, పూర్ణాంకం KB) {
     __m512i v[32];
-    const __m512i lowMask = _mm512_set1_epi8(0xF);
+    స్థిరరాశి __m512i దిగువ_ముసుగు = _mm512_set1_epi8(0xF);
     // QK_K 256 with 8 groups, handle 4 groups at a time
-    char * pb = (char *)packed_B;
-    char * ph = (char *)packed_B + (QK_K / 2) * TILE_N;
-    for (int k = 0; k < QK_K / 128; ++k) {
-        for (int n = 0; n < TILE_N; ++n) {
-            bytes_from_nibbles_128(v[n], v[n + 16], B[n * KB].ql + k * 64, B[n * KB].qh + k * 32);
+    అక్షరం * pb = (అక్షరం *)packed_B;
+    అక్షరం * ph = (అక్షరం *)packed_B + (QK_K / 2) * TILE_N;
+    కొరకు (పూర్ణాంకం k = 0; k < QK_K / 128; ++k) {
+        కొరకు (పూర్ణాంకం n = 0; n < TILE_N; ++n) {
+            బైట్లు_from_nibbles_128(v[n], v[n + 16], B[n * KB].ql + k * 64, B[n * KB].qh + k * 32);
         }
 
         // top half: group 0,1 or 4,5; bottom half: group 2,3 or 6,7
@@ -708,40 +708,40 @@ inline void pack_qs<block_q6_K>(void * RESTRICT packed_B, const block_q6_K * RES
         transpose_16x16_32bit(v + 16);
 
         // 1. pack lower 4bits with 4 groups
-        for (int n = 0; n < 32; n += 2) {
-            const __m512i r0 = _mm512_and_si512(v[n], lowMask);
-            const __m512i r1 = _mm512_and_si512(v[n + 1], lowMask);
+        కొరకు (పూర్ణాంకం n = 0; n < 32; n += 2) {
+            స్థిరరాశి __m512i r0 = _mm512_and_si512(v[n], దిగువ_ముసుగు);
+            స్థిరరాశి __m512i r1 = _mm512_and_si512(v[n + 1], దిగువ_ముసుగు);
             _mm512_storeu_si512((__m512i *)pb, packNibbles(r0, r1)); pb += 64;
         }
 
         // 2. pack higher 2bit with 4 groups
-        const __m512i hmask = _mm512_set1_epi8(0x30);
-        for (int g = 0; g < 8; ++g) {
+        స్థిరరాశి __m512i hmask = _mm512_set1_epi8(0x30);
+        కొరకు (పూర్ణాంకం g = 0; g < 8; ++g) {
             __m512i hbits = _mm512_setzero_si512();
-            hbits = _mm512_add_epi8(hbits, _mm512_srli_epi16(_mm512_and_si512(v[g * 4 + 0], hmask), 4));
-            hbits = _mm512_add_epi8(hbits, _mm512_srli_epi16(_mm512_and_si512(v[g * 4 + 1], hmask), 2));
-            hbits = _mm512_add_epi8(hbits,                   _mm512_and_si512(v[g * 4 + 2], hmask)    );
-            hbits = _mm512_add_epi8(hbits, _mm512_slli_epi16(_mm512_and_si512(v[g * 4 + 3], hmask), 2));
+            hbits = mm512_కూడు_epi8(hbits, _mm512_srli_epi16(_mm512_and_si512(v[g * 4 + 0], hmask), 4));
+            hbits = mm512_కూడు_epi8(hbits, _mm512_srli_epi16(_mm512_and_si512(v[g * 4 + 1], hmask), 2));
+            hbits = mm512_కూడు_epi8(hbits,                   _mm512_and_si512(v[g * 4 + 2], hmask)    );
+            hbits = mm512_కూడు_epi8(hbits, _mm512_slli_epi16(_mm512_and_si512(v[g * 4 + 3], hmask), 2));
             _mm512_storeu_si512((__m512i *)ph, hbits); ph += 64;
         }
     }
 }
 
-template <>
-inline void pack_qs<block_iq4_xs>(void * RESTRICT packed_B, const block_iq4_xs * RESTRICT B, int KB) {
+మూస <>
+అంతఃవరుస శూన్య pack_qs<ఖండం_iq4_xs>(శూన్య * RESTRICT packed_B, స్థిరరాశి ఖండం_iq4_xs * RESTRICT B, పూర్ణాంకం KB) {
     __m512i v[16];
-    char * pb = (char *)packed_B;
-    for (int k = 0; k < QK_K / 64; ++k) {
-        for (int n = 0; n < TILE_N; ++n) {
-            __m256i r0 = bytes_from_nibbles_32(B[n * KB].qs + k * 32 +  0);
-            __m256i r1 = bytes_from_nibbles_32(B[n * KB].qs + k * 32 + 16);
+    అక్షరం * pb = (అక్షరం *)packed_B;
+    కొరకు (పూర్ణాంకం k = 0; k < QK_K / 64; ++k) {
+        కొరకు (పూర్ణాంకం n = 0; n < TILE_N; ++n) {
+            __m256i r0 = బైట్లు_from_nibbles_32(B[n * KB].qs + k * 32 +  0);
+            __m256i r1 = బైట్లు_from_nibbles_32(B[n * KB].qs + k * 32 + 16);
             v[n] = _mm512_inserti32x8(_mm512_castsi256_si512(r0), r1, 1);
         }
 
         transpose_16x16_32bit(v);
 
         // pack again with 128 to fully utilize vector length
-        for (int n = 0; n < TILE_N; n += 2) {
+        కొరకు (పూర్ణాంకం n = 0; n < TILE_N; n += 2) {
             _mm512_storeu_si512((__m512i *)pb, packNibbles(v[n], v[n + 1]));
             pb += 64;
         }
@@ -749,57 +749,57 @@ inline void pack_qs<block_iq4_xs>(void * RESTRICT packed_B, const block_iq4_xs *
 }
 
 // pack B to vnni formats in 4bits or 8 bits
-void pack_B(void * RESTRICT packed_B, const block_q4_0 * RESTRICT B, int KB) {
+శూన్య pack_B(శూన్య * RESTRICT packed_B, స్థిరరాశి ఖండం_q4_0 * RESTRICT B, పూర్ణాంకం KB) {
     pack_qs(packed_B, B, KB);
-    ggml_half * d0 = reinterpret_cast<ggml_half *>((char *)packed_B + TILE_N * TILE_K / 2);
-    for (int n = 0; n < TILE_N; ++n) {
+    ggml_half * d0 = reinterpret_cast<ggml_half *>((అక్షరం *)packed_B + TILE_N * TILE_K / 2);
+    కొరకు (పూర్ణాంకం n = 0; n < TILE_N; ++n) {
         d0[n] = B[n * KB].d;
     }
 }
 
-void pack_B(void * RESTRICT packed_B, const block_q4_1 * RESTRICT B, int KB) {
+శూన్య pack_B(శూన్య * RESTRICT packed_B, స్థిరరాశి ఖండం_q4_1 * RESTRICT B, పూర్ణాంకం KB) {
     pack_qs(packed_B, B, KB);
-    ggml_half * d0 = reinterpret_cast<ggml_half *>((char *)packed_B + TILE_N * TILE_K / 2);
+    ggml_half * d0 = reinterpret_cast<ggml_half *>((అక్షరం *)packed_B + TILE_N * TILE_K / 2);
     ggml_half * m0 = d0 + TILE_N;
-    for (int n = 0; n < TILE_N; ++n) {
+    కొరకు (పూర్ణాంకం n = 0; n < TILE_N; ++n) {
         d0[n] = B[n * KB].d;
         m0[n] = B[n * KB].m;
     }
 }
 
-inline void s8s8_compensation(void * RESTRICT packed_B) {
+అంతఃవరుస శూన్య s8s8_compensation(శూన్య * RESTRICT packed_B) {
     // packed_B layout:
     //   quants {TILE_N, TILEK}  int8_t
     //   d0     {TILE_N}      ggml_half
     //   comp   {TILE_N}        int32_t
-    const int offset = TILE_N * TILE_K + TILE_N * sizeof(ggml_half);
+    స్థిరరాశి పూర్ణాంకం స్థానభ్రంశం = TILE_N * TILE_K + TILE_N * పరిమాణం(ggml_half);
     __m512i vcomp = _mm512_setzero_si512();
-    const __m512i off = _mm512_set1_epi8(static_cast<char>(0x80));
-    for (int k = 0; k < 8; ++k) {
-        __m512i vb = _mm512_loadu_si512((const __m512i *)((const char *)packed_B + k * 64));
+    స్థిరరాశి __m512i off = _mm512_set1_epi8(static_cast<అక్షరం>(0x80));
+    కొరకు (పూర్ణాంకం k = 0; k < 8; ++k) {
+        __m512i vb = _mm512_loadu_si512((స్థిరరాశి __m512i *)((స్థిరరాశి అక్షరం *)packed_B + k * 64));
         vcomp = _mm512_dpbusd_epi32(vcomp, off, vb);
     }
-    _mm512_storeu_si512((__m512i *)((char *)(packed_B) + offset), vcomp);
+    _mm512_storeu_si512((__m512i *)((అక్షరం *)(packed_B) + స్థానభ్రంశం), vcomp);
 }
 
-void pack_B(void * RESTRICT packed_B, const block_q8_0 * RESTRICT B, int KB) {
+శూన్య pack_B(శూన్య * RESTRICT packed_B, స్థిరరాశి ఖండం_q8_0 * RESTRICT B, పూర్ణాంకం KB) {
     pack_qs(packed_B, B, KB);
-    ggml_half * d0 = reinterpret_cast<ggml_half *>((char *)packed_B + TILE_N * TILE_K);
-    for (int n = 0; n < TILE_N; ++n) {
+    ggml_half * d0 = reinterpret_cast<ggml_half *>((అక్షరం *)packed_B + TILE_N * TILE_K);
+    కొరకు (పూర్ణాంకం n = 0; n < TILE_N; ++n) {
         d0[n] = B[n * KB].d;
     }
     s8s8_compensation(packed_B);
 }
 
 // convert 8 * {min, scale} from int6 to int8
-inline void unpack_mins_and_scales(const uint8_t * scales, uint32_t * utmp) {
-    const uint32_t kmask1 = 0x3f3f3f3f;
-    const uint32_t kmask2 = 0x0f0f0f0f;
-    const uint32_t kmask3 = 0x03030303;
+అంతఃవరుస శూన్య unpack_mins_and_scales(స్థిరరాశి uint8_t * scales, uint32_t * utmp) {
+    స్థిరరాశి uint32_t kmask1 = 0x3f3f3f3f;
+    స్థిరరాశి uint32_t kmask2 = 0x0f0f0f0f;
+    స్థిరరాశి uint32_t kmask3 = 0x03030303;
 
-    memcpy(utmp, scales, 12);
+    జ్ఞాపకం_నకలు(utmp, scales, 12);
     utmp[3] = ((utmp[2] >> 4) & kmask2) | (((utmp[1] >> 6) & kmask3) << 4);
-    const uint32_t uaux = utmp[1] & kmask1;
+    స్థిరరాశి uint32_t uaux = utmp[1] & kmask1;
     utmp[1] = (utmp[2] & kmask2) | (((utmp[0] >> 6) & kmask3) << 4);
     utmp[2] = uaux;
     utmp[0] &= kmask1;
@@ -811,22 +811,22 @@ inline void unpack_mins_and_scales(const uint8_t * scales, uint32_t * utmp) {
 //   mins   {8, TILE_N}      uint8
 //   d      {TILE_N}     ggml_half
 //   dmin   {TILE_N}     ggml_half
-void pack_B(void * RESTRICT packed_B, const block_q4_K * RESTRICT B, int KB) {
+శూన్య pack_B(శూన్య * RESTRICT packed_B, స్థిరరాశి ఖండం_q4_K * RESTRICT B, పూర్ణాంకం KB) {
     pack_qs(packed_B, B, KB);
 
-    uint8_t * scales = reinterpret_cast<uint8_t *>((char *)packed_B + (QK_K / 2) * TILE_N);
+    uint8_t * scales = reinterpret_cast<uint8_t *>((అక్షరం *)packed_B + (QK_K / 2) * TILE_N);
     uint8_t * mins = scales + 8 * TILE_N;
     ggml_half * d = reinterpret_cast<ggml_half *>(mins + 8 * TILE_N);
     ggml_half * dmin = d + TILE_N;
 
-    union {
+    సంఘం {
         uint32_t u32[4];
         uint8_t  u8[16];
     } s;
 
-    for (int n = 0; n < TILE_N; ++n) {
+    కొరకు (పూర్ణాంకం n = 0; n < TILE_N; ++n) {
         unpack_mins_and_scales(B[n * KB].scales, s.u32);
-        for (int k = 0; k < 8; ++k) {
+        కొరకు (పూర్ణాంకం k = 0; k < 8; ++k) {
             scales[k * TILE_N + n] = s.u8[k];
             mins[(k >> 1) * TILE_N * 2 + n * 2 + (k & 0x1)] = s.u8[k + 8];
         }
@@ -842,22 +842,22 @@ void pack_B(void * RESTRICT packed_B, const block_q4_K * RESTRICT B, int KB) {
 //   mins   {8, TILE_N}      uint8
 //   d      {TILE_N}     ggml_half
 //   dmin   {TILE_N}     ggml_half
-void pack_B(void * RESTRICT packed_B, const block_q5_K * RESTRICT B, int KB) {
+శూన్య pack_B(శూన్య * RESTRICT packed_B, స్థిరరాశి ఖండం_q5_K * RESTRICT B, పూర్ణాంకం KB) {
     pack_qs(packed_B, B, KB);
 
-    uint8_t * scales = reinterpret_cast<uint8_t *>((char *)packed_B + (QK_K / 2) * TILE_N + (QK_K / 8) * TILE_N);
+    uint8_t * scales = reinterpret_cast<uint8_t *>((అక్షరం *)packed_B + (QK_K / 2) * TILE_N + (QK_K / 8) * TILE_N);
     uint8_t * mins = scales + 8 * TILE_N;
     ggml_half * d = reinterpret_cast<ggml_half *>(mins + 8 * TILE_N);
     ggml_half * dmin = d + TILE_N;
 
-    union {
+    సంఘం {
         uint32_t u32[4];
         uint8_t  u8[16];
     } s;
 
-    for (int n = 0; n < TILE_N; ++n) {
+    కొరకు (పూర్ణాంకం n = 0; n < TILE_N; ++n) {
         unpack_mins_and_scales(B[n * KB].scales, s.u32);
-        for (int k = 0; k < 8; ++k) {
+        కొరకు (పూర్ణాంకం k = 0; k < 8; ++k) {
             scales[k * TILE_N + n] = s.u8[k];
             mins[(k >> 1) * TILE_N * 2 + n * 2 + (k & 0x1)] = s.u8[k + 8];
         }
@@ -871,14 +871,14 @@ void pack_B(void * RESTRICT packed_B, const block_q5_K * RESTRICT B, int KB) {
 //   qh     {16, TILE_N, 4}  uint8
 //   scales {16, TILE_N}      uint8
 //   d      {TILE_N}     ggml_half
-void pack_B(void * RESTRICT packed_B, const block_q6_K * RESTRICT B, int KB) {
+శూన్య pack_B(శూన్య * RESTRICT packed_B, స్థిరరాశి ఖండం_q6_K * RESTRICT B, పూర్ణాంకం KB) {
     pack_qs(packed_B, B, KB);
 
-    uint8_t * scales = reinterpret_cast<uint8_t *>((char *)packed_B + (QK_K / 2) * TILE_N + (QK_K / 4) * TILE_N);
+    uint8_t * scales = reinterpret_cast<uint8_t *>((అక్షరం *)packed_B + (QK_K / 2) * TILE_N + (QK_K / 4) * TILE_N);
     ggml_half * d = reinterpret_cast<ggml_half *>(scales + 16 * TILE_N);
-    for (int n = 0; n < TILE_N; ++n) {
-        const int8_t * ps = B[n * KB].scales;
-        for (int k = 0; k < 16; ++k) {
+    కొరకు (పూర్ణాంకం n = 0; n < TILE_N; ++n) {
+        స్థిరరాశి int8_t * ps = B[n * KB].scales;
+        కొరకు (పూర్ణాంకం k = 0; k < 16; ++k) {
             scales[k * TILE_N + n] = ps[k];
         }
         d[n] = B[n * KB].d;
@@ -889,18 +889,18 @@ void pack_B(void * RESTRICT packed_B, const block_q6_K * RESTRICT B, int KB) {
 //   quants {8, TILE_N, 16}  uint8
 //   scales {8, TILE_N}       int8
 //   d      {TILE_N}     ggml_half
-void pack_B(void * RESTRICT packed_B, const block_iq4_xs * RESTRICT B, int KB) {
+శూన్య pack_B(శూన్య * RESTRICT packed_B, స్థిరరాశి ఖండం_iq4_xs * RESTRICT B, పూర్ణాంకం KB) {
     pack_qs(packed_B, B, KB);
 
-    int8_t * scales = reinterpret_cast<int8_t *>((char *)packed_B + (QK_K / 2) * TILE_N);
+    int8_t * scales = reinterpret_cast<int8_t *>((అక్షరం *)packed_B + (QK_K / 2) * TILE_N);
     ggml_half * d = reinterpret_cast<ggml_half *>(scales + 8 * TILE_N);
 
     // pack the scales
-    for (int n = 0; n < TILE_N; ++n) {
+    కొరకు (పూర్ణాంకం n = 0; n < TILE_N; ++n) {
         uint16_t sh = B[n * KB].scales_h;
-        for (int k = 0; k < 8; k += 2) {
-            const int16_t ls1 = ((B[n * KB].scales_l[k / 2] & 0xf) | ((sh << 4) & 0x30)) - 32;
-            const int16_t ls2 = ((B[n * KB].scales_l[k / 2] >>  4) | ((sh << 2) & 0x30)) - 32;
+        కొరకు (పూర్ణాంకం k = 0; k < 8; k += 2) {
+            స్థిరరాశి int16_t ls1 = ((B[n * KB].scales_l[k / 2] & 0xf) | ((sh << 4) & 0x30)) - 32;
+            స్థిరరాశి int16_t ls2 = ((B[n * KB].scales_l[k / 2] >>  4) | ((sh << 2) & 0x30)) - 32;
             scales[(k + 0) * TILE_N + n] = ls1;
             scales[(k + 1) * TILE_N + n] = ls2;
             sh >>= 4;
@@ -909,159 +909,159 @@ void pack_B(void * RESTRICT packed_B, const block_iq4_xs * RESTRICT B, int KB) {
     }
 }
 
-template<typename TB, typename packed_B_t = packed_B_type<TB>>
-void unpack_B(packed_B_t * RESTRICT tile, const void * RESTRICT packed_B) {
-    GGML_UNUSED(tile);
-    GGML_UNUSED(packed_B);
+మూస<రకం_పేరు TB, రకం_పేరు packed_B_t = packed_B_type<TB>>
+శూన్య unpack_B(packed_B_t * RESTRICT tile, స్థిరరాశి శూన్య * RESTRICT packed_B) {
+    GGML_వాడని(tile);
+    GGML_వాడని(packed_B);
 }
 
-template <>
-void unpack_B<block_q4_0>(int8_t * RESTRICT tile, const void * RESTRICT packed_B) {
-  const __m512i off = _mm512_set1_epi8(8);
-  const __m512i lowMask = _mm512_set1_epi8(0xF);
-  for (int n = 0; n < 8; n += 2) {
-    __m512i bytes = _mm512_loadu_si512((const __m512i *)((const char *)packed_B + n * 32));
-    const __m512i r0 = _mm512_sub_epi8(_mm512_and_si512(bytes, lowMask), off);
-    const __m512i r1 = _mm512_sub_epi8(_mm512_and_si512(_mm512_srli_epi16(bytes, 4), lowMask), off);
+మూస <>
+శూన్య unpack_B<ఖండం_q4_0>(int8_t * RESTRICT tile, స్థిరరాశి శూన్య * RESTRICT packed_B) {
+  స్థిరరాశి __m512i off = _mm512_set1_epi8(8);
+  స్థిరరాశి __m512i దిగువ_ముసుగు = _mm512_set1_epi8(0xF);
+  కొరకు (పూర్ణాంకం n = 0; n < 8; n += 2) {
+    __m512i బైట్లు = _mm512_loadu_si512((స్థిరరాశి __m512i *)((స్థిరరాశి అక్షరం *)packed_B + n * 32));
+    స్థిరరాశి __m512i r0 = _mm512_sub_epi8(_mm512_and_si512(బైట్లు, దిగువ_ముసుగు), off);
+    స్థిరరాశి __m512i r1 = _mm512_sub_epi8(_mm512_and_si512(_mm512_srli_epi16(బైట్లు, 4), దిగువ_ముసుగు), off);
     _mm512_storeu_si512((__m512i *)(tile + n * 64 +  0), r0);
     _mm512_storeu_si512((__m512i *)(tile + n * 64 + 64), r1);
   }
 }
 
-template <>
-void unpack_B<block_q4_1>(uint8_t * RESTRICT tile, const void * RESTRICT packed_B) {
-    const __m512i lowMask = _mm512_set1_epi8(0xF);
-    for (int n = 0; n < 8; n += 2) {
-        __m512i bytes = _mm512_loadu_si512((const __m512i *)((const char *)packed_B + n * 32));
-        const __m512i r0 = _mm512_and_si512(bytes, lowMask);
-        const __m512i r1 = _mm512_and_si512(_mm512_srli_epi16(bytes, 4), lowMask);
+మూస <>
+శూన్య unpack_B<ఖండం_q4_1>(uint8_t * RESTRICT tile, స్థిరరాశి శూన్య * RESTRICT packed_B) {
+    స్థిరరాశి __m512i దిగువ_ముసుగు = _mm512_set1_epi8(0xF);
+    కొరకు (పూర్ణాంకం n = 0; n < 8; n += 2) {
+        __m512i బైట్లు = _mm512_loadu_si512((స్థిరరాశి __m512i *)((స్థిరరాశి అక్షరం *)packed_B + n * 32));
+        స్థిరరాశి __m512i r0 = _mm512_and_si512(బైట్లు, దిగువ_ముసుగు);
+        స్థిరరాశి __m512i r1 = _mm512_and_si512(_mm512_srli_epi16(బైట్లు, 4), దిగువ_ముసుగు);
         _mm512_storeu_si512((__m512i *)(tile + n * 64 +  0), r0);
         _mm512_storeu_si512((__m512i *)(tile + n * 64 + 64), r1);
     }
 }
 
 // packed_B_t for QKK is int8_t
-template <typename TB>
-void unpack_B(int8_t * RESTRICT tile, const void * RESTRICT packed_B, int k) {
-    const int packed_B_group_size = QK_K / 2 * TILE_N / 8;
-    const char * packed_B_group = (const char *)packed_B + k * packed_B_group_size;
-    const __m512i lowMask = _mm512_set1_epi8(0xF);
-    for (int n = 0; n < 8; n += 2) {
-        __m512i bytes = _mm512_loadu_si512(packed_B_group + n * 32);
-        const __m512i r0 = _mm512_and_si512(bytes, lowMask);
-        const __m512i r1 = _mm512_and_si512(_mm512_srli_epi16(bytes, 4), lowMask);
+మూస <రకం_పేరు TB>
+శూన్య unpack_B(int8_t * RESTRICT tile, స్థిరరాశి శూన్య * RESTRICT packed_B, పూర్ణాంకం k) {
+    స్థిరరాశి పూర్ణాంకం packed_B_సమూహం_కొలత = QK_K / 2 * TILE_N / 8;
+    స్థిరరాశి అక్షరం * packed_B_సమూహం = (స్థిరరాశి అక్షరం *)packed_B + k * packed_B_సమూహం_కొలత;
+    స్థిరరాశి __m512i దిగువ_ముసుగు = _mm512_set1_epi8(0xF);
+    కొరకు (పూర్ణాంకం n = 0; n < 8; n += 2) {
+        __m512i బైట్లు = _mm512_loadu_si512(packed_B_సమూహం + n * 32);
+        స్థిరరాశి __m512i r0 = _mm512_and_si512(బైట్లు, దిగువ_ముసుగు);
+        స్థిరరాశి __m512i r1 = _mm512_and_si512(_mm512_srli_epi16(బైట్లు, 4), దిగువ_ముసుగు);
         _mm512_storeu_si512((__m512i *)(tile + n * 64 +  0), r0);
         _mm512_storeu_si512((__m512i *)(tile + n * 64 + 64), r1);
     }
 }
 
-template <>
-void unpack_B<block_q5_K>(int8_t * RESTRICT tile, const void * RESTRICT packed_B, int k) {
+మూస <>
+శూన్య unpack_B<ఖండం_q5_K>(int8_t * RESTRICT tile, స్థిరరాశి శూన్య * RESTRICT packed_B, పూర్ణాంకం k) {
     // lower 4bits, stride 256 bytes
-    const int packed_l4_group_size = QK_K / 2 * TILE_N / 8;
-    const char * pb = (const char *)packed_B + k * packed_l4_group_size;
+    స్థిరరాశి పూర్ణాంకం packed_l4_సమూహం_కొలత = QK_K / 2 * TILE_N / 8;
+    స్థిరరాశి అక్షరం * pb = (స్థిరరాశి అక్షరం *)packed_B + k * packed_l4_సమూహం_కొలత;
 
     // higher 1bit, stride 64 bytes
-    const int packed_h1_group_size = QK_K / 8 * TILE_N / 8;
-    const char * ph = (const char *)packed_B + (QK_K / 2) * TILE_N + k * packed_h1_group_size;
-    const __m512i hbits = _mm512_loadu_si512(ph);
+    స్థిరరాశి పూర్ణాంకం packed_h1_సమూహం_కొలత = QK_K / 8 * TILE_N / 8;
+    స్థిరరాశి అక్షరం * ph = (స్థిరరాశి అక్షరం *)packed_B + (QK_K / 2) * TILE_N + k * packed_h1_సమూహం_కొలత;
+    స్థిరరాశి __m512i hbits = _mm512_loadu_si512(ph);
 
-    const __m512i lowMask = _mm512_set1_epi8(0xF);
+    స్థిరరాశి __m512i దిగువ_ముసుగు = _mm512_set1_epi8(0xF);
     __m512i hmask0 = _mm512_set1_epi8(0x1);
     __m512i hmask1 = _mm512_set1_epi8(0x2);
 
-    for (int n = 0; n < 8; n += 2) {
-        __m512i bytes = _mm512_loadu_si512(pb + n * 32);
-        __m512i r0 = _mm512_and_si512(bytes, lowMask);
-        __m512i r1 = _mm512_and_si512(_mm512_srli_epi16(bytes, 4), lowMask);
+    కొరకు (పూర్ణాంకం n = 0; n < 8; n += 2) {
+        __m512i బైట్లు = _mm512_loadu_si512(pb + n * 32);
+        __m512i r0 = _mm512_and_si512(బైట్లు, దిగువ_ముసుగు);
+        __m512i r1 = _mm512_and_si512(_mm512_srli_epi16(బైట్లు, 4), దిగువ_ముసుగు);
         __m512i h0 = _mm512_slli_epi16(_mm512_srli_epi16(_mm512_and_si512(hbits, hmask0), n), 4);
         __m512i h1 = _mm512_slli_epi16(_mm512_srli_epi16(_mm512_and_si512(hbits, hmask1), n + 1), 4);
 
         hmask0 = _mm512_slli_epi16(hmask0, 2);
         hmask1 = _mm512_slli_epi16(hmask1, 2);
-        r0 = _mm512_add_epi8(r0, h0);
-        r1 = _mm512_add_epi8(r1, h1);
+        r0 = mm512_కూడు_epi8(r0, h0);
+        r1 = mm512_కూడు_epi8(r1, h1);
         _mm512_storeu_si512((__m512i *)(tile + n * 64 +  0), r0);
         _mm512_storeu_si512((__m512i *)(tile + n * 64 + 64), r1);
     }
 }
 
-template <>
-void unpack_B<block_q6_K>(int8_t * RESTRICT tile, const void * RESTRICT packed_B, int k) {
+మూస <>
+శూన్య unpack_B<ఖండం_q6_K>(int8_t * RESTRICT tile, స్థిరరాశి శూన్య * RESTRICT packed_B, పూర్ణాంకం k) {
     // lower 4bits, stride 128 bytes
-    const int packed_l4_group_size = QK_K / 2 * TILE_N / 16;
-    const char * pb = (const char *)packed_B + k * packed_l4_group_size;
+    స్థిరరాశి పూర్ణాంకం packed_l4_సమూహం_కొలత = QK_K / 2 * TILE_N / 16;
+    స్థిరరాశి అక్షరం * pb = (స్థిరరాశి అక్షరం *)packed_B + k * packed_l4_సమూహం_కొలత;
 
     // higher 2bits, stride 64 bytes
-    const int packed_h2_group_size = QK_K / 4 * TILE_N / 16;
-    const char * ph = (const char *)packed_B + (QK_K / 2) * TILE_N + k * packed_h2_group_size;
-    const __m512i hbits = _mm512_loadu_si512(ph);
+    స్థిరరాశి పూర్ణాంకం packed_h2_సమూహం_కొలత = QK_K / 4 * TILE_N / 16;
+    స్థిరరాశి అక్షరం * ph = (స్థిరరాశి అక్షరం *)packed_B + (QK_K / 2) * TILE_N + k * packed_h2_సమూహం_కొలత;
+    స్థిరరాశి __m512i hbits = _mm512_loadu_si512(ph);
 
-    const __m512i off = _mm512_set1_epi8(32);
-    const __m512i lowMask = _mm512_set1_epi8(0xF);
+    స్థిరరాశి __m512i off = _mm512_set1_epi8(32);
+    స్థిరరాశి __m512i దిగువ_ముసుగు = _mm512_set1_epi8(0xF);
     __m512i hmask0 = _mm512_set1_epi8(0x3); // 0011
     __m512i hmask1 = _mm512_set1_epi8(0xC); // 1100
 
     // notes: skip zero padding from row4 to row7 as we have done so in `unpack_A`
-    __m512i bytes = _mm512_loadu_si512(pb);
-    __m512i r0 = _mm512_and_si512(bytes, lowMask);
-    __m512i r1 = _mm512_and_si512(_mm512_srli_epi16(bytes, 4), lowMask);
+    __m512i బైట్లు = _mm512_loadu_si512(pb);
+    __m512i r0 = _mm512_and_si512(బైట్లు, దిగువ_ముసుగు);
+    __m512i r1 = _mm512_and_si512(_mm512_srli_epi16(బైట్లు, 4), దిగువ_ముసుగు);
     __m512i h0 = _mm512_slli_epi16(_mm512_and_si512(hbits, hmask0), 4);
     __m512i h1 = _mm512_slli_epi16(_mm512_and_si512(hbits, hmask1), 2);
-    _mm512_storeu_si512((__m512i *)(tile +  0), _mm512_sub_epi8(_mm512_add_epi8(r0, h0), off));
-    _mm512_storeu_si512((__m512i *)(tile + 64), _mm512_sub_epi8(_mm512_add_epi8(r1, h1), off));
+    _mm512_storeu_si512((__m512i *)(tile +  0), _mm512_sub_epi8(mm512_కూడు_epi8(r0, h0), off));
+    _mm512_storeu_si512((__m512i *)(tile + 64), _mm512_sub_epi8(mm512_కూడు_epi8(r1, h1), off));
 
     hmask0 = _mm512_slli_epi16(hmask0, 4);
     hmask1 = _mm512_slli_epi16(hmask1, 4);
 
-    bytes = _mm512_loadu_si512(pb + 64);
-    r0 = _mm512_and_si512(bytes, lowMask);
-    r1 = _mm512_and_si512(_mm512_srli_epi16(bytes, 4), lowMask);
+    బైట్లు = _mm512_loadu_si512(pb + 64);
+    r0 = _mm512_and_si512(బైట్లు, దిగువ_ముసుగు);
+    r1 = _mm512_and_si512(_mm512_srli_epi16(బైట్లు, 4), దిగువ_ముసుగు);
     h0 =                   _mm512_and_si512(hbits, hmask0);
     h1 = _mm512_srli_epi16(_mm512_and_si512(hbits, hmask1), 2);
-    _mm512_storeu_si512((__m512i *)(tile + 128), _mm512_sub_epi8(_mm512_add_epi8(r0, h0), off));
-    _mm512_storeu_si512((__m512i *)(tile + 192), _mm512_sub_epi8(_mm512_add_epi8(r1, h1), off));
+    _mm512_storeu_si512((__m512i *)(tile + 128), _mm512_sub_epi8(mm512_కూడు_epi8(r0, h0), off));
+    _mm512_storeu_si512((__m512i *)(tile + 192), _mm512_sub_epi8(mm512_కూడు_epi8(r1, h1), off));
 }
 
-template <>
-void unpack_B<block_iq4_xs>(int8_t * RESTRICT tile, const void * RESTRICT packed_B, int k) {
-    static const __m512i values128 = _mm512_set_epi8(
+మూస <>
+శూన్య unpack_B<ఖండం_iq4_xs>(int8_t * RESTRICT tile, స్థిరరాశి శూన్య * RESTRICT packed_B, పూర్ణాంకం k) {
+    స్థిర స్థిరరాశి __m512i values128 = mm512_సమితి_epi8(
         113, 89, 69, 53, 38, 25, 13, 1, -10, -22, -35, -49, -65, -83, -104, -127,
         113, 89, 69, 53, 38, 25, 13, 1, -10, -22, -35, -49, -65, -83, -104, -127,
         113, 89, 69, 53, 38, 25, 13, 1, -10, -22, -35, -49, -65, -83, -104, -127,
         113, 89, 69, 53, 38, 25, 13, 1, -10, -22, -35, -49, -65, -83, -104, -127
     );
 
-    const int packed_B_group_size = QK_K / 2 * TILE_N / 8;
-    const char * pb = (const char *)packed_B + k * packed_B_group_size;
-    const __m512i lowMask = _mm512_set1_epi8(0xF);
+    స్థిరరాశి పూర్ణాంకం packed_B_సమూహం_కొలత = QK_K / 2 * TILE_N / 8;
+    స్థిరరాశి అక్షరం * pb = (స్థిరరాశి అక్షరం *)packed_B + k * packed_B_సమూహం_కొలత;
+    స్థిరరాశి __m512i దిగువ_ముసుగు = _mm512_set1_epi8(0xF);
 
-    for (int n = 0; n < 8; n += 2) {
-        __m512i bytes = _mm512_loadu_si512(pb + n * 32);
-        const __m512i r0 = _mm512_shuffle_epi8(values128, _mm512_and_si512(bytes, lowMask));
-        const __m512i r1 = _mm512_shuffle_epi8(values128, _mm512_and_si512(_mm512_srli_epi16(bytes, 4), lowMask));
+    కొరకు (పూర్ణాంకం n = 0; n < 8; n += 2) {
+        __m512i బైట్లు = _mm512_loadu_si512(pb + n * 32);
+        స్థిరరాశి __m512i r0 = _mm512_shuffle_epi8(values128, _mm512_and_si512(బైట్లు, దిగువ_ముసుగు));
+        స్థిరరాశి __m512i r1 = _mm512_shuffle_epi8(values128, _mm512_and_si512(_mm512_srli_epi16(బైట్లు, 4), దిగువ_ముసుగు));
         _mm512_storeu_si512((__m512i *)(tile + n * 64 +  0), r0);
         _mm512_storeu_si512((__m512i *)(tile + n * 64 + 64), r1);
     }
 }
 
-template <typename TA, typename TB, bool is_acc>
-struct acc_C {};
+మూస <రకం_పేరు TA, రకం_పేరు TB, తార్కిక is_acc>
+నిర్మాణం acc_C {};
 
-template <bool is_acc>
-struct acc_C<block_q8_0, block_q4_0, is_acc> {
-    static void apply(float * RESTRICT C, int ldc, const int32_t * RESTRICT tile, const block_q8_0 * A, int lda, const void * packed_B, int nr) {
-        const int offset = TILE_N * TILE_K / 2;
-        const __m512 vd0 = _mm512_cvtph_ps(_mm256_loadu_si256((const __m256i *)((const char *)packed_B + offset)));
+మూస <తార్కిక is_acc>
+నిర్మాణం acc_C<ఖండం_q8_0, ఖండం_q4_0, is_acc> {
+    స్థిర శూన్య apply(దశాంశం * RESTRICT C, పూర్ణాంకం ldc, స్థిరరాశి int32_t * RESTRICT tile, స్థిరరాశి ఖండం_q8_0 * A, పూర్ణాంకం lda, స్థిరరాశి శూన్య * packed_B, పూర్ణాంకం nr) {
+        స్థిరరాశి పూర్ణాంకం స్థానభ్రంశం = TILE_N * TILE_K / 2;
+        స్థిరరాశి __m512 vd0 = _mm512_cvtph_ps(_mm256_loadu_si256((స్థిరరాశి __m256i *)((స్థిరరాశి అక్షరం *)packed_B + స్థానభ్రంశం)));
 
-        for (int m = 0; m < nr; ++m) {
-            const __m512 vd1 = _mm512_set1_ps(GGML_CPU_FP16_TO_FP32(A[m * lda].d));
-            const __m512 vtile = _mm512_cvtepi32_ps(_mm512_loadu_si512(tile + m * TILE_N));
+        కొరకు (పూర్ణాంకం m = 0; m < nr; ++m) {
+            స్థిరరాశి __m512 vd1 = _mm512_set1_ps(GGML_CPU_FP16_గమ్యం_FP32(A[m * lda].d));
+            స్థిరరాశి __m512 vtile = _mm512_cvtepi32_ps(_mm512_loadu_si512(tile + m * TILE_N));
 
             __m512 vsum;
-            if (is_acc) {
+            ఒకవేళ (is_acc) {
                 vsum = _mm512_loadu_ps(C + m * ldc);
-            } else {
+            } లేకపోతే {
                 vsum = _mm512_set1_ps(0.f);
             }
             vsum = _mm512_fmadd_ps(vtile, _mm512_mul_ps(vd0, vd1), vsum);
@@ -1070,22 +1070,22 @@ struct acc_C<block_q8_0, block_q4_0, is_acc> {
     }
 };
 
-template <bool is_acc>
-struct acc_C<block_q8_1, block_q4_1, is_acc> {
-    static void apply(float * RESTRICT C, int ldc, const int32_t * RESTRICT tile, const block_q8_1 * A, int lda, const void * packed_B, int nr) {
-        const int offset = TILE_N * TILE_K / 2;
-        const __m512 vd0 = _mm512_cvtph_ps(_mm256_loadu_si256((const __m256i *)((const char *)packed_B + offset)));
-        const __m512 vm0 = _mm512_cvtph_ps(_mm256_loadu_si256((const __m256i *)((const char *)packed_B + offset + TILE_N * sizeof(ggml_half))));
+మూస <తార్కిక is_acc>
+నిర్మాణం acc_C<ఖండం_q8_1, ఖండం_q4_1, is_acc> {
+    స్థిర శూన్య apply(దశాంశం * RESTRICT C, పూర్ణాంకం ldc, స్థిరరాశి int32_t * RESTRICT tile, స్థిరరాశి ఖండం_q8_1 * A, పూర్ణాంకం lda, స్థిరరాశి శూన్య * packed_B, పూర్ణాంకం nr) {
+        స్థిరరాశి పూర్ణాంకం స్థానభ్రంశం = TILE_N * TILE_K / 2;
+        స్థిరరాశి __m512 vd0 = _mm512_cvtph_ps(_mm256_loadu_si256((స్థిరరాశి __m256i *)((స్థిరరాశి అక్షరం *)packed_B + స్థానభ్రంశం)));
+        స్థిరరాశి __m512 vm0 = _mm512_cvtph_ps(_mm256_loadu_si256((స్థిరరాశి __m256i *)((స్థిరరాశి అక్షరం *)packed_B + స్థానభ్రంశం + TILE_N * పరిమాణం(ggml_half))));
 
-        for (int m = 0; m < nr; ++m) {
-            const __m512 vd1 = _mm512_set1_ps(GGML_CPU_FP16_TO_FP32(A[m * lda].d));
-            const __m512 vs1 = _mm512_set1_ps(GGML_CPU_FP16_TO_FP32(A[m * lda].s));
-            const __m512 vtile = _mm512_cvtepi32_ps(_mm512_loadu_si512(tile + m * TILE_N));
+        కొరకు (పూర్ణాంకం m = 0; m < nr; ++m) {
+            స్థిరరాశి __m512 vd1 = _mm512_set1_ps(GGML_CPU_FP16_గమ్యం_FP32(A[m * lda].d));
+            స్థిరరాశి __m512 vs1 = _mm512_set1_ps(GGML_CPU_FP16_గమ్యం_FP32(A[m * lda].s));
+            స్థిరరాశి __m512 vtile = _mm512_cvtepi32_ps(_mm512_loadu_si512(tile + m * TILE_N));
 
             __m512 vsum;
-            if (is_acc) {
+            ఒకవేళ (is_acc) {
                 vsum = _mm512_loadu_ps(C + m * ldc);
-            } else {
+            } లేకపోతే {
                 vsum = _mm512_set1_ps(0.f);
             }
             vsum = _mm512_fmadd_ps(vtile, _mm512_mul_ps(vd0, vd1), vsum);
@@ -1095,20 +1095,20 @@ struct acc_C<block_q8_1, block_q4_1, is_acc> {
     }
 };
 
-template <bool is_acc>
-struct acc_C<block_q8_0, block_q8_0, is_acc> {
-    static void apply(float * RESTRICT C, int ldc, const int32_t * RESTRICT tile, const block_q8_0 * A, int lda, const void * packed_B, int nr) {
-        const int offset = TILE_N * TILE_K;
-        const __m512 vd0 = _mm512_cvtph_ps(_mm256_loadu_si256((const __m256i *)((const char *)packed_B + offset)));
+మూస <తార్కిక is_acc>
+నిర్మాణం acc_C<ఖండం_q8_0, ఖండం_q8_0, is_acc> {
+    స్థిర శూన్య apply(దశాంశం * RESTRICT C, పూర్ణాంకం ldc, స్థిరరాశి int32_t * RESTRICT tile, స్థిరరాశి ఖండం_q8_0 * A, పూర్ణాంకం lda, స్థిరరాశి శూన్య * packed_B, పూర్ణాంకం nr) {
+        స్థిరరాశి పూర్ణాంకం స్థానభ్రంశం = TILE_N * TILE_K;
+        స్థిరరాశి __m512 vd0 = _mm512_cvtph_ps(_mm256_loadu_si256((స్థిరరాశి __m256i *)((స్థిరరాశి అక్షరం *)packed_B + స్థానభ్రంశం)));
 
-        for (int m = 0; m < nr; ++m) {
-            const __m512 vd1 = _mm512_set1_ps(GGML_CPU_FP16_TO_FP32(A[m * lda].d));
-            const __m512 vtile = _mm512_cvtepi32_ps(_mm512_loadu_si512(tile + m * TILE_N));
+        కొరకు (పూర్ణాంకం m = 0; m < nr; ++m) {
+            స్థిరరాశి __m512 vd1 = _mm512_set1_ps(GGML_CPU_FP16_గమ్యం_FP32(A[m * lda].d));
+            స్థిరరాశి __m512 vtile = _mm512_cvtepi32_ps(_mm512_loadu_si512(tile + m * TILE_N));
 
             __m512 vsum;
-            if (is_acc) {
+            ఒకవేళ (is_acc) {
                 vsum = _mm512_loadu_ps(C + m * ldc);
-            } else {
+            } లేకపోతే {
                 vsum = _mm512_set1_ps(0.f);
             }
             vsum = _mm512_fmadd_ps(vtile, _mm512_mul_ps(vd0, vd1), vsum);
@@ -1117,38 +1117,38 @@ struct acc_C<block_q8_0, block_q8_0, is_acc> {
     }
 };
 
-template <bool is_acc>
-struct acc_C<block_q8_K, block_q4_K, is_acc> {
-    static void apply(float * RESTRICT C, int ldc, const int32_t * RESTRICT tile, const block_q8_K * A, int lda, const void * packed_B, int nr) {
-        const uint8_t * scales = reinterpret_cast<const uint8_t *>((const char *)packed_B + (QK_K / 2) * TILE_N);
-        const uint8_t * mins = scales + 8 * TILE_N;
-        const ggml_half * d0 = reinterpret_cast<const ggml_half *>(mins + 8 * TILE_N);
-        const ggml_half * dmin = d0 + TILE_N;
+మూస <తార్కిక is_acc>
+నిర్మాణం acc_C<ఖండం_q8_K, ఖండం_q4_K, is_acc> {
+    స్థిర శూన్య apply(దశాంశం * RESTRICT C, పూర్ణాంకం ldc, స్థిరరాశి int32_t * RESTRICT tile, స్థిరరాశి ఖండం_q8_K * A, పూర్ణాంకం lda, స్థిరరాశి శూన్య * packed_B, పూర్ణాంకం nr) {
+        స్థిరరాశి uint8_t * scales = reinterpret_cast<స్థిరరాశి uint8_t *>((స్థిరరాశి అక్షరం *)packed_B + (QK_K / 2) * TILE_N);
+        స్థిరరాశి uint8_t * mins = scales + 8 * TILE_N;
+        స్థిరరాశి ggml_half * d0 = reinterpret_cast<స్థిరరాశి ggml_half *>(mins + 8 * TILE_N);
+        స్థిరరాశి ggml_half * dmin = d0 + TILE_N;
 
-        const __m512 vd0 = _mm512_cvtph_ps(_mm256_loadu_si256((const __m256i *)d0));
-        const __m512 vdmin = _mm512_cvtph_ps(_mm256_loadu_si256((const __m256i *)dmin));
+        స్థిరరాశి __m512 vd0 = _mm512_cvtph_ps(_mm256_loadu_si256((స్థిరరాశి __m256i *)d0));
+        స్థిరరాశి __m512 vdmin = _mm512_cvtph_ps(_mm256_loadu_si256((స్థిరరాశి __m256i *)dmin));
 
-        for (int m = 0; m < nr; ++m) {
-            const float d1 = A[m * lda].d;
-            const __m512 vd = _mm512_mul_ps(_mm512_set1_ps(d1), vd0);
-            const __m512 vdm = _mm512_mul_ps(_mm512_set1_ps(-d1), vdmin);
-            const __m512 vtile = _mm512_cvtepi32_ps(_mm512_loadu_si512(tile + m * TILE_N));
+        కొరకు (పూర్ణాంకం m = 0; m < nr; ++m) {
+            స్థిరరాశి దశాంశం d1 = A[m * lda].d;
+            స్థిరరాశి __m512 vd = _mm512_mul_ps(_mm512_set1_ps(d1), vd0);
+            స్థిరరాశి __m512 vdm = _mm512_mul_ps(_mm512_set1_ps(-d1), vdmin);
+            స్థిరరాశి __m512 vtile = _mm512_cvtepi32_ps(_mm512_loadu_si512(tile + m * TILE_N));
 
             __m512 vsum;
-            if (is_acc) {
+            ఒకవేళ (is_acc) {
                 vsum = _mm512_loadu_ps(C + m * ldc);
-            } else {
+            } లేకపోతే {
                 vsum = _mm512_set1_ps(0.f);
             }
 
-            const __m256i q8sums = _mm256_loadu_si256((const __m256i *)A[m * lda].bsums);
-            const __m128i q8s = _mm_hadd_epi16(_mm256_extracti128_si256(q8sums, 0), _mm256_extracti128_si256(q8sums, 1));
+            స్థిరరాశి __m256i q8sums = _mm256_loadu_si256((స్థిరరాశి __m256i *)A[m * lda].bsums);
+            స్థిరరాశి __m128i q8s = _mm_hadd_epi16(_mm256_extracti128_si256(q8sums, 0), _mm256_extracti128_si256(q8sums, 1));
 
             __m512i acc_m = _mm512_setzero_si512();
-            for (int k = 0; k < 4; ++k) {
+            కొరకు (పూర్ణాంకం k = 0; k < 4; ++k) {
                 __m512i vmask = _mm512_set1_epi32(k);
                 __m512i va = _mm512_permutexvar_epi32(vmask, _mm512_castsi128_si512(q8s));
-                __m512i vb = _mm512_cvtepi8_epi16(_mm256_loadu_si256((const __m256i *)(mins + k * 32)));
+                __m512i vb = _mm512_cvtepi8_epi16(_mm256_loadu_si256((స్థిరరాశి __m256i *)(mins + k * 32)));
                 acc_m = _mm512_dpwssds_epi32(acc_m, va, vb);
             }
 
@@ -1159,38 +1159,38 @@ struct acc_C<block_q8_K, block_q4_K, is_acc> {
     }
 };
 
-template <bool is_acc>
-struct acc_C<block_q8_K, block_q5_K, is_acc> {
-    static void apply(float * RESTRICT C, int ldc, const int32_t * RESTRICT tile, const block_q8_K * A, int lda, const void * packed_B, int nr) {
-        const uint8_t * scales = reinterpret_cast<const uint8_t *>((const char *)packed_B + (QK_K / 2) * TILE_N + (QK_K / 8) * TILE_N);
-        const uint8_t * mins = scales + 8 * TILE_N;
-        const ggml_half * d0 = reinterpret_cast<const ggml_half *>(mins + 8 * TILE_N);
-        const ggml_half * dmin = d0 + TILE_N;
+మూస <తార్కిక is_acc>
+నిర్మాణం acc_C<ఖండం_q8_K, ఖండం_q5_K, is_acc> {
+    స్థిర శూన్య apply(దశాంశం * RESTRICT C, పూర్ణాంకం ldc, స్థిరరాశి int32_t * RESTRICT tile, స్థిరరాశి ఖండం_q8_K * A, పూర్ణాంకం lda, స్థిరరాశి శూన్య * packed_B, పూర్ణాంకం nr) {
+        స్థిరరాశి uint8_t * scales = reinterpret_cast<స్థిరరాశి uint8_t *>((స్థిరరాశి అక్షరం *)packed_B + (QK_K / 2) * TILE_N + (QK_K / 8) * TILE_N);
+        స్థిరరాశి uint8_t * mins = scales + 8 * TILE_N;
+        స్థిరరాశి ggml_half * d0 = reinterpret_cast<స్థిరరాశి ggml_half *>(mins + 8 * TILE_N);
+        స్థిరరాశి ggml_half * dmin = d0 + TILE_N;
 
-        const __m512 vd0 = _mm512_cvtph_ps(_mm256_loadu_si256((const __m256i *)d0));
-        const __m512 vdmin = _mm512_cvtph_ps(_mm256_loadu_si256((const __m256i *)dmin));
+        స్థిరరాశి __m512 vd0 = _mm512_cvtph_ps(_mm256_loadu_si256((స్థిరరాశి __m256i *)d0));
+        స్థిరరాశి __m512 vdmin = _mm512_cvtph_ps(_mm256_loadu_si256((స్థిరరాశి __m256i *)dmin));
 
-        for (int m = 0; m < nr; ++m) {
-            const float d1 = A[m * lda].d;
-            const __m512 vd = _mm512_mul_ps(_mm512_set1_ps(d1), vd0);
-            const __m512 vdm = _mm512_mul_ps(_mm512_set1_ps(-d1), vdmin);
-            const __m512 vtile = _mm512_cvtepi32_ps(_mm512_loadu_si512(tile + m * TILE_N));
+        కొరకు (పూర్ణాంకం m = 0; m < nr; ++m) {
+            స్థిరరాశి దశాంశం d1 = A[m * lda].d;
+            స్థిరరాశి __m512 vd = _mm512_mul_ps(_mm512_set1_ps(d1), vd0);
+            స్థిరరాశి __m512 vdm = _mm512_mul_ps(_mm512_set1_ps(-d1), vdmin);
+            స్థిరరాశి __m512 vtile = _mm512_cvtepi32_ps(_mm512_loadu_si512(tile + m * TILE_N));
 
             __m512 vsum;
-            if (is_acc) {
+            ఒకవేళ (is_acc) {
                 vsum = _mm512_loadu_ps(C + m * ldc);
-            } else {
+            } లేకపోతే {
                 vsum = _mm512_set1_ps(0.f);
             }
 
-            const __m256i q8sums = _mm256_loadu_si256((const __m256i *)A[m * lda].bsums);
-            const __m128i q8s = _mm_hadd_epi16(_mm256_extracti128_si256(q8sums, 0), _mm256_extracti128_si256(q8sums, 1));
+            స్థిరరాశి __m256i q8sums = _mm256_loadu_si256((స్థిరరాశి __m256i *)A[m * lda].bsums);
+            స్థిరరాశి __m128i q8s = _mm_hadd_epi16(_mm256_extracti128_si256(q8sums, 0), _mm256_extracti128_si256(q8sums, 1));
 
             __m512i acc_m = _mm512_setzero_si512();
-            for (int k = 0; k < 4; ++k) {
+            కొరకు (పూర్ణాంకం k = 0; k < 4; ++k) {
                 __m512i vmask = _mm512_set1_epi32(k);
                 __m512i va = _mm512_permutexvar_epi32(vmask, _mm512_castsi128_si512(q8s));
-                __m512i vb = _mm512_cvtepi8_epi16(_mm256_loadu_si256((const __m256i *)(mins + k * 32)));
+                __m512i vb = _mm512_cvtepi8_epi16(_mm256_loadu_si256((స్థిరరాశి __m256i *)(mins + k * 32)));
                 acc_m = _mm512_dpwssds_epi32(acc_m, va, vb);
             }
 
@@ -1201,23 +1201,23 @@ struct acc_C<block_q8_K, block_q5_K, is_acc> {
     }
 };
 
-template <bool is_acc>
-struct acc_C<block_q8_K, block_q6_K, is_acc> {
-    static void apply(float * RESTRICT C, int ldc, const int32_t * RESTRICT tile, const block_q8_K * A, int lda, const void * packed_B, int nr) {
-        const uint8_t * scales = reinterpret_cast<const uint8_t *>((const char *)packed_B + (QK_K / 2) * TILE_N + (QK_K / 4) * TILE_N);
-        const ggml_half * d0 = reinterpret_cast<const ggml_half *>(scales + 16 * TILE_N);
+మూస <తార్కిక is_acc>
+నిర్మాణం acc_C<ఖండం_q8_K, ఖండం_q6_K, is_acc> {
+    స్థిర శూన్య apply(దశాంశం * RESTRICT C, పూర్ణాంకం ldc, స్థిరరాశి int32_t * RESTRICT tile, స్థిరరాశి ఖండం_q8_K * A, పూర్ణాంకం lda, స్థిరరాశి శూన్య * packed_B, పూర్ణాంకం nr) {
+        స్థిరరాశి uint8_t * scales = reinterpret_cast<స్థిరరాశి uint8_t *>((స్థిరరాశి అక్షరం *)packed_B + (QK_K / 2) * TILE_N + (QK_K / 4) * TILE_N);
+        స్థిరరాశి ggml_half * d0 = reinterpret_cast<స్థిరరాశి ggml_half *>(scales + 16 * TILE_N);
 
-        const __m512 vd0 = _mm512_cvtph_ps(_mm256_loadu_si256((const __m256i *)d0));
+        స్థిరరాశి __m512 vd0 = _mm512_cvtph_ps(_mm256_loadu_si256((స్థిరరాశి __m256i *)d0));
 
-        for (int m = 0; m < nr; ++m) {
-            const float d1 = A[m * lda].d;
-            const __m512 vd = _mm512_mul_ps(_mm512_set1_ps(d1), vd0);
-            const __m512 vtile = _mm512_cvtepi32_ps(_mm512_loadu_si512(tile + m * TILE_N));
+        కొరకు (పూర్ణాంకం m = 0; m < nr; ++m) {
+            స్థిరరాశి దశాంశం d1 = A[m * lda].d;
+            స్థిరరాశి __m512 vd = _mm512_mul_ps(_mm512_set1_ps(d1), vd0);
+            స్థిరరాశి __m512 vtile = _mm512_cvtepi32_ps(_mm512_loadu_si512(tile + m * TILE_N));
 
             __m512 vsum;
-            if (is_acc) {
+            ఒకవేళ (is_acc) {
                 vsum = _mm512_loadu_ps(C + m * ldc);
-            } else {
+            } లేకపోతే {
                 vsum = _mm512_set1_ps(0.f);
             }
 
@@ -1227,23 +1227,23 @@ struct acc_C<block_q8_K, block_q6_K, is_acc> {
     }
 };
 
-template <bool is_acc>
-struct acc_C<block_q8_K, block_iq4_xs, is_acc> {
-    static void apply(float * RESTRICT C, int ldc, const int32_t * RESTRICT tile, const block_q8_K * A, int lda, const void * packed_B, int nr) {
-        const int8_t * scales = reinterpret_cast<const int8_t *>((const char *)packed_B + (QK_K / 2) * TILE_N);
-        const ggml_half * d0 = reinterpret_cast<const ggml_half *>(scales + 8 * TILE_N);
+మూస <తార్కిక is_acc>
+నిర్మాణం acc_C<ఖండం_q8_K, ఖండం_iq4_xs, is_acc> {
+    స్థిర శూన్య apply(దశాంశం * RESTRICT C, పూర్ణాంకం ldc, స్థిరరాశి int32_t * RESTRICT tile, స్థిరరాశి ఖండం_q8_K * A, పూర్ణాంకం lda, స్థిరరాశి శూన్య * packed_B, పూర్ణాంకం nr) {
+        స్థిరరాశి int8_t * scales = reinterpret_cast<స్థిరరాశి int8_t *>((స్థిరరాశి అక్షరం *)packed_B + (QK_K / 2) * TILE_N);
+        స్థిరరాశి ggml_half * d0 = reinterpret_cast<స్థిరరాశి ggml_half *>(scales + 8 * TILE_N);
 
-        const __m512 vd0 = _mm512_cvtph_ps(_mm256_loadu_si256((const __m256i *)d0));
+        స్థిరరాశి __m512 vd0 = _mm512_cvtph_ps(_mm256_loadu_si256((స్థిరరాశి __m256i *)d0));
 
-        for (int m = 0; m < nr; ++m) {
-            const float d1 = A[m * lda].d;
-            const __m512 vd = _mm512_mul_ps(_mm512_set1_ps(d1), vd0);
-            const __m512 vtile = _mm512_cvtepi32_ps(_mm512_loadu_si512(tile + m * TILE_N));
+        కొరకు (పూర్ణాంకం m = 0; m < nr; ++m) {
+            స్థిరరాశి దశాంశం d1 = A[m * lda].d;
+            స్థిరరాశి __m512 vd = _mm512_mul_ps(_mm512_set1_ps(d1), vd0);
+            స్థిరరాశి __m512 vtile = _mm512_cvtepi32_ps(_mm512_loadu_si512(tile + m * TILE_N));
 
             __m512 vsum;
-            if (is_acc) {
+            ఒకవేళ (is_acc) {
                 vsum = _mm512_loadu_ps(C + m * ldc);
-            } else {
+            } లేకపోతే {
                 vsum = _mm512_set1_ps(0.f);
             }
 
@@ -1253,127 +1253,127 @@ struct acc_C<block_q8_K, block_iq4_xs, is_acc> {
     }
 };
 
-template <typename TB> constexpr int get_quants_size();
-template <> constexpr int get_quants_size<block_q4_K>() { return (QK_K / 2) * TILE_N; }
-template <> constexpr int get_quants_size<block_q5_K>() { return (QK_K / 2) * TILE_N + (QK_K / 8) * TILE_N; }
-template <> constexpr int get_quants_size<block_q6_K>() { return (QK_K / 2) * TILE_N + (QK_K / 4) * TILE_N; }
-template <> constexpr int get_quants_size<block_iq4_xs>() { return (QK_K / 2) * TILE_N; }
+మూస <రకం_పేరు TB> constexpr పూర్ణాంకం get_quants_కొలత();
+మూస <> constexpr పూర్ణాంకం get_quants_కొలత<ఖండం_q4_K>() { తిరిగి (QK_K / 2) * TILE_N; }
+మూస <> constexpr పూర్ణాంకం get_quants_కొలత<ఖండం_q5_K>() { తిరిగి (QK_K / 2) * TILE_N + (QK_K / 8) * TILE_N; }
+మూస <> constexpr పూర్ణాంకం get_quants_కొలత<ఖండం_q6_K>() { తిరిగి (QK_K / 2) * TILE_N + (QK_K / 4) * TILE_N; }
+మూస <> constexpr పూర్ణాంకం get_quants_కొలత<ఖండం_iq4_xs>() { తిరిగి (QK_K / 2) * TILE_N; }
 
 // used for QKK format
-template <typename TB, bool is_acc,
-          typename std::enable_if<is_type_qkk<TB>::value, int>::type = 0>
-inline void scale_C(const int32_t * RESTRICT tile, int32_t * RESTRICT sumi, const void * packed_B, int k, int nr) {
-    const uint8_t * scales = reinterpret_cast<const uint8_t *>((const char *)packed_B + get_quants_size<TB>());
-    const __m512i vscale = _mm512_cvtepi8_epi32(_mm_loadu_si128((const __m128i *)(scales + k * TILE_N)));
+మూస <రకం_పేరు TB, తార్కిక is_acc,
+          రకం_పేరు std::enable_if<is_type_qkk<TB>::value, పూర్ణాంకం>::type = 0>
+అంతఃవరుస శూన్య scale_C(స్థిరరాశి int32_t * RESTRICT tile, int32_t * RESTRICT sumi, స్థిరరాశి శూన్య * packed_B, పూర్ణాంకం k, పూర్ణాంకం nr) {
+    స్థిరరాశి uint8_t * scales = reinterpret_cast<స్థిరరాశి uint8_t *>((స్థిరరాశి అక్షరం *)packed_B + get_quants_కొలత<TB>());
+    స్థిరరాశి __m512i vscale = _mm512_cvtepi8_epi32(_mm_loadu_si128((స్థిరరాశి __m128i *)(scales + k * TILE_N)));
 
-    for (int m = 0; m < nr; ++m) {
+    కొరకు (పూర్ణాంకం m = 0; m < nr; ++m) {
         __m512i vsumi;
-        if (is_acc) {
+        ఒకవేళ (is_acc) {
             vsumi = _mm512_loadu_si512(sumi + m * TILE_N);
-        } else {
+        } లేకపోతే {
             vsumi = _mm512_setzero_si512();
         }
         __m512i vtile = _mm512_loadu_si512(tile + m * TILE_N);
-        vsumi = _mm512_add_epi32(vsumi, _mm512_mullo_epi32(vtile, vscale));
+        vsumi = mm512_కూడు_epi32(vsumi, _mm512_mullo_epi32(vtile, vscale));
         _mm512_storeu_si512((__m512i *)(sumi + m * TILE_N), vsumi);
     }
 }
 
-template <typename TA, typename TB, typename TC, int BLOCK_M, int BLOCK_N, int BLOCK_K>
-struct tinygemm_kernel_avx {
-    static void apply(int K, const TA * RESTRICT A, const TB * RESTRICT B, TC * RESTRICT C, int ldc) {
-        GGML_UNUSED(K);
-        GGML_UNUSED(A);
-        GGML_UNUSED(B);
-        GGML_UNUSED(C);
-        GGML_UNUSED(ldc);
+మూస <రకం_పేరు TA, రకం_పేరు TB, రకం_పేరు TC, పూర్ణాంకం ఖండం_M, పూర్ణాంకం ఖండం_N, పూర్ణాంకం ఖండం_K>
+నిర్మాణం tinygemm_kernel_avx {
+    స్థిర శూన్య apply(పూర్ణాంకం K, స్థిరరాశి TA * RESTRICT A, స్థిరరాశి TB * RESTRICT B, TC * RESTRICT C, పూర్ణాంకం ldc) {
+        GGML_వాడని(K);
+        GGML_వాడని(A);
+        GGML_వాడని(B);
+        GGML_వాడని(C);
+        GGML_వాడని(ldc);
     }
 };
 
-template <int BLOCK_M, int BLOCK_N, int BLOCK_K>
-struct tinygemm_kernel_avx<float, ggml_fp16_t, float, BLOCK_M, BLOCK_N, BLOCK_K> {
-    static void apply(int K, const float * RESTRICT A, const ggml_fp16_t * RESTRICT B, float * RESTRICT C, int ldc) {
-        constexpr int ROWS = BLOCK_M;
-        constexpr int COLS = BLOCK_N;
-        assert(BLOCK_K == 16);
+మూస <పూర్ణాంకం ఖండం_M, పూర్ణాంకం ఖండం_N, పూర్ణాంకం ఖండం_K>
+నిర్మాణం tinygemm_kernel_avx<దశాంశం, ggml_fp16_t, దశాంశం, ఖండం_M, ఖండం_N, ఖండం_K> {
+    స్థిర శూన్య apply(పూర్ణాంకం K, స్థిరరాశి దశాంశం * RESTRICT A, స్థిరరాశి ggml_fp16_t * RESTRICT B, దశాంశం * RESTRICT C, పూర్ణాంకం ldc) {
+        constexpr పూర్ణాంకం అడ్డువరుసలు_2 = ఖండం_M;
+        constexpr పూర్ణాంకం నిలువుల_సంఖ్య = ఖండం_N;
+        ప్రతిజ్ఞా(ఖండం_K == 16);
 
         __m512 va;
-        __m512 vb[COLS];
-        __m512 vc[ROWS * COLS];
+        __m512 vb[నిలువుల_సంఖ్య];
+        __m512 vc[అడ్డువరుసలు_2 * నిలువుల_సంఖ్య];
 
-        auto loadc = [&](auto idx) {
+        స్వయంచాలక loadc = [&](స్వయంచాలక idx) {
             vc[idx] = _mm512_setzero_ps();
         };
-        Unroll<ROWS * COLS>{}(loadc);
+        Unroll<అడ్డువరుసలు_2 * నిలువుల_సంఖ్య>{}(loadc);
 
-        auto compute = [&](auto idx, auto k) {
-            constexpr int row = idx / COLS;
-            constexpr int col = idx % COLS;
+        స్వయంచాలక compute = [&](స్వయంచాలక idx, స్వయంచాలక k) {
+            constexpr పూర్ణాంకం అడ్డువరుస = idx / నిలువుల_సంఖ్య;
+            constexpr పూర్ణాంకం నిలువు = idx % నిలువుల_సంఖ్య;
 
-            if constexpr (col == 0) {
-                va = _mm512_loadu_ps(A + row * K + k);
+            ఒకవేళ constexpr (నిలువు == 0) {
+                va = _mm512_loadu_ps(A + అడ్డువరుస * K + k);
             }
-            if constexpr (row == 0) {
-                vb[col] =  _mm512_cvtph_ps(_mm256_loadu_si256((const __m256i *)(B + col * K + k)));
+            ఒకవేళ constexpr (అడ్డువరుస == 0) {
+                vb[నిలువు] =  _mm512_cvtph_ps(_mm256_loadu_si256((స్థిరరాశి __m256i *)(B + నిలువు * K + k)));
             }
-            vc[idx] = _mm512_fmadd_ps(va, vb[col], vc[idx]);
+            vc[idx] = _mm512_fmadd_ps(va, vb[నిలువు], vc[idx]);
         };
 
-        for (int k = 0; k < K; k += 16) {
-            Unroll<ROWS * COLS>{}(compute, k);
+        కొరకు (పూర్ణాంకం k = 0; k < K; k += 16) {
+            Unroll<అడ్డువరుసలు_2 * నిలువుల_సంఖ్య>{}(compute, k);
         }
 
-        auto storec = [&](auto idx) {
-            constexpr int row = idx / COLS;
-            constexpr int col = idx % COLS;
-            C[row * ldc + col] = _mm512_reduce_add_ps(vc[idx]);
+        స్వయంచాలక storec = [&](స్వయంచాలక idx) {
+            constexpr పూర్ణాంకం అడ్డువరుస = idx / నిలువుల_సంఖ్య;
+            constexpr పూర్ణాంకం నిలువు = idx % నిలువుల_సంఖ్య;
+            C[అడ్డువరుస * ldc + నిలువు] = mm512_reduce_కూడు_ps(vc[idx]);
         };
-        Unroll<ROWS * COLS>{}(storec);
+        Unroll<అడ్డువరుసలు_2 * నిలువుల_సంఖ్య>{}(storec);
     }
 };
 
-#define LAUNCH_TINYGEMM_KERNEL_AVX(MB_SIZE, NB_SIZE)                                \
-    tinygemm_kernel_avx<float, type, float, MB_SIZE, NB_SIZE, blck_size>::apply(    \
-        K, (const float *)src1->data + src1_offset + mb_start * K,                  \
-        (const type *)src0->data + src0_offset + nb_start * K,                      \
-        (float *)dst->data + dst_offset + mb_start * ldc + nb_start, ldc)
+#నిర్వచించు LAUNCH_TINYGEMM_KERNEL_AVX(MB_కొలత, NB_కొలత)                                \
+    tinygemm_kernel_avx<దశాంశం, type, దశాంశం, MB_కొలత, NB_కొలత, blck_కొలత>::apply(    \
+        K, (స్థిరరాశి దశాంశం *)src1->దత్తాంశం + src1_స్థానభ్రంశం + mb_ప్రారంభం * K,                  \
+        (స్థిరరాశి type *)src0->దత్తాంశం + src0_స్థానభ్రంశం + nb_ప్రారంభం * K,                      \
+        (దశాంశం *)dst->దత్తాంశం + dst_స్థానభ్రంశం + mb_ప్రారంభం * ldc + nb_ప్రారంభం, ldc)
 
 
 // re-organize in the format {NB, KB, TILE_SIZE}:
-#define PACKED_INDEX(n, k, KB, tile_size) (n * KB + k) * tile_size
+#నిర్వచించు PACKED_సూచీ(n, k, KB, tile_కొలత) (n * KB + k) * tile_కొలత
 
-template<typename TB, int BLOCK_K>
-void convert_B_packed_format(void * RESTRICT packed_B, const TB * RESTRICT B, int N, int K) {
-    const int NB = N / TILE_N;
-    const int KB = K / BLOCK_K;
-    const int TILE_SIZE = get_tile_size<TB>();
+మూస<రకం_పేరు TB, పూర్ణాంకం ఖండం_K>
+శూన్య convert_B_packed_format(శూన్య * RESTRICT packed_B, స్థిరరాశి TB * RESTRICT B, పూర్ణాంకం N, పూర్ణాంకం K) {
+    స్థిరరాశి పూర్ణాంకం NB = N / TILE_N;
+    స్థిరరాశి పూర్ణాంకం KB = K / ఖండం_K;
+    స్థిరరాశి పూర్ణాంకం TILE_కొలత = get_tile_కొలత<TB>();
 
     // parallel on NB should be enough
-    parallel_for(NB, [&](int begin, int end) {
-        for (int n = begin; n < end; ++n) {
-            for (int k = 0; k < KB; ++k) {
-                int n0 = n * TILE_N;
-                pack_B((char *)packed_B + PACKED_INDEX(n, k, KB, TILE_SIZE), &B[n0 * KB + k], KB);
+    parallel_for(NB, [&](పూర్ణాంకం begin, పూర్ణాంకం end) {
+        కొరకు (పూర్ణాంకం n = begin; n < end; ++n) {
+            కొరకు (పూర్ణాంకం k = 0; k < KB; ++k) {
+                పూర్ణాంకం n0 = n * TILE_N;
+                pack_B((అక్షరం *)packed_B + PACKED_సూచీ(n, k, KB, TILE_కొలత), &B[n0 * KB + k], KB);
             }
         }
     });
 }
 
-template <typename TA, typename TB, typename TC, int BLOCK_M, int BLOCK_N, int BLOCK_K>
-struct tinygemm_kernel_vnni {};
+మూస <రకం_పేరు TA, రకం_పేరు TB, రకం_పేరు TC, పూర్ణాంకం ఖండం_M, పూర్ణాంకం ఖండం_N, పూర్ణాంకం ఖండం_K>
+నిర్మాణం tinygemm_kernel_vnni {};
 
-template <int BLOCK_M, int BLOCK_N, int BLOCK_K>
-struct tinygemm_kernel_vnni<block_q8_0, block_q4_0, float, BLOCK_M, BLOCK_N, BLOCK_K> {
-    static void apply(int KB, const void * RESTRICT _A, const void * RESTRICT _B, float * RESTRICT C, int ldc) {
+మూస <పూర్ణాంకం ఖండం_M, పూర్ణాంకం ఖండం_N, పూర్ణాంకం ఖండం_K>
+నిర్మాణం tinygemm_kernel_vnni<ఖండం_q8_0, ఖండం_q4_0, దశాంశం, ఖండం_M, ఖండం_N, ఖండం_K> {
+    స్థిర శూన్య apply(పూర్ణాంకం KB, స్థిరరాశి శూన్య * RESTRICT _A, స్థిరరాశి శూన్య * RESTRICT _B, దశాంశం * RESTRICT C, పూర్ణాంకం ldc) {
 
-        constexpr int COLS = BLOCK_N / 16;
-        const int TILE_SIZE = TILE_N * sizeof(block_q4_0);
+        constexpr పూర్ణాంకం నిలువుల_సంఖ్య = ఖండం_N / 16;
+        స్థిరరాశి పూర్ణాంకం TILE_కొలత = TILE_N * పరిమాణం(ఖండం_q4_0);
 
-        const block_q8_0 * RESTRICT A = static_cast<const block_q8_0 *>(_A);
-        const char * RESTRICT B = static_cast<const char *>(_B);
+        స్థిరరాశి ఖండం_q8_0 * RESTRICT A = static_cast<స్థిరరాశి ఖండం_q8_0 *>(_A);
+        స్థిరరాశి అక్షరం * RESTRICT B = static_cast<స్థిరరాశి అక్షరం *>(_B);
 
         __m512i va[8];
-        __m512 vc[COLS];
+        __m512 vc[నిలువుల_సంఖ్య];
         __m512 vd1;
 
         // sum of offsets, shared across COLS
@@ -1385,133 +1385,133 @@ struct tinygemm_kernel_vnni<block_q8_0, block_q4_0, float, BLOCK_M, BLOCK_N, BLO
         //
         __m512i vcomp;
 
-        const __m512i off = _mm512_set1_epi8(8);
-        const __m512i lowMask = _mm512_set1_epi8(0xF);
+        స్థిరరాశి __m512i off = _mm512_set1_epi8(8);
+        స్థిరరాశి __m512i దిగువ_ముసుగు = _mm512_set1_epi8(0xF);
 
-        auto loadc = [&](auto col) {
-            vc[col] = _mm512_setzero_ps();
+        స్వయంచాలక loadc = [&](స్వయంచాలక నిలువు) {
+            vc[నిలువు] = _mm512_setzero_ps();
         };
-        Unroll<COLS>{}(loadc);
+        Unroll<నిలువుల_సంఖ్య>{}(loadc);
 
-        auto compute = [&](auto col, auto i) {
+        స్వయంచాలక compute = [&](స్వయంచాలక నిలువు, స్వయంచాలక i) {
             // load a and compute compensation
-            if constexpr (col == 0) {
-                const int32_t * a_ptr = reinterpret_cast<const int32_t *>(A[0 * KB + i].qs);
+            ఒకవేళ constexpr (నిలువు == 0) {
+                స్థిరరాశి int32_t * a_ptr = reinterpret_cast<స్థిరరాశి int32_t *>(A[0 * KB + i].qs);
                 vcomp = _mm512_setzero_si512();
-                for (int k = 0; k < 8; ++k) {
+                కొరకు (పూర్ణాంకం k = 0; k < 8; ++k) {
                     va[k] = _mm512_set1_epi32(a_ptr[k]);
                     vcomp = _mm512_dpbusd_epi32(vcomp, off, va[k]);
                 }
-                vd1 = _mm512_set1_ps(GGML_CPU_FP16_TO_FP32(A[0 * KB + i].d));
+                vd1 = _mm512_set1_ps(GGML_CPU_FP16_గమ్యం_FP32(A[0 * KB + i].d));
             }
 
             // load b
             __m512i vsum = _mm512_setzero_si512();
-            const char * b_ptr = B + PACKED_INDEX(col, i, KB, TILE_SIZE);
-            for (int k = 0; k < 8; k += 2) {
-                __m512i bytes = _mm512_loadu_si512((const __m512i *)(b_ptr + k * 32));
-                __m512i vb0 = _mm512_and_si512(bytes, lowMask);
+            స్థిరరాశి అక్షరం * b_ptr = B + PACKED_సూచీ(నిలువు, i, KB, TILE_కొలత);
+            కొరకు (పూర్ణాంకం k = 0; k < 8; k += 2) {
+                __m512i బైట్లు = _mm512_loadu_si512((స్థిరరాశి __m512i *)(b_ptr + k * 32));
+                __m512i vb0 = _mm512_and_si512(బైట్లు, దిగువ_ముసుగు);
                 vsum = _mm512_dpbusd_epi32(vsum, vb0, va[k + 0]);
-                __m512i vb1 = _mm512_and_si512(_mm512_srli_epi16(bytes, 4), lowMask);
+                __m512i vb1 = _mm512_and_si512(_mm512_srli_epi16(బైట్లు, 4), దిగువ_ముసుగు);
                 vsum = _mm512_dpbusd_epi32(vsum, vb1, va[k + 1]);
             }
-            const int offset = TILE_N * TILE_K / 2;
-            const __m512 vd0 = _mm512_cvtph_ps(_mm256_loadu_si256((const __m256i *)(b_ptr + offset)));
+            స్థిరరాశి పూర్ణాంకం స్థానభ్రంశం = TILE_N * TILE_K / 2;
+            స్థిరరాశి __m512 vd0 = _mm512_cvtph_ps(_mm256_loadu_si256((స్థిరరాశి __m256i *)(b_ptr + స్థానభ్రంశం)));
             vsum = _mm512_sub_epi32(vsum, vcomp);
 
-            vc[col] = _mm512_fmadd_ps(_mm512_cvtepi32_ps(vsum), _mm512_mul_ps(vd0, vd1), vc[col]);
+            vc[నిలువు] = _mm512_fmadd_ps(_mm512_cvtepi32_ps(vsum), _mm512_mul_ps(vd0, vd1), vc[నిలువు]);
         };
 
-        for (int i = 0; i < KB; ++i) {
-            Unroll<COLS>{}(compute, i);
+        కొరకు (పూర్ణాంకం i = 0; i < KB; ++i) {
+            Unroll<నిలువుల_సంఖ్య>{}(compute, i);
         }
 
         //store to C
-        auto storec = [&](auto col) {
-            _mm512_storeu_ps((__m512i*)(C + 0 * ldc + col * 16), vc[col]);
+        స్వయంచాలక storec = [&](స్వయంచాలక నిలువు) {
+            _mm512_storeu_ps((__m512i*)(C + 0 * ldc + నిలువు * 16), vc[నిలువు]);
         };
-        Unroll<COLS>{}(storec);
+        Unroll<నిలువుల_సంఖ్య>{}(storec);
     }
 };
 
-template <int BLOCK_N, int BLOCK_K>
-struct tinygemm_kernel_vnni<block_q8_1, block_q4_1, float, 1, BLOCK_N, BLOCK_K> {
-    static void apply(int KB, const void * RESTRICT _A, const void * RESTRICT _B, float * RESTRICT C, int ldc) {
+మూస <పూర్ణాంకం ఖండం_N, పూర్ణాంకం ఖండం_K>
+నిర్మాణం tinygemm_kernel_vnni<ఖండం_q8_1, ఖండం_q4_1, దశాంశం, 1, ఖండం_N, ఖండం_K> {
+    స్థిర శూన్య apply(పూర్ణాంకం KB, స్థిరరాశి శూన్య * RESTRICT _A, స్థిరరాశి శూన్య * RESTRICT _B, దశాంశం * RESTRICT C, పూర్ణాంకం ldc) {
 
-        constexpr int COLS = BLOCK_N / 16;
-        const int TILE_SIZE = TILE_N * sizeof(block_q4_1);
+        constexpr పూర్ణాంకం నిలువుల_సంఖ్య = ఖండం_N / 16;
+        స్థిరరాశి పూర్ణాంకం TILE_కొలత = TILE_N * పరిమాణం(ఖండం_q4_1);
 
-        const block_q8_1 * RESTRICT A = static_cast<const block_q8_1 *>(_A);
-        const char * RESTRICT B = static_cast<const char *>(_B);
+        స్థిరరాశి ఖండం_q8_1 * RESTRICT A = static_cast<స్థిరరాశి ఖండం_q8_1 *>(_A);
+        స్థిరరాశి అక్షరం * RESTRICT B = static_cast<స్థిరరాశి అక్షరం *>(_B);
 
         __m512i va[8];
         __m512i vb[8];
-        __m512 vc[COLS];
+        __m512 vc[నిలువుల_సంఖ్య];
         __m512 vd1, vs1;
 
-        const __m512i lowMask = _mm512_set1_epi8(0xF);
+        స్థిరరాశి __m512i దిగువ_ముసుగు = _mm512_set1_epi8(0xF);
 
-        auto loadc = [&](auto col) {
-            vc[col] = _mm512_setzero_ps();
+        స్వయంచాలక loadc = [&](స్వయంచాలక నిలువు) {
+            vc[నిలువు] = _mm512_setzero_ps();
         };
-        Unroll<COLS>{}(loadc);
+        Unroll<నిలువుల_సంఖ్య>{}(loadc);
 
-        auto compute = [&](auto col, auto i) {
+        స్వయంచాలక compute = [&](స్వయంచాలక నిలువు, స్వయంచాలక i) {
             // load a
-            if constexpr (col == 0) {
-                const int32_t * a_ptr = reinterpret_cast<const int32_t *>(A[0 * KB + i].qs);
-                for (int k = 0; k < 8; ++k) {
+            ఒకవేళ constexpr (నిలువు == 0) {
+                స్థిరరాశి int32_t * a_ptr = reinterpret_cast<స్థిరరాశి int32_t *>(A[0 * KB + i].qs);
+                కొరకు (పూర్ణాంకం k = 0; k < 8; ++k) {
                     va[k] = _mm512_set1_epi32(a_ptr[k]);
                 }
-                vd1 = _mm512_set1_ps(GGML_CPU_FP16_TO_FP32(A[0 * KB + i].d));
-                vs1 = _mm512_set1_ps(GGML_CPU_FP16_TO_FP32(A[0 * KB + i].s));
+                vd1 = _mm512_set1_ps(GGML_CPU_FP16_గమ్యం_FP32(A[0 * KB + i].d));
+                vs1 = _mm512_set1_ps(GGML_CPU_FP16_గమ్యం_FP32(A[0 * KB + i].s));
             }
 
             // load b
-            const char * b_ptr = B + PACKED_INDEX(col, i, KB, TILE_SIZE);
-            for (int k = 0; k < 8; k += 2) {
-                __m512i bytes = _mm512_loadu_si512((const __m512i *)(b_ptr + k * 32));
-                vb[k + 0] = _mm512_and_si512(bytes, lowMask);
-                vb[k + 1] = _mm512_and_si512(_mm512_srli_epi16(bytes, 4), lowMask);
+            స్థిరరాశి అక్షరం * b_ptr = B + PACKED_సూచీ(నిలువు, i, KB, TILE_కొలత);
+            కొరకు (పూర్ణాంకం k = 0; k < 8; k += 2) {
+                __m512i బైట్లు = _mm512_loadu_si512((స్థిరరాశి __m512i *)(b_ptr + k * 32));
+                vb[k + 0] = _mm512_and_si512(బైట్లు, దిగువ_ముసుగు);
+                vb[k + 1] = _mm512_and_si512(_mm512_srli_epi16(బైట్లు, 4), దిగువ_ముసుగు);
             }
-            const int offset = TILE_N * TILE_K / 2;
-            const __m512 vd0 = _mm512_cvtph_ps(_mm256_loadu_si256((const __m256i *)(b_ptr + offset)));
-            const __m512 vm0 = _mm512_cvtph_ps(_mm256_loadu_si256((const __m256i *)(b_ptr + offset + TILE_N * sizeof(ggml_half))));
+            స్థిరరాశి పూర్ణాంకం స్థానభ్రంశం = TILE_N * TILE_K / 2;
+            స్థిరరాశి __m512 vd0 = _mm512_cvtph_ps(_mm256_loadu_si256((స్థిరరాశి __m256i *)(b_ptr + స్థానభ్రంశం)));
+            స్థిరరాశి __m512 vm0 = _mm512_cvtph_ps(_mm256_loadu_si256((స్థిరరాశి __m256i *)(b_ptr + స్థానభ్రంశం + TILE_N * పరిమాణం(ggml_half))));
 
             __m512i vsum = _mm512_setzero_si512();
-            for (int k = 0; k < 8; ++k) {
+            కొరకు (పూర్ణాంకం k = 0; k < 8; ++k) {
                 vsum = _mm512_dpbusd_epi32(vsum, vb[k], va[k]);
             }
 
-            vc[col] = _mm512_fmadd_ps(_mm512_cvtepi32_ps(vsum), _mm512_mul_ps(vd0, vd1), vc[col]);
-            vc[col] = _mm512_fmadd_ps(vm0, vs1, vc[col]);
+            vc[నిలువు] = _mm512_fmadd_ps(_mm512_cvtepi32_ps(vsum), _mm512_mul_ps(vd0, vd1), vc[నిలువు]);
+            vc[నిలువు] = _mm512_fmadd_ps(vm0, vs1, vc[నిలువు]);
         };
 
-        for (int i = 0; i < KB; ++i) {
-            Unroll<COLS>{}(compute, i);
+        కొరకు (పూర్ణాంకం i = 0; i < KB; ++i) {
+            Unroll<నిలువుల_సంఖ్య>{}(compute, i);
         }
 
         //store to C
-        auto storec = [&](auto col) {
-            _mm512_storeu_ps((__m512i*)(C + 0 * ldc + col * 16), vc[col]);
+        స్వయంచాలక storec = [&](స్వయంచాలక నిలువు) {
+            _mm512_storeu_ps((__m512i*)(C + 0 * ldc + నిలువు * 16), vc[నిలువు]);
         };
-        Unroll<COLS>{}(storec);
+        Unroll<నిలువుల_సంఖ్య>{}(storec);
     }
 };
 
-template <int BLOCK_M, int BLOCK_N, int BLOCK_K>
-struct tinygemm_kernel_vnni<block_q8_0, block_q8_0, float, BLOCK_M, BLOCK_N, BLOCK_K> {
-    static void apply(int KB, const void * RESTRICT _A, const void * RESTRICT _B, float * RESTRICT C, int ldc) {
+మూస <పూర్ణాంకం ఖండం_M, పూర్ణాంకం ఖండం_N, పూర్ణాంకం ఖండం_K>
+నిర్మాణం tinygemm_kernel_vnni<ఖండం_q8_0, ఖండం_q8_0, దశాంశం, ఖండం_M, ఖండం_N, ఖండం_K> {
+    స్థిర శూన్య apply(పూర్ణాంకం KB, స్థిరరాశి శూన్య * RESTRICT _A, స్థిరరాశి శూన్య * RESTRICT _B, దశాంశం * RESTRICT C, పూర్ణాంకం ldc) {
 
-        constexpr int COLS = BLOCK_N / 16;
-        const int TILE_SIZE = TILE_N * sizeof(block_q8_0) + TILE_N * sizeof(int32_t);
+        constexpr పూర్ణాంకం నిలువుల_సంఖ్య = ఖండం_N / 16;
+        స్థిరరాశి పూర్ణాంకం TILE_కొలత = TILE_N * పరిమాణం(ఖండం_q8_0) + TILE_N * పరిమాణం(int32_t);
 
-        const block_q8_0 * RESTRICT A = static_cast<const block_q8_0 *>(_A);
-        const char * RESTRICT B = static_cast<const char *>(_B);
+        స్థిరరాశి ఖండం_q8_0 * RESTRICT A = static_cast<స్థిరరాశి ఖండం_q8_0 *>(_A);
+        స్థిరరాశి అక్షరం * RESTRICT B = static_cast<స్థిరరాశి అక్షరం *>(_B);
 
         __m512i va[8];
         __m512i vb[8];
-        __m512 vc[COLS];
+        __m512 vc[నిలువుల_సంఖ్య];
         __m512 vd1;
 
         // Notes: s8s8 igemm compensation in avx512-vnni
@@ -1521,84 +1521,84 @@ struct tinygemm_kernel_vnni<block_q8_0, block_q8_0, float, BLOCK_M, BLOCK_N, BLO
         //
         // (128 * b is pre-computed when packing B to vnni formats)
         //
-        const __m512i off = _mm512_set1_epi8(static_cast<char>(0x80));
+        స్థిరరాశి __m512i off = _mm512_set1_epi8(static_cast<అక్షరం>(0x80));
 
-        auto loadc = [&](auto col) {
-            vc[col] = _mm512_setzero_ps();
+        స్వయంచాలక loadc = [&](స్వయంచాలక నిలువు) {
+            vc[నిలువు] = _mm512_setzero_ps();
         };
-        Unroll<COLS>{}(loadc);
+        Unroll<నిలువుల_సంఖ్య>{}(loadc);
 
-        auto compute = [&](auto col, auto i) {
+        స్వయంచాలక compute = [&](స్వయంచాలక నిలువు, స్వయంచాలక i) {
             // load a and add offset 128
-            if constexpr (col == 0) {
-                const int32_t * a_ptr = reinterpret_cast<const int32_t *>(A[0 * KB + i].qs);
-                for (int k = 0; k < 8; ++k) {
+            ఒకవేళ constexpr (నిలువు == 0) {
+                స్థిరరాశి int32_t * a_ptr = reinterpret_cast<స్థిరరాశి int32_t *>(A[0 * KB + i].qs);
+                కొరకు (పూర్ణాంకం k = 0; k < 8; ++k) {
                     va[k] = _mm512_set1_epi32(a_ptr[k]);
-                    va[k] = _mm512_add_epi8(va[k], off);
+                    va[k] = mm512_కూడు_epi8(va[k], off);
                 }
-                vd1 = _mm512_set1_ps(GGML_CPU_FP16_TO_FP32(A[0 * KB + i].d));
+                vd1 = _mm512_set1_ps(GGML_CPU_FP16_గమ్యం_FP32(A[0 * KB + i].d));
             }
 
             // load b
-            const char * b_ptr = B + PACKED_INDEX(col, i, KB, TILE_SIZE);
-            for (int k = 0; k < 8; ++k) {
-                vb[k] = _mm512_loadu_si512((const __m512i *)(b_ptr + k * 64));
+            స్థిరరాశి అక్షరం * b_ptr = B + PACKED_సూచీ(నిలువు, i, KB, TILE_కొలత);
+            కొరకు (పూర్ణాంకం k = 0; k < 8; ++k) {
+                vb[k] = _mm512_loadu_si512((స్థిరరాశి __m512i *)(b_ptr + k * 64));
             }
-            const int offset = TILE_N * TILE_K;
-            const __m512 vd0 = _mm512_cvtph_ps(_mm256_loadu_si256((const __m256i *)(b_ptr + offset)));
-            const int offset2 = TILE_N * TILE_K + TILE_N * sizeof(ggml_half);
-            const __m512i vcomp = _mm512_loadu_si512((const __m512i *)(b_ptr + offset2));
+            స్థిరరాశి పూర్ణాంకం స్థానభ్రంశం = TILE_N * TILE_K;
+            స్థిరరాశి __m512 vd0 = _mm512_cvtph_ps(_mm256_loadu_si256((స్థిరరాశి __m256i *)(b_ptr + స్థానభ్రంశం)));
+            స్థిరరాశి పూర్ణాంకం offset2 = TILE_N * TILE_K + TILE_N * పరిమాణం(ggml_half);
+            స్థిరరాశి __m512i vcomp = _mm512_loadu_si512((స్థిరరాశి __m512i *)(b_ptr + offset2));
 
             __m512i vsum = _mm512_setzero_si512();
-            for (int k = 0; k < 8; ++k) {
+            కొరకు (పూర్ణాంకం k = 0; k < 8; ++k) {
                 vsum = _mm512_dpbusd_epi32(vsum, va[k], vb[k]);
             }
             vsum = _mm512_sub_epi32(vsum, vcomp);
 
-            vc[col] = _mm512_fmadd_ps(_mm512_cvtepi32_ps(vsum), _mm512_mul_ps(vd0, vd1), vc[col]);
+            vc[నిలువు] = _mm512_fmadd_ps(_mm512_cvtepi32_ps(vsum), _mm512_mul_ps(vd0, vd1), vc[నిలువు]);
         };
 
-        for (int i = 0; i < KB; ++i) {
-            Unroll<COLS>{}(compute, i);
+        కొరకు (పూర్ణాంకం i = 0; i < KB; ++i) {
+            Unroll<నిలువుల_సంఖ్య>{}(compute, i);
         }
 
         //store to C
-        auto storec = [&](auto col) {
-            _mm512_storeu_ps((__m512i*)(C + 0 * ldc + col * 16), vc[col]);
+        స్వయంచాలక storec = [&](స్వయంచాలక నిలువు) {
+            _mm512_storeu_ps((__m512i*)(C + 0 * ldc + నిలువు * 16), vc[నిలువు]);
         };
-        Unroll<COLS>{}(storec);
+        Unroll<నిలువుల_సంఖ్య>{}(storec);
     }
 };
 
-template <int BLOCK_M, int BLOCK_N, int BLOCK_K>
-struct tinygemm_kernel_vnni<block_q8_K, block_q4_K, float, BLOCK_M, BLOCK_N, BLOCK_K> {
-    static void apply(int KB, const void * RESTRICT _A, const void * RESTRICT _B, float * RESTRICT C, int ldc) {
+మూస <పూర్ణాంకం ఖండం_M, పూర్ణాంకం ఖండం_N, పూర్ణాంకం ఖండం_K>
+నిర్మాణం tinygemm_kernel_vnni<ఖండం_q8_K, ఖండం_q4_K, దశాంశం, ఖండం_M, ఖండం_N, ఖండం_K> {
+    స్థిర శూన్య apply(పూర్ణాంకం KB, స్థిరరాశి శూన్య * RESTRICT _A, స్థిరరాశి శూన్య * RESTRICT _B, దశాంశం * RESTRICT C, పూర్ణాంకం ldc) {
 
-        constexpr int COLS = BLOCK_N / 16;
-        const int TILE_SIZE = TILE_N * sizeof(block_q4_K) + TILE_N * 4;
+        constexpr పూర్ణాంకం నిలువుల_సంఖ్య = ఖండం_N / 16;
+        స్థిరరాశి పూర్ణాంకం TILE_కొలత = TILE_N * పరిమాణం(ఖండం_q4_K) + TILE_N * 4;
 
-        const block_q8_K * RESTRICT A = static_cast<const block_q8_K *>(_A);
-        const char * RESTRICT B = static_cast<const char *>(_B);
+        స్థిరరాశి ఖండం_q8_K * RESTRICT A = static_cast<స్థిరరాశి ఖండం_q8_K *>(_A);
+        స్థిరరాశి అక్షరం * RESTRICT B = static_cast<స్థిరరాశి అక్షరం *>(_B);
 
         // a.qs:   8 groups, 32 bytes each group (m256i)
         __m512i va[8];
         // a.bsum: 8 groups,  2 bytes each group (m128i)
         __m512i va_bsum;
-        __m512 vc[COLS];
+        __m512 vc[నిలువుల_సంఖ్య];
         __m512 vd1;
 
         // packed_B:
-        const int offset_scales = (QK_K / 2) * TILE_N;
-        const int offset_mins   = (QK_K / 2) * TILE_N +  8 * TILE_N;
-        const int offset_d0     = (QK_K / 2) * TILE_N + 16 * TILE_N;
-        const int offset_dmin   = (QK_K / 2) * TILE_N + 16 * TILE_N + TILE_N * sizeof(ggml_half);
+        స్థిరరాశి పూర్ణాంకం స్థానభ్రంశం_scales = (QK_K / 2) * TILE_N;
+        స్థిరరాశి పూర్ణాంకం స్థానభ్రంశం_mins   = (QK_K / 2) * TILE_N +  8 * TILE_N;
+        స్థిరరాశి పూర్ణాంకం స్థానభ్రంశం_d0     = (QK_K / 2) * TILE_N + 16 * TILE_N;
+        స్థిరరాశి పూర్ణాంకం స్థానభ్రంశం_dmin   = (QK_K / 2) * TILE_N + 16 * TILE_N + TILE_N * పరిమాణం(ggml_half);
 
-        const __m512i lowMask = _mm512_set1_epi8(0xF);
+        స్థిరరాశి __m512i దిగువ_ముసుగు = _mm512_set1_epi8(0xF);
 
-        auto loadc = [&](auto col) {
-            vc[col] = _mm512_setzero_ps();
+        స్వయంచాలక loadc = [&](స్వయంచాలక నిలువు) {
+            vc[నిలువు] = _mm512_setzero_ps();
         };
-        Unroll<COLS>{}(loadc);
+        Unroll<నిలువుల_సంఖ్య>{}(loadc);
 
         // Notes: vnni formats in QK_K
         //   a) quants vnni format
@@ -1609,136 +1609,136 @@ struct tinygemm_kernel_vnni<block_q8_K, block_q4_K, float, BLOCK_M, BLOCK_N, BLO
         //     int16 {k/2, n, 2}, viewed as 2d {k/2, 2n}, k = 8
         //     from {16,  8} to {4, 32}
         //
-        auto compute = [&](auto col, auto i) {
+        స్వయంచాలక compute = [&](స్వయంచాలక నిలువు, స్వయంచాలక i) {
             // load a
-            if constexpr (col == 0) {
-                for (int k_group = 0; k_group < QK_K / 32; ++k_group) {
-                    va[k_group] = _mm512_castsi256_si512(_mm256_loadu_si256((const __m256i *)(A[0 * KB + i].qs + k_group * 32)));
+            ఒకవేళ constexpr (నిలువు == 0) {
+                కొరకు (పూర్ణాంకం k_సమూహం = 0; k_సమూహం < QK_K / 32; ++k_సమూహం) {
+                    va[k_సమూహం] = _mm512_castsi256_si512(_mm256_loadu_si256((స్థిరరాశి __m256i *)(A[0 * KB + i].qs + k_సమూహం * 32)));
                 }
-                const __m256i q8sums = _mm256_loadu_si256((const __m256i *)A[0 * KB + i].bsums);
-                const __m128i q8s = _mm_hadd_epi16(_mm256_extracti128_si256(q8sums, 0), _mm256_extracti128_si256(q8sums, 1));
+                స్థిరరాశి __m256i q8sums = _mm256_loadu_si256((స్థిరరాశి __m256i *)A[0 * KB + i].bsums);
+                స్థిరరాశి __m128i q8s = _mm_hadd_epi16(_mm256_extracti128_si256(q8sums, 0), _mm256_extracti128_si256(q8sums, 1));
                 va_bsum = _mm512_castsi128_si512(q8s);
                 vd1 = _mm512_set1_ps(A[0 * KB + i].d);
             }
 
             // step 1: accumultate the quants
             __m512i acc = _mm512_setzero_si512();
-            const char * b_ptr = B + PACKED_INDEX(col, i, KB, TILE_SIZE);
-            const char * b_qs  = b_ptr;
-            for (int k_group = 0; k_group < QK_K / 32; ++k_group) {
+            స్థిరరాశి అక్షరం * b_ptr = B + PACKED_సూచీ(నిలువు, i, KB, TILE_కొలత);
+            స్థిరరాశి అక్షరం * b_qs  = b_ptr;
+            కొరకు (పూర్ణాంకం k_సమూహం = 0; k_సమూహం < QK_K / 32; ++k_సమూహం) {
                 __m512i vsum = _mm512_setzero_si512();
-                for (int k = 0; k < 8; k += 2) {
-                    __m512i va0 = _mm512_permutexvar_epi32(_mm512_set1_epi32(k + 0), va[k_group]);
-                    __m512i va1 = _mm512_permutexvar_epi32(_mm512_set1_epi32(k + 1), va[k_group]);
+                కొరకు (పూర్ణాంకం k = 0; k < 8; k += 2) {
+                    __m512i va0 = _mm512_permutexvar_epi32(_mm512_set1_epi32(k + 0), va[k_సమూహం]);
+                    __m512i va1 = _mm512_permutexvar_epi32(_mm512_set1_epi32(k + 1), va[k_సమూహం]);
 
-                    __m512i bytes = _mm512_loadu_si512((const __m512i *)b_qs);
-                    __m512i vb0 = _mm512_and_si512(bytes, lowMask);
+                    __m512i బైట్లు = _mm512_loadu_si512((స్థిరరాశి __m512i *)b_qs);
+                    __m512i vb0 = _mm512_and_si512(బైట్లు, దిగువ_ముసుగు);
                     vsum = _mm512_dpbusd_epi32(vsum, vb0, va0);
-                    __m512i vb1 = _mm512_and_si512(_mm512_srli_epi16(bytes, 4), lowMask);
+                    __m512i vb1 = _mm512_and_si512(_mm512_srli_epi16(బైట్లు, 4), దిగువ_ముసుగు);
                     vsum = _mm512_dpbusd_epi32(vsum, vb1, va1);
 
                     b_qs += 64;
                 }
                 // vacc += scale * (q8 @ q4)
-                const __m512i vscale = _mm512_cvtepi8_epi32(_mm_loadu_si128((const __m128i *)(b_ptr + offset_scales + k_group * TILE_N)));
-                acc = _mm512_add_epi32(acc, _mm512_mullo_epi32(vsum, vscale));
+                స్థిరరాశి __m512i vscale = _mm512_cvtepi8_epi32(_mm_loadu_si128((స్థిరరాశి __m128i *)(b_ptr + స్థానభ్రంశం_scales + k_సమూహం * TILE_N)));
+                acc = mm512_కూడు_epi32(acc, _mm512_mullo_epi32(vsum, vscale));
             }
-            const __m512 vd0 = _mm512_cvtph_ps(_mm256_loadu_si256((const __m256i *)(b_ptr + offset_d0)));
-            vc[col] = _mm512_fmadd_ps(_mm512_cvtepi32_ps(acc), _mm512_mul_ps(vd0, vd1), vc[col]);
+            స్థిరరాశి __m512 vd0 = _mm512_cvtph_ps(_mm256_loadu_si256((స్థిరరాశి __m256i *)(b_ptr + స్థానభ్రంశం_d0)));
+            vc[నిలువు] = _mm512_fmadd_ps(_mm512_cvtepi32_ps(acc), _mm512_mul_ps(vd0, vd1), vc[నిలువు]);
 
             // step 2: accumulate the mins
             __m512i acc_m = _mm512_setzero_si512();
-            for (int k = 0; k < 4; ++k) {
+            కొరకు (పూర్ణాంకం k = 0; k < 4; ++k) {
                 __m512i vmask = _mm512_set1_epi32(k);
                 __m512i va = _mm512_permutexvar_epi32(vmask, va_bsum);
-                __m512i vb = _mm512_cvtepi8_epi16(_mm256_loadu_si256((const __m256i *)(b_ptr + offset_mins + k * 32)));
+                __m512i vb = _mm512_cvtepi8_epi16(_mm256_loadu_si256((స్థిరరాశి __m256i *)(b_ptr + స్థానభ్రంశం_mins + k * 32)));
                 acc_m = _mm512_dpwssds_epi32(acc_m, va, vb);
             }
-            const __m512 vdmin = _mm512_cvtph_ps(_mm256_loadu_si256((const __m256i *)(b_ptr + offset_dmin)));
-            vc[col] = _mm512_fnmadd_ps(_mm512_cvtepi32_ps(acc_m), _mm512_mul_ps(vdmin, vd1), vc[col]);
+            స్థిరరాశి __m512 vdmin = _mm512_cvtph_ps(_mm256_loadu_si256((స్థిరరాశి __m256i *)(b_ptr + స్థానభ్రంశం_dmin)));
+            vc[నిలువు] = _mm512_fnmadd_ps(_mm512_cvtepi32_ps(acc_m), _mm512_mul_ps(vdmin, vd1), vc[నిలువు]);
         };
 
-        for (int i = 0; i < KB; ++i) {
-            Unroll<COLS>{}(compute, i);
+        కొరకు (పూర్ణాంకం i = 0; i < KB; ++i) {
+            Unroll<నిలువుల_సంఖ్య>{}(compute, i);
         }
 
         //store to C
-        auto storec = [&](auto col) {
-            _mm512_storeu_ps((__m512i*)(C + 0 * ldc + col * 16), vc[col]);
+        స్వయంచాలక storec = [&](స్వయంచాలక నిలువు) {
+            _mm512_storeu_ps((__m512i*)(C + 0 * ldc + నిలువు * 16), vc[నిలువు]);
         };
-        Unroll<COLS>{}(storec);
+        Unroll<నిలువుల_సంఖ్య>{}(storec);
     }
 };
 
-template <int BLOCK_M, int BLOCK_N, int BLOCK_K>
-struct tinygemm_kernel_vnni<block_q8_K, block_q5_K, float, BLOCK_M, BLOCK_N, BLOCK_K> {
-    static void apply(int KB, const void * RESTRICT _A, const void * RESTRICT _B, float * RESTRICT C, int ldc) {
+మూస <పూర్ణాంకం ఖండం_M, పూర్ణాంకం ఖండం_N, పూర్ణాంకం ఖండం_K>
+నిర్మాణం tinygemm_kernel_vnni<ఖండం_q8_K, ఖండం_q5_K, దశాంశం, ఖండం_M, ఖండం_N, ఖండం_K> {
+    స్థిర శూన్య apply(పూర్ణాంకం KB, స్థిరరాశి శూన్య * RESTRICT _A, స్థిరరాశి శూన్య * RESTRICT _B, దశాంశం * RESTRICT C, పూర్ణాంకం ldc) {
 
-        constexpr int COLS = BLOCK_N / 16;
-        const int TILE_SIZE = TILE_N * sizeof(block_q5_K) + TILE_N * 4;
+        constexpr పూర్ణాంకం నిలువుల_సంఖ్య = ఖండం_N / 16;
+        స్థిరరాశి పూర్ణాంకం TILE_కొలత = TILE_N * పరిమాణం(ఖండం_q5_K) + TILE_N * 4;
 
-        const block_q8_K * RESTRICT A = static_cast<const block_q8_K *>(_A);
-        const char * RESTRICT B = static_cast<const char *>(_B);
+        స్థిరరాశి ఖండం_q8_K * RESTRICT A = static_cast<స్థిరరాశి ఖండం_q8_K *>(_A);
+        స్థిరరాశి అక్షరం * RESTRICT B = static_cast<స్థిరరాశి అక్షరం *>(_B);
 
         // a.qs:   8 groups, 32 bytes each group (m256i)
         __m512i va[8];
         // a.bsum: 8 groups,  2 bytes each group (m128i)
         __m512i va_bsum;
-        __m512 vc[COLS];
+        __m512 vc[నిలువుల_సంఖ్య];
         __m512 vd1;
 
         // packed_B:
-        const int offset_qh     = (QK_K / 2) * TILE_N;
-        const int offset_scales = (QK_K / 2) * TILE_N + (QK_K / 8) * TILE_N;
-        const int offset_mins   = (QK_K / 2) * TILE_N + (QK_K / 8) * TILE_N +  8 * TILE_N;
-        const int offset_d0     = (QK_K / 2) * TILE_N + (QK_K / 8) * TILE_N + 16 * TILE_N;
-        const int offset_dmin   = (QK_K / 2) * TILE_N + (QK_K / 8) * TILE_N + 16 * TILE_N + TILE_N * sizeof(ggml_half);
+        స్థిరరాశి పూర్ణాంకం స్థానభ్రంశం_qh     = (QK_K / 2) * TILE_N;
+        స్థిరరాశి పూర్ణాంకం స్థానభ్రంశం_scales = (QK_K / 2) * TILE_N + (QK_K / 8) * TILE_N;
+        స్థిరరాశి పూర్ణాంకం స్థానభ్రంశం_mins   = (QK_K / 2) * TILE_N + (QK_K / 8) * TILE_N +  8 * TILE_N;
+        స్థిరరాశి పూర్ణాంకం స్థానభ్రంశం_d0     = (QK_K / 2) * TILE_N + (QK_K / 8) * TILE_N + 16 * TILE_N;
+        స్థిరరాశి పూర్ణాంకం స్థానభ్రంశం_dmin   = (QK_K / 2) * TILE_N + (QK_K / 8) * TILE_N + 16 * TILE_N + TILE_N * పరిమాణం(ggml_half);
 
-        const __m512i lowMask = _mm512_set1_epi8(0xF);
+        స్థిరరాశి __m512i దిగువ_ముసుగు = _mm512_set1_epi8(0xF);
 
-        auto loadc = [&](auto col) {
-            vc[col] = _mm512_setzero_ps();
+        స్వయంచాలక loadc = [&](స్వయంచాలక నిలువు) {
+            vc[నిలువు] = _mm512_setzero_ps();
         };
-        Unroll<COLS>{}(loadc);
+        Unroll<నిలువుల_సంఖ్య>{}(loadc);
 
         // Q5_K and Q4_K shares the same vnni formats, refer to notes above.
-        auto compute = [&](auto col, auto i) {
+        స్వయంచాలక compute = [&](స్వయంచాలక నిలువు, స్వయంచాలక i) {
             // load a
-            if constexpr (col == 0) {
-                for (int k_group = 0; k_group < QK_K / 32; ++k_group) {
-                    va[k_group] = _mm512_castsi256_si512(_mm256_loadu_si256((const __m256i *)(A[0 * KB + i].qs + k_group * 32)));
+            ఒకవేళ constexpr (నిలువు == 0) {
+                కొరకు (పూర్ణాంకం k_సమూహం = 0; k_సమూహం < QK_K / 32; ++k_సమూహం) {
+                    va[k_సమూహం] = _mm512_castsi256_si512(_mm256_loadu_si256((స్థిరరాశి __m256i *)(A[0 * KB + i].qs + k_సమూహం * 32)));
                 }
-                const __m256i q8sums = _mm256_loadu_si256((const __m256i *)A[0 * KB + i].bsums);
-                const __m128i q8s = _mm_hadd_epi16(_mm256_extracti128_si256(q8sums, 0), _mm256_extracti128_si256(q8sums, 1));
+                స్థిరరాశి __m256i q8sums = _mm256_loadu_si256((స్థిరరాశి __m256i *)A[0 * KB + i].bsums);
+                స్థిరరాశి __m128i q8s = _mm_hadd_epi16(_mm256_extracti128_si256(q8sums, 0), _mm256_extracti128_si256(q8sums, 1));
                 va_bsum = _mm512_castsi128_si512(q8s);
                 vd1 = _mm512_set1_ps(A[0 * KB + i].d);
             }
 
             // step 1: accumultate the quants
             __m512i acc = _mm512_setzero_si512();
-            const char * b_ptr = B + PACKED_INDEX(col, i, KB, TILE_SIZE);
-            const char * b_qs  = b_ptr;
-            const char * b_qh  = b_ptr + offset_qh;
-            for (int k_group = 0; k_group < QK_K / 32; ++k_group) {
+            స్థిరరాశి అక్షరం * b_ptr = B + PACKED_సూచీ(నిలువు, i, KB, TILE_కొలత);
+            స్థిరరాశి అక్షరం * b_qs  = b_ptr;
+            స్థిరరాశి అక్షరం * b_qh  = b_ptr + స్థానభ్రంశం_qh;
+            కొరకు (పూర్ణాంకం k_సమూహం = 0; k_సమూహం < QK_K / 32; ++k_సమూహం) {
                 __m512i vsum = _mm512_setzero_si512();
                 __m512i hmask0 = _mm512_set1_epi8(0x1);
                 __m512i hmask1 = _mm512_set1_epi8(0x2);
-                __m512i hbits = _mm512_loadu_si512((const __m512i *)(b_qh + k_group * 64));
-                for (int k = 0; k < 8; k += 2) {
-                    __m512i va0 = _mm512_permutexvar_epi32(_mm512_set1_epi32(k + 0), va[k_group]);
-                    __m512i va1 = _mm512_permutexvar_epi32(_mm512_set1_epi32(k + 1), va[k_group]);
+                __m512i hbits = _mm512_loadu_si512((స్థిరరాశి __m512i *)(b_qh + k_సమూహం * 64));
+                కొరకు (పూర్ణాంకం k = 0; k < 8; k += 2) {
+                    __m512i va0 = _mm512_permutexvar_epi32(_mm512_set1_epi32(k + 0), va[k_సమూహం]);
+                    __m512i va1 = _mm512_permutexvar_epi32(_mm512_set1_epi32(k + 1), va[k_సమూహం]);
 
-                    __m512i bytes = _mm512_loadu_si512((const __m512i *)b_qs);
-                    __m512i vb0 = _mm512_and_si512(bytes, lowMask);
-                    __m512i vb1 = _mm512_and_si512(_mm512_srli_epi16(bytes, 4), lowMask);
+                    __m512i బైట్లు = _mm512_loadu_si512((స్థిరరాశి __m512i *)b_qs);
+                    __m512i vb0 = _mm512_and_si512(బైట్లు, దిగువ_ముసుగు);
+                    __m512i vb1 = _mm512_and_si512(_mm512_srli_epi16(బైట్లు, 4), దిగువ_ముసుగు);
 
                     __m512i vh0 = _mm512_slli_epi16(_mm512_srli_epi16(_mm512_and_si512(hbits, hmask0), k), 4);
                     __m512i vh1 = _mm512_slli_epi16(_mm512_srli_epi16(_mm512_and_si512(hbits, hmask1), k + 1), 4);
 
                     hmask0 = _mm512_slli_epi16(hmask0, 2);
                     hmask1 = _mm512_slli_epi16(hmask1, 2);
-                    vb0 = _mm512_add_epi8(vb0, vh0);
-                    vb1 = _mm512_add_epi8(vb1, vh1);
+                    vb0 = mm512_కూడు_epi8(vb0, vh0);
+                    vb1 = mm512_కూడు_epi8(vb1, vh1);
 
                     vsum = _mm512_dpbusd_epi32(vsum, vb0, va0);
                     vsum = _mm512_dpbusd_epi32(vsum, vb1, va1);
@@ -1746,215 +1746,215 @@ struct tinygemm_kernel_vnni<block_q8_K, block_q5_K, float, BLOCK_M, BLOCK_N, BLO
                     b_qs += 64;
                 }
                 // vacc += scale * (q8 @ q5)
-                const __m512i vscale = _mm512_cvtepi8_epi32(_mm_loadu_si128((const __m128i *)(b_ptr + offset_scales + k_group * TILE_N)));
-                acc = _mm512_add_epi32(acc, _mm512_mullo_epi32(vsum, vscale));
+                స్థిరరాశి __m512i vscale = _mm512_cvtepi8_epi32(_mm_loadu_si128((స్థిరరాశి __m128i *)(b_ptr + స్థానభ్రంశం_scales + k_సమూహం * TILE_N)));
+                acc = mm512_కూడు_epi32(acc, _mm512_mullo_epi32(vsum, vscale));
             }
-            const __m512 vd0 = _mm512_cvtph_ps(_mm256_loadu_si256((const __m256i *)(b_ptr + offset_d0)));
-            vc[col] = _mm512_fmadd_ps(_mm512_cvtepi32_ps(acc), _mm512_mul_ps(vd0, vd1), vc[col]);
+            స్థిరరాశి __m512 vd0 = _mm512_cvtph_ps(_mm256_loadu_si256((స్థిరరాశి __m256i *)(b_ptr + స్థానభ్రంశం_d0)));
+            vc[నిలువు] = _mm512_fmadd_ps(_mm512_cvtepi32_ps(acc), _mm512_mul_ps(vd0, vd1), vc[నిలువు]);
 
             // step 2: accumulate the mins
             __m512i acc_m = _mm512_setzero_si512();
-            for (int k = 0; k < 4; ++k) {
+            కొరకు (పూర్ణాంకం k = 0; k < 4; ++k) {
                 __m512i vmask = _mm512_set1_epi32(k);
                 __m512i va = _mm512_permutexvar_epi32(vmask, va_bsum);
-                __m512i vb = _mm512_cvtepi8_epi16(_mm256_loadu_si256((const __m256i *)(b_ptr + offset_mins + k * 32)));
+                __m512i vb = _mm512_cvtepi8_epi16(_mm256_loadu_si256((స్థిరరాశి __m256i *)(b_ptr + స్థానభ్రంశం_mins + k * 32)));
                 acc_m = _mm512_dpwssds_epi32(acc_m, va, vb);
             }
-            const __m512 vdmin = _mm512_cvtph_ps(_mm256_loadu_si256((const __m256i *)(b_ptr + offset_dmin)));
-            vc[col] = _mm512_fnmadd_ps(_mm512_cvtepi32_ps(acc_m), _mm512_mul_ps(vdmin, vd1), vc[col]);
+            స్థిరరాశి __m512 vdmin = _mm512_cvtph_ps(_mm256_loadu_si256((స్థిరరాశి __m256i *)(b_ptr + స్థానభ్రంశం_dmin)));
+            vc[నిలువు] = _mm512_fnmadd_ps(_mm512_cvtepi32_ps(acc_m), _mm512_mul_ps(vdmin, vd1), vc[నిలువు]);
         };
 
-        for (int i = 0; i < KB; ++i) {
-            Unroll<COLS>{}(compute, i);
+        కొరకు (పూర్ణాంకం i = 0; i < KB; ++i) {
+            Unroll<నిలువుల_సంఖ్య>{}(compute, i);
         }
 
         //store to C
-        auto storec = [&](auto col) {
-            _mm512_storeu_ps((__m512i*)(C + 0 * ldc + col * 16), vc[col]);
+        స్వయంచాలక storec = [&](స్వయంచాలక నిలువు) {
+            _mm512_storeu_ps((__m512i*)(C + 0 * ldc + నిలువు * 16), vc[నిలువు]);
         };
-        Unroll<COLS>{}(storec);
+        Unroll<నిలువుల_సంఖ్య>{}(storec);
     }
 };
 
-template <int BLOCK_M, int BLOCK_N, int BLOCK_K>
-struct tinygemm_kernel_vnni<block_q8_K, block_q6_K, float, BLOCK_M, BLOCK_N, BLOCK_K> {
-    static void apply(int KB, const void * RESTRICT _A, const void * RESTRICT _B, float * RESTRICT C, int ldc) {
+మూస <పూర్ణాంకం ఖండం_M, పూర్ణాంకం ఖండం_N, పూర్ణాంకం ఖండం_K>
+నిర్మాణం tinygemm_kernel_vnni<ఖండం_q8_K, ఖండం_q6_K, దశాంశం, ఖండం_M, ఖండం_N, ఖండం_K> {
+    స్థిర శూన్య apply(పూర్ణాంకం KB, స్థిరరాశి శూన్య * RESTRICT _A, స్థిరరాశి శూన్య * RESTRICT _B, దశాంశం * RESTRICT C, పూర్ణాంకం ldc) {
 
-        constexpr int COLS = BLOCK_N / 16;
-        const int TILE_SIZE = TILE_N * sizeof(block_q6_K);
+        constexpr పూర్ణాంకం నిలువుల_సంఖ్య = ఖండం_N / 16;
+        స్థిరరాశి పూర్ణాంకం TILE_కొలత = TILE_N * పరిమాణం(ఖండం_q6_K);
 
-        const block_q8_K * RESTRICT A = static_cast<const block_q8_K *>(_A);
-        const char * RESTRICT B = static_cast<const char *>(_B);
+        స్థిరరాశి ఖండం_q8_K * RESTRICT A = static_cast<స్థిరరాశి ఖండం_q8_K *>(_A);
+        స్థిరరాశి అక్షరం * RESTRICT B = static_cast<స్థిరరాశి అక్షరం *>(_B);
 
         // load the 256 bytes from A to 4 avx512 vectors
         __m512i va[4];
-        __m512 vc[COLS];
+        __m512 vc[నిలువుల_సంఖ్య];
         __m512 vd1;
 
         // packed_B:
-        const int offset_qh     = (QK_K / 2) * TILE_N;
-        const int offset_scales = (QK_K / 2) * TILE_N + (QK_K / 4) * TILE_N;
-        const int offset_d0     = (QK_K / 2) * TILE_N + (QK_K / 4) * TILE_N + 16 * TILE_N;
+        స్థిరరాశి పూర్ణాంకం స్థానభ్రంశం_qh     = (QK_K / 2) * TILE_N;
+        స్థిరరాశి పూర్ణాంకం స్థానభ్రంశం_scales = (QK_K / 2) * TILE_N + (QK_K / 4) * TILE_N;
+        స్థిరరాశి పూర్ణాంకం స్థానభ్రంశం_d0     = (QK_K / 2) * TILE_N + (QK_K / 4) * TILE_N + 16 * TILE_N;
 
         // compensation
         __m512i vcomp;
 
-        const __m512i m32s = _mm512_set1_epi32(32);
-        const __m512i lowMask = _mm512_set1_epi8(0xF);
+        స్థిరరాశి __m512i m32s = _mm512_set1_epi32(32);
+        స్థిరరాశి __m512i దిగువ_ముసుగు = _mm512_set1_epi8(0xF);
 
-        auto loadc = [&](auto col) {
-            vc[col] = _mm512_setzero_ps();
+        స్వయంచాలక loadc = [&](స్వయంచాలక నిలువు) {
+            vc[నిలువు] = _mm512_setzero_ps();
         };
-        Unroll<COLS>{}(loadc);
+        Unroll<నిలువుల_సంఖ్య>{}(loadc);
 
-        auto compute = [&](auto col, auto i) {
-            if constexpr (col == 0) {
+        స్వయంచాలక compute = [&](స్వయంచాలక నిలువు, స్వయంచాలక i) {
+            ఒకవేళ constexpr (నిలువు == 0) {
                 // load a
-                va[0] = _mm512_loadu_si512((const __m512i *)(A[0 * KB + i].qs +   0));
-                va[1] = _mm512_loadu_si512((const __m512i *)(A[0 * KB + i].qs +  64));
-                va[2] = _mm512_loadu_si512((const __m512i *)(A[0 * KB + i].qs + 128));
-                va[3] = _mm512_loadu_si512((const __m512i *)(A[0 * KB + i].qs + 192));
+                va[0] = _mm512_loadu_si512((స్థిరరాశి __m512i *)(A[0 * KB + i].qs +   0));
+                va[1] = _mm512_loadu_si512((స్థిరరాశి __m512i *)(A[0 * KB + i].qs +  64));
+                va[2] = _mm512_loadu_si512((స్థిరరాశి __m512i *)(A[0 * KB + i].qs + 128));
+                va[3] = _mm512_loadu_si512((స్థిరరాశి __m512i *)(A[0 * KB + i].qs + 192));
 
-                const __m256i q8sums = _mm256_loadu_si256((const __m256i *)A[0 * KB + i].bsums);
+                స్థిరరాశి __m256i q8sums = _mm256_loadu_si256((స్థిరరాశి __m256i *)A[0 * KB + i].bsums);
                 vcomp = _mm512_mullo_epi32(_mm512_cvtepi16_epi32(q8sums), m32s);
                 vd1 = _mm512_set1_ps(A[0 * KB + i].d);
             }
 
             // accmulate the quants
             __m512i acc = _mm512_setzero_si512();
-            const char * b_ptr = B + PACKED_INDEX(col, i, KB, TILE_SIZE);
-            const char * b_qs = b_ptr;
-            const char * b_qh = b_ptr + offset_qh;
-            int mask = 0;
-            for (int k_group = 0; k_group < QK_K / 16; ++k_group) {
-                int r = k_group >> 2;
-                __m512i va0 = _mm512_permutexvar_epi32(_mm512_set1_epi32(mask++), va[r]);
-                __m512i va1 = _mm512_permutexvar_epi32(_mm512_set1_epi32(mask++), va[r]);
+            స్థిరరాశి అక్షరం * b_ptr = B + PACKED_సూచీ(నిలువు, i, KB, TILE_కొలత);
+            స్థిరరాశి అక్షరం * b_qs = b_ptr;
+            స్థిరరాశి అక్షరం * b_qh = b_ptr + స్థానభ్రంశం_qh;
+            పూర్ణాంకం ముసుగు = 0;
+            కొరకు (పూర్ణాంకం k_సమూహం = 0; k_సమూహం < QK_K / 16; ++k_సమూహం) {
+                పూర్ణాంకం r = k_సమూహం >> 2;
+                __m512i va0 = _mm512_permutexvar_epi32(_mm512_set1_epi32(ముసుగు++), va[r]);
+                __m512i va1 = _mm512_permutexvar_epi32(_mm512_set1_epi32(ముసుగు++), va[r]);
 
                 __m512i vsum = _mm512_setzero_si512();
                 __m512i hmask = _mm512_set1_epi8(0x3);
 
-                __m512i bytes = _mm512_loadu_si512(b_qs);
+                __m512i బైట్లు = _mm512_loadu_si512(b_qs);
                 __m512i hbits = _mm512_loadu_si512(b_qh);
-                __m512i vb0 = _mm512_and_si512(bytes, lowMask);
-                __m512i vb1 = _mm512_and_si512(_mm512_srli_epi16(bytes, 4), lowMask);
+                __m512i vb0 = _mm512_and_si512(బైట్లు, దిగువ_ముసుగు);
+                __m512i vb1 = _mm512_and_si512(_mm512_srli_epi16(బైట్లు, 4), దిగువ_ముసుగు);
                 __m512i vh0 = _mm512_slli_epi16(_mm512_and_si512(hbits, hmask), 4);
                 __m512i vh1 = _mm512_slli_epi16(_mm512_and_si512(hbits, _mm512_slli_epi16(hmask, 2)), 2);
 
-                vb0 = _mm512_add_epi8(vb0, vh0);
-                vb1 = _mm512_add_epi8(vb1, vh1);
+                vb0 = mm512_కూడు_epi8(vb0, vh0);
+                vb1 = mm512_కూడు_epi8(vb1, vh1);
                 vsum = _mm512_dpbusd_epi32(vsum, vb0, va0);
                 vsum = _mm512_dpbusd_epi32(vsum, vb1, va1);
                 b_qs += 64;
 
-                va0 = _mm512_permutexvar_epi32(_mm512_set1_epi32(mask++), va[r]);
-                va1 = _mm512_permutexvar_epi32(_mm512_set1_epi32(mask++), va[r]);
+                va0 = _mm512_permutexvar_epi32(_mm512_set1_epi32(ముసుగు++), va[r]);
+                va1 = _mm512_permutexvar_epi32(_mm512_set1_epi32(ముసుగు++), va[r]);
 
-                bytes = _mm512_loadu_si512(b_qs);
-                vb0 = _mm512_and_si512(bytes, lowMask);
-                vb1 = _mm512_and_si512(_mm512_srli_epi16(bytes, 4), lowMask);
+                బైట్లు = _mm512_loadu_si512(b_qs);
+                vb0 = _mm512_and_si512(బైట్లు, దిగువ_ముసుగు);
+                vb1 = _mm512_and_si512(_mm512_srli_epi16(బైట్లు, 4), దిగువ_ముసుగు);
                 vh0 =                   _mm512_and_si512(hbits, _mm512_slli_epi16(hmask, 4));
                 vh1 = _mm512_srli_epi16(_mm512_and_si512(hbits, _mm512_slli_epi16(hmask, 6)), 2);
-                vb0 = _mm512_add_epi8(vb0, vh0);
-                vb1 = _mm512_add_epi8(vb1, vh1);
+                vb0 = mm512_కూడు_epi8(vb0, vh0);
+                vb1 = mm512_కూడు_epi8(vb1, vh1);
                 vsum = _mm512_dpbusd_epi32(vsum, vb0, va0);
                 vsum = _mm512_dpbusd_epi32(vsum, vb1, va1);
                 b_qs += 64;
                 b_qh += 64;
 
                 // B * A - 32 * A
-                __m512i vmask = _mm512_set1_epi32(k_group);
+                __m512i vmask = _mm512_set1_epi32(k_సమూహం);
                 vsum = _mm512_sub_epi32(vsum, _mm512_permutexvar_epi32(vmask, vcomp));
 
                 // vacc += scale * (q8 @ q6)
-                const __m512i vscale = _mm512_cvtepi8_epi32(_mm_loadu_si128((const __m128i *)(b_ptr + offset_scales + k_group * TILE_N)));
-                acc = _mm512_add_epi32(acc, _mm512_mullo_epi32(vsum, vscale));
+                స్థిరరాశి __m512i vscale = _mm512_cvtepi8_epi32(_mm_loadu_si128((స్థిరరాశి __m128i *)(b_ptr + స్థానభ్రంశం_scales + k_సమూహం * TILE_N)));
+                acc = mm512_కూడు_epi32(acc, _mm512_mullo_epi32(vsum, vscale));
             }
-            const __m512 vd0 = _mm512_cvtph_ps(_mm256_loadu_si256((const __m256i *)(b_ptr + offset_d0)));
-            vc[col] = _mm512_fmadd_ps(_mm512_cvtepi32_ps(acc), _mm512_mul_ps(vd0, vd1), vc[col]);
+            స్థిరరాశి __m512 vd0 = _mm512_cvtph_ps(_mm256_loadu_si256((స్థిరరాశి __m256i *)(b_ptr + స్థానభ్రంశం_d0)));
+            vc[నిలువు] = _mm512_fmadd_ps(_mm512_cvtepi32_ps(acc), _mm512_mul_ps(vd0, vd1), vc[నిలువు]);
         };
 
-        for (int i = 0; i < KB; ++i) {
-            Unroll<COLS>{}(compute, i);
+        కొరకు (పూర్ణాంకం i = 0; i < KB; ++i) {
+            Unroll<నిలువుల_సంఖ్య>{}(compute, i);
         }
 
         //store to C
-        auto storec = [&](int col) {
-            _mm512_storeu_ps((__m512i*)(C + 0 * ldc + col * 16), vc[col]);
+        స్వయంచాలక storec = [&](పూర్ణాంకం నిలువు) {
+            _mm512_storeu_ps((__m512i*)(C + 0 * ldc + నిలువు * 16), vc[నిలువు]);
         };
-        Unroll<COLS>{}(storec);
+        Unroll<నిలువుల_సంఖ్య>{}(storec);
     }
 };
 
-template <int BLOCK_M, int BLOCK_N, int BLOCK_K>
-struct tinygemm_kernel_vnni<block_q8_K, block_iq4_xs, float, BLOCK_M, BLOCK_N, BLOCK_K> {
-    static void apply(int KB, const void * RESTRICT _A, const void * RESTRICT _B, float * RESTRICT C, int ldc) {
+మూస <పూర్ణాంకం ఖండం_M, పూర్ణాంకం ఖండం_N, పూర్ణాంకం ఖండం_K>
+నిర్మాణం tinygemm_kernel_vnni<ఖండం_q8_K, ఖండం_iq4_xs, దశాంశం, ఖండం_M, ఖండం_N, ఖండం_K> {
+    స్థిర శూన్య apply(పూర్ణాంకం KB, స్థిరరాశి శూన్య * RESTRICT _A, స్థిరరాశి శూన్య * RESTRICT _B, దశాంశం * RESTRICT C, పూర్ణాంకం ldc) {
 
-        constexpr int COLS = BLOCK_N / 16;
-        const int TILE_SIZE = TILE_N * sizeof(block_iq4_xs) + TILE_N * 2;
+        constexpr పూర్ణాంకం నిలువుల_సంఖ్య = ఖండం_N / 16;
+        స్థిరరాశి పూర్ణాంకం TILE_కొలత = TILE_N * పరిమాణం(ఖండం_iq4_xs) + TILE_N * 2;
 
-        const block_q8_K * RESTRICT A = static_cast<const block_q8_K *>(_A);
-        const char * RESTRICT B = static_cast<const char *>(_B);
+        స్థిరరాశి ఖండం_q8_K * RESTRICT A = static_cast<స్థిరరాశి ఖండం_q8_K *>(_A);
+        స్థిరరాశి అక్షరం * RESTRICT B = static_cast<స్థిరరాశి అక్షరం *>(_B);
 
         // load the 256 bytes from A to 4 avx512 vectors
         __m512i va[4];
-        __m512 vc[COLS];
+        __m512 vc[నిలువుల_సంఖ్య];
         __m512 vd1;
 
         // packed_B:
-        const int offset_scales = (QK_K / 2) * TILE_N ;
-        const int offset_d0     = (QK_K / 2) * TILE_N + 8 * TILE_N;
+        స్థిరరాశి పూర్ణాంకం స్థానభ్రంశం_scales = (QK_K / 2) * TILE_N ;
+        స్థిరరాశి పూర్ణాంకం స్థానభ్రంశం_d0     = (QK_K / 2) * TILE_N + 8 * TILE_N;
 
         // compensation
         __m512i vcomp;
 
-        const __m256i m128s = _mm256_set1_epi16(128);
-        const __m512i lowMask = _mm512_set1_epi8(0xF);
+        స్థిరరాశి __m256i m128s = _mm256_set1_epi16(128);
+        స్థిరరాశి __m512i దిగువ_ముసుగు = _mm512_set1_epi8(0xF);
 
-        const __m512i values128 = _mm512_set_epi8(
+        స్థిరరాశి __m512i values128 = mm512_సమితి_epi8(
             113, 89, 69, 53, 38, 25, 13, 1, -10, -22, -35, -49, -65, -83, -104, -127,
             113, 89, 69, 53, 38, 25, 13, 1, -10, -22, -35, -49, -65, -83, -104, -127,
             113, 89, 69, 53, 38, 25, 13, 1, -10, -22, -35, -49, -65, -83, -104, -127,
             113, 89, 69, 53, 38, 25, 13, 1, -10, -22, -35, -49, -65, -83, -104, -127
         );
-        const __m512i off = _mm512_set1_epi8(static_cast<char>(0x80));
-        const __m512i values256 = _mm512_add_epi8(values128, off);
+        స్థిరరాశి __m512i off = _mm512_set1_epi8(static_cast<అక్షరం>(0x80));
+        స్థిరరాశి __m512i values256 = mm512_కూడు_epi8(values128, off);
 
-        auto loadc = [&](auto col) {
-            vc[col] = _mm512_setzero_ps();
+        స్వయంచాలక loadc = [&](స్వయంచాలక నిలువు) {
+            vc[నిలువు] = _mm512_setzero_ps();
         };
-        Unroll<COLS>{}(loadc);
+        Unroll<నిలువుల_సంఖ్య>{}(loadc);
 
-        auto compute = [&](auto col, auto i) {
-            if constexpr (col == 0) {
+        స్వయంచాలక compute = [&](స్వయంచాలక నిలువు, స్వయంచాలక i) {
+            ఒకవేళ constexpr (నిలువు == 0) {
                 // load a
-                va[0] = _mm512_loadu_si512((const __m512i *)(A[0 * KB + i].qs +   0));
-                va[1] = _mm512_loadu_si512((const __m512i *)(A[0 * KB + i].qs +  64));
-                va[2] = _mm512_loadu_si512((const __m512i *)(A[0 * KB + i].qs + 128));
-                va[3] = _mm512_loadu_si512((const __m512i *)(A[0 * KB + i].qs + 192));
+                va[0] = _mm512_loadu_si512((స్థిరరాశి __m512i *)(A[0 * KB + i].qs +   0));
+                va[1] = _mm512_loadu_si512((స్థిరరాశి __m512i *)(A[0 * KB + i].qs +  64));
+                va[2] = _mm512_loadu_si512((స్థిరరాశి __m512i *)(A[0 * KB + i].qs + 128));
+                va[3] = _mm512_loadu_si512((స్థిరరాశి __m512i *)(A[0 * KB + i].qs + 192));
 
                 // compensation: 128 * A
-                const __m256i q8sums = _mm256_loadu_si256((const __m256i *)A[0 * KB + i].bsums);
+                స్థిరరాశి __m256i q8sums = _mm256_loadu_si256((స్థిరరాశి __m256i *)A[0 * KB + i].bsums);
                 vcomp = _mm512_castsi256_si512(_mm256_madd_epi16(q8sums, m128s));
                 vd1 = _mm512_set1_ps(A[0 * KB + i].d);
             }
 
             // accmulate the quants
             __m512i acc = _mm512_setzero_si512();
-            const char * b_ptr = B + PACKED_INDEX(col, i, KB, TILE_SIZE);
-            const char * b_qs = b_ptr;
-            int mask = 0;
-            for (int k_group = 0; k_group < QK_K / 32; ++k_group) {
-                int r = k_group >> 1;
-                __m512i vmask = _mm512_set1_epi32(k_group);
+            స్థిరరాశి అక్షరం * b_ptr = B + PACKED_సూచీ(నిలువు, i, KB, TILE_కొలత);
+            స్థిరరాశి అక్షరం * b_qs = b_ptr;
+            పూర్ణాంకం ముసుగు = 0;
+            కొరకు (పూర్ణాంకం k_సమూహం = 0; k_సమూహం < QK_K / 32; ++k_సమూహం) {
+                పూర్ణాంకం r = k_సమూహం >> 1;
+                __m512i vmask = _mm512_set1_epi32(k_సమూహం);
                 __m512i vsum = _mm512_setzero_si512();
-                for (int k = 0; k < 8; k += 2) {
-                    __m512i va0 = _mm512_permutexvar_epi32(_mm512_set1_epi32(mask++), va[r]);
-                    __m512i va1 = _mm512_permutexvar_epi32(_mm512_set1_epi32(mask++), va[r]);
+                కొరకు (పూర్ణాంకం k = 0; k < 8; k += 2) {
+                    __m512i va0 = _mm512_permutexvar_epi32(_mm512_set1_epi32(ముసుగు++), va[r]);
+                    __m512i va1 = _mm512_permutexvar_epi32(_mm512_set1_epi32(ముసుగు++), va[r]);
 
-                    __m512i bytes = _mm512_loadu_si512(b_qs);
-                    __m512i vb0 = _mm512_shuffle_epi8(values256, _mm512_and_si512(bytes, lowMask));
-                    __m512i vb1 = _mm512_shuffle_epi8(values256, _mm512_and_si512(_mm512_srli_epi16(bytes, 4), lowMask));
+                    __m512i బైట్లు = _mm512_loadu_si512(b_qs);
+                    __m512i vb0 = _mm512_shuffle_epi8(values256, _mm512_and_si512(బైట్లు, దిగువ_ముసుగు));
+                    __m512i vb1 = _mm512_shuffle_epi8(values256, _mm512_and_si512(_mm512_srli_epi16(బైట్లు, 4), దిగువ_ముసుగు));
 
                     vsum = _mm512_dpbusd_epi32(vsum, vb0, va0);
                     vsum = _mm512_dpbusd_epi32(vsum, vb1, va1);
@@ -1964,182 +1964,182 @@ struct tinygemm_kernel_vnni<block_q8_K, block_iq4_xs, float, BLOCK_M, BLOCK_N, B
                 vsum = _mm512_sub_epi32(vsum, _mm512_permutexvar_epi32(vmask, vcomp));
 
                 // vacc += scale * (q8 @ q4)
-                const __m512i vscale = _mm512_cvtepi8_epi32(_mm_loadu_si128((const __m128i *)(b_ptr + offset_scales + k_group * TILE_N)));
-                acc = _mm512_add_epi32(acc, _mm512_mullo_epi32(vsum, vscale));
+                స్థిరరాశి __m512i vscale = _mm512_cvtepi8_epi32(_mm_loadu_si128((స్థిరరాశి __m128i *)(b_ptr + స్థానభ్రంశం_scales + k_సమూహం * TILE_N)));
+                acc = mm512_కూడు_epi32(acc, _mm512_mullo_epi32(vsum, vscale));
             }
-            const __m512 vd0 = _mm512_cvtph_ps(_mm256_loadu_si256((const __m256i *)(b_ptr + offset_d0)));
-            vc[col] = _mm512_fmadd_ps(_mm512_cvtepi32_ps(acc), _mm512_mul_ps(vd0, vd1), vc[col]);
+            స్థిరరాశి __m512 vd0 = _mm512_cvtph_ps(_mm256_loadu_si256((స్థిరరాశి __m256i *)(b_ptr + స్థానభ్రంశం_d0)));
+            vc[నిలువు] = _mm512_fmadd_ps(_mm512_cvtepi32_ps(acc), _mm512_mul_ps(vd0, vd1), vc[నిలువు]);
         };
 
-        for (int i = 0; i < KB; ++i) {
-            Unroll<COLS>{}(compute, i);
+        కొరకు (పూర్ణాంకం i = 0; i < KB; ++i) {
+            Unroll<నిలువుల_సంఖ్య>{}(compute, i);
         }
 
         //store to C
-        auto storec = [&](auto col) {
-            _mm512_storeu_ps((__m512i*)(C + 0 * ldc + col * 16), vc[col]);
+        స్వయంచాలక storec = [&](స్వయంచాలక నిలువు) {
+            _mm512_storeu_ps((__m512i*)(C + 0 * ldc + నిలువు * 16), vc[నిలువు]);
         };
-        Unroll<COLS>{}(storec);
+        Unroll<నిలువుల_సంఖ్య>{}(storec);
     }
 };
 
-#define LAUNCH_TINYGEMM_KERNEL_VNNI(NB_SIZE)                                                   \
-    tinygemm_kernel_vnni<vec_dot_type, type, float, 1, NB_SIZE, blck_size>::apply(             \
+#నిర్వచించు LAUNCH_TINYGEMM_KERNEL_VNNI(NB_కొలత)                                                   \
+    tinygemm_kernel_vnni<vec_dot_type, type, దశాంశం, 1, NB_కొలత, blck_కొలత>::apply(             \
         KB, wdata_batch,                                                                       \
-        (const char *)src0->data + src0_offset + PACKED_INDEX(nb * kTilesN, 0, KB, TILE_SIZE), \
-        (float *) dst->data + dst_offset + nb_start, ldc)
+        (స్థిరరాశి అక్షరం *)src0->దత్తాంశం + src0_స్థానభ్రంశం + PACKED_సూచీ(nb * kTilesN, 0, KB, TILE_కొలత), \
+        (దశాంశం *) dst->దత్తాంశం + dst_స్థానభ్రంశం + nb_ప్రారంభం, ldc)
 
-template <typename TA, typename TB, typename TC, int BLOCK_K,
-          typename std::enable_if<!is_type_qkk<TB>::value, int>::type = 0>
-void tinygemm_kernel_amx(int M, int N, int KB, const void * RESTRICT _A, const void * RESTRICT _B, TC * RESTRICT C, int ldc) {
-    using packed_B_t = packed_B_type<TB>;
-    const int TILE_SIZE = get_tile_size<TB>();
-    const bool need_unpack = do_unpack<TB>::value;
+మూస <రకం_పేరు TA, రకం_పేరు TB, రకం_పేరు TC, పూర్ణాంకం ఖండం_K,
+          రకం_పేరు std::enable_if<!is_type_qkk<TB>::value, పూర్ణాంకం>::type = 0>
+శూన్య tinygemm_kernel_amx(పూర్ణాంకం M, పూర్ణాంకం N, పూర్ణాంకం KB, స్థిరరాశి శూన్య * RESTRICT _A, స్థిరరాశి శూన్య * RESTRICT _B, TC * RESTRICT C, పూర్ణాంకం ldc) {
+    ఉపయోగించి packed_B_t = packed_B_type<TB>;
+    స్థిరరాశి పూర్ణాంకం TILE_కొలత = get_tile_కొలత<TB>();
+    స్థిరరాశి తార్కిక need_unpack = do_unpack<TB>::value;
 
     GGML_ASSERT(M <= 2 * TILE_M && N == 2 * TILE_N);
-    const TA * RESTRICT A = static_cast<const TA *>(_A);
-    const char * RESTRICT B = static_cast<const char *>(_B);
+    స్థిరరాశి TA * RESTRICT A = static_cast<స్థిరరాశి TA *>(_A);
+    స్థిరరాశి అక్షరం * RESTRICT B = static_cast<స్థిరరాశి అక్షరం *>(_B);
 
-    const int m0 = std::min(M, TILE_M);
-    const int m1 = std::max(M - TILE_M, 0);
-    const int lda = KB * sizeof(TA);
+    స్థిరరాశి పూర్ణాంకం m0 = std::min(M, TILE_M);
+    స్థిరరాశి పూర్ణాంకం m1 = std::max(M - TILE_M, 0);
+    స్థిరరాశి పూర్ణాంకం lda = KB * పరిమాణం(TA);
     //const int ldb = KB * sizeof(TB);
 
-    alignas(64) static thread_local packed_B_t Tile0[TILE_N * TILE_K];
-    alignas(64) static thread_local packed_B_t Tile1[TILE_N * TILE_K];
-    alignas(64) static thread_local int8_t Tile23[TILE_M * TILE_K];
+    alignas(64) స్థిర thread_local packed_B_t Tile0[TILE_N * TILE_K];
+    alignas(64) స్థిర thread_local packed_B_t Tile1[TILE_N * TILE_K];
+    alignas(64) స్థిర thread_local int8_t Tile23[TILE_M * TILE_K];
 
-    alignas(64) static thread_local int32_t TileC0[TILE_M * TILE_N * 4];
-    alignas(64) static thread_local int32_t TileC1[TILE_M * TILE_N * 4];
+    alignas(64) స్థిర thread_local int32_t TileC0[TILE_M * TILE_N * 4];
+    alignas(64) స్థిర thread_local int32_t TileC1[TILE_M * TILE_N * 4];
 
     // double buffering C to interleave avx512 and amx
     int32_t * C_cur = TileC0;
     int32_t * C_pre = TileC1;
 
-    auto Tile4 = [&](int32_t * base) { return base; };
-    auto Tile5 = [&](int32_t * base) { return base + TILE_M * TILE_N; };
-    auto Tile6 = [&](int32_t * base) { return base + 2 * TILE_M * TILE_N; };
-    auto Tile7 = [&](int32_t * base) { return base + 3 * TILE_M * TILE_N; };
+    స్వయంచాలక Tile4 = [&](int32_t * పునాది) { తిరిగి పునాది; };
+    స్వయంచాలక Tile5 = [&](int32_t * పునాది) { తిరిగి పునాది + TILE_M * TILE_N; };
+    స్వయంచాలక Tile6 = [&](int32_t * పునాది) { తిరిగి పునాది + 2 * TILE_M * TILE_N; };
+    స్వయంచాలక Tile7 = [&](int32_t * పునాది) { తిరిగి పునాది + 3 * TILE_M * TILE_N; };
 
-    if (M == 2 * TILE_M) {
+    ఒకవేళ (M == 2 * TILE_M) {
         // i = 0
-        const char * B_blk0 = B + PACKED_INDEX(0, 0, KB, TILE_SIZE);
-        const char * B_blk1 = B + PACKED_INDEX(1, 0, KB, TILE_SIZE);
-        if (need_unpack) {
+        స్థిరరాశి అక్షరం * B_blk0 = B + PACKED_సూచీ(0, 0, KB, TILE_కొలత);
+        స్థిరరాశి అక్షరం * B_blk1 = B + PACKED_సూచీ(1, 0, KB, TILE_కొలత);
+        ఒకవేళ (need_unpack) {
             unpack_B<TB>(Tile0, B_blk0);
             _tile_loadd(TMM0, Tile0, TILE_N * VNNI_BLK);
-        } else {
+        } లేకపోతే {
             _tile_loadd(TMM0, B_blk0, TILE_N * VNNI_BLK);
         }
 
         _tile_zero(TMM4);
         _tile_loadd(TMM2, A[0].qs, lda);
         _tile_dpbssd(TMM4, TMM2, TMM0);
-        _tile_stored(TMM4, Tile4(C_pre), TILE_N * sizeof(int32_t));
+        _tile_stored(TMM4, Tile4(C_pre), TILE_N * పరిమాణం(int32_t));
 
         _tile_zero(TMM5);
         _tile_loadd(TMM3, A[TILE_M * KB + 0].qs, lda);
         _tile_dpbssd(TMM5, TMM3, TMM0);
-        _tile_stored(TMM5, Tile5(C_pre), TILE_N * sizeof(int32_t));
+        _tile_stored(TMM5, Tile5(C_pre), TILE_N * పరిమాణం(int32_t));
 
-        if (need_unpack) {
+        ఒకవేళ (need_unpack) {
             unpack_B<TB>(Tile1, B_blk1);
             _tile_loadd(TMM1, Tile1, TILE_N * VNNI_BLK);
-        } else {
+        } లేకపోతే {
             _tile_loadd(TMM1, B_blk1, TILE_N * VNNI_BLK);
         }
 
         _tile_zero(TMM6);
         _tile_dpbssd(TMM6, TMM2, TMM1);
-        _tile_stored(TMM6, Tile6(C_pre), TILE_N * sizeof(int32_t));
+        _tile_stored(TMM6, Tile6(C_pre), TILE_N * పరిమాణం(int32_t));
 
         _tile_zero(TMM7);
         _tile_dpbssd(TMM7, TMM3, TMM1);
-        _tile_stored(TMM7, Tile7(C_pre), TILE_N * sizeof(int32_t));
+        _tile_stored(TMM7, Tile7(C_pre), TILE_N * పరిమాణం(int32_t));
 
-        for (int i = 1; i < KB; ++i) {
+        కొరకు (పూర్ణాంకం i = 1; i < KB; ++i) {
             // index of previous iter
-            const int ii = i - 1;
-            const char * B_blk0 = B + PACKED_INDEX(0, i, KB, TILE_SIZE);
-            const char * B_blk1 = B + PACKED_INDEX(1, i, KB, TILE_SIZE);
+            స్థిరరాశి పూర్ణాంకం ii = i - 1;
+            స్థిరరాశి అక్షరం * B_blk0 = B + PACKED_సూచీ(0, i, KB, TILE_కొలత);
+            స్థిరరాశి అక్షరం * B_blk1 = B + PACKED_సూచీ(1, i, KB, TILE_కొలత);
             GGML_DISPATCH_BOOL(ii > 0, is_acc, [&] {
-                if (need_unpack) {
+                ఒకవేళ (need_unpack) {
                     unpack_B<TB>(Tile0, B_blk0);
                     _tile_loadd(TMM0, Tile0, TILE_N * VNNI_BLK);
-                } else {
+                } లేకపోతే {
                     _tile_loadd(TMM0, B_blk0, TILE_N * VNNI_BLK);
                 }
                 _tile_zero(TMM4);
                 _tile_loadd(TMM2, A[i].qs, lda);
-                acc_C<TA, TB, is_acc>::apply(C, ldc, Tile4(C_pre), &A[ii], KB, B + PACKED_INDEX(0, ii, KB, TILE_SIZE), TILE_M);
+                acc_C<TA, TB, is_acc>::apply(C, ldc, Tile4(C_pre), &A[ii], KB, B + PACKED_సూచీ(0, ii, KB, TILE_కొలత), TILE_M);
 
                 _tile_dpbssd(TMM4, TMM2, TMM0);
-                _tile_stored(TMM4, Tile4(C_cur), TILE_N * sizeof(int32_t));
+                _tile_stored(TMM4, Tile4(C_cur), TILE_N * పరిమాణం(int32_t));
 
                 _tile_zero(TMM5);
                 _tile_loadd(TMM3, A[TILE_M * KB + i].qs, lda);
-                acc_C<TA, TB, is_acc>::apply(C + TILE_M * ldc, ldc, Tile5(C_pre), &A[TILE_M * KB + ii], KB, B + PACKED_INDEX(0, ii, KB, TILE_SIZE), TILE_M);
+                acc_C<TA, TB, is_acc>::apply(C + TILE_M * ldc, ldc, Tile5(C_pre), &A[TILE_M * KB + ii], KB, B + PACKED_సూచీ(0, ii, KB, TILE_కొలత), TILE_M);
 
                 _tile_dpbssd(TMM5, TMM3, TMM0);
-                _tile_stored(TMM5, Tile5(C_cur), TILE_N * sizeof(int32_t));
+                _tile_stored(TMM5, Tile5(C_cur), TILE_N * పరిమాణం(int32_t));
 
-                if (need_unpack) {
+                ఒకవేళ (need_unpack) {
                     unpack_B<TB>(Tile1, B_blk1);
                     _tile_loadd(TMM1, Tile1, TILE_N * VNNI_BLK);
-                } else {
+                } లేకపోతే {
                     _tile_loadd(TMM1, B_blk1, TILE_N * VNNI_BLK);
                 }
                 _tile_zero(TMM6);
-                acc_C<TA, TB, is_acc>::apply(C + TILE_N, ldc, Tile6(C_pre), &A[ii], KB, B + PACKED_INDEX(1, ii, KB, TILE_SIZE), TILE_M);
+                acc_C<TA, TB, is_acc>::apply(C + TILE_N, ldc, Tile6(C_pre), &A[ii], KB, B + PACKED_సూచీ(1, ii, KB, TILE_కొలత), TILE_M);
 
                 _tile_dpbssd(TMM6, TMM2, TMM1);
-                _tile_stored(TMM6, Tile6(C_cur), TILE_N * sizeof(int32_t));
+                _tile_stored(TMM6, Tile6(C_cur), TILE_N * పరిమాణం(int32_t));
 
                 _tile_zero(TMM7);
-                acc_C<TA, TB, is_acc>::apply(C + TILE_M * ldc + TILE_N, ldc, Tile7(C_pre), &A[TILE_M * KB + ii], KB, B + PACKED_INDEX(1, ii, KB, TILE_SIZE), TILE_M);
+                acc_C<TA, TB, is_acc>::apply(C + TILE_M * ldc + TILE_N, ldc, Tile7(C_pre), &A[TILE_M * KB + ii], KB, B + PACKED_సూచీ(1, ii, KB, TILE_కొలత), TILE_M);
 
                 _tile_dpbssd(TMM7, TMM3, TMM1);
-                _tile_stored(TMM7, Tile7(C_cur), TILE_N * sizeof(int32_t));
+                _tile_stored(TMM7, Tile7(C_cur), TILE_N * పరిమాణం(int32_t));
 
                 std::swap(C_cur, C_pre);
             });
         }
         // final accumulation
         {
-            int ii = KB - 1;
-            acc_C<TA, TB, true>::apply(C, ldc, Tile4(C_pre), &A[ii], KB, B + PACKED_INDEX(0, ii, KB, TILE_SIZE), TILE_M);
-            acc_C<TA, TB, true>::apply(C + TILE_M * ldc, ldc, Tile5(C_pre), &A[TILE_M * KB + ii], KB, B + PACKED_INDEX(0, ii, KB, TILE_SIZE), TILE_M);
-            acc_C<TA, TB, true>::apply(C + TILE_N, ldc, Tile6(C_pre), &A[ii], KB, B + PACKED_INDEX(1, ii, KB, TILE_SIZE), TILE_M);
-            acc_C<TA, TB, true>::apply(C + TILE_M * ldc + TILE_N, ldc, Tile7(C_pre), &A[TILE_M * KB + ii], KB, B + PACKED_INDEX(1, ii, KB, TILE_SIZE), TILE_M);
+            పూర్ణాంకం ii = KB - 1;
+            acc_C<TA, TB, నిజం>::apply(C, ldc, Tile4(C_pre), &A[ii], KB, B + PACKED_సూచీ(0, ii, KB, TILE_కొలత), TILE_M);
+            acc_C<TA, TB, నిజం>::apply(C + TILE_M * ldc, ldc, Tile5(C_pre), &A[TILE_M * KB + ii], KB, B + PACKED_సూచీ(0, ii, KB, TILE_కొలత), TILE_M);
+            acc_C<TA, TB, నిజం>::apply(C + TILE_N, ldc, Tile6(C_pre), &A[ii], KB, B + PACKED_సూచీ(1, ii, KB, TILE_కొలత), TILE_M);
+            acc_C<TA, TB, నిజం>::apply(C + TILE_M * ldc + TILE_N, ldc, Tile7(C_pre), &A[TILE_M * KB + ii], KB, B + PACKED_సూచీ(1, ii, KB, TILE_కొలత), TILE_M);
         }
-    } else {
-        for (int i = 0; i < KB; ++i) {
+    } లేకపోతే {
+        కొరకు (పూర్ణాంకం i = 0; i < KB; ++i) {
             _tile_zero(TMM4);
             _tile_zero(TMM6);
-            if (m1 != 0) {
+            ఒకవేళ (m1 != 0) {
                 _tile_zero(TMM5);
                 _tile_zero(TMM7);
             }
 
-            const char * B_blk0 = B + PACKED_INDEX(0, i, KB, TILE_SIZE);
-            const char * B_blk1 = B + PACKED_INDEX(1, i, KB, TILE_SIZE);
-            if (need_unpack) {
+            స్థిరరాశి అక్షరం * B_blk0 = B + PACKED_సూచీ(0, i, KB, TILE_కొలత);
+            స్థిరరాశి అక్షరం * B_blk1 = B + PACKED_సూచీ(1, i, KB, TILE_కొలత);
+            ఒకవేళ (need_unpack) {
                 unpack_B<TB>(Tile0, B_blk0);
                 _tile_loadd(TMM0, Tile0, TILE_N * VNNI_BLK);
-            } else {
+            } లేకపోతే {
                 _tile_loadd(TMM0, B_blk0, TILE_N * VNNI_BLK);
             }
 
-            if (need_unpack) {
+            ఒకవేళ (need_unpack) {
                 unpack_B<TB>(Tile1, B_blk1);
                 _tile_loadd(TMM1, Tile1, TILE_N * VNNI_BLK);
-            } else {
+            } లేకపోతే {
                 _tile_loadd(TMM1, B_blk1, TILE_N * VNNI_BLK);
             }
 
-            if (m0 == TILE_M) {
+            ఒకవేళ (m0 == TILE_M) {
                 _tile_loadd(TMM2, A[i].qs, lda);
-            } else {
+            } లేకపోతే {
                 unpack_A(Tile23, &A[i], KB, m0);
                 _tile_loadd(TMM2, Tile23, TILE_K);
             }
@@ -2147,74 +2147,74 @@ void tinygemm_kernel_amx(int M, int N, int KB, const void * RESTRICT _A, const v
             _tile_dpbssd(TMM4, TMM2, TMM0);
             _tile_dpbssd(TMM6, TMM2, TMM1);
 
-            _tile_stored(TMM4, Tile4(C_cur), TILE_N * sizeof(int32_t));
-            _tile_stored(TMM6, Tile6(C_cur), TILE_N * sizeof(int32_t));
+            _tile_stored(TMM4, Tile4(C_cur), TILE_N * పరిమాణం(int32_t));
+            _tile_stored(TMM6, Tile6(C_cur), TILE_N * పరిమాణం(int32_t));
 
             GGML_DISPATCH_BOOL(i > 0, is_acc, [&] {
-                acc_C<TA, TB, is_acc>::apply(C,          ldc, Tile4(C_cur), &A[i], KB, B + PACKED_INDEX(0, i, KB, TILE_SIZE), m0);
-                acc_C<TA, TB, is_acc>::apply(C + TILE_N, ldc, Tile6(C_cur), &A[i], KB, B + PACKED_INDEX(1, i, KB, TILE_SIZE), m0);
+                acc_C<TA, TB, is_acc>::apply(C,          ldc, Tile4(C_cur), &A[i], KB, B + PACKED_సూచీ(0, i, KB, TILE_కొలత), m0);
+                acc_C<TA, TB, is_acc>::apply(C + TILE_N, ldc, Tile6(C_cur), &A[i], KB, B + PACKED_సూచీ(1, i, KB, TILE_కొలత), m0);
             });
 
-            if (m1 != 0) {
+            ఒకవేళ (m1 != 0) {
                 unpack_A(Tile23, &A[TILE_M * KB + i], KB, m1);
                 _tile_loadd(TMM3, Tile23, TILE_K);
 
                 _tile_dpbssd(TMM5, TMM3, TMM0);
                 _tile_dpbssd(TMM7, TMM3, TMM1);
-                _tile_stored(TMM5, Tile5(C_cur), TILE_N * sizeof(int32_t));
-                _tile_stored(TMM7, Tile7(C_cur), TILE_N * sizeof(int32_t));
+                _tile_stored(TMM5, Tile5(C_cur), TILE_N * పరిమాణం(int32_t));
+                _tile_stored(TMM7, Tile7(C_cur), TILE_N * పరిమాణం(int32_t));
                 GGML_DISPATCH_BOOL(i > 0, is_acc, [&] {
-                    acc_C<TA, TB, is_acc>::apply(C + TILE_M * ldc,          ldc, Tile5(C_cur), &A[TILE_M * KB + i], KB, B + PACKED_INDEX(0, i, KB, TILE_SIZE), m1);
-                    acc_C<TA, TB, is_acc>::apply(C + TILE_M * ldc + TILE_N, ldc, Tile7(C_cur), &A[TILE_M * KB + i], KB, B + PACKED_INDEX(1, i, KB, TILE_SIZE), m1);
+                    acc_C<TA, TB, is_acc>::apply(C + TILE_M * ldc,          ldc, Tile5(C_cur), &A[TILE_M * KB + i], KB, B + PACKED_సూచీ(0, i, KB, TILE_కొలత), m1);
+                    acc_C<TA, TB, is_acc>::apply(C + TILE_M * ldc + TILE_N, ldc, Tile7(C_cur), &A[TILE_M * KB + i], KB, B + PACKED_సూచీ(1, i, KB, TILE_కొలత), m1);
                 });
             }
         }
     }
-    return;
+    తిరిగి;
 }
 
-template <typename TA, typename TB, typename TC, int BLOCK_K,
-          typename std::enable_if<is_type_qkk<TB>::value, int>::type = 0>
-void tinygemm_kernel_amx(int M, int N, int KB, const void * RESTRICT _A, const void * RESTRICT _B, float * RESTRICT C, int ldc) {
-    static_assert(std::is_same<TA, block_q8_K>::value);
-    const int TILE_SIZE = get_tile_size<TB>();
+మూస <రకం_పేరు TA, రకం_పేరు TB, రకం_పేరు TC, పూర్ణాంకం ఖండం_K,
+          రకం_పేరు std::enable_if<is_type_qkk<TB>::value, పూర్ణాంకం>::type = 0>
+శూన్య tinygemm_kernel_amx(పూర్ణాంకం M, పూర్ణాంకం N, పూర్ణాంకం KB, స్థిరరాశి శూన్య * RESTRICT _A, స్థిరరాశి శూన్య * RESTRICT _B, దశాంశం * RESTRICT C, పూర్ణాంకం ldc) {
+    static_assert(std::is_same<TA, ఖండం_q8_K>::value);
+    స్థిరరాశి పూర్ణాంకం TILE_కొలత = get_tile_కొలత<TB>();
 
     GGML_ASSERT(M <= 2 * TILE_M && N == 2 * TILE_N);
-    const TA * RESTRICT A = static_cast<const TA *>(_A);
-    const char * RESTRICT B = static_cast<const char *>(_B);
+    స్థిరరాశి TA * RESTRICT A = static_cast<స్థిరరాశి TA *>(_A);
+    స్థిరరాశి అక్షరం * RESTRICT B = static_cast<స్థిరరాశి అక్షరం *>(_B);
 
-    const int m0 = std::min(M, TILE_M);
-    const int m1 = std::max(M - TILE_M, 0);
+    స్థిరరాశి పూర్ణాంకం m0 = std::min(M, TILE_M);
+    స్థిరరాశి పూర్ణాంకం m1 = std::max(M - TILE_M, 0);
     //const int lda = KB * sizeof(TA);
 
-    alignas(64) static thread_local int8_t Tile0[TILE_N * TILE_K];
-    alignas(64) static thread_local int8_t Tile1[TILE_N * TILE_K];
-    alignas(64) static thread_local int8_t Tile23[TILE_M * TILE_K];
+    alignas(64) స్థిర thread_local int8_t Tile0[TILE_N * TILE_K];
+    alignas(64) స్థిర thread_local int8_t Tile1[TILE_N * TILE_K];
+    alignas(64) స్థిర thread_local int8_t Tile23[TILE_M * TILE_K];
 
     // mat mul result for each group
-    alignas(64) static thread_local int32_t Tile4[TILE_M * TILE_N];
-    alignas(64) static thread_local int32_t Tile5[TILE_M * TILE_N];
-    alignas(64) static thread_local int32_t Tile6[TILE_M * TILE_N];
-    alignas(64) static thread_local int32_t Tile7[TILE_M * TILE_N];
+    alignas(64) స్థిర thread_local int32_t Tile4[TILE_M * TILE_N];
+    alignas(64) స్థిర thread_local int32_t Tile5[TILE_M * TILE_N];
+    alignas(64) స్థిర thread_local int32_t Tile6[TILE_M * TILE_N];
+    alignas(64) స్థిర thread_local int32_t Tile7[TILE_M * TILE_N];
 
     // sum of each QK_K block, contains 8 groups, int32
-    alignas(64) static thread_local int32_t Sumi4[TILE_M * TILE_N];
-    alignas(64) static thread_local int32_t Sumi5[TILE_M * TILE_N];
-    alignas(64) static thread_local int32_t Sumi6[TILE_M * TILE_N];
-    alignas(64) static thread_local int32_t Sumi7[TILE_M * TILE_N];
+    alignas(64) స్థిర thread_local int32_t Sumi4[TILE_M * TILE_N];
+    alignas(64) స్థిర thread_local int32_t Sumi5[TILE_M * TILE_N];
+    alignas(64) స్థిర thread_local int32_t Sumi6[TILE_M * TILE_N];
+    alignas(64) స్థిర thread_local int32_t Sumi7[TILE_M * TILE_N];
 
-    const int k_group_size = std::is_same<TB, block_q6_K>::value ? 16 : 32;
-    for (int i = 0; i < KB; ++i) {
+    స్థిరరాశి పూర్ణాంకం k_సమూహం_కొలత = std::is_same<TB, ఖండం_q6_K>::value ? 16 : 32;
+    కొరకు (పూర్ణాంకం i = 0; i < KB; ++i) {
         // step 1: accumulate the quants across 8 groups, each group with 32
-        for (int k = 0; k < QK_K / k_group_size; ++k) {
+        కొరకు (పూర్ణాంకం k = 0; k < QK_K / k_సమూహం_కొలత; ++k) {
             GGML_DISPATCH_BOOL(k > 0, is_acc, [&] {
                 _tile_zero(TMM4);
                 _tile_zero(TMM6);
 
-                unpack_B<TB>(Tile0, B + PACKED_INDEX(0, i, KB, TILE_SIZE), k);
+                unpack_B<TB>(Tile0, B + PACKED_సూచీ(0, i, KB, TILE_కొలత), k);
                 _tile_loadd(TMM0, Tile0, TILE_N * VNNI_BLK);
 
-                unpack_B<TB>(Tile1, B + PACKED_INDEX(1, i, KB, TILE_SIZE), k);
+                unpack_B<TB>(Tile1, B + PACKED_సూచీ(1, i, KB, TILE_కొలత), k);
                 _tile_loadd(TMM1, Tile1, TILE_N * VNNI_BLK);
 
                 unpack_A<TB>(Tile23, &A[i], KB, k, m0);
@@ -2223,13 +2223,13 @@ void tinygemm_kernel_amx(int M, int N, int KB, const void * RESTRICT _A, const v
                 _tile_dpbssd(TMM4, TMM2, TMM0);
                 _tile_dpbssd(TMM6, TMM2, TMM1);
 
-                _tile_stored(TMM4, Tile4, TILE_N * sizeof(int32_t));
-                _tile_stored(TMM6, Tile6, TILE_N * sizeof(int32_t));
+                _tile_stored(TMM4, Tile4, TILE_N * పరిమాణం(int32_t));
+                _tile_stored(TMM6, Tile6, TILE_N * పరిమాణం(int32_t));
 
-                scale_C<TB, is_acc>(Tile4, Sumi4, B + PACKED_INDEX(0, i, KB, TILE_SIZE), k, m0);
-                scale_C<TB, is_acc>(Tile6, Sumi6, B + PACKED_INDEX(1, i, KB, TILE_SIZE), k, m0);
+                scale_C<TB, is_acc>(Tile4, Sumi4, B + PACKED_సూచీ(0, i, KB, TILE_కొలత), k, m0);
+                scale_C<TB, is_acc>(Tile6, Sumi6, B + PACKED_సూచీ(1, i, KB, TILE_కొలత), k, m0);
 
-                if (m1 != 0) {
+                ఒకవేళ (m1 != 0) {
                     _tile_zero(TMM5);
                     _tile_zero(TMM7);
 
@@ -2239,96 +2239,96 @@ void tinygemm_kernel_amx(int M, int N, int KB, const void * RESTRICT _A, const v
                     _tile_dpbssd(TMM5, TMM3, TMM0);
                     _tile_dpbssd(TMM7, TMM3, TMM1);
 
-                    _tile_stored(TMM5, Tile5, TILE_N * sizeof(int32_t));
-                    _tile_stored(TMM7, Tile7, TILE_N * sizeof(int32_t));
+                    _tile_stored(TMM5, Tile5, TILE_N * పరిమాణం(int32_t));
+                    _tile_stored(TMM7, Tile7, TILE_N * పరిమాణం(int32_t));
 
-                    scale_C<TB, is_acc>(Tile5, Sumi5, B + PACKED_INDEX(0, i, KB, TILE_SIZE), k, m1);
-                    scale_C<TB, is_acc>(Tile7, Sumi7, B + PACKED_INDEX(1, i, KB, TILE_SIZE), k, m1);
+                    scale_C<TB, is_acc>(Tile5, Sumi5, B + PACKED_సూచీ(0, i, KB, TILE_కొలత), k, m1);
+                    scale_C<TB, is_acc>(Tile7, Sumi7, B + PACKED_సూచీ(1, i, KB, TILE_కొలత), k, m1);
                 }
             });
         }
 
         // step 2: accmulate the mins
         GGML_DISPATCH_BOOL(i > 0, is_acc, [&] {
-            acc_C<TA, TB, is_acc>::apply(C,          ldc, Sumi4, &A[i], KB, B + PACKED_INDEX(0, i, KB, TILE_SIZE), m0);
-            acc_C<TA, TB, is_acc>::apply(C + TILE_N, ldc, Sumi6, &A[i], KB, B + PACKED_INDEX(1, i, KB, TILE_SIZE), m0);
-            if (m1 != 0) {
-                acc_C<TA, TB, is_acc>::apply(C + TILE_M * ldc,          ldc, Sumi5, &A[TILE_M * KB + i], KB, B + PACKED_INDEX(0, i, KB, TILE_SIZE), m1);
-                acc_C<TA, TB, is_acc>::apply(C + TILE_M * ldc + TILE_N, ldc, Sumi7, &A[TILE_M * KB + i], KB, B + PACKED_INDEX(1, i, KB, TILE_SIZE), m1);
+            acc_C<TA, TB, is_acc>::apply(C,          ldc, Sumi4, &A[i], KB, B + PACKED_సూచీ(0, i, KB, TILE_కొలత), m0);
+            acc_C<TA, TB, is_acc>::apply(C + TILE_N, ldc, Sumi6, &A[i], KB, B + PACKED_సూచీ(1, i, KB, TILE_కొలత), m0);
+            ఒకవేళ (m1 != 0) {
+                acc_C<TA, TB, is_acc>::apply(C + TILE_M * ldc,          ldc, Sumi5, &A[TILE_M * KB + i], KB, B + PACKED_సూచీ(0, i, KB, TILE_కొలత), m1);
+                acc_C<TA, TB, is_acc>::apply(C + TILE_M * ldc + TILE_N, ldc, Sumi7, &A[TILE_M * KB + i], KB, B + PACKED_సూచీ(1, i, KB, TILE_కొలత), m1);
             }
         });
     }
-    return;
+    తిరిగి;
 }
 
 } // anonymous namespace
 
 // get the packed tensor size for quantized weights
-size_t ggml_backend_amx_get_alloc_size(const struct ggml_tensor * tensor) {
-    const enum ggml_type TYPE = tensor->type;
+size_t ggml_backend_amx_get_alloc_కొలత(స్థిరరాశి నిర్మాణం ggml_tensor * tensor) {
+    స్థిరరాశి గణన ggml_type TYPE = tensor->type;
 
-    const int K = tensor->ne[0]; // ne0: in_features
-    const int N = tensor->ne[1]; // ne1: out_features
+    స్థిరరాశి పూర్ణాంకం K = tensor->ne[0]; // ne0: in_features
+    స్థిరరాశి పూర్ణాంకం N = tensor->ne[1]; // ne1: out_features
 
-    auto get_tensor_size = [&] {
-        size_t row_size_B{0};
+    స్వయంచాలక get_tensor_కొలత = [&] {
+        size_t అడ్డువరుస_కొలత_B{0};
         GGML_DISPATCH_QTYPES(TYPE, [&] {
-            row_size_B = get_row_size<type, blck_size>(K);
+            అడ్డువరుస_కొలత_B = get_అడ్డువరుస_కొలత<type, blck_కొలత>(K);
         });
-        return N * row_size_B;
+        తిరిగి N * అడ్డువరుస_కొలత_B;
     };
 
-    if (qtype_has_amx_kernels(TYPE)) {
-        return get_tensor_size();
-    } else {
+    ఒకవేళ (qtype_has_amx_kernels(TYPE)) {
+        తిరిగి get_tensor_కొలత();
+    } లేకపోతే {
         // for f16, bf16 we don't do packing
-        return ggml_nbytes(tensor);
+        తిరిగి ggml_nbytes(tensor);
     }
 }
 
 // pack weight to vnni format
-void ggml_backend_amx_convert_weight(struct ggml_tensor * tensor, const void * data, size_t offset, size_t size) {
-    GGML_ASSERT(offset == 0 && size == ggml_nbytes(tensor)); // only full tensor conversion is supported for now
+శూన్య ggml_backend_amx_convert_బరువు(నిర్మాణం ggml_tensor * tensor, స్థిరరాశి శూన్య * దత్తాంశం, size_t స్థానభ్రంశం, size_t size) {
+    GGML_ASSERT(స్థానభ్రంశం == 0 && size == ggml_nbytes(tensor)); // only full tensor conversion is supported for now
 
-    const enum ggml_type TYPE = tensor->type;
+    స్థిరరాశి గణన ggml_type TYPE = tensor->type;
 
-    const int K = tensor->ne[0]; // ne0: in_features
-    const int N = tensor->ne[1]; // ne1: out_features
+    స్థిరరాశి పూర్ణాంకం K = tensor->ne[0]; // ne0: in_features
+    స్థిరరాశి పూర్ణాంకం N = tensor->ne[1]; // ne1: out_features
 
     GGML_DISPATCH_QTYPES(TYPE, [&] {
-        convert_B_packed_format<type, blck_size>((void *)((char *)tensor->data + offset), (const type *)data, N, K);
+        convert_B_packed_format<type, blck_కొలత>((శూన్య *)((అక్షరం *)tensor->దత్తాంశం + స్థానభ్రంశం), (స్థిరరాశి type *)దత్తాంశం, N, K);
     });
 }
 
 // ne2 is passed explicitly to help compiler optimize repeated calls
-inline int64_t ggml_batch_offset(const ggml_tensor * t, int64_t batch_idx, int64_t ne2) {
-    const int64_t i2 = batch_idx % ne2;
-    const int64_t i3 = batch_idx / ne2;
-    return i3 * t->nb[3] + i2 * t->nb[2];
+అంతఃవరుస int64_t ggml_batch_స్థానభ్రంశం(స్థిరరాశి ggml_tensor * t, int64_t batch_idx, int64_t ne2) {
+    స్థిరరాశి int64_t i2 = batch_idx % ne2;
+    స్థిరరాశి int64_t i3 = batch_idx / ne2;
+    తిరిగి i3 * t->nb[3] + i2 * t->nb[2];
 }
 
-size_t ggml_backend_amx_desired_wsize(const struct ggml_tensor * dst) {
-    struct ggml_tensor * src0 = dst->src[0];
+size_t ggml_backend_amx_desired_wsize(స్థిరరాశి నిర్మాణం ggml_tensor * dst) {
+    నిర్మాణం ggml_tensor * src0 = dst->src[0];
 
-    const enum ggml_type TYPE = src0->type;
+    స్థిరరాశి గణన ggml_type TYPE = src0->type;
 
-    const bool is_floating_type = TYPE == GGML_TYPE_F16;
-    if (is_floating_type) {
-        return 0;
+    స్థిరరాశి తార్కిక is_floating_type = TYPE == GGML_TYPE_F16;
+    ఒకవేళ (is_floating_type) {
+        తిరిగి 0;
     }
 
-    const int M = dst->ne[1];
-    const int K = src0->ne[0];
-    const int64_t n_batch = dst->ne[2] * dst->ne[3];
+    స్థిరరాశి పూర్ణాంకం M = dst->ne[1];
+    స్థిరరాశి పూర్ణాంకం K = src0->ne[0];
+    స్థిరరాశి int64_t n_batch = dst->ne[2] * dst->ne[3];
 
     size_t desired_wsize = 0;
 
     GGML_DISPATCH_QTYPES(TYPE, [&] {
-        const size_t row_size_A = K / blck_size * sizeof(vec_dot_type);
-        desired_wsize = n_batch * M * row_size_A;
+        స్థిరరాశి size_t అడ్డువరుస_కొలత_A = K / blck_కొలత * పరిమాణం(vec_dot_type);
+        desired_wsize = n_batch * M * అడ్డువరుస_కొలత_A;
     });
 
-    return desired_wsize;
+    తిరిగి desired_wsize;
 }
 
 // NB: mixed dtype gemm with Advanced Matrix Extensions (Intel AMX)
@@ -2339,92 +2339,92 @@ size_t ggml_backend_amx_desired_wsize(const struct ggml_tensor * dst) {
 //
 // the function performs: dst = src1 @ src0.T for each batch
 //
-void ggml_backend_amx_mul_mat(const ggml_compute_params * params, struct ggml_tensor * dst) {
-    struct ggml_tensor * src0 = dst->src[0];
-    struct ggml_tensor * src1 = dst->src[1];
+శూన్య ggml_backend_amx_mul_mat(స్థిరరాశి ggml_compute_params * params, నిర్మాణం ggml_tensor * dst) {
+    నిర్మాణం ggml_tensor * src0 = dst->src[0];
+    నిర్మాణం ggml_tensor * src1 = dst->src[1];
 
-    const enum ggml_type TYPE = src0->type;
+    స్థిరరాశి గణన ggml_type TYPE = src0->type;
 
     // f16 only has avx512 kernels for now,
     // amx kernels will be added once 6th gen xeon is released.
-    const bool is_floating_type = TYPE == GGML_TYPE_F16;
+    స్థిరరాశి తార్కిక is_floating_type = TYPE == GGML_TYPE_F16;
 
-    const int M = dst->ne[1];
-    const int N = dst->ne[0];
-    const int K = src0->ne[0];
-    const int ldc = dst->nb[1] / dst->nb[0];
+    స్థిరరాశి పూర్ణాంకం M = dst->ne[1];
+    స్థిరరాశి పూర్ణాంకం N = dst->ne[0];
+    స్థిరరాశి పూర్ణాంకం K = src0->ne[0];
+    స్థిరరాశి పూర్ణాంకం ldc = dst->nb[1] / dst->nb[0];
 
-    const int64_t ne2 = dst->ne[2];
-    const int64_t n_batch = ne2 * dst->ne[3];
+    స్థిరరాశి int64_t ne2 = dst->ne[2];
+    స్థిరరాశి int64_t n_batch = ne2 * dst->ne[3];
 
-    if (is_floating_type) {
-        constexpr int BLOCK_M = 4;
-        constexpr int BLOCK_N = 6;
-        const int MB = div_up(M, BLOCK_M);
-        const int NB = div_up(N, BLOCK_N);
+    ఒకవేళ (is_floating_type) {
+        constexpr పూర్ణాంకం ఖండం_M = 4;
+        constexpr పూర్ణాంకం ఖండం_N = 6;
+        స్థిరరాశి పూర్ణాంకం MB = div_పైకి(M, ఖండం_M);
+        స్థిరరాశి పూర్ణాంకం NB = div_పైకి(N, ఖండం_N);
 
-        parallel_for_ggml(params, n_batch * MB * NB, [&](int begin, int end) {
+        parallel_for_ggml(params, n_batch * MB * NB, [&](పూర్ణాంకం begin, పూర్ణాంకం end) {
             GGML_DISPATCH_FLOATING_TYPES(TYPE, [&] {
-                for (int i = begin; i < end; ++i) {
-                    int batch_idx = i / (MB * NB);
-                    int remaining = i % (MB * NB);
-                    int mb = remaining / NB;
-                    int nb = remaining % NB;
+                కొరకు (పూర్ణాంకం i = begin; i < end; ++i) {
+                    పూర్ణాంకం batch_idx = i / (MB * NB);
+                    పూర్ణాంకం మిగిలిన = i % (MB * NB);
+                    పూర్ణాంకం mb = మిగిలిన / NB;
+                    పూర్ణాంకం nb = మిగిలిన % NB;
 
-                    int64_t src0_offset = ggml_batch_offset(src0, batch_idx, ne2);
-                    int64_t src1_offset = ggml_batch_offset(src1, batch_idx, ne2);
-                    int64_t dst_offset  = ggml_batch_offset(dst,  batch_idx, ne2);
+                    int64_t src0_స్థానభ్రంశం = ggml_batch_స్థానభ్రంశం(src0, batch_idx, ne2);
+                    int64_t src1_స్థానభ్రంశం = ggml_batch_స్థానభ్రంశం(src1, batch_idx, ne2);
+                    int64_t dst_స్థానభ్రంశం  = ggml_batch_స్థానభ్రంశం(dst,  batch_idx, ne2);
 
-                    int mb_start = mb * BLOCK_M;
-                    int mb_size = std::min(BLOCK_M, M - mb_start);
-                    int nb_start = nb * BLOCK_N;
-                    int nb_size = std::min(BLOCK_N, N - nb_start);
+                    పూర్ణాంకం mb_ప్రారంభం = mb * ఖండం_M;
+                    పూర్ణాంకం mb_కొలత = std::min(ఖండం_M, M - mb_ప్రారంభం);
+                    పూర్ణాంకం nb_ప్రారంభం = nb * ఖండం_N;
+                    పూర్ణాంకం nb_కొలత = std::min(ఖండం_N, N - nb_ప్రారంభం);
 
-                    switch (mb_size << 4 | nb_size) {
-                        case 0x12: LAUNCH_TINYGEMM_KERNEL_AVX(1, 2); break;
-                        case 0x14: LAUNCH_TINYGEMM_KERNEL_AVX(1, 4); break;
-                        case 0x16: LAUNCH_TINYGEMM_KERNEL_AVX(1, 6); break;
-                        case 0x22: LAUNCH_TINYGEMM_KERNEL_AVX(2, 2); break;
-                        case 0x24: LAUNCH_TINYGEMM_KERNEL_AVX(2, 4); break;
-                        case 0x26: LAUNCH_TINYGEMM_KERNEL_AVX(2, 6); break;
-                        case 0x32: LAUNCH_TINYGEMM_KERNEL_AVX(3, 2); break;
-                        case 0x34: LAUNCH_TINYGEMM_KERNEL_AVX(3, 4); break;
-                        case 0x36: LAUNCH_TINYGEMM_KERNEL_AVX(3, 6); break;
-                        case 0x42: LAUNCH_TINYGEMM_KERNEL_AVX(4, 2); break;
-                        case 0x44: LAUNCH_TINYGEMM_KERNEL_AVX(4, 4); break;
-                        case 0x46: LAUNCH_TINYGEMM_KERNEL_AVX(4, 6); break;
-                        default: fprintf(stderr, "Unexpected block size!\n");
+                    ఎంపిక (mb_కొలత << 4 | nb_కొలత) {
+                        స్థితి 0x12: LAUNCH_TINYGEMM_KERNEL_AVX(1, 2); ఆపు;
+                        స్థితి 0x14: LAUNCH_TINYGEMM_KERNEL_AVX(1, 4); ఆపు;
+                        స్థితి 0x16: LAUNCH_TINYGEMM_KERNEL_AVX(1, 6); ఆపు;
+                        స్థితి 0x22: LAUNCH_TINYGEMM_KERNEL_AVX(2, 2); ఆపు;
+                        స్థితి 0x24: LAUNCH_TINYGEMM_KERNEL_AVX(2, 4); ఆపు;
+                        స్థితి 0x26: LAUNCH_TINYGEMM_KERNEL_AVX(2, 6); ఆపు;
+                        స్థితి 0x32: LAUNCH_TINYGEMM_KERNEL_AVX(3, 2); ఆపు;
+                        స్థితి 0x34: LAUNCH_TINYGEMM_KERNEL_AVX(3, 4); ఆపు;
+                        స్థితి 0x36: LAUNCH_TINYGEMM_KERNEL_AVX(3, 6); ఆపు;
+                        స్థితి 0x42: LAUNCH_TINYGEMM_KERNEL_AVX(4, 2); ఆపు;
+                        స్థితి 0x44: LAUNCH_TINYGEMM_KERNEL_AVX(4, 4); ఆపు;
+                        స్థితి 0x46: LAUNCH_TINYGEMM_KERNEL_AVX(4, 6); ఆపు;
+                        అప్రమేయ: fprintf(stderr, "Unexpected block size!\n");
                     }
                 }
             });
         });
-        return;
+        తిరిగి;
     }
 
     // pointer to work space, used convert A from float to quantized type
-    void * wdata = params->wdata;
+    శూన్య * wdata = params->wdata;
 
     //TODO: performance improvement: merge quant A
  // if (params->ith == 0) {
         GGML_DISPATCH_QTYPES(TYPE, [&] {
-            const size_t row_size_A = K / blck_size * sizeof(vec_dot_type);
-            const size_t desired_wsize = n_batch * M * row_size_A;
-            if (params->wsize < desired_wsize) {
+            స్థిరరాశి size_t అడ్డువరుస_కొలత_A = K / blck_కొలత * పరిమాణం(vec_dot_type);
+            స్థిరరాశి size_t desired_wsize = n_batch * M * అడ్డువరుస_కొలత_A;
+            ఒకవేళ (params->wsize < desired_wsize) {
                 GGML_ABORT("insufficient work space size");
             }
 
             // Q4_0, Q4_1, Q8_0 handles 1 TILE_K per blck_size
             // Q4_K, Q5_K, Q6_K, IQ4_XS handles 8 TILE_K per blck_size
-            GGML_ASSERT(TILE_K == blck_size || TILE_K * 8 == blck_size);
+            GGML_ASSERT(TILE_K == blck_కొలత || TILE_K * 8 == blck_కొలత);
 
-            parallel_for_ggml(params, n_batch * M, [&](int begin, int end) {
-                for (int idx = begin; idx < end; ++idx) {
-                    int batch_idx = idx / M;
-                    int m         = idx % M;
-                    int64_t src1_offset = ggml_batch_offset(src1, batch_idx, ne2);
-                    const float * A_data = (const float *)((const char *)src1->data + src1_offset);
-                    char * wdata_batch = (char *)wdata + batch_idx * M * row_size_A;
-                    from_float<vec_dot_type>(A_data + m * K, wdata_batch + m * row_size_A, K);
+            parallel_for_ggml(params, n_batch * M, [&](పూర్ణాంకం begin, పూర్ణాంకం end) {
+                కొరకు (పూర్ణాంకం idx = begin; idx < end; ++idx) {
+                    పూర్ణాంకం batch_idx = idx / M;
+                    పూర్ణాంకం m         = idx % M;
+                    int64_t src1_స్థానభ్రంశం = ggml_batch_స్థానభ్రంశం(src1, batch_idx, ne2);
+                    స్థిరరాశి దశాంశం * A_దత్తాంశం = (స్థిరరాశి దశాంశం *)((స్థిరరాశి అక్షరం *)src1->దత్తాంశం + src1_స్థానభ్రంశం);
+                    అక్షరం * wdata_batch = (అక్షరం *)wdata + batch_idx * M * అడ్డువరుస_కొలత_A;
+                    from_float<vec_dot_type>(A_దత్తాంశం + m * K, wdata_batch + m * అడ్డువరుస_కొలత_A, K);
                 }
             });
         });
@@ -2432,80 +2432,80 @@ void ggml_backend_amx_mul_mat(const ggml_compute_params * params, struct ggml_te
 
     ggml_barrier(params->threadpool);
 
-    if (M == 1) {
+    ఒకవేళ (M == 1) {
         // MB = 1 and handle 8 tiles in each block
-        constexpr int kTilesN = 4;
-        constexpr int BLOCK_N = TILE_N * kTilesN;
-        const int NB = div_up(N, BLOCK_N);
+        constexpr పూర్ణాంకం kTilesN = 4;
+        constexpr పూర్ణాంకం ఖండం_N = TILE_N * kTilesN;
+        స్థిరరాశి పూర్ణాంకం NB = div_పైకి(N, ఖండం_N);
 
-        parallel_for_ggml(params, n_batch * NB, [&](int begin, int end) {
+        parallel_for_ggml(params, n_batch * NB, [&](పూర్ణాంకం begin, పూర్ణాంకం end) {
             GGML_DISPATCH_QTYPES(TYPE, [&] {
-                const int KB = K / blck_size;
-                const int TILE_SIZE = get_tile_size<type>();
-                const int row_size_A = KB * sizeof(vec_dot_type);
-                for (int i = begin; i < end; ++i) {
-                    int batch_idx = i / NB;
-                    int nb = i % NB;
+                స్థిరరాశి పూర్ణాంకం KB = K / blck_కొలత;
+                స్థిరరాశి పూర్ణాంకం TILE_కొలత = get_tile_కొలత<type>();
+                స్థిరరాశి పూర్ణాంకం అడ్డువరుస_కొలత_A = KB * పరిమాణం(vec_dot_type);
+                కొరకు (పూర్ణాంకం i = begin; i < end; ++i) {
+                    పూర్ణాంకం batch_idx = i / NB;
+                    పూర్ణాంకం nb = i % NB;
 
-                    int64_t src0_offset = ggml_batch_offset(src0, batch_idx, ne2);
-                    int64_t dst_offset  = ggml_batch_offset(dst,  batch_idx, ne2);
-                    const char * wdata_batch = (const char *)wdata + batch_idx * row_size_A;
+                    int64_t src0_స్థానభ్రంశం = ggml_batch_స్థానభ్రంశం(src0, batch_idx, ne2);
+                    int64_t dst_స్థానభ్రంశం  = ggml_batch_స్థానభ్రంశం(dst,  batch_idx, ne2);
+                    స్థిరరాశి అక్షరం * wdata_batch = (స్థిరరాశి అక్షరం *)wdata + batch_idx * అడ్డువరుస_కొలత_A;
 
-                    int nb_start = nb * BLOCK_N;
-                    int nb_size = std::min(BLOCK_N, N - nb_start); // 32, 64, 96
+                    పూర్ణాంకం nb_ప్రారంభం = nb * ఖండం_N;
+                    పూర్ణాంకం nb_కొలత = std::min(ఖండం_N, N - nb_ప్రారంభం); // 32, 64, 96
 
-                    switch (nb_size) {
+                    ఎంపిక (nb_కొలత) {
                         //case 160: LAUNCH_TINYGEMM_KERNEL_VNNI(160); break;
-                        case 128: LAUNCH_TINYGEMM_KERNEL_VNNI(128); break;
-                        case 96: LAUNCH_TINYGEMM_KERNEL_VNNI(96); break;
-                        case 64: LAUNCH_TINYGEMM_KERNEL_VNNI(64); break;
-                        case 32: LAUNCH_TINYGEMM_KERNEL_VNNI(32); break;
-                        default: fprintf(stderr, "Unexpected n block size!\n");
+                        స్థితి 128: LAUNCH_TINYGEMM_KERNEL_VNNI(128); ఆపు;
+                        స్థితి 96: LAUNCH_TINYGEMM_KERNEL_VNNI(96); ఆపు;
+                        స్థితి 64: LAUNCH_TINYGEMM_KERNEL_VNNI(64); ఆపు;
+                        స్థితి 32: LAUNCH_TINYGEMM_KERNEL_VNNI(32); ఆపు;
+                        అప్రమేయ: fprintf(stderr, "Unexpected n block size!\n");
                     }
                 }
             });
         });
-        return;
+        తిరిగి;
     }
 
     // handle 4 tiles at a tile
-    constexpr int BLOCK_M = TILE_M * 2;
-    constexpr int BLOCK_N = TILE_N * 2;
-    const int MB = div_up(M, BLOCK_M);
-    const int NB = div_up(N, BLOCK_N);
+    constexpr పూర్ణాంకం ఖండం_M = TILE_M * 2;
+    constexpr పూర్ణాంకం ఖండం_N = TILE_N * 2;
+    స్థిరరాశి పూర్ణాంకం MB = div_పైకి(M, ఖండం_M);
+    స్థిరరాశి పూర్ణాంకం NB = div_పైకి(N, ఖండం_N);
 
-    parallel_for_ggml(params, n_batch * MB * NB, [&](int begin, int end) {
+    parallel_for_ggml(params, n_batch * MB * NB, [&](పూర్ణాంకం begin, పూర్ణాంకం end) {
         // init tile config for each thread
         ggml_tile_config_init();
 
         GGML_DISPATCH_QTYPES(TYPE, [&] {
-            const int KB = K / blck_size;
-            const int TILE_SIZE = get_tile_size<type>();
-            const int row_size_A = KB * sizeof(vec_dot_type);
+            స్థిరరాశి పూర్ణాంకం KB = K / blck_కొలత;
+            స్థిరరాశి పూర్ణాంకం TILE_కొలత = get_tile_కొలత<type>();
+            స్థిరరాశి పూర్ణాంకం అడ్డువరుస_కొలత_A = KB * పరిమాణం(vec_dot_type);
 
-            for (int i = begin; i < end; ++i) {
-                int batch_idx = i / (MB * NB);
-                int remaining = i % (MB * NB);
-                int mb = remaining / NB;
-                int nb = remaining % NB;
+            కొరకు (పూర్ణాంకం i = begin; i < end; ++i) {
+                పూర్ణాంకం batch_idx = i / (MB * NB);
+                పూర్ణాంకం మిగిలిన = i % (MB * NB);
+                పూర్ణాంకం mb = మిగిలిన / NB;
+                పూర్ణాంకం nb = మిగిలిన % NB;
 
-                int64_t src0_offset = ggml_batch_offset(src0, batch_idx, ne2);
-                int64_t dst_offset  = ggml_batch_offset(dst,  batch_idx, ne2);
-                const char * wdata_batch = (const char *)wdata + batch_idx * M * row_size_A;
+                int64_t src0_స్థానభ్రంశం = ggml_batch_స్థానభ్రంశం(src0, batch_idx, ne2);
+                int64_t dst_స్థానభ్రంశం  = ggml_batch_స్థానభ్రంశం(dst,  batch_idx, ne2);
+                స్థిరరాశి అక్షరం * wdata_batch = (స్థిరరాశి అక్షరం *)wdata + batch_idx * M * అడ్డువరుస_కొలత_A;
 
-                int mb_start = mb * BLOCK_M;
-                int mb_size = std::min(BLOCK_M, M - mb_start);
-                int nb_start = nb * BLOCK_N;
-                int nb_size = BLOCK_N;
+                పూర్ణాంకం mb_ప్రారంభం = mb * ఖండం_M;
+                పూర్ణాంకం mb_కొలత = std::min(ఖండం_M, M - mb_ప్రారంభం);
+                పూర్ణాంకం nb_ప్రారంభం = nb * ఖండం_N;
+                పూర్ణాంకం nb_కొలత = ఖండం_N;
 
-                tinygemm_kernel_amx<vec_dot_type, type, float, blck_size>(
-                    mb_size, nb_size, KB,
-                    wdata_batch + mb_start * row_size_A,
-                    (const char *)src0->data + src0_offset + PACKED_INDEX(nb * 2, 0, KB, TILE_SIZE),
-                    (float *) dst->data + dst_offset + mb_start * N + nb_start, ldc);
+                tinygemm_kernel_amx<vec_dot_type, type, దశాంశం, blck_కొలత>(
+                    mb_కొలత, nb_కొలత, KB,
+                    wdata_batch + mb_ప్రారంభం * అడ్డువరుస_కొలత_A,
+                    (స్థిరరాశి అక్షరం *)src0->దత్తాంశం + src0_స్థానభ్రంశం + PACKED_సూచీ(nb * 2, 0, KB, TILE_కొలత),
+                    (దశాంశం *) dst->దత్తాంశం + dst_స్థానభ్రంశం + mb_ప్రారంభం * N + nb_ప్రారంభం, ldc);
             }
         });
     });
 }
 
-#endif // if defined(__AMX_INT8__) && defined(__AVX512VNNI__)
+#అయితే_ముగింపు // if defined(__AMX_INT8__) && defined(__AVX512VNNI__)

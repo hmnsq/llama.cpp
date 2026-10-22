@@ -1,57 +1,57 @@
 
 // Fused RMS Norm + MUL F32 Kernel
 
-#include "ggml_tensor.h"
-#include "math_fp.h"
-#include "platform.h"
+#అన్తర్భావ "ggml_tensor.h"
+#అన్తర్భావ "math_fp.h"
+#అన్తర్భావ "platform.h"
 
-#include <assert.h>
-#include <stdint.h>
-#include <string.h>
+#అన్తర్భావ <assert.h>
+#అన్తర్భావ <stdint.h>
+#అన్తర్భావ <string.h>
 
 // Fused RMS norm + MUL kernel parameters structure
-struct ggml_et_rms_norm_mul_params {
-    struct ggml_tensor src0;  // F32 input tensor (to be normalized)
-    struct ggml_tensor src1;  // F32 weights tensor (element-wise multiply)
-    struct ggml_tensor dst;   // F32 output tensor
-    float              eps;   // Epsilon for numerical stability
+నిర్మాణం ggml_et_rms_norm_mul_params {
+    నిర్మాణం ggml_tensor src0;  // F32 input tensor (to be normalized)
+    నిర్మాణం ggml_tensor src1;  // F32 weights tensor (element-wise multiply)
+    నిర్మాణం ggml_tensor dst;   // F32 output tensor
+    దశాంశం              eps;   // Epsilon for numerical stability
 };
 
-static inline size_t tensor_bytes(const struct ggml_tensor * t) {
-    return (size_t) t->ne[0] * t->ne[1] * t->ne[2] * t->ne[3] * t->nb[0];
+స్థిర అంతఃవరుస size_t tensor_బైట్లు(స్థిరరాశి నిర్మాణం ggml_tensor * t) {
+    తిరిగి (size_t) t->ne[0] * t->ne[1] * t->ne[2] * t->ne[3] * t->nb[0];
 }
 
-int entry_point(struct ggml_et_rms_norm_mul_params * params, void * env) {
+పూర్ణాంకం నమోదు_బిందువు(నిర్మాణం ggml_et_rms_norm_mul_params * params, శూన్య * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    ఒకవేళ (!kernel_env) {
+        తిరిగి -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    పూర్ణాంకం thread_id   = get_relative_thread_id(kernel_env->shire_ముసుగు);
+    పూర్ణాంకం అంకె_దారాలు = get_అంకె_దారాలు(kernel_env->shire_ముసుగు);
 
-    if (thread_id < 0) {
-        return 0;
+    ఒకవేళ (thread_id < 0) {
+        తిరిగి 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;  // Invalid pointer
+    ఒకవేళ (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        తిరిగి -1;  // Invalid pointer
     }
 
-    struct ggml_tensor * src0 = &params->src0;
-    struct ggml_tensor * src1 = &params->src1;
-    struct ggml_tensor * dst  = &params->dst;
+    నిర్మాణం ggml_tensor * src0 = &params->src0;
+    నిర్మాణం ggml_tensor * src1 = &params->src1;
+    నిర్మాణం ggml_tensor * dst  = &params->dst;
 
-    float eps = params->eps;
+    దశాంశం eps = params->eps;
 
-    if (src0->type != GGML_TYPE_F32 || src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;  // Unsupported type combination
+    ఒకవేళ (src0->type != GGML_TYPE_F32 || src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        తిరిగి -1;  // Unsupported type combination
     }
 
-    float * src0_data = (float *) src0->data;
-    float * src1_data = (float *) src1->data;
-    float * dst_data  = (float *) dst->data;
+    దశాంశం * src0_దత్తాంశం = (దశాంశం *) src0->దత్తాంశం;
+    దశాంశం * src1_దత్తాంశం = (దశాంశం *) src1->దత్తాంశం;
+    దశాంశం * dst_దత్తాంశం  = (దశాంశం *) dst->దత్తాంశం;
     // #ifdef ET_UBERKERNEL
     //     evict_region_past_l2(src0_data, tensor_bytes(src0));
     //     evict_region_past_l2(src1_data, tensor_bytes(src1));
@@ -59,66 +59,66 @@ int entry_point(struct ggml_et_rms_norm_mul_params * params, void * env) {
     //     FENCE;
     //     // et_barrier(ET_BARRIER_GLOBAL);
     // #endif
-    if (!src0_data || !src1_data || !dst_data) {
-        return -1;  // Null data pointer
+    ఒకవేళ (!src0_దత్తాంశం || !src1_దత్తాంశం || !dst_దత్తాంశం) {
+        తిరిగి -1;  // Null data pointer
     }
 
-    if (eps < 0.0f) {
-        return -1;  // Invalid epsilon
+    ఒకవేళ (eps < 0.0f) {
+        తిరిగి -1;  // Invalid epsilon
     }
 
-    const int64_t ne0 = dst->ne[0];  // Inner dimension (row size)
-    const int64_t ne1 = dst->ne[1];  // Dimension 1
-    const int64_t ne2 = dst->ne[2];  // Dimension 2
-    const int64_t ne3 = dst->ne[3];  // Dimension 3
+    స్థిరరాశి int64_t ne0 = dst->ne[0];  // Inner dimension (row size)
+    స్థిరరాశి int64_t ne1 = dst->ne[1];  // Dimension 1
+    స్థిరరాశి int64_t ne2 = dst->ne[2];  // Dimension 2
+    స్థిరరాశి int64_t ne3 = dst->ne[3];  // Dimension 3
 
     // Get dst strides (in bytes)
-    const size_t nb0 = dst->nb[0], nb1 = dst->nb[1], nb2 = dst->nb[2], nb3 = dst->nb[3];
+    స్థిరరాశి size_t nb0 = dst->nb[0], nb1 = dst->nb[1], nb2 = dst->nb[2], nb3 = dst->nb[3];
 
     // Get src0 strides (in bytes)
-    const size_t nb00 = src0->nb[0], nb01 = src0->nb[1], nb02 = src0->nb[2], nb03 = src0->nb[3];
+    స్థిరరాశి size_t nb00 = src0->nb[0], nb01 = src0->nb[1], nb02 = src0->nb[2], nb03 = src0->nb[3];
 
     // Get src1 (weights) strides (in bytes), supports broadcasting in dims 1,2,3
-    const size_t nb10 = src1->nb[0], nb11 = src1->nb[1], nb12 = src1->nb[2], nb13 = src1->nb[3];
+    స్థిరరాశి size_t nb10 = src1->nb[0], nb11 = src1->nb[1], nb12 = src1->nb[2], nb13 = src1->nb[3];
 
     // Verify that src0 and dst have same shape (required for RMS norm)
-    if (src0->ne[0] != ne0 || src0->ne[1] != ne1 || src0->ne[2] != ne2 || src0->ne[3] != ne3) {
-        return -1;  // Shape mismatch
+    ఒకవేళ (src0->ne[0] != ne0 || src0->ne[1] != ne1 || src0->ne[2] != ne2 || src0->ne[3] != ne3) {
+        తిరిగి -1;  // Shape mismatch
     }
     // et_barrier(ET_BARRIER_GLOBAL);
 
-    const float   inv_ne0       = et_fdiv(1.0f, (float) (int32_t) ne0);
-    const int32_t total_rows    = (int32_t) (ne1 * ne2 * ne3);
-    const int     shire_threads = SOC_MINIONS_PER_SHIRE * NUM_HARTS_PER_MINION;
+    స్థిరరాశి దశాంశం   inv_ne0       = et_fdiv(1.0f, (దశాంశం) (int32_t) ne0);
+    స్థిరరాశి int32_t మొత్తం_అడ్డువరుసలు    = (int32_t) (ne1 * ne2 * ne3);
+    స్థిరరాశి పూర్ణాంకం     shire_దారాలు = SOC_MINIONS_చొప్పున_SHIRE * అంకె_HARTS_చొప్పున_MINION;
 
-    if (total_rows >= shire_threads) {
+    ఒకవేళ (మొత్తం_అడ్డువరుసలు >= shire_దారాలు) {
         // Row-parallel: each thread processes whole rows
-        for (int64_t i3 = 0; i3 < ne3; i3++) {
-            for (int64_t i2 = 0; i2 < ne2; i2++) {
-                for (int64_t i1 = thread_id; i1 < ne1; i1 += num_threads) {
-                    const float * src_ptr =
-                        (const float *) ((const char *) src0_data + i3 * nb03 + i2 * nb02 + i1 * nb01);
-                    float * dst_ptr = (float *) ((char *) dst_data + i3 * nb3 + i2 * nb2 + i1 * nb1);
+        కొరకు (int64_t i3 = 0; i3 < ne3; i3++) {
+            కొరకు (int64_t i2 = 0; i2 < ne2; i2++) {
+                కొరకు (int64_t i1 = thread_id; i1 < ne1; i1 += అంకె_దారాలు) {
+                    స్థిరరాశి దశాంశం * src_ptr =
+                        (స్థిరరాశి దశాంశం *) ((స్థిరరాశి అక్షరం *) src0_దత్తాంశం + i3 * nb03 + i2 * nb02 + i1 * nb01);
+                    దశాంశం * dst_ptr = (దశాంశం *) ((అక్షరం *) dst_దత్తాంశం + i3 * nb3 + i2 * nb2 + i1 * nb1);
 
-                    const float * wgt_ptr = (const float *) ((const char *) src1_data + (i3 % src1->ne[3]) * nb13 +
+                    స్థిరరాశి దశాంశం * wgt_ptr = (స్థిరరాశి దశాంశం *) ((స్థిరరాశి అక్షరం *) src1_దత్తాంశం + (i3 % src1->ne[3]) * nb13 +
                                                              (i2 % src1->ne[2]) * nb12 + (i1 % src1->ne[1]) * nb11);
 
-                    unsigned long saved_mask;
-                    __asm__ volatile("mova.x.m %0" : "=r"(saved_mask));
-                    __asm__ volatile("mov.m.x m0, x0, 0xFF");
+                    గుర్తులేని దీర్ఘ saved_ముసుగు;
+                    __asm__ అస్థిర("mova.x.m %0" : "=r"(saved_ముసుగు));
+                    __asm__ అస్థిర("mov.m.x m0, x0, 0xFF");
 
                     // Sum of squares
-                    __asm__ volatile("fbci.pi f10, 0" ::: "f10");
-                    for (int32_t i0 = 0; i0 < (int32_t) ne0; i0 += 8) {
-                        __asm__ volatile(
+                    __asm__ అస్థిర("fbci.pi f10, 0" ::: "f10");
+                    కొరకు (int32_t i0 = 0; i0 < (int32_t) ne0; i0 += 8) {
+                        __asm__ అస్థిర(
                             "flw.ps f11, %[x_vec]\n"
                             "fmadd.ps f10, f11, f11, f10\n"
                             :
-                            : [x_vec] "m"(*(const float (*)[8]) & src_ptr[i0])
+                            : [x_vec] "m"(*(స్థిరరాశి దశాంశం (*)[8]) & src_ptr[i0])
                             : "f10", "f11");
                     }
 
-                    float sum;
+                    దశాంశం కూడిక;
                     __asm__ __volatile__(
                         "fswizz.ps f1, f10, 0xB1 \n\t"
                         "fadd.ps   f2, f10, f1, rne \n\t"
@@ -127,27 +127,27 @@ int entry_point(struct ggml_et_rms_norm_mul_params * params, void * env) {
                         "fmvz.x.ps t0, f4, 4 \n\t"
                         "fbcx.ps   f5, t0 \n\t"
                         "fadd.ps   %[vout], f4, f5, rne \n\t"
-                        : [vout] "=f"(sum)::"t0", "f1", "f2", "f3", "f4", "f5");
+                        : [vout] "=f"(కూడిక)::"t0", "f1", "f2", "f3", "f4", "f5");
 
-                    const float scale = et_powf(sum * inv_ne0 + eps, -0.5f);
-                    if (!(scale > 0.0f)) {
-                        __asm__ volatile("mova.m.x %0" ::"r"(saved_mask));
-                        return -1;
+                    స్థిరరాశి దశాంశం scale = et_powf(కూడిక * inv_ne0 + eps, -0.5f);
+                    ఒకవేళ (!(scale > 0.0f)) {
+                        __asm__ అస్థిర("mova.m.x %0" ::"r"(saved_ముసుగు));
+                        తిరిగి -1;
                     }
 
-                    uint32_t scale_bits;
-                    __asm__ volatile("fmv.x.s %0, %1" : "=r"(scale_bits) : "f"(scale));
-                    __asm__ volatile("fbcx.ps f13, %[sb]\n" : : [sb] "r"(scale_bits) : "f13");
+                    uint32_t scale_బిట్లు;
+                    __asm__ అస్థిర("fmv.x.s %0, %1" : "=r"(scale_బిట్లు) : "f"(scale));
+                    __asm__ అస్థిర("fbcx.ps f13, %[sb]\n" : : [sb] "r"(scale_బిట్లు) : "f13");
 
-                    for (int32_t i0 = 0; i0 < (int32_t) ne0; i0 += 8) {
-                        __asm__ volatile(
+                    కొరకు (int32_t i0 = 0; i0 < (int32_t) ne0; i0 += 8) {
+                        __asm__ అస్థిర(
                             "flw.ps f12, %[x_vec]\n"
                             "flw.ps f15, %[w_vec]\n"
                             "fmul.ps f14, f12, f13\n"
                             "fmul.ps f14, f14, f15\n"
                             "fsw.ps f14, %[result]\n"
-                            : [result] "=m"(*(float (*)[8]) & dst_ptr[i0])
-                            : [x_vec] "m"(*(const float (*)[8]) & src_ptr[i0]), [w_vec] "m"(*(const float (*)[8]) &
+                            : [ఫలితం] "=m"(*(దశాంశం (*)[8]) & dst_ptr[i0])
+                            : [x_vec] "m"(*(స్థిరరాశి దశాంశం (*)[8]) & src_ptr[i0]), [w_vec] "m"(*(స్థిరరాశి దశాంశం (*)[8]) &
                                                                                             wgt_ptr[i0])
                             : "f12", "f14", "f15");
                     }
@@ -157,67 +157,67 @@ int entry_point(struct ggml_et_rms_norm_mul_params * params, void * env) {
                     //                 WAIT_CACHEOPS;
                     //                 FENCE;
                     // #endif
-                    __asm__ volatile("mova.m.x %0" ::"r"(saved_mask));
+                    __asm__ అస్థిర("mova.m.x %0" ::"r"(saved_ముసుగు));
                 }
             }
         }
-    } else {
+    } లేకపోతే {
         // Intra-row: threads within each shire cooperate on rows via L2 SCP.
         // L2 SCP + barrier are shire-local, so use shire-local thread index.
-        int shire_tid       = thread_id % shire_threads;
-        int threads_per_row = shire_threads / total_rows;
-        int my_row          = shire_tid / threads_per_row;
-        int local_tid       = shire_tid % threads_per_row;
-        int group_base      = my_row * threads_per_row;
+        పూర్ణాంకం shire_tid       = thread_id % shire_దారాలు;
+        పూర్ణాంకం దారాలు_చొప్పున_అడ్డువరుస = shire_దారాలు / మొత్తం_అడ్డువరుసలు;
+        పూర్ణాంకం my_అడ్డువరుస          = shire_tid / దారాలు_చొప్పున_అడ్డువరుస;
+        పూర్ణాంకం local_tid       = shire_tid % దారాలు_చొప్పున_అడ్డువరుస;
+        పూర్ణాంకం సమూహం_పునాది      = my_అడ్డువరుస * దారాలు_చొప్పున_అడ్డువరుస;
 
         // Excess threads within this shire
-        if (my_row >= total_rows) {
+        ఒకవేళ (my_అడ్డువరుస >= మొత్తం_అడ్డువరుసలు) {
             __asm__ __volatile__("fence\n" ::: "memory");
             et_barrier(ET_BARRIER_SHIRE);
-            return 0;
+            తిరిగి 0;
         }
 
         // Unflatten row index
-        int64_t i1 = my_row % ne1;
-        int64_t i2 = (my_row / ne1) % ne2;
-        int64_t i3 = my_row / (ne1 * ne2);
+        int64_t i1 = my_అడ్డువరుస % ne1;
+        int64_t i2 = (my_అడ్డువరుస / ne1) % ne2;
+        int64_t i3 = my_అడ్డువరుస / (ne1 * ne2);
 
-        const float * src_ptr = (const float *) ((const char *) src0_data + i3 * nb03 + i2 * nb02 + i1 * nb01);
-        float *       dst_ptr = (float *) ((char *) dst_data + i3 * nb3 + i2 * nb2 + i1 * nb1);
+        స్థిరరాశి దశాంశం * src_ptr = (స్థిరరాశి దశాంశం *) ((స్థిరరాశి అక్షరం *) src0_దత్తాంశం + i3 * nb03 + i2 * nb02 + i1 * nb01);
+        దశాంశం *       dst_ptr = (దశాంశం *) ((అక్షరం *) dst_దత్తాంశం + i3 * nb3 + i2 * nb2 + i1 * nb1);
 
-        const float * wgt_ptr = (const float *) ((const char *) src1_data + (i3 % src1->ne[3]) * nb13 +
+        స్థిరరాశి దశాంశం * wgt_ptr = (స్థిరరాశి దశాంశం *) ((స్థిరరాశి అక్షరం *) src1_దత్తాంశం + (i3 % src1->ne[3]) * nb13 +
                                                  (i2 % src1->ne[2]) * nb12 + (i1 % src1->ne[1]) * nb11);
 
         // Chunk boundaries aligned to 16 floats (64-byte cache line)
-        const int32_t elems_per_cl   = 16;
-        int32_t       total_cls      = ((int32_t) ne0 + elems_per_cl - 1) / elems_per_cl;
-        int32_t       cls_per_thread = (total_cls + threads_per_row - 1) / threads_per_row;
-        int32_t       my_start       = local_tid * cls_per_thread * elems_per_cl;
-        int32_t       my_end         = my_start + cls_per_thread * elems_per_cl;
-        if (my_end > (int32_t) ne0) {
-            my_end = (int32_t) ne0;
+        స్థిరరాశి int32_t elems_చొప్పున_cl   = 16;
+        int32_t       మొత్తం_cls      = ((int32_t) ne0 + elems_చొప్పున_cl - 1) / elems_చొప్పున_cl;
+        int32_t       cls_చొప్పున_thread = (మొత్తం_cls + దారాలు_చొప్పున_అడ్డువరుస - 1) / దారాలు_చొప్పున_అడ్డువరుస;
+        int32_t       my_ప్రారంభం       = local_tid * cls_చొప్పున_thread * elems_చొప్పున_cl;
+        int32_t       my_చివర         = my_ప్రారంభం + cls_చొప్పున_thread * elems_చొప్పున_cl;
+        ఒకవేళ (my_చివర > (int32_t) ne0) {
+            my_చివర = (int32_t) ne0;
         }
-        if (my_start >= (int32_t) ne0) {
-            my_start = 0;
-            my_end   = 0;
+        ఒకవేళ (my_ప్రారంభం >= (int32_t) ne0) {
+            my_ప్రారంభం = 0;
+            my_చివర   = 0;
         }
 
-        unsigned long saved_mask;
-        __asm__ volatile("mova.x.m %0" : "=r"(saved_mask));
-        __asm__ volatile("mov.m.x m0, x0, 0xFF");
+        గుర్తులేని దీర్ఘ saved_ముసుగు;
+        __asm__ అస్థిర("mova.x.m %0" : "=r"(saved_ముసుగు));
+        __asm__ అస్థిర("mov.m.x m0, x0, 0xFF");
 
         // Phase 1: partial sum of squares on own chunk
-        __asm__ volatile("fbci.pi f10, 0" ::: "f10");
-        for (int32_t i0 = my_start; i0 < my_end; i0 += 8) {
-            __asm__ volatile(
+        __asm__ అస్థిర("fbci.pi f10, 0" ::: "f10");
+        కొరకు (int32_t i0 = my_ప్రారంభం; i0 < my_చివర; i0 += 8) {
+            __asm__ అస్థిర(
                 "flw.ps f11, %[x_vec]\n"
                 "fmadd.ps f10, f11, f11, f10\n"
                 :
-                : [x_vec] "m"(*(const float (*)[8]) & src_ptr[i0])
+                : [x_vec] "m"(*(స్థిరరాశి దశాంశం (*)[8]) & src_ptr[i0])
                 : "f10", "f11");
         }
 
-        float partial_sum;
+        దశాంశం partial_కూడిక;
         __asm__ __volatile__(
             "fswizz.ps f1, f10, 0xB1 \n\t"
             "fadd.ps   f2, f10, f1, rne \n\t"
@@ -226,53 +226,53 @@ int entry_point(struct ggml_et_rms_norm_mul_params * params, void * env) {
             "fmvz.x.ps t0, f4, 4 \n\t"
             "fbcx.ps   f5, t0 \n\t"
             "fadd.ps   %[vout], f4, f5, rne \n\t"
-            : [vout] "=f"(partial_sum)::"t0", "f1", "f2", "f3", "f4", "f5");
+            : [vout] "=f"(partial_కూడిక)::"t0", "f1", "f2", "f3", "f4", "f5");
 
         // Phase 2: write partial sum to L2 SCP, evict from L1D
-        volatile float * my_slot = (volatile float *) et_shire_l2scp_local((uint64_t) shire_tid * 64);
-        *my_slot                 = partial_sum;
+        అస్థిర దశాంశం * my_స్థానం = (అస్థిర దశాంశం *) et_shire_l2scp_local((uint64_t) shire_tid * 64);
+        *my_స్థానం                 = partial_కూడిక;
         __asm__ __volatile__("fence\n" ::: "memory");
-        evict_to_l2((const void *) my_slot, 1, 64);
+        evict_గమ్యం_l2((స్థిరరాశి శూన్య *) my_స్థానం, 1, 64);
         WAIT_CACHEOPS;
 
         et_barrier(ET_BARRIER_SHIRE);
 
         // Phase 3: all threads read partial sums, compute scale, apply to own chunk
-        int workers = threads_per_row < total_cls ? threads_per_row : total_cls;
+        పూర్ణాంకం workers = దారాలు_చొప్పున_అడ్డువరుస < మొత్తం_cls ? దారాలు_చొప్పున_అడ్డువరుస : మొత్తం_cls;
 
-        for (int t = 0; t < workers; t++) {
-            volatile float * slot = (volatile float *) et_shire_l2scp_local((uint64_t) (group_base + t) * 64);
-            evict_to_l2((const void *) slot, 1, 64);
+        కొరకు (పూర్ణాంకం t = 0; t < workers; t++) {
+            అస్థిర దశాంశం * స్థానం = (అస్థిర దశాంశం *) et_shire_l2scp_local((uint64_t) (సమూహం_పునాది + t) * 64);
+            evict_గమ్యం_l2((స్థిరరాశి శూన్య *) స్థానం, 1, 64);
         }
         WAIT_CACHEOPS;
 
-        float total_sum = 0.0f;
-        for (int t = 0; t < workers; t++) {
-            volatile float * slot = (volatile float *) et_shire_l2scp_local((uint64_t) (group_base + t) * 64);
-            total_sum += *slot;
+        దశాంశం మొత్తం_కూడిక = 0.0f;
+        కొరకు (పూర్ణాంకం t = 0; t < workers; t++) {
+            అస్థిర దశాంశం * స్థానం = (అస్థిర దశాంశం *) et_shire_l2scp_local((uint64_t) (సమూహం_పునాది + t) * 64);
+            మొత్తం_కూడిక += *స్థానం;
         }
 
-        const float scale = et_powf(total_sum * inv_ne0 + eps, -0.5f);
-        if (!(scale > 0.0f)) {
-            __asm__ volatile("mova.m.x %0" ::"r"(saved_mask));
-            return -1;
+        స్థిరరాశి దశాంశం scale = et_powf(మొత్తం_కూడిక * inv_ne0 + eps, -0.5f);
+        ఒకవేళ (!(scale > 0.0f)) {
+            __asm__ అస్థిర("mova.m.x %0" ::"r"(saved_ముసుగు));
+            తిరిగి -1;
         }
 
         // Apply scale * weights to own chunk
-        if (my_start < my_end) {
-            uint32_t scale_bits;
-            __asm__ volatile("fmv.x.s %0, %1" : "=r"(scale_bits) : "f"(scale));
-            __asm__ volatile("fbcx.ps f13, %[sb]\n" : : [sb] "r"(scale_bits) : "f13");
+        ఒకవేళ (my_ప్రారంభం < my_చివర) {
+            uint32_t scale_బిట్లు;
+            __asm__ అస్థిర("fmv.x.s %0, %1" : "=r"(scale_బిట్లు) : "f"(scale));
+            __asm__ అస్థిర("fbcx.ps f13, %[sb]\n" : : [sb] "r"(scale_బిట్లు) : "f13");
 
-            for (int32_t i0 = my_start; i0 < my_end; i0 += 8) {
-                __asm__ volatile(
+            కొరకు (int32_t i0 = my_ప్రారంభం; i0 < my_చివర; i0 += 8) {
+                __asm__ అస్థిర(
                     "flw.ps f12, %[x_vec]\n"
                     "flw.ps f15, %[w_vec]\n"
                     "fmul.ps f14, f12, f13\n"
                     "fmul.ps f14, f14, f15\n"
                     "fsw.ps f14, %[result]\n"
-                    : [result] "=m"(*(float (*)[8]) & dst_ptr[i0])
-                    : [x_vec] "m"(*(const float (*)[8]) & src_ptr[i0]), [w_vec] "m"(*(const float (*)[8]) & wgt_ptr[i0])
+                    : [ఫలితం] "=m"(*(దశాంశం (*)[8]) & dst_ptr[i0])
+                    : [x_vec] "m"(*(స్థిరరాశి దశాంశం (*)[8]) & src_ptr[i0]), [w_vec] "m"(*(స్థిరరాశి దశాంశం (*)[8]) & wgt_ptr[i0])
                     : "f12", "f14", "f15");
             }
             // #ifdef ET_UBERKERNEL
@@ -283,8 +283,8 @@ int entry_point(struct ggml_et_rms_norm_mul_params * params, void * env) {
             // #endif
         }
 
-        __asm__ volatile("mova.m.x %0" ::"r"(saved_mask));
+        __asm__ అస్థిర("mova.m.x %0" ::"r"(saved_ముసుగు));
     }
 
-    return 0;
+    తిరిగి 0;
 }

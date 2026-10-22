@@ -1,48 +1,48 @@
-#include "ggml.h"
-#include "ggml-impl.h"
-#include "ggml-backend.h"
-#include "ggml-backend-impl.h"
-#include "ggml-alloc.h"
-#include "ggml-cpp.h"
+#అన్తర్భావ "ggml.h"
+#అన్తర్భావ "ggml-impl.h"
+#అన్తర్భావ "ggml-backend.h"
+#అన్తర్భావ "ggml-backend-impl.h"
+#అన్తర్భావ "ggml-alloc.h"
+#అన్తర్భావ "ggml-cpp.h"
 
-#include <algorithm>
-#include <cassert>
-#include <cmath>
-#include <cstddef>
-#include <cstdint>
-#include <cstring>
-#include <map>
-#include <memory>
-#include <set>
-#include <string>
-#include <tuple>
-#include <utility>
-#include <vector>
+#అన్తర్భావ <algorithm>
+#అన్తర్భావ <cassert>
+#అన్తర్భావ <cmath>
+#అన్తర్భావ <cstddef>
+#అన్తర్భావ <cstdint>
+#అన్తర్భావ <cstring>
+#అన్తర్భావ <map>
+#అన్తర్భావ <memory>
+#అన్తర్భావ <set>
+#అన్తర్భావ <string>
+#అన్తర్భావ <tuple>
+#అన్తర్భావ <utility>
+#అన్తర్భావ <vector>
 
-struct ggml_backend_meta_device;
-struct ggml_backend_meta_buffer_type;
-struct ggml_backend_meta_buffer;
-struct ggml_backend_meta;
+నిర్మాణం ggml_backend_meta_device;
+నిర్మాణం ggml_backend_meta_బఫరు_type;
+నిర్మాణం ggml_backend_meta_బఫరు;
+నిర్మాణం ggml_backend_meta;
 
-const char * ggml_backend_meta_split_axis_name(enum ggml_backend_meta_split_axis split_axis) {
-    switch (split_axis) {
-        case GGML_BACKEND_SPLIT_AXIS_0:
-            return "0";
-        case GGML_BACKEND_SPLIT_AXIS_1:
-            return "1";
-        case GGML_BACKEND_SPLIT_AXIS_2:
-            return "2";
-        case GGML_BACKEND_SPLIT_AXIS_3:
-            return "3";
-        case GGML_BACKEND_SPLIT_AXIS_MIRRORED:
-            return "MIRRORED";
-        case GGML_BACKEND_SPLIT_AXIS_PARTIAL:
-            return "PARTIAL";
-        case GGML_BACKEND_SPLIT_AXIS_NONE:
-            return "NONE";
-        case GGML_BACKEND_SPLIT_AXIS_UNKNOWN:
-            return "UNKNOWN";
-        default:
+స్థిరరాశి అక్షరం * ggml_backend_meta_విభజించు_axis_name(గణన ggml_backend_meta_విభజించు_axis విభజించు_axis) {
+    ఎంపిక (విభజించు_axis) {
+        స్థితి GGML_BACKEND_విభజించు_AXIS_0:
+            తిరిగి "0";
+        స్థితి GGML_BACKEND_విభజించు_AXIS_1:
+            తిరిగి "1";
+        స్థితి GGML_BACKEND_విభజించు_AXIS_2:
+            తిరిగి "2";
+        స్థితి GGML_BACKEND_విభజించు_AXIS_3:
+            తిరిగి "3";
+        స్థితి GGML_BACKEND_విభజించు_AXIS_MIRRORED:
+            తిరిగి "MIRRORED";
+        స్థితి GGML_BACKEND_విభజించు_AXIS_PARTIAL:
+            తిరిగి "PARTIAL";
+        స్థితి GGML_BACKEND_విభజించు_AXIS_NONE:
+            తిరిగి "NONE";
+        స్థితి GGML_BACKEND_విభజించు_AXIS_UNKNOWN:
+            తిరిగి "UNKNOWN";
+        అప్రమేయ:
             GGML_ABORT("fatal error");
     }
 }
@@ -51,21 +51,21 @@ const char * ggml_backend_meta_split_axis_name(enum ggml_backend_meta_split_axis
 // meta backend device
 //
 
-struct ggml_backend_meta_device_context {
+నిర్మాణం ggml_backend_meta_device_context {
     std::vector<ggml_backend_dev_t>     simple_devs;
-    ggml_backend_meta_get_split_state_t get_split_state;
-    void *                              get_split_state_ud;
+    ggml_backend_meta_get_విభజించు_state_t get_విభజించు_state;
+    శూన్య *                              get_విభజించు_state_ud;
 
     std::string name;
     std::string description;
 
     ggml_backend_meta_device_context(
-            std::vector<ggml_backend_dev_t> simple_devs, ggml_backend_meta_get_split_state_t get_split_state, void * get_split_state_ud) :
-            simple_devs(std::move(simple_devs)), get_split_state(get_split_state), get_split_state_ud(get_split_state_ud) {
+            std::vector<ggml_backend_dev_t> simple_devs, ggml_backend_meta_get_విభజించు_state_t get_విభజించు_state, శూన్య * get_విభజించు_state_ud) :
+            simple_devs(std::move(simple_devs)), get_విభజించు_state(get_విభజించు_state), get_విభజించు_state_ud(get_విభజించు_state_ud) {
         name        = std::string("Meta(");
         description = std::string("Meta(");
-        for (size_t i = 0; i < simple_devs.size(); i++) {
-            if (i > 0) {
+        కొరకు (size_t i = 0; i < simple_devs.size(); i++) {
+            ఒకవేళ (i > 0) {
                 name        += ",";
                 description += ",";
             }
@@ -76,48 +76,48 @@ struct ggml_backend_meta_device_context {
         description += ")";
     }
 
-    bool operator<(const ggml_backend_meta_device_context & other) const {
-        return std::tie(simple_devs, get_split_state, get_split_state_ud)
-            < std::tie(other.simple_devs, other.get_split_state, other.get_split_state_ud);
+    తార్కిక క్రియాకారకం<(స్థిరరాశి ggml_backend_meta_device_context & other) స్థిరరాశి {
+        తిరిగి std::tie(simple_devs, get_విభజించు_state, get_విభజించు_state_ud)
+            < std::tie(other.simple_devs, other.get_విభజించు_state, other.get_విభజించు_state_ud);
     }
 };
 
-static bool ggml_backend_dev_is_meta(ggml_backend_dev_t dev);
+స్థిర తార్కిక ggml_backend_dev_is_meta(ggml_backend_dev_t dev);
 
-static const char * ggml_backend_meta_device_get_name(ggml_backend_dev_t dev) {
+స్థిర స్థిరరాశి అక్షరం * ggml_backend_meta_device_get_name(ggml_backend_dev_t dev) {
     GGML_ASSERT(ggml_backend_dev_is_meta(dev));
-    const ggml_backend_meta_device_context * meta_dev_ctx = (const ggml_backend_meta_device_context *) dev->context;
-    return meta_dev_ctx->name.c_str();
+    స్థిరరాశి ggml_backend_meta_device_context * meta_dev_ctx = (స్థిరరాశి ggml_backend_meta_device_context *) dev->context;
+    తిరిగి meta_dev_ctx->name.c_str();
 }
 
-static const char * ggml_backend_meta_device_get_description(ggml_backend_dev_t dev) {
+స్థిర స్థిరరాశి అక్షరం * ggml_backend_meta_device_get_description(ggml_backend_dev_t dev) {
     GGML_ASSERT(ggml_backend_dev_is_meta(dev));
-    const ggml_backend_meta_device_context * meta_dev_ctx = (const ggml_backend_meta_device_context *) dev->context;
-    return meta_dev_ctx->description.c_str();
+    స్థిరరాశి ggml_backend_meta_device_context * meta_dev_ctx = (స్థిరరాశి ggml_backend_meta_device_context *) dev->context;
+    తిరిగి meta_dev_ctx->description.c_str();
 }
 
-static void ggml_backend_meta_device_get_memory(ggml_backend_dev_t dev, size_t * free, size_t * total) {
+స్థిర శూన్య ggml_backend_meta_device_get_జ్ఞాపకం(ggml_backend_dev_t dev, size_t * విడుదల, size_t * మొత్తం) {
     GGML_ASSERT(ggml_backend_dev_is_meta(dev));
-    const ggml_backend_meta_device_context * meta_dev_ctx = (const ggml_backend_meta_device_context *) dev->context;
-    *free  = 0;
-    *total = 0;
-    for (ggml_backend_dev_t dev : meta_dev_ctx->simple_devs) {
-        size_t tmp_free, tmp_total;
-        ggml_backend_dev_memory(dev, &tmp_free, &tmp_total);
-        *free  += tmp_free;
-        *total += tmp_total;
+    స్థిరరాశి ggml_backend_meta_device_context * meta_dev_ctx = (స్థిరరాశి ggml_backend_meta_device_context *) dev->context;
+    *విడుదల  = 0;
+    *మొత్తం = 0;
+    కొరకు (ggml_backend_dev_t dev : meta_dev_ctx->simple_devs) {
+        size_t tmp_free, tmp_మొత్తం;
+        ggml_backend_dev_జ్ఞాపకం(dev, &tmp_free, &tmp_మొత్తం);
+        *విడుదల  += tmp_free;
+        *మొత్తం += tmp_మొత్తం;
     }
 }
 
-static enum ggml_backend_dev_type ggml_backend_meta_device_get_type(ggml_backend_dev_t dev) {
-    return GGML_BACKEND_DEVICE_TYPE_META;
+స్థిర గణన ggml_backend_dev_type ggml_backend_meta_device_get_type(ggml_backend_dev_t dev) {
+    తిరిగి GGML_BACKEND_DEVICE_TYPE_META;
 
-    GGML_UNUSED(dev);
+    GGML_వాడని(dev);
 }
 
-static void ggml_backend_meta_device_get_props(ggml_backend_dev_t dev, ggml_backend_dev_props * props) {
+స్థిర శూన్య ggml_backend_meta_device_get_props(ggml_backend_dev_t dev, ggml_backend_dev_props * props) {
     GGML_ASSERT(ggml_backend_dev_is_meta(dev));
-    const ggml_backend_meta_device_context * meta_dev_ctx = (const ggml_backend_meta_device_context *) dev->context;
+    స్థిరరాశి ggml_backend_meta_device_context * meta_dev_ctx = (స్థిరరాశి ggml_backend_meta_device_context *) dev->context;
 
     // TODO replace placeholders
     props->name        = ggml_backend_meta_device_get_name(dev);
@@ -125,138 +125,138 @@ static void ggml_backend_meta_device_get_props(ggml_backend_dev_t dev, ggml_back
     props->type        = ggml_backend_meta_device_get_type(dev);
     props->device_id   = 0;
 
-    ggml_backend_meta_device_get_memory(dev, &props->memory_free, &props->memory_total);
+    ggml_backend_meta_device_get_జ్ఞాపకం(dev, &props->జ్ఞాపకం_free, &props->జ్ఞాపకం_మొత్తం);
 
     props->caps = {
-        /* .async                 = */ true,
-        /* .host_buffer           = */ false, // Not implemented.
-        /* .buffer_from_host_ptr  = */ false, // Not implemented.
-        /* .events                = */ false, // Not implemented.
-        /* .mmap_support          = */ true,
+        /* .async                 = */ నిజం,
+        /* .host_buffer           = */ అబద్ధం, // Not implemented.
+        /* .buffer_from_host_ptr  = */ అబద్ధం, // Not implemented.
+        /* .events                = */ అబద్ధం, // Not implemented.
+        /* .mmap_support          = */ నిజం,
     };
-    for (ggml_backend_dev_t simple_dev : meta_dev_ctx->simple_devs) {
+    కొరకు (ggml_backend_dev_t simple_dev : meta_dev_ctx->simple_devs) {
         ggml_backend_dev_props tmp_props;
         ggml_backend_dev_get_props(simple_dev, &tmp_props);
         props->caps.async                = props->caps.async                && tmp_props.caps.async;
-        props->caps.host_buffer          = props->caps.host_buffer          && tmp_props.caps.host_buffer;
-        props->caps.buffer_from_host_ptr = props->caps.buffer_from_host_ptr && tmp_props.caps.buffer_from_host_ptr;
+        props->caps.host_బఫరు          = props->caps.host_బఫరు          && tmp_props.caps.host_బఫరు;
+        props->caps.బఫరు_from_host_ptr = props->caps.బఫరు_from_host_ptr && tmp_props.caps.బఫరు_from_host_ptr;
         props->caps.events               = props->caps.events               && tmp_props.caps.events;
         props->caps.mmap_support         = props->caps.mmap_support         && tmp_props.caps.mmap_support;
     }
 }
 
-static ggml_backend_t ggml_backend_meta_device_init_backend(ggml_backend_dev_t dev, const char * params);
+స్థిర ggml_backend_t ggml_backend_meta_device_init_backend(ggml_backend_dev_t dev, స్థిరరాశి అక్షరం * params);
 
-static ggml_backend_buffer_type_t ggml_backend_meta_device_get_buffer_type(ggml_backend_dev_t dev);
+స్థిర ggml_backend_బఫరు_type_t ggml_backend_meta_device_get_బఫరు_type(ggml_backend_dev_t dev);
 
-static ggml_backend_buffer_type_t ggml_backend_meta_device_get_host_buffer_type(ggml_backend_dev_t dev);
+స్థిర ggml_backend_బఫరు_type_t ggml_backend_meta_device_get_host_బఫరు_type(ggml_backend_dev_t dev);
 
-static bool ggml_backend_meta_device_supports_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
+స్థిర తార్కిక ggml_backend_meta_device_supports_op(ggml_backend_dev_t dev, స్థిరరాశి ggml_tensor * op) {
     GGML_ASSERT(ggml_backend_dev_is_meta(dev));
-    const ggml_backend_meta_device_context * meta_dev_ctx = (const ggml_backend_meta_device_context *) dev->context;
-    return std::all_of(meta_dev_ctx->simple_devs.begin(), meta_dev_ctx->simple_devs.end(),
-        [op](ggml_backend_dev_t simple_dev) { return ggml_backend_dev_supports_op(simple_dev, op); });
+    స్థిరరాశి ggml_backend_meta_device_context * meta_dev_ctx = (స్థిరరాశి ggml_backend_meta_device_context *) dev->context;
+    తిరిగి std::all_of(meta_dev_ctx->simple_devs.begin(), meta_dev_ctx->simple_devs.end(),
+        [op](ggml_backend_dev_t simple_dev) { తిరిగి ggml_backend_dev_supports_op(simple_dev, op); });
 }
 
-static bool ggml_backend_meta_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
+స్థిర తార్కిక ggml_backend_meta_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_బఫరు_type_t buft) {
     GGML_ASSERT(ggml_backend_dev_is_meta(dev));
     ggml_backend_dev_t dev_buft = ggml_backend_buft_get_device(buft);
-    if (!ggml_backend_dev_is_meta(dev_buft)) {
-        return false;
+    ఒకవేళ (!ggml_backend_dev_is_meta(dev_buft)) {
+        తిరిగి అబద్ధం;
     }
-    const ggml_backend_meta_device_context * meta_dev_ctx      = (const ggml_backend_meta_device_context *) dev->context;
-    const ggml_backend_meta_device_context * meta_buft_dev_ctx = (const ggml_backend_meta_device_context *) dev_buft->context;
-    if (meta_dev_ctx->simple_devs.size() != meta_buft_dev_ctx->simple_devs.size()) {
-        return false;
+    స్థిరరాశి ggml_backend_meta_device_context * meta_dev_ctx      = (స్థిరరాశి ggml_backend_meta_device_context *) dev->context;
+    స్థిరరాశి ggml_backend_meta_device_context * meta_buft_dev_ctx = (స్థిరరాశి ggml_backend_meta_device_context *) dev_buft->context;
+    ఒకవేళ (meta_dev_ctx->simple_devs.size() != meta_buft_dev_ctx->simple_devs.size()) {
+        తిరిగి అబద్ధం;
     }
-    for (size_t i = 0; i < meta_dev_ctx->simple_devs.size(); i++) {
-        if (meta_dev_ctx->simple_devs[i] != meta_buft_dev_ctx->simple_devs[i]) {
-            return false;
+    కొరకు (size_t i = 0; i < meta_dev_ctx->simple_devs.size(); i++) {
+        ఒకవేళ (meta_dev_ctx->simple_devs[i] != meta_buft_dev_ctx->simple_devs[i]) {
+            తిరిగి అబద్ధం;
         }
     }
-    return true;
+    తిరిగి నిజం;
 }
 
-static const ggml_backend_device_i ggml_backend_meta_device_iface = {
+స్థిర స్థిరరాశి ggml_backend_device_i ggml_backend_meta_device_iface = {
     /* .get_name             = */ ggml_backend_meta_device_get_name,
     /* .get_description      = */ ggml_backend_meta_device_get_description,
-    /* .get_memory           = */ ggml_backend_meta_device_get_memory,
+    /* .get_memory           = */ ggml_backend_meta_device_get_జ్ఞాపకం,
     /* .get_type             = */ ggml_backend_meta_device_get_type,
     /* .get_props            = */ ggml_backend_meta_device_get_props,
     /* .init_backend         = */ ggml_backend_meta_device_init_backend,
-    /* .get_buffer_type      = */ ggml_backend_meta_device_get_buffer_type,
-    /* .get_host_buffer_type = */ ggml_backend_meta_device_get_host_buffer_type,
-    /* .buffer_from_host_ptr = */ nullptr,
+    /* .get_buffer_type      = */ ggml_backend_meta_device_get_బఫరు_type,
+    /* .get_host_buffer_type = */ ggml_backend_meta_device_get_host_బఫరు_type,
+    /* .buffer_from_host_ptr = */ శూన్యసూచిక,
     /* .supports_op          = */ ggml_backend_meta_device_supports_op,
     /* .supports_buft        = */ ggml_backend_meta_device_supports_buft,
-    /* .offload_op           = */ nullptr,
-    /* .event_new            = */ nullptr,
-    /* .event_free           = */ nullptr,
-    /* .event_synchronize    = */ nullptr,
+    /* .offload_op           = */ శూన్యసూచిక,
+    /* .event_new            = */ శూన్యసూచిక,
+    /* .event_free           = */ శూన్యసూచిక,
+    /* .event_synchronize    = */ శూన్యసూచిక,
 };
 
-static bool ggml_backend_dev_is_meta(ggml_backend_dev_t dev) {
-    return dev != nullptr && dev->iface.get_name == ggml_backend_meta_device_iface.get_name;
+స్థిర తార్కిక ggml_backend_dev_is_meta(ggml_backend_dev_t dev) {
+    తిరిగి dev != శూన్యసూచిక && dev->iface.get_name == ggml_backend_meta_device_iface.get_name;
 }
 
-static size_t ggml_backend_meta_dev_n_devs(ggml_backend_dev_t meta_dev) {
+స్థిర size_t ggml_backend_meta_dev_n_devs(ggml_backend_dev_t meta_dev) {
     GGML_ASSERT(ggml_backend_dev_is_meta(meta_dev));
-    const ggml_backend_meta_device_context * meta_dev_ctx = (const ggml_backend_meta_device_context *) meta_dev->context;
-    return meta_dev_ctx->simple_devs.size();
+    స్థిరరాశి ggml_backend_meta_device_context * meta_dev_ctx = (స్థిరరాశి ggml_backend_meta_device_context *) meta_dev->context;
+    తిరిగి meta_dev_ctx->simple_devs.size();
 }
 
-static ggml_backend_dev_t ggml_backend_meta_dev_simple_dev(ggml_backend_dev_t meta_dev, size_t index) {
+స్థిర ggml_backend_dev_t ggml_backend_meta_dev_simple_dev(ggml_backend_dev_t meta_dev, size_t సూచీ) {
     GGML_ASSERT(ggml_backend_dev_is_meta(meta_dev));
-    const ggml_backend_meta_device_context * meta_dev_ctx = (const ggml_backend_meta_device_context *) meta_dev->context;
-    GGML_ASSERT(index < meta_dev_ctx->simple_devs.size());
-    return meta_dev_ctx->simple_devs[index];
+    స్థిరరాశి ggml_backend_meta_device_context * meta_dev_ctx = (స్థిరరాశి ggml_backend_meta_device_context *) meta_dev->context;
+    GGML_ASSERT(సూచీ < meta_dev_ctx->simple_devs.size());
+    తిరిగి meta_dev_ctx->simple_devs[సూచీ];
 }
 
 ggml_backend_dev_t ggml_backend_meta_device(
-        ggml_backend_dev_t * devs, size_t n_devs, ggml_backend_meta_get_split_state_t get_split_state, void * get_split_state_ud) {
+        ggml_backend_dev_t * devs, size_t n_devs, ggml_backend_meta_get_విభజించు_state_t get_విభజించు_state, శూన్య * get_విభజించు_state_ud) {
     GGML_ASSERT(n_devs <= GGML_BACKEND_META_MAX_DEVICES);
     // TODO: this is not thread-safe - needs to be fixed
-    static std::vector<std::unique_ptr<ggml_backend_meta_device_context>>         ctxs;
-    static std::map<ggml_backend_meta_device_context, struct ggml_backend_device> meta_devs;
+    స్థిర std::vector<std::unique_ptr<ggml_backend_meta_device_context>>         ctxs;
+    స్థిర std::map<ggml_backend_meta_device_context, నిర్మాణం ggml_backend_device> meta_devs;
 
     std::vector<ggml_backend_dev_t> simple_devs;
     simple_devs.reserve(n_devs);
-    for (size_t i = 0; i < n_devs; i++) {
+    కొరకు (size_t i = 0; i < n_devs; i++) {
         simple_devs.push_back(devs[i]);
     }
-    ggml_backend_meta_device_context ctx(simple_devs, get_split_state, get_split_state_ud);
+    ggml_backend_meta_device_context ctx(simple_devs, get_విభజించు_state, get_విభజించు_state_ud);
 
     {
-        auto it = meta_devs.find(ctx);
-        if (it != meta_devs.end()) {
-            return &it->second;
+        స్వయంచాలక it = meta_devs.find(ctx);
+        ఒకవేళ (it != meta_devs.end()) {
+            తిరిగి &it->second;
         }
     }
     ctxs.push_back(std::make_unique<ggml_backend_meta_device_context>(ctx));
 
-    struct ggml_backend_device meta_dev = {
+    నిర్మాణం ggml_backend_device meta_dev = {
         /*iface  =*/ ggml_backend_meta_device_iface,
-        /*reg    =*/ nullptr,
+        /*reg    =*/ శూన్యసూచిక,
         /*ctx    =*/ ctxs.back().get(),
     };
 
-    auto result = meta_devs.emplace(*ctxs.back(), meta_dev);
-    return &result.first->second;
+    స్వయంచాలక ఫలితం = meta_devs.emplace(*ctxs.back(), meta_dev);
+    తిరిగి &ఫలితం.మొదటి->second;
 }
 
 //
 // meta backend buffer type
 //
 
-struct ggml_backend_meta_buffer_type_context {
-    std::vector<ggml_backend_buffer_type_t> simple_bufts;
+నిర్మాణం ggml_backend_meta_బఫరు_type_context {
+    std::vector<ggml_backend_బఫరు_type_t> simple_bufts;
 
     std::string name;
 
-    ggml_backend_meta_buffer_type_context(std::vector<ggml_backend_buffer_type_t> simple_bufts) : simple_bufts(std::move(simple_bufts)) {
+    ggml_backend_meta_బఫరు_type_context(std::vector<ggml_backend_బఫరు_type_t> simple_bufts) : simple_bufts(std::move(simple_bufts)) {
         name = "Meta(";
-        for (size_t i = 0; i < simple_bufts.size(); i++) {
-            if (i > 0) {
+        కొరకు (size_t i = 0; i < simple_bufts.size(); i++) {
+            ఒకవేళ (i > 0) {
                 name += ",";
             }
             name += ggml_backend_buft_name(simple_bufts[i]);
@@ -264,135 +264,135 @@ struct ggml_backend_meta_buffer_type_context {
         name += ")";
     }
 
-    bool operator<(const ggml_backend_meta_buffer_type_context & other) const {
-        return simple_bufts < other.simple_bufts;
+    తార్కిక క్రియాకారకం<(స్థిరరాశి ggml_backend_meta_బఫరు_type_context & other) స్థిరరాశి {
+        తిరిగి simple_bufts < other.simple_bufts;
     }
 };
 
-static size_t ggml_backend_meta_buft_n_bufts(ggml_backend_buffer_type_t meta_buft) {
+స్థిర size_t ggml_backend_meta_buft_n_bufts(ggml_backend_బఫరు_type_t meta_buft) {
     GGML_ASSERT(ggml_backend_buft_is_meta(meta_buft));
-    const ggml_backend_meta_buffer_type_context * meta_buft_ctx = (const ggml_backend_meta_buffer_type_context *) meta_buft->context;
-    return meta_buft_ctx->simple_bufts.size();
+    స్థిరరాశి ggml_backend_meta_బఫరు_type_context * meta_buft_ctx = (స్థిరరాశి ggml_backend_meta_బఫరు_type_context *) meta_buft->context;
+    తిరిగి meta_buft_ctx->simple_bufts.size();
 }
 
-static const char * ggml_backend_meta_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
+స్థిర స్థిరరాశి అక్షరం * ggml_backend_meta_బఫరు_type_get_name(ggml_backend_బఫరు_type_t buft) {
     GGML_ASSERT(ggml_backend_buft_is_meta(buft));
-    const ggml_backend_meta_buffer_type_context * meta_buft_ctx = (const ggml_backend_meta_buffer_type_context *) buft->context;
-    return meta_buft_ctx->name.c_str();
+    స్థిరరాశి ggml_backend_meta_బఫరు_type_context * meta_buft_ctx = (స్థిరరాశి ggml_backend_meta_బఫరు_type_context *) buft->context;
+    తిరిగి meta_buft_ctx->name.c_str();
 }
 
-static ggml_backend_buffer_type_t ggml_backend_meta_buft_simple_buft(ggml_backend_buffer_type_t meta_buft, size_t index) {
+స్థిర ggml_backend_బఫరు_type_t ggml_backend_meta_buft_simple_buft(ggml_backend_బఫరు_type_t meta_buft, size_t సూచీ) {
     GGML_ASSERT(ggml_backend_buft_is_meta(meta_buft));
-    const ggml_backend_meta_buffer_type_context * meta_buft_ctx = (const ggml_backend_meta_buffer_type_context *) meta_buft->context;
-    GGML_ASSERT(index < meta_buft_ctx->simple_bufts.size());
-    return meta_buft_ctx->simple_bufts[index];
+    స్థిరరాశి ggml_backend_meta_బఫరు_type_context * meta_buft_ctx = (స్థిరరాశి ggml_backend_meta_బఫరు_type_context *) meta_buft->context;
+    GGML_ASSERT(సూచీ < meta_buft_ctx->simple_bufts.size());
+    తిరిగి meta_buft_ctx->simple_bufts[సూచీ];
 }
 
-static ggml_backend_buffer_t ggml_backend_meta_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size);
+స్థిర ggml_backend_బఫరు_t ggml_backend_meta_బఫరు_type_alloc_బఫరు(ggml_backend_బఫరు_type_t buft, size_t size);
 
-static ggml_backend_buffer_t ggml_backend_meta_buffer_type_alloc_buffer_n(ggml_backend_buffer_type_t buft, ggml_tensor ** tensors, int n_tensors);
+స్థిర ggml_backend_బఫరు_t ggml_backend_meta_బఫరు_type_alloc_బఫరు_n(ggml_backend_బఫరు_type_t buft, ggml_tensor ** tensors, పూర్ణాంకం n_tensors);
 
-static size_t ggml_backend_meta_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
-    const size_t n_simple_bufts = ggml_backend_meta_buft_n_bufts(buft);
+స్థిర size_t ggml_backend_meta_బఫరు_type_get_alignment(ggml_backend_బఫరు_type_t buft) {
+    స్థిరరాశి size_t n_simple_bufts = ggml_backend_meta_buft_n_bufts(buft);
     size_t max_alignment = 1;
-    for (size_t i = 0; i < n_simple_bufts; i++) {
-        const size_t alignment = ggml_backend_buft_get_alignment(ggml_backend_meta_buft_simple_buft(buft, i));
+    కొరకు (size_t i = 0; i < n_simple_bufts; i++) {
+        స్థిరరాశి size_t alignment = ggml_backend_buft_get_alignment(ggml_backend_meta_buft_simple_buft(buft, i));
         max_alignment = std::max(max_alignment, alignment);
         GGML_ASSERT(max_alignment % alignment == 0);
     }
-    return max_alignment;
+    తిరిగి max_alignment;
 }
 
-static size_t ggml_backend_meta_buffer_type_get_max_size(ggml_backend_buffer_type_t buft) {
-    const size_t n_simple_bufts = ggml_backend_meta_buft_n_bufts(buft);
+స్థిర size_t ggml_backend_meta_బఫరు_type_get_max_కొలత(ggml_backend_బఫరు_type_t buft) {
+    స్థిరరాశి size_t n_simple_bufts = ggml_backend_meta_buft_n_bufts(buft);
     size_t max_size = SIZE_MAX;
-    for (size_t i = 0; i < n_simple_bufts; i++) {
-        max_size = std::min(max_size, ggml_backend_buft_get_max_size(ggml_backend_meta_buft_simple_buft(buft, i)));
+    కొరకు (size_t i = 0; i < n_simple_bufts; i++) {
+        max_size = std::min(max_size, ggml_backend_buft_get_max_కొలత(ggml_backend_meta_buft_simple_buft(buft, i)));
     }
-    return max_size;
+    తిరిగి max_size;
 }
 
-static size_t ggml_backend_meta_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft, const ggml_tensor * tensor) {
-    const size_t n_simple_bufts = ggml_backend_meta_buft_n_bufts(buft);
-    size_t max_alloc_size = 0;
-    for (size_t i = 0; i < n_simple_bufts; i++) {
-        const size_t alloc_size = ggml_backend_buft_get_alloc_size(ggml_backend_meta_buft_simple_buft(buft, i), tensor);
-        max_alloc_size = std::max(max_alloc_size, alloc_size);
+స్థిర size_t ggml_backend_meta_బఫరు_type_get_alloc_కొలత(ggml_backend_బఫరు_type_t buft, స్థిరరాశి ggml_tensor * tensor) {
+    స్థిరరాశి size_t n_simple_bufts = ggml_backend_meta_buft_n_bufts(buft);
+    size_t max_alloc_కొలత = 0;
+    కొరకు (size_t i = 0; i < n_simple_bufts; i++) {
+        స్థిరరాశి size_t alloc_కొలత = ggml_backend_buft_get_alloc_కొలత(ggml_backend_meta_buft_simple_buft(buft, i), tensor);
+        max_alloc_కొలత = std::max(max_alloc_కొలత, alloc_కొలత);
     }
-    return max_alloc_size;
+    తిరిగి max_alloc_కొలత;
 }
 
-static bool ggml_backend_meta_buffer_type_is_host(ggml_backend_buffer_type_t buft) {
-    const size_t n_simple_bufts = ggml_backend_meta_buft_n_bufts(buft);
-    for (size_t i = 0; i < n_simple_bufts; i++) {
-        if (!ggml_backend_buft_is_host(ggml_backend_meta_buft_simple_buft(buft, i))) {
-            return false;
+స్థిర తార్కిక ggml_backend_meta_బఫరు_type_is_host(ggml_backend_బఫరు_type_t buft) {
+    స్థిరరాశి size_t n_simple_bufts = ggml_backend_meta_buft_n_bufts(buft);
+    కొరకు (size_t i = 0; i < n_simple_bufts; i++) {
+        ఒకవేళ (!ggml_backend_buft_is_host(ggml_backend_meta_buft_simple_buft(buft, i))) {
+            తిరిగి అబద్ధం;
         }
     }
-    return true;
+    తిరిగి నిజం;
 }
 
-static const struct ggml_backend_buffer_type_i ggml_backend_meta_buffer_type_iface = {
-    /* .get_name            = */ ggml_backend_meta_buffer_type_get_name,
-    /* .alloc_buffer        = */ ggml_backend_meta_buffer_type_alloc_buffer,
-    /* .alloc_buffer_n      = */ ggml_backend_meta_buffer_type_alloc_buffer_n,
-    /* .get_alignment       = */ ggml_backend_meta_buffer_type_get_alignment,
-    /* .get_max_size        = */ ggml_backend_meta_buffer_type_get_max_size,
-    /* .get_alloc_size      = */ ggml_backend_meta_buffer_type_get_alloc_size,
-    /* .get_alloc_size_n    = */ NULL,
-    /* .is_host             = */ ggml_backend_meta_buffer_type_is_host,
+స్థిర స్థిరరాశి నిర్మాణం ggml_backend_బఫరు_type_i ggml_backend_meta_బఫరు_type_iface = {
+    /* .get_name            = */ ggml_backend_meta_బఫరు_type_get_name,
+    /* .alloc_buffer        = */ ggml_backend_meta_బఫరు_type_alloc_బఫరు,
+    /* .alloc_buffer_n      = */ ggml_backend_meta_బఫరు_type_alloc_బఫరు_n,
+    /* .get_alignment       = */ ggml_backend_meta_బఫరు_type_get_alignment,
+    /* .get_max_size        = */ ggml_backend_meta_బఫరు_type_get_max_కొలత,
+    /* .get_alloc_size      = */ ggml_backend_meta_బఫరు_type_get_alloc_కొలత,
+    /* .get_alloc_size_n    = */ ఖాళీ,
+    /* .is_host             = */ ggml_backend_meta_బఫరు_type_is_host,
 };
 
-bool ggml_backend_buft_is_meta(ggml_backend_buffer_type_t buft) {
-    return buft != nullptr && buft->iface.get_name == ggml_backend_meta_buffer_type_iface.get_name;
+తార్కిక ggml_backend_buft_is_meta(ggml_backend_బఫరు_type_t buft) {
+    తిరిగి buft != శూన్యసూచిక && buft->iface.get_name == ggml_backend_meta_బఫరు_type_iface.get_name;
 }
 
-static ggml_backend_buffer_type_t ggml_backend_meta_device_get_buffer_type(ggml_backend_dev_t dev) {
-    static std::map<ggml_backend_dev_t, struct ggml_backend_buffer_type> meta_bufts;
+స్థిర ggml_backend_బఫరు_type_t ggml_backend_meta_device_get_బఫరు_type(ggml_backend_dev_t dev) {
+    స్థిర std::map<ggml_backend_dev_t, నిర్మాణం ggml_backend_బఫరు_type> meta_bufts;
     GGML_ASSERT(ggml_backend_dev_is_meta(dev));
     {
-        auto it = meta_bufts.find(dev);
-        if (it != meta_bufts.end()) {
-            return &it->second;
+        స్వయంచాలక it = meta_bufts.find(dev);
+        ఒకవేళ (it != meta_bufts.end()) {
+            తిరిగి &it->second;
         }
     }
 
-    const size_t n_devs = ggml_backend_meta_dev_n_devs(dev);
-    std::vector<ggml_backend_buffer_type_t> simple_bufts;
+    స్థిరరాశి size_t n_devs = ggml_backend_meta_dev_n_devs(dev);
+    std::vector<ggml_backend_బఫరు_type_t> simple_bufts;
     simple_bufts.reserve(n_devs);
-    for (size_t i = 0; i < n_devs; i++) {
-        simple_bufts.push_back(ggml_backend_dev_buffer_type(ggml_backend_meta_dev_simple_dev(dev, i)));
+    కొరకు (size_t i = 0; i < n_devs; i++) {
+        simple_bufts.push_back(ggml_backend_dev_బఫరు_type(ggml_backend_meta_dev_simple_dev(dev, i)));
     }
-    ggml_backend_meta_buffer_type_context * buft_ctx = new ggml_backend_meta_buffer_type_context(simple_bufts);
+    ggml_backend_meta_బఫరు_type_context * buft_ctx = కొత్త ggml_backend_meta_బఫరు_type_context(simple_bufts);
 
-    struct ggml_backend_buffer_type meta_buft = {
-        /*iface  =*/ ggml_backend_meta_buffer_type_iface,
+    నిర్మాణం ggml_backend_బఫరు_type meta_buft = {
+        /*iface  =*/ ggml_backend_meta_బఫరు_type_iface,
         /*device =*/ dev,
         /*ctx    =*/ buft_ctx,
     };
-    auto result = meta_bufts.emplace(dev, meta_buft);
-    return &result.first->second;
+    స్వయంచాలక ఫలితం = meta_bufts.emplace(dev, meta_buft);
+    తిరిగి &ఫలితం.మొదటి->second;
 }
 
-static ggml_backend_buffer_type_t ggml_backend_meta_device_get_host_buffer_type(ggml_backend_dev_t dev) {
+స్థిర ggml_backend_బఫరు_type_t ggml_backend_meta_device_get_host_బఫరు_type(ggml_backend_dev_t dev) {
     GGML_ASSERT(ggml_backend_dev_is_meta(dev));
-    const ggml_backend_meta_device_context * meta_dev_ctx = (const ggml_backend_meta_device_context *) dev->context;
+    స్థిరరాశి ggml_backend_meta_device_context * meta_dev_ctx = (స్థిరరాశి ggml_backend_meta_device_context *) dev->context;
 
-    ggml_backend_buffer_type_t host_buft = nullptr;
-    for (ggml_backend_dev_t simple_dev : meta_dev_ctx->simple_devs) {
-        ggml_backend_buffer_type_t simple_host_buft = ggml_backend_dev_host_buffer_type(simple_dev);
-        if (simple_host_buft == nullptr) {
-            return nullptr;
+    ggml_backend_బఫరు_type_t host_buft = శూన్యసూచిక;
+    కొరకు (ggml_backend_dev_t simple_dev : meta_dev_ctx->simple_devs) {
+        ggml_backend_బఫరు_type_t simple_host_buft = ggml_backend_dev_host_బఫరు_type(simple_dev);
+        ఒకవేళ (simple_host_buft == శూన్యసూచిక) {
+            తిరిగి శూన్యసూచిక;
         }
-        if (host_buft == nullptr) {
+        ఒకవేళ (host_buft == శూన్యసూచిక) {
             host_buft = simple_host_buft;
-        } else if (host_buft != simple_host_buft) {
+        } లేకపోతే ఒకవేళ (host_buft != simple_host_buft) {
             // if different simple devices have different host buffer types,
             // we cannot provide a single host buffer type for the meta device
-            return nullptr;
+            తిరిగి శూన్యసూచిక;
         }
     }
-    return host_buft;
+    తిరిగి host_buft;
 }
 
 //
@@ -400,20 +400,20 @@ static ggml_backend_buffer_type_t ggml_backend_meta_device_get_host_buffer_type(
 //
 
 // Container to hold the tensor slices per simple ggml backend buffer.
-struct ggml_backend_meta_simple_tensor_container {
+నిర్మాణం ggml_backend_meta_simple_tensor_container {
     std::vector<ggml_context_ptr> ctxs;
-    std::map<const ggml_tensor *, std::vector<ggml_tensor *>> simple_tensors;
+    std::map<స్థిరరాశి ggml_tensor *, std::vector<ggml_tensor *>> simple_tensors;
 
-    ggml_backend_meta_simple_tensor_container(const ggml_init_params & params, const int n_simple) {
+    ggml_backend_meta_simple_tensor_container(స్థిరరాశి ggml_init_params & params, స్థిరరాశి పూర్ణాంకం n_simple) {
         ctxs.reserve(n_simple);
-        for (int i = 0; i < n_simple; i++) {
+        కొరకు (పూర్ణాంకం i = 0; i < n_simple; i++) {
             ctxs.emplace_back(ggml_init(params));
         }
     }
     ggml_backend_meta_simple_tensor_container() {}
 };
 
-struct ggml_backend_meta_buffer_context {
+నిర్మాణం ggml_backend_meta_బఫరు_context {
     // FIXME
     // Most tensors can simply be stored statically in their own buffer.
     // Externally created views however also need a mapping to simple tensors but they use the buffer of the view source.
@@ -423,895 +423,895 @@ struct ggml_backend_meta_buffer_context {
     //     currently not possible due to graph-external operations in the backend scheduler.
     ggml_backend_meta_simple_tensor_container stc_static;
     ggml_backend_meta_simple_tensor_container stc_compute[2];
-    int stc_compute_index      = 0;
-    int stc_compute_index_next = 0;
-    std::vector<ggml_backend_buffer_ptr> bufs;
+    పూర్ణాంకం stc_compute_సూచీ      = 0;
+    పూర్ణాంకం stc_compute_సూచీ_తదుపరి = 0;
+    std::vector<ggml_backend_బఫరు_ptr> bufs;
 
     // FIXME
     // The size of the split state cache is unbounded and can theoretically grow infinitely large.
     // However, it is also expensive to build and clearing it on every rebuild in ggml_backend_meta_graph_compute is too expensive.
-    static constexpr size_t nbtc = GGML_TENSOR_SIZE - sizeof(ggml_tensor::padding);
-    std::map<std::pair<const ggml_tensor *, bool>, std::pair<ggml_backend_meta_split_state, char[nbtc]>> split_state_cache;
+    స్థిర constexpr size_t nbtc = GGML_TENSOR_కొలత - పరిమాణం(ggml_tensor::padding);
+    std::map<std::pair<స్థిరరాశి ggml_tensor *, తార్కిక>, std::pair<ggml_backend_meta_విభజించు_state, అక్షరం[nbtc]>> విభజించు_state_cache;
 
-    int debug;
+    పూర్ణాంకం debug;
 
-    ggml_backend_meta_buffer_context(
+    ggml_backend_meta_బఫరు_context(
             ggml_backend_meta_simple_tensor_container & stc_static,
             ggml_backend_meta_simple_tensor_container & stc_compute_0,
             ggml_backend_meta_simple_tensor_container & stc_compute_1,
-            const std::vector<ggml_backend_buffer_t> & bufs)
+            స్థిరరాశి std::vector<ggml_backend_బఫరు_t> & bufs)
             : stc_static(std::move(stc_static)), stc_compute{std::move(stc_compute_0), std::move(stc_compute_1)} {
-        this->bufs.reserve(bufs.size());
-        for (ggml_backend_buffer_t buf : bufs) {
-            this->bufs.emplace_back(buf);
+        ఇది->bufs.reserve(bufs.size());
+        కొరకు (ggml_backend_బఫరు_t buf : bufs) {
+            ఇది->bufs.emplace_back(buf);
         }
-        const char * GGML_META_DEBUG = getenv("GGML_META_DEBUG");
+        స్థిరరాశి అక్షరం * GGML_META_DEBUG = getenv("GGML_META_DEBUG");
         debug = GGML_META_DEBUG ? atoi(GGML_META_DEBUG) : 0;
     }
 
-    ggml_backend_meta_simple_tensor_container & get_simple_tensor_container(const ggml_tensor * tensor) {
-        if (stc_static.simple_tensors.find(tensor) != stc_static.simple_tensors.end()) {
-            return stc_static;
+    ggml_backend_meta_simple_tensor_container & get_simple_tensor_container(స్థిరరాశి ggml_tensor * tensor) {
+        ఒకవేళ (stc_static.simple_tensors.find(tensor) != stc_static.simple_tensors.end()) {
+            తిరిగి stc_static;
         }
-        return stc_compute[stc_compute_index];
+        తిరిగి stc_compute[stc_compute_సూచీ];
     }
 };
 
-static void ggml_backend_meta_buffer_free_buffer(ggml_backend_buffer_t buffer) {
-    GGML_ASSERT(ggml_backend_buffer_is_meta(buffer));
-    ggml_backend_meta_buffer_context * buf_ctx = (ggml_backend_meta_buffer_context *) buffer->context;
-    delete buf_ctx;
+స్థిర శూన్య ggml_backend_meta_బఫరు_free_బఫరు(ggml_backend_బఫరు_t బఫరు) {
+    GGML_ASSERT(ggml_backend_బఫరు_is_meta(బఫరు));
+    ggml_backend_meta_బఫరు_context * buf_ctx = (ggml_backend_meta_బఫరు_context *) బఫరు->context;
+    తొలగించు buf_ctx;
 }
 
-static size_t ggml_backend_meta_buffer_n_bufs(ggml_backend_buffer_t meta_buf) {
-    GGML_ASSERT(ggml_backend_buffer_is_meta(meta_buf));
-    ggml_backend_meta_buffer_context * buf_ctx = (ggml_backend_meta_buffer_context *) meta_buf->context;
-    return buf_ctx->bufs.size();
+స్థిర size_t ggml_backend_meta_బఫరు_n_bufs(ggml_backend_బఫరు_t meta_buf) {
+    GGML_ASSERT(ggml_backend_బఫరు_is_meta(meta_buf));
+    ggml_backend_meta_బఫరు_context * buf_ctx = (ggml_backend_meta_బఫరు_context *) meta_buf->context;
+    తిరిగి buf_ctx->bufs.size();
 }
 
-static ggml_backend_buffer_t ggml_backend_meta_buffer_simple_buffer(ggml_backend_buffer_t meta_buf, size_t index) {
-    GGML_ASSERT(ggml_backend_buffer_is_meta(meta_buf));
-    ggml_backend_meta_buffer_context * buf_ctx = (ggml_backend_meta_buffer_context *) meta_buf->context;
-    GGML_ASSERT(index < buf_ctx->bufs.size());
-    return buf_ctx->bufs[index].get();
+స్థిర ggml_backend_బఫరు_t ggml_backend_meta_బఫరు_simple_బఫరు(ggml_backend_బఫరు_t meta_buf, size_t సూచీ) {
+    GGML_ASSERT(ggml_backend_బఫరు_is_meta(meta_buf));
+    ggml_backend_meta_బఫరు_context * buf_ctx = (ggml_backend_meta_బఫరు_context *) meta_buf->context;
+    GGML_ASSERT(సూచీ < buf_ctx->bufs.size());
+    తిరిగి buf_ctx->bufs[సూచీ].get();
 }
 
-static struct ggml_tensor * ggml_backend_meta_buffer_simple_tensor(const struct ggml_tensor * tensor, size_t index) {
-    GGML_ASSERT(ggml_backend_buffer_is_meta(tensor->buffer));
-    ggml_backend_meta_buffer_context * buf_ctx = (ggml_backend_meta_buffer_context *) tensor->buffer->context;
-    GGML_ASSERT(index < buf_ctx->bufs.size());
+స్థిర నిర్మాణం ggml_tensor * ggml_backend_meta_బఫరు_simple_tensor(స్థిరరాశి నిర్మాణం ggml_tensor * tensor, size_t సూచీ) {
+    GGML_ASSERT(ggml_backend_బఫరు_is_meta(tensor->బఫరు));
+    ggml_backend_meta_బఫరు_context * buf_ctx = (ggml_backend_meta_బఫరు_context *) tensor->బఫరు->context;
+    GGML_ASSERT(సూచీ < buf_ctx->bufs.size());
 
     ggml_backend_meta_simple_tensor_container & stc = buf_ctx->get_simple_tensor_container(tensor);
-    auto it = stc.simple_tensors.find(tensor);
-    if (it == stc.simple_tensors.end()) {
-        return nullptr;
+    స్వయంచాలక it = stc.simple_tensors.find(tensor);
+    ఒకవేళ (it == stc.simple_tensors.end()) {
+        తిరిగి శూన్యసూచిక;
     }
-    return it->second[index];
+    తిరిగి it->second[సూచీ];
 }
 
-static struct ggml_backend_meta_split_state ggml_backend_meta_get_split_state(const struct ggml_tensor * tensor, bool assume_sync);
+స్థిర నిర్మాణం ggml_backend_meta_విభజించు_state ggml_backend_meta_get_విభజించు_state(స్థిరరాశి నిర్మాణం ggml_tensor * tensor, తార్కిక assume_sync);
 
-static struct ggml_backend_meta_split_state ggml_backend_meta_get_split_state(
-        ggml_backend_meta_simple_tensor_container & stc, const struct ggml_tensor * tensor, bool assume_sync) {
+స్థిర నిర్మాణం ggml_backend_meta_విభజించు_state ggml_backend_meta_get_విభజించు_state(
+        ggml_backend_meta_simple_tensor_container & stc, స్థిరరాశి నిర్మాణం ggml_tensor * tensor, తార్కిక assume_sync) {
     // FIXME Currently this function preserves/erases the information in n_segments and nr in an inconsistent way.
     // Since the operations in question are developed specifically for llama.cpp this currently does not manifest as a bug there.
     // However, in a broader ggml context with arbitrary ggml graphs this can lead to unexpected results.
-    const size_t n_bufs = ggml_backend_meta_buffer_n_bufs(tensor->buffer);
-    ggml_backend_meta_buffer_context * buf_ctx = (ggml_backend_meta_buffer_context *) tensor->buffer->context;
+    స్థిరరాశి size_t n_bufs = ggml_backend_meta_బఫరు_n_bufs(tensor->బఫరు);
+    ggml_backend_meta_బఫరు_context * buf_ctx = (ggml_backend_meta_బఫరు_context *) tensor->బఫరు->context;
 
-    auto split_states_equal = [&](const ggml_backend_meta_split_state & a, const ggml_backend_meta_split_state & b) -> bool {
-        if (a.axis != b.axis) {
-            return false;
+    స్వయంచాలక విభజించు_స్థితులు_equal = [&](స్థిరరాశి ggml_backend_meta_విభజించు_state & a, స్థిరరాశి ggml_backend_meta_విభజించు_state & b) -> తార్కిక {
+        ఒకవేళ (a.axis != b.axis) {
+            తిరిగి అబద్ధం;
         }
-        for (size_t j = 0; j < n_bufs; j++) {
-            int64_t sum_a = 0;
-            for (size_t s = 0; s < a.n_segments; s++) {
-                sum_a += a.ne[s*n_bufs + j] * a.nr[s];
+        కొరకు (size_t j = 0; j < n_bufs; j++) {
+            int64_t కూడిక_a = 0;
+            కొరకు (size_t s = 0; s < a.n_segments; s++) {
+                కూడిక_a += a.ne[s*n_bufs + j] * a.nr[s];
             }
-            int64_t sum_b = 0;
-            for (size_t s = 0; s < b.n_segments; s++) {
-                sum_b += b.ne[s*n_bufs + j] * b.nr[s];
+            int64_t కూడిక_b = 0;
+            కొరకు (size_t s = 0; s < b.n_segments; s++) {
+                కూడిక_b += b.ne[s*n_bufs + j] * b.nr[s];
             }
-            if (sum_a != sum_b) {
-                return false;
+            ఒకవేళ (కూడిక_a != కూడిక_b) {
+                తిరిగి అబద్ధం;
             }
         }
-        return true;
+        తిరిగి నిజం;
     };
 
-    auto handle_generic = [&](const std::vector<ggml_backend_meta_split_state> & src_ss, bool scalar_only) -> ggml_backend_meta_split_state {
-        ggml_backend_meta_split_state ret = {GGML_BACKEND_SPLIT_AXIS_NONE, {0}, {1}, 1};
-        for (size_t i = 0; i < GGML_MAX_SRC; i++) {
-            if (tensor->src[i] == nullptr || tensor->src[i] == tensor) {
-                continue;
+    స్వయంచాలక handle_generic = [&](స్థిరరాశి std::vector<ggml_backend_meta_విభజించు_state> & src_ss, తార్కిక scalar_only) -> ggml_backend_meta_విభజించు_state {
+        ggml_backend_meta_విభజించు_state ret = {GGML_BACKEND_విభజించు_AXIS_NONE, {0}, {1}, 1};
+        కొరకు (size_t i = 0; i < GGML_MAX_SRC; i++) {
+            ఒకవేళ (tensor->src[i] == శూన్యసూచిక || tensor->src[i] == tensor) {
+                కొనసాగు;
             }
-            if (ret.axis == GGML_BACKEND_SPLIT_AXIS_NONE) {
+            ఒకవేళ (ret.axis == GGML_BACKEND_విభజించు_AXIS_NONE) {
                 ret = src_ss[i];
-            } else if (!split_states_equal(src_ss[i], ret)) {
-                ret = {GGML_BACKEND_SPLIT_AXIS_UNKNOWN, {0}, {1}, 1};
-                break;
+            } లేకపోతే ఒకవేళ (!విభజించు_స్థితులు_equal(src_ss[i], ret)) {
+                ret = {GGML_BACKEND_విభజించు_AXIS_UNKNOWN, {0}, {1}, 1};
+                ఆపు;
             }
         }
-        if (ret.axis == GGML_BACKEND_SPLIT_AXIS_NONE) {
-            ret = {GGML_BACKEND_SPLIT_AXIS_UNKNOWN, {0}, {1}, 1};
+        ఒకవేళ (ret.axis == GGML_BACKEND_విభజించు_AXIS_NONE) {
+            ret = {GGML_BACKEND_విభజించు_AXIS_UNKNOWN, {0}, {1}, 1};
         }
-        if (scalar_only && ret.axis >= 0 && ret.axis < GGML_MAX_DIMS) {
-            ret = {GGML_BACKEND_SPLIT_AXIS_UNKNOWN, {0}, {1}, 1};
+        ఒకవేళ (scalar_only && ret.axis >= 0 && ret.axis < GGML_MAX_DIMS) {
+            ret = {GGML_BACKEND_విభజించు_AXIS_UNKNOWN, {0}, {1}, 1};
         }
-        GGML_ASSERT(ret.axis != GGML_BACKEND_SPLIT_AXIS_UNKNOWN);
-        return ret;
+        GGML_ASSERT(ret.axis != GGML_BACKEND_విభజించు_AXIS_UNKNOWN);
+        తిరిగి ret;
     };
 
     // Some ops process data on a per-row bases:
-    auto handle_per_row = [&](const std::vector<ggml_backend_meta_split_state> & src_ss) -> ggml_backend_meta_split_state {
-        GGML_ASSERT(src_ss[0].axis != GGML_BACKEND_SPLIT_AXIS_0);
-        return src_ss[0];
+    స్వయంచాలక handle_చొప్పున_అడ్డువరుస = [&](స్థిరరాశి std::vector<ggml_backend_meta_విభజించు_state> & src_ss) -> ggml_backend_meta_విభజించు_state {
+        GGML_ASSERT(src_ss[0].axis != GGML_BACKEND_విభజించు_AXIS_0);
+        తిరిగి src_ss[0];
     };
 
     // Some ops broadcast the src1 data across src0:
-    auto handle_bin_bcast = [&](const std::vector<ggml_backend_meta_split_state> & src_ss) -> ggml_backend_meta_split_state {
-        if (src_ss[0].axis >= 0 && src_ss[0].axis < GGML_MAX_DIMS &&
-                tensor->src[1]->ne[src_ss[0].axis] == 1 && src_ss[1].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED) {
-            return src_ss[0];
+    స్వయంచాలక handle_bin_bcast = [&](స్థిరరాశి std::vector<ggml_backend_meta_విభజించు_state> & src_ss) -> ggml_backend_meta_విభజించు_state {
+        ఒకవేళ (src_ss[0].axis >= 0 && src_ss[0].axis < GGML_MAX_DIMS &&
+                tensor->src[1]->ne[src_ss[0].axis] == 1 && src_ss[1].axis == GGML_BACKEND_విభజించు_AXIS_MIRRORED) {
+            తిరిగి src_ss[0];
         }
-        if (src_ss[2].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED && (src_ss[0].axis == src_ss[1].axis ||
-           (src_ss[0].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED && (src_ss[1].axis == GGML_BACKEND_SPLIT_AXIS_PARTIAL)))) {
-            return src_ss[0]; // GGML_OP_ADD_ID
+        ఒకవేళ (src_ss[2].axis == GGML_BACKEND_విభజించు_AXIS_MIRRORED && (src_ss[0].axis == src_ss[1].axis ||
+           (src_ss[0].axis == GGML_BACKEND_విభజించు_AXIS_MIRRORED && (src_ss[1].axis == GGML_BACKEND_విభజించు_AXIS_PARTIAL)))) {
+            తిరిగి src_ss[0]; // GGML_OP_ADD_ID
         }
-        GGML_ASSERT(tensor->src[2] == nullptr || src_ss[2].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED);
-        return handle_generic(src_ss, /*scalar_only =*/ false);
+        GGML_ASSERT(tensor->src[2] == శూన్యసూచిక || src_ss[2].axis == GGML_BACKEND_విభజించు_AXIS_MIRRORED);
+        తిరిగి handle_generic(src_ss, /*scalar_only =*/ అబద్ధం);
     };
 
-    auto handle_concat = [&](const std::vector<ggml_backend_meta_split_state> & src_ss) -> ggml_backend_meta_split_state {
-        const ggml_backend_meta_split_axis concat_axis = ggml_backend_meta_split_axis(ggml_get_op_params_i32(tensor, 0));
-        if (src_ss[0].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED && src_ss[1].axis >= 0 && src_ss[1].axis < GGML_MAX_DIMS) {
+    స్వయంచాలక handle_concat = [&](స్థిరరాశి std::vector<ggml_backend_meta_విభజించు_state> & src_ss) -> ggml_backend_meta_విభజించు_state {
+        స్థిరరాశి ggml_backend_meta_విభజించు_axis concat_axis = ggml_backend_meta_విభజించు_axis(ggml_get_op_params_i32(tensor, 0));
+        ఒకవేళ (src_ss[0].axis == GGML_BACKEND_విభజించు_AXIS_MIRRORED && src_ss[1].axis >= 0 && src_ss[1].axis < GGML_MAX_DIMS) {
             GGML_ASSERT(concat_axis != src_ss[1].axis);
-            return src_ss[1];
+            తిరిగి src_ss[1];
         }
-        if (src_ss[1].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED && src_ss[0].axis >= 0 && src_ss[0].axis < GGML_MAX_DIMS) {
+        ఒకవేళ (src_ss[1].axis == GGML_BACKEND_విభజించు_AXIS_MIRRORED && src_ss[0].axis >= 0 && src_ss[0].axis < GGML_MAX_DIMS) {
             GGML_ASSERT(concat_axis != src_ss[0].axis);
-            return src_ss[0];
+            తిరిగి src_ss[0];
         }
-        if (src_ss[0].axis == src_ss[1].axis && src_ss[0].axis != concat_axis) {
-            return src_ss[0];
+        ఒకవేళ (src_ss[0].axis == src_ss[1].axis && src_ss[0].axis != concat_axis) {
+            తిరిగి src_ss[0];
         }
-        return handle_generic(src_ss, /*scalar_only =*/ true);
+        తిరిగి handle_generic(src_ss, /*scalar_only =*/ నిజం);
     };
 
-    auto handle_mul_mat = [&](const std::vector<ggml_backend_meta_split_state> & src_ss) -> ggml_backend_meta_split_state {
-        if (src_ss[0].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED && src_ss[1].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED) {
-            return {GGML_BACKEND_SPLIT_AXIS_MIRRORED, {0}, {1}, 1};
+    స్వయంచాలక handle_mul_mat = [&](స్థిరరాశి std::vector<ggml_backend_meta_విభజించు_state> & src_ss) -> ggml_backend_meta_విభజించు_state {
+        ఒకవేళ (src_ss[0].axis == GGML_BACKEND_విభజించు_AXIS_MIRRORED && src_ss[1].axis == GGML_BACKEND_విభజించు_AXIS_MIRRORED) {
+            తిరిగి {GGML_BACKEND_విభజించు_AXIS_MIRRORED, {0}, {1}, 1};
         }
-        if (src_ss[0].axis == GGML_BACKEND_SPLIT_AXIS_1 && src_ss[1].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED) {
-            ggml_backend_meta_split_state ret = src_ss[0];
-            ret.axis = GGML_BACKEND_SPLIT_AXIS_0;
+        ఒకవేళ (src_ss[0].axis == GGML_BACKEND_విభజించు_AXIS_1 && src_ss[1].axis == GGML_BACKEND_విభజించు_AXIS_MIRRORED) {
+            ggml_backend_meta_విభజించు_state ret = src_ss[0];
+            ret.axis = GGML_BACKEND_విభజించు_AXIS_0;
             ret.nr[0] = 1;
             ret.n_segments = 1;
-            return ret;
+            తిరిగి ret;
         }
-        if (src_ss[1].axis == GGML_BACKEND_SPLIT_AXIS_1 && src_ss[0].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED) {
-            return src_ss[1];
+        ఒకవేళ (src_ss[1].axis == GGML_BACKEND_విభజించు_AXIS_1 && src_ss[0].axis == GGML_BACKEND_విభజించు_AXIS_MIRRORED) {
+            తిరిగి src_ss[1];
         }
-        if (src_ss[0].axis == GGML_BACKEND_SPLIT_AXIS_0 && src_ss[1].axis == GGML_BACKEND_SPLIT_AXIS_0) {
-            GGML_ASSERT(split_states_equal(src_ss[0], src_ss[1]));
-            return {assume_sync ? GGML_BACKEND_SPLIT_AXIS_MIRRORED : GGML_BACKEND_SPLIT_AXIS_PARTIAL, {0}, {1}, 1};
+        ఒకవేళ (src_ss[0].axis == GGML_BACKEND_విభజించు_AXIS_0 && src_ss[1].axis == GGML_BACKEND_విభజించు_AXIS_0) {
+            GGML_ASSERT(విభజించు_స్థితులు_equal(src_ss[0], src_ss[1]));
+            తిరిగి {assume_sync ? GGML_BACKEND_విభజించు_AXIS_MIRRORED : GGML_BACKEND_విభజించు_AXIS_PARTIAL, {0}, {1}, 1};
         }
-        if (src_ss[0].axis == src_ss[1].axis && src_ss[0].axis >= GGML_BACKEND_SPLIT_AXIS_2 &&
+        ఒకవేళ (src_ss[0].axis == src_ss[1].axis && src_ss[0].axis >= GGML_BACKEND_విభజించు_AXIS_2 &&
                 src_ss[0].axis < GGML_MAX_DIMS) {
-            GGML_ASSERT(split_states_equal(src_ss[0], src_ss[1]));
-            return src_ss[0];
+            GGML_ASSERT(విభజించు_స్థితులు_equal(src_ss[0], src_ss[1]));
+            తిరిగి src_ss[0];
         }
         // batched matmul with the batches split across devices and a replicated activation
-        if (src_ss[0].axis >= GGML_BACKEND_SPLIT_AXIS_2 && src_ss[0].axis < GGML_MAX_DIMS &&
-                src_ss[1].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED) {
-            return src_ss[0];
+        ఒకవేళ (src_ss[0].axis >= GGML_BACKEND_విభజించు_AXIS_2 && src_ss[0].axis < GGML_MAX_DIMS &&
+                src_ss[1].axis == GGML_BACKEND_విభజించు_AXIS_MIRRORED) {
+            తిరిగి src_ss[0];
         }
         GGML_ABORT("unsupported mul_mat split states: node=%s src0=%s axis=%d src1=%s axis=%d",
-            tensor->name, tensor->src[0]->name, (int) src_ss[0].axis, tensor->src[1]->name, (int) src_ss[1].axis);
+            tensor->name, tensor->src[0]->name, (పూర్ణాంకం) src_ss[0].axis, tensor->src[1]->name, (పూర్ణాంకం) src_ss[1].axis);
         //return {GGML_BACKEND_SPLIT_AXIS_UNKNOWN, {0}, {1}, 1};
     };
 
-    auto handle_reshape = [&](const std::vector<ggml_backend_meta_split_state> & src_ss) -> ggml_backend_meta_split_state {
-        switch (src_ss[0].axis) {
-            case GGML_BACKEND_SPLIT_AXIS_0:
-            case GGML_BACKEND_SPLIT_AXIS_1:
-            case GGML_BACKEND_SPLIT_AXIS_2:
-            case GGML_BACKEND_SPLIT_AXIS_3: {
-                int64_t base_ne_in = 1;
-                for (int dim = 0; dim <= src_ss[0].axis; dim++) {
-                    base_ne_in *= tensor->src[0]->ne[dim];
+    స్వయంచాలక handle_reshape = [&](స్థిరరాశి std::vector<ggml_backend_meta_విభజించు_state> & src_ss) -> ggml_backend_meta_విభజించు_state {
+        ఎంపిక (src_ss[0].axis) {
+            స్థితి GGML_BACKEND_విభజించు_AXIS_0:
+            స్థితి GGML_BACKEND_విభజించు_AXIS_1:
+            స్థితి GGML_BACKEND_విభజించు_AXIS_2:
+            స్థితి GGML_BACKEND_విభజించు_AXIS_3: {
+                int64_t పునాది_ne_లోపల = 1;
+                కొరకు (పూర్ణాంకం dim = 0; dim <= src_ss[0].axis; dim++) {
+                    పునాది_ne_లోపల *= tensor->src[0]->ne[dim];
                 }
-                if (src_ss[0].n_segments == 1) {
-                    base_ne_in /= src_ss[0].nr[0];
-                    if (src_ss[0].axis == ggml_n_dims(tensor->src[0]) - 1 && src_ss[0].nr[0] == 1) {
-                        return {ggml_backend_meta_split_axis(ggml_n_dims(tensor) - 1), {0}, {1}, 1};
+                ఒకవేళ (src_ss[0].n_segments == 1) {
+                    పునాది_ne_లోపల /= src_ss[0].nr[0];
+                    ఒకవేళ (src_ss[0].axis == ggml_n_dims(tensor->src[0]) - 1 && src_ss[0].nr[0] == 1) {
+                        తిరిగి {ggml_backend_meta_విభజించు_axis(ggml_n_dims(tensor) - 1), {0}, {1}, 1};
                     }
-                    if (src_ss[0].axis == GGML_BACKEND_SPLIT_AXIS_0 && tensor->ne[0] == tensor->src[0]->ne[0] &&
+                    ఒకవేళ (src_ss[0].axis == GGML_BACKEND_విభజించు_AXIS_0 && tensor->ne[0] == tensor->src[0]->ne[0] &&
                             tensor->ne[1] == 1 && src_ss[0].nr[0] == 1) {
-                        bool complete_rows = true;
-                        for (size_t j = 0; j < n_bufs; j++) {
-                            const int64_t ne = src_ss[0].ne[j];
-                            complete_rows = complete_rows && (ne == 0 || ne == tensor->src[0]->ne[0]);
+                        తార్కిక complete_అడ్డువరుసలు = నిజం;
+                        కొరకు (size_t j = 0; j < n_bufs; j++) {
+                            స్థిరరాశి int64_t ne = src_ss[0].ne[j];
+                            complete_అడ్డువరుసలు = complete_అడ్డువరుసలు && (ne == 0 || ne == tensor->src[0]->ne[0]);
                         }
-                        if (complete_rows) {
+                        ఒకవేళ (complete_అడ్డువరుసలు) {
                             // Move a complete dim-0 split to the following singleton dimension.
-                            return {GGML_BACKEND_SPLIT_AXIS_1, {0}, {1}, 1};
+                            తిరిగి {GGML_BACKEND_విభజించు_AXIS_1, {0}, {1}, 1};
                         }
                     }
                 }
                 // Reshape outputs use one segment; split-state propagation merges source segments.
-                int64_t base_ne_out = 1;
-                for (int dim = 0; dim < GGML_MAX_DIMS; dim++) {
-                    base_ne_out *= tensor->ne[dim];
-                    if (base_ne_out % base_ne_in == 0) {
-                        return {ggml_backend_meta_split_axis(dim), {0}, {uint32_t(base_ne_out/base_ne_in)}, 1};
+                int64_t పునాది_ne_బహిర్గతం = 1;
+                కొరకు (పూర్ణాంకం dim = 0; dim < GGML_MAX_DIMS; dim++) {
+                    పునాది_ne_బహిర్గతం *= tensor->ne[dim];
+                    ఒకవేళ (పునాది_ne_బహిర్గతం % పునాది_ne_లోపల == 0) {
+                        తిరిగి {ggml_backend_meta_విభజించు_axis(dim), {0}, {uint32_t(పునాది_ne_బహిర్గతం/పునాది_ne_లోపల)}, 1};
                     }
-                    if (base_ne_out > base_ne_in) {
+                    ఒకవేళ (పునాది_ne_బహిర్గతం > పునాది_ne_లోపల) {
                         GGML_ASSERT(src_ss[0].n_segments == 1);
                         GGML_ASSERT(src_ss[0].nr[0]      == 1);
-                        return {ggml_backend_meta_split_axis(dim), {0}, {1}, 1};
+                        తిరిగి {ggml_backend_meta_విభజించు_axis(dim), {0}, {1}, 1};
                     }
                 }
                 GGML_ABORT("shape mismatch for %s", ggml_op_name(tensor->op));
             }
-            case GGML_BACKEND_SPLIT_AXIS_MIRRORED:
-            case GGML_BACKEND_SPLIT_AXIS_PARTIAL: {
-                return src_ss[0];
+            స్థితి GGML_BACKEND_విభజించు_AXIS_MIRRORED:
+            స్థితి GGML_BACKEND_విభజించు_AXIS_PARTIAL: {
+                తిరిగి src_ss[0];
             }
-            default: {
+            అప్రమేయ: {
                 GGML_ABORT("fatal error");
                 //return {GGML_BACKEND_SPLIT_AXIS_UNKNOWN, {0}, {1}, 1};
             }
         }
     };
 
-    auto handle_cpy = [&](const std::vector<ggml_backend_meta_split_state> & src_ss) -> ggml_backend_meta_split_state {
-        if (src_ss[0].axis >= 0 && src_ss[0].axis < GGML_MAX_DIMS) {
-            return handle_reshape(src_ss);
+    స్వయంచాలక handle_cpy = [&](స్థిరరాశి std::vector<ggml_backend_meta_విభజించు_state> & src_ss) -> ggml_backend_meta_విభజించు_state {
+        ఒకవేళ (src_ss[0].axis >= 0 && src_ss[0].axis < GGML_MAX_DIMS) {
+            తిరిగి handle_reshape(src_ss);
         }
-        return handle_generic(src_ss, /*scalar_only =*/ false);
+        తిరిగి handle_generic(src_ss, /*scalar_only =*/ అబద్ధం);
     };
 
-    auto handle_view = [&](const std::vector<ggml_backend_meta_split_state> & src_ss) -> ggml_backend_meta_split_state {
-        if (ggml_is_contiguous(tensor) && ggml_is_contiguous(tensor->src[0])) {
-            return handle_reshape(src_ss);
+    స్వయంచాలక handle_view = [&](స్థిరరాశి std::vector<ggml_backend_meta_విభజించు_state> & src_ss) -> ggml_backend_meta_విభజించు_state {
+        ఒకవేళ (ggml_is_contiguous(tensor) && ggml_is_contiguous(tensor->src[0])) {
+            తిరిగి handle_reshape(src_ss);
         }
-        const int axis = src_ss[0].axis;
+        స్థిరరాశి పూర్ణాంకం axis = src_ss[0].axis;
         {
-            bool all_strides_the_same = true;
-            for (int dim = 0; dim < GGML_MAX_DIMS; dim++) {
-                if (tensor->ne[dim] == 1 && tensor->src[0]->ne[dim] == 1) {
-                    continue;
+            తార్కిక all_strides_the_same = నిజం;
+            కొరకు (పూర్ణాంకం dim = 0; dim < GGML_MAX_DIMS; dim++) {
+                ఒకవేళ (tensor->ne[dim] == 1 && tensor->src[0]->ne[dim] == 1) {
+                    కొనసాగు;
                 }
-                if (tensor->nb[dim] != tensor->src[0]->nb[dim]) {
-                    all_strides_the_same = false;
-                    break;
+                ఒకవేళ (tensor->nb[dim] != tensor->src[0]->nb[dim]) {
+                    all_strides_the_same = అబద్ధం;
+                    ఆపు;
                 }
             }
-            if (all_strides_the_same) {
-                return src_ss[0];
+            ఒకవేళ (all_strides_the_same) {
+                తిరిగి src_ss[0];
             }
         }
-        if (!ggml_is_permuted(tensor) && !ggml_is_permuted(tensor->src[0]) && axis >= 0 && axis < GGML_MAX_DIMS-1) {
-            for (int dim = 0; dim < GGML_MAX_DIMS-1; dim++) {
-                if (tensor->nb[dim+1] == tensor->src[0]->nb[axis+1]) {
-                    return {ggml_backend_meta_split_axis(dim), {0}, {1}, 1};
+        ఒకవేళ (!ggml_is_permuted(tensor) && !ggml_is_permuted(tensor->src[0]) && axis >= 0 && axis < GGML_MAX_DIMS-1) {
+            కొరకు (పూర్ణాంకం dim = 0; dim < GGML_MAX_DIMS-1; dim++) {
+                ఒకవేళ (tensor->nb[dim+1] == tensor->src[0]->nb[axis+1]) {
+                    తిరిగి {ggml_backend_meta_విభజించు_axis(dim), {0}, {1}, 1};
                 }
             }
             GGML_ABORT("fatal error");
         }
-        if (src_ss[0].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED || src_ss[0].axis == GGML_BACKEND_SPLIT_AXIS_PARTIAL) {
-            return src_ss[0];
+        ఒకవేళ (src_ss[0].axis == GGML_BACKEND_విభజించు_AXIS_MIRRORED || src_ss[0].axis == GGML_BACKEND_విభజించు_AXIS_PARTIAL) {
+            తిరిగి src_ss[0];
         }
         GGML_ABORT("view of permuted tensor not implemented");
         //return {GGML_BACKEND_SPLIT_AXIS_UNKNOWN, {0}, {1}, 1};
     };
 
-    auto handle_permute = [&](const std::vector<ggml_backend_meta_split_state> & src_ss) -> ggml_backend_meta_split_state {
-        switch (src_ss[0].axis) {
-            case GGML_BACKEND_SPLIT_AXIS_0:
-            case GGML_BACKEND_SPLIT_AXIS_1:
-            case GGML_BACKEND_SPLIT_AXIS_2:
-            case GGML_BACKEND_SPLIT_AXIS_3: {
+    స్వయంచాలక handle_క్రమమార్పు = [&](స్థిరరాశి std::vector<ggml_backend_meta_విభజించు_state> & src_ss) -> ggml_backend_meta_విభజించు_state {
+        ఎంపిక (src_ss[0].axis) {
+            స్థితి GGML_BACKEND_విభజించు_AXIS_0:
+            స్థితి GGML_BACKEND_విభజించు_AXIS_1:
+            స్థితి GGML_BACKEND_విభజించు_AXIS_2:
+            స్థితి GGML_BACKEND_విభజించు_AXIS_3: {
                 GGML_ASSERT(src_ss[0].n_segments == 1 || src_ss[0].nr[0] == 1);
-                return {ggml_backend_meta_split_axis(tensor->op_params[src_ss[0].axis]), {0}, {src_ss[0].nr[0]}, 1};
+                తిరిగి {ggml_backend_meta_విభజించు_axis(tensor->op_params[src_ss[0].axis]), {0}, {src_ss[0].nr[0]}, 1};
             }
-            case GGML_BACKEND_SPLIT_AXIS_MIRRORED:
-            case GGML_BACKEND_SPLIT_AXIS_PARTIAL: {
-                return src_ss[0];
+            స్థితి GGML_BACKEND_విభజించు_AXIS_MIRRORED:
+            స్థితి GGML_BACKEND_విభజించు_AXIS_PARTIAL: {
+                తిరిగి src_ss[0];
             }
-            default: {
+            అప్రమేయ: {
                 GGML_ABORT("fatal error");
                 //return {GGML_BACKEND_SPLIT_AXIS_UNKNOWN, {0}, {1}, 1};
             }
         }
     };
 
-    auto handle_transpose = [&](const std::vector<ggml_backend_meta_split_state> & src_ss) -> ggml_backend_meta_split_state {
-        switch (src_ss[0].axis) {
-            case GGML_BACKEND_SPLIT_AXIS_0:
-            case GGML_BACKEND_SPLIT_AXIS_1: {
+    స్వయంచాలక handle_transpose = [&](స్థిరరాశి std::vector<ggml_backend_meta_విభజించు_state> & src_ss) -> ggml_backend_meta_విభజించు_state {
+        ఎంపిక (src_ss[0].axis) {
+            స్థితి GGML_BACKEND_విభజించు_AXIS_0:
+            స్థితి GGML_BACKEND_విభజించు_AXIS_1: {
                 GGML_ASSERT(src_ss[0].n_segments == 1 || src_ss[0].nr[0] == 1);
-                return {ggml_backend_meta_split_axis(int(src_ss[0].axis) ^ 1), {0}, {src_ss[0].nr[0]}, 1};
+                తిరిగి {ggml_backend_meta_విభజించు_axis(పూర్ణాంకం(src_ss[0].axis) ^ 1), {0}, {src_ss[0].nr[0]}, 1};
             }
-            case GGML_BACKEND_SPLIT_AXIS_2:
-            case GGML_BACKEND_SPLIT_AXIS_3:
-            case GGML_BACKEND_SPLIT_AXIS_MIRRORED:
-            case GGML_BACKEND_SPLIT_AXIS_PARTIAL: {
-                return src_ss[0];
+            స్థితి GGML_BACKEND_విభజించు_AXIS_2:
+            స్థితి GGML_BACKEND_విభజించు_AXIS_3:
+            స్థితి GGML_BACKEND_విభజించు_AXIS_MIRRORED:
+            స్థితి GGML_BACKEND_విభజించు_AXIS_PARTIAL: {
+                తిరిగి src_ss[0];
             }
-            default: {
+            అప్రమేయ: {
                 GGML_ABORT("fatal error");
                 //return {GGML_BACKEND_SPLIT_AXIS_UNKNOWN, {0}, {1}, 1};
             }
         }
     };
 
-    auto handle_get_rows = [&](const std::vector<ggml_backend_meta_split_state> & src_ss) -> ggml_backend_meta_split_state {
-        if (src_ss[0].axis == GGML_BACKEND_SPLIT_AXIS_0 && src_ss[1].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED) {
-            return src_ss[0];
+    స్వయంచాలక handle_get_అడ్డువరుసలు = [&](స్థిరరాశి std::vector<ggml_backend_meta_విభజించు_state> & src_ss) -> ggml_backend_meta_విభజించు_state {
+        ఒకవేళ (src_ss[0].axis == GGML_BACKEND_విభజించు_AXIS_0 && src_ss[1].axis == GGML_BACKEND_విభజించు_AXIS_MIRRORED) {
+            తిరిగి src_ss[0];
         }
-        return handle_generic(src_ss, /*scalar_only =*/ true);
+        తిరిగి handle_generic(src_ss, /*scalar_only =*/ నిజం);
     };
 
-    auto handle_set_rows = [&](const std::vector<ggml_backend_meta_split_state> & src_ss) -> ggml_backend_meta_split_state {
-        GGML_ASSERT(src_ss[0].axis != GGML_BACKEND_SPLIT_AXIS_1);
-        GGML_ASSERT(src_ss[1].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED);
-        GGML_ASSERT(split_states_equal(src_ss[0], src_ss[2]));
-        return src_ss[0];
+    స్వయంచాలక handle_సమితి_అడ్డువరుసలు = [&](స్థిరరాశి std::vector<ggml_backend_meta_విభజించు_state> & src_ss) -> ggml_backend_meta_విభజించు_state {
+        GGML_ASSERT(src_ss[0].axis != GGML_BACKEND_విభజించు_AXIS_1);
+        GGML_ASSERT(src_ss[1].axis == GGML_BACKEND_విభజించు_AXIS_MIRRORED);
+        GGML_ASSERT(విభజించు_స్థితులు_equal(src_ss[0], src_ss[2]));
+        తిరిగి src_ss[0];
     };
 
-    auto handle_rope = [&](const std::vector<ggml_backend_meta_split_state> & src_ss) -> ggml_backend_meta_split_state {
-        GGML_ASSERT(src_ss[1].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED);
-        return src_ss[0];
+    స్వయంచాలక handle_rope = [&](స్థిరరాశి std::vector<ggml_backend_meta_విభజించు_state> & src_ss) -> ggml_backend_meta_విభజించు_state {
+        GGML_ASSERT(src_ss[1].axis == GGML_BACKEND_విభజించు_AXIS_MIRRORED);
+        తిరిగి src_ss[0];
     };
 
-    auto handle_pad = [&](const std::vector<ggml_backend_meta_split_state> & src_ss) -> ggml_backend_meta_split_state {
-        if (src_ss[0].axis >= 0 && src_ss[0].axis < GGML_MAX_DIMS) {
+    స్వయంచాలక handle_pad = [&](స్థిరరాశి std::vector<ggml_backend_meta_విభజించు_state> & src_ss) -> ggml_backend_meta_విభజించు_state {
+        ఒకవేళ (src_ss[0].axis >= 0 && src_ss[0].axis < GGML_MAX_DIMS) {
             GGML_ASSERT(tensor->op_params[2*src_ss[0].axis + 0] == 0);
             GGML_ASSERT(tensor->op_params[2*src_ss[0].axis + 1] == 0);
         }
-        return src_ss[0];
+        తిరిగి src_ss[0];
     };
 
-    auto handle_pool_1d = [&](const std::vector<ggml_backend_meta_split_state> & src_ss) -> ggml_backend_meta_split_state {
-        if (src_ss[0].axis == GGML_BACKEND_SPLIT_AXIS_0) {
-            return {GGML_BACKEND_SPLIT_AXIS_MIRRORED, {0}, {1}, 1};
+    స్వయంచాలక handle_pool_1d = [&](స్థిరరాశి std::vector<ggml_backend_meta_విభజించు_state> & src_ss) -> ggml_backend_meta_విభజించు_state {
+        ఒకవేళ (src_ss[0].axis == GGML_BACKEND_విభజించు_AXIS_0) {
+            తిరిగి {GGML_BACKEND_విభజించు_AXIS_MIRRORED, {0}, {1}, 1};
         }
-        return src_ss[0];
+        తిరిగి src_ss[0];
     };
 
-    auto handle_flash_attn_ext = [&](const std::vector<ggml_backend_meta_split_state> & src_ss) -> ggml_backend_meta_split_state {
-        GGML_ASSERT(tensor->src[3] == nullptr || src_ss[3].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED);
+    స్వయంచాలక handle_flash_attn_ext = [&](స్థిరరాశి std::vector<ggml_backend_meta_విభజించు_state> & src_ss) -> ggml_backend_meta_విభజించు_state {
+        GGML_ASSERT(tensor->src[3] == శూన్యసూచిక || src_ss[3].axis == GGML_BACKEND_విభజించు_AXIS_MIRRORED);
 
-        if (src_ss[0].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED) {
-            GGML_ASSERT(src_ss[1].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED);
-            GGML_ASSERT(src_ss[2].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED);
-            GGML_ASSERT(tensor->src[4] == nullptr || src_ss[4].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED);
-            return {GGML_BACKEND_SPLIT_AXIS_MIRRORED, {0}, {1}, 1};
+        ఒకవేళ (src_ss[0].axis == GGML_BACKEND_విభజించు_AXIS_MIRRORED) {
+            GGML_ASSERT(src_ss[1].axis == GGML_BACKEND_విభజించు_AXIS_MIRRORED);
+            GGML_ASSERT(src_ss[2].axis == GGML_BACKEND_విభజించు_AXIS_MIRRORED);
+            GGML_ASSERT(tensor->src[4] == శూన్యసూచిక || src_ss[4].axis == GGML_BACKEND_విభజించు_AXIS_MIRRORED);
+            తిరిగి {GGML_BACKEND_విభజించు_AXIS_MIRRORED, {0}, {1}, 1};
         }
 
-        GGML_ASSERT(src_ss[0].axis == GGML_BACKEND_SPLIT_AXIS_2);
-        const bool kv_split = src_ss[1].axis == GGML_BACKEND_SPLIT_AXIS_2 &&
-                src_ss[2].axis == GGML_BACKEND_SPLIT_AXIS_2;
-        const bool kv_mirrored = src_ss[1].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED &&
-                src_ss[2].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED;
-        GGML_ASSERT(kv_split || kv_mirrored);
-        GGML_ASSERT(tensor->src[4] == nullptr || src_ss[4].axis == GGML_BACKEND_SPLIT_AXIS_0);
-        return {GGML_BACKEND_SPLIT_AXIS_1, {0}, {1}, 1};
+        GGML_ASSERT(src_ss[0].axis == GGML_BACKEND_విభజించు_AXIS_2);
+        స్థిరరాశి తార్కిక kv_విభజించు = src_ss[1].axis == GGML_BACKEND_విభజించు_AXIS_2 &&
+                src_ss[2].axis == GGML_BACKEND_విభజించు_AXIS_2;
+        స్థిరరాశి తార్కిక kv_mirrored = src_ss[1].axis == GGML_BACKEND_విభజించు_AXIS_MIRRORED &&
+                src_ss[2].axis == GGML_BACKEND_విభజించు_AXIS_MIRRORED;
+        GGML_ASSERT(kv_విభజించు || kv_mirrored);
+        GGML_ASSERT(tensor->src[4] == శూన్యసూచిక || src_ss[4].axis == GGML_BACKEND_విభజించు_AXIS_0);
+        తిరిగి {GGML_BACKEND_విభజించు_AXIS_1, {0}, {1}, 1};
     };
 
-    auto handle_lightning_indexer = [&](
-            const std::vector<ggml_backend_meta_split_state> & src_ss) -> ggml_backend_meta_split_state {
-        for (size_t i = 0; i < 4; i++) {
-            GGML_ASSERT(src_ss[i].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED);
+    స్వయంచాలక handle_lightning_indexer = [&](
+            స్థిరరాశి std::vector<ggml_backend_meta_విభజించు_state> & src_ss) -> ggml_backend_meta_విభజించు_state {
+        కొరకు (size_t i = 0; i < 4; i++) {
+            GGML_ASSERT(src_ss[i].axis == GGML_BACKEND_విభజించు_AXIS_MIRRORED);
         }
-        return {GGML_BACKEND_SPLIT_AXIS_MIRRORED, {0}, {1}, 1};
+        తిరిగి {GGML_BACKEND_విభజించు_AXIS_MIRRORED, {0}, {1}, 1};
     };
 
-    auto handle_ssm_conv = [&](const std::vector<ggml_backend_meta_split_state> & src_ss) -> ggml_backend_meta_split_state {
-        if (src_ss[0].axis == src_ss[1].axis) {
-            if (src_ss[0].axis == GGML_BACKEND_SPLIT_AXIS_0) {
-                return {GGML_BACKEND_SPLIT_AXIS_1, {0}, {1}, 1};
+    స్వయంచాలక handle_ssm_conv = [&](స్థిరరాశి std::vector<ggml_backend_meta_విభజించు_state> & src_ss) -> ggml_backend_meta_విభజించు_state {
+        ఒకవేళ (src_ss[0].axis == src_ss[1].axis) {
+            ఒకవేళ (src_ss[0].axis == GGML_BACKEND_విభజించు_AXIS_0) {
+                తిరిగి {GGML_BACKEND_విభజించు_AXIS_1, {0}, {1}, 1};
             }
-            if (src_ss[0].axis == GGML_BACKEND_SPLIT_AXIS_1) {
-                return {GGML_BACKEND_SPLIT_AXIS_0, {0}, {1}, 1};
+            ఒకవేళ (src_ss[0].axis == GGML_BACKEND_విభజించు_AXIS_1) {
+                తిరిగి {GGML_BACKEND_విభజించు_AXIS_0, {0}, {1}, 1};
             }
         }
-        return handle_generic(src_ss, /*scalar_only =*/ false);
+        తిరిగి handle_generic(src_ss, /*scalar_only =*/ అబద్ధం);
     };
 
-    auto handle_gated_delta_net = [&](const std::vector<ggml_backend_meta_split_state> & src_ss) -> ggml_backend_meta_split_state {
-        if (src_ss[0].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED && src_ss[1].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED &&
-                src_ss[2].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED && src_ss[3].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED &&
-                src_ss[4].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED && src_ss[5].axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED) {
-            return src_ss[0];
+    స్వయంచాలక handle_gated_delta_net = [&](స్థిరరాశి std::vector<ggml_backend_meta_విభజించు_state> & src_ss) -> ggml_backend_meta_విభజించు_state {
+        ఒకవేళ (src_ss[0].axis == GGML_BACKEND_విభజించు_AXIS_MIRRORED && src_ss[1].axis == GGML_BACKEND_విభజించు_AXIS_MIRRORED &&
+                src_ss[2].axis == GGML_BACKEND_విభజించు_AXIS_MIRRORED && src_ss[3].axis == GGML_BACKEND_విభజించు_AXIS_MIRRORED &&
+                src_ss[4].axis == GGML_BACKEND_విభజించు_AXIS_MIRRORED && src_ss[5].axis == GGML_BACKEND_విభజించు_AXIS_MIRRORED) {
+            తిరిగి src_ss[0];
         }
-        GGML_ASSERT(src_ss[0].axis == GGML_BACKEND_SPLIT_AXIS_1);
-        GGML_ASSERT(src_ss[1].axis == GGML_BACKEND_SPLIT_AXIS_1);
-        GGML_ASSERT(src_ss[2].axis == GGML_BACKEND_SPLIT_AXIS_1);
-        GGML_ASSERT(src_ss[3].axis == GGML_BACKEND_SPLIT_AXIS_1);
-        GGML_ASSERT(src_ss[4].axis == GGML_BACKEND_SPLIT_AXIS_1);
+        GGML_ASSERT(src_ss[0].axis == GGML_BACKEND_విభజించు_AXIS_1);
+        GGML_ASSERT(src_ss[1].axis == GGML_BACKEND_విభజించు_AXIS_1);
+        GGML_ASSERT(src_ss[2].axis == GGML_BACKEND_విభజించు_AXIS_1);
+        GGML_ASSERT(src_ss[3].axis == GGML_BACKEND_విభజించు_AXIS_1);
+        GGML_ASSERT(src_ss[4].axis == GGML_BACKEND_విభజించు_AXIS_1);
         // state shape is [S_v, S_v, H_v, n_seqs] (s0 only); the heads dim is its own axis 2,
         // so a head-aligned split on the input cache lands on axis 2 here.
-        GGML_ASSERT(src_ss[5].axis == GGML_BACKEND_SPLIT_AXIS_2 || src_ss[5].axis == GGML_BACKEND_SPLIT_AXIS_1 || src_ss[5].axis == GGML_BACKEND_SPLIT_AXIS_0);
-        return {GGML_BACKEND_SPLIT_AXIS_0, {0}, {1}, 1};
+        GGML_ASSERT(src_ss[5].axis == GGML_BACKEND_విభజించు_AXIS_2 || src_ss[5].axis == GGML_BACKEND_విభజించు_AXIS_1 || src_ss[5].axis == GGML_BACKEND_విభజించు_AXIS_0);
+        తిరిగి {GGML_BACKEND_విభజించు_AXIS_0, {0}, {1}, 1};
     };
 
-    auto calculate_split_state = [&]() -> ggml_backend_meta_split_state {
-        if (ggml_nelements(tensor) == 0) {
-            return {GGML_BACKEND_SPLIT_AXIS_UNKNOWN, {0}, {1}, 1};
+    స్వయంచాలక calculate_విభజించు_state = [&]() -> ggml_backend_meta_విభజించు_state {
+        ఒకవేళ (ggml_nelements(tensor) == 0) {
+            తిరిగి {GGML_BACKEND_విభజించు_AXIS_UNKNOWN, {0}, {1}, 1};
         }
-        if (ggml_backend_buffer_get_usage(tensor->buffer) != GGML_BACKEND_BUFFER_USAGE_COMPUTE && tensor->view_src == nullptr) {
-            ggml_backend_dev_t dev = ggml_backend_buft_get_device(ggml_backend_buffer_get_type(tensor->buffer));
-            const ggml_backend_meta_device_context * dev_ctx = (const ggml_backend_meta_device_context *) dev->context;
-            ggml_backend_meta_split_state ret = dev_ctx->get_split_state(tensor, dev_ctx->get_split_state_ud);
-            if (ret.axis >= 0 && ret.axis < GGML_MAX_DIMS) {
-                const int64_t granularity = ret.axis == GGML_BACKEND_SPLIT_AXIS_0 ? ggml_blck_size(tensor->type) : 1;
-                int64_t ne_sum = 0;
-                for (size_t s = 0; s < ret.n_segments; s++) {
-                    for (size_t j = 0; j < n_bufs; j++) {
+        ఒకవేళ (ggml_backend_బఫరు_get_usage(tensor->బఫరు) != GGML_BACKEND_బఫరు_USAGE_COMPUTE && tensor->view_src == శూన్యసూచిక) {
+            ggml_backend_dev_t dev = ggml_backend_buft_get_device(ggml_backend_బఫరు_get_type(tensor->బఫరు));
+            స్థిరరాశి ggml_backend_meta_device_context * dev_ctx = (స్థిరరాశి ggml_backend_meta_device_context *) dev->context;
+            ggml_backend_meta_విభజించు_state ret = dev_ctx->get_విభజించు_state(tensor, dev_ctx->get_విభజించు_state_ud);
+            ఒకవేళ (ret.axis >= 0 && ret.axis < GGML_MAX_DIMS) {
+                స్థిరరాశి int64_t granularity = ret.axis == GGML_BACKEND_విభజించు_AXIS_0 ? ggml_blck_కొలత(tensor->type) : 1;
+                int64_t ne_కూడిక = 0;
+                కొరకు (size_t s = 0; s < ret.n_segments; s++) {
+                    కొరకు (size_t j = 0; j < n_bufs; j++) {
                         GGML_ASSERT(ret.ne[s*n_bufs + j] % granularity == 0);
-                        ne_sum += ret.ne[s*n_bufs + j] * ret.nr[s];
+                        ne_కూడిక += ret.ne[s*n_bufs + j] * ret.nr[s];
                     }
                 }
-                GGML_ASSERT(ne_sum == tensor->ne[ret.axis]);
-            } else if (ret.axis == GGML_BACKEND_SPLIT_AXIS_PARTIAL) {
+                GGML_ASSERT(ne_కూడిక == tensor->ne[ret.axis]);
+            } లేకపోతే ఒకవేళ (ret.axis == GGML_BACKEND_విభజించు_AXIS_PARTIAL) {
                 GGML_ASSERT(ret.n_segments == 1);
                 GGML_ASSERT(ret.nr[0] == 1);
             }
-            return ret;
+            తిరిగి ret;
         }
 
-        std::vector<ggml_backend_meta_split_state> src_ss(GGML_MAX_SRC, {GGML_BACKEND_SPLIT_AXIS_NONE, {0}, {1}, 1});
-        for (size_t i = 0; i < GGML_MAX_SRC; i++) {
-            if (tensor->src[i] == nullptr || tensor->src[i] == tensor) {
-                src_ss[i] = {GGML_BACKEND_SPLIT_AXIS_UNKNOWN, {0}, {1}, 1};
-                continue;
+        std::vector<ggml_backend_meta_విభజించు_state> src_ss(GGML_MAX_SRC, {GGML_BACKEND_విభజించు_AXIS_NONE, {0}, {1}, 1});
+        కొరకు (size_t i = 0; i < GGML_MAX_SRC; i++) {
+            ఒకవేళ (tensor->src[i] == శూన్యసూచిక || tensor->src[i] == tensor) {
+                src_ss[i] = {GGML_BACKEND_విభజించు_AXIS_UNKNOWN, {0}, {1}, 1};
+                కొనసాగు;
             }
-            src_ss[i] = ggml_backend_meta_get_split_state(stc, tensor->src[i], /*assume_sync =*/ true);
-            GGML_ASSERT(src_ss[i].axis != GGML_BACKEND_SPLIT_AXIS_UNKNOWN);
+            src_ss[i] = ggml_backend_meta_get_విభజించు_state(stc, tensor->src[i], /*assume_sync =*/ నిజం);
+            GGML_ASSERT(src_ss[i].axis != GGML_BACKEND_విభజించు_AXIS_UNKNOWN);
         }
 
-        ggml_backend_meta_split_state split_state;
-        switch (tensor->op) {
-            case GGML_OP_NONE: {
-                if (tensor->view_src != nullptr) {
+        ggml_backend_meta_విభజించు_state విభజించు_state;
+        ఎంపిక (tensor->op) {
+            స్థితి GGML_OP_NONE: {
+                ఒకవేళ (tensor->view_src != శూన్యసూచిక) {
                     // full-tensor view created with ggml_view_tensor, transparent for the split state
-                    split_state = ggml_backend_meta_get_split_state(stc, tensor->view_src, assume_sync);
-                } else {
-                    split_state = {GGML_BACKEND_SPLIT_AXIS_MIRRORED, {0}, {1}, 1};
+                    విభజించు_state = ggml_backend_meta_get_విభజించు_state(stc, tensor->view_src, assume_sync);
+                } లేకపోతే {
+                    విభజించు_state = {GGML_BACKEND_విభజించు_AXIS_MIRRORED, {0}, {1}, 1};
                 }
-            } break;
-            case GGML_OP_DUP: {
-                split_state = handle_generic(src_ss, /*scalar_only =*/ true);
-            } break;
-            case GGML_OP_ADD:
-            case GGML_OP_ADD_ID: {
-                split_state = handle_bin_bcast(src_ss);
-            } break;
-            case GGML_OP_ADD1:
-            case GGML_OP_ACC: {
-                split_state = handle_generic(src_ss, /*scalar_only =*/ true);
-            } break;
-            case GGML_OP_SUB:
-            case GGML_OP_MUL:
-            case GGML_OP_DIV: {
-                split_state = handle_bin_bcast(src_ss);
-            } break;
-            case GGML_OP_SQR:
-            case GGML_OP_SQRT:
-            case GGML_OP_LOG:
-            case GGML_OP_SIN:
-            case GGML_OP_COS: {
-                split_state = handle_generic(src_ss, /*scalar_only =*/ false);
-            } break;
-            case GGML_OP_SUM: {
-                split_state = handle_generic(src_ss, /*scalar_only =*/ true);
-            } break;
-            case GGML_OP_SUM_ROWS:
-            case GGML_OP_CUMSUM:
-            case GGML_OP_MEAN:
-            case GGML_OP_ARGMAX:
-            case GGML_OP_COUNT_EQUAL: {
-                split_state = handle_per_row(src_ss);
-            } break;
-            case GGML_OP_REPEAT:
-            case GGML_OP_REPEAT_BACK: {
-                split_state = handle_generic(src_ss, /*scalar_only =*/ false);
-            } break;
-            case GGML_OP_CONCAT: {
-                split_state = handle_concat(src_ss);
-            } break;
-            case GGML_OP_SILU_BACK: {
-                split_state = handle_generic(src_ss, /*scalar_only =*/ false);
-            } break;
-            case GGML_OP_NORM:
-            case GGML_OP_RMS_NORM:
-            case GGML_OP_RMS_NORM_BACK:
-            case GGML_OP_GROUP_NORM:
-            case GGML_OP_L2_NORM: {
-                split_state = handle_per_row(src_ss);
-            } break;
-            case GGML_OP_MUL_MAT:
-            case GGML_OP_MUL_MAT_ID: {
-                split_state = handle_mul_mat(src_ss);
-            } break;
-            case GGML_OP_OUT_PROD: {
-                split_state = handle_generic(src_ss, /*scalar_only =*/ true);
-            } break;
-            case GGML_OP_SCALE: {
-                split_state = handle_generic(src_ss, /*scalar_only =*/ false);
-            } break;
-            case GGML_OP_SET: {
-                split_state = handle_generic(src_ss, /*scalar_only =*/ true);
-            } break;
-            case GGML_OP_CPY: {
-                split_state = handle_cpy(src_ss);
-            } break;
-            case GGML_OP_CONT:
-            case GGML_OP_RESHAPE: {
-                split_state = handle_reshape(src_ss);
-            } break;
-            case GGML_OP_VIEW: {
-                split_state = handle_view(src_ss);
-            } break;
-            case GGML_OP_PERMUTE: {
-                split_state = handle_permute(src_ss);
-            } break;
-            case GGML_OP_TRANSPOSE: {
-                split_state = handle_transpose(src_ss);
-            } break;
-            case GGML_OP_GET_ROWS: {
-                split_state = handle_get_rows(src_ss);
-            } break;
-            case GGML_OP_GET_ROWS_BACK: {
-                split_state = handle_generic(src_ss, /*scalar_only =*/ true);
-            } break;
-            case GGML_OP_SET_ROWS: {
-                split_state = handle_set_rows(src_ss);
-            } break;
-            case GGML_OP_DIAG:
-            case GGML_OP_DIAG_MASK_INF:
-            case GGML_OP_DIAG_MASK_ZERO: {
-                split_state = handle_generic(src_ss, /*scalar_only =*/ true);
-            } break;
-            case GGML_OP_SOFT_MAX:
-            case GGML_OP_SOFT_MAX_BACK: {
-                split_state = handle_generic(src_ss, /*scalar_only =*/ false);
-            } break;
-            case GGML_OP_ROPE: {
-                split_state = handle_rope(src_ss);
-            } break;
-            case GGML_OP_ROPE_BACK: {
-                split_state = handle_rope(src_ss);
-            } break;
-            case GGML_OP_CLAMP: {
-                split_state = handle_generic(src_ss, /*scalar_only =*/ false);
-            } break;
-            case GGML_OP_CONV_TRANSPOSE_1D:
-            case GGML_OP_IM2COL:
-            case GGML_OP_IM2COL_BACK:
-            case GGML_OP_IM2COL_3D:
-            case GGML_OP_CONV_2D:
-            case GGML_OP_CONV_3D:
-            case GGML_OP_CONV_2D_DW:
-            case GGML_OP_CONV_TRANSPOSE_2D:
-            case GGML_OP_POOL_2D:
-            case GGML_OP_POOL_2D_BACK:
-            case GGML_OP_UPSCALE: {
-                split_state = handle_generic(src_ss, /*scalar_only =*/ true);
-            } break;
-            case GGML_OP_POOL_1D: {
-                split_state = handle_pool_1d(src_ss);
-            } break;
-            case GGML_OP_PAD: {
-                split_state = handle_pad(src_ss);
-            } break;
-            case GGML_OP_PAD_REFLECT_1D:
-            case GGML_OP_ROLL:
-            case GGML_OP_ARANGE:
-            case GGML_OP_TIMESTEP_EMBEDDING: {
-                split_state = handle_generic(src_ss, /*scalar_only =*/ true);
-            } break;
-            case GGML_OP_ARGSORT:
-            case GGML_OP_TOP_K: {
-                split_state = handle_per_row(src_ss);
-            } break;
-            case GGML_OP_LEAKY_RELU: {
-                split_state = handle_generic(src_ss, /*scalar_only =*/ false);
-            } break;
-            case GGML_OP_TRI: {
-                split_state = handle_generic(src_ss, /*scalar_only =*/ true);
-            } break;
-            case GGML_OP_FILL: {
-                split_state = handle_generic(src_ss, /*scalar_only =*/ false);
-            } break;
-            case GGML_OP_FLASH_ATTN_EXT: {
-                split_state = handle_flash_attn_ext(src_ss);
-            } break;
-            case GGML_OP_FLASH_ATTN_BACK: {
-                split_state = handle_generic(src_ss, /*scalar_only =*/ true);
-            } break;
-            case GGML_OP_SSM_CONV: {
-                split_state = handle_ssm_conv(src_ss);
-            } break;
-            case GGML_OP_SSM_SCAN:
-            case GGML_OP_WIN_PART:
-            case GGML_OP_WIN_UNPART:
-            case GGML_OP_GET_REL_POS:
-            case GGML_OP_ADD_REL_POS:
-            case GGML_OP_RWKV_WKV6:
-            case GGML_OP_GATED_LINEAR_ATTN:
-            case GGML_OP_RWKV_WKV7:
-            case GGML_OP_SOLVE_TRI: {
-                split_state = handle_generic(src_ss, /*scalar_only =*/ true);
-            } break;
-            case GGML_OP_GATED_DELTA_NET: {
-                split_state = handle_gated_delta_net(src_ss);
-            } break;
-            case GGML_OP_LIGHTNING_INDEXER: {
-                split_state = handle_lightning_indexer(src_ss);
-            } break;
-            case GGML_OP_DSV4_HC_COMB:
-            case GGML_OP_DSV4_HC_PRE:
-            case GGML_OP_DSV4_HC_POST:
-            case GGML_OP_TOP_K_MASK: {
-                split_state = handle_generic(src_ss, /*scalar_only =*/ true);
-            } break;
-            case GGML_OP_UNARY: {
-                split_state = handle_generic(src_ss, /*scalar_only =*/ false);
-            } break;
-            case GGML_OP_MAP_CUSTOM1:
-            case GGML_OP_MAP_CUSTOM2:
-            case GGML_OP_MAP_CUSTOM3:
-            case GGML_OP_CUSTOM: {
-                split_state = handle_generic(src_ss, /*scalar_only =*/ true);
-            } break;
-            case GGML_OP_CROSS_ENTROPY_LOSS:
-            case GGML_OP_CROSS_ENTROPY_LOSS_BACK: {
-                split_state = handle_per_row(src_ss);
-            } break;
-            case GGML_OP_OPT_STEP_ADAMW:
-            case GGML_OP_OPT_STEP_SGD:
-            case GGML_OP_GLU: {
-                split_state = handle_generic(src_ss, /*scalar_only =*/ false);
-            } break;
-            default: {
+            } ఆపు;
+            స్థితి GGML_OP_DUP: {
+                విభజించు_state = handle_generic(src_ss, /*scalar_only =*/ నిజం);
+            } ఆపు;
+            స్థితి GGML_OP_కూడు:
+            స్థితి GGML_OP_కూడు_ID: {
+                విభజించు_state = handle_bin_bcast(src_ss);
+            } ఆపు;
+            స్థితి GGML_OP_ADD1:
+            స్థితి GGML_OP_ACC: {
+                విభజించు_state = handle_generic(src_ss, /*scalar_only =*/ నిజం);
+            } ఆపు;
+            స్థితి GGML_OP_SUB:
+            స్థితి GGML_OP_MUL:
+            స్థితి GGML_OP_DIV: {
+                విభజించు_state = handle_bin_bcast(src_ss);
+            } ఆపు;
+            స్థితి GGML_OP_SQR:
+            స్థితి GGML_OP_SQRT:
+            స్థితి GGML_OP_LOG:
+            స్థితి GGML_OP_SIN:
+            స్థితి GGML_OP_COS: {
+                విభజించు_state = handle_generic(src_ss, /*scalar_only =*/ అబద్ధం);
+            } ఆపు;
+            స్థితి GGML_OP_కూడిక: {
+                విభజించు_state = handle_generic(src_ss, /*scalar_only =*/ నిజం);
+            } ఆపు;
+            స్థితి GGML_OP_కూడిక_అడ్డువరుసలు:
+            స్థితి GGML_OP_CUMSUM:
+            స్థితి GGML_OP_సగటు:
+            స్థితి GGML_OP_ARGMAX:
+            స్థితి GGML_OP_లెక్క_EQUAL: {
+                విభజించు_state = handle_చొప్పున_అడ్డువరుస(src_ss);
+            } ఆపు;
+            స్థితి GGML_OP_REPEAT:
+            స్థితి GGML_OP_REPEAT_వెనుక: {
+                విభజించు_state = handle_generic(src_ss, /*scalar_only =*/ అబద్ధం);
+            } ఆపు;
+            స్థితి GGML_OP_CONCAT: {
+                విభజించు_state = handle_concat(src_ss);
+            } ఆపు;
+            స్థితి GGML_OP_SILU_వెనుక: {
+                విభజించు_state = handle_generic(src_ss, /*scalar_only =*/ అబద్ధం);
+            } ఆపు;
+            స్థితి GGML_OP_NORM:
+            స్థితి GGML_OP_RMS_NORM:
+            స్థితి GGML_OP_RMS_NORM_వెనుక:
+            స్థితి GGML_OP_సమూహం_NORM:
+            స్థితి GGML_OP_L2_NORM: {
+                విభజించు_state = handle_చొప్పున_అడ్డువరుస(src_ss);
+            } ఆపు;
+            స్థితి GGML_OP_MUL_MAT:
+            స్థితి GGML_OP_MUL_MAT_ID: {
+                విభజించు_state = handle_mul_mat(src_ss);
+            } ఆపు;
+            స్థితి GGML_OP_బహిర్గతం_PROD: {
+                విభజించు_state = handle_generic(src_ss, /*scalar_only =*/ నిజం);
+            } ఆపు;
+            స్థితి GGML_OP_SCALE: {
+                విభజించు_state = handle_generic(src_ss, /*scalar_only =*/ అబద్ధం);
+            } ఆపు;
+            స్థితి GGML_OP_సమితి: {
+                విభజించు_state = handle_generic(src_ss, /*scalar_only =*/ నిజం);
+            } ఆపు;
+            స్థితి GGML_OP_CPY: {
+                విభజించు_state = handle_cpy(src_ss);
+            } ఆపు;
+            స్థితి GGML_OP_CONT:
+            స్థితి GGML_OP_RESHAPE: {
+                విభజించు_state = handle_reshape(src_ss);
+            } ఆపు;
+            స్థితి GGML_OP_VIEW: {
+                విభజించు_state = handle_view(src_ss);
+            } ఆపు;
+            స్థితి GGML_OP_క్రమమార్పు: {
+                విభజించు_state = handle_క్రమమార్పు(src_ss);
+            } ఆపు;
+            స్థితి GGML_OP_TRANSPOSE: {
+                విభజించు_state = handle_transpose(src_ss);
+            } ఆపు;
+            స్థితి GGML_OP_GET_అడ్డువరుసలు: {
+                విభజించు_state = handle_get_అడ్డువరుసలు(src_ss);
+            } ఆపు;
+            స్థితి GGML_OP_GET_అడ్డువరుసలు_వెనుక: {
+                విభజించు_state = handle_generic(src_ss, /*scalar_only =*/ నిజం);
+            } ఆపు;
+            స్థితి GGML_OP_సమితి_అడ్డువరుసలు: {
+                విభజించు_state = handle_సమితి_అడ్డువరుసలు(src_ss);
+            } ఆపు;
+            స్థితి GGML_OP_DIAG:
+            స్థితి GGML_OP_DIAG_ముసుగు_INF:
+            స్థితి GGML_OP_DIAG_ముసుగు_ZERO: {
+                విభజించు_state = handle_generic(src_ss, /*scalar_only =*/ నిజం);
+            } ఆపు;
+            స్థితి GGML_OP_SOFT_MAX:
+            స్థితి GGML_OP_SOFT_MAX_వెనుక: {
+                విభజించు_state = handle_generic(src_ss, /*scalar_only =*/ అబద్ధం);
+            } ఆపు;
+            స్థితి GGML_OP_ROPE: {
+                విభజించు_state = handle_rope(src_ss);
+            } ఆపు;
+            స్థితి GGML_OP_ROPE_వెనుక: {
+                విభజించు_state = handle_rope(src_ss);
+            } ఆపు;
+            స్థితి GGML_OP_CLAMP: {
+                విభజించు_state = handle_generic(src_ss, /*scalar_only =*/ అబద్ధం);
+            } ఆపు;
+            స్థితి GGML_OP_CONV_TRANSPOSE_1D:
+            స్థితి GGML_OP_IM2_నిలువు:
+            స్థితి GGML_OP_IM2_నిలువు_వెనుక:
+            స్థితి GGML_OP_IM2_నిలువు_3_D:
+            స్థితి GGML_OP_CONV_2D:
+            స్థితి GGML_OP_CONV_3D:
+            స్థితి GGML_OP_CONV_2D_DW:
+            స్థితి GGML_OP_CONV_TRANSPOSE_2D:
+            స్థితి GGML_OP_POOL_2D:
+            స్థితి GGML_OP_POOL_2_D_వెనుక:
+            స్థితి GGML_OP_UPSCALE: {
+                విభజించు_state = handle_generic(src_ss, /*scalar_only =*/ నిజం);
+            } ఆపు;
+            స్థితి GGML_OP_POOL_1D: {
+                విభజించు_state = handle_pool_1d(src_ss);
+            } ఆపు;
+            స్థితి GGML_OP_PAD: {
+                విభజించు_state = handle_pad(src_ss);
+            } ఆపు;
+            స్థితి GGML_OP_PAD_REFLECT_1D:
+            స్థితి GGML_OP_ROLL:
+            స్థితి GGML_OP_ARANGE:
+            స్థితి GGML_OP_TIMESTEP_EMBEDDING: {
+                విభజించు_state = handle_generic(src_ss, /*scalar_only =*/ నిజం);
+            } ఆపు;
+            స్థితి GGML_OP_ARGSORT:
+            స్థితి GGML_OP_శిఖరం_K: {
+                విభజించు_state = handle_చొప్పున_అడ్డువరుస(src_ss);
+            } ఆపు;
+            స్థితి GGML_OP_LEAKY_RELU: {
+                విభజించు_state = handle_generic(src_ss, /*scalar_only =*/ అబద్ధం);
+            } ఆపు;
+            స్థితి GGML_OP_TRI: {
+                విభజించు_state = handle_generic(src_ss, /*scalar_only =*/ నిజం);
+            } ఆపు;
+            స్థితి GGML_OP_FILL: {
+                విభజించు_state = handle_generic(src_ss, /*scalar_only =*/ అబద్ధం);
+            } ఆపు;
+            స్థితి GGML_OP_FLASH_ATTN_EXT: {
+                విభజించు_state = handle_flash_attn_ext(src_ss);
+            } ఆపు;
+            స్థితి GGML_OP_FLASH_ATTN_వెనుక: {
+                విభజించు_state = handle_generic(src_ss, /*scalar_only =*/ నిజం);
+            } ఆపు;
+            స్థితి GGML_OP_SSM_CONV: {
+                విభజించు_state = handle_ssm_conv(src_ss);
+            } ఆపు;
+            స్థితి GGML_OP_SSM_పరిశీలన:
+            స్థితి GGML_OP_WIN_PART:
+            స్థితి GGML_OP_WIN_UNPART:
+            స్థితి GGML_OP_GET_REL_POS:
+            స్థితి GGML_OP_కూడు_REL_POS:
+            స్థితి GGML_OP_RWKV_WKV6:
+            స్థితి GGML_OP_GATED_రేఖీయ_ATTN:
+            స్థితి GGML_OP_RWKV_WKV7:
+            స్థితి GGML_OP_SOLVE_TRI: {
+                విభజించు_state = handle_generic(src_ss, /*scalar_only =*/ నిజం);
+            } ఆపు;
+            స్థితి GGML_OP_GATED_DELTA_NET: {
+                విభజించు_state = handle_gated_delta_net(src_ss);
+            } ఆపు;
+            స్థితి GGML_OP_LIGHTNING_INDEXER: {
+                విభజించు_state = handle_lightning_indexer(src_ss);
+            } ఆపు;
+            స్థితి GGML_OP_DSV4_HC_COMB:
+            స్థితి GGML_OP_DSV4_HC_PRE:
+            స్థితి GGML_OP_DSV4_HC_POST:
+            స్థితి GGML_OP_శిఖరం_K_ముసుగు: {
+                విభజించు_state = handle_generic(src_ss, /*scalar_only =*/ నిజం);
+            } ఆపు;
+            స్థితి GGML_OP_UNARY: {
+                విభజించు_state = handle_generic(src_ss, /*scalar_only =*/ అబద్ధం);
+            } ఆపు;
+            స్థితి GGML_OP_MAP_CUSTOM1:
+            స్థితి GGML_OP_MAP_CUSTOM2:
+            స్థితి GGML_OP_MAP_CUSTOM3:
+            స్థితి GGML_OP_CUSTOM: {
+                విభజించు_state = handle_generic(src_ss, /*scalar_only =*/ నిజం);
+            } ఆపు;
+            స్థితి GGML_OP_CROSS_ENTROPY_LOSS:
+            స్థితి GGML_OP_CROSS_ENTROPY_LOSS_వెనుక: {
+                విభజించు_state = handle_చొప్పున_అడ్డువరుస(src_ss);
+            } ఆపు;
+            స్థితి GGML_OP_OPT_అడుగు_ADAMW:
+            స్థితి GGML_OP_OPT_అడుగు_SGD:
+            స్థితి GGML_OP_GLU: {
+                విభజించు_state = handle_generic(src_ss, /*scalar_only =*/ అబద్ధం);
+            } ఆపు;
+            అప్రమేయ: {
                 GGML_ABORT("ggml op not implemented: %s", ggml_op_name(tensor->op));
-                split_state = {GGML_BACKEND_SPLIT_AXIS_UNKNOWN, {0}, {1}, 1};
-            } break;
+                విభజించు_state = {GGML_BACKEND_విభజించు_AXIS_UNKNOWN, {0}, {1}, 1};
+            } ఆపు;
         }
-        if (split_state.axis >= 0 && split_state.axis < GGML_MAX_DIMS) {
-            bool first_src_split_by_axis = true;
-            const size_t n_bufs = ggml_backend_meta_buffer_n_bufs(tensor->buffer);
+        ఒకవేళ (విభజించు_state.axis >= 0 && విభజించు_state.axis < GGML_MAX_DIMS) {
+            తార్కిక మొదటి_src_విభజించు_by_axis = నిజం;
+            స్థిరరాశి size_t n_bufs = ggml_backend_meta_బఫరు_n_bufs(tensor->బఫరు);
 
-            for (size_t i = 0; i < GGML_MAX_SRC; i++) {
-                if (tensor->src[i] == nullptr || src_ss[i].axis < 0 || src_ss[i].axis >= GGML_MAX_DIMS) {
-                    continue;
+            కొరకు (size_t i = 0; i < GGML_MAX_SRC; i++) {
+                ఒకవేళ (tensor->src[i] == శూన్యసూచిక || src_ss[i].axis < 0 || src_ss[i].axis >= GGML_MAX_DIMS) {
+                    కొనసాగు;
                 }
-                if (first_src_split_by_axis) {
-                    for (size_t j = 0; j < n_bufs; j++) {
+                ఒకవేళ (మొదటి_src_విభజించు_by_axis) {
+                    కొరకు (size_t j = 0; j < n_bufs; j++) {
                         // Take over ratio from src:
-                        for (size_t s = 0; s < src_ss[i].n_segments; s++) {
-                            split_state.ne[s*n_bufs + j] = 0;
+                        కొరకు (size_t s = 0; s < src_ss[i].n_segments; s++) {
+                            విభజించు_state.ne[s*n_bufs + j] = 0;
                         }
-                        for (size_t s = 0; s < src_ss[i].n_segments; s++) {
-                            split_state.ne[j] += src_ss[i].ne[s*n_bufs + j] * src_ss[i].nr[s];
+                        కొరకు (size_t s = 0; s < src_ss[i].n_segments; s++) {
+                            విభజించు_state.ne[j] += src_ss[i].ne[s*n_bufs + j] * src_ss[i].nr[s];
                         }
-                        split_state.ne[j] *= tensor->ne[split_state.axis];
-                        if (split_state.ne[j] != 0 || tensor->src[i]->ne[src_ss[i].axis] != 0) {
-                            const int64_t div = tensor->src[i]->ne[src_ss[i].axis] * split_state.nr[0];
-                            GGML_ASSERT(split_state.ne[j] % div == 0);
-                            split_state.ne[j] /= div;
+                        విభజించు_state.ne[j] *= tensor->ne[విభజించు_state.axis];
+                        ఒకవేళ (విభజించు_state.ne[j] != 0 || tensor->src[i]->ne[src_ss[i].axis] != 0) {
+                            స్థిరరాశి int64_t div = tensor->src[i]->ne[src_ss[i].axis] * విభజించు_state.nr[0];
+                            GGML_ASSERT(విభజించు_state.ne[j] % div == 0);
+                            విభజించు_state.ne[j] /= div;
                         }
                     }
-                } else {
-                    GGML_ASSERT(split_state.n_segments == 1);
-                    for (size_t j = 0; j < n_bufs; j++) {
+                } లేకపోతే {
+                    GGML_ASSERT(విభజించు_state.n_segments == 1);
+                    కొరకు (size_t j = 0; j < n_bufs; j++) {
                         // Assert that ratio is consistent:
-                        int64_t sum = 0;
-                        for (size_t s = 0; s < src_ss[i].n_segments; s++) {
-                            sum += src_ss[i].ne[s*n_bufs + j] * src_ss[i].nr[s];
+                        int64_t కూడిక = 0;
+                        కొరకు (size_t s = 0; s < src_ss[i].n_segments; s++) {
+                            కూడిక += src_ss[i].ne[s*n_bufs + j] * src_ss[i].nr[s];
                         }
-                        GGML_ASSERT(split_state.ne[j]*split_state.nr[0] * tensor->src[i]->ne[src_ss[i].axis]
-                                                                 == sum * tensor->ne[split_state.axis]);
+                        GGML_ASSERT(విభజించు_state.ne[j]*విభజించు_state.nr[0] * tensor->src[i]->ne[src_ss[i].axis]
+                                                                 == కూడిక * tensor->ne[విభజించు_state.axis]);
                     }
                 }
-                first_src_split_by_axis = false;
+                మొదటి_src_విభజించు_by_axis = అబద్ధం;
             }
-            GGML_ASSERT(!first_src_split_by_axis);
+            GGML_ASSERT(!మొదటి_src_విభజించు_by_axis);
         }
-        return split_state;
+        తిరిగి విభజించు_state;
     };
 
-    const std::pair key = std::make_pair(tensor, assume_sync);
-    auto it = buf_ctx->split_state_cache.find(key);
-    if (it != buf_ctx->split_state_cache.end() && memcmp(it->second.second, (const char *) tensor, sizeof(it->second.second)) != 0) {
-        buf_ctx->split_state_cache.clear();
-        it = buf_ctx->split_state_cache.end();
+    స్థిరరాశి std::pair కీలకం = std::make_pair(tensor, assume_sync);
+    స్వయంచాలక it = buf_ctx->విభజించు_state_cache.find(కీలకం);
+    ఒకవేళ (it != buf_ctx->విభజించు_state_cache.end() && memcmp(it->second.second, (స్థిరరాశి అక్షరం *) tensor, పరిమాణం(it->second.second)) != 0) {
+        buf_ctx->విభజించు_state_cache.clear();
+        it = buf_ctx->విభజించు_state_cache.end();
     }
 
-    if (it == buf_ctx->split_state_cache.end()) {
-        buf_ctx->split_state_cache[key].first = calculate_split_state();
-        memcpy(buf_ctx->split_state_cache[key].second, tensor, sizeof(buf_ctx->split_state_cache[key].second));
-        if (buf_ctx->debug > 0) {
+    ఒకవేళ (it == buf_ctx->విభజించు_state_cache.end()) {
+        buf_ctx->విభజించు_state_cache[కీలకం].మొదటి = calculate_విభజించు_state();
+        జ్ఞాపకం_నకలు(buf_ctx->విభజించు_state_cache[కీలకం].second, tensor, పరిమాణం(buf_ctx->విభజించు_state_cache[కీలకం].second));
+        ఒకవేళ (buf_ctx->debug > 0) {
             std::string srcs_info;
-            for (size_t i = 0; i < GGML_MAX_SRC; i++) {
-                if (tensor->src[i] == nullptr || tensor->src[i] == tensor) {
-                    continue;
+            కొరకు (size_t i = 0; i < GGML_MAX_SRC; i++) {
+                ఒకవేళ (tensor->src[i] == శూన్యసూచిక || tensor->src[i] == tensor) {
+                    కొనసాగు;
                 }
-                if (!srcs_info.empty()) {
+                ఒకవేళ (!srcs_info.ఖాళీలు()) {
                     srcs_info += ", ";
                 }
-                const ggml_backend_meta_split_state split_state =
-                        ggml_backend_meta_get_split_state(tensor->src[i], true);
-                GGML_ASSERT(split_state.n_segments == 1);
-                const char * axis_name = ggml_backend_meta_split_axis_name(split_state.axis);
+                స్థిరరాశి ggml_backend_meta_విభజించు_state విభజించు_state =
+                        ggml_backend_meta_get_విభజించు_state(tensor->src[i], నిజం);
+                GGML_ASSERT(విభజించు_state.n_segments == 1);
+                స్థిరరాశి అక్షరం * axis_name = ggml_backend_meta_విభజించు_axis_name(విభజించు_state.axis);
                 std::string ne_info;
-                for (size_t j = 0; j < n_bufs; j++) {
-                    if (!ne_info.empty()) {
+                కొరకు (size_t j = 0; j < n_bufs; j++) {
+                    ఒకవేళ (!ne_info.ఖాళీలు()) {
                         ne_info += ", ";
                     }
-                    ne_info += std::to_string(split_state.ne[j]) + "x" + std::to_string(split_state.nr[0]);
+                    ne_info += std::to_string(విభజించు_state.ne[j]) + "x" + std::to_string(విభజించు_state.nr[0]);
                 }
                 srcs_info += std::string(tensor->src[i]->name) + "[" + ggml_op_name(tensor->src[i]->op) + ", " + axis_name + ", {" + ne_info + "}]";
             }
             std::string ne_info;
-            for (size_t j = 0; j < n_bufs; j++) {
-                if (!ne_info.empty()) {
+            కొరకు (size_t j = 0; j < n_bufs; j++) {
+                ఒకవేళ (!ne_info.ఖాళీలు()) {
                     ne_info += ", ";
                 }
-                const ggml_backend_meta_split_state & ss = buf_ctx->split_state_cache[key].first;
+                స్థిరరాశి ggml_backend_meta_విభజించు_state & ss = buf_ctx->విభజించు_state_cache[కీలకం].మొదటి;
                 ne_info += std::to_string(ss.ne[j]) + "x" + std::to_string(ss.nr[0]);
             }
             GGML_LOG_DEBUG("SPLIT_STATE: {%s} -> %s[%s, %s, {%s}]\n", srcs_info.c_str(), tensor->name, ggml_op_name(tensor->op),
-                ggml_backend_meta_split_axis_name(buf_ctx->split_state_cache[key].first.axis), ne_info.c_str());
+                ggml_backend_meta_విభజించు_axis_name(buf_ctx->విభజించు_state_cache[కీలకం].మొదటి.axis), ne_info.c_str());
         }
     }
 
-    ggml_backend_meta_split_state ret = buf_ctx->split_state_cache[key].first;
-    GGML_ASSERT(ret.axis != GGML_BACKEND_SPLIT_AXIS_NONE);
-#ifndef NDEBUG
-    if (ret.axis >= 0 && ret.axis < GGML_MAX_DIMS) {
+    ggml_backend_meta_విభజించు_state ret = buf_ctx->విభజించు_state_cache[కీలకం].మొదటి;
+    GGML_ASSERT(ret.axis != GGML_BACKEND_విభజించు_AXIS_NONE);
+#నిర్వచితం_కాకపోతే NDEBUG
+    ఒకవేళ (ret.axis >= 0 && ret.axis < GGML_MAX_DIMS) {
         int64_t ne_ret = 0;
-        for (size_t s = 0; s < ret.n_segments; s++) {
-            for (size_t j = 0; j < n_bufs; j++) {
+        కొరకు (size_t s = 0; s < ret.n_segments; s++) {
+            కొరకు (size_t j = 0; j < n_bufs; j++) {
                 ne_ret += ret.ne[s*n_bufs + j] * ret.nr[s];
             }
         }
-        assert(ne_ret == tensor->ne[int(ret.axis)]);
+        ప్రతిజ్ఞా(ne_ret == tensor->ne[పూర్ణాంకం(ret.axis)]);
     }
-#endif // NDEBUG
-    return ret;
+#అయితే_ముగింపు // NDEBUG
+    తిరిగి ret;
 }
 
-static bool ggml_backend_meta_is_host_view(const struct ggml_tensor * tensor) {
-    return ggml_is_view(tensor) && ggml_backend_buffer_is_host(tensor->view_src->buffer);
+స్థిర తార్కిక ggml_backend_meta_is_host_view(స్థిరరాశి నిర్మాణం ggml_tensor * tensor) {
+    తిరిగి ggml_is_view(tensor) && ggml_backend_బఫరు_is_host(tensor->view_src->బఫరు);
 }
 
-static struct ggml_backend_meta_split_state ggml_backend_meta_get_split_state(const struct ggml_tensor * tensor, bool assume_sync) {
+స్థిర నిర్మాణం ggml_backend_meta_విభజించు_state ggml_backend_meta_get_విభజించు_state(స్థిరరాశి నిర్మాణం ggml_tensor * tensor, తార్కిక assume_sync) {
     // [TAG_META_HOST_VIEWS]
     // TODO: technically, this check should not be needed if the backend scheduler correctly prevents assigning
     //       such host-buffer views to the meta backend. figure out how to update the scheduler logic to achieve that
     //       ref: https://github.com/ggml-org/llama.cpp/pull/30217
-    if (!ggml_backend_buffer_is_meta(tensor->buffer)) {
+    ఒకవేళ (!ggml_backend_బఫరు_is_meta(tensor->బఫరు)) {
         GGML_ASSERT(ggml_backend_meta_is_host_view(tensor));
 
         // the view is not allocated in the meta buffer, it is not split across the sub-devices
-        return { GGML_BACKEND_SPLIT_AXIS_NONE, {0}, {1}, 1 };
+        తిరిగి { GGML_BACKEND_విభజించు_AXIS_NONE, {0}, {1}, 1 };
     }
 
-    ggml_backend_meta_buffer_context * buf_ctx = (ggml_backend_meta_buffer_context *) tensor->buffer->context;
-    return ggml_backend_meta_get_split_state(buf_ctx->get_simple_tensor_container(tensor), tensor, assume_sync);
+    ggml_backend_meta_బఫరు_context * buf_ctx = (ggml_backend_meta_బఫరు_context *) tensor->బఫరు->context;
+    తిరిగి ggml_backend_meta_get_విభజించు_state(buf_ctx->get_simple_tensor_container(tensor), tensor, assume_sync);
 }
 
-static void * ggml_backend_meta_buffer_get_base(ggml_backend_buffer_t buffer) {
-    GGML_UNUSED(buffer);
-    return (void *) 0x1000000000000000; // FIXME
+స్థిర శూన్య * ggml_backend_meta_బఫరు_get_పునాది(ggml_backend_బఫరు_t బఫరు) {
+    GGML_వాడని(బఫరు);
+    తిరిగి (శూన్య *) 0x1000000000000000; // FIXME
 }
 
-static enum ggml_status ggml_backend_meta_buffer_init_tensor_impl(ggml_backend_meta_simple_tensor_container & stc, ggml_tensor * tensor) {
-    GGML_ASSERT(ggml_backend_buffer_is_meta(tensor->buffer));
-    ggml_backend_meta_buffer_context * buf_ctx = (ggml_backend_meta_buffer_context *) tensor->buffer->context;
-    const size_t n_simple_bufs = ggml_backend_meta_buffer_n_bufs(tensor->buffer);
+స్థిర గణన ggml_స్థితి ggml_backend_meta_బఫరు_init_tensor_impl(ggml_backend_meta_simple_tensor_container & stc, ggml_tensor * tensor) {
+    GGML_ASSERT(ggml_backend_బఫరు_is_meta(tensor->బఫరు));
+    ggml_backend_meta_బఫరు_context * buf_ctx = (ggml_backend_meta_బఫరు_context *) tensor->బఫరు->context;
+    స్థిరరాశి size_t n_simple_bufs = ggml_backend_meta_బఫరు_n_bufs(tensor->బఫరు);
 
-    const ggml_backend_meta_split_state split_state = ggml_backend_meta_get_split_state(stc, tensor, /*assume_sync =*/ true);
-    GGML_ASSERT(ggml_nelements(tensor) == 0 || split_state.axis != GGML_BACKEND_SPLIT_AXIS_UNKNOWN);
-    GGML_ASSERT(split_state.n_segments <= 16);
+    స్థిరరాశి ggml_backend_meta_విభజించు_state విభజించు_state = ggml_backend_meta_get_విభజించు_state(stc, tensor, /*assume_sync =*/ నిజం);
+    GGML_ASSERT(ggml_nelements(tensor) == 0 || విభజించు_state.axis != GGML_BACKEND_విభజించు_AXIS_UNKNOWN);
+    GGML_ASSERT(విభజించు_state.n_segments <= 16);
 
-    int split_dim = split_state.axis;
+    పూర్ణాంకం విభజించు_dim = విభజించు_state.axis;
     int64_t ne[GGML_MAX_DIMS];
     size_t  nb[GGML_MAX_DIMS];
-    for (size_t k = 0; k < GGML_MAX_DIMS; k++) {
+    కొరకు (size_t k = 0; k < GGML_MAX_DIMS; k++) {
         ne[k] = tensor->ne[k];
         nb[k] = tensor->nb[k];
     }
 
     std::vector<ggml_tensor *> simple_tensors;
     simple_tensors.reserve(n_simple_bufs);
-    for (size_t j = 0; j < n_simple_bufs; j++) {
+    కొరకు (size_t j = 0; j < n_simple_bufs; j++) {
         ggml_context          * simple_ctx = stc.ctxs[j].get();
-        ggml_backend_buffer_t   simple_buf = buf_ctx->bufs[j].get();
+        ggml_backend_బఫరు_t   simple_buf = buf_ctx->bufs[j].get();
 
-        if (split_dim >= 0 && split_dim < GGML_MAX_DIMS) {
+        ఒకవేళ (విభజించు_dim >= 0 && విభజించు_dim < GGML_MAX_DIMS) {
             // TODO: the following assert fails for llama-parallel even though the results are correct:
             // GGML_ASSERT(ggml_is_contiguously_allocated(tensor));
-            ne[split_dim] = 0;
-            for (size_t s = 0; s < split_state.n_segments; s++) {
-                ne[split_dim] += split_state.ne[s*n_simple_bufs + j] * split_state.nr[s];
+            ne[విభజించు_dim] = 0;
+            కొరకు (size_t s = 0; s < విభజించు_state.n_segments; s++) {
+                ne[విభజించు_dim] += విభజించు_state.ne[s*n_simple_bufs + j] * విభజించు_state.nr[s];
             }
-            for (int i = 0; i < GGML_MAX_DIMS; i++) {
-                if (tensor->nb[i] > tensor->nb[split_dim]) {
-                    nb[i] = tensor->nb[i] * ne[split_dim]/tensor->ne[split_dim];
+            కొరకు (పూర్ణాంకం i = 0; i < GGML_MAX_DIMS; i++) {
+                ఒకవేళ (tensor->nb[i] > tensor->nb[విభజించు_dim]) {
+                    nb[i] = tensor->nb[i] * ne[విభజించు_dim]/tensor->ne[విభజించు_dim];
                 }
             }
         }
 
         ggml_tensor * t_ij = ggml_new_tensor(simple_ctx, tensor->type, GGML_MAX_DIMS, ne);
         t_ij->op = tensor->op;
-        for (int i = 0; i < GGML_MAX_DIMS; i++) {
+        కొరకు (పూర్ణాంకం i = 0; i < GGML_MAX_DIMS; i++) {
             t_ij->nb[i] = nb[i];
         }
         t_ij->flags = tensor->flags;
-        memcpy(t_ij->op_params, tensor->op_params, sizeof(tensor->op_params));
-        ggml_set_name(t_ij, tensor->name);
-        t_ij->buffer = simple_buf;
+        జ్ఞాపకం_నకలు(t_ij->op_params, tensor->op_params, పరిమాణం(tensor->op_params));
+        ggml_సమితి_name(t_ij, tensor->name);
+        t_ij->బఫరు = simple_buf;
         t_ij->view_src = tensor->view_src;
         t_ij->view_offs = tensor->view_offs;
-        if (t_ij->view_src != nullptr && ggml_backend_buffer_is_meta(t_ij->view_src->buffer)) {
-            t_ij->view_src = ggml_backend_meta_buffer_simple_tensor(tensor->view_src, j);
-            if (t_ij->view_offs > 0 && split_dim >= 0 && split_dim < GGML_MAX_DIMS) {
-                GGML_ASSERT(tensor->ne[split_dim] != 0);
-                const int split_dim_view_src = ggml_backend_meta_get_split_state(tensor->view_src, /*assume_sync =*/ true).axis;
-                GGML_ASSERT(split_dim_view_src >= 0 && split_dim_view_src < GGML_MAX_DIMS);
+        ఒకవేళ (t_ij->view_src != శూన్యసూచిక && ggml_backend_బఫరు_is_meta(t_ij->view_src->బఫరు)) {
+            t_ij->view_src = ggml_backend_meta_బఫరు_simple_tensor(tensor->view_src, j);
+            ఒకవేళ (t_ij->view_offs > 0 && విభజించు_dim >= 0 && విభజించు_dim < GGML_MAX_DIMS) {
+                GGML_ASSERT(tensor->ne[విభజించు_dim] != 0);
+                స్థిరరాశి పూర్ణాంకం విభజించు_dim_view_src = ggml_backend_meta_get_విభజించు_state(tensor->view_src, /*assume_sync =*/ నిజం).axis;
+                GGML_ASSERT(విభజించు_dim_view_src >= 0 && విభజించు_dim_view_src < GGML_MAX_DIMS);
 
                 // The offset can be internal to the data split, in those cases the view offset should not be scaled.
                 // If however, the offset is larger than the data split then it needs to be scaled proportionally.
-                bool split_internal_offset = t_ij->view_offs <= tensor->view_src->nb[split_dim_view_src];
-                for (int i = 0; i < GGML_MAX_DIMS; i++) {
-                    const size_t dim_size = tensor->ne[i] * tensor->nb[i];
-                    if (tensor->view_offs <= dim_size && dim_size < tensor->nb[split_dim]) {
-                        split_internal_offset = true;
-                        break;
+                తార్కిక విభజించు_అంతర్గత_స్థానభ్రంశం = t_ij->view_offs <= tensor->view_src->nb[విభజించు_dim_view_src];
+                కొరకు (పూర్ణాంకం i = 0; i < GGML_MAX_DIMS; i++) {
+                    స్థిరరాశి size_t dim_కొలత = tensor->ne[i] * tensor->nb[i];
+                    ఒకవేళ (tensor->view_offs <= dim_కొలత && dim_కొలత < tensor->nb[విభజించు_dim]) {
+                        విభజించు_అంతర్గత_స్థానభ్రంశం = నిజం;
+                        ఆపు;
                     }
                 }
-                if (!split_internal_offset) {
-                    t_ij->view_offs = t_ij->view_offs * ne[split_dim]/tensor->ne[split_dim];
+                ఒకవేళ (!విభజించు_అంతర్గత_స్థానభ్రంశం) {
+                    t_ij->view_offs = t_ij->view_offs * ne[విభజించు_dim]/tensor->ne[విభజించు_dim];
                 }
             }
         }
         // TODO: revisit once the graph allocator has been refactored, see https://github.com/ggml-org/llama.cpp/pull/25051#issuecomment-4842873396
-        ggml_backend_buffer_t init_buf = simple_buf;
-        if (t_ij->view_src != nullptr) {
-            t_ij->data = (char *) t_ij->view_src->data + t_ij->view_offs;
+        ggml_backend_బఫరు_t init_buf = simple_buf;
+        ఒకవేళ (t_ij->view_src != శూన్యసూచిక) {
+            t_ij->దత్తాంశం = (అక్షరం *) t_ij->view_src->దత్తాంశం + t_ij->view_offs;
             // views inherit the source slice's concrete sub-buffer (issue 22197)
-            if (tensor->view_src != nullptr && ggml_backend_buffer_is_meta(tensor->view_src->buffer)
-                    && t_ij->view_src->buffer != nullptr) {
-                t_ij->buffer = t_ij->view_src->buffer;
-                init_buf     = t_ij->view_src->buffer;
+            ఒకవేళ (tensor->view_src != శూన్యసూచిక && ggml_backend_బఫరు_is_meta(tensor->view_src->బఫరు)
+                    && t_ij->view_src->బఫరు != శూన్యసూచిక) {
+                t_ij->బఫరు = t_ij->view_src->బఫరు;
+                init_buf     = t_ij->view_src->బఫరు;
             }
-        } else if (simple_buf != nullptr) {
-            if (ggml_backend_buffer_is_multi_buffer(simple_buf)) {
+        } లేకపోతే ఒకవేళ (simple_buf != శూన్యసూచిక) {
+            ఒకవేళ (ggml_backend_బఫరు_is_multi_బఫరు(simple_buf)) {
                 GGML_ABORT("multi buffers are not supported by the meta backend");
             }
-            t_ij->data = (char *) ggml_backend_buffer_get_base(simple_buf)
-                + size_t(tensor->data) - size_t(ggml_backend_buffer_get_base(tensor->buffer));
+            t_ij->దత్తాంశం = (అక్షరం *) ggml_backend_బఫరు_get_పునాది(simple_buf)
+                + size_t(tensor->దత్తాంశం) - size_t(ggml_backend_బఫరు_get_పునాది(tensor->బఫరు));
         }
 
-        if (init_buf) {
+        ఒకవేళ (init_buf) {
             // the backend that owns the buffer will set .extra
-            ggml_backend_buffer_init_tensor(init_buf, t_ij);
-        } else {
+            ggml_backend_బఫరు_init_tensor(init_buf, t_ij);
+        } లేకపోతే {
             t_ij->extra = tensor->extra;
         }
 
-        for (int i = 0; i < GGML_MAX_SRC; i++) {
+        కొరకు (పూర్ణాంకం i = 0; i < GGML_MAX_SRC; i++) {
             t_ij->src[i] = tensor->src[i];
-            if (tensor->src[i] == tensor) {
+            ఒకవేళ (tensor->src[i] == tensor) {
                 t_ij->src[i] = t_ij;
-            } else if (t_ij->src[i] != nullptr && ggml_backend_buffer_is_meta(t_ij->src[i]->buffer)) {
-                t_ij->src[i] = ggml_backend_meta_buffer_simple_tensor(tensor->src[i], j);
+            } లేకపోతే ఒకవేళ (t_ij->src[i] != శూన్యసూచిక && ggml_backend_బఫరు_is_meta(t_ij->src[i]->బఫరు)) {
+                t_ij->src[i] = ggml_backend_meta_బఫరు_simple_tensor(tensor->src[i], j);
             }
         }
 
@@ -1319,21 +1319,21 @@ static enum ggml_status ggml_backend_meta_buffer_init_tensor_impl(ggml_backend_m
     }
 
     // If one of the sources has a zero-sized slice, disable the computation:
-    for (int i = 0; i < GGML_MAX_SRC; i++) {
-        if (tensor->src[i] == nullptr || !ggml_backend_buffer_is_meta(tensor->src[i]->buffer)) {
-            continue;
+    కొరకు (పూర్ణాంకం i = 0; i < GGML_MAX_SRC; i++) {
+        ఒకవేళ (tensor->src[i] == శూన్యసూచిక || !ggml_backend_బఫరు_is_meta(tensor->src[i]->బఫరు)) {
+            కొనసాగు;
         }
 
-        const ggml_backend_meta_split_state split_state_src = ggml_backend_meta_get_split_state(tensor->src[i], /*assume_sync =*/ true);
-        if (split_state_src.axis < 0 || split_state_src.axis >= GGML_MAX_DIMS) {
-            continue;
+        స్థిరరాశి ggml_backend_meta_విభజించు_state విభజించు_state_src = ggml_backend_meta_get_విభజించు_state(tensor->src[i], /*assume_sync =*/ నిజం);
+        ఒకవేళ (విభజించు_state_src.axis < 0 || విభజించు_state_src.axis >= GGML_MAX_DIMS) {
+            కొనసాగు;
         }
-        for (size_t j = 0; j < n_simple_bufs; j++) {
-            int64_t ne_sum = 0;
-            for (size_t s = 0; s < split_state_src.n_segments; s++) {
-                ne_sum += split_state_src.ne[s*n_simple_bufs + j] * split_state_src.nr[s];
+        కొరకు (size_t j = 0; j < n_simple_bufs; j++) {
+            int64_t ne_కూడిక = 0;
+            కొరకు (size_t s = 0; s < విభజించు_state_src.n_segments; s++) {
+                ne_కూడిక += విభజించు_state_src.ne[s*n_simple_bufs + j] * విభజించు_state_src.nr[s];
             }
-            if (ne_sum == 0) {
+            ఒకవేళ (ne_కూడిక == 0) {
                 simple_tensors[j]->flags &= ~GGML_TENSOR_FLAG_COMPUTE;
             }
         }
@@ -1341,494 +1341,494 @@ static enum ggml_status ggml_backend_meta_buffer_init_tensor_impl(ggml_backend_m
 
     stc.simple_tensors[tensor] = simple_tensors;
 
-    return GGML_STATUS_SUCCESS;
+    తిరిగి GGML_స్థితి_SUCCESS;
 }
 
-static enum ggml_status ggml_backend_meta_buffer_init_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor) {
-    GGML_ASSERT(ggml_backend_buffer_is_meta(buffer));
-    ggml_backend_meta_buffer_context * buf_ctx = (ggml_backend_meta_buffer_context *) buffer->context;
-    buf_ctx->stc_compute_index = buf_ctx->stc_compute_index_next;
-    return ggml_backend_meta_buffer_init_tensor_impl(buf_ctx->get_simple_tensor_container(tensor), tensor);
+స్థిర గణన ggml_స్థితి ggml_backend_meta_బఫరు_init_tensor(ggml_backend_బఫరు_t బఫరు, ggml_tensor * tensor) {
+    GGML_ASSERT(ggml_backend_బఫరు_is_meta(బఫరు));
+    ggml_backend_meta_బఫరు_context * buf_ctx = (ggml_backend_meta_బఫరు_context *) బఫరు->context;
+    buf_ctx->stc_compute_సూచీ = buf_ctx->stc_compute_సూచీ_తదుపరి;
+    తిరిగి ggml_backend_meta_బఫరు_init_tensor_impl(buf_ctx->get_simple_tensor_container(tensor), tensor);
 }
 
-static void ggml_backend_meta_buffer_memset_tensor(
-        ggml_backend_buffer_t buffer, ggml_tensor * tensor, uint8_t value, size_t offset, size_t size) {
-    const size_t n_bufs = ggml_backend_meta_buffer_n_bufs(buffer);
-    const ggml_backend_meta_split_state split_state =
-            ggml_backend_meta_get_split_state(tensor, /*assume_sync =*/ false);
-    GGML_ASSERT(ggml_is_contiguous(tensor) || split_state.axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED);
+స్థిర శూన్య ggml_backend_meta_బఫరు_memset_tensor(
+        ggml_backend_బఫరు_t బఫరు, ggml_tensor * tensor, uint8_t value, size_t స్థానభ్రంశం, size_t size) {
+    స్థిరరాశి size_t n_bufs = ggml_backend_meta_బఫరు_n_bufs(బఫరు);
+    స్థిరరాశి ggml_backend_meta_విభజించు_state విభజించు_state =
+            ggml_backend_meta_get_విభజించు_state(tensor, /*assume_sync =*/ అబద్ధం);
+    GGML_ASSERT(ggml_is_contiguous(tensor) || విభజించు_state.axis == GGML_BACKEND_విభజించు_AXIS_MIRRORED);
 
-    if (split_state.n_segments != 1 || split_state.nr[0] != 1) {
-        GGML_ASSERT(split_state.axis >= 0 && split_state.axis < GGML_MAX_DIMS);
-        GGML_ASSERT(split_state.nr[0] != 0);
+    ఒకవేళ (విభజించు_state.n_segments != 1 || విభజించు_state.nr[0] != 1) {
+        GGML_ASSERT(విభజించు_state.axis >= 0 && విభజించు_state.axis < GGML_MAX_DIMS);
+        GGML_ASSERT(విభజించు_state.nr[0] != 0);
         GGML_ASSERT(tensor->ne[3] == 1);
 
         std::vector<size_t> simple_offsets(n_bufs, 0);
-        if (split_state.axis == GGML_BACKEND_SPLIT_AXIS_0) {
+        ఒకవేళ (విభజించు_state.axis == GGML_BACKEND_విభజించు_AXIS_0) {
             GGML_ASSERT(tensor->ne[2] == 1);
 
-            const size_t row_stride = tensor->nb[1];
-            GGML_ASSERT(offset % row_stride == 0);
-            GGML_ASSERT(size   % row_stride == 0);
-            const int64_t row_start = offset / row_stride;
-            const int64_t row_count = size   / row_stride;
-            GGML_ASSERT(row_start + row_count <= tensor->ne[1]);
+            స్థిరరాశి size_t అడ్డువరుస_stride = tensor->nb[1];
+            GGML_ASSERT(స్థానభ్రంశం % అడ్డువరుస_stride == 0);
+            GGML_ASSERT(size   % అడ్డువరుస_stride == 0);
+            స్థిరరాశి int64_t అడ్డువరుస_ప్రారంభం = స్థానభ్రంశం / అడ్డువరుస_stride;
+            స్థిరరాశి int64_t అడ్డువరుస_లెక్క = size   / అడ్డువరుస_stride;
+            GGML_ASSERT(అడ్డువరుస_ప్రారంభం + అడ్డువరుస_లెక్క <= tensor->ne[1]);
 
-            const int64_t blck_size = ggml_blck_size(tensor->type);
-            for (size_t s = 0; s < split_state.n_segments; s++) {
-                for (size_t r = 0; r < split_state.nr[s]; r++) {
-                    for (size_t j = 0; j < n_bufs; j++) {
-                        ggml_tensor * simple_tensor = ggml_backend_meta_buffer_simple_tensor(tensor, j);
-                        GGML_ASSERT(split_state.ne[s*n_bufs + j] % blck_size == 0);
-                        const size_t nbytes = split_state.ne[s*n_bufs + j]/blck_size * tensor->nb[0];
-                        for (int64_t row = 0; row < row_count; row++) {
+            స్థిరరాశి int64_t blck_కొలత = ggml_blck_కొలత(tensor->type);
+            కొరకు (size_t s = 0; s < విభజించు_state.n_segments; s++) {
+                కొరకు (size_t r = 0; r < విభజించు_state.nr[s]; r++) {
+                    కొరకు (size_t j = 0; j < n_bufs; j++) {
+                        ggml_tensor * simple_tensor = ggml_backend_meta_బఫరు_simple_tensor(tensor, j);
+                        GGML_ASSERT(విభజించు_state.ne[s*n_bufs + j] % blck_కొలత == 0);
+                        స్థిరరాశి size_t nbytes = విభజించు_state.ne[s*n_bufs + j]/blck_కొలత * tensor->nb[0];
+                        కొరకు (int64_t అడ్డువరుస = 0; అడ్డువరుస < అడ్డువరుస_లెక్క; అడ్డువరుస++) {
                             ggml_backend_tensor_memset(simple_tensor, value,
-                                    simple_offsets[j] + (row_start + row)*simple_tensor->nb[1], nbytes);
+                                    simple_offsets[j] + (అడ్డువరుస_ప్రారంభం + అడ్డువరుస)*simple_tensor->nb[1], nbytes);
                         }
                         simple_offsets[j] += nbytes;
                     }
                 }
             }
-            return;
+            తిరిగి;
         }
 
-        GGML_ASSERT(split_state.axis == GGML_BACKEND_SPLIT_AXIS_1);
+        GGML_ASSERT(విభజించు_state.axis == GGML_BACKEND_విభజించు_AXIS_1);
 
-        const size_t row_stride = tensor->nb[2];
-        GGML_ASSERT(offset % row_stride == 0);
-        GGML_ASSERT(size   % row_stride == 0);
-        const int64_t row_start = offset / row_stride;
-        const int64_t row_count = size   / row_stride;
-        GGML_ASSERT(row_start + row_count <= tensor->ne[2]);
+        స్థిరరాశి size_t అడ్డువరుస_stride = tensor->nb[2];
+        GGML_ASSERT(స్థానభ్రంశం % అడ్డువరుస_stride == 0);
+        GGML_ASSERT(size   % అడ్డువరుస_stride == 0);
+        స్థిరరాశి int64_t అడ్డువరుస_ప్రారంభం = స్థానభ్రంశం / అడ్డువరుస_stride;
+        స్థిరరాశి int64_t అడ్డువరుస_లెక్క = size   / అడ్డువరుస_stride;
+        GGML_ASSERT(అడ్డువరుస_ప్రారంభం + అడ్డువరుస_లెక్క <= tensor->ne[2]);
 
-        for (size_t s = 0; s < split_state.n_segments; s++) {
-            for (size_t r = 0; r < split_state.nr[s]; r++) {
-                for (size_t j = 0; j < n_bufs; j++) {
-                    ggml_tensor * simple_tensor = ggml_backend_meta_buffer_simple_tensor(tensor, j);
-                    const size_t nbytes = split_state.ne[s*n_bufs + j] * tensor->nb[1];
-                    for (int64_t row = 0; row < row_count; row++) {
+        కొరకు (size_t s = 0; s < విభజించు_state.n_segments; s++) {
+            కొరకు (size_t r = 0; r < విభజించు_state.nr[s]; r++) {
+                కొరకు (size_t j = 0; j < n_bufs; j++) {
+                    ggml_tensor * simple_tensor = ggml_backend_meta_బఫరు_simple_tensor(tensor, j);
+                    స్థిరరాశి size_t nbytes = విభజించు_state.ne[s*n_bufs + j] * tensor->nb[1];
+                    కొరకు (int64_t అడ్డువరుస = 0; అడ్డువరుస < అడ్డువరుస_లెక్క; అడ్డువరుస++) {
                         ggml_backend_tensor_memset(simple_tensor, value,
-                                simple_offsets[j] + (row_start + row)*simple_tensor->nb[2], nbytes);
+                                simple_offsets[j] + (అడ్డువరుస_ప్రారంభం + అడ్డువరుస)*simple_tensor->nb[2], nbytes);
                     }
                     simple_offsets[j] += nbytes;
                 }
             }
         }
-        return;
+        తిరిగి;
     }
 
-    switch (split_state.axis) {
-        case GGML_BACKEND_SPLIT_AXIS_0:
-        case GGML_BACKEND_SPLIT_AXIS_1:
-        case GGML_BACKEND_SPLIT_AXIS_2: {
-            const size_t chunk_size_full = tensor->nb[split_state.axis + 1];
-            GGML_ASSERT(offset % chunk_size_full == 0);
-            GGML_ASSERT(size   % chunk_size_full == 0);
-            const int64_t i_start =  offset        / chunk_size_full;
-            const int64_t i_stop  = (offset + size) / chunk_size_full;
-            for (size_t j = 0; j < n_bufs; j++) {
-                ggml_tensor * simple_tensor = ggml_backend_meta_buffer_simple_tensor(tensor, j);
-                const size_t chunk_size = simple_tensor->nb[split_state.axis + 1];
-                if (chunk_size == 0) {
-                    continue;
+    ఎంపిక (విభజించు_state.axis) {
+        స్థితి GGML_BACKEND_విభజించు_AXIS_0:
+        స్థితి GGML_BACKEND_విభజించు_AXIS_1:
+        స్థితి GGML_BACKEND_విభజించు_AXIS_2: {
+            స్థిరరాశి size_t chunk_కొలత_నిండిన = tensor->nb[విభజించు_state.axis + 1];
+            GGML_ASSERT(స్థానభ్రంశం % chunk_కొలత_నిండిన == 0);
+            GGML_ASSERT(size   % chunk_కొలత_నిండిన == 0);
+            స్థిరరాశి int64_t i_ప్రారంభం =  స్థానభ్రంశం        / chunk_కొలత_నిండిన;
+            స్థిరరాశి int64_t i_stop  = (స్థానభ్రంశం + size) / chunk_కొలత_నిండిన;
+            కొరకు (size_t j = 0; j < n_bufs; j++) {
+                ggml_tensor * simple_tensor = ggml_backend_meta_బఫరు_simple_tensor(tensor, j);
+                స్థిరరాశి size_t chunk_కొలత = simple_tensor->nb[విభజించు_state.axis + 1];
+                ఒకవేళ (chunk_కొలత == 0) {
+                    కొనసాగు;
                 }
-                for (int64_t i = i_start; i < i_stop; i++) {
-                    ggml_backend_tensor_memset(simple_tensor, value, i*chunk_size, chunk_size);
+                కొరకు (int64_t i = i_ప్రారంభం; i < i_stop; i++) {
+                    ggml_backend_tensor_memset(simple_tensor, value, i*chunk_కొలత, chunk_కొలత);
                 }
             }
-        } break;
-        case GGML_BACKEND_SPLIT_AXIS_PARTIAL: {
+        } ఆపు;
+        స్థితి GGML_BACKEND_విభజించు_AXIS_PARTIAL: {
             GGML_ASSERT(value == 0);
             [[fallthrough]];
         }
-        case GGML_BACKEND_SPLIT_AXIS_MIRRORED: {
-            for (size_t j = 0; j < n_bufs; j++) {
-                ggml_tensor * simple_tensor = ggml_backend_meta_buffer_simple_tensor(tensor, j);
-                ggml_backend_tensor_memset(simple_tensor, value, offset, size);
+        స్థితి GGML_BACKEND_విభజించు_AXIS_MIRRORED: {
+            కొరకు (size_t j = 0; j < n_bufs; j++) {
+                ggml_tensor * simple_tensor = ggml_backend_meta_బఫరు_simple_tensor(tensor, j);
+                ggml_backend_tensor_memset(simple_tensor, value, స్థానభ్రంశం, size);
             }
-        } break;
-        default: {
+        } ఆపు;
+        అప్రమేయ: {
             GGML_ABORT("fatal error");
         }
     }
 }
 
-static void ggml_backend_meta_buffer_set_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor, const void * data, size_t offset, size_t size) {
-    const size_t n_bufs = ggml_backend_meta_buffer_n_bufs(buffer);
-    const ggml_backend_meta_split_state split_state = ggml_backend_meta_get_split_state(tensor, /*assume_sync =*/ false);
-    GGML_ASSERT(ggml_is_contiguous(tensor) || split_state.axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED);
+స్థిర శూన్య ggml_backend_meta_బఫరు_సమితి_tensor(ggml_backend_బఫరు_t బఫరు, ggml_tensor * tensor, స్థిరరాశి శూన్య * దత్తాంశం, size_t స్థానభ్రంశం, size_t size) {
+    స్థిరరాశి size_t n_bufs = ggml_backend_meta_బఫరు_n_bufs(బఫరు);
+    స్థిరరాశి ggml_backend_meta_విభజించు_state విభజించు_state = ggml_backend_meta_get_విభజించు_state(tensor, /*assume_sync =*/ అబద్ధం);
+    GGML_ASSERT(ggml_is_contiguous(tensor) || విభజించు_state.axis == GGML_BACKEND_విభజించు_AXIS_MIRRORED);
 
-    if (split_state.n_segments != 1 || split_state.nr[0] != 1) {
-        GGML_ASSERT(split_state.axis >= 0 && split_state.axis < GGML_MAX_DIMS);
-        GGML_ASSERT(split_state.nr[0] != 0);
+    ఒకవేళ (విభజించు_state.n_segments != 1 || విభజించు_state.nr[0] != 1) {
+        GGML_ASSERT(విభజించు_state.axis >= 0 && విభజించు_state.axis < GGML_MAX_DIMS);
+        GGML_ASSERT(విభజించు_state.nr[0] != 0);
         GGML_ASSERT(tensor->ne[3] == 1);
 
-        size_t offset_data = 0;
+        size_t స్థానభ్రంశం_దత్తాంశం = 0;
         std::vector<size_t> simple_offsets(n_bufs, 0);
-        if (split_state.axis == GGML_BACKEND_SPLIT_AXIS_0) {
+        ఒకవేళ (విభజించు_state.axis == GGML_BACKEND_విభజించు_AXIS_0) {
             GGML_ASSERT(tensor->ne[2] == 1);
 
-            const size_t row_stride = tensor->nb[1];
-            GGML_ASSERT(offset % row_stride == 0);
-            GGML_ASSERT(size   % row_stride == 0);
-            const int64_t row_start = offset / row_stride;
-            const int64_t row_count = size   / row_stride;
-            GGML_ASSERT(row_start + row_count <= tensor->ne[1]);
+            స్థిరరాశి size_t అడ్డువరుస_stride = tensor->nb[1];
+            GGML_ASSERT(స్థానభ్రంశం % అడ్డువరుస_stride == 0);
+            GGML_ASSERT(size   % అడ్డువరుస_stride == 0);
+            స్థిరరాశి int64_t అడ్డువరుస_ప్రారంభం = స్థానభ్రంశం / అడ్డువరుస_stride;
+            స్థిరరాశి int64_t అడ్డువరుస_లెక్క = size   / అడ్డువరుస_stride;
+            GGML_ASSERT(అడ్డువరుస_ప్రారంభం + అడ్డువరుస_లెక్క <= tensor->ne[1]);
 
-            const int64_t blck_size = ggml_blck_size(tensor->type);
-            for (size_t s = 0; s < split_state.n_segments; s++) {
-                for (size_t r = 0; r < split_state.nr[s]; r++) {
-                    for (size_t j = 0; j < n_bufs; j++) {
-                        ggml_tensor * simple_tensor = ggml_backend_meta_buffer_simple_tensor(tensor, j);
-                        GGML_ASSERT(split_state.ne[s*n_bufs + j] % blck_size == 0);
-                        const size_t nbytes = split_state.ne[s*n_bufs + j]/blck_size * tensor->nb[0];
-                        ggml_backend_tensor_set_2d(simple_tensor, (const char *) data + offset_data,
-                            simple_offsets[j] + row_start * simple_tensor->nb[1], nbytes,
-                            row_count, simple_tensor->nb[1], tensor->nb[1]);
-                        offset_data       += nbytes;
+            స్థిరరాశి int64_t blck_కొలత = ggml_blck_కొలత(tensor->type);
+            కొరకు (size_t s = 0; s < విభజించు_state.n_segments; s++) {
+                కొరకు (size_t r = 0; r < విభజించు_state.nr[s]; r++) {
+                    కొరకు (size_t j = 0; j < n_bufs; j++) {
+                        ggml_tensor * simple_tensor = ggml_backend_meta_బఫరు_simple_tensor(tensor, j);
+                        GGML_ASSERT(విభజించు_state.ne[s*n_bufs + j] % blck_కొలత == 0);
+                        స్థిరరాశి size_t nbytes = విభజించు_state.ne[s*n_bufs + j]/blck_కొలత * tensor->nb[0];
+                        ggml_backend_tensor_సమితి_2d(simple_tensor, (స్థిరరాశి అక్షరం *) దత్తాంశం + స్థానభ్రంశం_దత్తాంశం,
+                            simple_offsets[j] + అడ్డువరుస_ప్రారంభం * simple_tensor->nb[1], nbytes,
+                            అడ్డువరుస_లెక్క, simple_tensor->nb[1], tensor->nb[1]);
+                        స్థానభ్రంశం_దత్తాంశం       += nbytes;
                         simple_offsets[j] += nbytes;
                     }
                 }
             }
-            GGML_ASSERT(offset_data*row_count == size);
-            return;
+            GGML_ASSERT(స్థానభ్రంశం_దత్తాంశం*అడ్డువరుస_లెక్క == size);
+            తిరిగి;
         }
-        GGML_ASSERT(split_state.axis == GGML_BACKEND_SPLIT_AXIS_1);
+        GGML_ASSERT(విభజించు_state.axis == GGML_BACKEND_విభజించు_AXIS_1);
 
-        const size_t row_stride = tensor->nb[2];
-        GGML_ASSERT(offset % row_stride == 0);
-        GGML_ASSERT(size   % row_stride == 0);
-        const int64_t row_start = offset / row_stride;
-        const int64_t row_count = size   / row_stride;
-        GGML_ASSERT(row_start + row_count <= tensor->ne[2]);
+        స్థిరరాశి size_t అడ్డువరుస_stride = tensor->nb[2];
+        GGML_ASSERT(స్థానభ్రంశం % అడ్డువరుస_stride == 0);
+        GGML_ASSERT(size   % అడ్డువరుస_stride == 0);
+        స్థిరరాశి int64_t అడ్డువరుస_ప్రారంభం = స్థానభ్రంశం / అడ్డువరుస_stride;
+        స్థిరరాశి int64_t అడ్డువరుస_లెక్క = size   / అడ్డువరుస_stride;
+        GGML_ASSERT(అడ్డువరుస_ప్రారంభం + అడ్డువరుస_లెక్క <= tensor->ne[2]);
 
-        for (size_t s = 0; s < split_state.n_segments; s++) {
-            for (size_t r = 0; r < split_state.nr[s]; r++) {
-                for (size_t j = 0; j < n_bufs; j++) {
-                    ggml_tensor * simple_tensor = ggml_backend_meta_buffer_simple_tensor(tensor, j);
-                    const size_t nbytes = split_state.ne[s*n_bufs + j] * tensor->nb[1];
-                    ggml_backend_tensor_set_2d(simple_tensor, (const char *) data + offset_data,
-                        simple_offsets[j] + row_start * simple_tensor->nb[2], nbytes,
-                        row_count, simple_tensor->nb[2], tensor->nb[2]);
-                    offset_data       += nbytes;
+        కొరకు (size_t s = 0; s < విభజించు_state.n_segments; s++) {
+            కొరకు (size_t r = 0; r < విభజించు_state.nr[s]; r++) {
+                కొరకు (size_t j = 0; j < n_bufs; j++) {
+                    ggml_tensor * simple_tensor = ggml_backend_meta_బఫరు_simple_tensor(tensor, j);
+                    స్థిరరాశి size_t nbytes = విభజించు_state.ne[s*n_bufs + j] * tensor->nb[1];
+                    ggml_backend_tensor_సమితి_2d(simple_tensor, (స్థిరరాశి అక్షరం *) దత్తాంశం + స్థానభ్రంశం_దత్తాంశం,
+                        simple_offsets[j] + అడ్డువరుస_ప్రారంభం * simple_tensor->nb[2], nbytes,
+                        అడ్డువరుస_లెక్క, simple_tensor->nb[2], tensor->nb[2]);
+                    స్థానభ్రంశం_దత్తాంశం       += nbytes;
                     simple_offsets[j] += nbytes;
                 }
             }
         }
-        GGML_ASSERT(offset_data*row_count == size);
-        return;
+        GGML_ASSERT(స్థానభ్రంశం_దత్తాంశం*అడ్డువరుస_లెక్క == size);
+        తిరిగి;
     }
 
-    switch (split_state.axis) {
-        case GGML_BACKEND_SPLIT_AXIS_0:
-        case GGML_BACKEND_SPLIT_AXIS_1:
-        case GGML_BACKEND_SPLIT_AXIS_2: {
+    ఎంపిక (విభజించు_state.axis) {
+        స్థితి GGML_BACKEND_విభజించు_AXIS_0:
+        స్థితి GGML_BACKEND_విభజించు_AXIS_1:
+        స్థితి GGML_BACKEND_విభజించు_AXIS_2: {
             // Exploit that tensors are contiguous to splice it with simple tensors as "chunks".
-            const size_t chunk_size_full = tensor->nb[split_state.axis + 1];
-            GGML_ASSERT(offset % chunk_size_full == 0);
-            GGML_ASSERT(size   % chunk_size_full == 0);
-            const int64_t i_start =  offset        /chunk_size_full;
-            const int64_t i_stop  = (offset + size)/chunk_size_full;
-            size_t offset_j = 0;
-            for (size_t j = 0; j < n_bufs; j++) {
-                ggml_tensor * simple_tensor = ggml_backend_meta_buffer_simple_tensor(tensor, j);
-                const size_t chunk_size_j = simple_tensor->nb[split_state.axis + 1];
-                if (chunk_size_j == 0) {
-                    continue;
+            స్థిరరాశి size_t chunk_కొలత_నిండిన = tensor->nb[విభజించు_state.axis + 1];
+            GGML_ASSERT(స్థానభ్రంశం % chunk_కొలత_నిండిన == 0);
+            GGML_ASSERT(size   % chunk_కొలత_నిండిన == 0);
+            స్థిరరాశి int64_t i_ప్రారంభం =  స్థానభ్రంశం        /chunk_కొలత_నిండిన;
+            స్థిరరాశి int64_t i_stop  = (స్థానభ్రంశం + size)/chunk_కొలత_నిండిన;
+            size_t స్థానభ్రంశం_j = 0;
+            కొరకు (size_t j = 0; j < n_bufs; j++) {
+                ggml_tensor * simple_tensor = ggml_backend_meta_బఫరు_simple_tensor(tensor, j);
+                స్థిరరాశి size_t chunk_కొలత_j = simple_tensor->nb[విభజించు_state.axis + 1];
+                ఒకవేళ (chunk_కొలత_j == 0) {
+                    కొనసాగు;
                 }
-                const size_t simple_offset = i_start * chunk_size_j;
-                ggml_backend_tensor_set_2d(simple_tensor, (const char *) data + offset_j, simple_offset, chunk_size_j, i_stop - i_start, chunk_size_j, chunk_size_full);
-                offset_j += chunk_size_j;
+                స్థిరరాశి size_t simple_స్థానభ్రంశం = i_ప్రారంభం * chunk_కొలత_j;
+                ggml_backend_tensor_సమితి_2d(simple_tensor, (స్థిరరాశి అక్షరం *) దత్తాంశం + స్థానభ్రంశం_j, simple_స్థానభ్రంశం, chunk_కొలత_j, i_stop - i_ప్రారంభం, chunk_కొలత_j, chunk_కొలత_నిండిన);
+                స్థానభ్రంశం_j += chunk_కొలత_j;
             }
-            GGML_ASSERT(offset_j == chunk_size_full);
-        } break;
-        case GGML_BACKEND_SPLIT_AXIS_MIRRORED: {
-            for (size_t j = 0; j < n_bufs; j++) {
-                ggml_tensor * simple_tensor = ggml_backend_meta_buffer_simple_tensor(tensor, j);
-                ggml_backend_tensor_set(simple_tensor, data, offset, size);
+            GGML_ASSERT(స్థానభ్రంశం_j == chunk_కొలత_నిండిన);
+        } ఆపు;
+        స్థితి GGML_BACKEND_విభజించు_AXIS_MIRRORED: {
+            కొరకు (size_t j = 0; j < n_bufs; j++) {
+                ggml_tensor * simple_tensor = ggml_backend_meta_బఫరు_simple_tensor(tensor, j);
+                ggml_backend_tensor_సమితి(simple_tensor, దత్తాంశం, స్థానభ్రంశం, size);
             }
-        } break;
-        case GGML_BACKEND_SPLIT_AXIS_PARTIAL: {
+        } ఆపు;
+        స్థితి GGML_BACKEND_విభజించు_AXIS_PARTIAL: {
             GGML_ASSERT(tensor->type == GGML_TYPE_F32);
-            GGML_ASSERT(offset % sizeof(float) == 0);
-            GGML_ASSERT(size   % sizeof(float) == 0);
-            const size_t n_values = size / sizeof(float);
+            GGML_ASSERT(స్థానభ్రంశం % పరిమాణం(దశాంశం) == 0);
+            GGML_ASSERT(size   % పరిమాణం(దశాంశం) == 0);
+            స్థిరరాశి size_t n_విలువలు = size / పరిమాణం(దశాంశం);
             size_t n_contributors = 0;
-            for (size_t j = 0; j < n_bufs; j++) {
-                n_contributors += split_state.ne[j] != 0;
+            కొరకు (size_t j = 0; j < n_bufs; j++) {
+                n_contributors += విభజించు_state.ne[j] != 0;
             }
-            const bool has_contributor_mask = n_contributors != 0;
-            if (!has_contributor_mask) {
+            స్థిరరాశి తార్కిక has_contributor_ముసుగు = n_contributors != 0;
+            ఒకవేళ (!has_contributor_ముసుగు) {
                 n_contributors = n_bufs;
             }
-            std::vector<float> tmp(n_values);
-            for (size_t i = 0; i < n_values; i++) {
-                tmp[i] = ((const float *) data)[i] / n_contributors;
+            std::vector<దశాంశం> tmp(n_విలువలు);
+            కొరకు (size_t i = 0; i < n_విలువలు; i++) {
+                tmp[i] = ((స్థిరరాశి దశాంశం *) దత్తాంశం)[i] / n_contributors;
             }
-            std::vector<float> zero;
-            if (has_contributor_mask) {
-                zero.resize(n_values, 0.0f);
+            std::vector<దశాంశం> zero;
+            ఒకవేళ (has_contributor_ముసుగు) {
+                zero.resize(n_విలువలు, 0.0f);
             }
-            for (size_t j = 0; j < n_bufs; j++) {
-                ggml_tensor * simple_tensor = ggml_backend_meta_buffer_simple_tensor(tensor, j);
-                const float * partial = has_contributor_mask && split_state.ne[j] == 0 ? zero.data() : tmp.data();
-                ggml_backend_tensor_set(simple_tensor, partial, offset, size);
+            కొరకు (size_t j = 0; j < n_bufs; j++) {
+                ggml_tensor * simple_tensor = ggml_backend_meta_బఫరు_simple_tensor(tensor, j);
+                స్థిరరాశి దశాంశం * partial = has_contributor_ముసుగు && విభజించు_state.ne[j] == 0 ? zero.దత్తాంశం() : tmp.దత్తాంశం();
+                ggml_backend_tensor_సమితి(simple_tensor, partial, స్థానభ్రంశం, size);
             }
-        } break;
-        default: {
+        } ఆపు;
+        అప్రమేయ: {
             GGML_ABORT("fatal error");
         }
     }
 }
 
-static void ggml_backend_meta_buffer_get_tensor(ggml_backend_buffer_t buffer, const ggml_tensor * tensor, void * data, size_t offset, size_t size) {
-    const size_t n_bufs = ggml_backend_meta_buffer_n_bufs(buffer);
-    const ggml_backend_meta_split_state split_state = ggml_backend_meta_get_split_state(tensor, /*assume_sync =*/ false);
-    GGML_ASSERT(ggml_is_contiguous(tensor) || split_state.axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED);
+స్థిర శూన్య ggml_backend_meta_బఫరు_get_tensor(ggml_backend_బఫరు_t బఫరు, స్థిరరాశి ggml_tensor * tensor, శూన్య * దత్తాంశం, size_t స్థానభ్రంశం, size_t size) {
+    స్థిరరాశి size_t n_bufs = ggml_backend_meta_బఫరు_n_bufs(బఫరు);
+    స్థిరరాశి ggml_backend_meta_విభజించు_state విభజించు_state = ggml_backend_meta_get_విభజించు_state(tensor, /*assume_sync =*/ అబద్ధం);
+    GGML_ASSERT(ggml_is_contiguous(tensor) || విభజించు_state.axis == GGML_BACKEND_విభజించు_AXIS_MIRRORED);
 
-    if (split_state.n_segments != 1 || split_state.nr[0] != 1) {
-        GGML_ASSERT(split_state.axis >= 0 && split_state.axis < GGML_MAX_DIMS);
-        GGML_ASSERT(split_state.nr[0] != 0);
+    ఒకవేళ (విభజించు_state.n_segments != 1 || విభజించు_state.nr[0] != 1) {
+        GGML_ASSERT(విభజించు_state.axis >= 0 && విభజించు_state.axis < GGML_MAX_DIMS);
+        GGML_ASSERT(విభజించు_state.nr[0] != 0);
         GGML_ASSERT(tensor->ne[3] == 1);
 
-        size_t offset_data = 0;
+        size_t స్థానభ్రంశం_దత్తాంశం = 0;
         std::vector<size_t> simple_offsets(n_bufs, 0);
-        if (split_state.axis == GGML_BACKEND_SPLIT_AXIS_0) {
+        ఒకవేళ (విభజించు_state.axis == GGML_BACKEND_విభజించు_AXIS_0) {
             GGML_ASSERT(tensor->ne[2] == 1);
 
-            const size_t row_stride = tensor->nb[1];
-            GGML_ASSERT(offset % row_stride == 0);
-            GGML_ASSERT(size   % row_stride == 0);
-            const int64_t row_start = offset / row_stride;
-            const int64_t row_count = size   / row_stride;
-            GGML_ASSERT(row_start + row_count <= tensor->ne[1]);
+            స్థిరరాశి size_t అడ్డువరుస_stride = tensor->nb[1];
+            GGML_ASSERT(స్థానభ్రంశం % అడ్డువరుస_stride == 0);
+            GGML_ASSERT(size   % అడ్డువరుస_stride == 0);
+            స్థిరరాశి int64_t అడ్డువరుస_ప్రారంభం = స్థానభ్రంశం / అడ్డువరుస_stride;
+            స్థిరరాశి int64_t అడ్డువరుస_లెక్క = size   / అడ్డువరుస_stride;
+            GGML_ASSERT(అడ్డువరుస_ప్రారంభం + అడ్డువరుస_లెక్క <= tensor->ne[1]);
 
-            const int64_t blck_size = ggml_blck_size(tensor->type);
-            for (size_t s = 0; s < split_state.n_segments; s++) {
-                for (size_t r = 0; r < split_state.nr[s]; r++) {
-                    for (size_t j = 0; j < n_bufs; j++) {
-                        const ggml_tensor * simple_tensor = ggml_backend_meta_buffer_simple_tensor(tensor, j);
-                        GGML_ASSERT(split_state.ne[s*n_bufs + j] % blck_size == 0);
-                        const size_t nbytes = split_state.ne[s*n_bufs + j]/blck_size * tensor->nb[0];
-                        ggml_backend_tensor_get_2d(simple_tensor, (char *) data + offset_data,
-                            simple_offsets[j] + row_start * simple_tensor->nb[1], nbytes,
-                            row_count, simple_tensor->nb[1], tensor->nb[1]);
-                        offset_data       += nbytes;
+            స్థిరరాశి int64_t blck_కొలత = ggml_blck_కొలత(tensor->type);
+            కొరకు (size_t s = 0; s < విభజించు_state.n_segments; s++) {
+                కొరకు (size_t r = 0; r < విభజించు_state.nr[s]; r++) {
+                    కొరకు (size_t j = 0; j < n_bufs; j++) {
+                        స్థిరరాశి ggml_tensor * simple_tensor = ggml_backend_meta_బఫరు_simple_tensor(tensor, j);
+                        GGML_ASSERT(విభజించు_state.ne[s*n_bufs + j] % blck_కొలత == 0);
+                        స్థిరరాశి size_t nbytes = విభజించు_state.ne[s*n_bufs + j]/blck_కొలత * tensor->nb[0];
+                        ggml_backend_tensor_get_2d(simple_tensor, (అక్షరం *) దత్తాంశం + స్థానభ్రంశం_దత్తాంశం,
+                            simple_offsets[j] + అడ్డువరుస_ప్రారంభం * simple_tensor->nb[1], nbytes,
+                            అడ్డువరుస_లెక్క, simple_tensor->nb[1], tensor->nb[1]);
+                        స్థానభ్రంశం_దత్తాంశం       += nbytes;
                         simple_offsets[j] += nbytes;
                     }
                 }
             }
-            GGML_ASSERT(offset_data*row_count == size);
-            return;
+            GGML_ASSERT(స్థానభ్రంశం_దత్తాంశం*అడ్డువరుస_లెక్క == size);
+            తిరిగి;
         }
-        GGML_ASSERT(split_state.axis == GGML_BACKEND_SPLIT_AXIS_1);
+        GGML_ASSERT(విభజించు_state.axis == GGML_BACKEND_విభజించు_AXIS_1);
 
-        const size_t row_stride = tensor->nb[2];
-        GGML_ASSERT(offset % row_stride == 0);
-        GGML_ASSERT(size   % row_stride == 0);
-        const int64_t row_start = offset / row_stride;
-        const int64_t row_count = size   / row_stride;
-        GGML_ASSERT(row_start + row_count <= tensor->ne[2]);
+        స్థిరరాశి size_t అడ్డువరుస_stride = tensor->nb[2];
+        GGML_ASSERT(స్థానభ్రంశం % అడ్డువరుస_stride == 0);
+        GGML_ASSERT(size   % అడ్డువరుస_stride == 0);
+        స్థిరరాశి int64_t అడ్డువరుస_ప్రారంభం = స్థానభ్రంశం / అడ్డువరుస_stride;
+        స్థిరరాశి int64_t అడ్డువరుస_లెక్క = size   / అడ్డువరుస_stride;
+        GGML_ASSERT(అడ్డువరుస_ప్రారంభం + అడ్డువరుస_లెక్క <= tensor->ne[2]);
 
-        for (size_t s = 0; s < split_state.n_segments; s++) {
-            for (size_t r = 0; r < split_state.nr[s]; r++) {
-                for (size_t j = 0; j < n_bufs; j++) {
-                    const ggml_tensor * simple_tensor = ggml_backend_meta_buffer_simple_tensor(tensor, j);
-                    const size_t nbytes = split_state.ne[s*n_bufs + j] * tensor->nb[1];
-                    ggml_backend_tensor_get_2d(simple_tensor, (char *) data + offset_data,
-                        simple_offsets[j] + row_start * simple_tensor->nb[2], nbytes,
-                        row_count, simple_tensor->nb[2], tensor->nb[2]);
-                    offset_data       += nbytes;
+        కొరకు (size_t s = 0; s < విభజించు_state.n_segments; s++) {
+            కొరకు (size_t r = 0; r < విభజించు_state.nr[s]; r++) {
+                కొరకు (size_t j = 0; j < n_bufs; j++) {
+                    స్థిరరాశి ggml_tensor * simple_tensor = ggml_backend_meta_బఫరు_simple_tensor(tensor, j);
+                    స్థిరరాశి size_t nbytes = విభజించు_state.ne[s*n_bufs + j] * tensor->nb[1];
+                    ggml_backend_tensor_get_2d(simple_tensor, (అక్షరం *) దత్తాంశం + స్థానభ్రంశం_దత్తాంశం,
+                        simple_offsets[j] + అడ్డువరుస_ప్రారంభం * simple_tensor->nb[2], nbytes,
+                        అడ్డువరుస_లెక్క, simple_tensor->nb[2], tensor->nb[2]);
+                    స్థానభ్రంశం_దత్తాంశం       += nbytes;
                     simple_offsets[j] += nbytes;
                 }
             }
         }
-        GGML_ASSERT(offset_data*row_count == size);
-        return;
+        GGML_ASSERT(స్థానభ్రంశం_దత్తాంశం*అడ్డువరుస_లెక్క == size);
+        తిరిగి;
     }
 
-    switch (split_state.axis) {
-        case GGML_BACKEND_SPLIT_AXIS_0:
-        case GGML_BACKEND_SPLIT_AXIS_1:
-        case GGML_BACKEND_SPLIT_AXIS_2: {
+    ఎంపిక (విభజించు_state.axis) {
+        స్థితి GGML_BACKEND_విభజించు_AXIS_0:
+        స్థితి GGML_BACKEND_విభజించు_AXIS_1:
+        స్థితి GGML_BACKEND_విభజించు_AXIS_2: {
             // Exploit that tensors are contiguous to splice it with simple tensors as "chunks".
-            const size_t chunk_size_full = tensor->nb[split_state.axis + 1];
-            GGML_ASSERT(offset % chunk_size_full == 0);
-            GGML_ASSERT(size   % chunk_size_full == 0);
-            const int64_t i_start =  offset        /chunk_size_full;
-            const int64_t i_stop  = (offset + size)/chunk_size_full;
-            size_t offset_j = 0;
-            for (size_t j = 0; j < n_bufs; j++){
-                const ggml_tensor * simple_tensor = ggml_backend_meta_buffer_simple_tensor(tensor, j);
-                const size_t chunk_size_j = simple_tensor->nb[split_state.axis + 1];
-                if (chunk_size_j == 0) {
-                    continue;
+            స్థిరరాశి size_t chunk_కొలత_నిండిన = tensor->nb[విభజించు_state.axis + 1];
+            GGML_ASSERT(స్థానభ్రంశం % chunk_కొలత_నిండిన == 0);
+            GGML_ASSERT(size   % chunk_కొలత_నిండిన == 0);
+            స్థిరరాశి int64_t i_ప్రారంభం =  స్థానభ్రంశం        /chunk_కొలత_నిండిన;
+            స్థిరరాశి int64_t i_stop  = (స్థానభ్రంశం + size)/chunk_కొలత_నిండిన;
+            size_t స్థానభ్రంశం_j = 0;
+            కొరకు (size_t j = 0; j < n_bufs; j++){
+                స్థిరరాశి ggml_tensor * simple_tensor = ggml_backend_meta_బఫరు_simple_tensor(tensor, j);
+                స్థిరరాశి size_t chunk_కొలత_j = simple_tensor->nb[విభజించు_state.axis + 1];
+                ఒకవేళ (chunk_కొలత_j == 0) {
+                    కొనసాగు;
                 }
-                const size_t simple_offset = i_start * chunk_size_j;
-                ggml_backend_tensor_get_2d(simple_tensor, (char *) data + offset_j, simple_offset, chunk_size_j, i_stop - i_start, chunk_size_j, chunk_size_full);
-                offset_j += chunk_size_j;
+                స్థిరరాశి size_t simple_స్థానభ్రంశం = i_ప్రారంభం * chunk_కొలత_j;
+                ggml_backend_tensor_get_2d(simple_tensor, (అక్షరం *) దత్తాంశం + స్థానభ్రంశం_j, simple_స్థానభ్రంశం, chunk_కొలత_j, i_stop - i_ప్రారంభం, chunk_కొలత_j, chunk_కొలత_నిండిన);
+                స్థానభ్రంశం_j += chunk_కొలత_j;
             }
-            GGML_ASSERT(offset_j == chunk_size_full);
-        } break;
-        case GGML_BACKEND_SPLIT_AXIS_MIRRORED: {
+            GGML_ASSERT(స్థానభ్రంశం_j == chunk_కొలత_నిండిన);
+        } ఆపు;
+        స్థితి GGML_BACKEND_విభజించు_AXIS_MIRRORED: {
             // TODO other simple backend may be better
-            const ggml_tensor * simple_tensor = ggml_backend_meta_buffer_simple_tensor(tensor, 0);
-            ggml_backend_tensor_get(simple_tensor, data, offset, size);
-        } break;
-        default: {
+            స్థిరరాశి ggml_tensor * simple_tensor = ggml_backend_meta_బఫరు_simple_tensor(tensor, 0);
+            ggml_backend_tensor_get(simple_tensor, దత్తాంశం, స్థానభ్రంశం, size);
+        } ఆపు;
+        అప్రమేయ: {
             GGML_ABORT("fatal error");
         }
     }
 }
 
-static void ggml_backend_meta_buffer_clear(ggml_backend_buffer_t buffer, uint8_t value) {
-    const size_t n_buffers = ggml_backend_meta_buffer_n_bufs(buffer);
-    for (size_t i = 0; i < n_buffers; i++) {
-        ggml_backend_buffer_clear(ggml_backend_meta_buffer_simple_buffer(buffer, i), value);
+స్థిర శూన్య ggml_backend_meta_బఫరు_clear(ggml_backend_బఫరు_t బఫరు, uint8_t value) {
+    స్థిరరాశి size_t n_buffers = ggml_backend_meta_బఫరు_n_bufs(బఫరు);
+    కొరకు (size_t i = 0; i < n_buffers; i++) {
+        ggml_backend_బఫరు_clear(ggml_backend_meta_బఫరు_simple_బఫరు(బఫరు, i), value);
     }
 }
 
-static void ggml_backend_meta_buffer_reset(ggml_backend_buffer_t buffer) {
-    GGML_ASSERT(ggml_backend_buffer_is_meta(buffer));
-    ggml_backend_meta_buffer_context * buf_ctx = (ggml_backend_meta_buffer_context *) buffer->context;
-    for (size_t i = 0; i < buf_ctx->bufs.size(); i++) {
-        ggml_backend_buffer_reset(ggml_backend_meta_buffer_simple_buffer(buffer, i));
+స్థిర శూన్య ggml_backend_meta_బఫరు_reset(ggml_backend_బఫరు_t బఫరు) {
+    GGML_ASSERT(ggml_backend_బఫరు_is_meta(బఫరు));
+    ggml_backend_meta_బఫరు_context * buf_ctx = (ggml_backend_meta_బఫరు_context *) బఫరు->context;
+    కొరకు (size_t i = 0; i < buf_ctx->bufs.size(); i++) {
+        ggml_backend_బఫరు_reset(ggml_backend_meta_బఫరు_simple_బఫరు(బఫరు, i));
     }
 }
 
-static const ggml_backend_buffer_i ggml_backend_meta_buffer_iface = {
-    /* .free_buffer     = */ ggml_backend_meta_buffer_free_buffer,
-    /* .get_base        = */ ggml_backend_meta_buffer_get_base,
-    /* .init_tensor     = */ ggml_backend_meta_buffer_init_tensor,
-    /* .memset_tensor   = */ ggml_backend_meta_buffer_memset_tensor,
-    /* .set_tensor      = */ ggml_backend_meta_buffer_set_tensor,
-    /* .get_tensor      = */ ggml_backend_meta_buffer_get_tensor,
-    /* .set_tensor_2d   = */ nullptr,
-    /* .get_tensor_2d   = */ nullptr,
-    /* .cpy_tensor      = */ nullptr,
-    /* .clear           = */ ggml_backend_meta_buffer_clear,
-    /* .reset           = */ ggml_backend_meta_buffer_reset,
+స్థిర స్థిరరాశి ggml_backend_బఫరు_i ggml_backend_meta_బఫరు_iface = {
+    /* .free_buffer     = */ ggml_backend_meta_బఫరు_free_బఫరు,
+    /* .get_base        = */ ggml_backend_meta_బఫరు_get_పునాది,
+    /* .init_tensor     = */ ggml_backend_meta_బఫరు_init_tensor,
+    /* .memset_tensor   = */ ggml_backend_meta_బఫరు_memset_tensor,
+    /* .set_tensor      = */ ggml_backend_meta_బఫరు_సమితి_tensor,
+    /* .get_tensor      = */ ggml_backend_meta_బఫరు_get_tensor,
+    /* .set_tensor_2d   = */ శూన్యసూచిక,
+    /* .get_tensor_2d   = */ శూన్యసూచిక,
+    /* .cpy_tensor      = */ శూన్యసూచిక,
+    /* .clear           = */ ggml_backend_meta_బఫరు_clear,
+    /* .reset           = */ ggml_backend_meta_బఫరు_reset,
 };
 
-bool ggml_backend_buffer_is_meta(ggml_backend_buffer_t buf) {
-    return buf != nullptr && buf->iface.free_buffer == ggml_backend_meta_buffer_iface.free_buffer;
+తార్కిక ggml_backend_బఫరు_is_meta(ggml_backend_బఫరు_t buf) {
+    తిరిగి buf != శూన్యసూచిక && buf->iface.free_బఫరు == ggml_backend_meta_బఫరు_iface.free_బఫరు;
 }
 
-void ggml_backend_meta_buffer_set_usage(ggml_backend_buffer_t buffer, enum ggml_backend_buffer_usage usage) {
-    GGML_ASSERT(ggml_backend_buffer_is_meta(buffer));
-    ggml_backend_meta_buffer_context * buf_ctx = (ggml_backend_meta_buffer_context *) buffer->context;
-    for (size_t i = 0; i < buf_ctx->bufs.size(); i++) {
-        if (buf_ctx->bufs[i]) {
-            ggml_backend_buffer_set_usage(buf_ctx->bufs[i].get(), usage);
+శూన్య ggml_backend_meta_బఫరు_సమితి_usage(ggml_backend_బఫరు_t బఫరు, గణన ggml_backend_బఫరు_usage usage) {
+    GGML_ASSERT(ggml_backend_బఫరు_is_meta(బఫరు));
+    ggml_backend_meta_బఫరు_context * buf_ctx = (ggml_backend_meta_బఫరు_context *) బఫరు->context;
+    కొరకు (size_t i = 0; i < buf_ctx->bufs.size(); i++) {
+        ఒకవేళ (buf_ctx->bufs[i]) {
+            ggml_backend_బఫరు_సమితి_usage(buf_ctx->bufs[i].get(), usage);
         }
     }
 }
 
-static ggml_backend_buffer_t ggml_backend_meta_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
-    const size_t n_simple_bufts = ggml_backend_meta_buft_n_bufts(buft);
+స్థిర ggml_backend_బఫరు_t ggml_backend_meta_బఫరు_type_alloc_బఫరు(ggml_backend_బఫరు_type_t buft, size_t size) {
+    స్థిరరాశి size_t n_simple_bufts = ggml_backend_meta_buft_n_bufts(buft);
 
-    const ggml_init_params params = {
+    స్థిరరాశి ggml_init_params params = {
         /*.mem_size   =*/ 1024*1024*ggml_tensor_overhead(), // FIXME
-        /*.mem_buffer =*/ nullptr,
-        /*.no_alloc   =*/ true,
+        /*.mem_buffer =*/ శూన్యసూచిక,
+        /*.no_alloc   =*/ నిజం,
     };
     ggml_backend_meta_simple_tensor_container stc_static;
     ggml_backend_meta_simple_tensor_container stc_compute_0(params, n_simple_bufts);
     ggml_backend_meta_simple_tensor_container stc_compute_1(params, n_simple_bufts);
 
     size_t max_size = 0;
-    std::vector<ggml_backend_buffer_t> bufs;
+    std::vector<ggml_backend_బఫరు_t> bufs;
     bufs.reserve(n_simple_bufts);
-    for (size_t i = 0; i < n_simple_bufts; i++) {
-        bufs.push_back(ggml_backend_buft_alloc_buffer(ggml_backend_meta_buft_simple_buft(buft, i), size));
-        GGML_ASSERT(bufs.back() != nullptr);
-        max_size = std::max(max_size, ggml_backend_buffer_get_size(bufs.back()));
+    కొరకు (size_t i = 0; i < n_simple_bufts; i++) {
+        bufs.push_back(ggml_backend_buft_alloc_బఫరు(ggml_backend_meta_buft_simple_buft(buft, i), size));
+        GGML_ASSERT(bufs.back() != శూన్యసూచిక);
+        max_size = std::max(max_size, ggml_backend_బఫరు_get_కొలత(bufs.back()));
     }
-    ggml_backend_meta_buffer_context * buf_ctx = new ggml_backend_meta_buffer_context(stc_static, stc_compute_0, stc_compute_1, bufs);
+    ggml_backend_meta_బఫరు_context * buf_ctx = కొత్త ggml_backend_meta_బఫరు_context(stc_static, stc_compute_0, stc_compute_1, bufs);
 
-    return ggml_backend_buffer_init(buft, ggml_backend_meta_buffer_iface, buf_ctx, max_size);
+    తిరిగి ggml_backend_బఫరు_init(buft, ggml_backend_meta_బఫరు_iface, buf_ctx, max_size);
 }
 
-static ggml_backend_buffer_t ggml_backend_meta_buffer_type_alloc_buffer_n(ggml_backend_buffer_type_t buft, ggml_tensor ** tensors, int n_tensors) {
-    const size_t n_simple_bufts = ggml_backend_meta_buft_n_bufts(buft);
+స్థిర ggml_backend_బఫరు_t ggml_backend_meta_బఫరు_type_alloc_బఫరు_n(ggml_backend_బఫరు_type_t buft, ggml_tensor ** tensors, పూర్ణాంకం n_tensors) {
+    స్థిరరాశి size_t n_simple_bufts = ggml_backend_meta_buft_n_bufts(buft);
 
     constexpr size_t compute_headroom = 16; // Maximum number of views per statically allocated tensor that can be created between evals.
-    const ggml_init_params params_static = {
+    స్థిరరాశి ggml_init_params params_static = {
         /*.mem_size   =*/ n_tensors * ggml_tensor_overhead(),
-        /*.mem_buffer =*/ nullptr,
-        /*.no_alloc   =*/ true,
+        /*.mem_buffer =*/ శూన్యసూచిక,
+        /*.no_alloc   =*/ నిజం,
     };
-    const ggml_init_params params_compute = {
+    స్థిరరాశి ggml_init_params params_compute = {
         /*.mem_size   =*/ compute_headroom * n_tensors * ggml_tensor_overhead(),
-        /*.mem_buffer =*/ nullptr,
-        /*.no_alloc   =*/ true,
+        /*.mem_buffer =*/ శూన్యసూచిక,
+        /*.no_alloc   =*/ నిజం,
     };
     ggml_backend_meta_simple_tensor_container stc_static   (params_static,  n_simple_bufts);
     ggml_backend_meta_simple_tensor_container stc_compute_0(params_compute, n_simple_bufts);
     ggml_backend_meta_simple_tensor_container stc_compute_1(params_compute, n_simple_bufts);
 
-    std::vector<ggml_backend_buffer_t> bufs(n_simple_bufts, nullptr);
-    ggml_backend_meta_buffer_context * meta_buf_ctx = new ggml_backend_meta_buffer_context(stc_static, stc_compute_0, stc_compute_1, bufs);
+    std::vector<ggml_backend_బఫరు_t> bufs(n_simple_bufts, శూన్యసూచిక);
+    ggml_backend_meta_బఫరు_context * meta_buf_ctx = కొత్త ggml_backend_meta_బఫరు_context(stc_static, stc_compute_0, stc_compute_1, bufs);
 
-    ggml_backend_buffer_t meta_buf = ggml_backend_buffer_init(buft, ggml_backend_meta_buffer_iface, meta_buf_ctx, 0);
-    for (int i = 0; i < n_tensors; i++) {
+    ggml_backend_బఫరు_t meta_buf = ggml_backend_బఫరు_init(buft, ggml_backend_meta_బఫరు_iface, meta_buf_ctx, 0);
+    కొరకు (పూర్ణాంకం i = 0; i < n_tensors; i++) {
         ggml_tensor * t = tensors[i];
-        t->buffer = meta_buf;
-        ggml_backend_meta_buffer_init_tensor_impl(meta_buf_ctx->stc_static, t);
-        t->data = (void *) 0x2000000000000000; // FIXME
+        t->బఫరు = meta_buf;
+        ggml_backend_meta_బఫరు_init_tensor_impl(meta_buf_ctx->stc_static, t);
+        t->దత్తాంశం = (శూన్య *) 0x2000000000000000; // FIXME
     }
-    for (size_t i = 0; i < n_simple_bufts; i++) {
+    కొరకు (size_t i = 0; i < n_simple_bufts; i++) {
         ggml_context * ctx = meta_buf_ctx->stc_static.ctxs[i].get();
-        ggml_backend_buffer_type_t simple_buft = ggml_backend_meta_buft_simple_buft(buft, i);
+        ggml_backend_బఫరు_type_t simple_buft = ggml_backend_meta_buft_simple_buft(buft, i);
 
         // If a ggml_context only has zero-sized tensors, ggml_backend_alloc_ctx_tensors_from_buft returns NULL.
         // For those edge cases, allocate a dummy buffer instead.
-        bool any_nonzero_slice = false;
-        for (ggml_tensor * t = ggml_get_first_tensor(ctx); t != nullptr; t = ggml_get_next_tensor(ctx, t)) {
-            if (ggml_nelements(t) != 0) {
-                any_nonzero_slice = true;
-                break;
+        తార్కిక any_nonzero_ముక్క = అబద్ధం;
+        కొరకు (ggml_tensor * t = ggml_get_మొదటి_tensor(ctx); t != శూన్యసూచిక; t = ggml_get_తదుపరి_tensor(ctx, t)) {
+            ఒకవేళ (ggml_nelements(t) != 0) {
+                any_nonzero_ముక్క = నిజం;
+                ఆపు;
             }
         }
-        if (any_nonzero_slice) {
+        ఒకవేళ (any_nonzero_ముక్క) {
             meta_buf_ctx->bufs[i].reset(ggml_backend_alloc_ctx_tensors_from_buft(ctx, simple_buft));
-        } else {
-            meta_buf_ctx->bufs[i].reset(ggml_backend_buft_alloc_buffer(simple_buft, 0));
-            for (ggml_tensor * t = ggml_get_first_tensor(ctx); t != nullptr; t = ggml_get_next_tensor(ctx, t)) {
-                t->buffer = meta_buf_ctx->bufs[i].get();
+        } లేకపోతే {
+            meta_buf_ctx->bufs[i].reset(ggml_backend_buft_alloc_బఫరు(simple_buft, 0));
+            కొరకు (ggml_tensor * t = ggml_get_మొదటి_tensor(ctx); t != శూన్యసూచిక; t = ggml_get_తదుపరి_tensor(ctx, t)) {
+                t->బఫరు = meta_buf_ctx->bufs[i].get();
             }
         }
         GGML_ASSERT(meta_buf_ctx->bufs[i]);
-        meta_buf->size = std::max(meta_buf->size, ggml_backend_buffer_get_size(meta_buf_ctx->bufs[i].get()));
+        meta_buf->size = std::max(meta_buf->size, ggml_backend_బఫరు_get_కొలత(meta_buf_ctx->bufs[i].get()));
     }
-    return meta_buf;
+    తిరిగి meta_buf;
 }
 
 //
 // meta backend
 //
 
-static ggml_guid_t ggml_backend_meta_guid() {
-    static ggml_guid guid = {0xf1, 0x0e, 0x34, 0xcf, 0x9c, 0x6f, 0x43, 0xcb, 0x96, 0x92, 0xbe, 0x8e, 0xbb, 0x71, 0x3f, 0xda};
-    return &guid;
+స్థిర ggml_guid_t ggml_backend_meta_guid() {
+    స్థిర ggml_guid guid = {0xf1, 0x0e, 0x34, 0xcf, 0x9c, 0x6f, 0x43, 0xcb, 0x96, 0x92, 0xbe, 0x8e, 0xbb, 0x71, 0x3f, 0xda};
+    తిరిగి &guid;
 }
 
-struct ggml_backend_meta_context {
-    struct cgraph_config {
-        ggml_cgraph * cgraph_main = nullptr;
-        int           offset      = 0; // Node offset vs. original graph
+నిర్మాణం ggml_backend_meta_context {
+    నిర్మాణం cgraph_config {
+        ggml_cgraph * cgraph_main = శూన్యసూచిక;
+        పూర్ణాంకం           స్థానభ్రంశం      = 0; // Node offset vs. original graph
 
         std::vector<ggml_cgraph *> cgraphs_aux;
     };
-    struct backend_config {
+    నిర్మాణం backend_config {
         ggml_backend_t backend;
 
         std::vector<cgraph_config>           cgraphs;
         std::vector<ggml_tensor *>           nodes;
-        std::vector<ggml_backend_buffer_ptr> bufs;
+        std::vector<ggml_backend_బఫరు_ptr> bufs;
 
-        backend_config(ggml_backend_t backend, const size_t n_reduce_steps) : backend(backend) {
-            bufs.resize(n_reduce_steps);
+        backend_config(ggml_backend_t backend, స్థిరరాశి size_t n_reduce_అడుగులు) : backend(backend) {
+            bufs.resize(n_reduce_అడుగులు);
         }
     };
     std::string                 name;
@@ -1836,418 +1836,418 @@ struct ggml_backend_meta_context {
     ggml_context_ptr            ctx;
     std::vector<ggml_cgraph *>  cgraphs_aux;
     std::vector<ggml_tensor *>  nodes_aux;
-    size_t                      n_reduce_steps;
-    int                         max_nnodes    = 0;
-    size_t                      max_tmp_size  = 0;
+    size_t                      n_reduce_అడుగులు;
+    పూర్ణాంకం                         max_nnodes    = 0;
+    size_t                      max_tmp_కొలత  = 0;
     size_t                      max_subgraphs = 0;
     size_t                      n_subgraphs   = 0;
     uint64_t                    uid           = 0;
 
-    void *                               comm_ctx       = nullptr;
-    ggml_backend_comm_allreduce_tensor_t comm_allreduce = nullptr;
+    శూన్య *                               comm_ctx       = శూన్యసూచిక;
+    ggml_backend_comm_allreduce_tensor_t comm_allreduce = శూన్యసూచిక;
 
-    ggml_backend_meta_context(ggml_backend_dev_t meta_dev, const char * params) {
-        const size_t n_devs = ggml_backend_meta_dev_n_devs(meta_dev);
-        n_reduce_steps = std::ceil(std::log2(n_devs));
+    ggml_backend_meta_context(ggml_backend_dev_t meta_dev, స్థిరరాశి అక్షరం * params) {
+        స్థిరరాశి size_t n_devs = ggml_backend_meta_dev_n_devs(meta_dev);
+        n_reduce_అడుగులు = std::ceil(std::log2(n_devs));
         name = "Meta(";
         std::vector<ggml_backend_t> simple_backends;
         backend_configs.reserve(n_devs);
         simple_backends.reserve(n_devs);
-        for (size_t i = 0; i < n_devs; i++) {
+        కొరకు (size_t i = 0; i < n_devs; i++) {
             ggml_backend_dev_t simple_dev = ggml_backend_meta_dev_simple_dev(meta_dev, i);
-            if (i > 0) {
+            ఒకవేళ (i > 0) {
                 name += ",";
             }
             name += ggml_backend_dev_name(simple_dev);
             simple_backends.push_back(ggml_backend_dev_init(simple_dev, params));
-            backend_configs.emplace_back(simple_backends.back(), n_reduce_steps);
+            backend_configs.emplace_back(simple_backends.back(), n_reduce_అడుగులు);
         }
         name += ")";
 
-        if (n_devs > 1) {
-            ggml_backend_comm_init_t comm_init = (ggml_backend_comm_init_t) ggml_backend_reg_get_proc_address(
+        ఒకవేళ (n_devs > 1) {
+            ggml_backend_comm_init_t comm_init = (ggml_backend_comm_init_t) ggml_backend_reg_get_proc_చిరునామా(
                 ggml_backend_dev_backend_reg(ggml_backend_get_device(simple_backends[0])), "ggml_backend_comm_init");
-            if (comm_init != nullptr) {
-                comm_ctx = comm_init(simple_backends.data(), simple_backends.size());
+            ఒకవేళ (comm_init != శూన్యసూచిక) {
+                comm_ctx = comm_init(simple_backends.దత్తాంశం(), simple_backends.size());
             }
         }
-        if (comm_ctx != nullptr) {
+        ఒకవేళ (comm_ctx != శూన్యసూచిక) {
             comm_allreduce = (ggml_backend_comm_allreduce_tensor_t)
-                ggml_backend_reg_get_proc_address(ggml_backend_dev_backend_reg(
+                ggml_backend_reg_get_proc_చిరునామా(ggml_backend_dev_backend_reg(
                     ggml_backend_get_device(simple_backends[0])), "ggml_backend_comm_allreduce_tensor");
-            GGML_ASSERT(comm_allreduce != nullptr);
+            GGML_ASSERT(comm_allreduce != శూన్యసూచిక);
         }
     }
 
     ~ggml_backend_meta_context() {
-        if (comm_ctx != nullptr) {
-            ggml_backend_comm_free_t comm_free = (ggml_backend_comm_free_t) ggml_backend_reg_get_proc_address(
+        ఒకవేళ (comm_ctx != శూన్యసూచిక) {
+            ggml_backend_comm_free_t comm_free = (ggml_backend_comm_free_t) ggml_backend_reg_get_proc_చిరునామా(
                 ggml_backend_dev_backend_reg(ggml_backend_get_device(backend_configs[0].backend)), "ggml_backend_comm_free");
-            GGML_ASSERT(comm_free != nullptr);
+            GGML_ASSERT(comm_free != శూన్యసూచిక);
             comm_free(comm_ctx);
         }
-        for (auto & bc : backend_configs) {
+        కొరకు (స్వయంచాలక & bc : backend_configs) {
             ggml_backend_free(bc.backend);
         }
     }
 };
 
-static const char * ggml_backend_meta_get_name(ggml_backend_t backend) {
+స్థిర స్థిరరాశి అక్షరం * ggml_backend_meta_get_name(ggml_backend_t backend) {
     GGML_ASSERT(ggml_backend_is_meta(backend));
-    const ggml_backend_meta_context * backend_ctx = (const ggml_backend_meta_context *) backend->context;
-    return backend_ctx->name.c_str();
+    స్థిరరాశి ggml_backend_meta_context * backend_ctx = (స్థిరరాశి ggml_backend_meta_context *) backend->context;
+    తిరిగి backend_ctx->name.c_str();
 }
 
-static void ggml_backend_meta_free(ggml_backend_t backend) {
+స్థిర శూన్య ggml_backend_meta_free(ggml_backend_t backend) {
     GGML_ASSERT(ggml_backend_is_meta(backend));
     ggml_backend_meta_context * backend_ctx = (ggml_backend_meta_context *) backend->context;
-    delete backend_ctx;
-    delete backend;
+    తొలగించు backend_ctx;
+    తొలగించు backend;
 }
 
-static void ggml_backend_meta_set_tensor_async(ggml_backend_t backend, ggml_tensor * tensor, const void * data, size_t offset, size_t size) {
-    const size_t n_backends = ggml_backend_meta_n_backends(backend);
-    GGML_ASSERT(offset == 0);
+స్థిర శూన్య ggml_backend_meta_సమితి_tensor_async(ggml_backend_t backend, ggml_tensor * tensor, స్థిరరాశి శూన్య * దత్తాంశం, size_t స్థానభ్రంశం, size_t size) {
+    స్థిరరాశి size_t n_backends = ggml_backend_meta_n_backends(backend);
+    GGML_ASSERT(స్థానభ్రంశం == 0);
     GGML_ASSERT(ggml_is_contiguous(tensor));
 
-    const ggml_backend_meta_split_state split_state = ggml_backend_meta_get_split_state(tensor, /*assume_sync =*/ false);
-    GGML_ASSERT(split_state.n_segments == 1);
-    GGML_ASSERT(split_state.nr[0]      == 1);
+    స్థిరరాశి ggml_backend_meta_విభజించు_state విభజించు_state = ggml_backend_meta_get_విభజించు_state(tensor, /*assume_sync =*/ అబద్ధం);
+    GGML_ASSERT(విభజించు_state.n_segments == 1);
+    GGML_ASSERT(విభజించు_state.nr[0]      == 1);
 
-    switch (split_state.axis) {
-        case GGML_BACKEND_SPLIT_AXIS_0:
-        case GGML_BACKEND_SPLIT_AXIS_1:
-        case GGML_BACKEND_SPLIT_AXIS_2: {
+    ఎంపిక (విభజించు_state.axis) {
+        స్థితి GGML_BACKEND_విభజించు_AXIS_0:
+        స్థితి GGML_BACKEND_విభజించు_AXIS_1:
+        స్థితి GGML_BACKEND_విభజించు_AXIS_2: {
             // Exploit that tensors are contiguous to splice it with simple tensors as "chunks".
-            const size_t chunk_size_full = tensor->nb[split_state.axis + 1];
-            GGML_ASSERT(offset % chunk_size_full == 0);
-            GGML_ASSERT(size   % chunk_size_full == 0);
-            const int64_t i_start =  offset        /chunk_size_full;
-            const int64_t i_stop  = (offset + size)/chunk_size_full;
-            size_t offset_j = 0;
-            for (size_t j = 0; j < n_backends; j++){
+            స్థిరరాశి size_t chunk_కొలత_నిండిన = tensor->nb[విభజించు_state.axis + 1];
+            GGML_ASSERT(స్థానభ్రంశం % chunk_కొలత_నిండిన == 0);
+            GGML_ASSERT(size   % chunk_కొలత_నిండిన == 0);
+            స్థిరరాశి int64_t i_ప్రారంభం =  స్థానభ్రంశం        /chunk_కొలత_నిండిన;
+            స్థిరరాశి int64_t i_stop  = (స్థానభ్రంశం + size)/chunk_కొలత_నిండిన;
+            size_t స్థానభ్రంశం_j = 0;
+            కొరకు (size_t j = 0; j < n_backends; j++){
                 ggml_backend_t simple_backend = ggml_backend_meta_simple_backend(backend, j);
-                ggml_tensor * simple_tensor = ggml_backend_meta_buffer_simple_tensor(tensor, j);
-                const size_t chunk_size_j = simple_tensor->nb[split_state.axis + 1];
-                if (chunk_size_j == 0) {
-                    continue;
+                ggml_tensor * simple_tensor = ggml_backend_meta_బఫరు_simple_tensor(tensor, j);
+                స్థిరరాశి size_t chunk_కొలత_j = simple_tensor->nb[విభజించు_state.axis + 1];
+                ఒకవేళ (chunk_కొలత_j == 0) {
+                    కొనసాగు;
                 }
-                ggml_backend_tensor_set_2d_async(simple_backend, simple_tensor, (const char *) data + offset_j, offset, chunk_size_j,
-                    i_stop - i_start, chunk_size_j, chunk_size_full);
-                offset_j += chunk_size_j;
+                ggml_backend_tensor_సమితి_2d_async(simple_backend, simple_tensor, (స్థిరరాశి అక్షరం *) దత్తాంశం + స్థానభ్రంశం_j, స్థానభ్రంశం, chunk_కొలత_j,
+                    i_stop - i_ప్రారంభం, chunk_కొలత_j, chunk_కొలత_నిండిన);
+                స్థానభ్రంశం_j += chunk_కొలత_j;
             }
-            GGML_ASSERT(offset_j == chunk_size_full);
-        } break;
-        case GGML_BACKEND_SPLIT_AXIS_MIRRORED: {
-            for (size_t j = 0; j < n_backends; j++) {
-                ggml_backend_tensor_set_async(
-                    ggml_backend_meta_simple_backend(backend, j), ggml_backend_meta_buffer_simple_tensor(tensor, j), data, offset, size);
+            GGML_ASSERT(స్థానభ్రంశం_j == chunk_కొలత_నిండిన);
+        } ఆపు;
+        స్థితి GGML_BACKEND_విభజించు_AXIS_MIRRORED: {
+            కొరకు (size_t j = 0; j < n_backends; j++) {
+                ggml_backend_tensor_సమితి_async(
+                    ggml_backend_meta_simple_backend(backend, j), ggml_backend_meta_బఫరు_simple_tensor(tensor, j), దత్తాంశం, స్థానభ్రంశం, size);
             }
-        } break;
-        default: {
+        } ఆపు;
+        అప్రమేయ: {
             GGML_ABORT("fatal error");
         }
     }
 }
 
-static void ggml_backend_meta_get_tensor_async(ggml_backend_t backend, const ggml_tensor * tensor, void * data, size_t offset, size_t size) {
-    const size_t n_backends = ggml_backend_meta_n_backends(backend);
-    GGML_ASSERT(offset == 0);
+స్థిర శూన్య ggml_backend_meta_get_tensor_async(ggml_backend_t backend, స్థిరరాశి ggml_tensor * tensor, శూన్య * దత్తాంశం, size_t స్థానభ్రంశం, size_t size) {
+    స్థిరరాశి size_t n_backends = ggml_backend_meta_n_backends(backend);
+    GGML_ASSERT(స్థానభ్రంశం == 0);
     GGML_ASSERT(ggml_is_contiguous(tensor));
 
-    const ggml_backend_meta_split_state split_state = ggml_backend_meta_get_split_state(tensor, /*assume_sync =*/ false);
-    GGML_ASSERT(split_state.n_segments == 1);
-    GGML_ASSERT(split_state.nr[0]      == 1);
+    స్థిరరాశి ggml_backend_meta_విభజించు_state విభజించు_state = ggml_backend_meta_get_విభజించు_state(tensor, /*assume_sync =*/ అబద్ధం);
+    GGML_ASSERT(విభజించు_state.n_segments == 1);
+    GGML_ASSERT(విభజించు_state.nr[0]      == 1);
 
-    switch (split_state.axis) {
-        case GGML_BACKEND_SPLIT_AXIS_0:
-        case GGML_BACKEND_SPLIT_AXIS_1:
-        case GGML_BACKEND_SPLIT_AXIS_2: {
+    ఎంపిక (విభజించు_state.axis) {
+        స్థితి GGML_BACKEND_విభజించు_AXIS_0:
+        స్థితి GGML_BACKEND_విభజించు_AXIS_1:
+        స్థితి GGML_BACKEND_విభజించు_AXIS_2: {
             // Exploit that tensors are contiguous to splice it with simple tensors as "chunks".
-            const size_t chunk_size_full = tensor->nb[split_state.axis + 1];
-            GGML_ASSERT(offset % chunk_size_full == 0);
-            GGML_ASSERT(size   % chunk_size_full == 0);
-            const int64_t i_start =  offset        /chunk_size_full;
-            const int64_t i_stop  = (offset + size)/chunk_size_full;
-            size_t offset_j = 0;
-            for (size_t j = 0; j < n_backends; j++){
+            స్థిరరాశి size_t chunk_కొలత_నిండిన = tensor->nb[విభజించు_state.axis + 1];
+            GGML_ASSERT(స్థానభ్రంశం % chunk_కొలత_నిండిన == 0);
+            GGML_ASSERT(size   % chunk_కొలత_నిండిన == 0);
+            స్థిరరాశి int64_t i_ప్రారంభం =  స్థానభ్రంశం        /chunk_కొలత_నిండిన;
+            స్థిరరాశి int64_t i_stop  = (స్థానభ్రంశం + size)/chunk_కొలత_నిండిన;
+            size_t స్థానభ్రంశం_j = 0;
+            కొరకు (size_t j = 0; j < n_backends; j++){
                 ggml_backend_t simple_backend = ggml_backend_meta_simple_backend(backend, j);
-                const ggml_tensor * simple_tensor = ggml_backend_meta_buffer_simple_tensor(tensor, j);
-                const size_t chunk_size_j = simple_tensor->nb[split_state.axis + 1];
-                if (chunk_size_j == 0) {
-                    continue;
+                స్థిరరాశి ggml_tensor * simple_tensor = ggml_backend_meta_బఫరు_simple_tensor(tensor, j);
+                స్థిరరాశి size_t chunk_కొలత_j = simple_tensor->nb[విభజించు_state.axis + 1];
+                ఒకవేళ (chunk_కొలత_j == 0) {
+                    కొనసాగు;
                 }
-                ggml_backend_tensor_get_2d_async(simple_backend, simple_tensor, (char *) data + offset_j, offset, chunk_size_j,
-                    i_stop - i_start, chunk_size_j, chunk_size_full);
-                offset_j += chunk_size_j;
+                ggml_backend_tensor_get_2d_async(simple_backend, simple_tensor, (అక్షరం *) దత్తాంశం + స్థానభ్రంశం_j, స్థానభ్రంశం, chunk_కొలత_j,
+                    i_stop - i_ప్రారంభం, chunk_కొలత_j, chunk_కొలత_నిండిన);
+                స్థానభ్రంశం_j += chunk_కొలత_j;
             }
-            GGML_ASSERT(offset_j == chunk_size_full);
-        } break;
-        case GGML_BACKEND_SPLIT_AXIS_MIRRORED: {
+            GGML_ASSERT(స్థానభ్రంశం_j == chunk_కొలత_నిండిన);
+        } ఆపు;
+        స్థితి GGML_BACKEND_విభజించు_AXIS_MIRRORED: {
             // TODO other simple backend may be better
             ggml_backend_t simple_backend = ggml_backend_meta_simple_backend(backend, 0);
-            const ggml_tensor * simple_tensor = ggml_backend_meta_buffer_simple_tensor(tensor, 0);
-            ggml_backend_tensor_get_async(simple_backend, simple_tensor, data, offset, size);
-        } break;
-        default: {
+            స్థిరరాశి ggml_tensor * simple_tensor = ggml_backend_meta_బఫరు_simple_tensor(tensor, 0);
+            ggml_backend_tensor_get_async(simple_backend, simple_tensor, దత్తాంశం, స్థానభ్రంశం, size);
+        } ఆపు;
+        అప్రమేయ: {
             GGML_ABORT("fatal error");
         }
     }
 }
 
-static void ggml_backend_meta_synchronize(ggml_backend_t backend) {
-    const size_t n_backends = ggml_backend_meta_n_backends(backend);
-    for (size_t i = 0; i < n_backends; i++) {
+స్థిర శూన్య ggml_backend_meta_synchronize(ggml_backend_t backend) {
+    స్థిరరాశి size_t n_backends = ggml_backend_meta_n_backends(backend);
+    కొరకు (size_t i = 0; i < n_backends; i++) {
         ggml_backend_synchronize(ggml_backend_meta_simple_backend(backend, i));
     }
 }
 
-static enum ggml_status ggml_backend_meta_graph_compute(ggml_backend_t backend, struct ggml_cgraph * cgraph) {
-    GGML_ASSERT(cgraph->grads == nullptr);
-    const size_t n_backends = ggml_backend_meta_n_backends(backend);
+స్థిర గణన ggml_స్థితి ggml_backend_meta_లేఖాచిత్రం_compute(ggml_backend_t backend, నిర్మాణం ggml_cgraph * cgraph) {
+    GGML_ASSERT(cgraph->grads == శూన్యసూచిక);
+    స్థిరరాశి size_t n_backends = ggml_backend_meta_n_backends(backend);
     ggml_backend_meta_context * backend_ctx = (ggml_backend_meta_context *) backend->context;
 
     // If the previous cgraph had a defined UID it can be used to skip rebuilding the subgraphs per simple backend.
-    const bool needs_rebuild = (cgraph->uid == 0) || (cgraph->uid != backend_ctx->uid);
+    స్థిరరాశి తార్కిక needs_rebuild = (cgraph->uid == 0) || (cgraph->uid != backend_ctx->uid);
 
-    bool max_nnodes_raised = false;
-    if (cgraph->n_nodes > backend_ctx->max_nnodes) {
-        for (size_t j = 0; j < n_backends; j++) {
-            auto & bcj = backend_ctx->backend_configs[j];
+    తార్కిక max_nnodes_raised = అబద్ధం;
+    ఒకవేళ (cgraph->n_nodes > backend_ctx->max_nnodes) {
+        కొరకు (size_t j = 0; j < n_backends; j++) {
+            స్వయంచాలక & bcj = backend_ctx->backend_configs[j];
             bcj.nodes.resize(cgraph->n_nodes);
             bcj.cgraphs.resize(cgraph->n_nodes);
         }
         backend_ctx->max_nnodes = cgraph->n_nodes;
-        max_nnodes_raised = true;
-        assert(needs_rebuild);
+        max_nnodes_raised = నిజం;
+        ప్రతిజ్ఞా(needs_rebuild);
     }
 
-    if (needs_rebuild) {
-        std::set<ggml_backend_buffer_t> used_buffers;
-        for (int i = 0; i < cgraph->n_leafs; i++) {
-            if (ggml_backend_buffer_is_meta(cgraph->leafs[i]->buffer)) {
-                used_buffers.emplace(cgraph->leafs[i]->buffer);
+    ఒకవేళ (needs_rebuild) {
+        std::set<ggml_backend_బఫరు_t> వాడిన_buffers;
+        కొరకు (పూర్ణాంకం i = 0; i < cgraph->n_leafs; i++) {
+            ఒకవేళ (ggml_backend_బఫరు_is_meta(cgraph->leafs[i]->బఫరు)) {
+                వాడిన_buffers.emplace(cgraph->leafs[i]->బఫరు);
             }
         }
-        for (int i = 0; i < cgraph->n_nodes; i++) {
-            if (ggml_backend_buffer_is_meta(cgraph->nodes[i]->buffer)) {
-                used_buffers.emplace(cgraph->nodes[i]->buffer);
+        కొరకు (పూర్ణాంకం i = 0; i < cgraph->n_nodes; i++) {
+            ఒకవేళ (ggml_backend_బఫరు_is_meta(cgraph->nodes[i]->బఫరు)) {
+                వాడిన_buffers.emplace(cgraph->nodes[i]->బఫరు);
             }
         }
-        for (ggml_backend_buffer_t buf : used_buffers) {
-            ggml_backend_meta_buffer_context * buf_ctx = (ggml_backend_meta_buffer_context *) buf->context;
-            buf_ctx->stc_compute_index_next = buf_ctx->stc_compute_index ^ 1;
-            ggml_backend_meta_simple_tensor_container & stc = buf_ctx->stc_compute[buf_ctx->stc_compute_index_next];
-            for (ggml_context_ptr & ctx : stc.ctxs) {
+        కొరకు (ggml_backend_బఫరు_t buf : వాడిన_buffers) {
+            ggml_backend_meta_బఫరు_context * buf_ctx = (ggml_backend_meta_బఫరు_context *) buf->context;
+            buf_ctx->stc_compute_సూచీ_తదుపరి = buf_ctx->stc_compute_సూచీ ^ 1;
+            ggml_backend_meta_simple_tensor_container & stc = buf_ctx->stc_compute[buf_ctx->stc_compute_సూచీ_తదుపరి];
+            కొరకు (ggml_context_ptr & ctx : stc.ctxs) {
                 ggml_reset(ctx.get());
             }
             stc.simple_tensors.clear();
         }
         size_t n_subgraphs  = 0;
-        size_t max_tmp_size = 0;
+        size_t max_tmp_కొలత = 0;
 
-        for (size_t j = 0; j < n_backends; j++) {
-            auto & bcj = backend_ctx->backend_configs[j];
+        కొరకు (size_t j = 0; j < n_backends; j++) {
+            స్వయంచాలక & bcj = backend_ctx->backend_configs[j];
 
-            for (int i = 0; i < cgraph->n_nodes; i++) {
-                ggml_tensor * node = cgraph->nodes[i];
-                if (!ggml_backend_buffer_is_meta(node->buffer)) {
+            కొరకు (పూర్ణాంకం i = 0; i < cgraph->n_nodes; i++) {
+                ggml_tensor * కణుపు = cgraph->nodes[i];
+                ఒకవేళ (!ggml_backend_బఫరు_is_meta(కణుపు->బఫరు)) {
                     // [TAG_META_HOST_VIEWS]
-                    GGML_ASSERT(ggml_backend_meta_is_host_view(node));
+                    GGML_ASSERT(ggml_backend_meta_is_host_view(కణుపు));
 
                     // keep the node as is, mapping it to a simple tensor is not possible
-                    bcj.nodes[i] = node;
-                    continue;
+                    bcj.nodes[i] = కణుపు;
+                    కొనసాగు;
                 }
-                bcj.nodes[i] = ggml_backend_meta_buffer_simple_tensor(node, j);
+                bcj.nodes[i] = ggml_backend_meta_బఫరు_simple_tensor(కణుపు, j);
                 GGML_ASSERT(bcj.nodes[i]);
             }
         }
 
         {
             // For MoE models it may make sense to delay the AllReduce in order to reduce I/O:
-            auto get_i_delayed_branch = [&](const int i) -> int {
-                int id = i; // i_delayed
-                int idr = i; // i_delayed return, last safe return value
+            స్వయంచాలక get_i_delayed_branch = [&](స్థిరరాశి పూర్ణాంకం i) -> పూర్ణాంకం {
+                పూర్ణాంకం id = i; // i_delayed
+                పూర్ణాంకం idr = i; // i_delayed return, last safe return value
 
-                ggml_tensor * node = cgraph->nodes[id];
-                int32_t n_used = ggml_node_get_use_count(cgraph, id);
+                ggml_tensor * కణుపు = cgraph->nodes[id];
+                int32_t n_వాడిన = ggml_కణుపు_get_use_లెక్క(cgraph, id);
 
                 // Skip MIRRORED nodes that don't consume node
-                auto skip_unrelated = [&]() {
-                    while (id + 1 < cgraph->n_nodes) {
-                        ggml_tensor * next = cgraph->nodes[id+1];
-                        if (ggml_backend_meta_get_split_state(next, false).axis != GGML_BACKEND_SPLIT_AXIS_MIRRORED) {
-                            break;
+                స్వయంచాలక skip_unrelated = [&]() {
+                    అయితే (id + 1 < cgraph->n_nodes) {
+                        ggml_tensor * తదుపరి = cgraph->nodes[id+1];
+                        ఒకవేళ (ggml_backend_meta_get_విభజించు_state(తదుపరి, అబద్ధం).axis != GGML_BACKEND_విభజించు_AXIS_MIRRORED) {
+                            ఆపు;
                         }
-                        bool safe = true;
-                        for (int s = 0; s < GGML_MAX_SRC; s++) {
-                            if (next->src[s] == nullptr) {
-                                continue;
+                        తార్కిక సురక్షిత = నిజం;
+                        కొరకు (పూర్ణాంకం s = 0; s < GGML_MAX_SRC; s++) {
+                            ఒకవేళ (తదుపరి->src[s] == శూన్యసూచిక) {
+                                కొనసాగు;
                             }
-                            if (next->src[s] == node) {
-                                safe = false;
-                                break;
+                            ఒకవేళ (తదుపరి->src[s] == కణుపు) {
+                                సురక్షిత = అబద్ధం;
+                                ఆపు;
                             }
-                            if (ggml_backend_meta_get_split_state(next->src[s], false).axis != GGML_BACKEND_SPLIT_AXIS_MIRRORED) {
-                                safe = false;
-                                break;
+                            ఒకవేళ (ggml_backend_meta_get_విభజించు_state(తదుపరి->src[s], అబద్ధం).axis != GGML_BACKEND_విభజించు_AXIS_MIRRORED) {
+                                సురక్షిత = అబద్ధం;
+                                ఆపు;
                             }
                         }
-                        if (!safe) {
-                            break;
+                        ఒకవేళ (!సురక్షిత) {
+                            ఆపు;
                         }
                         id++;
                     }
                 };
 
                 skip_unrelated();
-                if (id + 1 >= cgraph->n_nodes) {
-                    return idr;
+                ఒకవేళ (id + 1 >= cgraph->n_nodes) {
+                    తిరిగి idr;
                 }
                 {
-                    ggml_tensor * next = cgraph->nodes[id+1];
-                    if (next->op == GGML_OP_ADD_ID && next->src[0] == node &&
-                            ggml_backend_meta_get_split_state(next->src[1], false).axis == GGML_BACKEND_SPLIT_AXIS_PARTIAL &&
-                            ggml_backend_meta_get_split_state(next->src[2], false).axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED) {
-                        node = next;
+                    ggml_tensor * తదుపరి = cgraph->nodes[id+1];
+                    ఒకవేళ (తదుపరి->op == GGML_OP_కూడు_ID && తదుపరి->src[0] == కణుపు &&
+                            ggml_backend_meta_get_విభజించు_state(తదుపరి->src[1], అబద్ధం).axis == GGML_BACKEND_విభజించు_AXIS_PARTIAL &&
+                            ggml_backend_meta_get_విభజించు_state(తదుపరి->src[2], అబద్ధం).axis == GGML_BACKEND_విభజించు_AXIS_MIRRORED) {
+                        కణుపు = తదుపరి;
                         id++;
                         idr = id;
-                        n_used = ggml_node_get_use_count(cgraph, id);
+                        n_వాడిన = ggml_కణుపు_get_use_లెక్క(cgraph, id);
                     }
                 }
                 // Chain of MULs with MIRRORED src[1]
-                while (true) {
+                అయితే (నిజం) {
                     skip_unrelated();
-                    if (id + 1 >= cgraph->n_nodes) {
-                        return idr;
+                    ఒకవేళ (id + 1 >= cgraph->n_nodes) {
+                        తిరిగి idr;
                     }
-                    ggml_tensor * next = cgraph->nodes[id+1];
-                    if (next->op == GGML_OP_MUL && next->src[0] == node &&
-                            ggml_backend_meta_get_split_state(next->src[1], false).axis == GGML_BACKEND_SPLIT_AXIS_MIRRORED) {
-                        node = next;
+                    ggml_tensor * తదుపరి = cgraph->nodes[id+1];
+                    ఒకవేళ (తదుపరి->op == GGML_OP_MUL && తదుపరి->src[0] == కణుపు &&
+                            ggml_backend_meta_get_విభజించు_state(తదుపరి->src[1], అబద్ధం).axis == GGML_BACKEND_విభజించు_AXIS_MIRRORED) {
+                        కణుపు = తదుపరి;
                         id++;
                         idr = id;
-                        n_used = ggml_node_get_use_count(cgraph, id);
-                    } else {
-                        break;
+                        n_వాడిన = ggml_కణుపు_get_use_లెక్క(cgraph, id);
+                    } లేకపోతే {
+                        ఆపు;
                     }
                 }
 
-                if (n_used != node->ne[1] || id + 2*n_used-1 >= cgraph->n_nodes) {
-                    return idr;
+                ఒకవేళ (n_వాడిన != కణుపు->ne[1] || id + 2*n_వాడిన-1 >= cgraph->n_nodes) {
+                    తిరిగి idr;
                 }
-                for (int32_t k = 0; k < n_used; k++) {
-                    ggml_tensor * next = cgraph->nodes[id+1];
-                    if (next->op != GGML_OP_VIEW || next->view_src != node || next->view_offs != k*node->nb[1] ||
-                            next->ne[0] != node->ne[0] || next->ne[1] != node->ne[2] || next->nb[1] != node->nb[2] ||
-                            ggml_node_get_use_count(cgraph, id+1) != 1) {
-                        return idr;
+                కొరకు (int32_t k = 0; k < n_వాడిన; k++) {
+                    ggml_tensor * తదుపరి = cgraph->nodes[id+1];
+                    ఒకవేళ (తదుపరి->op != GGML_OP_VIEW || తదుపరి->view_src != కణుపు || తదుపరి->view_offs != k*కణుపు->nb[1] ||
+                            తదుపరి->ne[0] != కణుపు->ne[0] || తదుపరి->ne[1] != కణుపు->ne[2] || తదుపరి->nb[1] != కణుపు->nb[2] ||
+                            ggml_కణుపు_get_use_లెక్క(cgraph, id+1) != 1) {
+                        తిరిగి idr;
                     }
                     id++;
                 }
                 {
-                    ggml_tensor * next = cgraph->nodes[id+1];
-                    if (next->op != GGML_OP_ADD || next->src[0] != cgraph->nodes[id - (n_used-1)] ||
-                            next->src[1] != cgraph->nodes[id - (n_used-2)] || ggml_node_get_use_count(cgraph, id+1) != 1) {
-                        return idr;
+                    ggml_tensor * తదుపరి = cgraph->nodes[id+1];
+                    ఒకవేళ (తదుపరి->op != GGML_OP_కూడు || తదుపరి->src[0] != cgraph->nodes[id - (n_వాడిన-1)] ||
+                            తదుపరి->src[1] != cgraph->nodes[id - (n_వాడిన-2)] || ggml_కణుపు_get_use_లెక్క(cgraph, id+1) != 1) {
+                        తిరిగి idr;
                     }
                     id++;
                 }
-                for (int32_t k = 0; k < n_used - 2; k++) {
-                    ggml_tensor * next = cgraph->nodes[id+1];
-                    if (next->op != GGML_OP_ADD || next->src[0] != cgraph->nodes[id] ||
-                            next->src[1] != cgraph->nodes[id - (n_used-2)] || ggml_node_get_use_count(cgraph, id+1) != 1) {
-                        return idr;
+                కొరకు (int32_t k = 0; k < n_వాడిన - 2; k++) {
+                    ggml_tensor * తదుపరి = cgraph->nodes[id+1];
+                    ఒకవేళ (తదుపరి->op != GGML_OP_కూడు || తదుపరి->src[0] != cgraph->nodes[id] ||
+                            తదుపరి->src[1] != cgraph->nodes[id - (n_వాడిన-2)] || ggml_కణుపు_get_use_లెక్క(cgraph, id+1) != 1) {
+                        తిరిగి idr;
                     }
                     id++;
                 }
                 idr = id;
-                return idr;
+                తిరిగి idr;
             };
 
             // AllReduce(a) + AllReduce(b) == AllReduce(a + b) for independent partial branches.
-            auto get_i_delayed = [&](const int i) -> int {
-                const int i_delayed = get_i_delayed_branch(i);
-                ggml_tensor * node = cgraph->nodes[i_delayed];
+            స్వయంచాలక get_i_delayed = [&](స్థిరరాశి పూర్ణాంకం i) -> పూర్ణాంకం {
+                స్థిరరాశి పూర్ణాంకం i_delayed = get_i_delayed_branch(i);
+                ggml_tensor * కణుపు = cgraph->nodes[i_delayed];
 
-                if (ggml_node_get_use_count(cgraph, i_delayed) != 1) {
-                    return i_delayed;
+                ఒకవేళ (ggml_కణుపు_get_use_లెక్క(cgraph, i_delayed) != 1) {
+                    తిరిగి i_delayed;
                 }
 
-                for (int id = i_delayed + 1; id < cgraph->n_nodes; id++) {
-                    ggml_tensor * next = cgraph->nodes[id];
-                    if (next->view_src == node) {
-                        return i_delayed;
+                కొరకు (పూర్ణాంకం id = i_delayed + 1; id < cgraph->n_nodes; id++) {
+                    ggml_tensor * తదుపరి = cgraph->nodes[id];
+                    ఒకవేళ (తదుపరి->view_src == కణుపు) {
+                        తిరిగి i_delayed;
                     }
-                    for (int s = 0; s < GGML_MAX_SRC; s++) {
-                        if (next->src[s] == node) {
-                            return i_delayed;
+                    కొరకు (పూర్ణాంకం s = 0; s < GGML_MAX_SRC; s++) {
+                        ఒకవేళ (తదుపరి->src[s] == కణుపు) {
+                            తిరిగి i_delayed;
                         }
                     }
 
-                    if (next->view_src != nullptr && next->view_src->op == GGML_OP_NONE && ggml_backend_buffer_is_host(next->view_src->buffer)) {
-                        continue;
+                    ఒకవేళ (తదుపరి->view_src != శూన్యసూచిక && తదుపరి->view_src->op == GGML_OP_NONE && ggml_backend_బఫరు_is_host(తదుపరి->view_src->బఫరు)) {
+                        కొనసాగు;
                     }
-                    if (ggml_backend_meta_get_split_state(next, false).axis != GGML_BACKEND_SPLIT_AXIS_PARTIAL) {
-                        continue;
+                    ఒకవేళ (ggml_backend_meta_get_విభజించు_state(తదుపరి, అబద్ధం).axis != GGML_BACKEND_విభజించు_AXIS_PARTIAL) {
+                        కొనసాగు;
                     }
 
-                    const int i_other = id;
-                    const int i_other_delayed = get_i_delayed_branch(i_other);
+                    స్థిరరాశి పూర్ణాంకం i_other = id;
+                    స్థిరరాశి పూర్ణాంకం i_other_delayed = get_i_delayed_branch(i_other);
                     ggml_tensor * other = cgraph->nodes[i_other_delayed];
-                    if (ggml_node_get_use_count(cgraph, i_other_delayed) != 1 || i_other_delayed + 1 >= cgraph->n_nodes) {
-                        return i_delayed;
+                    ఒకవేళ (ggml_కణుపు_get_use_లెక్క(cgraph, i_other_delayed) != 1 || i_other_delayed + 1 >= cgraph->n_nodes) {
+                        తిరిగి i_delayed;
                     }
 
-                    ggml_tensor * sum = cgraph->nodes[i_other_delayed + 1];
-                    if (sum->op != GGML_OP_ADD ||
-                            !ggml_are_same_shape(node, other) || node->type != other->type || sum->type != node->type ||
-                            !((sum->src[0] == node && sum->src[1] == other) ||
-                              (sum->src[0] == other && sum->src[1] == node)) ||
-                            ggml_backend_meta_get_split_state(sum, false).axis != GGML_BACKEND_SPLIT_AXIS_MIRRORED) {
-                        return i_delayed;
+                    ggml_tensor * కూడిక = cgraph->nodes[i_other_delayed + 1];
+                    ఒకవేళ (కూడిక->op != GGML_OP_కూడు ||
+                            !ggml_are_same_shape(కణుపు, other) || కణుపు->type != other->type || కూడిక->type != కణుపు->type ||
+                            !((కూడిక->src[0] == కణుపు && కూడిక->src[1] == other) ||
+                              (కూడిక->src[0] == other && కూడిక->src[1] == కణుపు)) ||
+                            ggml_backend_meta_get_విభజించు_state(కూడిక, అబద్ధం).axis != GGML_BACKEND_విభజించు_AXIS_MIRRORED) {
+                        తిరిగి i_delayed;
                     }
 
-                    for (size_t j = 0; j < n_backends; j++) {
-                        auto & bcj = backend_ctx->backend_configs[j];
-                        const bool compute       = bcj.nodes[i]->flags       & GGML_TENSOR_FLAG_COMPUTE;
-                        const bool compute_other = bcj.nodes[i_other]->flags & GGML_TENSOR_FLAG_COMPUTE;
-                        if (compute != compute_other) {
-                            return i_delayed;
+                    కొరకు (size_t j = 0; j < n_backends; j++) {
+                        స్వయంచాలక & bcj = backend_ctx->backend_configs[j];
+                        స్థిరరాశి తార్కిక compute       = bcj.nodes[i]->flags       & GGML_TENSOR_FLAG_COMPUTE;
+                        స్థిరరాశి తార్కిక compute_other = bcj.nodes[i_other]->flags & GGML_TENSOR_FLAG_COMPUTE;
+                        ఒకవేళ (compute != compute_other) {
+                            తిరిగి i_delayed;
                         }
                     }
-                    return i_other_delayed + 1;
+                    తిరిగి i_other_delayed + 1;
                 }
-                return i_delayed;
+                తిరిగి i_delayed;
             };
 
-            int i_start = 0;
-            for (int i = 0; i < cgraph->n_nodes; i++) {
-                ggml_tensor * node = cgraph->nodes[i];
-                if (node->view_src != nullptr && node->view_src->op == GGML_OP_NONE && ggml_backend_buffer_is_host(node->view_src->buffer)) {
-                    continue;
+            పూర్ణాంకం i_ప్రారంభం = 0;
+            కొరకు (పూర్ణాంకం i = 0; i < cgraph->n_nodes; i++) {
+                ggml_tensor * కణుపు = cgraph->nodes[i];
+                ఒకవేళ (కణుపు->view_src != శూన్యసూచిక && కణుపు->view_src->op == GGML_OP_NONE && ggml_backend_బఫరు_is_host(కణుపు->view_src->బఫరు)) {
+                    కొనసాగు;
                 }
-                const ggml_backend_meta_split_state split_state = ggml_backend_meta_get_split_state(node, /*assume_sync =*/ false);
-                if (split_state.axis == GGML_BACKEND_SPLIT_AXIS_PARTIAL) {
-                    max_tmp_size = std::max(max_tmp_size, ggml_nbytes(node));
+                స్థిరరాశి ggml_backend_meta_విభజించు_state విభజించు_state = ggml_backend_meta_get_విభజించు_state(కణుపు, /*assume_sync =*/ అబద్ధం);
+                ఒకవేళ (విభజించు_state.axis == GGML_BACKEND_విభజించు_AXIS_PARTIAL) {
+                    max_tmp_కొలత = std::max(max_tmp_కొలత, ggml_nbytes(కణుపు));
                 }
-                const bool new_subgraph = i + 1 == cgraph->n_nodes || split_state.axis == GGML_BACKEND_SPLIT_AXIS_PARTIAL;
-                if (!new_subgraph) {
-                    continue;
+                స్థిరరాశి తార్కిక new_subgraph = i + 1 == cgraph->n_nodes || విభజించు_state.axis == GGML_BACKEND_విభజించు_AXIS_PARTIAL;
+                ఒకవేళ (!new_subgraph) {
+                    కొనసాగు;
                 }
 
-                const int i_delayed = get_i_delayed(i);
+                స్థిరరాశి పూర్ణాంకం i_delayed = get_i_delayed(i);
 
                 // If we can delay the AllReduce we need to consider the interaction with zero-sized tensor slices.
                 // A backend with such a slice would normally have valid data after participating in the AllReduce with a node that has
                 //     its compute flag disabled and thus gets its data zeroed out.
                 // If the AllReduce is delayed then the nodes until that point also need to have their compute flag disabled.
-                if (i_delayed > i) {
-                    for (size_t j = 0; j < n_backends; j++) {
-                        auto & bcj = backend_ctx->backend_configs[j];
-                        if ((bcj.nodes[i]->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
-                            for (int ii = i + 1; ii <= i_delayed; ii++) {
+                ఒకవేళ (i_delayed > i) {
+                    కొరకు (size_t j = 0; j < n_backends; j++) {
+                        స్వయంచాలక & bcj = backend_ctx->backend_configs[j];
+                        ఒకవేళ ((bcj.nodes[i]->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+                            కొరకు (పూర్ణాంకం ii = i + 1; ii <= i_delayed; ii++) {
                                 bcj.nodes[ii]->flags &= ~GGML_TENSOR_FLAG_COMPUTE;
                             }
                         }
@@ -2256,74 +2256,74 @@ static enum ggml_status ggml_backend_meta_graph_compute(ggml_backend_t backend, 
 
                 i = i_delayed;
 
-                for (size_t j = 0; j < n_backends; j++) {
-                    auto & bcj = backend_ctx->backend_configs[j];
-                    bcj.cgraphs[n_subgraphs].offset = i_start;
+                కొరకు (size_t j = 0; j < n_backends; j++) {
+                    స్వయంచాలక & bcj = backend_ctx->backend_configs[j];
+                    bcj.cgraphs[n_subgraphs].స్థానభ్రంశం = i_ప్రారంభం;
                 }
                 n_subgraphs++;
-                i_start = i + 1;
+                i_ప్రారంభం = i + 1;
             }
-            GGML_ASSERT(i_start == cgraph->n_nodes);
+            GGML_ASSERT(i_ప్రారంభం == cgraph->n_nodes);
         }
 
         backend_ctx->uid         = cgraph->uid;
         backend_ctx->n_subgraphs = n_subgraphs;
 
-        if (max_tmp_size > backend_ctx->max_tmp_size) {
-            for (size_t j = 0; j < n_backends; j++) {
-                auto & bcj = backend_ctx->backend_configs[j];
-                for (size_t i = 0; i < backend_ctx->n_reduce_steps; i++) {
-                    bcj.bufs[i].reset(ggml_backend_alloc_buffer(bcj.backend, max_tmp_size));
+        ఒకవేళ (max_tmp_కొలత > backend_ctx->max_tmp_కొలత) {
+            కొరకు (size_t j = 0; j < n_backends; j++) {
+                స్వయంచాలక & bcj = backend_ctx->backend_configs[j];
+                కొరకు (size_t i = 0; i < backend_ctx->n_reduce_అడుగులు; i++) {
+                    bcj.bufs[i].reset(ggml_backend_alloc_బఫరు(bcj.backend, max_tmp_కొలత));
                 }
             }
-            backend_ctx->max_tmp_size = max_tmp_size;
+            backend_ctx->max_tmp_కొలత = max_tmp_కొలత;
         }
 
-        if (max_nnodes_raised || n_subgraphs > backend_ctx->max_subgraphs) {
+        ఒకవేళ (max_nnodes_raised || n_subgraphs > backend_ctx->max_subgraphs) {
             backend_ctx->max_subgraphs = std::max(backend_ctx->max_subgraphs, n_subgraphs);
-            const size_t n_nodes_per_device = 3 * backend_ctx->n_reduce_steps; // tmp + ADD (+zeroing) graph per step and device
-            const size_t n_cgraphs_per_device = 2 * backend_ctx->n_reduce_steps; // ADD ( + zeroing) graph per step and device
-            const size_t mem_per_device_graphs_main = backend_ctx->max_subgraphs*ggml_graph_overhead_custom(backend_ctx->max_nnodes, cgraph->grads);
-            const size_t mem_per_device_graphs_aux = n_cgraphs_per_device*backend_ctx->max_subgraphs*ggml_graph_overhead_custom(1, cgraph->grads);
-            const size_t mem_per_device_nodes_aux = n_nodes_per_device*backend_ctx->max_subgraphs*ggml_tensor_overhead();
-            const ggml_init_params params = {
-                /*.mem_size   =*/ n_backends * (mem_per_device_graphs_main + mem_per_device_graphs_aux + mem_per_device_nodes_aux),
-                /*.mem_buffer =*/ nullptr,
-                /*.no_alloc   =*/ true,
+            స్థిరరాశి size_t n_nodes_చొప్పున_device = 3 * backend_ctx->n_reduce_అడుగులు; // tmp + ADD (+zeroing) graph per step and device
+            స్థిరరాశి size_t n_cgraphs_చొప్పున_device = 2 * backend_ctx->n_reduce_అడుగులు; // ADD ( + zeroing) graph per step and device
+            స్థిరరాశి size_t mem_చొప్పున_device_graphs_main = backend_ctx->max_subgraphs*ggml_లేఖాచిత్రం_overhead_custom(backend_ctx->max_nnodes, cgraph->grads);
+            స్థిరరాశి size_t mem_చొప్పున_device_graphs_aux = n_cgraphs_చొప్పున_device*backend_ctx->max_subgraphs*ggml_లేఖాచిత్రం_overhead_custom(1, cgraph->grads);
+            స్థిరరాశి size_t mem_చొప్పున_device_nodes_aux = n_nodes_చొప్పున_device*backend_ctx->max_subgraphs*ggml_tensor_overhead();
+            స్థిరరాశి ggml_init_params params = {
+                /*.mem_size   =*/ n_backends * (mem_చొప్పున_device_graphs_main + mem_చొప్పున_device_graphs_aux + mem_చొప్పున_device_nodes_aux),
+                /*.mem_buffer =*/ శూన్యసూచిక,
+                /*.no_alloc   =*/ నిజం,
             };
             backend_ctx->ctx.reset(ggml_init(params));
-            for (size_t j = 0; j < n_backends; j++) {
-                auto & bcj = backend_ctx->backend_configs[j];
-                for (size_t i = 0; i < backend_ctx->max_subgraphs; i++) {
-                    bcj.cgraphs[i].cgraph_main = ggml_new_graph_custom(backend_ctx->ctx.get(), backend_ctx->max_nnodes, /*grads =*/ false);
+            కొరకు (size_t j = 0; j < n_backends; j++) {
+                స్వయంచాలక & bcj = backend_ctx->backend_configs[j];
+                కొరకు (size_t i = 0; i < backend_ctx->max_subgraphs; i++) {
+                    bcj.cgraphs[i].cgraph_main = ggml_new_లేఖాచిత్రం_custom(backend_ctx->ctx.get(), backend_ctx->max_nnodes, /*grads =*/ అబద్ధం);
                 }
             }
-            backend_ctx->cgraphs_aux.resize(n_backends*n_cgraphs_per_device*backend_ctx->max_subgraphs);
-            for (size_t k = 0; k < backend_ctx->cgraphs_aux.size(); k++) {
-                backend_ctx->cgraphs_aux[k] = ggml_new_graph_custom(backend_ctx->ctx.get(), 1, cgraph->grads);
+            backend_ctx->cgraphs_aux.resize(n_backends*n_cgraphs_చొప్పున_device*backend_ctx->max_subgraphs);
+            కొరకు (size_t k = 0; k < backend_ctx->cgraphs_aux.size(); k++) {
+                backend_ctx->cgraphs_aux[k] = ggml_new_లేఖాచిత్రం_custom(backend_ctx->ctx.get(), 1, cgraph->grads);
             }
-            backend_ctx->nodes_aux.resize(n_backends*n_nodes_per_device*backend_ctx->max_subgraphs);
-            for (size_t k = 0; k < backend_ctx->nodes_aux.size(); k++) {
+            backend_ctx->nodes_aux.resize(n_backends*n_nodes_చొప్పున_device*backend_ctx->max_subgraphs);
+            కొరకు (size_t k = 0; k < backend_ctx->nodes_aux.size(); k++) {
                 backend_ctx->nodes_aux[k] = ggml_new_tensor_1d(backend_ctx->ctx.get(), GGML_TYPE_F32, 1);
             }
         }
 
-        for (size_t j = 0; j < n_backends; j++) {
-            auto & bcj = backend_ctx->backend_configs[j];
-            for (size_t i_graph = 0; i_graph < n_subgraphs; i_graph++) {
-                ggml_cgraph * cgraph_ij = bcj.cgraphs[i_graph].cgraph_main;
-                const size_t i_node_start = bcj.cgraphs[i_graph].offset;
-                const size_t i_node_stop = i_graph + 1 < n_subgraphs ? bcj.cgraphs[i_graph + 1].offset : cgraph->n_nodes;
-                cgraph_ij->n_nodes = i_node_stop - i_node_start;
-                ggml_hash_set_reset(&cgraph_ij->visited_hash_set);
-                for (size_t i_node = i_node_start; i_node < i_node_stop; i_node++) {
-                    ggml_tensor * node_ij = bcj.nodes[i_node];
-                    cgraph_ij->nodes[i_node - i_node_start] = node_ij;
-                    const size_t hash_pos_orig = ggml_hash_find(&cgraph->visited_hash_set, cgraph->nodes[i_node]);
-                    const size_t hash_pos_ij = ggml_hash_insert(&cgraph_ij->visited_hash_set, node_ij);
+        కొరకు (size_t j = 0; j < n_backends; j++) {
+            స్వయంచాలక & bcj = backend_ctx->backend_configs[j];
+            కొరకు (size_t i_లేఖాచిత్రం = 0; i_లేఖాచిత్రం < n_subgraphs; i_లేఖాచిత్రం++) {
+                ggml_cgraph * cgraph_ij = bcj.cgraphs[i_లేఖాచిత్రం].cgraph_main;
+                స్థిరరాశి size_t i_కణుపు_ప్రారంభం = bcj.cgraphs[i_లేఖాచిత్రం].స్థానభ్రంశం;
+                స్థిరరాశి size_t i_కణుపు_stop = i_లేఖాచిత్రం + 1 < n_subgraphs ? bcj.cgraphs[i_లేఖాచిత్రం + 1].స్థానభ్రంశం : cgraph->n_nodes;
+                cgraph_ij->n_nodes = i_కణుపు_stop - i_కణుపు_ప్రారంభం;
+                ggml_hash_సమితి_reset(&cgraph_ij->సందర్శించిన_hash_సమితి);
+                కొరకు (size_t i_కణుపు = i_కణుపు_ప్రారంభం; i_కణుపు < i_కణుపు_stop; i_కణుపు++) {
+                    ggml_tensor * కణుపు_ij = bcj.nodes[i_కణుపు];
+                    cgraph_ij->nodes[i_కణుపు - i_కణుపు_ప్రారంభం] = కణుపు_ij;
+                    స్థిరరాశి size_t hash_pos_orig = ggml_hash_కనుగొను(&cgraph->సందర్శించిన_hash_సమితి, cgraph->nodes[i_కణుపు]);
+                    స్థిరరాశి size_t hash_pos_ij = ggml_hash_చొప్పించు(&cgraph_ij->సందర్శించిన_hash_సమితి, కణుపు_ij);
                     cgraph_ij->use_counts[hash_pos_ij] = cgraph->use_counts[hash_pos_orig];
                 }
-                cgraph_ij->uid = ggml_graph_next_uid();
+                cgraph_ij->uid = ggml_లేఖాచిత్రం_తదుపరి_uid();
             }
         }
     }
@@ -2331,226 +2331,226 @@ static enum ggml_status ggml_backend_meta_graph_compute(ggml_backend_t backend, 
     size_t iga = 0; // i graph aux
     size_t ina = 0; // i node aux
 
-    auto get_node_aux = [&](ggml_tensor * t) -> ggml_tensor * {
+    స్వయంచాలక get_కణుపు_aux = [&](ggml_tensor * t) -> ggml_tensor * {
         ggml_tensor * ret = backend_ctx->nodes_aux[ina++];
-        memset(ret, 0, sizeof(ggml_tensor));
+        memset(ret, 0, పరిమాణం(ggml_tensor));
         ret->op   = GGML_OP_NONE;
         ret->type = t->type;
-        for (size_t k = 0; k < GGML_MAX_DIMS; k++) {
+        కొరకు (size_t k = 0; k < GGML_MAX_DIMS; k++) {
             ret->ne[k] = t->ne[k];
             ret->nb[k] = t->nb[k];
         }
-        return ret;
+        తిరిగి ret;
     };
-    auto set_tmp_data = [&](ggml_tensor * tensor, const size_t j, const size_t i_buf) {
-        auto & bcj = backend_ctx->backend_configs[j];
-        ggml_backend_buffer_ptr & buf_ptr = bcj.bufs[i_buf];
-        if (!buf_ptr || ggml_backend_buffer_get_size(buf_ptr.get()) < backend_ctx->max_tmp_size) {
-            buf_ptr.reset(ggml_backend_alloc_buffer(bcj.backend, backend_ctx->max_tmp_size));
+    స్వయంచాలక సమితి_tmp_దత్తాంశం = [&](ggml_tensor * tensor, స్థిరరాశి size_t j, స్థిరరాశి size_t i_buf) {
+        స్వయంచాలక & bcj = backend_ctx->backend_configs[j];
+        ggml_backend_బఫరు_ptr & buf_ptr = bcj.bufs[i_buf];
+        ఒకవేళ (!buf_ptr || ggml_backend_బఫరు_get_కొలత(buf_ptr.get()) < backend_ctx->max_tmp_కొలత) {
+            buf_ptr.reset(ggml_backend_alloc_బఫరు(bcj.backend, backend_ctx->max_tmp_కొలత));
         }
-        tensor->buffer = buf_ptr.get();
-        tensor->data   = ggml_backend_buffer_get_base(buf_ptr.get());
+        tensor->బఫరు = buf_ptr.get();
+        tensor->దత్తాంశం   = ggml_backend_బఫరు_get_పునాది(buf_ptr.get());
     };
     // FIXME usage_counts
-    auto get_cgraph_aux = [&]() -> ggml_cgraph * {
+    స్వయంచాలక get_cgraph_aux = [&]() -> ggml_cgraph * {
         ggml_cgraph * ret = backend_ctx->cgraphs_aux[iga++];
-        return ret;
+        తిరిగి ret;
     };
 
     // Preferentially use backend-specific allreduce_tensor_async (e.g. NCCL for CUDA), use a generic fallback if unavailable:
-    auto allreduce_fallback = [&](size_t i) -> ggml_status {
-        std::vector<ggml_cgraph *> step_cgraphs(n_backends, nullptr);
+    స్వయంచాలక allreduce_fallback = [&](size_t i) -> ggml_స్థితి {
+        std::vector<ggml_cgraph *> అడుగు_cgraphs(n_backends, శూన్యసూచిక);
 
         // Zero out nodes that were disabled due to having a zero-sized slice:
-        for (size_t j = 0; j < n_backends; j++) {
-            auto & bcj = backend_ctx->backend_configs[j];
-            ggml_tensor * node = bcj.cgraphs[i].cgraph_main->nodes[bcj.cgraphs[i].cgraph_main->n_nodes - 1];
-            if (node->flags & GGML_TENSOR_FLAG_COMPUTE) {
-                continue;
+        కొరకు (size_t j = 0; j < n_backends; j++) {
+            స్వయంచాలక & bcj = backend_ctx->backend_configs[j];
+            ggml_tensor * కణుపు = bcj.cgraphs[i].cgraph_main->nodes[bcj.cgraphs[i].cgraph_main->n_nodes - 1];
+            ఒకవేళ (కణుపు->flags & GGML_TENSOR_FLAG_COMPUTE) {
+                కొనసాగు;
             }
-            if (ggml_nelements(node) > 0) {
-                ggml_tensor * node_zero = get_node_aux(node);
-                node_zero->op = GGML_OP_FILL;
-                node_zero->src[0] = node; // only used for the shape, the data is not read
-                ggml_set_op_params_f32(node_zero, 0, 0.0f);
-                node_zero->data = node->data;
-                node_zero->buffer = node->buffer;
-                node_zero->flags |= GGML_TENSOR_FLAG_COMPUTE;
+            ఒకవేళ (ggml_nelements(కణుపు) > 0) {
+                ggml_tensor * కణుపు_zero = get_కణుపు_aux(కణుపు);
+                కణుపు_zero->op = GGML_OP_FILL;
+                కణుపు_zero->src[0] = కణుపు; // only used for the shape, the data is not read
+                ggml_సమితి_op_params_f32(కణుపు_zero, 0, 0.0f);
+                కణుపు_zero->దత్తాంశం = కణుపు->దత్తాంశం;
+                కణుపు_zero->బఫరు = కణుపు->బఫరు;
+                కణుపు_zero->flags |= GGML_TENSOR_FLAG_COMPUTE;
 
-                step_cgraphs[j] = get_cgraph_aux();
-                step_cgraphs[j]->nodes[0] = node_zero;
-                step_cgraphs[j]->n_nodes = 1;
-                const ggml_status status = ggml_backend_graph_compute_async(bcj.backend, step_cgraphs[j]);
-                if (status != GGML_STATUS_SUCCESS) {
-                    return status;
+                అడుగు_cgraphs[j] = get_cgraph_aux();
+                అడుగు_cgraphs[j]->nodes[0] = కణుపు_zero;
+                అడుగు_cgraphs[j]->n_nodes = 1;
+                స్థిరరాశి ggml_స్థితి స్థితి_2 = ggml_backend_లేఖాచిత్రం_compute_async(bcj.backend, అడుగు_cgraphs[j]);
+                ఒకవేళ (స్థితి_2 != GGML_స్థితి_SUCCESS) {
+                    తిరిగి స్థితి_2;
                 }
             }
         }
-        std::fill(step_cgraphs.begin(), step_cgraphs.end(), nullptr);
+        std::fill(అడుగు_cgraphs.begin(), అడుగు_cgraphs.end(), శూన్యసూచిక);
 
-        auto push_data = [&](const size_t j_src, const size_t j_dst, const size_t i_buf) {
-            assert(step_cgraphs[j_dst] == nullptr);
-            auto & bcj_src = backend_ctx->backend_configs[j_src];
-            auto & bcj_dst = backend_ctx->backend_configs[j_dst];
+        స్వయంచాలక నెట్టు_దత్తాంశం = [&](స్థిరరాశి size_t j_src, స్థిరరాశి size_t j_dst, స్థిరరాశి size_t i_buf) {
+            ప్రతిజ్ఞా(అడుగు_cgraphs[j_dst] == శూన్యసూచిక);
+            స్వయంచాలక & bcj_src = backend_ctx->backend_configs[j_src];
+            స్వయంచాలక & bcj_dst = backend_ctx->backend_configs[j_dst];
 
-            ggml_tensor * node_src = bcj_src.cgraphs[i].cgraph_main->nodes[bcj_src.cgraphs[i].cgraph_main->n_nodes - 1];
-            ggml_tensor * node_dst = bcj_dst.cgraphs[i].cgraph_main->nodes[bcj_dst.cgraphs[i].cgraph_main->n_nodes - 1];
-            GGML_ASSERT(ggml_is_contiguous(node_src));
-            GGML_ASSERT(ggml_is_contiguous(node_dst));
+            ggml_tensor * కణుపు_src = bcj_src.cgraphs[i].cgraph_main->nodes[bcj_src.cgraphs[i].cgraph_main->n_nodes - 1];
+            ggml_tensor * కణుపు_dst = bcj_dst.cgraphs[i].cgraph_main->nodes[bcj_dst.cgraphs[i].cgraph_main->n_nodes - 1];
+            GGML_ASSERT(ggml_is_contiguous(కణుపు_src));
+            GGML_ASSERT(ggml_is_contiguous(కణుపు_dst));
 
-            ggml_tensor * node_tmp = get_node_aux(node_dst);
-            set_tmp_data(node_tmp, j_dst, i_buf);
+            ggml_tensor * కణుపు_tmp = get_కణుపు_aux(కణుపు_dst);
+            సమితి_tmp_దత్తాంశం(కణుపు_tmp, j_dst, i_buf);
 
-            ggml_backend_tensor_copy_async(bcj_src.backend, bcj_dst.backend, node_src, node_tmp);
+            ggml_backend_tensor_copy_async(bcj_src.backend, bcj_dst.backend, కణుపు_src, కణుపు_tmp);
 
-            ggml_tensor * node_red = get_node_aux(node_dst);
-            node_red->view_src = node_dst->view_src == nullptr ? node_dst : node_dst->view_src;
-            node_red->view_offs = node_dst->view_offs;
-            node_red->op = GGML_OP_ADD;
-            node_red->src[0] = node_dst;
-            node_red->src[1] = node_tmp;
-            node_red->flags |= GGML_TENSOR_FLAG_COMPUTE;
-            ggml_backend_view_init(node_red);
+            ggml_tensor * కణుపు_red = get_కణుపు_aux(కణుపు_dst);
+            కణుపు_red->view_src = కణుపు_dst->view_src == శూన్యసూచిక ? కణుపు_dst : కణుపు_dst->view_src;
+            కణుపు_red->view_offs = కణుపు_dst->view_offs;
+            కణుపు_red->op = GGML_OP_కూడు;
+            కణుపు_red->src[0] = కణుపు_dst;
+            కణుపు_red->src[1] = కణుపు_tmp;
+            కణుపు_red->flags |= GGML_TENSOR_FLAG_COMPUTE;
+            ggml_backend_view_init(కణుపు_red);
 
             ggml_cgraph * cgraph_aux = get_cgraph_aux();
-            cgraph_aux->nodes[0] = node_red;
+            cgraph_aux->nodes[0] = కణుపు_red;
             cgraph_aux->n_nodes = 1;
-            step_cgraphs[j_dst] = cgraph_aux;
+            అడుగు_cgraphs[j_dst] = cgraph_aux;
         };
 
-        size_t offset_j = n_backends/2;
-        while ((offset_j & (offset_j - 1)) != 0) {
-            offset_j--;
+        size_t స్థానభ్రంశం_j = n_backends/2;
+        అయితే ((స్థానభ్రంశం_j & (స్థానభ్రంశం_j - 1)) != 0) {
+            స్థానభ్రంశం_j--;
         }
-        const size_t offset_j_max = offset_j;
+        స్థిరరాశి size_t స్థానభ్రంశం_j_max = స్థానభ్రంశం_j;
         size_t i_buf = 0;
 
         // If n_backends is not a power of 2, fold in the excess prior to butterfly reduction:
-        for (size_t j_src = 2*offset_j_max; j_src < n_backends; j_src++) {
-            const size_t j_dst = j_src - 2*offset_j_max;
-            push_data(j_src, j_dst, i_buf);
-            const ggml_status status = ggml_backend_graph_compute_async(backend_ctx->backend_configs[j_dst].backend, step_cgraphs[j_dst]);
-            if (status != GGML_STATUS_SUCCESS) {
-                return status;
+        కొరకు (size_t j_src = 2*స్థానభ్రంశం_j_max; j_src < n_backends; j_src++) {
+            స్థిరరాశి size_t j_dst = j_src - 2*స్థానభ్రంశం_j_max;
+            నెట్టు_దత్తాంశం(j_src, j_dst, i_buf);
+            స్థిరరాశి ggml_స్థితి స్థితి_2 = ggml_backend_లేఖాచిత్రం_compute_async(backend_ctx->backend_configs[j_dst].backend, అడుగు_cgraphs[j_dst]);
+            ఒకవేళ (స్థితి_2 != GGML_స్థితి_SUCCESS) {
+                తిరిగి స్థితి_2;
             }
             i_buf = 1;
         }
 
         // Butterfly reduction:
-        for (; offset_j >= 1; offset_j /= 2) {
-            std::fill(step_cgraphs.begin(), step_cgraphs.end(), nullptr);
+        కొరకు (; స్థానభ్రంశం_j >= 1; స్థానభ్రంశం_j /= 2) {
+            std::fill(అడుగు_cgraphs.begin(), అడుగు_cgraphs.end(), శూన్యసూచిక);
 
-            for (size_t j = 0; j < 2*offset_j_max; j++) {
-                const size_t j_other = j ^ offset_j;
-                if (j_other >= n_backends) {
-                    continue;
+            కొరకు (size_t j = 0; j < 2*స్థానభ్రంశం_j_max; j++) {
+                స్థిరరాశి size_t j_other = j ^ స్థానభ్రంశం_j;
+                ఒకవేళ (j_other >= n_backends) {
+                    కొనసాగు;
                 }
-                push_data(j, j_other, i_buf);
+                నెట్టు_దత్తాంశం(j, j_other, i_buf);
             }
 
-            for (size_t j = 0; j < 2*offset_j_max; j++) {
-                if (step_cgraphs[j] == nullptr) {
-                    continue;
+            కొరకు (size_t j = 0; j < 2*స్థానభ్రంశం_j_max; j++) {
+                ఒకవేళ (అడుగు_cgraphs[j] == శూన్యసూచిక) {
+                    కొనసాగు;
                 }
-                auto & bcj = backend_ctx->backend_configs[j];
-                const ggml_status status = ggml_backend_graph_compute_async(bcj.backend, step_cgraphs[j]);
-                if (status != GGML_STATUS_SUCCESS) {
-                    return status;
+                స్వయంచాలక & bcj = backend_ctx->backend_configs[j];
+                స్థిరరాశి ggml_స్థితి స్థితి_2 = ggml_backend_లేఖాచిత్రం_compute_async(bcj.backend, అడుగు_cgraphs[j]);
+                ఒకవేళ (స్థితి_2 != GGML_స్థితి_SUCCESS) {
+                    తిరిగి స్థితి_2;
                 }
             }
             i_buf++;
         }
-        assert(i_buf == backend_ctx->n_reduce_steps);
+        ప్రతిజ్ఞా(i_buf == backend_ctx->n_reduce_అడుగులు);
 
         // If n_backends is not a power of 2, copy back the reduced tensors to the excess:
-        for (size_t j = 2*offset_j_max; j < n_backends; j++) {
-            auto & bcj_src = backend_ctx->backend_configs[j - 2*offset_j_max];
-            auto & bcj_dst = backend_ctx->backend_configs[j];
+        కొరకు (size_t j = 2*స్థానభ్రంశం_j_max; j < n_backends; j++) {
+            స్వయంచాలక & bcj_src = backend_ctx->backend_configs[j - 2*స్థానభ్రంశం_j_max];
+            స్వయంచాలక & bcj_dst = backend_ctx->backend_configs[j];
 
-            ggml_tensor * node_src = bcj_src.cgraphs[i].cgraph_main->nodes[bcj_src.cgraphs[i].cgraph_main->n_nodes - 1];
-            ggml_tensor * node_dst = bcj_dst.cgraphs[i].cgraph_main->nodes[bcj_dst.cgraphs[i].cgraph_main->n_nodes - 1];
-            ggml_backend_tensor_copy_async(bcj_src.backend, bcj_dst.backend, node_src, node_dst);
+            ggml_tensor * కణుపు_src = bcj_src.cgraphs[i].cgraph_main->nodes[bcj_src.cgraphs[i].cgraph_main->n_nodes - 1];
+            ggml_tensor * కణుపు_dst = bcj_dst.cgraphs[i].cgraph_main->nodes[bcj_dst.cgraphs[i].cgraph_main->n_nodes - 1];
+            ggml_backend_tensor_copy_async(bcj_src.backend, bcj_dst.backend, కణుపు_src, కణుపు_dst);
         }
 
-        return GGML_STATUS_SUCCESS;
+        తిరిగి GGML_స్థితి_SUCCESS;
     };
 
 
-    for (size_t i = 0; i < backend_ctx->n_subgraphs; i++) {
-        for (size_t j = 0; j < n_backends; j++) {
-            auto & bcj = backend_ctx->backend_configs[j];
-            const ggml_status status = ggml_backend_graph_compute_async(bcj.backend, bcj.cgraphs[i].cgraph_main);
-            if (status != GGML_STATUS_SUCCESS) {
-                return status;
+    కొరకు (size_t i = 0; i < backend_ctx->n_subgraphs; i++) {
+        కొరకు (size_t j = 0; j < n_backends; j++) {
+            స్వయంచాలక & bcj = backend_ctx->backend_configs[j];
+            స్థిరరాశి ggml_స్థితి స్థితి_2 = ggml_backend_లేఖాచిత్రం_compute_async(bcj.backend, bcj.cgraphs[i].cgraph_main);
+            ఒకవేళ (స్థితి_2 != GGML_స్థితి_SUCCESS) {
+                తిరిగి స్థితి_2;
             }
         }
 
-        if (n_backends > 1 && i < backend_ctx->n_subgraphs - 1) {
-            bool backend_allreduce_success = false;
-            if (backend_ctx->comm_ctx) {
+        ఒకవేళ (n_backends > 1 && i < backend_ctx->n_subgraphs - 1) {
+            తార్కిక backend_allreduce_success = అబద్ధం;
+            ఒకవేళ (backend_ctx->comm_ctx) {
                 std::vector<ggml_tensor *> nodes;
                 nodes.reserve(n_backends);
-                for (size_t j = 0; j < n_backends; j++) {
-                    auto & bcj = backend_ctx->backend_configs[j];
+                కొరకు (size_t j = 0; j < n_backends; j++) {
+                    స్వయంచాలక & bcj = backend_ctx->backend_configs[j];
                     ggml_cgraph * cgraph_ij = bcj.cgraphs[i].cgraph_main;
                     nodes.push_back(cgraph_ij->nodes[cgraph_ij->n_nodes-1]);
                 }
-                backend_allreduce_success = backend_ctx->comm_allreduce(backend_ctx->comm_ctx, nodes.data());
+                backend_allreduce_success = backend_ctx->comm_allreduce(backend_ctx->comm_ctx, nodes.దత్తాంశం());
             }
 
-            if (!backend_allreduce_success) {
-                const ggml_status status = allreduce_fallback(i);
-                if (status != GGML_STATUS_SUCCESS) {
-                    return status;
+            ఒకవేళ (!backend_allreduce_success) {
+                స్థిరరాశి ggml_స్థితి స్థితి_2 = allreduce_fallback(i);
+                ఒకవేళ (స్థితి_2 != GGML_స్థితి_SUCCESS) {
+                    తిరిగి స్థితి_2;
                 }
             }
         }
     }
-    return GGML_STATUS_SUCCESS;
+    తిరిగి GGML_స్థితి_SUCCESS;
 }
 
-static const ggml_backend_i ggml_backend_meta_i = {
+స్థిర స్థిరరాశి ggml_backend_i ggml_backend_meta_i = {
     /* .get_name                = */ ggml_backend_meta_get_name,
     /* .free                    = */ ggml_backend_meta_free,
-    /* .set_tensor_async        = */ ggml_backend_meta_set_tensor_async,
+    /* .set_tensor_async        = */ ggml_backend_meta_సమితి_tensor_async,
     /* .get_tensor_async        = */ ggml_backend_meta_get_tensor_async,
-    /* .set_tensor_2d_async     = */ nullptr,
-    /* .get_tensor_2d_async     = */ nullptr,
-    /* .cpy_tensor_async        = */ nullptr,
+    /* .set_tensor_2d_async     = */ శూన్యసూచిక,
+    /* .get_tensor_2d_async     = */ శూన్యసూచిక,
+    /* .cpy_tensor_async        = */ శూన్యసూచిక,
     /* .synchronize             = */ ggml_backend_meta_synchronize,
-    /* .graph_plan_create       = */ nullptr,
-    /* .graph_plan_free         = */ nullptr,
-    /* .graph_plan_update       = */ nullptr,
-    /* .graph_plan_compute      = */ nullptr,
-    /* .graph_compute           = */ ggml_backend_meta_graph_compute,
-    /* .event_record            = */ nullptr,
-    /* .event_wait              = */ nullptr,
-    /* .graph_optimize          = */ nullptr,
+    /* .graph_plan_create       = */ శూన్యసూచిక,
+    /* .graph_plan_free         = */ శూన్యసూచిక,
+    /* .graph_plan_update       = */ శూన్యసూచిక,
+    /* .graph_plan_compute      = */ శూన్యసూచిక,
+    /* .graph_compute           = */ ggml_backend_meta_లేఖాచిత్రం_compute,
+    /* .event_record            = */ శూన్యసూచిక,
+    /* .event_wait              = */ శూన్యసూచిక,
+    /* .graph_optimize          = */ శూన్యసూచిక,
 };
 
-bool ggml_backend_is_meta(ggml_backend_t backend) {
-    return backend != nullptr && backend->iface.get_name == ggml_backend_meta_i.get_name;
+తార్కిక ggml_backend_is_meta(ggml_backend_t backend) {
+    తిరిగి backend != శూన్యసూచిక && backend->iface.get_name == ggml_backend_meta_i.get_name;
 }
 
-static ggml_backend_t ggml_backend_meta_device_init_backend(ggml_backend_dev_t dev, const char * params) {
-    ggml_backend_meta_context * backend_ctx = new ggml_backend_meta_context(dev, params);
+స్థిర ggml_backend_t ggml_backend_meta_device_init_backend(ggml_backend_dev_t dev, స్థిరరాశి అక్షరం * params) {
+    ggml_backend_meta_context * backend_ctx = కొత్త ggml_backend_meta_context(dev, params);
 
-    ggml_backend_t backend = new struct ggml_backend;
+    ggml_backend_t backend = కొత్త నిర్మాణం ggml_backend;
     backend->guid    = ggml_backend_meta_guid();
     backend->iface   = ggml_backend_meta_i;
     backend->device  = dev;
     backend->context = backend_ctx;
-    return backend;
+    తిరిగి backend;
 }
 
 size_t ggml_backend_meta_n_backends(ggml_backend_t meta_backend) {
     GGML_ASSERT(ggml_backend_is_meta(meta_backend));
-    const ggml_backend_meta_context * backend_ctx = (const ggml_backend_meta_context *) meta_backend->context;
-    return backend_ctx->backend_configs.size();
+    స్థిరరాశి ggml_backend_meta_context * backend_ctx = (స్థిరరాశి ggml_backend_meta_context *) meta_backend->context;
+    తిరిగి backend_ctx->backend_configs.size();
 }
 
-ggml_backend_t ggml_backend_meta_simple_backend(ggml_backend_t meta_backend, size_t index) {
+ggml_backend_t ggml_backend_meta_simple_backend(ggml_backend_t meta_backend, size_t సూచీ) {
     GGML_ASSERT(ggml_backend_is_meta(meta_backend));
-    const ggml_backend_meta_context * backend_ctx = (const ggml_backend_meta_context *) meta_backend->context;
-    return backend_ctx->backend_configs[index].backend;
+    స్థిరరాశి ggml_backend_meta_context * backend_ctx = (స్థిరరాశి ggml_backend_meta_context *) meta_backend->context;
+    తిరిగి backend_ctx->backend_configs[సూచీ].backend;
 }

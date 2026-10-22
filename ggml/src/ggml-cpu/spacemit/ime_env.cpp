@@ -1,168 +1,168 @@
-#include "ime_env.h"
+#అన్తర్భావ "ime_env.h"
 
-#include "ggml-impl.h"
-#include "spine_mem_pool.h"
+#అన్తర్భావ "ggml-impl.h"
+#అన్తర్భావ "spine_mem_pool.h"
 
-#include <fcntl.h>
-#include <unistd.h>
+#అన్తర్భావ <fcntl.h>
+#అన్తర్భావ <unistd.h>
 
-#include <algorithm>
-#include <array>
-#include <cctype>
-#include <fstream>
-#include <string>
-#include <thread>
-#include <unordered_map>
+#అన్తర్భావ <algorithm>
+#అన్తర్భావ <array>
+#అన్తర్భావ <cctype>
+#అన్తర్భావ <fstream>
+#అన్తర్భావ <string>
+#అన్తర్భావ <thread>
+#అన్తర్భావ <unordered_map>
 
-namespace ggml::cpu::riscv64_spacemit {
-bool spine_core_info::get_spine_core_info(std::vector<spine_core_info> & result) {
-    static std::unordered_map<uint64_t, spine_core_arch_id> spine_march_mapping_ = {
+నామాకాశ ggml::cpu::riscv64_spacemit {
+తార్కిక spine_core_info::get_spine_core_info(std::vector<spine_core_info> & ఫలితం) {
+    స్థిర std::unordered_map<uint64_t, spine_core_arch_id> spine_march_mapping_ = {
         {0x8000000058000001,  spine_core_arch_id::core_arch_x60 },
         { 0x8000000041000001, spine_core_arch_id::core_arch_a60 },
         { 0x8000000058000002, spine_core_arch_id::core_arch_x100},
         { 0x8000000041000002, spine_core_arch_id::core_arch_a100},
     };
 
-    result.clear();
+    ఫలితం.clear();
     std::ifstream file("/proc/cpuinfo");
-    std::string   line;
+    std::string   పంక్తి;
 
     std::vector<std::array<uint64_t, 2>> cpu_info_list;
 
     uint64_t current_processor = spine_invalid_core_id;
     uint64_t current_marchid   = 0;
-    bool     has_processor     = false;
-    bool     has_marchid       = false;
+    తార్కిక     has_processor     = అబద్ధం;
+    తార్కిక     has_marchid       = అబద్ధం;
 
-    if (!file.is_open()) {
-        return false;
+    ఒకవేళ (!file.is_open()) {
+        తిరిగి అబద్ధం;
     }
 
-    while (std::getline(file, line)) {
-        if (line.substr(0, 9) == "processor") {
-            if (has_processor && has_marchid) {
+    అయితే (std::getline(file, పంక్తి)) {
+        ఒకవేళ (పంక్తి.substr(0, 9) == "processor") {
+            ఒకవేళ (has_processor && has_marchid) {
                 cpu_info_list.push_back({ current_processor, current_marchid });
             }
 
-            size_t colon_pos = line.find(':');
-            if (colon_pos != std::string::npos) {
-                current_processor = std::stoi(line.substr(colon_pos + 1));
-                has_processor     = true;
+            size_t colon_pos = పంక్తి.find(':');
+            ఒకవేళ (colon_pos != std::string::npos) {
+                current_processor = std::stoi(పంక్తి.substr(colon_pos + 1));
+                has_processor     = నిజం;
             }
 
-            has_marchid = false;
-        } else if (line.substr(0, 7) == "marchid") {
-            size_t colon_pos = line.find(':');
-            if (colon_pos != std::string::npos) {
-                std::string marchid_str = line.substr(colon_pos + 1);
-                marchid_str.erase(std::remove_if(marchid_str.begin(), marchid_str.end(), isspace), marchid_str.end());
-                current_marchid = std::stoull(marchid_str, nullptr, 16);
-                has_marchid     = true;
+            has_marchid = అబద్ధం;
+        } లేకపోతే ఒకవేళ (పంక్తి.substr(0, 7) == "marchid") {
+            size_t colon_pos = పంక్తి.find(':');
+            ఒకవేళ (colon_pos != std::string::npos) {
+                std::string marchid_str = పంక్తి.substr(colon_pos + 1);
+                marchid_str.erase(std::remove_if(marchid_str.begin(), marchid_str.end(), ఖాళీనా), marchid_str.end());
+                current_marchid = std::stoull(marchid_str, శూన్యసూచిక, 16);
+                has_marchid     = నిజం;
             }
         }
     }
 
-    if (has_processor && has_marchid) {
+    ఒకవేళ (has_processor && has_marchid) {
         cpu_info_list.push_back({ current_processor, current_marchid });
     }
 
-    if (has_processor && has_marchid) {
-        for (auto & cpu_info : cpu_info_list) {
-            if (cpu_info[0] != spine_invalid_core_id &&
+    ఒకవేళ (has_processor && has_marchid) {
+        కొరకు (స్వయంచాలక & cpu_info : cpu_info_list) {
+            ఒకవేళ (cpu_info[0] != spine_invalid_core_id &&
                 spine_march_mapping_.find(cpu_info[1]) != spine_march_mapping_.end()) {
-                auto core_info    = spine_core_info();
+                స్వయంచాలక core_info    = spine_core_info();
                 core_info.core_id = cpu_info[0];
                 core_info.arch_id = spine_core_arch_id(spine_march_mapping_[cpu_info[1]]);
 
-                result.push_back(core_info);
+                ఫలితం.push_back(core_info);
             }
         }
     }
 
-    return has_processor && has_marchid;
+    తిరిగి has_processor && has_marchid;
 }
 
-namespace {
-uint16_t hex_string_to_u16(const std::string & hex_str) {
-    try {
+నామాకాశ {
+uint16_t hex_string_గమ్యం_u16(స్థిరరాశి std::string & hex_str) {
+    ప్రయత్నించు {
         size_t pos = 0;
-        if (hex_str.substr(0, 2) == "0x" || hex_str.substr(0, 2) == "0X") {
+        ఒకవేళ (hex_str.substr(0, 2) == "0x" || hex_str.substr(0, 2) == "0X") {
             pos = 2;
         }
-        unsigned long result = std::stoul(hex_str.substr(pos), nullptr, 16);
-        if (result > std::numeric_limits<uint16_t>::max()) {
-            throw std::out_of_range("Converted value is out of range for uint16_t");
+        గుర్తులేని దీర్ఘ ఫలితం = std::stoul(hex_str.substr(pos), శూన్యసూచిక, 16);
+        ఒకవేళ (ఫలితం > std::numeric_limits<uint16_t>::max()) {
+            విసురు std::out_of_range("Converted value is out of range for uint16_t");
         }
-        return static_cast<uint16_t>(result);
-    } catch (const std::invalid_argument & e) {
-        throw std::invalid_argument("Invalid hexadecimal string");
-    } catch (const std::out_of_range & e) {
-        throw;
+        తిరిగి static_cast<uint16_t>(ఫలితం);
+    } పట్టుకో (స్థిరరాశి std::invalid_argument & e) {
+        విసురు std::invalid_argument("Invalid hexadecimal string");
+    } పట్టుకో (స్థిరరాశి std::out_of_range & e) {
+        విసురు;
     }
 }
 
-const char * spine_mem_pool_backend_to_string(spine_mem_pool_backend backend) {
-    switch (backend) {
-        case spine_mem_pool_backend::none:
-            return "NONE";
-        case spine_mem_pool_backend::posix_memalign:
-            return "POSIX";
-        case spine_mem_pool_backend::transparent_hugepage:
-            return "HPAGE";
-        case spine_mem_pool_backend::hugetlb_1g:
-            return "HPAGE1GB";
+స్థిరరాశి అక్షరం * spine_mem_pool_backend_గమ్యం_string(spine_mem_pool_backend backend) {
+    ఎంపిక (backend) {
+        స్థితి spine_mem_pool_backend::none:
+            తిరిగి "NONE";
+        స్థితి spine_mem_pool_backend::posix_memalign:
+            తిరిగి "POSIX";
+        స్థితి spine_mem_pool_backend::transparent_hugepage:
+            తిరిగి "HPAGE";
+        స్థితి spine_mem_pool_backend::hugetlb_1g:
+            తిరిగి "HPAGE1GB";
     }
 
-    return "unknown";
+    తిరిగి "unknown";
 }
 
-spine_mem_pool_backend parse_mem_backend(const char * mem_backend_str) {
-    if (mem_backend_str == nullptr || mem_backend_str[0] == '\0') {
-        return spine_mem_pool_backend::transparent_hugepage;
+spine_mem_pool_backend parse_mem_backend(స్థిరరాశి అక్షరం * mem_backend_str) {
+    ఒకవేళ (mem_backend_str == శూన్యసూచిక || mem_backend_str[0] == '\0') {
+        తిరిగి spine_mem_pool_backend::transparent_hugepage;
     }
 
     std::string value(mem_backend_str);
     std::transform(value.begin(), value.end(), value.begin(),
-                   [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+                   [](గుర్తులేని అక్షరం ch) { తిరిగి static_cast<అక్షరం>(std::tolower(ch)); });
 
-    if (value == "none") {
-        return spine_mem_pool_backend::none;
+    ఒకవేళ (value == "none") {
+        తిరిగి spine_mem_pool_backend::none;
     }
 
-    if (value == "posix") {
-        return spine_mem_pool_backend::posix_memalign;
+    ఒకవేళ (value == "posix") {
+        తిరిగి spine_mem_pool_backend::posix_memalign;
     }
 
-    if (value == "hpage") {
-        return spine_mem_pool_backend::transparent_hugepage;
+    ఒకవేళ (value == "hpage") {
+        తిరిగి spine_mem_pool_backend::transparent_hugepage;
     }
 
-    if (value == "hpage1gb") {
-        return spine_mem_pool_backend::hugetlb_1g;
+    ఒకవేళ (value == "hpage1gb") {
+        తిరిగి spine_mem_pool_backend::hugetlb_1g;
     }
 
-    throw std::runtime_error("invalid SPACEMIT_MEM_BACKEND: " + value + ", expected NONE, POSIX, HPAGE or HPAGE1GB");
+    విసురు std::runtime_error("invalid SPACEMIT_MEM_BACKEND: " + value + ", expected NONE, POSIX, HPAGE or HPAGE1GB");
 }
 }  // namespace
 
 spine_env_info::spine_env_info() {
-    num_cores = static_cast<int>(std::thread::hardware_concurrency());
+    అంకె_cores = static_cast<పూర్ణాంకం>(std::thread::hardware_concurrency());
     spine_core_info::get_spine_core_info(core_info_list);
 
     // special for x60 K1
-    if (core_info_list.size() == 8 && core_info_list[0].arch_id == spine_core_arch_id::core_arch_x60) {
-        for (int i = 0; i < 4; i++) {
+    ఒకవేళ (core_info_list.size() == 8 && core_info_list[0].arch_id == spine_core_arch_id::core_arch_x60) {
+        కొరకు (పూర్ణాంకం i = 0; i < 4; i++) {
             core_info_list[i].arch_id = spine_core_arch_id::core_arch_a60;
         }
     }
 
     // special for qemu
-    if (core_info_list.size() == 0) {
-        char * spine_core_arch_str = getenv("SPACEMIT_CORE_ARCH");
-        if (spine_core_arch_str != nullptr) {
-            auto arch_id = hex_string_to_u16(spine_core_arch_str);
-            for (int i = 0; i < num_cores; i++) {
-                auto core_info    = spine_core_info();
+    ఒకవేళ (core_info_list.size() == 0) {
+        అక్షరం * spine_core_arch_str = getenv("SPACEMIT_CORE_ARCH");
+        ఒకవేళ (spine_core_arch_str != శూన్యసూచిక) {
+            స్వయంచాలక arch_id = hex_string_గమ్యం_u16(spine_core_arch_str);
+            కొరకు (పూర్ణాంకం i = 0; i < అంకె_cores; i++) {
+                స్వయంచాలక core_info    = spine_core_info();
                 core_info.core_id = i;
                 core_info.arch_id = spine_core_arch_id{ arch_id };
                 core_info_list.push_back(core_info);
@@ -170,23 +170,23 @@ spine_env_info::spine_env_info() {
         }
     }
 
-    if (core_info_list.size() == 0) {
-        throw std::runtime_error(
+    ఒకవేళ (core_info_list.size() == 0) {
+        విసురు std::runtime_error(
             "Failed to get SPACEMIT_CORE_ARCH from environment or failed to parse it from /proc/cpuinfo");
     }
 
-    char * spine_perfer_core_arch_str = getenv("SPACEMIT_PERFER_CORE_ARCH");
-    if (spine_perfer_core_arch_str != nullptr && spine_perfer_core_arch_str != "") {
-        perfer_core_arch_id = spine_core_arch_id{ hex_string_to_u16(spine_perfer_core_arch_str) };
+    అక్షరం * spine_perfer_core_arch_str = getenv("SPACEMIT_PERFER_CORE_ARCH");
+    ఒకవేళ (spine_perfer_core_arch_str != శూన్యసూచిక && spine_perfer_core_arch_str != "") {
+        perfer_core_arch_id = spine_core_arch_id{ hex_string_గమ్యం_u16(spine_perfer_core_arch_str) };
     }
 
-    char *           spine_perfer_core_id_str = getenv("SPACEMIT_PERFER_CORE_ID");
-    std::vector<int> perfer_core_id_vec;
-    if (spine_perfer_core_id_str != nullptr && spine_perfer_core_id_str != "") {
+    అక్షరం *           spine_perfer_core_id_str = getenv("SPACEMIT_PERFER_CORE_ID");
+    std::vector<పూర్ణాంకం> perfer_core_id_vec;
+    ఒకవేళ (spine_perfer_core_id_str != శూన్యసూచిక && spine_perfer_core_id_str != "") {
         std::string perfer_core_id_str(spine_perfer_core_id_str);
         size_t      start = 0;
         size_t      end   = 0;
-        while ((end = perfer_core_id_str.find(',', start)) != std::string::npos) {
+        అయితే ((end = perfer_core_id_str.find(',', start)) != std::string::npos) {
             std::string core_id_substr = perfer_core_id_str.substr(start, end - start);
             perfer_core_id_vec.push_back(std::stoi(core_id_substr));
             start = end + 1;
@@ -195,52 +195,52 @@ spine_env_info::spine_env_info() {
         perfer_core_id_vec.push_back(std::stoi(core_id_substr));
     }
 
-    perfer_core_ids.reserve(num_cores);
-    if (perfer_core_arch_id == spine_core_arch_id::core_arch_none) {
-        for (auto & core_info : core_info_list) {
-            auto core_arch_id   = core_info.arch_id;
-            auto core_arch_head = (uint16_t) (core_arch_id) >> 12;
-            if (core_arch_head == 0xA) {
-                num_perfer_cores++;
+    perfer_core_ids.reserve(అంకె_cores);
+    ఒకవేళ (perfer_core_arch_id == spine_core_arch_id::core_arch_none) {
+        కొరకు (స్వయంచాలక & core_info : core_info_list) {
+            స్వయంచాలక core_arch_id   = core_info.arch_id;
+            స్వయంచాలక core_arch_తల = (uint16_t) (core_arch_id) >> 12;
+            ఒకవేళ (core_arch_తల == 0xA) {
+                అంకె_perfer_cores++;
                 perfer_core_arch_id = core_arch_id;
-                cpu_mask |= (1ULL << core_info.core_id);
+                cpu_ముసుగు |= (1ULL << core_info.core_id);
                 perfer_core_ids.push_back(core_info.core_id);
             }
         }
-    } else {
-        for (auto & core_info : core_info_list) {
-            auto core_arch_id = core_info.arch_id;
-            if (core_arch_id == perfer_core_arch_id) {
-                num_perfer_cores++;
-                cpu_mask |= (1ULL << core_info.core_id);
+    } లేకపోతే {
+        కొరకు (స్వయంచాలక & core_info : core_info_list) {
+            స్వయంచాలక core_arch_id = core_info.arch_id;
+            ఒకవేళ (core_arch_id == perfer_core_arch_id) {
+                అంకె_perfer_cores++;
+                cpu_ముసుగు |= (1ULL << core_info.core_id);
 
-                auto core_arch_head = (uint16_t) (core_arch_id) >> 12;
-                if (core_arch_head == 0xA) {
+                స్వయంచాలక core_arch_తల = (uint16_t) (core_arch_id) >> 12;
+                ఒకవేళ (core_arch_తల == 0xA) {
                     perfer_core_ids.push_back(core_info.core_id);
                 }
             }
         }
-        if (num_perfer_cores == 0) {
+        ఒకవేళ (అంకె_perfer_cores == 0) {
             GGML_ABORT("can not find core with arch id %x for SPACEMIT_PERFER_CORE_ARCH in core info list\n",
                        (uint16_t) perfer_core_arch_id);
         }
     }
 
-    if (perfer_core_id_vec.size() > 0) {
+    ఒకవేళ (perfer_core_id_vec.size() > 0) {
         perfer_core_ids.clear();
-        cpu_mask         = 0;
-        num_perfer_cores = 0;
-        for (int core_id : perfer_core_id_vec) {
-            if (core_id < 0 || core_id >= num_cores) {
+        cpu_ముసుగు         = 0;
+        అంకె_perfer_cores = 0;
+        కొరకు (పూర్ణాంకం core_id : perfer_core_id_vec) {
+            ఒకవేళ (core_id < 0 || core_id >= అంకె_cores) {
                 GGML_ABORT("invalid core id in SPACEMIT_PERFER_CORE_ID: %d, should be between 0 and %d\n", core_id,
-                           num_cores - 1);
+                           అంకె_cores - 1);
             }
-            auto core_info    = core_info_list[core_id];
-            auto core_arch_id = core_info.arch_id;
-            if (core_arch_id == perfer_core_arch_id) {
-                cpu_mask |= (1ULL << core_id);
+            స్వయంచాలక core_info    = core_info_list[core_id];
+            స్వయంచాలక core_arch_id = core_info.arch_id;
+            ఒకవేళ (core_arch_id == perfer_core_arch_id) {
+                cpu_ముసుగు |= (1ULL << core_id);
                 perfer_core_ids.push_back(core_id);
-            } else {
+            } లేకపోతే {
                 GGML_ABORT(
                     "core id %d in SPACEMIT_PERFER_CORE_ID has arch id %x which does not match "
                     "SPACEMIT_PERFER_CORE_ARCH %x\n",
@@ -248,12 +248,12 @@ spine_env_info::spine_env_info() {
             }
         }
         std::string perfer_core_id_vec_str;
-        for (int core_id : perfer_core_id_vec) {
+        కొరకు (పూర్ణాంకం core_id : perfer_core_id_vec) {
             perfer_core_id_vec_str += std::to_string(core_id) + ",";
         }
         perfer_core_id_vec_str.pop_back();
         GGML_LOG_DEBUG("SPACEMIT_PERFER_CORE_ID is set, perferred core ids: %s\n", perfer_core_id_vec_str.c_str());
-        num_perfer_cores = static_cast<int>(perfer_core_id_vec.size());
+        అంకె_perfer_cores = static_cast<పూర్ణాంకం>(perfer_core_id_vec.size());
     }
 
     use_ime1 = perfer_core_arch_id == spine_core_arch_id::core_arch_a60 ||
@@ -262,23 +262,23 @@ spine_env_info::spine_env_info() {
     use_ime2 = perfer_core_arch_id == spine_core_arch_id::core_arch_a100;
 
     mem_backend                  = parse_mem_backend(getenv("SPACEMIT_MEM_BACKEND"));
-    char * spine_disable_tcm_str = getenv("SPACEMIT_DISABLE_TCM");
-    auto   user_disable_tcm      = spine_disable_tcm_str != nullptr && strcmp(spine_disable_tcm_str, "0") != 0;
+    అక్షరం * spine_disable_tcm_str = getenv("SPACEMIT_DISABLE_TCM");
+    స్వయంచాలక   user_disable_tcm      = spine_disable_tcm_str != శూన్యసూచిక && strcmp(spine_disable_tcm_str, "0") != 0;
 
-    if (!user_disable_tcm) {
+    ఒకవేళ (!user_disable_tcm) {
         spine_mem_pool_tcm_info tcm_info;
-        if (spine_mem_pool_tcm_init(&tcm_info)) {
-            use_tcm      = tcm_info.available;
-            tcm_blk_size = tcm_info.blk_size;
+        ఒకవేళ (spine_mem_pool_tcm_init(&tcm_info)) {
+            use_tcm      = tcm_info.అందుబాటు;
+            tcm_blk_కొలత = tcm_info.blk_కొలత;
             GGML_LOG_DEBUG("CPU_RISCV64_SPACEMIT: tcm is available, blk_size: %zu, blk_num: %zu, is_fake_tcm: %d\n",
-                           tcm_info.blk_size, tcm_info.blk_num, tcm_info.is_fake_tcm);
+                           tcm_info.blk_కొలత, tcm_info.blk_అంకె, tcm_info.is_fake_tcm);
 
-            for (auto & core_info : core_info_list) {
-                auto core_arch_head = (uint16_t) (core_info.arch_id) >> 12;
-                if (core_arch_head != 0xA) {
-                    aicpu_id_offset++;
-                } else {
-                    break;
+            కొరకు (స్వయంచాలక & core_info : core_info_list) {
+                స్వయంచాలక core_arch_తల = (uint16_t) (core_info.arch_id) >> 12;
+                ఒకవేళ (core_arch_తల != 0xA) {
+                    aicpu_id_స్థానభ్రంశం++;
+                } లేకపోతే {
+                    ఆపు;
                 }
             }
         }
@@ -287,32 +287,32 @@ spine_env_info::spine_env_info() {
     GGML_LOG_DEBUG(
         "CPU_RISCV64_SPACEMIT: num_cores: %d, num_perfer_cores: %d, perfer_core_arch_id: %x, exclude_main_thread: %d, "
         "use_ime1: %d, use_ime2: %d, mem_backend: %s, cpu_mask: %lx, aicpu_id_offset: %d\n",
-        num_cores, num_perfer_cores, (uint16_t) perfer_core_arch_id, exclude_main_thread, use_ime1, use_ime2,
-        spine_mem_pool_backend_to_string(mem_backend), cpu_mask, aicpu_id_offset);
+        అంకె_cores, అంకె_perfer_cores, (uint16_t) perfer_core_arch_id, exclude_main_thread, use_ime1, use_ime2,
+        spine_mem_pool_backend_గమ్యం_string(mem_backend), cpu_ముసుగు, aicpu_id_స్థానభ్రంశం);
 
-    const size_t init_barrier_size = sizeof(spine_barrier_t) * spine_init_barrier_count;
+    స్థిరరాశి size_t init_barrier_కొలత = పరిమాణం(spine_barrier_t) * spine_init_barrier_లెక్క;
     init_barrier =
-        static_cast<spine_barrier_t *>(spine_mem_pool_shared_mem_alloc(init_barrier_size, alignof(spine_barrier_t)));
-    if (init_barrier != nullptr) {
-        init_barrier_is_shared_mem = true;
-    } else {
+        static_cast<spine_barrier_t *>(spine_mem_pool_shared_mem_alloc(init_barrier_కొలత, alignof(spine_barrier_t)));
+    ఒకవేళ (init_barrier != శూన్యసూచిక) {
+        init_barrier_is_shared_mem = నిజం;
+    } లేకపోతే {
         GGML_LOG_WARN("CPU_RISCV64_SPACEMIT: failed to allocate init_barrier from shared mem, falling back to heap\n",
                       __func__);
-        init_barrier = new spine_barrier_t[spine_init_barrier_count];
+        init_barrier = కొత్త spine_barrier_t[spine_init_barrier_లెక్క];
     }
 
-    spine_barrier_init(init_barrier, spine_init_barrier_count, 2);
+    spine_barrier_init(init_barrier, spine_init_barrier_లెక్క, 2);
 }
 
 spine_env_info::~spine_env_info() {
-    if (init_barrier_is_shared_mem) {
+    ఒకవేళ (init_barrier_is_shared_mem) {
         spine_mem_pool_shared_mem_free(init_barrier);
-    } else {
-        delete[] init_barrier;
+    } లేకపోతే {
+        తొలగించు[] init_barrier;
     }
 
-    init_barrier               = nullptr;
-    init_barrier_is_shared_mem = false;
+    init_barrier               = శూన్యసూచిక;
+    init_barrier_is_shared_mem = అబద్ధం;
 }
 
 spine_env_info global_spine_env_info;

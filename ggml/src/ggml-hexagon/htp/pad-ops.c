@@ -1,30 +1,30 @@
-#pragma clang diagnostic ignored "-Wunused-variable"
-#pragma clang diagnostic ignored "-Wunused-function"
-#pragma clang diagnostic ignored "-Wunused-but-set-variable"
+#సూచన clang diagnostic ignored "-Wunused-variable"
+#సూచన clang diagnostic ignored "-Wunused-function"
+#సూచన clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <HAP_perf.h>
+#అన్తర్భావ <HAP_farf.h>
+#అన్తర్భావ <HAP_perf.h>
 
-#include <string.h>
+#అన్తర్భావ <string.h>
 
-#include "dma-queue.h"
-#include "hvx-utils.h"
+#అన్తర్భావ "dma-queue.h"
+#అన్తర్భావ "hvx-utils.h"
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "hex-common.h"
-#include "hex-profile.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "htp-tensor.h"
+#నిర్వచించు GGML_COMMON_DECL_C
+#అన్తర్భావ "ggml-common.h"
+#అన్తర్భావ "hex-common.h"
+#అన్తర్భావ "hex-profile.h"
+#అన్తర్భావ "htp-ctx.h"
+#అన్తర్భావ "htp-ops.h"
+#అన్తర్భావ "htp-tensor.h"
 
 /* Circular wrap: maps any integer x into [0, n) */
-static inline uint32_t wrap_around(int32_t x, uint32_t n) {
-    return (uint32_t)(((x % (int32_t)n) + (int32_t)n) % (int32_t)n);
+స్థిర అంతఃవరుస uint32_t wrap_around(int32_t x, uint32_t n) {
+    తిరిగి (uint32_t)(((x % (int32_t)n) + (int32_t)n) % (int32_t)n);
 }
 
 /* Decompose a flat dst row index into (i1, i2, i3) */
-static inline void pad_decompose_row(uint32_t ir, uint32_t ne1, uint32_t ne2,
+స్థిర అంతఃవరుస శూన్య pad_decompose_అడ్డువరుస(uint32_t ir, uint32_t ne1, uint32_t ne2,
                                      uint32_t *i1, uint32_t *i2, uint32_t *i3) {
     *i1 = ir % ne1;
     *i2 = (ir / ne1) % ne2;
@@ -32,177 +32,177 @@ static inline void pad_decompose_row(uint32_t ir, uint32_t ne1, uint32_t ne2,
 }
 
 /* Return non-zero if row (i1,i2,i3) falls in the non-padded interior */
-static inline int pad_is_interior(uint32_t i1, uint32_t i2, uint32_t i3,
+స్థిర అంతఃవరుస పూర్ణాంకం pad_is_interior(uint32_t i1, uint32_t i2, uint32_t i3,
                                    int32_t lp1, int32_t rp1, uint32_t ne1,
                                    int32_t lp2, int32_t rp2, uint32_t ne2,
                                    int32_t lp3, int32_t rp3, uint32_t ne3) {
-    return ((int32_t)i1 >= lp1 && (int32_t)i1 < (int32_t)ne1 - rp1) &&
+    తిరిగి ((int32_t)i1 >= lp1 && (int32_t)i1 < (int32_t)ne1 - rp1) &&
            ((int32_t)i2 >= lp2 && (int32_t)i2 < (int32_t)ne2 - rp2) &&
            ((int32_t)i3 >= lp3 && (int32_t)i3 < (int32_t)ne3 - rp3);
 }
 
 /* Compute the DDR src row pointer for a zero-pad interior row */
-static inline const uint8_t * pad_src_row_ptr(const struct htp_tensor * src,
+స్థిర అంతఃవరుస స్థిరరాశి uint8_t * pad_src_అడ్డువరుస_ptr(స్థిరరాశి నిర్మాణం htp_tensor * src,
                                                uint32_t i1, uint32_t i2, uint32_t i3,
                                                int32_t lp1, int32_t lp2, int32_t lp3) {
-    return (const uint8_t *) src->data
+    తిరిగి (స్థిరరాశి uint8_t *) src->దత్తాంశం
         + (i1 - (uint32_t)lp1) * src->nb[1]
         + (i2 - (uint32_t)lp2) * src->nb[2]
         + (i3 - (uint32_t)lp3) * src->nb[3];
 }
 
-static inline dma_addr_t pad_src_row_data(const struct htp_tensor * src,
+స్థిర అంతఃవరుస dma_addr_t pad_src_అడ్డువరుస_దత్తాంశం(స్థిరరాశి నిర్మాణం htp_tensor * src,
                                           uint32_t i1, uint32_t i2, uint32_t i3,
                                           int32_t lp1, int32_t lp2, int32_t lp3) {
-    return src->data
+    తిరిగి src->దత్తాంశం
         + (i1 - (uint32_t)lp1) * src->nb[1]
         + (i2 - (uint32_t)lp2) * src->nb[2]
         + (i3 - (uint32_t)lp3) * src->nb[3];
 }
 
 /* Compute the DDR src row pointer for a circular row (wrap-around indexing) */
-static inline const uint8_t * pad_circ_src_row_ptr(const struct htp_tensor * src,
+స్థిర అంతఃవరుస స్థిరరాశి uint8_t * pad_circ_src_అడ్డువరుస_ptr(స్థిరరాశి నిర్మాణం htp_tensor * src,
                                                     uint32_t i1, uint32_t i2, uint32_t i3,
                                                     int32_t lp1, int32_t lp2, int32_t lp3) {
-    return (const uint8_t *) src->data
+    తిరిగి (స్థిరరాశి uint8_t *) src->దత్తాంశం
         + wrap_around((int32_t)i1 - lp1, src->ne[1]) * src->nb[1]
         + wrap_around((int32_t)i2 - lp2, src->ne[2]) * src->nb[2]
         + wrap_around((int32_t)i3 - lp3, src->ne[3]) * src->nb[3];
 }
 
-static inline dma_addr_t pad_circ_src_row_data(const struct htp_tensor * src,
+స్థిర అంతఃవరుస dma_addr_t pad_circ_src_అడ్డువరుస_దత్తాంశం(స్థిరరాశి నిర్మాణం htp_tensor * src,
                                                uint32_t i1, uint32_t i2, uint32_t i3,
                                                int32_t lp1, int32_t lp2, int32_t lp3) {
-    return src->data
+    తిరిగి src->దత్తాంశం
         + wrap_around((int32_t)i1 - lp1, src->ne[1]) * src->nb[1]
         + wrap_around((int32_t)i2 - lp2, src->ne[2]) * src->nb[2]
         + wrap_around((int32_t)i3 - lp3, src->ne[3]) * src->nb[3];
 }
 
-struct htp_pad_context {
-    struct htp_ops_context * octx;
+నిర్మాణం htp_pad_context {
+    నిర్మాణం htp_ops_context * octx;
 
     int32_t  lp0, rp0;
     int32_t  lp1, rp1;
     int32_t  lp2, rp2;
     int32_t  lp3, rp3;
 
-    uint32_t nrows_per_thread;
-    uint32_t total_dst_rows;
-    uint32_t row_start;
+    uint32_t nrows_చొప్పున_thread;
+    uint32_t మొత్తం_dst_అడ్డువరుసలు;
+    uint32_t అడ్డువరుస_ప్రారంభం;
 
-    size_t   type_size;
+    size_t   type_కొలత;
 
     // Row sizes for DMA kernel (populated when VTCM is available)
-    size_t   src_row_size;
-    size_t   src_row_size_aligned;
-    size_t   dst_row_size;
-    size_t   dst_row_size_aligned;
+    size_t   src_అడ్డువరుస_కొలత;
+    size_t   src_అడ్డువరుస_కొలత_aligned;
+    size_t   dst_అడ్డువరుస_కొలత;
+    size_t   dst_అడ్డువరుస_కొలత_aligned;
 };
 
-#define htp_pad_preamble                                                             \
-    const struct htp_tensor * src = octx->src[0];                                    \
-    const struct htp_tensor * dst = octx->dst;                                       \
+#నిర్వచించు htp_pad_preamble                                                             \
+    స్థిరరాశి నిర్మాణం htp_tensor * src = octx->src[0];                                    \
+    స్థిరరాశి నిర్మాణం htp_tensor * dst = octx->dst;                                       \
                                                                                      \
-    const uint32_t ne00 = src->ne[0];                                                \
-    const uint32_t nb00 = src->nb[0];                                                \
+    స్థిరరాశి uint32_t ne00 = src->ne[0];                                                \
+    స్థిరరాశి uint32_t nb00 = src->nb[0];                                                \
                                                                                      \
-    const uint32_t ne0 = dst->ne[0];                                                 \
-    const uint32_t ne1 = dst->ne[1];                                                 \
-    const uint32_t ne2 = dst->ne[2];                                                 \
-    const uint32_t ne3 = dst->ne[3];                                                 \
+    స్థిరరాశి uint32_t ne0 = dst->ne[0];                                                 \
+    స్థిరరాశి uint32_t ne1 = dst->ne[1];                                                 \
+    స్థిరరాశి uint32_t ne2 = dst->ne[2];                                                 \
+    స్థిరరాశి uint32_t ne3 = dst->ne[3];                                                 \
                                                                                      \
-    const uint32_t nb1 = dst->nb[1];                                                 \
-    const uint32_t nb2 = dst->nb[2];                                                 \
-    const uint32_t nb3 = dst->nb[3];                                                 \
+    స్థిరరాశి uint32_t nb1 = dst->nb[1];                                                 \
+    స్థిరరాశి uint32_t nb2 = dst->nb[2];                                                 \
+    స్థిరరాశి uint32_t nb3 = dst->nb[3];                                                 \
                                                                                      \
-    const int32_t lp0 = pctx->lp0, rp0 = pctx->rp0;                                  \
-    const int32_t lp1 = pctx->lp1, rp1 = pctx->rp1;                                  \
-    const int32_t lp2 = pctx->lp2, rp2 = pctx->rp2;                                  \
-    const int32_t lp3 = pctx->lp3, rp3 = pctx->rp3;                                  \
+    స్థిరరాశి int32_t lp0 = pctx->lp0, rp0 = pctx->rp0;                                  \
+    స్థిరరాశి int32_t lp1 = pctx->lp1, rp1 = pctx->rp1;                                  \
+    స్థిరరాశి int32_t lp2 = pctx->lp2, rp2 = pctx->rp2;                                  \
+    స్థిరరాశి int32_t lp3 = pctx->lp3, rp3 = pctx->rp3;                                  \
                                                                                      \
-    const size_t type_size = pctx->type_size;                                        \
+    స్థిరరాశి size_t type_కొలత = pctx->type_కొలత;                                        \
                                                                                      \
-    const uint32_t row_start = pctx->row_start + pctx->nrows_per_thread * ith;       \
-    const uint32_t row_end   = MIN(row_start + pctx->nrows_per_thread, pctx->row_start + pctx->total_dst_rows);
+    స్థిరరాశి uint32_t అడ్డువరుస_ప్రారంభం = pctx->అడ్డువరుస_ప్రారంభం + pctx->nrows_చొప్పున_thread * ith;       \
+    స్థిరరాశి uint32_t అడ్డువరుస_చివర   = MIN(అడ్డువరుస_ప్రారంభం + pctx->nrows_చొప్పున_thread, pctx->అడ్డువరుస_ప్రారంభం + pctx->మొత్తం_dst_అడ్డువరుసలు);
 
 
-#define htp_pad_dma_preamble                                                                \
-    const size_t src_row_size         = pctx->src_row_size;                                 \
-    const size_t src_row_size_aligned = pctx->src_row_size_aligned;                         \
-    const size_t dst_row_size         = pctx->dst_row_size;                                 \
-    const size_t dst_row_size_aligned = pctx->dst_row_size_aligned;                         \
+#నిర్వచించు htp_pad_dma_preamble                                                                \
+    స్థిరరాశి size_t src_అడ్డువరుస_కొలత         = pctx->src_అడ్డువరుస_కొలత;                                 \
+    స్థిరరాశి size_t src_అడ్డువరుస_కొలత_aligned = pctx->src_అడ్డువరుస_కొలత_aligned;                         \
+    స్థిరరాశి size_t dst_అడ్డువరుస_కొలత         = pctx->dst_అడ్డువరుస_కొలత;                                 \
+    స్థిరరాశి size_t dst_అడ్డువరుస_కొలత_aligned = pctx->dst_అడ్డువరుస_కొలత_aligned;                         \
                                                                                             \
-    uint8_t * src_spad_base = octx->src0_spad.data + ith * octx->src0_spad.size_per_thread; \
-    uint8_t * dst_spad_base = octx->dst_spad.data  + ith * octx->dst_spad.size_per_thread;  \
+    uint8_t * src_spad_పునాది = octx->src0_spad.దత్తాంశం + ith * octx->src0_spad.కొలత_చొప్పున_thread; \
+    uint8_t * dst_spad_పునాది = octx->dst_spad.దత్తాంశం  + ith * octx->dst_spad.కొలత_చొప్పున_thread;  \
                                                                                             \
-    dma_queue * dma_q = octx->ctx->dma[ith];
+    dma_వరుస * dma_q = octx->ctx->dma[ith];
 
 // ---------------------------------------------------------------------------
 // HVX vectorized PAD kernel
 // ---------------------------------------------------------------------------
 
-static void pad_job_per_thread_hvx(unsigned int nth, unsigned int ith, void * data) {
-    const struct htp_pad_context * pctx = (const struct htp_pad_context *) data;
-    struct htp_ops_context * octx = pctx->octx;
+స్థిర శూన్య pad_పని_చొప్పున_thread_hvx(గుర్తులేని పూర్ణాంకం nth, గుర్తులేని పూర్ణాంకం ith, శూన్య * దత్తాంశం) {
+    స్థిరరాశి నిర్మాణం htp_pad_context * pctx = (స్థిరరాశి నిర్మాణం htp_pad_context *) దత్తాంశం;
+    నిర్మాణం htp_ops_context * octx = pctx->octx;
     htp_pad_preamble;
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
-    htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, row_start);
+    నిర్మాణం htp_thread_trace * tr = &octx->ctx->trace[ith];
+    htp_trace_event_ప్రారంభం(tr, HTP_TRACE_EVT_HVX_COMP, అడ్డువరుస_ప్రారంభం);
 
-    for (uint32_t dst_row = row_start; dst_row < row_end; dst_row++) {
+    కొరకు (uint32_t dst_అడ్డువరుస = అడ్డువరుస_ప్రారంభం; dst_అడ్డువరుస < అడ్డువరుస_చివర; dst_అడ్డువరుస++) {
         uint32_t i1, i2, i3;
-        pad_decompose_row(dst_row, ne1, ne2, &i1, &i2, &i3);
+        pad_decompose_అడ్డువరుస(dst_అడ్డువరుస, ne1, ne2, &i1, &i2, &i3);
 
-        uint8_t * dst_ptr = (uint8_t *) dst->data + i1 * nb1 + i2 * nb2 + i3 * nb3;
+        uint8_t * dst_ptr = (uint8_t *) dst->దత్తాంశం + i1 * nb1 + i2 * nb2 + i3 * nb3;
 
-        const int interior = pad_is_interior(i1, i2, i3,
+        స్థిరరాశి పూర్ణాంకం interior = pad_is_interior(i1, i2, i3,
                                              lp1, rp1, ne1,
                                              lp2, rp2, ne2,
                                              lp3, rp3, ne3);
 
-        if (!interior) {
+        ఒకవేళ (!interior) {
             hvx_splat_f32_u(dst_ptr, 0.0f, ne0);
-        } else {
-            const uint8_t * src_ptr = pad_src_row_ptr(src, i1, i2, i3, lp1, lp2, lp3);
+        } లేకపోతే {
+            స్థిరరాశి uint8_t * src_ptr = pad_src_అడ్డువరుస_ptr(src, i1, i2, i3, lp1, lp2, lp3);
 
-            if (lp0 > 0) {
+            ఒకవేళ (lp0 > 0) {
                 hvx_splat_f32_u(dst_ptr, 0.0f, (uint32_t)lp0);
             }
 
-            uint8_t * dst_row_start = dst_ptr + (size_t)lp0 * type_size;
-            if (nb00 == type_size) {
-                hvx_copy_f32_uu(dst_row_start, src_ptr, ne00);
-            } else {
-                for (uint32_t i = 0; i < ne00; i++) {
-                    memcpy(dst_row_start + i * type_size,
+            uint8_t * dst_అడ్డువరుస_ప్రారంభం = dst_ptr + (size_t)lp0 * type_కొలత;
+            ఒకవేళ (nb00 == type_కొలత) {
+                hvx_copy_f32_uu(dst_అడ్డువరుస_ప్రారంభం, src_ptr, ne00);
+            } లేకపోతే {
+                కొరకు (uint32_t i = 0; i < ne00; i++) {
+                    జ్ఞాపకం_నకలు(dst_అడ్డువరుస_ప్రారంభం + i * type_కొలత,
                            src_ptr + (size_t)i * nb00,
-                           type_size);
+                           type_కొలత);
                 }
             }
 
-            if (rp0 > 0) {
-                hvx_splat_f32_u(dst_ptr + ((size_t)lp0 + ne00) * type_size, 0.0f, (uint32_t)rp0);
+            ఒకవేళ (rp0 > 0) {
+                hvx_splat_f32_u(dst_ptr + ((size_t)lp0 + ne00) * type_కొలత, 0.0f, (uint32_t)rp0);
             }
         }
     }
 
-    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, row_start);
+    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, అడ్డువరుస_ప్రారంభం);
 
-    FARF(HIGH, "pad-hvx %d/%d: (%ux%ux%ux%u) -> (%ux%ux%ux%u) rows %u:%u\n",
+    FARF(ఎగువ_2, "pad-hvx %d/%d: (%ux%ux%ux%u) -> (%ux%ux%ux%u) rows %u:%u\n",
          ith, nth,
          src->ne[0], src->ne[1], src->ne[2], src->ne[3],
          dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3],
-         row_start, row_end);
+         అడ్డువరుస_ప్రారంభం, అడ్డువరుస_చివర);
 }
 
 // ---------------------------------------------------------------------------
 // HVX + DMA PAD kernel - aligned, double-buffered
 // ---------------------------------------------------------------------------
 
-static void pad_job_per_thread_hvx_dma(unsigned int nth, unsigned int ith, void * data) {
-    const struct htp_pad_context * pctx = (const struct htp_pad_context *) data;
-    struct htp_ops_context * octx = pctx->octx;
+స్థిర శూన్య pad_పని_చొప్పున_thread_hvx_dma(గుర్తులేని పూర్ణాంకం nth, గుర్తులేని పూర్ణాంకం ith, శూన్య * దత్తాంశం) {
+    స్థిరరాశి నిర్మాణం htp_pad_context * pctx = (స్థిరరాశి నిర్మాణం htp_pad_context *) దత్తాంశం;
+    నిర్మాణం htp_ops_context * octx = pctx->octx;
     htp_pad_preamble;
     htp_pad_dma_preamble;
 
@@ -210,173 +210,173 @@ static void pad_job_per_thread_hvx_dma(unsigned int nth, unsigned int ith, void 
     // Priming phase: push 2 pairs of (dummy_dst_DMA, src_DMA) to seed the
     // double-buffer pipeline before the main loop begins.
     // -----------------------------------------------------------------------
-    for (uint32_t ir = row_start, spad_idx = 0; ir < row_end && spad_idx < 2; ir++, spad_idx++) {
-        uint8_t * src_spad_cur = src_spad_base + spad_idx * src_row_size_aligned;
-        uint8_t * dst_spad_cur = dst_spad_base + spad_idx * dst_row_size_aligned;
+    కొరకు (uint32_t ir = అడ్డువరుస_ప్రారంభం, spad_idx = 0; ir < అడ్డువరుస_చివర && spad_idx < 2; ir++, spad_idx++) {
+        uint8_t * src_spad_cur = src_spad_పునాది + spad_idx * src_అడ్డువరుస_కొలత_aligned;
+        uint8_t * dst_spad_cur = dst_spad_పునాది + spad_idx * dst_అడ్డువరుస_కొలత_aligned;
 
-        dma_queue_push(dma_q,
-            dma_make_data(dst->data, dst_spad_cur),
-            dst_row_size, dst_row_size_aligned, dst_row_size, 0);
+        dma_వరుస_నెట్టు(dma_q,
+            dma_make_దత్తాంశం(dst->దత్తాంశం, dst_spad_cur),
+            dst_అడ్డువరుస_కొలత, dst_అడ్డువరుస_కొలత_aligned, dst_అడ్డువరుస_కొలత, 0);
 
         uint32_t i1, i2, i3;
-        pad_decompose_row(ir, ne1, ne2, &i1, &i2, &i3);
-        const int interior = pad_is_interior(i1, i2, i3,
+        pad_decompose_అడ్డువరుస(ir, ne1, ne2, &i1, &i2, &i3);
+        స్థిరరాశి పూర్ణాంకం interior = pad_is_interior(i1, i2, i3,
                                              lp1, rp1, ne1,
                                              lp2, rp2, ne2,
                                              lp3, rp3, ne3);
 
-        const dma_addr_t src_data = interior
-            ? pad_src_row_data(src, i1, i2, i3, lp1, lp2, lp3) : src->data;
+        స్థిరరాశి dma_addr_t src_దత్తాంశం = interior
+            ? pad_src_అడ్డువరుస_దత్తాంశం(src, i1, i2, i3, lp1, lp2, lp3) : src->దత్తాంశం;
 
         // Interior row: real DMA (1 row) from DDR to VTCM.
         // Border row: null DMA (nrows=0)
-        dma_queue_push(dma_q,
-            dma_make_data(src_spad_cur, src_data),
-            src_row_size_aligned, src_row_size, src_row_size, interior ? 1 : 0);
+        dma_వరుస_నెట్టు(dma_q,
+            dma_make_దత్తాంశం(src_spad_cur, src_దత్తాంశం),
+            src_అడ్డువరుస_కొలత_aligned, src_అడ్డువరుస_కొలత, src_అడ్డువరుస_కొలత, interior ? 1 : 0);
     }
 
     // -----------------------------------------------------------------------
     // Main loop: pop completed DMAs, compute in VTCM with aligned HVX ops,
     // push dst DMA and prefetch src for the next+1 row.
     // -----------------------------------------------------------------------
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
+    నిర్మాణం htp_thread_trace * tr = &octx->ctx->trace[ith];
 
-    for (uint32_t ir = row_start; ir < row_end; ir++) {
-        uint8_t * dst_spad_cur = (uint8_t *) dma_queue_pop(dma_q).src;
-        uint8_t * src_spad_cur = (uint8_t *) dma_queue_pop(dma_q).dst;
+    కొరకు (uint32_t ir = అడ్డువరుస_ప్రారంభం; ir < అడ్డువరుస_చివర; ir++) {
+        uint8_t * dst_spad_cur = (uint8_t *) dma_వరుస_తీయి(dma_q).src;
+        uint8_t * src_spad_cur = (uint8_t *) dma_వరుస_తీయి(dma_q).dst;
 
         uint32_t i1, i2, i3;
-        pad_decompose_row(ir, ne1, ne2, &i1, &i2, &i3);
+        pad_decompose_అడ్డువరుస(ir, ne1, ne2, &i1, &i2, &i3);
 
-        const dma_addr_t dst_data = dst->data + i1 * nb1 + i2 * nb2 + i3 * nb3;
+        స్థిరరాశి dma_addr_t dst_దత్తాంశం = dst->దత్తాంశం + i1 * nb1 + i2 * nb2 + i3 * nb3;
 
-        const int interior = pad_is_interior(i1, i2, i3,
+        స్థిరరాశి పూర్ణాంకం interior = pad_is_interior(i1, i2, i3,
                                              lp1, rp1, ne1,
                                              lp2, rp2, ne2,
                                              lp3, rp3, ne3);
 
-        htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
-        if (!interior) {
+        htp_trace_event_ప్రారంభం(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
+        ఒకవేళ (!interior) {
             hvx_splat_f32_a(dst_spad_cur, 0.0f, ne0);
-        } else {
+        } లేకపోతే {
             hvx_splat_f32_a(dst_spad_cur, 0.0f, ne0);
 
-            uint8_t * dst_interior = dst_spad_cur + (size_t)lp0 * type_size;
+            uint8_t * dst_interior = dst_spad_cur + (size_t)lp0 * type_కొలత;
 
-            if ((uintptr_t)dst_interior % VLEN == 0) {
+            ఒకవేళ ((uintptr_t)dst_interior % VLEN == 0) {
                 hvx_copy_f32_aa(dst_interior, src_spad_cur, ne00);
-            } else {
+            } లేకపోతే {
                 hvx_copy_f32_ua(dst_interior, src_spad_cur, ne00);
             }
         }
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
 
-        dma_queue_push(dma_q,
-            dma_make_data(dst_data, dst_spad_cur),
-            dst_row_size, dst_row_size_aligned, dst_row_size, 1);
+        dma_వరుస_నెట్టు(dma_q,
+            dma_make_దత్తాంశం(dst_దత్తాంశం, dst_spad_cur),
+            dst_అడ్డువరుస_కొలత, dst_అడ్డువరుస_కొలత_aligned, dst_అడ్డువరుస_కొలత, 1);
 
-        const uint32_t next_row = ir + 2;
-        if (next_row < row_end) {
+        స్థిరరాశి uint32_t తదుపరి_అడ్డువరుస = ir + 2;
+        ఒకవేళ (తదుపరి_అడ్డువరుస < అడ్డువరుస_చివర) {
             uint32_t ni1, ni2, ni3;
-            pad_decompose_row(next_row, ne1, ne2, &ni1, &ni2, &ni3);
-            const int next_interior = pad_is_interior(ni1, ni2, ni3,
+            pad_decompose_అడ్డువరుస(తదుపరి_అడ్డువరుస, ne1, ne2, &ni1, &ni2, &ni3);
+            స్థిరరాశి పూర్ణాంకం తదుపరి_interior = pad_is_interior(ni1, ni2, ni3,
                                                       lp1, rp1, ne1,
                                                       lp2, rp2, ne2,
                                                       lp3, rp3, ne3);
-            const dma_addr_t next_src_data = next_interior
-                ? pad_src_row_data(src, ni1, ni2, ni3, lp1, lp2, lp3) : src->data;
+            స్థిరరాశి dma_addr_t తదుపరి_src_దత్తాంశం = తదుపరి_interior
+                ? pad_src_అడ్డువరుస_దత్తాంశం(src, ni1, ni2, ni3, lp1, lp2, lp3) : src->దత్తాంశం;
 
-            dma_queue_push(dma_q,
-                dma_make_data(src_spad_cur, next_src_data),
-                src_row_size_aligned, src_row_size, src_row_size, next_interior ? 1 : 0);
+            dma_వరుస_నెట్టు(dma_q,
+                dma_make_దత్తాంశం(src_spad_cur, తదుపరి_src_దత్తాంశం),
+                src_అడ్డువరుస_కొలత_aligned, src_అడ్డువరుస_కొలత, src_అడ్డువరుస_కొలత, తదుపరి_interior ? 1 : 0);
         }
     }
 
-    dma_queue_flush(dma_q);
+    dma_వరుస_flush(dma_q);
 
-    FARF(HIGH, "pad-hvx-dma %d/%d: (%ux%ux%ux%u) -> (%ux%ux%ux%u) rows %u:%u\n",
+    FARF(ఎగువ_2, "pad-hvx-dma %d/%d: (%ux%ux%ux%u) -> (%ux%ux%ux%u) rows %u:%u\n",
          ith, nth,
          src->ne[0], src->ne[1], src->ne[2], src->ne[3],
          dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3],
-         row_start, row_end);
+         అడ్డువరుస_ప్రారంభం, అడ్డువరుస_చివర);
 }
 
 // ---------------------------------------------------------------------------
 // HVX circular PAD kernel
 // ---------------------------------------------------------------------------
 
-static void pad_job_per_thread_hvx_circular(unsigned int nth, unsigned int ith, void * data) {
-    const struct htp_pad_context * pctx = (const struct htp_pad_context *) data;
-    struct htp_ops_context * octx = pctx->octx;
+స్థిర శూన్య pad_పని_చొప్పున_thread_hvx_circular(గుర్తులేని పూర్ణాంకం nth, గుర్తులేని పూర్ణాంకం ith, శూన్య * దత్తాంశం) {
+    స్థిరరాశి నిర్మాణం htp_pad_context * pctx = (స్థిరరాశి నిర్మాణం htp_pad_context *) దత్తాంశం;
+    నిర్మాణం htp_ops_context * octx = pctx->octx;
     htp_pad_preamble;
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
-    htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, row_start);
+    నిర్మాణం htp_thread_trace * tr = &octx->ctx->trace[ith];
+    htp_trace_event_ప్రారంభం(tr, HTP_TRACE_EVT_HVX_COMP, అడ్డువరుస_ప్రారంభం);
 
-    for (uint32_t dst_row = row_start; dst_row < row_end; dst_row++) {
+    కొరకు (uint32_t dst_అడ్డువరుస = అడ్డువరుస_ప్రారంభం; dst_అడ్డువరుస < అడ్డువరుస_చివర; dst_అడ్డువరుస++) {
         uint32_t i1, i2, i3;
-        pad_decompose_row(dst_row, ne1, ne2, &i1, &i2, &i3);
+        pad_decompose_అడ్డువరుస(dst_అడ్డువరుస, ne1, ne2, &i1, &i2, &i3);
 
-        uint8_t       * dst_ptr = (uint8_t *) dst->data + i1 * nb1 + i2 * nb2 + i3 * nb3;
-        const uint8_t * src_row = pad_circ_src_row_ptr(src, i1, i2, i3, lp1, lp2, lp3);
+        uint8_t       * dst_ptr = (uint8_t *) dst->దత్తాంశం + i1 * nb1 + i2 * nb2 + i3 * nb3;
+        స్థిరరాశి uint8_t * src_అడ్డువరుస = pad_circ_src_అడ్డువరుస_ptr(src, i1, i2, i3, lp1, lp2, lp3);
 
-        if (nb00 == type_size) {
+        ఒకవేళ (nb00 == type_కొలత) {
 
-            if (lp0 > 0) {
-                if ((uint32_t)lp0 < 32) {
-                    memcpy(dst_ptr,
-                           src_row + (size_t)(ne00 - (uint32_t)lp0) * type_size,
-                           (size_t)lp0 * type_size);
-                } else {
+            ఒకవేళ (lp0 > 0) {
+                ఒకవేళ ((uint32_t)lp0 < 32) {
+                    జ్ఞాపకం_నకలు(dst_ptr,
+                           src_అడ్డువరుస + (size_t)(ne00 - (uint32_t)lp0) * type_కొలత,
+                           (size_t)lp0 * type_కొలత);
+                } లేకపోతే {
                     hvx_copy_f32_uu(dst_ptr,
-                                    src_row + (size_t)(ne00 - (uint32_t)lp0) * type_size,
+                                    src_అడ్డువరుస + (size_t)(ne00 - (uint32_t)lp0) * type_కొలత,
                                     (uint32_t)lp0);
                 }
             }
-            hvx_copy_f32_uu(dst_ptr + (size_t)lp0 * type_size, src_row, ne00);
-            if (rp0 > 0) {
-                if ((uint32_t)rp0 < 32) {
-                    memcpy(dst_ptr + ((size_t)lp0 + ne00) * type_size,
-                           src_row,
-                           (size_t)rp0 * type_size);
-                } else {
-                    hvx_copy_f32_uu(dst_ptr + ((size_t)lp0 + ne00) * type_size,
-                                    src_row,
+            hvx_copy_f32_uu(dst_ptr + (size_t)lp0 * type_కొలత, src_అడ్డువరుస, ne00);
+            ఒకవేళ (rp0 > 0) {
+                ఒకవేళ ((uint32_t)rp0 < 32) {
+                    జ్ఞాపకం_నకలు(dst_ptr + ((size_t)lp0 + ne00) * type_కొలత,
+                           src_అడ్డువరుస,
+                           (size_t)rp0 * type_కొలత);
+                } లేకపోతే {
+                    hvx_copy_f32_uu(dst_ptr + ((size_t)lp0 + ne00) * type_కొలత,
+                                    src_అడ్డువరుస,
                                     (uint32_t)rp0);
                 }
             }
-        } else {
-            for (uint32_t i = 0; i < (uint32_t)lp0; i++) {
-                *(float *)(dst_ptr + i * type_size) =
-                    *(const float *)(src_row + (size_t)(ne00 - (uint32_t)lp0 + i) * nb00);
+        } లేకపోతే {
+            కొరకు (uint32_t i = 0; i < (uint32_t)lp0; i++) {
+                *(దశాంశం *)(dst_ptr + i * type_కొలత) =
+                    *(స్థిరరాశి దశాంశం *)(src_అడ్డువరుస + (size_t)(ne00 - (uint32_t)lp0 + i) * nb00);
             }
-            for (uint32_t i = 0; i < ne00; i++) {
-                *(float *)(dst_ptr + ((size_t)lp0 + i) * type_size) =
-                    *(const float *)(src_row + (size_t)i * nb00);
+            కొరకు (uint32_t i = 0; i < ne00; i++) {
+                *(దశాంశం *)(dst_ptr + ((size_t)lp0 + i) * type_కొలత) =
+                    *(స్థిరరాశి దశాంశం *)(src_అడ్డువరుస + (size_t)i * nb00);
             }
-            for (uint32_t i = 0; i < (uint32_t)rp0; i++) {
-                *(float *)(dst_ptr + ((size_t)lp0 + ne00 + i) * type_size) =
-                    *(const float *)(src_row + (size_t)i * nb00);
+            కొరకు (uint32_t i = 0; i < (uint32_t)rp0; i++) {
+                *(దశాంశం *)(dst_ptr + ((size_t)lp0 + ne00 + i) * type_కొలత) =
+                    *(స్థిరరాశి దశాంశం *)(src_అడ్డువరుస + (size_t)i * nb00);
             }
         }
     }
 
-    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, row_start);
+    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, అడ్డువరుస_ప్రారంభం);
 
-    FARF(HIGH, "pad-hvx-circ %d/%d: (%ux%ux%ux%u) -> (%ux%ux%ux%u) rows %u:%u\n",
+    FARF(ఎగువ_2, "pad-hvx-circ %d/%d: (%ux%ux%ux%u) -> (%ux%ux%ux%u) rows %u:%u\n",
          ith, nth,
          src->ne[0], src->ne[1], src->ne[2], src->ne[3],
          dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3],
-         row_start, row_end);
+         అడ్డువరుస_ప్రారంభం, అడ్డువరుస_చివర);
 }
 
 // ---------------------------------------------------------------------------
 // HVX + DMA circular PAD kernel - aligned, double-buffered
 // ---------------------------------------------------------------------------
 
-static void pad_job_per_thread_hvx_circular_dma(unsigned int nth, unsigned int ith, void * data) {
-    const struct htp_pad_context * pctx = (const struct htp_pad_context *) data;
-    struct htp_ops_context * octx = pctx->octx;
+స్థిర శూన్య pad_పని_చొప్పున_thread_hvx_circular_dma(గుర్తులేని పూర్ణాంకం nth, గుర్తులేని పూర్ణాంకం ith, శూన్య * దత్తాంశం) {
+    స్థిరరాశి నిర్మాణం htp_pad_context * pctx = (స్థిరరాశి నిర్మాణం htp_pad_context *) దత్తాంశం;
+    నిర్మాణం htp_ops_context * octx = pctx->octx;
     htp_pad_preamble;
     htp_pad_dma_preamble;
 
@@ -384,192 +384,192 @@ static void pad_job_per_thread_hvx_circular_dma(unsigned int nth, unsigned int i
     // Priming phase: push 2 pairs of (dummy_dst_DMA, src_DMA) to seed the
     // double-buffer pipeline.  Every row is a real src DMA (no null DMAs).
     // -----------------------------------------------------------------------
-    for (uint32_t ir = row_start, spad_idx = 0; ir < row_end && spad_idx < 2; ir++, spad_idx++) {
-        uint8_t * src_spad_cur = src_spad_base + spad_idx * src_row_size_aligned;
-        uint8_t * dst_spad_cur = dst_spad_base + spad_idx * dst_row_size_aligned;
+    కొరకు (uint32_t ir = అడ్డువరుస_ప్రారంభం, spad_idx = 0; ir < అడ్డువరుస_చివర && spad_idx < 2; ir++, spad_idx++) {
+        uint8_t * src_spad_cur = src_spad_పునాది + spad_idx * src_అడ్డువరుస_కొలత_aligned;
+        uint8_t * dst_spad_cur = dst_spad_పునాది + spad_idx * dst_అడ్డువరుస_కొలత_aligned;
 
-        dma_queue_push(dma_q,
-            dma_make_data(dst->data, dst_spad_cur),
-            dst_row_size, dst_row_size_aligned, dst_row_size, 0);
+        dma_వరుస_నెట్టు(dma_q,
+            dma_make_దత్తాంశం(dst->దత్తాంశం, dst_spad_cur),
+            dst_అడ్డువరుస_కొలత, dst_అడ్డువరుస_కొలత_aligned, dst_అడ్డువరుస_కొలత, 0);
 
         uint32_t pi1, pi2, pi3;
-        pad_decompose_row(ir, ne1, ne2, &pi1, &pi2, &pi3);
-        const dma_addr_t src_data = pad_circ_src_row_data(src, pi1, pi2, pi3, lp1, lp2, lp3);
-        dma_queue_push(dma_q,
-            dma_make_data(src_spad_cur, src_data),
-            src_row_size_aligned, src_row_size, src_row_size, 1);
+        pad_decompose_అడ్డువరుస(ir, ne1, ne2, &pi1, &pi2, &pi3);
+        స్థిరరాశి dma_addr_t src_దత్తాంశం = pad_circ_src_అడ్డువరుస_దత్తాంశం(src, pi1, pi2, pi3, lp1, lp2, lp3);
+        dma_వరుస_నెట్టు(dma_q,
+            dma_make_దత్తాంశం(src_spad_cur, src_దత్తాంశం),
+            src_అడ్డువరుస_కొలత_aligned, src_అడ్డువరుస_కొలత, src_అడ్డువరుస_కొలత, 1);
     }
 
     // -----------------------------------------------------------------------
     // Main loop: pop completed DMAs, assemble circular row in VTCM with
     // aligned HVX ops, push dst DMA and prefetch src for the next+1 row.
     // -----------------------------------------------------------------------
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
+    నిర్మాణం htp_thread_trace * tr = &octx->ctx->trace[ith];
 
-    for (uint32_t ir = row_start; ir < row_end; ir++) {
-        uint8_t * dst_spad_cur = (uint8_t *) dma_queue_pop(dma_q).src;
-        uint8_t * src_spad_cur = (uint8_t *) dma_queue_pop(dma_q).dst;
+    కొరకు (uint32_t ir = అడ్డువరుస_ప్రారంభం; ir < అడ్డువరుస_చివర; ir++) {
+        uint8_t * dst_spad_cur = (uint8_t *) dma_వరుస_తీయి(dma_q).src;
+        uint8_t * src_spad_cur = (uint8_t *) dma_వరుస_తీయి(dma_q).dst;
 
         uint32_t i1, i2, i3;
-        pad_decompose_row(ir, ne1, ne2, &i1, &i2, &i3);
-        const dma_addr_t dst_data = dst->data + i1 * nb1 + i2 * nb2 + i3 * nb3;
+        pad_decompose_అడ్డువరుస(ir, ne1, ne2, &i1, &i2, &i3);
+        స్థిరరాశి dma_addr_t dst_దత్తాంశం = dst->దత్తాంశం + i1 * nb1 + i2 * nb2 + i3 * nb3;
 
-        htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
-        if (lp0 > 0) {
-            uint8_t * dst_left       = dst_spad_cur;
-            const uint8_t * src_left = src_spad_cur + (size_t)(ne00 - (uint32_t)lp0) * type_size;
-            if ((uint32_t)lp0 < 32) {
-                memcpy(dst_left, src_left, (size_t)lp0 * type_size);
-            } else {
-                hvx_copy_f32_uu(dst_left, src_left, (uint32_t)lp0);
+        htp_trace_event_ప్రారంభం(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
+        ఒకవేళ (lp0 > 0) {
+            uint8_t * dst_ఎడమ       = dst_spad_cur;
+            స్థిరరాశి uint8_t * src_ఎడమ = src_spad_cur + (size_t)(ne00 - (uint32_t)lp0) * type_కొలత;
+            ఒకవేళ ((uint32_t)lp0 < 32) {
+                జ్ఞాపకం_నకలు(dst_ఎడమ, src_ఎడమ, (size_t)lp0 * type_కొలత);
+            } లేకపోతే {
+                hvx_copy_f32_uu(dst_ఎడమ, src_ఎడమ, (uint32_t)lp0);
             }
         }
 
         {
-            uint8_t * dst_mid = dst_spad_cur + (size_t)lp0 * type_size;
-            if ((uintptr_t)dst_mid % VLEN == 0) {
+            uint8_t * dst_mid = dst_spad_cur + (size_t)lp0 * type_కొలత;
+            ఒకవేళ ((uintptr_t)dst_mid % VLEN == 0) {
                 hvx_copy_f32_aa(dst_mid, src_spad_cur, ne00);
-            } else {
+            } లేకపోతే {
                 hvx_copy_f32_ua(dst_mid, src_spad_cur, ne00);
             }
         }
 
-        if (rp0 > 0) {
-            uint8_t * dst_right = dst_spad_cur + ((size_t)lp0 + ne00) * type_size;
-            if ((uint32_t)rp0 < 32) {
-                memcpy(dst_right, src_spad_cur, (size_t)rp0 * type_size);
-            } else {
-                if ((uintptr_t)dst_right % VLEN == 0) {
-                    hvx_copy_f32_aa(dst_right, src_spad_cur, (uint32_t)rp0);
-                } else {
-                    hvx_copy_f32_ua(dst_right, src_spad_cur, (uint32_t)rp0);
+        ఒకవేళ (rp0 > 0) {
+            uint8_t * dst_కుడి = dst_spad_cur + ((size_t)lp0 + ne00) * type_కొలత;
+            ఒకవేళ ((uint32_t)rp0 < 32) {
+                జ్ఞాపకం_నకలు(dst_కుడి, src_spad_cur, (size_t)rp0 * type_కొలత);
+            } లేకపోతే {
+                ఒకవేళ ((uintptr_t)dst_కుడి % VLEN == 0) {
+                    hvx_copy_f32_aa(dst_కుడి, src_spad_cur, (uint32_t)rp0);
+                } లేకపోతే {
+                    hvx_copy_f32_ua(dst_కుడి, src_spad_cur, (uint32_t)rp0);
                 }
             }
         }
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
 
-        dma_queue_push(dma_q,
-            dma_make_data(dst_data, dst_spad_cur),
-            dst_row_size, dst_row_size_aligned, dst_row_size, 1);
+        dma_వరుస_నెట్టు(dma_q,
+            dma_make_దత్తాంశం(dst_దత్తాంశం, dst_spad_cur),
+            dst_అడ్డువరుస_కొలత, dst_అడ్డువరుస_కొలత_aligned, dst_అడ్డువరుస_కొలత, 1);
 
-        const uint32_t next_row = ir + 2;
-        if (next_row < row_end) {
+        స్థిరరాశి uint32_t తదుపరి_అడ్డువరుస = ir + 2;
+        ఒకవేళ (తదుపరి_అడ్డువరుస < అడ్డువరుస_చివర) {
             uint32_t nri1, nri2, nri3;
-            pad_decompose_row(next_row, ne1, ne2, &nri1, &nri2, &nri3);
-            const dma_addr_t next_src_data = pad_circ_src_row_data(src, nri1, nri2, nri3, lp1, lp2, lp3);
-            dma_queue_push(dma_q,
-                dma_make_data(src_spad_cur, next_src_data),
-                src_row_size_aligned, src_row_size, src_row_size, 1);
+            pad_decompose_అడ్డువరుస(తదుపరి_అడ్డువరుస, ne1, ne2, &nri1, &nri2, &nri3);
+            స్థిరరాశి dma_addr_t తదుపరి_src_దత్తాంశం = pad_circ_src_అడ్డువరుస_దత్తాంశం(src, nri1, nri2, nri3, lp1, lp2, lp3);
+            dma_వరుస_నెట్టు(dma_q,
+                dma_make_దత్తాంశం(src_spad_cur, తదుపరి_src_దత్తాంశం),
+                src_అడ్డువరుస_కొలత_aligned, src_అడ్డువరుస_కొలత, src_అడ్డువరుస_కొలత, 1);
         }
     }
 
-    dma_queue_flush(dma_q);
+    dma_వరుస_flush(dma_q);
 
-    FARF(HIGH, "pad-hvx-circ-dma %d/%d: (%ux%ux%ux%u) -> (%ux%ux%ux%u) rows %u:%u\n",
+    FARF(ఎగువ_2, "pad-hvx-circ-dma %d/%d: (%ux%ux%ux%u) -> (%ux%ux%ux%u) rows %u:%u\n",
          ith, nth,
          src->ne[0], src->ne[1], src->ne[2], src->ne[3],
          dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3],
-         row_start, row_end);
+         అడ్డువరుస_ప్రారంభం, అడ్డువరుస_చివర);
 }
 
-int op_pad(struct htp_ops_context * octx) {
-    const struct htp_tensor * src0 = octx->src[0];
-    const struct htp_tensor * dst  = octx->dst;
+పూర్ణాంకం op_pad(నిర్మాణం htp_ops_context * octx) {
+    స్థిరరాశి నిర్మాణం htp_tensor * src0 = octx->src[0];
+    స్థిరరాశి నిర్మాణం htp_tensor * dst  = octx->dst;
 
     // Only F32 supported
-    size_t type_size;
-    switch (src0->type) {
-        case HTP_TYPE_F32: type_size = 4; break;
-        default:
+    size_t type_కొలత;
+    ఎంపిక (src0->type) {
+        స్థితి HTP_TYPE_F32: type_కొలత = 4; ఆపు;
+        అప్రమేయ:
             FARF(ERROR, "pad-hvx: unsupported type %u\n", src0->type);
-            return HTP_STATUS_NO_SUPPORT;
+            తిరిగి HTP_స్థితి_NO_SUPPORT;
     }
 
-    const int32_t lp0 = octx->op_params[0];
-    const int32_t rp0 = octx->op_params[1];
-    const int32_t lp1 = octx->op_params[2];
-    const int32_t rp1 = octx->op_params[3];
-    const int32_t lp2 = octx->op_params[4];
-    const int32_t rp2 = octx->op_params[5];
-    const int32_t lp3 = octx->op_params[6];
-    const int32_t rp3 = octx->op_params[7];
-    const int32_t circular = octx->op_params[8];
+    స్థిరరాశి int32_t lp0 = octx->op_params[0];
+    స్థిరరాశి int32_t rp0 = octx->op_params[1];
+    స్థిరరాశి int32_t lp1 = octx->op_params[2];
+    స్థిరరాశి int32_t rp1 = octx->op_params[3];
+    స్థిరరాశి int32_t lp2 = octx->op_params[4];
+    స్థిరరాశి int32_t rp2 = octx->op_params[5];
+    స్థిరరాశి int32_t lp3 = octx->op_params[6];
+    స్థిరరాశి int32_t rp3 = octx->op_params[7];
+    స్థిరరాశి int32_t circular = octx->op_params[8];
 
-    const uint32_t ne0  = dst->ne[0];
-    const uint32_t ne00 = src0->ne[0];
+    స్థిరరాశి uint32_t ne0  = dst->ne[0];
+    స్థిరరాశి uint32_t ne00 = src0->ne[0];
 
-    const uint32_t total_dst_rows = dst->ne[1] * dst->ne[2] * dst->ne[3];
-    const size_t dst_row_size     = (size_t)ne0 * type_size;
+    స్థిరరాశి uint32_t మొత్తం_dst_అడ్డువరుసలు = dst->ne[1] * dst->ne[2] * dst->ne[3];
+    స్థిరరాశి size_t dst_అడ్డువరుస_కొలత     = (size_t)ne0 * type_కొలత;
 
-    uint32_t row_start = 0;
-    uint32_t nrows     = total_dst_rows;
+    uint32_t అడ్డువరుస_ప్రారంభం = 0;
+    uint32_t nrows     = మొత్తం_dst_అడ్డువరుసలు;
 
-    if (octx->ctx->mdev.count > 1) {
-        uint32_t rows_per_chunk = 0;
-        htp_tensor_mdev_rows_per_chunk(dst, type_size, (uint32_t) dst_row_size, &rows_per_chunk);
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_dst_rows, rows_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
-        row_start = range.start;
-        nrows     = range.count;
+    ఒకవేళ (octx->ctx->mdev.లెక్క > 1) {
+        uint32_t అడ్డువరుసలు_చొప్పున_chunk = 0;
+        htp_tensor_mdev_అడ్డువరుసలు_చొప్పున_chunk(dst, type_కొలత, (uint32_t) dst_అడ్డువరుస_కొలత, &అడ్డువరుసలు_చొప్పున_chunk);
+        స్థిరరాశి నిర్మాణం htp_tensor_mdev_range range = htp_tensor_mdev_విభజన(మొత్తం_dst_అడ్డువరుసలు, అడ్డువరుసలు_చొప్పున_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.లెక్క, &octx->ctx->mdev.లెక్క_div);
+        అడ్డువరుస_ప్రారంభం = range.ప్రారంభం;
+        nrows     = range.లెక్క;
     }
 
-    if (nrows == 0) {
-        return HTP_STATUS_OK;
+    ఒకవేళ (nrows == 0) {
+        తిరిగి HTP_స్థితి_OK;
     }
 
-    const uint32_t n_threads = octx->n_threads;
+    స్థిరరాశి uint32_t n_దారాలు = octx->n_దారాలు;
 
-    const size_t src_row_size         = (size_t)ne00 * type_size;
-    const size_t src_row_size_aligned = hex_round_up(src_row_size, VLEN);
-    const size_t dst_row_size_aligned = hex_round_up(dst_row_size, VLEN);
+    స్థిరరాశి size_t src_అడ్డువరుస_కొలత         = (size_t)ne00 * type_కొలత;
+    స్థిరరాశి size_t src_అడ్డువరుస_కొలత_aligned = hex_విడత_పైకి(src_అడ్డువరుస_కొలత, VLEN);
+    స్థిరరాశి size_t dst_అడ్డువరుస_కొలత_aligned = hex_విడత_పైకి(dst_అడ్డువరుస_కొలత, VLEN);
 
     // Total VTCM needed: 2 buffers (ping+pong) for src and dst, per thread
-    const size_t vtcm_needed = (size_t)n_threads * 2 * (src_row_size_aligned + dst_row_size_aligned);
+    స్థిరరాశి size_t vtcm_needed = (size_t)n_దారాలు * 2 * (src_అడ్డువరుస_కొలత_aligned + dst_అడ్డువరుస_కొలత_aligned);
 
-    const int use_dma = (src0->nb[0] == (uint32_t)type_size) && (ne00 >= 512) &&
-                        (octx->ctx->vtcm_size >= vtcm_needed);
+    స్థిరరాశి పూర్ణాంకం use_dma = (src0->nb[0] == (uint32_t)type_కొలత) && (ne00 >= 512) &&
+                        (octx->ctx->vtcm_కొలత >= vtcm_needed);
 
-    if (!use_dma && (htp_tensor_is_extended(src0) || htp_tensor_is_extended(dst))) {
-        return HTP_STATUS_NO_SUPPORT;
+    ఒకవేళ (!use_dma && (htp_tensor_is_extended(src0) || htp_tensor_is_extended(dst))) {
+        తిరిగి HTP_స్థితి_NO_SUPPORT;
     }
 
-    if (use_dma) {
-        octx->src0_spad.size_per_thread = 2 * src_row_size_aligned;
-        octx->dst_spad.size_per_thread  = 2 * dst_row_size_aligned;
-        octx->src0_spad.size = n_threads * octx->src0_spad.size_per_thread;
-        octx->dst_spad.size  = n_threads * octx->dst_spad.size_per_thread;
-        octx->src0_spad.data = octx->ctx->vtcm_base;
-        octx->dst_spad.data  = octx->src0_spad.data + octx->src0_spad.size;
-        octx->src0_spad.src  = NULL;
-        octx->dst_spad.src   = NULL;
+    ఒకవేళ (use_dma) {
+        octx->src0_spad.కొలత_చొప్పున_thread = 2 * src_అడ్డువరుస_కొలత_aligned;
+        octx->dst_spad.కొలత_చొప్పున_thread  = 2 * dst_అడ్డువరుస_కొలత_aligned;
+        octx->src0_spad.కొలత = n_దారాలు * octx->src0_spad.కొలత_చొప్పున_thread;
+        octx->dst_spad.కొలత  = n_దారాలు * octx->dst_spad.కొలత_చొప్పున_thread;
+        octx->src0_spad.దత్తాంశం = octx->ctx->vtcm_పునాది;
+        octx->dst_spad.దత్తాంశం  = octx->src0_spad.దత్తాంశం + octx->src0_spad.కొలత;
+        octx->src0_spad.src  = ఖాళీ;
+        octx->dst_spad.src   = ఖాళీ;
     }
 
-    struct htp_pad_context pctx = {
+    నిర్మాణం htp_pad_context pctx = {
         .octx             = octx,
         .lp0 = lp0, .rp0 = rp0,
         .lp1 = lp1, .rp1 = rp1,
         .lp2 = lp2, .rp2 = rp2,
         .lp3 = lp3, .rp3 = rp3,
-        .nrows_per_thread = fastdiv(nrows + n_threads - 1, &octx->n_threads_div),
-        .total_dst_rows   = nrows,
-        .row_start        = row_start,
-        .type_size        = type_size,
-        .src_row_size         = src_row_size,
-        .src_row_size_aligned = src_row_size_aligned,
-        .dst_row_size         = dst_row_size,
-        .dst_row_size_aligned = dst_row_size_aligned,
+        .nrows_చొప్పున_thread = fastdiv(nrows + n_దారాలు - 1, &octx->n_దారాలు_div),
+        .మొత్తం_dst_అడ్డువరుసలు   = nrows,
+        .అడ్డువరుస_ప్రారంభం        = అడ్డువరుస_ప్రారంభం,
+        .type_కొలత        = type_కొలత,
+        .src_అడ్డువరుస_కొలత         = src_అడ్డువరుస_కొలత,
+        .src_అడ్డువరుస_కొలత_aligned = src_అడ్డువరుస_కొలత_aligned,
+        .dst_అడ్డువరుస_కొలత         = dst_అడ్డువరుస_కొలత,
+        .dst_అడ్డువరుస_కొలత_aligned = dst_అడ్డువరుస_కొలత_aligned,
     };
 
-    FARF(HIGH, "pad-hvx%s%s: (%ux%ux%ux%u) -> (%ux%ux%ux%u) pads=(%d,%d,%d,%d,%d,%d,%d,%d)\n",
+    FARF(ఎగువ_2, "pad-hvx%s%s: (%ux%ux%ux%u) -> (%ux%ux%ux%u) pads=(%d,%d,%d,%d,%d,%d,%d,%d)\n",
          circular ? "-circ" : "",
          use_dma   ? "-dma"  : "",
          src0->ne[0], src0->ne[1], src0->ne[2], src0->ne[3],
          dst->ne[0],  dst->ne[1],  dst->ne[2],  dst->ne[3],
          lp0, rp0, lp1, rp1, lp2, rp2, lp3, rp3);
 
-    if      (circular && use_dma) { work_queue_run(octx->ctx->work_queue, pad_job_per_thread_hvx_circular_dma, &pctx, n_threads); }
-    else if (circular)            { work_queue_run(octx->ctx->work_queue, pad_job_per_thread_hvx_circular,     &pctx, n_threads); }
-    else if (use_dma)             { work_queue_run(octx->ctx->work_queue, pad_job_per_thread_hvx_dma,          &pctx, n_threads); }
-    else                          { work_queue_run(octx->ctx->work_queue, pad_job_per_thread_hvx,              &pctx, n_threads); }
+    ఒకవేళ      (circular && use_dma) { work_వరుస_నిరంతరం(octx->ctx->work_వరుస, pad_పని_చొప్పున_thread_hvx_circular_dma, &pctx, n_దారాలు); }
+    లేకపోతే ఒకవేళ (circular)            { work_వరుస_నిరంతరం(octx->ctx->work_వరుస, pad_పని_చొప్పున_thread_hvx_circular,     &pctx, n_దారాలు); }
+    లేకపోతే ఒకవేళ (use_dma)             { work_వరుస_నిరంతరం(octx->ctx->work_వరుస, pad_పని_చొప్పున_thread_hvx_dma,          &pctx, n_దారాలు); }
+    లేకపోతే                          { work_వరుస_నిరంతరం(octx->ctx->work_వరుస, pad_పని_చొప్పున_thread_hvx,              &pctx, n_దారాలు); }
 
-    return HTP_STATUS_OK;
+    తిరిగి HTP_స్థితి_OK;
 }

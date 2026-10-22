@@ -1,25 +1,25 @@
-#pragma once
-#include <stdint.h>
-#include <stdbool.h>
+#సూచన once
+#అన్తర్భావ <stdint.h>
+#అన్తర్భావ <stdbool.h>
 
-#if defined(__VXE__) || defined(__VXE2__)
-#include <vecintrin.h>
-#endif
+#ఒకవేళ defined(__VXE__) || defined(__VXE2__)
+#అన్తర్భావ <vecintrin.h>
+#అయితే_ముగింపు
 
-#ifdef _MSC_VER
-#define NOINLINE __declspec(noinline)
-#else
-#define NOINLINE __attribute__((__noinline__))
-#endif
+#నిర్వచితమైతే _MSC_VER
+#నిర్వచించు NOINLINE __declspec(noinline)
+#లేకపోతే
+#నిర్వచించు NOINLINE __attribute__((__noinline__))
+#అయితే_ముగింపు
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#నిర్వచితమైతే __cplusplus
+బాహ్య "C" {
+#అయితే_ముగింపు
 
-bool llamafile_sgemm(const struct ggml_compute_params * params, int64_t, int64_t, int64_t,
-                     const void *, int64_t, const void *, int64_t, void *, int64_t,
-                     int, int, int);
+bool llamafile_sgemm(స్థిరరాశి నిర్మాణం ggml_compute_params * params, int64_t, int64_t, int64_t,
+                     స్థిరరాశి శూన్య *, int64_t, స్థిరరాశి శూన్య *, int64_t, శూన్య *, int64_t,
+                     పూర్ణాంకం, పూర్ణాంకం, పూర్ణాంకం);
 
-#ifdef __cplusplus
+#నిర్వచితమైతే __cplusplus
 }
-#endif
+#అయితే_ముగింపు

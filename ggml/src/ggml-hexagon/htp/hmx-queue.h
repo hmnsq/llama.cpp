@@ -1,160 +1,160 @@
-#ifndef HMX_QUEUE_H
-#define HMX_QUEUE_H
+#నిర్వచితం_కాకపోతే HMX_వరుస_H
+#నిర్వచించు HMX_వరుస_H
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdatomic.h>
+#అన్తర్భావ <stdbool.h>
+#అన్తర్భావ <stdint.h>
+#అన్తర్భావ <stdatomic.h>
 
-#include <hexagon_types.h>
-#include <qurt_thread.h>
-#include <qurt_futex.h>
-#include <HAP_farf.h>
+#అన్తర్భావ <hexagon_types.h>
+#అన్తర్భావ <qurt_thread.h>
+#అన్తర్భావ <qurt_futex.h>
+#అన్తర్భావ <HAP_farf.h>
 
-#include "hex-utils.h"
-#include "hex-profile.h"
+#అన్తర్భావ "hex-utils.h"
+#అన్తర్భావ "hex-profile.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#నిర్వచితమైతే __cplusplus
+బాహ్య "C" {
+#అయితే_ముగింపు
 
-#if __HVX_ARCH__ > 79
-#define HMX_QUEUE_POLL_COUNT 2000
-#else
-#define HMX_QUEUE_POLL_COUNT 1
-#endif
+#ఒకవేళ __HVX_ARCH__ > 79
+#నిర్వచించు HMX_వరుస_POLL_లెక్క 2000
+#లేకపోతే
+#నిర్వచించు HMX_వరుస_POLL_లెక్క 1
+#అయితే_ముగింపు
 
-typedef void (*hmx_queue_func)(void *);
+రకనిర్వచనం శూన్య (*hmx_వరుస_func)(శూన్య *);
 
 // Dummy funcs used as signals
-enum hmx_queue_signal {
-    HMX_QUEUE_NOOP = 0, // aka NULL
-    HMX_QUEUE_WAKEUP,
-    HMX_QUEUE_SUSPEND,
-    HMX_QUEUE_KILL
+గణన hmx_వరుస_signal {
+    HMX_వరుస_NOOP = 0, // aka NULL
+    HMX_వరుస_WAKEUP,
+    HMX_వరుస_SUSPEND,
+    HMX_వరుస_KILL
 };
 
-struct hmx_queue_desc {
-    hmx_queue_func   func;
-    void *           data;
-    atomic_uint      done;
+నిర్మాణం hmx_వరుస_desc {
+    hmx_వరుస_func   func;
+    శూన్య *           దత్తాంశం;
+    atomic_uint      పూర్తి;
 };
 
-struct hmx_queue_s {
-    struct hmx_queue_desc * desc;
+నిర్మాణం hmx_వరుస_s {
+    నిర్మాణం hmx_వరుస_desc * desc;
     atomic_uint      idx_write; // updated by producer (push)
     atomic_uint      idx_read;  // updated by consumer (process)
-    unsigned int     idx_pop;   // updated by producer (pop)
-    uint32_t         idx_mask;
-    uint32_t         capacity;
+    గుర్తులేని పూర్ణాంకం     idx_తీయి;   // updated by producer (pop)
+    uint32_t         idx_ముసుగు;
+    uint32_t         సామర్థ్యం;
 
     atomic_uint      seqn;      // incremented for all pushes, used with futex
     qurt_thread_t    thread;
-    void *           stack;
+    శూన్య *           దొంతర;
     uint32_t         hap_rctx;
     bool             hmx_locked;
-    struct htp_thread_trace * trace;
+    నిర్మాణం htp_thread_trace * trace;
     bool             external_mem; // memory owned externally
 };
 
-typedef struct hmx_queue_s * hmx_queue_t;
+రకనిర్వచనం నిర్మాణం hmx_వరుస_s * hmx_వరుస_t;
 
-size_t      hmx_queue_sizeof(size_t capacity, uint32_t stack_size);
-size_t      hmx_queue_alignof(void);
-hmx_queue_t hmx_queue_init(void * ptr, size_t capacity, uint32_t stack_size, uint32_t hap_rctx, struct htp_thread_trace * trace);
-void        hmx_queue_free(hmx_queue_t q);
+size_t      hmx_వరుస_sizeof(size_t సామర్థ్యం, uint32_t దొంతర_కొలత);
+size_t      hmx_వరుస_alignof(శూన్య);
+hmx_వరుస_t hmx_వరుస_init(శూన్య * ptr, size_t సామర్థ్యం, uint32_t దొంతర_కొలత, uint32_t hap_rctx, నిర్మాణం htp_thread_trace * trace);
+శూన్య        hmx_వరుస_free(hmx_వరుస_t q);
 
-static inline struct hmx_queue_desc hmx_queue_make_desc(hmx_queue_func func, void * data) {
-    struct hmx_queue_desc d = { func, data };
-    return d;
+స్థిర అంతఃవరుస నిర్మాణం hmx_వరుస_desc hmx_వరుస_make_desc(hmx_వరుస_func func, శూన్య * దత్తాంశం) {
+    నిర్మాణం hmx_వరుస_desc d = { func, దత్తాంశం };
+    తిరిగి d;
 }
 
-static inline bool hmx_queue_push(hmx_queue_t q, struct hmx_queue_desc d) {
-    unsigned int ir = atomic_load(&q->idx_read);
-    unsigned int iw = atomic_load(&q->idx_write);
+స్థిర అంతఃవరుస bool hmx_వరుస_నెట్టు(hmx_వరుస_t q, నిర్మాణం hmx_వరుస_desc d) {
+    గుర్తులేని పూర్ణాంకం ir = atomic_ఎక్కించు(&q->idx_read);
+    గుర్తులేని పూర్ణాంకం iw = atomic_ఎక్కించు(&q->idx_write);
 
-    if (((iw + 1) & q->idx_mask) == ir) {
-        FARF(HIGH, "hmx-queue-push: queue is full\n");
-        return false;
+    ఒకవేళ (((iw + 1) & q->idx_ముసుగు) == ir) {
+        FARF(ఎగువ_2, "hmx-queue-push: queue is full\n");
+        తిరిగి false;
     }
 
-    atomic_store(&d.done, 0);
+    atomic_store(&d.పూర్తి, 0);
 
-    FARF(HIGH, "hmx-queue-push: iw %u func %p data %p\n", iw, d.func, d.data);
+    FARF(ఎగువ_2, "hmx-queue-push: iw %u func %p data %p\n", iw, d.func, d.దత్తాంశం);
 
     q->desc[iw] = d;
-    atomic_store(&q->idx_write, (iw + 1) & q->idx_mask);
+    atomic_store(&q->idx_write, (iw + 1) & q->idx_ముసుగు);
     // wake up our thread
-    atomic_fetch_add(&q->seqn, 1);
+    atomic_fetch_కూడు(&q->seqn, 1);
     qurt_futex_wake(&q->seqn, 1);
 
-    return true;
+    తిరిగి true;
 }
 
-static inline bool hmx_queue_signal(hmx_queue_t q, enum hmx_queue_signal sig) {
-    return hmx_queue_push(q, hmx_queue_make_desc((hmx_queue_func) sig, NULL));
+స్థిర అంతఃవరుస bool hmx_వరుస_signal(hmx_వరుస_t q, గణన hmx_వరుస_signal sig) {
+    తిరిగి hmx_వరుస_నెట్టు(q, hmx_వరుస_make_desc((hmx_వరుస_func) sig, ఖాళీ));
 }
 
-static inline bool hmx_queue_empty(hmx_queue_t q) {
-    return q->idx_pop == atomic_load(&q->idx_write);
+స్థిర అంతఃవరుస bool hmx_వరుస_ఖాళీలు(hmx_వరుస_t q) {
+    తిరిగి q->idx_తీయి == atomic_ఎక్కించు(&q->idx_write);
 }
 
-static inline uint32_t hmx_queue_depth(hmx_queue_t q) {
-    return (atomic_load(&q->idx_write) - atomic_load(&q->idx_read)) & q->idx_mask;
+స్థిర అంతఃవరుస uint32_t hmx_వరుస_లోతు(hmx_వరుస_t q) {
+    తిరిగి (atomic_ఎక్కించు(&q->idx_write) - atomic_ఎక్కించు(&q->idx_read)) & q->idx_ముసుగు;
 }
 
-static inline uint32_t hmx_queue_capacity(hmx_queue_t q) {
-    return q->capacity;
+స్థిర అంతఃవరుస uint32_t hmx_వరుస_సామర్థ్యం(hmx_వరుస_t q) {
+    తిరిగి q->సామర్థ్యం;
 }
 
-static inline struct hmx_queue_desc hmx_queue_pop_one(hmx_queue_t q) {
-    unsigned int ip = q->idx_pop;
-    unsigned int iw = atomic_load(&q->idx_write);
+స్థిర అంతఃవరుస నిర్మాణం hmx_వరుస_desc hmx_వరుస_తీయి_one(hmx_వరుస_t q) {
+    గుర్తులేని పూర్ణాంకం ip = q->idx_తీయి;
+    గుర్తులేని పూర్ణాంకం iw = atomic_ఎక్కించు(&q->idx_write);
 
-    struct hmx_queue_desc rd = { NULL, NULL };
-    if (ip == iw) {
-        return rd;
+    నిర్మాణం hmx_వరుస_desc rd = { ఖాళీ, ఖాళీ };
+    ఒకవేళ (ip == iw) {
+        తిరిగి rd;
     }
 
     // Wait for desc to complete
-    struct hmx_queue_desc * d = &q->desc[ip];
-    while (!atomic_load(&d->done)) {
-        FARF(HIGH, "hmx-queue-pop: waiting for HMX queue : %u\n", ip);
+    నిర్మాణం hmx_వరుస_desc * d = &q->desc[ip];
+    అయితే (!atomic_ఎక్కించు(&d->పూర్తి)) {
+        FARF(ఎగువ_2, "hmx-queue-pop: waiting for HMX queue : %u\n", ip);
         hex_pause();
     }
 
     rd = *d;
-    q->idx_pop = (ip + 1) & q->idx_mask;
+    q->idx_తీయి = (ip + 1) & q->idx_ముసుగు;
 
-    FARF(HIGH, "hmx-queue-pop: ip %u func %p data %p\n", ip, rd.func, rd.data);
-    return rd;
+    FARF(ఎగువ_2, "hmx-queue-pop: ip %u func %p data %p\n", ip, rd.func, rd.దత్తాంశం);
+    తిరిగి rd;
 }
 
-static inline struct hmx_queue_desc hmx_queue_pop(hmx_queue_t q) {
-    while (1) {
-        struct hmx_queue_desc d = hmx_queue_pop_one(q);
+స్థిర అంతఃవరుస నిర్మాణం hmx_వరుస_desc hmx_వరుస_తీయి(hmx_వరుస_t q) {
+    అయితే (1) {
+        నిర్మాణం hmx_వరుస_desc d = hmx_వరుస_తీయి_one(q);
 
         uint32_t sig = (uint32_t) d.func;
-        if (sig && sig <= HMX_QUEUE_KILL)
-            continue;
+        ఒకవేళ (sig && sig <= HMX_వరుస_KILL)
+            కొనసాగు;
 
-        return d;
+        తిరిగి d;
     }
 }
 
-static inline void hmx_queue_flush(hmx_queue_t q) {
-    while (hmx_queue_pop_one(q).func != NULL) ;
+స్థిర అంతఃవరుస శూన్య hmx_వరుస_flush(hmx_వరుస_t q) {
+    అయితే (hmx_వరుస_తీయి_one(q).func != ఖాళీ) ;
 }
 
-static inline void hmx_queue_wakeup(hmx_queue_t q) {
-    hmx_queue_signal(q, HMX_QUEUE_WAKEUP);
+స్థిర అంతఃవరుస శూన్య hmx_వరుస_wakeup(hmx_వరుస_t q) {
+    hmx_వరుస_signal(q, HMX_వరుస_WAKEUP);
 }
 
-static inline void hmx_queue_suspend(hmx_queue_t q) {
-    hmx_queue_signal(q, HMX_QUEUE_SUSPEND);
+స్థిర అంతఃవరుస శూన్య hmx_వరుస_suspend(hmx_వరుస_t q) {
+    hmx_వరుస_signal(q, HMX_వరుస_SUSPEND);
 }
 
-#ifdef __cplusplus
+#నిర్వచితమైతే __cplusplus
 }  // extern "C"
-#endif
+#అయితే_ముగింపు
 
-#endif /* HMX_QUEUE_H */
+#అయితే_ముగింపు /* HMX_QUEUE_H */

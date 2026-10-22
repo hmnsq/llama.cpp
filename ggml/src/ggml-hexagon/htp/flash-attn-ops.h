@@ -1,91 +1,91 @@
-#ifndef HTP_FLASH_ATTN_OPS_H
-#define HTP_FLASH_ATTN_OPS_H
+#నిర్వచితం_కాకపోతే HTP_FLASH_ATTN_OPS_H
+#నిర్వచించు HTP_FLASH_ATTN_OPS_H
 
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
+#అన్తర్భావ <stdint.h>
+#అన్తర్భావ <stddef.h>
+#అన్తర్భావ <stdbool.h>
 
-#include "hex-fastdiv.h"
-#include "hex-common.h"
-#include "htp-vtcm.h"
+#అన్తర్భావ "hex-fastdiv.h"
+#అన్తర్భావ "hex-common.h"
+#అన్తర్భావ "htp-vtcm.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#నిర్వచితమైతే __cplusplus
+బాహ్య "C" {
+#అయితే_ముగింపు
 
 // Tile constants (mirrored from hmx-utils.h for use on host side if needed)
-#define HTP_FA_HMX_TILE_SIZE   2048
-#define HMX_FP16_TILE_SIZE     2048
-#define HMX_FP16_TILE_N_ROWS   32
-#define HMX_FP16_TILE_N_COLS   32
-#define HMX_FP16_TILE_N_ELMS   1024
+#నిర్వచించు HTP_FA_HMX_TILE_కొలత   2048
+#నిర్వచించు HMX_FP16_TILE_కొలత     2048
+#నిర్వచించు HMX_FP16_TILE_N_అడ్డువరుసలు   32
+#నిర్వచించు HMX_FP16_TILE_N_నిలువుల_సంఖ్య   32
+#నిర్వచించు HMX_FP16_TILE_N_ELMS   1024
 
-#define HVX_FA_DMA_CACHE_SIZE  128
-#define HMX_FA_DMA_CACHE_SIZE  4
+#నిర్వచించు HVX_FA_DMA_CACHE_కొలత  128
+#నిర్వచించు HMX_FA_DMA_CACHE_కొలత  4
 
 
-#define HTP_FA_M_INITIAL_VAL  -10000.0f
+#నిర్వచించు HTP_FA_M_INITIAL_VAL  -10000.0f
 
-enum htp_fa_kernel_type {
+గణన htp_fa_kernel_type {
     HTP_FA_KERNEL_UNSUPPORTED = 0,
     HTP_FA_KERNEL_HVX,
     HTP_FA_KERNEL_HMX
 };
 
-struct htp_fa_kernel_params {
+నిర్మాణం htp_fa_kernel_params {
     uint8_t  kernel_type;        // enum htp_fa_kernel_type
-    uint8_t  head_split;         // 1 = partition by KV heads in multicore, 0 = token partition
+    uint8_t  తల_విభజించు;         // 1 = partition by KV heads in multicore, 0 = token partition
     uint8_t  flags;              // reserved
-    uint8_t  n_threads;          // Number of threads to run
+    uint8_t  n_దారాలు;          // Number of threads to run
 
     // Common parameters
     uint16_t Br;
     uint16_t Bc;
-    uint16_t n_kv_blocks;        // also HVX's n_blocks
+    uint16_t n_kv_ఖండాలు;        // also HVX's n_blocks
     uint16_t G;                  // GQA factor (n_heads / n_kv_heads)
 
-    float    scale;
-    float    max_bias;
-    float    logit_softcap;
-    uint32_t vtcm_size;
+    దశాంశం    scale;
+    దశాంశం    max_bias;
+    దశాంశం    logit_softcap;
+    uint32_t vtcm_కొలత;
 
     uint32_t qrows;
-    uint32_t qrows_per_thread;
-    uint32_t qrow_start;
-    float    m0;
-    float    m1;
-    uint32_t n_head_log2;
+    uint32_t qrows_చొప్పున_thread;
+    uint32_t qrow_ప్రారంభం;
+    దశాంశం    m0;
+    దశాంశం    m1;
+    uint32_t n_తల_log2;
 
-    struct fastdiv_values src3_div2;
-    struct fastdiv_values src3_div3;
+    నిర్మాణం fastdiv_విలువలు src3_div2;
+    నిర్మాణం fastdiv_విలువలు src3_div3;
 
-    struct fastdiv_values broadcast_rk2;
-    struct fastdiv_values broadcast_rk3;
-    struct fastdiv_values broadcast_rv2;
-    struct fastdiv_values broadcast_rv3;
+    నిర్మాణం fastdiv_విలువలు ప్రసారం_rk2;
+    నిర్మాణం fastdiv_విలువలు ప్రసారం_rk3;
+    నిర్మాణం fastdiv_విలువలు ప్రసారం_rv2;
+    నిర్మాణం fastdiv_విలువలు ప్రసారం_rv3;
 
-    union {
-        struct {
+    సంఘం {
+        నిర్మాణం {
             uint32_t g_br;
-            uint32_t row_buf_stride;
-            uint32_t mask_buf_row_stride;
-            int32_t  mask_broadcast;
+            uint32_t అడ్డువరుస_buf_stride;
+            uint32_t ముసుగు_buf_అడ్డువరుస_stride;
+            int32_t  ముసుగు_ప్రసారం;
             int32_t  pipeline;
-            struct fastdiv_values div_G;
+            నిర్మాణం fastdiv_విలువలు div_G;
         } hmx;
-        struct {
-            uint32_t size_q_row_padded;
-            uint32_t size_k_row_padded;
-            uint32_t size_v_row_padded;
-            struct fastdiv_values src0_div21;
-            struct fastdiv_values src0_div1;
+        నిర్మాణం {
+            uint32_t కొలత_q_అడ్డువరుస_padded;
+            uint32_t కొలత_k_అడ్డువరుస_padded;
+            uint32_t కొలత_v_అడ్డువరుస_padded;
+            నిర్మాణం fastdiv_విలువలు src0_div21;
+            నిర్మాణం fastdiv_విలువలు src0_div1;
         } hvx;
     } u;
 };
 
-#if defined(__cplusplus)
-static_assert(sizeof(struct htp_fa_kernel_params) <= 128, "htp_fa_kernel_params is too large for kernel_params blob");
-#endif
+#ఒకవేళ defined(__cplusplus)
+static_assert(పరిమాణం(నిర్మాణం htp_fa_kernel_params) <= 128, "htp_fa_kernel_params is too large for kernel_params blob");
+#అయితే_ముగింపు
 
 // VTCM region layout for the HMX flash-attention kernel.
 //
@@ -99,7 +99,7 @@ static_assert(sizeof(struct htp_fa_kernel_params) <= 128, "htp_fa_kernel_params 
 // header stays host-includable. The device casts (base + off_*) to the proper type.
 // An offset of 0 marks a region that is not allocated for this configuration (only
 // off_v_tiles[1], which exists only when pipelining); the device sets such pointers NULL.
-struct hmx_fa_vtcm_layout {
+నిర్మాణం hmx_fa_vtcm_layout {
     // Byte offsets from vtcm_base for each region.
     size_t off_q_tiles;
     size_t off_q_dma;
@@ -116,144 +116,144 @@ struct hmx_fa_vtcm_layout {
     size_t off_l_vec;
     size_t off_s_rowmax;
     size_t off_p_rowsum;
-    size_t off_row_bufs;
+    size_t off_అడ్డువరుస_bufs;
     size_t off_hmx_scales_id;
     size_t off_hmx_scales_qk;
-    size_t off_mask_buf;
+    size_t off_ముసుగు_buf;
     size_t off_slopes;
     size_t off_sinks;
 
     // Region byte sizes reused by the device at runtime (not just for allocation).
-    size_t q_tile_bytes;
-    size_t o_tile_bytes;
-    size_t k_tile_bytes;
-    size_t s_tile_bytes;       // S and P tiles (same size)
-    size_t d_tile_bytes;       // d_tiles[0..1] + d_inv_l, allocated back to back
-    size_t m_line_bytes;       // one mask row
-    size_t m_buf_slot_bytes;   // one dma_cache slot = align_up(Br * m_line_bytes, 4096)
-    size_t col_vec_bytes;
-    size_t sinks_bytes;
+    size_t q_tile_బైట్లు;
+    size_t o_tile_బైట్లు;
+    size_t k_tile_బైట్లు;
+    size_t s_tile_బైట్లు;       // S and P tiles (same size)
+    size_t d_tile_బైట్లు;       // d_tiles[0..1] + d_inv_l, allocated back to back
+    size_t m_పంక్తి_బైట్లు;       // one mask row
+    size_t m_buf_స్థానం_బైట్లు;   // one dma_cache slot = align_up(Br * m_line_bytes, 4096)
+    size_t నిలువు_vec_బైట్లు;
+    size_t sinks_బైట్లు;
 
     // Derived strides.
-    size_t row_buf_stride;       // HVX vectors (128B) per row buffer
-    size_t mask_buf_row_stride;  // __fp16 elements per row in the mask buffer
+    size_t అడ్డువరుస_buf_stride;       // HVX vectors (128B) per row buffer
+    size_t ముసుగు_buf_అడ్డువరుస_stride;  // __fp16 elements per row in the mask buffer
 
     bool   pipeline;
-    size_t total_bytes;
+    size_t మొత్తం_బైట్లు;
 };
 
-#define FA_MAX_KV_BLOCKS 1024
+#నిర్వచించు FA_MAX_KV_ఖండాలు 1024
 
 // Build the VTCM layout.
 
-static inline void hmx_fa_vtcm_layout_build(struct hmx_fa_vtcm_layout * L,
-                                            size_t gqa_factor, size_t DK, size_t DV,
-                                            size_t Br, size_t Bc, size_t n_threads,
+స్థిర అంతఃవరుస శూన్య hmx_fa_vtcm_layout_build(నిర్మాణం hmx_fa_vtcm_layout * L,
+                                            size_t gqa_గుణకం, size_t DK, size_t DV,
+                                            size_t Br, size_t Bc, size_t n_దారాలు,
                                             bool pipeline, bool is_q_fp32,
                                             bool has_sinks, size_t n_heads) {
-    const size_t g_br         = hex_align_up(gqa_factor * Br, HMX_FP16_TILE_N_ROWS);
-    const size_t q_tile_size  = hex_align_up(g_br * DK   * sizeof(__fp16), HTP_FA_HMX_TILE_SIZE);
-    const size_t o_tile_size  = hex_align_up(g_br * DV   * sizeof(__fp16), HTP_FA_HMX_TILE_SIZE);
-    const size_t k_tile_size  = hex_align_up(Bc   * DK   * sizeof(__fp16), HTP_FA_HMX_TILE_SIZE);
-    const size_t v_tile_size  = hex_align_up(Bc   * DV   * sizeof(__fp16), HTP_FA_HMX_TILE_SIZE);
-    const size_t s_tile_size  = hex_align_up(g_br * Bc   * sizeof(__fp16), HTP_FA_HMX_TILE_SIZE);
+    స్థిరరాశి size_t g_br         = hex_align_పైకి(gqa_గుణకం * Br, HMX_FP16_TILE_N_అడ్డువరుసలు);
+    స్థిరరాశి size_t q_tile_కొలత  = hex_align_పైకి(g_br * DK   * పరిమాణం(__fp16), HTP_FA_HMX_TILE_కొలత);
+    స్థిరరాశి size_t o_tile_కొలత  = hex_align_పైకి(g_br * DV   * పరిమాణం(__fp16), HTP_FA_HMX_TILE_కొలత);
+    స్థిరరాశి size_t k_tile_కొలత  = hex_align_పైకి(Bc   * DK   * పరిమాణం(__fp16), HTP_FA_HMX_TILE_కొలత);
+    స్థిరరాశి size_t v_tile_కొలత  = hex_align_పైకి(Bc   * DV   * పరిమాణం(__fp16), HTP_FA_HMX_TILE_కొలత);
+    స్థిరరాశి size_t s_tile_కొలత  = hex_align_పైకి(g_br * Bc   * పరిమాణం(__fp16), HTP_FA_HMX_TILE_కొలత);
 
     // The rescale matrices are diagonal: the HMX kernels only ever load the g_br/32
     // tiles that sit on the diagonal, so store just those, packed back to back with
     // a stride of one tile.  The old [g_br, g_br] square layout allocated g_br/32
     // times more than it used, which is also why a second D buffer was unaffordable.
-    const size_t d_tile_size = (g_br / HMX_FP16_TILE_N_ROWS) * HTP_FA_HMX_TILE_SIZE;
+    స్థిరరాశి size_t d_tile_కొలత = (g_br / HMX_FP16_TILE_N_అడ్డువరుసలు) * HTP_FA_HMX_TILE_కొలత;
 
-    const size_t q_dma_size   = hex_align_up(g_br * DK * (is_q_fp32 ? sizeof(float) : sizeof(__fp16)), 128);
-    const size_t k_dma_size   = hex_align_up(Bc * hex_round_up(DK * sizeof(__fp16), 128), 128);
-    const size_t v_dma_size   = hex_align_up(Bc * hex_round_up(DV * sizeof(__fp16), 128), 128);
-    const size_t col_vec_size = hex_align_up(g_br * sizeof(float),  256);
-    const size_t row_vec_size = hex_align_up(Bc   * sizeof(__fp16), 256);
-    const size_t m_line_size  = hex_align_up(Bc   * sizeof(__fp16), 128);
-    const size_t m_buf_slot   = hex_align_up(Br * m_line_size, 256);
-    const size_t m_buf_size   = m_buf_slot * HMX_FA_DMA_CACHE_SIZE;
-    const size_t slopes_size  = hex_align_up(g_br * sizeof(__fp16), 128);
-    const size_t sinks_size   = hex_round_up(n_heads * sizeof(float), 128);
+    స్థిరరాశి size_t q_dma_కొలత   = hex_align_పైకి(g_br * DK * (is_q_fp32 ? పరిమాణం(దశాంశం) : పరిమాణం(__fp16)), 128);
+    స్థిరరాశి size_t k_dma_కొలత   = hex_align_పైకి(Bc * hex_విడత_పైకి(DK * పరిమాణం(__fp16), 128), 128);
+    స్థిరరాశి size_t v_dma_కొలత   = hex_align_పైకి(Bc * hex_విడత_పైకి(DV * పరిమాణం(__fp16), 128), 128);
+    స్థిరరాశి size_t నిలువు_vec_కొలత = hex_align_పైకి(g_br * పరిమాణం(దశాంశం),  256);
+    స్థిరరాశి size_t అడ్డువరుస_vec_కొలత = hex_align_పైకి(Bc   * పరిమాణం(__fp16), 256);
+    స్థిరరాశి size_t m_పంక్తి_కొలత  = hex_align_పైకి(Bc   * పరిమాణం(__fp16), 128);
+    స్థిరరాశి size_t m_buf_స్థానం   = hex_align_పైకి(Br * m_పంక్తి_కొలత, 256);
+    స్థిరరాశి size_t m_buf_కొలత   = m_buf_స్థానం * HMX_FA_DMA_CACHE_కొలత;
+    స్థిరరాశి size_t slopes_కొలత  = hex_align_పైకి(g_br * పరిమాణం(__fp16), 128);
+    స్థిరరాశి size_t sinks_కొలత   = hex_విడత_పైకి(n_heads * పరిమాణం(దశాంశం), 128);
 
     size_t off = 0;
 
     // Group A (Part 1 - HMX Tiled buffers)
-    VTCM_LAYOUT_ALLOC(off, off_q_tiles,       q_tile_size);
-    VTCM_LAYOUT_ALLOC(off, off_o_tiles[0],    o_tile_size);
-    VTCM_LAYOUT_ALLOC(off, off_o_tiles[1],    o_tile_size);
-    VTCM_LAYOUT_ALLOC(off, off_d_tiles[0],    d_tile_size);
-    VTCM_LAYOUT_ALLOC_OPTIONAL(off, off_d_tiles[1], d_tile_size, pipeline);
-    VTCM_LAYOUT_ALLOC(off, off_d_inv_l,       d_tile_size);
+    VTCM_LAYOUT_ALLOC(off, off_q_tiles,       q_tile_కొలత);
+    VTCM_LAYOUT_ALLOC(off, off_o_tiles[0],    o_tile_కొలత);
+    VTCM_LAYOUT_ALLOC(off, off_o_tiles[1],    o_tile_కొలత);
+    VTCM_LAYOUT_ALLOC(off, off_d_tiles[0],    d_tile_కొలత);
+    VTCM_LAYOUT_ALLOC_OPTIONAL(off, off_d_tiles[1], d_tile_కొలత, pipeline);
+    VTCM_LAYOUT_ALLOC(off, off_d_inv_l,       d_tile_కొలత);
 
     // Group B & C share start offset (Group B tiles must be 2KB aligned)
-    size_t off_group_b_c = hex_align_up(off, HTP_FA_HMX_TILE_SIZE);
+    size_t off_సమూహం_b_c = hex_align_పైకి(off, HTP_FA_HMX_TILE_కొలత);
 
     // Group B: Compute-only buffers
-    size_t off_group_b = off_group_b_c;
-    VTCM_LAYOUT_ALLOC(off_group_b, off_k_tiles[0],    k_tile_size);
-    VTCM_LAYOUT_ALLOC_OPTIONAL(off_group_b, off_k_tiles[1], k_tile_size, pipeline);
-    VTCM_LAYOUT_ALLOC(off_group_b, off_v_tiles[0],    v_tile_size);
-    VTCM_LAYOUT_ALLOC_OPTIONAL(off_group_b, off_v_tiles[1], v_tile_size, pipeline);
-    VTCM_LAYOUT_ALLOC(off_group_b, off_s_tiles[0],    s_tile_size);
-    VTCM_LAYOUT_ALLOC_OPTIONAL(off_group_b, off_s_tiles[1], s_tile_size, pipeline);
-    VTCM_LAYOUT_ALLOC(off_group_b, off_p_tiles[0],    s_tile_size);
-    VTCM_LAYOUT_ALLOC_OPTIONAL(off_group_b, off_p_tiles[1], s_tile_size, pipeline);
-    VTCM_LAYOUT_ALLOC(off_group_b, off_s_rowmax,      col_vec_size);
-    VTCM_LAYOUT_ALLOC(off_group_b, off_p_rowsum,      col_vec_size);
-    VTCM_LAYOUT_ALLOC(off_group_b, off_row_bufs,      row_vec_size * 2 * n_threads);
+    size_t off_సమూహం_b = off_సమూహం_b_c;
+    VTCM_LAYOUT_ALLOC(off_సమూహం_b, off_k_tiles[0],    k_tile_కొలత);
+    VTCM_LAYOUT_ALLOC_OPTIONAL(off_సమూహం_b, off_k_tiles[1], k_tile_కొలత, pipeline);
+    VTCM_LAYOUT_ALLOC(off_సమూహం_b, off_v_tiles[0],    v_tile_కొలత);
+    VTCM_LAYOUT_ALLOC_OPTIONAL(off_సమూహం_b, off_v_tiles[1], v_tile_కొలత, pipeline);
+    VTCM_LAYOUT_ALLOC(off_సమూహం_b, off_s_tiles[0],    s_tile_కొలత);
+    VTCM_LAYOUT_ALLOC_OPTIONAL(off_సమూహం_b, off_s_tiles[1], s_tile_కొలత, pipeline);
+    VTCM_LAYOUT_ALLOC(off_సమూహం_b, off_p_tiles[0],    s_tile_కొలత);
+    VTCM_LAYOUT_ALLOC_OPTIONAL(off_సమూహం_b, off_p_tiles[1], s_tile_కొలత, pipeline);
+    VTCM_LAYOUT_ALLOC(off_సమూహం_b, off_s_rowmax,      నిలువు_vec_కొలత);
+    VTCM_LAYOUT_ALLOC(off_సమూహం_b, off_p_rowsum,      నిలువు_vec_కొలత);
+    VTCM_LAYOUT_ALLOC(off_సమూహం_b, off_అడ్డువరుస_bufs,      అడ్డువరుస_vec_కొలత * 2 * n_దారాలు);
 
-    const size_t group_b_size = off_group_b - off_group_b_c;
+    స్థిరరాశి size_t సమూహం_b_కొలత = off_సమూహం_b - off_సమూహం_b_c;
 
     // Group C: Q fetch DMA buffer
-    size_t off_group_c = off_group_b_c;
-    VTCM_LAYOUT_ALLOC(off_group_c, off_q_dma,         q_dma_size);
+    size_t off_సమూహం_c = off_సమూహం_b_c;
+    VTCM_LAYOUT_ALLOC(off_సమూహం_c, off_q_dma,         q_dma_కొలత);
 
-    const size_t group_c_size = off_group_c - off_group_b_c;
+    స్థిరరాశి size_t సమూహం_c_కొలత = off_సమూహం_c - off_సమూహం_b_c;
 
-    off = off_group_b_c + hex_smax(group_b_size, group_c_size);
+    off = off_సమూహం_b_c + hex_smax(సమూహం_b_కొలత, సమూహం_c_కొలత);
 
     // Group A (Part 2 - remaining non-HMX buffers)
-    VTCM_LAYOUT_ALLOC(off, off_k_fp16[0],     k_dma_size);
-    VTCM_LAYOUT_ALLOC(off, off_k_fp16[1],     k_dma_size);
-    VTCM_LAYOUT_ALLOC(off, off_v_fp16[0],     v_dma_size);
-    VTCM_LAYOUT_ALLOC(off, off_v_fp16[1],     v_dma_size);
-    VTCM_LAYOUT_ALLOC(off, off_m_vec,         col_vec_size);
-    VTCM_LAYOUT_ALLOC(off, off_l_vec,         col_vec_size);
+    VTCM_LAYOUT_ALLOC(off, off_k_fp16[0],     k_dma_కొలత);
+    VTCM_LAYOUT_ALLOC(off, off_k_fp16[1],     k_dma_కొలత);
+    VTCM_LAYOUT_ALLOC(off, off_v_fp16[0],     v_dma_కొలత);
+    VTCM_LAYOUT_ALLOC(off, off_v_fp16[1],     v_dma_కొలత);
+    VTCM_LAYOUT_ALLOC(off, off_m_vec,         నిలువు_vec_కొలత);
+    VTCM_LAYOUT_ALLOC(off, off_l_vec,         నిలువు_vec_కొలత);
     VTCM_LAYOUT_ALLOC(off, off_hmx_scales_id, 256);
     VTCM_LAYOUT_ALLOC(off, off_hmx_scales_qk, 256);
-    VTCM_LAYOUT_ALLOC(off, off_mask_buf,      m_buf_size);
-    VTCM_LAYOUT_ALLOC(off, off_slopes,        slopes_size);
-    VTCM_LAYOUT_ALLOC_OPTIONAL(off, off_sinks, sinks_size, has_sinks);
+    VTCM_LAYOUT_ALLOC(off, off_ముసుగు_buf,      m_buf_కొలత);
+    VTCM_LAYOUT_ALLOC(off, off_slopes,        slopes_కొలత);
+    VTCM_LAYOUT_ALLOC_OPTIONAL(off, off_sinks, sinks_కొలత, has_sinks);
 
-    L->q_tile_bytes        = q_tile_size;
-    L->o_tile_bytes        = o_tile_size;
-    L->k_tile_bytes        = k_tile_size;
-    L->col_vec_bytes       = col_vec_size;
-    L->s_tile_bytes        = s_tile_size;
+    L->q_tile_బైట్లు        = q_tile_కొలత;
+    L->o_tile_బైట్లు        = o_tile_కొలత;
+    L->k_tile_బైట్లు        = k_tile_కొలత;
+    L->నిలువు_vec_బైట్లు       = నిలువు_vec_కొలత;
+    L->s_tile_బైట్లు        = s_tile_కొలత;
     // Measured from the actual offsets rather than assumed to be N * d_tile_size, so
     // that inserting a region between them (or adding padding to VTCM_LAYOUT_ALLOC)
     // cannot silently leave the tail of the run unzeroed.
-    L->d_tile_bytes        = (L->off_d_inv_l + d_tile_size) - L->off_d_tiles[0];
-    L->m_line_bytes        = m_line_size;
-    L->m_buf_slot_bytes    = m_buf_slot;
-    L->row_buf_stride      = row_vec_size / 128;
-    L->mask_buf_row_stride = m_line_size / sizeof(__fp16);
-    L->sinks_bytes         = has_sinks ? sinks_size : 0;
+    L->d_tile_బైట్లు        = (L->off_d_inv_l + d_tile_కొలత) - L->off_d_tiles[0];
+    L->m_పంక్తి_బైట్లు        = m_పంక్తి_కొలత;
+    L->m_buf_స్థానం_బైట్లు    = m_buf_స్థానం;
+    L->అడ్డువరుస_buf_stride      = అడ్డువరుస_vec_కొలత / 128;
+    L->ముసుగు_buf_అడ్డువరుస_stride = m_పంక్తి_కొలత / పరిమాణం(__fp16);
+    L->sinks_బైట్లు         = has_sinks ? sinks_కొలత : 0;
     L->pipeline            = pipeline;
-    L->total_bytes         = off;
+    L->మొత్తం_బైట్లు         = off;
 }
 
 // Exact VTCM usage for a given (gqa_factor, DK, DV, Br, Bc) configuration.
-static inline size_t hmx_fa_compute_vtcm_usage(size_t gqa_factor, size_t DK, size_t DV, size_t Br, size_t Bc, size_t n_threads, bool pipeline, bool is_q_fp32, bool has_sinks, size_t n_heads) {
-    struct hmx_fa_vtcm_layout L;
-    hmx_fa_vtcm_layout_build(&L, gqa_factor, DK, DV, Br, Bc, n_threads, pipeline, is_q_fp32, has_sinks, n_heads);
-    return L.total_bytes;
+స్థిర అంతఃవరుస size_t hmx_fa_compute_vtcm_usage(size_t gqa_గుణకం, size_t DK, size_t DV, size_t Br, size_t Bc, size_t n_దారాలు, bool pipeline, bool is_q_fp32, bool has_sinks, size_t n_heads) {
+    నిర్మాణం hmx_fa_vtcm_layout L;
+    hmx_fa_vtcm_layout_build(&L, gqa_గుణకం, DK, DV, Br, Bc, n_దారాలు, pipeline, is_q_fp32, has_sinks, n_heads);
+    తిరిగి L.మొత్తం_బైట్లు;
 }
 
-#define FA_HVX_BLOCK_SIZE 64
-#define FA_HVX_G_MAX      8
+#నిర్వచించు FA_HVX_ఖండం_కొలత 64
+#నిర్వచించు FA_HVX_G_MAX      8
 
-struct hvx_fa_vtcm_layout {
+నిర్మాణం hvx_fa_vtcm_layout {
     size_t off_q;
     size_t off_k;
     size_t off_v;
@@ -261,141 +261,141 @@ struct hvx_fa_vtcm_layout {
     size_t off_a;
     size_t off_sinks;
 
-    size_t size_q_block;
-    size_t size_k_block;
-    size_t size_v_block;
-    size_t size_m_block;
-    size_t size_vkq_acc;
-    size_t size_sinks;
+    size_t కొలత_q_ఖండం;
+    size_t కొలత_k_ఖండం;
+    size_t కొలత_v_ఖండం;
+    size_t కొలత_m_ఖండం;
+    size_t కొలత_vkq_acc;
+    size_t కొలత_sinks;
 
-    size_t total_bytes;
+    size_t మొత్తం_బైట్లు;
 };
 
-static inline void hvx_fa_vtcm_layout_build(struct hvx_fa_vtcm_layout * L,
+స్థిర అంతఃవరుస శూన్య hvx_fa_vtcm_layout_build(నిర్మాణం hvx_fa_vtcm_layout * L,
                                             size_t DK, size_t DV,
-                                            bool is_q_fp32, bool has_mask,
+                                            bool is_q_fp32, bool has_ముసుగు,
                                             bool has_sinks, size_t n_heads,
-                                            size_t n_threads) {
-    const size_t size_q_row_padded = hex_round_up(DK * (is_q_fp32 ? 4 : 2), 128);
-    const size_t size_k_row_padded = hex_round_up(DK * sizeof(__fp16), 128);
-    const size_t size_v_row_padded = hex_round_up(DV * sizeof(__fp16), 128);
+                                            size_t n_దారాలు) {
+    స్థిరరాశి size_t కొలత_q_అడ్డువరుస_padded = hex_విడత_పైకి(DK * (is_q_fp32 ? 4 : 2), 128);
+    స్థిరరాశి size_t కొలత_k_అడ్డువరుస_padded = hex_విడత_పైకి(DK * పరిమాణం(__fp16), 128);
+    స్థిరరాశి size_t కొలత_v_అడ్డువరుస_padded = hex_విడత_పైకి(DV * పరిమాణం(__fp16), 128);
 
-    const size_t size_q_block = size_q_row_padded * FA_HVX_G_MAX;
-    const size_t size_k_block = size_k_row_padded * FA_HVX_BLOCK_SIZE;
-    const size_t size_v_block = size_v_row_padded * FA_HVX_BLOCK_SIZE;
-    const size_t size_m_block = hex_round_up(FA_HVX_BLOCK_SIZE * sizeof(__fp16), 128);
-    const size_t size_vkq_acc = hex_round_up(DV * sizeof(float), 128) * FA_HVX_G_MAX;
-    const size_t size_sinks   = hex_round_up(n_heads * sizeof(float), 128);
+    స్థిరరాశి size_t కొలత_q_ఖండం = కొలత_q_అడ్డువరుస_padded * FA_HVX_G_MAX;
+    స్థిరరాశి size_t కొలత_k_ఖండం = కొలత_k_అడ్డువరుస_padded * FA_HVX_ఖండం_కొలత;
+    స్థిరరాశి size_t కొలత_v_ఖండం = కొలత_v_అడ్డువరుస_padded * FA_HVX_ఖండం_కొలత;
+    స్థిరరాశి size_t కొలత_m_ఖండం = hex_విడత_పైకి(FA_HVX_ఖండం_కొలత * పరిమాణం(__fp16), 128);
+    స్థిరరాశి size_t కొలత_vkq_acc = hex_విడత_పైకి(DV * పరిమాణం(దశాంశం), 128) * FA_HVX_G_MAX;
+    స్థిరరాశి size_t కొలత_sinks   = hex_విడత_పైకి(n_heads * పరిమాణం(దశాంశం), 128);
 
     size_t off = 0;
 
-    VTCM_LAYOUT_ALLOC(off, off_q, size_q_block * n_threads);
-    VTCM_LAYOUT_ALLOC(off, off_k, size_k_block * 2 * n_threads);
-    VTCM_LAYOUT_ALLOC(off, off_v, size_v_block * 2 * n_threads);
-    VTCM_LAYOUT_ALLOC_OPTIONAL(off, off_m, size_m_block * HVX_FA_DMA_CACHE_SIZE * n_threads, has_mask);
-    VTCM_LAYOUT_ALLOC(off, off_a, size_vkq_acc * n_threads);
-    VTCM_LAYOUT_ALLOC_OPTIONAL(off, off_sinks, size_sinks, has_sinks);
+    VTCM_LAYOUT_ALLOC(off, off_q, కొలత_q_ఖండం * n_దారాలు);
+    VTCM_LAYOUT_ALLOC(off, off_k, కొలత_k_ఖండం * 2 * n_దారాలు);
+    VTCM_LAYOUT_ALLOC(off, off_v, కొలత_v_ఖండం * 2 * n_దారాలు);
+    VTCM_LAYOUT_ALLOC_OPTIONAL(off, off_m, కొలత_m_ఖండం * HVX_FA_DMA_CACHE_కొలత * n_దారాలు, has_ముసుగు);
+    VTCM_LAYOUT_ALLOC(off, off_a, కొలత_vkq_acc * n_దారాలు);
+    VTCM_LAYOUT_ALLOC_OPTIONAL(off, off_sinks, కొలత_sinks, has_sinks);
 
-    L->size_q_block = size_q_block;
-    L->size_k_block = size_k_block;
-    L->size_v_block = size_v_block;
-    L->size_m_block = size_m_block;
-    L->size_vkq_acc = size_vkq_acc;
-    L->size_sinks   = has_sinks ? size_sinks : 0;
-    L->total_bytes  = off;
+    L->కొలత_q_ఖండం = కొలత_q_ఖండం;
+    L->కొలత_k_ఖండం = కొలత_k_ఖండం;
+    L->కొలత_v_ఖండం = కొలత_v_ఖండం;
+    L->కొలత_m_ఖండం = కొలత_m_ఖండం;
+    L->కొలత_vkq_acc = కొలత_vkq_acc;
+    L->కొలత_sinks   = has_sinks ? కొలత_sinks : 0;
+    L->మొత్తం_బైట్లు  = off;
 }
 
-static inline size_t hvx_fa_compute_vtcm_usage(size_t DK, size_t DV, bool is_q_fp32, bool has_mask, bool has_sinks, size_t n_heads, size_t n_threads) {
-    struct hvx_fa_vtcm_layout L;
-    hvx_fa_vtcm_layout_build(&L, DK, DV, is_q_fp32, has_mask, has_sinks, n_heads, n_threads);
-    return L.total_bytes;
+స్థిర అంతఃవరుస size_t hvx_fa_compute_vtcm_usage(size_t DK, size_t DV, bool is_q_fp32, bool has_ముసుగు, bool has_sinks, size_t n_heads, size_t n_దారాలు) {
+    నిర్మాణం hvx_fa_vtcm_layout L;
+    hvx_fa_vtcm_layout_build(&L, DK, DV, is_q_fp32, has_ముసుగు, has_sinks, n_heads, n_దారాలు);
+    తిరిగి L.మొత్తం_బైట్లు;
 }
 
-#define FA_MIN_KV_BLOCKS 3
+#నిర్వచించు FA_MIN_KV_ఖండాలు 3
 
 // Cost-based (Br, Bc) search for flash attention with pipeline constraint.
-static inline int hmx_fa_find_chunk_size(size_t * Br_out,
-                                         size_t * Bc_out,
-                                         size_t   gqa_factor,
+స్థిర అంతఃవరుస పూర్ణాంకం hmx_fa_కనుగొను_chunk_కొలత(size_t * Br_బహిర్గతం,
+                                         size_t * Bc_బహిర్గతం,
+                                         size_t   gqa_గుణకం,
                                          size_t   DK,
                                          size_t   DV,
                                          size_t   qo_len,
                                          size_t   kv_len,
                                          size_t   vtcm_budget,
-                                         size_t   n_threads,
+                                         size_t   n_దారాలు,
                                          bool     is_q_fp32,
                                          bool     has_sinks,
                                          size_t   n_heads) {
-    const size_t T       = HMX_FP16_TILE_N_ROWS;  // 32
-    const size_t br_unit = hmx_ceil_div(T, gqa_factor);
-    const size_t bc_unit = HMX_FP16_TILE_N_COLS * 2;  // 64
-    const bool   can_pipeline = (kv_len >= FA_MIN_KV_BLOCKS * bc_unit && n_threads >= 2);
+    స్థిరరాశి size_t T       = HMX_FP16_TILE_N_అడ్డువరుసలు;  // 32
+    స్థిరరాశి size_t br_unit = hmx_ceil_div(T, gqa_గుణకం);
+    స్థిరరాశి size_t bc_unit = HMX_FP16_TILE_N_నిలువుల_సంఖ్య * 2;  // 64
+    స్థిరరాశి bool   can_pipeline = (kv_len >= FA_MIN_KV_ఖండాలు * bc_unit && n_దారాలు >= 2);
 
     // Br_max: largest Br aligned to br_unit that does not exceed qo_len.
-    const size_t Br_max = qo_len >= br_unit ? hex_align_down(qo_len, br_unit) : br_unit;
+    స్థిరరాశి size_t Br_max = qo_len >= br_unit ? hex_align_కిందికి(qo_len, br_unit) : br_unit;
 
     // Pipeline constraint: cap Bc so n_kv_blocks >= FA_MIN_KV_BLOCKS.
     // Only relax when kv_len is too short to form enough blocks.
-    size_t Bc_limit     = can_pipeline ? hex_align_down(kv_len / FA_MIN_KV_BLOCKS, bc_unit) :
-                                         (kv_len >= bc_unit ? hex_align_down(kv_len, bc_unit) : bc_unit);
+    size_t Bc_హద్దు     = can_pipeline ? hex_align_కిందికి(kv_len / FA_MIN_KV_ఖండాలు, bc_unit) :
+                                         (kv_len >= bc_unit ? hex_align_కిందికి(kv_len, bc_unit) : bc_unit);
     // For small-Q SWA-sized KV caches (qo_len <= 16, kv_len <= 2048), cap Bc at 256 for block-skipping granularity
-    if (qo_len <= 16 && kv_len <= 2048 && Bc_limit > 256) {
-        Bc_limit = 256;
+    ఒకవేళ (qo_len <= 16 && kv_len <= 2048 && Bc_హద్దు > 256) {
+        Bc_హద్దు = 256;
     }
     // Cost coefficients calibrated from profiling
-    const size_t c_q_fixed    = 800;   // per-Q-block: q_load + epilogue o_update + o_norm + o_store
-    const size_t c_iter_base  = 200;   // per-KV-iter base (HMX dot/update + DMA)
-    const size_t c_softmax    = 600;   // per 64-row vector chunk on HVX
+    స్థిరరాశి size_t c_q_fixed    = 800;   // per-Q-block: q_load + epilogue o_update + o_norm + o_store
+    స్థిరరాశి size_t c_iter_పునాది  = 200;   // per-KV-iter base (HMX dot/update + DMA)
+    స్థిరరాశి size_t c_softmax    = 600;   // per 64-row vector chunk on HVX
 
-    size_t best_cost = SIZE_MAX, best_mn = 0;
-    size_t best_Br = 0, best_Bc = 0;
+    size_t ఉత్తమ_ఖర్చు = SIZE_MAX, ఉత్తమ_mn = 0;
+    size_t ఉత్తమ_Br = 0, ఉత్తమ_Bc = 0;
 
-    for (size_t Br = Br_max; Br >= br_unit; Br -= br_unit) {
+    కొరకు (size_t Br = Br_max; Br >= br_unit; Br -= br_unit) {
         // Try all Bc candidates from Bc_limit down to bc_unit
-        for (size_t Bc = Bc_limit; Bc >= bc_unit; Bc -= bc_unit) {
-            size_t vtcm_needed = hmx_fa_compute_vtcm_usage(gqa_factor, DK, DV, Br, Bc, n_threads, can_pipeline, is_q_fp32, has_sinks, n_heads);
-            if (vtcm_needed <= vtcm_budget) {
+        కొరకు (size_t Bc = Bc_హద్దు; Bc >= bc_unit; Bc -= bc_unit) {
+            size_t vtcm_needed = hmx_fa_compute_vtcm_usage(gqa_గుణకం, DK, DV, Br, Bc, n_దారాలు, can_pipeline, is_q_fp32, has_sinks, n_heads);
+            ఒకవేళ (vtcm_needed <= vtcm_budget) {
                 // This Bc fits for this Br!
-                const size_t q_blocks       = (qo_len + Br - 1) / Br;
-                const size_t kv_blocks      = (kv_len + Bc - 1) / Bc;
-                const size_t actual_threads = (kv_blocks >= 3 && n_threads >= 2) ? n_threads : 1;
-                const size_t n_rows_g       = Br * gqa_factor;
-                const size_t n_row_vec_cnt  = (n_rows_g + 63) / 64;
-                const size_t n_use          = n_row_vec_cnt < actual_threads ? n_row_vec_cnt : actual_threads;
-                const size_t vecs_per_t     = n_use > 0 ? (n_row_vec_cnt + n_use - 1) / n_use : 1;
+                స్థిరరాశి size_t q_ఖండాలు       = (qo_len + Br - 1) / Br;
+                స్థిరరాశి size_t kv_ఖండాలు      = (kv_len + Bc - 1) / Bc;
+                స్థిరరాశి size_t actual_దారాలు = (kv_ఖండాలు >= 3 && n_దారాలు >= 2) ? n_దారాలు : 1;
+                స్థిరరాశి size_t n_అడ్డువరుసలు_g       = Br * gqa_గుణకం;
+                స్థిరరాశి size_t n_అడ్డువరుస_vec_cnt  = (n_అడ్డువరుసలు_g + 63) / 64;
+                స్థిరరాశి size_t n_use          = n_అడ్డువరుస_vec_cnt < actual_దారాలు ? n_అడ్డువరుస_vec_cnt : actual_దారాలు;
+                స్థిరరాశి size_t vecs_చొప్పున_t     = n_use > 0 ? (n_అడ్డువరుస_vec_cnt + n_use - 1) / n_use : 1;
 
-                const size_t c_iter_actual  = c_iter_base + c_softmax * vecs_per_t;
-                const size_t cost           = q_blocks * (c_q_fixed + kv_blocks * c_iter_actual);
-                const size_t mn             = Br * Bc;
+                స్థిరరాశి size_t c_iter_actual  = c_iter_పునాది + c_softmax * vecs_చొప్పున_t;
+                స్థిరరాశి size_t ఖర్చు           = q_ఖండాలు * (c_q_fixed + kv_ఖండాలు * c_iter_actual);
+                స్థిరరాశి size_t mn             = Br * Bc;
 
-                if (cost < best_cost || (cost == best_cost && mn > best_mn)) {
-                    best_cost = cost;
-                    best_mn   = mn;
-                    best_Br   = Br;
-                    best_Bc   = Bc;
+                ఒకవేళ (ఖర్చు < ఉత్తమ_ఖర్చు || (ఖర్చు == ఉత్తమ_ఖర్చు && mn > ఉత్తమ_mn)) {
+                    ఉత్తమ_ఖర్చు = ఖర్చు;
+                    ఉత్తమ_mn   = mn;
+                    ఉత్తమ_Br   = Br;
+                    ఉత్తమ_Bc   = Bc;
                 }
                 // Since we iterate Bc from largest to smallest, this is the largest Bc that fits
                 // for this Br. We can break to the next Br.
-                break;
+                ఆపు;
             }
         }
 
-        if (Br == br_unit) {
-            break;
+        ఒకవేళ (Br == br_unit) {
+            ఆపు;
         }
     }
 
-    if (best_Br == 0 || best_Bc == 0) {
-        return -1;
+    ఒకవేళ (ఉత్తమ_Br == 0 || ఉత్తమ_Bc == 0) {
+        తిరిగి -1;
     }
 
-    *Br_out = best_Br;
-    *Bc_out = best_Bc;
-    return 0;
+    *Br_బహిర్గతం = ఉత్తమ_Br;
+    *Bc_బహిర్గతం = ఉత్తమ_Bc;
+    తిరిగి 0;
 }
 
-#ifdef __cplusplus
+#నిర్వచితమైతే __cplusplus
 }
-#endif
+#అయితే_ముగింపు
 
-#endif /* HTP_FLASH_ATTN_OPS_H */
+#అయితే_ముగింపు /* HTP_FLASH_ATTN_OPS_H */

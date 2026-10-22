@@ -1,20 +1,20 @@
-#ifndef HTP_DCACHE_H
-#define HTP_DCACHE_H
+#నిర్వచితం_కాకపోతే HTP_DCACHE_H
+#నిర్వచించు HTP_DCACHE_H
 
-#include <stdint.h>
-#include "htp-ops.h"
+#అన్తర్భావ <stdint.h>
+#అన్తర్భావ "htp-ops.h"
 
-#define HTP_MAX_DIRTY_RANGES 64
+#నిర్వచించు HTP_MAX_DIRTY_RANGES 64
 
-struct htp_dirty_range {
-    uint32_t start;
-    uint32_t end;
+నిర్మాణం htp_dirty_range {
+    uint32_t ప్రారంభం;
+    uint32_t చివర;
 };
 
-struct htp_context;
+నిర్మాణం htp_context;
 
-void htp_dcache_flush_dirty_ranges(struct htp_context * ctx);
-void htp_dcache_flush_dirty_tensors(struct htp_context * ctx, const struct htp_tensor * const * tensors, uint32_t n);
-void htp_dcache_mark_dirty_tensors(struct htp_context * ctx, const struct htp_tensor * const * tensors, uint32_t n);
+శూన్య htp_dcache_flush_dirty_ranges(నిర్మాణం htp_context * ctx);
+శూన్య htp_dcache_flush_dirty_tensors(నిర్మాణం htp_context * ctx, స్థిరరాశి నిర్మాణం htp_tensor * స్థిరరాశి * tensors, uint32_t n);
+శూన్య htp_dcache_mark_dirty_tensors(నిర్మాణం htp_context * ctx, స్థిరరాశి నిర్మాణం htp_tensor * స్థిరరాశి * tensors, uint32_t n);
 
-#endif // HTP_DCACHE_H
+#అయితే_ముగింపు // HTP_DCACHE_H

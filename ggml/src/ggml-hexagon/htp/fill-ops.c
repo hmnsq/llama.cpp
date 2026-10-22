@@ -1,146 +1,146 @@
-#pragma clang diagnostic ignored "-Wunused-variable"
-#pragma clang diagnostic ignored "-Wunused-function"
-#pragma clang diagnostic ignored "-Wunused-but-set-variable"
+#సూచన clang diagnostic ignored "-Wunused-variable"
+#సూచన clang diagnostic ignored "-Wunused-function"
+#సూచన clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <string.h>
+#అన్తర్భావ <HAP_farf.h>
+#అన్తర్భావ <string.h>
 
-#include "hex-common.h"
-#include "hex-profile.h"
+#అన్తర్భావ "hex-common.h"
+#అన్తర్భావ "hex-profile.h"
 
-#include "hvx-copy.h"
-#include "hvx-utils.h"
+#అన్తర్భావ "hvx-copy.h"
+#అన్తర్భావ "hvx-utils.h"
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "htp-tensor.h"
+#నిర్వచించు GGML_COMMON_DECL_C
+#అన్తర్భావ "ggml-common.h"
+#అన్తర్భావ "htp-ctx.h"
+#అన్తర్భావ "htp-ops.h"
+#అన్తర్భావ "htp-tensor.h"
 
 // ggml op_params layout for FILL:
 //   op_params[0] (as float) - the scalar fill value
 
-#define fill_preamble                          \
-    const struct htp_tensor * dst = octx->dst; \
+#నిర్వచించు fill_preamble                          \
+    స్థిరరాశి నిర్మాణం htp_tensor * dst = octx->dst; \
                                                \
-    const uint32_t ne0 = dst->ne[0];           \
-    const uint32_t ne1 = dst->ne[1];           \
-    const uint32_t ne2 = dst->ne[2];           \
-    const uint32_t ne3 = dst->ne[3];           \
+    స్థిరరాశి uint32_t ne0 = dst->ne[0];           \
+    స్థిరరాశి uint32_t ne1 = dst->ne[1];           \
+    స్థిరరాశి uint32_t ne2 = dst->ne[2];           \
+    స్థిరరాశి uint32_t ne3 = dst->ne[3];           \
                                                \
-    const uint32_t nb1 = dst->nb[1];           \
-    const uint32_t nb2 = dst->nb[2];           \
-    const uint32_t nb3 = dst->nb[3];           \
+    స్థిరరాశి uint32_t nb1 = dst->nb[1];           \
+    స్థిరరాశి uint32_t nb2 = dst->nb[2];           \
+    స్థిరరాశి uint32_t nb3 = dst->nb[3];           \
                                                \
-    const uint32_t nr = ne1 * ne2 * ne3;
+    స్థిరరాశి uint32_t nr = ne1 * ne2 * ne3;
 
-struct htp_fill_context {
-    struct htp_ops_context * octx;
-    uint32_t nrows_per_thread;
-    uint32_t total_rows;  // ne1 * ne2 * ne3
-    uint32_t row_start;
-    bool     opt_path;
-    HVX_Vector splat_vec;
-    uint32_t   elem_size;
+నిర్మాణం htp_fill_context {
+    నిర్మాణం htp_ops_context * octx;
+    uint32_t nrows_చొప్పున_thread;
+    uint32_t మొత్తం_అడ్డువరుసలు;  // ne1 * ne2 * ne3
+    uint32_t అడ్డువరుస_ప్రారంభం;
+    bool     opt_మార్గం;
+    HVX_సదిశ splat_vec;
+    uint32_t   elem_కొలత;
 };
 
-static void fill_thread(unsigned int nth, unsigned int ith, void * data) {
-    const struct htp_fill_context * fctx = (const struct htp_fill_context *) data;
-    struct htp_ops_context        * octx = fctx->octx;
+స్థిర శూన్య fill_thread(గుర్తులేని పూర్ణాంకం nth, గుర్తులేని పూర్ణాంకం ith, శూన్య * దత్తాంశం) {
+    స్థిరరాశి నిర్మాణం htp_fill_context * fctx = (స్థిరరాశి నిర్మాణం htp_fill_context *) దత్తాంశం;
+    నిర్మాణం htp_ops_context        * octx = fctx->octx;
     fill_preamble;
 
     // Parallelise over the flat row index spanning ne1*ne2*ne3
-    const uint32_t ir0 = fctx->row_start + fctx->nrows_per_thread * ith;
-    const uint32_t ir1 = MIN(ir0 + fctx->nrows_per_thread, fctx->row_start + fctx->total_rows);
+    స్థిరరాశి uint32_t ir0 = fctx->అడ్డువరుస_ప్రారంభం + fctx->nrows_చొప్పున_thread * ith;
+    స్థిరరాశి uint32_t ir1 = MIN(ir0 + fctx->nrows_చొప్పున_thread, fctx->అడ్డువరుస_ప్రారంభం + fctx->మొత్తం_అడ్డువరుసలు);
 
-    if (ir0 >= ir1) {
-        return;
+    ఒకవేళ (ir0 >= ir1) {
+        తిరిగి;
     }
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
-    htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir0);
+    నిర్మాణం htp_thread_trace * tr = &octx->ctx->trace[ith];
+    htp_trace_event_ప్రారంభం(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir0);
 
-    if (fctx->opt_path) {
+    ఒకవేళ (fctx->opt_మార్గం) {
         // Opt path: tensor is fully contiguous, treat as flat array
-        const uint32_t elem_start = ir0 * ne0;
-        const uint32_t elem_end = ir1 * ne0;
-        uint8_t * dst_ptr = (uint8_t *) dst->data + elem_start * fctx->elem_size;
-        hvx_splat_u(dst_ptr, fctx->splat_vec, elem_end - elem_start, fctx->elem_size);
-    } else {
+        స్థిరరాశి uint32_t elem_ప్రారంభం = ir0 * ne0;
+        స్థిరరాశి uint32_t elem_చివర = ir1 * ne0;
+        uint8_t * dst_ptr = (uint8_t *) dst->దత్తాంశం + elem_ప్రారంభం * fctx->elem_కొలత;
+        hvx_splat_u(dst_ptr, fctx->splat_vec, elem_చివర - elem_ప్రారంభం, fctx->elem_కొలత);
+    } లేకపోతే {
         // Non-contiguous path: must respect strides
-        for (uint32_t ir = ir0; ir < ir1; ++ir) {
-            const uint32_t i1 = ir % ne1;
-            const uint32_t i2 = (ir / ne1) % ne2;
-            const uint32_t i3 = ir / (ne1 * ne2);
-            uint8_t * dst_ptr = (uint8_t *) dst->data + i1*nb1 + i2*nb2 + i3*nb3;
-            hvx_splat_u(dst_ptr, fctx->splat_vec, ne0, fctx->elem_size);
+        కొరకు (uint32_t ir = ir0; ir < ir1; ++ir) {
+            స్థిరరాశి uint32_t i1 = ir % ne1;
+            స్థిరరాశి uint32_t i2 = (ir / ne1) % ne2;
+            స్థిరరాశి uint32_t i3 = ir / (ne1 * ne2);
+            uint8_t * dst_ptr = (uint8_t *) dst->దత్తాంశం + i1*nb1 + i2*nb2 + i3*nb3;
+            hvx_splat_u(dst_ptr, fctx->splat_vec, ne0, fctx->elem_కొలత);
         }
     }
 
     htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir1);
-    FARF(HIGH, "fill %u/%u: rows %u:%u\n", ith, nth, ir0, ir1);
+    FARF(ఎగువ_2, "fill %u/%u: rows %u:%u\n", ith, nth, ir0, ir1);
 }
 
-int op_fill(struct htp_ops_context * octx) {
+పూర్ణాంకం op_fill(నిర్మాణం htp_ops_context * octx) {
     fill_preamble;
 
-    if (dst->type != HTP_TYPE_F32 && dst->type != HTP_TYPE_F16) {
-        return HTP_STATUS_NO_SUPPORT;
+    ఒకవేళ (dst->type != HTP_TYPE_F32 && dst->type != HTP_TYPE_F16) {
+        తిరిగి HTP_స్థితి_NO_SUPPORT;
     }
 
-    if (htp_tensor_is_extended(dst)) {
-        return HTP_STATUS_NO_SUPPORT;
+    ఒకవేళ (htp_tensor_is_extended(dst)) {
+        తిరిగి HTP_స్థితి_NO_SUPPORT;
     }
 
-    uint32_t row_start = 0;
+    uint32_t అడ్డువరుస_ప్రారంభం = 0;
     uint32_t nrows     = nr;
 
-    if (octx->ctx->mdev.count > 1) {
-        const uint32_t row_size = nb1;
-        const uint32_t rows_per_chunk = (row_size > 0) ? (HEX_L2_LINE_SIZE / hex_gcd_u32(row_size, HEX_L2_LINE_SIZE)) : 1;
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(nr, htp_tensor_mdev_data_aligned(dst) ? rows_per_chunk : 0, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
-        row_start = range.start;
-        nrows     = range.count;
+    ఒకవేళ (octx->ctx->mdev.లెక్క > 1) {
+        స్థిరరాశి uint32_t అడ్డువరుస_కొలత = nb1;
+        స్థిరరాశి uint32_t అడ్డువరుసలు_చొప్పున_chunk = (అడ్డువరుస_కొలత > 0) ? (HEX_L2_పంక్తి_కొలత / hex_గరిష్ఠ_సామాన్య_భాజకం_u32(అడ్డువరుస_కొలత, HEX_L2_పంక్తి_కొలత)) : 1;
+        స్థిరరాశి నిర్మాణం htp_tensor_mdev_range range = htp_tensor_mdev_విభజన(nr, htp_tensor_mdev_దత్తాంశం_aligned(dst) ? అడ్డువరుసలు_చొప్పున_chunk : 0, octx->ctx->mdev.idx, octx->ctx->mdev.లెక్క, &octx->ctx->mdev.లెక్క_div);
+        అడ్డువరుస_ప్రారంభం = range.ప్రారంభం;
+        nrows     = range.లెక్క;
     }
 
-    if (nrows == 0) {
-        return HTP_STATUS_OK;
+    ఒకవేళ (nrows == 0) {
+        తిరిగి HTP_స్థితి_OK;
     }
 
     // nr = ne1*ne2*ne3 (flat row count across all outer dims); parallelise over it.
-    const uint32_t n_threads = octx->n_threads;
+    స్థిరరాశి uint32_t n_దారాలు = octx->n_దారాలు;
 
     // Optimize if fully contiguous: skip stride arithmetic, treat as flat array
-    const bool opt_path = (nb2 == nb1 * ne1) && (nb3 == nb2 * ne2);
+    స్థిరరాశి bool opt_మార్గం = (nb2 == nb1 * ne1) && (nb3 == nb2 * ne2);
 
-    FARF(HIGH, "fill: (%ux%ux%ux%u) type=%u opt=%d\n",
-         dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3], dst->type, (int) opt_path);
+    FARF(ఎగువ_2, "fill: (%ux%ux%ux%u) type=%u opt=%d\n",
+         dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3], dst->type, (పూర్ణాంకం) opt_మార్గం);
 
-    float val_f32 = 0.f;
-    memcpy(&val_f32, &octx->op_params[0], sizeof(float));
+    దశాంశం val_f32 = 0.f;
+    జ్ఞాపకం_నకలు(&val_f32, &octx->op_params[0], పరిమాణం(దశాంశం));
 
-    struct htp_fill_context fctx = {
+    నిర్మాణం htp_fill_context fctx = {
         .octx             = octx,
-        .nrows_per_thread = fastdiv(nrows + n_threads - 1, &octx->n_threads_div),
-        .total_rows       = nrows,
-        .row_start        = row_start,
-        .opt_path         = opt_path,
+        .nrows_చొప్పున_thread = fastdiv(nrows + n_దారాలు - 1, &octx->n_దారాలు_div),
+        .మొత్తం_అడ్డువరుసలు       = nrows,
+        .అడ్డువరుస_ప్రారంభం        = అడ్డువరుస_ప్రారంభం,
+        .opt_మార్గం         = opt_మార్గం,
     };
 
-    switch (dst->type) {
-    case HTP_TYPE_F32:
+    ఎంపిక (dst->type) {
+    స్థితి HTP_TYPE_F32:
         fctx.splat_vec = hvx_vec_splat_f32(val_f32);
-        fctx.elem_size = sizeof(float);
-        break;
-    case HTP_TYPE_F16:
+        fctx.elem_కొలత = పరిమాణం(దశాంశం);
+        ఆపు;
+    స్థితి HTP_TYPE_F16:
         fctx.splat_vec = hvx_vec_splat_f16((_Float16) val_f32);
-        fctx.elem_size = sizeof(_Float16);
-        break;
-    default:
-        return HTP_STATUS_NO_SUPPORT;
+        fctx.elem_కొలత = పరిమాణం(_Float16);
+        ఆపు;
+    అప్రమేయ:
+        తిరిగి HTP_స్థితి_NO_SUPPORT;
     }
 
-    work_queue_run(octx->ctx->work_queue, fill_thread, &fctx, n_threads);
+    work_వరుస_నిరంతరం(octx->ctx->work_వరుస, fill_thread, &fctx, n_దారాలు);
 
-    return HTP_STATUS_OK;
+    తిరిగి HTP_స్థితి_OK;
 }

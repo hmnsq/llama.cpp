@@ -1,79 +1,79 @@
-#pragma once
+#సూచన once
 
-#ifdef _WIN32
-#   define WIN32_LEAN_AND_MEAN
+#నిర్వచితమైతే _WIN32
+#   define WIN32_LEAN_AND_సగటు
 #   ifndef NOMINMAX
 #       define NOMINMAX
 #   endif
 #   include <windows.h>
 #   include <winevt.h>
-#else
+#లేకపోతే
 #    include <dlfcn.h>
 #    include <unistd.h>
-#endif
-#include <filesystem>
+#అయితే_ముగింపు
+#అన్తర్భావ <filesystem>
 
 namespace fs = std::filesystem;
 
-#ifdef _WIN32
+#నిర్వచితమైతే _WIN32
 
-using dl_handle = std::remove_pointer_t<HMODULE>;
+using dl_handle = std::remove_సూచిక_t<HMODULE>;
 
-struct dl_handle_deleter {
-    void operator()(HMODULE handle) {
+నిర్మాణం dl_handle_deleter {
+    శూన్య క్రియాకారకం()(HMODULE handle) {
         FreeLibrary(handle);
     }
 };
 
-static inline dl_handle * dl_load_library(const fs::path & path) {
+స్థిర అంతఃవరుస dl_handle * dl_ఎక్కించు_library(స్థిరరాశి fs::మార్గం & మార్గం) {
     // suppress error dialogs for missing DLLs
-    DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
-    SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
+    DWORD old_బహుళకం = సమితి_Error_బహుళకం(SEM_FAILCRITICALERRORS);
+    సమితి_Error_బహుళకం(old_బహుళకం | SEM_FAILCRITICALERRORS);
 
-    HMODULE handle = LoadLibraryW(path.wstring().c_str());
+    HMODULE handle = ఎక్కించు_Library_W(మార్గం.wstring().c_str());
 
-    SetErrorMode(old_mode);
+    సమితి_Error_బహుళకం(old_బహుళకం);
 
-    return handle;
+    తిరిగి handle;
 }
 
-static inline void * dl_get_sym(dl_handle * handle, const char * name) {
-    DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
-    SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
+స్థిర అంతఃవరుస శూన్య * dl_get_sym(dl_handle * handle, స్థిరరాశి అక్షరం * name) {
+    DWORD old_బహుళకం = సమితి_Error_బహుళకం(SEM_FAILCRITICALERRORS);
+    సమితి_Error_బహుళకం(old_బహుళకం | SEM_FAILCRITICALERRORS);
 
-    void * p = (void *) GetProcAddress(handle, name);
+    శూన్య * p = (శూన్య *) Get_Proc_చిరునామా(handle, name);
 
-    SetErrorMode(old_mode);
+    సమితి_Error_బహుళకం(old_బహుళకం);
 
-    return p;
+    తిరిగి p;
 }
 
-static inline const char * dl_error() {
-    return "";
+స్థిర అంతఃవరుస స్థిరరాశి అక్షరం * dl_error() {
+    తిరిగి "";
 }
 
-#else
+#లేకపోతే
 
-using dl_handle = void;
+using dl_handle = శూన్య;
 
-struct dl_handle_deleter {
-    void operator()(void * handle) {
+నిర్మాణం dl_handle_deleter {
+    శూన్య క్రియాకారకం()(శూన్య * handle) {
         dlclose(handle);
     }
 };
 
-static inline dl_handle * dl_load_library(const fs::path & path) {
-    dl_handle * handle = dlopen(path.string().c_str(), RTLD_NOW | RTLD_LOCAL);
-    return handle;
+స్థిర అంతఃవరుస dl_handle * dl_ఎక్కించు_library(స్థిరరాశి fs::మార్గం & మార్గం) {
+    dl_handle * handle = dlopen(మార్గం.string().c_str(), RTLD_NOW | RTLD_LOCAL);
+    తిరిగి handle;
 }
 
-static inline void * dl_get_sym(dl_handle * handle, const char * name) {
-    return dlsym(handle, name);
+స్థిర అంతఃవరుస శూన్య * dl_get_sym(dl_handle * handle, స్థిరరాశి అక్షరం * name) {
+    తిరిగి dlsym(handle, name);
 }
 
-static inline const char * dl_error() {
-    const char *rslt = dlerror();
-    return rslt != nullptr ? rslt : "";
+స్థిర అంతఃవరుస స్థిరరాశి అక్షరం * dl_error() {
+    స్థిరరాశి అక్షరం *rslt = dlerror();
+    తిరిగి rslt != nullptr ? rslt : "";
 }
 
-#endif
+#అయితే_ముగింపు

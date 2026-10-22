@@ -10,397 +10,397 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#include "ggml-impl.h"
-#include "common.hpp"
-#include "dequantize.hpp"
-#include "getrows.hpp"
+#అన్తర్భావ "ggml-impl.h"
+#అన్తర్భావ "common.hpp"
+#అన్తర్భావ "dequantize.hpp"
+#అన్తర్భావ "getrows.hpp"
 
 
-template<int qk, int qr, dequantize_kernel_t dequantize_kernel, typename dst_t>
-static void k_get_rows(
-            const void * src0, const int32_t * src1, dst_t * dst,
+మూస<పూర్ణాంకం qk, పూర్ణాంకం qr, dequantize_kernel_t dequantize_kernel, రకం_పేరు dst_t>
+స్థిర శూన్య k_get_అడ్డువరుసలు(
+            స్థిరరాశి శూన్య * src0, స్థిరరాశి int32_t * src1, dst_t * dst,
             int64_t ne00, /*int64_t ne01, int64_t ne02, int64_t ne03,*/
             /*int64_t ne10, int64_t ne11,*/ int64_t ne12, /*int64_t ne13,*/
             /*size_t s0,*/ size_t s1, size_t s2, size_t s3,
             /*size_t nb00,*/ size_t nb01, size_t nb02, size_t nb03,
             size_t s10, size_t s11, size_t s12,
-            const sycl::nd_item<3> &item_ct1/*, size_t s13*/) {
+            స్థిరరాశి sycl::nd_అంశం<3> &అంశం_ct1/*, size_t s13*/) {
 
-    const int i00 = (item_ct1.get_group(2) * item_ct1.get_local_range(2) +
-                     item_ct1.get_local_id(2)) *
+    స్థిరరాశి పూర్ణాంకం i00 = (అంశం_ct1.get_సమూహం(2) * అంశం_ct1.get_local_range(2) +
+                     అంశం_ct1.get_local_id(2)) *
                     2;
-    const int i10 = item_ct1.get_local_range(1) * item_ct1.get_group(1) +
-                    item_ct1.get_local_id(1);
-    const int i11 = (item_ct1.get_group(0) * item_ct1.get_local_range(0) +
-                     item_ct1.get_local_id(0)) /
+    స్థిరరాశి పూర్ణాంకం i10 = అంశం_ct1.get_local_range(1) * అంశం_ct1.get_సమూహం(1) +
+                    అంశం_ct1.get_local_id(1);
+    స్థిరరాశి పూర్ణాంకం i11 = (అంశం_ct1.get_సమూహం(0) * అంశం_ct1.get_local_range(0) +
+                     అంశం_ct1.get_local_id(0)) /
                     ne12;
-    const int i12 = (item_ct1.get_group(0) * item_ct1.get_local_range(0) +
-                     item_ct1.get_local_id(0)) %
+    స్థిరరాశి పూర్ణాంకం i12 = (అంశం_ct1.get_సమూహం(0) * అంశం_ct1.get_local_range(0) +
+                     అంశం_ct1.get_local_id(0)) %
                     ne12;
 
-    if (i00 >= ne00) {
-        return;
+    ఒకవేళ (i00 >= ne00) {
+        తిరిగి;
     }
 
-    const int i01 = src1[i10*s10 + i11*s11 + i12*s12];
+    స్థిరరాశి పూర్ణాంకం i01 = src1[i10*s10 + i11*s11 + i12*s12];
 
-    dst_t * dst_row = dst + i10*s1 + i11*s2 + i12*s3;
-    const void * src0_row = (const char *)src0 + i01*nb01 + i11*nb02 + i12*nb03;
+    dst_t * dst_అడ్డువరుస = dst + i10*s1 + i11*s2 + i12*s3;
+    స్థిరరాశి శూన్య * src0_అడ్డువరుస = (స్థిరరాశి అక్షరం *)src0 + i01*nb01 + i11*nb02 + i12*nb03;
 
-    const int ib = i00/qk; // block index
-    const int iqs = (i00%qk)/qr; // quant index
-    const int iybs = i00 - i00%qk; // dst block start index
-    const int y_offset = qr == 1 ? 1 : qk/2;
+    స్థిరరాశి పూర్ణాంకం ib = i00/qk; // block index
+    స్థిరరాశి పూర్ణాంకం iqs = (i00%qk)/qr; // quant index
+    స్థిరరాశి పూర్ణాంకం iybs = i00 - i00%qk; // dst block start index
+    స్థిరరాశి పూర్ణాంకం y_స్థానభ్రంశం = qr == 1 ? 1 : qk/2;
 
     // dequantize
     dfloat2 v;
-    dequantize_kernel(src0_row, ib, iqs, v);
+    dequantize_kernel(src0_అడ్డువరుస, ib, iqs, v);
 
-    dst_row[iybs + iqs + 0] = v.x();
-    dst_row[iybs + iqs + y_offset] = v.y();
+    dst_అడ్డువరుస[iybs + iqs + 0] = v.x();
+    dst_అడ్డువరుస[iybs + iqs + y_స్థానభ్రంశం] = v.y();
 }
 
-template<int qk, int qr, dequantize_kernel_f32_t dequantize_kernel, typename dst_t>
-static void k_get_rows_f32(
-            const void * src0, const int32_t * src1, dst_t * dst,
+మూస<పూర్ణాంకం qk, పూర్ణాంకం qr, dequantize_kernel_f32_t dequantize_kernel, రకం_పేరు dst_t>
+స్థిర శూన్య k_get_అడ్డువరుసలు_f32(
+            స్థిరరాశి శూన్య * src0, స్థిరరాశి int32_t * src1, dst_t * dst,
             int64_t ne00,
             int64_t ne12,
             size_t s1, size_t s2, size_t s3,
             size_t nb01, size_t nb02, size_t nb03,
             size_t s10, size_t s11, size_t s12,
-            const sycl::nd_item<3> &item_ct1) {
+            స్థిరరాశి sycl::nd_అంశం<3> &అంశం_ct1) {
 
-    const int i00 = (item_ct1.get_group(2) * item_ct1.get_local_range(2) +
-                     item_ct1.get_local_id(2)) *
+    స్థిరరాశి పూర్ణాంకం i00 = (అంశం_ct1.get_సమూహం(2) * అంశం_ct1.get_local_range(2) +
+                     అంశం_ct1.get_local_id(2)) *
                     2;
-    const int i10 = item_ct1.get_local_range(1) * item_ct1.get_group(1) +
-                    item_ct1.get_local_id(1);
-    const int i11 = (item_ct1.get_group(0) * item_ct1.get_local_range(0) +
-                     item_ct1.get_local_id(0)) /
+    స్థిరరాశి పూర్ణాంకం i10 = అంశం_ct1.get_local_range(1) * అంశం_ct1.get_సమూహం(1) +
+                    అంశం_ct1.get_local_id(1);
+    స్థిరరాశి పూర్ణాంకం i11 = (అంశం_ct1.get_సమూహం(0) * అంశం_ct1.get_local_range(0) +
+                     అంశం_ct1.get_local_id(0)) /
                     ne12;
-    const int i12 = (item_ct1.get_group(0) * item_ct1.get_local_range(0) +
-                     item_ct1.get_local_id(0)) %
+    స్థిరరాశి పూర్ణాంకం i12 = (అంశం_ct1.get_సమూహం(0) * అంశం_ct1.get_local_range(0) +
+                     అంశం_ct1.get_local_id(0)) %
                     ne12;
 
-    if (i00 >= ne00) {
-        return;
+    ఒకవేళ (i00 >= ne00) {
+        తిరిగి;
     }
 
-    const int i01 = src1[i10*s10 + i11*s11 + i12*s12];
+    స్థిరరాశి పూర్ణాంకం i01 = src1[i10*s10 + i11*s11 + i12*s12];
 
-    dst_t * dst_row = dst + i10*s1 + i11*s2 + i12*s3;
-    const void * src0_row = (const char *)src0 + i01*nb01 + i11*nb02 + i12*nb03;
+    dst_t * dst_అడ్డువరుస = dst + i10*s1 + i11*s2 + i12*s3;
+    స్థిరరాశి శూన్య * src0_అడ్డువరుస = (స్థిరరాశి అక్షరం *)src0 + i01*nb01 + i11*nb02 + i12*nb03;
 
-    const int ib = i00/qk;
-    const int iqs = (i00%qk)/qr;
-    const int iybs = i00 - i00%qk;
-    const int y_offset = qr == 1 ? 1 : qk/2;
+    స్థిరరాశి పూర్ణాంకం ib = i00/qk;
+    స్థిరరాశి పూర్ణాంకం iqs = (i00%qk)/qr;
+    స్థిరరాశి పూర్ణాంకం iybs = i00 - i00%qk;
+    స్థిరరాశి పూర్ణాంకం y_స్థానభ్రంశం = qr == 1 ? 1 : qk/2;
 
-    float v0;
-    float v1;
-    dequantize_kernel(src0_row, ib, iqs, v0, v1);
+    దశాంశం v0;
+    దశాంశం v1;
+    dequantize_kernel(src0_అడ్డువరుస, ib, iqs, v0, v1);
 
-    dst_row[iybs + iqs + 0] = (dst_t) v0;
-    dst_row[iybs + iqs + y_offset] = (dst_t) v1;
+    dst_అడ్డువరుస[iybs + iqs + 0] = (dst_t) v0;
+    dst_అడ్డువరుస[iybs + iqs + y_స్థానభ్రంశం] = (dst_t) v1;
 }
 
-template<typename src0_t, typename dst_t>
-static void k_get_rows_float(
-            const src0_t * src0, const int32_t * src1, dst_t * dst,
+మూస<రకం_పేరు src0_t, రకం_పేరు dst_t>
+స్థిర శూన్య k_get_అడ్డువరుసలు_float(
+            స్థిరరాశి src0_t * src0, స్థిరరాశి int32_t * src1, dst_t * dst,
             int64_t ne00, /*int64_t ne01, int64_t ne02, int64_t ne03,*/
             /*int64_t ne10, int64_t ne11,*/ int64_t ne12, /*int64_t ne13,*/
             /*size_t s0,*/ size_t s1, size_t s2, size_t s3,
             /*size_t nb00,*/ size_t nb01, size_t nb02, size_t nb03,
             size_t s10, size_t s11, size_t s12,
-            const sycl::nd_item<3> &item_ct1/*, size_t s13*/) {
+            స్థిరరాశి sycl::nd_అంశం<3> &అంశం_ct1/*, size_t s13*/) {
 
-    const int i00 = item_ct1.get_group(2) * item_ct1.get_local_range(2) +
-                    item_ct1.get_local_id(2);
-    const int i10 = item_ct1.get_local_range(1) * item_ct1.get_group(1) +
-                    item_ct1.get_local_id(1);
-    const int i11 = (item_ct1.get_group(0) * item_ct1.get_local_range(0) +
-                     item_ct1.get_local_id(0)) /
+    స్థిరరాశి పూర్ణాంకం i00 = అంశం_ct1.get_సమూహం(2) * అంశం_ct1.get_local_range(2) +
+                    అంశం_ct1.get_local_id(2);
+    స్థిరరాశి పూర్ణాంకం i10 = అంశం_ct1.get_local_range(1) * అంశం_ct1.get_సమూహం(1) +
+                    అంశం_ct1.get_local_id(1);
+    స్థిరరాశి పూర్ణాంకం i11 = (అంశం_ct1.get_సమూహం(0) * అంశం_ct1.get_local_range(0) +
+                     అంశం_ct1.get_local_id(0)) /
                     ne12;
-    const int i12 = (item_ct1.get_group(0) * item_ct1.get_local_range(0) +
-                     item_ct1.get_local_id(0)) %
+    స్థిరరాశి పూర్ణాంకం i12 = (అంశం_ct1.get_సమూహం(0) * అంశం_ct1.get_local_range(0) +
+                     అంశం_ct1.get_local_id(0)) %
                     ne12;
 
-    if (i00 >= ne00) {
-        return;
+    ఒకవేళ (i00 >= ne00) {
+        తిరిగి;
     }
 
-    const int i01 = src1[i10*s10 + i11*s11 + i12*s12];
+    స్థిరరాశి పూర్ణాంకం i01 = src1[i10*s10 + i11*s11 + i12*s12];
 
-    dst_t * dst_row = dst + i10*s1 + i11*s2 + i12*s3;
-    const src0_t * src0_row = (const src0_t *)((const char *)src0 + i01*nb01 + i11*nb02 + i12*nb03);
+    dst_t * dst_అడ్డువరుస = dst + i10*s1 + i11*s2 + i12*s3;
+    స్థిరరాశి src0_t * src0_అడ్డువరుస = (స్థిరరాశి src0_t *)((స్థిరరాశి అక్షరం *)src0 + i01*nb01 + i11*nb02 + i12*nb03);
 
-    dst_row[i00] = src0_row[i00];
+    dst_అడ్డువరుస[i00] = src0_అడ్డువరుస[i00];
 }
 
 // src0 is in reorder layout: all qs of the tensor, then all d
-template<int qk, int qr, dequantize_kernel_t_reorder dequantize_kernel, typename dst_t>
-static void k_get_rows_reorder(
-            const void * src0_qs, const void * src0_d, const int32_t * src1, dst_t * dst,
+మూస<పూర్ణాంకం qk, పూర్ణాంకం qr, dequantize_kernel_t_reorder dequantize_kernel, రకం_పేరు dst_t>
+స్థిర శూన్య k_get_అడ్డువరుసలు_reorder(
+            స్థిరరాశి శూన్య * src0_qs, స్థిరరాశి శూన్య * src0_d, స్థిరరాశి int32_t * src1, dst_t * dst,
             int64_t ne00, int64_t ne12,
             size_t s1, size_t s2, size_t s3,
             size_t s10, size_t s11, size_t s12,
-            const sycl::nd_item<3> &item_ct1) {
+            స్థిరరాశి sycl::nd_అంశం<3> &అంశం_ct1) {
 
-    const int i00 = (item_ct1.get_group(2) * item_ct1.get_local_range(2) +
-                     item_ct1.get_local_id(2)) *
+    స్థిరరాశి పూర్ణాంకం i00 = (అంశం_ct1.get_సమూహం(2) * అంశం_ct1.get_local_range(2) +
+                     అంశం_ct1.get_local_id(2)) *
                     2;
-    const int i10 = item_ct1.get_local_range(1) * item_ct1.get_group(1) +
-                    item_ct1.get_local_id(1);
-    const int i11 = (item_ct1.get_group(0) * item_ct1.get_local_range(0) +
-                     item_ct1.get_local_id(0)) /
+    స్థిరరాశి పూర్ణాంకం i10 = అంశం_ct1.get_local_range(1) * అంశం_ct1.get_సమూహం(1) +
+                    అంశం_ct1.get_local_id(1);
+    స్థిరరాశి పూర్ణాంకం i11 = (అంశం_ct1.get_సమూహం(0) * అంశం_ct1.get_local_range(0) +
+                     అంశం_ct1.get_local_id(0)) /
                     ne12;
-    const int i12 = (item_ct1.get_group(0) * item_ct1.get_local_range(0) +
-                     item_ct1.get_local_id(0)) %
+    స్థిరరాశి పూర్ణాంకం i12 = (అంశం_ct1.get_సమూహం(0) * అంశం_ct1.get_local_range(0) +
+                     అంశం_ct1.get_local_id(0)) %
                     ne12;
 
-    if (i00 >= ne00) {
-        return;
+    ఒకవేళ (i00 >= ne00) {
+        తిరిగి;
     }
 
-    const int i01 = src1[i10*s10 + i11*s11 + i12*s12];
+    స్థిరరాశి పూర్ణాంకం i01 = src1[i10*s10 + i11*s11 + i12*s12];
 
-    dst_t * dst_row = dst + i10*s1 + i11*s2 + i12*s3;
+    dst_t * dst_అడ్డువరుస = dst + i10*s1 + i11*s2 + i12*s3;
 
-    const int64_t ib = (int64_t) i01*(ne00/qk) + i00/qk; // block index in the whole tensor
-    const int iqs = (i00%qk)/qr;
-    const int iybs = i00 - i00%qk;
-    const int y_offset = qr == 1 ? 1 : qk/2;
+    స్థిరరాశి int64_t ib = (int64_t) i01*(ne00/qk) + i00/qk; // block index in the whole tensor
+    స్థిరరాశి పూర్ణాంకం iqs = (i00%qk)/qr;
+    స్థిరరాశి పూర్ణాంకం iybs = i00 - i00%qk;
+    స్థిరరాశి పూర్ణాంకం y_స్థానభ్రంశం = qr == 1 ? 1 : qk/2;
 
     dfloat2 v;
     dequantize_kernel(src0_d, ib, src0_qs, ib*(qk/qr) + iqs, v);
 
-    dst_row[iybs + iqs + 0] = v.x();
-    dst_row[iybs + iqs + y_offset] = v.y();
+    dst_అడ్డువరుస[iybs + iqs + 0] = v.x();
+    dst_అడ్డువరుస[iybs + iqs + y_స్థానభ్రంశం] = v.y();
 }
 
-template <int qk, int qr, dequantize_kernel_t dq>
-static void get_rows_sycl(ggml_backend_sycl_context & ctx, const ggml_tensor *src0, const ggml_tensor *src1,
-                          ggml_tensor *dst, const void *src0_dd,
-                          const int32_t *src1_dd, float *dst_dd,
-                          queue_ptr stream) {
+మూస <పూర్ణాంకం qk, పూర్ణాంకం qr, dequantize_kernel_t dq>
+స్థిర శూన్య get_అడ్డువరుసలు_sycl(ggml_backend_sycl_context & ctx, స్థిరరాశి ggml_tensor *src0, స్థిరరాశి ggml_tensor *src1,
+                          ggml_tensor *dst, స్థిరరాశి శూన్య *src0_dd,
+                          స్థిరరాశి int32_t *src1_dd, దశాంశం *dst_dd,
+                          వరుస_ptr stream) {
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ద్విమాన_OP_LOCALS
 
-    const sycl::range<3> block_dims(1, 1, SYCL_GET_ROWS_BLOCK_SIZE);
-    const int block_num_x = (ne00 + 2*SYCL_GET_ROWS_BLOCK_SIZE - 1) / (2*SYCL_GET_ROWS_BLOCK_SIZE);
-    const sycl::range<3> block_nums(ne11 * ne12, ne10, block_num_x);
+    స్థిరరాశి sycl::range<3> ఖండం_dims(1, 1, SYCL_GET_అడ్డువరుసలు_ఖండం_కొలత);
+    స్థిరరాశి పూర్ణాంకం ఖండం_అంకె_x = (ne00 + 2*SYCL_GET_అడ్డువరుసలు_ఖండం_కొలత - 1) / (2*SYCL_GET_అడ్డువరుసలు_ఖండం_కొలత);
+    స్థిరరాశి sycl::range<3> ఖండం_nums(ne11 * ne12, ne10, ఖండం_అంకె_x);
 
     // strides in elements
     //const size_t s0 = nb0 / ggml_element_size(dst);
-    const size_t s1 = nb1 / ggml_element_size(dst);
-    const size_t s2 = nb2 / ggml_element_size(dst);
-    const size_t s3 = nb3 / ggml_element_size(dst);
+    స్థిరరాశి size_t s1 = nb1 / ggml_element_కొలత(dst);
+    స్థిరరాశి size_t s2 = nb2 / ggml_element_కొలత(dst);
+    స్థిరరాశి size_t s3 = nb3 / ggml_element_కొలత(dst);
 
-    const size_t s10 = nb10 / ggml_element_size(src1);
-    const size_t s11 = nb11 / ggml_element_size(src1);
-    const size_t s12 = nb12 / ggml_element_size(src1);
+    స్థిరరాశి size_t s10 = nb10 / ggml_element_కొలత(src1);
+    స్థిరరాశి size_t s11 = nb11 / ggml_element_కొలత(src1);
+    స్థిరరాశి size_t s12 = nb12 / ggml_element_కొలత(src1);
     //const size_t s13 = nb13 / ggml_element_size(src1);
 
     GGML_ASSERT(ne00 % 2 == 0);
 
-    stream->parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                         [=](sycl::nd_item<3> item_ct1) {
-                             k_get_rows<qk, qr, dq>(
+    stream->parallel_for(sycl::nd_range<3>(ఖండం_nums * ఖండం_dims, ఖండం_dims),
+                         [=](sycl::nd_అంశం<3> అంశం_ct1) {
+                             k_get_అడ్డువరుసలు<qk, qr, dq>(
                                  src0_dd, src1_dd, dst_dd, ne00, ne12, s1, s2,
-                                 s3, nb01, nb02, nb03, s10, s11, s12, item_ct1);
+                                 s3, nb01, nb02, nb03, s10, s11, s12, అంశం_ct1);
                          });
 
-    GGML_UNUSED(dst);
-    GGML_UNUSED(ctx);
+    GGML_వాడని(dst);
+    GGML_వాడని(ctx);
 }
 
-template <int qk, int qr, dequantize_kernel_t_reorder dq>
-static void get_rows_sycl_reorder(const ggml_tensor *src0, const ggml_tensor *src1,
-                                  ggml_tensor *dst, const void *src0_dd,
-                                  const int32_t *src1_dd, float *dst_dd,
-                                  queue_ptr stream) {
+మూస <పూర్ణాంకం qk, పూర్ణాంకం qr, dequantize_kernel_t_reorder dq>
+స్థిర శూన్య get_అడ్డువరుసలు_sycl_reorder(స్థిరరాశి ggml_tensor *src0, స్థిరరాశి ggml_tensor *src1,
+                                  ggml_tensor *dst, స్థిరరాశి శూన్య *src0_dd,
+                                  స్థిరరాశి int32_t *src1_dd, దశాంశం *dst_dd,
+                                  వరుస_ptr stream) {
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ద్విమాన_OP_LOCALS
 
     // reorder is done only on 2D weights
     GGML_ASSERT(ne02 == 1 && ne03 == 1);
     GGML_ASSERT(ne00 % 2 == 0);
 
-    const sycl::range<3> block_dims(1, 1, SYCL_GET_ROWS_BLOCK_SIZE);
-    const int block_num_x = (ne00 + 2*SYCL_GET_ROWS_BLOCK_SIZE - 1) / (2*SYCL_GET_ROWS_BLOCK_SIZE);
-    const sycl::range<3> block_nums(ne11 * ne12, ne10, block_num_x);
+    స్థిరరాశి sycl::range<3> ఖండం_dims(1, 1, SYCL_GET_అడ్డువరుసలు_ఖండం_కొలత);
+    స్థిరరాశి పూర్ణాంకం ఖండం_అంకె_x = (ne00 + 2*SYCL_GET_అడ్డువరుసలు_ఖండం_కొలత - 1) / (2*SYCL_GET_అడ్డువరుసలు_ఖండం_కొలత);
+    స్థిరరాశి sycl::range<3> ఖండం_nums(ne11 * ne12, ne10, ఖండం_అంకె_x);
 
-    const size_t s1 = nb1 / ggml_element_size(dst);
-    const size_t s2 = nb2 / ggml_element_size(dst);
-    const size_t s3 = nb3 / ggml_element_size(dst);
+    స్థిరరాశి size_t s1 = nb1 / ggml_element_కొలత(dst);
+    స్థిరరాశి size_t s2 = nb2 / ggml_element_కొలత(dst);
+    స్థిరరాశి size_t s3 = nb3 / ggml_element_కొలత(dst);
 
-    const size_t s10 = nb10 / ggml_element_size(src1);
-    const size_t s11 = nb11 / ggml_element_size(src1);
-    const size_t s12 = nb12 / ggml_element_size(src1);
+    స్థిరరాశి size_t s10 = nb10 / ggml_element_కొలత(src1);
+    స్థిరరాశి size_t s11 = nb11 / ggml_element_కొలత(src1);
+    స్థిరరాశి size_t s12 = nb12 / ggml_element_కొలత(src1);
 
-    const void * src0_d = (const char *) src0_dd + ne00*ne01/qr;
+    స్థిరరాశి శూన్య * src0_d = (స్థిరరాశి అక్షరం *) src0_dd + ne00*ne01/qr;
 
-    stream->parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                         [=](sycl::nd_item<3> item_ct1) {
-                             k_get_rows_reorder<qk, qr, dq>(
+    stream->parallel_for(sycl::nd_range<3>(ఖండం_nums * ఖండం_dims, ఖండం_dims),
+                         [=](sycl::nd_అంశం<3> అంశం_ct1) {
+                             k_get_అడ్డువరుసలు_reorder<qk, qr, dq>(
                                  src0_dd, src0_d, src1_dd, dst_dd, ne00, ne12, s1, s2,
-                                 s3, s10, s11, s12, item_ct1);
+                                 s3, s10, s11, s12, అంశం_ct1);
                          });
 
-    GGML_UNUSED(src0);
+    GGML_వాడని(src0);
 }
 
 // K-quants in reorder layout: one work-group dequantizes one QK_K block of one row
-template <int dims, int nthreads, int nlocal, typename F>
-static void get_rows_sycl_reorder_k(const ggml_tensor *src0, const ggml_tensor *src1,
-                                    ggml_tensor *dst, const int32_t *src1_dd, float *dst_dd,
-                                    queue_ptr stream, F dequantize_block) {
+మూస <పూర్ణాంకం dims, పూర్ణాంకం nthreads, పూర్ణాంకం nlocal, రకం_పేరు F>
+స్థిర శూన్య get_అడ్డువరుసలు_sycl_reorder_k(స్థిరరాశి ggml_tensor *src0, స్థిరరాశి ggml_tensor *src1,
+                                    ggml_tensor *dst, స్థిరరాశి int32_t *src1_dd, దశాంశం *dst_dd,
+                                    వరుస_ptr stream, F dequantize_ఖండం) {
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ద్విమాన_OP_LOCALS
 
     // reorder is done only on 2D weights
     GGML_ASSERT(ne02 == 1 && ne03 == 1);
     GGML_ASSERT(ne00 % QK_K == 0);
 
-    const int64_t nblk = ne00 / QK_K;
-    const int64_t nb = nblk * ne01; // blocks in the whole tensor
-    const int64_t ngroups = ne10 * ne11 * ne12 * nblk;
+    స్థిరరాశి int64_t nblk = ne00 / QK_K;
+    స్థిరరాశి int64_t nb = nblk * ne01; // blocks in the whole tensor
+    స్థిరరాశి int64_t ngroups = ne10 * ne11 * ne12 * nblk;
 
-    const size_t s1 = nb1 / ggml_element_size(dst);
-    const size_t s2 = nb2 / ggml_element_size(dst);
-    const size_t s3 = nb3 / ggml_element_size(dst);
+    స్థిరరాశి size_t s1 = nb1 / ggml_element_కొలత(dst);
+    స్థిరరాశి size_t s2 = nb2 / ggml_element_కొలత(dst);
+    స్థిరరాశి size_t s3 = nb3 / ggml_element_కొలత(dst);
 
-    const size_t s10 = nb10 / ggml_element_size(src1);
-    const size_t s11 = nb11 / ggml_element_size(src1);
-    const size_t s12 = nb12 / ggml_element_size(src1);
+    స్థిరరాశి size_t s10 = nb10 / ggml_element_కొలత(src1);
+    స్థిరరాశి size_t s11 = nb11 / ggml_element_కొలత(src1);
+    స్థిరరాశి size_t s12 = nb12 / ggml_element_కొలత(src1);
 
     stream->submit([&](sycl::handler & cgh) {
         sycl::local_accessor<uint8_t, 1> scales_local(sycl::range<1>(nlocal), cgh);
 
-        auto kernel = [=](sycl::nd_item<dims> item_ct1) {
-            const int64_t g   = item_ct1.get_group(dims - 1);
-            const int64_t b   = g % nblk;
-            const int64_t r   = g / nblk;
-            const int64_t i10 = r % ne10;
-            const int64_t i11 = (r / ne10) % ne11;
-            const int64_t i12 = r / (ne10 * ne11);
+        స్వయంచాలక kernel = [=](sycl::nd_అంశం<dims> అంశం_ct1) {
+            స్థిరరాశి int64_t g   = అంశం_ct1.get_సమూహం(dims - 1);
+            స్థిరరాశి int64_t b   = g % nblk;
+            స్థిరరాశి int64_t r   = g / nblk;
+            స్థిరరాశి int64_t i10 = r % ne10;
+            స్థిరరాశి int64_t i11 = (r / ne10) % ne11;
+            స్థిరరాశి int64_t i12 = r / (ne10 * ne11);
 
-            const int64_t i01 = src1_dd[i10*s10 + i11*s11 + i12*s12];
+            స్థిరరాశి int64_t i01 = src1_dd[i10*s10 + i11*s11 + i12*s12];
 
-            float * y = dst_dd + i10*s1 + i11*s2 + i12*s3 + b*QK_K;
-            dequantize_block(y, i01*nblk + b, get_pointer(scales_local), item_ct1, nb);
+            దశాంశం * y = dst_dd + i10*s1 + i11*s2 + i12*s3 + b*QK_K;
+            dequantize_ఖండం(y, i01*nblk + b, get_సూచిక(scales_local), అంశం_ct1, nb);
         };
 
-        if constexpr (dims == 1) {
+        ఒకవేళ constexpr (dims == 1) {
             cgh.parallel_for(sycl::nd_range<1>(sycl::range<1>(ngroups * nthreads), sycl::range<1>(nthreads)), kernel);
-        } else {
+        } లేకపోతే {
             cgh.parallel_for(sycl::nd_range<3>(sycl::range<3>(1, 1, ngroups * nthreads), sycl::range<3>(1, 1, nthreads)), kernel);
         }
     });
 
-    GGML_UNUSED(src0);
+    GGML_వాడని(src0);
 }
 
 // IQ3_S / IQ3_XXS in the persistent reorder layout: one work-group of 32 threads
 // dequantizes one QK_K block of one requested row, reusing the reorder-aware
 // block dequantizers that the dequantize-based mul_mat path already uses.
-template <typename F>
-static void get_rows_sycl_reorder_iq3(ggml_backend_sycl_context & ctx, const ggml_tensor * src0,
-                                      const ggml_tensor * src1, ggml_tensor * dst,
-                                      const int32_t * src1_dd, float * dst_dd,
-                                      F dequantize_block) {
-    GGML_TENSOR_BINARY_OP_LOCALS
+మూస <రకం_పేరు F>
+స్థిర శూన్య get_అడ్డువరుసలు_sycl_reorder_iq3(ggml_backend_sycl_context & ctx, స్థిరరాశి ggml_tensor * src0,
+                                      స్థిరరాశి ggml_tensor * src1, ggml_tensor * dst,
+                                      స్థిరరాశి int32_t * src1_dd, దశాంశం * dst_dd,
+                                      F dequantize_ఖండం) {
+    GGML_TENSOR_ద్విమాన_OP_LOCALS
 
     // the persistent reorder is only installed for 2D weights
     GGML_ASSERT(ne02 == 1 && ne03 == 1);
     GGML_ASSERT(ne00 % QK_K == 0);
 
-    const int64_t nblk    = ne00 / QK_K;
-    const int64_t nb      = nblk * ne01; // blocks in the whole tensor
-    const int64_t ngroups = ne10 * ne11 * ne12 * nblk;
+    స్థిరరాశి int64_t nblk    = ne00 / QK_K;
+    స్థిరరాశి int64_t nb      = nblk * ne01; // blocks in the whole tensor
+    స్థిరరాశి int64_t ngroups = ne10 * ne11 * ne12 * nblk;
 
-    const size_t s1  = nb1 / ggml_element_size(dst);
-    const size_t s2  = nb2 / ggml_element_size(dst);
-    const size_t s3  = nb3 / ggml_element_size(dst);
+    స్థిరరాశి size_t s1  = nb1 / ggml_element_కొలత(dst);
+    స్థిరరాశి size_t s2  = nb2 / ggml_element_కొలత(dst);
+    స్థిరరాశి size_t s3  = nb3 / ggml_element_కొలత(dst);
 
-    const size_t s10 = nb10 / ggml_element_size(src1);
-    const size_t s11 = nb11 / ggml_element_size(src1);
-    const size_t s12 = nb12 / ggml_element_size(src1);
+    స్థిరరాశి size_t s10 = nb10 / ggml_element_కొలత(src1);
+    స్థిరరాశి size_t s11 = nb11 / ggml_element_కొలత(src1);
+    స్థిరరాశి size_t s12 = nb12 / ggml_element_కొలత(src1);
 
-    queue_ptr stream = ctx.stream();
+    వరుస_ptr stream = ctx.stream();
     stream->parallel_for(
         sycl::nd_range<3>(sycl::range<3>(1, 1, ngroups * 32), sycl::range<3>(1, 1, 32)),
-        [=](sycl::nd_item<3> item_ct1) {
-            const int64_t g   = item_ct1.get_group(2);
-            const int64_t b   = g % nblk;
-            const int64_t r   = g / nblk;
-            const int64_t i10 = r % ne10;
-            const int64_t i11 = (r / ne10) % ne11;
-            const int64_t i12 = r / (ne10 * ne11);
+        [=](sycl::nd_అంశం<3> అంశం_ct1) {
+            స్థిరరాశి int64_t g   = అంశం_ct1.get_సమూహం(2);
+            స్థిరరాశి int64_t b   = g % nblk;
+            స్థిరరాశి int64_t r   = g / nblk;
+            స్థిరరాశి int64_t i10 = r % ne10;
+            స్థిరరాశి int64_t i11 = (r / ne10) % ne11;
+            స్థిరరాశి int64_t i12 = r / (ne10 * ne11);
 
-            const int64_t i01 = src1_dd[i10*s10 + i11*s11 + i12*s12];
+            స్థిరరాశి int64_t i01 = src1_dd[i10*s10 + i11*s11 + i12*s12];
 
-            float * y = dst_dd + i10*s1 + i11*s2 + i12*s3 + b*QK_K;
-            dequantize_block(y, i01*nblk + b, item_ct1, nb);
+            దశాంశం * y = dst_dd + i10*s1 + i11*s2 + i12*s3 + b*QK_K;
+            dequantize_ఖండం(y, i01*nblk + b, అంశం_ct1, nb);
         });
 
-    GGML_UNUSED(dst);
+    GGML_వాడని(dst);
 }
 
-template <int qk, int qr, dequantize_kernel_f32_t dq>
-static void get_rows_sycl_f32(ggml_backend_sycl_context & ctx, const ggml_tensor *src0, const ggml_tensor *src1,
-                              ggml_tensor *dst, const void *src0_dd,
-                              const int32_t *src1_dd, float *dst_dd,
-                              queue_ptr stream) {
+మూస <పూర్ణాంకం qk, పూర్ణాంకం qr, dequantize_kernel_f32_t dq>
+స్థిర శూన్య get_అడ్డువరుసలు_sycl_f32(ggml_backend_sycl_context & ctx, స్థిరరాశి ggml_tensor *src0, స్థిరరాశి ggml_tensor *src1,
+                              ggml_tensor *dst, స్థిరరాశి శూన్య *src0_dd,
+                              స్థిరరాశి int32_t *src1_dd, దశాంశం *dst_dd,
+                              వరుస_ptr stream) {
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ద్విమాన_OP_LOCALS
 
-    const sycl::range<3> block_dims(1, 1, SYCL_GET_ROWS_BLOCK_SIZE);
-    const int block_num_x = (ne00 + 2*SYCL_GET_ROWS_BLOCK_SIZE - 1) / (2*SYCL_GET_ROWS_BLOCK_SIZE);
-    const sycl::range<3> block_nums(ne11 * ne12, ne10, block_num_x);
+    స్థిరరాశి sycl::range<3> ఖండం_dims(1, 1, SYCL_GET_అడ్డువరుసలు_ఖండం_కొలత);
+    స్థిరరాశి పూర్ణాంకం ఖండం_అంకె_x = (ne00 + 2*SYCL_GET_అడ్డువరుసలు_ఖండం_కొలత - 1) / (2*SYCL_GET_అడ్డువరుసలు_ఖండం_కొలత);
+    స్థిరరాశి sycl::range<3> ఖండం_nums(ne11 * ne12, ne10, ఖండం_అంకె_x);
 
-    const size_t s1 = nb1 / ggml_element_size(dst);
-    const size_t s2 = nb2 / ggml_element_size(dst);
-    const size_t s3 = nb3 / ggml_element_size(dst);
+    స్థిరరాశి size_t s1 = nb1 / ggml_element_కొలత(dst);
+    స్థిరరాశి size_t s2 = nb2 / ggml_element_కొలత(dst);
+    స్థిరరాశి size_t s3 = nb3 / ggml_element_కొలత(dst);
 
-    const size_t s10 = nb10 / ggml_element_size(src1);
-    const size_t s11 = nb11 / ggml_element_size(src1);
-    const size_t s12 = nb12 / ggml_element_size(src1);
+    స్థిరరాశి size_t s10 = nb10 / ggml_element_కొలత(src1);
+    స్థిరరాశి size_t s11 = nb11 / ggml_element_కొలత(src1);
+    స్థిరరాశి size_t s12 = nb12 / ggml_element_కొలత(src1);
 
     GGML_ASSERT(ne00 % 2 == 0);
 
-    stream->parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                         [=](sycl::nd_item<3> item_ct1) {
-                             k_get_rows_f32<qk, qr, dq>(
+    stream->parallel_for(sycl::nd_range<3>(ఖండం_nums * ఖండం_dims, ఖండం_dims),
+                         [=](sycl::nd_అంశం<3> అంశం_ct1) {
+                             k_get_అడ్డువరుసలు_f32<qk, qr, dq>(
                                  src0_dd, src1_dd, dst_dd, ne00, ne12, s1, s2,
-                                 s3, nb01, nb02, nb03, s10, s11, s12, item_ct1);
+                                 s3, nb01, nb02, nb03, s10, s11, s12, అంశం_ct1);
                          });
 
-    GGML_UNUSED(dst);
-    GGML_UNUSED(ctx);
+    GGML_వాడని(dst);
+    GGML_వాడని(ctx);
 }
 
-template <typename src0_t, typename dst_t>
-static void get_rows_sycl_float(ggml_backend_sycl_context & ctx, const ggml_tensor *src0,
-                                const ggml_tensor *src1, ggml_tensor *dst,
-                                const src0_t *src0_dd, const int32_t *src1_dd,
-                                dst_t *dst_dd, queue_ptr stream) {
+మూస <రకం_పేరు src0_t, రకం_పేరు dst_t>
+స్థిర శూన్య get_అడ్డువరుసలు_sycl_float(ggml_backend_sycl_context & ctx, స్థిరరాశి ggml_tensor *src0,
+                                స్థిరరాశి ggml_tensor *src1, ggml_tensor *dst,
+                                స్థిరరాశి src0_t *src0_dd, స్థిరరాశి int32_t *src1_dd,
+                                dst_t *dst_dd, వరుస_ptr stream) {
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ద్విమాన_OP_LOCALS
 
-    const sycl::range<3> block_dims(1, 1, SYCL_GET_ROWS_BLOCK_SIZE);
-    const int block_num_x = (ne00 + SYCL_GET_ROWS_BLOCK_SIZE - 1) / SYCL_GET_ROWS_BLOCK_SIZE;
-    const sycl::range<3> block_nums(ne11 * ne12, ne10, block_num_x);
+    స్థిరరాశి sycl::range<3> ఖండం_dims(1, 1, SYCL_GET_అడ్డువరుసలు_ఖండం_కొలత);
+    స్థిరరాశి పూర్ణాంకం ఖండం_అంకె_x = (ne00 + SYCL_GET_అడ్డువరుసలు_ఖండం_కొలత - 1) / SYCL_GET_అడ్డువరుసలు_ఖండం_కొలత;
+    స్థిరరాశి sycl::range<3> ఖండం_nums(ne11 * ne12, ne10, ఖండం_అంకె_x);
 
     // strides in elements
     //const size_t s0 = nb0 / ggml_element_size(dst);
-    const size_t s1 = nb1 / ggml_element_size(dst);
-    const size_t s2 = nb2 / ggml_element_size(dst);
-    const size_t s3 = nb3 / ggml_element_size(dst);
+    స్థిరరాశి size_t s1 = nb1 / ggml_element_కొలత(dst);
+    స్థిరరాశి size_t s2 = nb2 / ggml_element_కొలత(dst);
+    స్థిరరాశి size_t s3 = nb3 / ggml_element_కొలత(dst);
 
-    const size_t s10 = nb10 / ggml_element_size(src1);
-    const size_t s11 = nb11 / ggml_element_size(src1);
-    const size_t s12 = nb12 / ggml_element_size(src1);
+    స్థిరరాశి size_t s10 = nb10 / ggml_element_కొలత(src1);
+    స్థిరరాశి size_t s11 = nb11 / ggml_element_కొలత(src1);
+    స్థిరరాశి size_t s12 = nb12 / ggml_element_కొలత(src1);
     //const size_t s13 = nb13 / ggml_element_size(src1);
 
     {
@@ -408,296 +408,296 @@ static void get_rows_sycl_float(ggml_backend_sycl_context & ctx, const ggml_tens
                                      {sycl::aspect::fp16});
 
         stream->parallel_for(
-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
-            [=](sycl::nd_item<3> item_ct1) {
-                k_get_rows_float(src0_dd, src1_dd, dst_dd, ne00, ne12, s1, s2,
-                                 s3, nb01, nb02, nb03, s10, s11, s12, item_ct1);
+            sycl::nd_range<3>(ఖండం_nums * ఖండం_dims, ఖండం_dims),
+            [=](sycl::nd_అంశం<3> అంశం_ct1) {
+                k_get_అడ్డువరుసలు_float(src0_dd, src1_dd, dst_dd, ne00, ne12, s1, s2,
+                                 s3, nb01, nb02, nb03, s10, s11, s12, అంశం_ct1);
             });
     }
 
-    GGML_UNUSED(dst);
-    GGML_UNUSED(ctx);
+    GGML_వాడని(dst);
+    GGML_వాడని(ctx);
 }
 
-template <typename src0_t>
-static void k_get_rows_back_float(const src0_t * src0, const int32_t * src1, float * dst,
-                                  const int64_t ncols, const int64_t nrows_grad_10, const int64_t nrows_grad_11, const int64_t nrows_dst,
-                                  const size_t s01, const size_t s02,
-                                  const size_t s10, const size_t s11,
-                                  const size_t s1,
-                                  const int64_t block_num_y,
-                                  const sycl::nd_item<3> & item_ct1) {
-    const int64_t col = item_ct1.get_group(2) * item_ct1.get_local_range(2) + item_ct1.get_local_id(2);
-    if (col >= ncols) {
-        return;
+మూస <రకం_పేరు src0_t>
+స్థిర శూన్య k_get_అడ్డువరుసలు_వెనుక_float(స్థిరరాశి src0_t * src0, స్థిరరాశి int32_t * src1, దశాంశం * dst,
+                                  స్థిరరాశి int64_t ncols, స్థిరరాశి int64_t nrows_grad_10, స్థిరరాశి int64_t nrows_grad_11, స్థిరరాశి int64_t nrows_dst,
+                                  స్థిరరాశి size_t s01, స్థిరరాశి size_t s02,
+                                  స్థిరరాశి size_t s10, స్థిరరాశి size_t s11,
+                                  స్థిరరాశి size_t s1,
+                                  స్థిరరాశి int64_t ఖండం_అంకె_y,
+                                  స్థిరరాశి sycl::nd_అంశం<3> & అంశం_ct1) {
+    స్థిరరాశి int64_t నిలువు = అంశం_ct1.get_సమూహం(2) * అంశం_ct1.get_local_range(2) + అంశం_ct1.get_local_id(2);
+    ఒకవేళ (నిలువు >= ncols) {
+        తిరిగి;
     }
 
     // block_num_y is clamped, so stride over destination rows like CUDA k_get_rows_back_float
-    for (int64_t dst_row = item_ct1.get_group(1); dst_row < nrows_dst; dst_row += block_num_y) {
-        float sum = 0.0f;
+    కొరకు (int64_t dst_అడ్డువరుస = అంశం_ct1.get_సమూహం(1); dst_అడ్డువరుస < nrows_dst; dst_అడ్డువరుస += ఖండం_అంకె_y) {
+        దశాంశం కూడిక = 0.0f;
 
-        const int64_t nrows_grad_total = nrows_grad_10 * nrows_grad_11;
-        for (int64_t i = 0; i < nrows_grad_total; ++i) {
-            const int64_t i10 = i % nrows_grad_10;
-            const int64_t i11 = i / nrows_grad_10;
-            if (src1[i10*s10 + i11*s11] != dst_row) {
-                continue;
+        స్థిరరాశి int64_t nrows_grad_మొత్తం = nrows_grad_10 * nrows_grad_11;
+        కొరకు (int64_t i = 0; i < nrows_grad_మొత్తం; ++i) {
+            స్థిరరాశి int64_t i10 = i % nrows_grad_10;
+            స్థిరరాశి int64_t i11 = i / nrows_grad_10;
+            ఒకవేళ (src1[i10*s10 + i11*s11] != dst_అడ్డువరుస) {
+                కొనసాగు;
             }
-            sum += (float) src0[col + i10*s01 + i11*s02];
+            కూడిక += (దశాంశం) src0[నిలువు + i10*s01 + i11*s02];
         }
 
-        dst[col + dst_row*s1] = sum;
+        dst[నిలువు + dst_అడ్డువరుస*s1] = కూడిక;
     }
 }
 
-template <typename src0_t>
-static void get_rows_back_sycl_float(ggml_backend_sycl_context & ctx, const ggml_tensor * src0,
-                                     const ggml_tensor * src1, ggml_tensor * dst,
-                                     const src0_t * src0_dd, const int32_t * src1_dd,
-                                     float * dst_dd, queue_ptr stream) {
+మూస <రకం_పేరు src0_t>
+స్థిర శూన్య get_అడ్డువరుసలు_వెనుక_sycl_float(ggml_backend_sycl_context & ctx, స్థిరరాశి ggml_tensor * src0,
+                                     స్థిరరాశి ggml_tensor * src1, ggml_tensor * dst,
+                                     స్థిరరాశి src0_t * src0_dd, స్థిరరాశి int32_t * src1_dd,
+                                     దశాంశం * dst_dd, వరుస_ptr stream) {
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ద్విమాన_OP_LOCALS
 
     GGML_ASSERT(ne02*ne03 == 1);
     GGML_ASSERT(ne12*ne13 == 1);
     GGML_ASSERT(ne2*ne3 == 1);
-    GGML_ASSERT(src0->nb[0] == ggml_type_size(src0->type));
-    GGML_ASSERT(src1->nb[0] == ggml_type_size(src1->type));
-    GGML_ASSERT(dst->nb[0]  == ggml_type_size(dst->type));
+    GGML_ASSERT(src0->nb[0] == ggml_type_కొలత(src0->type));
+    GGML_ASSERT(src1->nb[0] == ggml_type_కొలత(src1->type));
+    GGML_ASSERT(dst->nb[0]  == ggml_type_కొలత(dst->type));
 
-    const int64_t ncols = ne00;
-    const int64_t nrows_grad_10 = ne10;
-    const int64_t nrows_grad_11 = ne11;
-    const int64_t nrows_dst = ne1;
+    స్థిరరాశి int64_t ncols = ne00;
+    స్థిరరాశి int64_t nrows_grad_10 = ne10;
+    స్థిరరాశి int64_t nrows_grad_11 = ne11;
+    స్థిరరాశి int64_t nrows_dst = ne1;
 
-    const size_t s01 = nb01 / sizeof(src0_t);
-    const size_t s02 = nb02 / sizeof(src0_t);
+    స్థిరరాశి size_t s01 = nb01 / పరిమాణం(src0_t);
+    స్థిరరాశి size_t s02 = nb02 / పరిమాణం(src0_t);
 
-    const size_t s10 = nb10 / sizeof(int32_t);
-    const size_t s11 = nb11 / sizeof(int32_t);
+    స్థిరరాశి size_t s10 = nb10 / పరిమాణం(int32_t);
+    స్థిరరాశి size_t s11 = nb11 / పరిమాణం(int32_t);
 
-    const size_t s1 = nb1 / sizeof(float);
+    స్థిరరాశి size_t s1 = nb1 / పరిమాణం(దశాంశం);
 
-    const sycl::range<3> block_dims(1, 1, SYCL_GET_ROWS_BLOCK_SIZE);
-    const int64_t block_num_x = (ncols + SYCL_GET_ROWS_BLOCK_SIZE - 1) / SYCL_GET_ROWS_BLOCK_SIZE;
-    const int64_t block_num_y = std::min<int64_t>(nrows_dst, (int64_t) UINT16_MAX);
-    const sycl::range<3> block_nums(1, block_num_y, block_num_x);
+    స్థిరరాశి sycl::range<3> ఖండం_dims(1, 1, SYCL_GET_అడ్డువరుసలు_ఖండం_కొలత);
+    స్థిరరాశి int64_t ఖండం_అంకె_x = (ncols + SYCL_GET_అడ్డువరుసలు_ఖండం_కొలత - 1) / SYCL_GET_అడ్డువరుసలు_ఖండం_కొలత;
+    స్థిరరాశి int64_t ఖండం_అంకె_y = std::min<int64_t>(nrows_dst, (int64_t) UINT16_MAX);
+    స్థిరరాశి sycl::range<3> ఖండం_nums(1, ఖండం_అంకె_y, ఖండం_అంకె_x);
 
-    stream->parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                         [=](sycl::nd_item<3> item_ct1) {
-                             k_get_rows_back_float(src0_dd, src1_dd, dst_dd,
+    stream->parallel_for(sycl::nd_range<3>(ఖండం_nums * ఖండం_dims, ఖండం_dims),
+                         [=](sycl::nd_అంశం<3> అంశం_ct1) {
+                             k_get_అడ్డువరుసలు_వెనుక_float(src0_dd, src1_dd, dst_dd,
                                                    ncols, nrows_grad_10, nrows_grad_11, nrows_dst,
                                                    s01, s02, s10, s11, s1,
-                                                   block_num_y, item_ct1);
+                                                   ఖండం_అంకె_y, అంశం_ct1);
                          });
 
-    GGML_UNUSED(src0);
-    GGML_UNUSED(src1);
-    GGML_UNUSED(dst);
-    GGML_UNUSED(ctx);
+    GGML_వాడని(src0);
+    GGML_వాడని(src1);
+    GGML_వాడని(dst);
+    GGML_వాడని(ctx);
 }
 
-void ggml_sycl_op_get_rows(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+శూన్య ggml_sycl_op_get_అడ్డువరుసలు(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     GGML_ASSERT(dst->src[1]->type == GGML_TYPE_I32);
     GGML_ASSERT(dst->type == GGML_TYPE_F32 || dst->type == GGML_TYPE_I32 );
 
-    GGML_ASSERT(dst->src[0]->nb[0] == ggml_type_size(dst->src[0]->type));
-    GGML_ASSERT(dst->src[1]->nb[0] == ggml_type_size(dst->src[1]->type));
-    GGML_ASSERT(dst->nb[0] == ggml_type_size(dst->type));
+    GGML_ASSERT(dst->src[0]->nb[0] == ggml_type_కొలత(dst->src[0]->type));
+    GGML_ASSERT(dst->src[1]->nb[0] == ggml_type_కొలత(dst->src[1]->type));
+    GGML_ASSERT(dst->nb[0] == ggml_type_కొలత(dst->type));
 
-    const int32_t * src1_i32 = (const int32_t *) dst->src[1]->data;
+    స్థిరరాశి int32_t * src1_i32 = (స్థిరరాశి int32_t *) dst->src[1]->దత్తాంశం;
     // a weight shared with MUL_MAT (e.g. tied embeddings) can be in the
     // persistent reorder layout (incl. IQ3_S / IQ3_XXS since the SYCL IQ3
     // reorder work)
-    const bool src0_reordered = dst->src[0]->extra &&
-        ((const ggml_tensor_extra_gpu *) dst->src[0]->extra)->optimized_feature.reorder;
+    స్థిరరాశి తార్కిక src0_reordered = dst->src[0]->extra &&
+        ((స్థిరరాశి ggml_tensor_extra_gpu *) dst->src[0]->extra)->optimized_feature.reorder;
     /* TODO: Refactor and remove duplicates */
-    switch (dst->src[0]->type) {
-        case GGML_TYPE_F16:
-            get_rows_sycl_float(ctx, dst->src[0], dst->src[1], dst, (const sycl::half *)dst->src[0]->data,
-                                src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_BF16:
-            get_rows_sycl_float(ctx, dst->src[0], dst->src[1], dst, (const sycl::ext::oneapi::bfloat16 *)dst->src[0]->data,
-                                src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_F32:
-            get_rows_sycl_float(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_I32:
-            get_rows_sycl_float(ctx, dst->src[0], dst->src[1], dst, (const int32_t *)dst->src[0]->data,
-            src1_i32, (int32_t *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_Q1_0:
-            get_rows_sycl<QK1_0, 1, dequantize_q1_0>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_MXFP4:
-            get_rows_sycl<QK_MXFP4, 2, dequantize_mxfp4>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_NVFP4:
-            get_rows_sycl<QK_NVFP4, 1, dequantize_nvfp4>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_IQ2_XXS:
-            get_rows_sycl<QK_K, 1, dequantize_iq2_xxs>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_IQ2_XS:
-            get_rows_sycl<QK_K, 1, dequantize_iq2_xs>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_IQ2_S:
-            get_rows_sycl<QK_K, 1, dequantize_iq2_s>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_IQ3_XXS:
-            if (src0_reordered) {
-                const void * vx = dst->src[0]->data;
-                get_rows_sycl_reorder_iq3(ctx, dst->src[0], dst->src[1], dst, src1_i32, (float *) dst->data,
-                    [=](float * y, int64_t iblk, const sycl::nd_item<3> & item_ct1, int64_t nb) {
-                        dequantize_block_iq3_xxs_reorder(vx, y, iblk, item_ct1, nb,
+    ఎంపిక (dst->src[0]->type) {
+        స్థితి GGML_TYPE_F16:
+            get_అడ్డువరుసలు_sycl_float(ctx, dst->src[0], dst->src[1], dst, (స్థిరరాశి sycl::half *)dst->src[0]->దత్తాంశం,
+                                src1_i32, (దశాంశం *)dst->దత్తాంశం, ctx.stream());
+            ఆపు;
+        స్థితి GGML_TYPE_BF16:
+            get_అడ్డువరుసలు_sycl_float(ctx, dst->src[0], dst->src[1], dst, (స్థిరరాశి sycl::ext::oneapi::bfloat16 *)dst->src[0]->దత్తాంశం,
+                                src1_i32, (దశాంశం *)dst->దత్తాంశం, ctx.stream());
+            ఆపు;
+        స్థితి GGML_TYPE_F32:
+            get_అడ్డువరుసలు_sycl_float(ctx, dst->src[0], dst->src[1], dst, (స్థిరరాశి దశాంశం *)dst->src[0]->దత్తాంశం,
+            src1_i32, (దశాంశం *)dst->దత్తాంశం, ctx.stream());
+            ఆపు;
+        స్థితి GGML_TYPE_I32:
+            get_అడ్డువరుసలు_sycl_float(ctx, dst->src[0], dst->src[1], dst, (స్థిరరాశి int32_t *)dst->src[0]->దత్తాంశం,
+            src1_i32, (int32_t *)dst->దత్తాంశం, ctx.stream());
+            ఆపు;
+        స్థితి GGML_TYPE_Q1_0:
+            get_అడ్డువరుసలు_sycl<QK1_0, 1, dequantize_q1_0>(ctx, dst->src[0], dst->src[1], dst, (స్థిరరాశి దశాంశం *)dst->src[0]->దత్తాంశం,
+            src1_i32, (దశాంశం *)dst->దత్తాంశం, ctx.stream());
+            ఆపు;
+        స్థితి GGML_TYPE_MXFP4:
+            get_అడ్డువరుసలు_sycl<QK_MXFP4, 2, dequantize_mxfp4>(ctx, dst->src[0], dst->src[1], dst, (స్థిరరాశి దశాంశం *)dst->src[0]->దత్తాంశం,
+            src1_i32, (దశాంశం *)dst->దత్తాంశం, ctx.stream());
+            ఆపు;
+        స్థితి GGML_TYPE_NVFP4:
+            get_అడ్డువరుసలు_sycl<QK_NVFP4, 1, dequantize_nvfp4>(ctx, dst->src[0], dst->src[1], dst, (స్థిరరాశి దశాంశం *)dst->src[0]->దత్తాంశం,
+            src1_i32, (దశాంశం *)dst->దత్తాంశం, ctx.stream());
+            ఆపు;
+        స్థితి GGML_TYPE_IQ2_XXS:
+            get_అడ్డువరుసలు_sycl<QK_K, 1, dequantize_iq2_xxs>(ctx, dst->src[0], dst->src[1], dst, (స్థిరరాశి దశాంశం *)dst->src[0]->దత్తాంశం,
+            src1_i32, (దశాంశం *)dst->దత్తాంశం, ctx.stream());
+            ఆపు;
+        స్థితి GGML_TYPE_IQ2_XS:
+            get_అడ్డువరుసలు_sycl<QK_K, 1, dequantize_iq2_xs>(ctx, dst->src[0], dst->src[1], dst, (స్థిరరాశి దశాంశం *)dst->src[0]->దత్తాంశం,
+            src1_i32, (దశాంశం *)dst->దత్తాంశం, ctx.stream());
+            ఆపు;
+        స్థితి GGML_TYPE_IQ2_S:
+            get_అడ్డువరుసలు_sycl<QK_K, 1, dequantize_iq2_s>(ctx, dst->src[0], dst->src[1], dst, (స్థిరరాశి దశాంశం *)dst->src[0]->దత్తాంశం,
+            src1_i32, (దశాంశం *)dst->దత్తాంశం, ctx.stream());
+            ఆపు;
+        స్థితి GGML_TYPE_IQ3_XXS:
+            ఒకవేళ (src0_reordered) {
+                స్థిరరాశి శూన్య * vx = dst->src[0]->దత్తాంశం;
+                get_అడ్డువరుసలు_sycl_reorder_iq3(ctx, dst->src[0], dst->src[1], dst, src1_i32, (దశాంశం *) dst->దత్తాంశం,
+                    [=](దశాంశం * y, int64_t iblk, స్థిరరాశి sycl::nd_అంశం<3> & అంశం_ct1, int64_t nb) {
+                        dequantize_ఖండం_iq3_xxs_reorder(vx, y, iblk, అంశం_ct1, nb,
                                                          iq3xxs_grid, ksigns_iq2xs, kmask_iq2xs);
                     });
-                break;
+                ఆపు;
             }
-            get_rows_sycl<QK_K, 1, dequantize_iq3_xxs>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_IQ1_S:
-            get_rows_sycl<QK_K, 1, dequantize_iq1_s>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_IQ1_M:
-            get_rows_sycl<QK_K, 1, dequantize_iq1_m>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_IQ3_S:
-            if (src0_reordered) {
-                const void * vx = dst->src[0]->data;
-                get_rows_sycl_reorder_iq3(ctx, dst->src[0], dst->src[1], dst, src1_i32, (float *) dst->data,
-                    [=](float * y, int64_t iblk, const sycl::nd_item<3> & item_ct1, int64_t nb) {
-                        dequantize_block_iq3_s_reorder(vx, y, iblk, item_ct1, nb,
+            get_అడ్డువరుసలు_sycl<QK_K, 1, dequantize_iq3_xxs>(ctx, dst->src[0], dst->src[1], dst, (స్థిరరాశి దశాంశం *)dst->src[0]->దత్తాంశం,
+            src1_i32, (దశాంశం *)dst->దత్తాంశం, ctx.stream());
+            ఆపు;
+        స్థితి GGML_TYPE_IQ1_S:
+            get_అడ్డువరుసలు_sycl<QK_K, 1, dequantize_iq1_s>(ctx, dst->src[0], dst->src[1], dst, (స్థిరరాశి దశాంశం *)dst->src[0]->దత్తాంశం,
+            src1_i32, (దశాంశం *)dst->దత్తాంశం, ctx.stream());
+            ఆపు;
+        స్థితి GGML_TYPE_IQ1_M:
+            get_అడ్డువరుసలు_sycl<QK_K, 1, dequantize_iq1_m>(ctx, dst->src[0], dst->src[1], dst, (స్థిరరాశి దశాంశం *)dst->src[0]->దత్తాంశం,
+            src1_i32, (దశాంశం *)dst->దత్తాంశం, ctx.stream());
+            ఆపు;
+        స్థితి GGML_TYPE_IQ3_S:
+            ఒకవేళ (src0_reordered) {
+                స్థిరరాశి శూన్య * vx = dst->src[0]->దత్తాంశం;
+                get_అడ్డువరుసలు_sycl_reorder_iq3(ctx, dst->src[0], dst->src[1], dst, src1_i32, (దశాంశం *) dst->దత్తాంశం,
+                    [=](దశాంశం * y, int64_t iblk, స్థిరరాశి sycl::nd_అంశం<3> & అంశం_ct1, int64_t nb) {
+                        dequantize_ఖండం_iq3_s_reorder(vx, y, iblk, అంశం_ct1, nb,
                                                        kmask_iq2xs, iq3s_grid);
                     });
-                break;
+                ఆపు;
             }
-            get_rows_sycl<QK_K, 1, dequantize_iq3_s>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_IQ4_NL:
-            get_rows_sycl<QK4_NL, 1, dequantize_iq4_nl>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_IQ4_XS:
-            get_rows_sycl<QK_K, 1, dequantize_iq4_xs>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_Q2_K:
-            if (src0_reordered) {
-                const void * vx = dst->src[0]->data;
-                get_rows_sycl_reorder_k<3, 64, 1>(dst->src[0], dst->src[1], dst, src1_i32, (float *)dst->data, ctx.stream(),
-                    [=](float * y, int64_t ib, uint8_t * scales_local, const sycl::nd_item<3> & item_ct1, int64_t nb) {
-                        dequantize_block_q2_K_reorder(vx, y, ib, item_ct1, nb);
-                        GGML_UNUSED(scales_local);
+            get_అడ్డువరుసలు_sycl<QK_K, 1, dequantize_iq3_s>(ctx, dst->src[0], dst->src[1], dst, (స్థిరరాశి దశాంశం *)dst->src[0]->దత్తాంశం,
+            src1_i32, (దశాంశం *)dst->దత్తాంశం, ctx.stream());
+            ఆపు;
+        స్థితి GGML_TYPE_IQ4_NL:
+            get_అడ్డువరుసలు_sycl<QK4_NL, 1, dequantize_iq4_nl>(ctx, dst->src[0], dst->src[1], dst, (స్థిరరాశి దశాంశం *)dst->src[0]->దత్తాంశం,
+            src1_i32, (దశాంశం *)dst->దత్తాంశం, ctx.stream());
+            ఆపు;
+        స్థితి GGML_TYPE_IQ4_XS:
+            get_అడ్డువరుసలు_sycl<QK_K, 1, dequantize_iq4_xs>(ctx, dst->src[0], dst->src[1], dst, (స్థిరరాశి దశాంశం *)dst->src[0]->దత్తాంశం,
+            src1_i32, (దశాంశం *)dst->దత్తాంశం, ctx.stream());
+            ఆపు;
+        స్థితి GGML_TYPE_Q2_K:
+            ఒకవేళ (src0_reordered) {
+                స్థిరరాశి శూన్య * vx = dst->src[0]->దత్తాంశం;
+                get_అడ్డువరుసలు_sycl_reorder_k<3, 64, 1>(dst->src[0], dst->src[1], dst, src1_i32, (దశాంశం *)dst->దత్తాంశం, ctx.stream(),
+                    [=](దశాంశం * y, int64_t ib, uint8_t * scales_local, స్థిరరాశి sycl::nd_అంశం<3> & అంశం_ct1, int64_t nb) {
+                        dequantize_ఖండం_q2_K_reorder(vx, y, ib, అంశం_ct1, nb);
+                        GGML_వాడని(scales_local);
                     });
-                break;
+                ఆపు;
             }
-            get_rows_sycl_f32<QK_K, 1, dequantize_q2_K_f32>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_Q3_K:
-            if (src0_reordered) {
-                const void * vx = dst->src[0]->data;
-                get_rows_sycl_reorder_k<3, 64, 1>(dst->src[0], dst->src[1], dst, src1_i32, (float *)dst->data, ctx.stream(),
-                    [=](float * y, int64_t ib, uint8_t * scales_local, const sycl::nd_item<3> & item_ct1, int64_t nb) {
-                        dequantize_block_q3_K_reorder(vx, y, ib, item_ct1, nb);
-                        GGML_UNUSED(scales_local);
+            get_అడ్డువరుసలు_sycl_f32<QK_K, 1, dequantize_q2_K_f32>(ctx, dst->src[0], dst->src[1], dst, (స్థిరరాశి దశాంశం *)dst->src[0]->దత్తాంశం,
+            src1_i32, (దశాంశం *)dst->దత్తాంశం, ctx.stream());
+            ఆపు;
+        స్థితి GGML_TYPE_Q3_K:
+            ఒకవేళ (src0_reordered) {
+                స్థిరరాశి శూన్య * vx = dst->src[0]->దత్తాంశం;
+                get_అడ్డువరుసలు_sycl_reorder_k<3, 64, 1>(dst->src[0], dst->src[1], dst, src1_i32, (దశాంశం *)dst->దత్తాంశం, ctx.stream(),
+                    [=](దశాంశం * y, int64_t ib, uint8_t * scales_local, స్థిరరాశి sycl::nd_అంశం<3> & అంశం_ct1, int64_t nb) {
+                        dequantize_ఖండం_q3_K_reorder(vx, y, ib, అంశం_ct1, nb);
+                        GGML_వాడని(scales_local);
                     });
-                break;
+                ఆపు;
             }
-            get_rows_sycl<QK_K, 1, dequantize_q3_K>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_Q4_0:
-            if (src0_reordered) {
-                get_rows_sycl_reorder<QK4_0, QR4_0, dequantize_q4_0_reorder>(dst->src[0], dst->src[1], dst, dst->src[0]->data,
-                src1_i32, (float *)dst->data, ctx.stream());
-                break;
+            get_అడ్డువరుసలు_sycl<QK_K, 1, dequantize_q3_K>(ctx, dst->src[0], dst->src[1], dst, (స్థిరరాశి దశాంశం *)dst->src[0]->దత్తాంశం,
+            src1_i32, (దశాంశం *)dst->దత్తాంశం, ctx.stream());
+            ఆపు;
+        స్థితి GGML_TYPE_Q4_0:
+            ఒకవేళ (src0_reordered) {
+                get_అడ్డువరుసలు_sycl_reorder<QK4_0, QR4_0, dequantize_q4_0_reorder>(dst->src[0], dst->src[1], dst, dst->src[0]->దత్తాంశం,
+                src1_i32, (దశాంశం *)dst->దత్తాంశం, ctx.stream());
+                ఆపు;
             }
-            get_rows_sycl<QK4_0, QR4_0, dequantize_q4_0>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_Q4_1:
-            get_rows_sycl<QK4_1, QR4_1, dequantize_q4_1>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_Q4_K:
-            if (src0_reordered) {
-                const void * vx = dst->src[0]->data;
-                get_rows_sycl_reorder_k<1, 32, K_SCALE_SIZE>(dst->src[0], dst->src[1], dst, src1_i32, (float *)dst->data, ctx.stream(),
-                    [=](float * y, int64_t ib, uint8_t * scales_local, const sycl::nd_item<1> & item_ct1, int64_t nb) {
-                        dequantize_block_q4_K_reorder(vx, y, ib, scales_local, item_ct1, nb);
+            get_అడ్డువరుసలు_sycl<QK4_0, QR4_0, dequantize_q4_0>(ctx, dst->src[0], dst->src[1], dst, (స్థిరరాశి దశాంశం *)dst->src[0]->దత్తాంశం,
+            src1_i32, (దశాంశం *)dst->దత్తాంశం, ctx.stream());
+            ఆపు;
+        స్థితి GGML_TYPE_Q4_1:
+            get_అడ్డువరుసలు_sycl<QK4_1, QR4_1, dequantize_q4_1>(ctx, dst->src[0], dst->src[1], dst, (స్థిరరాశి దశాంశం *)dst->src[0]->దత్తాంశం,
+            src1_i32, (దశాంశం *)dst->దత్తాంశం, ctx.stream());
+            ఆపు;
+        స్థితి GGML_TYPE_Q4_K:
+            ఒకవేళ (src0_reordered) {
+                స్థిరరాశి శూన్య * vx = dst->src[0]->దత్తాంశం;
+                get_అడ్డువరుసలు_sycl_reorder_k<1, 32, K_SCALE_కొలత>(dst->src[0], dst->src[1], dst, src1_i32, (దశాంశం *)dst->దత్తాంశం, ctx.stream(),
+                    [=](దశాంశం * y, int64_t ib, uint8_t * scales_local, స్థిరరాశి sycl::nd_అంశం<1> & అంశం_ct1, int64_t nb) {
+                        dequantize_ఖండం_q4_K_reorder(vx, y, ib, scales_local, అంశం_ct1, nb);
                     });
-                break;
+                ఆపు;
             }
-            get_rows_sycl_f32<QK_K, 1, dequantize_q4_K_f32>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_Q5_0:
-            get_rows_sycl<QK5_0, QR5_0, dequantize_q5_0>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_Q5_1:
-            get_rows_sycl<QK5_1, QR5_1, dequantize_q5_1>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_Q5_K:
-            if (src0_reordered) {
-                const void * vx = dst->src[0]->data;
-                get_rows_sycl_reorder_k<3, 64, K_SCALE_SIZE>(dst->src[0], dst->src[1], dst, src1_i32, (float *)dst->data, ctx.stream(),
-                    [=](float * y, int64_t ib, uint8_t * scales_local, const sycl::nd_item<3> & item_ct1, int64_t nb) {
-                        dequantize_block_q5_K_reorder(vx, y, ib, scales_local, item_ct1, nb);
+            get_అడ్డువరుసలు_sycl_f32<QK_K, 1, dequantize_q4_K_f32>(ctx, dst->src[0], dst->src[1], dst, (స్థిరరాశి దశాంశం *)dst->src[0]->దత్తాంశం,
+            src1_i32, (దశాంశం *)dst->దత్తాంశం, ctx.stream());
+            ఆపు;
+        స్థితి GGML_TYPE_Q5_0:
+            get_అడ్డువరుసలు_sycl<QK5_0, QR5_0, dequantize_q5_0>(ctx, dst->src[0], dst->src[1], dst, (స్థిరరాశి దశాంశం *)dst->src[0]->దత్తాంశం,
+            src1_i32, (దశాంశం *)dst->దత్తాంశం, ctx.stream());
+            ఆపు;
+        స్థితి GGML_TYPE_Q5_1:
+            get_అడ్డువరుసలు_sycl<QK5_1, QR5_1, dequantize_q5_1>(ctx, dst->src[0], dst->src[1], dst, (స్థిరరాశి దశాంశం *)dst->src[0]->దత్తాంశం,
+            src1_i32, (దశాంశం *)dst->దత్తాంశం, ctx.stream());
+            ఆపు;
+        స్థితి GGML_TYPE_Q5_K:
+            ఒకవేళ (src0_reordered) {
+                స్థిరరాశి శూన్య * vx = dst->src[0]->దత్తాంశం;
+                get_అడ్డువరుసలు_sycl_reorder_k<3, 64, K_SCALE_కొలత>(dst->src[0], dst->src[1], dst, src1_i32, (దశాంశం *)dst->దత్తాంశం, ctx.stream(),
+                    [=](దశాంశం * y, int64_t ib, uint8_t * scales_local, స్థిరరాశి sycl::nd_అంశం<3> & అంశం_ct1, int64_t nb) {
+                        dequantize_ఖండం_q5_K_reorder(vx, y, ib, scales_local, అంశం_ct1, nb);
                     });
-                break;
+                ఆపు;
             }
-            get_rows_sycl_f32<QK_K, 1, dequantize_q5_K_f32>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_Q6_K:
-            if (src0_reordered) {
-                const void * vx = dst->src[0]->data;
-                get_rows_sycl_reorder_k<3, 64, 1>(dst->src[0], dst->src[1], dst, src1_i32, (float *)dst->data, ctx.stream(),
-                    [=](float * y, int64_t ib, uint8_t * scales_local, const sycl::nd_item<3> & item_ct1, int64_t nb) {
-                        dequantize_block_q6_K_reorder(vx, y, ib, item_ct1, nb);
-                        GGML_UNUSED(scales_local);
+            get_అడ్డువరుసలు_sycl_f32<QK_K, 1, dequantize_q5_K_f32>(ctx, dst->src[0], dst->src[1], dst, (స్థిరరాశి దశాంశం *)dst->src[0]->దత్తాంశం,
+            src1_i32, (దశాంశం *)dst->దత్తాంశం, ctx.stream());
+            ఆపు;
+        స్థితి GGML_TYPE_Q6_K:
+            ఒకవేళ (src0_reordered) {
+                స్థిరరాశి శూన్య * vx = dst->src[0]->దత్తాంశం;
+                get_అడ్డువరుసలు_sycl_reorder_k<3, 64, 1>(dst->src[0], dst->src[1], dst, src1_i32, (దశాంశం *)dst->దత్తాంశం, ctx.stream(),
+                    [=](దశాంశం * y, int64_t ib, uint8_t * scales_local, స్థిరరాశి sycl::nd_అంశం<3> & అంశం_ct1, int64_t nb) {
+                        dequantize_ఖండం_q6_K_reorder(vx, y, ib, అంశం_ct1, nb);
+                        GGML_వాడని(scales_local);
                     });
-                break;
+                ఆపు;
             }
-            get_rows_sycl<QK_K, 1, dequantize_q6_K>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_Q8_0:
-            if (src0_reordered) {
-                get_rows_sycl_reorder<QK8_0, QR8_0, dequantize_q8_0_reorder>(dst->src[0], dst->src[1], dst, dst->src[0]->data,
-                src1_i32, (float *)dst->data, ctx.stream());
-                break;
+            get_అడ్డువరుసలు_sycl<QK_K, 1, dequantize_q6_K>(ctx, dst->src[0], dst->src[1], dst, (స్థిరరాశి దశాంశం *)dst->src[0]->దత్తాంశం,
+            src1_i32, (దశాంశం *)dst->దత్తాంశం, ctx.stream());
+            ఆపు;
+        స్థితి GGML_TYPE_Q8_0:
+            ఒకవేళ (src0_reordered) {
+                get_అడ్డువరుసలు_sycl_reorder<QK8_0, QR8_0, dequantize_q8_0_reorder>(dst->src[0], dst->src[1], dst, dst->src[0]->దత్తాంశం,
+                src1_i32, (దశాంశం *)dst->దత్తాంశం, ctx.stream());
+                ఆపు;
             }
-            get_rows_sycl<QK8_0, QR8_0, dequantize_q8_0>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        default:
+            get_అడ్డువరుసలు_sycl<QK8_0, QR8_0, dequantize_q8_0>(ctx, dst->src[0], dst->src[1], dst, (స్థిరరాశి దశాంశం *)dst->src[0]->దత్తాంశం,
+            src1_i32, (దశాంశం *)dst->దత్తాంశం, ctx.stream());
+            ఆపు;
+        అప్రమేయ:
             // TODO: k-quants
             GGML_LOG_ERROR("%s: unsupported type: %s\n", __func__, ggml_type_name(dst->src[0]->type));
             GGML_ABORT("fatal error");
     }
 }
 
-void ggml_sycl_op_get_rows_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+శూన్య ggml_sycl_op_get_అడ్డువరుసలు_వెనుక(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    స్థిరరాశి ggml_tensor * src0 = dst->src[0];
+    స్థిరరాశి ggml_tensor * src1 = dst->src[1];
 
     GGML_ASSERT(src0->type == GGML_TYPE_F32 || src0->type == GGML_TYPE_F16);
     GGML_ASSERT(src1->type == GGML_TYPE_I32);
@@ -705,18 +705,18 @@ void ggml_sycl_op_get_rows_back(ggml_backend_sycl_context & ctx, ggml_tensor * d
 
     GGML_ASSERT(ggml_is_contiguous(dst));
 
-    switch (src0->type) {
-        case GGML_TYPE_F16:
-            get_rows_back_sycl_float(ctx, src0, src1, dst, (const sycl::half *) src0->data,
-                                     (const int32_t *) src1->data, (float *) dst->data,
+    ఎంపిక (src0->type) {
+        స్థితి GGML_TYPE_F16:
+            get_అడ్డువరుసలు_వెనుక_sycl_float(ctx, src0, src1, dst, (స్థిరరాశి sycl::half *) src0->దత్తాంశం,
+                                     (స్థిరరాశి int32_t *) src1->దత్తాంశం, (దశాంశం *) dst->దత్తాంశం,
                                      ctx.stream());
-            break;
-        case GGML_TYPE_F32:
-            get_rows_back_sycl_float(ctx, src0, src1, dst, (const float *) src0->data,
-                                     (const int32_t *) src1->data, (float *) dst->data,
+            ఆపు;
+        స్థితి GGML_TYPE_F32:
+            get_అడ్డువరుసలు_వెనుక_sycl_float(ctx, src0, src1, dst, (స్థిరరాశి దశాంశం *) src0->దత్తాంశం,
+                                     (స్థిరరాశి int32_t *) src1->దత్తాంశం, (దశాంశం *) dst->దత్తాంశం,
                                      ctx.stream());
-            break;
-        default:
+            ఆపు;
+        అప్రమేయ:
             GGML_ABORT("%s: unsupported src0 type: %s\n", __func__, ggml_type_name(src0->type));
     }
 }

@@ -1,19 +1,19 @@
-#ifndef SYCL_HW_HPP
-#define SYCL_HW_HPP
+#నిర్వచితం_కాకపోతే SYCL_HW_HPP
+#నిర్వచించు SYCL_HW_HPP
 
-#include <algorithm>
-#include <stdio.h>
-#include <vector>
-#include <map>
+#అన్తర్భావ <algorithm>
+#అన్తర్భావ <stdio.h>
+#అన్తర్భావ <vector>
+#అన్తర్భావ <map>
 
-#include <sycl/sycl.hpp>
+#అన్తర్భావ <sycl/sycl.hpp>
 
-namespace syclex = sycl::ext::oneapi::experimental;
-using gpu_arch = sycl::ext::oneapi::experimental::architecture;
+నామాకాశ syclex = sycl::ext::oneapi::experimental;
+ఉపయోగించి gpu_arch = sycl::ext::oneapi::experimental::architecture;
 
 // It's used to mark the GPU computing capacity
 // The value must flow the order of performance.
-enum sycl_intel_gpu_family {
+గణన sycl_intel_gpu_family {
   GPU_FAMILY_UKNOWN = -1,
   // iGPU without Xe core, before Meteor Lake iGPU(Xe)
   GPU_FAMILY_IGPU_NON_XE = 0,
@@ -25,9 +25,9 @@ enum sycl_intel_gpu_family {
   GPU_FAMILY_DGPU_CLOUD = 3
 };
 
-struct sycl_hw_info {
+నిర్మాణం sycl_hw_info {
   syclex::architecture arch;
-  const char* arch_name;
+  స్థిరరాశి అక్షరం* arch_name;
   int32_t device_id;
   std::string name;
   sycl_intel_gpu_family gpu_family;
@@ -35,4 +35,4 @@ struct sycl_hw_info {
 
 sycl_hw_info get_device_hw_info(sycl::device *device_ptr);
 
-#endif // SYCL_HW_HPP
+#అయితే_ముగింపు // SYCL_HW_HPP

@@ -1,5 +1,5 @@
-#pragma once
+#సూచన once
 
-#include "common.hpp"
+#అన్తర్భావ "common.hpp"
 
-void ggml_sycl_cumsum(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+శూన్య ggml_sycl_cumsum(ggml_backend_sycl_context & ctx, ggml_tensor * dst);

@@ -1,148 +1,148 @@
-#include "cpy.hpp"
+#అన్తర్భావ "cpy.hpp"
 
-#include <float.h>
-#include <vector>
+#అన్తర్భావ <float.h>
+#అన్తర్భావ <vector>
 
-#include "dequantize.hpp"
-#include "ggml-sycl/common.hpp"
-#include "ggml-sycl/presets.hpp"
-#include "ggml.h"
+#అన్తర్భావ "dequantize.hpp"
+#అన్తర్భావ "ggml-sycl/common.hpp"
+#అన్తర్భావ "ggml-sycl/presets.hpp"
+#అన్తర్భావ "ggml.h"
 
-static void cpy_1_f32_f32(const char * cxi, char * cdsti) {
-    const float * xi   = (const float *) cxi;
-    float *       dsti = (float *) cdsti;
+స్థిర శూన్య cpy_1_f32_f32(స్థిరరాశి అక్షరం * cxi, అక్షరం * cdsti) {
+    స్థిరరాశి దశాంశం * xi   = (స్థిరరాశి దశాంశం *) cxi;
+    దశాంశం *       dsti = (దశాంశం *) cdsti;
 
     *dsti = *xi;
 }
 
-static void cpy_1_f32_f16(const char * cxi, char * cdsti) {
-    const float * xi   = (const float *) cxi;
+స్థిర శూన్య cpy_1_f32_f16(స్థిరరాశి అక్షరం * cxi, అక్షరం * cdsti) {
+    స్థిరరాశి దశాంశం * xi   = (స్థిరరాశి దశాంశం *) cxi;
     sycl::half *  dsti = (sycl::half *) cdsti;
 
-    *dsti = sycl::vec<float, 1>(*xi).convert<sycl::half, sycl::rounding_mode::automatic>()[0];
+    *dsti = sycl::vec<దశాంశం, 1>(*xi).convert<sycl::half, sycl::rounding_బహుళకం::automatic>()[0];
 }
 
-static void cpy_1_f16_f16(const char * cxi, char * cdsti) {
-    const sycl::half * xi   = (const sycl::half *) cxi;
+స్థిర శూన్య cpy_1_f16_f16(స్థిరరాశి అక్షరం * cxi, అక్షరం * cdsti) {
+    స్థిరరాశి sycl::half * xi   = (స్థిరరాశి sycl::half *) cxi;
     sycl::half *       dsti = (sycl::half *) cdsti;
 
     *dsti = *xi;
 }
 
-static void cpy_1_f16_f32(const char * cxi, char * cdsti) {
-    const sycl::half * xi   = (const sycl::half *) cxi;
-    float *            dsti = (float *) cdsti;
+స్థిర శూన్య cpy_1_f16_f32(స్థిరరాశి అక్షరం * cxi, అక్షరం * cdsti) {
+    స్థిరరాశి sycl::half * xi   = (స్థిరరాశి sycl::half *) cxi;
+    దశాంశం *            dsti = (దశాంశం *) cdsti;
 
     *dsti = *xi;
 }
 
-static void cpy_1_i16_i16(const char * cxi, char * cdsti) {
-    const int16_t * xi   = (const int16_t *) cxi;
+స్థిర శూన్య cpy_1_i16_i16(స్థిరరాశి అక్షరం * cxi, అక్షరం * cdsti) {
+    స్థిరరాశి int16_t * xi   = (స్థిరరాశి int16_t *) cxi;
     int16_t *       dsti = (int16_t *) cdsti;
 
     *dsti = *xi;
 }
 
-static void cpy_1_i32_i32(const char * cxi, char * cdsti) {
-    const int32_t * xi   = (const int32_t *) cxi;
+స్థిర శూన్య cpy_1_i32_i32(స్థిరరాశి అక్షరం * cxi, అక్షరం * cdsti) {
+    స్థిరరాశి int32_t * xi   = (స్థిరరాశి int32_t *) cxi;
     int32_t *       dsti = (int32_t *) cdsti;
 
     *dsti = *xi;
 }
 
-static void cpy_1_f32_i32(const char * cxi, char * cdsti) {
-    const float * xi     = (const float *) cxi;
+స్థిర శూన్య cpy_1_f32_i32(స్థిరరాశి అక్షరం * cxi, అక్షరం * cdsti) {
+    స్థిరరాశి దశాంశం * xi     = (స్థిరరాశి దశాంశం *) cxi;
     int32_t *     dsti   = (int32_t *) cdsti;
 
     *dsti = (int32_t) *xi;
 }
 
-static void cpy_1_i32_f32(const char * cxi, char * cdsti) {
-    const int32_t * xi   = (const int32_t *) cxi;
-    float *         dsti = (float *) cdsti;
+స్థిర శూన్య cpy_1_i32_f32(స్థిరరాశి అక్షరం * cxi, అక్షరం * cdsti) {
+    స్థిరరాశి int32_t * xi   = (స్థిరరాశి int32_t *) cxi;
+    దశాంశం *         dsti = (దశాంశం *) cdsti;
 
-    *dsti = (float) *xi;
+    *dsti = (దశాంశం) *xi;
 }
 
-#ifdef GGML_SYCL_HAS_BF16
-static void cpy_1_f32_bf16(const char * cxi, char * cdsti) {
-    const float * xi   = (const float *) cxi;
+#నిర్వచితమైతే GGML_SYCL_HAS_BF16
+స్థిర శూన్య cpy_1_f32_bf16(స్థిరరాశి అక్షరం * cxi, అక్షరం * cdsti) {
+    స్థిరరాశి దశాంశం * xi   = (స్థిరరాశి దశాంశం *) cxi;
     sycl::ext::oneapi::bfloat16 *  dsti = (sycl::ext::oneapi::bfloat16 *) cdsti;
 
     *dsti = sycl::ext::oneapi::bfloat16(*xi);
 }
 
-static void cpy_1_bf16_f32(const char * cxi, char * cdsti) {
-    const sycl::ext::oneapi::bfloat16 * xi   = (const sycl::ext::oneapi::bfloat16 *) cxi;
-    float *            dsti = (float *) cdsti;
+స్థిర శూన్య cpy_1_bf16_f32(స్థిరరాశి అక్షరం * cxi, అక్షరం * cdsti) {
+    స్థిరరాశి sycl::ext::oneapi::bfloat16 * xi   = (స్థిరరాశి sycl::ext::oneapi::bfloat16 *) cxi;
+    దశాంశం *            dsti = (దశాంశం *) cdsti;
 
-    *dsti = static_cast<float>(*xi);
+    *dsti = static_cast<దశాంశం>(*xi);
 }
 
-static void cpy_1_bf16_bf16(const char * cxi, char * cdsti) {
-    const sycl::ext::oneapi::bfloat16 * xi   = (const sycl::ext::oneapi::bfloat16 *) cxi;
+స్థిర శూన్య cpy_1_bf16_bf16(స్థిరరాశి అక్షరం * cxi, అక్షరం * cdsti) {
+    స్థిరరాశి sycl::ext::oneapi::bfloat16 * xi   = (స్థిరరాశి sycl::ext::oneapi::bfloat16 *) cxi;
     sycl::ext::oneapi::bfloat16 *       dsti = (sycl::ext::oneapi::bfloat16 *) cdsti;
 
     *dsti = *xi;
 }
 
-static void cpy_1_f16_bf16(const char * cxi, char * cdsti) {
-    const sycl::half * xi   = (const sycl::half *) cxi;
+స్థిర శూన్య cpy_1_f16_bf16(స్థిరరాశి అక్షరం * cxi, అక్షరం * cdsti) {
+    స్థిరరాశి sycl::half * xi   = (స్థిరరాశి sycl::half *) cxi;
     sycl::ext::oneapi::bfloat16 *  dsti = (sycl::ext::oneapi::bfloat16 *) cdsti;
 
-    *dsti = sycl::ext::oneapi::bfloat16(static_cast<float>(*xi));
+    *dsti = sycl::ext::oneapi::bfloat16(static_cast<దశాంశం>(*xi));
 }
 
-static void cpy_1_bf16_f16(const char * cxi, char * cdsti) {
-    const sycl::ext::oneapi::bfloat16 * xi   = (const sycl::ext::oneapi::bfloat16 *) cxi;
+స్థిర శూన్య cpy_1_bf16_f16(స్థిరరాశి అక్షరం * cxi, అక్షరం * cdsti) {
+    స్థిరరాశి sycl::ext::oneapi::bfloat16 * xi   = (స్థిరరాశి sycl::ext::oneapi::bfloat16 *) cxi;
     sycl::half *            dsti = (sycl::half *) cdsti;
 
-    *dsti = sycl::half(static_cast<float>(*xi));
+    *dsti = sycl::half(static_cast<దశాంశం>(*xi));
 }
-#endif
+#అయితే_ముగింపు
 
-template <cpy_kernel_t cpy_1>
-static void cpy_f32_f16(const char * cx, char * cdst, const int ne, const int ne00, const int ne01, const int ne02,
-                        const int nb00, const int nb01, const int nb02, const int nb03, const int ne10, const int ne11,
-                        const int ne12, const int nb10, const int nb11, const int nb12, const int nb13,
-                        const sycl::nd_item<3> & item_ct1) {
-    const int i = item_ct1.get_local_range(2) * item_ct1.get_group(2) + item_ct1.get_local_id(2);
+మూస <cpy_kernel_t cpy_1>
+స్థిర శూన్య cpy_f32_f16(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01, స్థిరరాశి పూర్ణాంకం ne02,
+                        స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03, స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11,
+                        స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11, స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13,
+                        స్థిరరాశి sycl::nd_అంశం<3> & అంశం_ct1) {
+    స్థిరరాశి పూర్ణాంకం i = అంశం_ct1.get_local_range(2) * అంశం_ct1.get_సమూహం(2) + అంశం_ct1.get_local_id(2);
 
-    if (i >= ne) {
-        return;
+    ఒకవేళ (i >= ne) {
+        తిరిగి;
     }
 
     // determine indices i02/i12, i01/i11, i00/i10 as a function of index i of flattened tensor
     // then combine those indices with the corresponding byte offsets to get the total offsets
-    const int i03      = i / (ne00 * ne01 * ne02);
-    const int i02      = (i - i03 * ne00 * ne01 * ne02) / (ne00 * ne01);
-    const int i01      = (i - i03 * ne00 * ne01 * ne02 - i02 * ne01 * ne00) / ne00;
-    const int i00      = i - i03 * ne00 * ne01 * ne02 - i02 * ne01 * ne00 - i01 * ne00;
-    const int x_offset = i00 * nb00 + i01 * nb01 + i02 * nb02 + i03 * nb03;
+    స్థిరరాశి పూర్ణాంకం i03      = i / (ne00 * ne01 * ne02);
+    స్థిరరాశి పూర్ణాంకం i02      = (i - i03 * ne00 * ne01 * ne02) / (ne00 * ne01);
+    స్థిరరాశి పూర్ణాంకం i01      = (i - i03 * ne00 * ne01 * ne02 - i02 * ne01 * ne00) / ne00;
+    స్థిరరాశి పూర్ణాంకం i00      = i - i03 * ne00 * ne01 * ne02 - i02 * ne01 * ne00 - i01 * ne00;
+    స్థిరరాశి పూర్ణాంకం x_స్థానభ్రంశం = i00 * nb00 + i01 * nb01 + i02 * nb02 + i03 * nb03;
 
-    const int i13        = i / (ne10 * ne11 * ne12);
-    const int i12        = (i - i13 * ne10 * ne11 * ne12) / (ne10 * ne11);
-    const int i11        = (i - i13 * ne10 * ne11 * ne12 - i12 * ne10 * ne11) / ne10;
-    const int i10        = i - i13 * ne10 * ne11 * ne12 - i12 * ne10 * ne11 - i11 * ne10;
-    const int dst_offset = i10 * nb10 + i11 * nb11 + i12 * nb12 + i13 * nb13;
+    స్థిరరాశి పూర్ణాంకం i13        = i / (ne10 * ne11 * ne12);
+    స్థిరరాశి పూర్ణాంకం i12        = (i - i13 * ne10 * ne11 * ne12) / (ne10 * ne11);
+    స్థిరరాశి పూర్ణాంకం i11        = (i - i13 * ne10 * ne11 * ne12 - i12 * ne10 * ne11) / ne10;
+    స్థిరరాశి పూర్ణాంకం i10        = i - i13 * ne10 * ne11 * ne12 - i12 * ne10 * ne11 - i11 * ne10;
+    స్థిరరాశి పూర్ణాంకం dst_స్థానభ్రంశం = i10 * nb10 + i11 * nb11 + i12 * nb12 + i13 * nb13;
 
-    cpy_1(cx + x_offset, cdst + dst_offset);
+    cpy_1(cx + x_స్థానభ్రంశం, cdst + dst_స్థానభ్రంశం);
 }
 
 
 /* quantized type same copy */
-template<typename T>
-static void cpy_blck_q_q(const char * cxi, char * cdsti) {
-    const T * xi = (const T *) cxi;
+మూస<రకం_పేరు T>
+స్థిర శూన్య cpy_blck_q_q(స్థిరరాశి అక్షరం * cxi, అక్షరం * cdsti) {
+    స్థిరరాశి T * xi = (స్థిరరాశి T *) cxi;
     T * dsti = (T *) cdsti;
     *dsti = *xi;
 }
 
 
-static void cpy_blck_q8_0_f32(const char * cxi, char * cdsti) {
-    float * cdstf = (float *) (cdsti);
+స్థిర శూన్య cpy_blck_q8_0_f32(స్థిరరాశి అక్షరం * cxi, అక్షరం * cdsti) {
+    దశాంశం * cdstf = (దశాంశం *) (cdsti);
 
-    for (int j = 0; j < QK8_0; j += 2) {
+    కొరకు (పూర్ణాంకం j = 0; j < QK8_0; j += 2) {
         dfloat2 dq;
         dequantize_q8_0(cxi, 0, j, dq);
         *(cdstf + j)     = dq.x();
@@ -150,26 +150,26 @@ static void cpy_blck_q8_0_f32(const char * cxi, char * cdsti) {
     }
 }
 
-static void cpy_blck_q2_0_f32(const char * cxi, char * cdsti) {
-    const block_q2_0 * xi = (const block_q2_0 *) cxi;
-    float * cdstf = (float *) cdsti;
+స్థిర శూన్య cpy_blck_q2_0_f32(స్థిరరాశి అక్షరం * cxi, అక్షరం * cdsti) {
+    స్థిరరాశి ఖండం_q2_0 * xi = (స్థిరరాశి ఖండం_q2_0 *) cxi;
+    దశాంశం * cdstf = (దశాంశం *) cdsti;
 
-    const float d = xi->d;
+    స్థిరరాశి దశాంశం d = xi->d;
 
-    for (int j = 0; j < QK2_0; ++j) {
-        const int byte_index = j / 4;
-        const int bit_offset = (j % 4) * 2;
-        const int q = (xi->qs[byte_index] >> bit_offset) & 0x3;
-        cdstf[j] = (float) (q - 1) * d;
+    కొరకు (పూర్ణాంకం j = 0; j < QK2_0; ++j) {
+        స్థిరరాశి పూర్ణాంకం byte_సూచీ = j / 4;
+        స్థిరరాశి పూర్ణాంకం బిట్టు_స్థానభ్రంశం = (j % 4) * 2;
+        స్థిరరాశి పూర్ణాంకం q = (xi->qs[byte_సూచీ] >> బిట్టు_స్థానభ్రంశం) & 0x3;
+        cdstf[j] = (దశాంశం) (q - 1) * d;
     }
 }
 
 
 
-template <dequantize_kernel_t dequant, int qk> static void cpy_blck_q_f32(const char * cxi, char * cdsti) {
-    float * cdstf = (float *) (cdsti);
+మూస <dequantize_kernel_t dequant, పూర్ణాంకం qk> స్థిర శూన్య cpy_blck_q_f32(స్థిరరాశి అక్షరం * cxi, అక్షరం * cdsti) {
+    దశాంశం * cdstf = (దశాంశం *) (cdsti);
 
-    for (int j = 0; j < qk / 2; j++) {
+    కొరకు (పూర్ణాంకం j = 0; j < qk / 2; j++) {
         dfloat2 dq;
         dequant(cxi, 0, j, dq);
         *(cdstf + j)          = dq.x();
@@ -178,1258 +178,1258 @@ template <dequantize_kernel_t dequant, int qk> static void cpy_blck_q_f32(const 
 }
 
 
-template <typename T, int qk>
-static void cpy_q_q(const char * cx, char * cdst, const int ne, const int ne00, const int ne01, const int ne02,
-                      const int nb00, const int nb01, const int nb02, const int nb03, const int ne10, const int ne11,
-                      const int ne12, const int nb10, const int nb11, const int nb12, const int nb13,
-                      const sycl::nd_item<3> & item_ct1) {
-    const int i = (item_ct1.get_local_range(2) * item_ct1.get_group(2) + item_ct1.get_local_id(2)) * qk;
+మూస <రకం_పేరు T, పూర్ణాంకం qk>
+స్థిర శూన్య cpy_q_q(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01, స్థిరరాశి పూర్ణాంకం ne02,
+                      స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03, స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11,
+                      స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11, స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13,
+                      స్థిరరాశి sycl::nd_అంశం<3> & అంశం_ct1) {
+    స్థిరరాశి పూర్ణాంకం i = (అంశం_ct1.get_local_range(2) * అంశం_ct1.get_సమూహం(2) + అంశం_ct1.get_local_id(2)) * qk;
 
-    if (i >= ne) {
-        return;
+    ఒకవేళ (i >= ne) {
+        తిరిగి;
     }
 
-    const int i03      = i / (ne00 * ne01 * ne02);
-    const int i02      = (i - i03 * ne00 * ne01 * ne02) / (ne00 * ne01);
-    const int i01      = (i - i03 * ne00 * ne01 * ne02 - i02 * ne01 * ne00) / ne00;
-    const int i00      = i - i03 * ne00 * ne01 * ne02 - i02 * ne01 * ne00 - i01 * ne00;
-    const int x_offset = (i00 / qk) * nb00 + i01 * nb01 + i02 * nb02 + i03 * nb03;
+    స్థిరరాశి పూర్ణాంకం i03      = i / (ne00 * ne01 * ne02);
+    స్థిరరాశి పూర్ణాంకం i02      = (i - i03 * ne00 * ne01 * ne02) / (ne00 * ne01);
+    స్థిరరాశి పూర్ణాంకం i01      = (i - i03 * ne00 * ne01 * ne02 - i02 * ne01 * ne00) / ne00;
+    స్థిరరాశి పూర్ణాంకం i00      = i - i03 * ne00 * ne01 * ne02 - i02 * ne01 * ne00 - i01 * ne00;
+    స్థిరరాశి పూర్ణాంకం x_స్థానభ్రంశం = (i00 / qk) * nb00 + i01 * nb01 + i02 * nb02 + i03 * nb03;
 
 
-    const int i13        = i / (ne10 * ne11 * ne12);
-    const int i12        = (i - i13 * ne10 * ne11 * ne12) / (ne10 * ne11);
-    const int i11        = (i - i13 * ne10 * ne11 * ne12 - i12 * ne10 * ne11) / ne10;
-    const int i10        = i - i13 * ne10 * ne11 * ne12 - i12 * ne10 * ne11 - i11 * ne10;
-    const int dst_offset = (i10 / qk) * nb10 + i11 * nb11 + i12 * nb12 + i13 * nb13;
+    స్థిరరాశి పూర్ణాంకం i13        = i / (ne10 * ne11 * ne12);
+    స్థిరరాశి పూర్ణాంకం i12        = (i - i13 * ne10 * ne11 * ne12) / (ne10 * ne11);
+    స్థిరరాశి పూర్ణాంకం i11        = (i - i13 * ne10 * ne11 * ne12 - i12 * ne10 * ne11) / ne10;
+    స్థిరరాశి పూర్ణాంకం i10        = i - i13 * ne10 * ne11 * ne12 - i12 * ne10 * ne11 - i11 * ne10;
+    స్థిరరాశి పూర్ణాంకం dst_స్థానభ్రంశం = (i10 / qk) * nb10 + i11 * nb11 + i12 * nb12 + i13 * nb13;
 
-    cpy_blck_q_q<T>(cx + x_offset, cdst + dst_offset);
+    cpy_blck_q_q<T>(cx + x_స్థానభ్రంశం, cdst + dst_స్థానభ్రంశం);
 }
 
-template <cpy_kernel_t cpy_blck, int qk>
-static void cpy_f32_q(const char * cx, char * cdst, const int ne, const int ne00, const int ne01, const int ne02,
-                      const int nb00, const int nb01, const int nb02, const int nb03, const int ne10, const int ne11,
-                      const int ne12, const int nb10, const int nb11, const int nb12, const int nb13,
-                      const sycl::nd_item<3> & item_ct1) {
-    const int i = (item_ct1.get_local_range(2) * item_ct1.get_group(2) + item_ct1.get_local_id(2)) * qk;
+మూస <cpy_kernel_t cpy_blck, పూర్ణాంకం qk>
+స్థిర శూన్య cpy_f32_q(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01, స్థిరరాశి పూర్ణాంకం ne02,
+                      స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03, స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11,
+                      స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11, స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13,
+                      స్థిరరాశి sycl::nd_అంశం<3> & అంశం_ct1) {
+    స్థిరరాశి పూర్ణాంకం i = (అంశం_ct1.get_local_range(2) * అంశం_ct1.get_సమూహం(2) + అంశం_ct1.get_local_id(2)) * qk;
 
-    if (i >= ne) {
-        return;
+    ఒకవేళ (i >= ne) {
+        తిరిగి;
     }
 
 
-    const int i03      = i / (ne00 * ne01 * ne02);
-    const int i02      = (i - i03 * ne00 * ne01 * ne02) / (ne00 * ne01);
-    const int i01      = (i - i03 * ne00 * ne01 * ne02 - i02 * ne01 * ne00) / ne00;
-    const int i00      = i - i03 * ne00 * ne01 * ne02 - i02 * ne01 * ne00 - i01 * ne00;
-    const int x_offset = i00 * nb00 + i01 * nb01 + i02 * nb02 + i03 * nb03;
+    స్థిరరాశి పూర్ణాంకం i03      = i / (ne00 * ne01 * ne02);
+    స్థిరరాశి పూర్ణాంకం i02      = (i - i03 * ne00 * ne01 * ne02) / (ne00 * ne01);
+    స్థిరరాశి పూర్ణాంకం i01      = (i - i03 * ne00 * ne01 * ne02 - i02 * ne01 * ne00) / ne00;
+    స్థిరరాశి పూర్ణాంకం i00      = i - i03 * ne00 * ne01 * ne02 - i02 * ne01 * ne00 - i01 * ne00;
+    స్థిరరాశి పూర్ణాంకం x_స్థానభ్రంశం = i00 * nb00 + i01 * nb01 + i02 * nb02 + i03 * nb03;
 
-    const int i13        = i / (ne10 * ne11 * ne12);
-    const int i12        = (i - i13 * ne10 * ne11 * ne12) / (ne10 * ne11);
-    const int i11        = (i - i13 * ne10 * ne11 * ne12 - i12 * ne10 * ne11) / ne10;
-    const int i10        = i - i13 * ne10 * ne11 * ne12 - i12 * ne10 * ne11 - i11 * ne10;
-    const int dst_offset = (i10 / qk) * nb10 + i11 * nb11 + i12 * nb12 + i13 * nb13;
+    స్థిరరాశి పూర్ణాంకం i13        = i / (ne10 * ne11 * ne12);
+    స్థిరరాశి పూర్ణాంకం i12        = (i - i13 * ne10 * ne11 * ne12) / (ne10 * ne11);
+    స్థిరరాశి పూర్ణాంకం i11        = (i - i13 * ne10 * ne11 * ne12 - i12 * ne10 * ne11) / ne10;
+    స్థిరరాశి పూర్ణాంకం i10        = i - i13 * ne10 * ne11 * ne12 - i12 * ne10 * ne11 - i11 * ne10;
+    స్థిరరాశి పూర్ణాంకం dst_స్థానభ్రంశం = (i10 / qk) * nb10 + i11 * nb11 + i12 * nb12 + i13 * nb13;
 
-    cpy_blck(cx + x_offset, cdst + dst_offset);
+    cpy_blck(cx + x_స్థానభ్రంశం, cdst + dst_స్థానభ్రంశం);
 }
 
-template <cpy_kernel_t cpy_blck, int qk>
-static void cpy_q_f32(const char * cx, char * cdst, const int ne, const int ne00, const int ne01, const int ne02,
-                      const int nb00, const int nb01, const int nb02, const int nb03, const int ne10, const int ne11,
-                      const int ne12, const int nb10, const int nb11, const int nb12, const int nb13,
-                      const sycl::nd_item<3> & item_ct1) {
-    const int i = (item_ct1.get_local_range(2) * item_ct1.get_group(2) + item_ct1.get_local_id(2)) * qk;
+మూస <cpy_kernel_t cpy_blck, పూర్ణాంకం qk>
+స్థిర శూన్య cpy_q_f32(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01, స్థిరరాశి పూర్ణాంకం ne02,
+                      స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03, స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11,
+                      స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11, స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13,
+                      స్థిరరాశి sycl::nd_అంశం<3> & అంశం_ct1) {
+    స్థిరరాశి పూర్ణాంకం i = (అంశం_ct1.get_local_range(2) * అంశం_ct1.get_సమూహం(2) + అంశం_ct1.get_local_id(2)) * qk;
 
-    if (i >= ne) {
-        return;
+    ఒకవేళ (i >= ne) {
+        తిరిగి;
     }
 
-    const int i03      = i / (ne00 * ne01 * ne02);
-    const int i02      = (i - i03 * ne00 * ne01 * ne02) / (ne00 * ne01);
-    const int i01      = (i - i03 * ne00 * ne01 * ne02 - i02 * ne01 * ne00) / ne00;
-    const int i00      = i - i03 * ne00 * ne01 * ne02 - i02 * ne01 * ne00 - i01 * ne00;
-    const int x_offset = (i00 / qk) * nb00 + i01 * nb01 + i02 * nb02 + i03 * nb03;
+    స్థిరరాశి పూర్ణాంకం i03      = i / (ne00 * ne01 * ne02);
+    స్థిరరాశి పూర్ణాంకం i02      = (i - i03 * ne00 * ne01 * ne02) / (ne00 * ne01);
+    స్థిరరాశి పూర్ణాంకం i01      = (i - i03 * ne00 * ne01 * ne02 - i02 * ne01 * ne00) / ne00;
+    స్థిరరాశి పూర్ణాంకం i00      = i - i03 * ne00 * ne01 * ne02 - i02 * ne01 * ne00 - i01 * ne00;
+    స్థిరరాశి పూర్ణాంకం x_స్థానభ్రంశం = (i00 / qk) * nb00 + i01 * nb01 + i02 * nb02 + i03 * nb03;
 
-    const int i13        = i / (ne10 * ne11 * ne12);
-    const int i12        = (i - i13 * ne10 * ne11 * ne12) / (ne10 * ne11);
-    const int i11        = (i - i13 * ne10 * ne11 * ne12 - i12 * ne10 * ne11) / ne10;
-    const int i10        = i - i13 * ne10 * ne11 * ne12 - i12 * ne10 * ne11 - i11 * ne10;
-    const int dst_offset = i10 * nb10 + i11 * nb11 + i12 * nb12 + i13 * nb13;
+    స్థిరరాశి పూర్ణాంకం i13        = i / (ne10 * ne11 * ne12);
+    స్థిరరాశి పూర్ణాంకం i12        = (i - i13 * ne10 * ne11 * ne12) / (ne10 * ne11);
+    స్థిరరాశి పూర్ణాంకం i11        = (i - i13 * ne10 * ne11 * ne12 - i12 * ne10 * ne11) / ne10;
+    స్థిరరాశి పూర్ణాంకం i10        = i - i13 * ne10 * ne11 * ne12 - i12 * ne10 * ne11 - i11 * ne10;
+    స్థిరరాశి పూర్ణాంకం dst_స్థానభ్రంశం = i10 * nb10 + i11 * nb11 + i12 * nb12 + i13 * nb13;
 
-    cpy_blck(cx + x_offset, cdst + dst_offset);
+    cpy_blck(cx + x_స్థానభ్రంశం, cdst + dst_స్థానభ్రంశం);
 }
 
-static void ggml_cpy_f16_f32_sycl(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                  const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                  const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                  const int nb12, const int nb13, queue_ptr stream) {
-    const int num_blocks = (ne + SYCL_CPY_BLOCK_SIZE - 1) / SYCL_CPY_BLOCK_SIZE;
+స్థిర శూన్య ggml_cpy_f16_f32_sycl(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                  స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                  స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                  స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = (ne + SYCL_CPY_ఖండం_కొలత - 1) / SYCL_CPY_ఖండం_కొలత;
     {
         dpct::has_capability_or_fail(stream->get_device(), { sycl::aspect::fp16 });
 
         stream->parallel_for(
-            sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE),
-                              sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-            [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
+            sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత),
+                              sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+            [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
                 cpy_f32_f16<cpy_1_f16_f32>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12,
-                                           nb10, nb11, nb12, nb13, item_ct1);
+                                           nb10, nb11, nb12, nb13, అంశం_ct1);
             });
     }
 }
 
-static void ggml_cpy_f32_f32_sycl(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                  const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                  const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                  const int nb12, const int nb13, queue_ptr stream) {
-    const int num_blocks = (ne + SYCL_CPY_BLOCK_SIZE - 1) / SYCL_CPY_BLOCK_SIZE;
+స్థిర శూన్య ggml_cpy_f32_f32_sycl(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                  స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                  స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                  స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = (ne + SYCL_CPY_ఖండం_కొలత - 1) / SYCL_CPY_ఖండం_కొలత;
     {
         dpct::has_capability_or_fail(stream->get_device(), { sycl::aspect::fp16 });
 
         stream->parallel_for(
-            sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE),
-                              sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-            [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
+            sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత),
+                              sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+            [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
                 cpy_f32_f16<cpy_1_f32_f32>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12,
-                                           nb10, nb11, nb12, nb13, item_ct1);
+                                           nb10, nb11, nb12, nb13, అంశం_ct1);
             });
     }
 }
 
-static void ggml_cpy_f32_f16_sycl(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                  const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                  const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                  const int nb12, const int nb13, queue_ptr stream) {
-    const int num_blocks = (ne + SYCL_CPY_BLOCK_SIZE - 1) / SYCL_CPY_BLOCK_SIZE;
+స్థిర శూన్య ggml_cpy_f32_f16_sycl(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                  స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                  స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                  స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = (ne + SYCL_CPY_ఖండం_కొలత - 1) / SYCL_CPY_ఖండం_కొలత;
     {
         dpct::has_capability_or_fail(stream->get_device(), { sycl::aspect::fp16 });
 
         stream->parallel_for(
-            sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE),
-                              sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-            [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
+            sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత),
+                              sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+            [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
                 cpy_f32_f16<cpy_1_f32_f16>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12,
-                                           nb10, nb11, nb12, nb13, item_ct1);
+                                           nb10, nb11, nb12, nb13, అంశం_ct1);
             });
     }
 }
 
-static void ggml_cpy_f32_i32_sycl(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                  const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                  const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                  const int nb12, const int nb13, queue_ptr stream) {
-    const int num_blocks = (ne + SYCL_CPY_BLOCK_SIZE - 1) / SYCL_CPY_BLOCK_SIZE;
+స్థిర శూన్య ggml_cpy_f32_i32_sycl(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                  స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                  స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                  స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = (ne + SYCL_CPY_ఖండం_కొలత - 1) / SYCL_CPY_ఖండం_కొలత;
     {
         stream->parallel_for(
-            sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE),
-                              sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-            [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
+            sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత),
+                              sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+            [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
                 cpy_f32_f16<cpy_1_f32_i32>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12,
-                                           nb10, nb11, nb12, nb13, item_ct1);
+                                           nb10, nb11, nb12, nb13, అంశం_ct1);
             });
     }
 }
 
-static void ggml_cpy_i32_f32_sycl(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                  const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                  const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                  const int nb12, const int nb13, queue_ptr stream) {
-    const int num_blocks = (ne + SYCL_CPY_BLOCK_SIZE - 1) / SYCL_CPY_BLOCK_SIZE;
+స్థిర శూన్య ggml_cpy_i32_f32_sycl(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                  స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                  స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                  స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = (ne + SYCL_CPY_ఖండం_కొలత - 1) / SYCL_CPY_ఖండం_కొలత;
     {
         stream->parallel_for(
-            sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE),
-                              sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-            [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
+            sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత),
+                              sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+            [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
                 cpy_f32_f16<cpy_1_i32_f32>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12,
-                                           nb10, nb11, nb12, nb13, item_ct1);
+                                           nb10, nb11, nb12, nb13, అంశం_ct1);
             });
     }
 }
 
-static void ggml_cpy_f32_q8_0_sycl(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_f32_q8_0_sycl(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK8_0 == 0);
-    const int num_blocks = ceil_div(ne / QK8_0, SYCL_CPY_BLOCK_SIZE);
-    stream->parallel_for(sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE),
-                                           sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-                         [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK8_0, SYCL_CPY_ఖండం_కొలత);
+    stream->parallel_for(sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత),
+                                           sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+                         [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
                              cpy_f32_q<cpy_blck_f32_q8_0, QK8_0>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03,
-                                                                 ne10, ne11, ne12, nb10, nb11, nb12, nb13, item_ct1);
+                                                                 ne10, ne11, ne12, nb10, nb11, nb12, nb13, అంశం_ct1);
                          });
 }
 
-static void ggml_cpy_q8_0_f32_sycl(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_q8_0_f32_sycl(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK8_0 == 0);
-    const int num_blocks = ceil_div(ne / QK8_0, SYCL_CPY_BLOCK_SIZE);
-    stream->parallel_for(sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE),
-                                           sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-                         [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK8_0, SYCL_CPY_ఖండం_కొలత);
+    stream->parallel_for(sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత),
+                                           sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+                         [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
                              cpy_q_f32<cpy_blck_q8_0_f32, QK8_0>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03,
-                                                                 ne10, ne11, ne12, nb10, nb11, nb12, nb13, item_ct1);
+                                                                 ne10, ne11, ne12, nb10, nb11, nb12, nb13, అంశం_ct1);
                          });
 }
 
-static void ggml_cpy_q2_0_f32_sycl(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_q2_0_f32_sycl(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK2_0 == 0);
-    const int num_blocks = ceil_div(ne / QK2_0, SYCL_CPY_BLOCK_SIZE);
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK2_0, SYCL_CPY_ఖండం_కొలత);
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE),
-                          sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-        [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత),
+                          sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+        [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]] {
             cpy_q_f32<cpy_blck_q2_0_f32, QK2_0>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11,
-                                                ne12, nb10, nb11, nb12, nb13, item_ct1);
+                                                ne12, nb10, nb11, nb12, nb13, అంశం_ct1);
         });
 }
 
-static void ggml_cpy_f32_q4_0_sycl(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_f32_q4_0_sycl(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK4_0 == 0);
-    const int num_blocks = ceil_div(ne / QK4_0, SYCL_CPY_BLOCK_SIZE);
-    stream->parallel_for(sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE),
-                                           sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-                         [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK4_0, SYCL_CPY_ఖండం_కొలత);
+    stream->parallel_for(sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత),
+                                           sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+                         [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
                              cpy_f32_q<cpy_blck_f32_q4_0, QK4_0>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03,
-                                                                 ne10, ne11, ne12, nb10, nb11, nb12, nb13, item_ct1);
+                                                                 ne10, ne11, ne12, nb10, nb11, nb12, nb13, అంశం_ct1);
                          });
 }
 
-static void ggml_cpy_q4_0_f32_sycl(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_q4_0_f32_sycl(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK4_0 == 0);
-    const int num_blocks = ceil_div(ne / QK4_0, SYCL_CPY_BLOCK_SIZE);
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK4_0, SYCL_CPY_ఖండం_కొలత);
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE),
-                          sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-        [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత),
+                          sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+        [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
             cpy_q_f32<cpy_blck_q_f32<dequantize_q4_0, QK4_0>, QK4_0>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02,
                                                                      nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13,
-                                                                     item_ct1);
+                                                                     అంశం_ct1);
         });
 }
 
-static void ggml_cpy_f32_q4_1_sycl(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_f32_q4_1_sycl(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK4_1 == 0);
-    const int num_blocks = ceil_div(ne / QK4_1, SYCL_CPY_BLOCK_SIZE);
-    stream->parallel_for(sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE),
-                                           sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-                         [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK4_1, SYCL_CPY_ఖండం_కొలత);
+    stream->parallel_for(sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత),
+                                           sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+                         [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
                              cpy_f32_q<cpy_blck_f32_q4_1, QK4_1>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03,
-                                                                 ne10, ne11, ne12, nb10, nb11, nb12, nb13, item_ct1);
+                                                                 ne10, ne11, ne12, nb10, nb11, nb12, nb13, అంశం_ct1);
                          });
 }
 
-static void ggml_cpy_q4_1_f32_sycl(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_q4_1_f32_sycl(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK4_1 == 0);
-    const int num_blocks = ceil_div(ne / QK4_1, SYCL_CPY_BLOCK_SIZE);
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK4_1, SYCL_CPY_ఖండం_కొలత);
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE),
-                          sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-        [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత),
+                          sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+        [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
             cpy_q_f32<cpy_blck_q_f32<dequantize_q4_1, QK4_1>, QK4_1>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02,
                                                                      nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13,
-                                                                     item_ct1);
+                                                                     అంశం_ct1);
         });
 }
 
-static void ggml_cpy_f32_q5_0_sycl(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_f32_q5_0_sycl(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK5_0 == 0);
-    const int num_blocks = ceil_div(ne / QK5_0, SYCL_CPY_BLOCK_SIZE);
-    stream->parallel_for(sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE),
-                                           sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-                         [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK5_0, SYCL_CPY_ఖండం_కొలత);
+    stream->parallel_for(sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత),
+                                           sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+                         [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]] {
                              cpy_f32_q<cpy_blck_f32_q5_0, QK5_0>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03,
-                                                                 ne10, ne11, ne12, nb10, nb11, nb12, nb13, item_ct1);
+                                                                 ne10, ne11, ne12, nb10, nb11, nb12, nb13, అంశం_ct1);
                          });
 }
 
-static void ggml_cpy_q5_0_f32_sycl(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_q5_0_f32_sycl(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK5_0 == 0);
-    const int num_blocks = ceil_div(ne / QK5_0, SYCL_CPY_BLOCK_SIZE);
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK5_0, SYCL_CPY_ఖండం_కొలత);
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE),
-                          sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-        [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత),
+                          sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+        [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
             cpy_q_f32<cpy_blck_q_f32<dequantize_q5_0, QK5_0>, QK5_0>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02,
                                                                      nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13,
-                                                                     item_ct1);
+                                                                     అంశం_ct1);
         });
 }
 
-static void ggml_cpy_f32_q5_1_sycl(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_f32_q5_1_sycl(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK5_1 == 0);
-    const int num_blocks = ceil_div(ne / QK5_1, SYCL_CPY_BLOCK_SIZE);
-    stream->parallel_for(sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE),
-                                           sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-                         [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK5_1, SYCL_CPY_ఖండం_కొలత);
+    stream->parallel_for(sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత),
+                                           sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+                         [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
                              cpy_f32_q<cpy_blck_f32_q5_1, QK5_1>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03,
-                                                                 ne10, ne11, ne12, nb10, nb11, nb12, nb13, item_ct1);
+                                                                 ne10, ne11, ne12, nb10, nb11, nb12, nb13, అంశం_ct1);
                          });
 }
 
-static void ggml_cpy_q5_1_f32_sycl(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_q5_1_f32_sycl(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK5_1 == 0);
-    const int num_blocks = ceil_div(ne / QK5_1, SYCL_CPY_BLOCK_SIZE);
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK5_1, SYCL_CPY_ఖండం_కొలత);
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE),
-                          sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-        [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత),
+                          sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+        [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
             cpy_q_f32<cpy_blck_q_f32<dequantize_q5_1, QK5_1>, QK5_1>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02,
                                                                      nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13,
-                                                                     item_ct1);
+                                                                     అంశం_ct1);
         });
 }
 
-static void ggml_cpy_mxfp4_f32_sycl(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                    const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                    const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                    const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_mxfp4_f32_sycl(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                    స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                    స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                    స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK_MXFP4 == 0);
-    const int num_blocks = ceil_div(ne / QK_MXFP4, SYCL_CPY_BLOCK_SIZE);
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK_MXFP4, SYCL_CPY_ఖండం_కొలత);
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE),
-                          sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-        [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత),
+                          sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+        [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]] {
             cpy_q_f32<cpy_blck_q_f32<dequantize_mxfp4, QK_MXFP4>, QK_MXFP4>(cx, cdst, ne, ne00, ne01, ne02, nb00,
                                                                              nb01, nb02, nb03, ne10, ne11, ne12,
-                                                                             nb10, nb11, nb12, nb13, item_ct1);
+                                                                             nb10, nb11, nb12, nb13, అంశం_ct1);
         });
 }
 
-static void ggml_cpy_f32_iq4_nl_sycl(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                     const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                     const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                     const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_f32_iq4_nl_sycl(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                     స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                     స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                     స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK4_NL == 0);
-    const int num_blocks = ceil_div(ne / QK4_NL, SYCL_CPY_BLOCK_SIZE);
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK4_NL, SYCL_CPY_ఖండం_కొలత);
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE),
-                          sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-        [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత),
+                          sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+        [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]] {
             cpy_f32_q<cpy_blck_f32_iq4_nl, QK4_NL>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11,
-                                                   ne12, nb10, nb11, nb12, nb13, item_ct1);
+                                                   ne12, nb10, nb11, nb12, nb13, అంశం_ct1);
         });
 }
 
-static void cpy_blck_f16_q4_0(const char * cxi, char * cdsti) {
-    const sycl::half * xi = (const sycl::half *) cxi;
-    float xf[QK4_0];
+స్థిర శూన్య cpy_blck_f16_q4_0(స్థిరరాశి అక్షరం * cxi, అక్షరం * cdsti) {
+    స్థిరరాశి sycl::half * xi = (స్థిరరాశి sycl::half *) cxi;
+    దశాంశం xf[QK4_0];
 
-    for (int j = 0; j < QK4_0; ++j) {
-        xf[j] = (float) xi[j];
+    కొరకు (పూర్ణాంకం j = 0; j < QK4_0; ++j) {
+        xf[j] = (దశాంశం) xi[j];
     }
 
-    cpy_blck_f32_q4_0((const char *) xf, cdsti);
+    cpy_blck_f32_q4_0((స్థిరరాశి అక్షరం *) xf, cdsti);
 }
 
-static void cpy_blck_f16_q4_1(const char * cxi, char * cdsti) {
-    const sycl::half * xi = (const sycl::half *) cxi;
-    float xf[QK4_1];
+స్థిర శూన్య cpy_blck_f16_q4_1(స్థిరరాశి అక్షరం * cxi, అక్షరం * cdsti) {
+    స్థిరరాశి sycl::half * xi = (స్థిరరాశి sycl::half *) cxi;
+    దశాంశం xf[QK4_1];
 
-    for (int j = 0; j < QK4_1; ++j) {
-        xf[j] = (float) xi[j];
+    కొరకు (పూర్ణాంకం j = 0; j < QK4_1; ++j) {
+        xf[j] = (దశాంశం) xi[j];
     }
 
-    cpy_blck_f32_q4_1((const char *) xf, cdsti);
+    cpy_blck_f32_q4_1((స్థిరరాశి అక్షరం *) xf, cdsti);
 }
 
-static void cpy_blck_f16_q5_0(const char * cxi, char * cdsti) {
-    const sycl::half * xi = (const sycl::half *) cxi;
-    float xf[QK5_0];
+స్థిర శూన్య cpy_blck_f16_q5_0(స్థిరరాశి అక్షరం * cxi, అక్షరం * cdsti) {
+    స్థిరరాశి sycl::half * xi = (స్థిరరాశి sycl::half *) cxi;
+    దశాంశం xf[QK5_0];
 
-    for (int j = 0; j < QK5_0; ++j) {
-        xf[j] = (float) xi[j];
+    కొరకు (పూర్ణాంకం j = 0; j < QK5_0; ++j) {
+        xf[j] = (దశాంశం) xi[j];
     }
 
-    cpy_blck_f32_q5_0((const char *) xf, cdsti);
+    cpy_blck_f32_q5_0((స్థిరరాశి అక్షరం *) xf, cdsti);
 }
 
-static void ggml_cpy_f16_q4_0_sycl(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_f16_q4_0_sycl(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK4_0 == 0);
-    const int num_blocks = ceil_div(ne / QK4_0, SYCL_CPY_BLOCK_SIZE);
-    stream->parallel_for(sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE),
-                                           sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-                         [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK4_0, SYCL_CPY_ఖండం_కొలత);
+    stream->parallel_for(sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత),
+                                           sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+                         [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
                              cpy_f32_q<cpy_blck_f16_q4_0, QK4_0>(cx, cdst, ne, ne00, ne01, ne02,
                                                                  nb00, nb01, nb02, nb03,
-                                                                 ne10, ne11, ne12, nb10, nb11, nb12, nb13, item_ct1);
+                                                                 ne10, ne11, ne12, nb10, nb11, nb12, nb13, అంశం_ct1);
                          });
 }
 
-static void ggml_cpy_f16_q4_1_sycl(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_f16_q4_1_sycl(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK4_1 == 0);
-    const int num_blocks = ceil_div(ne / QK4_1, SYCL_CPY_BLOCK_SIZE);
-    stream->parallel_for(sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE),
-                                           sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-                         [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK4_1, SYCL_CPY_ఖండం_కొలత);
+    stream->parallel_for(sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత),
+                                           sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+                         [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
                              cpy_f32_q<cpy_blck_f16_q4_1, QK4_1>(cx, cdst, ne, ne00, ne01, ne02,
                                                                  nb00, nb01, nb02, nb03,
-                                                                 ne10, ne11, ne12, nb10, nb11, nb12, nb13, item_ct1);
+                                                                 ne10, ne11, ne12, nb10, nb11, nb12, nb13, అంశం_ct1);
                          });
 }
 
-static void ggml_cpy_f16_q5_0_sycl(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_f16_q5_0_sycl(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK5_0 == 0);
-    const int num_blocks = ceil_div(ne / QK5_0, SYCL_CPY_BLOCK_SIZE);
-    stream->parallel_for(sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE),
-                                           sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-                         [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK5_0, SYCL_CPY_ఖండం_కొలత);
+    stream->parallel_for(sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత),
+                                           sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+                         [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
                              cpy_f32_q<cpy_blck_f16_q5_0, QK5_0>(cx, cdst, ne, ne00, ne01, ne02,
                                                                  nb00, nb01, nb02, nb03,
-                                                                 ne10, ne11, ne12, nb10, nb11, nb12, nb13, item_ct1);
+                                                                 ne10, ne11, ne12, nb10, nb11, nb12, nb13, అంశం_ct1);
                          });
 }
 
-static bool ggml_sycl_is_quantized_type(enum ggml_type type) {
-    switch (type) {
-        case GGML_TYPE_Q1_0:
-        case GGML_TYPE_Q2_0:
-        case GGML_TYPE_Q4_0:
-        case GGML_TYPE_Q4_1:
-        case GGML_TYPE_Q5_0:
-        case GGML_TYPE_Q5_1:
-        case GGML_TYPE_Q8_0:
-        case GGML_TYPE_MXFP4:
-        case GGML_TYPE_NVFP4:
-        case GGML_TYPE_Q2_K:
-        case GGML_TYPE_Q3_K:
-        case GGML_TYPE_Q4_K:
-        case GGML_TYPE_Q5_K:
-        case GGML_TYPE_Q6_K:
-        case GGML_TYPE_IQ2_XXS:
-        case GGML_TYPE_IQ2_XS:
-        case GGML_TYPE_IQ2_S:
-        case GGML_TYPE_IQ3_XXS:
-        case GGML_TYPE_IQ3_S:
-        case GGML_TYPE_IQ1_S:
-        case GGML_TYPE_IQ1_M:
-        case GGML_TYPE_IQ4_NL:
-        case GGML_TYPE_IQ4_XS:
-            return true;
-        default:
-            return false;
+స్థిర తార్కిక ggml_sycl_is_quantized_type(గణన ggml_type type) {
+    ఎంపిక (type) {
+        స్థితి GGML_TYPE_Q1_0:
+        స్థితి GGML_TYPE_Q2_0:
+        స్థితి GGML_TYPE_Q4_0:
+        స్థితి GGML_TYPE_Q4_1:
+        స్థితి GGML_TYPE_Q5_0:
+        స్థితి GGML_TYPE_Q5_1:
+        స్థితి GGML_TYPE_Q8_0:
+        స్థితి GGML_TYPE_MXFP4:
+        స్థితి GGML_TYPE_NVFP4:
+        స్థితి GGML_TYPE_Q2_K:
+        స్థితి GGML_TYPE_Q3_K:
+        స్థితి GGML_TYPE_Q4_K:
+        స్థితి GGML_TYPE_Q5_K:
+        స్థితి GGML_TYPE_Q6_K:
+        స్థితి GGML_TYPE_IQ2_XXS:
+        స్థితి GGML_TYPE_IQ2_XS:
+        స్థితి GGML_TYPE_IQ2_S:
+        స్థితి GGML_TYPE_IQ3_XXS:
+        స్థితి GGML_TYPE_IQ3_S:
+        స్థితి GGML_TYPE_IQ1_S:
+        స్థితి GGML_TYPE_IQ1_M:
+        స్థితి GGML_TYPE_IQ4_NL:
+        స్థితి GGML_TYPE_IQ4_XS:
+            తిరిగి నిజం;
+        అప్రమేయ:
+            తిరిగి అబద్ధం;
     }
 }
 
-static bool ggml_sycl_can_quantize_rows_sycl(enum ggml_type type) {
-    switch (type) {
-        case GGML_TYPE_Q1_0:
-        case GGML_TYPE_Q2_0:
-        case GGML_TYPE_Q4_0:
-        case GGML_TYPE_Q4_1:
-        case GGML_TYPE_Q5_0:
-        case GGML_TYPE_Q5_1:
-        case GGML_TYPE_Q8_0:
-        case GGML_TYPE_MXFP4:
-        case GGML_TYPE_NVFP4:
-        case GGML_TYPE_Q2_K:
-        case GGML_TYPE_Q3_K:
-        case GGML_TYPE_Q4_K:
-        case GGML_TYPE_Q5_K:
-        case GGML_TYPE_Q6_K:
-        case GGML_TYPE_IQ4_NL:
-        case GGML_TYPE_IQ4_XS:
-            return true;
-        default:
-            return false;
+స్థిర తార్కిక ggml_sycl_can_quantize_అడ్డువరుసలు_sycl(గణన ggml_type type) {
+    ఎంపిక (type) {
+        స్థితి GGML_TYPE_Q1_0:
+        స్థితి GGML_TYPE_Q2_0:
+        స్థితి GGML_TYPE_Q4_0:
+        స్థితి GGML_TYPE_Q4_1:
+        స్థితి GGML_TYPE_Q5_0:
+        స్థితి GGML_TYPE_Q5_1:
+        స్థితి GGML_TYPE_Q8_0:
+        స్థితి GGML_TYPE_MXFP4:
+        స్థితి GGML_TYPE_NVFP4:
+        స్థితి GGML_TYPE_Q2_K:
+        స్థితి GGML_TYPE_Q3_K:
+        స్థితి GGML_TYPE_Q4_K:
+        స్థితి GGML_TYPE_Q5_K:
+        స్థితి GGML_TYPE_Q6_K:
+        స్థితి GGML_TYPE_IQ4_NL:
+        స్థితి GGML_TYPE_IQ4_XS:
+            తిరిగి నిజం;
+        అప్రమేయ:
+            తిరిగి అబద్ధం;
     }
 }
 
-template <typename SrcScalar>
-static inline float ggml_sycl_src_to_f32(const SrcScalar & x) {
-    return (float) x;
+మూస <రకం_పేరు SrcScalar>
+స్థిర అంతఃవరుస దశాంశం ggml_sycl_src_గమ్యం_f32(స్థిరరాశి SrcScalar & x) {
+    తిరిగి (దశాంశం) x;
 }
 
-#ifdef GGML_SYCL_HAS_BF16
-template <>
-inline float ggml_sycl_src_to_f32<sycl::ext::oneapi::bfloat16>(const sycl::ext::oneapi::bfloat16 & x) {
-    return static_cast<float>(x);
+#నిర్వచితమైతే GGML_SYCL_HAS_BF16
+మూస <>
+అంతఃవరుస దశాంశం ggml_sycl_src_గమ్యం_f32<sycl::ext::oneapi::bfloat16>(స్థిరరాశి sycl::ext::oneapi::bfloat16 & x) {
+    తిరిగి static_cast<దశాంశం>(x);
 }
 
-template <>
-inline float ggml_sycl_src_to_f32<ggml_bf16_t>(const ggml_bf16_t & x) {
-    union {
+మూస <>
+అంతఃవరుస దశాంశం ggml_sycl_src_గమ్యం_f32<ggml_bf16_t>(స్థిరరాశి ggml_bf16_t & x) {
+    సంఘం {
         uint32_t u32;
-        float f32;
+        దశాంశం f32;
     } value;
 
-    value.u32 = (uint32_t) x.bits << 16;
-    return value.f32;
+    value.u32 = (uint32_t) x.బిట్లు << 16;
+    తిరిగి value.f32;
 }
-#endif
+#అయితే_ముగింపు
 
-template <typename SrcScalar, cpy_kernel_t quantize_block, int qk>
-static void ggml_sycl_quantize_rows_q(const char * cx, char * cdst, const int64_t ne,
-                                      const int64_t ne00, const int64_t ne01, const int64_t ne02,
-                                      const size_t nb00, const size_t nb01, const size_t nb02, const size_t nb03,
-                                      const int64_t ne10, const int64_t ne11, const int64_t ne12,
-                                      const size_t nb10, const size_t nb11, const size_t nb12, const size_t nb13,
-                                      queue_ptr stream) {
+మూస <రకం_పేరు SrcScalar, cpy_kernel_t quantize_ఖండం, పూర్ణాంకం qk>
+స్థిర శూన్య ggml_sycl_quantize_అడ్డువరుసలు_q(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి int64_t ne,
+                                      స్థిరరాశి int64_t ne00, స్థిరరాశి int64_t ne01, స్థిరరాశి int64_t ne02,
+                                      స్థిరరాశి size_t nb00, స్థిరరాశి size_t nb01, స్థిరరాశి size_t nb02, స్థిరరాశి size_t nb03,
+                                      స్థిరరాశి int64_t ne10, స్థిరరాశి int64_t ne11, స్థిరరాశి int64_t ne12,
+                                      స్థిరరాశి size_t nb10, స్థిరరాశి size_t nb11, స్థిరరాశి size_t nb12, స్థిరరాశి size_t nb13,
+                                      వరుస_ptr stream) {
     GGML_ASSERT(ne % qk == 0);
     GGML_ASSERT(ne00 % qk == 0);
 
-    const int64_t total_blocks = ne / qk;
-    constexpr int block_size = 256;
-    const int64_t grid_size = ceil_div(total_blocks, (int64_t) block_size);
+    స్థిరరాశి int64_t మొత్తం_ఖండాలు = ne / qk;
+    constexpr పూర్ణాంకం ఖండం_కొలత_3 = 256;
+    స్థిరరాశి int64_t grid_కొలత = ceil_div(మొత్తం_ఖండాలు, (int64_t) ఖండం_కొలత_3);
 
-    stream->parallel_for(sycl::nd_range<1>(grid_size * block_size, block_size),
-                        [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-        const int64_t block_idx = item_ct1.get_global_linear_id();
-        if (block_idx >= total_blocks) {
-            return;
+    stream->parallel_for(sycl::nd_range<1>(grid_కొలత * ఖండం_కొలత_3, ఖండం_కొలత_3),
+                        [=](sycl::nd_అంశం<1> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]] {
+        స్థిరరాశి int64_t ఖండం_idx = అంశం_ct1.get_global_రేఖీయ_id();
+        ఒకవేళ (ఖండం_idx >= మొత్తం_ఖండాలు) {
+            తిరిగి;
         }
 
-        const int64_t i = block_idx * qk;
+        స్థిరరాశి int64_t i = ఖండం_idx * qk;
 
-        const int64_t i03 = i / (ne00 * ne01 * ne02);
-        const int64_t i02 = (i - i03 * ne00 * ne01 * ne02) / (ne00 * ne01);
-        const int64_t i01 = (i - i03 * ne00 * ne01 * ne02 - i02 * ne01 * ne00) / ne00;
-        const int64_t i00 = i - i03 * ne00 * ne01 * ne02 - i02 * ne01 * ne00 - i01 * ne00;
-        const size_t x_offset = i00 * nb00 + i01 * nb01 + i02 * nb02 + i03 * nb03;
+        స్థిరరాశి int64_t i03 = i / (ne00 * ne01 * ne02);
+        స్థిరరాశి int64_t i02 = (i - i03 * ne00 * ne01 * ne02) / (ne00 * ne01);
+        స్థిరరాశి int64_t i01 = (i - i03 * ne00 * ne01 * ne02 - i02 * ne01 * ne00) / ne00;
+        స్థిరరాశి int64_t i00 = i - i03 * ne00 * ne01 * ne02 - i02 * ne01 * ne00 - i01 * ne00;
+        స్థిరరాశి size_t x_స్థానభ్రంశం = i00 * nb00 + i01 * nb01 + i02 * nb02 + i03 * nb03;
 
-        const int64_t i13 = i / (ne10 * ne11 * ne12);
-        const int64_t i12 = (i - i13 * ne10 * ne11 * ne12) / (ne10 * ne11);
-        const int64_t i11 = (i - i13 * ne10 * ne11 * ne12 - i12 * ne10 * ne11) / ne10;
-        const int64_t i10 = i - i13 * ne10 * ne11 * ne12 - i12 * ne10 * ne11 - i11 * ne10;
-        const size_t dst_offset = (i10 / qk) * nb10 + i11 * nb11 + i12 * nb12 + i13 * nb13;
+        స్థిరరాశి int64_t i13 = i / (ne10 * ne11 * ne12);
+        స్థిరరాశి int64_t i12 = (i - i13 * ne10 * ne11 * ne12) / (ne10 * ne11);
+        స్థిరరాశి int64_t i11 = (i - i13 * ne10 * ne11 * ne12 - i12 * ne10 * ne11) / ne10;
+        స్థిరరాశి int64_t i10 = i - i13 * ne10 * ne11 * ne12 - i12 * ne10 * ne11 - i11 * ne10;
+        స్థిరరాశి size_t dst_స్థానభ్రంశం = (i10 / qk) * nb10 + i11 * nb11 + i12 * nb12 + i13 * nb13;
 
-        float xf[qk];
-        if (nb00 == sizeof(SrcScalar)) {
-            const SrcScalar * src_row = (const SrcScalar *) (cx + x_offset);
-            for (int j = 0; j < qk; ++j) {
-                xf[j] = ggml_sycl_src_to_f32(src_row[j]);
+        దశాంశం xf[qk];
+        ఒకవేళ (nb00 == పరిమాణం(SrcScalar)) {
+            స్థిరరాశి SrcScalar * src_అడ్డువరుస = (స్థిరరాశి SrcScalar *) (cx + x_స్థానభ్రంశం);
+            కొరకు (పూర్ణాంకం j = 0; j < qk; ++j) {
+                xf[j] = ggml_sycl_src_గమ్యం_f32(src_అడ్డువరుస[j]);
             }
-        } else {
-            for (int j = 0; j < qk; ++j) {
-                const SrcScalar * src_val = (const SrcScalar *) (cx + x_offset + j * nb00);
-                xf[j] = ggml_sycl_src_to_f32(*src_val);
+        } లేకపోతే {
+            కొరకు (పూర్ణాంకం j = 0; j < qk; ++j) {
+                స్థిరరాశి SrcScalar * src_val = (స్థిరరాశి SrcScalar *) (cx + x_స్థానభ్రంశం + j * nb00);
+                xf[j] = ggml_sycl_src_గమ్యం_f32(*src_val);
             }
         }
 
-        quantize_block((const char *) xf, cdst + dst_offset);
+        quantize_ఖండం((స్థిరరాశి అక్షరం *) xf, cdst + dst_స్థానభ్రంశం);
     });
 }
 
-template <typename SrcScalar>
-static void ggml_sycl_quantize_rows_sycl(const char * cx, char * cdst, const ggml_tensor * src0, const ggml_tensor * src1,
-                                         const int64_t ne, const int64_t ne00, const int64_t ne01, const int64_t ne02,
-                                         const size_t nb00, const size_t nb01, const size_t nb02, const size_t nb03,
-                                         const int64_t ne10, const int64_t ne11, const int64_t ne12, const size_t nb10,
-                                         const size_t nb11, const size_t nb12, const size_t nb13, queue_ptr stream) {
-    GGML_UNUSED(src0);
-    GGML_UNUSED(src1);
+మూస <రకం_పేరు SrcScalar>
+స్థిర శూన్య ggml_sycl_quantize_అడ్డువరుసలు_sycl(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి ggml_tensor * src0, స్థిరరాశి ggml_tensor * src1,
+                                         స్థిరరాశి int64_t ne, స్థిరరాశి int64_t ne00, స్థిరరాశి int64_t ne01, స్థిరరాశి int64_t ne02,
+                                         స్థిరరాశి size_t nb00, స్థిరరాశి size_t nb01, స్థిరరాశి size_t nb02, స్థిరరాశి size_t nb03,
+                                         స్థిరరాశి int64_t ne10, స్థిరరాశి int64_t ne11, స్థిరరాశి int64_t ne12, స్థిరరాశి size_t nb10,
+                                         స్థిరరాశి size_t nb11, స్థిరరాశి size_t nb12, స్థిరరాశి size_t nb13, వరుస_ptr stream) {
+    GGML_వాడని(src0);
+    GGML_వాడని(src1);
 
-    switch (src1->type) {
-        case GGML_TYPE_Q8_0:
-            ggml_sycl_quantize_rows_q<SrcScalar, cpy_blck_f32_q8_0, QK8_0>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01,
+    ఎంపిక (src1->type) {
+        స్థితి GGML_TYPE_Q8_0:
+            ggml_sycl_quantize_అడ్డువరుసలు_q<SrcScalar, cpy_blck_f32_q8_0, QK8_0>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01,
                                                                             nb02, nb03, ne10, ne11, ne12, nb10, nb11,
                                                                             nb12, nb13, stream);
-            break;
-        case GGML_TYPE_Q1_0:
-            ggml_sycl_quantize_rows_q<SrcScalar, cpy_blck_f32_q1_0, QK1_0>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01,
+            ఆపు;
+        స్థితి GGML_TYPE_Q1_0:
+            ggml_sycl_quantize_అడ్డువరుసలు_q<SrcScalar, cpy_blck_f32_q1_0, QK1_0>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01,
                                                                             nb02, nb03, ne10, ne11, ne12, nb10, nb11,
                                                                             nb12, nb13, stream);
-            break;
-        case GGML_TYPE_Q2_0:
-            ggml_sycl_quantize_rows_q<SrcScalar, cpy_blck_f32_q2_0, QK2_0>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01,
+            ఆపు;
+        స్థితి GGML_TYPE_Q2_0:
+            ggml_sycl_quantize_అడ్డువరుసలు_q<SrcScalar, cpy_blck_f32_q2_0, QK2_0>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01,
                                                                             nb02, nb03, ne10, ne11, ne12, nb10, nb11,
                                                                             nb12, nb13, stream);
-            break;
-        case GGML_TYPE_Q5_1:
-            ggml_sycl_quantize_rows_q<SrcScalar, cpy_blck_f32_q5_1, QK5_1>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01,
+            ఆపు;
+        స్థితి GGML_TYPE_Q5_1:
+            ggml_sycl_quantize_అడ్డువరుసలు_q<SrcScalar, cpy_blck_f32_q5_1, QK5_1>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01,
                                                                             nb02, nb03, ne10, ne11, ne12, nb10, nb11,
                                                                             nb12, nb13, stream);
-            break;
-        case GGML_TYPE_Q5_0:
-            ggml_sycl_quantize_rows_q<SrcScalar, cpy_blck_f32_q5_0, QK5_0>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01,
+            ఆపు;
+        స్థితి GGML_TYPE_Q5_0:
+            ggml_sycl_quantize_అడ్డువరుసలు_q<SrcScalar, cpy_blck_f32_q5_0, QK5_0>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01,
                                                                             nb02, nb03, ne10, ne11, ne12, nb10, nb11,
                                                                             nb12, nb13, stream);
-            break;
-        case GGML_TYPE_Q4_1:
-            ggml_sycl_quantize_rows_q<SrcScalar, cpy_blck_f32_q4_1, QK4_1>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01,
+            ఆపు;
+        స్థితి GGML_TYPE_Q4_1:
+            ggml_sycl_quantize_అడ్డువరుసలు_q<SrcScalar, cpy_blck_f32_q4_1, QK4_1>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01,
                                                                             nb02, nb03, ne10, ne11, ne12, nb10, nb11,
                                                                             nb12, nb13, stream);
-            break;
-        case GGML_TYPE_Q4_0:
-            ggml_sycl_quantize_rows_q<SrcScalar, cpy_blck_f32_q4_0, QK4_0>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01,
+            ఆపు;
+        స్థితి GGML_TYPE_Q4_0:
+            ggml_sycl_quantize_అడ్డువరుసలు_q<SrcScalar, cpy_blck_f32_q4_0, QK4_0>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01,
                                                                             nb02, nb03, ne10, ne11, ne12, nb10, nb11,
                                                                             nb12, nb13, stream);
-            break;
-        case GGML_TYPE_IQ4_NL:
-            ggml_sycl_quantize_rows_q<SrcScalar, cpy_blck_f32_iq4_nl, QK4_NL>(cx, cdst, ne, ne00, ne01, ne02, nb00,
+            ఆపు;
+        స్థితి GGML_TYPE_IQ4_NL:
+            ggml_sycl_quantize_అడ్డువరుసలు_q<SrcScalar, cpy_blck_f32_iq4_nl, QK4_NL>(cx, cdst, ne, ne00, ne01, ne02, nb00,
                                                                                nb01, nb02, nb03, ne10, ne11, ne12,
                                                                                nb10, nb11, nb12, nb13, stream);
-            break;
-        case GGML_TYPE_MXFP4:
-            ggml_sycl_quantize_rows_q<SrcScalar, cpy_blck_f32_mxfp4, QK_MXFP4>(cx, cdst, ne, ne00, ne01, ne02, nb00,
+            ఆపు;
+        స్థితి GGML_TYPE_MXFP4:
+            ggml_sycl_quantize_అడ్డువరుసలు_q<SrcScalar, cpy_blck_f32_mxfp4, QK_MXFP4>(cx, cdst, ne, ne00, ne01, ne02, nb00,
                                                                                 nb01, nb02, nb03, ne10, ne11, ne12,
                                                                                 nb10, nb11, nb12, nb13, stream);
-            break;
-        case GGML_TYPE_NVFP4:
-            ggml_sycl_quantize_rows_q<SrcScalar, cpy_blck_f32_nvfp4, QK_NVFP4>(cx, cdst, ne, ne00, ne01, ne02, nb00,
+            ఆపు;
+        స్థితి GGML_TYPE_NVFP4:
+            ggml_sycl_quantize_అడ్డువరుసలు_q<SrcScalar, cpy_blck_f32_nvfp4, QK_NVFP4>(cx, cdst, ne, ne00, ne01, ne02, nb00,
                                                                                 nb01, nb02, nb03, ne10, ne11, ne12,
                                                                                 nb10, nb11, nb12, nb13, stream);
-            break;
-        default:
+            ఆపు;
+        అప్రమేయ:
             GGML_ABORT("unsupported quantized target type in sycl quantizer src1->type=%s\n",
                        ggml_type_name(src1->type));
     }
 }
 
-static void ggml_cpy_f16_f16_sycl(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                  const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                  const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                  const int nb12, const int nb13, queue_ptr stream) {
-    const int num_blocks = (ne + SYCL_CPY_BLOCK_SIZE - 1) / SYCL_CPY_BLOCK_SIZE;
+స్థిర శూన్య ggml_cpy_f16_f16_sycl(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                  స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                  స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                  స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = (ne + SYCL_CPY_ఖండం_కొలత - 1) / SYCL_CPY_ఖండం_కొలత;
     {
         dpct::has_capability_or_fail(stream->get_device(), { sycl::aspect::fp16 });
 
         stream->parallel_for(
-            sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE),
-                              sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-            [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
+            sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత),
+                              sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+            [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
                 cpy_f32_f16<cpy_1_f16_f16>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12,
-                                           nb10, nb11, nb12, nb13, item_ct1);
+                                           nb10, nb11, nb12, nb13, అంశం_ct1);
             });
     }
 }
 
-static void ggml_cpy_i16_i16_sycl(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                  const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                  const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                  const int nb12, const int nb13, queue_ptr stream) {
-    const int num_blocks = (ne + SYCL_CPY_BLOCK_SIZE - 1) / SYCL_CPY_BLOCK_SIZE;
+స్థిర శూన్య ggml_cpy_i16_i16_sycl(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                  స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                  స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                  స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = (ne + SYCL_CPY_ఖండం_కొలత - 1) / SYCL_CPY_ఖండం_కొలత;
     {
         // dpct::has_capability_or_fail(stream->get_device(),
         //                              {sycl::aspect::fp16});
 
         stream->parallel_for(
-            sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE),
-                              sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-            [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
+            sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత),
+                              sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+            [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
                 cpy_f32_f16<cpy_1_i16_i16>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12,
-                                           nb10, nb11, nb12, nb13, item_ct1);
+                                           nb10, nb11, nb12, nb13, అంశం_ct1);
             });
     }
 }
 
-static void ggml_cpy_i32_i32_sycl(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                  const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                  const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                  const int nb12, const int nb13, queue_ptr stream) {
-    const int num_blocks = (ne + SYCL_CPY_BLOCK_SIZE - 1) / SYCL_CPY_BLOCK_SIZE;
+స్థిర శూన్య ggml_cpy_i32_i32_sycl(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                  స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                  స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                  స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = (ne + SYCL_CPY_ఖండం_కొలత - 1) / SYCL_CPY_ఖండం_కొలత;
     {
         // dpct::has_capability_or_fail(stream->get_device(),
         //                              {sycl::aspect::fp16});
 
         stream->parallel_for(
-            sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE),
-                              sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-            [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
+            sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత),
+                              sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+            [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
                 cpy_f32_f16<cpy_1_i32_i32>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12,
-                                           nb10, nb11, nb12, nb13, item_ct1);
+                                           nb10, nb11, nb12, nb13, అంశం_ct1);
             });
     }
 }
 
-static void ggml_cpy_q8_0_q8_0(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_q8_0_q8_0(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK8_0 == 0);
-    const int num_blocks = ceil_div(ne / QK8_0, SYCL_CPY_BLOCK_SIZE);
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK8_0, SYCL_CPY_ఖండం_కొలత);
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE),
-                              sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-                              [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
-            cpy_q_q<block_q8_0, QK8_0>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, item_ct1);
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత),
+                              sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+                              [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
+            cpy_q_q<ఖండం_q8_0, QK8_0>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, అంశం_ct1);
         });
 }
 
 
-static void ggml_cpy_q5_0_q5_0(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_q5_0_q5_0(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK5_0 == 0);
-    const int num_blocks = ceil_div(ne / QK5_0, SYCL_CPY_BLOCK_SIZE);
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK5_0, SYCL_CPY_ఖండం_కొలత);
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE),
-                              sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-                              [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
-            cpy_q_q<block_q5_0, QK5_0>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, item_ct1);
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత),
+                              sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+                              [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
+            cpy_q_q<ఖండం_q5_0, QK5_0>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, అంశం_ct1);
         });
 }
 
 
-static void ggml_cpy_q5_1_q5_1(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_q5_1_q5_1(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK5_1 == 0);
-    const int num_blocks = ceil_div(ne / QK5_1, SYCL_CPY_BLOCK_SIZE);
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK5_1, SYCL_CPY_ఖండం_కొలత);
 
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE),
-                              sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-                              [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
-            cpy_q_q<block_q5_1, QK5_1>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, item_ct1);
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత),
+                              sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+                              [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
+            cpy_q_q<ఖండం_q5_1, QK5_1>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, అంశం_ct1);
         });
 }
 
 
-static void ggml_cpy_q4_0_q4_0(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_q4_0_q4_0(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK4_0 == 0);
-    const int num_blocks = ceil_div(ne / QK4_0, SYCL_CPY_BLOCK_SIZE);
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK4_0, SYCL_CPY_ఖండం_కొలత);
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE), sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-        [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
-            cpy_q_q<block_q4_0, QK4_0>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, item_ct1);
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత), sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+        [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
+            cpy_q_q<ఖండం_q4_0, QK4_0>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, అంశం_ct1);
         });
 }
 
 
-static void ggml_cpy_q4_1_q4_1(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_q4_1_q4_1(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
 
     GGML_ASSERT(ne % QK4_1 == 0);
-    const int num_blocks = ceil_div(ne / QK4_1, SYCL_CPY_BLOCK_SIZE);
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK4_1, SYCL_CPY_ఖండం_కొలత);
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE), sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-        [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
-            cpy_q_q<block_q4_1, QK4_1>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, item_ct1);
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత), sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+        [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
+            cpy_q_q<ఖండం_q4_1, QK4_1>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, అంశం_ct1);
         });
 }
 
-static void ggml_cpy_q1_0_q1_0(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_q1_0_q1_0(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK1_0 == 0);
-    const int num_blocks = ceil_div(ne / QK1_0, SYCL_CPY_BLOCK_SIZE);
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK1_0, SYCL_CPY_ఖండం_కొలత);
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE), sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-        [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-            cpy_q_q<block_q1_0, QK1_0>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, item_ct1);
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత), sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+        [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]] {
+            cpy_q_q<ఖండం_q1_0, QK1_0>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, అంశం_ct1);
         });
 }
 
-static void ggml_cpy_q2_0_q2_0(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_q2_0_q2_0(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK2_0 == 0);
-    const int num_blocks = ceil_div(ne / QK2_0, SYCL_CPY_BLOCK_SIZE);
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK2_0, SYCL_CPY_ఖండం_కొలత);
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE), sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-        [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
-            cpy_q_q<block_q2_0, QK2_0>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, item_ct1);
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత), sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+        [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
+            cpy_q_q<ఖండం_q2_0, QK2_0>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, అంశం_ct1);
         });
 }
 
-static void ggml_cpy_mxfp4_mxfp4(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_mxfp4_mxfp4(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK_MXFP4 == 0);
-    const int num_blocks = ceil_div(ne / QK_MXFP4, SYCL_CPY_BLOCK_SIZE);
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK_MXFP4, SYCL_CPY_ఖండం_కొలత);
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE), sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-        [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-            cpy_q_q<block_mxfp4, QK_MXFP4>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, item_ct1);
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత), sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+        [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]] {
+            cpy_q_q<ఖండం_mxfp4, QK_MXFP4>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, అంశం_ct1);
         });
 }
 
-static void ggml_cpy_nvfp4_nvfp4(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_nvfp4_nvfp4(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK_NVFP4 == 0);
-    const int num_blocks = ceil_div(ne / QK_NVFP4, SYCL_CPY_BLOCK_SIZE);
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK_NVFP4, SYCL_CPY_ఖండం_కొలత);
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE), sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-        [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
-            cpy_q_q<block_nvfp4, QK_NVFP4>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, item_ct1);
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత), sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+        [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
+            cpy_q_q<ఖండం_nvfp4, QK_NVFP4>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, అంశం_ct1);
         });
 }
 
-static void ggml_cpy_q2_K_q2_K(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_q2_K_q2_K(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK_K == 0);
-    const int num_blocks = ceil_div(ne / QK_K, SYCL_CPY_BLOCK_SIZE);
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK_K, SYCL_CPY_ఖండం_కొలత);
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE), sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-        [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
-            cpy_q_q<block_q2_K, QK_K>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, item_ct1);
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత), sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+        [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
+            cpy_q_q<ఖండం_q2_K, QK_K>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, అంశం_ct1);
         });
 }
 
-static void ggml_cpy_q3_K_q3_K(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_q3_K_q3_K(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK_K == 0);
-    const int num_blocks = ceil_div(ne / QK_K, SYCL_CPY_BLOCK_SIZE);
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK_K, SYCL_CPY_ఖండం_కొలత);
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE), sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-        [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
-            cpy_q_q<block_q3_K, QK_K>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, item_ct1);
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత), sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+        [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
+            cpy_q_q<ఖండం_q3_K, QK_K>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, అంశం_ct1);
         });
 }
 
-static void ggml_cpy_q4_K_q4_K(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_q4_K_q4_K(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK_K == 0);
-    const int num_blocks = ceil_div(ne / QK_K, SYCL_CPY_BLOCK_SIZE);
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK_K, SYCL_CPY_ఖండం_కొలత);
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE), sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-        [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
-            cpy_q_q<block_q4_K, QK_K>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, item_ct1);
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత), sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+        [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
+            cpy_q_q<ఖండం_q4_K, QK_K>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, అంశం_ct1);
         });
 }
 
-static void ggml_cpy_q5_K_q5_K(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_q5_K_q5_K(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK_K == 0);
-    const int num_blocks = ceil_div(ne / QK_K, SYCL_CPY_BLOCK_SIZE);
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK_K, SYCL_CPY_ఖండం_కొలత);
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE), sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-        [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
-            cpy_q_q<block_q5_K, QK_K>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, item_ct1);
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత), sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+        [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
+            cpy_q_q<ఖండం_q5_K, QK_K>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, అంశం_ct1);
         });
 }
 
-static void ggml_cpy_q6_K_q6_K(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_q6_K_q6_K(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK_K == 0);
-    const int num_blocks = ceil_div(ne / QK_K, SYCL_CPY_BLOCK_SIZE);
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK_K, SYCL_CPY_ఖండం_కొలత);
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE), sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-        [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
-            cpy_q_q<block_q6_K, QK_K>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, item_ct1);
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత), sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+        [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
+            cpy_q_q<ఖండం_q6_K, QK_K>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, అంశం_ct1);
         });
 }
 
-static void ggml_cpy_iq2_xxs_iq2_xxs(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_iq2_xxs_iq2_xxs(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK_K == 0);
-    const int num_blocks = ceil_div(ne / QK_K, SYCL_CPY_BLOCK_SIZE);
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK_K, SYCL_CPY_ఖండం_కొలత);
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE), sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-        [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
-            cpy_q_q<block_iq2_xxs, QK_K>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, item_ct1);
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత), sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+        [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
+            cpy_q_q<ఖండం_iq2_xxs, QK_K>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, అంశం_ct1);
         });
 }
 
-static void ggml_cpy_iq2_xs_iq2_xs(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_iq2_xs_iq2_xs(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK_K == 0);
-    const int num_blocks = ceil_div(ne / QK_K, SYCL_CPY_BLOCK_SIZE);
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK_K, SYCL_CPY_ఖండం_కొలత);
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE), sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-        [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
-            cpy_q_q<block_iq2_xs, QK_K>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, item_ct1);
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత), sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+        [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
+            cpy_q_q<ఖండం_iq2_xs, QK_K>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, అంశం_ct1);
         });
 }
 
-static void ggml_cpy_iq2_s_iq2_s(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_iq2_s_iq2_s(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK_K == 0);
-    const int num_blocks = ceil_div(ne / QK_K, SYCL_CPY_BLOCK_SIZE);
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK_K, SYCL_CPY_ఖండం_కొలత);
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE), sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-        [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
-            cpy_q_q<block_iq2_s, QK_K>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, item_ct1);
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత), sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+        [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
+            cpy_q_q<ఖండం_iq2_s, QK_K>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, అంశం_ct1);
         });
 }
 
-static void ggml_cpy_iq3_xxs_iq3_xxs(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_iq3_xxs_iq3_xxs(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK_K == 0);
-    const int num_blocks = ceil_div(ne / QK_K, SYCL_CPY_BLOCK_SIZE);
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK_K, SYCL_CPY_ఖండం_కొలత);
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE), sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-        [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
-            cpy_q_q<block_iq3_xxs, QK_K>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, item_ct1);
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత), sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+        [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
+            cpy_q_q<ఖండం_iq3_xxs, QK_K>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, అంశం_ct1);
         });
 }
 
-static void ggml_cpy_iq1_s_iq1_s(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_iq1_s_iq1_s(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK_K == 0);
-    const int num_blocks = ceil_div(ne / QK_K, SYCL_CPY_BLOCK_SIZE);
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK_K, SYCL_CPY_ఖండం_కొలత);
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE), sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-        [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
-            cpy_q_q<block_iq1_s, QK_K>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, item_ct1);
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత), sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+        [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
+            cpy_q_q<ఖండం_iq1_s, QK_K>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, అంశం_ct1);
         });
 }
 
-static void ggml_cpy_iq1_m_iq1_m(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_iq1_m_iq1_m(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK_K == 0);
-    const int num_blocks = ceil_div(ne / QK_K, SYCL_CPY_BLOCK_SIZE);
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK_K, SYCL_CPY_ఖండం_కొలత);
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE), sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-        [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
-            cpy_q_q<block_iq1_m, QK_K>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, item_ct1);
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత), sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+        [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
+            cpy_q_q<ఖండం_iq1_m, QK_K>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, అంశం_ct1);
         });
 }
 
-static void ggml_cpy_iq4_nl_iq4_nl(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_iq4_nl_iq4_nl(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK4_NL == 0);
-    const int num_blocks = ceil_div(ne / QK4_NL, SYCL_CPY_BLOCK_SIZE);
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK4_NL, SYCL_CPY_ఖండం_కొలత);
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE), sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-        [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
-            cpy_q_q<block_iq4_nl, QK4_NL>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, item_ct1);
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత), sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+        [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
+            cpy_q_q<ఖండం_iq4_nl, QK4_NL>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, అంశం_ct1);
         });
 }
 
-static void ggml_cpy_iq3_s_iq3_s(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_iq3_s_iq3_s(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK_K == 0);
-    const int num_blocks = ceil_div(ne / QK_K, SYCL_CPY_BLOCK_SIZE);
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK_K, SYCL_CPY_ఖండం_కొలత);
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE), sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-        [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
-            cpy_q_q<block_iq3_s, QK_K>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, item_ct1);
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత), sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+        [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
+            cpy_q_q<ఖండం_iq3_s, QK_K>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, అంశం_ct1);
         });
 }
 
-static void ggml_cpy_iq4_xs_iq4_xs(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                   const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                   const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                   const int nb12, const int nb13, queue_ptr stream) {
+స్థిర శూన్య ggml_cpy_iq4_xs_iq4_xs(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                   స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                   స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                   స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
     GGML_ASSERT(ne % QK_K == 0);
-    const int num_blocks = ceil_div(ne / QK_K, SYCL_CPY_BLOCK_SIZE);
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = ceil_div(ne / QK_K, SYCL_CPY_ఖండం_కొలత);
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE), sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-        [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
-            cpy_q_q<block_iq4_xs, QK_K>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, item_ct1);
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత), sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+        [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
+            cpy_q_q<ఖండం_iq4_xs, QK_K>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, అంశం_ct1);
         });
 }
 
-#ifdef GGML_SYCL_HAS_BF16
-static void ggml_cpy_f32_bf16_sycl(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                  const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                  const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                  const int nb12, const int nb13, queue_ptr stream) {
-    const int num_blocks = (ne + SYCL_CPY_BLOCK_SIZE - 1) / SYCL_CPY_BLOCK_SIZE;
+#నిర్వచితమైతే GGML_SYCL_HAS_BF16
+స్థిర శూన్య ggml_cpy_f32_bf16_sycl(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                  స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                  స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                  స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = (ne + SYCL_CPY_ఖండం_కొలత - 1) / SYCL_CPY_ఖండం_కొలత;
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE),
-                          sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-        [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత),
+                          sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+        [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
             cpy_f32_f16<cpy_1_f32_bf16>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12,
-                                           nb10, nb11, nb12, nb13, item_ct1);
+                                           nb10, nb11, nb12, nb13, అంశం_ct1);
         });
 }
 
-static void ggml_cpy_bf16_f32_sycl(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                  const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                  const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                  const int nb12, const int nb13, queue_ptr stream) {
-    const int num_blocks = (ne + SYCL_CPY_BLOCK_SIZE - 1) / SYCL_CPY_BLOCK_SIZE;
+స్థిర శూన్య ggml_cpy_bf16_f32_sycl(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                  స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                  స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                  స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = (ne + SYCL_CPY_ఖండం_కొలత - 1) / SYCL_CPY_ఖండం_కొలత;
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE),
-                          sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-        [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత),
+                          sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+        [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
             cpy_f32_f16<cpy_1_bf16_f32>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12,
-                                           nb10, nb11, nb12, nb13, item_ct1);
+                                           nb10, nb11, nb12, nb13, అంశం_ct1);
         });
 }
 
-static void ggml_cpy_bf16_bf16_sycl(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                  const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                  const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                  const int nb12, const int nb13, queue_ptr stream) {
-    const int num_blocks = (ne + SYCL_CPY_BLOCK_SIZE - 1) / SYCL_CPY_BLOCK_SIZE;
+స్థిర శూన్య ggml_cpy_bf16_bf16_sycl(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                  స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                  స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                  స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = (ne + SYCL_CPY_ఖండం_కొలత - 1) / SYCL_CPY_ఖండం_కొలత;
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE),
-                          sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-        [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత),
+                          sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+        [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
             cpy_f32_f16<cpy_1_bf16_bf16>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12,
-                                            nb10, nb11, nb12, nb13, item_ct1);
+                                            nb10, nb11, nb12, nb13, అంశం_ct1);
         });
 }
 
-static void ggml_cpy_f16_bf16_sycl(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                  const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                  const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                  const int nb12, const int nb13, queue_ptr stream) {
-    const int num_blocks = (ne + SYCL_CPY_BLOCK_SIZE - 1) / SYCL_CPY_BLOCK_SIZE;
+స్థిర శూన్య ggml_cpy_f16_bf16_sycl(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                  స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                  స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                  స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = (ne + SYCL_CPY_ఖండం_కొలత - 1) / SYCL_CPY_ఖండం_కొలత;
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE),
-                          sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-        [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత),
+                          sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+        [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
             cpy_f32_f16<cpy_1_f16_bf16>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12,
-                                           nb10, nb11, nb12, nb13, item_ct1);
+                                           nb10, nb11, nb12, nb13, అంశం_ct1);
         });
 }
 
-static void ggml_cpy_bf16_f16_sycl(const char * cx, char * cdst, const int ne, const int ne00, const int ne01,
-                                  const int ne02, const int nb00, const int nb01, const int nb02, const int nb03,
-                                  const int ne10, const int ne11, const int ne12, const int nb10, const int nb11,
-                                  const int nb12, const int nb13, queue_ptr stream) {
-    const int num_blocks = (ne + SYCL_CPY_BLOCK_SIZE - 1) / SYCL_CPY_BLOCK_SIZE;
+స్థిర శూన్య ggml_cpy_bf16_f16_sycl(స్థిరరాశి అక్షరం * cx, అక్షరం * cdst, స్థిరరాశి పూర్ణాంకం ne, స్థిరరాశి పూర్ణాంకం ne00, స్థిరరాశి పూర్ణాంకం ne01,
+                                  స్థిరరాశి పూర్ణాంకం ne02, స్థిరరాశి పూర్ణాంకం nb00, స్థిరరాశి పూర్ణాంకం nb01, స్థిరరాశి పూర్ణాంకం nb02, స్థిరరాశి పూర్ణాంకం nb03,
+                                  స్థిరరాశి పూర్ణాంకం ne10, స్థిరరాశి పూర్ణాంకం ne11, స్థిరరాశి పూర్ణాంకం ne12, స్థిరరాశి పూర్ణాంకం nb10, స్థిరరాశి పూర్ణాంకం nb11,
+                                  స్థిరరాశి పూర్ణాంకం nb12, స్థిరరాశి పూర్ణాంకం nb13, వరుస_ptr stream) {
+    స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు = (ne + SYCL_CPY_ఖండం_కొలత - 1) / SYCL_CPY_ఖండం_కొలత;
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE),
-                          sycl::range<3>(1, 1, SYCL_CPY_BLOCK_SIZE)),
-        [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]]{
+        sycl::nd_range<3>(sycl::range<3>(1, 1, అంకె_ఖండాలు) * sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత),
+                          sycl::range<3>(1, 1, SYCL_CPY_ఖండం_కొలత)),
+        [=](sycl::nd_అంశం<3> అంశం_ct1) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]]{
             cpy_f32_f16<cpy_1_bf16_f16>(cx, cdst, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12,
-                                           nb10, nb11, nb12, nb13, item_ct1);
+                                           nb10, nb11, nb12, nb13, అంశం_ct1);
         });
 }
-#endif
+#అయితే_ముగింపు
 
-void ggml_sycl_cpy(ggml_backend_sycl_context & ctx, const ggml_tensor * src0, const ggml_tensor * src1) try {
+శూన్య ggml_sycl_cpy(ggml_backend_sycl_context & ctx, స్థిరరాశి ggml_tensor * src0, స్థిరరాశి ggml_tensor * src1) ప్రయత్నించు {
     // Unlike other operators ggml_sycl_cpy takes 2 distinct tensors instead of a dst ggml_tensor and rely on its src field
     GGML_SYCL_DEBUG("ggml_sycl_cpy: src0->type=%s, src1->type=%s\n",
         ggml_type_name(src0->type), ggml_type_name(src1->type));
     scope_op_debug_print scope_dbg_print(__func__, src1, /*num_src=*/0, debug_get_tensor_str("\tsrc0", src0));
-    const int64_t ne = ggml_nelements(src0);
+    స్థిరరాశి int64_t ne = ggml_nelements(src0);
     GGML_ASSERT(ne == ggml_nelements(src1));
     // the cpy kernels index in 32-bit
     GGML_ASSERT(ne <= INT32_MAX);
 
-    GGML_TENSOR_BINARY_OP_LOCALS01;
+    GGML_TENSOR_ద్విమాన_OP_LOCALS01;
 
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
-    queue_ptr main_stream = ctx.stream();
+    SYCL_CHECK(ggml_sycl_సమితి_device(ctx.device));
+    వరుస_ptr main_ప్రవాహం = ctx.stream();
 
-    char * src0_ddc = (char *) src0->data;
-    char * src1_ddc = (char *) src1->data;
-    if ((src0->type == src1->type) && (ggml_is_contiguous(src0) && ggml_is_contiguous(src1))) {
+    అక్షరం * src0_ddc = (అక్షరం *) src0->దత్తాంశం;
+    అక్షరం * src1_ddc = (అక్షరం *) src1->దత్తాంశం;
+    ఒకవేళ ((src0->type == src1->type) && (ggml_is_contiguous(src0) && ggml_is_contiguous(src1))) {
         GGML_SYCL_DEBUG("%s: memcpy path\n", __func__);
-        main_stream->memcpy(src1_ddc, src0_ddc, ggml_nbytes(src0));
-    } else if (src0->type == GGML_TYPE_F32 && ggml_sycl_is_quantized_type(src1->type)) {
-        GGML_ASSERT(ggml_sycl_can_quantize_rows_sycl(src1->type));
-        ggml_sycl_quantize_rows_sycl<float>(src0_ddc, src1_ddc, src0, src1, ne, ne00, ne01, ne02, nb00, nb01,
-                                            nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_F16 && ggml_sycl_is_quantized_type(src1->type)) {
-        GGML_ASSERT(ggml_sycl_can_quantize_rows_sycl(src1->type));
-        ggml_sycl_quantize_rows_sycl<sycl::half>(src0_ddc, src1_ddc, src0, src1, ne, ne00, ne01, ne02, nb00,
+        main_ప్రవాహం->జ్ఞాపకం_నకలు(src1_ddc, src0_ddc, ggml_nbytes(src0));
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_F32 && ggml_sycl_is_quantized_type(src1->type)) {
+        GGML_ASSERT(ggml_sycl_can_quantize_అడ్డువరుసలు_sycl(src1->type));
+        ggml_sycl_quantize_అడ్డువరుసలు_sycl<దశాంశం>(src0_ddc, src1_ddc, src0, src1, ne, ne00, ne01, ne02, nb00, nb01,
+                                            nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_F16 && ggml_sycl_is_quantized_type(src1->type)) {
+        GGML_ASSERT(ggml_sycl_can_quantize_అడ్డువరుసలు_sycl(src1->type));
+        ggml_sycl_quantize_అడ్డువరుసలు_sycl<sycl::half>(src0_ddc, src1_ddc, src0, src1, ne, ne00, ne01, ne02, nb00,
                                                  nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13,
-                                                 main_stream);
-#ifdef GGML_SYCL_HAS_BF16
-    } else if (src0->type == GGML_TYPE_BF16 && ggml_sycl_is_quantized_type(src1->type)) {
-        GGML_ASSERT(ggml_sycl_can_quantize_rows_sycl(src1->type));
-        ggml_sycl_quantize_rows_sycl<ggml_bf16_t>(src0_ddc, src1_ddc, src0, src1, ne, ne00, ne01, ne02,
+                                                 main_ప్రవాహం);
+#నిర్వచితమైతే GGML_SYCL_HAS_BF16
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_BF16 && ggml_sycl_is_quantized_type(src1->type)) {
+        GGML_ASSERT(ggml_sycl_can_quantize_అడ్డువరుసలు_sycl(src1->type));
+        ggml_sycl_quantize_అడ్డువరుసలు_sycl<ggml_bf16_t>(src0_ddc, src1_ddc, src0, src1, ne, ne00, ne01, ne02,
                                                   nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11,
-                                                  nb12, nb13, main_stream);
-#endif
-    } else if (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_F32) {
+                                                  nb12, nb13, main_ప్రవాహం);
+#అయితే_ముగింపు
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_F32) {
         ggml_cpy_f32_f32_sycl(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10,
-                              nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_F16) {
+                              nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_F16) {
         ggml_cpy_f32_f16_sycl(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10,
-                              nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_I32) {
+                              nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_I32) {
         ggml_cpy_f32_i32_sycl(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10,
-                              nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_Q8_0) {
+                              nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_Q8_0) {
         ggml_cpy_f32_q8_0_sycl(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10,
-                               nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_Q4_0) {
+                               nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_Q4_0) {
         ggml_cpy_f32_q4_0_sycl(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10,
-                               nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_Q4_1) {
+                               nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_Q4_1) {
         ggml_cpy_f32_q4_1_sycl(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10,
-                               nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_F32) {
+                               nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_F32) {
         ggml_cpy_f16_f32_sycl(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10,
-                              nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_F16) {
+                              nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_F16) {
         ggml_cpy_f16_f16_sycl(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10,
-                              nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_Q4_0) {
+                              nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_Q4_0) {
         ggml_cpy_f16_q4_0_sycl(src0_ddc, src1_ddc, ne, ne00, ne01, ne02,
-                               nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_Q4_1) {
+                               nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_Q4_1) {
         ggml_cpy_f16_q4_1_sycl(src0_ddc, src1_ddc, ne, ne00, ne01, ne02,
-                               nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_Q5_0) {
+                               nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_Q5_0) {
         ggml_cpy_f16_q5_0_sycl(src0_ddc, src1_ddc, ne, ne00, ne01, ne02,
-                               nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_I16 && src1->type == GGML_TYPE_I16) {
+                               nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_I16 && src1->type == GGML_TYPE_I16) {
         ggml_cpy_i16_i16_sycl(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10,
-                              nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_I32 && src1->type == GGML_TYPE_I32) {
+                              nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_I32 && src1->type == GGML_TYPE_I32) {
         ggml_cpy_i32_i32_sycl(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10,
-                              nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_I32 && src1->type == GGML_TYPE_F32) {
+                              nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_I32 && src1->type == GGML_TYPE_F32) {
         ggml_cpy_i32_f32_sycl(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10,
-                              nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_Q4_0 && src1->type == GGML_TYPE_F32) {
+                              nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_Q4_0 && src1->type == GGML_TYPE_F32) {
         ggml_cpy_q4_0_f32_sycl(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10,
-                               nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_Q4_1 && src1->type == GGML_TYPE_F32) {
+                               nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_Q4_1 && src1->type == GGML_TYPE_F32) {
         ggml_cpy_q4_1_f32_sycl(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10,
-                               nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_Q8_0 && src1->type == GGML_TYPE_F32) {
+                               nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_Q8_0 && src1->type == GGML_TYPE_F32) {
         ggml_cpy_q8_0_f32_sycl(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10,
-                               nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_Q2_0 && src1->type == GGML_TYPE_F32) {
+                               nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_Q2_0 && src1->type == GGML_TYPE_F32) {
         ggml_cpy_q2_0_f32_sycl(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12,
-                               nb10, nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_Q5_0) {
+                               nb10, nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_Q5_0) {
         ggml_cpy_f32_q5_0_sycl(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10,
-                               nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_Q5_0 && src1->type == GGML_TYPE_F32) {
+                               nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_Q5_0 && src1->type == GGML_TYPE_F32) {
         ggml_cpy_q5_0_f32_sycl(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10,
-                               nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_Q5_1) {
+                               nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_Q5_1) {
         ggml_cpy_f32_q5_1_sycl(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10,
-                               nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_Q5_1 && src1->type == GGML_TYPE_F32) {
+                               nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_Q5_1 && src1->type == GGML_TYPE_F32) {
         ggml_cpy_q5_1_f32_sycl(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10,
-                               nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_MXFP4 && src1->type == GGML_TYPE_F32) {
+                               nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_MXFP4 && src1->type == GGML_TYPE_F32) {
         ggml_cpy_mxfp4_f32_sycl(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12,
-                                nb10, nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_IQ4_NL) {
+                                nb10, nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_IQ4_NL) {
         ggml_cpy_f32_iq4_nl_sycl(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12,
-                                 nb10, nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_Q8_0 && src1->type == GGML_TYPE_Q8_0) {
-        ggml_cpy_q8_0_q8_0(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_Q5_0 && src1->type == GGML_TYPE_Q5_0) {
-        ggml_cpy_q5_0_q5_0(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_Q5_1 && src1->type == GGML_TYPE_Q5_1) {
-        ggml_cpy_q5_1_q5_1(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_Q4_0 && src1->type == GGML_TYPE_Q4_0) {
-        ggml_cpy_q4_0_q4_0(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_Q4_1 && src1->type == GGML_TYPE_Q4_1) {
-        ggml_cpy_q4_1_q4_1(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_Q1_0 && src1->type == GGML_TYPE_Q1_0) {
-        ggml_cpy_q1_0_q1_0(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_Q2_0 && src1->type == GGML_TYPE_Q2_0) {
-        ggml_cpy_q2_0_q2_0(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_MXFP4 && src1->type == GGML_TYPE_MXFP4) {
-        ggml_cpy_mxfp4_mxfp4(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_NVFP4 && src1->type == GGML_TYPE_NVFP4) {
-        ggml_cpy_nvfp4_nvfp4(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_Q2_K && src1->type == GGML_TYPE_Q2_K) {
-        ggml_cpy_q2_K_q2_K(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_Q3_K && src1->type == GGML_TYPE_Q3_K) {
-        ggml_cpy_q3_K_q3_K(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_Q4_K && src1->type == GGML_TYPE_Q4_K) {
-        ggml_cpy_q4_K_q4_K(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_Q5_K && src1->type == GGML_TYPE_Q5_K) {
-        ggml_cpy_q5_K_q5_K(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_Q6_K && src1->type == GGML_TYPE_Q6_K) {
-        ggml_cpy_q6_K_q6_K(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_IQ2_XXS && src1->type == GGML_TYPE_IQ2_XXS) {
-        ggml_cpy_iq2_xxs_iq2_xxs(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_IQ2_XS && src1->type == GGML_TYPE_IQ2_XS) {
-        ggml_cpy_iq2_xs_iq2_xs(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_IQ2_S && src1->type == GGML_TYPE_IQ2_S) {
-        ggml_cpy_iq2_s_iq2_s(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_IQ3_XXS && src1->type == GGML_TYPE_IQ3_XXS) {
-        ggml_cpy_iq3_xxs_iq3_xxs(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_IQ1_S && src1->type == GGML_TYPE_IQ1_S) {
-        ggml_cpy_iq1_s_iq1_s(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_IQ1_M && src1->type == GGML_TYPE_IQ1_M) {
-        ggml_cpy_iq1_m_iq1_m(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_IQ4_NL && src1->type == GGML_TYPE_IQ4_NL) {
-        ggml_cpy_iq4_nl_iq4_nl(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_IQ3_S && src1->type == GGML_TYPE_IQ3_S) {
-        ggml_cpy_iq3_s_iq3_s(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_IQ4_XS && src1->type == GGML_TYPE_IQ4_XS) {
-        ggml_cpy_iq4_xs_iq4_xs(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_stream);
-#ifdef GGML_SYCL_HAS_BF16
-    } else if (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_BF16) {
+                                 nb10, nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_Q8_0 && src1->type == GGML_TYPE_Q8_0) {
+        ggml_cpy_q8_0_q8_0(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_Q5_0 && src1->type == GGML_TYPE_Q5_0) {
+        ggml_cpy_q5_0_q5_0(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_Q5_1 && src1->type == GGML_TYPE_Q5_1) {
+        ggml_cpy_q5_1_q5_1(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_Q4_0 && src1->type == GGML_TYPE_Q4_0) {
+        ggml_cpy_q4_0_q4_0(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_Q4_1 && src1->type == GGML_TYPE_Q4_1) {
+        ggml_cpy_q4_1_q4_1(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_Q1_0 && src1->type == GGML_TYPE_Q1_0) {
+        ggml_cpy_q1_0_q1_0(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_Q2_0 && src1->type == GGML_TYPE_Q2_0) {
+        ggml_cpy_q2_0_q2_0(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_MXFP4 && src1->type == GGML_TYPE_MXFP4) {
+        ggml_cpy_mxfp4_mxfp4(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_NVFP4 && src1->type == GGML_TYPE_NVFP4) {
+        ggml_cpy_nvfp4_nvfp4(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_Q2_K && src1->type == GGML_TYPE_Q2_K) {
+        ggml_cpy_q2_K_q2_K(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_Q3_K && src1->type == GGML_TYPE_Q3_K) {
+        ggml_cpy_q3_K_q3_K(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_Q4_K && src1->type == GGML_TYPE_Q4_K) {
+        ggml_cpy_q4_K_q4_K(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_Q5_K && src1->type == GGML_TYPE_Q5_K) {
+        ggml_cpy_q5_K_q5_K(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_Q6_K && src1->type == GGML_TYPE_Q6_K) {
+        ggml_cpy_q6_K_q6_K(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_IQ2_XXS && src1->type == GGML_TYPE_IQ2_XXS) {
+        ggml_cpy_iq2_xxs_iq2_xxs(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_IQ2_XS && src1->type == GGML_TYPE_IQ2_XS) {
+        ggml_cpy_iq2_xs_iq2_xs(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_IQ2_S && src1->type == GGML_TYPE_IQ2_S) {
+        ggml_cpy_iq2_s_iq2_s(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_IQ3_XXS && src1->type == GGML_TYPE_IQ3_XXS) {
+        ggml_cpy_iq3_xxs_iq3_xxs(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_IQ1_S && src1->type == GGML_TYPE_IQ1_S) {
+        ggml_cpy_iq1_s_iq1_s(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_IQ1_M && src1->type == GGML_TYPE_IQ1_M) {
+        ggml_cpy_iq1_m_iq1_m(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_IQ4_NL && src1->type == GGML_TYPE_IQ4_NL) {
+        ggml_cpy_iq4_nl_iq4_nl(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_IQ3_S && src1->type == GGML_TYPE_IQ3_S) {
+        ggml_cpy_iq3_s_iq3_s(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_IQ4_XS && src1->type == GGML_TYPE_IQ4_XS) {
+        ggml_cpy_iq4_xs_iq4_xs(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10, nb11, nb12, nb13, main_ప్రవాహం);
+#నిర్వచితమైతే GGML_SYCL_HAS_BF16
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_BF16) {
         ggml_cpy_f32_bf16_sycl(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10,
-                              nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_BF16 && src1->type == GGML_TYPE_F32) {
+                              nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_BF16 && src1->type == GGML_TYPE_F32) {
         ggml_cpy_bf16_f32_sycl(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10,
-                              nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_BF16 && src1->type == GGML_TYPE_BF16) {
+                              nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_BF16 && src1->type == GGML_TYPE_BF16) {
         ggml_cpy_bf16_bf16_sycl(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10,
-                               nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_BF16) {
+                               nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_BF16) {
         ggml_cpy_f16_bf16_sycl(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10,
-                              nb11, nb12, nb13, main_stream);
-    } else if (src0->type == GGML_TYPE_BF16 && src1->type == GGML_TYPE_F16) {
+                              nb11, nb12, nb13, main_ప్రవాహం);
+    } లేకపోతే ఒకవేళ (src0->type == GGML_TYPE_BF16 && src1->type == GGML_TYPE_F16) {
         ggml_cpy_bf16_f16_sycl(src0_ddc, src1_ddc, ne, ne00, ne01, ne02, nb00, nb01, nb02, nb03, ne10, ne11, ne12, nb10,
-                              nb11, nb12, nb13, main_stream);
-#endif
-    } else {
+                              nb11, nb12, nb13, main_ప్రవాహం);
+#అయితే_ముగింపు
+    } లేకపోతే {
         GGML_LOG_ERROR("%s: unsupported type combination (%s to %s)\n", __func__, ggml_type_name(src0->type),
                        ggml_type_name(src1->type));
         GGML_ABORT("fatal error");
     }
-} catch (const sycl::exception & exc) {
-    std::cerr << exc.what() << "Exception caught at file:" << __FILE__ << ", line:" << __LINE__ << std::endl;
-    std::exit(1);
+} పట్టుకో (స్థిరరాశి sycl::exception & exc) {
+    std::cerr << exc.what() << "Exception caught at file:" << __FILE__ << ", line:" << __LINE__ << std::పంక్తి_ముగింపు;
+    std::నిష్క్రమించు(1);
 }
 
-void ggml_sycl_dup(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+శూన్య ggml_sycl_dup(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_cpy(ctx, dst->src[0], dst);
 }

@@ -1,287 +1,287 @@
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
-#include "ggml-backend-dl.h"
-#include "ggml-impl.h"
-#include <algorithm>
-#include <cstring>
-#include <filesystem>
-#include <memory>
-#include <string>
-#include <type_traits>
-#include <vector>
-#include <cctype>
+#అన్తర్భావ "ggml-backend-impl.h"
+#అన్తర్భావ "ggml-backend.h"
+#అన్తర్భావ "ggml-backend-dl.h"
+#అన్తర్భావ "ggml-impl.h"
+#అన్తర్భావ <algorithm>
+#అన్తర్భావ <cstring>
+#అన్తర్భావ <filesystem>
+#అన్తర్భావ <memory>
+#అన్తర్భావ <string>
+#అన్తర్భావ <type_traits>
+#అన్తర్భావ <vector>
+#అన్తర్భావ <cctype>
 
-#ifdef _WIN32
-#    define WIN32_LEAN_AND_MEAN
+#నిర్వచితమైతే _WIN32
+#    define WIN32_LEAN_AND_సగటు
 #    ifndef NOMINMAX
 #        define NOMINMAX
 #    endif
 #    include <windows.h>
-#elif defined(__APPLE__)
+#లేదావేళ defined(__APPLE__)
 #    include <mach-o/dyld.h>
 #    include <dlfcn.h>
-#else
+#లేకపోతే
 #    include <dlfcn.h>
 #    include <unistd.h>
-#endif
+#అయితే_ముగింపు
 
 // Backend registry
-#ifdef GGML_USE_CPU
-#include "ggml-cpu.h"
-#endif
+#నిర్వచితమైతే GGML_USE_CPU
+#అన్తర్భావ "ggml-cpu.h"
+#అయితే_ముగింపు
 
-#ifdef GGML_USE_CUDA
-#include "ggml-cuda.h"
-#endif
+#నిర్వచితమైతే GGML_USE_CUDA
+#అన్తర్భావ "ggml-cuda.h"
+#అయితే_ముగింపు
 
-#ifdef GGML_USE_METAL
-#include "ggml-metal.h"
-#endif
+#నిర్వచితమైతే GGML_USE_METAL
+#అన్తర్భావ "ggml-metal.h"
+#అయితే_ముగింపు
 
-#ifdef GGML_USE_SYCL
-#include "ggml-sycl.h"
-#endif
+#నిర్వచితమైతే GGML_USE_SYCL
+#అన్తర్భావ "ggml-sycl.h"
+#అయితే_ముగింపు
 
-#ifdef GGML_USE_VULKAN
-#include "ggml-vulkan.h"
-#endif
+#నిర్వచితమైతే GGML_USE_VULKAN
+#అన్తర్భావ "ggml-vulkan.h"
+#అయితే_ముగింపు
 
-#ifdef GGML_USE_WEBGPU
-#include "ggml-webgpu.h"
-#endif
+#నిర్వచితమైతే GGML_USE_WEBGPU
+#అన్తర్భావ "ggml-webgpu.h"
+#అయితే_ముగింపు
 
-#ifdef GGML_USE_ZDNN
-#include "ggml-zdnn.h"
-#endif
+#నిర్వచితమైతే GGML_USE_ZDNN
+#అన్తర్భావ "ggml-zdnn.h"
+#అయితే_ముగింపు
 
-#ifdef GGML_USE_OPENCL
-#include "ggml-opencl.h"
-#endif
+#నిర్వచితమైతే GGML_USE_OPENCL
+#అన్తర్భావ "ggml-opencl.h"
+#అయితే_ముగింపు
 
-#ifdef GGML_USE_HEXAGON
-#include "ggml-hexagon.h"
-#endif
+#నిర్వచితమైతే GGML_USE_HEXAGON
+#అన్తర్భావ "ggml-hexagon.h"
+#అయితే_ముగింపు
 
-#ifdef GGML_USE_BLAS
-#include "ggml-blas.h"
-#endif
+#నిర్వచితమైతే GGML_USE_BLAS
+#అన్తర్భావ "ggml-blas.h"
+#అయితే_ముగింపు
 
-#ifdef GGML_USE_RPC
-#include "ggml-rpc.h"
-#endif
+#నిర్వచితమైతే GGML_USE_RPC
+#అన్తర్భావ "ggml-rpc.h"
+#అయితే_ముగింపు
 
-#ifdef GGML_USE_VIRTGPU_FRONTEND
-#include "ggml-virtgpu.h"
-#endif
+#నిర్వచితమైతే GGML_USE_VIRTGPU_FRONTEND
+#అన్తర్భావ "ggml-virtgpu.h"
+#అయితే_ముగింపు
 
-#ifdef GGML_USE_CANN
-#include "ggml-cann.h"
-#endif
+#నిర్వచితమైతే GGML_USE_CANN
+#అన్తర్భావ "ggml-cann.h"
+#అయితే_ముగింపు
 
-#ifdef GGML_USE_ZENDNN
-#include "ggml-zendnn.h"
-#endif
+#నిర్వచితమైతే GGML_USE_ZENDNN
+#అన్తర్భావ "ggml-zendnn.h"
+#అయితే_ముగింపు
 
-#ifdef GGML_USE_OPENVINO
-#include "ggml-openvino.h"
-#endif
+#నిర్వచితమైతే GGML_USE_OPENVINO
+#అన్తర్భావ "ggml-openvino.h"
+#అయితే_ముగింపు
 
-#ifdef GGML_USE_ET
-#include "ggml-et.h"
-#endif
+#నిర్వచితమైతే GGML_USE_ET
+#అన్తర్భావ "ggml-et.h"
+#అయితే_ముగింపు
 
-namespace fs = std::filesystem;
+నామాకాశ fs = std::filesystem;
 
-static std::string path_str(const fs::path & path) {
-    try {
-#if defined(__cpp_lib_char8_t)
+స్థిర std::string మార్గం_str(స్థిరరాశి fs::path & path) {
+    ప్రయత్నించు {
+#ఒకవేళ defined(__cpp_lib_char8_t)
         // C++20 and later: u8string() returns std::u8string
-        const std::u8string u8str = path.u8string();
-        return std::string(reinterpret_cast<const char *>(u8str.data()), u8str.size());
-#else
+        స్థిరరాశి std::u8string u8str = path.u8string();
+        తిరిగి std::string(reinterpret_cast<స్థిరరాశి అక్షరం *>(u8str.దత్తాంశం()), u8str.size());
+#లేకపోతే
         // C++17: u8string() returns std::string
-        return path.u8string();
-#endif
-    } catch (...) {
-        return std::string();
+        తిరిగి path.u8string();
+#అయితే_ముగింపు
+    } పట్టుకో (...) {
+        తిరిగి std::string();
     }
 }
 
-struct ggml_backend_reg_entry {
+నిర్మాణం ggml_backend_reg_నమోదు {
     ggml_backend_reg_t reg;
     dl_handle_ptr handle;
 };
 
-struct ggml_backend_registry {
-    std::vector<ggml_backend_reg_entry> backends;
+నిర్మాణం ggml_backend_registry {
+    std::vector<ggml_backend_reg_నమోదు> backends;
     std::vector<ggml_backend_dev_t> devices;
 
     ggml_backend_registry() {
-#ifdef GGML_USE_CUDA
-        register_backend(ggml_backend_cuda_reg());
-#endif
-#ifdef GGML_USE_METAL
-        register_backend(ggml_backend_metal_reg());
-#endif
-#ifdef GGML_USE_SYCL
-        register_backend(ggml_backend_sycl_reg());
-#endif
-#ifdef GGML_USE_VULKAN
+#నిర్వచితమైతే GGML_USE_CUDA
+        రిజిస్టరు_backend(ggml_backend_cuda_reg());
+#అయితే_ముగింపు
+#నిర్వచితమైతే GGML_USE_METAL
+        రిజిస్టరు_backend(ggml_backend_metal_reg());
+#అయితే_ముగింపు
+#నిర్వచితమైతే GGML_USE_SYCL
+        రిజిస్టరు_backend(ggml_backend_sycl_reg());
+#అయితే_ముగింపు
+#నిర్వచితమైతే GGML_USE_VULKAN
     // Add runtime disable check
-    if (getenv("GGML_DISABLE_VULKAN") == nullptr) {
-        register_backend(ggml_backend_vk_reg());
-    } else {
+    ఒకవేళ (getenv("GGML_DISABLE_VULKAN") == శూన్యసూచిక) {
+        రిజిస్టరు_backend(ggml_backend_vk_reg());
+    } లేకపోతే {
         GGML_LOG_DEBUG("Vulkan backend disabled by GGML_DISABLE_VULKAN environment variable\n");
     }
-#endif
-#ifdef GGML_USE_WEBGPU
-        register_backend(ggml_backend_webgpu_reg());
-#endif
-#ifdef GGML_USE_ZDNN
-        register_backend(ggml_backend_zdnn_reg());
-#endif
-#ifdef GGML_USE_VIRTGPU_FRONTEND
-        register_backend(ggml_backend_virtgpu_reg());
-#endif
+#అయితే_ముగింపు
+#నిర్వచితమైతే GGML_USE_WEBGPU
+        రిజిస్టరు_backend(ggml_backend_webgpu_reg());
+#అయితే_ముగింపు
+#నిర్వచితమైతే GGML_USE_ZDNN
+        రిజిస్టరు_backend(ggml_backend_zdnn_reg());
+#అయితే_ముగింపు
+#నిర్వచితమైతే GGML_USE_VIRTGPU_FRONTEND
+        రిజిస్టరు_backend(ggml_backend_virtgpu_reg());
+#అయితే_ముగింపు
 
-#ifdef GGML_USE_OPENCL
-        register_backend(ggml_backend_opencl_reg());
-#endif
-#ifdef GGML_USE_ZENDNN
-        register_backend(ggml_backend_zendnn_reg());
-#endif
-#ifdef GGML_USE_HEXAGON
-        register_backend(ggml_backend_hexagon_reg());
-#endif
-#ifdef GGML_USE_CANN
-        register_backend(ggml_backend_cann_reg());
-#endif
-#ifdef GGML_USE_BLAS
-        register_backend(ggml_backend_blas_reg());
-#endif
-#ifdef GGML_USE_RPC
-        register_backend(ggml_backend_rpc_reg());
-#endif
-#ifdef GGML_USE_OPENVINO
-        register_backend(ggml_backend_openvino_reg());
-#endif
-#ifdef GGML_USE_ET
-        register_backend(ggml_backend_et_reg());
-#endif
-#ifdef GGML_USE_CPU
-        register_backend(ggml_backend_cpu_reg());
-#endif
+#నిర్వచితమైతే GGML_USE_OPENCL
+        రిజిస్టరు_backend(ggml_backend_opencl_reg());
+#అయితే_ముగింపు
+#నిర్వచితమైతే GGML_USE_ZENDNN
+        రిజిస్టరు_backend(ggml_backend_zendnn_reg());
+#అయితే_ముగింపు
+#నిర్వచితమైతే GGML_USE_HEXAGON
+        రిజిస్టరు_backend(ggml_backend_hexagon_reg());
+#అయితే_ముగింపు
+#నిర్వచితమైతే GGML_USE_CANN
+        రిజిస్టరు_backend(ggml_backend_cann_reg());
+#అయితే_ముగింపు
+#నిర్వచితమైతే GGML_USE_BLAS
+        రిజిస్టరు_backend(ggml_backend_blas_reg());
+#అయితే_ముగింపు
+#నిర్వచితమైతే GGML_USE_RPC
+        రిజిస్టరు_backend(ggml_backend_rpc_reg());
+#అయితే_ముగింపు
+#నిర్వచితమైతే GGML_USE_OPENVINO
+        రిజిస్టరు_backend(ggml_backend_openvino_reg());
+#అయితే_ముగింపు
+#నిర్వచితమైతే GGML_USE_ET
+        రిజిస్టరు_backend(ggml_backend_et_reg());
+#అయితే_ముగింపు
+#నిర్వచితమైతే GGML_USE_CPU
+        రిజిస్టరు_backend(ggml_backend_cpu_reg());
+#అయితే_ముగింపు
     }
 
     ~ggml_backend_registry() {
         // FIXME: backends cannot be safely unloaded without a function to destroy all the backend resources,
         // since backend threads may still be running and accessing resources from the dynamic library
-        for (auto & entry : backends) {
-            if (entry.handle) {
-                entry.handle.release(); // NOLINT
+        కొరకు (స్వయంచాలక & నమోదు_2 : backends) {
+            ఒకవేళ (నమోదు_2.handle) {
+                నమోదు_2.handle.release(); // NOLINT
             }
         }
     }
 
-    void register_backend(ggml_backend_reg_t reg, dl_handle_ptr handle = nullptr) {
-        if (!reg) {
-            return;
+    శూన్య రిజిస్టరు_backend(ggml_backend_reg_t reg, dl_handle_ptr handle = శూన్యసూచిక) {
+        ఒకవేళ (!reg) {
+            తిరిగి;
         }
 
-        for (auto & entry : backends) {
-            if (entry.reg == reg) {
-                return;
+        కొరకు (స్వయంచాలక & నమోదు_2 : backends) {
+            ఒకవేళ (నమోదు_2.reg == reg) {
+                తిరిగి;
             }
         }
 
-#ifndef NDEBUG
+#నిర్వచితం_కాకపోతే NDEBUG
         GGML_LOG_DEBUG("%s: registered backend %s (%zu devices)\n",
-            __func__, ggml_backend_reg_name(reg), ggml_backend_reg_dev_count(reg));
-#endif
+            __func__, ggml_backend_reg_name(reg), ggml_backend_reg_dev_లెక్క(reg));
+#అయితే_ముగింపు
         backends.push_back({ reg, std::move(handle) });
-        for (size_t i = 0; i < ggml_backend_reg_dev_count(reg); i++) {
-            register_device(ggml_backend_reg_dev_get(reg, i));
+        కొరకు (size_t i = 0; i < ggml_backend_reg_dev_లెక్క(reg); i++) {
+            రిజిస్టరు_device(ggml_backend_reg_dev_get(reg, i));
         }
     }
 
-    void register_device(ggml_backend_dev_t device) {
-        for (auto & dev : devices) {
-            if (dev == device) {
-                return;
+    శూన్య రిజిస్టరు_device(ggml_backend_dev_t device) {
+        కొరకు (స్వయంచాలక & dev : devices) {
+            ఒకవేళ (dev == device) {
+                తిరిగి;
             }
         }
 
-#ifndef NDEBUG
+#నిర్వచితం_కాకపోతే NDEBUG
         GGML_LOG_DEBUG("%s: registered device %s (%s)\n", __func__, ggml_backend_dev_name(device), ggml_backend_dev_description(device));
-#endif
+#అయితే_ముగింపు
         devices.push_back(device);
     }
 
-    ggml_backend_reg_t load_backend(const fs::path & path, bool silent) {
-        dl_handle_ptr handle { dl_load_library(path) };
-        if (!handle) {
-            if (!silent) {
-                GGML_LOG_ERROR("%s: failed to load %s: %s\n", __func__, path_str(path).c_str(), dl_error());
+    ggml_backend_reg_t ఎక్కించు_backend(స్థిరరాశి fs::path & path, తార్కిక silent) {
+        dl_handle_ptr handle { dl_ఎక్కించు_library(path) };
+        ఒకవేళ (!handle) {
+            ఒకవేళ (!silent) {
+                GGML_LOG_ERROR("%s: failed to load %s: %s\n", __func__, మార్గం_str(path).c_str(), dl_error());
             }
-            return nullptr;
+            తిరిగి శూన్యసూచిక;
         }
 
-        auto score_fn = (ggml_backend_score_t) dl_get_sym(handle.get(), "ggml_backend_score");
-        if (score_fn && score_fn() == 0) {
-            if (!silent) {
-                GGML_LOG_INFO("%s: backend %s is not supported on this system\n", __func__, path_str(path).c_str());
+        స్వయంచాలక score_fn = (ggml_backend_score_t) dl_get_sym(handle.get(), "ggml_backend_score");
+        ఒకవేళ (score_fn && score_fn() == 0) {
+            ఒకవేళ (!silent) {
+                GGML_LOG_INFO("%s: backend %s is not supported on this system\n", __func__, మార్గం_str(path).c_str());
             }
-            return nullptr;
+            తిరిగి శూన్యసూచిక;
         }
 
-        auto backend_init_fn = (ggml_backend_init_t) dl_get_sym(handle.get(), "ggml_backend_init");
-        if (!backend_init_fn) {
-            if (!silent) {
-                GGML_LOG_ERROR("%s: failed to find ggml_backend_init in %s\n", __func__, path_str(path).c_str());
+        స్వయంచాలక backend_init_fn = (ggml_backend_init_t) dl_get_sym(handle.get(), "ggml_backend_init");
+        ఒకవేళ (!backend_init_fn) {
+            ఒకవేళ (!silent) {
+                GGML_LOG_ERROR("%s: failed to find ggml_backend_init in %s\n", __func__, మార్గం_str(path).c_str());
             }
-            return nullptr;
+            తిరిగి శూన్యసూచిక;
         }
 
         ggml_backend_reg_t reg = backend_init_fn();
-        if (!reg || reg->api_version != GGML_BACKEND_API_VERSION) {
-            if (!silent) {
-                if (!reg) {
+        ఒకవేళ (!reg || reg->api_సంస్కరణ != GGML_BACKEND_API_సంస్కరణ) {
+            ఒకవేళ (!silent) {
+                ఒకవేళ (!reg) {
                     GGML_LOG_ERROR("%s: failed to initialize backend from %s: ggml_backend_init returned NULL\n",
-                        __func__, path_str(path).c_str());
-                } else {
+                        __func__, మార్గం_str(path).c_str());
+                } లేకపోతే {
                     GGML_LOG_ERROR("%s: failed to initialize backend from %s: incompatible API version (backend: %d, current: %d)\n",
-                        __func__, path_str(path).c_str(), reg->api_version, GGML_BACKEND_API_VERSION);
+                        __func__, మార్గం_str(path).c_str(), reg->api_సంస్కరణ, GGML_BACKEND_API_సంస్కరణ);
                 }
             }
-            return nullptr;
+            తిరిగి శూన్యసూచిక;
         }
 
-        GGML_LOG_INFO("%s: loaded %s backend from %s\n", __func__, ggml_backend_reg_name(reg), path_str(path).c_str());
+        GGML_LOG_INFO("%s: loaded %s backend from %s\n", __func__, ggml_backend_reg_name(reg), మార్గం_str(path).c_str());
 
-        register_backend(reg, std::move(handle));
+        రిజిస్టరు_backend(reg, std::move(handle));
 
-        return reg;
+        తిరిగి reg;
     }
 
-    void unload_backend(ggml_backend_reg_t reg, bool silent) {
-        auto it = std::find_if(backends.begin(), backends.end(),
-                               [reg](const ggml_backend_reg_entry & entry) { return entry.reg == reg; });
+    శూన్య unload_backend(ggml_backend_reg_t reg, తార్కిక silent) {
+        స్వయంచాలక it = std::find_if(backends.begin(), backends.end(),
+                               [reg](స్థిరరాశి ggml_backend_reg_నమోదు & నమోదు_2) { తిరిగి నమోదు_2.reg == reg; });
 
-        if (it == backends.end()) {
-            if (!silent) {
+        ఒకవేళ (it == backends.end()) {
+            ఒకవేళ (!silent) {
                 GGML_LOG_ERROR("%s: backend not found\n", __func__);
             }
-            return;
+            తిరిగి;
         }
 
-        if (!silent) {
+        ఒకవేళ (!silent) {
             GGML_LOG_DEBUG("%s: unloading %s backend\n", __func__, ggml_backend_reg_name(reg));
         }
 
         // remove devices
         devices.erase(
             std::remove_if(devices.begin(), devices.end(),
-                            [reg](ggml_backend_dev_t dev) { return ggml_backend_dev_backend_reg(dev) == reg; }),
+                            [reg](ggml_backend_dev_t dev) { తిరిగి ggml_backend_dev_backend_reg(dev) == reg; }),
             devices.end());
 
         // remove backend
@@ -289,250 +289,250 @@ struct ggml_backend_registry {
     }
 };
 
-static ggml_backend_registry & get_reg() {
-    static ggml_backend_registry reg;
-    return reg;
+స్థిర ggml_backend_registry & get_reg() {
+    స్థిర ggml_backend_registry reg;
+    తిరిగి reg;
 }
 
 // Internal API
-void ggml_backend_register(ggml_backend_reg_t reg) {
-    get_reg().register_backend(reg);
+శూన్య ggml_backend_రిజిస్టరు(ggml_backend_reg_t reg) {
+    get_reg().రిజిస్టరు_backend(reg);
 }
 
-void ggml_backend_device_register(ggml_backend_dev_t device) {
-    get_reg().register_device(device);
+శూన్య ggml_backend_device_రిజిస్టరు(ggml_backend_dev_t device) {
+    get_reg().రిజిస్టరు_device(device);
 }
 
 // Backend (reg) enumeration
-static bool striequals(const char * a, const char * b) {
-    for (; *a && *b; a++, b++) {
-        if (std::tolower(*a) != std::tolower(*b)) {
-            return false;
+స్థిర తార్కిక striequals(స్థిరరాశి అక్షరం * a, స్థిరరాశి అక్షరం * b) {
+    కొరకు (; *a && *b; a++, b++) {
+        ఒకవేళ (std::tolower(*a) != std::tolower(*b)) {
+            తిరిగి అబద్ధం;
         }
     }
-    return *a == *b;
+    తిరిగి *a == *b;
 }
 
-size_t ggml_backend_reg_count() {
-    return get_reg().backends.size();
+size_t ggml_backend_reg_లెక్క() {
+    తిరిగి get_reg().backends.size();
 }
 
-ggml_backend_reg_t ggml_backend_reg_get(size_t index) {
-    GGML_ASSERT(index < ggml_backend_reg_count());
-    return get_reg().backends[index].reg;
+ggml_backend_reg_t ggml_backend_reg_get(size_t సూచీ) {
+    GGML_ASSERT(సూచీ < ggml_backend_reg_లెక్క());
+    తిరిగి get_reg().backends[సూచీ].reg;
 }
 
-ggml_backend_reg_t ggml_backend_reg_by_name(const char * name) {
-    for (size_t i = 0; i < ggml_backend_reg_count(); i++) {
+ggml_backend_reg_t ggml_backend_reg_by_name(స్థిరరాశి అక్షరం * name) {
+    కొరకు (size_t i = 0; i < ggml_backend_reg_లెక్క(); i++) {
         ggml_backend_reg_t reg = ggml_backend_reg_get(i);
-        if (striequals(ggml_backend_reg_name(reg), name)) {
-            return reg;
+        ఒకవేళ (striequals(ggml_backend_reg_name(reg), name)) {
+            తిరిగి reg;
         }
     }
-    return nullptr;
+    తిరిగి శూన్యసూచిక;
 }
 
 // Device enumeration
-size_t ggml_backend_dev_count() {
-    return get_reg().devices.size();
+size_t ggml_backend_dev_లెక్క() {
+    తిరిగి get_reg().devices.size();
 }
 
-ggml_backend_dev_t ggml_backend_dev_get(size_t index) {
-    GGML_ASSERT(index < ggml_backend_dev_count());
-    return get_reg().devices[index];
+ggml_backend_dev_t ggml_backend_dev_get(size_t సూచీ) {
+    GGML_ASSERT(సూచీ < ggml_backend_dev_లెక్క());
+    తిరిగి get_reg().devices[సూచీ];
 }
 
-ggml_backend_dev_t ggml_backend_dev_by_name(const char * name) {
-    for (size_t i = 0; i < ggml_backend_dev_count(); i++) {
+ggml_backend_dev_t ggml_backend_dev_by_name(స్థిరరాశి అక్షరం * name) {
+    కొరకు (size_t i = 0; i < ggml_backend_dev_లెక్క(); i++) {
         ggml_backend_dev_t dev = ggml_backend_dev_get(i);
-        if (striequals(ggml_backend_dev_name(dev), name)) {
-            return dev;
+        ఒకవేళ (striequals(ggml_backend_dev_name(dev), name)) {
+            తిరిగి dev;
         }
     }
-    return nullptr;
+    తిరిగి శూన్యసూచిక;
 }
 
-ggml_backend_dev_t ggml_backend_dev_by_type(enum ggml_backend_dev_type type) {
-    for (size_t i = 0; i < ggml_backend_dev_count(); i++) {
+ggml_backend_dev_t ggml_backend_dev_by_type(గణన ggml_backend_dev_type type) {
+    కొరకు (size_t i = 0; i < ggml_backend_dev_లెక్క(); i++) {
         ggml_backend_dev_t dev = ggml_backend_dev_get(i);
-        if (ggml_backend_dev_type(dev) == type) {
-            return dev;
+        ఒకవేళ (ggml_backend_dev_type(dev) == type) {
+            తిరిగి dev;
         }
     }
-    return nullptr;
+    తిరిగి శూన్యసూచిక;
 }
 
 // Convenience functions
-ggml_backend_t ggml_backend_init_by_name(const char * name, const char * params) {
+ggml_backend_t ggml_backend_init_by_name(స్థిరరాశి అక్షరం * name, స్థిరరాశి అక్షరం * params) {
     ggml_backend_dev_t dev = ggml_backend_dev_by_name(name);
-    if (!dev) {
-        return nullptr;
+    ఒకవేళ (!dev) {
+        తిరిగి శూన్యసూచిక;
     }
-    return ggml_backend_dev_init(dev, params);
+    తిరిగి ggml_backend_dev_init(dev, params);
 }
 
-ggml_backend_t ggml_backend_init_by_type(enum ggml_backend_dev_type type, const char * params) {
+ggml_backend_t ggml_backend_init_by_type(గణన ggml_backend_dev_type type, స్థిరరాశి అక్షరం * params) {
     ggml_backend_dev_t dev = ggml_backend_dev_by_type(type);
-    if (!dev) {
-        return nullptr;
+    ఒకవేళ (!dev) {
+        తిరిగి శూన్యసూచిక;
     }
-    return ggml_backend_dev_init(dev, params);
+    తిరిగి ggml_backend_dev_init(dev, params);
 }
 
-ggml_backend_t ggml_backend_init_best(void) {
+ggml_backend_t ggml_backend_init_ఉత్తమ(శూన్య) {
     ggml_backend_dev_t dev = ggml_backend_dev_by_type(GGML_BACKEND_DEVICE_TYPE_GPU);
     dev = dev ? dev : ggml_backend_dev_by_type(GGML_BACKEND_DEVICE_TYPE_IGPU);
     dev = dev ? dev : ggml_backend_dev_by_type(GGML_BACKEND_DEVICE_TYPE_CPU);
-    if (!dev) {
-        return nullptr;
+    ఒకవేళ (!dev) {
+        తిరిగి శూన్యసూచిక;
     }
-    return ggml_backend_dev_init(dev, nullptr);
+    తిరిగి ggml_backend_dev_init(dev, శూన్యసూచిక);
 }
 
 // Dynamic loading
-ggml_backend_reg_t ggml_backend_load(const char * path) {
-    return get_reg().load_backend(path, false);
+ggml_backend_reg_t ggml_backend_ఎక్కించు(స్థిరరాశి అక్షరం * path) {
+    తిరిగి get_reg().ఎక్కించు_backend(path, అబద్ధం);
 }
 
-void ggml_backend_unload(ggml_backend_reg_t reg) {
-    get_reg().unload_backend(reg, true);
+శూన్య ggml_backend_unload(ggml_backend_reg_t reg) {
+    get_reg().unload_backend(reg, నిజం);
 }
 
-static fs::path get_executable_path() {
-#if defined(__APPLE__)
+స్థిర fs::path get_executable_మార్గం() {
+#ఒకవేళ defined(__APPLE__)
     // get executable path
-    std::vector<char> path;
+    std::vector<అక్షరం> path;
     uint32_t size;
-    while (true) {
+    అయితే (నిజం) {
         size = path.size();
-        if (_NSGetExecutablePath(path.data(), &size) == 0) {
-            break;
+        ఒకవేళ (NSGet_Executable_మార్గం(path.దత్తాంశం(), &size) == 0) {
+            ఆపు;
         }
         path.resize(size);
     }
-    std::string base_path(path.data(), size);
+    std::string పునాది_మార్గం(path.దత్తాంశం(), size);
     // remove executable name
-    auto last_slash = base_path.find_last_of('/');
-    if (last_slash != std::string::npos) {
-        base_path = base_path.substr(0, last_slash);
+    స్వయంచాలక చివరి_slash = పునాది_మార్గం.find_last_of('/');
+    ఒకవేళ (చివరి_slash != std::string::npos) {
+        పునాది_మార్గం = పునాది_మార్గం.substr(0, చివరి_slash);
     }
-    return base_path + "/";
-#elif defined(__linux__) || defined(__FreeBSD__)
-    std::string base_path = ".";
-    std::vector<char> path(1024);
-    while (true) {
+    తిరిగి పునాది_మార్గం + "/";
+#లేదావేళ defined(__linux__) || defined(__FreeBSD__)
+    std::string పునాది_మార్గం = ".";
+    std::vector<అక్షరం> path(1024);
+    అయితే (నిజం) {
         // get executable path
-#    if defined(__linux__)
-        ssize_t len = readlink("/proc/self/exe", path.data(), path.size());
+#    ఒకవేళ defined(__linux__)
+        ssize_t len = readlink("/proc/self/exe", path.దత్తాంశం(), path.size());
 #    elif defined(__FreeBSD__)
-        ssize_t len = readlink("/proc/curproc/file", path.data(), path.size());
+        ssize_t len = readlink("/proc/curproc/file", path.దత్తాంశం(), path.size());
 #    endif
-        if (len == -1) {
-            break;
+        ఒకవేళ (len == -1) {
+            ఆపు;
         }
-        if (len < (ssize_t) path.size()) {
-            base_path = std::string(path.data(), len);
+        ఒకవేళ (len < (ssize_t) path.size()) {
+            పునాది_మార్గం = std::string(path.దత్తాంశం(), len);
             // remove executable name
-            auto last_slash = base_path.find_last_of('/');
-            if (last_slash != std::string::npos) {
-                base_path = base_path.substr(0, last_slash);
+            స్వయంచాలక చివరి_slash = పునాది_మార్గం.find_last_of('/');
+            ఒకవేళ (చివరి_slash != std::string::npos) {
+                పునాది_మార్గం = పునాది_మార్గం.substr(0, చివరి_slash);
             }
-            break;
+            ఆపు;
         }
         path.resize(path.size() * 2);
     }
 
-    return base_path + "/";
-#elif defined(_WIN32)
-    std::vector<wchar_t> path(MAX_PATH);
-    DWORD len = GetModuleFileNameW(NULL, path.data(), path.size());
-    if (len == 0) {
-        return {};
+    తిరిగి పునాది_మార్గం + "/";
+#లేదావేళ defined(_WIN32)
+    std::vector<wchar_t> path(MAX_మార్గం);
+    DWORD len = GetModuleFileNameW(ఖాళీ, path.దత్తాంశం(), path.size());
+    ఒకవేళ (len == 0) {
+        తిరిగి {};
     }
-    std::wstring base_path(path.data(), len);
+    std::wstring పునాది_మార్గం(path.దత్తాంశం(), len);
     // remove executable name
-    auto last_slash = base_path.find_last_of('\\');
-    if (last_slash != std::string::npos) {
-        base_path = base_path.substr(0, last_slash);
+    స్వయంచాలక చివరి_slash = పునాది_మార్గం.find_last_of('\\');
+    ఒకవేళ (చివరి_slash != std::string::npos) {
+        పునాది_మార్గం = పునాది_మార్గం.substr(0, చివరి_slash);
     }
-    return base_path + L"\\";
-#else
-    return {};
-#endif
+    తిరిగి పునాది_మార్గం + L"\\";
+#లేకపోతే
+    తిరిగి {};
+#అయితే_ముగింపు
 }
 
-static fs::path backend_filename_prefix() {
-#ifdef _WIN32
-    return fs::u8path("ggml-");
-#else
-    return fs::u8path("libggml-");
-#endif
+స్థిర fs::path backend_filename_ఉపసర్గ() {
+#నిర్వచితమైతే _WIN32
+    తిరిగి fs::u8path("ggml-");
+#లేకపోతే
+    తిరిగి fs::u8path("libggml-");
+#అయితే_ముగింపు
 }
 
-static fs::path backend_filename_extension() {
-#ifdef _WIN32
-    return fs::u8path(".dll");
-#else
-    return fs::u8path(".so");
-#endif
+స్థిర fs::path backend_filename_extension() {
+#నిర్వచితమైతే _WIN32
+    తిరిగి fs::u8path(".dll");
+#లేకపోతే
+    తిరిగి fs::u8path(".so");
+#అయితే_ముగింపు
 }
 
-static ggml_backend_reg_t ggml_backend_load_best(const char * name, bool silent, const char * user_search_path) {
+స్థిర ggml_backend_reg_t ggml_backend_ఎక్కించు_ఉత్తమ(స్థిరరాశి అక్షరం * name, తార్కిక silent, స్థిరరాశి అక్షరం * user_శోధన_మార్గం) {
     // enumerate all the files that match [lib]ggml-name-*.[so|dll] in the search paths
-    const fs::path name_path = fs::u8path(name);
-    const fs::path file_prefix = backend_filename_prefix().native() + name_path.native() + fs::u8path("-").native();
-    const fs::path file_extension = backend_filename_extension();
+    స్థిరరాశి fs::path name_మార్గం = fs::u8path(name);
+    స్థిరరాశి fs::path file_ఉపసర్గ = backend_filename_ఉపసర్గ().native() + name_మార్గం.native() + fs::u8path("-").native();
+    స్థిరరాశి fs::path file_extension = backend_filename_extension();
 
-    std::vector<fs::path> search_paths;
-    if (user_search_path == nullptr) {
-#ifdef GGML_BACKEND_DIR
-        search_paths.push_back(fs::u8path(GGML_BACKEND_DIR));
-#endif
+    std::vector<fs::path> శోధన_paths;
+    ఒకవేళ (user_శోధన_మార్గం == శూన్యసూచిక) {
+#నిర్వచితమైతే GGML_BACKEND_DIR
+        శోధన_paths.push_back(fs::u8path(GGML_BACKEND_DIR));
+#అయితే_ముగింపు
         // default search paths: executable directory, current directory
-        search_paths.push_back(get_executable_path());
+        శోధన_paths.push_back(get_executable_మార్గం());
         std::error_code cwd_ec;
-        const fs::path cwd = fs::current_path(cwd_ec);
-        if (cwd_ec) {
-            GGML_LOG_DEBUG("%s: failed to get current directory: %s\n", __func__, cwd_ec.message().c_str());
-        } else {
-            search_paths.push_back(cwd);
+        స్థిరరాశి fs::path cwd = fs::current_path(cwd_ec);
+        ఒకవేళ (cwd_ec) {
+            GGML_LOG_DEBUG("%s: failed to get current directory: %s\n", __func__, cwd_ec.సందేశం().c_str());
+        } లేకపోతే {
+            శోధన_paths.push_back(cwd);
         }
-    } else {
-        search_paths.push_back(fs::u8path(user_search_path));
+    } లేకపోతే {
+        శోధన_paths.push_back(fs::u8path(user_శోధన_మార్గం));
     }
 
-    int best_score = 0;
-    fs::path best_path;
+    పూర్ణాంకం ఉత్తమ_score = 0;
+    fs::path ఉత్తమ_మార్గం;
     std::error_code ec;
 
-    for (const auto & search_path : search_paths) {
+    కొరకు (స్థిరరాశి స్వయంచాలక & శోధన_మార్గం : శోధన_paths) {
         std::error_code dir_ec;
-        fs::directory_iterator dir_it(search_path, dir_ec);
+        fs::directory_iterator dir_it(శోధన_మార్గం, dir_ec);
 
-        for (const fs::directory_iterator end; dir_it != end; dir_it.increment(dir_ec)) {
-            const auto & entry = *dir_it;
-            if (entry.is_regular_file(ec)) {
-                auto filename = entry.path().filename();
-                auto ext = entry.path().extension();
-                if (filename.native().find(file_prefix) == 0 && ext == file_extension) {
-                    dl_handle_ptr handle { dl_load_library(entry) };
-                    if (!handle && !silent) {
-                        GGML_LOG_ERROR("%s: failed to load %s: %s\n", __func__, path_str(entry.path()).c_str(), dl_error());
+        కొరకు (స్థిరరాశి fs::directory_iterator end; dir_it != end; dir_it.increment(dir_ec)) {
+            స్థిరరాశి స్వయంచాలక & నమోదు_2 = *dir_it;
+            ఒకవేళ (నమోదు_2.is_regular_file(ec)) {
+                స్వయంచాలక filename = నమోదు_2.path().filename();
+                స్వయంచాలక ext = నమోదు_2.path().extension();
+                ఒకవేళ (filename.native().find(file_ఉపసర్గ) == 0 && ext == file_extension) {
+                    dl_handle_ptr handle { dl_ఎక్కించు_library(నమోదు_2) };
+                    ఒకవేళ (!handle && !silent) {
+                        GGML_LOG_ERROR("%s: failed to load %s: %s\n", __func__, మార్గం_str(నమోదు_2.path()).c_str(), dl_error());
                     }
-                    if (handle) {
-                        auto score_fn = (ggml_backend_score_t) dl_get_sym(handle.get(), "ggml_backend_score");
-                        if (score_fn) {
-                            int s = score_fn();
-#ifndef NDEBUG
-                            GGML_LOG_DEBUG("%s: %s score: %d\n", __func__, path_str(entry.path()).c_str(), s);
-#endif
-                            if (s > best_score) {
-                                best_score = s;
-                                best_path = entry.path();
+                    ఒకవేళ (handle) {
+                        స్వయంచాలక score_fn = (ggml_backend_score_t) dl_get_sym(handle.get(), "ggml_backend_score");
+                        ఒకవేళ (score_fn) {
+                            పూర్ణాంకం s = score_fn();
+#నిర్వచితం_కాకపోతే NDEBUG
+                            GGML_LOG_DEBUG("%s: %s score: %d\n", __func__, మార్గం_str(నమోదు_2.path()).c_str(), s);
+#అయితే_ముగింపు
+                            ఒకవేళ (s > ఉత్తమ_score) {
+                                ఉత్తమ_score = s;
+                                ఉత్తమ_మార్గం = నమోదు_2.path();
                             }
-                        } else {
-                            if (!silent) {
-                                GGML_LOG_INFO("%s: failed to find ggml_backend_score in %s\n", __func__, path_str(entry.path()).c_str());
+                        } లేకపోతే {
+                            ఒకవేళ (!silent) {
+                                GGML_LOG_INFO("%s: failed to find ggml_backend_score in %s\n", __func__, మార్గం_str(నమోదు_2.path()).c_str());
                             }
                         }
                     }
@@ -540,59 +540,59 @@ static ggml_backend_reg_t ggml_backend_load_best(const char * name, bool silent,
             }
         }
 
-        if (dir_ec) {
-            GGML_LOG_DEBUG("%s: failed to enumerate %s: %s\n", __func__, path_str(search_path).c_str(), dir_ec.message().c_str());
+        ఒకవేళ (dir_ec) {
+            GGML_LOG_DEBUG("%s: failed to enumerate %s: %s\n", __func__, మార్గం_str(శోధన_మార్గం).c_str(), dir_ec.సందేశం().c_str());
         }
     }
 
-    if (best_score == 0) {
+    ఒకవేళ (ఉత్తమ_score == 0) {
         // try to load the base backend
-        for (const auto & search_path : search_paths) {
-            fs::path filename = backend_filename_prefix().native() + name_path.native() + backend_filename_extension().native();
-            fs::path path = search_path / filename;
-            if (std::error_code ec; fs::exists(path, ec)) {
-                return get_reg().load_backend(path, silent);
-            } else {
-                if (ec) {
-                    GGML_LOG_DEBUG("%s: posix_stat(%s) failure, error-message: %s\n", __func__, path_str(path).c_str(), ec.message().c_str());
+        కొరకు (స్థిరరాశి స్వయంచాలక & శోధన_మార్గం : శోధన_paths) {
+            fs::path filename = backend_filename_ఉపసర్గ().native() + name_మార్గం.native() + backend_filename_extension().native();
+            fs::path path = శోధన_మార్గం / filename;
+            ఒకవేళ (std::error_code ec; fs::exists(path, ec)) {
+                తిరిగి get_reg().ఎక్కించు_backend(path, silent);
+            } లేకపోతే {
+                ఒకవేళ (ec) {
+                    GGML_LOG_DEBUG("%s: posix_stat(%s) failure, error-message: %s\n", __func__, మార్గం_str(path).c_str(), ec.సందేశం().c_str());
                 }
             }
         }
-        return nullptr;
+        తిరిగి శూన్యసూచిక;
     }
 
-    return get_reg().load_backend(best_path, silent);
+    తిరిగి get_reg().ఎక్కించు_backend(ఉత్తమ_మార్గం, silent);
 }
 
-void ggml_backend_load_all() {
-    ggml_backend_load_all_from_path(nullptr);
+శూన్య ggml_backend_ఎక్కించు_all() {
+    ggml_backend_ఎక్కించు_all_from_మార్గం(శూన్యసూచిక);
 }
 
-void ggml_backend_load_all_from_path(const char * dir_path) {
-#ifdef NDEBUG
-    bool silent = true;
-#else
-    bool silent = false;
-#endif
+శూన్య ggml_backend_ఎక్కించు_all_from_మార్గం(స్థిరరాశి అక్షరం * dir_మార్గం) {
+#నిర్వచితమైతే NDEBUG
+    తార్కిక silent = నిజం;
+#లేకపోతే
+    తార్కిక silent = అబద్ధం;
+#అయితే_ముగింపు
 
-    ggml_backend_load_best("blas", silent, dir_path);
-    ggml_backend_load_best("zendnn", silent, dir_path);
-    ggml_backend_load_best("cann", silent, dir_path);
-    ggml_backend_load_best("cuda", silent, dir_path);
-    ggml_backend_load_best("hip", silent, dir_path);
-    ggml_backend_load_best("metal", silent, dir_path);
-    ggml_backend_load_best("rpc", silent, dir_path);
-    ggml_backend_load_best("sycl", silent, dir_path);
-    ggml_backend_load_best("vulkan", silent, dir_path);
-    ggml_backend_load_best("virtgpu", silent, dir_path);
-    ggml_backend_load_best("opencl", silent, dir_path);
-    ggml_backend_load_best("hexagon", silent, dir_path);
-    ggml_backend_load_best("musa", silent, dir_path);
-    ggml_backend_load_best("openvino", silent, dir_path);
-    ggml_backend_load_best("cpu", silent, dir_path);
+    ggml_backend_ఎక్కించు_ఉత్తమ("blas", silent, dir_మార్గం);
+    ggml_backend_ఎక్కించు_ఉత్తమ("zendnn", silent, dir_మార్గం);
+    ggml_backend_ఎక్కించు_ఉత్తమ("cann", silent, dir_మార్గం);
+    ggml_backend_ఎక్కించు_ఉత్తమ("cuda", silent, dir_మార్గం);
+    ggml_backend_ఎక్కించు_ఉత్తమ("hip", silent, dir_మార్గం);
+    ggml_backend_ఎక్కించు_ఉత్తమ("metal", silent, dir_మార్గం);
+    ggml_backend_ఎక్కించు_ఉత్తమ("rpc", silent, dir_మార్గం);
+    ggml_backend_ఎక్కించు_ఉత్తమ("sycl", silent, dir_మార్గం);
+    ggml_backend_ఎక్కించు_ఉత్తమ("vulkan", silent, dir_మార్గం);
+    ggml_backend_ఎక్కించు_ఉత్తమ("virtgpu", silent, dir_మార్గం);
+    ggml_backend_ఎక్కించు_ఉత్తమ("opencl", silent, dir_మార్గం);
+    ggml_backend_ఎక్కించు_ఉత్తమ("hexagon", silent, dir_మార్గం);
+    ggml_backend_ఎక్కించు_ఉత్తమ("musa", silent, dir_మార్గం);
+    ggml_backend_ఎక్కించు_ఉత్తమ("openvino", silent, dir_మార్గం);
+    ggml_backend_ఎక్కించు_ఉత్తమ("cpu", silent, dir_మార్గం);
     // check the environment variable GGML_BACKEND_PATH to load an out-of-tree backend
-    const char * backend_path = std::getenv("GGML_BACKEND_PATH");
-    if (backend_path) {
-        ggml_backend_load(backend_path);
+    స్థిరరాశి అక్షరం * backend_మార్గం = std::getenv("GGML_BACKEND_PATH");
+    ఒకవేళ (backend_మార్గం) {
+        ggml_backend_ఎక్కించు(backend_మార్గం);
     }
 }

@@ -1,99 +1,99 @@
-#pragma once
+#సూచన once
 
-#include "node_context.h"
+#అన్తర్భావ "node_context.h"
 
-#include <memory>
-#include <openvino/core/node.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/shape_of.hpp>
-#include <openvino/op/slice.hpp>
-#include <utility>
+#అన్తర్భావ <memory>
+#అన్తర్భావ <openvino/core/node.hpp>
+#అన్తర్భావ <openvino/op/convert.hpp>
+#అన్తర్భావ <openvino/op/shape_of.hpp>
+#అన్తర్భావ <openvino/op/slice.hpp>
+#అన్తర్భావ <utility>
 
 namespace ov {
 namespace frontend {
 namespace ggml {
 
-std::string getCurrentTime();
+std::string get_Current_సమయం();
 
-void num_inputs_check(const NodeContext & context, size_t min_inputs, size_t max_inputs);
+శూన్య అంకె_inputs_check(స్థిరరాశి కణుపు_Context & context, size_t min_inputs, size_t max_inputs);
 
-int non_cont_dim(std::vector<size_t> ne, std::vector<size_t> nb);
+పూర్ణాంకం non_cont_dim(std::సదిశ<size_t> ne, std::సదిశ<size_t> nb);
 
-template <typename T> std::vector<int> argsort_descend(const std::vector<T> & v) {
-    std::vector<int> idx(v.size());
-    std::iota(idx.begin(), idx.end(), 0);
-    std::sort(idx.begin(), idx.end(), [&v](int i1, int i2) { return v[i1] > v[i2]; });
-    return idx;
+మూస <typename T> std::సదిశ<పూర్ణాంకం> argsort_descend(స్థిరరాశి std::సదిశ<T> & v) {
+    std::సదిశ<పూర్ణాంకం> idx(v.కొలత());
+    std::iota(idx.begin(), idx.చివర(), 0);
+    std::క్రమీకరించు(idx.begin(), idx.చివర(), [&v](పూర్ణాంకం i1, పూర్ణాంకం i2) { తిరిగి v[i1] > v[i2]; });
+    తిరిగి idx;
 }
 
-template <typename T> std::vector<T> sorted_descend(std::vector<T> v) {
-    std::sort(v.begin(), v.end(), [](T a, T b) { return a > b; });
-    return v;
+మూస <typename T> std::సదిశ<T> sorted_descend(std::సదిశ<T> v) {
+    std::క్రమీకరించు(v.begin(), v.చివర(), [](T a, T b) { తిరిగి a > b; });
+    తిరిగి v;
 }
 
-template <typename T> bool is_permuted(const std::vector<T> & strides) {
-    for (size_t i = 0; i < strides.size() - 1; ++i) {
-        if (strides[i] < strides[i + 1]) {
-            return true;
+మూస <typename T> bool is_permuted(స్థిరరాశి std::సదిశ<T> & strides) {
+    కొరకు (size_t i = 0; i < strides.కొలత() - 1; ++i) {
+        ఒకవేళ (strides[i] < strides[i + 1]) {
+            తిరిగి true;
         }
     }
-    return false;
+    తిరిగి false;
 }
 
-template <typename T> std::vector<T> permute(const std::vector<T> & x, const std::vector<int> & perm) {
-    std::vector<T> result;
-    result.reserve(perm.size());
-    for (int i : perm) {
-        result.push_back(x[i]);
+మూస <typename T> std::సదిశ<T> క్రమమార్పు_2(స్థిరరాశి std::సదిశ<T> & x, స్థిరరాశి std::సదిశ<పూర్ణాంకం> & perm) {
+    std::సదిశ<T> ఫలితం;
+    ఫలితం.reserve(perm.కొలత());
+    కొరకు (పూర్ణాంకం i : perm) {
+        ఫలితం.నెట్టు_వెనుక(x[i]);
     }
-    return result;
+    తిరిగి ఫలితం;
 }
 
-std::shared_ptr<ov::Node> get_dimensions(const std::shared_ptr<ov::op::v3::ShapeOf> & shape,
-                                         const std::vector<int> & dims);
-std::shared_ptr<ov::Node> get_dimensions(const std::shared_ptr<ov::Node> & node, const std::vector<int> & dims);
+std::shared_ptr<ov::కణుపు_2> get_dimensions(స్థిరరాశి std::shared_ptr<ov::op::v3::Shape_యొక్క> & shape,
+                                         స్థిరరాశి std::సదిశ<పూర్ణాంకం> & dims);
+std::shared_ptr<ov::కణుపు_2> get_dimensions(స్థిరరాశి std::shared_ptr<ov::కణుపు_2> & కణుపు, స్థిరరాశి std::సదిశ<పూర్ణాంకం> & dims);
 
-OutputVector rename_outputs_with_suffix(const OutputVector & outputs, const std::string & suffix);
+Output_సదిశ rename_outputs_with_suffix(స్థిరరాశి Output_సదిశ & outputs, స్థిరరాశి std::string & suffix);
 
-std::pair<ov::Output<Node>, ov::Output<Node>> make_sin_cos(int32_t * rope_params,
-                                                           std::shared_ptr<ov::Node> inp_pos,
-                                                           std::shared_ptr<ov::Node> rope_freqs_weight = nullptr,
-                                                           int mode = 0,
+std::pair<ov::Output<కణుపు_2>, ov::Output<కణుపు_2>> make_sin_cos(int32_t * rope_params,
+                                                           std::shared_ptr<ov::కణుపు_2> inp_pos,
+                                                           std::shared_ptr<ov::కణుపు_2> rope_freqs_బరువు = nullptr,
+                                                           పూర్ణాంకం బహుళకం = 0,
                                                            bool stateful = false,
-                                                           int64_t head_dim = 0);
+                                                           int64_t తల_dim = 0);
 
-ov::Output<ov::Node> process_view_input(const NodeContext & context, int input_index, int slice_len = 0, int axis = -1);
+ov::Output<ov::కణుపు_2> process_view_ఆదానం(స్థిరరాశి కణుపు_Context & context, పూర్ణాంకం ఆదానం_సూచీ, పూర్ణాంకం ముక్క_len = 0, పూర్ణాంకం axis = -1);
 
-ov::Output<ov::Node> process_view_input_new(const NodeContext & context, int input_index);
+ov::Output<ov::కణుపు_2> process_view_ఆదానం_new(స్థిరరాశి కణుపు_Context & context, పూర్ణాంకం ఆదానం_సూచీ);
 
 namespace op {
-template <typename T> OutputVector translate_1to1_match_2_inputs(const NodeContext & context) {
-    num_inputs_check(context, 2, 2);
-    auto input_0 = process_view_input_new(context, 0);
-    auto input_1 = process_view_input_new(context, 1);
+మూస <typename T> Output_సదిశ translate_1to1_సరిపోలిక_2_inputs(స్థిరరాశి కణుపు_Context & context) {
+    అంకె_inputs_check(context, 2, 2);
+    స్వయంచాలక ఆదానం_0 = process_view_ఆదానం_new(context, 0);
+    స్వయంచాలక ఆదానం_1 = process_view_ఆదానం_new(context, 1);
 
-    auto output_type = context.get_output_type();
-    if (input_0.get_element_type() != input_1.get_element_type()) {
-        if (input_0.get_element_type() != ov::element::f32) {
-            input_0 = std::make_shared<ov::op::v0::Convert>(input_0, ov::element::f32);
+    స్వయంచాలక output_type = context.get_output_type();
+    ఒకవేళ (ఆదానం_0.get_element_type() != ఆదానం_1.get_element_type()) {
+        ఒకవేళ (ఆదానం_0.get_element_type() != ov::element::f32) {
+            ఆదానం_0 = std::make_shared<ov::op::v0::Convert>(ఆదానం_0, ov::element::f32);
         }
-        if (input_1.get_element_type() != ov::element::f32) {
-            input_1 = std::make_shared<ov::op::v0::Convert>(input_1, ov::element::f32);
+        ఒకవేళ (ఆదానం_1.get_element_type() != ov::element::f32) {
+            ఆదానం_1 = std::make_shared<ov::op::v0::Convert>(ఆదానం_1, ov::element::f32);
         }
     }
 
-    ov::Output<ov::Node> res = std::make_shared<T>(input_0, input_1);
-    if (res.get_element_type() != output_type) {
+    ov::Output<ov::కణుపు_2> res = std::make_shared<T>(ఆదానం_0, ఆదానం_1);
+    ఒకవేళ (res.get_element_type() != output_type) {
         res = std::make_shared<ov::op::v0::Convert>(res, output_type);
     }
-    return rename_outputs_with_suffix({res}, context.get_name());
+    తిరిగి rename_outputs_with_suffix({res}, context.get_name());
 }
 
-template <typename T> OutputVector translate_1to1_match_1_input(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
-    auto input = process_view_input_new(context, 0);
-    auto res = std::make_shared<T>(input);
-    return rename_outputs_with_suffix({res}, context.get_name());
+మూస <typename T> Output_సదిశ translate_1to1_సరిపోలిక_1_ఆదానం(స్థిరరాశి కణుపు_Context & context) {
+    అంకె_inputs_check(context, 1, 1);
+    స్వయంచాలక ఆదానం = process_view_ఆదానం_new(context, 0);
+    స్వయంచాలక res = std::make_shared<T>(ఆదానం);
+    తిరిగి rename_outputs_with_suffix({res}, context.get_name());
 }
 }  // namespace op
 

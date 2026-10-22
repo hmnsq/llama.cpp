@@ -1,79 +1,79 @@
-#include "amx.h"
-#include "common.h"
-#include "mmq.h"
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
-#include "ggml-impl.h"
-#include "ggml-cpu.h"
-#include "traits.h"
+#అన్తర్భావ "amx.h"
+#అన్తర్భావ "common.h"
+#అన్తర్భావ "mmq.h"
+#అన్తర్భావ "ggml-backend-impl.h"
+#అన్తర్భావ "ggml-backend.h"
+#అన్తర్భావ "ggml-impl.h"
+#అన్తర్భావ "ggml-cpu.h"
+#అన్తర్భావ "traits.h"
 
-#if defined(__linux__)
-#include <sys/syscall.h>
-#include <unistd.h>
-#endif
+#ఒకవేళ defined(__linux__)
+#అన్తర్భావ <sys/syscall.h>
+#అన్తర్భావ <unistd.h>
+#అయితే_ముగింపు
 
-#include <cstdlib>
-#include <cstring>
-#include <memory>
+#అన్తర్భావ <cstdlib>
+#అన్తర్భావ <cstring>
+#అన్తర్భావ <memory>
 
-#if defined(__AMX_INT8__) && defined(__AVX512VNNI__)
+#ఒకవేళ defined(__AMX_INT8__) && defined(__AVX512VNNI__)
 
 // AMX type_trais
-namespace ggml::cpu::amx {
-class tensor_traits : public ggml::cpu::tensor_traits {
-    bool work_size(int /* n_threads */, const struct ggml_tensor * op, size_t & size) override {
+నామాకాశ ggml::cpu::amx {
+తరగతి tensor_traits : బహిరంగ ggml::cpu::tensor_traits {
+    తార్కిక work_కొలత(పూర్ణాంకం /* n_threads */, స్థిరరాశి నిర్మాణం ggml_tensor * op, size_t & size) override {
         size = ggml_backend_amx_desired_wsize(op);
-        return true;
+        తిరిగి నిజం;
     }
 
-    bool compute_forward(struct ggml_compute_params * params, struct ggml_tensor * op) override {
-        if (op->op == GGML_OP_MUL_MAT) {
+    తార్కిక compute_forward(నిర్మాణం ggml_compute_params * params, నిర్మాణం ggml_tensor * op) override {
+        ఒకవేళ (op->op == GGML_OP_MUL_MAT) {
             ggml_backend_amx_mul_mat(params, op);
-            return true;
+            తిరిగి నిజం;
         }
-        return false;
+        తిరిగి అబద్ధం;
     }
 };
 
-static ggml::cpu::tensor_traits * get_tensor_traits(ggml_backend_buffer_t, struct ggml_tensor *) {
-    static tensor_traits traits;
-    return &traits;
+స్థిర ggml::cpu::tensor_traits * get_tensor_traits(ggml_backend_బఫరు_t, నిర్మాణం ggml_tensor *) {
+    స్థిర tensor_traits traits;
+    తిరిగి &traits;
 }
 }  // namespace ggml::cpu::amx
 
 // AMX buffer interface
-static void ggml_backend_amx_buffer_free_buffer(ggml_backend_buffer_t buffer) {
-    free(buffer->context);
+స్థిర శూన్య ggml_backend_amx_బఫరు_free_బఫరు(ggml_backend_బఫరు_t బఫరు) {
+    విడుదల(బఫరు->context);
 }
 
-static void * ggml_backend_amx_buffer_get_base(ggml_backend_buffer_t buffer) {
-    return (void *) (buffer->context);
+స్థిర శూన్య * ggml_backend_amx_బఫరు_get_పునాది(ggml_backend_బఫరు_t బఫరు) {
+    తిరిగి (శూన్య *) (బఫరు->context);
 }
 
-static enum ggml_status ggml_backend_amx_buffer_init_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor) {
-    tensor->extra = (void *) ggml::cpu::amx::get_tensor_traits(buffer, tensor);
+స్థిర గణన ggml_స్థితి ggml_backend_amx_బఫరు_init_tensor(ggml_backend_బఫరు_t బఫరు, నిర్మాణం ggml_tensor * tensor) {
+    tensor->extra = (శూన్య *) ggml::cpu::amx::get_tensor_traits(బఫరు, tensor);
 
-    GGML_UNUSED(buffer);
-    return GGML_STATUS_SUCCESS;
+    GGML_వాడని(బఫరు);
+    తిరిగి GGML_స్థితి_SUCCESS;
 }
 
-static void ggml_backend_amx_buffer_memset_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor,
-                                                  uint8_t value, size_t offset, size_t size) {
-    memset((char *) tensor->data + offset, value, size);
+స్థిర శూన్య ggml_backend_amx_బఫరు_memset_tensor(ggml_backend_బఫరు_t బఫరు, నిర్మాణం ggml_tensor * tensor,
+                                                  uint8_t value, size_t స్థానభ్రంశం, size_t size) {
+    memset((అక్షరం *) tensor->దత్తాంశం + స్థానభ్రంశం, value, size);
 
-    GGML_UNUSED(buffer);
+    GGML_వాడని(బఫరు);
 }
 
-static void ggml_backend_amx_buffer_set_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor,
-                                               const void * data, size_t offset, size_t size) {
-    if (qtype_has_amx_kernels(tensor->type)) {
+స్థిర శూన్య ggml_backend_amx_బఫరు_సమితి_tensor(ggml_backend_బఫరు_t బఫరు, నిర్మాణం ggml_tensor * tensor,
+                                               స్థిరరాశి శూన్య * దత్తాంశం, size_t స్థానభ్రంశం, size_t size) {
+    ఒకవేళ (qtype_has_amx_kernels(tensor->type)) {
         GGML_LOG_DEBUG("%s: amx repack tensor %s of type %s\n", __func__, tensor->name, ggml_type_name(tensor->type));
-        ggml_backend_amx_convert_weight(tensor, data, offset, size);
-    } else {
-        memcpy((char *) tensor->data + offset, data, size);
+        ggml_backend_amx_convert_బరువు(tensor, దత్తాంశం, స్థానభ్రంశం, size);
+    } లేకపోతే {
+        జ్ఞాపకం_నకలు((అక్షరం *) tensor->దత్తాంశం + స్థానభ్రంశం, దత్తాంశం, size);
     }
 
-    GGML_UNUSED(buffer);
+    GGML_వాడని(బఫరు);
 }
 
 /*
@@ -100,152 +100,152 @@ static bool ggml_backend_amx_buffer_cpy_tensor(ggml_backend_buffer_t buffer, con
 }
 */
 
-static void ggml_backend_amx_buffer_clear(ggml_backend_buffer_t buffer, uint8_t value) {
-    memset(buffer->context, value, buffer->size);
+స్థిర శూన్య ggml_backend_amx_బఫరు_clear(ggml_backend_బఫరు_t బఫరు, uint8_t value) {
+    memset(బఫరు->context, value, బఫరు->size);
 }
 
-static ggml_backend_buffer_i ggml_backend_amx_buffer_interface = {
-    /* .free_buffer     = */ ggml_backend_amx_buffer_free_buffer,
-    /* .get_base        = */ ggml_backend_amx_buffer_get_base,
-    /* .init_tensor     = */ ggml_backend_amx_buffer_init_tensor,
-    /* .memset_tensor   = */ ggml_backend_amx_buffer_memset_tensor,
-    /* .set_tensor      = */ ggml_backend_amx_buffer_set_tensor,
-    /* .get_tensor      = */ nullptr,
-    /* .set_tensor_2d   = */ nullptr,
-    /* .get_tensor_2d   = */ nullptr,
-    /* .cpy_tensor      = */ nullptr,
-    /* .clear           = */ ggml_backend_amx_buffer_clear,
-    /* .reset           = */ nullptr,
+స్థిర ggml_backend_బఫరు_i ggml_backend_amx_బఫరు_interface = {
+    /* .free_buffer     = */ ggml_backend_amx_బఫరు_free_బఫరు,
+    /* .get_base        = */ ggml_backend_amx_బఫరు_get_పునాది,
+    /* .init_tensor     = */ ggml_backend_amx_బఫరు_init_tensor,
+    /* .memset_tensor   = */ ggml_backend_amx_బఫరు_memset_tensor,
+    /* .set_tensor      = */ ggml_backend_amx_బఫరు_సమితి_tensor,
+    /* .get_tensor      = */ శూన్యసూచిక,
+    /* .set_tensor_2d   = */ శూన్యసూచిక,
+    /* .get_tensor_2d   = */ శూన్యసూచిక,
+    /* .cpy_tensor      = */ శూన్యసూచిక,
+    /* .clear           = */ ggml_backend_amx_బఫరు_clear,
+    /* .reset           = */ శూన్యసూచిక,
 };
 
-static const char * ggml_backend_amx_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
-    return "AMX";
+స్థిర స్థిరరాశి అక్షరం * ggml_backend_amx_బఫరు_type_get_name(ggml_backend_బఫరు_type_t buft) {
+    తిరిగి "AMX";
 
-    GGML_UNUSED(buft);
+    GGML_వాడని(buft);
 }
 
-static ggml_backend_buffer_t ggml_backend_amx_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
-    void * data = ggml_aligned_malloc(size);
-    if (data == NULL) {
+స్థిర ggml_backend_బఫరు_t ggml_backend_amx_బఫరు_type_alloc_బఫరు(ggml_backend_బఫరు_type_t buft, size_t size) {
+    శూన్య * దత్తాంశం = ggml_aligned_malloc(size);
+    ఒకవేళ (దత్తాంశం == ఖాళీ) {
         fprintf(stderr, "%s: failed to allocate buffer of size %zu\n", __func__, size);
-        return NULL;
+        తిరిగి ఖాళీ;
     }
 
-    return ggml_backend_buffer_init(buft, ggml_backend_amx_buffer_interface, data, size);
+    తిరిగి ggml_backend_బఫరు_init(buft, ggml_backend_amx_బఫరు_interface, దత్తాంశం, size);
 }
 
-static size_t ggml_backend_amx_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
-    return TENSOR_ALIGNMENT;
+స్థిర size_t ggml_backend_amx_బఫరు_type_get_alignment(ggml_backend_బఫరు_type_t buft) {
+    తిరిగి TENSOR_ALIGNMENT;
 
-    GGML_UNUSED(buft);
+    GGML_వాడని(buft);
 }
 
-namespace ggml::cpu::amx {
-class extra_buffer_type : ggml::cpu::extra_buffer_type {
-    bool supports_op(ggml_backend_dev_t, const struct ggml_tensor * op) override {
-        if (op->op != GGML_OP_MUL_MAT) {
-            return false;
+నామాకాశ ggml::cpu::amx {
+తరగతి extra_బఫరు_type : ggml::cpu::extra_బఫరు_type {
+    తార్కిక supports_op(ggml_backend_dev_t, స్థిరరాశి నిర్మాణం ggml_tensor * op) override {
+        ఒకవేళ (op->op != GGML_OP_MUL_MAT) {
+            తిరిగి అబద్ధం;
         }
-        auto * src0 = op->src[0];
-        auto * src1 = op->src[1];
+        స్వయంచాలక * src0 = op->src[0];
+        స్వయంచాలక * src1 = op->src[1];
 
-        if (!ggml_is_contiguous(src0) || !ggml_is_contiguous(src1)) {
-            return false;
+        ఒకవేళ (!ggml_is_contiguous(src0) || !ggml_is_contiguous(src1)) {
+            తిరిగి అబద్ధం;
         }
-        if (!src0->buffer || src0->buffer->buft != ggml_backend_amx_buffer_type()) {
-            return false;
+        ఒకవేళ (!src0->బఫరు || src0->బఫరు->buft != ggml_backend_amx_బఫరు_type()) {
+            తిరిగి అబద్ధం;
         }
-        if (src1->buffer && !ggml_backend_buft_is_host(src1->buffer->buft)) {
-            return false;
+        ఒకవేళ (src1->బఫరు && !ggml_backend_buft_is_host(src1->బఫరు->buft)) {
+            తిరిగి అబద్ధం;
         }
-        if (op->ne[0] % (TILE_N * 2)) {
-            return false;
+        ఒకవేళ (op->ne[0] % (TILE_N * 2)) {
+            తిరిగి అబద్ధం;
         }
-        int alignment;
-        switch (src0->type) {
-            case GGML_TYPE_Q4_0:
-            case GGML_TYPE_Q4_1:
-            case GGML_TYPE_Q8_0:
+        పూర్ణాంకం alignment;
+        ఎంపిక (src0->type) {
+            స్థితి GGML_TYPE_Q4_0:
+            స్థితి GGML_TYPE_Q4_1:
+            స్థితి GGML_TYPE_Q8_0:
                 alignment = TILE_K;
-                break;
-            case GGML_TYPE_Q4_K:
-            case GGML_TYPE_Q5_K:
-            case GGML_TYPE_Q6_K:
-            case GGML_TYPE_IQ4_XS:
+                ఆపు;
+            స్థితి GGML_TYPE_Q4_K:
+            స్థితి GGML_TYPE_Q5_K:
+            స్థితి GGML_TYPE_Q6_K:
+            స్థితి GGML_TYPE_IQ4_XS:
                 alignment = 256; // QK_K
-                break;
-            case GGML_TYPE_F16:
+                ఆపు;
+            స్థితి GGML_TYPE_F16:
                 alignment = 16;
-                break;
-            default:
-                return false;
+                ఆపు;
+            అప్రమేయ:
+                తిరిగి అబద్ధం;
         }
-        if (src0->ne[0] % alignment) {
-            return false;
+        ఒకవేళ (src0->ne[0] % alignment) {
+            తిరిగి అబద్ధం;
         }
-        if (src1->type != GGML_TYPE_F32) {
-            return false;
+        ఒకవేళ (src1->type != GGML_TYPE_F32) {
+            తిరిగి అబద్ధం;
         }
-        return true;
+        తిరిగి నిజం;
     }
 
-    ggml::cpu::tensor_traits * get_tensor_traits(const struct ggml_tensor * op) override {
-        if (op->op == GGML_OP_MUL_MAT && op->src[0]->buffer &&
-            op->src[0]->buffer->buft == ggml_backend_amx_buffer_type()) {
-            return (ggml::cpu::tensor_traits *) op->src[0]->extra;
+    ggml::cpu::tensor_traits * get_tensor_traits(స్థిరరాశి నిర్మాణం ggml_tensor * op) override {
+        ఒకవేళ (op->op == GGML_OP_MUL_MAT && op->src[0]->బఫరు &&
+            op->src[0]->బఫరు->buft == ggml_backend_amx_బఫరు_type()) {
+            తిరిగి (ggml::cpu::tensor_traits *) op->src[0]->extra;
         }
 
-        return nullptr;
+        తిరిగి శూన్యసూచిక;
     }
 };
 }  // namespace ggml::cpu::amx
 
-static size_t ggml_backend_amx_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft, const ggml_tensor * tensor) {
-    return ggml_backend_amx_get_alloc_size(tensor);
+స్థిర size_t ggml_backend_amx_బఫరు_type_get_alloc_కొలత(ggml_backend_బఫరు_type_t buft, స్థిరరాశి ggml_tensor * tensor) {
+    తిరిగి ggml_backend_amx_get_alloc_కొలత(tensor);
 
-    GGML_UNUSED(buft);
+    GGML_వాడని(buft);
 }
 
-#define ARCH_GET_XCOMP_PERM     0x1022
-#define ARCH_REQ_XCOMP_PERM     0x1023
-#define XFEATURE_XTILECFG       17
-#define XFEATURE_XTILEDATA      18
+#నిర్వచించు ARCH_GET_XCOMP_PERM     0x1022
+#నిర్వచించు ARCH_REQ_XCOMP_PERM     0x1023
+#నిర్వచించు XFEATURE_XTILECFG       17
+#నిర్వచించు XFEATURE_XTILEDATA      18
 
-static bool ggml_amx_init() {
-#if defined(__linux__)
-    if (syscall(SYS_arch_prctl, ARCH_REQ_XCOMP_PERM, XFEATURE_XTILEDATA)) {
+స్థిర తార్కిక ggml_amx_init() {
+#ఒకవేళ defined(__linux__)
+    ఒకవేళ (syscall(SYS_arch_prctl, ARCH_REQ_XCOMP_PERM, XFEATURE_XTILEDATA)) {
         fprintf(stderr, "AMX is not ready to be used!\n");
-        return false;
+        తిరిగి అబద్ధం;
     }
-    return true;
-#elif defined(_WIN32)
-    return true;
-#else
-    return false;
-#endif
+    తిరిగి నిజం;
+#లేదావేళ defined(_WIN32)
+    తిరిగి నిజం;
+#లేకపోతే
+    తిరిగి అబద్ధం;
+#అయితే_ముగింపు
 }
 
-ggml_backend_buffer_type_t ggml_backend_amx_buffer_type() {
-    static struct ggml_backend_buffer_type ggml_backend_buffer_type_amx = {
+ggml_backend_బఫరు_type_t ggml_backend_amx_బఫరు_type() {
+    స్థిర నిర్మాణం ggml_backend_బఫరు_type ggml_backend_బఫరు_type_amx = {
         /* .iface = */ {
-                        /* .get_name            = */ ggml_backend_amx_buffer_type_get_name,
-                        /* .alloc_buffer        = */ ggml_backend_amx_buffer_type_alloc_buffer,
-                        /* .alloc_buffer_n      = */ nullptr,
-                        /* .get_alignment       = */ ggml_backend_amx_buffer_type_get_alignment,
-                        /* .get_max_size        = */ nullptr,  // defaults to SIZE_MAX
-                        /* .get_alloc_size      = */ ggml_backend_amx_buffer_type_get_alloc_size,
-                        /* .get_alloc_size_n    = */ NULL,
-                        /* .is_host             = */ nullptr,
+                        /* .get_name            = */ ggml_backend_amx_బఫరు_type_get_name,
+                        /* .alloc_buffer        = */ ggml_backend_amx_బఫరు_type_alloc_బఫరు,
+                        /* .alloc_buffer_n      = */ శూన్యసూచిక,
+                        /* .get_alignment       = */ ggml_backend_amx_బఫరు_type_get_alignment,
+                        /* .get_max_size        = */ శూన్యసూచిక,  // defaults to SIZE_MAX
+                        /* .get_alloc_size      = */ ggml_backend_amx_బఫరు_type_get_alloc_కొలత,
+                        /* .get_alloc_size_n    = */ ఖాళీ,
+                        /* .is_host             = */ శూన్యసూచిక,
                         },
         /* .device  = */ ggml_backend_reg_dev_get(ggml_backend_cpu_reg(), 0),
-        /* .context = */ new ggml::cpu::amx::extra_buffer_type(),
+        /* .context = */ కొత్త ggml::cpu::amx::extra_బఫరు_type(),
     };
 
-    if (!ggml_amx_init()) {
-        return nullptr;
+    ఒకవేళ (!ggml_amx_init()) {
+        తిరిగి శూన్యసూచిక;
     }
 
-    return &ggml_backend_buffer_type_amx;
+    తిరిగి &ggml_backend_బఫరు_type_amx;
 }
 
-#endif  // defined(__AMX_INT8__) && defined(__AVX512VNNI__)
+#అయితే_ముగింపు  // defined(__AMX_INT8__) && defined(__AVX512VNNI__)

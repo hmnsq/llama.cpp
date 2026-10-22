@@ -1,61 +1,61 @@
-#ifndef GGML_ZDNN_SCRATCH_HPP
-#define GGML_ZDNN_SCRATCH_HPP
+#నిర్వచితం_కాకపోతే GGML_ZDNN_SCRATCH_HPP
+#నిర్వచించు GGML_ZDNN_SCRATCH_HPP
 
-#include "ggml.h"
+#అన్తర్భావ "ggml.h"
 
-#include <cstddef>
-#include <vector>
+#అన్తర్భావ <cstddef>
+#అన్తర్భావ <vector>
 
 // 4K aligned host buffers that are cached for reuse, see ggml_cuda_pool_leg
-struct ggml_zdnn_pool {
-    struct buffer {
-        void * ptr  = nullptr;
+నిర్మాణం ggml_zdnn_pool {
+    నిర్మాణం బఫరు {
+        శూన్య * ptr  = శూన్యసూచిక;
         size_t size = 0;
     };
 
-    std::vector<buffer> cached;
+    std::vector<బఫరు> cached;
 
     ~ggml_zdnn_pool();
 
-    void * alloc(size_t size, size_t * actual_size);
-    void   free(void * ptr, size_t size);
+    శూన్య * alloc(size_t size, size_t * actual_కొలత);
+    శూన్య   విడుదల(శూన్య * ptr, size_t size);
 };
 
 // a buffer of the pool that goes back to it at the end of its scope, see ggml_cuda_pool_alloc
-template <typename T>
-struct ggml_zdnn_pool_alloc {
-    ggml_zdnn_pool * pool = nullptr;
-    T * ptr = nullptr;
-    size_t actual_size = 0;
+మూస <రకం_పేరు T>
+నిర్మాణం ggml_zdnn_pool_alloc {
+    ggml_zdnn_pool * pool = శూన్యసూచిక;
+    T * ptr = శూన్యసూచిక;
+    size_t actual_కొలత = 0;
 
-    ggml_zdnn_pool_alloc() = default;
+    ggml_zdnn_pool_alloc() = అప్రమేయ;
 
     ggml_zdnn_pool_alloc(ggml_zdnn_pool & pool, size_t size) {
         alloc(pool, size);
     }
 
     ~ggml_zdnn_pool_alloc() {
-        if (ptr != nullptr) {
-            pool->free(ptr, actual_size);
+        ఒకవేళ (ptr != శూన్యసూచిక) {
+            pool->విడుదల(ptr, actual_కొలత);
         }
     }
 
     // size is in number of elements
     T * alloc(ggml_zdnn_pool & pool, size_t size) {
-        GGML_ASSERT(ptr == nullptr);
-        this->pool = &pool;
-        ptr = (T *) pool.alloc(size * sizeof(T), &actual_size);
-        return ptr;
+        GGML_ASSERT(ptr == శూన్యసూచిక);
+        ఇది->pool = &pool;
+        ptr = (T *) pool.alloc(size * పరిమాణం(T), &actual_కొలత);
+        తిరిగి ptr;
     }
 
     T * get() {
-        return ptr;
+        తిరిగి ptr;
     }
 
-    ggml_zdnn_pool_alloc(const ggml_zdnn_pool_alloc &) = delete;
-    ggml_zdnn_pool_alloc(ggml_zdnn_pool_alloc &&) = delete;
-    ggml_zdnn_pool_alloc & operator=(const ggml_zdnn_pool_alloc &) = delete;
-    ggml_zdnn_pool_alloc & operator=(ggml_zdnn_pool_alloc &&) = delete;
+    ggml_zdnn_pool_alloc(స్థిరరాశి ggml_zdnn_pool_alloc &) = తొలగించు;
+    ggml_zdnn_pool_alloc(ggml_zdnn_pool_alloc &&) = తొలగించు;
+    ggml_zdnn_pool_alloc & క్రియాకారకం=(స్థిరరాశి ggml_zdnn_pool_alloc &) = తొలగించు;
+    ggml_zdnn_pool_alloc & క్రియాకారకం=(ggml_zdnn_pool_alloc &&) = తొలగించు;
 };
 
-#endif  // GGML_ZDNN_SCRATCH_HPP
+#అయితే_ముగింపు  // GGML_ZDNN_SCRATCH_HPP

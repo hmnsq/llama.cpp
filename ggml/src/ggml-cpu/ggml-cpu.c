@@ -1,121 +1,121 @@
-#define _CRT_SECURE_NO_DEPRECATE // Disables "unsafe" warnings on Windows
-#define _USE_MATH_DEFINES // For M_PI on MSVC
+#నిర్వచించు _CRT_SECURE_NO_DEPRECATE // Disables "unsafe" warnings on Windows
+#నిర్వచించు USE_MATH_నిర్వచిస్తుంది // For M_PI on MSVC
 
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
-#include "traits.h"
-#include "ggml-cpu-impl.h"
-#include "ggml-impl.h"
-#include "quants.h"
-#include "ggml-threading.h"
-#include "unary-ops.h"
-#include "binary-ops.h"
-#include "vec.h"
-#include "ops.h"
-#include "ggml.h"
-#include "common.h"
-#include "tiled/tiled.h"
+#అన్తర్భావ "ggml-backend-impl.h"
+#అన్తర్భావ "ggml-backend.h"
+#అన్తర్భావ "traits.h"
+#అన్తర్భావ "ggml-cpu-impl.h"
+#అన్తర్భావ "ggml-impl.h"
+#అన్తర్భావ "quants.h"
+#అన్తర్భావ "ggml-threading.h"
+#అన్తర్భావ "unary-ops.h"
+#అన్తర్భావ "binary-ops.h"
+#అన్తర్భావ "vec.h"
+#అన్తర్భావ "ops.h"
+#అన్తర్భావ "ggml.h"
+#అన్తర్భావ "common.h"
+#అన్తర్భావ "tiled/tiled.h"
 
-#if defined(_MSC_VER) || defined(__MINGW32__)
-#include <malloc.h> // using malloc.h with MSC/MINGW
-#elif !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__OpenBSD__)
-#include <alloca.h>
-#endif
+#ఒకవేళ defined(_MSC_VER) || defined(__MINGW32__)
+#అన్తర్భావ <malloc.h> // using malloc.h with MSC/MINGW
+#లేదావేళ !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__OpenBSD__)
+#అన్తర్భావ <alloca.h>
+#అయితే_ముగింపు
 
-#include <assert.h>
-#include <errno.h>
-#include <time.h>
-#include <math.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdint.h>
-#include <inttypes.h>
-#include <stdio.h>
-#include <float.h>
-#include <limits.h>
-#include <stdarg.h>
-#include <signal.h>
-#if defined(__gnu_linux__)
-#include <syscall.h>
-#endif
+#అన్తర్భావ <assert.h>
+#అన్తర్భావ <errno.h>
+#అన్తర్భావ <time.h>
+#అన్తర్భావ <math.h>
+#అన్తర్భావ <stdlib.h>
+#అన్తర్భావ <string.h>
+#అన్తర్భావ <stdint.h>
+#అన్తర్భావ <inttypes.h>
+#అన్తర్భావ <stdio.h>
+#అన్తర్భావ <float.h>
+#అన్తర్భావ <limits.h>
+#అన్తర్భావ <stdarg.h>
+#అన్తర్భావ <signal.h>
+#ఒకవేళ defined(__gnu_linux__)
+#అన్తర్భావ <syscall.h>
+#అయితే_ముగింపు
 
-#ifdef GGML_USE_OPENMP
-#include <omp.h>
-#endif
+#నిర్వచితమైతే GGML_USE_OPENMP
+#అన్తర్భావ <omp.h>
+#అయితే_ముగింపు
 
-#if defined(__ARM_FEATURE_SVE) || defined(__ARM_FEATURE_MATMUL_INT8)
-#undef GGML_USE_LLAMAFILE
-#endif
+#ఒకవేళ defined(__ARM_FEATURE_SVE) || defined(__ARM_FEATURE_MATMUL_INT8)
+#నిర్వచనం_రద్దు GGML_USE_LLAMAFILE
+#అయితే_ముగింపు
 
-#ifdef GGML_USE_LLAMAFILE
-#include "llamafile/sgemm.h"
-#endif
+#నిర్వచితమైతే GGML_USE_LLAMAFILE
+#అన్తర్భావ "llamafile/sgemm.h"
+#అయితే_ముగింపు
 
-#ifdef GGML_USE_CPU_RISCV64_SPACEMIT
+#నిర్వచితమైతే GGML_USE_CPU_RISCV64_SPACEMIT
 #    include "spacemit/ime.h"
-#endif
+#అయితే_ముగింపు
 
 // Note: once we move threading into a separate C++ file
 // will use std::hardware_destructive_interference_size instead of hardcoding it here
 // and we'll use C++ attribute syntax.
-#define GGML_CACHE_LINE  64
+#నిర్వచించు GGML_CACHE_పంక్తి  64
 
-#if defined(__clang__) || defined(__GNUC__)
-#define GGML_CACHE_ALIGN __attribute__((aligned(GGML_CACHE_LINE)))
-#endif
+#ఒకవేళ defined(__clang__) || defined(__GNUC__)
+#నిర్వచించు GGML_CACHE_ALIGN __attribute__((aligned(GGML_CACHE_పంక్తి)))
+#అయితే_ముగింపు
 
-#if defined(__has_feature)
-#if __has_feature(thread_sanitizer)
-#define GGML_TSAN_ENABLED 1
-#endif
-#else  // __has_feature
-#if defined(__SANITIZE_THREAD__)
-#define GGML_TSAN_ENABLED 1
-#endif
-#endif // __has_feature
+#ఒకవేళ defined(__has_feature)
+#ఒకవేళ __has_feature(thread_sanitizer)
+#నిర్వచించు GGML_TSAN_ENABLED 1
+#అయితే_ముగింపు
+#లేకపోతే  // __has_feature
+#ఒకవేళ defined(__SANITIZE_THREAD__)
+#నిర్వచించు GGML_TSAN_ENABLED 1
+#అయితే_ముగింపు
+#అయితే_ముగింపు // __has_feature
 
-#define UNUSED GGML_UNUSED
-#define SWAP(x, y, T) do { T SWAP = x; (x) = y; (y) = SWAP; } while (0)
+#నిర్వచించు వాడని GGML_వాడని
+#నిర్వచించు మార్పిడి(x, y, T) చేయి { T మార్పిడి = x; (x) = y; (y) = మార్పిడి; } అయితే (0)
 
 // precomputed f32 table for f16 (256 KB) (simd-mappings.h)
-float ggml_table_f32_f16[1 << 16];
+దశాంశం ggml_పట్టిక_f32_f16[1 << 16];
 
 // precomputed f32 table for e8m0 half (1 KB) (simd-mappings.h)
-float ggml_table_f32_e8m0_half[1 << 8];
+దశాంశం ggml_పట్టిక_f32_e8m0_half[1 << 8];
 
 // precomputed f32 table for ue4m3 (1 KB) (simd-mappings.h)
-float ggml_table_f32_ue4m3[1 << 8];
+దశాంశం ggml_పట్టిక_f32_ue4m3[1 << 8];
 
-#if defined(__ARM_ARCH)
-struct ggml_arm_arch_features_type {
-    int sve_cnt;
+#ఒకవేళ defined(__ARM_ARCH)
+నిర్మాణం ggml_arm_arch_features_type {
+    పూర్ణాంకం sve_cnt;
 } ggml_arm_arch_features = { 0 };
-#endif
+#అయితే_ముగింపు
 
-#if defined(__riscv)
-struct ggml_riscv_arch_features_type {
-    int rvv_vlen;
+#ఒకవేళ defined(__riscv)
+నిర్మాణం ggml_riscv_arch_features_type {
+    పూర్ణాంకం rvv_vlen;
 } ggml_riscv_arch_features = { 0 };
-#endif
+#అయితే_ముగింపు
 
-#if defined(_WIN32)
+#ఒకవేళ defined(_WIN32)
 
-#define WIN32_LEAN_AND_MEAN
-#ifndef NOMINMAX
-    #define NOMINMAX
-#endif
-#include <windows.h>
+#నిర్వచించు WIN32_LEAN_AND_సగటు
+#నిర్వచితం_కాకపోతే NOMINMAX
+    #నిర్వచించు NOMINMAX
+#అయితే_ముగింపు
+#అన్తర్భావ <windows.h>
 
-#if defined(_MSC_VER) && !defined(__clang__)
-#define GGML_CACHE_ALIGN __declspec(align(GGML_CACHE_LINE))
+#ఒకవేళ defined(_MSC_VER) && !defined(__clang__)
+#నిర్వచించు GGML_CACHE_ALIGN __declspec(align(GGML_CACHE_పంక్తి))
 
-typedef volatile LONG atomic_int;
-typedef atomic_int atomic_bool;
-typedef atomic_int atomic_flag;
+రకనిర్వచనం అస్థిర LONG atomic_int;
+రకనిర్వచనం atomic_int atomic_bool;
+రకనిర్వచనం atomic_int atomic_flag;
 
-#define ATOMIC_FLAG_INIT 0
+#నిర్వచించు ATOMIC_FLAG_INIT 0
 
-typedef enum {
+రకనిర్వచనం గణన {
     memory_order_relaxed,
     memory_order_consume,
     memory_order_acquire,
@@ -124,224 +124,224 @@ typedef enum {
     memory_order_seq_cst
 } memory_order;
 
-static void atomic_store(atomic_int * ptr, LONG val) {
+స్థిర శూన్య atomic_store(atomic_int * ptr, LONG val) {
     InterlockedExchange(ptr, val);
 }
-static void atomic_store_explicit(atomic_int * ptr, LONG val, memory_order mo) {
+స్థిర శూన్య atomic_store_explicit(atomic_int * ptr, LONG val, memory_order mo) {
     // TODO: add support for explicit memory order
     InterlockedExchange(ptr, val);
 }
-static LONG atomic_load(atomic_int * ptr) {
-    return InterlockedCompareExchange(ptr, 0, 0);
+స్థిర LONG atomic_ఎక్కించు(atomic_int * ptr) {
+    తిరిగి InterlockedCompareExchange(ptr, 0, 0);
 }
-static LONG atomic_load_explicit(atomic_int * ptr, memory_order mo) {
+స్థిర LONG atomic_ఎక్కించు_explicit(atomic_int * ptr, memory_order mo) {
     // TODO: add support for explicit memory order
-    return InterlockedCompareExchange(ptr, 0, 0);
+    తిరిగి InterlockedCompareExchange(ptr, 0, 0);
 }
-static LONG atomic_fetch_add(atomic_int * ptr, LONG inc) {
-    return InterlockedExchangeAdd(ptr, inc);
+స్థిర LONG atomic_fetch_కూడు(atomic_int * ptr, LONG inc) {
+    తిరిగి Interlocked_Exchange_కూడు(ptr, inc);
 }
-static LONG atomic_fetch_add_explicit(atomic_int * ptr, LONG inc, memory_order mo) {
+స్థిర LONG atomic_fetch_కూడు_explicit(atomic_int * ptr, LONG inc, memory_order mo) {
     // TODO: add support for explicit memory order
-    return InterlockedExchangeAdd(ptr, inc);
+    తిరిగి Interlocked_Exchange_కూడు(ptr, inc);
 }
-static atomic_bool atomic_flag_test_and_set(atomic_flag * ptr) {
-    return InterlockedExchange(ptr, 1);
+స్థిర atomic_bool atomic_flag_test_and_సమితి(atomic_flag * ptr) {
+    తిరిగి InterlockedExchange(ptr, 1);
 }
-static void atomic_flag_clear(atomic_flag * ptr) {
+స్థిర శూన్య atomic_flag_clear(atomic_flag * ptr) {
     InterlockedExchange(ptr, 0);
 }
-static void atomic_thread_fence(memory_order mo) {
-    MemoryBarrier();
+స్థిర శూన్య atomic_thread_fence(memory_order mo) {
+    జ్ఞాపకం_Barrier();
 }
-#else // clang
-#include <stdatomic.h>
-#endif
+#లేకపోతే // clang
+#అన్తర్భావ <stdatomic.h>
+#అయితే_ముగింపు
 
-typedef HANDLE pthread_t;
+రకనిర్వచనం HANDLE pthread_t;
 
-typedef DWORD thread_ret_t;
-static int pthread_create(pthread_t * out, void * unused, thread_ret_t(*func)(void *), void * arg) {
-    (void) unused;
-    HANDLE handle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) func, arg, 0, NULL);
-    if (handle == NULL)
+రకనిర్వచనం DWORD thread_ret_t;
+స్థిర పూర్ణాంకం pthread_create(pthread_t * బహిర్గతం, శూన్య * వాడని_2, thread_ret_t(*func)(శూన్య *), శూన్య * arg) {
+    (శూన్య) వాడని_2;
+    HANDLE handle = CreateThread(ఖాళీ, 0, (LPTHREAD_ప్రారంభం_ROUTINE) func, arg, 0, ఖాళీ);
+    ఒకవేళ (handle == ఖాళీ)
     {
-        return EAGAIN;
+        తిరిగి EAGAIN;
     }
 
-    *out = handle;
-    return 0;
+    *బహిర్గతం = handle;
+    తిరిగి 0;
 }
 
-static int pthread_join(pthread_t thread, void * unused) {
-    (void) unused;
-    int ret = (int) WaitForSingleObject(thread, INFINITE);
+స్థిర పూర్ణాంకం pthread_join(pthread_t thread, శూన్య * వాడని_2) {
+    (శూన్య) వాడని_2;
+    పూర్ణాంకం ret = (పూర్ణాంకం) WaitForSingleObject(thread, INFINITE);
     CloseHandle(thread);
-    return ret;
+    తిరిగి ret;
 }
 
-static int sched_yield (void) {
+స్థిర పూర్ణాంకం sched_yield (శూన్య) {
     Sleep (0);
-    return 0;
+    తిరిగి 0;
 }
-#else
+#లేకపోతే
 
-#include <pthread.h>
-#include <stdatomic.h>
-#include <sched.h>
-#if defined(__FreeBSD__)
-#include <pthread_np.h>
-#endif
+#అన్తర్భావ <pthread.h>
+#అన్తర్భావ <stdatomic.h>
+#అన్తర్భావ <sched.h>
+#ఒకవేళ defined(__FreeBSD__)
+#అన్తర్భావ <pthread_np.h>
+#అయితే_ముగింపు
 
-typedef void * thread_ret_t;
+రకనిర్వచనం శూన్య * thread_ret_t;
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
+#అన్తర్భావ <sys/types.h>
+#అన్తర్భావ <sys/stat.h>
+#అన్తర్భావ <unistd.h>
 
-#endif
+#అయితే_ముగింపు
 
-typedef pthread_t ggml_thread_t;
+రకనిర్వచనం pthread_t ggml_thread_t;
 
-#define GGML_THREADPOOL_N_THREADS_MASK (0xffffU)
-#define GGML_THREADPOOL_N_THREADS_BITS (16)
+#నిర్వచించు GGML_THREADPOOL_N_దారాలు_ముసుగు (0xffffU)
+#నిర్వచించు GGML_THREADPOOL_N_దారాలు_బిట్లు (16)
 
-#if defined(__APPLE__)
-#include <unistd.h>
-#include <mach/mach.h>
-#include <TargetConditionals.h>
-#endif
+#ఒకవేళ defined(__APPLE__)
+#అన్తర్భావ <unistd.h>
+#అన్తర్భావ <mach/mach.h>
+#అన్తర్భావ <TargetConditionals.h>
+#అయితే_ముగింపు
 
-static const struct ggml_type_traits_cpu type_traits_cpu[GGML_TYPE_COUNT] = {
+స్థిర స్థిరరాశి నిర్మాణం ggml_type_traits_cpu type_traits_cpu[GGML_TYPE_లెక్క] = {
     [GGML_TYPE_F32] = {
-        .from_float               = (ggml_from_float_t) ggml_cpu_fp32_to_fp32,
+        .from_float               = (ggml_from_float_t) ggml_cpu_fp32_గమ్యం_fp32,
         .vec_dot                  = (ggml_vec_dot_t) ggml_vec_dot_f32,
         .vec_dot_type             = GGML_TYPE_F32,
         .nrows                    = 1,
     },
     [GGML_TYPE_F16] = {
-        .from_float               = (ggml_from_float_t) ggml_cpu_fp32_to_fp16,
+        .from_float               = (ggml_from_float_t) ggml_cpu_fp32_గమ్యం_fp16,
         .vec_dot                  = (ggml_vec_dot_t) ggml_vec_dot_f16,
         .vec_dot_type             = GGML_TYPE_F16,
         .nrows                    = 1,
     },
     [GGML_TYPE_Q1_0] = {
-        .from_float               = quantize_row_q1_0,
+        .from_float               = quantize_అడ్డువరుస_q1_0,
         .vec_dot                  = ggml_vec_dot_q1_0_q8_0,
         .vec_dot_type             = GGML_TYPE_Q8_0,
         .nrows                    = 1,
     },
     [GGML_TYPE_Q2_0] = {
-        .from_float               = quantize_row_q2_0,
+        .from_float               = quantize_అడ్డువరుస_q2_0,
         .vec_dot                  = ggml_vec_dot_q2_0_q8_0,
         .vec_dot_type             = GGML_TYPE_Q8_0,
         .nrows                    = 1,
     },
     [GGML_TYPE_Q4_0] = {
-        .from_float               = quantize_row_q4_0,
+        .from_float               = quantize_అడ్డువరుస_q4_0,
         .vec_dot                  = ggml_vec_dot_q4_0_q8_0,
         .vec_dot_type             = GGML_TYPE_Q8_0,
-#if defined (__ARM_FEATURE_MATMUL_INT8)
+#ఒకవేళ defined (__ARM_FEATURE_MATMUL_INT8)
         .nrows                    = 2,
-#else
+#లేకపోతే
         .nrows                    = 1,
-#endif
+#అయితే_ముగింపు
     },
     [GGML_TYPE_Q4_1] = {
-        .from_float               = quantize_row_q4_1,
+        .from_float               = quantize_అడ్డువరుస_q4_1,
         .vec_dot                  = ggml_vec_dot_q4_1_q8_1,
         .vec_dot_type             = GGML_TYPE_Q8_1,
-#if defined (__ARM_FEATURE_MATMUL_INT8)
+#ఒకవేళ defined (__ARM_FEATURE_MATMUL_INT8)
         .nrows                    = 2,
-#else
+#లేకపోతే
         .nrows                    = 1,
-#endif
+#అయితే_ముగింపు
     },
     [GGML_TYPE_Q5_0] = {
-        .from_float               = quantize_row_q5_0,
+        .from_float               = quantize_అడ్డువరుస_q5_0,
         .vec_dot                  = ggml_vec_dot_q5_0_q8_0,
         .vec_dot_type             = GGML_TYPE_Q8_0,
         .nrows                    = 1,
     },
     [GGML_TYPE_Q5_1] = {
-        .from_float               = quantize_row_q5_1,
+        .from_float               = quantize_అడ్డువరుస_q5_1,
         .vec_dot                  = ggml_vec_dot_q5_1_q8_1,
         .vec_dot_type             = GGML_TYPE_Q8_1,
         .nrows                    = 1,
     },
     [GGML_TYPE_Q8_0] = {
-        .from_float               = quantize_row_q8_0,
+        .from_float               = quantize_అడ్డువరుస_q8_0,
         .vec_dot                  = ggml_vec_dot_q8_0_q8_0,
         .vec_dot_type             = GGML_TYPE_Q8_0,
-#if defined (__ARM_FEATURE_MATMUL_INT8)
+#ఒకవేళ defined (__ARM_FEATURE_MATMUL_INT8)
         .nrows                    = 2,
-#else
+#లేకపోతే
         .nrows                    = 1,
-#endif
+#అయితే_ముగింపు
     },
     [GGML_TYPE_Q8_1] = {
-        .from_float               = quantize_row_q8_1,
+        .from_float               = quantize_అడ్డువరుస_q8_1,
         .vec_dot_type             = GGML_TYPE_Q8_1,
         .nrows                    = 1,
     },
     [GGML_TYPE_MXFP4] = {
-        .from_float               = quantize_row_mxfp4,
+        .from_float               = quantize_అడ్డువరుస_mxfp4,
         .vec_dot                  = ggml_vec_dot_mxfp4_q8_0,
         .vec_dot_type             = GGML_TYPE_Q8_0,
         .nrows                    = 1,
     },
     [GGML_TYPE_NVFP4] = {
-        .from_float               = quantize_row_nvfp4,
+        .from_float               = quantize_అడ్డువరుస_nvfp4,
         .vec_dot                  = ggml_vec_dot_nvfp4_q8_0,
         .vec_dot_type             = GGML_TYPE_Q8_0,
         .nrows                    = 1,
     },
     [GGML_TYPE_Q2_K] = {
-        .from_float               = quantize_row_q2_K,
+        .from_float               = quantize_అడ్డువరుస_q2_K,
         .vec_dot                  = ggml_vec_dot_q2_K_q8_K,
         .vec_dot_type             = GGML_TYPE_Q8_K,
         .nrows                    = 1,
     },
     [GGML_TYPE_Q3_K] = {
-        .from_float               = quantize_row_q3_K,
+        .from_float               = quantize_అడ్డువరుస_q3_K,
         .vec_dot                  = ggml_vec_dot_q3_K_q8_K,
         .vec_dot_type             = GGML_TYPE_Q8_K,
         .nrows                    = 1,
     },
     [GGML_TYPE_Q4_K] = {
-        .from_float               = quantize_row_q4_K,
+        .from_float               = quantize_అడ్డువరుస_q4_K,
         .vec_dot                  = ggml_vec_dot_q4_K_q8_K,
         .vec_dot_type             = GGML_TYPE_Q8_K,
-#if defined (__ARM_FEATURE_MATMUL_INT8)
+#ఒకవేళ defined (__ARM_FEATURE_MATMUL_INT8)
         .nrows                    = 2,
-#else
+#లేకపోతే
         .nrows                    = 1,
-#endif
+#అయితే_ముగింపు
     },
     [GGML_TYPE_Q5_K] = {
-        .from_float               = quantize_row_q5_K,
+        .from_float               = quantize_అడ్డువరుస_q5_K,
         .vec_dot                  = ggml_vec_dot_q5_K_q8_K,
         .vec_dot_type             = GGML_TYPE_Q8_K,
         .nrows                    = 1,
     },
     [GGML_TYPE_Q6_K] = {
-        .from_float               = quantize_row_q6_K,
+        .from_float               = quantize_అడ్డువరుస_q6_K,
         .vec_dot                  = ggml_vec_dot_q6_K_q8_K,
         .vec_dot_type             = GGML_TYPE_Q8_K,
-#if defined (__ARM_FEATURE_MATMUL_INT8)
+#ఒకవేళ defined (__ARM_FEATURE_MATMUL_INT8)
         .nrows                    = 2,
-#else
+#లేకపోతే
         .nrows                    = 1,
-#endif
+#అయితే_ముగింపు
     },
     [GGML_TYPE_IQ2_XXS] = {
-        .from_float               = NULL,
+        .from_float               = ఖాళీ,
         .vec_dot                  = ggml_vec_dot_iq2_xxs_q8_K,
         .vec_dot_type             = GGML_TYPE_Q8_K,
         .nrows                    = 1,
     },
     [GGML_TYPE_IQ2_XS] = {
-        .from_float               = NULL,
+        .from_float               = ఖాళీ,
         .vec_dot                  = ggml_vec_dot_iq2_xs_q8_K,
         .vec_dot_type             = GGML_TYPE_Q8_K,
         .nrows                    = 1,
@@ -366,127 +366,127 @@ static const struct ggml_type_traits_cpu type_traits_cpu[GGML_TYPE_COUNT] = {
         .nrows                    = 1,
     },
     [GGML_TYPE_IQ1_S] = {
-        .from_float               = NULL,
+        .from_float               = ఖాళీ,
         .vec_dot                  = ggml_vec_dot_iq1_s_q8_K,
         .vec_dot_type             = GGML_TYPE_Q8_K,
         .nrows                    = 1,
     },
     [GGML_TYPE_IQ1_M] = {
-        .from_float               = NULL,
+        .from_float               = ఖాళీ,
         .vec_dot                  = ggml_vec_dot_iq1_m_q8_K,
         .vec_dot_type             = GGML_TYPE_Q8_K,
         .nrows                    = 1,
     },
     [GGML_TYPE_IQ4_NL] = {
-        .from_float               = quantize_row_iq4_nl,
+        .from_float               = quantize_అడ్డువరుస_iq4_nl,
         .vec_dot                  = ggml_vec_dot_iq4_nl_q8_0,
         .vec_dot_type             = GGML_TYPE_Q8_0,
         .nrows                    = 1,
     },
     [GGML_TYPE_IQ4_XS] = {
-        .from_float               = quantize_row_iq4_xs,
+        .from_float               = quantize_అడ్డువరుస_iq4_xs,
         .vec_dot                  = ggml_vec_dot_iq4_xs_q8_K,
         .vec_dot_type             = GGML_TYPE_Q8_K,
         .nrows                    = 1,
     },
     [GGML_TYPE_Q8_K] = {
-        .from_float               = quantize_row_q8_K,
+        .from_float               = quantize_అడ్డువరుస_q8_K,
     },
     [GGML_TYPE_BF16] = {
-        .from_float               = (ggml_from_float_t) ggml_cpu_fp32_to_bf16,
+        .from_float               = (ggml_from_float_t) ggml_cpu_fp32_గమ్యం_bf16,
         .vec_dot                  = (ggml_vec_dot_t) ggml_vec_dot_bf16,
         .vec_dot_type             = GGML_TYPE_BF16,
         .nrows                    = 1,
     },
     [GGML_TYPE_TQ1_0] = {
-        .from_float               = quantize_row_tq1_0,
+        .from_float               = quantize_అడ్డువరుస_tq1_0,
         .vec_dot                  = ggml_vec_dot_tq1_0_q8_K,
         .vec_dot_type             = GGML_TYPE_Q8_K,
         .nrows                    = 1,
     },
     [GGML_TYPE_TQ2_0] = {
-        .from_float               = quantize_row_tq2_0,
+        .from_float               = quantize_అడ్డువరుస_tq2_0,
         .vec_dot                  = ggml_vec_dot_tq2_0_q8_K,
         .vec_dot_type             = GGML_TYPE_Q8_K,
         .nrows                    = 1,
     },
     [GGML_TYPE_I32] = {
-        .from_float               = (ggml_from_float_t) ggml_cpu_fp32_to_i32,
+        .from_float               = (ggml_from_float_t) ggml_cpu_fp32_గమ్యం_i32,
     },
 };
 
-const struct ggml_type_traits_cpu * ggml_get_type_traits_cpu(enum ggml_type type) {
-    return &type_traits_cpu[type];
+స్థిరరాశి నిర్మాణం ggml_type_traits_cpu * ggml_get_type_traits_cpu(గణన ggml_type type) {
+    తిరిగి &type_traits_cpu[type];
 }
 
 //
 // Threading defs
 //
 
-typedef pthread_t          ggml_thread_t;
+రకనిర్వచనం pthread_t          ggml_thread_t;
 
-#if defined(_WIN32)
+#ఒకవేళ defined(_WIN32)
 
-typedef CONDITION_VARIABLE ggml_cond_t;
-typedef SRWLOCK            ggml_mutex_t;
+రకనిర్వచనం CONDITION_VARIABLE ggml_cond_t;
+రకనిర్వచనం SRWLOCK            ggml_mutex_t;
 
-#define ggml_mutex_init(m)   InitializeSRWLock(m)
-#define ggml_mutex_destroy(m)
-#define ggml_mutex_lock(m)   AcquireSRWLockExclusive(m)
-#define ggml_mutex_unlock(m) ReleaseSRWLockExclusive(m)
-#define ggml_mutex_lock_shared(m)   AcquireSRWLockShared(m)
-#define ggml_mutex_unlock_shared(m) ReleaseSRWLockShared(m)
+#నిర్వచించు ggml_mutex_init(m)   InitializeSRWLock(m)
+#నిర్వచించు ggml_mutex_destroy(m)
+#నిర్వచించు ggml_mutex_తాళం(m)   AcquireSRWLockExclusive(m)
+#నిర్వచించు ggml_mutex_unlock(m) ReleaseSRWLockExclusive(m)
+#నిర్వచించు ggml_mutex_తాళం_shared(m)   AcquireSRWLockShared(m)
+#నిర్వచించు ggml_mutex_unlock_shared(m) ReleaseSRWLockShared(m)
 
-#define ggml_cond_init(c)    InitializeConditionVariable(c)
-#define ggml_cond_destroy(c)
-#define ggml_cond_wait(c, m) SleepConditionVariableSRW(c, m, INFINITE, CONDITION_VARIABLE_LOCKMODE_SHARED)
-#define ggml_cond_broadcast(c) WakeAllConditionVariable(c)
+#నిర్వచించు ggml_cond_init(c)    InitializeConditionVariable(c)
+#నిర్వచించు ggml_cond_destroy(c)
+#నిర్వచించు ggml_cond_wait(c, m) SleepConditionVariableSRW(c, m, INFINITE, CONDITION_VARIABLE_LOCKMODE_SHARED)
+#నిర్వచించు ggml_cond_ప్రసారం(c) WakeAllConditionVariable(c)
 
-#define ggml_thread_create pthread_create
-#define ggml_thread_join   pthread_join
+#నిర్వచించు ggml_thread_create pthread_create
+#నిర్వచించు ggml_thread_join   pthread_join
 
-#else
+#లేకపోతే
 
-typedef pthread_cond_t     ggml_cond_t;
-typedef pthread_mutex_t    ggml_mutex_t;
+రకనిర్వచనం pthread_cond_t     ggml_cond_t;
+రకనిర్వచనం pthread_mutex_t    ggml_mutex_t;
 
-#define ggml_mutex_init(m)          pthread_mutex_init(m, NULL)
-#define ggml_mutex_destroy(m)       pthread_mutex_destroy(m)
-#define ggml_mutex_lock(m)          pthread_mutex_lock(m)
-#define ggml_mutex_unlock(m)        pthread_mutex_unlock(m)
-#define ggml_mutex_lock_shared(m)   pthread_mutex_lock(m)
-#define ggml_mutex_unlock_shared(m) pthread_mutex_unlock(m)
+#నిర్వచించు ggml_mutex_init(m)          pthread_mutex_init(m, ఖాళీ)
+#నిర్వచించు ggml_mutex_destroy(m)       pthread_mutex_destroy(m)
+#నిర్వచించు ggml_mutex_తాళం(m)          pthread_mutex_తాళం(m)
+#నిర్వచించు ggml_mutex_unlock(m)        pthread_mutex_unlock(m)
+#నిర్వచించు ggml_mutex_తాళం_shared(m)   pthread_mutex_తాళం(m)
+#నిర్వచించు ggml_mutex_unlock_shared(m) pthread_mutex_unlock(m)
 
-#define ggml_lock_init(x)    UNUSED(x)
-#define ggml_lock_destroy(x) UNUSED(x)
-#if defined(__x86_64__) || (defined(_MSC_VER) && defined(_M_AMD64) && !defined(_M_ARM64EC))
-#define ggml_lock_lock(x)    _mm_pause()
-#else
-#define ggml_lock_lock(x)    UNUSED(x)
-#endif
-#define ggml_lock_unlock(x)  UNUSED(x)
+#నిర్వచించు ggml_తాళం_init(x)    వాడని(x)
+#నిర్వచించు ggml_తాళం_destroy(x) వాడని(x)
+#ఒకవేళ defined(__x86_64__) || (defined(_MSC_VER) && defined(_M_AMD64) && !defined(_M_ARM64EC))
+#నిర్వచించు ggml_తాళం_తాళం(x)    _mm_pause()
+#లేకపోతే
+#నిర్వచించు ggml_తాళం_తాళం(x)    వాడని(x)
+#అయితే_ముగింపు
+#నిర్వచించు ggml_తాళం_unlock(x)  వాడని(x)
 
-#define GGML_LOCK_INITIALIZER 0
-#define ggml_cond_init(c)      pthread_cond_init(c, NULL)
-#define ggml_cond_destroy(c)   pthread_cond_destroy(c)
-#define ggml_cond_wait(c, m)   pthread_cond_wait(c, m)
-#define ggml_cond_broadcast(c) pthread_cond_broadcast(c)
+#నిర్వచించు GGML_తాళం_INITIALIZER 0
+#నిర్వచించు ggml_cond_init(c)      pthread_cond_init(c, ఖాళీ)
+#నిర్వచించు ggml_cond_destroy(c)   pthread_cond_destroy(c)
+#నిర్వచించు ggml_cond_wait(c, m)   pthread_cond_wait(c, m)
+#నిర్వచించు ggml_cond_ప్రసారం(c) pthread_cond_ప్రసారం(c)
 
-#define ggml_thread_create pthread_create
-#define ggml_thread_join   pthread_join
+#నిర్వచించు ggml_thread_create pthread_create
+#నిర్వచించు ggml_thread_join   pthread_join
 
-#endif
+#అయితే_ముగింపు
 
 // Threadpool def
-struct ggml_threadpool {
+నిర్మాణం ggml_threadpool {
     ggml_mutex_t mutex;       // mutex for cond.var
     ggml_cond_t  cond;        // cond.var for waiting for new work
 
-    struct ggml_cgraph * cgraph;
-    struct ggml_cplan  * cplan;
+    నిర్మాణం ggml_cgraph * cgraph;
+    నిర్మాణం ggml_cplan  * cplan;
 
     // synchronization primitives
-    atomic_int n_graph;       // updated when there is work to be done (i.e each graph) holds graph and active thread counts.
+    atomic_int n_లేఖాచిత్రం;       // updated when there is work to be done (i.e each graph) holds graph and active thread counts.
     atomic_int GGML_CACHE_ALIGN n_barrier;
     atomic_int GGML_CACHE_ALIGN n_barrier_passed;
     atomic_int GGML_CACHE_ALIGN current_chunk; // currently processing chunk during Mat_Mul, shared between all the threads.
@@ -496,155 +496,155 @@ struct ggml_threadpool {
     atomic_bool pause;        // Used for pausing the threadpool or individual threads
     atomic_int  abort;        // Used for aborting processing of a graph
 
-    struct ggml_compute_state * workers;   // per thread state
-    int          n_threads;   // Number of threads in the pool
+    నిర్మాణం ggml_compute_state * workers;   // per thread state
+    పూర్ణాంకం          n_దారాలు;   // Number of threads in the pool
     int32_t      prio;        // Scheduling priority
     uint32_t     poll;        // Polling level (0 - no polling)
 
-    enum ggml_status ec;
+    గణన ggml_స్థితి ec;
 };
 
 // Per-thread state
-struct ggml_compute_state {
-#ifndef GGML_USE_OPENMP
+నిర్మాణం ggml_compute_state {
+#నిర్వచితం_కాకపోతే GGML_USE_OPENMP
     ggml_thread_t thrd;
-    int  last_graph;
+    పూర్ణాంకం  చివరి_లేఖాచిత్రం;
     bool pending;
-#endif
-    bool cpumask[GGML_MAX_N_THREADS];
-    struct ggml_threadpool * threadpool;
-    int ith;
+#అయితే_ముగింపు
+    bool cpumask[GGML_MAX_N_దారాలు];
+    నిర్మాణం ggml_threadpool * threadpool;
+    పూర్ణాంకం ith;
 };
 
 // Helpers for polling loops
-#if defined(__aarch64__) && ( defined(__clang__) || defined(__GNUC__) )
-static inline void ggml_thread_cpu_relax(void) {
-    __asm__ volatile("yield" ::: "memory");
+#ఒకవేళ defined(__aarch64__) && ( defined(__clang__) || defined(__GNUC__) )
+స్థిర అంతఃవరుస శూన్య ggml_thread_cpu_relax(శూన్య) {
+    __asm__ అస్థిర("yield" ::: "memory");
 }
-#elif defined(__x86_64__)
-static inline void ggml_thread_cpu_relax(void) {
+#లేదావేళ defined(__x86_64__)
+స్థిర అంతఃవరుస శూన్య ggml_thread_cpu_relax(శూన్య) {
     _mm_pause();
 }
-#elif defined(__riscv)
-static inline void ggml_thread_cpu_relax(void) {
-    #ifdef __riscv_zihintpause
+#లేదావేళ defined(__riscv)
+స్థిర అంతఃవరుస శూన్య ggml_thread_cpu_relax(శూన్య) {
+    #నిర్వచితమైతే __riscv_zihintpause
         __asm__ __volatile__ ("pause");
-    #else
+    #లేకపోతే
         /* Encoding of the pause instruction */
         __asm__ __volatile__ (".4byte 0x100000F");
-    #endif
+    #అయితే_ముగింపు
 }
-#else
-static inline void ggml_thread_cpu_relax(void) {;}
-#endif
+#లేకపోతే
+స్థిర అంతఃవరుస శూన్య ggml_thread_cpu_relax(శూన్య) {;}
+#అయితే_ముగింపు
 
 //
 // NUMA support
 //
 
-#define GGML_NUMA_MAX_NODES 8
-#define GGML_NUMA_MAX_CPUS 512
+#నిర్వచించు GGML_NUMA_MAX_NODES 8
+#నిర్వచించు GGML_NUMA_MAX_CPUS 512
 
-struct ggml_numa_node {
+నిర్మాణం ggml_numa_కణుపు {
     uint32_t cpus[GGML_NUMA_MAX_CPUS]; // hardware threads on this node
     uint32_t n_cpus;
 };
 
-struct ggml_numa_nodes {
-    enum ggml_numa_strategy numa_strategy;
-    struct ggml_numa_node nodes[GGML_NUMA_MAX_NODES];
+నిర్మాణం ggml_numa_nodes {
+    గణన ggml_numa_strategy numa_strategy;
+    నిర్మాణం ggml_numa_కణుపు nodes[GGML_NUMA_MAX_NODES];
     uint32_t n_nodes;
-    uint32_t total_cpus; // hardware threads on system
-    uint32_t current_node; // node on which main process is execting
-#if defined(__gnu_linux__)
-    cpu_set_t cpuset; // cpuset from numactl
-#else
+    uint32_t మొత్తం_cpus; // hardware threads on system
+    uint32_t current_కణుపు; // node on which main process is execting
+#ఒకవేళ defined(__gnu_linux__)
+    cpu_సమితి_t cpuset; // cpuset from numactl
+#లేకపోతే
     uint32_t cpuset; // no NUMA support outside of Linux at this time. Use a portable datatype
-#endif
+#అయితే_ముగింపు
 };
 
 //
 // ggml state
 //
 
-struct ggml_state {
-    struct ggml_numa_nodes numa;
+నిర్మాణం ggml_state {
+    నిర్మాణం ggml_numa_nodes numa;
 };
 
-static struct ggml_state g_state = {0};
+స్థిర నిర్మాణం ggml_state g_state = {0};
 
-void ggml_barrier(struct ggml_threadpool * tp) {
-    int n_threads = atomic_load_explicit(&tp->n_graph, memory_order_relaxed) & GGML_THREADPOOL_N_THREADS_MASK;
-    if (n_threads == 1) {
-        return;
+శూన్య ggml_barrier(నిర్మాణం ggml_threadpool * tp) {
+    పూర్ణాంకం n_దారాలు = atomic_ఎక్కించు_explicit(&tp->n_లేఖాచిత్రం, memory_order_relaxed) & GGML_THREADPOOL_N_దారాలు_ముసుగు;
+    ఒకవేళ (n_దారాలు == 1) {
+        తిరిగి;
     }
 
-#ifdef GGML_USE_OPENMP
-    #pragma omp barrier
-#else
-    int n_passed = atomic_load_explicit(&tp->n_barrier_passed, memory_order_relaxed);
+#నిర్వచితమైతే GGML_USE_OPENMP
+    #సూచన omp barrier
+#లేకపోతే
+    పూర్ణాంకం n_passed = atomic_ఎక్కించు_explicit(&tp->n_barrier_passed, memory_order_relaxed);
 
     // enter barrier (full seq-cst fence)
-    int n_barrier = atomic_fetch_add_explicit(&tp->n_barrier, 1, memory_order_seq_cst);
+    పూర్ణాంకం n_barrier = atomic_fetch_కూడు_explicit(&tp->n_barrier, 1, memory_order_seq_cst);
 
-    if (n_barrier == (n_threads - 1)) {
+    ఒకవేళ (n_barrier == (n_దారాలు - 1)) {
         // last thread
         atomic_store_explicit(&tp->n_barrier, 0, memory_order_relaxed);
 
         // exit barrier (full seq-cst fence)
-        atomic_fetch_add_explicit(&tp->n_barrier_passed, 1, memory_order_seq_cst);
-        return;
+        atomic_fetch_కూడు_explicit(&tp->n_barrier_passed, 1, memory_order_seq_cst);
+        తిరిగి;
     }
 
     // wait for other threads
-    while (atomic_load_explicit(&tp->n_barrier_passed, memory_order_relaxed) == n_passed) {
+    అయితే (atomic_ఎక్కించు_explicit(&tp->n_barrier_passed, memory_order_relaxed) == n_passed) {
         ggml_thread_cpu_relax();
     }
 
     // exit barrier (full seq-cst fence)
     // TSAN doesn't support standalone fence yet, we use a dummy read-modify-write instead
-    #ifdef GGML_TSAN_ENABLED
-    atomic_fetch_add_explicit(&tp->n_barrier_passed, 0, memory_order_seq_cst);
-    #else
+    #నిర్వచితమైతే GGML_TSAN_ENABLED
+    atomic_fetch_కూడు_explicit(&tp->n_barrier_passed, 0, memory_order_seq_cst);
+    #లేకపోతే
     atomic_thread_fence(memory_order_seq_cst);
-    #endif
-#endif
+    #అయితే_ముగింపు
+#అయితే_ముగింపు
 }
 
-void ggml_threadpool_chunk_set(struct ggml_threadpool * tp, int value) {
-    atomic_store_explicit(&tp->current_chunk, value, memory_order_relaxed);
+శూన్య ggml_threadpool_chunk_సమితి(నిర్మాణం ggml_threadpool * tp, పూర్ణాంకం విలువ) {
+    atomic_store_explicit(&tp->current_chunk, విలువ, memory_order_relaxed);
 }
 
-int ggml_threadpool_chunk_add(struct ggml_threadpool * tp, int value) {
-    return atomic_fetch_add_explicit(&tp->current_chunk, value, memory_order_relaxed);
+పూర్ణాంకం ggml_threadpool_chunk_కూడు(నిర్మాణం ggml_threadpool * tp, పూర్ణాంకం విలువ) {
+    తిరిగి atomic_fetch_కూడు_explicit(&tp->current_chunk, విలువ, memory_order_relaxed);
 }
 
-#if defined(__gnu_linux__)
-static cpu_set_t ggml_get_numa_affinity(void) {
-    cpu_set_t cpuset;
+#ఒకవేళ defined(__gnu_linux__)
+స్థిర cpu_సమితి_t ggml_get_numa_affinity(శూన్య) {
+    cpu_సమితి_t cpuset;
     pthread_t thread;
     thread = pthread_self();
     CPU_ZERO(&cpuset);
-    pthread_getaffinity_np(thread, sizeof(cpu_set_t), &cpuset);
-    return cpuset;
+    pthread_getaffinity_np(thread, పరిమాణం(cpu_సమితి_t), &cpuset);
+    తిరిగి cpuset;
 }
-#else
-static uint32_t ggml_get_numa_affinity(void) {
-    return 0; // no NUMA support
+#లేకపోతే
+స్థిర uint32_t ggml_get_numa_affinity(శూన్య) {
+    తిరిగి 0; // no NUMA support
 }
-#endif
+#అయితే_ముగింపు
 
-void ggml_numa_init(enum ggml_numa_strategy numa_flag) {
-    if (g_state.numa.n_nodes > 0) {
+శూన్య ggml_numa_init(గణన ggml_numa_strategy numa_flag) {
+    ఒకవేళ (g_state.numa.n_nodes > 0) {
         fprintf(stderr, "ggml_numa_init: NUMA already initialized\n");
 
-        return;
+        తిరిగి;
     }
 
-#if defined(__gnu_linux__)
-    struct stat st;
-    char path[256];
-    int rv;
+#ఒకవేళ defined(__gnu_linux__)
+    నిర్మాణం stat st;
+    అక్షరం మార్గం[256];
+    పూర్ణాంకం rv;
 
     // set numa scheme
     g_state.numa.numa_strategy = numa_flag;
@@ -654,504 +654,504 @@ void ggml_numa_init(enum ggml_numa_strategy numa_flag) {
     g_state.numa.cpuset = ggml_get_numa_affinity();
 
     // enumerate nodes
-    while (g_state.numa.n_nodes < GGML_NUMA_MAX_NODES) {
-        rv = snprintf(path, sizeof(path), "/sys/devices/system/node/node%u", g_state.numa.n_nodes);
-        GGML_ASSERT(rv > 0 && (unsigned)rv < sizeof(path));
-        if (stat(path, &st) != 0) { break; }
+    అయితే (g_state.numa.n_nodes < GGML_NUMA_MAX_NODES) {
+        rv = snprintf(మార్గం, పరిమాణం(మార్గం), "/sys/devices/system/node/node%u", g_state.numa.n_nodes);
+        GGML_ASSERT(rv > 0 && (గుర్తులేని)rv < పరిమాణం(మార్గం));
+        ఒకవేళ (stat(మార్గం, &st) != 0) { ఆపు; }
         ++g_state.numa.n_nodes;
     }
 
     // enumerate CPUs
-    while (g_state.numa.total_cpus < GGML_NUMA_MAX_CPUS) {
-        rv = snprintf(path, sizeof(path), "/sys/devices/system/cpu/cpu%u", g_state.numa.total_cpus);
-        GGML_ASSERT(rv > 0 && (unsigned)rv < sizeof(path));
-        if (stat(path, &st) != 0) { break; }
-        ++g_state.numa.total_cpus;
+    అయితే (g_state.numa.మొత్తం_cpus < GGML_NUMA_MAX_CPUS) {
+        rv = snprintf(మార్గం, పరిమాణం(మార్గం), "/sys/devices/system/cpu/cpu%u", g_state.numa.మొత్తం_cpus);
+        GGML_ASSERT(rv > 0 && (గుర్తులేని)rv < పరిమాణం(మార్గం));
+        ఒకవేళ (stat(మార్గం, &st) != 0) { ఆపు; }
+        ++g_state.numa.మొత్తం_cpus;
     }
 
-    GGML_PRINT_DEBUG("found %u numa nodes, %u CPUs\n", g_state.numa.n_nodes, g_state.numa.total_cpus);
+    GGML_PRINT_DEBUG("found %u numa nodes, %u CPUs\n", g_state.numa.n_nodes, g_state.numa.మొత్తం_cpus);
 
     // figure out which node we're on
     uint current_cpu;
-    int getcpu_ret = 0;
-#if __GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ > 33) || defined(__COSMOPOLITAN__)
-    getcpu_ret = getcpu(&current_cpu, &g_state.numa.current_node);
-#else
+    పూర్ణాంకం getcpu_ret = 0;
+#ఒకవేళ __GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ > 33) || defined(__COSMOPOLITAN__)
+    getcpu_ret = getcpu(&current_cpu, &g_state.numa.current_కణుపు);
+#లేకపోతే
     // old glibc doesn't have a wrapper for this call. Fall back on direct syscall
-#   if !defined(SYS_getcpu) && defined(SYS_get_cpu)
+#   ఒకవేళ !defined(SYS_getcpu) && defined(SYS_get_cpu)
 #       define SYS_getcpu SYS_get_cpu // some older glibc versions use this name
 #   endif
-    getcpu_ret = syscall(SYS_getcpu, &current_cpu, &g_state.numa.current_node);
-#endif
+    getcpu_ret = syscall(SYS_getcpu, &current_cpu, &g_state.numa.current_కణుపు);
+#అయితే_ముగింపు
 
-    if (g_state.numa.n_nodes < 1 || g_state.numa.total_cpus < 1 || getcpu_ret != 0) {
+    ఒకవేళ (g_state.numa.n_nodes < 1 || g_state.numa.మొత్తం_cpus < 1 || getcpu_ret != 0) {
         g_state.numa.n_nodes = 0;
-        return;
+        తిరిగి;
     }
 
-    GGML_PRINT_DEBUG("found our process on numa node %u, CPU %u\n", g_state.numa.current_node, current_cpu);
+    GGML_PRINT_DEBUG("found our process on numa node %u, CPU %u\n", g_state.numa.current_కణుపు, current_cpu);
 
-    for (uint32_t n = 0; n < g_state.numa.n_nodes; ++n) {
-        struct ggml_numa_node * node = &g_state.numa.nodes[n];
+    కొరకు (uint32_t n = 0; n < g_state.numa.n_nodes; ++n) {
+        నిర్మాణం ggml_numa_కణుపు * కణుపు = &g_state.numa.nodes[n];
         GGML_PRINT_DEBUG("CPUs on node %u:", n);
-        node->n_cpus = 0;
-        for (uint32_t c = 0; c < g_state.numa.total_cpus; ++c) {
-            rv = snprintf(path, sizeof(path), "/sys/devices/system/node/node%u/cpu%u", n, c);
-            GGML_ASSERT(rv > 0 && (unsigned)rv < sizeof(path));
-            if (stat(path, &st) == 0) {
-                node->cpus[node->n_cpus++] = c;
+        కణుపు->n_cpus = 0;
+        కొరకు (uint32_t c = 0; c < g_state.numa.మొత్తం_cpus; ++c) {
+            rv = snprintf(మార్గం, పరిమాణం(మార్గం), "/sys/devices/system/node/node%u/cpu%u", n, c);
+            GGML_ASSERT(rv > 0 && (గుర్తులేని)rv < పరిమాణం(మార్గం));
+            ఒకవేళ (stat(మార్గం, &st) == 0) {
+                కణుపు->cpus[కణుపు->n_cpus++] = c;
                 GGML_PRINT_DEBUG(" %u", c);
             }
         }
         GGML_PRINT_DEBUG("\n");
     }
 
-    if (ggml_is_numa()) {
+    ఒకవేళ (ggml_is_numa()) {
         FILE *fptr = fopen("/proc/sys/kernel/numa_balancing", "r");
-        if (fptr != NULL) {
-            char buf[42];
-            if (fgets(buf, sizeof(buf), fptr) && strncmp(buf, "0\n", sizeof(buf)) != 0) {
+        ఒకవేళ (fptr != ఖాళీ) {
+            అక్షరం buf[42];
+            ఒకవేళ (fgets(buf, పరిమాణం(buf), fptr) && అక్షరశ్రేణి_పోలిక(buf, "0\n", పరిమాణం(buf)) != 0) {
                 GGML_LOG_WARN("/proc/sys/kernel/numa_balancing is enabled, this has been observed to impair performance\n");
             }
             fclose(fptr);
         }
     }
-#else
-    UNUSED(numa_flag);
+#లేకపోతే
+    వాడని(numa_flag);
     // TODO
-#endif
+#అయితే_ముగింపు
 }
 
-bool ggml_is_numa(void) {
-    return g_state.numa.n_nodes > 1;
+bool ggml_is_numa(శూన్య) {
+    తిరిగి g_state.numa.n_nodes > 1;
 }
 
-#if defined(__ARM_ARCH)
-#if defined(__aarch64__) && defined(__ARM_FEATURE_SVE)
-#include <arm_sve.h>
-static void ggml_init_arm_arch_features(void) {
+#ఒకవేళ defined(__ARM_ARCH)
+#ఒకవేళ defined(__aarch64__) && defined(__ARM_FEATURE_SVE)
+#అన్తర్భావ <arm_sve.h>
+స్థిర శూన్య ggml_init_arm_arch_features(శూన్య) {
     ggml_arm_arch_features.sve_cnt = svcntb();
 }
-#else
-static void ggml_init_arm_arch_features(void) {}
-#endif
-#endif // __ARM_ARCH
+#లేకపోతే
+స్థిర శూన్య ggml_init_arm_arch_features(శూన్య) {}
+#అయితే_ముగింపు
+#అయితే_ముగింపు // __ARM_ARCH
 
-#if defined(__riscv) && defined(__riscv_v_intrinsic)
-#include <riscv_vector.h>
-static void ggml_init_riscv_arch_features(void) {
+#ఒకవేళ defined(__riscv) && defined(__riscv_v_intrinsic)
+#అన్తర్భావ <riscv_vector.h>
+స్థిర శూన్య ggml_init_riscv_arch_features(శూన్య) {
     ggml_riscv_arch_features.rvv_vlen = __riscv_vlenb();
 }
-#else
-static void ggml_init_riscv_arch_features(void) {}
-#endif
+#లేకపోతే
+స్థిర శూన్య ggml_init_riscv_arch_features(శూన్య) {}
+#అయితే_ముగింపు
 
-struct ggml_tensor * ggml_new_i32(struct ggml_context * ctx, int32_t value) {
+నిర్మాణం ggml_tensor * ggml_new_i32(నిర్మాణం ggml_context * ctx, int32_t విలువ) {
     GGML_ASSERT(!ggml_get_no_alloc(ctx));
 
-    struct ggml_tensor * result = ggml_new_tensor_1d(ctx, GGML_TYPE_I32, 1);
+    నిర్మాణం ggml_tensor * ఫలితం = ggml_new_tensor_1d(ctx, GGML_TYPE_I32, 1);
 
-    ggml_set_i32(result, value);
+    ggml_సమితి_i32(ఫలితం, విలువ);
 
-    return result;
+    తిరిగి ఫలితం;
 }
 
-struct ggml_tensor * ggml_new_f32(struct ggml_context * ctx, float value) {
+నిర్మాణం ggml_tensor * ggml_new_f32(నిర్మాణం ggml_context * ctx, దశాంశం విలువ) {
     GGML_ASSERT(!ggml_get_no_alloc(ctx));
 
-    struct ggml_tensor * result = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, 1);
+    నిర్మాణం ggml_tensor * ఫలితం = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, 1);
 
-    ggml_set_f32(result, value);
+    ggml_సమితి_f32(ఫలితం, విలువ);
 
-    return result;
+    తిరిగి ఫలితం;
 }
 
-struct ggml_tensor * ggml_set_i32 (struct ggml_tensor * tensor, int32_t value) {
-    const int n     = ggml_nrows(tensor);
-    const int nc    = tensor->ne[0];
-    const size_t n1 = tensor->nb[1];
+నిర్మాణం ggml_tensor * ggml_సమితి_i32 (నిర్మాణం ggml_tensor * tensor, int32_t విలువ) {
+    స్థిరరాశి పూర్ణాంకం n     = ggml_nrows(tensor);
+    స్థిరరాశి పూర్ణాంకం nc    = tensor->ne[0];
+    స్థిరరాశి size_t n1 = tensor->nb[1];
 
-    char * const data = tensor->data;
+    అక్షరం * స్థిరరాశి దత్తాంశం = tensor->దత్తాంశం;
 
-    switch (tensor->type) {
-        case GGML_TYPE_I8:
+    ఎంపిక (tensor->type) {
+        స్థితి GGML_TYPE_I8:
             {
-                assert(tensor->nb[0] == sizeof(int8_t));
-                for (int i = 0; i < n; i++) {
-                    ggml_vec_set_i8(nc, (int8_t *)(data + i*n1), value);
+                ప్రతిజ్ఞా(tensor->nb[0] == పరిమాణం(int8_t));
+                కొరకు (పూర్ణాంకం i = 0; i < n; i++) {
+                    ggml_vec_సమితి_i8(nc, (int8_t *)(దత్తాంశం + i*n1), విలువ);
                 }
-            } break;
-        case GGML_TYPE_I16:
+            } ఆపు;
+        స్థితి GGML_TYPE_I16:
             {
-                assert(tensor->nb[0] == sizeof(int16_t));
-                for (int i = 0; i < n; i++) {
-                    ggml_vec_set_i16(nc, (int16_t *)(data + i*n1), value);
+                ప్రతిజ్ఞా(tensor->nb[0] == పరిమాణం(int16_t));
+                కొరకు (పూర్ణాంకం i = 0; i < n; i++) {
+                    ggml_vec_సమితి_i16(nc, (int16_t *)(దత్తాంశం + i*n1), విలువ);
                 }
-            } break;
-        case GGML_TYPE_I32:
+            } ఆపు;
+        స్థితి GGML_TYPE_I32:
             {
-                assert(tensor->nb[0] == sizeof(int32_t));
-                for (int i = 0; i < n; i++) {
-                    ggml_vec_set_i32(nc, (int32_t *)(data + i*n1), value);
+                ప్రతిజ్ఞా(tensor->nb[0] == పరిమాణం(int32_t));
+                కొరకు (పూర్ణాంకం i = 0; i < n; i++) {
+                    ggml_vec_సమితి_i32(nc, (int32_t *)(దత్తాంశం + i*n1), విలువ);
                 }
-            } break;
-        case GGML_TYPE_F16:
+            } ఆపు;
+        స్థితి GGML_TYPE_F16:
             {
-                assert(tensor->nb[0] == sizeof(ggml_fp16_t));
-                for (int i = 0; i < n; i++) {
-                    ggml_vec_set_f16(nc, (ggml_fp16_t *)(data + i*n1), GGML_CPU_FP32_TO_FP16(value));
+                ప్రతిజ్ఞా(tensor->nb[0] == పరిమాణం(ggml_fp16_t));
+                కొరకు (పూర్ణాంకం i = 0; i < n; i++) {
+                    ggml_vec_సమితి_f16(nc, (ggml_fp16_t *)(దత్తాంశం + i*n1), GGML_CPU_FP32_గమ్యం_FP16(విలువ));
                 }
-            } break;
-        case GGML_TYPE_BF16:
+            } ఆపు;
+        స్థితి GGML_TYPE_BF16:
             {
-                assert(tensor->nb[0] == sizeof(ggml_fp16_t));
-                for (int i = 0; i < n; i++) {
-                    ggml_vec_set_bf16(nc, (ggml_bf16_t *)(data + i*n1), GGML_FP32_TO_BF16(value));
+                ప్రతిజ్ఞా(tensor->nb[0] == పరిమాణం(ggml_fp16_t));
+                కొరకు (పూర్ణాంకం i = 0; i < n; i++) {
+                    ggml_vec_సమితి_bf16(nc, (ggml_bf16_t *)(దత్తాంశం + i*n1), GGML_FP32_గమ్యం_BF16(విలువ));
                 }
-            } break;
-        case GGML_TYPE_F32:
+            } ఆపు;
+        స్థితి GGML_TYPE_F32:
             {
-                assert(tensor->nb[0] == sizeof(float));
-                for (int i = 0; i < n; i++) {
-                    ggml_vec_set_f32(nc, (float *)(data + i*n1), value);
+                ప్రతిజ్ఞా(tensor->nb[0] == పరిమాణం(దశాంశం));
+                కొరకు (పూర్ణాంకం i = 0; i < n; i++) {
+                    ggml_vec_సమితి_f32(nc, (దశాంశం *)(దత్తాంశం + i*n1), విలువ);
                 }
-            } break;
-        default:
+            } ఆపు;
+        అప్రమేయ:
             {
                 GGML_ABORT("fatal error");
             }
     }
 
-    return tensor;
+    తిరిగి tensor;
 }
 
-struct ggml_tensor * ggml_set_f32(struct ggml_tensor * tensor, float value) {
-    const int n     = ggml_nrows(tensor);
-    const int nc    = tensor->ne[0];
-    const size_t n1 = tensor->nb[1];
+నిర్మాణం ggml_tensor * ggml_సమితి_f32(నిర్మాణం ggml_tensor * tensor, దశాంశం విలువ) {
+    స్థిరరాశి పూర్ణాంకం n     = ggml_nrows(tensor);
+    స్థిరరాశి పూర్ణాంకం nc    = tensor->ne[0];
+    స్థిరరాశి size_t n1 = tensor->nb[1];
 
-    char * const data = tensor->data;
+    అక్షరం * స్థిరరాశి దత్తాంశం = tensor->దత్తాంశం;
 
-    switch (tensor->type) {
-        case GGML_TYPE_I8:
+    ఎంపిక (tensor->type) {
+        స్థితి GGML_TYPE_I8:
             {
-                assert(tensor->nb[0] == sizeof(int8_t));
-                for (int i = 0; i < n; i++) {
-                    ggml_vec_set_i8(nc, (int8_t *)(data + i*n1), value);
+                ప్రతిజ్ఞా(tensor->nb[0] == పరిమాణం(int8_t));
+                కొరకు (పూర్ణాంకం i = 0; i < n; i++) {
+                    ggml_vec_సమితి_i8(nc, (int8_t *)(దత్తాంశం + i*n1), విలువ);
                 }
-            } break;
-        case GGML_TYPE_I16:
+            } ఆపు;
+        స్థితి GGML_TYPE_I16:
             {
-                assert(tensor->nb[0] == sizeof(int16_t));
-                for (int i = 0; i < n; i++) {
-                    ggml_vec_set_i16(nc, (int16_t *)(data + i*n1), value);
+                ప్రతిజ్ఞా(tensor->nb[0] == పరిమాణం(int16_t));
+                కొరకు (పూర్ణాంకం i = 0; i < n; i++) {
+                    ggml_vec_సమితి_i16(nc, (int16_t *)(దత్తాంశం + i*n1), విలువ);
                 }
-            } break;
-        case GGML_TYPE_I32:
+            } ఆపు;
+        స్థితి GGML_TYPE_I32:
             {
-                assert(tensor->nb[0] == sizeof(int32_t));
-                for (int i = 0; i < n; i++) {
-                    ggml_vec_set_i32(nc, (int32_t *)(data + i*n1), value);
+                ప్రతిజ్ఞా(tensor->nb[0] == పరిమాణం(int32_t));
+                కొరకు (పూర్ణాంకం i = 0; i < n; i++) {
+                    ggml_vec_సమితి_i32(nc, (int32_t *)(దత్తాంశం + i*n1), విలువ);
                 }
-            } break;
-        case GGML_TYPE_F16:
+            } ఆపు;
+        స్థితి GGML_TYPE_F16:
             {
-                assert(tensor->nb[0] == sizeof(ggml_fp16_t));
-                for (int i = 0; i < n; i++) {
-                    ggml_vec_set_f16(nc, (ggml_fp16_t *)(data + i*n1), GGML_CPU_FP32_TO_FP16(value));
+                ప్రతిజ్ఞా(tensor->nb[0] == పరిమాణం(ggml_fp16_t));
+                కొరకు (పూర్ణాంకం i = 0; i < n; i++) {
+                    ggml_vec_సమితి_f16(nc, (ggml_fp16_t *)(దత్తాంశం + i*n1), GGML_CPU_FP32_గమ్యం_FP16(విలువ));
                 }
-            } break;
-        case GGML_TYPE_BF16:
+            } ఆపు;
+        స్థితి GGML_TYPE_BF16:
             {
-                assert(tensor->nb[0] == sizeof(ggml_bf16_t));
-                for (int i = 0; i < n; i++) {
-                    ggml_vec_set_bf16(nc, (ggml_bf16_t *)(data + i*n1), GGML_FP32_TO_BF16(value));
+                ప్రతిజ్ఞా(tensor->nb[0] == పరిమాణం(ggml_bf16_t));
+                కొరకు (పూర్ణాంకం i = 0; i < n; i++) {
+                    ggml_vec_సమితి_bf16(nc, (ggml_bf16_t *)(దత్తాంశం + i*n1), GGML_FP32_గమ్యం_BF16(విలువ));
                 }
-            } break;
-        case GGML_TYPE_F32:
+            } ఆపు;
+        స్థితి GGML_TYPE_F32:
             {
-                assert(tensor->nb[0] == sizeof(float));
-                for (int i = 0; i < n; i++) {
-                    ggml_vec_set_f32(nc, (float *)(data + i*n1), value);
+                ప్రతిజ్ఞా(tensor->nb[0] == పరిమాణం(దశాంశం));
+                కొరకు (పూర్ణాంకం i = 0; i < n; i++) {
+                    ggml_vec_సమితి_f32(nc, (దశాంశం *)(దత్తాంశం + i*n1), విలువ);
                 }
-            } break;
-        default:
+            } ఆపు;
+        అప్రమేయ:
             {
                 GGML_ABORT("fatal error");
             }
     }
 
-    return tensor;
+    తిరిగి tensor;
 }
 
-int32_t ggml_get_i32_1d(const struct ggml_tensor * tensor, int i) {
-    if (!ggml_is_contiguous(tensor)) {
+int32_t ggml_get_i32_1d(స్థిరరాశి నిర్మాణం ggml_tensor * tensor, పూర్ణాంకం i) {
+    ఒకవేళ (!ggml_is_contiguous(tensor)) {
         int64_t id[4] = { 0, 0, 0, 0 };
-        ggml_unravel_index(tensor, i, &id[0], &id[1], &id[2], &id[3]);
-        return ggml_get_i32_nd(tensor, id[0], id[1], id[2], id[3]);
+        ggml_unravel_సూచీ(tensor, i, &id[0], &id[1], &id[2], &id[3]);
+        తిరిగి ggml_get_i32_nd(tensor, id[0], id[1], id[2], id[3]);
     }
-    switch (tensor->type) {
-        case GGML_TYPE_I8:
+    ఎంపిక (tensor->type) {
+        స్థితి GGML_TYPE_I8:
             {
-                GGML_ASSERT(tensor->nb[0] == sizeof(int8_t));
-                return ((int8_t *)(tensor->data))[i];
+                GGML_ASSERT(tensor->nb[0] == పరిమాణం(int8_t));
+                తిరిగి ((int8_t *)(tensor->దత్తాంశం))[i];
             }
-        case GGML_TYPE_I16:
+        స్థితి GGML_TYPE_I16:
             {
-                GGML_ASSERT(tensor->nb[0] == sizeof(int16_t));
-                return ((int16_t *)(tensor->data))[i];
+                GGML_ASSERT(tensor->nb[0] == పరిమాణం(int16_t));
+                తిరిగి ((int16_t *)(tensor->దత్తాంశం))[i];
             }
-        case GGML_TYPE_I32:
+        స్థితి GGML_TYPE_I32:
             {
-                GGML_ASSERT(tensor->nb[0] == sizeof(int32_t));
-                return ((int32_t *)(tensor->data))[i];
+                GGML_ASSERT(tensor->nb[0] == పరిమాణం(int32_t));
+                తిరిగి ((int32_t *)(tensor->దత్తాంశం))[i];
             }
-        case GGML_TYPE_F16:
+        స్థితి GGML_TYPE_F16:
             {
-                GGML_ASSERT(tensor->nb[0] == sizeof(ggml_fp16_t));
-                return GGML_CPU_FP16_TO_FP32(((ggml_fp16_t *)(tensor->data))[i]);
+                GGML_ASSERT(tensor->nb[0] == పరిమాణం(ggml_fp16_t));
+                తిరిగి GGML_CPU_FP16_గమ్యం_FP32(((ggml_fp16_t *)(tensor->దత్తాంశం))[i]);
             }
-        case GGML_TYPE_BF16:
+        స్థితి GGML_TYPE_BF16:
             {
-                GGML_ASSERT(tensor->nb[0] == sizeof(ggml_bf16_t));
-                return GGML_BF16_TO_FP32(((ggml_bf16_t *)(tensor->data))[i]);
+                GGML_ASSERT(tensor->nb[0] == పరిమాణం(ggml_bf16_t));
+                తిరిగి GGML_BF16_గమ్యం_FP32(((ggml_bf16_t *)(tensor->దత్తాంశం))[i]);
             }
-        case GGML_TYPE_F32:
+        స్థితి GGML_TYPE_F32:
             {
-                GGML_ASSERT(tensor->nb[0] == sizeof(float));
-                return ((float *)(tensor->data))[i];
+                GGML_ASSERT(tensor->nb[0] == పరిమాణం(దశాంశం));
+                తిరిగి ((దశాంశం *)(tensor->దత్తాంశం))[i];
             }
-        default:
+        అప్రమేయ:
             {
                 GGML_ABORT("fatal error");
             }
     }
 }
 
-void ggml_set_i32_1d(const struct ggml_tensor * tensor, int i, int32_t value) {
-    if (!ggml_is_contiguous(tensor)) {
+శూన్య ggml_సమితి_i32_1d(స్థిరరాశి నిర్మాణం ggml_tensor * tensor, పూర్ణాంకం i, int32_t విలువ) {
+    ఒకవేళ (!ggml_is_contiguous(tensor)) {
         int64_t id[4] = { 0, 0, 0, 0 };
-        ggml_unravel_index(tensor, i, &id[0], &id[1], &id[2], &id[3]);
-        ggml_set_i32_nd(tensor, id[0], id[1], id[2], id[3], value);
-        return;
+        ggml_unravel_సూచీ(tensor, i, &id[0], &id[1], &id[2], &id[3]);
+        ggml_సమితి_i32_nd(tensor, id[0], id[1], id[2], id[3], విలువ);
+        తిరిగి;
     }
-    switch (tensor->type) {
-        case GGML_TYPE_I8:
+    ఎంపిక (tensor->type) {
+        స్థితి GGML_TYPE_I8:
             {
-                GGML_ASSERT(tensor->nb[0] == sizeof(int8_t));
-                ((int8_t *)(tensor->data))[i] = value;
-            } break;
-        case GGML_TYPE_I16:
+                GGML_ASSERT(tensor->nb[0] == పరిమాణం(int8_t));
+                ((int8_t *)(tensor->దత్తాంశం))[i] = విలువ;
+            } ఆపు;
+        స్థితి GGML_TYPE_I16:
             {
-                GGML_ASSERT(tensor->nb[0] == sizeof(int16_t));
-                ((int16_t *)(tensor->data))[i] = value;
-            } break;
-        case GGML_TYPE_I32:
+                GGML_ASSERT(tensor->nb[0] == పరిమాణం(int16_t));
+                ((int16_t *)(tensor->దత్తాంశం))[i] = విలువ;
+            } ఆపు;
+        స్థితి GGML_TYPE_I32:
             {
-                GGML_ASSERT(tensor->nb[0] == sizeof(int32_t));
-                ((int32_t *)(tensor->data))[i] = value;
-            } break;
-        case GGML_TYPE_F16:
+                GGML_ASSERT(tensor->nb[0] == పరిమాణం(int32_t));
+                ((int32_t *)(tensor->దత్తాంశం))[i] = విలువ;
+            } ఆపు;
+        స్థితి GGML_TYPE_F16:
             {
-                GGML_ASSERT(tensor->nb[0] == sizeof(ggml_fp16_t));
-                ((ggml_fp16_t *)(tensor->data))[i] = GGML_CPU_FP32_TO_FP16(value);
-            } break;
-        case GGML_TYPE_BF16:
+                GGML_ASSERT(tensor->nb[0] == పరిమాణం(ggml_fp16_t));
+                ((ggml_fp16_t *)(tensor->దత్తాంశం))[i] = GGML_CPU_FP32_గమ్యం_FP16(విలువ);
+            } ఆపు;
+        స్థితి GGML_TYPE_BF16:
             {
-                GGML_ASSERT(tensor->nb[0] == sizeof(ggml_bf16_t));
-                ((ggml_bf16_t *)(tensor->data))[i] = GGML_FP32_TO_BF16(value);
-            } break;
-        case GGML_TYPE_F32:
+                GGML_ASSERT(tensor->nb[0] == పరిమాణం(ggml_bf16_t));
+                ((ggml_bf16_t *)(tensor->దత్తాంశం))[i] = GGML_FP32_గమ్యం_BF16(విలువ);
+            } ఆపు;
+        స్థితి GGML_TYPE_F32:
             {
-                GGML_ASSERT(tensor->nb[0] == sizeof(float));
-                ((float *)(tensor->data))[i] = value;
-            } break;
-        default:
+                GGML_ASSERT(tensor->nb[0] == పరిమాణం(దశాంశం));
+                ((దశాంశం *)(tensor->దత్తాంశం))[i] = విలువ;
+            } ఆపు;
+        అప్రమేయ:
             {
                 GGML_ABORT("fatal error");
             }
     }
 }
 
-int32_t ggml_get_i32_nd(const struct ggml_tensor * tensor, int i0, int i1, int i2, int i3) {
-    void * data   = (char *) tensor->data + i0*tensor->nb[0] + i1*tensor->nb[1] + i2*tensor->nb[2] + i3*tensor->nb[3];
-    switch (tensor->type) {
-        case GGML_TYPE_I8:
-            return ((int8_t *) data)[0];
-        case GGML_TYPE_I16:
-            return ((int16_t *) data)[0];
-        case GGML_TYPE_I32:
-            return ((int32_t *) data)[0];
-        case GGML_TYPE_F16:
-            return GGML_CPU_FP16_TO_FP32(((ggml_fp16_t *) data)[0]);
-        case GGML_TYPE_BF16:
-            return GGML_BF16_TO_FP32(((ggml_bf16_t *) data)[0]);
-        case GGML_TYPE_F32:
-            return ((float *) data)[0];
-        default:
+int32_t ggml_get_i32_nd(స్థిరరాశి నిర్మాణం ggml_tensor * tensor, పూర్ణాంకం i0, పూర్ణాంకం i1, పూర్ణాంకం i2, పూర్ణాంకం i3) {
+    శూన్య * దత్తాంశం   = (అక్షరం *) tensor->దత్తాంశం + i0*tensor->nb[0] + i1*tensor->nb[1] + i2*tensor->nb[2] + i3*tensor->nb[3];
+    ఎంపిక (tensor->type) {
+        స్థితి GGML_TYPE_I8:
+            తిరిగి ((int8_t *) దత్తాంశం)[0];
+        స్థితి GGML_TYPE_I16:
+            తిరిగి ((int16_t *) దత్తాంశం)[0];
+        స్థితి GGML_TYPE_I32:
+            తిరిగి ((int32_t *) దత్తాంశం)[0];
+        స్థితి GGML_TYPE_F16:
+            తిరిగి GGML_CPU_FP16_గమ్యం_FP32(((ggml_fp16_t *) దత్తాంశం)[0]);
+        స్థితి GGML_TYPE_BF16:
+            తిరిగి GGML_BF16_గమ్యం_FP32(((ggml_bf16_t *) దత్తాంశం)[0]);
+        స్థితి GGML_TYPE_F32:
+            తిరిగి ((దశాంశం *) దత్తాంశం)[0];
+        అప్రమేయ:
             GGML_ABORT("fatal error");
     }
 }
 
-void ggml_set_i32_nd(const struct ggml_tensor * tensor, int i0, int i1, int i2, int i3, int32_t value) {
-    void * data   = (char *) tensor->data + i0*tensor->nb[0] + i1*tensor->nb[1] + i2*tensor->nb[2] + i3*tensor->nb[3];
-    switch (tensor->type) {
-        case GGML_TYPE_I8:
+శూన్య ggml_సమితి_i32_nd(స్థిరరాశి నిర్మాణం ggml_tensor * tensor, పూర్ణాంకం i0, పూర్ణాంకం i1, పూర్ణాంకం i2, పూర్ణాంకం i3, int32_t విలువ) {
+    శూన్య * దత్తాంశం   = (అక్షరం *) tensor->దత్తాంశం + i0*tensor->nb[0] + i1*tensor->nb[1] + i2*tensor->nb[2] + i3*tensor->nb[3];
+    ఎంపిక (tensor->type) {
+        స్థితి GGML_TYPE_I8:
             {
-                ((int8_t *)(data))[0] = value;
-            } break;
-        case GGML_TYPE_I16:
+                ((int8_t *)(దత్తాంశం))[0] = విలువ;
+            } ఆపు;
+        స్థితి GGML_TYPE_I16:
             {
-                ((int16_t *)(data))[0] = value;
-            } break;
-        case GGML_TYPE_I32:
+                ((int16_t *)(దత్తాంశం))[0] = విలువ;
+            } ఆపు;
+        స్థితి GGML_TYPE_I32:
             {
-                ((int32_t *)(data))[0] = value;
-            } break;
-        case GGML_TYPE_F16:
+                ((int32_t *)(దత్తాంశం))[0] = విలువ;
+            } ఆపు;
+        స్థితి GGML_TYPE_F16:
             {
-                ((ggml_fp16_t *)(data))[0] = GGML_CPU_FP32_TO_FP16(value);
-            } break;
-        case GGML_TYPE_BF16:
+                ((ggml_fp16_t *)(దత్తాంశం))[0] = GGML_CPU_FP32_గమ్యం_FP16(విలువ);
+            } ఆపు;
+        స్థితి GGML_TYPE_BF16:
             {
-                ((ggml_bf16_t *)(data))[0] = GGML_FP32_TO_BF16(value);
-            } break;
-        case GGML_TYPE_F32:
+                ((ggml_bf16_t *)(దత్తాంశం))[0] = GGML_FP32_గమ్యం_BF16(విలువ);
+            } ఆపు;
+        స్థితి GGML_TYPE_F32:
             {
-                ((float *)(data))[0] = value;
-            } break;
-        default:
+                ((దశాంశం *)(దత్తాంశం))[0] = విలువ;
+            } ఆపు;
+        అప్రమేయ:
             {
                 GGML_ABORT("fatal error");
             }
     }
 }
 
-float ggml_get_f32_1d(const struct ggml_tensor * tensor, int i) {
-    if (!ggml_is_contiguous(tensor)) {
+దశాంశం ggml_get_f32_1d(స్థిరరాశి నిర్మాణం ggml_tensor * tensor, పూర్ణాంకం i) {
+    ఒకవేళ (!ggml_is_contiguous(tensor)) {
         int64_t id[4] = { 0, 0, 0, 0 };
-        ggml_unravel_index(tensor, i, &id[0], &id[1], &id[2], &id[3]);
-        return ggml_get_f32_nd(tensor, id[0], id[1], id[2], id[3]);
+        ggml_unravel_సూచీ(tensor, i, &id[0], &id[1], &id[2], &id[3]);
+        తిరిగి ggml_get_f32_nd(tensor, id[0], id[1], id[2], id[3]);
     }
-    switch (tensor->type) {
-        case GGML_TYPE_I8:
+    ఎంపిక (tensor->type) {
+        స్థితి GGML_TYPE_I8:
             {
-                return ((int8_t *)(tensor->data))[i];
+                తిరిగి ((int8_t *)(tensor->దత్తాంశం))[i];
             }
-        case GGML_TYPE_I16:
+        స్థితి GGML_TYPE_I16:
             {
-                return ((int16_t *)(tensor->data))[i];
+                తిరిగి ((int16_t *)(tensor->దత్తాంశం))[i];
             }
-        case GGML_TYPE_I32:
+        స్థితి GGML_TYPE_I32:
             {
-                return ((int32_t *)(tensor->data))[i];
+                తిరిగి ((int32_t *)(tensor->దత్తాంశం))[i];
             }
-        case GGML_TYPE_F16:
+        స్థితి GGML_TYPE_F16:
             {
-                return GGML_CPU_FP16_TO_FP32(((ggml_fp16_t *)(tensor->data))[i]);
+                తిరిగి GGML_CPU_FP16_గమ్యం_FP32(((ggml_fp16_t *)(tensor->దత్తాంశం))[i]);
             }
-        case GGML_TYPE_BF16:
+        స్థితి GGML_TYPE_BF16:
             {
-                return GGML_BF16_TO_FP32(((ggml_bf16_t *)(tensor->data))[i]);
+                తిరిగి GGML_BF16_గమ్యం_FP32(((ggml_bf16_t *)(tensor->దత్తాంశం))[i]);
             }
-        case GGML_TYPE_F32:
+        స్థితి GGML_TYPE_F32:
             {
-                return ((float *)(tensor->data))[i];
+                తిరిగి ((దశాంశం *)(tensor->దత్తాంశం))[i];
             }
-        default:
+        అప్రమేయ:
             {
                 GGML_ABORT("fatal error");
             }
     }
 }
 
-void ggml_set_f32_1d(const struct ggml_tensor * tensor, int i, float value) {
-    if (!ggml_is_contiguous(tensor)) {
+శూన్య ggml_సమితి_f32_1d(స్థిరరాశి నిర్మాణం ggml_tensor * tensor, పూర్ణాంకం i, దశాంశం విలువ) {
+    ఒకవేళ (!ggml_is_contiguous(tensor)) {
         int64_t id[4] = { 0, 0, 0, 0 };
-        ggml_unravel_index(tensor, i, &id[0], &id[1], &id[2], &id[3]);
-        ggml_set_f32_nd(tensor, id[0], id[1], id[2], id[3], value);
-        return;
+        ggml_unravel_సూచీ(tensor, i, &id[0], &id[1], &id[2], &id[3]);
+        ggml_సమితి_f32_nd(tensor, id[0], id[1], id[2], id[3], విలువ);
+        తిరిగి;
     }
-    switch (tensor->type) {
-        case GGML_TYPE_I8:
+    ఎంపిక (tensor->type) {
+        స్థితి GGML_TYPE_I8:
             {
-                ((int8_t *)(tensor->data))[i] = value;
-            } break;
-        case GGML_TYPE_I16:
+                ((int8_t *)(tensor->దత్తాంశం))[i] = విలువ;
+            } ఆపు;
+        స్థితి GGML_TYPE_I16:
             {
-                ((int16_t *)(tensor->data))[i] = value;
-            } break;
-        case GGML_TYPE_I32:
+                ((int16_t *)(tensor->దత్తాంశం))[i] = విలువ;
+            } ఆపు;
+        స్థితి GGML_TYPE_I32:
             {
-                ((int32_t *)(tensor->data))[i] = value;
-            } break;
-        case GGML_TYPE_F16:
+                ((int32_t *)(tensor->దత్తాంశం))[i] = విలువ;
+            } ఆపు;
+        స్థితి GGML_TYPE_F16:
             {
-                ((ggml_fp16_t *)(tensor->data))[i] = GGML_CPU_FP32_TO_FP16(value);
-            } break;
-        case GGML_TYPE_BF16:
+                ((ggml_fp16_t *)(tensor->దత్తాంశం))[i] = GGML_CPU_FP32_గమ్యం_FP16(విలువ);
+            } ఆపు;
+        స్థితి GGML_TYPE_BF16:
             {
-                ((ggml_bf16_t *)(tensor->data))[i] = GGML_FP32_TO_BF16(value);
-            } break;
-        case GGML_TYPE_F32:
+                ((ggml_bf16_t *)(tensor->దత్తాంశం))[i] = GGML_FP32_గమ్యం_BF16(విలువ);
+            } ఆపు;
+        స్థితి GGML_TYPE_F32:
             {
-                ((float *)(tensor->data))[i] = value;
-            } break;
-        default:
+                ((దశాంశం *)(tensor->దత్తాంశం))[i] = విలువ;
+            } ఆపు;
+        అప్రమేయ:
             {
                 GGML_ABORT("fatal error");
             }
     }
 }
 
-float ggml_get_f32_nd(const struct ggml_tensor * tensor, int i0, int i1, int i2, int i3) {
-    void * data   = (char *) tensor->data + i0*tensor->nb[0] + i1*tensor->nb[1] + i2*tensor->nb[2] + i3*tensor->nb[3];
-    switch (tensor->type) {
-        case GGML_TYPE_I8:
-            return ((int8_t *) data)[0];
-        case GGML_TYPE_I16:
-            return ((int16_t *) data)[0];
-        case GGML_TYPE_I32:
-            return ((int32_t *) data)[0];
-        case GGML_TYPE_F16:
-            return GGML_CPU_FP16_TO_FP32(((ggml_fp16_t *) data)[0]);
-        case GGML_TYPE_BF16:
-            return GGML_BF16_TO_FP32(((ggml_bf16_t *) data)[0]);
-        case GGML_TYPE_F32:
-            return ((float *) data)[0];
-        default:
+దశాంశం ggml_get_f32_nd(స్థిరరాశి నిర్మాణం ggml_tensor * tensor, పూర్ణాంకం i0, పూర్ణాంకం i1, పూర్ణాంకం i2, పూర్ణాంకం i3) {
+    శూన్య * దత్తాంశం   = (అక్షరం *) tensor->దత్తాంశం + i0*tensor->nb[0] + i1*tensor->nb[1] + i2*tensor->nb[2] + i3*tensor->nb[3];
+    ఎంపిక (tensor->type) {
+        స్థితి GGML_TYPE_I8:
+            తిరిగి ((int8_t *) దత్తాంశం)[0];
+        స్థితి GGML_TYPE_I16:
+            తిరిగి ((int16_t *) దత్తాంశం)[0];
+        స్థితి GGML_TYPE_I32:
+            తిరిగి ((int32_t *) దత్తాంశం)[0];
+        స్థితి GGML_TYPE_F16:
+            తిరిగి GGML_CPU_FP16_గమ్యం_FP32(((ggml_fp16_t *) దత్తాంశం)[0]);
+        స్థితి GGML_TYPE_BF16:
+            తిరిగి GGML_BF16_గమ్యం_FP32(((ggml_bf16_t *) దత్తాంశం)[0]);
+        స్థితి GGML_TYPE_F32:
+            తిరిగి ((దశాంశం *) దత్తాంశం)[0];
+        అప్రమేయ:
             GGML_ABORT("fatal error");
     }
 }
 
-void ggml_set_f32_nd(const struct ggml_tensor * tensor, int i0, int i1, int i2, int i3, float value) {
-    void * data   = (char *) tensor->data + i0*tensor->nb[0] + i1*tensor->nb[1] + i2*tensor->nb[2] + i3*tensor->nb[3];
-    switch (tensor->type) {
-        case GGML_TYPE_I8:
+శూన్య ggml_సమితి_f32_nd(స్థిరరాశి నిర్మాణం ggml_tensor * tensor, పూర్ణాంకం i0, పూర్ణాంకం i1, పూర్ణాంకం i2, పూర్ణాంకం i3, దశాంశం విలువ) {
+    శూన్య * దత్తాంశం   = (అక్షరం *) tensor->దత్తాంశం + i0*tensor->nb[0] + i1*tensor->nb[1] + i2*tensor->nb[2] + i3*tensor->nb[3];
+    ఎంపిక (tensor->type) {
+        స్థితి GGML_TYPE_I8:
             {
-                ((int8_t *)(data))[0] = value;
-            } break;
-        case GGML_TYPE_I16:
+                ((int8_t *)(దత్తాంశం))[0] = విలువ;
+            } ఆపు;
+        స్థితి GGML_TYPE_I16:
             {
-                ((int16_t *)(data))[0] = value;
-            } break;
-        case GGML_TYPE_I32:
+                ((int16_t *)(దత్తాంశం))[0] = విలువ;
+            } ఆపు;
+        స్థితి GGML_TYPE_I32:
             {
-                ((int32_t *)(data))[0] = value;
-            } break;
-        case GGML_TYPE_F16:
+                ((int32_t *)(దత్తాంశం))[0] = విలువ;
+            } ఆపు;
+        స్థితి GGML_TYPE_F16:
             {
-                ((ggml_fp16_t *)(data))[0] = GGML_CPU_FP32_TO_FP16(value);
-            } break;
-        case GGML_TYPE_BF16:
+                ((ggml_fp16_t *)(దత్తాంశం))[0] = GGML_CPU_FP32_గమ్యం_FP16(విలువ);
+            } ఆపు;
+        స్థితి GGML_TYPE_BF16:
             {
-                ((ggml_bf16_t *)(data))[0] = GGML_FP32_TO_BF16(value);
-            } break;
-        case GGML_TYPE_F32:
+                ((ggml_bf16_t *)(దత్తాంశం))[0] = GGML_FP32_గమ్యం_BF16(విలువ);
+            } ఆపు;
+        స్థితి GGML_TYPE_F32:
             {
-                ((float *)(data))[0] = value;
-            } break;
-        default:
+                ((దశాంశం *)(దత్తాంశం))[0] = విలువ;
+            } ఆపు;
+        అప్రమేయ:
             {
                 GGML_ABORT("fatal error");
             }
@@ -1162,122 +1162,122 @@ void ggml_set_f32_nd(const struct ggml_tensor * tensor, int i0, int i1, int i2, 
 
 // ggml_compute_forward_mul_mat
 
-static void ggml_compute_forward_mul_mat_one_chunk(
-    const struct ggml_compute_params * params,
-    struct ggml_tensor * dst,
-    const enum ggml_type type,
-    const int64_t num_rows_per_vec_dot,
-    const int64_t ir0_start,
-    const int64_t ir0_end,
-    const int64_t ir1_start,
-    const int64_t ir1_end) {
+స్థిర శూన్య ggml_compute_forward_mul_mat_one_chunk(
+    స్థిరరాశి నిర్మాణం ggml_compute_params * params,
+    నిర్మాణం ggml_tensor * dst,
+    స్థిరరాశి గణన ggml_type type,
+    స్థిరరాశి int64_t అంకె_అడ్డువరుసలు_చొప్పున_vec_dot,
+    స్థిరరాశి int64_t ir0_ప్రారంభం,
+    స్థిరరాశి int64_t ir0_చివర,
+    స్థిరరాశి int64_t ir1_ప్రారంభం,
+    స్థిరరాశి int64_t ir1_చివర) {
 
-    const struct ggml_tensor * src0 = dst->src[0];
-    const struct ggml_tensor * src1 = dst->src[1];
+    స్థిరరాశి నిర్మాణం ggml_tensor * src0 = dst->src[0];
+    స్థిరరాశి నిర్మాణం ggml_tensor * src1 = dst->src[1];
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ద్విమాన_OP_LOCALS
 
-    const bool src1_cont = ggml_is_contiguous(src1);
+    స్థిరరాశి bool src1_cont = ggml_is_contiguous(src1);
 
-    ggml_vec_dot_t const vec_dot      = type_traits_cpu[type].vec_dot;
-    enum ggml_type const vec_dot_type = type_traits_cpu[type].vec_dot_type;
+    ggml_vec_dot_t స్థిరరాశి vec_dot      = type_traits_cpu[type].vec_dot;
+    గణన ggml_type స్థిరరాశి vec_dot_type = type_traits_cpu[type].vec_dot_type;
 
     // broadcast factors
-    const int64_t r2 = ne12 / ne02;
-    const int64_t r3 = ne13 / ne03;
+    స్థిరరాశి int64_t r2 = ne12 / ne02;
+    స్థిరరాశి int64_t r3 = ne13 / ne03;
 
     //printf("ir0_start = %6lld, ir0_end = %6lld, ir1_start = %6lld, ir1_end = %6lld\n", ir0_start, ir0_end, ir1_start, ir1_end);
 
     // threads with no work simply yield (not sure if it helps)
-    if (ir0_start >= ir0_end || ir1_start >= ir1_end) {
-        return;
+    ఒకవేళ (ir0_ప్రారంభం >= ir0_చివర || ir1_ప్రారంభం >= ir1_చివర) {
+        తిరిగి;
     }
 
-    const void * wdata = (src1->type == vec_dot_type) ? src1->data : params->wdata;
-    const size_t row_size = ggml_row_size(vec_dot_type, ne10);
+    స్థిరరాశి శూన్య * wdata = (src1->type == vec_dot_type) ? src1->దత్తాంశం : params->wdata;
+    స్థిరరాశి size_t అడ్డువరుస_కొలత = ggml_అడ్డువరుస_కొలత(vec_dot_type, ne10);
 
-    assert(ne12 % ne02 == 0);
-    assert(ne13 % ne03 == 0);
+    ప్రతిజ్ఞా(ne12 % ne02 == 0);
+    ప్రతిజ్ఞా(ne13 % ne03 == 0);
 
     // block-tiling attempt
-    const int64_t blck_0 = 16;
-    const int64_t blck_1 = 16;
+    స్థిరరాశి int64_t blck_0 = 16;
+    స్థిరరాశి int64_t blck_1 = 16;
 
-    const size_t src1_col_stride = src1_cont || src1->type != vec_dot_type ? row_size : nb11;
+    స్థిరరాశి size_t src1_నిలువు_stride = src1_cont || src1->type != vec_dot_type ? అడ్డువరుస_కొలత : nb11;
 
     // attempt to reduce false-sharing (does not seem to make a difference)
     // 16 * 2, accounting for mmla kernels
-    float tmp[32];
+    దశాంశం tmp[32];
 
-    for (int64_t iir1 = ir1_start; iir1 < ir1_end; iir1 += blck_1) {
-        for (int64_t iir0 = ir0_start; iir0 < ir0_end; iir0 += blck_0) {
-            for (int64_t ir1 = iir1; ir1 < iir1 + blck_1 && ir1 < ir1_end; ir1 += num_rows_per_vec_dot) {
-                const int64_t i13 = (ir1 / (ne12 * ne1));
-                const int64_t i12 = (ir1 - i13 * ne12 * ne1) / ne1;
-                const int64_t i11 = (ir1 - i13 * ne12 * ne1 - i12 * ne1);
+    కొరకు (int64_t iir1 = ir1_ప్రారంభం; iir1 < ir1_చివర; iir1 += blck_1) {
+        కొరకు (int64_t iir0 = ir0_ప్రారంభం; iir0 < ir0_చివర; iir0 += blck_0) {
+            కొరకు (int64_t ir1 = iir1; ir1 < iir1 + blck_1 && ir1 < ir1_చివర; ir1 += అంకె_అడ్డువరుసలు_చొప్పున_vec_dot) {
+                స్థిరరాశి int64_t i13 = (ir1 / (ne12 * ne1));
+                స్థిరరాశి int64_t i12 = (ir1 - i13 * ne12 * ne1) / ne1;
+                స్థిరరాశి int64_t i11 = (ir1 - i13 * ne12 * ne1 - i12 * ne1);
 
                 // broadcast src0 into src1
-                const int64_t i03 = i13 / r3;
-                const int64_t i02 = i12 / r2;
+                స్థిరరాశి int64_t i03 = i13 / r3;
+                స్థిరరాశి int64_t i02 = i12 / r2;
 
-                const int64_t i1 = i11;
-                const int64_t i2 = i12;
-                const int64_t i3 = i13;
+                స్థిరరాశి int64_t i1 = i11;
+                స్థిరరాశి int64_t i2 = i12;
+                స్థిరరాశి int64_t i3 = i13;
 
-                const char * src0_row = (const char*)src0->data + (0 + i02 * nb02 + i03 * nb03);
+                స్థిరరాశి అక్షరం * src0_అడ్డువరుస = (స్థిరరాశి అక్షరం*)src0->దత్తాంశం + (0 + i02 * nb02 + i03 * nb03);
 
                 // desc: when src1 is not a contiguous memory block we have to calculate the offset using the strides
                 //       if it is, then we have either copied the data to params->wdata and made it contiguous or we are using
                 //       the original src1 data pointer, so we should index using the indices directly
                 // TODO: this is a bit of a hack, we should probably have a better way to handle this
-                const char * src1_col = (const char*)wdata +
+                స్థిరరాశి అక్షరం * src1_నిలువు = (స్థిరరాశి అక్షరం*)wdata +
                     (src1_cont || src1->type != vec_dot_type
-                        ? (i11 + i12 * ne11 + i13 * ne12 * ne11) * row_size
+                        ? (i11 + i12 * ne11 + i13 * ne12 * ne11) * అడ్డువరుస_కొలత
                         : (i11 * nb11 + i12 * nb12 + i13 * nb13));
-                float * dst_col = (float*)((char*)dst->data + (i1 * nb1 + i2 * nb2 + i3 * nb3));
+                దశాంశం * dst_నిలువు = (దశాంశం*)((అక్షరం*)dst->దత్తాంశం + (i1 * nb1 + i2 * nb2 + i3 * nb3));
 
                 //for (int64_t ir0 = iir0; ir0 < iir0 + blck_0 && ir0 < ir0_end; ++ir0) {
                 //    vec_dot(ne00, &dst_col[ir0], src0_row + ir0*nb01, src1_col);
                 //}
 
-                for (int64_t ir0 = iir0; ir0 < iir0 + blck_0 && ir0 < ir0_end; ir0 += num_rows_per_vec_dot) {
-                    vec_dot(ne00, &tmp[ir0 - iir0], (num_rows_per_vec_dot > 1 ? 16 : 0), src0_row + ir0 * nb01, (num_rows_per_vec_dot > 1 ? nb01 : 0), src1_col, (num_rows_per_vec_dot > 1 ? src1_col_stride : 0), num_rows_per_vec_dot);
+                కొరకు (int64_t ir0 = iir0; ir0 < iir0 + blck_0 && ir0 < ir0_చివర; ir0 += అంకె_అడ్డువరుసలు_చొప్పున_vec_dot) {
+                    vec_dot(ne00, &tmp[ir0 - iir0], (అంకె_అడ్డువరుసలు_చొప్పున_vec_dot > 1 ? 16 : 0), src0_అడ్డువరుస + ir0 * nb01, (అంకె_అడ్డువరుసలు_చొప్పున_vec_dot > 1 ? nb01 : 0), src1_నిలువు, (అంకె_అడ్డువరుసలు_చొప్పున_vec_dot > 1 ? src1_నిలువు_stride : 0), అంకె_అడ్డువరుసలు_చొప్పున_vec_dot);
                 }
 
-                for (int cn = 0; cn < num_rows_per_vec_dot; ++cn) {
-                    memcpy(&dst_col[iir0 + cn * nb1 / nb0], tmp + (cn * 16), (MIN(iir0 + blck_0, ir0_end) - iir0) * sizeof(float));
+                కొరకు (పూర్ణాంకం cn = 0; cn < అంకె_అడ్డువరుసలు_చొప్పున_vec_dot; ++cn) {
+                    జ్ఞాపకం_నకలు(&dst_నిలువు[iir0 + cn * nb1 / nb0], tmp + (cn * 16), (MIN(iir0 + blck_0, ir0_చివర) - iir0) * పరిమాణం(దశాంశం));
                 }
             }
         }
     }
 }
 
-void ggml_compute_forward_mul_mat(
-        const struct ggml_compute_params * params,
-              struct ggml_tensor * dst) {
+శూన్య ggml_compute_forward_mul_mat(
+        స్థిరరాశి నిర్మాణం ggml_compute_params * params,
+              నిర్మాణం ggml_tensor * dst) {
 
-    const struct ggml_tensor * src0 = dst->src[0];
-    const struct ggml_tensor * src1 = dst->src[1];
+    స్థిరరాశి నిర్మాణం ggml_tensor * src0 = dst->src[0];
+    స్థిరరాశి నిర్మాణం ggml_tensor * src1 = dst->src[1];
 
-    const int32_t hint = ggml_get_op_params_i32(dst, 1);
-    if (hint == GGML_HINT_SRC0_IS_HADAMARD && !params->use_ref) {
+    స్థిరరాశి int32_t hint = ggml_get_op_params_i32(dst, 1);
+    ఒకవేళ (hint == GGML_HINT_SRC0_IS_HADAMARD && !params->use_ref) {
         ggml_compute_forward_fwht(params, dst);
-        return;
+        తిరిగి;
     }
 
     // If tiled is supported, it will execute the full op here and we return
-    if (ggml_compute_forward_mul_mat_tiled(params, dst)) {
-        return;
+    ఒకవేళ (ggml_compute_forward_mul_mat_tiled(params, dst)) {
+        తిరిగి;
     }
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ద్విమాన_OP_LOCALS
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    స్థిరరాశి పూర్ణాంకం ith = params->ith;
+    స్థిరరాశి పూర్ణాంకం nth = params->nth;
 
-    enum ggml_type           const vec_dot_type         = type_traits_cpu[src0->type].vec_dot_type;
-    ggml_from_float_t        const from_float           = type_traits_cpu[vec_dot_type].from_float;
-    int64_t                  const vec_dot_num_rows     = type_traits_cpu[src0->type].nrows;
+    గణన ggml_type           స్థిరరాశి vec_dot_type         = type_traits_cpu[src0->type].vec_dot_type;
+    ggml_from_float_t        స్థిరరాశి from_float           = type_traits_cpu[vec_dot_type].from_float;
+    int64_t                  స్థిరరాశి vec_dot_అంకె_అడ్డువరుసలు     = type_traits_cpu[src0->type].nrows;
 
     GGML_ASSERT(ne0 == ne01);
     GGML_ASSERT(ne1 == ne11);
@@ -1285,11 +1285,11 @@ void ggml_compute_forward_mul_mat(
     GGML_ASSERT(ne3 == ne13);
 
     // we don't support permuted src0 or src1
-    GGML_ASSERT(nb00 == ggml_type_size(src0->type));
-    GGML_ASSERT(nb10 == ggml_type_size(src1->type));
+    GGML_ASSERT(nb00 == ggml_type_కొలత(src0->type));
+    GGML_ASSERT(nb10 == ggml_type_కొలత(src1->type));
 
     // dst cannot be transposed or permuted
-    GGML_ASSERT(nb0 == sizeof(float));
+    GGML_ASSERT(nb0 == పరిమాణం(దశాంశం));
     GGML_ASSERT(nb0 <= nb1);
     GGML_ASSERT(nb1 <= nb2);
     GGML_ASSERT(nb2 <= nb3);
@@ -1298,878 +1298,878 @@ void ggml_compute_forward_mul_mat(
     //   compute by src0 rows
 
     // TODO: extract to "extra_op"
-#if GGML_USE_LLAMAFILE
+#ఒకవేళ GGML_USE_LLAMAFILE
     // broadcast factors
-    const int64_t r2 = ne12 / ne02;
-    const int64_t r3 = ne13 / ne03;
+    స్థిరరాశి int64_t r2 = ne12 / ne02;
+    స్థిరరాశి int64_t r3 = ne13 / ne03;
 
-    const bool src1_cont = ggml_is_contiguous(src1);
+    స్థిరరాశి bool src1_cont = ggml_is_contiguous(src1);
 
-    if (!params->use_ref && src1_cont) {
-        for (int64_t i13 = 0; i13 < ne13; i13++)
-            for (int64_t i12 = 0; i12 < ne12; i12++)
-                if (!llamafile_sgemm(params,
-                                     ne01, ne11, ne00/ggml_blck_size(src0->type),
-                                     (const char *)src0->data + i12/r2*nb02 + i13/r3*nb03,
-                                     nb01/ggml_type_size(src0->type),
-                                     (const char *)src1->data + i12*nb12 + i13*nb13,
-                                     nb11/ggml_type_size(src1->type),
-                                     (char *)dst->data + i12*nb2 + i13*nb3,
-                                     nb1/ggml_type_size(dst->type),
+    ఒకవేళ (!params->use_ref && src1_cont) {
+        కొరకు (int64_t i13 = 0; i13 < ne13; i13++)
+            కొరకు (int64_t i12 = 0; i12 < ne12; i12++)
+                ఒకవేళ (!llamafile_sgemm(params,
+                                     ne01, ne11, ne00/ggml_blck_కొలత(src0->type),
+                                     (స్థిరరాశి అక్షరం *)src0->దత్తాంశం + i12/r2*nb02 + i13/r3*nb03,
+                                     nb01/ggml_type_కొలత(src0->type),
+                                     (స్థిరరాశి అక్షరం *)src1->దత్తాంశం + i12*nb12 + i13*nb13,
+                                     nb11/ggml_type_కొలత(src1->type),
+                                     (అక్షరం *)dst->దత్తాంశం + i12*nb2 + i13*nb3,
+                                     nb1/ggml_type_కొలత(dst->type),
                                      src0->type,
                                      src1->type,
                                      dst->type))
-                    goto UseGgmlGemm1;
-        return;
+                    వెళ్ళు UseGgmlGemm1;
+        తిరిగి;
     }
 UseGgmlGemm1:;
-#endif
+#అయితే_ముగింపు
 
-    if (src1->type != vec_dot_type) {
-        char * wdata = params->wdata;
+    ఒకవేళ (src1->type != vec_dot_type) {
+        అక్షరం * wdata = params->wdata;
 
-        const size_t nbw0 = ggml_type_size(vec_dot_type);
-        const size_t nbw1 = ggml_row_size(vec_dot_type, ne10);
-        const size_t nbw2 = nbw1*ne11;
-        const size_t nbw3 = nbw2*ne12;
+        స్థిరరాశి size_t nbw0 = ggml_type_కొలత(vec_dot_type);
+        స్థిరరాశి size_t nbw1 = ggml_అడ్డువరుస_కొలత(vec_dot_type, ne10);
+        స్థిరరాశి size_t nbw2 = nbw1*ne11;
+        స్థిరరాశి size_t nbw3 = nbw2*ne12;
 
-        assert(params->wsize >= ne13*nbw3);
+        ప్రతిజ్ఞా(params->wsize >= ne13*nbw3);
         // src1 is either packed from F32 into vec_dot_type, or widened from F16 or BF16 into the F32 work buffer
-        const bool widen = src1->type != GGML_TYPE_F32;
+        స్థిరరాశి bool widen = src1->type != GGML_TYPE_F32;
 
         GGML_ASSERT(!widen || vec_dot_type == GGML_TYPE_F32);
         GGML_ASSERT(!widen || src1->type == GGML_TYPE_F16 || src1->type == GGML_TYPE_BF16);
 
-    #if 0
-        for (int64_t i13 = 0; i13 < ne13; ++i13) {
-            for (int64_t i12 = 0; i12 < ne12; ++i12) {
-                for (int64_t i11 = ith; i11 < ne11; i11 += nth) {
-                    from_float((float *)((char *) src1->data + i13*nb13 + i12*nb12 + i11*nb11),
-                               (void *)               (wdata + i13*nbw3 + i12*nbw2 + i11*nbw1),
+    #ఒకవేళ 0
+        కొరకు (int64_t i13 = 0; i13 < ne13; ++i13) {
+            కొరకు (int64_t i12 = 0; i12 < ne12; ++i12) {
+                కొరకు (int64_t i11 = ith; i11 < ne11; i11 += nth) {
+                    from_float((దశాంశం *)((అక్షరం *) src1->దత్తాంశం + i13*nb13 + i12*nb12 + i11*nb11),
+                               (శూన్య *)               (wdata + i13*nbw3 + i12*nbw2 + i11*nbw1),
                                 ne10);
                 }
             }
         }
-    #else
-        const int64_t bs = ggml_blck_size(vec_dot_type);
+    #లేకపోతే
+        స్థిరరాశి int64_t bs = ggml_blck_కొలత(vec_dot_type);
 
-        for (int64_t i13 = 0; i13 < ne13; ++i13) {
-            for (int64_t i12 = 0; i12 < ne12; ++i12) {
-                for (int64_t i11 = 0; i11 < ne11; ++i11) {
-                    int64_t ne10_block_start = (ith * ne10/bs) / nth;
-                    int64_t ne10_block_end   = ((ith + 1) * ne10/bs) / nth;
-                    const void * src1_row  = (const char *) src1->data + i13*nb13 + i12*nb12 + i11*nb11 + ne10_block_start*bs*nb10;
-                    void       * wdata_row =                    wdata  + i13*nbw3 + i12*nbw2 + i11*nbw1 + ne10_block_start*nbw0;
+        కొరకు (int64_t i13 = 0; i13 < ne13; ++i13) {
+            కొరకు (int64_t i12 = 0; i12 < ne12; ++i12) {
+                కొరకు (int64_t i11 = 0; i11 < ne11; ++i11) {
+                    int64_t ne10_ఖండం_ప్రారంభం = (ith * ne10/bs) / nth;
+                    int64_t ne10_ఖండం_చివర   = ((ith + 1) * ne10/bs) / nth;
+                    స్థిరరాశి శూన్య * src1_అడ్డువరుస  = (స్థిరరాశి అక్షరం *) src1->దత్తాంశం + i13*nb13 + i12*nb12 + i11*nb11 + ne10_ఖండం_ప్రారంభం*bs*nb10;
+                    శూన్య       * wdata_అడ్డువరుస =                    wdata  + i13*nbw3 + i12*nbw2 + i11*nbw1 + ne10_ఖండం_ప్రారంభం*nbw0;
 
-                    const int64_t ne10_block_size = (ne10_block_end - ne10_block_start) * bs;
+                    స్థిరరాశి int64_t ne10_ఖండం_కొలత = (ne10_ఖండం_చివర - ne10_ఖండం_ప్రారంభం) * bs;
 
-                    if (src1->type == GGML_TYPE_F16) {
-                        ggml_cpu_fp16_to_fp32((const ggml_fp16_t *) src1_row, (float *) wdata_row, ne10_block_size);
-                    } else if (src1->type == GGML_TYPE_BF16) {
-                        ggml_cpu_bf16_to_fp32((const ggml_bf16_t *) src1_row, (float *) wdata_row, ne10_block_size);
-                    } else {
-                        from_float((const float *) src1_row, wdata_row, ne10_block_size);
+                    ఒకవేళ (src1->type == GGML_TYPE_F16) {
+                        ggml_cpu_fp16_గమ్యం_fp32((స్థిరరాశి ggml_fp16_t *) src1_అడ్డువరుస, (దశాంశం *) wdata_అడ్డువరుస, ne10_ఖండం_కొలత);
+                    } లేకపోతే ఒకవేళ (src1->type == GGML_TYPE_BF16) {
+                        ggml_cpu_bf16_గమ్యం_fp32((స్థిరరాశి ggml_bf16_t *) src1_అడ్డువరుస, (దశాంశం *) wdata_అడ్డువరుస, ne10_ఖండం_కొలత);
+                    } లేకపోతే {
+                        from_float((స్థిరరాశి దశాంశం *) src1_అడ్డువరుస, wdata_అడ్డువరుస, ne10_ఖండం_కొలత);
                     }
                 }
             }
         }
-    #endif
+    #అయితే_ముగింపు
     }
 
-    if (ith == 0) {
+    ఒకవేళ (ith == 0) {
         // Every thread starts at ith, so the first unprocessed chunk is nth.  This save a bit of coordination right at the start.
         atomic_store_explicit(&params->threadpool->current_chunk, nth, memory_order_relaxed);
     }
 
     ggml_barrier(params->threadpool);
 
-#if GGML_USE_LLAMAFILE
-    if (!params->use_ref && src1->type != vec_dot_type) {
-        const void* wdata = (src1->type == vec_dot_type) ? src1->data : params->wdata;
-        const size_t row_size = ggml_row_size(vec_dot_type, ne10);
+#ఒకవేళ GGML_USE_LLAMAFILE
+    ఒకవేళ (!params->use_ref && src1->type != vec_dot_type) {
+        స్థిరరాశి శూన్య* wdata = (src1->type == vec_dot_type) ? src1->దత్తాంశం : params->wdata;
+        స్థిరరాశి size_t అడ్డువరుస_కొలత = ggml_అడ్డువరుస_కొలత(vec_dot_type, ne10);
 
-        for (int64_t i13 = 0; i13 < ne13; i13++)
-            for (int64_t i12 = 0; i12 < ne12; i12++)
-                if (!llamafile_sgemm(params,
-                                     ne01, ne11, ne00/ggml_blck_size(src0->type),
-                                     (const char *)src0->data + i12/r2*nb02 + i13/r3*nb03,
-                                     nb01/ggml_type_size(src0->type),
-                                     (const char *)wdata + (i12*ne11 + i13*ne12*ne11)*row_size,
-                                     row_size/ggml_type_size(vec_dot_type),
-                                     (char *)dst->data + i12*nb2 + i13*nb3,
-                                     nb1/ggml_type_size(dst->type),
+        కొరకు (int64_t i13 = 0; i13 < ne13; i13++)
+            కొరకు (int64_t i12 = 0; i12 < ne12; i12++)
+                ఒకవేళ (!llamafile_sgemm(params,
+                                     ne01, ne11, ne00/ggml_blck_కొలత(src0->type),
+                                     (స్థిరరాశి అక్షరం *)src0->దత్తాంశం + i12/r2*nb02 + i13/r3*nb03,
+                                     nb01/ggml_type_కొలత(src0->type),
+                                     (స్థిరరాశి అక్షరం *)wdata + (i12*ne11 + i13*ne12*ne11)*అడ్డువరుస_కొలత,
+                                     అడ్డువరుస_కొలత/ggml_type_కొలత(vec_dot_type),
+                                     (అక్షరం *)dst->దత్తాంశం + i12*nb2 + i13*nb3,
+                                     nb1/ggml_type_కొలత(dst->type),
                                      src0->type,
                                      vec_dot_type,
                                      dst->type))
-                    goto UseGgmlGemm2;
-        return;
+                    వెళ్ళు UseGgmlGemm2;
+        తిరిగి;
     }
 UseGgmlGemm2:;
-#endif
+#అయితే_ముగింపు
 
     // This is the size of the first dimension of the result, so we can iterate that way. (see the ASSERT above, these are the same numbers)
-    const int64_t nr0 = ne0;
+    స్థిరరాశి int64_t nr0 = ne0;
 
     // This is the size of the rest of the dimensions of the result
-    const int64_t nr1 = ne1 * ne2 * ne3;
+    స్థిరరాశి int64_t nr1 = ne1 * ne2 * ne3;
 
     // Now select a reasonable chunk size.
-    int chunk_size = 16;
+    పూర్ణాంకం chunk_కొలత = 16;
 
     // We need to step up the size if it's small
-    if (nr0 == 1 || nr1 == 1) {
-        chunk_size = 64;
+    ఒకవేళ (nr0 == 1 || nr1 == 1) {
+        chunk_కొలత = 64;
     }
 
     // distribute the work across the inner or outer loop based on which one is larger
     // The number of chunks in the 0/1 dim.
     // CEIL(nr0/chunk_size)
-    int64_t nchunk0 = (nr0 + chunk_size - 1) / chunk_size;
-    int64_t nchunk1 = (nr1 + chunk_size - 1) / chunk_size;
+    int64_t nchunk0 = (nr0 + chunk_కొలత - 1) / chunk_కొలత;
+    int64_t nchunk1 = (nr1 + chunk_కొలత - 1) / chunk_కొలత;
 
     // If the chunking is poor for the number of threads on this setup, scrap the whole plan.  Re-chunk it by thread.
     //   Also, chunking by thread was measured to have perform better on NUMA systems.  See https://github.com/ggml-org/llama.cpp/pull/6915
     //   In theory, chunking should be just as useful on NUMA and non NUMA systems, but testing disagreed with that.
-    if (nchunk0 * nchunk1 < nth * 4 || ggml_is_numa()) {
+    ఒకవేళ (nchunk0 * nchunk1 < nth * 4 || ggml_is_numa()) {
         // distribute the thread work across the inner or outer loop based on which one is larger
         nchunk0 = nr0 > nr1 ? nth : 1; // parallelize by src0 rows
         nchunk1 = nr0 > nr1 ? 1 : nth; // parallelize by src1 rows
     }
 
     // The number of elements in each chunk
-    const int64_t dr0 = (nr0 + nchunk0 - 1) / nchunk0;
-    const int64_t dr1 = (nr1 + nchunk1 - 1) / nchunk1;
+    స్థిరరాశి int64_t dr0 = (nr0 + nchunk0 - 1) / nchunk0;
+    స్థిరరాశి int64_t dr1 = (nr1 + nchunk1 - 1) / nchunk1;
 
     // The first chunk comes from our thread_id, the rest will get auto-assigned.
-    int current_chunk = ith;
+    పూర్ణాంకం current_chunk = ith;
 
-    while (current_chunk < nchunk0 * nchunk1) {
-        const int64_t ith0 = current_chunk % nchunk0;
-        const int64_t ith1 = current_chunk / nchunk0;
+    అయితే (current_chunk < nchunk0 * nchunk1) {
+        స్థిరరాశి int64_t ith0 = current_chunk % nchunk0;
+        స్థిరరాశి int64_t ith1 = current_chunk / nchunk0;
 
-        const int64_t ir0_start = dr0 * ith0;
-        const int64_t ir0_end = MIN(ir0_start + dr0, nr0);
+        స్థిరరాశి int64_t ir0_ప్రారంభం = dr0 * ith0;
+        స్థిరరాశి int64_t ir0_చివర = MIN(ir0_ప్రారంభం + dr0, nr0);
 
-        const int64_t ir1_start = dr1 * ith1;
-        const int64_t ir1_end = MIN(ir1_start + dr1, nr1);
+        స్థిరరాశి int64_t ir1_ప్రారంభం = dr1 * ith1;
+        స్థిరరాశి int64_t ir1_చివర = MIN(ir1_ప్రారంభం + dr1, nr1);
 
         // dot kernels can handle 1 row and col at a time, but mmla kernels can process 2 rows and cols
-        int64_t num_rows_per_vec_dot = vec_dot_num_rows;
+        int64_t అంకె_అడ్డువరుసలు_చొప్పున_vec_dot = vec_dot_అంకె_అడ్డువరుసలు;
 
         // these checks are needed to avoid crossing dim1 boundaries
         // can be optimized, but the logic would become more complicated, so keeping it like this for simplicity
-        if ((nr0 % 2 != 0) || (ne11 % 2 != 0) || ((ir0_end - ir0_start) % 2 != 0) || ((ir1_end - ir1_start) % 2 != 0)) {
-            num_rows_per_vec_dot = 1;
+        ఒకవేళ ((nr0 % 2 != 0) || (ne11 % 2 != 0) || ((ir0_చివర - ir0_ప్రారంభం) % 2 != 0) || ((ir1_చివర - ir1_ప్రారంభం) % 2 != 0)) {
+            అంకె_అడ్డువరుసలు_చొప్పున_vec_dot = 1;
         }
-        ggml_compute_forward_mul_mat_one_chunk(params, dst, src0->type, num_rows_per_vec_dot, ir0_start, ir0_end, ir1_start, ir1_end);
+        ggml_compute_forward_mul_mat_one_chunk(params, dst, src0->type, అంకె_అడ్డువరుసలు_చొప్పున_vec_dot, ir0_ప్రారంభం, ir0_చివర, ir1_ప్రారంభం, ir1_చివర);
 
-        if (nth >= nchunk0 * nchunk1) {
-            break;
+        ఒకవేళ (nth >= nchunk0 * nchunk1) {
+            ఆపు;
         }
 
-        current_chunk = atomic_fetch_add_explicit(&params->threadpool->current_chunk, 1, memory_order_relaxed);
+        current_chunk = atomic_fetch_కూడు_explicit(&params->threadpool->current_chunk, 1, memory_order_relaxed);
     }
 }
 
 // ggml_compute_forward_mul_mat_id
 
-#define MMID_MATRIX_ROW(row_id, i1) matrix_rows[(row_id)*ids->ne[0]*ids->ne[1] + (i1)]
+#నిర్వచించు MMID_మాతృక_అడ్డువరుస(అడ్డువరుస_id, i1) మాతృక_అడ్డువరుసలు[(అడ్డువరుస_id)*ids->ne[0]*ids->ne[1] + (i1)]
 
-struct mmid_row_mapping {
+నిర్మాణం mmid_అడ్డువరుస_mapping {
     int32_t i1;
     int32_t i2;
 };
 
-static void ggml_compute_forward_mul_mat_id_one_chunk(
-    struct ggml_tensor * dst,
-    const struct ggml_tensor * src0,
-    const struct ggml_tensor * src1,
-    const struct ggml_tensor * ids,
-    const int64_t cur_a,
-    const int64_t ir0_start,
-    const int64_t ir0_end,
-    const int64_t ir1_start,
-    const int64_t ir1_end,
-    const char * src0_cur,
-    const struct mmid_row_mapping * matrix_rows,
-    const size_t row_size,
-    const bool src1_cont,
-    const void * wdata) {
+స్థిర శూన్య ggml_compute_forward_mul_mat_id_one_chunk(
+    నిర్మాణం ggml_tensor * dst,
+    స్థిరరాశి నిర్మాణం ggml_tensor * src0,
+    స్థిరరాశి నిర్మాణం ggml_tensor * src1,
+    స్థిరరాశి నిర్మాణం ggml_tensor * ids,
+    స్థిరరాశి int64_t cur_a,
+    స్థిరరాశి int64_t ir0_ప్రారంభం,
+    స్థిరరాశి int64_t ir0_చివర,
+    స్థిరరాశి int64_t ir1_ప్రారంభం,
+    స్థిరరాశి int64_t ir1_చివర,
+    స్థిరరాశి అక్షరం * src0_cur,
+    స్థిరరాశి నిర్మాణం mmid_అడ్డువరుస_mapping * మాతృక_అడ్డువరుసలు,
+    స్థిరరాశి size_t అడ్డువరుస_కొలత,
+    స్థిరరాశి bool src1_cont,
+    స్థిరరాశి శూన్య * wdata) {
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ద్విమాన_OP_LOCALS
 
-    const enum ggml_type type = src0->type;
+    స్థిరరాశి గణన ggml_type type = src0->type;
 
-    ggml_vec_dot_t    const vec_dot      = type_traits_cpu[type].vec_dot;
-    enum ggml_type    const vec_dot_type = type_traits_cpu[type].vec_dot_type;
+    ggml_vec_dot_t    స్థిరరాశి vec_dot      = type_traits_cpu[type].vec_dot;
+    గణన ggml_type    స్థిరరాశి vec_dot_type = type_traits_cpu[type].vec_dot_type;
 
-    const int64_t blck_0 = 16;
-    const int64_t blck_1 = 16;
+    స్థిరరాశి int64_t blck_0 = 16;
+    స్థిరరాశి int64_t blck_1 = 16;
 
-    float tmp[16];
+    దశాంశం tmp[16];
 
-    for (int64_t iir1 = ir1_start; iir1 < ir1_end; iir1 += blck_1) {
-        for (int64_t iir0 = ir0_start; iir0 < ir0_end; iir0 += blck_0) {
-            for (int64_t ir1 = iir1; ir1 < iir1 + blck_1 && ir1 < ir1_end; ++ir1) {
-                const int64_t _i12 = ir1; // logical row index for this expert
+    కొరకు (int64_t iir1 = ir1_ప్రారంభం; iir1 < ir1_చివర; iir1 += blck_1) {
+        కొరకు (int64_t iir0 = ir0_ప్రారంభం; iir0 < ir0_చివర; iir0 += blck_0) {
+            కొరకు (int64_t ir1 = iir1; ir1 < iir1 + blck_1 && ir1 < ir1_చివర; ++ir1) {
+                స్థిరరాశి int64_t _i12 = ir1; // logical row index for this expert
 
-                struct mmid_row_mapping row_mapping = MMID_MATRIX_ROW(cur_a, _i12);
-                const int id       = row_mapping.i1; // selected expert index
+                నిర్మాణం mmid_అడ్డువరుస_mapping అడ్డువరుస_mapping = MMID_మాతృక_అడ్డువరుస(cur_a, _i12);
+                స్థిరరాశి పూర్ణాంకం id       = అడ్డువరుస_mapping.i1; // selected expert index
 
-                const int64_t  i11 = id % ne11;
-                const int64_t  i12 = row_mapping.i2; // row index in src1
+                స్థిరరాశి int64_t  i11 = id % ne11;
+                స్థిరరాశి int64_t  i12 = అడ్డువరుస_mapping.i2; // row index in src1
 
-                const int64_t  i1 = id;  // selected expert index
-                const int64_t  i2 = i12; // row
+                స్థిరరాశి int64_t  i1 = id;  // selected expert index
+                స్థిరరాశి int64_t  i2 = i12; //అడ్డువరుస
 
                 // desc: when src1 is not a contiguous memory block we have to calculate the offset using the strides
                 //       if it is, then we have either copied the data to params->wdata and made it contiguous or we are using
                 //       the original src1 data pointer, so we should index using the indices directly
                 // TODO: this is a bit of a hack, we should probably have a better way to handle this
-                const char * src1_col = (const char *) wdata +
+                స్థిరరాశి అక్షరం * src1_నిలువు = (స్థిరరాశి అక్షరం *) wdata +
                     (src1_cont || src1->type != vec_dot_type
-                    ? (i11      + i12*ne11)*row_size
+                    ? (i11      + i12*ne11)*అడ్డువరుస_కొలత
                     : (i11*nb11 + i12*nb12));
 
-                float * dst_col = (float *) ((char *) dst->data + (i1*nb1 + i2*nb2));
+                దశాంశం * dst_నిలువు = (దశాంశం *) ((అక్షరం *) dst->దత్తాంశం + (i1*nb1 + i2*nb2));
 
-                for (int64_t ir0 = iir0; ir0 < iir0 + blck_0 && ir0 < ir0_end; ++ir0) {
-                    vec_dot(ne00, &tmp[ir0 - iir0], 0, src0_cur + ir0*nb01, 0, src1_col, 0, 1);
+                కొరకు (int64_t ir0 = iir0; ir0 < iir0 + blck_0 && ir0 < ir0_చివర; ++ir0) {
+                    vec_dot(ne00, &tmp[ir0 - iir0], 0, src0_cur + ir0*nb01, 0, src1_నిలువు, 0, 1);
                 }
 
-                memcpy(&dst_col[iir0], tmp, (MIN(iir0 + blck_0, ir0_end) - iir0)*sizeof(float));
+                జ్ఞాపకం_నకలు(&dst_నిలువు[iir0], tmp, (MIN(iir0 + blck_0, ir0_చివర) - iir0)*పరిమాణం(దశాంశం));
             }
         }
     }
 }
 
-static void * incr_ptr_aligned(void ** p, size_t size, size_t align) {
+స్థిర శూన్య * incr_ptr_aligned(శూన్య ** p, size_t కొలత, size_t align) {
 
-    void * ptr = *p;
-    ptr = (void *) GGML_PAD((uintptr_t) ptr, align);
-    *p = (void *) ((char *) ptr + size);
-    return ptr;
+    శూన్య * ptr = *p;
+    ptr = (శూన్య *) GGML_PAD((uintptr_t) ptr, align);
+    *p = (శూన్య *) ((అక్షరం *) ptr + కొలత);
+    తిరిగి ptr;
 }
 
-static void ggml_compute_forward_mul_mat_id(
-        const struct ggml_compute_params * params,
-              struct ggml_tensor * dst) {
+స్థిర శూన్య ggml_compute_forward_mul_mat_id(
+        స్థిరరాశి నిర్మాణం ggml_compute_params * params,
+              నిర్మాణం ggml_tensor * dst) {
 
-    const struct ggml_tensor * src0 = dst->src[0];
-    const struct ggml_tensor * src1 = dst->src[1];
-    const struct ggml_tensor * ids = dst->src[2];
+    స్థిరరాశి నిర్మాణం ggml_tensor * src0 = dst->src[0];
+    స్థిరరాశి నిర్మాణం ggml_tensor * src1 = dst->src[1];
+    స్థిరరాశి నిర్మాణం ggml_tensor * ids = dst->src[2];
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ద్విమాన_OP_LOCALS
 
-    const int ith = params->ith;
-    const int nth = params->nth;
+    స్థిరరాశి పూర్ణాంకం ith = params->ith;
+    స్థిరరాశి పూర్ణాంకం nth = params->nth;
 
-    const enum ggml_type type = src0->type;
+    స్థిరరాశి గణన ggml_type type = src0->type;
 
-    const bool src1_cont = ggml_is_contiguous(src1);
+    స్థిరరాశి bool src1_cont = ggml_is_contiguous(src1);
 
-    enum ggml_type    const vec_dot_type    = type_traits_cpu[type].vec_dot_type;
-    ggml_from_float_t const from_float      = type_traits_cpu[vec_dot_type].from_float;
+    గణన ggml_type    స్థిరరాశి vec_dot_type    = type_traits_cpu[type].vec_dot_type;
+    ggml_from_float_t స్థిరరాశి from_float      = type_traits_cpu[vec_dot_type].from_float;
 
     // we don't support permuted src0 or src1
-    GGML_ASSERT(nb00 == ggml_type_size(type));
-    GGML_ASSERT(nb10 == ggml_type_size(src1->type));
+    GGML_ASSERT(nb00 == ggml_type_కొలత(type));
+    GGML_ASSERT(nb10 == ggml_type_కొలత(src1->type));
 
     // dst cannot be transposed or permuted
-    GGML_ASSERT(nb0 == sizeof(float));
+    GGML_ASSERT(nb0 == పరిమాణం(దశాంశం));
     GGML_ASSERT(nb0 <= nb1);
     GGML_ASSERT(nb1 <= nb2);
     GGML_ASSERT(nb2 <= nb3);
 
     // row groups
-    const int n_ids = ids->ne[0]; // n_expert_used
-    const int n_as  = ne02;       // n_expert
+    స్థిరరాశి పూర్ణాంకం n_ids = ids->ne[0]; // n_expert_used
+    స్థిరరాశి పూర్ణాంకం n_as  = ne02;       // n_expert
 
-    void * wdata_cur = params->wdata;
+    శూన్య * wdata_cur = params->wdata;
 
-    if (src1->type != vec_dot_type) {
-        incr_ptr_aligned(&wdata_cur, ggml_row_size(vec_dot_type, ggml_nelements(src1)), sizeof(int64_t));
+    ఒకవేళ (src1->type != vec_dot_type) {
+        incr_ptr_aligned(&wdata_cur, ggml_అడ్డువరుస_కొలత(vec_dot_type, ggml_nelements(src1)), పరిమాణం(int64_t));
     }
 
-    int64_t * matrix_row_counts = // [n_as]
-        incr_ptr_aligned(&wdata_cur, n_as*sizeof(int64_t), sizeof(int64_t));
+    int64_t * మాతృక_అడ్డువరుస_counts = // [n_as]
+        incr_ptr_aligned(&wdata_cur, n_as*పరిమాణం(int64_t), పరిమాణం(int64_t));
 
-    struct mmid_row_mapping * matrix_rows = // [n_as][ids->ne[0]*ids->ne[1]]
-        incr_ptr_aligned(&wdata_cur, n_as*ids->ne[0]*ids->ne[1]*sizeof(struct mmid_row_mapping), sizeof(int64_t));
+    నిర్మాణం mmid_అడ్డువరుస_mapping * మాతృక_అడ్డువరుసలు = // [n_as][ids->ne[0]*ids->ne[1]]
+        incr_ptr_aligned(&wdata_cur, n_as*ids->ne[0]*ids->ne[1]*పరిమాణం(నిర్మాణం mmid_అడ్డువరుస_mapping), పరిమాణం(int64_t));
 
-    char (*atomic_current_chunk)[CACHE_LINE_SIZE] = // [n_as]
-        incr_ptr_aligned(&wdata_cur, CACHE_LINE_SIZE * n_as, CACHE_LINE_SIZE);
+    అక్షరం (*atomic_current_chunk)[CACHE_పంక్తి_కొలత] = // [n_as]
+        incr_ptr_aligned(&wdata_cur, CACHE_పంక్తి_కొలత * n_as, CACHE_పంక్తి_కొలత);
 
     // Tiled matmul (see tiled.h); per-thread work buffers, 0 bytes when disabled. The
     // reservation is unconditional, the per expert eligibility is decided at dispatch time
-    char * tiled_scratch = incr_ptr_aligned(&wdata_cur, ggml_tiled_wdata_size(nth, dst), 64);
+    అక్షరం * tiled_scratch = incr_ptr_aligned(&wdata_cur, ggml_tiled_wdata_కొలత(nth, dst), 64);
 
-    GGML_ASSERT(params->wsize >= (size_t)((char *) wdata_cur - (char *) params->wdata));
+    GGML_ASSERT(params->wsize >= (size_t)((అక్షరం *) wdata_cur - (అక్షరం *) params->wdata));
 
-    if (src1->type != vec_dot_type) {
-        char * wdata = params->wdata;
+    ఒకవేళ (src1->type != vec_dot_type) {
+        అక్షరం * wdata = params->wdata;
 
-        const size_t nbw0 = ggml_type_size(vec_dot_type);
-        const size_t nbw1 = ggml_row_size(vec_dot_type, ne10);
-        const size_t nbw2 = nbw1*ne11;
-        const size_t nbw3 = nbw2*ne12;
+        స్థిరరాశి size_t nbw0 = ggml_type_కొలత(vec_dot_type);
+        స్థిరరాశి size_t nbw1 = ggml_అడ్డువరుస_కొలత(vec_dot_type, ne10);
+        స్థిరరాశి size_t nbw2 = nbw1*ne11;
+        స్థిరరాశి size_t nbw3 = nbw2*ne12;
 
-        assert(params->wsize >= ne13*nbw3);
+        ప్రతిజ్ఞా(params->wsize >= ne13*nbw3);
         GGML_ASSERT(src1->type == GGML_TYPE_F32);
 
-#if 0
-        for (int64_t i13 = 0; i13 < ne13; ++i13) {
-            for (int64_t i12 = ith; i12 < ne12; i12 += nth) {
-                for (int64_t i11 = 0; i11 < ne11; ++i11) {
-                    from_float((float *)((char *) src1->data + i13*nb13 + i12*nb12 + i11*nb11),
-                               (void *)               (wdata + i13*nbw3 + i12*nbw2 + i11*nbw1),
+#ఒకవేళ 0
+        కొరకు (int64_t i13 = 0; i13 < ne13; ++i13) {
+            కొరకు (int64_t i12 = ith; i12 < ne12; i12 += nth) {
+                కొరకు (int64_t i11 = 0; i11 < ne11; ++i11) {
+                    from_float((దశాంశం *)((అక్షరం *) src1->దత్తాంశం + i13*nb13 + i12*nb12 + i11*nb11),
+                               (శూన్య *)               (wdata + i13*nbw3 + i12*nbw2 + i11*nbw1),
                                ne10);
                 }
             }
         }
-#else
-        for (int64_t i13 = 0; i13 < ne13; ++i13) {
-            for (int64_t i12 = 0; i12 < ne12; ++i12) {
-                for (int64_t i11 = 0; i11 < ne11; ++i11) {
-                    size_t bs = ggml_blck_size(vec_dot_type);
-                    int64_t ne10_block_start = (ith * ne10/bs) / nth;
-                    int64_t ne10_block_end   = ((ith + 1) * ne10/bs) / nth;
-                    from_float((float *)((char *) src1->data + i13*nb13 + i12*nb12 + i11*nb11 + ne10_block_start*bs*nb10),
-                               (void *)               (wdata + i13*nbw3 + i12*nbw2 + i11*nbw1 + ne10_block_start*nbw0),
-                               (ne10_block_end - ne10_block_start) * bs);
+#లేకపోతే
+        కొరకు (int64_t i13 = 0; i13 < ne13; ++i13) {
+            కొరకు (int64_t i12 = 0; i12 < ne12; ++i12) {
+                కొరకు (int64_t i11 = 0; i11 < ne11; ++i11) {
+                    size_t bs = ggml_blck_కొలత(vec_dot_type);
+                    int64_t ne10_ఖండం_ప్రారంభం = (ith * ne10/bs) / nth;
+                    int64_t ne10_ఖండం_చివర   = ((ith + 1) * ne10/bs) / nth;
+                    from_float((దశాంశం *)((అక్షరం *) src1->దత్తాంశం + i13*nb13 + i12*nb12 + i11*nb11 + ne10_ఖండం_ప్రారంభం*bs*nb10),
+                               (శూన్య *)               (wdata + i13*nbw3 + i12*nbw2 + i11*nbw1 + ne10_ఖండం_ప్రారంభం*nbw0),
+                               (ne10_ఖండం_చివర - ne10_ఖండం_ప్రారంభం) * bs);
                 }
             }
         }
-#endif
+#అయితే_ముగింపు
     }
 
-    if (ith == 0) {
+    ఒకవేళ (ith == 0) {
         // initialize matrix_row_counts
-        memset(matrix_row_counts, 0, n_as*sizeof(int64_t));
+        memset(మాతృక_అడ్డువరుస_counts, 0, n_as*పరిమాణం(int64_t));
 
         // group rows by src0 matrix
-        for (int64_t iid1 = 0; iid1 < ids->ne[1]; ++iid1) {
-            for (int id = 0; id < n_ids; ++id) {
-                const int32_t i02 = *(const int32_t *) ((const char *) ids->data + iid1*ids->nb[1] + id*ids->nb[0]);
+        కొరకు (int64_t iid1 = 0; iid1 < ids->ne[1]; ++iid1) {
+            కొరకు (పూర్ణాంకం id = 0; id < n_ids; ++id) {
+                స్థిరరాశి int32_t i02 = *(స్థిరరాశి int32_t *) ((స్థిరరాశి అక్షరం *) ids->దత్తాంశం + iid1*ids->nb[1] + id*ids->nb[0]);
 
-                assert(i02 >= 0 && i02 < n_as);
+                ప్రతిజ్ఞా(i02 >= 0 && i02 < n_as);
 
-                MMID_MATRIX_ROW(i02, matrix_row_counts[i02]) = (struct mmid_row_mapping) {id, iid1};
-                matrix_row_counts[i02] += 1;
+                MMID_మాతృక_అడ్డువరుస(i02, మాతృక_అడ్డువరుస_counts[i02]) = (నిర్మాణం mmid_అడ్డువరుస_mapping) {id, iid1};
+                మాతృక_అడ్డువరుస_counts[i02] += 1;
             }
         }
     }
 
     // reset current_chunk
-    for (int cur_a = ith; cur_a < n_as; cur_a += nth) {
+    కొరకు (పూర్ణాంకం cur_a = ith; cur_a < n_as; cur_a += nth) {
         atomic_int * current_chunk_ctr = (atomic_int *)(atomic_current_chunk + cur_a);
         *current_chunk_ctr = nth;
     }
 
     ggml_barrier(params->threadpool);
 
-    for (int cur_a = 0; cur_a < n_as; ++cur_a) {
-        const int64_t cne1 = matrix_row_counts[cur_a];
+    కొరకు (పూర్ణాంకం cur_a = 0; cur_a < n_as; ++cur_a) {
+        స్థిరరాశి int64_t cne1 = మాతృక_అడ్డువరుస_counts[cur_a];
 
-        if (cne1 == 0) {
-            continue;
+        ఒకవేళ (cne1 == 0) {
+            కొనసాగు;
         }
 
         // tiled takes over if profitable for this expert (see tiled.h)
-        if (ggml_compute_forward_mul_mat_id_tiled(params, dst, cur_a, cne1, (const int32_t *) &MMID_MATRIX_ROW(cur_a, 0), tiled_scratch)) {
-            continue;
+        ఒకవేళ (ggml_compute_forward_mul_mat_id_tiled(params, dst, cur_a, cne1, (స్థిరరాశి int32_t *) &MMID_మాతృక_అడ్డువరుస(cur_a, 0), tiled_scratch)) {
+            కొనసాగు;
         }
 
-        const char * src0_cur = (const char *) src0->data + cur_a * nb02;
-        const void * wdata = (src1->type == vec_dot_type) ? src1->data : params->wdata;
-        const size_t row_size = ggml_row_size(vec_dot_type, ne10);
+        స్థిరరాశి అక్షరం * src0_cur = (స్థిరరాశి అక్షరం *) src0->దత్తాంశం + cur_a * nb02;
+        స్థిరరాశి శూన్య * wdata = (src1->type == vec_dot_type) ? src1->దత్తాంశం : params->wdata;
+        స్థిరరాశి size_t అడ్డువరుస_కొలత = ggml_అడ్డువరుస_కొలత(vec_dot_type, ne10);
 
-        const int64_t nr0 = ne01;
-        const int64_t nr1 = cne1;
+        స్థిరరాశి int64_t nr0 = ne01;
+        స్థిరరాశి int64_t nr1 = cne1;
 
-        int chunk_size = 16;
-        if (nr0 == 1 || nr1 == 1) {
-            chunk_size = 64;
+        పూర్ణాంకం chunk_కొలత = 16;
+        ఒకవేళ (nr0 == 1 || nr1 == 1) {
+            chunk_కొలత = 64;
         }
 
         // disable for NUMA
-        const bool disable_chunking = ggml_is_numa();
+        స్థిరరాశి bool disable_chunking = ggml_is_numa();
 
-        int64_t nchunk0 = (nr0 + chunk_size - 1) / chunk_size;
-        int64_t nchunk1 = (nr1 + chunk_size - 1) / chunk_size;
+        int64_t nchunk0 = (nr0 + chunk_కొలత - 1) / chunk_కొలత;
+        int64_t nchunk1 = (nr1 + chunk_కొలత - 1) / chunk_కొలత;
 
-        if (nchunk0 * nchunk1 < nth * 4 || disable_chunking) {
+        ఒకవేళ (nchunk0 * nchunk1 < nth * 4 || disable_chunking) {
             nchunk0 = nr0 > nr1 ? nth : 1;
             nchunk1 = nr0 > nr1 ? 1 : nth;
         }
 
-        const int64_t dr0 = (nr0 + nchunk0 - 1) / nchunk0;
-        const int64_t dr1 = (nr1 + nchunk1 - 1) / nchunk1;
+        స్థిరరాశి int64_t dr0 = (nr0 + nchunk0 - 1) / nchunk0;
+        స్థిరరాశి int64_t dr1 = (nr1 + nchunk1 - 1) / nchunk1;
 
-        int current_chunk = ith;
+        పూర్ణాంకం current_chunk = ith;
 
         atomic_int * current_chunk_ctr = (atomic_int *)(atomic_current_chunk + cur_a);
 
-        while (current_chunk < nchunk0 * nchunk1) {
-            const int64_t ith0 = current_chunk % nchunk0;
-            const int64_t ith1 = current_chunk / nchunk0;
+        అయితే (current_chunk < nchunk0 * nchunk1) {
+            స్థిరరాశి int64_t ith0 = current_chunk % nchunk0;
+            స్థిరరాశి int64_t ith1 = current_chunk / nchunk0;
 
-            const int64_t ir0_start = dr0 * ith0;
-            const int64_t ir0_end = MIN(ir0_start + dr0, nr0);
+            స్థిరరాశి int64_t ir0_ప్రారంభం = dr0 * ith0;
+            స్థిరరాశి int64_t ir0_చివర = MIN(ir0_ప్రారంభం + dr0, nr0);
 
-            const int64_t ir1_start = dr1 * ith1;
-            const int64_t ir1_end = MIN(ir1_start + dr1, nr1);
+            స్థిరరాశి int64_t ir1_ప్రారంభం = dr1 * ith1;
+            స్థిరరాశి int64_t ir1_చివర = MIN(ir1_ప్రారంభం + dr1, nr1);
 
             ggml_compute_forward_mul_mat_id_one_chunk(
                 dst, src0, src1, ids, cur_a,
-                ir0_start, ir0_end, ir1_start, ir1_end,
-                src0_cur, matrix_rows, row_size, src1_cont, wdata
+                ir0_ప్రారంభం, ir0_చివర, ir1_ప్రారంభం, ir1_చివర,
+                src0_cur, మాతృక_అడ్డువరుసలు, అడ్డువరుస_కొలత, src1_cont, wdata
             );
 
-            if (nth >= nchunk0 * nchunk1) {
-                break;
+            ఒకవేళ (nth >= nchunk0 * nchunk1) {
+                ఆపు;
             }
 
-            current_chunk = atomic_fetch_add_explicit(current_chunk_ctr, 1, memory_order_relaxed);
+            current_chunk = atomic_fetch_కూడు_explicit(current_chunk_ctr, 1, memory_order_relaxed);
         }
     }
 }
 
 /////////////////////////////////
 
-static void ggml_compute_forward(struct ggml_compute_params * params, struct ggml_tensor * tensor) {
+స్థిర శూన్య ggml_compute_forward(నిర్మాణం ggml_compute_params * params, నిర్మాణం ggml_tensor * tensor) {
     GGML_ASSERT(params);
 
-    if (tensor->op == GGML_OP_NONE || ggml_is_empty(tensor)) {
-        return;
+    ఒకవేళ (tensor->op == GGML_OP_NONE || ggml_is_ఖాళీలు(tensor)) {
+        తిరిగి;
     }
 
     // extra_buffer op?
-    if (ggml_cpu_extra_compute_forward(params, tensor)) {
-        return;
+    ఒకవేళ (ggml_cpu_extra_compute_forward(params, tensor)) {
+        తిరిగి;
     }
 
-    switch (tensor->op) {
-        case GGML_OP_DUP:
+    ఎంపిక (tensor->op) {
+        స్థితి GGML_OP_DUP:
             {
                 ggml_compute_forward_dup(params, tensor);
-            } break;
-        case GGML_OP_ADD:
+            } ఆపు;
+        స్థితి GGML_OP_కూడు:
             {
-                ggml_compute_forward_add(params, tensor);
-            } break;
-        case GGML_OP_ADD_ID:
+                ggml_compute_forward_కూడు(params, tensor);
+            } ఆపు;
+        స్థితి GGML_OP_కూడు_ID:
             {
-                ggml_compute_forward_add_id(params, tensor);
-            } break;
-        case GGML_OP_ADD1:
+                ggml_compute_forward_కూడు_id(params, tensor);
+            } ఆపు;
+        స్థితి GGML_OP_ADD1:
             {
                 ggml_compute_forward_add1(params, tensor);
-            } break;
-        case GGML_OP_ACC:
+            } ఆపు;
+        స్థితి GGML_OP_ACC:
             {
                 ggml_compute_forward_acc(params, tensor);
-            } break;
-        case GGML_OP_SUB:
+            } ఆపు;
+        స్థితి GGML_OP_SUB:
             {
                 ggml_compute_forward_sub(params, tensor);
-            } break;
-        case GGML_OP_MUL:
+            } ఆపు;
+        స్థితి GGML_OP_MUL:
             {
                 ggml_compute_forward_mul(params, tensor);
-            } break;
-        case GGML_OP_DIV:
+            } ఆపు;
+        స్థితి GGML_OP_DIV:
             {
                 ggml_compute_forward_div(params, tensor);
-            } break;
-        case GGML_OP_SQR:
+            } ఆపు;
+        స్థితి GGML_OP_SQR:
             {
                 ggml_compute_forward_sqr(params, tensor);
-            } break;
-        case GGML_OP_SQRT:
+            } ఆపు;
+        స్థితి GGML_OP_SQRT:
             {
                 ggml_compute_forward_sqrt(params, tensor);
-            } break;
-        case GGML_OP_LOG:
+            } ఆపు;
+        స్థితి GGML_OP_LOG:
             {
                 ggml_compute_forward_log(params, tensor);
-            } break;
-        case GGML_OP_SIN:
+            } ఆపు;
+        స్థితి GGML_OP_SIN:
             {
                 ggml_compute_forward_sin(params, tensor);
-            } break;
-        case GGML_OP_COS:
+            } ఆపు;
+        స్థితి GGML_OP_COS:
             {
                 ggml_compute_forward_cos(params, tensor);
-            } break;
-        case GGML_OP_SUM:
+            } ఆపు;
+        స్థితి GGML_OP_కూడిక:
             {
-                ggml_compute_forward_sum(params, tensor);
-            } break;
-        case GGML_OP_SUM_ROWS:
+                ggml_compute_forward_కూడిక(params, tensor);
+            } ఆపు;
+        స్థితి GGML_OP_కూడిక_అడ్డువరుసలు:
             {
-                ggml_compute_forward_sum_rows(params, tensor);
-            } break;
-        case GGML_OP_CUMSUM:
+                ggml_compute_forward_కూడిక_అడ్డువరుసలు(params, tensor);
+            } ఆపు;
+        స్థితి GGML_OP_CUMSUM:
             {
                 ggml_compute_forward_cumsum(params, tensor);
-            } break;
-        case GGML_OP_MEAN:
+            } ఆపు;
+        స్థితి GGML_OP_సగటు:
             {
-                ggml_compute_forward_mean(params, tensor);
-            } break;
-        case GGML_OP_ARGMAX:
+                ggml_compute_forward_సగటు(params, tensor);
+            } ఆపు;
+        స్థితి GGML_OP_ARGMAX:
             {
                 ggml_compute_forward_argmax(params, tensor);
-            } break;
-        case GGML_OP_COUNT_EQUAL:
+            } ఆపు;
+        స్థితి GGML_OP_లెక్క_EQUAL:
             {
-                ggml_compute_forward_count_equal(params, tensor);
-            } break;
-        case GGML_OP_REPEAT:
+                ggml_compute_forward_లెక్క_equal(params, tensor);
+            } ఆపు;
+        స్థితి GGML_OP_REPEAT:
             {
                 ggml_compute_forward_repeat(params, tensor);
-            } break;
-        case GGML_OP_REPEAT_BACK:
+            } ఆపు;
+        స్థితి GGML_OP_REPEAT_వెనుక:
             {
-                ggml_compute_forward_repeat_back(params, tensor);
-            } break;
-        case GGML_OP_CONCAT:
+                ggml_compute_forward_repeat_వెనుక(params, tensor);
+            } ఆపు;
+        స్థితి GGML_OP_CONCAT:
             {
                 ggml_compute_forward_concat(params, tensor);
-            } break;
-        case GGML_OP_SILU_BACK:
+            } ఆపు;
+        స్థితి GGML_OP_SILU_వెనుక:
             {
-                ggml_compute_forward_silu_back(params, tensor);
-            } break;
-        case GGML_OP_NORM:
+                ggml_compute_forward_silu_వెనుక(params, tensor);
+            } ఆపు;
+        స్థితి GGML_OP_NORM:
             {
                 ggml_compute_forward_norm(params, tensor);
-            } break;
-        case GGML_OP_RMS_NORM:
+            } ఆపు;
+        స్థితి GGML_OP_RMS_NORM:
             {
                 ggml_compute_forward_rms_norm(params, tensor);
-            } break;
-        case GGML_OP_RMS_NORM_BACK:
+            } ఆపు;
+        స్థితి GGML_OP_RMS_NORM_వెనుక:
             {
-                ggml_compute_forward_rms_norm_back(params, tensor);
-            } break;
-        case GGML_OP_GROUP_NORM:
+                ggml_compute_forward_rms_norm_వెనుక(params, tensor);
+            } ఆపు;
+        స్థితి GGML_OP_సమూహం_NORM:
             {
-                ggml_compute_forward_group_norm(params, tensor);
-            } break;
-        case GGML_OP_L2_NORM:
+                ggml_compute_forward_సమూహం_norm(params, tensor);
+            } ఆపు;
+        స్థితి GGML_OP_L2_NORM:
             {
                 ggml_compute_forward_l2_norm(params, tensor);
-            } break;
-        case GGML_OP_MUL_MAT:
+            } ఆపు;
+        స్థితి GGML_OP_MUL_MAT:
             {
                 ggml_compute_forward_mul_mat(params, tensor);
-            } break;
-        case GGML_OP_MUL_MAT_ID:
+            } ఆపు;
+        స్థితి GGML_OP_MUL_MAT_ID:
             {
                 ggml_compute_forward_mul_mat_id(params, tensor);
-            } break;
-        case GGML_OP_OUT_PROD:
+            } ఆపు;
+        స్థితి GGML_OP_బహిర్గతం_PROD:
             {
-                ggml_compute_forward_out_prod(params, tensor);
-            } break;
-        case GGML_OP_SCALE:
+                ggml_compute_forward_బహిర్గతం_prod(params, tensor);
+            } ఆపు;
+        స్థితి GGML_OP_SCALE:
             {
                 ggml_compute_forward_scale(params, tensor);
-            } break;
-        case GGML_OP_SET:
+            } ఆపు;
+        స్థితి GGML_OP_సమితి:
             {
-                ggml_compute_forward_set(params, tensor);
-            } break;
-        case GGML_OP_CPY:
+                ggml_compute_forward_సమితి(params, tensor);
+            } ఆపు;
+        స్థితి GGML_OP_CPY:
             {
                 ggml_compute_forward_cpy(params, tensor);
-            } break;
-        case GGML_OP_CONT:
+            } ఆపు;
+        స్థితి GGML_OP_CONT:
             {
                 ggml_compute_forward_cont(params, tensor);
-            } break;
-        case GGML_OP_GET_ROWS:
+            } ఆపు;
+        స్థితి GGML_OP_GET_అడ్డువరుసలు:
             {
-                ggml_compute_forward_get_rows(params, tensor);
-            } break;
-        case GGML_OP_GET_ROWS_BACK:
+                ggml_compute_forward_get_అడ్డువరుసలు(params, tensor);
+            } ఆపు;
+        స్థితి GGML_OP_GET_అడ్డువరుసలు_వెనుక:
             {
-                ggml_compute_forward_get_rows_back(params, tensor);
-            } break;
-        case GGML_OP_SET_ROWS:
+                ggml_compute_forward_get_అడ్డువరుసలు_వెనుక(params, tensor);
+            } ఆపు;
+        స్థితి GGML_OP_సమితి_అడ్డువరుసలు:
             {
-                ggml_compute_forward_set_rows(params, tensor);
-            } break;
-        case GGML_OP_DIAG:
+                ggml_compute_forward_సమితి_అడ్డువరుసలు(params, tensor);
+            } ఆపు;
+        స్థితి GGML_OP_DIAG:
             {
                 ggml_compute_forward_diag(params, tensor);
-            } break;
-        case GGML_OP_DIAG_MASK_INF:
+            } ఆపు;
+        స్థితి GGML_OP_DIAG_ముసుగు_INF:
             {
-                ggml_compute_forward_diag_mask_inf(params, tensor);
-            } break;
-        case GGML_OP_DIAG_MASK_ZERO:
+                ggml_compute_forward_diag_ముసుగు_inf(params, tensor);
+            } ఆపు;
+        స్థితి GGML_OP_DIAG_ముసుగు_ZERO:
             {
-                ggml_compute_forward_diag_mask_zero(params, tensor);
-            } break;
-        case GGML_OP_SOFT_MAX:
+                ggml_compute_forward_diag_ముసుగు_zero(params, tensor);
+            } ఆపు;
+        స్థితి GGML_OP_SOFT_MAX:
             {
                 ggml_compute_forward_soft_max(params, tensor);
-            } break;
-        case GGML_OP_SOFT_MAX_BACK:
+            } ఆపు;
+        స్థితి GGML_OP_SOFT_MAX_వెనుక:
             {
-                ggml_compute_forward_soft_max_ext_back(params, tensor);
-            } break;
-        case GGML_OP_ROPE:
+                ggml_compute_forward_soft_max_ext_వెనుక(params, tensor);
+            } ఆపు;
+        స్థితి GGML_OP_ROPE:
             {
                 ggml_compute_forward_rope(params, tensor);
-            } break;
-        case GGML_OP_ROPE_BACK:
+            } ఆపు;
+        స్థితి GGML_OP_ROPE_వెనుక:
             {
-                ggml_compute_forward_rope_back(params, tensor);
-            } break;
-        case GGML_OP_CLAMP:
+                ggml_compute_forward_rope_వెనుక(params, tensor);
+            } ఆపు;
+        స్థితి GGML_OP_CLAMP:
             {
                 ggml_compute_forward_clamp(params, tensor);
-            } break;
-        case GGML_OP_CONV_TRANSPOSE_1D:
+            } ఆపు;
+        స్థితి GGML_OP_CONV_TRANSPOSE_1D:
             {
                 ggml_compute_forward_conv_transpose_1d(params, tensor);
-            } break;
-        case GGML_OP_IM2COL:
+            } ఆపు;
+        స్థితి GGML_OP_IM2_నిలువు:
             {
                 ggml_compute_forward_im2col(params, tensor);
-            } break;
-        case GGML_OP_IM2COL_BACK:
+            } ఆపు;
+        స్థితి GGML_OP_IM2_నిలువు_వెనుక:
             {
-                ggml_compute_forward_im2col_back_f32(params, tensor);
-            } break;
-        case GGML_OP_IM2COL_3D:
+                ggml_compute_forward_im2col_వెనుక_f32(params, tensor);
+            } ఆపు;
+        స్థితి GGML_OP_IM2_నిలువు_3_D:
             {
                 ggml_compute_forward_im2col_3d(params, tensor);
-            } break;
-        case GGML_OP_COL2IM_1D:
+            } ఆపు;
+        స్థితి GGML_OP_COL2IM_1D:
             {
                 ggml_compute_forward_col2im_1d(params, tensor);
-            } break;
-        case GGML_OP_CONV_2D:
+            } ఆపు;
+        స్థితి GGML_OP_CONV_2D:
             {
                 ggml_compute_forward_conv_2d(params, tensor);
-            } break;
-        case GGML_OP_CONV_3D:
+            } ఆపు;
+        స్థితి GGML_OP_CONV_3D:
             {
                 ggml_compute_forward_conv_3d(params, tensor);
-            } break;
-        case GGML_OP_CONV_2D_DW:
+            } ఆపు;
+        స్థితి GGML_OP_CONV_2D_DW:
             {
                 ggml_compute_forward_conv_2d_dw(params, tensor);
-            } break;
-        case GGML_OP_CONV_TRANSPOSE_2D:
+            } ఆపు;
+        స్థితి GGML_OP_CONV_TRANSPOSE_2D:
             {
                 ggml_compute_forward_conv_transpose_2d(params, tensor);
-            } break;
-        case GGML_OP_POOL_1D:
+            } ఆపు;
+        స్థితి GGML_OP_POOL_1D:
             {
                 ggml_compute_forward_pool_1d(params, tensor);
-            } break;
-        case GGML_OP_POOL_2D:
+            } ఆపు;
+        స్థితి GGML_OP_POOL_2D:
             {
                 ggml_compute_forward_pool_2d(params, tensor);
-            } break;
-        case GGML_OP_POOL_2D_BACK:
+            } ఆపు;
+        స్థితి GGML_OP_POOL_2_D_వెనుక:
             {
-                ggml_compute_forward_pool_2d_back(params, tensor);
-            } break;
-        case GGML_OP_UPSCALE:
+                ggml_compute_forward_pool_2d_వెనుక(params, tensor);
+            } ఆపు;
+        స్థితి GGML_OP_UPSCALE:
             {
                 ggml_compute_forward_upscale(params, tensor);
-            } break;
-        case GGML_OP_PAD:
+            } ఆపు;
+        స్థితి GGML_OP_PAD:
             {
                 ggml_compute_forward_pad(params, tensor);
-            } break;
-        case GGML_OP_PAD_REFLECT_1D:
+            } ఆపు;
+        స్థితి GGML_OP_PAD_REFLECT_1D:
             {
                 ggml_compute_forward_pad_reflect_1d(params, tensor);
-            } break;
-        case GGML_OP_ROLL:
+            } ఆపు;
+        స్థితి GGML_OP_ROLL:
             {
                 ggml_compute_forward_roll(params, tensor);
-            } break;
-        case GGML_OP_ARANGE:
+            } ఆపు;
+        స్థితి GGML_OP_ARANGE:
             {
                 ggml_compute_forward_arange(params, tensor);
-            } break;
-        case GGML_OP_TIMESTEP_EMBEDDING:
+            } ఆపు;
+        స్థితి GGML_OP_TIMESTEP_EMBEDDING:
             {
                 ggml_compute_forward_timestep_embedding(params, tensor);
-            } break;
-        case GGML_OP_ARGSORT:
+            } ఆపు;
+        స్థితి GGML_OP_ARGSORT:
             {
                 ggml_compute_forward_argsort(params, tensor);
-            } break;
-        case GGML_OP_TOP_K:
+            } ఆపు;
+        స్థితి GGML_OP_శిఖరం_K:
             {
-                ggml_compute_forward_top_k(params, tensor);
-            } break;
-        case GGML_OP_LEAKY_RELU:
+                ggml_compute_forward_శిఖరం_k(params, tensor);
+            } ఆపు;
+        స్థితి GGML_OP_LEAKY_RELU:
             {
                 ggml_compute_forward_leaky_relu(params, tensor);
-            } break;
-        case GGML_OP_TRI:
+            } ఆపు;
+        స్థితి GGML_OP_TRI:
             {
                 ggml_compute_forward_tri(params, tensor);
-            } break;
-        case GGML_OP_FILL:
+            } ఆపు;
+        స్థితి GGML_OP_FILL:
             {
                 ggml_compute_forward_fill(params, tensor);
-            } break;
-        case GGML_OP_FLASH_ATTN_EXT:
+            } ఆపు;
+        స్థితి GGML_OP_FLASH_ATTN_EXT:
             {
                 ggml_compute_forward_flash_attn_ext(params, tensor);
-            } break;
-        case GGML_OP_FLASH_ATTN_BACK:
+            } ఆపు;
+        స్థితి GGML_OP_FLASH_ATTN_వెనుక:
             {
                 int32_t t = ggml_get_op_params_i32(tensor, 0);
                 GGML_ASSERT(t == 0 || t == 1);
                 bool masked = t != 0;
-                ggml_compute_forward_flash_attn_back(params, masked, tensor);
-            } break;
-        case GGML_OP_SSM_CONV:
+                ggml_compute_forward_flash_attn_వెనుక(params, masked, tensor);
+            } ఆపు;
+        స్థితి GGML_OP_SSM_CONV:
             {
                 ggml_compute_forward_ssm_conv(params, tensor);
-            } break;
-        case GGML_OP_SSM_SCAN:
+            } ఆపు;
+        స్థితి GGML_OP_SSM_పరిశీలన:
             {
-                ggml_compute_forward_ssm_scan(params, tensor);
-            } break;
-        case GGML_OP_WIN_PART:
+                ggml_compute_forward_ssm_పరిశీలన(params, tensor);
+            } ఆపు;
+        స్థితి GGML_OP_WIN_PART:
             {
                 ggml_compute_forward_win_part(params, tensor);
-            } break;
-        case GGML_OP_WIN_UNPART:
+            } ఆపు;
+        స్థితి GGML_OP_WIN_UNPART:
             {
                 ggml_compute_forward_win_unpart(params, tensor);
-            } break;
-        case GGML_OP_UNARY:
+            } ఆపు;
+        స్థితి GGML_OP_UNARY:
             {
                 ggml_compute_forward_unary(params, tensor);
-            } break;
-        case GGML_OP_GLU:
+            } ఆపు;
+        స్థితి GGML_OP_GLU:
             {
                 ggml_compute_forward_glu(params, tensor);
-            } break;
-        case GGML_OP_GET_REL_POS:
+            } ఆపు;
+        స్థితి GGML_OP_GET_REL_POS:
             {
                 ggml_compute_forward_get_rel_pos(params, tensor);
-            } break;
-        case GGML_OP_ADD_REL_POS:
+            } ఆపు;
+        స్థితి GGML_OP_కూడు_REL_POS:
             {
-                ggml_compute_forward_add_rel_pos(params, tensor);
-            } break;
-        case GGML_OP_RWKV_WKV6:
+                ggml_compute_forward_కూడు_rel_pos(params, tensor);
+            } ఆపు;
+        స్థితి GGML_OP_RWKV_WKV6:
             {
                 ggml_compute_forward_rwkv_wkv6(params, tensor);
-            } break;
-        case GGML_OP_GATED_LINEAR_ATTN:
+            } ఆపు;
+        స్థితి GGML_OP_GATED_రేఖీయ_ATTN:
             {
                 ggml_compute_forward_gla(params, tensor);
-            } break;
-        case GGML_OP_RWKV_WKV7:
+            } ఆపు;
+        స్థితి GGML_OP_RWKV_WKV7:
             {
                 ggml_compute_forward_rwkv_wkv7(params, tensor);
-            } break;
-        case GGML_OP_SOLVE_TRI:
+            } ఆపు;
+        స్థితి GGML_OP_SOLVE_TRI:
             {
                 ggml_compute_forward_solve_tri(params, tensor);
-            } break;
-        case GGML_OP_GATED_DELTA_NET:
+            } ఆపు;
+        స్థితి GGML_OP_GATED_DELTA_NET:
             {
                 ggml_compute_forward_gated_delta_net(params, tensor);
-            } break;
-        case GGML_OP_LIGHTNING_INDEXER:
+            } ఆపు;
+        స్థితి GGML_OP_LIGHTNING_INDEXER:
             {
                 ggml_compute_forward_lightning_indexer(params, tensor);
-            } break;
-        case GGML_OP_DSV4_HC_COMB:
+            } ఆపు;
+        స్థితి GGML_OP_DSV4_HC_COMB:
             {
                 ggml_compute_forward_dsv4_hc_comb(params, tensor);
-            } break;
-        case GGML_OP_DSV4_HC_PRE:
+            } ఆపు;
+        స్థితి GGML_OP_DSV4_HC_PRE:
             {
                 ggml_compute_forward_dsv4_hc_pre(params, tensor);
-            } break;
-        case GGML_OP_DSV4_HC_POST:
+            } ఆపు;
+        స్థితి GGML_OP_DSV4_HC_POST:
             {
                 ggml_compute_forward_dsv4_hc_post(params, tensor);
-            } break;
-        case GGML_OP_TOP_K_MASK:
+            } ఆపు;
+        స్థితి GGML_OP_శిఖరం_K_ముసుగు:
             {
-                ggml_compute_forward_top_k_mask(params, tensor);
-            } break;
-        case GGML_OP_MAP_CUSTOM1:
+                ggml_compute_forward_శిఖరం_k_ముసుగు(params, tensor);
+            } ఆపు;
+        స్థితి GGML_OP_MAP_CUSTOM1:
             {
                 ggml_compute_forward_map_custom1(params, tensor);
             }
-            break;
-        case GGML_OP_MAP_CUSTOM2:
+            ఆపు;
+        స్థితి GGML_OP_MAP_CUSTOM2:
             {
                 ggml_compute_forward_map_custom2(params, tensor);
             }
-            break;
-        case GGML_OP_MAP_CUSTOM3:
+            ఆపు;
+        స్థితి GGML_OP_MAP_CUSTOM3:
             {
                 ggml_compute_forward_map_custom3(params, tensor);
             }
-            break;
-        case GGML_OP_CUSTOM:
+            ఆపు;
+        స్థితి GGML_OP_CUSTOM:
             {
                 ggml_compute_forward_custom(params, tensor);
             }
-            break;
-        case GGML_OP_CROSS_ENTROPY_LOSS:
+            ఆపు;
+        స్థితి GGML_OP_CROSS_ENTROPY_LOSS:
             {
                 ggml_compute_forward_cross_entropy_loss(params, tensor);
             }
-            break;
-        case GGML_OP_CROSS_ENTROPY_LOSS_BACK:
+            ఆపు;
+        స్థితి GGML_OP_CROSS_ENTROPY_LOSS_వెనుక:
             {
-                ggml_compute_forward_cross_entropy_loss_back(params, tensor);
+                ggml_compute_forward_cross_entropy_loss_వెనుక(params, tensor);
             }
-            break;
-        case GGML_OP_OPT_STEP_ADAMW:
+            ఆపు;
+        స్థితి GGML_OP_OPT_అడుగు_ADAMW:
             {
-                ggml_compute_forward_opt_step_adamw(params, tensor);
+                ggml_compute_forward_opt_అడుగు_adamw(params, tensor);
             }
-            break;
-        case GGML_OP_OPT_STEP_SGD:
+            ఆపు;
+        స్థితి GGML_OP_OPT_అడుగు_SGD:
             {
-                ggml_compute_forward_opt_step_sgd(params, tensor);
+                ggml_compute_forward_opt_అడుగు_sgd(params, tensor);
             }
-            break;
-        case GGML_OP_NONE:
+            ఆపు;
+        స్థితి GGML_OP_NONE:
             {
                 // nop
-            } break;
-        case GGML_OP_RESHAPE:
+            } ఆపు;
+        స్థితి GGML_OP_RESHAPE:
             {
                 // nop
-            } break;
-        case GGML_OP_PERMUTE:
+            } ఆపు;
+        స్థితి GGML_OP_క్రమమార్పు:
             {
                 // nop
-            } break;
-        case GGML_OP_VIEW:
+            } ఆపు;
+        స్థితి GGML_OP_VIEW:
             {
                 // nop
-            } break;
-        case GGML_OP_TRANSPOSE:
+            } ఆపు;
+        స్థితి GGML_OP_TRANSPOSE:
             {
                 // nop
-            } break;
-        case GGML_OP_COUNT:
+            } ఆపు;
+        స్థితి GGML_OP_లెక్క:
             {
                 GGML_ABORT("fatal error");
             }
@@ -2177,1088 +2177,1088 @@ static void ggml_compute_forward(struct ggml_compute_params * params, struct ggm
 }
 
 // Android's libc implementation "bionic" does not support setting affinity
-#if defined(__gnu_linux__)
-static void set_numa_thread_affinity(int thread_n) {
-    if (!ggml_is_numa()) {
-        return;
+#ఒకవేళ defined(__gnu_linux__)
+స్థిర శూన్య సమితి_numa_thread_affinity(పూర్ణాంకం thread_n) {
+    ఒకవేళ (!ggml_is_numa()) {
+        తిరిగి;
     }
 
-    int node_num;
-    int rv;
-    size_t setsize = CPU_ALLOC_SIZE(g_state.numa.total_cpus);
+    పూర్ణాంకం కణుపు_అంకె;
+    పూర్ణాంకం rv;
+    size_t setsize = CPU_ALLOC_కొలత(g_state.numa.మొత్తం_cpus);
 
-    switch(g_state.numa.numa_strategy) {
-        case GGML_NUMA_STRATEGY_DISTRIBUTE:
+    ఎంపిక(g_state.numa.numa_strategy) {
+        స్థితి GGML_NUMA_STRATEGY_DISTRIBUTE:
             // run thread on node_num thread_n / (threads per node)
-            node_num = thread_n % g_state.numa.n_nodes;
-            break;
-        case GGML_NUMA_STRATEGY_ISOLATE:
+            కణుపు_అంకె = thread_n % g_state.numa.n_nodes;
+            ఆపు;
+        స్థితి GGML_NUMA_STRATEGY_ISOLATE:
             // run thread on current_node
-            node_num = g_state.numa.current_node;
-            break;
-        case GGML_NUMA_STRATEGY_NUMACTL:
+            కణుపు_అంకె = g_state.numa.current_కణుపు;
+            ఆపు;
+        స్థితి GGML_NUMA_STRATEGY_NUMACTL:
             // use the cpuset that numactl gave us
             rv = pthread_setaffinity_np(pthread_self(), setsize, &g_state.numa.cpuset);
-            if (rv) {
+            ఒకవేళ (rv) {
                 fprintf(stderr, "warning: pthread_setaffinity_np() failed: %s\n",strerror(rv));
             }
-            return;
-        default:
-            return;
+            తిరిగి;
+        అప్రమేయ:
+            తిరిగి;
     }
 
-    struct ggml_numa_node * node = &g_state.numa.nodes[node_num];
+    నిర్మాణం ggml_numa_కణుపు * కణుపు = &g_state.numa.nodes[కణుపు_అంకె];
 
-    cpu_set_t * cpus = CPU_ALLOC(g_state.numa.total_cpus);
+    cpu_సమితి_t * cpus = CPU_ALLOC(g_state.numa.మొత్తం_cpus);
     CPU_ZERO_S(setsize, cpus);
-    for (size_t i = 0; i < node->n_cpus; ++i) {
-        CPU_SET_S(node->cpus[i], setsize, cpus);
+    కొరకు (size_t i = 0; i < కణుపు->n_cpus; ++i) {
+        CPU_సమితి_S(కణుపు->cpus[i], setsize, cpus);
     }
 
     rv = pthread_setaffinity_np(pthread_self(), setsize, cpus);
-    if (rv) {
+    ఒకవేళ (rv) {
             fprintf(stderr, "warning: pthread_setaffinity_np() failed: %s\n", strerror(rv));
     }
 
     CPU_FREE(cpus);
 }
 
-static void clear_numa_thread_affinity(void) {
-    if (!ggml_is_numa()) {
-        return;
+స్థిర శూన్య clear_numa_thread_affinity(శూన్య) {
+    ఒకవేళ (!ggml_is_numa()) {
+        తిరిగి;
     }
 
-    size_t setsize = CPU_ALLOC_SIZE(g_state.numa.total_cpus);
+    size_t setsize = CPU_ALLOC_కొలత(g_state.numa.మొత్తం_cpus);
 
-    cpu_set_t * cpus = CPU_ALLOC(g_state.numa.total_cpus);
+    cpu_సమితి_t * cpus = CPU_ALLOC(g_state.numa.మొత్తం_cpus);
     CPU_ZERO_S(setsize, cpus);
-    for (unsigned i = 0; i < g_state.numa.total_cpus; ++i) {
-        CPU_SET_S(i, setsize, cpus);
+    కొరకు (గుర్తులేని i = 0; i < g_state.numa.మొత్తం_cpus; ++i) {
+        CPU_సమితి_S(i, setsize, cpus);
     }
 
-    int rv = pthread_setaffinity_np(pthread_self(), setsize, cpus);
-    if (rv) {
+    పూర్ణాంకం rv = pthread_setaffinity_np(pthread_self(), setsize, cpus);
+    ఒకవేళ (rv) {
         fprintf(stderr, "warning: pthread_setaffinity_np() failed: %s\n", strerror(rv));
     }
 
     CPU_FREE(cpus);
 }
-#else
+#లేకపోతే
 // TODO: Windows etc.
 // (the linux implementation may also work on BSD, someone should test)
-static void set_numa_thread_affinity(int thread_n) { UNUSED(thread_n);  }
-static void clear_numa_thread_affinity(void) {}
-#endif
+స్థిర శూన్య సమితి_numa_thread_affinity(పూర్ణాంకం thread_n) { వాడని(thread_n);  }
+స్థిర శూన్య clear_numa_thread_affinity(శూన్య) {}
+#అయితే_ముగింపు
 
-static int ggml_get_n_tasks(struct ggml_tensor * node, int n_threads) {
-    int n_tasks = 0;
+స్థిర పూర్ణాంకం ggml_get_n_tasks(నిర్మాణం ggml_tensor * కణుపు, పూర్ణాంకం n_దారాలు) {
+    పూర్ణాంకం n_tasks = 0;
 
-    if (ggml_is_empty(node)) {
+    ఒకవేళ (ggml_is_ఖాళీలు(కణుపు)) {
         // no need to multi-thread a no-op
         n_tasks = 1;
-        return n_tasks;
+        తిరిగి n_tasks;
     }
 
-    switch (node->op) {
-        case GGML_OP_CPY:
-        case GGML_OP_DUP:
-        case GGML_OP_CONT:
-        case GGML_OP_ADD:
-        case GGML_OP_ADD_ID:
-        case GGML_OP_ADD1:
-        case GGML_OP_ACC:
-        case GGML_OP_CUMSUM:
-        case GGML_OP_TRI:
-        case GGML_OP_FILL:
+    ఎంపిక (కణుపు->op) {
+        స్థితి GGML_OP_CPY:
+        స్థితి GGML_OP_DUP:
+        స్థితి GGML_OP_CONT:
+        స్థితి GGML_OP_కూడు:
+        స్థితి GGML_OP_కూడు_ID:
+        స్థితి GGML_OP_ADD1:
+        స్థితి GGML_OP_ACC:
+        స్థితి GGML_OP_CUMSUM:
+        స్థితి GGML_OP_TRI:
+        స్థితి GGML_OP_FILL:
             {
-                n_tasks = n_threads;
-            } break;
-        case GGML_OP_SUB:
-        case GGML_OP_SQR:
-        case GGML_OP_SQRT:
-        case GGML_OP_LOG:
-        case GGML_OP_SIN:
-        case GGML_OP_COS:
-        case GGML_OP_SUM:
-        case GGML_OP_SUM_ROWS:
-        case GGML_OP_MEAN:
-        case GGML_OP_ARGMAX:
-            {
-                n_tasks = 1;
-            } break;
-        case GGML_OP_COUNT_EQUAL:
-        case GGML_OP_SOLVE_TRI:
-        case GGML_OP_GATED_DELTA_NET:
-        case GGML_OP_DSV4_HC_COMB:
-        case GGML_OP_DSV4_HC_PRE:
-        case GGML_OP_DSV4_HC_POST:
-        case GGML_OP_TOP_K_MASK:
-            {
-                n_tasks = n_threads;
-            } break;
-        case GGML_OP_REPEAT:
-        case GGML_OP_REPEAT_BACK:
-        case GGML_OP_LEAKY_RELU:
+                n_tasks = n_దారాలు;
+            } ఆపు;
+        స్థితి GGML_OP_SUB:
+        స్థితి GGML_OP_SQR:
+        స్థితి GGML_OP_SQRT:
+        స్థితి GGML_OP_LOG:
+        స్థితి GGML_OP_SIN:
+        స్థితి GGML_OP_COS:
+        స్థితి GGML_OP_కూడిక:
+        స్థితి GGML_OP_కూడిక_అడ్డువరుసలు:
+        స్థితి GGML_OP_సగటు:
+        స్థితి GGML_OP_ARGMAX:
             {
                 n_tasks = 1;
-            } break;
-        case GGML_OP_UNARY:
-            switch (ggml_get_unary_op(node)) {
-                case GGML_UNARY_OP_ABS:
-                case GGML_UNARY_OP_SGN:
-                case GGML_UNARY_OP_NEG:
-                case GGML_UNARY_OP_STEP:
-                case GGML_UNARY_OP_TANH:
-                case GGML_UNARY_OP_ELU:
-                case GGML_UNARY_OP_RELU:
-                case GGML_UNARY_OP_SIGMOID:
-                case GGML_UNARY_OP_HARDSWISH:
-                case GGML_UNARY_OP_HARDSIGMOID:
-                case GGML_UNARY_OP_EXP:
-                case GGML_UNARY_OP_SOFTPLUS:
-                case GGML_UNARY_OP_EXPM1:
-                case GGML_UNARY_OP_FLOOR:
-                case GGML_UNARY_OP_CEIL:
-                case GGML_UNARY_OP_ROUND:
-                case GGML_UNARY_OP_TRUNC:
+            } ఆపు;
+        స్థితి GGML_OP_లెక్క_EQUAL:
+        స్థితి GGML_OP_SOLVE_TRI:
+        స్థితి GGML_OP_GATED_DELTA_NET:
+        స్థితి GGML_OP_DSV4_HC_COMB:
+        స్థితి GGML_OP_DSV4_HC_PRE:
+        స్థితి GGML_OP_DSV4_HC_POST:
+        స్థితి GGML_OP_శిఖరం_K_ముసుగు:
+            {
+                n_tasks = n_దారాలు;
+            } ఆపు;
+        స్థితి GGML_OP_REPEAT:
+        స్థితి GGML_OP_REPEAT_వెనుక:
+        స్థితి GGML_OP_LEAKY_RELU:
+            {
+                n_tasks = 1;
+            } ఆపు;
+        స్థితి GGML_OP_UNARY:
+            ఎంపిక (ggml_get_unary_op(కణుపు)) {
+                స్థితి GGML_UNARY_OP_ABS:
+                స్థితి GGML_UNARY_OP_SGN:
+                స్థితి GGML_UNARY_OP_NEG:
+                స్థితి GGML_UNARY_OP_అడుగు:
+                స్థితి GGML_UNARY_OP_TANH:
+                స్థితి GGML_UNARY_OP_ELU:
+                స్థితి GGML_UNARY_OP_RELU:
+                స్థితి GGML_UNARY_OP_SIGMOID:
+                స్థితి GGML_UNARY_OP_HARDSWISH:
+                స్థితి GGML_UNARY_OP_HARDSIGMOID:
+                స్థితి GGML_UNARY_OP_EXP:
+                స్థితి GGML_UNARY_OP_SOFTPLUS:
+                స్థితి GGML_UNARY_OP_EXPM1:
+                స్థితి GGML_UNARY_OP_FLOOR:
+                స్థితి GGML_UNARY_OP_CEIL:
+                స్థితి GGML_UNARY_OP_విడత:
+                స్థితి GGML_UNARY_OP_TRUNC:
                     {
                         n_tasks = 1;
-                    } break;
+                    } ఆపు;
 
-                case GGML_UNARY_OP_GELU:
-                case GGML_UNARY_OP_GELU_ERF:
-                case GGML_UNARY_OP_GELU_QUICK:
-                case GGML_UNARY_OP_SILU:
-                case GGML_UNARY_OP_XIELU:
+                స్థితి GGML_UNARY_OP_GELU:
+                స్థితి GGML_UNARY_OP_GELU_ERF:
+                స్థితి GGML_UNARY_OP_GELU_శీఘ్ర:
+                స్థితి GGML_UNARY_OP_SILU:
+                స్థితి GGML_UNARY_OP_XIELU:
                     {
-                        n_tasks = n_threads;
-                    } break;
-                default:
+                        n_tasks = n_దారాలు;
+                    } ఆపు;
+                అప్రమేయ:
                     GGML_ABORT("fatal error");
             }
-            break;
-        case GGML_OP_GLU:
-            switch (ggml_get_glu_op(node)) {
-                case GGML_GLU_OP_REGLU:
-                case GGML_GLU_OP_GEGLU:
-                case GGML_GLU_OP_SWIGLU:
-                case GGML_GLU_OP_SWIGLU_OAI:
-                case GGML_GLU_OP_GEGLU_ERF:
-                case GGML_GLU_OP_GEGLU_QUICK:
-                case GGML_GLU_OP_SWIGLU_CLAMP:
+            ఆపు;
+        స్థితి GGML_OP_GLU:
+            ఎంపిక (ggml_get_glu_op(కణుపు)) {
+                స్థితి GGML_GLU_OP_REGLU:
+                స్థితి GGML_GLU_OP_GEGLU:
+                స్థితి GGML_GLU_OP_SWIGLU:
+                స్థితి GGML_GLU_OP_SWIGLU_OAI:
+                స్థితి GGML_GLU_OP_GEGLU_ERF:
+                స్థితి GGML_GLU_OP_GEGLU_శీఘ్ర:
+                స్థితి GGML_GLU_OP_SWIGLU_CLAMP:
                     {
-                        n_tasks = n_threads;
-                    } break;
-                default:
+                        n_tasks = n_దారాలు;
+                    } ఆపు;
+                అప్రమేయ:
                     GGML_ABORT("fatal error");
             }
-            break;
-        case GGML_OP_SILU_BACK:
-        case GGML_OP_MUL:
-        case GGML_OP_DIV:
-        case GGML_OP_NORM:
-        case GGML_OP_RMS_NORM:
-        case GGML_OP_RMS_NORM_BACK:
-        case GGML_OP_L2_NORM:
-        case GGML_OP_GROUP_NORM:
-        case GGML_OP_CONCAT:
-        case GGML_OP_MUL_MAT:
-        case GGML_OP_MUL_MAT_ID:
-        case GGML_OP_OUT_PROD:
-        case GGML_OP_SET_ROWS:
+            ఆపు;
+        స్థితి GGML_OP_SILU_వెనుక:
+        స్థితి GGML_OP_MUL:
+        స్థితి GGML_OP_DIV:
+        స్థితి GGML_OP_NORM:
+        స్థితి GGML_OP_RMS_NORM:
+        స్థితి GGML_OP_RMS_NORM_వెనుక:
+        స్థితి GGML_OP_L2_NORM:
+        స్థితి GGML_OP_సమూహం_NORM:
+        స్థితి GGML_OP_CONCAT:
+        స్థితి GGML_OP_MUL_MAT:
+        స్థితి GGML_OP_MUL_MAT_ID:
+        స్థితి GGML_OP_బహిర్గతం_PROD:
+        స్థితి GGML_OP_సమితి_అడ్డువరుసలు:
             {
-                n_tasks = n_threads;
-            } break;
-        case GGML_OP_GET_ROWS:
+                n_tasks = n_దారాలు;
+            } ఆపు;
+        స్థితి GGML_OP_GET_అడ్డువరుసలు:
             {
                 // FIXME: get_rows can use additional threads, but the cost of launching additional threads
                 // decreases performance with GPU offloading
                 //n_tasks = n_threads;
                 n_tasks = 1;
-            } break;
-        case GGML_OP_SCALE:
-        case GGML_OP_SET:
-        case GGML_OP_RESHAPE:
-        case GGML_OP_VIEW:
-        case GGML_OP_PERMUTE:
-        case GGML_OP_TRANSPOSE:
-        case GGML_OP_GET_ROWS_BACK:
-        case GGML_OP_DIAG:
+            } ఆపు;
+        స్థితి GGML_OP_SCALE:
+        స్థితి GGML_OP_సమితి:
+        స్థితి GGML_OP_RESHAPE:
+        స్థితి GGML_OP_VIEW:
+        స్థితి GGML_OP_క్రమమార్పు:
+        స్థితి GGML_OP_TRANSPOSE:
+        స్థితి GGML_OP_GET_అడ్డువరుసలు_వెనుక:
+        స్థితి GGML_OP_DIAG:
             {
                 n_tasks = 1;
-            } break;
-        case GGML_OP_DIAG_MASK_ZERO:
-        case GGML_OP_DIAG_MASK_INF:
-        case GGML_OP_SOFT_MAX_BACK:
-        case GGML_OP_ROPE:
-        case GGML_OP_ROPE_BACK:
-        case GGML_OP_ADD_REL_POS:
+            } ఆపు;
+        స్థితి GGML_OP_DIAG_ముసుగు_ZERO:
+        స్థితి GGML_OP_DIAG_ముసుగు_INF:
+        స్థితి GGML_OP_SOFT_MAX_వెనుక:
+        స్థితి GGML_OP_ROPE:
+        స్థితి GGML_OP_ROPE_వెనుక:
+        స్థితి GGML_OP_కూడు_REL_POS:
             {
-                n_tasks = n_threads;
-            } break;
-        case GGML_OP_CLAMP:
+                n_tasks = n_దారాలు;
+            } ఆపు;
+        స్థితి GGML_OP_CLAMP:
             {
                 n_tasks = 1; //TODO
-            } break;
-        case GGML_OP_SOFT_MAX:
+            } ఆపు;
+        స్థితి GGML_OP_SOFT_MAX:
             {
-                n_tasks = MIN(n_threads, ggml_nrows(node->src[0]));
-            } break;
-        case GGML_OP_IM2COL:
-        case GGML_OP_IM2COL_BACK:
-        case GGML_OP_IM2COL_3D:
-        case GGML_OP_CONV_2D:
-        case GGML_OP_CONV_3D:
-        case GGML_OP_CONV_2D_DW:
-        case GGML_OP_COL2IM_1D:
-        case GGML_OP_CONV_TRANSPOSE_1D:
-        case GGML_OP_CONV_TRANSPOSE_2D:
+                n_tasks = MIN(n_దారాలు, ggml_nrows(కణుపు->src[0]));
+            } ఆపు;
+        స్థితి GGML_OP_IM2_నిలువు:
+        స్థితి GGML_OP_IM2_నిలువు_వెనుక:
+        స్థితి GGML_OP_IM2_నిలువు_3_D:
+        స్థితి GGML_OP_CONV_2D:
+        స్థితి GGML_OP_CONV_3D:
+        స్థితి GGML_OP_CONV_2D_DW:
+        స్థితి GGML_OP_COL2IM_1D:
+        స్థితి GGML_OP_CONV_TRANSPOSE_1D:
+        స్థితి GGML_OP_CONV_TRANSPOSE_2D:
             {
-                n_tasks = n_threads;
-            } break;
-        case GGML_OP_POOL_1D:
-        case GGML_OP_POOL_2D:
-        case GGML_OP_POOL_2D_BACK:
-            {
-                n_tasks = 1;
-            } break;
-        case GGML_OP_UPSCALE:
-        case GGML_OP_PAD:
-        case GGML_OP_PAD_REFLECT_1D:
-        case GGML_OP_ROLL:
-        case GGML_OP_ARANGE:
-        case GGML_OP_TIMESTEP_EMBEDDING:
-        case GGML_OP_ARGSORT:
-        case GGML_OP_TOP_K:
-        case GGML_OP_FLASH_ATTN_EXT:
-        case GGML_OP_FLASH_ATTN_BACK:
-        case GGML_OP_SSM_CONV:
-        case GGML_OP_SSM_SCAN:
-        case GGML_OP_LIGHTNING_INDEXER:
-            {
-                n_tasks = n_threads;
-            } break;
-        case GGML_OP_RWKV_WKV6:
-        case GGML_OP_GATED_LINEAR_ATTN:
-        case GGML_OP_RWKV_WKV7:
-            {
-                const int64_t n_heads = node->src[1]->ne[1];
-                n_tasks = MIN(n_threads, n_heads);
-            } break;
-        case GGML_OP_WIN_PART:
-        case GGML_OP_WIN_UNPART:
-        case GGML_OP_GET_REL_POS:
+                n_tasks = n_దారాలు;
+            } ఆపు;
+        స్థితి GGML_OP_POOL_1D:
+        స్థితి GGML_OP_POOL_2D:
+        స్థితి GGML_OP_POOL_2_D_వెనుక:
             {
                 n_tasks = 1;
-            } break;
-        case GGML_OP_MAP_CUSTOM1:
+            } ఆపు;
+        స్థితి GGML_OP_UPSCALE:
+        స్థితి GGML_OP_PAD:
+        స్థితి GGML_OP_PAD_REFLECT_1D:
+        స్థితి GGML_OP_ROLL:
+        స్థితి GGML_OP_ARANGE:
+        స్థితి GGML_OP_TIMESTEP_EMBEDDING:
+        స్థితి GGML_OP_ARGSORT:
+        స్థితి GGML_OP_శిఖరం_K:
+        స్థితి GGML_OP_FLASH_ATTN_EXT:
+        స్థితి GGML_OP_FLASH_ATTN_వెనుక:
+        స్థితి GGML_OP_SSM_CONV:
+        స్థితి GGML_OP_SSM_పరిశీలన:
+        స్థితి GGML_OP_LIGHTNING_INDEXER:
             {
-                struct ggml_map_custom1_op_params p;
-                memcpy(&p, node->op_params, sizeof(p));
-                if (p.n_tasks == GGML_N_TASKS_MAX) {
-                    n_tasks = n_threads;
-                } else {
-                    n_tasks = MIN(p.n_tasks, n_threads);
-                }
-            } break;
-        case GGML_OP_MAP_CUSTOM2:
+                n_tasks = n_దారాలు;
+            } ఆపు;
+        స్థితి GGML_OP_RWKV_WKV6:
+        స్థితి GGML_OP_GATED_రేఖీయ_ATTN:
+        స్థితి GGML_OP_RWKV_WKV7:
             {
-                struct ggml_map_custom2_op_params p;
-                memcpy(&p, node->op_params, sizeof(p));
-                if (p.n_tasks == GGML_N_TASKS_MAX) {
-                    n_tasks = n_threads;
-                } else {
-                    n_tasks = MIN(p.n_tasks, n_threads);
-                }
-            } break;
-        case GGML_OP_MAP_CUSTOM3:
-            {
-                struct ggml_map_custom3_op_params p;
-                memcpy(&p, node->op_params, sizeof(p));
-                if (p.n_tasks == GGML_N_TASKS_MAX) {
-                    n_tasks = n_threads;
-                } else {
-                    n_tasks = MIN(p.n_tasks, n_threads);
-                }
-            } break;
-        case GGML_OP_CUSTOM:
-            {
-                struct ggml_custom_op_params p;
-                memcpy(&p, node->op_params, sizeof(p));
-                if (p.n_tasks == GGML_N_TASKS_MAX) {
-                    n_tasks = n_threads;
-                } else {
-                    n_tasks = MIN(p.n_tasks, n_threads);
-                }
-            } break;
-        case GGML_OP_CROSS_ENTROPY_LOSS:
-        case GGML_OP_CROSS_ENTROPY_LOSS_BACK:
-        case GGML_OP_OPT_STEP_ADAMW:
-        case GGML_OP_OPT_STEP_SGD:
-            {
-                n_tasks = n_threads;
-            } break;
-        case GGML_OP_NONE:
+                స్థిరరాశి int64_t n_heads = కణుపు->src[1]->ne[1];
+                n_tasks = MIN(n_దారాలు, n_heads);
+            } ఆపు;
+        స్థితి GGML_OP_WIN_PART:
+        స్థితి GGML_OP_WIN_UNPART:
+        స్థితి GGML_OP_GET_REL_POS:
             {
                 n_tasks = 1;
-            } break;
-        case GGML_OP_COUNT:
+            } ఆపు;
+        స్థితి GGML_OP_MAP_CUSTOM1:
+            {
+                నిర్మాణం ggml_map_custom1_op_params p;
+                జ్ఞాపకం_నకలు(&p, కణుపు->op_params, పరిమాణం(p));
+                ఒకవేళ (p.n_tasks == GGML_N_TASKS_MAX) {
+                    n_tasks = n_దారాలు;
+                } లేకపోతే {
+                    n_tasks = MIN(p.n_tasks, n_దారాలు);
+                }
+            } ఆపు;
+        స్థితి GGML_OP_MAP_CUSTOM2:
+            {
+                నిర్మాణం ggml_map_custom2_op_params p;
+                జ్ఞాపకం_నకలు(&p, కణుపు->op_params, పరిమాణం(p));
+                ఒకవేళ (p.n_tasks == GGML_N_TASKS_MAX) {
+                    n_tasks = n_దారాలు;
+                } లేకపోతే {
+                    n_tasks = MIN(p.n_tasks, n_దారాలు);
+                }
+            } ఆపు;
+        స్థితి GGML_OP_MAP_CUSTOM3:
+            {
+                నిర్మాణం ggml_map_custom3_op_params p;
+                జ్ఞాపకం_నకలు(&p, కణుపు->op_params, పరిమాణం(p));
+                ఒకవేళ (p.n_tasks == GGML_N_TASKS_MAX) {
+                    n_tasks = n_దారాలు;
+                } లేకపోతే {
+                    n_tasks = MIN(p.n_tasks, n_దారాలు);
+                }
+            } ఆపు;
+        స్థితి GGML_OP_CUSTOM:
+            {
+                నిర్మాణం ggml_custom_op_params p;
+                జ్ఞాపకం_నకలు(&p, కణుపు->op_params, పరిమాణం(p));
+                ఒకవేళ (p.n_tasks == GGML_N_TASKS_MAX) {
+                    n_tasks = n_దారాలు;
+                } లేకపోతే {
+                    n_tasks = MIN(p.n_tasks, n_దారాలు);
+                }
+            } ఆపు;
+        స్థితి GGML_OP_CROSS_ENTROPY_LOSS:
+        స్థితి GGML_OP_CROSS_ENTROPY_LOSS_వెనుక:
+        స్థితి GGML_OP_OPT_అడుగు_ADAMW:
+        స్థితి GGML_OP_OPT_అడుగు_SGD:
+            {
+                n_tasks = n_దారాలు;
+            } ఆపు;
+        స్థితి GGML_OP_NONE:
+            {
+                n_tasks = 1;
+            } ఆపు;
+        స్థితి GGML_OP_లెక్క:
             {
                 GGML_ABORT("fatal error");
             }
-        default:
+        అప్రమేయ:
             {
                 fprintf(stderr, "%s: op not implemented: ", __func__);
-                if (node->op < GGML_OP_COUNT) {
-                    fprintf(stderr, "%s\n", ggml_op_name(node->op));
-                } else {
-                    fprintf(stderr, "%d\n", node->op);
+                ఒకవేళ (కణుపు->op < GGML_OP_లెక్క) {
+                    fprintf(stderr, "%s\n", ggml_op_name(కణుపు->op));
+                } లేకపోతే {
+                    fprintf(stderr, "%d\n", కణుపు->op);
                 }
                 GGML_ABORT("fatal error");
             }
     }
 
-    assert(n_tasks > 0);
+    ప్రతిజ్ఞా(n_tasks > 0);
 
-    return n_tasks;
+    తిరిగి n_tasks;
 }
 
-static thread_ret_t ggml_graph_compute_secondary_thread(void* data);
+స్థిర thread_ret_t ggml_లేఖాచిత్రం_compute_secondary_thread(శూన్య* దత్తాంశం);
 
-#if defined(_WIN32)
-#include "windows.h"
+#ఒకవేళ defined(_WIN32)
+#అన్తర్భావ "windows.h"
 
 // TODO: support > 64 CPUs
-static bool ggml_thread_apply_affinity(bool * mask) {
+స్థిర bool ggml_thread_apply_affinity(bool * ముసుగు) {
     HANDLE    h = GetCurrentThread();
     uint64_t  bitmask = 0ULL;
 
-    assert(GGML_MAX_N_THREADS >= 64);
+    ప్రతిజ్ఞా(GGML_MAX_N_దారాలు >= 64);
 
-    for (int32_t i = 0; i < 8; i++) {
+    కొరకు (int32_t i = 0; i < 8; i++) {
         int32_t idx = i * 8;
         uint8_t val = 0;
-        val |= mask[idx + 0] << 0;
-        val |= mask[idx + 1] << 1;
-        val |= mask[idx + 2] << 2;
-        val |= mask[idx + 3] << 3;
-        val |= mask[idx + 4] << 4;
-        val |= mask[idx + 5] << 5;
-        val |= mask[idx + 6] << 6;
-        val |= mask[idx + 7] << 7;
+        val |= ముసుగు[idx + 0] << 0;
+        val |= ముసుగు[idx + 1] << 1;
+        val |= ముసుగు[idx + 2] << 2;
+        val |= ముసుగు[idx + 3] << 3;
+        val |= ముసుగు[idx + 4] << 4;
+        val |= ముసుగు[idx + 5] << 5;
+        val |= ముసుగు[idx + 6] << 6;
+        val |= ముసుగు[idx + 7] << 7;
         bitmask |= (uint64_t)val << idx;
     }
 
-    for (int32_t i = 64; i < GGML_MAX_N_THREADS; i++) {
-        if (mask[i]) {
+    కొరకు (int32_t i = 64; i < GGML_MAX_N_దారాలు; i++) {
+        ఒకవేళ (ముసుగు[i]) {
             fprintf(stderr, "warn: setting thread-affinity for > 64 CPUs isn't supported on windows!\n");
-            break;
+            ఆపు;
         }
     }
 
     DWORD_PTR m = (DWORD_PTR)bitmask;
 
-    m = SetThreadAffinityMask(h, m);
+    m = సమితి_Thread_Affinity_ముసుగు(h, m);
 
-    return m != 0;
+    తిరిగి m != 0;
 }
 
-static bool ggml_thread_apply_priority(int32_t prio) {
+స్థిర bool ggml_thread_apply_ప్రాధాన్యత(int32_t prio) {
     // Note that on Windows the Process Priority Class must be updated in order to set Thread priority.
     // This is up to the applications.
-    DWORD p = THREAD_PRIORITY_NORMAL;
-    switch (prio) {
-        case GGML_SCHED_PRIO_LOW:      p = THREAD_PRIORITY_BELOW_NORMAL;  break;
-        case GGML_SCHED_PRIO_NORMAL:   p = THREAD_PRIORITY_NORMAL;        break;
-        case GGML_SCHED_PRIO_MEDIUM:   p = THREAD_PRIORITY_ABOVE_NORMAL;  break;
-        case GGML_SCHED_PRIO_HIGH:     p = THREAD_PRIORITY_HIGHEST;       break;
-        case GGML_SCHED_PRIO_REALTIME: p = THREAD_PRIORITY_TIME_CRITICAL; break;
+    DWORD p = THREAD_ప్రాధాన్యత_సాధారణ;
+    ఎంపిక (prio) {
+        స్థితి GGML_SCHED_PRIO_దిగువ:      p = THREAD_ప్రాధాన్యత_క్రింద_సాధారణ;  ఆపు;
+        స్థితి GGML_SCHED_PRIO_సాధారణ:   p = THREAD_ప్రాధాన్యత_సాధారణ;        ఆపు;
+        స్థితి GGML_SCHED_PRIO_MEDIUM:   p = THREAD_ప్రాధాన్యత_ABOVE_సాధారణ;  ఆపు;
+        స్థితి GGML_SCHED_PRIO_ఎగువ:     p = THREAD_ప్రాధాన్యత_HIGHEST;       ఆపు;
+        స్థితి GGML_SCHED_PRIO_REALTIME: p = THREAD_ప్రాధాన్యత_సమయం_CRITICAL; ఆపు;
     }
 
-    if (prio != GGML_SCHED_PRIO_LOW) {
+    ఒకవేళ (prio != GGML_SCHED_PRIO_దిగువ) {
         // Tell Windows that this thread should not be throttled (needs its own CPU core).
         // Newer Windows 11 versions aggressively park (offline) CPU cores and often place
         // all our threads onto the first 4 cores which results in terrible performance with
         // n_threads > 4
-        #if _WIN32_WINNT >= 0x0602
+        #ఒకవేళ _WIN32_WINNT >= 0x0602
         THREAD_POWER_THROTTLING_STATE t;
-        ZeroMemory(&t, sizeof(t));
-        t.Version     = THREAD_POWER_THROTTLING_CURRENT_VERSION;
-        t.ControlMask = THREAD_POWER_THROTTLING_EXECUTION_SPEED;
-        t.StateMask   = 0;
+        Zero_జ్ఞాపకం(&t, పరిమాణం(t));
+        t.సంస్కరణ     = THREAD_POWER_THROTTLING_CURRENT_సంస్కరణ;
+        t.Control_ముసుగు = THREAD_POWER_THROTTLING_EXECUTION_వేగం;
+        t.State_ముసుగు   = 0;
 
-        if (!SetThreadInformation(GetCurrentThread(), ThreadPowerThrottling, &t, sizeof(t))) {
-            GGML_LOG_DEBUG("failed to disable thread power throttling %d : (%d)\n", prio, (int) GetLastError());
-            return false;
+        ఒకవేళ (!సమితి_Thread_Information(GetCurrentThread(), ThreadPowerThrottling, &t, పరిమాణం(t))) {
+            GGML_LOG_DEBUG("failed to disable thread power throttling %d : (%d)\n", prio, (పూర్ణాంకం) Get_చివరి_Error());
+            తిరిగి false;
         }
-        #endif
+        #అయితే_ముగింపు
     }
 
-    if (prio == GGML_SCHED_PRIO_NORMAL) {
+    ఒకవేళ (prio == GGML_SCHED_PRIO_సాధారణ) {
         // Keep inherited policy/priority
-        return true;
+        తిరిగి true;
     }
 
-    if (!SetThreadPriority(GetCurrentThread(), p)) {
-        fprintf(stderr, "warn: failed to set thread priority %d : (%d)\n", prio, (int) GetLastError());
-        return false;
+    ఒకవేళ (!సమితి_Thread_ప్రాధాన్యత(GetCurrentThread(), p)) {
+        fprintf(stderr, "warn: failed to set thread priority %d : (%d)\n", prio, (పూర్ణాంకం) Get_చివరి_Error());
+        తిరిగి false;
     }
 
-    return true;
+    తిరిగి true;
 }
 
-#elif defined(__APPLE__)
-#include <sys/types.h>
-#include <sys/resource.h>
+#లేదావేళ defined(__APPLE__)
+#అన్తర్భావ <sys/types.h>
+#అన్తర్భావ <sys/resource.h>
 
-static bool ggml_thread_apply_affinity(const bool * mask) {
+స్థిర bool ggml_thread_apply_affinity(స్థిరరాశి bool * ముసుగు) {
     // Not supported on Apple platforms
-    UNUSED(mask);
-    return true;
+    వాడని(ముసుగు);
+    తిరిగి true;
 }
 
-static bool ggml_thread_apply_priority(int32_t prio) {
-    struct sched_param p;
+స్థిర bool ggml_thread_apply_ప్రాధాన్యత(int32_t prio) {
+    నిర్మాణం sched_param p;
     int32_t policy = SCHED_OTHER;
-    switch (prio) {
+    ఎంపిక (prio) {
         // TODO: there seems to be no way to set lower prio on Apple platforms
-        case GGML_SCHED_PRIO_LOW:      policy = SCHED_OTHER; p.sched_priority = 0;  break;
-        case GGML_SCHED_PRIO_NORMAL:   policy = SCHED_OTHER; p.sched_priority = 0;  break;
-        case GGML_SCHED_PRIO_MEDIUM:   policy = SCHED_FIFO;  p.sched_priority = 40; break;
-        case GGML_SCHED_PRIO_HIGH:     policy = SCHED_FIFO;  p.sched_priority = 80; break;
-        case GGML_SCHED_PRIO_REALTIME: policy = SCHED_FIFO;  p.sched_priority = 90; break;
+        స్థితి GGML_SCHED_PRIO_దిగువ:      policy = SCHED_OTHER; p.sched_ప్రాధాన్యత = 0;  ఆపు;
+        స్థితి GGML_SCHED_PRIO_సాధారణ:   policy = SCHED_OTHER; p.sched_ప్రాధాన్యత = 0;  ఆపు;
+        స్థితి GGML_SCHED_PRIO_MEDIUM:   policy = SCHED_FIFO;  p.sched_ప్రాధాన్యత = 40; ఆపు;
+        స్థితి GGML_SCHED_PRIO_ఎగువ:     policy = SCHED_FIFO;  p.sched_ప్రాధాన్యత = 80; ఆపు;
+        స్థితి GGML_SCHED_PRIO_REALTIME: policy = SCHED_FIFO;  p.sched_ప్రాధాన్యత = 90; ఆపు;
     }
 
-    if (prio == GGML_SCHED_PRIO_NORMAL) {
+    ఒకవేళ (prio == GGML_SCHED_PRIO_సాధారణ) {
         // Keep inherited policy/priority
-        return true;
+        తిరిగి true;
     }
 
     int32_t err = pthread_setschedparam(pthread_self(), policy, &p);
-    if (err != 0) {
+    ఒకవేళ (err != 0) {
         fprintf(stderr, "warn: failed to set thread priority %d : %s (%d)\n", prio, strerror(err), err);
-        return false;
+        తిరిగి false;
     }
 
-    return true;
+    తిరిగి true;
 }
 
-#elif defined(__linux__)
+#లేదావేళ defined(__linux__)
 // TODO: this may not work on BSD, to be verified
 
-static bool ggml_thread_apply_affinity(const bool * mask) {
-    cpu_set_t cpuset;
-    int err;
+స్థిర bool ggml_thread_apply_affinity(స్థిరరాశి bool * ముసుగు) {
+    cpu_సమితి_t cpuset;
+    పూర్ణాంకం err;
 
     CPU_ZERO(&cpuset);
 
-    for (uint32_t i = 0; i < GGML_MAX_N_THREADS; i++) {
-        if (mask[i]) {
+    కొరకు (uint32_t i = 0; i < GGML_MAX_N_దారాలు; i++) {
+        ఒకవేళ (ముసుగు[i]) {
             GGML_PRINT_DEBUG("Thread %lx: adding %d to cpuset\n", pthread_self(), i);
-            CPU_SET(i, &cpuset);
+            CPU_సమితి(i, &cpuset);
         }
     }
 
-#ifdef __ANDROID__
-    err = sched_setaffinity(0, sizeof(cpuset), &cpuset);
-    if (err < 0) {
+#నిర్వచితమైతే __ANDROID__
+    err = sched_setaffinity(0, పరిమాణం(cpuset), &cpuset);
+    ఒకవేళ (err < 0) {
         err = errno;
     }
-#else
-    err = pthread_setaffinity_np(pthread_self(), sizeof(cpuset), &cpuset);
-#endif
-    if (err != 0) {
-        fprintf(stderr, "warn: failed to set affinity mask 0x%llx : %s (%d)\n", (unsigned long long)mask, strerror(err), err);
-        return false;
+#లేకపోతే
+    err = pthread_setaffinity_np(pthread_self(), పరిమాణం(cpuset), &cpuset);
+#అయితే_ముగింపు
+    ఒకవేళ (err != 0) {
+        fprintf(stderr, "warn: failed to set affinity mask 0x%llx : %s (%d)\n", (గుర్తులేని దీర్ఘ దీర్ఘ)ముసుగు, strerror(err), err);
+        తిరిగి false;
     }
 
-    return true;
+    తిరిగి true;
 }
 
-static bool ggml_thread_apply_priority(int32_t prio) {
-    struct sched_param p;
+స్థిర bool ggml_thread_apply_ప్రాధాన్యత(int32_t prio) {
+    నిర్మాణం sched_param p;
     int32_t policy = SCHED_OTHER;
-    switch (prio) {
-        case GGML_SCHED_PRIO_LOW:      policy = SCHED_BATCH; p.sched_priority = 0;  break;
-        case GGML_SCHED_PRIO_NORMAL:   policy = SCHED_OTHER; p.sched_priority = 0;  break;
-        case GGML_SCHED_PRIO_MEDIUM:   policy = SCHED_FIFO;  p.sched_priority = 40; break;
-        case GGML_SCHED_PRIO_HIGH:     policy = SCHED_FIFO;  p.sched_priority = 80; break;
-        case GGML_SCHED_PRIO_REALTIME: policy = SCHED_FIFO;  p.sched_priority = 90; break;
+    ఎంపిక (prio) {
+        స్థితి GGML_SCHED_PRIO_దిగువ:      policy = SCHED_BATCH; p.sched_ప్రాధాన్యత = 0;  ఆపు;
+        స్థితి GGML_SCHED_PRIO_సాధారణ:   policy = SCHED_OTHER; p.sched_ప్రాధాన్యత = 0;  ఆపు;
+        స్థితి GGML_SCHED_PRIO_MEDIUM:   policy = SCHED_FIFO;  p.sched_ప్రాధాన్యత = 40; ఆపు;
+        స్థితి GGML_SCHED_PRIO_ఎగువ:     policy = SCHED_FIFO;  p.sched_ప్రాధాన్యత = 80; ఆపు;
+        స్థితి GGML_SCHED_PRIO_REALTIME: policy = SCHED_FIFO;  p.sched_ప్రాధాన్యత = 90; ఆపు;
     }
 
-    if (prio == GGML_SCHED_PRIO_NORMAL) {
+    ఒకవేళ (prio == GGML_SCHED_PRIO_సాధారణ) {
         // Keep inherited policy/priority
-        return true;
+        తిరిగి true;
     }
 
     int32_t err = pthread_setschedparam(pthread_self(), policy, &p);
-    if (err != 0) {
+    ఒకవేళ (err != 0) {
         fprintf(stderr, "warn: failed to set thread priority %d : %s (%d)\n", prio, strerror(err), err);
-        return false;
+        తిరిగి false;
     }
 
-    return true;
+    తిరిగి true;
 }
 
-#else // unsupported platforms
+#లేకపోతే // unsupported platforms
 
-static bool ggml_thread_apply_affinity(const bool * mask) {
-    UNUSED(mask);
-    return true;
+స్థిర bool ggml_thread_apply_affinity(స్థిరరాశి bool * ముసుగు) {
+    వాడని(ముసుగు);
+    తిరిగి true;
 }
 
-static bool ggml_thread_apply_priority(int32_t prio) {
-    UNUSED(prio);
-    return true;
+స్థిర bool ggml_thread_apply_ప్రాధాన్యత(int32_t prio) {
+    వాడని(prio);
+    తిరిగి true;
 }
 
-#endif
+#అయితే_ముగింపు
 
-static bool ggml_thread_cpumask_is_valid(const bool * mask) {
-    for (int i = 0; i < GGML_MAX_N_THREADS; i++) {
-        if (mask[i]) { return true; }
+స్థిర bool ggml_thread_cpumask_is_valid(స్థిరరాశి bool * ముసుగు) {
+    కొరకు (పూర్ణాంకం i = 0; i < GGML_MAX_N_దారాలు; i++) {
+        ఒకవేళ (ముసుగు[i]) { తిరిగి true; }
     }
-    return false;
+    తిరిగి false;
 }
 
-static void ggml_thread_cpumask_next(const bool * global_mask, bool * local_mask, bool strict, int32_t* iter) {
-    if (!strict) {
-        memcpy(local_mask, global_mask, GGML_MAX_N_THREADS);
-        return;
-    } else {
-        memset(local_mask, 0, GGML_MAX_N_THREADS);
-        int32_t base_idx = *iter;
-        for (int32_t i = 0; i < GGML_MAX_N_THREADS; i++) {
-            int32_t idx = base_idx + i;
-            if (idx >= GGML_MAX_N_THREADS) {
+స్థిర శూన్య ggml_thread_cpumask_తదుపరి(స్థిరరాశి bool * global_ముసుగు, bool * local_ముసుగు, bool strict, int32_t* iter) {
+    ఒకవేళ (!strict) {
+        జ్ఞాపకం_నకలు(local_ముసుగు, global_ముసుగు, GGML_MAX_N_దారాలు);
+        తిరిగి;
+    } లేకపోతే {
+        memset(local_ముసుగు, 0, GGML_MAX_N_దారాలు);
+        int32_t పునాది_idx = *iter;
+        కొరకు (int32_t i = 0; i < GGML_MAX_N_దారాలు; i++) {
+            int32_t idx = పునాది_idx + i;
+            ఒకవేళ (idx >= GGML_MAX_N_దారాలు) {
                 // Just a cheaper modulo
-                idx -= GGML_MAX_N_THREADS;
+                idx -= GGML_MAX_N_దారాలు;
             }
-            if (global_mask[idx]) {
-                local_mask[idx] = 1;
+            ఒకవేళ (global_ముసుగు[idx]) {
+                local_ముసుగు[idx] = 1;
                 *iter = idx + 1;
-                return;
+                తిరిగి;
             }
         }
     }
 }
 
-void ggml_threadpool_free(struct ggml_threadpool* threadpool) {
-    if (!threadpool) return;
+శూన్య ggml_threadpool_free(నిర్మాణం ggml_threadpool* threadpool) {
+    ఒకవేళ (!threadpool) తిరిగి;
 
-    const int n_threads = threadpool->n_threads;
+    స్థిరరాశి పూర్ణాంకం n_దారాలు = threadpool->n_దారాలు;
 
-#ifndef GGML_USE_OPENMP
-    struct ggml_compute_state* workers = threadpool->workers;
+#నిర్వచితం_కాకపోతే GGML_USE_OPENMP
+    నిర్మాణం ggml_compute_state* workers = threadpool->workers;
 
-    ggml_mutex_lock(&threadpool->mutex);
+    ggml_mutex_తాళం(&threadpool->mutex);
 
     threadpool->stop = true;
     threadpool->pause = false;
 
-    ggml_cond_broadcast(&threadpool->cond);
+    ggml_cond_ప్రసారం(&threadpool->cond);
     ggml_mutex_unlock(&threadpool->mutex);
 
-    for (int j = 1; j < n_threads; j++) {
-        int32_t rc = ggml_thread_join(workers[j].thrd, NULL);
+    కొరకు (పూర్ణాంకం j = 1; j < n_దారాలు; j++) {
+        int32_t rc = ggml_thread_join(workers[j].thrd, ఖాళీ);
         GGML_ASSERT(rc == GGML_EXIT_SUCCESS || rc == GGML_EXIT_ABORTED);
-        UNUSED(rc);
+        వాడని(rc);
     }
 
     ggml_mutex_destroy(&threadpool->mutex);
     ggml_cond_destroy(&threadpool->cond);
-#endif // GGML_USE_OPENMP
+#అయితే_ముగింపు // GGML_USE_OPENMP
 
-    const size_t workers_size = sizeof(struct ggml_compute_state) * n_threads;
-    ggml_aligned_free(threadpool->workers, workers_size);
-    ggml_aligned_free(threadpool, sizeof(struct ggml_threadpool));
+    స్థిరరాశి size_t workers_కొలత = పరిమాణం(నిర్మాణం ggml_compute_state) * n_దారాలు;
+    ggml_aligned_free(threadpool->workers, workers_కొలత);
+    ggml_aligned_free(threadpool, పరిమాణం(నిర్మాణం ggml_threadpool));
 }
 
-#ifndef GGML_USE_OPENMP
+#నిర్వచితం_కాకపోతే GGML_USE_OPENMP
 // pause/resume must be called under mutex
-static void ggml_threadpool_pause_locked(struct ggml_threadpool * threadpool) {
+స్థిర శూన్య ggml_threadpool_pause_locked(నిర్మాణం ggml_threadpool * threadpool) {
     GGML_PRINT_DEBUG("Pausing threadpool\n");
     threadpool->pause = true;
-    ggml_cond_broadcast(&threadpool->cond);
+    ggml_cond_ప్రసారం(&threadpool->cond);
 }
 
-static void ggml_threadpool_resume_locked(struct ggml_threadpool * threadpool) {
+స్థిర శూన్య ggml_threadpool_resume_locked(నిర్మాణం ggml_threadpool * threadpool) {
     GGML_PRINT_DEBUG("Resuming threadpool\n");
     threadpool->pause = false;
-    ggml_cond_broadcast(&threadpool->cond);
+    ggml_cond_ప్రసారం(&threadpool->cond);
 }
-#endif
+#అయితే_ముగింపు
 
-void ggml_threadpool_pause(struct ggml_threadpool * threadpool) {
-#ifndef GGML_USE_OPENMP
-    ggml_mutex_lock(&threadpool->mutex);
-    if (!threadpool->pause) {
+శూన్య ggml_threadpool_pause(నిర్మాణం ggml_threadpool * threadpool) {
+#నిర్వచితం_కాకపోతే GGML_USE_OPENMP
+    ggml_mutex_తాళం(&threadpool->mutex);
+    ఒకవేళ (!threadpool->pause) {
        ggml_threadpool_pause_locked(threadpool);
     }
     ggml_mutex_unlock(&threadpool->mutex);
-#else
-    UNUSED(threadpool);
-#endif
+#లేకపోతే
+    వాడని(threadpool);
+#అయితే_ముగింపు
 }
 
-void ggml_threadpool_resume(struct ggml_threadpool * threadpool) {
-#ifndef GGML_USE_OPENMP
-    ggml_mutex_lock(&threadpool->mutex);
-    if (threadpool->pause) {
+శూన్య ggml_threadpool_resume(నిర్మాణం ggml_threadpool * threadpool) {
+#నిర్వచితం_కాకపోతే GGML_USE_OPENMP
+    ggml_mutex_తాళం(&threadpool->mutex);
+    ఒకవేళ (threadpool->pause) {
        ggml_threadpool_resume_locked(threadpool);
     }
     ggml_mutex_unlock(&threadpool->mutex);
-#else
-    UNUSED(threadpool);
-#endif
+#లేకపోతే
+    వాడని(threadpool);
+#అయితే_ముగింపు
 }
 
-struct ggml_cplan ggml_graph_plan(
-          const struct ggml_cgraph * cgraph,
-                               int   n_threads,
-            struct ggml_threadpool * threadpool) {
+నిర్మాణం ggml_cplan ggml_లేఖాచిత్రం_plan(
+          స్థిరరాశి నిర్మాణం ggml_cgraph * cgraph,
+                               పూర్ణాంకం   n_దారాలు,
+            నిర్మాణం ggml_threadpool * threadpool) {
 
-    if (threadpool == NULL) {
+    ఒకవేళ (threadpool == ఖాళీ) {
         //GGML_PRINT_DEBUG("Threadpool is not specified. Will create a disposable threadpool : n_threads %d\n", n_threads);
     }
-    if (n_threads <= 0) {
-        n_threads = threadpool ? threadpool->n_threads : GGML_DEFAULT_N_THREADS;
+    ఒకవేళ (n_దారాలు <= 0) {
+        n_దారాలు = threadpool ? threadpool->n_దారాలు : GGML_DEFAULT_N_దారాలు;
     }
 
-#if defined(__EMSCRIPTEN__) && !defined(__EMSCRIPTEN_PTHREADS__)
+#ఒకవేళ defined(__EMSCRIPTEN__) && !defined(__EMSCRIPTEN_PTHREADS__)
     // Emscripten without pthreads support can only use a single thread
-    n_threads = 1;
-#endif
+    n_దారాలు = 1;
+#అయితే_ముగింపు
 
-#if defined(__wasi__)
+#ఒకవేళ defined(__wasi__)
     // WASI doesn't support parallelism yet
-    n_threads = 1;
-#endif
+    n_దారాలు = 1;
+#అయితే_ముగింపు
 
-    size_t work_size = 0;
+    size_t work_కొలత = 0;
 
-    struct ggml_cplan cplan;
-    memset(&cplan, 0, sizeof(struct ggml_cplan));
+    నిర్మాణం ggml_cplan cplan;
+    memset(&cplan, 0, పరిమాణం(నిర్మాణం ggml_cplan));
 
-    int max_tasks = 1;
+    పూర్ణాంకం max_tasks = 1;
 
     // thread scheduling for the different operations + work buffer size estimation
-    for (int i = 0; i < cgraph->n_nodes; i++) {
-        struct ggml_tensor * node = cgraph->nodes[i];
+    కొరకు (పూర్ణాంకం i = 0; i < cgraph->n_nodes; i++) {
+        నిర్మాణం ggml_tensor * కణుపు = cgraph->nodes[i];
 
-        const int n_tasks = ggml_get_n_tasks(node, n_threads);
+        స్థిరరాశి పూర్ణాంకం n_tasks = ggml_get_n_tasks(కణుపు, n_దారాలు);
 
         max_tasks = MAX(max_tasks, n_tasks);
 
         size_t cur = 0;
 
-        if (!ggml_cpu_extra_work_size(n_threads, node, &cur)) {
-            switch (node->op) {
-                case GGML_OP_CPY:
-                case GGML_OP_DUP:
+        ఒకవేళ (!ggml_cpu_extra_work_కొలత(n_దారాలు, కణుపు, &cur)) {
+            ఎంపిక (కణుపు->op) {
+                స్థితి GGML_OP_CPY:
+                స్థితి GGML_OP_DUP:
                     {
-                        if (ggml_is_quantized(node->type) ||
+                        ఒకవేళ (ggml_is_quantized(కణుపు->type) ||
                             // F16 -> BF16 and BF16 -> F16 copies go through intermediate F32
-                            (node->src[0]->type == GGML_TYPE_F16  && node->src[1] && node->src[1]->type == GGML_TYPE_BF16) ||
-                            (node->src[0]->type == GGML_TYPE_BF16 && node->src[1] && node->src[1]->type == GGML_TYPE_F16) ||
+                            (కణుపు->src[0]->type == GGML_TYPE_F16  && కణుపు->src[1] && కణుపు->src[1]->type == GGML_TYPE_BF16) ||
+                            (కణుపు->src[0]->type == GGML_TYPE_BF16 && కణుపు->src[1] && కణుపు->src[1]->type == GGML_TYPE_F16) ||
                             // conversion between F32 and I32
-                            (node->src[0]->type == GGML_TYPE_F32 && node->src[1] && node->src[1]->type == GGML_TYPE_I32) ||
-                            (node->src[0]->type == GGML_TYPE_I32 && node->src[1] && node->src[1]->type == GGML_TYPE_F32)) {
-                            cur = ggml_type_size(GGML_TYPE_F32) * node->ne[0] * n_tasks;
+                            (కణుపు->src[0]->type == GGML_TYPE_F32 && కణుపు->src[1] && కణుపు->src[1]->type == GGML_TYPE_I32) ||
+                            (కణుపు->src[0]->type == GGML_TYPE_I32 && కణుపు->src[1] && కణుపు->src[1]->type == GGML_TYPE_F32)) {
+                            cur = ggml_type_కొలత(GGML_TYPE_F32) * కణుపు->ne[0] * n_tasks;
                         }
-                    } break;
-                case GGML_OP_ADD:
-                case GGML_OP_ADD_ID:
-                case GGML_OP_ADD1:
+                    } ఆపు;
+                స్థితి GGML_OP_కూడు:
+                స్థితి GGML_OP_కూడు_ID:
+                స్థితి GGML_OP_ADD1:
                     {
-                        if (ggml_is_quantized(node->src[0]->type)) {
-                            cur = ggml_type_size(GGML_TYPE_F32) * node->src[0]->ne[0] * n_tasks;
+                        ఒకవేళ (ggml_is_quantized(కణుపు->src[0]->type)) {
+                            cur = ggml_type_కొలత(GGML_TYPE_F32) * కణుపు->src[0]->ne[0] * n_tasks;
                         }
-                    } break;
-                case GGML_OP_ACC:
+                    } ఆపు;
+                స్థితి GGML_OP_ACC:
                     {
-                        if (ggml_is_quantized(node->src[0]->type)) {
-                            cur = ggml_type_size(GGML_TYPE_F32) * node->src[1]->ne[0] * n_tasks;
+                        ఒకవేళ (ggml_is_quantized(కణుపు->src[0]->type)) {
+                            cur = ggml_type_కొలత(GGML_TYPE_F32) * కణుపు->src[1]->ne[0] * n_tasks;
                         }
-                    } break;
-                case GGML_OP_COUNT_EQUAL:
+                    } ఆపు;
+                స్థితి GGML_OP_లెక్క_EQUAL:
                     {
-                        cur = ggml_type_size(node->type)*n_tasks;
-                    } break;
-                case GGML_OP_MUL_MAT:
+                        cur = ggml_type_కొలత(కణుపు->type)*n_tasks;
+                    } ఆపు;
+                స్థితి GGML_OP_MUL_MAT:
                     {
-                        const enum ggml_type vec_dot_type = type_traits_cpu[node->src[0]->type].vec_dot_type;
-                        if (node->src[1]->type != vec_dot_type) {
-                            cur = ggml_row_size(vec_dot_type, ggml_nelements(node->src[1]));
+                        స్థిరరాశి గణన ggml_type vec_dot_type = type_traits_cpu[కణుపు->src[0]->type].vec_dot_type;
+                        ఒకవేళ (కణుపు->src[1]->type != vec_dot_type) {
+                            cur = ggml_అడ్డువరుస_కొలత(vec_dot_type, ggml_nelements(కణుపు->src[1]));
                         }
                         // Workspace for tiled (see tiled.h)
                         cur = GGML_PAD(cur, 64);
-                        cur += ggml_tiled_wdata_size(n_tasks, node);
-                    } break;
-                case GGML_OP_MUL_MAT_ID:
+                        cur += ggml_tiled_wdata_కొలత(n_tasks, కణుపు);
+                    } ఆపు;
+                స్థితి GGML_OP_MUL_MAT_ID:
                     {
                         cur = 0;
-                        const struct ggml_tensor * src0 = node->src[0];
-                        const struct ggml_tensor * src1 = node->src[1];
-                        const struct ggml_tensor * ids = node->src[2];
-                        const enum ggml_type vec_dot_type = type_traits_cpu[src0->type].vec_dot_type;
-                        const int n_as = src0->ne[2];
+                        స్థిరరాశి నిర్మాణం ggml_tensor * src0 = కణుపు->src[0];
+                        స్థిరరాశి నిర్మాణం ggml_tensor * src1 = కణుపు->src[1];
+                        స్థిరరాశి నిర్మాణం ggml_tensor * ids = కణుపు->src[2];
+                        స్థిరరాశి గణన ggml_type vec_dot_type = type_traits_cpu[src0->type].vec_dot_type;
+                        స్థిరరాశి పూర్ణాంకం n_as = src0->ne[2];
                         // src1
-                        if (src1->type != vec_dot_type) {
-                            cur += ggml_row_size(vec_dot_type, ggml_nelements(src1)) + sizeof(int64_t);
+                        ఒకవేళ (src1->type != vec_dot_type) {
+                            cur += ggml_అడ్డువరుస_కొలత(vec_dot_type, ggml_nelements(src1)) + పరిమాణం(int64_t);
                         }
                         // matrix_row_counts
-                        cur += n_as * sizeof(int64_t) + sizeof(int64_t);
+                        cur += n_as * పరిమాణం(int64_t) + పరిమాణం(int64_t);
                         // matrix_rows
-                        cur += n_as*ids->ne[0]*ids->ne[1]*sizeof(struct mmid_row_mapping) + sizeof(int64_t);
+                        cur += n_as*ids->ne[0]*ids->ne[1]*పరిమాణం(నిర్మాణం mmid_అడ్డువరుస_mapping) + పరిమాణం(int64_t);
                         // atomic_current_chunk
-                        cur += CACHE_LINE_SIZE*n_as + CACHE_LINE_SIZE;
+                        cur += CACHE_పంక్తి_కొలత*n_as + CACHE_పంక్తి_కొలత;
                         // Workspace for tiled (see tiled.h)
                         cur = GGML_PAD(cur, 64);
-                        cur += ggml_tiled_wdata_size(n_tasks, node);
-                    } break;
-                case GGML_OP_OUT_PROD:
+                        cur += ggml_tiled_wdata_కొలత(n_tasks, కణుపు);
+                    } ఆపు;
+                స్థితి GGML_OP_బహిర్గతం_PROD:
                     {
-                        if (ggml_is_quantized(node->src[0]->type) ||
-                            node->src[0]->type == GGML_TYPE_F16) {
-                            cur = ggml_type_size(GGML_TYPE_F32) * node->src[0]->ne[0] * n_tasks;
+                        ఒకవేళ (ggml_is_quantized(కణుపు->src[0]->type) ||
+                            కణుపు->src[0]->type == GGML_TYPE_F16) {
+                            cur = ggml_type_కొలత(GGML_TYPE_F32) * కణుపు->src[0]->ne[0] * n_tasks;
                         }
-                    } break;
-                case GGML_OP_SET_ROWS:
+                    } ఆపు;
+                స్థితి GGML_OP_సమితి_అడ్డువరుసలు:
                     {
-                        if (node->src[0]->type == GGML_TYPE_F16 && node->type != GGML_TYPE_F16) {
-                            cur = ggml_type_size(GGML_TYPE_F32) * node->src[0]->ne[0] * n_tasks;
+                        ఒకవేళ (కణుపు->src[0]->type == GGML_TYPE_F16 && కణుపు->type != GGML_TYPE_F16) {
+                            cur = ggml_type_కొలత(GGML_TYPE_F32) * కణుపు->src[0]->ne[0] * n_tasks;
                         }
-                    } break;
-                case GGML_OP_SOFT_MAX:
-                case GGML_OP_ROPE:
-                case GGML_OP_ROPE_BACK:
+                    } ఆపు;
+                స్థితి GGML_OP_SOFT_MAX:
+                స్థితి GGML_OP_ROPE:
+                స్థితి GGML_OP_ROPE_వెనుక:
                     {
-                        cur = ggml_type_size(GGML_TYPE_F32) * node->ne[0] * n_tasks;
-                    } break;
-                case GGML_OP_CONV_TRANSPOSE_1D:
+                        cur = ggml_type_కొలత(GGML_TYPE_F32) * కణుపు->ne[0] * n_tasks;
+                    } ఆపు;
+                స్థితి GGML_OP_CONV_TRANSPOSE_1D:
                     {
-                        GGML_ASSERT(node->src[0]->ne[3] == 1);
-                        GGML_ASSERT(node->src[1]->ne[2] == 1);
-                        GGML_ASSERT(node->src[1]->ne[3] == 1);
+                        GGML_ASSERT(కణుపు->src[0]->ne[3] == 1);
+                        GGML_ASSERT(కణుపు->src[1]->ne[2] == 1);
+                        GGML_ASSERT(కణుపు->src[1]->ne[3] == 1);
 
-                        const int64_t ne00 = node->src[0]->ne[0];  // K
-                        const int64_t ne01 = node->src[0]->ne[1];  // Cout
-                        const int64_t ne02 = node->src[0]->ne[2];  // Cin
-                        const int64_t ne10 = node->src[1]->ne[0];  // L
-                        const int64_t ne11 = node->src[1]->ne[1];  // Cin
+                        స్థిరరాశి int64_t ne00 = కణుపు->src[0]->ne[0];  // K
+                        స్థిరరాశి int64_t ne01 = కణుపు->src[0]->ne[1];  // Cout
+                        స్థిరరాశి int64_t ne02 = కణుపు->src[0]->ne[2];  // Cin
+                        స్థిరరాశి int64_t ne10 = కణుపు->src[1]->ne[0];  // L
+                        స్థిరరాశి int64_t ne11 = కణుపు->src[1]->ne[1];  // Cin
 
-                        if ((node->src[0]->type == GGML_TYPE_F16 ||
-                             node->src[0]->type == GGML_TYPE_BF16) &&
-                            node->src[1]->type == GGML_TYPE_F32) {
-                            cur += sizeof(ggml_fp16_t)*ne00*ne01*ne02;
-                            cur += sizeof(ggml_fp16_t)*ne10*ne11;
-                        } else if (node->src[0]->type == GGML_TYPE_F32 &&
-                                   node->src[1]->type == GGML_TYPE_F32) {
-                            cur += sizeof(float)*ne00*ne01*ne02;
-                            cur += sizeof(float)*ne10*ne11;
-                        } else {
+                        ఒకవేళ ((కణుపు->src[0]->type == GGML_TYPE_F16 ||
+                             కణుపు->src[0]->type == GGML_TYPE_BF16) &&
+                            కణుపు->src[1]->type == GGML_TYPE_F32) {
+                            cur += పరిమాణం(ggml_fp16_t)*ne00*ne01*ne02;
+                            cur += పరిమాణం(ggml_fp16_t)*ne10*ne11;
+                        } లేకపోతే ఒకవేళ (కణుపు->src[0]->type == GGML_TYPE_F32 &&
+                                   కణుపు->src[1]->type == GGML_TYPE_F32) {
+                            cur += పరిమాణం(దశాంశం)*ne00*ne01*ne02;
+                            cur += పరిమాణం(దశాంశం)*ne10*ne11;
+                        } లేకపోతే {
                             GGML_ABORT("fatal error");
                         }
-                    } break;
-                case GGML_OP_CONV_2D:
-                case GGML_OP_CONV_3D:
+                    } ఆపు;
+                స్థితి GGML_OP_CONV_2D:
+                స్థితి GGML_OP_CONV_3D:
                     {
-                        cur = GGML_IM2COL_WORK_SIZE;
-                    } break;
-                case GGML_OP_CONV_TRANSPOSE_2D:
+                        cur = GGML_IM2_నిలువు_WORK_కొలత;
+                    } ఆపు;
+                స్థితి GGML_OP_CONV_TRANSPOSE_2D:
                     {
-                        const int64_t ne00 = node->src[0]->ne[0]; // W
-                        const int64_t ne01 = node->src[0]->ne[1]; // H
-                        const int64_t ne02 = node->src[0]->ne[2]; // Channels Out
-                        const int64_t ne03 = node->src[0]->ne[3]; // Channels In
+                        స్థిరరాశి int64_t ne00 = కణుపు->src[0]->ne[0]; // W
+                        స్థిరరాశి int64_t ne01 = కణుపు->src[0]->ne[1]; // H
+                        స్థిరరాశి int64_t ne02 = కణుపు->src[0]->ne[2]; // Channels Out
+                        స్థిరరాశి int64_t ne03 = కణుపు->src[0]->ne[3]; // Channels In
 
-                        const int64_t ne10 = node->src[1]->ne[0]; // W
-                        const int64_t ne11 = node->src[1]->ne[1]; // H
-                        const int64_t ne12 = node->src[1]->ne[2]; // Channels In
-                        const int64_t ne13 = node->src[1]->ne[3]; // Batch
+                        స్థిరరాశి int64_t ne10 = కణుపు->src[1]->ne[0]; // W
+                        స్థిరరాశి int64_t ne11 = కణుపు->src[1]->ne[1]; // H
+                        స్థిరరాశి int64_t ne12 = కణుపు->src[1]->ne[2]; // Channels In
+                        స్థిరరాశి int64_t ne13 = కణుపు->src[1]->ne[3]; // Batch
 
-                        GGML_ASSERT(node->src[0]->type == GGML_TYPE_F16 || node->src[0]->type == GGML_TYPE_F32);
-                        GGML_ASSERT(node->src[1]->type == GGML_TYPE_F32);
+                        GGML_ASSERT(కణుపు->src[0]->type == GGML_TYPE_F16 || కణుపు->src[0]->type == GGML_TYPE_F32);
+                        GGML_ASSERT(కణుపు->src[1]->type == GGML_TYPE_F32);
 
-                        cur += ggml_type_size(node->src[0]->type) * ne00 * ne01 * ne02 * ne03;
-                        cur += ggml_type_size(node->src[0]->type) * ne10 * ne11 * ne12 * ne13;
+                        cur += ggml_type_కొలత(కణుపు->src[0]->type) * ne00 * ne01 * ne02 * ne03;
+                        cur += ggml_type_కొలత(కణుపు->src[0]->type) * ne10 * ne11 * ne12 * ne13;
 
-                    } break;
-                case GGML_OP_TOP_K:
+                    } ఆపు;
+                స్థితి GGML_OP_శిఖరం_K:
                     {
-                        cur += sizeof(int32_t)*node->src[0]->ne[0]*n_tasks;
-                    } break;
-                case GGML_OP_FLASH_ATTN_EXT:
+                        cur += పరిమాణం(int32_t)*కణుపు->src[0]->ne[0]*n_tasks;
+                    } ఆపు;
+                స్థితి GGML_OP_FLASH_ATTN_EXT:
                     {
-                        const int64_t neq2 = node->src[0]->ne[2]; // number of query heads
-                        const int64_t DK = node->src[1]->ne[0];
-                        const int64_t DV = node->src[2]->ne[0];
+                        స్థిరరాశి int64_t neq2 = కణుపు->src[0]->ne[2]; // number of query heads
+                        స్థిరరాశి int64_t DK = కణుపు->src[1]->ne[0];
+                        స్థిరరాశి int64_t DV = కణుపు->src[2]->ne[0];
 
                         // Tiled flash attention scratch (tile sizes defined in common.h)
                         // Per-thread: Q_q + KQ + mask + VKQ32 + V32 + K_f32 + padding
-                        size_t prefill  = sizeof(float)*(GGML_FA_TILE_Q*DK + 2*GGML_FA_TILE_Q*GGML_FA_TILE_KV + GGML_FA_TILE_Q*DV + GGML_FA_TILE_KV*DV + GGML_FA_TILE_KV*DK)*n_tasks;
+                        size_t prefill  = పరిమాణం(దశాంశం)*(GGML_FA_TILE_Q*DK + 2*GGML_FA_TILE_Q*GGML_FA_TILE_KV + GGML_FA_TILE_Q*DV + GGML_FA_TILE_KV*DV + GGML_FA_TILE_KV*DK)*n_tasks;
 
                         // Decode path: n_kv_chunks = n_tasks (one chunk per thread)
                         // Per-thread: VKQ accmulator (DV), partial M, partial S + intra-thread scratch for V, Q and VKQ
                         size_t n_chunks = n_tasks;
-                        size_t decode   = sizeof(float)*(neq2*n_chunks*(2+DV) + n_tasks*(DK + 2*DV));
+                        size_t decode   = పరిమాణం(దశాంశం)*(neq2*n_chunks*(2+DV) + n_tasks*(DK + 2*DV));
 
                         cur += MAX(prefill, decode);
-                    } break;
-                case GGML_OP_FLASH_ATTN_BACK:
+                    } ఆపు;
+                స్థితి GGML_OP_FLASH_ATTN_వెనుక:
                     {
-                        const int64_t    D = node->src[0]->ne[0];
-                        const int64_t ne11 = ggml_up(node->src[1]->ne[1], GGML_SOFT_MAX_UNROLL);
-                        const int64_t mxDn = MAX(D, ne11) * 2; // *2 because of S and SM in ggml_compute_forward_flash_attn_back
-                        if (node->src[1]->type == GGML_TYPE_F32) {
-                            cur  = sizeof(float)*mxDn*n_tasks; // TODO: this can become (n_tasks-1)
-                            cur += sizeof(float)*mxDn*n_tasks; // this is overestimated by x2
-                        } else if (node->src[1]->type == GGML_TYPE_F16) {
-                            cur  = sizeof(float)*mxDn*n_tasks; // TODO: this can become (n_tasks-1)
-                            cur += sizeof(float)*mxDn*n_tasks; // this is overestimated by x2
-                        } else if (node->src[1]->type == GGML_TYPE_BF16) {
-                            cur  = sizeof(float)*mxDn*n_tasks; // TODO: this can become (n_tasks-1)
-                            cur += sizeof(float)*mxDn*n_tasks; // this is overestimated by x2
+                        స్థిరరాశి int64_t    D = కణుపు->src[0]->ne[0];
+                        స్థిరరాశి int64_t ne11 = ggml_పైకి(కణుపు->src[1]->ne[1], GGML_SOFT_MAX_UNROLL);
+                        స్థిరరాశి int64_t mxDn = MAX(D, ne11) * 2; // *2 because of S and SM in ggml_compute_forward_flash_attn_back
+                        ఒకవేళ (కణుపు->src[1]->type == GGML_TYPE_F32) {
+                            cur  = పరిమాణం(దశాంశం)*mxDn*n_tasks; // TODO: this can become (n_tasks-1)
+                            cur += పరిమాణం(దశాంశం)*mxDn*n_tasks; // this is overestimated by x2
+                        } లేకపోతే ఒకవేళ (కణుపు->src[1]->type == GGML_TYPE_F16) {
+                            cur  = పరిమాణం(దశాంశం)*mxDn*n_tasks; // TODO: this can become (n_tasks-1)
+                            cur += పరిమాణం(దశాంశం)*mxDn*n_tasks; // this is overestimated by x2
+                        } లేకపోతే ఒకవేళ (కణుపు->src[1]->type == GGML_TYPE_BF16) {
+                            cur  = పరిమాణం(దశాంశం)*mxDn*n_tasks; // TODO: this can become (n_tasks-1)
+                            cur += పరిమాణం(దశాంశం)*mxDn*n_tasks; // this is overestimated by x2
                         }
-                    } break;
+                    } ఆపు;
 
-                case GGML_OP_CROSS_ENTROPY_LOSS:
+                స్థితి GGML_OP_CROSS_ENTROPY_LOSS:
                     {
-                        cur = ggml_type_size(node->type)*(n_tasks + node->src[0]->ne[0]*n_tasks);
-                    } break;
-                case GGML_OP_GATED_DELTA_NET:
+                        cur = ggml_type_కొలత(కణుపు->type)*(n_tasks + కణుపు->src[0]->ne[0]*n_tasks);
+                    } ఆపు;
+                స్థితి GGML_OP_GATED_DELTA_NET:
                     {
-                        const int64_t S_v = node->src[2]->ne[0];
-                        const int64_t K   = ggml_get_op_params_i32(node, 0);
-                        const int64_t per_thread = S_v + (K > 1 ? S_v * S_v : 0);
-                        cur = per_thread * sizeof(float) * n_tasks;
-                    } break;
-                case GGML_OP_COUNT:
+                        స్థిరరాశి int64_t S_v = కణుపు->src[2]->ne[0];
+                        స్థిరరాశి int64_t K   = ggml_get_op_params_i32(కణుపు, 0);
+                        స్థిరరాశి int64_t చొప్పున_thread = S_v + (K > 1 ? S_v * S_v : 0);
+                        cur = చొప్పున_thread * పరిమాణం(దశాంశం) * n_tasks;
+                    } ఆపు;
+                స్థితి GGML_OP_లెక్క:
                     {
                         GGML_ABORT("fatal error");
                     }
-                case GGML_OP_LIGHTNING_INDEXER:
+                స్థితి GGML_OP_LIGHTNING_INDEXER:
                     {
                         // temp buffer for dequantizing lightning indexer keys
-                        const int64_t ne10 = node->src[1]->ne[0];
-                        cur += sizeof(float)*ne10*n_tasks;
-                    } break;
-                default:
-                    break;
+                        స్థిరరాశి int64_t ne10 = కణుపు->src[1]->ne[0];
+                        cur += పరిమాణం(దశాంశం)*ne10*n_tasks;
+                    } ఆపు;
+                అప్రమేయ:
+                    ఆపు;
             }
         }
 
-        work_size = MAX(work_size, cur);
+        work_కొలత = MAX(work_కొలత, cur);
     }
 
-    if (work_size > 0) {
-        work_size += CACHE_LINE_SIZE*(n_threads);
+    ఒకవేళ (work_కొలత > 0) {
+        work_కొలత += CACHE_పంక్తి_కొలత*(n_దారాలు);
     }
 
     cplan.threadpool = threadpool;
-    cplan.n_threads  = MIN(max_tasks, n_threads);
-    cplan.work_size  = work_size;
-    cplan.work_data  = NULL;
+    cplan.n_దారాలు  = MIN(max_tasks, n_దారాలు);
+    cplan.work_కొలత  = work_కొలత;
+    cplan.work_దత్తాంశం  = ఖాళీ;
 
-    return cplan;
+    తిరిగి cplan;
 }
 
 
 // Try to fuse the current node with subsequent nodes for better performance.
 // Returns the number of nodes skipped by fusion (>=1), or 0 if no fusion was applied.
-static bool ggml_cpu_disable_fusion = false;  // initialized once in ggml_cpu_init(), read-only afterwards
+స్థిర bool ggml_cpu_disable_fusion = false;  // initialized once in ggml_cpu_init(), read-only afterwards
 
-static int ggml_cpu_try_fuse_ops(
-        const struct ggml_cgraph * cgraph,
-        const int node_n,
-        const struct ggml_compute_params * params,
-        const struct ggml_cplan * cplan) {
+స్థిర పూర్ణాంకం ggml_cpu_try_fuse_ops(
+        స్థిరరాశి నిర్మాణం ggml_cgraph * cgraph,
+        స్థిరరాశి పూర్ణాంకం కణుపు_n,
+        స్థిరరాశి నిర్మాణం ggml_compute_params * params,
+        స్థిరరాశి నిర్మాణం ggml_cplan * cplan) {
 
-    if (ggml_cpu_disable_fusion || cplan->use_ref) {
-        return 0;
+    ఒకవేళ (ggml_cpu_disable_fusion || cplan->use_ref) {
+        తిరిగి 0;
     }
 
-    struct ggml_tensor * node = cgraph->nodes[node_n];
+    నిర్మాణం ggml_tensor * కణుపు = cgraph->nodes[కణుపు_n];
 
-    if (node->op == GGML_OP_RMS_NORM) {
+    ఒకవేళ (కణుపు->op == GGML_OP_RMS_NORM) {
         // RMS_NORM + MUL fusion
-        const enum ggml_op fuse_ops[] = { GGML_OP_RMS_NORM, GGML_OP_MUL };
-        if (ggml_can_fuse(cgraph, node_n, fuse_ops, 2)) {
-            struct ggml_tensor * mul_node = cgraph->nodes[node_n + 1];
-            const struct ggml_tensor * mul_w = (mul_node->src[0] == node)
-                ? mul_node->src[1] : mul_node->src[0];
-            if (node->src[0]->type  == GGML_TYPE_F32 &&
-                mul_node->type      == GGML_TYPE_F32 &&
+        స్థిరరాశి గణన ggml_op fuse_ops[] = { GGML_OP_RMS_NORM, GGML_OP_MUL };
+        ఒకవేళ (ggml_can_fuse(cgraph, కణుపు_n, fuse_ops, 2)) {
+            నిర్మాణం ggml_tensor * mul_కణుపు = cgraph->nodes[కణుపు_n + 1];
+            స్థిరరాశి నిర్మాణం ggml_tensor * mul_w = (mul_కణుపు->src[0] == కణుపు)
+                ? mul_కణుపు->src[1] : mul_కణుపు->src[0];
+            ఒకవేళ (కణుపు->src[0]->type  == GGML_TYPE_F32 &&
+                mul_కణుపు->type      == GGML_TYPE_F32 &&
                 mul_w->type         == GGML_TYPE_F32 &&
-                mul_w->ne[0]        == node->ne[0]   &&
-                mul_w->nb[0]        == sizeof(float)) {
+                mul_w->ne[0]        == కణుపు->ne[0]   &&
+                mul_w->nb[0]        == పరిమాణం(దశాంశం)) {
 
-                ggml_compute_forward_rms_norm_mul_fused(params, node, mul_node);
-                return 1;
+                ggml_compute_forward_rms_norm_mul_fused(params, కణుపు, mul_కణుపు);
+                తిరిగి 1;
             }
         }
     }
 
-    return 0;
+    తిరిగి 0;
 }
 
-static thread_ret_t ggml_graph_compute_thread(void * data) {
-    struct ggml_compute_state * state = (struct ggml_compute_state *) data;
-    struct ggml_threadpool    * tp    = state->threadpool;
+స్థిర thread_ret_t ggml_లేఖాచిత్రం_compute_thread(శూన్య * దత్తాంశం) {
+    నిర్మాణం ggml_compute_state * state = (నిర్మాణం ggml_compute_state *) దత్తాంశం;
+    నిర్మాణం ggml_threadpool    * tp    = state->threadpool;
 
-    const struct ggml_cgraph * cgraph = tp->cgraph;
-    const struct ggml_cplan  * cplan  = tp->cplan;
+    స్థిరరాశి నిర్మాణం ggml_cgraph * cgraph = tp->cgraph;
+    స్థిరరాశి నిర్మాణం ggml_cplan  * cplan  = tp->cplan;
 
-#ifdef GGML_USE_CPU_RISCV64_SPACEMIT
-    ggml_backend_cpu_riscv64_spacemit_set_numa_thread_affinity(state->ith);
-#else
-    set_numa_thread_affinity(state->ith);
-#endif
+#నిర్వచితమైతే GGML_USE_CPU_RISCV64_SPACEMIT
+    ggml_backend_cpu_riscv64_spacemit_సమితి_numa_thread_affinity(state->ith);
+#లేకపోతే
+    సమితి_numa_thread_affinity(state->ith);
+#అయితే_ముగింపు
 
-    struct ggml_compute_params params = {
+    నిర్మాణం ggml_compute_params params = {
         /*.ith        =*/ state->ith,
-        /*.nth        =*/ atomic_load_explicit(&tp->n_graph, memory_order_relaxed) & GGML_THREADPOOL_N_THREADS_MASK,
-        /*.wsize      =*/ cplan->work_size,
-        /*.wdata      =*/ cplan->work_data,
+        /*.nth        =*/ atomic_ఎక్కించు_explicit(&tp->n_లేఖాచిత్రం, memory_order_relaxed) & GGML_THREADPOOL_N_దారాలు_ముసుగు,
+        /*.wsize      =*/ cplan->work_కొలత,
+        /*.wdata      =*/ cplan->work_దత్తాంశం,
         /*.threadpool =*/ tp,
         /*.use_ref    =*/ cplan->use_ref,
     };
 
-#ifdef GGML_USE_OPENMP
-    GGML_PRINT_DEBUG("thread #%d compute-start cplan %p\n", state->ith, (const void *)cplan);
-#else
-    GGML_PRINT_DEBUG("thread #%d compute-start cplan %p last-graph %d\n", state->ith, (const void *)cplan, state->last_graph);
-#endif
+#నిర్వచితమైతే GGML_USE_OPENMP
+    GGML_PRINT_DEBUG("thread #%d compute-start cplan %p\n", state->ith, (స్థిరరాశి శూన్య *)cplan);
+#లేకపోతే
+    GGML_PRINT_DEBUG("thread #%d compute-start cplan %p last-graph %d\n", state->ith, (స్థిరరాశి శూన్య *)cplan, state->చివరి_లేఖాచిత్రం);
+#అయితే_ముగింపు
 
-    for (int node_n = 0; node_n < cgraph->n_nodes && atomic_load_explicit(&tp->abort, memory_order_relaxed) != node_n; node_n++) {
-        struct ggml_tensor * node = cgraph->nodes[node_n];
+    కొరకు (పూర్ణాంకం కణుపు_n = 0; కణుపు_n < cgraph->n_nodes && atomic_ఎక్కించు_explicit(&tp->abort, memory_order_relaxed) != కణుపు_n; కణుపు_n++) {
+        నిర్మాణం ggml_tensor * కణుపు = cgraph->nodes[కణుపు_n];
 
-        if (ggml_op_is_empty(node->op)) {
+        ఒకవేళ (ggml_op_is_ఖాళీలు(కణుపు->op)) {
             // skip NOPs
-            continue;
+            కొనసాగు;
         }
 
-        if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
-            continue;
+        ఒకవేళ ((కణుపు->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+            కొనసాగు;
         }
 
         // TODO: move fused-op detection into ggml_graph_plan so fusion decisions are made once at planning time
         // Try fused ops, fall back to normal compute
-        const int n_fused = ggml_cpu_try_fuse_ops(cgraph, node_n, &params, cplan);
-        if (n_fused > 0) {
-            node_n += n_fused;
-        } else {
-            ggml_compute_forward(&params, node);
+        స్థిరరాశి పూర్ణాంకం n_fused = ggml_cpu_try_fuse_ops(cgraph, కణుపు_n, &params, cplan);
+        ఒకవేళ (n_fused > 0) {
+            కణుపు_n += n_fused;
+        } లేకపోతే {
+            ggml_compute_forward(&params, కణుపు);
         }
 
-        if (state->ith == 0 && cplan->abort_callback &&
-                cplan->abort_callback(cplan->abort_callback_data)) {
-            atomic_store_explicit(&tp->abort, node_n + 1, memory_order_relaxed);
-            tp->ec    = GGML_STATUS_ABORTED;
+        ఒకవేళ (state->ith == 0 && cplan->abort_callback &&
+                cplan->abort_callback(cplan->abort_callback_దత్తాంశం)) {
+            atomic_store_explicit(&tp->abort, కణుపు_n + 1, memory_order_relaxed);
+            tp->ec    = GGML_స్థితి_ABORTED;
         }
 
-        if (node_n + 1 < cgraph->n_nodes) {
+        ఒకవేళ (కణుపు_n + 1 < cgraph->n_nodes) {
             ggml_barrier(state->threadpool);
         }
     }
 
-#ifdef GGML_USE_OPENMP
-    GGML_PRINT_DEBUG("thread #%d compute-done cplan %p\n", state->ith, (const void *)cplan);
-#else
-    GGML_PRINT_DEBUG("thread #%d compute-done cplan %p last-graph %d\n", state->ith, (const void *)cplan, state->last_graph);
-#endif
+#నిర్వచితమైతే GGML_USE_OPENMP
+    GGML_PRINT_DEBUG("thread #%d compute-done cplan %p\n", state->ith, (స్థిరరాశి శూన్య *)cplan);
+#లేకపోతే
+    GGML_PRINT_DEBUG("thread #%d compute-done cplan %p last-graph %d\n", state->ith, (స్థిరరాశి శూన్య *)cplan, state->చివరి_లేఖాచిత్రం);
+#అయితే_ముగింపు
 
     ggml_barrier(state->threadpool);
 
-#ifdef GGML_USE_CPU_RISCV64_SPACEMIT
+#నిర్వచితమైతే GGML_USE_CPU_RISCV64_SPACEMIT
     ggml_backend_cpu_riscv64_spacemit_clear_numa_thread_affinity_threaded(state->ith);
-#endif
+#అయితే_ముగింపు
 
-    return 0;
+    తిరిగి 0;
 }
 
-#ifndef GGML_USE_OPENMP
+#నిర్వచితం_కాకపోతే GGML_USE_OPENMP
 
 // check if thread is ready to proceed (exit from polling or sleeping)
 // returns true if loops should exit, sets state->pending to indicate new work
-static inline bool ggml_graph_compute_thread_ready(struct ggml_compute_state * state) {
-    struct ggml_threadpool * threadpool = state->threadpool;
+స్థిర అంతఃవరుస bool ggml_లేఖాచిత్రం_compute_thread_ready(నిర్మాణం ggml_compute_state * state) {
+    నిర్మాణం ggml_threadpool * threadpool = state->threadpool;
 
-    if (state->pending || threadpool->stop || threadpool->pause) { return true; }
+    ఒకవేళ (state->pending || threadpool->stop || threadpool->pause) { తిరిగి true; }
 
     // check for new graph/work
-    int n_graph   = atomic_load_explicit(&threadpool->n_graph, memory_order_relaxed);
-    int n_threads = n_graph & GGML_THREADPOOL_N_THREADS_MASK;
-    if (n_graph != state->last_graph) {
-        state->pending    = (state->ith < n_threads);
-        state->last_graph = n_graph;
-        return true;
+    పూర్ణాంకం n_లేఖాచిత్రం   = atomic_ఎక్కించు_explicit(&threadpool->n_లేఖాచిత్రం, memory_order_relaxed);
+    పూర్ణాంకం n_దారాలు = n_లేఖాచిత్రం & GGML_THREADPOOL_N_దారాలు_ముసుగు;
+    ఒకవేళ (n_లేఖాచిత్రం != state->చివరి_లేఖాచిత్రం) {
+        state->pending    = (state->ith < n_దారాలు);
+        state->చివరి_లేఖాచిత్రం = n_లేఖాచిత్రం;
+        తిరిగి true;
     }
 
-    return false;
+    తిరిగి false;
 }
 
 // sync thread state after polling
-static inline void ggml_graph_compute_thread_sync(struct ggml_compute_state * state) {
+స్థిర అంతఃవరుస శూన్య ggml_లేఖాచిత్రం_compute_thread_sync(నిర్మాణం ggml_compute_state * state) {
     // TSAN doesn't support standalone fence yet, we use a dummy read-modify-write instead
-    #ifdef GGML_TSAN_ENABLED
-    atomic_fetch_add_explicit(&state->threadpool->n_graph, 0, memory_order_seq_cst);
-    #else
+    #నిర్వచితమైతే GGML_TSAN_ENABLED
+    atomic_fetch_కూడు_explicit(&state->threadpool->n_లేఖాచిత్రం, 0, memory_order_seq_cst);
+    #లేకపోతే
     atomic_thread_fence(memory_order_seq_cst);
-    #endif
-    UNUSED(state);
+    #అయితే_ముగింపు
+    వాడని(state);
 }
 
-static inline bool ggml_graph_compute_poll_for_work(struct ggml_compute_state * state) {
-    struct ggml_threadpool * threadpool = state->threadpool;
+స్థిర అంతఃవరుస bool ggml_లేఖాచిత్రం_compute_poll_for_work(నిర్మాణం ggml_compute_state * state) {
+    నిర్మాణం ggml_threadpool * threadpool = state->threadpool;
 
     // This seems to make 0 ... 100 a decent range for polling level across modern processors.
     // Perhaps, we can adjust it dynamically based on load and things.
-    const uint64_t n_rounds = 1024UL * 128 * threadpool->poll;
+    స్థిరరాశి uint64_t n_విడతలు = 1024UL * 128 * threadpool->poll;
 
-    for (uint64_t i=0; !ggml_graph_compute_thread_ready(state) && i < n_rounds; i++) {
+    కొరకు (uint64_t i=0; !ggml_లేఖాచిత్రం_compute_thread_ready(state) && i < n_విడతలు; i++) {
         // No new work. Keep polling.
         ggml_thread_cpu_relax();
     }
 
-    return state->pending;
+    తిరిగి state->pending;
 }
 
-static inline bool ggml_graph_compute_check_for_work(struct ggml_compute_state * state) {
-    struct ggml_threadpool * threadpool = state->threadpool;
+స్థిర అంతఃవరుస bool ggml_లేఖాచిత్రం_compute_check_for_work(నిర్మాణం ggml_compute_state * state) {
+    నిర్మాణం ggml_threadpool * threadpool = state->threadpool;
 
-    if (ggml_graph_compute_poll_for_work(state)) {
-        ggml_graph_compute_thread_sync(state);
-        return state->pending;
+    ఒకవేళ (ggml_లేఖాచిత్రం_compute_poll_for_work(state)) {
+        ggml_లేఖాచిత్రం_compute_thread_sync(state);
+        తిరిగి state->pending;
     }
 
-    ggml_mutex_lock_shared(&threadpool->mutex);
-    while (!ggml_graph_compute_thread_ready(state)) {
+    ggml_mutex_తాళం_shared(&threadpool->mutex);
+    అయితే (!ggml_లేఖాచిత్రం_compute_thread_ready(state)) {
         // No new work. Wait for the signal.
         GGML_PRINT_DEBUG("thread #%d waiting for work (sleeping)\n", state->ith);
         ggml_cond_wait(&threadpool->cond, &threadpool->mutex);
     }
     ggml_mutex_unlock_shared(&threadpool->mutex);
 
-    return state->pending;
+    తిరిగి state->pending;
 }
 
-static thread_ret_t ggml_graph_compute_secondary_thread(void* data) {
-    struct ggml_compute_state * state = (struct ggml_compute_state *) data;
-    struct ggml_threadpool * threadpool = state->threadpool;
+స్థిర thread_ret_t ggml_లేఖాచిత్రం_compute_secondary_thread(శూన్య* దత్తాంశం) {
+    నిర్మాణం ggml_compute_state * state = (నిర్మాణం ggml_compute_state *) దత్తాంశం;
+    నిర్మాణం ggml_threadpool * threadpool = state->threadpool;
 
-    ggml_thread_apply_priority(threadpool->prio);
-    if (ggml_thread_cpumask_is_valid(state->cpumask)) {
+    ggml_thread_apply_ప్రాధాన్యత(threadpool->prio);
+    ఒకవేళ (ggml_thread_cpumask_is_valid(state->cpumask)) {
         ggml_thread_apply_affinity(state->cpumask);
     }
 
-    while (true) {
+    అయితే (true) {
         // Check if we need to sleep
-        while (threadpool->pause) {
+        అయితే (threadpool->pause) {
             GGML_PRINT_DEBUG("thread #%d inside pause loop\n", state->ith);
-            ggml_mutex_lock_shared(&threadpool->mutex);
-            if (threadpool->pause) {
+            ggml_mutex_తాళం_shared(&threadpool->mutex);
+            ఒకవేళ (threadpool->pause) {
                 ggml_cond_wait(&threadpool->cond, &threadpool->mutex);
             }
             GGML_PRINT_DEBUG("thread #%d resuming after wait\n", state->ith);
@@ -3266,100 +3266,100 @@ static thread_ret_t ggml_graph_compute_secondary_thread(void* data) {
         }
 
         // This needs to be checked for after the cond_wait
-        if (threadpool->stop) break;
+        ఒకవేళ (threadpool->stop) ఆపు;
 
         // Check if there is new work
         // The main thread is the only one that can dispatch new work
 
-        ggml_graph_compute_check_for_work(state);
-        if (state->pending) {
+        ggml_లేఖాచిత్రం_compute_check_for_work(state);
+        ఒకవేళ (state->pending) {
             state->pending = false;
-            ggml_graph_compute_thread(state);
+            ggml_లేఖాచిత్రం_compute_thread(state);
         }
     }
 
-    return (thread_ret_t) 0;
+    తిరిగి (thread_ret_t) 0;
 }
 
 // Start processing new graph
-static void ggml_graph_compute_kickoff(struct ggml_threadpool * threadpool, int n_threads)
+స్థిర శూన్య ggml_లేఖాచిత్రం_compute_kickoff(నిర్మాణం ggml_threadpool * threadpool, పూర్ణాంకం n_దారాలు)
 {
     // Always take the mutex here because the worker threads are doing hybrid poll/wait
 
-    ggml_mutex_lock(&threadpool->mutex);
+    ggml_mutex_తాళం(&threadpool->mutex);
 
     // Update the number of active threads and the graph count
-    int n_graph = atomic_load_explicit(&threadpool->n_graph, memory_order_relaxed) >> GGML_THREADPOOL_N_THREADS_BITS;
-    n_graph = ((n_graph + 1) << GGML_THREADPOOL_N_THREADS_BITS) | (n_threads & GGML_THREADPOOL_N_THREADS_MASK);
+    పూర్ణాంకం n_లేఖాచిత్రం = atomic_ఎక్కించు_explicit(&threadpool->n_లేఖాచిత్రం, memory_order_relaxed) >> GGML_THREADPOOL_N_దారాలు_బిట్లు;
+    n_లేఖాచిత్రం = ((n_లేఖాచిత్రం + 1) << GGML_THREADPOOL_N_దారాలు_బిట్లు) | (n_దారాలు & GGML_THREADPOOL_N_దారాలు_ముసుగు);
 
-    GGML_PRINT_DEBUG("compute-kickoff: n_threads %d n_graph %d\n", n_threads, n_graph);
+    GGML_PRINT_DEBUG("compute-kickoff: n_threads %d n_graph %d\n", n_దారాలు, n_లేఖాచిత్రం);
 
     // Indicate the graph is ready to be processed
     // We need the full seq-cst fence here because of the polling threads (used in thread_sync)
-    atomic_store_explicit(&threadpool->n_graph, n_graph, memory_order_seq_cst);
+    atomic_store_explicit(&threadpool->n_లేఖాచిత్రం, n_లేఖాచిత్రం, memory_order_seq_cst);
 
-    if (threadpool->pause) {
+    ఒకవేళ (threadpool->pause) {
        // Update main thread prio and affinity to match the threadpool settings
-       ggml_thread_apply_priority(threadpool->prio);
-       if (ggml_thread_cpumask_is_valid(threadpool->workers[0].cpumask)) {
+       ggml_thread_apply_ప్రాధాన్యత(threadpool->prio);
+       ఒకవేళ (ggml_thread_cpumask_is_valid(threadpool->workers[0].cpumask)) {
            ggml_thread_apply_affinity(threadpool->workers[0].cpumask);
        }
 
        // resume does cond broadcast
        ggml_threadpool_resume_locked(threadpool);
-    } else {
-       ggml_cond_broadcast(&threadpool->cond);
+    } లేకపోతే {
+       ggml_cond_ప్రసారం(&threadpool->cond);
     }
 
     ggml_mutex_unlock(&threadpool->mutex);
 }
 
-#endif // GGML_USE_OPENMP
+#అయితే_ముగింపు // GGML_USE_OPENMP
 
-static struct ggml_threadpool * ggml_threadpool_new_impl(
-    struct ggml_threadpool_params * tpp,
-               struct ggml_cgraph * cgraph,
-                struct ggml_cplan * cplan) {
+స్థిర నిర్మాణం ggml_threadpool * ggml_threadpool_new_impl(
+    నిర్మాణం ggml_threadpool_params * tpp,
+               నిర్మాణం ggml_cgraph * cgraph,
+                నిర్మాణం ggml_cplan * cplan) {
 
-    struct ggml_threadpool * threadpool =
-        ggml_aligned_malloc(sizeof(struct ggml_threadpool));
+    నిర్మాణం ggml_threadpool * threadpool =
+        ggml_aligned_malloc(పరిమాణం(నిర్మాణం ggml_threadpool));
     {
         threadpool->cgraph           = cgraph;
         threadpool->cplan            = cplan;
-        threadpool->n_graph          = 0;
+        threadpool->n_లేఖాచిత్రం          = 0;
         threadpool->n_barrier        = 0;
         threadpool->n_barrier_passed = 0;
         threadpool->current_chunk    = 0;
         threadpool->stop             = false;
         threadpool->pause            = tpp->paused;
         threadpool->abort            = -1;
-        threadpool->workers          = NULL;
-        threadpool->n_threads        = tpp->n_threads;
+        threadpool->workers          = ఖాళీ;
+        threadpool->n_దారాలు        = tpp->n_దారాలు;
         threadpool->poll             = tpp->poll;
         threadpool->prio             = tpp->prio;
-        threadpool->ec               = GGML_STATUS_SUCCESS;
+        threadpool->ec               = GGML_స్థితి_SUCCESS;
     }
 
     // Allocate and init workers state
-    const size_t workers_size = sizeof(struct ggml_compute_state) * tpp->n_threads;
-    struct ggml_compute_state * workers = ggml_aligned_malloc(workers_size);
+    స్థిరరాశి size_t workers_కొలత = పరిమాణం(నిర్మాణం ggml_compute_state) * tpp->n_దారాలు;
+    నిర్మాణం ggml_compute_state * workers = ggml_aligned_malloc(workers_కొలత);
 
-    memset(workers, 0, workers_size);
-    for (int j = 0; j < tpp->n_threads; j++) {
+    memset(workers, 0, workers_కొలత);
+    కొరకు (పూర్ణాంకం j = 0; j < tpp->n_దారాలు; j++) {
         workers[j].threadpool = threadpool;
         workers[j].ith        = j;
     }
 
     threadpool->workers = workers;
 
-#ifdef GGML_USE_OPENMP
+#నిర్వచితమైతే GGML_USE_OPENMP
     int32_t cpumask_iter = 0;
 
     // Compute CPU masks for each thread
-    for (int j = 0; j < tpp->n_threads; j++) {
-        ggml_thread_cpumask_next(tpp->cpumask, workers[j].cpumask, tpp->strict_cpu, &cpumask_iter);
+    కొరకు (పూర్ణాంకం j = 0; j < tpp->n_దారాలు; j++) {
+        ggml_thread_cpumask_తదుపరి(tpp->cpumask, workers[j].cpumask, tpp->strict_cpu, &cpumask_iter);
     }
-#else // GGML_USE_OPENMP
+#లేకపోతే // GGML_USE_OPENMP
     ggml_mutex_init(&threadpool->mutex);
     ggml_cond_init(&threadpool->cond);
 
@@ -3368,580 +3368,580 @@ static struct ggml_threadpool * ggml_threadpool_new_impl(
 
     int32_t cpumask_iter = 0;
 
-    for (int j = 1; j < tpp->n_threads; j++) {
-        ggml_thread_cpumask_next(tpp->cpumask, workers[j].cpumask, tpp->strict_cpu, &cpumask_iter);
+    కొరకు (పూర్ణాంకం j = 1; j < tpp->n_దారాలు; j++) {
+        ggml_thread_cpumask_తదుపరి(tpp->cpumask, workers[j].cpumask, tpp->strict_cpu, &cpumask_iter);
 
-        int32_t rc = ggml_thread_create(&workers[j].thrd, NULL, ggml_graph_compute_secondary_thread, &workers[j]);
+        int32_t rc = ggml_thread_create(&workers[j].thrd, ఖాళీ, ggml_లేఖాచిత్రం_compute_secondary_thread, &workers[j]);
         GGML_ASSERT(rc == 0);
     }
 
-    ggml_thread_cpumask_next(tpp->cpumask, workers[0].cpumask, tpp->strict_cpu, &cpumask_iter);
+    ggml_thread_cpumask_తదుపరి(tpp->cpumask, workers[0].cpumask, tpp->strict_cpu, &cpumask_iter);
 
-    if (!threadpool->pause) {
+    ఒకవేళ (!threadpool->pause) {
         // Update main thread prio and affinity at the start, otherwise we'll do it in resume
-        ggml_thread_apply_priority(threadpool->prio);
-        if (ggml_thread_cpumask_is_valid(threadpool->workers[0].cpumask)) {
+        ggml_thread_apply_ప్రాధాన్యత(threadpool->prio);
+        ఒకవేళ (ggml_thread_cpumask_is_valid(threadpool->workers[0].cpumask)) {
             ggml_thread_apply_affinity(threadpool->workers[0].cpumask);
         }
     }
-#endif // GGML_USE_OPENMP
+#అయితే_ముగింపు // GGML_USE_OPENMP
 
-    return threadpool;
+    తిరిగి threadpool;
 }
 
-struct ggml_threadpool * ggml_threadpool_new(struct ggml_threadpool_params * tpp) {
-    return ggml_threadpool_new_impl(tpp, NULL, NULL);
+నిర్మాణం ggml_threadpool * ggml_threadpool_new(నిర్మాణం ggml_threadpool_params * tpp) {
+    తిరిగి ggml_threadpool_new_impl(tpp, ఖాళీ, ఖాళీ);
 }
 
-enum ggml_status ggml_graph_compute(struct ggml_cgraph * cgraph, struct ggml_cplan * cplan) {
+గణన ggml_స్థితి ggml_లేఖాచిత్రం_compute(నిర్మాణం ggml_cgraph * cgraph, నిర్మాణం ggml_cplan * cplan) {
     ggml_cpu_init();
 
     GGML_ASSERT(cplan);
-    GGML_ASSERT(cplan->n_threads > 0);
-    GGML_ASSERT(cplan->work_size == 0 || cplan->work_data != NULL);
+    GGML_ASSERT(cplan->n_దారాలు > 0);
+    GGML_ASSERT(cplan->work_కొలత == 0 || cplan->work_దత్తాంశం != ఖాళీ);
 
-    int n_threads                               = cplan->n_threads;
-    struct ggml_threadpool * threadpool = cplan->threadpool;
+    పూర్ణాంకం n_దారాలు                               = cplan->n_దారాలు;
+    నిర్మాణం ggml_threadpool * threadpool = cplan->threadpool;
 
     bool disposable_threadpool = false;
 
-    if (threadpool == NULL) {
+    ఒకవేళ (threadpool == ఖాళీ) {
         //GGML_PRINT_DEBUG("Threadpool is not specified. Will create a disposable threadpool : n_threads %d\n", n_threads);
         disposable_threadpool = true;
 
-        struct ggml_threadpool_params ttp = ggml_threadpool_params_default(n_threads);
+        నిర్మాణం ggml_threadpool_params ttp = ggml_threadpool_params_default(n_దారాలు);
         threadpool = ggml_threadpool_new_impl(&ttp, cgraph, cplan);
-    } else {
+    } లేకపోతే {
         // Reset some of the parameters that need resetting
         // No worker threads should be accessing the parameters below at this stage
         threadpool->cgraph           = cgraph;
         threadpool->cplan            = cplan;
         threadpool->current_chunk    = 0;
         threadpool->abort            = -1;
-        threadpool->ec               = GGML_STATUS_SUCCESS;
+        threadpool->ec               = GGML_స్థితి_SUCCESS;
     }
 
-#ifdef GGML_USE_OPENMP
-    if (n_threads > 1) {
-        #pragma omp parallel num_threads(n_threads)
+#నిర్వచితమైతే GGML_USE_OPENMP
+    ఒకవేళ (n_దారాలు > 1) {
+        #సూచన omp parallel అంకె_దారాలు(n_దారాలు)
         {
-            #pragma omp single
+            #సూచన omp single
             {
                 // update the number of threads from the actual number of threads that we got from OpenMP
-                n_threads = omp_get_num_threads();
-                atomic_store_explicit(&threadpool->n_graph, n_threads, memory_order_relaxed);
+                n_దారాలు = omp_get_అంకె_దారాలు();
+                atomic_store_explicit(&threadpool->n_లేఖాచిత్రం, n_దారాలు, memory_order_relaxed);
             }
 
             // Apply thread CPU mask and priority
-            int ith = omp_get_thread_num();
+            పూర్ణాంకం ith = omp_get_thread_అంకె();
 
-            ggml_thread_apply_priority(threadpool->prio);
-            if (ggml_thread_cpumask_is_valid(threadpool->workers[ith].cpumask)) {
+            ggml_thread_apply_ప్రాధాన్యత(threadpool->prio);
+            ఒకవేళ (ggml_thread_cpumask_is_valid(threadpool->workers[ith].cpumask)) {
                 ggml_thread_apply_affinity(threadpool->workers[ith].cpumask);
             }
-            ggml_graph_compute_thread(&threadpool->workers[ith]);
+            ggml_లేఖాచిత్రం_compute_thread(&threadpool->workers[ith]);
         }
-    } else {
-        atomic_store_explicit(&threadpool->n_graph, 1, memory_order_relaxed);
-        ggml_graph_compute_thread(&threadpool->workers[0]);
+    } లేకపోతే {
+        atomic_store_explicit(&threadpool->n_లేఖాచిత్రం, 1, memory_order_relaxed);
+        ggml_లేఖాచిత్రం_compute_thread(&threadpool->workers[0]);
     }
-#else
-    if (n_threads > threadpool->n_threads) {
-        GGML_LOG_WARN("cplan requested more threads (%d) than available (%d)\n", n_threads, threadpool->n_threads);
-        n_threads = threadpool->n_threads;
+#లేకపోతే
+    ఒకవేళ (n_దారాలు > threadpool->n_దారాలు) {
+        GGML_LOG_WARN("cplan requested more threads (%d) than available (%d)\n", n_దారాలు, threadpool->n_దారాలు);
+        n_దారాలు = threadpool->n_దారాలు;
     }
 
     // Kick all threads to start the new graph
-    ggml_graph_compute_kickoff(threadpool, n_threads);
+    ggml_లేఖాచిత్రం_compute_kickoff(threadpool, n_దారాలు);
 
     // This is a work thread too
-    ggml_graph_compute_thread(&threadpool->workers[0]);
-#endif
+    ggml_లేఖాచిత్రం_compute_thread(&threadpool->workers[0]);
+#అయితే_ముగింపు
 
     // don't leave affinity set on the main thread
     clear_numa_thread_affinity();
 
-    enum ggml_status ret = threadpool->ec;
+    గణన ggml_స్థితి ret = threadpool->ec;
 
-    if (disposable_threadpool) {
+    ఒకవేళ (disposable_threadpool) {
         ggml_threadpool_free(threadpool);
     }
 
-    return ret;
+    తిరిగి ret;
 }
 
-enum ggml_status ggml_graph_compute_with_ctx(struct ggml_context * ctx, struct ggml_cgraph * cgraph, int n_threads) {
-    struct ggml_cplan cplan = ggml_graph_plan(cgraph, n_threads, NULL);
+గణన ggml_స్థితి ggml_లేఖాచిత్రం_compute_with_ctx(నిర్మాణం ggml_context * ctx, నిర్మాణం ggml_cgraph * cgraph, పూర్ణాంకం n_దారాలు) {
+    నిర్మాణం ggml_cplan cplan = ggml_లేఖాచిత్రం_plan(cgraph, n_దారాలు, ఖాళీ);
 
-    cplan.work_data = (uint8_t *)ggml_new_buffer(ctx, cplan.work_size);
+    cplan.work_దత్తాంశం = (uint8_t *)ggml_new_బఫరు(ctx, cplan.work_కొలత);
 
-    return ggml_graph_compute(cgraph, &cplan);
+    తిరిగి ggml_లేఖాచిత్రం_compute(cgraph, &cplan);
 }
 
-void ggml_cpu_fp32_to_fp32(const float * x, float * y, int64_t n) {
-    memcpy(y, x, n * sizeof(float));
+శూన్య ggml_cpu_fp32_గమ్యం_fp32(స్థిరరాశి దశాంశం * x, దశాంశం * y, int64_t n) {
+    జ్ఞాపకం_నకలు(y, x, n * పరిమాణం(దశాంశం));
 }
 
-void ggml_cpu_fp32_to_fp16(const float * x, ggml_fp16_t * y, int64_t n) {
+శూన్య ggml_cpu_fp32_గమ్యం_fp16(స్థిరరాశి దశాంశం * x, ggml_fp16_t * y, int64_t n) {
     int64_t i = 0;
-#if defined(__F16C__)
-#if defined(__AVX512F__)
-    for (; i + 15 < n; i += 16) {
+#ఒకవేళ defined(__F16C__)
+#ఒకవేళ defined(__AVX512F__)
+    కొరకు (; i + 15 < n; i += 16) {
         __m512 x_vec = _mm512_loadu_ps(x + i);
         __m256i y_vec = _mm512_cvtps_ph(x_vec, _MM_FROUND_TO_NEAREST_INT);
         _mm256_storeu_si256((__m256i *)(y + i), y_vec);
     }
-#endif
-    for (; i + 7 < n; i += 8) {
+#అయితే_ముగింపు
+    కొరకు (; i + 7 < n; i += 8) {
         __m256 x_vec = _mm256_loadu_ps(x + i);
         __m128i y_vec = _mm256_cvtps_ph(x_vec, _MM_FROUND_TO_NEAREST_INT);
         _mm_storeu_si128((__m128i *)(y + i), y_vec);
     }
-    for (; i + 3 < n; i += 4) {
+    కొరకు (; i + 3 < n; i += 4) {
         __m128 x_vec = _mm_loadu_ps(x + i);
         __m128i y_vec = _mm_cvtps_ph(x_vec, _MM_FROUND_TO_NEAREST_INT);
         _mm_storel_epi64((__m128i *)(y + i), y_vec);
     }
-#elif defined(__riscv_zvfh)
-    for (int vl; i < n; i += vl) {
+#లేదావేళ defined(__riscv_zvfh)
+    కొరకు (పూర్ణాంకం vl; i < n; i += vl) {
         vl = __riscv_vsetvl_e32m2(n - i);
         vfloat32m2_t vx = __riscv_vle32_v_f32m2(&x[i], vl);
         vfloat16m1_t vy = __riscv_vfncvt_f_f_w_f16m1(vx, vl);
         __riscv_vse16_v_f16m1((_Float16 *)&y[i], vy, vl);
     }
-#elif defined(__VXE__) || defined(__VXE2__)
-    for (; i + 7 < n; i += 8) {
-        const uint32x4_t v_yl = __lzs_f32cx4_to_f16(vec_xl(0, x + i + 0));
-        const uint32x4_t v_yh = __lzs_f32cx4_to_f16(vec_xl(0, x + i + 4));
+#లేదావేళ defined(__VXE__) || defined(__VXE2__)
+    కొరకు (; i + 7 < n; i += 8) {
+        స్థిరరాశి uint32x4_t v_yl = __lzs_f32cx4_to_f16(vec_xl(0, x + i + 0));
+        స్థిరరాశి uint32x4_t v_yh = __lzs_f32cx4_to_f16(vec_xl(0, x + i + 4));
         vec_xst(vec_pack(v_yl, v_yh), 0, (uint16_t *)(y + i));
     }
-#endif
-    for (; i < n; ++i) {
-        y[i] = GGML_CPU_FP32_TO_FP16(x[i]);
+#అయితే_ముగింపు
+    కొరకు (; i < n; ++i) {
+        y[i] = GGML_CPU_FP32_గమ్యం_FP16(x[i]);
     }
 }
 
-void ggml_cpu_fp16_to_fp32(const ggml_fp16_t * x, float * y, int64_t n) {
+శూన్య ggml_cpu_fp16_గమ్యం_fp32(స్థిరరాశి ggml_fp16_t * x, దశాంశం * y, int64_t n) {
     int64_t i = 0;
-#if defined(__F16C__)
-#if defined(__AVX512F__)
-    for (; i + 15 < n; i += 16) {
-        __m256i x_vec = _mm256_loadu_si256((const __m256i *)(x + i));
+#ఒకవేళ defined(__F16C__)
+#ఒకవేళ defined(__AVX512F__)
+    కొరకు (; i + 15 < n; i += 16) {
+        __m256i x_vec = _mm256_loadu_si256((స్థిరరాశి __m256i *)(x + i));
         __m512 y_vec = _mm512_cvtph_ps(x_vec);
         _mm512_storeu_ps(y + i, y_vec);
     }
-#endif
-    for (; i + 7 < n; i += 8) {
-        __m128i x_vec = _mm_loadu_si128((const __m128i *)(x + i));
+#అయితే_ముగింపు
+    కొరకు (; i + 7 < n; i += 8) {
+        __m128i x_vec = _mm_loadu_si128((స్థిరరాశి __m128i *)(x + i));
         __m256 y_vec = _mm256_cvtph_ps(x_vec);
         _mm256_storeu_ps(y + i, y_vec);
     }
-    for (; i + 3 < n; i += 4) {
-        __m128i x_vec = _mm_loadl_epi64((const __m128i *)(x + i));
+    కొరకు (; i + 3 < n; i += 4) {
+        __m128i x_vec = _mm_loadl_epi64((స్థిరరాశి __m128i *)(x + i));
         __m128 y_vec = _mm_cvtph_ps(x_vec);
         _mm_storeu_ps(y + i, y_vec);
     }
 
-#elif defined(__riscv_v_intrinsic) && defined(__riscv_zvfhmin)
+#లేదావేళ defined(__riscv_v_intrinsic) && defined(__riscv_zvfhmin)
     // calculate step size
-    const int epr = __riscv_vsetvlmax_e16m2();
-    const int step = epr * 2;
-    const int np = (n & ~(step - 1));
+    స్థిరరాశి పూర్ణాంకం epr = __riscv_vsetvlmax_e16m2();
+    స్థిరరాశి పూర్ణాంకం అడుగు = epr * 2;
+    స్థిరరాశి పూర్ణాంకం np = (n & ~(అడుగు - 1));
 
     // unroll by 2
-    for (; i < np; i += step) {
-        vfloat16m2_t ax0 = __riscv_vle16_v_f16m2((const _Float16*)x + i, epr);
+    కొరకు (; i < np; i += అడుగు) {
+        vfloat16m2_t ax0 = __riscv_vle16_v_f16m2((స్థిరరాశి _Float16*)x + i, epr);
         vfloat32m4_t ay0 = __riscv_vfwcvt_f_f_v_f32m4(ax0, epr);
         __riscv_vse32_v_f32m4(y + i, ay0, epr);
 
-        vfloat16m2_t ax1 = __riscv_vle16_v_f16m2((const _Float16*)x + i + epr, epr);
+        vfloat16m2_t ax1 = __riscv_vle16_v_f16m2((స్థిరరాశి _Float16*)x + i + epr, epr);
         vfloat32m4_t ay1 = __riscv_vfwcvt_f_f_v_f32m4(ax1, epr);
         __riscv_vse32_v_f32m4(y + i + epr, ay1, epr);
     }
 
     // leftovers
-    int vl;
-    for (i = np; i < n; i += vl) {
+    పూర్ణాంకం vl;
+    కొరకు (i = np; i < n; i += vl) {
         vl = __riscv_vsetvl_e16m2(n - i);
-        vfloat16m2_t ax0 = __riscv_vle16_v_f16m2((const _Float16*)x + i, vl);
+        vfloat16m2_t ax0 = __riscv_vle16_v_f16m2((స్థిరరాశి _Float16*)x + i, vl);
         vfloat32m4_t ay0 = __riscv_vfwcvt_f_f_v_f32m4(ax0, vl);
         __riscv_vse32_v_f32m4(y + i, ay0, vl);
     }
 
-#endif
+#అయితే_ముగింపు
 
-    for (; i < n; ++i) {
-        y[i] = GGML_CPU_FP16_TO_FP32(x[i]);
+    కొరకు (; i < n; ++i) {
+        y[i] = GGML_CPU_FP16_గమ్యం_FP32(x[i]);
     }
 }
 
-void ggml_cpu_fp32_to_bf16(const float * x, ggml_bf16_t * y, int64_t n) {
+శూన్య ggml_cpu_fp32_గమ్యం_bf16(స్థిరరాశి దశాంశం * x, ggml_bf16_t * y, int64_t n) {
     int64_t i = 0;
-    for (; i < n; ++i) {
-        y[i] = GGML_FP32_TO_BF16(x[i]);
+    కొరకు (; i < n; ++i) {
+        y[i] = GGML_FP32_గమ్యం_BF16(x[i]);
     }
 }
 
-void ggml_cpu_fp32_to_i32(const float * x, int32_t * y, int64_t n) {
+శూన్య ggml_cpu_fp32_గమ్యం_i32(స్థిరరాశి దశాంశం * x, int32_t * y, int64_t n) {
     int64_t i = 0;
-    for (; i < n; ++i) {
+    కొరకు (; i < n; ++i) {
         y[i] = x[i];
     }
 }
 
-void ggml_cpu_bf16_to_fp32(const ggml_bf16_t * x, float * y, int64_t n) {
+శూన్య ggml_cpu_bf16_గమ్యం_fp32(స్థిరరాశి ggml_bf16_t * x, దశాంశం * y, int64_t n) {
     int64_t i = 0;
-#if defined(__AVX2__)
-#if defined(__AVX512F__)
-    for (; i + 15 < n; i += 16) {
+#ఒకవేళ defined(__AVX2__)
+#ఒకవేళ defined(__AVX512F__)
+    కొరకు (; i + 15 < n; i += 16) {
         _mm512_storeu_ps(y + i,
                         _mm512_castsi512_ps(
                             _mm512_slli_epi32(
                                 _mm512_cvtepu16_epi32(
                                     _mm256_loadu_si256(
-                                        (const __m256i *)(x + i))),
+                                        (స్థిరరాశి __m256i *)(x + i))),
                                 16)));
     }
-#endif
-    for (; i + 7 < n; i += 8) {
+#అయితే_ముగింపు
+    కొరకు (; i + 7 < n; i += 8) {
         _mm256_storeu_ps(y + i,
                         _mm256_castsi256_ps(
                             _mm256_slli_epi32(
                                 _mm256_cvtepu16_epi32(
                                     _mm_loadu_si128(
-                                        (const __m128i *)(x + i))),
+                                        (స్థిరరాశి __m128i *)(x + i))),
                                 16)));
     }
-#elif defined(__riscv_v_intrinsic) && defined(__riscv_zvfbfmin)
+#లేదావేళ defined(__riscv_v_intrinsic) && defined(__riscv_zvfbfmin)
     // calculate step size
-    const int epr = __riscv_vsetvlmax_e16m2();
-    const int step = epr * 2;
-    const int np = (n & ~(step - 1));
+    స్థిరరాశి పూర్ణాంకం epr = __riscv_vsetvlmax_e16m2();
+    స్థిరరాశి పూర్ణాంకం అడుగు = epr * 2;
+    స్థిరరాశి పూర్ణాంకం np = (n & ~(అడుగు - 1));
 
     // unroll by 2
-    for (; i < np; i += step) {
-        vbfloat16m2_t ax0 = __riscv_vle16_v_bf16m2((const __bf16*)x + i, epr);
+    కొరకు (; i < np; i += అడుగు) {
+        vbfloat16m2_t ax0 = __riscv_vle16_v_bf16m2((స్థిరరాశి __bf16*)x + i, epr);
         vfloat32m4_t ay0 = __riscv_vfwcvtbf16_f_f_v_f32m4(ax0, epr);
         __riscv_vse32_v_f32m4(y + i, ay0, epr);
 
-        vbfloat16m2_t ax1 = __riscv_vle16_v_bf16m2((const __bf16*)x + i + epr, epr);
+        vbfloat16m2_t ax1 = __riscv_vle16_v_bf16m2((స్థిరరాశి __bf16*)x + i + epr, epr);
         vfloat32m4_t ay1 = __riscv_vfwcvtbf16_f_f_v_f32m4(ax1, epr);
         __riscv_vse32_v_f32m4(y + i + epr, ay1, epr);
     }
 
     // leftovers
-    int vl;
-    for (i = np; i < n; i += vl) {
+    పూర్ణాంకం vl;
+    కొరకు (i = np; i < n; i += vl) {
         vl = __riscv_vsetvl_e16m2(n - i);
-        vbfloat16m2_t ax0 = __riscv_vle16_v_bf16m2((const __bf16*)x + i, vl);
+        vbfloat16m2_t ax0 = __riscv_vle16_v_bf16m2((స్థిరరాశి __bf16*)x + i, vl);
         vfloat32m4_t ay0 = __riscv_vfwcvtbf16_f_f_v_f32m4(ax0, vl);
         __riscv_vse32_v_f32m4(y + i, ay0, vl);
     }
-#endif
-    for (; i < n; i++) {
-        y[i] = GGML_BF16_TO_FP32(x[i]);
+#అయితే_ముగింపు
+    కొరకు (; i < n; i++) {
+        y[i] = GGML_BF16_గమ్యం_FP32(x[i]);
     }
 }
 
-int ggml_cpu_has_avx(void) {
-#if defined(__AVX__)
-    return 1;
-#else
-    return 0;
-#endif
+పూర్ణాంకం ggml_cpu_has_avx(శూన్య) {
+#ఒకవేళ defined(__AVX__)
+    తిరిగి 1;
+#లేకపోతే
+    తిరిగి 0;
+#అయితే_ముగింపు
 }
 
-int ggml_cpu_has_avx_vnni(void) {
-#if defined(__AVXVNNI__)
-    return 1;
-#else
-    return 0;
-#endif
+పూర్ణాంకం ggml_cpu_has_avx_vnni(శూన్య) {
+#ఒకవేళ defined(__AVXVNNI__)
+    తిరిగి 1;
+#లేకపోతే
+    తిరిగి 0;
+#అయితే_ముగింపు
 }
 
-int ggml_cpu_has_avx2(void) {
-#if defined(__AVX2__)
-    return 1;
-#else
-    return 0;
-#endif
+పూర్ణాంకం ggml_cpu_has_avx2(శూన్య) {
+#ఒకవేళ defined(__AVX2__)
+    తిరిగి 1;
+#లేకపోతే
+    తిరిగి 0;
+#అయితే_ముగింపు
 }
 
-int ggml_cpu_has_avx512(void) {
-#if defined(__AVX512F__)
-    return 1;
-#else
-    return 0;
-#endif
+పూర్ణాంకం ggml_cpu_has_avx512(శూన్య) {
+#ఒకవేళ defined(__AVX512F__)
+    తిరిగి 1;
+#లేకపోతే
+    తిరిగి 0;
+#అయితే_ముగింపు
 }
 
-int ggml_cpu_has_avx512_vbmi(void) {
-#if defined(__AVX512VBMI__)
-    return 1;
-#else
-    return 0;
-#endif
+పూర్ణాంకం ggml_cpu_has_avx512_vbmi(శూన్య) {
+#ఒకవేళ defined(__AVX512VBMI__)
+    తిరిగి 1;
+#లేకపోతే
+    తిరిగి 0;
+#అయితే_ముగింపు
 }
 
-int ggml_cpu_has_avx512_vnni(void) {
-#if defined(__AVX512VNNI__)
-    return 1;
-#else
-    return 0;
-#endif
+పూర్ణాంకం ggml_cpu_has_avx512_vnni(శూన్య) {
+#ఒకవేళ defined(__AVX512VNNI__)
+    తిరిగి 1;
+#లేకపోతే
+    తిరిగి 0;
+#అయితే_ముగింపు
 }
 
-int ggml_cpu_has_avx512_bf16(void) {
-#if defined(__AVX512BF16__)
-    return 1;
-#else
-    return 0;
-#endif
+పూర్ణాంకం ggml_cpu_has_avx512_bf16(శూన్య) {
+#ఒకవేళ defined(__AVX512BF16__)
+    తిరిగి 1;
+#లేకపోతే
+    తిరిగి 0;
+#అయితే_ముగింపు
 }
 
-int ggml_cpu_has_amx_int8(void) {
-#if defined(__AMX_INT8__)
-    return 1;
-#else
-    return 0;
-#endif
+పూర్ణాంకం ggml_cpu_has_amx_int8(శూన్య) {
+#ఒకవేళ defined(__AMX_INT8__)
+    తిరిగి 1;
+#లేకపోతే
+    తిరిగి 0;
+#అయితే_ముగింపు
 }
 
-int ggml_cpu_has_bmi2(void) {
-#if defined(__BMI2__)
-    return 1;
-#else
-    return 0;
-#endif
+పూర్ణాంకం ggml_cpu_has_bmi2(శూన్య) {
+#ఒకవేళ defined(__BMI2__)
+    తిరిగి 1;
+#లేకపోతే
+    తిరిగి 0;
+#అయితే_ముగింపు
 }
 
-int ggml_cpu_has_fma(void) {
-#if defined(__FMA__)
-    return 1;
-#else
-    return 0;
-#endif
+పూర్ణాంకం ggml_cpu_has_fma(శూన్య) {
+#ఒకవేళ defined(__FMA__)
+    తిరిగి 1;
+#లేకపోతే
+    తిరిగి 0;
+#అయితే_ముగింపు
 }
 
-int ggml_cpu_has_arm_fma(void) {
-#if defined(__ARM_FEATURE_FMA)
-    return 1;
-#else
-    return 0;
-#endif
+పూర్ణాంకం ggml_cpu_has_arm_fma(శూన్య) {
+#ఒకవేళ defined(__ARM_FEATURE_FMA)
+    తిరిగి 1;
+#లేకపోతే
+    తిరిగి 0;
+#అయితే_ముగింపు
 }
 
-int ggml_cpu_has_riscv_v(void) {
-#if defined(__riscv_v_intrinsic)
-    return 1;
-#else
-    return 0;
-#endif
+పూర్ణాంకం ggml_cpu_has_riscv_v(శూన్య) {
+#ఒకవేళ defined(__riscv_v_intrinsic)
+    తిరిగి 1;
+#లేకపోతే
+    తిరిగి 0;
+#అయితే_ముగింపు
 }
 
-int ggml_cpu_get_rvv_vlen(void) {
-#if defined(__riscv) && defined(__riscv_v_intrinsic)
-    return ggml_riscv_arch_features.rvv_vlen;
-#else
-    return 0;
-#endif
+పూర్ణాంకం ggml_cpu_get_rvv_vlen(శూన్య) {
+#ఒకవేళ defined(__riscv) && defined(__riscv_v_intrinsic)
+    తిరిగి ggml_riscv_arch_features.rvv_vlen;
+#లేకపోతే
+    తిరిగి 0;
+#అయితే_ముగింపు
 }
 
-int ggml_cpu_has_f16c(void) {
-#if defined(__F16C__)
-    return 1;
-#else
-    return 0;
-#endif
+పూర్ణాంకం ggml_cpu_has_f16c(శూన్య) {
+#ఒకవేళ defined(__F16C__)
+    తిరిగి 1;
+#లేకపోతే
+    తిరిగి 0;
+#అయితే_ముగింపు
 }
 
-int ggml_cpu_has_fp16_va(void) {
-#if defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
-    return 1;
-#else
-    return 0;
-#endif
+పూర్ణాంకం ggml_cpu_has_fp16_va(శూన్య) {
+#ఒకవేళ defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
+    తిరిగి 1;
+#లేకపోతే
+    తిరిగి 0;
+#అయితే_ముగింపు
 }
 
-int ggml_cpu_has_wasm_simd(void) {
-#if defined(__wasm_simd128__)
-    return 1;
-#else
-    return 0;
-#endif
+పూర్ణాంకం ggml_cpu_has_wasm_simd(శూన్య) {
+#ఒకవేళ defined(__wasm_simd128__)
+    తిరిగి 1;
+#లేకపోతే
+    తిరిగి 0;
+#అయితే_ముగింపు
 }
 
-int ggml_cpu_has_llamafile(void) {
-#if defined(GGML_USE_LLAMAFILE)
-    return 1;
-#else
-    return 0;
-#endif
+పూర్ణాంకం ggml_cpu_has_llamafile(శూన్య) {
+#ఒకవేళ defined(GGML_USE_LLAMAFILE)
+    తిరిగి 1;
+#లేకపోతే
+    తిరిగి 0;
+#అయితే_ముగింపు
 }
 
-int ggml_cpu_has_sse3(void) {
-#if defined(__SSE3__)
-    return 1;
-#else
-    return 0;
-#endif
+పూర్ణాంకం ggml_cpu_has_sse3(శూన్య) {
+#ఒకవేళ defined(__SSE3__)
+    తిరిగి 1;
+#లేకపోతే
+    తిరిగి 0;
+#అయితే_ముగింపు
 }
 
-int ggml_cpu_has_ssse3(void) {
-#if defined(__SSSE3__)
-    return 1;
-#else
-    return 0;
-#endif
+పూర్ణాంకం ggml_cpu_has_ssse3(శూన్య) {
+#ఒకవేళ defined(__SSSE3__)
+    తిరిగి 1;
+#లేకపోతే
+    తిరిగి 0;
+#అయితే_ముగింపు
 }
 
-int ggml_cpu_has_vsx(void) {
-#if defined(__POWER9_VECTOR__)
-    return 1;
-#else
-    return 0;
-#endif
+పూర్ణాంకం ggml_cpu_has_vsx(శూన్య) {
+#ఒకవేళ defined(__POWER9_VECTOR__)
+    తిరిగి 1;
+#లేకపోతే
+    తిరిగి 0;
+#అయితే_ముగింపు
 }
 
-int ggml_cpu_has_vxe(void) {
-#if defined(__VXE__) || defined(__VXE2__)
-    return 1;
-#else
-    return 0;
-#endif
+పూర్ణాంకం ggml_cpu_has_vxe(శూన్య) {
+#ఒకవేళ defined(__VXE__) || defined(__VXE2__)
+    తిరిగి 1;
+#లేకపోతే
+    తిరిగి 0;
+#అయితే_ముగింపు
 }
 
-int ggml_cpu_has_neon(void) {
-#if defined(__ARM_ARCH) && defined(__ARM_NEON)
-    return 1;
-#else
-    return 0;
-#endif
+పూర్ణాంకం ggml_cpu_has_neon(శూన్య) {
+#ఒకవేళ defined(__ARM_ARCH) && defined(__ARM_NEON)
+    తిరిగి 1;
+#లేకపోతే
+    తిరిగి 0;
+#అయితే_ముగింపు
 }
 
-int ggml_cpu_has_dotprod(void) {
-#if defined(__ARM_ARCH) && defined(__ARM_FEATURE_DOTPROD)
-    return 1;
-#else
-    return 0;
-#endif
+పూర్ణాంకం ggml_cpu_has_dotprod(శూన్య) {
+#ఒకవేళ defined(__ARM_ARCH) && defined(__ARM_FEATURE_DOTPROD)
+    తిరిగి 1;
+#లేకపోతే
+    తిరిగి 0;
+#అయితే_ముగింపు
 }
 
-int ggml_cpu_has_sve(void) {
-#if defined(__ARM_ARCH) && defined(__ARM_FEATURE_SVE)
-    return 1;
-#else
-    return 0;
-#endif
+పూర్ణాంకం ggml_cpu_has_sve(శూన్య) {
+#ఒకవేళ defined(__ARM_ARCH) && defined(__ARM_FEATURE_SVE)
+    తిరిగి 1;
+#లేకపోతే
+    తిరిగి 0;
+#అయితే_ముగింపు
 }
 
-int ggml_cpu_has_matmul_int8(void) {
-#if defined(__ARM_ARCH) && defined(__ARM_FEATURE_MATMUL_INT8)
-    return 1;
-#else
-    return 0;
-#endif
+పూర్ణాంకం ggml_cpu_has_matmul_int8(శూన్య) {
+#ఒకవేళ defined(__ARM_ARCH) && defined(__ARM_FEATURE_MATMUL_INT8)
+    తిరిగి 1;
+#లేకపోతే
+    తిరిగి 0;
+#అయితే_ముగింపు
 }
 
-int ggml_cpu_get_sve_cnt(void) {
-#if defined(__ARM_ARCH) && defined(__ARM_FEATURE_SVE)
-    return ggml_arm_arch_features.sve_cnt;
-#else
-    return 0;
-#endif
+పూర్ణాంకం ggml_cpu_get_sve_cnt(శూన్య) {
+#ఒకవేళ defined(__ARM_ARCH) && defined(__ARM_FEATURE_SVE)
+    తిరిగి ggml_arm_arch_features.sve_cnt;
+#లేకపోతే
+    తిరిగి 0;
+#అయితే_ముగింపు
 }
 
-int ggml_cpu_has_sme(void) {
-#if defined(__ARM_ARCH) && defined(__ARM_FEATURE_SME)
-    return 1;
-#else
-    return 0;
-#endif
+పూర్ణాంకం ggml_cpu_has_sme(శూన్య) {
+#ఒకవేళ defined(__ARM_ARCH) && defined(__ARM_FEATURE_SME)
+    తిరిగి 1;
+#లేకపోతే
+    తిరిగి 0;
+#అయితే_ముగింపు
 }
 
-int ggml_cpu_has_sme2(void) {
-#if defined(__ARM_ARCH) && defined(__ARM_FEATURE_SME2)
-    return 1;
-#else
-    return 0;
-#endif
+పూర్ణాంకం ggml_cpu_has_sme2(శూన్య) {
+#ఒకవేళ defined(__ARM_ARCH) && defined(__ARM_FEATURE_SME2)
+    తిరిగి 1;
+#లేకపోతే
+    తిరిగి 0;
+#అయితే_ముగింపు
 }
 
-void ggml_cpu_init(void) {
+శూన్య ggml_cpu_init(శూన్య) {
     // needed to initialize ggml_time
     {
-        struct ggml_init_params params = { 0, NULL, false };
-        struct ggml_context * ctx = ggml_init(params);
+        నిర్మాణం ggml_init_params params = { 0, ఖాళీ, false };
+        నిర్మాణం ggml_context * ctx = ggml_init(params);
         ggml_free(ctx);
     }
 
-    ggml_critical_section_start();
+    ggml_critical_section_ప్రారంభం();
 
-    static bool is_first_call = true;
+    స్థిర bool is_మొదటి_call = true;
 
-    if (is_first_call) {
+    ఒకవేళ (is_మొదటి_call) {
         // initialize GELU, Quick GELU, SILU and EXP F32 tables
         {
-            const uint64_t t_start = ggml_time_us(); UNUSED(t_start);
+            స్థిరరాశి uint64_t t_ప్రారంభం = ggml_సమయం_us(); వాడని(t_ప్రారంభం);
 
-            for (int i = 0; i < (1 << 16); ++i) {
-                union {
+            కొరకు (పూర్ణాంకం i = 0; i < (1 << 16); ++i) {
+                సంఘం {
                     uint16_t u16;
                     ggml_fp16_t fp16;
                 } u = {i};
-                float f = GGML_COMPUTE_FP16_TO_FP32(u.fp16);
-                ggml_table_f32_f16[i] = f;
-                ggml_table_gelu_f16[i] = GGML_CPU_FP32_TO_FP16(ggml_gelu_f32(f));
-                ggml_table_gelu_quick_f16[i] = GGML_CPU_FP32_TO_FP16(ggml_gelu_quick_f32(f));
+                దశాంశం f = GGML_COMPUTE_FP16_గమ్యం_FP32(u.fp16);
+                ggml_పట్టిక_f32_f16[i] = f;
+                ggml_పట్టిక_gelu_f16[i] = GGML_CPU_FP32_గమ్యం_FP16(ggml_gelu_f32(f));
+                ggml_పట్టిక_gelu_శీఘ్ర_f16[i] = GGML_CPU_FP32_గమ్యం_FP16(ggml_gelu_శీఘ్ర_f32(f));
             }
 
             // initialize E8M0 half table (256 entries)
-            for (int i = 0; i < (1 << 8); ++i) {
-                ggml_table_f32_e8m0_half[i] = GGML_E8M0_TO_FP32_HALF(i);
+            కొరకు (పూర్ణాంకం i = 0; i < (1 << 8); ++i) {
+                ggml_పట్టిక_f32_e8m0_half[i] = GGML_E8_M0_గమ్యం_FP32_HALF(i);
             }
 
             // initialize UE4M3 table (256 entries)
-            for (int i = 0; i < (1 << 8); ++i) {
-                ggml_table_f32_ue4m3[i] = ggml_ue4m3_to_fp32(i);
+            కొరకు (పూర్ణాంకం i = 0; i < (1 << 8); ++i) {
+                ggml_పట్టిక_f32_ue4m3[i] = ggml_ue4m3_గమ్యం_fp32(i);
             }
 
-            const uint64_t t_end = ggml_time_us(); UNUSED(t_end);
+            స్థిరరాశి uint64_t t_చివర = ggml_సమయం_us(); వాడని(t_చివర);
 
-            GGML_PRINT_DEBUG("%s: GELU, Quick GELU, SILU and EXP tables initialized in %f ms\n", __func__, (t_end - t_start)/1000.0);
+            GGML_PRINT_DEBUG("%s: GELU, Quick GELU, SILU and EXP tables initialized in %f ms\n", __func__, (t_చివర - t_ప్రారంభం)/1000.0);
 
-#ifdef GGML_USE_OPENMP
+#నిర్వచితమైతే GGML_USE_OPENMP
             //if (!getenv("OMP_WAIT_POLICY")) {
             //    // set the wait policy to active, so that OpenMP threads don't sleep
             //    setenv("OMP_WAIT_POLICY", "active", 0)
             //}
 
-            if (!getenv("KMP_BLOCKTIME")) {
+            ఒకవేళ (!getenv("KMP_BLOCKTIME")) {
                 // set the time to wait before sleeping a thread
                 // this is less aggressive than setting the wait policy to active, but should achieve similar results in most cases
-#ifdef _WIN32
+#నిర్వచితమైతే _WIN32
                 _putenv_s("KMP_BLOCKTIME", "200"); // 200ms
-#else
+#లేకపోతే
                 setenv("KMP_BLOCKTIME", "200", 0); // 200ms
-#endif
+#అయితే_ముగింపు
             }
-#endif
+#అయితే_ముగింపు
         }
 
-#if defined(__ARM_ARCH)
+#ఒకవేళ defined(__ARM_ARCH)
         ggml_init_arm_arch_features();
-#endif
+#అయితే_ముగింపు
 
-#if defined(__riscv)
+#ఒకవేళ defined(__riscv)
         ggml_init_riscv_arch_features();
-#endif
+#అయితే_ముగింపు
 
         {
-            const char * env = getenv("GGML_CPU_DISABLE_FUSION");
-            ggml_cpu_disable_fusion = (env != NULL && atoi(env) == 1);
+            స్థిరరాశి అక్షరం * env = getenv("GGML_CPU_DISABLE_FUSION");
+            ggml_cpu_disable_fusion = (env != ఖాళీ && atoi(env) == 1);
         }
 
-        is_first_call = false;
+        is_మొదటి_call = false;
     }
 
-    ggml_critical_section_end();
+    ggml_critical_section_చివర();
 }

@@ -1,149 +1,149 @@
-#include "backend-dispatched.h"
-#include "backend-virgl-apir.h"
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
-#include "ggml-impl.h"
+#అన్తర్భావ "backend-dispatched.h"
+#అన్తర్భావ "backend-virgl-apir.h"
+#అన్తర్భావ "ggml-backend-impl.h"
+#అన్తర్భావ "ggml-backend.h"
+#అన్తర్భావ "ggml-impl.h"
 
-#include <cstdint>
+#అన్తర్భావ <cstdint>
 
-uint32_t backend_device_get_device_count(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
-    GGML_UNUSED(ctx);
-    GGML_UNUSED(ctx);
-    GGML_UNUSED(dec);
+uint32_t backend_device_get_device_లెక్క(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+    GGML_వాడని(ctx);
+    GGML_వాడని(ctx);
+    GGML_వాడని(dec);
 
-    int32_t dev_count = reg->iface.get_device_count(reg);
-    apir_encode_int32_t(enc, &dev_count);
+    int32_t dev_లెక్క = reg->iface.get_device_లెక్క(reg);
+    apir_encode_int32_t(enc, &dev_లెక్క);
 
-    return 0;
+    తిరిగి 0;
 }
 
-uint32_t backend_device_get_count(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
-    GGML_UNUSED(ctx);
-    GGML_UNUSED(ctx);
-    GGML_UNUSED(dec);
+uint32_t backend_device_get_లెక్క(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+    GGML_వాడని(ctx);
+    GGML_వాడని(ctx);
+    GGML_వాడని(dec);
 
-    int32_t dev_count = reg->iface.get_device_count(reg);
-    apir_encode_int32_t(enc, &dev_count);
+    int32_t dev_లెక్క = reg->iface.get_device_లెక్క(reg);
+    apir_encode_int32_t(enc, &dev_లెక్క);
 
-    return 0;
+    తిరిగి 0;
 }
 
 uint32_t backend_device_get_name(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
-    GGML_UNUSED(ctx);
-    GGML_UNUSED(dec);
+    GGML_వాడని(ctx);
+    GGML_వాడని(dec);
 
-    const char * string = dev->iface.get_name(dev);
+    స్థిరరాశి అక్షరం * string = dev->iface.get_name(dev);
 
-    const size_t string_size = strlen(string) + 1;
-    apir_encode_array_size(enc, string_size);
-    apir_encode_char_array(enc, string, string_size);
+    స్థిరరాశి size_t string_కొలత = అక్షరశ్రేణి_పొడవు(string) + 1;
+    apir_encode_array_కొలత(enc, string_కొలత);
+    apir_encode_char_array(enc, string, string_కొలత);
 
-    return 0;
+    తిరిగి 0;
 }
 
 uint32_t backend_device_get_description(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
-    GGML_UNUSED(ctx);
-    GGML_UNUSED(dec);
+    GGML_వాడని(ctx);
+    GGML_వాడని(dec);
 
-    const char * string = dev->iface.get_description(dev);
+    స్థిరరాశి అక్షరం * string = dev->iface.get_description(dev);
 
-    const size_t string_size = strlen(string) + 1;
-    apir_encode_array_size(enc, string_size);
-    apir_encode_char_array(enc, string, string_size);
+    స్థిరరాశి size_t string_కొలత = అక్షరశ్రేణి_పొడవు(string) + 1;
+    apir_encode_array_కొలత(enc, string_కొలత);
+    apir_encode_char_array(enc, string, string_కొలత);
 
-    return 0;
+    తిరిగి 0;
 }
 
 uint32_t backend_device_get_type(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
-    GGML_UNUSED(ctx);
-    GGML_UNUSED(dec);
+    GGML_వాడని(ctx);
+    GGML_వాడని(dec);
 
     uint32_t type = dev->iface.get_type(dev);
     apir_encode_uint32_t(enc, &type);
 
-    return 0;
+    తిరిగి 0;
 }
 
-uint32_t backend_device_get_memory(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
-    GGML_UNUSED(ctx);
-    GGML_UNUSED(dec);
+uint32_t backend_device_get_జ్ఞాపకం(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+    GGML_వాడని(ctx);
+    GGML_వాడని(dec);
 
-    size_t free, total;
-    dev->iface.get_memory(dev, &free, &total);
+    size_t విడుదల, మొత్తం;
+    dev->iface.get_జ్ఞాపకం(dev, &విడుదల, &మొత్తం);
 
-    apir_encode_size_t(enc, &free);
-    apir_encode_size_t(enc, &total);
+    apir_encode_కొలత_t(enc, &విడుదల);
+    apir_encode_కొలత_t(enc, &మొత్తం);
 
-    return 0;
+    తిరిగి 0;
 }
 
 uint32_t backend_device_supports_op(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
-    GGML_UNUSED(ctx);
+    GGML_వాడని(ctx);
 
-    const ggml_tensor * op = apir_decode_ggml_tensor_inplace(dec);
+    స్థిరరాశి ggml_tensor * op = apir_decode_ggml_tensor_inplace(dec);
 
-    bool supports_op = dev->iface.supports_op(dev, op);
+    తార్కిక supports_op = dev->iface.supports_op(dev, op);
 
     apir_encode_bool_t(enc, &supports_op);
 
-    return 0;
+    తిరిగి 0;
 }
 
-uint32_t backend_device_get_buffer_type(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
-    GGML_UNUSED(ctx);
-    GGML_UNUSED(dec);
+uint32_t backend_device_get_బఫరు_type(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+    GGML_వాడని(ctx);
+    GGML_వాడని(dec);
 
-    ggml_backend_buffer_type_t bufft = dev->iface.get_buffer_type(dev);
+    ggml_backend_బఫరు_type_t bufft = dev->iface.get_బఫరు_type(dev);
 
-    apir_encode_ggml_buffer_type(enc, bufft);
+    apir_encode_ggml_బఫరు_type(enc, bufft);
 
-    return 0;
+    తిరిగి 0;
 }
 
 uint32_t backend_device_get_props(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
-    GGML_UNUSED(ctx);
-    GGML_UNUSED(dec);
+    GGML_వాడని(ctx);
+    GGML_వాడని(dec);
 
     ggml_backend_dev_props props;
     dev->iface.get_props(dev, &props);
 
     apir_encode_bool_t(enc, &props.caps.async);
-    apir_encode_bool_t(enc, &props.caps.host_buffer);
-    apir_encode_bool_t(enc, &props.caps.buffer_from_host_ptr);
+    apir_encode_bool_t(enc, &props.caps.host_బఫరు);
+    apir_encode_bool_t(enc, &props.caps.బఫరు_from_host_ptr);
     apir_encode_bool_t(enc, &props.caps.events);
     apir_encode_bool_t(enc, &props.caps.mmap_support);
 
-    return 0;
+    తిరిగి 0;
 }
 
-uint32_t backend_device_buffer_from_ptr(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
-    GGML_UNUSED(ctx);
-    GGML_UNUSED(dec);
+uint32_t backend_device_బఫరు_from_ptr(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+    GGML_వాడని(ctx);
+    GGML_వాడని(dec);
 
     uint32_t shmem_res_id;
     apir_decode_virtgpu_shmem_res_id(dec, &shmem_res_id);
 
-    void * shmem_ptr = ctx->iface->get_shmem_ptr(ctx->ctx_id, shmem_res_id);
-    if (!shmem_ptr) {
+    శూన్య * shmem_ptr = ctx->iface->get_shmem_ptr(ctx->ctx_id, shmem_res_id);
+    ఒకవేళ (!shmem_ptr) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: Couldn't get the shmem addr from virgl\n", __func__);
-        apir_decoder_set_fatal(dec);
-        return 1;
+        apir_decoder_సమితి_fatal(dec);
+        తిరిగి 1;
     }
 
     size_t size;
-    apir_decode_size_t(dec, &size);
-    size_t max_tensor_size;
-    apir_decode_size_t(dec, &max_tensor_size);
+    apir_decode_కొలత_t(dec, &size);
+    size_t max_tensor_కొలత;
+    apir_decode_కొలత_t(dec, &max_tensor_కొలత);
 
-    ggml_backend_buffer_t buffer;
-    buffer = dev->iface.buffer_from_host_ptr(dev, shmem_ptr, size, max_tensor_size);
+    ggml_backend_బఫరు_t బఫరు;
+    బఫరు = dev->iface.బఫరు_from_host_ptr(dev, shmem_ptr, size, max_tensor_కొలత);
 
-    apir_encode_ggml_buffer(enc, buffer);
-    apir_encode_ggml_buffer_type(enc, buffer->buft);
+    apir_encode_ggml_బఫరు(enc, బఫరు);
+    apir_encode_ggml_బఫరు_type(enc, బఫరు->buft);
 
-    if (buffer) {
-        apir_track_backend_buffer(buffer);
+    ఒకవేళ (బఫరు) {
+        apir_track_backend_బఫరు(బఫరు);
     }
 
-    return 0;
+    తిరిగి 0;
 }

@@ -1,19 +1,19 @@
-#ifndef HTP_VTCM_H
-#define HTP_VTCM_H
+#నిర్వచితం_కాకపోతే HTP_VTCM_H
+#నిర్వచించు HTP_VTCM_H
 
-#include <stddef.h>
-#include <stdint.h>
+#అన్తర్భావ <stddef.h>
+#అన్తర్భావ <stdint.h>
 
-static inline uint8_t *vtcm_seq_alloc(uint8_t **vtcm_ptr, size_t size) {
+స్థిర అంతఃవరుస uint8_t *vtcm_seq_alloc(uint8_t **vtcm_ptr, size_t కొలత) {
     uint8_t *p = *vtcm_ptr;
-    *vtcm_ptr += size;
-    return p;
+    *vtcm_ptr += కొలత;
+    తిరిగి p;
 }
 
-#define VTCM_LAYOUT_ALLOC(off, field, sz) do { (L)->field = (off); (off) += (sz); } while (0)
-#define VTCM_LAYOUT_ALLOC_OPTIONAL(off, field, sz, cond) do { if (cond) { VTCM_LAYOUT_ALLOC(off, field, sz); } else { (L)->field = 0; } } while (0)
+#నిర్వచించు VTCM_LAYOUT_ALLOC(off, క్షేత్రం, sz) చేయి { (L)->క్షేత్రం = (off); (off) += (sz); } అయితే (0)
+#నిర్వచించు VTCM_LAYOUT_ALLOC_OPTIONAL(off, క్షేత్రం, sz, cond) చేయి { ఒకవేళ (cond) { VTCM_LAYOUT_ALLOC(off, క్షేత్రం, sz); } లేకపోతే { (L)->క్షేత్రం = 0; } } అయితే (0)
 
-#define VTCM_LAYOUT_PTR(type, base, offset) ((type *)((uint8_t *)(base) + (offset)))
-#define VTCM_LAYOUT_PTR_OPTIONAL(type, base, offset, cond) ((cond) ? VTCM_LAYOUT_PTR(type, base, offset) : NULL)
+#నిర్వచించు VTCM_LAYOUT_PTR(type, పునాది, స్థానభ్రంశం) ((type *)((uint8_t *)(పునాది) + (స్థానభ్రంశం)))
+#నిర్వచించు VTCM_LAYOUT_PTR_OPTIONAL(type, పునాది, స్థానభ్రంశం, cond) ((cond) ? VTCM_LAYOUT_PTR(type, పునాది, స్థానభ్రంశం) : ఖాళీ)
 
-#endif // HTP_VTCM_H
+#అయితే_ముగింపు // HTP_VTCM_H

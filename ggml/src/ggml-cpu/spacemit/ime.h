@@ -1,21 +1,21 @@
-#pragma once
+#సూచన once
 
-#include "ggml-alloc.h"
+#అన్తర్భావ "ggml-alloc.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#నిర్వచితమైతే __cplusplus
+బాహ్య "C" {
+#అయితే_ముగింపు
 
-ggml_backend_buffer_type_t ggml_backend_cpu_riscv64_spacemit_buffer_type(void);
+ggml_backend_బఫరు_type_t ggml_backend_cpu_riscv64_spacemit_బఫరు_type(శూన్య);
 
-void ggml_backend_cpu_riscv64_spacemit_set_numa_thread_affinity(int thread_n);
+శూన్య ggml_backend_cpu_riscv64_spacemit_సమితి_numa_thread_affinity(పూర్ణాంకం thread_n);
 
-void ggml_backend_cpu_riscv64_spacemit_clear_numa_thread_affinity_threaded(int thread_n);
+శూన్య ggml_backend_cpu_riscv64_spacemit_clear_numa_thread_affinity_threaded(పూర్ణాంకం thread_n);
 
-void * ggml_backend_cpu_riscv64_spacemit_alloc_shared(size_t size, size_t alignment);
+శూన్య * ggml_backend_cpu_riscv64_spacemit_alloc_shared(size_t కొలత, size_t alignment);
 
-void ggml_backend_cpu_riscv64_spacemit_free_shared(void * ptr);
+శూన్య ggml_backend_cpu_riscv64_spacemit_free_shared(శూన్య * ptr);
 
-#ifdef __cplusplus
+#నిర్వచితమైతే __cplusplus
 }
-#endif
+#అయితే_ముగింపు

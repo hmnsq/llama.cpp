@@ -1,181 +1,181 @@
-#ifndef HTP_BINARY_OPS_H
-#define HTP_BINARY_OPS_H
+#నిర్వచితం_కాకపోతే HTP_ద్విమాన_OPS_H
+#నిర్వచించు HTP_ద్విమాన_OPS_H
 
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
+#అన్తర్భావ <stddef.h>
+#అన్తర్భావ <stdint.h>
+#అన్తర్భావ <string.h>
 
-#include "hex-common.h"
-#include "htp-ops.h"
-#include "htp-vtcm.h"
+#అన్తర్భావ "hex-common.h"
+#అన్తర్భావ "htp-ops.h"
+#అన్తర్భావ "htp-vtcm.h"
 
-enum htp_binary_kernel_type {
-    HTP_BINARY_KERNEL_SAME_SHAPE = 0,
-    HTP_BINARY_KERNEL_ROW_BCAST,
-    HTP_BINARY_KERNEL_SCALAR,
-    HTP_BINARY_KERNEL_ADD_ID,
-    HTP_BINARY_KERNEL_COMPLEX,
-    HTP_BINARY_KERNEL_REPEAT,
-    HTP_BINARY_KERNEL_CHUNKED,
+గణన htp_ద్విమాన_kernel_type {
+    HTP_ద్విమాన_KERNEL_SAME_SHAPE = 0,
+    HTP_ద్విమాన_KERNEL_అడ్డువరుస_BCAST,
+    HTP_ద్విమాన_KERNEL_SCALAR,
+    HTP_ద్విమాన_KERNEL_కూడు_ID,
+    HTP_ద్విమాన_KERNEL_COMPLEX,
+    HTP_ద్విమాన_KERNEL_REPEAT,
+    HTP_ద్విమాన_KERNEL_CHUNKED,
 };
 
-struct htp_binary_kernel_params {
+నిర్మాణం htp_ద్విమాన_kernel_params {
     uint32_t kernel_type;
-    uint32_t n_threads;
-    uint32_t rows_per_buffer;
+    uint32_t n_దారాలు;
+    uint32_t అడ్డువరుసలు_చొప్పున_బఫరు;
 
-    uint32_t src0_row_size_aligned;
-    uint32_t src1_row_size_aligned;
-    uint32_t dst_row_size_aligned;
+    uint32_t src0_అడ్డువరుస_కొలత_aligned;
+    uint32_t src1_అడ్డువరుస_కొలత_aligned;
+    uint32_t dst_అడ్డువరుస_కొలత_aligned;
 
-    uint32_t src1_size;
-    uint32_t src2_size;
-    uint32_t vtcm_size;
+    uint32_t src1_కొలత;
+    uint32_t src2_కొలత;
+    uint32_t vtcm_కొలత;
 
-    uint32_t chunk_size;
-    uint32_t chunk_bytes;
+    uint32_t chunk_కొలత;
+    uint32_t chunk_బైట్లు;
     uint32_t is_scalar;
 
-    uint8_t  split_at_ne01;
-    uint8_t  split_at_ne02;
+    uint8_t  విభజించు_at_ne01;
+    uint8_t  విభజించు_at_ne02;
     uint8_t  src1_strided;
     uint8_t  pad;
 };
 
-#if defined(__cplusplus)
-static_assert(sizeof(struct htp_binary_kernel_params) <= 128, "htp_binary_kernel_params is too large for kernel_params blob");
+#ఒకవేళ defined(__cplusplus)
+static_assert(పరిమాణం(నిర్మాణం htp_ద్విమాన_kernel_params) <= 128, "htp_binary_kernel_params is too large for kernel_params blob");
 
-struct ggml_tensor;
-static inline bool htp_binary_strides_safe(
-    const struct ggml_tensor * src0,
-    const struct ggml_tensor * src1,
-    const struct ggml_tensor * dst,
-    size_t elem_size
+నిర్మాణం ggml_tensor;
+స్థిర అంతఃవరుస bool htp_ద్విమాన_strides_సురక్షిత(
+    స్థిరరాశి నిర్మాణం ggml_tensor * src0,
+    స్థిరరాశి నిర్మాణం ggml_tensor * src1,
+    స్థిరరాశి నిర్మాణం ggml_tensor * dst,
+    size_t elem_కొలత
 ) {
-    if ((src0->ne[0] != 1 && src0->nb[0] != elem_size) ||
-        (src1->ne[0] != 1 && src1->nb[0] != elem_size) ||
-        (dst->ne[0]  != 1 && dst->nb[0]  != elem_size)) {
-        return false;
+    ఒకవేళ ((src0->ne[0] != 1 && src0->nb[0] != elem_కొలత) ||
+        (src1->ne[0] != 1 && src1->nb[0] != elem_కొలత) ||
+        (dst->ne[0]  != 1 && dst->nb[0]  != elem_కొలత)) {
+        తిరిగి false;
     }
-    if ((src0->ne[1] > 1 && src0->nb[1] < src0->ne[0] * elem_size) ||
-        (src1->ne[1] > 1 && src1->nb[1] < src1->ne[0] * elem_size) ||
-        (dst->ne[1]  > 1 && dst->nb[1]  < dst->ne[0]  * elem_size)) {
-        return false;
+    ఒకవేళ ((src0->ne[1] > 1 && src0->nb[1] < src0->ne[0] * elem_కొలత) ||
+        (src1->ne[1] > 1 && src1->nb[1] < src1->ne[0] * elem_కొలత) ||
+        (dst->ne[1]  > 1 && dst->nb[1]  < dst->ne[0]  * elem_కొలత)) {
+        తిరిగి false;
     }
-    return true;
+    తిరిగి true;
 }
-#else
-_Static_assert(sizeof(struct htp_binary_kernel_params) <= 128, "htp_binary_kernel_params is too large for kernel_params blob");
-#endif
+#లేకపోతే
+_Static_assert(పరిమాణం(నిర్మాణం htp_ద్విమాన_kernel_params) <= 128, "htp_binary_kernel_params is too large for kernel_params blob");
+#అయితే_ముగింపు
 
-struct htp_binary_vtcm_layout {
-    size_t total_bytes;
+నిర్మాణం htp_ద్విమాన_vtcm_layout {
+    size_t మొత్తం_బైట్లు;
     size_t off_src0;
     size_t off_src1;
     size_t off_src2;
     size_t off_dst;
 
-    size_t src0_bytes_per_thread;
-    size_t src1_bytes_per_thread;
-    size_t dst_bytes_per_thread;
+    size_t src0_బైట్లు_చొప్పున_thread;
+    size_t src1_బైట్లు_చొప్పున_thread;
+    size_t dst_బైట్లు_చొప్పున_thread;
 
-    size_t src0_spad_half_size;
-    size_t src1_spad_half_size;
-    size_t dst_spad_half_size;
+    size_t src0_spad_half_కొలత;
+    size_t src1_spad_half_కొలత;
+    size_t dst_spad_half_కొలత;
 
-    size_t src1_size;
-    size_t src2_size;
-    uint32_t rows_per_buffer;
+    size_t src1_కొలత;
+    size_t src2_కొలత;
+    uint32_t అడ్డువరుసలు_చొప్పున_బఫరు;
 };
 
-static inline void htp_binary_vtcm_layout_build(
-    struct htp_binary_vtcm_layout * L,
-    const struct htp_binary_kernel_params * kparams,
-    size_t vtcm_size
+స్థిర అంతఃవరుస శూన్య htp_ద్విమాన_vtcm_layout_build(
+    నిర్మాణం htp_ద్విమాన_vtcm_layout * L,
+    స్థిరరాశి నిర్మాణం htp_ద్విమాన_kernel_params * kparams,
+    size_t vtcm_కొలత
 ) {
-    memset(L, 0, sizeof(*L));
+    memset(L, 0, పరిమాణం(*L));
 
-    const uint32_t n_threads = kparams->n_threads;
-    if (n_threads == 0) {
-        return;
+    స్థిరరాశి uint32_t n_దారాలు = kparams->n_దారాలు;
+    ఒకవేళ (n_దారాలు == 0) {
+        తిరిగి;
     }
 
-    if (kparams->kernel_type == HTP_BINARY_KERNEL_CHUNKED) {
-        const size_t chunk_bytes = kparams->chunk_bytes;
-        if (chunk_bytes == 0) {
-            return;
+    ఒకవేళ (kparams->kernel_type == HTP_ద్విమాన_KERNEL_CHUNKED) {
+        స్థిరరాశి size_t chunk_బైట్లు = kparams->chunk_బైట్లు;
+        ఒకవేళ (chunk_బైట్లు == 0) {
+            తిరిగి;
         }
 
-        L->src0_bytes_per_thread = 2 * chunk_bytes;
-        L->src1_bytes_per_thread = kparams->is_scalar ? 0 : (2 * chunk_bytes);
-        L->dst_bytes_per_thread  = 2 * chunk_bytes;
+        L->src0_బైట్లు_చొప్పున_thread = 2 * chunk_బైట్లు;
+        L->src1_బైట్లు_చొప్పున_thread = kparams->is_scalar ? 0 : (2 * chunk_బైట్లు);
+        L->dst_బైట్లు_చొప్పున_thread  = 2 * chunk_బైట్లు;
 
-        L->src0_spad_half_size = chunk_bytes;
-        L->src1_spad_half_size = kparams->is_scalar ? 0 : chunk_bytes;
-        L->dst_spad_half_size  = chunk_bytes;
+        L->src0_spad_half_కొలత = chunk_బైట్లు;
+        L->src1_spad_half_కొలత = kparams->is_scalar ? 0 : chunk_బైట్లు;
+        L->dst_spad_half_కొలత  = chunk_బైట్లు;
 
-        L->rows_per_buffer = 1;
-        L->src1_size = 0;
+        L->అడ్డువరుసలు_చొప్పున_బఫరు = 1;
+        L->src1_కొలత = 0;
 
-        const size_t src0_total = n_threads * L->src0_bytes_per_thread;
-        const size_t src1_total = kparams->is_scalar ? 128 : (n_threads * L->src1_bytes_per_thread);
-        const size_t dst_total  = n_threads * L->dst_bytes_per_thread;
+        స్థిరరాశి size_t src0_మొత్తం = n_దారాలు * L->src0_బైట్లు_చొప్పున_thread;
+        స్థిరరాశి size_t src1_మొత్తం = kparams->is_scalar ? 128 : (n_దారాలు * L->src1_బైట్లు_చొప్పున_thread);
+        స్థిరరాశి size_t dst_మొత్తం  = n_దారాలు * L->dst_బైట్లు_చొప్పున_thread;
 
         size_t off = 0;
-        VTCM_LAYOUT_ALLOC(off, off_src0, src0_total);
-        VTCM_LAYOUT_ALLOC(off, off_src1, src1_total);
-        VTCM_LAYOUT_ALLOC(off, off_dst,  dst_total);
+        VTCM_LAYOUT_ALLOC(off, off_src0, src0_మొత్తం);
+        VTCM_LAYOUT_ALLOC(off, off_src1, src1_మొత్తం);
+        VTCM_LAYOUT_ALLOC(off, off_dst,  dst_మొత్తం);
 
-        if (off > vtcm_size) {
-            return;
+        ఒకవేళ (off > vtcm_కొలత) {
+            తిరిగి;
         }
 
-        L->total_bytes = off;
-        return;
+        L->మొత్తం_బైట్లు = off;
+        తిరిగి;
     }
 
-    const size_t spad_row_total = (kparams->kernel_type == HTP_BINARY_KERNEL_SAME_SHAPE)
-        ? 2 * (kparams->src0_row_size_aligned + kparams->src1_row_size_aligned + kparams->dst_row_size_aligned)
-        : 2 * (kparams->src0_row_size_aligned + kparams->dst_row_size_aligned);
+    స్థిరరాశి size_t spad_అడ్డువరుస_మొత్తం = (kparams->kernel_type == HTP_ద్విమాన_KERNEL_SAME_SHAPE)
+        ? 2 * (kparams->src0_అడ్డువరుస_కొలత_aligned + kparams->src1_అడ్డువరుస_కొలత_aligned + kparams->dst_అడ్డువరుస_కొలత_aligned)
+        : 2 * (kparams->src0_అడ్డువరుస_కొలత_aligned + kparams->dst_అడ్డువరుస_కొలత_aligned);
 
-    const size_t static_vtcm_size = kparams->src1_size + kparams->src2_size;
-    if (spad_row_total == 0 || vtcm_size < static_vtcm_size) {
-        return;
+    స్థిరరాశి size_t static_vtcm_కొలత = kparams->src1_కొలత + kparams->src2_కొలత;
+    ఒకవేళ (spad_అడ్డువరుస_మొత్తం == 0 || vtcm_కొలత < static_vtcm_కొలత) {
+        తిరిగి;
     }
 
-    const size_t rows_per_buffer = (vtcm_size - static_vtcm_size) / (n_threads * spad_row_total);
-    if (rows_per_buffer == 0) {
-        return;
+    స్థిరరాశి size_t అడ్డువరుసలు_చొప్పున_బఫరు = (vtcm_కొలత - static_vtcm_కొలత) / (n_దారాలు * spad_అడ్డువరుస_మొత్తం);
+    ఒకవేళ (అడ్డువరుసలు_చొప్పున_బఫరు == 0) {
+        తిరిగి;
     }
 
-    L->rows_per_buffer = (uint32_t) rows_per_buffer;
-    L->src1_size = kparams->src1_size;
-    L->src2_size = kparams->src2_size;
+    L->అడ్డువరుసలు_చొప్పున_బఫరు = (uint32_t) అడ్డువరుసలు_చొప్పున_బఫరు;
+    L->src1_కొలత = kparams->src1_కొలత;
+    L->src2_కొలత = kparams->src2_కొలత;
 
-    L->src0_bytes_per_thread = rows_per_buffer * 2 * kparams->src0_row_size_aligned;
-    L->dst_bytes_per_thread  = rows_per_buffer * 2 * kparams->dst_row_size_aligned;
-    L->src1_bytes_per_thread = (kparams->kernel_type == HTP_BINARY_KERNEL_SAME_SHAPE)
-        ? rows_per_buffer * 2 * kparams->src1_row_size_aligned
+    L->src0_బైట్లు_చొప్పున_thread = అడ్డువరుసలు_చొప్పున_బఫరు * 2 * kparams->src0_అడ్డువరుస_కొలత_aligned;
+    L->dst_బైట్లు_చొప్పున_thread  = అడ్డువరుసలు_చొప్పున_బఫరు * 2 * kparams->dst_అడ్డువరుస_కొలత_aligned;
+    L->src1_బైట్లు_చొప్పున_thread = (kparams->kernel_type == HTP_ద్విమాన_KERNEL_SAME_SHAPE)
+        ? అడ్డువరుసలు_చొప్పున_బఫరు * 2 * kparams->src1_అడ్డువరుస_కొలత_aligned
         : 0;
 
-    L->src0_spad_half_size = L->src0_bytes_per_thread / 2;
-    L->src1_spad_half_size = L->src1_bytes_per_thread / 2;
-    L->dst_spad_half_size  = L->dst_bytes_per_thread / 2;
+    L->src0_spad_half_కొలత = L->src0_బైట్లు_చొప్పున_thread / 2;
+    L->src1_spad_half_కొలత = L->src1_బైట్లు_చొప్పున_thread / 2;
+    L->dst_spad_half_కొలత  = L->dst_బైట్లు_చొప్పున_thread / 2;
 
-    const size_t src0_total = n_threads * L->src0_bytes_per_thread;
-    const size_t src1_total = (kparams->src1_size > 0)
-        ? kparams->src1_size
-        : n_threads * L->src1_bytes_per_thread;
-    const size_t src2_total = kparams->src2_size;
-    const size_t dst_total  = n_threads * L->dst_bytes_per_thread;
+    స్థిరరాశి size_t src0_మొత్తం = n_దారాలు * L->src0_బైట్లు_చొప్పున_thread;
+    స్థిరరాశి size_t src1_మొత్తం = (kparams->src1_కొలత > 0)
+        ? kparams->src1_కొలత
+        : n_దారాలు * L->src1_బైట్లు_చొప్పున_thread;
+    స్థిరరాశి size_t src2_మొత్తం = kparams->src2_కొలత;
+    స్థిరరాశి size_t dst_మొత్తం  = n_దారాలు * L->dst_బైట్లు_చొప్పున_thread;
 
     size_t off = 0;
-    VTCM_LAYOUT_ALLOC(off, off_src0, src0_total);
-    VTCM_LAYOUT_ALLOC(off, off_src1, src1_total);
-    VTCM_LAYOUT_ALLOC(off, off_src2, src2_total);
-    VTCM_LAYOUT_ALLOC(off, off_dst,  dst_total);
+    VTCM_LAYOUT_ALLOC(off, off_src0, src0_మొత్తం);
+    VTCM_LAYOUT_ALLOC(off, off_src1, src1_మొత్తం);
+    VTCM_LAYOUT_ALLOC(off, off_src2, src2_మొత్తం);
+    VTCM_LAYOUT_ALLOC(off, off_dst,  dst_మొత్తం);
 
-    L->total_bytes = off;
+    L->మొత్తం_బైట్లు = off;
 }
 
-#endif
+#అయితే_ముగింపు

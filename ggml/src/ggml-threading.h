@@ -1,14 +1,14 @@
-#pragma once
+#సూచన once
 
-#include "ggml.h"
+#అన్తర్భావ "ggml.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#నిర్వచితమైతే __cplusplus
+బాహ్య "C" {
+#అయితే_ముగింపు
 
-GGML_API void ggml_critical_section_start(void);
-GGML_API void ggml_critical_section_end(void);
+GGML_API శూన్య ggml_critical_section_ప్రారంభం(శూన్య);
+GGML_API శూన్య ggml_critical_section_చివర(శూన్య);
 
-#ifdef __cplusplus
+#నిర్వచితమైతే __cplusplus
 }
-#endif
+#అయితే_ముగింపు

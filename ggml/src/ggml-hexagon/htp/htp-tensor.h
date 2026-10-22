@@ -1,199 +1,199 @@
-#ifndef HTP_TENSOR_H
-#define HTP_TENSOR_H
+#నిర్వచితం_కాకపోతే HTP_TENSOR_H
+#నిర్వచించు HTP_TENSOR_H
 
-#include <stdint.h>
-#include <stdbool.h>
-#include "htp-ops.h"
-#include "hex-bitmap.h"
-#include "hex-common.h"
-#include "hex-fastdiv.h"
+#అన్తర్భావ <stdint.h>
+#అన్తర్భావ <stdbool.h>
+#అన్తర్భావ "htp-ops.h"
+#అన్తర్భావ "hex-bitmap.h"
+#అన్తర్భావ "hex-common.h"
+#అన్తర్భావ "hex-fastdiv.h"
 
-#define HTP_TENSOR_MDEV_LINE_SIZE   128
+#నిర్వచించు HTP_TENSOR_MDEV_పంక్తి_కొలత   128
 
 // Currently HMX requires 32x32 tile formats (do not change)
-#define HTP_TENSOR_TILE_N_COLS      32
-#define HTP_TENSOR_TILE_N_ROWS      32
+#నిర్వచించు HTP_TENSOR_TILE_N_నిలువుల_సంఖ్య      32
+#నిర్వచించు HTP_TENSOR_TILE_N_అడ్డువరుసలు      32
 
-#define HTP_TENSOR_TILE_SIZE_F16    2048
-#define HTP_TENSOR_TILE_SIZE_Q4_0   576
-#define HTP_TENSOR_TILE_SIZE_Q4_1   640
-#define HTP_TENSOR_TILE_SIZE_Q8_0   1088
-#define HTP_TENSOR_TILE_SIZE_IQ4_NL 576
-#define HTP_TENSOR_TILE_SIZE_MXFP4  544
-#define HTP_TENSOR_TILE_SIZE_Q4_K   640
-#define HTP_TENSOR_TILE_SIZE_Q5_K   768
-#define HTP_TENSOR_TILE_SIZE_Q6_K   896
-#define HTP_TENSOR_TILE_SIZE_Q3_K   512
-#define HTP_TENSOR_TILE_SIZE_Q2_K   336
-#define HTP_TENSOR_TILE_K_Q1_0      128
-#define HTP_TENSOR_TILE_SIZE_Q1_0   576
-#define HTP_TENSOR_TILE_K_Q2_0      64
-#define HTP_TENSOR_TILE_SIZE_Q2_0   576
+#నిర్వచించు HTP_TENSOR_TILE_కొలత_F16    2048
+#నిర్వచించు HTP_TENSOR_TILE_కొలత_Q4_0   576
+#నిర్వచించు HTP_TENSOR_TILE_కొలత_Q4_1   640
+#నిర్వచించు HTP_TENSOR_TILE_కొలత_Q8_0   1088
+#నిర్వచించు HTP_TENSOR_TILE_కొలత_IQ4_NL 576
+#నిర్వచించు HTP_TENSOR_TILE_కొలత_MXFP4  544
+#నిర్వచించు HTP_TENSOR_TILE_కొలత_Q4_K   640
+#నిర్వచించు HTP_TENSOR_TILE_కొలత_Q5_K   768
+#నిర్వచించు HTP_TENSOR_TILE_కొలత_Q6_K   896
+#నిర్వచించు HTP_TENSOR_TILE_కొలత_Q3_K   512
+#నిర్వచించు HTP_TENSOR_TILE_కొలత_Q2_K   336
+#నిర్వచించు HTP_TENSOR_TILE_K_Q1_0      128
+#నిర్వచించు HTP_TENSOR_TILE_కొలత_Q1_0   576
+#నిర్వచించు HTP_TENSOR_TILE_K_Q2_0      64
+#నిర్వచించు HTP_TENSOR_TILE_కొలత_Q2_0   576
 
 // Tiled weight tensor layouts (Q4_0, Q8_0, IQ4_NL, MXFP4, Q1_0, Q2_0, K-quants):
 // See docs/backend/snapdragon/developer.md ("Tiled Weight Formats").
 
-struct htp_tensor_mdev_range {
-    uint32_t start;
-    uint32_t count;
+నిర్మాణం htp_tensor_mdev_range {
+    uint32_t ప్రారంభం;
+    uint32_t లెక్క;
 };
 
-static inline bool htp_tensor_is_extended(const struct htp_tensor * t) {
-    return t && (t->data >> 32) != 0;
+స్థిర అంతఃవరుస bool htp_tensor_is_extended(స్థిరరాశి నిర్మాణం htp_tensor * t) {
+    తిరిగి t && (t->దత్తాంశం >> 32) != 0;
 }
 
-static inline bool htp_tensor_is_contiguous(const struct htp_tensor * t, uint32_t type_size) {
-    uint32_t next_nb = type_size;
-    if (t->ne[0] != 1 && t->nb[0] != next_nb) {
-        return false;
+స్థిర అంతఃవరుస bool htp_tensor_is_contiguous(స్థిరరాశి నిర్మాణం htp_tensor * t, uint32_t type_కొలత) {
+    uint32_t తదుపరి_nb = type_కొలత;
+    ఒకవేళ (t->ne[0] != 1 && t->nb[0] != తదుపరి_nb) {
+        తిరిగి false;
     }
-    next_nb *= t->ne[0];
-    for (int i = 1; i < HTP_OP_MAX_DIMS; i++) {
-        if (t->ne[i] != 1 && t->nb[i] != next_nb) {
-            return false;
+    తదుపరి_nb *= t->ne[0];
+    కొరకు (పూర్ణాంకం i = 1; i < HTP_OP_MAX_DIMS; i++) {
+        ఒకవేళ (t->ne[i] != 1 && t->nb[i] != తదుపరి_nb) {
+            తిరిగి false;
         }
-        next_nb *= t->ne[i];
+        తదుపరి_nb *= t->ne[i];
     }
-    return true;
+    తిరిగి true;
 }
 
-static inline bool htp_tensor_is_permuted(const struct htp_tensor * t) {
-    return t->nb[0] > t->nb[1] || t->nb[1] > t->nb[2] || t->nb[2] > t->nb[3];
+స్థిర అంతఃవరుస bool htp_tensor_is_permuted(స్థిరరాశి నిర్మాణం htp_tensor * t) {
+    తిరిగి t->nb[0] > t->nb[1] || t->nb[1] > t->nb[2] || t->nb[2] > t->nb[3];
 }
 
-static inline bool htp_tensor_mdev_data_aligned(const struct htp_tensor * t) {
-    return ((uintptr_t) t->data & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0;
+స్థిర అంతఃవరుస bool htp_tensor_mdev_దత్తాంశం_aligned(స్థిరరాశి నిర్మాణం htp_tensor * t) {
+    తిరిగి ((uintptr_t) t->దత్తాంశం & (HTP_TENSOR_MDEV_పంక్తి_కొలత - 1)) == 0;
 }
 
-static inline bool htp_tensor_can_row_partition(const struct htp_tensor * t, uint32_t elem_size) {
-    if (!htp_tensor_mdev_data_aligned(t)) {
-        return false;
+స్థిర అంతఃవరుస bool htp_tensor_can_అడ్డువరుస_విభజన(స్థిరరాశి నిర్మాణం htp_tensor * t, uint32_t elem_కొలత) {
+    ఒకవేళ (!htp_tensor_mdev_దత్తాంశం_aligned(t)) {
+        తిరిగి false;
     }
-    if (t->ne[0] != 1 && t->nb[0] != elem_size) {
-        return false;
+    ఒకవేళ (t->ne[0] != 1 && t->nb[0] != elem_కొలత) {
+        తిరిగి false;
     }
-    if (htp_tensor_is_permuted(t)) {
-        return false;
+    ఒకవేళ (htp_tensor_is_permuted(t)) {
+        తిరిగి false;
     }
-    if (t->ne[1] > 1 && (t->nb[1] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) != 0) return false;
-    if (t->ne[2] > 1 && (t->nb[2] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) != 0) return false;
-    if (t->ne[3] > 1 && (t->nb[3] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) != 0) return false;
-    return true;
+    ఒకవేళ (t->ne[1] > 1 && (t->nb[1] & (HTP_TENSOR_MDEV_పంక్తి_కొలత - 1)) != 0) తిరిగి false;
+    ఒకవేళ (t->ne[2] > 1 && (t->nb[2] & (HTP_TENSOR_MDEV_పంక్తి_కొలత - 1)) != 0) తిరిగి false;
+    ఒకవేళ (t->ne[3] > 1 && (t->nb[3] & (HTP_TENSOR_MDEV_పంక్తి_కొలత - 1)) != 0) తిరిగి false;
+    తిరిగి true;
 }
 
-static inline bool htp_tensor_mdev_rows_per_chunk(const struct htp_tensor * t, uint32_t elem_size, uint32_t row_size, uint32_t * rows_per_chunk) {
-    *rows_per_chunk = 0;
+స్థిర అంతఃవరుస bool htp_tensor_mdev_అడ్డువరుసలు_చొప్పున_chunk(స్థిరరాశి నిర్మాణం htp_tensor * t, uint32_t elem_కొలత, uint32_t అడ్డువరుస_కొలత, uint32_t * అడ్డువరుసలు_చొప్పున_chunk) {
+    *అడ్డువరుసలు_చొప్పున_chunk = 0;
 
-    if (!htp_tensor_mdev_data_aligned(t)) {
-        return false;
+    ఒకవేళ (!htp_tensor_mdev_దత్తాంశం_aligned(t)) {
+        తిరిగి false;
     }
-    if (t->ne[0] != 1 && t->nb[0] != elem_size) {
-        return false;
+    ఒకవేళ (t->ne[0] != 1 && t->nb[0] != elem_కొలత) {
+        తిరిగి false;
     }
-    if (htp_tensor_is_permuted(t)) {
-        return false;
+    ఒకవేళ (htp_tensor_is_permuted(t)) {
+        తిరిగి false;
     }
-    if (t->ne[1] > 1 && (t->nb[1] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0 &&
-        (t->ne[2] <= 1 || (t->nb[2] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0) &&
-        (t->ne[3] <= 1 || (t->nb[3] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0)) {
-        *rows_per_chunk = 1;
-        return true;
+    ఒకవేళ (t->ne[1] > 1 && (t->nb[1] & (HTP_TENSOR_MDEV_పంక్తి_కొలత - 1)) == 0 &&
+        (t->ne[2] <= 1 || (t->nb[2] & (HTP_TENSOR_MDEV_పంక్తి_కొలత - 1)) == 0) &&
+        (t->ne[3] <= 1 || (t->nb[3] & (HTP_TENSOR_MDEV_పంక్తి_కొలత - 1)) == 0)) {
+        *అడ్డువరుసలు_చొప్పున_chunk = 1;
+        తిరిగి true;
     }
-    if (t->nb[1] == row_size &&
+    ఒకవేళ (t->nb[1] == అడ్డువరుస_కొలత &&
         (t->ne[2] <= 1 || t->nb[2] == t->nb[1] * t->ne[1]) &&
         (t->ne[3] <= 1 || t->nb[3] == t->nb[2] * t->ne[2])) {
-        *rows_per_chunk = (row_size > 0) ? (HTP_TENSOR_MDEV_LINE_SIZE / hex_gcd_u32(row_size, HTP_TENSOR_MDEV_LINE_SIZE)) : 1;
-        return true;
+        *అడ్డువరుసలు_చొప్పున_chunk = (అడ్డువరుస_కొలత > 0) ? (HTP_TENSOR_MDEV_పంక్తి_కొలత / hex_గరిష్ఠ_సామాన్య_భాజకం_u32(అడ్డువరుస_కొలత, HTP_TENSOR_MDEV_పంక్తి_కొలత)) : 1;
+        తిరిగి true;
     }
-    return false;
+    తిరిగి false;
 }
 
-static inline struct htp_tensor_mdev_range htp_tensor_mdev_partition(uint32_t total_units, uint32_t units_per_chunk, uint32_t mdev_idx, uint32_t mdev_count, const struct fastdiv_values * mdev_count_div) {
-    struct htp_tensor_mdev_range range = { 0, total_units };
+స్థిర అంతఃవరుస నిర్మాణం htp_tensor_mdev_range htp_tensor_mdev_విభజన(uint32_t మొత్తం_units, uint32_t units_చొప్పున_chunk, uint32_t mdev_idx, uint32_t mdev_లెక్క, స్థిరరాశి నిర్మాణం fastdiv_విలువలు * mdev_లెక్క_div) {
+    నిర్మాణం htp_tensor_mdev_range range = { 0, మొత్తం_units };
 
-    if (mdev_count <= 1) {
-        return range;
+    ఒకవేళ (mdev_లెక్క <= 1) {
+        తిరిగి range;
     }
 
-    if (units_per_chunk == 0) {
-        range.start = (mdev_idx == 0) ? 0 : total_units;
-        range.count = (mdev_idx == 0) ? total_units : 0;
-        return range;
+    ఒకవేళ (units_చొప్పున_chunk == 0) {
+        range.ప్రారంభం = (mdev_idx == 0) ? 0 : మొత్తం_units;
+        range.లెక్క = (mdev_idx == 0) ? మొత్తం_units : 0;
+        తిరిగి range;
     }
 
-    const uint32_t total_chunks = total_units / units_per_chunk;
-    if (total_chunks < mdev_count) {
-        range.start = (mdev_idx == 0) ? 0 : total_units;
-        range.count = (mdev_idx == 0) ? total_units : 0;
-        return range;
+    స్థిరరాశి uint32_t మొత్తం_chunks = మొత్తం_units / units_చొప్పున_chunk;
+    ఒకవేళ (మొత్తం_chunks < mdev_లెక్క) {
+        range.ప్రారంభం = (mdev_idx == 0) ? 0 : మొత్తం_units;
+        range.లెక్క = (mdev_idx == 0) ? మొత్తం_units : 0;
+        తిరిగి range;
     }
 
-    const uint32_t chunks_per_mdev = fastdiv(total_chunks + mdev_count - 1, mdev_count_div);
-    range.start = MIN(mdev_idx * chunks_per_mdev * units_per_chunk, total_units);
-    if (mdev_idx == mdev_count - 1) {
-        range.count = total_units - range.start;
-    } else {
-        range.count = MIN(chunks_per_mdev * units_per_chunk, total_units - range.start);
+    స్థిరరాశి uint32_t chunks_చొప్పున_mdev = fastdiv(మొత్తం_chunks + mdev_లెక్క - 1, mdev_లెక్క_div);
+    range.ప్రారంభం = MIN(mdev_idx * chunks_చొప్పున_mdev * units_చొప్పున_chunk, మొత్తం_units);
+    ఒకవేళ (mdev_idx == mdev_లెక్క - 1) {
+        range.లెక్క = మొత్తం_units - range.ప్రారంభం;
+    } లేకపోతే {
+        range.లెక్క = MIN(chunks_చొప్పున_mdev * units_చొప్పున_chunk, మొత్తం_units - range.ప్రారంభం);
     }
-    return range;
+    తిరిగి range;
 }
 
-static inline uint32_t htp_tensor_get_tile_size(int type) {
-    switch (type) {
-        case HTP_TYPE_Q4_0:   return HTP_TENSOR_TILE_SIZE_Q4_0;
-        case HTP_TYPE_IQ4_NL: return HTP_TENSOR_TILE_SIZE_IQ4_NL;
-        case HTP_TYPE_Q4_1:   return HTP_TENSOR_TILE_SIZE_Q4_1;
-        case HTP_TYPE_Q4_K:   return HTP_TENSOR_TILE_SIZE_Q4_K;
-        case HTP_TYPE_Q8_0:   return HTP_TENSOR_TILE_SIZE_Q8_0;
-        case HTP_TYPE_Q5_K:   return HTP_TENSOR_TILE_SIZE_Q5_K;
-        case HTP_TYPE_Q6_K:   return HTP_TENSOR_TILE_SIZE_Q6_K;
-        case HTP_TYPE_Q3_K:   return HTP_TENSOR_TILE_SIZE_Q3_K;
-        case HTP_TYPE_Q2_K:   return HTP_TENSOR_TILE_SIZE_Q2_K;
-        case HTP_TYPE_Q1_0:   return HTP_TENSOR_TILE_SIZE_Q1_0;
-        case HTP_TYPE_Q2_0:   return HTP_TENSOR_TILE_SIZE_Q2_0;
-        case HTP_TYPE_MXFP4:  return HTP_TENSOR_TILE_SIZE_MXFP4;
-        case HTP_TYPE_F16:    return HTP_TENSOR_TILE_SIZE_F16;
-        default:              return 0;
-    }
-}
-
-static inline uint32_t htp_tensor_get_tile_k(int type) {
-    switch (type) {
-        case HTP_TYPE_Q1_0: return HTP_TENSOR_TILE_K_Q1_0;
-        case HTP_TYPE_Q2_0: return HTP_TENSOR_TILE_K_Q2_0;
-        default:            return 32;
+స్థిర అంతఃవరుస uint32_t htp_tensor_get_tile_కొలత(పూర్ణాంకం type) {
+    ఎంపిక (type) {
+        స్థితి HTP_TYPE_Q4_0:   తిరిగి HTP_TENSOR_TILE_కొలత_Q4_0;
+        స్థితి HTP_TYPE_IQ4_NL: తిరిగి HTP_TENSOR_TILE_కొలత_IQ4_NL;
+        స్థితి HTP_TYPE_Q4_1:   తిరిగి HTP_TENSOR_TILE_కొలత_Q4_1;
+        స్థితి HTP_TYPE_Q4_K:   తిరిగి HTP_TENSOR_TILE_కొలత_Q4_K;
+        స్థితి HTP_TYPE_Q8_0:   తిరిగి HTP_TENSOR_TILE_కొలత_Q8_0;
+        స్థితి HTP_TYPE_Q5_K:   తిరిగి HTP_TENSOR_TILE_కొలత_Q5_K;
+        స్థితి HTP_TYPE_Q6_K:   తిరిగి HTP_TENSOR_TILE_కొలత_Q6_K;
+        స్థితి HTP_TYPE_Q3_K:   తిరిగి HTP_TENSOR_TILE_కొలత_Q3_K;
+        స్థితి HTP_TYPE_Q2_K:   తిరిగి HTP_TENSOR_TILE_కొలత_Q2_K;
+        స్థితి HTP_TYPE_Q1_0:   తిరిగి HTP_TENSOR_TILE_కొలత_Q1_0;
+        స్థితి HTP_TYPE_Q2_0:   తిరిగి HTP_TENSOR_TILE_కొలత_Q2_0;
+        స్థితి HTP_TYPE_MXFP4:  తిరిగి HTP_TENSOR_TILE_కొలత_MXFP4;
+        స్థితి HTP_TYPE_F16:    తిరిగి HTP_TENSOR_TILE_కొలత_F16;
+        అప్రమేయ:              తిరిగి 0;
     }
 }
 
-static inline uint32_t htp_tensor_get_tile_padded_size(int type) {
-    return (htp_tensor_get_tile_size(type) + 127u) & ~127u;
-}
-
-static inline bool htp_tensor_is_tiled(const struct htp_tensor * t) {
-    return t && (t->flags & HTP_TENSOR_TILED) != 0;
-}
-
-static inline uint32_t htp_tensor_get_row_size(int type, uint32_t ne00) {
-    switch (type) {
-        case HTP_TYPE_F32:    return ne00 * 4;
-        case HTP_TYPE_F16:
-        case HTP_TYPE_BF16:   return ne00 * 2;
-        case HTP_TYPE_Q8_0:   return (ne00 / 32) * 34;
-        case HTP_TYPE_Q4_0:
-        case HTP_TYPE_IQ4_NL: return (ne00 / 32) * 18;
-        case HTP_TYPE_Q4_1:   return (ne00 / 32) * 20;
-        case HTP_TYPE_MXFP4:  return (ne00 / 32) * 17;
-        case HTP_TYPE_Q2_K:   return (ne00 / 256) * 84;
-        case HTP_TYPE_Q2_0:   return (ne00 / 64) * 18;
-        case HTP_TYPE_Q3_K:   return (ne00 / 256) * 110;
-        case HTP_TYPE_Q4_K:   return (ne00 / 256) * 144;
-        case HTP_TYPE_Q5_K:   return (ne00 / 256) * 176;
-        case HTP_TYPE_Q6_K:   return (ne00 / 256) * 210;
-        case HTP_TYPE_Q1_0:   return (ne00 / HTP_TENSOR_TILE_K_Q1_0) * 18;
-        case HTP_TYPE_I32:    return ne00 * 4;
-        case HTP_TYPE_I64:    return ne00 * 8;
-        default:              return 0;
+స్థిర అంతఃవరుస uint32_t htp_tensor_get_tile_k(పూర్ణాంకం type) {
+    ఎంపిక (type) {
+        స్థితి HTP_TYPE_Q1_0: తిరిగి HTP_TENSOR_TILE_K_Q1_0;
+        స్థితి HTP_TYPE_Q2_0: తిరిగి HTP_TENSOR_TILE_K_Q2_0;
+        అప్రమేయ:            తిరిగి 32;
     }
 }
 
-#endif // HTP_TENSOR_H
+స్థిర అంతఃవరుస uint32_t htp_tensor_get_tile_padded_కొలత(పూర్ణాంకం type) {
+    తిరిగి (htp_tensor_get_tile_కొలత(type) + 127u) & ~127u;
+}
+
+స్థిర అంతఃవరుస bool htp_tensor_is_tiled(స్థిరరాశి నిర్మాణం htp_tensor * t) {
+    తిరిగి t && (t->flags & HTP_TENSOR_TILED) != 0;
+}
+
+స్థిర అంతఃవరుస uint32_t htp_tensor_get_అడ్డువరుస_కొలత(పూర్ణాంకం type, uint32_t ne00) {
+    ఎంపిక (type) {
+        స్థితి HTP_TYPE_F32:    తిరిగి ne00 * 4;
+        స్థితి HTP_TYPE_F16:
+        స్థితి HTP_TYPE_BF16:   తిరిగి ne00 * 2;
+        స్థితి HTP_TYPE_Q8_0:   తిరిగి (ne00 / 32) * 34;
+        స్థితి HTP_TYPE_Q4_0:
+        స్థితి HTP_TYPE_IQ4_NL: తిరిగి (ne00 / 32) * 18;
+        స్థితి HTP_TYPE_Q4_1:   తిరిగి (ne00 / 32) * 20;
+        స్థితి HTP_TYPE_MXFP4:  తిరిగి (ne00 / 32) * 17;
+        స్థితి HTP_TYPE_Q2_K:   తిరిగి (ne00 / 256) * 84;
+        స్థితి HTP_TYPE_Q2_0:   తిరిగి (ne00 / 64) * 18;
+        స్థితి HTP_TYPE_Q3_K:   తిరిగి (ne00 / 256) * 110;
+        స్థితి HTP_TYPE_Q4_K:   తిరిగి (ne00 / 256) * 144;
+        స్థితి HTP_TYPE_Q5_K:   తిరిగి (ne00 / 256) * 176;
+        స్థితి HTP_TYPE_Q6_K:   తిరిగి (ne00 / 256) * 210;
+        స్థితి HTP_TYPE_Q1_0:   తిరిగి (ne00 / HTP_TENSOR_TILE_K_Q1_0) * 18;
+        స్థితి HTP_TYPE_I32:    తిరిగి ne00 * 4;
+        స్థితి HTP_TYPE_I64:    తిరిగి ne00 * 8;
+        అప్రమేయ:              తిరిగి 0;
+    }
+}
+
+#అయితే_ముగింపు // HTP_TENSOR_H

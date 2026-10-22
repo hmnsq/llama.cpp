@@ -1,55 +1,55 @@
-#include "fill.hpp"
-#include "common.hpp"
+#అన్తర్భావ "fill.hpp"
+#అన్తర్భావ "common.hpp"
 
-#define SYCL_FILL_BLOCK_SIZE 256
+#నిర్వచించు SYCL_FILL_ఖండం_కొలత 256
 
-template <typename T>
-static void fill_kernel(T * dst, const int64_t k, const T value,
-                        const sycl::nd_item<1> & item) {
-    const int64_t i = (int64_t)item.get_global_id(0);
-    if (i >= k) {
-        return;
+మూస <రకం_పేరు T>
+స్థిర శూన్య fill_kernel(T * dst, స్థిరరాశి int64_t k, స్థిరరాశి T value,
+                        స్థిరరాశి sycl::nd_అంశం<1> & అంశం) {
+    స్థిరరాశి int64_t i = (int64_t)అంశం.get_global_id(0);
+    ఒకవేళ (i >= k) {
+        తిరిగి;
     }
     dst[i] = value;
 }
 
-inline void ggml_sycl_op_fill(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+అంతఃవరుస శూన్య ggml_sycl_op_fill(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     GGML_ASSERT(ggml_is_contiguous(dst));
 
-    dpct::queue_ptr stream = ctx.stream();
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
+    dpct::వరుస_ptr stream = ctx.stream();
+    SYCL_CHECK(ggml_sycl_సమితి_device(ctx.device));
 
-    float value;
-    memcpy(&value, dst->op_params, sizeof(float));
+    దశాంశం value;
+    జ్ఞాపకం_నకలు(&value, dst->op_params, పరిమాణం(దశాంశం));
 
-    const int64_t k = ggml_nelements(dst);
-    const int64_t num_blocks = (k + SYCL_FILL_BLOCK_SIZE - 1) / SYCL_FILL_BLOCK_SIZE;
-    void * dst_d = dst->data;
+    స్థిరరాశి int64_t k = ggml_nelements(dst);
+    స్థిరరాశి int64_t అంకె_ఖండాలు = (k + SYCL_FILL_ఖండం_కొలత - 1) / SYCL_FILL_ఖండం_కొలత;
+    శూన్య * dst_d = dst->దత్తాంశం;
 
-    switch (dst->type) {
-        case GGML_TYPE_F32:
+    ఎంపిక (dst->type) {
+        స్థితి GGML_TYPE_F32:
             stream->parallel_for(
-                sycl::nd_range<1>(num_blocks * SYCL_FILL_BLOCK_SIZE, SYCL_FILL_BLOCK_SIZE),
-                [=](sycl::nd_item<1> item) {
-                    fill_kernel(static_cast<float *>(dst_d), k, value, item);
+                sycl::nd_range<1>(అంకె_ఖండాలు * SYCL_FILL_ఖండం_కొలత, SYCL_FILL_ఖండం_కొలత),
+                [=](sycl::nd_అంశం<1> అంశం) {
+                    fill_kernel(static_cast<దశాంశం *>(dst_d), k, value, అంశం);
                 });
-            break;
-        case GGML_TYPE_F16:
+            ఆపు;
+        స్థితి GGML_TYPE_F16:
             {
-                sycl::half h_value = sycl::half(value);
+                sycl::half h_విలువ = sycl::half(value);
                 stream->parallel_for(
-                    sycl::nd_range<1>(num_blocks * SYCL_FILL_BLOCK_SIZE, SYCL_FILL_BLOCK_SIZE),
-                    [=](sycl::nd_item<1> item) {
-                        fill_kernel(static_cast<sycl::half *>(dst_d), k, h_value, item);
+                    sycl::nd_range<1>(అంకె_ఖండాలు * SYCL_FILL_ఖండం_కొలత, SYCL_FILL_ఖండం_కొలత),
+                    [=](sycl::nd_అంశం<1> అంశం) {
+                        fill_kernel(static_cast<sycl::half *>(dst_d), k, h_విలువ, అంశం);
                     });
             }
-            break;
-        default:
+            ఆపు;
+        అప్రమేయ:
             GGML_ABORT("unsupported type");
     }
 }
 
-void ggml_sycl_fill(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+శూన్య ggml_sycl_fill(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/0);
     ggml_sycl_op_fill(ctx, dst);
 }

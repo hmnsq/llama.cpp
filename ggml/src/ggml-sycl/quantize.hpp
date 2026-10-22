@@ -17,117 +17,117 @@
  *     Sycl backend specific quantization functions
  **************************************************************************/
 
-#pragma once
+#సూచన once
 
-#include <sycl/nd_item.hpp>
+#అన్తర్భావ <sycl/nd_item.hpp>
 
-#include "ggml-sycl/dpct/helper.hpp"
+#అన్తర్భావ "ggml-sycl/dpct/helper.hpp"
 
-template <int ElementsPerWI>
-__dpct_inline__ static void quantize_q8_1_impl(const float * __restrict__ x,
-                                               sycl::vec<int8_t, ElementsPerWI> & quantized_values, float & d,
-                                               float & sum, const sycl::nd_item<1> & it) {
-    auto subgroup_id = it.get_group(0);
-    auto wi_id       = it.get_local_id(0);
+మూస <పూర్ణాంకం Elements_చొప్పున_WI>
+__dpct_inline__ స్థిర శూన్య quantize_q8_1_impl(స్థిరరాశి దశాంశం * __restrict__ x,
+                                               sycl::vec<int8_t, Elements_చొప్పున_WI> & quantized_విలువలు, దశాంశం & d,
+                                               దశాంశం & కూడిక, స్థిరరాశి sycl::nd_అంశం<1> & it) {
+    స్వయంచాలక subgroup_id = it.get_సమూహం(0);
+    స్వయంచాలక wi_id       = it.get_local_id(0);
 
-    sycl::vec<float, ElementsPerWI> wi_f32_vals;
+    sycl::vec<దశాంశం, Elements_చొప్పున_WI> wi_f32_vals;
 
-    auto float_ptr_offset = subgroup_id * QK8_1 + ElementsPerWI * wi_id;
-    wi_f32_vals           = *reinterpret_cast<const sycl::vec<float, ElementsPerWI> *>(x + float_ptr_offset);
+    స్వయంచాలక float_ptr_స్థానభ్రంశం = subgroup_id * QK8_1 + Elements_చొప్పున_WI * wi_id;
+    wi_f32_vals           = *reinterpret_cast<స్థిరరాశి sycl::vec<దశాంశం, Elements_చొప్పున_WI> *>(x + float_ptr_స్థానభ్రంశం);
 
-    float amax = 0.0f;
+    దశాంశం amax = 0.0f;
 
-#pragma unroll(ElementsPerWI)
-    for (int i = 0; i < ElementsPerWI; i++) {
-        sum += wi_f32_vals[i];
+#సూచన unroll(Elements_చొప్పున_WI)
+    కొరకు (పూర్ణాంకం i = 0; i < Elements_చొప్పున_WI; i++) {
+        కూడిక += wi_f32_vals[i];
         amax                = sycl::fmax(amax, sycl::fabs(wi_f32_vals[i]));
-        quantized_values[i] = 0;
+        quantized_విలువలు[i] = 0;
     }
-    sum  = sycl::reduce_over_group(it.get_sub_group(), sum, sycl::plus<float>());
-    amax = sycl::reduce_over_group(it.get_sub_group(), amax, sycl::maximum<float>());
+    కూడిక  = sycl::reduce_over_సమూహం(it.get_sub_సమూహం(), కూడిక, sycl::plus<దశాంశం>());
+    amax = sycl::reduce_over_సమూహం(it.get_sub_సమూహం(), amax, sycl::గరిష్ఠ<దశాంశం>());
     d    = amax == 0 ? 1 : amax / 127;
 
-#pragma unroll(ElementsPerWI)
-    for (int i = 0; i < ElementsPerWI; i++) {
-        quantized_values[i] = sycl::round(wi_f32_vals[i] / d);
+#సూచన unroll(Elements_చొప్పున_WI)
+    కొరకు (పూర్ణాంకం i = 0; i < Elements_చొప్పున_WI; i++) {
+        quantized_విలువలు[i] = sycl::round(wi_f32_vals[i] / d);
     }
 
     d = amax == 0 ? 0 : d;
 }
 
 // No op to control codepath in ggml_sycl_op_mul_mat
-template <int ElementsPerWI> struct no_quantize_q8_1 {
-    void operator()(const float *, void *, int, int, const sycl::nd_item<1> &) const {}
+మూస <పూర్ణాంకం Elements_చొప్పున_WI> నిర్మాణం no_quantize_q8_1 {
+    శూన్య క్రియాకారకం()(స్థిరరాశి దశాంశం *, శూన్య *, పూర్ణాంకం, పూర్ణాంకం, స్థిరరాశి sycl::nd_అంశం<1> &) స్థిరరాశి {}
 };
 
-template <int ElementsPerWI> struct quantize_and_reorder_q8_1_soa {
-    __dpct_inline__ void operator()(const float * __restrict__ x, void * reordered_q8_tensor, const int kx,
-                                    const int kx_padded, const sycl::nd_item<1> & it) const {
+మూస <పూర్ణాంకం Elements_చొప్పున_WI> నిర్మాణం quantize_and_reorder_q8_1_soa {
+    __dpct_inline__ శూన్య క్రియాకారకం()(స్థిరరాశి దశాంశం * __restrict__ x, శూన్య * reordered_q8_tensor, స్థిరరాశి పూర్ణాంకం kx,
+                                    స్థిరరాశి పూర్ణాంకం kx_padded, స్థిరరాశి sycl::nd_అంశం<1> & it) స్థిరరాశి {
         /*
         Quantizes and reorders the resultant q8 tensor in a per row fashion
         Each sub-group calculates one quant block. i.e. QK8_1 quant values and the d and sum values
     */
-        auto subgroup_id = it.get_group(0);
-        auto wi_id       = it.get_local_id(0);
+        స్వయంచాలక subgroup_id = it.get_సమూహం(0);
+        స్వయంచాలక wi_id       = it.get_local_id(0);
 
-        sycl::vec<int8_t, ElementsPerWI> quantized_values;
-        float                            d   = 0.0f;
-        float                            sum = 0.0f;
-        quantize_q8_1_impl<ElementsPerWI>(x, quantized_values, d, sum, it);
+        sycl::vec<int8_t, Elements_చొప్పున_WI> quantized_విలువలు;
+        దశాంశం                            d   = 0.0f;
+        దశాంశం                            కూడిక = 0.0f;
+        quantize_q8_1_impl<Elements_చొప్పున_WI>(x, quantized_విలువలు, d, కూడిక, it);
 
-        const int num_blocks_per_row = kx / QK8_1;
-        auto      row                = subgroup_id / num_blocks_per_row;
-        auto      col                = subgroup_id % num_blocks_per_row;
-        auto      row_offset         = row * (kx_padded / QK8_1) * sizeof(block_q8_1);
-        auto      col_offset         = QK8_1 * col + wi_id * ElementsPerWI;
+        స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు_చొప్పున_అడ్డువరుస = kx / QK8_1;
+        స్వయంచాలక      అడ్డువరుస                = subgroup_id / అంకె_ఖండాలు_చొప్పున_అడ్డువరుస;
+        స్వయంచాలక      నిలువు                = subgroup_id % అంకె_ఖండాలు_చొప్పున_అడ్డువరుస;
+        స్వయంచాలక      అడ్డువరుస_స్థానభ్రంశం         = అడ్డువరుస * (kx_padded / QK8_1) * పరిమాణం(ఖండం_q8_1);
+        స్వయంచాలక      నిలువు_స్థానభ్రంశం         = QK8_1 * నిలువు + wi_id * Elements_చొప్పున_WI;
 
-        auto quant_ptr = (int8_t *) ((char *) reordered_q8_tensor + row_offset + col_offset);
-        *reinterpret_cast<sycl::vec<int8_t, ElementsPerWI> *>(quant_ptr) = quantized_values;
+        స్వయంచాలక quant_ptr = (int8_t *) ((అక్షరం *) reordered_q8_tensor + అడ్డువరుస_స్థానభ్రంశం + నిలువు_స్థానభ్రంశం);
+        *reinterpret_cast<sycl::vec<int8_t, Elements_చొప్పున_WI> *>(quant_ptr) = quantized_విలువలు;
 
-        auto ds_ptr = (sycl::half2 *) ((char *) reordered_q8_tensor + row_offset + kx + col * sizeof(sycl::half2));
-        if (wi_id == 0) {
-            *ds_ptr = sycl::half2(sycl::half(d), sycl::half(sum));
+        స్వయంచాలక ds_ptr = (sycl::half2 *) ((అక్షరం *) reordered_q8_tensor + అడ్డువరుస_స్థానభ్రంశం + kx + నిలువు * పరిమాణం(sycl::half2));
+        ఒకవేళ (wi_id == 0) {
+            *ds_ptr = sycl::half2(sycl::half(d), sycl::half(కూడిక));
         }
     }
 };
 
-template <int ElementsPerWI> struct quantize_q8_1 {
-    __dpct_inline__ void operator()(const float * __restrict__ x, void * q8_tensor, const int kx, const int kx_padded,
-                                    const sycl::nd_item<1> & it) const {
-        auto subgroup_id = it.get_group(0);
-        auto wi_id       = it.get_local_id(0);
+మూస <పూర్ణాంకం Elements_చొప్పున_WI> నిర్మాణం quantize_q8_1 {
+    __dpct_inline__ శూన్య క్రియాకారకం()(స్థిరరాశి దశాంశం * __restrict__ x, శూన్య * q8_tensor, స్థిరరాశి పూర్ణాంకం kx, స్థిరరాశి పూర్ణాంకం kx_padded,
+                                    స్థిరరాశి sycl::nd_అంశం<1> & it) స్థిరరాశి {
+        స్వయంచాలక subgroup_id = it.get_సమూహం(0);
+        స్వయంచాలక wi_id       = it.get_local_id(0);
 
-        const int num_blocks_per_row = kx / QK8_1;
-        auto      row                = subgroup_id / num_blocks_per_row;
-        const int pitch              = kx_padded / QK8_1;
+        స్థిరరాశి పూర్ణాంకం అంకె_ఖండాలు_చొప్పున_అడ్డువరుస = kx / QK8_1;
+        స్వయంచాలక      అడ్డువరుస                = subgroup_id / అంకె_ఖండాలు_చొప్పున_అడ్డువరుస;
+        స్థిరరాశి పూర్ణాంకం pitch              = kx_padded / QK8_1;
 
-        sycl::vec<int8_t, ElementsPerWI> quantized_values;
-        float                            d   = 0.0f;
-        float                            sum = 0.0f;
-        quantize_q8_1_impl<ElementsPerWI>(x, quantized_values, d, sum, it);
+        sycl::vec<int8_t, Elements_చొప్పున_WI> quantized_విలువలు;
+        దశాంశం                            d   = 0.0f;
+        దశాంశం                            కూడిక = 0.0f;
+        quantize_q8_1_impl<Elements_చొప్పున_WI>(x, quantized_విలువలు, d, కూడిక, it);
 
-        block_q8_1 * quant_ptr = (block_q8_1 *) q8_tensor;
-        auto         block_id  = subgroup_id % num_blocks_per_row + row * pitch;
+        ఖండం_q8_1 * quant_ptr = (ఖండం_q8_1 *) q8_tensor;
+        స్వయంచాలక         ఖండం_id  = subgroup_id % అంకె_ఖండాలు_చొప్పున_అడ్డువరుస + అడ్డువరుస * pitch;
 
-        int8_t * qs                                               = &(quant_ptr[block_id].qs[wi_id * ElementsPerWI]);
-        *reinterpret_cast<sycl::vec<int8_t, ElementsPerWI> *>(qs) = quantized_values;
-        if (wi_id == 0) {
-            quant_ptr[block_id].ds = sycl::half2(sycl::half(d), sycl::half(sum));
+        int8_t * qs                                               = &(quant_ptr[ఖండం_id].qs[wi_id * Elements_చొప్పున_WI]);
+        *reinterpret_cast<sycl::vec<int8_t, Elements_చొప్పున_WI> *>(qs) = quantized_విలువలు;
+        ఒకవేళ (wi_id == 0) {
+            quant_ptr[ఖండం_id].ds = sycl::half2(sycl::half(d), sycl::half(కూడిక));
         }
     }
 };
 
-template <template <int> typename quantize_f>
-void quantize_row_q8_1_sycl(const float * x, void * vy, const int kx, const int ky, const int kx_padded,
-                            dpct::queue_ptr stream) {
-    static_assert(QK8_1 % WARP_SIZE == 0);
-    auto local_range      = std::size_t(WARP_SIZE);
-    auto num_quant_blocks = ky * (kx / QK8_1);
-    auto global_range     = num_quant_blocks * local_range;
+మూస <మూస <పూర్ణాంకం> రకం_పేరు quantize_f>
+శూన్య quantize_అడ్డువరుస_q8_1_sycl(స్థిరరాశి దశాంశం * x, శూన్య * vy, స్థిరరాశి పూర్ణాంకం kx, స్థిరరాశి పూర్ణాంకం ky, స్థిరరాశి పూర్ణాంకం kx_padded,
+                            dpct::వరుస_ptr stream) {
+    static_assert(QK8_1 % WARP_కొలత == 0);
+    స్వయంచాలక local_range      = std::size_t(WARP_కొలత);
+    స్వయంచాలక అంకె_quant_ఖండాలు = ky * (kx / QK8_1);
+    స్వయంచాలక global_range     = అంకె_quant_ఖండాలు * local_range;
     dpct::has_capability_or_fail(stream->get_device(), { sycl::aspect::fp16 });
 
     stream->parallel_for(sycl::nd_range<1>({ global_range }, { local_range }),
-                         [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                             quantize_f<QK8_1 / WARP_SIZE>()(x, vy, kx, kx_padded, it);
+                         [=](sycl::nd_అంశం<1> it) [[sycl::reqd_sub_సమూహం_కొలత(WARP_కొలత)]] {
+                             quantize_f<QK8_1 / WARP_కొలత>()(x, vy, kx, kx_padded, it);
                          });
 }

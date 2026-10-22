@@ -1,8 +1,8 @@
-#ifndef GGML_SYCL_ADD_ID_HPP
-#define GGML_SYCL_ADD_ID_HPP
+#నిర్వచితం_కాకపోతే GGML_SYCL_కూడు_ID_HPP
+#నిర్వచించు GGML_SYCL_కూడు_ID_HPP
 
-#include "common.hpp"
+#అన్తర్భావ "common.hpp"
 
-void ggml_sycl_add_id(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+శూన్య ggml_sycl_కూడు_id(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-#endif // GGML_SYCL_ADD_ID_HPP
+#అయితే_ముగింపు // GGML_SYCL_ADD_ID_HPP

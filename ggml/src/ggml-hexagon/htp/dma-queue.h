@@ -1,525 +1,525 @@
-#ifndef HTP_DMA_H
-#define HTP_DMA_H
+#నిర్వచితం_కాకపోతే HTP_DMA_H
+#నిర్వచించు HTP_DMA_H
 
-#include <HAP_farf.h>
-#include <hexagon_types.h>
-#include <assert.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <string.h>
-#include "hex-utils.h"
+#అన్తర్భావ <HAP_farf.h>
+#అన్తర్భావ <hexagon_types.h>
+#అన్తర్భావ <assert.h>
+#అన్తర్భావ <stdbool.h>
+#అన్తర్భావ <stdint.h>
+#అన్తర్భావ <string.h>
+#అన్తర్భావ "hex-utils.h"
 
-#include "hex-profile.h"
+#అన్తర్భావ "hex-profile.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#నిర్వచితమైతే __cplusplus
+బాహ్య "C" {
+#అయితే_ముగింపు
 
 // Define the HW descriptor structs here since the ones in HexSDK are a bit out of date
-typedef struct dma_descriptor_1d_s {
-    void *   next;
-    uint32_t size:24;
-    uint32_t desc_size:2;
+రకనిర్వచనం నిర్మాణం dma_descriptor_1d_s {
+    శూన్య *   తదుపరి;
+    uint32_t కొలత:24;
+    uint32_t desc_కొలత:2;
     uint32_t dst_comp:1;
     uint32_t src_comp:1;
     uint32_t dst_bypass:1;
     uint32_t src_bypass:1;
-    uint32_t order:1;
-    uint32_t done:1;
+    uint32_t క్రమం:1;
+    uint32_t పూర్తి:1;
     uint32_t src;
     uint32_t dst;
 } dma_descriptor_1d;
 
-#if __HVX_ARCH__ < 75
+#ఒకవేళ __HVX_ARCH__ < 75
 
-typedef struct dma_descriptor_2d_s {
-    void *   next;
+రకనిర్వచనం నిర్మాణం dma_descriptor_2d_s {
+    శూన్య *   తదుపరి;
     uint32_t reserved0:24;
-    uint32_t desc_size:2;
+    uint32_t desc_కొలత:2;
     uint32_t dst_comp:1;
     uint32_t src_comp:1;
     uint32_t dst_bypass:1;
     uint32_t src_bypass:1;
-    uint32_t order:1;
-    uint32_t done:1;
+    uint32_t క్రమం:1;
+    uint32_t పూర్తి:1;
     uint32_t src;
     uint32_t dst;
     uint32_t desc_type:8;
     uint32_t reserved1:24;
-    uint32_t row_size:16;
+    uint32_t అడ్డువరుస_కొలత:16;
     uint32_t nrows:16;
     uint32_t src_stride:16;
     uint32_t dst_stride:16;
-    uint32_t src_offset:16;
-    uint32_t dst_offset:16;
+    uint32_t src_స్థానభ్రంశం:16;
+    uint32_t dst_స్థానభ్రంశం:16;
 } dma_descriptor_2d;
 
-#else
+#లేకపోతే
 
-typedef struct dma_descriptor_2d_s {
-    void *   next;
+రకనిర్వచనం నిర్మాణం dma_descriptor_2d_s {
+    శూన్య *   తదుపరి;
     uint32_t dst_stride:24;
-    uint32_t desc_size:2;
+    uint32_t desc_కొలత:2;
     uint32_t dst_comp:1;
     uint32_t src_comp:1;
     uint32_t dst_bypass:1;
     uint32_t src_bypass:1;
-    uint32_t order:1;
-    uint32_t done:1;
+    uint32_t క్రమం:1;
+    uint32_t పూర్తి:1;
     uint32_t src;
     uint32_t dst;
     uint32_t desc_type:8;
-#if __HVX_ARCH__ > 79
-    uint32_t src_upper:8;
-    uint32_t dst_upper:8;
-    uint32_t allocation:2;
+#ఒకవేళ __HVX_ARCH__ > 79
+    uint32_t src_పై:8;
+    uint32_t dst_పై:8;
+    uint32_t కేటాయింపు:2;
     uint32_t reserved0:2;
     uint32_t transform:4;
-#else
+#లేకపోతే
     uint32_t reserved0:24;
-#endif
-    uint32_t row_size:24;
+#అయితే_ముగింపు
+    uint32_t అడ్డువరుస_కొలత:24;
     uint32_t nrows_lo:8;
     uint32_t nrows_hi:8;
     uint32_t src_stride:24;
-    uint32_t offset:24;
+    uint32_t స్థానభ్రంశం:24;
     uint32_t reserved1:8;
 } dma_descriptor_2d;
 
-#endif
+#అయితే_ముగింపు
 
-#if __HVX_ARCH__ > 79
-typedef uint64_t dma_addr_t;
-#else
-typedef uint32_t dma_addr_t;
-#endif
+#ఒకవేళ __HVX_ARCH__ > 79
+రకనిర్వచనం uint64_t dma_addr_t;
+#లేకపోతే
+రకనిర్వచనం uint32_t dma_addr_t;
+#అయితే_ముగింపు
 
-typedef struct {
+రకనిర్వచనం నిర్మాణం {
     dma_addr_t dst;
     dma_addr_t src;
-} dma_data;
+} dma_దత్తాంశం;
 
 // Hardware descriptor field limits
-#define DMA_MAX_NROWS          0xFFFFu        // 16-bit HW descriptor limit (65535)
-#define DMA_MAX_SIZE_16B       0xFFFFu        // 16-bit HW descriptor limit for row_size (65535)
-#define DMA_MAX_STRIDE_16B     0xFFFFu        // 16-bit HW descriptor limit for strides (65535)
-#define DMA_MAX_SIZE_24B       0x00FFFFFFu    // 24-bit HW descriptor limit for row_size / 1D size (16MB - 1)
-#define DMA_MAX_STRIDE_24B     0x00FFFFFFu    // 24-bit HW descriptor limit for strides (16MB - 1)
-#define DMA_SAFE_CHUNK_SIZE    0x00F00000u    // ~15MB safe contiguous chunk size
+#నిర్వచించు DMA_MAX_NROWS          0xFFFFu        // 16-bit HW descriptor limit (65535)
+#నిర్వచించు DMA_MAX_కొలత_16_B       0xFFFFu        // 16-bit HW descriptor limit for row_size (65535)
+#నిర్వచించు DMA_MAX_STRIDE_16B     0xFFFFu        // 16-bit HW descriptor limit for strides (65535)
+#నిర్వచించు DMA_MAX_కొలత_24_B       0x00FFFFFFu    // 24-bit HW descriptor limit for row_size / 1D size (16MB - 1)
+#నిర్వచించు DMA_MAX_STRIDE_24B     0x00FFFFFFu    // 24-bit HW descriptor limit for strides (16MB - 1)
+#నిర్వచించు DMA_సురక్షిత_CHUNK_కొలత    0x00F00000u    // ~15MB safe contiguous chunk size
 
-#if __HVX_ARCH__ < 75
-#define DMA_MAX_2D_ROW_SIZE    DMA_MAX_SIZE_16B
-#define DMA_MAX_2D_STRIDE      DMA_MAX_STRIDE_16B
-#else
-#define DMA_MAX_2D_ROW_SIZE    DMA_MAX_SIZE_24B
-#define DMA_MAX_2D_STRIDE      DMA_MAX_STRIDE_24B
-#endif
+#ఒకవేళ __HVX_ARCH__ < 75
+#నిర్వచించు DMA_MAX_2_D_అడ్డువరుస_కొలత    DMA_MAX_కొలత_16_B
+#నిర్వచించు DMA_MAX_2D_STRIDE      DMA_MAX_STRIDE_16B
+#లేకపోతే
+#నిర్వచించు DMA_MAX_2_D_అడ్డువరుస_కొలత    DMA_MAX_కొలత_24_B
+#నిర్వచించు DMA_MAX_2D_STRIDE      DMA_MAX_STRIDE_24B
+#అయితే_ముగింపు
 
-#define DMA_FALLBACK_CAPACITY  16u            // descriptors in secondary fallback ring
+#నిర్వచించు DMA_FALLBACK_సామర్థ్యం  16u            // descriptors in secondary fallback ring
 
-typedef struct dma_ring_s dma_ring;
-struct dma_ring_s {
+రకనిర్వచనం నిర్మాణం dma_ring_s dma_ring;
+నిర్మాణం dma_ring_s {
     dma_descriptor_2d * desc;      // descriptor pointers
-    dma_descriptor_2d * tail;      // tail pointer
-    dma_data          * data;      // dst/src data
-    uint32_t            push_idx;
-    uint32_t            pop_idx;
-    uint32_t            capacity;
-    uint32_t            idx_mask;
-    struct htp_thread_trace * trace;
+    dma_descriptor_2d * తోక;      // tail pointer
+    dma_దత్తాంశం          * దత్తాంశం;      // dst/src data
+    uint32_t            నెట్టు_idx;
+    uint32_t            తీయి_idx;
+    uint32_t            సామర్థ్యం;
+    uint32_t            idx_ముసుగు;
+    నిర్మాణం htp_thread_trace * trace;
 };
 
-typedef struct dma_queue_s dma_queue;
-typedef dma_queue * dma_queue_t;
+రకనిర్వచనం నిర్మాణం dma_వరుస_s dma_వరుస;
+రకనిర్వచనం dma_వరుస * dma_వరుస_t;
 
-struct dma_queue_s {
+నిర్మాణం dma_వరుస_s {
     dma_ring *          ring0;     // Main descriptor ring state
     dma_ring *          ring1;     // Secondary fallback descriptor ring state
     bool                alias;     // When set, dma_queue_delete will not free the ring
 };
 
-size_t      dma_queue_sizeof(size_t capacity);
-size_t      dma_queue_alignof(void);
-dma_queue_t dma_queue_init(void * ptr, size_t capacity, struct htp_thread_trace * trace);
-void        dma_queue_free(dma_queue_t q);
+size_t      dma_వరుస_sizeof(size_t సామర్థ్యం);
+size_t      dma_వరుస_alignof(శూన్య);
+dma_వరుస_t dma_వరుస_init(శూన్య * ptr, size_t సామర్థ్యం, నిర్మాణం htp_thread_trace * trace);
+శూన్య        dma_వరుస_free(dma_వరుస_t q);
 
-size_t      dma_queue_alias_sizeof(void);
-dma_queue_t dma_queue_alias_init(void * ptr, dma_queue_t main_q);
-void        dma_queue_alias_free(dma_queue_t q);
+size_t      dma_వరుస_alias_sizeof(శూన్య);
+dma_వరుస_t dma_వరుస_alias_init(శూన్య * ptr, dma_వరుస_t main_q);
+శూన్య        dma_వరుస_alias_free(dma_వరుస_t q);
 
-bool        dma_queue_push_fallback_2d(dma_queue * q, dma_data ddata, size_t dst_stride, size_t src_stride, size_t row_size, size_t nrows);
-bool        dma_queue_push_fallback_contig(dma_queue * q, dma_data ddata, size_t total);
-#if __HVX_ARCH__ < 75
-bool        dma_queue_push_fallback_1d(dma_queue * q, dma_data ddata, size_t dst_stride, size_t src_stride, size_t row_size, size_t nrows);
-#endif
+bool        dma_వరుస_నెట్టు_fallback_2d(dma_వరుస * q, dma_దత్తాంశం ddata, size_t dst_stride, size_t src_stride, size_t అడ్డువరుస_కొలత, size_t nrows);
+bool        dma_వరుస_నెట్టు_fallback_contig(dma_వరుస * q, dma_దత్తాంశం ddata, size_t మొత్తం);
+#ఒకవేళ __HVX_ARCH__ < 75
+bool        dma_వరుస_నెట్టు_fallback_1d(dma_వరుస * q, dma_దత్తాంశం ddata, size_t dst_stride, size_t src_stride, size_t అడ్డువరుస_కొలత, size_t nrows);
+#అయితే_ముగింపు
 
 // TODO: technically we don't need these and could use Q6_dmstart/wait/etc instead
 // but those do not seem to always compiler properly.
-static inline void dmstart(void * next) {
-    asm volatile(" release(%0):at" : : "r"(next));
-    asm volatile(" dmstart(%0)" : : "r"(next));
+స్థిర అంతఃవరుస శూన్య dmstart(శూన్య * తదుపరి) {
+    asm అస్థిర(" release(%0):at" : : "r"(తదుపరి));
+    asm అస్థిర(" dmstart(%0)" : : "r"(తదుపరి));
 }
 
-static inline void dmlink(void * cur, void * next) {
-    asm volatile(" release(%0):at" : : "r"(next));
-    asm volatile(" dmlink(%0, %1)" : : "r"(cur), "r"(next));
+స్థిర అంతఃవరుస శూన్య dmlink(శూన్య * cur, శూన్య * తదుపరి) {
+    asm అస్థిర(" release(%0):at" : : "r"(తదుపరి));
+    asm అస్థిర(" dmlink(%0, %1)" : : "r"(cur), "r"(తదుపరి));
 }
 
-static inline unsigned int dmpoll(void) {
-    unsigned int ret = 0;
-    asm volatile(" %0 = dmpoll" : "=r"(ret) : : "memory");
-    return ret;
+స్థిర అంతఃవరుస గుర్తులేని పూర్ణాంకం dmpoll(శూన్య) {
+    గుర్తులేని పూర్ణాంకం ret = 0;
+    asm అస్థిర(" %0 = dmpoll" : "=r"(ret) : : "memory");
+    తిరిగి ret;
 }
 
-static inline unsigned int dmwait(void) {
-    unsigned int ret = 0;
-    asm volatile(" %0 = dmwait" : "=r"(ret) : : "memory");
-    return ret;
+స్థిర అంతఃవరుస గుర్తులేని పూర్ణాంకం dmwait(శూన్య) {
+    గుర్తులేని పూర్ణాంకం ret = 0;
+    asm అస్థిర(" %0 = dmwait" : "=r"(ret) : : "memory");
+    తిరిగి ret;
 }
 
-static inline dma_data dma_make_data_impl(dma_addr_t dst, dma_addr_t src)
+స్థిర అంతఃవరుస dma_దత్తాంశం dma_make_దత్తాంశం_impl(dma_addr_t dst, dma_addr_t src)
 {
-    dma_data d = { dst, src };
-    return d;
+    dma_దత్తాంశం d = { dst, src };
+    తిరిగి d;
 }
 
-#define dma_make_data(dst, src) dma_make_data_impl((dma_addr_t) (dst), (dma_addr_t) (src))
+#నిర్వచించు dma_make_దత్తాంశం(dst, src) dma_make_దత్తాంశం_impl((dma_addr_t) (dst), (dma_addr_t) (src))
 
-static inline bool dma_ring_push_single_1d(dma_ring * r, dma_data ddata, size_t size) {
-#if __HVX_ARCH__ > 79
-    assert(!((ddata.src | ddata.dst) >> 32) || size == 0);
-#endif
+స్థిర అంతఃవరుస bool dma_ring_నెట్టు_single_1d(dma_ring * r, dma_దత్తాంశం ddata, size_t కొలత) {
+#ఒకవేళ __HVX_ARCH__ > 79
+    ప్రతిజ్ఞా(!((ddata.src | ddata.dst) >> 32) || కొలత == 0);
+#అయితే_ముగింపు
 
-    if (((r->push_idx + 1) & r->idx_mask) == r->pop_idx) {
-        return false;
+    ఒకవేళ (((r->నెట్టు_idx + 1) & r->idx_ముసుగు) == r->తీయి_idx) {
+        తిరిగి false;
     }
 
-    dma_descriptor_1d * desc = (dma_descriptor_1d *) &r->desc[r->push_idx];
+    dma_descriptor_1d * desc = (dma_descriptor_1d *) &r->desc[r->నెట్టు_idx];
     desc->src  = (uint32_t) ddata.src;
     desc->dst  = (uint32_t) ddata.dst;
-    desc->size = size;
+    desc->కొలత = కొలత;
 
-    r->data[r->push_idx] = ddata;
+    r->దత్తాంశం[r->నెట్టు_idx] = ddata;
 
-    htp_trace_event_start(r->trace, HTP_TRACE_EVT_DMA, r->push_idx);
+    htp_trace_event_ప్రారంభం(r->trace, HTP_TRACE_EVT_DMA, r->నెట్టు_idx);
 
-    if (size) {
-        desc->next       = NULL;
-        desc->desc_size  = 0; // 1D mode
+    ఒకవేళ (కొలత) {
+        desc->తదుపరి       = ఖాళీ;
+        desc->desc_కొలత  = 0; // 1D mode
         desc->src_bypass = 1;
         desc->dst_bypass = 1;
-        desc->order      = 0;
-        desc->done       = 0;
+        desc->క్రమం      = 0;
+        desc->పూర్తి       = 0;
 
-        dmlink(r->tail, desc);
-        r->tail = (dma_descriptor_2d *) desc;
-    } else {
-        desc->desc_size = 0;
-        desc->done      = 1;
+        dmlink(r->తోక, desc);
+        r->తోక = (dma_descriptor_2d *) desc;
+    } లేకపోతే {
+        desc->desc_కొలత = 0;
+        desc->పూర్తి      = 1;
     }
 
-    r->push_idx = (r->push_idx + 1) & r->idx_mask;
-    return true;
+    r->నెట్టు_idx = (r->నెట్టు_idx + 1) & r->idx_ముసుగు;
+    తిరిగి true;
 }
 
-static inline bool dma_ring_push_single_2d(dma_ring * r, dma_data ddata, size_t dst_stride, size_t src_stride, size_t row_size, size_t nrows) {
-#if __HVX_ARCH__ > 79
-    assert(!((ddata.src | ddata.dst) >> 40) || nrows == 0);
-    const uint32_t src_hi = (uint32_t) (ddata.src >> 32);
-    const uint32_t dst_hi = (uint32_t) (ddata.dst >> 32);
-    const bool is_ext     = (src_hi | dst_hi) != 0;
-#endif
+స్థిర అంతఃవరుస bool dma_ring_నెట్టు_single_2d(dma_ring * r, dma_దత్తాంశం ddata, size_t dst_stride, size_t src_stride, size_t అడ్డువరుస_కొలత, size_t nrows) {
+#ఒకవేళ __HVX_ARCH__ > 79
+    ప్రతిజ్ఞా(!((ddata.src | ddata.dst) >> 40) || nrows == 0);
+    స్థిరరాశి uint32_t src_hi = (uint32_t) (ddata.src >> 32);
+    స్థిరరాశి uint32_t dst_hi = (uint32_t) (ddata.dst >> 32);
+    స్థిరరాశి bool is_ext     = (src_hi | dst_hi) != 0;
+#అయితే_ముగింపు
 
-    if (((r->push_idx + 1) & r->idx_mask) == r->pop_idx) {
-        return false;
+    ఒకవేళ (((r->నెట్టు_idx + 1) & r->idx_ముసుగు) == r->తీయి_idx) {
+        తిరిగి false;
     }
 
-    dma_descriptor_2d * desc = &r->desc[r->push_idx];
+    dma_descriptor_2d * desc = &r->desc[r->నెట్టు_idx];
 
-    desc->next           = NULL;
+    desc->తదుపరి           = ఖాళీ;
     desc->reserved1      = 0;
-    desc->desc_size      = 1; // 2d mode
+    desc->desc_కొలత      = 1; // 2d mode
     desc->src_bypass     = 1;
     desc->dst_bypass     = 1;
     desc->src_comp       = 0;
     desc->dst_comp       = 0;
-    desc->order          = 0;
-    desc->done           = 0;
+    desc->క్రమం          = 0;
+    desc->పూర్తి           = 0;
     desc->src_stride     = src_stride;
     desc->dst_stride     = dst_stride;
     desc->src            = (uint32_t) ddata.src;
     desc->dst            = (uint32_t) ddata.dst;
-    desc->row_size       = row_size;
+    desc->అడ్డువరుస_కొలత       = అడ్డువరుస_కొలత;
 
-#if __HVX_ARCH__ < 75
+#ఒకవేళ __HVX_ARCH__ < 75
     desc->reserved0      = 0;
     desc->desc_type      = 0; // 2d (16-bit) mode
     desc->nrows          = nrows;
-    desc->src_offset     = 0;
-    desc->dst_offset     = 0;
-#else
-#if __HVX_ARCH__ > 79
-    desc->src_upper      = src_hi;
-    desc->dst_upper      = dst_hi;
-    desc->allocation     = 0;
+    desc->src_స్థానభ్రంశం     = 0;
+    desc->dst_స్థానభ్రంశం     = 0;
+#లేకపోతే
+#ఒకవేళ __HVX_ARCH__ > 79
+    desc->src_పై      = src_hi;
+    desc->dst_పై      = dst_hi;
+    desc->కేటాయింపు     = 0;
     desc->reserved0      = 0;
     desc->transform      = 0;
     desc->desc_type      = is_ext ? 10 : 9; // 2d 40-bit or 24-bit mode
-#else
+#లేకపోతే
     desc->reserved0      = 0;
     desc->desc_type      = 9; // 2d (24-bit) mode
-#endif
+#అయితే_ముగింపు
     desc->nrows_lo       = (nrows & 0xff);
     desc->nrows_hi       = (nrows >> 8);
-    desc->offset         = 0;
-#endif
+    desc->స్థానభ్రంశం         = 0;
+#అయితే_ముగింపు
 
-    r->data[r->push_idx] = ddata;
+    r->దత్తాంశం[r->నెట్టు_idx] = ddata;
 
-    htp_trace_event_start(r->trace, HTP_TRACE_EVT_DMA, r->push_idx);
+    htp_trace_event_ప్రారంభం(r->trace, HTP_TRACE_EVT_DMA, r->నెట్టు_idx);
 
-    if (nrows) {
-        dmlink(r->tail, desc);
-        r->tail = desc;
-    } else {
-        desc->done = 1;
+    ఒకవేళ (nrows) {
+        dmlink(r->తోక, desc);
+        r->తోక = desc;
+    } లేకపోతే {
+        desc->పూర్తి = 1;
     }
 
-    r->push_idx = (r->push_idx + 1) & r->idx_mask;
-    return true;
+    r->నెట్టు_idx = (r->నెట్టు_idx + 1) & r->idx_ముసుగు;
+    తిరిగి true;
 }
 
-#if __HVX_ARCH__ < 75
-static inline bool dma_ring_push_single_contig(dma_ring * r, dma_data ddata, size_t size) {
-    return dma_ring_push_single_1d(r, ddata, size);
+#ఒకవేళ __HVX_ARCH__ < 75
+స్థిర అంతఃవరుస bool dma_ring_నెట్టు_single_contig(dma_ring * r, dma_దత్తాంశం ddata, size_t కొలత) {
+    తిరిగి dma_ring_నెట్టు_single_1d(r, ddata, కొలత);
 }
-#else
-static inline bool dma_ring_push_single_contig(dma_ring * r, dma_data ddata, size_t size) {
-    return dma_ring_push_single_2d(r, ddata, size, size, size, 1);
+#లేకపోతే
+స్థిర అంతఃవరుస bool dma_ring_నెట్టు_single_contig(dma_ring * r, dma_దత్తాంశం ddata, size_t కొలత) {
+    తిరిగి dma_ring_నెట్టు_single_2d(r, ddata, కొలత, కొలత, కొలత, 1);
 }
-#endif
+#అయితే_ముగింపు
 
-static inline dma_data dma_ring_pop(dma_ring * r) {
-    dma_data ddata = { 0 };
+స్థిర అంతఃవరుస dma_దత్తాంశం dma_ring_తీయి(dma_ring * r) {
+    dma_దత్తాంశం ddata = { 0 };
 
-    if (r->push_idx == r->pop_idx) {
-        return ddata;
+    ఒకవేళ (r->నెట్టు_idx == r->తీయి_idx) {
+        తిరిగి ddata;
     }
 
-    ddata = r->data[r->pop_idx];
+    ddata = r->దత్తాంశం[r->తీయి_idx];
 
-    volatile dma_descriptor_2d * desc = &r->desc[r->pop_idx];
+    అస్థిర dma_descriptor_2d * desc = &r->desc[r->తీయి_idx];
 
     // Wait for desc to complete
-    if (!desc->done) {
+    ఒకవేళ (!desc->పూర్తి) {
         // FARF(ALWAYS, "dma-poll: idx %u dst %p src %p", r->pop_idx, ddata.dst, ddata.src);
-        while (!desc->done) {
+        అయితే (!desc->పూర్తి) {
             dmpoll();
         }
     }
 
-    htp_trace_event_stop(r->trace, HTP_TRACE_EVT_DMA, r->pop_idx);
+    htp_trace_event_stop(r->trace, HTP_TRACE_EVT_DMA, r->తీయి_idx);
 
-    r->pop_idx = (r->pop_idx + 1) & r->idx_mask;
-    return ddata;
+    r->తీయి_idx = (r->తీయి_idx + 1) & r->idx_ముసుగు;
+    తిరిగి ddata;
 }
 
-static inline dma_data dma_ring_pop_nowait(dma_ring * r) {
-    dma_data ddata = { 0 };
+స్థిర అంతఃవరుస dma_దత్తాంశం dma_ring_తీయి_nowait(dma_ring * r) {
+    dma_దత్తాంశం ddata = { 0 };
 
-    if (r->push_idx == r->pop_idx) {
-        return ddata;
+    ఒకవేళ (r->నెట్టు_idx == r->తీయి_idx) {
+        తిరిగి ddata;
     }
 
-    ddata = r->data[r->pop_idx];
+    ddata = r->దత్తాంశం[r->తీయి_idx];
 
-    htp_trace_event_stop(r->trace, HTP_TRACE_EVT_DMA, r->pop_idx);
+    htp_trace_event_stop(r->trace, HTP_TRACE_EVT_DMA, r->తీయి_idx);
 
-    r->pop_idx = (r->pop_idx + 1) & r->idx_mask;
-    return ddata;
+    r->తీయి_idx = (r->తీయి_idx + 1) & r->idx_ముసుగు;
+    తిరిగి ddata;
 }
 
-static inline bool dma_ring_empty(dma_ring * r) {
-    return r->push_idx == r->pop_idx;
+స్థిర అంతఃవరుస bool dma_ring_ఖాళీలు(dma_ring * r) {
+    తిరిగి r->నెట్టు_idx == r->తీయి_idx;
 }
 
-static inline void dma_ring_flush(dma_ring * r) {
-    while (!dma_ring_empty(r)) {
-        dma_ring_pop(r);
+స్థిర అంతఃవరుస శూన్య dma_ring_flush(dma_ring * r) {
+    అయితే (!dma_ring_ఖాళీలు(r)) {
+        dma_ring_తీయి(r);
     }
 }
 
-static inline uint32_t dma_ring_depth(dma_ring * r) {
-    return (r->push_idx - r->pop_idx) & r->idx_mask;
+స్థిర అంతఃవరుస uint32_t dma_ring_లోతు(dma_ring * r) {
+    తిరిగి (r->నెట్టు_idx - r->తీయి_idx) & r->idx_ముసుగు;
 }
 
-static inline uint32_t dma_ring_capacity(dma_ring * r) {
-    return r->capacity;
+స్థిర అంతఃవరుస uint32_t dma_ring_సామర్థ్యం(dma_ring * r) {
+    తిరిగి r->సామర్థ్యం;
 }
 
-static inline bool dma_queue_push_single_1d(dma_queue * q, dma_data ddata, size_t size) {
-    return dma_ring_push_single_1d(q->ring0, ddata, size);
+స్థిర అంతఃవరుస bool dma_వరుస_నెట్టు_single_1d(dma_వరుస * q, dma_దత్తాంశం ddata, size_t కొలత) {
+    తిరిగి dma_ring_నెట్టు_single_1d(q->ring0, ddata, కొలత);
 }
 
-static inline bool dma_queue_push_single_2d(dma_queue * q, dma_data ddata, size_t dst_stride, size_t src_stride, size_t row_size, size_t nrows) {
-    return dma_ring_push_single_2d(q->ring0, ddata, dst_stride, src_stride, row_size, nrows);
+స్థిర అంతఃవరుస bool dma_వరుస_నెట్టు_single_2d(dma_వరుస * q, dma_దత్తాంశం ddata, size_t dst_stride, size_t src_stride, size_t అడ్డువరుస_కొలత, size_t nrows) {
+    తిరిగి dma_ring_నెట్టు_single_2d(q->ring0, ddata, dst_stride, src_stride, అడ్డువరుస_కొలత, nrows);
 }
 
-static inline dma_data dma_queue_pop(dma_queue * q) {
-    return dma_ring_pop(q->ring0);
+స్థిర అంతఃవరుస dma_దత్తాంశం dma_వరుస_తీయి(dma_వరుస * q) {
+    తిరిగి dma_ring_తీయి(q->ring0);
 }
 
-static inline dma_data dma_queue_pop_nowait(dma_queue * q) {
-    return dma_ring_pop_nowait(q->ring0);
+స్థిర అంతఃవరుస dma_దత్తాంశం dma_వరుస_తీయి_nowait(dma_వరుస * q) {
+    తిరిగి dma_ring_తీయి_nowait(q->ring0);
 }
 
-static inline bool dma_queue_empty(dma_queue * q) {
-    return dma_ring_empty(q->ring0);
+స్థిర అంతఃవరుస bool dma_వరుస_ఖాళీలు(dma_వరుస * q) {
+    తిరిగి dma_ring_ఖాళీలు(q->ring0);
 }
 
-static inline void dma_queue_flush(dma_queue * q) {
+స్థిర అంతఃవరుస శూన్య dma_వరుస_flush(dma_వరుస * q) {
     dma_ring_flush(q->ring0);
 }
 
-static inline uint32_t dma_queue_depth(dma_queue * q) {
-    return dma_ring_depth(q->ring0);
+స్థిర అంతఃవరుస uint32_t dma_వరుస_లోతు(dma_వరుస * q) {
+    తిరిగి dma_ring_లోతు(q->ring0);
 }
 
-static inline uint32_t dma_queue_capacity(dma_queue * q) {
-    return dma_ring_capacity(q->ring0);
+స్థిర అంతఃవరుస uint32_t dma_వరుస_సామర్థ్యం(dma_వరుస * q) {
+    తిరిగి dma_ring_సామర్థ్యం(q->ring0);
 }
 
-static inline bool dma_queue_push(dma_queue * q, dma_data ddata, size_t dst_stride, size_t src_stride, size_t row_size, size_t nrows) {
-    if (__builtin_expect(nrows == 0, 0)) {
-        return dma_ring_push_single_1d(q->ring0, ddata, 0);
+స్థిర అంతఃవరుస bool dma_వరుస_నెట్టు(dma_వరుస * q, dma_దత్తాంశం ddata, size_t dst_stride, size_t src_stride, size_t అడ్డువరుస_కొలత, size_t nrows) {
+    ఒకవేళ (__builtin_expect(nrows == 0, 0)) {
+        తిరిగి dma_ring_నెట్టు_single_1d(q->ring0, ddata, 0);
     }
 
     // 1. Hot path: Contiguous or single-row (80-90% of calls)
-    if (nrows == 1 || !((row_size ^ src_stride) | (row_size ^ dst_stride))) {
-        const size_t total = row_size * nrows;
-        if (__builtin_expect(total <= DMA_MAX_SIZE_24B, 1)) {
-            return dma_ring_push_single_contig(q->ring0, ddata, total);
+    ఒకవేళ (nrows == 1 || !((అడ్డువరుస_కొలత ^ src_stride) | (అడ్డువరుస_కొలత ^ dst_stride))) {
+        స్థిరరాశి size_t మొత్తం = అడ్డువరుస_కొలత * nrows;
+        ఒకవేళ (__builtin_expect(మొత్తం <= DMA_MAX_కొలత_24_B, 1)) {
+            తిరిగి dma_ring_నెట్టు_single_contig(q->ring0, ddata, మొత్తం);
         }
-        return dma_queue_push_fallback_contig(q, ddata, total);
+        తిరిగి dma_వరుస_నెట్టు_fallback_contig(q, ddata, మొత్తం);
     }
 
     // 2. Hot path: Standard strided 2D (10-20% of calls)
-    if (__builtin_expect(nrows <= DMA_MAX_NROWS &&
-                         (row_size | src_stride | dst_stride) <= DMA_MAX_2D_ROW_SIZE, 1)) {
-        return dma_ring_push_single_2d(q->ring0, ddata, dst_stride, src_stride, row_size, nrows);
+    ఒకవేళ (__builtin_expect(nrows <= DMA_MAX_NROWS &&
+                         (అడ్డువరుస_కొలత | src_stride | dst_stride) <= DMA_MAX_2_D_అడ్డువరుస_కొలత, 1)) {
+        తిరిగి dma_ring_నెట్టు_single_2d(q->ring0, ddata, dst_stride, src_stride, అడ్డువరుస_కొలత, nrows);
     }
 
     // 3. Cold path: Descriptor chunking fallbacks (< 0.1%)
-#if __HVX_ARCH__ < 75
-    if (row_size <= DMA_MAX_SIZE_16B && (src_stride | dst_stride) <= DMA_MAX_STRIDE_16B) {
-        return dma_queue_push_fallback_2d(q, ddata, dst_stride, src_stride, row_size, nrows);
+#ఒకవేళ __HVX_ARCH__ < 75
+    ఒకవేళ (అడ్డువరుస_కొలత <= DMA_MAX_కొలత_16_B && (src_stride | dst_stride) <= DMA_MAX_STRIDE_16B) {
+        తిరిగి dma_వరుస_నెట్టు_fallback_2d(q, ddata, dst_stride, src_stride, అడ్డువరుస_కొలత, nrows);
     }
-    return dma_queue_push_fallback_1d(q, ddata, dst_stride, src_stride, row_size, nrows);
-#else
-    return dma_queue_push_fallback_2d(q, ddata, dst_stride, src_stride, row_size, nrows);
-#endif
+    తిరిగి dma_వరుస_నెట్టు_fallback_1d(q, ddata, dst_stride, src_stride, అడ్డువరుస_కొలత, nrows);
+#లేకపోతే
+    తిరిగి dma_వరుస_నెట్టు_fallback_2d(q, ddata, dst_stride, src_stride, అడ్డువరుస_కొలత, nrows);
+#అయితే_ముగింపు
 }
 
-static inline void dma_sync_read(dma_queue * dma_q, void * dst, dma_addr_t src, size_t bytes) {
-    const uint32_t b = (uint32_t) bytes;
-    if (b > 0) {
-        dma_queue_push(dma_q, dma_make_data(dst, src), b, b, b, 1);
-        dma_queue_pop(dma_q);
-    }
-}
-
-static inline void dma_sync_write(dma_queue * dma_q, dma_addr_t dst, const void * src, size_t bytes) {
-    const uint32_t b = (uint32_t) bytes;
-    if (b > 0) {
-        dma_queue_push(dma_q, dma_make_data(dst, src), b, b, b, 1);
-        dma_queue_pop(dma_q);
+స్థిర అంతఃవరుస శూన్య dma_sync_read(dma_వరుస * dma_q, శూన్య * dst, dma_addr_t src, size_t బైట్లు) {
+    స్థిరరాశి uint32_t b = (uint32_t) బైట్లు;
+    ఒకవేళ (b > 0) {
+        dma_వరుస_నెట్టు(dma_q, dma_make_దత్తాంశం(dst, src), b, b, b, 1);
+        dma_వరుస_తీయి(dma_q);
     }
 }
 
-#define DMA_CACHE_MAX_SIZE 256U
+స్థిర అంతఃవరుస శూన్య dma_sync_write(dma_వరుస * dma_q, dma_addr_t dst, స్థిరరాశి శూన్య * src, size_t బైట్లు) {
+    స్థిరరాశి uint32_t b = (uint32_t) బైట్లు;
+    ఒకవేళ (b > 0) {
+        dma_వరుస_నెట్టు(dma_q, dma_make_దత్తాంశం(dst, src), b, b, b, 1);
+        dma_వరుస_తీయి(dma_q);
+    }
+}
+
+#నిర్వచించు DMA_CACHE_MAX_కొలత 256U
 
 // Fully assoc LRU cache
-typedef struct {
-    uint8_t *base;
-    uint32_t line_size;
-    uint32_t capacity;
-    dma_addr_t src[DMA_CACHE_MAX_SIZE];
-    uint16_t age[DMA_CACHE_MAX_SIZE];
+రకనిర్వచనం నిర్మాణం {
+    uint8_t *పునాది;
+    uint32_t పంక్తి_కొలత;
+    uint32_t సామర్థ్యం;
+    dma_addr_t src[DMA_CACHE_MAX_కొలత];
+    uint16_t age[DMA_CACHE_MAX_కొలత];
 } dma_cache_fa;
 
-static inline void dma_cache_fa_init(dma_cache_fa *c, uint8_t *base, uint32_t line_size, uint32_t capacity)
+స్థిర అంతఃవరుస శూన్య dma_cache_fa_init(dma_cache_fa *c, uint8_t *పునాది, uint32_t పంక్తి_కొలత, uint32_t సామర్థ్యం)
 {
-    c->capacity  = (capacity > DMA_CACHE_MAX_SIZE) ? DMA_CACHE_MAX_SIZE : capacity;
-    c->base      = base;
-    c->line_size = line_size;
+    c->సామర్థ్యం  = (సామర్థ్యం > DMA_CACHE_MAX_కొలత) ? DMA_CACHE_MAX_కొలత : సామర్థ్యం;
+    c->పునాది      = పునాది;
+    c->పంక్తి_కొలత = పంక్తి_కొలత;
 
-    for (unsigned i=0; i < c->capacity; i++) {
+    కొరకు (గుర్తులేని i=0; i < c->సామర్థ్యం; i++) {
         c->src[i] = 0;
         c->age[i] = 0;
     }
 }
 
-static inline bool dma_cache_fa_push(dma_queue *q, dma_cache_fa *c, dma_addr_t src_addr, uint32_t dst_stride, uint32_t src_stride, uint32_t row_size, uint32_t nrows)
+స్థిర అంతఃవరుస bool dma_cache_fa_నెట్టు(dma_వరుస *q, dma_cache_fa *c, dma_addr_t src_addr, uint32_t dst_stride, uint32_t src_stride, uint32_t అడ్డువరుస_కొలత, uint32_t nrows)
 {
     uint32_t o_idx = 0;
     uint16_t o_age = 0;
     uint8_t *  dst = 0;
 
-    for (unsigned i=0; i < c->capacity; i++) {
-        if (c->src[i] == src_addr) {
+    కొరకు (గుర్తులేని i=0; i < c->సామర్థ్యం; i++) {
+        ఒకవేళ (c->src[i] == src_addr) {
             c->age[i] = 0;
-            dst = c->base + (i * c->line_size); nrows = 0; // dummy dma
-        } else {
+            dst = c->పునాది + (i * c->పంక్తి_కొలత); nrows = 0; // dummy dma
+        } లేకపోతే {
             c->age[i]++;
-            if (c->age[i] > o_age) { o_age = c->age[i]; o_idx = i; }
+            ఒకవేళ (c->age[i] > o_age) { o_age = c->age[i]; o_idx = i; }
         }
     }
-    if (!dst) {
+    ఒకవేళ (!dst) {
         c->age[o_idx] = 0;
         c->src[o_idx] = src_addr;
-        dst = c->base + o_idx * c->line_size; // normal nrows dma
-        return dma_queue_push(q, dma_make_data(dst, src_addr), dst_stride, src_stride, row_size, nrows);
+        dst = c->పునాది + o_idx * c->పంక్తి_కొలత; // normal nrows dma
+        తిరిగి dma_వరుస_నెట్టు(q, dma_make_దత్తాంశం(dst, src_addr), dst_stride, src_stride, అడ్డువరుస_కొలత, nrows);
     }
 
-    return dma_queue_push_single_1d(q, dma_make_data(dst, src_addr), 0);
+    తిరిగి dma_వరుస_నెట్టు_single_1d(q, dma_make_దత్తాంశం(dst, src_addr), 0);
 }
 
 // Direct mapped cache
-typedef struct {
-    uint8_t *base;
-    uint32_t line_size;
-    uint32_t capacity;
-    uint32_t idx_mask;
-    dma_addr_t src[DMA_CACHE_MAX_SIZE];
+రకనిర్వచనం నిర్మాణం {
+    uint8_t *పునాది;
+    uint32_t పంక్తి_కొలత;
+    uint32_t సామర్థ్యం;
+    uint32_t idx_ముసుగు;
+    dma_addr_t src[DMA_CACHE_MAX_కొలత];
 } dma_cache_dm;
 
-static inline void dma_cache_dm_init(dma_cache_dm *c, uint8_t *base, uint32_t line_size, uint32_t capacity)
+స్థిర అంతఃవరుస శూన్య dma_cache_dm_init(dma_cache_dm *c, uint8_t *పునాది, uint32_t పంక్తి_కొలత, uint32_t సామర్థ్యం)
 {
-    c->capacity  = (capacity > DMA_CACHE_MAX_SIZE) ? DMA_CACHE_MAX_SIZE : capacity;
-    c->idx_mask  = c->capacity - 1;
-    c->base      = base;
-    c->line_size = line_size;
+    c->సామర్థ్యం  = (సామర్థ్యం > DMA_CACHE_MAX_కొలత) ? DMA_CACHE_MAX_కొలత : సామర్థ్యం;
+    c->idx_ముసుగు  = c->సామర్థ్యం - 1;
+    c->పునాది      = పునాది;
+    c->పంక్తి_కొలత = పంక్తి_కొలత;
 
-    for (unsigned i=0; i < c->capacity; i++) {
+    కొరకు (గుర్తులేని i=0; i < c->సామర్థ్యం; i++) {
         c->src[i] = 0;
     }
 }
 
-static inline bool dma_cache_dm_push(dma_queue *q, dma_cache_dm *c, uint32_t slot, dma_addr_t src_addr, uint32_t dst_stride, uint32_t src_stride, uint32_t row_size, uint32_t nrows)
+స్థిర అంతఃవరుస bool dma_cache_dm_నెట్టు(dma_వరుస *q, dma_cache_dm *c, uint32_t స్థానం, dma_addr_t src_addr, uint32_t dst_stride, uint32_t src_stride, uint32_t అడ్డువరుస_కొలత, uint32_t nrows)
 {
-    const uint32_t i = slot & c->idx_mask;
-    uint8_t * dst = c->base + (i * c->line_size);
+    స్థిరరాశి uint32_t i = స్థానం & c->idx_ముసుగు;
+    uint8_t * dst = c->పునాది + (i * c->పంక్తి_కొలత);
 
-    if (c->src[i] == src_addr) {
-        return dma_queue_push_single_1d(q, dma_make_data(dst, src_addr), 0); // dummy dma
+    ఒకవేళ (c->src[i] == src_addr) {
+        తిరిగి dma_వరుస_నెట్టు_single_1d(q, dma_make_దత్తాంశం(dst, src_addr), 0); // dummy dma
     }
 
     c->src[i] = src_addr;
-    return dma_queue_push(q, dma_make_data(dst, src_addr), dst_stride, src_stride, row_size, nrows);
+    తిరిగి dma_వరుస_నెట్టు(q, dma_make_దత్తాంశం(dst, src_addr), dst_stride, src_stride, అడ్డువరుస_కొలత, nrows);
 }
 
-#ifdef __cplusplus
+#నిర్వచితమైతే __cplusplus
 }  // extern "C"
-#endif
+#అయితే_ముగింపు
 
-#endif /* HTP_DMA_H */
+#అయితే_ముగింపు /* HTP_DMA_H */

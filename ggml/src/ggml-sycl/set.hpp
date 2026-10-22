@@ -1,5 +1,5 @@
-#pragma once
-#include "backend.hpp"
-#include "ggml.h"
+#సూచన once
+#అన్తర్భావ "backend.hpp"
+#అన్తర్భావ "ggml.h"
 
-void ggml_sycl_op_set(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+శూన్య ggml_sycl_op_సమితి(ggml_backend_sycl_context & ctx, ggml_tensor * dst);

@@ -1,87 +1,87 @@
-#include "backend/shared/apir_cs_rpc.h"
-#include "ggml-backend-impl.h"
-#include "ggml-impl.h"
-#include "ggml-remoting.h"
+#అన్తర్భావ "backend/shared/apir_cs_rpc.h"
+#అన్తర్భావ "ggml-backend-impl.h"
+#అన్తర్భావ "ggml-impl.h"
+#అన్తర్భావ "ggml-remoting.h"
 
-#include <cinttypes>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
+#అన్తర్భావ <cinttypes>
+#అన్తర్భావ <unordered_map>
+#అన్తర్భావ <unordered_set>
+#అన్తర్భావ <vector>
 
-apir_rpc_tensor apir_serialize_tensor(const ggml_tensor * tensor) {
-    apir_rpc_tensor result;
-    result.id   = reinterpret_cast<uint64_t>(tensor);
-    result.type = tensor->type;
-    if (tensor->buffer) {
-        ggml_backend_buffer_t buffer = tensor->buffer;
+apir_rpc_tensor apir_serialize_tensor(స్థిరరాశి ggml_tensor * tensor) {
+    apir_rpc_tensor ఫలితం;
+    ఫలితం.id   = reinterpret_cast<uint64_t>(tensor);
+    ఫలితం.type = tensor->type;
+    ఒకవేళ (tensor->బఫరు) {
+        ggml_backend_బఫరు_t బఫరు = tensor->బఫరు;
 
-        result.buffer = BUFFER_TO_HOST_HANDLE(buffer);
-    } else {
-        result.buffer = 0;
+        ఫలితం.బఫరు = బఫరు_గమ్యం_HOST_HANDLE(బఫరు);
+    } లేకపోతే {
+        ఫలితం.బఫరు = 0;
     }
-    for (uint32_t i = 0; i < GGML_MAX_DIMS; i++) {
-        result.ne[i] = tensor->ne[i];
-        result.nb[i] = tensor->nb[i];
+    కొరకు (uint32_t i = 0; i < GGML_MAX_DIMS; i++) {
+        ఫలితం.ne[i] = tensor->ne[i];
+        ఫలితం.nb[i] = tensor->nb[i];
     }
-    result.op = tensor->op;
-    for (uint32_t i = 0; i < GGML_MAX_OP_PARAMS / sizeof(int32_t); i++) {
-        result.op_params[i] = tensor->op_params[i];
+    ఫలితం.op = tensor->op;
+    కొరకు (uint32_t i = 0; i < GGML_MAX_OP_PARAMS / పరిమాణం(int32_t); i++) {
+        ఫలితం.op_params[i] = tensor->op_params[i];
     }
-    result.flags = tensor->flags;
-    for (uint32_t i = 0; i < GGML_MAX_SRC; i++) {
-        result.src[i] = reinterpret_cast<uint64_t>(tensor->src[i]);
+    ఫలితం.flags = tensor->flags;
+    కొరకు (uint32_t i = 0; i < GGML_MAX_SRC; i++) {
+        ఫలితం.src[i] = reinterpret_cast<uint64_t>(tensor->src[i]);
     }
-    result.view_src  = reinterpret_cast<uint64_t>(tensor->view_src);
-    result.view_offs = tensor->view_offs;
-    result.data      = reinterpret_cast<uint64_t>(tensor->data);
-    if (tensor->data) {
-        if (!tensor->buffer) {
+    ఫలితం.view_src  = reinterpret_cast<uint64_t>(tensor->view_src);
+    ఫలితం.view_offs = tensor->view_offs;
+    ఫలితం.దత్తాంశం      = reinterpret_cast<uint64_t>(tensor->దత్తాంశం);
+    ఒకవేళ (tensor->దత్తాంశం) {
+        ఒకవేళ (!tensor->బఫరు) {
             GGML_ABORT("%s: tensor has data but not buffer", __func__);
         }
         // tensor->data is serialized as an offset to the buffer base address
-        result.data -= reinterpret_cast<uint64_t>(BUFFER_TO_GGML_CONTEXT(tensor->buffer)->base);
+        ఫలితం.దత్తాంశం -= reinterpret_cast<uint64_t>(బఫరు_గమ్యం_GGML_CONTEXT(tensor->బఫరు)->పునాది);
     }
-    snprintf(result.name, GGML_MAX_NAME, "%s", tensor->name);
-    return result;
+    snprintf(ఫలితం.name, GGML_MAX_NAME, "%s", tensor->name);
+    తిరిగి ఫలితం;
 }
 
-void apir_add_tensor(ggml_tensor *                       tensor,
+శూన్య apir_కూడు_tensor(ggml_tensor *                       tensor,
                      std::vector<apir_rpc_tensor> &      tensors,
-                     std::unordered_set<ggml_tensor *> & visited) {
-    if (tensor == nullptr) {
-        return;
+                     std::unordered_set<ggml_tensor *> & సందర్శించిన) {
+    ఒకవేళ (tensor == శూన్యసూచిక) {
+        తిరిగి;
     }
-    if (visited.find(tensor) != visited.end()) {
-        return;
+    ఒకవేళ (సందర్శించిన.find(tensor) != సందర్శించిన.end()) {
+        తిరిగి;
     }
-    visited.insert(tensor);
-    for (int i = 0; i < GGML_MAX_SRC; i++) {
-        apir_add_tensor(tensor->src[i], tensors, visited);
+    సందర్శించిన.insert(tensor);
+    కొరకు (పూర్ణాంకం i = 0; i < GGML_MAX_SRC; i++) {
+        apir_కూడు_tensor(tensor->src[i], tensors, సందర్శించిన);
     }
-    apir_add_tensor(tensor->view_src, tensors, visited);
+    apir_కూడు_tensor(tensor->view_src, tensors, సందర్శించిన);
     tensors.push_back(apir_serialize_tensor(tensor));
 }
 
-void apir_serialize_graph(const ggml_cgraph * cgraph, std::vector<uint8_t> & output) {
+శూన్య apir_serialize_లేఖాచిత్రం(స్థిరరాశి ggml_cgraph * cgraph, std::vector<uint8_t> & output) {
     uint32_t                          n_nodes = cgraph->n_nodes;
     std::vector<apir_rpc_tensor>      tensors;
-    std::unordered_set<ggml_tensor *> visited;
-    for (uint32_t i = 0; i < n_nodes; i++) {
-        apir_add_tensor(cgraph->nodes[i], tensors, visited);
+    std::unordered_set<ggml_tensor *> సందర్శించిన;
+    కొరకు (uint32_t i = 0; i < n_nodes; i++) {
+        apir_కూడు_tensor(cgraph->nodes[i], tensors, సందర్శించిన);
     }
     // serialization format:
     // | n_nodes (4 bytes) | nodes (n_nodes * sizeof(uint64_t) | n_tensors (4 bytes) | tensors (n_tensors * sizeof(apir_rpc_tensor)) |
     uint32_t n_tensors = tensors.size();
-    int      output_size =
-        sizeof(uint32_t) + n_nodes * sizeof(uint64_t) + sizeof(uint32_t) + n_tensors * sizeof(apir_rpc_tensor);
-    output.resize(output_size, 0);
-    memcpy(output.data(), &n_nodes, sizeof(n_nodes));
-    for (uint32_t i = 0; i < n_nodes; i++) {
-        memcpy(output.data() + sizeof(n_nodes) + i * sizeof(uint64_t), &cgraph->nodes[i], sizeof(uint64_t));
+    పూర్ణాంకం      output_కొలత =
+        పరిమాణం(uint32_t) + n_nodes * పరిమాణం(uint64_t) + పరిమాణం(uint32_t) + n_tensors * పరిమాణం(apir_rpc_tensor);
+    output.resize(output_కొలత, 0);
+    జ్ఞాపకం_నకలు(output.దత్తాంశం(), &n_nodes, పరిమాణం(n_nodes));
+    కొరకు (uint32_t i = 0; i < n_nodes; i++) {
+        జ్ఞాపకం_నకలు(output.దత్తాంశం() + పరిమాణం(n_nodes) + i * పరిమాణం(uint64_t), &cgraph->nodes[i], పరిమాణం(uint64_t));
     }
-    uint32_t * out_ntensors = (uint32_t *) (output.data() + sizeof(n_nodes) + n_nodes * sizeof(uint64_t));
-    *out_ntensors           = n_tensors;
-    apir_rpc_tensor * out_tensors =
-        (apir_rpc_tensor *) (output.data() + sizeof(n_nodes) + n_nodes * sizeof(uint64_t) + sizeof(uint32_t));
-    memcpy(out_tensors, tensors.data(), n_tensors * sizeof(apir_rpc_tensor));
+    uint32_t * బహిర్గతం_ntensors = (uint32_t *) (output.దత్తాంశం() + పరిమాణం(n_nodes) + n_nodes * పరిమాణం(uint64_t));
+    *బహిర్గతం_ntensors           = n_tensors;
+    apir_rpc_tensor * బహిర్గతం_tensors =
+        (apir_rpc_tensor *) (output.దత్తాంశం() + పరిమాణం(n_nodes) + n_nodes * పరిమాణం(uint64_t) + పరిమాణం(uint32_t));
+    జ్ఞాపకం_నకలు(బహిర్గతం_tensors, tensors.దత్తాంశం(), n_tensors * పరిమాణం(apir_rpc_tensor));
 }

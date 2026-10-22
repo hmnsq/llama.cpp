@@ -1,17 +1,17 @@
-#pragma once
+#సూచన once
 
-#include "openvino/op/op.hpp"
+#అన్తర్భావ "openvino/op/op.hpp"
 
-namespace ov::op::internal {
+నామాకాశ ov::op::internal {
 /// \note GatedDeltaNet op class is under development and subject to change
 ///
 /// \brief Operator performing Gated Delta Net computation
 /// \ingroup ov_ops_cpp_api
-class OPENVINO_API GatedDeltaNet : public ov::op::Op {
-public:
+తరగతి OPENVINO_API GatedDeltaNet : బహిరంగ ov::op::Op {
+బహిరంగ:
     OPENVINO_OP("GatedDeltaNet")
 
-    GatedDeltaNet() = default;
+    GatedDeltaNet() = అప్రమేయ;
     /// \brief Constructs a GatedDeltaNet operation.
     ///
     /// \param query Query tensor input.
@@ -23,15 +23,15 @@ public:
     /// \param fuse_qk_l2norm Enables fusing q/k L2-normalization into this op.
     /// \param q_l2_norm_eps Epsilon used for query L2-normalization when fusion is enabled.
     /// \param k_l2_norm_eps Epsilon used for key L2-normalization when fusion is enabled.
-    GatedDeltaNet(const Output<Node>& query,
-                  const Output<Node>& key,
-                  const Output<Node>& value,
-                  const Output<Node>& recurrent_state,
-                  const Output<Node>& gate,
-                  const Output<Node>& beta,
-                  const bool fuse_qk_l2norm = false,
-                  const float q_l2_norm_eps = 1e-6F,
-                  const float k_l2_norm_eps = 1e-6F);
+    GatedDeltaNet(స్థిరరాశి Output<Node>& query,
+                  స్థిరరాశి Output<Node>& కీలకం,
+                  స్థిరరాశి Output<Node>& value,
+                  స్థిరరాశి Output<Node>& recurrent_state,
+                  స్థిరరాశి Output<Node>& gate,
+                  స్థిరరాశి Output<Node>& beta,
+                  స్థిరరాశి తార్కిక fuse_qk_l2norm = అబద్ధం,
+                  స్థిరరాశి దశాంశం q_l2_norm_eps = 1e-6F,
+                  స్థిరరాశి దశాంశం k_l2_norm_eps = 1e-6F);
 
     /// \brief Constructs a GatedDeltaNet operation from input vector.
     ///
@@ -39,27 +39,27 @@ public:
     /// \param fuse_qk_l2norm Enables fusing q/k L2-normalization into this op.
     /// \param q_l2_norm_eps Epsilon used for query L2-normalization when fusion is enabled.
     /// \param k_l2_norm_eps Epsilon used for key L2-normalization when fusion is enabled.
-    GatedDeltaNet(const ov::OutputVector& args,
-                  const bool fuse_qk_l2norm = false,
-                  const float q_l2_norm_eps = 1e-6F,
-                  const float k_l2_norm_eps = 1e-6F);
-    void validate_and_infer_types() override;
-    bool visit_attributes(AttributeVisitor& visitor) override;
-    std::shared_ptr<ov::Node> clone_with_new_inputs(const ov::OutputVector& new_args) const override;
-    bool get_fuse_qk_l2norm() const {
-        return m_fuse_qk_l2norm;
+    GatedDeltaNet(స్థిరరాశి ov::Output_సదిశ& వాదనలు_2,
+                  స్థిరరాశి తార్కిక fuse_qk_l2norm = అబద్ధం,
+                  స్థిరరాశి దశాంశం q_l2_norm_eps = 1e-6F,
+                  స్థిరరాశి దశాంశం k_l2_norm_eps = 1e-6F);
+    శూన్య validate_and_infer_types() override;
+    తార్కిక సందర్శించు_లక్షణాలు(AttributeVisitor& visitor) override;
+    std::shared_ptr<ov::Node> clone_with_new_inputs(స్థిరరాశి ov::Output_సదిశ& new_వాదనలు) స్థిరరాశి override;
+    తార్కిక get_fuse_qk_l2norm() స్థిరరాశి {
+        తిరిగి m_fuse_qk_l2norm;
     }
-    float get_q_l2_norm_eps() const {
-        return m_q_l2_norm_eps;
+    దశాంశం get_q_l2_norm_eps() స్థిరరాశి {
+        తిరిగి m_q_l2_norm_eps;
     }
-    float get_k_l2_norm_eps() const {
-        return m_k_l2_norm_eps;
+    దశాంశం get_k_l2_norm_eps() స్థిరరాశి {
+        తిరిగి m_k_l2_norm_eps;
     }
 
-private:
-    bool m_fuse_qk_l2norm = false;
-    float m_q_l2_norm_eps = 1e-6F;
-    float m_k_l2_norm_eps = 1e-6F;
+అంతరంగ:
+    తార్కిక m_fuse_qk_l2norm = అబద్ధం;
+    దశాంశం m_q_l2_norm_eps = 1e-6F;
+    దశాంశం m_k_l2_norm_eps = 1e-6F;
 };
 
 }  // namespace ov::op::internal

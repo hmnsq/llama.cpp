@@ -1,47 +1,47 @@
-#include "backend-dispatched.h"
-#include "backend-virgl-apir.h"
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
-#include "ggml-impl.h"
+#అన్తర్భావ "backend-dispatched.h"
+#అన్తర్భావ "backend-virgl-apir.h"
+#అన్తర్భావ "ggml-backend-impl.h"
+#అన్తర్భావ "ggml-backend.h"
+#అన్తర్భావ "ggml-impl.h"
 
-#include <cstdint>
+#అన్తర్భావ <cstdint>
 
-static uint32_t validate_buffer_operation(size_t offset, size_t size, const char * operation) {
+స్థిర uint32_t validate_బఫరు_operation(size_t స్థానభ్రంశం, size_t size, స్థిరరాశి అక్షరం * operation) {
     // Only check for critical integer overflow - no arbitrary size limits
-    if (offset > SIZE_MAX - size) {
-        GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: Integer overflow in offset+size: %zu + %zu\n", operation, offset, size);
-        return 1;
+    ఒకవేళ (స్థానభ్రంశం > SIZE_MAX - size) {
+        GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: Integer overflow in offset+size: %zu + %zu\n", operation, స్థానభ్రంశం, size);
+        తిరిగి 1;
     }
 
-    return 0;  // Valid
+    తిరిగి 0;  // Valid
 }
 
-uint32_t backend_buffer_get_base(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
-    GGML_UNUSED(ctx);
-    ggml_backend_buffer_t buffer;
-    buffer = apir_decode_ggml_buffer(dec);
+uint32_t backend_బఫరు_get_పునాది(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+    GGML_వాడని(ctx);
+    ggml_backend_బఫరు_t బఫరు;
+    బఫరు = apir_decode_ggml_బఫరు(dec);
 
-    if (!buffer || apir_decoder_get_fatal(dec)) {
+    ఒకవేళ (!బఫరు || apir_decoder_get_fatal(dec)) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: Invalid buffer handle from guest\n", __func__);
-        return 1;
+        తిరిగి 1;
     }
 
-    uintptr_t base = (uintptr_t) buffer->iface.get_base(buffer);
-    apir_encode_uintptr_t(enc, &base);
+    uintptr_t పునాది = (uintptr_t) బఫరు->iface.get_పునాది(బఫరు);
+    apir_encode_uintptr_t(enc, &పునాది);
 
-    return 0;
+    తిరిగి 0;
 }
 
-uint32_t backend_buffer_set_tensor(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
-    GGML_UNUSED(ctx);
-    GGML_UNUSED(enc);
+uint32_t backend_బఫరు_సమితి_tensor(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+    GGML_వాడని(ctx);
+    GGML_వాడని(enc);
 
-    ggml_backend_buffer_t buffer;
-    buffer = apir_decode_ggml_buffer(dec);
+    ggml_backend_బఫరు_t బఫరు;
+    బఫరు = apir_decode_ggml_బఫరు(dec);
 
-    if (!buffer || apir_decoder_get_fatal(dec)) {
+    ఒకవేళ (!బఫరు || apir_decoder_get_fatal(dec)) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: Invalid buffer handle from guest\n", __func__);
-        return 1;
+        తిరిగి 1;
     }
 
     ggml_tensor * tensor;
@@ -51,129 +51,129 @@ uint32_t backend_buffer_set_tensor(apir_encoder * enc, apir_decoder * dec, virgl
     uint32_t shmem_res_id;
     apir_decode_virtgpu_shmem_res_id(dec, &shmem_res_id);
 
-    size_t offset;
-    apir_decode_size_t(dec, &offset);
+    size_t స్థానభ్రంశం;
+    apir_decode_కొలత_t(dec, &స్థానభ్రంశం);
 
     size_t size;
-    apir_decode_size_t(dec, &size);
+    apir_decode_కొలత_t(dec, &size);
 
-    if (validate_buffer_operation(offset, size, __func__) != 0) {
-        return 1;
+    ఒకవేళ (validate_బఫరు_operation(స్థానభ్రంశం, size, __func__) != 0) {
+        తిరిగి 1;
     }
 
-    void * shmem_data = ctx->iface->get_shmem_ptr(ctx->ctx_id, shmem_res_id);
+    శూన్య * shmem_దత్తాంశం = ctx->iface->get_shmem_ptr(ctx->ctx_id, shmem_res_id);
 
-    if (!shmem_data) {
+    ఒకవేళ (!shmem_దత్తాంశం) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: Couldn't get the shmem addr from virgl\n", __func__);
-        return 1;
+        తిరిగి 1;
     }
 
-    buffer->iface.set_tensor(buffer, tensor, shmem_data, offset, size);
+    బఫరు->iface.సమితి_tensor(బఫరు, tensor, shmem_దత్తాంశం, స్థానభ్రంశం, size);
 
-    return 0;
+    తిరిగి 0;
 }
 
-uint32_t backend_buffer_get_tensor(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
-    GGML_UNUSED(ctx);
-    GGML_UNUSED(enc);
+uint32_t backend_బఫరు_get_tensor(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+    GGML_వాడని(ctx);
+    GGML_వాడని(enc);
 
-    ggml_backend_buffer_t buffer;
-    buffer = apir_decode_ggml_buffer(dec);
+    ggml_backend_బఫరు_t బఫరు;
+    బఫరు = apir_decode_ggml_బఫరు(dec);
 
-    if (!buffer || apir_decoder_get_fatal(dec)) {
+    ఒకవేళ (!బఫరు || apir_decoder_get_fatal(dec)) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: Invalid buffer handle from guest\n", __func__);
-        return 1;
+        తిరిగి 1;
     }
 
-    const ggml_tensor * tensor;
+    స్థిరరాశి ggml_tensor * tensor;
     // safe to remove the const qualifier here
     tensor = apir_decode_ggml_tensor(dec);
 
     uint32_t shmem_res_id;
     apir_decode_virtgpu_shmem_res_id(dec, &shmem_res_id);
 
-    size_t offset;
-    apir_decode_size_t(dec, &offset);
+    size_t స్థానభ్రంశం;
+    apir_decode_కొలత_t(dec, &స్థానభ్రంశం);
 
     size_t size;
-    apir_decode_size_t(dec, &size);
+    apir_decode_కొలత_t(dec, &size);
 
-    if (validate_buffer_operation(offset, size, __func__) != 0) {
-        return 1;
+    ఒకవేళ (validate_బఫరు_operation(స్థానభ్రంశం, size, __func__) != 0) {
+        తిరిగి 1;
     }
 
-    void * shmem_data = ctx->iface->get_shmem_ptr(ctx->ctx_id, shmem_res_id);
-    if (!shmem_data) {
+    శూన్య * shmem_దత్తాంశం = ctx->iface->get_shmem_ptr(ctx->ctx_id, shmem_res_id);
+    ఒకవేళ (!shmem_దత్తాంశం) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: Couldn't get the shmem addr from virgl\n", __func__);
-        return 1;
+        తిరిగి 1;
     }
 
-    buffer->iface.get_tensor(buffer, tensor, shmem_data, offset, size);
+    బఫరు->iface.get_tensor(బఫరు, tensor, shmem_దత్తాంశం, స్థానభ్రంశం, size);
 
-    return 0;
+    తిరిగి 0;
 }
 
-uint32_t backend_buffer_cpy_tensor(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
-    GGML_UNUSED(ctx);
+uint32_t backend_బఫరు_cpy_tensor(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+    GGML_వాడని(ctx);
 
-    ggml_backend_buffer_t buffer;
-    buffer = apir_decode_ggml_buffer(dec);
+    ggml_backend_బఫరు_t బఫరు;
+    బఫరు = apir_decode_ggml_బఫరు(dec);
 
-    if (!buffer || apir_decoder_get_fatal(dec)) {
+    ఒకవేళ (!బఫరు || apir_decoder_get_fatal(dec)) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: Invalid buffer handle from guest\n", __func__);
-        return 1;
+        తిరిగి 1;
     }
 
-    const ggml_tensor * src;
+    స్థిరరాశి ggml_tensor * src;
     // safe to remove the const qualifier here
     src               = apir_decode_ggml_tensor(dec);
     ggml_tensor * dst = (ggml_tensor *) (uintptr_t) apir_decode_ggml_tensor(dec);
 
-    bool ret = buffer->iface.cpy_tensor(buffer, src, (ggml_tensor *) dst);
+    తార్కిక ret = బఫరు->iface.cpy_tensor(బఫరు, src, (ggml_tensor *) dst);
 
     apir_encode_bool_t(enc, &ret);
 
-    return 0;
+    తిరిగి 0;
 }
 
-uint32_t backend_buffer_clear(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
-    GGML_UNUSED(ctx);
-    GGML_UNUSED(enc);
+uint32_t backend_బఫరు_clear(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+    GGML_వాడని(ctx);
+    GGML_వాడని(enc);
 
-    ggml_backend_buffer_t buffer;
-    buffer = apir_decode_ggml_buffer(dec);
+    ggml_backend_బఫరు_t బఫరు;
+    బఫరు = apir_decode_ggml_బఫరు(dec);
 
-    if (!buffer || apir_decoder_get_fatal(dec)) {
+    ఒకవేళ (!బఫరు || apir_decoder_get_fatal(dec)) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: Invalid buffer handle from guest\n", __func__);
-        return 1;
+        తిరిగి 1;
     }
 
     uint8_t value;
     apir_decode_uint8_t(dec, &value);
 
-    buffer->iface.clear(buffer, value);
+    బఫరు->iface.clear(బఫరు, value);
 
-    return 0;
+    తిరిగి 0;
 }
 
-uint32_t backend_buffer_free_buffer(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
-    GGML_UNUSED(ctx);
-    GGML_UNUSED(enc);
+uint32_t backend_బఫరు_free_బఫరు(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+    GGML_వాడని(ctx);
+    GGML_వాడని(enc);
 
-    ggml_backend_buffer_t buffer;
-    buffer = apir_decode_ggml_buffer(dec);
+    ggml_backend_బఫరు_t బఫరు;
+    బఫరు = apir_decode_ggml_బఫరు(dec);
 
-    if (!buffer || apir_decoder_get_fatal(dec)) {
+    ఒకవేళ (!బఫరు || apir_decoder_get_fatal(dec)) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: Invalid buffer handle from guest\n", __func__);
-        return 1;
+        తిరిగి 1;
     }
 
-    if (!apir_untrack_backend_buffer(buffer)) {
-        GGML_LOG_WARN(GGML_VIRTGPU_BCK "%s: unknown buffer %p\n", __func__, (void *) buffer);
-        return 1;
+    ఒకవేళ (!apir_untrack_backend_బఫరు(బఫరు)) {
+        GGML_LOG_WARN(GGML_VIRTGPU_BCK "%s: unknown buffer %p\n", __func__, (శూన్య *) బఫరు);
+        తిరిగి 1;
     }
 
-    buffer->iface.free_buffer(buffer);
+    బఫరు->iface.free_బఫరు(బఫరు);
 
-    return 0;
+    తిరిగి 0;
 }

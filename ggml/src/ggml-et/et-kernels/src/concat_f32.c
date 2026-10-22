@@ -9,167 +9,167 @@
 // - a scalar stride-aware path otherwise
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "platform.h"
+#అన్తర్భావ "ggml_tensor.h"
+#అన్తర్భావ "platform.h"
 
-#include <stdint.h>
-#include <string.h>
+#అన్తర్భావ <stdint.h>
+#అన్తర్భావ <string.h>
 
-struct ggml_et_concat_params {
-    struct ggml_tensor src0;  // F32 input tensor 0
-    struct ggml_tensor src1;  // F32 input tensor 1
-    struct ggml_tensor dst;   // F32 output tensor
+నిర్మాణం ggml_et_concat_params {
+    నిర్మాణం ggml_tensor src0;  // F32 input tensor 0
+    నిర్మాణం ggml_tensor src1;  // F32 input tensor 1
+    నిర్మాణం ggml_tensor dst;   // F32 output tensor
     int32_t            dim;   // Concatenation dimension
 };
 
 // Copy n floats from src to dst using 8-wide vector loads/stores.
 // n must be a multiple of 16 (cacheline-aligned).
-static inline void copy_row_aligned(float * dst, const float * src, int32_t n) {
-    for (int32_t i = 0; i < n; i += 8) {
-        __asm__ volatile(
+స్థిర అంతఃవరుస శూన్య copy_అడ్డువరుస_aligned(దశాంశం * dst, స్థిరరాశి దశాంశం * src, int32_t n) {
+    కొరకు (int32_t i = 0; i < n; i += 8) {
+        __asm__ అస్థిర(
             "flw.ps f11, %[src_vec]\n"
             "fsw.ps f11, %[dst_vec]\n"
-            : [dst_vec] "=m"(*(float (*)[8]) & dst[i])
-            : [src_vec] "m"(*(const float (*)[8]) & src[i])
+            : [dst_vec] "=m"(*(దశాంశం (*)[8]) & dst[i])
+            : [src_vec] "m"(*(స్థిరరాశి దశాంశం (*)[8]) & src[i])
             : "f11");
     }
 }
 
-int entry_point(struct ggml_et_concat_params * params, void * env) {
+పూర్ణాంకం నమోదు_బిందువు(నిర్మాణం ggml_et_concat_params * params, శూన్య * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    ఒకవేళ (!kernel_env) {
+        తిరిగి -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    పూర్ణాంకం thread_id   = get_relative_thread_id(kernel_env->shire_ముసుగు);
+    పూర్ణాంకం అంకె_దారాలు = get_అంకె_దారాలు(kernel_env->shire_ముసుగు);
 
-    if (thread_id < 0) {
-        return 0;
+    ఒకవేళ (thread_id < 0) {
+        తిరిగి 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    ఒకవేళ (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        తిరిగి -1;
     }
 
-    struct ggml_tensor * src0 = &params->src0;
-    struct ggml_tensor * src1 = &params->src1;
-    struct ggml_tensor * dst  = &params->dst;
+    నిర్మాణం ggml_tensor * src0 = &params->src0;
+    నిర్మాణం ggml_tensor * src1 = &params->src1;
+    నిర్మాణం ggml_tensor * dst  = &params->dst;
     int32_t              dim  = params->dim;
 
-    if (src0->type != GGML_TYPE_F32 || src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+    ఒకవేళ (src0->type != GGML_TYPE_F32 || src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        తిరిగి -1;
     }
 
-    float * src0_data = (float *) src0->data;
-    float * src1_data = (float *) src1->data;
-    float * dst_data  = (float *) dst->data;
+    దశాంశం * src0_దత్తాంశం = (దశాంశం *) src0->దత్తాంశం;
+    దశాంశం * src1_దత్తాంశం = (దశాంశం *) src1->దత్తాంశం;
+    దశాంశం * dst_దత్తాంశం  = (దశాంశం *) dst->దత్తాంశం;
 
-    if (!src0_data || !src1_data || !dst_data) {
-        return -1;
+    ఒకవేళ (!src0_దత్తాంశం || !src1_దత్తాంశం || !dst_దత్తాంశం) {
+        తిరిగి -1;
     }
 
-    const int64_t ne00 = src0->ne[0], ne01 = src0->ne[1], ne02 = src0->ne[2], ne03 = src0->ne[3];
-    const int64_t ne10 = src1->ne[0], ne11 = src1->ne[1], ne12 = src1->ne[2], ne13 = src1->ne[3];
-    const int64_t ne0 = dst->ne[0], ne1 = dst->ne[1], ne2 = dst->ne[2], ne3 = dst->ne[3];
+    స్థిరరాశి int64_t ne00 = src0->ne[0], ne01 = src0->ne[1], ne02 = src0->ne[2], ne03 = src0->ne[3];
+    స్థిరరాశి int64_t ne10 = src1->ne[0], ne11 = src1->ne[1], ne12 = src1->ne[2], ne13 = src1->ne[3];
+    స్థిరరాశి int64_t ne0 = dst->ne[0], ne1 = dst->ne[1], ne2 = dst->ne[2], ne3 = dst->ne[3];
 
     // src strides in bytes
-    const size_t nb00 = src0->nb[0], nb01 = src0->nb[1], nb02 = src0->nb[2], nb03 = src0->nb[3];
-    const size_t nb10 = src1->nb[0], nb11 = src1->nb[1], nb12 = src1->nb[2], nb13 = src1->nb[3];
+    స్థిరరాశి size_t nb00 = src0->nb[0], nb01 = src0->nb[1], nb02 = src0->nb[2], nb03 = src0->nb[3];
+    స్థిరరాశి size_t nb10 = src1->nb[0], nb11 = src1->nb[1], nb12 = src1->nb[2], nb13 = src1->nb[3];
     // dst strides in bytes
-    const size_t dnb1 = dst->nb[1], dnb2 = dst->nb[2], dnb3 = dst->nb[3];
+    స్థిరరాశి size_t dnb1 = dst->nb[1], dnb2 = dst->nb[2], dnb3 = dst->nb[3];
 
     // Total rows across all higher dimensions
-    const int64_t total_rows = ne1 * ne2 * ne3;
+    స్థిరరాశి int64_t మొత్తం_అడ్డువరుసలు = ne1 * ne2 * ne3;
 
     // Generic slow path for dim==0 when either source segment is not suitable for
     // aligned vector copies. Threading is done by cacheline-aligned row groups,
     // so writers do not share destination cache lines.
-    if (dim == 0 && (ne00 % 16 != 0 || ne10 % 16 != 0 || nb00 != sizeof(float) || nb10 != sizeof(float))) {
-        const int64_t rows_per_group = et_rows_per_cacheline_group(ne0, sizeof(float));
-        const int64_t total_groups   = (total_rows + rows_per_group - 1) / rows_per_group;
+    ఒకవేళ (dim == 0 && (ne00 % 16 != 0 || ne10 % 16 != 0 || nb00 != పరిమాణం(దశాంశం) || nb10 != పరిమాణం(దశాంశం))) {
+        స్థిరరాశి int64_t అడ్డువరుసలు_చొప్పున_సమూహం = et_అడ్డువరుసలు_చొప్పున_cacheline_సమూహం(ne0, పరిమాణం(దశాంశం));
+        స్థిరరాశి int64_t మొత్తం_groups   = (మొత్తం_అడ్డువరుసలు + అడ్డువరుసలు_చొప్పున_సమూహం - 1) / అడ్డువరుసలు_చొప్పున_సమూహం;
 
-        for (int64_t grp = thread_id; grp < total_groups; grp += num_threads) {
-            const int64_t row_start = grp * rows_per_group;
-            int64_t       row_end   = row_start + rows_per_group;
-            if (row_end > total_rows) {
-                row_end = total_rows;
+        కొరకు (int64_t grp = thread_id; grp < మొత్తం_groups; grp += అంకె_దారాలు) {
+            స్థిరరాశి int64_t అడ్డువరుస_ప్రారంభం = grp * అడ్డువరుసలు_చొప్పున_సమూహం;
+            int64_t       అడ్డువరుస_చివర   = అడ్డువరుస_ప్రారంభం + అడ్డువరుసలు_చొప్పున_సమూహం;
+            ఒకవేళ (అడ్డువరుస_చివర > మొత్తం_అడ్డువరుసలు) {
+                అడ్డువరుస_చివర = మొత్తం_అడ్డువరుసలు;
             }
 
-            for (int64_t row = row_start; row < row_end; row++) {
-                int64_t i1 = row % ne1;
-                int64_t i2 = (row / ne1) % ne2;
-                int64_t i3 = row / (ne1 * ne2);
+            కొరకు (int64_t అడ్డువరుస = అడ్డువరుస_ప్రారంభం; అడ్డువరుస < అడ్డువరుస_చివర; అడ్డువరుస++) {
+                int64_t i1 = అడ్డువరుస % ne1;
+                int64_t i2 = (అడ్డువరుస / ne1) % ne2;
+                int64_t i3 = అడ్డువరుస / (ne1 * ne2);
 
-                float * dst_row = (float *) ((char *) dst_data + i1 * dnb1 + i2 * dnb2 + i3 * dnb3);
+                దశాంశం * dst_అడ్డువరుస = (దశాంశం *) ((అక్షరం *) dst_దత్తాంశం + i1 * dnb1 + i2 * dnb2 + i3 * dnb3);
 
-                const char * s0_base = (const char *) src0_data + i1 * nb01 + i2 * nb02 + i3 * nb03;
-                for (int64_t i0 = 0; i0 < ne00; i0++) {
-                    dst_row[i0] = *(const float *) (s0_base + i0 * nb00);
+                స్థిరరాశి అక్షరం * s0_పునాది = (స్థిరరాశి అక్షరం *) src0_దత్తాంశం + i1 * nb01 + i2 * nb02 + i3 * nb03;
+                కొరకు (int64_t i0 = 0; i0 < ne00; i0++) {
+                    dst_అడ్డువరుస[i0] = *(స్థిరరాశి దశాంశం *) (s0_పునాది + i0 * nb00);
                 }
 
-                const char * s1_base = (const char *) src1_data + i1 * nb11 + i2 * nb12 + i3 * nb13;
-                for (int64_t i0 = 0; i0 < ne10; i0++) {
-                    dst_row[ne00 + i0] = *(const float *) (s1_base + i0 * nb10);
+                స్థిరరాశి అక్షరం * s1_పునాది = (స్థిరరాశి అక్షరం *) src1_దత్తాంశం + i1 * nb11 + i2 * nb12 + i3 * nb13;
+                కొరకు (int64_t i0 = 0; i0 < ne10; i0++) {
+                    dst_అడ్డువరుస[ne00 + i0] = *(స్థిరరాశి దశాంశం *) (s1_పునాది + i0 * nb10);
                 }
             }
         }
-        return 0;
+        తిరిగి 0;
     }
 
     // Standard path: ne0 % 16 == 0, aligned rows
-    for (int64_t row = thread_id; row < total_rows; row += num_threads) {
+    కొరకు (int64_t అడ్డువరుస = thread_id; అడ్డువరుస < మొత్తం_అడ్డువరుసలు; అడ్డువరుస += అంకె_దారాలు) {
         // Decompose linear row index into (i1, i2, i3)
-        int64_t i1 = row % ne1;
-        int64_t i2 = (row / ne1) % ne2;
-        int64_t i3 = row / (ne1 * ne2);
+        int64_t i1 = అడ్డువరుస % ne1;
+        int64_t i2 = (అడ్డువరుస / ne1) % ne2;
+        int64_t i3 = అడ్డువరుస / (ne1 * ne2);
 
-        float * dst_row = (float *) ((char *) dst_data + i1 * dnb1 + i2 * dnb2 + i3 * dnb3);
+        దశాంశం * dst_అడ్డువరుస = (దశాంశం *) ((అక్షరం *) dst_దత్తాంశం + i1 * dnb1 + i2 * dnb2 + i3 * dnb3);
 
-        if (dim == 0) {
+        ఒకవేళ (dim == 0) {
             // Concat along innermost dimension: [src0_row | src1_row]
             // Both ne00 and ne10 are multiples of 16 (cacheline-aligned)
-            const float * s0_row = (const float *) ((const char *) src0_data + i1 * nb01 + i2 * nb02 + i3 * nb03);
-            const float * s1_row = (const float *) ((const char *) src1_data + i1 * nb11 + i2 * nb12 + i3 * nb13);
+            స్థిరరాశి దశాంశం * s0_అడ్డువరుస = (స్థిరరాశి దశాంశం *) ((స్థిరరాశి అక్షరం *) src0_దత్తాంశం + i1 * nb01 + i2 * nb02 + i3 * nb03);
+            స్థిరరాశి దశాంశం * s1_అడ్డువరుస = (స్థిరరాశి దశాంశం *) ((స్థిరరాశి అక్షరం *) src1_దత్తాంశం + i1 * nb11 + i2 * nb12 + i3 * nb13);
 
-            copy_row_aligned(dst_row, s0_row, (int32_t) ne00);
-            copy_row_aligned(dst_row + ne00, s1_row, (int32_t) ne10);
+            copy_అడ్డువరుస_aligned(dst_అడ్డువరుస, s0_అడ్డువరుస, (int32_t) ne00);
+            copy_అడ్డువరుస_aligned(dst_అడ్డువరుస + ne00, s1_అడ్డువరుస, (int32_t) ne10);
 
-        } else if (dim == 1) {
+        } లేకపోతే ఒకవేళ (dim == 1) {
             // Concat along dim 1: first ne01 rows from src0, rest from src1
-            if (i1 < ne01) {
-                const float * s0_row = (const float *) ((const char *) src0_data + i1 * nb01 + i2 * nb02 + i3 * nb03);
-                copy_row_aligned(dst_row, s0_row, (int32_t) ne0);
-            } else {
-                const float * s1_row =
-                    (const float *) ((const char *) src1_data + (i1 - ne01) * nb11 + i2 * nb12 + i3 * nb13);
-                copy_row_aligned(dst_row, s1_row, (int32_t) ne0);
+            ఒకవేళ (i1 < ne01) {
+                స్థిరరాశి దశాంశం * s0_అడ్డువరుస = (స్థిరరాశి దశాంశం *) ((స్థిరరాశి అక్షరం *) src0_దత్తాంశం + i1 * nb01 + i2 * nb02 + i3 * nb03);
+                copy_అడ్డువరుస_aligned(dst_అడ్డువరుస, s0_అడ్డువరుస, (int32_t) ne0);
+            } లేకపోతే {
+                స్థిరరాశి దశాంశం * s1_అడ్డువరుస =
+                    (స్థిరరాశి దశాంశం *) ((స్థిరరాశి అక్షరం *) src1_దత్తాంశం + (i1 - ne01) * nb11 + i2 * nb12 + i3 * nb13);
+                copy_అడ్డువరుస_aligned(dst_అడ్డువరుస, s1_అడ్డువరుస, (int32_t) ne0);
             }
 
-        } else if (dim == 2) {
+        } లేకపోతే ఒకవేళ (dim == 2) {
             // Concat along dim 2: first ne02 slices from src0, rest from src1
-            if (i2 < ne02) {
-                const float * s0_row = (const float *) ((const char *) src0_data + i1 * nb01 + i2 * nb02 + i3 * nb03);
-                copy_row_aligned(dst_row, s0_row, (int32_t) ne0);
-            } else {
-                const float * s1_row =
-                    (const float *) ((const char *) src1_data + i1 * nb11 + (i2 - ne02) * nb12 + i3 * nb13);
-                copy_row_aligned(dst_row, s1_row, (int32_t) ne0);
+            ఒకవేళ (i2 < ne02) {
+                స్థిరరాశి దశాంశం * s0_అడ్డువరుస = (స్థిరరాశి దశాంశం *) ((స్థిరరాశి అక్షరం *) src0_దత్తాంశం + i1 * nb01 + i2 * nb02 + i3 * nb03);
+                copy_అడ్డువరుస_aligned(dst_అడ్డువరుస, s0_అడ్డువరుస, (int32_t) ne0);
+            } లేకపోతే {
+                స్థిరరాశి దశాంశం * s1_అడ్డువరుస =
+                    (స్థిరరాశి దశాంశం *) ((స్థిరరాశి అక్షరం *) src1_దత్తాంశం + i1 * nb11 + (i2 - ne02) * nb12 + i3 * nb13);
+                copy_అడ్డువరుస_aligned(dst_అడ్డువరుస, s1_అడ్డువరుస, (int32_t) ne0);
             }
 
-        } else {
+        } లేకపోతే {
             // dim == 3: first ne03 batches from src0, rest from src1
-            if (i3 < ne03) {
-                const float * s0_row = (const float *) ((const char *) src0_data + i1 * nb01 + i2 * nb02 + i3 * nb03);
-                copy_row_aligned(dst_row, s0_row, (int32_t) ne0);
-            } else {
-                const float * s1_row =
-                    (const float *) ((const char *) src1_data + i1 * nb11 + i2 * nb12 + (i3 - ne03) * nb13);
-                copy_row_aligned(dst_row, s1_row, (int32_t) ne0);
+            ఒకవేళ (i3 < ne03) {
+                స్థిరరాశి దశాంశం * s0_అడ్డువరుస = (స్థిరరాశి దశాంశం *) ((స్థిరరాశి అక్షరం *) src0_దత్తాంశం + i1 * nb01 + i2 * nb02 + i3 * nb03);
+                copy_అడ్డువరుస_aligned(dst_అడ్డువరుస, s0_అడ్డువరుస, (int32_t) ne0);
+            } లేకపోతే {
+                స్థిరరాశి దశాంశం * s1_అడ్డువరుస =
+                    (స్థిరరాశి దశాంశం *) ((స్థిరరాశి అక్షరం *) src1_దత్తాంశం + i1 * nb11 + i2 * nb12 + (i3 - ne03) * nb13);
+                copy_అడ్డువరుస_aligned(dst_అడ్డువరుస, s1_అడ్డువరుస, (int32_t) ne0);
             }
         }
     }
 
-    return 0;
+    తిరిగి 0;
 }

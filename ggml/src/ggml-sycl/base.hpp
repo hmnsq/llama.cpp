@@ -1,5 +1,5 @@
-#ifndef GGML_SYCL_BASE_HPP
-#define GGML_SYCL_BASE_HPP
+#నిర్వచితం_కాకపోతే GGML_SYCL_పునాది_HPP
+#నిర్వచించు GGML_SYCL_పునాది_HPP
 
 /**
  * Module: base
@@ -14,30 +14,30 @@
  * - High stability and backward compatibility required.
  */
 
-#include <cstdio>
+#అన్తర్భావ <cstdio>
 
-extern int g_ggml_sycl_debug;
-extern int g_ggml_sycl_dev_debug;
+బాహ్య పూర్ణాంకం g_ggml_sycl_debug;
+బాహ్య పూర్ణాంకం g_ggml_sycl_dev_debug;
 
-#if defined(__clang__) && __has_builtin(__builtin_expect)
+#ఒకవేళ defined(__clang__) && __has_builtin(__builtin_expect)
 // Hint the optimizer to pipeline the more likely following instruction in branches
-#    define LIKELY(expr)   __builtin_expect(expr, true)
-#    define UNLIKELY(expr) __builtin_expect(expr, false)
-#else
-#    define LIKELY(expr)   (expr)
-#    define UNLIKELY(expr) (expr)
-#endif
+#    define LIKELY(సమాసం)   __builtin_expect(సమాసం, నిజం)
+#    define UNLIKELY(సమాసం) __builtin_expect(సమాసం, అబద్ధం)
+#లేకపోతే
+#    define LIKELY(సమాసం)   (సమాసం)
+#    define UNLIKELY(సమాసం) (సమాసం)
+#అయితే_ముగింపు
 
-#define GGML_SYCL_DEBUG(...)              \
-    do {                                  \
-        if (UNLIKELY(g_ggml_sycl_debug))  \
+#నిర్వచించు GGML_SYCL_DEBUG(...)              \
+    చేయి {                                  \
+        ఒకవేళ (UNLIKELY(g_ggml_sycl_debug))  \
             fprintf(stderr, __VA_ARGS__); \
-    } while (0)
+    } అయితే (0)
 
-#define GGML_SYCL_DEV_DEBUG(...)          \
-    do {                                  \
-        if (UNLIKELY(g_ggml_sycl_dev_debug))  \
+#నిర్వచించు GGML_SYCL_DEV_DEBUG(...)          \
+    చేయి {                                  \
+        ఒకవేళ (UNLIKELY(g_ggml_sycl_dev_debug))  \
             fprintf(stderr, __VA_ARGS__); \
-    } while (0)
+    } అయితే (0)
 
-#endif  // GGML_SYCL_BASE_HPP
+#అయితే_ముగింపు  // GGML_SYCL_BASE_HPP

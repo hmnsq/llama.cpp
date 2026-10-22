@@ -1,101 +1,101 @@
-#ifndef HTP_ARGSORT_OPS_H
-#define HTP_ARGSORT_OPS_H
+#నిర్వచితం_కాకపోతే HTP_ARGSORT_OPS_H
+#నిర్వచించు HTP_ARGSORT_OPS_H
 
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
-#include <string.h>
+#అన్తర్భావ <stdint.h>
+#అన్తర్భావ <stddef.h>
+#అన్తర్భావ <stdbool.h>
+#అన్తర్భావ <string.h>
 
-#include "hex-fastdiv.h"
+#అన్తర్భావ "hex-fastdiv.h"
 
-struct htp_sort_kernel_params {
-    int32_t  n_threads;
-    int32_t  total_rows;
-    int32_t  row_start;
-    int32_t  row_end;
+నిర్మాణం htp_క్రమీకరించు_kernel_params {
+    int32_t  n_దారాలు;
+    int32_t  మొత్తం_అడ్డువరుసలు;
+    int32_t  అడ్డువరుస_ప్రారంభం;
+    int32_t  అడ్డువరుస_చివర;
     int32_t  ne00;
     int32_t  k;
-    int32_t  order;             // GGML_SORT_ORDER_ASC (0) or GGML_SORT_ORDER_DESC (1)
-    int32_t  is_top_k;          // 1 if TOP_K, 0 if ARGSORT
+    int32_t  క్రమం;             // GGML_SORT_ORDER_ASC (0) or GGML_SORT_ORDER_DESC (1)
+    int32_t  is_శిఖరం_k;          // 1 if TOP_K, 0 if ARGSORT
     int32_t  use_dma;           // 1 if DMA enabled
     int32_t  chunk_elems;
     int32_t  n_chunks;
-    int32_t  vtcm_size;
-    int32_t  phase1_slot_size;
-    int32_t  merge_values_off;
-    int32_t  merge_indices_off;
-    int32_t  merge_elems;
+    int32_t  vtcm_కొలత;
+    int32_t  phase1_స్థానం_కొలత;
+    int32_t  విలీనం_విలువలు_off;
+    int32_t  విలీనం_indices_off;
+    int32_t  విలీనం_elems;
     int32_t  n_slots;
     int32_t  pad[15];
 };
 
-struct htp_sort_vtcm_layout {
-    size_t   total_bytes;
-    size_t   phase1_slot_size;
-    size_t   merge_values_off;
-    size_t   merge_indices_off;
+నిర్మాణం htp_క్రమీకరించు_vtcm_layout {
+    size_t   మొత్తం_బైట్లు;
+    size_t   phase1_స్థానం_కొలత;
+    size_t   విలీనం_విలువలు_off;
+    size_t   విలీనం_indices_off;
     uint32_t chunk_elems;
     uint32_t n_chunks;
-    uint32_t merge_elems;
-    uint32_t n_threads;
+    uint32_t విలీనం_elems;
+    uint32_t n_దారాలు;
     uint32_t n_slots;
 };
 
-static inline bool htp_sort_solve_layout(
-    struct htp_sort_vtcm_layout * layout,
+స్థిర అంతఃవరుస bool htp_క్రమీకరించు_solve_layout(
+    నిర్మాణం htp_క్రమీకరించు_vtcm_layout * layout,
     uint32_t ne00,
-    uint32_t total_rows,
+    uint32_t మొత్తం_అడ్డువరుసలు,
     uint32_t k,
-    uint32_t n_threads_max,
+    uint32_t n_దారాలు_max,
     size_t vtcm_budget,
-    bool is_top_k) {
+    bool is_శిఖరం_k) {
 
-    memset(layout, 0, sizeof(*layout));
+    memset(layout, 0, పరిమాణం(*layout));
 
-    if (total_rows > 1) {
-        uint32_t n_threads = total_rows < n_threads_max ? total_rows : n_threads_max;
+    ఒకవేళ (మొత్తం_అడ్డువరుసలు > 1) {
+        uint32_t n_దారాలు = మొత్తం_అడ్డువరుసలు < n_దారాలు_max ? మొత్తం_అడ్డువరుసలు : n_దారాలు_max;
 
         uint32_t n_vec = (ne00 + 31) / 32;
         uint32_t n_vec_pow2 = 1;
-        while (n_vec_pow2 < n_vec) n_vec_pow2 <<= 1;
+        అయితే (n_vec_pow2 < n_vec) n_vec_pow2 <<= 1;
         uint32_t ne00_padded = n_vec_pow2 * 32;
 
-        size_t values_size  = ((ne00_padded * sizeof(float)) + 127) & ~127;
-        size_t indices_size = ((ne00_padded * sizeof(int32_t)) + 127) & ~127;
-        size_t spad_per_slot = ((values_size + indices_size) + 255) & ~255;
+        size_t విలువలు_కొలత  = ((ne00_padded * పరిమాణం(దశాంశం)) + 127) & ~127;
+        size_t indices_కొలత = ((ne00_padded * పరిమాణం(int32_t)) + 127) & ~127;
+        size_t spad_చొప్పున_స్థానం = ((విలువలు_కొలత + indices_కొలత) + 255) & ~255;
 
         uint32_t n_slots = 2;
-        if (spad_per_slot * 2 > vtcm_budget) {
+        ఒకవేళ (spad_చొప్పున_స్థానం * 2 > vtcm_budget) {
             n_slots = 1;
         }
 
-        size_t spad_per_thread = spad_per_slot * n_slots;
+        size_t spad_చొప్పున_thread = spad_చొప్పున_స్థానం * n_slots;
 
-        while (n_threads > 1 && (spad_per_thread * n_threads) > vtcm_budget) {
-            n_threads--;
+        అయితే (n_దారాలు > 1 && (spad_చొప్పున_thread * n_దారాలు) > vtcm_budget) {
+            n_దారాలు--;
         }
 
-        size_t total_bytes = spad_per_thread * n_threads;
-        if (total_bytes > vtcm_budget) {
-            return false;
+        size_t మొత్తం_బైట్లు = spad_చొప్పున_thread * n_దారాలు;
+        ఒకవేళ (మొత్తం_బైట్లు > vtcm_budget) {
+            తిరిగి false;
         }
 
-        layout->total_bytes      = total_bytes;
-        layout->phase1_slot_size = spad_per_slot;
+        layout->మొత్తం_బైట్లు      = మొత్తం_బైట్లు;
+        layout->phase1_స్థానం_కొలత = spad_చొప్పున_స్థానం;
         layout->chunk_elems      = ne00_padded;
         layout->n_chunks         = 1;
-        layout->n_threads        = n_threads;
+        layout->n_దారాలు        = n_దారాలు;
         layout->n_slots          = n_slots;
-        return true;
+        తిరిగి true;
     }
 
     uint32_t n_vec = (ne00 + 31) / 32;
     uint32_t n_vec_pow2 = 1;
-    while (n_vec_pow2 < n_vec) n_vec_pow2 <<= 1;
+    అయితే (n_vec_pow2 < n_vec) n_vec_pow2 <<= 1;
 
     uint32_t n_chunks = 1;
-    if (ne00 > 1024) {
-        while (n_chunks * 2 <= n_threads_max && n_chunks * 2 <= n_vec_pow2) {
+    ఒకవేళ (ne00 > 1024) {
+        అయితే (n_chunks * 2 <= n_దారాలు_max && n_chunks * 2 <= n_vec_pow2) {
             n_chunks *= 2;
         }
     }
@@ -103,76 +103,76 @@ static inline bool htp_sort_solve_layout(
     uint32_t chunk_n_vec = n_vec_pow2 / n_chunks;
     uint32_t chunk_elems = chunk_n_vec * 32;
 
-    size_t phase1_values_size  = ((chunk_elems * sizeof(float)) + 127) & ~127;
-    size_t phase1_indices_size = ((chunk_elems * sizeof(int32_t)) + 127) & ~127;
-    size_t phase1_slot_size    = ((phase1_values_size + phase1_indices_size) + 255) & ~255;
-    size_t phase1_total_size   = phase1_slot_size * n_chunks;
+    size_t phase1_విలువలు_కొలత  = ((chunk_elems * పరిమాణం(దశాంశం)) + 127) & ~127;
+    size_t phase1_indices_కొలత = ((chunk_elems * పరిమాణం(int32_t)) + 127) & ~127;
+    size_t phase1_స్థానం_కొలత    = ((phase1_విలువలు_కొలత + phase1_indices_కొలత) + 255) & ~255;
+    size_t phase1_మొత్తం_కొలత   = phase1_స్థానం_కొలత * n_chunks;
 
-    size_t merge_values_size  = 0;
-    size_t merge_indices_size = 0;
-    size_t merge_values_off   = phase1_total_size;
-    size_t merge_indices_off  = 0;
-    uint32_t merge_elems      = 0;
+    size_t విలీనం_విలువలు_కొలత  = 0;
+    size_t విలీనం_indices_కొలత = 0;
+    size_t విలీనం_విలువలు_off   = phase1_మొత్తం_కొలత;
+    size_t విలీనం_indices_off  = 0;
+    uint32_t విలీనం_elems      = 0;
 
-    if (n_chunks > 1) {
-        if (is_top_k) {
+    ఒకవేళ (n_chunks > 1) {
+        ఒకవేళ (is_శిఖరం_k) {
             uint32_t local_k = k < chunk_elems ? k : chunk_elems;
-            uint32_t total_candidates = n_chunks * local_k;
-            uint32_t merge_n_vec = (total_candidates + 31) / 32;
-            uint32_t merge_n_vec_pow2 = 1;
-            while (merge_n_vec_pow2 < merge_n_vec) merge_n_vec_pow2 <<= 1;
-            merge_elems = merge_n_vec_pow2 * 32;
-        } else {
-            merge_elems = n_vec_pow2 * 32;
+            uint32_t మొత్తం_candidates = n_chunks * local_k;
+            uint32_t విలీనం_n_vec = (మొత్తం_candidates + 31) / 32;
+            uint32_t విలీనం_n_vec_pow2 = 1;
+            అయితే (విలీనం_n_vec_pow2 < విలీనం_n_vec) విలీనం_n_vec_pow2 <<= 1;
+            విలీనం_elems = విలీనం_n_vec_pow2 * 32;
+        } లేకపోతే {
+            విలీనం_elems = n_vec_pow2 * 32;
         }
-        merge_values_size  = ((merge_elems * sizeof(float)) + 127) & ~127;
-        merge_indices_size = ((merge_elems * sizeof(int32_t)) + 127) & ~127;
-        merge_indices_off  = merge_values_off + merge_values_size;
+        విలీనం_విలువలు_కొలత  = ((విలీనం_elems * పరిమాణం(దశాంశం)) + 127) & ~127;
+        విలీనం_indices_కొలత = ((విలీనం_elems * పరిమాణం(int32_t)) + 127) & ~127;
+        విలీనం_indices_off  = విలీనం_విలువలు_off + విలీనం_విలువలు_కొలత;
     }
 
-    size_t total_bytes = phase1_total_size + merge_values_size + merge_indices_size;
+    size_t మొత్తం_బైట్లు = phase1_మొత్తం_కొలత + విలీనం_విలువలు_కొలత + విలీనం_indices_కొలత;
 
-    if (total_bytes > vtcm_budget && n_chunks > 1) {
+    ఒకవేళ (మొత్తం_బైట్లు > vtcm_budget && n_chunks > 1) {
         n_chunks = 1;
         chunk_elems = n_vec_pow2 * 32;
-        phase1_values_size  = ((chunk_elems * sizeof(float)) + 127) & ~127;
-        phase1_indices_size = ((chunk_elems * sizeof(int32_t)) + 127) & ~127;
-        phase1_slot_size    = ((phase1_values_size + phase1_indices_size) + 255) & ~255;
-        phase1_total_size   = phase1_slot_size;
-        merge_values_size   = 0;
-        merge_indices_size  = 0;
-        merge_values_off    = phase1_total_size;
-        merge_indices_off   = 0;
-        merge_elems         = 0;
-        total_bytes         = phase1_total_size;
+        phase1_విలువలు_కొలత  = ((chunk_elems * పరిమాణం(దశాంశం)) + 127) & ~127;
+        phase1_indices_కొలత = ((chunk_elems * పరిమాణం(int32_t)) + 127) & ~127;
+        phase1_స్థానం_కొలత    = ((phase1_విలువలు_కొలత + phase1_indices_కొలత) + 255) & ~255;
+        phase1_మొత్తం_కొలత   = phase1_స్థానం_కొలత;
+        విలీనం_విలువలు_కొలత   = 0;
+        విలీనం_indices_కొలత  = 0;
+        విలీనం_విలువలు_off    = phase1_మొత్తం_కొలత;
+        విలీనం_indices_off   = 0;
+        విలీనం_elems         = 0;
+        మొత్తం_బైట్లు         = phase1_మొత్తం_కొలత;
     }
 
-    if (total_bytes > vtcm_budget) {
-        return false;
+    ఒకవేళ (మొత్తం_బైట్లు > vtcm_budget) {
+        తిరిగి false;
     }
 
     uint32_t n_slots = 1;
-    if (n_chunks == 1 && phase1_slot_size * 2 <= vtcm_budget) {
+    ఒకవేళ (n_chunks == 1 && phase1_స్థానం_కొలత * 2 <= vtcm_budget) {
         n_slots = 2;
-        total_bytes = phase1_slot_size * 2;
+        మొత్తం_బైట్లు = phase1_స్థానం_కొలత * 2;
     }
 
-    layout->total_bytes       = total_bytes;
-    layout->phase1_slot_size  = phase1_slot_size;
-    layout->merge_values_off  = merge_values_off;
-    layout->merge_indices_off = merge_indices_off;
+    layout->మొత్తం_బైట్లు       = మొత్తం_బైట్లు;
+    layout->phase1_స్థానం_కొలత  = phase1_స్థానం_కొలత;
+    layout->విలీనం_విలువలు_off  = విలీనం_విలువలు_off;
+    layout->విలీనం_indices_off = విలీనం_indices_off;
     layout->chunk_elems       = chunk_elems;
     layout->n_chunks          = n_chunks;
-    layout->merge_elems       = merge_elems;
-    layout->n_threads         = n_chunks;
+    layout->విలీనం_elems       = విలీనం_elems;
+    layout->n_దారాలు         = n_chunks;
     layout->n_slots           = n_slots;
-    return true;
+    తిరిగి true;
 }
 
-#if defined(__cplusplus)
-static_assert(sizeof(struct htp_sort_kernel_params) <= 128, "htp_sort_kernel_params is too large for kernel_params blob");
-#else
-_Static_assert(sizeof(struct htp_sort_kernel_params) <= 128, "htp_sort_kernel_params is too large for kernel_params blob");
-#endif
+#ఒకవేళ defined(__cplusplus)
+static_assert(పరిమాణం(నిర్మాణం htp_క్రమీకరించు_kernel_params) <= 128, "htp_sort_kernel_params is too large for kernel_params blob");
+#లేకపోతే
+_Static_assert(పరిమాణం(నిర్మాణం htp_క్రమీకరించు_kernel_params) <= 128, "htp_sort_kernel_params is too large for kernel_params blob");
+#అయితే_ముగింపు
 
-#endif // HTP_ARGSORT_OPS_H
+#అయితే_ముగింపు // HTP_ARGSORT_OPS_H

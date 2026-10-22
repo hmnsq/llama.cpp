@@ -10,12 +10,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#ifndef GGML_SYCL_GETROWS_HPP
-#define GGML_SYCL_GETROWS_HPP
+#నిర్వచితం_కాకపోతే GGML_SYCL_GETROWS_HPP
+#నిర్వచించు GGML_SYCL_GETROWS_HPP
 
-#include "common.hpp"
+#అన్తర్భావ "common.hpp"
 
-void ggml_sycl_op_get_rows(ggml_backend_sycl_context & ctx, ggml_tensor *dst);
-void ggml_sycl_op_get_rows_back(ggml_backend_sycl_context & ctx, ggml_tensor *dst);
+శూన్య ggml_sycl_op_get_అడ్డువరుసలు(ggml_backend_sycl_context & ctx, ggml_tensor *dst);
+శూన్య ggml_sycl_op_get_అడ్డువరుసలు_వెనుక(ggml_backend_sycl_context & ctx, ggml_tensor *dst);
 
-#endif // GGML_SYCL_GETROWS_HPP
+#అయితే_ముగింపు // GGML_SYCL_GETROWS_HPP

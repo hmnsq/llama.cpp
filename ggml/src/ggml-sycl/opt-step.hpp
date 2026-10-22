@@ -1,6 +1,6 @@
-#pragma once
+#సూచన once
 
-#include "common.hpp"
+#అన్తర్భావ "common.hpp"
 
-void ggml_sycl_opt_step_adamw(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
-void ggml_sycl_opt_step_sgd(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+శూన్య ggml_sycl_opt_అడుగు_adamw(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+శూన్య ggml_sycl_opt_అడుగు_sgd(ggml_backend_sycl_context & ctx, ggml_tensor * dst);

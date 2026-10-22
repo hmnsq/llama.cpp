@@ -1,95 +1,95 @@
-#pragma once
+#సూచన once
 
-#if defined(__aarch64__) || defined(_M_ARM64)
+#ఒకవేళ defined(__aarch64__) || defined(_M_ARM64)
 
-#if defined(__linux__)
-#include <sys/auxv.h>
-#include <sys/prctl.h>
+#ఒకవేళ defined(__linux__)
+#అన్తర్భావ <sys/auxv.h>
+#అన్తర్భావ <sys/prctl.h>
 
-#if !defined(HWCAP2_SVE2)
-#define HWCAP2_SVE2 (1ULL << 1)
-#endif
+#ఒకవేళ !defined(HWCAP2_SVE2)
+#నిర్వచించు HWCAP2_SVE2 (1ULL << 1)
+#అయితే_ముగింపు
 
-#if !defined(HWCAP_FPHP)
-#define HWCAP_FPHP (1 << 9)
-#endif
+#ఒకవేళ !defined(HWCAP_FPHP)
+#నిర్వచించు HWCAP_FPHP (1 << 9)
+#అయితే_ముగింపు
 
-#if !defined(HWCAP_ASIMDHP)
-#define HWCAP_ASIMDHP (1 << 10)
-#endif
+#ఒకవేళ !defined(HWCAP_ASIMDHP)
+#నిర్వచించు HWCAP_ASIMDHP (1 << 10)
+#అయితే_ముగింపు
 
-#if !defined(HWCAP2_I8MM)
-#define HWCAP2_I8MM (1ULL << 13)
-#endif
+#ఒకవేళ !defined(HWCAP2_I8MM)
+#నిర్వచించు HWCAP2_I8MM (1ULL << 13)
+#అయితే_ముగింపు
 
-#if !defined(HWCAP2_SVEI8MM)
-#define HWCAP2_SVEI8MM (1ULL << 9)
-#endif
+#ఒకవేళ !defined(HWCAP2_SVEI8MM)
+#నిర్వచించు HWCAP2_SVEI8MM (1ULL << 9)
+#అయితే_ముగింపు
 
-#if !defined(HWCAP_ASIMDDP)
-#define HWCAP_ASIMDDP (1 << 20)
-#endif
+#ఒకవేళ !defined(HWCAP_ASIMDDP)
+#నిర్వచించు HWCAP_ASIMDDP (1 << 20)
+#అయితే_ముగింపు
 
-#if !defined(HWCAP_SVE)
-#define HWCAP_SVE (1 << 22)
-#endif
+#ఒకవేళ !defined(HWCAP_SVE)
+#నిర్వచించు HWCAP_SVE (1 << 22)
+#అయితే_ముగింపు
 
-#if !defined(HWCAP2_SME)
-#define HWCAP2_SME (1ULL << 23)
-#endif
+#ఒకవేళ !defined(HWCAP2_SME)
+#నిర్వచించు HWCAP2_SME (1ULL << 23)
+#అయితే_ముగింపు
 
-#if !defined(HWCAP2_SME2)
-#define HWCAP2_SME2 (1ULL << 37)
-#endif
+#ఒకవేళ !defined(HWCAP2_SME2)
+#నిర్వచించు HWCAP2_SME2 (1ULL << 37)
+#అయితే_ముగింపు
 
-#if !defined(PR_SVE_GET_VL)
-#define PR_SVE_GET_VL 51
-#endif
+#ఒకవేళ !defined(PR_SVE_GET_VL)
+#నిర్వచించు PR_SVE_GET_VL 51
+#అయితే_ముగింపు
 
-#if !defined(PR_SVE_VL_LEN_MASK)
-#define PR_SVE_VL_LEN_MASK 0xffff
-#endif
+#ఒకవేళ !defined(PR_SVE_VL_LEN_ముసుగు)
+#నిర్వచించు PR_SVE_VL_LEN_ముసుగు 0xffff
+#అయితే_ముగింపు
 
-#elif defined(__APPLE__)
-#include <sys/sysctl.h>
-#elif defined(_WIN32)
-#include <windows.h>
+#లేదావేళ defined(__APPLE__)
+#అన్తర్భావ <sys/sysctl.h>
+#లేదావేళ defined(_WIN32)
+#అన్తర్భావ <windows.h>
 
-#if !defined(PF_ARM_V82_DP_INSTRUCTIONS_AVAILABLE)
-#define PF_ARM_V82_DP_INSTRUCTIONS_AVAILABLE 43
-#endif
+#ఒకవేళ !defined(PF_ARM_V82_DP_INSTRUCTIONS_అందుబాటు)
+#నిర్వచించు PF_ARM_V82_DP_INSTRUCTIONS_అందుబాటు 43
+#అయితే_ముగింపు
 
-#if !defined(PF_ARM_SVE_INSTRUCTIONS_AVAILABLE)
-#define PF_ARM_SVE_INSTRUCTIONS_AVAILABLE 46
-#endif
+#ఒకవేళ !defined(PF_ARM_SVE_INSTRUCTIONS_అందుబాటు)
+#నిర్వచించు PF_ARM_SVE_INSTRUCTIONS_అందుబాటు 46
+#అయితే_ముగింపు
 
-#if !defined(PF_ARM_SVE2_INSTRUCTIONS_AVAILABLE)
-#define PF_ARM_SVE2_INSTRUCTIONS_AVAILABLE 47
-#endif
+#ఒకవేళ !defined(PF_ARM_SVE2_INSTRUCTIONS_అందుబాటు)
+#నిర్వచించు PF_ARM_SVE2_INSTRUCTIONS_అందుబాటు 47
+#అయితే_ముగింపు
 
-#if !defined(PF_ARM_SVE_I8MM_INSTRUCTIONS_AVAILABLE)
-#define PF_ARM_SVE_I8MM_INSTRUCTIONS_AVAILABLE 57
-#endif
+#ఒకవేళ !defined(PF_ARM_SVE_I8_MM_INSTRUCTIONS_అందుబాటు)
+#నిర్వచించు PF_ARM_SVE_I8_MM_INSTRUCTIONS_అందుబాటు 57
+#అయితే_ముగింపు
 
-#if !defined(PF_ARM_V82_I8MM_INSTRUCTIONS_AVAILABLE)
-#define PF_ARM_V82_I8MM_INSTRUCTIONS_AVAILABLE 66
-#endif
+#ఒకవేళ !defined(PF_ARM_V82_I8_MM_INSTRUCTIONS_అందుబాటు)
+#నిర్వచించు PF_ARM_V82_I8_MM_INSTRUCTIONS_అందుబాటు 66
+#అయితే_ముగింపు
 
-#if !defined(PF_ARM_V82_FP16_INSTRUCTIONS_AVAILABLE)
-#define PF_ARM_V82_FP16_INSTRUCTIONS_AVAILABLE 67
-#endif
+#ఒకవేళ !defined(PF_ARM_V82_FP16_INSTRUCTIONS_అందుబాటు)
+#నిర్వచించు PF_ARM_V82_FP16_INSTRUCTIONS_అందుబాటు 67
+#అయితే_ముగింపు
 
-#if !defined(PF_ARM_SME_INSTRUCTIONS_AVAILABLE)
-#define PF_ARM_SME_INSTRUCTIONS_AVAILABLE 70
-#endif
+#ఒకవేళ !defined(PF_ARM_SME_INSTRUCTIONS_అందుబాటు)
+#నిర్వచించు PF_ARM_SME_INSTRUCTIONS_అందుబాటు 70
+#అయితే_ముగింపు
 
-#if !defined(PF_ARM_SME2_INSTRUCTIONS_AVAILABLE)
-#define PF_ARM_SME2_INSTRUCTIONS_AVAILABLE 71
-#endif
+#ఒకవేళ !defined(PF_ARM_SME2_INSTRUCTIONS_అందుబాటు)
+#నిర్వచించు PF_ARM_SME2_INSTRUCTIONS_అందుబాటు 71
+#అయితే_ముగింపు
 
-#endif
+#అయితే_ముగింపు
 
-typedef struct ggml_feats_arch64_runtime {
+రకనిర్వచనం నిర్మాణం ggml_feats_arch64_runtime {
     bool has_dotprod;
     bool has_fp16;
     bool has_sve;
@@ -98,15 +98,15 @@ typedef struct ggml_feats_arch64_runtime {
     bool has_svei8mm;
     bool has_sme;
     bool has_sme2;
-    int sve_cnt;
+    పూర్ణాంకం sve_cnt;
 } ggml_feats_arch64_runtime_t;
 
-static inline ggml_feats_arch64_runtime_t ggml_feats_get_arch64_runtime(void) {
+స్థిర అంతఃవరుస ggml_feats_arch64_runtime_t ggml_feats_get_arch64_runtime(శూన్య) {
     ggml_feats_arch64_runtime_t runtime_feat = {};
 
-#if defined(__linux__)
-    const unsigned long hwcap  = getauxval(AT_HWCAP);
-    const unsigned long hwcap2 = getauxval(AT_HWCAP2);
+#ఒకవేళ defined(__linux__)
+    స్థిరరాశి గుర్తులేని దీర్ఘ hwcap  = getauxval(AT_HWCAP);
+    స్థిరరాశి గుర్తులేని దీర్ఘ hwcap2 = getauxval(AT_HWCAP2);
 
     runtime_feat.has_dotprod = !!(hwcap & HWCAP_ASIMDDP);
     runtime_feat.has_fp16    = !!(hwcap & HWCAP_FPHP) && !!(hwcap & HWCAP_ASIMDHP);;
@@ -117,61 +117,61 @@ static inline ggml_feats_arch64_runtime_t ggml_feats_get_arch64_runtime(void) {
     runtime_feat.has_sme     = !!(hwcap2 & HWCAP2_SME);
     runtime_feat.has_sme2    = !!(hwcap2 & HWCAP2_SME2);
 
-    if (runtime_feat.has_sve) {
-        const int vl = prctl(PR_SVE_GET_VL);
-        if (vl >= 0) {
-            runtime_feat.sve_cnt = vl & PR_SVE_VL_LEN_MASK;
+    ఒకవేళ (runtime_feat.has_sve) {
+        స్థిరరాశి పూర్ణాంకం vl = prctl(PR_SVE_GET_VL);
+        ఒకవేళ (vl >= 0) {
+            runtime_feat.sve_cnt = vl & PR_SVE_VL_LEN_ముసుగు;
         }
     }
-#elif defined(__APPLE__)
-    int oldp = 0;
-    size_t size = sizeof(oldp);
+#లేదావేళ defined(__APPLE__)
+    పూర్ణాంకం oldp = 0;
+    size_t కొలత = పరిమాణం(oldp);
 
-    if (sysctlbyname("hw.optional.arm.FEAT_DotProd", &oldp, &size, nullptr, 0) == 0) {
+    ఒకవేళ (sysctlbyname("hw.optional.arm.FEAT_DotProd", &oldp, &కొలత, nullptr, 0) == 0) {
         runtime_feat.has_dotprod = static_cast<bool>(oldp);
     }
 
-    if (sysctlbyname("hw.optional.arm.FEAT_FP16", &oldp, &size, nullptr, 0) == 0) {
+    ఒకవేళ (sysctlbyname("hw.optional.arm.FEAT_FP16", &oldp, &కొలత, nullptr, 0) == 0) {
         runtime_feat.has_fp16 = static_cast<bool>(oldp);
     }
 
-    if (sysctlbyname("hw.optional.arm.FEAT_SVE", &oldp, &size, nullptr, 0) == 0) {
+    ఒకవేళ (sysctlbyname("hw.optional.arm.FEAT_SVE", &oldp, &కొలత, nullptr, 0) == 0) {
         runtime_feat.has_sve = static_cast<bool>(oldp);
     }
 
-    if (sysctlbyname("hw.optional.arm.FEAT_SVE2", &oldp, &size, nullptr, 0) == 0) {
+    ఒకవేళ (sysctlbyname("hw.optional.arm.FEAT_SVE2", &oldp, &కొలత, nullptr, 0) == 0) {
         runtime_feat.has_sve2 = static_cast<bool>(oldp);
     }
 
-    if (sysctlbyname("hw.optional.arm.FEAT_I8MM", &oldp, &size, nullptr, 0) == 0) {
+    ఒకవేళ (sysctlbyname("hw.optional.arm.FEAT_I8MM", &oldp, &కొలత, nullptr, 0) == 0) {
         runtime_feat.has_i8mm = static_cast<bool>(oldp);
     }
 
-    if (sysctlbyname("hw.optional.arm.FEAT_SME", &oldp, &size, nullptr, 0) == 0) {
+    ఒకవేళ (sysctlbyname("hw.optional.arm.FEAT_SME", &oldp, &కొలత, nullptr, 0) == 0) {
         runtime_feat.has_sme = static_cast<bool>(oldp);
     }
 
-    if (sysctlbyname("hw.optional.arm.FEAT_SME2", &oldp, &size, nullptr, 0) == 0) {
+    ఒకవేళ (sysctlbyname("hw.optional.arm.FEAT_SME2", &oldp, &కొలత, nullptr, 0) == 0) {
         runtime_feat.has_sme2 = static_cast<bool>(oldp);
     }
 
     // Apple does not support userspace non-streaming SVE; keep SVE vector length unknown.
     runtime_feat.sve_cnt = 0;
-#elif defined (_WIN32)
-    runtime_feat.has_dotprod = IsProcessorFeaturePresent(PF_ARM_V82_DP_INSTRUCTIONS_AVAILABLE) != 0;
-    runtime_feat.has_fp16    = IsProcessorFeaturePresent(PF_ARM_V82_FP16_INSTRUCTIONS_AVAILABLE) != 0;
-    runtime_feat.has_sve     = IsProcessorFeaturePresent(PF_ARM_SVE_INSTRUCTIONS_AVAILABLE) != 0;
-    runtime_feat.has_sve2    = IsProcessorFeaturePresent(PF_ARM_SVE2_INSTRUCTIONS_AVAILABLE) != 0;
-    runtime_feat.has_i8mm    = IsProcessorFeaturePresent(PF_ARM_V82_I8MM_INSTRUCTIONS_AVAILABLE) != 0;
-    runtime_feat.has_svei8mm = IsProcessorFeaturePresent(PF_ARM_SVE_I8MM_INSTRUCTIONS_AVAILABLE) != 0;
-    runtime_feat.has_sme     = IsProcessorFeaturePresent(PF_ARM_SME_INSTRUCTIONS_AVAILABLE) != 0;
-    runtime_feat.has_sme2    = IsProcessorFeaturePresent(PF_ARM_SME2_INSTRUCTIONS_AVAILABLE) != 0;
+#లేదావేళ defined (_WIN32)
+    runtime_feat.has_dotprod = IsProcessorFeaturePresent(PF_ARM_V82_DP_INSTRUCTIONS_అందుబాటు) != 0;
+    runtime_feat.has_fp16    = IsProcessorFeaturePresent(PF_ARM_V82_FP16_INSTRUCTIONS_అందుబాటు) != 0;
+    runtime_feat.has_sve     = IsProcessorFeaturePresent(PF_ARM_SVE_INSTRUCTIONS_అందుబాటు) != 0;
+    runtime_feat.has_sve2    = IsProcessorFeaturePresent(PF_ARM_SVE2_INSTRUCTIONS_అందుబాటు) != 0;
+    runtime_feat.has_i8mm    = IsProcessorFeaturePresent(PF_ARM_V82_I8_MM_INSTRUCTIONS_అందుబాటు) != 0;
+    runtime_feat.has_svei8mm = IsProcessorFeaturePresent(PF_ARM_SVE_I8_MM_INSTRUCTIONS_అందుబాటు) != 0;
+    runtime_feat.has_sme     = IsProcessorFeaturePresent(PF_ARM_SME_INSTRUCTIONS_అందుబాటు) != 0;
+    runtime_feat.has_sme2    = IsProcessorFeaturePresent(PF_ARM_SME2_INSTRUCTIONS_అందుబాటు) != 0;
 
     // Windows exposes SVE feature presence, but not the runtime SVE vector length here.
     runtime_feat.sve_cnt = 0;
-#endif
+#అయితే_ముగింపు
 
-    return runtime_feat;
+    తిరిగి runtime_feat;
 }
 
-#endif // defined(__aarch64__) || defined(_M_ARM64)
+#అయితే_ముగింపు // defined(__aarch64__) || defined(_M_ARM64)

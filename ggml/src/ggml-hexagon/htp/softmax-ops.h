@@ -1,106 +1,106 @@
-#ifndef HTP_SOFTMAX_OPS_H
-#define HTP_SOFTMAX_OPS_H
+#నిర్వచితం_కాకపోతే HTP_SOFTMAX_OPS_H
+#నిర్వచించు HTP_SOFTMAX_OPS_H
 
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
-#include <math.h>
-#include "hex-fastdiv.h"
-#include "hex-common.h"
+#అన్తర్భావ <stdint.h>
+#అన్తర్భావ <stddef.h>
+#అన్తర్భావ <stdbool.h>
+#అన్తర్భావ <math.h>
+#అన్తర్భావ "hex-fastdiv.h"
+#అన్తర్భావ "hex-common.h"
 
-enum htp_softmax_kernel_id {
+గణన htp_softmax_kernel_id {
     HTP_SOFTMAX_KERNEL_NOMASK = 0,
-    HTP_SOFTMAX_KERNEL_MASK_F32,
-    HTP_SOFTMAX_KERNEL_MASK_F16,
-    HTP_SOFTMAX_KERNEL_COUNT,
+    HTP_SOFTMAX_KERNEL_ముసుగు_F32,
+    HTP_SOFTMAX_KERNEL_ముసుగు_F16,
+    HTP_SOFTMAX_KERNEL_లెక్క,
 };
 
-struct htp_softmax_kernel_params {
-    uint32_t n_threads;
+నిర్మాణం htp_softmax_kernel_params {
+    uint32_t n_దారాలు;
     uint32_t src0_nrows;
-    uint32_t src0_nrows_per_thread;
-    uint32_t vtcm_size;
+    uint32_t src0_nrows_చొప్పున_thread;
+    uint32_t vtcm_కొలత;
 
-    uint32_t vtcm_src0_size_per_thread;
-    uint32_t vtcm_src1_size_per_thread;
-    uint32_t vtcm_dst_size_per_thread;
+    uint32_t vtcm_src0_కొలత_చొప్పున_thread;
+    uint32_t vtcm_src1_కొలత_చొప్పున_thread;
+    uint32_t vtcm_dst_కొలత_చొప్పున_thread;
 
-    uint32_t src0_row_size_aligned;
-    uint32_t src1_row_size_aligned;
-    uint32_t dst_row_size_aligned;
+    uint32_t src0_అడ్డువరుస_కొలత_aligned;
+    uint32_t src1_అడ్డువరుస_కొలత_aligned;
+    uint32_t dst_అడ్డువరుస_కొలత_aligned;
 
-    uint32_t src0_spad_half_size;
-    uint32_t src1_spad_half_size;
-    uint32_t dst_spad_half_size;
+    uint32_t src0_spad_half_కొలత;
+    uint32_t src1_spad_half_కొలత;
+    uint32_t dst_spad_half_కొలత;
 
-    uint32_t n_head;
-    uint32_t n_head_log2;
+    uint32_t n_తల;
+    uint32_t n_తల_log2;
     uint32_t use_src1;
     uint32_t use_f16;
     uint32_t kernel_id;
 
-    float    scale;
-    float    max_bias;
-    float    m0;
-    float    m1;
+    దశాంశం    scale;
+    దశాంశం    max_bias;
+    దశాంశం    m0;
+    దశాంశం    m1;
 
-    struct fastdiv_values div_ne01;
-    struct fastdiv_values div_ne02;
-    struct fastdiv_values div_ne12;
-    struct fastdiv_values div_ne13;
+    నిర్మాణం fastdiv_విలువలు div_ne01;
+    నిర్మాణం fastdiv_విలువలు div_ne02;
+    నిర్మాణం fastdiv_విలువలు div_ne12;
+    నిర్మాణం fastdiv_విలువలు div_ne13;
 };
 
-#if defined(__cplusplus)
-static_assert(sizeof(struct htp_softmax_kernel_params) <= 128, "htp_softmax_kernel_params is too large for kernel_params blob");
-#else
-_Static_assert(sizeof(struct htp_softmax_kernel_params) <= 128, "htp_softmax_kernel_params is too large for kernel_params blob");
-#endif
+#ఒకవేళ defined(__cplusplus)
+static_assert(పరిమాణం(నిర్మాణం htp_softmax_kernel_params) <= 128, "htp_softmax_kernel_params is too large for kernel_params blob");
+#లేకపోతే
+_Static_assert(పరిమాణం(నిర్మాణం htp_softmax_kernel_params) <= 128, "htp_softmax_kernel_params is too large for kernel_params blob");
+#అయితే_ముగింపు
 
-struct htp_softmax_vtcm_layout {
-    size_t total_bytes;
+నిర్మాణం htp_softmax_vtcm_layout {
+    size_t మొత్తం_బైట్లు;
     size_t off_src0;
     size_t off_dst;
     size_t off_src1;
 
-    size_t src0_bytes_per_thread;
-    size_t dst_bytes_per_thread;
-    size_t src1_bytes_per_thread;
+    size_t src0_బైట్లు_చొప్పున_thread;
+    size_t dst_బైట్లు_చొప్పున_thread;
+    size_t src1_బైట్లు_చొప్పున_thread;
 
-    size_t src0_spad_half_size;
-    size_t dst_spad_half_size;
-    size_t src1_spad_half_size;
+    size_t src0_spad_half_కొలత;
+    size_t dst_spad_half_కొలత;
+    size_t src1_spad_half_కొలత;
 };
 
-static inline void htp_softmax_vtcm_layout_build(
-    struct htp_softmax_vtcm_layout * layout,
+స్థిర అంతఃవరుస శూన్య htp_softmax_vtcm_layout_build(
+    నిర్మాణం htp_softmax_vtcm_layout * layout,
     uint32_t ne00,
     uint32_t ne10,
     bool use_src1,
     bool use_f16,
-    uint32_t n_threads
+    uint32_t n_దారాలు
 ) {
-    size_t src0_row_size = ne00 * sizeof(float);
-    size_t dst_row_size  = ne00 * sizeof(float);
-    size_t src1_row_size = use_src1 ? (ne10 * (use_f16 ? 2 : 4)) : 0;
+    size_t src0_అడ్డువరుస_కొలత = ne00 * పరిమాణం(దశాంశం);
+    size_t dst_అడ్డువరుస_కొలత  = ne00 * పరిమాణం(దశాంశం);
+    size_t src1_అడ్డువరుస_కొలత = use_src1 ? (ne10 * (use_f16 ? 2 : 4)) : 0;
 
-    size_t src0_row_size_aligned = hex_round_up(src0_row_size, 128);
-    size_t dst_row_size_aligned  = hex_round_up(dst_row_size,  128);
-    size_t src1_row_size_aligned = use_src1 ? hex_round_up(src1_row_size, 128) : 0;
+    size_t src0_అడ్డువరుస_కొలత_aligned = hex_విడత_పైకి(src0_అడ్డువరుస_కొలత, 128);
+    size_t dst_అడ్డువరుస_కొలత_aligned  = hex_విడత_పైకి(dst_అడ్డువరుస_కొలత,  128);
+    size_t src1_అడ్డువరుస_కొలత_aligned = use_src1 ? hex_విడత_పైకి(src1_అడ్డువరుస_కొలత, 128) : 0;
 
-    layout->src0_spad_half_size = src0_row_size_aligned;
-    layout->dst_spad_half_size  = dst_row_size_aligned;
-    layout->src1_spad_half_size = src1_row_size_aligned;
+    layout->src0_spad_half_కొలత = src0_అడ్డువరుస_కొలత_aligned;
+    layout->dst_spad_half_కొలత  = dst_అడ్డువరుస_కొలత_aligned;
+    layout->src1_spad_half_కొలత = src1_అడ్డువరుస_కొలత_aligned;
 
     // Double buffering: 2 half-buffers per thread
-    layout->src0_bytes_per_thread = src0_row_size_aligned * 2;
-    layout->dst_bytes_per_thread  = dst_row_size_aligned  * 2;
-    layout->src1_bytes_per_thread = src1_row_size_aligned * 2;
+    layout->src0_బైట్లు_చొప్పున_thread = src0_అడ్డువరుస_కొలత_aligned * 2;
+    layout->dst_బైట్లు_చొప్పున_thread  = dst_అడ్డువరుస_కొలత_aligned  * 2;
+    layout->src1_బైట్లు_చొప్పున_thread = src1_అడ్డువరుస_కొలత_aligned * 2;
 
     layout->off_src0 = 0;
-    layout->off_dst  = layout->off_src0 + layout->src0_bytes_per_thread * n_threads;
-    layout->off_src1 = layout->off_dst  + layout->dst_bytes_per_thread  * n_threads;
+    layout->off_dst  = layout->off_src0 + layout->src0_బైట్లు_చొప్పున_thread * n_దారాలు;
+    layout->off_src1 = layout->off_dst  + layout->dst_బైట్లు_చొప్పున_thread  * n_దారాలు;
 
-    layout->total_bytes = layout->off_src1 + layout->src1_bytes_per_thread * n_threads;
+    layout->మొత్తం_బైట్లు = layout->off_src1 + layout->src1_బైట్లు_చొప్పున_thread * n_దారాలు;
 }
 
-#endif // HTP_SOFTMAX_OPS_H
+#అయితే_ముగింపు // HTP_SOFTMAX_OPS_H

@@ -1,51 +1,51 @@
-#include "backend-dispatched.h"
+#అన్తర్భావ "backend-dispatched.h"
 
-#include "backend-virgl-apir.h"
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
-#include "ggml-impl.h"
+#అన్తర్భావ "backend-virgl-apir.h"
+#అన్తర్భావ "ggml-backend-impl.h"
+#అన్తర్భావ "ggml-backend.h"
+#అన్తర్భావ "ggml-impl.h"
 
-#include <cstdint>
+#అన్తర్భావ <cstdint>
 
-ggml_backend_reg_t reg = NULL;
-ggml_backend_dev_t dev = NULL;
-ggml_backend_t     bck = NULL;
+ggml_backend_reg_t reg = ఖాళీ;
+ggml_backend_dev_t dev = ఖాళీ;
+ggml_backend_t     bck = ఖాళీ;
 
-uint64_t timer_start = 0;
-uint64_t timer_total = 0;
-uint64_t timer_count = 0;
+uint64_t timer_ప్రారంభం = 0;
+uint64_t timer_మొత్తం = 0;
+uint64_t timer_లెక్క = 0;
 
-uint32_t backend_dispatch_initialize(void * ggml_backend_reg_fct_p) {
-    if (reg != NULL) {
+uint32_t backend_dispatch_initialize(శూన్య * ggml_backend_reg_fct_p) {
+    ఒకవేళ (reg != ఖాళీ) {
         GGML_LOG_WARN(GGML_VIRTGPU_BCK "%s: already initialized\n", __func__);
-        return APIR_BACKEND_INITIALIZE_ALREADY_INITED;
+        తిరిగి APIR_BACKEND_INITIALIZE_ALREADY_INITED;
     }
-    ggml_backend_reg_t (*ggml_backend_reg_fct)(void) = (ggml_backend_reg_t (*)()) ggml_backend_reg_fct_p;
+    ggml_backend_reg_t (*ggml_backend_reg_fct)(శూన్య) = (ggml_backend_reg_t (*)()) ggml_backend_reg_fct_p;
 
     reg = ggml_backend_reg_fct();
-    if (reg == NULL) {
+    ఒకవేళ (reg == ఖాళీ) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: backend registration failed\n", __func__);
-        return APIR_BACKEND_INITIALIZE_BACKEND_REG_FAILED;
+        తిరిగి APIR_BACKEND_INITIALIZE_BACKEND_REG_FAILED;
     }
 
-    size_t device_count = reg->iface.get_device_count(reg);
-    if (!device_count) {
+    size_t device_లెక్క = reg->iface.get_device_లెక్క(reg);
+    ఒకవేళ (!device_లెక్క) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: no device found\n", __func__);
-        return APIR_BACKEND_INITIALIZE_NO_DEVICE;
+        తిరిగి APIR_BACKEND_INITIALIZE_NO_DEVICE;
     }
 
     dev = reg->iface.get_device(reg, 0);
 
-    if (!dev) {
+    ఒకవేళ (!dev) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: failed to get device\n", __func__);
-        return APIR_BACKEND_INITIALIZE_NO_DEVICE;
+        తిరిగి APIR_BACKEND_INITIALIZE_NO_DEVICE;
     }
 
-    bck = dev->iface.init_backend(dev, NULL);
-    if (!bck) {
+    bck = dev->iface.init_backend(dev, ఖాళీ);
+    ఒకవేళ (!bck) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: backend initialization failed\n", __func__);
-        return APIR_BACKEND_INITIALIZE_BACKEND_INIT_FAILED;
+        తిరిగి APIR_BACKEND_INITIALIZE_BACKEND_INIT_FAILED;
     }
 
-    return APIR_BACKEND_INITIALIZE_SUCCESS;
+    తిరిగి APIR_BACKEND_INITIALIZE_SUCCESS;
 }

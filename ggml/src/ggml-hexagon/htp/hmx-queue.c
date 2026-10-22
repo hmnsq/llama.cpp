@@ -1,170 +1,170 @@
-#pragma clang diagnostic ignored "-Wunused-function"
+#సూచన clang diagnostic ignored "-Wunused-function"
 
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
+#అన్తర్భావ <stdbool.h>
+#అన్తర్భావ <stdlib.h>
+#అన్తర్భావ <string.h>
 
-#include <qurt_thread.h>
-#include <qurt_futex.h>
-#include <qurt_hvx.h>
+#అన్తర్భావ <qurt_thread.h>
+#అన్తర్భావ <qurt_futex.h>
+#అన్తర్భావ <qurt_hvx.h>
 
-#include <HAP_compute_res.h>
+#అన్తర్భావ <HAP_compute_res.h>
 
-#include "hmx-queue.h"
+#అన్తర్భావ "hmx-queue.h"
 
-#define QURT_LOWEST_PRIO (254)
+#నిర్వచించు QURT_అత్యల్ప_PRIO (254)
 
-static inline void hmx_lock(hmx_queue_t q)
+స్థిర అంతఃవరుస శూన్య hmx_తాళం(hmx_వరుస_t q)
 {
-    if (!q->hmx_locked) {
-        HAP_compute_res_hmx_lock(q->hap_rctx);
+    ఒకవేళ (!q->hmx_locked) {
+        HAP_compute_res_hmx_తాళం(q->hap_rctx);
         q->hmx_locked = true;
     }
 }
 
-static inline void hmx_unlock(hmx_queue_t q)
+స్థిర అంతఃవరుస శూన్య hmx_unlock(hmx_వరుస_t q)
 {
-    if (q->hmx_locked) {
+    ఒకవేళ (q->hmx_locked) {
         HAP_compute_res_hmx_unlock(q->hap_rctx);
         q->hmx_locked = false;
     }
 }
 
-static inline void hmx_queue_process(hmx_queue_t q, bool* killed) {
-    unsigned int ir = atomic_load(&q->idx_read);
+స్థిర అంతఃవరుస శూన్య hmx_వరుస_process(hmx_వరుస_t q, bool* killed) {
+    గుర్తులేని పూర్ణాంకం ir = atomic_ఎక్కించు(&q->idx_read);
 
-    while (ir != atomic_load(&q->idx_write)) {
-        struct hmx_queue_desc *d = &q->desc[ir];
-        if (!d->done) {
-            FARF(HIGH, "hmx-queue-process: ir %u func %p data %p", ir, d->func, d->data);
+    అయితే (ir != atomic_ఎక్కించు(&q->idx_write)) {
+        నిర్మాణం hmx_వరుస_desc *d = &q->desc[ir];
+        ఒకవేళ (!d->పూర్తి) {
+            FARF(ఎగువ_2, "hmx-queue-process: ir %u func %p data %p", ir, d->func, d->దత్తాంశం);
 
             uintptr_t sig = (uintptr_t) d->func;
-            switch (sig) {
-                case HMX_QUEUE_NOOP:    /* noop */;     break;
-                case HMX_QUEUE_KILL:    *killed = true; break;
-                case HMX_QUEUE_SUSPEND: hmx_unlock(q);  break;
-                case HMX_QUEUE_WAKEUP:  hmx_lock(q);    break;
-                default:
-                    hmx_lock(q);
-                    htp_trace_event_start(q->trace, HTP_TRACE_EVT_HMX_COMP, ir);
-                    d->func(d->data);
+            ఎంపిక (sig) {
+                స్థితి HMX_వరుస_NOOP:    /* noop */;     ఆపు;
+                స్థితి HMX_వరుస_KILL:    *killed = true; ఆపు;
+                స్థితి HMX_వరుస_SUSPEND: hmx_unlock(q);  ఆపు;
+                స్థితి HMX_వరుస_WAKEUP:  hmx_తాళం(q);    ఆపు;
+                అప్రమేయ:
+                    hmx_తాళం(q);
+                    htp_trace_event_ప్రారంభం(q->trace, HTP_TRACE_EVT_HMX_COMP, ir);
+                    d->func(d->దత్తాంశం);
                     htp_trace_event_stop(q->trace, HTP_TRACE_EVT_HMX_COMP, ir);
-                    break;
+                    ఆపు;
             }
 
-            atomic_fetch_add(&d->done, 1);
+            atomic_fetch_కూడు(&d->పూర్తి, 1);
         }
 
-        ir = (ir + 1) & q->idx_mask;
+        ir = (ir + 1) & q->idx_ముసుగు;
         atomic_store(&q->idx_read, ir);
     }
 }
 
-static void hmx_queue_thread(void * arg) {
-    hmx_queue_t q = (hmx_queue_t) arg;
+స్థిర శూన్య hmx_వరుస_thread(శూన్య * arg) {
+    hmx_వరుస_t q = (hmx_వరుస_t) arg;
 
-    FARF(HIGH, "hmx-queue-thread: started");
+    FARF(ఎగువ_2, "hmx-queue-thread: started");
 
     bool killed = false;
 
-    unsigned int poll_cnt  = HMX_QUEUE_POLL_COUNT;
-    unsigned int prev_seqn = 0;
-    while (!killed) {
-        unsigned int seqn = atomic_load(&q->seqn);
-        if (seqn == prev_seqn) {
+    గుర్తులేని పూర్ణాంకం poll_cnt  = HMX_వరుస_POLL_లెక్క;
+    గుర్తులేని పూర్ణాంకం prev_seqn = 0;
+    అయితే (!killed) {
+        గుర్తులేని పూర్ణాంకం seqn = atomic_ఎక్కించు(&q->seqn);
+        ఒకవేళ (seqn == prev_seqn) {
             // drop HVX context while spinning
-            if (poll_cnt > 1 && poll_cnt == HMX_QUEUE_POLL_COUNT) {
+            ఒకవేళ (poll_cnt > 1 && poll_cnt == HMX_వరుస_POLL_లెక్క) {
                 qurt_hvx_unlock();
             }
-            if (--poll_cnt) { hex_pause(); continue; }
-            FARF(HIGH, "hmx-queue-thread: sleeping");
+            ఒకవేళ (--poll_cnt) { hex_pause(); కొనసాగు; }
+            FARF(ఎగువ_2, "hmx-queue-thread: sleeping");
             qurt_futex_wait(&q->seqn, prev_seqn);
-            poll_cnt = HMX_QUEUE_POLL_COUNT;
-            continue;
+            poll_cnt = HMX_వరుస_POLL_లెక్క;
+            కొనసాగు;
         }
         prev_seqn = seqn;
-        poll_cnt  = HMX_QUEUE_POLL_COUNT;
+        poll_cnt  = HMX_వరుస_POLL_లెక్క;
 
-        FARF(HIGH, "hmx-queue-thread: new work");
+        FARF(ఎగువ_2, "hmx-queue-thread: new work");
 
-        hmx_queue_process(q, &killed);
+        hmx_వరుస_process(q, &killed);
     }
 
-    FARF(HIGH, "hmx-queue-thread: stopped");
+    FARF(ఎగువ_2, "hmx-queue-thread: stopped");
 }
 
-size_t hmx_queue_sizeof(size_t capacity, uint32_t stack_size) {
-    capacity = hex_ceil_pow2(capacity);
-    size_t size_q = hex_align_up(sizeof(struct hmx_queue_s), HEX_L2_LINE_SIZE);
-    size_t size_desc = hex_align_up(capacity * sizeof(struct hmx_queue_desc), HEX_L2_LINE_SIZE);
-    size_t size_stack = stack_size;
-    return size_q + size_desc + size_stack;
+size_t hmx_వరుస_sizeof(size_t సామర్థ్యం, uint32_t దొంతర_కొలత) {
+    సామర్థ్యం = hex_ceil_pow2(సామర్థ్యం);
+    size_t కొలత_q = hex_align_పైకి(పరిమాణం(నిర్మాణం hmx_వరుస_s), HEX_L2_పంక్తి_కొలత);
+    size_t కొలత_desc = hex_align_పైకి(సామర్థ్యం * పరిమాణం(నిర్మాణం hmx_వరుస_desc), HEX_L2_పంక్తి_కొలత);
+    size_t కొలత_దొంతర = దొంతర_కొలత;
+    తిరిగి కొలత_q + కొలత_desc + కొలత_దొంతర;
 }
 
-size_t hmx_queue_alignof(void) {
-    return HEX_L2_LINE_SIZE;
+size_t hmx_వరుస_alignof(శూన్య) {
+    తిరిగి HEX_L2_పంక్తి_కొలత;
 }
 
-hmx_queue_t hmx_queue_init(void * ptr, size_t capacity, uint32_t stack_size, uint32_t hap_rctx, struct htp_thread_trace * trace) {
-    capacity = hex_ceil_pow2(capacity);
-    size_t size_q = hex_align_up(sizeof(struct hmx_queue_s), HEX_L2_LINE_SIZE);
-    size_t size_desc = hex_align_up(capacity * sizeof(struct hmx_queue_desc), HEX_L2_LINE_SIZE);
+hmx_వరుస_t hmx_వరుస_init(శూన్య * ptr, size_t సామర్థ్యం, uint32_t దొంతర_కొలత, uint32_t hap_rctx, నిర్మాణం htp_thread_trace * trace) {
+    సామర్థ్యం = hex_ceil_pow2(సామర్థ్యం);
+    size_t కొలత_q = hex_align_పైకి(పరిమాణం(నిర్మాణం hmx_వరుస_s), HEX_L2_పంక్తి_కొలత);
+    size_t కొలత_desc = hex_align_పైకి(సామర్థ్యం * పరిమాణం(నిర్మాణం hmx_వరుస_desc), HEX_L2_పంక్తి_కొలత);
 
-    uint8_t * block = (uint8_t *) ptr;
+    uint8_t * ఖండం = (uint8_t *) ptr;
 
-    hmx_queue_t q = (hmx_queue_t) block; block += size_q;
-    memset(q, 0, sizeof(struct hmx_queue_s));
+    hmx_వరుస_t q = (hmx_వరుస_t) ఖండం; ఖండం += కొలత_q;
+    memset(q, 0, పరిమాణం(నిర్మాణం hmx_వరుస_s));
 
-    q->capacity = capacity;
-    q->idx_mask = capacity - 1;
+    q->సామర్థ్యం = సామర్థ్యం;
+    q->idx_ముసుగు = సామర్థ్యం - 1;
     q->hap_rctx = hap_rctx;
     q->external_mem = true;
 
-    q->desc = (struct hmx_queue_desc *) block; block += size_desc;
-    memset(q->desc, 0, capacity * sizeof(struct hmx_queue_desc));
+    q->desc = (నిర్మాణం hmx_వరుస_desc *) ఖండం; ఖండం += కొలత_desc;
+    memset(q->desc, 0, సామర్థ్యం * పరిమాణం(నిర్మాణం hmx_వరుస_desc));
 
-    q->stack = block;
-    memset(q->stack, 0, stack_size);
+    q->దొంతర = ఖండం;
+    memset(q->దొంతర, 0, దొంతర_కొలత);
 
     q->trace = trace;
 
     // Match caller thread priority (same pattern as worker-pool.c).
-    int prio = qurt_thread_get_priority(qurt_thread_get_id());
-    if (prio < 1) {
+    పూర్ణాంకం prio = qurt_thread_get_ప్రాధాన్యత(qurt_thread_get_id());
+    ఒకవేళ (prio < 1) {
         prio = 1;
     }
-    if (prio > QURT_LOWEST_PRIO) {
-        prio = QURT_LOWEST_PRIO;
+    ఒకవేళ (prio > QURT_అత్యల్ప_PRIO) {
+        prio = QURT_అత్యల్ప_PRIO;
     }
 
     qurt_thread_attr_t attr;
     qurt_thread_attr_init(&attr);
-    qurt_thread_attr_set_stack_addr(&attr, q->stack);
-    qurt_thread_attr_set_stack_size(&attr, stack_size);
-    qurt_thread_attr_set_priority(&attr, prio);
-    qurt_thread_attr_set_name(&attr, "hmx-queue");
+    qurt_thread_attr_సమితి_దొంతర_addr(&attr, q->దొంతర);
+    qurt_thread_attr_సమితి_దొంతర_కొలత(&attr, దొంతర_కొలత);
+    qurt_thread_attr_సమితి_ప్రాధాన్యత(&attr, prio);
+    qurt_thread_attr_సమితి_name(&attr, "hmx-queue");
 
-    int err = qurt_thread_create(&q->thread, &attr, hmx_queue_thread, q);
-    if (err) {
+    పూర్ణాంకం err = qurt_thread_create(&q->thread, &attr, hmx_వరుస_thread, q);
+    ఒకవేళ (err) {
         FARF(ERROR, "hmx-worker: thread create failed (%d)", err);
-        return NULL;
+        తిరిగి ఖాళీ;
     }
 
-    FARF(HIGH, "hmx-queue: capacity %u\n", capacity);
+    FARF(ఎగువ_2, "hmx-queue: capacity %u\n", సామర్థ్యం);
 
-    return q;
+    తిరిగి q;
 }
 
-void hmx_queue_free(hmx_queue_t q) {
-    if (!q) {
-        return;
+శూన్య hmx_వరుస_free(hmx_వరుస_t q) {
+    ఒకవేళ (!q) {
+        తిరిగి;
     }
 
     // Tell the worker to exit.
-    hmx_queue_flush(q);
-    hmx_queue_signal(q, HMX_QUEUE_KILL);
-    hmx_queue_flush(q);
+    hmx_వరుస_flush(q);
+    hmx_వరుస_signal(q, HMX_వరుస_KILL);
+    hmx_వరుస_flush(q);
 
-    int status;
-    qurt_thread_join(q->thread, &status);
+    పూర్ణాంకం స్థితి_2;
+    qurt_thread_join(q->thread, &స్థితి_2);
 }

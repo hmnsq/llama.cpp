@@ -1,91 +1,91 @@
-#include "../op_table.h"
-#include "../utils.h"
+#అన్తర్భావ "../op_table.h"
+#అన్తర్భావ "../utils.h"
 
-#include <array>
-#include <cstdint>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/gather.hpp>
-#include <openvino/op/pad.hpp>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/shape_of.hpp>
-#include <utility>
-#include <vector>
+#అన్తర్భావ <array>
+#అన్తర్భావ <cstdint>
+#అన్తర్భావ <openvino/op/constant.hpp>
+#అన్తర్భావ <openvino/op/gather.hpp>
+#అన్తర్భావ <openvino/op/pad.hpp>
+#అన్తర్భావ <openvino/op/reshape.hpp>
+#అన్తర్భావ <openvino/op/shape_of.hpp>
+#అన్తర్భావ <utility>
+#అన్తర్భావ <vector>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+నామాకాశ ov {
+నామాకాశ frontend {
+నామాకాశ ggml {
+నామాకాశ op {
 
-namespace {
+నామాకాశ {
 
-ov::Output<ov::Node> translate_circular_pad(ov::Output<ov::Node> input,
-                                            const std::array<int32_t, 8> & pads,
-                                            const ov::Shape & input_shape) {
-    ov::Output<ov::Node> result = std::move(input);
+ov::Output<ov::Node> translate_circular_pad(ov::Output<ov::Node> ఆదానం,
+                                            స్థిరరాశి std::array<int32_t, 8> & pads,
+                                            స్థిరరాశి ov::Shape & ఆదానం_shape) {
+    ov::Output<ov::Node> ఫలితం = std::move(ఆదానం);
 
-    const std::array<int32_t, 4> pads_begin = {pads[6], pads[4], pads[2], pads[0]};
-    const std::array<int32_t, 4> pads_end = {pads[7], pads[5], pads[3], pads[1]};
+    స్థిరరాశి std::array<int32_t, 4> pads_begin = {pads[6], pads[4], pads[2], pads[0]};
+    స్థిరరాశి std::array<int32_t, 4> pads_చివర = {pads[7], pads[5], pads[3], pads[1]};
 
-    for (size_t axis = 0; axis < input_shape.size(); ++axis) {
-        const int64_t input_dim = static_cast<int64_t>(input_shape[axis]);
-        const int64_t pad_begin = pads_begin[axis];
-        const int64_t pad_end = pads_end[axis];
+    కొరకు (size_t axis = 0; axis < ఆదానం_shape.size(); ++axis) {
+        స్థిరరాశి int64_t ఆదానం_dim = static_cast<int64_t>(ఆదానం_shape[axis]);
+        స్థిరరాశి int64_t pad_begin = pads_begin[axis];
+        స్థిరరాశి int64_t pad_చివర = pads_చివర[axis];
 
-        if (pad_begin == 0 && pad_end == 0) {
-            continue;
+        ఒకవేళ (pad_begin == 0 && pad_చివర == 0) {
+            కొనసాగు;
         }
 
-        FRONT_END_CHECK_IMPLEMENTED(input_dim > 0, "Circular PAD requires static non-zero input dimensions");
+        FRONT_చివర_CHECK_IMPLEMENTED(ఆదానం_dim > 0, "Circular PAD requires static non-zero input dimensions");
 
-        std::vector<int64_t> indices(static_cast<size_t>(input_dim + pad_begin + pad_end));
-        for (int64_t index = 0; index < static_cast<int64_t>(indices.size()); ++index) {
-            int64_t wrapped = (index - pad_begin) % input_dim;
-            if (wrapped < 0) {
-                wrapped += input_dim;
+        std::vector<int64_t> indices(static_cast<size_t>(ఆదానం_dim + pad_begin + pad_చివర));
+        కొరకు (int64_t సూచీ = 0; సూచీ < static_cast<int64_t>(indices.size()); ++సూచీ) {
+            int64_t wrapped = (సూచీ - pad_begin) % ఆదానం_dim;
+            ఒకవేళ (wrapped < 0) {
+                wrapped += ఆదానం_dim;
             }
-            indices[static_cast<size_t>(index)] = wrapped;
+            indices[static_cast<size_t>(సూచీ)] = wrapped;
         }
 
-        auto gather_indices = ov::op::v0::Constant::create(ov::element::i64, {indices.size()}, indices);
-        auto gather_axis = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{}, {axis});
-        result = std::make_shared<ov::op::v8::Gather>(result, gather_indices, gather_axis);
+        స్వయంచాలక gather_indices = ov::op::v0::Constant::create(ov::element::i64, {indices.size()}, indices);
+        స్వయంచాలక gather_axis = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{}, {axis});
+        ఫలితం = std::make_shared<ov::op::v8::Gather>(ఫలితం, gather_indices, gather_axis);
     }
 
-    return result;
+    తిరిగి ఫలితం;
 }
 
 }  // namespace
 
-OutputVector translate_pad(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+Output_సదిశ translate_pad(స్థిరరాశి కణుపు_Context & context) {
+    అంకె_inputs_check(context, 1, 1);
 
-    auto input = process_view_input_new(context, 0);
-    if (context.get_input_shape(0) == context.get_output_shape()) {
-        return rename_outputs_with_suffix({input}, context.get_name());
+    స్వయంచాలక ఆదానం = process_view_ఆదానం_new(context, 0);
+    ఒకవేళ (context.get_ఆదానం_shape(0) == context.get_output_shape()) {
+        తిరిగి rename_outputs_with_suffix({ఆదానం}, context.get_name());
     }
 
-    const int32_t * op_params = context.get_output_op_params();
-    FRONT_END_CHECK_IMPLEMENTED(op_params != nullptr, "PAD requires output op params");
+    స్థిరరాశి int32_t * op_params = context.get_output_op_params();
+    FRONT_చివర_CHECK_IMPLEMENTED(op_params != శూన్యసూచిక, "PAD requires output op params");
 
-    const std::array<int32_t, 8> pads = {op_params[0], op_params[1], op_params[2], op_params[3],
+    స్థిరరాశి std::array<int32_t, 8> pads = {op_params[0], op_params[1], op_params[2], op_params[3],
                                          op_params[4], op_params[5], op_params[6], op_params[7]};
-    const bool circular = op_params[8] != 0;
+    స్థిరరాశి తార్కిక circular = op_params[8] != 0;
 
-    if (circular) {
-        auto res = translate_circular_pad(input, pads, context.get_input_shape(0).to_shape());
-        return rename_outputs_with_suffix({res}, context.get_name());
+    ఒకవేళ (circular) {
+        స్వయంచాలక res = translate_circular_pad(ఆదానం, pads, context.get_ఆదానం_shape(0).గమ్యం_shape());
+        తిరిగి rename_outputs_with_suffix({res}, context.get_name());
     }
 
-    const std::vector<int64_t> pads_begin = {pads[6], pads[4], pads[2], pads[0]};
-    const std::vector<int64_t> pads_end = {pads[7], pads[5], pads[3], pads[1]};
+    స్థిరరాశి std::vector<int64_t> pads_begin = {pads[6], pads[4], pads[2], pads[0]};
+    స్థిరరాశి std::vector<int64_t> pads_చివర = {pads[7], pads[5], pads[3], pads[1]};
 
-    auto pads_begin_node = ov::op::v0::Constant::create(ov::element::i64, {pads_begin.size()}, pads_begin);
-    auto pads_end_node = ov::op::v0::Constant::create(ov::element::i64, {pads_end.size()}, pads_end);
-    auto pad_value = ov::op::v0::Constant::create(context.get_input_type(0), ov::Shape{}, {0});
-    auto res =
-        std::make_shared<ov::op::v1::Pad>(input, pads_begin_node, pads_end_node, pad_value, ov::op::PadMode::CONSTANT);
+    స్వయంచాలక pads_begin_కణుపు = ov::op::v0::Constant::create(ov::element::i64, {pads_begin.size()}, pads_begin);
+    స్వయంచాలక pads_చివర_కణుపు = ov::op::v0::Constant::create(ov::element::i64, {pads_చివర.size()}, pads_చివర);
+    స్వయంచాలక pad_విలువ = ov::op::v0::Constant::create(context.get_ఆదానం_type(0), ov::Shape{}, {0});
+    స్వయంచాలక res =
+        std::make_shared<ov::op::v1::Pad>(ఆదానం, pads_begin_కణుపు, pads_చివర_కణుపు, pad_విలువ, ov::op::Pad_బహుళకం::CONSTANT);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    తిరిగి rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

@@ -1,34 +1,34 @@
 
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#అన్తర్భావ "../node_context.h"
+#అన్తర్భావ "../op_table.h"
+#అన్తర్భావ "../utils.h"
 
-#include <memory>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/slice.hpp>
+#అన్తర్భావ <memory>
+#అన్తర్భావ <openvino/op/reshape.hpp>
+#అన్తర్భావ <openvino/op/slice.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+నామాకాశ ov {
+నామాకాశ frontend {
+నామాకాశ ggml {
+నామాకాశ op {
 
-OutputVector translate_cont(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+Output_సదిశ translate_cont(స్థిరరాశి కణుపు_Context & context) {
+    అంకె_inputs_check(context, 1, 1);
 
-    auto src_shape = context.get_input_shape(0).to_shape();
-    auto dst_shape = context.get_output_shape().to_shape();
+    స్వయంచాలక src_shape = context.get_ఆదానం_shape(0).గమ్యం_shape();
+    స్వయంచాలక dst_shape = context.get_output_shape().గమ్యం_shape();
 
-    if (context.get_op_dynamic_dim() != -1) {
+    ఒకవేళ (context.get_op_dynamic_dim() != -1) {
         dst_shape[3 - context.get_op_dynamic_dim()] = -1;
     }
 
-    auto input = process_view_input_new(context, 0);
+    స్వయంచాలక ఆదానం = process_view_ఆదానం_new(context, 0);
 
     ov::Output<Node> res;
     res = std::make_shared<ov::op::v1::Reshape>(
-        input, ov::op::v0::Constant::create(ov::element::i64, {dst_shape.size()}, dst_shape), false);
+        ఆదానం, ov::op::v0::Constant::create(ov::element::i64, {dst_shape.size()}, dst_shape), అబద్ధం);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    తిరిగి rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

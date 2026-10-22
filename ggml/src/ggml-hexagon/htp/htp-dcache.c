@@ -1,360 +1,360 @@
-#include "htp-dcache.h"
+#అన్తర్భావ "htp-dcache.h"
 
-#include <qurt.h>
-#include <qurt_memory.h>
-#include <HAP_farf.h>
+#అన్తర్భావ <qurt.h>
+#అన్తర్భావ <qurt_memory.h>
+#అన్తర్భావ <HAP_farf.h>
 
-#include "hex-common.h"
-#include "hex-utils.h"
-#include "hex-fastdiv.h"
-#include "hex-profile.h"
-#include "htp-ctx.h"
-#include "work-queue.h"
+#అన్తర్భావ "hex-common.h"
+#అన్తర్భావ "hex-utils.h"
+#అన్తర్భావ "hex-fastdiv.h"
+#అన్తర్భావ "hex-profile.h"
+#అన్తర్భావ "htp-ctx.h"
+#అన్తర్భావ "work-queue.h"
 
-struct l2flush_range {
-    uint32_t start;       // line-aligned start address
-    uint32_t end;         // line-aligned end address
-    uint32_t block_first; // global block index of this range's first block
-    uint32_t n_blocks;    // number of HEX_L2_BLOCK_SIZE chunks (last may be partial)
+నిర్మాణం l2flush_range {
+    uint32_t ప్రారంభం;       // line-aligned start address
+    uint32_t చివర;         // line-aligned end address
+    uint32_t ఖండం_మొదటి; // global block index of this range's first block
+    uint32_t n_ఖండాలు;    // number of HEX_L2_BLOCK_SIZE chunks (last may be partial)
 };
 
-struct l2flush_multi_task {
-    struct htp_thread_trace * trace;
-    struct l2flush_range      ranges[HTP_MAX_DIRTY_RANGES];
+నిర్మాణం l2flush_multi_task {
+    నిర్మాణం htp_thread_trace * trace;
+    నిర్మాణం l2flush_range      ranges[HTP_MAX_DIRTY_RANGES];
     uint32_t                  n_ranges;
-    uint32_t                  total_blocks;
-    uint32_t                  blocks_per_thread;
+    uint32_t                  మొత్తం_ఖండాలు;
+    uint32_t                  ఖండాలు_చొప్పున_thread;
 };
 
-static void flush_all_dcache(struct htp_context * ctx) {
-    struct htp_thread_trace * tr = &ctx->trace[0];
-    htp_trace_event_start(tr, HTP_TRACE_EVT_L2FLUSH, 0);
+స్థిర శూన్య flush_all_dcache(నిర్మాణం htp_context * ctx) {
+    నిర్మాణం htp_thread_trace * tr = &ctx->trace[0];
+    htp_trace_event_ప్రారంభం(tr, HTP_TRACE_EVT_L2FLUSH, 0);
     qurt_mem_cache_clean((qurt_addr_t) 0, 0, QURT_MEM_CACHE_FLUSH_INVALIDATE_ALL, QURT_MEM_DCACHE);
-    hex_l2fetch_block(ctx, ctx->footprint);
+    hex_l2fetch_ఖండం(ctx, ctx->footprint);
     htp_trace_event_stop(tr, HTP_TRACE_EVT_L2FLUSH, 0);
-    memset(ctx->dirty_ranges, 0, sizeof(ctx->dirty_ranges));
+    memset(ctx->dirty_ranges, 0, పరిమాణం(ctx->dirty_ranges));
 }
 
-static void l2flush_multi_worker(unsigned int n, unsigned int i, void * data) {
-    struct l2flush_multi_task * task = (struct l2flush_multi_task *) data;
-    (void) n;
+స్థిర శూన్య l2flush_multi_కార్మికుడు(గుర్తులేని పూర్ణాంకం n, గుర్తులేని పూర్ణాంకం i, శూన్య * దత్తాంశం) {
+    నిర్మాణం l2flush_multi_task * task = (నిర్మాణం l2flush_multi_task *) దత్తాంశం;
+    (శూన్య) n;
 
-    const uint32_t gb_first = i * task->blocks_per_thread;
-    uint32_t       gb_last  = gb_first + task->blocks_per_thread;
-    if (gb_last > task->total_blocks) {
-        gb_last = task->total_blocks;
+    స్థిరరాశి uint32_t gb_మొదటి = i * task->ఖండాలు_చొప్పున_thread;
+    uint32_t       gb_చివరి  = gb_మొదటి + task->ఖండాలు_చొప్పున_thread;
+    ఒకవేళ (gb_చివరి > task->మొత్తం_ఖండాలు) {
+        gb_చివరి = task->మొత్తం_ఖండాలు;
     }
-    if (gb_first >= gb_last) {
-        return;
+    ఒకవేళ (gb_మొదటి >= gb_చివరి) {
+        తిరిగి;
     }
 
-    struct htp_thread_trace * tr = &task->trace[i];
-    htp_trace_event_start(tr, HTP_TRACE_EVT_L2FLUSH, gb_first);
+    నిర్మాణం htp_thread_trace * tr = &task->trace[i];
+    htp_trace_event_ప్రారంభం(tr, HTP_TRACE_EVT_L2FLUSH, gb_మొదటి);
 
-    for (uint32_t r = 0; r < task->n_ranges; r++) {
-        const struct l2flush_range * rg = &task->ranges[r];
-        const uint32_t rb_first = rg->block_first;
-        const uint32_t rb_last  = rg->block_first + rg->n_blocks;
+    కొరకు (uint32_t r = 0; r < task->n_ranges; r++) {
+        స్థిరరాశి నిర్మాణం l2flush_range * rg = &task->ranges[r];
+        స్థిరరాశి uint32_t rb_మొదటి = rg->ఖండం_మొదటి;
+        స్థిరరాశి uint32_t rb_చివరి  = rg->ఖండం_మొదటి + rg->n_ఖండాలు;
 
-        const uint32_t lo = gb_first > rb_first ? gb_first : rb_first;
-        const uint32_t hi = gb_last  < rb_last  ? gb_last  : rb_last;
-        if (lo >= hi) {
-            continue;
+        స్థిరరాశి uint32_t lo = gb_మొదటి > rb_మొదటి ? gb_మొదటి : rb_మొదటి;
+        స్థిరరాశి uint32_t hi = gb_చివరి  < rb_చివరి  ? gb_చివరి  : rb_చివరి;
+        ఒకవేళ (lo >= hi) {
+            కొనసాగు;
         }
 
-        const uint32_t s = rg->start + (lo - rb_first) * HEX_L2_BLOCK_SIZE;
-        uint32_t       e = rg->start + (hi - rb_first) * HEX_L2_BLOCK_SIZE;
-        if (e > rg->end) {
-            e = rg->end;
+        స్థిరరాశి uint32_t s = rg->ప్రారంభం + (lo - rb_మొదటి) * HEX_L2_ఖండం_కొలత;
+        uint32_t       e = rg->ప్రారంభం + (hi - rb_మొదటి) * HEX_L2_ఖండం_కొలత;
+        ఒకవేళ (e > rg->చివర) {
+            e = rg->చివర;
         }
-        hex_l2flush((void *) (uintptr_t) s, e - s);
+        hex_l2flush((శూన్య *) (uintptr_t) s, e - s);
     }
 
-    htp_trace_event_stop(tr, HTP_TRACE_EVT_L2FLUSH, gb_first);
+    htp_trace_event_stop(tr, HTP_TRACE_EVT_L2FLUSH, gb_మొదటి);
 }
 
-static void merge_dirty_ranges(struct htp_context * ctx) {
-    for (uint32_t i = 0; i < HTP_MAX_DIRTY_RANGES; i++) {
-        struct htp_dirty_range * r = &ctx->dirty_ranges[i];
-        if (!r->start) continue;
+స్థిర శూన్య విలీనం_dirty_ranges(నిర్మాణం htp_context * ctx) {
+    కొరకు (uint32_t i = 0; i < HTP_MAX_DIRTY_RANGES; i++) {
+        నిర్మాణం htp_dirty_range * r = &ctx->dirty_ranges[i];
+        ఒకవేళ (!r->ప్రారంభం) కొనసాగు;
 
-        for (uint32_t j = 0; j < HTP_MAX_DIRTY_RANGES;) {
-            struct htp_dirty_range * s = &ctx->dirty_ranges[j];
-            if (i == j || !s->start || r->end < s->start || s->end < r->start) {
+        కొరకు (uint32_t j = 0; j < HTP_MAX_DIRTY_RANGES;) {
+            నిర్మాణం htp_dirty_range * s = &ctx->dirty_ranges[j];
+            ఒకవేళ (i == j || !s->ప్రారంభం || r->చివర < s->ప్రారంభం || s->చివర < r->ప్రారంభం) {
                 j++;
-                continue;
+                కొనసాగు;
             }
 
-            r->start = MIN(r->start, s->start);
-            r->end   = MAX(r->end, s->end);
-            s->start = 0;
-            s->end   = 0;
+            r->ప్రారంభం = MIN(r->ప్రారంభం, s->ప్రారంభం);
+            r->చివర   = MAX(r->చివర, s->చివర);
+            s->ప్రారంభం = 0;
+            s->చివర   = 0;
             j = 0;
         }
     }
 }
 
-void htp_dcache_mark_dirty_tensors(struct htp_context * ctx, const struct htp_tensor * const * tensors, uint32_t n) {
-    const struct htp_tensor * pending[HTP_OP_MAX_OUTPUTS];
+శూన్య htp_dcache_mark_dirty_tensors(నిర్మాణం htp_context * ctx, స్థిరరాశి నిర్మాణం htp_tensor * స్థిరరాశి * tensors, uint32_t n) {
+    స్థిరరాశి నిర్మాణం htp_tensor * pending[HTP_OP_MAX_OUTPUTS];
     uint32_t n_pending = 0;
 
-    for (uint32_t i = 0; i < n; i++) {
-        const struct htp_tensor * t = tensors[i];
-        if (!t || (t->flags & (HTP_TENSOR_WEIGHT | HTP_TENSOR_FENCE))) {
-            continue;
+    కొరకు (uint32_t i = 0; i < n; i++) {
+        స్థిరరాశి నిర్మాణం htp_tensor * t = tensors[i];
+        ఒకవేళ (!t || (t->flags & (HTP_TENSOR_బరువు | HTP_TENSOR_FENCE))) {
+            కొనసాగు;
         }
 
-        uint32_t t_start = t->data;
-        uint32_t t_end   = t_start + t->size;
+        uint32_t t_ప్రారంభం = t->దత్తాంశం;
+        uint32_t t_చివర   = t_ప్రారంభం + t->కొలత;
 
         bool merged = false;
-        for (uint32_t j = 0; j < HTP_MAX_DIRTY_RANGES; j++) {
-            struct htp_dirty_range * r = &ctx->dirty_ranges[j];
-            if (!r->start) continue;
+        కొరకు (uint32_t j = 0; j < HTP_MAX_DIRTY_RANGES; j++) {
+            నిర్మాణం htp_dirty_range * r = &ctx->dirty_ranges[j];
+            ఒకవేళ (!r->ప్రారంభం) కొనసాగు;
 
-            if (r->start <= t_end && t_start <= r->end) {
-                uint32_t new_start = (t_start < r->start) ? t_start : r->start;
-                uint32_t new_end   = (t_end > r->end)     ? t_end   : r->end;
-                r->start = new_start;
-                r->end   = new_end;
+            ఒకవేళ (r->ప్రారంభం <= t_చివర && t_ప్రారంభం <= r->చివర) {
+                uint32_t new_ప్రారంభం = (t_ప్రారంభం < r->ప్రారంభం) ? t_ప్రారంభం : r->ప్రారంభం;
+                uint32_t new_చివర   = (t_చివర > r->చివర)     ? t_చివర   : r->చివర;
+                r->ప్రారంభం = new_ప్రారంభం;
+                r->చివర   = new_చివర;
                 merged   = true;
             }
         }
 
-        if (!merged) {
+        ఒకవేళ (!merged) {
             pending[n_pending++] = t;
         }
     }
 
-    merge_dirty_ranges(ctx);
+    విలీనం_dirty_ranges(ctx);
 
-    if (n_pending == 0) {
-        return;
+    ఒకవేళ (n_pending == 0) {
+        తిరిగి;
     }
 
-    uint32_t empty_indices[HTP_MAX_DIRTY_RANGES];
-    uint32_t active_indices[HTP_MAX_DIRTY_RANGES];
-    uint32_t n_active = 0;
-    uint32_t n_empty  = 0;
-    for (uint32_t j = 0; j < HTP_MAX_DIRTY_RANGES; j++) {
-        if (ctx->dirty_ranges[j].start) {
-            active_indices[n_active++] = j;
-        } else {
-            empty_indices[n_empty++]   = j;
+    uint32_t ఖాళీలు_indices[HTP_MAX_DIRTY_RANGES];
+    uint32_t చురుకైన_indices[HTP_MAX_DIRTY_RANGES];
+    uint32_t n_చురుకైన = 0;
+    uint32_t n_ఖాళీలు  = 0;
+    కొరకు (uint32_t j = 0; j < HTP_MAX_DIRTY_RANGES; j++) {
+        ఒకవేళ (ctx->dirty_ranges[j].ప్రారంభం) {
+            చురుకైన_indices[n_చురుకైన++] = j;
+        } లేకపోతే {
+            ఖాళీలు_indices[n_ఖాళీలు++]   = j;
         }
     }
 
-    if (n_pending <= n_empty) {
-        for (uint32_t i = 0; i < n_pending; i++) {
-            uint32_t idx = empty_indices[i];
-            struct htp_dirty_range * r = &ctx->dirty_ranges[idx];
-            r->start = pending[i]->data;
-            r->end   = pending[i]->data + pending[i]->size;
+    ఒకవేళ (n_pending <= n_ఖాళీలు) {
+        కొరకు (uint32_t i = 0; i < n_pending; i++) {
+            uint32_t idx = ఖాళీలు_indices[i];
+            నిర్మాణం htp_dirty_range * r = &ctx->dirty_ranges[idx];
+            r->ప్రారంభం = pending[i]->దత్తాంశం;
+            r->చివర   = pending[i]->దత్తాంశం + pending[i]->కొలత;
         }
-        merge_dirty_ranges(ctx);
-        return;
+        విలీనం_dirty_ranges(ctx);
+        తిరిగి;
     }
 
-    uint32_t n_evict = n_pending - n_empty;
-    uint32_t total_evict_size = 0;
-    for (uint32_t i = 0; i < n_evict; i++) {
-        uint32_t idx = active_indices[i];
-        struct htp_dirty_range * r = &ctx->dirty_ranges[idx];
-        total_evict_size += r->end - r->start;
+    uint32_t n_evict = n_pending - n_ఖాళీలు;
+    uint32_t మొత్తం_evict_కొలత = 0;
+    కొరకు (uint32_t i = 0; i < n_evict; i++) {
+        uint32_t idx = చురుకైన_indices[i];
+        నిర్మాణం htp_dirty_range * r = &ctx->dirty_ranges[idx];
+        మొత్తం_evict_కొలత += r->చివర - r->ప్రారంభం;
     }
 
-    if (total_evict_size > HEX_L2_FLUSH_ALL_THRESHOLD) {
+    ఒకవేళ (మొత్తం_evict_కొలత > HEX_L2_FLUSH_ALL_పరిమితి) {
         flush_all_dcache(ctx);
-        for (uint32_t i = 0; i < n_pending; i++) {
-            struct htp_dirty_range * r = &ctx->dirty_ranges[i];
-            r->start = pending[i]->data;
-            r->end   = pending[i]->data + pending[i]->size;
+        కొరకు (uint32_t i = 0; i < n_pending; i++) {
+            నిర్మాణం htp_dirty_range * r = &ctx->dirty_ranges[i];
+            r->ప్రారంభం = pending[i]->దత్తాంశం;
+            r->చివర   = pending[i]->దత్తాంశం + pending[i]->కొలత;
         }
-        merge_dirty_ranges(ctx);
-        return;
+        విలీనం_dirty_ranges(ctx);
+        తిరిగి;
     }
 
-    if (total_evict_size > HEX_L2_FLUSH_WQ_THRESHOLD && ctx->n_threads > 1 && n_evict <= HTP_MAX_DIRTY_RANGES) {
-        struct l2flush_multi_task task;
+    ఒకవేళ (మొత్తం_evict_కొలత > HEX_L2_FLUSH_WQ_పరిమితి && ctx->n_దారాలు > 1 && n_evict <= HTP_MAX_DIRTY_RANGES) {
+        నిర్మాణం l2flush_multi_task task;
         task.trace    = ctx->trace;
         task.n_ranges = n_evict;
 
-        uint32_t block_acc = 0;
-        for (uint32_t i = 0; i < n_evict; i++) {
-            uint32_t idx = active_indices[i];
-            struct htp_dirty_range * r = &ctx->dirty_ranges[idx];
+        uint32_t ఖండం_acc = 0;
+        కొరకు (uint32_t i = 0; i < n_evict; i++) {
+            uint32_t idx = చురుకైన_indices[i];
+            నిర్మాణం htp_dirty_range * r = &ctx->dirty_ranges[idx];
 
-            struct l2flush_range * rg = &task.ranges[i];
-            rg->start = hex_align_down((size_t) r->start, HEX_L2_LINE_SIZE);
-            rg->end   = hex_align_up((size_t) r->end, HEX_L2_LINE_SIZE);
-            rg->block_first = block_acc;
-            rg->n_blocks = (rg->end - rg->start + HEX_L2_BLOCK_SIZE - 1) / HEX_L2_BLOCK_SIZE;
-            block_acc += rg->n_blocks;
+            నిర్మాణం l2flush_range * rg = &task.ranges[i];
+            rg->ప్రారంభం = hex_align_కిందికి((size_t) r->ప్రారంభం, HEX_L2_పంక్తి_కొలత);
+            rg->చివర   = hex_align_పైకి((size_t) r->చివర, HEX_L2_పంక్తి_కొలత);
+            rg->ఖండం_మొదటి = ఖండం_acc;
+            rg->n_ఖండాలు = (rg->చివర - rg->ప్రారంభం + HEX_L2_ఖండం_కొలత - 1) / HEX_L2_ఖండం_కొలత;
+            ఖండం_acc += rg->n_ఖండాలు;
         }
 
-        task.total_blocks      = block_acc;
-        task.blocks_per_thread = fastdiv(block_acc + ctx->n_threads - 1, &ctx->n_threads_div);
+        task.మొత్తం_ఖండాలు      = ఖండం_acc;
+        task.ఖండాలు_చొప్పున_thread = fastdiv(ఖండం_acc + ctx->n_దారాలు - 1, &ctx->n_దారాలు_div);
 
-        work_queue_run(ctx->work_queue, l2flush_multi_worker, &task, ctx->n_threads);
-    } else {
-        struct htp_thread_trace * tr = &ctx->trace[0];
-        htp_trace_event_start(tr, HTP_TRACE_EVT_L2FLUSH, 0);
-        for (uint32_t i = 0; i < n_evict; i++) {
-            uint32_t idx = active_indices[i];
-            struct htp_dirty_range * r = &ctx->dirty_ranges[idx];
-            uint32_t size = r->end - r->start;
-            hex_l2flush((void *) (uintptr_t) r->start, size);
+        work_వరుస_నిరంతరం(ctx->work_వరుస, l2flush_multi_కార్మికుడు, &task, ctx->n_దారాలు);
+    } లేకపోతే {
+        నిర్మాణం htp_thread_trace * tr = &ctx->trace[0];
+        htp_trace_event_ప్రారంభం(tr, HTP_TRACE_EVT_L2FLUSH, 0);
+        కొరకు (uint32_t i = 0; i < n_evict; i++) {
+            uint32_t idx = చురుకైన_indices[i];
+            నిర్మాణం htp_dirty_range * r = &ctx->dirty_ranges[idx];
+            uint32_t కొలత = r->చివర - r->ప్రారంభం;
+            hex_l2flush((శూన్య *) (uintptr_t) r->ప్రారంభం, కొలత);
         }
         htp_trace_event_stop(tr, HTP_TRACE_EVT_L2FLUSH, 0);
     }
 
-    for (uint32_t i = 0; i < n_evict; i++) {
-        uint32_t idx = active_indices[i];
-        struct htp_dirty_range * r = &ctx->dirty_ranges[idx];
-        r->start = pending[i]->data;
-        r->end   = pending[i]->data + pending[i]->size;
+    కొరకు (uint32_t i = 0; i < n_evict; i++) {
+        uint32_t idx = చురుకైన_indices[i];
+        నిర్మాణం htp_dirty_range * r = &ctx->dirty_ranges[idx];
+        r->ప్రారంభం = pending[i]->దత్తాంశం;
+        r->చివర   = pending[i]->దత్తాంశం + pending[i]->కొలత;
     }
 
-    for (uint32_t i = 0; i < n_empty; i++) {
-        uint32_t idx = empty_indices[i];
-        struct htp_dirty_range * r = &ctx->dirty_ranges[idx];
-        r->start = pending[n_evict + i]->data;
-        r->end   = pending[n_evict + i]->data + pending[n_evict + i]->size;
+    కొరకు (uint32_t i = 0; i < n_ఖాళీలు; i++) {
+        uint32_t idx = ఖాళీలు_indices[i];
+        నిర్మాణం htp_dirty_range * r = &ctx->dirty_ranges[idx];
+        r->ప్రారంభం = pending[n_evict + i]->దత్తాంశం;
+        r->చివర   = pending[n_evict + i]->దత్తాంశం + pending[n_evict + i]->కొలత;
     }
 
-    merge_dirty_ranges(ctx);
+    విలీనం_dirty_ranges(ctx);
 }
 
-static void make_tensor_clean(struct htp_context * ctx, const struct htp_tensor * t) {
-    if (!t || (t->flags & (HTP_TENSOR_WEIGHT | HTP_TENSOR_FENCE))) {
-        return;
+స్థిర శూన్య make_tensor_clean(నిర్మాణం htp_context * ctx, స్థిరరాశి నిర్మాణం htp_tensor * t) {
+    ఒకవేళ (!t || (t->flags & (HTP_TENSOR_బరువు | HTP_TENSOR_FENCE))) {
+        తిరిగి;
     }
 
-    uint32_t t_start = t->data;
-    uint32_t t_end   = t_start + t->size;
+    uint32_t t_ప్రారంభం = t->దత్తాంశం;
+    uint32_t t_చివర   = t_ప్రారంభం + t->కొలత;
 
-    for (uint32_t i = 0; i < HTP_MAX_DIRTY_RANGES; i++) {
-        struct htp_dirty_range * r = &ctx->dirty_ranges[i];
-        if (!r->start) continue;
+    కొరకు (uint32_t i = 0; i < HTP_MAX_DIRTY_RANGES; i++) {
+        నిర్మాణం htp_dirty_range * r = &ctx->dirty_ranges[i];
+        ఒకవేళ (!r->ప్రారంభం) కొనసాగు;
 
-        if (r->start < t_end && t_start < r->end) {
-            if (t_start <= r->start && r->end <= t_end) {
-                r->start = 0;
-                r->end   = 0;
-            } else if (t_start <= r->start) {
-                r->start = t_end;
-            } else if (r->end <= t_end) {
-                r->end = t_start;
+        ఒకవేళ (r->ప్రారంభం < t_చివర && t_ప్రారంభం < r->చివర) {
+            ఒకవేళ (t_ప్రారంభం <= r->ప్రారంభం && r->చివర <= t_చివర) {
+                r->ప్రారంభం = 0;
+                r->చివర   = 0;
+            } లేకపోతే ఒకవేళ (t_ప్రారంభం <= r->ప్రారంభం) {
+                r->ప్రారంభం = t_చివర;
+            } లేకపోతే ఒకవేళ (r->చివర <= t_చివర) {
+                r->చివర = t_ప్రారంభం;
             }
         }
     }
 }
 
-static inline bool is_tensor_dirty(struct htp_context * ctx, const struct htp_tensor * t) {
-    if (!t || (t->flags & (HTP_TENSOR_WEIGHT | HTP_TENSOR_FENCE))) {
-        return false;
+స్థిర అంతఃవరుస bool is_tensor_dirty(నిర్మాణం htp_context * ctx, స్థిరరాశి నిర్మాణం htp_tensor * t) {
+    ఒకవేళ (!t || (t->flags & (HTP_TENSOR_బరువు | HTP_TENSOR_FENCE))) {
+        తిరిగి false;
     }
 
-    uint32_t t_start = t->data;
-    uint32_t t_end   = t_start + t->size;
+    uint32_t t_ప్రారంభం = t->దత్తాంశం;
+    uint32_t t_చివర   = t_ప్రారంభం + t->కొలత;
 
-    for (uint32_t i = 0; i < HTP_MAX_DIRTY_RANGES; i++) {
-        struct htp_dirty_range * r = &ctx->dirty_ranges[i];
-        if (!r->start) continue;
+    కొరకు (uint32_t i = 0; i < HTP_MAX_DIRTY_RANGES; i++) {
+        నిర్మాణం htp_dirty_range * r = &ctx->dirty_ranges[i];
+        ఒకవేళ (!r->ప్రారంభం) కొనసాగు;
 
-        if (r->start < t_end && t_start < r->end) {
-            return true;
+        ఒకవేళ (r->ప్రారంభం < t_చివర && t_ప్రారంభం < r->చివర) {
+            తిరిగి true;
         }
     }
-    return false;
+    తిరిగి false;
 }
 
-static void flush_dirty_ranges(struct htp_context * ctx, const struct htp_dirty_range * ranges, uint32_t n_ranges, uint64_t total_dirty) {
-    if (total_dirty >= HEX_L2_FLUSH_WQ_THRESHOLD && ctx->n_threads > 1) {
-        struct l2flush_multi_task task;
+స్థిర శూన్య flush_dirty_ranges(నిర్మాణం htp_context * ctx, స్థిరరాశి నిర్మాణం htp_dirty_range * ranges, uint32_t n_ranges, uint64_t మొత్తం_dirty) {
+    ఒకవేళ (మొత్తం_dirty >= HEX_L2_FLUSH_WQ_పరిమితి && ctx->n_దారాలు > 1) {
+        నిర్మాణం l2flush_multi_task task;
         task.trace    = ctx->trace;
         task.n_ranges = n_ranges;
 
-        uint32_t block_acc = 0;
-        for (uint32_t i = 0; i < n_ranges; i++) {
-            const struct htp_dirty_range * r = &ranges[i];
-            struct l2flush_range * rg = &task.ranges[i];
-            rg->start = hex_align_down((size_t) r->start, HEX_L2_LINE_SIZE);
-            rg->end   = hex_align_up((size_t) r->end, HEX_L2_LINE_SIZE);
-            rg->block_first = block_acc;
-            rg->n_blocks = (rg->end - rg->start + HEX_L2_BLOCK_SIZE - 1) / HEX_L2_BLOCK_SIZE;
-            block_acc += rg->n_blocks;
+        uint32_t ఖండం_acc = 0;
+        కొరకు (uint32_t i = 0; i < n_ranges; i++) {
+            స్థిరరాశి నిర్మాణం htp_dirty_range * r = &ranges[i];
+            నిర్మాణం l2flush_range * rg = &task.ranges[i];
+            rg->ప్రారంభం = hex_align_కిందికి((size_t) r->ప్రారంభం, HEX_L2_పంక్తి_కొలత);
+            rg->చివర   = hex_align_పైకి((size_t) r->చివర, HEX_L2_పంక్తి_కొలత);
+            rg->ఖండం_మొదటి = ఖండం_acc;
+            rg->n_ఖండాలు = (rg->చివర - rg->ప్రారంభం + HEX_L2_ఖండం_కొలత - 1) / HEX_L2_ఖండం_కొలత;
+            ఖండం_acc += rg->n_ఖండాలు;
         }
 
-        task.total_blocks      = block_acc;
-        task.blocks_per_thread = fastdiv(block_acc + ctx->n_threads - 1, &ctx->n_threads_div);
+        task.మొత్తం_ఖండాలు      = ఖండం_acc;
+        task.ఖండాలు_చొప్పున_thread = fastdiv(ఖండం_acc + ctx->n_దారాలు - 1, &ctx->n_దారాలు_div);
 
-        work_queue_run(ctx->work_queue, l2flush_multi_worker, &task, ctx->n_threads);
-    } else {
-        struct htp_thread_trace * tr = &ctx->trace[0];
-        htp_trace_event_start(tr, HTP_TRACE_EVT_L2FLUSH, 0);
-        for (uint32_t i = 0; i < n_ranges; i++) {
-            const struct htp_dirty_range * r = &ranges[i];
-            hex_l2flush((void *) (uintptr_t) r->start, r->end - r->start);
+        work_వరుస_నిరంతరం(ctx->work_వరుస, l2flush_multi_కార్మికుడు, &task, ctx->n_దారాలు);
+    } లేకపోతే {
+        నిర్మాణం htp_thread_trace * tr = &ctx->trace[0];
+        htp_trace_event_ప్రారంభం(tr, HTP_TRACE_EVT_L2FLUSH, 0);
+        కొరకు (uint32_t i = 0; i < n_ranges; i++) {
+            స్థిరరాశి నిర్మాణం htp_dirty_range * r = &ranges[i];
+            hex_l2flush((శూన్య *) (uintptr_t) r->ప్రారంభం, r->చివర - r->ప్రారంభం);
         }
         htp_trace_event_stop(tr, HTP_TRACE_EVT_L2FLUSH, 0);
     }
 }
 
-void htp_dcache_flush_dirty_ranges(struct htp_context * ctx) {
-    struct htp_dirty_range ranges[HTP_MAX_DIRTY_RANGES];
+శూన్య htp_dcache_flush_dirty_ranges(నిర్మాణం htp_context * ctx) {
+    నిర్మాణం htp_dirty_range ranges[HTP_MAX_DIRTY_RANGES];
     uint32_t n_ranges = 0;
-    uint64_t total_dirty = 0;
+    uint64_t మొత్తం_dirty = 0;
 
-    for (uint32_t i = 0; i < HTP_MAX_DIRTY_RANGES; i++) {
-        const struct htp_dirty_range * r = &ctx->dirty_ranges[i];
-        if (!r->start) {
-            continue;
+    కొరకు (uint32_t i = 0; i < HTP_MAX_DIRTY_RANGES; i++) {
+        స్థిరరాశి నిర్మాణం htp_dirty_range * r = &ctx->dirty_ranges[i];
+        ఒకవేళ (!r->ప్రారంభం) {
+            కొనసాగు;
         }
         ranges[n_ranges++] = *r;
-        total_dirty += r->end - r->start;
+        మొత్తం_dirty += r->చివర - r->ప్రారంభం;
     }
 
-    if (total_dirty == 0) {
-        return;
+    ఒకవేళ (మొత్తం_dirty == 0) {
+        తిరిగి;
     }
 
-    if (total_dirty > HEX_L2_FLUSH_ALL_THRESHOLD) {
+    ఒకవేళ (మొత్తం_dirty > HEX_L2_FLUSH_ALL_పరిమితి) {
         flush_all_dcache(ctx);
-        return;
+        తిరిగి;
     }
 
-    flush_dirty_ranges(ctx, ranges, n_ranges, total_dirty);
-    memset(ctx->dirty_ranges, 0, sizeof(ctx->dirty_ranges));
+    flush_dirty_ranges(ctx, ranges, n_ranges, మొత్తం_dirty);
+    memset(ctx->dirty_ranges, 0, పరిమాణం(ctx->dirty_ranges));
 }
 
-void htp_dcache_flush_dirty_tensors(struct htp_context * ctx, const struct htp_tensor * const * tensors, uint32_t n) {
-    const struct htp_tensor * dirty_tensors[HTP_OP_MAX_INPUTS];
-    struct htp_dirty_range ranges[HTP_OP_MAX_INPUTS];
+శూన్య htp_dcache_flush_dirty_tensors(నిర్మాణం htp_context * ctx, స్థిరరాశి నిర్మాణం htp_tensor * స్థిరరాశి * tensors, uint32_t n) {
+    స్థిరరాశి నిర్మాణం htp_tensor * dirty_tensors[HTP_OP_MAX_INPUTS];
+    నిర్మాణం htp_dirty_range ranges[HTP_OP_MAX_INPUTS];
     uint32_t n_dirty = 0;
-    uint64_t total_dirty = 0;
+    uint64_t మొత్తం_dirty = 0;
 
-    for (uint32_t i = 0; i < n; i++) {
-        const struct htp_tensor * t = tensors[i];
-        if (is_tensor_dirty(ctx, t)) {
+    కొరకు (uint32_t i = 0; i < n; i++) {
+        స్థిరరాశి నిర్మాణం htp_tensor * t = tensors[i];
+        ఒకవేళ (is_tensor_dirty(ctx, t)) {
             dirty_tensors[n_dirty++] = t;
-            ranges[n_dirty - 1].start = t->data;
-            ranges[n_dirty - 1].end   = t->data + t->size;
-            total_dirty += t->size;
+            ranges[n_dirty - 1].ప్రారంభం = t->దత్తాంశం;
+            ranges[n_dirty - 1].చివర   = t->దత్తాంశం + t->కొలత;
+            మొత్తం_dirty += t->కొలత;
         }
     }
 
-    if (total_dirty == 0) {
-        return;
+    ఒకవేళ (మొత్తం_dirty == 0) {
+        తిరిగి;
     }
 
-    if (total_dirty > HEX_L2_FLUSH_ALL_THRESHOLD) {
+    ఒకవేళ (మొత్తం_dirty > HEX_L2_FLUSH_ALL_పరిమితి) {
         flush_all_dcache(ctx);
-        return;
+        తిరిగి;
     }
 
-    flush_dirty_ranges(ctx, ranges, n_dirty, total_dirty);
-    for (uint32_t i = 0; i < n_dirty; i++) {
+    flush_dirty_ranges(ctx, ranges, n_dirty, మొత్తం_dirty);
+    కొరకు (uint32_t i = 0; i < n_dirty; i++) {
         make_tensor_clean(ctx, dirty_tensors[i]);
     }
 }

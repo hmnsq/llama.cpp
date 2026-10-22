@@ -10,12 +10,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#ifndef GGML_SYCL_IM2COL_HPP
-#define GGML_SYCL_IM2COL_HPP
+#నిర్వచితం_కాకపోతే GGML_SYCL_IM2_నిలువు_HPP
+#నిర్వచించు GGML_SYCL_IM2_నిలువు_HPP
 
-#include "common.hpp"
+#అన్తర్భావ "common.hpp"
 
-void ggml_sycl_op_im2col(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
-void ggml_sycl_op_im2col_3d(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+శూన్య ggml_sycl_op_im2col(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+శూన్య ggml_sycl_op_im2col_3d(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-#endif // GGML_SYCL_IM2COL_HPP
+#అయితే_ముగింపు // GGML_SYCL_IM2COL_HPP

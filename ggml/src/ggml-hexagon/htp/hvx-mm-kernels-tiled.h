@@ -4,88 +4,88 @@
 // q8_1_s16 (Q2_K, sums16): one fp16 d (vector 8) for the 256 k super-block starting at x_sb, and vector 9 holds the
 // integer sums of k 0..15 (low halfword) and k 16..31 (high halfword) in every word
 __attribute__((always_inline))
-static inline void quantize_block_f32_q8_1_tiled_impl(float * restrict x, uint8_t * restrict y_block, const bool sums16,
-                                                      const float * restrict x_sb) {
-    assert((unsigned long) x % 128 == 0);
-    assert((unsigned long) y_block % 128 == 0);
+స్థిర అంతఃవరుస శూన్య quantize_ఖండం_f32_q8_1_tiled_impl(దశాంశం * పరిమిత x, uint8_t * పరిమిత y_ఖండం, స్థిరరాశి bool sums16,
+                                                      స్థిరరాశి దశాంశం * పరిమిత x_sb) {
+    ప్రతిజ్ఞా((గుర్తులేని దీర్ఘ) x % 128 == 0);
+    ప్రతిజ్ఞా((గుర్తులేని దీర్ఘ) y_ఖండం % 128 == 0);
 
-    HVX_Vector * vx = (HVX_Vector *) x;
-    HVX_Vector zero = Q6_V_vzero();
+    HVX_సదిశ * vx = (HVX_సదిశ *) x;
+    HVX_సదిశ zero = Q6_V_vzero();
 
-    HVX_Vector vmax0_sf, vmax1_sf, vmax2_sf, vmax3_sf;
-    if (sums16) {
-        const HVX_Vector * vsb = (const HVX_Vector *) x_sb;
-        HVX_Vector vm = hvx_vec_abs_f32(vsb[0]);
-        for (int i = 1; i < 8; i++) {
+    HVX_సదిశ vmax0_sf, vmax1_sf, vmax2_sf, vmax3_sf;
+    ఒకవేళ (sums16) {
+        స్థిరరాశి HVX_సదిశ * vsb = (స్థిరరాశి HVX_సదిశ *) x_sb;
+        HVX_సదిశ vm = hvx_vec_abs_f32(vsb[0]);
+        కొరకు (పూర్ణాంకం i = 1; i < 8; i++) {
             vm = Q6_Vsf_vmax_VsfVsf(vm, hvx_vec_abs_f32(vsb[i]));
         }
         vmax0_sf = vmax1_sf = vmax2_sf = vmax3_sf = hvx_vec_reduce_max_f32(vm);
-    } else {
+    } లేకపోతే {
         vmax0_sf = hvx_vec_reduce_max_f32(hvx_vec_abs_f32(vx[0]));
         vmax1_sf = hvx_vec_reduce_max_f32(hvx_vec_abs_f32(vx[1]));
         vmax2_sf = hvx_vec_reduce_max_f32(hvx_vec_abs_f32(vx[2]));
         vmax3_sf = hvx_vec_reduce_max_f32(hvx_vec_abs_f32(vx[3]));
     }
 
-    HVX_Vector vx0_qf = Q6_Vqf32_vsub_VsfVsf(vx[0], zero);
-    HVX_Vector vx1_qf = Q6_Vqf32_vsub_VsfVsf(vx[1], zero);
-    HVX_Vector vmax0_qf = Q6_Vqf32_vsub_VsfVsf(vmax0_sf, zero);
-    HVX_Vector vmax1_qf = Q6_Vqf32_vsub_VsfVsf(vmax1_sf, zero);
+    HVX_సదిశ vx0_qf = Q6_Vqf32_vsub_VsfVsf(vx[0], zero);
+    HVX_సదిశ vx1_qf = Q6_Vqf32_vsub_VsfVsf(vx[1], zero);
+    HVX_సదిశ vmax0_qf = Q6_Vqf32_vsub_VsfVsf(vmax0_sf, zero);
+    HVX_సదిశ vmax1_qf = Q6_Vqf32_vsub_VsfVsf(vmax1_sf, zero);
 
-    HVX_Vector vmax01_hf   = Q6_Vh_vdeal_Vh(Q6_Vhf_equals_Wqf32(Q6_W_vcombine_VV(vmax1_qf, vmax0_qf)));
-    HVX_Vector vx01_hf     = Q6_Vh_vdeal_Vh(Q6_Vhf_equals_Wqf32(Q6_W_vcombine_VV(vx1_qf, vx0_qf)));
-    HVX_Vector vd01_qf16   = Q6_Vqf16_vmpy_VhfVhf(vmax01_hf, Q6_Vh_vsplat_R(0x2008));  // 1.0 / 127.0
-    HVX_Vector vd01_hf     = Q6_Vhf_equals_Vqf16(vd01_qf16);
-    HVX_Vector vd01_inv_hf = hvx_vec_inverse_f16(vd01_hf);
+    HVX_సదిశ vmax01_hf   = Q6_Vh_vdeal_Vh(Q6_Vhf_equals_Wqf32(Q6_W_vcombine_VV(vmax1_qf, vmax0_qf)));
+    HVX_సదిశ vx01_hf     = Q6_Vh_vdeal_Vh(Q6_Vhf_equals_Wqf32(Q6_W_vcombine_VV(vx1_qf, vx0_qf)));
+    HVX_సదిశ vd01_qf16   = Q6_Vqf16_vmpy_VhfVhf(vmax01_hf, Q6_Vh_vsplat_R(0x2008));  // 1.0 / 127.0
+    HVX_సదిశ vd01_hf     = Q6_Vhf_equals_Vqf16(vd01_qf16);
+    HVX_సదిశ vd01_inv_hf = hvx_vec_inverse_f16(vd01_hf);
     vx01_hf                = Q6_Vhf_equals_Vqf16(Q6_Vqf16_vmpy_VhfVhf(vx01_hf, vd01_inv_hf));
 
-    HVX_Vector vx2_qf = Q6_Vqf32_vsub_VsfVsf(vx[2], zero);
-    HVX_Vector vx3_qf = Q6_Vqf32_vsub_VsfVsf(vx[3], zero);
-    HVX_Vector vmax2_qf = Q6_Vqf32_vsub_VsfVsf(vmax2_sf, zero);
-    HVX_Vector vmax3_qf = Q6_Vqf32_vsub_VsfVsf(vmax3_sf, zero);
+    HVX_సదిశ vx2_qf = Q6_Vqf32_vsub_VsfVsf(vx[2], zero);
+    HVX_సదిశ vx3_qf = Q6_Vqf32_vsub_VsfVsf(vx[3], zero);
+    HVX_సదిశ vmax2_qf = Q6_Vqf32_vsub_VsfVsf(vmax2_sf, zero);
+    HVX_సదిశ vmax3_qf = Q6_Vqf32_vsub_VsfVsf(vmax3_sf, zero);
 
-    HVX_Vector vmax23_hf   = Q6_Vh_vdeal_Vh(Q6_Vhf_equals_Wqf32(Q6_W_vcombine_VV(vmax3_qf, vmax2_qf)));
-    HVX_Vector vx23_hf     = Q6_Vh_vdeal_Vh(Q6_Vhf_equals_Wqf32(Q6_W_vcombine_VV(vx3_qf, vx2_qf)));
-    HVX_Vector vd23_qf16   = Q6_Vqf16_vmpy_VhfVhf(vmax23_hf, Q6_Vh_vsplat_R(0x2008));  // 1.0 / 127.0
-    HVX_Vector vd23_hf     = Q6_Vhf_equals_Vqf16(vd23_qf16);
-    HVX_Vector vd23_inv_hf = hvx_vec_inverse_f16(vd23_hf);
+    HVX_సదిశ vmax23_hf   = Q6_Vh_vdeal_Vh(Q6_Vhf_equals_Wqf32(Q6_W_vcombine_VV(vmax3_qf, vmax2_qf)));
+    HVX_సదిశ vx23_hf     = Q6_Vh_vdeal_Vh(Q6_Vhf_equals_Wqf32(Q6_W_vcombine_VV(vx3_qf, vx2_qf)));
+    HVX_సదిశ vd23_qf16   = Q6_Vqf16_vmpy_VhfVhf(vmax23_hf, Q6_Vh_vsplat_R(0x2008));  // 1.0 / 127.0
+    HVX_సదిశ vd23_hf     = Q6_Vhf_equals_Vqf16(vd23_qf16);
+    HVX_సదిశ vd23_inv_hf = hvx_vec_inverse_f16(vd23_hf);
     vx23_hf                = Q6_Vhf_equals_Vqf16(Q6_Vqf16_vmpy_VhfVhf(vx23_hf, vd23_inv_hf));
 
-    HVX_Vector vx01_i16 = hvx_vec_i16_from_hf_rnd_sat(vx01_hf);
-    HVX_Vector vx23_i16 = hvx_vec_i16_from_hf_rnd_sat(vx23_hf);
-    HVX_Vector vx_i8    = Q6_Vb_vpack_VhVh_sat(vx23_i16, vx01_i16);
+    HVX_సదిశ vx01_i16 = hvx_vec_i16_from_hf_rnd_sat(vx01_hf);
+    HVX_సదిశ vx23_i16 = hvx_vec_i16_from_hf_rnd_sat(vx23_hf);
+    HVX_సదిశ vx_i8    = Q6_Vb_vpack_VhVh_sat(vx23_i16, vx01_i16);
 
-    const HVX_Vector ones = Q6_Vb_vsplat_R(1);
-    HVX_Vector v_sums = Q6_Vw_vrmpy_VbVb(vx_i8, ones);
+    స్థిరరాశి HVX_సదిశ ones = Q6_Vb_vsplat_R(1);
+    HVX_సదిశ v_sums = Q6_Vw_vrmpy_VbVb(vx_i8, ones);
     v_sums = Q6_Vw_vadd_VwVw(v_sums, Q6_V_vror_VR(v_sums, 4));
     v_sums = Q6_Vw_vadd_VwVw(v_sums, Q6_V_vror_VR(v_sums, 8));
-    if (!sums16) {
+    ఒకవేళ (!sums16) {
         v_sums = Q6_Vw_vadd_VwVw(v_sums, Q6_V_vror_VR(v_sums, 16));
     }
     // word 8b: sum of block b (sums16: k 0..15, and word 8b + 4: k 16..31)
 
-    const HVX_Vector v_inv127 = hvx_vec_splat_f32(1.0f / 127.0f);
-    HVX_Vector vd0_sf = hvx_vec_mul_f32_f32(vmax0_sf, v_inv127);
-    HVX_Vector vd1_sf = hvx_vec_mul_f32_f32(vmax1_sf, v_inv127);
-    HVX_Vector vd2_sf = hvx_vec_mul_f32_f32(vmax2_sf, v_inv127);
-    HVX_Vector vd3_sf = hvx_vec_mul_f32_f32(vmax3_sf, v_inv127);
+    స్థిరరాశి HVX_సదిశ v_inv127 = hvx_vec_splat_f32(1.0f / 127.0f);
+    HVX_సదిశ vd0_sf = hvx_vec_mul_f32_f32(vmax0_sf, v_inv127);
+    HVX_సదిశ vd1_sf = hvx_vec_mul_f32_f32(vmax1_sf, v_inv127);
+    HVX_సదిశ vd2_sf = hvx_vec_mul_f32_f32(vmax2_sf, v_inv127);
+    HVX_సదిశ vd3_sf = hvx_vec_mul_f32_f32(vmax3_sf, v_inv127);
 
-    HVX_Vector v_sums_sf = Q6_Vsf_equals_Vw(v_sums);
-    HVX_Vector voff0_sf = hvx_vec_mul_f32_f32(vd0_sf, v_sums_sf);
-    HVX_Vector voff1_sf = hvx_vec_mul_f32_f32(vd1_sf, Q6_V_vror_VR(v_sums_sf, 32));
-    HVX_Vector voff2_sf = hvx_vec_mul_f32_f32(vd2_sf, Q6_V_vror_VR(v_sums_sf, 64));
-    HVX_Vector voff3_sf = hvx_vec_mul_f32_f32(vd3_sf, Q6_V_vror_VR(v_sums_sf, 96));
+    HVX_సదిశ v_sums_sf = Q6_Vsf_equals_Vw(v_sums);
+    HVX_సదిశ voff0_sf = hvx_vec_mul_f32_f32(vd0_sf, v_sums_sf);
+    HVX_సదిశ voff1_sf = hvx_vec_mul_f32_f32(vd1_sf, Q6_V_vror_VR(v_sums_sf, 32));
+    HVX_సదిశ voff2_sf = hvx_vec_mul_f32_f32(vd2_sf, Q6_V_vror_VR(v_sums_sf, 64));
+    HVX_సదిశ voff3_sf = hvx_vec_mul_f32_f32(vd3_sf, Q6_V_vror_VR(v_sums_sf, 96));
 
-    HVX_Vector voff01_hf = hvx_vec_f32_to_f16(voff0_sf, voff1_sf);
-    HVX_Vector voff23_hf = hvx_vec_f32_to_f16(voff2_sf, voff3_sf);
+    HVX_సదిశ voff01_hf = hvx_vec_f32_గమ్యం_f16(voff0_sf, voff1_sf);
+    HVX_సదిశ voff23_hf = hvx_vec_f32_గమ్యం_f16(voff2_sf, voff3_sf);
 
     int32_t __attribute__((aligned(128))) ws[32];
-    if (sums16) {
+    ఒకవేళ (sums16) {
         // |sum of 16 int8| <= 2032 fits a halfword
-        *(HVX_Vector *) ws = v_sums;
+        *(HVX_సదిశ *) ws = v_sums;
     }
 
-    static const uint8_t __attribute__((aligned(128))) repl[128] = {
+    స్థిర స్థిరరాశి uint8_t __attribute__((aligned(128))) repl[128] = {
         0x00, 0x00, 0x00, 0x00, 0x04, 0x04, 0x04, 0x04, 0x08, 0x08, 0x08, 0x08, 0x04, 0x04, 0x04, 0x04,
         0x10, 0x10, 0x10, 0x10, 0x04, 0x04, 0x04, 0x04, 0x08, 0x08, 0x08, 0x08, 0x04, 0x04, 0x04, 0x04,
         0x20, 0x20, 0x20, 0x20, 0x04, 0x04, 0x04, 0x04, 0x08, 0x08, 0x08, 0x08, 0x04, 0x04, 0x04, 0x04,
@@ -95,28 +95,28 @@ static inline void quantize_block_f32_q8_1_tiled_impl(float * restrict x, uint8_
         0x20, 0x20, 0x20, 0x20, 0x04, 0x04, 0x04, 0x04, 0x08, 0x08, 0x08, 0x08, 0x04, 0x04, 0x04, 0x04,
         0x10, 0x10, 0x10, 0x10, 0x04, 0x04, 0x04, 0x04, 0x08, 0x08, 0x08, 0x08, 0x04, 0x04, 0x04, 0x04,
     };
-    HVX_Vector v_repl_ctrl = * (const HVX_Vector *) repl;
+    HVX_సదిశ v_repl_ctrl = * (స్థిరరాశి HVX_సదిశ *) repl;
 
-    #pragma unroll
-    for (int b = 0; b < 4; b++) {
-        HVX_Vector v_act = Q6_V_vror_VR(vx_i8, b * 32);
-        HVX_Vector vd_b   = (b < 2) ? vd01_hf   : vd23_hf;
-        HVX_Vector voff_b = (b < 2) ? voff01_hf : voff23_hf;
-        HVX_Vector r_scale  = hvx_vec_repl_f16((b & 1) ? Q6_V_vror_VR(vd_b, 64)   : vd_b);
-        HVX_Vector r_offset = sums16
+    #సూచన unroll
+    కొరకు (పూర్ణాంకం b = 0; b < 4; b++) {
+        HVX_సదిశ v_act = Q6_V_vror_VR(vx_i8, b * 32);
+        HVX_సదిశ vd_b   = (b < 2) ? vd01_hf   : vd23_hf;
+        HVX_సదిశ voff_b = (b < 2) ? voff01_hf : voff23_hf;
+        HVX_సదిశ r_scale  = hvx_vec_repl_f16((b & 1) ? Q6_V_vror_VR(vd_b, 64)   : vd_b);
+        HVX_సదిశ r_స్థానభ్రంశం = sums16
             ? Q6_V_vsplat_R(((uint32_t) ws[8 * b + 4] << 16) | ((uint32_t) ws[8 * b] & 0xFFFF))
             : hvx_vec_repl_f16((b & 1) ? Q6_V_vror_VR(voff_b, 64) : voff_b);
 
-        HVX_Vector r0 = Q6_V_vdelta_VV(v_act, v_repl_ctrl);
-        HVX_Vector r1 = Q6_V_vdelta_VV(Q6_V_vror_VR(v_act, 4),  v_repl_ctrl);
-        HVX_Vector r2 = Q6_V_vdelta_VV(Q6_V_vror_VR(v_act, 8),  v_repl_ctrl);
-        HVX_Vector r3 = Q6_V_vdelta_VV(Q6_V_vror_VR(v_act, 12), v_repl_ctrl);
-        HVX_Vector r4 = Q6_V_vdelta_VV(Q6_V_vror_VR(v_act, 16), v_repl_ctrl);
-        HVX_Vector r5 = Q6_V_vdelta_VV(Q6_V_vror_VR(v_act, 20), v_repl_ctrl);
-        HVX_Vector r6 = Q6_V_vdelta_VV(Q6_V_vror_VR(v_act, 24), v_repl_ctrl);
-        HVX_Vector r7 = Q6_V_vdelta_VV(Q6_V_vror_VR(v_act, 28), v_repl_ctrl);
+        HVX_సదిశ r0 = Q6_V_vdelta_VV(v_act, v_repl_ctrl);
+        HVX_సదిశ r1 = Q6_V_vdelta_VV(Q6_V_vror_VR(v_act, 4),  v_repl_ctrl);
+        HVX_సదిశ r2 = Q6_V_vdelta_VV(Q6_V_vror_VR(v_act, 8),  v_repl_ctrl);
+        HVX_సదిశ r3 = Q6_V_vdelta_VV(Q6_V_vror_VR(v_act, 12), v_repl_ctrl);
+        HVX_సదిశ r4 = Q6_V_vdelta_VV(Q6_V_vror_VR(v_act, 16), v_repl_ctrl);
+        HVX_సదిశ r5 = Q6_V_vdelta_VV(Q6_V_vror_VR(v_act, 20), v_repl_ctrl);
+        HVX_సదిశ r6 = Q6_V_vdelta_VV(Q6_V_vror_VR(v_act, 24), v_repl_ctrl);
+        HVX_సదిశ r7 = Q6_V_vdelta_VV(Q6_V_vror_VR(v_act, 28), v_repl_ctrl);
 
-        HVX_Vector * restrict dst = (HVX_Vector *) (y_block + b * 1280);
+        HVX_సదిశ * పరిమిత dst = (HVX_సదిశ *) (y_ఖండం + b * 1280);
         dst[0] = r0;
         dst[1] = r1;
         dst[2] = r2;
@@ -126,64 +126,64 @@ static inline void quantize_block_f32_q8_1_tiled_impl(float * restrict x, uint8_
         dst[6] = r6;
         dst[7] = r7;
         dst[8] = r_scale;
-        dst[9] = r_offset;
+        dst[9] = r_స్థానభ్రంశం;
     }
 }
 
-static inline void quantize_block_f32_q8_1_tiled(float * restrict x, uint8_t * restrict y_block) {
-    quantize_block_f32_q8_1_tiled_impl(x, y_block, false, NULL);
+స్థిర అంతఃవరుస శూన్య quantize_ఖండం_f32_q8_1_tiled(దశాంశం * పరిమిత x, uint8_t * పరిమిత y_ఖండం) {
+    quantize_ఖండం_f32_q8_1_tiled_impl(x, y_ఖండం, false, ఖాళీ);
 }
 
-static inline void quantize_block_f32_q8_1_s16_tiled(float * restrict x, uint8_t * restrict y_block, const float * restrict x_sb) {
-    quantize_block_f32_q8_1_tiled_impl(x, y_block, true, x_sb);
+స్థిర అంతఃవరుస శూన్య quantize_ఖండం_f32_q8_1_s16_tiled(దశాంశం * పరిమిత x, uint8_t * పరిమిత y_ఖండం, స్థిరరాశి దశాంశం * పరిమిత x_sb) {
+    quantize_ఖండం_f32_q8_1_tiled_impl(x, y_ఖండం, true, x_sb);
 }
 
-static inline void quantize_block_f32_q8_0_tiled(float * restrict x, uint8_t * restrict y_block) {
-    assert((unsigned long) x % 128 == 0);
-    assert((unsigned long) y_block % 128 == 0);
+స్థిర అంతఃవరుస శూన్య quantize_ఖండం_f32_q8_0_tiled(దశాంశం * పరిమిత x, uint8_t * పరిమిత y_ఖండం) {
+    ప్రతిజ్ఞా((గుర్తులేని దీర్ఘ) x % 128 == 0);
+    ప్రతిజ్ఞా((గుర్తులేని దీర్ఘ) y_ఖండం % 128 == 0);
 
-    HVX_Vector * vx = (HVX_Vector *) x;
-    HVX_Vector zero   = Q6_V_vzero();
+    HVX_సదిశ * vx = (HVX_సదిశ *) x;
+    HVX_సదిశ zero   = Q6_V_vzero();
 
-    HVX_Vector vmax0_sf = hvx_vec_reduce_max_f32(hvx_vec_abs_f32(vx[0]));
-    HVX_Vector vmax1_sf = hvx_vec_reduce_max_f32(hvx_vec_abs_f32(vx[1]));
-    HVX_Vector vmax2_sf = hvx_vec_reduce_max_f32(hvx_vec_abs_f32(vx[2]));
-    HVX_Vector vmax3_sf = hvx_vec_reduce_max_f32(hvx_vec_abs_f32(vx[3]));
+    HVX_సదిశ vmax0_sf = hvx_vec_reduce_max_f32(hvx_vec_abs_f32(vx[0]));
+    HVX_సదిశ vmax1_sf = hvx_vec_reduce_max_f32(hvx_vec_abs_f32(vx[1]));
+    HVX_సదిశ vmax2_sf = hvx_vec_reduce_max_f32(hvx_vec_abs_f32(vx[2]));
+    HVX_సదిశ vmax3_sf = hvx_vec_reduce_max_f32(hvx_vec_abs_f32(vx[3]));
 
-    HVX_Vector vx0_qf = Q6_Vqf32_vsub_VsfVsf(vx[0], zero);
-    HVX_Vector vx1_qf = Q6_Vqf32_vsub_VsfVsf(vx[1], zero);
-    HVX_Vector vx2_qf = Q6_Vqf32_vsub_VsfVsf(vx[2], zero);
-    HVX_Vector vx3_qf = Q6_Vqf32_vsub_VsfVsf(vx[3], zero);
+    HVX_సదిశ vx0_qf = Q6_Vqf32_vsub_VsfVsf(vx[0], zero);
+    HVX_సదిశ vx1_qf = Q6_Vqf32_vsub_VsfVsf(vx[1], zero);
+    HVX_సదిశ vx2_qf = Q6_Vqf32_vsub_VsfVsf(vx[2], zero);
+    HVX_సదిశ vx3_qf = Q6_Vqf32_vsub_VsfVsf(vx[3], zero);
 
-    HVX_Vector vmax0_qf = Q6_Vqf32_vsub_VsfVsf(vmax0_sf, zero);
-    HVX_Vector vmax1_qf = Q6_Vqf32_vsub_VsfVsf(vmax1_sf, zero);
-    HVX_Vector vmax2_qf = Q6_Vqf32_vsub_VsfVsf(vmax2_sf, zero);
-    HVX_Vector vmax3_qf = Q6_Vqf32_vsub_VsfVsf(vmax3_sf, zero);
+    HVX_సదిశ vmax0_qf = Q6_Vqf32_vsub_VsfVsf(vmax0_sf, zero);
+    HVX_సదిశ vmax1_qf = Q6_Vqf32_vsub_VsfVsf(vmax1_sf, zero);
+    HVX_సదిశ vmax2_qf = Q6_Vqf32_vsub_VsfVsf(vmax2_sf, zero);
+    HVX_సదిశ vmax3_qf = Q6_Vqf32_vsub_VsfVsf(vmax3_sf, zero);
 
-    HVX_Vector vmax01_hf = Q6_Vh_vdeal_Vh(Q6_Vhf_equals_Wqf32(Q6_W_vcombine_VV(vmax1_qf, vmax0_qf)));
-    HVX_Vector vmax23_hf = Q6_Vh_vdeal_Vh(Q6_Vhf_equals_Wqf32(Q6_W_vcombine_VV(vmax3_qf, vmax2_qf)));
+    HVX_సదిశ vmax01_hf = Q6_Vh_vdeal_Vh(Q6_Vhf_equals_Wqf32(Q6_W_vcombine_VV(vmax1_qf, vmax0_qf)));
+    HVX_సదిశ vmax23_hf = Q6_Vh_vdeal_Vh(Q6_Vhf_equals_Wqf32(Q6_W_vcombine_VV(vmax3_qf, vmax2_qf)));
 
-    HVX_Vector vx01_hf = Q6_Vh_vdeal_Vh(Q6_Vhf_equals_Wqf32(Q6_W_vcombine_VV(vx1_qf, vx0_qf)));
-    HVX_Vector vx23_hf = Q6_Vh_vdeal_Vh(Q6_Vhf_equals_Wqf32(Q6_W_vcombine_VV(vx3_qf, vx2_qf)));
+    HVX_సదిశ vx01_hf = Q6_Vh_vdeal_Vh(Q6_Vhf_equals_Wqf32(Q6_W_vcombine_VV(vx1_qf, vx0_qf)));
+    HVX_సదిశ vx23_hf = Q6_Vh_vdeal_Vh(Q6_Vhf_equals_Wqf32(Q6_W_vcombine_VV(vx3_qf, vx2_qf)));
 
-    HVX_Vector vd01_qf16 = Q6_Vqf16_vmpy_VhfVhf(vmax01_hf, Q6_Vh_vsplat_R(0x2008));
-    HVX_Vector vd23_qf16 = Q6_Vqf16_vmpy_VhfVhf(vmax23_hf, Q6_Vh_vsplat_R(0x2008));
-    HVX_Vector vd01_hf   = Q6_Vhf_equals_Vqf16(vd01_qf16);
-    HVX_Vector vd23_hf   = Q6_Vhf_equals_Vqf16(vd23_qf16);
+    HVX_సదిశ vd01_qf16 = Q6_Vqf16_vmpy_VhfVhf(vmax01_hf, Q6_Vh_vsplat_R(0x2008));
+    HVX_సదిశ vd23_qf16 = Q6_Vqf16_vmpy_VhfVhf(vmax23_hf, Q6_Vh_vsplat_R(0x2008));
+    HVX_సదిశ vd01_hf   = Q6_Vhf_equals_Vqf16(vd01_qf16);
+    HVX_సదిశ vd23_hf   = Q6_Vhf_equals_Vqf16(vd23_qf16);
 
-    HVX_Vector vd01_inv_hf = hvx_vec_inverse_f16(vd01_hf);
-    HVX_Vector vd23_inv_hf = hvx_vec_inverse_f16(vd23_hf);
+    HVX_సదిశ vd01_inv_hf = hvx_vec_inverse_f16(vd01_hf);
+    HVX_సదిశ vd23_inv_hf = hvx_vec_inverse_f16(vd23_hf);
     vx01_hf                = Q6_Vhf_equals_Vqf16(Q6_Vqf16_vmpy_VhfVhf(vx01_hf, vd01_inv_hf));
     vx23_hf                = Q6_Vhf_equals_Vqf16(Q6_Vqf16_vmpy_VhfVhf(vx23_hf, vd23_inv_hf));
 
-    HVX_Vector vx01_i16 = hvx_vec_i16_from_hf_rnd_sat(vx01_hf);
-    HVX_Vector vx23_i16 = hvx_vec_i16_from_hf_rnd_sat(vx23_hf);
-    HVX_Vector vx_i8    = Q6_Vb_vpack_VhVh_sat(vx23_i16, vx01_i16);
+    HVX_సదిశ vx01_i16 = hvx_vec_i16_from_hf_rnd_sat(vx01_hf);
+    HVX_సదిశ vx23_i16 = hvx_vec_i16_from_hf_rnd_sat(vx23_hf);
+    HVX_సదిశ vx_i8    = Q6_Vb_vpack_VhVh_sat(vx23_i16, vx01_i16);
 
-    HVX_VectorPair vp01 = Q6_W_vshuff_VVR(vd01_hf, vd01_hf, -64);
-    HVX_VectorPair vp23 = Q6_W_vshuff_VVR(vd23_hf, vd23_hf, -64);
+    HVX_సదిశ_Pair vp01 = Q6_W_vshuff_VVR(vd01_hf, vd01_hf, -64);
+    HVX_సదిశ_Pair vp23 = Q6_W_vshuff_VVR(vd23_hf, vd23_hf, -64);
 
-    static const uint8_t __attribute__((aligned(128))) repl[128] = {
+    స్థిర స్థిరరాశి uint8_t __attribute__((aligned(128))) repl[128] = {
         0x00, 0x00, 0x00, 0x00, 0x04, 0x04, 0x04, 0x04, 0x08, 0x08, 0x08, 0x08, 0x04, 0x04, 0x04, 0x04,
         0x10, 0x10, 0x10, 0x10, 0x04, 0x04, 0x04, 0x04, 0x08, 0x08, 0x08, 0x08, 0x04, 0x04, 0x04, 0x04,
         0x20, 0x20, 0x20, 0x20, 0x04, 0x04, 0x04, 0x04, 0x08, 0x08, 0x08, 0x08, 0x04, 0x04, 0x04, 0x04,
@@ -193,32 +193,32 @@ static inline void quantize_block_f32_q8_0_tiled(float * restrict x, uint8_t * r
         0x20, 0x20, 0x20, 0x20, 0x04, 0x04, 0x04, 0x04, 0x08, 0x08, 0x08, 0x08, 0x04, 0x04, 0x04, 0x04,
         0x10, 0x10, 0x10, 0x10, 0x04, 0x04, 0x04, 0x04, 0x08, 0x08, 0x08, 0x08, 0x04, 0x04, 0x04, 0x04,
     };
-    HVX_Vector v_repl_ctrl = * (const HVX_Vector *) repl;
+    HVX_సదిశ v_repl_ctrl = * (స్థిరరాశి HVX_సదిశ *) repl;
 
-    #pragma unroll
-    for (int b = 0; b < 4; b++) {
-        HVX_Vector v_act = Q6_V_vror_VR(vx_i8, b * 32);
-        HVX_Vector r_scale;
-        if (b == 0) {
+    #సూచన unroll
+    కొరకు (పూర్ణాంకం b = 0; b < 4; b++) {
+        HVX_సదిశ v_act = Q6_V_vror_VR(vx_i8, b * 32);
+        HVX_సదిశ r_scale;
+        ఒకవేళ (b == 0) {
             r_scale = Q6_V_lo_W(vp01);
-        } else if (b == 1) {
+        } లేకపోతే ఒకవేళ (b == 1) {
             r_scale = Q6_V_hi_W(vp01);
-        } else if (b == 2) {
+        } లేకపోతే ఒకవేళ (b == 2) {
             r_scale = Q6_V_lo_W(vp23);
-        } else {
+        } లేకపోతే {
             r_scale = Q6_V_hi_W(vp23);
         }
 
-        HVX_Vector r0 = Q6_V_vdelta_VV(v_act, v_repl_ctrl);
-        HVX_Vector r1 = Q6_V_vdelta_VV(Q6_V_vror_VR(v_act, 4),  v_repl_ctrl);
-        HVX_Vector r2 = Q6_V_vdelta_VV(Q6_V_vror_VR(v_act, 8),  v_repl_ctrl);
-        HVX_Vector r3 = Q6_V_vdelta_VV(Q6_V_vror_VR(v_act, 12), v_repl_ctrl);
-        HVX_Vector r4 = Q6_V_vdelta_VV(Q6_V_vror_VR(v_act, 16), v_repl_ctrl);
-        HVX_Vector r5 = Q6_V_vdelta_VV(Q6_V_vror_VR(v_act, 20), v_repl_ctrl);
-        HVX_Vector r6 = Q6_V_vdelta_VV(Q6_V_vror_VR(v_act, 24), v_repl_ctrl);
-        HVX_Vector r7 = Q6_V_vdelta_VV(Q6_V_vror_VR(v_act, 28), v_repl_ctrl);
+        HVX_సదిశ r0 = Q6_V_vdelta_VV(v_act, v_repl_ctrl);
+        HVX_సదిశ r1 = Q6_V_vdelta_VV(Q6_V_vror_VR(v_act, 4),  v_repl_ctrl);
+        HVX_సదిశ r2 = Q6_V_vdelta_VV(Q6_V_vror_VR(v_act, 8),  v_repl_ctrl);
+        HVX_సదిశ r3 = Q6_V_vdelta_VV(Q6_V_vror_VR(v_act, 12), v_repl_ctrl);
+        HVX_సదిశ r4 = Q6_V_vdelta_VV(Q6_V_vror_VR(v_act, 16), v_repl_ctrl);
+        HVX_సదిశ r5 = Q6_V_vdelta_VV(Q6_V_vror_VR(v_act, 20), v_repl_ctrl);
+        HVX_సదిశ r6 = Q6_V_vdelta_VV(Q6_V_vror_VR(v_act, 24), v_repl_ctrl);
+        HVX_సదిశ r7 = Q6_V_vdelta_VV(Q6_V_vror_VR(v_act, 28), v_repl_ctrl);
 
-        HVX_Vector * restrict dst = (HVX_Vector *) (y_block + b * 1152);
+        HVX_సదిశ * పరిమిత dst = (HVX_సదిశ *) (y_ఖండం + b * 1152);
         dst[0] = r0;
         dst[1] = r1;
         dst[2] = r2;
@@ -231,41 +231,41 @@ static inline void quantize_block_f32_q8_0_tiled(float * restrict x, uint8_t * r
     }
 }
 
-static void quantize_row_f32_q8_0_tiled(float * restrict x, uint8_t * restrict y, uint32_t k) {
-    assert(k % 32 == 0);
-    const uint32_t qk = QK_Q8_0_TILED;
-    const uint32_t nb = (k + qk - 1) / qk;
+స్థిర శూన్య quantize_అడ్డువరుస_f32_q8_0_tiled(దశాంశం * పరిమిత x, uint8_t * పరిమిత y, uint32_t k) {
+    ప్రతిజ్ఞా(k % 32 == 0);
+    స్థిరరాశి uint32_t qk = QK_Q8_0_TILED;
+    స్థిరరాశి uint32_t nb = (k + qk - 1) / qk;
 
-    for (uint32_t i = 0; i < nb; i++) {
-        uint8_t * restrict y_block = y + i * 4 * 1152;
-        quantize_block_f32_q8_0_tiled(x + i * qk, y_block);
+    కొరకు (uint32_t i = 0; i < nb; i++) {
+        uint8_t * పరిమిత y_ఖండం = y + i * 4 * 1152;
+        quantize_ఖండం_f32_q8_0_tiled(x + i * qk, y_ఖండం);
     }
 }
 
-static void quantize_row_f32_q8_1_tiled(float * restrict x, uint8_t * restrict y, uint32_t k) {
-    assert(k % 32 == 0);
-    const uint32_t qk = QK_Q8_0_TILED;
-    const uint32_t nb = (k + qk - 1) / qk;
+స్థిర శూన్య quantize_అడ్డువరుస_f32_q8_1_tiled(దశాంశం * పరిమిత x, uint8_t * పరిమిత y, uint32_t k) {
+    ప్రతిజ్ఞా(k % 32 == 0);
+    స్థిరరాశి uint32_t qk = QK_Q8_0_TILED;
+    స్థిరరాశి uint32_t nb = (k + qk - 1) / qk;
 
-    for (uint32_t i = 0; i < nb; i++) {
-        uint8_t * restrict y_block = y + i * 4 * 1280;
-        quantize_block_f32_q8_1_tiled(x + i * qk, y_block);
+    కొరకు (uint32_t i = 0; i < nb; i++) {
+        uint8_t * పరిమిత y_ఖండం = y + i * 4 * 1280;
+        quantize_ఖండం_f32_q8_1_tiled(x + i * qk, y_ఖండం);
     }
 }
 
-static void quantize_row_f32_q8_1_s16_tiled(float * restrict x, uint8_t * restrict y, uint32_t k) {
-    assert(k % 32 == 0);
-    const uint32_t qk = QK_Q8_0_TILED;
-    const uint32_t nb = (k + qk - 1) / qk;
+స్థిర శూన్య quantize_అడ్డువరుస_f32_q8_1_s16_tiled(దశాంశం * పరిమిత x, uint8_t * పరిమిత y, uint32_t k) {
+    ప్రతిజ్ఞా(k % 32 == 0);
+    స్థిరరాశి uint32_t qk = QK_Q8_0_TILED;
+    స్థిరరాశి uint32_t nb = (k + qk - 1) / qk;
 
-    for (uint32_t i = 0; i < nb; i++) {
-        uint8_t * restrict y_block = y + i * 4 * 1280;
-        quantize_block_f32_q8_1_s16_tiled(x + i * qk, y_block, x + (i & ~1u) * qk);  // k % 256 == 0 for Q2_K
+    కొరకు (uint32_t i = 0; i < nb; i++) {
+        uint8_t * పరిమిత y_ఖండం = y + i * 4 * 1280;
+        quantize_ఖండం_f32_q8_1_s16_tiled(x + i * qk, y_ఖండం, x + (i & ~1u) * qk);  // k % 256 == 0 for Q2_K
     }
 }
 
-static inline void quantize_half_f16_tiled_splat(HVX_Vector v_src, HVX_Vector * restrict dst) {
-    static const uint8_t __attribute__((aligned(128))) repl[128] = {
+స్థిర అంతఃవరుస శూన్య quantize_half_f16_tiled_splat(HVX_సదిశ v_src, HVX_సదిశ * పరిమిత dst) {
+    స్థిర స్థిరరాశి uint8_t __attribute__((aligned(128))) repl[128] = {
         0x00, 0x00, 0x00, 0x00, 0x04, 0x04, 0x04, 0x04, 0x08, 0x08, 0x08, 0x08, 0x04, 0x04, 0x04, 0x04,
         0x10, 0x10, 0x10, 0x10, 0x04, 0x04, 0x04, 0x04, 0x08, 0x08, 0x08, 0x08, 0x04, 0x04, 0x04, 0x04,
         0x20, 0x20, 0x20, 0x20, 0x04, 0x04, 0x04, 0x04, 0x08, 0x08, 0x08, 0x08, 0x04, 0x04, 0x04, 0x04,
@@ -275,230 +275,230 @@ static inline void quantize_half_f16_tiled_splat(HVX_Vector v_src, HVX_Vector * 
         0x20, 0x20, 0x20, 0x20, 0x04, 0x04, 0x04, 0x04, 0x08, 0x08, 0x08, 0x08, 0x04, 0x04, 0x04, 0x04,
         0x10, 0x10, 0x10, 0x10, 0x04, 0x04, 0x04, 0x04, 0x08, 0x08, 0x08, 0x08, 0x04, 0x04, 0x04, 0x04,
     };
-    HVX_Vector v_repl_ctrl = *(const HVX_Vector *) repl;
+    HVX_సదిశ v_repl_ctrl = *(స్థిరరాశి HVX_సదిశ *) repl;
 
-    #pragma unroll(4)
-    for (int cp = 0; cp < 32; cp++) {
+    #సూచన unroll(4)
+    కొరకు (పూర్ణాంకం cp = 0; cp < 32; cp++) {
         dst[cp] = Q6_V_vdelta_VV(cp == 0 ? v_src : Q6_V_vror_VR(v_src, cp * 4), v_repl_ctrl);
     }
 }
 
-static inline void quantize_block_f32_f16_tiled(const float * restrict x, uint8_t * restrict y_block) {
-    assert((unsigned long) x % 128 == 0);
-    assert((unsigned long) y_block % 128 == 0);
+స్థిర అంతఃవరుస శూన్య quantize_ఖండం_f32_f16_tiled(స్థిరరాశి దశాంశం * పరిమిత x, uint8_t * పరిమిత y_ఖండం) {
+    ప్రతిజ్ఞా((గుర్తులేని దీర్ఘ) x % 128 == 0);
+    ప్రతిజ్ఞా((గుర్తులేని దీర్ఘ) y_ఖండం % 128 == 0);
 
-    const HVX_Vector * vx = (const HVX_Vector *) x;
-    HVX_Vector * restrict dst = (HVX_Vector *) y_block;
+    స్థిరరాశి HVX_సదిశ * vx = (స్థిరరాశి HVX_సదిశ *) x;
+    HVX_సదిశ * పరిమిత dst = (HVX_సదిశ *) y_ఖండం;
 
-    HVX_Vector vx01_hf = hvx_vec_f32_to_f16(vx[0], vx[1]);
+    HVX_సదిశ vx01_hf = hvx_vec_f32_గమ్యం_f16(vx[0], vx[1]);
     quantize_half_f16_tiled_splat(vx01_hf, dst);
 
-    HVX_Vector vx23_hf = hvx_vec_f32_to_f16(vx[2], vx[3]);
+    HVX_సదిశ vx23_hf = hvx_vec_f32_గమ్యం_f16(vx[2], vx[3]);
     quantize_half_f16_tiled_splat(vx23_hf, dst + 32);
 }
 
-static inline void quantize_block_f16_f16_tiled(const __fp16 * restrict x, uint8_t * restrict y_block) {
-    assert((unsigned long) x % 128 == 0);
-    assert((unsigned long) y_block % 128 == 0);
+స్థిర అంతఃవరుస శూన్య quantize_ఖండం_f16_f16_tiled(స్థిరరాశి __fp16 * పరిమిత x, uint8_t * పరిమిత y_ఖండం) {
+    ప్రతిజ్ఞా((గుర్తులేని దీర్ఘ) x % 128 == 0);
+    ప్రతిజ్ఞా((గుర్తులేని దీర్ఘ) y_ఖండం % 128 == 0);
 
-    const HVX_Vector * vx = (const HVX_Vector *) x;
-    HVX_Vector * restrict dst = (HVX_Vector *) y_block;
+    స్థిరరాశి HVX_సదిశ * vx = (స్థిరరాశి HVX_సదిశ *) x;
+    HVX_సదిశ * పరిమిత dst = (HVX_సదిశ *) y_ఖండం;
 
     quantize_half_f16_tiled_splat(vx[0], dst);
     quantize_half_f16_tiled_splat(vx[1], dst + 32);
 }
 
-static void quantize_row_f32_f16_tiled(const float * restrict x, uint8_t * restrict y, uint32_t k) {
-    assert(k % 32 == 0);
-    const uint32_t qk = QK_Q8_0_TILED;
-    const uint32_t nb = (k + qk - 1) / qk;
+స్థిర శూన్య quantize_అడ్డువరుస_f32_f16_tiled(స్థిరరాశి దశాంశం * పరిమిత x, uint8_t * పరిమిత y, uint32_t k) {
+    ప్రతిజ్ఞా(k % 32 == 0);
+    స్థిరరాశి uint32_t qk = QK_Q8_0_TILED;
+    స్థిరరాశి uint32_t nb = (k + qk - 1) / qk;
 
-    for (uint32_t i = 0; i < nb; i++) {
-        uint8_t * restrict y_block = y + i * 4 * 2048;
-        quantize_block_f32_f16_tiled(x + i * qk, y_block);
+    కొరకు (uint32_t i = 0; i < nb; i++) {
+        uint8_t * పరిమిత y_ఖండం = y + i * 4 * 2048;
+        quantize_ఖండం_f32_f16_tiled(x + i * qk, y_ఖండం);
     }
 }
 
-static void quantize_row_f16_f16_tiled(const __fp16 * restrict x, uint8_t * restrict y, uint32_t k) {
-    assert(k % 32 == 0);
-    const uint32_t qk = QK_Q8_0_TILED;
-    const uint32_t nb = (k + qk - 1) / qk;
+స్థిర శూన్య quantize_అడ్డువరుస_f16_f16_tiled(స్థిరరాశి __fp16 * పరిమిత x, uint8_t * పరిమిత y, uint32_t k) {
+    ప్రతిజ్ఞా(k % 32 == 0);
+    స్థిరరాశి uint32_t qk = QK_Q8_0_TILED;
+    స్థిరరాశి uint32_t nb = (k + qk - 1) / qk;
 
-    for (uint32_t i = 0; i < nb; i++) {
-        uint8_t * restrict y_block = y + i * 4 * 2048;
-        quantize_block_f16_f16_tiled(x + i * qk, y_block);
+    కొరకు (uint32_t i = 0; i < nb; i++) {
+        uint8_t * పరిమిత y_ఖండం = y + i * 4 * 2048;
+        quantize_ఖండం_f16_f16_tiled(x + i * qk, y_ఖండం);
     }
 }
 
 // Dot kernels & helpers that consume tiled activations
 
-static inline HVX_Vector hvx_vec_mul_f16_f16_to_f32_lower32(HVX_Vector v1, HVX_Vector v2) {
-#if __HVX_ARCH__ >= 79
-    HVX_VectorPair p = Q6_Wsf_vmpy_VhfVhf(v1, v2);
-    return Q6_V_lo_W(Q6_W_vshuff_VVR(Q6_V_hi_W(p), Q6_V_lo_W(p), -4));
-#else
-    HVX_VectorPair p = Q6_Wqf32_vmpy_VhfVhf(v1, v2);
-    HVX_Vector hi = Q6_Vsf_equals_Vqf32(Q6_V_hi_W(p));
-    HVX_Vector lo = Q6_Vsf_equals_Vqf32(Q6_V_lo_W(p));
-    return Q6_V_lo_W(Q6_W_vshuff_VVR(hi, lo, -4));
-#endif
+స్థిర అంతఃవరుస HVX_సదిశ hvx_vec_mul_f16_f16_గమ్యం_f32_lower32(HVX_సదిశ v1, HVX_సదిశ v2) {
+#ఒకవేళ __HVX_ARCH__ >= 79
+    HVX_సదిశ_Pair p = Q6_Wsf_vmpy_VhfVhf(v1, v2);
+    తిరిగి Q6_V_lo_W(Q6_W_vshuff_VVR(Q6_V_hi_W(p), Q6_V_lo_W(p), -4));
+#లేకపోతే
+    HVX_సదిశ_Pair p = Q6_Wqf32_vmpy_VhfVhf(v1, v2);
+    HVX_సదిశ hi = Q6_Vsf_equals_Vqf32(Q6_V_hi_W(p));
+    HVX_సదిశ lo = Q6_Vsf_equals_Vqf32(Q6_V_lo_W(p));
+    తిరిగి Q6_V_lo_W(Q6_W_vshuff_VVR(hi, lo, -4));
+#అయితే_ముగింపు
 }
 
 // both halves of hvx_vec_mul_f16_f16_to_f32_lower32: lo = products of lanes 0..31, hi = lanes 32..63
-static inline HVX_VectorPair hvx_vec_mul_f16_f16_to_f32_pair(HVX_Vector v1, HVX_Vector v2) {
-#if __HVX_ARCH__ >= 79
-    HVX_VectorPair p = Q6_Wsf_vmpy_VhfVhf(v1, v2);
-    return Q6_W_vshuff_VVR(Q6_V_hi_W(p), Q6_V_lo_W(p), -4);
-#else
-    HVX_VectorPair p = Q6_Wqf32_vmpy_VhfVhf(v1, v2);
-    HVX_Vector hi = Q6_Vsf_equals_Vqf32(Q6_V_hi_W(p));
-    HVX_Vector lo = Q6_Vsf_equals_Vqf32(Q6_V_lo_W(p));
-    return Q6_W_vshuff_VVR(hi, lo, -4);
-#endif
+స్థిర అంతఃవరుస HVX_సదిశ_Pair hvx_vec_mul_f16_f16_గమ్యం_f32_pair(HVX_సదిశ v1, HVX_సదిశ v2) {
+#ఒకవేళ __HVX_ARCH__ >= 79
+    HVX_సదిశ_Pair p = Q6_Wsf_vmpy_VhfVhf(v1, v2);
+    తిరిగి Q6_W_vshuff_VVR(Q6_V_hi_W(p), Q6_V_lo_W(p), -4);
+#లేకపోతే
+    HVX_సదిశ_Pair p = Q6_Wqf32_vmpy_VhfVhf(v1, v2);
+    HVX_సదిశ hi = Q6_Vsf_equals_Vqf32(Q6_V_hi_W(p));
+    HVX_సదిశ lo = Q6_Vsf_equals_Vqf32(Q6_V_lo_W(p));
+    తిరిగి Q6_W_vshuff_VVR(hi, lo, -4);
+#అయితే_ముగింపు
 }
 
-static inline HVX_Vector unpack_and_interleave_4bit(HVX_Vector v_a, HVX_Vector v_b, HVX_Vector mask_h4) {
-    HVX_Vector v_W0 = Q6_V_vand_VV(v_a, mask_h4);
-    HVX_Vector v_W1 = Q6_Vub_vlsr_VubR(v_a, 4);
-    HVX_Vector v_W2 = Q6_V_vand_VV(v_b, mask_h4);
-    HVX_Vector v_W3 = Q6_Vub_vlsr_VubR(v_b, 4);
+స్థిర అంతఃవరుస HVX_సదిశ unpack_and_interleave_4bit(HVX_సదిశ v_a, HVX_సదిశ v_b, HVX_సదిశ ముసుగు_h4) {
+    HVX_సదిశ v_W0 = Q6_V_vand_VV(v_a, ముసుగు_h4);
+    HVX_సదిశ v_W1 = Q6_Vub_vlsr_VubR(v_a, 4);
+    HVX_సదిశ v_W2 = Q6_V_vand_VV(v_b, ముసుగు_h4);
+    HVX_సదిశ v_W3 = Q6_Vub_vlsr_VubR(v_b, 4);
 
-    HVX_VectorPair v01_pair = Q6_W_vshuff_VVR(v_W1, v_W0, -1);
-    HVX_VectorPair v23_pair = Q6_W_vshuff_VVR(v_W3, v_W2, -1);
-    HVX_VectorPair v0123_pair = Q6_W_vshuff_VVR(Q6_V_lo_W(v23_pair), Q6_V_lo_W(v01_pair), -2);
-    return Q6_V_lo_W(v0123_pair);
+    HVX_సదిశ_Pair v01_pair = Q6_W_vshuff_VVR(v_W1, v_W0, -1);
+    HVX_సదిశ_Pair v23_pair = Q6_W_vshuff_VVR(v_W3, v_W2, -1);
+    HVX_సదిశ_Pair v0123_pair = Q6_W_vshuff_VVR(Q6_V_lo_W(v23_pair), Q6_V_lo_W(v01_pair), -2);
+    తిరిగి Q6_V_lo_W(v0123_pair);
 }
 
-static inline HVX_VectorPair unpack_and_interleave_4bit_x2(HVX_Vector v_src, HVX_Vector mask_h4) {
-    HVX_Vector v_lo = Q6_V_vand_VV(v_src, mask_h4);
-    HVX_Vector v_hi = Q6_Vub_vlsr_VubR(v_src, 4);
-    HVX_VectorPair v01_pair = Q6_W_vshuff_VVR(v_hi, v_lo, -1);
-    HVX_Vector v01_lo = Q6_V_lo_W(v01_pair);
-    HVX_Vector v01_hi = Q6_V_hi_W(v01_pair);
+స్థిర అంతఃవరుస HVX_సదిశ_Pair unpack_and_interleave_4bit_x2(HVX_సదిశ v_src, HVX_సదిశ ముసుగు_h4) {
+    HVX_సదిశ v_lo = Q6_V_vand_VV(v_src, ముసుగు_h4);
+    HVX_సదిశ v_hi = Q6_Vub_vlsr_VubR(v_src, 4);
+    HVX_సదిశ_Pair v01_pair = Q6_W_vshuff_VVR(v_hi, v_lo, -1);
+    HVX_సదిశ v01_lo = Q6_V_lo_W(v01_pair);
+    HVX_సదిశ v01_hi = Q6_V_hi_W(v01_pair);
 
-    HVX_Vector v23_lo = Q6_V_valign_VVR(v01_hi, v01_lo, 64);
-    HVX_Vector v_W0 = Q6_V_lo_W(Q6_W_vshuff_VVR(v23_lo, v01_lo, -2));
+    HVX_సదిశ v23_lo = Q6_V_valign_VVR(v01_hi, v01_lo, 64);
+    HVX_సదిశ v_W0 = Q6_V_lo_W(Q6_W_vshuff_VVR(v23_lo, v01_lo, -2));
 
-    HVX_Vector v67_lo = Q6_V_valign_VVR(v01_lo, v01_hi, 64);
-    HVX_Vector v_W1 = Q6_V_lo_W(Q6_W_vshuff_VVR(v67_lo, v01_hi, -2));
+    HVX_సదిశ v67_lo = Q6_V_valign_VVR(v01_lo, v01_hi, 64);
+    HVX_సదిశ v_W1 = Q6_V_lo_W(Q6_W_vshuff_VVR(v67_lo, v01_hi, -2));
 
-    return Q6_W_vcombine_VV(v_W1, v_W0);
+    తిరిగి Q6_W_vcombine_VV(v_W1, v_W0);
 }
 
-static inline HVX_Vector unpack_q1_0_group(
-    HVX_Vector v_plane,
-    int g,
-    HVX_Vector v_neg_one,
-    HVX_Vector v_pos_one
+స్థిర అంతఃవరుస HVX_సదిశ unpack_q1_0_సమూహం(
+    HVX_సదిశ v_plane,
+    పూర్ణాంకం g,
+    HVX_సదిశ v_neg_one,
+    HVX_సదిశ v_pos_one
 ) {
-    HVX_VectorPred q = Q6_Q_vand_VR(v_plane, 0x01010101u << g);
-    return Q6_V_vmux_QVV(q, v_pos_one, v_neg_one);
+    HVX_సదిశ_Pred q = Q6_Q_vand_VR(v_plane, 0x01010101u << g);
+    తిరిగి Q6_V_vmux_QVV(q, v_pos_one, v_neg_one);
 }
 
-static inline HVX_Vector accum_q1_0_32x1(
-    HVX_Vector v_plane,
-    const HVX_Vector * restrict v_act,
-    HVX_Vector v_neg_one,
-    HVX_Vector v_pos_one
+స్థిర అంతఃవరుస HVX_సదిశ accum_q1_0_32x1(
+    HVX_సదిశ v_plane,
+    స్థిరరాశి HVX_సదిశ * పరిమిత v_act,
+    HVX_సదిశ v_neg_one,
+    HVX_సదిశ v_pos_one
 ) {
-    HVX_Vector v_sum_lo = Q6_V_vzero();
-    HVX_Vector v_sum_hi = Q6_V_vzero();
+    HVX_సదిశ v_కూడిక_lo = Q6_V_vzero();
+    HVX_సదిశ v_కూడిక_hi = Q6_V_vzero();
 
-    #pragma unroll
-    for (int g = 0; g < 4; g++) {
-        HVX_Vector v_W_lo = unpack_q1_0_group(v_plane, g,     v_neg_one, v_pos_one);
-        HVX_Vector v_W_hi = unpack_q1_0_group(v_plane, g + 4, v_neg_one, v_pos_one);
-        v_sum_lo = Q6_Vw_vrmpyacc_VwVbVb(v_sum_lo, v_W_lo, v_act[g]);
-        v_sum_hi = Q6_Vw_vrmpyacc_VwVbVb(v_sum_hi, v_W_hi, v_act[g + 4]);
+    #సూచన unroll
+    కొరకు (పూర్ణాంకం g = 0; g < 4; g++) {
+        HVX_సదిశ v_W_lo = unpack_q1_0_సమూహం(v_plane, g,     v_neg_one, v_pos_one);
+        HVX_సదిశ v_W_hi = unpack_q1_0_సమూహం(v_plane, g + 4, v_neg_one, v_pos_one);
+        v_కూడిక_lo = Q6_Vw_vrmpyacc_VwVbVb(v_కూడిక_lo, v_W_lo, v_act[g]);
+        v_కూడిక_hi = Q6_Vw_vrmpyacc_VwVbVb(v_కూడిక_hi, v_W_hi, v_act[g + 4]);
     }
 
-    return Q6_Vw_vadd_VwVw(v_sum_lo, v_sum_hi);
+    తిరిగి Q6_Vw_vadd_VwVw(v_కూడిక_lo, v_కూడిక_hi);
 }
 
-static inline HVX_Vector accum_4bit_32x1(
-    const HVX_Vector * restrict vptr,
-    const HVX_Vector * restrict v_act,
-    HVX_Vector i8
+స్థిర అంతఃవరుస HVX_సదిశ accum_4bit_32x1(
+    స్థిరరాశి HVX_సదిశ * పరిమిత vptr,
+    స్థిరరాశి HVX_సదిశ * పరిమిత v_act,
+    HVX_సదిశ i8
 ) {
-    HVX_Vector v_sum0 = Q6_V_vzero();
-    HVX_Vector v_sum1 = Q6_V_vzero();
-    HVX_Vector mask_h4 = Q6_Vb_vsplat_R(0x0F);
+    HVX_సదిశ v_sum0 = Q6_V_vzero();
+    HVX_సదిశ v_sum1 = Q6_V_vzero();
+    HVX_సదిశ ముసుగు_h4 = Q6_Vb_vsplat_R(0x0F);
 
-    #pragma unroll
-    for (int i = 0; i < 4; i++) {
-        HVX_VectorPair v_W_pair = unpack_and_interleave_4bit_x2(vptr[i], mask_h4);
-        HVX_Vector v_W0 = Q6_Vb_vsub_VbVb(Q6_V_lo_W(v_W_pair), i8);
-        HVX_Vector v_W1 = Q6_Vb_vsub_VbVb(Q6_V_hi_W(v_W_pair), i8);
+    #సూచన unroll
+    కొరకు (పూర్ణాంకం i = 0; i < 4; i++) {
+        HVX_సదిశ_Pair v_W_pair = unpack_and_interleave_4bit_x2(vptr[i], ముసుగు_h4);
+        HVX_సదిశ v_W0 = Q6_Vb_vsub_VbVb(Q6_V_lo_W(v_W_pair), i8);
+        HVX_సదిశ v_W1 = Q6_Vb_vsub_VbVb(Q6_V_hi_W(v_W_pair), i8);
         v_sum0 = Q6_Vw_vrmpyacc_VwVbVb(v_sum0, v_W0, v_act[i * 2 + 0]);
         v_sum1 = Q6_Vw_vrmpyacc_VwVbVb(v_sum1, v_W1, v_act[i * 2 + 1]);
     }
 
-    return Q6_Vw_vadd_VwVw(v_sum0, v_sum1);
+    తిరిగి Q6_Vw_vadd_VwVw(v_sum0, v_sum1);
 }
 
-static inline HVX_Vector accum_4bit_32x1_lut(
-    const HVX_Vector * restrict vptr,
-    const HVX_Vector * restrict v_act,
-    HVX_Vector mask_h4,
-    HVX_Vector lut
+స్థిర అంతఃవరుస HVX_సదిశ accum_4bit_32x1_lut(
+    స్థిరరాశి HVX_సదిశ * పరిమిత vptr,
+    స్థిరరాశి HVX_సదిశ * పరిమిత v_act,
+    HVX_సదిశ ముసుగు_h4,
+    HVX_సదిశ lut
 ) {
-    HVX_Vector v_sum0 = Q6_V_vzero();
-    HVX_Vector v_sum1 = Q6_V_vzero();
+    HVX_సదిశ v_sum0 = Q6_V_vzero();
+    HVX_సదిశ v_sum1 = Q6_V_vzero();
 
-    #pragma unroll
-    for (int i = 0; i < 4; i++) {
-        HVX_VectorPair v_W_pair = unpack_and_interleave_4bit_x2(vptr[i], mask_h4);
-        HVX_Vector v_W0 = Q6_Vb_vlut32_VbVbI(Q6_V_lo_W(v_W_pair), lut, 0);
-        HVX_Vector v_W1 = Q6_Vb_vlut32_VbVbI(Q6_V_hi_W(v_W_pair), lut, 0);
+    #సూచన unroll
+    కొరకు (పూర్ణాంకం i = 0; i < 4; i++) {
+        HVX_సదిశ_Pair v_W_pair = unpack_and_interleave_4bit_x2(vptr[i], ముసుగు_h4);
+        HVX_సదిశ v_W0 = Q6_Vb_vlut32_VbVbI(Q6_V_lo_W(v_W_pair), lut, 0);
+        HVX_సదిశ v_W1 = Q6_Vb_vlut32_VbVbI(Q6_V_hi_W(v_W_pair), lut, 0);
         v_sum0 = Q6_Vw_vrmpyacc_VwVbVb(v_sum0, v_W0, v_act[i * 2 + 0]);
         v_sum1 = Q6_Vw_vrmpyacc_VwVbVb(v_sum1, v_W1, v_act[i * 2 + 1]);
     }
 
-    return Q6_Vw_vadd_VwVw(v_sum0, v_sum1);
+    తిరిగి Q6_Vw_vadd_VwVw(v_sum0, v_sum1);
 }
 
-static inline HVX_VectorPair accum_q1_0_32x2(
-    HVX_Vector v_plane,
-    const HVX_Vector * restrict v_act0,
-    const HVX_Vector * restrict v_act1,
-    HVX_Vector v_neg_one,
-    HVX_Vector v_pos_one
+స్థిర అంతఃవరుస HVX_సదిశ_Pair accum_q1_0_32x2(
+    HVX_సదిశ v_plane,
+    స్థిరరాశి HVX_సదిశ * పరిమిత v_act0,
+    స్థిరరాశి HVX_సదిశ * పరిమిత v_act1,
+    HVX_సదిశ v_neg_one,
+    HVX_సదిశ v_pos_one
 ) {
-    HVX_Vector v_sum0_lo = Q6_V_vzero();
-    HVX_Vector v_sum0_hi = Q6_V_vzero();
-    HVX_Vector v_sum1_lo = Q6_V_vzero();
-    HVX_Vector v_sum1_hi = Q6_V_vzero();
+    HVX_సదిశ v_sum0_lo = Q6_V_vzero();
+    HVX_సదిశ v_sum0_hi = Q6_V_vzero();
+    HVX_సదిశ v_sum1_lo = Q6_V_vzero();
+    HVX_సదిశ v_sum1_hi = Q6_V_vzero();
 
-    #pragma unroll
-    for (int g = 0; g < 4; g++) {
-        HVX_Vector v_W_lo = unpack_q1_0_group(v_plane, g,     v_neg_one, v_pos_one);
-        HVX_Vector v_W_hi = unpack_q1_0_group(v_plane, g + 4, v_neg_one, v_pos_one);
+    #సూచన unroll
+    కొరకు (పూర్ణాంకం g = 0; g < 4; g++) {
+        HVX_సదిశ v_W_lo = unpack_q1_0_సమూహం(v_plane, g,     v_neg_one, v_pos_one);
+        HVX_సదిశ v_W_hi = unpack_q1_0_సమూహం(v_plane, g + 4, v_neg_one, v_pos_one);
         v_sum0_lo = Q6_Vw_vrmpyacc_VwVbVb(v_sum0_lo, v_W_lo, v_act0[g]);
         v_sum0_hi = Q6_Vw_vrmpyacc_VwVbVb(v_sum0_hi, v_W_hi, v_act0[g + 4]);
         v_sum1_lo = Q6_Vw_vrmpyacc_VwVbVb(v_sum1_lo, v_W_lo, v_act1[g]);
         v_sum1_hi = Q6_Vw_vrmpyacc_VwVbVb(v_sum1_hi, v_W_hi, v_act1[g + 4]);
     }
 
-    return Q6_W_vcombine_VV(
+    తిరిగి Q6_W_vcombine_VV(
         Q6_Vw_vadd_VwVw(v_sum1_lo, v_sum1_hi),
         Q6_Vw_vadd_VwVw(v_sum0_lo, v_sum0_hi));
 }
 
-static inline HVX_VectorPair accum_4bit_32x2(
-    const HVX_Vector * restrict vptr,
-    const HVX_Vector * restrict v_act0,
-    const HVX_Vector * restrict v_act1,
-    HVX_Vector i8
+స్థిర అంతఃవరుస HVX_సదిశ_Pair accum_4bit_32x2(
+    స్థిరరాశి HVX_సదిశ * పరిమిత vptr,
+    స్థిరరాశి HVX_సదిశ * పరిమిత v_act0,
+    స్థిరరాశి HVX_సదిశ * పరిమిత v_act1,
+    HVX_సదిశ i8
 ) {
-    HVX_Vector v_sum0 = Q6_V_vzero();
-    HVX_Vector v_sum1 = Q6_V_vzero();
-    HVX_Vector mask_h4 = Q6_Vb_vsplat_R(0x0F);
+    HVX_సదిశ v_sum0 = Q6_V_vzero();
+    HVX_సదిశ v_sum1 = Q6_V_vzero();
+    HVX_సదిశ ముసుగు_h4 = Q6_Vb_vsplat_R(0x0F);
 
-    #pragma unroll
-    for (int i = 0; i < 4; i++) {
-        HVX_VectorPair v_W_pair = unpack_and_interleave_4bit_x2(vptr[i], mask_h4);
-        HVX_Vector v_W0 = Q6_Vb_vsub_VbVb(Q6_V_lo_W(v_W_pair), i8);
-        HVX_Vector v_W1 = Q6_Vb_vsub_VbVb(Q6_V_hi_W(v_W_pair), i8);
+    #సూచన unroll
+    కొరకు (పూర్ణాంకం i = 0; i < 4; i++) {
+        HVX_సదిశ_Pair v_W_pair = unpack_and_interleave_4bit_x2(vptr[i], ముసుగు_h4);
+        HVX_సదిశ v_W0 = Q6_Vb_vsub_VbVb(Q6_V_lo_W(v_W_pair), i8);
+        HVX_సదిశ v_W1 = Q6_Vb_vsub_VbVb(Q6_V_hi_W(v_W_pair), i8);
 
         v_sum0 = Q6_Vw_vrmpyacc_VwVbVb(v_sum0, v_W0, v_act0[i * 2 + 0]);
         v_sum0 = Q6_Vw_vrmpyacc_VwVbVb(v_sum0, v_W1, v_act0[i * 2 + 1]);
@@ -507,24 +507,24 @@ static inline HVX_VectorPair accum_4bit_32x2(
         v_sum1 = Q6_Vw_vrmpyacc_VwVbVb(v_sum1, v_W1, v_act1[i * 2 + 1]);
     }
 
-    return Q6_W_vcombine_VV(v_sum1, v_sum0);
+    తిరిగి Q6_W_vcombine_VV(v_sum1, v_sum0);
 }
 
-static inline HVX_VectorPair accum_4bit_32x2_lut(
-    const HVX_Vector * restrict vptr,
-    const HVX_Vector * restrict v_act0,
-    const HVX_Vector * restrict v_act1,
-    HVX_Vector mask_h4,
-    HVX_Vector lut
+స్థిర అంతఃవరుస HVX_సదిశ_Pair accum_4bit_32x2_lut(
+    స్థిరరాశి HVX_సదిశ * పరిమిత vptr,
+    స్థిరరాశి HVX_సదిశ * పరిమిత v_act0,
+    స్థిరరాశి HVX_సదిశ * పరిమిత v_act1,
+    HVX_సదిశ ముసుగు_h4,
+    HVX_సదిశ lut
 ) {
-    HVX_Vector v_sum0 = Q6_V_vzero();
-    HVX_Vector v_sum1 = Q6_V_vzero();
+    HVX_సదిశ v_sum0 = Q6_V_vzero();
+    HVX_సదిశ v_sum1 = Q6_V_vzero();
 
-    #pragma unroll
-    for (int i = 0; i < 4; i++) {
-        HVX_VectorPair v_W_pair = unpack_and_interleave_4bit_x2(vptr[i], mask_h4);
-        HVX_Vector v_W0 = Q6_Vb_vlut32_VbVbI(Q6_V_lo_W(v_W_pair), lut, 0);
-        HVX_Vector v_W1 = Q6_Vb_vlut32_VbVbI(Q6_V_hi_W(v_W_pair), lut, 0);
+    #సూచన unroll
+    కొరకు (పూర్ణాంకం i = 0; i < 4; i++) {
+        HVX_సదిశ_Pair v_W_pair = unpack_and_interleave_4bit_x2(vptr[i], ముసుగు_h4);
+        HVX_సదిశ v_W0 = Q6_Vb_vlut32_VbVbI(Q6_V_lo_W(v_W_pair), lut, 0);
+        HVX_సదిశ v_W1 = Q6_Vb_vlut32_VbVbI(Q6_V_hi_W(v_W_pair), lut, 0);
 
         v_sum0 = Q6_Vw_vrmpyacc_VwVbVb(v_sum0, v_W0, v_act0[i * 2 + 0]);
         v_sum0 = Q6_Vw_vrmpyacc_VwVbVb(v_sum0, v_W1, v_act0[i * 2 + 1]);
@@ -533,101 +533,101 @@ static inline HVX_VectorPair accum_4bit_32x2_lut(
         v_sum1 = Q6_Vw_vrmpyacc_VwVbVb(v_sum1, v_W1, v_act1[i * 2 + 1]);
     }
 
-    return Q6_W_vcombine_VV(v_sum1, v_sum0);
+    తిరిగి Q6_W_vcombine_VV(v_sum1, v_sum0);
 }
 
-static inline HVX_Vector accum_q8_0_32x1(
-    const HVX_Vector * restrict vptr,
-    const HVX_Vector * restrict v_act
+స్థిర అంతఃవరుస HVX_సదిశ accum_q8_0_32x1(
+    స్థిరరాశి HVX_సదిశ * పరిమిత vptr,
+    స్థిరరాశి HVX_సదిశ * పరిమిత v_act
 ) {
-    HVX_Vector v_sum = Q6_V_vzero();
-    #pragma unroll
-    for (int g = 0; g < 8; g++) {
-        HVX_Vector v_rot = Q6_V_vror_VR(vptr[g], 64);
-        HVX_Vector v_W = Q6_V_lo_W(Q6_W_vshuff_VVR(v_rot, vptr[g], -2));
-        v_sum = Q6_Vw_vrmpyacc_VwVbVb(v_sum, v_W, v_act[g]);
+    HVX_సదిశ v_కూడిక = Q6_V_vzero();
+    #సూచన unroll
+    కొరకు (పూర్ణాంకం g = 0; g < 8; g++) {
+        HVX_సదిశ v_rot = Q6_V_vror_VR(vptr[g], 64);
+        HVX_సదిశ v_W = Q6_V_lo_W(Q6_W_vshuff_VVR(v_rot, vptr[g], -2));
+        v_కూడిక = Q6_Vw_vrmpyacc_VwVbVb(v_కూడిక, v_W, v_act[g]);
     }
-    return v_sum;
+    తిరిగి v_కూడిక;
 }
 
-static inline HVX_VectorPair accum_q8_0_32x2(
-    const HVX_Vector * restrict vptr,
-    const HVX_Vector * restrict v_act0,
-    const HVX_Vector * restrict v_act1
+స్థిర అంతఃవరుస HVX_సదిశ_Pair accum_q8_0_32x2(
+    స్థిరరాశి HVX_సదిశ * పరిమిత vptr,
+    స్థిరరాశి HVX_సదిశ * పరిమిత v_act0,
+    స్థిరరాశి HVX_సదిశ * పరిమిత v_act1
 ) {
-    HVX_Vector v_sum0 = Q6_V_vzero();
-    HVX_Vector v_sum1 = Q6_V_vzero();
-    #pragma unroll
-    for (int g = 0; g < 8; g++) {
-        HVX_Vector v_rot = Q6_V_vror_VR(vptr[g], 64);
-        HVX_Vector v_W = Q6_V_lo_W(Q6_W_vshuff_VVR(v_rot, vptr[g], -2));
+    HVX_సదిశ v_sum0 = Q6_V_vzero();
+    HVX_సదిశ v_sum1 = Q6_V_vzero();
+    #సూచన unroll
+    కొరకు (పూర్ణాంకం g = 0; g < 8; g++) {
+        HVX_సదిశ v_rot = Q6_V_vror_VR(vptr[g], 64);
+        HVX_సదిశ v_W = Q6_V_lo_W(Q6_W_vshuff_VVR(v_rot, vptr[g], -2));
         v_sum0 = Q6_Vw_vrmpyacc_VwVbVb(v_sum0, v_W, v_act0[g]);
         v_sum1 = Q6_Vw_vrmpyacc_VwVbVb(v_sum1, v_W, v_act1[g]);
     }
-    return Q6_W_vcombine_VV(v_sum1, v_sum0);
+    తిరిగి Q6_W_vcombine_VV(v_sum1, v_sum0);
 }
 
 // Q5_K: OR 0x10 into every lane of v whose flag j is set in the plane (see HTP_TENSOR_TILE_SIZE_Q5_K)
-static inline HVX_Vector hvx_q5k_or_hibit(HVX_Vector v, HVX_Vector v_plane, int j) {
-    HVX_VectorPred q = Q6_Q_vand_VR(v_plane, 0x01010101u << j);
-    return Q6_V_vandor_VQR(v, q, 0x10101010);
+స్థిర అంతఃవరుస HVX_సదిశ hvx_q5k_or_hibit(HVX_సదిశ v, HVX_సదిశ v_plane, పూర్ణాంకం j) {
+    HVX_సదిశ_Pred q = Q6_Q_vand_VR(v_plane, 0x01010101u << j);
+    తిరిగి Q6_V_vandor_VQR(v, q, 0x10101010);
 }
 
 // 5-bit variant: the high bit comes from the plane, see hvx_q5k_or_hibit
-static inline HVX_VectorPair unpack_and_interleave_5bit_x2(HVX_Vector v_src, HVX_Vector v_plane, int i, HVX_Vector mask_h4) {
-    HVX_Vector v_lo = hvx_q5k_or_hibit(Q6_V_vand_VV(v_src, mask_h4), v_plane, 2 * i);
-    HVX_Vector v_hi = hvx_q5k_or_hibit(Q6_Vub_vlsr_VubR(v_src, 4), v_plane, 2 * i + 1);
-    HVX_VectorPair v01_pair = Q6_W_vshuff_VVR(v_hi, v_lo, -1);
-    HVX_Vector v01_lo = Q6_V_lo_W(v01_pair);
-    HVX_Vector v01_hi = Q6_V_hi_W(v01_pair);
+స్థిర అంతఃవరుస HVX_సదిశ_Pair unpack_and_interleave_5bit_x2(HVX_సదిశ v_src, HVX_సదిశ v_plane, పూర్ణాంకం i, HVX_సదిశ ముసుగు_h4) {
+    HVX_సదిశ v_lo = hvx_q5k_or_hibit(Q6_V_vand_VV(v_src, ముసుగు_h4), v_plane, 2 * i);
+    HVX_సదిశ v_hi = hvx_q5k_or_hibit(Q6_Vub_vlsr_VubR(v_src, 4), v_plane, 2 * i + 1);
+    HVX_సదిశ_Pair v01_pair = Q6_W_vshuff_VVR(v_hi, v_lo, -1);
+    HVX_సదిశ v01_lo = Q6_V_lo_W(v01_pair);
+    HVX_సదిశ v01_hi = Q6_V_hi_W(v01_pair);
 
-    HVX_Vector v23_lo = Q6_V_valign_VVR(v01_hi, v01_lo, 64);
-    HVX_Vector v_W0 = Q6_V_lo_W(Q6_W_vshuff_VVR(v23_lo, v01_lo, -2));
+    HVX_సదిశ v23_lo = Q6_V_valign_VVR(v01_hi, v01_lo, 64);
+    HVX_సదిశ v_W0 = Q6_V_lo_W(Q6_W_vshuff_VVR(v23_lo, v01_lo, -2));
 
-    HVX_Vector v67_lo = Q6_V_valign_VVR(v01_lo, v01_hi, 64);
-    HVX_Vector v_W1 = Q6_V_lo_W(Q6_W_vshuff_VVR(v67_lo, v01_hi, -2));
+    HVX_సదిశ v67_lo = Q6_V_valign_VVR(v01_lo, v01_hi, 64);
+    HVX_సదిశ v_W1 = Q6_V_lo_W(Q6_W_vshuff_VVR(v67_lo, v01_hi, -2));
 
-    return Q6_W_vcombine_VV(v_W1, v_W0);
+    తిరిగి Q6_W_vcombine_VV(v_W1, v_W0);
 }
 
-static inline HVX_Vector accum_5bit_32x1(
-    const HVX_Vector * restrict vptr,
-    const HVX_Vector * restrict v_act,
-    HVX_Vector i8
+స్థిర అంతఃవరుస HVX_సదిశ accum_5bit_32x1(
+    స్థిరరాశి HVX_సదిశ * పరిమిత vptr,
+    స్థిరరాశి HVX_సదిశ * పరిమిత v_act,
+    HVX_సదిశ i8
 ) {
-    HVX_Vector v_sum0 = Q6_V_vzero();
-    HVX_Vector v_sum1 = Q6_V_vzero();
-    HVX_Vector mask_h4 = Q6_Vb_vsplat_R(0x0F);
-    HVX_Vector v_plane = vptr[5];
+    HVX_సదిశ v_sum0 = Q6_V_vzero();
+    HVX_సదిశ v_sum1 = Q6_V_vzero();
+    HVX_సదిశ ముసుగు_h4 = Q6_Vb_vsplat_R(0x0F);
+    HVX_సదిశ v_plane = vptr[5];
 
-    #pragma unroll
-    for (int i = 0; i < 4; i++) {
-        HVX_VectorPair v_W_pair = unpack_and_interleave_5bit_x2(vptr[i], v_plane, i, mask_h4);
-        HVX_Vector v_W0 = Q6_Vb_vsub_VbVb(Q6_V_lo_W(v_W_pair), i8);
-        HVX_Vector v_W1 = Q6_Vb_vsub_VbVb(Q6_V_hi_W(v_W_pair), i8);
+    #సూచన unroll
+    కొరకు (పూర్ణాంకం i = 0; i < 4; i++) {
+        HVX_సదిశ_Pair v_W_pair = unpack_and_interleave_5bit_x2(vptr[i], v_plane, i, ముసుగు_h4);
+        HVX_సదిశ v_W0 = Q6_Vb_vsub_VbVb(Q6_V_lo_W(v_W_pair), i8);
+        HVX_సదిశ v_W1 = Q6_Vb_vsub_VbVb(Q6_V_hi_W(v_W_pair), i8);
         v_sum0 = Q6_Vw_vrmpyacc_VwVbVb(v_sum0, v_W0, v_act[i * 2 + 0]);
         v_sum1 = Q6_Vw_vrmpyacc_VwVbVb(v_sum1, v_W1, v_act[i * 2 + 1]);
     }
 
-    return Q6_Vw_vadd_VwVw(v_sum0, v_sum1);
+    తిరిగి Q6_Vw_vadd_VwVw(v_sum0, v_sum1);
 }
 
-static inline HVX_VectorPair accum_5bit_32x2(
-    const HVX_Vector * restrict vptr,
-    const HVX_Vector * restrict v_act0,
-    const HVX_Vector * restrict v_act1,
-    HVX_Vector i8
+స్థిర అంతఃవరుస HVX_సదిశ_Pair accum_5bit_32x2(
+    స్థిరరాశి HVX_సదిశ * పరిమిత vptr,
+    స్థిరరాశి HVX_సదిశ * పరిమిత v_act0,
+    స్థిరరాశి HVX_సదిశ * పరిమిత v_act1,
+    HVX_సదిశ i8
 ) {
-    HVX_Vector v_sum0 = Q6_V_vzero();
-    HVX_Vector v_sum1 = Q6_V_vzero();
-    HVX_Vector mask_h4 = Q6_Vb_vsplat_R(0x0F);
-    HVX_Vector v_plane = vptr[5];
+    HVX_సదిశ v_sum0 = Q6_V_vzero();
+    HVX_సదిశ v_sum1 = Q6_V_vzero();
+    HVX_సదిశ ముసుగు_h4 = Q6_Vb_vsplat_R(0x0F);
+    HVX_సదిశ v_plane = vptr[5];
 
-    #pragma unroll
-    for (int i = 0; i < 4; i++) {
-        HVX_VectorPair v_W_pair = unpack_and_interleave_5bit_x2(vptr[i], v_plane, i, mask_h4);
-        HVX_Vector v_W0 = Q6_Vb_vsub_VbVb(Q6_V_lo_W(v_W_pair), i8);
-        HVX_Vector v_W1 = Q6_Vb_vsub_VbVb(Q6_V_hi_W(v_W_pair), i8);
+    #సూచన unroll
+    కొరకు (పూర్ణాంకం i = 0; i < 4; i++) {
+        HVX_సదిశ_Pair v_W_pair = unpack_and_interleave_5bit_x2(vptr[i], v_plane, i, ముసుగు_h4);
+        HVX_సదిశ v_W0 = Q6_Vb_vsub_VbVb(Q6_V_lo_W(v_W_pair), i8);
+        HVX_సదిశ v_W1 = Q6_Vb_vsub_VbVb(Q6_V_hi_W(v_W_pair), i8);
 
         v_sum0 = Q6_Vw_vrmpyacc_VwVbVb(v_sum0, v_W0, v_act0[i * 2 + 0]);
         v_sum0 = Q6_Vw_vrmpyacc_VwVbVb(v_sum0, v_W1, v_act0[i * 2 + 1]);
@@ -636,58 +636,58 @@ static inline HVX_VectorPair accum_5bit_32x2(
         v_sum1 = Q6_Vw_vrmpyacc_VwVbVb(v_sum1, v_W1, v_act1[i * 2 + 1]);
     }
 
-    return Q6_W_vcombine_VV(v_sum1, v_sum0);
+    తిరిగి Q6_W_vcombine_VV(v_sum1, v_sum0);
 }
 
 // Q6_K weights are stored unsigned (0..63), see HTP_TENSOR_TILE_SIZE_Q6_K. Unpack k-group g of a tile to signed bytes (q - 32)
-static inline HVX_Vector unpack_q6_k_group(const HVX_Vector * restrict vptr, int g, HVX_Vector mask_0f, HVX_Vector mask_03, HVX_Vector i32) {
-    HVX_Vector v_lo = (g & 1) ? Q6_Vub_vlsr_VubR(vptr[g >> 1], 4) : Q6_V_vand_VV(vptr[g >> 1], mask_0f);
-    HVX_Vector v_hi = (g & 3) ? Q6_Vub_vlsr_VubR(vptr[4 + (g >> 2)], 2 * (g & 3)) : vptr[4 + (g >> 2)];
-    HVX_Vector v_q  = Q6_V_vor_VV(v_lo, Q6_Vw_vasl_VwR(Q6_V_vand_VV(v_hi, mask_03), 4));
-    return Q6_Vb_vsub_VbVb(v_q, i32);
+స్థిర అంతఃవరుస HVX_సదిశ unpack_q6_k_సమూహం(స్థిరరాశి HVX_సదిశ * పరిమిత vptr, పూర్ణాంకం g, HVX_సదిశ ముసుగు_0f, HVX_సదిశ ముసుగు_03, HVX_సదిశ i32) {
+    HVX_సదిశ v_lo = (g & 1) ? Q6_Vub_vlsr_VubR(vptr[g >> 1], 4) : Q6_V_vand_VV(vptr[g >> 1], ముసుగు_0f);
+    HVX_సదిశ v_hi = (g & 3) ? Q6_Vub_vlsr_VubR(vptr[4 + (g >> 2)], 2 * (g & 3)) : vptr[4 + (g >> 2)];
+    HVX_సదిశ v_q  = Q6_V_vor_VV(v_lo, Q6_Vw_vasl_VwR(Q6_V_vand_VV(v_hi, ముసుగు_03), 4));
+    తిరిగి Q6_Vb_vsub_VbVb(v_q, i32);
 }
 
 // k 0..15 and k 16..31 of a Q6_K tile have different scales: lo half of the pair sums k 0..15, hi half sums k 16..31
-static inline HVX_VectorPair accum_q6_k_32x1(
-    const HVX_Vector * restrict vptr,
-    const HVX_Vector * restrict v_act,
-    HVX_Vector i32
+స్థిర అంతఃవరుస HVX_సదిశ_Pair accum_q6_k_32x1(
+    స్థిరరాశి HVX_సదిశ * పరిమిత vptr,
+    స్థిరరాశి HVX_సదిశ * పరిమిత v_act,
+    HVX_సదిశ i32
 ) {
-    HVX_Vector v_sum_lo = Q6_V_vzero();
-    HVX_Vector v_sum_hi = Q6_V_vzero();
-    HVX_Vector mask_0f = Q6_Vb_vsplat_R(0x0F);
-    HVX_Vector mask_03 = Q6_Vb_vsplat_R(0x03);
+    HVX_సదిశ v_కూడిక_lo = Q6_V_vzero();
+    HVX_సదిశ v_కూడిక_hi = Q6_V_vzero();
+    HVX_సదిశ ముసుగు_0f = Q6_Vb_vsplat_R(0x0F);
+    HVX_సదిశ ముసుగు_03 = Q6_Vb_vsplat_R(0x03);
 
-    #pragma unroll
-    for (int g = 0; g < 4; g++) {
-        HVX_Vector v_W_lo = unpack_q6_k_group(vptr, g,     mask_0f, mask_03, i32);
-        HVX_Vector v_W_hi = unpack_q6_k_group(vptr, g + 4, mask_0f, mask_03, i32);
-        v_sum_lo = Q6_Vw_vrmpyacc_VwVbVb(v_sum_lo, v_W_lo, v_act[g]);
-        v_sum_hi = Q6_Vw_vrmpyacc_VwVbVb(v_sum_hi, v_W_hi, v_act[g + 4]);
+    #సూచన unroll
+    కొరకు (పూర్ణాంకం g = 0; g < 4; g++) {
+        HVX_సదిశ v_W_lo = unpack_q6_k_సమూహం(vptr, g,     ముసుగు_0f, ముసుగు_03, i32);
+        HVX_సదిశ v_W_hi = unpack_q6_k_సమూహం(vptr, g + 4, ముసుగు_0f, ముసుగు_03, i32);
+        v_కూడిక_lo = Q6_Vw_vrmpyacc_VwVbVb(v_కూడిక_lo, v_W_lo, v_act[g]);
+        v_కూడిక_hi = Q6_Vw_vrmpyacc_VwVbVb(v_కూడిక_hi, v_W_hi, v_act[g + 4]);
     }
 
-    return Q6_W_vcombine_VV(v_sum_hi, v_sum_lo);
+    తిరిగి Q6_W_vcombine_VV(v_కూడిక_hi, v_కూడిక_lo);
 }
 
-static inline void accum_q6_k_32x2(
-    const HVX_Vector * restrict vptr,
-    const HVX_Vector * restrict v_act0,
-    const HVX_Vector * restrict v_act1,
-    HVX_Vector i32,
-    HVX_VectorPair * v_sums0,
-    HVX_VectorPair * v_sums1
+స్థిర అంతఃవరుస శూన్య accum_q6_k_32x2(
+    స్థిరరాశి HVX_సదిశ * పరిమిత vptr,
+    స్థిరరాశి HVX_సదిశ * పరిమిత v_act0,
+    స్థిరరాశి HVX_సదిశ * పరిమిత v_act1,
+    HVX_సదిశ i32,
+    HVX_సదిశ_Pair * v_sums0,
+    HVX_సదిశ_Pair * v_sums1
 ) {
-    HVX_Vector v_sum0_lo = Q6_V_vzero();
-    HVX_Vector v_sum0_hi = Q6_V_vzero();
-    HVX_Vector v_sum1_lo = Q6_V_vzero();
-    HVX_Vector v_sum1_hi = Q6_V_vzero();
-    HVX_Vector mask_0f = Q6_Vb_vsplat_R(0x0F);
-    HVX_Vector mask_03 = Q6_Vb_vsplat_R(0x03);
+    HVX_సదిశ v_sum0_lo = Q6_V_vzero();
+    HVX_సదిశ v_sum0_hi = Q6_V_vzero();
+    HVX_సదిశ v_sum1_lo = Q6_V_vzero();
+    HVX_సదిశ v_sum1_hi = Q6_V_vzero();
+    HVX_సదిశ ముసుగు_0f = Q6_Vb_vsplat_R(0x0F);
+    HVX_సదిశ ముసుగు_03 = Q6_Vb_vsplat_R(0x03);
 
-    #pragma unroll
-    for (int g = 0; g < 4; g++) {
-        HVX_Vector v_W_lo = unpack_q6_k_group(vptr, g,     mask_0f, mask_03, i32);
-        HVX_Vector v_W_hi = unpack_q6_k_group(vptr, g + 4, mask_0f, mask_03, i32);
+    #సూచన unroll
+    కొరకు (పూర్ణాంకం g = 0; g < 4; g++) {
+        HVX_సదిశ v_W_lo = unpack_q6_k_సమూహం(vptr, g,     ముసుగు_0f, ముసుగు_03, i32);
+        HVX_సదిశ v_W_hi = unpack_q6_k_సమూహం(vptr, g + 4, ముసుగు_0f, ముసుగు_03, i32);
         v_sum0_lo = Q6_Vw_vrmpyacc_VwVbVb(v_sum0_lo, v_W_lo, v_act0[g]);
         v_sum0_hi = Q6_Vw_vrmpyacc_VwVbVb(v_sum0_hi, v_W_hi, v_act0[g + 4]);
         v_sum1_lo = Q6_Vw_vrmpyacc_VwVbVb(v_sum1_lo, v_W_lo, v_act1[g]);
@@ -699,68 +699,68 @@ static inline void accum_q6_k_32x2(
 }
 
 // scale the two half sums with the per-row tile scales (v_scale_w = vptr[6]) and the activation scale
-static inline HVX_Vector scale_q6_k_32x1(HVX_VectorPair v_sums, HVX_Vector v_scale_w, HVX_Vector v_scale_a) {
-    HVX_VectorPair v_scale = hvx_vec_mul_f16_f16_to_f32_pair(v_scale_w, v_scale_a);
-    HVX_Vector v_lo = hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vw(Q6_V_lo_W(v_sums)), Q6_V_lo_W(v_scale));
-    HVX_Vector v_hi = hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vw(Q6_V_hi_W(v_sums)), Q6_V_hi_W(v_scale));
-    return hvx_vec_add_f32_f32(v_lo, v_hi);
+స్థిర అంతఃవరుస HVX_సదిశ scale_q6_k_32x1(HVX_సదిశ_Pair v_sums, HVX_సదిశ v_scale_w, HVX_సదిశ v_scale_a) {
+    HVX_సదిశ_Pair v_scale = hvx_vec_mul_f16_f16_గమ్యం_f32_pair(v_scale_w, v_scale_a);
+    HVX_సదిశ v_lo = hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vw(Q6_V_lo_W(v_sums)), Q6_V_lo_W(v_scale));
+    HVX_సదిశ v_hi = hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vw(Q6_V_hi_W(v_sums)), Q6_V_hi_W(v_scale));
+    తిరిగి hvx_vec_కూడు_f32_f32(v_lo, v_hi);
 }
 
 // Q3_K / Q2_K: low 2 bits of k-group g, see HTP_TENSOR_TILE_SIZE_Q3_K
-static inline HVX_Vector unpack_q3_k_low2(const HVX_Vector * restrict vptr, int g, HVX_Vector mask_03) {
-    HVX_Vector v = vptr[g >> 2];
-    if ((g & 3) == 3) {
-        return Q6_Vub_vlsr_VubR(v, 6);
+స్థిర అంతఃవరుస HVX_సదిశ unpack_q3_k_low2(స్థిరరాశి HVX_సదిశ * పరిమిత vptr, పూర్ణాంకం g, HVX_సదిశ ముసుగు_03) {
+    HVX_సదిశ v = vptr[g >> 2];
+    ఒకవేళ ((g & 3) == 3) {
+        తిరిగి Q6_Vub_vlsr_VubR(v, 6);
     }
-    if (g & 3) {
+    ఒకవేళ (g & 3) {
         v = Q6_Vub_vlsr_VubR(v, 2 * (g & 3));
     }
-    return Q6_V_vand_VV(v, mask_03);
+    తిరిగి Q6_V_vand_VV(v, ముసుగు_03);
 }
 
 // Q3_K k-group g as signed bytes: low2 | 0xFC (= low2 - 4) where bit g of vector 2 is set
-static inline HVX_Vector unpack_q3_k_group(const HVX_Vector * restrict vptr, int g, HVX_Vector mask_03) {
-    HVX_VectorPred q_neg = Q6_Q_vand_VR(vptr[2], 0x01010101u << g);
-    return Q6_V_vandor_VQR(unpack_q3_k_low2(vptr, g, mask_03), q_neg, 0xFCFCFCFC);
+స్థిర అంతఃవరుస HVX_సదిశ unpack_q3_k_సమూహం(స్థిరరాశి HVX_సదిశ * పరిమిత vptr, పూర్ణాంకం g, HVX_సదిశ ముసుగు_03) {
+    HVX_సదిశ_Pred q_neg = Q6_Q_vand_VR(vptr[2], 0x01010101u << g);
+    తిరిగి Q6_V_vandor_VQR(unpack_q3_k_low2(vptr, g, ముసుగు_03), q_neg, 0xFCFCFCFC);
 }
 
 // same half split as accum_q6_k_32x1
-static inline HVX_VectorPair accum_q3_k_32x1(
-    const HVX_Vector * restrict vptr,
-    const HVX_Vector * restrict v_act
+స్థిర అంతఃవరుస HVX_సదిశ_Pair accum_q3_k_32x1(
+    స్థిరరాశి HVX_సదిశ * పరిమిత vptr,
+    స్థిరరాశి HVX_సదిశ * పరిమిత v_act
 ) {
-    HVX_Vector v_sum_lo = Q6_V_vzero();
-    HVX_Vector v_sum_hi = Q6_V_vzero();
-    HVX_Vector mask_03  = Q6_Vb_vsplat_R(0x03);
+    HVX_సదిశ v_కూడిక_lo = Q6_V_vzero();
+    HVX_సదిశ v_కూడిక_hi = Q6_V_vzero();
+    HVX_సదిశ ముసుగు_03  = Q6_Vb_vsplat_R(0x03);
 
-    #pragma unroll
-    for (int g = 0; g < 4; g++) {
-        HVX_Vector v_W_lo = unpack_q3_k_group(vptr, g,     mask_03);
-        HVX_Vector v_W_hi = unpack_q3_k_group(vptr, g + 4, mask_03);
-        v_sum_lo = Q6_Vw_vrmpyacc_VwVbVb(v_sum_lo, v_W_lo, v_act[g]);
-        v_sum_hi = Q6_Vw_vrmpyacc_VwVbVb(v_sum_hi, v_W_hi, v_act[g + 4]);
+    #సూచన unroll
+    కొరకు (పూర్ణాంకం g = 0; g < 4; g++) {
+        HVX_సదిశ v_W_lo = unpack_q3_k_సమూహం(vptr, g,     ముసుగు_03);
+        HVX_సదిశ v_W_hi = unpack_q3_k_సమూహం(vptr, g + 4, ముసుగు_03);
+        v_కూడిక_lo = Q6_Vw_vrmpyacc_VwVbVb(v_కూడిక_lo, v_W_lo, v_act[g]);
+        v_కూడిక_hi = Q6_Vw_vrmpyacc_VwVbVb(v_కూడిక_hi, v_W_hi, v_act[g + 4]);
     }
 
-    return Q6_W_vcombine_VV(v_sum_hi, v_sum_lo);
+    తిరిగి Q6_W_vcombine_VV(v_కూడిక_hi, v_కూడిక_lo);
 }
 
-static inline void accum_q3_k_32x2(
-    const HVX_Vector * restrict vptr,
-    const HVX_Vector * restrict v_act0,
-    const HVX_Vector * restrict v_act1,
-    HVX_VectorPair * v_sums0,
-    HVX_VectorPair * v_sums1
+స్థిర అంతఃవరుస శూన్య accum_q3_k_32x2(
+    స్థిరరాశి HVX_సదిశ * పరిమిత vptr,
+    స్థిరరాశి HVX_సదిశ * పరిమిత v_act0,
+    స్థిరరాశి HVX_సదిశ * పరిమిత v_act1,
+    HVX_సదిశ_Pair * v_sums0,
+    HVX_సదిశ_Pair * v_sums1
 ) {
-    HVX_Vector v_sum0_lo = Q6_V_vzero();
-    HVX_Vector v_sum0_hi = Q6_V_vzero();
-    HVX_Vector v_sum1_lo = Q6_V_vzero();
-    HVX_Vector v_sum1_hi = Q6_V_vzero();
-    HVX_Vector mask_03   = Q6_Vb_vsplat_R(0x03);
+    HVX_సదిశ v_sum0_lo = Q6_V_vzero();
+    HVX_సదిశ v_sum0_hi = Q6_V_vzero();
+    HVX_సదిశ v_sum1_lo = Q6_V_vzero();
+    HVX_సదిశ v_sum1_hi = Q6_V_vzero();
+    HVX_సదిశ ముసుగు_03   = Q6_Vb_vsplat_R(0x03);
 
-    #pragma unroll
-    for (int g = 0; g < 4; g++) {
-        HVX_Vector v_W_lo = unpack_q3_k_group(vptr, g,     mask_03);
-        HVX_Vector v_W_hi = unpack_q3_k_group(vptr, g + 4, mask_03);
+    #సూచన unroll
+    కొరకు (పూర్ణాంకం g = 0; g < 4; g++) {
+        HVX_సదిశ v_W_lo = unpack_q3_k_సమూహం(vptr, g,     ముసుగు_03);
+        HVX_సదిశ v_W_hi = unpack_q3_k_సమూహం(vptr, g + 4, ముసుగు_03);
         v_sum0_lo = Q6_Vw_vrmpyacc_VwVbVb(v_sum0_lo, v_W_lo, v_act0[g]);
         v_sum0_hi = Q6_Vw_vrmpyacc_VwVbVb(v_sum0_hi, v_W_hi, v_act0[g + 4]);
         v_sum1_lo = Q6_Vw_vrmpyacc_VwVbVb(v_sum1_lo, v_W_lo, v_act1[g]);
@@ -772,42 +772,42 @@ static inline void accum_q3_k_32x2(
 }
 
 // Q2_K: the Q3_K dot products without the -4 flags, scales and mins are applied in q2_k_int_accum
-static inline HVX_VectorPair accum_q2_k_32x1(
-    const HVX_Vector * restrict vptr,
-    const HVX_Vector * restrict v_act
+స్థిర అంతఃవరుస HVX_సదిశ_Pair accum_q2_k_32x1(
+    స్థిరరాశి HVX_సదిశ * పరిమిత vptr,
+    స్థిరరాశి HVX_సదిశ * పరిమిత v_act
 ) {
-    HVX_Vector v_sum_lo = Q6_V_vzero();
-    HVX_Vector v_sum_hi = Q6_V_vzero();
-    HVX_Vector mask_03  = Q6_Vb_vsplat_R(0x03);
+    HVX_సదిశ v_కూడిక_lo = Q6_V_vzero();
+    HVX_సదిశ v_కూడిక_hi = Q6_V_vzero();
+    HVX_సదిశ ముసుగు_03  = Q6_Vb_vsplat_R(0x03);
 
-    #pragma unroll
-    for (int g = 0; g < 4; g++) {
-        HVX_Vector v_W_lo = unpack_q3_k_low2(vptr, g,     mask_03);
-        HVX_Vector v_W_hi = unpack_q3_k_low2(vptr, g + 4, mask_03);
-        v_sum_lo = Q6_Vw_vrmpyacc_VwVbVb(v_sum_lo, v_W_lo, v_act[g]);
-        v_sum_hi = Q6_Vw_vrmpyacc_VwVbVb(v_sum_hi, v_W_hi, v_act[g + 4]);
+    #సూచన unroll
+    కొరకు (పూర్ణాంకం g = 0; g < 4; g++) {
+        HVX_సదిశ v_W_lo = unpack_q3_k_low2(vptr, g,     ముసుగు_03);
+        HVX_సదిశ v_W_hi = unpack_q3_k_low2(vptr, g + 4, ముసుగు_03);
+        v_కూడిక_lo = Q6_Vw_vrmpyacc_VwVbVb(v_కూడిక_lo, v_W_lo, v_act[g]);
+        v_కూడిక_hi = Q6_Vw_vrmpyacc_VwVbVb(v_కూడిక_hi, v_W_hi, v_act[g + 4]);
     }
 
-    return Q6_W_vcombine_VV(v_sum_hi, v_sum_lo);
+    తిరిగి Q6_W_vcombine_VV(v_కూడిక_hi, v_కూడిక_lo);
 }
 
-static inline void accum_q2_k_32x2(
-    const HVX_Vector * restrict vptr,
-    const HVX_Vector * restrict v_act0,
-    const HVX_Vector * restrict v_act1,
-    HVX_VectorPair * v_sums0,
-    HVX_VectorPair * v_sums1
+స్థిర అంతఃవరుస శూన్య accum_q2_k_32x2(
+    స్థిరరాశి HVX_సదిశ * పరిమిత vptr,
+    స్థిరరాశి HVX_సదిశ * పరిమిత v_act0,
+    స్థిరరాశి HVX_సదిశ * పరిమిత v_act1,
+    HVX_సదిశ_Pair * v_sums0,
+    HVX_సదిశ_Pair * v_sums1
 ) {
-    HVX_Vector v_sum0_lo = Q6_V_vzero();
-    HVX_Vector v_sum0_hi = Q6_V_vzero();
-    HVX_Vector v_sum1_lo = Q6_V_vzero();
-    HVX_Vector v_sum1_hi = Q6_V_vzero();
-    HVX_Vector mask_03   = Q6_Vb_vsplat_R(0x03);
+    HVX_సదిశ v_sum0_lo = Q6_V_vzero();
+    HVX_సదిశ v_sum0_hi = Q6_V_vzero();
+    HVX_సదిశ v_sum1_lo = Q6_V_vzero();
+    HVX_సదిశ v_sum1_hi = Q6_V_vzero();
+    HVX_సదిశ ముసుగు_03   = Q6_Vb_vsplat_R(0x03);
 
-    #pragma unroll
-    for (int g = 0; g < 4; g++) {
-        HVX_Vector v_W_lo = unpack_q3_k_low2(vptr, g,     mask_03);
-        HVX_Vector v_W_hi = unpack_q3_k_low2(vptr, g + 4, mask_03);
+    #సూచన unroll
+    కొరకు (పూర్ణాంకం g = 0; g < 4; g++) {
+        HVX_సదిశ v_W_lo = unpack_q3_k_low2(vptr, g,     ముసుగు_03);
+        HVX_సదిశ v_W_hi = unpack_q3_k_low2(vptr, g + 4, ముసుగు_03);
         v_sum0_lo = Q6_Vw_vrmpyacc_VwVbVb(v_sum0_lo, v_W_lo, v_act0[g]);
         v_sum0_hi = Q6_Vw_vrmpyacc_VwVbVb(v_sum0_hi, v_W_hi, v_act0[g + 4]);
         v_sum1_lo = Q6_Vw_vrmpyacc_VwVbVb(v_sum1_lo, v_W_lo, v_act1[g]);
@@ -819,42 +819,42 @@ static inline void accum_q2_k_32x2(
 }
 
 // Q2_0: unsigned codes 0..3; the -1 offset is applied via the Q8_1 block sum (v_act[9])
-static inline HVX_Vector accum_q2_0_32x1(
-    const HVX_Vector * restrict vptr,
-    const HVX_Vector * restrict v_act
+స్థిర అంతఃవరుస HVX_సదిశ accum_q2_0_32x1(
+    స్థిరరాశి HVX_సదిశ * పరిమిత vptr,
+    స్థిరరాశి HVX_సదిశ * పరిమిత v_act
 ) {
-    HVX_Vector v_sum_lo = Q6_V_vzero();
-    HVX_Vector v_sum_hi = Q6_V_vzero();
-    HVX_Vector mask_03  = Q6_Vb_vsplat_R(0x03);
+    HVX_సదిశ v_కూడిక_lo = Q6_V_vzero();
+    HVX_సదిశ v_కూడిక_hi = Q6_V_vzero();
+    HVX_సదిశ ముసుగు_03  = Q6_Vb_vsplat_R(0x03);
 
-    #pragma unroll
-    for (int g = 0; g < 4; g++) {
-        HVX_Vector v_W_lo = unpack_q3_k_low2(vptr, g,     mask_03);
-        HVX_Vector v_W_hi = unpack_q3_k_low2(vptr, g + 4, mask_03);
-        v_sum_lo = Q6_Vw_vrmpyacc_VwVubVb(v_sum_lo, v_W_lo, v_act[g]);
-        v_sum_hi = Q6_Vw_vrmpyacc_VwVubVb(v_sum_hi, v_W_hi, v_act[g + 4]);
+    #సూచన unroll
+    కొరకు (పూర్ణాంకం g = 0; g < 4; g++) {
+        HVX_సదిశ v_W_lo = unpack_q3_k_low2(vptr, g,     ముసుగు_03);
+        HVX_సదిశ v_W_hi = unpack_q3_k_low2(vptr, g + 4, ముసుగు_03);
+        v_కూడిక_lo = Q6_Vw_vrmpyacc_VwVubVb(v_కూడిక_lo, v_W_lo, v_act[g]);
+        v_కూడిక_hi = Q6_Vw_vrmpyacc_VwVubVb(v_కూడిక_hi, v_W_hi, v_act[g + 4]);
     }
 
-    return Q6_Vw_vadd_VwVw(v_sum_lo, v_sum_hi);
+    తిరిగి Q6_Vw_vadd_VwVw(v_కూడిక_lo, v_కూడిక_hi);
 }
 
-static inline void accum_q2_0_32x2(
-    const HVX_Vector * restrict vptr,
-    const HVX_Vector * restrict v_act0,
-    const HVX_Vector * restrict v_act1,
-    HVX_Vector * v_sum0,
-    HVX_Vector * v_sum1
+స్థిర అంతఃవరుస శూన్య accum_q2_0_32x2(
+    స్థిరరాశి HVX_సదిశ * పరిమిత vptr,
+    స్థిరరాశి HVX_సదిశ * పరిమిత v_act0,
+    స్థిరరాశి HVX_సదిశ * పరిమిత v_act1,
+    HVX_సదిశ * v_sum0,
+    HVX_సదిశ * v_sum1
 ) {
-    HVX_Vector v_sum0_lo = Q6_V_vzero();
-    HVX_Vector v_sum0_hi = Q6_V_vzero();
-    HVX_Vector v_sum1_lo = Q6_V_vzero();
-    HVX_Vector v_sum1_hi = Q6_V_vzero();
-    HVX_Vector mask_03   = Q6_Vb_vsplat_R(0x03);
+    HVX_సదిశ v_sum0_lo = Q6_V_vzero();
+    HVX_సదిశ v_sum0_hi = Q6_V_vzero();
+    HVX_సదిశ v_sum1_lo = Q6_V_vzero();
+    HVX_సదిశ v_sum1_hi = Q6_V_vzero();
+    HVX_సదిశ ముసుగు_03   = Q6_Vb_vsplat_R(0x03);
 
-    #pragma unroll
-    for (int g = 0; g < 4; g++) {
-        HVX_Vector v_W_lo = unpack_q3_k_low2(vptr, g,     mask_03);
-        HVX_Vector v_W_hi = unpack_q3_k_low2(vptr, g + 4, mask_03);
+    #సూచన unroll
+    కొరకు (పూర్ణాంకం g = 0; g < 4; g++) {
+        HVX_సదిశ v_W_lo = unpack_q3_k_low2(vptr, g,     ముసుగు_03);
+        HVX_సదిశ v_W_hi = unpack_q3_k_low2(vptr, g + 4, ముసుగు_03);
         v_sum0_lo = Q6_Vw_vrmpyacc_VwVubVb(v_sum0_lo, v_W_lo, v_act0[g]);
         v_sum0_hi = Q6_Vw_vrmpyacc_VwVubVb(v_sum0_hi, v_W_hi, v_act0[g + 4]);
         v_sum1_lo = Q6_Vw_vrmpyacc_VwVubVb(v_sum1_lo, v_W_lo, v_act1[g]);
@@ -866,1234 +866,1234 @@ static inline void accum_q2_0_32x2(
 }
 
 // Q2_K: fp16 d (*v_d) and -dmin (*v_m) of the 32 rows of a super-block (8 tiles, VTCM stride 384), each in both vector halves
-static inline void q2_k_load_dmin(const uint8_t * restrict sb, HVX_Vector * restrict v_d, HVX_Vector * restrict v_m) {
-    HVX_Vector v_dd = Q6_V_vzero();  // lanes 0..31: d, lanes 32..63: -dmin
+స్థిర అంతఃవరుస శూన్య q2_k_ఎక్కించు_dmin(స్థిరరాశి uint8_t * పరిమిత sb, HVX_సదిశ * పరిమిత v_d, HVX_సదిశ * పరిమిత v_m) {
+    HVX_సదిశ v_dd = Q6_V_vzero();  // lanes 0..31: d, lanes 32..63: -dmin
 
-    #pragma unroll
-    for (int j = 0; j < 8; j++) {
-        HVX_Vector v = hvx_vmem(sb + j * 384 + 256);  // the slice is at bytes 64..79
+    #సూచన unroll
+    కొరకు (పూర్ణాంకం j = 0; j < 8; j++) {
+        HVX_సదిశ v = hvx_vmem(sb + j * 384 + 256);  // the slice is at bytes 64..79
         v_dd = Q6_V_vmux_QVV(Q6_Q_vsetq_R(16 * j), v_dd, Q6_V_vror_VR(v, (64 - 16 * j) & 127));
     }
 
-    HVX_VectorPred q_lo = Q6_Q_vsetq_R(64);
-    HVX_Vector     v_r  = Q6_V_vror_VR(v_dd, 64);
+    HVX_సదిశ_Pred q_lo = Q6_Q_vsetq_R(64);
+    HVX_సదిశ     v_r  = Q6_V_vror_VR(v_dd, 64);
     *v_d = Q6_V_vmux_QVV(q_lo, v_dd, v_r);
     *v_m = Q6_V_vmux_QVV(q_lo, v_r, v_dd);
 }
 
 // Q2_K: fp16 D = d * scale and M = -dmin * min of a tile from its scale bytes, in the lanes of the Q6_K scales
-static inline void q2_k_unpack_scales(const uint8_t * restrict tile, HVX_Vector v_d, HVX_Vector v_m,
-                                      HVX_Vector * restrict v_D, HVX_Vector * restrict v_M) {
-    HVX_Vector v_sc = hvx_vmem(tile + 256);
-    HVX_Vector v_l  = Q6_V_lo_W(Q6_Wuh_vunpack_Vub(Q6_V_vand_VV(v_sc, Q6_Vb_vsplat_R(0x0F))));
-    HVX_Vector v_mn = Q6_V_lo_W(Q6_Wuh_vunpack_Vub(Q6_Vub_vlsr_VubR(v_sc, 4)));
+స్థిర అంతఃవరుస శూన్య q2_k_unpack_scales(స్థిరరాశి uint8_t * పరిమిత tile, HVX_సదిశ v_d, HVX_సదిశ v_m,
+                                      HVX_సదిశ * పరిమిత v_D, HVX_సదిశ * పరిమిత v_M) {
+    HVX_సదిశ v_sc = hvx_vmem(tile + 256);
+    HVX_సదిశ v_l  = Q6_V_lo_W(Q6_Wuh_vunpack_Vub(Q6_V_vand_VV(v_sc, Q6_Vb_vsplat_R(0x0F))));
+    HVX_సదిశ v_mn = Q6_V_lo_W(Q6_Wuh_vunpack_Vub(Q6_Vub_vlsr_VubR(v_sc, 4)));
     // qf32 product: rounds like GGML_FP32_TO_FP16(d * scale) (qf16 is off by 1 ulp for many values on v73)
     *v_D = Q6_Vhf_equals_Wqf32(Q6_Wqf32_vmpy_VhfVhf(Q6_Vhf_equals_Vh(v_l), v_d));
     *v_M = Q6_Vhf_equals_Wqf32(Q6_Wqf32_vmpy_VhfVhf(Q6_Vhf_equals_Vh(v_mn), v_m));
 }
 
 // Q2_K scale and min nibbles of a tile as halfword pairs: word r = sub-block 1 << 16 | sub-block 0 of row r
-static inline void q2_k_scale_pairs(const uint8_t * restrict tile, HVX_Vector * restrict v_sc2, HVX_Vector * restrict v_mn2) {
-    HVX_Vector v_h = Q6_Vh_vshuff_Vh(Q6_V_lo_W(Q6_Wuh_vunpack_Vub(hvx_vmem(tile + 256))));
+స్థిర అంతఃవరుస శూన్య q2_k_scale_జతలు(స్థిరరాశి uint8_t * పరిమిత tile, HVX_సదిశ * పరిమిత v_sc2, HVX_సదిశ * పరిమిత v_mn2) {
+    HVX_సదిశ v_h = Q6_Vh_vshuff_Vh(Q6_V_lo_W(Q6_Wuh_vunpack_Vub(hvx_vmem(tile + 256))));
     *v_sc2 = Q6_V_vand_VV(v_h, Q6_Vh_vsplat_R(0x000F));
     *v_mn2 = Q6_Vuh_vlsr_VuhR(v_h, 4);
 }
 
 // Q2_K with q8_1_s16 activations, one tile: isum += scale * (q . a), msum += min * sum(a), per row, in int32.
 // |sum of 16 q * a| <= 3 * 128 * 16 fits a halfword, so both sub-blocks go through one vdmpy (no saturation)
-static inline void q2_k_int_accum(HVX_VectorPair v_sums, HVX_Vector v_sc2, HVX_Vector v_mn2, HVX_Vector v_bsum,
-                                  HVX_Vector * restrict v_isum, HVX_Vector * restrict v_msum) {
-    HVX_Vector v_s2 = Q6_Vh_vshuffe_VhVh(Q6_V_hi_W(v_sums), Q6_V_lo_W(v_sums));
+స్థిర అంతఃవరుస శూన్య q2_k_int_accum(HVX_సదిశ_Pair v_sums, HVX_సదిశ v_sc2, HVX_సదిశ v_mn2, HVX_సదిశ v_bsum,
+                                  HVX_సదిశ * పరిమిత v_isum, HVX_సదిశ * పరిమిత v_msum) {
+    HVX_సదిశ v_s2 = Q6_Vh_vshuffe_VhVh(Q6_V_hi_W(v_sums), Q6_V_lo_W(v_sums));
     *v_isum = Q6_Vw_vadd_VwVw(*v_isum, Q6_Vw_vdmpy_VhVh_sat(v_s2, v_sc2));
     *v_msum = Q6_Vw_vadd_VwVw(*v_msum, Q6_Vw_vdmpy_VhVh_sat(v_mn2, v_bsum));
 }
 
 // Q2_K super-block result: d_a * (d * isum - dmin * msum), with v_d / v_m the fp16 d / -dmin of q2_k_load_dmin
-static inline HVX_Vector q2_k_int_scale(HVX_Vector v_isum, HVX_Vector v_msum, HVX_Vector v_d, HVX_Vector v_m, HVX_Vector v_act8) {
-    HVX_Vector v_d32  = Q6_V_lo_W(hvx_vec_f16_to_f32(v_d));
-    HVX_Vector v_m32  = Q6_V_lo_W(hvx_vec_f16_to_f32(v_m));
-    HVX_Vector v_da32 = Q6_V_lo_W(hvx_vec_f16_to_f32(v_act8));
-    HVX_Vector v_t = hvx_vec_add_f32_f32(hvx_vec_mul_f32_f32(v_d32, Q6_Vsf_equals_Vw(v_isum)),
+స్థిర అంతఃవరుస HVX_సదిశ q2_k_int_scale(HVX_సదిశ v_isum, HVX_సదిశ v_msum, HVX_సదిశ v_d, HVX_సదిశ v_m, HVX_సదిశ v_act8) {
+    HVX_సదిశ v_d32  = Q6_V_lo_W(hvx_vec_f16_గమ్యం_f32(v_d));
+    HVX_సదిశ v_m32  = Q6_V_lo_W(hvx_vec_f16_గమ్యం_f32(v_m));
+    HVX_సదిశ v_da32 = Q6_V_lo_W(hvx_vec_f16_గమ్యం_f32(v_act8));
+    HVX_సదిశ v_t = hvx_vec_కూడు_f32_f32(hvx_vec_mul_f32_f32(v_d32, Q6_Vsf_equals_Vw(v_isum)),
                                          hvx_vec_mul_f32_f32(v_m32, Q6_Vsf_equals_Vw(v_msum)));
-    return hvx_vec_mul_f32_f32(v_t, v_da32);
+    తిరిగి hvx_vec_mul_f32_f32(v_t, v_da32);
 }
 
-static void tiled_vec_dot_q1_0_32x1(const uint32_t n, float * restrict s, const void * restrict vx, const void * restrict vy, uint32_t valid_rows, const float * restrict sz) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y_q = vy;
+స్థిర శూన్య tiled_vec_dot_q1_0_32x1(స్థిరరాశి uint32_t n, దశాంశం * పరిమిత s, స్థిరరాశి శూన్య * పరిమిత vx, స్థిరరాశి శూన్య * పరిమిత vy, uint32_t valid_అడ్డువరుసలు, స్థిరరాశి దశాంశం * పరిమిత sz) {
+    స్థిరరాశి uint8_t * పరిమిత tile_ptr = vx;
+    స్థిరరాశి uint8_t * పరిమిత y_q = vy;
 
-    HVX_Vector v_sum_qf  = Q6_V_vzero();
-    HVX_Vector v_neg_one = Q6_Vb_vsplat_R(-1);
-    HVX_Vector v_pos_one = Q6_Vb_vsplat_R(1);
+    HVX_సదిశ v_కూడిక_qf  = Q6_V_vzero();
+    HVX_సదిశ v_neg_one = Q6_Vb_vsplat_R(-1);
+    HVX_సదిశ v_pos_one = Q6_Vb_vsplat_R(1);
 
-    const uint32_t n_k_tiles = n / HTP_TENSOR_TILE_K_Q1_0;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * htp_tensor_get_tile_padded_size(HTP_TYPE_Q1_0));
-        HVX_Vector v_tile_qf = Q6_V_vzero();
+    స్థిరరాశి uint32_t n_k_tiles = n / HTP_TENSOR_TILE_K_Q1_0;
+    కొరకు (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        స్థిరరాశి HVX_సదిశ * పరిమిత vptr = (స్థిరరాశి HVX_సదిశ *) (tile_ptr + kt * htp_tensor_get_tile_padded_కొలత(HTP_TYPE_Q1_0));
+        HVX_సదిశ v_tile_qf = Q6_V_vzero();
 
-        #pragma unroll
-        for (int quarter = 0; quarter < 4; quarter++) {
-            const HVX_Vector * restrict v_act = (const HVX_Vector *) (y_q + (4 * kt + quarter) * HTP_MM_ACT_TILE_SIZE_Q8_0);
-            HVX_Vector v_sum_sf = Q6_Vsf_equals_Vw(accum_q1_0_32x1(vptr[quarter], v_act, v_neg_one, v_pos_one));
-            HVX_Vector v_da_sf  = Q6_V_lo_W(hvx_vec_f16_to_f32_shuff(v_act[8]));
-            HVX_Vector v_q_qf   = Q6_Vqf32_vmpy_VsfVsf(v_sum_sf, v_da_sf);
+        #సూచన unroll
+        కొరకు (పూర్ణాంకం quarter = 0; quarter < 4; quarter++) {
+            స్థిరరాశి HVX_సదిశ * పరిమిత v_act = (స్థిరరాశి HVX_సదిశ *) (y_q + (4 * kt + quarter) * HTP_MM_ACT_TILE_కొలత_Q8_0);
+            HVX_సదిశ v_కూడిక_sf = Q6_Vsf_equals_Vw(accum_q1_0_32x1(vptr[quarter], v_act, v_neg_one, v_pos_one));
+            HVX_సదిశ v_da_sf  = Q6_V_lo_W(hvx_vec_f16_గమ్యం_f32_shuff(v_act[8]));
+            HVX_సదిశ v_q_qf   = Q6_Vqf32_vmpy_VsfVsf(v_కూడిక_sf, v_da_sf);
             v_tile_qf = (quarter == 0) ? v_q_qf : Q6_Vqf32_vadd_Vqf32Vqf32(v_tile_qf, v_q_qf);
         }
 
-        HVX_Vector v_dw_sf = Q6_V_lo_W(hvx_vec_f16_to_f32(vptr[4]));
-        v_sum_qf = Q6_Vqf32_vadd_Vqf32Vqf32(v_sum_qf, Q6_Vqf32_vmpy_VsfVsf(Q6_Vsf_equals_Vqf32(v_tile_qf), v_dw_sf));
+        HVX_సదిశ v_dw_sf = Q6_V_lo_W(hvx_vec_f16_గమ్యం_f32(vptr[4]));
+        v_కూడిక_qf = Q6_Vqf32_vadd_Vqf32Vqf32(v_కూడిక_qf, Q6_Vqf32_vmpy_VsfVsf(Q6_Vsf_equals_Vqf32(v_tile_qf), v_dw_sf));
     }
 
-    HVX_Vector v_sum_float = Q6_Vsf_equals_Vqf32(v_sum_qf);
-    if (sz) {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float, hvx_vmemu(sz)));
-    } else {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), v_sum_float);
+    HVX_సదిశ v_కూడిక_float = Q6_Vsf_equals_Vqf32(v_కూడిక_qf);
+    ఒకవేళ (sz) {
+        hvx_vec_store_u(s, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_కూడిక_float, hvx_vmemu(sz)));
+    } లేకపోతే {
+        hvx_vec_store_u(s, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_కూడిక_float);
     }
 }
 
-static void tiled_vec_dot_q1_0_32x2(const uint32_t n, float * restrict s0, float * restrict s1, const void * restrict vx, const void * restrict vy0, const void * restrict vy1, uint32_t valid_rows, const float * restrict sz0, const float * restrict sz1) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y0_q = vy0;
-    const uint8_t * restrict y1_q = vy1;
+స్థిర శూన్య tiled_vec_dot_q1_0_32x2(స్థిరరాశి uint32_t n, దశాంశం * పరిమిత s0, దశాంశం * పరిమిత s1, స్థిరరాశి శూన్య * పరిమిత vx, స్థిరరాశి శూన్య * పరిమిత vy0, స్థిరరాశి శూన్య * పరిమిత vy1, uint32_t valid_అడ్డువరుసలు, స్థిరరాశి దశాంశం * పరిమిత sz0, స్థిరరాశి దశాంశం * పరిమిత sz1) {
+    స్థిరరాశి uint8_t * పరిమిత tile_ptr = vx;
+    స్థిరరాశి uint8_t * పరిమిత y0_q = vy0;
+    స్థిరరాశి uint8_t * పరిమిత y1_q = vy1;
 
-    HVX_Vector v_sum_qf_c0 = Q6_V_vzero();
-    HVX_Vector v_sum_qf_c1 = Q6_V_vzero();
-    HVX_Vector v_neg_one   = Q6_Vb_vsplat_R(-1);
-    HVX_Vector v_pos_one   = Q6_Vb_vsplat_R(1);
+    HVX_సదిశ v_కూడిక_qf_c0 = Q6_V_vzero();
+    HVX_సదిశ v_కూడిక_qf_c1 = Q6_V_vzero();
+    HVX_సదిశ v_neg_one   = Q6_Vb_vsplat_R(-1);
+    HVX_సదిశ v_pos_one   = Q6_Vb_vsplat_R(1);
 
-    const uint32_t n_k_tiles = n / HTP_TENSOR_TILE_K_Q1_0;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * htp_tensor_get_tile_padded_size(HTP_TYPE_Q1_0));
-        HVX_Vector v_tile_qf_c0 = Q6_V_vzero();
-        HVX_Vector v_tile_qf_c1 = Q6_V_vzero();
+    స్థిరరాశి uint32_t n_k_tiles = n / HTP_TENSOR_TILE_K_Q1_0;
+    కొరకు (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        స్థిరరాశి HVX_సదిశ * పరిమిత vptr = (స్థిరరాశి HVX_సదిశ *) (tile_ptr + kt * htp_tensor_get_tile_padded_కొలత(HTP_TYPE_Q1_0));
+        HVX_సదిశ v_tile_qf_c0 = Q6_V_vzero();
+        HVX_సదిశ v_tile_qf_c1 = Q6_V_vzero();
 
-        for (int quarter = 0; quarter < 4; quarter++) {
-            const uint32_t act_tile = 4 * kt + quarter;
-            const HVX_Vector * restrict v_act0 = (const HVX_Vector *) (y0_q + act_tile * HTP_MM_ACT_TILE_SIZE_Q8_0);
-            const HVX_Vector * restrict v_act1 = (const HVX_Vector *) (y1_q + act_tile * HTP_MM_ACT_TILE_SIZE_Q8_0);
-            HVX_VectorPair v_sums = accum_q1_0_32x2(vptr[quarter], v_act0, v_act1, v_neg_one, v_pos_one);
-            HVX_Vector v_sum_sf_c0 = Q6_Vsf_equals_Vw(Q6_V_lo_W(v_sums));
-            HVX_Vector v_sum_sf_c1 = Q6_Vsf_equals_Vw(Q6_V_hi_W(v_sums));
-            HVX_Vector v_da_sf_c0  = Q6_V_lo_W(hvx_vec_f16_to_f32_shuff(v_act0[8]));
-            HVX_Vector v_da_sf_c1  = Q6_V_lo_W(hvx_vec_f16_to_f32_shuff(v_act1[8]));
+        కొరకు (పూర్ణాంకం quarter = 0; quarter < 4; quarter++) {
+            స్థిరరాశి uint32_t act_tile = 4 * kt + quarter;
+            స్థిరరాశి HVX_సదిశ * పరిమిత v_act0 = (స్థిరరాశి HVX_సదిశ *) (y0_q + act_tile * HTP_MM_ACT_TILE_కొలత_Q8_0);
+            స్థిరరాశి HVX_సదిశ * పరిమిత v_act1 = (స్థిరరాశి HVX_సదిశ *) (y1_q + act_tile * HTP_MM_ACT_TILE_కొలత_Q8_0);
+            HVX_సదిశ_Pair v_sums = accum_q1_0_32x2(vptr[quarter], v_act0, v_act1, v_neg_one, v_pos_one);
+            HVX_సదిశ v_కూడిక_sf_c0 = Q6_Vsf_equals_Vw(Q6_V_lo_W(v_sums));
+            HVX_సదిశ v_కూడిక_sf_c1 = Q6_Vsf_equals_Vw(Q6_V_hi_W(v_sums));
+            HVX_సదిశ v_da_sf_c0  = Q6_V_lo_W(hvx_vec_f16_గమ్యం_f32_shuff(v_act0[8]));
+            HVX_సదిశ v_da_sf_c1  = Q6_V_lo_W(hvx_vec_f16_గమ్యం_f32_shuff(v_act1[8]));
 
-            v_tile_qf_c0 = Q6_Vqf32_vadd_Vqf32Vqf32(v_tile_qf_c0, Q6_Vqf32_vmpy_VsfVsf(v_sum_sf_c0, v_da_sf_c0));
-            v_tile_qf_c1 = Q6_Vqf32_vadd_Vqf32Vqf32(v_tile_qf_c1, Q6_Vqf32_vmpy_VsfVsf(v_sum_sf_c1, v_da_sf_c1));
+            v_tile_qf_c0 = Q6_Vqf32_vadd_Vqf32Vqf32(v_tile_qf_c0, Q6_Vqf32_vmpy_VsfVsf(v_కూడిక_sf_c0, v_da_sf_c0));
+            v_tile_qf_c1 = Q6_Vqf32_vadd_Vqf32Vqf32(v_tile_qf_c1, Q6_Vqf32_vmpy_VsfVsf(v_కూడిక_sf_c1, v_da_sf_c1));
         }
 
-        HVX_Vector v_dw_sf = Q6_V_lo_W(hvx_vec_f16_to_f32(vptr[4]));
-        v_sum_qf_c0 = Q6_Vqf32_vadd_Vqf32Vqf32(v_sum_qf_c0, Q6_Vqf32_vmpy_VsfVsf(Q6_Vsf_equals_Vqf32(v_tile_qf_c0), v_dw_sf));
-        v_sum_qf_c1 = Q6_Vqf32_vadd_Vqf32Vqf32(v_sum_qf_c1, Q6_Vqf32_vmpy_VsfVsf(Q6_Vsf_equals_Vqf32(v_tile_qf_c1), v_dw_sf));
+        HVX_సదిశ v_dw_sf = Q6_V_lo_W(hvx_vec_f16_గమ్యం_f32(vptr[4]));
+        v_కూడిక_qf_c0 = Q6_Vqf32_vadd_Vqf32Vqf32(v_కూడిక_qf_c0, Q6_Vqf32_vmpy_VsfVsf(Q6_Vsf_equals_Vqf32(v_tile_qf_c0), v_dw_sf));
+        v_కూడిక_qf_c1 = Q6_Vqf32_vadd_Vqf32Vqf32(v_కూడిక_qf_c1, Q6_Vqf32_vmpy_VsfVsf(Q6_Vsf_equals_Vqf32(v_tile_qf_c1), v_dw_sf));
     }
 
-    HVX_Vector v_sum_float_c0 = Q6_Vsf_equals_Vqf32(v_sum_qf_c0);
-    HVX_Vector v_sum_float_c1 = Q6_Vsf_equals_Vqf32(v_sum_qf_c1);
-    if (sz0) {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c0, hvx_vmemu(sz0)));
-    } else {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), v_sum_float_c0);
+    HVX_సదిశ v_కూడిక_float_c0 = Q6_Vsf_equals_Vqf32(v_కూడిక_qf_c0);
+    HVX_సదిశ v_కూడిక_float_c1 = Q6_Vsf_equals_Vqf32(v_కూడిక_qf_c1);
+    ఒకవేళ (sz0) {
+        hvx_vec_store_u(s0, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_కూడిక_float_c0, hvx_vmemu(sz0)));
+    } లేకపోతే {
+        hvx_vec_store_u(s0, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_కూడిక_float_c0);
     }
-    if (sz1) {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vmemu(sz1)));
-    } else {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), v_sum_float_c1);
-    }
-}
-
-static void tiled_vec_dot_q4_0_32x1(const uint32_t n, float * restrict s, const void * restrict vx, const void * restrict vy, uint32_t valid_rows, const float * restrict sz) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y_q = vy;
-
-    HVX_Vector v_sum_float = Q6_V_vzero();
-    HVX_Vector i8 = Q6_Vb_vsplat_R(8);
-
-    uint32_t n_k_tiles = n / 32;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * 640);
-        const HVX_Vector * restrict v_act = (const HVX_Vector *) (y_q + kt * 1152);
-
-        HVX_Vector v_sum = accum_4bit_32x1(vptr, v_act, i8);
-        HVX_Vector v_sum_sf = Q6_Vsf_equals_Vw(v_sum);
-
-        HVX_Vector v_scale_w = vptr[4];
-        HVX_Vector v_scale_a = v_act[8];
-        HVX_Vector v_scale_comb = hvx_vec_mul_f16_f16_to_f32_lower32(v_scale_w, v_scale_a);
-        HVX_Vector v_sum_scaled = hvx_vec_mul_f32_f32(v_sum_sf, v_scale_comb);
-
-        v_sum_float = hvx_vec_add_f32_f32(v_sum_float, v_sum_scaled);
-    }
-
-    if (sz) {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float, hvx_vmemu(sz)));
-    } else {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), v_sum_float);
+    ఒకవేళ (sz1) {
+        hvx_vec_store_u(s1, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_కూడిక_float_c1, hvx_vmemu(sz1)));
+    } లేకపోతే {
+        hvx_vec_store_u(s1, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_కూడిక_float_c1);
     }
 }
 
-static void tiled_vec_dot_q4_0_32x2(const uint32_t n, float * restrict s0, float * restrict s1, const void * restrict vx, const void * restrict vy0, const void * restrict vy1, uint32_t valid_rows, const float * restrict sz0, const float * restrict sz1) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y0_q = vy0;
-    const uint8_t * restrict y1_q = vy1;
+స్థిర శూన్య tiled_vec_dot_q4_0_32x1(స్థిరరాశి uint32_t n, దశాంశం * పరిమిత s, స్థిరరాశి శూన్య * పరిమిత vx, స్థిరరాశి శూన్య * పరిమిత vy, uint32_t valid_అడ్డువరుసలు, స్థిరరాశి దశాంశం * పరిమిత sz) {
+    స్థిరరాశి uint8_t * పరిమిత tile_ptr = vx;
+    స్థిరరాశి uint8_t * పరిమిత y_q = vy;
 
-    HVX_Vector v_sum_float_c0 = Q6_V_vzero();
-    HVX_Vector v_sum_float_c1 = Q6_V_vzero();
-    HVX_Vector i8 = Q6_Vb_vsplat_R(8);
+    HVX_సదిశ v_కూడిక_float = Q6_V_vzero();
+    HVX_సదిశ i8 = Q6_Vb_vsplat_R(8);
 
     uint32_t n_k_tiles = n / 32;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * 640);
-        const HVX_Vector * restrict v_act0 = (const HVX_Vector *) (y0_q + kt * 1152);
-        const HVX_Vector * restrict v_act1 = (const HVX_Vector *) (y1_q + kt * 1152);
+    కొరకు (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        స్థిరరాశి HVX_సదిశ * పరిమిత vptr = (స్థిరరాశి HVX_సదిశ *) (tile_ptr + kt * 640);
+        స్థిరరాశి HVX_సదిశ * పరిమిత v_act = (స్థిరరాశి HVX_సదిశ *) (y_q + kt * 1152);
 
-        HVX_VectorPair v_sums = accum_4bit_32x2(vptr, v_act0, v_act1, i8);
-        HVX_Vector v_sum_c0 = Q6_V_lo_W(v_sums);
-        HVX_Vector v_sum_c1 = Q6_V_hi_W(v_sums);
+        HVX_సదిశ v_కూడిక = accum_4bit_32x1(vptr, v_act, i8);
+        HVX_సదిశ v_కూడిక_sf = Q6_Vsf_equals_Vw(v_కూడిక);
 
-        HVX_Vector v_sum_sf_c0 = Q6_Vsf_equals_Vw(v_sum_c0);
-        HVX_Vector v_sum_sf_c1 = Q6_Vsf_equals_Vw(v_sum_c1);
+        HVX_సదిశ v_scale_w = vptr[4];
+        HVX_సదిశ v_scale_a = v_act[8];
+        HVX_సదిశ v_scale_comb = hvx_vec_mul_f16_f16_గమ్యం_f32_lower32(v_scale_w, v_scale_a);
+        HVX_సదిశ v_కూడిక_scaled = hvx_vec_mul_f32_f32(v_కూడిక_sf, v_scale_comb);
 
-        HVX_Vector v_scale_w = vptr[4];
-        HVX_Vector v_scale_a_c0 = v_act0[8];
-        HVX_Vector v_scale_a_c1 = v_act1[8];
-
-        HVX_Vector v_scale_comb_c0 = hvx_vec_mul_f16_f16_to_f32_lower32(v_scale_w, v_scale_a_c0);
-        HVX_Vector v_scale_comb_c1 = hvx_vec_mul_f16_f16_to_f32_lower32(v_scale_w, v_scale_a_c1);
-
-        HVX_Vector v_sum_scaled_c0 = hvx_vec_mul_f32_f32(v_sum_sf_c0, v_scale_comb_c0);
-        HVX_Vector v_sum_scaled_c1 = hvx_vec_mul_f32_f32(v_sum_sf_c1, v_scale_comb_c1);
-
-        v_sum_float_c0 = hvx_vec_add_f32_f32(v_sum_float_c0, v_sum_scaled_c0);
-        v_sum_float_c1 = hvx_vec_add_f32_f32(v_sum_float_c1, v_sum_scaled_c1);
+        v_కూడిక_float = hvx_vec_కూడు_f32_f32(v_కూడిక_float, v_కూడిక_scaled);
     }
 
-    if (sz0) {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c0, hvx_vmemu(sz0)));
-    } else {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), v_sum_float_c0);
-    }
-    if (sz1) {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vmemu(sz1)));
-    } else {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), v_sum_float_c1);
+    ఒకవేళ (sz) {
+        hvx_vec_store_u(s, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_కూడిక_float, hvx_vmemu(sz)));
+    } లేకపోతే {
+        hvx_vec_store_u(s, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_కూడిక_float);
     }
 }
 
-static void tiled_vec_dot_q4_1_32x1(const uint32_t n, float * restrict s, const void * restrict vx, const void * restrict vy, uint32_t valid_rows, const float * restrict sz) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y_q = vy;
+స్థిర శూన్య tiled_vec_dot_q4_0_32x2(స్థిరరాశి uint32_t n, దశాంశం * పరిమిత s0, దశాంశం * పరిమిత s1, స్థిరరాశి శూన్య * పరిమిత vx, స్థిరరాశి శూన్య * పరిమిత vy0, స్థిరరాశి శూన్య * పరిమిత vy1, uint32_t valid_అడ్డువరుసలు, స్థిరరాశి దశాంశం * పరిమిత sz0, స్థిరరాశి దశాంశం * పరిమిత sz1) {
+    స్థిరరాశి uint8_t * పరిమిత tile_ptr = vx;
+    స్థిరరాశి uint8_t * పరిమిత y0_q = vy0;
+    స్థిరరాశి uint8_t * పరిమిత y1_q = vy1;
 
-    HVX_Vector v_sum_float = Q6_V_vzero();
+    HVX_సదిశ v_కూడిక_float_c0 = Q6_V_vzero();
+    HVX_సదిశ v_కూడిక_float_c1 = Q6_V_vzero();
+    HVX_సదిశ i8 = Q6_Vb_vsplat_R(8);
 
     uint32_t n_k_tiles = n / 32;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * 640);
-        const HVX_Vector * restrict v_act = (const HVX_Vector *) (y_q + kt * 1280);
+    కొరకు (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        స్థిరరాశి HVX_సదిశ * పరిమిత vptr = (స్థిరరాశి HVX_సదిశ *) (tile_ptr + kt * 640);
+        స్థిరరాశి HVX_సదిశ * పరిమిత v_act0 = (స్థిరరాశి HVX_సదిశ *) (y0_q + kt * 1152);
+        స్థిరరాశి HVX_సదిశ * పరిమిత v_act1 = (స్థిరరాశి HVX_సదిశ *) (y1_q + kt * 1152);
 
-        HVX_Vector v_sum = accum_4bit_32x1(vptr, v_act, Q6_V_vzero());
-        HVX_Vector v_sum_sf = Q6_Vsf_equals_Vw(v_sum);
+        HVX_సదిశ_Pair v_sums = accum_4bit_32x2(vptr, v_act0, v_act1, i8);
+        HVX_సదిశ v_కూడిక_c0 = Q6_V_lo_W(v_sums);
+        HVX_సదిశ v_కూడిక_c1 = Q6_V_hi_W(v_sums);
 
-        HVX_Vector v_scale_offset = vptr[4];
-        HVX_VectorPair p_deal = Q6_W_vdeal_VVR(v_scale_offset, v_scale_offset, -2);
-        HVX_Vector v_scale = Q6_V_lo_W(p_deal);
-        HVX_Vector v_offset = Q6_V_hi_W(p_deal);
+        HVX_సదిశ v_కూడిక_sf_c0 = Q6_Vsf_equals_Vw(v_కూడిక_c0);
+        HVX_సదిశ v_కూడిక_sf_c1 = Q6_Vsf_equals_Vw(v_కూడిక_c1);
 
-        HVX_Vector v_scale_a = v_act[8];
-        HVX_Vector v_sum_a   = v_act[9];
+        HVX_సదిశ v_scale_w = vptr[4];
+        HVX_సదిశ v_scale_a_c0 = v_act0[8];
+        HVX_సదిశ v_scale_a_c1 = v_act1[8];
 
-        HVX_Vector v_scale_comb = hvx_vec_mul_f16_f16_to_f32_lower32(v_scale, v_scale_a);
-        HVX_Vector v_offset_comb = hvx_vec_mul_f16_f16_to_f32_lower32(v_offset, v_sum_a);
+        HVX_సదిశ v_scale_comb_c0 = hvx_vec_mul_f16_f16_గమ్యం_f32_lower32(v_scale_w, v_scale_a_c0);
+        HVX_సదిశ v_scale_comb_c1 = hvx_vec_mul_f16_f16_గమ్యం_f32_lower32(v_scale_w, v_scale_a_c1);
 
-        HVX_Vector v_scaled_dot = hvx_vec_mul_f32_f32(v_sum_sf, v_scale_comb);
-        HVX_Vector v_sum_scaled = hvx_vec_add_f32_f32(v_scaled_dot, v_offset_comb);
+        HVX_సదిశ v_కూడిక_scaled_c0 = hvx_vec_mul_f32_f32(v_కూడిక_sf_c0, v_scale_comb_c0);
+        HVX_సదిశ v_కూడిక_scaled_c1 = hvx_vec_mul_f32_f32(v_కూడిక_sf_c1, v_scale_comb_c1);
 
-        v_sum_float = hvx_vec_add_f32_f32(v_sum_float, v_sum_scaled);
+        v_కూడిక_float_c0 = hvx_vec_కూడు_f32_f32(v_కూడిక_float_c0, v_కూడిక_scaled_c0);
+        v_కూడిక_float_c1 = hvx_vec_కూడు_f32_f32(v_కూడిక_float_c1, v_కూడిక_scaled_c1);
     }
 
-    if (sz) {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float, hvx_vmemu(sz)));
-    } else {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), v_sum_float);
+    ఒకవేళ (sz0) {
+        hvx_vec_store_u(s0, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_కూడిక_float_c0, hvx_vmemu(sz0)));
+    } లేకపోతే {
+        hvx_vec_store_u(s0, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_కూడిక_float_c0);
+    }
+    ఒకవేళ (sz1) {
+        hvx_vec_store_u(s1, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_కూడిక_float_c1, hvx_vmemu(sz1)));
+    } లేకపోతే {
+        hvx_vec_store_u(s1, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_కూడిక_float_c1);
     }
 }
 
-static void tiled_vec_dot_q4_1_32x2(const uint32_t n, float * restrict s0, float * restrict s1, const void * restrict vx, const void * restrict vy0, const void * restrict vy1, uint32_t valid_rows, const float * restrict sz0, const float * restrict sz1) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y0_q = vy0;
-    const uint8_t * restrict y1_q = vy1;
+స్థిర శూన్య tiled_vec_dot_q4_1_32x1(స్థిరరాశి uint32_t n, దశాంశం * పరిమిత s, స్థిరరాశి శూన్య * పరిమిత vx, స్థిరరాశి శూన్య * పరిమిత vy, uint32_t valid_అడ్డువరుసలు, స్థిరరాశి దశాంశం * పరిమిత sz) {
+    స్థిరరాశి uint8_t * పరిమిత tile_ptr = vx;
+    స్థిరరాశి uint8_t * పరిమిత y_q = vy;
 
-    HVX_Vector v_sum_float_c0 = Q6_V_vzero();
-    HVX_Vector v_sum_float_c1 = Q6_V_vzero();
+    HVX_సదిశ v_కూడిక_float = Q6_V_vzero();
 
     uint32_t n_k_tiles = n / 32;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * 640);
-        const HVX_Vector * restrict v_act0 = (const HVX_Vector *) (y0_q + kt * 1280);
-        const HVX_Vector * restrict v_act1 = (const HVX_Vector *) (y1_q + kt * 1280);
+    కొరకు (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        స్థిరరాశి HVX_సదిశ * పరిమిత vptr = (స్థిరరాశి HVX_సదిశ *) (tile_ptr + kt * 640);
+        స్థిరరాశి HVX_సదిశ * పరిమిత v_act = (స్థిరరాశి HVX_సదిశ *) (y_q + kt * 1280);
 
-        HVX_VectorPair v_sums = accum_4bit_32x2(vptr, v_act0, v_act1, Q6_V_vzero());
-        HVX_Vector v_sum_c0 = Q6_V_lo_W(v_sums);
-        HVX_Vector v_sum_c1 = Q6_V_hi_W(v_sums);
+        HVX_సదిశ v_కూడిక = accum_4bit_32x1(vptr, v_act, Q6_V_vzero());
+        HVX_సదిశ v_కూడిక_sf = Q6_Vsf_equals_Vw(v_కూడిక);
 
-        HVX_Vector v_sum_sf_c0 = Q6_Vsf_equals_Vw(v_sum_c0);
-        HVX_Vector v_sum_sf_c1 = Q6_Vsf_equals_Vw(v_sum_c1);
+        HVX_సదిశ v_scale_స్థానభ్రంశం = vptr[4];
+        HVX_సదిశ_Pair p_deal = Q6_W_vdeal_VVR(v_scale_స్థానభ్రంశం, v_scale_స్థానభ్రంశం, -2);
+        HVX_సదిశ v_scale = Q6_V_lo_W(p_deal);
+        HVX_సదిశ v_స్థానభ్రంశం = Q6_V_hi_W(p_deal);
 
-        HVX_Vector v_scale_offset = vptr[4];
-        HVX_VectorPair p_deal = Q6_W_vdeal_VVR(v_scale_offset, v_scale_offset, -2);
-        HVX_Vector v_scale = Q6_V_lo_W(p_deal);
-        HVX_Vector v_offset = Q6_V_hi_W(p_deal);
+        HVX_సదిశ v_scale_a = v_act[8];
+        HVX_సదిశ v_కూడిక_a   = v_act[9];
 
-        HVX_Vector v_scale_a_c0 = v_act0[8];
-        HVX_Vector v_sum_a_c0   = v_act0[9];
-        HVX_Vector v_scale_a_c1 = v_act1[8];
-        HVX_Vector v_sum_a_c1   = v_act1[9];
+        HVX_సదిశ v_scale_comb = hvx_vec_mul_f16_f16_గమ్యం_f32_lower32(v_scale, v_scale_a);
+        HVX_సదిశ v_స్థానభ్రంశం_comb = hvx_vec_mul_f16_f16_గమ్యం_f32_lower32(v_స్థానభ్రంశం, v_కూడిక_a);
 
-        HVX_Vector v_scale_comb_c0 = hvx_vec_mul_f16_f16_to_f32_lower32(v_scale, v_scale_a_c0);
-        HVX_Vector v_offset_comb_c0 = hvx_vec_mul_f16_f16_to_f32_lower32(v_offset, v_sum_a_c0);
-        HVX_Vector v_scale_comb_c1 = hvx_vec_mul_f16_f16_to_f32_lower32(v_scale, v_scale_a_c1);
-        HVX_Vector v_offset_comb_c1 = hvx_vec_mul_f16_f16_to_f32_lower32(v_offset, v_sum_a_c1);
+        HVX_సదిశ v_scaled_dot = hvx_vec_mul_f32_f32(v_కూడిక_sf, v_scale_comb);
+        HVX_సదిశ v_కూడిక_scaled = hvx_vec_కూడు_f32_f32(v_scaled_dot, v_స్థానభ్రంశం_comb);
 
-        HVX_Vector v_scaled_dot_c0 = hvx_vec_mul_f32_f32(v_sum_sf_c0, v_scale_comb_c0);
-        HVX_Vector v_sum_scaled_c0 = hvx_vec_add_f32_f32(v_scaled_dot_c0, v_offset_comb_c0);
-
-        HVX_Vector v_scaled_dot_c1 = hvx_vec_mul_f32_f32(v_sum_sf_c1, v_scale_comb_c1);
-        HVX_Vector v_sum_scaled_c1 = hvx_vec_add_f32_f32(v_scaled_dot_c1, v_offset_comb_c1);
-
-        v_sum_float_c0 = hvx_vec_add_f32_f32(v_sum_float_c0, v_sum_scaled_c0);
-        v_sum_float_c1 = hvx_vec_add_f32_f32(v_sum_float_c1, v_sum_scaled_c1);
+        v_కూడిక_float = hvx_vec_కూడు_f32_f32(v_కూడిక_float, v_కూడిక_scaled);
     }
 
-    if (sz0) {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c0, hvx_vmemu(sz0)));
-    } else {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), v_sum_float_c0);
-    }
-    if (sz1) {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vmemu(sz1)));
-    } else {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), v_sum_float_c1);
+    ఒకవేళ (sz) {
+        hvx_vec_store_u(s, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_కూడిక_float, hvx_vmemu(sz)));
+    } లేకపోతే {
+        hvx_vec_store_u(s, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_కూడిక_float);
     }
 }
 
-static void tiled_vec_dot_q8_0_32x1(const uint32_t n, float * restrict s, const void * restrict vx, const void * restrict vy, uint32_t valid_rows, const float * restrict sz) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y_q = vy;
+స్థిర శూన్య tiled_vec_dot_q4_1_32x2(స్థిరరాశి uint32_t n, దశాంశం * పరిమిత s0, దశాంశం * పరిమిత s1, స్థిరరాశి శూన్య * పరిమిత vx, స్థిరరాశి శూన్య * పరిమిత vy0, స్థిరరాశి శూన్య * పరిమిత vy1, uint32_t valid_అడ్డువరుసలు, స్థిరరాశి దశాంశం * పరిమిత sz0, స్థిరరాశి దశాంశం * పరిమిత sz1) {
+    స్థిరరాశి uint8_t * పరిమిత tile_ptr = vx;
+    స్థిరరాశి uint8_t * పరిమిత y0_q = vy0;
+    స్థిరరాశి uint8_t * పరిమిత y1_q = vy1;
 
-    HVX_Vector v_sum_float = Q6_V_vzero();
+    HVX_సదిశ v_కూడిక_float_c0 = Q6_V_vzero();
+    HVX_సదిశ v_కూడిక_float_c1 = Q6_V_vzero();
 
     uint32_t n_k_tiles = n / 32;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * 1152);
-        const HVX_Vector * restrict v_act = (const HVX_Vector *) (y_q + kt * 1152);
+    కొరకు (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        స్థిరరాశి HVX_సదిశ * పరిమిత vptr = (స్థిరరాశి HVX_సదిశ *) (tile_ptr + kt * 640);
+        స్థిరరాశి HVX_సదిశ * పరిమిత v_act0 = (స్థిరరాశి HVX_సదిశ *) (y0_q + kt * 1280);
+        స్థిరరాశి HVX_సదిశ * పరిమిత v_act1 = (స్థిరరాశి HVX_సదిశ *) (y1_q + kt * 1280);
 
-        HVX_Vector v_sum = accum_q8_0_32x1(vptr, v_act);
-        HVX_Vector v_sum_sf = Q6_Vsf_equals_Vw(v_sum);
+        HVX_సదిశ_Pair v_sums = accum_4bit_32x2(vptr, v_act0, v_act1, Q6_V_vzero());
+        HVX_సదిశ v_కూడిక_c0 = Q6_V_lo_W(v_sums);
+        HVX_సదిశ v_కూడిక_c1 = Q6_V_hi_W(v_sums);
 
-        HVX_Vector v_scale_w = vptr[8];
-        HVX_Vector v_scale_a = v_act[8];
-        HVX_Vector v_scale_comb = hvx_vec_mul_f16_f16_to_f32_lower32(v_scale_w, v_scale_a);
-        HVX_Vector v_sum_scaled = hvx_vec_mul_f32_f32(v_sum_sf, v_scale_comb);
+        HVX_సదిశ v_కూడిక_sf_c0 = Q6_Vsf_equals_Vw(v_కూడిక_c0);
+        HVX_సదిశ v_కూడిక_sf_c1 = Q6_Vsf_equals_Vw(v_కూడిక_c1);
 
-        v_sum_float = hvx_vec_add_f32_f32(v_sum_float, v_sum_scaled);
+        HVX_సదిశ v_scale_స్థానభ్రంశం = vptr[4];
+        HVX_సదిశ_Pair p_deal = Q6_W_vdeal_VVR(v_scale_స్థానభ్రంశం, v_scale_స్థానభ్రంశం, -2);
+        HVX_సదిశ v_scale = Q6_V_lo_W(p_deal);
+        HVX_సదిశ v_స్థానభ్రంశం = Q6_V_hi_W(p_deal);
+
+        HVX_సదిశ v_scale_a_c0 = v_act0[8];
+        HVX_సదిశ v_కూడిక_a_c0   = v_act0[9];
+        HVX_సదిశ v_scale_a_c1 = v_act1[8];
+        HVX_సదిశ v_కూడిక_a_c1   = v_act1[9];
+
+        HVX_సదిశ v_scale_comb_c0 = hvx_vec_mul_f16_f16_గమ్యం_f32_lower32(v_scale, v_scale_a_c0);
+        HVX_సదిశ v_స్థానభ్రంశం_comb_c0 = hvx_vec_mul_f16_f16_గమ్యం_f32_lower32(v_స్థానభ్రంశం, v_కూడిక_a_c0);
+        HVX_సదిశ v_scale_comb_c1 = hvx_vec_mul_f16_f16_గమ్యం_f32_lower32(v_scale, v_scale_a_c1);
+        HVX_సదిశ v_స్థానభ్రంశం_comb_c1 = hvx_vec_mul_f16_f16_గమ్యం_f32_lower32(v_స్థానభ్రంశం, v_కూడిక_a_c1);
+
+        HVX_సదిశ v_scaled_dot_c0 = hvx_vec_mul_f32_f32(v_కూడిక_sf_c0, v_scale_comb_c0);
+        HVX_సదిశ v_కూడిక_scaled_c0 = hvx_vec_కూడు_f32_f32(v_scaled_dot_c0, v_స్థానభ్రంశం_comb_c0);
+
+        HVX_సదిశ v_scaled_dot_c1 = hvx_vec_mul_f32_f32(v_కూడిక_sf_c1, v_scale_comb_c1);
+        HVX_సదిశ v_కూడిక_scaled_c1 = hvx_vec_కూడు_f32_f32(v_scaled_dot_c1, v_స్థానభ్రంశం_comb_c1);
+
+        v_కూడిక_float_c0 = hvx_vec_కూడు_f32_f32(v_కూడిక_float_c0, v_కూడిక_scaled_c0);
+        v_కూడిక_float_c1 = hvx_vec_కూడు_f32_f32(v_కూడిక_float_c1, v_కూడిక_scaled_c1);
     }
 
-    if (sz) {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float, hvx_vmemu(sz)));
-    } else {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), v_sum_float);
+    ఒకవేళ (sz0) {
+        hvx_vec_store_u(s0, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_కూడిక_float_c0, hvx_vmemu(sz0)));
+    } లేకపోతే {
+        hvx_vec_store_u(s0, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_కూడిక_float_c0);
+    }
+    ఒకవేళ (sz1) {
+        hvx_vec_store_u(s1, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_కూడిక_float_c1, hvx_vmemu(sz1)));
+    } లేకపోతే {
+        hvx_vec_store_u(s1, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_కూడిక_float_c1);
     }
 }
 
-static void tiled_vec_dot_q8_0_32x2(const uint32_t n, float * restrict s0, float * restrict s1, const void * restrict vx, const void * restrict vy0, const void * restrict vy1, uint32_t valid_rows, const float * restrict sz0, const float * restrict sz1) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y0_q = vy0;
-    const uint8_t * restrict y1_q = vy1;
+స్థిర శూన్య tiled_vec_dot_q8_0_32x1(స్థిరరాశి uint32_t n, దశాంశం * పరిమిత s, స్థిరరాశి శూన్య * పరిమిత vx, స్థిరరాశి శూన్య * పరిమిత vy, uint32_t valid_అడ్డువరుసలు, స్థిరరాశి దశాంశం * పరిమిత sz) {
+    స్థిరరాశి uint8_t * పరిమిత tile_ptr = vx;
+    స్థిరరాశి uint8_t * పరిమిత y_q = vy;
 
-    HVX_Vector v_sum_float_c0 = Q6_V_vzero();
-    HVX_Vector v_sum_float_c1 = Q6_V_vzero();
+    HVX_సదిశ v_కూడిక_float = Q6_V_vzero();
 
     uint32_t n_k_tiles = n / 32;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * 1152);
-        const HVX_Vector * restrict v_act0 = (const HVX_Vector *) (y0_q + kt * 1152);
-        const HVX_Vector * restrict v_act1 = (const HVX_Vector *) (y1_q + kt * 1152);
+    కొరకు (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        స్థిరరాశి HVX_సదిశ * పరిమిత vptr = (స్థిరరాశి HVX_సదిశ *) (tile_ptr + kt * 1152);
+        స్థిరరాశి HVX_సదిశ * పరిమిత v_act = (స్థిరరాశి HVX_సదిశ *) (y_q + kt * 1152);
 
-        HVX_VectorPair v_sums = accum_q8_0_32x2(vptr, v_act0, v_act1);
-        HVX_Vector v_sum_c0 = Q6_V_lo_W(v_sums);
-        HVX_Vector v_sum_c1 = Q6_V_hi_W(v_sums);
+        HVX_సదిశ v_కూడిక = accum_q8_0_32x1(vptr, v_act);
+        HVX_సదిశ v_కూడిక_sf = Q6_Vsf_equals_Vw(v_కూడిక);
 
-        HVX_Vector v_sum_sf_c0 = Q6_Vsf_equals_Vw(v_sum_c0);
-        HVX_Vector v_sum_sf_c1 = Q6_Vsf_equals_Vw(v_sum_c1);
+        HVX_సదిశ v_scale_w = vptr[8];
+        HVX_సదిశ v_scale_a = v_act[8];
+        HVX_సదిశ v_scale_comb = hvx_vec_mul_f16_f16_గమ్యం_f32_lower32(v_scale_w, v_scale_a);
+        HVX_సదిశ v_కూడిక_scaled = hvx_vec_mul_f32_f32(v_కూడిక_sf, v_scale_comb);
 
-        HVX_Vector v_scale_w = vptr[8];
-        HVX_Vector v_scale_a_c0 = v_act0[8];
-        HVX_Vector v_scale_a_c1 = v_act1[8];
-
-        HVX_Vector v_scale_comb_c0 = hvx_vec_mul_f16_f16_to_f32_lower32(v_scale_w, v_scale_a_c0);
-        HVX_Vector v_scale_comb_c1 = hvx_vec_mul_f16_f16_to_f32_lower32(v_scale_w, v_scale_a_c1);
-
-        HVX_Vector v_sum_scaled_c0 = hvx_vec_mul_f32_f32(v_sum_sf_c0, v_scale_comb_c0);
-        HVX_Vector v_sum_scaled_c1 = hvx_vec_mul_f32_f32(v_sum_sf_c1, v_scale_comb_c1);
-
-        v_sum_float_c0 = hvx_vec_add_f32_f32(v_sum_float_c0, v_sum_scaled_c0);
-        v_sum_float_c1 = hvx_vec_add_f32_f32(v_sum_float_c1, v_sum_scaled_c1);
+        v_కూడిక_float = hvx_vec_కూడు_f32_f32(v_కూడిక_float, v_కూడిక_scaled);
     }
 
-    if (sz0) {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c0, hvx_vmemu(sz0)));
-    } else {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), v_sum_float_c0);
-    }
-    if (sz1) {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vmemu(sz1)));
-    } else {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), v_sum_float_c1);
+    ఒకవేళ (sz) {
+        hvx_vec_store_u(s, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_కూడిక_float, hvx_vmemu(sz)));
+    } లేకపోతే {
+        hvx_vec_store_u(s, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_కూడిక_float);
     }
 }
 
-static void tiled_vec_dot_q5_k_32x1(const uint32_t n, float * restrict s, const void * restrict vx, const void * restrict vy, uint32_t valid_rows, const float * restrict sz) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y_q = vy;
+స్థిర శూన్య tiled_vec_dot_q8_0_32x2(స్థిరరాశి uint32_t n, దశాంశం * పరిమిత s0, దశాంశం * పరిమిత s1, స్థిరరాశి శూన్య * పరిమిత vx, స్థిరరాశి శూన్య * పరిమిత vy0, స్థిరరాశి శూన్య * పరిమిత vy1, uint32_t valid_అడ్డువరుసలు, స్థిరరాశి దశాంశం * పరిమిత sz0, స్థిరరాశి దశాంశం * పరిమిత sz1) {
+    స్థిరరాశి uint8_t * పరిమిత tile_ptr = vx;
+    స్థిరరాశి uint8_t * పరిమిత y0_q = vy0;
+    స్థిరరాశి uint8_t * పరిమిత y1_q = vy1;
 
-    HVX_Vector v_sum_float = Q6_V_vzero();
+    HVX_సదిశ v_కూడిక_float_c0 = Q6_V_vzero();
+    HVX_సదిశ v_కూడిక_float_c1 = Q6_V_vzero();
 
     uint32_t n_k_tiles = n / 32;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * 768);
-        const HVX_Vector * restrict v_act = (const HVX_Vector *) (y_q + kt * 1280);
+    కొరకు (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        స్థిరరాశి HVX_సదిశ * పరిమిత vptr = (స్థిరరాశి HVX_సదిశ *) (tile_ptr + kt * 1152);
+        స్థిరరాశి HVX_సదిశ * పరిమిత v_act0 = (స్థిరరాశి HVX_సదిశ *) (y0_q + kt * 1152);
+        స్థిరరాశి HVX_సదిశ * పరిమిత v_act1 = (స్థిరరాశి HVX_సదిశ *) (y1_q + kt * 1152);
 
-        HVX_Vector v_sum = accum_5bit_32x1(vptr, v_act, Q6_V_vzero());
-        HVX_Vector v_sum_sf = Q6_Vsf_equals_Vw(v_sum);
+        HVX_సదిశ_Pair v_sums = accum_q8_0_32x2(vptr, v_act0, v_act1);
+        HVX_సదిశ v_కూడిక_c0 = Q6_V_lo_W(v_sums);
+        HVX_సదిశ v_కూడిక_c1 = Q6_V_hi_W(v_sums);
 
-        HVX_Vector v_scale_offset = vptr[4];
-        HVX_VectorPair p_deal = Q6_W_vdeal_VVR(v_scale_offset, v_scale_offset, -2);
-        HVX_Vector v_scale = Q6_V_lo_W(p_deal);
-        HVX_Vector v_offset = Q6_V_hi_W(p_deal);
+        HVX_సదిశ v_కూడిక_sf_c0 = Q6_Vsf_equals_Vw(v_కూడిక_c0);
+        HVX_సదిశ v_కూడిక_sf_c1 = Q6_Vsf_equals_Vw(v_కూడిక_c1);
 
-        HVX_Vector v_scale_a = v_act[8];
-        HVX_Vector v_sum_a   = v_act[9];
+        HVX_సదిశ v_scale_w = vptr[8];
+        HVX_సదిశ v_scale_a_c0 = v_act0[8];
+        HVX_సదిశ v_scale_a_c1 = v_act1[8];
 
-        HVX_Vector v_scale_comb = hvx_vec_mul_f16_f16_to_f32_lower32(v_scale, v_scale_a);
-        HVX_Vector v_offset_comb = hvx_vec_mul_f16_f16_to_f32_lower32(v_offset, v_sum_a);
+        HVX_సదిశ v_scale_comb_c0 = hvx_vec_mul_f16_f16_గమ్యం_f32_lower32(v_scale_w, v_scale_a_c0);
+        HVX_సదిశ v_scale_comb_c1 = hvx_vec_mul_f16_f16_గమ్యం_f32_lower32(v_scale_w, v_scale_a_c1);
 
-        HVX_Vector v_scaled_dot = hvx_vec_mul_f32_f32(v_sum_sf, v_scale_comb);
-        HVX_Vector v_sum_scaled = hvx_vec_add_f32_f32(v_scaled_dot, v_offset_comb);
+        HVX_సదిశ v_కూడిక_scaled_c0 = hvx_vec_mul_f32_f32(v_కూడిక_sf_c0, v_scale_comb_c0);
+        HVX_సదిశ v_కూడిక_scaled_c1 = hvx_vec_mul_f32_f32(v_కూడిక_sf_c1, v_scale_comb_c1);
 
-        v_sum_float = hvx_vec_add_f32_f32(v_sum_float, v_sum_scaled);
+        v_కూడిక_float_c0 = hvx_vec_కూడు_f32_f32(v_కూడిక_float_c0, v_కూడిక_scaled_c0);
+        v_కూడిక_float_c1 = hvx_vec_కూడు_f32_f32(v_కూడిక_float_c1, v_కూడిక_scaled_c1);
     }
 
-    if (sz) {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float, hvx_vmemu(sz)));
-    } else {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), v_sum_float);
+    ఒకవేళ (sz0) {
+        hvx_vec_store_u(s0, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_కూడిక_float_c0, hvx_vmemu(sz0)));
+    } లేకపోతే {
+        hvx_vec_store_u(s0, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_కూడిక_float_c0);
+    }
+    ఒకవేళ (sz1) {
+        hvx_vec_store_u(s1, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_కూడిక_float_c1, hvx_vmemu(sz1)));
+    } లేకపోతే {
+        hvx_vec_store_u(s1, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_కూడిక_float_c1);
     }
 }
 
-static void tiled_vec_dot_q5_k_32x2(const uint32_t n, float * restrict s0, float * restrict s1, const void * restrict vx, const void * restrict vy0, const void * restrict vy1, uint32_t valid_rows, const float * restrict sz0, const float * restrict sz1) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y0_q = vy0;
-    const uint8_t * restrict y1_q = vy1;
+స్థిర శూన్య tiled_vec_dot_q5_k_32x1(స్థిరరాశి uint32_t n, దశాంశం * పరిమిత s, స్థిరరాశి శూన్య * పరిమిత vx, స్థిరరాశి శూన్య * పరిమిత vy, uint32_t valid_అడ్డువరుసలు, స్థిరరాశి దశాంశం * పరిమిత sz) {
+    స్థిరరాశి uint8_t * పరిమిత tile_ptr = vx;
+    స్థిరరాశి uint8_t * పరిమిత y_q = vy;
 
-    HVX_Vector v_sum_float_c0 = Q6_V_vzero();
-    HVX_Vector v_sum_float_c1 = Q6_V_vzero();
+    HVX_సదిశ v_కూడిక_float = Q6_V_vzero();
 
     uint32_t n_k_tiles = n / 32;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * 768);
-        const HVX_Vector * restrict v_act0 = (const HVX_Vector *) (y0_q + kt * 1280);
-        const HVX_Vector * restrict v_act1 = (const HVX_Vector *) (y1_q + kt * 1280);
+    కొరకు (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        స్థిరరాశి HVX_సదిశ * పరిమిత vptr = (స్థిరరాశి HVX_సదిశ *) (tile_ptr + kt * 768);
+        స్థిరరాశి HVX_సదిశ * పరిమిత v_act = (స్థిరరాశి HVX_సదిశ *) (y_q + kt * 1280);
 
-        HVX_VectorPair v_sums = accum_5bit_32x2(vptr, v_act0, v_act1, Q6_V_vzero());
-        HVX_Vector v_sum_c0 = Q6_V_lo_W(v_sums);
-        HVX_Vector v_sum_c1 = Q6_V_hi_W(v_sums);
+        HVX_సదిశ v_కూడిక = accum_5bit_32x1(vptr, v_act, Q6_V_vzero());
+        HVX_సదిశ v_కూడిక_sf = Q6_Vsf_equals_Vw(v_కూడిక);
 
-        HVX_Vector v_sum_sf_c0 = Q6_Vsf_equals_Vw(v_sum_c0);
-        HVX_Vector v_sum_sf_c1 = Q6_Vsf_equals_Vw(v_sum_c1);
+        HVX_సదిశ v_scale_స్థానభ్రంశం = vptr[4];
+        HVX_సదిశ_Pair p_deal = Q6_W_vdeal_VVR(v_scale_స్థానభ్రంశం, v_scale_స్థానభ్రంశం, -2);
+        HVX_సదిశ v_scale = Q6_V_lo_W(p_deal);
+        HVX_సదిశ v_స్థానభ్రంశం = Q6_V_hi_W(p_deal);
 
-        HVX_Vector v_scale_offset = vptr[4];
-        HVX_VectorPair p_deal = Q6_W_vdeal_VVR(v_scale_offset, v_scale_offset, -2);
-        HVX_Vector v_scale = Q6_V_lo_W(p_deal);
-        HVX_Vector v_offset = Q6_V_hi_W(p_deal);
+        HVX_సదిశ v_scale_a = v_act[8];
+        HVX_సదిశ v_కూడిక_a   = v_act[9];
 
-        HVX_Vector v_scale_a_c0 = v_act0[8];
-        HVX_Vector v_sum_a_c0   = v_act0[9];
-        HVX_Vector v_scale_a_c1 = v_act1[8];
-        HVX_Vector v_sum_a_c1   = v_act1[9];
+        HVX_సదిశ v_scale_comb = hvx_vec_mul_f16_f16_గమ్యం_f32_lower32(v_scale, v_scale_a);
+        HVX_సదిశ v_స్థానభ్రంశం_comb = hvx_vec_mul_f16_f16_గమ్యం_f32_lower32(v_స్థానభ్రంశం, v_కూడిక_a);
 
-        HVX_Vector v_scale_comb_c0 = hvx_vec_mul_f16_f16_to_f32_lower32(v_scale, v_scale_a_c0);
-        HVX_Vector v_offset_comb_c0 = hvx_vec_mul_f16_f16_to_f32_lower32(v_offset, v_sum_a_c0);
-        HVX_Vector v_scale_comb_c1 = hvx_vec_mul_f16_f16_to_f32_lower32(v_scale, v_scale_a_c1);
-        HVX_Vector v_offset_comb_c1 = hvx_vec_mul_f16_f16_to_f32_lower32(v_offset, v_sum_a_c1);
+        HVX_సదిశ v_scaled_dot = hvx_vec_mul_f32_f32(v_కూడిక_sf, v_scale_comb);
+        HVX_సదిశ v_కూడిక_scaled = hvx_vec_కూడు_f32_f32(v_scaled_dot, v_స్థానభ్రంశం_comb);
 
-        HVX_Vector v_scaled_dot_c0 = hvx_vec_mul_f32_f32(v_sum_sf_c0, v_scale_comb_c0);
-        HVX_Vector v_sum_scaled_c0 = hvx_vec_add_f32_f32(v_scaled_dot_c0, v_offset_comb_c0);
-
-        HVX_Vector v_scaled_dot_c1 = hvx_vec_mul_f32_f32(v_sum_sf_c1, v_scale_comb_c1);
-        HVX_Vector v_sum_scaled_c1 = hvx_vec_add_f32_f32(v_scaled_dot_c1, v_offset_comb_c1);
-
-        v_sum_float_c0 = hvx_vec_add_f32_f32(v_sum_float_c0, v_sum_scaled_c0);
-        v_sum_float_c1 = hvx_vec_add_f32_f32(v_sum_float_c1, v_sum_scaled_c1);
+        v_కూడిక_float = hvx_vec_కూడు_f32_f32(v_కూడిక_float, v_కూడిక_scaled);
     }
 
-    if (sz0) {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c0, hvx_vmemu(sz0)));
-    } else {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), v_sum_float_c0);
-    }
-    if (sz1) {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vmemu(sz1)));
-    } else {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), v_sum_float_c1);
+    ఒకవేళ (sz) {
+        hvx_vec_store_u(s, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_కూడిక_float, hvx_vmemu(sz)));
+    } లేకపోతే {
+        hvx_vec_store_u(s, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_కూడిక_float);
     }
 }
 
-static void tiled_vec_dot_q6_k_32x1(const uint32_t n, float * restrict s, const void * restrict vx, const void * restrict vy, uint32_t valid_rows, const float * restrict sz) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y_q = vy;
+స్థిర శూన్య tiled_vec_dot_q5_k_32x2(స్థిరరాశి uint32_t n, దశాంశం * పరిమిత s0, దశాంశం * పరిమిత s1, స్థిరరాశి శూన్య * పరిమిత vx, స్థిరరాశి శూన్య * పరిమిత vy0, స్థిరరాశి శూన్య * పరిమిత vy1, uint32_t valid_అడ్డువరుసలు, స్థిరరాశి దశాంశం * పరిమిత sz0, స్థిరరాశి దశాంశం * పరిమిత sz1) {
+    స్థిరరాశి uint8_t * పరిమిత tile_ptr = vx;
+    స్థిరరాశి uint8_t * పరిమిత y0_q = vy0;
+    స్థిరరాశి uint8_t * పరిమిత y1_q = vy1;
 
-    HVX_Vector v_sum_float = Q6_V_vzero();
-    HVX_Vector i32 = Q6_Vb_vsplat_R(32);
+    HVX_సదిశ v_కూడిక_float_c0 = Q6_V_vzero();
+    HVX_సదిశ v_కూడిక_float_c1 = Q6_V_vzero();
 
     uint32_t n_k_tiles = n / 32;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * 896);
-        const HVX_Vector * restrict v_act = (const HVX_Vector *) (y_q + kt * 1152);
+    కొరకు (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        స్థిరరాశి HVX_సదిశ * పరిమిత vptr = (స్థిరరాశి HVX_సదిశ *) (tile_ptr + kt * 768);
+        స్థిరరాశి HVX_సదిశ * పరిమిత v_act0 = (స్థిరరాశి HVX_సదిశ *) (y0_q + kt * 1280);
+        స్థిరరాశి HVX_సదిశ * పరిమిత v_act1 = (స్థిరరాశి HVX_సదిశ *) (y1_q + kt * 1280);
 
-        HVX_VectorPair v_sums = accum_q6_k_32x1(vptr, v_act, i32);
-        v_sum_float = hvx_vec_add_f32_f32(v_sum_float, scale_q6_k_32x1(v_sums, vptr[6], v_act[8]));
+        HVX_సదిశ_Pair v_sums = accum_5bit_32x2(vptr, v_act0, v_act1, Q6_V_vzero());
+        HVX_సదిశ v_కూడిక_c0 = Q6_V_lo_W(v_sums);
+        HVX_సదిశ v_కూడిక_c1 = Q6_V_hi_W(v_sums);
+
+        HVX_సదిశ v_కూడిక_sf_c0 = Q6_Vsf_equals_Vw(v_కూడిక_c0);
+        HVX_సదిశ v_కూడిక_sf_c1 = Q6_Vsf_equals_Vw(v_కూడిక_c1);
+
+        HVX_సదిశ v_scale_స్థానభ్రంశం = vptr[4];
+        HVX_సదిశ_Pair p_deal = Q6_W_vdeal_VVR(v_scale_స్థానభ్రంశం, v_scale_స్థానభ్రంశం, -2);
+        HVX_సదిశ v_scale = Q6_V_lo_W(p_deal);
+        HVX_సదిశ v_స్థానభ్రంశం = Q6_V_hi_W(p_deal);
+
+        HVX_సదిశ v_scale_a_c0 = v_act0[8];
+        HVX_సదిశ v_కూడిక_a_c0   = v_act0[9];
+        HVX_సదిశ v_scale_a_c1 = v_act1[8];
+        HVX_సదిశ v_కూడిక_a_c1   = v_act1[9];
+
+        HVX_సదిశ v_scale_comb_c0 = hvx_vec_mul_f16_f16_గమ్యం_f32_lower32(v_scale, v_scale_a_c0);
+        HVX_సదిశ v_స్థానభ్రంశం_comb_c0 = hvx_vec_mul_f16_f16_గమ్యం_f32_lower32(v_స్థానభ్రంశం, v_కూడిక_a_c0);
+        HVX_సదిశ v_scale_comb_c1 = hvx_vec_mul_f16_f16_గమ్యం_f32_lower32(v_scale, v_scale_a_c1);
+        HVX_సదిశ v_స్థానభ్రంశం_comb_c1 = hvx_vec_mul_f16_f16_గమ్యం_f32_lower32(v_స్థానభ్రంశం, v_కూడిక_a_c1);
+
+        HVX_సదిశ v_scaled_dot_c0 = hvx_vec_mul_f32_f32(v_కూడిక_sf_c0, v_scale_comb_c0);
+        HVX_సదిశ v_కూడిక_scaled_c0 = hvx_vec_కూడు_f32_f32(v_scaled_dot_c0, v_స్థానభ్రంశం_comb_c0);
+
+        HVX_సదిశ v_scaled_dot_c1 = hvx_vec_mul_f32_f32(v_కూడిక_sf_c1, v_scale_comb_c1);
+        HVX_సదిశ v_కూడిక_scaled_c1 = hvx_vec_కూడు_f32_f32(v_scaled_dot_c1, v_స్థానభ్రంశం_comb_c1);
+
+        v_కూడిక_float_c0 = hvx_vec_కూడు_f32_f32(v_కూడిక_float_c0, v_కూడిక_scaled_c0);
+        v_కూడిక_float_c1 = hvx_vec_కూడు_f32_f32(v_కూడిక_float_c1, v_కూడిక_scaled_c1);
     }
 
-    if (sz) {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float, hvx_vmemu(sz)));
-    } else {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), v_sum_float);
+    ఒకవేళ (sz0) {
+        hvx_vec_store_u(s0, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_కూడిక_float_c0, hvx_vmemu(sz0)));
+    } లేకపోతే {
+        hvx_vec_store_u(s0, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_కూడిక_float_c0);
+    }
+    ఒకవేళ (sz1) {
+        hvx_vec_store_u(s1, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_కూడిక_float_c1, hvx_vmemu(sz1)));
+    } లేకపోతే {
+        hvx_vec_store_u(s1, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_కూడిక_float_c1);
     }
 }
 
-static void tiled_vec_dot_q6_k_32x2(const uint32_t n, float * restrict s0, float * restrict s1, const void * restrict vx, const void * restrict vy0, const void * restrict vy1, uint32_t valid_rows, const float * restrict sz0, const float * restrict sz1) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y0_q = vy0;
-    const uint8_t * restrict y1_q = vy1;
+స్థిర శూన్య tiled_vec_dot_q6_k_32x1(స్థిరరాశి uint32_t n, దశాంశం * పరిమిత s, స్థిరరాశి శూన్య * పరిమిత vx, స్థిరరాశి శూన్య * పరిమిత vy, uint32_t valid_అడ్డువరుసలు, స్థిరరాశి దశాంశం * పరిమిత sz) {
+    స్థిరరాశి uint8_t * పరిమిత tile_ptr = vx;
+    స్థిరరాశి uint8_t * పరిమిత y_q = vy;
 
-    HVX_Vector v_sum_float_c0 = Q6_V_vzero();
-    HVX_Vector v_sum_float_c1 = Q6_V_vzero();
-    HVX_Vector i32 = Q6_Vb_vsplat_R(32);
+    HVX_సదిశ v_కూడిక_float = Q6_V_vzero();
+    HVX_సదిశ i32 = Q6_Vb_vsplat_R(32);
 
     uint32_t n_k_tiles = n / 32;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * 896);
-        const HVX_Vector * restrict v_act0 = (const HVX_Vector *) (y0_q + kt * 1152);
-        const HVX_Vector * restrict v_act1 = (const HVX_Vector *) (y1_q + kt * 1152);
+    కొరకు (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        స్థిరరాశి HVX_సదిశ * పరిమిత vptr = (స్థిరరాశి HVX_సదిశ *) (tile_ptr + kt * 896);
+        స్థిరరాశి HVX_సదిశ * పరిమిత v_act = (స్థిరరాశి HVX_సదిశ *) (y_q + kt * 1152);
 
-        HVX_VectorPair v_sums0, v_sums1;
+        HVX_సదిశ_Pair v_sums = accum_q6_k_32x1(vptr, v_act, i32);
+        v_కూడిక_float = hvx_vec_కూడు_f32_f32(v_కూడిక_float, scale_q6_k_32x1(v_sums, vptr[6], v_act[8]));
+    }
+
+    ఒకవేళ (sz) {
+        hvx_vec_store_u(s, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_కూడిక_float, hvx_vmemu(sz)));
+    } లేకపోతే {
+        hvx_vec_store_u(s, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_కూడిక_float);
+    }
+}
+
+స్థిర శూన్య tiled_vec_dot_q6_k_32x2(స్థిరరాశి uint32_t n, దశాంశం * పరిమిత s0, దశాంశం * పరిమిత s1, స్థిరరాశి శూన్య * పరిమిత vx, స్థిరరాశి శూన్య * పరిమిత vy0, స్థిరరాశి శూన్య * పరిమిత vy1, uint32_t valid_అడ్డువరుసలు, స్థిరరాశి దశాంశం * పరిమిత sz0, స్థిరరాశి దశాంశం * పరిమిత sz1) {
+    స్థిరరాశి uint8_t * పరిమిత tile_ptr = vx;
+    స్థిరరాశి uint8_t * పరిమిత y0_q = vy0;
+    స్థిరరాశి uint8_t * పరిమిత y1_q = vy1;
+
+    HVX_సదిశ v_కూడిక_float_c0 = Q6_V_vzero();
+    HVX_సదిశ v_కూడిక_float_c1 = Q6_V_vzero();
+    HVX_సదిశ i32 = Q6_Vb_vsplat_R(32);
+
+    uint32_t n_k_tiles = n / 32;
+    కొరకు (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        స్థిరరాశి HVX_సదిశ * పరిమిత vptr = (స్థిరరాశి HVX_సదిశ *) (tile_ptr + kt * 896);
+        స్థిరరాశి HVX_సదిశ * పరిమిత v_act0 = (స్థిరరాశి HVX_సదిశ *) (y0_q + kt * 1152);
+        స్థిరరాశి HVX_సదిశ * పరిమిత v_act1 = (స్థిరరాశి HVX_సదిశ *) (y1_q + kt * 1152);
+
+        HVX_సదిశ_Pair v_sums0, v_sums1;
         accum_q6_k_32x2(vptr, v_act0, v_act1, i32, &v_sums0, &v_sums1);
 
-        v_sum_float_c0 = hvx_vec_add_f32_f32(v_sum_float_c0, scale_q6_k_32x1(v_sums0, vptr[6], v_act0[8]));
-        v_sum_float_c1 = hvx_vec_add_f32_f32(v_sum_float_c1, scale_q6_k_32x1(v_sums1, vptr[6], v_act1[8]));
+        v_కూడిక_float_c0 = hvx_vec_కూడు_f32_f32(v_కూడిక_float_c0, scale_q6_k_32x1(v_sums0, vptr[6], v_act0[8]));
+        v_కూడిక_float_c1 = hvx_vec_కూడు_f32_f32(v_కూడిక_float_c1, scale_q6_k_32x1(v_sums1, vptr[6], v_act1[8]));
     }
 
-    if (sz0) {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c0, hvx_vmemu(sz0)));
-    } else {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), v_sum_float_c0);
+    ఒకవేళ (sz0) {
+        hvx_vec_store_u(s0, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_కూడిక_float_c0, hvx_vmemu(sz0)));
+    } లేకపోతే {
+        hvx_vec_store_u(s0, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_కూడిక_float_c0);
     }
-    if (sz1) {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vmemu(sz1)));
-    } else {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), v_sum_float_c1);
-    }
-}
-
-static void tiled_vec_dot_q3_k_32x1(const uint32_t n, float * restrict s, const void * restrict vx, const void * restrict vy, uint32_t valid_rows, const float * restrict sz) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y_q = vy;
-
-    HVX_Vector v_sum_float = Q6_V_vzero();
-
-    uint32_t n_k_tiles = n / 32;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * 512);
-        const HVX_Vector * restrict v_act = (const HVX_Vector *) (y_q + kt * 1152);
-
-        HVX_VectorPair v_sums = accum_q3_k_32x1(vptr, v_act);
-        v_sum_float = hvx_vec_add_f32_f32(v_sum_float, scale_q6_k_32x1(v_sums, vptr[3], v_act[8]));
-    }
-
-    if (sz) {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float, hvx_vmemu(sz)));
-    } else {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), v_sum_float);
+    ఒకవేళ (sz1) {
+        hvx_vec_store_u(s1, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_కూడిక_float_c1, hvx_vmemu(sz1)));
+    } లేకపోతే {
+        hvx_vec_store_u(s1, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_కూడిక_float_c1);
     }
 }
 
-static void tiled_vec_dot_q3_k_32x2(const uint32_t n, float * restrict s0, float * restrict s1, const void * restrict vx, const void * restrict vy0, const void * restrict vy1, uint32_t valid_rows, const float * restrict sz0, const float * restrict sz1) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y0_q = vy0;
-    const uint8_t * restrict y1_q = vy1;
+స్థిర శూన్య tiled_vec_dot_q3_k_32x1(స్థిరరాశి uint32_t n, దశాంశం * పరిమిత s, స్థిరరాశి శూన్య * పరిమిత vx, స్థిరరాశి శూన్య * పరిమిత vy, uint32_t valid_అడ్డువరుసలు, స్థిరరాశి దశాంశం * పరిమిత sz) {
+    స్థిరరాశి uint8_t * పరిమిత tile_ptr = vx;
+    స్థిరరాశి uint8_t * పరిమిత y_q = vy;
 
-    HVX_Vector v_sum_float_c0 = Q6_V_vzero();
-    HVX_Vector v_sum_float_c1 = Q6_V_vzero();
+    HVX_సదిశ v_కూడిక_float = Q6_V_vzero();
 
     uint32_t n_k_tiles = n / 32;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * 512);
-        const HVX_Vector * restrict v_act0 = (const HVX_Vector *) (y0_q + kt * 1152);
-        const HVX_Vector * restrict v_act1 = (const HVX_Vector *) (y1_q + kt * 1152);
+    కొరకు (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        స్థిరరాశి HVX_సదిశ * పరిమిత vptr = (స్థిరరాశి HVX_సదిశ *) (tile_ptr + kt * 512);
+        స్థిరరాశి HVX_సదిశ * పరిమిత v_act = (స్థిరరాశి HVX_సదిశ *) (y_q + kt * 1152);
 
-        HVX_VectorPair v_sums0, v_sums1;
+        HVX_సదిశ_Pair v_sums = accum_q3_k_32x1(vptr, v_act);
+        v_కూడిక_float = hvx_vec_కూడు_f32_f32(v_కూడిక_float, scale_q6_k_32x1(v_sums, vptr[3], v_act[8]));
+    }
+
+    ఒకవేళ (sz) {
+        hvx_vec_store_u(s, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_కూడిక_float, hvx_vmemu(sz)));
+    } లేకపోతే {
+        hvx_vec_store_u(s, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_కూడిక_float);
+    }
+}
+
+స్థిర శూన్య tiled_vec_dot_q3_k_32x2(స్థిరరాశి uint32_t n, దశాంశం * పరిమిత s0, దశాంశం * పరిమిత s1, స్థిరరాశి శూన్య * పరిమిత vx, స్థిరరాశి శూన్య * పరిమిత vy0, స్థిరరాశి శూన్య * పరిమిత vy1, uint32_t valid_అడ్డువరుసలు, స్థిరరాశి దశాంశం * పరిమిత sz0, స్థిరరాశి దశాంశం * పరిమిత sz1) {
+    స్థిరరాశి uint8_t * పరిమిత tile_ptr = vx;
+    స్థిరరాశి uint8_t * పరిమిత y0_q = vy0;
+    స్థిరరాశి uint8_t * పరిమిత y1_q = vy1;
+
+    HVX_సదిశ v_కూడిక_float_c0 = Q6_V_vzero();
+    HVX_సదిశ v_కూడిక_float_c1 = Q6_V_vzero();
+
+    uint32_t n_k_tiles = n / 32;
+    కొరకు (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        స్థిరరాశి HVX_సదిశ * పరిమిత vptr = (స్థిరరాశి HVX_సదిశ *) (tile_ptr + kt * 512);
+        స్థిరరాశి HVX_సదిశ * పరిమిత v_act0 = (స్థిరరాశి HVX_సదిశ *) (y0_q + kt * 1152);
+        స్థిరరాశి HVX_సదిశ * పరిమిత v_act1 = (స్థిరరాశి HVX_సదిశ *) (y1_q + kt * 1152);
+
+        HVX_సదిశ_Pair v_sums0, v_sums1;
         accum_q3_k_32x2(vptr, v_act0, v_act1, &v_sums0, &v_sums1);
 
-        v_sum_float_c0 = hvx_vec_add_f32_f32(v_sum_float_c0, scale_q6_k_32x1(v_sums0, vptr[3], v_act0[8]));
-        v_sum_float_c1 = hvx_vec_add_f32_f32(v_sum_float_c1, scale_q6_k_32x1(v_sums1, vptr[3], v_act1[8]));
+        v_కూడిక_float_c0 = hvx_vec_కూడు_f32_f32(v_కూడిక_float_c0, scale_q6_k_32x1(v_sums0, vptr[3], v_act0[8]));
+        v_కూడిక_float_c1 = hvx_vec_కూడు_f32_f32(v_కూడిక_float_c1, scale_q6_k_32x1(v_sums1, vptr[3], v_act1[8]));
     }
 
-    if (sz0) {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c0, hvx_vmemu(sz0)));
-    } else {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), v_sum_float_c0);
+    ఒకవేళ (sz0) {
+        hvx_vec_store_u(s0, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_కూడిక_float_c0, hvx_vmemu(sz0)));
+    } లేకపోతే {
+        hvx_vec_store_u(s0, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_కూడిక_float_c0);
     }
-    if (sz1) {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vmemu(sz1)));
-    } else {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), v_sum_float_c1);
+    ఒకవేళ (sz1) {
+        hvx_vec_store_u(s1, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_కూడిక_float_c1, hvx_vmemu(sz1)));
+    } లేకపోతే {
+        hvx_vec_store_u(s1, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_కూడిక_float_c1);
     }
 }
 
-static void tiled_vec_dot_q2_k_32x1(const uint32_t n, float * restrict s, const void * restrict vx, const void * restrict vy, uint32_t valid_rows, const float * restrict sz) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y_q = vy;
+స్థిర శూన్య tiled_vec_dot_q2_k_32x1(స్థిరరాశి uint32_t n, దశాంశం * పరిమిత s, స్థిరరాశి శూన్య * పరిమిత vx, స్థిరరాశి శూన్య * పరిమిత vy, uint32_t valid_అడ్డువరుసలు, స్థిరరాశి దశాంశం * పరిమిత sz) {
+    స్థిరరాశి uint8_t * పరిమిత tile_ptr = vx;
+    స్థిరరాశి uint8_t * పరిమిత y_q = vy;
 
-    HVX_Vector v_sum_float = Q6_V_vzero();
+    HVX_సదిశ v_కూడిక_float = Q6_V_vzero();
 
     uint32_t n_k_tiles = n / 32;
-    for (uint32_t kb = 0; kb < n_k_tiles; kb += 8) {
-        HVX_Vector v_d, v_m;
-        q2_k_load_dmin(tile_ptr + kb * 384, &v_d, &v_m);
+    కొరకు (uint32_t kb = 0; kb < n_k_tiles; kb += 8) {
+        HVX_సదిశ v_d, v_m;
+        q2_k_ఎక్కించు_dmin(tile_ptr + kb * 384, &v_d, &v_m);
 
-        HVX_Vector v_isum = Q6_V_vzero();
-        HVX_Vector v_msum = Q6_V_vzero();
-        for (uint32_t kt = kb; kt < kb + 8; kt++) {
-            const uint8_t * restrict tile = tile_ptr + kt * 384;
-            const HVX_Vector * restrict v_act = (const HVX_Vector *) (y_q + kt * 1280);
+        HVX_సదిశ v_isum = Q6_V_vzero();
+        HVX_సదిశ v_msum = Q6_V_vzero();
+        కొరకు (uint32_t kt = kb; kt < kb + 8; kt++) {
+            స్థిరరాశి uint8_t * పరిమిత tile = tile_ptr + kt * 384;
+            స్థిరరాశి HVX_సదిశ * పరిమిత v_act = (స్థిరరాశి HVX_సదిశ *) (y_q + kt * 1280);
 
-            HVX_Vector v_sc2, v_mn2;
-            q2_k_scale_pairs(tile, &v_sc2, &v_mn2);
-            q2_k_int_accum(accum_q2_k_32x1((const HVX_Vector *) tile, v_act), v_sc2, v_mn2, v_act[9], &v_isum, &v_msum);
+            HVX_సదిశ v_sc2, v_mn2;
+            q2_k_scale_జతలు(tile, &v_sc2, &v_mn2);
+            q2_k_int_accum(accum_q2_k_32x1((స్థిరరాశి HVX_సదిశ *) tile, v_act), v_sc2, v_mn2, v_act[9], &v_isum, &v_msum);
         }
-        const HVX_Vector * restrict v_act_sb = (const HVX_Vector *) (y_q + kb * 1280);
-        v_sum_float = hvx_vec_add_f32_f32(v_sum_float, q2_k_int_scale(v_isum, v_msum, v_d, v_m, v_act_sb[8]));
+        స్థిరరాశి HVX_సదిశ * పరిమిత v_act_sb = (స్థిరరాశి HVX_సదిశ *) (y_q + kb * 1280);
+        v_కూడిక_float = hvx_vec_కూడు_f32_f32(v_కూడిక_float, q2_k_int_scale(v_isum, v_msum, v_d, v_m, v_act_sb[8]));
     }
 
-    if (sz) {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float, hvx_vmemu(sz)));
-    } else {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), v_sum_float);
+    ఒకవేళ (sz) {
+        hvx_vec_store_u(s, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_కూడిక_float, hvx_vmemu(sz)));
+    } లేకపోతే {
+        hvx_vec_store_u(s, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_కూడిక_float);
     }
 }
 
-static void tiled_vec_dot_q2_k_32x2(const uint32_t n, float * restrict s0, float * restrict s1, const void * restrict vx, const void * restrict vy0, const void * restrict vy1, uint32_t valid_rows, const float * restrict sz0, const float * restrict sz1) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y0_q = vy0;
-    const uint8_t * restrict y1_q = vy1;
+స్థిర శూన్య tiled_vec_dot_q2_k_32x2(స్థిరరాశి uint32_t n, దశాంశం * పరిమిత s0, దశాంశం * పరిమిత s1, స్థిరరాశి శూన్య * పరిమిత vx, స్థిరరాశి శూన్య * పరిమిత vy0, స్థిరరాశి శూన్య * పరిమిత vy1, uint32_t valid_అడ్డువరుసలు, స్థిరరాశి దశాంశం * పరిమిత sz0, స్థిరరాశి దశాంశం * పరిమిత sz1) {
+    స్థిరరాశి uint8_t * పరిమిత tile_ptr = vx;
+    స్థిరరాశి uint8_t * పరిమిత y0_q = vy0;
+    స్థిరరాశి uint8_t * పరిమిత y1_q = vy1;
 
-    HVX_Vector v_sum_float_c0 = Q6_V_vzero();
-    HVX_Vector v_sum_float_c1 = Q6_V_vzero();
+    HVX_సదిశ v_కూడిక_float_c0 = Q6_V_vzero();
+    HVX_సదిశ v_కూడిక_float_c1 = Q6_V_vzero();
 
     uint32_t n_k_tiles = n / 32;
-    for (uint32_t kb = 0; kb < n_k_tiles; kb += 8) {
-        HVX_Vector v_d, v_m;
-        q2_k_load_dmin(tile_ptr + kb * 384, &v_d, &v_m);
+    కొరకు (uint32_t kb = 0; kb < n_k_tiles; kb += 8) {
+        HVX_సదిశ v_d, v_m;
+        q2_k_ఎక్కించు_dmin(tile_ptr + kb * 384, &v_d, &v_m);
 
-        HVX_Vector v_isum0 = Q6_V_vzero();
-        HVX_Vector v_msum0 = Q6_V_vzero();
-        HVX_Vector v_isum1 = Q6_V_vzero();
-        HVX_Vector v_msum1 = Q6_V_vzero();
-        for (uint32_t kt = kb; kt < kb + 8; kt++) {
-            const uint8_t * restrict tile = tile_ptr + kt * 384;
-            const HVX_Vector * restrict v_act0 = (const HVX_Vector *) (y0_q + kt * 1280);
-            const HVX_Vector * restrict v_act1 = (const HVX_Vector *) (y1_q + kt * 1280);
+        HVX_సదిశ v_isum0 = Q6_V_vzero();
+        HVX_సదిశ v_msum0 = Q6_V_vzero();
+        HVX_సదిశ v_isum1 = Q6_V_vzero();
+        HVX_సదిశ v_msum1 = Q6_V_vzero();
+        కొరకు (uint32_t kt = kb; kt < kb + 8; kt++) {
+            స్థిరరాశి uint8_t * పరిమిత tile = tile_ptr + kt * 384;
+            స్థిరరాశి HVX_సదిశ * పరిమిత v_act0 = (స్థిరరాశి HVX_సదిశ *) (y0_q + kt * 1280);
+            స్థిరరాశి HVX_సదిశ * పరిమిత v_act1 = (స్థిరరాశి HVX_సదిశ *) (y1_q + kt * 1280);
 
-            HVX_Vector v_sc2, v_mn2;
-            q2_k_scale_pairs(tile, &v_sc2, &v_mn2);
+            HVX_సదిశ v_sc2, v_mn2;
+            q2_k_scale_జతలు(tile, &v_sc2, &v_mn2);
 
-            HVX_VectorPair v_sums0, v_sums1;
-            accum_q2_k_32x2((const HVX_Vector *) tile, v_act0, v_act1, &v_sums0, &v_sums1);
+            HVX_సదిశ_Pair v_sums0, v_sums1;
+            accum_q2_k_32x2((స్థిరరాశి HVX_సదిశ *) tile, v_act0, v_act1, &v_sums0, &v_sums1);
             q2_k_int_accum(v_sums0, v_sc2, v_mn2, v_act0[9], &v_isum0, &v_msum0);
             q2_k_int_accum(v_sums1, v_sc2, v_mn2, v_act1[9], &v_isum1, &v_msum1);
         }
-        const HVX_Vector * restrict v_act0_sb = (const HVX_Vector *) (y0_q + kb * 1280);
-        const HVX_Vector * restrict v_act1_sb = (const HVX_Vector *) (y1_q + kb * 1280);
-        v_sum_float_c0 = hvx_vec_add_f32_f32(v_sum_float_c0, q2_k_int_scale(v_isum0, v_msum0, v_d, v_m, v_act0_sb[8]));
-        v_sum_float_c1 = hvx_vec_add_f32_f32(v_sum_float_c1, q2_k_int_scale(v_isum1, v_msum1, v_d, v_m, v_act1_sb[8]));
+        స్థిరరాశి HVX_సదిశ * పరిమిత v_act0_sb = (స్థిరరాశి HVX_సదిశ *) (y0_q + kb * 1280);
+        స్థిరరాశి HVX_సదిశ * పరిమిత v_act1_sb = (స్థిరరాశి HVX_సదిశ *) (y1_q + kb * 1280);
+        v_కూడిక_float_c0 = hvx_vec_కూడు_f32_f32(v_కూడిక_float_c0, q2_k_int_scale(v_isum0, v_msum0, v_d, v_m, v_act0_sb[8]));
+        v_కూడిక_float_c1 = hvx_vec_కూడు_f32_f32(v_కూడిక_float_c1, q2_k_int_scale(v_isum1, v_msum1, v_d, v_m, v_act1_sb[8]));
     }
 
-    if (sz0) {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c0, hvx_vmemu(sz0)));
-    } else {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), v_sum_float_c0);
+    ఒకవేళ (sz0) {
+        hvx_vec_store_u(s0, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_కూడిక_float_c0, hvx_vmemu(sz0)));
+    } లేకపోతే {
+        hvx_vec_store_u(s0, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_కూడిక_float_c0);
     }
-    if (sz1) {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vmemu(sz1)));
-    } else {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), v_sum_float_c1);
+    ఒకవేళ (sz1) {
+        hvx_vec_store_u(s1, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_కూడిక_float_c1, hvx_vmemu(sz1)));
+    } లేకపోతే {
+        hvx_vec_store_u(s1, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_కూడిక_float_c1);
     }
 }
 
 // One Q2_0 weight tile covers 64 k: act tiles 2 * kt and 2 * kt + 1, each 32 k wide (Q8_1)
-static void tiled_vec_dot_q2_0_32x1(const uint32_t n, float * restrict s, const void * restrict vx, const void * restrict vy, uint32_t valid_rows, const float * restrict sz) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y_q = vy;
+స్థిర శూన్య tiled_vec_dot_q2_0_32x1(స్థిరరాశి uint32_t n, దశాంశం * పరిమిత s, స్థిరరాశి శూన్య * పరిమిత vx, స్థిరరాశి శూన్య * పరిమిత vy, uint32_t valid_అడ్డువరుసలు, స్థిరరాశి దశాంశం * పరిమిత sz) {
+    స్థిరరాశి uint8_t * పరిమిత tile_ptr = vx;
+    స్థిరరాశి uint8_t * పరిమిత y_q = vy;
 
-    HVX_Vector v_sum_float = Q6_V_vzero();
-    HVX_Vector v_one_f16   = hvx_vec_splat_f16(1.0);
+    HVX_సదిశ v_కూడిక_float = Q6_V_vzero();
+    HVX_సదిశ v_one_f16   = hvx_vec_splat_f16(1.0);
 
-    uint32_t n_weight_tiles = n / HTP_MM_WEIGHT_TILE_K_Q2_0;
-    for (uint32_t kt = 0; kt < n_weight_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * HTP_MM_WEIGHT_ALIGNED_TILE_SIZE_Q2_0);
-        HVX_Vector v_tile_qf = Q6_V_vzero();
+    uint32_t n_బరువు_tiles = n / HTP_MM_బరువు_TILE_K_Q2_0;
+    కొరకు (uint32_t kt = 0; kt < n_బరువు_tiles; kt++) {
+        స్థిరరాశి HVX_సదిశ * పరిమిత vptr = (స్థిరరాశి HVX_సదిశ *) (tile_ptr + kt * HTP_MM_బరువు_ALIGNED_TILE_కొలత_Q2_0);
+        HVX_సదిశ v_tile_qf = Q6_V_vzero();
 
-        #pragma unroll
-        for (int half = 0; half < 2; half++) {
-            const HVX_Vector * restrict v_act = (const HVX_Vector *) (y_q + (2 * kt + half) * HTP_MM_ACT_TILE_SIZE_Q8_1);
+        #సూచన unroll
+        కొరకు (పూర్ణాంకం half = 0; half < 2; half++) {
+            స్థిరరాశి HVX_సదిశ * పరిమిత v_act = (స్థిరరాశి HVX_సదిశ *) (y_q + (2 * kt + half) * HTP_MM_ACT_TILE_కొలత_Q8_1);
 
-            HVX_Vector v_sum_sf = Q6_Vsf_equals_Vw(accum_q2_0_32x1(vptr + 2 * half, v_act));
-            HVX_Vector v_da_sf  = Q6_V_lo_W(hvx_vec_f16_to_f32_shuff(v_act[8]));
-            HVX_Vector v_sa_qf  = Q6_V_lo_W(Q6_Wqf32_vmpy_VhfVhf(v_act[9], v_one_f16));
-            HVX_Vector v_h_qf   = Q6_Vqf32_vsub_Vqf32Vqf32(Q6_Vqf32_vmpy_VsfVsf(v_sum_sf, v_da_sf), v_sa_qf);
+            HVX_సదిశ v_కూడిక_sf = Q6_Vsf_equals_Vw(accum_q2_0_32x1(vptr + 2 * half, v_act));
+            HVX_సదిశ v_da_sf  = Q6_V_lo_W(hvx_vec_f16_గమ్యం_f32_shuff(v_act[8]));
+            HVX_సదిశ v_sa_qf  = Q6_V_lo_W(Q6_Wqf32_vmpy_VhfVhf(v_act[9], v_one_f16));
+            HVX_సదిశ v_h_qf   = Q6_Vqf32_vsub_Vqf32Vqf32(Q6_Vqf32_vmpy_VsfVsf(v_కూడిక_sf, v_da_sf), v_sa_qf);
             v_tile_qf = (half == 0) ? v_h_qf : Q6_Vqf32_vadd_Vqf32Vqf32(v_tile_qf, v_h_qf);
         }
 
-        HVX_Vector v_dw_sf = Q6_V_lo_W(hvx_vec_f16_to_f32(vptr[4]));
-        v_sum_float = hvx_vec_add_f32_f32(v_sum_float, hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vqf32(v_tile_qf), v_dw_sf));
+        HVX_సదిశ v_dw_sf = Q6_V_lo_W(hvx_vec_f16_గమ్యం_f32(vptr[4]));
+        v_కూడిక_float = hvx_vec_కూడు_f32_f32(v_కూడిక_float, hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vqf32(v_tile_qf), v_dw_sf));
     }
 
-    if (sz) {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float, hvx_vmemu(sz)));
-    } else {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), v_sum_float);
+    ఒకవేళ (sz) {
+        hvx_vec_store_u(s, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_కూడిక_float, hvx_vmemu(sz)));
+    } లేకపోతే {
+        hvx_vec_store_u(s, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_కూడిక_float);
     }
 }
 
-static void tiled_vec_dot_q2_0_32x2(const uint32_t n, float * restrict s0, float * restrict s1, const void * restrict vx, const void * restrict vy0, const void * restrict vy1, uint32_t valid_rows, const float * restrict sz0, const float * restrict sz1) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y0_q = vy0;
-    const uint8_t * restrict y1_q = vy1;
+స్థిర శూన్య tiled_vec_dot_q2_0_32x2(స్థిరరాశి uint32_t n, దశాంశం * పరిమిత s0, దశాంశం * పరిమిత s1, స్థిరరాశి శూన్య * పరిమిత vx, స్థిరరాశి శూన్య * పరిమిత vy0, స్థిరరాశి శూన్య * పరిమిత vy1, uint32_t valid_అడ్డువరుసలు, స్థిరరాశి దశాంశం * పరిమిత sz0, స్థిరరాశి దశాంశం * పరిమిత sz1) {
+    స్థిరరాశి uint8_t * పరిమిత tile_ptr = vx;
+    స్థిరరాశి uint8_t * పరిమిత y0_q = vy0;
+    స్థిరరాశి uint8_t * పరిమిత y1_q = vy1;
 
-    HVX_Vector v_sum_float_c0 = Q6_V_vzero();
-    HVX_Vector v_sum_float_c1 = Q6_V_vzero();
-    HVX_Vector v_one_f16      = hvx_vec_splat_f16(1.0);
+    HVX_సదిశ v_కూడిక_float_c0 = Q6_V_vzero();
+    HVX_సదిశ v_కూడిక_float_c1 = Q6_V_vzero();
+    HVX_సదిశ v_one_f16      = hvx_vec_splat_f16(1.0);
 
-    uint32_t n_weight_tiles = n / HTP_MM_WEIGHT_TILE_K_Q2_0;
-    for (uint32_t kt = 0; kt < n_weight_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * HTP_MM_WEIGHT_ALIGNED_TILE_SIZE_Q2_0);
-        HVX_Vector v_tile_qf_c0 = Q6_V_vzero();
-        HVX_Vector v_tile_qf_c1 = Q6_V_vzero();
+    uint32_t n_బరువు_tiles = n / HTP_MM_బరువు_TILE_K_Q2_0;
+    కొరకు (uint32_t kt = 0; kt < n_బరువు_tiles; kt++) {
+        స్థిరరాశి HVX_సదిశ * పరిమిత vptr = (స్థిరరాశి HVX_సదిశ *) (tile_ptr + kt * HTP_MM_బరువు_ALIGNED_TILE_కొలత_Q2_0);
+        HVX_సదిశ v_tile_qf_c0 = Q6_V_vzero();
+        HVX_సదిశ v_tile_qf_c1 = Q6_V_vzero();
 
-        #pragma unroll
-        for (int half = 0; half < 2; half++) {
-            const HVX_Vector * restrict v_act0 = (const HVX_Vector *) (y0_q + (2 * kt + half) * HTP_MM_ACT_TILE_SIZE_Q8_1);
-            const HVX_Vector * restrict v_act1 = (const HVX_Vector *) (y1_q + (2 * kt + half) * HTP_MM_ACT_TILE_SIZE_Q8_1);
+        #సూచన unroll
+        కొరకు (పూర్ణాంకం half = 0; half < 2; half++) {
+            స్థిరరాశి HVX_సదిశ * పరిమిత v_act0 = (స్థిరరాశి HVX_సదిశ *) (y0_q + (2 * kt + half) * HTP_MM_ACT_TILE_కొలత_Q8_1);
+            స్థిరరాశి HVX_సదిశ * పరిమిత v_act1 = (స్థిరరాశి HVX_సదిశ *) (y1_q + (2 * kt + half) * HTP_MM_ACT_TILE_కొలత_Q8_1);
 
-            HVX_Vector v_sum_c0, v_sum_c1;
-            accum_q2_0_32x2(vptr + 2 * half, v_act0, v_act1, &v_sum_c0, &v_sum_c1);
+            HVX_సదిశ v_కూడిక_c0, v_కూడిక_c1;
+            accum_q2_0_32x2(vptr + 2 * half, v_act0, v_act1, &v_కూడిక_c0, &v_కూడిక_c1);
 
-            HVX_Vector v_da_sf_c0 = Q6_V_lo_W(hvx_vec_f16_to_f32_shuff(v_act0[8]));
-            HVX_Vector v_da_sf_c1 = Q6_V_lo_W(hvx_vec_f16_to_f32_shuff(v_act1[8]));
-            HVX_Vector v_sa_qf_c0 = Q6_V_lo_W(Q6_Wqf32_vmpy_VhfVhf(v_act0[9], v_one_f16));
-            HVX_Vector v_sa_qf_c1 = Q6_V_lo_W(Q6_Wqf32_vmpy_VhfVhf(v_act1[9], v_one_f16));
+            HVX_సదిశ v_da_sf_c0 = Q6_V_lo_W(hvx_vec_f16_గమ్యం_f32_shuff(v_act0[8]));
+            HVX_సదిశ v_da_sf_c1 = Q6_V_lo_W(hvx_vec_f16_గమ్యం_f32_shuff(v_act1[8]));
+            HVX_సదిశ v_sa_qf_c0 = Q6_V_lo_W(Q6_Wqf32_vmpy_VhfVhf(v_act0[9], v_one_f16));
+            HVX_సదిశ v_sa_qf_c1 = Q6_V_lo_W(Q6_Wqf32_vmpy_VhfVhf(v_act1[9], v_one_f16));
 
-            HVX_Vector v_h_qf_c0 = Q6_Vqf32_vsub_Vqf32Vqf32(Q6_Vqf32_vmpy_VsfVsf(Q6_Vsf_equals_Vw(v_sum_c0), v_da_sf_c0), v_sa_qf_c0);
-            HVX_Vector v_h_qf_c1 = Q6_Vqf32_vsub_Vqf32Vqf32(Q6_Vqf32_vmpy_VsfVsf(Q6_Vsf_equals_Vw(v_sum_c1), v_da_sf_c1), v_sa_qf_c1);
+            HVX_సదిశ v_h_qf_c0 = Q6_Vqf32_vsub_Vqf32Vqf32(Q6_Vqf32_vmpy_VsfVsf(Q6_Vsf_equals_Vw(v_కూడిక_c0), v_da_sf_c0), v_sa_qf_c0);
+            HVX_సదిశ v_h_qf_c1 = Q6_Vqf32_vsub_Vqf32Vqf32(Q6_Vqf32_vmpy_VsfVsf(Q6_Vsf_equals_Vw(v_కూడిక_c1), v_da_sf_c1), v_sa_qf_c1);
 
             v_tile_qf_c0 = (half == 0) ? v_h_qf_c0 : Q6_Vqf32_vadd_Vqf32Vqf32(v_tile_qf_c0, v_h_qf_c0);
             v_tile_qf_c1 = (half == 0) ? v_h_qf_c1 : Q6_Vqf32_vadd_Vqf32Vqf32(v_tile_qf_c1, v_h_qf_c1);
         }
 
-        HVX_Vector v_dw_sf = Q6_V_lo_W(hvx_vec_f16_to_f32(vptr[4]));
-        v_sum_float_c0 = hvx_vec_add_f32_f32(v_sum_float_c0, hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vqf32(v_tile_qf_c0), v_dw_sf));
-        v_sum_float_c1 = hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vqf32(v_tile_qf_c1), v_dw_sf));
+        HVX_సదిశ v_dw_sf = Q6_V_lo_W(hvx_vec_f16_గమ్యం_f32(vptr[4]));
+        v_కూడిక_float_c0 = hvx_vec_కూడు_f32_f32(v_కూడిక_float_c0, hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vqf32(v_tile_qf_c0), v_dw_sf));
+        v_కూడిక_float_c1 = hvx_vec_కూడు_f32_f32(v_కూడిక_float_c1, hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vqf32(v_tile_qf_c1), v_dw_sf));
     }
 
-    if (sz0) {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c0, hvx_vmemu(sz0)));
-    } else {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), v_sum_float_c0);
+    ఒకవేళ (sz0) {
+        hvx_vec_store_u(s0, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_కూడిక_float_c0, hvx_vmemu(sz0)));
+    } లేకపోతే {
+        hvx_vec_store_u(s0, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_కూడిక_float_c0);
     }
-    if (sz1) {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vmemu(sz1)));
-    } else {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), v_sum_float_c1);
+    ఒకవేళ (sz1) {
+        hvx_vec_store_u(s1, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_కూడిక_float_c1, hvx_vmemu(sz1)));
+    } లేకపోతే {
+        hvx_vec_store_u(s1, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_కూడిక_float_c1);
     }
 }
 
-static void tiled_vec_dot_iq4nl_32x1(const uint32_t n, float * restrict s, const void * restrict vx, const void * restrict vy, uint32_t valid_rows, const float * restrict sz) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y_q = vy;
+స్థిర శూన్య tiled_vec_dot_iq4nl_32x1(స్థిరరాశి uint32_t n, దశాంశం * పరిమిత s, స్థిరరాశి శూన్య * పరిమిత vx, స్థిరరాశి శూన్య * పరిమిత vy, uint32_t valid_అడ్డువరుసలు, స్థిరరాశి దశాంశం * పరిమిత sz) {
+    స్థిరరాశి uint8_t * పరిమిత tile_ptr = vx;
+    స్థిరరాశి uint8_t * పరిమిత y_q = vy;
 
-    HVX_Vector v_sum_float = Q6_V_vzero();
-    HVX_Vector mask_h4 = Q6_Vb_vsplat_R(0x0F);
-    HVX_Vector lut = *(const HVX_Vector *) kvalues_iq4nl_lut;
+    HVX_సదిశ v_కూడిక_float = Q6_V_vzero();
+    HVX_సదిశ ముసుగు_h4 = Q6_Vb_vsplat_R(0x0F);
+    HVX_సదిశ lut = *(స్థిరరాశి HVX_సదిశ *) kvalues_iq4nl_lut;
 
     uint32_t n_k_tiles = n / 32;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * 640);
-        const HVX_Vector * restrict v_act = (const HVX_Vector *) (y_q + kt * 1152);
+    కొరకు (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        స్థిరరాశి HVX_సదిశ * పరిమిత vptr = (స్థిరరాశి HVX_సదిశ *) (tile_ptr + kt * 640);
+        స్థిరరాశి HVX_సదిశ * పరిమిత v_act = (స్థిరరాశి HVX_సదిశ *) (y_q + kt * 1152);
 
-        HVX_Vector v_sum = accum_4bit_32x1_lut(vptr, v_act, mask_h4, lut);
-        HVX_Vector v_sum_sf = Q6_Vsf_equals_Vw(v_sum);
+        HVX_సదిశ v_కూడిక = accum_4bit_32x1_lut(vptr, v_act, ముసుగు_h4, lut);
+        HVX_సదిశ v_కూడిక_sf = Q6_Vsf_equals_Vw(v_కూడిక);
 
-        HVX_Vector v_scale_w = vptr[4];
-        HVX_Vector v_scale_a = v_act[8];
-        HVX_Vector v_scale_comb = hvx_vec_mul_f16_f16_to_f32_lower32(v_scale_w, v_scale_a);
-        HVX_Vector v_sum_scaled = hvx_vec_mul_f32_f32(v_sum_sf, v_scale_comb);
+        HVX_సదిశ v_scale_w = vptr[4];
+        HVX_సదిశ v_scale_a = v_act[8];
+        HVX_సదిశ v_scale_comb = hvx_vec_mul_f16_f16_గమ్యం_f32_lower32(v_scale_w, v_scale_a);
+        HVX_సదిశ v_కూడిక_scaled = hvx_vec_mul_f32_f32(v_కూడిక_sf, v_scale_comb);
 
-        v_sum_float = hvx_vec_add_f32_f32(v_sum_float, v_sum_scaled);
+        v_కూడిక_float = hvx_vec_కూడు_f32_f32(v_కూడిక_float, v_కూడిక_scaled);
     }
 
-    if (sz) {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float, hvx_vmemu(sz)));
-    } else {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), v_sum_float);
+    ఒకవేళ (sz) {
+        hvx_vec_store_u(s, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_కూడిక_float, hvx_vmemu(sz)));
+    } లేకపోతే {
+        hvx_vec_store_u(s, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_కూడిక_float);
     }
 }
 
-static void tiled_vec_dot_iq4nl_32x2(const uint32_t n, float * restrict s0, float * restrict s1, const void * restrict vx, const void * restrict vy0, const void * restrict vy1, uint32_t valid_rows, const float * restrict sz0, const float * restrict sz1) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y0_q = vy0;
-    const uint8_t * restrict y1_q = vy1;
+స్థిర శూన్య tiled_vec_dot_iq4nl_32x2(స్థిరరాశి uint32_t n, దశాంశం * పరిమిత s0, దశాంశం * పరిమిత s1, స్థిరరాశి శూన్య * పరిమిత vx, స్థిరరాశి శూన్య * పరిమిత vy0, స్థిరరాశి శూన్య * పరిమిత vy1, uint32_t valid_అడ్డువరుసలు, స్థిరరాశి దశాంశం * పరిమిత sz0, స్థిరరాశి దశాంశం * పరిమిత sz1) {
+    స్థిరరాశి uint8_t * పరిమిత tile_ptr = vx;
+    స్థిరరాశి uint8_t * పరిమిత y0_q = vy0;
+    స్థిరరాశి uint8_t * పరిమిత y1_q = vy1;
 
-    HVX_Vector v_sum_float_c0 = Q6_V_vzero();
-    HVX_Vector v_sum_float_c1 = Q6_V_vzero();
-    HVX_Vector mask_h4 = Q6_Vb_vsplat_R(0x0F);
-    HVX_Vector lut = *(const HVX_Vector *) kvalues_iq4nl_lut;
+    HVX_సదిశ v_కూడిక_float_c0 = Q6_V_vzero();
+    HVX_సదిశ v_కూడిక_float_c1 = Q6_V_vzero();
+    HVX_సదిశ ముసుగు_h4 = Q6_Vb_vsplat_R(0x0F);
+    HVX_సదిశ lut = *(స్థిరరాశి HVX_సదిశ *) kvalues_iq4nl_lut;
 
     uint32_t n_k_tiles = n / 32;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * 640);
-        const HVX_Vector * restrict v_act0 = (const HVX_Vector *) (y0_q + kt * 1152);
-        const HVX_Vector * restrict v_act1 = (const HVX_Vector *) (y1_q + kt * 1152);
+    కొరకు (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        స్థిరరాశి HVX_సదిశ * పరిమిత vptr = (స్థిరరాశి HVX_సదిశ *) (tile_ptr + kt * 640);
+        స్థిరరాశి HVX_సదిశ * పరిమిత v_act0 = (స్థిరరాశి HVX_సదిశ *) (y0_q + kt * 1152);
+        స్థిరరాశి HVX_సదిశ * పరిమిత v_act1 = (స్థిరరాశి HVX_సదిశ *) (y1_q + kt * 1152);
 
-        HVX_VectorPair v_sums = accum_4bit_32x2_lut(vptr, v_act0, v_act1, mask_h4, lut);
-        HVX_Vector v_sum_c0 = Q6_V_lo_W(v_sums);
-        HVX_Vector v_sum_c1 = Q6_V_hi_W(v_sums);
+        HVX_సదిశ_Pair v_sums = accum_4bit_32x2_lut(vptr, v_act0, v_act1, ముసుగు_h4, lut);
+        HVX_సదిశ v_కూడిక_c0 = Q6_V_lo_W(v_sums);
+        HVX_సదిశ v_కూడిక_c1 = Q6_V_hi_W(v_sums);
 
-        HVX_Vector v_sum_sf_c0 = Q6_Vsf_equals_Vw(v_sum_c0);
-        HVX_Vector v_sum_sf_c1 = Q6_Vsf_equals_Vw(v_sum_c1);
+        HVX_సదిశ v_కూడిక_sf_c0 = Q6_Vsf_equals_Vw(v_కూడిక_c0);
+        HVX_సదిశ v_కూడిక_sf_c1 = Q6_Vsf_equals_Vw(v_కూడిక_c1);
 
-        HVX_Vector v_scale_w = vptr[4];
-        HVX_Vector v_scale_a_c0 = v_act0[8];
-        HVX_Vector v_scale_a_c1 = v_act1[8];
+        HVX_సదిశ v_scale_w = vptr[4];
+        HVX_సదిశ v_scale_a_c0 = v_act0[8];
+        HVX_సదిశ v_scale_a_c1 = v_act1[8];
 
-        HVX_Vector v_scale_comb_c0 = hvx_vec_mul_f16_f16_to_f32_lower32(v_scale_w, v_scale_a_c0);
-        HVX_Vector v_scale_comb_c1 = hvx_vec_mul_f16_f16_to_f32_lower32(v_scale_w, v_scale_a_c1);
+        HVX_సదిశ v_scale_comb_c0 = hvx_vec_mul_f16_f16_గమ్యం_f32_lower32(v_scale_w, v_scale_a_c0);
+        HVX_సదిశ v_scale_comb_c1 = hvx_vec_mul_f16_f16_గమ్యం_f32_lower32(v_scale_w, v_scale_a_c1);
 
-        HVX_Vector v_sum_scaled_c0 = hvx_vec_mul_f32_f32(v_sum_sf_c0, v_scale_comb_c0);
-        HVX_Vector v_sum_scaled_c1 = hvx_vec_mul_f32_f32(v_sum_sf_c1, v_scale_comb_c1);
+        HVX_సదిశ v_కూడిక_scaled_c0 = hvx_vec_mul_f32_f32(v_కూడిక_sf_c0, v_scale_comb_c0);
+        HVX_సదిశ v_కూడిక_scaled_c1 = hvx_vec_mul_f32_f32(v_కూడిక_sf_c1, v_scale_comb_c1);
 
-        v_sum_float_c0 = hvx_vec_add_f32_f32(v_sum_float_c0, v_sum_scaled_c0);
-        v_sum_float_c1 = hvx_vec_add_f32_f32(v_sum_float_c1, v_sum_scaled_c1);
+        v_కూడిక_float_c0 = hvx_vec_కూడు_f32_f32(v_కూడిక_float_c0, v_కూడిక_scaled_c0);
+        v_కూడిక_float_c1 = hvx_vec_కూడు_f32_f32(v_కూడిక_float_c1, v_కూడిక_scaled_c1);
     }
 
-    if (sz0) {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c0, hvx_vmemu(sz0)));
-    } else {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), v_sum_float_c0);
+    ఒకవేళ (sz0) {
+        hvx_vec_store_u(s0, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_కూడిక_float_c0, hvx_vmemu(sz0)));
+    } లేకపోతే {
+        hvx_vec_store_u(s0, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_కూడిక_float_c0);
     }
-    if (sz1) {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vmemu(sz1)));
-    } else {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), v_sum_float_c1);
+    ఒకవేళ (sz1) {
+        hvx_vec_store_u(s1, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_కూడిక_float_c1, hvx_vmemu(sz1)));
+    } లేకపోతే {
+        hvx_vec_store_u(s1, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_కూడిక_float_c1);
     }
 }
 
-static void tiled_vec_dot_mxfp4_32x1(const uint32_t n, float * restrict s, const void * restrict vx, const void * restrict vy, uint32_t valid_rows, const float * restrict sz) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y_q = vy;
+స్థిర శూన్య tiled_vec_dot_mxfp4_32x1(స్థిరరాశి uint32_t n, దశాంశం * పరిమిత s, స్థిరరాశి శూన్య * పరిమిత vx, స్థిరరాశి శూన్య * పరిమిత vy, uint32_t valid_అడ్డువరుసలు, స్థిరరాశి దశాంశం * పరిమిత sz) {
+    స్థిరరాశి uint8_t * పరిమిత tile_ptr = vx;
+    స్థిరరాశి uint8_t * పరిమిత y_q = vy;
 
-    HVX_Vector v_sum_float = Q6_V_vzero();
-    HVX_Vector mask_h4 = Q6_Vb_vsplat_R(0x0F);
-    HVX_Vector lut = *(const HVX_Vector *) kvalues_mxfp4_lut;
-    HVX_Vector expand = *(const HVX_Vector *) expand_x32_e8m0;
-    HVX_Vector e8m0_mask = Q6_V_vsplat_R(0x000000ff);
+    HVX_సదిశ v_కూడిక_float = Q6_V_vzero();
+    HVX_సదిశ ముసుగు_h4 = Q6_Vb_vsplat_R(0x0F);
+    HVX_సదిశ lut = *(స్థిరరాశి HVX_సదిశ *) kvalues_mxfp4_lut;
+    HVX_సదిశ expand = *(స్థిరరాశి HVX_సదిశ *) expand_x32_e8m0;
+    HVX_సదిశ e8m0_ముసుగు = Q6_V_vsplat_R(0x000000ff);
 
     uint32_t n_k_tiles = n / 32;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * 640);
-        const HVX_Vector * restrict v_act = (const HVX_Vector *) (y_q + kt * 1152);
+    కొరకు (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        స్థిరరాశి HVX_సదిశ * పరిమిత vptr = (స్థిరరాశి HVX_సదిశ *) (tile_ptr + kt * 640);
+        స్థిరరాశి HVX_సదిశ * పరిమిత v_act = (స్థిరరాశి HVX_సదిశ *) (y_q + kt * 1152);
 
-        HVX_Vector v_sum = accum_4bit_32x1_lut(vptr, v_act, mask_h4, lut);
-        HVX_Vector v_sum_sf = Q6_Vsf_equals_Vw(v_sum);
+        HVX_సదిశ v_కూడిక = accum_4bit_32x1_lut(vptr, v_act, ముసుగు_h4, lut);
+        HVX_సదిశ v_కూడిక_sf = Q6_Vsf_equals_Vw(v_కూడిక);
 
-        HVX_Vector v_scale_w = hvx_vmem(tile_ptr + kt * 640 + 512);
-        HVX_Vector r0_d = Q6_V_vdelta_VV(v_scale_w, expand);
-        r0_d = Q6_V_vand_VV(r0_d, e8m0_mask);
-        HVX_Vector v_scale_w_f32 = Q6_Vw_vasl_VwR(r0_d, 23);
+        HVX_సదిశ v_scale_w = hvx_vmem(tile_ptr + kt * 640 + 512);
+        HVX_సదిశ r0_d = Q6_V_vdelta_VV(v_scale_w, expand);
+        r0_d = Q6_V_vand_VV(r0_d, e8m0_ముసుగు);
+        HVX_సదిశ v_scale_w_f32 = Q6_Vw_vasl_VwR(r0_d, 23);
 
-        HVX_Vector v_scale_a_f16 = v_act[8];
-        HVX_VectorPair p_scale_a_f32 = hvx_vec_f16_to_f32_shuff(v_scale_a_f16);
-        HVX_Vector v_scale_a = Q6_V_lo_W(p_scale_a_f32);
+        HVX_సదిశ v_scale_a_f16 = v_act[8];
+        HVX_సదిశ_Pair p_scale_a_f32 = hvx_vec_f16_గమ్యం_f32_shuff(v_scale_a_f16);
+        HVX_సదిశ v_scale_a = Q6_V_lo_W(p_scale_a_f32);
 
-        HVX_Vector v_scale_comb = hvx_vec_mul_f32_f32(v_scale_w_f32, v_scale_a);
-        HVX_Vector v_sum_scaled = hvx_vec_mul_f32_f32(v_sum_sf, v_scale_comb);
+        HVX_సదిశ v_scale_comb = hvx_vec_mul_f32_f32(v_scale_w_f32, v_scale_a);
+        HVX_సదిశ v_కూడిక_scaled = hvx_vec_mul_f32_f32(v_కూడిక_sf, v_scale_comb);
 
-        v_sum_float = hvx_vec_add_f32_f32(v_sum_float, v_sum_scaled);
+        v_కూడిక_float = hvx_vec_కూడు_f32_f32(v_కూడిక_float, v_కూడిక_scaled);
     }
 
-    v_sum_float = hvx_vec_mul_f32_f32(v_sum_float, hvx_vec_splat_f32(0.5f));
+    v_కూడిక_float = hvx_vec_mul_f32_f32(v_కూడిక_float, hvx_vec_splat_f32(0.5f));
 
-    if (sz) {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float, hvx_vmemu(sz)));
-    } else {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), v_sum_float);
+    ఒకవేళ (sz) {
+        hvx_vec_store_u(s, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_కూడిక_float, hvx_vmemu(sz)));
+    } లేకపోతే {
+        hvx_vec_store_u(s, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_కూడిక_float);
     }
 }
 
-static void tiled_vec_dot_mxfp4_32x2(const uint32_t n, float * restrict s0, float * restrict s1, const void * restrict vx, const void * restrict vy0, const void * restrict vy1, uint32_t valid_rows, const float * restrict sz0, const float * restrict sz1) {
-    const uint8_t * restrict tile_ptr = vx;
-    const uint8_t * restrict y0_q = vy0;
-    const uint8_t * restrict y1_q = vy1;
+స్థిర శూన్య tiled_vec_dot_mxfp4_32x2(స్థిరరాశి uint32_t n, దశాంశం * పరిమిత s0, దశాంశం * పరిమిత s1, స్థిరరాశి శూన్య * పరిమిత vx, స్థిరరాశి శూన్య * పరిమిత vy0, స్థిరరాశి శూన్య * పరిమిత vy1, uint32_t valid_అడ్డువరుసలు, స్థిరరాశి దశాంశం * పరిమిత sz0, స్థిరరాశి దశాంశం * పరిమిత sz1) {
+    స్థిరరాశి uint8_t * పరిమిత tile_ptr = vx;
+    స్థిరరాశి uint8_t * పరిమిత y0_q = vy0;
+    స్థిరరాశి uint8_t * పరిమిత y1_q = vy1;
 
-    HVX_Vector v_sum_float_c0 = Q6_V_vzero();
-    HVX_Vector v_sum_float_c1 = Q6_V_vzero();
-    HVX_Vector mask_h4 = Q6_Vb_vsplat_R(0x0F);
-    HVX_Vector lut = *(const HVX_Vector *) kvalues_mxfp4_lut;
-    HVX_Vector expand = *(const HVX_Vector *) expand_x32_e8m0;
-    HVX_Vector e8m0_mask = Q6_V_vsplat_R(0x000000ff);
+    HVX_సదిశ v_కూడిక_float_c0 = Q6_V_vzero();
+    HVX_సదిశ v_కూడిక_float_c1 = Q6_V_vzero();
+    HVX_సదిశ ముసుగు_h4 = Q6_Vb_vsplat_R(0x0F);
+    HVX_సదిశ lut = *(స్థిరరాశి HVX_సదిశ *) kvalues_mxfp4_lut;
+    HVX_సదిశ expand = *(స్థిరరాశి HVX_సదిశ *) expand_x32_e8m0;
+    HVX_సదిశ e8m0_ముసుగు = Q6_V_vsplat_R(0x000000ff);
 
     uint32_t n_k_tiles = n / 32;
-    for (uint32_t kt = 0; kt < n_k_tiles; kt++) {
-        const HVX_Vector * restrict vptr = (const HVX_Vector *) (tile_ptr + kt * 640);
-        const HVX_Vector * restrict v_act0 = (const HVX_Vector *) (y0_q + kt * 1152);
-        const HVX_Vector * restrict v_act1 = (const HVX_Vector *) (y1_q + kt * 1152);
+    కొరకు (uint32_t kt = 0; kt < n_k_tiles; kt++) {
+        స్థిరరాశి HVX_సదిశ * పరిమిత vptr = (స్థిరరాశి HVX_సదిశ *) (tile_ptr + kt * 640);
+        స్థిరరాశి HVX_సదిశ * పరిమిత v_act0 = (స్థిరరాశి HVX_సదిశ *) (y0_q + kt * 1152);
+        స్థిరరాశి HVX_సదిశ * పరిమిత v_act1 = (స్థిరరాశి HVX_సదిశ *) (y1_q + kt * 1152);
 
-        HVX_VectorPair v_sums = accum_4bit_32x2_lut(vptr, v_act0, v_act1, mask_h4, lut);
-        HVX_Vector v_sum_c0 = Q6_V_lo_W(v_sums);
-        HVX_Vector v_sum_c1 = Q6_V_hi_W(v_sums);
+        HVX_సదిశ_Pair v_sums = accum_4bit_32x2_lut(vptr, v_act0, v_act1, ముసుగు_h4, lut);
+        HVX_సదిశ v_కూడిక_c0 = Q6_V_lo_W(v_sums);
+        HVX_సదిశ v_కూడిక_c1 = Q6_V_hi_W(v_sums);
 
-        HVX_Vector v_sum_sf_c0 = Q6_Vsf_equals_Vw(v_sum_c0);
-        HVX_Vector v_sum_sf_c1 = Q6_Vsf_equals_Vw(v_sum_c1);
+        HVX_సదిశ v_కూడిక_sf_c0 = Q6_Vsf_equals_Vw(v_కూడిక_c0);
+        HVX_సదిశ v_కూడిక_sf_c1 = Q6_Vsf_equals_Vw(v_కూడిక_c1);
 
-        HVX_Vector v_scale_w = hvx_vmem(tile_ptr + kt * 640 + 512);
-        HVX_Vector r0_d = Q6_V_vdelta_VV(v_scale_w, expand);
-        r0_d = Q6_V_vand_VV(r0_d, e8m0_mask);
-        HVX_Vector v_scale_w_f32 = Q6_Vw_vasl_VwR(r0_d, 23);
+        HVX_సదిశ v_scale_w = hvx_vmem(tile_ptr + kt * 640 + 512);
+        HVX_సదిశ r0_d = Q6_V_vdelta_VV(v_scale_w, expand);
+        r0_d = Q6_V_vand_VV(r0_d, e8m0_ముసుగు);
+        HVX_సదిశ v_scale_w_f32 = Q6_Vw_vasl_VwR(r0_d, 23);
 
-        HVX_Vector v_scale_a_c0_f16 = v_act0[8];
-        HVX_Vector v_scale_a_c1_f16 = v_act1[8];
+        HVX_సదిశ v_scale_a_c0_f16 = v_act0[8];
+        HVX_సదిశ v_scale_a_c1_f16 = v_act1[8];
 
-        HVX_VectorPair p_scale_a_c0_f32 = hvx_vec_f16_to_f32_shuff(v_scale_a_c0_f16);
-        HVX_VectorPair p_scale_a_c1_f32 = hvx_vec_f16_to_f32_shuff(v_scale_a_c1_f16);
+        HVX_సదిశ_Pair p_scale_a_c0_f32 = hvx_vec_f16_గమ్యం_f32_shuff(v_scale_a_c0_f16);
+        HVX_సదిశ_Pair p_scale_a_c1_f32 = hvx_vec_f16_గమ్యం_f32_shuff(v_scale_a_c1_f16);
 
-        HVX_Vector v_scale_a_c0 = Q6_V_lo_W(p_scale_a_c0_f32);
-        HVX_Vector v_scale_a_c1 = Q6_V_lo_W(p_scale_a_c1_f32);
+        HVX_సదిశ v_scale_a_c0 = Q6_V_lo_W(p_scale_a_c0_f32);
+        HVX_సదిశ v_scale_a_c1 = Q6_V_lo_W(p_scale_a_c1_f32);
 
-        HVX_Vector v_scale_comb_c0 = hvx_vec_mul_f32_f32(v_scale_w_f32, v_scale_a_c0);
-        HVX_Vector v_scale_comb_c1 = hvx_vec_mul_f32_f32(v_scale_w_f32, v_scale_a_c1);
+        HVX_సదిశ v_scale_comb_c0 = hvx_vec_mul_f32_f32(v_scale_w_f32, v_scale_a_c0);
+        HVX_సదిశ v_scale_comb_c1 = hvx_vec_mul_f32_f32(v_scale_w_f32, v_scale_a_c1);
 
-        HVX_Vector v_sum_scaled_c0 = hvx_vec_mul_f32_f32(v_sum_sf_c0, v_scale_comb_c0);
-        HVX_Vector v_sum_scaled_c1 = hvx_vec_mul_f32_f32(v_sum_sf_c1, v_scale_comb_c1);
+        HVX_సదిశ v_కూడిక_scaled_c0 = hvx_vec_mul_f32_f32(v_కూడిక_sf_c0, v_scale_comb_c0);
+        HVX_సదిశ v_కూడిక_scaled_c1 = hvx_vec_mul_f32_f32(v_కూడిక_sf_c1, v_scale_comb_c1);
 
-        v_sum_float_c0 = hvx_vec_add_f32_f32(v_sum_float_c0, v_sum_scaled_c0);
-        v_sum_float_c1 = hvx_vec_add_f32_f32(v_sum_float_c1, v_sum_scaled_c1);
+        v_కూడిక_float_c0 = hvx_vec_కూడు_f32_f32(v_కూడిక_float_c0, v_కూడిక_scaled_c0);
+        v_కూడిక_float_c1 = hvx_vec_కూడు_f32_f32(v_కూడిక_float_c1, v_కూడిక_scaled_c1);
     }
 
-    v_sum_float_c0 = hvx_vec_mul_f32_f32(v_sum_float_c0, hvx_vec_splat_f32(0.5f));
-    v_sum_float_c1 = hvx_vec_mul_f32_f32(v_sum_float_c1, hvx_vec_splat_f32(0.5f));
+    v_కూడిక_float_c0 = hvx_vec_mul_f32_f32(v_కూడిక_float_c0, hvx_vec_splat_f32(0.5f));
+    v_కూడిక_float_c1 = hvx_vec_mul_f32_f32(v_కూడిక_float_c1, hvx_vec_splat_f32(0.5f));
 
-    if (sz0) {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c0, hvx_vmemu(sz0)));
-    } else {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), v_sum_float_c0);
+    ఒకవేళ (sz0) {
+        hvx_vec_store_u(s0, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_కూడిక_float_c0, hvx_vmemu(sz0)));
+    } లేకపోతే {
+        hvx_vec_store_u(s0, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_కూడిక_float_c0);
     }
-    if (sz1) {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum_float_c1, hvx_vmemu(sz1)));
-    } else {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), v_sum_float_c1);
+    ఒకవేళ (sz1) {
+        hvx_vec_store_u(s1, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_కూడిక_float_c1, hvx_vmemu(sz1)));
+    } లేకపోతే {
+        hvx_vec_store_u(s1, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_కూడిక_float_c1);
     }
 }
 
-static void tiled_vec_dot_f16_32x1(const uint32_t n, float * restrict s, const void * restrict vx, const void * restrict vy, uint32_t valid_rows, const float * restrict sz) {
-    const HVX_Vector * restrict vptr  = (const HVX_Vector *) vx;
-    const HVX_Vector * restrict v_act = (const HVX_Vector *) vy;
-    const uint32_t n_vecs = ((n + 31) / 32) * 16;
+స్థిర శూన్య tiled_vec_dot_f16_32x1(స్థిరరాశి uint32_t n, దశాంశం * పరిమిత s, స్థిరరాశి శూన్య * పరిమిత vx, స్థిరరాశి శూన్య * పరిమిత vy, uint32_t valid_అడ్డువరుసలు, స్థిరరాశి దశాంశం * పరిమిత sz) {
+    స్థిరరాశి HVX_సదిశ * పరిమిత vptr  = (స్థిరరాశి HVX_సదిశ *) vx;
+    స్థిరరాశి HVX_సదిశ * పరిమిత v_act = (స్థిరరాశి HVX_సదిశ *) vy;
+    స్థిరరాశి uint32_t n_vecs = ((n + 31) / 32) * 16;
 
-    HVX_VectorPair acc = Q6_W_vzero();
+    HVX_సదిశ_Pair acc = Q6_W_vzero();
 
-    #pragma unroll(4)
-    for (uint32_t i = 0; i < n_vecs; i++) {
+    #సూచన unroll(4)
+    కొరకు (uint32_t i = 0; i < n_vecs; i++) {
         acc = hvx_vec_mpyacc_f32_f16(acc, vptr[i], v_act[i]);
     }
 
-    HVX_Vector v_sum = hvx_vec_add_f32_f32(Q6_V_lo_W(acc), Q6_V_hi_W(acc));
+    HVX_సదిశ v_కూడిక = hvx_vec_కూడు_f32_f32(Q6_V_lo_W(acc), Q6_V_hi_W(acc));
 
-    if (sz) {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum, hvx_vmemu(sz)));
-    } else {
-        hvx_vec_store_u(s, valid_rows * sizeof(float), v_sum);
+    ఒకవేళ (sz) {
+        hvx_vec_store_u(s, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_కూడిక, hvx_vmemu(sz)));
+    } లేకపోతే {
+        hvx_vec_store_u(s, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_కూడిక);
     }
 }
 
-static void tiled_vec_dot_f16_32x2(const uint32_t n, float * restrict s0, float * restrict s1, const void * restrict vx, const void * restrict vy0, const void * restrict vy1, uint32_t valid_rows, const float * restrict sz0, const float * restrict sz1) {
-    const HVX_Vector * restrict vptr   = (const HVX_Vector *) vx;
-    const HVX_Vector * restrict v_act0 = (const HVX_Vector *) vy0;
-    const HVX_Vector * restrict v_act1 = (const HVX_Vector *) vy1;
-    const uint32_t n_vecs = ((n + 31) / 32) * 16;
+స్థిర శూన్య tiled_vec_dot_f16_32x2(స్థిరరాశి uint32_t n, దశాంశం * పరిమిత s0, దశాంశం * పరిమిత s1, స్థిరరాశి శూన్య * పరిమిత vx, స్థిరరాశి శూన్య * పరిమిత vy0, స్థిరరాశి శూన్య * పరిమిత vy1, uint32_t valid_అడ్డువరుసలు, స్థిరరాశి దశాంశం * పరిమిత sz0, స్థిరరాశి దశాంశం * పరిమిత sz1) {
+    స్థిరరాశి HVX_సదిశ * పరిమిత vptr   = (స్థిరరాశి HVX_సదిశ *) vx;
+    స్థిరరాశి HVX_సదిశ * పరిమిత v_act0 = (స్థిరరాశి HVX_సదిశ *) vy0;
+    స్థిరరాశి HVX_సదిశ * పరిమిత v_act1 = (స్థిరరాశి HVX_సదిశ *) vy1;
+    స్థిరరాశి uint32_t n_vecs = ((n + 31) / 32) * 16;
 
-    HVX_VectorPair acc0 = Q6_W_vzero();
-    HVX_VectorPair acc1 = Q6_W_vzero();
+    HVX_సదిశ_Pair acc0 = Q6_W_vzero();
+    HVX_సదిశ_Pair acc1 = Q6_W_vzero();
 
-    #pragma unroll(4)
-    for (uint32_t i = 0; i < n_vecs; i++) {
-        HVX_Vector v_w = vptr[i];
+    #సూచన unroll(4)
+    కొరకు (uint32_t i = 0; i < n_vecs; i++) {
+        HVX_సదిశ v_w = vptr[i];
         acc0 = hvx_vec_mpyacc_f32_f16(acc0, v_w, v_act0[i]);
         acc1 = hvx_vec_mpyacc_f32_f16(acc1, v_w, v_act1[i]);
     }
 
-    HVX_Vector v_sum0 = hvx_vec_add_f32_f32(Q6_V_lo_W(acc0), Q6_V_hi_W(acc0));
-    HVX_Vector v_sum1 = hvx_vec_add_f32_f32(Q6_V_lo_W(acc1), Q6_V_hi_W(acc1));
+    HVX_సదిశ v_sum0 = hvx_vec_కూడు_f32_f32(Q6_V_lo_W(acc0), Q6_V_hi_W(acc0));
+    HVX_సదిశ v_sum1 = hvx_vec_కూడు_f32_f32(Q6_V_lo_W(acc1), Q6_V_hi_W(acc1));
 
-    if (sz0) {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum0, hvx_vmemu(sz0)));
-    } else {
-        hvx_vec_store_u(s0, valid_rows * sizeof(float), v_sum0);
+    ఒకవేళ (sz0) {
+        hvx_vec_store_u(s0, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_sum0, hvx_vmemu(sz0)));
+    } లేకపోతే {
+        hvx_vec_store_u(s0, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_sum0);
     }
-    if (sz1) {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), hvx_vec_add_f32_f32(v_sum1, hvx_vmemu(sz1)));
-    } else {
-        hvx_vec_store_u(s1, valid_rows * sizeof(float), v_sum1);
+    ఒకవేళ (sz1) {
+        hvx_vec_store_u(s1, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), hvx_vec_కూడు_f32_f32(v_sum1, hvx_vmemu(sz1)));
+    } లేకపోతే {
+        hvx_vec_store_u(s1, valid_అడ్డువరుసలు * పరిమాణం(దశాంశం), v_sum1);
     }
 }
 
 
-static inline void quantize_f32_q8_0_tiled_kernel(
-    const uint8_t * restrict src_data,
-    uint8_t * restrict dst_data,
-    uint8_t * restrict tmp_data,
+స్థిర అంతఃవరుస శూన్య quantize_f32_q8_0_tiled_kernel(
+    స్థిరరాశి uint8_t * పరిమిత src_దత్తాంశం,
+    uint8_t * పరిమిత dst_దత్తాంశం,
+    uint8_t * పరిమిత tmp_దత్తాంశం,
     uint32_t ne0,
     uint32_t nrows,
-    size_t src_row_size,
-    size_t dst_row_size
+    size_t src_అడ్డువరుస_కొలత,
+    size_t dst_అడ్డువరుస_కొలత
 ) {
-    (void) tmp_data;
-    for (uint32_t i = 0; i < nrows; ++i) {
-        quantize_row_f32_q8_0_tiled((float *) src_data, dst_data, ne0);
-        dst_data += dst_row_size;
-        src_data += src_row_size;
+    (శూన్య) tmp_దత్తాంశం;
+    కొరకు (uint32_t i = 0; i < nrows; ++i) {
+        quantize_అడ్డువరుస_f32_q8_0_tiled((దశాంశం *) src_దత్తాంశం, dst_దత్తాంశం, ne0);
+        dst_దత్తాంశం += dst_అడ్డువరుస_కొలత;
+        src_దత్తాంశం += src_అడ్డువరుస_కొలత;
     }
 }
 
-static inline void quantize_f32_q8_1_tiled_kernel(
-    const uint8_t * restrict src_data,
-    uint8_t * restrict dst_data,
-    uint8_t * restrict tmp_data,
+స్థిర అంతఃవరుస శూన్య quantize_f32_q8_1_tiled_kernel(
+    స్థిరరాశి uint8_t * పరిమిత src_దత్తాంశం,
+    uint8_t * పరిమిత dst_దత్తాంశం,
+    uint8_t * పరిమిత tmp_దత్తాంశం,
     uint32_t ne0,
     uint32_t nrows,
-    size_t src_row_size,
-    size_t dst_row_size
+    size_t src_అడ్డువరుస_కొలత,
+    size_t dst_అడ్డువరుస_కొలత
 ) {
-    (void) tmp_data;
-    for (uint32_t i = 0; i < nrows; ++i) {
-        quantize_row_f32_q8_1_tiled((float *) src_data, dst_data, ne0);
-        dst_data += dst_row_size;
-        src_data += src_row_size;
+    (శూన్య) tmp_దత్తాంశం;
+    కొరకు (uint32_t i = 0; i < nrows; ++i) {
+        quantize_అడ్డువరుస_f32_q8_1_tiled((దశాంశం *) src_దత్తాంశం, dst_దత్తాంశం, ne0);
+        dst_దత్తాంశం += dst_అడ్డువరుస_కొలత;
+        src_దత్తాంశం += src_అడ్డువరుస_కొలత;
     }
 }
 
-static inline void quantize_f32_q8_1_s16_tiled_kernel(
-    const uint8_t * restrict src_data,
-    uint8_t * restrict dst_data,
-    uint8_t * restrict tmp_data,
+స్థిర అంతఃవరుస శూన్య quantize_f32_q8_1_s16_tiled_kernel(
+    స్థిరరాశి uint8_t * పరిమిత src_దత్తాంశం,
+    uint8_t * పరిమిత dst_దత్తాంశం,
+    uint8_t * పరిమిత tmp_దత్తాంశం,
     uint32_t ne0,
     uint32_t nrows,
-    size_t src_row_size,
-    size_t dst_row_size
+    size_t src_అడ్డువరుస_కొలత,
+    size_t dst_అడ్డువరుస_కొలత
 ) {
-    (void) tmp_data;
-    for (uint32_t i = 0; i < nrows; ++i) {
-        quantize_row_f32_q8_1_s16_tiled((float *) src_data, dst_data, ne0);
-        dst_data += dst_row_size;
-        src_data += src_row_size;
+    (శూన్య) tmp_దత్తాంశం;
+    కొరకు (uint32_t i = 0; i < nrows; ++i) {
+        quantize_అడ్డువరుస_f32_q8_1_s16_tiled((దశాంశం *) src_దత్తాంశం, dst_దత్తాంశం, ne0);
+        dst_దత్తాంశం += dst_అడ్డువరుస_కొలత;
+        src_దత్తాంశం += src_అడ్డువరుస_కొలత;
     }
 }
 
-static inline void quantize_f32_f16_tiled_kernel(
-    const uint8_t * restrict src_data,
-    uint8_t * restrict dst_data,
-    uint8_t * restrict tmp_data,
+స్థిర అంతఃవరుస శూన్య quantize_f32_f16_tiled_kernel(
+    స్థిరరాశి uint8_t * పరిమిత src_దత్తాంశం,
+    uint8_t * పరిమిత dst_దత్తాంశం,
+    uint8_t * పరిమిత tmp_దత్తాంశం,
     uint32_t ne0,
     uint32_t nrows,
-    size_t src_row_size,
-    size_t dst_row_size
+    size_t src_అడ్డువరుస_కొలత,
+    size_t dst_అడ్డువరుస_కొలత
 ) {
-    (void) tmp_data;
-    for (uint32_t i = 0; i < nrows; ++i) {
-        quantize_row_f32_f16_tiled((const float *) src_data, dst_data, ne0);
-        dst_data += dst_row_size;
-        src_data += src_row_size;
+    (శూన్య) tmp_దత్తాంశం;
+    కొరకు (uint32_t i = 0; i < nrows; ++i) {
+        quantize_అడ్డువరుస_f32_f16_tiled((స్థిరరాశి దశాంశం *) src_దత్తాంశం, dst_దత్తాంశం, ne0);
+        dst_దత్తాంశం += dst_అడ్డువరుస_కొలత;
+        src_దత్తాంశం += src_అడ్డువరుస_కొలత;
     }
 }
 
-static inline void quantize_f16_f16_tiled_kernel(
-    const uint8_t * restrict src_data,
-    uint8_t * restrict dst_data,
-    uint8_t * restrict tmp_data,
+స్థిర అంతఃవరుస శూన్య quantize_f16_f16_tiled_kernel(
+    స్థిరరాశి uint8_t * పరిమిత src_దత్తాంశం,
+    uint8_t * పరిమిత dst_దత్తాంశం,
+    uint8_t * పరిమిత tmp_దత్తాంశం,
     uint32_t ne0,
     uint32_t nrows,
-    size_t src_row_size,
-    size_t dst_row_size
+    size_t src_అడ్డువరుస_కొలత,
+    size_t dst_అడ్డువరుస_కొలత
 ) {
-    (void) tmp_data;
-    for (uint32_t i = 0; i < nrows; ++i) {
-        quantize_row_f16_f16_tiled((const __fp16 *) src_data, dst_data, ne0);
-        dst_data += dst_row_size;
-        src_data += src_row_size;
+    (శూన్య) tmp_దత్తాంశం;
+    కొరకు (uint32_t i = 0; i < nrows; ++i) {
+        quantize_అడ్డువరుస_f16_f16_tiled((స్థిరరాశి __fp16 *) src_దత్తాంశం, dst_దత్తాంశం, ne0);
+        dst_దత్తాంశం += dst_అడ్డువరుస_కొలత;
+        src_దత్తాంశం += src_అడ్డువరుస_కొలత;
     }
 }
 
-static inline void quantize_f32_q8_0_tiled_block_kernel(
-    const float * restrict src,
-    uint8_t * restrict dst,
-    uint8_t * restrict tmp_data,
+స్థిర అంతఃవరుస శూన్య quantize_f32_q8_0_tiled_ఖండం_kernel(
+    స్థిరరాశి దశాంశం * పరిమిత src,
+    uint8_t * పరిమిత dst,
+    uint8_t * పరిమిత tmp_దత్తాంశం,
     uint32_t ne0,
-    uint32_t ib_first,
-    uint32_t ib_last,
-    size_t src_row_size,
-    size_t dst_row_size,
+    uint32_t ib_మొదటి,
+    uint32_t ib_చివరి,
+    size_t src_అడ్డువరుస_కొలత,
+    size_t dst_అడ్డువరుస_కొలత,
     uint32_t r,
     uint32_t c
 ) {
-    (void) tmp_data;
-    const uint32_t qk = QK_Q8_0_TILED;
-    const uint32_t nb = (ne0 + qk - 1) / qk;
+    (శూన్య) tmp_దత్తాంశం;
+    స్థిరరాశి uint32_t qk = QK_Q8_0_TILED;
+    స్థిరరాశి uint32_t nb = (ne0 + qk - 1) / qk;
 
-    for (uint32_t ib = ib_first; ib < ib_last; ++ib) {
-        const float * restrict src_ptr = (const float *) ((const uint8_t *) src + r * src_row_size + c * qk * sizeof(float));
-        uint8_t * restrict dst_ptr = dst + r * dst_row_size + c * 4 * 1152;
+    కొరకు (uint32_t ib = ib_మొదటి; ib < ib_చివరి; ++ib) {
+        స్థిరరాశి దశాంశం * పరిమిత src_ptr = (స్థిరరాశి దశాంశం *) ((స్థిరరాశి uint8_t *) src + r * src_అడ్డువరుస_కొలత + c * qk * పరిమాణం(దశాంశం));
+        uint8_t * పరిమిత dst_ptr = dst + r * dst_అడ్డువరుస_కొలత + c * 4 * 1152;
 
-        quantize_block_f32_q8_0_tiled((float *) src_ptr, dst_ptr);
+        quantize_ఖండం_f32_q8_0_tiled((దశాంశం *) src_ptr, dst_ptr);
 
         c++;
-        if (c == nb) {
+        ఒకవేళ (c == nb) {
             c = 0;
             r++;
         }
     }
 }
 
-static inline void quantize_f32_q8_1_tiled_block_kernel(
-    const float * restrict src,
-    uint8_t * restrict dst,
-    uint8_t * restrict tmp_data,
+స్థిర అంతఃవరుస శూన్య quantize_f32_q8_1_tiled_ఖండం_kernel(
+    స్థిరరాశి దశాంశం * పరిమిత src,
+    uint8_t * పరిమిత dst,
+    uint8_t * పరిమిత tmp_దత్తాంశం,
     uint32_t ne0,
-    uint32_t ib_first,
-    uint32_t ib_last,
-    size_t src_row_size,
-    size_t dst_row_size,
+    uint32_t ib_మొదటి,
+    uint32_t ib_చివరి,
+    size_t src_అడ్డువరుస_కొలత,
+    size_t dst_అడ్డువరుస_కొలత,
     uint32_t r,
     uint32_t c
 ) {
-    (void) tmp_data;
-    const uint32_t qk = QK_Q8_0_TILED;
-    const uint32_t nb = (ne0 + qk - 1) / qk;
+    (శూన్య) tmp_దత్తాంశం;
+    స్థిరరాశి uint32_t qk = QK_Q8_0_TILED;
+    స్థిరరాశి uint32_t nb = (ne0 + qk - 1) / qk;
 
-    for (uint32_t ib = ib_first; ib < ib_last; ++ib) {
-        const float * restrict src_ptr = (const float *) ((const uint8_t *) src + r * src_row_size + c * qk * sizeof(float));
-        uint8_t * restrict dst_ptr = dst + r * dst_row_size + c * 4 * 1280;
+    కొరకు (uint32_t ib = ib_మొదటి; ib < ib_చివరి; ++ib) {
+        స్థిరరాశి దశాంశం * పరిమిత src_ptr = (స్థిరరాశి దశాంశం *) ((స్థిరరాశి uint8_t *) src + r * src_అడ్డువరుస_కొలత + c * qk * పరిమాణం(దశాంశం));
+        uint8_t * పరిమిత dst_ptr = dst + r * dst_అడ్డువరుస_కొలత + c * 4 * 1280;
 
-        quantize_block_f32_q8_1_tiled((float *) src_ptr, dst_ptr);
+        quantize_ఖండం_f32_q8_1_tiled((దశాంశం *) src_ptr, dst_ptr);
 
         c++;
-        if (c == nb) {
+        ఒకవేళ (c == nb) {
             c = 0;
             r++;
         }
     }
 }
 
-static inline void quantize_f32_q8_1_s16_tiled_block_kernel(
-    const float * restrict src,
-    uint8_t * restrict dst,
-    uint8_t * restrict tmp_data,
+స్థిర అంతఃవరుస శూన్య quantize_f32_q8_1_s16_tiled_ఖండం_kernel(
+    స్థిరరాశి దశాంశం * పరిమిత src,
+    uint8_t * పరిమిత dst,
+    uint8_t * పరిమిత tmp_దత్తాంశం,
     uint32_t ne0,
-    uint32_t ib_first,
-    uint32_t ib_last,
-    size_t src_row_size,
-    size_t dst_row_size,
+    uint32_t ib_మొదటి,
+    uint32_t ib_చివరి,
+    size_t src_అడ్డువరుస_కొలత,
+    size_t dst_అడ్డువరుస_కొలత,
     uint32_t r,
     uint32_t c
 ) {
-    (void) tmp_data;
-    const uint32_t qk = QK_Q8_0_TILED;
-    const uint32_t nb = (ne0 + qk - 1) / qk;
+    (శూన్య) tmp_దత్తాంశం;
+    స్థిరరాశి uint32_t qk = QK_Q8_0_TILED;
+    స్థిరరాశి uint32_t nb = (ne0 + qk - 1) / qk;
 
-    for (uint32_t ib = ib_first; ib < ib_last; ++ib) {
-        const float * restrict src_ptr = (const float *) ((const uint8_t *) src + r * src_row_size + c * qk * sizeof(float));
-        uint8_t * restrict dst_ptr = dst + r * dst_row_size + c * 4 * 1280;
+    కొరకు (uint32_t ib = ib_మొదటి; ib < ib_చివరి; ++ib) {
+        స్థిరరాశి దశాంశం * పరిమిత src_ptr = (స్థిరరాశి దశాంశం *) ((స్థిరరాశి uint8_t *) src + r * src_అడ్డువరుస_కొలత + c * qk * పరిమాణం(దశాంశం));
+        uint8_t * పరిమిత dst_ptr = dst + r * dst_అడ్డువరుస_కొలత + c * 4 * 1280;
 
-        quantize_block_f32_q8_1_s16_tiled((float *) src_ptr, dst_ptr, src_ptr - (c & 1) * qk);  // super-block of 256 k
+        quantize_ఖండం_f32_q8_1_s16_tiled((దశాంశం *) src_ptr, dst_ptr, src_ptr - (c & 1) * qk);  // super-block of 256 k
 
         c++;
-        if (c == nb) {
+        ఒకవేళ (c == nb) {
             c = 0;
             r++;
         }
     }
 }
 
-static inline void quantize_f32_f16_tiled_block_kernel(
-    const float * restrict src,
-    uint8_t * restrict dst,
-    uint8_t * restrict tmp_data,
+స్థిర అంతఃవరుస శూన్య quantize_f32_f16_tiled_ఖండం_kernel(
+    స్థిరరాశి దశాంశం * పరిమిత src,
+    uint8_t * పరిమిత dst,
+    uint8_t * పరిమిత tmp_దత్తాంశం,
     uint32_t ne0,
-    uint32_t ib_first,
-    uint32_t ib_last,
-    size_t src_row_size,
-    size_t dst_row_size,
+    uint32_t ib_మొదటి,
+    uint32_t ib_చివరి,
+    size_t src_అడ్డువరుస_కొలత,
+    size_t dst_అడ్డువరుస_కొలత,
     uint32_t r,
     uint32_t c
 ) {
-    (void) tmp_data;
-    const uint32_t qk = QK_Q8_0_TILED;
-    const uint32_t nb = (ne0 + qk - 1) / qk;
+    (శూన్య) tmp_దత్తాంశం;
+    స్థిరరాశి uint32_t qk = QK_Q8_0_TILED;
+    స్థిరరాశి uint32_t nb = (ne0 + qk - 1) / qk;
 
-    for (uint32_t ib = ib_first; ib < ib_last; ++ib) {
-        const float * restrict src_ptr = (const float *) ((const uint8_t *) src + r * src_row_size + c * qk * sizeof(float));
-        uint8_t * restrict dst_ptr = dst + r * dst_row_size + c * 4 * 2048;
+    కొరకు (uint32_t ib = ib_మొదటి; ib < ib_చివరి; ++ib) {
+        స్థిరరాశి దశాంశం * పరిమిత src_ptr = (స్థిరరాశి దశాంశం *) ((స్థిరరాశి uint8_t *) src + r * src_అడ్డువరుస_కొలత + c * qk * పరిమాణం(దశాంశం));
+        uint8_t * పరిమిత dst_ptr = dst + r * dst_అడ్డువరుస_కొలత + c * 4 * 2048;
 
-        quantize_block_f32_f16_tiled(src_ptr, dst_ptr);
+        quantize_ఖండం_f32_f16_tiled(src_ptr, dst_ptr);
 
         c++;
-        if (c == nb) {
+        ఒకవేళ (c == nb) {
             c = 0;
             r++;
         }
     }
 }
 
-static inline void quantize_f16_f16_tiled_block_kernel(
-    const __fp16 * restrict src,
-    uint8_t * restrict dst,
-    uint8_t * restrict tmp_data,
+స్థిర అంతఃవరుస శూన్య quantize_f16_f16_tiled_ఖండం_kernel(
+    స్థిరరాశి __fp16 * పరిమిత src,
+    uint8_t * పరిమిత dst,
+    uint8_t * పరిమిత tmp_దత్తాంశం,
     uint32_t ne0,
-    uint32_t ib_first,
-    uint32_t ib_last,
-    size_t src_row_size,
-    size_t dst_row_size,
+    uint32_t ib_మొదటి,
+    uint32_t ib_చివరి,
+    size_t src_అడ్డువరుస_కొలత,
+    size_t dst_అడ్డువరుస_కొలత,
     uint32_t r,
     uint32_t c
 ) {
-    (void) tmp_data;
-    const uint32_t qk = QK_Q8_0_TILED;
-    const uint32_t nb = (ne0 + qk - 1) / qk;
+    (శూన్య) tmp_దత్తాంశం;
+    స్థిరరాశి uint32_t qk = QK_Q8_0_TILED;
+    స్థిరరాశి uint32_t nb = (ne0 + qk - 1) / qk;
 
-    for (uint32_t ib = ib_first; ib < ib_last; ++ib) {
-        const __fp16 * restrict src_ptr = (const __fp16 *) ((const uint8_t *) src + r * src_row_size + c * qk * sizeof(__fp16));
-        uint8_t * restrict dst_ptr = dst + r * dst_row_size + c * 4 * 2048;
+    కొరకు (uint32_t ib = ib_మొదటి; ib < ib_చివరి; ++ib) {
+        స్థిరరాశి __fp16 * పరిమిత src_ptr = (స్థిరరాశి __fp16 *) ((స్థిరరాశి uint8_t *) src + r * src_అడ్డువరుస_కొలత + c * qk * పరిమాణం(__fp16));
+        uint8_t * పరిమిత dst_ptr = dst + r * dst_అడ్డువరుస_కొలత + c * 4 * 2048;
 
-        quantize_block_f16_f16_tiled(src_ptr, dst_ptr);
+        quantize_ఖండం_f16_f16_tiled(src_ptr, dst_ptr);
 
         c++;
-        if (c == nb) {
+        ఒకవేళ (c == nb) {
             c = 0;
             r++;
         }

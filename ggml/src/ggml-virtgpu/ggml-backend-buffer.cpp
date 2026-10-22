@@ -1,123 +1,123 @@
-#include "ggml-remoting.h"
+#అన్తర్భావ "ggml-remoting.h"
 
-#define BUFFER_TO_GPU(name) ((ggml_backend_remoting_buffer_context *) (name)->context)->gpu
+#నిర్వచించు బఫరు_గమ్యం_GPU(name) ((ggml_backend_remoting_బఫరు_context *) (name)->context)->gpu
 
-static void * ggml_backend_remoting_buffer_get_base(ggml_backend_buffer_t buffer) {
-    ggml_backend_remoting_buffer_context * context = (ggml_backend_remoting_buffer_context *) buffer->context;
-    if (context->base) {
-        return context->base;
+స్థిర శూన్య * ggml_backend_remoting_బఫరు_get_పునాది(ggml_backend_బఫరు_t బఫరు) {
+    ggml_backend_remoting_బఫరు_context * context = (ggml_backend_remoting_బఫరు_context *) బఫరు->context;
+    ఒకవేళ (context->పునాది) {
+        తిరిగి context->పునాది;
     }
 
-    context->base = apir_buffer_get_base(BUFFER_TO_GPU(buffer), BUFFER_TO_APIR_CONTEXT(buffer));
+    context->పునాది = apir_బఫరు_get_పునాది(బఫరు_గమ్యం_GPU(బఫరు), బఫరు_గమ్యం_APIR_CONTEXT(బఫరు));
 
-    return context->base;
+    తిరిగి context->పునాది;
 }
 
-static void ggml_backend_remoting_buffer_set_tensor(ggml_backend_buffer_t buffer,
+స్థిర శూన్య ggml_backend_remoting_బఫరు_సమితి_tensor(ggml_backend_బఫరు_t బఫరు,
                                                     ggml_tensor *         tensor,
-                                                    const void *          data,
-                                                    size_t                offset,
+                                                    స్థిరరాశి శూన్య *          దత్తాంశం,
+                                                    size_t                స్థానభ్రంశం,
                                                     size_t                size) {
-    virtgpu * gpu = BUFFER_TO_GPU(buffer);
+    virtgpu * gpu = బఫరు_గమ్యం_GPU(బఫరు);
 
-    ggml_backend_remoting_buffer_context * context = BUFFER_TO_GGML_CONTEXT(buffer);
-    if (context->is_from_ptr) {
-        memcpy((char *) tensor->data + offset, data, size);
-    } else {
-        apir_buffer_set_tensor(gpu, BUFFER_TO_APIR_CONTEXT(buffer), tensor, data, offset, size);
+    ggml_backend_remoting_బఫరు_context * context = బఫరు_గమ్యం_GGML_CONTEXT(బఫరు);
+    ఒకవేళ (context->is_from_ptr) {
+        జ్ఞాపకం_నకలు((అక్షరం *) tensor->దత్తాంశం + స్థానభ్రంశం, దత్తాంశం, size);
+    } లేకపోతే {
+        apir_బఫరు_సమితి_tensor(gpu, బఫరు_గమ్యం_APIR_CONTEXT(బఫరు), tensor, దత్తాంశం, స్థానభ్రంశం, size);
     }
 
-    return;
+    తిరిగి;
 }
 
-static void ggml_backend_remoting_buffer_get_tensor(ggml_backend_buffer_t buffer,
-                                                    const ggml_tensor *   tensor,
-                                                    void *                data,
-                                                    size_t                offset,
+స్థిర శూన్య ggml_backend_remoting_బఫరు_get_tensor(ggml_backend_బఫరు_t బఫరు,
+                                                    స్థిరరాశి ggml_tensor *   tensor,
+                                                    శూన్య *                దత్తాంశం,
+                                                    size_t                స్థానభ్రంశం,
                                                     size_t                size) {
-    virtgpu *                              gpu     = BUFFER_TO_GPU(buffer);
-    ggml_backend_remoting_buffer_context * context = BUFFER_TO_GGML_CONTEXT(buffer);
-    if (context->is_from_ptr) {
-        memcpy(data, (const char *) tensor->data + offset, size);
-    } else {
-        apir_buffer_get_tensor(gpu, BUFFER_TO_APIR_CONTEXT(buffer), tensor, data, offset, size);
+    virtgpu *                              gpu     = బఫరు_గమ్యం_GPU(బఫరు);
+    ggml_backend_remoting_బఫరు_context * context = బఫరు_గమ్యం_GGML_CONTEXT(బఫరు);
+    ఒకవేళ (context->is_from_ptr) {
+        జ్ఞాపకం_నకలు(దత్తాంశం, (స్థిరరాశి అక్షరం *) tensor->దత్తాంశం + స్థానభ్రంశం, size);
+    } లేకపోతే {
+        apir_బఫరు_get_tensor(gpu, బఫరు_గమ్యం_APIR_CONTEXT(బఫరు), tensor, దత్తాంశం, స్థానభ్రంశం, size);
     }
 }
 
-static void ggml_backend_remoting_buffer_set_tensor_from_ptr(ggml_backend_buffer_t buffer,
+స్థిర శూన్య ggml_backend_remoting_బఫరు_సమితి_tensor_from_ptr(ggml_backend_బఫరు_t బఫరు,
                                                              ggml_tensor *         tensor,
-                                                             const void *          data,
-                                                             size_t                offset,
+                                                             స్థిరరాశి శూన్య *          దత్తాంశం,
+                                                             size_t                స్థానభ్రంశం,
                                                              size_t                size) {
-    UNUSED(buffer);
+    వాడని(బఫరు);
 
-    memcpy((char *) tensor->data + offset, data, size);
+    జ్ఞాపకం_నకలు((అక్షరం *) tensor->దత్తాంశం + స్థానభ్రంశం, దత్తాంశం, size);
 
-    return;
+    తిరిగి;
 }
 
-static void ggml_backend_remoting_buffer_get_tensor_from_ptr(ggml_backend_buffer_t buffer,
-                                                             const ggml_tensor *   tensor,
-                                                             void *                data,
-                                                             size_t                offset,
+స్థిర శూన్య ggml_backend_remoting_బఫరు_get_tensor_from_ptr(ggml_backend_బఫరు_t బఫరు,
+                                                             స్థిరరాశి ggml_tensor *   tensor,
+                                                             శూన్య *                దత్తాంశం,
+                                                             size_t                స్థానభ్రంశం,
                                                              size_t                size) {
-    UNUSED(buffer);
+    వాడని(బఫరు);
 
-    memcpy(data, (const char *) tensor->data + offset, size);
+    జ్ఞాపకం_నకలు(దత్తాంశం, (స్థిరరాశి అక్షరం *) tensor->దత్తాంశం + స్థానభ్రంశం, size);
 }
 
-static bool ggml_backend_remoting_buffer_cpy_tensor(ggml_backend_buffer_t buffer,
-                                                    const ggml_tensor *   src,
+స్థిర తార్కిక ggml_backend_remoting_బఫరు_cpy_tensor(ggml_backend_బఫరు_t బఫరు,
+                                                    స్థిరరాశి ggml_tensor *   src,
                                                     ggml_tensor *         dst) {
-    virtgpu * gpu = BUFFER_TO_GPU(buffer);
+    virtgpu * gpu = బఫరు_గమ్యం_GPU(బఫరు);
 
-    bool ret = apir_buffer_cpy_tensor(gpu, BUFFER_TO_APIR_CONTEXT(buffer), src, dst);
+    తార్కిక ret = apir_బఫరు_cpy_tensor(gpu, బఫరు_గమ్యం_APIR_CONTEXT(బఫరు), src, dst);
 
-    return ret;
+    తిరిగి ret;
 }
 
-static void ggml_backend_remoting_buffer_clear(ggml_backend_buffer_t buffer, uint8_t value) {
-    virtgpu * gpu = BUFFER_TO_GPU(buffer);
+స్థిర శూన్య ggml_backend_remoting_బఫరు_clear(ggml_backend_బఫరు_t బఫరు, uint8_t value) {
+    virtgpu * gpu = బఫరు_గమ్యం_GPU(బఫరు);
 
-    apir_buffer_clear(gpu, BUFFER_TO_APIR_CONTEXT(buffer), value);
+    apir_బఫరు_clear(gpu, బఫరు_గమ్యం_APIR_CONTEXT(బఫరు), value);
 
-    return;
+    తిరిగి;
 }
 
-static void ggml_backend_remoting_buffer_free_buffer(ggml_backend_buffer_t buffer) {
-    virtgpu * gpu = BUFFER_TO_GPU(buffer);
+స్థిర శూన్య ggml_backend_remoting_బఫరు_free_బఫరు(ggml_backend_బఫరు_t బఫరు) {
+    virtgpu * gpu = బఫరు_గమ్యం_GPU(బఫరు);
 
-    apir_buffer_free_buffer(gpu, BUFFER_TO_APIR_CONTEXT(buffer));
+    apir_బఫరు_free_బఫరు(gpu, బఫరు_గమ్యం_APIR_CONTEXT(బఫరు));
 
-    ggml_backend_remoting_buffer_context * context = BUFFER_TO_GGML_CONTEXT(buffer);
-    free(context);
-    buffer->context = NULL;
+    ggml_backend_remoting_బఫరు_context * context = బఫరు_గమ్యం_GGML_CONTEXT(బఫరు);
+    విడుదల(context);
+    బఫరు->context = ఖాళీ;
 }
 
-const ggml_backend_buffer_i ggml_backend_remoting_buffer_interface = {
-    /* .free_buffer     = */ ggml_backend_remoting_buffer_free_buffer,
-    /* .get_base        = */ ggml_backend_remoting_buffer_get_base,
-    /* .init_tensor     = */ NULL,
-    /* .memset_tensor   = */ NULL,
-    /* .set_tensor      = */ ggml_backend_remoting_buffer_set_tensor,
-    /* .get_tensor      = */ ggml_backend_remoting_buffer_get_tensor,
-    /* .set_tensor_2d   = */ NULL,
-    /* .get_tensor_2d   = */ NULL,
-    /* .cpy_tensor      = */ ggml_backend_remoting_buffer_cpy_tensor,
-    /* .clear           = */ ggml_backend_remoting_buffer_clear,
-    /* .reset           = */ NULL,
+స్థిరరాశి ggml_backend_బఫరు_i ggml_backend_remoting_బఫరు_interface = {
+    /* .free_buffer     = */ ggml_backend_remoting_బఫరు_free_బఫరు,
+    /* .get_base        = */ ggml_backend_remoting_బఫరు_get_పునాది,
+    /* .init_tensor     = */ ఖాళీ,
+    /* .memset_tensor   = */ ఖాళీ,
+    /* .set_tensor      = */ ggml_backend_remoting_బఫరు_సమితి_tensor,
+    /* .get_tensor      = */ ggml_backend_remoting_బఫరు_get_tensor,
+    /* .set_tensor_2d   = */ ఖాళీ,
+    /* .get_tensor_2d   = */ ఖాళీ,
+    /* .cpy_tensor      = */ ggml_backend_remoting_బఫరు_cpy_tensor,
+    /* .clear           = */ ggml_backend_remoting_బఫరు_clear,
+    /* .reset           = */ ఖాళీ,
 };
 
-const ggml_backend_buffer_i ggml_backend_remoting_buffer_from_ptr_interface = {
-    /* .free_buffer     = */ ggml_backend_remoting_buffer_free_buffer,
-    /* .get_base        = */ ggml_backend_remoting_buffer_get_base,
-    /* .init_tensor     = */ NULL,
-    /* .memset_tensor   = */ NULL,
-    /* .set_tensor      = */ ggml_backend_remoting_buffer_set_tensor_from_ptr,
-    /* .get_tensor      = */ ggml_backend_remoting_buffer_get_tensor_from_ptr,
-    /* .set_tensor_2d   = */ NULL,
-    /* .get_tensor_2d   = */ NULL,
-    /* .cpy_tensor      = */ ggml_backend_remoting_buffer_cpy_tensor,
-    /* .clear           = */ ggml_backend_remoting_buffer_clear,
-    /* .reset           = */ NULL,
+స్థిరరాశి ggml_backend_బఫరు_i ggml_backend_remoting_బఫరు_from_ptr_interface = {
+    /* .free_buffer     = */ ggml_backend_remoting_బఫరు_free_బఫరు,
+    /* .get_base        = */ ggml_backend_remoting_బఫరు_get_పునాది,
+    /* .init_tensor     = */ ఖాళీ,
+    /* .memset_tensor   = */ ఖాళీ,
+    /* .set_tensor      = */ ggml_backend_remoting_బఫరు_సమితి_tensor_from_ptr,
+    /* .get_tensor      = */ ggml_backend_remoting_బఫరు_get_tensor_from_ptr,
+    /* .set_tensor_2d   = */ ఖాళీ,
+    /* .get_tensor_2d   = */ ఖాళీ,
+    /* .cpy_tensor      = */ ggml_backend_remoting_బఫరు_cpy_tensor,
+    /* .clear           = */ ggml_backend_remoting_బఫరు_clear,
+    /* .reset           = */ ఖాళీ,
 };
