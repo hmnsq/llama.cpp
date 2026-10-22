@@ -1,83 +1,83 @@
 #pragma once
 
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
-#include "ggml.h"
-#include "openvino/decoder.h"
+#شامل "ggml-backend-impl.h"
+#شامل "ggml-backend.h"
+#شامل "ggml.h"
+#شامل "openvino/decoder.h"
 
-#include <cstdint>
-#include <cstring>
-#include <map>
-#include <memory>
-#include <openvino/core/partial_shape.hpp>
-#include <optional>
-#include <set>
-#include <string>
-#include <vector>
+#شامل <cstdint>
+#شامل <cstring>
+#شامل <map>
+#شامل <memory>
+#شامل <openvino/core/partial_shape.hpp>
+#شامل <optional>
+#شامل <set>
+#شامل <string>
+#شامل <vector>
 
-struct ModelParams {
-    int ctx = -1;
-    int ctx_per_seq = -1;
-    int ctx_per_seq_swa = -1;
-    int n_seq = 1;
-    int n_heads_kv = -1;
+ساختار ModelParams {
+    صحیح ctx = -1;
+    صحیح ctx_per_seq = -1;
+    صحیح ctx_per_seq_swa = -1;
+    صحیح n_seq = 1;
+    صحیح n_heads_kv = -1;
     // Per-layer KV head count. gemma-4 12B interleaves 8 x 256 sliding layers with 1 x 512
     // full-attention layers, so no single scalar describes every layer. Keyed by layer, not by
     // layer TYPE, because the SWA classification depends on the context size (extents tie at a
     // small -c) while the head count does not.
-    std::map<int, int> n_heads_kv_per_layer;
-    int head_size = -1;
-    int state_size = -1;  // for SSM molels, eg qwen35
+    std::map<صحیح, صحیح> n_heads_kv_per_layer;
+    صحیح head_size = -1;
+    صحیح state_size = -1;  // for SSM molels, eg qwen35
     int32_t rope_params[16] = {};
-    int n_rs_slots = -1;
+    صحیح n_rs_slots = -1;
     bool has_rs_rollback = false;
     bool mixed_rope_params = false;
     bool is_cacheless_attn = false;
-    std::vector<int> swa_layers;
+    std::vector<صحیح> swa_layers;
     // The sliding-window mask tensor, identified in compute_llm_params() by grouping attention
     // layers on the mask they consume. Only used to tell the two masks apart when naming OV
     // parameters -- both carry the same tensor name. Null when the graph has a single mask.
-    const ggml_tensor * swa_mask = nullptr;
+    ثابت ggml_tensor * swa_mask = nullptr;
 
     std::vector<std::string> kv_names;
     size_t kv_buffer_ctx_id = 0;
 
-    bool same_rope_params(const ModelParams & other) const {
-        return mixed_rope_params == other.mixed_rope_params &&
-               memcmp(rope_params, other.rope_params, sizeof(int32_t) * 16) == 0;
+    bool same_rope_params(ثابت ModelParams & other) ثابت {
+        بازگشت mixed_rope_params == other.mixed_rope_params &&
+               memcmp(rope_params, other.rope_params, اندازه(int32_t) * 16) == 0;
     }
 
-    bool can_reuse_dynamically(const ModelParams & other) const {
-        return same_rope_params(other) && n_rs_slots == other.n_rs_slots &&
+    bool can_reuse_dynamically(ثابت ModelParams & other) ثابت {
+        بازگشت same_rope_params(other) && n_rs_slots == other.n_rs_slots &&
                has_rs_rollback == other.has_rs_rollback;
     }
 
-    bool can_reuse_statically(const ModelParams & other) const {
-        return same_rope_params(other) && ctx == other.ctx && n_rs_slots == other.n_rs_slots &&
+    bool can_reuse_statically(ثابت ModelParams & other) ثابت {
+        بازگشت same_rope_params(other) && ctx == other.ctx && n_rs_slots == other.n_rs_slots &&
                has_rs_rollback == other.has_rs_rollback;
     }
 
-    bool kv_buffer_changed(const ModelParams & other) const { return kv_buffer_ctx_id != other.kv_buffer_ctx_id; }
+    bool kv_buffer_changed(ثابت ModelParams & other) ثابت { بازگشت kv_buffer_ctx_id != other.kv_buffer_ctx_id; }
 };
 
-struct ComputeParams {
-    int n_seq_active = 1;
-    int seq_active_start = 0;
-    int attention_size = -1;
-    int attention_size_swa = -1;
-    int attention_size_static = -1;  // encoder/cross-attn KV fill level (whisper)
+ساختار ComputeParams {
+    صحیح n_seq_active = 1;
+    صحیح seq_active_start = 0;
+    صحیح attention_size = -1;
+    صحیح attention_size_swa = -1;
+    صحیح attention_size_static = -1;  // encoder/cross-attn KV fill level (whisper)
     // Sliding window width, read back from the band of ggml's own SWA mask. ggml never passes
     // n_swa down to a backend, but fill_mask() bakes it into the mask contents, so the widest
     // unmasked row recovers it. Shorter than n_swa while the sequence is still short, which is
     // harmless: every causal pair is inside the window then anyway.
-    int swa_window = -1;
-    int input_len = -1;
-    int token_len_per_seq = -1;
-    int past_kv_len = -1;
-    int output_len = 1;
+    صحیح swa_window = -1;
+    صحیح درون_داد_len = -1;
+    صحیح token_len_per_seq = -1;
+    صحیح past_kv_len = -1;
+    صحیح output_len = 1;
 
-    int cache_rs_reset_idx = -1;
-    int cache_rs_reset_len = -1;
+    صحیح cache_rs_reset_idx = -1;
+    صحیح cache_rs_reset_len = -1;
     // SSM/DeltaNet models otionally clear cache_r and cache_s of certain slots in the cgraph
     // 3: [ 18432,     4,     1,     1] RESHAPE              cache_r_l0 (reshaped)
     //    [ 18432,     4,     1,     1]            0: NONE        cache_r_l0
@@ -86,7 +86,7 @@ struct ComputeParams {
     // 5: [ 18432,     1,     1,     1] SCALE                cache_r_l0 (reshaped) (view) (view)
     //    [ 18432,     1,     1,     1]            0: VIEW        cache_r_l0 (reshaped) (view)
 
-    int s_copy_active_slot_len = -1;
+    صحیح s_copy_active_slot_len = -1;
     // SSM/DeltaNet models otionally reorder slots of state cache, to make the active slots contiguous
     // leaf_5 is the inp->s_copy in llama-graph.cpp, eg if there are 8 slots in total and slot 3 and 7
     // are active in the current batch, leaf_5 will be [3, 7, 5, 6, 4]
@@ -106,9 +106,9 @@ struct ComputeParams {
     //      [ 18432,     0,     1,     1]            0: GET_ROWS    node_9
     //      [ 18432,     0,     1,     1]            1: VIEW        cache_r_l0 (view)
 
-    struct RsWriteback {
-        int slot_begin = 0;  // first cache slot written by the CPY
-        int src_begin = -1;  // first source column copied by a conv-state CPY
+    ساختار RsWriteback {
+        صحیح slot_begin = 0;  // first cache slot written by the CPY
+        صحیح src_begin = -1;  // first source column copied by a conv-state CPY
     };
 
     std::map<std::string, RsWriteback> rs_writebacks;
@@ -120,340 +120,340 @@ struct ComputeParams {
 };
 
 // defined below; declared here because GgmlOvDecoder uses it inline
-std::optional<int> extract_layer_from_name(const std::string & name);
+std::optional<صحیح> extract_layer_from_name(ثابت std::string & name);
 
 // detects the MoE expert-plane-sum ADD chain (see definition); used by supports_op too
-bool is_moe_expert_sum_add(const ggml_tensor * node);
+bool is_moe_expert_sum_add(ثابت ggml_tensor * گره);
 
-class GgmlOvDecoder : public ov::frontend::ggml::GgmlDecoder {
-public:
-    static std::string get_tensor_name(const ggml_cgraph * cgraph, const ggml_tensor * tensor);
-    struct NodeInfo {
-        ggml_tensor * node;
-        std::string node_name;
-        std::string node_op_type;
-        std::map<std::string, ggml_tensor *> node_inputs;
-        std::map<std::string, std::vector<std::pair<std::string, ggml_tensor *>>> node_inputs_views;
-        std::vector<std::string> node_inputs_names;
-        int node_op_case = 0;
-        void * data_addr;
+class GgmlOvDecoder : عمومی ov::frontend::ggml::GgmlDecoder {
+عمومی:
+    ایستا std::string get_tensor_name(ثابت ggml_cgraph * cgraph, ثابت ggml_tensor * tensor);
+    ساختار گره_Info {
+        ggml_tensor * گره;
+        std::string گره_name;
+        std::string گره_op_type;
+        std::map<std::string, ggml_tensor *> گره_inputs;
+        std::map<std::string, std::vector<std::pair<std::string, ggml_tensor *>>> گره_inputs_views;
+        std::vector<std::string> گره_inputs_names;
+        صحیح گره_op_case = 0;
+        تهی * data_addr;
     };
 
     // Graph decoder
     GgmlOvDecoder(ggml_cgraph * cgraph,
                   ModelParams & model_params,
                   ComputeParams & compute_params,
-                  std::map<std::string, std::shared_ptr<ov::Node>> & model_weights,
+                  std::map<std::string, std::shared_ptr<ov::گره_2>> & model_weights,
                   bool is_static,
                   bool is_stateful = false,
                   bool model_is_splitted = false,
                   bool is_prefill = false,
-                  int prefill_chunk_size = 256);
+                  صحیح prefill_chunk_size = 256);
 
     // Naive graph decoder
-    GgmlOvDecoder(ggml_cgraph * cgraph, std::map<std::string, std::shared_ptr<ov::Node>> & model_weights);
+    GgmlOvDecoder(ggml_cgraph * cgraph, std::map<std::string, std::shared_ptr<ov::گره_2>> & model_weights);
 
-    virtual ov::Any get_attribute(const std::string & name) const override {
-        return nullptr;
+    مجازی ov::Any get_attribute(ثابت std::string & name) ثابت override {
+        بازگشت nullptr;
         GGML_UNUSED(name);
     }
 
-    virtual ov::PartialShape get_input_shape(int node_idx, const std::string & name) const override;
+    مجازی ov::PartialShape get_درون_داد_shape(صحیح گره_idx, ثابت std::string & name) ثابت override;
 
-    virtual std::vector<size_t> get_input_stride(int node_idx, const std::string & name) const override;
+    مجازی std::vector<size_t> get_درون_داد_stride(صحیح گره_idx, ثابت std::string & name) ثابت override;
 
-    virtual size_t get_view_input_size(int node_idx, const std::string & name) const override;
+    مجازی size_t get_view_درون_داد_size(صحیح گره_idx, ثابت std::string & name) ثابت override;
 
-    virtual size_t get_view_input_offset(int node_idx, const std::string & name, size_t view_index) const override;
+    مجازی size_t get_view_درون_داد_offset(صحیح گره_idx, ثابت std::string & name, size_t view_index) ثابت override;
 
-    virtual size_t get_view_input_src_offset(int node_idx, const std::string & name, size_t view_index) const override;
+    مجازی size_t get_view_درون_داد_src_offset(صحیح گره_idx, ثابت std::string & name, size_t view_index) ثابت override;
 
-    virtual std::vector<size_t> get_view_input_stride(int node_idx,
-                                                      const std::string & name,
-                                                      size_t view_index) const override;
+    مجازی std::vector<size_t> get_view_درون_داد_stride(صحیح گره_idx,
+                                                      ثابت std::string & name,
+                                                      size_t view_index) ثابت override;
 
-    virtual std::vector<size_t> get_view_input_src_stride(int node_idx,
-                                                          const std::string & name,
-                                                          size_t view_index) const override;
+    مجازی std::vector<size_t> get_view_درون_داد_src_stride(صحیح گره_idx,
+                                                          ثابت std::string & name,
+                                                          size_t view_index) ثابت override;
 
-    virtual ov::Shape get_view_input_ggml_shape(int node_idx,
-                                                const std::string & name,
-                                                size_t view_index) const override;
+    مجازی ov::Shape get_view_درون_داد_ggml_shape(صحیح گره_idx,
+                                                ثابت std::string & name,
+                                                size_t view_index) ثابت override;
 
-    virtual ov::Shape get_view_input_src_ggml_shape(int node_idx,
-                                                    const std::string & name,
-                                                    size_t view_index) const override;
+    مجازی ov::Shape get_view_درون_داد_src_ggml_shape(صحیح گره_idx,
+                                                    ثابت std::string & name,
+                                                    size_t view_index) ثابت override;
 
-    virtual ov::PartialShape get_view_input_ov_shape(int node_idx,
-                                                     const std::string & name,
-                                                     size_t view_index) const override;
+    مجازی ov::PartialShape get_view_درون_داد_ov_shape(صحیح گره_idx,
+                                                     ثابت std::string & name,
+                                                     size_t view_index) ثابت override;
 
-    virtual ov::PartialShape get_view_input_src_ov_shape(int node_idx,
-                                                         const std::string & name,
-                                                         size_t view_index) const override;
+    مجازی ov::PartialShape get_view_درون_داد_src_ov_shape(صحیح گره_idx,
+                                                         ثابت std::string & name,
+                                                         size_t view_index) ثابت override;
 
-    virtual std::string get_view_input_name(int node_idx, const std::string & name, size_t view_index) const override;
+    مجازی std::string get_view_درون_داد_name(صحیح گره_idx, ثابت std::string & name, size_t view_index) ثابت override;
 
-    virtual std::string get_view_input_src_name(int node_idx,
-                                                const std::string & name,
-                                                size_t view_index) const override;
+    مجازی std::string get_view_درون_داد_src_name(صحیح گره_idx,
+                                                ثابت std::string & name,
+                                                size_t view_index) ثابت override;
 
-    virtual ov::element::Type get_input_type(int node_idx, const std::string & name) const override;
+    مجازی ov::element::Type get_درون_داد_type(صحیح گره_idx, ثابت std::string & name) ثابت override;
 
-    virtual size_t get_input_size() const override;
+    مجازی size_t get_درون_داد_size() ثابت override;
 
-    virtual size_t get_input_size(int node_idx) const override;
+    مجازی size_t get_درون_داد_size(صحیح گره_idx) ثابت override;
 
-    virtual void get_input_node(size_t input_port_idx,
+    مجازی تهی get_درون_داد_گره(size_t درون_داد_port_idx,
                                 std::string & producer_name,
                                 std::string & producer_output_port_name,
-                                size_t & producer_output_port_index) const override {
-        GGML_UNUSED(input_port_idx);
+                                size_t & producer_output_port_index) ثابت override {
+        GGML_UNUSED(درون_داد_port_idx);
         GGML_UNUSED(producer_name);
         GGML_UNUSED(producer_output_port_name);
         GGML_UNUSED(producer_output_port_index);
     }
 
-    virtual std::vector<std::string> get_input_names(int node_idx) const override;
+    مجازی std::vector<std::string> get_درون_داد_names(صحیح گره_idx) ثابت override;
 
-    virtual ov::PartialShape get_output_shape(int node_idx) const override;
+    مجازی ov::PartialShape get_output_shape(صحیح گره_idx) ثابت override;
 
-    virtual ov::element::Type get_output_type(int node_idx) const override;
+    مجازی ov::element::Type get_output_type(صحیح گره_idx) ثابت override;
 
-    virtual std::vector<size_t> get_output_stride(int node_idx) const override;
+    مجازی std::vector<size_t> get_output_stride(صحیح گره_idx) ثابت override;
 
-    virtual int32_t * get_input_op_params(int node_idx, const std::string & name) const override;
+    مجازی int32_t * get_درون_داد_op_params(صحیح گره_idx, ثابت std::string & name) ثابت override;
 
-    virtual int32_t * get_output_op_params(int node_idx) const override;
+    مجازی int32_t * get_output_op_params(صحیح گره_idx) ثابت override;
 
-    virtual size_t get_output_op_offset(int node_idx) const override;
+    مجازی size_t get_output_op_offset(صحیح گره_idx) ثابت override;
 
-    virtual std::vector<std::string> get_output_names(int node_idx) const override;
+    مجازی std::vector<std::string> get_output_names(صحیح گره_idx) ثابت override;
 
-    virtual std::string get_inplace_op_src(int node_idx) const override;
+    مجازی std::string get_inplace_op_src(صحیح گره_idx) ثابت override;
 
-    virtual bool is_view_like_alias_of(int node_idx, const std::string & view_src_name) const override;
+    مجازی bool is_view_like_alias_of(صحیح گره_idx, ثابت std::string & view_src_name) ثابت override;
 
-    virtual const std::string & get_op_type() const override;
+    مجازی ثابت std::string & get_op_type() ثابت override;
 
-    virtual const std::string & get_op_type(int node_idx) const override;
+    مجازی ثابت std::string & get_op_type(صحیح گره_idx) ثابت override;
 
-    virtual const std::string & get_op_name() const override;
+    مجازی ثابت std::string & get_op_name() ثابت override;
 
-    virtual const std::string & get_op_name(int node_idx) const override;
+    مجازی ثابت std::string & get_op_name(صحیح گره_idx) ثابت override;
 
-    virtual int32_t get_op_dynamic_dim(int node_idx) const override;
+    مجازی int32_t get_op_dynamic_dim(صحیح گره_idx) ثابت override;
 
-    virtual void visit_subgraph(
-        std::function<void(std::shared_ptr<GgmlDecoder>, int node_idx)> node_visitor) const override;
+    مجازی تهی visit_subgraph(
+        std::function<تهی(std::shared_ptr<GgmlDecoder>, صحیح گره_idx)> گره_visitor) ثابت override;
 
-    ggml_tensor * get_input_ggml_tensor(const std::string & name) const { return m_inputs.at(name); }
+    ggml_tensor * get_درون_داد_ggml_tensor(ثابت std::string & name) ثابت { بازگشت m_inputs.at(name); }
 
-    virtual int get_op_case(int node_idx) const override { return m_node_info_list[node_idx].node_op_case; }
+    مجازی صحیح get_op_case(صحیح گره_idx) ثابت override { بازگشت m_گره_info_list[گره_idx].گره_op_case; }
 
-    virtual const std::map<std::string, ov::frontend::ggml::ModelInputInfo> & get_model_inputs() const override {
-        return m_model_inputs;
+    مجازی ثابت std::map<std::string, ov::frontend::ggml::Model_درون_داد_Info> & get_model_inputs() ثابت override {
+        بازگشت m_model_inputs;
     }
 
-    virtual const std::map<std::string, ov::frontend::ggml::ModelExtraInputInfo> & get_model_extra_inputs() const override {
-        return m_model_extra_inputs;
+    مجازی ثابت std::map<std::string, ov::frontend::ggml::Model_Extra_درون_داد_Info> & get_model_extra_inputs() ثابت override {
+        بازگشت m_model_extra_inputs;
     }
 
-    virtual const std::map<std::string, std::shared_ptr<ov::Node>> & get_model_weights() const override {
-        return m_model_weights;
+    مجازی ثابت std::map<std::string, std::shared_ptr<ov::گره_2>> & get_model_weights() ثابت override {
+        بازگشت m_model_weights;
     }
 
-    virtual std::set<std::string> get_model_output_names() const override { return m_model_output_names; }
+    مجازی std::set<std::string> get_model_output_names() ثابت override { بازگشت m_model_output_names; }
 
-    const std::map<std::string, ggml_tensor *> & get_model_outputs() const { return m_model_outputs; }
+    ثابت std::map<std::string, ggml_tensor *> & get_model_outputs() ثابت { بازگشت m_model_outputs; }
 
-    virtual int get_ctx_size() const { return m_model_params.ctx; }
+    مجازی صحیح get_ctx_size() ثابت { بازگشت m_model_params.ctx; }
 
-    virtual int get_ctx_per_seq() const { return m_model_params.ctx_per_seq; }
+    مجازی صحیح get_ctx_per_seq() ثابت { بازگشت m_model_params.ctx_per_seq; }
 
-    virtual int get_ctx_per_seq_swa() const { return m_model_params.ctx_per_seq_swa; }
+    مجازی صحیح get_ctx_per_seq_swa() ثابت { بازگشت m_model_params.ctx_per_seq_swa; }
 
-    virtual int get_n_seq() const { return m_model_params.n_seq; }
+    مجازی صحیح get_n_seq() ثابت { بازگشت m_model_params.n_seq; }
 
-    virtual int is_swa_layer(int layer) const override {
-        return std::find(m_model_params.swa_layers.begin(), m_model_params.swa_layers.end(), layer) !=
+    مجازی صحیح is_swa_layer(صحیح layer) ثابت override {
+        بازگشت std::find(m_model_params.swa_layers.begin(), m_model_params.swa_layers.end(), layer) !=
                m_model_params.swa_layers.end();
     }
 
     // KV head count for one layer. Sliding and full layers can differ (gemma-4 12B), so callers
     // that reinterpret a KV buffer must use this and not the model-level n_heads_kv.
-    int get_n_heads_kv_for_layer(int layer) const {
+    صحیح get_n_heads_kv_for_layer(صحیح layer) ثابت {
         auto it = m_model_params.n_heads_kv_per_layer.find(layer);
-        return it != m_model_params.n_heads_kv_per_layer.end() ? it->second : m_model_params.n_heads_kv;
+        بازگشت it != m_model_params.n_heads_kv_per_layer.end() ? it->second : m_model_params.n_heads_kv;
     }
 
     // Same, for a KV cache tensor: its layer comes from the leaf name (cache_k_l<N>).
-    int get_n_heads_kv_for_tensor(const ggml_tensor * kv_tensor) const {
-        if (auto layer = extract_layer_from_name(std::string(kv_tensor->name)); layer.has_value()) {
-            return get_n_heads_kv_for_layer(layer.value());
+    صحیح get_n_heads_kv_for_tensor(ثابت ggml_tensor * kv_tensor) ثابت {
+        اگر (auto layer = extract_layer_from_name(std::string(kv_tensor->name)); layer.has_مقدار()) {
+            بازگشت get_n_heads_kv_for_layer(layer.مقدار());
         }
-        return m_model_params.n_heads_kv;
+        بازگشت m_model_params.n_heads_kv;
     }
 
-    int get_past_kv_len() const { return m_compute_params.past_kv_len; }
+    صحیح get_past_kv_len() ثابت { بازگشت m_compute_params.past_kv_len; }
 
-    int get_input_len() const { return m_compute_params.input_len; }
+    صحیح get_درون_داد_len() ثابت { بازگشت m_compute_params.درون_داد_len; }
 
-    virtual int32_t * get_rope_params() const override { return const_cast<int32_t *>(m_model_params.rope_params); }
+    مجازی int32_t * get_rope_params() ثابت override { بازگشت const_cast<int32_t *>(m_model_params.rope_params); }
 
-    virtual bool has_mixed_rope_params() const override { return m_model_params.mixed_rope_params; }
+    مجازی bool has_mixed_rope_params() ثابت override { بازگشت m_model_params.mixed_rope_params; }
 
-    virtual int get_ssm_state_size() const override { return m_model_params.state_size; }
+    مجازی صحیح get_ssm_state_size() ثابت override { بازگشت m_model_params.state_size; }
 
-    virtual std::map<std::string, std::string> get_kv_param_res_names() const override;
+    مجازی std::map<std::string, std::string> get_kv_param_res_names() ثابت override;
 
-    virtual bool is_static() const override { return m_is_static; }
+    مجازی bool is_static() ثابت override { بازگشت m_is_static; }
 
-    virtual bool is_stateful() const override { return m_is_stateful; }
+    مجازی bool is_stateful() ثابت override { بازگشت m_is_stateful; }
 
-    int get_static_n_tokens() const { return m_is_prefill ? m_prefill_chunk_size : 1; }
+    صحیح get_static_n_tokens() ثابت { بازگشت m_is_prefill ? m_prefill_chunk_size : 1; }
 
-    virtual bool is_splited_model() const override { return m_model_is_splitted; }
+    مجازی bool is_splited_model() ثابت override { بازگشت m_model_is_splitted; }
 
-    ov::PartialShape get_graph_input_shape(const ggml_tensor * op,
-                                           const ggml_tensor * input,
-                                           int dynamic_dim_index = -1) const;
+    ov::PartialShape get_graph_درون_داد_shape(ثابت ggml_tensor * op,
+                                           ثابت ggml_tensor * درون_داد,
+                                           صحیح dynamic_dim_index = -1) ثابت;
 
-    static void dump_cgraph(const ggml_cgraph * cgraph, std::string & filename);
+    ایستا تهی dump_cgraph(ثابت ggml_cgraph * cgraph, std::string & filename);
 
-    static std::shared_ptr<ov::Node> create_weight_node(ggml_tensor * tensor, bool naive = false);
+    ایستا std::shared_ptr<ov::گره_2> create_weight_گره(ggml_tensor * tensor, bool naive = false);
 
-    static std::map<std::string, std::shared_ptr<ov::Node>> create_weight_nodes(ggml_cgraph * cgraph,
+    ایستا std::map<std::string, std::shared_ptr<ov::گره_2>> create_weight_nodes(ggml_cgraph * cgraph,
                                                                                 bool naive = false);
 
     // Collect just the set of weight-tensor names referenced by the graph, without
     // building (or requantizing) any OV weight nodes. Used by topology checks like
     // is_model_splitted that only need name membership.
-    static std::set<std::string> collect_weight_names(ggml_cgraph * cgraph);
+    ایستا std::set<std::string> collect_weight_names(ggml_cgraph * cgraph);
 
-    const ggml_tensor * get_tensor_used_op(const ggml_tensor * tensor) const;
+    ثابت ggml_tensor * get_tensor_used_op(ثابت ggml_tensor * tensor) ثابت;
 
-    const ggml_tensor * get_tensor_from_name(const std::string & name) const;
+    ثابت ggml_tensor * get_tensor_from_name(ثابت std::string & name) ثابت;
 
-    void clear_model_weights() { m_model_weights.clear(); }
+    تهی clear_model_weights() { m_model_weights.clear(); }
 
-    static std::pair<ModelParams, ComputeParams> compute_llm_params(ggml_cgraph * cgraph, bool is_static);
+    ایستا std::pair<ModelParams, ComputeParams> compute_llm_params(ggml_cgraph * cgraph, bool is_static);
 
-    ModelParams get_model_params() const { return m_model_params; }
+    ModelParams get_model_params() ثابت { بازگشت m_model_params; }
 
-    ComputeParams get_compute_params() const { return m_compute_params; }
+    ComputeParams get_compute_params() ثابت { بازگشت m_compute_params; }
 
-    void set_model_params(const ModelParams & model_params) { m_model_params = model_params; }
+    تهی set_model_params(ثابت ModelParams & model_params) { m_model_params = model_params; }
 
-    void set_compute_params(const ComputeParams & compute_params) { m_compute_params = compute_params; }
+    تهی set_compute_params(ثابت ComputeParams & compute_params) { m_compute_params = compute_params; }
 
     bool m_is_static = false;
     bool m_is_stateful = false;
     bool m_is_prefill = false;
     bool m_naive = false;
-    int m_prefill_chunk_size = 0;
+    صحیح m_prefill_chunk_size = 0;
     bool m_model_is_splitted = false;  // label the cgraph is splited or not
 
-    static ov::Shape get_shape(const ggml_tensor * tensor);
-    static std::vector<size_t> get_stride(const ggml_tensor * tensor);
-    static ov::element::Type get_ov_type(const ggml_tensor * tensor);
-    static std::string compute_op_type(const ggml_tensor * node);
-    void add_extra_inputs();
+    ایستا ov::Shape get_shape(ثابت ggml_tensor * tensor);
+    ایستا std::vector<size_t> get_stride(ثابت ggml_tensor * tensor);
+    ایستا ov::element::Type get_ov_type(ثابت ggml_tensor * tensor);
+    ایستا std::string compute_op_type(ثابت ggml_tensor * گره);
+    تهی add_extra_inputs();
 
-    void update_io(ggml_cgraph * cgraph);
-    bool is_bound_to(const ggml_cgraph * cgraph) const;
+    تهی update_io(ggml_cgraph * cgraph);
+    bool is_bound_to(ثابت ggml_cgraph * cgraph) ثابت;
 
-    static bool is_inp_tok(const ggml_tensor * tensor, const ggml_tensor * op) {
-        return op->op == GGML_OP_GET_ROWS && tensor == op->src[1] && op->src[0]->op == GGML_OP_NONE;
+    ایستا bool is_inp_tok(ثابت ggml_tensor * tensor, ثابت ggml_tensor * op) {
+        بازگشت op->op == GGML_OP_GET_ROWS && tensor == op->src[1] && op->src[0]->op == GGML_OP_NONE;
     }
 
-    static bool is_inp_pos(const ggml_tensor * tensor, const ggml_tensor * op) {
-        return op->op == GGML_OP_ROPE && tensor == op->src[1];
+    ایستا bool is_inp_pos(ثابت ggml_tensor * tensor, ثابت ggml_tensor * op) {
+        بازگشت op->op == GGML_OP_ROPE && tensor == op->src[1];
     }
 
     // IMROPE and VISION pack 4 stacked position planes (t/h/w/e) into inp_pos, each of length
     // n_tokens; other modes carry a single position per token.
-    static int get_inp_pos_n_planes(const ggml_tensor * op) {
-        const int mode = op->op_params[2];
-        return (mode == GGML_ROPE_TYPE_IMROPE || mode == GGML_ROPE_TYPE_VISION || (mode & GGML_ROPE_TYPE_MROPE)) ? 4 : 1;
+    ایستا صحیح get_inp_pos_n_planes(ثابت ggml_tensor * op) {
+        ثابت صحیح mode = op->op_params[2];
+        بازگشت (mode == GGML_ROPE_TYPE_IMROPE || mode == GGML_ROPE_TYPE_VISION || (mode & GGML_ROPE_TYPE_MROPE)) ? 4 : 1;
     }
 
-    static bool is_inp_emb(const ggml_tensor * tensor, const ggml_tensor * op) {
-        return tensor->op == GGML_OP_GET_ROWS && op->op == GGML_OP_RMS_NORM;
+    ایستا bool is_inp_emb(ثابت ggml_tensor * tensor, ثابت ggml_tensor * op) {
+        بازگشت tensor->op == GGML_OP_GET_ROWS && op->op == GGML_OP_RMS_NORM;
     }
 
-    static bool is_inp_mask(const ggml_tensor * tensor, const ggml_tensor * op) {
-        return op->op == GGML_OP_CPY || (op->op == GGML_OP_FLASH_ATTN_EXT && tensor == op->src[3]) ||
+    ایستا bool is_inp_mask(ثابت ggml_tensor * tensor, ثابت ggml_tensor * op) {
+        بازگشت op->op == GGML_OP_CPY || (op->op == GGML_OP_FLASH_ATTN_EXT && tensor == op->src[3]) ||
                (op->op == GGML_OP_SOFT_MAX && tensor == op->src[1]);
     }
 
-    static bool is_inp_mean(const ggml_tensor * tensor, const ggml_tensor * op) {
-        return op->op == GGML_OP_MUL_MAT && tensor == op->src[1] && tensor->op == GGML_OP_NONE &&
-               (tensor->flags & GGML_TENSOR_FLAG_INPUT) && tensor->type == GGML_TYPE_F32 &&
+    ایستا bool is_inp_mean(ثابت ggml_tensor * tensor, ثابت ggml_tensor * op) {
+        بازگشت op->op == GGML_OP_MUL_MAT && tensor == op->src[1] && tensor->op == GGML_OP_NONE &&
+               (tensor->flags & GGML_TENSOR_FLAG_درون_داد) && tensor->type == GGML_TYPE_F32 &&
                op->src[0] != nullptr && op->src[0]->op != GGML_OP_NONE;
     }
 
     // per-token embedding scale [1, n_tokens] (inp->scale_rows in llama-graph.cpp)
-    static bool is_inp_scale_rows(const ggml_tensor * tensor, const ggml_tensor * op) {
-        return op->op == GGML_OP_MUL && tensor == op->src[1] && strcmp(tensor->name, "inp_scale_rows") == 0;
+    ایستا bool is_inp_scale_rows(ثابت ggml_tensor * tensor, ثابت ggml_tensor * op) {
+        بازگشت op->op == GGML_OP_MUL && tensor == op->src[1] && strcmp(tensor->name, "inp_scale_rows") == 0;
     }
 
-    static bool is_rope_freqs_weight(const ggml_tensor * tensor, const ggml_tensor * op) {
-        return op->op == GGML_OP_ROPE && tensor == op->src[2];
+    ایستا bool is_rope_freqs_weight(ثابت ggml_tensor * tensor, ثابت ggml_tensor * op) {
+        بازگشت op->op == GGML_OP_ROPE && tensor == op->src[2];
     }
 
-    inline static bool is_recurrent_cache(const ggml_tensor * tensor) {
-        return tensor != nullptr && (strncmp(tensor->name, "cache_r_l", strlen("cache_r_l")) == 0 ||
+    درونخطی ایستا bool is_recurrent_cache(ثابت ggml_tensor * tensor) {
+        بازگشت tensor != nullptr && (strncmp(tensor->name, "cache_r_l", strlen("cache_r_l")) == 0 ||
                                      strncmp(tensor->name, "cache_s_l", strlen("cache_s_l")) == 0 ||
                                      strncmp(tensor->name, "cache_ple_r_l", strlen("cache_ple_r_l")) == 0);
     }
 
-    inline static bool is_cache(const ggml_tensor * tensor, const ggml_tensor * op) {
-        return is_recurrent_cache(tensor) || is_kvcache(tensor, op);
+    درونخطی ایستا bool is_cache(ثابت ggml_tensor * tensor, ثابت ggml_tensor * op) {
+        بازگشت is_recurrent_cache(tensor) || is_kvcache(tensor, op);
     }
 
-    inline static bool is_kvcache(const ggml_tensor * tensor, const ggml_tensor * op) {
-        if (tensor == nullptr || is_recurrent_cache(tensor)) {
-            return false;
+    درونخطی ایستا bool is_kvcache(ثابت ggml_tensor * tensor, ثابت ggml_tensor * op) {
+        اگر (tensor == nullptr || is_recurrent_cache(tensor)) {
+            بازگشت false;
         }
-        return (tensor->buffer != nullptr && tensor->buffer->usage == GGML_BACKEND_BUFFER_USAGE_ANY) ||
+        بازگشت (tensor->buffer != nullptr && tensor->buffer->usage == GGML_BACKEND_BUFFER_USAGE_ANY) ||
                (op != nullptr && op->op == GGML_OP_SET_ROWS && op->src[2] == tensor);
     }
 
-    inline static bool is_conv_state_writeback(const ggml_tensor * node) {
-        return node->op == GGML_OP_CPY && node->view_src != nullptr && is_recurrent_cache(node->view_src) &&
-               node->src[0] != nullptr && node->src[0]->op == GGML_OP_VIEW && node->src[0]->src[0] != nullptr &&
-               node->src[0]->src[0]->op == GGML_OP_CONCAT && node->src[1] != nullptr &&
-               node->src[1]->op == GGML_OP_VIEW && node->src[1]->view_src == node->view_src;
+    درونخطی ایستا bool is_conv_state_writeback(ثابت ggml_tensor * گره) {
+        بازگشت گره->op == GGML_OP_CPY && گره->view_src != nullptr && is_recurrent_cache(گره->view_src) &&
+               گره->src[0] != nullptr && گره->src[0]->op == GGML_OP_VIEW && گره->src[0]->src[0] != nullptr &&
+               گره->src[0]->src[0]->op == GGML_OP_CONCAT && گره->src[1] != nullptr &&
+               گره->src[1]->op == GGML_OP_VIEW && گره->src[1]->view_src == گره->view_src;
     }
 
-    static bool is_kv_idx(const ggml_tensor * tensor, const ggml_tensor * op) {
-        return op->op == GGML_OP_SET_ROWS && op->src[1] == tensor;
+    ایستا bool is_kv_idx(ثابت ggml_tensor * tensor, ثابت ggml_tensor * op) {
+        بازگشت op->op == GGML_OP_SET_ROWS && op->src[1] == tensor;
     }
 
-    bool is_swa_mask(const ggml_tensor * tensor) const {
-        return m_model_params.swa_mask != nullptr && tensor == m_model_params.swa_mask;
+    bool is_swa_mask(ثابت ggml_tensor * tensor) ثابت {
+        بازگشت m_model_params.swa_mask != nullptr && tensor == m_model_params.swa_mask;
     }
 
-    static bool is_output_idx(const ggml_tensor * tensor, const ggml_tensor * op) {
-        return op->op == GGML_OP_GET_ROWS && tensor == op->src[1] && op->src[0]->op != GGML_OP_NONE &&
+    ایستا bool is_output_idx(ثابت ggml_tensor * tensor, ثابت ggml_tensor * op) {
+        بازگشت op->op == GGML_OP_GET_ROWS && tensor == op->src[1] && op->src[0]->op != GGML_OP_NONE &&
                op->src[1]->op == GGML_OP_NONE;
     }
 
     // the state permutation index input used in SSM/DeltaNet models (inp->s_copy in llama-graph.cpp)
-    static bool is_inp_s_copy(const ggml_tensor * tensor, const ggml_tensor * op) {
-        return op->op == GGML_OP_GET_ROWS && tensor == op->src[1] &&
+    ایستا bool is_inp_s_copy(ثابت ggml_tensor * tensor, ثابت ggml_tensor * op) {
+        بازگشت op->op == GGML_OP_GET_ROWS && tensor == op->src[1] &&
                op->src[0]->buffer->usage == GGML_BACKEND_BUFFER_USAGE_ANY;
     }
 
-    std::string get_graph_input_ov_name(const ggml_tensor * tensor, const ggml_tensor * op) const {
-        if (is_inp_pos(tensor, op)) {
-            return "inp_pos";
+    std::string get_graph_درون_داد_ov_name(ثابت ggml_tensor * tensor, ثابت ggml_tensor * op) ثابت {
+        اگر (is_inp_pos(tensor, op)) {
+            بازگشت "inp_pos";
         }
-        if (is_inp_emb(tensor, op)) {
-            return "embd";
+        اگر (is_inp_emb(tensor, op)) {
+            بازگشت "embd";
         }
-        if (is_inp_mask(tensor, op)) {
+        اگر (is_inp_mask(tensor, op)) {
             // Give the two attention masks distinct OV parameter names.
             //
             // An interleaved-SWA model builds one full-attention mask and one sliding-window mask,
@@ -465,43 +465,43 @@ public:
             //
             // When no SWA layer was found there is only one mask in play, so the plain name is
             // correct and no _swa parameter is created.
-            if (m_model_params.swa_layers.empty()) {
-                return "self_kq_mask";
+            اگر (m_model_params.swa_layers.empty()) {
+                بازگشت "self_kq_mask";
             }
-            return is_swa_mask(tensor) ? "self_kq_mask_swa" : "self_kq_mask";
+            بازگشت is_swa_mask(tensor) ? "self_kq_mask_swa" : "self_kq_mask";
         }
-        return tensor->name;
+        بازگشت tensor->name;
     }
 
-private:
-    void set_input_output();
-    int compute_op_case(const ggml_tensor * node) const;
-    bool node_is_used_as_src(const int node_idx);
-    void compute_model_inputs();
-    void compute_model_outputs();
+خصوصی:
+    تهی set_درون_داد_output();
+    صحیح compute_op_case(ثابت ggml_tensor * گره) ثابت;
+    bool گره_is_used_as_src(ثابت صحیح گره_idx);
+    تهی compute_model_inputs();
+    تهی compute_model_outputs();
 
     // True if tensor is the inp->s_copy index leaf gathered by a recurrent state cache GET_ROWS
     // (possibly through a VIEW), so it gets a dynamic [1,1,1,-1] graph-input shape.
-    bool is_s_copy_leaf(const ggml_tensor * tensor) const;
+    bool is_s_copy_leaf(ثابت ggml_tensor * tensor) ثابت;
 
     // Infer and propagate dynamic-dimension indices for all tensors in the GGML graph.
-    void compute_node_dynamic_dims();
+    تهی compute_گره_dynamic_dims();
 
-    void validate_cgraph() const;
+    تهی validate_cgraph() ثابت;
 
     ggml_cgraph * m_cgraph = nullptr;
     std::map<std::string, ggml_tensor *> m_inputs;
 
-    std::map<std::string, ov::frontend::ggml::ModelInputInfo> m_model_inputs;
-    std::map<std::string, ov::frontend::ggml::ModelExtraInputInfo> m_model_extra_inputs;
-    std::map<std::string, std::shared_ptr<ov::Node>> m_model_weights;
+    std::map<std::string, ov::frontend::ggml::Model_درون_داد_Info> m_model_inputs;
+    std::map<std::string, ov::frontend::ggml::Model_Extra_درون_داد_Info> m_model_extra_inputs;
+    std::map<std::string, std::shared_ptr<ov::گره_2>> m_model_weights;
     std::map<std::string, ggml_tensor *> m_model_outputs;
     std::set<std::string> m_model_output_names;
-    std::vector<NodeInfo> m_node_info_list;
-    std::map<ggml_tensor *, int> m_node_dynamic_dims;
+    std::vector<گره_Info> m_گره_info_list;
+    std::map<ggml_tensor *, صحیح> m_گره_dynamic_dims;
 
     ModelParams m_model_params;
     ComputeParams m_compute_params;
 };
 
-void print_tensor_address_map(const ggml_cgraph * cgraph);
+تهی print_tensor_address_map(ثابت ggml_cgraph * cgraph);

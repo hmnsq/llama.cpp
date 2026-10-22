@@ -1,20 +1,20 @@
 #ifndef HTP_DCACHE_H
 #define HTP_DCACHE_H
 
-#include <stdint.h>
-#include "htp-ops.h"
+#شامل <stdint.h>
+#شامل "htp-ops.h"
 
 #define HTP_MAX_DIRTY_RANGES 64
 
-struct htp_dirty_range {
+ساختار htp_dirty_range {
     uint32_t start;
     uint32_t end;
 };
 
-struct htp_context;
+ساختار htp_context;
 
-void htp_dcache_flush_dirty_ranges(struct htp_context * ctx);
-void htp_dcache_flush_dirty_tensors(struct htp_context * ctx, const struct htp_tensor * const * tensors, uint32_t n);
-void htp_dcache_mark_dirty_tensors(struct htp_context * ctx, const struct htp_tensor * const * tensors, uint32_t n);
+تهی htp_dcache_flush_dirty_ranges(ساختار htp_context * ctx);
+تهی htp_dcache_flush_dirty_tensors(ساختار htp_context * ctx, ثابت ساختار htp_tensor * ثابت * tensors, uint32_t n);
+تهی htp_dcache_mark_dirty_tensors(ساختار htp_context * ctx, ثابت ساختار htp_tensor * ثابت * tensors, uint32_t n);
 
 #endif // HTP_DCACHE_H

@@ -1,34 +1,34 @@
-#include "log.h"
+#شامل "log.h"
 
-#include <cinttypes>
-#include <cstdio>
+#شامل <cinttypes>
+#شامل <cstdio>
 
 std::string rpc_log_format_size(size_t size) {
-    static const char * units[] = { "B", "KiB", "MiB", "GiB", "TiB", "PiB" };
+    ایستا ثابت نویسه * units[] = { "B", "KiB", "MiB", "GiB", "TiB", "PiB" };
 
-    double value = (double) size;
+    دوگانه value = (دوگانه) size;
     size_t unit  = 0;
-    while (value >= 1024.0 && unit + 1 < sizeof(units) / sizeof(units[0])) {
+    وقتی (value >= 1024.0 && unit + 1 < اندازه(units) / اندازه(units[0])) {
         value /= 1024.0;
         unit++;
     }
 
-    char buf[32];
-    if (unit == 0) {
-        snprintf(buf, sizeof(buf), "%zu B", size);
-    } else {
-        snprintf(buf, sizeof(buf), "%.2f %s", value, units[unit]);
+    نویسه buf[32];
+    اگر (unit == 0) {
+        snprintf(buf, اندازه(buf), "%zu B", size);
+    } وگرنه {
+        snprintf(buf, اندازه(buf), "%.2f %s", value, units[unit]);
     }
-    return std::string(buf);
+    بازگشت std::string(buf);
 }
 
-std::string rpc_log_format_tensor(const ggml_tensor * tensor) {
-    char shape[64];
-    snprintf(shape, sizeof(shape), "[%" PRId64 ", %" PRId64 ", %" PRId64 ", %" PRId64 "]", tensor->ne[0], tensor->ne[1],
+std::string rpc_log_format_tensor(ثابت ggml_tensor * tensor) {
+    نویسه shape[64];
+    snprintf(shape, اندازه(shape), "[%" PRId64 ", %" PRId64 ", %" PRId64 ", %" PRId64 "]", tensor->ne[0], tensor->ne[1],
              tensor->ne[2], tensor->ne[3]);
 
-    char buf[GGML_MAX_NAME + 192];
-    snprintf(buf, sizeof(buf), "%s [%s, %s, %s]", ggml_get_name(tensor), ggml_op_name(tensor->op),
+    نویسه buf[GGML_MAX_NAME + 192];
+    snprintf(buf, اندازه(buf), "%s [%s, %s, %s]", ggml_get_name(tensor), ggml_op_name(tensor->op),
              ggml_type_name(tensor->type), shape);
-    return std::string(buf);
+    بازگشت std::string(buf);
 }

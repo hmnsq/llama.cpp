@@ -1,15 +1,15 @@
-#include "ggml.h"
-#include "mmf.hpp"
-#include "utils.hpp"
+#شامل "ggml.h"
+#شامل "mmf.hpp"
+#شامل "utils.hpp"
 
-void ggml_zdnn_mul_mat_f(
-    const ggml_backend_zdnn_context * ctx,
-    const               ggml_tensor * src0,
-    const               ggml_tensor * src1,
+تهی ggml_zdnn_mul_mat_f(
+    ثابت ggml_backend_zdnn_context * ctx,
+    ثابت               ggml_tensor * src0,
+    ثابت               ggml_tensor * src1,
                         ggml_tensor * dst) {
-    GGML_TENSOR_BINARY_OP_LOCALS;
+    GGML_TENSOR_دودویی_OP_LOCALS;
 
-    const enum ggml_type type = src0->type;
+    ثابت شمارش ggml_type type = src0->type;
 
     GGML_ASSERT(ne0 == ne01);
     GGML_ASSERT(ne1 == ne11);
@@ -21,13 +21,13 @@ void ggml_zdnn_mul_mat_f(
     GGML_ASSERT(nb10 == ggml_type_size(src1->type));
 
     // dst cannot be transposed or permuted
-    GGML_ASSERT(nb0 == sizeof(float));
+    GGML_ASSERT(nb0 == اندازه(اعشاری));
     GGML_ASSERT(nb0 <= nb1);
     GGML_ASSERT(nb1 <= nb2);
     GGML_ASSERT(nb2 <= nb3);
 
-    const ggml_tensor * weights = src0;
-    const ggml_tensor * inputs  = src1;
+    ثابت ggml_tensor * weights = src0;
+    ثابت ggml_tensor * inputs  = src1;
           ggml_tensor * output  = dst;
 
     ggml_backend_zdnn_buffer * weights_extra = (ggml_backend_zdnn_buffer *)weights->extra;
@@ -35,15 +35,15 @@ void ggml_zdnn_mul_mat_f(
     ggml_backend_zdnn_buffer * output_extra  = (ggml_backend_zdnn_buffer *)output->extra;
     ggml_backend_zdnn_buffer * bias_extra    = (ggml_backend_zdnn_buffer *)output_extra->extra;
 
-    const int64_t weights_rows = ne01;
-    const int64_t weights_cols = ne00;
-    const int64_t inputs_rows  = ne11;
-    const int64_t inputs_cols  = ne10;
+    ثابت int64_t weights_rows = ne01;
+    ثابت int64_t weights_cols = ne00;
+    ثابت int64_t inputs_rows  = ne11;
+    ثابت int64_t inputs_cols  = ne10;
 
-    assert(inputs_cols == weights_cols);
+    أكد(inputs_cols == weights_cols);
 
-    const int64_t output_rows = ne1;
-    const int64_t output_cols = ne0;
+    ثابت int64_t output_rows = ne1;
+    ثابت int64_t output_cols = ne0;
 
     // GGML_LOG_INFO("%s: tensor '%s' tensor dimensions: [%ld, %ld, %ld, %ld] pre_tfm_desc dimensions: [%ld, %ld, %ld, %ld]\n",
     //               __func__, weights_extra->name,
@@ -67,15 +67,15 @@ void ggml_zdnn_mul_mat_f(
     GGML_ASSERT(inputs_extra->pre_tfm_desc.dim2  == inputs->ne[1]  && "inputs_extra->pre_tfm_desc.dim2 must match inputs->ne[1]");
 
     // compute tensors are transformed on first use
-    if (!weights_extra->ztensor.is_transformed) {
+    اگر (!weights_extra->ztensor.is_transformed) {
         ggml_zdnn_load_tensor(weights_extra->ztensor, weights->data);
     }
-    if (!inputs_extra->ztensor.is_transformed) {
+    اگر (!inputs_extra->ztensor.is_transformed) {
         ggml_zdnn_load_tensor(inputs_extra->ztensor, inputs->data);
     }
 
     ZDNN_CHECK(zdnn_matmul_transpose_op(&inputs_extra->ztensor, &weights_extra->ztensor, &bias_extra->ztensor,
-                                        false, true, MATMUL_OP_ADDITION, &output_extra->ztensor));
+                                        نادرست, درست, MATMUL_OP_ADDITION, &output_extra->ztensor));
     // TODO: Remove in the future as we are currently DLF16 -> FP32 then in the next op, FP32 -> DLF16 again. Inefficient.
     ZDNN_CHECK(zdnn_transform_origtensor(&output_extra->ztensor, output->data));
 

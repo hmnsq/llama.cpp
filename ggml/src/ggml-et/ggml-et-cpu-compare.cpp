@@ -1,110 +1,110 @@
-#include "ggml-et-cpu-compare.h"
+#شامل "ggml-et-cpu-compare.h"
 
-#include "ggml-cpu/ggml-cpu-impl.h"
-#include "ggml-cpu/ops.h"
+#شامل "ggml-cpu/ggml-cpu-impl.h"
+#شامل "ggml-cpu/ops.h"
 
-#include <algorithm>
-#include <cmath>
-#include <cstdlib>
-#include <cstring>
+#شامل <algorithm>
+#شامل <cmath>
+#شامل <cstdlib>
+#شامل <cstring>
 
-bool ggml_et_cpu_compare_init_pre(ggml_et_cpu_compare_ctx * ctx, const ggml_tensor * node, ggml_op op) {
-    if (!ctx || !node) {
+منطقی ggml_et_cpu_compare_init_pre(ggml_et_cpu_compare_ctx * ctx, ثابت ggml_tensor * گره, ggml_op op) {
+    اگر (!ctx || !گره) {
         GGML_LOG_ERROR("ET: Invalid parameters for CPU compare init\n");
-        return false;
+        بازگشت نادرست;
     }
 
     // Clear context
-    memset(ctx, 0, sizeof(*ctx));
+    memset(ctx, 0, اندازه(*ctx));
 
     // Calculate actual buffer sizes - use backend buffer size for accurate copy
-    auto get_tensor_buffer_size = [](const ggml_tensor * tensor) -> size_t {
-        if (!tensor) {
-            return 0;
+    auto get_tensor_buffer_size = [](ثابت ggml_tensor * tensor) -> size_t {
+        اگر (!tensor) {
+            بازگشت 0;
         }
 
-        if (tensor->buffer) {
+        اگر (tensor->buffer) {
             // Get actual backend buffer size
             size_t buffer_size = ggml_backend_buffer_get_size(tensor->buffer);
 
             // Use the full buffer size to avoid any truncation issues
-            return buffer_size;
-        } else {
+            بازگشت buffer_size;
+        } وگرنه {
             // Fallback to logical size if no buffer
-            return ggml_nbytes(tensor);
+            بازگشت ggml_nbytes(tensor);
         }
     };
 
-    ctx->src0_size = get_tensor_buffer_size(node->src[0]);
-    ctx->src1_size = get_tensor_buffer_size(node->src[1]);
-    ctx->src2_size = get_tensor_buffer_size(node->src[2]);
-    ctx->dst_size  = get_tensor_buffer_size(node);
+    ctx->src0_size = get_tensor_buffer_size(گره->src[0]);
+    ctx->src1_size = get_tensor_buffer_size(گره->src[1]);
+    ctx->src2_size = get_tensor_buffer_size(گره->src[2]);
+    ctx->dst_size  = get_tensor_buffer_size(گره);
 
     // Allocate CPU buffers for all tensors
-    if (ctx->src0_size > 0) {
+    اگر (ctx->src0_size > 0) {
         ctx->cpu_src0_data = malloc(ctx->src0_size);
-        if (!ctx->cpu_src0_data) {
+        اگر (!ctx->cpu_src0_data) {
             GGML_LOG_ERROR("ET: Failed to allocate CPU src0 buffer\n");
-            goto cleanup;
+            برو cleanup;
         }
     }
 
-    if (ctx->src1_size > 0) {
+    اگر (ctx->src1_size > 0) {
         ctx->cpu_src1_data = malloc(ctx->src1_size);
-        if (!ctx->cpu_src1_data) {
+        اگر (!ctx->cpu_src1_data) {
             GGML_LOG_ERROR("ET: Failed to allocate CPU src1 buffer\n");
-            goto cleanup;
+            برو cleanup;
         }
     }
 
-    if (ctx->src2_size > 0) {
+    اگر (ctx->src2_size > 0) {
         ctx->cpu_src2_data = malloc(ctx->src2_size);
-        if (!ctx->cpu_src2_data) {
+        اگر (!ctx->cpu_src2_data) {
             GGML_LOG_ERROR("ET: Failed to allocate CPU src2 buffer\n");
-            goto cleanup;
+            برو cleanup;
         }
     }
 
     ctx->cpu_dst_data = malloc(ctx->dst_size);
-    if (!ctx->cpu_dst_data) {
+    اگر (!ctx->cpu_dst_data) {
         GGML_LOG_ERROR("ET: Failed to allocate CPU dst buffer\n");
-        goto cleanup;
+        برو cleanup;
     }
 
     ctx->et_dst_data = malloc(ctx->dst_size);
-    if (!ctx->et_dst_data) {
+    اگر (!ctx->et_dst_data) {
         GGML_LOG_ERROR("ET: Failed to allocate ET dst buffer\n");
-        goto cleanup;
+        برو cleanup;
     }
 
     // Copy data from ET device buffers to CPU host buffers
-    if (ctx->src0_size > 0) {
+    اگر (ctx->src0_size > 0) {
         // Copy logical tensor size - ggml_backend_tensor_get handles stride layout internally
-        size_t logical_size = ggml_nbytes(node->src[0]);
-        ggml_backend_tensor_get(node->src[0], ctx->cpu_src0_data, 0, logical_size);
+        size_t logical_size = ggml_nbytes(گره->src[0]);
+        ggml_backend_tensor_get(گره->src[0], ctx->cpu_src0_data, 0, logical_size);
     }
-    if (ctx->src1_size > 0) {
-        size_t logical_size = ggml_nbytes(node->src[1]);
-        ggml_backend_tensor_get(node->src[1], ctx->cpu_src1_data, 0, logical_size);
+    اگر (ctx->src1_size > 0) {
+        size_t logical_size = ggml_nbytes(گره->src[1]);
+        ggml_backend_tensor_get(گره->src[1], ctx->cpu_src1_data, 0, logical_size);
     }
-    if (ctx->src2_size > 0) {
-        size_t logical_size = ggml_nbytes(node->src[2]);
-        ggml_backend_tensor_get(node->src[2], ctx->cpu_src2_data, 0, logical_size);
+    اگر (ctx->src2_size > 0) {
+        size_t logical_size = ggml_nbytes(گره->src[2]);
+        ggml_backend_tensor_get(گره->src[2], ctx->cpu_src2_data, 0, logical_size);
     }
 
     // Copy destination data from device (for operations like SET_ROWS that modify existing data)
     // Most ops create new tensors so this is unused, but SET_ROWS requires existing dst data
     {
-        size_t logical_size = ggml_nbytes(node);
-        ggml_backend_tensor_get(node, ctx->cpu_dst_data, 0, logical_size);
+        size_t logical_size = ggml_nbytes(گره);
+        ggml_backend_tensor_get(گره, ctx->cpu_dst_data, 0, logical_size);
     }
 
     // Create CPU backend for reference computation
     GGML_LOG_DEBUG("ET: Creating CPU backend for reference computation\n");
     ctx->cpu_backend = ggml_backend_cpu_init();
-    if (!ctx->cpu_backend) {
+    اگر (!ctx->cpu_backend) {
         GGML_LOG_ERROR("ET: Failed to create CPU backend\n");
-        goto cleanup;
+        برو cleanup;
     }
 
     // Create GGML context for CPU tensors
@@ -112,202 +112,202 @@ bool ggml_et_cpu_compare_init_pre(ggml_et_cpu_compare_ctx * ctx, const ggml_tens
     ggml_init_params ctx_params;
     ctx_params.mem_size   = ggml_tensor_overhead() * 4 + ggml_graph_overhead();  // up to 4 tensors + graph
     ctx_params.mem_buffer = nullptr;
-    ctx_params.no_alloc   = true;                                                // We'll manage data ourselves
+    ctx_params.no_alloc   = درست;                                                // We'll manage data ourselves
     ctx->ggml_ctx         = ggml_init(ctx_params);
-    if (!ctx->ggml_ctx) {
+    اگر (!ctx->ggml_ctx) {
         GGML_LOG_ERROR("ET: Failed to create GGML context\n");
-        goto cleanup;
+        برو cleanup;
     }
 
     // Create CPU tensors with proper context
-    if (node->src[0]) {
-        ctx->cpu_src0 = ggml_new_tensor(ctx->ggml_ctx, node->src[0]->type, GGML_MAX_DIMS, node->src[0]->ne);
-        if (!ctx->cpu_src0) {
+    اگر (گره->src[0]) {
+        ctx->cpu_src0 = ggml_new_tensor(ctx->ggml_ctx, گره->src[0]->type, GGML_MAX_DIMS, گره->src[0]->ne);
+        اگر (!ctx->cpu_src0) {
             GGML_LOG_ERROR("ET: Failed to create CPU src0 tensor\n");
-            goto cleanup;
+            برو cleanup;
         }
         ctx->cpu_src0->data = ctx->cpu_src0_data;
         // Copy stride array (nb) for correct memory layout
-        memcpy(ctx->cpu_src0->nb, node->src[0]->nb, sizeof(node->src[0]->nb));
+        memcpy(ctx->cpu_src0->nb, گره->src[0]->nb, اندازه(گره->src[0]->nb));
         // Copy op_params if present
-        memcpy(ctx->cpu_src0->op_params, node->src[0]->op_params, sizeof(node->src[0]->op_params));
+        memcpy(ctx->cpu_src0->op_params, گره->src[0]->op_params, اندازه(گره->src[0]->op_params));
     }
 
-    if (node->src[1]) {
-        ctx->cpu_src1 = ggml_new_tensor(ctx->ggml_ctx, node->src[1]->type, GGML_MAX_DIMS, node->src[1]->ne);
-        if (!ctx->cpu_src1) {
+    اگر (گره->src[1]) {
+        ctx->cpu_src1 = ggml_new_tensor(ctx->ggml_ctx, گره->src[1]->type, GGML_MAX_DIMS, گره->src[1]->ne);
+        اگر (!ctx->cpu_src1) {
             GGML_LOG_ERROR("ET: Failed to create CPU src1 tensor\n");
-            goto cleanup;
+            برو cleanup;
         }
         ctx->cpu_src1->data = ctx->cpu_src1_data;
         // Copy stride array (nb) for correct memory layout
-        memcpy(ctx->cpu_src1->nb, node->src[1]->nb, sizeof(node->src[1]->nb));
+        memcpy(ctx->cpu_src1->nb, گره->src[1]->nb, اندازه(گره->src[1]->nb));
         // Copy op_params if present
-        memcpy(ctx->cpu_src1->op_params, node->src[1]->op_params, sizeof(node->src[1]->op_params));
+        memcpy(ctx->cpu_src1->op_params, گره->src[1]->op_params, اندازه(گره->src[1]->op_params));
     }
 
-    if (node->src[2]) {
-        ctx->cpu_src2 = ggml_new_tensor(ctx->ggml_ctx, node->src[2]->type, GGML_MAX_DIMS, node->src[2]->ne);
-        if (!ctx->cpu_src2) {
+    اگر (گره->src[2]) {
+        ctx->cpu_src2 = ggml_new_tensor(ctx->ggml_ctx, گره->src[2]->type, GGML_MAX_DIMS, گره->src[2]->ne);
+        اگر (!ctx->cpu_src2) {
             GGML_LOG_ERROR("ET: Failed to create CPU src2 tensor\n");
-            goto cleanup;
+            برو cleanup;
         }
         ctx->cpu_src2->data = ctx->cpu_src2_data;
         // Copy stride array (nb) for correct memory layout
-        memcpy(ctx->cpu_src2->nb, node->src[2]->nb, sizeof(node->src[2]->nb));
+        memcpy(ctx->cpu_src2->nb, گره->src[2]->nb, اندازه(گره->src[2]->nb));
         // Copy op_params if present
-        memcpy(ctx->cpu_src2->op_params, node->src[2]->op_params, sizeof(node->src[2]->op_params));
+        memcpy(ctx->cpu_src2->op_params, گره->src[2]->op_params, اندازه(گره->src[2]->op_params));
     }
 
-    return true;
+    بازگشت درست;
 
 cleanup:
     ggml_et_cpu_compare_free(ctx);
-    return false;
+    بازگشت نادرست;
 }
 
-bool ggml_et_cpu_compare_compute_and_check(ggml_et_cpu_compare_ctx *          ctx,
-                                           const ggml_tensor *                node,
-                                           const ggml_et_cpu_compare_config * config) {
-    if (!ctx || !ctx->cpu_backend || !ctx->ggml_ctx || !node || !config) {
+منطقی ggml_et_cpu_compare_compute_and_check(ggml_et_cpu_compare_ctx *          ctx,
+                                           ثابت ggml_tensor *                گره,
+                                           ثابت ggml_et_cpu_compare_config * config) {
+    اگر (!ctx || !ctx->cpu_backend || !ctx->ggml_ctx || !گره || !config) {
         GGML_LOG_ERROR("ET: Invalid parameters for CPU compute and check\n");
-        return false;
+        بازگشت نادرست;
     }
 
     // Create operation-specific CPU destination tensor based on the node's operation
-    ggml_op op = node->op;
-    switch (op) {
-        case GGML_OP_MUL:
+    ggml_op op = گره->op;
+    انتخاب (op) {
+        حالت GGML_OP_MUL:
             ctx->cpu_dst = ggml_mul(ctx->ggml_ctx, ctx->cpu_src0, ctx->cpu_src1);
-            break;
-        case GGML_OP_ADD:
+            بشکن;
+        حالت GGML_OP_ADD:
             ctx->cpu_dst = ggml_add(ctx->ggml_ctx, ctx->cpu_src0, ctx->cpu_src1);
-            break;
-        case GGML_OP_MUL_MAT:
+            بشکن;
+        حالت GGML_OP_MUL_MAT:
             ctx->cpu_dst = ggml_mul_mat(ctx->ggml_ctx, ctx->cpu_src0, ctx->cpu_src1);
-            break;
-        case GGML_OP_MUL_MAT_ID:
+            بشکن;
+        حالت GGML_OP_MUL_MAT_ID:
             // MUL_MAT_ID: Mixture of Experts matrix multiplication
             // src0 (as): expert weight matrices [K, M, n_expert]
             // src1 (b):  activations [K, n_expert_used, batch]
             // src2 (ids): expert selection indices [n_expert_used, batch]
             ctx->cpu_dst = ggml_mul_mat_id(ctx->ggml_ctx, ctx->cpu_src0, ctx->cpu_src1, ctx->cpu_src2);
-            break;
-        case GGML_OP_ROPE:
+            بشکن;
+        حالت GGML_OP_ROPE:
             {
-                const int32_t * op_params  = (const int32_t *) node->op_params;
-                const int32_t   n_dims     = op_params[1];
-                const int32_t   mode       = op_params[2];
-                const int32_t   n_ctx_orig = op_params[4];
-                const float     freq_base  = *((const float *) (op_params + 5));
-                const float     freq_scale = *((const float *) (op_params + 6));
-                const float     ext_factor = *((const float *) (op_params + 7));
-                const float     attn_factor = *((const float *) (op_params + 8));
-                const float     beta_fast  = *((const float *) (op_params + 9));
-                const float     beta_slow  = *((const float *) (op_params + 10));
+                ثابت int32_t * op_params  = (ثابت int32_t *) گره->op_params;
+                ثابت int32_t   n_dims     = op_params[1];
+                ثابت int32_t   mode       = op_params[2];
+                ثابت int32_t   n_ctx_orig = op_params[4];
+                ثابت اعشاری     freq_base  = *((ثابت اعشاری *) (op_params + 5));
+                ثابت اعشاری     freq_scale = *((ثابت اعشاری *) (op_params + 6));
+                ثابت اعشاری     ext_factor = *((ثابت اعشاری *) (op_params + 7));
+                ثابت اعشاری     attn_factor = *((ثابت اعشاری *) (op_params + 8));
+                ثابت اعشاری     beta_fast  = *((ثابت اعشاری *) (op_params + 9));
+                ثابت اعشاری     beta_slow  = *((ثابت اعشاری *) (op_params + 10));
 
-                if (mode & GGML_ROPE_TYPE_MROPE) {
-                    int sections[GGML_MROPE_SECTIONS];
-                    memcpy(sections, op_params + 11, sizeof(sections));
+                اگر (mode & GGML_ROPE_TYPE_MROPE) {
+                    صحیح sections[GGML_MROPE_SECTIONS];
+                    memcpy(sections, op_params + 11, اندازه(sections));
                     ctx->cpu_dst = ggml_rope_multi(ctx->ggml_ctx, ctx->cpu_src0, ctx->cpu_src1, ctx->cpu_src2,
                                                    n_dims, sections, mode, n_ctx_orig, freq_base, freq_scale,
                                                    ext_factor, attn_factor, beta_fast, beta_slow);
-                } else {
+                } وگرنه {
                     ctx->cpu_dst = ggml_rope_ext(ctx->ggml_ctx, ctx->cpu_src0, ctx->cpu_src1, ctx->cpu_src2,
                                                  n_dims, mode, n_ctx_orig, freq_base, freq_scale, ext_factor,
                                                  attn_factor, beta_fast, beta_slow);
                 }
             }
-            break;
-        case GGML_OP_RMS_NORM:
+            بشکن;
+        حالت GGML_OP_RMS_NORM:
             // Extract epsilon parameter from op_params (stored as float)
             {
-                float eps;
-                memcpy(&eps, node->op_params, sizeof(float));
+                اعشاری eps;
+                memcpy(&eps, گره->op_params, اندازه(اعشاری));
                 ctx->cpu_dst = ggml_rms_norm(ctx->ggml_ctx, ctx->cpu_src0, eps);
             }
-            break;
-        case GGML_OP_SQR:
+            بشکن;
+        حالت GGML_OP_SQR:
             ctx->cpu_dst = ggml_sqr(ctx->ggml_ctx, ctx->cpu_src0);
-            break;
-        case GGML_OP_UNARY:
+            بشکن;
+        حالت GGML_OP_UNARY:
             {
-                ggml_unary_op uop = (ggml_unary_op) ggml_get_op_params_i32(node, 0);
+                ggml_unary_op uop = (ggml_unary_op) ggml_get_op_params_i32(گره, 0);
                 ctx->cpu_dst      = ggml_unary(ctx->ggml_ctx, ctx->cpu_src0, uop);
             }
-            break;
-        case GGML_OP_SUM_ROWS:
+            بشکن;
+        حالت GGML_OP_SUM_ROWS:
             ctx->cpu_dst = ggml_sum_rows(ctx->ggml_ctx, ctx->cpu_src0);
-            break;
-        case GGML_OP_MEAN:
+            بشکن;
+        حالت GGML_OP_MEAN:
             ctx->cpu_dst = ggml_mean(ctx->ggml_ctx, ctx->cpu_src0);
-            break;
-        case GGML_OP_CLAMP:
+            بشکن;
+        حالت GGML_OP_CLAMP:
             {
-                float clamp_min, clamp_max;
-                memcpy(&clamp_min, (const float *) node->op_params + 0, sizeof(float));
-                memcpy(&clamp_max, (const float *) node->op_params + 1, sizeof(float));
+                اعشاری clamp_min, clamp_max;
+                memcpy(&clamp_min, (ثابت اعشاری *) گره->op_params + 0, اندازه(اعشاری));
+                memcpy(&clamp_max, (ثابت اعشاری *) گره->op_params + 1, اندازه(اعشاری));
                 ctx->cpu_dst = ggml_clamp(ctx->ggml_ctx, ctx->cpu_src0, clamp_min, clamp_max);
             }
-            break;
-        case GGML_OP_GLU:
+            بشکن;
+        حالت GGML_OP_GLU:
             // Extract GLU parameters from op_params (split mode only)
             {
-                int32_t     glu_op_type = ggml_get_op_params_i32(node, 0);  // GLU variant
+                int32_t     glu_op_type = ggml_get_op_params_i32(گره, 0);  // GLU variant
                 ggml_glu_op glu_op      = (ggml_glu_op) glu_op_type;
 
                 // Only support split tensor mode
-                if (!ctx->cpu_src1) {
+                اگر (!ctx->cpu_src1) {
                     GGML_LOG_ERROR("ET: GLU CPU comparison requires split tensor mode\n");
-                    return false;
+                    بازگشت نادرست;
                 }
-                if (glu_op == GGML_GLU_OP_SWIGLU_CLAMP) {
-                    const float limit = ggml_get_op_params_f32(node, 3);
+                اگر (glu_op == GGML_GLU_OP_SWIGLU_CLAMP) {
+                    ثابت اعشاری limit = ggml_get_op_params_f32(گره, 3);
                     ctx->cpu_dst      = ggml_swiglu_clamp(ctx->ggml_ctx, ctx->cpu_src0, ctx->cpu_src1, limit);
-                } else {
+                } وگرنه {
                     ctx->cpu_dst = ggml_glu_split(ctx->ggml_ctx, ctx->cpu_src0, ctx->cpu_src1, glu_op);
                 }
             }
-            break;
-        case GGML_OP_SOFT_MAX:
+            بشکن;
+        حالت GGML_OP_SOFT_MAX:
             {
                 // Extract scale and max_bias from op_params
-                float scale    = 1.0f;
-                float max_bias = 0.0f;
-                memcpy(&scale, (const float *) node->op_params + 0, sizeof(float));
-                memcpy(&max_bias, (const float *) node->op_params + 1, sizeof(float));
+                اعشاری scale    = 1.0f;
+                اعشاری max_bias = 0.0f;
+                memcpy(&scale, (ثابت اعشاری *) گره->op_params + 0, اندازه(اعشاری));
+                memcpy(&max_bias, (ثابت اعشاری *) گره->op_params + 1, اندازه(اعشاری));
 
-                if (ctx->cpu_src1 || scale != 1.0f || max_bias != 0.0f) {
+                اگر (ctx->cpu_src1 || scale != 1.0f || max_bias != 0.0f) {
                     // Use extended softmax when mask or non-default parameters are present
                     ctx->cpu_dst = ggml_soft_max_ext(ctx->ggml_ctx, ctx->cpu_src0, ctx->cpu_src1, scale, max_bias);
-                } else {
+                } وگرنه {
                     // Use simple softmax when no mask and default parameters
                     ctx->cpu_dst = ggml_soft_max(ctx->ggml_ctx, ctx->cpu_src0);
                 }
 
                 // Add sinks if present
-                if (ctx->cpu_src2) {
+                اگر (ctx->cpu_src2) {
                     ggml_soft_max_add_sinks(ctx->cpu_dst, ctx->cpu_src2);
                 }
             }
-            break;
-        case GGML_OP_GET_ROWS:
+            بشکن;
+        حالت GGML_OP_GET_ROWS:
             ctx->cpu_dst = ggml_get_rows(ctx->ggml_ctx, ctx->cpu_src0, ctx->cpu_src1);
-            break;
-        case GGML_OP_CONT:
+            بشکن;
+        حالت GGML_OP_CONT:
             ctx->cpu_dst = ggml_cont(ctx->ggml_ctx, ctx->cpu_src0);
-            break;
-        case GGML_OP_SET_ROWS:
+            بشکن;
+        حالت GGML_OP_SET_ROWS:
             {
                 // SET_ROWS operation scatters src0 rows to dst[src1] positions
                 // Create destination tensor (this is the "view" that SET_ROWS returns)
-                ggml_tensor * cpu_dst_base = ggml_new_tensor(ctx->ggml_ctx, node->type, GGML_MAX_DIMS, node->ne);
-                if (!cpu_dst_base) {
+                ggml_tensor * cpu_dst_base = ggml_new_tensor(ctx->ggml_ctx, گره->type, GGML_MAX_DIMS, گره->ne);
+                اگر (!cpu_dst_base) {
                     GGML_LOG_ERROR("ET: Failed to create CPU destination base tensor for SET_ROWS\n");
-                    return false;
+                    بازگشت نادرست;
                 }
                 cpu_dst_base->data = ctx->cpu_dst_data;
-                memcpy(cpu_dst_base->nb, node->nb, sizeof(node->nb));
+                memcpy(cpu_dst_base->nb, گره->nb, اندازه(گره->nb));
 
                 // Note: cpu_dst_data already contains the pre-existing destination data from device
                 // SET_ROWS will update specific rows, leaving others unchanged
@@ -315,180 +315,180 @@ bool ggml_et_cpu_compare_compute_and_check(ggml_et_cpu_compare_ctx *          ct
                 // Perform SET_ROWS operation: returns a view that scatters src0 rows to dst[src1] positions
                 ctx->cpu_dst = ggml_set_rows(ctx->ggml_ctx, cpu_dst_base, ctx->cpu_src0, ctx->cpu_src1);
             }
-            break;
-        default:
+            بشکن;
+        پیشفرض:
             GGML_LOG_ERROR("ET: Unsupported operation %s for CPU comparison\n", ggml_op_name(op));
-            return false;
+            بازگشت نادرست;
     }
 
-    if (!ctx->cpu_dst) {
+    اگر (!ctx->cpu_dst) {
         GGML_LOG_ERROR("ET: Failed to create CPU destination tensor for operation %s\n", ggml_op_name(op));
-        return false;
+        بازگشت نادرست;
     }
 
     ctx->cpu_dst->data = ctx->cpu_dst_data;
     // Copy stride array (nb) for correct memory layout - except for CONT which should keep contiguous strides
-    if (op != GGML_OP_CONT) {
-        memcpy(ctx->cpu_dst->nb, node->nb, sizeof(node->nb));
+    اگر (op != GGML_OP_CONT) {
+        memcpy(ctx->cpu_dst->nb, گره->nb, اندازه(گره->nb));
     }
     // For CONT operations, keep the contiguous strides created by ggml_cont()
 
     // Create minimal computation graph
-    ctx->cpu_graph = ggml_new_graph_custom(ctx->ggml_ctx, 1, false);
-    if (!ctx->cpu_graph) {
+    ctx->cpu_graph = ggml_new_graph_custom(ctx->ggml_ctx, 1, نادرست);
+    اگر (!ctx->cpu_graph) {
         GGML_LOG_ERROR("ET: Failed to create CPU computation graph\n");
-        return false;
+        بازگشت نادرست;
     }
     ctx->cpu_graph->nodes[0] = ctx->cpu_dst;
     ctx->cpu_graph->n_nodes  = 1;
 
     // Log input data for debugging if enabled
-    if (config && config->log_differences) {
-        if (ctx->cpu_src0_data && ctx->src0_size >= 4) {
+    اگر (config && config->log_differences) {
+        اگر (ctx->cpu_src0_data && ctx->src0_size >= 4) {
             GGML_LOG_DEBUG("ET: CPU src0 first few bytes: %02x %02x %02x %02x\n", ((uint8_t *) ctx->cpu_src0_data)[0],
                            ((uint8_t *) ctx->cpu_src0_data)[1], ((uint8_t *) ctx->cpu_src0_data)[2],
                            ((uint8_t *) ctx->cpu_src0_data)[3]);
         }
-        if (ctx->cpu_src1_data && ctx->src1_size >= 16) {
-            GGML_LOG_DEBUG("ET: CPU src1 first few floats: %.6f %.6f %.6f %.6f\n", ((float *) ctx->cpu_src1_data)[0],
-                           ((float *) ctx->cpu_src1_data)[1], ((float *) ctx->cpu_src1_data)[2],
-                           ((float *) ctx->cpu_src1_data)[3]);
+        اگر (ctx->cpu_src1_data && ctx->src1_size >= 16) {
+            GGML_LOG_DEBUG("ET: CPU src1 first few floats: %.6f %.6f %.6f %.6f\n", ((اعشاری *) ctx->cpu_src1_data)[0],
+                           ((اعشاری *) ctx->cpu_src1_data)[1], ((اعشاری *) ctx->cpu_src1_data)[2],
+                           ((اعشاری *) ctx->cpu_src1_data)[3]);
         }
     }
 
     // Compute using CPU backend
     ggml_status cpu_result = ggml_backend_graph_compute(ctx->cpu_backend, ctx->cpu_graph);
 
-    if (cpu_result != GGML_STATUS_SUCCESS) {
+    اگر (cpu_result != GGML_STATUS_SUCCESS) {
         GGML_LOG_ERROR("ET: CPU reference computation failed with status %d\n", cpu_result);
-        return false;
+        بازگشت نادرست;
     }
 
     // Log output data for debugging if enabled
-    if (config && config->log_differences && ctx->dst_size >= 16) {
+    اگر (config && config->log_differences && ctx->dst_size >= 16) {
         GGML_LOG_DEBUG("ET: CPU dst first few floats after computation: %.6f %.6f %.6f %.6f\n",
-                       ((float *) ctx->cpu_dst_data)[0], ((float *) ctx->cpu_dst_data)[1],
-                       ((float *) ctx->cpu_dst_data)[2], ((float *) ctx->cpu_dst_data)[3]);
+                       ((اعشاری *) ctx->cpu_dst_data)[0], ((اعشاری *) ctx->cpu_dst_data)[1],
+                       ((اعشاری *) ctx->cpu_dst_data)[2], ((اعشاری *) ctx->cpu_dst_data)[3]);
     }
 
     // Now copy ET device destination to host for comparison
-    size_t dst_logical_size = ggml_nbytes(node);
-    ggml_backend_tensor_get(node, ctx->et_dst_data, 0, dst_logical_size);
+    size_t dst_logical_size = ggml_nbytes(گره);
+    ggml_backend_tensor_get(گره, ctx->et_dst_data, 0, dst_logical_size);
 
-    if (config->log_differences) {
-        size_t num_elements = ggml_nelements(node);
-        size_t max_log      = std::min(num_elements, config->max_log_elements);
+    اگر (config->log_differences) {
+        size_t رقم_elements = ggml_nelements(گره);
+        size_t max_log      = std::min(رقم_elements, config->max_log_elements);
 
         // Check if this is an elementwise operation that can show src inputs
-        bool    is_elementwise = (op == GGML_OP_MUL || op == GGML_OP_ADD || op == GGML_OP_GLU);
-        float * cpu_src0_float = is_elementwise ? (float *) ctx->cpu_src0_data : nullptr;
-        float * cpu_src1_float = is_elementwise ? (float *) ctx->cpu_src1_data : nullptr;
+        منطقی    is_elementwise = (op == GGML_OP_MUL || op == GGML_OP_ADD || op == GGML_OP_GLU);
+        اعشاری * cpu_src0_float = is_elementwise ? (اعشاری *) ctx->cpu_src0_data : nullptr;
+        اعشاری * cpu_src1_float = is_elementwise ? (اعشاری *) ctx->cpu_src1_data : nullptr;
 
         // Helper to get float value from tensor data (handles f16 and f32)
-        auto get_float = [](const void * data, size_t idx, ggml_type type) -> float {
-            if (type == GGML_TYPE_F16) {
-                const ggml_fp16_t * fp16_data = (const ggml_fp16_t *) data;
-                return ggml_fp16_to_fp32(fp16_data[idx]);
+        auto get_float = [](ثابت تهی * data, size_t idx, ggml_type type) -> اعشاری {
+            اگر (type == GGML_TYPE_F16) {
+                ثابت ggml_fp16_t * fp16_data = (ثابت ggml_fp16_t *) data;
+                بازگشت ggml_fp16_to_fp32(fp16_data[idx]);
             }
 
-            const float * float_data = (const float *) data;
-            return float_data[idx];
+            ثابت اعشاری * float_data = (ثابت اعشاری *) data;
+            بازگشت float_data[idx];
         };
 
         // Compare all elements but log only the first max_log_elements
-        bool   matches          = true;
+        منطقی   matches          = درست;
         size_t total_mismatches = 0;
 
         // First pass: check all elements for mismatches
-        for (size_t i = 0; i < num_elements; i++) {
-            float cpu_val  = get_float(ctx->cpu_dst_data, i, node->type);
-            float et_val   = get_float(ctx->et_dst_data, i, node->type);
-            float diff     = fabsf(cpu_val - et_val);
-            float rel_diff = diff / (fabsf(cpu_val) + 1e-8f);
+        برای (size_t i = 0; i < رقم_elements; i++) {
+            اعشاری cpu_val  = get_float(ctx->cpu_dst_data, i, گره->type);
+            اعشاری et_val   = get_float(ctx->et_dst_data, i, گره->type);
+            اعشاری diff     = fabsf(cpu_val - et_val);
+            اعشاری rel_diff = diff / (fabsf(cpu_val) + 1e-8f);
 
-            if (rel_diff > config->tolerance) {
-                matches = false;
+            اگر (rel_diff > config->tolerance) {
+                matches = نادرست;
                 total_mismatches++;
             }
         }
 
         // Second pass: log detailed info for first max_log elements only
-        for (size_t i = 0; i < max_log; i++) {
-            float cpu_val = get_float(ctx->cpu_dst_data, i, node->type);
-            float et_val  = get_float(ctx->et_dst_data, i, node->type);
-            float diff    = fabsf(cpu_val - et_val);
+        برای (size_t i = 0; i < max_log; i++) {
+            اعشاری cpu_val = get_float(ctx->cpu_dst_data, i, گره->type);
+            اعشاری et_val  = get_float(ctx->et_dst_data, i, گره->type);
+            اعشاری diff    = fabsf(cpu_val - et_val);
 
-            if (is_elementwise && cpu_src0_float && cpu_src1_float) {
+            اگر (is_elementwise && cpu_src0_float && cpu_src1_float) {
                 GGML_LOG_DEBUG("ET: [%zu] src0=%.6f, src1=%.6f -> CPU=%.6f, ET=%.6f, diff=%.6f\n", i, cpu_src0_float[i],
                                cpu_src1_float[i], cpu_val, et_val, diff);
-            } else if (is_elementwise && cpu_src0_float) {
+            } وگرنه اگر (is_elementwise && cpu_src0_float) {
                 GGML_LOG_DEBUG("ET: [%zu] src0=%.6f -> CPU=%.6f, ET=%.6f, diff=%.6f\n", i, cpu_src0_float[i], cpu_val,
                                et_val, diff);
-            } else {
+            } وگرنه {
                 GGML_LOG_DEBUG("ET: [%zu] CPU=%.6f, ET=%.6f, diff=%.6f\n", i, cpu_val, et_val, diff);
             }
         }
 
         // Check some elements from the middle and end for full coverage
-        if (num_elements > max_log) {
-            size_t mid     = num_elements / 2;
-            size_t end     = num_elements - 1;
-            float  cpu_mid = get_float(ctx->cpu_dst_data, mid, node->type);
-            float  et_mid  = get_float(ctx->et_dst_data, mid, node->type);
-            float  cpu_end = get_float(ctx->cpu_dst_data, end, node->type);
-            float  et_end  = get_float(ctx->et_dst_data, end, node->type);
+        اگر (رقم_elements > max_log) {
+            size_t mid     = رقم_elements / 2;
+            size_t end     = رقم_elements - 1;
+            اعشاری  cpu_mid = get_float(ctx->cpu_dst_data, mid, گره->type);
+            اعشاری  et_mid  = get_float(ctx->et_dst_data, mid, گره->type);
+            اعشاری  cpu_end = get_float(ctx->cpu_dst_data, end, گره->type);
+            اعشاری  et_end  = get_float(ctx->et_dst_data, end, گره->type);
 
             GGML_LOG_DEBUG("ET: Middle element [%zu]: CPU=%.6f, ET=%.6f\n", mid, cpu_mid, et_mid);
             GGML_LOG_DEBUG("ET: Last element [%zu]: CPU=%.6f, ET=%.6f\n", end, cpu_end, et_end);
         }
 
         GGML_LOG_DEBUG("ET: Results %s (%zu/%zu elements match within tolerance %.6f)\n", matches ? "MATCH" : "DIFFER",
-                       num_elements - total_mismatches, num_elements, config->tolerance);
+                       رقم_elements - total_mismatches, رقم_elements, config->tolerance);
     }
 
     // Copy CPU result to device if flag is set
-    if (config->use_cpu_result) {
+    اگر (config->use_cpu_result) {
         GGML_LOG_DEBUG("ET: Overwriting ET device result with CPU result for correct inference\n");
-        size_t dst_logical_size = ggml_nbytes(node);
-        ggml_backend_tensor_set(const_cast<ggml_tensor *>(node), ctx->cpu_dst_data, 0, dst_logical_size);
+        size_t dst_logical_size = ggml_nbytes(گره);
+        ggml_backend_tensor_set(const_cast<ggml_tensor *>(گره), ctx->cpu_dst_data, 0, dst_logical_size);
         GGML_LOG_DEBUG("ET: CPU result copied to ET device buffer\n");
     }
 
-    return true;
+    بازگشت درست;
 }
 
-void ggml_et_cpu_compare_free(ggml_et_cpu_compare_ctx * ctx) {
-    if (!ctx) {
-        return;
+تهی ggml_et_cpu_compare_free(ggml_et_cpu_compare_ctx * ctx) {
+    اگر (!ctx) {
+        بازگشت;
     }
 
-    if (ctx->cpu_src0_data) {
-        free(ctx->cpu_src0_data);
+    اگر (ctx->cpu_src0_data) {
+        آزاد(ctx->cpu_src0_data);
         ctx->cpu_src0_data = nullptr;
     }
-    if (ctx->cpu_src1_data) {
-        free(ctx->cpu_src1_data);
+    اگر (ctx->cpu_src1_data) {
+        آزاد(ctx->cpu_src1_data);
         ctx->cpu_src1_data = nullptr;
     }
-    if (ctx->cpu_src2_data) {
-        free(ctx->cpu_src2_data);
+    اگر (ctx->cpu_src2_data) {
+        آزاد(ctx->cpu_src2_data);
         ctx->cpu_src2_data = nullptr;
     }
-    if (ctx->cpu_dst_data) {
-        free(ctx->cpu_dst_data);
+    اگر (ctx->cpu_dst_data) {
+        آزاد(ctx->cpu_dst_data);
         ctx->cpu_dst_data = nullptr;
     }
-    if (ctx->et_dst_data) {
-        free(ctx->et_dst_data);
+    اگر (ctx->et_dst_data) {
+        آزاد(ctx->et_dst_data);
         ctx->et_dst_data = nullptr;
     }
 
-    if (ctx->ggml_ctx) {
+    اگر (ctx->ggml_ctx) {
         ggml_free(ctx->ggml_ctx);
         ctx->ggml_ctx = nullptr;
     }
 
-    if (ctx->cpu_backend) {
+    اگر (ctx->cpu_backend) {
         ggml_backend_free(ctx->cpu_backend);
         ctx->cpu_backend = nullptr;
     }

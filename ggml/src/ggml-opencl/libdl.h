@@ -7,11 +7,11 @@
 #   endif
 #   include <windows.h>
 #   include <winevt.h>
-#else
+#وگرنه
 #    include <dlfcn.h>
 #    include <unistd.h>
 #endif
-#include <filesystem>
+#شامل <filesystem>
 
 namespace fs = std::filesystem;
 
@@ -19,13 +19,13 @@ namespace fs = std::filesystem;
 
 using dl_handle = std::remove_pointer_t<HMODULE>;
 
-struct dl_handle_deleter {
-    void operator()(HMODULE handle) {
+ساختار dl_handle_deleter {
+    تهی operator()(HMODULE handle) {
         FreeLibrary(handle);
     }
 };
 
-static inline dl_handle * dl_load_library(const fs::path & path) {
+ایستا درونخطی dl_handle * dl_load_library(ثابت fs::path & path) {
     // suppress error dialogs for missing DLLs
     DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
     SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
@@ -34,46 +34,46 @@ static inline dl_handle * dl_load_library(const fs::path & path) {
 
     SetErrorMode(old_mode);
 
-    return handle;
+    بازگشت handle;
 }
 
-static inline void * dl_get_sym(dl_handle * handle, const char * name) {
+ایستا درونخطی تهی * dl_get_sym(dl_handle * handle, ثابت نویسه * name) {
     DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
     SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
 
-    void * p = (void *) GetProcAddress(handle, name);
+    تهی * p = (تهی *) GetProcAddress(handle, name);
 
     SetErrorMode(old_mode);
 
-    return p;
+    بازگشت p;
 }
 
-static inline const char * dl_error() {
-    return "";
+ایستا درونخطی ثابت نویسه * dl_error() {
+    بازگشت "";
 }
 
-#else
+#وگرنه
 
-using dl_handle = void;
+using dl_handle = تهی;
 
-struct dl_handle_deleter {
-    void operator()(void * handle) {
+ساختار dl_handle_deleter {
+    تهی operator()(تهی * handle) {
         dlclose(handle);
     }
 };
 
-static inline dl_handle * dl_load_library(const fs::path & path) {
+ایستا درونخطی dl_handle * dl_load_library(ثابت fs::path & path) {
     dl_handle * handle = dlopen(path.string().c_str(), RTLD_NOW | RTLD_LOCAL);
-    return handle;
+    بازگشت handle;
 }
 
-static inline void * dl_get_sym(dl_handle * handle, const char * name) {
-    return dlsym(handle, name);
+ایستا درونخطی تهی * dl_get_sym(dl_handle * handle, ثابت نویسه * name) {
+    بازگشت dlsym(handle, name);
 }
 
-static inline const char * dl_error() {
-    const char *rslt = dlerror();
-    return rslt != nullptr ? rslt : "";
+ایستا درونخطی ثابت نویسه * dl_error() {
+    ثابت نویسه *rslt = dlerror();
+    بازگشت rslt != nullptr ? rslt : "";
 }
 
 #endif

@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include "ggml.h"
+#شامل "ggml.h"
 
-enum cpu_feature {
+شمارش cpu_feature {
     CPU_FEATURE_NONE    = 0,
     CPU_FEATURE_DOTPROD = 1,
     CPU_FEATURE_I8MM    = 2,
@@ -17,21 +17,21 @@ enum cpu_feature {
     CPU_FEATURE_SVEI8MM = 64
 };
 
-inline cpu_feature& operator|=(cpu_feature& lhs, cpu_feature rhs) {
+درونخطی cpu_feature& operator|=(cpu_feature& lhs, cpu_feature rhs) {
     lhs = static_cast<cpu_feature>(lhs | rhs);
-    return lhs;
+    بازگشت lhs;
 }
-inline cpu_feature operator|(cpu_feature lhs, cpu_feature rhs) {
-    return static_cast<cpu_feature>(static_cast<int>(lhs) | static_cast<int>(rhs));
+درونخطی cpu_feature operator|(cpu_feature lhs, cpu_feature rhs) {
+    بازگشت static_cast<cpu_feature>(static_cast<صحیح>(lhs) | static_cast<صحیح>(rhs));
 }
 
-struct kernel_info {
-    size_t (*get_m_step)(void);
-    size_t (*get_n_step)(void);
-    size_t (*get_mr)(void);
-    size_t (*get_nr)(void);
-    size_t (*get_kr)(void);
-    size_t (*get_sr)(void);
+ساختار kernel_info {
+    size_t (*get_m_step)(تهی);
+    size_t (*get_n_step)(تهی);
+    size_t (*get_mr)(تهی);
+    size_t (*get_nr)(تهی);
+    size_t (*get_kr)(تهی);
+    size_t (*get_sr)(تهی);
 
     size_t (*get_dst_offset)(size_t m_idx, size_t n_idx, size_t stride);
 
@@ -39,39 +39,39 @@ struct kernel_info {
 
     size_t (*get_rhs_packed_offset_ex)(size_t n_idx, size_t k, size_t bl);
 
-    void (*run_kernel_ex)(
+    تهی (*run_kernel_ex)(
         size_t m, size_t n, size_t k, size_t bl,
-        const void* lhs_packed, const void* rhs_packed,
-        void* dst, size_t dst_stride_row, size_t dst_stride_col,
-        float clamp_min, float clamp_max);
+        ثابت تهی* lhs_packed, ثابت تهی* rhs_packed,
+        تهی* dst, size_t dst_stride_row, size_t dst_stride_col,
+        اعشاری clamp_min, اعشاری clamp_max);
 };
 
-struct lhs_packing_info {
+ساختار lhs_packing_info {
     size_t (*get_offset)(size_t m_idx, size_t lhs_stride);
 
     size_t (*get_packed_offset_ex)(size_t m_idx, size_t k, size_t bl, size_t mr, size_t kr, size_t sr);
 
     size_t (*packed_size_ex)(size_t m, size_t k, size_t bl, size_t mr, size_t kr, size_t sr);
 
-    void (*pack_func_ex)(size_t m, size_t k, size_t bl, size_t mr, size_t kr, size_t sr,
-        size_t m_idx_start, const void * lhs, size_t lhs_stride, void * lhs_packed);
+    تهی (*pack_func_ex)(size_t m, size_t k, size_t bl, size_t mr, size_t kr, size_t sr,
+        size_t m_idx_start, ثابت تهی * lhs, size_t lhs_stride, تهی * lhs_packed);
 };
 
-enum rhs_repack_mode {
+شمارش rhs_repack_mode {
     RHS_REPACK_PER_KERNEL,
     RHS_REPACK_SINGLE_ONLY,
 };
 
-struct rhs_packing_info {
+ساختار rhs_packing_info {
     size_t (*packed_size_ex)(size_t n, size_t k, size_t nr, size_t kr, size_t bl);
 
-    void (*pack_func_ex)(size_t num_groups, size_t n, size_t k, size_t nr, size_t kr, size_t sr, size_t bl,
-        size_t rhs_stride, const void * rhs, const void * bias, const void * scale, void * rhs_packed, size_t extra_bytes, const void * params);
+    تهی (*pack_func_ex)(size_t رقم_groups, size_t n, size_t k, size_t nr, size_t kr, size_t sr, size_t bl,
+        size_t rhs_stride, ثابت تهی * rhs, ثابت تهی * bias, ثابت تهی * scale, تهی * rhs_packed, size_t extra_bytes, ثابت تهی * params);
 
     rhs_repack_mode repack_mode = RHS_REPACK_PER_KERNEL;
 };
 
-struct ggml_kleidiai_kernels {
+ساختار ggml_kleidiai_kernels {
     kernel_info      gemm;
     lhs_packing_info gemm_lhs_info;
 
@@ -86,7 +86,7 @@ struct ggml_kleidiai_kernels {
     ggml_type op_type;
 };
 
-ggml_kleidiai_kernels * ggml_kleidiai_select_kernels(cpu_feature cpu_features, const ggml_tensor * tensor);
+ggml_kleidiai_kernels * ggml_kleidiai_select_kernels(cpu_feature cpu_features, ثابت ggml_tensor * tensor);
 ggml_kleidiai_kernels * ggml_kleidiai_select_kernels_q4_0(cpu_feature features);
 ggml_kleidiai_kernels * ggml_kleidiai_select_kernels_q4_k(cpu_feature features);
 ggml_kleidiai_kernels * ggml_kleidiai_select_kernels_q8_0(cpu_feature features);

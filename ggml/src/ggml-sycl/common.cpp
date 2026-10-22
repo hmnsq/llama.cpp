@@ -10,83 +10,83 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#include "common.hpp"
-#include <sycl/backend.hpp>
+#شامل "common.hpp"
+#شامل <sycl/backend.hpp>
 #ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
-#include <level_zero/ze_api.h>
+#شامل <level_zero/ze_api.h>
 #endif
 
-#include "ggml-backend-impl.h"
-#include "ggml-impl.h"
+#شامل "ggml-backend-impl.h"
+#شامل "ggml-impl.h"
 
-int get_current_device_id() {
-  return dpct::dev_mgr::instance().current_device_id();
+صحیح get_current_device_id() {
+  بازگشت dpct::dev_mgr::instance().current_device_id();
 }
 
-void* ggml_sycl_host_malloc(size_t size) try {
-  if (getenv("GGML_SYCL_NO_PINNED") != nullptr) {
-    return nullptr;
+تهی* ggml_sycl_host_malloc(size_t size) تلاش {
+  اگر (getenv("GGML_SYCL_NO_PINNED") != nullptr) {
+    بازگشت nullptr;
   }
 
-  void* ptr = nullptr;
+  تهی* ptr = nullptr;
   // allow to use dpct::get_in_order_queue() for host malloc
   dpct::err0 err = CHECK_TRY_ERROR(
-      ptr = (void*)sycl::malloc_host(size, dpct::get_in_order_queue()));
+      ptr = (تهی*)sycl::malloc_host(size, dpct::get_in_order_queue()));
 
-  if (err != 0) {
+  اگر (err != 0) {
     // clear the error
     GGML_LOG_ERROR("WARNING: failed to allocate %.2f MB of pinned memory: %s\n", size / 1024.0 / 1024.0,    "syclGetErrorString is not supported");
-    return nullptr;
+    بازگشت nullptr;
   }
 
-  return ptr;
-} catch (sycl::exception const& exc) {
+  بازگشت ptr;
+} بگیر (sycl::exception ثابت& exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
             << ", line:" << __LINE__ << std::endl;
   std::exit(1);
 }
 
-void ggml_sycl_host_free(void* ptr) try {
+تهی ggml_sycl_host_free(تهی* ptr) تلاش {
   // allow to use dpct::get_in_order_queue() for host malloc
-  SYCL_CHECK(CHECK_TRY_ERROR(sycl::free(ptr, dpct::get_in_order_queue())));
-} catch (sycl::exception const& exc) {
+  SYCL_CHECK(CHECK_TRY_ERROR(sycl::آزاد(ptr, dpct::get_in_order_queue())));
+} بگیر (sycl::exception ثابت& exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
             << ", line:" << __LINE__ << std::endl;
   std::exit(1);
 }
 
-bool gpu_has_xmx(sycl::device &dev) {
-    return dev.has(sycl::aspect::ext_intel_matrix);
+منطقی gpu_has_xmx(sycl::device &dev) {
+    بازگشت dev.has(sycl::aspect::ext_intel_matrix);
 }
 
-int ggml_sycl_get_env(const char *env_name, int default_val) {
-    char *user_device_string = getenv(env_name);
-    int user_number = default_val;
+صحیح ggml_sycl_get_env(ثابت نویسه *env_name, صحیح default_val) {
+    نویسه *user_device_string = getenv(env_name);
+    صحیح user_عدد = default_val;
 
     unsigned n;
-    if (user_device_string != NULL &&
+    اگر (user_device_string != پوچ &&
         sscanf(user_device_string, " %u", &n) == 1) {
-        user_number = (int)n;
-    } else {
-        user_number = default_val;
+        user_عدد = (صحیح)n;
+    } وگرنه {
+        user_عدد = default_val;
     }
-    return user_number;
+    بازگشت user_عدد;
 }
 
-int64_t downsample_sycl_global_range(int64_t accumulate_block_num, int64_t block_size) {
-  const int64_t max_range = std::numeric_limits<int>::max();
+int64_t downsample_sycl_global_range(int64_t accumulate_block_رقم, int64_t block_size) {
+  ثابت int64_t max_range = std::numeric_limits<صحیح>::max();
   int64_t sycl_down_blk_size = block_size;
-  int64_t global_range = accumulate_block_num * sycl_down_blk_size;
-  while(global_range > max_range) {
+  int64_t global_range = accumulate_block_رقم * sycl_down_blk_size;
+  وقتی(global_range > max_range) {
       sycl_down_blk_size /= 2;
-      global_range = accumulate_block_num * sycl_down_blk_size;
+      global_range = accumulate_block_رقم * sycl_down_blk_size;
   }
-  return sycl_down_blk_size;
+  بازگشت sycl_down_blk_size;
 }
 
 #ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
-static bool ggml_sycl_use_level_zero_device_alloc(sycl::queue &q) {
-    return g_ggml_sycl_use_level_zero_api &&
+ایستا منطقی ggml_sycl_use_level_zero_device_alloc(sycl::queue &q) {
+    بازگشت g_ggml_sycl_use_level_zero_api &&
         q.get_device().is_gpu() &&
         q.get_backend() == sycl::backend::ext_oneapi_level_zero;
 }
@@ -94,10 +94,10 @@ static bool ggml_sycl_use_level_zero_device_alloc(sycl::queue &q) {
 
 // Use Level Zero zeMemAllocDevice to avoid sycl::malloc_device triggering
 // DMA-buf/TTM system RAM staging in the xe kernel driver during multi-GPU inference.
-void * ggml_sycl_malloc_device(size_t size, sycl::queue &q, ggml_sycl_mem_type type) {
+تهی * ggml_sycl_malloc_device(size_t size, sycl::queue &q, ggml_sycl_mem_type type) {
 #ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
-    if (ggml_sycl_use_level_zero_device_alloc(q)) {
-        void *ptr = nullptr;
+    اگر (ggml_sycl_use_level_zero_device_alloc(q)) {
+        تهی *ptr = nullptr;
         auto ze_ctx = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(q.get_context());
         auto ze_dev = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(q.get_device());
 #ifdef ZE_RELAXED_ALLOCATION_LIMITS_EXP_NAME
@@ -112,49 +112,49 @@ void * ggml_sycl_malloc_device(size_t size, sycl::queue &q, ggml_sycl_mem_type t
             0,
             0,
         };
-#else
+#وگرنه
         ze_device_mem_alloc_desc_t alloc_desc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC, nullptr, 0, 0};
 #endif
         // request SYCL_BUFFER_ALIGNMENT so tensor offsets aligned to it stay aligned in absolute terms
         ze_result_t r = zeMemAllocDevice(ze_ctx, &alloc_desc, size, SYCL_BUFFER_ALIGNMENT, ze_dev, &ptr);
-        if (r == ZE_RESULT_SUCCESS && ptr) {
+        اگر (r == ZE_RESULT_SUCCESS && ptr) {
             ggml_sycl_memtrace_add(type, ptr, size);
-            return ptr;
+            بازگشت ptr;
         }
         ggml_sycl_memtrace_fail(type, size);
-        return nullptr;
+        بازگشت nullptr;
     }
 #endif
-    void * ptr = sycl::malloc_device(size, q);
-    if (ptr == nullptr) {
+    تهی * ptr = sycl::malloc_device(size, q);
+    اگر (ptr == nullptr) {
         ggml_sycl_memtrace_fail(type, size);
-        return nullptr;
+        بازگشت nullptr;
     }
     ggml_sycl_memtrace_add(type, ptr, size);
-    return ptr;
+    بازگشت ptr;
 }
 
-void ggml_sycl_free_device(void *ptr, sycl::queue &q) {
-    if (!ptr) return;
+تهی ggml_sycl_free_device(تهی *ptr, sycl::queue &q) {
+    اگر (!ptr) بازگشت;
     ggml_sycl_memtrace_del(ptr);
 #ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
-    if (ggml_sycl_use_level_zero_device_alloc(q)) {
+    اگر (ggml_sycl_use_level_zero_device_alloc(q)) {
         auto ze_ctx = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(q.get_context());
         zeMemFree(ze_ctx, ptr);
-        return;
+        بازگشت;
     }
 #endif
-    SYCL_CHECK(CHECK_TRY_ERROR(sycl::free(ptr, q)));
+    SYCL_CHECK(CHECK_TRY_ERROR(sycl::آزاد(ptr, q)));
 }
 
-void release_extra_gpu(ggml_tensor_extra_gpu * extra, std::vector<queue_ptr> streams) {
-    for (int i = 0; i < ggml_sycl_info().device_count; ++i) {
-        for (int64_t is = 0; is < GGML_SYCL_MAX_STREAMS; ++is) {
-            if (extra->events[i][is] != nullptr) {
+تهی release_extra_gpu(ggml_tensor_extra_gpu * extra, std::vector<queue_ptr> streams) {
+    برای (صحیح i = 0; i < ggml_sycl_info().device_شمار; ++i) {
+        برای (int64_t is = 0; is < GGML_SYCL_MAX_STREAMS; ++is) {
+            اگر (extra->events[i][is] != nullptr) {
                 SYCL_CHECK(CHECK_TRY_ERROR(dpct::destroy_event(extra->events[i][is])));
             }
         }
-        if (extra->data_device[i] != nullptr && streams.size()>0) {
+        اگر (extra->data_device[i] != nullptr && streams.size()>0) {
             ggml_sycl_set_device(i);
             SYCL_CHECK(CHECK_TRY_ERROR(ggml_sycl_free_device(extra->data_device[i], *(streams[i]))));
         }

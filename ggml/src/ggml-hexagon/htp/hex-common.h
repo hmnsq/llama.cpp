@@ -1,9 +1,9 @@
 #ifndef HEX_COMMON_H
 #define HEX_COMMON_H
 
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
+#شامل <stdint.h>
+#شامل <stddef.h>
+#شامل <stdbool.h>
 
 #ifndef SIZE_MAX
 #define SIZE_MAX ((size_t)-1)
@@ -17,73 +17,73 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #endif
 
-static inline uint32_t hex_ceil_pow2(uint32_t x) {
-    if (x <= 1) { return 1; }
-    int p = 2;
+ایستا درونخطی uint32_t hex_ceil_pow2(uint32_t x) {
+    اگر (x <= 1) { بازگشت 1; }
+    صحیح p = 2;
     x--;
-    while (x >>= 1) { p <<= 1; }
-    return p;
+    وقتی (x >>= 1) { p <<= 1; }
+    بازگشت p;
 }
 
-static inline size_t hmx_ceil_div(size_t num, size_t den) {
-    return (num + den - 1) / den;
+ایستا درونخطی size_t hmx_ceil_div(size_t رقم, size_t den) {
+    بازگشت (رقم + den - 1) / den;
 }
 
-static inline int32_t hex_is_aligned(const void * addr, uint32_t align) {
-    return ((size_t) addr & (align - 1)) == 0;
+ایستا درونخطی int32_t hex_is_aligned(ثابت تهی * addr, uint32_t align) {
+    بازگشت ((size_t) addr & (align - 1)) == 0;
 }
 
-static inline size_t hex_align_up(size_t v, size_t align) {
-    return hmx_ceil_div(v, align) * align;
+ایستا درونخطی size_t hex_align_up(size_t v, size_t align) {
+    بازگشت hmx_ceil_div(v, align) * align;
 }
 
-static inline size_t hex_align_down(size_t v, size_t align) {
-    return (v / align) * align;
+ایستا درونخطی size_t hex_align_down(size_t v, size_t align) {
+    بازگشت (v / align) * align;
 }
 
-static inline int32_t hex_is_one_chunk(void * addr, uint32_t n, uint32_t chunk_size) {
-    uint32_t left_off  = (size_t) addr & (chunk_size - 1);
-    uint32_t right_off = left_off + n;
-    return right_off <= chunk_size;
+ایستا درونخطی int32_t hex_is_one_chunk(تهی * addr, uint32_t n, uint32_t chunk_size) {
+    uint32_t چپ_off  = (size_t) addr & (chunk_size - 1);
+    uint32_t راست_off = چپ_off + n;
+    بازگشت راست_off <= chunk_size;
 }
 
-static inline uint32_t hex_round_up(uint32_t n, uint32_t m) {
-    return m * ((n + m - 1) / m);
+ایستا درونخطی uint32_t hex_round_up(uint32_t n, uint32_t m) {
+    بازگشت m * ((n + m - 1) / m);
 }
 
-static inline size_t hex_smin(size_t a, size_t b) {
-    return a < b ? a : b;
+ایستا درونخطی size_t hex_smin(size_t a, size_t b) {
+    بازگشت a < b ? a : b;
 }
 
-static inline size_t hex_smax(size_t a, size_t b) {
-    return a > b ? a : b;
+ایستا درونخطی size_t hex_smax(size_t a, size_t b) {
+    بازگشت a > b ? a : b;
 }
 
-static inline void hex_swap_ptr(void ** p1, void ** p2) {
-    void * t = *p1;
+ایستا درونخطی تهی hex_swap_ptr(تهی ** p1, تهی ** p2) {
+    تهی * t = *p1;
     *p1      = *p2;
     *p2      = t;
 }
 
-static inline bool hex_mul_overflow(size_t a, size_t b, size_t *out) {
-    if (a != 0 && b > SIZE_MAX / a) return true;
+ایستا درونخطی bool hex_mul_overflow(size_t a, size_t b, size_t *out) {
+    اگر (a != 0 && b > SIZE_MAX / a) بازگشت true;
     *out = a * b;
-    return false;
+    بازگشت false;
 }
 
-static inline bool hex_add_overflow(size_t a, size_t b, size_t *out) {
-    if (a > SIZE_MAX - b) return true;
+ایستا درونخطی bool hex_add_overflow(size_t a, size_t b, size_t *out) {
+    اگر (a > SIZE_MAX - b) بازگشت true;
     *out = a + b;
-    return false;
+    بازگشت false;
 }
 
-static inline uint32_t hex_gcd_u32(uint32_t a, uint32_t b) {
-    while (b != 0) {
+ایستا درونخطی uint32_t hex_gcd_u32(uint32_t a, uint32_t b) {
+    وقتی (b != 0) {
         uint32_t t = b;
         b = a % b;
         a = t;
     }
-    return a;
+    بازگشت a;
 }
 
 #endif // HEX_COMMON_H

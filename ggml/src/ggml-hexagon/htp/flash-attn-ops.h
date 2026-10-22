@@ -1,16 +1,16 @@
 #ifndef HTP_FLASH_ATTN_OPS_H
 #define HTP_FLASH_ATTN_OPS_H
 
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
+#شامل <stdint.h>
+#شامل <stddef.h>
+#شامل <stdbool.h>
 
-#include "hex-fastdiv.h"
-#include "hex-common.h"
-#include "htp-vtcm.h"
+#شامل "hex-fastdiv.h"
+#شامل "hex-common.h"
+#شامل "htp-vtcm.h"
 
 #ifdef __cplusplus
-extern "C" {
+بیرونی "C" {
 #endif
 
 // Tile constants (mirrored from hmx-utils.h for use on host side if needed)
@@ -26,13 +26,13 @@ extern "C" {
 
 #define HTP_FA_M_INITIAL_VAL  -10000.0f
 
-enum htp_fa_kernel_type {
+شمارش htp_fa_kernel_type {
     HTP_FA_KERNEL_UNSUPPORTED = 0,
     HTP_FA_KERNEL_HVX,
     HTP_FA_KERNEL_HMX
 };
 
-struct htp_fa_kernel_params {
+ساختار htp_fa_kernel_params {
     uint8_t  kernel_type;        // enum htp_fa_kernel_type
     uint8_t  head_split;         // 1 = partition by KV heads in multicore, 0 = token partition
     uint8_t  flags;              // reserved
@@ -44,47 +44,47 @@ struct htp_fa_kernel_params {
     uint16_t n_kv_blocks;        // also HVX's n_blocks
     uint16_t G;                  // GQA factor (n_heads / n_kv_heads)
 
-    float    scale;
-    float    max_bias;
-    float    logit_softcap;
+    اعشاری    scale;
+    اعشاری    max_bias;
+    اعشاری    logit_softcap;
     uint32_t vtcm_size;
 
     uint32_t qrows;
     uint32_t qrows_per_thread;
     uint32_t qrow_start;
-    float    m0;
-    float    m1;
+    اعشاری    m0;
+    اعشاری    m1;
     uint32_t n_head_log2;
 
-    struct fastdiv_values src3_div2;
-    struct fastdiv_values src3_div3;
+    ساختار fastdiv_مقادیر src3_div2;
+    ساختار fastdiv_مقادیر src3_div3;
 
-    struct fastdiv_values broadcast_rk2;
-    struct fastdiv_values broadcast_rk3;
-    struct fastdiv_values broadcast_rv2;
-    struct fastdiv_values broadcast_rv3;
+    ساختار fastdiv_مقادیر broadcast_rk2;
+    ساختار fastdiv_مقادیر broadcast_rk3;
+    ساختار fastdiv_مقادیر broadcast_rv2;
+    ساختار fastdiv_مقادیر broadcast_rv3;
 
-    union {
-        struct {
+    اجتماع {
+        ساختار {
             uint32_t g_br;
             uint32_t row_buf_stride;
             uint32_t mask_buf_row_stride;
             int32_t  mask_broadcast;
             int32_t  pipeline;
-            struct fastdiv_values div_G;
+            ساختار fastdiv_مقادیر div_G;
         } hmx;
-        struct {
+        ساختار {
             uint32_t size_q_row_padded;
             uint32_t size_k_row_padded;
             uint32_t size_v_row_padded;
-            struct fastdiv_values src0_div21;
-            struct fastdiv_values src0_div1;
+            ساختار fastdiv_مقادیر src0_div21;
+            ساختار fastdiv_مقادیر src0_div1;
         } hvx;
     } u;
 };
 
-#if defined(__cplusplus)
-static_assert(sizeof(struct htp_fa_kernel_params) <= 128, "htp_fa_kernel_params is too large for kernel_params blob");
+#اگر defined(__cplusplus)
+static_assert(اندازه(ساختار htp_fa_kernel_params) <= 128, "htp_fa_kernel_params is too large for kernel_params blob");
 #endif
 
 // VTCM region layout for the HMX flash-attention kernel.
@@ -99,7 +99,7 @@ static_assert(sizeof(struct htp_fa_kernel_params) <= 128, "htp_fa_kernel_params 
 // header stays host-includable. The device casts (base + off_*) to the proper type.
 // An offset of 0 marks a region that is not allocated for this configuration (only
 // off_v_tiles[1], which exists only when pipelining); the device sets such pointers NULL.
-struct hmx_fa_vtcm_layout {
+ساختار hmx_fa_vtcm_layout {
     // Byte offsets from vtcm_base for each region.
     size_t off_q_tiles;
     size_t off_q_dma;
@@ -129,7 +129,7 @@ struct hmx_fa_vtcm_layout {
     size_t k_tile_bytes;
     size_t s_tile_bytes;       // S and P tiles (same size)
     size_t d_tile_bytes;       // d_tiles[0..1] + d_inv_l, allocated back to back
-    size_t m_line_bytes;       // one mask row
+    size_t m_سطر_bytes;       // one mask row
     size_t m_buf_slot_bytes;   // one dma_cache slot = align_up(Br * m_line_bytes, 4096)
     size_t col_vec_bytes;
     size_t sinks_bytes;
@@ -146,34 +146,34 @@ struct hmx_fa_vtcm_layout {
 
 // Build the VTCM layout.
 
-static inline void hmx_fa_vtcm_layout_build(struct hmx_fa_vtcm_layout * L,
+ایستا درونخطی تهی hmx_fa_vtcm_layout_build(ساختار hmx_fa_vtcm_layout * L,
                                             size_t gqa_factor, size_t DK, size_t DV,
                                             size_t Br, size_t Bc, size_t n_threads,
                                             bool pipeline, bool is_q_fp32,
                                             bool has_sinks, size_t n_heads) {
-    const size_t g_br         = hex_align_up(gqa_factor * Br, HMX_FP16_TILE_N_ROWS);
-    const size_t q_tile_size  = hex_align_up(g_br * DK   * sizeof(__fp16), HTP_FA_HMX_TILE_SIZE);
-    const size_t o_tile_size  = hex_align_up(g_br * DV   * sizeof(__fp16), HTP_FA_HMX_TILE_SIZE);
-    const size_t k_tile_size  = hex_align_up(Bc   * DK   * sizeof(__fp16), HTP_FA_HMX_TILE_SIZE);
-    const size_t v_tile_size  = hex_align_up(Bc   * DV   * sizeof(__fp16), HTP_FA_HMX_TILE_SIZE);
-    const size_t s_tile_size  = hex_align_up(g_br * Bc   * sizeof(__fp16), HTP_FA_HMX_TILE_SIZE);
+    ثابت size_t g_br         = hex_align_up(gqa_factor * Br, HMX_FP16_TILE_N_ROWS);
+    ثابت size_t q_tile_size  = hex_align_up(g_br * DK   * اندازه(__fp16), HTP_FA_HMX_TILE_SIZE);
+    ثابت size_t o_tile_size  = hex_align_up(g_br * DV   * اندازه(__fp16), HTP_FA_HMX_TILE_SIZE);
+    ثابت size_t k_tile_size  = hex_align_up(Bc   * DK   * اندازه(__fp16), HTP_FA_HMX_TILE_SIZE);
+    ثابت size_t v_tile_size  = hex_align_up(Bc   * DV   * اندازه(__fp16), HTP_FA_HMX_TILE_SIZE);
+    ثابت size_t s_tile_size  = hex_align_up(g_br * Bc   * اندازه(__fp16), HTP_FA_HMX_TILE_SIZE);
 
     // The rescale matrices are diagonal: the HMX kernels only ever load the g_br/32
     // tiles that sit on the diagonal, so store just those, packed back to back with
     // a stride of one tile.  The old [g_br, g_br] square layout allocated g_br/32
     // times more than it used, which is also why a second D buffer was unaffordable.
-    const size_t d_tile_size = (g_br / HMX_FP16_TILE_N_ROWS) * HTP_FA_HMX_TILE_SIZE;
+    ثابت size_t d_tile_size = (g_br / HMX_FP16_TILE_N_ROWS) * HTP_FA_HMX_TILE_SIZE;
 
-    const size_t q_dma_size   = hex_align_up(g_br * DK * (is_q_fp32 ? sizeof(float) : sizeof(__fp16)), 128);
-    const size_t k_dma_size   = hex_align_up(Bc * hex_round_up(DK * sizeof(__fp16), 128), 128);
-    const size_t v_dma_size   = hex_align_up(Bc * hex_round_up(DV * sizeof(__fp16), 128), 128);
-    const size_t col_vec_size = hex_align_up(g_br * sizeof(float),  256);
-    const size_t row_vec_size = hex_align_up(Bc   * sizeof(__fp16), 256);
-    const size_t m_line_size  = hex_align_up(Bc   * sizeof(__fp16), 128);
-    const size_t m_buf_slot   = hex_align_up(Br * m_line_size, 256);
-    const size_t m_buf_size   = m_buf_slot * HMX_FA_DMA_CACHE_SIZE;
-    const size_t slopes_size  = hex_align_up(g_br * sizeof(__fp16), 128);
-    const size_t sinks_size   = hex_round_up(n_heads * sizeof(float), 128);
+    ثابت size_t q_dma_size   = hex_align_up(g_br * DK * (is_q_fp32 ? اندازه(اعشاری) : اندازه(__fp16)), 128);
+    ثابت size_t k_dma_size   = hex_align_up(Bc * hex_round_up(DK * اندازه(__fp16), 128), 128);
+    ثابت size_t v_dma_size   = hex_align_up(Bc * hex_round_up(DV * اندازه(__fp16), 128), 128);
+    ثابت size_t col_vec_size = hex_align_up(g_br * اندازه(اعشاری),  256);
+    ثابت size_t row_vec_size = hex_align_up(Bc   * اندازه(__fp16), 256);
+    ثابت size_t m_سطر_size  = hex_align_up(Bc   * اندازه(__fp16), 128);
+    ثابت size_t m_buf_slot   = hex_align_up(Br * m_سطر_size, 256);
+    ثابت size_t m_buf_size   = m_buf_slot * HMX_FA_DMA_CACHE_SIZE;
+    ثابت size_t slopes_size  = hex_align_up(g_br * اندازه(__fp16), 128);
+    ثابت size_t sinks_size   = hex_round_up(n_heads * اندازه(اعشاری), 128);
 
     size_t off = 0;
 
@@ -202,13 +202,13 @@ static inline void hmx_fa_vtcm_layout_build(struct hmx_fa_vtcm_layout * L,
     VTCM_LAYOUT_ALLOC(off_group_b, off_p_rowsum,      col_vec_size);
     VTCM_LAYOUT_ALLOC(off_group_b, off_row_bufs,      row_vec_size * 2 * n_threads);
 
-    const size_t group_b_size = off_group_b - off_group_b_c;
+    ثابت size_t group_b_size = off_group_b - off_group_b_c;
 
     // Group C: Q fetch DMA buffer
     size_t off_group_c = off_group_b_c;
     VTCM_LAYOUT_ALLOC(off_group_c, off_q_dma,         q_dma_size);
 
-    const size_t group_c_size = off_group_c - off_group_b_c;
+    ثابت size_t group_c_size = off_group_c - off_group_b_c;
 
     off = off_group_b_c + hex_smax(group_b_size, group_c_size);
 
@@ -234,26 +234,26 @@ static inline void hmx_fa_vtcm_layout_build(struct hmx_fa_vtcm_layout * L,
     // that inserting a region between them (or adding padding to VTCM_LAYOUT_ALLOC)
     // cannot silently leave the tail of the run unzeroed.
     L->d_tile_bytes        = (L->off_d_inv_l + d_tile_size) - L->off_d_tiles[0];
-    L->m_line_bytes        = m_line_size;
+    L->m_سطر_bytes        = m_سطر_size;
     L->m_buf_slot_bytes    = m_buf_slot;
     L->row_buf_stride      = row_vec_size / 128;
-    L->mask_buf_row_stride = m_line_size / sizeof(__fp16);
+    L->mask_buf_row_stride = m_سطر_size / اندازه(__fp16);
     L->sinks_bytes         = has_sinks ? sinks_size : 0;
     L->pipeline            = pipeline;
     L->total_bytes         = off;
 }
 
 // Exact VTCM usage for a given (gqa_factor, DK, DV, Br, Bc) configuration.
-static inline size_t hmx_fa_compute_vtcm_usage(size_t gqa_factor, size_t DK, size_t DV, size_t Br, size_t Bc, size_t n_threads, bool pipeline, bool is_q_fp32, bool has_sinks, size_t n_heads) {
-    struct hmx_fa_vtcm_layout L;
+ایستا درونخطی size_t hmx_fa_compute_vtcm_usage(size_t gqa_factor, size_t DK, size_t DV, size_t Br, size_t Bc, size_t n_threads, bool pipeline, bool is_q_fp32, bool has_sinks, size_t n_heads) {
+    ساختار hmx_fa_vtcm_layout L;
     hmx_fa_vtcm_layout_build(&L, gqa_factor, DK, DV, Br, Bc, n_threads, pipeline, is_q_fp32, has_sinks, n_heads);
-    return L.total_bytes;
+    بازگشت L.total_bytes;
 }
 
 #define FA_HVX_BLOCK_SIZE 64
 #define FA_HVX_G_MAX      8
 
-struct hvx_fa_vtcm_layout {
+ساختار hvx_fa_vtcm_layout {
     size_t off_q;
     size_t off_k;
     size_t off_v;
@@ -271,21 +271,21 @@ struct hvx_fa_vtcm_layout {
     size_t total_bytes;
 };
 
-static inline void hvx_fa_vtcm_layout_build(struct hvx_fa_vtcm_layout * L,
+ایستا درونخطی تهی hvx_fa_vtcm_layout_build(ساختار hvx_fa_vtcm_layout * L,
                                             size_t DK, size_t DV,
                                             bool is_q_fp32, bool has_mask,
                                             bool has_sinks, size_t n_heads,
                                             size_t n_threads) {
-    const size_t size_q_row_padded = hex_round_up(DK * (is_q_fp32 ? 4 : 2), 128);
-    const size_t size_k_row_padded = hex_round_up(DK * sizeof(__fp16), 128);
-    const size_t size_v_row_padded = hex_round_up(DV * sizeof(__fp16), 128);
+    ثابت size_t size_q_row_padded = hex_round_up(DK * (is_q_fp32 ? 4 : 2), 128);
+    ثابت size_t size_k_row_padded = hex_round_up(DK * اندازه(__fp16), 128);
+    ثابت size_t size_v_row_padded = hex_round_up(DV * اندازه(__fp16), 128);
 
-    const size_t size_q_block = size_q_row_padded * FA_HVX_G_MAX;
-    const size_t size_k_block = size_k_row_padded * FA_HVX_BLOCK_SIZE;
-    const size_t size_v_block = size_v_row_padded * FA_HVX_BLOCK_SIZE;
-    const size_t size_m_block = hex_round_up(FA_HVX_BLOCK_SIZE * sizeof(__fp16), 128);
-    const size_t size_vkq_acc = hex_round_up(DV * sizeof(float), 128) * FA_HVX_G_MAX;
-    const size_t size_sinks   = hex_round_up(n_heads * sizeof(float), 128);
+    ثابت size_t size_q_block = size_q_row_padded * FA_HVX_G_MAX;
+    ثابت size_t size_k_block = size_k_row_padded * FA_HVX_BLOCK_SIZE;
+    ثابت size_t size_v_block = size_v_row_padded * FA_HVX_BLOCK_SIZE;
+    ثابت size_t size_m_block = hex_round_up(FA_HVX_BLOCK_SIZE * اندازه(__fp16), 128);
+    ثابت size_t size_vkq_acc = hex_round_up(DV * اندازه(اعشاری), 128) * FA_HVX_G_MAX;
+    ثابت size_t size_sinks   = hex_round_up(n_heads * اندازه(اعشاری), 128);
 
     size_t off = 0;
 
@@ -305,16 +305,16 @@ static inline void hvx_fa_vtcm_layout_build(struct hvx_fa_vtcm_layout * L,
     L->total_bytes  = off;
 }
 
-static inline size_t hvx_fa_compute_vtcm_usage(size_t DK, size_t DV, bool is_q_fp32, bool has_mask, bool has_sinks, size_t n_heads, size_t n_threads) {
-    struct hvx_fa_vtcm_layout L;
+ایستا درونخطی size_t hvx_fa_compute_vtcm_usage(size_t DK, size_t DV, bool is_q_fp32, bool has_mask, bool has_sinks, size_t n_heads, size_t n_threads) {
+    ساختار hvx_fa_vtcm_layout L;
     hvx_fa_vtcm_layout_build(&L, DK, DV, is_q_fp32, has_mask, has_sinks, n_heads, n_threads);
-    return L.total_bytes;
+    بازگشت L.total_bytes;
 }
 
 #define FA_MIN_KV_BLOCKS 3
 
 // Cost-based (Br, Bc) search for flash attention with pipeline constraint.
-static inline int hmx_fa_find_chunk_size(size_t * Br_out,
+ایستا درونخطی صحیح hmx_fa_find_chunk_size(size_t * Br_out,
                                          size_t * Bc_out,
                                          size_t   gqa_factor,
                                          size_t   DK,
@@ -326,49 +326,49 @@ static inline int hmx_fa_find_chunk_size(size_t * Br_out,
                                          bool     is_q_fp32,
                                          bool     has_sinks,
                                          size_t   n_heads) {
-    const size_t T       = HMX_FP16_TILE_N_ROWS;  // 32
-    const size_t br_unit = hmx_ceil_div(T, gqa_factor);
-    const size_t bc_unit = HMX_FP16_TILE_N_COLS * 2;  // 64
-    const bool   can_pipeline = (kv_len >= FA_MIN_KV_BLOCKS * bc_unit && n_threads >= 2);
+    ثابت size_t T       = HMX_FP16_TILE_N_ROWS;  // 32
+    ثابت size_t br_unit = hmx_ceil_div(T, gqa_factor);
+    ثابت size_t bc_unit = HMX_FP16_TILE_N_COLS * 2;  // 64
+    ثابت bool   can_pipeline = (kv_len >= FA_MIN_KV_BLOCKS * bc_unit && n_threads >= 2);
 
     // Br_max: largest Br aligned to br_unit that does not exceed qo_len.
-    const size_t Br_max = qo_len >= br_unit ? hex_align_down(qo_len, br_unit) : br_unit;
+    ثابت size_t Br_max = qo_len >= br_unit ? hex_align_down(qo_len, br_unit) : br_unit;
 
     // Pipeline constraint: cap Bc so n_kv_blocks >= FA_MIN_KV_BLOCKS.
     // Only relax when kv_len is too short to form enough blocks.
     size_t Bc_limit     = can_pipeline ? hex_align_down(kv_len / FA_MIN_KV_BLOCKS, bc_unit) :
                                          (kv_len >= bc_unit ? hex_align_down(kv_len, bc_unit) : bc_unit);
     // For small-Q SWA-sized KV caches (qo_len <= 16, kv_len <= 2048), cap Bc at 256 for block-skipping granularity
-    if (qo_len <= 16 && kv_len <= 2048 && Bc_limit > 256) {
+    اگر (qo_len <= 16 && kv_len <= 2048 && Bc_limit > 256) {
         Bc_limit = 256;
     }
     // Cost coefficients calibrated from profiling
-    const size_t c_q_fixed    = 800;   // per-Q-block: q_load + epilogue o_update + o_norm + o_store
-    const size_t c_iter_base  = 200;   // per-KV-iter base (HMX dot/update + DMA)
-    const size_t c_softmax    = 600;   // per 64-row vector chunk on HVX
+    ثابت size_t c_q_fixed    = 800;   // per-Q-block: q_load + epilogue o_update + o_norm + o_store
+    ثابت size_t c_iter_base  = 200;   // per-KV-iter base (HMX dot/update + DMA)
+    ثابت size_t c_softmax    = 600;   // per 64-row vector chunk on HVX
 
     size_t best_cost = SIZE_MAX, best_mn = 0;
     size_t best_Br = 0, best_Bc = 0;
 
-    for (size_t Br = Br_max; Br >= br_unit; Br -= br_unit) {
+    برای (size_t Br = Br_max; Br >= br_unit; Br -= br_unit) {
         // Try all Bc candidates from Bc_limit down to bc_unit
-        for (size_t Bc = Bc_limit; Bc >= bc_unit; Bc -= bc_unit) {
+        برای (size_t Bc = Bc_limit; Bc >= bc_unit; Bc -= bc_unit) {
             size_t vtcm_needed = hmx_fa_compute_vtcm_usage(gqa_factor, DK, DV, Br, Bc, n_threads, can_pipeline, is_q_fp32, has_sinks, n_heads);
-            if (vtcm_needed <= vtcm_budget) {
+            اگر (vtcm_needed <= vtcm_budget) {
                 // This Bc fits for this Br!
-                const size_t q_blocks       = (qo_len + Br - 1) / Br;
-                const size_t kv_blocks      = (kv_len + Bc - 1) / Bc;
-                const size_t actual_threads = (kv_blocks >= 3 && n_threads >= 2) ? n_threads : 1;
-                const size_t n_rows_g       = Br * gqa_factor;
-                const size_t n_row_vec_cnt  = (n_rows_g + 63) / 64;
-                const size_t n_use          = n_row_vec_cnt < actual_threads ? n_row_vec_cnt : actual_threads;
-                const size_t vecs_per_t     = n_use > 0 ? (n_row_vec_cnt + n_use - 1) / n_use : 1;
+                ثابت size_t q_blocks       = (qo_len + Br - 1) / Br;
+                ثابت size_t kv_blocks      = (kv_len + Bc - 1) / Bc;
+                ثابت size_t actual_threads = (kv_blocks >= 3 && n_threads >= 2) ? n_threads : 1;
+                ثابت size_t n_rows_g       = Br * gqa_factor;
+                ثابت size_t n_row_vec_cnt  = (n_rows_g + 63) / 64;
+                ثابت size_t n_use          = n_row_vec_cnt < actual_threads ? n_row_vec_cnt : actual_threads;
+                ثابت size_t vecs_per_t     = n_use > 0 ? (n_row_vec_cnt + n_use - 1) / n_use : 1;
 
-                const size_t c_iter_actual  = c_iter_base + c_softmax * vecs_per_t;
-                const size_t cost           = q_blocks * (c_q_fixed + kv_blocks * c_iter_actual);
-                const size_t mn             = Br * Bc;
+                ثابت size_t c_iter_actual  = c_iter_base + c_softmax * vecs_per_t;
+                ثابت size_t cost           = q_blocks * (c_q_fixed + kv_blocks * c_iter_actual);
+                ثابت size_t mn             = Br * Bc;
 
-                if (cost < best_cost || (cost == best_cost && mn > best_mn)) {
+                اگر (cost < best_cost || (cost == best_cost && mn > best_mn)) {
                     best_cost = cost;
                     best_mn   = mn;
                     best_Br   = Br;
@@ -376,22 +376,22 @@ static inline int hmx_fa_find_chunk_size(size_t * Br_out,
                 }
                 // Since we iterate Bc from largest to smallest, this is the largest Bc that fits
                 // for this Br. We can break to the next Br.
-                break;
+                بشکن;
             }
         }
 
-        if (Br == br_unit) {
-            break;
+        اگر (Br == br_unit) {
+            بشکن;
         }
     }
 
-    if (best_Br == 0 || best_Bc == 0) {
-        return -1;
+    اگر (best_Br == 0 || best_Bc == 0) {
+        بازگشت -1;
     }
 
     *Br_out = best_Br;
     *Bc_out = best_Bc;
-    return 0;
+    بازگشت 0;
 }
 
 #ifdef __cplusplus

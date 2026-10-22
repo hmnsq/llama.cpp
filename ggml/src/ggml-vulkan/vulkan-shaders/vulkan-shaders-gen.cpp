@@ -1,34 +1,34 @@
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <string>
-#include <stdexcept>
-#include <array>
-#include <vector>
-#include <map>
-#include <thread>
-#include <mutex>
-#include <future>
-#include <queue>
-#include <condition_variable>
-#include <atomic>
-#include <cstdio>
-#include <cstring>
-#include <cstdlib>
-#include <cassert>
-#include <algorithm>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <filesystem>
+#شامل <iostream>
+#شامل <fstream>
+#شامل <sstream>
+#شامل <string>
+#شامل <stdexcept>
+#شامل <array>
+#شامل <vector>
+#شامل <map>
+#شامل <thread>
+#شامل <mutex>
+#شامل <future>
+#شامل <queue>
+#شامل <condition_variable>
+#شامل <atomic>
+#شامل <cstdio>
+#شامل <cstring>
+#شامل <cstdlib>
+#شامل <cassert>
+#شامل <algorithm>
+#شامل <sys/stat.h>
+#شامل <sys/types.h>
+#شامل <filesystem>
 
 #ifdef _WIN32
     #define NOMINMAX
-    #include <windows.h>
-    #include <direct.h> // For _mkdir on Windows
-#else
-    #include <unistd.h>
-    #include <sys/wait.h>
-    #include <fcntl.h>
+    #شامل <windows.h>
+    #شامل <direct.h> // For _mkdir on Windows
+#وگرنه
+    #شامل <unistd.h>
+    #شامل <sys/wait.h>
+    #شامل <fcntl.h>
 #endif
 
 #define ASYNCIO_CONCURRENCY 64
@@ -37,16 +37,16 @@ std::mutex lock;
 std::vector<std::pair<std::string, std::string>> shader_fnames;
 // Set when any shader subprocess fails (non-zero exit / stderr / launch failure) so the
 // build is stopped instead of silently producing a broken libggml-vulkan. (issue #24393)
-static std::atomic<bool> compile_failed{false};
+ایستا std::atomic<منطقی> compile_failed{نادرست};
 std::locale c_locale("C");
 
 std::string GLSLC = "glslc";
-std::string input_filepath = "";
+std::string درون_داد_filepath = "";
 std::string output_dir = "/tmp";
 std::string target_hpp = "";
 std::string target_cpp = "";
 
-const std::vector<std::string> type_names = {
+ثابت std::vector<std::string> type_names = {
     "f32",
     "f16",
     "q1_0",
@@ -77,57 +77,57 @@ const std::vector<std::string> type_names = {
     "bf16",
 };
 
-enum MatMulIdType {
+شمارش MatMulIdType {
     NONE,
     DEFAULT,
     SUBGROUP,
 };
 
-namespace {
+فضاینام {
 
-int execute_command(std::vector<std::string>& command, std::string& stdout_str, std::string& stderr_str) {
+صحیح execute_command(std::vector<std::string>& command, std::string& stdout_str, std::string& stderr_str) {
 #ifdef _WIN32
     HANDLE stdout_read, stdout_write;
     HANDLE stderr_read, stderr_write;
-    SECURITY_ATTRIBUTES sa = { sizeof(SECURITY_ATTRIBUTES), NULL, TRUE };
+    SECURITY_ATTRIBUTES sa = { اندازه(SECURITY_ATTRIBUTES), پوچ, TRUE };
 
-    if (!CreatePipe(&stdout_read, &stdout_write, &sa, 0) ||
+    اگر (!CreatePipe(&stdout_read, &stdout_write, &sa, 0) ||
         !SetHandleInformation(stdout_read, HANDLE_FLAG_INHERIT, 0)) {
-        throw std::runtime_error("Failed to create stdout pipe");
+        پرتابکن std::runtime_error("Failed to create stdout pipe");
     }
 
-    if (!CreatePipe(&stderr_read, &stderr_write, &sa, 0) ||
+    اگر (!CreatePipe(&stderr_read, &stderr_write, &sa, 0) ||
         !SetHandleInformation(stderr_read, HANDLE_FLAG_INHERIT, 0)) {
-        throw std::runtime_error("Failed to create stderr pipe");
+        پرتابکن std::runtime_error("Failed to create stderr pipe");
     }
 
     PROCESS_INFORMATION pi;
     STARTUPINFOA si = {};
-    si.cb = sizeof(STARTUPINFOA);
+    si.cb = اندازه(STARTUPINFOA);
     si.dwFlags = STARTF_USESTDHANDLES;
     si.hStdOutput = stdout_write;
     si.hStdError = stderr_write;
 
     std::string cmd;
-    for (const auto& part : command) {
+    برای (ثابت auto& part : command) {
         cmd += part + " ";
     }
 
-    if (!CreateProcessA(NULL, cmd.data(), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) {
-        throw std::runtime_error("Failed to create process");
+    اگر (!CreateProcessA(پوچ, cmd.data(), پوچ, پوچ, TRUE, 0, پوچ, پوچ, &si, &pi)) {
+        پرتابکن std::runtime_error("Failed to create process");
     }
 
     CloseHandle(stdout_write);
     CloseHandle(stderr_write);
 
-    std::array<char, 128> buffer;
+    std::array<نویسه, 128> buffer;
     DWORD bytes_read;
 
-    while (ReadFile(stdout_read, buffer.data(), (DWORD)buffer.size(), &bytes_read, NULL) && bytes_read > 0) {
+    وقتی (ReadFile(stdout_read, buffer.data(), (DWORD)buffer.size(), &bytes_read, پوچ) && bytes_read > 0) {
         stdout_str.append(buffer.data(), bytes_read);
     }
 
-    while (ReadFile(stderr_read, buffer.data(), (DWORD)buffer.size(), &bytes_read, NULL) && bytes_read > 0) {
+    وقتی (ReadFile(stderr_read, buffer.data(), (DWORD)buffer.size(), &bytes_read, پوچ) && bytes_read > 0) {
         stderr_str.append(buffer.data(), bytes_read);
     }
 
@@ -138,28 +138,28 @@ int execute_command(std::vector<std::string>& command, std::string& stdout_str, 
     GetExitCodeProcess(pi.hProcess, &exit_code);
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
-    return (int)exit_code;
-#else
-    int stdout_pipe[2];
-    int stderr_pipe[2];
+    بازگشت (صحیح)exit_code;
+#وگرنه
+    صحیح stdout_pipe[2];
+    صحیح stderr_pipe[2];
 
-    if (pipe(stdout_pipe) != 0 || pipe(stderr_pipe) != 0) {
-        throw std::runtime_error("Failed to create pipes");
+    اگر (أنبوب(stdout_pipe) != 0 || أنبوب(stderr_pipe) != 0) {
+        پرتابکن std::runtime_error("Failed to create pipes");
     }
 
     pid_t pid = fork();
-    if (pid < 0) {
+    اگر (pid < 0) {
         std::cerr << strerror(errno) << "\n";
-        throw std::runtime_error("Failed to fork process");
+        پرتابکن std::runtime_error("Failed to fork process");
     }
 
-    std::vector<char*> argv;
-    for (std::string& part : command) {
+    std::vector<نویسه*> argv;
+    برای (std::string& part : command) {
         argv.push_back(part.data());
     }
     argv.push_back(nullptr);
 
-    if (pid == 0) {
+    اگر (pid == 0) {
         close(stdout_pipe[0]);
         close(stderr_pipe[0]);
         dup2(stdout_pipe[1], STDOUT_FILENO);
@@ -168,118 +168,118 @@ int execute_command(std::vector<std::string>& command, std::string& stdout_str, 
         close(stderr_pipe[1]);
         execvp(argv[0], argv.data());
         _exit(EXIT_FAILURE);
-    } else {
+    } وگرنه {
         close(stdout_pipe[1]);
         close(stderr_pipe[1]);
 
-        std::array<char, 128> buffer;
+        std::array<نویسه, 128> buffer;
         ssize_t bytes_read;
 
-        while ((bytes_read = read(stdout_pipe[0], buffer.data(), buffer.size())) > 0) {
+        وقتی ((bytes_read = اقرأ(stdout_pipe[0], buffer.data(), buffer.size())) > 0) {
             stdout_str.append(buffer.data(), bytes_read);
         }
 
-        while ((bytes_read = read(stderr_pipe[0], buffer.data(), buffer.size())) > 0) {
+        وقتی ((bytes_read = اقرأ(stderr_pipe[0], buffer.data(), buffer.size())) > 0) {
             stderr_str.append(buffer.data(), bytes_read);
         }
 
         close(stdout_pipe[0]);
         close(stderr_pipe[0]);
-        int status = 0;
+        صحیح status = 0;
         waitpid(pid, &status, 0);
-        return WIFEXITED(status) ? WEXITSTATUS(status) : -1;
+        بازگشت WIFEXITED(status) ? WEXITSTATUS(status) : -1;
     }
 #endif
 }
 
-bool directory_exists(const std::string& path) {
-    struct stat info;
-    if (stat(path.c_str(), &info) != 0) {
-        return false; // Path doesn't exist or can't be accessed
+منطقی directory_exists(ثابت std::string& path) {
+    ساختار stat info;
+    اگر (stat(path.c_str(), &info) != 0) {
+        بازگشت نادرست; // Path doesn't exist or can't be accessed
     }
-    return (info.st_mode & S_IFDIR) != 0; // Check if it is a directory
+    بازگشت (info.st_mode & S_IFDIR) != 0; // Check if it is a directory
 }
 
-bool create_directory(const std::string& path) {
+منطقی create_directory(ثابت std::string& path) {
 #ifdef _WIN32
-    return _mkdir(path.c_str()) == 0 || errno == EEXIST; // EEXIST means the directory already exists
-#else
-    return mkdir(path.c_str(), 0755) == 0 || errno == EEXIST; // 0755 is the directory permissions
+    بازگشت _mkdir(path.c_str()) == 0 || errno == EEXIST; // EEXIST means the directory already exists
+#وگرنه
+    بازگشت mkdir(path.c_str(), 0755) == 0 || errno == EEXIST; // 0755 is the directory permissions
 #endif
 }
 
-std::string to_uppercase(const std::string& input) {
-    std::string result = input;
-    for (char& c : result) {
+std::string to_uppercase(ثابت std::string& درون_داد) {
+    std::string result = درون_داد;
+    برای (نویسه& c : result) {
         c = std::toupper(c);
     }
-    return result;
+    بازگشت result;
 }
 
-bool string_starts_with(const std::string& str, const std::string& prefix) {
-    if (prefix.size() > str.size()) {
-        return false;
+منطقی string_starts_with(ثابت std::string& str, ثابت std::string& prefix) {
+    اگر (prefix.size() > str.size()) {
+        بازگشت نادرست;
     }
-    return std::equal(prefix.begin(), prefix.end(), str.begin());
+    بازگشت std::equal(prefix.begin(), prefix.end(), str.begin());
 }
 
-bool string_ends_with(const std::string& str, const std::string& suffix) {
-    if (suffix.size() > str.size()) {
-        return false;
+منطقی string_ends_with(ثابت std::string& str, ثابت std::string& suffix) {
+    اگر (suffix.size() > str.size()) {
+        بازگشت نادرست;
     }
-    return std::equal(suffix.rbegin(), suffix.rend(), str.rbegin());
+    بازگشت std::equal(suffix.rbegin(), suffix.rend(), str.rbegin());
 }
 
-bool is_quantized_type(const std::string& type_name) {
-    return type_name != "f32" && type_name != "f16" && type_name != "bf16";
+منطقی is_quantized_type(ثابت std::string& type_name) {
+    بازگشت type_name != "f32" && type_name != "f16" && type_name != "bf16";
 }
 
-bool is_legacy_quant(const std::string& type_name) {
-    return type_name == "q2_0" || type_name == "q4_0" || type_name == "q4_1" || type_name == "q5_0" || type_name == "q5_1" || type_name == "q8_0";
+منطقی is_legacy_quant(ثابت std::string& type_name) {
+    بازگشت type_name == "q2_0" || type_name == "q4_0" || type_name == "q4_1" || type_name == "q5_0" || type_name == "q5_1" || type_name == "q8_0";
 }
 
-bool is_k_quant(const std::string& type_name) {
-    return string_ends_with(type_name, "_k");
+منطقی is_k_quant(ثابت std::string& type_name) {
+    بازگشت string_ends_with(type_name, "_k");
 }
 
-bool is_iq_quant(const std::string& type_name) {
-    return string_starts_with(type_name, "iq");
+منطقی is_iq_quant(ثابت std::string& type_name) {
+    بازگشت string_starts_with(type_name, "iq");
 }
 
-bool is_lut_quant(const std::string& type_name) {
-    return is_iq_quant(type_name) || type_name == "mxfp4" || type_name == "nvfp4";
+منطقی is_lut_quant(ثابت std::string& type_name) {
+    بازگشت is_iq_quant(type_name) || type_name == "mxfp4" || type_name == "nvfp4";
 }
 
-std::string lut_load_vec_a(const std::string& type_name) {
-    if (type_name == "iq1_s" || type_name == "iq1_m" || type_name == "iq2_xxs" || type_name == "iq2_xs" || type_name == "iq2_s" || type_name == "iq4_xs") {
-        return "8";
+std::string lut_load_vec_a(ثابت std::string& type_name) {
+    اگر (type_name == "iq1_s" || type_name == "iq1_m" || type_name == "iq2_xxs" || type_name == "iq2_xs" || type_name == "iq2_s" || type_name == "iq4_xs") {
+        بازگشت "8";
     }
-    return "4";
+    بازگشت "4";
 }
 
-static const char path_separator = '/';
+ایستا ثابت نویسه path_separator = '/';
 
-std::string join_paths(const std::string& path1, const std::string& path2) {
-    return path1 + path_separator + path2;
+std::string join_paths(ثابت std::string& path1, ثابت std::string& path2) {
+    بازگشت path1 + path_separator + path2;
 }
 
-std::string basename(const std::string &path) {
-    return path.substr(path.find_last_of("/\\") + 1);
+std::string basename(ثابت std::string &path) {
+    بازگشت path.substr(path.find_last_of("/\\") + 1);
 }
 
 std::stringstream make_generic_stringstream() {
     std::stringstream ss;
     ss.imbue(c_locale);
-    return ss;
+    بازگشت ss;
 }
 
-std::string read_binary_file(const std::string& path, bool may_not_exist = false) {
+std::string read_دودویی_file(ثابت std::string& path, منطقی may_not_exist = نادرست) {
     FILE* f = fopen(path.c_str(), "rb");
-    if (!f) {
-        if (!may_not_exist) {
+    اگر (!f) {
+        اگر (!may_not_exist) {
             std::cerr << "Error opening file: " << path << " (" << strerror(errno) << ")\n";
         }
-        return {};
+        بازگشت {};
     }
 
     fseek(f, 0, SEEK_END);
@@ -289,70 +289,70 @@ std::string read_binary_file(const std::string& path, bool may_not_exist = false
     std::string data(size, '\0');
     size_t read_size = fread(data.data(), 1, size, f);
     fclose(f);
-    if (read_size != size) {
+    اگر (read_size != size) {
         std::cerr << "Error reading file: " << path << " (" << strerror(errno) << ")\n";
-        return {};
+        بازگشت {};
     }
 
-    return data;
+    بازگشت data;
 }
 
-void write_binary_file(const std::string& path, const std::string& content) {
+تهی write_دودویی_file(ثابت std::string& path, ثابت std::string& content) {
     FILE* f = fopen(path.c_str(), "wb");
-    if (!f) {
+    اگر (!f) {
         std::cerr << "Error opening file for writing: " << path << " (" << strerror(errno) << ")\n";
-        return;
+        بازگشت;
     }
 
     size_t write_size = fwrite(content.data(), 1, content.size(), f);
     fclose(f);
-    if (write_size != content.size()) {
+    اگر (write_size != content.size()) {
         std::cerr << "Error writing file: " << path << " (" << strerror(errno) << ")\n";
-        return;
+        بازگشت;
     }
 }
 
-void write_file_if_changed(const std::string& path, const std::string& content) {
-    std::string existing = read_binary_file(path, true);
-    if (existing != content) {
-        write_binary_file(path, content);
+تهی write_file_if_changed(ثابت std::string& path, ثابت std::string& content) {
+    std::string existing = read_دودویی_file(path, درست);
+    اگر (existing != content) {
+        write_دودویی_file(path, content);
     }
 }
 
 
 // variables to track number of compiles in progress
-static uint32_t compile_count = 0;
-static std::mutex compile_count_mutex;
-static std::condition_variable compile_count_cond;
-static bool generate_dep_file = true;
+ایستا uint32_t compile_شمار = 0;
+ایستا std::mutex compile_شمار_mutex;
+ایستا std::condition_variable compile_شمار_cond;
+ایستا منطقی generate_dep_file = درست;
 
-void decrement_compile_count(uint32_t * count) {
-    if (count) {
-        std::lock_guard<std::mutex> guard(compile_count_mutex);
-        assert(compile_count > 0);
-        compile_count--;
-        compile_count_cond.notify_all();
+تهی decrement_compile_شمار(uint32_t * count) {
+    اگر (count) {
+        std::lock_guard<std::mutex> guard(compile_شمار_mutex);
+        أكد(compile_شمار > 0);
+        compile_شمار--;
+        compile_شمار_cond.notify_all();
     }
 }
 
-using compile_count_guard = std::unique_ptr<uint32_t, decltype(&decrement_compile_count)>;
+using compile_شمار_guard = std::unique_ptr<uint32_t, decltype(&decrement_compile_شمار)>;
 
-compile_count_guard acquire_compile_slot() {
+compile_شمار_guard acquire_compile_slot() {
     // wait until fewer than N compiles are in progress.
     // 16 is an arbitrary limit, the goal is to avoid "failed to create pipe" errors.
     uint32_t N = std::max(1u, std::min(16u, std::thread::hardware_concurrency()));
-    std::unique_lock<std::mutex> guard(compile_count_mutex);
-    compile_count_cond.wait(guard, [N] { return compile_count < N; });
-    compile_count++;
-    return compile_count_guard(&compile_count, &decrement_compile_count);
+    std::unique_lock<std::mutex> guard(compile_شمار_mutex);
+    compile_شمار_cond.wait(guard, [N] { بازگشت compile_شمار < N; });
+    compile_شمار++;
+    بازگشت compile_شمار_guard(&compile_شمار, &decrement_compile_شمار);
 }
 
-void string_to_spv_func(std::string name, std::string in_path, std::string out_path, std::map<std::string, std::string> defines, bool coopmat, bool dep_file, compile_count_guard slot) {
+تهی string_to_spv_func(std::string name, std::string in_path, std::string out_path, std::map<std::string, std::string> defines, منطقی coopmat, منطقی dep_file, compile_شمار_guard slot) {
     std::string target_env = (name.find("_cm2") != std::string::npos) ? "--target-env=vulkan1.3" : "--target-env=vulkan1.2";
 
     #ifdef _WIN32
         std::vector<std::string> cmd = {GLSLC, "-fshader-stage=compute", target_env, "\"" + in_path + "\"", "-o", "\"" + out_path + "\""};
-    #else
+    #وگرنه
         std::vector<std::string> cmd = {GLSLC, "-fshader-stage=compute", target_env, in_path, "-o", out_path};
     #endif
 
@@ -360,16 +360,16 @@ void string_to_spv_func(std::string name, std::string in_path, std::string out_p
     // disable spirv-opt for bf16 shaders for https://github.com/ggml-org/llama.cpp/issues/15344
     // disable spirv-opt for rope shaders for https://github.com/ggml-org/llama.cpp/issues/16860
     // disable spirv-opt for dot2 shaders (spirv-opt doesn't recognize SPV_VALVE_mixed_float_dot_product capability)
-    if (!coopmat && name.find("bf16") == std::string::npos && name.find("rope") == std::string::npos && name.find("_dot2") == std::string::npos) {
+    اگر (!coopmat && name.find("bf16") == std::string::npos && name.find("rope") == std::string::npos && name.find("_dot2") == std::string::npos) {
         cmd.push_back("-O");
     }
 
-    if (dep_file) {
+    اگر (dep_file) {
         cmd.push_back("-MD");
         cmd.push_back("-MF");
 #ifdef _WIN32
         cmd.push_back("\"" + target_cpp + ".d\"");
-#else
+#وگرنه
         cmd.push_back(target_cpp + ".d");
 #endif
     }
@@ -378,87 +378,87 @@ void string_to_spv_func(std::string name, std::string in_path, std::string out_p
         cmd.push_back("-g");
     #endif
 
-    for (const auto& define : defines) {
+    برای (ثابت auto& define : defines) {
         cmd.push_back("-D" + define.first + "=" + define.second);
     }
 
     std::string command;
-    for (const auto& part : cmd) {
+    برای (ثابت auto& part : cmd) {
         command += part + " ";
     }
 
     std::string stdout_str, stderr_str;
-    try {
+    تلاش {
         // std::cout << "Executing command: ";
         // for (const auto& part : cmd) {
         //     std::cout << part << " ";
         // }
         // std::cout << std::endl;
 
-        int exit_code = execute_command(cmd, stdout_str, stderr_str);
-        if (exit_code != 0 || !stderr_str.empty()) {
+        صحیح exit_code = execute_command(cmd, stdout_str, stderr_str);
+        اگر (exit_code != 0 || !stderr_str.empty()) {
             std::cerr << "cannot compile " << name << " (exit code " << exit_code << ")\n\n";
-            for (const auto& part : cmd) {
+            برای (ثابت auto& part : cmd) {
                 std::cerr << part << " ";
             }
             std::cerr << "\n\n" << stderr_str << std::endl;
-            compile_failed = true;
-            return;
+            compile_failed = درست;
+            بازگشت;
         }
 
-        if (dep_file) {
+        اگر (dep_file) {
             // replace .spv output path with the embed .cpp path which is used as output in CMakeLists.txt
-            std::string dep = read_binary_file(target_cpp + ".d", true);
-            if (!dep.empty()) {
+            std::string dep = read_دودویی_file(target_cpp + ".d", درست);
+            اگر (!dep.empty()) {
                 size_t pos = dep.find(out_path);
-                if (pos != std::string::npos) {
+                اگر (pos != std::string::npos) {
                     dep.replace(pos, out_path.length(), target_cpp);
                 }
-                write_binary_file(target_cpp + ".d", dep);
+                write_دودویی_file(target_cpp + ".d", dep);
             }
         }
 
         std::lock_guard<std::mutex> guard(lock);
         shader_fnames.push_back(std::make_pair(name, out_path));
-    } catch (const std::exception& e) {
+    } بگیر (ثابت std::exception& e) {
         std::cerr << "Error executing command for " << name << ": " << e.what() << std::endl;
-        compile_failed = true;
+        compile_failed = درست;
     }
 }
 
-std::map<std::string, std::string> merge_maps(const std::map<std::string, std::string>& a, const std::map<std::string, std::string>& b) {
+std::map<std::string, std::string> merge_maps(ثابت std::map<std::string, std::string>& a, ثابت std::map<std::string, std::string>& b) {
     std::map<std::string, std::string> result = a;
     result.insert(b.begin(), b.end());
-    return result;
+    بازگشت result;
 }
 
-static std::deque<std::future<void>> compiles;
-void string_to_spv(std::string name, const std::string& source, const std::map<std::string, std::string>& defines, bool fp16 = true, bool coopmat = false, bool coopmat2 = false, bool f16acc = false, const std::string& suffix = "") {
+ایستا std::deque<std::future<تهی>> compiles;
+تهی string_to_spv(std::string name, ثابت std::string& source, ثابت std::map<std::string, std::string>& defines, منطقی fp16 = درست, منطقی coopmat = نادرست, منطقی coopmat2 = نادرست, منطقی f16acc = نادرست, ثابت std::string& suffix = "") {
     name = name + (f16acc ? "_f16acc" : "") + (coopmat ? "_cm1" : "") + (coopmat2 ? "_cm2" : (fp16 ? "" : "_fp32")) + suffix;
     std::string out_path = join_paths(output_dir, name + ".spv");
 
-    if (input_filepath == "") {
+    اگر (درون_داد_filepath == "") {
         // No input source to compile, only generate header for all shaders
         shader_fnames.push_back(std::pair(name, out_path));
-        return;
-    } else if (basename(input_filepath) != source) {
+        بازگشت;
+    } وگرنه اگر (basename(درون_داد_filepath) != source) {
         // Only compile shader variants matching the input filename
-        return;
+        بازگشت;
     }
 
-    compile_count_guard slot = acquire_compile_slot();
+    compile_شمار_guard slot = acquire_compile_slot();
     compiles.push_back(std::async(
-        string_to_spv_func, name, input_filepath, out_path, defines, coopmat, generate_dep_file, std::move(slot)));
+        string_to_spv_func, name, درون_داد_filepath, out_path, defines, coopmat, generate_dep_file, std::move(slot)));
     // Don't write the same dep file from multiple processes
-    generate_dep_file = false;
+    generate_dep_file = نادرست;
 
     // Clean up completed futures - don't accumulate virtual memory for completed threads' stacks.
-    while (!compiles.empty() && compiles.front().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+    وقتی (!compiles.empty() && compiles.front().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
         compiles.pop_front();
     }
 }
 
-void matmul_shaders(bool fp16, MatMulIdType matmul_id_type, bool coopmat, bool coopmat2, bool f16acc, bool dot2 = false) {
+تهی matmul_shaders(منطقی fp16, MatMulIdType matmul_id_type, منطقی coopmat, منطقی coopmat2, منطقی f16acc, منطقی dot2 = نادرست) {
     std::string load_vec = coopmat2 ? "1" : fp16 ? "8" : "4";
     std::string aligned_b_type_f32 = coopmat2 ? "float" : fp16 ? "mat2x4" : "vec4";
     std::string aligned_b_type_f16 = coopmat2 ? "float16_t" : fp16 ? "f16mat2x4" : "f16vec4";
@@ -467,98 +467,98 @@ void matmul_shaders(bool fp16, MatMulIdType matmul_id_type, bool coopmat, bool c
     std::map<std::string, std::string> base_dict;
     std::string shader_name = "matmul";
 
-    if (matmul_id_type == MatMulIdType::DEFAULT) {
+    اگر (matmul_id_type == MatMulIdType::DEFAULT) {
         base_dict["MUL_MAT_ID"] = "1";
         shader_name = "matmul_id";
-    } else if (matmul_id_type == MatMulIdType::SUBGROUP) {
+    } وگرنه اگر (matmul_id_type == MatMulIdType::SUBGROUP) {
         base_dict["MUL_MAT_ID"] = "1";
         base_dict["MUL_MAT_ID_USE_SUBGROUPS"] = "1";
         shader_name = "matmul_id_subgroup";
     }
 
-    if (fp16) {
+    اگر (fp16) {
         base_dict["FLOAT16"] = "1";
     }
 
     base_dict["ACC_TYPE"     ] = f16acc ? "float16_t" : "float";
     base_dict["ACC_TYPEV2"   ] = f16acc ? "f16vec2"   : "vec2";
     base_dict["ACC_TYPE_VEC4"] = f16acc ? "f16vec4"   : "vec4";
-    if (f16acc) {
+    اگر (f16acc) {
         base_dict["ACC_TYPE_MAX"] = "float16_t(65504.0)";
         base_dict["ACC_F16"] = "1";
     }
 
-    if (coopmat) {
+    اگر (coopmat) {
         base_dict["COOPMAT"] = "1";
     }
-#if defined(GGML_VULKAN_COOPMAT2_DECODE_VECTOR_GLSLC_SUPPORT)
-    if (coopmat2) {
+#اگر defined(GGML_VULKAN_COOPMAT2_DECODE_VECTOR_GLSLC_SUPPORT)
+    اگر (coopmat2) {
         base_dict["GGML_VULKAN_COOPMAT2_DECODE_VECTOR"] = "1";
     }
 #endif
 
-    if (dot2) {
+    اگر (dot2) {
         base_dict["DOT2_F16"] = "1";
     }
 
-    const std::string source_name = coopmat2 ? "mul_mm_cm2.comp" : "mul_mm.comp";
+    ثابت std::string source_name = coopmat2 ? "mul_mm_cm2.comp" : "mul_mm.comp";
 
-    auto const &FLOAT_TYPE = [&](int vec, const std::string &t) -> std::string {
-        switch (vec) {
-        case 1:
-            if (t == "bf16") {
+    auto ثابت &FLOAT_TYPE = [&](صحیح vec, ثابت std::string &t) -> std::string {
+        انتخاب (vec) {
+        حالت 1:
+            اگر (t == "bf16") {
                 // scalar path promotes to float
-                if (!coopmat && !coopmat2) {
-                    return "float";
+                اگر (!coopmat && !coopmat2) {
+                    بازگشت "float";
                 }
-                return "bfloat16_t";
+                بازگشت "bfloat16_t";
             }
-            if (coopmat2 || fp16) {
-                return "float16_t";
+            اگر (coopmat2 || fp16) {
+                بازگشت "float16_t";
             }
-            return "float";
-        case 2:
-            if (t == "bf16") {
+            بازگشت "float";
+        حالت 2:
+            اگر (t == "bf16") {
                 // scalar path promotes to float
-                if (!coopmat && !coopmat2) {
-                    return "vec2";
+                اگر (!coopmat && !coopmat2) {
+                    بازگشت "vec2";
                 }
-                return "bf16vec2";
+                بازگشت "bf16vec2";
             }
-            if (coopmat2 || fp16) {
-                return "f16vec2";
+            اگر (coopmat2 || fp16) {
+                بازگشت "f16vec2";
             }
-            return "vec2";
-        case 4:
-            if (t == "bf16") {
+            بازگشت "vec2";
+        حالت 4:
+            اگر (t == "bf16") {
                 // scalar path promotes to float
-                if (!coopmat && !coopmat2) {
-                    return "vec4";
+                اگر (!coopmat && !coopmat2) {
+                    بازگشت "vec4";
                 }
-                return "bf16vec4";
+                بازگشت "bf16vec4";
             }
-            if (coopmat2 || fp16) {
-                return "f16vec4";
+            اگر (coopmat2 || fp16) {
+                بازگشت "f16vec4";
             }
-            return "vec4";
-        case 8:
-            if (t == "bf16") {
+            بازگشت "vec4";
+        حالت 8:
+            اگر (t == "bf16") {
                 // scalar path promotes to float
-                if (!coopmat && !coopmat2) {
-                    return "mat2x4";
+                اگر (!coopmat && !coopmat2) {
+                    بازگشت "mat2x4";
                 }
-                throw std::runtime_error("bf16 vec8 not supported");
+                پرتابکن std::runtime_error("bf16 vec8 not supported");
             }
-            if (coopmat2 || fp16) {
-                return "f16mat2x4";
+            اگر (coopmat2 || fp16) {
+                بازگشت "f16mat2x4";
             }
-            return "mat2x4";
-        default:
-            throw std::runtime_error("invalid vector size");
+            بازگشت "mat2x4";
+        پیشفرض:
+            پرتابکن std::runtime_error("invalid vector size");
         }
     };
 
-    const std::map<std::string, std::string> float_type_dict_f16 = {
+    ثابت std::map<std::string, std::string> float_type_dict_f16 = {
         {"FLOAT_TYPE",   FLOAT_TYPE(1, "f16")},
         {"FLOAT_TYPEV2", FLOAT_TYPE(2, "f16")},
         {"FLOAT_TYPEV4", FLOAT_TYPE(4, "f16")},
@@ -578,93 +578,93 @@ void matmul_shaders(bool fp16, MatMulIdType matmul_id_type, bool coopmat, bool c
         // scalar path promotes to float
         std::string to_float_type = (coopmat || coopmat2) ? "uintBitsToBFloat16EXT" : "bf16_to_fp32";
 
-        const std::map<std::string, std::string> float_type_dict_bf16 = {
+        ثابت std::map<std::string, std::string> float_type_dict_bf16 = {
             {"FLOAT_TYPE",   FLOAT_TYPE(1, "bf16")},
             {"FLOAT_TYPEV2", FLOAT_TYPE(2, "bf16")},
             {"FLOAT_TYPEV4", FLOAT_TYPE(4, "bf16")},
         };
 
         // If bfloat16 is not supported, then only compile the scalar (promote to fp32) shader
-#if !defined(GGML_VULKAN_BFLOAT16_GLSLC_SUPPORT)
-        if (!(coopmat || coopmat2))
+#اگر !defined(GGML_VULKAN_BFLOAT16_GLSLC_SUPPORT)
+        اگر (!(coopmat || coopmat2))
 #endif
         {
-            if (!dot2) {
+            اگر (!dot2) {
                 string_to_spv(shader_name + "_bf16", source_name, merge_maps(merge_maps(base_dict, float_type_dict_bf16), {{"TO_FLOAT_TYPE", to_float_type}, {"DATA_A_BF16", "1"}, {"LOAD_VEC_A", load_vec_a}, {"LOAD_VEC_B", "4"}, {"B_TYPE", coopmat2 ? "bfloat16_t" : "u16vec4"}, {"B_TYPE_SCALAR", coopmat2 ? "bfloat16_t" : "uint16_t"}, {"B_TYPEV4", "bf16vec4"}, {"D_TYPE", "float"}, {"B_IS_FLOAT", "1"}, {"DATA_B_BF16", "1"}}), fp16, coopmat, coopmat2, f16acc);
             }
         }
     }
 
-    for (const auto& tname : type_names) {
-        if (tname == "bf16") {
-            continue;
+    برای (ثابت auto& tname : type_names) {
+        اگر (tname == "bf16") {
+            ادامه;
         }
 
         // Float types keep per-type compilation (different accumulation loop structure)
-        if (tname == "f32" || tname == "f16") {
-            std::string data_a_key = "DATA_A_" + to_uppercase(tname);
+        اگر (tname == "f32" || tname == "f16") {
+            std::string data_a_کلید = "DATA_A_" + to_uppercase(tname);
 
-            const std::map<std::string, std::string> float_type_dict = {
+            ثابت std::map<std::string, std::string> float_type_dict = {
                 {"FLOAT_TYPE",   FLOAT_TYPE(1, tname)},
                 {"FLOAT_TYPEV2", FLOAT_TYPE(2, tname)},
                 {"FLOAT_TYPEV4", FLOAT_TYPE(4, tname)},
                 {"FLOAT_TYPEV8", FLOAT_TYPE(8, tname)},
             };
 
-            if (!coopmat2) {
-                string_to_spv(shader_name + "_" + tname + "_f32" + dot2_sfx, source_name, merge_maps(merge_maps(base_dict, float_type_dict), {{data_a_key, "1"}, {"LOAD_VEC_A", load_vec}, {"LOAD_VEC_B", load_vec}, {"B_TYPE", aligned_b_type_f32}, {"B_TYPE_SCALAR", "float"}, {"B_TYPEV4", "vec4"}, {"D_TYPE", "float"}}), fp16, coopmat, coopmat2, f16acc);
+            اگر (!coopmat2) {
+                string_to_spv(shader_name + "_" + tname + "_f32" + dot2_sfx, source_name, merge_maps(merge_maps(base_dict, float_type_dict), {{data_a_کلید, "1"}, {"LOAD_VEC_A", load_vec}, {"LOAD_VEC_B", load_vec}, {"B_TYPE", aligned_b_type_f32}, {"B_TYPE_SCALAR", "float"}, {"B_TYPEV4", "vec4"}, {"D_TYPE", "float"}}), fp16, coopmat, coopmat2, f16acc);
             }
-            continue;
+            ادامه;
         }
 
-        std::string data_a_key = "DATA_A_" + to_uppercase(tname);
-        const std::map<std::string, std::string> float_type_dict = {
+        std::string data_a_کلید = "DATA_A_" + to_uppercase(tname);
+        ثابت std::map<std::string, std::string> float_type_dict = {
             {"FLOAT_TYPE",   FLOAT_TYPE(1, tname)},
             {"FLOAT_TYPEV2", FLOAT_TYPE(2, tname)},
             {"FLOAT_TYPEV4", FLOAT_TYPE(4, tname)},
             {"FLOAT_TYPEV8", FLOAT_TYPE(8, tname)},
         };
 
-#if defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)
-        if (!f16acc && !coopmat && !coopmat2 && !dot2 && (is_legacy_quant(tname) || is_k_quant(tname) || tname == "mxfp4" || tname == "iq3_s" || tname == "iq4_xs")) {
-            string_to_spv(shader_name + "_" + tname + "_q8_1", "mul_mmq.comp", merge_maps(merge_maps(base_dict, float_type_dict), {{data_a_key, "1"}, {"D_TYPE", "float"},}), fp16, coopmat, coopmat2, f16acc);
+#اگر defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)
+        اگر (!f16acc && !coopmat && !coopmat2 && !dot2 && (is_legacy_quant(tname) || is_k_quant(tname) || tname == "mxfp4" || tname == "iq3_s" || tname == "iq4_xs")) {
+            string_to_spv(shader_name + "_" + tname + "_q8_1", "mul_mmq.comp", merge_maps(merge_maps(base_dict, float_type_dict), {{data_a_کلید, "1"}, {"D_TYPE", "float"},}), fp16, coopmat, coopmat2, f16acc);
         }
 #endif
 
-        if (!f16acc && coopmat && (tname == "q4_0" || tname == "q4_1" || tname == "q5_0" || tname == "q5_1" || tname == "q8_0" || tname == "iq4_nl" || tname == "iq4_xs" || tname == "mxfp4"
+        اگر (!f16acc && coopmat && (tname == "q4_0" || tname == "q4_1" || tname == "q5_0" || tname == "q5_1" || tname == "q8_0" || tname == "iq4_nl" || tname == "iq4_xs" || tname == "mxfp4"
                      || tname == "q3_k" || tname == "q4_k" || tname == "q5_k" || tname == "q6_k" || tname == "nvfp4")) {
-            string_to_spv(shader_name + "_" + tname + "_q8_1", "mul_mmq_cm1.comp", merge_maps(merge_maps(base_dict, float_type_dict), {{data_a_key, "1"}, {"D_TYPE", "float"}, {"D_TYPE_VEC4", "vec4"}}), fp16, coopmat, coopmat2, f16acc);
+            string_to_spv(shader_name + "_" + tname + "_q8_1", "mul_mmq_cm1.comp", merge_maps(merge_maps(base_dict, float_type_dict), {{data_a_کلید, "1"}, {"D_TYPE", "float"}, {"D_TYPE_VEC4", "vec4"}}), fp16, coopmat, coopmat2, f16acc);
         }
 
-        if (is_lut_quant(tname)) {
+        اگر (is_lut_quant(tname)) {
             std::string lva = lut_load_vec_a(tname);
 
-            string_to_spv(shader_name + "_" + tname + "_f16" + dot2_sfx, source_name, merge_maps(merge_maps(base_dict, float_type_dict), {{data_a_key, "1"}, {"LOAD_VEC_A", lva}, {"LOAD_VEC_B", load_vec}, {"B_TYPE", aligned_b_type_f16}, {"B_TYPE_SCALAR", "float16_t"}, {"B_TYPEV4", "f16vec4"}, {"D_TYPE", "float"}}), fp16, coopmat, coopmat2, f16acc);
+            string_to_spv(shader_name + "_" + tname + "_f16" + dot2_sfx, source_name, merge_maps(merge_maps(base_dict, float_type_dict), {{data_a_کلید, "1"}, {"LOAD_VEC_A", lva}, {"LOAD_VEC_B", load_vec}, {"B_TYPE", aligned_b_type_f16}, {"B_TYPE_SCALAR", "float16_t"}, {"B_TYPEV4", "f16vec4"}, {"D_TYPE", "float"}}), fp16, coopmat, coopmat2, f16acc);
 
-            if (!coopmat2) {
-                string_to_spv(shader_name + "_" + tname + "_f32" + dot2_sfx, source_name, merge_maps(merge_maps(base_dict, float_type_dict), {{data_a_key, "1"}, {"LOAD_VEC_A", lva}, {"LOAD_VEC_B", load_vec}, {"B_TYPE", aligned_b_type_f32}, {"B_TYPE_SCALAR", "float"}, {"B_TYPEV4", "vec4"}, {"D_TYPE", "float"}}), fp16, coopmat, coopmat2, f16acc);
+            اگر (!coopmat2) {
+                string_to_spv(shader_name + "_" + tname + "_f32" + dot2_sfx, source_name, merge_maps(merge_maps(base_dict, float_type_dict), {{data_a_کلید, "1"}, {"LOAD_VEC_A", lva}, {"LOAD_VEC_B", load_vec}, {"B_TYPE", aligned_b_type_f32}, {"B_TYPE_SCALAR", "float"}, {"B_TYPEV4", "vec4"}, {"D_TYPE", "float"}}), fp16, coopmat, coopmat2, f16acc);
             }
 
-#if defined(GGML_VULKAN_FLOAT_E2M1_GLSLC_SUPPORT) && defined(GGML_VULKAN_FLOAT_E4M3_GLSLC_SUPPORT)
-            if ((tname == "mxfp4" || tname == "nvfp4") && (coopmat || coopmat2)) {
-                string_to_spv(shader_name + "_" + tname + "_f16_ocp" + dot2_sfx, source_name, merge_maps(merge_maps(base_dict, float_type_dict), {{data_a_key, "1"}, {"USE_OCP_FP4", "1"}, {"LOAD_VEC_A", lva}, {"LOAD_VEC_B", load_vec}, {"B_TYPE", aligned_b_type_f16}, {"B_TYPE_SCALAR", "float16_t"}, {"B_TYPEV4", "f16vec4"}, {"D_TYPE", "float"}}), fp16, coopmat, coopmat2, f16acc);
-                if (!coopmat2) {
-                    string_to_spv(shader_name + "_" + tname + "_f32_ocp" + dot2_sfx, source_name, merge_maps(merge_maps(base_dict, float_type_dict), {{data_a_key, "1"}, {"USE_OCP_FP4", "1"}, {"LOAD_VEC_A", lva}, {"LOAD_VEC_B", load_vec}, {"B_TYPE", aligned_b_type_f32}, {"B_TYPE_SCALAR", "float"}, {"B_TYPEV4", "vec4"}, {"D_TYPE", "float"}}), fp16, coopmat, coopmat2, f16acc);
+#اگر defined(GGML_VULKAN_FLOAT_E2M1_GLSLC_SUPPORT) && defined(GGML_VULKAN_FLOAT_E4M3_GLSLC_SUPPORT)
+            اگر ((tname == "mxfp4" || tname == "nvfp4") && (coopmat || coopmat2)) {
+                string_to_spv(shader_name + "_" + tname + "_f16_ocp" + dot2_sfx, source_name, merge_maps(merge_maps(base_dict, float_type_dict), {{data_a_کلید, "1"}, {"USE_OCP_FP4", "1"}, {"LOAD_VEC_A", lva}, {"LOAD_VEC_B", load_vec}, {"B_TYPE", aligned_b_type_f16}, {"B_TYPE_SCALAR", "float16_t"}, {"B_TYPEV4", "f16vec4"}, {"D_TYPE", "float"}}), fp16, coopmat, coopmat2, f16acc);
+                اگر (!coopmat2) {
+                    string_to_spv(shader_name + "_" + tname + "_f32_ocp" + dot2_sfx, source_name, merge_maps(merge_maps(base_dict, float_type_dict), {{data_a_کلید, "1"}, {"USE_OCP_FP4", "1"}, {"LOAD_VEC_A", lva}, {"LOAD_VEC_B", load_vec}, {"B_TYPE", aligned_b_type_f32}, {"B_TYPE_SCALAR", "float"}, {"B_TYPEV4", "vec4"}, {"D_TYPE", "float"}}), fp16, coopmat, coopmat2, f16acc);
                 }
             }
 #endif
-            continue;
+            ادامه;
         }
 
         // dedicated shader needed due to regression on Ampere
-        if (coopmat2 && (tname == "q4_k" || tname == "q5_k")) {
-            string_to_spv(shader_name + "_" + tname + "_f16" + dot2_sfx, source_name, merge_maps(merge_maps(base_dict, float_type_dict), {{data_a_key, "1"}, {"LOAD_VEC_A", load_vec}, {"LOAD_VEC_B", load_vec}, {"B_TYPE", aligned_b_type_f16}, {"B_TYPE_SCALAR", "float16_t"}, {"B_TYPEV4", "f16vec4"}, {"D_TYPE", "float"}}), fp16, coopmat, coopmat2, f16acc);
+        اگر (coopmat2 && (tname == "q4_k" || tname == "q5_k")) {
+            string_to_spv(shader_name + "_" + tname + "_f16" + dot2_sfx, source_name, merge_maps(merge_maps(base_dict, float_type_dict), {{data_a_کلید, "1"}, {"LOAD_VEC_A", load_vec}, {"LOAD_VEC_B", load_vec}, {"B_TYPE", aligned_b_type_f16}, {"B_TYPE_SCALAR", "float16_t"}, {"B_TYPEV4", "f16vec4"}, {"D_TYPE", "float"}}), fp16, coopmat, coopmat2, f16acc);
         }
     }
 
     // Quant shader: one SPIR-V for all quant types, selected via MmTypeA spec constant
     {
-        const std::map<std::string, std::string> quant_float_type_dict = {
+        ثابت std::map<std::string, std::string> quant_float_type_dict = {
             {"FLOAT_TYPE",   FLOAT_TYPE(1, "q4_0")},
             {"FLOAT_TYPEV2", FLOAT_TYPE(2, "q4_0")},
             {"FLOAT_TYPEV4", FLOAT_TYPE(4, "q4_0")},
@@ -673,90 +673,90 @@ void matmul_shaders(bool fp16, MatMulIdType matmul_id_type, bool coopmat, bool c
 
         string_to_spv(shader_name + "_quant_f16" + dot2_sfx, source_name, merge_maps(merge_maps(base_dict, quant_float_type_dict), {{"MULMAT_QUANT", "1"}, {"LOAD_VEC_B", load_vec}, {"B_TYPE", aligned_b_type_f16}, {"B_TYPE_SCALAR", "float16_t"}, {"B_TYPEV4", "f16vec4"}, {"D_TYPE", "float"}}), fp16, coopmat, coopmat2, f16acc);
 
-        if (!coopmat2) {
+        اگر (!coopmat2) {
             string_to_spv(shader_name + "_quant_f32" + dot2_sfx, source_name, merge_maps(merge_maps(base_dict, quant_float_type_dict), {{"MULMAT_QUANT", "1"}, {"LOAD_VEC_B", load_vec}, {"B_TYPE", aligned_b_type_f32}, {"B_TYPE_SCALAR", "float"}, {"B_TYPEV4", "vec4"}, {"D_TYPE", "float"}}), fp16, coopmat, coopmat2, f16acc);
         }
     }
 }
 
-void process_shaders() {
+تهی process_shaders() {
     // matmul
-    for (const MatMulIdType& matmul_id_type : {MatMulIdType::NONE, MatMulIdType::DEFAULT, MatMulIdType::SUBGROUP}) {
+    برای (ثابت MatMulIdType& matmul_id_type : {MatMulIdType::NONE, MatMulIdType::DEFAULT, MatMulIdType::SUBGROUP}) {
         // No coopmats
         // fp32
-        matmul_shaders(false, matmul_id_type, false, false, false);
+        matmul_shaders(نادرست, matmul_id_type, نادرست, نادرست, نادرست);
 
         // fp16, fp32acc and fp16acc
-        matmul_shaders(true, matmul_id_type, false, false, false);
-        matmul_shaders(true, matmul_id_type, false, false, true);
+        matmul_shaders(درست, matmul_id_type, نادرست, نادرست, نادرست);
+        matmul_shaders(درست, matmul_id_type, نادرست, نادرست, درست);
 
         // dot2 variants (scalar fp16 only)
-        matmul_shaders(true, matmul_id_type, false, false, false, true);
-        matmul_shaders(true, matmul_id_type, false, false, true,  true);
+        matmul_shaders(درست, matmul_id_type, نادرست, نادرست, نادرست, درست);
+        matmul_shaders(درست, matmul_id_type, نادرست, نادرست, درست,  درست);
 
-        if (matmul_id_type != MatMulIdType::DEFAULT) {
-#if defined(GGML_VULKAN_COOPMAT_GLSLC_SUPPORT)
+        اگر (matmul_id_type != MatMulIdType::DEFAULT) {
+#اگر defined(GGML_VULKAN_COOPMAT_GLSLC_SUPPORT)
             // Coopmat, fp32acc and fp16acc
-            matmul_shaders(true, matmul_id_type, true, false, false);
-            matmul_shaders(true, matmul_id_type, true, false, true);
+            matmul_shaders(درست, matmul_id_type, درست, نادرست, نادرست);
+            matmul_shaders(درست, matmul_id_type, درست, نادرست, درست);
 #endif
 
-#if defined(GGML_VULKAN_COOPMAT2_GLSLC_SUPPORT)
+#اگر defined(GGML_VULKAN_COOPMAT2_GLSLC_SUPPORT)
             // Coopmat2, fp32acc and fp16acc
-            matmul_shaders(true, matmul_id_type, false, true, false);
-            matmul_shaders(true, matmul_id_type, false, true, true);
+            matmul_shaders(درست, matmul_id_type, نادرست, درست, نادرست);
+            matmul_shaders(درست, matmul_id_type, نادرست, درست, درست);
 #endif
         }
     }
 
-    for (const bool& fp16 : {false, true}) {
+    برای (ثابت منطقی& fp16 : {نادرست, درست}) {
         std::map<std::string, std::string> base_dict;
-        if (fp16) {
+        اگر (fp16) {
             base_dict = {{"FLOAT_TYPE", "float16_t"}, {"FLOAT_TYPEV2", "f16vec2"}, {"FLOAT_TYPEV4", "f16vec4"}, {"FLOAT16", "1"}, {"FLOAT_TYPE_MAX", "float16_t(65504.0)"}};
-        } else {
+        } وگرنه {
             base_dict = {{"FLOAT_TYPE", "float"}, {"FLOAT_TYPEV2", "vec2"}, {"FLOAT_TYPEV4", "vec4"}};
         }
 
         // flash attention
-        for (const bool& f16acc : {false, true}) {
+        برای (ثابت منطقی& f16acc : {نادرست, درست}) {
             std::map<std::string, std::string> fa_base_dict = base_dict;
             fa_base_dict["ACC_TYPE"] = fp16 && f16acc ? "float16_t" : "float";
             fa_base_dict["ACC_TYPEV2"] = fp16 && f16acc ? "f16vec2" : "vec2";
             fa_base_dict["ACC_TYPEV4"] = fp16 && f16acc ? "f16vec4" : "vec4";
             // Compile IQ4_NL support into all FA variants so its shared LUT is available when K or V uses it.
             fa_base_dict["DATA_A_IQ4_NL"] = "1";
-            if (fp16 && f16acc) {
+            اگر (fp16 && f16acc) {
                 fa_base_dict["ACC_TYPE_MAX"] = "float16_t(65504.0)";
             }
 
-            if (fp16) {
-#if defined(GGML_VULKAN_COOPMAT2_GLSLC_SUPPORT)
+            اگر (fp16) {
+#اگر defined(GGML_VULKAN_COOPMAT2_GLSLC_SUPPORT)
                 string_to_spv("flash_attn_f32_f16", "flash_attn_cm2.comp",
-                    merge_maps(fa_base_dict, {{"Q_TYPE", "float"}, {"D_TYPE", "float"}, {"D_TYPEV4", "vec4"}}), fp16, false, true, f16acc);
+                    merge_maps(fa_base_dict, {{"Q_TYPE", "float"}, {"D_TYPE", "float"}, {"D_TYPEV4", "vec4"}}), fp16, نادرست, درست, f16acc);
 #endif
 
-#if defined(GGML_VULKAN_COOPMAT_GLSLC_SUPPORT)
+#اگر defined(GGML_VULKAN_COOPMAT_GLSLC_SUPPORT)
                 string_to_spv("flash_attn_f32_f16", "flash_attn_cm1.comp",
-                    merge_maps(fa_base_dict, {{"Q_TYPE", "float"}, {"D_TYPE", "float"}, {"D_TYPEV4", "vec4"}, {"COOPMAT", "1"}}), fp16, true, false, f16acc);
+                    merge_maps(fa_base_dict, {{"Q_TYPE", "float"}, {"D_TYPE", "float"}, {"D_TYPEV4", "vec4"}, {"COOPMAT", "1"}}), fp16, درست, نادرست, f16acc);
 #endif
             }
 
             string_to_spv("flash_attn_f32_f16", "flash_attn.comp",
-                merge_maps(fa_base_dict, {{"Q_TYPE", "float"}, {"D_TYPE", "float"}, {"D_TYPEV4", "vec4"}}), fp16, false, false, f16acc);
+                merge_maps(fa_base_dict, {{"Q_TYPE", "float"}, {"D_TYPE", "float"}, {"D_TYPEV4", "vec4"}}), fp16, نادرست, نادرست, f16acc);
 
-            if (fp16) {
+            اگر (fp16) {
                 string_to_spv("flash_attn_f32_f16_dot2", "flash_attn.comp",
-                    merge_maps(fa_base_dict, {{"Q_TYPE", "float"}, {"D_TYPE", "float"}, {"D_TYPEV4", "vec4"}, {"DOT2_F16", "1"}}), fp16, false, false, f16acc);
+                    merge_maps(fa_base_dict, {{"Q_TYPE", "float"}, {"D_TYPE", "float"}, {"D_TYPEV4", "vec4"}, {"DOT2_F16", "1"}}), fp16, نادرست, نادرست, f16acc);
             }
 
-#if defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)
+#اگر defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)
             string_to_spv("flash_attn_f32_f16", "flash_attn.comp",
-                merge_maps(fa_base_dict, {{"Q_TYPE", "float"}, {"D_TYPE", "float"}, {"D_TYPEV4", "vec4"}, {"MMQ", "1"}, {"FA_MMQ_MIXED", "1"}}), fp16, false, false, f16acc, "_int8");
+                merge_maps(fa_base_dict, {{"Q_TYPE", "float"}, {"D_TYPE", "float"}, {"D_TYPEV4", "vec4"}, {"MMQ", "1"}, {"FA_MMQ_MIXED", "1"}}), fp16, نادرست, نادرست, f16acc, "_int8");
 #endif
         }
     }
 
-    const std::map<std::string, std::string> fa_bf16_dict = {
+    ثابت std::map<std::string, std::string> fa_bf16_dict = {
         {"FLOAT_TYPE",   "bfloat16_t"},
         {"FLOAT_TYPEV2", "bf16vec2"},
         {"FLOAT_TYPEV4", "bf16vec4"},
@@ -766,82 +766,82 @@ void process_shaders() {
         {"BFLOAT16",     "1"},
     };
 
-#if defined(GGML_VULKAN_BFLOAT16_GLSLC_SUPPORT) && defined(GGML_VULKAN_COOPMAT_GLSLC_SUPPORT)
+#اگر defined(GGML_VULKAN_BFLOAT16_GLSLC_SUPPORT) && defined(GGML_VULKAN_COOPMAT_GLSLC_SUPPORT)
     string_to_spv("flash_attn_f32_f16_bf16", "flash_attn_cm1.comp",
         merge_maps(fa_bf16_dict, {{"Q_TYPE", "float"}, {"D_TYPE", "float"}, {"D_TYPEV4", "vec4"}, {"COOPMAT", "1"}}),
-        true, true, false, false);
+        درست, درست, نادرست, نادرست);
 #endif
 
-#if defined(GGML_VULKAN_BFLOAT16_GLSLC_SUPPORT) && defined(GGML_VULKAN_COOPMAT2_GLSLC_SUPPORT)
+#اگر defined(GGML_VULKAN_BFLOAT16_GLSLC_SUPPORT) && defined(GGML_VULKAN_COOPMAT2_GLSLC_SUPPORT)
     string_to_spv("flash_attn_f32_f16_bf16", "flash_attn_cm2.comp",
         merge_maps(fa_bf16_dict, {{"Q_TYPE", "float"}, {"D_TYPE", "float"}, {"D_TYPEV4", "vec4"}}),
-        true, false, true, false);
+        درست, نادرست, درست, نادرست);
 #endif
 
     std::map<std::string, std::string> base_dict = {{"FLOAT_TYPE", "float"}, {"FLOAT_TYPEV2", "vec2"}};
 
-    for (const auto& tname : type_names) {
+    برای (ثابت auto& tname : type_names) {
         // mul mat vec
-        std::string data_a_key = "DATA_A_" + to_uppercase(tname);
+        std::string data_a_کلید = "DATA_A_" + to_uppercase(tname);
         std::string shader = (string_ends_with(tname, "_k") || string_starts_with(tname, "iq1_") || string_starts_with(tname, "iq2_") || string_starts_with(tname, "iq3_") || tname == "iq4_xs" || tname == "tq2_0" || tname == "tq1_0") ? "mul_mat_vec_" + tname + ".comp" : "mul_mat_vec.comp";
 
-        string_to_spv("mul_mat_vec_" + tname + "_f32_f32", shader, merge_maps(base_dict, {{data_a_key, "1"}, {"B_TYPE", "float"}, {"B_TYPEV2", "vec2"}, {"B_TYPEV4", "vec4"}, {"D_TYPE", "float"}}));
-        string_to_spv("mul_mat_vec_" + tname + "_f16_f32", shader, merge_maps(base_dict, {{data_a_key, "1"}, {"B_TYPE", "float16_t"}, {"B_TYPEV2", "f16vec2"}, {"B_TYPEV4", "f16vec4"}, {"D_TYPE", "float"}}));
+        string_to_spv("mul_mat_vec_" + tname + "_f32_f32", shader, merge_maps(base_dict, {{data_a_کلید, "1"}, {"B_TYPE", "float"}, {"B_TYPEV2", "vec2"}, {"B_TYPEV4", "vec4"}, {"D_TYPE", "float"}}));
+        string_to_spv("mul_mat_vec_" + tname + "_f16_f32", shader, merge_maps(base_dict, {{data_a_کلید, "1"}, {"B_TYPE", "float16_t"}, {"B_TYPEV2", "f16vec2"}, {"B_TYPEV4", "f16vec4"}, {"D_TYPE", "float"}}));
 
-        string_to_spv("mul_mat_vec_" + tname + "_f32_f32_subgroup", shader, merge_maps(base_dict, {{data_a_key, "1"}, {"B_TYPE", "float"}, {"B_TYPEV2", "vec2"}, {"B_TYPEV4", "vec4"}, {"D_TYPE", "float"}, {"USE_SUBGROUP_ADD", "1"}}));
-        string_to_spv("mul_mat_vec_" + tname + "_f16_f32_subgroup", shader, merge_maps(base_dict, {{data_a_key, "1"}, {"B_TYPE", "float16_t"}, {"B_TYPEV2", "f16vec2"}, {"B_TYPEV4", "f16vec4"}, {"D_TYPE", "float"}, {"USE_SUBGROUP_ADD", "1"}}));
+        string_to_spv("mul_mat_vec_" + tname + "_f32_f32_subgroup", shader, merge_maps(base_dict, {{data_a_کلید, "1"}, {"B_TYPE", "float"}, {"B_TYPEV2", "vec2"}, {"B_TYPEV4", "vec4"}, {"D_TYPE", "float"}, {"USE_SUBGROUP_ADD", "1"}}));
+        string_to_spv("mul_mat_vec_" + tname + "_f16_f32_subgroup", shader, merge_maps(base_dict, {{data_a_کلید, "1"}, {"B_TYPE", "float16_t"}, {"B_TYPEV2", "f16vec2"}, {"B_TYPEV4", "f16vec4"}, {"D_TYPE", "float"}, {"USE_SUBGROUP_ADD", "1"}}));
 
-        string_to_spv("mul_mat_vec_" + tname + "_f32_f32_subgroup_no_shmem", shader, merge_maps(base_dict, {{data_a_key, "1"}, {"B_TYPE", "float"}, {"B_TYPEV2", "vec2"}, {"B_TYPEV4", "vec4"}, {"D_TYPE", "float"}, {"USE_SUBGROUP_ADD_NO_SHMEM", "1"}}));
-        string_to_spv("mul_mat_vec_" + tname + "_f16_f32_subgroup_no_shmem", shader, merge_maps(base_dict, {{data_a_key, "1"}, {"B_TYPE", "float16_t"}, {"B_TYPEV2", "f16vec2"}, {"B_TYPEV4", "f16vec4"}, {"D_TYPE", "float"}, {"USE_SUBGROUP_ADD_NO_SHMEM", "1"}}));
+        string_to_spv("mul_mat_vec_" + tname + "_f32_f32_subgroup_no_shmem", shader, merge_maps(base_dict, {{data_a_کلید, "1"}, {"B_TYPE", "float"}, {"B_TYPEV2", "vec2"}, {"B_TYPEV4", "vec4"}, {"D_TYPE", "float"}, {"USE_SUBGROUP_ADD_NO_SHMEM", "1"}}));
+        string_to_spv("mul_mat_vec_" + tname + "_f16_f32_subgroup_no_shmem", shader, merge_maps(base_dict, {{data_a_کلید, "1"}, {"B_TYPE", "float16_t"}, {"B_TYPEV2", "f16vec2"}, {"B_TYPEV4", "f16vec4"}, {"D_TYPE", "float"}, {"USE_SUBGROUP_ADD_NO_SHMEM", "1"}}));
 
-#if defined(GGML_VULKAN_FLOAT_E2M1_GLSLC_SUPPORT) && defined(GGML_VULKAN_FLOAT_E4M3_GLSLC_SUPPORT)
-        if (tname == "mxfp4" || tname == "nvfp4") {
-            string_to_spv("mul_mat_vec_" + tname + "_f32_f32_ocp", shader, merge_maps(base_dict, {{data_a_key, "1"}, {"USE_OCP_FP4", "1"}, {"B_TYPE", "float"}, {"B_TYPEV2", "vec2"}, {"B_TYPEV4", "vec4"}, {"D_TYPE", "float"}}));
-            string_to_spv("mul_mat_vec_" + tname + "_f16_f32_ocp", shader, merge_maps(base_dict, {{data_a_key, "1"}, {"USE_OCP_FP4", "1"}, {"B_TYPE", "float16_t"}, {"B_TYPEV2", "f16vec2"}, {"B_TYPEV4", "f16vec4"}, {"D_TYPE", "float"}}));
-            string_to_spv("mul_mat_vec_" + tname + "_f32_f32_ocp_subgroup", shader, merge_maps(base_dict, {{data_a_key, "1"}, {"USE_OCP_FP4", "1"}, {"B_TYPE", "float"}, {"B_TYPEV2", "vec2"}, {"B_TYPEV4", "vec4"}, {"D_TYPE", "float"}, {"USE_SUBGROUP_ADD", "1"}}));
-            string_to_spv("mul_mat_vec_" + tname + "_f16_f32_ocp_subgroup", shader, merge_maps(base_dict, {{data_a_key, "1"}, {"USE_OCP_FP4", "1"}, {"B_TYPE", "float16_t"}, {"B_TYPEV2", "f16vec2"}, {"B_TYPEV4", "f16vec4"}, {"D_TYPE", "float"}, {"USE_SUBGROUP_ADD", "1"}}));
-            string_to_spv("mul_mat_vec_" + tname + "_f32_f32_ocp_subgroup_no_shmem", shader, merge_maps(base_dict, {{data_a_key, "1"}, {"USE_OCP_FP4", "1"}, {"B_TYPE", "float"}, {"B_TYPEV2", "vec2"}, {"B_TYPEV4", "vec4"}, {"D_TYPE", "float"}, {"USE_SUBGROUP_ADD_NO_SHMEM", "1"}}));
-            string_to_spv("mul_mat_vec_" + tname + "_f16_f32_ocp_subgroup_no_shmem", shader, merge_maps(base_dict, {{data_a_key, "1"}, {"USE_OCP_FP4", "1"}, {"B_TYPE", "float16_t"}, {"B_TYPEV2", "f16vec2"}, {"B_TYPEV4", "f16vec4"}, {"D_TYPE", "float"}, {"USE_SUBGROUP_ADD_NO_SHMEM", "1"}}));
-            string_to_spv("mul_mat_vec_id_" + tname + "_f32_f32_ocp", shader, merge_maps(base_dict, {{"MUL_MAT_ID", "1"}, {data_a_key, "1"}, {"USE_OCP_FP4", "1"}, {"B_TYPE", "float"}, {"B_TYPEV2", "vec2"}, {"B_TYPEV4", "vec4"}, {"D_TYPE", "float"}}));
-            string_to_spv("mul_mat_vec_id_" + tname + "_f32_f32_ocp_subgroup", shader, merge_maps(base_dict, {{"MUL_MAT_ID", "1"}, {data_a_key, "1"}, {"USE_OCP_FP4", "1"}, {"B_TYPE", "float"}, {"B_TYPEV2", "vec2"}, {"B_TYPEV4", "vec4"}, {"D_TYPE", "float"}, {"USE_SUBGROUP_ADD", "1"}}));
-            string_to_spv("mul_mat_vec_id_" + tname + "_f32_f32_ocp_subgroup_no_shmem", shader, merge_maps(base_dict, {{"MUL_MAT_ID", "1"}, {data_a_key, "1"}, {"USE_OCP_FP4", "1"}, {"B_TYPE", "float"}, {"B_TYPEV2", "vec2"}, {"B_TYPEV4", "vec4"}, {"D_TYPE", "float"}, {"USE_SUBGROUP_ADD_NO_SHMEM", "1"}}));
+#اگر defined(GGML_VULKAN_FLOAT_E2M1_GLSLC_SUPPORT) && defined(GGML_VULKAN_FLOAT_E4M3_GLSLC_SUPPORT)
+        اگر (tname == "mxfp4" || tname == "nvfp4") {
+            string_to_spv("mul_mat_vec_" + tname + "_f32_f32_ocp", shader, merge_maps(base_dict, {{data_a_کلید, "1"}, {"USE_OCP_FP4", "1"}, {"B_TYPE", "float"}, {"B_TYPEV2", "vec2"}, {"B_TYPEV4", "vec4"}, {"D_TYPE", "float"}}));
+            string_to_spv("mul_mat_vec_" + tname + "_f16_f32_ocp", shader, merge_maps(base_dict, {{data_a_کلید, "1"}, {"USE_OCP_FP4", "1"}, {"B_TYPE", "float16_t"}, {"B_TYPEV2", "f16vec2"}, {"B_TYPEV4", "f16vec4"}, {"D_TYPE", "float"}}));
+            string_to_spv("mul_mat_vec_" + tname + "_f32_f32_ocp_subgroup", shader, merge_maps(base_dict, {{data_a_کلید, "1"}, {"USE_OCP_FP4", "1"}, {"B_TYPE", "float"}, {"B_TYPEV2", "vec2"}, {"B_TYPEV4", "vec4"}, {"D_TYPE", "float"}, {"USE_SUBGROUP_ADD", "1"}}));
+            string_to_spv("mul_mat_vec_" + tname + "_f16_f32_ocp_subgroup", shader, merge_maps(base_dict, {{data_a_کلید, "1"}, {"USE_OCP_FP4", "1"}, {"B_TYPE", "float16_t"}, {"B_TYPEV2", "f16vec2"}, {"B_TYPEV4", "f16vec4"}, {"D_TYPE", "float"}, {"USE_SUBGROUP_ADD", "1"}}));
+            string_to_spv("mul_mat_vec_" + tname + "_f32_f32_ocp_subgroup_no_shmem", shader, merge_maps(base_dict, {{data_a_کلید, "1"}, {"USE_OCP_FP4", "1"}, {"B_TYPE", "float"}, {"B_TYPEV2", "vec2"}, {"B_TYPEV4", "vec4"}, {"D_TYPE", "float"}, {"USE_SUBGROUP_ADD_NO_SHMEM", "1"}}));
+            string_to_spv("mul_mat_vec_" + tname + "_f16_f32_ocp_subgroup_no_shmem", shader, merge_maps(base_dict, {{data_a_کلید, "1"}, {"USE_OCP_FP4", "1"}, {"B_TYPE", "float16_t"}, {"B_TYPEV2", "f16vec2"}, {"B_TYPEV4", "f16vec4"}, {"D_TYPE", "float"}, {"USE_SUBGROUP_ADD_NO_SHMEM", "1"}}));
+            string_to_spv("mul_mat_vec_id_" + tname + "_f32_f32_ocp", shader, merge_maps(base_dict, {{"MUL_MAT_ID", "1"}, {data_a_کلید, "1"}, {"USE_OCP_FP4", "1"}, {"B_TYPE", "float"}, {"B_TYPEV2", "vec2"}, {"B_TYPEV4", "vec4"}, {"D_TYPE", "float"}}));
+            string_to_spv("mul_mat_vec_id_" + tname + "_f32_f32_ocp_subgroup", shader, merge_maps(base_dict, {{"MUL_MAT_ID", "1"}, {data_a_کلید, "1"}, {"USE_OCP_FP4", "1"}, {"B_TYPE", "float"}, {"B_TYPEV2", "vec2"}, {"B_TYPEV4", "vec4"}, {"D_TYPE", "float"}, {"USE_SUBGROUP_ADD", "1"}}));
+            string_to_spv("mul_mat_vec_id_" + tname + "_f32_f32_ocp_subgroup_no_shmem", shader, merge_maps(base_dict, {{"MUL_MAT_ID", "1"}, {data_a_کلید, "1"}, {"USE_OCP_FP4", "1"}, {"B_TYPE", "float"}, {"B_TYPEV2", "vec2"}, {"B_TYPEV4", "vec4"}, {"D_TYPE", "float"}, {"USE_SUBGROUP_ADD_NO_SHMEM", "1"}}));
         }
 #endif
 
-        string_to_spv("mul_mat_vec_id_" + tname + "_f32_f32", shader, merge_maps(base_dict, {{"MUL_MAT_ID", "1"}, {data_a_key, "1"}, {"B_TYPE", "float"}, {"B_TYPEV2", "vec2"}, {"B_TYPEV4", "vec4"}, {"D_TYPE", "float"}}));
-        string_to_spv("mul_mat_vec_id_" + tname + "_f32_f32_subgroup", shader, merge_maps(base_dict, {{"MUL_MAT_ID", "1"}, {data_a_key, "1"}, {"B_TYPE", "float"}, {"B_TYPEV2", "vec2"}, {"B_TYPEV4", "vec4"}, {"D_TYPE", "float"}, {"USE_SUBGROUP_ADD", "1"}}));
-        string_to_spv("mul_mat_vec_id_" + tname + "_f32_f32_subgroup_no_shmem", shader, merge_maps(base_dict, {{"MUL_MAT_ID", "1"}, {data_a_key, "1"}, {"B_TYPE", "float"}, {"B_TYPEV2", "vec2"}, {"B_TYPEV4", "vec4"}, {"D_TYPE", "float"}, {"USE_SUBGROUP_ADD_NO_SHMEM", "1"}}));
+        string_to_spv("mul_mat_vec_id_" + tname + "_f32_f32", shader, merge_maps(base_dict, {{"MUL_MAT_ID", "1"}, {data_a_کلید, "1"}, {"B_TYPE", "float"}, {"B_TYPEV2", "vec2"}, {"B_TYPEV4", "vec4"}, {"D_TYPE", "float"}}));
+        string_to_spv("mul_mat_vec_id_" + tname + "_f32_f32_subgroup", shader, merge_maps(base_dict, {{"MUL_MAT_ID", "1"}, {data_a_کلید, "1"}, {"B_TYPE", "float"}, {"B_TYPEV2", "vec2"}, {"B_TYPEV4", "vec4"}, {"D_TYPE", "float"}, {"USE_SUBGROUP_ADD", "1"}}));
+        string_to_spv("mul_mat_vec_id_" + tname + "_f32_f32_subgroup_no_shmem", shader, merge_maps(base_dict, {{"MUL_MAT_ID", "1"}, {data_a_کلید, "1"}, {"B_TYPE", "float"}, {"B_TYPEV2", "vec2"}, {"B_TYPEV4", "vec4"}, {"D_TYPE", "float"}, {"USE_SUBGROUP_ADD_NO_SHMEM", "1"}}));
 
         // mul mat vec with integer dot product
-#if defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)
-        if (is_legacy_quant(tname) || tname == "mxfp4" || is_k_quant(tname) || tname == "iq1_s" || tname == "iq1_m" || tname == "iq4_xs") {
-            string_to_spv("mul_mat_vec_" + tname + "_q8_1_f32", "mul_mat_vecq.comp", merge_maps(base_dict, {{data_a_key, "1"}, {"D_TYPE", "float"}, {"FLOAT_TYPE", "float"}, {"FLOAT_TYPEV2", "vec2"}, {"ACC_TYPE", "float"}}));
-            string_to_spv("mul_mat_vec_" + tname + "_q8_1_f32_subgroup", "mul_mat_vecq.comp", merge_maps(base_dict, {{data_a_key, "1"}, {"D_TYPE", "float"}, {"FLOAT_TYPE", "float"}, {"FLOAT_TYPEV2", "vec2"}, {"ACC_TYPE", "float"}, {"USE_SUBGROUP_ADD", "1"}}));
-            string_to_spv("mul_mat_vec_" + tname + "_q8_1_f32_subgroup_no_shmem", "mul_mat_vecq.comp", merge_maps(base_dict, {{data_a_key, "1"}, {"D_TYPE", "float"}, {"FLOAT_TYPE", "float"}, {"FLOAT_TYPEV2", "vec2"}, {"ACC_TYPE", "float"}, {"USE_SUBGROUP_ADD_NO_SHMEM", "1"}}));
+#اگر defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)
+        اگر (is_legacy_quant(tname) || tname == "mxfp4" || is_k_quant(tname) || tname == "iq1_s" || tname == "iq1_m" || tname == "iq4_xs") {
+            string_to_spv("mul_mat_vec_" + tname + "_q8_1_f32", "mul_mat_vecq.comp", merge_maps(base_dict, {{data_a_کلید, "1"}, {"D_TYPE", "float"}, {"FLOAT_TYPE", "float"}, {"FLOAT_TYPEV2", "vec2"}, {"ACC_TYPE", "float"}}));
+            string_to_spv("mul_mat_vec_" + tname + "_q8_1_f32_subgroup", "mul_mat_vecq.comp", merge_maps(base_dict, {{data_a_کلید, "1"}, {"D_TYPE", "float"}, {"FLOAT_TYPE", "float"}, {"FLOAT_TYPEV2", "vec2"}, {"ACC_TYPE", "float"}, {"USE_SUBGROUP_ADD", "1"}}));
+            string_to_spv("mul_mat_vec_" + tname + "_q8_1_f32_subgroup_no_shmem", "mul_mat_vecq.comp", merge_maps(base_dict, {{data_a_کلید, "1"}, {"D_TYPE", "float"}, {"FLOAT_TYPE", "float"}, {"FLOAT_TYPEV2", "vec2"}, {"ACC_TYPE", "float"}, {"USE_SUBGROUP_ADD_NO_SHMEM", "1"}}));
 
-            string_to_spv("mul_mat_vec_id_" + tname + "_q8_1_f32", "mul_mat_vecq.comp", merge_maps(base_dict, {{"MUL_MAT_ID", "1"}, {data_a_key, "1"}, {"D_TYPE", "float"}, {"FLOAT_TYPE", "float"}, {"FLOAT_TYPEV2", "vec2"}, {"ACC_TYPE", "float"}}));
-            string_to_spv("mul_mat_vec_id_" + tname + "_q8_1_f32_subgroup", "mul_mat_vecq.comp", merge_maps(base_dict, {{"MUL_MAT_ID", "1"}, {data_a_key, "1"}, {"D_TYPE", "float"}, {"FLOAT_TYPE", "float"}, {"FLOAT_TYPEV2", "vec2"}, {"ACC_TYPE", "float"}, {"USE_SUBGROUP_ADD", "1"}}));
-            string_to_spv("mul_mat_vec_id_" + tname + "_q8_1_f32_subgroup_no_shmem", "mul_mat_vecq.comp", merge_maps(base_dict, {{"MUL_MAT_ID", "1"}, {data_a_key, "1"}, {"D_TYPE", "float"}, {"FLOAT_TYPE", "float"}, {"FLOAT_TYPEV2", "vec2"}, {"ACC_TYPE", "float"}, {"USE_SUBGROUP_ADD_NO_SHMEM", "1"}}));
+            string_to_spv("mul_mat_vec_id_" + tname + "_q8_1_f32", "mul_mat_vecq.comp", merge_maps(base_dict, {{"MUL_MAT_ID", "1"}, {data_a_کلید, "1"}, {"D_TYPE", "float"}, {"FLOAT_TYPE", "float"}, {"FLOAT_TYPEV2", "vec2"}, {"ACC_TYPE", "float"}}));
+            string_to_spv("mul_mat_vec_id_" + tname + "_q8_1_f32_subgroup", "mul_mat_vecq.comp", merge_maps(base_dict, {{"MUL_MAT_ID", "1"}, {data_a_کلید, "1"}, {"D_TYPE", "float"}, {"FLOAT_TYPE", "float"}, {"FLOAT_TYPEV2", "vec2"}, {"ACC_TYPE", "float"}, {"USE_SUBGROUP_ADD", "1"}}));
+            string_to_spv("mul_mat_vec_id_" + tname + "_q8_1_f32_subgroup_no_shmem", "mul_mat_vecq.comp", merge_maps(base_dict, {{"MUL_MAT_ID", "1"}, {data_a_کلید, "1"}, {"D_TYPE", "float"}, {"FLOAT_TYPE", "float"}, {"FLOAT_TYPEV2", "vec2"}, {"ACC_TYPE", "float"}, {"USE_SUBGROUP_ADD_NO_SHMEM", "1"}}));
         }
 #endif
 
         // Dequant shaders
-        if (tname != "f16" && tname != "bf16") {
-            string_to_spv("dequant_" + tname, "dequant_" + tname + ".comp", merge_maps(base_dict, {{data_a_key, "1"}, {"D_TYPE", "float16_t"}}));
+        اگر (tname != "f16" && tname != "bf16") {
+            string_to_spv("dequant_" + tname, "dequant_" + tname + ".comp", merge_maps(base_dict, {{data_a_کلید, "1"}, {"D_TYPE", "float16_t"}}));
         }
         // Fused dequant+transpose variant for FA quant-KV (per-head-contiguous f16 scratch).
-        if (tname == "q8_0") {
-            string_to_spv("dequant_" + tname + "_transpose", "dequant_" + tname + ".comp", merge_maps(base_dict, {{data_a_key, "1"}, {"D_TYPE", "float16_t"}, {"DEQUANT_TRANSPOSE", "1"}}));
+        اگر (tname == "q8_0") {
+            string_to_spv("dequant_" + tname + "_transpose", "dequant_" + tname + ".comp", merge_maps(base_dict, {{data_a_کلید, "1"}, {"D_TYPE", "float16_t"}, {"DEQUANT_TRANSPOSE", "1"}}));
         }
 
         shader = (tname == "f32" || tname == "f16" || tname == "bf16") ? "get_rows.comp" : "get_rows_quant.comp";
 
-        if (tname == "f16") {
-            string_to_spv("get_rows_" + tname, shader, merge_maps(base_dict, {{"TEMP_TYPE", "FLOAT_TYPE"}, {data_a_key, "1"}, {"B_TYPE", "int"}, {"D_TYPE", "float16_t"}, {"OPTIMIZATION_ERROR_WORKAROUND", "1"}}));
-        } else {
-            string_to_spv("get_rows_" + tname, shader, merge_maps(base_dict, {{"TEMP_TYPE", "FLOAT_TYPE"}, {data_a_key, "1"}, {"B_TYPE", "int"}, {"D_TYPE", "float16_t"}}));
+        اگر (tname == "f16") {
+            string_to_spv("get_rows_" + tname, shader, merge_maps(base_dict, {{"TEMP_TYPE", "FLOAT_TYPE"}, {data_a_کلید, "1"}, {"B_TYPE", "int"}, {"D_TYPE", "float16_t"}, {"OPTIMIZATION_ERROR_WORKAROUND", "1"}}));
+        } وگرنه {
+            string_to_spv("get_rows_" + tname, shader, merge_maps(base_dict, {{"TEMP_TYPE", "FLOAT_TYPE"}, {data_a_کلید, "1"}, {"B_TYPE", "int"}, {"D_TYPE", "float16_t"}}));
         }
-        string_to_spv("get_rows_" + tname + "_f32", shader, merge_maps(base_dict, {{"TEMP_TYPE", "FLOAT_TYPE"}, {data_a_key, "1"}, {"B_TYPE", "int"}, {"D_TYPE", "float"}}));
+        string_to_spv("get_rows_" + tname + "_f32", shader, merge_maps(base_dict, {{"TEMP_TYPE", "FLOAT_TYPE"}, {data_a_کلید, "1"}, {"B_TYPE", "int"}, {"D_TYPE", "float"}}));
     }
 
     string_to_spv("get_rows_i32", "get_rows.comp", {{"TEMP_TYPE", "uint"}, {"A_TYPE", "uint"}, {"B_TYPE", "int"}, {"D_TYPE", "uint"}});
@@ -888,32 +888,32 @@ void process_shaders() {
     string_to_spv("cpy_transpose_02_16", "copy_transpose_02.comp", {{"A_TYPE", "uint16_t"}, {"D_TYPE", "uint16_t"}});
     string_to_spv("cpy_transpose_02_32", "copy_transpose_02.comp", {{"A_TYPE", "uint"}, {"D_TYPE", "uint"}});
 
-    for (std::string t : {"q1_0", "q2_0", "q4_0", "q4_1", "q5_0", "q5_1", "q8_0", "iq4_nl"}) {
+    برای (std::string t : {"q1_0", "q2_0", "q4_0", "q4_1", "q5_0", "q5_1", "q8_0", "iq4_nl"}) {
         string_to_spv("cpy_f32_" + t, "copy_to_quant.comp", {{"DATA_A_" + to_uppercase(t), "1"}, {"S_TYPE", "float"}, {"D_TYPE", "float"}, {"FLOAT_TYPE", "float"}});
         string_to_spv("cpy_" + t + "_f32", "copy_from_quant.comp", {{"DATA_A_" + to_uppercase(t), "1"}, {"D_TYPE", "float"}, {"FLOAT_TYPE", "float"}});
     }
 
-    for (auto src : {std::pair{"f32", "float"}, std::pair{"f16", "float16_t"}}) {
-        for (std::string dst : {"f32", "f16", "bf16", "q1_0", "q2_0", "q4_0", "q4_1", "q5_0", "q5_1", "q8_0", "iq4_nl"}) {
+    برای (auto src : {std::pair{"f32", "float"}, std::pair{"f16", "float16_t"}}) {
+        برای (std::string dst : {"f32", "f16", "bf16", "q1_0", "q2_0", "q4_0", "q4_1", "q5_0", "q5_1", "q8_0", "iq4_nl"}) {
             string_to_spv("set_rows_" + std::string(src.first) + "_" + dst + "_i32", "copy_to_quant.comp", {{"SET_ROWS", "1"}, {"DATA_A_" + to_uppercase(dst), "1"}, {"B_TYPE", "uint"}, {"B_SIZE", "32"}, {"S_TYPE", src.second}, {"D_TYPE", "float"}, {"FLOAT_TYPE", "float"}});
             string_to_spv("set_rows_" + std::string(src.first) + "_" + dst + "_i64", "copy_to_quant.comp", {{"SET_ROWS", "1"}, {"DATA_A_" + to_uppercase(dst), "1"}, {"B_TYPE", "uvec2"}, {"B_SIZE", "64"}, {"S_TYPE", src.second}, {"D_TYPE", "float"}, {"FLOAT_TYPE", "float"}});
         }
     }
 
-    auto get_type_str = [](bool f16) {
-        return f16 ? "float16_t" : "float";
+    auto get_type_str = [](منطقی f16) {
+        بازگشت f16 ? "float16_t" : "float";
     };
-    auto get_suffix = [](bool src0_f16, bool src1_f16, bool dst_f16) {
+    auto get_suffix = [](منطقی src0_f16, منطقی src1_f16, منطقی dst_f16) {
         std::string s;
         s += std::string(src0_f16 ? "_f16" : "_f32");
         s += std::string(src1_f16 ? "_f16" : "_f32");
         s += std::string(dst_f16 ? "_f16" : "_f32");
-        return s;
+        بازگشت s;
     };
-    for (std::string op : {"add", "sub", "mul", "div", "add_rms", }) {
-    for (auto src0_f16 : {false, true}) {
-    for (auto src1_f16 : {false, true}) {
-    for (auto dst_f16  : {false, true}) {
+    برای (std::string op : {"add", "sub", "mul", "div", "add_rms", }) {
+    برای (auto src0_f16 : {نادرست, درست}) {
+    برای (auto src1_f16 : {نادرست, درست}) {
+    برای (auto dst_f16  : {نادرست, درست}) {
         auto source = op == "add_rms" ? std::string("add") : op;
         auto name = op + get_suffix(src0_f16, src1_f16, dst_f16);
         auto add_rms = op == "add_rms" ? "1" : "0";
@@ -932,9 +932,9 @@ void process_shaders() {
 
     string_to_spv("fa_mask_opt", "flash_attn_mask_opt.comp", {});
 
-#if defined(GGML_VULKAN_COOPMAT_GLSLC_SUPPORT)
-    string_to_spv("fa_decode_ph1", "flash_attn_decode_phase_1.comp", {}, true, true, false, false);
-    string_to_spv("fa_decode_ph2", "flash_attn_decode_phase_2.comp", {}, true, true, false, false);
+#اگر defined(GGML_VULKAN_COOPMAT_GLSLC_SUPPORT)
+    string_to_spv("fa_decode_ph1", "flash_attn_decode_phase_1.comp", {}, درست, درست, نادرست, نادرست);
+    string_to_spv("fa_decode_ph2", "flash_attn_decode_phase_2.comp", {}, درست, درست, نادرست, نادرست);
 #endif
 
     string_to_spv("fa_sparse_compact", "flash_attn_sparse_compact.comp", {});
@@ -1119,8 +1119,8 @@ void process_shaders() {
     string_to_spv("count_experts", "count_experts.comp", merge_maps(base_dict, {{"A_TYPE", "uint"}, {"D_TYPE", "uint"}}));
     string_to_spv("count_experts_subgroup", "count_experts.comp", merge_maps(base_dict, {{"A_TYPE", "uint"}, {"D_TYPE", "uint"}, {"USE_SUBGROUPS", "1"}}));
 
-    for (std::string dim_str : {"", "_3d"}) {
-        for (bool bda : {false, true}) {
+    برای (std::string dim_str : {"", "_3d"}) {
+        برای (منطقی bda : {نادرست, درست}) {
             std::string bda_str = bda ? "_bda" : "";
             std::string bda_def = bda ? "1" : "0";
             string_to_spv("im2col" + dim_str + "_f32" + bda_str, "im2col" + dim_str + ".comp", merge_maps(base_dict, {{"A_TYPE", "float"}, {"D_TYPE", "float"}, {"D_SIZE", "4"}, {"BDA", bda_def}}));
@@ -1165,55 +1165,55 @@ void process_shaders() {
 
     string_to_spv("solve_tri_f32", "solve_tri.comp", merge_maps(base_dict, {{"A_TYPE", "float"}, {"B_TYPE", "float"}, {"D_TYPE", "float"}}));
 
-    for (auto transpose : {false, true}) {
-        for (auto unroll : {false, true}) {
-            for (auto a_f16 : {false, true}) {
+    برای (auto transpose : {نادرست, درست}) {
+        برای (auto unroll : {نادرست, درست}) {
+            برای (auto a_f16 : {نادرست, درست}) {
                 std::map<std::string, std::string> defines = {
                     {"A_TYPE", a_f16 ? "float16_t" : "float"}, {"B_TYPE", "float"}, {"D_TYPE", "float"},
                     {"USE_COLLECTIVES", "1"}, {"UNROLL", unroll ? "[[unroll]]" : ""},
                 };
-                if (transpose) defines["TRANSPOSE"] = "1";
+                اگر (transpose) defines["TRANSPOSE"] = "1";
                 std::string name = std::string(transpose ? "conv_transpose_2d": "conv2d")
                     + (a_f16 ? "_f16" : "") + "_f32";
                 string_to_spv(name + (unroll ? "_unroll" : ""), "conv2d_mm.comp", defines);
-#if defined(GGML_VULKAN_COOPMAT2_GLSLC_SUPPORT)
-                if (unroll) {
+#اگر defined(GGML_VULKAN_COOPMAT2_GLSLC_SUPPORT)
+                اگر (unroll) {
                     auto cm2_defines = defines;
                     cm2_defines["COOPMAT2"] = "1";
-                    string_to_spv(name, "conv2d_mm.comp", cm2_defines, true, false, true);
+                    string_to_spv(name, "conv2d_mm.comp", cm2_defines, درست, نادرست, درست);
                 }
 #endif
-#if defined(GGML_VULKAN_COOPMAT_GLSLC_SUPPORT)
-                if (unroll) {
+#اگر defined(GGML_VULKAN_COOPMAT_GLSLC_SUPPORT)
+                اگر (unroll) {
                     auto cm1_defines = defines;
                     cm1_defines["COOPMAT"] = "1";
-                    string_to_spv(name, "conv2d_mm.comp", cm1_defines, true, true, false);
+                    string_to_spv(name, "conv2d_mm.comp", cm1_defines, درست, درست, نادرست);
                 }
 #endif
             }
         }
     }
 
-    for (auto unroll : {false, true}) {
-        for (auto a_f16 : {false, true}) {
+    برای (auto unroll : {نادرست, درست}) {
+        برای (auto a_f16 : {نادرست, درست}) {
             std::map<std::string, std::string> defines = {
                 {"A_TYPE", a_f16 ? "float16_t" : "float"}, {"B_TYPE", "float"}, {"D_TYPE", "float"},
                 {"UNROLL", unroll ? "[[unroll]]" : ""},
             };
             std::string name = std::string("conv3d") + (a_f16 ? "_f16" : "") + "_f32";
             string_to_spv(name + (unroll ? "_unroll" : ""), "conv3d_mm.comp", defines);
-#if defined(GGML_VULKAN_COOPMAT2_GLSLC_SUPPORT)
-            if (unroll) {
+#اگر defined(GGML_VULKAN_COOPMAT2_GLSLC_SUPPORT)
+            اگر (unroll) {
                 auto cm2_defines = defines;
                 cm2_defines["COOPMAT2"] = "1";
-                string_to_spv(name, "conv3d_mm.comp", cm2_defines, true, false, true);
+                string_to_spv(name, "conv3d_mm.comp", cm2_defines, درست, نادرست, درست);
             }
 #endif
-#if defined(GGML_VULKAN_COOPMAT_GLSLC_SUPPORT)
-            if (unroll) {
+#اگر defined(GGML_VULKAN_COOPMAT_GLSLC_SUPPORT)
+            اگر (unroll) {
                 auto cm1_defines = defines;
                 cm1_defines["COOPMAT"] = "1";
-                string_to_spv(name, "conv3d_mm.comp", cm1_defines, true, true, false);
+                string_to_spv(name, "conv3d_mm.comp", cm1_defines, درست, درست, نادرست);
             }
 #endif
         }
@@ -1238,12 +1238,12 @@ void process_shaders() {
 
     string_to_spv("topk_moe_f32", "topk_moe.comp", {});
 
-    for (auto &c : compiles) {
+    برای (auto &c : compiles) {
         c.wait();
     }
 }
 
-void write_output_files() {
+تهی write_output_files() {
     std::stringstream hdr = make_generic_stringstream();
     std::stringstream src = make_generic_stringstream();
 
@@ -1251,60 +1251,60 @@ void write_output_files() {
     src << "#include \"" << basename(target_hpp) << "\"\n\n";
 
     std::sort(shader_fnames.begin(), shader_fnames.end());
-    for (const auto& pair : shader_fnames) {
-        const std::string& name = pair.first;
+    برای (ثابت auto& pair : shader_fnames) {
+        ثابت std::string& name = pair.first;
         #ifdef _WIN32
             std::string path = pair.second;
             std::replace(path.begin(), path.end(), '/', '\\' );
-        #else
-            const std::string& path = pair.second;
+        #وگرنه
+            ثابت std::string& path = pair.second;
         #endif
 
         hdr << "extern const uint64_t " << name << "_len;\n";
         hdr << "extern const unsigned char " << name << "_data[];\n\n";
 
-        if (input_filepath != "") {
-            std::string data = read_binary_file(path);
-            if (data.empty()) {
-                continue;
+        اگر (درون_داد_filepath != "") {
+            std::string data = read_دودویی_file(path);
+            اگر (data.empty()) {
+                ادامه;
             }
 
             src << "const uint64_t " << name << "_len = " << data.size() << ";\n";
             src << "const unsigned char " << name << "_data[" << data.size() << "] = {\n" << std::hex;
-            auto bytes = reinterpret_cast<const uint8_t*>(data.data());
-            for (size_t i = 0; i < data.size(); ++i) {
-                src << "0x" << static_cast<int>(bytes[i]) << ",";
-                if ((i + 1) % 12 == 0) src << "\n";
+            auto bytes = reinterpret_cast<ثابت uint8_t*>(data.data());
+            برای (size_t i = 0; i < data.size(); ++i) {
+                src << "0x" << static_cast<صحیح>(bytes[i]) << ",";
+                اگر ((i + 1) % 12 == 0) src << "\n";
             }
             src << std::dec << "\n};\n\n";
         }
     }
 
     std::string suffixes[2] = {"_f32", "_f16"};
-    for (std::string op : {"add", "sub", "mul", "div", "add_rms"}) {
+    برای (std::string op : {"add", "sub", "mul", "div", "add_rms"}) {
         hdr << "extern const void * " << op << "_data[2][2][2];\n";
         hdr << "extern const uint64_t " << op << "_len[2][2][2];\n";
 
         std::string op_file = op == "add_rms" ? "add.comp" : std::string(op) + ".comp";
-        if (basename(input_filepath) != op_file) {
-            continue;
+        اگر (basename(درون_داد_filepath) != op_file) {
+            ادامه;
         }
         std::stringstream data = make_generic_stringstream();
         std::stringstream len  = make_generic_stringstream();
         data << "const void * " << op << "_data[2][2][2] = ";
         len  << "const uint64_t " << op << "_len[2][2][2] = ";
-        for (uint32_t t0 = 0; t0 < 2; ++t0) {
-            if (t0 == 0) {
+        برای (uint32_t t0 = 0; t0 < 2; ++t0) {
+            اگر (t0 == 0) {
                 data << "{";
                 len  << "{";
             }
-            for (uint32_t t1 = 0; t1 < 2; ++t1) {
-                if (t1 == 0) {
+            برای (uint32_t t1 = 0; t1 < 2; ++t1) {
+                اگر (t1 == 0) {
                     data << "{";
                     len  << "{";
                 }
-                for (uint32_t t2 = 0; t2 < 2; ++t2) {
-                    if (t2 == 0) {
+                برای (uint32_t t2 = 0; t2 < 2; ++t2) {
+                    اگر (t2 == 0) {
                         data << "{";
                         len  << "{";
                     }
@@ -1312,17 +1312,17 @@ void write_output_files() {
                     len  << op << suffixes[t0] << suffixes[t1] << suffixes[t2];
                     data << "_data,";
                     len  << "_len,";
-                    if (t2 == 1) {
+                    اگر (t2 == 1) {
                         data << "}, ";
                         len  << "}, ";
                     }
                 }
-                if (t1 == 1) {
+                اگر (t1 == 1) {
                     data << "}, ";
                     len  << "}, ";
                 }
             }
-            if (t0 == 1) {
+            اگر (t0 == 1) {
                 data << "};\n";
                 len  << "};\n";
             }
@@ -1333,110 +1333,110 @@ void write_output_files() {
 
     std::vector<std::string> btypes = {"f16", "f32"};
 
-#if defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)
+#اگر defined(GGML_VULKAN_INTEGER_DOT_GLSLC_SUPPORT)
     btypes.push_back("q8_1");
 #endif
 
-    for (const std::string& btype : btypes) {
-    for (const auto& tname : type_names) {
-        if (btype == "q8_1" && !is_legacy_quant(tname) && tname != "mxfp4" && !is_k_quant(tname) && tname != "iq1_s" && tname != "iq1_m" && tname != "iq4_xs") {
-            continue;
+    برای (ثابت std::string& btype : btypes) {
+    برای (ثابت auto& tname : type_names) {
+        اگر (btype == "q8_1" && !is_legacy_quant(tname) && tname != "mxfp4" && !is_k_quant(tname) && tname != "iq1_s" && tname != "iq1_m" && tname != "iq4_xs") {
+            ادامه;
         }
         hdr << "extern const void * arr_dmmv_"   << tname << "_" << btype << "_f32_data[3];\n";
         hdr << "extern const uint64_t arr_dmmv_" << tname << "_" << btype << "_f32_len[3];\n";
-        if (basename(input_filepath) == "mul_mat_vec.comp") {
+        اگر (basename(درون_داد_filepath) == "mul_mat_vec.comp") {
             src << "const void * arr_dmmv_"   << tname << "_" << btype << "_f32_data[3] = {mul_mat_vec_" << tname << "_" << btype << "_f32_data, mul_mat_vec_" << tname << "_" << btype << "_f32_subgroup_data, mul_mat_vec_" << tname << "_" << btype << "_f32_subgroup_no_shmem_data};\n";
             src << "const uint64_t arr_dmmv_" << tname << "_" << btype << "_f32_len[3] =  {mul_mat_vec_" << tname << "_" << btype << "_f32_len,  mul_mat_vec_" << tname << "_" << btype << "_f32_subgroup_len, mul_mat_vec_"  << tname << "_" << btype << "_f32_subgroup_no_shmem_len};\n";
         }
 
-        if (btype == "f16") {
-            continue;
+        اگر (btype == "f16") {
+            ادامه;
         }
         hdr << "extern const void * arr_dmmv_id_"   << tname << "_" << btype << "_f32_data[3];\n";
         hdr << "extern const uint64_t arr_dmmv_id_" << tname << "_" << btype << "_f32_len[3];\n";
-        if (basename(input_filepath) == "mul_mat_vec.comp") {
+        اگر (basename(درون_داد_filepath) == "mul_mat_vec.comp") {
             src << "const void * arr_dmmv_id_"   << tname << "_" << btype << "_f32_data[3] = {mul_mat_vec_id_" << tname << "_" << btype << "_f32_data, mul_mat_vec_id_" << tname << "_" << btype << "_f32_subgroup_data, mul_mat_vec_id_" << tname << "_" << btype << "_f32_subgroup_no_shmem_data};\n";
             src << "const uint64_t arr_dmmv_id_" << tname << "_" << btype << "_f32_len[3] =  {mul_mat_vec_id_" << tname << "_" << btype << "_f32_len,  mul_mat_vec_id_" << tname << "_" << btype << "_f32_subgroup_len, mul_mat_vec_id_"  << tname << "_" << btype << "_f32_subgroup_no_shmem_len};\n";
         }
     }
     }
 
-#if defined(GGML_VULKAN_FLOAT_E2M1_GLSLC_SUPPORT) && defined(GGML_VULKAN_FLOAT_E4M3_GLSLC_SUPPORT)
-    for (const std::string& btype : {"f16", "f32"}) {
-    for (const std::string& tname : {"mxfp4", "nvfp4"}) {
+#اگر defined(GGML_VULKAN_FLOAT_E2M1_GLSLC_SUPPORT) && defined(GGML_VULKAN_FLOAT_E4M3_GLSLC_SUPPORT)
+    برای (ثابت std::string& btype : {"f16", "f32"}) {
+    برای (ثابت std::string& tname : {"mxfp4", "nvfp4"}) {
         hdr << "extern const void * arr_dmmv_"   << tname << "_" << btype << "_f32_ocp_data[3];\n";
         hdr << "extern const uint64_t arr_dmmv_" << tname << "_" << btype << "_f32_ocp_len[3];\n";
-        if (basename(input_filepath) == "mul_mat_vec.comp") {
+        اگر (basename(درون_داد_filepath) == "mul_mat_vec.comp") {
             src << "const void * arr_dmmv_"   << tname << "_" << btype << "_f32_ocp_data[3] = {mul_mat_vec_" << tname << "_" << btype << "_f32_ocp_data, mul_mat_vec_" << tname << "_" << btype << "_f32_ocp_subgroup_data, mul_mat_vec_" << tname << "_" << btype << "_f32_ocp_subgroup_no_shmem_data};\n";
             src << "const uint64_t arr_dmmv_" << tname << "_" << btype << "_f32_ocp_len[3] =  {mul_mat_vec_" << tname << "_" << btype << "_f32_ocp_len,  mul_mat_vec_" << tname << "_" << btype << "_f32_ocp_subgroup_len, mul_mat_vec_"  << tname << "_" << btype << "_f32_ocp_subgroup_no_shmem_len};\n";
         }
     }
     }
-    for (const std::string& tname : {"mxfp4", "nvfp4"}) {
+    برای (ثابت std::string& tname : {"mxfp4", "nvfp4"}) {
         hdr << "extern const void * arr_dmmv_id_"   << tname << "_f32_f32_ocp_data[3];\n";
         hdr << "extern const uint64_t arr_dmmv_id_" << tname << "_f32_f32_ocp_len[3];\n";
-        if (basename(input_filepath) == "mul_mat_vec.comp") {
+        اگر (basename(درون_داد_filepath) == "mul_mat_vec.comp") {
             src << "const void * arr_dmmv_id_"   << tname << "_f32_f32_ocp_data[3] = {mul_mat_vec_id_" << tname << "_f32_f32_ocp_data, mul_mat_vec_id_" << tname << "_f32_f32_ocp_subgroup_data, mul_mat_vec_id_" << tname << "_f32_f32_ocp_subgroup_no_shmem_data};\n";
             src << "const uint64_t arr_dmmv_id_" << tname << "_f32_f32_ocp_len[3] =  {mul_mat_vec_id_" << tname << "_f32_f32_ocp_len,  mul_mat_vec_id_" << tname << "_f32_f32_ocp_subgroup_len, mul_mat_vec_id_"  << tname << "_f32_f32_ocp_subgroup_no_shmem_len};\n";
         }
     }
 #endif
 
-    if (input_filepath == "") {
+    اگر (درون_داد_filepath == "") {
         write_file_if_changed(target_hpp, hdr.str());
     }
-    if (target_cpp != "") {
-        write_binary_file(target_cpp, src.str());
+    اگر (target_cpp != "") {
+        write_دودویی_file(target_cpp, src.str());
     }
 }
 
 } // namespace
 
-int main(int argc, char** argv) {
+صحیح اصلی(صحیح argc, نویسه** argv) {
     std::map<std::string, std::string> args;
-    for (int i = 1; i < argc; ++i) {
+    برای (صحیح i = 1; i < argc; ++i) {
         std::string arg = argv[i];
-        if (arg.rfind("--", 0) == 0) {
-            if (i + 1 < argc && argv[i + 1][0] != '-') {
+        اگر (arg.rfind("--", 0) == 0) {
+            اگر (i + 1 < argc && argv[i + 1][0] != '-') {
                 args[arg] = argv[i + 1];
                 ++i;
-            } else {
+            } وگرنه {
                 args[arg] = "";
             }
         }
     }
 
-    if (args.find("--glslc") != args.end()) {
+    اگر (args.find("--glslc") != args.end()) {
         GLSLC = args["--glslc"]; // Path to glslc
     }
-    if (args.find("--source") != args.end()) {
-        input_filepath = args["--source"]; // The shader source file to compile
+    اگر (args.find("--source") != args.end()) {
+        درون_داد_filepath = args["--source"]; // The shader source file to compile
     }
-    if (args.find("--output-dir") != args.end()) {
+    اگر (args.find("--output-dir") != args.end()) {
         output_dir = args["--output-dir"]; // Directory for containing SPIR-V output
     }
-    if (args.find("--target-hpp") != args.end()) {
+    اگر (args.find("--target-hpp") != args.end()) {
         target_hpp = args["--target-hpp"]; // Path to generated header file
     }
-    if (args.find("--target-cpp") != args.end()) {
+    اگر (args.find("--target-cpp") != args.end()) {
         target_cpp = args["--target-cpp"]; // Path to generated cpp file
     }
 
-    if (!directory_exists(output_dir)) {
-        if (!create_directory(output_dir)) {
+    اگر (!directory_exists(output_dir)) {
+        اگر (!create_directory(output_dir)) {
             std::cerr << "Error creating output directory: " << output_dir << "\n";
-            return EXIT_FAILURE;
+            بازگشت EXIT_FAILURE;
         }
     }
 
     process_shaders();
 
-    if (compile_failed) {
+    اگر (compile_failed) {
         std::cerr << "vulkan-shaders-gen: one or more shaders failed to compile" << std::endl;
-        return EXIT_FAILURE;
+        بازگشت EXIT_FAILURE;
     }
 
     write_output_files();
 
-    return EXIT_SUCCESS;
+    بازگشت EXIT_SUCCESS;
 }

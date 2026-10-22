@@ -10,55 +10,55 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#include "conv.hpp"
+#شامل "conv.hpp"
 
-static  void conv_transpose_1d_kernel(
-        const int s0, const int output_size,
-        const int src0_ne0, const int src0_ne1, const int src0_ne2,
-        const int src1_ne0, const int dst_ne0,
-        const float * src0, const float * src1,  float * dst,
-        const sycl::nd_item<3> &item_ct1) {
-    int global_index = item_ct1.get_local_id(2) +
+ایستا  تهی conv_transpose_1d_kernel(
+        ثابت صحیح s0, ثابت صحیح output_size,
+        ثابت صحیح src0_ne0, ثابت صحیح src0_ne1, ثابت صحیح src0_ne2,
+        ثابت صحیح src1_ne0, ثابت صحیح dst_ne0,
+        ثابت اعشاری * src0, ثابت اعشاری * src1,  اعشاری * dst,
+        ثابت sycl::nd_item<3> &item_ct1) {
+    صحیح global_index = item_ct1.get_local_id(2) +
                        item_ct1.get_group(2) * item_ct1.get_local_range(2);
-    if (global_index >= output_size) {
-        return;
+    اگر (global_index >= output_size) {
+        بازگشت;
     }
 
-    int out_index = global_index / dst_ne0;
+    صحیح out_index = global_index / dst_ne0;
 
-    float accumulator = 0;
+    اعشاری accumulator = 0;
 
-    for (int c = 0; c < src0_ne2; c++) {
-        int idx = global_index % dst_ne0;
+    برای (صحیح c = 0; c < src0_ne2; c++) {
+        صحیح idx = global_index % dst_ne0;
 
-        int kernel_offset = (src0_ne0 * src0_ne1 * c) + (out_index * src0_ne0);
-        int input_offset = src1_ne0 * c;
+        صحیح kernel_offset = (src0_ne0 * src0_ne1 * c) + (out_index * src0_ne0);
+        صحیح درون_داد_offset = src1_ne0 * c;
 
-        for (int i = 0; i < src1_ne0; i++) {
-            if (!(idx >= i*s0 && idx < i*s0 + src0_ne0)) {
-                continue;
+        برای (صحیح i = 0; i < src1_ne0; i++) {
+            اگر (!(idx >= i*s0 && idx < i*s0 + src0_ne0)) {
+                ادامه;
             }
-            int weight_idx = idx - i*s0;
+            صحیح weight_idx = idx - i*s0;
 
-            float kernel_weight = src0[kernel_offset + weight_idx];
-            float input_value =  src1[input_offset+i];
+            اعشاری kernel_weight = src0[kernel_offset + weight_idx];
+            اعشاری درون_داد_مقدار =  src1[درون_داد_offset+i];
 
-            accumulator += kernel_weight * input_value;
+            accumulator += kernel_weight * درون_داد_مقدار;
         }
     }
     dst[global_index] = accumulator;
 }
 
-static void conv_transpose_1d_f32_f32_sycl(
-    const int s0, const int output_size,
-    const int src0_ne0, const int src0_ne1, const int src0_ne2,
-    const int src1_ne0, const int dst_ne0,
-    const float *src0, const float *src1, float *dst,
-    const queue_ptr& stream) {
+ایستا تهی conv_transpose_1d_f32_f32_sycl(
+    ثابت صحیح s0, ثابت صحیح output_size,
+    ثابت صحیح src0_ne0, ثابت صحیح src0_ne1, ثابت صحیح src0_ne2,
+    ثابت صحیح src1_ne0, ثابت صحیح dst_ne0,
+    ثابت اعشاری *src0, ثابت اعشاری *src1, اعشاری *dst,
+    ثابت queue_ptr& stream) {
 
-    const int num_blocks = (output_size + SYCL_CONV_TRANPOSE_1D_BLOCK_SIZE - 1) / SYCL_CONV_TRANPOSE_1D_BLOCK_SIZE;
-    const sycl::range<3> block_dims(1, 1, SYCL_CONV_TRANPOSE_1D_BLOCK_SIZE);
-    const sycl::range<3> block_nums(1, 1, num_blocks);
+    ثابت صحیح رقم_blocks = (output_size + SYCL_CONV_TRANPOSE_1D_BLOCK_SIZE - 1) / SYCL_CONV_TRANPOSE_1D_BLOCK_SIZE;
+    ثابت sycl::range<3> block_dims(1, 1, SYCL_CONV_TRANPOSE_1D_BLOCK_SIZE);
+    ثابت sycl::range<3> block_nums(1, 1, رقم_blocks);
     stream->parallel_for(
         sycl::nd_range<3>(
             block_nums * block_dims, block_dims),
@@ -71,14 +71,14 @@ static void conv_transpose_1d_f32_f32_sycl(
         });
 }
 
-void ggml_sycl_op_conv_transpose_1d(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
+تهی ggml_sycl_op_conv_transpose_1d(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
-    const ggml_tensor *src0 = dst->src[0];
-    const ggml_tensor *src1 = dst->src[1];
-    const float * src0_d = (const float *)src0->data;
-    const float * src1_d = (const float *)src1->data;
+    ثابت ggml_tensor *src0 = dst->src[0];
+    ثابت ggml_tensor *src1 = dst->src[1];
+    ثابت اعشاری * src0_d = (ثابت اعشاری *)src0->data;
+    ثابت اعشاری * src1_d = (ثابت اعشاری *)src1->data;
 
-    float * dst_d = (float *)dst->data;
+    اعشاری * dst_d = (اعشاری *)dst->data;
     dpct::queue_ptr stream = ctx.stream();
 
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
@@ -87,11 +87,11 @@ void ggml_sycl_op_conv_transpose_1d(ggml_backend_sycl_context & ctx, ggml_tensor
     GGML_ASSERT(ggml_is_contiguous(src0));
     GGML_ASSERT(ggml_is_contiguous(src1));
 
-    const int32_t * opts = (const int32_t *)dst->op_params;
+    ثابت int32_t * opts = (ثابت int32_t *)dst->op_params;
 
-    const int s0 = opts[0];
+    ثابت صحیح s0 = opts[0];
 
-    const int64_t output_size = ggml_nelements(dst);
+    ثابت int64_t output_size = ggml_nelements(dst);
 
     conv_transpose_1d_f32_f32_sycl(s0, output_size,
         src0->ne[0], src0->ne[1], src0->ne[2],

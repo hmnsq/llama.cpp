@@ -1,30 +1,30 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#شامل "../node_context.h"
+#شامل "../op_table.h"
+#شامل "../utils.h"
 
-#include <cstring>
-#include <openvino/op/clamp.hpp>
+#شامل <cstring>
+#شامل <openvino/op/clamp.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+فضاینام ov {
+فضاینام frontend {
+فضاینام ggml {
+فضاینام op {
 
-OutputVector translate_clamp(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+OutputVector translate_clamp(ثابت گره_Context & context) {
+    رقم_inputs_check(context, 1, 1);
 
-    auto input = process_view_input_new(context, 0);
+    auto درون_داد = process_view_درون_داد_new(context, 0);
 
-    const int32_t * op_params = context.get_output_op_params();
+    ثابت int32_t * op_params = context.get_output_op_params();
     FRONT_END_CHECK_IMPLEMENTED(op_params != nullptr, "CLAMP requires output op params");
 
-    float min;
-    float max;
-    std::memcpy(&min, reinterpret_cast<const float *>(op_params) + 0, sizeof(float));
-    std::memcpy(&max, reinterpret_cast<const float *>(op_params) + 1, sizeof(float));
+    اعشاری min;
+    اعشاری max;
+    std::memcpy(&min, reinterpret_cast<ثابت اعشاری *>(op_params) + 0, اندازه(اعشاری));
+    std::memcpy(&max, reinterpret_cast<ثابت اعشاری *>(op_params) + 1, اندازه(اعشاری));
 
-    auto res = std::make_shared<ov::op::v0::Clamp>(input, min, max);
-    return rename_outputs_with_suffix({res}, context.get_name());
+    auto res = std::make_shared<ov::op::v0::Clamp>(درون_داد, min, max);
+    بازگشت rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

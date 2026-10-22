@@ -2,35 +2,35 @@
 
 // GGML internal header
 
-#include "ggml.h"
-#include "gguf.h"
+#شامل "ggml.h"
+#شامل "gguf.h"
 
-#include <assert.h>
-#include <math.h>
-#include <stdlib.h> // load `stdlib.h` before other headers to work around MinGW bug: https://sourceforge.net/p/mingw-w64/bugs/192/
-#include <stdbool.h>
-#include <stdint.h>
-#include <string.h>
+#شامل <assert.h>
+#شامل <math.h>
+#شامل <stdlib.h> // load `stdlib.h` before other headers to work around MinGW bug: https://sourceforge.net/p/mingw-w64/bugs/192/
+#شامل <stdbool.h>
+#شامل <stdint.h>
+#شامل <string.h>
 
 #ifdef __ARM_FEATURE_SVE
-#include <arm_sve.h>
+#شامل <arm_sve.h>
 #endif // __ARM_FEATURE_SVE
 
-#if defined(__ARM_NEON) && !defined(__CUDACC__) && !defined(__MUSACC__)
+#اگر defined(__ARM_NEON) && !defined(__CUDACC__) && !defined(__MUSACC__)
 // if YCM cannot find <arm_neon.h>, make a symbolic link to it, for example:
 //
 //   $ ln -sfn /Library/Developer/CommandLineTools/usr/lib/clang/13.1.6/include/arm_neon.h ./src/
 //
-#include <arm_neon.h>
+#شامل <arm_neon.h>
 #endif
 
 #ifdef __cplusplus
-extern "C" {
+بیرونی "C" {
 #endif
 
-void ggml_print_backtrace(void);
+تهی ggml_print_backtrace(تهی);
 
-uint64_t ggml_graph_next_uid(void);
+uint64_t ggml_graph_next_uid(تهی);
 
 #ifndef MIN
 #    define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -49,71 +49,71 @@ uint64_t ggml_graph_next_uid(void);
 // ref: https://stackoverflow.com/a/53923785/4039976
 #ifndef __cplusplus
     #ifndef static_assert
-        #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201100L)
-            #define static_assert(cond, msg) _Static_assert(cond, msg)
-        #else
-            #define static_assert(cond, msg) struct global_scope_noop_trick
+        #اگر defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201100L)
+            #define static_assert(cond, پیام) _Static_assert(cond, پیام)
+        #وگرنه
+            #define static_assert(cond, پیام) ساختار global_scope_noop_trick
         #endif
     #endif
 #endif
 
-static inline int ggml_up32(int n) {
-    return (n + 31) & ~31;
+ایستا درونخطی صحیح ggml_up32(صحیح n) {
+    بازگشت (n + 31) & ~31;
 }
 
 //static inline int ggml_up64(int n) {
 //    return (n + 63) & ~63;
 //}
 
-static inline int ggml_up(int n, int m) {
+ایستا درونخطی صحیح ggml_up(صحیح n, صحیح m) {
     // assert m is a power of 2
     GGML_ASSERT((m & (m - 1)) == 0);
-    return (n + m - 1) & ~(m - 1);
+    بازگشت (n + m - 1) & ~(m - 1);
 }
 
 // TODO: move to ggml.h? (won't be able to inline)
-static bool ggml_are_same_layout(const struct ggml_tensor * a, const struct ggml_tensor * b) {
-    if (a->type != b->type) {
-        return false;
+ایستا bool ggml_are_same_layout(ثابت ساختار ggml_tensor * a, ثابت ساختار ggml_tensor * b) {
+    اگر (a->type != b->type) {
+        بازگشت false;
     }
-    for (int i = 0; i < GGML_MAX_DIMS; i++) {
-        if (a->ne[i] != b->ne[i]) {
-            return false;
+    برای (صحیح i = 0; i < GGML_MAX_DIMS; i++) {
+        اگر (a->ne[i] != b->ne[i]) {
+            بازگشت false;
         }
-        if (a->nb[i] != b->nb[i]) {
-            return false;
+        اگر (a->nb[i] != b->nb[i]) {
+            بازگشت false;
         }
     }
-    return true;
+    بازگشت true;
 }
 
-static bool ggml_op_is_empty(enum ggml_op op) {
-    switch (op) {
-        case GGML_OP_NONE:
-        case GGML_OP_RESHAPE:
-        case GGML_OP_TRANSPOSE:
-        case GGML_OP_VIEW:
-        case GGML_OP_PERMUTE:
-            return true;
-        default:
-            return false;
+ایستا bool ggml_op_is_empty(شمارش ggml_op op) {
+    انتخاب (op) {
+        حالت GGML_OP_NONE:
+        حالت GGML_OP_RESHAPE:
+        حالت GGML_OP_TRANSPOSE:
+        حالت GGML_OP_VIEW:
+        حالت GGML_OP_PERMUTE:
+            بازگشت true;
+        پیشفرض:
+            بازگشت false;
     }
 }
 
-static inline bool ggml_impl_is_view(const struct ggml_tensor * t) {
-    return t->view_src != NULL;
+ایستا درونخطی bool ggml_impl_is_view(ثابت ساختار ggml_tensor * t) {
+    بازگشت t->view_src != پوچ;
 }
 
-static inline float ggml_compute_softplus_f32(float input) {
-    return (input > 20.0f) ? input : logf(1 + expf(input));
+ایستا درونخطی اعشاری ggml_compute_softplus_f32(اعشاری درون_داد) {
+    بازگشت (درون_داد > 20.0f) ? درون_داد : logf(1 + expf(درون_داد));
 }
 //
 // logging
 //
 
 GGML_ATTRIBUTE_FORMAT(2, 3)
-GGML_API void ggml_log_internal        (enum ggml_log_level level, const char * format, ...);
-GGML_API void ggml_log_callback_default(enum ggml_log_level level, const char * text, void * user_data);
+GGML_API تهی ggml_log_internal        (شمارش ggml_log_level level, ثابت نویسه * format, ...);
+GGML_API تهی ggml_log_callback_default(شمارش ggml_log_level level, ثابت نویسه * text, تهی * user_data);
 
 #define GGML_LOG(...)       ggml_log_internal(GGML_LOG_LEVEL_NONE , __VA_ARGS__)
 #define GGML_LOG_INFO(...)  ggml_log_internal(GGML_LOG_LEVEL_INFO , __VA_ARGS__)
@@ -124,40 +124,40 @@ GGML_API void ggml_log_callback_default(enum ggml_log_level level, const char * 
 
 #define GGML_DEBUG 0
 
-#if (GGML_DEBUG >= 1)
+#اگر (GGML_DEBUG >= 1)
 #define GGML_PRINT_DEBUG(...) GGML_LOG_DEBUG(__VA_ARGS__)
-#else
+#وگرنه
 #define GGML_PRINT_DEBUG(...)
 #endif
 
-#if (GGML_DEBUG >= 5)
+#اگر (GGML_DEBUG >= 5)
 #define GGML_PRINT_DEBUG_5(...) GGML_LOG_DEBUG(__VA_ARGS__)
-#else
+#وگرنه
 #define GGML_PRINT_DEBUG_5(...)
 #endif
 
-#if (GGML_DEBUG >= 10)
+#اگر (GGML_DEBUG >= 10)
 #define GGML_PRINT_DEBUG_10(...) GGML_LOG_DEBUG(__VA_ARGS__)
-#else
+#وگرنه
 #define GGML_PRINT_DEBUG_10(...)
 #endif
 
 // tensor params
 
-static void ggml_set_op_params(struct ggml_tensor * tensor, const void * params, size_t params_size) {
-    GGML_ASSERT(tensor != NULL); // silence -Warray-bounds warnings
-    assert(params_size <= GGML_MAX_OP_PARAMS);
+ایستا تهی ggml_set_op_params(ساختار ggml_tensor * tensor, ثابت تهی * params, size_t params_size) {
+    GGML_ASSERT(tensor != پوچ); // silence -Warray-bounds warnings
+    أكد(params_size <= GGML_MAX_OP_PARAMS);
     memcpy(tensor->op_params, params, params_size);
 }
 
-static int32_t ggml_get_op_params_i32(const struct ggml_tensor * tensor, uint32_t i) {
-    assert(i < GGML_MAX_OP_PARAMS / sizeof(int32_t));
-    return ((const int32_t *)(tensor->op_params))[i];
+ایستا int32_t ggml_get_op_params_i32(ثابت ساختار ggml_tensor * tensor, uint32_t i) {
+    أكد(i < GGML_MAX_OP_PARAMS / اندازه(int32_t));
+    بازگشت ((ثابت int32_t *)(tensor->op_params))[i];
 }
 
-static float ggml_get_op_params_f32(const struct ggml_tensor * tensor, uint32_t i) {
-    assert(i < GGML_MAX_OP_PARAMS / sizeof(float));
-    return ((const float *)(tensor->op_params))[i];
+ایستا اعشاری ggml_get_op_params_f32(ثابت ساختار ggml_tensor * tensor, uint32_t i) {
+    أكد(i < GGML_MAX_OP_PARAMS / اندازه(اعشاری));
+    بازگشت ((ثابت اعشاری *)(tensor->op_params))[i];
 }
 
 // [TAG_GGML_PREC]
@@ -172,61 +172,61 @@ static float ggml_get_op_params_f32(const struct ggml_tensor * tensor, uint32_t 
 //   1 - hint
 //   2 - src0 precision
 //   3 - src1 precision
-static void ggml_set_op_params_i32(struct ggml_tensor * tensor, uint32_t i, int32_t value) {
-    assert(i < GGML_MAX_OP_PARAMS / sizeof(int32_t));
-    ((int32_t *)(tensor->op_params))[i] = value;
+ایستا تهی ggml_set_op_params_i32(ساختار ggml_tensor * tensor, uint32_t i, int32_t مقدار) {
+    أكد(i < GGML_MAX_OP_PARAMS / اندازه(int32_t));
+    ((int32_t *)(tensor->op_params))[i] = مقدار;
 }
 
-static void ggml_set_op_params_f32(struct ggml_tensor * tensor, uint32_t i, float value) {
-    assert(i < GGML_MAX_OP_PARAMS / sizeof(float));
-    ((float *)(tensor->op_params))[i] = value;
+ایستا تهی ggml_set_op_params_f32(ساختار ggml_tensor * tensor, uint32_t i, اعشاری مقدار) {
+    أكد(i < GGML_MAX_OP_PARAMS / اندازه(اعشاری));
+    ((اعشاری *)(tensor->op_params))[i] = مقدار;
 }
 
-struct ggml_map_custom1_op_params {
+ساختار ggml_map_custom1_op_params {
     ggml_custom1_op_t  fun;
-    int                n_tasks;
-    void             * userdata;
+    صحیح                n_tasks;
+    تهی             * userdata;
 };
 
-struct ggml_map_custom2_op_params {
+ساختار ggml_map_custom2_op_params {
     ggml_custom2_op_t   fun;
-    int                 n_tasks;
-    void              * userdata;
+    صحیح                 n_tasks;
+    تهی              * userdata;
 };
 
-struct ggml_map_custom3_op_params {
+ساختار ggml_map_custom3_op_params {
     ggml_custom3_op_t fun;
-    int               n_tasks;
-    void            * userdata;
+    صحیح               n_tasks;
+    تهی            * userdata;
 };
 
-struct ggml_custom_op_params {
+ساختار ggml_custom_op_params {
     ggml_custom_op_t fun;
-    int              n_tasks;
-    void           * userdata;
+    صحیح              n_tasks;
+    تهی           * userdata;
 };
 
 // bitset
 
-typedef uint32_t ggml_bitset_t;
+تعریفنوع uint32_t ggml_bitset_t;
 
-static_assert(sizeof(ggml_bitset_t) == 4, "bitset_t constants must be updated");
+static_assert(اندازه(ggml_bitset_t) == 4, "bitset_t constants must be updated");
 #define BITSET_SHR 5 // log2(sizeof(ggml_bitset_t)*8)
-#define BITSET_MASK (sizeof(ggml_bitset_t)*8 - 1)
+#define BITSET_MASK (اندازه(ggml_bitset_t)*8 - 1)
 
-static size_t ggml_bitset_size(size_t n) {
-    return (n + BITSET_MASK) >> BITSET_SHR;
+ایستا size_t ggml_bitset_size(size_t n) {
+    بازگشت (n + BITSET_MASK) >> BITSET_SHR;
 }
 
-static inline bool ggml_bitset_get(const ggml_bitset_t * bitset, size_t i) {
-    return !!(bitset[i >> BITSET_SHR] & (1u << (i & BITSET_MASK)));
+ایستا درونخطی bool ggml_bitset_get(ثابت ggml_bitset_t * bitset, size_t i) {
+    بازگشت !!(bitset[i >> BITSET_SHR] & (1u << (i & BITSET_MASK)));
 }
 
-static inline void ggml_bitset_set(ggml_bitset_t * bitset, size_t i) {
+ایستا درونخطی تهی ggml_bitset_set(ggml_bitset_t * bitset, size_t i) {
     bitset[i >> BITSET_SHR] |= (1u << (i & BITSET_MASK));
 }
 
-static inline void ggml_bitset_clear(ggml_bitset_t * bitset, size_t i) {
+ایستا درونخطی تهی ggml_bitset_clear(ggml_bitset_t * bitset, size_t i) {
     bitset[i >> BITSET_SHR] &= ~(1u << (i & BITSET_MASK));
 }
 
@@ -235,96 +235,96 @@ static inline void ggml_bitset_clear(ggml_bitset_t * bitset, size_t i) {
 #define GGML_HASHSET_FULL ((size_t)-1)
 #define GGML_HASHSET_ALREADY_EXISTS ((size_t)-2)
 
-struct ggml_hash_set {
+ساختار ggml_hash_set {
     size_t size;
     ggml_bitset_t * used;       // whether or not the keys are in use i.e. set
-    struct ggml_tensor ** keys; // actual tensors in the set, keys[i] is only defined if ggml_bitset_get(used, i)
+    ساختار ggml_tensor ** کلیدها; // actual tensors in the set, keys[i] is only defined if ggml_bitset_get(used, i)
 };
 
-struct ggml_hash_set ggml_hash_set_new(size_t size);
-void                 ggml_hash_set_free(struct ggml_hash_set * hash_set);
+ساختار ggml_hash_set ggml_hash_set_new(size_t size);
+تهی                 ggml_hash_set_free(ساختار ggml_hash_set * hash_set);
 
 // returns the minimum size for a hash set that can hold min_sz elements
 size_t ggml_hash_size(size_t min_sz);
 
 // remove all elements from the hash set
-void ggml_hash_set_reset(struct ggml_hash_set * hash_set);
+تهی ggml_hash_set_reset(ساختار ggml_hash_set * hash_set);
 
 // returns true if key is in the hash set
-static bool ggml_hash_contains(const struct ggml_hash_set * hash_set, struct ggml_tensor * key);
+ایستا bool ggml_hash_contains(ثابت ساختار ggml_hash_set * hash_set, ساختار ggml_tensor * کلید);
 
 // returns GGML_HASHSET_FULL if table is full, otherwise the current index of the key or where it should be inserted
-static size_t ggml_hash_find(const struct ggml_hash_set * hash_set, const struct ggml_tensor * key);
+ایستا size_t ggml_hash_find(ثابت ساختار ggml_hash_set * hash_set, ثابت ساختار ggml_tensor * کلید);
 
 // returns GGML_HASHSET_ALREADY_EXISTS if key already exists, index otherwise, asserts if table is full
-static size_t ggml_hash_insert(struct ggml_hash_set * hash_set, struct ggml_tensor * key);
+ایستا size_t ggml_hash_درج(ساختار ggml_hash_set * hash_set, ساختار ggml_tensor * کلید);
 
 // return index, asserts if table is full
-static size_t ggml_hash_find_or_insert(struct ggml_hash_set * hash_set, struct ggml_tensor * key);
+ایستا size_t ggml_hash_find_or_درج(ساختار ggml_hash_set * hash_set, ساختار ggml_tensor * کلید);
 
 // hash function for ggml_tensor
-static inline size_t ggml_hash(const struct ggml_tensor * p) {
+ایستا درونخطی size_t ggml_hash(ثابت ساختار ggml_tensor * p) {
     // the last 4 bits are always zero due to alignment
-    return (size_t)(uintptr_t)p >> 4;
+    بازگشت (size_t)(uintptr_t)p >> 4;
 }
 
-static size_t ggml_hash_find(const struct ggml_hash_set * hash_set, const struct ggml_tensor * key) {
-    size_t h = ggml_hash(key) % hash_set->size;
+ایستا size_t ggml_hash_find(ثابت ساختار ggml_hash_set * hash_set, ثابت ساختار ggml_tensor * کلید) {
+    size_t h = ggml_hash(کلید) % hash_set->size;
 
     // linear probing
     size_t i = h;
-    while (ggml_bitset_get(hash_set->used, i) && hash_set->keys[i] != key) {
+    وقتی (ggml_bitset_get(hash_set->used, i) && hash_set->کلیدها[i] != کلید) {
         i = (i + 1) % hash_set->size;
-        if (i == h) {
+        اگر (i == h) {
             // visited all hash table entries -> not found
-            return GGML_HASHSET_FULL;
+            بازگشت GGML_HASHSET_FULL;
         }
     }
-    return i;
+    بازگشت i;
 }
 
-static bool ggml_hash_contains(const struct ggml_hash_set * hash_set, struct ggml_tensor * key) {
-    size_t i = ggml_hash_find(hash_set, key);
-    return i != GGML_HASHSET_FULL && ggml_bitset_get(hash_set->used, i);
+ایستا bool ggml_hash_contains(ثابت ساختار ggml_hash_set * hash_set, ساختار ggml_tensor * کلید) {
+    size_t i = ggml_hash_find(hash_set, کلید);
+    بازگشت i != GGML_HASHSET_FULL && ggml_bitset_get(hash_set->used, i);
 }
 
-static size_t ggml_hash_insert(struct ggml_hash_set * hash_set, struct ggml_tensor * key) {
-    size_t h = ggml_hash(key) % hash_set->size;
+ایستا size_t ggml_hash_درج(ساختار ggml_hash_set * hash_set, ساختار ggml_tensor * کلید) {
+    size_t h = ggml_hash(کلید) % hash_set->size;
 
     // linear probing
     size_t i = h;
-    do {
-        if (!ggml_bitset_get(hash_set->used, i)) {
+    انجامبده {
+        اگر (!ggml_bitset_get(hash_set->used, i)) {
             ggml_bitset_set(hash_set->used, i);
-            hash_set->keys[i] = key;
-            return i;
+            hash_set->کلیدها[i] = کلید;
+            بازگشت i;
         }
-        if (hash_set->keys[i] == key) {
-            return GGML_HASHSET_ALREADY_EXISTS;
+        اگر (hash_set->کلیدها[i] == کلید) {
+            بازگشت GGML_HASHSET_ALREADY_EXISTS;
         }
         i = (i + 1) % hash_set->size;
-    } while (i != h);
+    } وقتی (i != h);
 
     // visited all hash table entries -> not found
     GGML_ABORT("fatal error");
 }
 
-static size_t ggml_hash_find_or_insert(struct ggml_hash_set * hash_set, struct ggml_tensor * key) {
-    size_t h = ggml_hash(key) % hash_set->size;
+ایستا size_t ggml_hash_find_or_درج(ساختار ggml_hash_set * hash_set, ساختار ggml_tensor * کلید) {
+    size_t h = ggml_hash(کلید) % hash_set->size;
 
     // linear probing
     size_t i = h;
-    do {
-        if (!ggml_bitset_get(hash_set->used, i)) {
+    انجامبده {
+        اگر (!ggml_bitset_get(hash_set->used, i)) {
             ggml_bitset_set(hash_set->used, i);
-            hash_set->keys[i] = key;
-            return i;
+            hash_set->کلیدها[i] = کلید;
+            بازگشت i;
         }
-        if (hash_set->keys[i] == key) {
-            return i;
+        اگر (hash_set->کلیدها[i] == کلید) {
+            بازگشت i;
         }
         i = (i + 1) % hash_set->size;
-    } while (i != h);
+    } وقتی (i != h);
 
     // visited all hash table entries -> not found
     GGML_ABORT("fatal error");
@@ -332,26 +332,26 @@ static size_t ggml_hash_find_or_insert(struct ggml_hash_set * hash_set, struct g
 
 // computation graph
 
-enum ggml_cgraph_eval_order {
-    GGML_CGRAPH_EVAL_ORDER_LEFT_TO_RIGHT = 0,
-    GGML_CGRAPH_EVAL_ORDER_RIGHT_TO_LEFT,
-    GGML_CGRAPH_EVAL_ORDER_COUNT
+شمارش ggml_cgraph_eval_order {
+    GGML_CGRAPH_EVAL_ORDER_چپ_TO_راست = 0,
+    GGML_CGRAPH_EVAL_ORDER_راست_TO_چپ,
+    GGML_CGRAPH_EVAL_ORDER_شمار
 };
 
-struct ggml_cgraph {
-    int size;    // maximum number of nodes/leafs/grads/grad_accs
-    int n_nodes; // number of nodes currently in use
-    int n_leafs; // number of leafs currently in use
+ساختار ggml_cgraph {
+    صحیح size;    // maximum number of nodes/leafs/grads/grad_accs
+    صحیح n_nodes; // number of nodes currently in use
+    صحیح n_leafs; // number of leafs currently in use
 
-    struct ggml_tensor ** nodes;     // tensors with data that can change if the graph is evaluated
-    struct ggml_tensor ** grads;     // the outputs of these tensors are the gradients of the nodes
-    struct ggml_tensor ** grad_accs; // accumulators for node gradients
-    struct ggml_tensor ** leafs;     // tensors with constant data
+    ساختار ggml_tensor ** nodes;     // tensors with data that can change if the graph is evaluated
+    ساختار ggml_tensor ** grads;     // the outputs of these tensors are the gradients of the nodes
+    ساختار ggml_tensor ** grad_accs; // accumulators for node gradients
+    ساختار ggml_tensor ** leafs;     // tensors with constant data
     int32_t             * use_counts;// number of uses of each tensor, indexed by hash table slot
 
-    struct ggml_hash_set visited_hash_set;
+    ساختار ggml_hash_set visited_hash_set;
 
-    enum ggml_cgraph_eval_order order;
+    شمارش ggml_cgraph_eval_order order;
 
     // an optional identifier that can be utilized to recognize same graphs if two non-zero values match
     // a value of 0 means it is not set and should be ignored
@@ -361,85 +361,85 @@ struct ggml_cgraph {
 // returns a slice of cgraph with nodes [i0, i1)
 // the slice does not have leafs or gradients
 // if you need the gradients, get them from the original graph
-struct ggml_cgraph ggml_graph_view(struct ggml_cgraph * cgraph, int i0, int i1);
+ساختار ggml_cgraph ggml_graph_view(ساختار ggml_cgraph * cgraph, صحیح i0, صحیح i1);
 
 // ggml-alloc.c: true if the operation can reuse memory from its sources
-GGML_API bool ggml_op_can_inplace(enum ggml_op op);
+GGML_API bool ggml_op_can_inplace(شمارش ggml_op op);
 
 
 // Memory allocation
 
-GGML_API void * ggml_aligned_malloc(size_t size);
-GGML_API void ggml_aligned_free(void * ptr, size_t size);
+GGML_API تهی * ggml_aligned_malloc(size_t size);
+GGML_API تهی ggml_aligned_free(تهی * ptr, size_t size);
 
 // FP16 <-> FP32
 // ref: https://github.com/Maratyszcza/FP16
 
-static inline float fp32_from_bits(uint32_t w) {
-    union {
+ایستا درونخطی اعشاری fp32_from_bits(uint32_t w) {
+    اجتماع {
         uint32_t as_bits;
-        float as_value;
+        اعشاری as_مقدار;
     } fp32;
     fp32.as_bits = w;
-    return fp32.as_value;
+    بازگشت fp32.as_مقدار;
 }
 
-static inline uint32_t fp32_to_bits(float f) {
-    union {
-        float as_value;
+ایستا درونخطی uint32_t fp32_to_bits(اعشاری f) {
+    اجتماع {
+        اعشاری as_مقدار;
         uint32_t as_bits;
     } fp32;
-    fp32.as_value = f;
-    return fp32.as_bits;
+    fp32.as_مقدار = f;
+    بازگشت fp32.as_bits;
 }
 
-static inline float ggml_compute_fp16_to_fp32(ggml_fp16_t h) {
-    const uint32_t w = (uint32_t) h << 16;
-    const uint32_t sign = w & UINT32_C(0x80000000);
-    const uint32_t two_w = w + w;
+ایستا درونخطی اعشاری ggml_compute_fp16_to_fp32(ggml_fp16_t h) {
+    ثابت uint32_t w = (uint32_t) h << 16;
+    ثابت uint32_t sign = w & UINT32_C(0x80000000);
+    ثابت uint32_t two_w = w + w;
 
-    const uint32_t exp_offset = UINT32_C(0xE0) << 23;
-#if (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) || defined(__GNUC__) && !defined(__STRICT_ANSI__)) && (!defined(__cplusplus) || __cplusplus >= 201703L)
-    const float exp_scale = 0x1.0p-112f;
-#else
-    const float exp_scale = fp32_from_bits(UINT32_C(0x7800000));
+    ثابت uint32_t exp_offset = UINT32_C(0xE0) << 23;
+#اگر (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) || defined(__GNUC__) && !defined(__STRICT_ANSI__)) && (!defined(__cplusplus) || __cplusplus >= 201703L)
+    ثابت اعشاری exp_scale = 0x1.0p-112f;
+#وگرنه
+    ثابت اعشاری exp_scale = fp32_from_bits(UINT32_C(0x7800000));
 #endif
-    const float normalized_value = fp32_from_bits((two_w >> 4) + exp_offset) * exp_scale;
+    ثابت اعشاری normalized_مقدار = fp32_from_bits((two_w >> 4) + exp_offset) * exp_scale;
 
-    const uint32_t magic_mask = UINT32_C(126) << 23;
-    const float magic_bias = 0.5f;
-    const float denormalized_value = fp32_from_bits((two_w >> 17) | magic_mask) - magic_bias;
+    ثابت uint32_t magic_mask = UINT32_C(126) << 23;
+    ثابت اعشاری magic_bias = 0.5f;
+    ثابت اعشاری denormalized_مقدار = fp32_from_bits((two_w >> 17) | magic_mask) - magic_bias;
 
-    const uint32_t denormalized_cutoff = UINT32_C(1) << 27;
-    const uint32_t result = sign |
-        (two_w < denormalized_cutoff ? fp32_to_bits(denormalized_value) : fp32_to_bits(normalized_value));
-    return fp32_from_bits(result);
+    ثابت uint32_t denormalized_cutoff = UINT32_C(1) << 27;
+    ثابت uint32_t result = sign |
+        (two_w < denormalized_cutoff ? fp32_to_bits(denormalized_مقدار) : fp32_to_bits(normalized_مقدار));
+    بازگشت fp32_from_bits(result);
 }
 
-static inline ggml_fp16_t ggml_compute_fp32_to_fp16(float f) {
-#if (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) || defined(__GNUC__) && !defined(__STRICT_ANSI__)) && (!defined(__cplusplus) || __cplusplus >= 201703L)
-    const float scale_to_inf = 0x1.0p+112f;
-    const float scale_to_zero = 0x1.0p-110f;
-#else
-    const float scale_to_inf = fp32_from_bits(UINT32_C(0x77800000));
-    const float scale_to_zero = fp32_from_bits(UINT32_C(0x08800000));
+ایستا درونخطی ggml_fp16_t ggml_compute_fp32_to_fp16(اعشاری f) {
+#اگر (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) || defined(__GNUC__) && !defined(__STRICT_ANSI__)) && (!defined(__cplusplus) || __cplusplus >= 201703L)
+    ثابت اعشاری scale_to_inf = 0x1.0p+112f;
+    ثابت اعشاری scale_to_zero = 0x1.0p-110f;
+#وگرنه
+    ثابت اعشاری scale_to_inf = fp32_from_bits(UINT32_C(0x77800000));
+    ثابت اعشاری scale_to_zero = fp32_from_bits(UINT32_C(0x08800000));
 #endif
-    float base = (fabsf(f) * scale_to_inf) * scale_to_zero;
+    اعشاری base = (fabsf(f) * scale_to_inf) * scale_to_zero;
 
-    const uint32_t w = fp32_to_bits(f);
-    const uint32_t shl1_w = w + w;
-    const uint32_t sign = w & UINT32_C(0x80000000);
+    ثابت uint32_t w = fp32_to_bits(f);
+    ثابت uint32_t shl1_w = w + w;
+    ثابت uint32_t sign = w & UINT32_C(0x80000000);
     uint32_t bias = shl1_w & UINT32_C(0xFF000000);
-    if (bias < UINT32_C(0x71000000)) {
+    اگر (bias < UINT32_C(0x71000000)) {
         bias = UINT32_C(0x71000000);
     }
 
     base = fp32_from_bits((bias >> 1) + UINT32_C(0x07800000)) + base;
-    const uint32_t bits = fp32_to_bits(base);
-    const uint32_t exp_bits = (bits >> 13) & UINT32_C(0x00007C00);
-    const uint32_t mantissa_bits = bits & UINT32_C(0x00000FFF);
-    const uint32_t nonsign = exp_bits + mantissa_bits;
-    return (sign >> 16) | (shl1_w > UINT32_C(0xFF000000) ? UINT16_C(0x7E00) : nonsign);
+    ثابت uint32_t bits = fp32_to_bits(base);
+    ثابت uint32_t exp_bits = (bits >> 13) & UINT32_C(0x00007C00);
+    ثابت uint32_t mantissa_bits = bits & UINT32_C(0x00000FFF);
+    ثابت uint32_t nonsign = exp_bits + mantissa_bits;
+    بازگشت (sign >> 16) | (shl1_w > UINT32_C(0xFF000000) ? UINT16_C(0x7E00) : nonsign);
 }
 
 #define GGML_COMPUTE_FP16_TO_FP32(x) ggml_compute_fp16_to_fp32(x)
@@ -448,11 +448,11 @@ static inline ggml_fp16_t ggml_compute_fp32_to_fp16(float f) {
 #define GGML_FP16_TO_FP32(x) GGML_COMPUTE_FP16_TO_FP32(x)
 #define GGML_FP32_TO_FP16(x) GGML_COMPUTE_FP32_TO_FP16(x)
 
-static inline float ggml_e8m0_to_fp32(uint8_t x) {
+ایستا درونخطی اعشاری ggml_e8m0_to_fp32(uint8_t x) {
     uint32_t bits;  // Stores the raw bit representation of the float
 
     // Handle special case for minimum exponent (denormalized float)
-    if (x == 0) {
+    اگر (x == 0) {
         // Bit pattern for 2^(-127):
         // - Sign bit: 0 (positive)
         // - Exponent: 0 (denormalized number)
@@ -470,7 +470,7 @@ static inline float ggml_e8m0_to_fp32(uint8_t x) {
     //    bits = 0x7FC00000;
     //}
     // Normalized values (most common case)
-    else {
+    وگرنه {
         // Construct normalized float by shifting exponent into position:
         // - Exponent field: 8 bits (positions 30-23)
         // - Mantissa: 0 (implicit leading 1)
@@ -478,32 +478,32 @@ static inline float ggml_e8m0_to_fp32(uint8_t x) {
         bits = (uint32_t) x << 23;
     }
 
-    float result;  // Final float value
+    اعشاری result;  // Final float value
                    // Safely reinterpret bit pattern as float without type-punning issues
-    memcpy(&result, &bits, sizeof(float));
-    return result;
+    memcpy(&result, &bits, اندازه(اعشاری));
+    بازگشت result;
 }
 
 // Equal to ggml_e8m0_to_fp32/2
 // Useful with MXFP4 quantization since the E0M2 values are doubled
-static inline float ggml_e8m0_to_fp32_half(uint8_t x) {
+ایستا درونخطی اعشاری ggml_e8m0_to_fp32_half(uint8_t x) {
     uint32_t bits;
 
     // For x < 2: use precomputed denormal patterns
-    if (x < 2) {
+    اگر (x < 2) {
         // 0x00200000 = 2^(-128), 0x00400000 = 2^(-127)
         bits = 0x00200000 << x;
     }
     // For x >= 2: normalized exponent adjustment
-    else {
+    وگرنه {
         // 0.5 * 2^(x-127) = 2^(x-128) = normalized with exponent (x-1)
         bits = (uint32_t)(x - 1) << 23;
     }
     // Note: NaNs are not handled here
 
-    float result;
-    memcpy(&result, &bits, sizeof(float));
-    return result;
+    اعشاری result;
+    memcpy(&result, &bits, اندازه(اعشاری));
+    بازگشت result;
 }
 
 #define GGML_E8M0_TO_FP32(x) ggml_e8m0_to_fp32(x)
@@ -511,57 +511,57 @@ static inline float ggml_e8m0_to_fp32_half(uint8_t x) {
 
 // UE4M3: unsigned, 4 exp bits (bias=7), 3 mantissa bits
 // Returns value * 0.5 to match kvalues_mxfp4 convention (kvalues = 2 * E2M1_float)
-static inline float ggml_ue4m3_to_fp32(uint8_t x) {
-    if (x == 0 || x == 0x7F) {
-        return 0.0f;
+ایستا درونخطی اعشاری ggml_ue4m3_to_fp32(uint8_t x) {
+    اگر (x == 0 || x == 0x7F) {
+        بازگشت 0.0f;
     }
-    int   exp = (x >> 3) & 0xF;
-    int   man = x & 0x7;
-    float raw;
-    if (exp == 0) {
-        raw = ldexpf((float) man, -9);
-    } else {
-        raw = ldexpf(1.0f + (float) man / 8.0f, exp - 7);
+    صحیح   exp = (x >> 3) & 0xF;
+    صحیح   man = x & 0x7;
+    اعشاری raw;
+    اگر (exp == 0) {
+        raw = ldexpf((اعشاری) man, -9);
+    } وگرنه {
+        raw = ldexpf(1.0f + (اعشاری) man / 8.0f, exp - 7);
     }
-    return raw * 0.5f;
+    بازگشت raw * 0.5f;
 }
 
-static inline uint8_t ggml_fp32_to_ue4m3(float x) {
-    if (!(x > 0.0f)) {
-        return 0;
+ایستا درونخطی uint8_t ggml_fp32_to_ue4m3(اعشاری x) {
+    اگر (!(x > 0.0f)) {
+        بازگشت 0;
     }
-    if (x > 448.0f) {
+    اگر (x > 448.0f) {
         x = 448.0f;
     }
     uint32_t bits;
     memcpy(&bits, &x, 4);
-    int fp32_exp  = ((bits >> 23) & 0xFF) - 127;
-    int fp32_man  = (bits >> 20) & 0x7;
-    int ue4m3_exp = fp32_exp + 7;
-    if (ue4m3_exp <= 0) {
+    صحیح fp32_exp  = ((bits >> 23) & 0xFF) - 127;
+    صحیح fp32_man  = (bits >> 20) & 0x7;
+    صحیح ue4m3_exp = fp32_exp + 7;
+    اگر (ue4m3_exp <= 0) {
         // subnormal: value = man * 2^-9, man = round(x * 2^9)
-        int man = (int) (x * 512.0f + 0.5f);
-        if (man > 7) {
+        صحیح man = (صحیح) (x * 512.0f + 0.5f);
+        اگر (man > 7) {
             man = 7;
         }
-        if (man < 1) {
-            return 0;
+        اگر (man < 1) {
+            بازگشت 0;
         }
-        return (uint8_t) man;
+        بازگشت (uint8_t) man;
     }
-    if (ue4m3_exp >= 15) {
-        return 0x7E;
+    اگر (ue4m3_exp >= 15) {
+        بازگشت 0x7E;
     }
-    int round_bit = (bits >> 19) & 1;
-    int ue4m3_man = fp32_man + round_bit;
-    if (ue4m3_man > 7) {
+    صحیح round_bit = (bits >> 19) & 1;
+    صحیح ue4m3_man = fp32_man + round_bit;
+    اگر (ue4m3_man > 7) {
         ue4m3_man = 0;
         ue4m3_exp++;
-        if (ue4m3_exp >= 15) {
-            return 0x7E;
+        اگر (ue4m3_exp >= 15) {
+            بازگشت 0x7E;
         }
     }
-    return (uint8_t) ((ue4m3_exp << 3) | ue4m3_man);
+    بازگشت (uint8_t) ((ue4m3_exp << 3) | ue4m3_man);
 }
 
 /**
@@ -603,13 +603,13 @@ static inline uint8_t ggml_fp32_to_ue4m3(float x) {
  *
  * @see IEEE 754-2008
  */
-static inline float ggml_compute_bf16_to_fp32(ggml_bf16_t h) {
-    union {
-        float f;
+ایستا درونخطی اعشاری ggml_compute_bf16_to_fp32(ggml_bf16_t h) {
+    اجتماع {
+        اعشاری f;
         uint32_t i;
     } u;
     u.i = (uint32_t)h.bits << 16;
-    return u.f;
+    بازگشت u.f;
 }
 
 /**
@@ -620,56 +620,56 @@ static inline float ggml_compute_bf16_to_fp32(ggml_bf16_t h) {
  * Subnormals aren't flushed to zero, except perhaps when used.
  * This code should vectorize nicely if using modern compilers.
  */
-static inline ggml_bf16_t ggml_compute_fp32_to_bf16(float s) {
+ایستا درونخطی ggml_bf16_t ggml_compute_fp32_to_bf16(اعشاری s) {
     ggml_bf16_t h;
-    union {
-        float f;
+    اجتماع {
+        اعشاری f;
         uint32_t i;
     } u;
     u.f = s;
-    if ((u.i & 0x7fffffff) > 0x7f800000) { /* nan */
+    اگر ((u.i & 0x7fffffff) > 0x7f800000) { /* nan */
         h.bits = (u.i >> 16) | 64; /* force to quiet */
-        return h;
+        بازگشت h;
     }
     h.bits = (u.i + (0x7fff + ((u.i >> 16) & 1))) >> 16;
-    return h;
+    بازگشت h;
 }
 
 #define GGML_FP32_TO_BF16(x) ggml_compute_fp32_to_bf16(x)
 #define GGML_BF16_TO_FP32(x) ggml_compute_bf16_to_fp32(x)
 
-static inline int32_t ggml_node_get_use_count(const struct ggml_cgraph * cgraph, int node_idx) {
-    const struct ggml_tensor * node = cgraph->nodes[node_idx];
+ایستا درونخطی int32_t ggml_گره_get_use_شمار(ثابت ساختار ggml_cgraph * cgraph, صحیح گره_idx) {
+    ثابت ساختار ggml_tensor * گره = cgraph->nodes[گره_idx];
 
-    size_t hash_pos = ggml_hash_find(&cgraph->visited_hash_set, node);
-    if (!ggml_bitset_get(cgraph->visited_hash_set.used, hash_pos)) {
-        return 0;
+    size_t hash_pos = ggml_hash_find(&cgraph->visited_hash_set, گره);
+    اگر (!ggml_bitset_get(cgraph->visited_hash_set.used, hash_pos)) {
+        بازگشت 0;
     }
-    return cgraph->use_counts[hash_pos];
+    بازگشت cgraph->use_counts[hash_pos];
 }
 
 // return true if the node's results are only used by N other nodes
 // and can be fused into their calculations.
-static inline bool ggml_node_has_n_uses(const struct ggml_cgraph * cgraph, int node_idx, int32_t n_uses) {
-    const struct ggml_tensor * node = cgraph->nodes[node_idx];
+ایستا درونخطی bool ggml_گره_has_n_uses(ثابت ساختار ggml_cgraph * cgraph, صحیح گره_idx, int32_t n_uses) {
+    ثابت ساختار ggml_tensor * گره = cgraph->nodes[گره_idx];
 
     // check the use count against how many we're replacing
-    if (ggml_node_get_use_count(cgraph, node_idx) != n_uses) {
-        return false;
+    اگر (ggml_گره_get_use_شمار(cgraph, گره_idx) != n_uses) {
+        بازگشت false;
     }
 
     // if node is a view, some other node might be using the intermediate result
     // via the view source.
-    if (node->view_src) {
-        return false;
+    اگر (گره->view_src) {
+        بازگشت false;
     }
 
     // If the user requested output for the node, can't fuse
-    if (node->flags & GGML_TENSOR_FLAG_OUTPUT) {
-        return false;
+    اگر (گره->flags & GGML_TENSOR_FLAG_OUTPUT) {
+        بازگشت false;
     }
 
-    return true;
+    بازگشت true;
 }
 
 // Returns true if nodes with indices { node_idxs } are the sequence of ggml_ops in ops[]
@@ -678,79 +678,79 @@ static inline bool ggml_node_has_n_uses(const struct ggml_cgraph * cgraph, int n
 // - all nodes except the last are a src of the following node.
 // - all nodes are the same shape.
 // TODO: Consider allowing GGML_OP_NONE nodes in between
-static inline bool ggml_can_fuse_ext(const struct ggml_cgraph * cgraph, const int * node_idxs, const enum ggml_op * ops, int num_ops) {
-    for (int i = 0; i < num_ops; ++i) {
-        if (node_idxs[i] >= cgraph->n_nodes) {
-            return false;
+ایستا درونخطی bool ggml_can_fuse_ext(ثابت ساختار ggml_cgraph * cgraph, ثابت صحیح * گره_idxs, ثابت شمارش ggml_op * ops, صحیح رقم_ops) {
+    برای (صحیح i = 0; i < رقم_ops; ++i) {
+        اگر (گره_idxs[i] >= cgraph->n_nodes) {
+            بازگشت false;
         }
 
-        struct ggml_tensor * node = cgraph->nodes[node_idxs[i]];
-        if (node->op != ops[i]) {
-            return false;
+        ساختار ggml_tensor * گره = cgraph->nodes[گره_idxs[i]];
+        اگر (گره->op != ops[i]) {
+            بازگشت false;
         }
-        if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
-            return false;
+        اگر ((گره->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+            بازگشت false;
         }
-        if (i < num_ops - 1 && !ggml_node_has_n_uses(cgraph, node_idxs[i], 1)) {
-            return false;
+        اگر (i < رقم_ops - 1 && !ggml_گره_has_n_uses(cgraph, گره_idxs[i], 1)) {
+            بازگشت false;
         }
-        if (i > 0) {
-            struct ggml_tensor * prev = cgraph->nodes[node_idxs[i - 1]];
-            if (node->src[0] != prev && node->src[1] != prev) {
-                return false;
+        اگر (i > 0) {
+            ساختار ggml_tensor * prev = cgraph->nodes[گره_idxs[i - 1]];
+            اگر (گره->src[0] != prev && گره->src[1] != prev) {
+                بازگشت false;
             }
-            if (!ggml_are_same_shape(node, prev)) {
-                return false;
+            اگر (!ggml_are_same_shape(گره, prev)) {
+                بازگشت false;
             }
         }
     }
-    return true;
+    بازگشت true;
 }
 
 // same as above, for sequential indices starting at node_idx
-static inline bool ggml_can_fuse(const struct ggml_cgraph * cgraph, int node_idx, const enum ggml_op * ops, int num_ops) {
-    assert(num_ops < 32);
+ایستا درونخطی bool ggml_can_fuse(ثابت ساختار ggml_cgraph * cgraph, صحیح گره_idx, ثابت شمارش ggml_op * ops, صحیح رقم_ops) {
+    أكد(رقم_ops < 32);
 
-    if (node_idx + num_ops > cgraph->n_nodes) {
-        return false;
+    اگر (گره_idx + رقم_ops > cgraph->n_nodes) {
+        بازگشت false;
     }
 
-    int idxs[32];
-    for (int i = 0; i < num_ops; ++i) {
-        idxs[i] = node_idx + i;
+    صحیح idxs[32];
+    برای (صحیح i = 0; i < رقم_ops; ++i) {
+        idxs[i] = گره_idx + i;
     }
 
-    return ggml_can_fuse_ext(cgraph, idxs, ops, num_ops);
+    بازگشت ggml_can_fuse_ext(cgraph, idxs, ops, رقم_ops);
 }
 
-GGML_API bool ggml_can_fuse_subgraph_ext(const struct ggml_cgraph * cgraph,
-                                         const int *                node_idxs,
-                                         int                        count,
-                                         const enum ggml_op *       ops,
-                                         const int *                outputs,
-                                         int                        num_outputs);
+GGML_API bool ggml_can_fuse_subgraph_ext(ثابت ساختار ggml_cgraph * cgraph,
+                                         ثابت صحیح *                گره_idxs,
+                                         صحیح                        شمار,
+                                         ثابت شمارش ggml_op *       ops,
+                                         ثابت صحیح *                outputs,
+                                         صحیح                        رقم_outputs);
 
 // Returns true if the subgraph formed by {node_idxs} can be fused
 // checks whethers all nodes which are not part of outputs can be elided
 // by checking if their num_uses are confined to the subgraph
-static inline bool ggml_can_fuse_subgraph(const struct ggml_cgraph * cgraph,
-                                          int                        node_idx,
-                                          int                        count,
-                                          const enum ggml_op *       ops,
-                                          const int *                outputs,
-                                          int                        num_outputs) {
-    GGML_ASSERT(count < 32);
-    if (node_idx + count > cgraph->n_nodes) {
-        return false;
+ایستا درونخطی bool ggml_can_fuse_subgraph(ثابت ساختار ggml_cgraph * cgraph,
+                                          صحیح                        گره_idx,
+                                          صحیح                        شمار,
+                                          ثابت شمارش ggml_op *       ops,
+                                          ثابت صحیح *                outputs,
+                                          صحیح                        رقم_outputs) {
+    GGML_ASSERT(شمار < 32);
+    اگر (گره_idx + شمار > cgraph->n_nodes) {
+        بازگشت false;
     }
 
-    int idxs[32];
+    صحیح idxs[32];
 
-    for (int i = 0; i < count; ++i) {
-        idxs[i] = node_idx + i;
+    برای (صحیح i = 0; i < شمار; ++i) {
+        idxs[i] = گره_idx + i;
     }
 
-    return ggml_can_fuse_subgraph_ext(cgraph, idxs, count, ops, outputs, num_outputs);
+    بازگشت ggml_can_fuse_subgraph_ext(cgraph, idxs, شمار, ops, outputs, رقم_outputs);
 }
 
 #ifdef __cplusplus
@@ -758,38 +758,38 @@ static inline bool ggml_can_fuse_subgraph(const struct ggml_cgraph * cgraph,
 #endif
 
 #ifdef __cplusplus
-#include <array>
-#include <initializer_list>
-#include <vector>
+#شامل <array>
+#شامل <initializer_list>
+#شامل <vector>
 
 // nicer C++ syntax for ggml_can_fuse
-inline bool ggml_can_fuse(const struct ggml_cgraph * cgraph, int node_idx, std::initializer_list<enum ggml_op> ops) {
-    return ggml_can_fuse(cgraph, node_idx, ops.begin(), (int)ops.size());
+درونخطی bool ggml_can_fuse(ثابت ساختار ggml_cgraph * cgraph, صحیح گره_idx, std::initializer_list<شمارش ggml_op> ops) {
+    بازگشت ggml_can_fuse(cgraph, گره_idx, ops.begin(), (صحیح)ops.size());
 }
 
-inline bool ggml_can_fuse_subgraph(const struct ggml_cgraph *          cgraph,
-                                   int                                 start_idx,
-                                   std::initializer_list<enum ggml_op> ops,
-                                   std::initializer_list<int>          outputs = {}) {
-    return ggml_can_fuse_subgraph(cgraph, start_idx, ops.size(), ops.begin(), outputs.begin(), outputs.size());
+درونخطی bool ggml_can_fuse_subgraph(ثابت ساختار ggml_cgraph *          cgraph,
+                                   صحیح                                 start_idx,
+                                   std::initializer_list<شمارش ggml_op> ops,
+                                   std::initializer_list<صحیح>          outputs = {}) {
+    بازگشت ggml_can_fuse_subgraph(cgraph, start_idx, ops.size(), ops.begin(), outputs.begin(), outputs.size());
 }
 
 // Return true if the edges in the graph match expectations.
-inline bool ggml_check_edges(const struct ggml_cgraph *                cgraph,
-                             int                                       start_idx,
-                             std::initializer_list<std::array<int, 3>> edges) {
-    for (const auto & edge : edges) {
-        int dst_node = edge[0];
-        int src_idx  = edge[1];
-        int src_node = edge[2];
-        if (cgraph->nodes[start_idx + dst_node]->src[src_idx] != cgraph->nodes[start_idx + src_node]) {
-            return false;
+درونخطی bool ggml_check_edges(ثابت ساختار ggml_cgraph *                cgraph,
+                             صحیح                                       start_idx,
+                             std::initializer_list<std::array<صحیح, 3>> edges) {
+    برای (ثابت auto & edge : edges) {
+        صحیح dst_گره = edge[0];
+        صحیح src_idx  = edge[1];
+        صحیح src_گره = edge[2];
+        اگر (cgraph->nodes[start_idx + dst_گره]->src[src_idx] != cgraph->nodes[start_idx + src_گره]) {
+            بازگشت false;
         }
     }
-    return true;
+    بازگشت true;
 }
 
 // expose GGUF internals for test code
-GGML_API size_t gguf_type_size(enum gguf_type type);
-GGML_API void gguf_write_to_buf(const struct gguf_context * ctx, std::vector<int8_t> & buf, bool only_meta);
+GGML_API size_t gguf_type_size(شمارش gguf_type type);
+GGML_API تهی gguf_write_to_buf(ثابت ساختار gguf_context * ctx, std::vector<int8_t> & buf, bool only_meta);
 #endif // __cplusplus

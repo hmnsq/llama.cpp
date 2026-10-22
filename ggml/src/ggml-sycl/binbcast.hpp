@@ -1,68 +1,68 @@
 #ifndef GGML_SYCL_BINBCAST_HPP
 #define GGML_SYCL_BINBCAST_HPP
-#include "common.hpp"
+#شامل "common.hpp"
 
 
-static __dpct_inline__ float op_repeat(const float a, const float b) {
-    return b;
+ایستا __dpct_inline__ اعشاری op_repeat(ثابت اعشاری a, ثابت اعشاری b) {
+    بازگشت b;
     GGML_UNUSED(a);
 }
 
-static __dpct_inline__ float op_add(const float a, const float b) {
-    return a + b;
+ایستا __dpct_inline__ اعشاری op_add(ثابت اعشاری a, ثابت اعشاری b) {
+    بازگشت a + b;
 }
 
-static __dpct_inline__ float op_sub(const float a, const float b) {
-    return a - b;
+ایستا __dpct_inline__ اعشاری op_sub(ثابت اعشاری a, ثابت اعشاری b) {
+    بازگشت a - b;
 }
 
-static __dpct_inline__ float op_mul(const float a, const float b) {
-    return a * b;
+ایستا __dpct_inline__ اعشاری op_mul(ثابت اعشاری a, ثابت اعشاری b) {
+    بازگشت a * b;
 }
 
-static __dpct_inline__ float op_div(const float a, const float b) {
-    return a / b;
+ایستا __dpct_inline__ اعشاری op_div(ثابت اعشاری a, ثابت اعشاری b) {
+    بازگشت a / b;
 }
 
-void ggml_sycl_add(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+تهی ggml_sycl_add(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-void ggml_sycl_sub(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+تهی ggml_sycl_sub(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-void ggml_sycl_mul(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+تهی ggml_sycl_mul(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-void ggml_sycl_div(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+تهی ggml_sycl_div(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-void ggml_sycl_repeat(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+تهی ggml_sycl_repeat(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-void ggml_sycl_op_add_add_fused(ggml_backend_sycl_context & ctx, ggml_tensor * add0, ggml_tensor * add1);
+تهی ggml_sycl_op_add_add_fused(ggml_backend_sycl_context & ctx, ggml_tensor * add0, ggml_tensor * add1);
 
 // Type combinations the standalone SYCL add() kernel can run. Fused ADD+ADD
 // uses the same set; anything else falls back to two add() launches.
-inline bool ggml_sycl_add_kernel_supports(enum ggml_type src0, enum ggml_type src1, enum ggml_type dst) {
-    if (src0 == GGML_TYPE_F32 && src1 == GGML_TYPE_F32 && dst == GGML_TYPE_F32) {
-        return true;
+درونخطی منطقی ggml_sycl_add_kernel_supports(شمارش ggml_type src0, شمارش ggml_type src1, شمارش ggml_type dst) {
+    اگر (src0 == GGML_TYPE_F32 && src1 == GGML_TYPE_F32 && dst == GGML_TYPE_F32) {
+        بازگشت درست;
     }
-    if (src0 == GGML_TYPE_F16 && src1 == GGML_TYPE_F16 && dst == GGML_TYPE_F16) {
-        return true;
+    اگر (src0 == GGML_TYPE_F16 && src1 == GGML_TYPE_F16 && dst == GGML_TYPE_F16) {
+        بازگشت درست;
     }
-    if (src0 == GGML_TYPE_F16 && src1 == GGML_TYPE_F32 && dst == GGML_TYPE_F16) {
-        return true;
+    اگر (src0 == GGML_TYPE_F16 && src1 == GGML_TYPE_F32 && dst == GGML_TYPE_F16) {
+        بازگشت درست;
     }
-    if (src0 == GGML_TYPE_I32 && src1 == GGML_TYPE_I32 && dst == GGML_TYPE_I32) {
-        return true;
+    اگر (src0 == GGML_TYPE_I32 && src1 == GGML_TYPE_I32 && dst == GGML_TYPE_I32) {
+        بازگشت درست;
     }
-    if (src0 == GGML_TYPE_I16 && src1 == GGML_TYPE_I16 && dst == GGML_TYPE_I16) {
-        return true;
+    اگر (src0 == GGML_TYPE_I16 && src1 == GGML_TYPE_I16 && dst == GGML_TYPE_I16) {
+        بازگشت درست;
     }
 #ifdef GGML_SYCL_HAS_BF16
-    if (src0 == GGML_TYPE_BF16 && src1 == GGML_TYPE_BF16 && dst == GGML_TYPE_BF16) {
-        return true;
+    اگر (src0 == GGML_TYPE_BF16 && src1 == GGML_TYPE_BF16 && dst == GGML_TYPE_BF16) {
+        بازگشت درست;
     }
-    if (src0 == GGML_TYPE_BF16 && src1 == GGML_TYPE_F32 && dst == GGML_TYPE_BF16) {
-        return true;
+    اگر (src0 == GGML_TYPE_BF16 && src1 == GGML_TYPE_F32 && dst == GGML_TYPE_BF16) {
+        بازگشت درست;
     }
 #endif
-    return false;
+    بازگشت نادرست;
 }
 
 #endif //GGML_SYCL_BINBCAST_HPP

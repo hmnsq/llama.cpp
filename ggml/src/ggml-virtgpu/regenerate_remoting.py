@@ -17,26 +17,26 @@ The script will:
 4. Show a summary of what was generated
 """
 
-import yaml
-from typing import Dict, List, Any
-from pathlib import Path
-import os
-import subprocess
-import shutil
-import logging
+واردکن yaml
+از typing واردکن Dict, List, Any
+از pathlib واردکن Path
+واردکن os
+واردکن subprocess
+واردکن shutil
+واردکن logging
 
 NL = '\n' # can't have f"{'\n'}" in f-strings
 
 
-class RemotingCodebaseGenerator:
+رده RemotingCodebaseGenerator:
     def __init__(self, yaml_path: str = "ggmlremoting_functions.yaml"):
         """Initialize the generator with the YAML configuration."""
         self.yaml_path = yaml_path
 
-        if not Path(yaml_path).exists():
-            raise FileNotFoundError(f"Configuration file {yaml_path} not found")
+        اگر نه Path(yaml_path).exists():
+            بالاببر FileNotFoundError(f"Configuration file {yaml_path} not found")
 
-        with open(yaml_path, 'r') as f:
+        with open(yaml_path, 'r') بهعنوان f:
             self.config = yaml.safe_load(f)
 
         self.functions = self.config['functions']
@@ -48,163 +48,163 @@ class RemotingCodebaseGenerator:
 
     def _check_clang_format_available(self) -> bool:
         """Check if clang-format is available in the system PATH."""
-        return shutil.which("clang-format") is not None
+        بازگشت shutil.which("clang-format") is نه None
 
     def _format_file_with_clang_format(self, file_path: Path) -> bool:
         """Format a file with clang-format -i. Returns True if successful, False otherwise."""
-        if not self.clang_format_available:
-            return False
+        اگر نه self.clang_format_available:
+            بازگشت نادرست
 
-        try:
+        تلاش:
             subprocess.run(
                 ["clang-format", "-i", str(file_path)],
-                check=True,
-                capture_output=True,
-                text=True
+                check=درست,
+                capture_output=درست,
+                text=درست
             )
-            return True
-        except subprocess.CalledProcessError:
+            بازگشت درست
+        استثنا subprocess.CalledProcessError:
             logging.exception(f"   ⚠️  clang-format failed for {file_path}")
-            return False
-        except Exception as e:
+            بازگشت نادرست
+        استثنا Exception بهعنوان e:
             logging.exception(f"   ⚠️  Unexpected error formatting {file_path}: {e}")
-            return False
+            بازگشت نادرست
 
     def generate_enum_name(self, group_name: str, function_name: str) -> str:
         """Generate the APIR_COMMAND_TYPE enum name for a function."""
         prefix = self.naming_patterns['enum_prefix']
-        return f"{prefix}{group_name.upper()}_{function_name.upper()}"
+        بازگشت f"{prefix}{group_name.upper()}_{function_name.upper()}"
 
     def generate_backend_function_name(self, group_name: str, function_name: str) -> str:
         """Generate the backend function name."""
-        function_key = f"{group_name}_{function_name}"
+        function_کلید = f"{group_name}_{function_name}"
         overrides = self.naming_patterns.get('backend_function_overrides', {})
 
-        if function_key in overrides:
-            return overrides[function_key]
+        اگر function_کلید در overrides:
+            بازگشت overrides[function_کلید]
 
         prefix = self.naming_patterns['backend_function_prefix']
-        return f"{prefix}{group_name}_{function_name}"
+        بازگشت f"{prefix}{group_name}_{function_name}"
 
     def generate_frontend_function_name(self, group_name: str, function_name: str) -> str:
         """Generate the frontend function name."""
         prefix = self.naming_patterns['frontend_function_prefix']
-        return f"{prefix}{group_name}_{function_name}"
+        بازگشت f"{prefix}{group_name}_{function_name}"
 
     def get_enabled_functions(self) -> List[Dict[str, Any]]:
         """Get all enabled functions with their metadata."""
         functions = []
-        enum_value = 0
+        enum_مقدار = 0
 
-        for group_name, group_data in self.functions.items():
+        برای group_name, group_data در self.functions.اقلام():
             group_description = group_data['group_description']
 
-            for function_name, func_metadata in group_data['functions'].items():
+            برای function_name, func_metadata در group_data['functions'].اقلام():
                 # Handle case where func_metadata is None or empty (functions with only comments)
-                if func_metadata is None:
+                اگر func_metadata is None:
                     func_metadata = {}
 
                 # Functions are enabled by default unless explicitly disabled
-                if func_metadata.get('enabled', True):
+                اگر func_metadata.get('enabled', درست):
                     functions.append({
                         'group_name': group_name,
                         'function_name': function_name,
                         'enum_name': self.generate_enum_name(group_name, function_name),
-                        'enum_value': enum_value,
+                        'enum_value': enum_مقدار,
                         'backend_function': self.generate_backend_function_name(group_name, function_name),
                         'frontend_function': self.generate_frontend_function_name(group_name, function_name),
                         'frontend_return': func_metadata.get('frontend_return', 'void'),
                         'frontend_extra_params': func_metadata.get('frontend_extra_params', []),
                         'group_description': group_description,
-                        'deprecated': func_metadata.get('deprecated', False),
+                        'deprecated': func_metadata.get('deprecated', نادرست),
                     })
-                    enum_value += 1
+                    enum_مقدار += 1
 
-        return functions
+        بازگشت functions
 
     def generate_apir_backend_header(self) -> str:
         """Generate the complete apir_backend.h file."""
         functions = self.get_enabled_functions()
 
         # Generate the enum section
-        enum_lines = ["typedef enum ApirBackendCommandType {"]
+        enum_سطرها = ["typedef enum ApirBackendCommandType {"]
         current_group = None
 
-        for func in functions:
+        برای func در functions:
             # Add comment for new group
-            if func['group_name'] != current_group:
-                enum_lines.append("")
-                enum_lines.append(f"  /* {func['group_description']} */")
+            اگر func['group_name'] != current_group:
+                enum_سطرها.append("")
+                enum_سطرها.append(f"  /* {func['group_description']} */")
                 current_group = func['group_name']
 
-            enum_lines.append(f"  {func['enum_name']} = {func['enum_value']},")
+            enum_سطرها.append(f"  {func['enum_name']} = {func['enum_value']},")
 
         # Add the count
-        total_count = len(functions)
-        enum_lines.append("\n  // last command_type index + 1")
-        enum_lines.append(f"  APIR_BACKEND_DISPATCH_TABLE_COUNT = {total_count},")
-        enum_lines.append("} ApirBackendCommandType;")
+        total_شمار = len(functions)
+        enum_سطرها.append("\n  // last command_type index + 1")
+        enum_سطرها.append(f"  APIR_BACKEND_DISPATCH_TABLE_COUNT = {total_count},")
+        enum_سطرها.append("} ApirBackendCommandType;")
 
         # Generate function name mapping
-        func_lines = []
-        func_lines.append("static inline const char * apir_dispatch_command_name(ApirBackendCommandType type) {")
-        func_lines.append("    switch (type) {")
+        func_سطرها = []
+        func_سطرها.append("static inline const char * apir_dispatch_command_name(ApirBackendCommandType type) {")
+        func_سطرها.append("    switch (type) {")
 
         current_group = None
-        for func in functions:
+        برای func در functions:
             # Add comment for new group
-            if func['group_name'] != current_group:
-                func_lines.append(f"        /* {func['group_description']} */")
+            اگر func['group_name'] != current_group:
+                func_سطرها.append(f"        /* {func['group_description']} */")
                 current_group = func['group_name']
 
             # Generate clean function name without backend_ prefix
             clean_name = f"{func['group_name']}_{func['function_name']}"
-            func_lines.append(f"        case {func['enum_name']}:")
-            func_lines.append(f"            return \"{clean_name}\";")
+            func_سطرها.append(f"        case {func['enum_name']}:")
+            func_سطرها.append(f"            return \"{clean_name}\";")
 
-        func_lines.append("")
-        func_lines.append("        default:")
-        func_lines.append("            return \"unknown\";")
-        func_lines.append("    }")
-        func_lines.append("}")
+        func_سطرها.append("")
+        func_سطرها.append("        default:")
+        func_سطرها.append("            return \"unknown\";")
+        func_سطرها.append("    }")
+        func_سطرها.append("}")
 
         # Full header template
-        header_content = NL.join(enum_lines) + "\n\n" + NL.join(func_lines) + "\n"
+        header_content = NL.join(enum_سطرها) + "\n\n" + NL.join(func_سطرها) + "\n"
 
-        return header_content
+        بازگشت header_content
 
     def generate_backend_dispatched_header(self) -> str:
         """Generate the complete backend-dispatched.h file."""
         functions = self.get_enabled_functions()
 
         # Function declarations
-        decl_lines = []
+        decl_سطرها = []
         current_group = None
 
-        for func in functions:
-            if func['group_name'] != current_group:
-                decl_lines.append(f"\n/* {func['group_description']} */")
+        برای func در functions:
+            اگر func['group_name'] != current_group:
+                decl_سطرها.append(f"\n/* {func['group_description']} */")
                 current_group = func['group_name']
 
             signature = "uint32_t"
             params = "apir_encoder *enc, apir_decoder *dec, virgl_apir_context *ctx"
-            if func['deprecated']:
-                decl_lines.append(f"/* {func['enum_name']} is deprecated. Keeping the handler for backward compatibility. */")
+            اگر func['deprecated']:
+                decl_سطرها.append(f"/* {func['enum_name']} is deprecated. Keeping the handler for backward compatibility. */")
 
-            decl_lines.append(f"{signature} {func['backend_function']}({params});")
+            decl_سطرها.append(f"{signature} {func['backend_function']}({params});")
 
         # Dispatch table
-        table_lines = []
+        table_سطرها = []
         current_group = None
 
-        for func in functions:
-            if func['group_name'] != current_group:
-                table_lines.append(f"\n  /* {func['group_description']} */")
-                table_lines.append("")
+        برای func در functions:
+            اگر func['group_name'] != current_group:
+                table_سطرها.append(f"\n  /* {func['group_description']} */")
+                table_سطرها.append("")
                 current_group = func['group_name']
 
-            deprecated = " /* DEPRECATED */" if func['deprecated'] else ""
-            table_lines.append(f"  /* {func['enum_name']}  = */ {func['backend_function']}{deprecated},")
+            deprecated = " /* DEPRECATED */" اگر func['deprecated'] وگرنه ""
+            table_سطرها.append(f"  /* {func['enum_name']}  = */ {func['backend_function']}{deprecated},")
 
         header_content = f'''\
 #pragma once
@@ -217,37 +217,37 @@ static const backend_dispatch_t apir_backend_dispatch_table[APIR_BACKEND_DISPATC
 }};
 }}
 '''
-        return header_content
+        بازگشت header_content
 
     def generate_virtgpu_forward_header(self) -> str:
         """Generate the complete virtgpu-forward.gen.h file."""
         functions = self.get_enabled_functions()
 
-        decl_lines = []
+        decl_سطرها = []
         current_group = None
 
-        for func in functions:
-            if func['group_name'] != current_group:
-                decl_lines.append("")
-                decl_lines.append(f"/* {func['group_description']} */")
+        برای func در functions:
+            اگر func['group_name'] != current_group:
+                decl_سطرها.append("")
+                decl_سطرها.append(f"/* {func['group_description']} */")
                 current_group = func['group_name']
 
-            if func['deprecated']:
-                decl_lines.append(f"/* {func['frontend_function']} is deprecated. */")
-                continue
+            اگر func['deprecated']:
+                decl_سطرها.append(f"/* {func['frontend_function']} is deprecated. */")
+                ادامه
 
             # Build parameter list
             params = [self.naming_patterns['frontend_base_param']]
             params.extend(func['frontend_extra_params'])
             param_str = ', '.join(params)
 
-            decl_lines.append(f"{func['frontend_return']} {func['frontend_function']}({param_str});")
+            decl_سطرها.append(f"{func['frontend_return']} {func['frontend_function']}({param_str});")
 
         header_content = f'''\
 #pragma once
 {NL.join(decl_lines)}
 '''
-        return header_content
+        بازگشت header_content
 
     def regenerate_codebase(self) -> None:
         """Regenerate the entire remoting codebase."""
@@ -258,11 +258,11 @@ static const backend_dispatch_t apir_backend_dispatch_table[APIR_BACKEND_DISPATC
         current_dir = os.getcwd()
         is_frontend_dir = current_dir.endswith('ggml-virtgpu')
 
-        if is_frontend_dir:
+        اگر is_frontend_dir:
             # Running from ggml/src/ggml-virtgpu-apir
             logging.info("📍 Detected frontend directory execution")
             frontend_base = Path(".")
-        else:
+        وگرنه:
             # Running from project root (fallback to original behavior)
             logging.info("📍 Detected project root execution")
             base_path = self.config_data.get('base_path', 'ggml/src')
@@ -275,9 +275,9 @@ static const backend_dispatch_t apir_backend_dispatch_table[APIR_BACKEND_DISPATC
         virtgpu_forward_path = frontend_base / "virtgpu-forward.gen.h"
 
         # Create output directories for each file
-        apir_backend_path.parent.mkdir(parents=True, exist_ok=True)
-        backend_dispatched_path.parent.mkdir(parents=True, exist_ok=True)
-        virtgpu_forward_path.parent.mkdir(parents=True, exist_ok=True)
+        apir_backend_path.parent.mkdir(parents=درست, exist_ok=درست)
+        backend_dispatched_path.parent.mkdir(parents=درست, exist_ok=درست)
+        virtgpu_forward_path.parent.mkdir(parents=درست, exist_ok=درست)
 
         # Generate header files
         logging.info("📁 Generating header files...")
@@ -297,15 +297,15 @@ static const backend_dispatch_t apir_backend_dispatch_table[APIR_BACKEND_DISPATC
         # Format generated files with clang-format
         generated_files = [apir_backend_path, backend_dispatched_path, virtgpu_forward_path]
 
-        if not self.clang_format_available:
+        اگر نه self.clang_format_available:
             logging.warning("\n⚠️clang-format not found in PATH. Generated files will not be formatted.\n"
                             "   Install clang-format to enable automatic code formatting.")
-        else:
+        وگرنه:
             logging.info("\n🎨 Formatting files with clang-format...")
-            for file_path in generated_files:
-                if self._format_file_with_clang_format(file_path):
+            برای file_path در generated_files:
+                اگر self._format_file_with_clang_format(file_path):
                     logging.info(f"   ✅ Formatted {file_path.name}")
-                else:
+                وگرنه:
                     logging.warning(f"   ❌ Failed to format {file_path.name}")
 
         # Generate summary
@@ -320,14 +320,14 @@ static const backend_dispatch_t apir_backend_dispatch_table[APIR_BACKEND_DISPATC
         logging.info(f"   Working directory: {current_dir}")
 
 
-def main():
-    try:
+def اصلی():
+    تلاش:
         generator = RemotingCodebaseGenerator()
         generator.regenerate_codebase()
-    except Exception as e:
+    استثنا Exception بهعنوان e:
         logging.exception(f"❌ Error: {e}")
         exit(1)
 
 
-if __name__ == "__main__":
-    main()
+اگر __name__ == "__main__":
+    اصلی()

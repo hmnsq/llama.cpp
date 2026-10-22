@@ -1,79 +1,79 @@
-#include "pad_reflect_1d.hpp"
+#شامل "pad_reflect_1d.hpp"
 
-static void pad_reflect_1d_kernel_f32(
-    const void *__restrict__ src0, void *__restrict__ dst, const int64_t ne0,
-    const int64_t ne00, const sycl::uint3 ne01, const int64_t ne02,
-    const int64_t ne03, const int64_t nb00, const int64_t nb01,
-    const int64_t nb02, const int64_t nb03, const int64_t nb0,
-    const int64_t nb1, const int64_t nb2, const int64_t nb3, const int p0,
-    const int p1, sycl::nd_item<3> item_ct1) {
+ایستا تهی pad_reflect_1d_kernel_f32(
+    ثابت تهی *__restrict__ src0, تهی *__restrict__ dst, ثابت int64_t ne0,
+    ثابت int64_t ne00, ثابت sycl::uint3 ne01, ثابت int64_t ne02,
+    ثابت int64_t ne03, ثابت int64_t nb00, ثابت int64_t nb01,
+    ثابت int64_t nb02, ثابت int64_t nb03, ثابت int64_t nb0,
+    ثابت int64_t nb1, ثابت int64_t nb2, ثابت int64_t nb3, ثابت صحیح p0,
+    ثابت صحیح p1, sycl::nd_item<3> item_ct1) {
 
-    const int64_t i3 = item_ct1.get_group(0);
-    const int64_t i2 = item_ct1.get_group(1);
+    ثابت int64_t i3 = item_ct1.get_group(0);
+    ثابت int64_t i2 = item_ct1.get_group(1);
 
-    const sycl::uint2 div_mod_packed =
+    ثابت sycl::uint2 div_mod_packed =
         fast_div_modulo(item_ct1.get_group(2), ne01);
-    const int64_t tile1 = div_mod_packed.y();
-    const int64_t tile0 = div_mod_packed.x();
-    const int64_t i1 = tile1;
-    const int64_t i0 =
+    ثابت int64_t tile1 = div_mod_packed.y();
+    ثابت int64_t tile0 = div_mod_packed.x();
+    ثابت int64_t i1 = tile1;
+    ثابت int64_t i0 =
         item_ct1.get_local_id(2) + tile0 * item_ct1.get_local_range(2);
 
-    if (i0 >= ne0 || i1 >= ne01.z() || i2 >= ne02 || i3 >= ne03) {
-        return;
+    اگر (i0 >= ne0 || i1 >= ne01.z() || i2 >= ne02 || i3 >= ne03) {
+        بازگشت;
     }
 
-    const char *src0_ptr =
-        (const char *)src0 + i3 * nb03 + i2 * nb02 + i1 * nb01;
-    char *dst_ptr = (char *)dst + i3 * nb3 + i2 * nb2 + i1 * nb1;
+    ثابت نویسه *src0_ptr =
+        (ثابت نویسه *)src0 + i3 * nb03 + i2 * nb02 + i1 * nb01;
+    نویسه *dst_ptr = (نویسه *)dst + i3 * nb3 + i2 * nb2 + i1 * nb1;
 
-    const int64_t rel_i0 = i0 - p0; // relative i0 in src0
+    ثابت int64_t rel_i0 = i0 - p0; // relative i0 in src0
     int64_t src_idx;
 
-    if (rel_i0 < 0) {
+    اگر (rel_i0 < 0) {
         // Left padding - reflect
         src_idx = -rel_i0;
-    } else if (rel_i0 < ne00) {
+    } وگرنه اگر (rel_i0 < ne00) {
         // Middle - copy
         src_idx = rel_i0;
-    } else {
+    } وگرنه {
         // Right padding - reflect
         src_idx = 2 * ne00 - 2 - rel_i0;
     }
-    const float value = *(const float *)(src0_ptr + src_idx * nb00);
-    *(float *)(dst_ptr + i0 * nb0) = value;
+    ثابت اعشاری value = *(ثابت اعشاری *)(src0_ptr + src_idx * nb00);
+    *(اعشاری *)(dst_ptr + i0 * nb0) = value;
 
     GGML_UNUSED(p1);
 }
 
-void ggml_sycl_op_pad_reflect_1d(ggml_backend_sycl_context &ctx,
+تهی ggml_sycl_op_pad_reflect_1d(ggml_backend_sycl_context &ctx,
                                  ggml_tensor *dst) {
 
-    const ggml_tensor *src0 = dst->src[0];
+    ثابت ggml_tensor *src0 = dst->src[0];
     dpct::queue_ptr stream = ctx.stream();
 
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
     GGML_ASSERT(dst->type == GGML_TYPE_F32);
 
-    const int32_t *opts = (const int32_t *)dst->op_params;
-    const int p0 = opts[0];
-    const int p1 = opts[1];
+    ثابت int32_t *opts = (ثابت int32_t *)dst->op_params;
+    ثابت صحیح p0 = opts[0];
+    ثابت صحیح p1 = opts[1];
 
-    const int64_t ne00 = src0->ne[0];
-    const int64_t ne01 = src0->ne[1];
-    const sycl::uint3 ne01_packed = init_fastdiv_values(ne01);
-    const int64_t ne02 = src0->ne[2];
-    const int64_t ne03 = src0->ne[3];
+    ثابت int64_t ne00 = src0->ne[0];
+    ثابت int64_t ne01 = src0->ne[1];
+    ثابت sycl::uint3 ne01_packed = init_fastdiv_مقادیر(ne01);
+    ثابت int64_t ne02 = src0->ne[2];
+    ثابت int64_t ne03 = src0->ne[3];
 
-    const int64_t ne0 = dst->ne[0];
+    ثابت int64_t ne0 = dst->ne[0];
 
     GGML_ASSERT(ne0 == ne00 + p0 + p1);
 
     constexpr int64_t bx = SYCL_PAD_REFLECT_1D_BLOCK_SIZE;
-    const int64_t tiles0 = (ne0 + bx - 1) / bx;
-    const dpct::dim3 grid_dims((unsigned)(ne01 * tiles0), (unsigned)ne02,
+    ثابت int64_t tiles0 = (ne0 + bx - 1) / bx;
+    ثابت dpct::dim3 grid_dims((unsigned)(ne01 * tiles0), (unsigned)ne02,
                                (unsigned)ne03);
-    const dpct::dim3 block_dims((unsigned)bx, 1, 1);
+    ثابت dpct::dim3 block_dims((unsigned)bx, 1, 1);
 
     stream->submit([&](sycl::handler &cgh) {
         auto src0_data_ct0 = src0->data;

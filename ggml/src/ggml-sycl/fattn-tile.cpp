@@ -1,58 +1,58 @@
-#include <sycl/sycl.hpp>
-#include <sycl/ext/oneapi/work_group_static.hpp>
-#include "dpct/helper.hpp"
-#include "common.hpp"
-#include "fattn-common.hpp"
-#include "fattn-tile.hpp"
-#include <cmath>
-#include <float.h>
-namespace syclex = sycl::ext::oneapi::experimental;
+#شامل <sycl/sycl.hpp>
+#شامل <sycl/ext/oneapi/work_group_static.hpp>
+#شامل "dpct/helper.hpp"
+#شامل "common.hpp"
+#شامل "fattn-common.hpp"
+#شامل "fattn-tile.hpp"
+#شامل <cmath>
+#شامل <float.h>
+فضاینام syclex = sycl::ext::oneapi::experimental;
 
-void ggml_sycl_flash_attn_ext_tile(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    const ggml_tensor * K = dst->src[1];
-    const ggml_tensor * V = dst->src[2];
-    switch (K->ne[0]) {
-        case  40: {
+تهی ggml_sycl_flash_attn_ext_tile(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ثابت ggml_tensor * K = dst->src[1];
+    ثابت ggml_tensor * V = dst->src[2];
+    انتخاب (K->ne[0]) {
+        حالت  40: {
             GGML_ASSERT(V->ne[0] == K->ne[0]);
             ggml_sycl_flash_attn_ext_tile_case< 40,  40>(ctx, dst);
-        } break;
-        case  64: {
+        } بشکن;
+        حالت  64: {
             GGML_ASSERT(V->ne[0] == K->ne[0]);
             ggml_sycl_flash_attn_ext_tile_case< 64,  64>(ctx, dst);
-        } break;
-        case  72: {
+        } بشکن;
+        حالت  72: {
             GGML_ASSERT(V->ne[0] == K->ne[0]);
             ggml_sycl_flash_attn_ext_tile_case< 72,  72>(ctx, dst);
-        } break;
-        case  80: {
+        } بشکن;
+        حالت  80: {
             GGML_ASSERT(V->ne[0] == K->ne[0]);
             ggml_sycl_flash_attn_ext_tile_case< 80,  80>(ctx, dst);
-        } break;
-        case  96: {
+        } بشکن;
+        حالت  96: {
             GGML_ASSERT(V->ne[0] == K->ne[0]);
             ggml_sycl_flash_attn_ext_tile_case< 96,  96>(ctx, dst);
-        } break;
-        case 112: {
+        } بشکن;
+        حالت 112: {
             GGML_ASSERT(V->ne[0] == K->ne[0]);
             ggml_sycl_flash_attn_ext_tile_case<112, 112>(ctx, dst);
-        } break;
-        case 128: {
+        } بشکن;
+        حالت 128: {
             GGML_ASSERT(V->ne[0] == K->ne[0]);
             ggml_sycl_flash_attn_ext_tile_case<128, 128>(ctx, dst);
-        } break;
-        case 256: {
+        } بشکن;
+        حالت 256: {
             GGML_ASSERT(V->ne[0] == K->ne[0]);
             ggml_sycl_flash_attn_ext_tile_case<256, 256>(ctx, dst);
-        } break;
-        case 512: {
+        } بشکن;
+        حالت 512: {
             GGML_ASSERT(V->ne[0] == K->ne[0]);
             ggml_sycl_flash_attn_ext_tile_case<512, 512>(ctx, dst);
-        } break;
-        case 576: {
+        } بشکن;
+        حالت 576: {
             GGML_ASSERT(V->ne[0] == 512);
             ggml_sycl_flash_attn_ext_tile_case<576, 512>(ctx, dst);
-        } break;
-        default: {
+        } بشکن;
+        پیشفرض: {
             GGML_ABORT("Unsupported head size");
         }
     }
