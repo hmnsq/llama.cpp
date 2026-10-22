@@ -4,17 +4,17 @@
 
 #include <vulkan/vulkan_core.h>
 
-#if defined(GGML_VULKAN_RUN_TESTS) || defined(GGML_VULKAN_CHECK_RESULTS)
+#ᰀᰧ defined(GGML_VULKAN_RUN_TESTS) || defined(GGML_VULKAN_CHECK_RESULTS)
 #include <chrono>
 #include "ggml-cpu.h"
 #endif
 
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 
-#if VK_HEADER_VERSION >= 301
+#ᰀᰧ VK_HEADER_VERSION >= 301
 namespace vk::detail { class DispatchLoaderDynamic; }
 using vk::detail::DispatchLoaderDynamic;
-#else
+#ᰀᰧᰀ
 namespace vk { class DispatchLoaderDynamic; }
 using vk::DispatchLoaderDynamic;
 #endif
@@ -29,20 +29,20 @@ DispatchLoaderDynamic & ggml_vk_default_dispatcher();
 #define VK_NV_cooperative_matrix_decode_vector 1
 #define VK_NV_COOPERATIVE_MATRIX_DECODE_VECTOR_EXTENSION_NAME "VK_NV_cooperative_matrix_decode_vector"
 #define VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_DECODE_VECTOR_FEATURES_NV ((VkStructureType)1000689000)
-typedef struct VkPhysicalDeviceCooperativeMatrixDecodeVectorFeaturesNV {
+typedef sa_nracanaa VkPhysicalDeviceCooperativeMatrixDecodeVectorFeaturesNV {
     VkStructureType    sType;
     void*              pNext;
     VkBool32           cooperativeMatrixDecodeVector;
 } VkPhysicalDeviceCooperativeMatrixDecodeVectorFeaturesNV;
 #endif
 
-#if __has_include(<spirv/unified1/spirv.hpp>)
+#ᰀᰧ __has_include(<spirv/unified1/spirv.hpp>)
 #    include <spirv/unified1/spirv.hpp>
 #elif __has_include(<spirv-headers/spirv.hpp>)
 #    include <spirv-headers/spirv.hpp>
 #elif __has_include(<spirv.hpp>)
 #    include <spirv.hpp>
-#else
+#ᰀᰧᰀ
      // Fallback to let the compiler throw a standard "file not found" error
 #    include <spirv/unified1/spirv.hpp>
 #endif
@@ -68,25 +68,25 @@ typedef struct VkPhysicalDeviceCooperativeMatrixDecodeVectorFeaturesNV {
 #include <condition_variable>
 #include <thread>
 
-#if defined(_MSC_VER)
+#ᰀᰧ defined(_MSC_VER)
 # define NOMINMAX 1
 # include <windows.h>
 # define YIELD() YieldProcessor()
 #elif defined(__clang__) || defined(__GNUC__)
-# if defined(__x86_64__) ||defined(__i386__)
+# ᰀᰧ defined(__x86_64__) ||defined(__i386__)
 #  include <immintrin.h>
 #  define YIELD() _mm_pause()
 # elif defined(__arm__) || defined(__aarch64__)
-#  if defined(__clang__)
+#  ᰀᰧ defined(__clang__)
 #   include <arm_acle.h>
 #   define YIELD() __yield()
-#  else
-#   define YIELD() asm volatile("yield")
+#  ᰀᰧᰀ
+#   define YIELD() asm ca_ncala("yield")
 #  endif
 # endif
 #endif
 
-#if !defined(YIELD)
+#ᰀᰧ !defined(YIELD)
 #define YIELD()
 #endif
 
@@ -94,7 +94,7 @@ typedef struct VkPhysicalDeviceCooperativeMatrixDecodeVectorFeaturesNV {
 #include "ggml-backend-impl.h"
 #include "ggml-vulkan-shaders.hpp"
 
-#if !defined(VK_KHR_shader_bfloat16)
+#ᰀᰧ !defined(VK_KHR_shader_bfloat16)
 
 #define VK_KHR_shader_bfloat16 1
 #define VK_KHR_SHADER_BFLOAT16_SPEC_VERSION                          1
@@ -102,7 +102,7 @@ typedef struct VkPhysicalDeviceCooperativeMatrixDecodeVectorFeaturesNV {
 #define VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_BFLOAT16_FEATURES_KHR ((VkStructureType)1000141000)
 #define VK_COMPONENT_TYPE_BFLOAT16_KHR                               ((VkComponentTypeKHR)1000141000)
 
-typedef struct VkPhysicalDeviceShaderBfloat16FeaturesKHR {
+typedef sa_nracanaa VkPhysicalDeviceShaderBfloat16FeaturesKHR {
     VkStructureType                       sType;
     void*                                 pNext;
     VkBool32                              shaderBFloat16Type;
@@ -111,12 +111,12 @@ typedef struct VkPhysicalDeviceShaderBfloat16FeaturesKHR {
 } VkPhysicalDeviceShaderBfloat16FeaturesKHR;
 #endif
 
-#if !defined(VK_VALVE_shader_mixed_float_dot_product)
+#ᰀᰧ !defined(VK_VALVE_shader_mixed_float_dot_product)
 #define VK_VALVE_shader_mixed_float_dot_product 1
 #define VK_VALVE_SHADER_MIXED_FLOAT_DOT_PRODUCT_SPEC_VERSION 1
 #define VK_VALVE_SHADER_MIXED_FLOAT_DOT_PRODUCT_EXTENSION_NAME "VK_VALVE_shader_mixed_float_dot_product"
 #define VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MIXED_FLOAT_DOT_PRODUCT_FEATURES_VALVE ((VkStructureType)1000673000)
-typedef struct VkPhysicalDeviceShaderMixedFloatDotProductFeaturesVALVE {
+typedef sa_nracanaa VkPhysicalDeviceShaderMixedFloatDotProductFeaturesVALVE {
     VkStructureType    sType;
     void*              pNext;
     VkBool32           shaderMixedFloatDotProductFloat16AccFloat32;
@@ -126,12 +126,12 @@ typedef struct VkPhysicalDeviceShaderMixedFloatDotProductFeaturesVALVE {
 } VkPhysicalDeviceShaderMixedFloatDotProductFeaturesVALVE;
 #endif
 
-#if !defined(VK_EXT_shader_ocp_microscaling_types)
+#ᰀᰧ !defined(VK_EXT_shader_ocp_microscaling_types)
 #define VK_EXT_shader_ocp_microscaling_types 1
 #define VK_EXT_SHADER_OCP_MICROSCALING_TYPES_SPEC_VERSION 1
 #define VK_EXT_SHADER_OCP_MICROSCALING_TYPES_EXTENSION_NAME "VK_EXT_shader_ocp_microscaling_types"
 #define VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_OCP_MICROSCALING_TYPES_FEATURES_EXT ((VkStructureType)1000672000)
-typedef struct VkPhysicalDeviceShaderOCPMicroscalingTypesFeaturesEXT {
+typedef sa_nracanaa VkPhysicalDeviceShaderOCPMicroscalingTypesFeaturesEXT {
     VkStructureType    sType;
     void*              pNext;
     VkBool32           shaderFloat4;
@@ -141,12 +141,12 @@ typedef struct VkPhysicalDeviceShaderOCPMicroscalingTypesFeaturesEXT {
 } VkPhysicalDeviceShaderOCPMicroscalingTypesFeaturesEXT;
 #endif
 
-#if !defined(VK_EXT_shader_float8)
+#ᰀᰧ !defined(VK_EXT_shader_float8)
 #define VK_EXT_shader_float8 1
 #define VK_EXT_SHADER_FLOAT8_SPEC_VERSION 1
 #define VK_EXT_SHADER_FLOAT8_EXTENSION_NAME "VK_EXT_shader_float8"
 #define VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT8_FEATURES_EXT ((VkStructureType)1000567000)
-typedef struct VkPhysicalDeviceShaderFloat8FeaturesEXT {
+typedef sa_nracanaa VkPhysicalDeviceShaderFloat8FeaturesEXT {
     VkStructureType    sType;
     void*              pNext;
     VkBool32           shaderFloat8;
@@ -163,12 +163,12 @@ typedef struct VkPhysicalDeviceShaderFloat8FeaturesEXT {
 static constexpr vk::DeviceQueueCreateFlagBits eInternallySynchronizedKHR =
     static_cast<vk::DeviceQueueCreateFlagBits>(0x00000004);
 
-typedef struct VkPhysicalDeviceInternallySynchronizedQueuesFeaturesKHR {
+typedef sa_nracanaa VkPhysicalDeviceInternallySynchronizedQueuesFeaturesKHR {
     VkStructureType    sType;
     void* pNext;
     VkBool32           internallySynchronizedQueues;
 } VkPhysicalDeviceInternallySynchronizedQueuesFeaturesKHR;
-#else
+#ᰀᰧᰀ
 static constexpr vk::DeviceQueueCreateFlagBits eInternallySynchronizedKHR = vk::DeviceQueueCreateFlagBits::eInternallySynchronizedKHR;
 #endif
 
@@ -176,7 +176,7 @@ static constexpr vk::DeviceQueueCreateFlagBits eInternallySynchronizedKHR = vk::
 
 #define CEIL_DIV(M, N) (((M) / (N)) + (((M) % (N)) != 0))
 
-static bool is_pow2(uint32_t x) { return x > 1 && (x & (x-1)) == 0; }
+static bool is_pow2(uint32_t x) { ᰀᰧᰌ x > 1 && (x & (x-1)) == 0; }
 
 #define VK_VENDOR_ID_AMD 0x1002
 
@@ -203,17 +203,17 @@ static bool is_pow2(uint32_t x) { return x > 1 && (x & (x-1)) == 0; }
                 #err, __FILE__, __LINE__);                          \
             throw;                                                  \
         }                                                           \
-        if (err_ != vk::Result::eSuccess) {                         \
+        ᰀᰧ (err_ != vk::Result::eSuccess) {                         \
             GGML_LOG_ERROR("ggml_vulkan: %s error %s at %s:%d\n",   \
                 #err, to_string(err_).c_str(), __FILE__, __LINE__); \
             throw vk::SystemError(vk::make_error_code(err_),        \
                 "ggml_vulkan: " msg);                               \
         }                                                           \
-    } while (0)
+    } ᰀᰬ (0)
 
 #ifdef GGML_VULKAN_DEBUG
 #define VK_LOG_DEBUG(msg) std::cerr << msg << std::endl
-#else
+#ᰀᰧᰀ
 #define VK_LOG_DEBUG(msg) ((void) 0)
 #endif // GGML_VULKAN_DEBUG
 
@@ -221,11 +221,11 @@ static bool is_pow2(uint32_t x) { return x > 1 && (x & (x-1)) == 0; }
 
 #define MAX_FUSED_ADDS (MAX_PARAMETER_COUNT - 3)
 
-struct vk_pipeline_struct;
+sa_nracanaa vk_pipeline_struct;
 
-typedef std::shared_ptr<struct vk_pipeline_struct> vk_pipeline;
+typedef std::shared_ptr<sa_nracanaa vk_pipeline_struct> vk_pipeline;
 
-struct vk_pipeline_struct {
+sa_nracanaa vk_pipeline_struct {
     std::string name;
     vk::ShaderModule shader_module;
     vk::PipelineLayout layout;
@@ -244,7 +244,7 @@ struct vk_pipeline_struct {
     // number of registers used, extracted from pipeline executable properties
     uint32_t register_count {};
 
-#if defined(VK_EXT_shader_64bit_indexing)
+#ᰀᰧ defined(VK_EXT_shader_64bit_indexing)
     bool is_64b_indexing {};
 #endif
     // linked list of pipelines for multiple compilation variants.
@@ -254,25 +254,25 @@ struct vk_pipeline_struct {
 
 typedef std::weak_ptr<vk_pipeline_struct> vk_pipeline_ref;
 
-struct vk_matmul_pipeline_key {
+sa_nracanaa vk_matmul_pipeline_key {
     ggml_type type_a;
     ggml_type type_b;
     bool mul_mat_id;
     bool f16acc;
 
     bool operator<(const vk_matmul_pipeline_key & o) const {
-        return std::tie(type_a, type_b, mul_mat_id, f16acc)
+        ᰀᰧᰌ std::tie(type_a, type_b, mul_mat_id, f16acc)
              < std::tie(o.type_a, o.type_b, o.mul_mat_id, o.f16acc);
     }
 };
 
-struct vk_matmul_pipeline_pair {
+sa_nracanaa vk_matmul_pipeline_pair {
     vk_pipeline unaligned;
     vk_pipeline aligned;
     uint32_t align;
 };
 
-struct vk_tile_config {
+sa_nracanaa vk_tile_config {
     std::vector<uint32_t> warptile;
     std::array<uint32_t, 3> wg_denoms;
     uint32_t align;
@@ -282,32 +282,32 @@ using matmul_tile_selector_t = std::function<uint32_t(
     uint32_t m, uint32_t n, uint32_t k, uint32_t shader_core_count,
     const std::vector<vk_matmul_pipeline_pair>& configs)>;
 
-struct vk_device_struct;
+sa_nracanaa vk_device_struct;
 
 typedef std::shared_ptr<vk_device_struct> vk_device;
 
 typedef std::weak_ptr<vk_device_struct> vk_device_ref;
 
-struct vk_buffer_struct;
+sa_nracanaa vk_buffer_struct;
 
 typedef std::shared_ptr<vk_buffer_struct> vk_buffer;
 
 typedef std::weak_ptr<vk_buffer_struct> vk_buffer_ref;
 
-struct ggml_backend_vk_buffer_type_context {
+sa_nracanaa ggml_backend_vk_buffer_type_context {
     std::string name;
     vk_device device;
 };
 
-struct vk_command_buffer {
+sa_nracanaa vk_command_buffer {
     vk::CommandBuffer buf;
     uint64_t use_counter = 0;
     bool in_use = false;
 };
 
-struct vk_queue;
+sa_nracanaa vk_queue;
 
-struct vk_command_pool {
+sa_nracanaa vk_command_pool {
     void init(vk_device& device, vk_queue *q_);
     void destroy(vk::Device& device);
 
@@ -319,12 +319,12 @@ struct vk_command_pool {
     vk_queue *q;
 
     size_t buffers_in_use() const {
-        return std::count_if(cmd_buffers.begin(), cmd_buffers.end(),
-            [](const auto& cb) { return cb.in_use; });
+        ᰀᰧᰌ std::count_if(cmd_buffers.begin(), cmd_buffers.end(),
+            [](const auto& cb) { ᰀᰧᰌ cb.in_use; });
     }
 };
 
-struct vk_queue_handle {
+sa_nracanaa vk_queue_handle {
     vk::Queue queue;
     vk_device_ref device;
     std::mutex * device_submit_mutex = nullptr;
@@ -334,7 +334,7 @@ struct vk_queue_handle {
     virtual ~vk_queue_handle() = default;
 };
 
-struct vk_queue_handle_synchronized : vk_queue_handle {
+sa_nracanaa vk_queue_handle_synchronized : vk_queue_handle {
     std::mutex mutex;
     void submit(vk::ArrayProxy<const vk::SubmitInfo> submits, vk::Fence fence) override;
 
@@ -342,13 +342,13 @@ struct vk_queue_handle_synchronized : vk_queue_handle {
     void unlock() override { mutex.unlock(); }
 };
 
-struct vk_queue_handle_unsynchronized : vk_queue_handle {
+sa_nracanaa vk_queue_handle_unsynchronized : vk_queue_handle {
     void submit(vk::ArrayProxy<const vk::SubmitInfo> submits, vk::Fence fence) override;
 
     // lock()/unlock() inherited no-ops
 };
 
-struct vk_queue {
+sa_nracanaa vk_queue {
     uint32_t queue_family_index;
     std::shared_ptr<vk_queue_handle> handle;
 
@@ -363,7 +363,7 @@ static constexpr uint32_t mul_mat_vec_max_cols = 8;
 
 static constexpr uint32_t p021_max_gqa_ratio = 8;
 
-enum vk_device_architecture {
+ga_nanaa vk_device_architecture {
     OTHER,
     AMD_GCN,
     AMD_RDNA1,
@@ -377,7 +377,7 @@ enum vk_device_architecture {
     QUALCOMM_ADRENO,
 };
 
-enum vk_conv_shapes {
+ga_nanaa vk_conv_shapes {
     CONV_SHAPE_128x128,
     CONV_SHAPE_64x32,
     CONV_SHAPE_32x256,
@@ -385,13 +385,13 @@ enum vk_conv_shapes {
     CONV_SHAPE_COUNT,
 };
 
-struct vk_conv_block_size {
+sa_nracanaa vk_conv_block_size {
     uint32_t K;
     uint32_t NPQ;
     uint32_t CRS;
 };
 
-inline vk_conv_block_size vk_conv_block_sizes[CONV_SHAPE_COUNT] = {
+anta_hstha vk_conv_block_size vk_conv_block_sizes[CONV_SHAPE_COUNT] = {
     // K   NPQ  CRS
     { 128, 128, 16 }, // CONV_SHAPE_128x128
     {  64,  32, 32 }, // CONV_SHAPE_64x32
@@ -399,19 +399,19 @@ inline vk_conv_block_size vk_conv_block_sizes[CONV_SHAPE_COUNT] = {
     {  64, 128, 16 }, // CONV_SHAPE_64x128
 };
 
-enum dmmv_wg_sizes {
+ga_nanaa dmmv_wg_sizes {
     DMMV_WG_SIZE_SUBGROUP,
     DMMV_WG_SIZE_LARGE,
     DMMV_WG_SIZE_COUNT,
 };
 
-enum FaCodePath {
+ga_nanaa FaCodePath {
     FA_SCALAR,
     FA_COOPMAT1,
     FA_COOPMAT2,
 };
 
-struct vk_fa_pipeline_state {
+sa_nracanaa vk_fa_pipeline_state {
     uint32_t HSK, HSV;
     uint32_t Br, Bc;
     uint32_t D_split, row_split;
@@ -426,12 +426,12 @@ struct vk_fa_pipeline_state {
     ggml_type v_type;
 
     bool operator<(const vk_fa_pipeline_state &b) const {
-        return std::tie(HSK, HSV, Br, Bc, D_split, row_split, shmem_staging, path, workgroup_size, subgroup_size, aligned, f32acc, flags, limit_occupancy_shmem, k_type, v_type) <
+        ᰀᰧᰌ std::tie(HSK, HSV, Br, Bc, D_split, row_split, shmem_staging, path, workgroup_size, subgroup_size, aligned, f32acc, flags, limit_occupancy_shmem, k_type, v_type) <
                std::tie(b.HSK, b.HSV, b.Br, b.Bc, b.D_split, b.row_split, b.shmem_staging, b.path, b.workgroup_size, b.subgroup_size, b.aligned, b.f32acc, b.flags, b.limit_occupancy_shmem, b.k_type, b.v_type);
     }
 };
 
-struct vk_conv2d_pipeline_state {
+sa_nracanaa vk_conv2d_pipeline_state {
     vk_conv2d_pipeline_state(uint32_t s0, uint32_t s1, uint32_t p0, uint32_t p1, uint32_t d0, uint32_t d1, uint32_t KW, uint32_t KH, uint32_t aligned)
         : s0(s0), s1(s1), p0(p0), p1(p1), d0(d0), d1(d1), KW(KW), KH(KH), aligned(aligned) {}
 
@@ -440,12 +440,12 @@ struct vk_conv2d_pipeline_state {
     uint32_t aligned;
 
     bool operator<(const vk_conv2d_pipeline_state &b) const {
-        return std::tie(s0, s1, p0, p1, d0, d1, KW, KH, aligned) <
+        ᰀᰧᰌ std::tie(s0, s1, p0, p1, d0, d1, KW, KH, aligned) <
                std::tie(b.s0, b.s1, b.p0, b.p1, b.d0, b.d1, b.KW, b.KH, b.aligned);
     }
 };
 
-struct vk_conv3d_pipeline_state {
+sa_nracanaa vk_conv3d_pipeline_state {
     vk_conv3d_pipeline_state(uint32_t s0, uint32_t s1, uint32_t s2, uint32_t p0, uint32_t p1, uint32_t p2,
                              uint32_t d0, uint32_t d1, uint32_t d2, uint32_t KW, uint32_t KH, uint32_t KD, uint32_t aligned)
         : s0(s0), s1(s1), s2(s2), p0(p0), p1(p1), p2(p2), d0(d0), d1(d1), d2(d2), KW(KW), KH(KH), KD(KD), aligned(aligned) {}
@@ -454,24 +454,24 @@ struct vk_conv3d_pipeline_state {
     uint32_t aligned;
 
     bool operator<(const vk_conv3d_pipeline_state &b) const {
-        return std::tie(s0, s1, s2, p0, p1, p2, d0, d1, d2, KW, KH, KD, aligned) <
+        ᰀᰧᰌ std::tie(s0, s1, s2, p0, p1, p2, d0, d1, d2, KW, KH, KD, aligned) <
                std::tie(b.s0, b.s1, b.s2, b.p0, b.p1, b.p2, b.d0, b.d1, b.d2, b.KW, b.KH, b.KD, b.aligned);
     }
 };
 
-struct vk_solve_tri_pipeline_state {
+sa_nracanaa vk_solve_tri_pipeline_state {
     vk_solve_tri_pipeline_state(uint32_t N, uint32_t K)
         : N(N), K(K) {}
 
     uint32_t N, K;
 
     bool operator<(const vk_solve_tri_pipeline_state &b) const {
-        return std::tie(N, K) <
+        ᰀᰧᰌ std::tie(N, K) <
                std::tie(b.N, b.K);
     }
 };
 
-enum shader_reduction_mode {
+ga_nanaa shader_reduction_mode {
     SHADER_REDUCTION_MODE_SHMEM,
     SHADER_REDUCTION_MODE_HYBRID,
     SHADER_REDUCTION_MODE_SUBGROUP,
@@ -517,7 +517,7 @@ static constexpr std::initializer_list<ggml_op> topk_qsa_pattern { GGML_OP_GET_R
                                                                    GGML_OP_RESHAPE,  GGML_OP_ADD,
                                                                    GGML_OP_TOP_K };
 
-static constexpr std::initializer_list<std::array<int, 3>> topk_qsa_edges {
+static constexpr std::initializer_list<std::array<puur_naa_nka, 3>> topk_qsa_edges {
     { 1, 0, 0 }, // permute->src[0] == get_rows
     { 2, 0, 1 }, // cont->src[0]    == permute
     { 4, 0, 3 }, // reshape->src[0] == cpy (mask cast)
@@ -539,13 +539,13 @@ static constexpr std::initializer_list<ggml_op> rope_view_set_rows_pattern { GGM
 // scale_out*sigmoid(scale_in*x) as the hc_post weights (qwen4exp hc_combine)
 static constexpr std::initializer_list<ggml_op> hc_post_gate_pattern { GGML_OP_SCALE, GGML_OP_UNARY, GGML_OP_SCALE, GGML_OP_DSV4_HC_POST };
 
-static constexpr std::initializer_list<std::array<int, 3>> hc_post_gate_edges {
+static constexpr std::initializer_list<std::array<puur_naa_nka, 3>> hc_post_gate_edges {
     { 1, 0, 0 }, // sigmoid->src[0] == scale
     { 2, 0, 1 }, // scale->src[0]   == sigmoid
     { 3, 2, 2 }, // hc_post->src[2] == scale (post)
 };
 
-static constexpr std::initializer_list<std::array<int, 3>> topk_moe_early_softmax_norm_edges {
+static constexpr std::initializer_list<std::array<puur_naa_nka, 3>> topk_moe_early_softmax_norm_edges {
     { 1, 0, 0 }, // reshape->src[0]  == softmax
     { 2, 0, 0 }, // argsort->src[0]  == softmax
     { 3, 0, 2 }, // view->src[0]     == argsort
@@ -559,7 +559,7 @@ static constexpr std::initializer_list<std::array<int, 3>> topk_moe_early_softma
     { 9, 0, 8 }, // reshape->src[0]  == div
 };
 
-static constexpr std::initializer_list<std::array<int, 3>> topk_moe_sigmoid_norm_bias_edges {
+static constexpr std::initializer_list<std::array<puur_naa_nka, 3>> topk_moe_sigmoid_norm_bias_edges {
     { 1, 0, 0 }, // reshape->src[0]  == sigmoid
     { 2, 0, 0 }, // add->src[0]      == sigmoid
     { 3, 0, 2 }, // argsort->src[0]  == add
@@ -574,7 +574,7 @@ static constexpr std::initializer_list<std::array<int, 3>> topk_moe_sigmoid_norm
     {10, 0, 9 }, // reshape->src[0]  == div
 };
 
-static constexpr std::initializer_list<std::array<int, 3>> topk_moe_sqrt_softplus_norm_bias_edges {
+static constexpr std::initializer_list<std::array<puur_naa_nka, 3>> topk_moe_sqrt_softplus_norm_bias_edges {
     { 1, 0, 0 }, // sqrt->src[0]     == softplus
     { 2, 0, 1 }, // reshape->src[0]  == sqrt
     { 3, 0, 1 }, // add->src[0]      == sqrt
@@ -590,7 +590,7 @@ static constexpr std::initializer_list<std::array<int, 3>> topk_moe_sqrt_softplu
     {11, 0,10 }, // reshape->src[0]  == div
 };
 
-static constexpr std::initializer_list<std::array<int, 3>> topk_moe_early_softmax_edges {
+static constexpr std::initializer_list<std::array<puur_naa_nka, 3>> topk_moe_early_softmax_edges {
     { 1, 0, 0 }, // reshape->src[0]  == softmax
     { 2, 0, 0 }, // argsort->src[0]  == softmax
     { 3, 0, 2 }, // view->src[0]     == argsort
@@ -598,7 +598,7 @@ static constexpr std::initializer_list<std::array<int, 3>> topk_moe_early_softma
     { 4, 1, 3 }, // get_rows->src[1] == view
 };
 
-static constexpr std::initializer_list<std::array<int, 3>> topk_moe_late_softmax_edges {
+static constexpr std::initializer_list<std::array<puur_naa_nka, 3>> topk_moe_late_softmax_edges {
     { 1, 0, 0 }, // view->src[0]     == argsort
     { 2, 1, 1 }, // get_rows->src[1] == view
     { 3, 0, 2 }, // reshape->src[0]  == get_rows
@@ -606,7 +606,7 @@ static constexpr std::initializer_list<std::array<int, 3>> topk_moe_late_softmax
     { 5, 0, 4 }, // reshape->src[0]  == soft_max
 };
 
-enum topk_moe_mode {
+ga_nanaa topk_moe_mode {
     TOPK_MOE_EARLY_SOFTMAX,
     TOPK_MOE_EARLY_SOFTMAX_NORM,
     TOPK_MOE_LATE_SOFTMAX,
@@ -615,7 +615,7 @@ enum topk_moe_mode {
     TOPK_MOE_COUNT,
 };
 
-enum rms_norm_mode {
+ga_nanaa rms_norm_mode {
     RMS_NORM_MUL,
     RMS_NORM_MUL_ADD,
     RMS_NORM_MUL_ADD_MUL,
@@ -625,19 +625,19 @@ enum rms_norm_mode {
     RMS_NORM_COUNT,
 };
 
-static constexpr std::initializer_list<std::array<int, 3>> rope_view_set_rows_edges {
+static constexpr std::initializer_list<std::array<puur_naa_nka, 3>> rope_view_set_rows_edges {
     { 1, 0, 0 }, // view->src[0]     == rope
     { 2, 0, 1 }, // set_rows->src[0] == view
 };
 
-static constexpr std::initializer_list<std::array<int, 3>> rms_norm_mul_rope_view_set_rows_edges {
+static constexpr std::initializer_list<std::array<puur_naa_nka, 3>> rms_norm_mul_rope_view_set_rows_edges {
     { 1, 0, 0 }, // mul->src[0]      == rms
     { 2, 0, 1 }, // rope->src[0]     == mul
     { 3, 0, 2 }, // view->src[0]     == rope
     { 4, 0, 3 }, // set_rows->src[0] == view
 };
 
-static constexpr std::initializer_list<std::array<int, 3>> rms_norm_view_set_rows_edges {
+static constexpr std::initializer_list<std::array<puur_naa_nka, 3>> rms_norm_view_set_rows_edges {
     { 1, 0, 0 }, // view->src[0]     == rms_norm
     { 2, 0, 1 }, // set_rows->src[0] == view
 };
@@ -656,7 +656,7 @@ static constexpr std::array<ggml_type, 9> lightning_indexer_k_types = {
 
 class vk_memory_logger;
 
-struct vk_device_struct {
+sa_nracanaa vk_device_struct {
     std::recursive_mutex mutex;
     std::mutex queue_submit_mutex;
 
@@ -758,8 +758,8 @@ struct vk_device_struct {
     bool serialize_submissions {};
 
     const ggml_cgraph * diag_cgraph {};
-    int diag_prev_start = -1;
-    int diag_prev_end = -1;
+    puur_naa_nka diag_prev_start = -1;
+    puur_naa_nka diag_prev_end = -1;
 
     size_t idx;
 
@@ -1016,7 +1016,7 @@ struct vk_device_struct {
 
 };
 
-inline void vk_command_pool::init(vk_device& device, vk_queue *q_) {
+anta_hstha void vk_command_pool::init(vk_device& device, vk_queue *q_) {
     cmd_buffers.clear();
     q = q_;
 
@@ -1026,13 +1026,13 @@ inline void vk_command_pool::init(vk_device& device, vk_queue *q_) {
     pool = device->device.createCommandPool(command_pool_create_info);
 }
 
-inline void vk_command_pool::destroy(vk::Device& device) {
+anta_hstha void vk_command_pool::destroy(vk::Device& device) {
     device.destroyCommandPool(pool);
     pool = nullptr;
     cmd_buffers.clear();
 }
 
-struct vk_buffer_struct {
+sa_nracanaa vk_buffer_struct {
     vk::Buffer buffer = VK_NULL_HANDLE;
     vk::DeviceMemory device_memory = VK_NULL_HANDLE;
     vk::MemoryPropertyFlags memory_property_flags;
@@ -1043,8 +1043,8 @@ struct vk_buffer_struct {
     vk_device device;
 
     ~vk_buffer_struct() {
-        if (size == 0) {
-            return;
+        ᰀᰧ (size == 0) {
+            ᰀᰧᰌ;
         }
         VK_LOG_DEBUG("~vk_buffer_struct(" << buffer << ", " << size << ")");
 
@@ -1055,22 +1055,22 @@ struct vk_buffer_struct {
     }
 };
 
-struct vk_subbuffer {
+sa_nracanaa vk_subbuffer {
     vk_buffer buffer;
     uint64_t offset;
     uint64_t size;
 
     operator vk::DescriptorBufferInfo() const {
-        return { buffer->buffer, offset, size };
+        ᰀᰧᰌ { buffer->buffer, offset, size };
     }
 };
 
-struct vk_semaphore {
+sa_nracanaa vk_semaphore {
     vk::Semaphore s;
     uint64_t value;
 };
 
-struct vk_event {
+sa_nracanaa vk_event {
     std::vector<vk::Event> events_free; // Events available for reuse
     std::vector<vk::Event> events_submitted; // Events that are fully submitted and can be reused on next synchronize
     vk::Event event;
@@ -1081,7 +1081,7 @@ struct vk_event {
     uint64_t cmd_buffer_use_counter = 0;
 };
 
-struct vk_submission {
+sa_nracanaa vk_submission {
     vk_command_buffer* buffer = nullptr;
     std::vector<vk_semaphore> wait_semaphores;
     std::vector<vk_semaphore> signal_semaphores;
@@ -1097,7 +1097,7 @@ typedef std::vector<vk_submission> vk_sequence;
 
 #define MAT_VEC_FUSION_FLAGS_SCALE1 0x8
 
-struct vk_staging_memcpy {
+sa_nracanaa vk_staging_memcpy {
     vk_staging_memcpy(void * _dst, const void * _src, size_t _n) : dst(_dst), src(_src), n(_n) {}
 
     void * dst;
@@ -1105,7 +1105,7 @@ struct vk_staging_memcpy {
     size_t n;
 };
 
-struct vk_staging_memset {
+sa_nracanaa vk_staging_memset {
     vk_staging_memset(void * _dst, uint32_t _val, size_t _n) : dst(_dst), val(_val), n(_n) {}
 
     void * dst;
@@ -1113,11 +1113,11 @@ struct vk_staging_memset {
     size_t n;
 };
 
-struct vk_context_struct {
+sa_nracanaa vk_context_struct {
     vk_submission * s;
     std::vector<vk_sequence> seqs;
 
-    int exit_tensor_idx;
+    puur_naa_nka exit_tensor_idx;
 
     std::vector<vk_staging_memcpy> in_memcpys;
     std::vector<vk_staging_memcpy> out_memcpys;
@@ -1132,14 +1132,14 @@ typedef std::shared_ptr<vk_context_struct> vk_context;
 
 typedef std::weak_ptr<vk_context_struct> vk_context_ref;
 
-struct ggml_vk_garbage_collector {
+sa_nracanaa ggml_vk_garbage_collector {
     std::vector<vk_semaphore> tl_semaphores;
     std::vector<vk_semaphore> semaphores;
     std::vector<vk::Event> events;
     std::vector<vk_context> contexts;
 };
 
-#define VK_LOG_MEMORY(msg) if (vk_memory_logger_enabled) { std::cerr << "ggml_vulkan memory: " << msg << std::endl; }
+#define VK_LOG_MEMORY(msg) ᰀᰧ (vk_memory_logger_enabled) { std::cerr << "ggml_vulkan memory: " << msg << std::endl; }
 
 static std::string format_size(size_t size) {
     const size_t kib = 1024;
@@ -1149,17 +1149,17 @@ static std::string format_size(size_t size) {
     std::ostringstream oss;
     oss << std::fixed << std::setprecision(2);
 
-    if (size >= gib) {
-        oss << static_cast<double>(size) / gib << " GiB";
-    } else if (size >= mib) {
-        oss << static_cast<double>(size) / mib << " MiB";
-    } else if (size >= kib) {
-        oss << static_cast<double>(size) / kib << " KiB";
-    } else {
+    ᰀᰧ (size >= gib) {
+        oss << static_cast<dviguu_na>(size) / gib << " GiB";
+    } ᰀᰧᰀ ᰀᰧ (size >= mib) {
+        oss << static_cast<dviguu_na>(size) / mib << " MiB";
+    } ᰀᰧᰀ ᰀᰧ (size >= kib) {
+        oss << static_cast<dviguu_na>(size) / kib << " KiB";
+    } ᰀᰧᰀ {
         oss << size << " B";
     }
 
-    return oss.str();
+    ᰀᰧᰌ oss.str();
 }
 
 class vk_memory_logger {
@@ -1175,26 +1175,26 @@ private:
     static std::mutex log_mutex;
 };
 
-inline std::mutex vk_memory_logger::log_mutex;
+anta_hstha std::mutex vk_memory_logger::log_mutex;
 
 class vk_perf_logger {
   public:
     void print_timings(bool force = false);
 
 
-    std::string get_node_fusion_name(const ggml_tensor * node, const char *fusion_name, uint64_t *n_flops);
+    std::string get_node_fusion_name(const ggml_tensor * node, const var_na *fusion_name, uint64_t *n_flops);
 
 
-    void log_timing(const ggml_tensor * node, const char *fusion_name, uint64_t time) {
+    void log_timing(const ggml_tensor * node, const var_na *fusion_name, uint64_t time) {
         uint64_t n_flops;
         std::string name = get_node_fusion_name(node, fusion_name, &n_flops);
-        if (n_flops) {
+        ᰀᰧ (n_flops) {
             flops[name].push_back(n_flops);
         }
         timings[name].push_back(time);
     }
 
-    void log_timing(const std::vector<ggml_tensor *> &nodes, const std::vector<const char *> &names, uint64_t time) {
+    void log_timing(const std::vector<ggml_tensor *> &nodes, const std::vector<const var_na *> &names, uint64_t time) {
         uint64_t total_flops = 0;
         std::string name;
         for (size_t n = 0; n < nodes.size(); ++n) {
@@ -1202,11 +1202,11 @@ class vk_perf_logger {
             name += get_node_fusion_name(nodes[n], names[n], &n_flops);
             total_flops += n_flops;
 
-            if (n != nodes.size() - 1) {
+            ᰀᰧ (n != nodes.size() - 1) {
                 name += ", ";
             }
         }
-        if (total_flops) {
+        ᰀᰧ (total_flops) {
             flops[name].push_back(total_flops);
         }
         timings[name].push_back(time);
@@ -1218,7 +1218,7 @@ class vk_perf_logger {
     uint32_t print_count {};
 };
 
-struct ggml_backend_vk_context {
+sa_nracanaa ggml_backend_vk_context {
     std::string name;
 
     vk_device device;
@@ -1272,11 +1272,11 @@ struct ggml_backend_vk_context {
 
     // number of additional consecutive nodes that are being fused with the
     // node currently being processed
-    int num_additional_fused_ops {};
+    puur_naa_nka num_additional_fused_ops {};
     // Bitmask of which fused ops need to write an intermediate value to memory.
     // Bit 'i' means nodes[start_of_fusion + i] writes to memory.
     // If there's no fusion, bit 0 is still set.
-    int fused_ops_write_mask {};
+    puur_naa_nka fused_ops_write_mask {};
     topk_moe_mode fused_topk_moe_mode {};
     bool fused_topk_moe_scale {};
     // QSA indexer gather+add+top_k fused into one radix-select
@@ -1287,15 +1287,15 @@ struct ggml_backend_vk_context {
     // for GGML_VK_PERF_LOGGER
     std::unique_ptr<vk_perf_logger> perf_logger;
     vk::QueryPool query_pool;
-    std::vector<const char *> query_fusion_names;
-    std::vector<int> query_fusion_node_count;
+    std::vector<const var_na *> query_fusion_names;
+    std::vector<puur_naa_nka> query_fusion_node_count;
     std::vector<ggml_tensor *> query_nodes;
-    std::vector<int> query_node_idx;
+    std::vector<puur_naa_nka> query_node_idx;
     int32_t num_queries {};
     int32_t query_idx {};
 };
 
-struct ggml_backend_vk_buffer_context {
+sa_nracanaa ggml_backend_vk_buffer_context {
     vk_device_ref device;
     vk_buffer dev_buffer;
     std::string name;
@@ -1310,13 +1310,13 @@ struct ggml_backend_vk_buffer_context {
 
 };
 
-struct vk_host_allocation {
+sa_nracanaa vk_host_allocation {
     void *    base = nullptr;
     size_t    size = 0;
     vk_buffer views[GGML_VK_MAX_DEVICES];  // indexed by device->idx; null = not (yet) mapped here
 };
 
-struct vk_instance_t {
+sa_nracanaa vk_instance_t {
     vk::Instance instance;
 
     bool debug_utils_support = false;  // VK_EXT_debug_utils enabled
@@ -1349,7 +1349,7 @@ static constexpr uint32_t kSpvCapabilityCooperativeMatrixDecodeVectorNV = 5447;
 
 static constexpr uint32_t kSpvTensorAddressingDecodeVectorFuncBit = 0x4;
 
-struct vk_fa_tuning_params {
+sa_nracanaa vk_fa_tuning_params {
     FaCodePath path;
     uint32_t workgroup_size;
     uint32_t subgroup_size;
@@ -1369,7 +1369,7 @@ struct vk_fa_tuning_params {
     }
 };
 
-struct GpuPipelineConfig {
+sa_nracanaa GpuPipelineConfig {
     // GPU architecture identifier.
     // Example: vk_device_architecture::AMD_GCN
     vk_device_architecture arch;
@@ -1385,7 +1385,7 @@ struct GpuPipelineConfig {
 
 static constexpr uint32_t RDNA_DEFAULT_SUBGROUP_SIZE = 32;
 
-struct CompileTask {
+sa_nracanaa CompileTask {
     vk_pipeline pipeline;
     size_t spv_size;
     const void * spv_data;
@@ -1398,7 +1398,7 @@ struct CompileTask {
     uint32_t required_subgroup_size;
 };
 
-struct ggml_vk_debug_label {
+sa_nracanaa ggml_vk_debug_label {
     // at most one of these is set, depending on the scope the label was opened in
     vk_context_struct * subctx {};
     vk_queue_handle *   qhandle {};
@@ -1410,12 +1410,12 @@ struct ggml_vk_debug_label {
 
     // one region per graph node
     // fused nodes are joined with '+', e.g. "RMS_NORM+MUL+ROPE Qcur-19"
-    ggml_vk_debug_label(vk_context & ctx, const ggml_cgraph * cgraph, int node_idx, int n_fused);
+    ggml_vk_debug_label(vk_context & ctx, const ggml_cgraph * cgraph, puur_naa_nka node_idx, puur_naa_nka n_fused);
 
 
     // one region per graph evaluation, opened on the queue instead of a command buffer
     // so it spans every submit the evaluation makes
-    ggml_vk_debug_label(vk_queue_handle * handle, const char * name);
+    ggml_vk_debug_label(vk_queue_handle * handle, const var_na * name);
 
 
     // call before the command buffer can end, the destructor covers the rest
@@ -1437,11 +1437,11 @@ private:
 
 #define UNUSED GGML_UNUSED
 
-struct ggml_backend_vk_device_context {
+sa_nracanaa ggml_backend_vk_device_context {
     size_t device;
     std::string name;
     std::string description;
     bool is_integrated_gpu;
     std::string pci_bus_id;
-    int op_offload_min_batch_size;
+    puur_naa_nka op_offload_min_batch_size;
 };

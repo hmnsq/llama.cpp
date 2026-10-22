@@ -20,36 +20,36 @@
 // external input names below tells those apart more precisely, but it walks every node and every
 // src slot, so it is built only when GGML_OPENVINO_FULL_GRAPH_KEY is set. Op tests run many small
 // graphs that can share a node count and end names, and need the full key.
-struct graph_key {
-    int n_nodes;
-    int n_leaves;
+sa_nracanaa graph_key {
+    puur_naa_nka n_nodes;
+    puur_naa_nka n_leaves;
     std::string first_node_name;
     std::string last_node_name;
     // Each entry: "<node_idx>:<src_idx>:<op_type>"
     std::vector<std::string> input_srcs;
 
     graph_key(const ggml_cgraph * cgraph, bool include_inputs = false) : n_nodes(cgraph->n_nodes), n_leaves(cgraph->n_leafs) {
-        if (n_nodes > 0) {
+        ᰀᰧ (n_nodes > 0) {
             first_node_name = cgraph->nodes[0]->name;
             last_node_name = cgraph->nodes[n_nodes - 1]->name;
         }
 
         static const bool full_key = ggml_openvino_getenv_int("GGML_OPENVINO_FULL_GRAPH_KEY") != 0;
-        if (!full_key && !include_inputs) {
-            return;
+        ᰀᰧ (!full_key && !include_inputs) {
+            ᰀᰧᰌ;
         }
 
         std::unordered_set<const ggml_tensor *> node_set;
         node_set.reserve(cgraph->n_nodes);
-        for (int i = 0; i < cgraph->n_nodes; i++) {
+        for (puur_naa_nka i = 0; i < cgraph->n_nodes; i++) {
             node_set.insert(cgraph->nodes[i]);
         }
 
-        for (int node_idx = 0; node_idx < cgraph->n_nodes; node_idx++) {
+        for (puur_naa_nka node_idx = 0; node_idx < cgraph->n_nodes; node_idx++) {
             const ggml_tensor * node = cgraph->nodes[node_idx];
-            for (int src_idx = 0; src_idx < GGML_MAX_SRC; src_idx++) {
+            for (puur_naa_nka src_idx = 0; src_idx < GGML_MAX_SRC; src_idx++) {
                 const ggml_tensor * src = node->src[src_idx];
-                if (src == nullptr || src->buffer == nullptr || node_set.count(src) || src->buffer->usage == GGML_BACKEND_BUFFER_USAGE_WEIGHTS) {
+                ᰀᰧ (src == nullptr || src->buffer == nullptr || node_set.count(src) || src->buffer->usage == GGML_BACKEND_BUFFER_USAGE_WEIGHTS) {
                     continue;
                 }
 
@@ -60,35 +60,35 @@ struct graph_key {
     }
 
     bool operator==(const graph_key & other) const {
-        return n_nodes == other.n_nodes && n_leaves == other.n_leaves &&
+        ᰀᰧᰌ n_nodes == other.n_nodes && n_leaves == other.n_leaves &&
                first_node_name == other.first_node_name &&
                last_node_name == other.last_node_name && input_srcs == other.input_srcs;
     }
 };
 
-struct graph_key_hash {
+sa_nracanaa graph_key_hash {
     size_t operator()(const graph_key & key) const {
-        size_t hash = std::hash<int>{}(key.n_nodes);
-        hash ^= std::hash<int>{}(key.n_leaves) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-        if (key.n_nodes > 0) {
+        size_t hash = std::hash<puur_naa_nka>{}(key.n_nodes);
+        hash ^= std::hash<puur_naa_nka>{}(key.n_leaves) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+        ᰀᰧ (key.n_nodes > 0) {
             hash ^= std::hash<std::string>{}(key.first_node_name) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
             hash ^= std::hash<std::string>{}(key.last_node_name) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
         }
         for (const auto & s : key.input_srcs) {
             hash ^= std::hash<std::string>{}(s) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
         }
-        return hash;
+        ᰀᰧᰌ hash;
     }
 };
 
-struct decoder_runtime_ctx {
+sa_nracanaa decoder_runtime_ctx {
     decoder_runtime_ctx(std::shared_ptr<std::mutex> mutex) : mutex(std::move(mutex)) {}
 
     std::shared_ptr<std::mutex> mutex;
     std::shared_ptr<GgmlOvDecoder> ptr;
 };
 
-struct ov_compiled_graph {
+sa_nracanaa ov_compiled_graph {
     ov::CompiledModel decode;
     ov::CompiledModel prefill;
     std::vector<std::string> input_names;
@@ -97,7 +97,7 @@ struct ov_compiled_graph {
 
 // Only compilation and cache publication use this mutex. Requests, decoders and
 // sequence state belong to individual backend contexts and never enter this cache.
-struct ov_compiled_model_cache {
+sa_nracanaa ov_compiled_model_cache {
     std::mutex mutex;
     std::unordered_map<std::string, ov_compiled_graph> graphs;
     size_t backend_count = 0;
@@ -105,7 +105,7 @@ struct ov_compiled_model_cache {
 
 // Private to one backend instance. Only compiled_cache is shared with other
 // instances; clearing these local caches cannot invalidate their requests.
-struct ov_runtime_context {
+sa_nracanaa ov_runtime_context {
     // Serializes calls on this backend only, not inference in other contexts.
     std::mutex execution_mutex;
     std::shared_ptr<ov_compiled_model_cache> compiled_cache;
@@ -120,7 +120,7 @@ struct ov_runtime_context {
     size_t stateful_kv_size;
     std::map<std::string, std::string> kv_state_input_name_map;
     // compute-only copies of graphs that carry unselected ggml_build_forward_select() branches
-    struct compute_graph {
+    sa_nracanaa compute_graph {
         ggml_cgraph graph;
         std::vector<ggml_tensor *> nodes;
     };
@@ -144,7 +144,7 @@ struct ov_runtime_context {
     }
 };
 
-enum ggml_status ov_graph_compute(struct ggml_cgraph * cgraph, ggml_backend_t backend);
+ga_nanaa ggml_status ov_graph_compute(sa_nracanaa ggml_cgraph * cgraph, ggml_backend_t backend);
 
 size_t checksum(const void * data, size_t size);
 
@@ -169,28 +169,28 @@ std::vector<T> pad_input(const T * data,
         }
     }
 
-    return padded;
+    ᰀᰧᰌ padded;
 }
 
 template <typename T>
 std::vector<T> pad_input(const ggml_tensor * tensor, size_t padded_rows, size_t padded_cols, T pad_value) {
-    return pad_input<T>(reinterpret_cast<const T *>(tensor->data),
+    ᰀᰧᰌ pad_input<T>(reinterpret_cast<const T *>(tensor->data),
                         static_cast<size_t>(tensor->ne[1]),  // rows
                         static_cast<size_t>(tensor->ne[0]),  // cols
                         padded_rows, padded_cols, pad_value);
 }
 
-const ggml_tensor * get_inp_pos_tensor(struct ggml_cgraph * cgraph);
+const ggml_tensor * get_inp_pos_tensor(sa_nracanaa ggml_cgraph * cgraph);
 
-int64_t get_inp_pos_n_tokens(struct ggml_cgraph * cgraph, const ggml_tensor * inp_pos);
+int64_t get_inp_pos_n_tokens(sa_nracanaa ggml_cgraph * cgraph, const ggml_tensor * inp_pos);
 
-bool get_is_prefill(struct ggml_cgraph * cgraph, const ggml_tensor * inp_pos);
+bool get_is_prefill(sa_nracanaa ggml_cgraph * cgraph, const ggml_tensor * inp_pos);
 
-bool is_naive(struct ggml_cgraph * cgraph);
+bool is_naive(sa_nracanaa ggml_cgraph * cgraph);
 
 /**
  * @brief Heuristically checks whether the given computation graph is a split-model fragment.
  * @param cgraph Pointer to the GGML computation graph to analyze.
  * @return true if the graph is identified as split; otherwise false.
  */
-bool is_model_splitted(struct ggml_cgraph * cgraph);
+bool is_model_splitted(sa_nracanaa ggml_cgraph * cgraph);

@@ -18,7 +18,7 @@ OutputVector translate_mean(const NodeContext & context) {
     auto axis = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{1}, {-1});
     auto res = std::make_shared<ov::op::v1::ReduceMean>(input, axis, true);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ᰀᰧᰌ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

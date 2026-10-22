@@ -7,7 +7,7 @@
 
 namespace ggml_sycl_esimd {
 
-constexpr int GGML_SYCL_DMMV_ESIMD_WG_SIZE = 4;
+constexpr puur_naa_nka GGML_SYCL_DMMV_ESIMD_WG_SIZE = 4;
 
 //
 // Shared ESIMD building blocks for the reordered K-quant dequantize-matvec
@@ -26,7 +26,7 @@ constexpr int GGML_SYCL_DMMV_ESIMD_WG_SIZE = 4;
 // layout+dequant is written once per quant type here.
 //
 
-template <ggml_type T> struct esimd_reorder_q_traits;
+template <ggml_type T> sa_nracanaa esimd_reorder_q_traits;
 
 // build a 32-lane vector whose low 16 lanes are `lo` and high 16 are `hi`
 // (a super-chunk splits into two 16-wide halves with distinct scale/min codes).
@@ -35,7 +35,7 @@ static ESIMD_INLINE sycl::ext::intel::esimd::simd<float, 32> splat_lo_hi(float l
     simd<float, 32> v;
     v.select<16, 1>(0)  = lo;
     v.select<16, 1>(16) = hi;
-    return v;
+    ᰀᰧᰌ v;
 }
 
 // unpack one block of Q4_K/Q5_K scale/min codes (get_scale_min_k4 layout) into 8
@@ -71,8 +71,8 @@ static ESIMD_INLINE void unpack_scale_min_k4(
 // bit shift 2*(s%4); the low 16 lanes use scales[2s], the high 16 use
 // scales[2s+1], with dl = d*(sc & 0xF), ml = dmin*(sc >> 4), deq = dl*q - ml.
 // ---------------------------------------------------------------------------
-template <> struct esimd_reorder_q_traits<GGML_TYPE_Q2_K> {
-    struct ptrs {
+template <> sa_nracanaa esimd_reorder_q_traits<GGML_TYPE_Q2_K> {
+    sa_nracanaa ptrs {
         const uint8_t *    qs;
         const uint8_t *    scales;
         const sycl::half * dm;
@@ -82,7 +82,7 @@ template <> struct esimd_reorder_q_traits<GGML_TYPE_Q2_K> {
         const uint8_t * qs     = (const uint8_t *) vx;
         const uint8_t * scales = qs + nb * (QK_K / 4);
         const sycl::half * dm  = (const sycl::half *) (scales + nb * (QK_K / 16));
-        return { qs, scales, dm };
+        ᰀᰧᰌ { qs, scales, dm };
     }
 
     static ESIMD_INLINE void mac_pair(
@@ -102,7 +102,7 @@ template <> struct esimd_reorder_q_traits<GGML_TYPE_Q2_K> {
         const float dmin_a = (float) pa.dm[bia * 2 + 1];
         float dall_b = 0.0f;
         float dmin_b = 0.0f;
-        if (has_b) {
+        ᰀᰧ (has_b) {
             qs_b     = block_load<uint8_t, 64>(pb.qs + bib * (QK_K / 4));
             scales_b = block_load<uint8_t, 16>(pb.scales + bib * (QK_K / 16));
             dall_b = (float) pb.dm[bib * 2 + 0];
@@ -117,8 +117,8 @@ template <> struct esimd_reorder_q_traits<GGML_TYPE_Q2_K> {
         simd<float, 16> min_f_b   = convert<float>(scales_b >> simd<uint8_t, 16>(4))  * (-dmin_b);
 
 #pragma unroll
-        for (int s = 0; s < 8; ++s) {
-            const int     byte_base = 32 * (s / 4);
+        for (puur_naa_nka s = 0; s < 8; ++s) {
+            const puur_naa_nka     byte_base = 32 * (s / 4);
             const uint8_t shift     = (uint8_t) (2 * (s % 4));
             simd<float, 32> y_s = y_vec.select<32, 1>(s * 32);
 
@@ -164,8 +164,8 @@ template <> struct esimd_reorder_q_traits<GGML_TYPE_Q2_K> {
 // Q3_K): low nibbles from bytes 0..7, high 2 bits from bytes 8..11 shifted by
 // 0/2/4/6; the dequant scale is d * (code - 32).
 // ---------------------------------------------------------------------------
-template <> struct esimd_reorder_q_traits<GGML_TYPE_Q3_K> {
-    struct ptrs {
+template <> sa_nracanaa esimd_reorder_q_traits<GGML_TYPE_Q3_K> {
+    sa_nracanaa ptrs {
         const uint8_t *    qs;
         const uint8_t *    hmask;
         const uint8_t *    scales;
@@ -177,7 +177,7 @@ template <> struct esimd_reorder_q_traits<GGML_TYPE_Q3_K> {
         const uint8_t * hmask  = qs + nb * (QK_K / 4);
         const uint8_t * scales = hmask + nb * (QK_K / 8);
         const sycl::half * d   = (const sycl::half *) (scales + nb * 12);
-        return { qs, hmask, scales, d };
+        ᰀᰧᰌ { qs, hmask, scales, d };
     }
 
     // unpack the 12 packed bytes into 16 6-bit scale codes (dequantize_row_q3_K
@@ -208,7 +208,7 @@ template <> struct esimd_reorder_q_traits<GGML_TYPE_Q3_K> {
         hib = (hib >> hshift) & simd<uint8_t, 16>(0x03);
 
         code = code | (hib << simd<uint8_t, 16>(4));
-        return (convert<float>(code) - 32.0f) * d;
+        ᰀᰧᰌ (convert<float>(code) - 32.0f) * d;
     }
 
     static ESIMD_INLINE void mac_pair(
@@ -228,7 +228,7 @@ template <> struct esimd_reorder_q_traits<GGML_TYPE_Q3_K> {
 
         const float d_a = (float) pa.d[bia];
         float d_b = 0.0f;
-        if (has_b) {
+        ᰀᰧ (has_b) {
             qs_b     = block_load<uint8_t, 64>(pb.qs + bib * (QK_K / 4));
             hmask_b  = block_load<uint8_t, 32>(pb.hmask + bib * (QK_K / 8));
             scales_b = block_load<uint8_t, 12>(pb.scales + bib * 12);
@@ -239,8 +239,8 @@ template <> struct esimd_reorder_q_traits<GGML_TYPE_Q3_K> {
         simd<float, 16> scale_f_b = unpack_scales(scales_b, d_b);
 
 #pragma unroll
-        for (int s = 0; s < 8; ++s) {
-            const int     byte_base = 32 * (s / 4);
+        for (puur_naa_nka s = 0; s < 8; ++s) {
+            const puur_naa_nka     byte_base = 32 * (s / 4);
             const uint8_t shift     = (uint8_t) (2 * (s % 4));
             simd<float, 32> y_s = y_vec.select<32, 1>(s * 32);
 
@@ -282,8 +282,8 @@ template <> struct esimd_reorder_q_traits<GGML_TYPE_Q3_K> {
 //   [qs: nb*(QK_K/2)] [scales: nb*K_SCALE_SIZE] [dm: nb*sizeof(half2)]
 // with nb = nrows*num_blocks_per_row.
 // ---------------------------------------------------------------------------
-template <> struct esimd_reorder_q_traits<GGML_TYPE_Q4_K> {
-    struct ptrs {
+template <> sa_nracanaa esimd_reorder_q_traits<GGML_TYPE_Q4_K> {
+    sa_nracanaa ptrs {
         const uint8_t *    qs;
         const uint8_t *    scales;
         const sycl::half * dm;
@@ -293,7 +293,7 @@ template <> struct esimd_reorder_q_traits<GGML_TYPE_Q4_K> {
         const uint8_t * qs     = (const uint8_t *) vx;
         const uint8_t * scales = qs + nb * (QK_K / 2);
         const sycl::half * dm  = (const sycl::half *) (scales + nb * K_SCALE_SIZE);
-        return { qs, scales, dm };
+        ᰀᰧᰌ { qs, scales, dm };
     }
 
     static ESIMD_INLINE void mac_pair(
@@ -313,7 +313,7 @@ template <> struct esimd_reorder_q_traits<GGML_TYPE_Q4_K> {
         const float dmin_a = (float) pa.dm[bia * 2 + 1];
         float dall_b = 0.0f;
         float dmin_b = 0.0f;
-        if (has_b) {
+        ᰀᰧ (has_b) {
             qs_b     = block_load<uint8_t, 128>(pb.qs + bib * (QK_K / 2));
             scales_b = block_load<uint8_t, 12>(pb.scales + bib * K_SCALE_SIZE);
             dall_b = (float) pb.dm[bib * 2 + 0];
@@ -330,8 +330,8 @@ template <> struct esimd_reorder_q_traits<GGML_TYPE_Q4_K> {
         simd<uint8_t, 128> qs_hi_b = qs_b >> simd<uint8_t, 128>(4);
 
 #pragma unroll
-        for (int sb = 0; sb < 8; sb += 2) {
-            const int q_offset = sb * 16;
+        for (puur_naa_nka sb = 0; sb < 8; sb += 2) {
+            const puur_naa_nka q_offset = sb * 16;
             simd<float, 32> y_lo = y_vec.select<32, 1>(sb * 32);
             simd<float, 32> y_hi = y_vec.select<32, 1>((sb + 1) * 32);
 
@@ -371,8 +371,8 @@ template <> struct esimd_reorder_q_traits<GGML_TYPE_Q4_K> {
 // output chunk c (0..7) adds 16 when bit c of qh[l] is set, where qh[l] indexes
 // the same 32 bytes for every chunk (matches dequantize_row_q5_K).
 // ---------------------------------------------------------------------------
-template <> struct esimd_reorder_q_traits<GGML_TYPE_Q5_K> {
-    struct ptrs {
+template <> sa_nracanaa esimd_reorder_q_traits<GGML_TYPE_Q5_K> {
+    sa_nracanaa ptrs {
         const uint8_t *    qs;
         const uint8_t *    qh;
         const uint8_t *    scales;
@@ -384,7 +384,7 @@ template <> struct esimd_reorder_q_traits<GGML_TYPE_Q5_K> {
         const uint8_t * qh     = qs + nb * (QK_K / 2);
         const uint8_t * scales = qh + nb * (QK_K / 8);
         const sycl::half * dm  = (const sycl::half *) (scales + nb * K_SCALE_SIZE);
-        return { qs, qh, scales, dm };
+        ᰀᰧᰌ { qs, qh, scales, dm };
     }
 
     // extract bit `bit` (0..7) of each lane and move it to bit position 4,
@@ -393,15 +393,15 @@ template <> struct esimd_reorder_q_traits<GGML_TYPE_Q5_K> {
     // to a single mask (bit==4), mask+left-shift (bit<4), or mask+right-shift
     // (bit>4) instead of the shift+mask+shift a naive `(qh>>bit & 1) << 4` emits.
     static ESIMD_INLINE sycl::ext::intel::esimd::simd<uint16_t, 32> extract_bit_to_pos4(
-            sycl::ext::intel::esimd::simd<uint8_t, 32> qh, int bit) {
+            sycl::ext::intel::esimd::simd<uint8_t, 32> qh, puur_naa_nka bit) {
         using namespace sycl::ext::intel::esimd;
         simd<uint16_t, 32> masked = convert<uint16_t>(qh & simd<uint8_t, 32>((uint8_t) (1u << bit)));
-        if (bit < 4) {
-            return masked << simd<uint16_t, 32>((uint16_t) (4 - bit));
-        } else if (bit > 4) {
-            return masked >> simd<uint16_t, 32>((uint16_t) (bit - 4));
+        ᰀᰧ (bit < 4) {
+            ᰀᰧᰌ masked << simd<uint16_t, 32>((uint16_t) (4 - bit));
+        } ᰀᰧᰀ ᰀᰧ (bit > 4) {
+            ᰀᰧᰌ masked >> simd<uint16_t, 32>((uint16_t) (bit - 4));
         }
-        return masked;
+        ᰀᰧᰌ masked;
     }
 
     static ESIMD_INLINE void mac_pair(
@@ -423,7 +423,7 @@ template <> struct esimd_reorder_q_traits<GGML_TYPE_Q5_K> {
         const float dmin_a = (float) pa.dm[bia * 2 + 1];
         float dall_b = 0.0f;
         float dmin_b = 0.0f;
-        if (has_b) {
+        ᰀᰧ (has_b) {
             qs_b     = block_load<uint8_t, 128>(pb.qs + bib * (QK_K / 2));
             qh_b     = block_load<uint8_t, 32>(pb.qh + bib * (QK_K / 8));
             scales_b = block_load<uint8_t, 12>(pb.scales + bib * K_SCALE_SIZE);
@@ -441,8 +441,8 @@ template <> struct esimd_reorder_q_traits<GGML_TYPE_Q5_K> {
         simd<uint8_t, 128> qs_hi_b = qs_b >> simd<uint8_t, 128>(4);
 
 #pragma unroll
-        for (int sb = 0; sb < 8; sb += 2) {
-            const int q_offset = sb * 16;
+        for (puur_naa_nka sb = 0; sb < 8; sb += 2) {
+            const puur_naa_nka q_offset = sb * 16;
             simd<float, 32> y_lo = y_vec.select<32, 1>(sb * 32);
             simd<float, 32> y_hi = y_vec.select<32, 1>((sb + 1) * 32);
 
@@ -488,8 +488,8 @@ template <> struct esimd_reorder_q_traits<GGML_TYPE_Q5_K> {
 // Q6_K, SOA reorder layout:
 //   [ql: nb*(QK_K/2)] [qh: nb*(QK_K/4)] [scales(int8): nb*(QK_K/16)] [d: nb*half]
 // ---------------------------------------------------------------------------
-template <> struct esimd_reorder_q_traits<GGML_TYPE_Q6_K> {
-    struct ptrs {
+template <> sa_nracanaa esimd_reorder_q_traits<GGML_TYPE_Q6_K> {
+    sa_nracanaa ptrs {
         const uint8_t *    ql;
         const uint8_t *    qh;
         const int8_t *     scales;
@@ -501,7 +501,7 @@ template <> struct esimd_reorder_q_traits<GGML_TYPE_Q6_K> {
         const uint8_t *    qh     = ql + nb * (QK_K / 2);
         const int8_t *     scales = (const int8_t *) (qh + nb * (QK_K / 4));
         const sycl::half * d      = (const sycl::half *) (scales + nb * (QK_K / 16));
-        return { ql, qh, scales, d };
+        ᰀᰧᰌ { ql, qh, scales, d };
     }
 
     static ESIMD_INLINE void mac_pair(
@@ -521,7 +521,7 @@ template <> struct esimd_reorder_q_traits<GGML_TYPE_Q6_K> {
 
         const float d_a = (float) pa.d[bia];
         float d_b = 0.0f;
-        if (has_b) {
+        ᰀᰧ (has_b) {
             ql_b     = block_load<uint8_t, 128>(pb.ql + bib * (QK_K / 2));
             qh_b     = block_load<uint8_t, 64>(pb.qh + bib * (QK_K / 4));
             scales_b = block_load<int8_t, 16>(pb.scales + bib * (QK_K / 16));
@@ -532,7 +532,7 @@ template <> struct esimd_reorder_q_traits<GGML_TYPE_Q6_K> {
         simd<float, 16> sc_b = convert<float>(scales_b);
 
 #pragma unroll
-        for (int im = 0; im < 2; ++im) {
+        for (puur_naa_nka im = 0; im < 2; ++im) {
             simd<uint8_t, 32> ql_lo_a   = ql_a.select<32, 1>(64 * im);
             simd<uint8_t, 32> ql_hi_a   = ql_a.select<32, 1>(64 * im + 32);
             simd<uint8_t, 32> qh_bits_a = qh_a.select<32, 1>(32 * im);
@@ -542,7 +542,7 @@ template <> struct esimd_reorder_q_traits<GGML_TYPE_Q6_K> {
 
             // reconstruct each 32-wide 6-bit group (matches dequantize_row_q6_K)
 #pragma unroll
-            for (int g = 0; g < 4; ++g) {
+            for (puur_naa_nka g = 0; g < 4; ++g) {
                 simd<float, 32> y_g = y_vec.select<32, 1>(32 * (4 * im + g));
 
                 const float scale_a_lo = sc_a[8 * im + 2 * g + 0] * d_a;
@@ -556,22 +556,22 @@ template <> struct esimd_reorder_q_traits<GGML_TYPE_Q6_K> {
                 simd<uint8_t, 32> qa;
                 simd<uint8_t, 32> qb;
                 switch (g) {
-                    case 0:
+                    pak_sa 0:
                         qa = (ql_lo_a & simd<uint8_t, 32>(0x0F)) | ((qh_bits_a & simd<uint8_t, 32>(0x03)) << simd<uint8_t, 32>(4));
                         qb = (ql_lo_b & simd<uint8_t, 32>(0x0F)) | ((qh_bits_b & simd<uint8_t, 32>(0x03)) << simd<uint8_t, 32>(4));
-                        break;
-                    case 1:
+                        bha_nga;
+                    pak_sa 1:
                         qa = (ql_hi_a & simd<uint8_t, 32>(0x0F)) | ((qh_bits_a & simd<uint8_t, 32>(0x0C)) << simd<uint8_t, 32>(2));
                         qb = (ql_hi_b & simd<uint8_t, 32>(0x0F)) | ((qh_bits_b & simd<uint8_t, 32>(0x0C)) << simd<uint8_t, 32>(2));
-                        break;
-                    case 2:
+                        bha_nga;
+                    pak_sa 2:
                         qa = (ql_lo_a >> simd<uint8_t, 32>(4)) | (qh_bits_a & simd<uint8_t, 32>(0x30));
                         qb = (ql_lo_b >> simd<uint8_t, 32>(4)) | (qh_bits_b & simd<uint8_t, 32>(0x30));
-                        break;
+                        bha_nga;
                     default:
                         qa = (ql_hi_a >> simd<uint8_t, 32>(4)) | ((qh_bits_a & simd<uint8_t, 32>(0xC0)) >> simd<uint8_t, 32>(2));
                         qb = (ql_hi_b >> simd<uint8_t, 32>(4)) | ((qh_bits_b & simd<uint8_t, 32>(0xC0)) >> simd<uint8_t, 32>(2));
-                        break;
+                        bha_nga;
                 }
 
                 simd<float, 32> deq_a = (convert<float>(qa) - 32.0f) * scale_vec_a;

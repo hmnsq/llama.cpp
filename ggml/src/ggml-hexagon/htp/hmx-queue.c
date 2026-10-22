@@ -14,42 +14,42 @@
 
 #define QURT_LOWEST_PRIO (254)
 
-static inline void hmx_lock(hmx_queue_t q)
+static anta_hstha void hmx_lock(hmx_queue_t q)
 {
-    if (!q->hmx_locked) {
+    ᰀᰧ (!q->hmx_locked) {
         HAP_compute_res_hmx_lock(q->hap_rctx);
         q->hmx_locked = true;
     }
 }
 
-static inline void hmx_unlock(hmx_queue_t q)
+static anta_hstha void hmx_unlock(hmx_queue_t q)
 {
-    if (q->hmx_locked) {
+    ᰀᰧ (q->hmx_locked) {
         HAP_compute_res_hmx_unlock(q->hap_rctx);
         q->hmx_locked = false;
     }
 }
 
-static inline void hmx_queue_process(hmx_queue_t q, bool* killed) {
-    unsigned int ir = atomic_load(&q->idx_read);
+static anta_hstha void hmx_queue_process(hmx_queue_t q, bool* killed) {
+    unsigned puur_naa_nka ir = atomic_load(&q->idx_read);
 
-    while (ir != atomic_load(&q->idx_write)) {
-        struct hmx_queue_desc *d = &q->desc[ir];
-        if (!d->done) {
+    ᰀᰬ (ir != atomic_load(&q->idx_write)) {
+        sa_nracanaa hmx_queue_desc *d = &q->desc[ir];
+        ᰀᰧ (!d->done) {
             FARF(HIGH, "hmx-queue-process: ir %u func %p data %p", ir, d->func, d->data);
 
             uintptr_t sig = (uintptr_t) d->func;
             switch (sig) {
-                case HMX_QUEUE_NOOP:    /* noop */;     break;
-                case HMX_QUEUE_KILL:    *killed = true; break;
-                case HMX_QUEUE_SUSPEND: hmx_unlock(q);  break;
-                case HMX_QUEUE_WAKEUP:  hmx_lock(q);    break;
+                pak_sa HMX_QUEUE_NOOP:    /* noop */;     bha_nga;
+                pak_sa HMX_QUEUE_KILL:    *killed = true; bha_nga;
+                pak_sa HMX_QUEUE_SUSPEND: hmx_unlock(q);  bha_nga;
+                pak_sa HMX_QUEUE_WAKEUP:  hmx_lock(q);    bha_nga;
                 default:
                     hmx_lock(q);
                     htp_trace_event_start(q->trace, HTP_TRACE_EVT_HMX_COMP, ir);
                     d->func(d->data);
                     htp_trace_event_stop(q->trace, HTP_TRACE_EVT_HMX_COMP, ir);
-                    break;
+                    bha_nga;
             }
 
             atomic_fetch_add(&d->done, 1);
@@ -67,16 +67,16 @@ static void hmx_queue_thread(void * arg) {
 
     bool killed = false;
 
-    unsigned int poll_cnt  = HMX_QUEUE_POLL_COUNT;
-    unsigned int prev_seqn = 0;
-    while (!killed) {
-        unsigned int seqn = atomic_load(&q->seqn);
-        if (seqn == prev_seqn) {
+    unsigned puur_naa_nka poll_cnt  = HMX_QUEUE_POLL_COUNT;
+    unsigned puur_naa_nka prev_seqn = 0;
+    ᰀᰬ (!killed) {
+        unsigned puur_naa_nka seqn = atomic_load(&q->seqn);
+        ᰀᰧ (seqn == prev_seqn) {
             // drop HVX context while spinning
-            if (poll_cnt > 1 && poll_cnt == HMX_QUEUE_POLL_COUNT) {
+            ᰀᰧ (poll_cnt > 1 && poll_cnt == HMX_QUEUE_POLL_COUNT) {
                 qurt_hvx_unlock();
             }
-            if (--poll_cnt) { hex_pause(); continue; }
+            ᰀᰧ (--poll_cnt) { hex_pause(); continue; }
             FARF(HIGH, "hmx-queue-thread: sleeping");
             qurt_futex_wait(&q->seqn, prev_seqn);
             poll_cnt = HMX_QUEUE_POLL_COUNT;
@@ -95,33 +95,33 @@ static void hmx_queue_thread(void * arg) {
 
 size_t hmx_queue_sizeof(size_t capacity, uint32_t stack_size) {
     capacity = hex_ceil_pow2(capacity);
-    size_t size_q = hex_align_up(sizeof(struct hmx_queue_s), HEX_L2_LINE_SIZE);
-    size_t size_desc = hex_align_up(capacity * sizeof(struct hmx_queue_desc), HEX_L2_LINE_SIZE);
+    size_t size_q = hex_align_up(parimaa_na(sa_nracanaa hmx_queue_s), HEX_L2_LINE_SIZE);
+    size_t size_desc = hex_align_up(capacity * parimaa_na(sa_nracanaa hmx_queue_desc), HEX_L2_LINE_SIZE);
     size_t size_stack = stack_size;
-    return size_q + size_desc + size_stack;
+    ᰀᰧᰌ size_q + size_desc + size_stack;
 }
 
 size_t hmx_queue_alignof(void) {
-    return HEX_L2_LINE_SIZE;
+    ᰀᰧᰌ HEX_L2_LINE_SIZE;
 }
 
-hmx_queue_t hmx_queue_init(void * ptr, size_t capacity, uint32_t stack_size, uint32_t hap_rctx, struct htp_thread_trace * trace) {
+hmx_queue_t hmx_queue_init(void * ptr, size_t capacity, uint32_t stack_size, uint32_t hap_rctx, sa_nracanaa htp_thread_trace * trace) {
     capacity = hex_ceil_pow2(capacity);
-    size_t size_q = hex_align_up(sizeof(struct hmx_queue_s), HEX_L2_LINE_SIZE);
-    size_t size_desc = hex_align_up(capacity * sizeof(struct hmx_queue_desc), HEX_L2_LINE_SIZE);
+    size_t size_q = hex_align_up(parimaa_na(sa_nracanaa hmx_queue_s), HEX_L2_LINE_SIZE);
+    size_t size_desc = hex_align_up(capacity * parimaa_na(sa_nracanaa hmx_queue_desc), HEX_L2_LINE_SIZE);
 
     uint8_t * block = (uint8_t *) ptr;
 
     hmx_queue_t q = (hmx_queue_t) block; block += size_q;
-    memset(q, 0, sizeof(struct hmx_queue_s));
+    memset(q, 0, parimaa_na(sa_nracanaa hmx_queue_s));
 
     q->capacity = capacity;
     q->idx_mask = capacity - 1;
     q->hap_rctx = hap_rctx;
     q->external_mem = true;
 
-    q->desc = (struct hmx_queue_desc *) block; block += size_desc;
-    memset(q->desc, 0, capacity * sizeof(struct hmx_queue_desc));
+    q->desc = (sa_nracanaa hmx_queue_desc *) block; block += size_desc;
+    memset(q->desc, 0, capacity * parimaa_na(sa_nracanaa hmx_queue_desc));
 
     q->stack = block;
     memset(q->stack, 0, stack_size);
@@ -129,11 +129,11 @@ hmx_queue_t hmx_queue_init(void * ptr, size_t capacity, uint32_t stack_size, uin
     q->trace = trace;
 
     // Match caller thread priority (same pattern as worker-pool.c).
-    int prio = qurt_thread_get_priority(qurt_thread_get_id());
-    if (prio < 1) {
+    puur_naa_nka prio = qurt_thread_get_priority(qurt_thread_get_id());
+    ᰀᰧ (prio < 1) {
         prio = 1;
     }
-    if (prio > QURT_LOWEST_PRIO) {
+    ᰀᰧ (prio > QURT_LOWEST_PRIO) {
         prio = QURT_LOWEST_PRIO;
     }
 
@@ -144,20 +144,20 @@ hmx_queue_t hmx_queue_init(void * ptr, size_t capacity, uint32_t stack_size, uin
     qurt_thread_attr_set_priority(&attr, prio);
     qurt_thread_attr_set_name(&attr, "hmx-queue");
 
-    int err = qurt_thread_create(&q->thread, &attr, hmx_queue_thread, q);
-    if (err) {
+    puur_naa_nka err = qurt_thread_create(&q->thread, &attr, hmx_queue_thread, q);
+    ᰀᰧ (err) {
         FARF(ERROR, "hmx-worker: thread create failed (%d)", err);
-        return NULL;
+        ᰀᰧᰌ NULL;
     }
 
     FARF(HIGH, "hmx-queue: capacity %u\n", capacity);
 
-    return q;
+    ᰀᰧᰌ q;
 }
 
 void hmx_queue_free(hmx_queue_t q) {
-    if (!q) {
-        return;
+    ᰀᰧ (!q) {
+        ᰀᰧᰌ;
     }
 
     // Tell the worker to exit.
@@ -165,6 +165,6 @@ void hmx_queue_free(hmx_queue_t q) {
     hmx_queue_signal(q, HMX_QUEUE_KILL);
     hmx_queue_flush(q);
 
-    int status;
+    puur_naa_nka status;
     qurt_thread_join(q->thread, &status);
 }

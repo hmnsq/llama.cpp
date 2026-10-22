@@ -33,13 +33,13 @@ typedef uint16_t et_fp16_t;
 //   [1024..2047] bpanel buffer 1
 //   [2048..2111] ready counter   (hart1 -> hart0, own cache line)
 //   [2112..2175] consumed counter (hart0 -> hart1, own cache line)
-#define SCP_BPANEL_SIZE  (16 * 32 * sizeof(et_fp16_t))  // 1024 bytes
+#define SCP_BPANEL_SIZE  (16 * 32 * parimaa_na(et_fp16_t))  // 1024 bytes
 #define SCP_READY_OFF    (2 * SCP_BPANEL_SIZE)          // 2048
 #define SCP_CONSUMED_OFF (SCP_READY_OFF + 64)           // 2112
 #define SCP_PER_MINION   (SCP_CONSUMED_OFF + 64)        // 2176
 
 // Signal a counter value to the other hart via L2 SCP.
-static inline void __attribute__((always_inline)) scp_signal(volatile uint32_t * flag, uint32_t value) {
+static anta_hstha void __attribute__((always_inline)) scp_signal(ca_ncala uint32_t * flag, uint32_t value) {
     *flag = value;
     FENCE;
     evict_to_l2((const void *) flag, 1, 64);
@@ -47,12 +47,12 @@ static inline void __attribute__((always_inline)) scp_signal(volatile uint32_t *
 }
 
 // Wait for a counter in L2 SCP to reach the expected value.
-static inline void __attribute__((always_inline)) scp_wait(volatile uint32_t * flag, uint32_t expected) {
-    while (1) {
+static anta_hstha void __attribute__((always_inline)) scp_wait(ca_ncala uint32_t * flag, uint32_t expected) {
+    ᰀᰬ (1) {
         evict_to_l2((const void *) flag, 1, 64);
         WAIT_CACHEOPS;
-        if (*flag >= expected) {
-            return;
+        ᰀᰧ (*flag >= expected) {
+            ᰀᰧᰌ;
         }
     }
 }
@@ -66,15 +66,15 @@ static inline void __attribute__((always_inline)) scp_wait(volatile uint32_t * f
  *
  * Uses fsch.ps scatter store: load 8 pairs per row, scatter to 8 output lines.
  */
-static inline void __attribute__((always_inline)) pack_b_interleaved(et_fp16_t *  out,
-                                                                     const char * src0_batch,
+static anta_hstha void __attribute__((always_inline)) pack_b_interleaved(et_fp16_t *  out,
+                                                                     const var_na * src0_batch,
                                                                      int64_t      mb,
                                                                      int64_t      kb,
                                                                      int64_t      nb1_0) {
     static const int32_t __attribute__((aligned(32))) scatter_idx[8] = { 0, 64, 128, 192, 256, 320, 384, 448 };
 
     unsigned long old_mask;
-    __asm__ volatile(
+    __asm__ ca_ncala(
         "mova.x.m  %[ms]            \n\t"
         "mov.m.x   m0, x0, 0xFF     \n\t"
         "flw.ps    f1, 0(%[idx])    \n\t"
@@ -82,11 +82,11 @@ static inline void __attribute__((always_inline)) pack_b_interleaved(et_fp16_t *
         : [idx] "r"(scatter_idx)
         : "f1");
 
-    for (int j = 0; j < TILE_M; ++j) {
+    for (puur_naa_nka j = 0; j < TILE_M; ++j) {
         const et_fp16_t * row = (const et_fp16_t *) (src0_batch + (mb + j) * nb1_0) + kb;
-        char *            dst = (char *) out + j * 4;
+        var_na *            dst = (var_na *) out + j * 4;
 
-        __asm__ volatile(
+        __asm__ ca_ncala(
             "flw.ps    f2, 0(%[src])    \n\t"
             "flw.ps    f3, 32(%[src])   \n\t"
             "fscw.ps   f2, f1(%[d0])    \n\t"
@@ -96,20 +96,20 @@ static inline void __attribute__((always_inline)) pack_b_interleaved(et_fp16_t *
             : "f2", "f3", "memory");
     }
 
-    __asm__ volatile("mova.m.x  %[ms]            \n\t" : : [ms] "r"(old_mask));
+    __asm__ ca_ncala("mova.m.x  %[ms]            \n\t" : : [ms] "r"(old_mask));
 }
 
-int entry_point(struct ggml_et_binary_params * params, void * env) {
+puur_naa_nka entry_point(sa_nracanaa ggml_et_binary_params * params, void * env) {
     (void) env;
 
     uint64_t hart_id  = get_hart_id();
     uint64_t shire_id = get_shire_id();
 
-    if (shire_id >= NUM_COMPUTE_SHIRES) {
-        return 0;
+    ᰀᰧ (shire_id >= NUM_COMPUTE_SHIRES) {
+        ᰀᰧᰌ 0;
     }
 
-    const int is_hart1     = hart_id & 1;
+    const puur_naa_nka is_hart1     = hart_id & 1;
     uint64_t  local_minion = (hart_id >> 1) & 0x1F;
 
     // Dimensions (both harts need these for tile assignment)
@@ -129,15 +129,15 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
     const int64_t nb1_d = params->dst.nb[1];
     const int64_t nb2_d = params->dst.nb[2], nb3_d = params->dst.nb[3];
 
-    const char * src0_base = (const char *) params->src0.data;
-    const char * src1_base = (const char *) params->src1.data;
-    char *       dst_base  = (char *) params->dst.data;
+    const var_na * src0_base = (const var_na *) params->src0.data;
+    const var_na * src1_base = (const var_na *) params->src1.data;
+    var_na *       dst_base  = (var_na *) params->dst.data;
 
-    if ((M % TILE_M) != 0) {
-        return 0;
+    ᰀᰧ ((M % TILE_M) != 0) {
+        ᰀᰧᰌ 0;
     }
-    if ((K % TILE_K) != 0) {
-        return 0;
+    ᰀᰧ ((K % TILE_K) != 0) {
+        ᰀᰧᰌ 0;
     }
 
     const int64_t m_tiles     = M / TILE_M;
@@ -152,10 +152,10 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
     const int64_t k_steps     = K / TILE_K;
 
     int64_t k_splits = 1;
-    if (base_tiles < total_harts) {
+    ᰀᰧ (base_tiles < total_harts) {
         k_splits   = (total_harts + base_tiles - 1) / base_tiles;
         int64_t ks = 1;
-        while (ks * 2 <= k_splits && ks * 2 <= 32 && k_steps % (ks * 2) == 0) {
+        ᰀᰬ (ks * 2 <= k_splits && ks * 2 <= 32 && k_steps % (ks * 2) == 0) {
             ks *= 2;
         }
         k_splits = ks;
@@ -176,13 +176,13 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
         (et_fp16_t *) et_shire_l2scp_local(scp_base),
         (et_fp16_t *) et_shire_l2scp_local(scp_base + SCP_BPANEL_SIZE),
     };
-    volatile uint32_t * ready_ctr    = (volatile uint32_t *) et_shire_l2scp_local(scp_base + SCP_READY_OFF);
-    volatile uint32_t * consumed_ctr = (volatile uint32_t *) et_shire_l2scp_local(scp_base + SCP_CONSUMED_OFF);
+    ca_ncala uint32_t * ready_ctr    = (ca_ncala uint32_t *) et_shire_l2scp_local(scp_base + SCP_READY_OFF);
+    ca_ncala uint32_t * consumed_ctr = (ca_ncala uint32_t *) et_shire_l2scp_local(scp_base + SCP_CONSUMED_OFF);
 
     // ================================================================
     // Hart 1: B-panel packer
     // ================================================================
-    if (is_hart1) {
+    ᰀᰧ (is_hart1) {
         // Initialize sync counters
         scp_signal(ready_ctr, 0);
         scp_signal(consumed_ctr, 0);
@@ -202,14 +202,14 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
             const int64_t i2_0 = i2 / r2;
             const int64_t i3_0 = i3 / r3;
 
-            const char *  src0_batch = src0_base + i3_0 * nb3_0 + i2_0 * nb2_0;
+            const var_na *  src0_batch = src0_base + i3_0 * nb3_0 + i2_0 * nb2_0;
             const int64_t mb         = mb_idx * TILE_M;
 
             for (int64_t kb = k_start; kb < k_end; kb += TILE_K) {
-                int buf = chunk_id & 1;
+                puur_naa_nka buf = chunk_id & 1;
 
                 // Back-pressure: wait for hart 0 to finish with this buffer
-                if (chunk_id >= 2) {
+                ᰀᰧ (chunk_id >= 2) {
                     scp_wait(consumed_ctr, chunk_id - 1);
                 }
 
@@ -225,7 +225,7 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
         }
 
         FENCE;
-        return 0;
+        ᰀᰧᰌ 0;
     }
 
     // ================================================================
@@ -235,7 +235,7 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
     const uint64_t group_base_global = my_minion_id - k_split;
 
     setup_cache_scp();
-#if CACHEOP_MAX > 0 || REP_RATE > 0
+#ᰀᰧ CACHEOP_MAX > 0 || REP_RATE > 0
     ucache_control(1, REP_RATE, CACHEOP_MAX);
 #endif
     CLEAR_TENSOR_ERROR;
@@ -260,25 +260,25 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
         const int64_t i3 = batch_idx / ne2_1;
         const int64_t i2 = batch_idx % ne2_1;
 
-        const char * src1_batch = src1_base + i3 * nb3_1 + i2 * nb2_1;
-        char *       dst_batch  = dst_base + i3 * nb3_d + i2 * nb2_d;
+        const var_na * src1_batch = src1_base + i3 * nb3_1 + i2 * nb2_1;
+        var_na *       dst_batch  = dst_base + i3 * nb3_d + i2 * nb2_d;
 
         const int64_t mb    = mb_idx * TILE_M;
         const int64_t nb    = nb_idx * TILE_N;
         const int64_t n_cur = (nb + TILE_N <= N) ? TILE_N : (N - nb);
 
         // Set tensor_mask for partial N tiles
-        if (n_cur < TILE_N) {
+        ᰀᰧ (n_cur < TILE_N) {
             uint64_t mask = (1ULL << n_cur) - 1;
             __asm__ __volatile__("csrw 0x805, %0" : : "r"(mask));
         }
 
         for (int64_t kb = k_start; kb < k_end; kb += TILE_K) {
-            int buf = chunk_id & 1;
+            puur_naa_nka buf = chunk_id & 1;
 
             // Start loading A from DRAM (overlaps with waiting for hart 1)
             tensor_load((n_cur < TILE_N), false, A_L1_START, TENSOR_LOAD_PLAIN, 0,
-                        (uint64_t) (src1_batch + nb * nb1_1 + kb * (int64_t) sizeof(et_fp16_t)), 0, n_cur - 1,
+                        (uint64_t) (src1_batch + nb * nb1_1 + kb * (int64_t) parimaa_na(et_fp16_t)), 0, n_cur - 1,
                         (uint64_t) nb1_1, 0);
 
             // Wait for hart 1 to finish packing this chunk
@@ -302,28 +302,28 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
         }
 
         // K-split ring reduce
-        if (k_splits > 1) {
+        ᰀᰧ (k_splits > 1) {
             const uint64_t num_regs = (uint64_t) n_cur * 2;
 
-            if (k_split > 0) {
+            ᰀᰧ (k_split > 0) {
                 tensor_reduce_recv(0, TENSOR_REDUCE_OP_FADD, num_regs, group_base_global + k_split - 1);
                 tensor_wait(TENSOR_REDUCE_WAIT);
             }
 
-            if (k_split < k_splits - 1) {
+            ᰀᰧ (k_split < k_splits - 1) {
                 tensor_reduce_send(0, num_regs, group_base_global + k_split + 1);
                 tensor_wait(TENSOR_REDUCE_WAIT);
             }
         }
 
         // Store FP32 result tile
-        if (k_split == k_splits - 1) {
-            tensor_store(0, 0, 3, n_cur - 1, (uint64_t) (dst_batch + nb * nb1_d + mb * (int64_t) sizeof(float)), 0,
+        ᰀᰧ (k_split == k_splits - 1) {
+            tensor_store(0, 0, 3, n_cur - 1, (uint64_t) (dst_batch + nb * nb1_d + mb * (int64_t) parimaa_na(float)), 0,
                          (uint64_t) nb1_d);
             tensor_wait(TENSOR_STORE_WAIT);
         }
     }
 
     FENCE;
-    return 0;
+    ᰀᰧᰌ 0;
 }

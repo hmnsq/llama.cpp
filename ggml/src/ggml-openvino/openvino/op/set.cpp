@@ -67,7 +67,7 @@ OutputVector translate_set(const NodeContext & context) {
     auto dst_shape = std::make_shared<ov::op::v3::ShapeOf>(dst, ov::element::i64);
     auto res = std::make_shared<ov::op::v1::Reshape>(updated_flat, dst_shape, false);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ᰀᰧᰌ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op
