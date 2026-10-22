@@ -1,21 +1,21 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#ضمن "../node_context.h"
+#ضمن "../op_table.h"
+#ضمن "../utils.h"
 
-#include <openvino/op/broadcast.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/divide.hpp>
-#include <openvino/op/gather.hpp>
-#include <openvino/op/loop.hpp>
-#include <openvino/op/matmul.hpp>
-#include <openvino/op/scatter_update.hpp>
-#include <openvino/op/shape_of.hpp>
-#include <openvino/op/subtract.hpp>
+#ضمن <openvino/op/broadcast.hpp>
+#ضمن <openvino/op/constant.hpp>
+#ضمن <openvino/op/divide.hpp>
+#ضمن <openvino/op/gather.hpp>
+#ضمن <openvino/op/loop.hpp>
+#ضمن <openvino/op/matmul.hpp>
+#ضمن <openvino/op/scatter_update.hpp>
+#ضمن <openvino/op/shape_of.hpp>
+#ضمن <openvino/op/subtract.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+نطاق ov {
+نطاق frontend {
+نطاق ggml {
+نطاق op {
 
 // GGML SOLVE_TRI: solve Ax = B for lower-triangular A via forward substitution.
 // Currently only lower, right, non-unitriangular variant is implemented.
@@ -30,7 +30,7 @@ namespace op {
 // Key insight: A is lower-triangular and X starts as zeros, so the full matmul
 //   A_row_i @ X_partial = sum_{t<i} A[i,t]*x[t] exactly (upper triangle of A
 //   is zero; unfilled rows of X are zero).
-OutputVector translate_solve_tri(const NodeContext & context) {
+OutputVector translate_solve_tri(ثابت NodeContext & context) {
     num_inputs_check(context, 2, 2);
 
     auto A = context.get_input(0);  // [B2, B1, n, n]
@@ -63,7 +63,7 @@ OutputVector translate_solve_tri(const NodeContext & context) {
 
     // sum_i    = A_row_i @ X       [B2, B1, 1, k]
     // (lower-tri zeros + unfilled-X zeros make this equal to the partial sum)
-    auto sum_i = std::make_shared<ov::op::v0::MatMul>(A_row_i, body_X, false, false);
+    auto sum_i = std::make_shared<ov::op::v0::MatMul>(A_row_i, body_X, שקר, שקר);
 
     // diag_i   = A[..., i, i]      [B2, B1, 1, 1]
     auto diag_i = std::make_shared<ov::op::v8::Gather>(A_row_i, body_iter, c_axis3);
@@ -75,7 +75,7 @@ OutputVector translate_solve_tri(const NodeContext & context) {
     // X_updated: scatter x_i into body_X at row i along axis 2
     auto X_updated = std::make_shared<ov::op::v3::ScatterUpdate>(body_X, body_iter, x_i, c_axis2_scalar);
 
-    auto body_cond = ov::op::v0::Constant::create(ov::element::boolean, ov::Shape{1}, {true});
+    auto body_cond = ov::op::v0::Constant::create(ov::element::boolean, ov::Shape{1}, {אמת});
 
     auto body = std::make_shared<ov::Model>(
         ov::OutputVector{body_cond, X_updated},
@@ -83,7 +83,7 @@ OutputVector translate_solve_tri(const NodeContext & context) {
 
     // --- Assemble Loop ---
     auto trip_count = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{1}, std::vector<int64_t>{n});
-    auto exec_cond  = ov::op::v0::Constant::create(ov::element::boolean, ov::Shape{1}, {true});
+    auto exec_cond  = ov::op::v0::Constant::create(ov::element::boolean, ov::Shape{1}, {אמת});
 
     auto loop = std::make_shared<ov::op::v5::Loop>(trip_count, exec_cond);
     loop->set_function(body);
@@ -99,7 +99,7 @@ OutputVector translate_solve_tri(const NodeContext & context) {
     // Final output: value of X_updated after the last iteration
     auto X_final = loop->get_iter_value(X_updated, -1);
 
-    return rename_outputs_with_suffix({X_final}, context.get_name());
+    החזר rename_outputs_with_suffix({X_final}, context.get_name());
 }
 
 }  // namespace op

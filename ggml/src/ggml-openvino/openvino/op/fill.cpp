@@ -1,22 +1,22 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#ضمن "../node_context.h"
+#ضمن "../op_table.h"
+#ضمن "../utils.h"
 
-#include <openvino/op/broadcast.hpp>
-#include <openvino/op/constant.hpp>
+#ضمن <openvino/op/broadcast.hpp>
+#ضمن <openvino/op/constant.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+نطاق ov {
+نطاق frontend {
+نطاق ggml {
+نطاق op {
 
 // GGML FILL sets all elements of a tensor to a constant value.
 // The constant is stored as a float in op_params[0].
-OutputVector translate_fill(const NodeContext & context) {
+OutputVector translate_fill(ثابت NodeContext & context) {
     num_inputs_check(context, 1, 1);
 
-    float c;
-    memcpy(&c, context.get_output_op_params(), sizeof(float));
+    عائم c;
+    memcpy(&c, context.get_output_op_params(), حجم(عائم));
 
     auto shape = context.get_input_shape(0).to_shape();
 
@@ -25,7 +25,7 @@ OutputVector translate_fill(const NodeContext & context) {
         std::vector<int64_t>(shape.begin(), shape.end()));
     auto res = std::make_shared<ov::op::v3::Broadcast>(val, target_shape);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    החזר rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

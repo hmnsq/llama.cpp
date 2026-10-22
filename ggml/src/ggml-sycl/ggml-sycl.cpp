@@ -10,188 +10,188 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#include <algorithm>
-#include <array>
-#include <assert.h>
-#include <atomic>
-#include <cctype>
-#include <cinttypes>
-#include <cstddef>
-#include <cstdint>
-#include <cstdlib>
-#include <float.h>
-#include <limits>
-#include <optional>
-#include <stdint.h>
-#include <stdio.h>
-#include <vector>
-#include <cmath>
-#include <iostream>
-#include <fstream>
-#include <stdio.h>
-#include <stdlib.h>
-#include <regex>
+#ضمن <algorithm>
+#ضمن <array>
+#ضمن <assert.h>
+#ضمن <atomic>
+#ضمن <cctype>
+#ضمن <cinttypes>
+#ضمن <cstddef>
+#ضمن <cstdint>
+#ضمن <cstdlib>
+#ضمن <float.h>
+#ضمن <limits>
+#ضمن <optional>
+#ضمن <stdint.h>
+#ضمن <stdio.h>
+#ضمن <vector>
+#ضمن <cmath>
+#ضمن <iostream>
+#ضمن <fstream>
+#ضمن <stdio.h>
+#ضمن <stdlib.h>
+#ضمن <regex>
 
-#include <sycl/sycl.hpp>
-#include <sycl/backend.hpp>
+#ضمن <sycl/sycl.hpp>
+#ضمن <sycl/backend.hpp>
 #ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
-#include <level_zero/ze_api.h>
-#include <level_zero/zes_api.h>
+#ضمن <level_zero/ze_api.h>
+#ضمن <level_zero/zes_api.h>
 #endif
-#if defined(GGML_SYCL_GRAPH) && SYCL_EXT_ONEAPI_ASYNC_MEMORY_ALLOC
+#אם defined(GGML_SYCL_GRAPH) && SYCL_EXT_ONEAPI_ASYNC_MEMORY_ALLOC
 #    include <sycl/ext/oneapi/experimental/async_alloc/async_alloc.hpp>
 #endif
-#if SYCL_EXT_ONEAPI_VIRTUAL_MEM
+#אם SYCL_EXT_ONEAPI_VIRTUAL_MEM
 #    include <sycl/ext/oneapi/virtual_mem/physical_mem.hpp>
 #    include <sycl/ext/oneapi/virtual_mem/virtual_mem.hpp>
 #    define GGML_SYCL_SUPPORT_VMM
 #endif
-#include <sycl/half_type.hpp>
+#ضمن <sycl/half_type.hpp>
 
-#include "ggml.h"
-#include "ggml-sycl.h"
-#include "ggml-impl.h"
-#include "ggml-backend-impl.h"
+#ضمن "ggml.h"
+#ضمن "ggml-sycl.h"
+#ضمن "ggml-impl.h"
+#ضمن "ggml-backend-impl.h"
 
-#include "ggml-sycl/add-id.hpp"
-#include "ggml-sycl/backend.hpp"
-#include "ggml-sycl/common.hpp"
-#include "ggml-sycl/element_wise.hpp"
-#include "ggml-sycl/fwht.hpp"
-#include "ggml-sycl/fused-gemm.hpp"
-#include "ggml-sycl/gemm.hpp"
-#include "ggml-sycl/getrows.hpp"
-#include "ggml-sycl/mem.hpp"
-#include "ggml-sycl/norm.hpp"
-#include "ggml-sycl/presets.hpp"
-#include "ggml-sycl/quantize.hpp"
-#include "ggml-sycl/repeat_back.hpp"
-#include "ggml-sycl/set_rows.hpp"
-#include "ggml-sycl/set.hpp"
-#include "ggml-sycl/dsv4-hc.hpp"
-#include "ggml-sycl/lightning-indexer.hpp"
-#include "ggml-sycl/conv2d.hpp"
-#include "ggml-sycl/conv2d-dw.hpp"
-#include "ggml-sycl/conv2d-transpose.hpp"
-#include "ggml-sycl/ssm_conv.hpp"
-#include "ggml-sycl/sycl_hw.hpp"
-#include "ggml-sycl/ssm_scan.hpp"
-#include "ggml-sycl/fill.hpp"
-#include "ggml-sycl/cumsum.hpp"
-#include "ggml-sycl/diag.hpp"
-#include "ggml-sycl/opt-step.hpp"
-#include "ggml-sycl/solve_tri.hpp"
-#include "ggml-sycl/gated_delta_net.hpp"
-#include "ggml-sycl/pool.hpp"
-#include "ggml-sycl/cross_entropy_loss.hpp"
+#ضمن "ggml-sycl/add-id.hpp"
+#ضمن "ggml-sycl/backend.hpp"
+#ضمن "ggml-sycl/common.hpp"
+#ضمن "ggml-sycl/element_wise.hpp"
+#ضمن "ggml-sycl/fwht.hpp"
+#ضمن "ggml-sycl/fused-gemm.hpp"
+#ضمن "ggml-sycl/gemm.hpp"
+#ضمن "ggml-sycl/getrows.hpp"
+#ضمن "ggml-sycl/mem.hpp"
+#ضمن "ggml-sycl/norm.hpp"
+#ضمن "ggml-sycl/presets.hpp"
+#ضمن "ggml-sycl/quantize.hpp"
+#ضمن "ggml-sycl/repeat_back.hpp"
+#ضمن "ggml-sycl/set_rows.hpp"
+#ضمن "ggml-sycl/set.hpp"
+#ضمن "ggml-sycl/dsv4-hc.hpp"
+#ضمن "ggml-sycl/lightning-indexer.hpp"
+#ضمن "ggml-sycl/conv2d.hpp"
+#ضمن "ggml-sycl/conv2d-dw.hpp"
+#ضمن "ggml-sycl/conv2d-transpose.hpp"
+#ضمن "ggml-sycl/ssm_conv.hpp"
+#ضمن "ggml-sycl/sycl_hw.hpp"
+#ضمن "ggml-sycl/ssm_scan.hpp"
+#ضمن "ggml-sycl/fill.hpp"
+#ضمن "ggml-sycl/cumsum.hpp"
+#ضمن "ggml-sycl/diag.hpp"
+#ضمن "ggml-sycl/opt-step.hpp"
+#ضمن "ggml-sycl/solve_tri.hpp"
+#ضمن "ggml-sycl/gated_delta_net.hpp"
+#ضمن "ggml-sycl/pool.hpp"
+#ضمن "ggml-sycl/cross_entropy_loss.hpp"
 
 #define MEM_SIZE_2M	0x00200000
 #define MEM_SIZE_1G	0x40000000
 
-static bool g_sycl_loaded = false;
-int g_ggml_sycl_debug = 0;
-int g_ggml_sycl_dev_debug = 0;
-int g_ggml_sycl_enable_optimize = 1;
-int g_ggml_sycl_enable_graph = 0;
-int g_ggml_sycl_enable_dnn = 1;
-int g_ggml_sycl_fa_onednn = 1;
-int g_ggml_sycl_fa_onednn_max_kv = 0;
-int g_ggml_sycl_enable_mkl_fa = 1;
-int g_ggml_sycl_memtrace = 0;
-int g_ggml_sycl_memtrace_step = 64;
-int g_ggml_sycl_enable_vmm = 1;
-int g_ggml_sycl_enable_fusion = 1;
-int g_ggml_sycl_enable_esimd = 1;
-int g_ggml_sycl_mmvq_wide = 1;
-int g_ggml_sycl_prioritize_dmmv = 0;
-int g_ggml_sycl_xmx_gather_types = GGML_SYCL_XMX_GATHER_TYPES_DEFAULT;
-int g_ggml_sycl_xmx_gather_shapes = GGML_SYCL_XMX_GATHER_SHAPES_DEFAULT;
-int g_ggml_sycl_dynamic_precision = GGML_SYCL_DYNAMIC_PRECISION_DEFAULT;
-int g_ggml_sycl_dynamic_required_precision = GGML_SYCL_DYNAMIC_PRECISION_F32;
-static const char * ggml_sycl_dynamic_precision_names[] = { "F16", "BF16", "TF32", "F32" };
+ساكن منطقي g_sycl_loaded = שקר;
+صحيح g_ggml_sycl_debug = 0;
+صحيح g_ggml_sycl_dev_debug = 0;
+صحيح g_ggml_sycl_enable_optimize = 1;
+صحيح g_ggml_sycl_enable_graph = 0;
+صحيح g_ggml_sycl_enable_dnn = 1;
+صحيح g_ggml_sycl_fa_onednn = 1;
+صحيح g_ggml_sycl_fa_onednn_max_kv = 0;
+صحيح g_ggml_sycl_enable_mkl_fa = 1;
+صحيح g_ggml_sycl_memtrace = 0;
+صحيح g_ggml_sycl_memtrace_step = 64;
+صحيح g_ggml_sycl_enable_vmm = 1;
+صحيح g_ggml_sycl_enable_fusion = 1;
+صحيح g_ggml_sycl_enable_esimd = 1;
+صحيح g_ggml_sycl_mmvq_wide = 1;
+صحيح g_ggml_sycl_prioritize_dmmv = 0;
+صحيح g_ggml_sycl_xmx_gather_types = GGML_SYCL_XMX_GATHER_TYPES_DEFAULT;
+صحيح g_ggml_sycl_xmx_gather_shapes = GGML_SYCL_XMX_GATHER_SHAPES_DEFAULT;
+صحيح g_ggml_sycl_dynamic_precision = GGML_SYCL_DYNAMIC_PRECISION_DEFAULT;
+صحيح g_ggml_sycl_dynamic_required_precision = GGML_SYCL_DYNAMIC_PRECISION_F32;
+ساكن ثابت حرف * ggml_sycl_dynamic_precision_names[] = { "F16", "BF16", "TF32", "F32" };
 
 // value of a GGML_SYCL_DYNAMIC_PRECISION-style variable; def if unset or invalid
-static int ggml_sycl_get_env_precision(const char * name, int def) {
-    const char * env = getenv(name);
-    if (!env) {
-        return def;
+ساكن صحيح ggml_sycl_get_env_precision(ثابت حرف * name, صحيح def) {
+    ثابت حرف * env = getenv(name);
+    אם (!env) {
+        החזר def;
     }
     std::string mode(env);
-    for (char & c : mode) {
-        c = (char) std::toupper((unsigned char) c);
+    עבור (حرف & c : mode) {
+        c = (حرف) std::toupper((unsigned حرف) c);
     }
-    for (int i = GGML_SYCL_DYNAMIC_PRECISION_F16; i <= GGML_SYCL_DYNAMIC_PRECISION_F32; i++) {
-        if (mode == ggml_sycl_dynamic_precision_names[i]) {
-            return i;
+    עבור (صحيح i = GGML_SYCL_DYNAMIC_PRECISION_F16; i <= GGML_SYCL_DYNAMIC_PRECISION_F32; i++) {
+        אם (mode == ggml_sycl_dynamic_precision_names[i]) {
+            החזר i;
         }
     }
     GGML_LOG_WARN("%s: unknown %s=%s, using %s\n", __func__, name, env, ggml_sycl_dynamic_precision_names[def]);
-    return def;
+    החזר def;
 }
-int g_ggml_sycl_use_async_mem_op = 0;
-int g_ggml_sycl_use_async_mem_op_requested = 1;
-int g_ggml_sycl_use_level_zero_api = 0;
-int g_ggml_sycl_enable_flash_attention = 1;
-int g_ggml_sycl_dev2dev_memcpy = DEV2DEV_MEMCPY_SYCL;
-int g_ggml_sycl_usm_system = 0;
-int g_ggml_sycl_enable_host_pinned_mem = 1;
-int g_ggml_sycl_host_pinned_mem_2g = 0;
-int g_ggml_sycl_upload_staging_slots = 4;
-int g_ggml_sycl_get_mem_api = MEMORY_API_TYPE_LEVEL_ZERO;
-int g_ggml_sycl_enable_sparse_fa = 0;
-int g_ggml_sycl_debug_sparse_fa = 0;
-int g_ggml_sycl_sparse_fa_margin = 256;
+صحيح g_ggml_sycl_use_async_mem_op = 0;
+صحيح g_ggml_sycl_use_async_mem_op_requested = 1;
+صحيح g_ggml_sycl_use_level_zero_api = 0;
+صحيح g_ggml_sycl_enable_flash_attention = 1;
+صحيح g_ggml_sycl_dev2dev_memcpy = DEV2DEV_MEMCPY_SYCL;
+صحيح g_ggml_sycl_usm_system = 0;
+صحيح g_ggml_sycl_enable_host_pinned_mem = 1;
+صحيح g_ggml_sycl_host_pinned_mem_2g = 0;
+صحيح g_ggml_sycl_upload_staging_slots = 4;
+صحيح g_ggml_sycl_get_mem_api = MEMORY_API_TYPE_LEVEL_ZERO;
+صحيح g_ggml_sycl_enable_sparse_fa = 0;
+صحيح g_ggml_sycl_debug_sparse_fa = 0;
+صحيح g_ggml_sycl_sparse_fa_margin = 256;
 
-#if GGML_SYCL_DNNL
+#אם GGML_SYCL_DNNL
 // ask oneDNN which matmul it picks for a small f16 problem
-static bool ggml_sycl_dnnl_detect_optimized_gemm(int device) {
+ساكن منطقي ggml_sycl_dnnl_detect_optimized_gemm(صحيح device) {
     using dt = dnnl::memory::data_type;
 
-    try {
-        const dnnl::memory::dims dims    = { 1, 64, 64 };
-        const dnnl::memory::dims strides = { 64 * 64, 64, 1 };
+    حاول {
+        ثابت dnnl::memory::dims dims    = { 1, 64, 64 };
+        ثابت dnnl::memory::dims strides = { 64 * 64, 64, 1 };
 
         dnnl::primitive_attr attr;
         attr.set_scratchpad_mode(dnnl::scratchpad_mode::user);
 
-        const auto & q   = dpct::dev_mgr::instance().get_device(device).default_queue();
-        const auto   eng = dnnl::sycl_interop::make_engine(q.get_device(), q.get_context());
-        const auto   pd  = dnnl::matmul::primitive_desc(eng,
+        ثابت auto & q   = dpct::dev_mgr::instance().get_device(device).default_queue();
+        ثابت auto   eng = dnnl::sycl_interop::make_engine(q.get_device(), q.get_context());
+        ثابت auto   pd  = dnnl::matmul::primitive_desc(eng,
                                                         dnnl::memory::desc(dims, dt::f16, strides),
                                                         dnnl::memory::desc(dims, dt::f16, strides),
                                                         dnnl::memory::desc(dims, dt::f32, strides), attr);
 
-        const std::string impl = pd.impl_info_str();
-        if (impl.find("ref") == std::string::npos) {
-            return true;
+        ثابت std::string impl = pd.impl_info_str();
+        אם (impl.find("ref") == std::string::npos) {
+            החזר אמת;
         }
 
         GGML_LOG_WARN("%s: oneDNN has no optimized matmul for device %d (picks %s), using SYCL kernels\n",
                       __func__, device, impl.c_str());
-    } catch (const std::exception & e) {
+    } امسك (ثابت std::exception & e) {
         GGML_LOG_WARN("%s: oneDNN matmul probe failed on device %d (%s), using SYCL kernels\n",
                       __func__, device, e.what());
     }
 
-    return false;
+    החזר שקר;
 }
 #endif
 
-static ggml_sycl_device_info ggml_sycl_init() {
+ساكن ggml_sycl_device_info ggml_sycl_init() {
     GGML_SYCL_DEBUG("[SYCL] call ggml_sycl_init\n");
     ggml_sycl_device_info info = {};
 
     // Do not hard crash when there exists no SYCL devices.
     // We want to allow the user to use non-SYCL tools when SYCL is compiled (such as llama-quantize)
-    try {
+    حاول {
         info.device_count = dpct::dev_mgr::instance().device_count();
-    } catch (sycl::exception const &exc) {
+    } امسك (sycl::exception ثابت &exc) {
         GGML_LOG_INFO("%s: no SYCL device available: %s\n", __func__, exc.what());
         info.device_count = 0;
     }
-    if (info.device_count == 0) {
+    אם (info.device_count == 0) {
         GGML_LOG_ERROR("%s: failed to initialize: %s\n", GGML_SYCL_NAME, __func__);
-        return info;
+        החזר info;
     }
 
     GGML_ASSERT(info.device_count <= GGML_SYCL_MAX_DEVICES);
@@ -203,24 +203,24 @@ static ggml_sycl_device_info ggml_sycl_init() {
 // #else
 //     GGML_LOG_INFO("%s: SYCL_USE_XMX: no\n", __func__);
 // #endif
-    for (int i = 0; i < info.device_count; ++i) {
+    עבור (صحيح i = 0; i < info.device_count; ++i) {
         dpct::device_info prop;
         auto & device = dpct::dev_mgr::instance().get_device(i);
 
         SYCL_CHECK(CHECK_TRY_ERROR(dpct::get_device_info(
             prop, device)));
 
-#if !defined(GGML_SYCL_SUPPORT_VMM)
+#אם !defined(GGML_SYCL_SUPPORT_VMM)
         info.devices[i].vmm = 0;
-#else
+#אחרת
         info.devices[i].vmm = device.has(sycl::aspect::ext_oneapi_virtual_mem);
-        if (info.devices[i].vmm) {
+        אם (info.devices[i].vmm) {
             // NB: SYCL's get_mem_granularity always returns the _minimum_ granularity,
             // but the L0 API requires a larger page size for allocs above 2 MiB and
             // rejects non-multiples with UR_RESULT_ERROR_INVALID_VALUE [sic].
             // Here we clamp it to 2 MiB for simplicity, but other devices may require
             // calling zeVirtualMemQueryPageSize or yet unexposed public API.
-            const size_t physical_page = 2ull << 20; // 2 MiB
+            ثابت size_t physical_page = 2ull << 20; // 2 MiB
             info.devices[i].vmm_granularity = std::max<size_t>(
                 sycl::ext::oneapi::experimental::get_mem_granularity(
                     device, sycl::context(device)),
@@ -235,7 +235,7 @@ static ggml_sycl_device_info ggml_sycl_init() {
             100 * prop.get_major_version() + 10 * prop.get_minor_version();
         info.devices[i].nsm = prop.get_max_compute_units() / 16; //16: Number of Xe Cores
         info.devices[i].opt_feature.reorder = device.ext_oneapi_architecture_is(syclex::arch_category::intel_gpu);
-#if GGML_SYCL_DNNL
+#אם GGML_SYCL_DNNL
         info.devices[i].opt_feature.onednn_optimized_gemm = ggml_sycl_dnnl_detect_optimized_gemm(i);
 #endif
         info.devices[i].smpbo = prop.get_local_mem_size();
@@ -248,26 +248,26 @@ static ggml_sycl_device_info ggml_sycl_init() {
 
         // Only check GPU devices; CPU devices use OpenCL and would otherwise
         // disable Level Zero for the GPUs on systems without ONEAPI_DEVICE_SELECTOR set.
-        if (device.is_gpu() && device.default_queue().get_backend() != sycl::backend::ext_oneapi_level_zero) {
+        אם (device.is_gpu() && device.default_queue().get_backend() != sycl::backend::ext_oneapi_level_zero) {
             GGML_LOG_WARN("SYCL GPU device %d does not use Level Zero backend, disabling Level Zero memory API\n", i);
-            info.ext_oneapi_level_zero = false;
+            info.ext_oneapi_level_zero = שקר;
         }
 
 #ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
-        if (info.ext_oneapi_level_zero && device.is_gpu() && device.default_queue().get_backend() == sycl::backend::ext_oneapi_level_zero) {
+        אם (info.ext_oneapi_level_zero && device.is_gpu() && device.default_queue().get_backend() == sycl::backend::ext_oneapi_level_zero) {
             ze_device_handle_t ze_dev = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(device.default_queue().get_device());
             ze_device_properties_t props = {};
             props.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
             ze_result_t r = zeDeviceGetProperties(ze_dev, &props);
-            if (r == ZE_RESULT_SUCCESS) {
-                info.devices[i].l0_device_type_valid = true;
+            אם (r == ZE_RESULT_SUCCESS) {
+                info.devices[i].l0_device_type_valid = אמת;
                 info.devices[i].l0_discrete_gpu = !(props.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED);
             }
         }
 #endif
     }
 
-    for (int id = 0; id < info.device_count; ++id) {
+    עבור (صحيح id = 0; id < info.device_count; ++id) {
         info.default_tensor_split[id] /= total_vram;
     }
 
@@ -277,15 +277,15 @@ static ggml_sycl_device_info ggml_sycl_init() {
         info.ext_oneapi_level_zero && g_ggml_sycl_use_level_zero_api;
 #endif
 
-    return info;
+    החזר info;
 }
 
-const ggml_sycl_device_info & ggml_sycl_info() {
-    static ggml_sycl_device_info info = ggml_sycl_init();
-    return info;
+ثابت ggml_sycl_device_info & ggml_sycl_info() {
+    ساكن ggml_sycl_device_info info = ggml_sycl_init();
+    החזר info;
 }
 
-static void print_device_detail(int id, sycl::device &device, std::string device_type) {
+ساكن فراغ print_device_detail(صحيح id, sycl::device &device, std::string device_type) {
 
     dpct::device_info prop;
     SYCL_CHECK(CHECK_TRY_ERROR(
@@ -308,17 +308,17 @@ static void print_device_detail(int id, sycl::device &device, std::string device
             global_mem_size, device.get_info<sycl::info::device::driver_version>().c_str());
 }
 
-static void print_device_opt_feature(int device_count) {
+ساكن فراغ print_device_opt_feature(صحيح device_count) {
     GGML_LOG_INFO("SYCL Optimization Feature:\n");
     GGML_LOG_INFO(
         "|ID|        Device Type|Reorder|\n");
     GGML_LOG_INFO(
         "|--|-------------------|-------|\n");
     std::map<std::string, size_t> DeviceNums;
-    for (int id = 0; id < device_count; ++id) {
+    עבור (صحيح id = 0; id < device_count; ++id) {
       sycl::device device = dpct::dev_mgr::instance().get_device(id);
       std::string backend_type = get_device_backend_and_type(device);
-      int type_id = DeviceNums[backend_type]++;
+      صحيح type_id = DeviceNums[backend_type]++;
       std::stringstream device_type;
       device_type << "[" << backend_type << ":" << std::to_string(type_id)
                   << "]";
@@ -329,9 +329,9 @@ static void print_device_opt_feature(int device_count) {
     }
 
 }
-void ggml_backend_sycl_print_sycl_devices() {
+فراغ ggml_backend_sycl_print_sycl_devices() {
     GGML_SYCL_DEBUG("[SYCL] call ggml_backend_sycl_print_sycl_devices\n");
-    int device_count = dpct::dev_mgr::instance().device_count();
+    صحيح device_count = dpct::dev_mgr::instance().device_count();
     std::map<std::string, size_t> DeviceNums;
     GGML_LOG_INFO("Found %d SYCL devices:\n", device_count);
 
@@ -348,10 +348,10 @@ void ggml_backend_sycl_print_sycl_devices() {
         "|--|-------------------|---------------------------------------|------"
         "-|-------|--------|-----|-------|---------------------|\n");
 
-    for (int id = 0; id < device_count; ++id) {
+    עבור (صحيح id = 0; id < device_count; ++id) {
       sycl::device device = dpct::dev_mgr::instance().get_device(id);
       std::string backend_type = get_device_backend_and_type(device);
-      int type_id = DeviceNums[backend_type]++;
+      صحيح type_id = DeviceNums[backend_type]++;
       std::stringstream device_type;
       device_type << "[" << backend_type << ":" << std::to_string(type_id)
                   << "]";
@@ -361,15 +361,15 @@ void ggml_backend_sycl_print_sycl_devices() {
     print_device_opt_feature(device_count);
 }
 
-static const char* dev2dev_int2str(int dev2dev) {
-    if (dev2dev == DEV2DEV_MEMCPY_SYCL) {
-        return "SYCL API";
-    } else if (dev2dev == DEV2DEV_MEMCPY_L0) {
-        return "Level Zero API";
-    } else if (dev2dev == DEV2DEV_MEMCPY_FORWARD) {
-        return "Host Forward";
-    } else {
-        return "Unknown";
+ساكن ثابت حرف* dev2dev_int2str(صحيح dev2dev) {
+    אם (dev2dev == DEV2DEV_MEMCPY_SYCL) {
+        החזר "SYCL API";
+    } אחרת אם (dev2dev == DEV2DEV_MEMCPY_L0) {
+        החזר "Level Zero API";
+    } אחרת אם (dev2dev == DEV2DEV_MEMCPY_FORWARD) {
+        החזר "Host Forward";
+    } אחרת {
+        החזר "Unknown";
     }
 }
 
@@ -379,23 +379,23 @@ static const char* dev2dev_int2str(int dev2dev) {
 * This function is used to do initialize work for the SYCL backend and set the global variables.
 */
 #ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
-static ze_result_t init_zes() {
+ساكن ze_result_t init_zes() {
     ze_result_t res = zesInit(0);
-    if (res != ZE_RESULT_SUCCESS) {
+    אם (res != ZE_RESULT_SUCCESS) {
         GGML_SYCL_DEBUG("Warning: [%s] zesInit failed with code %d. Sysman free-memory query be unavailable.\n",
-                            __func__, (int) res);
+                            __func__, (صحيح) res);
     }
-    return res;
+    החזר res;
 }
 
-static ze_result_t get_zes_init_res() {
-    static ze_result_t zes_init_res = init_zes();
-    GGML_SYCL_DEBUG("[SYCL] call %s: zesInit result: %d\n", __func__, (int) zes_init_res);
-    return zes_init_res;
+ساكن ze_result_t get_zes_init_res() {
+    ساكن ze_result_t zes_init_res = init_zes();
+    GGML_SYCL_DEBUG("[SYCL] call %s: zesInit result: %d\n", __func__, (صحيح) zes_init_res);
+    החזר zes_init_res;
 }
 #endif
 
-static void initialize_sycl_begining() {
+ساكن فراغ initialize_sycl_begining() {
 #ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
     //must be called in initialization stage, before any other Level Zero API calls
     GGML_SYCL_DEBUG("[SYCL] call %s\n", __func__);
@@ -403,11 +403,11 @@ static void initialize_sycl_begining() {
 #endif
 }
 
-static void ggml_check_sycl() try {
+ساكن فراغ ggml_check_sycl() حاول {
     GGML_SYCL_DEBUG("[SYCL] ggml_check_sycl()\n");
-    static bool initialized = false;
+    ساكن منطقي initialized = שקר;
 
-    if (!initialized) {
+    אם (!initialized) {
         initialize_sycl_begining();
 
         g_ggml_sycl_debug = ggml_sycl_get_env("GGML_SYCL_DEBUG", 0);
@@ -434,19 +434,19 @@ static void ggml_check_sycl() try {
 
 #ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
         g_ggml_sycl_use_level_zero_api = ggml_sycl_get_env("GGML_SYCL_USE_LEVEL_ZERO_API", 1);
-#else
+#אחרת
         g_ggml_sycl_use_level_zero_api = 0;
 #endif
         g_ggml_sycl_dev2dev_memcpy = ggml_sycl_get_env("GGML_SYCL_DEV2DEV_MEMCPY", DEV2DEV_MEMCPY_SYCL);
         g_ggml_sycl_get_mem_api = ggml_sycl_get_env("GGML_SYCL_GET_MEM_API", MEMORY_API_TYPE_LEVEL_ZERO);
-        if (g_ggml_sycl_use_level_zero_api == 0) {
+        אם (g_ggml_sycl_use_level_zero_api == 0) {
             g_ggml_sycl_dev2dev_memcpy = DEV2DEV_MEMCPY_SYCL;
             g_ggml_sycl_get_mem_api = MEMORY_API_TYPE_SYCL;
         }
 
 #ifdef SYCL_FLASH_ATTN
         g_ggml_sycl_enable_flash_attention = ggml_sycl_get_env("GGML_SYCL_ENABLE_FLASH_ATTN", 1);
-#else
+#אחרת
         g_ggml_sycl_enable_flash_attention = 0;
 #endif
 
@@ -465,38 +465,38 @@ static void ggml_check_sycl() try {
         GGML_SYCL_DEBUG("[SYCL] call ggml_check_sycl\n");
 
         GGML_LOG_INFO("Build with Macros:\n");
-#if defined(GGML_SYCL_DNNL)
+#אם defined(GGML_SYCL_DNNL)
         GGML_LOG_INFO("  GGML_SYCL_DNNL: yes\n");
-#else
+#אחרת
         GGML_LOG_INFO("  GGML_SYCL_DNNL: no\n");
 #endif
 
-#if defined(GGML_SYCL_F16)
+#אם defined(GGML_SYCL_F16)
         GGML_LOG_INFO("  GGML_SYCL_F16: yes\n");
-#else
+#אחרת
         GGML_LOG_INFO("  GGML_SYCL_F16: no\n");
 #endif
 
-#if defined(GGML_SYCL_FORCE_MMQ)
+#אם defined(GGML_SYCL_FORCE_MMQ)
         GGML_LOG_INFO("  GGML_SYCL_FORCE_MMQ: yes\n");
-#else
+#אחרת
         GGML_LOG_INFO("  GGML_SYCL_FORCE_MMQ: no\n");
 #endif
 
-#if defined(GGML_SYCL_GRAPH)
+#אם defined(GGML_SYCL_GRAPH)
         GGML_LOG_INFO("  GGML_SYCL_GRAPH: yes\n");
-#else
+#אחרת
         GGML_LOG_INFO("  GGML_SYCL_GRAPH: no\n");
 #endif
 
-#if defined(GGML_SYCL_SUPPORT_LEVEL_ZERO_API)
+#אם defined(GGML_SYCL_SUPPORT_LEVEL_ZERO_API)
         GGML_LOG_INFO("  GGML_SYCL_SUPPORT_LEVEL_ZERO_API: yes\n");
-#else
+#אחרת
         GGML_LOG_INFO("  GGML_SYCL_SUPPORT_LEVEL_ZERO_API: no\n");
 #endif
-#if defined(GGML_SYCL_SUPPORT_VMM)
+#אם defined(GGML_SYCL_SUPPORT_VMM)
         GGML_LOG_INFO("  GGML_SYCL_SUPPORT_VMM: yes\n");
-#else
+#אחרת
         GGML_LOG_INFO("  GGML_SYCL_SUPPORT_VMM: no\n");
 #endif
 
@@ -508,17 +508,17 @@ static void ggml_check_sycl() try {
 #ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
         GGML_LOG_INFO("  GGML_SYCL_DEV2DEV_MEMCPY: %d (%s)\n", g_ggml_sycl_dev2dev_memcpy, dev2dev_int2str(g_ggml_sycl_dev2dev_memcpy));
         GGML_LOG_INFO("  GGML_SYCL_GET_MEM_API: %d (%s)\n", g_ggml_sycl_get_mem_api, mem_api_int2str(g_ggml_sycl_get_mem_api));
-#else
+#אחרת
         GGML_LOG_INFO("  GGML_SYCL_DEV2DEV_MEMCPY: %d (%s), enable to SYCL API since missing GGML_SYCL_SUPPORT_LEVEL_ZERO_API\n",
                       g_ggml_sycl_dev2dev_memcpy, dev2dev_int2str(g_ggml_sycl_dev2dev_memcpy));
         GGML_LOG_INFO("  GGML_SYCL_GET_MEM_API: %d (%s), enable to SYCL API since missing GGML_SYCL_SUPPORT_LEVEL_ZERO_API\n",
                       g_ggml_sycl_get_mem_api, mem_api_int2str(g_ggml_sycl_get_mem_api));
 #endif
 
-#if defined(GGML_SYCL_DNNL)
+#אם defined(GGML_SYCL_DNNL)
         GGML_LOG_INFO("  GGML_SYCL_ENABLE_DNN: %d\n", g_ggml_sycl_enable_dnn);
         GGML_LOG_INFO("  GGML_SYCL_FA_ONEDNN: %d\n", g_ggml_sycl_fa_onednn);
-#else
+#אחרת
         GGML_LOG_INFO("  GGML_SYCL_ENABLE_DNN: DNN disabled by compile flag\n");
         GGML_LOG_INFO("  GGML_SYCL_FA_ONEDNN: %d\n", g_ggml_sycl_fa_onednn);
 #endif
@@ -528,14 +528,14 @@ static void ggml_check_sycl() try {
         GGML_LOG_INFO("  GGML_SYCL_MEMTRACE_STEP: %d\n", g_ggml_sycl_memtrace_step);
 #ifdef SYCL_FLASH_ATTN
         GGML_LOG_INFO("  GGML_SYCL_ENABLE_FLASH_ATTN: %d\n", g_ggml_sycl_enable_flash_attention);
-#else
+#אחרת
         GGML_LOG_INFO("  GGML_SYCL_ENABLE_FLASH_ATTN: %d disabled by compile flag\n",
             g_ggml_sycl_enable_flash_attention);
 #endif
 
 #ifdef GGML_SYCL_GRAPH
         GGML_LOG_INFO("  GGML_SYCL_ENABLE_GRAPH: %d\n", g_ggml_sycl_enable_graph);
-#else
+#אחרת
         GGML_LOG_INFO("  GGML_SYCL_ENABLE_GRAPH: graph disabled by compile flag\n");
 #endif
 
@@ -547,18 +547,18 @@ static void ggml_check_sycl() try {
         GGML_LOG_INFO("  GGML_SYCL_DYNAMIC_REQUIRED_PRECISION: %s\n",
                       ggml_sycl_dynamic_precision_names[g_ggml_sycl_dynamic_required_precision]);
 
-#if defined(GGML_SYCL_SUPPORT_VMM)
+#אם defined(GGML_SYCL_SUPPORT_VMM)
         GGML_LOG_INFO("  GGML_SYCL_ENABLE_VMM: %d\n", g_ggml_sycl_enable_vmm);
-#else
+#אחרת
         GGML_LOG_INFO("  GGML_SYCL_ENABLE_VMM: virtual memory extension is not available\n");
 #endif
 
         GGML_LOG_INFO("  GGML_SYCL_ENABLE_FUSION: %d\n", g_ggml_sycl_enable_fusion);
         GGML_LOG_INFO("  GGML_SYCL_UPLOAD_STAGING_SLOTS: %d\n", g_ggml_sycl_upload_staging_slots);
 
-#if defined(__INTEL_LLVM_COMPILER)
+#אם defined(__INTEL_LLVM_COMPILER)
         GGML_LOG_INFO("  GGML_SYCL_ENABLE_ESIMD: %d\n", g_ggml_sycl_enable_esimd);
-#else
+#אחרת
         GGML_LOG_INFO("  GGML_SYCL_ENABLE_ESIMD: %d disabled by compile flag\n", g_ggml_sycl_enable_esimd);
 #endif
         GGML_LOG_INFO("  GGML_SYCL_MMVQ_WIDE: %d\n", g_ggml_sycl_mmvq_wide);
@@ -569,7 +569,7 @@ static void ggml_check_sycl() try {
 
 #ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
         GGML_LOG_INFO("  GGML_SYCL_USE_LEVEL_ZERO_API: %d\n", g_ggml_sycl_use_level_zero_api);
-#else
+#אחרת
         GGML_LOG_INFO("  GGML_SYCL_USE_LEVEL_ZERO_API: Disable Level Zero API usage by compile flag\n");
 #endif
 
@@ -591,31 +591,31 @@ static void ggml_check_sycl() try {
         // Async USM allocation/free is also useful outside the graph path: it avoids the host waits in the reorder
         // staging path while preserving queue ordering semantics. Graph support still depends on the extension being
         // available, but it no longer needs to control the non-graph fast path.
-#if defined(GGML_SYCL_GRAPH) && SYCL_EXT_ONEAPI_ASYNC_MEMORY_ALLOC
+#אם defined(GGML_SYCL_GRAPH) && SYCL_EXT_ONEAPI_ASYNC_MEMORY_ALLOC
         g_ggml_sycl_use_async_mem_op = g_ggml_sycl_use_async_mem_op_requested || g_ggml_sycl_enable_graph;
-        if (g_ggml_sycl_use_async_mem_op) {
-            for (unsigned int i = 0; i < dpct::dev_mgr::instance().device_count(); ++i) {
-                if (!dpct::dev_mgr::instance().get_device(i).has(sycl::aspect::ext_oneapi_async_memory_alloc)) {
+        אם (g_ggml_sycl_use_async_mem_op) {
+            עבור (unsigned صحيح i = 0; i < dpct::dev_mgr::instance().device_count(); ++i) {
+                אם (!dpct::dev_mgr::instance().get_device(i).has(sycl::aspect::ext_oneapi_async_memory_alloc)) {
                     g_ggml_sycl_use_async_mem_op = 0;
-                    break;
+                    اكسر;
                 }
             }
         }
 #endif
-        if (CHECK_TRY_ERROR(g_all_sycl_device_count =
+        אם (CHECK_TRY_ERROR(g_all_sycl_device_count =
                             dpct::dev_mgr::instance().device_count()) != 0) {
-            initialized = true;
-            g_sycl_loaded = false;
-            return;
+            initialized = אמת;
+            g_sycl_loaded = שקר;
+            החזר;
         }
         GGML_ASSERT(g_all_sycl_device_count <= GGML_SYCL_MAX_DEVICES);
 
-        initialized = true;
-        g_sycl_loaded = true;
+        initialized = אמת;
+        g_sycl_loaded = אמת;
         ggml_backend_sycl_print_sycl_devices();
     }
 }
-catch (sycl::exception const &exc) {
+امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
             << ", line:" << __LINE__ << std::endl;
   std::exit(1);
@@ -625,68 +625,68 @@ catch (sycl::exception const &exc) {
 device_index: device index from 0 to n (continue numbers).
     It is used for device select/set in SYCL backend internal data structure.
 */
-inline void check_allow_gpu_index(const int device_index) {
-  if (device_index >= ggml_sycl_info().device_count) {
-    char error_buf[256];
+مضمن فراغ check_allow_gpu_index(ثابت صحيح device_index) {
+  אם (device_index >= ggml_sycl_info().device_count) {
+    حرف error_buf[256];
     snprintf(
         error_buf,
-        sizeof(error_buf),
+        حجم(error_buf),
         "%s error: device_index:%d is out of range: [0-%d]",
         __func__,
         device_index,
         ggml_sycl_info().device_count - 1);
     GGML_LOG_ERROR("%s\n", error_buf);
-    assert(false);
+    أكد(שקר);
   }
 }
 
-GGML_API void ggml_backend_sycl_get_gpu_list(int *id_list, int max_len) try {
+GGML_API فراغ ggml_backend_sycl_get_gpu_list(صحيح *id_list, صحيح max_len) حاول {
     GGML_SYCL_DEBUG("[SYCL] call ggml_backend_sycl_get_gpu_list\n");
-    for(int i=0;i<max_len;i++) id_list[i] = -1;
+    עבור(صحيح i=0;i<max_len;i++) id_list[i] = -1;
 
-    for (int i=0;i< ggml_sycl_info().device_count;i++){
-        if (i>=max_len) break;
+    עבור (صحيح i=0;i< ggml_sycl_info().device_count;i++){
+        אם (i>=max_len) اكسر;
         id_list[i] = i;
     }
-    return;
+    החזר;
 }
-catch (sycl::exception const &exc) {
+امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
             << ", line:" << __LINE__ << std::endl;
   std::exit(1);
 }
 
-inline void free_aligned_mem_host(void * memblock) {
+مضمن فراغ free_aligned_mem_host(فراغ * memblock) {
 #ifdef _WIN32
     _aligned_free(memblock);
-#else
-    free(memblock);
+#אחרת
+    حرر(memblock);
 #endif
 }
 
 // sycl buffer
 
-struct ggml_backend_sycl_buffer_context {
+بنية ggml_backend_sycl_buffer_context {
     // pinned staging for uploads; the host fills one slot while the previous one transfers
-    static constexpr size_t staging_slot_size = 8*1024*1024;
+    ساكن constexpr size_t staging_slot_size = 8*1024*1024;
 
-    struct host_staging {
-        void * data = nullptr;
+    بنية host_staging {
+        فراغ * data = nullptr;
         std::vector<sycl::event> events;
-        std::vector<bool> submitted;
-        int next = 0;
+        std::vector<منطقي> submitted;
+        صحيح next = 0;
     };
 
-    int device;
-    void * dev_ptr = nullptr;
+    صحيح device;
+    فراغ * dev_ptr = nullptr;
     queue_ptr stream;
     std::string name;
     optimize_feature opt_feature;
     std::vector<ggml_tensor_extra_gpu *> tensor_extras;
     host_staging staging;
-    bool is_usm_system;
+    منطقي is_usm_system;
 
-    ggml_backend_sycl_buffer_context(int device, void * dev_ptr, queue_ptr stream, bool is_usm_system) :
+    ggml_backend_sycl_buffer_context(صحيح device, فراغ * dev_ptr, queue_ptr stream, منطقي is_usm_system) :
         device(device), dev_ptr(dev_ptr), stream(stream), is_usm_system(is_usm_system) {
             check_allow_gpu_index(device);
             name = (GGML_SYCL_NAME + std::to_string(device));
@@ -694,119 +694,119 @@ struct ggml_backend_sycl_buffer_context {
         }
 
     // waits for every queued upload, then releases the pinned block
-    void drop_host_staging() {
-        for (size_t i = 0; i < staging.submitted.size(); ++i) {
-            if (staging.submitted[i]) {
+    فراغ drop_host_staging() {
+        עבור (size_t i = 0; i < staging.submitted.size(); ++i) {
+            אם (staging.submitted[i]) {
                 staging.events[i].wait_and_throw();
-                staging.submitted[i] = false;
+                staging.submitted[i] = שקר;
             }
         }
-        if (staging.data != nullptr) {
-            sycl::free(staging.data, *stream);
+        אם (staging.data != nullptr) {
+            sycl::حرر(staging.data, *stream);
             staging.data = nullptr;
         }
     }
 
     ~ggml_backend_sycl_buffer_context() {
         drop_host_staging();
-        if (dev_ptr != nullptr) {
+        אם (dev_ptr != nullptr) {
             ggml_sycl_set_device(device);
-            if (is_usm_system)
+            אם (is_usm_system)
                 free_aligned_mem_host(dev_ptr);
-            else
+            אחרת
                 SYCL_CHECK(CHECK_TRY_ERROR(ggml_sycl_free_device(dev_ptr, *stream)));
         }
 
         //release extra used by tensors
-        for (ggml_tensor_extra_gpu * extra : tensor_extras) {
+        עבור (ggml_tensor_extra_gpu * extra : tensor_extras) {
             release_extra_gpu(extra);
         }
 
     }
 };
 
-static const char * ggml_backend_sycl_buffer_type_get_name(ggml_backend_buffer_type_t buft);
+ساكن ثابت حرف * ggml_backend_sycl_buffer_type_get_name(ggml_backend_buffer_type_t buft);
 
-static bool ggml_backend_buffer_is_sycl(ggml_backend_buffer_t buffer) {
-    return buffer->buft->iface.get_name == ggml_backend_sycl_buffer_type_get_name;
+ساكن منطقي ggml_backend_buffer_is_sycl(ggml_backend_buffer_t buffer) {
+    החזר buffer->buft->iface.get_name == ggml_backend_sycl_buffer_type_get_name;
 }
 
-static void
-ggml_backend_sycl_buffer_free_buffer(ggml_backend_buffer_t buffer) try {
+ساكن فراغ
+ggml_backend_sycl_buffer_free_buffer(ggml_backend_buffer_t buffer) حاول {
     ggml_backend_sycl_buffer_context * ctx = ( ggml_backend_sycl_buffer_context *)buffer->context;
     ggml_sycl_set_device(ctx->device);
 
     delete ctx;
 }
-catch (sycl::exception const &exc) {
+امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
             << ", line:" << __LINE__ << std::endl;
   std::exit(1);
 }
 
-static void * ggml_backend_sycl_buffer_get_base(ggml_backend_buffer_t buffer) {
+ساكن فراغ * ggml_backend_sycl_buffer_get_base(ggml_backend_buffer_t buffer) {
     ggml_backend_sycl_buffer_context * ctx = ( ggml_backend_sycl_buffer_context *)buffer->context;
-    return ctx->dev_ptr;
+    החזר ctx->dev_ptr;
 }
 
-static enum ggml_status
+ساكن تعداد ggml_status
 ggml_backend_sycl_buffer_init_tensor(ggml_backend_buffer_t buffer,
-                                     ggml_tensor *tensor) try {
+                                     ggml_tensor *tensor) حاول {
     GGML_SYCL_DEBUG("[SYCL] call %s", __func__);
     GGML_SYCL_DEBUG("%s", debug_get_tensor_str(": tensor", tensor, "\n").c_str());
     ggml_backend_sycl_buffer_context * ctx = (ggml_backend_sycl_buffer_context *)buffer->context;
 
-    if (tensor->view_src != NULL) {
-        assert(tensor->view_src->buffer->buft == buffer->buft);
-        return GGML_STATUS_SUCCESS;
+    אם (tensor->view_src != عدم) {
+        أكد(tensor->view_src->buffer->buft == buffer->buft);
+        החזר GGML_STATUS_SUCCESS;
     }
 
-    if (g_ggml_sycl_enable_optimize) {
+    אם (g_ggml_sycl_enable_optimize) {
         // set reorder extra buffer based on supported type
-        switch (tensor->type) {
-            case GGML_TYPE_Q4_0:
-            case GGML_TYPE_Q8_0:
-            case GGML_TYPE_Q2_K:
-            case GGML_TYPE_Q3_K:
-            case GGML_TYPE_Q4_K:
-            case GGML_TYPE_Q5_K:
-            case GGML_TYPE_Q6_K:
-            case GGML_TYPE_IQ3_XXS:
-            case GGML_TYPE_IQ3_S:
-            case GGML_TYPE_MXFP4:{
-                ggml_tensor_extra_gpu * extra = new ggml_tensor_extra_gpu{};
+        بدل (tensor->type) {
+            حالة GGML_TYPE_Q4_0:
+            حالة GGML_TYPE_Q8_0:
+            حالة GGML_TYPE_Q2_K:
+            حالة GGML_TYPE_Q3_K:
+            حالة GGML_TYPE_Q4_K:
+            حالة GGML_TYPE_Q5_K:
+            حالة GGML_TYPE_Q6_K:
+            حالة GGML_TYPE_IQ3_XXS:
+            حالة GGML_TYPE_IQ3_S:
+            حالة GGML_TYPE_MXFP4:{
+                ggml_tensor_extra_gpu * extra = جديد ggml_tensor_extra_gpu{};
                 tensor->extra                 = extra;
                 ctx->tensor_extras.push_back(extra);
-                break;
+                اكسر;
             }
-            default:
-                break;
+            افتراضي:
+                اكسر;
         }
     }
 
-    if (ggml_is_quantized(tensor->type)) {
+    אם (ggml_is_quantized(tensor->type)) {
         // initialize padding to 0 to avoid possible NaN values
         size_t original_size = ggml_nbytes(tensor);
         size_t padded_size = ggml_backend_buft_get_alloc_size(buffer->buft, tensor);
 
-        if (padded_size > original_size && tensor->view_src == nullptr) {
+        אם (padded_size > original_size && tensor->view_src == nullptr) {
             SYCL_CHECK(CHECK_TRY_ERROR(ctx->stream->memset(
-                (char *)tensor->data + original_size, 0,
+                (حرف *)tensor->data + original_size, 0,
                 padded_size - original_size).wait()));
         }
     }
-    return GGML_STATUS_SUCCESS;
+    החזר GGML_STATUS_SUCCESS;
 }
-catch (sycl::exception const &exc) {
+امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
             << ", line:" << __LINE__ << std::endl;
   std::exit(1);
 }
 
-static void ggml_backend_sycl_buffer_set_tensor(ggml_backend_buffer_t buffer,
+ساكن فراغ ggml_backend_sycl_buffer_set_tensor(ggml_backend_buffer_t buffer,
                                                 ggml_tensor *tensor,
-                                                const void *data, size_t offset,
-                                                size_t size) try {
+                                                ثابت فراغ *data, size_t offset,
+                                                size_t size) حاول {
     GGML_SYCL_DEBUG("[SYCL] call %s", __func__);
     GGML_SYCL_DEBUG("%s", debug_get_tensor_str(": tensor", tensor).c_str());
     GGML_SYCL_DEBUG(" size=%zu offset=%zu\n", size, offset);
@@ -815,35 +815,35 @@ static void ggml_backend_sycl_buffer_set_tensor(ggml_backend_buffer_t buffer,
 
     // copy through pinned memory so the device never reads mmap()ed pages directly
     // chunks pipeline on the in-order compute queue, so no drain per tensor is needed
-    const int n_slots = g_ggml_sycl_upload_staging_slots;
-    if (n_slots > 0 && ctx->staging.data == nullptr) {
+    ثابت صحيح n_slots = g_ggml_sycl_upload_staging_slots;
+    אם (n_slots > 0 && ctx->staging.data == nullptr) {
         ctx->staging.data = sycl::malloc_host(n_slots * ctx->staging_slot_size, *ctx->stream);
-        if (ctx->staging.data != nullptr) {
+        אם (ctx->staging.data != nullptr) {
             ctx->staging.events.resize(n_slots);
-            ctx->staging.submitted.assign(n_slots, false);
+            ctx->staging.submitted.assign(n_slots, שקר);
         }
     }
-    if (ctx->staging.data != nullptr) {
+    אם (ctx->staging.data != nullptr) {
         queue_ptr    stream    = ctx->stream;
-        char *       dst       = (char *) tensor->data + offset;
-        const char * src       = (const char *) data;
+        حرف *       dst       = (حرف *) tensor->data + offset;
+        ثابت حرف * src       = (ثابت حرف *) data;
         size_t       remaining = size;
-        while (remaining > 0) {
-            const size_t chunk = std::min(remaining, ctx->staging_slot_size);
-            const int    slot  = ctx->staging.next;
-            ctx->staging.next = (ctx->staging.next + 1) % (int) ctx->staging.submitted.size();
-            if (ctx->staging.submitted[slot]) {
+        כלעוד (remaining > 0) {
+            ثابت size_t chunk = std::min(remaining, ctx->staging_slot_size);
+            ثابت صحيح    slot  = ctx->staging.next;
+            ctx->staging.next = (ctx->staging.next + 1) % (صحيح) ctx->staging.submitted.size();
+            אם (ctx->staging.submitted[slot]) {
                 ctx->staging.events[slot].wait_and_throw();
             }
-            void * stage = (char *) ctx->staging.data + slot * ctx->staging_slot_size;
+            فراغ * stage = (حرف *) ctx->staging.data + slot * ctx->staging_slot_size;
             memcpy(stage, src, chunk);
             ctx->staging.events[slot] = stream->memcpy(dst, stage, chunk);
-            ctx->staging.submitted[slot] = true;
+            ctx->staging.submitted[slot] = אמת;
             src       += chunk;
             dst       += chunk;
             remaining -= chunk;
         }
-        return;
+        החזר;
     }
 
     auto stream = &(dpct::dev_mgr::instance().get_device(ctx->device).default_queue());
@@ -851,24 +851,24 @@ static void ggml_backend_sycl_buffer_set_tensor(ggml_backend_buffer_t buffer,
 #ifndef _WIN32
     // Note: Use host buffer to save the data from mmap(), then copy to device. It's workaround for mmap() issue on PVC GPU.
     // This function will be called during load model from disk. Use memory buffer replace dynamic won't save more time and brings potential memory leak risk here.
-    char * host_buf = (char *) malloc(size);
+    حرف * host_buf = (حرف *) malloc(size);
     memcpy(host_buf, data, size);
-    SYCL_CHECK(CHECK_TRY_ERROR((*stream).memcpy((char *) tensor->data + offset, host_buf, size).wait()));
-    free(host_buf);
-#else
-    SYCL_CHECK(CHECK_TRY_ERROR((*stream).memcpy((char *) tensor->data + offset, data, size).wait()));
+    SYCL_CHECK(CHECK_TRY_ERROR((*stream).memcpy((حرف *) tensor->data + offset, host_buf, size).wait()));
+    حرر(host_buf);
+#אחרת
+    SYCL_CHECK(CHECK_TRY_ERROR((*stream).memcpy((حرف *) tensor->data + offset, data, size).wait()));
 #endif
 }
-catch (sycl::exception const &exc) {
+امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
             << ", line:" << __LINE__ << std::endl;
   std::exit(1);
 }
 
-static void ggml_backend_sycl_buffer_get_tensor(ggml_backend_buffer_t buffer,
-                                                const ggml_tensor *tensor,
-                                                void *data, size_t offset,
-                                                size_t size) try {
+ساكن فراغ ggml_backend_sycl_buffer_get_tensor(ggml_backend_buffer_t buffer,
+                                                ثابت ggml_tensor *tensor,
+                                                فراغ *data, size_t offset,
+                                                size_t size) حاول {
     GGML_SYCL_DEBUG("[SYCL] call %s", __func__);
     GGML_SYCL_DEBUG("%s", debug_get_tensor_str(": tensor", tensor).c_str());
     GGML_SYCL_DEBUG(" size=%zu offset=%zu\n", size, offset);
@@ -878,89 +878,89 @@ static void ggml_backend_sycl_buffer_get_tensor(ggml_backend_buffer_t buffer,
     auto stream = dpct::dev_mgr::instance().get_device(ctx->device).default_queue();
 
     SYCL_CHECK(CHECK_TRY_ERROR(
-        stream.memcpy(data, (const char *)tensor->data + offset, size)
+        stream.memcpy(data, (ثابت حرف *)tensor->data + offset, size)
             .wait()));
 }
-catch (sycl::exception const &exc) {
+امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
             << ", line:" << __LINE__ << std::endl;
   std::exit(1);
 }
 
 #ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
-static bool ggml_sycl_is_l0_discrete_gpu(int device) {
-    return ggml_sycl_info().devices[device].l0_discrete_gpu;
+ساكن منطقي ggml_sycl_is_l0_discrete_gpu(صحيح device) {
+    החזר ggml_sycl_info().devices[device].l0_discrete_gpu;
 }
 #endif
 
-static void memcpy_host_forward(sycl::queue &q_dst, sycl::queue &q_src, void *ptr_dst,
-                         const void *ptr_src, size_t size) {
-    char *host_buf = (char *)malloc(size);
-    if (host_buf == nullptr) {
+ساكن فراغ memcpy_host_forward(sycl::queue &q_dst, sycl::queue &q_src, فراغ *ptr_dst,
+                         ثابت فراغ *ptr_src, size_t size) {
+    حرف *host_buf = (حرف *)malloc(size);
+    אם (host_buf == nullptr) {
         GGML_LOG_ERROR("%s: can't allocate %zu Bytes of memory for host staging\n", __func__, size);
         GGML_ABORT("fatal error");
     }
-    q_src.memcpy(host_buf, (const char *)ptr_src, size).wait();
-    q_dst.memcpy((char *)ptr_dst, host_buf, size).wait();
-    free(host_buf);
+    q_src.memcpy(host_buf, (ثابت حرف *)ptr_src, size).wait();
+    q_dst.memcpy((حرف *)ptr_dst, host_buf, size).wait();
+    حرر(host_buf);
 }
 
-static void dev2dev_memcpy(int device_dst, sycl::queue &q_dst, int device_src, sycl::queue &q_src, void *ptr_dst,
-                    const void *ptr_src, size_t size) {
+ساكن فراغ dev2dev_memcpy(صحيح device_dst, sycl::queue &q_dst, صحيح device_src, sycl::queue &q_src, فراغ *ptr_dst,
+                    ثابت فراغ *ptr_src, size_t size) {
 
 #ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
-    if (g_ggml_sycl_dev2dev_memcpy == DEV2DEV_MEMCPY_L0) {
+    אם (g_ggml_sycl_dev2dev_memcpy == DEV2DEV_MEMCPY_L0) {
         // Use Level Zero direct copy for dGPU-to-dGPU transfers.
-        const bool l0_copy_supported =
+        ثابت منطقي l0_copy_supported =
             ggml_sycl_is_l0_discrete_gpu(device_dst) && ggml_sycl_is_l0_discrete_gpu(device_src);
-        if (g_ggml_sycl_use_level_zero_api && l0_copy_supported) {
+        אם (g_ggml_sycl_use_level_zero_api && l0_copy_supported) {
             auto ze_ctx = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(q_dst.get_context());
             auto ze_dev = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(q_dst.get_device());
             ze_command_queue_desc_t cq_desc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC, nullptr, 0, 0,
                                             0, ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, ZE_COMMAND_QUEUE_PRIORITY_NORMAL};
             ze_command_list_handle_t cl;
             ze_result_t r = zeCommandListCreateImmediate(ze_ctx, ze_dev, &cq_desc, &cl);
-            if (r == ZE_RESULT_SUCCESS) {
+            אם (r == ZE_RESULT_SUCCESS) {
                 GGML_SYCL_DEBUG("[SYCL] dev2dev memcpy by L0\n");
                 r = zeCommandListAppendMemoryCopy(cl, ptr_dst, ptr_src, size, nullptr, 0, nullptr);
                 zeCommandListDestroy(cl);
-                if (r == ZE_RESULT_SUCCESS) {
-                    return;
+                אם (r == ZE_RESULT_SUCCESS) {
+                    החזר;
                 }
             }
         }
     }
 #endif
 
-    if (g_ggml_sycl_dev2dev_memcpy == DEV2DEV_MEMCPY_SYCL) {
-        if (q_dst.get_device().ext_oneapi_can_access_peer(q_src.get_device(),
+    אם (g_ggml_sycl_dev2dev_memcpy == DEV2DEV_MEMCPY_SYCL) {
+        אם (q_dst.get_device().ext_oneapi_can_access_peer(q_src.get_device(),
                                                           sycl::ext::oneapi::peer_access::access_supported)) {
             GGML_SYCL_DEBUG("[SYCL] dev2dev memcpy by SYCL\n");
             q_dst.get_device().ext_oneapi_enable_peer_access(q_src.get_device());
             SYCL_CHECK(CHECK_TRY_ERROR(q_dst.memcpy(ptr_dst, ptr_src, size).wait()));
-            return;
+            החזר;
         }
     }
 
     // Host-staged copy
-    if(g_ggml_sycl_dev2dev_memcpy == DEV2DEV_MEMCPY_FORWARD) {
+    אם(g_ggml_sycl_dev2dev_memcpy == DEV2DEV_MEMCPY_FORWARD) {
         GGML_SYCL_DEBUG("[SYCL] dev2dev memcpy by host forward for setting GGML_SYCL_DEV2DEV_MEMCPY=2\n");
-    } else {
+    } אחרת {
         GGML_SYCL_DEBUG("[SYCL] dev2dev memcpy by host forward for SYCL/L0 fallback\n");
     }
     memcpy_host_forward(q_dst, q_src, ptr_dst, ptr_src, size);
 }
 
-static bool
+ساكن منطقي
 ggml_backend_sycl_buffer_cpy_tensor(ggml_backend_buffer_t buffer,
-                                    const ggml_tensor *src,
-                                    ggml_tensor *dst) try {
-    bool is_cpy_supported = ggml_backend_buffer_is_sycl(src->buffer);
+                                    ثابت ggml_tensor *src,
+                                    ggml_tensor *dst) حاول {
+    منطقي is_cpy_supported = ggml_backend_buffer_is_sycl(src->buffer);
     GGML_SYCL_DEBUG("[SYCL] call %s", __func__);
     GGML_SYCL_DEBUG("%s", debug_get_tensor_str(": dst", dst).c_str());
     GGML_SYCL_DEBUG("%s", debug_get_tensor_str(" src", src).c_str());
     GGML_SYCL_DEBUG(" is_cpy_supported=%d\n", is_cpy_supported);
-    if (is_cpy_supported) {
+    אם (is_cpy_supported) {
         ggml_backend_sycl_buffer_context * src_ctx = (ggml_backend_sycl_buffer_context *)src->buffer->context;
         ggml_backend_sycl_buffer_context * dst_ctx = (ggml_backend_sycl_buffer_context *)dst->buffer->context;
 
@@ -994,9 +994,9 @@ ggml_backend_sycl_buffer_cpy_tensor(ggml_backend_buffer_t buffer,
         dev2dev_memcpy(dst_ctx->device, *stream_dst, src_ctx->device, *stream_src, dst->data, src->data, size);
 
 //todo, it's known issue：error in device2device cross GPUs. reused when the issue is fixed. DON"T remove
-#if 0
+#אם 0
         SYCL_CHECK(CHECK_TRY_ERROR((*stream).memcpy(
-            (char *)dst->data, (const char *)src->data, size).wait()));
+            (حرف *)dst->data, (ثابت حرف *)src->data, size).wait()));
 
         /*
         DPCT1009:201: SYCL uses exceptions to report errors and does not use the
@@ -1006,17 +1006,17 @@ ggml_backend_sycl_buffer_cpy_tensor(ggml_backend_buffer_t buffer,
         SYCL_CHECK(CHECK_TRY_ERROR(
             dpct::dev_mgr::instance().get_device(dst_ctx->device).queues_wait_and_throw()));
 #endif
-        return true;
+        החזר אמת;
     }
-    return false;
+    החזר שקר;
     GGML_UNUSED(buffer);
-} catch (const sycl::exception & exc) {
+} امسك (ثابت sycl::exception & exc) {
     std::cerr << exc.what() << "Exception caught at file:" << __FILE__ << ", line:" << __LINE__ << std::endl;
     std::exit(1);
 }
 
-static void ggml_backend_sycl_buffer_clear(ggml_backend_buffer_t buffer,
-                                           uint8_t value) try {
+ساكن فراغ ggml_backend_sycl_buffer_clear(ggml_backend_buffer_t buffer,
+                                           uint8_t value) حاول {
     GGML_SYCL_DEBUG("[SYCL] call %s: size=%zu\n", __func__, buffer->size);
     ggml_backend_sycl_buffer_context * ctx = (ggml_backend_sycl_buffer_context *) buffer->context;
 
@@ -1026,22 +1026,22 @@ static void ggml_backend_sycl_buffer_clear(ggml_backend_buffer_t buffer,
         CHECK_TRY_ERROR(dpct::get_current_device().queues_wait_and_throw()));
 
     constexpr size_t MAX_CHUNK = 2ULL << 30;  // 2 GiB
-    for (size_t off = 0; off < buffer->size; off += MAX_CHUNK) {
+    עבור (size_t off = 0; off < buffer->size; off += MAX_CHUNK) {
         size_t chunk = std::min(buffer->size - off, MAX_CHUNK);
         SYCL_CHECK(CHECK_TRY_ERROR(
             (*stream)
-                .memset(static_cast<char*>(ctx->dev_ptr) + off, value, chunk)
+                .memset(static_cast<حرف*>(ctx->dev_ptr) + off, value, chunk)
                 .wait()
         ));
     }
 }
-catch (sycl::exception const &exc) {
+امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
             << ", line:" << __LINE__ << std::endl;
   std::exit(1);
 }
 
-static void ggml_backend_sycl_buffer_memset_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor, uint8_t value,
+ساكن فراغ ggml_backend_sycl_buffer_memset_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor, uint8_t value,
                                                    size_t offset, size_t size) {
     GGML_SYCL_DEBUG("[SYCL] call %s", __func__);
     GGML_SYCL_DEBUG("%s", debug_get_tensor_str(": tensor", tensor).c_str());
@@ -1049,90 +1049,90 @@ static void ggml_backend_sycl_buffer_memset_tensor(ggml_backend_buffer_t buffer,
     ggml_backend_sycl_buffer_context * ctx = (ggml_backend_sycl_buffer_context *) buffer->context;
     SYCL_CHECK(ggml_sycl_set_device(ctx->device));
     auto stream = &(dpct::dev_mgr::instance().get_device(ctx->device).default_queue());
-    if (size == 0) {
-        return;  // Nothing to do
+    אם (size == 0) {
+        החזר;  // Nothing to do
     }
-    if (tensor->data == nullptr) {
+    אם (tensor->data == nullptr) {
         GGML_ABORT("Error: Tensor data pointer is null.\n");
     }
-    void * target_ptr = static_cast<char *>(tensor->data) + offset;
+    فراغ * target_ptr = static_cast<حرف *>(tensor->data) + offset;
     SYCL_CHECK(CHECK_TRY_ERROR((*stream).memset(target_ptr, value, size)));
     SYCL_CHECK(CHECK_TRY_ERROR((*stream).wait()));
 }
 
-static void ggml_backend_sycl_buffer_reset(ggml_backend_buffer_t buffer) {
+ساكن فراغ ggml_backend_sycl_buffer_reset(ggml_backend_buffer_t buffer) {
     GGML_SYCL_DEBUG("[SYCL] call %s\n", __func__);
-    if (buffer == nullptr) {
-        return;
+    אם (buffer == nullptr) {
+        החזר;
     }
 
     ggml_backend_sycl_buffer_context * ctx = (ggml_backend_sycl_buffer_context *) buffer->context;
 
-    if (ctx != nullptr) {
-        for (ggml_tensor_extra_gpu * extra : ctx->tensor_extras) {
+    אם (ctx != nullptr) {
+        עבור (ggml_tensor_extra_gpu * extra : ctx->tensor_extras) {
             release_extra_gpu(extra);
         }
         ctx->tensor_extras.clear();  // reset the tensor_extras vector
     }
 }
 
-static const ggml_backend_buffer_i ggml_backend_sycl_buffer_interface = {
+ساكن ثابت ggml_backend_buffer_i ggml_backend_sycl_buffer_interface = {
     /* .free_buffer     = */ ggml_backend_sycl_buffer_free_buffer,
     /* .get_base        = */ ggml_backend_sycl_buffer_get_base,
     /* .init_tensor     = */ ggml_backend_sycl_buffer_init_tensor,
     /* .memset_tensor   = */ ggml_backend_sycl_buffer_memset_tensor,
     /* .set_tensor      = */ ggml_backend_sycl_buffer_set_tensor,
     /* .get_tensor      = */ ggml_backend_sycl_buffer_get_tensor,
-    /* .set_tensor_2d   = */ NULL,
-    /* .get_tensor_2d   = */ NULL,
+    /* .set_tensor_2d   = */ عدم,
+    /* .get_tensor_2d   = */ عدم,
     /* .cpy_tensor      = */ ggml_backend_sycl_buffer_cpy_tensor,
     /* .clear           = */ ggml_backend_sycl_buffer_clear,
     /* .reset           = */ ggml_backend_sycl_buffer_reset,
 };
 
 // sycl buffer type
-struct ggml_backend_sycl_buffer_type_context {
-    int device;
+بنية ggml_backend_sycl_buffer_type_context {
+    صحيح device;
     std::string name;
 
     // each buffer type has its own stream
     queue_ptr stream = nullptr;
 };
 
-static const char * ggml_backend_sycl_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
+ساكن ثابت حرف * ggml_backend_sycl_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
     ggml_backend_sycl_buffer_type_context * ctx = (ggml_backend_sycl_buffer_type_context *)buft->context;
 
-    return ctx->name.c_str();
+    החזר ctx->name.c_str();
 }
 
-static bool check_usm_system(int device, size_t size) {
-    bool use_usm_system = g_ggml_sycl_usm_system && size >= ((size_t)4 * MEM_SIZE_1G);
+ساكن منطقي check_usm_system(صحيح device, size_t size) {
+    منطقي use_usm_system = g_ggml_sycl_usm_system && size >= ((size_t)4 * MEM_SIZE_1G);
 
-    if (use_usm_system && !ggml_sycl_info().devices[device].usm_system_support) {
+    אם (use_usm_system && !ggml_sycl_info().devices[device].usm_system_support) {
         GGML_LOG_INFO("Device does not support USM system allocations\n");
-        use_usm_system = false;
+        use_usm_system = שקר;
     }
 
-    return use_usm_system;
+    החזר use_usm_system;
 }
 
-inline void * aligned_malloc_host(size_t alignment, size_t size) {
+مضمن فراغ * aligned_malloc_host(size_t alignment, size_t size) {
 #ifdef _WIN32
-    return _aligned_malloc(size, alignment);
-#else
-    return aligned_alloc(alignment, size);
+    החזר _aligned_malloc(size, alignment);
+#אחרת
+    החזר aligned_alloc(alignment, size);
 #endif
 }
 
-static ggml_backend_buffer_t
+ساكن ggml_backend_buffer_t
 ggml_backend_sycl_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft,
-                                           size_t size) try {
+                                           size_t size) حاول {
     GGML_SYCL_DEBUG("[SYCL] call %s: size=%zu\n", __func__, size);
     ggml_check_sycl();
 
     ggml_backend_sycl_buffer_type_context * buft_ctx = (ggml_backend_sycl_buffer_type_context *)buft->context;
     ggml_sycl_set_device(buft_ctx->device);
-    const queue_ptr stream = buft_ctx->stream;
+    ثابت queue_ptr stream = buft_ctx->stream;
     size = std::max(size, (size_t)1); // syclMalloc returns null for size 0
     /*
     Alignment below ensures best performance. While in theory it could lead to
@@ -1142,228 +1142,228 @@ ggml_backend_sycl_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft,
      */
     size_t alignment = MEM_SIZE_2M;
     size_t aligned_size = ((size + alignment - 1) / alignment) * alignment;
-    bool use_usm_system = check_usm_system(buft_ctx->device, aligned_size);
+    منطقي use_usm_system = check_usm_system(buft_ctx->device, aligned_size);
 
-    void * dev_ptr;
-    if (use_usm_system) {
+    فراغ * dev_ptr;
+    אם (use_usm_system) {
         GGML_SYCL_DEBUG("[SYCL] allocating %zu Bytes with USM system\n", size);
-        dev_ptr = (void *)aligned_malloc_host(alignment, aligned_size);
-        if (!dev_ptr) {
+        dev_ptr = (فراغ *)aligned_malloc_host(alignment, aligned_size);
+        אם (!dev_ptr) {
             GGML_LOG_ERROR("%s: can't allocate %zu Bytes of memory on host\n", __func__, size);
-            return nullptr;
+            החזר nullptr;
         }
-    } else {
-        SYCL_CHECK(CHECK_TRY_ERROR(dev_ptr = (void *)ggml_sycl_malloc_device(size, *stream, GGML_SYCL_MEM_BUFFER)));
-        if (!dev_ptr) {
+    } אחרת {
+        SYCL_CHECK(CHECK_TRY_ERROR(dev_ptr = (فراغ *)ggml_sycl_malloc_device(size, *stream, GGML_SYCL_MEM_BUFFER)));
+        אם (!dev_ptr) {
           GGML_LOG_ERROR("%s: can't allocate %zu Bytes of memory on device\n", __func__, size);
-          return nullptr;
+          החזר nullptr;
         }
     }
-    ggml_backend_sycl_buffer_context * ctx = new  ggml_backend_sycl_buffer_context(buft_ctx->device, dev_ptr, buft_ctx->stream, use_usm_system);
-    return ggml_backend_buffer_init(buft, ggml_backend_sycl_buffer_interface, ctx, size);
+    ggml_backend_sycl_buffer_context * ctx = جديد  ggml_backend_sycl_buffer_context(buft_ctx->device, dev_ptr, buft_ctx->stream, use_usm_system);
+    החזר ggml_backend_buffer_init(buft, ggml_backend_sycl_buffer_interface, ctx, size);
 }
-catch (sycl::exception const &exc) {
+امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
             << ", line:" << __LINE__ << std::endl;
   std::exit(1);
 }
 
-static size_t ggml_backend_sycl_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
-    return SYCL_BUFFER_ALIGNMENT;
+ساكن size_t ggml_backend_sycl_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
+    החזר SYCL_BUFFER_ALIGNMENT;
     GGML_UNUSED(buft);
 }
 
-static bool is_bmg_g31_arch(int device) {
-    return ggml_sycl_info().devices[device].hw_info.arch == gpu_arch::intel_gpu_bmg_g31;
+ساكن منطقي is_bmg_g31_arch(صحيح device) {
+    החזר ggml_sycl_info().devices[device].hw_info.arch == gpu_arch::intel_gpu_bmg_g31;
 }
 
-static size_t ggml_backend_sycl_buffer_type_get_max_size(ggml_backend_buffer_type_t buft) {
+ساكن size_t ggml_backend_sycl_buffer_type_get_max_size(ggml_backend_buffer_type_t buft) {
     ggml_backend_sycl_buffer_type_context * ctx = (ggml_backend_sycl_buffer_type_context *)buft->context;
-    int device = ctx->device;
+    صحيح device = ctx->device;
     // use the buft device, the current device may differ on multi-GPU systems
     size_t max_alloc_size = dpct::get_device(device).get_max_mem_alloc_size();
-    if (g_ggml_sycl_host_pinned_mem_2g) {
-        return std::min(max_alloc_size, (size_t) 2LL*1024*1024*1024);
-    } else {
-        if(is_bmg_g31_arch(device)) {
+    אם (g_ggml_sycl_host_pinned_mem_2g) {
+        החזר std::min(max_alloc_size, (size_t) 2LL*1024*1024*1024);
+    } אחרת {
+        אם(is_bmg_g31_arch(device)) {
             //Todo, it's workaround for BMG-G31, which has a known issue with large allocations.
             //The max alloc size is reduced to 60% of the reported max alloc size.
             //remove it after https://github.com/intel/compute-runtime/issues/998 is fixed.
             max_alloc_size = max_alloc_size*0.6;
         }
-        return max_alloc_size;
+        החזר max_alloc_size;
 
     }
     GGML_UNUSED(buft);
 }
 
-static size_t ggml_backend_sycl_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft, const ggml_tensor * tensor) {
+ساكن size_t ggml_backend_sycl_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft, ثابت ggml_tensor * tensor) {
     // Reserve the additional scratch so it's visible to the graph allocator
     size_t size = tensor->op == GGML_OP_FLASH_ATTN_EXT
         ? ggml_sycl_flash_attn_ext_get_alloc_size(tensor)
         : ggml_nbytes(tensor);
     int64_t ne0 = tensor->ne[0];
 
-    if (ggml_is_quantized(tensor->type)) {
-        if (ne0 % MATRIX_ROW_PADDING != 0) {
+    אם (ggml_is_quantized(tensor->type)) {
+        אם (ne0 % MATRIX_ROW_PADDING != 0) {
             size += ggml_row_size(tensor->type, MATRIX_ROW_PADDING - ne0 % MATRIX_ROW_PADDING);
         }
     }
 
-    return size;
+    החזר size;
 
     GGML_UNUSED(buft);
 }
 
-static const ggml_backend_buffer_type_i ggml_backend_sycl_buffer_type_interface = {
+ساكن ثابت ggml_backend_buffer_type_i ggml_backend_sycl_buffer_type_interface = {
     /* .get_name            = */ ggml_backend_sycl_buffer_type_get_name,
     /* .alloc_buffer        = */ ggml_backend_sycl_buffer_type_alloc_buffer,
-    /* .alloc_buffer_n      = */ NULL,
+    /* .alloc_buffer_n      = */ عدم,
     /* .get_alignment       = */ ggml_backend_sycl_buffer_type_get_alignment,
     /* .get_max_size        = */ ggml_backend_sycl_buffer_type_get_max_size,
     /* .get_alloc_size      = */ ggml_backend_sycl_buffer_type_get_alloc_size,
-    /* .get_alloc_size_n    = */ NULL,
-    /* .is_host             = */ NULL,
+    /* .get_alloc_size_n    = */ عدم,
+    /* .is_host             = */ عدم,
 };
 
-ggml_backend_buffer_type_t ggml_backend_sycl_buffer_type(int device) {
-    static std::mutex mutex;
+ggml_backend_buffer_type_t ggml_backend_sycl_buffer_type(صحيح device) {
+    ساكن std::mutex mutex;
     std::lock_guard<std::mutex> lock(mutex);
 
 
     auto dev_count = ggml_backend_sycl_get_device_count();
 
-    if (device>=dev_count or device<0) {
+    אם (device>=dev_count or device<0) {
         GGML_LOG_ERROR("ggml_backend_sycl_buffer_type error: device_index:%d is out of range [0, %d], miss to call ggml_backend_sycl_set_single_device()\n",
             device, dev_count-1);
         GGML_ASSERT(device<dev_count);
     }
-    static struct ggml_backend_buffer_type ggml_backend_sycl_buffer_types[GGML_SYCL_MAX_DEVICES];
+    ساكن بنية ggml_backend_buffer_type ggml_backend_sycl_buffer_types[GGML_SYCL_MAX_DEVICES];
 
-    static bool ggml_backend_sycl_buffer_type_initialized = false;
+    ساكن منطقي ggml_backend_sycl_buffer_type_initialized = שקר;
 
-    if (!ggml_backend_sycl_buffer_type_initialized) {
-        for (int i = 0; i < dev_count; i++) {
+    אם (!ggml_backend_sycl_buffer_type_initialized) {
+        עבור (صحيح i = 0; i < dev_count; i++) {
             auto & device_i = dpct::dev_mgr::instance().get_device(i);
             queue_ptr stream = &(device_i.default_queue());
             ggml_backend_sycl_buffer_types[i] = {
                 /* .iface    = */ ggml_backend_sycl_buffer_type_interface,
                 /* .device   = */ ggml_backend_reg_dev_get(ggml_backend_sycl_reg(), i),
-                /* .context  = */ new ggml_backend_sycl_buffer_type_context{i, GGML_SYCL_NAME + std::to_string(i), stream},
+                /* .context  = */ جديد ggml_backend_sycl_buffer_type_context{i, GGML_SYCL_NAME + std::to_string(i), stream},
             };
         }
-        ggml_backend_sycl_buffer_type_initialized = true;
+        ggml_backend_sycl_buffer_type_initialized = אמת;
     }
-    return &ggml_backend_sycl_buffer_types[device];
+    החזר &ggml_backend_sycl_buffer_types[device];
 }
 
-static ggml_backend_buffer_type_t ggml_backend_sycl_buffer_type(ggml_backend_sycl_context * ctx) {
+ساكن ggml_backend_buffer_type_t ggml_backend_sycl_buffer_type(ggml_backend_sycl_context * ctx) {
     GGML_SYCL_DEBUG("[SYCL] call ggml_backend_sycl_buffer_type\n");
 
-    int device = ctx->device;
-    if (device>=ggml_sycl_info().device_count or device<0) {
+    صحيح device = ctx->device;
+    אם (device>=ggml_sycl_info().device_count or device<0) {
         GGML_LOG_ERROR("ggml_backend_sycl_buffer_type error: device_index:%d is out of range [0, %d], miss to call ggml_backend_sycl_set_single_device()\n",
             device, ggml_sycl_info().device_count-1);
         GGML_ASSERT(device<ggml_sycl_info().device_count);
     }
-    static struct ggml_backend_buffer_type ggml_backend_sycl_buffer_types[GGML_SYCL_MAX_DEVICES];
+    ساكن بنية ggml_backend_buffer_type ggml_backend_sycl_buffer_types[GGML_SYCL_MAX_DEVICES];
 
-    static bool ggml_backend_sycl_buffer_type_initialized = false;
+    ساكن منطقي ggml_backend_sycl_buffer_type_initialized = שקר;
 
-    if (!ggml_backend_sycl_buffer_type_initialized) {
-        for (int i = 0; i < ggml_sycl_info().device_count; i++) {
+    אם (!ggml_backend_sycl_buffer_type_initialized) {
+        עבור (صحيح i = 0; i < ggml_sycl_info().device_count; i++) {
             ggml_backend_sycl_buffer_types[i] = {
                 /* .iface    = */ ggml_backend_sycl_buffer_type_interface,
                 /* .device   = */ nullptr,
-                /* .context  = */ new ggml_backend_sycl_buffer_type_context{i, GGML_SYCL_NAME + std::to_string(i), ctx->stream(i, 0)},
+                /* .context  = */ جديد ggml_backend_sycl_buffer_type_context{i, GGML_SYCL_NAME + std::to_string(i), ctx->stream(i, 0)},
             };
         }
-        ggml_backend_sycl_buffer_type_initialized = true;
+        ggml_backend_sycl_buffer_type_initialized = אמת;
     }
-    return &ggml_backend_sycl_buffer_types[device];
+    החזר &ggml_backend_sycl_buffer_types[device];
 }
 
 // sycl split buffer
 
-static int64_t get_row_rounding(ggml_type type, const std::array<float, GGML_SYCL_MAX_DEVICES> & tensor_split) {
+ساكن int64_t get_row_rounding(ggml_type type, ثابت std::array<عائم, GGML_SYCL_MAX_DEVICES> & tensor_split) {
     int64_t min_compute_capability = INT_MAX;
     int64_t max_compute_capability = INT_MIN;
-    for (int i = 0; i < ggml_sycl_info().device_count; ++i) {
-        if (tensor_split[i] < (i + 1 < ggml_sycl_info().device_count ? tensor_split[i + 1] : 1.0f)) {
-            if (min_compute_capability > ggml_sycl_info().devices[i].cc) {
+    עבור (صحيح i = 0; i < ggml_sycl_info().device_count; ++i) {
+        אם (tensor_split[i] < (i + 1 < ggml_sycl_info().device_count ? tensor_split[i + 1] : 1.0f)) {
+            אם (min_compute_capability > ggml_sycl_info().devices[i].cc) {
                 min_compute_capability = ggml_sycl_info().devices[i].cc;
             }
-            if (max_compute_capability < ggml_sycl_info().devices[i].cc) {
+            אם (max_compute_capability < ggml_sycl_info().devices[i].cc) {
                 max_compute_capability = ggml_sycl_info().devices[i].cc;
             }
         }
     }
 
-    switch(type) {
-        case GGML_TYPE_Q1_0:
-        case GGML_TYPE_Q4_0:
-        case GGML_TYPE_Q4_1:
-            return max_compute_capability >= VER_GEN9 ? 128 : 64;
-        case GGML_TYPE_Q5_0:
-        case GGML_TYPE_Q5_1:
-        case GGML_TYPE_Q8_0:
-            return 64;
-        case GGML_TYPE_F16:
-        case GGML_TYPE_F32:
-            return 1;
-        case GGML_TYPE_Q2_K:
-        case GGML_TYPE_Q3_K:
-        case GGML_TYPE_Q4_K:
-        case GGML_TYPE_Q5_K:
-        case GGML_TYPE_IQ2_XXS:
-        case GGML_TYPE_IQ2_XS:
-        case GGML_TYPE_IQ2_S:
-        case GGML_TYPE_IQ1_S:
-        case GGML_TYPE_IQ1_M:
-        case GGML_TYPE_IQ3_XXS:
-        case GGML_TYPE_IQ4_XS:
-        case GGML_TYPE_IQ4_NL:
-            return max_compute_capability >= VER_GEN9 ? 128 : 64;
-        case GGML_TYPE_IQ3_S:
-            return max_compute_capability >= VER_GEN9 ? 128 : 64;
-        case GGML_TYPE_Q6_K:
-            return 64;
-        default:
+    بدل(type) {
+        حالة GGML_TYPE_Q1_0:
+        حالة GGML_TYPE_Q4_0:
+        حالة GGML_TYPE_Q4_1:
+            החזר max_compute_capability >= VER_GEN9 ? 128 : 64;
+        حالة GGML_TYPE_Q5_0:
+        حالة GGML_TYPE_Q5_1:
+        حالة GGML_TYPE_Q8_0:
+            החזר 64;
+        حالة GGML_TYPE_F16:
+        حالة GGML_TYPE_F32:
+            החזר 1;
+        حالة GGML_TYPE_Q2_K:
+        حالة GGML_TYPE_Q3_K:
+        حالة GGML_TYPE_Q4_K:
+        حالة GGML_TYPE_Q5_K:
+        حالة GGML_TYPE_IQ2_XXS:
+        حالة GGML_TYPE_IQ2_XS:
+        حالة GGML_TYPE_IQ2_S:
+        حالة GGML_TYPE_IQ1_S:
+        حالة GGML_TYPE_IQ1_M:
+        حالة GGML_TYPE_IQ3_XXS:
+        حالة GGML_TYPE_IQ4_XS:
+        حالة GGML_TYPE_IQ4_NL:
+            החזר max_compute_capability >= VER_GEN9 ? 128 : 64;
+        حالة GGML_TYPE_IQ3_S:
+            החזר max_compute_capability >= VER_GEN9 ? 128 : 64;
+        حالة GGML_TYPE_Q6_K:
+            החזר 64;
+        افتراضي:
             GGML_ABORT("fatal error");
     }
 }
 
-static void get_row_split(int64_t * row_low, int64_t * row_high, const ggml_tensor * tensor, const std::array<float, GGML_SYCL_MAX_DEVICES> & tensor_split, int id) {
-    const int64_t nrows = ggml_nrows(tensor);
-    const int64_t rounding = get_row_rounding(tensor->type, tensor_split);
+ساكن فراغ get_row_split(int64_t * row_low, int64_t * row_high, ثابت ggml_tensor * tensor, ثابت std::array<عائم, GGML_SYCL_MAX_DEVICES> & tensor_split, صحيح id) {
+    ثابت int64_t nrows = ggml_nrows(tensor);
+    ثابت int64_t rounding = get_row_rounding(tensor->type, tensor_split);
 
     *row_low = id == 0 ? 0 : nrows*tensor_split[id];
     *row_low -= *row_low % rounding;
-    if (id == ggml_sycl_info().device_count - 1) {
+    אם (id == ggml_sycl_info().device_count - 1) {
         *row_high = nrows;
-    } else {
+    } אחרת {
         *row_high = nrows*tensor_split[id + 1];
         *row_high -= *row_high % rounding;
     }
 }
 
-static size_t ggml_nbytes_split(const struct ggml_tensor * tensor, int nrows_split) {
+ساكن size_t ggml_nbytes_split(ثابت بنية ggml_tensor * tensor, صحيح nrows_split) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return nrows_split*ggml_row_size(tensor->type, tensor->ne[0]);
+    החזר nrows_split*ggml_row_size(tensor->type, tensor->ne[0]);
 }
 
-struct ggml_backend_sycl_split_buffer_type_context {
-    std::array<float, GGML_SYCL_MAX_DEVICES> tensor_split;
+بنية ggml_backend_sycl_split_buffer_type_context {
+    std::array<عائم, GGML_SYCL_MAX_DEVICES> tensor_split;
 };
 
-struct ggml_backend_sycl_split_buffer_context {
-    ~ggml_backend_sycl_split_buffer_context() try {
-        for (ggml_tensor_extra_gpu * extra : tensor_extras) {
+بنية ggml_backend_sycl_split_buffer_context {
+    ~ggml_backend_sycl_split_buffer_context() حاول {
+        עבור (ggml_tensor_extra_gpu * extra : tensor_extras) {
             release_extra_gpu(extra, streams);
         }
     }
-    catch (sycl::exception const &exc) {
+    امسك (sycl::exception ثابت &exc) {
       std::cerr << exc.what() << "Exception caught at file:" << __FILE__
                 << ", line:" << __LINE__ << std::endl;
       std::exit(1);
@@ -1373,21 +1373,21 @@ struct ggml_backend_sycl_split_buffer_context {
     std::vector<queue_ptr> streams;
 };
 
-static void ggml_backend_sycl_split_buffer_free_buffer(ggml_backend_buffer_t buffer) {
+ساكن فراغ ggml_backend_sycl_split_buffer_free_buffer(ggml_backend_buffer_t buffer) {
     ggml_backend_sycl_split_buffer_context * ctx = (ggml_backend_sycl_split_buffer_context *)buffer->context;
     delete ctx;
 }
 
-static void * ggml_backend_sycl_split_buffer_get_base(ggml_backend_buffer_t buffer) {
+ساكن فراغ * ggml_backend_sycl_split_buffer_get_base(ggml_backend_buffer_t buffer) {
     // the pointers are stored in the tensor extras, this is just a dummy address and never dereferenced
-    return (void *)0x1000;
+    החזר (فراغ *)0x1000;
 
     GGML_UNUSED(buffer);
 }
 
-static enum ggml_status
+ساكن تعداد ggml_status
 ggml_backend_sycl_split_buffer_init_tensor(ggml_backend_buffer_t buffer,
-                                           ggml_tensor *tensor) try {
+                                           ggml_tensor *tensor) حاول {
     GGML_SYCL_DEBUG("[SYCL] call %s", __func__);
     GGML_SYCL_DEBUG("%s", debug_get_tensor_str(": tensor", tensor, "\n").c_str());
     GGML_ASSERT(tensor->view_src == nullptr); // views of split tensors are not supported
@@ -1395,46 +1395,46 @@ ggml_backend_sycl_split_buffer_init_tensor(ggml_backend_buffer_t buffer,
     ggml_backend_sycl_split_buffer_context * ctx = (ggml_backend_sycl_split_buffer_context *)buffer->context;
     ggml_backend_sycl_split_buffer_type_context * buft_ctx = (ggml_backend_sycl_split_buffer_type_context *)buffer->buft->context;
 
-    const int64_t ne0 = tensor->ne[0];
+    ثابت int64_t ne0 = tensor->ne[0];
 
-    ggml_tensor_extra_gpu * extra = new ggml_tensor_extra_gpu{};
+    ggml_tensor_extra_gpu * extra = جديد ggml_tensor_extra_gpu{};
 
     ctx->tensor_extras.push_back(extra);
     // consumers index the queues by device id, so size the vector once with one queue per device
-    if (ctx->streams.empty()) {
-        for (int i = 0; i < ggml_sycl_info().device_count; ++i) {
+    אם (ctx->streams.empty()) {
+        עבור (صحيح i = 0; i < ggml_sycl_info().device_count; ++i) {
             ctx->streams.push_back(&(dpct::get_device(i).default_queue()));
         }
     }
 
-    for (int i = 0; i < ggml_sycl_info().device_count; ++i) {
+    עבור (صحيح i = 0; i < ggml_sycl_info().device_count; ++i) {
         int64_t row_low, row_high;
         get_row_split(&row_low, &row_high, tensor, buft_ctx->tensor_split, i);
 
         int64_t nrows_split = row_high - row_low;
-        if (nrows_split == 0) {
-            continue;
+        אם (nrows_split == 0) {
+            استمر;
         }
 
         size_t size = ggml_nbytes_split(tensor, nrows_split);
-        const size_t original_size = size;
+        ثابت size_t original_size = size;
 
         // pad last row to a multiple of 512 elements to avoid out-of-bounds memory accesses
-        if (ne0 % MATRIX_ROW_PADDING != 0) {
+        אם (ne0 % MATRIX_ROW_PADDING != 0) {
             size += ggml_row_size(tensor->type, MATRIX_ROW_PADDING - ne0 % MATRIX_ROW_PADDING);
         }
 
         ggml_sycl_set_device(i);
-        const queue_ptr stream = ctx->streams[i];
-        char * buf;
-        SYCL_CHECK(CHECK_TRY_ERROR(buf = (char *)ggml_sycl_malloc_device(size, *stream, GGML_SYCL_MEM_BUFFER)));
-        if (!buf) {
-            char err_buf[1024];
+        ثابت queue_ptr stream = ctx->streams[i];
+        حرف * buf;
+        SYCL_CHECK(CHECK_TRY_ERROR(buf = (حرف *)ggml_sycl_malloc_device(size, *stream, GGML_SYCL_MEM_BUFFER)));
+        אם (!buf) {
+            حرف err_buf[1024];
             snprintf(err_buf, 1023, "%s: can't allocate %zu Bytes of memory on device\n", __func__, size);
-            throw std::runtime_error(err_buf);
+            ارم std::runtime_error(err_buf);
         }
         // set padding to 0 to avoid possible NaN values
-        if (size > original_size) {
+        אם (size > original_size) {
             /*
             DPCT1009:209: SYCL uses exceptions to report errors and does not use
             the error codes. The original code was commented out and a warning
@@ -1448,29 +1448,29 @@ ggml_backend_sycl_split_buffer_init_tensor(ggml_backend_buffer_t buffer,
 
         extra->data_device[i] = buf;
 
-        for (int64_t is = 0; is < GGML_SYCL_MAX_STREAMS; ++is) {
+        עבור (int64_t is = 0; is < GGML_SYCL_MAX_STREAMS; ++is) {
             /*
             DPCT1009:210: SYCL uses exceptions to report errors and does not use
             the error codes. The original code was commented out and a warning
             string was inserted. You need to rewrite this code.
             */
             SYCL_CHECK(
-                CHECK_TRY_ERROR(extra->events[i][is] = new sycl::event()));
+                CHECK_TRY_ERROR(extra->events[i][is] = جديد sycl::event()));
         }
     }
     tensor->extra = extra;
-    return GGML_STATUS_SUCCESS;
+    החזר GGML_STATUS_SUCCESS;
 }
-catch (sycl::exception const &exc) {
+امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
             << ", line:" << __LINE__ << std::endl;
   std::exit(1);
 }
 
-static void
+ساكن فراغ
 ggml_backend_sycl_split_buffer_set_tensor(ggml_backend_buffer_t buffer,
-                                          ggml_tensor *tensor, const void *data,
-                                          size_t offset, size_t size) try {
+                                          ggml_tensor *tensor, ثابت فراغ *data,
+                                          size_t offset, size_t size) حاول {
     GGML_SYCL_DEBUG("[SYCL] call %s", __func__);
     GGML_SYCL_DEBUG("%s", debug_get_tensor_str(": tensor", tensor).c_str());
     GGML_SYCL_DEBUG(" size=%zu offset=%zu\n", size, offset);
@@ -1481,52 +1481,52 @@ ggml_backend_sycl_split_buffer_set_tensor(ggml_backend_buffer_t buffer,
     ggml_backend_sycl_split_buffer_context * ctx = (ggml_backend_sycl_split_buffer_context *)buffer->context;
     ggml_backend_sycl_split_buffer_type_context * buft_ctx = (ggml_backend_sycl_split_buffer_type_context *)buffer->buft->context;
 
-    const int64_t ne0 = tensor->ne[0];
-    const size_t nb1 = tensor->nb[1];
+    ثابت int64_t ne0 = tensor->ne[0];
+    ثابت size_t nb1 = tensor->nb[1];
     ggml_tensor_extra_gpu * extra = (ggml_tensor_extra_gpu *)tensor->extra;
 
-    for (int i = 0; i < ggml_sycl_info().device_count; ++i) {
+    עבור (صحيح i = 0; i < ggml_sycl_info().device_count; ++i) {
         int64_t row_low, row_high;
         get_row_split(&row_low, &row_high, tensor, buft_ctx->tensor_split, i);
 
         int64_t nrows_split = row_high - row_low;
-        if (nrows_split == 0) {
-            continue;
+        אם (nrows_split == 0) {
+            استمر;
         }
 
-        const size_t offset_split = row_low*nb1;
+        ثابت size_t offset_split = row_low*nb1;
         size_t size = ggml_nbytes_split(tensor, nrows_split);
-        const size_t original_size = size;
+        ثابت size_t original_size = size;
 
         // pad last row to a multiple of 512 elements to avoid out-of-bounds memory accesses
-        if (ne0 % MATRIX_ROW_PADDING != 0) {
+        אם (ne0 % MATRIX_ROW_PADDING != 0) {
             size += ggml_row_size(tensor->type, MATRIX_ROW_PADDING - ne0 % MATRIX_ROW_PADDING);
         }
 
-        const char * buf_host = (const char *)data + offset_split;
+        ثابت حرف * buf_host = (ثابت حرف *)data + offset_split;
         /*
         DPCT1009:211: SYCL uses exceptions to report errors and does not use the
         error codes. The original code was commented out and a warning string
         was inserted. You need to rewrite this code.
         */
         ggml_sycl_set_device(i);
-        const queue_ptr stream = ctx->streams[i];
+        ثابت queue_ptr stream = ctx->streams[i];
         SYCL_CHECK(CHECK_TRY_ERROR(
             (*stream)
                 .memcpy(extra->data_device[i], buf_host, original_size)
                 .wait()));
     }
 }
-catch (sycl::exception const &exc) {
+امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
             << ", line:" << __LINE__ << std::endl;
   std::exit(1);
 }
 
-static void
+ساكن فراغ
 ggml_backend_sycl_split_buffer_get_tensor(ggml_backend_buffer_t buffer,
-                                          const ggml_tensor *tensor, void *data,
-                                          size_t offset, size_t size) try {
+                                          ثابت ggml_tensor *tensor, فراغ *data,
+                                          size_t offset, size_t size) حاول {
     GGML_SYCL_DEBUG("[SYCL] call %s", __func__);
     GGML_SYCL_DEBUG("%s", debug_get_tensor_str(": tensor", tensor).c_str());
     GGML_SYCL_DEBUG(" size=%zu offset=%zu\n", size, offset);
@@ -1537,240 +1537,240 @@ ggml_backend_sycl_split_buffer_get_tensor(ggml_backend_buffer_t buffer,
     ggml_backend_sycl_split_buffer_context * ctx = (ggml_backend_sycl_split_buffer_context *)buffer->context;
     ggml_backend_sycl_split_buffer_type_context * buft_ctx = (ggml_backend_sycl_split_buffer_type_context *)buffer->buft->context;
 
-    const int64_t ne0 = tensor->ne[0];
-    const size_t nb1 = tensor->nb[1];
+    ثابت int64_t ne0 = tensor->ne[0];
+    ثابت size_t nb1 = tensor->nb[1];
     ggml_tensor_extra_gpu * extra = (ggml_tensor_extra_gpu *)tensor->extra;
 
-    for (int i = 0; i < ggml_sycl_info().device_count; ++i) {
+    עבור (صحيح i = 0; i < ggml_sycl_info().device_count; ++i) {
         int64_t row_low, row_high;
         get_row_split(&row_low, &row_high, tensor, buft_ctx->tensor_split, i);
 
         int64_t nrows_split = row_high - row_low;
-        if (nrows_split == 0) {
-            continue;
+        אם (nrows_split == 0) {
+            استمر;
         }
 
-        const size_t offset_split = row_low*nb1;
+        ثابت size_t offset_split = row_low*nb1;
         size_t size = ggml_nbytes_split(tensor, nrows_split);
-        const size_t original_size = size;
+        ثابت size_t original_size = size;
 
         // pad last row to a multiple of 512 elements to avoid out-of-bounds memory accesses
-        if (ne0 % MATRIX_ROW_PADDING != 0) {
+        אם (ne0 % MATRIX_ROW_PADDING != 0) {
             size += ggml_row_size(tensor->type, MATRIX_ROW_PADDING - ne0 % MATRIX_ROW_PADDING);
         }
 
-        char * buf_host = (char *)data + offset_split;
+        حرف * buf_host = (حرف *)data + offset_split;
         /*
         DPCT1009:212: SYCL uses exceptions to report errors and does not use the
         error codes. The original code was commented out and a warning string
         was inserted. You need to rewrite this code.
         */
         ggml_sycl_set_device(i);
-        const queue_ptr stream = ctx->streams[i];
+        ثابت queue_ptr stream = ctx->streams[i];
         SYCL_CHECK(CHECK_TRY_ERROR(
             (*stream)
                 .memcpy(buf_host, extra->data_device[i], original_size)
                 .wait()));
     }
 }
-catch (sycl::exception const &exc) {
+امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
             << ", line:" << __LINE__ << std::endl;
   std::exit(1);
 }
 
-static void ggml_backend_sycl_split_buffer_clear(ggml_backend_buffer_t buffer, uint8_t value) {
+ساكن فراغ ggml_backend_sycl_split_buffer_clear(ggml_backend_buffer_t buffer, uint8_t value) {
     GGML_UNUSED(buffer);
     GGML_UNUSED(value);
 }
 
-static struct ggml_backend_buffer_i ggml_backend_sycl_split_buffer_interface = {
+ساكن بنية ggml_backend_buffer_i ggml_backend_sycl_split_buffer_interface = {
     /* .free_buffer     = */ ggml_backend_sycl_split_buffer_free_buffer,
     /* .get_base        = */ ggml_backend_sycl_split_buffer_get_base,
     /* .init_tensor     = */ ggml_backend_sycl_split_buffer_init_tensor,
-    /* .memset_tensor   = */ NULL,
+    /* .memset_tensor   = */ عدم,
     /* .set_tensor      = */ ggml_backend_sycl_split_buffer_set_tensor,
     /* .get_tensor      = */ ggml_backend_sycl_split_buffer_get_tensor,
-    /* .set_tensor_2d   = */ NULL,
-    /* .get_tensor_2d   = */ NULL,
-    /* .cpy_tensor      = */ NULL,
+    /* .set_tensor_2d   = */ عدم,
+    /* .get_tensor_2d   = */ عدم,
+    /* .cpy_tensor      = */ عدم,
     /* .clear           = */ ggml_backend_sycl_split_buffer_clear,
-    /* .reset           = */ NULL,
+    /* .reset           = */ عدم,
 };
 
 // sycl split buffer type
 
-static const char * ggml_backend_sycl_split_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
-    return GGML_SYCL_NAME "_Split";
+ساكن ثابت حرف * ggml_backend_sycl_split_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
+    החזר GGML_SYCL_NAME "_Split";
 
     GGML_UNUSED(buft);
 }
 
-static bool ggml_backend_buffer_is_sycl_split(ggml_backend_buffer_t buffer) {
-   return buffer->buft->iface.get_name == ggml_backend_sycl_split_buffer_type_get_name;
+ساكن منطقي ggml_backend_buffer_is_sycl_split(ggml_backend_buffer_t buffer) {
+   החזר buffer->buft->iface.get_name == ggml_backend_sycl_split_buffer_type_get_name;
 }
 
-static ggml_backend_buffer_t ggml_backend_sycl_split_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
+ساكن ggml_backend_buffer_t ggml_backend_sycl_split_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
     // since we don't know the exact split after rounding, we cannot allocate the device buffers at this point
     // instead, we allocate them for each tensor separately in init_tensor
     // however, the size still represents the maximum cumulative size of all the device buffers after the tensors are allocated,
     // as returned by get_alloc_size. this limit is enforced during tensor allocation by ggml-alloc, so it must be correct.
-    ggml_backend_sycl_split_buffer_context * ctx = new ggml_backend_sycl_split_buffer_context();
+    ggml_backend_sycl_split_buffer_context * ctx = جديد ggml_backend_sycl_split_buffer_context();
 
-    return ggml_backend_buffer_init(buft, ggml_backend_sycl_split_buffer_interface, ctx, size);
+    החזר ggml_backend_buffer_init(buft, ggml_backend_sycl_split_buffer_interface, ctx, size);
 }
 
-static size_t ggml_backend_sycl_split_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
-    return SYCL_BUFFER_ALIGNMENT;
+ساكن size_t ggml_backend_sycl_split_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
+    החזר SYCL_BUFFER_ALIGNMENT;
     GGML_UNUSED(buft);
 }
 
-static size_t ggml_backend_sycl_split_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft, const ggml_tensor * tensor) {
+ساكن size_t ggml_backend_sycl_split_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft, ثابت ggml_tensor * tensor) {
     ggml_backend_sycl_split_buffer_type_context * ctx = (ggml_backend_sycl_split_buffer_type_context *)buft->context;
 
     size_t total_size = 0;
 
-    const int64_t ne0 = tensor->ne[0];
+    ثابت int64_t ne0 = tensor->ne[0];
 
-    for (int i = 0; i < ggml_sycl_info().device_count; ++i) {
+    עבור (صحيح i = 0; i < ggml_sycl_info().device_count; ++i) {
         int64_t row_low, row_high;
         get_row_split(&row_low, &row_high, tensor, ctx->tensor_split, i);
 
         int64_t nrows_split = row_high - row_low;
-        if (nrows_split == 0) {
-            continue;
+        אם (nrows_split == 0) {
+            استمر;
         }
 
         total_size += ggml_nbytes_split(tensor, nrows_split);
 
         // pad last row to a multiple of 512 elements to avoid out-of-bounds memory accesses
-        if (ne0 % MATRIX_ROW_PADDING != 0) {
+        אם (ne0 % MATRIX_ROW_PADDING != 0) {
             total_size += ggml_row_size(tensor->type, MATRIX_ROW_PADDING - ne0 % MATRIX_ROW_PADDING);
         }
     }
 
-    return total_size;
+    החזר total_size;
 }
 
-static bool ggml_backend_sycl_split_buffer_type_is_host(ggml_backend_buffer_type_t buft) {
-    return false;
+ساكن منطقي ggml_backend_sycl_split_buffer_type_is_host(ggml_backend_buffer_type_t buft) {
+    החזר שקר;
 
     GGML_UNUSED(buft);
 }
 
-static ggml_backend_buffer_type_i ggml_backend_sycl_split_buffer_type_interface = {
+ساكن ggml_backend_buffer_type_i ggml_backend_sycl_split_buffer_type_interface = {
     /* .get_name            = */ ggml_backend_sycl_split_buffer_type_get_name,
     /* .alloc_buffer        = */ ggml_backend_sycl_split_buffer_type_alloc_buffer,
-    /* .alloc_buffer_n      = */ NULL,
+    /* .alloc_buffer_n      = */ عدم,
     /* .get_alignment       = */ ggml_backend_sycl_split_buffer_type_get_alignment,
-    /* .get_max_size        = */ NULL, // defaults to SIZE_MAX
+    /* .get_max_size        = */ عدم, // defaults to SIZE_MAX
     /* .get_alloc_size      = */ ggml_backend_sycl_split_buffer_type_get_alloc_size,
-    /* .get_alloc_size_n    = */ NULL,
+    /* .get_alloc_size_n    = */ عدم,
     /* .is_host             = */ ggml_backend_sycl_split_buffer_type_is_host,
 };
 
-ggml_backend_buffer_type_t ggml_backend_sycl_split_buffer_type(int main_device, const float * tensor_split) {
+ggml_backend_buffer_type_t ggml_backend_sycl_split_buffer_type(صحيح main_device, ثابت عائم * tensor_split) {
     GGML_SYCL_DEBUG("[SYCL] call ggml_backend_sycl_split_buffer_type\n");
 
     GGML_UNUSED(main_device);
 
-    static std::mutex mutex;
+    ساكن std::mutex mutex;
     std::lock_guard<std::mutex> lock(mutex);
 
     ggml_check_sycl();
     // FIXME: this is not thread safe
-    static std::map<std::array<float, GGML_SYCL_MAX_DEVICES>, struct ggml_backend_buffer_type> buft_map;
+    ساكن std::map<std::array<عائم, GGML_SYCL_MAX_DEVICES>, بنية ggml_backend_buffer_type> buft_map;
 
-    std::array<float, GGML_SYCL_MAX_DEVICES> tensor_split_arr = {};
+    std::array<عائم, GGML_SYCL_MAX_DEVICES> tensor_split_arr = {};
 
-    bool all_zero = tensor_split == nullptr || std::all_of(tensor_split, tensor_split + GGML_SYCL_MAX_DEVICES, [](float x) { return x == 0.0f; });
-    if (all_zero) {
+    منطقي all_zero = tensor_split == nullptr || std::all_of(tensor_split, tensor_split + GGML_SYCL_MAX_DEVICES, [](عائم x) { החזר x == 0.0f; });
+    אם (all_zero) {
         tensor_split_arr = ggml_sycl_info().default_tensor_split;
-    } else {
-        float split_sum = 0.0f;
-        for (int i = 0; i < ggml_sycl_info().device_count; ++i) {
+    } אחרת {
+        عائم split_sum = 0.0f;
+        עבור (صحيح i = 0; i < ggml_sycl_info().device_count; ++i) {
             tensor_split_arr[i] = split_sum;
             split_sum += tensor_split[i];
         }
-        for (int i = 0; i < ggml_sycl_info().device_count; ++i) {
+        עבור (صحيح i = 0; i < ggml_sycl_info().device_count; ++i) {
             tensor_split_arr[i] /= split_sum;
         }
     }
 
     auto it = buft_map.find(tensor_split_arr);
-    if (it != buft_map.end()) {
-        return &it->second;
+    אם (it != buft_map.end()) {
+        החזר &it->second;
     }
 
-    struct ggml_backend_buffer_type buft {
+    بنية ggml_backend_buffer_type buft {
         /* .iface   = */ ggml_backend_sycl_split_buffer_type_interface,
         /* .device  = */ ggml_backend_reg_dev_get(ggml_backend_sycl_reg(), 0),
-        /* .context = */ new ggml_backend_sycl_split_buffer_type_context{tensor_split_arr},
+        /* .context = */ جديد ggml_backend_sycl_split_buffer_type_context{tensor_split_arr},
     };
 
     auto result = buft_map.emplace(tensor_split_arr, buft);
-    return &result.first->second;
+    החזר &result.first->second;
 }
 
 // host buffer type
 
-struct ggml_backend_sycl_device_context {
-    int device;
+بنية ggml_backend_sycl_device_context {
+    صحيح device;
     std::string name;
     std::string description;
-    int op_offload_min_batch_size;
+    صحيح op_offload_min_batch_size;
 };
 
-static const char * ggml_backend_sycl_host_buffer_type_name(ggml_backend_buffer_type_t buft) {
-    return GGML_SYCL_NAME "_Host";
+ساكن ثابت حرف * ggml_backend_sycl_host_buffer_type_name(ggml_backend_buffer_type_t buft) {
+    החזר GGML_SYCL_NAME "_Host";
 
     GGML_UNUSED(buft);
 }
 
-static int ggml_backend_sycl_host_buffer_type_device(ggml_backend_buffer_type_t buft) {
-    return static_cast<const ggml_backend_sycl_device_context *>(buft->device->context)->device;
+ساكن صحيح ggml_backend_sycl_host_buffer_type_device(ggml_backend_buffer_type_t buft) {
+    החזר static_cast<ثابت ggml_backend_sycl_device_context *>(buft->device->context)->device;
 }
 
 //host pinned memory
-static void * ggml_backend_sycl_host_malloc(int device, size_t size) {
+ساكن فراغ * ggml_backend_sycl_host_malloc(صحيح device, size_t size) {
     GGML_SYCL_DEBUG("[SYCL] call ggml_backend_sycl_host_malloc of size %.2f MiB on device %d\n", size / 1024.0 / 1024.0, device);
-    void * ptr = nullptr;
-    try {
+    فراغ * ptr = nullptr;
+    حاول {
         ggml_check_sycl();
         // USM host memory is page-locked and device-accessible by construction
         auto & q = dpct::dev_mgr::instance().get_device(device).default_queue();
         ptr = sycl::malloc_host(size, q, sycl::property_list{});
-    } catch (...) {
+    } امسك (...) {
         ptr = nullptr;
     }
-    if (ptr == nullptr) {
+    אם (ptr == nullptr) {
         GGML_LOG_WARN("%s: failed to allocate %.2f MiB of pinned memory\n", __func__,
                 size / 1024.0 / 1024.0);
     }
 
-    return ptr;
+    החזר ptr;
 }
 
-static void ggml_backend_sycl_host_buffer_free_buffer(ggml_backend_buffer_t buffer) {
-    if (buffer->context == nullptr) {
-        return;
+ساكن فراغ ggml_backend_sycl_host_buffer_free_buffer(ggml_backend_buffer_t buffer) {
+    אם (buffer->context == nullptr) {
+        החזר;
     }
-    if (g_ggml_sycl_enable_host_pinned_mem) {
-        const int device = ggml_backend_sycl_host_buffer_type_device(buffer->buft);
+    אם (g_ggml_sycl_enable_host_pinned_mem) {
+        ثابت صحيح device = ggml_backend_sycl_host_buffer_type_device(buffer->buft);
         auto & q = dpct::dev_mgr::instance().get_device(device).default_queue();
-        SYCL_CHECK(CHECK_TRY_ERROR(sycl::free(buffer->context, q)));
-    } else {
-        free_aligned_mem_host((void *) buffer->context);
+        SYCL_CHECK(CHECK_TRY_ERROR(sycl::حرر(buffer->context, q)));
+    } אחרת {
+        free_aligned_mem_host((فراغ *) buffer->context);
     }
 }
 
-static ggml_backend_buffer_t ggml_backend_sycl_host_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
-    void * ptr = g_ggml_sycl_enable_host_pinned_mem ?
+ساكن ggml_backend_buffer_t ggml_backend_sycl_host_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
+    فراغ * ptr = g_ggml_sycl_enable_host_pinned_mem ?
                      ggml_backend_sycl_host_malloc(ggml_backend_sycl_host_buffer_type_device(buft), size) :
                      aligned_malloc_host(TENSOR_ALIGNMENT, size);
-    if (ptr == nullptr) {
+    אם (ptr == nullptr) {
         // fallback to cpu buffer
-        return ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(), size);
+        החזר ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(), size);
     }
 
     // FIXME: this is a hack to avoid having to implement a new buffer type
@@ -1778,96 +1778,96 @@ static ggml_backend_buffer_t ggml_backend_sycl_host_buffer_type_alloc_buffer(ggm
     buffer->buft = buft;
     buffer->iface.free_buffer = ggml_backend_sycl_host_buffer_free_buffer;
 
-    return buffer;
+    החזר buffer;
 }
 
-static size_t ggml_backend_sycl_host_buffer_type_get_max_size(ggml_backend_buffer_type_t buft) {
+ساكن size_t ggml_backend_sycl_host_buffer_type_get_max_size(ggml_backend_buffer_type_t buft) {
 
-    if (g_ggml_sycl_enable_host_pinned_mem) {
-        const int device = ggml_backend_sycl_host_buffer_type_device(buft);
+    אם (g_ggml_sycl_enable_host_pinned_mem) {
+        ثابت صحيح device = ggml_backend_sycl_host_buffer_type_device(buft);
         size_t max_alloc_size = dpct::dev_mgr::instance().get_device(device).get_max_mem_alloc_size();
-        if (g_ggml_sycl_host_pinned_mem_2g) {
-            return std::min(max_alloc_size, (size_t) 2LL*1024*1024*1024);
-        } else {
-            return max_alloc_size;
+        אם (g_ggml_sycl_host_pinned_mem_2g) {
+            החזר std::min(max_alloc_size, (size_t) 2LL*1024*1024*1024);
+        } אחרת {
+            החזר max_alloc_size;
         }
-    } else {
-        return SIZE_MAX;
+    } אחרת {
+        החזר SIZE_MAX;
     }
 }
 
-static ggml_backend_buffer_type_t ggml_backend_sycl_host_buffer_type_for_device(int device) {
+ساكن ggml_backend_buffer_type_t ggml_backend_sycl_host_buffer_type_for_device(صحيح device) {
     GGML_SYCL_DEBUG("[SYCL] call ggml_backend_sycl_host_buffer_type_for_device on device %d\n", device);
 
     // the vector is never resized after this, so the returned pointers stay valid
-    static std::vector<ggml_backend_buffer_type> buffer_types_host = [] {
+    ساكن std::vector<ggml_backend_buffer_type> buffer_types_host = [] {
         std::vector<ggml_backend_buffer_type> bufts(ggml_backend_sycl_get_device_count());
-        for (size_t i = 0; i < bufts.size(); i++) {
+        עבור (size_t i = 0; i < bufts.size(); i++) {
             bufts[i] = {
                 /* .iface    = */ {
                     /* .get_name            = */ ggml_backend_sycl_host_buffer_type_name,
                     /* .alloc_buffer        = */ ggml_backend_sycl_host_buffer_type_alloc_buffer,
-                    /* .alloc_buffer_n      = */ NULL,
+                    /* .alloc_buffer_n      = */ عدم,
                     /* .get_alignment       = */ ggml_backend_cpu_buffer_type()->iface.get_alignment,
                     /* .get_max_size        = */ ggml_backend_sycl_host_buffer_type_get_max_size,
                     /* .get_alloc_size      = */ ggml_backend_cpu_buffer_type()->iface.get_alloc_size,
-                    /* .get_alloc_size_n    = */ NULL,
+                    /* .get_alloc_size_n    = */ عدم,
                     /* .is_host             = */ ggml_backend_cpu_buffer_type()->iface.is_host,
                 },
                 /* .device   = */ ggml_backend_reg_dev_get(ggml_backend_sycl_reg(), i),
                 /* .context  = */ nullptr,
             };
         }
-        return bufts;
+        החזר bufts;
     }();
 
-    GGML_ASSERT(device >= 0 && device < (int) buffer_types_host.size());
+    GGML_ASSERT(device >= 0 && device < (صحيح) buffer_types_host.size());
 
-    return &buffer_types_host[device];
+    החזר &buffer_types_host[device];
 }
 
 // TODO: this function is unused and is a temporary hack to avoid breaking changes
 ggml_backend_buffer_type_t ggml_backend_sycl_host_buffer_type() {
-    return ggml_backend_sycl_host_buffer_type_for_device(0);
+    החזר ggml_backend_sycl_host_buffer_type_for_device(0);
 }
 
 // buffer pool for sycl (legacy)
-struct ggml_sycl_pool_leg : public ggml_sycl_pool {
-    static const int MAX_SYCL_BUFFERS = 256;
+بنية ggml_sycl_pool_leg : عام ggml_sycl_pool {
+    ساكن ثابت صحيح MAX_SYCL_BUFFERS = 256;
 
-    int device;
+    صحيح device;
     queue_ptr qptr;
-    struct ggml_sycl_buffer {
-        void * ptr = nullptr;
+    بنية ggml_sycl_buffer {
+        فراغ * ptr = nullptr;
         size_t size = 0;
     };
 
     ggml_sycl_buffer buffer_pool[MAX_SYCL_BUFFERS] = {};
     size_t pool_size = 0;
 
-    explicit ggml_sycl_pool_leg(queue_ptr qptr_, int device_) : device(device_), qptr(qptr_) {}
+    explicit ggml_sycl_pool_leg(queue_ptr qptr_, صحيح device_) : device(device_), qptr(qptr_) {}
 
     ~ggml_sycl_pool_leg() {
 #ifdef DEBUG_SYCL_POOL
-        int    n_cached    = 0;
+        صحيح    n_cached    = 0;
         size_t bytes_cached = 0;
-        for (int i = 0; i < MAX_SYCL_BUFFERS; ++i) {
-            if (buffer_pool[i].ptr != nullptr) {
+        עבור (صحيح i = 0; i < MAX_SYCL_BUFFERS; ++i) {
+            אם (buffer_pool[i].ptr != nullptr) {
                 ++n_cached;
                 bytes_cached += buffer_pool[i].size;
             }
         }
         GGML_LOG_INFO("%s: %d buffers, cached = %.2f MiB\n", __func__,
                       n_cached, bytes_cached / 1024.0 / 1024.0);
-        const auto slots = format_slots_in_alloc_order();
-        if (!slots.empty()) {
+        ثابت auto slots = format_slots_in_alloc_order();
+        אם (!slots.empty()) {
             GGML_LOG_INFO("%s: slots MiB: %s\n", __func__, slots.c_str());
         }
 #endif
 
-        for (int i = 0; i < MAX_SYCL_BUFFERS; ++i) {
+        עבור (صحيح i = 0; i < MAX_SYCL_BUFFERS; ++i) {
             ggml_sycl_buffer & b = buffer_pool[i];
-            if (b.ptr != nullptr) {
+            אם (b.ptr != nullptr) {
                 SYCL_CHECK(CHECK_TRY_ERROR(ggml_sycl_free_device(b.ptr, *qptr)));
                 pool_size -= b.size;
             }
@@ -1876,70 +1876,70 @@ struct ggml_sycl_pool_leg : public ggml_sycl_pool {
     }
 
 #ifdef DEBUG_SYCL_POOL
-    std::string format_slots_in_alloc_order() const {
+    std::string format_slots_in_alloc_order() ثابت {
         std::string line;
-        char buf[32];
-        bool first = true;
-        for (int i = 0; i < MAX_SYCL_BUFFERS; ++i) {
-            if (buffer_pool[i].ptr == nullptr) {
-                continue;
+        حرف buf[32];
+        منطقي first = אמת;
+        עבור (صحيح i = 0; i < MAX_SYCL_BUFFERS; ++i) {
+            אם (buffer_pool[i].ptr == nullptr) {
+                استمر;
             }
-            if (!first) {
+            אם (!first) {
                 line += '/';
             }
-            first = false;
-            snprintf(buf, sizeof(buf), "%.2f", buffer_pool[i].size / 1024.0 / 1024.0);
+            first = שקר;
+            snprintf(buf, حجم(buf), "%.2f", buffer_pool[i].size / 1024.0 / 1024.0);
             line += buf;
         }
-        return line;
+        החזר line;
     }
 #endif
 
-    void * alloc(size_t size, size_t * actual_size) override {
+    فراغ * alloc(size_t size, size_t * actual_size) override {
 #ifdef DEBUG_sycl_MALLOC
-        int nnz = 0;
+        صحيح nnz = 0;
         size_t max_size = 0;
 #endif
         size_t best_diff = 1ull << 36;
-        int ibest = -1;
-        for (int i = 0; i < MAX_SYCL_BUFFERS; ++i) {
+        صحيح ibest = -1;
+        עבור (صحيح i = 0; i < MAX_SYCL_BUFFERS; ++i) {
             ggml_sycl_buffer& b = buffer_pool[i];
-            if (b.ptr != nullptr) {
+            אם (b.ptr != nullptr) {
 #ifdef DEBUG_sycl_MALLOC
                 ++nnz;
-                if (b.size > max_size) max_size = b.size;
+                אם (b.size > max_size) max_size = b.size;
 #endif
-                if (b.size >= size) {
+                אם (b.size >= size) {
                     size_t diff = b.size - size;
-                    if (diff < best_diff) {
+                    אם (diff < best_diff) {
                         best_diff = diff;
                         ibest = i;
-                        if (!best_diff) {
-                            void * ptr = b.ptr;
+                        אם (!best_diff) {
+                            فراغ * ptr = b.ptr;
                             *actual_size = b.size;
                             b.ptr = nullptr;
                             b.size = 0;
-                            return ptr;
+                            החזר ptr;
                         }
                     }
                 }
             }
         }
-        if (ibest >= 0) {
+        אם (ibest >= 0) {
             ggml_sycl_buffer& b = buffer_pool[ibest];
-            void * ptr = b.ptr;
+            فراغ * ptr = b.ptr;
             *actual_size = b.size;
             b.ptr = nullptr;
             b.size = 0;
-            return ptr;
+            החזר ptr;
         }
-        void * ptr;
+        فراغ * ptr;
         size_t look_ahead_size = (size_t) (1.05 * size);
 
-        SYCL_CHECK(CHECK_TRY_ERROR(ptr = (void *)ggml_sycl_malloc_device(look_ahead_size, *qptr, GGML_SYCL_MEM_POOL_LEG)));
-        if (!ptr) {
+        SYCL_CHECK(CHECK_TRY_ERROR(ptr = (فراغ *)ggml_sycl_malloc_device(look_ahead_size, *qptr, GGML_SYCL_MEM_POOL_LEG)));
+        אם (!ptr) {
             GGML_LOG_ERROR("%s: can't allocate %zu Bytes of memory on device/GPU\n", __func__, look_ahead_size);
-            return nullptr;
+            החזר nullptr;
         }
 
         *actual_size = look_ahead_size;
@@ -1951,16 +1951,16 @@ struct ggml_sycl_pool_leg : public ggml_sycl_pool {
 #endif
 
         // GGML_SYCL_DEBUG("ggml_sycl_pool_malloc_leg look_ahead_size=%zu, return %p\n", look_ahead_size, ptr);
-        return ptr;
+        החזר ptr;
     }
 
-    void free(void * ptr, size_t size) override {
-        for (int i = 0; i < MAX_SYCL_BUFFERS; ++i) {
+    فراغ حرر(فراغ * ptr, size_t size) override {
+        עבור (صحيح i = 0; i < MAX_SYCL_BUFFERS; ++i) {
             ggml_sycl_buffer& b = buffer_pool[i];
-            if (b.ptr == nullptr) {
+            אם (b.ptr == nullptr) {
                 b.ptr = ptr;
                 b.size = size;
-                return;
+                החזר;
             }
         }
         GGML_LOG_WARN("WARNING: sycl buffer pool full, increase MAX_sycl_BUFFERS\n");
@@ -1970,11 +1970,11 @@ struct ggml_sycl_pool_leg : public ggml_sycl_pool {
 };
 
 // pool with virtual memory management
-#if defined(GGML_SYCL_SUPPORT_VMM)
-struct ggml_sycl_pool_vmm : public ggml_sycl_pool {
-    static const size_t SYCL_POOL_VMM_MAX_SIZE = 1ull << 35; // 32 GB
+#אם defined(GGML_SYCL_SUPPORT_VMM)
+بنية ggml_sycl_pool_vmm : عام ggml_sycl_pool {
+    ساكن ثابت size_t SYCL_POOL_VMM_MAX_SIZE = 1ull << 35; // 32 GB
 
-    int           device;
+    صحيح           device;
     sycl::context ctx;
     sycl::device  dev;
 
@@ -1984,13 +1984,13 @@ struct ggml_sycl_pool_vmm : public ggml_sycl_pool {
     size_t    granularity;
 
     // physical_mem owns the commits (unlike cuMemMap)
-    struct mapping {
+    بنية mapping {
         sycl::ext::oneapi::experimental::physical_mem phys;
-        void * map_ptr;
+        فراغ * map_ptr;
     };
     std::vector<mapping> mappings;
 
-    explicit ggml_sycl_pool_vmm(queue_ptr qptr_, int device_) :
+    explicit ggml_sycl_pool_vmm(queue_ptr qptr_, صحيح device_) :
         device(device_),
         ctx(qptr_->get_context()),
         dev(qptr_->get_device()),
@@ -1998,14 +1998,14 @@ struct ggml_sycl_pool_vmm : public ggml_sycl_pool {
     }
 
     ~ggml_sycl_pool_vmm() {
-        if (pool_addr == 0) {
-            return;
+        אם (pool_addr == 0) {
+            החזר;
         }
 
         // Per spec, unmap must (a) match the exact (ptr, size) of an earlier
         // physical_mem::map() call and (b) precede destruction of the
         // physical_mem objects (their dtors won't unmap).
-        for (auto & m : mappings) {
+        עבור (auto & m : mappings) {
             SYCL_CHECK(CHECK_TRY_ERROR(sycl::ext::oneapi::experimental::unmap(
                 m.map_ptr, m.phys.size(), ctx)));
         }
@@ -2013,19 +2013,19 @@ struct ggml_sycl_pool_vmm : public ggml_sycl_pool {
             pool_addr, SYCL_POOL_VMM_MAX_SIZE, ctx)));
     }
 
-    void * alloc(size_t size, size_t * actual_size) override {
+    فراغ * alloc(size_t size, size_t * actual_size) override {
         // round up the allocation size to the alignment to ensure that all allocations are aligned for all data types
         size = GGML_PAD(size, SYCL_BUFFER_ALIGNMENT);
 
         size_t avail = pool_size - pool_used;
 
-        if (size > avail) {
+        אם (size > avail) {
             // round up to the next multiple of the granularity
             size_t reserve_size = GGML_PAD(size - avail, granularity);
 
             GGML_ASSERT(pool_size + reserve_size <= SYCL_POOL_VMM_MAX_SIZE);
 
-            if (ggml_sycl_memtrace_enabled()) {
+            אם (ggml_sycl_memtrace_enabled()) {
                 GGML_LOG_INFO(GGML_SYCL_MEMTRACE_TAG " pool_vmm[%d] committing %5zu MiB (pool %5zu -> %5zu MiB)\n",
                               device, reserve_size / (1024 * 1024), pool_size / (1024 * 1024),
                               (pool_size + reserve_size) / (1024 * 1024));
@@ -2037,14 +2037,14 @@ struct ggml_sycl_pool_vmm : public ggml_sycl_pool {
             SYCL_CHECK(CHECK_TRY_ERROR(phys.emplace(dev, ctx, reserve_size)));
 
             // reserve virtual address space (if not already reserved)
-            if (pool_addr == 0) {
+            אם (pool_addr == 0) {
                 SYCL_CHECK(CHECK_TRY_ERROR(
                     pool_addr = sycl::ext::oneapi::experimental::reserve_virtual_mem(
                         SYCL_POOL_VMM_MAX_SIZE, ctx)));
             }
 
             // map at the end of the pool
-            void * map_ptr = nullptr;
+            فراغ * map_ptr = nullptr;
             SYCL_CHECK(CHECK_TRY_ERROR(
                 map_ptr = phys->map(pool_addr + pool_size, reserve_size,
                                     sycl::ext::oneapi::experimental::address_access_mode::read_write)));
@@ -2068,7 +2068,7 @@ struct ggml_sycl_pool_vmm : public ggml_sycl_pool {
 
         GGML_ASSERT(pool_addr != 0);
 
-        void * ptr = reinterpret_cast<void *>(pool_addr + pool_used);
+        فراغ * ptr = reinterpret_cast<فراغ *>(pool_addr + pool_used);
         *actual_size = size;
         pool_used += size;
 
@@ -2076,10 +2076,10 @@ struct ggml_sycl_pool_vmm : public ggml_sycl_pool {
         GGML_LOG_INFO("sycl pool[%d]: allocated %llu bytes at %p\n", device, (unsigned long long) size, ptr);
 #endif
 
-        return ptr;
+        החזר ptr;
     }
 
-    void free(void * ptr, size_t size) override {
+    فراغ حرر(فراغ * ptr, size_t size) override {
 #ifdef DEBUG_SYCL_MALLOC
         GGML_LOG_INFO("sycl pool[%d]: freed %llu bytes at %p\n", device, (unsigned long long) size, ptr);
 #endif
@@ -2087,33 +2087,33 @@ struct ggml_sycl_pool_vmm : public ggml_sycl_pool {
         pool_used -= size;
 
         // all deallocations must be in reverse order of the allocations
-        GGML_ASSERT(ptr == reinterpret_cast<void *>(pool_addr + pool_used));
+        GGML_ASSERT(ptr == reinterpret_cast<فراغ *>(pool_addr + pool_used));
     }
 };
 #endif // defined(GGML_SYCL_SUPPORT_VMM)
 
-struct ggml_sycl_pool_host : public ggml_sycl_pool {
+بنية ggml_sycl_pool_host : عام ggml_sycl_pool {
     queue_ptr qptr;
-    int       device;
+    صحيح       device;
 
-    struct ggml_sycl_buffer {
-        void * ptr  = nullptr;
+    بنية ggml_sycl_buffer {
+        فراغ * ptr  = nullptr;
         size_t size = 0;
     };
 
     // Set arbitrarly to 64
-    static constexpr int          MAX_POOL_SIZE{ 64 };
+    ساكن constexpr صحيح          MAX_POOL_SIZE{ 64 };
     std::vector<ggml_sycl_buffer> buffer_pool = std::vector<ggml_sycl_buffer>(MAX_POOL_SIZE);
     size_t                        pool_size   = 0;
-    int                           counter     = 0;
+    صحيح                           counter     = 0;
 
-    explicit ggml_sycl_pool_host(queue_ptr qptr_, int device_) : qptr(qptr_), device(device_) {}
+    explicit ggml_sycl_pool_host(queue_ptr qptr_, صحيح device_) : qptr(qptr_), device(device_) {}
 
     ~ggml_sycl_pool_host() {
-        for (int i = 0; i < MAX_POOL_SIZE; ++i) {
+        עבור (صحيح i = 0; i < MAX_POOL_SIZE; ++i) {
             ggml_sycl_buffer & b = buffer_pool[i];
-            if (b.ptr != nullptr) {
-                SYCL_CHECK(CHECK_TRY_ERROR(sycl::free(b.ptr, *qptr)));
+            אם (b.ptr != nullptr) {
+                SYCL_CHECK(CHECK_TRY_ERROR(sycl::حرر(b.ptr, *qptr)));
                 b.ptr = nullptr;
                 pool_size -= b.size;
                 b.size = 0;
@@ -2121,260 +2121,260 @@ struct ggml_sycl_pool_host : public ggml_sycl_pool {
         }
     }
 
-    void * alloc(size_t size, size_t * actual_size) override {
-        if (counter == MAX_POOL_SIZE) {
+    فراغ * alloc(size_t size, size_t * actual_size) override {
+        אם (counter == MAX_POOL_SIZE) {
             // the pool wrapped around, no slot is reserved for this allocation
-            void * ptr = nullptr;
-            SYCL_CHECK(CHECK_TRY_ERROR(ptr = (void *) sycl::malloc_host(size, *qptr)));
-            if (!ptr) {
+            فراغ * ptr = nullptr;
+            SYCL_CHECK(CHECK_TRY_ERROR(ptr = (فراغ *) sycl::malloc_host(size, *qptr)));
+            אם (!ptr) {
                 GGML_LOG_ERROR("%s: can't allocate %zu Bytes of memory on host\n", __func__, size);
-                return nullptr;
+                החזר nullptr;
             }
             pool_size    += size;
             *actual_size = size;
             counter      = 0;
-            return ptr;
+            החזר ptr;
         }
         ggml_sycl_buffer & b = buffer_pool[counter];
         ++counter;
 
-        if (b.ptr != nullptr) {
-            if (b.size >= size) {
+        אם (b.ptr != nullptr) {
+            אם (b.size >= size) {
                 // hand out the cached buffer, free() puts it back into the pool
-                void * ptr = b.ptr;
+                فراغ * ptr = b.ptr;
                 *actual_size = b.size;
                 b.ptr = nullptr;
                 b.size = 0;
-                return ptr;
+                החזר ptr;
             }
             // the cached buffer is too small, replace it
-            SYCL_CHECK(CHECK_TRY_ERROR(sycl::free(b.ptr, *qptr)));
+            SYCL_CHECK(CHECK_TRY_ERROR(sycl::حرر(b.ptr, *qptr)));
             pool_size -= b.size;
             b.ptr = nullptr;
             b.size = 0;
         }
 
-        void * ptr;
-        SYCL_CHECK(CHECK_TRY_ERROR(ptr = (void *) sycl::malloc_host(size, *qptr)));
-        if (!ptr) {
+        فراغ * ptr;
+        SYCL_CHECK(CHECK_TRY_ERROR(ptr = (فراغ *) sycl::malloc_host(size, *qptr)));
+        אם (!ptr) {
             GGML_LOG_ERROR("%s: can't allocate %zu Bytes of memory on host\n", __func__, size);
-            return nullptr;
+            החזר nullptr;
         }
         pool_size    += size;
         *actual_size = size;
-        return ptr;
+        החזר ptr;
     }
 
-    void free(void * ptr, size_t size) override {
+    فراغ حرر(فراغ * ptr, size_t size) override {
         // if the pool is not completed add the pointer to it in place of the first nullptr found.
         // Otherwise free the buffer, all slots are cached.
-        for (int i = 0; i < MAX_POOL_SIZE; ++i) {
+        עבור (صحيح i = 0; i < MAX_POOL_SIZE; ++i) {
             ggml_sycl_buffer & b = buffer_pool[i];
-            if (b.ptr == nullptr) {
+            אם (b.ptr == nullptr) {
                 b.ptr  = ptr;
                 b.size = size;
-                return;
+                החזר;
             }
         }
-        SYCL_CHECK(CHECK_TRY_ERROR(sycl::free(ptr, *qptr)));
+        SYCL_CHECK(CHECK_TRY_ERROR(sycl::حرر(ptr, *qptr)));
         pool_size -= size;
     }
 };
 
-std::unique_ptr<ggml_sycl_pool> ggml_backend_sycl_context::new_pool_for_host(queue_ptr qptr, int device) {
+std::unique_ptr<ggml_sycl_pool> ggml_backend_sycl_context::new_pool_for_host(queue_ptr qptr, صحيح device) {
     // return pool for the host to speed up memory management
-    return std::unique_ptr<ggml_sycl_pool>(new ggml_sycl_pool_host(qptr, device));
+    החזר std::unique_ptr<ggml_sycl_pool>(جديد ggml_sycl_pool_host(qptr, device));
 }
 
-std::unique_ptr<ggml_sycl_pool> ggml_backend_sycl_context::new_pool_for_device(queue_ptr qptr, int device) {
-#if defined(GGML_SYCL_SUPPORT_VMM)
-    if (g_ggml_sycl_enable_vmm && ggml_sycl_info().devices[device].vmm) {
-        return std::unique_ptr<ggml_sycl_pool>(new ggml_sycl_pool_vmm(qptr, device));
+std::unique_ptr<ggml_sycl_pool> ggml_backend_sycl_context::new_pool_for_device(queue_ptr qptr, صحيح device) {
+#אם defined(GGML_SYCL_SUPPORT_VMM)
+    אם (g_ggml_sycl_enable_vmm && ggml_sycl_info().devices[device].vmm) {
+        החזר std::unique_ptr<ggml_sycl_pool>(جديد ggml_sycl_pool_vmm(qptr, device));
     }
 #endif // defined(GGML_SYCL_SUPPORT_VMM)
-    return std::unique_ptr<ggml_sycl_pool>(new ggml_sycl_pool_leg(qptr, device));
+    החזר std::unique_ptr<ggml_sycl_pool>(جديد ggml_sycl_pool_leg(qptr, device));
 }
 
 /// kernels
-typedef void (*ggml_sycl_op_mul_mat_t)(
+تعريفنوع فراغ (*ggml_sycl_op_mul_mat_t)(
     ggml_backend_sycl_context & ctx,
-    const ggml_tensor *src0, const ggml_tensor *src1, ggml_tensor *dst,
-    const char *src0_dd_i, const float *src1_ddf_i, const char *src1_ddq_i,
-    float *dst_dd_i, const int64_t row_low, const int64_t row_high,
-    const int64_t src1_ncols, const int64_t src1_padded_row_size,
-    const queue_ptr &stream);
+    ثابت ggml_tensor *src0, ثابت ggml_tensor *src1, ggml_tensor *dst,
+    ثابت حرف *src0_dd_i, ثابت عائم *src1_ddf_i, ثابت حرف *src1_ddq_i,
+    عائم *dst_dd_i, ثابت int64_t row_low, ثابت int64_t row_high,
+    ثابت int64_t src1_ncols, ثابت int64_t src1_padded_row_size,
+    ثابت queue_ptr &stream);
 
 
 
-static void mul_mat_p021_f16_f32(
-    const void * __restrict__ vx, const float * __restrict__ y, float * __restrict__ dst,
-    const int ncols_x, const int nrows_x, const int nchannels_x, const int nchannels_y,
-    const sycl::nd_item<3> &item_ct1) {
+ساكن فراغ mul_mat_p021_f16_f32(
+    ثابت فراغ * __restrict__ vx, ثابت عائم * __restrict__ y, عائم * __restrict__ dst,
+    ثابت صحيح ncols_x, ثابت صحيح nrows_x, ثابت صحيح nchannels_x, ثابت صحيح nchannels_y,
+    ثابت sycl::nd_item<3> &item_ct1) {
 
-    const sycl::half *x = (const sycl::half *)vx;
+    ثابت sycl::half *x = (ثابت sycl::half *)vx;
 
-    const int row_x = item_ct1.get_local_range(1) * item_ct1.get_group(1) +
+    ثابت صحيح row_x = item_ct1.get_local_range(1) * item_ct1.get_group(1) +
                       item_ct1.get_local_id(1);
-    const int channel = item_ct1.get_local_range(0) * item_ct1.get_group(0) +
+    ثابت صحيح channel = item_ct1.get_local_range(0) * item_ct1.get_group(0) +
                         item_ct1.get_local_id(0);
-    const int channel_x = channel / (nchannels_y / nchannels_x);
+    ثابت صحيح channel_x = channel / (nchannels_y / nchannels_x);
 
-    const int nrows_y = ncols_x;
-    const int nrows_dst = nrows_x;
-    const int row_dst = row_x;
+    ثابت صحيح nrows_y = ncols_x;
+    ثابت صحيح nrows_dst = nrows_x;
+    ثابت صحيح row_dst = row_x;
 
-    float tmp = 0.0f;
+    عائم tmp = 0.0f;
 
-    for (int col_x0 = 0; col_x0 < ncols_x;
+    עבור (صحيح col_x0 = 0; col_x0 < ncols_x;
          col_x0 += item_ct1.get_local_range(2)) {
-        const int col_x = col_x0 + item_ct1.get_local_id(2);
+        ثابت صحيح col_x = col_x0 + item_ct1.get_local_id(2);
 
-        if (col_x >= ncols_x) {
-            break;
+        אם (col_x >= ncols_x) {
+            اكسر;
         }
 
         // x is transposed and permuted
-        const int ix = row_x*nchannels_x*ncols_x + channel_x*ncols_x + col_x;
-        const float xi =
+        ثابت صحيح ix = row_x*nchannels_x*ncols_x + channel_x*ncols_x + col_x;
+        ثابت عائم xi =
             sycl::vec<sycl::half, 1>(x[ix])
-                .convert<float, sycl::rounding_mode::automatic>()[0];
+                .convert<عائم, sycl::rounding_mode::automatic>()[0];
 
-        const int row_y = col_x;
+        ثابت صحيح row_y = col_x;
 
 
         // y is not transposed but permuted
-        const int iy = channel*nrows_y + row_y;
+        ثابت صحيح iy = channel*nrows_y + row_y;
 
         tmp += xi * y[iy];
     }
 
     // dst is not transposed and not permuted
-    const int idst = channel*nrows_dst + row_dst;
+    ثابت صحيح idst = channel*nrows_dst + row_dst;
 
     // sum up partial sums and write back result
 #pragma unroll
-    for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
+    עבור (صحيح mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
         tmp +=
             dpct::permute_sub_group_by_xor(item_ct1.get_sub_group(), tmp, mask);
     }
 
-    if (item_ct1.get_local_id(2) == 0) {
+    אם (item_ct1.get_local_id(2) == 0) {
         dst[idst] = tmp;
     }
 }
 
-static void mul_mat_vec_nc_f16_f32( // nc == non-contiguous
-    const void * __restrict__ vx, const float * __restrict__ y, float * __restrict__ dst, const int ncols_x, const int nrows_x,
-    const int row_stride_x, const int channel_stride_x,const int channel_stride_y, const int channel_x_divisor,
-    const sycl::nd_item<3> &item_ct1) {
+ساكن فراغ mul_mat_vec_nc_f16_f32( // nc == non-contiguous
+    ثابت فراغ * __restrict__ vx, ثابت عائم * __restrict__ y, عائم * __restrict__ dst, ثابت صحيح ncols_x, ثابت صحيح nrows_x,
+    ثابت صحيح row_stride_x, ثابت صحيح channel_stride_x,ثابت صحيح channel_stride_y, ثابت صحيح channel_x_divisor,
+    ثابت sycl::nd_item<3> &item_ct1) {
 
-    const sycl::half *x = (const sycl::half *)vx;
+    ثابت sycl::half *x = (ثابت sycl::half *)vx;
 
-    const int row_x = item_ct1.get_local_range(1) * item_ct1.get_group(1) +
+    ثابت صحيح row_x = item_ct1.get_local_range(1) * item_ct1.get_group(1) +
                       item_ct1.get_local_id(1);
-    const int channel = item_ct1.get_local_range(0) * item_ct1.get_group(0) +
+    ثابت صحيح channel = item_ct1.get_local_range(0) * item_ct1.get_group(0) +
                         item_ct1.get_local_id(0);
-    const int channel_x = channel / channel_x_divisor;
+    ثابت صحيح channel_x = channel / channel_x_divisor;
 
-    const int nrows_dst = nrows_x;
-    const int row_dst   = row_x;
+    ثابت صحيح nrows_dst = nrows_x;
+    ثابت صحيح row_dst   = row_x;
 
-    const int idst = channel*nrows_dst + row_dst;
+    ثابت صحيح idst = channel*nrows_dst + row_dst;
 
-    float tmp = 0.0f;
+    عائم tmp = 0.0f;
 
-    for (int col_x0 = 0; col_x0 < ncols_x;
+    עבור (صحيح col_x0 = 0; col_x0 < ncols_x;
          col_x0 += item_ct1.get_local_range(2)) {
-        const int col_x = col_x0 + item_ct1.get_local_id(2);
+        ثابت صحيح col_x = col_x0 + item_ct1.get_local_id(2);
 
-        if (col_x >= ncols_x) {
-            break;
+        אם (col_x >= ncols_x) {
+            اكسر;
         }
 
-        const int row_y = col_x;
+        ثابت صحيح row_y = col_x;
 
-        const int ix = channel_x*channel_stride_x + row_x*row_stride_x + col_x;
-        const int iy = channel * channel_stride_y + row_y;
+        ثابت صحيح ix = channel_x*channel_stride_x + row_x*row_stride_x + col_x;
+        ثابت صحيح iy = channel * channel_stride_y + row_y;
 
-        const float xi =
+        ثابت عائم xi =
             sycl::vec<sycl::half, 1>(x[ix])
-                .convert<float, sycl::rounding_mode::automatic>()[0];
+                .convert<عائم, sycl::rounding_mode::automatic>()[0];
 
         tmp += xi * y[iy];
     }
 
     // sum up partial sums and write back result
 #pragma unroll
-    for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
+    עבור (صحيح mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
         tmp +=
             dpct::permute_sub_group_by_xor(item_ct1.get_sub_group(), tmp, mask);
     }
 
-    if (item_ct1.get_local_id(2) == 0) {
+    אם (item_ct1.get_local_id(2) == 0) {
         dst[idst] = tmp;
     }
 }
 
-static void k_sum_rows_f32(const float * x, float * dst, const int ncols,
-                           const sycl::nd_item<3> &item_ct1) {
-    const int row = item_ct1.get_group(1);
-    const int col = item_ct1.get_local_id(2);
+ساكن فراغ k_sum_rows_f32(ثابت عائم * x, عائم * dst, ثابت صحيح ncols,
+                           ثابت sycl::nd_item<3> &item_ct1) {
+    ثابت صحيح row = item_ct1.get_group(1);
+    ثابت صحيح col = item_ct1.get_local_id(2);
 
-    float sum = 0.0f;
-    for (int i = col; i < ncols; i += item_ct1.get_local_range(2)) {
+    عائم sum = 0.0f;
+    עבור (صحيح i = col; i < ncols; i += item_ct1.get_local_range(2)) {
         sum += x[row * ncols + i];
     }
 
     sum = warp_reduce_sum(sum, item_ct1);
 
-    if (col == 0) {
+    אם (col == 0) {
         dst[row] = sum;
     }
 }
 
 
 template<typename T>
-static inline void ggml_sycl_swap(T & a, T & b) {
+ساكن مضمن فراغ ggml_sycl_swap(T & a, T & b) {
     T tmp = a;
     a = b;
     b = tmp;
 }
 
 template <ggml_sort_order order>
-__dpct_inline__ static void
-k_argsort_f32_i32(const float *x, int *dst, const int ncols, int ncols_pad,
-                  const int tasks_per_thread, const sycl::nd_item<3> &item_ct1,
+__dpct_inline__ ساكن فراغ
+k_argsort_f32_i32(ثابت عائم *x, صحيح *dst, ثابت صحيح ncols, صحيح ncols_pad,
+                  ثابت صحيح tasks_per_thread, ثابت sycl::nd_item<3> &item_ct1,
                   uint8_t *dpct_local) {
     // bitonic sort
-    int col_index =  item_ct1.get_local_id(2);
-    int row = item_ct1.get_group(1);
+    صحيح col_index =  item_ct1.get_local_id(2);
+    صحيح row = item_ct1.get_group(1);
 
-    for (int i = 0; i < tasks_per_thread; i++) {
-        int col = col_index * tasks_per_thread + i;
-        if (col >= ncols_pad) {
-            return;
+    עבור (صحيح i = 0; i < tasks_per_thread; i++) {
+        صحيح col = col_index * tasks_per_thread + i;
+        אם (col >= ncols_pad) {
+            החזר;
         }
     }
 
-    const float * x_row = x + row * ncols;
-    auto dst_row = (int *)dpct_local;
+    ثابت عائم * x_row = x + row * ncols;
+    auto dst_row = (صحيح *)dpct_local;
 
     // initialize indices
-    for (int i=0;i<tasks_per_thread;i++){
-        int col = col_index*tasks_per_thread+i;
+    עבור (صحيح i=0;i<tasks_per_thread;i++){
+        صحيح col = col_index*tasks_per_thread+i;
         dst_row[col] = col;
     }
 
     item_ct1.barrier(sycl::access::fence_space::local_space);
 
-    for (int k = 2; k <= ncols_pad; k *= 2) {
-        for (int j = k / 2; j > 0; j /= 2) {
-            for (int i = 0; i < tasks_per_thread; i++) {
-                int col = col_index * tasks_per_thread + i;
-                int ixj = col ^ j;
-                if (ixj > col) {
-                    if ((col & k) == 0) {
-                        if (dst_row[col] >= ncols ||
+    עבור (صحيح k = 2; k <= ncols_pad; k *= 2) {
+        עבור (صحيح j = k / 2; j > 0; j /= 2) {
+            עבור (صحيح i = 0; i < tasks_per_thread; i++) {
+                صحيح col = col_index * tasks_per_thread + i;
+                صحيح ixj = col ^ j;
+                אם (ixj > col) {
+                    אם ((col & k) == 0) {
+                        אם (dst_row[col] >= ncols ||
                             (dst_row[ixj] < ncols &&
                              (order == GGML_SORT_ORDER_ASC
                                   ? x_row[dst_row[col]] > x_row[dst_row[ixj]]
@@ -2382,8 +2382,8 @@ k_argsort_f32_i32(const float *x, int *dst, const int ncols, int ncols_pad,
                                         x_row[dst_row[ixj]]))) {
                             ggml_sycl_swap(dst_row[col], dst_row[ixj]);
                         }
-                    } else {
-                        if (dst_row[ixj] >= ncols ||
+                    } אחרת {
+                        אם (dst_row[ixj] >= ncols ||
                             (dst_row[col] < ncols &&
                              (order == GGML_SORT_ORDER_ASC
                                   ? x_row[dst_row[col]] < x_row[dst_row[ixj]]
@@ -2399,53 +2399,53 @@ k_argsort_f32_i32(const float *x, int *dst, const int ncols, int ncols_pad,
     }
 
     // copy the result to dst without the padding
-    for (int i = 0; i < tasks_per_thread; i++) {
-        int col = col_index * tasks_per_thread + i;
-        if (col < ncols) {
+    עבור (صحيح i = 0; i < tasks_per_thread; i++) {
+        صحيح col = col_index * tasks_per_thread + i;
+        אם (col < ncols) {
             dst[row * ncols + col] = dst_row[col];
         }
     }
 }
 
-static void diag_mask_inf_f32(const float * x, float * dst, const int ncols, const int rows_per_channel, const int n_past,
-                              const sycl::nd_item<3> &item_ct1) {
-    const int col = item_ct1.get_local_range(1) * item_ct1.get_group(1) +
+ساكن فراغ diag_mask_inf_f32(ثابت عائم * x, عائم * dst, ثابت صحيح ncols, ثابت صحيح rows_per_channel, ثابت صحيح n_past,
+                              ثابت sycl::nd_item<3> &item_ct1) {
+    ثابت صحيح col = item_ct1.get_local_range(1) * item_ct1.get_group(1) +
                     item_ct1.get_local_id(1);
-    const int row = item_ct1.get_local_range(2) * item_ct1.get_group(2) +
+    ثابت صحيح row = item_ct1.get_local_range(2) * item_ct1.get_group(2) +
                     item_ct1.get_local_id(2);
 
-    if (col >= ncols) {
-        return;
+    אם (col >= ncols) {
+        החזר;
     }
 
-    const int i = row*ncols + col;
+    ثابت صحيح i = row*ncols + col;
     //dst[i] = col > (n_past + row % rows_per_channel) ? -INFINITY : x[i];
     //dst[i] = x[i] - (col > n_past + row % rows_per_channel) * INT_MAX; // equivalent within rounding error but slightly faster on GPU
     dst[i] = x[i] - (col > n_past + row % rows_per_channel) * FLT_MAX;
 }
 
-static void scale_f32(const float * x, float * dst, const float scale, const float bias, const int k,
-                      const sycl::nd_item<3> &item_ct1) {
-    const int i = item_ct1.get_local_range(2) * item_ct1.get_group(2) +
+ساكن فراغ scale_f32(ثابت عائم * x, عائم * dst, ثابت عائم scale, ثابت عائم bias, ثابت صحيح k,
+                      ثابت sycl::nd_item<3> &item_ct1) {
+    ثابت صحيح i = item_ct1.get_local_range(2) * item_ct1.get_group(2) +
                   item_ct1.get_local_id(2);
 
-    if (i >= k) {
-        return;
+    אם (i >= k) {
+        החזר;
     }
 
     dst[i] = scale * x[i] + bias;
 }
 
 
-static void ggml_mul_mat_p021_f16_f32_sycl(const void *vx, const float *y,
-                                           float *dst, const int ncols_x,
-                                           const int nrows_x,
-                                           const int nchannels_x,
-                                           const int nchannels_y,
+ساكن فراغ ggml_mul_mat_p021_f16_f32_sycl(ثابت فراغ *vx, ثابت عائم *y,
+                                           عائم *dst, ثابت صحيح ncols_x,
+                                           ثابت صحيح nrows_x,
+                                           ثابت صحيح nchannels_x,
+                                           ثابت صحيح nchannels_y,
                                            queue_ptr stream) {
 
-    const sycl::range<3> block_nums(nchannels_y, nrows_x, 1);
-    const sycl::range<3> block_dims(1, 1, WARP_SIZE);
+    ثابت sycl::range<3> block_nums(nchannels_y, nrows_x, 1);
+    ثابت sycl::range<3> block_dims(1, 1, WARP_SIZE);
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -2459,13 +2459,13 @@ static void ggml_mul_mat_p021_f16_f32_sycl(const void *vx, const float *y,
     }
 }
 
-static void ggml_mul_mat_vec_nc_f16_f32_sycl(
-    const void *vx, const float *y, float *dst, const int ncols_x,
-    const int nrows_x, const int row_stride_x, const int nchannels_x,
-    const int nchannels_y, const int channel_stride_x, const int channel_stride_y, queue_ptr stream) {
+ساكن فراغ ggml_mul_mat_vec_nc_f16_f32_sycl(
+    ثابت فراغ *vx, ثابت عائم *y, عائم *dst, ثابت صحيح ncols_x,
+    ثابت صحيح nrows_x, ثابت صحيح row_stride_x, ثابت صحيح nchannels_x,
+    ثابت صحيح nchannels_y, ثابت صحيح channel_stride_x, ثابت صحيح channel_stride_y, queue_ptr stream) {
 
-    const sycl::range<3> block_nums(nchannels_y, nrows_x, 1);
-    const sycl::range<3> block_dims(1, 1, WARP_SIZE);
+    ثابت sycl::range<3> block_nums(nchannels_y, nrows_x, 1);
+    ثابت sycl::range<3> block_dims(1, 1, WARP_SIZE);
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -2482,9 +2482,9 @@ static void ggml_mul_mat_vec_nc_f16_f32_sycl(
 
 
 
-static void scale_f32_sycl(const float *x, float *dst, const float scale, const float bias,
-                           const int k, queue_ptr stream) {
-    const int num_blocks = (k + SYCL_SCALE_BLOCK_SIZE - 1) / SYCL_SCALE_BLOCK_SIZE;
+ساكن فراغ scale_f32_sycl(ثابت عائم *x, عائم *dst, ثابت عائم scale, ثابت عائم bias,
+                           ثابت صحيح k, queue_ptr stream) {
+    ثابت صحيح num_blocks = (k + SYCL_SCALE_BLOCK_SIZE - 1) / SYCL_SCALE_BLOCK_SIZE;
     stream->parallel_for(
         sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) *
                               sycl::range<3>(1, 1, SYCL_SCALE_BLOCK_SIZE),
@@ -2495,10 +2495,10 @@ static void scale_f32_sycl(const float *x, float *dst, const float scale, const 
 }
 
 
-static void sum_rows_f32_sycl(const float *x, float *dst, const int ncols,
-                              const int nrows, queue_ptr stream) {
-    const sycl::range<3> block_dims(1, 1, WARP_SIZE);
-    const sycl::range<3> block_nums(1, nrows, 1);
+ساكن فراغ sum_rows_f32_sycl(ثابت عائم *x, عائم *dst, ثابت صحيح ncols,
+                              ثابت صحيح nrows, queue_ptr stream) {
+    ثابت sycl::range<3> block_dims(1, 1, WARP_SIZE);
+    ثابت sycl::range<3> block_nums(1, nrows, 1);
     stream->parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
                          [=](sycl::nd_item<3> item_ct1)
                              [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
@@ -2506,170 +2506,170 @@ static void sum_rows_f32_sycl(const float *x, float *dst, const int ncols,
                              });
 }
 
-static int next_power_of_2(int x) {
-    int n = 1;
-    while (n < x) {
+ساكن صحيح next_power_of_2(صحيح x) {
+    صحيح n = 1;
+    כלעוד (n < x) {
         n *= 2;
     }
-    return n;
+    החזר n;
 }
 
-static void init_argsort_indices_padded(
-        int * idx,
-        const int nrows,
-        const int ncols_pad,
-        const sycl::nd_item<1> & item_ct1) {
-    const size_t gid = item_ct1.get_local_range(0) * item_ct1.get_group(0) + item_ct1.get_local_id(0);
-    const size_t total = (size_t) nrows * (size_t) ncols_pad;
+ساكن فراغ init_argsort_indices_padded(
+        صحيح * idx,
+        ثابت صحيح nrows,
+        ثابت صحيح ncols_pad,
+        ثابت sycl::nd_item<1> & item_ct1) {
+    ثابت size_t gid = item_ct1.get_local_range(0) * item_ct1.get_group(0) + item_ct1.get_local_id(0);
+    ثابت size_t total = (size_t) nrows * (size_t) ncols_pad;
 
-    if (gid >= total) {
-        return;
+    אם (gid >= total) {
+        החזר;
     }
 
-    idx[gid] = (int) (gid % (size_t) ncols_pad);
+    idx[gid] = (صحيح) (gid % (size_t) ncols_pad);
 }
 
 template <ggml_sort_order order>
-static void argsort_f32_i32_global_pass(const float *            x,
-                                        int *                    idx,
-                                        const int                ncols,
-                                        const int                nrows,
-                                        const int                ncols_pad,
-                                        const int                j,
-                                        const int                k,
-                                        const sycl::nd_item<1> & item_ct1) {
-    const size_t gid   = item_ct1.get_local_range(0) * item_ct1.get_group(0) + item_ct1.get_local_id(0);
-    const size_t total = (size_t) nrows * (size_t) ncols_pad;
+ساكن فراغ argsort_f32_i32_global_pass(ثابت عائم *            x,
+                                        صحيح *                    idx,
+                                        ثابت صحيح                ncols,
+                                        ثابت صحيح                nrows,
+                                        ثابت صحيح                ncols_pad,
+                                        ثابت صحيح                j,
+                                        ثابت صحيح                k,
+                                        ثابت sycl::nd_item<1> & item_ct1) {
+    ثابت size_t gid   = item_ct1.get_local_range(0) * item_ct1.get_group(0) + item_ct1.get_local_id(0);
+    ثابت size_t total = (size_t) nrows * (size_t) ncols_pad;
 
-    if (gid >= total) {
-        return;
+    אם (gid >= total) {
+        החזר;
     }
 
-    const int row = (int) (gid / (size_t) ncols_pad);
-    const int col = (int) (gid % (size_t) ncols_pad);
-    const int ixj = col ^ j;
+    ثابت صحيح row = (صحيح) (gid / (size_t) ncols_pad);
+    ثابت صحيح col = (صحيح) (gid % (size_t) ncols_pad);
+    ثابت صحيح ixj = col ^ j;
 
-    if (ixj <= col || ixj >= ncols_pad) {
-        return;
+    אם (ixj <= col || ixj >= ncols_pad) {
+        החזר;
     }
 
-    const size_t base  = (size_t) row * (size_t) ncols_pad;
-    const size_t pos_a = base + (size_t) col;
-    const size_t pos_b = base + (size_t) ixj;
+    ثابت size_t base  = (size_t) row * (size_t) ncols_pad;
+    ثابت size_t pos_a = base + (size_t) col;
+    ثابت size_t pos_b = base + (size_t) ixj;
 
-    const int a = idx[pos_a];
-    const int b = idx[pos_b];
+    ثابت صحيح a = idx[pos_a];
+    ثابت صحيح b = idx[pos_b];
 
-    bool do_swap = false;
+    منطقي do_swap = שקר;
 
-    if ((col & k) == 0) {
-        if (a >= ncols ||
+    אם ((col & k) == 0) {
+        אם (a >= ncols ||
             (b < ncols &&
              (order == GGML_SORT_ORDER_ASC ?
                   x[(size_t) row * (size_t) ncols + (size_t) a] > x[(size_t) row * (size_t) ncols + (size_t) b] :
                   x[(size_t) row * (size_t) ncols + (size_t) a] < x[(size_t) row * (size_t) ncols + (size_t) b]))) {
-            do_swap = true;
+            do_swap = אמת;
         }
-    } else {
-        if (b >= ncols ||
+    } אחרת {
+        אם (b >= ncols ||
             (a < ncols &&
              (order == GGML_SORT_ORDER_ASC ?
                   x[(size_t) row * (size_t) ncols + (size_t) a] < x[(size_t) row * (size_t) ncols + (size_t) b] :
                   x[(size_t) row * (size_t) ncols + (size_t) a] > x[(size_t) row * (size_t) ncols + (size_t) b]))) {
-            do_swap = true;
+            do_swap = אמת;
         }
     }
 
-    if (do_swap) {
+    אם (do_swap) {
         idx[pos_a] = b;
         idx[pos_b] = a;
     }
 }
 
-static void copy_argsort_indices_unpadded(const int *              idx_padded,
-                                          int *                    dst,
-                                          const int                nrows,
-                                          const int                ncols,
-                                          const int                ncols_pad,
-                                          const sycl::nd_item<1> & item_ct1) {
-    const size_t gid   = item_ct1.get_local_range(0) * item_ct1.get_group(0) + item_ct1.get_local_id(0);
-    const size_t total = (size_t) nrows * (size_t) ncols;
+ساكن فراغ copy_argsort_indices_unpadded(ثابت صحيح *              idx_padded,
+                                          صحيح *                    dst,
+                                          ثابت صحيح                nrows,
+                                          ثابت صحيح                ncols,
+                                          ثابت صحيح                ncols_pad,
+                                          ثابت sycl::nd_item<1> & item_ct1) {
+    ثابت size_t gid   = item_ct1.get_local_range(0) * item_ct1.get_group(0) + item_ct1.get_local_id(0);
+    ثابت size_t total = (size_t) nrows * (size_t) ncols;
 
-    if (gid >= total) {
-        return;
+    אם (gid >= total) {
+        החזר;
     }
 
-    const int row = (int) (gid / (size_t) ncols);
-    const int col = (int) (gid % (size_t) ncols);
+    ثابت صحيح row = (صحيح) (gid / (size_t) ncols);
+    ثابت صحيح col = (صحيح) (gid % (size_t) ncols);
 
     dst[(size_t) row * (size_t) ncols + (size_t) col] = idx_padded[(size_t) row * (size_t) ncols_pad + (size_t) col];
 }
 
-static void argsort_f32_i32_sycl(const float *x, int *dst, const int ncols,
-                                 const int nrows, ggml_sort_order order,
-                                 queue_ptr stream, int device, ggml_sycl_pool & pool) {
+ساكن فراغ argsort_f32_i32_sycl(ثابت عائم *x, صحيح *dst, ثابت صحيح ncols,
+                                 ثابت صحيح nrows, ggml_sort_order order,
+                                 queue_ptr stream, صحيح device, ggml_sycl_pool & pool) {
     // bitonic sort requires ncols to be power of 2
-    const int ncols_pad = next_power_of_2(ncols);
-    const size_t shared_mem = (size_t) ncols_pad * sizeof(int);
-    const size_t smpbo = ggml_sycl_info().devices[device].smpbo;
+    ثابت صحيح ncols_pad = next_power_of_2(ncols);
+    ثابت size_t shared_mem = (size_t) ncols_pad * حجم(صحيح);
+    ثابت size_t smpbo = ggml_sycl_info().devices[device].smpbo;
 
-    if (shared_mem > smpbo) {
-        ggml_sycl_pool_alloc<int> idx_padded_alloc(pool, (size_t) nrows * (size_t) ncols_pad);
-        int *                     idx_padded = idx_padded_alloc.get();
+    אם (shared_mem > smpbo) {
+        ggml_sycl_pool_alloc<صحيح> idx_padded_alloc(pool, (size_t) nrows * (size_t) ncols_pad);
+        صحيح *                     idx_padded = idx_padded_alloc.get();
 
         constexpr size_t block_size     = 256;
-        const size_t     total_padded   = (size_t) nrows * (size_t) ncols_pad;
-        const size_t     nblocks_padded = (total_padded + block_size - 1) / block_size;
+        ثابت size_t     total_padded   = (size_t) nrows * (size_t) ncols_pad;
+        ثابت size_t     nblocks_padded = (total_padded + block_size - 1) / block_size;
 
         stream->parallel_for(
             sycl::nd_range<1>(sycl::range<1>(nblocks_padded * block_size), sycl::range<1>(block_size)),
             [=](sycl::nd_item<1> item_ct1) { init_argsort_indices_padded(idx_padded, nrows, ncols_pad, item_ct1); });
 
-        for (int k = 2; k <= ncols_pad; k *= 2) {
-            for (int j = k / 2; j > 0; j /= 2) {
-                if (order == GGML_SORT_ORDER_ASC) {
+        עבור (صحيح k = 2; k <= ncols_pad; k *= 2) {
+            עבור (صحيح j = k / 2; j > 0; j /= 2) {
+                אם (order == GGML_SORT_ORDER_ASC) {
                     stream->parallel_for(
                         sycl::nd_range<1>(sycl::range<1>(nblocks_padded * block_size), sycl::range<1>(block_size)),
                         [=](sycl::nd_item<1> item_ct1) {
                             argsort_f32_i32_global_pass<GGML_SORT_ORDER_ASC>(x, idx_padded, ncols, nrows, ncols_pad, j,
                                                                              k, item_ct1);
                         });
-                } else if (order == GGML_SORT_ORDER_DESC) {
+                } אחרת אם (order == GGML_SORT_ORDER_DESC) {
                     stream->parallel_for(
                         sycl::nd_range<1>(sycl::range<1>(nblocks_padded * block_size), sycl::range<1>(block_size)),
                         [=](sycl::nd_item<1> item_ct1) {
                             argsort_f32_i32_global_pass<GGML_SORT_ORDER_DESC>(x, idx_padded, ncols, nrows, ncols_pad, j,
                                                                               k, item_ct1);
                         });
-                } else {
+                } אחרת {
                     GGML_ABORT("invalid sort order");
                 }
             }
         }
 
-        const size_t total   = (size_t) nrows * (size_t) ncols;
-        const size_t nblocks = (total + block_size - 1) / block_size;
+        ثابت size_t total   = (size_t) nrows * (size_t) ncols;
+        ثابت size_t nblocks = (total + block_size - 1) / block_size;
         stream->parallel_for(sycl::nd_range<1>(sycl::range<1>(nblocks * block_size), sycl::range<1>(block_size)),
                              [=](sycl::nd_item<1> item_ct1) {
                                  copy_argsort_indices_unpadded(idx_padded, dst, nrows, ncols, ncols_pad, item_ct1);
                              });
 
-        return;
+        החזר;
     }
 
-    int nth = 1;
-    int max_block_size = ggml_sycl_info().max_work_group_sizes[device];
-    while (nth < ncols_pad && nth < max_block_size)
+    صحيح nth = 1;
+    صحيح max_block_size = ggml_sycl_info().max_work_group_sizes[device];
+    כלעוד (nth < ncols_pad && nth < max_block_size)
         nth *= 2;
-    if (nth > max_block_size)
+    אם (nth > max_block_size)
         nth = max_block_size;
 
-    const int tasks_per_thread = ncols_pad / nth;
+    ثابت صحيح tasks_per_thread = ncols_pad / nth;
 
-    const sycl::range<3> block_dims(1, 1, nth);
-    const sycl::range<3> block_nums(1, nrows, 1);
+    ثابت sycl::range<3> block_dims(1, 1, nth);
+    ثابت sycl::range<3> block_nums(1, nrows, 1);
 
-    if (order == GGML_SORT_ORDER_ASC) {
+    אם (order == GGML_SORT_ORDER_ASC) {
         stream->submit([&](sycl::handler &cgh) {
             sycl::local_accessor<uint8_t, 1> dpct_local_acc_ct1(
                 sycl::range<1>(shared_mem), cgh);
@@ -2684,7 +2684,7 @@ static void argsort_f32_i32_sycl(const float *x, int *dst, const int ncols,
                             .get());
                 });
         });
-    } else if (order == GGML_SORT_ORDER_DESC) {
+    } אחרת אם (order == GGML_SORT_ORDER_DESC) {
         stream->submit([&](sycl::handler &cgh) {
             sycl::local_accessor<uint8_t, 1> dpct_local_acc_ct1(
                 sycl::range<1>(shared_mem), cgh);
@@ -2699,7 +2699,7 @@ static void argsort_f32_i32_sycl(const float *x, int *dst, const int ncols,
                             .get());
                 });
         });
-    } else {
+    } אחרת {
         GGML_ABORT("fatal error");
     }
 }
@@ -2711,21 +2711,21 @@ static void argsort_f32_i32_sycl(const float *x, int *dst, const int ncols,
 //                      original column index through.
 // out_vals != nullptr: also emit the k winning values, for a later merge pass.
 // swap01:              emit in the output order the single-pass path uses.
-static void top_k_scan_merge_f32(
-    const float *   src_vals,
-    const int32_t * src_map,
-    const int       begin,
-    const int       end,
-    const int       k,
-    const int       block_size,
-    float *         shared_vals,
-    int *           shared_idx,
-    float *         out_vals,
+ساكن فراغ top_k_scan_merge_f32(
+    ثابت عائم *   src_vals,
+    ثابت int32_t * src_map,
+    ثابت صحيح       begin,
+    ثابت صحيح       end,
+    ثابت صحيح       k,
+    ثابت صحيح       block_size,
+    عائم *         shared_vals,
+    صحيح *           shared_idx,
+    عائم *         out_vals,
     int32_t *       out_idx,
-    const bool      swap01,
-    const sycl::nd_item<1> & item_ct1
+    ثابت منطقي      swap01,
+    ثابت sycl::nd_item<1> & item_ct1
 ) {
-    const int tid = item_ct1.get_local_id(0);
+    ثابت صحيح tid = item_ct1.get_local_id(0);
 
     // The running top-k lives in SLM (shared local memory) rather than a private array:
     // an array indexed by a runtime position cannot be register-allocated, so a private
@@ -2735,28 +2735,28 @@ static void top_k_scan_merge_f32(
     // Lane-strided (lv[i * block_size]) rather than lane-blocked (lv[i]) so a given i is
     // contiguous across lanes; a k-strided layout would put every lane of a shift step in
     // the same SLM bank.
-    float * lv = shared_vals + tid;
-    int * li = shared_idx + tid;
+    عائم * lv = shared_vals + tid;
+    صحيح * li = shared_idx + tid;
 
-    for (int i = 0; i < k; i++) {
+    עבור (صحيح i = 0; i < k; i++) {
         lv[i * block_size] = -FLT_MAX;
         li[i * block_size] = -1;
     }
 
     // The k-th best, cached in a register. The reject test is taken for the large
     // majority of elements scanned, and in that case touches no memory.
-    float kth = -FLT_MAX;
+    عائم kth = -FLT_MAX;
 
-    for (int col = begin + tid; col < end; col += block_size) {
-        float val = src_vals[col];
+    עבור (صحيح col = begin + tid; col < end; col += block_size) {
+        عائم val = src_vals[col];
 
-        if (val > kth) {
-            int pos = k - 1;
-            while (pos > 0 && val > lv[(pos - 1) * block_size]) {
+        אם (val > kth) {
+            صحيح pos = k - 1;
+            כלעוד (pos > 0 && val > lv[(pos - 1) * block_size]) {
                 pos--;
             }
 
-            for (int i = k - 1; i > pos; i--) {
+            עבור (صحيح i = k - 1; i > pos; i--) {
                 lv[i * block_size] = lv[(i - 1) * block_size];
                 li[i * block_size] = li[(i - 1) * block_size];
             }
@@ -2769,44 +2769,44 @@ static void top_k_scan_merge_f32(
 
     item_ct1.barrier(sycl::access::fence_space::local_space);
 
-    if (tid != 0) {
-        return;
+    אם (tid != 0) {
+        החזר;
     }
 
     // Same treatment for the merge accumulator, past the per-lane region.
-    float * fv = shared_vals + (size_t) k * block_size;
-    int * fi = shared_idx + (size_t) k * block_size;
+    عائم * fv = shared_vals + (size_t) k * block_size;
+    صحيح * fi = shared_idx + (size_t) k * block_size;
 
-    for (int i = 0; i < k; i++) {
+    עבור (صحيح i = 0; i < k; i++) {
         fv[i] = -FLT_MAX;
         fi[i] = -1;
     }
 
-    float fkth = -FLT_MAX;
+    عائم fkth = -FLT_MAX;
 
     // Candidates are visited in the same (t, i) order as before, so tie-breaking is
     // unchanged.
-    for (int t = 0; t < block_size; t++) {
-        for (int i = 0; i < k; i++) {
-            float val = shared_vals[i * block_size + t];
+    עבור (صحيح t = 0; t < block_size; t++) {
+        עבור (صحيح i = 0; i < k; i++) {
+            عائم val = shared_vals[i * block_size + t];
 
-            if (val <= fkth) {
+            אם (val <= fkth) {
                 // Lane t's list is sorted descending, so once one of its entries loses
                 // to the k-th best, every later entry loses too. fkth only rises, so
                 // that stays true for the rest of the merge. This turns the merge from
                 // block_size*k steps into roughly block_size plus the candidates
                 // accepted.
-                break;
+                اكسر;
             }
 
-            int idx = shared_idx[i * block_size + t];
+            صحيح idx = shared_idx[i * block_size + t];
 
-            int pos = k - 1;
-            while (pos > 0 && val > fv[pos - 1]) {
+            صحيح pos = k - 1;
+            כלעוד (pos > 0 && val > fv[pos - 1]) {
                 pos--;
             }
 
-            for (int j = k - 1; j > pos; j--) {
+            עבור (صحيح j = k - 1; j > pos; j--) {
                 fv[j] = fv[j - 1];
                 fi[j] = fi[j - 1];
             }
@@ -2817,30 +2817,30 @@ static void top_k_scan_merge_f32(
         }
     }
 
-    if (out_vals) {
-        for (int i = 0; i < k; i++) {
+    אם (out_vals) {
+        עבור (صحيح i = 0; i < k; i++) {
             out_vals[i] = fv[i];
         }
     }
 
-    for (int i = 0; i < k; i++) {
+    עבור (صحيح i = 0; i < k; i++) {
         out_idx[i] = fi[i];
     }
 
-    if (swap01 && k > 1) {
+    אם (swap01 && k > 1) {
         int32_t temp = out_idx[0];
         out_idx[0] = out_idx[1];
         out_idx[1] = temp;
     }
 }
 
-static void top_k_f32_sycl(
+ساكن فراغ top_k_f32_sycl(
     ggml_backend_sycl_context & ctx,
-    const float * src,
+    ثابت عائم * src,
     int32_t * dst_indices,
-    const int64_t ncols,
-    const int64_t nrows,
-    const int k,
+    ثابت int64_t ncols,
+    ثابت int64_t nrows,
+    ثابت صحيح k,
     dpct::queue_ptr main_stream
 ) {
     // A row is scanned by exactly one work-group, so a vocabulary-sized row leaves the
@@ -2853,125 +2853,125 @@ static void top_k_f32_sycl(
     // (split_block + 1) * k * 8 bytes of SLM per group, so at the k <= 32 ceiling 128
     // lanes need about 33 KB, which leaves a single resident group per Xe-core. Revisit
     // if the supported k ever grows.
-    constexpr int split_block = 128;
-    constexpr int max_splits  = 128;
-    constexpr int min_cols    = 8192;
+    constexpr صحيح split_block = 128;
+    constexpr صحيح max_splits  = 128;
+    constexpr صحيح min_cols    = 8192;
 
-    int nsplit = 1;
-    if (ncols >= min_cols) {
+    صحيح nsplit = 1;
+    אם (ncols >= min_cols) {
         // A partition is then always >= split_block = 128 columns, hence always more than
         // the k <= 32 ceiling, so no pass is ever padded with -FLT_MAX sentinels.
-        const int64_t want = ncols / split_block;
-        nsplit = (int) (want > max_splits ? max_splits : want);
+        ثابت int64_t want = ncols / split_block;
+        nsplit = (صحيح) (want > max_splits ? max_splits : want);
     }
 
-    if (nsplit > 1) {
-        const int nchunk = (int) ((ncols + nsplit - 1) / nsplit);
-        const size_t ncand = (size_t) nrows * nsplit * k;
+    אם (nsplit > 1) {
+        ثابت صحيح nchunk = (صحيح) ((ncols + nsplit - 1) / nsplit);
+        ثابت size_t ncand = (size_t) nrows * nsplit * k;
 
-        ggml_sycl_pool_alloc<float>   part_vals(ctx.pool(), ncand);
+        ggml_sycl_pool_alloc<عائم>   part_vals(ctx.pool(), ncand);
         ggml_sycl_pool_alloc<int32_t> part_idx(ctx.pool(), ncand);
 
-        float *   pv = part_vals.get();
+        عائم *   pv = part_vals.get();
         int32_t * pi = part_idx.get();
 
-        const sycl::range<1> block_dims(split_block);
+        ثابت sycl::range<1> block_dims(split_block);
 
         main_stream->submit([&](sycl::handler &cgh) {
-            sycl::local_accessor<float, 1> shared_vals(sycl::range<1>((split_block + 1) * k), cgh);
-            sycl::local_accessor<int, 1> shared_idx(sycl::range<1>((split_block + 1) * k), cgh);
+            sycl::local_accessor<عائم, 1> shared_vals(sycl::range<1>((split_block + 1) * k), cgh);
+            sycl::local_accessor<صحيح, 1> shared_idx(sycl::range<1>((split_block + 1) * k), cgh);
 
             cgh.parallel_for(
                 sycl::nd_range<1>(sycl::range<1>(nrows * nsplit) * block_dims, block_dims),
                 [=](sycl::nd_item<1> item_ct1) {
-                    const int grp = item_ct1.get_group(0);
-                    const int row = grp / nsplit;
-                    const int part = grp % nsplit;
+                    ثابت صحيح grp = item_ct1.get_group(0);
+                    ثابت صحيح row = grp / nsplit;
+                    ثابت صحيح part = grp % nsplit;
 
-                    const int begin = part * nchunk;
-                    int end = begin + nchunk;
-                    if (end > (int) ncols) {
-                        end = (int) ncols;
+                    ثابت صحيح begin = part * nchunk;
+                    صحيح end = begin + nchunk;
+                    אם (end > (صحيح) ncols) {
+                        end = (صحيح) ncols;
                     }
 
                     top_k_scan_merge_f32(
                         src + (int64_t) row * ncols, nullptr, begin, end, k, split_block,
                         shared_vals.get_multi_ptr<sycl::access::decorated::no>().get(),
                         shared_idx.get_multi_ptr<sycl::access::decorated::no>().get(),
-                        pv + (size_t) grp * k, pi + (size_t) grp * k, false, item_ct1);
+                        pv + (size_t) grp * k, pi + (size_t) grp * k, שקר, item_ct1);
                 });
         });
 
         main_stream->submit([&](sycl::handler &cgh) {
-            sycl::local_accessor<float, 1> shared_vals(sycl::range<1>((split_block + 1) * k), cgh);
-            sycl::local_accessor<int, 1> shared_idx(sycl::range<1>((split_block + 1) * k), cgh);
+            sycl::local_accessor<عائم, 1> shared_vals(sycl::range<1>((split_block + 1) * k), cgh);
+            sycl::local_accessor<صحيح, 1> shared_idx(sycl::range<1>((split_block + 1) * k), cgh);
 
             cgh.parallel_for(
                 sycl::nd_range<1>(sycl::range<1>(nrows) * block_dims, block_dims),
                 [=](sycl::nd_item<1> item_ct1) {
-                    const int row = item_ct1.get_group(0);
-                    const size_t off = (size_t) row * nsplit * k;
+                    ثابت صحيح row = item_ct1.get_group(0);
+                    ثابت size_t off = (size_t) row * nsplit * k;
 
                     top_k_scan_merge_f32(
                         pv + off, pi + off, 0, nsplit * k, k, split_block,
                         shared_vals.get_multi_ptr<sycl::access::decorated::no>().get(),
                         shared_idx.get_multi_ptr<sycl::access::decorated::no>().get(),
-                        nullptr, dst_indices + (int64_t) row * k, true, item_ct1);
+                        nullptr, dst_indices + (int64_t) row * k, אמת, item_ct1);
                 });
         });
 
-        return;
+        החזר;
     }
 
-    const int block_size = 128;
+    ثابت صحيح block_size = 128;
 
-    const sycl::range<1> block_dims(block_size);
-    const sycl::range<1> grid_dims(nrows);
+    ثابت sycl::range<1> block_dims(block_size);
+    ثابت sycl::range<1> grid_dims(nrows);
 
     main_stream->submit([&](sycl::handler &cgh) {
-        sycl::local_accessor<float, 1> shared_vals(sycl::range<1>((block_size + 1) * k), cgh);
-        sycl::local_accessor<int, 1> shared_idx(sycl::range<1>((block_size + 1) * k), cgh);
+        sycl::local_accessor<عائم, 1> shared_vals(sycl::range<1>((block_size + 1) * k), cgh);
+        sycl::local_accessor<صحيح, 1> shared_idx(sycl::range<1>((block_size + 1) * k), cgh);
 
         cgh.parallel_for(
             sycl::nd_range<1>(grid_dims * block_dims, block_dims),
             [=](sycl::nd_item<1> item_ct1) {
-                const int row = item_ct1.get_group(0);
+                ثابت صحيح row = item_ct1.get_group(0);
 
-                if (row >= nrows) return;
+                אם (row >= nrows) החזר;
 
                 top_k_scan_merge_f32(
-                    src + (int64_t) row * ncols, nullptr, 0, (int) ncols, k, block_size,
+                    src + (int64_t) row * ncols, nullptr, 0, (صحيح) ncols, k, block_size,
                     shared_vals.get_multi_ptr<sycl::access::decorated::no>().get(),
                     shared_idx.get_multi_ptr<sycl::access::decorated::no>().get(),
-                    nullptr, dst_indices + (int64_t) row * k, true, item_ct1);
+                    nullptr, dst_indices + (int64_t) row * k, אמת, item_ct1);
             });
     });
 }
 
-static void argmax_f32_i32_sycl(const float *x, int *dst, const int ncols,
-                               const int nrows, queue_ptr stream) {
-    const sycl::range<3> block_dims(1, 1, SYCL_ARGMAX_BLOCK_SIZE);
-    const sycl::range<3> block_nums(1, nrows, 1);
-    const size_t shared_mem = 256 * sizeof(float);
+ساكن فراغ argmax_f32_i32_sycl(ثابت عائم *x, صحيح *dst, ثابت صحيح ncols,
+                               ثابت صحيح nrows, queue_ptr stream) {
+    ثابت sycl::range<3> block_dims(1, 1, SYCL_ARGMAX_BLOCK_SIZE);
+    ثابت sycl::range<3> block_nums(1, nrows, 1);
+    ثابت size_t shared_mem = 256 * حجم(عائم);
 
     stream->submit([&](sycl::handler &cgh) {
-        sycl::local_accessor<float, 1> shared_data(
-            sycl::range<1>(shared_mem/sizeof(float)), cgh);
-        sycl::local_accessor<int, 1> shared_indices(
-            sycl::range<1>(shared_mem/sizeof(float)), cgh);
+        sycl::local_accessor<عائم, 1> shared_data(
+            sycl::range<1>(shared_mem/حجم(عائم)), cgh);
+        sycl::local_accessor<صحيح, 1> shared_indices(
+            sycl::range<1>(shared_mem/حجم(عائم)), cgh);
 
         cgh.parallel_for(
             sycl::nd_range<3>(block_nums * block_dims, block_dims),
             [=](sycl::nd_item<3> item_ct1) {
-                const int tid = item_ct1.get_local_id(2);
-                const int row = item_ct1.get_global_id(1);
+                ثابت صحيح tid = item_ct1.get_local_id(2);
+                ثابت صحيح row = item_ct1.get_global_id(1);
 
-                float max_val = -INFINITY;
-                int max_idx = -1;
+                عائم max_val = -INFINITY;
+                صحيح max_idx = -1;
 
-                for (int col = tid; col < ncols; col += 256) {
-                    float val = x[row * ncols + col];
-                    if (val > max_val) {
+                עבור (صحيح col = tid; col < ncols; col += 256) {
+                    عائم val = x[row * ncols + col];
+                    אם (val > max_val) {
                         max_val = val;
                         max_idx = col;
                     }
@@ -2981,11 +2981,11 @@ static void argmax_f32_i32_sycl(const float *x, int *dst, const int ncols,
                 shared_indices[tid] = max_idx;
                 item_ct1.barrier(sycl::access::fence_space::local_space);
 
-                for (int stride = 256/2; stride > 0; stride >>= 1) {
-                    if (tid < stride) {
-                        float val1 = shared_data[tid];
-                        float val2 = shared_data[tid + stride];
-                        if (val2 > val1) {
+                עבור (صحيح stride = 256/2; stride > 0; stride >>= 1) {
+                    אם (tid < stride) {
+                        عائم val1 = shared_data[tid];
+                        عائم val2 = shared_data[tid + stride];
+                        אם (val2 > val1) {
                             shared_data[tid] = val2;
                             shared_indices[tid] = shared_indices[tid + stride];
                         }
@@ -2994,19 +2994,19 @@ static void argmax_f32_i32_sycl(const float *x, int *dst, const int ncols,
                 }
 
 
-                if (tid == 0) {
+                אם (tid == 0) {
                     dst[row] = shared_indices[0];
                 }
             });
     });
 }
-static void diag_mask_inf_f32_sycl(const float *x, float *dst,
-                                   const int ncols_x, const int nrows_x,
-                                   const int rows_per_channel, const int n_past,
+ساكن فراغ diag_mask_inf_f32_sycl(ثابت عائم *x, عائم *dst,
+                                   ثابت صحيح ncols_x, ثابت صحيح nrows_x,
+                                   ثابت صحيح rows_per_channel, ثابت صحيح n_past,
                                    queue_ptr stream) {
-    const sycl::range<3> block_dims(1, SYCL_DIAG_MASK_INF_BLOCK_SIZE, 1);
-    const int block_num_x = (ncols_x + SYCL_DIAG_MASK_INF_BLOCK_SIZE - 1) / SYCL_DIAG_MASK_INF_BLOCK_SIZE;
-    const sycl::range<3> block_nums(1, block_num_x, nrows_x);
+    ثابت sycl::range<3> block_dims(1, SYCL_DIAG_MASK_INF_BLOCK_SIZE, 1);
+    ثابت صحيح block_num_x = (ncols_x + SYCL_DIAG_MASK_INF_BLOCK_SIZE - 1) / SYCL_DIAG_MASK_INF_BLOCK_SIZE;
+    ثابت sycl::range<3> block_nums(1, block_num_x, nrows_x);
     stream->parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
                          [=](sycl::nd_item<3> item_ct1) {
                              diag_mask_inf_f32(x, dst, ncols_x,
@@ -3015,25 +3015,25 @@ static void diag_mask_inf_f32_sycl(const float *x, float *dst,
                          });
 }
 
-static dpct::err0 ggml_sycl_cpy_tensor_2d(void *dst,
-                                          const struct ggml_tensor *src,
+ساكن dpct::err0 ggml_sycl_cpy_tensor_2d(فراغ *dst,
+                                          ثابت بنية ggml_tensor *src,
                                           int64_t i3, int64_t i2,
                                           int64_t i1_low, int64_t i1_high,
-                                          queue_ptr stream) try {
+                                          queue_ptr stream) حاول {
 
     dpct::memcpy_direction kind;
-    char * src_ptr;
-    if (ggml_backend_buffer_is_host(src->buffer)) {
+    حرف * src_ptr;
+    אם (ggml_backend_buffer_is_host(src->buffer)) {
         kind = dpct::host_to_device;
         //GGML_SYCL_DEBUG("%s: Host buffer type src tensor\n", __func__);
-        src_ptr = (char *) src->data;
+        src_ptr = (حرف *) src->data;
         // GGML_SYCL_DEBUG("ggml_sycl_cpy_tensor_2d  GGML_BACKEND_TYPE_CPU src_ptr %p\n", src_ptr);
-    } else if (ggml_backend_buffer_is_sycl(src->buffer)) {
+    } אחרת אם (ggml_backend_buffer_is_sycl(src->buffer)) {
         // If buffer is a SYCL buffer
         //GGML_SYCL_DEBUG("%s: SYCL buffer type src tensor\n", __func__);
         kind    = dpct::device_to_device;
-        src_ptr = (char *) src->data;
-    } else if (ggml_backend_buffer_is_sycl_split(src->buffer)) {
+        src_ptr = (حرف *) src->data;
+    } אחרת אם (ggml_backend_buffer_is_sycl_split(src->buffer)) {
         /*
         If buffer is a SYCL split buffer
         */
@@ -3041,39 +3041,39 @@ static dpct::err0 ggml_sycl_cpy_tensor_2d(void *dst,
         GGML_ASSERT(i1_low == 0 && i1_high == src->ne[1]);
         kind = dpct::device_to_device;
         ggml_tensor_extra_gpu * extra = (ggml_tensor_extra_gpu *) src->extra;
-        int id;
+        صحيح id;
         SYCL_CHECK(CHECK_TRY_ERROR(
             id = get_current_device_id()));
         // GGML_SYCL_DEBUG("current device index %d\n", id);
-        src_ptr = (char *) extra->data_device[id];
-    } else {
+        src_ptr = (حرف *) extra->data_device[id];
+    } אחרת {
         // GGML_SYCL_DEBUG("GGML_ABORT("fatal error")\n");
         GGML_ABORT("fatal error");
     }
-    char * dst_ptr = (char *) dst;
+    حرف * dst_ptr = (حرف *) dst;
 
     GGML_TENSOR_LOCALS_1(int64_t, ne, src, ne);
     GGML_TENSOR_LOCALS(int64_t, nb, src, nb);
-    const enum ggml_type type = src->type;
-    const int64_t ts = ggml_type_size(type);
-    const int64_t bs = ggml_blck_size(type);
+    ثابت تعداد ggml_type type = src->type;
+    ثابت int64_t ts = ggml_type_size(type);
+    ثابت int64_t bs = ggml_blck_size(type);
     int64_t i1_diff = i1_high - i1_low;
 
-    const char * x = src_ptr + i1_low*nb1 + i2*nb2 + i3*nb3;
-    if (nb0 == ts && nb1 == ts*ne0/bs) {
+    ثابت حرف * x = src_ptr + i1_low*nb1 + i2*nb2 + i3*nb3;
+    אם (nb0 == ts && nb1 == ts*ne0/bs) {
         // GGML_SYCL_DEBUG("stream->memcpy: dst_ptr=%p, x=%p, size=%lu\n", dst_ptr, x, i1_diff * nb1);
         // return CHECK_TRY_ERROR(stream->memcpy(dst_ptr, x, i1_diff * nb1));
-        return CHECK_TRY_ERROR(dpct::async_dpct_memcpy(dst_ptr, x, i1_diff * nb1,
+        החזר CHECK_TRY_ERROR(dpct::async_dpct_memcpy(dst_ptr, x, i1_diff * nb1,
                                     kind, *stream));
 
-    } else if (nb0 == ts) {
-        return CHECK_TRY_ERROR(
+    } אחרת אם (nb0 == ts) {
+        החזר CHECK_TRY_ERROR(
             dpct::async_dpct_memcpy(dst_ptr, ts * ne0 / bs, x, nb1,
                                     ts * ne0 / bs, i1_diff, kind, *stream));
-    } else {
-        for (int64_t i1 = 0; i1 < i1_diff; i1++) {
-            const void * rx = (const void *) ((const char *) x + i1*nb1);
-            void * rd = (void *) (dst_ptr + i1*ts*ne0/bs);
+    } אחרת {
+        עבור (int64_t i1 = 0; i1 < i1_diff; i1++) {
+            ثابت فراغ * rx = (ثابت فراغ *) ((ثابت حرف *) x + i1*nb1);
+            فراغ * rd = (فراغ *) (dst_ptr + i1*ts*ne0/bs);
             // pretend the row is a matrix with cols=1
             dpct::err0 r = CHECK_TRY_ERROR(dpct::async_dpct_memcpy(
                 rd, ts / bs, rx, nb0, ts / bs, ne0, kind, *stream));
@@ -3084,72 +3084,72 @@ static dpct::err0 ggml_sycl_cpy_tensor_2d(void *dst,
             DPCT1000:86: Error handling if-stmt was detected but could not be
             rewritten.
             */
-            if (r != 0) return r;
+            אם (r != 0) החזר r;
         }
-        return 0;
+        החזר 0;
     }
 }
-catch (sycl::exception const &exc) {
+امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
             << ", line:" << __LINE__ << std::endl;
   std::exit(1);
 }
 
-inline void ggml_sycl_op_mul_mat_sycl(
+مضمن فراغ ggml_sycl_op_mul_mat_sycl(
     ggml_backend_sycl_context & ctx,
-    const ggml_tensor *src0, const ggml_tensor *src1, ggml_tensor *dst,
-    const char *src0_dd_i, const float *src1_ddf_i, const char *src1_ddq_i,
-    float *dst_dd_i, const int64_t row_low, const int64_t row_high,
-    const int64_t src1_ncols, const int64_t src1_padded_row_size,
-    const queue_ptr &stream) try {
+    ثابت ggml_tensor *src0, ثابت ggml_tensor *src1, ggml_tensor *dst,
+    ثابت حرف *src0_dd_i, ثابت عائم *src1_ddf_i, ثابت حرف *src1_ddq_i,
+    عائم *dst_dd_i, ثابت int64_t row_low, ثابت int64_t row_high,
+    ثابت int64_t src1_ncols, ثابت int64_t src1_padded_row_size,
+    ثابت queue_ptr &stream) حاول {
 
     GGML_ASSERT(src0_dd_i  != nullptr);
     GGML_ASSERT(src1_ddf_i != nullptr);
     GGML_ASSERT(dst_dd_i   != nullptr);
 
-    const int64_t ne00 = src0->ne[0];
-    const int64_t ne10 = src1->ne[0];
+    ثابت int64_t ne00 = src0->ne[0];
+    ثابت int64_t ne10 = src1->ne[0];
     GGML_ASSERT(ne00 == ne10);
 
-    const int64_t row_diff = row_high - row_low;
+    ثابت int64_t row_diff = row_high - row_low;
 
-    int id;
+    صحيح id;
     SYCL_CHECK(
         CHECK_TRY_ERROR(id = get_current_device_id()));
 
-    const int64_t ne0 = dst->ne[0]; // used by MKL only
+    ثابت int64_t ne0 = dst->ne[0]; // used by MKL only
     // the main device has a larger memory buffer to hold the results from all GPUs
     // ldc == nrows of the matrix that cuBLAS writes into
-    int ldc = id == ctx.device ? ne0 : row_diff; // used by MKL only
+    صحيح ldc = id == ctx.device ? ne0 : row_diff; // used by MKL only
 
 #ifdef GGML_SYCL_F16
-    bool use_fp16 = true;  // TODO(Yu) SYCL capability check
-#else
-    bool use_fp16 = false;
+    منطقي use_fp16 = אמת;  // TODO(Yu) SYCL capability check
+#אחרת
+    منطقي use_fp16 = שקר;
 #endif
 
-#if GGML_SYCL_DNNL && defined(GGML_SYCL_HAS_BF16)
+#אם GGML_SYCL_DNNL && defined(GGML_SYCL_HAS_BF16)
     // Fast path for bf16 src0
-    if (src0->type == GGML_TYPE_BF16 && g_ggml_sycl_enable_dnn &&
+    אם (src0->type == GGML_TYPE_BF16 && g_ggml_sycl_enable_dnn &&
         ggml_sycl_dnnl_has_optimized_gemm(ggml_sycl_get_device()) && ggml_is_contiguous(src0) &&
         row_diff == src0->ne[1]) {
         using bf16_t = sycl::ext::oneapi::bfloat16;
         ggml_sycl_pool_alloc<bf16_t> src1_as_bf16(ctx.pool(), src1_ncols*ne10);
-        if (src1->type != GGML_TYPE_BF16) {
-            const to_bf16_sycl_t to_bf16_sycl = ggml_get_to_bf16_sycl(src1->type, dst);
+        אם (src1->type != GGML_TYPE_BF16) {
+            ثابت to_bf16_sycl_t to_bf16_sycl = ggml_get_to_bf16_sycl(src1->type, dst);
             GGML_ASSERT(to_bf16_sycl != nullptr);
             to_bf16_sycl(src1_ddf_i, src1_as_bf16.get(), src1_ncols*ne10, stream);
-        } else {
-            stream->memcpy(src1_as_bf16.get(), src1_ddf_i, src1_ncols*ne10*sizeof(bf16_t));
+        } אחרת {
+            stream->memcpy(src1_as_bf16.get(), src1_ddf_i, src1_ncols*ne10*حجم(bf16_t));
         }
         DnnlGemmWrapper::row_gemm(ctx, row_diff, src1_ncols, ne10,
                                   src0_dd_i, DnnlGemmWrapper::to_dt<bf16_t>(),
                                   src1_as_bf16.get(), DnnlGemmWrapper::to_dt<bf16_t>(),
-                                  dst_dd_i, DnnlGemmWrapper::to_dt<float>(), stream);
+                                  dst_dd_i, DnnlGemmWrapper::to_dt<عائم>(), stream);
         GGML_UNUSED(dst);
         GGML_UNUSED(src1_ddq_i);
         GGML_UNUSED(src1_padded_row_size);
-        return;
+        החזר;
     }
 #endif
 
@@ -3158,59 +3158,59 @@ inline void ggml_sycl_op_mul_mat_sycl(
     // decodes the weight bytes in place, so an installed persistent reorder must be
     // visible to it: pass the flag through; types without an SoA A-stage decline
     // inside and this falls through to the reorder-aware conversion route below.
-    bool src0_reordered = false;
-    if (const auto * src0_extra = static_cast<const ggml_tensor_extra_gpu *>(src0->extra)) {
+    منطقي src0_reordered = שקר;
+    אם (ثابت auto * src0_extra = static_cast<ثابت ggml_tensor_extra_gpu *>(src0->extra)) {
         src0_reordered = src0_extra->optimized_feature.reorder;
     }
-    if (ggml_is_quantized(src0->type) && ggml_is_contiguous(src0) && row_diff == src0->ne[1] &&
+    אם (ggml_is_quantized(src0->type) && ggml_is_contiguous(src0) && row_diff == src0->ne[1] &&
         ggml_sycl_fused_dequant_gemm(src0->type, src0_reordered, src0_dd_i, src1_ddf_i, src1->type, ggml_sycl_src1_prec(dst), dst_dd_i,
                                      row_diff, src1_ncols, ne10, ldc, ctx.pool(), stream)) {
-        return;
+        החזר;
     }
 
     // the f16 route converts src1 to f16 [TAG_GGML_PREC]
     use_fp16 = use_fp16 && ggml_sycl_src1_f16_ok(dst);
-    if ((src0->type == GGML_TYPE_F16 || ggml_is_quantized(src0->type)) && use_fp16 && ggml_is_contiguous(src0) &&
+    אם ((src0->type == GGML_TYPE_F16 || ggml_is_quantized(src0->type)) && use_fp16 && ggml_is_contiguous(src0) &&
         row_diff == src0->ne[1] && dst->op_params[0] == GGML_PREC_DEFAULT) {
         ggml_sycl_pool_alloc<sycl::half> src1_as_f16(ctx.pool());
-        if (src1->type != GGML_TYPE_F16) {
+        אם (src1->type != GGML_TYPE_F16) {
             scope_op_debug_print scope_dbg_print(__func__, "/to_fp16_sycl", dst, /*num_src=*/2,
                                                  " : converting src1 to fp16");
-            const to_fp16_sycl_t to_fp16_sycl = ggml_get_to_fp16_sycl(src1->type, dst);
+            ثابت to_fp16_sycl_t to_fp16_sycl = ggml_get_to_fp16_sycl(src1->type, dst);
             GGML_ASSERT(to_fp16_sycl != nullptr);
             size_t ne = src1_ncols*ne10;
             src1_as_f16.alloc(ne);
             to_fp16_sycl(src1_ddf_i, src1_as_f16.get(), ne, stream);
         }
-        const sycl::half *src1_ptr = src1->type == GGML_TYPE_F16
-                ? (const sycl::half *)src1_ddf_i
+        ثابت sycl::half *src1_ptr = src1->type == GGML_TYPE_F16
+                ? (ثابت sycl::half *)src1_ddf_i
                 : src1_as_f16.get();
 
         ggml_sycl_pool_alloc<sycl::half> src0_as_f16(ctx.pool());
-        if (src0->type != GGML_TYPE_F16) {
+        אם (src0->type != GGML_TYPE_F16) {
             scope_op_debug_print scope_dbg_print(__func__, "/to_fp16_sycl", dst, /*num_src=*/2,
                                                  " : converting src0 to fp16");
-            const to_fp16_sycl_t to_fp16_sycl = ggml_get_to_fp16_sycl(src0->type, dst);
+            ثابت to_fp16_sycl_t to_fp16_sycl = ggml_get_to_fp16_sycl(src0->type, dst);
             GGML_ASSERT(to_fp16_sycl != nullptr);
             size_t ne = row_diff*ne00;
             src0_as_f16.alloc(ne);
             to_fp16_sycl(src0_dd_i, src0_as_f16.get(), ne, stream);
         }
-        const sycl::half *src0_ptr = src0->type == GGML_TYPE_F16
-                                         ? (const sycl::half *)src0_dd_i
+        ثابت sycl::half *src0_ptr = src0->type == GGML_TYPE_F16
+                                         ? (ثابت sycl::half *)src0_dd_i
                                          : src0_as_f16.get();
 
-#if GGML_SYCL_DNNL
-        if (g_ggml_sycl_enable_dnn && ggml_sycl_dnnl_has_optimized_gemm(ggml_sycl_get_device())) {
+#אם GGML_SYCL_DNNL
+        אם (g_ggml_sycl_enable_dnn && ggml_sycl_dnnl_has_optimized_gemm(ggml_sycl_get_device())) {
                 DnnlGemmWrapper::row_gemm(ctx,row_diff, src1_ncols , ne10, src0_ptr,
                                      DnnlGemmWrapper::to_dt<sycl::half>(), src1_ptr, DnnlGemmWrapper::to_dt<sycl::half>(),
-                                      dst_dd_i, DnnlGemmWrapper::to_dt<float>(), stream);
+                                      dst_dd_i, DnnlGemmWrapper::to_dt<عائم>(), stream);
         }
-        else
+        אחרת
 #endif
         {
-            const float alpha = 1.0f;
-            const float beta  = 0.0f;
+            ثابت عائم alpha = 1.0f;
+            ثابت عائم beta  = 0.0f;
             SYCL_CHECK(CHECK_TRY_ERROR(dpct::gemm(
                 *stream, oneapi::mkl::transpose::trans,
                 oneapi::mkl::transpose::nontrans, row_diff, src1_ncols, ne10,
@@ -3219,42 +3219,42 @@ inline void ggml_sycl_op_mul_mat_sycl(
                 dst_dd_i, dpct::library_data_t::real_float, ldc,
                 dpct::library_data_t::real_float)));
         }
-    } else {
-        ggml_sycl_pool_alloc<float> src0_ddq_as_f32(ctx.pool());
-        ggml_sycl_pool_alloc<float> src1_ddq_as_f32(ctx.pool());
-        if (src0->type != GGML_TYPE_F32) {
+    } אחרת {
+        ggml_sycl_pool_alloc<عائم> src0_ddq_as_f32(ctx.pool());
+        ggml_sycl_pool_alloc<عائم> src1_ddq_as_f32(ctx.pool());
+        אם (src0->type != GGML_TYPE_F32) {
             scope_op_debug_print scope_dbg_print(__func__, "/to_fp32_sycl", dst, /*num_src=*/2,
                                                  " : converting src0 to fp32");
-            const to_fp32_sycl_t to_fp32_sycl = ggml_get_to_fp32_sycl(src0->type, dst);
+            ثابت to_fp32_sycl_t to_fp32_sycl = ggml_get_to_fp32_sycl(src0->type, dst);
             GGML_ASSERT(to_fp32_sycl != nullptr);
             src0_ddq_as_f32.alloc(row_diff*ne00);
             to_fp32_sycl(src0_dd_i, src0_ddq_as_f32.get(), row_diff*ne00, stream);
         }
-        if (src1->type != GGML_TYPE_F32) {
+        אם (src1->type != GGML_TYPE_F32) {
             scope_op_debug_print scope_dbg_print(__func__, "/to_fp32_sycl", dst, /*num_src=*/2,
                                                  " : converting src1 to fp32");
-            const to_fp32_sycl_t to_fp32_sycl = ggml_get_to_fp32_sycl(src1->type, dst);
+            ثابت to_fp32_sycl_t to_fp32_sycl = ggml_get_to_fp32_sycl(src1->type, dst);
             GGML_ASSERT(to_fp32_sycl != nullptr);
             src1_ddq_as_f32.alloc(src1_ncols*ne10);
             to_fp32_sycl(src1_ddf_i, src1_ddq_as_f32.get(), src1_ncols*ne10, stream);
         }
-        const float * src0_ddf_i = src0->type == GGML_TYPE_F32 ? (const float *) src0_dd_i : src0_ddq_as_f32.get();
-        const float * src1_ddf1_i = src1->type == GGML_TYPE_F32 ? (const float *) src1_ddf_i : src1_ddq_as_f32.get();
+        ثابت عائم * src0_ddf_i = src0->type == GGML_TYPE_F32 ? (ثابت عائم *) src0_dd_i : src0_ddq_as_f32.get();
+        ثابت عائم * src1_ddf1_i = src1->type == GGML_TYPE_F32 ? (ثابت عائم *) src1_ddf_i : src1_ddq_as_f32.get();
 
         {
-#if GGML_SYCL_DNNL
-            const int64_t gemm_flops = (int64_t)row_diff * src1_ncols * ne10;
-            const bool use_mkl_direct = gemm_flops < 256 * 256 * 256;
-            if (g_ggml_sycl_enable_dnn && !use_mkl_direct && ggml_sycl_dnnl_has_optimized_gemm(ggml_sycl_get_device())) {
+#אם GGML_SYCL_DNNL
+            ثابت int64_t gemm_flops = (int64_t)row_diff * src1_ncols * ne10;
+            ثابت منطقي use_mkl_direct = gemm_flops < 256 * 256 * 256;
+            אם (g_ggml_sycl_enable_dnn && !use_mkl_direct && ggml_sycl_dnnl_has_optimized_gemm(ggml_sycl_get_device())) {
                 DnnlGemmWrapper::row_gemm(ctx, row_diff, src1_ncols, ne10, src0_ddf_i,
-                                          DnnlGemmWrapper::to_dt<float>(), src1_ddf1_i, DnnlGemmWrapper::to_dt<float>(),
-                                          dst_dd_i, DnnlGemmWrapper::to_dt<float>(), stream);
+                                          DnnlGemmWrapper::to_dt<عائم>(), src1_ddf1_i, DnnlGemmWrapper::to_dt<عائم>(),
+                                          dst_dd_i, DnnlGemmWrapper::to_dt<عائم>(), stream);
             }
-            else
+            אחרת
 #endif
             {
-                const float alpha = 1.0f;
-                const float beta  = 0.0f;
+                ثابت عائم alpha = 1.0f;
+                ثابت عائم beta  = 0.0f;
                 SYCL_CHECK(CHECK_TRY_ERROR(oneapi::mkl::blas::column_major::gemm(
                     *stream, oneapi::mkl::transpose::trans, oneapi::mkl::transpose::nontrans, row_diff,
                     src1_ncols, ne10, dpct::get_value(&alpha, *stream), src0_ddf_i, ne00, src1_ddf1_i, ne10,
@@ -3266,55 +3266,55 @@ inline void ggml_sycl_op_mul_mat_sycl(
     GGML_UNUSED(src1_ddq_i);
     GGML_UNUSED(src1_padded_row_size);
 }
-catch (sycl::exception const &exc) {
+امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
             << ", line:" << __LINE__ << std::endl;
   std::exit(1);
 }
 
-inline void ggml_sycl_op_sum(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
+مضمن فراغ ggml_sycl_op_sum(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
     GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
     dpct::queue_ptr main_stream = ctx.stream();
     SYCL_CHECK(ggml_sycl_set_device(ctx.device));
-    const float * src0_dd = static_cast<const float *>(dst->src[0]->data);
-    float *       dst_dd  = static_cast<float *>(dst->data);
+    ثابت عائم * src0_dd = static_cast<ثابت عائم *>(dst->src[0]->data);
+    عائم *       dst_dd  = static_cast<عائم *>(dst->data);
 
-    const int64_t ne = ggml_nelements(dst->src[0]);
+    ثابت int64_t ne = ggml_nelements(dst->src[0]);
     // the kernel indexes in 32-bit
     GGML_ASSERT(ne <= INT32_MAX);
 
     sum_rows_f32_sycl(src0_dd, dst_dd, ne, 1, main_stream);
 }
 
-inline void ggml_sycl_op_sum_rows(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+مضمن فراغ ggml_sycl_op_sum_rows(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
     dpct::queue_ptr main_stream = ctx.stream();
     SYCL_CHECK(ggml_sycl_set_device(ctx.device));
-    const float * src0_dd = static_cast<const float *>(dst->src[0]->data);
-    float *       dst_dd  = static_cast<float *>(dst->data);
+    ثابت عائم * src0_dd = static_cast<ثابت عائم *>(dst->src[0]->data);
+    عائم *       dst_dd  = static_cast<عائم *>(dst->data);
 
-    const int64_t ncols = dst->src[0]->ne[0];
-    const int64_t nrows = ggml_nrows(dst->src[0]);
+    ثابت int64_t ncols = dst->src[0]->ne[0];
+    ثابت int64_t nrows = ggml_nrows(dst->src[0]);
     // the kernel indexes in 32-bit
     GGML_ASSERT(ncols * nrows <= INT32_MAX);
 
     sum_rows_f32_sycl(src0_dd, dst_dd, ncols, nrows, main_stream);
 }
 
-inline void ggml_sycl_op_mean(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+مضمن فراغ ggml_sycl_op_mean(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32);
     GGML_ASSERT(dst->type == GGML_TYPE_F32);
 
     dpct::queue_ptr main_stream = ctx.stream();
     SYCL_CHECK(ggml_sycl_set_device(ctx.device));
 
-    const float * src0_dd = static_cast<const float *>(dst->src[0]->data);
-    float *       dst_dd  = static_cast<float *>(dst->data);
+    ثابت عائم * src0_dd = static_cast<ثابت عائم *>(dst->src[0]->data);
+    عائم *       dst_dd  = static_cast<عائم *>(dst->data);
 
-    const int64_t ncols = dst->src[0]->ne[0];
-    const int64_t nrows = ggml_nrows(dst->src[0]);
+    ثابت int64_t ncols = dst->src[0]->ne[0];
+    ثابت int64_t nrows = ggml_nrows(dst->src[0]);
     // the kernel indexes in 32-bit
     GGML_ASSERT(ncols * nrows <= INT32_MAX);
 
@@ -3329,26 +3329,26 @@ inline void ggml_sycl_op_mean(ggml_backend_sycl_context & ctx, ggml_tensor * dst
 }
 
 
-inline void ggml_sycl_op_argsort(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+مضمن فراغ ggml_sycl_op_argsort(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32);
     GGML_ASSERT(dst->type == GGML_TYPE_I32);
     dpct::queue_ptr main_stream = ctx.stream();
     SYCL_CHECK(ggml_sycl_set_device(ctx.device));
-    const float * src0_dd = static_cast<const float *>(dst->src[0]->data);
+    ثابت عائم * src0_dd = static_cast<ثابت عائم *>(dst->src[0]->data);
     int32_t *       dst_dd  = static_cast<int32_t *>(dst->data);
 
 
-    const int64_t ncols = dst->src[0]->ne[0];
-    const int64_t nrows = ggml_nrows(dst->src[0]);
+    ثابت int64_t ncols = dst->src[0]->ne[0];
+    ثابت int64_t nrows = ggml_nrows(dst->src[0]);
 
-    enum ggml_sort_order order = (enum ggml_sort_order) dst->op_params[0];
+    تعداد ggml_sort_order order = (تعداد ggml_sort_order) dst->op_params[0];
 
-    argsort_f32_i32_sycl(src0_dd, (int *)dst_dd, ncols, nrows, order,
+    argsort_f32_i32_sycl(src0_dd, (صحيح *)dst_dd, ncols, nrows, order,
                          main_stream, ctx.device, ctx.pool());
 }
 
-static void ggml_sycl_op_top_k(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    const ggml_tensor * src0 = dst->src[0];
+ساكن فراغ ggml_sycl_op_top_k(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ثابت ggml_tensor * src0 = dst->src[0];
 
     GGML_ASSERT(src0);
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
@@ -3358,93 +3358,93 @@ static void ggml_sycl_op_top_k(ggml_backend_sycl_context & ctx, ggml_tensor * ds
     dpct::queue_ptr main_stream = ctx.stream();
     SYCL_CHECK(ggml_sycl_set_device(ctx.device));
 
-    const float * src0_dd = static_cast<const float *>(src0->data);
+    ثابت عائم * src0_dd = static_cast<ثابت عائم *>(src0->data);
     int32_t * dst_dd = static_cast<int32_t *>(dst->data);
 
-    const int k = dst->ne[0];
-    const int64_t ncols = src0->ne[0];
-    const int64_t nrows = ggml_nrows(src0);
+    ثابت صحيح k = dst->ne[0];
+    ثابت int64_t ncols = src0->ne[0];
+    ثابت int64_t nrows = ggml_nrows(src0);
 
     GGML_ASSERT(k > 0);
     GGML_ASSERT(k <= ncols);
 
-    if (k <= SYCL_TOP_K_SCAN_MERGE_MAX_K) {
+    אם (k <= SYCL_TOP_K_SCAN_MERGE_MAX_K) {
         top_k_f32_sycl(ctx, src0_dd, dst_dd, ncols, nrows, k, main_stream);
-    } else {
+    } אחרת {
         ggml_sycl_top_k_radix(ctx, src0_dd, dst_dd, ncols, nrows, k, main_stream);
     }
 }
 
-inline void ggml_sycl_op_argmax(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+مضمن فراغ ggml_sycl_op_argmax(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_I32);
 
     dpct::queue_ptr main_stream = ctx.stream();
     SYCL_CHECK(ggml_sycl_set_device(ctx.device));
-    const float * src0_dd = static_cast<const float *>(dst->src[0]->data);
+    ثابت عائم * src0_dd = static_cast<ثابت عائم *>(dst->src[0]->data);
     int32_t *       dst_dd  = static_cast<int32_t *>(dst->data);
 
-    const int64_t ncols = dst->src[0]->ne[0];
-    const int64_t nrows = ggml_nrows(dst->src[0]);
+    ثابت int64_t ncols = dst->src[0]->ne[0];
+    ثابت int64_t nrows = ggml_nrows(dst->src[0]);
     // the kernel indexes in 32-bit
     GGML_ASSERT(ncols * nrows <= INT32_MAX);
 
     argmax_f32_i32_sycl(src0_dd, dst_dd, ncols, nrows, main_stream);
 }
 
-inline void ggml_sycl_op_diag_mask_inf(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+مضمن فراغ ggml_sycl_op_diag_mask_inf(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
     dpct::queue_ptr main_stream = ctx.stream();
     SYCL_CHECK(ggml_sycl_set_device(ctx.device));
-    const float * src0_dd = static_cast<const float *>(dst->src[0]->data);
-    float *       dst_dd  = static_cast<float *>(dst->data);
+    ثابت عائم * src0_dd = static_cast<ثابت عائم *>(dst->src[0]->data);
+    عائم *       dst_dd  = static_cast<عائم *>(dst->data);
 
-    const int64_t ne00 = dst->src[0]->ne[0];
-    const int64_t ne01 = dst->src[0]->ne[1];
-    const int nrows0 = ggml_nrows(dst->src[0]);
+    ثابت int64_t ne00 = dst->src[0]->ne[0];
+    ثابت int64_t ne01 = dst->src[0]->ne[1];
+    ثابت صحيح nrows0 = ggml_nrows(dst->src[0]);
     // the kernel indexes in 32-bit
     GGML_ASSERT(ne00 * nrows0 <= INT32_MAX);
 
-    const int n_past = ((int32_t *) dst->op_params)[0];
+    ثابت صحيح n_past = ((int32_t *) dst->op_params)[0];
 
     diag_mask_inf_f32_sycl(src0_dd, dst_dd, ne00, nrows0, ne01, n_past, main_stream);
 }
 
-static void tri_f32_sycl(
-    const float * src,
-    float * dst,
-    const int64_t ne0,
-    const int64_t ne1,
-    const int64_t ne2,
-    const int64_t ne3,
-    const ggml_tri_type ttype,
+ساكن فراغ tri_f32_sycl(
+    ثابت عائم * src,
+    عائم * dst,
+    ثابت int64_t ne0,
+    ثابت int64_t ne1,
+    ثابت int64_t ne2,
+    ثابت int64_t ne3,
+    ثابت ggml_tri_type ttype,
     dpct::queue_ptr main_stream
 ) {
-    const size_t total = (size_t) ne0 * (size_t) ne1 * (size_t) ne2 * (size_t) ne3;
+    ثابت size_t total = (size_t) ne0 * (size_t) ne1 * (size_t) ne2 * (size_t) ne3;
 
     main_stream->parallel_for(sycl::range<1>(total), [=](sycl::id<1> tid) {
-        const int64_t idx = (int64_t) tid[0];
+        ثابت int64_t idx = (int64_t) tid[0];
 
-        const int64_t i0 = idx % ne0;
-        const int64_t t1 = idx / ne0;
-        const int64_t i1 = t1 % ne1;
+        ثابت int64_t i0 = idx % ne0;
+        ثابت int64_t t1 = idx / ne0;
+        ثابت int64_t i1 = t1 % ne1;
 
-        bool keep = false;
-        switch (ttype) {
-            case GGML_TRI_TYPE_LOWER:      keep = (i0 <  i1); break;
-            case GGML_TRI_TYPE_LOWER_DIAG: keep = (i0 <= i1); break;
-            case GGML_TRI_TYPE_UPPER:      keep = (i0 >  i1); break;
-            case GGML_TRI_TYPE_UPPER_DIAG: keep = (i0 >= i1); break;
-            default: keep = false; break;
+        منطقي keep = שקר;
+        بدل (ttype) {
+            حالة GGML_TRI_TYPE_LOWER:      keep = (i0 <  i1); اكسر;
+            حالة GGML_TRI_TYPE_LOWER_DIAG: keep = (i0 <= i1); اكسر;
+            حالة GGML_TRI_TYPE_UPPER:      keep = (i0 >  i1); اكسر;
+            حالة GGML_TRI_TYPE_UPPER_DIAG: keep = (i0 >= i1); اكسر;
+            افتراضي: keep = שקר; اكسر;
         }
 
         dst[idx] = keep ? src[idx] : 0.0f;
     });
 }
 
-static void ggml_sycl_op_tri(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    const ggml_tensor * src0 = dst->src[0];
+ساكن فراغ ggml_sycl_op_tri(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ثابت ggml_tensor * src0 = dst->src[0];
     GGML_ASSERT(src0);
 
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
@@ -3456,32 +3456,32 @@ static void ggml_sycl_op_tri(ggml_backend_sycl_context & ctx, ggml_tensor * dst)
     dpct::queue_ptr main_stream = ctx.stream();
     SYCL_CHECK(ggml_sycl_set_device(ctx.device));
 
-    const float * src0_dd = static_cast<const float *>(src0->data);
-    float *       dst_dd  = static_cast<float *>(dst->data);
+    ثابت عائم * src0_dd = static_cast<ثابت عائم *>(src0->data);
+    عائم *       dst_dd  = static_cast<عائم *>(dst->data);
 
-    const ggml_tri_type ttype = (ggml_tri_type) ggml_get_op_params_i32(dst, 0);
+    ثابت ggml_tri_type ttype = (ggml_tri_type) ggml_get_op_params_i32(dst, 0);
 
-    const int64_t ne0 = src0->ne[0];
-    const int64_t ne1 = src0->ne[1];
-    const int64_t ne2 = src0->ne[2];
-    const int64_t ne3 = src0->ne[3];
+    ثابت int64_t ne0 = src0->ne[0];
+    ثابت int64_t ne1 = src0->ne[1];
+    ثابت int64_t ne2 = src0->ne[2];
+    ثابت int64_t ne3 = src0->ne[3];
 
     tri_f32_sycl(src0_dd, dst_dd, ne0, ne1, ne2, ne3, ttype, main_stream);
 }
 
 
-inline void ggml_sycl_op_scale(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+مضمن فراغ ggml_sycl_op_scale(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
     dpct::queue_ptr main_stream = ctx.stream();
     SYCL_CHECK(ggml_sycl_set_device(ctx.device));
-    const float * src0_dd = static_cast<const float *>(dst->src[0]->data);
-    float *       dst_dd  = static_cast<float *>(dst->data);
+    ثابت عائم * src0_dd = static_cast<ثابت عائم *>(dst->src[0]->data);
+    عائم *       dst_dd  = static_cast<عائم *>(dst->data);
 
-    float scale;
-    float bias;
-    memcpy(&scale, (float *) dst->op_params + 0, sizeof(float));
-    memcpy(&bias,  (float *) dst->op_params + 1, sizeof(float));
+    عائم scale;
+    عائم bias;
+    memcpy(&scale, (عائم *) dst->op_params + 0, حجم(عائم));
+    memcpy(&bias,  (عائم *) dst->op_params + 1, حجم(عائم));
 
     // the kernel indexes in 32-bit
     GGML_ASSERT(ggml_nelements(dst->src[0]) <= INT32_MAX);
@@ -3494,29 +3494,29 @@ inline void ggml_sycl_op_scale(ggml_backend_sycl_context & ctx, ggml_tensor * ds
     SYCL_CHECK(0);
 }
 
-static void ggml_sycl_set_peer_access(const int n_tokens, [[maybe_unused]] int main_device) {
-    static bool peer_access_enabled = false;
+ساكن فراغ ggml_sycl_set_peer_access(ثابت صحيح n_tokens, [[maybe_unused]] صحيح main_device) {
+    ساكن منطقي peer_access_enabled = שקר;
 
-    const bool enable_peer_access = n_tokens <= GGML_SYCL_PEER_MAX_BATCH_SIZE;
+    ثابت منطقي enable_peer_access = n_tokens <= GGML_SYCL_PEER_MAX_BATCH_SIZE;
 
-    if (peer_access_enabled == enable_peer_access) {
-        return;
+    אם (peer_access_enabled == enable_peer_access) {
+        החזר;
     }
 
 #ifdef NDEBUG
-    for (int i = 0; i < ggml_sycl_info().device_count; ++i) {
+    עבור (صحيح i = 0; i < ggml_sycl_info().device_count; ++i) {
         SYCL_CHECK(ggml_sycl_set_device(i));
     }
 
-    for (int i = 0; i < ggml_sycl_info().device_count; ++i) {
+    עבור (صحيح i = 0; i < ggml_sycl_info().device_count; ++i) {
         SYCL_CHECK(ggml_sycl_set_device(i));
 
-        for (int id_other = 0; id_other < ggml_sycl_info().device_count; ++id_other) {
-            if (i == id_other) {
-                continue;
+        עבור (صحيح id_other = 0; id_other < ggml_sycl_info().device_count; ++id_other) {
+            אם (i == id_other) {
+                استمر;
             }
-            if (i != main_device && id_other != main_device) {
-                continue;
+            אם (i != main_device && id_other != main_device) {
+                استمر;
             }
 
             // int can_access_peer;
@@ -3535,66 +3535,66 @@ static void ggml_sycl_set_peer_access(const int n_tokens, [[maybe_unused]] int m
     peer_access_enabled = enable_peer_access;
 }
 
-template <template <int> typename quantize_f>
-static void ggml_sycl_op_mul_mat(ggml_backend_sycl_context & ctx, const ggml_tensor *src0,
-                                 const ggml_tensor *src1, ggml_tensor *dst,
-                                 ggml_sycl_op_mul_mat_t op) try {
+template <template <صحيح> typename quantize_f>
+ساكن فراغ ggml_sycl_op_mul_mat(ggml_backend_sycl_context & ctx, ثابت ggml_tensor *src0,
+                                 ثابت ggml_tensor *src1, ggml_tensor *dst,
+                                 ggml_sycl_op_mul_mat_t op) حاول {
 
     GGML_TENSOR_LOCALS(int64_t, ne0, src0, ne);
 
     GGML_TENSOR_LOCALS(int64_t, ne1, src1, ne);
-    const int64_t nrows1 = ggml_nrows(src1);
+    ثابت int64_t nrows1 = ggml_nrows(src1);
 
     GGML_ASSERT(ne03 == ne13);
 
-    const int64_t ne0 = dst->ne[0];
-    const int64_t ne1 = dst->ne[1];
+    ثابت int64_t ne0 = dst->ne[0];
+    ثابت int64_t ne1 = dst->ne[1];
 
-    const int nb2 = dst->nb[2];
-    const int nb3 = dst->nb[3];
+    ثابت صحيح nb2 = dst->nb[2];
+    ثابت صحيح nb3 = dst->nb[3];
 
     GGML_ASSERT(!ggml_backend_buffer_is_sycl_split(dst->buffer));
     GGML_ASSERT(!ggml_backend_buffer_is_sycl_split(src1->buffer));
 
     GGML_ASSERT(ne12 >= ne02 && ne12 % ne02 == 0);
 
-    const int64_t i02_divisor = ne12 / ne02;
+    ثابت int64_t i02_divisor = ne12 / ne02;
 
-    const size_t src0_ts = ggml_type_size(src0->type);
-    const size_t src0_bs = ggml_blck_size(src0->type);
-    const size_t q8_1_ts = sizeof(block_q8_1);
-    const size_t q8_1_bs = QK8_1;
+    ثابت size_t src0_ts = ggml_type_size(src0->type);
+    ثابت size_t src0_bs = ggml_blck_size(src0->type);
+    ثابت size_t q8_1_ts = حجم(block_q8_1);
+    ثابت size_t q8_1_bs = QK8_1;
 
     ggml_tensor_extra_gpu * src0_extra = (ggml_tensor_extra_gpu *) src0->extra;
 
-    const bool src0_is_contiguous = ggml_is_contiguous(src0);
-    const bool src1_is_contiguous = ggml_is_contiguous(src1);
+    ثابت منطقي src0_is_contiguous = ggml_is_contiguous(src0);
+    ثابت منطقي src1_is_contiguous = ggml_is_contiguous(src1);
 
     int64_t src1_padded_col_size = GGML_PAD(ne10, MATRIX_ROW_PADDING);
 
-    const bool split = ggml_backend_buffer_is_sycl_split(src0->buffer);
+    ثابت منطقي split = ggml_backend_buffer_is_sycl_split(src0->buffer);
     GGML_ASSERT(!(split && ne02 > 1));
     GGML_ASSERT(!(split && ne03 > 1));
     GGML_ASSERT(!(split && ne02 < ne12));
 
-    std::array<float, GGML_SYCL_MAX_DEVICES> tensor_split;
-    if (split) {
+    std::array<عائم, GGML_SYCL_MAX_DEVICES> tensor_split;
+    אם (split) {
         // TODO: check that src0->buffer->buft is a split buffer type, replace GGML_BACKEND_TYPE_GPU_SPLIT check
         // GGML_ASSERT(src0->buffer != nullptr && src0->buffer->buft == ...);
         ggml_backend_sycl_split_buffer_type_context * buft_ctx = (ggml_backend_sycl_split_buffer_type_context *) src0->buffer->buft->context;
         tensor_split = buft_ctx->tensor_split;
     }
 
-    struct dev_data {
-        ggml_sycl_pool_alloc<char> src0_dd_alloc;
-        ggml_sycl_pool_alloc<float> src1_ddf_alloc;
-        ggml_sycl_pool_alloc<char> src1_ddq_alloc;
-        ggml_sycl_pool_alloc<float> dst_dd_alloc;
+    بنية dev_data {
+        ggml_sycl_pool_alloc<حرف> src0_dd_alloc;
+        ggml_sycl_pool_alloc<عائم> src1_ddf_alloc;
+        ggml_sycl_pool_alloc<حرف> src1_ddq_alloc;
+        ggml_sycl_pool_alloc<عائم> dst_dd_alloc;
 
-        char *src0_dd = nullptr;
-        float *src1_ddf = nullptr; // float
-        char *src1_ddq = nullptr;  // q8_1
-        float *dst_dd = nullptr;
+        حرف *src0_dd = nullptr;
+        عائم *src1_ddf = nullptr; // float
+        حرف *src1_ddq = nullptr;  // q8_1
+        عائم *dst_dd = nullptr;
 
         int64_t row_low;
         int64_t row_high;
@@ -3602,72 +3602,72 @@ static void ggml_sycl_op_mul_mat(ggml_backend_sycl_context & ctx, const ggml_ten
 
     dev_data dev[GGML_SYCL_MAX_DEVICES];
 
-    int used_devices = 0;
+    صحيح used_devices = 0;
     queue_ptr main_stream = ctx.stream();
 
-    for (int i = 0; i < ggml_sycl_info().device_count; ++i) {
+    עבור (صحيح i = 0; i < ggml_sycl_info().device_count; ++i) {
         // by default, use all rows
         dev[i].row_low  = 0;
         dev[i].row_high = ne01;
 
         // for multi GPU, get the row boundaries from tensor split
         // and round to mul_mat_q tile sizes
-        if (split) {
-            const int64_t rounding = get_row_rounding(src0->type, tensor_split);
+        אם (split) {
+            ثابت int64_t rounding = get_row_rounding(src0->type, tensor_split);
 
-            if (i != 0) {
+            אם (i != 0) {
                 dev[i].row_low  = ne01*tensor_split[i];
-                if (dev[i].row_low < ne01) {
+                אם (dev[i].row_low < ne01) {
                     dev[i].row_low -= dev[i].row_low % rounding;
                 }
             }
 
-            if (i != ggml_sycl_info().device_count - 1) {
+            אם (i != ggml_sycl_info().device_count - 1) {
                 dev[i].row_high  = ne01*tensor_split[i + 1];
-                if (dev[i].row_high < ne01) {
+                אם (dev[i].row_high < ne01) {
                     dev[i].row_high -= dev[i].row_high % rounding;
                 }
             }
         }
     }
 
-    constexpr bool quantize_enabled = !std::is_same_v<quantize_f<QK8_1 / WARP_SIZE>,
+    constexpr منطقي quantize_enabled = !std::is_same_v<quantize_f<QK8_1 / WARP_SIZE>,
                                                       no_quantize_q8_1<QK8_1 / WARP_SIZE>>;
-    for (int i = 0; i < ggml_sycl_info().device_count; ++i) {
-        if ((!split && i != ctx.device) || dev[i].row_low == dev[i].row_high) {
-            continue;
+    עבור (صحيح i = 0; i < ggml_sycl_info().device_count; ++i) {
+        אם ((!split && i != ctx.device) || dev[i].row_low == dev[i].row_high) {
+            استمر;
         }
 
         used_devices++;
 
-        const bool src1_on_device = i == ctx.device;
-        const bool  dst_on_device = i == ctx.device;
+        ثابت منطقي src1_on_device = i == ctx.device;
+        ثابت منطقي  dst_on_device = i == ctx.device;
 
         ggml_sycl_set_device(i);
         queue_ptr stream = ctx.stream(i, 0);
 
-        if (src0_is_contiguous) {
+        אם (src0_is_contiguous) {
             // a split tensor keeps its rows in the per-device slices of the tensor extra
-            dev[i].src0_dd = split ? (char *) src0_extra->data_device[i] : (char *) src0->data;
-        } else {
+            dev[i].src0_dd = split ? (حرف *) src0_extra->data_device[i] : (حرف *) src0->data;
+        } אחרת {
             dev[i].src0_dd = dev[i].src0_dd_alloc.alloc(ctx.pool(i), ggml_nbytes(src0));
         }
 
-        if (src1_on_device && src1_is_contiguous) {
-            dev[i].src1_ddf = (float *) src1->data;
-        } else {
+        אם (src1_on_device && src1_is_contiguous) {
+            dev[i].src1_ddf = (عائم *) src1->data;
+        } אחרת {
             dev[i].src1_ddf = dev[i].src1_ddf_alloc.alloc(ctx.pool(i), ggml_nelements(src1));
         }
 
-        if constexpr(quantize_enabled) {
+        אם constexpr(quantize_enabled) {
             dev[i].src1_ddq = dev[i].src1_ddq_alloc.alloc(ctx.pool(i), nrows1*src1_padded_col_size*q8_1_ts/q8_1_bs);
 
-            if (src1_on_device && src1_is_contiguous) {
+            אם (src1_on_device && src1_is_contiguous) {
                 scope_op_debug_print scope_dbg_print(__func__, "/quantize_row_q8_1_sycl", dst,
                                                      /*num_src=*/2, " : converting src1 to Q8_1");
-                try {
+                حاول {
                     quantize_row_q8_1_sycl<quantize_f>(dev[i].src1_ddf, dev[i].src1_ddq, ne10, nrows1, src1_padded_col_size, stream);
-                } catch (sycl::exception const &exc) {
+                } امسك (sycl::exception ثابت &exc) {
                     std::cerr << "Quantize_row_q8_1_sycl error" << exc.what() << "Exception caught at file:" << __FILE__
                               << ", line:" << __LINE__ << std::endl;
                     std::exit(1);
@@ -3675,77 +3675,77 @@ static void ggml_sycl_op_mul_mat(ggml_backend_sycl_context & ctx, const ggml_ten
             }
         }
 
-        if (dst_on_device) {
-            dev[i].dst_dd = (float *) dst->data;
-        } else {
-            const size_t size_dst_ddf = split ? (dev[i].row_high - dev[i].row_low)*ne1 : ggml_nelements(dst);
+        אם (dst_on_device) {
+            dev[i].dst_dd = (عائم *) dst->data;
+        } אחרת {
+            ثابت size_t size_dst_ddf = split ? (dev[i].row_high - dev[i].row_low)*ne1 : ggml_nelements(dst);
             dev[i].dst_dd = dev[i].dst_dd_alloc.alloc(ctx.pool(i), size_dst_ddf);
         }
     }
 
     // if multiple devices are used they need to wait for the main device
     // here an event is recorded that signals that the main device has finished calculating the input data
-    if (split && used_devices > 1) {
+    אם (split && used_devices > 1) {
         ggml_sycl_set_device(ctx.device);
         SYCL_CHECK(CHECK_TRY_ERROR(
             *src0_extra->events[ctx.device][0] =
                 ctx.stream()->ext_oneapi_submit_barrier()));
     }
 
-    const int64_t src1_col_stride = split && used_devices > 1 ? MUL_MAT_SRC1_COL_STRIDE : ne11;
-    for (int64_t src1_col_0 = 0; src1_col_0 < ne11; src1_col_0 += src1_col_stride) {
-        const int64_t is = split ? (src1_col_0/src1_col_stride) % GGML_SYCL_MAX_STREAMS : 0;
-        const int64_t src1_ncols = src1_col_0 + src1_col_stride > ne11 ? ne11 - src1_col_0 : src1_col_stride;
-        for (int i = 0; i < ggml_sycl_info().device_count; ++i) {
-            if ((!split && i != ctx.device) || dev[i].row_low == dev[i].row_high) {
-                continue;
+    ثابت int64_t src1_col_stride = split && used_devices > 1 ? MUL_MAT_SRC1_COL_STRIDE : ne11;
+    עבור (int64_t src1_col_0 = 0; src1_col_0 < ne11; src1_col_0 += src1_col_stride) {
+        ثابت int64_t is = split ? (src1_col_0/src1_col_stride) % GGML_SYCL_MAX_STREAMS : 0;
+        ثابت int64_t src1_ncols = src1_col_0 + src1_col_stride > ne11 ? ne11 - src1_col_0 : src1_col_stride;
+        עבור (صحيح i = 0; i < ggml_sycl_info().device_count; ++i) {
+            אם ((!split && i != ctx.device) || dev[i].row_low == dev[i].row_high) {
+                استمر;
             }
 
-            const bool src1_on_device = i == ctx.device;
-            const bool  dst_on_device = i == ctx.device;
-            const int64_t row_diff = dev[i].row_high - dev[i].row_low;
+            ثابت منطقي src1_on_device = i == ctx.device;
+            ثابت منطقي  dst_on_device = i == ctx.device;
+            ثابت int64_t row_diff = dev[i].row_high - dev[i].row_low;
 
             ggml_sycl_set_device(i);
             queue_ptr stream = ctx.stream(i, is);
 
             // wait for main GPU data if necessary
-            if (split && (i != ctx.device || is != 0)) {
+            אם (split && (i != ctx.device || is != 0)) {
                 SYCL_CHECK(CHECK_TRY_ERROR(stream->ext_oneapi_submit_barrier(
                     {*src0_extra->events[ctx.device][0]})));
             }
 
-            for (int64_t i0 = 0; i0 < ne13*ne12; ++i0) {
-                const int64_t i03 = i0 / ne12;
-                const int64_t i02 = i0 % ne12;
+            עבור (int64_t i0 = 0; i0 < ne13*ne12; ++i0) {
+                ثابت int64_t i03 = i0 / ne12;
+                ثابت int64_t i02 = i0 % ne12;
 
-                const size_t src1_ddq_i_offset = (i0*ne11 + src1_col_0) * src1_padded_col_size*q8_1_ts/q8_1_bs;
+                ثابت size_t src1_ddq_i_offset = (i0*ne11 + src1_col_0) * src1_padded_col_size*q8_1_ts/q8_1_bs;
 
                 // for split tensors the data begins at i0 == i0_offset_low
-                char  *  src0_dd_i =  dev[i].src0_dd + (i0/i02_divisor) * (ne01*ne00*src0_ts)/src0_bs;
-                float * src1_ddf_i = (float *) ((char *) dev[i].src1_ddf +
+                حرف  *  src0_dd_i =  dev[i].src0_dd + (i0/i02_divisor) * (ne01*ne00*src0_ts)/src0_bs;
+                عائم * src1_ddf_i = (عائم *) ((حرف *) dev[i].src1_ddf +
                     (i0*ne11 + src1_col_0) * ne10 * ggml_type_size(src1->type));
-                char  * src1_ddq_i = dev[i].src1_ddq +  src1_ddq_i_offset;
-                float *   dst_dd_i =   dev[i].dst_dd + (i0*ne1  + src1_col_0) * (dst_on_device ? ne0 : row_diff);
+                حرف  * src1_ddq_i = dev[i].src1_ddq +  src1_ddq_i_offset;
+                عائم *   dst_dd_i =   dev[i].dst_dd + (i0*ne1  + src1_col_0) * (dst_on_device ? ne0 : row_diff);
 
                 // the main device memory buffer can be on VRAM scratch, with space for all partial results
                 // in that case an offset on dst_ddf_i is needed
-                if (i == ctx.device) {
+                אם (i == ctx.device) {
                     dst_dd_i += dev[i].row_low; // offset is 0 if no tensor split
                 }
 
                 // copy src0, src1 to device if necessary
-                if (src1_is_contiguous) {
-                    if (i != ctx.device) {
-                        if constexpr (quantize_enabled) {
-                            char * src1_ddq_i_source = dev[ctx.device].src1_ddq + src1_ddq_i_offset;
+                אם (src1_is_contiguous) {
+                    אם (i != ctx.device) {
+                        אם constexpr (quantize_enabled) {
+                            حرف * src1_ddq_i_source = dev[ctx.device].src1_ddq + src1_ddq_i_offset;
                             SYCL_CHECK(
                                 CHECK_TRY_ERROR(stream
                                                     ->memcpy(src1_ddq_i, src1_ddq_i_source,
                                                              src1_ncols * src1_padded_col_size * q8_1_ts / q8_1_bs)
                                                     .wait()));
-                        } else {
+                        } אחרת {
                             // src1 is not split, on the main device it lives at dev[ctx.device].src1_ddf
-                            const char * src1_ddf_i_source = (const char *) dev[ctx.device].src1_ddf +
+                            ثابت حرف * src1_ddf_i_source = (ثابت حرف *) dev[ctx.device].src1_ddf +
                                 (i0 * ne11 + src1_col_0) * ne10 * ggml_type_size(src1->type);
 
                             SYCL_CHECK(
@@ -3753,21 +3753,21 @@ static void ggml_sycl_op_mul_mat(ggml_backend_sycl_context & ctx, const ggml_ten
                                                                src1_ncols * ne10 * ggml_type_size(src1->type))));
                         }
                     }
-                } else {
-                    if (src1_on_device) {
+                } אחרת {
+                    אם (src1_on_device) {
                         SYCL_CHECK(ggml_sycl_cpy_tensor_2d(src1_ddf_i, src1, i03, i02, src1_col_0,
                                                            src1_col_0 + src1_ncols, stream));
-                    } else {
+                    } אחרת {
                         GGML_ABORT("src1 is non-contiguous and not on device");
                     }
 
-                    if constexpr (quantize_enabled) {
+                    אם constexpr (quantize_enabled) {
                         scope_op_debug_print scope_dbg_print(__func__, "/quantize_row_q8_1_sycl", dst,
                                                              /*num_src=*/2, " : converting src1 to Q8_1");
-                        try {
+                        حاول {
                             quantize_row_q8_1_sycl<quantize_q8_1>(src1_ddf_i, src1_ddq_i, ne10, src1_ncols,
                                                                   src1_padded_col_size, stream);
-                        } catch (const sycl::exception & exc) {
+                        } امسك (ثابت sycl::exception & exc) {
                             std::cerr << "Quantize_row_q8_1_sycl error" << exc.what()
                                       << "Exception caught at file:" << __FILE__ << ", line:" << __LINE__ << std::endl;
                             std::exit(1);
@@ -3775,10 +3775,10 @@ static void ggml_sycl_op_mul_mat(ggml_backend_sycl_context & ctx, const ggml_ten
                     }
                 }
 
-                if (src1_col_0 == 0 && !src0_is_contiguous && i02 % i02_divisor == 0) {
+                אם (src1_col_0 == 0 && !src0_is_contiguous && i02 % i02_divisor == 0) {
                     SYCL_CHECK(ggml_sycl_cpy_tensor_2d(src0_dd_i, src0, i03, i02/i02_divisor, dev[i].row_low, dev[i].row_high, stream));
                 }
-                if (src1->type == GGML_TYPE_F16) {
+                אם (src1->type == GGML_TYPE_F16) {
                     src1_padded_col_size = (i0 * ne11 + src1_col_0) * ne10;
                 }
                 // do the computation
@@ -3786,34 +3786,34 @@ static void ggml_sycl_op_mul_mat(ggml_backend_sycl_context & ctx, const ggml_ten
                     dev[i].row_low, dev[i].row_high, src1_ncols, src1_padded_col_size, stream)));
 
                 // copy dst to host or other device if necessary
-                if (!dst_on_device) {
-                    void * dst_off_device = dst->data;
-                    if (split) {
+                אם (!dst_on_device) {
+                    فراغ * dst_off_device = dst->data;
+                    אם (split) {
                         // src0 = weight matrix is saved as a transposed matrix for better memory layout.
                         // dst is NOT transposed.
                         // The outputs of matrix matrix multiplications can therefore NOT simply be concatenated for >1 GPU.
                         // Instead they need to be copied to the correct slice in ne0 = dst row index.
                         // If dst is a vector with ne0 == 1 then you don't have to do this but it still produces correct results.
-                        float * dhf_dst_i = (float *) ((char *) dst_off_device + i02*nb2 + i03*nb3);
-                        GGML_ASSERT(dst->nb[1] == ne0*sizeof(float));
+                        عائم * dhf_dst_i = (عائم *) ((حرف *) dst_off_device + i02*nb2 + i03*nb3);
+                        GGML_ASSERT(dst->nb[1] == ne0*حجم(عائم));
                         dhf_dst_i += src1_col_0*ne0 + dev[i].row_low;
 
                         SYCL_CHECK(CHECK_TRY_ERROR(dpct::async_dpct_memcpy(
-                            dhf_dst_i, ne0 * sizeof(float), dst_dd_i,
-                            row_diff * sizeof(float), row_diff * sizeof(float),
+                            dhf_dst_i, ne0 * حجم(عائم), dst_dd_i,
+                            row_diff * حجم(عائم), row_diff * حجم(عائم),
                             src1_ncols, dpct::device_to_device, *stream)));
-                    } else {
-                        float * dhf_dst_i = (float *) ((char *) dst_off_device + i02*nb2 + i03*nb3);
-                        GGML_ASSERT(dst->nb[1] == ne0*sizeof(float));
+                    } אחרת {
+                        عائم * dhf_dst_i = (عائم *) ((حرف *) dst_off_device + i02*nb2 + i03*nb3);
+                        GGML_ASSERT(dst->nb[1] == ne0*حجم(عائم));
                         dhf_dst_i += src1_col_0*ne0;
                         SYCL_CHECK(CHECK_TRY_ERROR(
                             stream->memcpy(dhf_dst_i, dst_dd_i,
-                                           src1_ncols * ne0 * sizeof(float)).wait()));
+                                           src1_ncols * ne0 * حجم(عائم)).wait()));
                     }
                 }
 
                 // add event for the main device to wait on until other device is done
-                if (split && (i != ctx.device || is != 0)) {
+                אם (split && (i != ctx.device || is != 0)) {
                     SYCL_CHECK(CHECK_TRY_ERROR(
                         *src0_extra->events[i][is] =
                             stream->ext_oneapi_submit_barrier()));
@@ -3823,16 +3823,16 @@ static void ggml_sycl_op_mul_mat(ggml_backend_sycl_context & ctx, const ggml_ten
     }
 
     // main device waits for all other devices to be finished
-    if (split && ggml_sycl_info().device_count > 1) {
+    אם (split && ggml_sycl_info().device_count > 1) {
         int64_t is_max = (ne11 + MUL_MAT_SRC1_COL_STRIDE - 1) / MUL_MAT_SRC1_COL_STRIDE;
         is_max = is_max <= GGML_SYCL_MAX_STREAMS ? is_max : GGML_SYCL_MAX_STREAMS;
 
         ggml_sycl_set_device(ctx.device);
-        for (int i = 0; i < ggml_sycl_info().device_count; ++i) {
-            if (dev[i].row_low == dev[i].row_high) {
-                continue;
+        עבור (صحيح i = 0; i < ggml_sycl_info().device_count; ++i) {
+            אם (dev[i].row_low == dev[i].row_high) {
+                استمر;
             }
-            for (int64_t is = 0; is < is_max; ++is) {
+            עבור (int64_t is = 0; is < is_max; ++is) {
                 SYCL_CHECK(CHECK_TRY_ERROR(
                     ctx.stream()->ext_oneapi_submit_barrier(
                         {*src0_extra->events[i][is]})));
@@ -3840,55 +3840,55 @@ static void ggml_sycl_op_mul_mat(ggml_backend_sycl_context & ctx, const ggml_ten
         }
     }
 }
-catch (sycl::exception const &exc) {
+امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
             << ", line:" << __LINE__ << std::endl;
   std::exit(1);
 }
 
-static void ggml_sycl_repeat_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ساكن فراغ ggml_sycl_repeat_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_repeat_back(ctx, dst);
 }
 
-static void ggml_sycl_get_rows(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ساكن فراغ ggml_sycl_get_rows(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
     ggml_sycl_op_get_rows(ctx, dst);
 }
 
-static void ggml_sycl_get_rows_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ساكن فراغ ggml_sycl_get_rows_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
     ggml_sycl_op_get_rows_back(ctx, dst);
 }
 
-static void ggml_sycl_norm(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ساكن فراغ ggml_sycl_norm(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_norm(ctx, dst);
 }
 
-static void ggml_sycl_rms_norm(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ساكن فراغ ggml_sycl_rms_norm(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_rms_norm(ctx, dst);
 }
 
-static void ggml_sycl_rms_norm_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ساكن فراغ ggml_sycl_rms_norm_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
     ggml_sycl_op_rms_norm_back(ctx, dst);
 }
 
-static void ggml_sycl_l2_norm(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ساكن فراغ ggml_sycl_l2_norm(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_l2_norm(ctx, dst);
 }
 
-static void ggml_sycl_group_norm(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ساكن فراغ ggml_sycl_group_norm(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_group_norm(ctx, dst);
 }
 
-static void ggml_sycl_mul_mat_vec_p021(ggml_backend_sycl_context & ctx, const ggml_tensor *src0,
-                                       const ggml_tensor *src1,
-                                       ggml_tensor *dst) try {
+ساكن فراغ ggml_sycl_mul_mat_vec_p021(ggml_backend_sycl_context & ctx, ثابت ggml_tensor *src0,
+                                       ثابت ggml_tensor *src1,
+                                       ggml_tensor *dst) حاول {
     GGML_ASSERT(ggml_is_permuted(src0) && ggml_is_permuted(src1));
     GGML_ASSERT(!ggml_backend_buffer_is_sycl_split(src0->buffer));
     GGML_ASSERT(src0->nb[0] <= src0->nb[1] && src0->nb[2] <= src0->nb[3]); // 0213 permutation
@@ -3896,30 +3896,30 @@ static void ggml_sycl_mul_mat_vec_p021(ggml_backend_sycl_context & ctx, const gg
     GGML_ASSERT(src0->type == GGML_TYPE_F16);
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
 
-    const int64_t ne00 = src0->ne[0];
-    const int64_t ne01 = src0->ne[1];
-    const int64_t ne02 = src0->ne[2];
+    ثابت int64_t ne00 = src0->ne[0];
+    ثابت int64_t ne01 = src0->ne[1];
+    ثابت int64_t ne02 = src0->ne[2];
 
-    const int64_t ne12 = src1->ne[2];
+    ثابت int64_t ne12 = src1->ne[2];
 
     SYCL_CHECK(ggml_sycl_set_device(ctx.device));
     queue_ptr main_stream = ctx.stream();
 
-    void  * src0_ddq = src0->data;
-    float * src1_ddf = (float *) src1->data;
-    float * dst_ddf  = (float *) dst->data;
+    فراغ  * src0_ddq = src0->data;
+    عائم * src1_ddf = (عائم *) src1->data;
+    عائم * dst_ddf  = (عائم *) dst->data;
 
     ggml_mul_mat_p021_f16_f32_sycl(src0_ddq, src1_ddf, dst_ddf, ne00, ne01, ne02, ne12, main_stream);
 }
-catch (sycl::exception const &exc) {
+امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
             << ", line:" << __LINE__ << std::endl;
   std::exit(1);
 }
 
-static void ggml_sycl_mul_mat_vec_nc(ggml_backend_sycl_context & ctx, const ggml_tensor *src0,
-                                     const ggml_tensor *src1,
-                                     ggml_tensor *dst) try {
+ساكن فراغ ggml_sycl_mul_mat_vec_nc(ggml_backend_sycl_context & ctx, ثابت ggml_tensor *src0,
+                                     ثابت ggml_tensor *src1,
+                                     ggml_tensor *dst) حاول {
     GGML_ASSERT(!ggml_is_transposed(src0));
     GGML_ASSERT(!ggml_is_transposed(src1));
     GGML_ASSERT(!ggml_is_permuted(src0));
@@ -3929,51 +3929,51 @@ static void ggml_sycl_mul_mat_vec_nc(ggml_backend_sycl_context & ctx, const ggml
     GGML_ASSERT(src1->ne[1] == 1);
     GGML_ASSERT(src1->ne[3] == 1);
 
-    const int64_t ne00 = src0->ne[0];
-    const int64_t ne01 = src0->ne[1];
-    const int64_t ne02 = src0->ne[2];
+    ثابت int64_t ne00 = src0->ne[0];
+    ثابت int64_t ne01 = src0->ne[1];
+    ثابت int64_t ne02 = src0->ne[2];
 
-    const int64_t nb01 = src0->nb[1];
-    const int64_t nb02 = src0->nb[2];
+    ثابت int64_t nb01 = src0->nb[1];
+    ثابت int64_t nb02 = src0->nb[2];
 
-    const int64_t ne12 = src1->ne[2];
-    const int64_t nb11 = src1->nb[1];
+    ثابت int64_t ne12 = src1->ne[2];
+    ثابت int64_t nb11 = src1->nb[1];
 
     SYCL_CHECK(ggml_sycl_set_device(ctx.device));
     queue_ptr main_stream = ctx.stream();
 
-    void  * src0_ddq = src0->data;
-    float * src1_ddf = (float *) src1->data;
-    float * dst_ddf  = (float *) dst->data;
+    فراغ  * src0_ddq = src0->data;
+    عائم * src1_ddf = (عائم *) src1->data;
+    عائم * dst_ddf  = (عائم *) dst->data;
 
-    const int64_t row_stride_x = nb01 / sizeof(sycl::half);
-    const int64_t channel_stride_x = nb02 / sizeof(sycl::half);
-    const int64_t channel_stride_y = nb11 / sizeof(float);
+    ثابت int64_t row_stride_x = nb01 / حجم(sycl::half);
+    ثابت int64_t channel_stride_x = nb02 / حجم(sycl::half);
+    ثابت int64_t channel_stride_y = nb11 / حجم(عائم);
 
     ggml_mul_mat_vec_nc_f16_f32_sycl(src0_ddq, src1_ddf, dst_ddf, ne00, ne01, row_stride_x, ne02, ne12, channel_stride_x,channel_stride_y, main_stream);
 }
-catch (sycl::exception const &exc) {
+امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
             << ", line:" << __LINE__ << std::endl;
   std::exit(1);
 }
 
-static void k_compute_batched_ptrs(const sycl::half * src0_as_f16, const sycl::half * src1_as_f16, void * dst,
-                                   const void ** ptrs_src, void ** ptrs_dst, int64_t ne12, int64_t ne13, int64_t ne23,
+ساكن فراغ k_compute_batched_ptrs(ثابت sycl::half * src0_as_f16, ثابت sycl::half * src1_as_f16, فراغ * dst,
+                                   ثابت فراغ ** ptrs_src, فراغ ** ptrs_dst, int64_t ne12, int64_t ne13, int64_t ne23,
                                    size_t nb02, size_t nb03, size_t nb12, size_t nb13, size_t nbd2, size_t nbd3,
-                                   int64_t r2, int64_t r3, const sycl::nd_item<3> & item_ct1) {
-    const int64_t i13 = item_ct1.get_group(2) * item_ct1.get_local_range(2) + item_ct1.get_local_id(2);
-    const int64_t i12 = item_ct1.get_group(1) * item_ct1.get_local_range(1) + item_ct1.get_local_id(1);
+                                   int64_t r2, int64_t r3, ثابت sycl::nd_item<3> & item_ct1) {
+    ثابت int64_t i13 = item_ct1.get_group(2) * item_ct1.get_local_range(2) + item_ct1.get_local_id(2);
+    ثابت int64_t i12 = item_ct1.get_group(1) * item_ct1.get_local_range(1) + item_ct1.get_local_id(1);
 
-    if (i13 >= ne13 || i12 >= ne12) {
-        return;
+    אם (i13 >= ne13 || i12 >= ne12) {
+        החזר;
     }
 
-    const int64_t i03 = i13 / r3;
-    const int64_t i02 = i12 / r2;
+    ثابت int64_t i03 = i13 / r3;
+    ثابت int64_t i02 = i12 / r2;
 
-    const uint8_t * src0_bytes = reinterpret_cast<const uint8_t *>(src0_as_f16);
-    const uint8_t * src1_bytes = reinterpret_cast<const uint8_t *>(src1_as_f16);
+    ثابت uint8_t * src0_bytes = reinterpret_cast<ثابت uint8_t *>(src0_as_f16);
+    ثابت uint8_t * src1_bytes = reinterpret_cast<ثابت uint8_t *>(src1_as_f16);
     uint8_t *       dst_bytes  = static_cast<uint8_t *>(dst);
 
     ptrs_src[0 * ne23 + i12 + i13 * ne12] = src0_bytes + i02 * nb02 + i03 * nb03;
@@ -3981,8 +3981,8 @@ static void k_compute_batched_ptrs(const sycl::half * src0_as_f16, const sycl::h
     ptrs_dst[0 * ne23 + i12 + i13 * ne12] = dst_bytes + i12 * nbd2 + i13 * nbd3;
 }
 
-static void ggml_sycl_mul_mat_batched_sycl(ggml_backend_sycl_context & ctx, const ggml_tensor * src0,
-                                           const ggml_tensor * src1, ggml_tensor * dst) try {
+ساكن فراغ ggml_sycl_mul_mat_batched_sycl(ggml_backend_sycl_context & ctx, ثابت ggml_tensor * src0,
+                                           ثابت ggml_tensor * src1, ggml_tensor * dst) حاول {
     GGML_ASSERT(!ggml_is_transposed(src0));
     GGML_ASSERT(!ggml_is_transposed(src1));
     GGML_ASSERT(!ggml_backend_buffer_is_sycl_split(src0->buffer));
@@ -4000,17 +4000,17 @@ static void ggml_sycl_mul_mat_batched_sycl(ggml_backend_sycl_context & ctx, cons
 
     dpct::has_capability_or_fail(queue->get_device(), { sycl::aspect::fp16 });
 
-    const sycl::half * src0_f16 = static_cast<const sycl::half *>(src0->data);
-    float *            dst_ddf  = static_cast<float *>(dst->data);
+    ثابت sycl::half * src0_f16 = static_cast<ثابت sycl::half *>(src0->data);
+    عائم *            dst_ddf  = static_cast<عائم *>(dst->data);
 
-    const sycl::half * src1_f16       = static_cast<const sycl::half *>(src1->data);
-#if GGML_SYCL_DNNL
-    const size_t       type_size_src0 = ggml_type_size(src0->type);
+    ثابت sycl::half * src1_f16       = static_cast<ثابت sycl::half *>(src1->data);
+#אם GGML_SYCL_DNNL
+    ثابت size_t       type_size_src0 = ggml_type_size(src0->type);
 #endif
-    const size_t       type_size_src1 = ggml_type_size(src1->type);
+    ثابت size_t       type_size_src1 = ggml_type_size(src1->type);
 
-    bool is_src0_cont_2 = ggml_is_contiguous_2(src0);
-    bool is_src1_cont_2 = ggml_is_contiguous_2(src1);
+    منطقي is_src0_cont_2 = ggml_is_contiguous_2(src0);
+    منطقي is_src1_cont_2 = ggml_is_contiguous_2(src1);
 
     // SRC1 strides
     int64_t                          s11 = nb11 / type_size_src1;
@@ -4019,24 +4019,24 @@ static void ggml_sycl_mul_mat_batched_sycl(ggml_backend_sycl_context & ctx, cons
     ggml_sycl_pool_alloc<sycl::half> src1_f16_alloc(ctx.pool());
 
     // convert src1 to fp16
-    if (src1->type != GGML_TYPE_F16) {
+    אם (src1->type != GGML_TYPE_F16) {
         scope_op_debug_print    scope_dbg_print(__func__, "/to_fp16_nc_sycl", dst, /*num_src=*/2,
                                                 " : converting src1 to fp16");
 
-#if GGML_SYCL_DNNL
+#אם GGML_SYCL_DNNL
         // iterate tensor dims and find the slowest moving dim and stride
-        int last_dim=0;
-        int last_str=0;
+        صحيح last_dim=0;
+        صحيح last_str=0;
         size_t largest_str=0;
-        for(int i = 0; i< 4; i++){
+        עבור(صحيح i = 0; i< 4; i++){
             // last stride is always the largest
-            if(src1->nb[i] == largest_str){
-                if(src1->ne[last_dim] == 1){
+            אם(src1->nb[i] == largest_str){
+                אם(src1->ne[last_dim] == 1){
                     last_str = i;
                     last_dim = i;
                 }
             }
-            if(src1->nb[i] > largest_str){
+            אם(src1->nb[i] > largest_str){
                 largest_str = src1->nb[i];
                 last_str = i;
                 last_dim = i;
@@ -4044,15 +4044,15 @@ static void ggml_sycl_mul_mat_batched_sycl(ggml_backend_sycl_context & ctx, cons
 
         }
         // oneDNN handles strided data and does not need overhead of ggml_get_to_fp16_nc_sycl
-        const int64_t ne_src1 = src1->nb[last_str] * src1->ne[last_dim] / type_size_src1;
+        ثابت int64_t ne_src1 = src1->nb[last_str] * src1->ne[last_dim] / type_size_src1;
         src1_f16_alloc.alloc(ne_src1);
-        const to_fp16_sycl_t to_fp16_sycl = ggml_get_to_fp16_sycl(src1->type, dst);
+        ثابت to_fp16_sycl_t to_fp16_sycl = ggml_get_to_fp16_sycl(src1->type, dst);
         GGML_ASSERT(to_fp16_sycl != nullptr);
         to_fp16_sycl(src1_f16, src1_f16_alloc.get(), ne_src1, queue);
-# else
-        const int64_t ne_src1 = ggml_nelements(src1);
+# אחרת
+        ثابت int64_t ne_src1 = ggml_nelements(src1);
         src1_f16_alloc.alloc(ne_src1);
-        const to_fp16_nc_sycl_t to_fp16_nc_sycl = ggml_get_to_fp16_nc_sycl(src1->type);
+        ثابت to_fp16_nc_sycl_t to_fp16_nc_sycl = ggml_get_to_fp16_nc_sycl(src1->type);
         GGML_ASSERT(to_fp16_nc_sycl != nullptr);
         to_fp16_nc_sycl(src1_f16, src1_f16_alloc.get(), ne10, ne11, ne12, ne13, s11, s12, s13, queue);
 #endif
@@ -4062,7 +4062,7 @@ static void ggml_sycl_mul_mat_batched_sycl(ggml_backend_sycl_context & ctx, cons
         s12      = ne11 * s11;
         s13      = ne12 * s12;
 
-        is_src1_cont_2 = true;
+        is_src1_cont_2 = אמת;
     }
 
     ggml_sycl_pool_alloc<sycl::half> dst_f16(ctx.pool());
@@ -4074,11 +4074,11 @@ static void ggml_sycl_mul_mat_batched_sycl(ggml_backend_sycl_context & ctx, cons
     size_t nbd2 = dst->nb[2];
     size_t nbd3 = dst->nb[3];
 
-    const float alpha_f32 = 1.0f;
-    const float beta_f32  = 0.0f;
+    ثابت عائم alpha_f32 = 1.0f;
+    ثابت عائم beta_f32  = 0.0f;
 
-    const void * alpha = &alpha_f32;
-    const void * beta  = &beta_f32;
+    ثابت فراغ * alpha = &alpha_f32;
+    ثابت فراغ * beta  = &beta_f32;
 
     GGML_ASSERT(ne12 % ne02 == 0);
     GGML_ASSERT(ne13 % ne03 == 0);
@@ -4086,11 +4086,11 @@ static void ggml_sycl_mul_mat_batched_sycl(ggml_backend_sycl_context & ctx, cons
     GGML_ASSERT(ne10 == ne00);
 
     // broadcast factors
-    const int64_t r2 = ne12 / ne02;
-    const int64_t r3 = ne13 / ne03;
+    ثابت int64_t r2 = ne12 / ne02;
+    ثابت int64_t r3 = ne13 / ne03;
 
-#if GGML_SYCL_DNNL
-    if (g_ggml_sycl_enable_dnn && ggml_sycl_dnnl_has_optimized_gemm(ggml_sycl_get_device())) {
+#אם GGML_SYCL_DNNL
+    אם (g_ggml_sycl_enable_dnn && ggml_sycl_dnnl_has_optimized_gemm(ggml_sycl_get_device())) {
             int64_t str_a0 = nb00 / type_size_src0;
             int64_t str_a1 = nb01 / type_size_src0;
             int64_t str_a2 = nb02 / type_size_src0;
@@ -4099,70 +4099,70 @@ static void ggml_sycl_mul_mat_batched_sycl(ggml_backend_sycl_context & ctx, cons
             int64_t str_b1 = nb11 / type_size_src1;
             int64_t str_b2 = nb12 / type_size_src1;
 
-            auto launch_gemm_for_batches = [&ctx, queue](const sycl::half *src0,
-                                                const sycl::half *src1, float *dst,
+            auto launch_gemm_for_batches = [&ctx, queue](ثابت sycl::half *src0,
+                                                ثابت sycl::half *src1, عائم *dst,
                                                 int64_t a0, int64_t a1, int64_t batcha,
                                                 int64_t /*b0*/, int64_t b1, int64_t batchb,
                                                 int64_t sa0, int64_t sa1, int64_t sa2,
                                                 int64_t sb0, int64_t sb1, int64_t sb2,
                                                 int64_t sd2) {
-                bool supported_broadcast = batchb == batcha ? true
-                        : batchb == 1 || batcha == 1        ? true
-                                                            : false;
-                if (supported_broadcast) {
+                منطقي supported_broadcast = batchb == batcha ? אמת
+                        : batchb == 1 || batcha == 1        ? אמת
+                                                            : שקר;
+                אם (supported_broadcast) {
                     DnnlGemmWrapper::gemm(ctx, a1, b1, a0, src0,
                             DnnlGemmWrapper::to_dt<sycl::half>(), sa0, sa1, sa2, src1,
                             DnnlGemmWrapper::to_dt<sycl::half>(), sb0, sb1, sb2, dst,
-                            DnnlGemmWrapper::to_dt<float>(), queue, batcha, batchb);
-                } else {
+                            DnnlGemmWrapper::to_dt<عائم>(), queue, batcha, batchb);
+                } אחרת {
                     // iterate over batches from smaller set of matrices (matrix 0)
                     int64_t batches0 = batcha;
                     int64_t batches1 = batchb;
 
-                    if (batches0 > batches1) {
+                    אם (batches0 > batches1) {
                         int64_t num_mul_mats = batches1;
                         int64_t sub_batch = batches0 / num_mul_mats;
                         // src0 is batched and bigger, shift and multiply with src1
-                        for (int64_t i0 = 0; i0 < num_mul_mats; i0++) {
-                            const sycl::half *src0_shifted = src0 + (sa2 * i0 * sub_batch);
-                            const sycl::half *src1_shifted = src1 + (sb2 * i0);
-                            float *dst_shifted = dst + (sd2 * i0 * sub_batch);
+                        עבור (int64_t i0 = 0; i0 < num_mul_mats; i0++) {
+                            ثابت sycl::half *src0_shifted = src0 + (sa2 * i0 * sub_batch);
+                            ثابت sycl::half *src1_shifted = src1 + (sb2 * i0);
+                            عائم *dst_shifted = dst + (sd2 * i0 * sub_batch);
                             DnnlGemmWrapper::gemm(ctx, a1, b1, a0, src0_shifted,
                                     DnnlGemmWrapper::to_dt<sycl::half>(), sa0, sa1, sa2,
                                     src1_shifted, DnnlGemmWrapper::to_dt<sycl::half>(), sb0,
-                                    sb1, sb2, dst_shifted, DnnlGemmWrapper::to_dt<float>(),
+                                    sb1, sb2, dst_shifted, DnnlGemmWrapper::to_dt<عائم>(),
                                     queue, sub_batch, 1);
                         }
-                    } else {
+                    } אחרת {
                         int64_t num_mul_mats = batches0;
                         int64_t sub_batch = batches1 / num_mul_mats;
                         // src1 is batched and bigger, shift and multiply with src0
-                        for (int64_t i1 = 0; i1 < num_mul_mats; i1++) {
-                            const sycl::half *src0_shifted = src0 + (sa2 * i1);
-                            const sycl::half *src1_shifted = src1 + (sb2 * i1 * sub_batch);
-                            float *dst_shifted = dst + (sd2 * i1 * sub_batch);
+                        עבור (int64_t i1 = 0; i1 < num_mul_mats; i1++) {
+                            ثابت sycl::half *src0_shifted = src0 + (sa2 * i1);
+                            ثابت sycl::half *src1_shifted = src1 + (sb2 * i1 * sub_batch);
+                            عائم *dst_shifted = dst + (sd2 * i1 * sub_batch);
                             DnnlGemmWrapper::gemm(ctx, a1, b1, a0, src0_shifted,
                                     DnnlGemmWrapper::to_dt<sycl::half>(), sa0, sa1, sa2,
                                     src1_shifted, DnnlGemmWrapper::to_dt<sycl::half>(), sb0,
-                                    sb1, sb2, dst_shifted, DnnlGemmWrapper::to_dt<float>(),
+                                    sb1, sb2, dst_shifted, DnnlGemmWrapper::to_dt<عائم>(),
                                     queue, 1, sub_batch);
                         }
                     }
                 }
             };
 
-            const bool cont_batches_dim2_a = nb02 * ne02 == nb03;
-            const bool cont_batches_dim2_b = nb12 * ne12 == nb13;
-            const bool cont_batches_dim3_a = ne02 == 1 && nb02 * ne01 == nb03;
-            const bool cont_batches_dim3_b = ne12 == 1 && nb12 * ne11 == nb13;
-            if (cont_batches_dim2_a && cont_batches_dim2_b) {
+            ثابت منطقي cont_batches_dim2_a = nb02 * ne02 == nb03;
+            ثابت منطقي cont_batches_dim2_b = nb12 * ne12 == nb13;
+            ثابت منطقي cont_batches_dim3_a = ne02 == 1 && nb02 * ne01 == nb03;
+            ثابت منطقي cont_batches_dim3_b = ne12 == 1 && nb12 * ne11 == nb13;
+            אם (cont_batches_dim2_a && cont_batches_dim2_b) {
                 // A batch is considered contiguous if the dimension 2 is not strided
                 int64_t batches0 = ne02 * ne03;
                 int64_t batches1 = ne12 * ne13;
                 launch_gemm_for_batches(src0_f16, src1_f16, dst_ddf, ne00, ne01, batches0,
                         ne10, ne11, batches1, str_a0, str_a1, str_a2, str_b0, str_b1,
-                        str_b2, nb2 / sizeof(float));
-            } else if (cont_batches_dim3_a && cont_batches_dim3_b) {
+                        str_b2, nb2 / حجم(عائم));
+            } אחרת אם (cont_batches_dim3_a && cont_batches_dim3_b) {
                 // This case is similar to the one above with the difference that only the batch in dimension 3 is used and the dimension 2 is of size 1.
                 int64_t batches0 = ne02 * ne03;
                 int64_t batches1 = ne12 * ne13;
@@ -4170,30 +4170,30 @@ static void ggml_sycl_mul_mat_batched_sycl(ggml_backend_sycl_context & ctx, cons
                 int64_t str_b3 = nb13 / type_size_src1;
                 launch_gemm_for_batches(src0_f16, src1_f16, dst_ddf, ne00, ne01, batches0,
                         ne10, ne11, batches1, str_a0, str_a1, str_a3, str_b0, str_b1,
-                        str_b3, nb2 / sizeof(float));
-            } else {
-                for (int64_t b_a = 0; b_a < ne03; b_a++) {
-                    const sycl::half *src0_f16_shifted
+                        str_b3, nb2 / حجم(عائم));
+            } אחרת {
+                עבור (int64_t b_a = 0; b_a < ne03; b_a++) {
+                    ثابت sycl::half *src0_f16_shifted
                             = src0_f16 + (nb03 * b_a / type_size_src0);
-                    const sycl::half *src1_f16_shifted
+                    ثابت sycl::half *src1_f16_shifted
                             = src1_f16 + (nb13 * b_a / type_size_src1);
-                    float *dst_shifted = dst_ddf + (nb3 * b_a / sizeof(float));
+                    عائم *dst_shifted = dst_ddf + (nb3 * b_a / حجم(عائم));
                     int64_t batches0 = ne02;
                     int64_t batches1 = ne12;
                     launch_gemm_for_batches(src0_f16_shifted, src1_f16_shifted, dst_shifted,
                             ne00, ne01, batches0, ne10, ne11, batches1, str_a0, str_a1,
-                            str_a2, str_b0, str_b1, str_b2, nb2 / sizeof(float));
+                            str_a2, str_b0, str_b1, str_b2, nb2 / حجم(عائم));
                 }
             }
 
     }
-    else
+    אחרת
 #endif
     {
-        if (r2 == 1 && r3 == 1 && is_src0_cont_2 && is_src1_cont_2) {
+        אם (r2 == 1 && r3 == 1 && is_src0_cont_2 && is_src1_cont_2) {
             // with a [0, 2, 1, 3] perm. and ne02==1 the matrix strides need to be determined from dim 3:
-            const int64_t sma = ne02 == 1 ? nb03/nb00 : nb02/nb00;
-            const int64_t smb = ne12 == 1 ? s13       : s12;
+            ثابت int64_t sma = ne02 == 1 ? nb03/nb00 : nb02/nb00;
+            ثابت int64_t smb = ne12 == 1 ? s13       : s12;
 
             // there is no broadcast and src0, src1 are contiguous across dims 2, 3
             SYCL_CHECK(CHECK_TRY_ERROR(dpct::gemm_batch(*queue, oneapi::mkl::transpose::trans,
@@ -4201,19 +4201,19 @@ static void ggml_sycl_mul_mat_batched_sycl(ggml_backend_sycl_context & ctx, cons
                                                         src0_f16, dpct::library_data_t::real_half, nb01 / nb00, sma,
                                                         src1_f16, dpct::library_data_t::real_half, s11, smb, beta, dst_ddf,
                                                         mkl_data_type, ne0, ne1 * ne0, ne12 * ne13, mkl_compute_type)));
-        } else {
-            const int ne23 = ne12 * ne13;
+        } אחרת {
+            ثابت صحيح ne23 = ne12 * ne13;
 
-            ggml_sycl_pool_alloc<const void *>         ptrs_src(ctx.pool(), 2 * ne23);
-            ggml_sycl_pool_alloc<void *>               ptrs_dst(ctx.pool(), 1 * ne23);
-            ggml_sycl_pool_alloc<matrix_info_t<float>> matrix_info(ctx.host_pool(), 1);
+            ggml_sycl_pool_alloc<ثابت فراغ *>         ptrs_src(ctx.pool(), 2 * ne23);
+            ggml_sycl_pool_alloc<فراغ *>               ptrs_dst(ctx.pool(), 1 * ne23);
+            ggml_sycl_pool_alloc<matrix_info_t<عائم>> matrix_info(ctx.host_pool(), 1);
 
             sycl::range<3> block_dims(1, ne12, ne13);
             queue->submit([&](sycl::handler & cgh) {
-                const void ** ptrs_src_get = ptrs_src.get();
-                void **       ptrs_dst_get = ptrs_dst.get();
-                size_t        nb12_scaled  = src1->type == GGML_TYPE_F16 ? nb12 : s12 * sizeof(sycl::half);
-                size_t        nb13_scaled  = src1->type == GGML_TYPE_F16 ? nb13 : s13 * sizeof(sycl::half);
+                ثابت فراغ ** ptrs_src_get = ptrs_src.get();
+                فراغ **       ptrs_dst_get = ptrs_dst.get();
+                size_t        nb12_scaled  = src1->type == GGML_TYPE_F16 ? nb12 : s12 * حجم(sycl::half);
+                size_t        nb13_scaled  = src1->type == GGML_TYPE_F16 ? nb13 : s13 * حجم(sycl::half);
                 cgh.parallel_for(sycl::nd_range<3>(block_dims, block_dims), [=](sycl::nd_item<3> item_ct1) {
                     k_compute_batched_ptrs(src0_f16, src1_f16, dst_ddf, ptrs_src_get, ptrs_dst_get, ne12, ne13, ne23, nb02,
                                            nb03, nb12_scaled, nb13_scaled, nbd2, nbd3, r2, r3, item_ct1);
@@ -4222,144 +4222,144 @@ static void ggml_sycl_mul_mat_batched_sycl(ggml_backend_sycl_context & ctx, cons
 
             SYCL_CHECK(CHECK_TRY_ERROR(dpct::gemm_batch(
                 *queue, oneapi::mkl::transpose::trans, oneapi::mkl::transpose::nontrans, ne01, ne11, ne10, alpha,
-                (const void **) (ptrs_src.get() + 0 * ne23), dpct::library_data_t::real_half, nb01 / nb00,
-                (const void **) (ptrs_src.get() + 1 * ne23), dpct::library_data_t::real_half, s11, beta,
-                (void **) (ptrs_dst.get() + 0 * ne23), mkl_data_type, ne0, ne23, mkl_compute_type, matrix_info.get())));
+                (ثابت فراغ **) (ptrs_src.get() + 0 * ne23), dpct::library_data_t::real_half, nb01 / nb00,
+                (ثابت فراغ **) (ptrs_src.get() + 1 * ne23), dpct::library_data_t::real_half, s11, beta,
+                (فراغ **) (ptrs_dst.get() + 0 * ne23), mkl_data_type, ne0, ne23, mkl_compute_type, matrix_info.get())));
         }
     }
-} catch (const sycl::exception & exc) {
+} امسك (ثابت sycl::exception & exc) {
     std::cerr << exc.what() << "Exception caught at file:" << __FILE__ << ", line:" << __LINE__ << std::endl;
     std::exit(1);
 }
 
-enum class mul_mat_algo {
+تعداد מחלקה mul_mat_algo {
     DMMV         = 0,
     MMVQ         = 1,
     MUL_MAT_SYCL = 2,
 };
 
-inline bool ggml_sycl_supports_mmq(enum ggml_type type) {
+مضمن منطقي ggml_sycl_supports_mmq(تعداد ggml_type type) {
     // TODO: accuracy issues in MMQ
     GGML_UNUSED(type);
-    return false;
+    החזר שקר;
 }
 
-inline bool ggml_sycl_supports_reorder_mul_mat_sycl(enum ggml_type type) {
-    switch (type) {
-        case GGML_TYPE_Q1_0:
-        case GGML_TYPE_Q4_0:
-        case GGML_TYPE_Q8_0:
-            return true;
-        case GGML_TYPE_Q2_K:
-        case GGML_TYPE_Q3_K:
-        case GGML_TYPE_Q4_K:
-        case GGML_TYPE_Q5_K:
-        case GGML_TYPE_Q6_K:
-            return !g_ggml_sycl_prioritize_dmmv;
-        default:
-            return false;
+مضمن منطقي ggml_sycl_supports_reorder_mul_mat_sycl(تعداد ggml_type type) {
+    بدل (type) {
+        حالة GGML_TYPE_Q1_0:
+        حالة GGML_TYPE_Q4_0:
+        حالة GGML_TYPE_Q8_0:
+            החזר אמת;
+        حالة GGML_TYPE_Q2_K:
+        حالة GGML_TYPE_Q3_K:
+        حالة GGML_TYPE_Q4_K:
+        حالة GGML_TYPE_Q5_K:
+        حالة GGML_TYPE_Q6_K:
+            החזר !g_ggml_sycl_prioritize_dmmv;
+        افتراضي:
+            החזר שקר;
     }
 }
 
-inline bool ggml_sycl_supports_reorder_dmmv(enum ggml_type type) {
-    switch (type) {
-        case GGML_TYPE_Q1_0:
-        case GGML_TYPE_Q4_0:
-        case GGML_TYPE_Q8_0:
-        case GGML_TYPE_Q2_K:
-        case GGML_TYPE_Q3_K:
-        case GGML_TYPE_Q4_K:
-        case GGML_TYPE_Q5_K:
-        case GGML_TYPE_Q6_K:
-            return true;
-        default:
-            return false;
+مضمن منطقي ggml_sycl_supports_reorder_dmmv(تعداد ggml_type type) {
+    بدل (type) {
+        حالة GGML_TYPE_Q1_0:
+        حالة GGML_TYPE_Q4_0:
+        حالة GGML_TYPE_Q8_0:
+        حالة GGML_TYPE_Q2_K:
+        حالة GGML_TYPE_Q3_K:
+        حالة GGML_TYPE_Q4_K:
+        حالة GGML_TYPE_Q5_K:
+        حالة GGML_TYPE_Q6_K:
+            החזר אמת;
+        افتراضي:
+            החזר שקר;
     }
 }
 
-inline bool ggml_sycl_supports_reorder_mmvq(enum ggml_type type) {
-    switch (type) {
-        case GGML_TYPE_Q1_0:
-        case GGML_TYPE_Q4_0:
-        case GGML_TYPE_Q8_0:
-        case GGML_TYPE_Q2_K:
-        case GGML_TYPE_Q3_K:
-        case GGML_TYPE_Q4_K:
-        case GGML_TYPE_Q5_K:
-        case GGML_TYPE_Q6_K:
-        case GGML_TYPE_IQ3_XXS:
-        case GGML_TYPE_IQ3_S:
-            return true;
-        default:
-            return false;
+مضمن منطقي ggml_sycl_supports_reorder_mmvq(تعداد ggml_type type) {
+    بدل (type) {
+        حالة GGML_TYPE_Q1_0:
+        حالة GGML_TYPE_Q4_0:
+        حالة GGML_TYPE_Q8_0:
+        حالة GGML_TYPE_Q2_K:
+        حالة GGML_TYPE_Q3_K:
+        حالة GGML_TYPE_Q4_K:
+        حالة GGML_TYPE_Q5_K:
+        حالة GGML_TYPE_Q6_K:
+        حالة GGML_TYPE_IQ3_XXS:
+        حالة GGML_TYPE_IQ3_S:
+            החזר אמת;
+        افتراضي:
+            החזר שקר;
     }
 }
 
-static bool ggml_sycl_supports_reorder_esimd(enum ggml_type type) {
+ساكن منطقي ggml_sycl_supports_reorder_esimd(تعداد ggml_type type) {
 #ifdef GGML_SYCL_DMMV_HAS_ESIMD
-    switch (type) {
-        case GGML_TYPE_Q2_K:
-        case GGML_TYPE_Q3_K:
-        case GGML_TYPE_Q4_K:
-        case GGML_TYPE_Q5_K:
-        case GGML_TYPE_Q6_K:
-        case GGML_TYPE_Q8_0:
-            return true;
-        default:
-            return false;
+    بدل (type) {
+        حالة GGML_TYPE_Q2_K:
+        حالة GGML_TYPE_Q3_K:
+        حالة GGML_TYPE_Q4_K:
+        حالة GGML_TYPE_Q5_K:
+        حالة GGML_TYPE_Q6_K:
+        حالة GGML_TYPE_Q8_0:
+            החזר אמת;
+        افتراضي:
+            החזר שקר;
     }
-#else
+#אחרת
     GGML_UNUSED(type);
-    return false;
+    החזר שקר;
 #endif
 }
 
-static bool ggml_sycl_supports_dmmv(enum ggml_type type) {
-    switch (type) {
-        case GGML_TYPE_Q1_0:
-        case GGML_TYPE_Q4_0:
-        case GGML_TYPE_Q4_1:
-        case GGML_TYPE_Q5_0:
-        case GGML_TYPE_Q5_1:
-        case GGML_TYPE_Q8_0:
-        case GGML_TYPE_Q2_K:
-        case GGML_TYPE_Q3_K:
-        case GGML_TYPE_Q4_K:
-        case GGML_TYPE_Q5_K:
-        case GGML_TYPE_Q6_K:
-        case GGML_TYPE_F16:
-        case GGML_TYPE_BF16:
-            return true;
-        default:
-            return false;
+ساكن منطقي ggml_sycl_supports_dmmv(تعداد ggml_type type) {
+    بدل (type) {
+        حالة GGML_TYPE_Q1_0:
+        حالة GGML_TYPE_Q4_0:
+        حالة GGML_TYPE_Q4_1:
+        حالة GGML_TYPE_Q5_0:
+        حالة GGML_TYPE_Q5_1:
+        حالة GGML_TYPE_Q8_0:
+        حالة GGML_TYPE_Q2_K:
+        حالة GGML_TYPE_Q3_K:
+        حالة GGML_TYPE_Q4_K:
+        حالة GGML_TYPE_Q5_K:
+        حالة GGML_TYPE_Q6_K:
+        حالة GGML_TYPE_F16:
+        حالة GGML_TYPE_BF16:
+            החזר אמת;
+        افتراضي:
+            החזר שקר;
     }
 }
 
 // Helper functions to unify device memory allocation for both async and sync paths
-static inline void * sycl_ext_malloc_device(dpct::queue_ptr stream, size_t size) {
-    bool use_async = g_ggml_sycl_use_async_mem_op;
-#if defined(GGML_SYCL_GRAPH) && SYCL_EXT_ONEAPI_ASYNC_MEMORY_ALLOC
-    if (use_async) {
-        void * ptr = syclex::async_malloc(*stream, sycl::usm::alloc::device, size);
+ساكن مضمن فراغ * sycl_ext_malloc_device(dpct::queue_ptr stream, size_t size) {
+    منطقي use_async = g_ggml_sycl_use_async_mem_op;
+#אם defined(GGML_SYCL_GRAPH) && SYCL_EXT_ONEAPI_ASYNC_MEMORY_ALLOC
+    אם (use_async) {
+        فراغ * ptr = syclex::async_malloc(*stream, sycl::usm::alloc::device, size);
         ggml_sycl_memtrace_add(GGML_SYCL_MEM_ASYNC, ptr, size);
-        return ptr;
+        החזר ptr;
     }
-#else
+#אחרת
     // If async allocation extension is not available, use_async should always be false.
     GGML_ASSERT(!use_async);
 #endif
-    return ggml_sycl_malloc_device(size, *stream);
+    החזר ggml_sycl_malloc_device(size, *stream);
 }
 
-static inline void sycl_ext_free(dpct::queue_ptr stream, void * ptr) {
-    bool use_async = g_ggml_sycl_use_async_mem_op;
-#if defined(GGML_SYCL_GRAPH) && SYCL_EXT_ONEAPI_ASYNC_MEMORY_ALLOC
-    if (use_async) {
+ساكن مضمن فراغ sycl_ext_free(dpct::queue_ptr stream, فراغ * ptr) {
+    منطقي use_async = g_ggml_sycl_use_async_mem_op;
+#אם defined(GGML_SYCL_GRAPH) && SYCL_EXT_ONEAPI_ASYNC_MEMORY_ALLOC
+    אם (use_async) {
         ggml_sycl_memtrace_del(ptr);
         syclex::async_free(*stream, ptr);
-        return;
+        החזר;
     }
-#else
+#אחרת
     // If async allocation extension is not available, use_async should always be false.
     GGML_ASSERT(!use_async);
 #endif
@@ -4370,17 +4370,17 @@ static inline void sycl_ext_free(dpct::queue_ptr stream, void * ptr) {
 // When device allocation fails and GGML_SYCL_HOST_MEM_FALLBACK is enabled,
 // falls back to host memory so the reorder kernel can still run (over PCIe).
 // Device access to host memory requires Linux kernel 6.8+ (Ubuntu 26.04+).
-struct sycl_reorder_temp_buffer {
-    void *          ptr  = nullptr;
+بنية sycl_reorder_temp_buffer {
+    فراغ *          ptr  = nullptr;
     dpct::queue_ptr stream;
 
     sycl_reorder_temp_buffer(dpct::queue_ptr stream, size_t size) : stream(stream) {
         ptr = sycl_ext_malloc_device(stream, size);
 #ifdef GGML_SYCL_HOST_MEM_FALLBACK
-        if (!ptr) {
+        אם (!ptr) {
             ptr = sycl::malloc_host(size, *stream);
-            if (ptr) {
-                host_fallback = true;
+            אם (ptr) {
+                host_fallback = אמת;
                 GGML_LOG_WARN("%s: device alloc of %zu bytes failed, using host memory fallback\n", __func__, size);
             }
         }
@@ -4388,160 +4388,160 @@ struct sycl_reorder_temp_buffer {
     }
 
     ~sycl_reorder_temp_buffer() {
-        if (!ptr) {
-            return;
+        אם (!ptr) {
+            החזר;
         }
-        if (host_fallback) {
-            sycl::free(ptr, *stream);
-        } else {
+        אם (host_fallback) {
+            sycl::حرر(ptr, *stream);
+        } אחרת {
             sycl_ext_free(stream, ptr);
         }
     }
 
-    explicit operator bool() const { return ptr != nullptr; }
+    explicit operator منطقي() ثابت { החזר ptr != nullptr; }
 
-    sycl_reorder_temp_buffer(const sycl_reorder_temp_buffer &)            = delete;
-    sycl_reorder_temp_buffer & operator=(const sycl_reorder_temp_buffer &) = delete;
+    sycl_reorder_temp_buffer(ثابت sycl_reorder_temp_buffer &)            = delete;
+    sycl_reorder_temp_buffer & operator=(ثابت sycl_reorder_temp_buffer &) = delete;
 
-private:
-    bool host_fallback = false;
+خاص:
+    منطقي host_fallback = שקר;
 };
 
-static bool reorder_qw_q4_0(uint8_t * data_device, const int ncols, const int nrows, size_t size, size_t offset,
+ساكن منطقي reorder_qw_q4_0(uint8_t * data_device, ثابت صحيح ncols, ثابت صحيح nrows, size_t size, size_t offset,
                             dpct::queue_ptr stream) {
     sycl_reorder_temp_buffer tmp(stream, size);
-    if (!tmp) {
+    אם (!tmp) {
         GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__, size);
-        return false;
+        החזר שקר;
     }
     uint8_t * tmp_buf = static_cast<uint8_t *>(tmp.ptr);
 
     sycl::event copy_event;
     SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->memcpy(tmp_buf, data_device, size)));
-    if (!g_ggml_sycl_use_async_mem_op) {
+    אם (!g_ggml_sycl_use_async_mem_op) {
         copy_event.wait();
     }
 
-    GGML_ASSERT((size % sizeof(block_q4_0) == 0));
-    GGML_ASSERT((offset % sizeof(block_q4_0) == 0));
-    int offset_blks = offset / sizeof(block_q4_0);
+    GGML_ASSERT((size % حجم(block_q4_0) == 0));
+    GGML_ASSERT((offset % حجم(block_q4_0) == 0));
+    صحيح offset_blks = offset / حجم(block_q4_0);
     auto qs_ptr      = data_device + offset_blks * QK4_0 / 2;
     auto d_ptr = (sycl::half*)(qs_ptr + ncols * nrows / 2) + offset_blks;
 
     auto reorder_event = stream->parallel_for(
-        size / sizeof(block_q4_0),
+        size / حجم(block_q4_0),
             [=](auto i) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-            const block_q4_0* x = (const block_q4_0*)tmp_buf;
-            const int ib = i;
+            ثابت block_q4_0* x = (ثابت block_q4_0*)tmp_buf;
+            ثابت صحيح ib = i;
 
-            for (int j = 0; j < QK4_0/2; j ++)
+            עבור (صحيح j = 0; j < QK4_0/2; j ++)
             {
                 *(qs_ptr + ib * QK4_0 / 2 + j) = x[ib].qs[j];
             }
             *(d_ptr + ib) = x[ib].d;
         });
-    if (!g_ggml_sycl_use_async_mem_op) {
+    אם (!g_ggml_sycl_use_async_mem_op) {
         reorder_event.wait_and_throw();
     }
-    return true;
+    החזר אמת;
 }
 
-static bool reorder_qw_q8_0(uint8_t * data_device, const int ncols, const int nrows, size_t size, size_t offset,
+ساكن منطقي reorder_qw_q8_0(uint8_t * data_device, ثابت صحيح ncols, ثابت صحيح nrows, size_t size, size_t offset,
                             dpct::queue_ptr stream) {
     sycl_reorder_temp_buffer tmp(stream, size);
-    if (!tmp) {
+    אם (!tmp) {
         GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__, size);
-        return false;
+        החזר שקר;
     }
     uint8_t * tmp_buf = static_cast<uint8_t *>(tmp.ptr);
 
     sycl::event copy_event;
     SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->memcpy(tmp_buf, data_device, size)));
-    if (!g_ggml_sycl_use_async_mem_op) {
+    אם (!g_ggml_sycl_use_async_mem_op) {
         copy_event.wait();
     }
 
-    GGML_ASSERT((size % sizeof(block_q8_0) == 0));
-    GGML_ASSERT((offset % sizeof(block_q8_0) == 0));
-    int offset_blks = offset / sizeof(block_q8_0);
+    GGML_ASSERT((size % حجم(block_q8_0) == 0));
+    GGML_ASSERT((offset % حجم(block_q8_0) == 0));
+    صحيح offset_blks = offset / حجم(block_q8_0);
     auto qs_ptr = data_device + offset_blks * QK8_0;
     auto d_ptr = (sycl::half*)(qs_ptr + ncols * nrows) + offset_blks;
 
     auto reorder_event = stream->parallel_for(
-        size / sizeof(block_q8_0),
+        size / حجم(block_q8_0),
             [=](auto i) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-            const block_q8_0* x = (const block_q8_0*)tmp_buf;
-            const int ib = i;
+            ثابت block_q8_0* x = (ثابت block_q8_0*)tmp_buf;
+            ثابت صحيح ib = i;
 
-            for (int j = 0; j < QK8_0; j++)
+            עבור (صحيح j = 0; j < QK8_0; j++)
             {
                 *((int8_t*)qs_ptr + ib * QK8_0 + j) = x[ib].qs[j];
             }
             *(d_ptr + ib) = x[ib].d;
         });
-    if (!g_ggml_sycl_use_async_mem_op) {
+    אם (!g_ggml_sycl_use_async_mem_op) {
         reorder_event.wait_and_throw();
     }
-    return true;
+    החזר אמת;
 }
 
 // Reorder each Q8_0 expert slice into a self-contained [qs][d] SoA layout.
-static bool reorder_qw_q8_0_moe(uint8_t * data_device, size_t expert_bytes, int64_t n_expert, dpct::queue_ptr stream) {
-    GGML_ASSERT(expert_bytes % sizeof(block_q8_0) == 0);
-    const int    blocks_per_expert = (int) (expert_bytes / sizeof(block_q8_0));
-    const size_t total_bytes       = expert_bytes * (size_t) n_expert;
+ساكن منطقي reorder_qw_q8_0_moe(uint8_t * data_device, size_t expert_bytes, int64_t n_expert, dpct::queue_ptr stream) {
+    GGML_ASSERT(expert_bytes % حجم(block_q8_0) == 0);
+    ثابت صحيح    blocks_per_expert = (صحيح) (expert_bytes / حجم(block_q8_0));
+    ثابت size_t total_bytes       = expert_bytes * (size_t) n_expert;
 
     sycl_reorder_temp_buffer tmp(stream, total_bytes);
-    if (!tmp) {
+    אם (!tmp) {
         GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__, total_bytes);
-        return false;
+        החזר שקר;
     }
     uint8_t * tmp_buf = static_cast<uint8_t *>(tmp.ptr);
 
     sycl::event copy_event;
     SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->memcpy(tmp_buf, data_device, total_bytes)));
-    if (!g_ggml_sycl_use_async_mem_op) {
+    אם (!g_ggml_sycl_use_async_mem_op) {
         copy_event.wait();
     }
 
-    const int total_blocks = blocks_per_expert * (int) n_expert;
+    ثابت صحيح total_blocks = blocks_per_expert * (صحيح) n_expert;
     auto reorder_event = stream->parallel_for(total_blocks, [=](auto gb_) {
-        const int          gb   = gb_;
-        const int          e    = gb / blocks_per_expert;
-        const int          ib   = gb % blocks_per_expert;
-        const block_q8_0 * x    = (const block_q8_0 *) (tmp_buf + (size_t) e * expert_bytes);
+        ثابت صحيح          gb   = gb_;
+        ثابت صحيح          e    = gb / blocks_per_expert;
+        ثابت صحيح          ib   = gb % blocks_per_expert;
+        ثابت block_q8_0 * x    = (ثابت block_q8_0 *) (tmp_buf + (size_t) e * expert_bytes);
         uint8_t *          base = data_device + (size_t) e * expert_bytes;
 
         auto * qs_ptr = base;
         auto * d_ptr  = (sycl::half *) (qs_ptr + (size_t) blocks_per_expert * QK8_0);
 
-        for (int j = 0; j < QK8_0; ++j) {
+        עבור (صحيح j = 0; j < QK8_0; ++j) {
             *((int8_t *) qs_ptr + ib * QK8_0 + j) = x[ib].qs[j];
         }
         d_ptr[ib] = x[ib].d;
     });
-    if (!g_ggml_sycl_use_async_mem_op) {
+    אם (!g_ggml_sycl_use_async_mem_op) {
         reorder_event.wait_and_throw();
     }
-    return true;
+    החזר אמת;
 }
 
-static bool reorder_qw_q4_k(uint8_t * data_device, size_t size, size_t offset, dpct::queue_ptr stream) {
-    GGML_ASSERT(size % sizeof(block_q4_K) == 0);
-    GGML_ASSERT(offset % sizeof(block_q4_K) == 0);
+ساكن منطقي reorder_qw_q4_k(uint8_t * data_device, size_t size, size_t offset, dpct::queue_ptr stream) {
+    GGML_ASSERT(size % حجم(block_q4_K) == 0);
+    GGML_ASSERT(offset % حجم(block_q4_K) == 0);
 
-    const int nblocks = size / sizeof(block_q4_K);
+    ثابت صحيح nblocks = size / حجم(block_q4_K);
 
     sycl_reorder_temp_buffer tmp(stream, size);
-    if (!tmp) {
+    אם (!tmp) {
         GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__, size);
-        return false;
+        החזר שקר;
     }
     uint8_t * tmp_buf = static_cast<uint8_t *>(tmp.ptr);
 
     sycl::event copy_event;
     SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->memcpy(tmp_buf, data_device, size)));
-    if (!g_ggml_sycl_use_async_mem_op) {
+    אם (!g_ggml_sycl_use_async_mem_op) {
         copy_event.wait();
     }
 
@@ -4550,95 +4550,95 @@ static bool reorder_qw_q4_k(uint8_t * data_device, size_t size, size_t offset, d
     auto * dm_ptr     = (sycl::half2 *) (scales_ptr + K_SCALE_SIZE * nblocks);
 
     auto reorder_event = stream->parallel_for(nblocks, [=](auto i) {
-        const block_q4_K * x  = (const block_q4_K *) tmp_buf;
-        const int          ib = i;
+        ثابت block_q4_K * x  = (ثابت block_q4_K *) tmp_buf;
+        ثابت صحيح          ib = i;
 
-        for (int j = 0; j < QK_K / 2; ++j) {
+        עבור (صحيح j = 0; j < QK_K / 2; ++j) {
             qs_ptr[ib * (QK_K / 2) + j] = x[ib].qs[j];
         }
 
-        for (int j = 0; j < K_SCALE_SIZE; ++j) {
+        עבור (صحيح j = 0; j < K_SCALE_SIZE; ++j) {
             scales_ptr[ib * K_SCALE_SIZE + j] = x[ib].scales[j];
         }
 
         dm_ptr[ib] = x[ib].dm;
     });
-    if (!g_ggml_sycl_use_async_mem_op) {
+    אם (!g_ggml_sycl_use_async_mem_op) {
         reorder_event.wait_and_throw();
     }
-    return true;
+    החזר אמת;
 }
 
 // Reorder each expert slice into a self-contained SoA layout.
-static bool reorder_qw_q4_k_moe(uint8_t * data_device, size_t expert_bytes, int64_t n_expert, dpct::queue_ptr stream) {
-    GGML_ASSERT(expert_bytes % sizeof(block_q4_K) == 0);
-    const int    blocks_per_expert = (int) (expert_bytes / sizeof(block_q4_K));
-    const size_t total_bytes       = expert_bytes * (size_t) n_expert;
+ساكن منطقي reorder_qw_q4_k_moe(uint8_t * data_device, size_t expert_bytes, int64_t n_expert, dpct::queue_ptr stream) {
+    GGML_ASSERT(expert_bytes % حجم(block_q4_K) == 0);
+    ثابت صحيح    blocks_per_expert = (صحيح) (expert_bytes / حجم(block_q4_K));
+    ثابت size_t total_bytes       = expert_bytes * (size_t) n_expert;
 
     sycl_reorder_temp_buffer tmp(stream, total_bytes);
-    if (!tmp) {
+    אם (!tmp) {
         GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__, total_bytes);
-        return false;
+        החזר שקר;
     }
     uint8_t * tmp_buf = static_cast<uint8_t *>(tmp.ptr);
 
     sycl::event copy_event;
     SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->memcpy(tmp_buf, data_device, total_bytes)));
-    if (!g_ggml_sycl_use_async_mem_op) {
+    אם (!g_ggml_sycl_use_async_mem_op) {
         copy_event.wait();
     }
 
-    const int total_blocks = blocks_per_expert * (int) n_expert;
+    ثابت صحيح total_blocks = blocks_per_expert * (صحيح) n_expert;
     auto reorder_event = stream->parallel_for(total_blocks, [=](auto gb_) {
-        const int          gb   = gb_;
-        const int          e    = gb / blocks_per_expert;
-        const int          ib   = gb % blocks_per_expert;
-        const block_q4_K * x    = (const block_q4_K *) (tmp_buf + (size_t) e * expert_bytes);
+        ثابت صحيح          gb   = gb_;
+        ثابت صحيح          e    = gb / blocks_per_expert;
+        ثابت صحيح          ib   = gb % blocks_per_expert;
+        ثابت block_q4_K * x    = (ثابت block_q4_K *) (tmp_buf + (size_t) e * expert_bytes);
         uint8_t *          base = data_device + (size_t) e * expert_bytes;
 
         auto * qs_ptr     = base;
         auto * scales_ptr = qs_ptr + QK_K / 2 * blocks_per_expert;
         auto * dm_ptr     = (sycl::half2 *) (scales_ptr + K_SCALE_SIZE * blocks_per_expert);
 
-        for (int j = 0; j < QK_K / 2; ++j) {
+        עבור (صحيح j = 0; j < QK_K / 2; ++j) {
             qs_ptr[ib * (QK_K / 2) + j] = x[ib].qs[j];
         }
-        for (int j = 0; j < K_SCALE_SIZE; ++j) {
+        עבור (صحيح j = 0; j < K_SCALE_SIZE; ++j) {
             scales_ptr[ib * K_SCALE_SIZE + j] = x[ib].scales[j];
         }
         dm_ptr[ib] = x[ib].dm;
     });
-    if (!g_ggml_sycl_use_async_mem_op) {
+    אם (!g_ggml_sycl_use_async_mem_op) {
         reorder_event.wait_and_throw();
     }
-    return true;
+    החזר אמת;
 }
 
 // Reorder each Q5_K expert slice into [qs][qh][scales][dm].
-static bool reorder_qw_q5_k_moe(uint8_t * data_device, size_t expert_bytes, int64_t n_expert, dpct::queue_ptr stream) {
-    GGML_ASSERT(expert_bytes % sizeof(block_q5_K) == 0);
-    const int    blocks_per_expert = (int) (expert_bytes / sizeof(block_q5_K));
-    const size_t total_bytes       = expert_bytes * (size_t) n_expert;
+ساكن منطقي reorder_qw_q5_k_moe(uint8_t * data_device, size_t expert_bytes, int64_t n_expert, dpct::queue_ptr stream) {
+    GGML_ASSERT(expert_bytes % حجم(block_q5_K) == 0);
+    ثابت صحيح    blocks_per_expert = (صحيح) (expert_bytes / حجم(block_q5_K));
+    ثابت size_t total_bytes       = expert_bytes * (size_t) n_expert;
 
     sycl_reorder_temp_buffer tmp(stream, total_bytes);
-    if (!tmp) {
+    אם (!tmp) {
         GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__, total_bytes);
-        return false;
+        החזר שקר;
     }
     uint8_t * tmp_buf = static_cast<uint8_t *>(tmp.ptr);
 
     sycl::event copy_event;
     SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->memcpy(tmp_buf, data_device, total_bytes)));
-    if (!g_ggml_sycl_use_async_mem_op) {
+    אם (!g_ggml_sycl_use_async_mem_op) {
         copy_event.wait();
     }
 
-    const int total_blocks = blocks_per_expert * (int) n_expert;
+    ثابت صحيح total_blocks = blocks_per_expert * (صحيح) n_expert;
     auto reorder_event = stream->parallel_for(total_blocks, [=](auto gb_) {
-        const int          gb   = gb_;
-        const int          e    = gb / blocks_per_expert;
-        const int          ib   = gb % blocks_per_expert;
-        const block_q5_K * x    = (const block_q5_K *) (tmp_buf + (size_t) e * expert_bytes);
+        ثابت صحيح          gb   = gb_;
+        ثابت صحيح          e    = gb / blocks_per_expert;
+        ثابت صحيح          ib   = gb % blocks_per_expert;
+        ثابت block_q5_K * x    = (ثابت block_q5_K *) (tmp_buf + (size_t) e * expert_bytes);
         uint8_t *          base = data_device + (size_t) e * expert_bytes;
 
         auto * qs_ptr     = base;
@@ -4646,48 +4646,48 @@ static bool reorder_qw_q5_k_moe(uint8_t * data_device, size_t expert_bytes, int6
         auto * scales_ptr = qh_ptr + (QK_K / 8) * blocks_per_expert;
         auto * dm_ptr     = (sycl::half2 *) (scales_ptr + K_SCALE_SIZE * blocks_per_expert);
 
-        for (int j = 0; j < QK_K / 2; ++j) {
+        עבור (صحيح j = 0; j < QK_K / 2; ++j) {
             qs_ptr[ib * (QK_K / 2) + j] = x[ib].qs[j];
         }
-        for (int j = 0; j < QK_K / 8; ++j) {
+        עבור (صحيح j = 0; j < QK_K / 8; ++j) {
             qh_ptr[ib * (QK_K / 8) + j] = x[ib].qh[j];
         }
-        for (int j = 0; j < K_SCALE_SIZE; ++j) {
+        עבור (صحيح j = 0; j < K_SCALE_SIZE; ++j) {
             scales_ptr[ib * K_SCALE_SIZE + j] = x[ib].scales[j];
         }
         dm_ptr[ib] = x[ib].dm;
     });
-    if (!g_ggml_sycl_use_async_mem_op) {
+    אם (!g_ggml_sycl_use_async_mem_op) {
         reorder_event.wait_and_throw();
     }
-    return true;
+    החזר אמת;
 }
 
 // Reorder each Q6_K expert slice into [ql][qh][scales][d].
-static bool reorder_qw_q6_k_moe(uint8_t * data_device, size_t expert_bytes, int64_t n_expert, dpct::queue_ptr stream) {
-    GGML_ASSERT(expert_bytes % sizeof(block_q6_K) == 0);
-    const int    blocks_per_expert = (int) (expert_bytes / sizeof(block_q6_K));
-    const size_t total_bytes       = expert_bytes * (size_t) n_expert;
+ساكن منطقي reorder_qw_q6_k_moe(uint8_t * data_device, size_t expert_bytes, int64_t n_expert, dpct::queue_ptr stream) {
+    GGML_ASSERT(expert_bytes % حجم(block_q6_K) == 0);
+    ثابت صحيح    blocks_per_expert = (صحيح) (expert_bytes / حجم(block_q6_K));
+    ثابت size_t total_bytes       = expert_bytes * (size_t) n_expert;
 
     sycl_reorder_temp_buffer tmp(stream, total_bytes);
-    if (!tmp) {
+    אם (!tmp) {
         GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__, total_bytes);
-        return false;
+        החזר שקר;
     }
     uint8_t * tmp_buf = static_cast<uint8_t *>(tmp.ptr);
 
     sycl::event copy_event;
     SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->memcpy(tmp_buf, data_device, total_bytes)));
-    if (!g_ggml_sycl_use_async_mem_op) {
+    אם (!g_ggml_sycl_use_async_mem_op) {
         copy_event.wait();
     }
 
-    const int total_blocks = blocks_per_expert * (int) n_expert;
+    ثابت صحيح total_blocks = blocks_per_expert * (صحيح) n_expert;
     auto reorder_event = stream->parallel_for(total_blocks, [=](auto gb_) {
-        const int          gb   = gb_;
-        const int          e    = gb / blocks_per_expert;
-        const int          ib   = gb % blocks_per_expert;
-        const block_q6_K * x    = (const block_q6_K *) (tmp_buf + (size_t) e * expert_bytes);
+        ثابت صحيح          gb   = gb_;
+        ثابت صحيح          e    = gb / blocks_per_expert;
+        ثابت صحيح          ib   = gb % blocks_per_expert;
+        ثابت block_q6_K * x    = (ثابت block_q6_K *) (tmp_buf + (size_t) e * expert_bytes);
         uint8_t *          base = data_device + (size_t) e * expert_bytes;
 
         auto * ql_ptr     = base;
@@ -4695,91 +4695,91 @@ static bool reorder_qw_q6_k_moe(uint8_t * data_device, size_t expert_bytes, int6
         auto * scales_ptr = qh_ptr + (QK_K / 4) * blocks_per_expert;
         auto * d_ptr      = (sycl::half *) (scales_ptr + (QK_K / 16) * blocks_per_expert);
 
-        for (int j = 0; j < QK_K / 2; ++j) {
+        עבור (صحيح j = 0; j < QK_K / 2; ++j) {
             ql_ptr[ib * (QK_K / 2) + j] = x[ib].ql[j];
         }
-        for (int j = 0; j < QK_K / 4; ++j) {
+        עבור (صحيح j = 0; j < QK_K / 4; ++j) {
             qh_ptr[ib * (QK_K / 4) + j] = x[ib].qh[j];
         }
-        for (int j = 0; j < QK_K / 16; ++j) {
+        עבור (صحيح j = 0; j < QK_K / 16; ++j) {
             scales_ptr[ib * (QK_K / 16) + j] = x[ib].scales[j];
         }
         d_ptr[ib] = x[ib].d;
     });
-    if (!g_ggml_sycl_use_async_mem_op) {
+    אם (!g_ggml_sycl_use_async_mem_op) {
         reorder_event.wait_and_throw();
     }
-    return true;
+    החזר אמת;
 }
 
 // Reorder each MXFP4 expert slice into [qs][e]: 16-byte nibble blocks, then one E8M0 byte per block.
 // Experts are self-contained, so the tensor is reordered a few experts at a time through a small
 // temporary: a whole-tensor temporary (hundreds of MB) can exceed the VRAM left on a nearly full card,
 // and on Windows the driver then pages device memory out to host RAM instead of failing.
-static bool reorder_qw_mxfp4_moe(uint8_t * data_device, size_t expert_bytes, int64_t n_expert, dpct::queue_ptr stream) {
-    GGML_ASSERT(expert_bytes % sizeof(block_mxfp4) == 0);
-    const int     blocks_per_expert = (int) (expert_bytes / sizeof(block_mxfp4));
-    const size_t  max_chunk_bytes   = 32u << 20;
-    const int64_t chunk_experts     = std::max<int64_t>(1, std::min<int64_t>(n_expert, (int64_t) (max_chunk_bytes / expert_bytes)));
+ساكن منطقي reorder_qw_mxfp4_moe(uint8_t * data_device, size_t expert_bytes, int64_t n_expert, dpct::queue_ptr stream) {
+    GGML_ASSERT(expert_bytes % حجم(block_mxfp4) == 0);
+    ثابت صحيح     blocks_per_expert = (صحيح) (expert_bytes / حجم(block_mxfp4));
+    ثابت size_t  max_chunk_bytes   = 32u << 20;
+    ثابت int64_t chunk_experts     = std::max<int64_t>(1, std::min<int64_t>(n_expert, (int64_t) (max_chunk_bytes / expert_bytes)));
 
     sycl_reorder_temp_buffer tmp(stream, (size_t) chunk_experts * expert_bytes);
-    if (!tmp) {
+    אם (!tmp) {
         GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__,
                       (size_t) chunk_experts * expert_bytes);
-        return false;
+        החזר שקר;
     }
     uint8_t * tmp_buf = static_cast<uint8_t *>(tmp.ptr);
 
     // the queue is in-order: each chunk's copy into tmp_buf waits for the previous chunk's kernel
-    for (int64_t e0 = 0; e0 < n_expert; e0 += chunk_experts) {
-        const int64_t n_chunk = std::min(chunk_experts, n_expert - e0);
+    עבור (int64_t e0 = 0; e0 < n_expert; e0 += chunk_experts) {
+        ثابت int64_t n_chunk = std::min(chunk_experts, n_expert - e0);
         uint8_t *     chunk   = data_device + (size_t) e0 * expert_bytes;
 
         sycl::event copy_event;
         SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->memcpy(tmp_buf, chunk, (size_t) n_chunk * expert_bytes)));
-        if (!g_ggml_sycl_use_async_mem_op) {
+        אם (!g_ggml_sycl_use_async_mem_op) {
             copy_event.wait();
         }
 
-        const int total_blocks = blocks_per_expert * (int) n_chunk;
+        ثابت صحيح total_blocks = blocks_per_expert * (صحيح) n_chunk;
         auto reorder_event = stream->parallel_for(total_blocks, [=](auto gb_) {
-            const int           gb   = gb_;
-            const int           e    = gb / blocks_per_expert;
-            const int           ib   = gb % blocks_per_expert;
-            const block_mxfp4 * x    = (const block_mxfp4 *) (tmp_buf + (size_t) e * expert_bytes);
+            ثابت صحيح           gb   = gb_;
+            ثابت صحيح           e    = gb / blocks_per_expert;
+            ثابت صحيح           ib   = gb % blocks_per_expert;
+            ثابت block_mxfp4 * x    = (ثابت block_mxfp4 *) (tmp_buf + (size_t) e * expert_bytes);
             uint8_t *           base = chunk + (size_t) e * expert_bytes;
 
             uint8_t * qs_ptr = base;
             uint8_t * e_ptr  = qs_ptr + (QK_MXFP4 / 2) * (size_t) blocks_per_expert;
 
-            for (int j = 0; j < QK_MXFP4 / 2; ++j) {
+            עבור (صحيح j = 0; j < QK_MXFP4 / 2; ++j) {
                 qs_ptr[(size_t) ib * (QK_MXFP4 / 2) + j] = x[ib].qs[j];
             }
             e_ptr[ib] = x[ib].e;
         });
-        if (!g_ggml_sycl_use_async_mem_op) {
+        אם (!g_ggml_sycl_use_async_mem_op) {
             reorder_event.wait_and_throw();
         }
     }
-    return true;
+    החזר אמת;
 }
 
-static bool reorder_qw_q2_k(uint8_t * data_device, size_t size, size_t offset, dpct::queue_ptr stream) {
-    GGML_ASSERT(size % sizeof(block_q2_K) == 0);
-    GGML_ASSERT(offset % sizeof(block_q2_K) == 0);
+ساكن منطقي reorder_qw_q2_k(uint8_t * data_device, size_t size, size_t offset, dpct::queue_ptr stream) {
+    GGML_ASSERT(size % حجم(block_q2_K) == 0);
+    GGML_ASSERT(offset % حجم(block_q2_K) == 0);
 
-    const int nblocks = size / sizeof(block_q2_K);
+    ثابت صحيح nblocks = size / حجم(block_q2_K);
 
     sycl_reorder_temp_buffer tmp(stream, size);
-    if (!tmp) {
+    אם (!tmp) {
         GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__, size);
-        return false;
+        החזר שקר;
     }
     uint8_t * tmp_buf = static_cast<uint8_t *>(tmp.ptr);
 
     sycl::event copy_event;
     SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->memcpy(tmp_buf, data_device, size)));
-    if (!g_ggml_sycl_use_async_mem_op) {
+    אם (!g_ggml_sycl_use_async_mem_op) {
         copy_event.wait();
     }
 
@@ -4788,41 +4788,41 @@ static bool reorder_qw_q2_k(uint8_t * data_device, size_t size, size_t offset, d
     sycl::half2 * dm_ptr     = (sycl::half2 *) (scales_ptr + (QK_K / 16) * nblocks);
 
     auto reorder_event = stream->parallel_for(nblocks, [=](auto i) {
-        const block_q2_K * x  = (const block_q2_K *) tmp_buf;
-        const int          ib = i;
+        ثابت block_q2_K * x  = (ثابت block_q2_K *) tmp_buf;
+        ثابت صحيح          ib = i;
 
-        for (int j = 0; j < QK_K / 4; ++j) {
+        עבור (صحيح j = 0; j < QK_K / 4; ++j) {
             qs_ptr[ib * (QK_K / 4) + j] = x[ib].qs[j];
         }
 
-        for (int j = 0; j < QK_K / 16; ++j) {
+        עבור (صحيح j = 0; j < QK_K / 16; ++j) {
             scales_ptr[ib * (QK_K / 16) + j] = x[ib].scales[j];
         }
 
         dm_ptr[ib] = x[ib].dm;
     });
-    if (!g_ggml_sycl_use_async_mem_op) {
+    אם (!g_ggml_sycl_use_async_mem_op) {
         reorder_event.wait_and_throw();
     }
-    return true;
+    החזר אמת;
 }
 
-static bool reorder_qw_q3_k(uint8_t * data_device, size_t size, size_t offset, dpct::queue_ptr stream) {
-    GGML_ASSERT(size % sizeof(block_q3_K) == 0);
-    GGML_ASSERT(offset % sizeof(block_q3_K) == 0);
+ساكن منطقي reorder_qw_q3_k(uint8_t * data_device, size_t size, size_t offset, dpct::queue_ptr stream) {
+    GGML_ASSERT(size % حجم(block_q3_K) == 0);
+    GGML_ASSERT(offset % حجم(block_q3_K) == 0);
 
-    const int nblocks = size / sizeof(block_q3_K);
+    ثابت صحيح nblocks = size / حجم(block_q3_K);
 
     sycl_reorder_temp_buffer tmp(stream, size);
-    if (!tmp) {
+    אם (!tmp) {
         GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__, size);
-        return false;
+        החזר שקר;
     }
     uint8_t * tmp_buf = static_cast<uint8_t *>(tmp.ptr);
 
     sycl::event copy_event;
     SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->memcpy(tmp_buf, data_device, size)));
-    if (!g_ggml_sycl_use_async_mem_op) {
+    אם (!g_ggml_sycl_use_async_mem_op) {
         copy_event.wait();
     }
 
@@ -4832,45 +4832,45 @@ static bool reorder_qw_q3_k(uint8_t * data_device, size_t size, size_t offset, d
     sycl::half * d_ptr      = (sycl::half *) (scales_ptr + 12 * nblocks);
 
     auto reorder_event = stream->parallel_for(nblocks, [=](auto i) {
-        const block_q3_K * x  = (const block_q3_K *) tmp_buf;
-        const int          ib = i;
+        ثابت block_q3_K * x  = (ثابت block_q3_K *) tmp_buf;
+        ثابت صحيح          ib = i;
 
-        for (int j = 0; j < QK_K / 4; ++j) {
+        עבור (صحيح j = 0; j < QK_K / 4; ++j) {
             qs_ptr[ib * (QK_K / 4) + j] = x[ib].qs[j];
         }
 
-        for (int j = 0; j < QK_K / 8; ++j) {
+        עבור (صحيح j = 0; j < QK_K / 8; ++j) {
             hmask_ptr[ib * (QK_K / 8) + j] = x[ib].hmask[j];
         }
 
-        for (int j = 0; j < 12; ++j) {
+        עבור (صحيح j = 0; j < 12; ++j) {
             scales_ptr[ib * 12 + j] = x[ib].scales[j];
         }
 
         d_ptr[ib] = x[ib].d;
     });
-    if (!g_ggml_sycl_use_async_mem_op) {
+    אם (!g_ggml_sycl_use_async_mem_op) {
         reorder_event.wait_and_throw();
     }
-    return true;
+    החזר אמת;
 }
 
-static bool reorder_qw_q5_k(uint8_t * data_device, size_t size, size_t offset, dpct::queue_ptr stream) {
-    GGML_ASSERT(size % sizeof(block_q5_K) == 0);
-    GGML_ASSERT(offset % sizeof(block_q5_K) == 0);
+ساكن منطقي reorder_qw_q5_k(uint8_t * data_device, size_t size, size_t offset, dpct::queue_ptr stream) {
+    GGML_ASSERT(size % حجم(block_q5_K) == 0);
+    GGML_ASSERT(offset % حجم(block_q5_K) == 0);
 
-    const int nblocks = size / sizeof(block_q5_K);
+    ثابت صحيح nblocks = size / حجم(block_q5_K);
 
     sycl_reorder_temp_buffer tmp(stream, size);
-    if (!tmp) {
+    אם (!tmp) {
         GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__, size);
-        return false;
+        החזר שקר;
     }
     uint8_t * tmp_buf = static_cast<uint8_t *>(tmp.ptr);
 
     sycl::event copy_event;
     SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->memcpy(tmp_buf, data_device, size)));
-    if (!g_ggml_sycl_use_async_mem_op) {
+    אם (!g_ggml_sycl_use_async_mem_op) {
         copy_event.wait();
     }
 
@@ -4880,45 +4880,45 @@ static bool reorder_qw_q5_k(uint8_t * data_device, size_t size, size_t offset, d
     auto * dm_ptr     = (sycl::half2 *) (scales_ptr + K_SCALE_SIZE * nblocks);
 
     auto reorder_event = stream->parallel_for(nblocks, [=](auto i) {
-        const block_q5_K * x  = (const block_q5_K *) tmp_buf;
-        const int          ib = i;
+        ثابت block_q5_K * x  = (ثابت block_q5_K *) tmp_buf;
+        ثابت صحيح          ib = i;
 
-        for (int j = 0; j < QK_K / 2; ++j) {
+        עבור (صحيح j = 0; j < QK_K / 2; ++j) {
             qs_ptr[ib * (QK_K / 2) + j] = x[ib].qs[j];
         }
 
-        for (int j = 0; j < QK_K / 8; ++j) {
+        עבור (صحيح j = 0; j < QK_K / 8; ++j) {
             qh_ptr[ib * (QK_K / 8) + j] = x[ib].qh[j];
         }
 
-        for (int j = 0; j < K_SCALE_SIZE; ++j) {
+        עבור (صحيح j = 0; j < K_SCALE_SIZE; ++j) {
             scales_ptr[ib * K_SCALE_SIZE + j] = x[ib].scales[j];
         }
 
         dm_ptr[ib] = x[ib].dm;
     });
-    if (!g_ggml_sycl_use_async_mem_op) {
+    אם (!g_ggml_sycl_use_async_mem_op) {
         reorder_event.wait_and_throw();
     }
-    return true;
+    החזר אמת;
 }
 
-static bool reorder_qw_q6_k(uint8_t * data_device, size_t size, size_t offset, dpct::queue_ptr stream) {
-    GGML_ASSERT(size % sizeof(block_q6_K) == 0);
-    GGML_ASSERT(offset % sizeof(block_q6_K) == 0);
+ساكن منطقي reorder_qw_q6_k(uint8_t * data_device, size_t size, size_t offset, dpct::queue_ptr stream) {
+    GGML_ASSERT(size % حجم(block_q6_K) == 0);
+    GGML_ASSERT(offset % حجم(block_q6_K) == 0);
 
-    const int nblocks = size / sizeof(block_q6_K);
+    ثابت صحيح nblocks = size / حجم(block_q6_K);
 
     sycl_reorder_temp_buffer tmp(stream, size);
-    if (!tmp) {
+    אם (!tmp) {
         GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__, size);
-        return false;
+        החזר שקר;
     }
     uint8_t * tmp_buf = static_cast<uint8_t *>(tmp.ptr);
 
     sycl::event copy_event;
     SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->memcpy(tmp_buf, data_device, size)));
-    if (!g_ggml_sycl_use_async_mem_op) {
+    אם (!g_ggml_sycl_use_async_mem_op) {
         copy_event.wait();
     }
 
@@ -4928,48 +4928,48 @@ static bool reorder_qw_q6_k(uint8_t * data_device, size_t size, size_t offset, d
     sycl::half * dm_ptr     = (sycl::half *) (scales_ptr + (QK_K / 16) * nblocks);
 
     auto reorder_event = stream->parallel_for(nblocks, [=](auto i) {
-        const block_q6_K * x  = (const block_q6_K *) tmp_buf;
-        const int          ib = i;
+        ثابت block_q6_K * x  = (ثابت block_q6_K *) tmp_buf;
+        ثابت صحيح          ib = i;
 
-        const uint8_t * ql              = x[ib].ql;
-        const uint8_t * qh              = x[ib].qh;
+        ثابت uint8_t * ql              = x[ib].ql;
+        ثابت uint8_t * qh              = x[ib].qh;
         uint8_t *       base_ql_ptr     = ql_ptr + (QK_K / 2) * ib;
         uint8_t *       base_qh_ptr     = qh_ptr + (QK_K / 4) * ib;
         uint8_t *       base_scales_ptr = scales_ptr + (QK_K / 16) * ib;
 
-        for (int j = 0; j < QK_K / 2; ++j) {
+        עבור (صحيح j = 0; j < QK_K / 2; ++j) {
             base_ql_ptr[j] = ql[j];
         }
-        for (int j = 0; j < QK_K / 4; ++j) {
+        עבור (صحيح j = 0; j < QK_K / 4; ++j) {
             base_qh_ptr[j] = qh[j];
         }
 
-        for (int j = 0; j < QK_K / 16; ++j) {
+        עבור (صحيح j = 0; j < QK_K / 16; ++j) {
             base_scales_ptr[j] = x[ib].scales[j];
         }
 
         dm_ptr[ib] = x[ib].d;
     });
-    if (!g_ggml_sycl_use_async_mem_op) {
+    אם (!g_ggml_sycl_use_async_mem_op) {
         reorder_event.wait_and_throw();
     }
-    return true;
+    החזר אמת;
 }
 
-static bool reorder_qw_iq3_s(uint8_t * data_device, size_t size, dpct::queue_ptr stream) {
-    GGML_ASSERT(size % sizeof(block_iq3_s) == 0);
+ساكن منطقي reorder_qw_iq3_s(uint8_t * data_device, size_t size, dpct::queue_ptr stream) {
+    GGML_ASSERT(size % حجم(block_iq3_s) == 0);
 
-    const int nblocks = size / sizeof(block_iq3_s);
+    ثابت صحيح nblocks = size / حجم(block_iq3_s);
     sycl_reorder_temp_buffer tmp(stream, size);
-    if (!tmp) {
+    אם (!tmp) {
         GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__, size);
-        return false;
+        החזר שקר;
     }
     uint8_t * tmp_buf = static_cast<uint8_t *>(tmp.ptr);
 
     sycl::event copy_event;
     SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->memcpy(tmp_buf, data_device, size)));
-    if (!g_ggml_sycl_use_async_mem_op) {
+    אם (!g_ggml_sycl_use_async_mem_op) {
         copy_event.wait();
     }
 
@@ -4979,45 +4979,45 @@ static bool reorder_qw_iq3_s(uint8_t * data_device, size_t size, dpct::queue_ptr
     auto * metadata_ptr = signs_ptr + (QK_K / 8) * nblocks;
 
     auto reorder_event = stream->parallel_for(nblocks, [=](auto i) {
-        const block_iq3_s * x = (const block_iq3_s *) tmp_buf;
-        const int ib = i;
+        ثابت block_iq3_s * x = (ثابت block_iq3_s *) tmp_buf;
+        ثابت صحيح ib = i;
 
-        for (int j = 0; j < QK_K / 4; ++j) {
+        עבור (صحيح j = 0; j < QK_K / 4; ++j) {
             qs_ptr[ib * (QK_K / 4) + j] = x[ib].qs[j];
         }
-        for (int j = 0; j < QK_K / 32; ++j) {
+        עבור (صحيح j = 0; j < QK_K / 32; ++j) {
             qh_ptr[ib * (QK_K / 32) + j] = x[ib].qh[j];
         }
-        for (int j = 0; j < QK_K / 8; ++j) {
+        עבור (صحيح j = 0; j < QK_K / 8; ++j) {
             signs_ptr[ib * (QK_K / 8) + j] = x[ib].signs[j];
         }
 
-        uint8_t * metadata = metadata_ptr + ib * (sizeof(ggml_half) + IQ3S_N_SCALE);
+        uint8_t * metadata = metadata_ptr + ib * (حجم(ggml_half) + IQ3S_N_SCALE);
         *reinterpret_cast<ggml_half *>(metadata) = x[ib].d;
-        for (int j = 0; j < IQ3S_N_SCALE; ++j) {
-            metadata[sizeof(ggml_half) + j] = x[ib].scales[j];
+        עבור (صحيح j = 0; j < IQ3S_N_SCALE; ++j) {
+            metadata[حجم(ggml_half) + j] = x[ib].scales[j];
         }
     });
-    if (!g_ggml_sycl_use_async_mem_op) {
+    אם (!g_ggml_sycl_use_async_mem_op) {
         reorder_event.wait_and_throw();
     }
-    return true;
+    החזר אמת;
 }
 
-static bool reorder_qw_iq3_xxs(uint8_t * data_device, size_t size, dpct::queue_ptr stream) {
-    GGML_ASSERT(size % sizeof(block_iq3_xxs) == 0);
+ساكن منطقي reorder_qw_iq3_xxs(uint8_t * data_device, size_t size, dpct::queue_ptr stream) {
+    GGML_ASSERT(size % حجم(block_iq3_xxs) == 0);
 
-    const int nblocks = size / sizeof(block_iq3_xxs);
+    ثابت صحيح nblocks = size / حجم(block_iq3_xxs);
     sycl_reorder_temp_buffer tmp(stream, size);
-    if (!tmp) {
+    אם (!tmp) {
         GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__, size);
-        return false;
+        החזר שקר;
     }
     uint8_t * tmp_buf = static_cast<uint8_t *>(tmp.ptr);
 
     sycl::event copy_event;
     SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->memcpy(tmp_buf, data_device, size)));
-    if (!g_ggml_sycl_use_async_mem_op) {
+    אם (!g_ggml_sycl_use_async_mem_op) {
         copy_event.wait();
     }
 
@@ -5025,21 +5025,21 @@ static bool reorder_qw_iq3_xxs(uint8_t * data_device, size_t size, dpct::queue_p
     auto * d_ptr  = reinterpret_cast<ggml_half *>(qs_ptr + (3 * QK_K / 8) * nblocks);
 
     auto reorder_event = stream->parallel_for(nblocks, [=](auto i) {
-        const block_iq3_xxs * x = (const block_iq3_xxs *) tmp_buf;
-        const int ib = i;
+        ثابت block_iq3_xxs * x = (ثابت block_iq3_xxs *) tmp_buf;
+        ثابت صحيح ib = i;
 
-        for (int j = 0; j < 3 * QK_K / 8; ++j) {
+        עבור (صحيح j = 0; j < 3 * QK_K / 8; ++j) {
             qs_ptr[ib * (3 * QK_K / 8) + j] = x[ib].qs[j];
         }
         d_ptr[ib] = x[ib].d;
     });
-    if (!g_ggml_sycl_use_async_mem_op) {
+    אם (!g_ggml_sycl_use_async_mem_op) {
         reorder_event.wait_and_throw();
     }
-    return true;
+    החזר אמת;
 }
 
-static bool reorder_qw(const ggml_tensor * src0, dpct::queue_ptr stream) {
+ساكن منطقي reorder_qw(ثابت ggml_tensor * src0, dpct::queue_ptr stream) {
     uint8_t * data_device = (uint8_t *) src0->data;
     size_t ncols = src0->ne[0];
     size_t nrows = src0->ne[1];
@@ -5047,50 +5047,50 @@ static bool reorder_qw(const ggml_tensor * src0, dpct::queue_ptr stream) {
 
     // MoE expert weights are addressed per expert via nb[2], so each slice must
     // remain self-contained after reorder.
-    if (src0->ne[2] > 1) {
+    אם (src0->ne[2] > 1) {
         GGML_ASSERT((size_t) size == (size_t) src0->ne[2] * src0->nb[2]);
-        switch (src0->type) {
-            case GGML_TYPE_Q8_0:
-                return reorder_qw_q8_0_moe(data_device, src0->nb[2], src0->ne[2], stream);
-            case GGML_TYPE_Q4_K:
-                return reorder_qw_q4_k_moe(data_device, src0->nb[2], src0->ne[2], stream);
-            case GGML_TYPE_Q5_K:
-                return reorder_qw_q5_k_moe(data_device, src0->nb[2], src0->ne[2], stream);
-            case GGML_TYPE_Q6_K:
-                return reorder_qw_q6_k_moe(data_device, src0->nb[2], src0->ne[2], stream);
-            case GGML_TYPE_MXFP4:
-                return reorder_qw_mxfp4_moe(data_device, src0->nb[2], src0->ne[2], stream);
-            default:
-                return false;
+        بدل (src0->type) {
+            حالة GGML_TYPE_Q8_0:
+                החזר reorder_qw_q8_0_moe(data_device, src0->nb[2], src0->ne[2], stream);
+            حالة GGML_TYPE_Q4_K:
+                החזר reorder_qw_q4_k_moe(data_device, src0->nb[2], src0->ne[2], stream);
+            حالة GGML_TYPE_Q5_K:
+                החזר reorder_qw_q5_k_moe(data_device, src0->nb[2], src0->ne[2], stream);
+            حالة GGML_TYPE_Q6_K:
+                החזר reorder_qw_q6_k_moe(data_device, src0->nb[2], src0->ne[2], stream);
+            حالة GGML_TYPE_MXFP4:
+                החזר reorder_qw_mxfp4_moe(data_device, src0->nb[2], src0->ne[2], stream);
+            افتراضي:
+                החזר שקר;
         }
     }
 
-    switch (src0->type) {
-        case GGML_TYPE_Q4_0:
-            return reorder_qw_q4_0(data_device, ncols, nrows, size, 0, stream);
-        case GGML_TYPE_Q8_0:
-            return reorder_qw_q8_0(data_device, ncols, nrows, size, 0, stream);
-        case GGML_TYPE_Q2_K:
-            return reorder_qw_q2_k(data_device, size, 0, stream);
-        case GGML_TYPE_Q3_K:
-            return reorder_qw_q3_k(data_device, size, 0, stream);
-        case GGML_TYPE_Q4_K:
-            return reorder_qw_q4_k(data_device, size, 0, stream);
-        case GGML_TYPE_Q5_K:
-            return reorder_qw_q5_k(data_device, size, 0, stream);
-        case GGML_TYPE_Q6_K:
-            return reorder_qw_q6_k(data_device, size, 0, stream);
-        case GGML_TYPE_IQ3_XXS:
-            return reorder_qw_iq3_xxs(data_device, size, stream);
-        case GGML_TYPE_IQ3_S:
-            return reorder_qw_iq3_s(data_device, size, stream);
-        default:
-            return false;
+    بدل (src0->type) {
+        حالة GGML_TYPE_Q4_0:
+            החזר reorder_qw_q4_0(data_device, ncols, nrows, size, 0, stream);
+        حالة GGML_TYPE_Q8_0:
+            החזר reorder_qw_q8_0(data_device, ncols, nrows, size, 0, stream);
+        حالة GGML_TYPE_Q2_K:
+            החזר reorder_qw_q2_k(data_device, size, 0, stream);
+        حالة GGML_TYPE_Q3_K:
+            החזר reorder_qw_q3_k(data_device, size, 0, stream);
+        حالة GGML_TYPE_Q4_K:
+            החזר reorder_qw_q4_k(data_device, size, 0, stream);
+        حالة GGML_TYPE_Q5_K:
+            החזר reorder_qw_q5_k(data_device, size, 0, stream);
+        حالة GGML_TYPE_Q6_K:
+            החזר reorder_qw_q6_k(data_device, size, 0, stream);
+        حالة GGML_TYPE_IQ3_XXS:
+            החזר reorder_qw_iq3_xxs(data_device, size, stream);
+        حالة GGML_TYPE_IQ3_S:
+            החזר reorder_qw_iq3_s(data_device, size, stream);
+        افتراضي:
+            החזר שקר;
     }
 }
 
-static bool should_reorder_tensor(ggml_backend_sycl_context& ctx, const ggml_tensor * dst) {
-    return g_ggml_sycl_enable_optimize && //allow optimize, controlled by $GGML_SYCL_ENABLE_OPT
+ساكن منطقي should_reorder_tensor(ggml_backend_sycl_context& ctx, ثابت ggml_tensor * dst) {
+    החזר g_ggml_sycl_enable_optimize && //allow optimize, controlled by $GGML_SYCL_ENABLE_OPT
            ctx.opt_feature.reorder &&      //allow this device due to good perf, skip the devices with bad perf.
            dst->op == GGML_OP_MUL_MAT &&   //limit to some supported cases of Q4_0, to do for more cases.
            // ne[1] <= 8 so multi-column decode (spec / MTP verify) also bootstraps the reorder;
@@ -5098,79 +5098,79 @@ static bool should_reorder_tensor(ggml_backend_sycl_context& ctx, const ggml_ten
            dst->src[1]->ne[1] <= 8 && dst->src[1]->ne[2]==1 && dst->src[1]->ne[3]==1;
 }
 
-static void opt_for_reorder(ggml_backend_sycl_context * ctx, const ggml_tensor * src0, const ggml_tensor * /* src1 */,
+ساكن فراغ opt_for_reorder(ggml_backend_sycl_context * ctx, ثابت ggml_tensor * src0, ثابت ggml_tensor * /* src1 */,
                             ggml_tensor * dst, mul_mat_algo mm_algorithm) {
-    if (!should_reorder_tensor(*ctx, dst)) {
-        return;
+    אם (!should_reorder_tensor(*ctx, dst)) {
+        החזר;
     }
 
     ggml_tensor_extra_gpu * extra = static_cast<ggml_tensor_extra_gpu *>(src0->extra);
-    if (!extra || extra->optimized_feature.reorder) {
-        return;  // Skip permutations and already reordered tensors
+    אם (!extra || extra->optimized_feature.reorder) {
+        החזר;  // Skip permutations and already reordered tensors
     }
 
-    switch (mm_algorithm) {
-        case mul_mat_algo::DMMV:
-            if (!ggml_sycl_supports_reorder_dmmv(src0->type)) {
-                return;
+    بدل (mm_algorithm) {
+        حالة mul_mat_algo::DMMV:
+            אם (!ggml_sycl_supports_reorder_dmmv(src0->type)) {
+                החזר;
             }
-            break;
-        case mul_mat_algo::MMVQ:
-            if (!ggml_sycl_supports_reorder_mmvq(src0->type)) {
-                return;
+            اكسر;
+        حالة mul_mat_algo::MMVQ:
+            אם (!ggml_sycl_supports_reorder_mmvq(src0->type)) {
+                החזר;
             }
-            break;
-        case mul_mat_algo::MUL_MAT_SYCL:
-            if (!ggml_sycl_supports_reorder_mul_mat_sycl(src0->type)) {
-                return;
+            اكسر;
+        حالة mul_mat_algo::MUL_MAT_SYCL:
+            אם (!ggml_sycl_supports_reorder_mul_mat_sycl(src0->type)) {
+                החזר;
             }
-            break;
+            اكسر;
     }
 
-    if (reorder_qw(src0, ctx->stream())) {
-        extra->optimized_feature.reorder = true;  // Used to decode/dequan in next steps and avoid re-reordering
+    אם (reorder_qw(src0, ctx->stream())) {
+        extra->optimized_feature.reorder = אמת;  // Used to decode/dequan in next steps and avoid re-reordering
     }
 }
 
 // Lazily reorder supported MoE expert weights once their fused path is used.
-static void opt_for_reorder_id(ggml_backend_sycl_context * ctx, const ggml_tensor * src0) {
-    if (!g_ggml_sycl_enable_optimize || !ctx->opt_feature.reorder) {
-        return;
+ساكن فراغ opt_for_reorder_id(ggml_backend_sycl_context * ctx, ثابت ggml_tensor * src0) {
+    אם (!g_ggml_sycl_enable_optimize || !ctx->opt_feature.reorder) {
+        החזר;
     }
-    if (src0->type != GGML_TYPE_Q8_0 && src0->type != GGML_TYPE_Q4_K &&
+    אם (src0->type != GGML_TYPE_Q8_0 && src0->type != GGML_TYPE_Q4_K &&
         src0->type != GGML_TYPE_Q5_K && src0->type != GGML_TYPE_Q6_K && src0->type != GGML_TYPE_MXFP4) {
-        return;
+        החזר;
     }
     // The MXFP4 reorder kernels use 8-byte vector loads, so every expert slice must stay aligned.
-    if (src0->type == GGML_TYPE_MXFP4 && (src0->nb[2] % 16 != 0 || (uintptr_t) src0->data % 16 != 0)) {
-        return;
+    אם (src0->type == GGML_TYPE_MXFP4 && (src0->nb[2] % 16 != 0 || (uintptr_t) src0->data % 16 != 0)) {
+        החזר;
     }
     ggml_tensor_extra_gpu * extra = static_cast<ggml_tensor_extra_gpu *>(src0->extra);
-    if (!extra || extra->optimized_feature.reorder) {
-        return;
+    אם (!extra || extra->optimized_feature.reorder) {
+        החזר;
     }
-    if (reorder_qw(src0, ctx->stream())) {
-        extra->optimized_feature.reorder = true;
+    אם (reorder_qw(src0, ctx->stream())) {
+        extra->optimized_feature.reorder = אמת;
     }
 }
 
 
-static bool can_use_dequantize_mul_mat_vec(const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst) {
+ساكن منطقي can_use_dequantize_mul_mat_vec(ثابت ggml_tensor * src0, ثابت ggml_tensor * src1, ggml_tensor * dst) {
     // The F16/BF16 qk=1 kernel iterates with stride 2*DMMV_X, requiring ne[0] to be
     // a multiple of 2*DMMV_X. Quantized types use block-structured kernels that only
     // need ne[0] % DMMV_X == 0.
-    const int64_t dmmv_x_required = (src0->type == GGML_TYPE_BF16 || src0->type == GGML_TYPE_F16) ?
+    ثابت int64_t dmmv_x_required = (src0->type == GGML_TYPE_BF16 || src0->type == GGML_TYPE_F16) ?
                                     2*GGML_SYCL_DMMV_X : GGML_SYCL_DMMV_X;
-    return ggml_sycl_supports_dmmv(src0->type) && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32 &&
+    החזר ggml_sycl_supports_dmmv(src0->type) && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32 &&
            src0->ne[0] % dmmv_x_required == 0 && src1->ne[1] == 1;
 }
 
-static bool can_use_mul_mat_vec_q(const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst) {
-    return ggml_is_quantized(src0->type) && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32 &&
+ساكن منطقي can_use_mul_mat_vec_q(ثابت ggml_tensor * src0, ثابت ggml_tensor * src1, ggml_tensor * dst) {
+    החזר ggml_is_quantized(src0->type) && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32 &&
            src1->ne[1] <= MMVQ_MAX_BATCH_SIZE;
 }
 
-static void ggml_sycl_mul_mat(ggml_backend_sycl_context & ctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst) {
+ساكن فراغ ggml_sycl_mul_mat(ggml_backend_sycl_context & ctx, ثابت ggml_tensor * src0, ثابت ggml_tensor * src1, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
 
     // Handle HADAMARAD hint given from further up the pipeline and pass it to the correct
@@ -5179,42 +5179,42 @@ static void ggml_sycl_mul_mat(ggml_backend_sycl_context & ctx, const ggml_tensor
     // The op check is not redundant: this backend also routes MUL_MAT_ID through here with a
     // stack copy of dst, which carries MUL_MAT_ID's own op_params. ggml_mul_mat_set_hint()
     // asserts GGML_OP_MUL_MAT for the same reason.
-    if (dst->op == GGML_OP_MUL_MAT && ggml_get_op_params_i32(dst, 1) == GGML_HINT_SRC0_IS_HADAMARD &&
+    אם (dst->op == GGML_OP_MUL_MAT && ggml_get_op_params_i32(dst, 1) == GGML_HINT_SRC0_IS_HADAMARD &&
         ggml_sycl_op_fwht(ctx, src1, dst)) {
-        return;
+        החזר;
     }
 
-    const bool split = ggml_backend_buffer_is_sycl_split(src0->buffer);
+    ثابت منطقي split = ggml_backend_buffer_is_sycl_split(src0->buffer);
     int64_t min_compute_capability = INT_MAX;
 
-    if (split) {
+    אם (split) {
         ggml_backend_sycl_split_buffer_type_context * buft_ctx =
             (ggml_backend_sycl_split_buffer_type_context *) src0->buffer->buft->context;
         auto & tensor_split = buft_ctx->tensor_split;
-        for (int id = 0; id < ggml_sycl_info().device_count; ++id) {
+        עבור (صحيح id = 0; id < ggml_sycl_info().device_count; ++id) {
             // skip devices that are not going to do any work:
-            if (tensor_split[id] >= (id + 1 < ggml_sycl_info().device_count ? tensor_split[id + 1] : 1.0f)) {
-                continue;
+            אם (tensor_split[id] >= (id + 1 < ggml_sycl_info().device_count ? tensor_split[id + 1] : 1.0f)) {
+                استمر;
             }
 
-            if (min_compute_capability > ggml_sycl_info().devices[id].cc) {
+            אם (min_compute_capability > ggml_sycl_info().devices[id].cc) {
                 min_compute_capability = ggml_sycl_info().devices[id].cc;
             }
         }
-    } else {
+    } אחרת {
         min_compute_capability = ggml_sycl_info().devices[ctx.device].cc;
     }
 
     // check data types and tensor shapes for custom matrix multiplication kernels:
-    bool use_dequantize_mul_mat_vec = can_use_dequantize_mul_mat_vec(src0, src1, dst);
+    منطقي use_dequantize_mul_mat_vec = can_use_dequantize_mul_mat_vec(src0, src1, dst);
 #ifdef GGML_SYCL_F16
     // dmmv may convert src1 to f16 in this build [TAG_GGML_PREC]
     use_dequantize_mul_mat_vec = use_dequantize_mul_mat_vec && ggml_sycl_src1_f16_ok(dst);
 #endif
 
-    bool use_mul_mat_vec_q = can_use_mul_mat_vec_q(src0, src1, dst);
+    منطقي use_mul_mat_vec_q = can_use_mul_mat_vec_q(src0, src1, dst);
 
-    bool use_mul_mat_q =  ggml_sycl_supports_mmq(src0->type)
+    منطقي use_mul_mat_q =  ggml_sycl_supports_mmq(src0->type)
         && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32;
 
 
@@ -5231,11 +5231,11 @@ static void ggml_sycl_mul_mat(ggml_backend_sycl_context & ctx, const ggml_tensor
     // multi-token call (ne[1] in 2..8) will take the MMVQ path and it would read the
     // reordered bytes as if they were still the unreordered layout.
 
-    if (!g_ggml_sycl_prioritize_dmmv && ((should_reorder_tensor(ctx, dst) &&
+    אם (!g_ggml_sycl_prioritize_dmmv && ((should_reorder_tensor(ctx, dst) &&
                                           ggml_sycl_supports_reorder_mmvq(src0->type)))) {
-        bool use = g_ggml_sycl_enable_esimd && ggml_sycl_supports_reorder_esimd(src0->type);
+        منطقي use = g_ggml_sycl_enable_esimd && ggml_sycl_supports_reorder_esimd(src0->type);
         // Arc770 get benefit with Q4_0 by skipping MMVQ path
-        if (!(ggml_sycl_info().devices[ctx.device].hw_info.arch ==
+        אם (!(ggml_sycl_info().devices[ctx.device].hw_info.arch ==
                     gpu_arch::intel_gpu_acm_g10 &&
                 src0->type == GGML_TYPE_Q4_0)) {
             use = use || !use_mul_mat_vec_q;
@@ -5243,36 +5243,36 @@ static void ggml_sycl_mul_mat(ggml_backend_sycl_context & ctx, const ggml_tensor
         use_dequantize_mul_mat_vec = use_dequantize_mul_mat_vec && use;
     }
 
-    if (!split && src0->type == GGML_TYPE_F16 && ggml_is_permuted(src0) && ggml_is_permuted(src1) && src1->ne[1] == 1) {
+    אם (!split && src0->type == GGML_TYPE_F16 && ggml_is_permuted(src0) && ggml_is_permuted(src1) && src1->ne[1] == 1) {
         // TODO: Refactor and cleanup of mul mat dispatching.
-        if (src0->ne[3] == 1 && src1->ne[3] == 1) {
+        אם (src0->ne[3] == 1 && src1->ne[3] == 1) {
             // KQ single-batch
             // mmv p021 was specific for these dimensions
             ggml_sycl_mul_mat_vec_p021(ctx, src0, src1, dst);
-        } else {
+        } אחרת {
             // The kernel from the if path is faster for that specific case, but does not support all mul mats.
             ggml_sycl_mul_mat_batched_sycl(ctx, src0, src1, dst);
         }
-    } else if (!split && src0->type == GGML_TYPE_F16 && !ggml_is_contiguous(src0) && !ggml_is_transposed(src1) && src1->ne[1] == 1 && src1->ne[3] == 1) {
+    } אחרת אם (!split && src0->type == GGML_TYPE_F16 && !ggml_is_contiguous(src0) && !ggml_is_transposed(src1) && src1->ne[1] == 1 && src1->ne[3] == 1) {
         // KQV single-batch
         ggml_sycl_mul_mat_vec_nc(ctx, src0, src1, dst);
-    } else if (!split && src0->type == GGML_TYPE_F16 && !ggml_is_transposed(src0) && !ggml_is_transposed(src1) && src1->ne[2] * src1->ne[3] > 1) {
+    } אחרת אם (!split && src0->type == GGML_TYPE_F16 && !ggml_is_transposed(src0) && !ggml_is_transposed(src1) && src1->ne[2] * src1->ne[3] > 1) {
         // KQ + KQV multi-batch
         ggml_sycl_mul_mat_batched_sycl(ctx, src0, src1, dst);
-    } else if (use_dequantize_mul_mat_vec) {
+    } אחרת אם (use_dequantize_mul_mat_vec) {
         opt_for_reorder(&ctx, src0, src1, dst, mul_mat_algo::DMMV);
         ggml_sycl_op_mul_mat<no_quantize_q8_1>(ctx, src0, src1, dst, ggml_sycl_op_dequantize_mul_mat_vec);
-    } else if (use_mul_mat_vec_q) {
+    } אחרת אם (use_mul_mat_vec_q) {
         opt_for_reorder(&ctx, src0, src1, dst, mul_mat_algo::MMVQ);
         ggml_tensor_extra_gpu * extra = static_cast<ggml_tensor_extra_gpu *>(src0->extra);
-        if (extra && extra->optimized_feature.reorder) {
+        אם (extra && extra->optimized_feature.reorder) {
             ggml_sycl_op_mul_mat<quantize_and_reorder_q8_1_soa>(ctx, src0, src1, dst, ggml_sycl_op_mul_mat_vec_q);
-        } else {
+        } אחרת {
             ggml_sycl_op_mul_mat<quantize_q8_1>(ctx, src0, src1, dst, ggml_sycl_op_mul_mat_vec_q);
         }
-    } else if (use_mul_mat_q) {
+    } אחרת אם (use_mul_mat_q) {
         ggml_sycl_op_mul_mat<quantize_q8_1>(ctx, src0, src1, dst, ggml_sycl_op_mul_mat_q);
-    } else {
+    } אחרת {
         ggml_sycl_op_mul_mat<no_quantize_q8_1>(ctx, src0, src1, dst, ggml_sycl_op_mul_mat_sycl);
     }
 }
@@ -5281,43 +5281,43 @@ static void ggml_sycl_mul_mat(ggml_backend_sycl_context & ctx, const ggml_tensor
 // for quant pairs the reorder kernel does not cover (mixed gate/up types, e.g. UD-Q4_K_XL's
 // iq4_xs gate + q5_K up). Two launches replace five: one shared q8_1 quantization and one
 // dual-GEMV+GLU.
-static bool ggml_sycl_mul_mat_glu_mmvq_plain(ggml_backend_sycl_context & ctx, ggml_tensor * glu,
-                                             ggml_tensor * gate, ggml_tensor * up, const ggml_tensor * wu,
-                                             const ggml_tensor * wg, const ggml_tensor * act) {
+ساكن منطقي ggml_sycl_mul_mat_glu_mmvq_plain(ggml_backend_sycl_context & ctx, ggml_tensor * glu,
+                                             ggml_tensor * gate, ggml_tensor * up, ثابت ggml_tensor * wu,
+                                             ثابت ggml_tensor * wg, ثابت ggml_tensor * act) {
     // weights already migrated to the reorder layout would be misread by the plain kernel
-    const auto * extra_u = static_cast<const ggml_tensor_extra_gpu *>(wu->extra);
-    const auto * extra_g = static_cast<const ggml_tensor_extra_gpu *>(wg->extra);
-    if ((extra_u && extra_u->optimized_feature.reorder) || (extra_g && extra_g->optimized_feature.reorder)) {
-        return false;
+    ثابت auto * extra_u = static_cast<ثابت ggml_tensor_extra_gpu *>(wu->extra);
+    ثابت auto * extra_g = static_cast<ثابت ggml_tensor_extra_gpu *>(wg->extra);
+    אם ((extra_u && extra_u->optimized_feature.reorder) || (extra_g && extra_g->optimized_feature.reorder)) {
+        החזר שקר;
     }
 
     // the plain kernel only covers q5_K / iq4_xs pairs: bail before quantizing the activation
-    const auto plain_type = [](ggml_type t) { return t == GGML_TYPE_Q5_K || t == GGML_TYPE_IQ4_XS; };
-    if (!plain_type(wu->type) || !plain_type(wg->type)) {
-        return false;
+    ثابت auto plain_type = [](ggml_type t) { החזר t == GGML_TYPE_Q5_K || t == GGML_TYPE_IQ4_XS; };
+    אם (!plain_type(wu->type) || !plain_type(wg->type)) {
+        החזר שקר;
     }
 
     // log the up mat-mul: glu's own srcs are the two intermediates the fusion never materialises
     scope_op_debug_print scope_dbg_print(__func__, up, /*num_src=*/2, " : fused with gate + GLU (plain layout)");
 
-    const int64_t ne00 = wu->ne[0];
-    const int64_t ne11 = act->ne[1];
+    ثابت int64_t ne00 = wu->ne[0];
+    ثابت int64_t ne11 = act->ne[1];
 
-    const queue_ptr stream = ctx.stream();
-    const int src1_padded_cols = GGML_PAD((int) ne00, MATRIX_ROW_PADDING);
+    ثابت queue_ptr stream = ctx.stream();
+    ثابت صحيح src1_padded_cols = GGML_PAD((صحيح) ne00, MATRIX_ROW_PADDING);
 
-    ggml_sycl_pool_alloc<char> src1_q8_alloc(ctx.pool(),
-        (size_t) ne11 * src1_padded_cols * sizeof(block_q8_1) / QK8_1);
-    char * src1_ddq = src1_q8_alloc.get();
+    ggml_sycl_pool_alloc<حرف> src1_q8_alloc(ctx.pool(),
+        (size_t) ne11 * src1_padded_cols * حجم(block_q8_1) / QK8_1);
+    حرف * src1_ddq = src1_q8_alloc.get();
 
-    quantize_row_q8_1_sycl<quantize_q8_1>((const float *) act->data, src1_ddq, (int) ne00, (int) ne11,
+    quantize_row_q8_1_sycl<quantize_q8_1>((ثابت عائم *) act->data, src1_ddq, (صحيح) ne00, (صحيح) ne11,
                                           src1_padded_cols, stream);
 
-    return ggml_sycl_mul_mat_vec_q_glu_plain(wg->type, wu->type, ggml_get_glu_op(glu), wg->data, wu->data,
-                                             src1_ddq, (float *) glu->data, (int) ne00, (int) wu->ne[1],
-                                             (int) ne11,
+    החזר ggml_sycl_mul_mat_vec_q_glu_plain(wg->type, wu->type, ggml_get_glu_op(glu), wg->data, wu->data,
+                                             src1_ddq, (عائم *) glu->data, (صحيح) ne00, (صحيح) wu->ne[1],
+                                             (صحيح) ne11,
                                              /*stride_col_y=*/src1_padded_cols / QK8_1,
-                                             /*stride_col_dst=*/(int) glu->ne[0], stream);
+                                             /*stride_col_dst=*/(صحيح) glu->ne[0], stream);
     GGML_UNUSED(gate);
 }
 
@@ -5325,81 +5325,81 @@ static bool ggml_sycl_mul_mat_glu_mmvq_plain(ggml_backend_sycl_context & ctx, gg
 // {mul_mat(gate), mul_mat(up), GLU} on the reorder layout via the ESIMD DMMV kernel, for
 // same-type K-quant or Q8_0 pairs and a single activation column. It reads the F32 activation
 // directly, so one launch replaces three and no q8_1 quantization is needed.
-static bool ggml_sycl_mul_mat_glu_dmmv_esimd(ggml_backend_sycl_context & ctx, ggml_tensor * glu,
-                                             ggml_tensor * gate, ggml_tensor * up, const ggml_tensor * wu,
-                                             const ggml_tensor * wg, const ggml_tensor * act) {
+ساكن منطقي ggml_sycl_mul_mat_glu_dmmv_esimd(ggml_backend_sycl_context & ctx, ggml_tensor * glu,
+                                             ggml_tensor * gate, ggml_tensor * up, ثابت ggml_tensor * wu,
+                                             ثابت ggml_tensor * wg, ثابت ggml_tensor * act) {
     // the kernel reads the activation while writing the output; glu may reuse the dead activation's memory
-    const char * act_begin = (const char *) act->data;
-    const char * glu_begin = (const char *) glu->data;
-    if (act_begin < glu_begin + ggml_nbytes(glu) && glu_begin < act_begin + ggml_nbytes(act)) {
-        return false;
+    ثابت حرف * act_begin = (ثابت حرف *) act->data;
+    ثابت حرف * glu_begin = (ثابت حرف *) glu->data;
+    אם (act_begin < glu_begin + ggml_nbytes(glu) && glu_begin < act_begin + ggml_nbytes(act)) {
+        החזר שקר;
     }
 
     // install the reorder (SoA) layout the kernel needs, as the unfused DMMV path would
     opt_for_reorder(&ctx, wu, act, up, mul_mat_algo::DMMV);
     opt_for_reorder(&ctx, wg, act, gate, mul_mat_algo::DMMV);
 
-    const auto * extra_u = static_cast<const ggml_tensor_extra_gpu *>(wu->extra);
-    const auto * extra_g = static_cast<const ggml_tensor_extra_gpu *>(wg->extra);
-    if (!extra_u || !extra_g || !extra_u->optimized_feature.reorder || !extra_g->optimized_feature.reorder) {
-        return false;
+    ثابت auto * extra_u = static_cast<ثابت ggml_tensor_extra_gpu *>(wu->extra);
+    ثابت auto * extra_g = static_cast<ثابت ggml_tensor_extra_gpu *>(wg->extra);
+    אם (!extra_u || !extra_g || !extra_u->optimized_feature.reorder || !extra_g->optimized_feature.reorder) {
+        החזר שקר;
     }
 
     // log the up mat-mul: glu's own srcs are the two intermediates the fusion never materialises
     scope_op_debug_print scope_dbg_print(__func__, up, /*num_src=*/2, " : fused with gate + GLU (ESIMD)");
 
-    return ggml_sycl_dequantize_mul_mat_vec_glu_reorder_esimd(wu->type, ggml_get_glu_op(glu), wu->data, wg->data,
-                                                              (const float *) act->data, (float *) glu->data,
-                                                              (int) wu->ne[0], (int) wu->ne[1], ctx.stream());
+    החזר ggml_sycl_dequantize_mul_mat_vec_glu_reorder_esimd(wu->type, ggml_get_glu_op(glu), wu->data, wg->data,
+                                                              (ثابت عائم *) act->data, (عائم *) glu->data,
+                                                              (صحيح) wu->ne[0], (صحيح) wu->ne[1], ctx.stream());
 }
 #endif
 
 // Fused dense-FFN mat-vec for the {mul_mat(gate), mul_mat(up), GLU} subgraph at node_idx.
 // Returns false if it declined, in which case the caller runs the three nodes normally.
-static bool ggml_sycl_mul_mat_glu_fused(ggml_backend_sycl_context & ctx, ggml_cgraph * cgraph, int node_idx) {
-    if (!ggml_sycl_can_fuse(cgraph, node_idx, { GGML_OP_MUL_MAT, GGML_OP_MUL_MAT, GGML_OP_GLU }, {})) {
-        return false;
+ساكن منطقي ggml_sycl_mul_mat_glu_fused(ggml_backend_sycl_context & ctx, ggml_cgraph * cgraph, صحيح node_idx) {
+    אם (!ggml_sycl_can_fuse(cgraph, node_idx, { GGML_OP_MUL_MAT, GGML_OP_MUL_MAT, GGML_OP_GLU }, {})) {
+        החזר שקר;
     }
 
     ggml_tensor *       glu  = cgraph->nodes[node_idx + 2];
     ggml_tensor *       gate = glu->src[0];
     ggml_tensor *       up   = glu->src[1];
-    const ggml_tensor * wu   = up->src[0];
-    const ggml_tensor * wg   = gate->src[0];
-    const ggml_tensor * act  = up->src[1];
+    ثابت ggml_tensor * wu   = up->src[0];
+    ثابت ggml_tensor * wg   = gate->src[0];
+    ثابت ggml_tensor * act  = up->src[1];
 
     // this writes glu->data directly rather than the per-device row slices that
     // ggml_sycl_op_mul_mat() stitches back together, so it cannot serve split weights
-    if (ggml_backend_buffer_is_sycl_split(wu->buffer) || ggml_backend_buffer_is_sycl_split(wg->buffer)) {
-        return false;
+    אם (ggml_backend_buffer_is_sycl_split(wu->buffer) || ggml_backend_buffer_is_sycl_split(wg->buffer)) {
+        החזר שקר;
     }
 
 #ifdef GGML_SYCL_DMMV_HAS_ESIMD
     // single-column same-type K-quant or Q8_0 pairs take the ESIMD kernel, as the unfused mul-mats
     // would via DMMV; if the reorder layout could not be installed, fall through to mmvq
-    if (g_ggml_sycl_enable_esimd && wu->type == wg->type && act->ne[1] == 1 &&
+    אם (g_ggml_sycl_enable_esimd && wu->type == wg->type && act->ne[1] == 1 &&
         ggml_sycl_supports_reorder_esimd(wu->type) &&
         ggml_sycl_mul_mat_glu_dmmv_esimd(ctx, glu, gate, up, wu, wg, act)) {
-        return true;
+        החזר אמת;
     }
 #endif
 
     // with DMMV prioritised the unfused path would not have gone through mmvq at all
-    if (g_ggml_sycl_prioritize_dmmv) {
-        return false;
+    אם (g_ggml_sycl_prioritize_dmmv) {
+        החזר שקר;
     }
 
     // quant pairs the reorder kernel does not serve (mixed gate/up types, q5_K off BMG) take the
     // standard-layout fused path instead; same-type q4_K / q5_K keep the reorder path below
-    const bool reorder_pair = wg->type == wu->type &&
+    ثابت منطقي reorder_pair = wg->type == wu->type &&
         (wu->type == GGML_TYPE_Q4_K || (wu->type == GGML_TYPE_Q5_K && ggml_sycl_q5_k_mmvq_reuse(ctx.device)));
-    if (!reorder_pair) {
-        return ggml_sycl_mul_mat_glu_mmvq_plain(ctx, glu, gate, up, wu, wg, act);
+    אם (!reorder_pair) {
+        החזר ggml_sycl_mul_mat_glu_mmvq_plain(ctx, glu, gate, up, wu, wg, act);
     }
 
     // past 5 columns the two unfused q5_K GEMVs are faster than the fused kernel
-    if (wu->type == GGML_TYPE_Q5_K && act->ne[1] > 5) {
-        return false;
+    אם (wu->type == GGML_TYPE_Q5_K && act->ne[1] > 5) {
+        החזר שקר;
     }
 
     // install the reorder (SoA) layout the fused kernel needs, as the unfused mmvq path would;
@@ -5407,207 +5407,207 @@ static bool ggml_sycl_mul_mat_glu_fused(ggml_backend_sycl_context & ctx, ggml_cg
     opt_for_reorder(&ctx, wu, act, up, mul_mat_algo::MMVQ);
     opt_for_reorder(&ctx, wg, act, gate, mul_mat_algo::MMVQ);
 
-    const auto * extra_u = static_cast<const ggml_tensor_extra_gpu *>(wu->extra);
-    const auto * extra_g = static_cast<const ggml_tensor_extra_gpu *>(wg->extra);
-    if (!extra_u || !extra_g || !extra_u->optimized_feature.reorder || !extra_g->optimized_feature.reorder) {
-        return false;
+    ثابت auto * extra_u = static_cast<ثابت ggml_tensor_extra_gpu *>(wu->extra);
+    ثابت auto * extra_g = static_cast<ثابت ggml_tensor_extra_gpu *>(wg->extra);
+    אם (!extra_u || !extra_g || !extra_u->optimized_feature.reorder || !extra_g->optimized_feature.reorder) {
+        החזר שקר;
     }
 
     // log the up mat-mul: glu's own srcs are the two intermediates the fusion never materialises
     scope_op_debug_print scope_dbg_print(__func__, up, /*num_src=*/2, " : fused with gate + GLU");
 
-    const int64_t ne00 = wu->ne[0];
-    const int64_t ne11 = act->ne[1];
+    ثابت int64_t ne00 = wu->ne[0];
+    ثابت int64_t ne11 = act->ne[1];
 
-    const queue_ptr stream           = ctx.stream();
-    const int       src1_padded_cols = GGML_PAD((int) ne00, MATRIX_ROW_PADDING);
+    ثابت queue_ptr stream           = ctx.stream();
+    ثابت صحيح       src1_padded_cols = GGML_PAD((صحيح) ne00, MATRIX_ROW_PADDING);
 
     // one activation, quantized once and fully consumed into src1_ddq before the GEMV on this
     // in-order queue, so glu->data aliasing the dead activation needs no memory-range check
-    ggml_sycl_pool_alloc<char> src1_q8_alloc(ctx.pool(),
-                                             (size_t) ne11 * src1_padded_cols * sizeof(block_q8_1) / QK8_1);
-    char *                     src1_ddq = src1_q8_alloc.get();
+    ggml_sycl_pool_alloc<حرف> src1_q8_alloc(ctx.pool(),
+                                             (size_t) ne11 * src1_padded_cols * حجم(block_q8_1) / QK8_1);
+    حرف *                     src1_ddq = src1_q8_alloc.get();
 
-    quantize_row_q8_1_sycl<quantize_and_reorder_q8_1_soa>((const float *) act->data, src1_ddq, (int) ne00, (int) ne11,
+    quantize_row_q8_1_sycl<quantize_and_reorder_q8_1_soa>((ثابت عائم *) act->data, src1_ddq, (صحيح) ne00, (صحيح) ne11,
                                                           src1_padded_cols, stream);
 
-    return ggml_sycl_mul_mat_vec_q_glu_reorder(wu->type, ggml_get_glu_op(glu), wu->data, wg->data, src1_ddq,
-                                               (float *) glu->data, (int) ne00, (int) wu->ne[1], (int) ne11,
-                                               /*stride_col_y_bytes=*/src1_padded_cols * (int) sizeof(block_q8_1) /
+    החזר ggml_sycl_mul_mat_vec_q_glu_reorder(wu->type, ggml_get_glu_op(glu), wu->data, wg->data, src1_ddq,
+                                               (عائم *) glu->data, (صحيح) ne00, (صحيح) wu->ne[1], (صحيح) ne11,
+                                               /*stride_col_y_bytes=*/src1_padded_cols * (صحيح) حجم(block_q8_1) /
                                                    QK8_1,
-                                               /*stride_col_dst=*/(int) glu->ne[0], stream);
+                                               /*stride_col_dst=*/(صحيح) glu->ne[0], stream);
 }
 
 // Batch the run of consecutive L2_NORM siblings starting at node_idx into one launch.
 // Returns the number of extra graph nodes consumed, or 0 if the run is shorter than two
 // (the caller then runs the norm through the per-tensor kernel).
-static int ggml_sycl_l2_norm_batch_fused(ggml_backend_sycl_context & ctx, ggml_cgraph * cgraph, int node_idx) {
-    const ggml_tensor * node = cgraph->nodes[node_idx];
-    if (ggml_sycl_info().device_count != 1 || node->type != GGML_TYPE_F32 ||
+ساكن صحيح ggml_sycl_l2_norm_batch_fused(ggml_backend_sycl_context & ctx, ggml_cgraph * cgraph, صحيح node_idx) {
+    ثابت ggml_tensor * node = cgraph->nodes[node_idx];
+    אם (ggml_sycl_info().device_count != 1 || node->type != GGML_TYPE_F32 ||
         node->src[0]->type != GGML_TYPE_F32 || node->src[0]->ne[0] >= 1024) {
-        return 0;
+        החזר 0;
     }
 
     ggml_tensor * batch[GGML_SYCL_L2_BATCH_MAX];
-    int           count = 0;
-    int           last  = node_idx;
-    float         eps0;
-    memcpy(&eps0, node->op_params, sizeof(float));
+    صحيح           count = 0;
+    صحيح           last  = node_idx;
+    عائم         eps0;
+    memcpy(&eps0, node->op_params, حجم(عائم));
 
     // Conservative aliasing test: the batched norms run concurrently in one kernel,
     // so none may read what another writes, and none may write where another writes.
-    auto overlaps = [](const ggml_tensor * a, const ggml_tensor * b) {
-        const char * ab = (const char *) a->data;
-        const char * bb = (const char *) b->data;
-        return ab < bb + ggml_nbytes(b) && bb < ab + ggml_nbytes(a);
+    auto overlaps = [](ثابت ggml_tensor * a, ثابت ggml_tensor * b) {
+        ثابت حرف * ab = (ثابت حرف *) a->data;
+        ثابت حرف * bb = (ثابت حرف *) b->data;
+        החזר ab < bb + ggml_nbytes(b) && bb < ab + ggml_nbytes(a);
     };
 
-    for (int j = node_idx; j < cgraph->n_nodes && count < GGML_SYCL_L2_BATCH_MAX; ++j) {
+    עבור (صحيح j = node_idx; j < cgraph->n_nodes && count < GGML_SYCL_L2_BATCH_MAX; ++j) {
         ggml_tensor * nj = cgraph->nodes[j];
-        if (ggml_is_empty(nj) || nj->op == GGML_OP_RESHAPE || nj->op == GGML_OP_TRANSPOSE ||
+        אם (ggml_is_empty(nj) || nj->op == GGML_OP_RESHAPE || nj->op == GGML_OP_TRANSPOSE ||
             nj->op == GGML_OP_VIEW || nj->op == GGML_OP_PERMUTE || nj->op == GGML_OP_NONE ||
             (nj->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
-            continue;  // not a launch; cannot break a run of adjacent norms
+            استمر;  // not a launch; cannot break a run of adjacent norms
         }
-        if (nj->op != GGML_OP_L2_NORM || nj->type != GGML_TYPE_F32 ||
+        אם (nj->op != GGML_OP_L2_NORM || nj->type != GGML_TYPE_F32 ||
             nj->src[0]->type != GGML_TYPE_F32 || !ggml_are_same_shape(nj, node) ||
             !ggml_are_same_shape(nj->src[0], node->src[0])) {
-            break;  // any other launch ends the run
+            اكسر;  // any other launch ends the run
         }
-        bool same_nb = true;
-        for (int d = 0; d < GGML_MAX_DIMS; ++d) {
-            if (nj->nb[d] != node->nb[d] || nj->src[0]->nb[d] != node->src[0]->nb[d]) {
-                same_nb = false;
-                break;
+        منطقي same_nb = אמת;
+        עבור (صحيح d = 0; d < GGML_MAX_DIMS; ++d) {
+            אם (nj->nb[d] != node->nb[d] || nj->src[0]->nb[d] != node->src[0]->nb[d]) {
+                same_nb = שקר;
+                اكسر;
             }
         }
-        if (!same_nb) {
-            break;  // one nb[] stride set is shared by the whole batch
+        אם (!same_nb) {
+            اكسر;  // one nb[] stride set is shared by the whole batch
         }
-        float epsj;
-        memcpy(&epsj, nj->op_params, sizeof(float));
-        if (epsj != eps0) {
-            break;  // eps mismatch ends the run
+        عائم epsj;
+        memcpy(&epsj, nj->op_params, حجم(عائم));
+        אם (epsj != eps0) {
+            اكسر;  // eps mismatch ends the run
         }
-        bool indep = true;
-        for (int k = 0; k < count; ++k) {
-            if (overlaps(nj->src[0], batch[k]) || overlaps(nj, batch[k])) {
-                indep = false;
-                break;
+        منطقي indep = אמת;
+        עבור (صحيح k = 0; k < count; ++k) {
+            אם (overlaps(nj->src[0], batch[k]) || overlaps(nj, batch[k])) {
+                indep = שקר;
+                اكسر;
             }
         }
-        if (!indep) {
-            break;  // an overlapping tensor would race inside one launch
+        אם (!indep) {
+            اكسر;  // an overlapping tensor would race inside one launch
         }
         batch[count++] = nj;
         last           = j;
     }
-    if (count < 2) {
-        return 0;  // a lone norm falls through to the per-tensor kernel
+    אם (count < 2) {
+        החזר 0;  // a lone norm falls through to the per-tensor kernel
     }
     ggml_sycl_l2_norm_batch(ctx, batch, count);
-    return last - node_idx;
+    החזר last - node_idx;
 }
 
 
-__dpct_inline__ static void k_copy_src1_to_contiguous(
-    const char *__restrict__ src1_original, char *__restrict__ src1_contiguous,
-    const mmid_row_mapping *__restrict__ row_mapping,
+__dpct_inline__ ساكن فراغ k_copy_src1_to_contiguous(
+    ثابت حرف *__restrict__ src1_original, حرف *__restrict__ src1_contiguous,
+    ثابت mmid_row_mapping *__restrict__ row_mapping,
     int64_t ne11, int64_t ne10, size_t nb11, size_t nb12,
-    const sycl::nd_item<3> &item_ct1) {
-    const int32_t src1_row = item_ct1.get_group(2);
+    ثابت sycl::nd_item<3> &item_ct1) {
+    ثابت int32_t src1_row = item_ct1.get_group(2);
 
-    const int32_t iid1 = row_mapping[src1_row].i2;
-    const int32_t id   = row_mapping[src1_row].i1;
+    ثابت int32_t iid1 = row_mapping[src1_row].i2;
+    ثابت int32_t id   = row_mapping[src1_row].i1;
 
-    const int64_t i11 = id % ne11;
-    const int64_t i12 = iid1;
+    ثابت int64_t i11 = id % ne11;
+    ثابت int64_t i12 = iid1;
 
-    const float * src1_row_original = (const float *)(src1_original + i11*nb11 + i12*nb12);
-    float * src1_row_contiguous = (float *)(src1_contiguous + src1_row*nb11);
+    ثابت عائم * src1_row_original = (ثابت عائم *)(src1_original + i11*nb11 + i12*nb12);
+    عائم * src1_row_contiguous = (عائم *)(src1_contiguous + src1_row*nb11);
 
 #pragma unroll
-    for (int i = item_ct1.get_local_id(2); i < ne10;
+    עבור (صحيح i = item_ct1.get_local_id(2); i < ne10;
          i += item_ct1.get_local_range(2)) {
         src1_row_contiguous[i] = src1_row_original[i];
     }
 }
 
-__dpct_inline__ static void k_copy_dst_from_contiguous(
-    char *__restrict__ dst_original, const char *__restrict__ dst_contiguous,
-    const mmid_row_mapping *__restrict__ row_mapping, int64_t ne0, size_t nb1,
-    size_t nb2, const sycl::nd_item<3> &item_ct1) {
+__dpct_inline__ ساكن فراغ k_copy_dst_from_contiguous(
+    حرف *__restrict__ dst_original, ثابت حرف *__restrict__ dst_contiguous,
+    ثابت mmid_row_mapping *__restrict__ row_mapping, int64_t ne0, size_t nb1,
+    size_t nb2, ثابت sycl::nd_item<3> &item_ct1) {
     int32_t i = item_ct1.get_group(2);
 
-    const int32_t i1 = row_mapping[i].i1;
-    const int32_t i2 = row_mapping[i].i2;
+    ثابت int32_t i1 = row_mapping[i].i1;
+    ثابت int32_t i2 = row_mapping[i].i2;
 
-    const float * dst_row_contiguous = (const float *)(dst_contiguous + i*nb1);
-    float * dst_row_original = (float *)(dst_original + i1*nb1 + i2*nb2);
+    ثابت عائم * dst_row_contiguous = (ثابت عائم *)(dst_contiguous + i*nb1);
+    عائم * dst_row_original = (عائم *)(dst_original + i1*nb1 + i2*nb2);
 
 #pragma unroll
-    for (int j = item_ct1.get_local_id(2); j < ne0;
+    עבור (صحيح j = item_ct1.get_local_id(2); j < ne0;
          j += item_ct1.get_local_range(2)) {
         dst_row_original[j] = dst_row_contiguous[j];
     }
 }
 
 // Fused MoE TG fast path. Returns false to fall back to the per-expert loop below.
-static bool ggml_sycl_mul_mat_id_mmvq_fused(
-    ggml_backend_sycl_context & ctx, const ggml_tensor * src0,
-    const ggml_tensor * src1, const ggml_tensor * ids, ggml_tensor * dst)
+ساكن منطقي ggml_sycl_mul_mat_id_mmvq_fused(
+    ggml_backend_sycl_context & ctx, ثابت ggml_tensor * src0,
+    ثابت ggml_tensor * src1, ثابت ggml_tensor * ids, ggml_tensor * dst)
 {
-    const int64_t ne10 = src1->ne[0];
-    const int64_t ne11 = src1->ne[1];
-    const int64_t ne12 = src1->ne[2];
-    if (ne12 != 1) return false;
-    if (src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) return false;
-    if (ne10 != src0->ne[0] || ne10 % QK8_1 != 0) return false;
-    if (!ggml_is_contiguous(src1)) return false;
+    ثابت int64_t ne10 = src1->ne[0];
+    ثابت int64_t ne11 = src1->ne[1];
+    ثابت int64_t ne12 = src1->ne[2];
+    אם (ne12 != 1) החזר שקר;
+    אם (src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) החזר שקר;
+    אם (ne10 != src0->ne[0] || ne10 % QK8_1 != 0) החזר שקר;
+    אם (!ggml_is_contiguous(src1)) החזר שקר;
 
-    const int64_t n_ids_per_group = ids->ne[0];
-    if (ids->ne[1] != 1) return false;
-    if (ne11 != 1 && ne11 != n_ids_per_group) return false;
+    ثابت int64_t n_ids_per_group = ids->ne[0];
+    אם (ids->ne[1] != 1) החזר שקר;
+    אם (ne11 != 1 && ne11 != n_ids_per_group) החזר שקר;
 
-    const queue_ptr stream           = ctx.stream();
-    const int       src1_padded_cols = GGML_PAD((int) ne10, MATRIX_ROW_PADDING);
-    const int       n_experts_used   = (int) n_ids_per_group;
-    const int       nrows            = (int) src0->ne[1];
+    ثابت queue_ptr stream           = ctx.stream();
+    ثابت صحيح       src1_padded_cols = GGML_PAD((صحيح) ne10, MATRIX_ROW_PADDING);
+    ثابت صحيح       n_experts_used   = (صحيح) n_ids_per_group;
+    ثابت صحيح       nrows            = (صحيح) src0->ne[1];
 
     // Lazily reorder supported expert weights into a per-expert SoA layout, then run the reorder
     // GEMV. Placed after the bail checks so a non-dispatchable op does not pay the reorder cost.
     opt_for_reorder_id(&ctx, src0);
-    const ggml_tensor_extra_gpu * src0_extra =
-        static_cast<const ggml_tensor_extra_gpu *>(src0->extra);
-    const bool use_reorder = src0_extra && src0_extra->optimized_feature.reorder;
+    ثابت ggml_tensor_extra_gpu * src0_extra =
+        static_cast<ثابت ggml_tensor_extra_gpu *>(src0->extra);
+    ثابت منطقي use_reorder = src0_extra && src0_extra->optimized_feature.reorder;
 
-    ggml_sycl_pool_alloc<char> src1_q8_alloc(ctx.pool(),
-        (size_t) ne11 * src1_padded_cols * sizeof(block_q8_1) / QK8_1);
-    char * src1_ddq = src1_q8_alloc.get();
-    if (use_reorder) {
+    ggml_sycl_pool_alloc<حرف> src1_q8_alloc(ctx.pool(),
+        (size_t) ne11 * src1_padded_cols * حجم(block_q8_1) / QK8_1);
+    حرف * src1_ddq = src1_q8_alloc.get();
+    אם (use_reorder) {
         quantize_row_q8_1_sycl<quantize_and_reorder_q8_1_soa>(
-            (const float *) src1->data, src1_ddq, (int) ne10, (int) ne11,
+            (ثابت عائم *) src1->data, src1_ddq, (صحيح) ne10, (صحيح) ne11,
             src1_padded_cols, stream);
-    } else {
+    } אחרת {
         quantize_row_q8_1_sycl<quantize_q8_1>(
-            (const float *) src1->data, src1_ddq, (int) ne10, (int) ne11,
+            (ثابت عائم *) src1->data, src1_ddq, (صحيح) ne10, (صحيح) ne11,
             src1_padded_cols, stream);
     }
 
-    const size_t bytes_per_qrow = (size_t) src1_padded_cols * sizeof(block_q8_1) / QK8_1;
-    const size_t src1_row_stride = (ne11 == 1) ? 0 : bytes_per_qrow;
+    ثابت size_t bytes_per_qrow = (size_t) src1_padded_cols * حجم(block_q8_1) / QK8_1;
+    ثابت size_t src1_row_stride = (ne11 == 1) ? 0 : bytes_per_qrow;
 
-    if (use_reorder) {
-        return ggml_sycl_mul_mat_vec_q_id_reorder(
-            src0->type, src0->data, src1_ddq, (const int32_t *) ids->data,
-            (float *) dst->data, (int) ne10, nrows, n_experts_used,
+    אם (use_reorder) {
+        החזר ggml_sycl_mul_mat_vec_q_id_reorder(
+            src0->type, src0->data, src1_ddq, (ثابت int32_t *) ids->data,
+            (عائم *) dst->data, (صحيح) ne10, nrows, n_experts_used,
             /*expert_weight_stride=*/ src0->nb[2],
             /*dst_row_stride=*/ dst->nb[1],
             src1_row_stride, stream);
     }
-    return ggml_sycl_mul_mat_vec_q_id(
-        src0->type, src0->data, src1_ddq, (const int32_t *) ids->data,
-        (float *) dst->data, (int) ne10, nrows, n_experts_used,
+    החזר ggml_sycl_mul_mat_vec_q_id(
+        src0->type, src0->data, src1_ddq, (ثابت int32_t *) ids->data,
+        (عائم *) dst->data, (صحيح) ne10, nrows, n_experts_used,
         /*expert_weight_stride=*/ src0->nb[2],
         /*dst_row_stride=*/ dst->nb[1],
         src1_row_stride, stream);
@@ -5615,8 +5615,8 @@ static bool ggml_sycl_mul_mat_id_mmvq_fused(
 
 // counting sort of the routed rows by expert id (row_id_i, as chosen by the router):
 // builds a projection of a memory layout where each expert's slice is contiguous
-static void mmid_counting_sort_rows(
-        const ggml_tensor * ids, const char * ids_host,
+ساكن فراغ mmid_counting_sort_rows(
+        ثابت ggml_tensor * ids, ثابت حرف * ids_host,
         int64_t n_ids, int64_t n_as, int64_t n_routed_rows,
         std::vector<int64_t> & expert_counts,
         std::vector<int64_t> & expert_row_offsets,
@@ -5624,9 +5624,9 @@ static void mmid_counting_sort_rows(
 
     // frequencies: how many routed rows each expert "owns"
     expert_counts.assign(n_as, 0);
-    for (int64_t iid1 = 0; iid1 < ids->ne[1]; iid1++) {
-        for (int64_t id = 0; id < n_ids; id++) {
-            const int32_t row_id_i = *(const int32_t *) (ids_host + iid1*ids->nb[1] + id*ids->nb[0]);
+    עבור (int64_t iid1 = 0; iid1 < ids->ne[1]; iid1++) {
+        עבור (int64_t id = 0; id < n_ids; id++) {
+            ثابت int32_t row_id_i = *(ثابت int32_t *) (ids_host + iid1*ids->nb[1] + id*ids->nb[0]);
             GGML_ASSERT(row_id_i >= 0 && row_id_i < n_as);
             expert_counts[row_id_i]++;
         }
@@ -5634,19 +5634,19 @@ static void mmid_counting_sort_rows(
 
     // where each expert's slice starts (row indices) and the previous ends
     expert_row_offsets.assign(n_as + 1, 0);
-    for (int64_t i02 = 0; i02 < n_as; i02++) {
+    עבור (int64_t i02 = 0; i02 < n_as; i02++) {
         expert_row_offsets[i02 + 1] = expert_row_offsets[i02] + expert_counts[i02];
     }
 
     std::vector<int64_t> expert_row_next = expert_row_offsets;
     routed_row_src.resize(n_routed_rows);
-    for (int64_t iid1 = 0; iid1 < ids->ne[1]; iid1++) {
-        for (int64_t id = 0; id < n_ids; id++) {
-            const int32_t row_id_i = *(const int32_t *) (ids_host + iid1*ids->nb[1] + id*ids->nb[0]);
+    עבור (int64_t iid1 = 0; iid1 < ids->ne[1]; iid1++) {
+        עבור (int64_t id = 0; id < n_ids; id++) {
+            ثابت int32_t row_id_i = *(ثابت int32_t *) (ids_host + iid1*ids->nb[1] + id*ids->nb[0]);
             GGML_ASSERT(row_id_i >= 0 && row_id_i < n_as);
 
             // find and validate the next free row for a given expert (row_id_i)
-            const int64_t routed_row = expert_row_next[row_id_i]++;
+            ثابت int64_t routed_row = expert_row_next[row_id_i]++;
             GGML_ASSERT(routed_row >= expert_row_offsets[row_id_i]);
             GGML_ASSERT(routed_row < expert_row_offsets[row_id_i + 1]);
             routed_row_src[routed_row] = {(int32_t) id, (int32_t) iid1};
@@ -5654,34 +5654,34 @@ static void mmid_counting_sort_rows(
     }
 }
 
-static void ggml_sycl_mul_mat_id(ggml_backend_sycl_context & ctx,
-                                 ggml_tensor *dst) try {
+ساكن فراغ ggml_sycl_mul_mat_id(ggml_backend_sycl_context & ctx,
+                                 ggml_tensor *dst) حاول {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/3);
-    const ggml_tensor *src0 = dst->src[0];
-    const ggml_tensor *src1 = dst->src[1];
+    ثابت ggml_tensor *src0 = dst->src[0];
+    ثابت ggml_tensor *src1 = dst->src[1];
     GGML_ASSERT(!ggml_backend_buffer_is_sycl_split(src0->buffer) && "mul_mat_id does not support split buffers");
 
-    const ggml_tensor *ids = dst->src[2];
+    ثابت ggml_tensor *ids = dst->src[2];
     GGML_TENSOR_BINARY_OP_LOCALS
 
-    const queue_ptr stream = ctx.stream();
+    ثابت queue_ptr stream = ctx.stream();
 
-    const int64_t n_as = ne02;
-    const int64_t n_ids = ids->ne[0];
+    ثابت int64_t n_as = ne02;
+    ثابت int64_t n_ids = ids->ne[0];
 
-    if (ne12 == 1) {
-        if (ggml_sycl_mul_mat_id_mmvq_fused(ctx, src0, src1, ids, dst)) {
-            return;
+    אם (ne12 == 1) {
+        אם (ggml_sycl_mul_mat_id_mmvq_fused(ctx, src0, src1, ids, dst)) {
+            החזר;
         }
     }
 
     // The per-expert loop below reads the experts in whatever layout they have: reorder MXFP4 here as well, so prompt processing does not depend on a single-token decode having run first.
-    if (src0->type == GGML_TYPE_MXFP4) {
+    אם (src0->type == GGML_TYPE_MXFP4) {
         opt_for_reorder_id(&ctx, src0);
     }
 
-    std::vector<char> ids_host(ggml_nbytes(ids));
-    const char * ids_dev = (const char *) ids->data;
+    std::vector<حرف> ids_host(ggml_nbytes(ids));
+    ثابت حرف * ids_dev = (ثابت حرف *) ids->data;
 
     SYCL_CHECK(CHECK_TRY_ERROR(
         stream->memcpy(ids_host.data(), ids_dev, ggml_nbytes(ids))));
@@ -5695,9 +5695,9 @@ static void ggml_sycl_mul_mat_id(ggml_backend_sycl_context & ctx,
     ggml_tensor src1_row = *src1;
     ggml_tensor dst_row = *dst;
 
-    char *src0_original = (char *)src0->data;
-    char *src1_original = (char *)src1->data;
-    char *dst_original = (char *)dst->data;
+    حرف *src0_original = (حرف *)src0->data;
+    حرف *src1_original = (حرف *)src1->data;
+    حرف *dst_original = (حرف *)dst->data;
 
     src0_row.ne[2] = 1;
     src0_row.ne[3] = 1;
@@ -5714,17 +5714,17 @@ static void ggml_sycl_mul_mat_id(ggml_backend_sycl_context & ctx,
     dst_row.ne[3] = 1;
     dst_row.nb[2] = nb1;
     dst_row.nb[3] = nb1;
-    if (ne12 == 1) {
-        for (int64_t iid1 = 0; iid1 < ids->ne[1]; iid1++) {
-            for (int64_t id = 0; id < n_ids; id++) {
-                const int32_t i02 = *(const int32_t *) (ids_host.data() + iid1*ids->nb[1] + id*ids->nb[0]);
+    אם (ne12 == 1) {
+        עבור (int64_t iid1 = 0; iid1 < ids->ne[1]; iid1++) {
+            עבור (int64_t id = 0; id < n_ids; id++) {
+                ثابت int32_t i02 = *(ثابت int32_t *) (ids_host.data() + iid1*ids->nb[1] + id*ids->nb[0]);
                 GGML_ASSERT(i02 >= 0 && i02 < n_as);
 
-                const int64_t i11 = id % ne11;
-                const int64_t i12 = iid1;
+                ثابت int64_t i11 = id % ne11;
+                ثابت int64_t i12 = iid1;
 
-                const int64_t i1 = id;
-                const int64_t i2 = i12;
+                ثابت int64_t i1 = id;
+                ثابت int64_t i2 = i12;
 
             src0_row.data = src0_original + i02*nb02;
             src1_row.data = src1_original + i11*nb11 + i12*nb12;
@@ -5733,10 +5733,10 @@ static void ggml_sycl_mul_mat_id(ggml_backend_sycl_context & ctx,
             ggml_sycl_mul_mat(ctx, &src0_row, &src1_row, &dst_row);
             }
         }
-    } else {
-        const int64_t n_routed_rows = ids->ne[1] * n_ids;
-        ggml_sycl_pool_alloc<char> src1_contiguous(ctx.pool(), sizeof(float)*n_routed_rows*ne10);
-        ggml_sycl_pool_alloc<char>  dst_contiguous(ctx.pool(), sizeof(float)*n_routed_rows*ne0);
+    } אחרת {
+        ثابت int64_t n_routed_rows = ids->ne[1] * n_ids;
+        ggml_sycl_pool_alloc<حرف> src1_contiguous(ctx.pool(), حجم(عائم)*n_routed_rows*ne10);
+        ggml_sycl_pool_alloc<حرف>  dst_contiguous(ctx.pool(), حجم(عائم)*n_routed_rows*ne0);
 
         src1_row.data = src1_contiguous.get();
         dst_row.data  =  dst_contiguous.get();
@@ -5753,16 +5753,16 @@ static void ggml_sycl_mul_mat_id(ggml_backend_sycl_context & ctx,
 
         ggml_sycl_pool_alloc<mmid_row_mapping> dev_row_mapping(ctx.pool(), n_routed_rows);
         SYCL_CHECK(CHECK_TRY_ERROR(
-                stream->memcpy(dev_row_mapping.get(), routed_row_src.data(), n_routed_rows*sizeof(mmid_row_mapping))));
+                stream->memcpy(dev_row_mapping.get(), routed_row_src.data(), n_routed_rows*حجم(mmid_row_mapping))));
 
-        const unsigned int max_work_group_size = ggml_sycl_info().max_work_group_sizes[ctx.device];
-        assert(max_work_group_size % (WARP_SIZE * WARP_SIZE) == 0);
+        ثابت unsigned صحيح max_work_group_size = ggml_sycl_info().max_work_group_sizes[ctx.device];
+        أكد(max_work_group_size % (WARP_SIZE * WARP_SIZE) == 0);
 
         {
-            sycl::range<3> block_dims(1, 1, std::min((unsigned int)ne10, max_work_group_size));
+            sycl::range<3> block_dims(1, 1, std::min((unsigned صحيح)ne10, max_work_group_size));
             sycl::range<3> grid_dims(1, 1, n_routed_rows);
             stream->submit([&](sycl::handler &cgh) {
-                char *__restrict src1_contiguous_get =
+                حرف *__restrict src1_contiguous_get =
                     src1_contiguous.get();
                 mmid_row_mapping *__restrict dev_row_mapping_get =
                     dev_row_mapping.get();
@@ -5779,37 +5779,37 @@ static void ggml_sycl_mul_mat_id(ggml_backend_sycl_context & ctx,
             });
         }
 
-        bool grouped = false;
-        if (ggml_is_contiguous(src0) && src1->type == GGML_TYPE_F32 &&
-            dst->type == GGML_TYPE_F32 && nb11 == sizeof(float)*ne10 && nb1 == sizeof(float)*ne0) {
+        منطقي grouped = שקר;
+        אם (ggml_is_contiguous(src0) && src1->type == GGML_TYPE_F32 &&
+            dst->type == GGML_TYPE_F32 && nb11 == حجم(عائم)*ne10 && nb1 == حجم(عائم)*ne0) {
             // the grouped GEMM reads the reorder (SoA) layout faster, and the first decode step installs it
             // anyway: install it here already, so prefill does not depend on whether a decode ran before
-            if (g_ggml_sycl_dynamic_precision != GGML_SYCL_DYNAMIC_PRECISION_F32 &&
+            אם (g_ggml_sycl_dynamic_precision != GGML_SYCL_DYNAMIC_PRECISION_F32 &&
                 ggml_sycl_xmx_gather_type_enabled(src0->type)) {
                 opt_for_reorder_id(&ctx, src0);
             }
-            const bool src0_reordered =
-                src0->extra && ((const ggml_tensor_extra_gpu *) src0->extra)->optimized_feature.reorder;
+            ثابت منطقي src0_reordered =
+                src0->extra && ((ثابت ggml_tensor_extra_gpu *) src0->extra)->optimized_feature.reorder;
             grouped = ggml_sycl_grouped_dequant_gemm(src0->type, src0_reordered, src0_original, nb02,
-                                                     (const float *) src1_contiguous.get(), ggml_sycl_src1_prec(dst),
-                                                     (float *) dst_contiguous.get(),
+                                                     (ثابت عائم *) src1_contiguous.get(), ggml_sycl_src1_prec(dst),
+                                                     (عائم *) dst_contiguous.get(),
                                                      expert_row_offsets.data(), n_as, ne01, ne10, n_routed_rows,
                                                      ctx.mmid_tile_schedule_host, ctx.pool(), stream);
         }
 
-        for (int64_t i02 = 0; i02 < n_as && !grouped; i02++) {
-            const int64_t num_src1_rows = expert_row_counts[i02];
+        עבור (int64_t i02 = 0; i02 < n_as && !grouped; i02++) {
+            ثابت int64_t num_src1_rows = expert_row_counts[i02];
 
-            if (num_src1_rows == 0) {
-                continue;
+            אם (num_src1_rows == 0) {
+                استمر;
             }
 
-            const int64_t expert_row_offset = expert_row_offsets[i02];
+            ثابت int64_t expert_row_offset = expert_row_offsets[i02];
 
             src0_row.data = src0_original + i02*nb02;
 
-            GGML_ASSERT(nb11 == sizeof(float)*ne10);
-            GGML_ASSERT(nb1 == sizeof(float)*ne0);
+            GGML_ASSERT(nb11 == حجم(عائم)*ne10);
+            GGML_ASSERT(nb1 == حجم(عائم)*ne0);
             src1_row.data = src1_contiguous.get() + expert_row_offset*nb11;
             src1_row.ne[1] = num_src1_rows;
 
@@ -5827,12 +5827,12 @@ static void ggml_sycl_mul_mat_id(ggml_backend_sycl_context & ctx,
         }
 
         {
-            sycl::range<3> block_dims(1, 1, std::min((unsigned int)ne0, max_work_group_size));
+            sycl::range<3> block_dims(1, 1, std::min((unsigned صحيح)ne0, max_work_group_size));
             sycl::range<3> grid_dims(1, 1, n_routed_rows);
             stream->submit([&](sycl::handler &cgh) {
-                const char *__restrict dst_contiguous_get =
+                ثابت حرف *__restrict dst_contiguous_get =
                     dst_contiguous.get();
-                const mmid_row_mapping *__restrict dev_row_mapping_get =
+                ثابت mmid_row_mapping *__restrict dev_row_mapping_get =
                     dev_row_mapping.get();
 
                 cgh.parallel_for(
@@ -5847,91 +5847,91 @@ static void ggml_sycl_mul_mat_id(ggml_backend_sycl_context & ctx,
         }
     }
 }
-catch (sycl::exception const &exc) {
+امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
             << ", line:" << __LINE__ << std::endl;
   std::exit(1);
 }
 
-static void ggml_sycl_scale(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ساكن فراغ ggml_sycl_scale(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_scale(ctx, dst);
 }
 
-static void ggml_sycl_diag_mask_inf(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ساكن فراغ ggml_sycl_diag_mask_inf(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_diag_mask_inf(ctx, dst);
 }
 
-static void ggml_sycl_pool2d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ساكن فراغ ggml_sycl_pool2d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_pool2d(ctx, dst);
 }
 
-static void ggml_sycl_pool1d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ساكن فراغ ggml_sycl_pool1d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_pool1d(ctx, dst);
 }
 
-static void ggml_sycl_im2col(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ساكن فراغ ggml_sycl_im2col(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
     ggml_sycl_op_im2col(ctx, dst);
 }
 
-static void ggml_sycl_im2col_3d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ساكن فراغ ggml_sycl_im2col_3d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
     ggml_sycl_op_im2col_3d(ctx, dst);
 }
 
-static void ggml_sycl_col2im_1d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ساكن فراغ ggml_sycl_col2im_1d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_col2im_1d(ctx, dst);
 }
 
-static void ggml_sycl_conv_3d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ساكن فراغ ggml_sycl_conv_3d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
     ggml_sycl_op_conv_3d(ctx, dst);
 }
 
-static void ggml_sycl_sum(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ساكن فراغ ggml_sycl_sum(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     GGML_ASSERT(ggml_is_contiguous(dst->src[0]));
     ggml_sycl_op_sum(ctx, dst);
 }
 
-static void ggml_sycl_sum_rows(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ساكن فراغ ggml_sycl_sum_rows(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     GGML_ASSERT(ggml_is_contiguous(dst->src[0]));
     ggml_sycl_op_sum_rows(ctx, dst);
 }
 
-static void ggml_sycl_mean(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ساكن فراغ ggml_sycl_mean(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     GGML_ASSERT(ggml_is_contiguous(dst->src[0]));
     ggml_sycl_op_mean(ctx, dst);
 }
 
-static void ggml_sycl_argsort(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ساكن فراغ ggml_sycl_argsort(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     GGML_ASSERT(ggml_is_contiguous(dst->src[0]));
     ggml_sycl_op_argsort(ctx, dst);
 }
 
-static void ggml_sycl_argmax(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ساكن فراغ ggml_sycl_argmax(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     GGML_ASSERT(ggml_is_contiguous(dst->src[0]));
     ggml_sycl_op_argmax(ctx, dst);
 }
 
 
-static void ggml_sycl_set_main_device(const int main_device) try {
-    if (dpct::get_current_device_id() == static_cast<unsigned int> (main_device)) {
-        return;
+ساكن فراغ ggml_sycl_set_main_device(ثابت صحيح main_device) حاول {
+    אם (dpct::get_current_device_id() == static_cast<unsigned صحيح> (main_device)) {
+        החזר;
     }
     check_allow_gpu_index(main_device);
     dpct::select_device(main_device);
 
-    if (g_ggml_sycl_debug) {
+    אם (g_ggml_sycl_debug) {
         dpct::device_info prop;
         SYCL_CHECK(CHECK_TRY_ERROR(dpct::get_device_info(
             prop, dpct::dev_mgr::instance().get_device(main_device))));
@@ -5939,401 +5939,401 @@ static void ggml_sycl_set_main_device(const int main_device) try {
                 main_device, prop.get_name());
     }
 }
-catch (sycl::exception const &exc) {
+امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
             << ", line:" << __LINE__ << std::endl;
   std::exit(1);
 }
 
-static bool ggml_sycl_compute_forward(ggml_backend_sycl_context & ctx, struct ggml_tensor * dst) try {
+ساكن منطقي ggml_sycl_compute_forward(ggml_backend_sycl_context & ctx, بنية ggml_tensor * dst) حاول {
     GGML_SYCL_DEBUG("[SYCL] ggml_sycl_compute_forward: dst=%s, op=%s\n", dst->name, ggml_op_name(dst->op));
-    if (!g_sycl_loaded) return false;
+    אם (!g_sycl_loaded) החזר שקר;
 
-    if (dst->src[0] != nullptr && ggml_backend_buffer_is_sycl_split(dst->src[0]->buffer)) {
+    אם (dst->src[0] != nullptr && ggml_backend_buffer_is_sycl_split(dst->src[0]->buffer)) {
         ggml_sycl_set_peer_access(dst->src[1]->ne[1], ctx.device);
     }
 
-    switch (dst->op) {
-        case GGML_OP_ARGMAX:
+    بدل (dst->op) {
+        حالة GGML_OP_ARGMAX:
             ggml_sycl_argmax(ctx, dst);
-            break;
-        case GGML_OP_CONV_2D:
+            اكسر;
+        حالة GGML_OP_CONV_2D:
             ggml_sycl_op_conv2d(ctx, dst);
-            break;
-        case GGML_OP_CONV_2D_DW:
+            اكسر;
+        حالة GGML_OP_CONV_2D_DW:
             ggml_sycl_op_conv2d_dw(ctx, dst);
-            break;
-        case GGML_OP_CONV_3D:
+            اكسر;
+        حالة GGML_OP_CONV_3D:
             ggml_sycl_conv_3d(ctx, dst);
-            break;
-        case GGML_OP_CONV_TRANSPOSE_1D:
+            اكسر;
+        حالة GGML_OP_CONV_TRANSPOSE_1D:
             ggml_sycl_op_conv_transpose_1d(ctx, dst);
-            break;
-        case GGML_OP_CONV_TRANSPOSE_2D:
+            اكسر;
+        حالة GGML_OP_CONV_TRANSPOSE_2D:
             ggml_sycl_op_conv2d_transpose(ctx, dst);
-            break;
-        case GGML_OP_REPEAT:
+            اكسر;
+        حالة GGML_OP_REPEAT:
             ggml_sycl_repeat(ctx, dst);
-            break;
-        case GGML_OP_REPEAT_BACK:
+            اكسر;
+        حالة GGML_OP_REPEAT_BACK:
             ggml_sycl_repeat_back(ctx, dst);
-            break;
-        case GGML_OP_GET_ROWS:
+            اكسر;
+        حالة GGML_OP_GET_ROWS:
             ggml_sycl_get_rows(ctx, dst);
-            break;
-        case GGML_OP_GET_ROWS_BACK:
+            اكسر;
+        حالة GGML_OP_GET_ROWS_BACK:
             ggml_sycl_get_rows_back(ctx, dst);
-            break;
-        case GGML_OP_SET:
+            اكسر;
+        حالة GGML_OP_SET:
             ggml_sycl_op_set(ctx, dst);
-            break;
-        case GGML_OP_SET_ROWS:
+            اكسر;
+        حالة GGML_OP_SET_ROWS:
             ggml_sycl_op_set_rows(ctx, dst);
-            break;
-        case GGML_OP_DSV4_HC_PRE:
+            اكسر;
+        حالة GGML_OP_DSV4_HC_PRE:
             ggml_sycl_op_dsv4_hc_pre(ctx, dst);
-            break;
-        case GGML_OP_DSV4_HC_COMB:
+            اكسر;
+        حالة GGML_OP_DSV4_HC_COMB:
             ggml_sycl_op_dsv4_hc_comb(ctx, dst);
-            break;
-        case GGML_OP_DSV4_HC_POST:
+            اكسر;
+        حالة GGML_OP_DSV4_HC_POST:
             ggml_sycl_op_dsv4_hc_post(ctx, dst);
-            break;
-        case GGML_OP_LIGHTNING_INDEXER:
+            اكسر;
+        حالة GGML_OP_LIGHTNING_INDEXER:
             ggml_sycl_op_lightning_indexer(ctx, dst);
-            break;
-        case GGML_OP_DUP:
+            اكسر;
+        حالة GGML_OP_DUP:
             ggml_sycl_dup(ctx, dst);
-            break;
-        case GGML_OP_ADD:
-        case GGML_OP_ADD1: // TODO: more efficient implementation
+            اكسر;
+        حالة GGML_OP_ADD:
+        حالة GGML_OP_ADD1: // TODO: more efficient implementation
             ggml_sycl_add(ctx, dst);
-            break;
-        case GGML_OP_ADD_ID:
+            اكسر;
+        حالة GGML_OP_ADD_ID:
             ggml_sycl_add_id(ctx, dst);
-            break;
-        case GGML_OP_SUB:
+            اكسر;
+        حالة GGML_OP_SUB:
             ggml_sycl_sub(ctx, dst);
-            break;
-        case GGML_OP_COUNT_EQUAL:
+            اكسر;
+        حالة GGML_OP_COUNT_EQUAL:
             ggml_sycl_count_equal(ctx, dst);
-            break;
-        case GGML_OP_ACC:
+            اكسر;
+        حالة GGML_OP_ACC:
             ggml_sycl_acc(ctx, dst);
-            break;
-        case GGML_OP_MUL:
+            اكسر;
+        حالة GGML_OP_MUL:
             ggml_sycl_mul(ctx, dst);
-            break;
-        case GGML_OP_LOG:
+            اكسر;
+        حالة GGML_OP_LOG:
             ggml_sycl_log(ctx, dst);
-            break;
-        case GGML_OP_DIV:
+            اكسر;
+        حالة GGML_OP_DIV:
             ggml_sycl_div(ctx, dst);
-            break;
-        case GGML_OP_UNARY:
-            switch (ggml_get_unary_op(dst)) {
-                case GGML_UNARY_OP_NEG:
+            اكسر;
+        حالة GGML_OP_UNARY:
+            بدل (ggml_get_unary_op(dst)) {
+                حالة GGML_UNARY_OP_NEG:
                     ggml_sycl_neg(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_STEP:
+                    اكسر;
+                حالة GGML_UNARY_OP_STEP:
                     ggml_sycl_step(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_GELU:
+                    اكسر;
+                حالة GGML_UNARY_OP_GELU:
                     ggml_sycl_gelu(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_SILU:
+                    اكسر;
+                حالة GGML_UNARY_OP_SILU:
                     ggml_sycl_silu(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_GELU_QUICK:
+                    اكسر;
+                حالة GGML_UNARY_OP_GELU_QUICK:
                     ggml_sycl_gelu_quick(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_GELU_ERF:
+                    اكسر;
+                حالة GGML_UNARY_OP_GELU_ERF:
                     ggml_sycl_gelu_erf(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_TANH:
+                    اكسر;
+                حالة GGML_UNARY_OP_TANH:
                     ggml_sycl_tanh(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_RELU:
+                    اكسر;
+                حالة GGML_UNARY_OP_RELU:
                     ggml_sycl_relu(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_SIGMOID:
+                    اكسر;
+                حالة GGML_UNARY_OP_SIGMOID:
                     ggml_sycl_sigmoid(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_HARDSIGMOID:
+                    اكسر;
+                حالة GGML_UNARY_OP_HARDSIGMOID:
                     ggml_sycl_hardsigmoid(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_HARDSWISH:
+                    اكسر;
+                حالة GGML_UNARY_OP_HARDSWISH:
                     ggml_sycl_hardswish(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_EXP:
+                    اكسر;
+                حالة GGML_UNARY_OP_EXP:
                     ggml_sycl_exp(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_EXPM1:
+                    اكسر;
+                حالة GGML_UNARY_OP_EXPM1:
                     ggml_sycl_expm1(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_SOFTPLUS:
+                    اكسر;
+                حالة GGML_UNARY_OP_SOFTPLUS:
                     ggml_sycl_softplus(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_SGN:
+                    اكسر;
+                حالة GGML_UNARY_OP_SGN:
                     ggml_sycl_sgn(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_ABS:
+                    اكسر;
+                حالة GGML_UNARY_OP_ABS:
                     ggml_sycl_abs(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_ELU:
+                    اكسر;
+                حالة GGML_UNARY_OP_ELU:
                     ggml_sycl_elu(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_XIELU:
+                    اكسر;
+                حالة GGML_UNARY_OP_XIELU:
                     ggml_sycl_xielu(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_FLOOR:
+                    اكسر;
+                حالة GGML_UNARY_OP_FLOOR:
                     ggml_sycl_floor(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_CEIL:
+                    اكسر;
+                حالة GGML_UNARY_OP_CEIL:
                     ggml_sycl_ceil(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_ROUND:
+                    اكسر;
+                حالة GGML_UNARY_OP_ROUND:
                     ggml_sycl_round(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_TRUNC:
+                    اكسر;
+                حالة GGML_UNARY_OP_TRUNC:
                     ggml_sycl_trunc(ctx, dst);
-                    break;
-                default:
-                    return false;
+                    اكسر;
+                افتراضي:
+                    החזר שקר;
             }
-            break;
-        case GGML_OP_GLU:
-            switch (ggml_get_glu_op(dst)) {
-                case GGML_GLU_OP_REGLU:
+            اكسر;
+        حالة GGML_OP_GLU:
+            بدل (ggml_get_glu_op(dst)) {
+                حالة GGML_GLU_OP_REGLU:
                     ggml_sycl_reglu(ctx, dst);
-                    break;
-                case GGML_GLU_OP_GEGLU:
+                    اكسر;
+                حالة GGML_GLU_OP_GEGLU:
                     ggml_sycl_geglu(ctx, dst);
-                    break;
-                case GGML_GLU_OP_SWIGLU:
+                    اكسر;
+                حالة GGML_GLU_OP_SWIGLU:
                     ggml_sycl_swiglu(ctx, dst);
-                    break;
-                case GGML_GLU_OP_SWIGLU_OAI:
+                    اكسر;
+                حالة GGML_GLU_OP_SWIGLU_OAI:
                     ggml_sycl_swiglu_oai(ctx, dst);
-                    break;
-                case GGML_GLU_OP_SWIGLU_CLAMP:
+                    اكسر;
+                حالة GGML_GLU_OP_SWIGLU_CLAMP:
                     ggml_sycl_swiglu_clamp(ctx, dst);
-                    break;
-                case GGML_GLU_OP_GEGLU_ERF:
+                    اكسر;
+                حالة GGML_GLU_OP_GEGLU_ERF:
                     ggml_sycl_geglu_erf(ctx, dst);
-                    break;
-                case GGML_GLU_OP_GEGLU_QUICK:
+                    اكسر;
+                حالة GGML_GLU_OP_GEGLU_QUICK:
                     ggml_sycl_geglu_quick(ctx, dst);
-                    break;
-                default:
-                    return false;
+                    اكسر;
+                افتراضي:
+                    החזר שקר;
             }
-            break;
-        case GGML_OP_NORM:
+            اكسر;
+        حالة GGML_OP_NORM:
             ggml_sycl_norm(ctx, dst);
-            break;
-        case GGML_OP_GROUP_NORM:
+            اكسر;
+        حالة GGML_OP_GROUP_NORM:
             ggml_sycl_group_norm(ctx, dst);
-            break;
-        case GGML_OP_CONCAT:
+            اكسر;
+        حالة GGML_OP_CONCAT:
             ggml_sycl_op_concat(ctx, dst);
-            break;
-        case GGML_OP_PAD_REFLECT_1D:
+            اكسر;
+        حالة GGML_OP_PAD_REFLECT_1D:
             ggml_sycl_op_pad_reflect_1d(ctx,dst);
-            break;
-        case GGML_OP_UPSCALE:
+            اكسر;
+        حالة GGML_OP_UPSCALE:
             ggml_sycl_upscale(ctx, dst);
-            break;
-        case GGML_OP_PAD:
+            اكسر;
+        حالة GGML_OP_PAD:
             ggml_sycl_pad(ctx, dst);
-            break;
-        case GGML_OP_LEAKY_RELU:
+            اكسر;
+        حالة GGML_OP_LEAKY_RELU:
             ggml_sycl_leaky_relu(ctx, dst);
-            break;
-        case GGML_OP_RMS_NORM_BACK:
+            اكسر;
+        حالة GGML_OP_RMS_NORM_BACK:
             ggml_sycl_rms_norm_back(ctx, dst);
-            break;
-        case GGML_OP_RMS_NORM:
+            اكسر;
+        حالة GGML_OP_RMS_NORM:
             ggml_sycl_rms_norm(ctx, dst);
-            break;
-        case GGML_OP_L2_NORM:
+            اكسر;
+        حالة GGML_OP_L2_NORM:
             ggml_sycl_l2_norm(ctx, dst);
-            break;
-        case GGML_OP_MUL_MAT:
-            if (dst->src[0]->ne[3] != dst->src[1]->ne[3]) {
-                return false;
+            اكسر;
+        حالة GGML_OP_MUL_MAT:
+            אם (dst->src[0]->ne[3] != dst->src[1]->ne[3]) {
+                החזר שקר;
             }
             /* ggml_sycl_mul_mat_id is dependent on ggml_sycl_mul_mat */
             ggml_sycl_mul_mat(ctx, dst->src[0], dst->src[1], dst);
-            break;
-        case GGML_OP_MUL_MAT_ID:
-            if (dst->src[0]->ne[3] != dst->src[1]->ne[3]) {
-                return false;
+            اكسر;
+        حالة GGML_OP_MUL_MAT_ID:
+            אם (dst->src[0]->ne[3] != dst->src[1]->ne[3]) {
+                החזר שקר;
             }
             ggml_sycl_mul_mat_id(ctx, dst);
-            break;
-        case GGML_OP_OUT_PROD:
+            اكسر;
+        حالة GGML_OP_OUT_PROD:
             ggml_sycl_op_out_prod(ctx, dst);
-            break;
-        case GGML_OP_SCALE:
+            اكسر;
+        حالة GGML_OP_SCALE:
             ggml_sycl_scale(ctx, dst);
-            break;
-        case GGML_OP_SQR:
+            اكسر;
+        حالة GGML_OP_SQR:
             ggml_sycl_sqr(ctx, dst);
-            break;
-        case GGML_OP_SQRT:
+            اكسر;
+        حالة GGML_OP_SQRT:
             ggml_sycl_sqrt(ctx, dst);
-            break;
-        case GGML_OP_SIN:
+            اكسر;
+        حالة GGML_OP_SIN:
             ggml_sycl_sin(ctx, dst);
-            break;
-        case GGML_OP_COS:
+            اكسر;
+        حالة GGML_OP_COS:
             ggml_sycl_cos(ctx, dst);
-            break;
-        case GGML_OP_CLAMP:
+            اكسر;
+        حالة GGML_OP_CLAMP:
             ggml_sycl_clamp(ctx, dst);
-            break;
-        case GGML_OP_CPY:
+            اكسر;
+        حالة GGML_OP_CPY:
             ggml_sycl_cpy(ctx, dst->src[0], dst->src[1]);
-            break;
-        case GGML_OP_CONT:
+            اكسر;
+        حالة GGML_OP_CONT:
             ggml_sycl_dup(ctx, dst);
-            break;
-        case GGML_OP_NONE:
-        case GGML_OP_RESHAPE:
-        case GGML_OP_VIEW:
-        case GGML_OP_PERMUTE:
-        case GGML_OP_TRANSPOSE:
+            اكسر;
+        حالة GGML_OP_NONE:
+        حالة GGML_OP_RESHAPE:
+        حالة GGML_OP_VIEW:
+        حالة GGML_OP_PERMUTE:
+        حالة GGML_OP_TRANSPOSE:
             GGML_SYCL_DEBUG("%s: Tensor NO-OP\n", __func__);
-            break;
-        case GGML_OP_TRI:
+            اكسر;
+        حالة GGML_OP_TRI:
             ggml_sycl_op_tri(ctx, dst);
-            break;
-        case GGML_OP_DIAG_MASK_INF:
+            اكسر;
+        حالة GGML_OP_DIAG_MASK_INF:
             ggml_sycl_diag_mask_inf(ctx, dst);
-            break;
-        case GGML_OP_SOFT_MAX:
+            اكسر;
+        حالة GGML_OP_SOFT_MAX:
             ggml_sycl_op_soft_max(ctx, dst);
-            break;
-        case GGML_OP_SOFT_MAX_BACK:
+            اكسر;
+        حالة GGML_OP_SOFT_MAX_BACK:
             ggml_sycl_op_soft_max_back(ctx, dst);
-            break;
-        case GGML_OP_CROSS_ENTROPY_LOSS:
+            اكسر;
+        حالة GGML_OP_CROSS_ENTROPY_LOSS:
             ggml_sycl_cross_entropy_loss(ctx, dst);
-            break;
-        case GGML_OP_CROSS_ENTROPY_LOSS_BACK:
+            اكسر;
+        حالة GGML_OP_CROSS_ENTROPY_LOSS_BACK:
             ggml_sycl_cross_entropy_loss_back(ctx, dst);
-            break;
-        case GGML_OP_ROPE:
+            اكسر;
+        حالة GGML_OP_ROPE:
             ggml_sycl_rope(ctx, dst);
-            break;
-        case GGML_OP_ROPE_BACK:
+            اكسر;
+        حالة GGML_OP_ROPE_BACK:
             ggml_sycl_rope_back(ctx, dst);
-            break;
-        case GGML_OP_IM2COL:
+            اكسر;
+        حالة GGML_OP_IM2COL:
             ggml_sycl_im2col(ctx, dst);
-            break;
-        case GGML_OP_IM2COL_3D:
+            اكسر;
+        حالة GGML_OP_IM2COL_3D:
             ggml_sycl_im2col_3d(ctx, dst);
-            break;
-        case GGML_OP_COL2IM_1D:
+            اكسر;
+        حالة GGML_OP_COL2IM_1D:
             ggml_sycl_col2im_1d(ctx, dst);
-            break;
-        case GGML_OP_POOL_2D:
+            اكسر;
+        حالة GGML_OP_POOL_2D:
             ggml_sycl_pool2d(ctx, dst);
-            break;
-        case GGML_OP_POOL_1D:
+            اكسر;
+        حالة GGML_OP_POOL_1D:
             ggml_sycl_pool1d(ctx, dst);
-            break;
-        case GGML_OP_SUM:
+            اكسر;
+        حالة GGML_OP_SUM:
             ggml_sycl_sum(ctx, dst);
-            break;
-        case GGML_OP_SUM_ROWS:
+            اكسر;
+        حالة GGML_OP_SUM_ROWS:
             ggml_sycl_sum_rows(ctx, dst);
-            break;
-        case GGML_OP_MEAN:
+            اكسر;
+        حالة GGML_OP_MEAN:
             ggml_sycl_mean(ctx, dst);
-            break;
-        case GGML_OP_ARGSORT:
+            اكسر;
+        حالة GGML_OP_ARGSORT:
             ggml_sycl_argsort(ctx, dst);
-            break;
-        case GGML_OP_TOP_K:
+            اكسر;
+        حالة GGML_OP_TOP_K:
             ggml_sycl_op_top_k(ctx, dst);
-            break;
-        case GGML_OP_TIMESTEP_EMBEDDING:
+            اكسر;
+        حالة GGML_OP_TIMESTEP_EMBEDDING:
             ggml_sycl_op_timestep_embedding(ctx, dst);
-            break;
-        case GGML_OP_RWKV_WKV6:
+            اكسر;
+        حالة GGML_OP_RWKV_WKV6:
             ggml_sycl_op_rwkv_wkv6(ctx, dst);
-            break;
-        case GGML_OP_RWKV_WKV7:
+            اكسر;
+        حالة GGML_OP_RWKV_WKV7:
             ggml_sycl_op_rwkv_wkv7(ctx, dst);
-            break;
-        case GGML_OP_GATED_LINEAR_ATTN:
+            اكسر;
+        حالة GGML_OP_GATED_LINEAR_ATTN:
             ggml_sycl_op_gated_linear_attn(ctx, dst);
-            break;
-        case GGML_OP_GATED_DELTA_NET:
+            اكسر;
+        حالة GGML_OP_GATED_DELTA_NET:
             ggml_sycl_gated_delta_net(ctx, dst);
-            break;
-        case GGML_OP_OPT_STEP_ADAMW:
+            اكسر;
+        حالة GGML_OP_OPT_STEP_ADAMW:
             ggml_sycl_opt_step_adamw(ctx, dst);
-            break;
-        case GGML_OP_OPT_STEP_SGD:
+            اكسر;
+        حالة GGML_OP_OPT_STEP_SGD:
             ggml_sycl_opt_step_sgd(ctx, dst);
-            break;
-        case GGML_OP_SSM_CONV:
+            اكسر;
+        حالة GGML_OP_SSM_CONV:
             ggml_sycl_ssm_conv(ctx, dst);
-            break;
-        case GGML_OP_SSM_SCAN:
+            اكسر;
+        حالة GGML_OP_SSM_SCAN:
             ggml_sycl_ssm_scan(ctx, dst);
-            break;
-        case GGML_OP_FILL:
+            اكسر;
+        حالة GGML_OP_FILL:
             ggml_sycl_fill(ctx, dst);
-            break;
-        case GGML_OP_CUMSUM:
+            اكسر;
+        حالة GGML_OP_CUMSUM:
             ggml_sycl_cumsum(ctx, dst);
-            break;
-        case GGML_OP_DIAG:
+            اكسر;
+        حالة GGML_OP_DIAG:
             ggml_sycl_diag(ctx, dst);
-            break;
-        case GGML_OP_SOLVE_TRI:
+            اكسر;
+        حالة GGML_OP_SOLVE_TRI:
             ggml_sycl_solve_tri(ctx, dst);
-            break;
-        case GGML_OP_ROLL:
+            اكسر;
+        حالة GGML_OP_ROLL:
             ggml_sycl_roll(ctx, dst);
-            break;
-        case GGML_OP_ARANGE:
+            اكسر;
+        حالة GGML_OP_ARANGE:
             ggml_sycl_arange(ctx, dst);
-            break;
-        case GGML_OP_FLASH_ATTN_EXT:
+            اكسر;
+        حالة GGML_OP_FLASH_ATTN_EXT:
             ggml_sycl_flash_attn_ext(ctx, dst);
-            break;
-        default:
-            return false;
+            اكسر;
+        افتراضي:
+            החזר שקר;
     }
 
-    return true;
-} catch (sycl::exception & e) {
+    החזר אמת;
+} امسك (sycl::exception & e) {
     std::cerr << e.what() << "Exception caught at file:" << __FILE__ << ", line:" << __LINE__ << std::endl;
     std::cerr << "Error OP "<<ggml_op_name(dst->op)<< std::endl;
     std::exit(1);
 }
 
-GGML_API void ggml_backend_sycl_get_device_description(int device, char *description,
-                                      size_t description_size) try {
+GGML_API فراغ ggml_backend_sycl_get_device_description(صحيح device, حرف *description,
+                                      size_t description_size) حاول {
     GGML_SYCL_DEBUG("[SYCL] call ggml_backend_sycl_get_device_description\n");
     dpct::device_info prop;
     SYCL_CHECK(CHECK_TRY_ERROR(dpct::get_device_info(
         prop, dpct::dev_mgr::instance().get_device(device))));
     snprintf(description, description_size, "%s", prop.get_name());
 }
-catch (sycl::exception const &exc) {
+امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
             << ", line:" << __LINE__ << std::endl;
   std::exit(1);
 }
 
-static bool sycl_get_mem_info(int device, size_t * free, size_t * total) {
+ساكن منطقي sycl_get_mem_info(صحيح device, size_t * حرر, size_t * total) {
     GGML_SYCL_DEBUG("[SYCL] [%s] g_ggml_sycl_get_mem_api=%d\n",
         __func__, g_ggml_sycl_get_mem_api);
 
@@ -6342,22 +6342,22 @@ static bool sycl_get_mem_info(int device, size_t * free, size_t * total) {
 #ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
     mem_api_type = get_zes_init_res() == ZE_RESULT_SUCCESS ?
         (MemoryAPIType) g_ggml_sycl_get_mem_api : MemoryAPIType::MEMORY_API_TYPE_SYCL;
-#else
+#אחרת
     mem_api_type = MemoryAPIType::MEMORY_API_TYPE_SYCL;
 #endif
-    bool res = get_memory_size(dpct::dev_mgr::instance().get_device(device),
-        *free, *total, mem_api_type);
-    GGML_SYCL_DEBUG("[SYCL] [%s] total = %zu free = %zu\n", __func__, *total, *free);
-    return res;
+    منطقي res = get_memory_size(dpct::dev_mgr::instance().get_device(device),
+        *حرر, *total, mem_api_type);
+    GGML_SYCL_DEBUG("[SYCL] [%s] total = %zu free = %zu\n", __func__, *total, *حرر);
+    החזר res;
 }
 
-void ggml_backend_sycl_get_device_memory(int device, size_t * free, size_t * total) try {
+فراغ ggml_backend_sycl_get_device_memory(صحيح device, size_t * حرر, size_t * total) حاول {
     GGML_SYCL_DEBUG("[SYCL] call ggml_backend_sycl_get_device_memory\n");
-    if (!sycl_get_mem_info(device, free, total)) {
+    אם (!sycl_get_mem_info(device, حرر, total)) {
         GGML_ABORT("[%s] failed to get device memory size", __func__);
     }
-    ggml_sycl_memtrace_report_device("device memory query", device, *free, *total);
-} catch (const sycl::exception & exc) {
+    ggml_sycl_memtrace_report_device("device memory query", device, *حرر, *total);
+} امسك (ثابت sycl::exception & exc) {
     std::cerr << exc.what() << "Exception caught at file:" << __FILE__ << ", line:" << __LINE__ << std::endl;
     std::exit(1);
 }
@@ -6366,24 +6366,24 @@ void ggml_backend_sycl_get_device_memory(int device, size_t * free, size_t * tot
 
 // backend
 
-static const char * ggml_backend_sycl_get_name(ggml_backend_t backend) {
+ساكن ثابت حرف * ggml_backend_sycl_get_name(ggml_backend_t backend) {
 
     ggml_backend_sycl_context * sycl_ctx = (ggml_backend_sycl_context *)backend->context;
 
-    return sycl_ctx->name.c_str();
+    החזר sycl_ctx->name.c_str();
 }
 
-static void ggml_backend_sycl_free(ggml_backend_t backend) {
+ساكن فراغ ggml_backend_sycl_free(ggml_backend_t backend) {
     ggml_backend_sycl_context * sycl_ctx = (ggml_backend_sycl_context *)backend->context;
 
     delete sycl_ctx;
     delete backend;
 }
 
-static void ggml_backend_sycl_set_tensor_async(ggml_backend_t backend,
+ساكن فراغ ggml_backend_sycl_set_tensor_async(ggml_backend_t backend,
                                                ggml_tensor *tensor,
-                                               const void *data, size_t offset,
-                                               size_t size) try {
+                                               ثابت فراغ *data, size_t offset,
+                                               size_t size) حاول {
     GGML_SYCL_DEBUG("[SYCL] call %s", __func__);
     GGML_SYCL_DEBUG("%s", debug_get_tensor_str(": tensor", tensor).c_str());
     GGML_SYCL_DEBUG(" size=%zu offset=%zu\n", size, offset);
@@ -6391,20 +6391,20 @@ static void ggml_backend_sycl_set_tensor_async(ggml_backend_t backend,
     ggml_backend_buffer_t buf = tensor->view_src ? tensor->view_src->buffer : tensor->buffer;
 
     GGML_ASSERT(buf->buft == ggml_backend_sycl_buffer_type(sycl_ctx->device) && "unsupported buffer type");
-    const queue_ptr stream = sycl_ctx->stream(sycl_ctx->device, 0);
+    ثابت queue_ptr stream = sycl_ctx->stream(sycl_ctx->device, 0);
     SYCL_CHECK(CHECK_TRY_ERROR(
-        (stream)->memcpy((char *)tensor->data + offset, data, size)));
+        (stream)->memcpy((حرف *)tensor->data + offset, data, size)));
 }
-catch (sycl::exception const &exc) {
+امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
             << ", line:" << __LINE__ << std::endl;
   std::exit(1);
 }
 
-static void ggml_backend_sycl_get_tensor_async(ggml_backend_t backend,
-                                               const ggml_tensor *tensor,
-                                               void *data, size_t offset,
-                                               size_t size) try {
+ساكن فراغ ggml_backend_sycl_get_tensor_async(ggml_backend_t backend,
+                                               ثابت ggml_tensor *tensor,
+                                               فراغ *data, size_t offset,
+                                               size_t size) حاول {
     GGML_SYCL_DEBUG("[SYCL] call %s", __func__);
     GGML_SYCL_DEBUG("%s", debug_get_tensor_str(": tensor", tensor).c_str());
     GGML_SYCL_DEBUG(" size=%zu offset=%zu\n", size, offset);
@@ -6412,62 +6412,62 @@ static void ggml_backend_sycl_get_tensor_async(ggml_backend_t backend,
     ggml_backend_buffer_t buf = tensor->view_src ? tensor->view_src->buffer : tensor->buffer;
 
     GGML_ASSERT(buf->buft == ggml_backend_sycl_buffer_type(sycl_ctx->device) && "unsupported buffer type");
-    const queue_ptr stream = sycl_ctx->stream(sycl_ctx->device, 0);
+    ثابت queue_ptr stream = sycl_ctx->stream(sycl_ctx->device, 0);
     SYCL_CHECK(CHECK_TRY_ERROR((stream)->memcpy(
-        data, (const char *)tensor->data + offset, size)));
+        data, (ثابت حرف *)tensor->data + offset, size)));
 }
-catch (sycl::exception const &exc) {
+امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
             << ", line:" << __LINE__ << std::endl;
   std::exit(1);
 }
 
-static bool ggml_backend_sycl_cpy_tensor_async(ggml_backend_t backend,
-                                               const ggml_tensor *src,
-                                               ggml_tensor *dst) try {
+ساكن منطقي ggml_backend_sycl_cpy_tensor_async(ggml_backend_t backend,
+                                               ثابت ggml_tensor *src,
+                                               ggml_tensor *dst) حاول {
     ggml_backend_sycl_context * sycl_ctx = (ggml_backend_sycl_context *)backend->context;
-    bool is_cpy_supported                = dst->buffer->buft == ggml_backend_sycl_buffer_type(sycl_ctx->device) &&
+    منطقي is_cpy_supported                = dst->buffer->buft == ggml_backend_sycl_buffer_type(sycl_ctx->device) &&
                             ggml_backend_buffer_is_sycl(src->buffer);
     GGML_SYCL_DEBUG("[SYCL] call %s", __func__);
     GGML_SYCL_DEBUG("%s", debug_get_tensor_str(": dst", dst).c_str());
     GGML_SYCL_DEBUG("%s", debug_get_tensor_str(" src", src).c_str());
     GGML_SYCL_DEBUG(" is_cpy_supported=%d\n", is_cpy_supported);
-    if (is_cpy_supported) {
+    אם (is_cpy_supported) {
         /*
         DPCT1009:215: SYCL uses exceptions to report errors and does not use the
         error codes. The original code was commented out and a warning string
         was inserted. You need to rewrite this code.
         */
-        const queue_ptr stream = sycl_ctx->stream(sycl_ctx->device, 0);
+        ثابت queue_ptr stream = sycl_ctx->stream(sycl_ctx->device, 0);
         SYCL_CHECK(CHECK_TRY_ERROR((stream)->memcpy(
             dst->data, src->data, ggml_nbytes(dst))));
-        return true;
+        החזר אמת;
     }
 
-    return false;
+    החזר שקר;
 }
-catch (sycl::exception const &exc) {
+امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
             << ", line:" << __LINE__ << std::endl;
   std::exit(1);
 }
 
-static void ggml_backend_sycl_synchronize(ggml_backend_t backend) try {
+ساكن فراغ ggml_backend_sycl_synchronize(ggml_backend_t backend) حاول {
     GGML_SYCL_DEBUG("[SYCL] call %s\n", __func__);
     ggml_backend_sycl_context * sycl_ctx = (ggml_backend_sycl_context *)backend->context;
-    const queue_ptr stream = sycl_ctx->stream(sycl_ctx->device, 0);
+    ثابت queue_ptr stream = sycl_ctx->stream(sycl_ctx->device, 0);
     SYCL_CHECK(CHECK_TRY_ERROR((stream)->wait()));
 
     GGML_UNUSED(backend);
 }
-catch (sycl::exception const &exc) {
+امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
             << ", line:" << __LINE__ << std::endl;
   std::exit(1);
 }
 
-static bool ggml_sycl_is_view_or_noop(const ggml_tensor * t) {
-    return ggml_is_empty(t) || t->op == GGML_OP_RESHAPE || t->op == GGML_OP_TRANSPOSE ||
+ساكن منطقي ggml_sycl_is_view_or_noop(ثابت ggml_tensor * t) {
+    החזר ggml_is_empty(t) || t->op == GGML_OP_RESHAPE || t->op == GGML_OP_TRANSPOSE ||
            t->op == GGML_OP_VIEW || t->op == GGML_OP_PERMUTE || t->op == GGML_OP_NONE;
 }
 
@@ -6475,185 +6475,185 @@ static bool ggml_sycl_is_view_or_noop(const ggml_tensor * t) {
 // (slot i -> rollback group i, slot 0 newest), so the kernel can write them and skip the cpy.
 // returns the number of following nodes to skip (0 = no fusion)
 // ported from ggml_cuda_try_gdn_cache_fusion - pure graph inspection, backend-agnostic
-static int ggml_sycl_try_gdn_cache_fusion(const ggml_cgraph * cgraph, int node_idx,
+ساكن صحيح ggml_sycl_try_gdn_cache_fusion(ثابت ggml_cgraph * cgraph, صحيح node_idx,
                                           ggml_sycl_gated_delta_net_fused_cache & fused_state_cpy) {
-    if (!g_ggml_sycl_enable_fusion) {
-        return 0;
+    אם (!g_ggml_sycl_enable_fusion) {
+        החזר 0;
     }
 
-    const ggml_tensor * gdn = cgraph->nodes[node_idx];
+    ثابت ggml_tensor * gdn = cgraph->nodes[node_idx];
     // the kernel skips the snapshot tail, so the gdn output must not be a graph output, and the cpy
     // found below is taken to be its only reader, as it is in every graph that builds this op
-    if (gdn->op != GGML_OP_GATED_DELTA_NET || gdn->type != GGML_TYPE_F32 ||
+    אם (gdn->op != GGML_OP_GATED_DELTA_NET || gdn->type != GGML_TYPE_F32 ||
         (gdn->flags & GGML_TENSOR_FLAG_OUTPUT)) {
-        return 0;
+        החזר 0;
     }
 
-    const ggml_tensor * src_v     = gdn->src[2];
-    const int64_t       S_v       = src_v->ne[0];
-    const int64_t       H         = src_v->ne[1];
-    const int64_t       n_tokens  = src_v->ne[2];
-    const int64_t       n_seqs    = src_v->ne[3];
-    const int64_t       D         = S_v * S_v * H;
-    const int64_t       K         = ggml_get_op_params_i32(gdn, 0); // snapshot slot count
-    const int64_t       n_written = std::min<int64_t>(n_tokens, K); // newest n_written slots are written
+    ثابت ggml_tensor * src_v     = gdn->src[2];
+    ثابت int64_t       S_v       = src_v->ne[0];
+    ثابت int64_t       H         = src_v->ne[1];
+    ثابت int64_t       n_tokens  = src_v->ne[2];
+    ثابت int64_t       n_seqs    = src_v->ne[3];
+    ثابت int64_t       D         = S_v * S_v * H;
+    ثابت int64_t       K         = ggml_get_op_params_i32(gdn, 0); // snapshot slot count
+    ثابت int64_t       n_written = std::min<int64_t>(n_tokens, K); // newest n_written slots are written
 
     // snapshot tail starts right after the attention scores
-    const size_t tail_off = ggml_row_size(GGML_TYPE_F32, S_v * H * n_tokens * n_seqs);
+    ثابت size_t tail_off = ggml_row_size(GGML_TYPE_F32, S_v * H * n_tokens * n_seqs);
 
     // the cpy must be the first node the compute loop below runs, so nothing can read the cache first.
     // skip exactly what that loop skips: views, no-ops, and nodes the graph does not compute.
-    const ggml_tensor * cpy  = nullptr;
-    int                 skip = 0;
-    for (int j = node_idx + 1; j < cgraph->n_nodes && cpy == nullptr; ++j) {
-        const ggml_tensor * n = cgraph->nodes[j];
-        if (ggml_sycl_is_view_or_noop(n) || (n->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
-            continue;
+    ثابت ggml_tensor * cpy  = nullptr;
+    صحيح                 skip = 0;
+    עבור (صحيح j = node_idx + 1; j < cgraph->n_nodes && cpy == nullptr; ++j) {
+        ثابت ggml_tensor * n = cgraph->nodes[j];
+        אם (ggml_sycl_is_view_or_noop(n) || (n->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+            استمر;
         }
-        if (n->op != GGML_OP_CPY || (n->flags & GGML_TENSOR_FLAG_OUTPUT)) {
-            return 0;
+        אם (n->op != GGML_OP_CPY || (n->flags & GGML_TENSOR_FLAG_OUTPUT)) {
+            החזר 0;
         }
         cpy  = n;
         skip = j - node_idx;
     }
-    if (cpy == nullptr) {
-        return 0;
+    אם (cpy == nullptr) {
+        החזר 0;
     }
 
-    const ggml_tensor * src = cpy->src[0]; // view of the gdn snapshot tail
-    const ggml_tensor * dst = cpy->src[1]; // cache view the kernel writes to
+    ثابت ggml_tensor * src = cpy->src[0]; // view of the gdn snapshot tail
+    ثابت ggml_tensor * dst = cpy->src[1]; // cache view the kernel writes to
 
     // src must be this gdn's snapshot tail (contiguous, at the tail offset)
-    if (src->op != GGML_OP_VIEW || src->view_src != gdn || src->view_offs != tail_off ||
+    אם (src->op != GGML_OP_VIEW || src->view_src != gdn || src->view_offs != tail_off ||
         !ggml_is_contiguous(src)) {
-        return 0;
+        החזר 0;
     }
 
     // dst is the [D, n_seqs, n_written] cache view, with the per-seq stride D that the kernel assumes.
     // ggml_cpy pins src to the same element count, so src needs no shape check of its own.
-    const std::array<int64_t, GGML_MAX_DIMS> expected_ne = { D, n_seqs, n_written, 1 };
-    if (dst->op != GGML_OP_VIEW || dst->type != GGML_TYPE_F32 || dst->data == nullptr ||
+    ثابت std::array<int64_t, GGML_MAX_DIMS> expected_ne = { D, n_seqs, n_written, 1 };
+    אם (dst->op != GGML_OP_VIEW || dst->type != GGML_TYPE_F32 || dst->data == nullptr ||
         !std::equal(expected_ne.begin(), expected_ne.end(), dst->ne) ||
         dst->nb[0] != ggml_type_size(GGML_TYPE_F32) ||
         dst->nb[1] != (size_t) ggml_row_size(GGML_TYPE_F32, D)) {
-        return 0;
+        החזר 0;
     }
 
-    fused_state_cpy.data        = (float *) dst->data; // rollback group 0 (newest)
-    fused_state_cpy.slot_stride = K > 1 ? (int64_t) (dst->nb[2] / sizeof(float)) : 0;
-    return skip;
+    fused_state_cpy.data        = (عائم *) dst->data; // rollback group 0 (newest)
+    fused_state_cpy.slot_stride = K > 1 ? (int64_t) (dst->nb[2] / حجم(عائم)) : 0;
+    החזר skip;
 }
 
-static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * sycl_ctx, ggml_cgraph * cgraph) {
+ساكن فراغ ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * sycl_ctx, ggml_cgraph * cgraph) {
     ggml_sycl_set_main_device(sycl_ctx->device);
 
-    for (int i = 0; i < cgraph->n_nodes; i++) {
+    עבור (صحيح i = 0; i < cgraph->n_nodes; i++) {
         ggml_tensor * node = cgraph->nodes[i];
-        if (ggml_sycl_is_view_or_noop(node)) {
-            continue;
+        אם (ggml_sycl_is_view_or_noop(node)) {
+            استمر;
         }
-        if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
-            continue;
+        אם ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+            استمر;
         }
 
-        const int nodes_to_skip = ggml_sycl_fuse(*sycl_ctx, cgraph, i);
-        if (nodes_to_skip != 0) {
+        ثابت صحيح nodes_to_skip = ggml_sycl_fuse(*sycl_ctx, cgraph, i);
+        אם (nodes_to_skip != 0) {
             i += nodes_to_skip;
-            continue;
+            استمر;
         }
 #ifndef NDEBUG
-        assert(node->buffer->buft == ggml_backend_sycl_buffer_type(sycl_ctx->device));
-        for (int j = 0; j < GGML_MAX_SRC; j++) {
-            if (node->src[j] != nullptr) {
-                assert(node->src[j]->buffer->buft == ggml_backend_sycl_buffer_type(sycl_ctx->device));
+        أكد(node->buffer->buft == ggml_backend_sycl_buffer_type(sycl_ctx->device));
+        עבור (صحيح j = 0; j < GGML_MAX_SRC; j++) {
+            אם (node->src[j] != nullptr) {
+                أكد(node->src[j]->buffer->buft == ggml_backend_sycl_buffer_type(sycl_ctx->device));
             }
         }
 #endif
         // gated_delta_net -> cpy: scatter recurrent-state snapshots into the cache
-        if (node->op == GGML_OP_GATED_DELTA_NET) {
+        אם (node->op == GGML_OP_GATED_DELTA_NET) {
             ggml_sycl_gated_delta_net_fused_cache fused_state_cpy;
-            const int gdn_nodes_to_skip = ggml_sycl_try_gdn_cache_fusion(cgraph, i, fused_state_cpy);
-            if (gdn_nodes_to_skip > 0) {
+            ثابت صحيح gdn_nodes_to_skip = ggml_sycl_try_gdn_cache_fusion(cgraph, i, fused_state_cpy);
+            אם (gdn_nodes_to_skip > 0) {
                 ggml_sycl_op_gated_delta_net_fused_cache(*sycl_ctx, node, fused_state_cpy);
                 i += gdn_nodes_to_skip;
-                continue;
+                استمر;
             }
         }
-        if (node->op == GGML_OP_RMS_NORM &&
+        אם (node->op == GGML_OP_RMS_NORM &&
             ggml_sycl_can_fuse(cgraph, i, { GGML_OP_RMS_NORM, GGML_OP_MUL, GGML_OP_ADD }, {})) {
             ggml_sycl_op_rms_norm_fused_add(*sycl_ctx, node, cgraph->nodes[i + 1], cgraph->nodes[i + 2]);
             i += 2;
-            continue;
+            استمر;
         }
-        if (node->op == GGML_OP_RMS_NORM &&
+        אם (node->op == GGML_OP_RMS_NORM &&
             ggml_sycl_can_fuse(cgraph, i, { GGML_OP_RMS_NORM, GGML_OP_MUL }, {})) {
             ggml_sycl_op_rms_norm_fused(*sycl_ctx, node, cgraph->nodes[i + 1]);
             i++;
-            continue;
+            استمر;
         }
         // qwen35 GDN l2 norms are emitted as rms_norm + scalar scale (models.h
         // build_gdn_l2_norm), which the rms_norm+mul fusion above cannot match
-        if (node->op == GGML_OP_RMS_NORM &&
+        אם (node->op == GGML_OP_RMS_NORM &&
             ggml_sycl_can_fuse(cgraph, i, { GGML_OP_RMS_NORM, GGML_OP_SCALE }, {})) {
             ggml_sycl_op_rms_norm_scale_fused(*sycl_ctx, node, cgraph->nodes[i + 1]);
             i++;
-            continue;
+            استمر;
         }
-        if (node->op == GGML_OP_ADD &&
+        אם (node->op == GGML_OP_ADD &&
             ggml_sycl_can_fuse(cgraph, i, { GGML_OP_ADD, GGML_OP_ADD }, {})) {
             ggml_sycl_op_add_add_fused(*sycl_ctx, node, cgraph->nodes[i + 1]);
             i++;
-            continue;
+            استمر;
         }
-        if (node->op == GGML_OP_UNARY &&
+        אם (node->op == GGML_OP_UNARY &&
             ggml_sycl_can_fuse(cgraph, i, { GGML_OP_UNARY, GGML_OP_MUL }, { ggml_get_unary_op(node) })) {
             ggml_sycl_op_unary_mul_fused(*sycl_ctx, node, cgraph->nodes[i + 1]);
             i++;
-            continue;
+            استمر;
         }
         // ADD(bias) + UNARY + MUL(scale) with both broadcast over dim 0, the form the branch
         // above cannot take; ggml_get_unary_op() asserts, so check the op first.
-        if (node->op == GGML_OP_ADD && i + 2 < cgraph->n_nodes &&
+        אם (node->op == GGML_OP_ADD && i + 2 < cgraph->n_nodes &&
             cgraph->nodes[i + 1]->op == GGML_OP_UNARY &&
             ggml_sycl_can_fuse(cgraph, i, { GGML_OP_ADD, GGML_OP_UNARY, GGML_OP_MUL },
                                { ggml_get_unary_op(cgraph->nodes[i + 1]) })) {
             ggml_sycl_op_add_unary_mul_fused(*sycl_ctx, node, cgraph->nodes[i + 1], cgraph->nodes[i + 2]);
             i += 2;
-            continue;
+            استمر;
         }
 
         // Batch consecutive independent same-shape F32 L2_NORM siblings (the GDN q/k
         // norms) into one launch; sources are strided views of the fused qkv buffer, so
         // the scan skips the interleaved view nodes instead of breaking on them.
-        if (node->op == GGML_OP_L2_NORM) {
-            const int l2_batch_skip = ggml_sycl_l2_norm_batch_fused(*sycl_ctx, cgraph, i);
-            if (l2_batch_skip > 0) {
+        אם (node->op == GGML_OP_L2_NORM) {
+            ثابت صحيح l2_batch_skip = ggml_sycl_l2_norm_batch_fused(*sycl_ctx, cgraph, i);
+            אם (l2_batch_skip > 0) {
                 i += l2_batch_skip;
-                continue;
+                استمر;
             }
         }
 
-        if (node->op == GGML_OP_SSM_CONV &&
+        אם (node->op == GGML_OP_SSM_CONV &&
             ggml_sycl_can_fuse(cgraph, i, { GGML_OP_SSM_CONV, GGML_OP_ADD, GGML_OP_UNARY }, { GGML_UNARY_OP_SILU })) {
             ggml_sycl_ssm_conv_fused(*sycl_ctx, node, cgraph->nodes[i + 1], cgraph->nodes[i + 2]);
             i += 2;
-            continue;
+            استمر;
         }
 
-        if (node->op == GGML_OP_SSM_CONV &&
+        אם (node->op == GGML_OP_SSM_CONV &&
             ggml_sycl_can_fuse(cgraph, i, { GGML_OP_SSM_CONV, GGML_OP_UNARY }, { GGML_UNARY_OP_SILU })) {
             ggml_sycl_ssm_conv_fused(*sycl_ctx, node, nullptr, cgraph->nodes[i + 1]);
             i++;
-            continue;
+            استمر;
         }
 
-        if (node->op == GGML_OP_MUL_MAT && ggml_sycl_mul_mat_glu_fused(*sycl_ctx, cgraph, i)) {
+        אם (node->op == GGML_OP_MUL_MAT && ggml_sycl_mul_mat_glu_fused(*sycl_ctx, cgraph, i)) {
             i += 2;
-            continue;
+            استمر;
         }
 
-        bool ok = ggml_sycl_compute_forward(*sycl_ctx, node);
-        if (!ok) {
+        منطقي ok = ggml_sycl_compute_forward(*sycl_ctx, node);
+        אם (!ok) {
             GGML_LOG_ERROR("%s: error: op not supported %s (%s)\n", __func__, node->name, ggml_op_name(node->op));
         }
         GGML_ASSERT(ok);
@@ -6661,62 +6661,62 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
 }
 
 #ifdef GGML_SYCL_GRAPH
-static bool check_graph_compatibility(ggml_cgraph * cgraph) {
-    if (ggml_sycl_info().device_count > 1) {
+ساكن منطقي check_graph_compatibility(ggml_cgraph * cgraph) {
+    אם (ggml_sycl_info().device_count > 1) {
         // A sycl_ex::command_graph object can only be created for a single device
         GGML_LOG_INFO("%s: disabling SYCL graphs due to multiple devices\n", __func__);
-        return false;
+        החזר שקר;
     }
 
-    for (int i = 0; i < cgraph->n_nodes; i++) {
-        const ggml_op node_op = cgraph->nodes[i]->op;
-        switch (node_op) {
-            default:
-                break;
-            case GGML_OP_CONCAT:
+    עבור (صحيح i = 0; i < cgraph->n_nodes; i++) {
+        ثابت ggml_op node_op = cgraph->nodes[i]->op;
+        بدل (node_op) {
+            افتراضي:
+                اكسر;
+            حالة GGML_OP_CONCAT:
                 // ggml_sycl_op_concat() does a blocking host wait after memcpy operations,
                 // but wait() can't be called on the events returned by a queue recording
                 // to a graph.
                 [[fallthrough]];
-            case GGML_OP_MUL_MAT_ID:
+            حالة GGML_OP_MUL_MAT_ID:
                 // ggml_sycl_mul_mat_id() does a blocking host wait on the sycl queue after
                 // submitting a memcpy operation, but wait() can't be called on a queue that
                 // is recording to a graph.
                 GGML_LOG_INFO("%s: disabling SYCL graphs due to unsupported node type %s\n", __func__,
                               ggml_op_name(node_op));
-                return false;
-            case GGML_OP_MUL_MAT:
+                החזר שקר;
+            حالة GGML_OP_MUL_MAT:
                 // We cannot use graphs with ggml_sycl_mul_mat() when SYCL async memory allocation extensions are not available,
                 // as SYCL malloc / free and host wait calls are not supported when recording to a graph which are all present
                 // in reordering.
-                if (!g_ggml_sycl_use_async_mem_op) {
+                אם (!g_ggml_sycl_use_async_mem_op) {
                     GGML_LOG_INFO(
                         "%s: disabling SYCL graphs due to unsupported node type when using a compiler without the "
                         "oneAPI async memory allocation extension "
                         "%s\n",
                         __func__, ggml_op_name(node_op));
-                    return false;
+                    החזר שקר;
                 }
         }
     }
-    return true;
+    החזר אמת;
 }
 #endif
 
-static ggml_status ggml_backend_sycl_graph_compute(ggml_backend_t backend, ggml_cgraph * cgraph) {
+ساكن ggml_status ggml_backend_sycl_graph_compute(ggml_backend_t backend, ggml_cgraph * cgraph) {
     auto * sycl_ctx = static_cast<ggml_backend_sycl_context *>(backend->context);
 
 #ifdef GGML_SYCL_GRAPH
-    bool use_sycl_graph = false;
-    if (g_ggml_sycl_enable_graph) {
+    منطقي use_sycl_graph = שקר;
+    אם (g_ggml_sycl_enable_graph) {
         use_sycl_graph = check_graph_compatibility(cgraph);
     }
-    if (use_sycl_graph) {
-        const bool graph_support = dpct::get_device(sycl_ctx->device).has(sycl::aspect::ext_oneapi_limited_graph);
-        if (!graph_support) {
+    אם (use_sycl_graph) {
+        ثابت منطقي graph_support = dpct::get_device(sycl_ctx->device).has(sycl::aspect::ext_oneapi_limited_graph);
+        אם (!graph_support) {
             GGML_SYCL_DEBUG("[SYCL-GRAPH] can not use graphs on device:%d\n", sycl_ctx->device);
             ggml_backend_sycl_graph_compute_impl(sycl_ctx, cgraph);
-            return GGML_STATUS_SUCCESS;
+            החזר GGML_STATUS_SUCCESS;
         }
 
         sycl_ex::command_graph model_sycl_graph(*(sycl_ctx->stream()), {sycl_ex::property::graph::assume_buffer_outlives_graph{}});
@@ -6725,17 +6725,17 @@ static ggml_status ggml_backend_sycl_graph_compute(ggml_backend_t backend, ggml_
         ggml_backend_sycl_graph_compute_impl(sycl_ctx, cgraph);
         model_sycl_graph.end_recording();
 
-        const bool graph_update_support = dpct::get_device(sycl_ctx->device).has(sycl::aspect::ext_oneapi_graph);
-        if (!sycl_ctx->exec_graph || !graph_update_support) {
+        ثابت منطقي graph_update_support = dpct::get_device(sycl_ctx->device).has(sycl::aspect::ext_oneapi_graph);
+        אם (!sycl_ctx->exec_graph || !graph_update_support) {
             auto exec_graph = graph_update_support ? model_sycl_graph.finalize(sycl_ex::property::graph::updatable{}) :
                                                      model_sycl_graph.finalize();
             sycl_ctx->exec_graph = std::make_unique<
                 sycl_ex::command_graph<sycl_ex::graph_state::executable>>(exec_graph);
-        } else {
-            try {
+        } אחרת {
+            حاول {
                 sycl_ctx->exec_graph->update(model_sycl_graph);
                 GGML_SYCL_DEBUG("[SYCL-GRAPH] update success\n");
-            } catch (sycl::exception const & e) {
+            } امسك (sycl::exception ثابت & e) {
                 GGML_SYCL_DEBUG("[SYCL-GRAPH] Exception when updating graph, %s\n", e.what());
                 auto exec_graph = model_sycl_graph.finalize({sycl_ex::property::graph::updatable{}});
                 sycl_ctx->exec_graph = std::make_unique<
@@ -6744,331 +6744,331 @@ static ggml_status ggml_backend_sycl_graph_compute(ggml_backend_t backend, ggml_
         }
 
         sycl_ctx->stream()->ext_oneapi_graph(*(sycl_ctx->exec_graph));
-    } else
+    } אחרת
 #endif
     {
         ggml_backend_sycl_graph_compute_impl(sycl_ctx, cgraph);
     }
-    return GGML_STATUS_SUCCESS;
+    החזר GGML_STATUS_SUCCESS;
 }
 
-static void ggml_backend_sycl_event_record(ggml_backend_t backend, ggml_backend_event_t event)
-try
+ساكن فراغ ggml_backend_sycl_event_record(ggml_backend_t backend, ggml_backend_event_t event)
+حاول
 {
     ggml_backend_sycl_context *sycl_ctx =
         (ggml_backend_sycl_context *)backend->context;
 
     sycl::event *sycl_event = static_cast<sycl::event *>(event->context);
 
-    const queue_ptr &stream = sycl_ctx->stream(sycl_ctx->device, 0);
+    ثابت queue_ptr &stream = sycl_ctx->stream(sycl_ctx->device, 0);
     // Record the current state of the queue
     SYCL_CHECK(CHECK_TRY_ERROR(*sycl_event = stream->ext_oneapi_submit_barrier()));
 }
-catch (sycl::exception const &exc)
+امسك (sycl::exception ثابت &exc)
 {
     std::cerr << exc.what() << "Exception caught at file:" << __FILE__
               << ", line:" << __LINE__ << std::endl;
     std::exit(1);
 }
 
-static void ggml_backend_sycl_event_wait(ggml_backend_t backend, ggml_backend_event_t event) try {
+ساكن فراغ ggml_backend_sycl_event_wait(ggml_backend_t backend, ggml_backend_event_t event) حاول {
     GGML_SYCL_DEBUG("[SYCL] call %s\n", __func__);
     sycl::event* sycl_event = static_cast<sycl::event*>(event->context);
 
-    if (ggml_backend_is_sycl(backend)) {
+    אם (ggml_backend_is_sycl(backend)) {
         SYCL_CHECK(CHECK_TRY_ERROR(sycl_event->wait()));
-    } else
+    } אחרת
         GGML_ABORT("fatal error");
-} catch (sycl::exception const& exc) {
+} امسك (sycl::exception ثابت& exc) {
     std::cerr << exc.what() << "Exception caught at file:" << __FILE__
               << ", line:" << __LINE__ << std::endl;
     std::exit(1);
 }
 
-static ggml_backend_i ggml_backend_sycl_interface = {
+ساكن ggml_backend_i ggml_backend_sycl_interface = {
     /* .get_name                = */ ggml_backend_sycl_get_name,
     /* .free                    = */ ggml_backend_sycl_free,
     /* .set_tensor_async        = */ ggml_backend_sycl_set_tensor_async,
     /* .get_tensor_async        = */ ggml_backend_sycl_get_tensor_async,
-    /* .set_tensor_2d_async     = */ NULL,
-    /* .get_tensor_2d_async     = */ NULL,
-    /* .cpy_tensor_async        = */ NULL, // ggml_backend_sycl_cpy_tensor_async,
+    /* .set_tensor_2d_async     = */ عدم,
+    /* .get_tensor_2d_async     = */ عدم,
+    /* .cpy_tensor_async        = */ عدم, // ggml_backend_sycl_cpy_tensor_async,
                                            // // TODO: update for the new
                                            // interface
     /* .synchronize             = */ ggml_backend_sycl_synchronize,
-    /* .graph_plan_create       = */ NULL,
-    /* .graph_plan_free         = */ NULL,
-    /* .graph_plan_update       = */ NULL,
-    /* .graph_plan_compute      = */ NULL,
+    /* .graph_plan_create       = */ عدم,
+    /* .graph_plan_free         = */ عدم,
+    /* .graph_plan_update       = */ عدم,
+    /* .graph_plan_compute      = */ عدم,
     /* .graph_compute           = */ ggml_backend_sycl_graph_compute,
     /* .event_record            = */ ggml_backend_sycl_event_record,
     /* .event_wait              = */ ggml_backend_sycl_event_wait,
-    /* .graph_optimize          = */ NULL,
+    /* .graph_optimize          = */ عدم,
 };
 
-static ggml_guid_t ggml_backend_sycl_guid() {
-    static ggml_guid guid = { 0x58, 0x05, 0x13, 0x8f, 0xcd, 0x3a, 0x61, 0x9d, 0xe7, 0xcd, 0x98, 0xa9, 0x03, 0xfd, 0x7c, 0x53 };
-    return &guid;
+ساكن ggml_guid_t ggml_backend_sycl_guid() {
+    ساكن ggml_guid guid = { 0x58, 0x05, 0x13, 0x8f, 0xcd, 0x3a, 0x61, 0x9d, 0xe7, 0xcd, 0x98, 0xa9, 0x03, 0xfd, 0x7c, 0x53 };
+    החזר &guid;
 }
 
-bool ggml_backend_is_sycl(ggml_backend_t backend) {
-    return backend != NULL && ggml_guid_matches(backend->guid, ggml_backend_sycl_guid());
+منطقي ggml_backend_is_sycl(ggml_backend_t backend) {
+    החזר backend != عدم && ggml_guid_matches(backend->guid, ggml_backend_sycl_guid());
 }
 
-int ggml_backend_sycl_get_device_count(void) {
-    return ggml_sycl_info().device_count;
+صحيح ggml_backend_sycl_get_device_count(فراغ) {
+    החזר ggml_sycl_info().device_count;
 }
 
 
 // backend device
 
-static const char * ggml_backend_sycl_device_get_name(ggml_backend_dev_t dev) {
+ساكن ثابت حرف * ggml_backend_sycl_device_get_name(ggml_backend_dev_t dev) {
     ggml_backend_sycl_device_context * ctx = (ggml_backend_sycl_device_context *)dev->context;
-    return ctx->name.c_str();
+    החזר ctx->name.c_str();
 }
 
-static const char * ggml_backend_sycl_device_get_description(ggml_backend_dev_t dev) {
+ساكن ثابت حرف * ggml_backend_sycl_device_get_description(ggml_backend_dev_t dev) {
     ggml_backend_sycl_device_context * ctx = (ggml_backend_sycl_device_context *)dev->context;
-    return ctx->description.c_str();
+    החזר ctx->description.c_str();
 }
 
-static void ggml_backend_sycl_device_get_memory(ggml_backend_dev_t dev, size_t * free, size_t * total) {
+ساكن فراغ ggml_backend_sycl_device_get_memory(ggml_backend_dev_t dev, size_t * حرر, size_t * total) {
     GGML_SYCL_DEBUG("[SYCL] call %s\n", __func__);
     ggml_backend_sycl_device_context * ctx = (ggml_backend_sycl_device_context *) dev->context;
-    if (!sycl_get_mem_info(ctx->device, free, total)) {
+    אם (!sycl_get_mem_info(ctx->device, حرر, total)) {
         GGML_ABORT("[%s] failed to get device memory size", __func__);
     }
-    GGML_SYCL_DEBUG("[SYCL] call %s total %zu free %zu\n", __func__, *total, *free);
-    ggml_sycl_memtrace_report_device("device memory query (dev)", ctx->device, *free, *total);
+    GGML_SYCL_DEBUG("[SYCL] call %s total %zu free %zu\n", __func__, *total, *حرر);
+    ggml_sycl_memtrace_report_device("device memory query (dev)", ctx->device, *حرر, *total);
 }
 
-static enum ggml_backend_dev_type ggml_backend_sycl_device_get_type(ggml_backend_dev_t dev) {
+ساكن تعداد ggml_backend_dev_type ggml_backend_sycl_device_get_type(ggml_backend_dev_t dev) {
     ggml_backend_sycl_device_context * ctx = (ggml_backend_sycl_device_context *)dev->context;
-    const sycl_device_info & info = ggml_sycl_info().devices[ctx->device];
-    if (info.l0_device_type_valid && !info.l0_discrete_gpu) {
-        return GGML_BACKEND_DEVICE_TYPE_IGPU;
+    ثابت sycl_device_info & info = ggml_sycl_info().devices[ctx->device];
+    אם (info.l0_device_type_valid && !info.l0_discrete_gpu) {
+        החזר GGML_BACKEND_DEVICE_TYPE_IGPU;
     }
-    return GGML_BACKEND_DEVICE_TYPE_GPU;
+    החזר GGML_BACKEND_DEVICE_TYPE_GPU;
 }
 
-static void ggml_backend_sycl_device_get_props(ggml_backend_dev_t dev, ggml_backend_dev_props * props) {
+ساكن فراغ ggml_backend_sycl_device_get_props(ggml_backend_dev_t dev, ggml_backend_dev_props * props) {
     props->name        = ggml_backend_sycl_device_get_name(dev);
     props->description = ggml_backend_sycl_device_get_description(dev);
     props->type        = ggml_backend_sycl_device_get_type(dev);
     ggml_backend_sycl_device_get_memory(dev, &props->memory_free, &props->memory_total);
 
-    bool host_buffer = getenv("GGML_SYCL_NO_PINNED") == nullptr;
+    منطقي host_buffer = getenv("GGML_SYCL_NO_PINNED") == nullptr;
 #ifdef GGML_SYCL_NO_PEER_COPY
-    bool events = false;
-#else
-    bool events = true;
+    منطقي events = שקר;
+#אחרת
+    منطقي events = אמת;
 #endif
 
     props->caps = {
-        /* .async                 = */ true,
+        /* .async                 = */ אמת,
         /* .host_buffer           = */ host_buffer,
-        /* .buffer_from_host_ptr  = */ false,
+        /* .buffer_from_host_ptr  = */ שקר,
         /* .events                = */ events,
-        /* .mmap_support          = */ true,
+        /* .mmap_support          = */ אמת,
     };
 }
 
-static ggml_backend_t ggml_backend_sycl_device_init(ggml_backend_dev_t dev, const char * params) {
+ساكن ggml_backend_t ggml_backend_sycl_device_init(ggml_backend_dev_t dev, ثابت حرف * params) {
     GGML_UNUSED(params);
     ggml_backend_sycl_device_context * ctx = (ggml_backend_sycl_device_context *)dev->context;
-    return ggml_backend_sycl_init(ctx->device);
+    החזר ggml_backend_sycl_init(ctx->device);
 }
 
-static ggml_backend_buffer_type_t ggml_backend_sycl_device_get_buffer_type(ggml_backend_dev_t dev) {
+ساكن ggml_backend_buffer_type_t ggml_backend_sycl_device_get_buffer_type(ggml_backend_dev_t dev) {
     ggml_backend_sycl_device_context * ctx = (ggml_backend_sycl_device_context *)dev->context;
-    return ggml_backend_sycl_buffer_type(ctx->device);
+    החזר ggml_backend_sycl_buffer_type(ctx->device);
 }
 
-static ggml_backend_buffer_type_t ggml_backend_sycl_device_get_host_buffer_type(ggml_backend_dev_t dev) {
+ساكن ggml_backend_buffer_type_t ggml_backend_sycl_device_get_host_buffer_type(ggml_backend_dev_t dev) {
     ggml_backend_sycl_device_context * ctx = (ggml_backend_sycl_device_context *) dev->context;
-    return ggml_backend_sycl_host_buffer_type_for_device(ctx->device);
+    החזר ggml_backend_sycl_host_buffer_type_for_device(ctx->device);
 }
 
-static ggml_backend_buffer_t ggml_backend_sycl_device_buffer_from_host_ptr(ggml_backend_dev_t dev, void * ptr, size_t size, size_t max_tensor_size) {
+ساكن ggml_backend_buffer_t ggml_backend_sycl_device_buffer_from_host_ptr(ggml_backend_dev_t dev, فراغ * ptr, size_t size, size_t max_tensor_size) {
     GGML_UNUSED(dev);
     GGML_UNUSED(ptr);
     GGML_UNUSED(size);
     GGML_UNUSED(max_tensor_size);
-    return nullptr;
+    החזר nullptr;
 }
 
-static bool do_ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
+ساكن منطقي do_ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, ثابت ggml_tensor * op) {
     ggml_backend_sycl_device_context *sycl_ctx =
         (ggml_backend_sycl_device_context *)dev->context;
-    int device = sycl_ctx->device;
-    switch (op->op) {
-        case GGML_OP_CONV_TRANSPOSE_1D:
+    صحيح device = sycl_ctx->device;
+    بدل (op->op) {
+        حالة GGML_OP_CONV_TRANSPOSE_1D:
             {
                 ggml_type src0_type = op->src[0]->type;
                 ggml_type src1_type = op->src[1]->type;
-                if (src0_type == GGML_TYPE_F32 && src1_type == GGML_TYPE_F32) {
-                    return true;
+                אם (src0_type == GGML_TYPE_F32 && src1_type == GGML_TYPE_F32) {
+                    החזר אמת;
                 }
-                return false;
+                החזר שקר;
             }
-        case GGML_OP_CONV_2D:
+        حالة GGML_OP_CONV_2D:
             // WHCN: contiguous [KW,KH,IC,OC] kernel and [W,H,C,N] input
             // CWHN: channel-fastest input (C fastest) and kernel with OC fastest
-            return (ggml_is_contiguous(op->src[0]) && ggml_is_contiguous(op->src[1])) ||
+            החזר (ggml_is_contiguous(op->src[0]) && ggml_is_contiguous(op->src[1])) ||
                    (op->src[1]->nb[2] == ggml_type_size(op->src[1]->type) &&
                     op->src[0]->nb[3] == ggml_type_size(op->src[0]->type));
-        case GGML_OP_CONV_2D_DW:
-        case GGML_OP_CONV_TRANSPOSE_2D:
-            return true;
-        case GGML_OP_UNARY:
-            switch (ggml_get_unary_op(op)) {
-                case GGML_UNARY_OP_SGN:
-                case GGML_UNARY_OP_ABS:
-                case GGML_UNARY_OP_NEG:
-                case GGML_UNARY_OP_STEP:
-                case GGML_UNARY_OP_RELU:
-                case GGML_UNARY_OP_HARDSIGMOID:
-                case GGML_UNARY_OP_TANH:
-                case GGML_UNARY_OP_GELU:
-                case GGML_UNARY_OP_SILU:
-                case GGML_UNARY_OP_SIGMOID:
-                case GGML_UNARY_OP_HARDSWISH:
-                case GGML_UNARY_OP_GELU_QUICK:
-                case GGML_UNARY_OP_GELU_ERF:
-                case GGML_UNARY_OP_EXP:
-                case GGML_UNARY_OP_EXPM1:
-                case GGML_UNARY_OP_SOFTPLUS:
-                case GGML_UNARY_OP_ELU:
-                case GGML_UNARY_OP_XIELU:
-                case GGML_UNARY_OP_CEIL:
-                    return true;
-                case GGML_UNARY_OP_FLOOR:
-                case GGML_UNARY_OP_ROUND:
-                case GGML_UNARY_OP_TRUNC:
-                    return true;
-                default:
-                    return false;
+        حالة GGML_OP_CONV_2D_DW:
+        حالة GGML_OP_CONV_TRANSPOSE_2D:
+            החזר אמת;
+        حالة GGML_OP_UNARY:
+            بدل (ggml_get_unary_op(op)) {
+                حالة GGML_UNARY_OP_SGN:
+                حالة GGML_UNARY_OP_ABS:
+                حالة GGML_UNARY_OP_NEG:
+                حالة GGML_UNARY_OP_STEP:
+                حالة GGML_UNARY_OP_RELU:
+                حالة GGML_UNARY_OP_HARDSIGMOID:
+                حالة GGML_UNARY_OP_TANH:
+                حالة GGML_UNARY_OP_GELU:
+                حالة GGML_UNARY_OP_SILU:
+                حالة GGML_UNARY_OP_SIGMOID:
+                حالة GGML_UNARY_OP_HARDSWISH:
+                حالة GGML_UNARY_OP_GELU_QUICK:
+                حالة GGML_UNARY_OP_GELU_ERF:
+                حالة GGML_UNARY_OP_EXP:
+                حالة GGML_UNARY_OP_EXPM1:
+                حالة GGML_UNARY_OP_SOFTPLUS:
+                حالة GGML_UNARY_OP_ELU:
+                حالة GGML_UNARY_OP_XIELU:
+                حالة GGML_UNARY_OP_CEIL:
+                    החזר אמת;
+                حالة GGML_UNARY_OP_FLOOR:
+                حالة GGML_UNARY_OP_ROUND:
+                حالة GGML_UNARY_OP_TRUNC:
+                    החזר אמת;
+                افتراضي:
+                    החזר שקר;
             }
-        case GGML_OP_GLU:
-            switch (ggml_get_glu_op(op)) {
-                case GGML_GLU_OP_REGLU:
-                case GGML_GLU_OP_GEGLU:
-                case GGML_GLU_OP_SWIGLU:
-                case GGML_GLU_OP_SWIGLU_OAI:
-                case GGML_GLU_OP_GEGLU_ERF:
-                case GGML_GLU_OP_GEGLU_QUICK:
-                case GGML_GLU_OP_SWIGLU_CLAMP:
+        حالة GGML_OP_GLU:
+            بدل (ggml_get_glu_op(op)) {
+                حالة GGML_GLU_OP_REGLU:
+                حالة GGML_GLU_OP_GEGLU:
+                حالة GGML_GLU_OP_SWIGLU:
+                حالة GGML_GLU_OP_SWIGLU_OAI:
+                حالة GGML_GLU_OP_GEGLU_ERF:
+                حالة GGML_GLU_OP_GEGLU_QUICK:
+                حالة GGML_GLU_OP_SWIGLU_CLAMP:
                     // the fused GLU kernels only have f32/f16 instantiations
-                    return ggml_is_contiguous_1(op->src[0]) &&
+                    החזר ggml_is_contiguous_1(op->src[0]) &&
                            (op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16);
-                default:
-                    return false;
+                افتراضي:
+                    החזר שקר;
             }
-        case GGML_OP_MUL_MAT:
-        case GGML_OP_MUL_MAT_ID:
+        حالة GGML_OP_MUL_MAT:
+        حالة GGML_OP_MUL_MAT_ID:
             {
-                struct ggml_tensor * a = op->src[0];
-                struct ggml_tensor * b = op->src[1];
+                بنية ggml_tensor * a = op->src[0];
+                بنية ggml_tensor * b = op->src[1];
 
-                if (a->ne[3] != b->ne[3]) {
-                    return false;
+                אם (a->ne[3] != b->ne[3]) {
+                    החזר שקר;
                 }
 
                 ggml_type src0_type = op->src[0]->type;
 
                 // TODO: The configuration below needs more work to be supported with oneDNN
-                if (ggml_is_permuted(a) && !ggml_is_contiguous(a) &&
+                אם (ggml_is_permuted(a) && !ggml_is_contiguous(a) &&
                     a->ne[2] > 1 && a->ne[3] > 1 && src0_type == GGML_TYPE_F16) {
-                  return false;
+                  החזר שקר;
                 }
 
                 // TODO: This specific configuration can fail with oneDNN and needs more debugging
-                if (!ggml_is_permuted(a) && ggml_is_permuted(b) && b->ne[2] > 1 && b->ne[3] > 1 &&
+                אם (!ggml_is_permuted(a) && ggml_is_permuted(b) && b->ne[2] > 1 && b->ne[3] > 1 &&
                     a->ne[0] > 128 && a->ne[2] == 1 && src0_type == GGML_TYPE_F16) {
-                    return false;
+                    החזר שקר;
                 }
 
-                if (src0_type == GGML_TYPE_TQ2_0 || src0_type == GGML_TYPE_TQ1_0) {
-                    return false;
+                אם (src0_type == GGML_TYPE_TQ2_0 || src0_type == GGML_TYPE_TQ1_0) {
+                    החזר שקר;
                 }
 
-                return true;
+                החזר אמת;
             }
-        case GGML_OP_OUT_PROD:
-            return op->type == GGML_TYPE_F32 &&
+        حالة GGML_OP_OUT_PROD:
+            החזר op->type == GGML_TYPE_F32 &&
                    (op->src[0]->type == GGML_TYPE_F32 ||
                     (op->src[0]->type == GGML_TYPE_Q1_0 && op->src[0]->ne[2] == op->src[1]->ne[2] &&
                      op->src[0]->ne[3] == op->src[1]->ne[3])) &&
                    op->src[1]->type == GGML_TYPE_F32;
-        case GGML_OP_GET_ROWS:
+        حالة GGML_OP_GET_ROWS:
             {
-                switch (op->src[0]->type) {
-                    case GGML_TYPE_I32:
-                    case GGML_TYPE_F16:
-                    case GGML_TYPE_BF16:
-                    case GGML_TYPE_F32:
-                    case GGML_TYPE_Q1_0:
-                    case GGML_TYPE_MXFP4:
-                    case GGML_TYPE_NVFP4:
-                    case GGML_TYPE_IQ2_XXS:
-                    case GGML_TYPE_IQ2_XS:
-                    case GGML_TYPE_IQ2_S:
-                    case GGML_TYPE_IQ3_XXS:
-                    case GGML_TYPE_IQ1_S:
-                    case GGML_TYPE_IQ1_M:
-                    case GGML_TYPE_IQ3_S:
-                    case GGML_TYPE_IQ4_NL:
-                    case GGML_TYPE_IQ4_XS:
-                    case GGML_TYPE_Q2_K:
-                    case GGML_TYPE_Q3_K:
-                    case GGML_TYPE_Q4_0:
-                    case GGML_TYPE_Q4_1:
-                    case GGML_TYPE_Q4_K:
-                    case GGML_TYPE_Q5_0:
-                    case GGML_TYPE_Q5_1:
-                    case GGML_TYPE_Q5_K:
-                    case GGML_TYPE_Q6_K:
-                    case GGML_TYPE_Q8_0:
-                        return true;
-                    default:
-                        return false;
+                بدل (op->src[0]->type) {
+                    حالة GGML_TYPE_I32:
+                    حالة GGML_TYPE_F16:
+                    حالة GGML_TYPE_BF16:
+                    حالة GGML_TYPE_F32:
+                    حالة GGML_TYPE_Q1_0:
+                    حالة GGML_TYPE_MXFP4:
+                    حالة GGML_TYPE_NVFP4:
+                    حالة GGML_TYPE_IQ2_XXS:
+                    حالة GGML_TYPE_IQ2_XS:
+                    حالة GGML_TYPE_IQ2_S:
+                    حالة GGML_TYPE_IQ3_XXS:
+                    حالة GGML_TYPE_IQ1_S:
+                    حالة GGML_TYPE_IQ1_M:
+                    حالة GGML_TYPE_IQ3_S:
+                    حالة GGML_TYPE_IQ4_NL:
+                    حالة GGML_TYPE_IQ4_XS:
+                    حالة GGML_TYPE_Q2_K:
+                    حالة GGML_TYPE_Q3_K:
+                    حالة GGML_TYPE_Q4_0:
+                    حالة GGML_TYPE_Q4_1:
+                    حالة GGML_TYPE_Q4_K:
+                    حالة GGML_TYPE_Q5_0:
+                    حالة GGML_TYPE_Q5_1:
+                    حالة GGML_TYPE_Q5_K:
+                    حالة GGML_TYPE_Q6_K:
+                    حالة GGML_TYPE_Q8_0:
+                        החזר אמת;
+                    افتراضي:
+                        החזר שקר;
                 }
             }
-        case GGML_OP_GET_ROWS_BACK:
+        حالة GGML_OP_GET_ROWS_BACK:
             // return true;
-             return op->type == GGML_TYPE_F32 &&
+             החזר op->type == GGML_TYPE_F32 &&
                  (op->src[0]->type == GGML_TYPE_F32 || op->src[0]->type == GGML_TYPE_F16) &&
                  op->src[1]->type == GGML_TYPE_I32 &&
                  op->ne[2] == 1 && op->ne[3] == 1;
-         case GGML_OP_SET:
-               return (op->type == GGML_TYPE_F32) &&
+         حالة GGML_OP_SET:
+               החזר (op->type == GGML_TYPE_F32) &&
                       (op->src[0] && op->src[1]) &&
                       (op->src[0]->type == GGML_TYPE_F32) &&
                       (op->src[1]->type == GGML_TYPE_F32);
 
-        case GGML_OP_SET_ROWS:
+        حالة GGML_OP_SET_ROWS:
             {
-                if (op->type == GGML_TYPE_TQ2_0 || op->type == GGML_TYPE_TQ1_0) {
-                    return false;
+                אם (op->type == GGML_TYPE_TQ2_0 || op->type == GGML_TYPE_TQ1_0) {
+                    החזר שקר;
                 }
                 auto res = (op->src[0]->type == GGML_TYPE_F32 || op->src[0]->type == GGML_TYPE_F16 ||
                             op->src[0]->type == GGML_TYPE_BF16) &&
                            (op->src[1]->type == GGML_TYPE_I64 || op->src[1]->type == GGML_TYPE_I32);
-                return res;
+                החזר res;
             }
-        case GGML_OP_DSV4_HC_PRE:
-            return op->src[0]->type == GGML_TYPE_F32 && op->src[1]->type == GGML_TYPE_F32 &&
+        حالة GGML_OP_DSV4_HC_PRE:
+            החזר op->src[0]->type == GGML_TYPE_F32 && op->src[1]->type == GGML_TYPE_F32 &&
                 op->type == GGML_TYPE_F32;
-        case GGML_OP_DSV4_HC_COMB:
-            return op->src[0]->type == GGML_TYPE_F32 && op->src[1]->type == GGML_TYPE_F32 &&
+        حالة GGML_OP_DSV4_HC_COMB:
+            החזר op->src[0]->type == GGML_TYPE_F32 && op->src[1]->type == GGML_TYPE_F32 &&
                 op->src[2]->type == GGML_TYPE_F32 && op->type == GGML_TYPE_F32;
-        case GGML_OP_DSV4_HC_POST:
-            return op->src[0]->type == GGML_TYPE_F32 && op->src[1]->type == GGML_TYPE_F32 &&
+        حالة GGML_OP_DSV4_HC_POST:
+            החזר op->src[0]->type == GGML_TYPE_F32 && op->src[1]->type == GGML_TYPE_F32 &&
                 op->src[2]->type == GGML_TYPE_F32 &&
                 (op->src[3] == nullptr || op->src[3]->type == GGML_TYPE_F32) &&
                 op->type == GGML_TYPE_F32;
-        case GGML_OP_LIGHTNING_INDEXER:
-            return op->src[0]->type == GGML_TYPE_F32 &&
+        حالة GGML_OP_LIGHTNING_INDEXER:
+            החזר op->src[0]->type == GGML_TYPE_F32 &&
                 (op->src[1]->type == GGML_TYPE_F16 || op->src[1]->type == GGML_TYPE_F32 ||
                  op->src[1]->type == GGML_TYPE_BF16 || op->src[1]->type == GGML_TYPE_Q8_0 ||
                  op->src[1]->type == GGML_TYPE_Q5_1 || op->src[1]->type == GGML_TYPE_Q5_0 ||
@@ -7078,13 +7078,13 @@ static bool do_ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, cons
                 op->src[3]->type == GGML_TYPE_F16 &&
                 op->type == GGML_TYPE_F32 &&
                 op->src[0]->ne[0] == WARP_SIZE * 8;
-        case GGML_OP_CPY:
+        حالة GGML_OP_CPY:
             {
                 ggml_type src0_type = op->src[0]->type;
                 ggml_type src1_type = op->src[1]->type;
 
-                if (src0_type == GGML_TYPE_F16) {
-                    if (src1_type == GGML_TYPE_Q2_K ||
+                אם (src0_type == GGML_TYPE_F16) {
+                    אם (src1_type == GGML_TYPE_Q2_K ||
                         src1_type == GGML_TYPE_Q3_K ||
                         src1_type == GGML_TYPE_Q4_K ||
                         src1_type == GGML_TYPE_Q5_K ||
@@ -7097,12 +7097,12 @@ static bool do_ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, cons
                         src1_type == GGML_TYPE_IQ1_M ||
                         src1_type == GGML_TYPE_IQ3_S ||
                         src1_type == GGML_TYPE_IQ4_XS) {
-                        return false;
+                        החזר שקר;
                     }
                 }
 
-                if (src0_type == GGML_TYPE_BF16) {
-                    if (src1_type == GGML_TYPE_Q4_0 || //big error in ut
+                אם (src0_type == GGML_TYPE_BF16) {
+                    אם (src1_type == GGML_TYPE_Q4_0 || //big error in ut
                         src1_type == GGML_TYPE_Q4_1 || //big error in ut
                         src1_type == GGML_TYPE_Q8_0 || //big error in ut
                         src1_type == GGML_TYPE_Q2_K ||
@@ -7118,12 +7118,12 @@ static bool do_ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, cons
                         src1_type == GGML_TYPE_IQ1_M ||
                         src1_type == GGML_TYPE_IQ3_S ||
                         src1_type == GGML_TYPE_IQ4_XS) {
-                        return false;
+                        החזר שקר;
                     }
                 }
 
-                if (src0_type == GGML_TYPE_F32) {
-                    if (src1_type == GGML_TYPE_Q2_K ||
+                אם (src0_type == GGML_TYPE_F32) {
+                    אם (src1_type == GGML_TYPE_Q2_K ||
                         src1_type == GGML_TYPE_Q3_K ||
                         src1_type == GGML_TYPE_Q4_K ||
                         src1_type == GGML_TYPE_Q5_K ||
@@ -7136,12 +7136,12 @@ static bool do_ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, cons
                         src1_type == GGML_TYPE_IQ1_M ||
                         src1_type == GGML_TYPE_IQ3_S ||
                         src1_type == GGML_TYPE_IQ4_XS) {
-                        return false;
+                        החזר שקר;
                     }
                 }
 
-                if (src1_type == GGML_TYPE_F32) {
-                    if (src0_type == GGML_TYPE_Q1_0 ||
+                אם (src1_type == GGML_TYPE_F32) {
+                    אם (src0_type == GGML_TYPE_Q1_0 ||
                         src0_type == GGML_TYPE_NVFP4 ||
                         src0_type == GGML_TYPE_Q2_K ||
                         src0_type == GGML_TYPE_Q3_K ||
@@ -7158,12 +7158,12 @@ static bool do_ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, cons
                         src0_type == GGML_TYPE_IQ4_NL ||
                         src0_type == GGML_TYPE_IQ4_XS
                     ) {
-                        return false;
+                        החזר שקר;
                     }
                 }
 
-                if (src0_type == src1_type) {
-                    if (src1_type == GGML_TYPE_IQ2_XXS ||
+                אם (src0_type == src1_type) {
+                    אם (src1_type == GGML_TYPE_IQ2_XXS ||
                         src1_type == GGML_TYPE_IQ2_XS ||
                         src1_type == GGML_TYPE_IQ2_S ||
                         src1_type == GGML_TYPE_IQ3_XXS ||
@@ -7172,252 +7172,252 @@ static bool do_ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, cons
                         src1_type == GGML_TYPE_IQ1_M ||
                         src1_type == GGML_TYPE_TQ2_0 ||
                         src1_type == GGML_TYPE_TQ1_0) {
-                        return false;
+                        החזר שקר;
                     }
                 }
 
-                if (src0_type == GGML_TYPE_TQ2_0 || src1_type == GGML_TYPE_TQ2_0 ||
+                אם (src0_type == GGML_TYPE_TQ2_0 || src1_type == GGML_TYPE_TQ2_0 ||
                     src0_type == GGML_TYPE_TQ1_0 || src1_type == GGML_TYPE_TQ1_0) {
-                    return false;
+                    החזר שקר;
                 }
 
-                return true;
+                החזר אמת;
             }
-        case GGML_OP_REPEAT_BACK:
+        حالة GGML_OP_REPEAT_BACK:
             {
                 ggml_type src0_type = op->src[0]->type;
-                return src0_type == GGML_TYPE_F32;
+                החזר src0_type == GGML_TYPE_F32;
             }
-        case GGML_OP_CONCAT:
-        case GGML_OP_DUP:
-        case GGML_OP_ARGMAX:
-        case GGML_OP_NONE:
-        case GGML_OP_RESHAPE:
-        case GGML_OP_VIEW:
-        case GGML_OP_PERMUTE:
-        case GGML_OP_TRANSPOSE:
-        case GGML_OP_ADD:
-        case GGML_OP_ADD1:
-        case GGML_OP_ADD_ID:
-        case GGML_OP_SUB:
-        case GGML_OP_COUNT_EQUAL:
-        case GGML_OP_MUL:
-        case GGML_OP_DIV:
-        case GGML_OP_REPEAT:
-            return true;
-        case GGML_OP_PAD_REFLECT_1D:
-            return ggml_is_contiguous(op->src[0]) && op-> type == GGML_TYPE_F32 && op->src[0]->type == GGML_TYPE_F32;
-        case GGML_OP_SQR:
-        case GGML_OP_SQRT:
-        case GGML_OP_SIN:
-        case GGML_OP_COS:
-        case GGML_OP_CLAMP:
-        case GGML_OP_LOG:
-        case GGML_OP_NORM:
-        case GGML_OP_L2_NORM:
-        case GGML_OP_GROUP_NORM:
-        case GGML_OP_RMS_NORM:
-            return true;
-        case GGML_OP_RMS_NORM_BACK:
-            return ggml_is_contiguous(op->src[0]);
-        case GGML_OP_SCALE:
+        حالة GGML_OP_CONCAT:
+        حالة GGML_OP_DUP:
+        حالة GGML_OP_ARGMAX:
+        حالة GGML_OP_NONE:
+        حالة GGML_OP_RESHAPE:
+        حالة GGML_OP_VIEW:
+        حالة GGML_OP_PERMUTE:
+        حالة GGML_OP_TRANSPOSE:
+        حالة GGML_OP_ADD:
+        حالة GGML_OP_ADD1:
+        حالة GGML_OP_ADD_ID:
+        حالة GGML_OP_SUB:
+        حالة GGML_OP_COUNT_EQUAL:
+        حالة GGML_OP_MUL:
+        حالة GGML_OP_DIV:
+        حالة GGML_OP_REPEAT:
+            החזר אמת;
+        حالة GGML_OP_PAD_REFLECT_1D:
+            החזר ggml_is_contiguous(op->src[0]) && op-> type == GGML_TYPE_F32 && op->src[0]->type == GGML_TYPE_F32;
+        حالة GGML_OP_SQR:
+        حالة GGML_OP_SQRT:
+        حالة GGML_OP_SIN:
+        حالة GGML_OP_COS:
+        حالة GGML_OP_CLAMP:
+        حالة GGML_OP_LOG:
+        حالة GGML_OP_NORM:
+        حالة GGML_OP_L2_NORM:
+        حالة GGML_OP_GROUP_NORM:
+        حالة GGML_OP_RMS_NORM:
+            החזר אמת;
+        حالة GGML_OP_RMS_NORM_BACK:
+            החזר ggml_is_contiguous(op->src[0]);
+        حالة GGML_OP_SCALE:
             // the scale kernel is f32 only
-            return op->type == GGML_TYPE_F32 && op->src[0]->type == GGML_TYPE_F32;
-        case GGML_OP_CONT:
-            return true;
-        case GGML_OP_TRI:
+            החזר op->type == GGML_TYPE_F32 && op->src[0]->type == GGML_TYPE_F32;
+        حالة GGML_OP_CONT:
+            החזר אמת;
+        حالة GGML_OP_TRI:
             {
-                const ggml_tensor * src0 = op->src[0];
-                return src0 &&
+                ثابت ggml_tensor * src0 = op->src[0];
+                החזר src0 &&
                        op->type == GGML_TYPE_F32 &&
                        ggml_is_contiguous(src0);
             }
-        case GGML_OP_DIAG_MASK_INF:
-            return true;
-        case GGML_OP_SOFT_MAX:
-            return true;
-        case GGML_OP_SOFT_MAX_BACK: {
-            float max_bias = 0.0f;
-            memcpy(&max_bias, (const float *) op->op_params + 1, sizeof(float));
-            return max_bias == 0.0f;
+        حالة GGML_OP_DIAG_MASK_INF:
+            החזר אמת;
+        حالة GGML_OP_SOFT_MAX:
+            החזר אמת;
+        حالة GGML_OP_SOFT_MAX_BACK: {
+            عائم max_bias = 0.0f;
+            memcpy(&max_bias, (ثابت عائم *) op->op_params + 1, حجم(عائم));
+            החזר max_bias == 0.0f;
         }
-        case GGML_OP_ROPE:
-        case GGML_OP_ROPE_BACK:
-        case GGML_OP_IM2COL:
-        case GGML_OP_IM2COL_3D:
-        case GGML_OP_UPSCALE:
-            return true;
-        case GGML_OP_COL2IM_1D:
-            return ggml_is_contiguous(op->src[0]) &&
+        حالة GGML_OP_ROPE:
+        حالة GGML_OP_ROPE_BACK:
+        حالة GGML_OP_IM2COL:
+        حالة GGML_OP_IM2COL_3D:
+        حالة GGML_OP_UPSCALE:
+            החזר אמת;
+        حالة GGML_OP_COL2IM_1D:
+            החזר ggml_is_contiguous(op->src[0]) &&
                    (op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16
 #ifdef GGML_SYCL_HAS_BF16
                     || op->type == GGML_TYPE_BF16
 #endif
                    ) &&
                    op->src[0]->type == op->type;
-        case GGML_OP_CONV_3D: {
-            const int32_t * opts = (const int32_t *) op->op_params;
+        حالة GGML_OP_CONV_3D: {
+            ثابت int32_t * opts = (ثابت int32_t *) op->op_params;
             // zero kernel volume, channels or output makes the im2col GEMM degenerate (k == 0 or m == 0)
             // and MKL BLAS rejects it; let those fall back to the CPU backend
-            const int64_t knl_n_total = op->src[0]->ne[0] * op->src[0]->ne[1] * op->src[0]->ne[2] * opts[9];
-            const int64_t patch_total = op->ne[0] * op->ne[1] * op->ne[2] * opts[10];
-            return op->type == GGML_TYPE_F32 &&
+            ثابت int64_t knl_n_total = op->src[0]->ne[0] * op->src[0]->ne[1] * op->src[0]->ne[2] * opts[9];
+            ثابت int64_t patch_total = op->ne[0] * op->ne[1] * op->ne[2] * opts[10];
+            החזר op->type == GGML_TYPE_F32 &&
                    (op->src[0]->type == GGML_TYPE_F32 || op->src[0]->type == GGML_TYPE_F16) &&
                    op->src[1]->type == GGML_TYPE_F32 &&
                    ggml_is_contiguous(op->src[0]) &&
                    ggml_is_contiguous(op->src[1]) &&
                    knl_n_total > 0 && patch_total > 0;
         }
-        case GGML_OP_SUM:
-        case GGML_OP_SUM_ROWS:
-        case GGML_OP_MEAN:
-            return ggml_is_contiguous(op->src[0]);
-        case GGML_OP_ARGSORT:
-            return true;
-        case GGML_OP_TOP_K: {
-            const ggml_tensor * src0 = op->src[0];
-            const int k = op->ne[0];
-            return src0 &&
+        حالة GGML_OP_SUM:
+        حالة GGML_OP_SUM_ROWS:
+        حالة GGML_OP_MEAN:
+            החזר ggml_is_contiguous(op->src[0]);
+        حالة GGML_OP_ARGSORT:
+            החזר אמת;
+        حالة GGML_OP_TOP_K: {
+            ثابت ggml_tensor * src0 = op->src[0];
+            ثابت صحيح k = op->ne[0];
+            החזר src0 &&
                 op->type == GGML_TYPE_I32 &&
                 src0->type == GGML_TYPE_F32 &&
                 ggml_is_contiguous(src0) &&
                 k > 0 && k <= src0->ne[0];
         }
-        case GGML_OP_POOL_2D:
-        case GGML_OP_POOL_1D:
-        case GGML_OP_ACC:
-            return true;
-        case GGML_OP_PAD:
-            if (ggml_get_op_params_i32(op, 8) != 0) {
-                return false;
+        حالة GGML_OP_POOL_2D:
+        حالة GGML_OP_POOL_1D:
+        حالة GGML_OP_ACC:
+            החזר אמת;
+        حالة GGML_OP_PAD:
+            אם (ggml_get_op_params_i32(op, 8) != 0) {
+                החזר שקר;
             }
-            return true;
-        case GGML_OP_LEAKY_RELU:
-        case GGML_OP_TIMESTEP_EMBEDDING:
-        case GGML_OP_RWKV_WKV6:
-        case GGML_OP_RWKV_WKV7:
-        case GGML_OP_GATED_LINEAR_ATTN:
-        case GGML_OP_GATED_DELTA_NET:
-        case GGML_OP_OPT_STEP_ADAMW:
-        case GGML_OP_OPT_STEP_SGD:
-            return true;
-        case GGML_OP_SSM_CONV:
-            return op->type == GGML_TYPE_F32 &&
+            החזר אמת;
+        حالة GGML_OP_LEAKY_RELU:
+        حالة GGML_OP_TIMESTEP_EMBEDDING:
+        حالة GGML_OP_RWKV_WKV6:
+        حالة GGML_OP_RWKV_WKV7:
+        حالة GGML_OP_GATED_LINEAR_ATTN:
+        حالة GGML_OP_GATED_DELTA_NET:
+        حالة GGML_OP_OPT_STEP_ADAMW:
+        حالة GGML_OP_OPT_STEP_SGD:
+            החזר אמת;
+        حالة GGML_OP_SSM_CONV:
+            החזר op->type == GGML_TYPE_F32 &&
                    op->src[0]->type == GGML_TYPE_F32 &&
                    op->src[1]->type == GGML_TYPE_F32;
-        case GGML_OP_ROLL:
-            return op->type == GGML_TYPE_F32;
-        case GGML_OP_ARANGE:
-            return op->type == GGML_TYPE_F32;
-        case GGML_OP_SSM_SCAN:
-            if (op->src[3]->ne[0] == 1) {
+        حالة GGML_OP_ROLL:
+            החזר op->type == GGML_TYPE_F32;
+        حالة GGML_OP_ARANGE:
+            החזר op->type == GGML_TYPE_F32;
+        حالة GGML_OP_SSM_SCAN:
+            אם (op->src[3]->ne[0] == 1) {
                 // Mamba2
                 // (kernel only supports (d_state == 128 || d_state == 256) && d_head % WARP_SIZE == 0)
-                return (op->src[0]->ne[0] == 128 || op->src[0]->ne[0] == 256) && op->src[0]->ne[1] % WARP_SIZE == 0;
-            } else {
+                החזר (op->src[0]->ne[0] == 128 || op->src[0]->ne[0] == 256) && op->src[0]->ne[1] % WARP_SIZE == 0;
+            } אחרת {
                 // TODO Mamba-1 not yet ported to SYCL
-                return false;
+                החזר שקר;
             }
-        case GGML_OP_FILL:
-        case GGML_OP_CUMSUM:
-        case GGML_OP_DIAG:
-        case GGML_OP_CROSS_ENTROPY_LOSS:
-        case GGML_OP_CROSS_ENTROPY_LOSS_BACK:
-            return true;
-        case GGML_OP_SOLVE_TRI:
-            return op->src[0]->ne[0] <= SYCL_SOLVE_TRI_MAX_N && op->src[1]->ne[0] <= SYCL_SOLVE_TRI_MAX_K;
-        case GGML_OP_FLASH_ATTN_EXT:
-            return ggml_sycl_flash_attn_ext_supported(device, op);
-        default:
-            return false;
+        حالة GGML_OP_FILL:
+        حالة GGML_OP_CUMSUM:
+        حالة GGML_OP_DIAG:
+        حالة GGML_OP_CROSS_ENTROPY_LOSS:
+        حالة GGML_OP_CROSS_ENTROPY_LOSS_BACK:
+            החזר אמת;
+        حالة GGML_OP_SOLVE_TRI:
+            החזר op->src[0]->ne[0] <= SYCL_SOLVE_TRI_MAX_N && op->src[1]->ne[0] <= SYCL_SOLVE_TRI_MAX_K;
+        حالة GGML_OP_FLASH_ATTN_EXT:
+            החזר ggml_sycl_flash_attn_ext_supported(device, op);
+        افتراضي:
+            החזר שקר;
     }
 
     GGML_UNUSED(dev);
 }
 
-static bool ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
-    bool res = do_ggml_backend_sycl_device_supports_op(dev, op);
+ساكن منطقي ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, ثابت ggml_tensor * op) {
+    منطقي res = do_ggml_backend_sycl_device_supports_op(dev, op);
     GGML_SYCL_DEBUG("[SYCL] call %s op->op=%s op->type=%s -> %s\n", __func__, ggml_op_name(op->op),
                     ggml_type_name(op->type), res ? "true" : "false");
-    return res;
+    החזר res;
 }
 
-static bool ggml_backend_sycl_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
-    if (buft->iface.get_name != ggml_backend_sycl_buffer_type_get_name) {
-        return false;
+ساكن منطقي ggml_backend_sycl_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
+    אם (buft->iface.get_name != ggml_backend_sycl_buffer_type_get_name) {
+        החזר שקר;
     }
     ggml_backend_sycl_buffer_type_context * buft_ctx = (ggml_backend_sycl_buffer_type_context *)buft->context;
     ggml_backend_sycl_device_context * sycl_ctx = (ggml_backend_sycl_device_context *)dev->context;
-    return buft_ctx->device == sycl_ctx->device;
+    החזר buft_ctx->device == sycl_ctx->device;
 }
 
-static int64_t get_op_batch_size(const ggml_tensor * op) {
-    switch (op->op) {
-        case GGML_OP_GET_ROWS:
-            return 0;
-        case GGML_OP_MUL_MAT:
-            return op->ne[1];
-        case GGML_OP_MUL_MAT_ID:
-        case GGML_OP_ROPE:
-            return op->ne[2];
-        default:
-            return ggml_nrows(op);
+ساكن int64_t get_op_batch_size(ثابت ggml_tensor * op) {
+    بدل (op->op) {
+        حالة GGML_OP_GET_ROWS:
+            החזר 0;
+        حالة GGML_OP_MUL_MAT:
+            החזר op->ne[1];
+        حالة GGML_OP_MUL_MAT_ID:
+        حالة GGML_OP_ROPE:
+            החזר op->ne[2];
+        افتراضي:
+            החזר ggml_nrows(op);
     }
 }
 
-static bool ggml_backend_sycl_device_offload_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
+ساكن منطقي ggml_backend_sycl_device_offload_op(ggml_backend_dev_t dev, ثابت ggml_tensor * op) {
     ggml_backend_sycl_device_context * sycl_ctx = (ggml_backend_sycl_device_context *)dev->context;
-    return get_op_batch_size(op) >= sycl_ctx->op_offload_min_batch_size;
+    החזר get_op_batch_size(op) >= sycl_ctx->op_offload_min_batch_size;
 }
 
-static ggml_backend_event_t
+ساكن ggml_backend_event_t
 ggml_backend_sycl_device_event_new(ggml_backend_dev_t dev) {
 
 #ifdef GGML_SYCL_NO_PEER_COPY
-    return nullptr;
-#else
-  sycl::event *event_ptr = new sycl::event();
+    החזר nullptr;
+#אחרת
+  sycl::event *event_ptr = جديد sycl::event();
 
-  return new ggml_backend_event{
+  החזר جديد ggml_backend_event{
       /* .device = */ dev,
       /* .context = */ event_ptr,
   };
 #endif
 }
 
-static void ggml_backend_sycl_device_event_free(ggml_backend_dev_t dev, ggml_backend_event_t event) try {
+ساكن فراغ ggml_backend_sycl_device_event_free(ggml_backend_dev_t dev, ggml_backend_event_t event) حاول {
   GGML_UNUSED(dev);
-  if (event == nullptr) {
-    return;
+  אם (event == nullptr) {
+    החזר;
   }
 
-  if (event->context != nullptr) {
+  אם (event->context != nullptr) {
     sycl::event *sycl_event = static_cast<sycl::event *>(event->context);
     delete sycl_event;
     event->context = nullptr;
   }
 
   delete event;
-} catch (sycl::exception const &exc) {
+} امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
             << ", line:" << __LINE__ << std::endl;
   std::exit(1);
 }
 
 
-static void ggml_backend_sycl_device_event_synchronize(ggml_backend_dev_t dev, ggml_backend_event_t event) try {
+ساكن فراغ ggml_backend_sycl_device_event_synchronize(ggml_backend_dev_t dev, ggml_backend_event_t event) حاول {
   GGML_UNUSED(dev);
   GGML_SYCL_DEBUG("[SYCL] call %s\n", __func__);
 
   sycl::event *sycl_event = static_cast<sycl::event *>(event->context);
   SYCL_CHECK(CHECK_TRY_ERROR(sycl_event->wait()));
-} catch (sycl::exception const &exc) {
+} امسك (sycl::exception ثابت &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
             << ", line:" << __LINE__ << std::endl;
   std::exit(1);
 }
 
-static const ggml_backend_device_i ggml_backend_sycl_device_interface = {
+ساكن ثابت ggml_backend_device_i ggml_backend_sycl_device_interface = {
     /* .get_name                = */ ggml_backend_sycl_device_get_name,
     /* .get_description         = */ ggml_backend_sycl_device_get_description,
     /* .get_memory              = */ ggml_backend_sycl_device_get_memory,
@@ -7437,24 +7437,24 @@ static const ggml_backend_device_i ggml_backend_sycl_device_interface = {
 
 // backend reg
 
-struct ggml_backend_sycl_reg_context {
+بنية ggml_backend_sycl_reg_context {
     std::vector<ggml_backend_dev_t> devices;
 };
 
-static const char * ggml_backend_sycl_reg_get_name(ggml_backend_reg_t reg) {
+ساكن ثابت حرف * ggml_backend_sycl_reg_get_name(ggml_backend_reg_t reg) {
     GGML_UNUSED(reg);
-    return GGML_SYCL_NAME;
+    החזר GGML_SYCL_NAME;
 }
 
-static size_t ggml_backend_sycl_reg_get_device_count(ggml_backend_reg_t reg) {
+ساكن size_t ggml_backend_sycl_reg_get_device_count(ggml_backend_reg_t reg) {
     ggml_backend_sycl_reg_context * ctx = (ggml_backend_sycl_reg_context *)reg->context;
-    return ctx->devices.size();
+    החזר ctx->devices.size();
 }
 
-static ggml_backend_dev_t ggml_backend_sycl_reg_get_device(ggml_backend_reg_t reg, size_t index) {
+ساكن ggml_backend_dev_t ggml_backend_sycl_reg_get_device(ggml_backend_reg_t reg, size_t index) {
     ggml_backend_sycl_reg_context * ctx = (ggml_backend_sycl_reg_context *)reg->context;
     GGML_ASSERT(index < ctx->devices.size());
-    return ctx->devices[index];
+    החזר ctx->devices[index];
 }
 
 // ==========================================================================
@@ -7492,7 +7492,7 @@ static ggml_backend_dev_t ggml_backend_sycl_reg_get_device(ggml_backend_reg_t re
 // butterfly all-reduce fallback.
 // ==========================================================================
 
-struct ggml_backend_sycl_comm_context {
+بنية ggml_backend_sycl_comm_context {
     std::vector<ggml_backend_t> backends;
     // ONE persistent per-device byte buffer, 4*nelem bytes.  Both the
     // FP32 small-tensor path and the BF16 large-tensor path share it
@@ -7506,21 +7506,21 @@ struct ggml_backend_sycl_comm_context {
     uint8_t * host_in[2]  = { nullptr, nullptr };
     size_t    host_bytes  = 0;
 
-    void free_host() {
-        for (int i = 0; i < 2; ++i) {
-            const sycl::context sctx = ((ggml_backend_sycl_context *) backends[i]->context)->stream()->get_context();
-            if (host_out[i]) { sycl::free(host_out[i], sctx); host_out[i] = nullptr; }
-            if (host_in[i])  { sycl::free(host_in[i],  sctx); host_in[i]  = nullptr; }
+    فراغ free_host() {
+        עבור (صحيح i = 0; i < 2; ++i) {
+            ثابت sycl::context sctx = ((ggml_backend_sycl_context *) backends[i]->context)->stream()->get_context();
+            אם (host_out[i]) { sycl::حرر(host_out[i], sctx); host_out[i] = nullptr; }
+            אם (host_in[i])  { sycl::حرر(host_in[i],  sctx); host_in[i]  = nullptr; }
         }
         host_bytes = 0;
     }
 };
 
 // dst0 <- src1 and dst1 <- src0 through pinned host memory, with a single host wait
-static void ggml_sycl_comm_exchange(ggml_backend_sycl_comm_context * comm, queue_ptr q0, queue_ptr q1,
-                                    void * dst0, const void * src1, void * dst1, const void * src0,
+ساكن فراغ ggml_sycl_comm_exchange(ggml_backend_sycl_comm_context * comm, queue_ptr q0, queue_ptr q1,
+                                    فراغ * dst0, ثابت فراغ * src1, فراغ * dst1, ثابت فراغ * src0,
                                     size_t nbytes) {
-    if (comm->host_bytes < nbytes) {
+    אם (comm->host_bytes < nbytes) {
         q0->wait();
         q1->wait();
         comm->free_host();
@@ -7542,83 +7542,83 @@ static void ggml_sycl_comm_exchange(ggml_backend_sycl_comm_context * comm, queue
     q1->memcpy(dst1, comm->host_in[1], nbytes);
 }
 
-void * ggml_backend_sycl_comm_init(ggml_backend_t * backends, size_t n_backends) try {
-    for (size_t i = 0; i < n_backends; ++i) {
-        if (!ggml_backend_is_sycl(backends[i])) {
-            return nullptr;
+فراغ * ggml_backend_sycl_comm_init(ggml_backend_t * backends, size_t n_backends) حاول {
+    עבור (size_t i = 0; i < n_backends; ++i) {
+        אם (!ggml_backend_is_sycl(backends[i])) {
+            החזר nullptr;
         }
     }
 
     // Initial version: N=2 only. For N!=2, returning null makes the
     // meta-backend skip this backend-specific allreduce entirely.
-    if (n_backends != 2) {
-        return nullptr;
+    אם (n_backends != 2) {
+        החזר nullptr;
     }
 
-    auto * ctx = new ggml_backend_sycl_comm_context;
+    auto * ctx = جديد ggml_backend_sycl_comm_context;
     ctx->backends.assign(backends, backends + n_backends);
     auto * sctx0 = (ggml_backend_sycl_context *) backends[0]->context;
     auto * sctx1 = (ggml_backend_sycl_context *) backends[1]->context;
     ctx->buf0 = std::make_unique<ggml_sycl_pool_alloc<uint8_t>>(sctx0->pool());
     ctx->buf1 = std::make_unique<ggml_sycl_pool_alloc<uint8_t>>(sctx1->pool());
-    return ctx;
+    החזר ctx;
 }
-catch (const sycl::exception &) { return nullptr; }
-catch (...)                     { return nullptr; }
+امسك (ثابت sycl::exception &) { החזר nullptr; }
+امسك (...)                     { החזר nullptr; }
 
-void ggml_backend_sycl_comm_free(void * comm_ctx_v) {
+فراغ ggml_backend_sycl_comm_free(فراغ * comm_ctx_v) {
     auto * comm_ctx = static_cast<ggml_backend_sycl_comm_context *>(comm_ctx_v);
-    if (comm_ctx == nullptr) {
-        return;
+    אם (comm_ctx == nullptr) {
+        החזר;
     }
 
     // Sync both per-device queues so the pool_alloc destructors don't
     // return memory still in use by the last kernel.
-    if (comm_ctx->backends.size() == 2) {
+    אם (comm_ctx->backends.size() == 2) {
         auto * sctx0 = (ggml_backend_sycl_context *) comm_ctx->backends[0]->context;
         auto * sctx1 = (ggml_backend_sycl_context *) comm_ctx->backends[1]->context;
-        try {
+        حاول {
             sctx0->stream()->wait();
             sctx1->stream()->wait();
             comm_ctx->free_host();
-        } catch (...) { /* best effort during shutdown */ }
+        } امسك (...) { /* best effort during shutdown */ }
     }
 
     delete comm_ctx;
 }
 
-bool ggml_backend_sycl_comm_allreduce_tensor(void * comm_ctx_v, struct ggml_tensor ** tensors) try {
-    if (comm_ctx_v == nullptr) {
-        return false;
+منطقي ggml_backend_sycl_comm_allreduce_tensor(فراغ * comm_ctx_v, بنية ggml_tensor ** tensors) حاول {
+    אם (comm_ctx_v == nullptr) {
+        החזר שקר;
     }
 
     auto * comm_ctx = static_cast<ggml_backend_sycl_comm_context *>(comm_ctx_v);
-    const size_t n_backends = comm_ctx->backends.size();
+    ثابت size_t n_backends = comm_ctx->backends.size();
 
     // Fast path: N=2, F32/F16, contiguous, matching shapes.
-    if (n_backends != 2) {
-        return false;
+    אם (n_backends != 2) {
+        החזר שקר;
     }
     // Accept F32 or F16 inputs natively (types must match). F16 takes the
     // direct 2-byte memcpy + add path below; other types return false so the
     // meta-backend uses its generic all-reduce.
-    if (tensors[0]->type != tensors[1]->type) {
-        return false;
+    אם (tensors[0]->type != tensors[1]->type) {
+        החזר שקר;
     }
-    if (tensors[0]->type != GGML_TYPE_F32 && tensors[0]->type != GGML_TYPE_F16) {
-        return false;
+    אם (tensors[0]->type != GGML_TYPE_F32 && tensors[0]->type != GGML_TYPE_F16) {
+        החזר שקר;
     }
-    if (!ggml_is_contiguous(tensors[0]) || !ggml_is_contiguous(tensors[1])) {
-        return false;
+    אם (!ggml_is_contiguous(tensors[0]) || !ggml_is_contiguous(tensors[1])) {
+        החזר שקר;
     }
-    if (ggml_nelements(tensors[0]) != ggml_nelements(tensors[1])) {
-        return false;
+    אם (ggml_nelements(tensors[0]) != ggml_nelements(tensors[1])) {
+        החזר שקר;
     }
 
-    const int64_t nelem  = ggml_nelements(tensors[0]);
-    const size_t  nbytes = ggml_nbytes(tensors[0]);
-    if (nelem == 0) {
-        return true;
+    ثابت int64_t nelem  = ggml_nelements(tensors[0]);
+    ثابت size_t  nbytes = ggml_nbytes(tensors[0]);
+    אם (nelem == 0) {
+        החזר אמת;
     }
 
     auto * ctx0 = (ggml_backend_sycl_context *) comm_ctx->backends[0]->context;
@@ -7627,7 +7627,7 @@ bool ggml_backend_sycl_comm_allreduce_tensor(void * comm_ctx_v, struct ggml_tens
     queue_ptr q1 = ctx1->stream();
 
     // Grow per-device byte buffers if needed (4 * nelem bytes each).
-    if (comm_ctx->buf_nelem < nelem) {
+    אם (comm_ctx->buf_nelem < nelem) {
         comm_ctx->buf0->realloc(nelem * 4);
         comm_ctx->buf1->realloc(nelem * 4);
         comm_ctx->buf_nelem = nelem;
@@ -7638,7 +7638,7 @@ bool ggml_backend_sycl_comm_allreduce_tensor(void * comm_ctx_v, struct ggml_tens
     // F16 native path: direct 2-byte cross-device copy + add, skipping the
     // F32 round-trip the meta-backend fallback would force. The devices are in separate SYCL
     // contexts (a raw peer-USM q->memcpy would be a silent no-op), so copies go through host memory.
-    if (tensors[0]->type == GGML_TYPE_F16) {
+    אם (tensors[0]->type == GGML_TYPE_F16) {
         sycl::half * f16_out0 = (sycl::half *) tensors[0]->data;
         sycl::half * f16_out1 = (sycl::half *) tensors[1]->data;
         sycl::half * f16_tmp0 = (sycl::half *) buf0;
@@ -7648,30 +7648,30 @@ bool ggml_backend_sycl_comm_allreduce_tensor(void * comm_ctx_v, struct ggml_tens
 
         q0->submit([&](sycl::handler & h) {
             h.parallel_for(sycl::range<1>(nelem), [=](sycl::id<1> i) {
-                f16_out0[i] = (sycl::half) ((float) f16_out0[i] + (float) f16_tmp0[i]);
+                f16_out0[i] = (sycl::half) ((عائم) f16_out0[i] + (عائم) f16_tmp0[i]);
             });
         });
         q1->submit([&](sycl::handler & h) {
             h.parallel_for(sycl::range<1>(nelem), [=](sycl::id<1> i) {
-                f16_out1[i] = (sycl::half) ((float) f16_out1[i] + (float) f16_tmp1[i]);
+                f16_out1[i] = (sycl::half) ((عائم) f16_out1[i] + (عائم) f16_tmp1[i]);
             });
         });
-        return true;
+        החזר אמת;
     }
 
-    float * out0 = (float *) tensors[0]->data;
-    float * out1 = (float *) tensors[1]->data;
+    عائم * out0 = (عائم *) tensors[0]->data;
+    عائم * out1 = (عائم *) tensors[1]->data;
 
     // BF16 threshold: above this, the PCIe savings from halving the
     // cross-device bytes outweigh the 2 extra compress kernels.
     // Below: stay on the FP32 fast path.  Threshold mirrors the CUDA
     // NCCL allreduce pattern for n_backends=2.
-    static constexpr int64_t BF16_THRESHOLD = 32768;
+    ساكن constexpr int64_t BF16_THRESHOLD = 32768;
 
-    if (nelem < BF16_THRESHOLD) {
+    אם (nelem < BF16_THRESHOLD) {
         // FP32 small path: 4 SYCL submissions per allreduce.
-        float * tmp0 = (float *) buf0;
-        float * tmp1 = (float *) buf1;
+        عائم * tmp0 = (عائم *) buf0;
+        عائم * tmp1 = (عائم *) buf1;
 
         // separate SYCL contexts: a raw peer-USM q->memcpy is a silent no-op, so stage through host memory
         ggml_sycl_comm_exchange(comm_ctx, q0, q1, tmp0, tensors[1]->data, tmp1, tensors[0]->data, nbytes);
@@ -7686,7 +7686,7 @@ bool ggml_backend_sycl_comm_allreduce_tensor(void * comm_ctx_v, struct ggml_tens
                 out1[i] += tmp1[i];
             });
         });
-        return true;
+        החזר אמת;
     }
 
     // BF16 large path: 6 SYCL submissions per allreduce, but the
@@ -7707,53 +7707,53 @@ bool ggml_backend_sycl_comm_allreduce_tensor(void * comm_ctx_v, struct ggml_tens
     });
 
     // Phase B: exchange the compressed bytes (in-order queues keep this after the compress kernels).
-    const size_t bf16_bytes = nelem * sizeof(uint16_t);
+    ثابت size_t bf16_bytes = nelem * حجم(uint16_t);
     ggml_sycl_comm_exchange(comm_ctx, q0, q1, inbox0, outbox1, inbox1, outbox0, bf16_bytes);
 
     // Phase C: decompress + add into local FP32 partial.
     q0->submit([&](sycl::handler & h) {
         h.parallel_for(sycl::range<1>(nelem), [=](sycl::id<1> i) {
-            out0[i] += sycl::bit_cast<float>(((uint32_t) inbox0[i]) << 16);
+            out0[i] += sycl::bit_cast<عائم>(((uint32_t) inbox0[i]) << 16);
         });
     });
 
     q1->submit([&](sycl::handler & h) {
         h.parallel_for(sycl::range<1>(nelem), [=](sycl::id<1> i) {
-            out1[i] += sycl::bit_cast<float>(((uint32_t) inbox1[i]) << 16);
+            out1[i] += sycl::bit_cast<عائم>(((uint32_t) inbox1[i]) << 16);
         });
     });
 
-    return true;
+    החזר אמת;
 }
-catch (const sycl::exception &) { return false; }
-catch (...)                     { return false; }
+امسك (ثابت sycl::exception &) { החזר שקר; }
+امسك (...)                     { החזר שקר; }
 
-static void *ggml_backend_sycl_reg_get_proc_address(ggml_backend_reg_t reg, const char *name) {
+ساكن فراغ *ggml_backend_sycl_reg_get_proc_address(ggml_backend_reg_t reg, ثابت حرف *name) {
     GGML_UNUSED(reg);
 
-    if (strcmp(name, "ggml_backend_split_buffer_type") == 0) {
-        return (void *)ggml_backend_sycl_split_buffer_type;
+    אם (strcmp(name, "ggml_backend_split_buffer_type") == 0) {
+        החזר (فراغ *)ggml_backend_sycl_split_buffer_type;
     }
 
     // Tensor parallelism (--split-mode tensor) entry points.
-    if (strcmp(name, "ggml_backend_comm_init") == 0) {
-        return (void *)ggml_backend_sycl_comm_init;
+    אם (strcmp(name, "ggml_backend_comm_init") == 0) {
+        החזר (فراغ *)ggml_backend_sycl_comm_init;
     }
-    if (strcmp(name, "ggml_backend_comm_free") == 0) {
-        return (void *)ggml_backend_sycl_comm_free;
+    אם (strcmp(name, "ggml_backend_comm_free") == 0) {
+        החזר (فراغ *)ggml_backend_sycl_comm_free;
     }
-    if (strcmp(name, "ggml_backend_comm_allreduce_tensor") == 0) {
-        return (void *)ggml_backend_sycl_comm_allreduce_tensor;
+    אם (strcmp(name, "ggml_backend_comm_allreduce_tensor") == 0) {
+        החזר (فراغ *)ggml_backend_sycl_comm_allreduce_tensor;
     }
 
     // SYCL doesn't support registering host memory, left here for reference
     // "ggml_backend_register_host_buffer"
     // "ggml_backend_unregister_host_buffer"
     GGML_UNUSED(name);
-    return nullptr;
+    החזר nullptr;
 }
 
-static const ggml_backend_reg_i ggml_backend_sycl_reg_interface = {
+ساكن ثابت ggml_backend_reg_i ggml_backend_sycl_reg_interface = {
     /* .get_name          = */ ggml_backend_sycl_reg_get_name,
     /* .get_device_count  = */ ggml_backend_sycl_reg_get_device_count,
     /* .get_device        = */ ggml_backend_sycl_reg_get_device,
@@ -7765,19 +7765,19 @@ static const ggml_backend_reg_i ggml_backend_sycl_reg_interface = {
 
 ggml_backend_reg_t ggml_backend_sycl_reg() {
     GGML_SYCL_DEBUG("[SYCL] call ggml_backend_sycl_reg\n");
-    static ggml_backend_reg reg;
-    static bool initialized = false;
+    ساكن ggml_backend_reg reg;
+    ساكن منطقي initialized = שקר;
 
     {
-        static std::mutex mutex;
+        ساكن std::mutex mutex;
         std::lock_guard<std::mutex> lock(mutex);
-        if (!initialized) {
+        אם (!initialized) {
             ggml_check_sycl();
-            ggml_backend_sycl_reg_context * ctx = new ggml_backend_sycl_reg_context;
-            const int min_batch_size = getenv("GGML_OP_OFFLOAD_MIN_BATCH") ? atoi(getenv("GGML_OP_OFFLOAD_MIN_BATCH")) : 32;
+            ggml_backend_sycl_reg_context * ctx = جديد ggml_backend_sycl_reg_context;
+            ثابت صحيح min_batch_size = getenv("GGML_OP_OFFLOAD_MIN_BATCH") ? atoi(getenv("GGML_OP_OFFLOAD_MIN_BATCH")) : 32;
 
-            for (int i = 0; i < ggml_sycl_info().device_count; i++) {
-                ggml_backend_sycl_device_context * dev_ctx = new ggml_backend_sycl_device_context;
+            עבור (صحيح i = 0; i < ggml_sycl_info().device_count; i++) {
+                ggml_backend_sycl_device_context * dev_ctx = جديد ggml_backend_sycl_device_context;
                 dev_ctx->device = i;
                 dev_ctx->name = GGML_SYCL_NAME + std::to_string(i);
 
@@ -7790,7 +7790,7 @@ ggml_backend_reg_t ggml_backend_sycl_reg() {
                 dev_ctx->description = prop.get_name();
                 dev_ctx->op_offload_min_batch_size = min_batch_size;
 
-                ggml_backend_dev_t dev = new ggml_backend_device {
+                ggml_backend_dev_t dev = جديد ggml_backend_device {
                     /* .iface       = */ ggml_backend_sycl_device_interface,
                     /* .reg         = */ &reg,
                     /* .context     = */ dev_ctx
@@ -7805,32 +7805,32 @@ ggml_backend_reg_t ggml_backend_sycl_reg() {
             };
         }
 
-        initialized = true;
+        initialized = אמת;
     }
 
-    return &reg;
+    החזר &reg;
 }
 
-ggml_backend_t ggml_backend_sycl_init(int device) {
+ggml_backend_t ggml_backend_sycl_init(صحيح device) {
     GGML_SYCL_DEBUG("[SYCL] call ggml_backend_sycl_init\n");
     ggml_check_sycl();
 
     check_allow_gpu_index(device);
 
-    ggml_backend_sycl_context * ctx = new ggml_backend_sycl_context(device);
-    if (ctx == nullptr) {
+    ggml_backend_sycl_context * ctx = جديد ggml_backend_sycl_context(device);
+    אם (ctx == nullptr) {
         GGML_LOG_ERROR("%s: error: failed to allocate context\n", __func__);
-        return nullptr;
+        החזר nullptr;
     };
 
-    ggml_backend_t sycl_backend = new ggml_backend {
+    ggml_backend_t sycl_backend = جديد ggml_backend {
         /* .guid    = */ ggml_backend_sycl_guid(),
         /* .iface   = */ ggml_backend_sycl_interface,
         /* .device  = */ ggml_backend_reg_dev_get(ggml_backend_sycl_reg(), device),
         /* .context = */ ctx
     };
 
-    return sycl_backend;
+    החזר sycl_backend;
 }
 
 GGML_BACKEND_DL_IMPL(ggml_backend_sycl_reg)

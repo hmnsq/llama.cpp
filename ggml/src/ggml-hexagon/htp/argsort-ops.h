@@ -1,14 +1,14 @@
 #ifndef HTP_ARGSORT_OPS_H
 #define HTP_ARGSORT_OPS_H
 
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
-#include <string.h>
+#ضمن <stdint.h>
+#ضمن <stddef.h>
+#ضمن <stdbool.h>
+#ضمن <string.h>
 
-#include "hex-fastdiv.h"
+#ضمن "hex-fastdiv.h"
 
-struct htp_sort_kernel_params {
+بنية htp_sort_kernel_params {
     int32_t  n_threads;
     int32_t  total_rows;
     int32_t  row_start;
@@ -29,7 +29,7 @@ struct htp_sort_kernel_params {
     int32_t  pad[15];
 };
 
-struct htp_sort_vtcm_layout {
+بنية htp_sort_vtcm_layout {
     size_t   total_bytes;
     size_t   phase1_slot_size;
     size_t   merge_values_off;
@@ -41,8 +41,8 @@ struct htp_sort_vtcm_layout {
     uint32_t n_slots;
 };
 
-static inline bool htp_sort_solve_layout(
-    struct htp_sort_vtcm_layout * layout,
+ساكن مضمن bool htp_sort_solve_layout(
+    بنية htp_sort_vtcm_layout * layout,
     uint32_t ne00,
     uint32_t total_rows,
     uint32_t k,
@@ -50,34 +50,34 @@ static inline bool htp_sort_solve_layout(
     size_t vtcm_budget,
     bool is_top_k) {
 
-    memset(layout, 0, sizeof(*layout));
+    memset(layout, 0, حجم(*layout));
 
-    if (total_rows > 1) {
+    אם (total_rows > 1) {
         uint32_t n_threads = total_rows < n_threads_max ? total_rows : n_threads_max;
 
         uint32_t n_vec = (ne00 + 31) / 32;
         uint32_t n_vec_pow2 = 1;
-        while (n_vec_pow2 < n_vec) n_vec_pow2 <<= 1;
+        כלעוד (n_vec_pow2 < n_vec) n_vec_pow2 <<= 1;
         uint32_t ne00_padded = n_vec_pow2 * 32;
 
-        size_t values_size  = ((ne00_padded * sizeof(float)) + 127) & ~127;
-        size_t indices_size = ((ne00_padded * sizeof(int32_t)) + 127) & ~127;
+        size_t values_size  = ((ne00_padded * حجم(عائم)) + 127) & ~127;
+        size_t indices_size = ((ne00_padded * حجم(int32_t)) + 127) & ~127;
         size_t spad_per_slot = ((values_size + indices_size) + 255) & ~255;
 
         uint32_t n_slots = 2;
-        if (spad_per_slot * 2 > vtcm_budget) {
+        אם (spad_per_slot * 2 > vtcm_budget) {
             n_slots = 1;
         }
 
         size_t spad_per_thread = spad_per_slot * n_slots;
 
-        while (n_threads > 1 && (spad_per_thread * n_threads) > vtcm_budget) {
+        כלעוד (n_threads > 1 && (spad_per_thread * n_threads) > vtcm_budget) {
             n_threads--;
         }
 
         size_t total_bytes = spad_per_thread * n_threads;
-        if (total_bytes > vtcm_budget) {
-            return false;
+        אם (total_bytes > vtcm_budget) {
+            החזר false;
         }
 
         layout->total_bytes      = total_bytes;
@@ -86,16 +86,16 @@ static inline bool htp_sort_solve_layout(
         layout->n_chunks         = 1;
         layout->n_threads        = n_threads;
         layout->n_slots          = n_slots;
-        return true;
+        החזר true;
     }
 
     uint32_t n_vec = (ne00 + 31) / 32;
     uint32_t n_vec_pow2 = 1;
-    while (n_vec_pow2 < n_vec) n_vec_pow2 <<= 1;
+    כלעוד (n_vec_pow2 < n_vec) n_vec_pow2 <<= 1;
 
     uint32_t n_chunks = 1;
-    if (ne00 > 1024) {
-        while (n_chunks * 2 <= n_threads_max && n_chunks * 2 <= n_vec_pow2) {
+    אם (ne00 > 1024) {
+        כלעוד (n_chunks * 2 <= n_threads_max && n_chunks * 2 <= n_vec_pow2) {
             n_chunks *= 2;
         }
     }
@@ -103,8 +103,8 @@ static inline bool htp_sort_solve_layout(
     uint32_t chunk_n_vec = n_vec_pow2 / n_chunks;
     uint32_t chunk_elems = chunk_n_vec * 32;
 
-    size_t phase1_values_size  = ((chunk_elems * sizeof(float)) + 127) & ~127;
-    size_t phase1_indices_size = ((chunk_elems * sizeof(int32_t)) + 127) & ~127;
+    size_t phase1_values_size  = ((chunk_elems * حجم(عائم)) + 127) & ~127;
+    size_t phase1_indices_size = ((chunk_elems * حجم(int32_t)) + 127) & ~127;
     size_t phase1_slot_size    = ((phase1_values_size + phase1_indices_size) + 255) & ~255;
     size_t phase1_total_size   = phase1_slot_size * n_chunks;
 
@@ -114,29 +114,29 @@ static inline bool htp_sort_solve_layout(
     size_t merge_indices_off  = 0;
     uint32_t merge_elems      = 0;
 
-    if (n_chunks > 1) {
-        if (is_top_k) {
+    אם (n_chunks > 1) {
+        אם (is_top_k) {
             uint32_t local_k = k < chunk_elems ? k : chunk_elems;
             uint32_t total_candidates = n_chunks * local_k;
             uint32_t merge_n_vec = (total_candidates + 31) / 32;
             uint32_t merge_n_vec_pow2 = 1;
-            while (merge_n_vec_pow2 < merge_n_vec) merge_n_vec_pow2 <<= 1;
+            כלעוד (merge_n_vec_pow2 < merge_n_vec) merge_n_vec_pow2 <<= 1;
             merge_elems = merge_n_vec_pow2 * 32;
-        } else {
+        } אחרת {
             merge_elems = n_vec_pow2 * 32;
         }
-        merge_values_size  = ((merge_elems * sizeof(float)) + 127) & ~127;
-        merge_indices_size = ((merge_elems * sizeof(int32_t)) + 127) & ~127;
+        merge_values_size  = ((merge_elems * حجم(عائم)) + 127) & ~127;
+        merge_indices_size = ((merge_elems * حجم(int32_t)) + 127) & ~127;
         merge_indices_off  = merge_values_off + merge_values_size;
     }
 
     size_t total_bytes = phase1_total_size + merge_values_size + merge_indices_size;
 
-    if (total_bytes > vtcm_budget && n_chunks > 1) {
+    אם (total_bytes > vtcm_budget && n_chunks > 1) {
         n_chunks = 1;
         chunk_elems = n_vec_pow2 * 32;
-        phase1_values_size  = ((chunk_elems * sizeof(float)) + 127) & ~127;
-        phase1_indices_size = ((chunk_elems * sizeof(int32_t)) + 127) & ~127;
+        phase1_values_size  = ((chunk_elems * حجم(عائم)) + 127) & ~127;
+        phase1_indices_size = ((chunk_elems * حجم(int32_t)) + 127) & ~127;
         phase1_slot_size    = ((phase1_values_size + phase1_indices_size) + 255) & ~255;
         phase1_total_size   = phase1_slot_size;
         merge_values_size   = 0;
@@ -147,12 +147,12 @@ static inline bool htp_sort_solve_layout(
         total_bytes         = phase1_total_size;
     }
 
-    if (total_bytes > vtcm_budget) {
-        return false;
+    אם (total_bytes > vtcm_budget) {
+        החזר false;
     }
 
     uint32_t n_slots = 1;
-    if (n_chunks == 1 && phase1_slot_size * 2 <= vtcm_budget) {
+    אם (n_chunks == 1 && phase1_slot_size * 2 <= vtcm_budget) {
         n_slots = 2;
         total_bytes = phase1_slot_size * 2;
     }
@@ -166,13 +166,13 @@ static inline bool htp_sort_solve_layout(
     layout->merge_elems       = merge_elems;
     layout->n_threads         = n_chunks;
     layout->n_slots           = n_slots;
-    return true;
+    החזר true;
 }
 
-#if defined(__cplusplus)
-static_assert(sizeof(struct htp_sort_kernel_params) <= 128, "htp_sort_kernel_params is too large for kernel_params blob");
-#else
-_Static_assert(sizeof(struct htp_sort_kernel_params) <= 128, "htp_sort_kernel_params is too large for kernel_params blob");
+#אם defined(__cplusplus)
+static_assert(حجم(بنية htp_sort_kernel_params) <= 128, "htp_sort_kernel_params is too large for kernel_params blob");
+#אחרת
+_Static_assert(حجم(بنية htp_sort_kernel_params) <= 128, "htp_sort_kernel_params is too large for kernel_params blob");
 #endif
 
 #endif // HTP_ARGSORT_OPS_H

@@ -14,30 +14,30 @@
  * - High stability and backward compatibility required.
  */
 
-#include <cstdio>
+#ضمن <cstdio>
 
-extern int g_ggml_sycl_debug;
-extern int g_ggml_sycl_dev_debug;
+خارجي صحيح g_ggml_sycl_debug;
+خارجي صحيح g_ggml_sycl_dev_debug;
 
-#if defined(__clang__) && __has_builtin(__builtin_expect)
+#אם defined(__clang__) && __has_builtin(__builtin_expect)
 // Hint the optimizer to pipeline the more likely following instruction in branches
-#    define LIKELY(expr)   __builtin_expect(expr, true)
-#    define UNLIKELY(expr) __builtin_expect(expr, false)
-#else
+#    define LIKELY(expr)   __builtin_expect(expr, אמת)
+#    define UNLIKELY(expr) __builtin_expect(expr, שקר)
+#אחרת
 #    define LIKELY(expr)   (expr)
 #    define UNLIKELY(expr) (expr)
 #endif
 
 #define GGML_SYCL_DEBUG(...)              \
-    do {                                  \
-        if (UNLIKELY(g_ggml_sycl_debug))  \
+    עשה {                                  \
+        אם (UNLIKELY(g_ggml_sycl_debug))  \
             fprintf(stderr, __VA_ARGS__); \
-    } while (0)
+    } כלעוד (0)
 
 #define GGML_SYCL_DEV_DEBUG(...)          \
-    do {                                  \
-        if (UNLIKELY(g_ggml_sycl_dev_debug))  \
+    עשה {                                  \
+        אם (UNLIKELY(g_ggml_sycl_dev_debug))  \
             fprintf(stderr, __VA_ARGS__); \
-    } while (0)
+    } כלעוד (0)
 
 #endif  // GGML_SYCL_BASE_HPP

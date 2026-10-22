@@ -1,37 +1,37 @@
-#include "op_table.h"
+#ضمن "op_table.h"
 
-#include "utils.h"
+#ضمن "utils.h"
 
-#include <openvino/op/abs.hpp>
-#include <openvino/op/add.hpp>
-#include <openvino/op/ceiling.hpp>
-#include <openvino/op/cos.hpp>
-#include <openvino/op/divide.hpp>
-#include <openvino/op/exp.hpp>
-#include <openvino/op/floor.hpp>
-#include <openvino/op/gather.hpp>
-#include <openvino/op/gelu.hpp>
-#include <openvino/op/hswish.hpp>
-#include <openvino/op/log.hpp>
-#include <openvino/op/matmul.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/negative.hpp>
-#include <openvino/op/relu.hpp>
-#include <openvino/op/sigmoid.hpp>
-#include <openvino/op/sign.hpp>
-#include <openvino/op/sin.hpp>
-#include <openvino/op/softplus.hpp>
-#include <openvino/op/subtract.hpp>
-#include <openvino/op/swish.hpp>
-#include <openvino/op/tanh.hpp>
+#ضمن <openvino/op/abs.hpp>
+#ضمن <openvino/op/add.hpp>
+#ضمن <openvino/op/ceiling.hpp>
+#ضمن <openvino/op/cos.hpp>
+#ضمن <openvino/op/divide.hpp>
+#ضمن <openvino/op/exp.hpp>
+#ضمن <openvino/op/floor.hpp>
+#ضمن <openvino/op/gather.hpp>
+#ضمن <openvino/op/gelu.hpp>
+#ضمن <openvino/op/hswish.hpp>
+#ضمن <openvino/op/log.hpp>
+#ضمن <openvino/op/matmul.hpp>
+#ضمن <openvino/op/multiply.hpp>
+#ضمن <openvino/op/negative.hpp>
+#ضمن <openvino/op/relu.hpp>
+#ضمن <openvino/op/sigmoid.hpp>
+#ضمن <openvino/op/sign.hpp>
+#ضمن <openvino/op/sin.hpp>
+#ضمن <openvino/op/softplus.hpp>
+#ضمن <openvino/op/subtract.hpp>
+#ضمن <openvino/op/swish.hpp>
+#ضمن <openvino/op/tanh.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
+نطاق ov {
+نطاق frontend {
+نطاق ggml {
 
 std::unordered_map<std::string, CreatorFunction> get_supported_ops() {
-    using namespace ov::op;
-    return {
+    using نطاق ov::op;
+    החזר {
         {"GGML_OP_ADD",             op::translate_add                              },
         {"GGML_OP_ADD1",            op::translate_1to1_match_2_inputs<v1::Add>     },
         {"GGML_OP_ADD_ID",          op::translate_add_id                           },

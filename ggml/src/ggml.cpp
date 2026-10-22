@@ -1,26 +1,26 @@
-#include "ggml-impl.h"
+#ضمن "ggml-impl.h"
 
-#include <cstdlib>
-#include <exception>
+#ضمن <cstdlib>
+#ضمن <exception>
 
-static std::terminate_handler previous_terminate_handler;
+ساكن std::terminate_handler previous_terminate_handler;
 
-GGML_NORETURN static void ggml_uncaught_exception() {
+GGML_NORETURN ساكن فراغ ggml_uncaught_exception() {
     ggml_print_backtrace();
-    if (previous_terminate_handler) {
+    אם (previous_terminate_handler) {
         previous_terminate_handler();
     }
     abort(); // unreachable unless previous_terminate_handler was nullptr
 }
 
-static bool ggml_uncaught_exception_init = []{
-    const char * GGML_NO_BACKTRACE = getenv("GGML_NO_BACKTRACE");
-    if (GGML_NO_BACKTRACE) {
-        return false;
+ساكن منطقي ggml_uncaught_exception_init = []{
+    ثابت حرف * GGML_NO_BACKTRACE = getenv("GGML_NO_BACKTRACE");
+    אם (GGML_NO_BACKTRACE) {
+        החזר שקר;
     }
-    const auto prev{std::get_terminate()};
+    ثابت auto prev{std::get_terminate()};
     GGML_ASSERT(prev != ggml_uncaught_exception);
     previous_terminate_handler = prev;
     std::set_terminate(ggml_uncaught_exception);
-    return true;
+    החזר אמת;
 }();

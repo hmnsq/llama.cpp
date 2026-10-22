@@ -1,18 +1,18 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#ضمن "../node_context.h"
+#ضمن "../op_table.h"
+#ضمن "../utils.h"
 
-#include <openvino/op/roll.hpp>
-#include <openvino/op/constant.hpp>
+#ضمن <openvino/op/roll.hpp>
+#ضمن <openvino/op/constant.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+نطاق ov {
+نطاق frontend {
+نطاق ggml {
+نطاق op {
 
-OutputVector translate_roll(const NodeContext & context) {
+OutputVector translate_roll(ثابت NodeContext & context) {
     num_inputs_check(context, 1, 1);
-    const int32_t * params = context.get_output_op_params();
+    ثابت int32_t * params = context.get_output_op_params();
 
     int64_t s0 = params[0];
     int64_t s1 = params[1];
@@ -27,7 +27,7 @@ OutputVector translate_roll(const NodeContext & context) {
         ov::element::i64, ov::Shape{4}, std::vector<int64_t>{0, 1, 2, 3});
 
     auto roll = std::make_shared<ov::op::v7::Roll>(input, shift, axes);
-    return rename_outputs_with_suffix({roll}, context.get_name());
+    החזר rename_outputs_with_suffix({roll}, context.get_name());
 }
 
 }  // namespace op

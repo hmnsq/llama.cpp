@@ -1,22 +1,22 @@
 #ifndef PRE_WGSL_HPP
 #define PRE_WGSL_HPP
 
-#include <cctype>
-#include <fstream>
-#include <sstream>
-#include <stdexcept>
-#include <string>
-#include <string_view>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
+#ضمن <cctype>
+#ضمن <fstream>
+#ضمن <sstream>
+#ضمن <stdexcept>
+#ضمن <string>
+#ضمن <string_view>
+#ضمن <unordered_map>
+#ضمن <unordered_set>
+#ضمن <vector>
 
-namespace pre_wgsl {
+نطاق pre_wgsl {
 
 //==============================================================
 // Options
 //==============================================================
-struct Options {
+بنية Options {
     std::string              include_path = ".";
     std::vector<std::string> macros;
 };
@@ -24,119 +24,119 @@ struct Options {
 //==============================================================
 // Utility: trim
 //==============================================================
-static std::string trim(const std::string & s) {
+ساكن std::string trim(ثابت std::string & s) {
     size_t a = 0;
-    while (a < s.size() && std::isspace((unsigned char) s[a])) {
+    כלעוד (a < s.size() && std::isspace((unsigned حرف) s[a])) {
         a++;
     }
     size_t b = s.size();
-    while (b > a && std::isspace((unsigned char) s[b - 1])) {
+    כלעוד (b > a && std::isspace((unsigned حرف) s[b - 1])) {
         b--;
     }
-    return s.substr(a, b - a);
+    החזר s.substr(a, b - a);
 }
 
-static std::string trim_value(std::istream & is) {
+ساكن std::string trim_value(std::istream & is) {
     std::ostringstream ss;
     ss << is.rdbuf();
-    return trim(ss.str());
+    החזר trim(ss.str());
 }
 
-static bool isIdentChar(char c) {
-    return std::isalnum(static_cast<unsigned char>(c)) || c == '_';
+ساكن منطقي isIdentChar(حرف c) {
+    החזר std::isalnum(static_cast<unsigned حرف>(c)) || c == '_';
 }
 
-static bool endsWithContinuation(const std::string & line) {
+ساكن منطقي endsWithContinuation(ثابت std::string & line) {
     size_t i = line.size();
-    while (i > 0 && std::isspace((unsigned char) line[i - 1])) {
+    כלעוד (i > 0 && std::isspace((unsigned حرف) line[i - 1])) {
         i--;
     }
-    return i > 0 && line[i - 1] == '\\';
+    החזר i > 0 && line[i - 1] == '\\';
 }
 
-static void stripContinuation(std::string & line) {
+ساكن فراغ stripContinuation(std::string & line) {
     size_t i = line.size();
-    while (i > 0 && std::isspace((unsigned char) line[i - 1])) {
+    כלעוד (i > 0 && std::isspace((unsigned حرف) line[i - 1])) {
         i--;
     }
-    if (i > 0 && line[i - 1] == '\\') {
+    אם (i > 0 && line[i - 1] == '\\') {
         line.erase(i - 1);
     }
 }
 
-static std::string expandMacrosRecursiveInternal(const std::string &                                  line,
-                                                 const std::unordered_map<std::string, std::string> & macros,
+ساكن std::string expandMacrosRecursiveInternal(ثابت std::string &                                  line,
+                                                 ثابت std::unordered_map<std::string, std::string> & macros,
                                                  std::unordered_set<std::string> &                    visiting);
 
-static std::string expandMacroValue(const std::string &                                  name,
-                                    const std::unordered_map<std::string, std::string> & macros,
+ساكن std::string expandMacroValue(ثابت std::string &                                  name,
+                                    ثابت std::unordered_map<std::string, std::string> & macros,
                                     std::unordered_set<std::string> &                    visiting) {
-    if (visiting.count(name)) {
-        throw std::runtime_error("Recursive macro: " + name);
+    אם (visiting.count(name)) {
+        ارم std::runtime_error("Recursive macro: " + name);
     }
     visiting.insert(name);
 
     auto it = macros.find(name);
-    if (it == macros.end()) {
+    אם (it == macros.end()) {
         visiting.erase(name);
-        return name;
+        החזר name;
     }
 
-    const std::string & value = it->second;
-    if (value.empty()) {
+    ثابت std::string & value = it->second;
+    אם (value.empty()) {
         visiting.erase(name);
-        return "";
+        החזר "";
     }
 
     std::string expanded = expandMacrosRecursiveInternal(value, macros, visiting);
     visiting.erase(name);
-    return expanded;
+    החזר expanded;
 }
 
-static std::string expandMacrosRecursiveInternal(const std::string &                                  line,
-                                                 const std::unordered_map<std::string, std::string> & macros,
+ساكن std::string expandMacrosRecursiveInternal(ثابت std::string &                                  line,
+                                                 ثابت std::unordered_map<std::string, std::string> & macros,
                                                  std::unordered_set<std::string> &                    visiting) {
     std::string result;
     result.reserve(line.size());
 
     size_t i = 0;
-    while (i < line.size()) {
-        if (isIdentChar(line[i])) {
+    כלעוד (i < line.size()) {
+        אם (isIdentChar(line[i])) {
             size_t start = i;
-            while (i < line.size() && isIdentChar(line[i])) {
+            כלעוד (i < line.size() && isIdentChar(line[i])) {
                 i++;
             }
             std::string token = line.substr(start, i - start);
 
             auto it = macros.find(token);
-            if (it != macros.end()) {
+            אם (it != macros.end()) {
                 result += expandMacroValue(token, macros, visiting);
-            } else {
+            } אחרת {
                 result += token;
             }
-        } else {
+        } אחרת {
             result += line[i];
             i++;
         }
     }
 
-    return result;
+    החזר result;
 }
 
-static std::string expandMacrosRecursive(const std::string &                                  line,
-                                         const std::unordered_map<std::string, std::string> & macros) {
+ساكن std::string expandMacrosRecursive(ثابت std::string &                                  line,
+                                         ثابت std::unordered_map<std::string, std::string> & macros) {
     std::unordered_set<std::string> visiting;
-    return expandMacrosRecursiveInternal(line, macros, visiting);
+    החזר expandMacrosRecursiveInternal(line, macros, visiting);
 }
 
 //==============================================================
 // Tokenizer for expressions in #if/#elif
 //==============================================================
-class ExprLexer {
-  public:
-    enum Kind { END, IDENT, NUMBER, OP, LPAREN, RPAREN };
+מחלקה ExprLexer {
+  عام:
+    تعداد Kind { END, IDENT, NUMBER, OP, LPAREN, RPAREN };
 
-    struct Tok {
+    بنية Tok {
         Kind        kind;
         std::string text;
     };
@@ -145,65 +145,65 @@ class ExprLexer {
 
     Tok next() {
         skipWS();
-        if (pos >= src.size()) {
-            return { END, "" };
+        אם (pos >= src.size()) {
+            החזר { END, "" };
         }
 
-        char c = src[pos];
+        حرف c = src[pos];
 
         // number
-        if (std::isdigit((unsigned char) c)) {
+        אם (std::isdigit((unsigned حرف) c)) {
             size_t start = pos;
-            while (pos < src.size() && std::isdigit((unsigned char) src[pos])) {
+            כלעוד (pos < src.size() && std::isdigit((unsigned حرف) src[pos])) {
                 pos++;
             }
-            return { NUMBER, std::string(src.substr(start, pos - start)) };
+            החזר { NUMBER, std::string(src.substr(start, pos - start)) };
         }
 
         // identifier
-        if (std::isalpha((unsigned char) c) || c == '_') {
+        אם (std::isalpha((unsigned حرف) c) || c == '_') {
             size_t start = pos;
-            while (pos < src.size() && (std::isalnum((unsigned char) src[pos]) || src[pos] == '_')) {
+            כלעוד (pos < src.size() && (std::isalnum((unsigned حرف) src[pos]) || src[pos] == '_')) {
                 pos++;
             }
-            return { IDENT, std::string(src.substr(start, pos - start)) };
+            החזר { IDENT, std::string(src.substr(start, pos - start)) };
         }
 
-        if (c == '(') {
+        אם (c == '(') {
             pos++;
-            return { LPAREN, "(" };
+            החזר { LPAREN, "(" };
         }
-        if (c == ')') {
+        אם (c == ')') {
             pos++;
-            return { RPAREN, ")" };
+            החזר { RPAREN, ")" };
         }
 
         // multi-char operators
-        static const char * two_ops[] = { "==", "!=", "<=", ">=", "&&", "||", "<<", ">>" };
-        for (auto op : two_ops) {
-            if (src.substr(pos, 2) == op) {
+        ساكن ثابت حرف * two_ops[] = { "==", "!=", "<=", ">=", "&&", "||", "<<", ">>" };
+        עבור (auto op : two_ops) {
+            אם (src.substr(pos, 2) == op) {
                 pos += 2;
-                return { OP, std::string(op) };
+                החזר { OP, std::string(op) };
             }
         }
 
         // single-char operators
-        if (std::string("+-*/%<>!").find(c) != std::string::npos) {
+        אם (std::string("+-*/%<>!").find(c) != std::string::npos) {
             pos++;
-            return { OP, std::string(1, c) };
+            החזר { OP, std::string(1, c) };
         }
 
         // unexpected
         pos++;
-        return { END, "" };
+        החזר { END, "" };
     }
 
-  private:
+  خاص:
     std::string_view src;
     size_t           pos;
 
-    void skipWS() {
-        while (pos < src.size() && std::isspace((unsigned char) src[pos])) {
+    فراغ skipWS() {
+        כלעוד (pos < src.size() && std::isspace((unsigned حرف) src[pos])) {
             pos++;
         }
     }
@@ -212,10 +212,10 @@ class ExprLexer {
 //==============================================================
 // Expression Parser (recursive descent)
 //==============================================================
-class ExprParser {
-  public:
+מחלקה ExprParser {
+  عام:
     ExprParser(std::string_view                                     expr,
-               const std::unordered_map<std::string, std::string> & macros,
+               ثابت std::unordered_map<std::string, std::string> & macros,
                std::unordered_set<std::string> &                    visiting) :
         lex(expr),
         macros(macros),
@@ -223,297 +223,297 @@ class ExprParser {
         advance();
     }
 
-    int parse() { return parseLogicalOr(); }
+    صحيح parse() { החזר parseLogicalOr(); }
 
-  private:
+  خاص:
     ExprLexer                                            lex;
     ExprLexer::Tok                                       tok;
-    const std::unordered_map<std::string, std::string> & macros;
+    ثابت std::unordered_map<std::string, std::string> & macros;
     std::unordered_set<std::string> &                    visiting;
 
-    void advance() { tok = lex.next(); }
+    فراغ advance() { tok = lex.next(); }
 
-    bool acceptOp(const std::string & s) {
-        if (tok.kind == ExprLexer::OP && tok.text == s) {
+    منطقي acceptOp(ثابت std::string & s) {
+        אם (tok.kind == ExprLexer::OP && tok.text == s) {
             advance();
-            return true;
+            החזר אמת;
         }
-        return false;
+        החזר שקר;
     }
 
-    bool acceptKind(ExprLexer::Kind k) {
-        if (tok.kind == k) {
+    منطقي acceptKind(ExprLexer::Kind k) {
+        אם (tok.kind == k) {
             advance();
-            return true;
+            החזר אמת;
         }
-        return false;
+        החזר שקר;
     }
 
-    int parseLogicalOr() {
-        int v = parseLogicalAnd();
-        while (acceptOp("||")) {
-            int rhs = parseLogicalAnd();
+    صحيح parseLogicalOr() {
+        صحيح v = parseLogicalAnd();
+        כלעוד (acceptOp("||")) {
+            صحيح rhs = parseLogicalAnd();
             v       = (v || rhs);
         }
-        return v;
+        החזר v;
     }
 
-    int parseLogicalAnd() {
-        int v = parseEquality();
-        while (acceptOp("&&")) {
-            int rhs = parseEquality();
+    صحيح parseLogicalAnd() {
+        صحيح v = parseEquality();
+        כלעוד (acceptOp("&&")) {
+            صحيح rhs = parseEquality();
             v       = (v && rhs);
         }
-        return v;
+        החזר v;
     }
 
-    int parseEquality() {
-        int v = parseRelational();
-        for (;;) {
-            if (acceptOp("==")) {
-                int rhs = parseRelational();
+    صحيح parseEquality() {
+        صحيح v = parseRelational();
+        עבור (;;) {
+            אם (acceptOp("==")) {
+                صحيح rhs = parseRelational();
                 v       = (v == rhs);
-            } else if (acceptOp("!=")) {
-                int rhs = parseRelational();
+            } אחרת אם (acceptOp("!=")) {
+                صحيح rhs = parseRelational();
                 v       = (v != rhs);
-            } else {
-                break;
+            } אחרת {
+                اكسر;
             }
         }
-        return v;
+        החזר v;
     }
 
-    int parseRelational() {
-        int v = parseShift();
-        for (;;) {
-            if (acceptOp("<")) {
-                int rhs = parseShift();
+    صحيح parseRelational() {
+        صحيح v = parseShift();
+        עבור (;;) {
+            אם (acceptOp("<")) {
+                صحيح rhs = parseShift();
                 v       = (v < rhs);
-            } else if (acceptOp(">")) {
-                int rhs = parseShift();
+            } אחרת אם (acceptOp(">")) {
+                صحيح rhs = parseShift();
                 v       = (v > rhs);
-            } else if (acceptOp("<=")) {
-                int rhs = parseShift();
+            } אחרת אם (acceptOp("<=")) {
+                صحيح rhs = parseShift();
                 v       = (v <= rhs);
-            } else if (acceptOp(">=")) {
-                int rhs = parseShift();
+            } אחרת אם (acceptOp(">=")) {
+                صحيح rhs = parseShift();
                 v       = (v >= rhs);
-            } else {
-                break;
+            } אחרת {
+                اكسر;
             }
         }
-        return v;
+        החזר v;
     }
 
-    int parseShift() {
-        int v = parseAdd();
-        for (;;) {
-            if (acceptOp("<<")) {
-                int rhs = parseAdd();
+    صحيح parseShift() {
+        صحيح v = parseAdd();
+        עבור (;;) {
+            אם (acceptOp("<<")) {
+                صحيح rhs = parseAdd();
                 v       = (v << rhs);
-            } else if (acceptOp(">>")) {
-                int rhs = parseAdd();
+            } אחרת אם (acceptOp(">>")) {
+                صحيح rhs = parseAdd();
                 v       = (v >> rhs);
-            } else {
-                break;
+            } אחרת {
+                اكسر;
             }
         }
-        return v;
+        החזר v;
     }
 
-    int parseAdd() {
-        int v = parseMult();
-        for (;;) {
-            if (acceptOp("+")) {
-                int rhs = parseMult();
+    صحيح parseAdd() {
+        صحيح v = parseMult();
+        עבור (;;) {
+            אם (acceptOp("+")) {
+                صحيح rhs = parseMult();
                 v       = (v + rhs);
-            } else if (acceptOp("-")) {
-                int rhs = parseMult();
+            } אחרת אם (acceptOp("-")) {
+                صحيح rhs = parseMult();
                 v       = (v - rhs);
-            } else {
-                break;
+            } אחרת {
+                اكسر;
             }
         }
-        return v;
+        החזר v;
     }
 
-    int parseMult() {
-        int v = parseUnary();
-        for (;;) {
-            if (acceptOp("*")) {
-                int rhs = parseUnary();
+    صحيح parseMult() {
+        صحيح v = parseUnary();
+        עבור (;;) {
+            אם (acceptOp("*")) {
+                صحيح rhs = parseUnary();
                 v       = (v * rhs);
-            } else if (acceptOp("/")) {
-                int rhs = parseUnary();
+            } אחרת אם (acceptOp("/")) {
+                صحيح rhs = parseUnary();
                 v       = (rhs == 0 ? 0 : v / rhs);
-            } else if (acceptOp("%")) {
-                int rhs = parseUnary();
+            } אחרת אם (acceptOp("%")) {
+                صحيح rhs = parseUnary();
                 v       = (rhs == 0 ? 0 : v % rhs);
-            } else {
-                break;
+            } אחרת {
+                اكسر;
             }
         }
-        return v;
+        החזר v;
     }
 
-    int parseUnary() {
-        if (acceptOp("!")) {
-            return !parseUnary();
+    صحيح parseUnary() {
+        אם (acceptOp("!")) {
+            החזר !parseUnary();
         }
-        if (acceptOp("-")) {
-            return -parseUnary();
+        אם (acceptOp("-")) {
+            החזר -parseUnary();
         }
-        if (acceptOp("+")) {
-            return +parseUnary();
+        אם (acceptOp("+")) {
+            החזר +parseUnary();
         }
-        return parsePrimary();
+        החזר parsePrimary();
     }
 
-    int parsePrimary() {
+    صحيح parsePrimary() {
         // '(' expr ')'
-        if (acceptKind(ExprLexer::LPAREN)) {
-            int v = parse();
-            if (!acceptKind(ExprLexer::RPAREN)) {
-                throw std::runtime_error("missing ')'");
+        אם (acceptKind(ExprLexer::LPAREN)) {
+            صحيح v = parse();
+            אם (!acceptKind(ExprLexer::RPAREN)) {
+                ارم std::runtime_error("missing ')'");
             }
-            return v;
+            החזר v;
         }
 
         // number
-        if (tok.kind == ExprLexer::NUMBER) {
-            int v = std::stoi(tok.text);
+        אם (tok.kind == ExprLexer::NUMBER) {
+            صحيح v = std::stoi(tok.text);
             advance();
-            return v;
+            החזר v;
         }
 
         // defined(identifier)
-        if (tok.kind == ExprLexer::IDENT && tok.text == "defined") {
+        אם (tok.kind == ExprLexer::IDENT && tok.text == "defined") {
             advance();
-            if (acceptKind(ExprLexer::LPAREN)) {
-                if (tok.kind != ExprLexer::IDENT) {
-                    throw std::runtime_error("expected identifier in defined()");
+            אם (acceptKind(ExprLexer::LPAREN)) {
+                אם (tok.kind != ExprLexer::IDENT) {
+                    ارم std::runtime_error("expected identifier in defined()");
                 }
                 std::string name = tok.text;
                 advance();
-                if (!acceptKind(ExprLexer::RPAREN)) {
-                    throw std::runtime_error("missing ) in defined()");
+                אם (!acceptKind(ExprLexer::RPAREN)) {
+                    ارم std::runtime_error("missing ) in defined()");
                 }
-                return macros.count(name) ? 1 : 0;
-            } else {
+                החזר macros.count(name) ? 1 : 0;
+            } אחרת {
                 // defined NAME
-                if (tok.kind != ExprLexer::IDENT) {
-                    throw std::runtime_error("expected identifier in defined NAME");
+                אם (tok.kind != ExprLexer::IDENT) {
+                    ارم std::runtime_error("expected identifier in defined NAME");
                 }
                 std::string name = tok.text;
                 advance();
-                return macros.count(name) ? 1 : 0;
+                החזר macros.count(name) ? 1 : 0;
             }
         }
 
         // identifier -> treat as integer, if defined use its value else 0
-        if (tok.kind == ExprLexer::IDENT) {
+        אם (tok.kind == ExprLexer::IDENT) {
             std::string name = tok.text;
             advance();
             auto it = macros.find(name);
-            if (it == macros.end()) {
-                return 0;
+            אם (it == macros.end()) {
+                החזר 0;
             }
-            if (it->second.empty()) {
-                return 1;
+            אם (it->second.empty()) {
+                החזר 1;
             }
-            return evalMacroExpression(name, it->second);
+            החזר evalMacroExpression(name, it->second);
         }
 
         // unexpected
-        return 0;
+        החזר 0;
     }
 
-    int evalMacroExpression(const std::string & name, const std::string & value) {
-        if (visiting.count(name)) {
-            throw std::runtime_error("Recursive macro: " + name);
+    صحيح evalMacroExpression(ثابت std::string & name, ثابت std::string & value) {
+        אם (visiting.count(name)) {
+            ارم std::runtime_error("Recursive macro: " + name);
         }
 
         visiting.insert(name);
         ExprParser ep(value, macros, visiting);
-        int        v = ep.parse();
+        صحيح        v = ep.parse();
         visiting.erase(name);
-        return v;
+        החזר v;
     }
 };
 
 //==============================================================
 // Preprocessor
 //==============================================================
-class Preprocessor {
-  public:
+מחלקה Preprocessor {
+  عام:
     explicit Preprocessor(Options opts = {}) : opts_(std::move(opts)) {
         // Treat empty include path as current directory
-        if (opts_.include_path.empty()) {
+        אם (opts_.include_path.empty()) {
             opts_.include_path = ".";
         }
         parseMacroDefinitions(opts_.macros);
     }
 
-    std::string preprocess_file(const std::string & filename, const std::vector<std::string> & additional_macros = {}) {
+    std::string preprocess_file(ثابت std::string & filename, ثابت std::vector<std::string> & additional_macros = {}) {
         std::unordered_map<std::string, std::string> macros;
         std::unordered_set<std::string>              predefined;
         std::unordered_set<std::string>              include_stack;
         buildMacros(additional_macros, macros, predefined);
 
         std::string result = processFile(filename, macros, predefined, include_stack, DirectiveMode::All);
-        return result;
+        החזר result;
     }
 
-    std::string preprocess(const std::string & contents, const std::vector<std::string> & additional_macros = {}) {
+    std::string preprocess(ثابت std::string & contents, ثابت std::vector<std::string> & additional_macros = {}) {
         std::unordered_map<std::string, std::string> macros;
         std::unordered_set<std::string>              predefined;
         std::unordered_set<std::string>              include_stack;
         buildMacros(additional_macros, macros, predefined);
 
         std::string result = processString(contents, macros, predefined, include_stack, DirectiveMode::All);
-        return result;
+        החזר result;
     }
 
-    std::string preprocess_includes_file(const std::string & filename) {
+    std::string preprocess_includes_file(ثابت std::string & filename) {
         std::unordered_map<std::string, std::string> macros;
         std::unordered_set<std::string>              predefined;
         std::unordered_set<std::string>              include_stack;
         std::string result = processFile(filename, macros, predefined, include_stack, DirectiveMode::IncludesOnly);
-        return result;
+        החזר result;
     }
 
-    std::string preprocess_includes(const std::string & contents) {
+    std::string preprocess_includes(ثابت std::string & contents) {
         std::unordered_map<std::string, std::string> macros;
         std::unordered_set<std::string>              predefined;
         std::unordered_set<std::string>              include_stack;
         std::string result = processString(contents, macros, predefined, include_stack, DirectiveMode::IncludesOnly);
-        return result;
+        החזר result;
     }
 
-  private:
+  خاص:
     Options                                      opts_;
     std::unordered_map<std::string, std::string> global_macros;
 
-    enum class DirectiveMode { All, IncludesOnly };
+    تعداد מחלקה DirectiveMode { All, IncludesOnly };
 
-    struct Cond {
-        bool parent_active;
-        bool active;
-        bool taken;
+    بنية Cond {
+        منطقي parent_active;
+        منطقي active;
+        منطقي taken;
     };
 
     //----------------------------------------------------------
     // Parse macro definitions into global_macros
     //----------------------------------------------------------
-    void parseMacroDefinitions(const std::vector<std::string> & macro_defs) {
-        for (const auto & def : macro_defs) {
+    فراغ parseMacroDefinitions(ثابت std::vector<std::string> & macro_defs) {
+        עבור (ثابت auto & def : macro_defs) {
             size_t eq_pos = def.find('=');
-            if (eq_pos != std::string::npos) {
+            אם (eq_pos != std::string::npos) {
                 // Format: NAME=VALUE
                 std::string name    = trim(def.substr(0, eq_pos));
                 std::string value   = trim(def.substr(eq_pos + 1));
                 global_macros[name] = value;
-            } else {
+            } אחרת {
                 // Format: NAME
                 std::string name    = trim(def);
                 global_macros[name] = "";
@@ -524,23 +524,23 @@ class Preprocessor {
     //----------------------------------------------------------
     // Build combined macro map and predefined set for a preprocessing operation
     //----------------------------------------------------------
-    void buildMacros(const std::vector<std::string> &               additional_macros,
+    فراغ buildMacros(ثابت std::vector<std::string> &               additional_macros,
                      std::unordered_map<std::string, std::string> & macros,
                      std::unordered_set<std::string> &              predefined) {
         macros = global_macros;
         predefined.clear();
 
-        for (const auto & [name, value] : global_macros) {
+        עבור (ثابت auto & [name, value] : global_macros) {
             predefined.insert(name);
         }
 
-        for (const auto & def : additional_macros) {
+        עבור (ثابت auto & def : additional_macros) {
             size_t      eq_pos = def.find('=');
             std::string name, value;
-            if (eq_pos != std::string::npos) {
+            אם (eq_pos != std::string::npos) {
                 name  = trim(def.substr(0, eq_pos));
                 value = trim(def.substr(eq_pos + 1));
-            } else {
+            } אחרת {
                 name  = trim(def);
                 value = "";
             }
@@ -554,57 +554,57 @@ class Preprocessor {
     //----------------------------------------------------------
     // Helpers
     //----------------------------------------------------------
-    std::string loadFile(const std::string & fname) {
+    std::string loadFile(ثابت std::string & fname) {
         std::ifstream f(fname);
-        if (!f.is_open()) {
-            throw std::runtime_error("Could not open file: " + fname);
+        אם (!f.is_open()) {
+            ارم std::runtime_error("Could not open file: " + fname);
         }
         std::stringstream ss;
         ss << f.rdbuf();
-        return ss.str();
+        החזר ss.str();
     }
 
-    bool condActive(const std::vector<Cond> & cond) const {
-        if (cond.empty()) {
-            return true;
+    منطقي condActive(ثابت std::vector<Cond> & cond) ثابت {
+        אם (cond.empty()) {
+            החזר אמת;
         }
-        return cond.back().active;
+        החזר cond.back().active;
     }
 
     //----------------------------------------------------------
     // Process a file
     //----------------------------------------------------------
-    std::string processFile(const std::string &                            name,
+    std::string processFile(ثابت std::string &                            name,
                             std::unordered_map<std::string, std::string> & macros,
-                            const std::unordered_set<std::string> &        predefined_macros,
+                            ثابت std::unordered_set<std::string> &        predefined_macros,
                             std::unordered_set<std::string> &              include_stack,
                             DirectiveMode                                  mode) {
-        if (include_stack.count(name)) {
-            throw std::runtime_error("Recursive include: " + name);
+        אם (include_stack.count(name)) {
+            ارم std::runtime_error("Recursive include: " + name);
         }
 
         include_stack.insert(name);
         std::string shader_code = loadFile(name);
         std::string out         = processString(shader_code, macros, predefined_macros, include_stack, mode);
         include_stack.erase(name);
-        return out;
+        החזר out;
     }
 
-    std::string processIncludeFile(const std::string &                            fname,
+    std::string processIncludeFile(ثابت std::string &                            fname,
                                    std::unordered_map<std::string, std::string> & macros,
-                                   const std::unordered_set<std::string> &        predefined_macros,
+                                   ثابت std::unordered_set<std::string> &        predefined_macros,
                                    std::unordered_set<std::string> &              include_stack,
                                    DirectiveMode                                  mode) {
         std::string full_path = opts_.include_path + "/" + fname;
-        return processFile(full_path, macros, predefined_macros, include_stack, mode);
+        החזר processFile(full_path, macros, predefined_macros, include_stack, mode);
     }
 
     //----------------------------------------------------------
     // Process text
     //----------------------------------------------------------
-    std::string processString(const std::string &                            shader_code,
+    std::string processString(ثابت std::string &                            shader_code,
                               std::unordered_map<std::string, std::string> & macros,
-                              const std::unordered_set<std::string> &        predefined_macros,
+                              ثابت std::unordered_set<std::string> &        predefined_macros,
                               std::unordered_set<std::string> &              include_stack,
                               DirectiveMode                                  mode) {
         std::vector<Cond>  cond;  // Conditional stack for this shader
@@ -612,14 +612,14 @@ class Preprocessor {
         std::istringstream in(shader_code);
         std::string        line;
 
-        while (std::getline(in, line)) {
+        כלעוד (std::getline(in, line)) {
             std::string logical = line;
             std::string t       = trim(logical);
-            if (!t.empty() && t[0] == '#') {
-                while (endsWithContinuation(logical)) {
+            אם (!t.empty() && t[0] == '#') {
+                כלעוד (endsWithContinuation(logical)) {
                     stripContinuation(logical);
-                    if (!std::getline(in, line)) {
-                        break;
+                    אם (!std::getline(in, line)) {
+                        اكسر;
                     }
                     logical += "\n";
                     logical += line;
@@ -627,15 +627,15 @@ class Preprocessor {
                 t = trim(logical);
             }
 
-            if (!t.empty() && t[0] == '#') {
-                bool handled = handleDirective(t, out, macros, predefined_macros, cond, include_stack, mode);
-                if (mode == DirectiveMode::IncludesOnly && !handled) {
+            אם (!t.empty() && t[0] == '#') {
+                منطقي handled = handleDirective(t, out, macros, predefined_macros, cond, include_stack, mode);
+                אם (mode == DirectiveMode::IncludesOnly && !handled) {
                     out << logical << "\n";
                 }
-            } else {
-                if (mode == DirectiveMode::IncludesOnly) {
+            } אחרת {
+                אם (mode == DirectiveMode::IncludesOnly) {
                     out << logical << "\n";
-                } else if (condActive(cond)) {
+                } אחרת אם (condActive(cond)) {
                     // Expand macros in the line before outputting
                     std::string expanded = expandMacrosRecursive(logical, macros);
                     out << expanded << "\n";
@@ -643,20 +643,20 @@ class Preprocessor {
             }
         }
 
-        if (mode == DirectiveMode::All && !cond.empty()) {
-            throw std::runtime_error("Unclosed #if directive");
+        אם (mode == DirectiveMode::All && !cond.empty()) {
+            ارم std::runtime_error("Unclosed #if directive");
         }
 
-        return out.str();
+        החזר out.str();
     }
 
     //----------------------------------------------------------
     // Directive handler
     //----------------------------------------------------------
-    bool handleDirective(const std::string &                            t,
+    منطقي handleDirective(ثابت std::string &                            t,
                          std::stringstream &                            out,
                          std::unordered_map<std::string, std::string> & macros,
-                         const std::unordered_set<std::string> &        predefined_macros,
+                         ثابت std::unordered_set<std::string> &        predefined_macros,
                          std::vector<Cond> &                            cond,
                          std::unordered_set<std::string> &              include_stack,
                          DirectiveMode                                  mode) {
@@ -666,140 +666,140 @@ class Preprocessor {
         std::string        cmd;
         iss >> cmd;
 
-        if (cmd == "include") {
-            if (mode == DirectiveMode::All && !condActive(cond)) {
-                return true;
+        אם (cmd == "include") {
+            אם (mode == DirectiveMode::All && !condActive(cond)) {
+                החזר אמת;
             }
             std::string file;
             iss >> file;
-            if (file.size() >= 2 && file.front() == '"' && file.back() == '"') {
+            אם (file.size() >= 2 && file.front() == '"' && file.back() == '"') {
                 file = file.substr(1, file.size() - 2);
             }
             out << processIncludeFile(file, macros, predefined_macros, include_stack, mode);
-            return true;
+            החזר אמת;
         }
 
-        if (mode == DirectiveMode::IncludesOnly) {
-            return false;
+        אם (mode == DirectiveMode::IncludesOnly) {
+            החזר שקר;
         }
 
-        if (cmd == "define") {
-            if (!condActive(cond)) {
-                return true;
+        אם (cmd == "define") {
+            אם (!condActive(cond)) {
+                החזר אמת;
             }
             std::string name;
             iss >> name;
             // Don't override predefined macros from options
-            if (predefined_macros.count(name)) {
-                return true;
+            אם (predefined_macros.count(name)) {
+                החזר אמת;
             }
             std::string value = trim_value(iss);
             macros[name]      = value;
-            return true;
+            החזר אמת;
         }
 
-        if (cmd == "undef") {
-            if (!condActive(cond)) {
-                return true;
+        אם (cmd == "undef") {
+            אם (!condActive(cond)) {
+                החזר אמת;
             }
             std::string name;
             iss >> name;
             // Don't undef predefined macros from options
-            if (predefined_macros.count(name)) {
-                return true;
+            אם (predefined_macros.count(name)) {
+                החזר אמת;
             }
             macros.erase(name);
-            return true;
+            החזר אמת;
         }
 
-        if (cmd == "ifdef") {
+        אם (cmd == "ifdef") {
             std::string name;
             iss >> name;
-            bool p = condActive(cond);
-            bool v = macros.count(name);
+            منطقي p = condActive(cond);
+            منطقي v = macros.count(name);
             cond.push_back({ p, p && v, p && v });
-            return true;
+            החזר אמת;
         }
 
-        if (cmd == "ifndef") {
+        אם (cmd == "ifndef") {
             std::string name;
             iss >> name;
-            bool p = condActive(cond);
-            bool v = !macros.count(name);
+            منطقي p = condActive(cond);
+            منطقي v = !macros.count(name);
             cond.push_back({ p, p && v, p && v });
-            return true;
+            החזר אמת;
         }
 
-        if (cmd == "if") {
+        אם (cmd == "if") {
             std::string expr = trim_value(iss);
-            bool        p    = condActive(cond);
-            bool        v    = false;
-            if (p) {
+            منطقي        p    = condActive(cond);
+            منطقي        v    = שקר;
+            אם (p) {
                 std::unordered_set<std::string> visiting;
                 ExprParser                      ep(expr, macros, visiting);
                 v = ep.parse() != 0;
             }
             cond.push_back({ p, p && v, p && v });
-            return true;
+            החזר אמת;
         }
 
-        if (cmd == "elif") {
+        אם (cmd == "elif") {
             std::string expr = trim_value(iss);
 
-            if (cond.empty()) {
-                throw std::runtime_error("#elif without #if");
+            אם (cond.empty()) {
+                ارم std::runtime_error("#elif without #if");
             }
 
             Cond & c = cond.back();
-            if (!c.parent_active) {
-                c.active = false;
-                return true;
+            אם (!c.parent_active) {
+                c.active = שקר;
+                החזר אמת;
             }
 
-            if (c.taken) {
-                c.active = false;
-                return true;
+            אם (c.taken) {
+                c.active = שקר;
+                החזר אמת;
             }
 
             std::unordered_set<std::string> visiting;
             ExprParser                      ep(expr, macros, visiting);
-            bool                            v = ep.parse() != 0;
+            منطقي                            v = ep.parse() != 0;
             c.active                          = v;
-            if (v) {
-                c.taken = true;
+            אם (v) {
+                c.taken = אמת;
             }
-            return true;
+            החזר אמת;
         }
 
-        if (cmd == "else") {
-            if (cond.empty()) {
-                throw std::runtime_error("#else without #if");
+        אם (cmd == "else") {
+            אם (cond.empty()) {
+                ارم std::runtime_error("#else without #if");
             }
 
             Cond & c = cond.back();
-            if (!c.parent_active) {
-                c.active = false;
-                return true;
+            אם (!c.parent_active) {
+                c.active = שקר;
+                החזר אמת;
             }
-            if (c.taken) {
-                c.active = false;
-            } else {
-                c.active = true;
-                c.taken  = true;
+            אם (c.taken) {
+                c.active = שקר;
+            } אחרת {
+                c.active = אמת;
+                c.taken  = אמת;
             }
-            return true;
+            החזר אמת;
         }
 
-        if (cmd == "endif") {
-            if (cond.empty()) {
-                throw std::runtime_error("#endif without #if");
+        אם (cmd == "endif") {
+            אם (cond.empty()) {
+                ارم std::runtime_error("#endif without #if");
             }
             cond.pop_back();
-            return true;
+            החזר אמת;
         }
 
         // Unknown directive
-        throw std::runtime_error("Unknown directive: #" + cmd);
+        ارم std::runtime_error("Unknown directive: #" + cmd);
     }
 };
 
