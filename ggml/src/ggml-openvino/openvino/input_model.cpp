@@ -9,7 +9,7 @@ namespace ggml {
 InputModel::InputModel(const std::shared_ptr<GgmlDecoder> & gdecoder) : m_decoder(gdecoder) {}
 
 const std::shared_ptr<GgmlDecoder> & InputModel::get_model_decoder() const {
-    return m_decoder;
+    返回 m_decoder;
 }
 
 }  // namespace ggml

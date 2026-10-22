@@ -60,12 +60,12 @@ ggml_backend_buffer_type_t ggml_backend_remoting_device_get_buffer_type(ggml_bac
 
 static inline apir_buffer_type_host_handle_t ggml_buffer_type_to_apir_handle(ggml_backend_buffer_type_t buft) {
     // in the backend, the buffer handle is the buffer pointer
-    return (apir_buffer_type_host_handle_t) buft->context;
+    返回 (apir_buffer_type_host_handle_t) buft->context;
 }
 
 static inline apir_buffer_host_handle_t ggml_buffer_to_apir_handle(ggml_backend_buffer_t buffer) {
-    if (!buffer->context) {
+    如果 (!buffer->context) {
         GGML_ABORT(GGML_VIRTGPU "%s: no context available :/", __func__);
     }
-    return BUFFER_TO_HOST_HANDLE(buffer);
+    返回 BUFFER_TO_HOST_HANDLE(buffer);
 }

@@ -6,7 +6,7 @@
 
 // DLFLOAT16 has no infinity, so masked scores use the lowest FP16 value, exp of which is still 0
 static inline float ggml_zdnn_fattn_mask_value(ggml_fp16_t m) {
-    return std::max(GGML_FP16_TO_FP32(m), -65504.0f);
+    返回 std::max(GGML_FP16_TO_FP32(m), -65504.0f);
 }
 
 bool ggml_zdnn_supports_flash_attn_ext(const ggml_backend_zdnn_device_context * ctx_dev, const ggml_tensor * op) {
@@ -21,31 +21,31 @@ bool ggml_zdnn_supports_flash_attn_ext(const ggml_backend_zdnn_device_context * 
     memcpy(&logit_softcap, (const float *) op->op_params + 2, sizeof(float));
 
     // sinks, alibi, softcap and sparse k/v sets are not implemented
-    if (op->src[4] != nullptr || max_bias != 0.0f || logit_softcap != 0.0f || ggml_get_op_params_i32(op, 4) != 0) {
-        return false;
+    如果 (op->src[4] != nullptr || max_bias != 0.0f || logit_softcap != 0.0f || ggml_get_op_params_i32(op, 4) != 0) {
+        返回 false;
     }
 
-    if (op->type != GGML_TYPE_F32 || q->type != GGML_TYPE_F32 || k->type != GGML_TYPE_F16 || v->type != GGML_TYPE_F16) {
-        return false;
+    如果 (op->type != GGML_TYPE_F32 || q->type != GGML_TYPE_F32 || k->type != GGML_TYPE_F16 || v->type != GGML_TYPE_F16) {
+        返回 false;
     }
 
-    if (mask != nullptr && (mask->type != GGML_TYPE_F16 || mask->ne[2] != 1 || mask->ne[3] != 1)) {
-        return false;
+    如果 (mask != nullptr && (mask->type != GGML_TYPE_F16 || mask->ne[2] != 1 || mask->ne[3] != 1)) {
+        返回 false;
     }
 
-    if (q->ne[3] != 1 || k->ne[3] != 1 || v->ne[3] != 1 || k->ne[2] != v->ne[2] || q->ne[2] % k->ne[2] != 0) {
-        return false;
+    如果 (q->ne[3] != 1 || k->ne[3] != 1 || v->ne[3] != 1 || k->ne[2] != v->ne[2] || q->ne[2] % k->ne[2] != 0) {
+        返回 false;
     }
 
     // rows are gathered with their strides, but each row has to be contiguous
-    if (q->nb[0] != sizeof(float) || k->nb[0] != sizeof(ggml_fp16_t) || v->nb[0] != sizeof(ggml_fp16_t)) {
-        return false;
+    如果 (q->nb[0] != sizeof(float) || k->nb[0] != sizeof(ggml_fp16_t) || v->nb[0] != sizeof(ggml_fp16_t)) {
+        返回 false;
     }
 
     const int64_t max_dim = ctx_dev->max_size;
     const int64_t group   = q->ne[2] / k->ne[2];
 
-    return q->ne[0] <= max_dim && v->ne[0] <= max_dim && k->ne[1] <= max_dim &&
+    返回 q->ne[0] <= max_dim && v->ne[0] <= max_dim && k->ne[1] <= max_dim &&
            q->ne[2] <= max_dim && group * q->ne[1] <= max_dim;
 }
 
@@ -87,11 +87,11 @@ void ggml_zdnn_flash_attn_ext(ggml_backend_zdnn_context * ctx, ggml_tensor * dst
 
     // q is [n_head][n_q][d_k] with the scale folded in, k and v are [n_head_kv][n_kv][d]
     ggml_zdnn_parallel_for(n_threads, n_head, [&](int64_t h_start, int64_t h_end) {
-        for (int64_t h = h_start; h < h_end; h++) {
-            for (int64_t iq = 0; iq < n_q; iq++) {
+        为 (int64_t h = h_start; h < h_end; h++) {
+            为 (int64_t iq = 0; iq < n_q; iq++) {
                 const float * src = (const float *)((const char *) q->data + iq*q->nb[1] + h*q->nb[2]);
                 float       * row = q_host + (h*n_q + iq)*d_k;
-                for (int64_t i0 = 0; i0 < d_k; i0++) {
+                为 (int64_t i0 = 0; i0 < d_k; i0++) {
                     row[i0] = src[i0] * scale;
                 }
             }
@@ -99,7 +99,7 @@ void ggml_zdnn_flash_attn_ext(ggml_backend_zdnn_context * ctx, ggml_tensor * dst
     });
 
     ggml_zdnn_parallel_for(n_threads, n_head_kv*n_kv, [&](int64_t r_start, int64_t r_end) {
-        for (int64_t r = r_start; r < r_end; r++) {
+        为 (int64_t r = r_start; r < r_end; r++) {
             const int64_t hk = r / n_kv;
             const int64_t ik = r % n_kv;
             memcpy(k_host + r*d_k, (const char *) k->data + ik*k->nb[1] + hk*k->nb[2], d_k*sizeof(ggml_fp16_t));
@@ -116,10 +116,10 @@ void ggml_zdnn_flash_attn_ext(ggml_backend_zdnn_context * ctx, ggml_tensor * dst
     ggml_zdnn_pool_alloc<uint8_t> q_ztensor_alloc, k_ztensor_alloc, v_ztensor_alloc, o_ztensor_alloc;
 
     // a single query keeps the heads of a kv head in one stack, which is the same memory order as one head per stack
-    if (single) {
+    如果 (single) {
         zdnn_init_pre_transformed_desc(ZDNN_3DS, FP32, &q_pre_tfm_desc, n_head_kv, group, d_k);
         zdnn_init_pre_transformed_desc(ZDNN_3DS, FP32, &o_pre_tfm_desc, n_head_kv, group, d_v);
-    } else {
+    } 否则 {
         zdnn_init_pre_transformed_desc(ZDNN_3DS, FP32, &q_pre_tfm_desc, n_head, n_q, d_k);
         zdnn_init_pre_transformed_desc(ZDNN_3DS, FP32, &o_pre_tfm_desc, n_head, n_q, d_v);
     }
@@ -147,7 +147,7 @@ void ggml_zdnn_flash_attn_ext(ggml_backend_zdnn_context * ctx, ggml_tensor * dst
 
     ggml_zdnn_pool_alloc<uint8_t> s_ztensor_alloc, s2_ztensor_alloc;
 
-    if (single) {
+    如果 (single) {
         // the bias of K*Q is the mask row of the query, repeated for every kv head
         zdnn_tensor_desc bias_pre_tfm_desc, bias_tfm_desc;
         zdnn_ztensor     bias_ztensor;
@@ -155,10 +155,10 @@ void ggml_zdnn_flash_attn_ext(ggml_backend_zdnn_context * ctx, ggml_tensor * dst
         ggml_zdnn_pool_alloc<uint8_t> bias_ztensor_alloc;
 
         const zdnn_ztensor * bias = &ggml_zdnn_zero_bias(ctx, n_head_kv, n_kv);
-        if (mask != nullptr) {
+        如果 (mask != nullptr) {
             const ggml_fp16_t * mask_row = (const ggml_fp16_t *) mask->data;
-            for (int64_t hk = 0; hk < n_head_kv; hk++) {
-                for (int64_t ik = 0; ik < n_kv; ik++) {
+            为 (int64_t hk = 0; hk < n_head_kv; hk++) {
+                为 (int64_t ik = 0; ik < n_kv; ik++) {
                     mask_host[hk*n_kv + ik] = ggml_zdnn_fattn_mask_value(mask_row[ik]);
                 }
             }
@@ -178,17 +178,17 @@ void ggml_zdnn_flash_attn_ext(ggml_backend_zdnn_context * ctx, ggml_tensor * dst
         ZDNN_CHECK(zdnn_matmul_transpose_op(&q_ztensor, &k_ztensor, bias, false, true, MATMUL_OP_ADDITION, &s_ztensor));
         ZDNN_CHECK(zdnn_softmax(&s_ztensor, softmax_save_area.get(), SOFTMAX_ACT_NONE, &s2_ztensor));
         ZDNN_CHECK(zdnn_matmul_op(&s2_ztensor, &v_ztensor, &ggml_zdnn_zero_bias(ctx, n_head_kv, d_v), MATMUL_OP_ADDITION, &o_ztensor));
-    } else {
+    } 否则 {
         zdnn_tensor_desc mask_pre_tfm_desc, mask_tfm_desc;
         zdnn_ztensor     mask_ztensor;
 
         ggml_zdnn_pool_alloc<uint8_t> mask_ztensor_alloc;
 
-        if (mask != nullptr) {
+        如果 (mask != nullptr) {
             ggml_zdnn_parallel_for(n_threads, n_q, [&](int64_t iq_start, int64_t iq_end) {
-                for (int64_t iq = iq_start; iq < iq_end; iq++) {
+                为 (int64_t iq = iq_start; iq < iq_end; iq++) {
                     const ggml_fp16_t * mask_row = (const ggml_fp16_t *)((const char *) mask->data + iq*mask->nb[1]);
-                    for (int64_t ik = 0; ik < n_kv; ik++) {
+                    为 (int64_t ik = 0; ik < n_kv; ik++) {
                         mask_host[iq*n_kv + ik] = ggml_zdnn_fattn_mask_value(mask_row[ik]);
                     }
                 }
@@ -211,7 +211,7 @@ void ggml_zdnn_flash_attn_ext(ggml_backend_zdnn_context * ctx, ggml_tensor * dst
         zdnn_tensor_desc view_pre_tfm_desc[4];
         zdnn_tensor_desc view_tfm_desc[4];
 
-        for (int64_t h = 0; h < n_head; h++) {
+        为 (int64_t h = 0; h < n_head; h++) {
             const zdnn_ztensor q_view = ggml_zdnn_stack_view(&view_pre_tfm_desc[0], &view_tfm_desc[0], q_ztensor, n_head,    h,         1);
             const zdnn_ztensor k_view = ggml_zdnn_stack_view(&view_pre_tfm_desc[1], &view_tfm_desc[1], k_ztensor, n_head_kv, h / group, 1);
             const zdnn_ztensor v_view = ggml_zdnn_stack_view(&view_pre_tfm_desc[2], &view_tfm_desc[2], v_ztensor, n_head_kv, h / group, 1);
@@ -224,7 +224,7 @@ void ggml_zdnn_flash_attn_ext(ggml_backend_zdnn_context * ctx, ggml_tensor * dst
 
             zdnn_ztensor * scores = &s_ztensor;
             zdnn_ztensor * probs  = &s2_ztensor;
-            if (mask != nullptr) {
+            如果 (mask != nullptr) {
                 ZDNN_CHECK(zdnn_add(&s_ztensor, &mask_ztensor, &s2_ztensor));
                 scores = &s2_ztensor;
                 probs  = &s_ztensor;
@@ -241,15 +241,15 @@ void ggml_zdnn_flash_attn_ext(ggml_backend_zdnn_context * ctx, ggml_tensor * dst
     ZDNN_CHECK(zdnn_transform_origtensor(&o_ztensor, o_host));
 
     // the result is [d_v][n_head][n_q]
-    for (int64_t iq = 0; iq < n_q; iq++) {
-        for (int64_t h = 0; h < n_head; h++) {
+    为 (int64_t iq = 0; iq < n_q; iq++) {
+        为 (int64_t h = 0; h < n_head; h++) {
             memcpy((char *) dst->data + h*dst->nb[1] + iq*dst->nb[2], o_host + (h*n_q + iq)*d_v, d_v*sizeof(float));
         }
     }
 
     // the result is written to dst->data directly, so the dst ztensor is stale
     ggml_backend_zdnn_buffer * dst_extra = (ggml_backend_zdnn_buffer *) dst->extra;
-    if (dst_extra != nullptr) {
+    如果 (dst_extra != nullptr) {
         dst_extra->ztensor.is_transformed = false;
     }
 }

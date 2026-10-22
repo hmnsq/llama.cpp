@@ -9,7 +9,7 @@
 
 template <typename T>
 T neg_infinity() {
-    return -std::numeric_limits<T>::infinity();
+    返回 -std::numeric_limits<T>::infinity();
 }
 
 template<typename T_Dst, typename T_Src = T_Dst>
@@ -20,7 +20,7 @@ struct typed_data {
 
 template<typename T_Dst, typename T_Src = T_Dst>
 typed_data<T_Dst, T_Src> cast_data(ggml_tensor * dst) {
-    return {
+    返回 {
         /* .src = */ static_cast<const T_Src *>(dst->src[0]->data),
         /* .dst = */ static_cast<T_Dst *>(dst->data)
     };
@@ -31,35 +31,35 @@ const float GELU_QUICK_COEF = -1.702f;
 // Single-element activations, shared with the mat-vec kernels that fuse a GLU epilogue
 // (mmvq.cpp), so both apply the same formula.
 template <typename T> static __dpct_inline__ T op_tanh(T x) {
-    if constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) {
-#if defined(__INTEL_LLVM_COMPILER) && (__INTEL_LLVM_COMPILER >= 20260000)
-        return sycl::ext::oneapi::experimental::tanh(x);
-#else
-        return static_cast<T>(sycl::tanh(static_cast<float>(x)));
+    如果 constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) {
+#如果 defined(__INTEL_LLVM_COMPILER) && (__INTEL_LLVM_COMPILER >= 20260000)
+        返回 sycl::ext::oneapi::experimental::tanh(x);
+#否则
+        返回 static_cast<T>(sycl::tanh(static_cast<float>(x)));
 #endif
-    } else {
-        return sycl::tanh(x);
+    } 否则 {
+        返回 sycl::tanh(x);
     }
 }
 
 template <typename T> static __dpct_inline__ T op_gelu(T x) {
     const T GELU_COEF_A    = static_cast<T>(0.044715f);
     const T SQRT_2_OVER_PI = static_cast<T>(0.79788456080286535587989211986876f);
-    return static_cast<T>(0.5f) * x *
+    返回 static_cast<T>(0.5f) * x *
            (static_cast<T>(1.0f) +
             op_tanh(SQRT_2_OVER_PI * x * (static_cast<T>(1.0f) + GELU_COEF_A * x * x)));
 }
 
 template <typename T> static __dpct_inline__ T op_exp(T x) {
-    if constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) {
-        return sycl::ext::oneapi::experimental::exp(x);
-    } else {
-        return sycl::exp(x);
+    如果 constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) {
+        返回 sycl::ext::oneapi::experimental::exp(x);
+    } 否则 {
+        返回 sycl::exp(x);
     }
 }
 
 template <typename T> static __dpct_inline__ T op_silu(T x) {
-    return x / (static_cast<T>(1.0f) + op_exp(-x));
+    返回 x / (static_cast<T>(1.0f) + op_exp(-x));
 }
 
 void ggml_sycl_sqrt(ggml_backend_sycl_context & ctx, ggml_tensor * dst);

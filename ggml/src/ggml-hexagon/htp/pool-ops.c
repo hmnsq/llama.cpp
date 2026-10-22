@@ -25,15 +25,15 @@ static void pool_plane_hvx(
     const HVX_Vector scale = hvx_vec_splat_f32(p->inv_kernel_area);
     const HVX_Vector seed  = is_max ? hvx_vec_splat_f32(-FLT_MAX) : Q6_V_vsplat_R(0);
 
-    for (uint32_t oy = 0; oy < p->dst_y; ++oy) {
+    为 (uint32_t oy = 0; oy < p->dst_y; ++oy) {
         const uint32_t sy = oy * p->kernel_y;
-        for (uint32_t ox = 0; ox < p->dst_x; ox += VLEN_FP32) {
+        为 (uint32_t ox = 0; ox < p->dst_x; ox += VLEN_FP32) {
             const uint32_t rem = p->dst_x - ox;
             const uint32_t nbytes = (rem < VLEN_FP32) ? (rem * sizeof(float)) : VLEN;
             HVX_Vector acc = seed;
-            for (uint32_t ky = 0; ky < p->kernel_y; ++ky) {
+            为 (uint32_t ky = 0; ky < p->kernel_y; ++ky) {
                 const float * row = src + (sy + ky) * p->src_x;
-                if (p->kernel_x == 2) {
+                如果 (p->kernel_x == 2) {
                     const HVX_Vector v0 = *(const HVX_UVector *) (row + ox * 2);
                     const HVX_Vector v1 = *(const HVX_UVector *) (row + ox * 2 + VLEN_FP32);
                     const HVX_VectorPair deinterleaved = Q6_W_vdeal_VVR(v1, v0, -4);
@@ -41,7 +41,7 @@ static void pool_plane_hvx(
                     const HVX_Vector hi = Q6_V_hi_W(deinterleaved);
                     acc = is_max ? Q6_Vsf_vmax_VsfVsf(acc, Q6_Vsf_vmax_VsfVsf(lo, hi))
                                  : hvx_vec_add_f32_f32(acc, hvx_vec_add_f32_f32(lo, hi));
-                } else if (p->kernel_x == 1) {
+                } 否则 如果 (p->kernel_x == 1) {
                     const HVX_Vector v = *(const HVX_UVector *) (row + ox);
                     acc = is_max ? Q6_Vsf_vmax_VsfVsf(acc, v) : hvx_vec_add_f32_f32(acc, v);
                 }
@@ -59,14 +59,14 @@ static void pool_plane_hvx_narrow(
     const HVX_Vector scale = hvx_vec_splat_f32(p->inv_kernel_area);
     const HVX_Vector seed  = is_max ? hvx_vec_splat_f32(-FLT_MAX) : Q6_V_vsplat_R(0);
 
-    for (uint32_t oy = 0; oy < p->dst_y; ++oy) {
+    为 (uint32_t oy = 0; oy < p->dst_y; ++oy) {
         const uint32_t sy = oy * p->kernel_y;
         HVX_Vector acc = seed;
-        for (uint32_t ky = 0; ky < p->kernel_y; ++ky) {
+        为 (uint32_t ky = 0; ky < p->kernel_y; ++ky) {
             const float * row = src + (sy + ky) * p->src_x;
             const HVX_Vector v0 = *(const HVX_UVector *) row;
             HVX_Vector v = v0;
-            if (p->kernel_x == 2) {
+            如果 (p->kernel_x == 2) {
                 // The second vector is zero because a narrow row has fewer
                 // than 32 input elements. The low lanes still contain the
                 // complete even/odd pairs needed by the output.
@@ -89,9 +89,9 @@ static void pool_plane_global(
     const float * src, float * dst, const struct htp_pool_2d_kernel_params * p) {
     const uint32_t n = p->src_x * p->src_y;
     float val;
-    if (p->pool_op == HTP_POOL_MAX) {
+    如果 (p->pool_op == HTP_POOL_MAX) {
         val = hvx_reduce_max_f32((const uint8_t *) src, n);
-    } else {
+    } 否则 {
         val = hvx_reduce_sum_f32((const uint8_t *) src, n) * p->inv_kernel_area;
     }
     hvx_vec_store_u(dst, sizeof(float), hvx_vec_splat_f32(val));
@@ -99,15 +99,15 @@ static void pool_plane_global(
 
 static void pool_plane_block(
     const float * src, float * dst, const struct htp_pool_2d_kernel_params * p) {
-    for (uint32_t oy = 0; oy < p->dst_y; ++oy) {
+    为 (uint32_t oy = 0; oy < p->dst_y; ++oy) {
         const float * row = src + oy * p->src_x;
         float * dst_row = dst + oy * p->dst_x;
-        for (uint32_t ox = 0; ox < p->dst_x; ++ox) {
+        为 (uint32_t ox = 0; ox < p->dst_x; ++ox) {
             const uint8_t * block = (const uint8_t *) (row + ox * p->kernel_x);
             float val;
-            if (p->pool_op == HTP_POOL_MAX) {
+            如果 (p->pool_op == HTP_POOL_MAX) {
                 val = hvx_reduce_max_f32(block, p->kernel_x);
-            } else {
+            } 否则 {
                 val = hvx_reduce_sum_f32(block, p->kernel_x) * p->inv_kernel_area;
             }
             hvx_vec_store_u(dst_row + ox, sizeof(float), hvx_vec_splat_f32(val));
@@ -135,19 +135,19 @@ static inline void pool_pixel_boundary_vec(
     const int32_t kx_lo = MAX(0, -ix0);
     const int32_t kx_hi = MIN((int32_t) p->kernel_x, (int32_t) p->src_x - ix0);
 
-    if (kx_lo >= kx_hi || ky_lo >= ky_hi) {
+    如果 (kx_lo >= kx_hi || ky_lo >= ky_hi) {
         HVX_Vector empty_val = is_max ? hvx_vec_splat_f32(-FLT_MAX) : Q6_V_vsplat_R(0);
         hvx_vec_store_u(dst_row + ox, sizeof(float), empty_val);
-        return;
+        返回;
     }
 
     const uint32_t valid_kx = (uint32_t) (kx_hi - kx_lo);
     const HVX_Vector mask_identity = is_max ? hvx_vec_splat_f32(-FLT_MAX) : Q6_V_vsplat_R(0);
 
     HVX_Vector acc = mask_identity;
-    for (uint32_t ky = ky_lo; ky < ky_hi; ++ky) {
+    为 (uint32_t ky = ky_lo; ky < ky_hi; ++ky) {
         const float * row = src + (uint32_t) (iy0 + (int32_t) ky) * p->src_x;
-        for (uint32_t k = 0; k < valid_kx; k += VLEN_FP32) {
+        为 (uint32_t k = 0; k < valid_kx; k += VLEN_FP32) {
             const uint32_t k_rem = valid_kx - k;
             const uint32_t n = (k_rem < VLEN_FP32) ? k_rem : VLEN_FP32;
             const HVX_VectorPred q = Q6_Q_vsetq_R(n * sizeof(float));
@@ -158,12 +158,12 @@ static inline void pool_pixel_boundary_vec(
     }
 
     HVX_Vector reduced = is_max ? hvx_vec_reduce_max_f32(acc) : hvx_vec_reduce_sum_f32(acc);
-    if (!is_max) {
+    如果 (!is_max) {
         HVX_Vector scale_vec;
-        if (p->avg_divide_count) {
+        如果 (p->avg_divide_count) {
             const uint32_t count = (ky_hi - ky_lo) * valid_kx;
             scale_vec = hvx_vec_inverse_f32(hvx_vec_splat_f32((float) count));
-        } else {
+        } 否则 {
             scale_vec = hvx_vec_splat_f32(p->inv_kernel_area);
         }
         reduced = hvx_vec_mul_f32_f32(reduced, scale_vec);
@@ -174,7 +174,7 @@ static inline void pool_pixel_boundary_vec(
 static inline void pool_row_general_boundary_vec(
     const float * src, float * dst_row, const struct htp_pool_2d_kernel_params * p,
     uint32_t ox_start, uint32_t ox_end, int32_t iy0, uint32_t ky_lo, uint32_t ky_hi, bool is_max) {
-    for (uint32_t ox = ox_start; ox < ox_end; ++ox) {
+    为 (uint32_t ox = ox_start; ox < ox_end; ++ox) {
         pool_pixel_boundary_vec(src, dst_row, p, ox, iy0, ky_lo, ky_hi, is_max);
     }
 }
@@ -183,39 +183,39 @@ static inline void pool_row_general_boundary_vec(
 static inline void pool_row_general_vec(
     const float * src, float * dst_row, const struct htp_pool_2d_kernel_params * p,
     uint32_t ox_start, uint32_t ox_end, int32_t iy0, uint32_t ky_lo, uint32_t ky_hi, bool is_max) {
-    if (ox_start >= ox_end) {
-        return;
+    如果 (ox_start >= ox_end) {
+        返回;
     }
 
-    if (p->stride_x != 1 && p->stride_x != 2) {
+    如果 (p->stride_x != 1 && p->stride_x != 2) {
         pool_row_general_boundary_vec(src, dst_row, p, ox_start, ox_end, iy0, ky_lo, ky_hi, is_max);
-        return;
+        返回;
     }
 
     const HVX_Vector scale = hvx_vec_splat_f32(p->inv_kernel_area);
     const HVX_Vector seed  = is_max ? hvx_vec_splat_f32(-FLT_MAX) : Q6_V_vsplat_R(0);
 
-    for (uint32_t ox = ox_start; ox < ox_end; ox += VLEN_FP32) {
+    为 (uint32_t ox = ox_start; ox < ox_end; ox += VLEN_FP32) {
         const uint32_t rem = ox_end - ox;
         const uint32_t nbytes = (rem < VLEN_FP32) ? (rem * sizeof(float)) : VLEN;
         const int32_t ix0 = (int32_t) (ox * p->stride_x) - p->pad_x;
         HVX_Vector acc = seed;
 
-        for (uint32_t ky = ky_lo; ky < ky_hi; ++ky) {
+        为 (uint32_t ky = ky_lo; ky < ky_hi; ++ky) {
             const float * row = src + (uint32_t) (iy0 + (int32_t) ky) * p->src_x;
-            if (p->stride_x == 1) {
-                for (uint32_t kx = 0; kx < p->kernel_x; ++kx) {
+            如果 (p->stride_x == 1) {
+                为 (uint32_t kx = 0; kx < p->kernel_x; ++kx) {
                     const HVX_Vector v = *(const HVX_UVector *) (row + ix0 + (int32_t) kx);
                     acc = is_max ? Q6_Vsf_vmax_VsfVsf(acc, v) : hvx_vec_add_f32_f32(acc, v);
                 }
-            } else {
-                for (uint32_t kx = 0; kx < p->kernel_x; kx += 2) {
+            } 否则 {
+                为 (uint32_t kx = 0; kx < p->kernel_x; kx += 2) {
                     const HVX_Vector v0 = *(const HVX_UVector *) (row + ix0 + (int32_t) kx);
                     const HVX_Vector v1 = *(const HVX_UVector *) (row + ix0 + (int32_t) kx + VLEN_FP32);
                     const HVX_VectorPair deinterleaved = Q6_W_vdeal_VVR(v1, v0, -4);
                     const HVX_Vector lo = Q6_V_lo_W(deinterleaved);
                     acc = is_max ? Q6_Vsf_vmax_VsfVsf(acc, lo) : hvx_vec_add_f32_f32(acc, lo);
-                    if (kx + 1 < p->kernel_x) {
+                    如果 (kx + 1 < p->kernel_x) {
                         const HVX_Vector hi = Q6_V_hi_W(deinterleaved);
                         acc = is_max ? Q6_Vsf_vmax_VsfVsf(acc, hi) : hvx_vec_add_f32_f32(acc, hi);
                     }
@@ -230,7 +230,7 @@ static void pool_plane_general(
     const float * src, float * dst, const struct htp_pool_2d_kernel_params * p) {
     const bool is_max = (p->pool_op == HTP_POOL_MAX);
 
-    for (uint32_t oy = 0; oy < p->dst_y; ++oy) {
+    为 (uint32_t oy = 0; oy < p->dst_y; ++oy) {
         int32_t iy0;
         uint32_t ky_lo, ky_hi;
         pool_row_bounds_y(p, oy, &iy0, &ky_lo, &ky_hi);
@@ -254,7 +254,7 @@ struct pool_2d_context {
     uint32_t planes_per_thread;
 };
 
-static void pool_2d_thread(unsigned int nth, unsigned int ith, void * data) {
+static void pool_2d_thread(unsigned 整数 nth, unsigned 整数 ith, void * data) {
     struct pool_2d_context * ctx = (struct pool_2d_context *) data;
     const struct htp_pool_2d_kernel_params * p = ctx->kparams;
     const struct htp_tensor * src0 = ctx->octx->src[0];
@@ -264,8 +264,8 @@ static void pool_2d_thread(unsigned int nth, unsigned int ith, void * data) {
     const uint32_t first = ctx->plane_start + ith * planes_per_thread;
     const uint32_t last = MIN(first + planes_per_thread, ctx->plane_start + ctx->plane_count);
 
-    if (first >= last) {
-        return;
+    如果 (first >= last) {
+        返回;
     }
 
     struct htp_thread_trace * tr = &ctx->octx->ctx->trace[ith];
@@ -287,7 +287,7 @@ static void pool_2d_thread(unsigned int nth, unsigned int ith, void * data) {
     const uint32_t total = last - first;
 
     // Warm up the pipeline: push up to 2 initial (dummy dst, src) transfer pairs.
-    for (uint32_t i = 0; i < total && i < 2; ++i) {
+    为 (uint32_t i = 0; i < total && i < 2; ++i) {
         dma_queue_push(dma_queue,
                        dma_make_data(dst->data, dstb2[i]),
                        p->dst_plane_bytes, dst_spad_half,
@@ -300,7 +300,7 @@ static void pool_2d_thread(unsigned int nth, unsigned int ith, void * data) {
                        p->src_plane_bytes, 1);
     }
 
-    for (uint32_t i = 0; i < total; ++i) {
+    为 (uint32_t i = 0; i < total; ++i) {
         const uint32_t plane = first + i;
         const uint32_t buf   = i & 1u;
         float * srcb = srcb2[buf];
@@ -319,7 +319,7 @@ static void pool_2d_thread(unsigned int nth, unsigned int ith, void * data) {
                        p->dst_plane_bytes, dst_spad_half,
                        p->dst_plane_bytes, 1);
 
-        if (i + 2 < total) {
+        如果 (i + 2 < total) {
             const dma_addr_t next_src_addr = src0->data + (plane + 2) * p->src_plane_bytes;
             dma_queue_push(dma_queue,
                            dma_make_data(srcb, next_src_addr),
@@ -336,20 +336,20 @@ static void pool_2d_thread(unsigned int nth, unsigned int ith, void * data) {
     (void) nth;
 }
 
-int op_pool_2d(struct htp_ops_context * octx) {
+整数 op_pool_2d(struct htp_ops_context * octx) {
     const struct htp_tensor * src0 = octx->src[0];
     const struct htp_tensor * dst = octx->dst;
     const struct htp_pool_2d_kernel_params * p =
         (const struct htp_pool_2d_kernel_params *) octx->kernel_params;
 
-    if (src0->type != HTP_TYPE_F32 || dst->type != HTP_TYPE_F32 ||
+    如果 (src0->type != HTP_TYPE_F32 || dst->type != HTP_TYPE_F32 ||
         (p->pool_op != HTP_POOL_AVG && p->pool_op != HTP_POOL_MAX)) {
-        return HTP_STATUS_NO_SUPPORT;
+        返回 HTP_STATUS_NO_SUPPORT;
     }
 
     uint32_t plane_start = 0;
     uint32_t plane_count = p->planes;
-    if (octx->ctx->mdev.count > 1) {
+    如果 (octx->ctx->mdev.count > 1) {
         const uint32_t planes_per_chunk = (p->dst_plane_bytes > 0) ? (HEX_L2_LINE_SIZE / hex_gcd_u32(p->dst_plane_bytes, HEX_L2_LINE_SIZE)) : 1;
         const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(
             plane_count, htp_tensor_mdev_data_aligned(dst) ? planes_per_chunk : 0,
@@ -357,27 +357,27 @@ int op_pool_2d(struct htp_ops_context * octx) {
         plane_start = range.start;
         plane_count = range.count;
     }
-    if (plane_count == 0) {
-        return HTP_STATUS_OK;
+    如果 (plane_count == 0) {
+        返回 HTP_STATUS_OK;
     }
 
     const uint32_t n_threads = MIN(p->n_threads, plane_count);
-    if (!htp_ops_context_set_n_threads(octx, n_threads)) {
-        return HTP_STATUS_INVAL_PARAMS;
+    如果 (!htp_ops_context_set_n_threads(octx, n_threads)) {
+        返回 HTP_STATUS_INVAL_PARAMS;
     }
 
     const uint32_t planes_per_thread = fastdiv(plane_count + n_threads - 1, &octx->n_threads_div);
 
     pool_plane_fn_t pool_plane;
-    if (p->global_path) {
+    如果 (p->global_path) {
         pool_plane = pool_plane_global;
-    } else if (p->block_path) {
+    } 否则 如果 (p->block_path) {
         pool_plane = pool_plane_block;
-    } else if (p->narrow_path) {
+    } 否则 如果 (p->narrow_path) {
         pool_plane = pool_plane_hvx_narrow;
-    } else if (p->fast_path) {
+    } 否则 如果 (p->fast_path) {
         pool_plane = pool_plane_hvx;
-    } else {
+    } 否则 {
         pool_plane = pool_plane_general;
     }
 
@@ -391,9 +391,9 @@ int op_pool_2d(struct htp_ops_context * octx) {
         .planes_per_thread = planes_per_thread,
     };
     work_queue_run(octx->ctx->work_queue, pool_2d_thread, &ctx, n_threads);
-    return HTP_STATUS_OK;
+    返回 HTP_STATUS_OK;
 }
 
-int op_pool_1d(struct htp_ops_context * octx) {
-    return op_pool_2d(octx);
+整数 op_pool_1d(struct htp_ops_context * octx) {
+    返回 op_pool_2d(octx);
 }

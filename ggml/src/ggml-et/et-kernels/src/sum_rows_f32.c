@@ -14,36 +14,36 @@ struct ggml_et_sum_rows_params {
     struct ggml_tensor dst;   // F32 output tensor [1, ne01, ne02, ne03]
 };
 
-int entry_point(struct ggml_et_sum_rows_params * params, void * env) {
+整数 entry_point(struct ggml_et_sum_rows_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    如果 (!kernel_env) {
+        返回 -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    整数 thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    整数 num_threads = get_num_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return 0;
+    如果 (thread_id < 0) {
+        返回 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    如果 (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        返回 -1;
     }
 
     struct ggml_tensor * src0 = &params->src0;
     struct ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+    如果 (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        返回 -1;
     }
 
     float * src0_data = (float *) src0->data;
     float * dst_data  = (float *) dst->data;
 
-    if (!src0_data || !dst_data) {
-        return -1;
+    如果 (!src0_data || !dst_data) {
+        返回 -1;
     }
 
 
@@ -63,7 +63,7 @@ int entry_point(struct ggml_et_sum_rows_params * params, void * env) {
     // Flatten rows across dimensions 1,2,3 and distribute across threads
     const int64_t total_rows = ne01 * ne02 * ne03;
 
-    for (int64_t ir = thread_id; ir < total_rows; ir += num_threads) {
+    为 (int64_t ir = thread_id; ir < total_rows; ir += num_threads) {
         const int64_t i03 = ir / (ne02 * ne01);
         const int64_t i02 = (ir - i03 * ne02 * ne01) / ne01;
         const int64_t i01 = ir - i03 * ne02 * ne01 - i02 * ne01;
@@ -75,7 +75,7 @@ int entry_point(struct ggml_et_sum_rows_params * params, void * env) {
         float zero = 0.0f;
         __asm__ volatile("fbc.ps f10, %[z]\n" : : [z] "m"(zero) : "f10");
 
-        for (int32_t i0 = 0; i0 < (int32_t) ne00; i0 += 8) {
+        为 (int32_t i0 = 0; i0 < (int32_t) ne00; i0 += 8) {
             __asm__ volatile(
                 "flw.ps f11, %[x_vec]\n"
                 "fadd.ps f10, f10, f11\n"
@@ -99,5 +99,5 @@ int entry_point(struct ggml_et_sum_rows_params * params, void * env) {
         atomic_store_f32(dst_ptr, row_sum);
     }
 
-    return 0;
+    返回 0;
 }

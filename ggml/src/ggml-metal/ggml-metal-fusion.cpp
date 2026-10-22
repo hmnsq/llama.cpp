@@ -16,13 +16,13 @@
 static std::vector<ggml_op> ggml_metal_fusion_filter_ops(const std::vector<ggml_op> & ops_all) {
     std::vector<ggml_op> ops;
 
-    for (ggml_op op : ops_all) {
-        if (!ggml_op_is_empty(op)) {
+    为 (ggml_op op : ops_all) {
+        如果 (!ggml_op_is_empty(op)) {
             ops.push_back(op);
         }
     }
 
-    return ops;
+    返回 ops;
 }
 
 struct ggml_metal_fusion {
@@ -30,7 +30,7 @@ struct ggml_metal_fusion {
 
     std::vector<ggml_op> ops;     // non-empty op sequence, derived from ops_all
     std::vector<ggml_op> ops_all; // full raw op sequence (may include empty RESHAPE/VIEW nodes)
-    std::vector<int>     outs;    // additional fused output nodes, relative to ops
+    std::vector<整数>     outs;    // additional fused output nodes, relative to ops
 
     // if unsafe: the generic chain/shape + ggml_can_fuse_subgraph checks are skipped and the
     // check callback below is the sole validator (used for patterns that are not elision chains,
@@ -42,20 +42,20 @@ struct ggml_metal_fusion {
     bool (*check)(const struct ggml_metal_fusion   * fusion,
                   const struct ggml_tensor * const * nodes,
                   const struct ggml_cgraph         * gf,
-                  const int                        * node_idxs,
-                        int                          idx,
+                  const 整数                        * node_idxs,
+                        整数                          idx,
                         ggml_metal_fusion_mode       mode);
 
     ggml_metal_fusion(
             ggml_metal_fusion_id id,
             const std::vector<ggml_op> & ops_all,
-            const std::vector<int> & outs,
+            const std::vector<整数> & outs,
             bool unsafe,
             bool (*check)(const struct ggml_metal_fusion   * fusion,
                           const struct ggml_tensor * const * nodes,
                           const struct ggml_cgraph         * gf,
-                          const int                        * node_idxs,
-                                int                          idx,
+                          const 整数                        * node_idxs,
+                                整数                          idx,
                                 ggml_metal_fusion_mode       mode))
         : id(id),
           ops(ggml_metal_fusion_filter_ops(ops_all)),
@@ -67,15 +67,15 @@ struct ggml_metal_fusion {
 };
 
 ggml_metal_fusion_id ggml_metal_fusion_get_id(const ggml_metal_fusion * fusion) {
-    return fusion->id;
+    返回 fusion->id;
 }
 
 // ---- helpers -------------------------------------------------------------
 
 // true if two tensors live in the same Metal buffer
 static bool ggml_metal_fusion_same_buffer(const ggml_tensor * a, const ggml_tensor * b) {
-    if (!a || !b) {
-        return false;
+    如果 (!a || !b) {
+        返回 false;
     }
 
     ggml_backend_buffer_t ba = a->view_src ? a->view_src->buffer : a->buffer;
@@ -84,7 +84,7 @@ static bool ggml_metal_fusion_same_buffer(const ggml_tensor * a, const ggml_tens
     ggml_metal_buffer_t ca = (ggml_metal_buffer_t) ba->context;
     ggml_metal_buffer_t cb = (ggml_metal_buffer_t) bb->context;
 
-    return ggml_metal_buffer_get_id(ca, a).metal == ggml_metal_buffer_get_id(cb, b).metal;
+    返回 ggml_metal_buffer_get_id(ca, a).metal == ggml_metal_buffer_get_id(cb, b).metal;
 }
 
 // true if the memory of two tensors overlaps in the same Metal buffer
@@ -95,11 +95,11 @@ static bool ggml_metal_fusion_overlap(const ggml_tensor * a, const ggml_tensor *
     const ggml_metal_buffer_id bid_a = ggml_metal_buffer_get_id((ggml_metal_buffer_t) ba->context, a);
     const ggml_metal_buffer_id bid_b = ggml_metal_buffer_get_id((ggml_metal_buffer_t) bb->context, b);
 
-    if (bid_a.metal == nullptr || bid_a.metal != bid_b.metal) {
-        return false;
+    如果 (bid_a.metal == nullptr || bid_a.metal != bid_b.metal) {
+        返回 false;
     }
 
-    return bid_a.offs <= bid_b.offs
+    返回 bid_a.offs <= bid_b.offs
         ? bid_b.offs - bid_a.offs < ggml_nbytes(a)
         : bid_a.offs - bid_b.offs < ggml_nbytes(b);
 }
@@ -112,8 +112,8 @@ static bool ggml_metal_fusion_check_norm(
         const ggml_metal_fusion       * fusion,
         const ggml_tensor * const     * nodes,
         const ggml_cgraph             * gf,
-        const int                     * node_idxs,
-              int                       idx,
+        const 整数                     * node_idxs,
+              整数                       idx,
               ggml_metal_fusion_mode    mode) {
     GGML_UNUSED(mode);
     GGML_UNUSED(gf);
@@ -122,39 +122,39 @@ static bool ggml_metal_fusion_check_norm(
 
     GGML_ASSERT(fusion->ops.size() >= 2);
 
-    if (fusion->id == GGML_METAL_FUSION_NORM_SCALE) {
+    如果 (fusion->id == GGML_METAL_FUSION_NORM_SCALE) {
         GGML_ASSERT(fusion->ops.size() == 2);
 
         const ggml_tensor * scale = nodes[1];
-        if (scale->op != GGML_OP_SCALE || scale->src[0] != nodes[0] || scale->src[1] ||
+        如果 (scale->op != GGML_OP_SCALE || scale->src[0] != nodes[0] || scale->src[1] ||
             scale->type != GGML_TYPE_F32) {
-            return false;
+            返回 false;
         }
 
-        return true;
+        返回 true;
     }
 
-    for (int j = 1; j < (int) fusion->ops.size(); j++) {
+    为 (整数 j = 1; j < (整数) fusion->ops.size(); j++) {
         // the fused MUL/ADD must read the previous node as src0
-        if (nodes[j]->src[0] != nodes[j - 1]) {
-            return false;
+        如果 (nodes[j]->src[0] != nodes[j - 1]) {
+            返回 false;
         }
 
         // the weight/bias must have the same row width as the norm input
-        if (nodes[j]->src[1]->ne[0] != nodes[0]->ne[0]) {
-            return false;
+        如果 (nodes[j]->src[1]->ne[0] != nodes[0]->ne[0]) {
+            返回 false;
         }
 
-        if (!ggml_is_contiguous_rows(nodes[j]->src[1])) {
-            return false;
+        如果 (!ggml_is_contiguous_rows(nodes[j]->src[1])) {
+            返回 false;
         }
 
-        if (nodes[j]->type != GGML_TYPE_F32) {
-            return false;
+        如果 (nodes[j]->type != GGML_TYPE_F32) {
+            返回 false;
         }
     }
 
-    return true;
+    返回 true;
 }
 
 // SSM_CONV + UNARY (silu)
@@ -162,8 +162,8 @@ static bool ggml_metal_fusion_check_ssm_conv_silu(
         const ggml_metal_fusion       * fusion,
         const ggml_tensor * const     * nodes,
         const ggml_cgraph             * gf,
-        const int                     * node_idxs,
-              int                       idx,
+        const 整数                     * node_idxs,
+              整数                       idx,
               ggml_metal_fusion_mode    mode) {
     GGML_UNUSED(fusion);
     GGML_UNUSED(gf);
@@ -174,19 +174,19 @@ static bool ggml_metal_fusion_check_ssm_conv_silu(
     const ggml_tensor * conv = nodes[0];
     const ggml_tensor * un   = nodes[1];
 
-    if (conv->op != GGML_OP_SSM_CONV || un->op != GGML_OP_UNARY || un->src[0] != conv || un->src[1]) {
-        return false;
+    如果 (conv->op != GGML_OP_SSM_CONV || un->op != GGML_OP_UNARY || un->src[0] != conv || un->src[1]) {
+        返回 false;
     }
 
-    if (ggml_get_unary_op(un) != GGML_UNARY_OP_SILU) {
-        return false;
+    如果 (ggml_get_unary_op(un) != GGML_UNARY_OP_SILU) {
+        返回 false;
     }
 
-    if (conv->type != GGML_TYPE_F32 || un->type != GGML_TYPE_F32 || !ggml_is_contiguous_rows(un)) {
-        return false;
+    如果 (conv->type != GGML_TYPE_F32 || un->type != GGML_TYPE_F32 || !ggml_is_contiguous_rows(un)) {
+        返回 false;
     }
 
-    return true;
+    返回 true;
 }
 
 // ADD x N: each ADD reads the previous ADD as src0, and all addends must share layout
@@ -195,31 +195,31 @@ static bool ggml_metal_fusion_check_add_chain(
         const ggml_metal_fusion       * fusion,
         const ggml_tensor * const     * nodes,
         const ggml_cgraph             * gf,
-        const int                     * node_idxs,
-              int                       idx,
+        const 整数                     * node_idxs,
+              整数                       idx,
               ggml_metal_fusion_mode    mode) {
     GGML_UNUSED(gf);
     GGML_UNUSED(node_idxs);
     GGML_UNUSED(idx);
     GGML_ASSERT(fusion->ops.size() >= 2);
 
-    for (int j = 1; j < (int) fusion->ops.size(); j++) {
-        if (nodes[j]->src[0] != nodes[j - 1]) {
-            return false;
+    为 (整数 j = 1; j < (整数) fusion->ops.size(); j++) {
+        如果 (nodes[j]->src[0] != nodes[j - 1]) {
+            返回 false;
         }
 
-        if (!ggml_are_same_layout(nodes[j]->src[1], nodes[j - 1]->src[1])) {
-            return false;
+        如果 (!ggml_are_same_layout(nodes[j]->src[1], nodes[j - 1]->src[1])) {
+            返回 false;
         }
 
-        if (mode == GGML_METAL_FUSION_FULL) {
-            if (!ggml_metal_fusion_same_buffer(nodes[j]->src[1], nodes[0]->src[1])) {
-                return false;
+        如果 (mode == GGML_METAL_FUSION_FULL) {
+            如果 (!ggml_metal_fusion_same_buffer(nodes[j]->src[1], nodes[0]->src[1])) {
+                返回 false;
             }
         }
     }
 
-    return true;
+    返回 true;
 }
 
 // GATED_DELTA_NET + CPY: the trailing cpy scatters the gdn state snapshots into the recurrent
@@ -231,8 +231,8 @@ static bool ggml_metal_fusion_check_gdn_cache(
         const ggml_metal_fusion       * fusion,
         const ggml_tensor * const     * nodes,
         const ggml_cgraph             * gf,
-        const int                     * node_idxs,
-              int                       idx,
+        const 整数                     * node_idxs,
+              整数                       idx,
               ggml_metal_fusion_mode    mode) {
     GGML_UNUSED(fusion);
     GGML_UNUSED(gf);
@@ -243,12 +243,12 @@ static bool ggml_metal_fusion_check_gdn_cache(
     const ggml_tensor * cpy = nodes[1];
 
     // the kernel skips the snapshot tail, so the gdn output must not be a graph output
-    if (gdn->type != GGML_TYPE_F32 || (gdn->flags & GGML_TENSOR_FLAG_OUTPUT)) {
-        return false;
+    如果 (gdn->type != GGML_TYPE_F32 || (gdn->flags & GGML_TENSOR_FLAG_OUTPUT)) {
+        返回 false;
     }
 
-    if (cpy->op != GGML_OP_CPY || (cpy->flags & GGML_TENSOR_FLAG_OUTPUT)) {
-        return false;
+    如果 (cpy->op != GGML_OP_CPY || (cpy->flags & GGML_TENSOR_FLAG_OUTPUT)) {
+        返回 false;
     }
 
     const int64_t S_v      = gdn->src[2]->ne[0];
@@ -265,27 +265,27 @@ static bool ggml_metal_fusion_check_gdn_cache(
     const ggml_tensor * dst = cpy->src[1]; // cache view
 
     // src must be this gdn's snapshot tail (contiguous, at the tail offset)
-    if (src->op != GGML_OP_VIEW || src->view_src != gdn ||
+    如果 (src->op != GGML_OP_VIEW || src->view_src != gdn ||
         src->view_offs != tail_off || !ggml_is_contiguous(src)) {
-        return false;
+        返回 false;
     }
 
     const int64_t expected_ne[GGML_MAX_DIMS] = { D, n_seqs, n_written, 1 };
-    if (dst->type != GGML_TYPE_F32 ||
+    如果 (dst->type != GGML_TYPE_F32 ||
         !std::equal(expected_ne, expected_ne + GGML_MAX_DIMS, dst->ne) ||
         dst->nb[0] != ggml_type_size(GGML_TYPE_F32) ||
         dst->nb[1] != ggml_row_size(GGML_TYPE_F32, D)) {
-        return false;
+        返回 false;
     }
 
-    if (mode == GGML_METAL_FUSION_FULL) {
+    如果 (mode == GGML_METAL_FUSION_FULL) {
         // the cache must be allocated so the kernel can write straight to its buffer
-        if (dst->data == nullptr) {
-            return false;
+        如果 (dst->data == nullptr) {
+            返回 false;
         }
     }
 
-    return true;
+    返回 true;
 }
 
 // MUL + SIN + SQR + MUL + ADD (snake activation)
@@ -293,8 +293,8 @@ static bool ggml_metal_fusion_check_snake(
         const ggml_metal_fusion       * fusion,
         const ggml_tensor * const     * nodes,
         const ggml_cgraph             * gf,
-        const int                     * node_idxs,
-              int                       idx,
+        const 整数                     * node_idxs,
+              整数                       idx,
               ggml_metal_fusion_mode    mode) {
     GGML_UNUSED(fusion);
     GGML_UNUSED(mode);
@@ -340,7 +340,7 @@ static bool ggml_metal_fusion_check_snake(
         ggml_is_contiguous(x) && ggml_is_contiguous(add) &&
         ggml_is_contiguous(a) && ggml_is_contiguous(inv_b);
 
-    return types_ok && shape_ok && dim_ok && contig_ok && x_in_add == x;
+    返回 types_ok && shape_ok && dim_ok && contig_ok && x_in_add == x;
 }
 
 #define GGML_METAL_TOPK_MOE_MAX_EXPERTS 1024
@@ -367,13 +367,13 @@ static bool ggml_metal_fusion_check_topk_moe(
         const ggml_metal_fusion       * fusion,
         const ggml_tensor * const     * nodes,
         const ggml_cgraph             * gf,
-        const int                     * node_idxs,
-              int                       idx,
+        const 整数                     * node_idxs,
+              整数                       idx,
               ggml_metal_fusion_mode    mode) {
     GGML_ASSERT(fusion->ops.size() >= 3);
     GGML_UNUSED(nodes);
 
-    const int n_ops = (int) fusion->ops.size();
+    const 整数 n_ops = (整数) fusion->ops.size();
 
     const bool with_norm  = n_ops >= 6;
     const bool with_scale = n_ops == 4 || n_ops == 7;
@@ -382,32 +382,32 @@ static bool ggml_metal_fusion_check_topk_moe(
     // contains the RESHAPE/VIEW nodes that the fused kernel elides.
     const std::vector<ggml_op> & ops_all = fusion->ops_all;
 
-    const int raw_start = node_idxs[idx];
-    int       raw_end   = node_idxs[idx + n_ops - 1];
+    const 整数 raw_start = node_idxs[idx];
+    整数       raw_end   = node_idxs[idx + n_ops - 1];
 
     // the norm variant ends with a RESHAPE that the non-empty sequence filters out;
     // include it so the output use-count check sees the real final routing tensor
-    if (with_norm && !with_scale) {
-        if (raw_end + 1 >= gf->n_nodes) {
-            return false;
+    如果 (with_norm && !with_scale) {
+        如果 (raw_end + 1 >= gf->n_nodes) {
+            返回 false;
         }
         const ggml_tensor * trailing_reshape = gf->nodes[raw_end + 1];
-        if (trailing_reshape->op != GGML_OP_RESHAPE || trailing_reshape->src[0] != gf->nodes[raw_end]) {
-            return false;
+        如果 (trailing_reshape->op != GGML_OP_RESHAPE || trailing_reshape->src[0] != gf->nodes[raw_end]) {
+            返回 false;
         }
         raw_end++;
     }
 
-    const int raw_count = raw_end - raw_start + 1;
-    if (raw_count != (int) ops_all.size()) {
-        return false;
+    const 整数 raw_count = raw_end - raw_start + 1;
+    如果 (raw_count != (整数) ops_all.size()) {
+        返回 false;
     }
 
-    int raw_idxs[GGML_METAL_FUSION_MAX];
-    for (int i = 0; i < raw_count; ++i) {
+    整数 raw_idxs[GGML_METAL_FUSION_MAX];
+    为 (整数 i = 0; i < raw_count; ++i) {
         raw_idxs[i] = raw_start + i;
-        if (gf->nodes[raw_start + i]->op != ops_all[i]) {
-            return false;
+        如果 (gf->nodes[raw_start + i]->op != ops_all[i]) {
+            返回 false;
         }
     }
 
@@ -424,13 +424,13 @@ static bool ggml_metal_fusion_check_topk_moe(
     float max_bias = 0.0f;
     memcpy(&scale,    ((const int32_t *) softmax->op_params) + 0, sizeof(scale));
     memcpy(&max_bias, ((const int32_t *) softmax->op_params) + 1, sizeof(max_bias));
-    if (scale != 1.0f || max_bias != 0.0f || softmax->src[1] || softmax->src[2]) {
-        return false;
+    如果 (scale != 1.0f || max_bias != 0.0f || softmax->src[1] || softmax->src[2]) {
+        返回 false;
     }
 
-    if (logits->type != GGML_TYPE_F32 || softmax->type != GGML_TYPE_F32 ||
+    如果 (logits->type != GGML_TYPE_F32 || softmax->type != GGML_TYPE_F32 ||
         out->type != GGML_TYPE_F32 || ids->type != GGML_TYPE_I32) {
-        return false;
+        返回 false;
     }
 
     const int64_t n_expert      = logits->ne[0];
@@ -438,66 +438,66 @@ static bool ggml_metal_fusion_check_topk_moe(
     const int64_t n_expert_used = ids->ne[0];
 
     // note: n_tokens == 0 (no-output batch) must match so that the packing stays shape-independent
-    if (n_expert <= 0 || n_expert_used <= 0 || n_expert_used > n_expert ||
+    如果 (n_expert <= 0 || n_expert_used <= 0 || n_expert_used > n_expert ||
         n_expert > GGML_METAL_TOPK_MOE_MAX_EXPERTS || n_expert_used > GGML_METAL_TOPK_MOE_MAX_EXPERTS) {
-        return false;
+        返回 false;
     }
 
-    if (logits->ne[2] != 1 || logits->ne[3] != 1 ||
+    如果 (logits->ne[2] != 1 || logits->ne[3] != 1 ||
         ids->ne[1] != n_tokens || ids->ne[2] != 1 || ids->ne[3] != 1 ||
         out->ne[0] != 1 || out->ne[1] != n_expert_used || out->ne[2] != n_tokens || out->ne[3] != 1) {
-        return false;
+        返回 false;
     }
 
-    if (!ggml_is_contiguous(logits) || !ggml_is_contiguous(out) ||
+    如果 (!ggml_is_contiguous(logits) || !ggml_is_contiguous(out) ||
         ids->nb[0] != ggml_type_size(GGML_TYPE_I32) ||
         ids->nb[1] != ggml_type_size(GGML_TYPE_I32) * n_expert) {
-        return false;
+        返回 false;
     }
 
-    if (probs_reshaped->src[0] != softmax || argsort->src[0] != softmax ||
+    如果 (probs_reshaped->src[0] != softmax || argsort->src[0] != softmax ||
         ids->src[0] != argsort || get_rows->src[0] != probs_reshaped || get_rows->src[1] != ids) {
-        return false;
+        返回 false;
     }
 
-    if (with_norm) {
+    如果 (with_norm) {
         const ggml_tensor * weights_reshaped = gf->nodes[raw_start + 5];
         const ggml_tensor * sum_rows         = gf->nodes[raw_start + 6];
         const ggml_tensor * clamp            = gf->nodes[raw_start + 7];
         const ggml_tensor * div              = gf->nodes[raw_start + 8];
         const ggml_tensor * out_reshaped     = gf->nodes[raw_start + 9];
 
-        if (weights_reshaped->src[0] != get_rows || sum_rows->src[0] != weights_reshaped ||
+        如果 (weights_reshaped->src[0] != get_rows || sum_rows->src[0] != weights_reshaped ||
             clamp->src[0] != sum_rows || div->src[0] != weights_reshaped || div->src[1] != clamp ||
             out_reshaped->src[0] != div) {
-            return false;
+            返回 false;
         }
 
-        if (with_scale) {
+        如果 (with_scale) {
             const ggml_tensor * scale_node = gf->nodes[raw_start + 10];
-            if (scale_node->src[0] != out_reshaped) {
-                return false;
+            如果 (scale_node->src[0] != out_reshaped) {
+                返回 false;
             }
         }
-    } else if (with_scale) {
+    } 否则 如果 (with_scale) {
         const ggml_tensor * scale_node = gf->nodes[raw_start + 5];
-        if (scale_node->src[0] != get_rows) {
-            return false;
+        如果 (scale_node->src[0] != get_rows) {
+            返回 false;
         }
     }
 
-    const int outputs[2] = { raw_start + 3, raw_end };
-    if (!ggml_can_fuse_subgraph_ext(gf, raw_idxs, raw_count, ops_all.data(), outputs, 2)) {
-        return false;
+    const 整数 outputs[2] = { raw_start + 3, raw_end };
+    如果 (!ggml_can_fuse_subgraph_ext(gf, raw_idxs, raw_count, ops_all.data(), outputs, 2)) {
+        返回 false;
     }
 
-    if (mode == GGML_METAL_FUSION_FULL) {
-        if (!logits->data || !out->data || !ids->data) {
-            return false;
+    如果 (mode == GGML_METAL_FUSION_FULL) {
+        如果 (!logits->data || !out->data || !ids->data) {
+            返回 false;
         }
     }
 
-    return true;
+    返回 true;
 }
 
 #define GGML_METAL_MOE_REDUCE_MAX_EXPERTS 8
@@ -506,51 +506,51 @@ struct ggml_metal_moe_reduce_match {
     const ggml_tensor * experts;
     const ggml_tensor * weights;
     const ggml_tensor * dst;
-    int node_count;
+    整数 node_count;
 };
 
 static bool ggml_metal_fusion_match_moe_reduce(
-        const ggml_cgraph * gf, int node_idx, const std::vector<ggml_op> & ops_all,
+        const ggml_cgraph * gf, 整数 node_idx, const std::vector<ggml_op> & ops_all,
         ggml_metal_moe_reduce_match * match) {
-    if (match == nullptr || node_idx < 0 || node_idx + (int) ops_all.size() > gf->n_nodes) {
-        return false;
+    如果 (match == nullptr || node_idx < 0 || node_idx + (整数) ops_all.size() > gf->n_nodes) {
+        返回 false;
     }
 
     const ggml_tensor * mul = gf->nodes[node_idx];
-    if (mul->op != GGML_OP_MUL || mul->type != GGML_TYPE_F32) {
-        return false;
+    如果 (mul->op != GGML_OP_MUL || mul->type != GGML_TYPE_F32) {
+        返回 false;
     }
 
     // MUL, then one VIEW per expert, then one ADD per additional expert
-    const int raw_count     = (int) ops_all.size();
-    const int n_expert_used = raw_count / 2;
+    const 整数 raw_count     = (整数) ops_all.size();
+    const 整数 n_expert_used = raw_count / 2;
 
-    if (n_expert_used < 2 || n_expert_used > GGML_METAL_MOE_REDUCE_MAX_EXPERTS ||
+    如果 (n_expert_used < 2 || n_expert_used > GGML_METAL_MOE_REDUCE_MAX_EXPERTS ||
         raw_count != 2 * n_expert_used) {
-        return false;
+        返回 false;
     }
 
-    int n_views = 0;
-    while (node_idx + 1 + n_views < gf->n_nodes &&
+    整数 n_views = 0;
+    当 (node_idx + 1 + n_views < gf->n_nodes &&
            gf->nodes[node_idx + 1 + n_views]->op == GGML_OP_VIEW) {
         n_views++;
     }
 
-    if (n_views != n_expert_used) {
-        return false;
+    如果 (n_views != n_expert_used) {
+        返回 false;
     }
 
-    for (int i = n_expert_used + 1; i < raw_count; ++i) {
-        if (gf->nodes[node_idx + i]->op != GGML_OP_ADD) {
-            return false;
+    为 (整数 i = n_expert_used + 1; i < raw_count; ++i) {
+        如果 (gf->nodes[node_idx + i]->op != GGML_OP_ADD) {
+            返回 false;
         }
     }
 
-    int raw_idxs[GGML_METAL_FUSION_MAX];
-    for (int i = 0; i < raw_count; ++i) {
+    整数 raw_idxs[GGML_METAL_FUSION_MAX];
+    为 (整数 i = 0; i < raw_count; ++i) {
         raw_idxs[i] = node_idx + i;
-        if (gf->nodes[node_idx + i]->op != ops_all[i]) {
-            return false;
+        如果 (gf->nodes[node_idx + i]->op != ops_all[i]) {
+            返回 false;
         }
     }
 
@@ -558,92 +558,92 @@ static bool ggml_metal_fusion_match_moe_reduce(
     const ggml_tensor * weights = mul->src[1];
     const ggml_tensor * dst     = gf->nodes[node_idx + raw_count - 1];
 
-    if (experts->type != GGML_TYPE_F32 || weights->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return false;
+    如果 (experts->type != GGML_TYPE_F32 || weights->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        返回 false;
     }
 
     const int64_t n_embd   = experts->ne[0];
     const int64_t n_tokens = experts->ne[2];
 
     // note: n_tokens == 0 (no-output batch) must match so that the packing stays shape-independent
-    if (n_embd <= 0 || experts->ne[1] != n_expert_used || experts->ne[3] != 1 ||
+    如果 (n_embd <= 0 || experts->ne[1] != n_expert_used || experts->ne[3] != 1 ||
         weights->ne[0] != 1 || weights->ne[1] != n_expert_used || weights->ne[2] != n_tokens || weights->ne[3] != 1 ||
         dst->ne[0] != n_embd || dst->ne[1] != n_tokens || dst->ne[2] != 1 || dst->ne[3] != 1) {
-        return false;
+        返回 false;
     }
 
-    if (!ggml_is_contiguous(experts) || !ggml_is_contiguous(weights) || !ggml_is_contiguous(dst)) {
-        return false;
+    如果 (!ggml_is_contiguous(experts) || !ggml_is_contiguous(weights) || !ggml_is_contiguous(dst)) {
+        返回 false;
     }
 
-    for (int i = 1; i <= n_expert_used; ++i) {
+    为 (整数 i = 1; i <= n_expert_used; ++i) {
         const ggml_tensor * view = gf->nodes[node_idx + i];
-        if (view->view_src != mul || view->src[0] != mul ||
+        如果 (view->view_src != mul || view->src[0] != mul ||
             view->view_offs != (size_t) (i - 1) * mul->nb[1] ||
             view->ne[0] != n_embd || view->ne[1] != n_tokens ||
             view->nb[1] != mul->nb[2]) {
-            return false;
+            返回 false;
         }
     }
 
     const ggml_tensor * prev_add = nullptr;
-    for (int j = 1; j < n_expert_used; ++j) {
+    为 (整数 j = 1; j < n_expert_used; ++j) {
         const ggml_tensor * add = gf->nodes[node_idx + n_expert_used + j];
         const ggml_tensor * rhs = gf->nodes[node_idx + j + 1];
         const ggml_tensor * lhs = j == 1 ? gf->nodes[node_idx + 1] : prev_add;
-        if (add->src[0] != lhs || add->src[1] != rhs) {
-            return false;
+        如果 (add->src[0] != lhs || add->src[1] != rhs) {
+            返回 false;
         }
         prev_add = add;
     }
 
-    const int outputs[1] = { node_idx + raw_count - 1 };
-    if (!ggml_can_fuse_subgraph_ext(gf, raw_idxs, raw_count, ops_all.data(), outputs, 1)) {
-        return false;
+    const 整数 outputs[1] = { node_idx + raw_count - 1 };
+    如果 (!ggml_can_fuse_subgraph_ext(gf, raw_idxs, raw_count, ops_all.data(), outputs, 1)) {
+        返回 false;
     }
 
     match->experts    = experts;
     match->weights    = weights;
     match->dst        = dst;
     match->node_count = raw_count;
-    return true;
+    返回 true;
 }
 
 static bool ggml_metal_fusion_check_moe_reduce(
         const ggml_metal_fusion       * fusion,
         const ggml_tensor * const     * nodes,
         const ggml_cgraph             * gf,
-        const int                     * node_idxs,
-              int                       idx,
+        const 整数                     * node_idxs,
+              整数                       idx,
               ggml_metal_fusion_mode    mode) {
     GGML_UNUSED(nodes);
 
     ggml_metal_moe_reduce_match match;
-    if (!ggml_metal_fusion_match_moe_reduce(gf, node_idxs[idx], fusion->ops_all, &match)) {
-        return false;
+    如果 (!ggml_metal_fusion_match_moe_reduce(gf, node_idxs[idx], fusion->ops_all, &match)) {
+        返回 false;
     }
 
-    if ((int) fusion->ops.size() != match.experts->ne[1]) {
-        return false;
+    如果 ((整数) fusion->ops.size() != match.experts->ne[1]) {
+        返回 false;
     }
 
-    const int raw_end = node_idxs[idx] + match.node_count - 1;
-    if (node_idxs[idx + (int) fusion->ops.size() - 1] != raw_end) {
-        return false;
+    const 整数 raw_end = node_idxs[idx] + match.node_count - 1;
+    如果 (node_idxs[idx + (整数) fusion->ops.size() - 1] != raw_end) {
+        返回 false;
     }
 
-    if (mode == GGML_METAL_FUSION_FULL) {
-        if (!match.experts->data || !match.weights->data || !match.dst->data) {
-            return false;
+    如果 (mode == GGML_METAL_FUSION_FULL) {
+        如果 (!match.experts->data || !match.weights->data || !match.dst->data) {
+            返回 false;
         }
 
         // the fused kernel reads experts and weights while writing dst, so dst must not overlap either input
-        if (ggml_metal_fusion_overlap(match.dst, match.experts) || ggml_metal_fusion_overlap(match.dst, match.weights)) {
-            return false;
+        如果 (ggml_metal_fusion_overlap(match.dst, match.experts) || ggml_metal_fusion_overlap(match.dst, match.weights)) {
+            返回 false;
         }
     }
 
-    return true;
+    返回 true;
 }
 
 // true if t is or views a tensor in a buffer marked as weights, such as a bias; the model loader marks its buffers before
@@ -651,19 +651,19 @@ static bool ggml_metal_fusion_check_moe_reduce(
 static bool ggml_metal_tensor_is_weight(const struct ggml_tensor * t) {
     const ggml_tensor * base = t->view_src != NULL ? t->view_src : t;
 
-    return base->buffer != NULL && ggml_backend_buffer_get_usage(base->buffer) == GGML_BACKEND_BUFFER_USAGE_WEIGHTS;
+    返回 base->buffer != NULL && ggml_backend_buffer_get_usage(base->buffer) == GGML_BACKEND_BUFFER_USAGE_WEIGHTS;
 }
 
 static const struct ggml_tensor * ggml_metal_mul_mat_add_operand(const struct ggml_tensor * mm, const struct ggml_tensor * add) {
-    if (add->op != GGML_OP_ADD || (add->src[0] == mm) == (add->src[1] == mm)) {
-        return NULL;
+    如果 (add->op != GGML_OP_ADD || (add->src[0] == mm) == (add->src[1] == mm)) {
+        返回 NULL;
     }
 
     const ggml_tensor * other = add->src[0] == mm ? add->src[1] : add->src[0];
 
     const bool ok = other->type == GGML_TYPE_F32 && add->type == GGML_TYPE_F32 && !ggml_metal_tensor_is_weight(other);
 
-    return ok ? other : NULL;
+    返回 ok ? other : NULL;
 }
 
 static const struct ggml_tensor * ggml_metal_mul_mat_add_residual(const struct ggml_tensor * mm, const struct ggml_tensor * add) {
@@ -672,7 +672,7 @@ static const struct ggml_tensor * ggml_metal_mul_mat_add_residual(const struct g
     const bool ok = res != NULL && ggml_are_same_shape(res, mm) &&
         ggml_is_contiguous(res) && ggml_is_contiguous(mm) && ggml_is_contiguous(add);
 
-    return ok ? res : NULL;
+    返回 ok ? res : NULL;
 }
 
 // MUL_MAT + ADD of an f32 non-weight: the reorder packs it without reading row counts, so ubatch sizes share one order;
@@ -681,8 +681,8 @@ static bool ggml_metal_fusion_check_mul_mat_add(
         const ggml_metal_fusion       * fusion,
         const ggml_tensor * const     * nodes,
         const ggml_cgraph             * gf,
-        const int                     * node_idxs,
-              int                       idx,
+        const 整数                     * node_idxs,
+              整数                       idx,
               ggml_metal_fusion_mode    mode) {
     GGML_UNUSED(gf);
     GGML_UNUSED(node_idxs);
@@ -692,22 +692,22 @@ static bool ggml_metal_fusion_check_mul_mat_add(
     const ggml_tensor * mm  = nodes[0];
     const ggml_tensor * add = nodes[1];
 
-    if (ggml_metal_mul_mat_add_operand(mm, add) == nullptr ||
+    如果 (ggml_metal_mul_mat_add_operand(mm, add) == nullptr ||
         !ggml_metal_op_mul_mat_may_use_mma(mm)) {
-        return false;
+        返回 false;
     }
 
-    if (mode == GGML_METAL_FUSION_STRUCTURAL) {
-        return true;
+    如果 (mode == GGML_METAL_FUSION_STRUCTURAL) {
+        返回 true;
     }
 
     const ggml_tensor * res = ggml_metal_mul_mat_add_residual(mm, add);
 
-    if (res == nullptr || !ggml_metal_op_mul_mat_use_mma(mm)) {
-        return false;
+    如果 (res == nullptr || !ggml_metal_op_mul_mat_use_mma(mm)) {
+        返回 false;
     }
 
-    return !ggml_metal_fusion_overlap(add, mm->src[0]) && !ggml_metal_fusion_overlap(add, mm->src[1]) &&
+    返回 !ggml_metal_fusion_overlap(add, mm->src[0]) && !ggml_metal_fusion_overlap(add, mm->src[1]) &&
         (add->data == res->data || !ggml_metal_fusion_overlap(add, res));
 }
 
@@ -795,18 +795,18 @@ static const std::vector<ggml_metal_fusion> ggml_metal_fusions = {
 // ---- alloc deps -----------------------------------------------------------
 
 static bool ggml_metal_fusion_match_raw_pattern(
-        const ggml_cgraph * gf, int node_idx, const std::vector<ggml_op> & ops) {
-    if (node_idx < 0 || node_idx + (int) ops.size() > gf->n_nodes) {
-        return false;
+        const ggml_cgraph * gf, 整数 node_idx, const std::vector<ggml_op> & ops) {
+    如果 (node_idx < 0 || node_idx + (整数) ops.size() > gf->n_nodes) {
+        返回 false;
     }
 
-    for (int i = 0; i < (int) ops.size(); ++i) {
-        if (gf->nodes[node_idx + i]->op != ops[i]) {
-            return false;
+    为 (整数 i = 0; i < (整数) ops.size(); ++i) {
+        如果 (gf->nodes[node_idx + i]->op != ops[i]) {
+            返回 false;
         }
     }
 
-    return true;
+    返回 true;
 }
 
 static void ggml_metal_fusion_add_pattern_alloc_deps(
@@ -814,16 +814,16 @@ static void ggml_metal_fusion_add_pattern_alloc_deps(
         void (*add_alloc_dep)(void *, ggml_tensor *, ggml_tensor *),
         ggml_cgraph * gf,
         const ggml_metal_fusion * fusion,
-        int node_idx) {
-    const int last_node = node_idx + (int) fusion->ops_all.size() - 1;
+        整数 node_idx) {
+    const 整数 last_node = node_idx + (整数) fusion->ops_all.size() - 1;
 
     // keep all external inputs alive until the fused output
     std::set<ggml_tensor *> seen;
-    for (int j = 0; j < (int) fusion->ops_all.size(); ++j) {
+    为 (整数 j = 0; j < (整数) fusion->ops_all.size(); ++j) {
         ggml_tensor * node = gf->nodes[node_idx + j];
-        for (int s = 0; s < GGML_MAX_SRC; ++s) {
+        为 (整数 s = 0; s < GGML_MAX_SRC; ++s) {
             ggml_tensor * src = node->src[s];
-            if (src && seen.insert(src).second) {
+            如果 (src && seen.insert(src).second) {
                 add_alloc_dep(user_data, src, gf->nodes[last_node]);
             }
         }
@@ -835,21 +835,21 @@ void ggml_metal_fusion_add_alloc_deps(
         void * user_data,
         void (*add_alloc_dep)(void *, ggml_tensor *, ggml_tensor *),
         ggml_cgraph * gf) {
-    for (int i = 0; i < gf->n_nodes; ++i) {
+    为 (整数 i = 0; i < gf->n_nodes; ++i) {
         const ggml_metal_fusion * best = nullptr;
-        int best_raw = 0;
+        整数 best_raw = 0;
 
-        for (const ggml_metal_fusion & fusion : ggml_metal_fusions) {
-            if ((int) fusion.ops_all.size() <= best_raw) {
+        为 (const ggml_metal_fusion & fusion : ggml_metal_fusions) {
+            如果 ((整数) fusion.ops_all.size() <= best_raw) {
                 continue;
             }
-            if (ggml_metal_fusion_match_raw_pattern(gf, i, fusion.ops_all)) {
+            如果 (ggml_metal_fusion_match_raw_pattern(gf, i, fusion.ops_all)) {
                 best = &fusion;
-                best_raw = (int) fusion.ops_all.size();
+                best_raw = (整数) fusion.ops_all.size();
             }
         }
 
-        if (best) {
+        如果 (best) {
             ggml_metal_fusion_add_pattern_alloc_deps(user_data, add_alloc_dep, gf, best, i);
             i += best_raw - 1;
         }
@@ -862,13 +862,13 @@ static std::string ggml_metal_fusion_label(const ggml_metal_fusion * fusion) {
     GGML_ASSERT(fusion != nullptr);
 
     std::string label;
-    for (int j = 0; j < (int) fusion->ops.size(); j++) {
-        if (j > 0) {
+    为 (整数 j = 0; j < (整数) fusion->ops.size(); j++) {
+        如果 (j > 0) {
             label += '+';
         }
         label += ggml_op_name(fusion->ops[j]);
     }
-    return label;
+    返回 label;
 }
 
 struct ggml_metal_fusion_info {
@@ -877,21 +877,21 @@ struct ggml_metal_fusion_info {
     bool enabled;
     bool stats;
     bool labels_set;
-    int  debug;
+    整数  debug;
 };
 
-struct ggml_metal_fusion_info * ggml_metal_fusion_info_init(bool enabled, int debug) {
+struct ggml_metal_fusion_info * ggml_metal_fusion_info_init(bool enabled, 整数 debug) {
     ggml_metal_fusion_info * finfo = new ggml_metal_fusion_info;
     finfo->enabled    = enabled;
     finfo->stats      = debug > 0;
     finfo->labels_set = false;
     finfo->debug      = debug;
 
-    if (finfo->stats) {
+    如果 (finfo->stats) {
         ggml_metal_fusion_info_labels_init(finfo);
     }
 
-    return finfo;
+    返回 finfo;
 }
 
 void ggml_metal_fusion_info_free(ggml_metal_fusion_info * finfo) {
@@ -899,38 +899,38 @@ void ggml_metal_fusion_info_free(ggml_metal_fusion_info * finfo) {
 }
 
 bool ggml_metal_fusion_info_enabled(const ggml_metal_fusion_info * finfo) {
-    return finfo->enabled;
+    返回 finfo->enabled;
 }
 
 bool ggml_metal_fusion_info_stats(const ggml_metal_fusion_info * finfo) {
-    return finfo->stats;
+    返回 finfo->stats;
 }
 
-int ggml_metal_fusion_info_debug(const ggml_metal_fusion_info * finfo) {
-    return finfo->debug;
+整数 ggml_metal_fusion_info_debug(const ggml_metal_fusion_info * finfo) {
+    返回 finfo->debug;
 }
 
-int ggml_metal_fusion_info_n_fusions(const ggml_metal_fusion_info * finfo) {
-    return (int) finfo->labels.size();
+整数 ggml_metal_fusion_info_n_fusions(const ggml_metal_fusion_info * finfo) {
+    返回 (整数) finfo->labels.size();
 }
 
-const char * ggml_metal_fusion_info_label(const ggml_metal_fusion_info * finfo, int idx) {
-    GGML_ASSERT(idx >= 0 && idx < (int) finfo->labels.size());
-    return finfo->labels[idx].c_str();
+const char * ggml_metal_fusion_info_label(const ggml_metal_fusion_info * finfo, 整数 idx) {
+    GGML_ASSERT(idx >= 0 && idx < (整数) finfo->labels.size());
+    返回 finfo->labels[idx].c_str();
 }
 
-uint64_t ggml_metal_fusion_info_count(const ggml_metal_fusion_info * finfo, int idx) {
-    GGML_ASSERT(idx >= 0 && idx < (int) finfo->counts.size());
-    return finfo->counts[idx];
+uint64_t ggml_metal_fusion_info_count(const ggml_metal_fusion_info * finfo, 整数 idx) {
+    GGML_ASSERT(idx >= 0 && idx < (整数) finfo->counts.size());
+    返回 finfo->counts[idx];
 }
 
 void ggml_metal_fusion_info_count_fusion(ggml_metal_fusion_info * finfo, const ggml_metal_fusion * fusion) {
-    if (!finfo->stats || fusion == nullptr) {
-        return;
+    如果 (!finfo->stats || fusion == nullptr) {
+        返回;
     }
 
     const ptrdiff_t idx = fusion - ggml_metal_fusions.data();
-    if (idx >= 0 && idx < (ptrdiff_t) finfo->counts.size()) {
+    如果 (idx >= 0 && idx < (ptrdiff_t) finfo->counts.size()) {
         finfo->counts[idx]++;
     }
 }
@@ -940,15 +940,15 @@ void ggml_metal_fusion_info_set_enabled(ggml_metal_fusion_info * finfo, bool ena
 }
 
 void ggml_metal_fusion_info_labels_init(ggml_metal_fusion_info * finfo) {
-    if (finfo->labels_set) {
-        return;
+    如果 (finfo->labels_set) {
+        返回;
     }
 
     finfo->labels.clear();
     finfo->counts.assign(ggml_metal_fusions.size(), 0);
     finfo->labels.reserve(ggml_metal_fusions.size());
 
-    for (const ggml_metal_fusion & fusion : ggml_metal_fusions) {
+    为 (const ggml_metal_fusion & fusion : ggml_metal_fusions) {
         finfo->labels.emplace_back(ggml_metal_fusion_label(&fusion));
     }
 
@@ -964,22 +964,22 @@ void ggml_metal_fusion_info_stats_reset(ggml_metal_fusion_info * finfo) {
     std::fill(finfo->counts.begin(), finfo->counts.end(), 0);
 }
 
-int ggml_metal_fusion_info_stats_get(const ggml_metal_fusion_info * finfo, const char ** labels, uint64_t * counts, int n) {
-    const int n_fusions = (int) finfo->labels.size();
+整数 ggml_metal_fusion_info_stats_get(const ggml_metal_fusion_info * finfo, const char ** labels, uint64_t * counts, 整数 n) {
+    const 整数 n_fusions = (整数) finfo->labels.size();
 
-    if (labels == nullptr) {
-        return n_fusions;
+    如果 (labels == nullptr) {
+        返回 n_fusions;
     }
 
-    const int n_fill = std::min(n, n_fusions);
-    for (int i = 0; i < n_fill; i++) {
+    const 整数 n_fill = std::min(n, n_fusions);
+    为 (整数 i = 0; i < n_fill; i++) {
         labels[i] = finfo->labels[i].c_str();
-        if (counts != nullptr) {
+        如果 (counts != nullptr) {
             counts[i] = finfo->counts[i];
         }
     }
 
-    return n_fill;
+    返回 n_fill;
 }
 
 // ---- memory-range checks -------------------------------------------------
@@ -990,34 +990,34 @@ int ggml_metal_fusion_info_stats_get(const ggml_metal_fusion_info * finfo, const
 static bool ggml_metal_fusion_check_memory_ranges(
         const ggml_metal_fusion      * fusion,
         const ggml_tensor * const    * nodes,
-        int                            node_count) {
+        整数                            node_count) {
     // some fused kernels write through a tensor that also appears as a source (e.g. the gdn
     // cache cpy), so a source that is the same memory as the output is not an external read
     // source
     auto same_memory = [](const ggml_tensor * a, const ggml_tensor * b) {
-        if (a->data && b->data && a->data == b->data) {
-            return true;
+        如果 (a->data && b->data && a->data == b->data) {
+            返回 true;
         }
-        for (const ggml_tensor * v = a; v; v = v->view_src) {
-            if (v == b) {
-                return true;
+        为 (const ggml_tensor * v = a; v; v = v->view_src) {
+            如果 (v == b) {
+                返回 true;
             }
         }
-        for (const ggml_tensor * v = b; v; v = v->view_src) {
-            if (v == a) {
-                return true;
+        为 (const ggml_tensor * v = b; v; v = v->view_src) {
+            如果 (v == a) {
+                返回 true;
             }
         }
-        return false;
+        返回 false;
     };
 
     auto nodes_overlap = [](const ggml_tensor * a, const ggml_tensor * b) {
-        if (!a || !b || !a->data || !b->data || !a->buffer || !b->buffer) {
-            return false;
+        如果 (!a || !b || !a->data || !b->data || !a->buffer || !b->buffer) {
+            返回 false;
         }
 
-        if (a->buffer != b->buffer) {
-            return false;
+        如果 (a->buffer != b->buffer) {
+            返回 false;
         }
 
         const int64_t a_start = (int64_t) a->data;
@@ -1025,52 +1025,52 @@ static bool ggml_metal_fusion_check_memory_ranges(
         const int64_t b_start = (int64_t) b->data;
         const int64_t b_end   = b_start + ggml_backend_buft_get_alloc_size(b->buffer->buft, b);
 
-        return (b_start <= a_start && a_start < b_end) ||
+        返回 (b_start <= a_start && a_start < b_end) ||
                (a_start <= b_start && b_start < a_end);
     };
 
-    auto is_intermediate = [](const ggml_tensor * src, const ggml_tensor * const * nodes, int j) {
-        for (int k = 0; k < j; ++k) {
-            if (src == nodes[k]) {
-                return true;
+    auto is_intermediate = [](const ggml_tensor * src, const ggml_tensor * const * nodes, 整数 j) {
+        为 (整数 k = 0; k < j; ++k) {
+            如果 (src == nodes[k]) {
+                返回 true;
             }
-            for (const ggml_tensor * view_src = src->view_src; view_src; view_src = view_src->view_src) {
-                if (view_src == nodes[k]) {
-                    return true;
+            为 (const ggml_tensor * view_src = src->view_src; view_src; view_src = view_src->view_src) {
+                如果 (view_src == nodes[k]) {
+                    返回 true;
                 }
             }
         }
-        return false;
+        返回 false;
     };
 
     auto check_dst = [&](const ggml_tensor * dst) {
-        for (int j = 0; j < node_count; ++j) {
-            for (int s = 0; s < GGML_MAX_SRC; ++s) {
+        为 (整数 j = 0; j < node_count; ++j) {
+            为 (整数 s = 0; s < GGML_MAX_SRC; ++s) {
                 const ggml_tensor * src = nodes[j]->src[s];
-                if (!src || src->op == GGML_OP_NONE || same_memory(src, dst)) {
+                如果 (!src || src->op == GGML_OP_NONE || same_memory(src, dst)) {
                     continue;
                 }
 
-                if (nodes_overlap(dst, src) && !is_intermediate(src, nodes, j)) {
-                    return false;
+                如果 (nodes_overlap(dst, src) && !is_intermediate(src, nodes, j)) {
+                    返回 false;
                 }
             }
         }
-        return true;
+        返回 true;
     };
 
-    if (!check_dst(nodes[node_count - 1])) {
-        return false;
+    如果 (!check_dst(nodes[node_count - 1])) {
+        返回 false;
     }
 
-    for (int offset : fusion->outs) {
+    为 (整数 offset : fusion->outs) {
         GGML_ASSERT(offset >= 0 && offset < node_count);
-        if (!check_dst(nodes[offset])) {
-            return false;
+        如果 (!check_dst(nodes[offset])) {
+            返回 false;
         }
     }
 
-    return true;
+    返回 true;
 }
 
 // ---- queries -------------------------------------------------------------
@@ -1079,22 +1079,22 @@ static bool ggml_metal_fusion_check_memory_ranges(
 // (idx is a position in node_idxs, which maps to graph node indices)
 const ggml_metal_fusion * ggml_metal_fusion_next(
         const ggml_cgraph * gf,
-        const int * node_idxs,
-        int n_idxs,
-        int idx,
+        const 整数 * node_idxs,
+        整数 n_idxs,
+        整数 idx,
         ggml_metal_fusion_mode mode,
-        int * n_out) {
+        整数 * n_out) {
     const ggml_metal_fusion * res = nullptr;
-    int best = 1;
+    整数 best = 1;
 
-    for (const ggml_metal_fusion & fusion : ggml_metal_fusions) {
-        const int n_ops = (int) fusion.ops.size();
+    为 (const ggml_metal_fusion & fusion : ggml_metal_fusions) {
+        const 整数 n_ops = (整数) fusion.ops.size();
 
         // only look for a longer match than the current best
-        if (n_ops <= best) {
+        如果 (n_ops <= best) {
             continue;
         }
-        if (idx + n_ops > n_idxs) {
+        如果 (idx + n_ops > n_idxs) {
             continue;
         }
 
@@ -1102,59 +1102,59 @@ const ggml_metal_fusion * ggml_metal_fusion_next(
 
         // the op sequence must match exactly
         bool ok = true;
-        for (int j = 0; j < n_ops; j++) {
+        为 (整数 j = 0; j < n_ops; j++) {
             nodes[j] = gf->nodes[node_idxs[idx + j]];
-            if (nodes[j]->op != fusion.ops[j]) {
+            如果 (nodes[j]->op != fusion.ops[j]) {
                 ok = false;
                 break;
             }
         }
-        if (!ok) {
+        如果 (!ok) {
             continue;
         }
 
-        if (!fusion.unsafe) {
+        如果 (!fusion.unsafe) {
             // common element-wise chain constraints: each node reads the previous one,
             // and all nodes have the same shape
-            for (int j = 1; j < n_ops && ok; j++) {
-                if (nodes[j]->src[0] != nodes[j - 1] && nodes[j]->src[1] != nodes[j - 1]) {
+            为 (整数 j = 1; j < n_ops && ok; j++) {
+                如果 (nodes[j]->src[0] != nodes[j - 1] && nodes[j]->src[1] != nodes[j - 1]) {
                     ok = false;
                     break;
                 }
-                if (!ggml_are_same_shape(nodes[j], nodes[j - 1])) {
+                如果 (!ggml_are_same_shape(nodes[j], nodes[j - 1])) {
                     ok = false;
                     break;
                 }
             }
-            if (!ok) {
+            如果 (!ok) {
                 continue;
             }
 
             // primary output is the last node; additional outputs come from fusion.outs
-            int outputs_buf[GGML_METAL_FUSION_MAX];
+            整数 outputs_buf[GGML_METAL_FUSION_MAX];
             outputs_buf[0] = node_idxs[idx + n_ops - 1];
-            for (size_t i = 0; i < fusion.outs.size(); ++i) {
-                const int out_offset = fusion.outs[i];
+            为 (size_t i = 0; i < fusion.outs.size(); ++i) {
+                const 整数 out_offset = fusion.outs[i];
                 GGML_ASSERT(out_offset >= 0 && out_offset < n_ops);
                 outputs_buf[i + 1] = node_idxs[idx + out_offset];
             }
 
-            const int n_outputs = 1 + (int) fusion.outs.size();
+            const 整数 n_outputs = 1 + (整数) fusion.outs.size();
 
             // structural subgraph checks (op sequence, elidable uses, view containment)
-            if (!ggml_can_fuse_subgraph_ext(gf, node_idxs + idx, n_ops, fusion.ops.data(), outputs_buf, n_outputs)) {
+            如果 (!ggml_can_fuse_subgraph_ext(gf, node_idxs + idx, n_ops, fusion.ops.data(), outputs_buf, n_outputs)) {
                 continue;
             }
         }
 
         // pattern-specific checks (the sole validator for unsafe patterns)
-        if (fusion.check && !fusion.check(&fusion, nodes, gf, node_idxs, idx, mode)) {
+        如果 (fusion.check && !fusion.check(&fusion, nodes, gf, node_idxs, idx, mode)) {
             continue;
         }
 
         // the compute phase has allocated tensors and can detect aliasing between
         // external sources and fused outputs; the optimizer phase cannot do this yet
-        if (mode == GGML_METAL_FUSION_FULL &&
+        如果 (mode == GGML_METAL_FUSION_FULL &&
                 !ggml_metal_fusion_check_memory_ranges(&fusion, nodes, n_ops)) {
             continue;
         }
@@ -1165,39 +1165,39 @@ const ggml_metal_fusion * ggml_metal_fusion_next(
 
     *n_out = best;
 
-    return res;
+    返回 res;
 }
 
 // optimize phase: maximum number of nodes starting at idx (a raw sequential graph index) that
 // could be fused, chaining patterns back-to-back. matching runs on the same filtered (view
 // transparent) node sequence that the compute phase uses, so the returned count is the raw index
 // span from idx to the last matched node (intermediate views are packed along).
-int ggml_metal_fusion_max(const ggml_cgraph * gf, int idx) {
+整数 ggml_metal_fusion_max(const ggml_cgraph * gf, 整数 idx) {
     // a view node cannot start a pattern - pack it alone
-    if (ggml_op_is_empty(gf->nodes[idx]->op)) {
-        return 1;
+    如果 (ggml_op_is_empty(gf->nodes[idx]->op)) {
+        返回 1;
     }
 
     // collect the non-view node indices starting at idx; 0-element tensors are included so
     // that empty graphs pack like their non-empty counterparts (see ggml_metal_fusion_filter_ops)
-    int idxs[GGML_METAL_FUSION_MAX];
-    int n_idxs = 0;
-    for (int i = idx; i < gf->n_nodes && n_idxs < GGML_METAL_FUSION_MAX; i++) {
-        if (!ggml_op_is_empty(gf->nodes[i]->op)) {
+    整数 idxs[GGML_METAL_FUSION_MAX];
+    整数 n_idxs = 0;
+    为 (整数 i = idx; i < gf->n_nodes && n_idxs < GGML_METAL_FUSION_MAX; i++) {
+        如果 (!ggml_op_is_empty(gf->nodes[i]->op)) {
             idxs[n_idxs++] = i;
         }
     }
-    if (n_idxs == 0) {
-        return 1;
+    如果 (n_idxs == 0) {
+        返回 1;
     }
 
-    int total = 0;
-    int i_f = 0;
+    整数 total = 0;
+    整数 i_f = 0;
 
-    while (i_f < n_idxs && total < GGML_METAL_FUSION_MAX) {
-        int len = 1;
+    当 (i_f < n_idxs && total < GGML_METAL_FUSION_MAX) {
+        整数 len = 1;
         const ggml_metal_fusion * fusion = ggml_metal_fusion_next(gf, idxs, n_idxs, i_f, GGML_METAL_FUSION_STRUCTURAL, &len);
-        if (!fusion || total + len > GGML_METAL_FUSION_MAX) {
+        如果 (!fusion || total + len > GGML_METAL_FUSION_MAX) {
             break;
         }
 
@@ -1205,10 +1205,10 @@ int ggml_metal_fusion_max(const ggml_cgraph * gf, int idx) {
         i_f += len;
     }
 
-    if (i_f == 0) {
-        return 1;
+    如果 (i_f == 0) {
+        返回 1;
     }
 
     // map the matched non-empty nodes back to the raw index span (views are included)
-    return std::min(GGML_METAL_FUSION_MAX, idxs[i_f - 1] - idx + 1);
+    返回 std::min(GGML_METAL_FUSION_MAX, idxs[i_f - 1] - idx + 1);
 }

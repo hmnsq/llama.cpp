@@ -30,7 +30,7 @@ typedef struct dma_descriptor_1d_s {
     uint32_t dst;
 } dma_descriptor_1d;
 
-#if __HVX_ARCH__ < 75
+#如果 __HVX_ARCH__ < 75
 
 typedef struct dma_descriptor_2d_s {
     void *   next;
@@ -54,7 +54,7 @@ typedef struct dma_descriptor_2d_s {
     uint32_t dst_offset:16;
 } dma_descriptor_2d;
 
-#else
+#否则
 
 typedef struct dma_descriptor_2d_s {
     void *   next;
@@ -69,13 +69,13 @@ typedef struct dma_descriptor_2d_s {
     uint32_t src;
     uint32_t dst;
     uint32_t desc_type:8;
-#if __HVX_ARCH__ > 79
+#如果 __HVX_ARCH__ > 79
     uint32_t src_upper:8;
     uint32_t dst_upper:8;
     uint32_t allocation:2;
     uint32_t reserved0:2;
     uint32_t transform:4;
-#else
+#否则
     uint32_t reserved0:24;
 #endif
     uint32_t row_size:24;
@@ -88,9 +88,9 @@ typedef struct dma_descriptor_2d_s {
 
 #endif
 
-#if __HVX_ARCH__ > 79
+#如果 __HVX_ARCH__ > 79
 typedef uint64_t dma_addr_t;
-#else
+#否则
 typedef uint32_t dma_addr_t;
 #endif
 
@@ -107,10 +107,10 @@ typedef struct {
 #define DMA_MAX_STRIDE_24B     0x00FFFFFFu    // 24-bit HW descriptor limit for strides (16MB - 1)
 #define DMA_SAFE_CHUNK_SIZE    0x00F00000u    // ~15MB safe contiguous chunk size
 
-#if __HVX_ARCH__ < 75
+#如果 __HVX_ARCH__ < 75
 #define DMA_MAX_2D_ROW_SIZE    DMA_MAX_SIZE_16B
 #define DMA_MAX_2D_STRIDE      DMA_MAX_STRIDE_16B
-#else
+#否则
 #define DMA_MAX_2D_ROW_SIZE    DMA_MAX_SIZE_24B
 #define DMA_MAX_2D_STRIDE      DMA_MAX_STRIDE_24B
 #endif
@@ -149,7 +149,7 @@ void        dma_queue_alias_free(dma_queue_t q);
 
 bool        dma_queue_push_fallback_2d(dma_queue * q, dma_data ddata, size_t dst_stride, size_t src_stride, size_t row_size, size_t nrows);
 bool        dma_queue_push_fallback_contig(dma_queue * q, dma_data ddata, size_t total);
-#if __HVX_ARCH__ < 75
+#如果 __HVX_ARCH__ < 75
 bool        dma_queue_push_fallback_1d(dma_queue * q, dma_data ddata, size_t dst_stride, size_t src_stride, size_t row_size, size_t nrows);
 #endif
 
@@ -165,33 +165,33 @@ static inline void dmlink(void * cur, void * next) {
     asm volatile(" dmlink(%0, %1)" : : "r"(cur), "r"(next));
 }
 
-static inline unsigned int dmpoll(void) {
-    unsigned int ret = 0;
+static inline unsigned 整数 dmpoll(void) {
+    unsigned 整数 ret = 0;
     asm volatile(" %0 = dmpoll" : "=r"(ret) : : "memory");
-    return ret;
+    返回 ret;
 }
 
-static inline unsigned int dmwait(void) {
-    unsigned int ret = 0;
+static inline unsigned 整数 dmwait(void) {
+    unsigned 整数 ret = 0;
     asm volatile(" %0 = dmwait" : "=r"(ret) : : "memory");
-    return ret;
+    返回 ret;
 }
 
 static inline dma_data dma_make_data_impl(dma_addr_t dst, dma_addr_t src)
 {
     dma_data d = { dst, src };
-    return d;
+    返回 d;
 }
 
 #define dma_make_data(dst, src) dma_make_data_impl((dma_addr_t) (dst), (dma_addr_t) (src))
 
 static inline bool dma_ring_push_single_1d(dma_ring * r, dma_data ddata, size_t size) {
-#if __HVX_ARCH__ > 79
+#如果 __HVX_ARCH__ > 79
     assert(!((ddata.src | ddata.dst) >> 32) || size == 0);
 #endif
 
-    if (((r->push_idx + 1) & r->idx_mask) == r->pop_idx) {
-        return false;
+    如果 (((r->push_idx + 1) & r->idx_mask) == r->pop_idx) {
+        返回 false;
     }
 
     dma_descriptor_1d * desc = (dma_descriptor_1d *) &r->desc[r->push_idx];
@@ -203,7 +203,7 @@ static inline bool dma_ring_push_single_1d(dma_ring * r, dma_data ddata, size_t 
 
     htp_trace_event_start(r->trace, HTP_TRACE_EVT_DMA, r->push_idx);
 
-    if (size) {
+    如果 (size) {
         desc->next       = NULL;
         desc->desc_size  = 0; // 1D mode
         desc->src_bypass = 1;
@@ -213,25 +213,25 @@ static inline bool dma_ring_push_single_1d(dma_ring * r, dma_data ddata, size_t 
 
         dmlink(r->tail, desc);
         r->tail = (dma_descriptor_2d *) desc;
-    } else {
+    } 否则 {
         desc->desc_size = 0;
         desc->done      = 1;
     }
 
     r->push_idx = (r->push_idx + 1) & r->idx_mask;
-    return true;
+    返回 true;
 }
 
 static inline bool dma_ring_push_single_2d(dma_ring * r, dma_data ddata, size_t dst_stride, size_t src_stride, size_t row_size, size_t nrows) {
-#if __HVX_ARCH__ > 79
+#如果 __HVX_ARCH__ > 79
     assert(!((ddata.src | ddata.dst) >> 40) || nrows == 0);
     const uint32_t src_hi = (uint32_t) (ddata.src >> 32);
     const uint32_t dst_hi = (uint32_t) (ddata.dst >> 32);
     const bool is_ext     = (src_hi | dst_hi) != 0;
 #endif
 
-    if (((r->push_idx + 1) & r->idx_mask) == r->pop_idx) {
-        return false;
+    如果 (((r->push_idx + 1) & r->idx_mask) == r->pop_idx) {
+        返回 false;
     }
 
     dma_descriptor_2d * desc = &r->desc[r->push_idx];
@@ -251,21 +251,21 @@ static inline bool dma_ring_push_single_2d(dma_ring * r, dma_data ddata, size_t 
     desc->dst            = (uint32_t) ddata.dst;
     desc->row_size       = row_size;
 
-#if __HVX_ARCH__ < 75
+#如果 __HVX_ARCH__ < 75
     desc->reserved0      = 0;
     desc->desc_type      = 0; // 2d (16-bit) mode
     desc->nrows          = nrows;
     desc->src_offset     = 0;
     desc->dst_offset     = 0;
-#else
-#if __HVX_ARCH__ > 79
+#否则
+#如果 __HVX_ARCH__ > 79
     desc->src_upper      = src_hi;
     desc->dst_upper      = dst_hi;
     desc->allocation     = 0;
     desc->reserved0      = 0;
     desc->transform      = 0;
     desc->desc_type      = is_ext ? 10 : 9; // 2d 40-bit or 24-bit mode
-#else
+#否则
     desc->reserved0      = 0;
     desc->desc_type      = 9; // 2d (24-bit) mode
 #endif
@@ -278,32 +278,32 @@ static inline bool dma_ring_push_single_2d(dma_ring * r, dma_data ddata, size_t 
 
     htp_trace_event_start(r->trace, HTP_TRACE_EVT_DMA, r->push_idx);
 
-    if (nrows) {
+    如果 (nrows) {
         dmlink(r->tail, desc);
         r->tail = desc;
-    } else {
+    } 否则 {
         desc->done = 1;
     }
 
     r->push_idx = (r->push_idx + 1) & r->idx_mask;
-    return true;
+    返回 true;
 }
 
-#if __HVX_ARCH__ < 75
+#如果 __HVX_ARCH__ < 75
 static inline bool dma_ring_push_single_contig(dma_ring * r, dma_data ddata, size_t size) {
-    return dma_ring_push_single_1d(r, ddata, size);
+    返回 dma_ring_push_single_1d(r, ddata, size);
 }
-#else
+#否则
 static inline bool dma_ring_push_single_contig(dma_ring * r, dma_data ddata, size_t size) {
-    return dma_ring_push_single_2d(r, ddata, size, size, size, 1);
+    返回 dma_ring_push_single_2d(r, ddata, size, size, size, 1);
 }
 #endif
 
 static inline dma_data dma_ring_pop(dma_ring * r) {
     dma_data ddata = { 0 };
 
-    if (r->push_idx == r->pop_idx) {
-        return ddata;
+    如果 (r->push_idx == r->pop_idx) {
+        返回 ddata;
     }
 
     ddata = r->data[r->pop_idx];
@@ -311,9 +311,9 @@ static inline dma_data dma_ring_pop(dma_ring * r) {
     volatile dma_descriptor_2d * desc = &r->desc[r->pop_idx];
 
     // Wait for desc to complete
-    if (!desc->done) {
+    如果 (!desc->done) {
         // FARF(ALWAYS, "dma-poll: idx %u dst %p src %p", r->pop_idx, ddata.dst, ddata.src);
-        while (!desc->done) {
+        当 (!desc->done) {
             dmpoll();
         }
     }
@@ -321,14 +321,14 @@ static inline dma_data dma_ring_pop(dma_ring * r) {
     htp_trace_event_stop(r->trace, HTP_TRACE_EVT_DMA, r->pop_idx);
 
     r->pop_idx = (r->pop_idx + 1) & r->idx_mask;
-    return ddata;
+    返回 ddata;
 }
 
 static inline dma_data dma_ring_pop_nowait(dma_ring * r) {
     dma_data ddata = { 0 };
 
-    if (r->push_idx == r->pop_idx) {
-        return ddata;
+    如果 (r->push_idx == r->pop_idx) {
+        返回 ddata;
     }
 
     ddata = r->data[r->pop_idx];
@@ -336,45 +336,45 @@ static inline dma_data dma_ring_pop_nowait(dma_ring * r) {
     htp_trace_event_stop(r->trace, HTP_TRACE_EVT_DMA, r->pop_idx);
 
     r->pop_idx = (r->pop_idx + 1) & r->idx_mask;
-    return ddata;
+    返回 ddata;
 }
 
 static inline bool dma_ring_empty(dma_ring * r) {
-    return r->push_idx == r->pop_idx;
+    返回 r->push_idx == r->pop_idx;
 }
 
 static inline void dma_ring_flush(dma_ring * r) {
-    while (!dma_ring_empty(r)) {
+    当 (!dma_ring_empty(r)) {
         dma_ring_pop(r);
     }
 }
 
 static inline uint32_t dma_ring_depth(dma_ring * r) {
-    return (r->push_idx - r->pop_idx) & r->idx_mask;
+    返回 (r->push_idx - r->pop_idx) & r->idx_mask;
 }
 
 static inline uint32_t dma_ring_capacity(dma_ring * r) {
-    return r->capacity;
+    返回 r->capacity;
 }
 
 static inline bool dma_queue_push_single_1d(dma_queue * q, dma_data ddata, size_t size) {
-    return dma_ring_push_single_1d(q->ring0, ddata, size);
+    返回 dma_ring_push_single_1d(q->ring0, ddata, size);
 }
 
 static inline bool dma_queue_push_single_2d(dma_queue * q, dma_data ddata, size_t dst_stride, size_t src_stride, size_t row_size, size_t nrows) {
-    return dma_ring_push_single_2d(q->ring0, ddata, dst_stride, src_stride, row_size, nrows);
+    返回 dma_ring_push_single_2d(q->ring0, ddata, dst_stride, src_stride, row_size, nrows);
 }
 
 static inline dma_data dma_queue_pop(dma_queue * q) {
-    return dma_ring_pop(q->ring0);
+    返回 dma_ring_pop(q->ring0);
 }
 
 static inline dma_data dma_queue_pop_nowait(dma_queue * q) {
-    return dma_ring_pop_nowait(q->ring0);
+    返回 dma_ring_pop_nowait(q->ring0);
 }
 
 static inline bool dma_queue_empty(dma_queue * q) {
-    return dma_ring_empty(q->ring0);
+    返回 dma_ring_empty(q->ring0);
 }
 
 static inline void dma_queue_flush(dma_queue * q) {
@@ -382,47 +382,47 @@ static inline void dma_queue_flush(dma_queue * q) {
 }
 
 static inline uint32_t dma_queue_depth(dma_queue * q) {
-    return dma_ring_depth(q->ring0);
+    返回 dma_ring_depth(q->ring0);
 }
 
 static inline uint32_t dma_queue_capacity(dma_queue * q) {
-    return dma_ring_capacity(q->ring0);
+    返回 dma_ring_capacity(q->ring0);
 }
 
 static inline bool dma_queue_push(dma_queue * q, dma_data ddata, size_t dst_stride, size_t src_stride, size_t row_size, size_t nrows) {
-    if (__builtin_expect(nrows == 0, 0)) {
-        return dma_ring_push_single_1d(q->ring0, ddata, 0);
+    如果 (__builtin_expect(nrows == 0, 0)) {
+        返回 dma_ring_push_single_1d(q->ring0, ddata, 0);
     }
 
     // 1. Hot path: Contiguous or single-row (80-90% of calls)
-    if (nrows == 1 || !((row_size ^ src_stride) | (row_size ^ dst_stride))) {
+    如果 (nrows == 1 || !((row_size ^ src_stride) | (row_size ^ dst_stride))) {
         const size_t total = row_size * nrows;
-        if (__builtin_expect(total <= DMA_MAX_SIZE_24B, 1)) {
-            return dma_ring_push_single_contig(q->ring0, ddata, total);
+        如果 (__builtin_expect(total <= DMA_MAX_SIZE_24B, 1)) {
+            返回 dma_ring_push_single_contig(q->ring0, ddata, total);
         }
-        return dma_queue_push_fallback_contig(q, ddata, total);
+        返回 dma_queue_push_fallback_contig(q, ddata, total);
     }
 
     // 2. Hot path: Standard strided 2D (10-20% of calls)
-    if (__builtin_expect(nrows <= DMA_MAX_NROWS &&
+    如果 (__builtin_expect(nrows <= DMA_MAX_NROWS &&
                          (row_size | src_stride | dst_stride) <= DMA_MAX_2D_ROW_SIZE, 1)) {
-        return dma_ring_push_single_2d(q->ring0, ddata, dst_stride, src_stride, row_size, nrows);
+        返回 dma_ring_push_single_2d(q->ring0, ddata, dst_stride, src_stride, row_size, nrows);
     }
 
     // 3. Cold path: Descriptor chunking fallbacks (< 0.1%)
-#if __HVX_ARCH__ < 75
-    if (row_size <= DMA_MAX_SIZE_16B && (src_stride | dst_stride) <= DMA_MAX_STRIDE_16B) {
-        return dma_queue_push_fallback_2d(q, ddata, dst_stride, src_stride, row_size, nrows);
+#如果 __HVX_ARCH__ < 75
+    如果 (row_size <= DMA_MAX_SIZE_16B && (src_stride | dst_stride) <= DMA_MAX_STRIDE_16B) {
+        返回 dma_queue_push_fallback_2d(q, ddata, dst_stride, src_stride, row_size, nrows);
     }
-    return dma_queue_push_fallback_1d(q, ddata, dst_stride, src_stride, row_size, nrows);
-#else
-    return dma_queue_push_fallback_2d(q, ddata, dst_stride, src_stride, row_size, nrows);
+    返回 dma_queue_push_fallback_1d(q, ddata, dst_stride, src_stride, row_size, nrows);
+#否则
+    返回 dma_queue_push_fallback_2d(q, ddata, dst_stride, src_stride, row_size, nrows);
 #endif
 }
 
 static inline void dma_sync_read(dma_queue * dma_q, void * dst, dma_addr_t src, size_t bytes) {
     const uint32_t b = (uint32_t) bytes;
-    if (b > 0) {
+    如果 (b > 0) {
         dma_queue_push(dma_q, dma_make_data(dst, src), b, b, b, 1);
         dma_queue_pop(dma_q);
     }
@@ -430,7 +430,7 @@ static inline void dma_sync_read(dma_queue * dma_q, void * dst, dma_addr_t src, 
 
 static inline void dma_sync_write(dma_queue * dma_q, dma_addr_t dst, const void * src, size_t bytes) {
     const uint32_t b = (uint32_t) bytes;
-    if (b > 0) {
+    如果 (b > 0) {
         dma_queue_push(dma_q, dma_make_data(dst, src), b, b, b, 1);
         dma_queue_pop(dma_q);
     }
@@ -453,7 +453,7 @@ static inline void dma_cache_fa_init(dma_cache_fa *c, uint8_t *base, uint32_t li
     c->base      = base;
     c->line_size = line_size;
 
-    for (unsigned i=0; i < c->capacity; i++) {
+    为 (unsigned i=0; i < c->capacity; i++) {
         c->src[i] = 0;
         c->age[i] = 0;
     }
@@ -465,23 +465,23 @@ static inline bool dma_cache_fa_push(dma_queue *q, dma_cache_fa *c, dma_addr_t s
     uint16_t o_age = 0;
     uint8_t *  dst = 0;
 
-    for (unsigned i=0; i < c->capacity; i++) {
-        if (c->src[i] == src_addr) {
+    为 (unsigned i=0; i < c->capacity; i++) {
+        如果 (c->src[i] == src_addr) {
             c->age[i] = 0;
             dst = c->base + (i * c->line_size); nrows = 0; // dummy dma
-        } else {
+        } 否则 {
             c->age[i]++;
-            if (c->age[i] > o_age) { o_age = c->age[i]; o_idx = i; }
+            如果 (c->age[i] > o_age) { o_age = c->age[i]; o_idx = i; }
         }
     }
-    if (!dst) {
+    如果 (!dst) {
         c->age[o_idx] = 0;
         c->src[o_idx] = src_addr;
         dst = c->base + o_idx * c->line_size; // normal nrows dma
-        return dma_queue_push(q, dma_make_data(dst, src_addr), dst_stride, src_stride, row_size, nrows);
+        返回 dma_queue_push(q, dma_make_data(dst, src_addr), dst_stride, src_stride, row_size, nrows);
     }
 
-    return dma_queue_push_single_1d(q, dma_make_data(dst, src_addr), 0);
+    返回 dma_queue_push_single_1d(q, dma_make_data(dst, src_addr), 0);
 }
 
 // Direct mapped cache
@@ -500,7 +500,7 @@ static inline void dma_cache_dm_init(dma_cache_dm *c, uint8_t *base, uint32_t li
     c->base      = base;
     c->line_size = line_size;
 
-    for (unsigned i=0; i < c->capacity; i++) {
+    为 (unsigned i=0; i < c->capacity; i++) {
         c->src[i] = 0;
     }
 }
@@ -510,12 +510,12 @@ static inline bool dma_cache_dm_push(dma_queue *q, dma_cache_dm *c, uint32_t slo
     const uint32_t i = slot & c->idx_mask;
     uint8_t * dst = c->base + (i * c->line_size);
 
-    if (c->src[i] == src_addr) {
-        return dma_queue_push_single_1d(q, dma_make_data(dst, src_addr), 0); // dummy dma
+    如果 (c->src[i] == src_addr) {
+        返回 dma_queue_push_single_1d(q, dma_make_data(dst, src_addr), 0); // dummy dma
     }
 
     c->src[i] = src_addr;
-    return dma_queue_push(q, dma_make_data(dst, src_addr), dst_stride, src_stride, row_size, nrows);
+    返回 dma_queue_push(q, dma_make_data(dst, src_addr), dst_stride, src_stride, row_size, nrows);
 }
 
 #ifdef __cplusplus

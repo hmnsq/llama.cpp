@@ -84,10 +84,10 @@ static inline void htp_copy_convert_vtcm_layout_build(
 
     const uint32_t max_row = layout->src0_row_stride > layout->dst_row_stride ? layout->src0_row_stride : layout->dst_row_stride;
     uint32_t blk_rows = HTP_COPY_VTCM_BLK_BYTES / max_row;
-    if (blk_rows > ne01) {
+    如果 (blk_rows > ne01) {
         blk_rows = ne01;
     }
-    if (blk_rows == 0) {
+    如果 (blk_rows == 0) {
         blk_rows = 1;
     }
     layout->blk_rows = blk_rows;
@@ -99,9 +99,9 @@ static inline void htp_copy_convert_vtcm_layout_build(
     layout->total_bytes = n_threads * (layout->spad0_size_per_thread + layout->spad1_size_per_thread);
 }
 
-#if defined(__cplusplus)
+#如果 defined(__cplusplus)
 static_assert(sizeof(struct htp_copy_kernel_params) <= 128, "htp_copy_kernel_params is too large for kernel_params blob");
-#else
+#否则
 _Static_assert(sizeof(struct htp_copy_kernel_params) <= 128, "htp_copy_kernel_params is too large for kernel_params blob");
 #endif
 

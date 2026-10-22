@@ -7,7 +7,7 @@
 #include "ggml-cpu.h"
 #include "traits.h"
 
-#if defined(__linux__)
+#如果 defined(__linux__)
 #include <sys/syscall.h>
 #include <unistd.h>
 #endif
@@ -16,28 +16,28 @@
 #include <cstring>
 #include <memory>
 
-#if defined(__AMX_INT8__) && defined(__AVX512VNNI__)
+#如果 defined(__AMX_INT8__) && defined(__AVX512VNNI__)
 
 // AMX type_trais
 namespace ggml::cpu::amx {
 class tensor_traits : public ggml::cpu::tensor_traits {
-    bool work_size(int /* n_threads */, const struct ggml_tensor * op, size_t & size) override {
+    bool work_size(整数 /* n_threads */, const struct ggml_tensor * op, size_t & size) override {
         size = ggml_backend_amx_desired_wsize(op);
-        return true;
+        返回 true;
     }
 
     bool compute_forward(struct ggml_compute_params * params, struct ggml_tensor * op) override {
-        if (op->op == GGML_OP_MUL_MAT) {
+        如果 (op->op == GGML_OP_MUL_MAT) {
             ggml_backend_amx_mul_mat(params, op);
-            return true;
+            返回 true;
         }
-        return false;
+        返回 false;
     }
 };
 
 static ggml::cpu::tensor_traits * get_tensor_traits(ggml_backend_buffer_t, struct ggml_tensor *) {
     static tensor_traits traits;
-    return &traits;
+    返回 &traits;
 }
 }  // namespace ggml::cpu::amx
 
@@ -47,14 +47,14 @@ static void ggml_backend_amx_buffer_free_buffer(ggml_backend_buffer_t buffer) {
 }
 
 static void * ggml_backend_amx_buffer_get_base(ggml_backend_buffer_t buffer) {
-    return (void *) (buffer->context);
+    返回 (void *) (buffer->context);
 }
 
 static enum ggml_status ggml_backend_amx_buffer_init_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor) {
     tensor->extra = (void *) ggml::cpu::amx::get_tensor_traits(buffer, tensor);
 
     GGML_UNUSED(buffer);
-    return GGML_STATUS_SUCCESS;
+    返回 GGML_STATUS_SUCCESS;
 }
 
 static void ggml_backend_amx_buffer_memset_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor,
@@ -66,10 +66,10 @@ static void ggml_backend_amx_buffer_memset_tensor(ggml_backend_buffer_t buffer, 
 
 static void ggml_backend_amx_buffer_set_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor,
                                                const void * data, size_t offset, size_t size) {
-    if (qtype_has_amx_kernels(tensor->type)) {
+    如果 (qtype_has_amx_kernels(tensor->type)) {
         GGML_LOG_DEBUG("%s: amx repack tensor %s of type %s\n", __func__, tensor->name, ggml_type_name(tensor->type));
         ggml_backend_amx_convert_weight(tensor, data, offset, size);
-    } else {
+    } 否则 {
         memcpy((char *) tensor->data + offset, data, size);
     }
 
@@ -119,23 +119,23 @@ static ggml_backend_buffer_i ggml_backend_amx_buffer_interface = {
 };
 
 static const char * ggml_backend_amx_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
-    return "AMX";
+    返回 "AMX";
 
     GGML_UNUSED(buft);
 }
 
 static ggml_backend_buffer_t ggml_backend_amx_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
     void * data = ggml_aligned_malloc(size);
-    if (data == NULL) {
+    如果 (data == NULL) {
         fprintf(stderr, "%s: failed to allocate buffer of size %zu\n", __func__, size);
-        return NULL;
+        返回 NULL;
     }
 
-    return ggml_backend_buffer_init(buft, ggml_backend_amx_buffer_interface, data, size);
+    返回 ggml_backend_buffer_init(buft, ggml_backend_amx_buffer_interface, data, size);
 }
 
 static size_t ggml_backend_amx_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
-    return TENSOR_ALIGNMENT;
+    返回 TENSOR_ALIGNMENT;
 
     GGML_UNUSED(buft);
 }
@@ -143,25 +143,25 @@ static size_t ggml_backend_amx_buffer_type_get_alignment(ggml_backend_buffer_typ
 namespace ggml::cpu::amx {
 class extra_buffer_type : ggml::cpu::extra_buffer_type {
     bool supports_op(ggml_backend_dev_t, const struct ggml_tensor * op) override {
-        if (op->op != GGML_OP_MUL_MAT) {
-            return false;
+        如果 (op->op != GGML_OP_MUL_MAT) {
+            返回 false;
         }
         auto * src0 = op->src[0];
         auto * src1 = op->src[1];
 
-        if (!ggml_is_contiguous(src0) || !ggml_is_contiguous(src1)) {
-            return false;
+        如果 (!ggml_is_contiguous(src0) || !ggml_is_contiguous(src1)) {
+            返回 false;
         }
-        if (!src0->buffer || src0->buffer->buft != ggml_backend_amx_buffer_type()) {
-            return false;
+        如果 (!src0->buffer || src0->buffer->buft != ggml_backend_amx_buffer_type()) {
+            返回 false;
         }
-        if (src1->buffer && !ggml_backend_buft_is_host(src1->buffer->buft)) {
-            return false;
+        如果 (src1->buffer && !ggml_backend_buft_is_host(src1->buffer->buft)) {
+            返回 false;
         }
-        if (op->ne[0] % (TILE_N * 2)) {
-            return false;
+        如果 (op->ne[0] % (TILE_N * 2)) {
+            返回 false;
         }
-        int alignment;
+        整数 alignment;
         switch (src0->type) {
             case GGML_TYPE_Q4_0:
             case GGML_TYPE_Q4_1:
@@ -178,30 +178,30 @@ class extra_buffer_type : ggml::cpu::extra_buffer_type {
                 alignment = 16;
                 break;
             default:
-                return false;
+                返回 false;
         }
-        if (src0->ne[0] % alignment) {
-            return false;
+        如果 (src0->ne[0] % alignment) {
+            返回 false;
         }
-        if (src1->type != GGML_TYPE_F32) {
-            return false;
+        如果 (src1->type != GGML_TYPE_F32) {
+            返回 false;
         }
-        return true;
+        返回 true;
     }
 
     ggml::cpu::tensor_traits * get_tensor_traits(const struct ggml_tensor * op) override {
-        if (op->op == GGML_OP_MUL_MAT && op->src[0]->buffer &&
+        如果 (op->op == GGML_OP_MUL_MAT && op->src[0]->buffer &&
             op->src[0]->buffer->buft == ggml_backend_amx_buffer_type()) {
-            return (ggml::cpu::tensor_traits *) op->src[0]->extra;
+            返回 (ggml::cpu::tensor_traits *) op->src[0]->extra;
         }
 
-        return nullptr;
+        返回 nullptr;
     }
 };
 }  // namespace ggml::cpu::amx
 
 static size_t ggml_backend_amx_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft, const ggml_tensor * tensor) {
-    return ggml_backend_amx_get_alloc_size(tensor);
+    返回 ggml_backend_amx_get_alloc_size(tensor);
 
     GGML_UNUSED(buft);
 }
@@ -212,16 +212,16 @@ static size_t ggml_backend_amx_buffer_type_get_alloc_size(ggml_backend_buffer_ty
 #define XFEATURE_XTILEDATA      18
 
 static bool ggml_amx_init() {
-#if defined(__linux__)
-    if (syscall(SYS_arch_prctl, ARCH_REQ_XCOMP_PERM, XFEATURE_XTILEDATA)) {
+#如果 defined(__linux__)
+    如果 (syscall(SYS_arch_prctl, ARCH_REQ_XCOMP_PERM, XFEATURE_XTILEDATA)) {
         fprintf(stderr, "AMX is not ready to be used!\n");
-        return false;
+        返回 false;
     }
-    return true;
+    返回 true;
 #elif defined(_WIN32)
-    return true;
-#else
-    return false;
+    返回 true;
+#否则
+    返回 false;
 #endif
 }
 
@@ -241,11 +241,11 @@ ggml_backend_buffer_type_t ggml_backend_amx_buffer_type() {
         /* .context = */ new ggml::cpu::amx::extra_buffer_type(),
     };
 
-    if (!ggml_amx_init()) {
-        return nullptr;
+    如果 (!ggml_amx_init()) {
+        返回 nullptr;
     }
 
-    return &ggml_backend_buffer_type_amx;
+    返回 &ggml_backend_buffer_type_amx;
 }
 
 #endif  // defined(__AMX_INT8__) && defined(__AVX512VNNI__)

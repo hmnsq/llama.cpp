@@ -29,18 +29,18 @@ void apir_backend_deinit(uint32_t virgl_ctx_id) {
     GGML_UNUSED(virgl_ctx_id);
 
     auto buffers = apir_get_track_backend_buffers();
-    for (const auto & buffer : buffers) {
+    为 (const auto & buffer : buffers) {
         apir_untrack_backend_buffer(buffer);
         buffer->iface.free_buffer(buffer);
     }
 
-    if (backend_library_handle) {
+    如果 (backend_library_handle) {
         GGML_LOG_INFO(GGML_VIRTGPU_BCK "The GGML backend library was loaded. Unloading it.\n");
         dlclose(backend_library_handle);
         backend_library_handle = NULL;
     }
 
-    if (apir_logfile) {
+    如果 (apir_logfile) {
         fclose(apir_logfile);
         apir_logfile = NULL;
     }
@@ -53,11 +53,11 @@ ApirLoadLibraryReturnCode apir_backend_initialize(uint32_t virgl_ctx_id, struct 
     const char * dlsym_error;
 
     const char * apir_log_to_file = getenv(APIR_LLAMA_CPP_LOG_TO_FILE_ENV);
-    if (apir_log_to_file) {
+    如果 (apir_log_to_file) {
         apir_logfile = fopen(apir_log_to_file, "w");
-        if (apir_logfile) {
+        如果 (apir_logfile) {
             ggml_log_set(log_to_file_callback, apir_logfile);
-        } else {
+        } 否则 {
             GGML_LOG_INFO(GGML_VIRTGPU_BCK "Could not open the log file at '%s'\n", apir_log_to_file);
         }
     }
@@ -66,40 +66,40 @@ ApirLoadLibraryReturnCode apir_backend_initialize(uint32_t virgl_ctx_id, struct 
     const char * virgl_library_reg = virgl_cbs->get_config(virgl_ctx_id, APIR_GGML_LIBRARY_REG_KEY);
     const char * library_reg       = virgl_library_reg ? virgl_library_reg : GGML_DEFAULT_BACKEND_REG;
 
-    if (!library_name) {
+    如果 (!library_name) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: cannot open the GGML library: env var '%s' not defined\n", __func__,
                        APIR_LLAMA_CPP_GGML_LIBRARY_PATH_ENV);
 
-        return APIR_LOAD_LIBRARY_ENV_VAR_MISSING;
+        返回 APIR_LOAD_LIBRARY_ENV_VAR_MISSING;
     }
 
     backend_library_handle = dlopen(library_name, RTLD_LAZY);
 
-    if (!backend_library_handle) {
+    如果 (!backend_library_handle) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: cannot open the GGML library: %s\n", __func__, dlerror());
 
-        return APIR_LOAD_LIBRARY_CANNOT_OPEN;
+        返回 APIR_LOAD_LIBRARY_CANNOT_OPEN;
     }
 
-    if (!library_reg) {
+    如果 (!library_reg) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: cannot register the GGML library: env var '%s' not defined\n", __func__,
                        APIR_LLAMA_CPP_GGML_LIBRARY_REG_ENV);
 
-        return APIR_LOAD_LIBRARY_ENV_VAR_MISSING;
+        返回 APIR_LOAD_LIBRARY_ENV_VAR_MISSING;
     }
 
     void * ggml_backend_reg_fct = dlsym(backend_library_handle, library_reg);
     dlsym_error                 = dlerror();
-    if (dlsym_error) {
+    如果 (dlsym_error) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: cannot find the GGML backend registration symbol '%s' (from %s): %s\n",
                        __func__, library_reg, APIR_LLAMA_CPP_GGML_LIBRARY_REG_ENV, dlsym_error);
 
-        return APIR_LOAD_LIBRARY_SYMBOL_MISSING;
+        返回 APIR_LOAD_LIBRARY_SYMBOL_MISSING;
     }
 
     uint32_t ret = backend_dispatch_initialize(ggml_backend_reg_fct);
 
-    return (ApirLoadLibraryReturnCode) (APIR_LOAD_LIBRARY_INIT_BASE_INDEX + ret);
+    返回 (ApirLoadLibraryReturnCode) (APIR_LOAD_LIBRARY_INIT_BASE_INDEX + ret);
 }
 
 uint32_t apir_backend_dispatcher(uint32_t               virgl_ctx_id,
@@ -128,10 +128,10 @@ uint32_t apir_backend_dispatcher(uint32_t               virgl_ctx_id,
         .iface  = virgl_cbs,
     };
 
-    if (cmd_type >= APIR_BACKEND_DISPATCH_TABLE_COUNT) {
+    如果 (cmd_type >= APIR_BACKEND_DISPATCH_TABLE_COUNT) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: Received an invalid dispatch index (%d >= %d)\n", __func__, cmd_type,
                        APIR_BACKEND_DISPATCH_TABLE_COUNT);
-        return APIR_BACKEND_FORWARD_INDEX_INVALID;
+        返回 APIR_BACKEND_FORWARD_INDEX_INVALID;
     }
 
     backend_dispatch_t forward_fct = apir_backend_dispatch_table[cmd_type];
@@ -139,6 +139,6 @@ uint32_t apir_backend_dispatcher(uint32_t               virgl_ctx_id,
 
     *enc_cur_after = enc.cur;
 
-    return ret;
+    返回 ret;
 }
 }

@@ -10,28 +10,28 @@
 
 // GGML_RPC_DEBUG verbosity: unset / 0 disabled, 1 connections and allocations, 2 per-command trace,
 // 3 per-message detail. Non-numeric values fall back to 1
-static inline int rpc_log_debug_level() {
-    static const int level = [] {
+static inline 整数 rpc_log_debug_level() {
+    static const 整数 level = [] {
         const char * env = std::getenv("GGML_RPC_DEBUG");
-        if (env == nullptr) {
-            return 0;
+        如果 (env == nullptr) {
+            返回 0;
         }
-        if (env[0] == '\0') {
-            return 1;
+        如果 (env[0] == '\0') {
+            返回 1;
         }
-        int value = 0;
-        for (const char * p = env; *p != '\0'; p++) {
-            if (*p < '0' || *p > '9') {
-                return 1;
+        整数 value = 0;
+        为 (const char * p = env; *p != '\0'; p++) {
+            如果 (*p < '0' || *p > '9') {
+                返回 1;
             }
             value = value * 10 + (*p - '0');
-            if (value > 3) {
+            如果 (value > 3) {
                 value = 3;
             }
         }
-        return value;
+        返回 value;
     }();
-    return level;
+    返回 level;
 }
 
 // Byte counts in binary units, e.g. 8208 -> "8.02 KiB". Sizes below 1 KiB stay in plain bytes
@@ -44,6 +44,6 @@ std::string rpc_log_format_tensor(const ggml_tensor * tensor);
 #define LOG_WARN(...)  GGML_LOG_WARN(__VA_ARGS__)
 #define LOG_ERROR(...) GGML_LOG_ERROR(__VA_ARGS__)
 
-#define LOG_DBG(...)  do { if (rpc_log_debug_level() >= 1) GGML_LOG_DEBUG(__VA_ARGS__); } while (0)
-#define LOG_DBG2(...) do { if (rpc_log_debug_level() >= 2) GGML_LOG_DEBUG(__VA_ARGS__); } while (0)
-#define LOG_DBG3(...) do { if (rpc_log_debug_level() >= 3) GGML_LOG_DEBUG(__VA_ARGS__); } while (0)
+#define LOG_DBG(...)  do { 如果 (rpc_log_debug_level() >= 1) GGML_LOG_DEBUG(__VA_ARGS__); } 当 (0)
+#define LOG_DBG2(...) do { 如果 (rpc_log_debug_level() >= 2) GGML_LOG_DEBUG(__VA_ARGS__); } 当 (0)
+#define LOG_DBG3(...) do { 如果 (rpc_log_debug_level() >= 3) GGML_LOG_DEBUG(__VA_ARGS__); } 当 (0)

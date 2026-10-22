@@ -11,16 +11,16 @@ namespace ggml_metal_tuning {
 // batch side refined into {2,3,4,5}: Q>1 reuses one K/V load across rows, so it only pays
 // off once ne01 aligns with Q. ne11 (KV length) is bucketed too, as the Q>1 crossover is
 // head-size dependent (small dk crosses late, large dk wins even at short KV).
-constexpr int FA_VEC_NE11_BUCKETS[] = { 1024, 4096, 16384 };
-constexpr int FA_VEC_NE01_BUCKETS[] = { 2, 3, 4, 5 };
+constexpr 整数 FA_VEC_NE11_BUCKETS[] = { 1024, 4096, 16384 };
+constexpr 整数 FA_VEC_NE01_BUCKETS[] = { 2, 3, 4, 5 };
 
-int fa_vec_ne11_bucket(int64_t ne11);
-int fa_vec_ne01_bucket(int64_t ne01);
+整数 fa_vec_ne11_bucket(int64_t ne11);
+整数 fa_vec_ne01_bucket(int64_t ne01);
 
 // NE baked into each (dk,dv) baseline instantiation in kernels/fa_vec_*.metal.
 // Hand-maintained mirror; keep in sync with those instantiations.
 // The Metal test slice covers every legal config for dk=128 and dk=576.
-int fa_vec_baseline_ne(int dk, int dv);
+整数 fa_vec_baseline_ne(整数 dk, 整数 dv);
 
 // Tuned table has two row kinds. Exact rows key a (ne11_b, ne01_b) bucket. Default rows
 // collapse ne11 over one ne01 domain: ne11_b == FA_VEC_NE11_DEFAULT and ne01_b holds the
@@ -53,23 +53,23 @@ struct fa_vec_entry_t {
 
 // legal NE values for a (dk,dv): NL = 32/NE, require (dk/4)%NL==0 && (dv/4)%NL==0.
 // single source shared by the offline tuner and test-backend-ops.
-inline std::vector<int> fa_vec_legal_ne(int dk, int dv) {
-    std::vector<int> r;
-    for (int ne : { 1, 2, 4 }) {
-        const int nl = 32 / ne;
-        if ((dk / 4) % nl == 0 && (dv / 4) % nl == 0) {
+inline std::vector<整数> fa_vec_legal_ne(整数 dk, 整数 dv) {
+    std::vector<整数> r;
+    为 (整数 ne : { 1, 2, 4 }) {
+        const 整数 nl = 32 / ne;
+        如果 ((dk / 4) % nl == 0 && (dv / 4) % nl == 0) {
             r.push_back(ne);
         }
     }
-    return r;
+    返回 r;
 }
 
 // test/tune-only override; when set, fa_vec_pick returns it directly.
 void         fa_vec_set_override(fa_vec_cfg_t cfg);
 void         fa_vec_clear_override();
-fa_vec_cfg_t fa_vec_baseline_cfg(int dk, int dv);
+fa_vec_cfg_t fa_vec_baseline_cfg(整数 dk, 整数 dv);
 
 // Keyed by Apple GPU family; an untuned family matches no row and gets the baseline.
-fa_vec_cfg_t fa_vec_pick(int gpu_family, int dtype, int dk, int dv, int64_t ne11, int64_t ne01);
+fa_vec_cfg_t fa_vec_pick(整数 gpu_family, 整数 dtype, 整数 dk, 整数 dv, int64_t ne11, int64_t ne01);
 
 }  // namespace ggml_metal_tuning

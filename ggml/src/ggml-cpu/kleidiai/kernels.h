@@ -19,10 +19,10 @@ enum cpu_feature {
 
 inline cpu_feature& operator|=(cpu_feature& lhs, cpu_feature rhs) {
     lhs = static_cast<cpu_feature>(lhs | rhs);
-    return lhs;
+    返回 lhs;
 }
 inline cpu_feature operator|(cpu_feature lhs, cpu_feature rhs) {
-    return static_cast<cpu_feature>(static_cast<int>(lhs) | static_cast<int>(rhs));
+    返回 static_cast<cpu_feature>(static_cast<整数>(lhs) | static_cast<整数>(rhs));
 }
 
 struct kernel_info {

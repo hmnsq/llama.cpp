@@ -20,7 +20,7 @@
 #elif defined(__APPLE__)
 #    include <mach-o/dyld.h>
 #    include <dlfcn.h>
-#else
+#否则
 #    include <dlfcn.h>
 #    include <unistd.h>
 #endif
@@ -94,16 +94,16 @@ namespace fs = std::filesystem;
 
 static std::string path_str(const fs::path & path) {
     try {
-#if defined(__cpp_lib_char8_t)
+#如果 defined(__cpp_lib_char8_t)
         // C++20 and later: u8string() returns std::u8string
         const std::u8string u8str = path.u8string();
-        return std::string(reinterpret_cast<const char *>(u8str.data()), u8str.size());
-#else
+        返回 std::string(reinterpret_cast<const char *>(u8str.data()), u8str.size());
+#否则
         // C++17: u8string() returns std::string
-        return path.u8string();
+        返回 path.u8string();
 #endif
     } catch (...) {
-        return std::string();
+        返回 std::string();
     }
 }
 
@@ -128,9 +128,9 @@ struct ggml_backend_registry {
 #endif
 #ifdef GGML_USE_VULKAN
     // Add runtime disable check
-    if (getenv("GGML_DISABLE_VULKAN") == nullptr) {
+    如果 (getenv("GGML_DISABLE_VULKAN") == nullptr) {
         register_backend(ggml_backend_vk_reg());
-    } else {
+    } 否则 {
         GGML_LOG_DEBUG("Vulkan backend disabled by GGML_DISABLE_VULKAN environment variable\n");
     }
 #endif
@@ -176,21 +176,21 @@ struct ggml_backend_registry {
     ~ggml_backend_registry() {
         // FIXME: backends cannot be safely unloaded without a function to destroy all the backend resources,
         // since backend threads may still be running and accessing resources from the dynamic library
-        for (auto & entry : backends) {
-            if (entry.handle) {
+        为 (auto & entry : backends) {
+            如果 (entry.handle) {
                 entry.handle.release(); // NOLINT
             }
         }
     }
 
     void register_backend(ggml_backend_reg_t reg, dl_handle_ptr handle = nullptr) {
-        if (!reg) {
-            return;
+        如果 (!reg) {
+            返回;
         }
 
-        for (auto & entry : backends) {
-            if (entry.reg == reg) {
-                return;
+        为 (auto & entry : backends) {
+            如果 (entry.reg == reg) {
+                返回;
             }
         }
 
@@ -199,15 +199,15 @@ struct ggml_backend_registry {
             __func__, ggml_backend_reg_name(reg), ggml_backend_reg_dev_count(reg));
 #endif
         backends.push_back({ reg, std::move(handle) });
-        for (size_t i = 0; i < ggml_backend_reg_dev_count(reg); i++) {
+        为 (size_t i = 0; i < ggml_backend_reg_dev_count(reg); i++) {
             register_device(ggml_backend_reg_dev_get(reg, i));
         }
     }
 
     void register_device(ggml_backend_dev_t device) {
-        for (auto & dev : devices) {
-            if (dev == device) {
-                return;
+        为 (auto & dev : devices) {
+            如果 (dev == device) {
+                返回;
             }
         }
 
@@ -219,69 +219,69 @@ struct ggml_backend_registry {
 
     ggml_backend_reg_t load_backend(const fs::path & path, bool silent) {
         dl_handle_ptr handle { dl_load_library(path) };
-        if (!handle) {
-            if (!silent) {
+        如果 (!handle) {
+            如果 (!silent) {
                 GGML_LOG_ERROR("%s: failed to load %s: %s\n", __func__, path_str(path).c_str(), dl_error());
             }
-            return nullptr;
+            返回 nullptr;
         }
 
         auto score_fn = (ggml_backend_score_t) dl_get_sym(handle.get(), "ggml_backend_score");
-        if (score_fn && score_fn() == 0) {
-            if (!silent) {
+        如果 (score_fn && score_fn() == 0) {
+            如果 (!silent) {
                 GGML_LOG_INFO("%s: backend %s is not supported on this system\n", __func__, path_str(path).c_str());
             }
-            return nullptr;
+            返回 nullptr;
         }
 
         auto backend_init_fn = (ggml_backend_init_t) dl_get_sym(handle.get(), "ggml_backend_init");
-        if (!backend_init_fn) {
-            if (!silent) {
+        如果 (!backend_init_fn) {
+            如果 (!silent) {
                 GGML_LOG_ERROR("%s: failed to find ggml_backend_init in %s\n", __func__, path_str(path).c_str());
             }
-            return nullptr;
+            返回 nullptr;
         }
 
         ggml_backend_reg_t reg = backend_init_fn();
-        if (!reg || reg->api_version != GGML_BACKEND_API_VERSION) {
-            if (!silent) {
-                if (!reg) {
+        如果 (!reg || reg->api_version != GGML_BACKEND_API_VERSION) {
+            如果 (!silent) {
+                如果 (!reg) {
                     GGML_LOG_ERROR("%s: failed to initialize backend from %s: ggml_backend_init returned NULL\n",
                         __func__, path_str(path).c_str());
-                } else {
+                } 否则 {
                     GGML_LOG_ERROR("%s: failed to initialize backend from %s: incompatible API version (backend: %d, current: %d)\n",
                         __func__, path_str(path).c_str(), reg->api_version, GGML_BACKEND_API_VERSION);
                 }
             }
-            return nullptr;
+            返回 nullptr;
         }
 
         GGML_LOG_INFO("%s: loaded %s backend from %s\n", __func__, ggml_backend_reg_name(reg), path_str(path).c_str());
 
         register_backend(reg, std::move(handle));
 
-        return reg;
+        返回 reg;
     }
 
     void unload_backend(ggml_backend_reg_t reg, bool silent) {
         auto it = std::find_if(backends.begin(), backends.end(),
-                               [reg](const ggml_backend_reg_entry & entry) { return entry.reg == reg; });
+                               [reg](const ggml_backend_reg_entry & entry) { 返回 entry.reg == reg; });
 
-        if (it == backends.end()) {
-            if (!silent) {
+        如果 (it == backends.end()) {
+            如果 (!silent) {
                 GGML_LOG_ERROR("%s: backend not found\n", __func__);
             }
-            return;
+            返回;
         }
 
-        if (!silent) {
+        如果 (!silent) {
             GGML_LOG_DEBUG("%s: unloading %s backend\n", __func__, ggml_backend_reg_name(reg));
         }
 
         // remove devices
         devices.erase(
             std::remove_if(devices.begin(), devices.end(),
-                            [reg](ggml_backend_dev_t dev) { return ggml_backend_dev_backend_reg(dev) == reg; }),
+                            [reg](ggml_backend_dev_t dev) { 返回 ggml_backend_dev_backend_reg(dev) == reg; }),
             devices.end());
 
         // remove backend
@@ -291,7 +291,7 @@ struct ggml_backend_registry {
 
 static ggml_backend_registry & get_reg() {
     static ggml_backend_registry reg;
-    return reg;
+    返回 reg;
 }
 
 // Internal API
@@ -305,93 +305,93 @@ void ggml_backend_device_register(ggml_backend_dev_t device) {
 
 // Backend (reg) enumeration
 static bool striequals(const char * a, const char * b) {
-    for (; *a && *b; a++, b++) {
-        if (std::tolower(*a) != std::tolower(*b)) {
-            return false;
+    为 (; *a && *b; a++, b++) {
+        如果 (std::tolower(*a) != std::tolower(*b)) {
+            返回 false;
         }
     }
-    return *a == *b;
+    返回 *a == *b;
 }
 
 size_t ggml_backend_reg_count() {
-    return get_reg().backends.size();
+    返回 get_reg().backends.size();
 }
 
 ggml_backend_reg_t ggml_backend_reg_get(size_t index) {
     GGML_ASSERT(index < ggml_backend_reg_count());
-    return get_reg().backends[index].reg;
+    返回 get_reg().backends[index].reg;
 }
 
 ggml_backend_reg_t ggml_backend_reg_by_name(const char * name) {
-    for (size_t i = 0; i < ggml_backend_reg_count(); i++) {
+    为 (size_t i = 0; i < ggml_backend_reg_count(); i++) {
         ggml_backend_reg_t reg = ggml_backend_reg_get(i);
-        if (striequals(ggml_backend_reg_name(reg), name)) {
-            return reg;
+        如果 (striequals(ggml_backend_reg_name(reg), name)) {
+            返回 reg;
         }
     }
-    return nullptr;
+    返回 nullptr;
 }
 
 // Device enumeration
 size_t ggml_backend_dev_count() {
-    return get_reg().devices.size();
+    返回 get_reg().devices.size();
 }
 
 ggml_backend_dev_t ggml_backend_dev_get(size_t index) {
     GGML_ASSERT(index < ggml_backend_dev_count());
-    return get_reg().devices[index];
+    返回 get_reg().devices[index];
 }
 
 ggml_backend_dev_t ggml_backend_dev_by_name(const char * name) {
-    for (size_t i = 0; i < ggml_backend_dev_count(); i++) {
+    为 (size_t i = 0; i < ggml_backend_dev_count(); i++) {
         ggml_backend_dev_t dev = ggml_backend_dev_get(i);
-        if (striequals(ggml_backend_dev_name(dev), name)) {
-            return dev;
+        如果 (striequals(ggml_backend_dev_name(dev), name)) {
+            返回 dev;
         }
     }
-    return nullptr;
+    返回 nullptr;
 }
 
 ggml_backend_dev_t ggml_backend_dev_by_type(enum ggml_backend_dev_type type) {
-    for (size_t i = 0; i < ggml_backend_dev_count(); i++) {
+    为 (size_t i = 0; i < ggml_backend_dev_count(); i++) {
         ggml_backend_dev_t dev = ggml_backend_dev_get(i);
-        if (ggml_backend_dev_type(dev) == type) {
-            return dev;
+        如果 (ggml_backend_dev_type(dev) == type) {
+            返回 dev;
         }
     }
-    return nullptr;
+    返回 nullptr;
 }
 
 // Convenience functions
 ggml_backend_t ggml_backend_init_by_name(const char * name, const char * params) {
     ggml_backend_dev_t dev = ggml_backend_dev_by_name(name);
-    if (!dev) {
-        return nullptr;
+    如果 (!dev) {
+        返回 nullptr;
     }
-    return ggml_backend_dev_init(dev, params);
+    返回 ggml_backend_dev_init(dev, params);
 }
 
 ggml_backend_t ggml_backend_init_by_type(enum ggml_backend_dev_type type, const char * params) {
     ggml_backend_dev_t dev = ggml_backend_dev_by_type(type);
-    if (!dev) {
-        return nullptr;
+    如果 (!dev) {
+        返回 nullptr;
     }
-    return ggml_backend_dev_init(dev, params);
+    返回 ggml_backend_dev_init(dev, params);
 }
 
 ggml_backend_t ggml_backend_init_best(void) {
     ggml_backend_dev_t dev = ggml_backend_dev_by_type(GGML_BACKEND_DEVICE_TYPE_GPU);
     dev = dev ? dev : ggml_backend_dev_by_type(GGML_BACKEND_DEVICE_TYPE_IGPU);
     dev = dev ? dev : ggml_backend_dev_by_type(GGML_BACKEND_DEVICE_TYPE_CPU);
-    if (!dev) {
-        return nullptr;
+    如果 (!dev) {
+        返回 nullptr;
     }
-    return ggml_backend_dev_init(dev, nullptr);
+    返回 ggml_backend_dev_init(dev, nullptr);
 }
 
 // Dynamic loading
 ggml_backend_reg_t ggml_backend_load(const char * path) {
-    return get_reg().load_backend(path, false);
+    返回 get_reg().load_backend(path, false);
 }
 
 void ggml_backend_unload(ggml_backend_reg_t reg) {
@@ -399,13 +399,13 @@ void ggml_backend_unload(ggml_backend_reg_t reg) {
 }
 
 static fs::path get_executable_path() {
-#if defined(__APPLE__)
+#如果 defined(__APPLE__)
     // get executable path
     std::vector<char> path;
     uint32_t size;
-    while (true) {
+    当 (true) {
         size = path.size();
-        if (_NSGetExecutablePath(path.data(), &size) == 0) {
+        如果 (_NSGetExecutablePath(path.data(), &size) == 0) {
             break;
         }
         path.resize(size);
@@ -413,28 +413,28 @@ static fs::path get_executable_path() {
     std::string base_path(path.data(), size);
     // remove executable name
     auto last_slash = base_path.find_last_of('/');
-    if (last_slash != std::string::npos) {
+    如果 (last_slash != std::string::npos) {
         base_path = base_path.substr(0, last_slash);
     }
-    return base_path + "/";
+    返回 base_path + "/";
 #elif defined(__linux__) || defined(__FreeBSD__)
     std::string base_path = ".";
     std::vector<char> path(1024);
-    while (true) {
+    当 (true) {
         // get executable path
-#    if defined(__linux__)
+#    如果 defined(__linux__)
         ssize_t len = readlink("/proc/self/exe", path.data(), path.size());
 #    elif defined(__FreeBSD__)
         ssize_t len = readlink("/proc/curproc/file", path.data(), path.size());
 #    endif
-        if (len == -1) {
+        如果 (len == -1) {
             break;
         }
-        if (len < (ssize_t) path.size()) {
+        如果 (len < (ssize_t) path.size()) {
             base_path = std::string(path.data(), len);
             // remove executable name
             auto last_slash = base_path.find_last_of('/');
-            if (last_slash != std::string::npos) {
+            如果 (last_slash != std::string::npos) {
                 base_path = base_path.substr(0, last_slash);
             }
             break;
@@ -442,38 +442,38 @@ static fs::path get_executable_path() {
         path.resize(path.size() * 2);
     }
 
-    return base_path + "/";
+    返回 base_path + "/";
 #elif defined(_WIN32)
     std::vector<wchar_t> path(MAX_PATH);
     DWORD len = GetModuleFileNameW(NULL, path.data(), path.size());
-    if (len == 0) {
-        return {};
+    如果 (len == 0) {
+        返回 {};
     }
     std::wstring base_path(path.data(), len);
     // remove executable name
     auto last_slash = base_path.find_last_of('\\');
-    if (last_slash != std::string::npos) {
+    如果 (last_slash != std::string::npos) {
         base_path = base_path.substr(0, last_slash);
     }
-    return base_path + L"\\";
-#else
-    return {};
+    返回 base_path + L"\\";
+#否则
+    返回 {};
 #endif
 }
 
 static fs::path backend_filename_prefix() {
 #ifdef _WIN32
-    return fs::u8path("ggml-");
-#else
-    return fs::u8path("libggml-");
+    返回 fs::u8path("ggml-");
+#否则
+    返回 fs::u8path("libggml-");
 #endif
 }
 
 static fs::path backend_filename_extension() {
 #ifdef _WIN32
-    return fs::u8path(".dll");
-#else
-    return fs::u8path(".so");
+    返回 fs::u8path(".dll");
+#否则
+    返回 fs::u8path(".so");
 #endif
 }
 
@@ -484,7 +484,7 @@ static ggml_backend_reg_t ggml_backend_load_best(const char * name, bool silent,
     const fs::path file_extension = backend_filename_extension();
 
     std::vector<fs::path> search_paths;
-    if (user_search_path == nullptr) {
+    如果 (user_search_path == nullptr) {
 #ifdef GGML_BACKEND_DIR
         search_paths.push_back(fs::u8path(GGML_BACKEND_DIR));
 #endif
@@ -492,46 +492,46 @@ static ggml_backend_reg_t ggml_backend_load_best(const char * name, bool silent,
         search_paths.push_back(get_executable_path());
         std::error_code cwd_ec;
         const fs::path cwd = fs::current_path(cwd_ec);
-        if (cwd_ec) {
+        如果 (cwd_ec) {
             GGML_LOG_DEBUG("%s: failed to get current directory: %s\n", __func__, cwd_ec.message().c_str());
-        } else {
+        } 否则 {
             search_paths.push_back(cwd);
         }
-    } else {
+    } 否则 {
         search_paths.push_back(fs::u8path(user_search_path));
     }
 
-    int best_score = 0;
+    整数 best_score = 0;
     fs::path best_path;
     std::error_code ec;
 
-    for (const auto & search_path : search_paths) {
+    为 (const auto & search_path : search_paths) {
         std::error_code dir_ec;
         fs::directory_iterator dir_it(search_path, dir_ec);
 
-        for (const fs::directory_iterator end; dir_it != end; dir_it.increment(dir_ec)) {
+        为 (const fs::directory_iterator end; dir_it != end; dir_it.increment(dir_ec)) {
             const auto & entry = *dir_it;
-            if (entry.is_regular_file(ec)) {
+            如果 (entry.is_regular_file(ec)) {
                 auto filename = entry.path().filename();
                 auto ext = entry.path().extension();
-                if (filename.native().find(file_prefix) == 0 && ext == file_extension) {
+                如果 (filename.native().find(file_prefix) == 0 && ext == file_extension) {
                     dl_handle_ptr handle { dl_load_library(entry) };
-                    if (!handle && !silent) {
+                    如果 (!handle && !silent) {
                         GGML_LOG_ERROR("%s: failed to load %s: %s\n", __func__, path_str(entry.path()).c_str(), dl_error());
                     }
-                    if (handle) {
+                    如果 (handle) {
                         auto score_fn = (ggml_backend_score_t) dl_get_sym(handle.get(), "ggml_backend_score");
-                        if (score_fn) {
-                            int s = score_fn();
+                        如果 (score_fn) {
+                            整数 s = score_fn();
 #ifndef NDEBUG
                             GGML_LOG_DEBUG("%s: %s score: %d\n", __func__, path_str(entry.path()).c_str(), s);
 #endif
-                            if (s > best_score) {
+                            如果 (s > best_score) {
                                 best_score = s;
                                 best_path = entry.path();
                             }
-                        } else {
-                            if (!silent) {
+                        } 否则 {
+                            如果 (!silent) {
                                 GGML_LOG_INFO("%s: failed to find ggml_backend_score in %s\n", __func__, path_str(entry.path()).c_str());
                             }
                         }
@@ -540,28 +540,28 @@ static ggml_backend_reg_t ggml_backend_load_best(const char * name, bool silent,
             }
         }
 
-        if (dir_ec) {
+        如果 (dir_ec) {
             GGML_LOG_DEBUG("%s: failed to enumerate %s: %s\n", __func__, path_str(search_path).c_str(), dir_ec.message().c_str());
         }
     }
 
-    if (best_score == 0) {
+    如果 (best_score == 0) {
         // try to load the base backend
-        for (const auto & search_path : search_paths) {
+        为 (const auto & search_path : search_paths) {
             fs::path filename = backend_filename_prefix().native() + name_path.native() + backend_filename_extension().native();
             fs::path path = search_path / filename;
-            if (std::error_code ec; fs::exists(path, ec)) {
-                return get_reg().load_backend(path, silent);
-            } else {
-                if (ec) {
+            如果 (std::error_code ec; fs::exists(path, ec)) {
+                返回 get_reg().load_backend(path, silent);
+            } 否则 {
+                如果 (ec) {
                     GGML_LOG_DEBUG("%s: posix_stat(%s) failure, error-message: %s\n", __func__, path_str(path).c_str(), ec.message().c_str());
                 }
             }
         }
-        return nullptr;
+        返回 nullptr;
     }
 
-    return get_reg().load_backend(best_path, silent);
+    返回 get_reg().load_backend(best_path, silent);
 }
 
 void ggml_backend_load_all() {
@@ -571,7 +571,7 @@ void ggml_backend_load_all() {
 void ggml_backend_load_all_from_path(const char * dir_path) {
 #ifdef NDEBUG
     bool silent = true;
-#else
+#否则
     bool silent = false;
 #endif
 
@@ -592,7 +592,7 @@ void ggml_backend_load_all_from_path(const char * dir_path) {
     ggml_backend_load_best("cpu", silent, dir_path);
     // check the environment variable GGML_BACKEND_PATH to load an out-of-tree backend
     const char * backend_path = std::getenv("GGML_BACKEND_PATH");
-    if (backend_path) {
+    如果 (backend_path) {
         ggml_backend_load(backend_path);
     }
 }

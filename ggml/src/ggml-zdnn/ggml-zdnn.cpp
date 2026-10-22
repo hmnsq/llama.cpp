@@ -21,9 +21,9 @@ static void ggml_zdnn_compute_forward_mul_mat(
     const ggml_tensor * src0 = dst->src[0];  // weights
     const ggml_tensor * src1 = dst->src[1];  // inputs
 
-    if (ggml_is_quantized(src0->type)) {
+    如果 (ggml_is_quantized(src0->type)) {
         ggml_zdnn_mul_mat_q(ctx, src0, src1, dst);
-    } else {
+    } 否则 {
         ggml_zdnn_mul_mat_f(ctx, src0, src1, dst);
     }
 }
@@ -44,10 +44,10 @@ static bool ggml_zdnn_compute_forward(
             } break;
 
         default:
-            return false;
+            返回 false;
     }
 
-    return true;
+    返回 true;
 }
 
 static enum ggml_status ggml_zdnn_graph_compute(ggml_backend_t backend, ggml_cgraph * gf) {
@@ -55,10 +55,10 @@ static enum ggml_status ggml_zdnn_graph_compute(ggml_backend_t backend, ggml_cgr
     ggml_backend_zdnn_device_context * ctx_dev = (ggml_backend_zdnn_device_context *)backend->device->context;
 
     ctx->gf = gf;
-    for (int i = 0; i < gf->n_nodes; i++) {
+    为 (整数 i = 0; i < gf->n_nodes; i++) {
         ggml_tensor * node = gf->nodes[i];
 
-        if (ggml_is_empty(node)
+        如果 (ggml_is_empty(node)
             || node->op == GGML_OP_NONE
             || node->op == GGML_OP_RESHAPE
             || node->op == GGML_OP_VIEW
@@ -67,12 +67,12 @@ static enum ggml_status ggml_zdnn_graph_compute(ggml_backend_t backend, ggml_cgr
             continue;
         }
 
-        if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+        如果 ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
             continue;
         }
 
         bool ok = ggml_zdnn_compute_forward(ctx, node);
-        if (!ok) {
+        如果 (!ok) {
             GGML_LOG_ERROR("%s: unsupported op %s (%s)\n",
                            __func__, node->name, ggml_op_name(node->op));
         }
@@ -80,7 +80,7 @@ static enum ggml_status ggml_zdnn_graph_compute(ggml_backend_t backend, ggml_cgr
         GGML_ASSERT(ok);
     }
 
-    return GGML_STATUS_SUCCESS;
+    返回 GGML_STATUS_SUCCESS;
 
     GGML_UNUSED(ctx_dev);
 }
@@ -92,7 +92,7 @@ static bool ggml_zdnn_supports_op(const ggml_backend_zdnn_device_context * ctx_d
         case GGML_OP_VIEW:
         case GGML_OP_TRANSPOSE:
         case GGML_OP_PERMUTE:
-            return true;
+            返回 true;
 
         case GGML_OP_MUL_MAT:
             {
@@ -105,11 +105,11 @@ static bool ggml_zdnn_supports_op(const ggml_backend_zdnn_device_context * ctx_d
 
                 const int64_t max_batch = ctx_dev->max_size;
 
-                if (!ggml_is_matrix(weights) || !ggml_is_matrix(inputs) ||
+                如果 (!ggml_is_matrix(weights) || !ggml_is_matrix(inputs) ||
                     !ggml_is_contiguous(weights) || !ggml_is_contiguous(inputs) ||
                     weights->view_src != nullptr ||
                     ne0 > max_batch || ne1 > max_batch || ne10 > max_batch) {
-                        return false;
+                        返回 false;
                 }
 
                 switch (weights->type) {
@@ -117,20 +117,20 @@ static bool ggml_zdnn_supports_op(const ggml_backend_zdnn_device_context * ctx_d
                     case GGML_TYPE_F16:
                     case GGML_TYPE_BF16:
                         // the inputs ztensor is used, and views have none
-                        return inputs->view_src == nullptr;
+                        返回 inputs->view_src == nullptr;
                     case GGML_TYPE_Q8_0:
                         // the inputs are quantized from their data, so views work as well
-                        return ctx_dev->has_parmblkformat_1 && inputs->type == GGML_TYPE_F32;
+                        返回 ctx_dev->has_parmblkformat_1 && inputs->type == GGML_TYPE_F32;
                     default:
-                        return false;
+                        返回 false;
                 }
             } break;
 
         case GGML_OP_FLASH_ATTN_EXT:
-            return ggml_zdnn_supports_flash_attn_ext(ctx_dev, op);
+            返回 ggml_zdnn_supports_flash_attn_ext(ctx_dev, op);
 
         default:
-            return false;
+            返回 false;
     }
 }
 
@@ -153,14 +153,14 @@ static ggml_backend_zdnn_device_context g_ggml_ctx_dev_main = {
     /* .name                  = */ "",
 };
 
-static int ggml_backend_zdnn_device_acq(ggml_backend_zdnn_device_context * ctx) {
+static 整数 ggml_backend_zdnn_device_acq(ggml_backend_zdnn_device_context * ctx) {
     assert(ctx != NULL);
 
-    if (ctx->zdnn_device == 0) {
+    如果 (ctx->zdnn_device == 0) {
         ctx->zdnn_device = 1;
     }
 
-    if (ctx->zdnn_device >= 1) {
+    如果 (ctx->zdnn_device >= 1) {
         ctx->has_parmblkformat_0 = zdnn_is_nnpa_parmblk_fmt_installed(1, NNPA_PARMBLKFORMAT_0);
         ctx->has_parmblkformat_1 = zdnn_is_nnpa_parmblk_fmt_installed(1, NNPA_PARMBLKFORMAT_1);
         ctx->max_size = zdnn_get_nnpa_max_dim_idx_size();
@@ -168,7 +168,7 @@ static int ggml_backend_zdnn_device_acq(ggml_backend_zdnn_device_context * ctx) 
     }
 
     ctx->zdnn_device_ref_count++;
-    return ctx->zdnn_device;
+    返回 ctx->zdnn_device;
 }
 
 static void ggml_backend_zdnn_device_rel(ggml_backend_zdnn_device_context * ctx) {
@@ -176,8 +176,8 @@ static void ggml_backend_zdnn_device_rel(ggml_backend_zdnn_device_context * ctx)
     assert(ctx->zdnn_device_ref_count > 0);
 
     ctx->zdnn_device_ref_count--;
-    if (ctx->zdnn_device_ref_count == 0) {
-        if (ctx->zdnn_device >= 0) {
+    如果 (ctx->zdnn_device_ref_count == 0) {
+        如果 (ctx->zdnn_device >= 0) {
             ctx->zdnn_device = 0;
         }
     }
@@ -194,7 +194,7 @@ static ggml_backend_zdnn_context * ggml_zdnn_init(ggml_backend_dev_t dev) {
     ggml_backend_zdnn_context * ctx = new ggml_backend_zdnn_context();
     ggml_backend_zdnn_device_context * ctx_dev = (ggml_backend_zdnn_device_context *)dev->context;
 
-    int device = 1;
+    整数 device = 1;
     GGML_LOG_INFO("%s: picking default device: %s\n", __func__, ctx_dev->name);
 
     ctx->device = device;
@@ -205,13 +205,13 @@ static ggml_backend_zdnn_context * ggml_zdnn_init(ggml_backend_dev_t dev) {
     ctx->n_threads = GGML_DEFAULT_N_THREADS;
     ctx->gf = nullptr;
 
-    return ctx;
+    返回 ctx;
 }
 
 static void ggml_zdnn_free(ggml_backend_zdnn_context * ctx) {
     GGML_LOG_INFO("%s: deallocating\n", __func__);
 
-    for (const auto & it : ctx->zero_bias) {
+    为 (const auto & it : ctx->zero_bias) {
         ZDNN_CHECK(zdnn_free_ztensor_buffer(&it.second->ztensor));
     }
 
@@ -225,15 +225,15 @@ static void ggml_zdnn_free(ggml_backend_zdnn_context * ctx) {
 static void ggml_backend_zdnn_buffer_free_buffer(ggml_backend_buffer_t buffer) {
     ggml_backend_zdnn_buffer_context * ctx = (ggml_backend_zdnn_buffer_context *)buffer->context;
 
-    for (const auto & buf_ptr : ctx->buffers) {
+    为 (const auto & buf_ptr : ctx->buffers) {
         ggml_backend_zdnn_buffer * buf = buf_ptr.get();
 
         // Free any extra buffer allocated for the tensor. E.g., bias for GGML_OP_MUL_MAT
-        if (buf->extra != nullptr) free(buf->extra->data);
-        if (buf->ztensor.buffer_size > 0) ZDNN_CHECK(zdnn_free_ztensor_buffer(&buf->ztensor));
+        如果 (buf->extra != nullptr) free(buf->extra->data);
+        如果 (buf->ztensor.buffer_size > 0) ZDNN_CHECK(zdnn_free_ztensor_buffer(&buf->ztensor));
     }
 
-    if (ctx->owned) {
+    如果 (ctx->owned) {
         ggml_aligned_free(ctx->all_data, ctx->all_size);
     }
 
@@ -242,24 +242,24 @@ static void ggml_backend_zdnn_buffer_free_buffer(ggml_backend_buffer_t buffer) {
 
 static void * ggml_backend_zdnn_buffer_get_base(ggml_backend_buffer_t buffer) {
     ggml_backend_zdnn_buffer_context * ctx = (ggml_backend_zdnn_buffer_context *)buffer->context;
-    return ctx->all_data;
+    返回 ctx->all_data;
 }
 
 static enum ggml_status ggml_backend_zdnn_buffer_init_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor) {
-    if (tensor->view_src != NULL) {
+    如果 (tensor->view_src != NULL) {
         assert(tensor->view_src->buffer->buft == buffer->buft);
-        return GGML_STATUS_SUCCESS;
+        返回 GGML_STATUS_SUCCESS;
     }
 
     // reject empty tensors to avoid zDNN crash
-    if (ggml_is_empty(tensor)) {
-        return GGML_STATUS_SUCCESS;
+    如果 (ggml_is_empty(tensor)) {
+        返回 GGML_STATUS_SUCCESS;
     }
 
     ggml_backend_zdnn_buffer_context * ctx = (ggml_backend_zdnn_buffer_context *)buffer->context;
 
     const int64_t tsize = ggml_nbytes(tensor);
-    int buffer_idx = ctx->n_buffers;
+    整数 buffer_idx = ctx->n_buffers;
 
     std::unique_ptr<ggml_backend_zdnn_buffer> zdnn_buffer = std::make_unique<ggml_backend_zdnn_buffer>();
     zdnn_buffer->data = tensor->data;
@@ -277,7 +277,7 @@ static enum ggml_status ggml_backend_zdnn_buffer_init_tensor(ggml_backend_buffer
                 zdnn_bias_buffer->data = (void *)calloc(tensor->ne[0], ggml_element_size(tensor));
                 zdnn_bias_buffer->size = ggml_element_size(tensor) * tensor->ne[0];
                 snprintf(zdnn_bias_buffer->name, GGML_MAX_NAME, "%.*s (bias)",
-                         GGML_MAX_NAME - (int)sizeof(" (bias)"), tensor->name);
+                         GGML_MAX_NAME - (整数)sizeof(" (bias)"), tensor->name);
 
                 const int64_t bias_dim[GGML_MAX_DIMS] = { 1, 1, 1, tensor->ne[0] };
                 ggml_zdnn_create_tensor(zdnn_bias_buffer->pre_tfm_desc,
@@ -301,7 +301,7 @@ static enum ggml_status ggml_backend_zdnn_buffer_init_tensor(ggml_backend_buffer
     // GGML_LOG_INFO("%s: initialised tensor '%s' in buffer %d, size = %8.2f MiB\n",
     //               __func__, tensor->name, buffer_idx, tsize);
 
-    return GGML_STATUS_SUCCESS;
+    返回 GGML_STATUS_SUCCESS;
 
     GGML_UNUSED(buffer_idx);
 }
@@ -316,33 +316,33 @@ static void ggml_backend_zdnn_buffer_set_tensor(ggml_backend_buffer_t buffer, gg
     memcpy((char *)tensor->data + offset, data, size);
 
     // views share the ztensor of their source, which is now stale, and empty tensors have none
-    if (tensor->view_src != nullptr) {
+    如果 (tensor->view_src != nullptr) {
         ggml_backend_zdnn_buffer * src_extra = (ggml_backend_zdnn_buffer *)tensor->view_src->extra;
-        if (src_extra != nullptr && src_extra->ztensor.is_transformed) {
+        如果 (src_extra != nullptr && src_extra->ztensor.is_transformed) {
             zdnn_reset_ztensor(&src_extra->ztensor);
         }
-        return;
+        返回;
     }
 
     ggml_backend_zdnn_buffer * extra = (ggml_backend_zdnn_buffer *)tensor->extra;
-    if (extra == nullptr) {
-        return;
+    如果 (extra == nullptr) {
+        返回;
     }
 
-    if (ggml_is_quantized(tensor->type)) {
+    如果 (ggml_is_quantized(tensor->type)) {
         GGML_ASSERT(offset == 0 && size == ggml_nbytes(tensor));
         ggml_zdnn_load_tensor_q(extra, tensor);
-        return;
+        返回;
     }
 
     // Fixes the LLAMA_SET_ROWS bug
     // see: https://github.com/ggml-org/llama.cpp/issues/15414
     // only weights are transformed here, others on first use, as not every op reads the ztensor and some data (masks) is not finite
-    if (tensor->buffer->usage != GGML_BACKEND_BUFFER_USAGE_WEIGHTS) {
+    如果 (tensor->buffer->usage != GGML_BACKEND_BUFFER_USAGE_WEIGHTS) {
         zdnn_reset_ztensor(&extra->ztensor);
-        return;
+        返回;
     }
-    if (extra->ztensor.is_transformed == false) ggml_zdnn_load_tensor(extra->ztensor, tensor->data);
+    如果 (extra->ztensor.is_transformed == false) ggml_zdnn_load_tensor(extra->ztensor, tensor->data);
 
     GGML_UNUSED(buffer);
 }
@@ -362,19 +362,19 @@ static void ggml_backend_zdnn_buffer_clear(ggml_backend_buffer_t buffer, uint8_t
 static void ggml_backend_zdnn_buffer_reset(ggml_backend_buffer_t buffer) {
     ggml_backend_zdnn_buffer_context * ctx = (ggml_backend_zdnn_buffer_context *)buffer->context;
 
-    for (const auto & buf_ptr : ctx->buffers) {
+    为 (const auto & buf_ptr : ctx->buffers) {
         ggml_backend_zdnn_buffer * buf = buf_ptr.get();
 
-        if (buf->extra != nullptr) {
+        如果 (buf->extra != nullptr) {
             free(buf->extra->data);
         }
 
-        if (buf->ztensor.buffer_size > 0) {
+        如果 (buf->ztensor.buffer_size > 0) {
             ZDNN_CHECK(zdnn_free_ztensor_buffer(&buf->ztensor));
         }
     }
 
-    if (ctx->buffers.size() > 1) {
+    如果 (ctx->buffers.size() > 1) {
         ctx->buffers.resize(1);
     }
 
@@ -400,7 +400,7 @@ static ggml_backend_buffer_i ggml_backend_zdnn_buffer_i = {
 //
 
 static const char * ggml_backend_zdnn_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
-    return GGML_ZDNN_NAME;
+    返回 GGML_ZDNN_NAME;
 
     GGML_UNUSED(buft);
 }
@@ -411,46 +411,46 @@ static ggml_backend_buffer_t ggml_backend_zdnn_buffer_type_alloc_buffer(ggml_bac
     const size_t size_page = sysconf(_SC_PAGESIZE);
 
     size_t size_aligned = size;
-    if ((size_aligned % size_page) != 0) {
+    如果 ((size_aligned % size_page) != 0) {
         size_aligned += size_page - (size_aligned % size_page);
     }
 
     ggml_backend_zdnn_device_context * ctx_dev = (ggml_backend_zdnn_device_context *)buft->device->context;
 
     GGML_ASSERT(ctx_dev->zdnn_device >= 0);
-    int device = ctx_dev->zdnn_device; GGML_UNUSED(device);
+    整数 device = ctx_dev->zdnn_device; GGML_UNUSED(device);
 
     ctx->all_data  = ggml_aligned_malloc(size_aligned);
     ctx->all_size  = size_aligned;
     ctx->owned     = true;
     ctx->n_buffers = 1;
 
-    if (ctx->all_data != NULL) {
+    如果 (ctx->all_data != NULL) {
         std::unique_ptr<ggml_backend_zdnn_buffer> zdnn_buffer = std::make_unique<ggml_backend_zdnn_buffer>();
         zdnn_buffer->data = ctx->all_data;
         zdnn_buffer->size = size_aligned;
         ctx->buffers.push_back(std::move(zdnn_buffer));
     }
 
-    if (size_aligned > 0 && (ctx->all_data == NULL)) {
+    如果 (size_aligned > 0 && (ctx->all_data == NULL)) {
         GGML_LOG_ERROR("%s: error: failed to allocate buffer, size = %8.2f\n",
                        __func__, size_aligned / 1024.0 / 1024.0);
         delete ctx;
-        return NULL;
+        返回 NULL;
     }
 
-    return ggml_backend_buffer_init(buft, ggml_backend_zdnn_buffer_i, ctx, size);
+    返回 ggml_backend_buffer_init(buft, ggml_backend_zdnn_buffer_i, ctx, size);
 }
 
 static size_t ggml_backend_zdnn_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
-    return 256;
+    返回 256;
 
     GGML_UNUSED(buft);
 }
 
 static bool ggml_backend_zdnn_buffer_type_is_host(ggml_backend_buffer_type_t buft) {
     /* while it resides in host memory, additional transformation is needed */
-    return false;
+    返回 false;
 
     GGML_UNUSED(buft);
 }
@@ -471,7 +471,7 @@ ggml_backend_buffer_type_t ggml_backend_zdnn_buffer_type(void) {
         /* .context = */ NULL,
     };
 
-    return &ggml_backend_buffer_type_zdnn;
+    返回 &ggml_backend_buffer_type_zdnn;
 }
 
 //
@@ -479,7 +479,7 @@ ggml_backend_buffer_type_t ggml_backend_zdnn_buffer_type(void) {
 //
 
 static const char * ggml_backend_zdnn_name(ggml_backend_t backend) {
-    return GGML_ZDNN_NAME;
+    返回 GGML_ZDNN_NAME;
 
     GGML_UNUSED(backend);
 }
@@ -492,7 +492,7 @@ static void ggml_backend_zdnn_free(ggml_backend_t backend) {
 }
 
 static enum ggml_status ggml_backend_zdnn_graph_compute(ggml_backend_t backend, ggml_cgraph * cgraph) {
-    return ggml_zdnn_graph_compute(backend, cgraph);
+    返回 ggml_zdnn_graph_compute(backend, cgraph);
 }
 
 static ggml_backend_i ggml_backend_zdnn_i = {
@@ -516,11 +516,11 @@ static ggml_backend_i ggml_backend_zdnn_i = {
 
 static ggml_guid_t ggml_backend_zdnn_guid(void) {
     static char guid_str[] = "IBM-ZDNN-ACCELER";
-    return reinterpret_cast<ggml_guid_t>(guid_str);
+    返回 reinterpret_cast<ggml_guid_t>(guid_str);
 }
 
 bool ggml_backend_is_zdnn(ggml_backend_t backend) {
-    return backend != NULL &&
+    返回 backend != NULL &&
            ggml_guid_matches(backend->guid, ggml_backend_zdnn_guid());
 }
 
@@ -529,13 +529,13 @@ bool ggml_backend_is_zdnn(ggml_backend_t backend) {
 //
 
 static const char * ggml_backend_zdnn_device_get_name(ggml_backend_dev_t dev) {
-    return GGML_ZDNN_NAME;
+    返回 GGML_ZDNN_NAME;
 
     GGML_UNUSED(dev);
 }
 
 static const char * ggml_backend_zdnn_device_get_description(ggml_backend_dev_t dev) {
-    return "IBM Z Neural Network Processing Assist (NNPA)";
+    返回 "IBM Z Neural Network Processing Assist (NNPA)";
 
     GGML_UNUSED(dev);
 }
@@ -548,7 +548,7 @@ static void ggml_backend_zdnn_device_get_memory(ggml_backend_dev_t dev, size_t *
 }
 
 static enum ggml_backend_dev_type ggml_backend_zdnn_device_get_type(ggml_backend_dev_t dev) {
-    return GGML_BACKEND_DEVICE_TYPE_ACCEL;
+    返回 GGML_BACKEND_DEVICE_TYPE_ACCEL;
 
     GGML_UNUSED(dev);
 }
@@ -569,9 +569,9 @@ static void ggml_backend_zdnn_device_get_props(ggml_backend_dev_t dev, ggml_back
 
 static ggml_backend_t ggml_backend_zdnn_device_init(ggml_backend_dev_t dev, const char * params) {
     ggml_backend_zdnn_context * ctx = ggml_zdnn_init(dev);
-    if (ctx == NULL) {
+    如果 (ctx == NULL) {
         GGML_LOG_ERROR("%s: error: failed to allocate context\n", __func__);
-        return NULL;
+        返回 NULL;
     }
 
     ggml_backend_t backend = (ggml_backend *)malloc(sizeof(ggml_backend));
@@ -582,13 +582,13 @@ static ggml_backend_t ggml_backend_zdnn_device_init(ggml_backend_dev_t dev, cons
         /* .context    = */ ctx
     };
 
-    return backend;
+    返回 backend;
 
     GGML_UNUSED(params);
 }
 
 static ggml_backend_buffer_type_t ggml_backend_zdnn_device_get_buffer_type(ggml_backend_dev_t dev) {
-    return ggml_backend_zdnn_buffer_type();
+    返回 ggml_backend_zdnn_buffer_type();
 
     GGML_UNUSED(dev);
 }
@@ -596,11 +596,11 @@ static ggml_backend_buffer_type_t ggml_backend_zdnn_device_get_buffer_type(ggml_
 static bool ggml_backend_zdnn_device_supports_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
     ggml_backend_zdnn_device_context * ctx_dev = (ggml_backend_zdnn_device_context *) dev->context;
 
-    return ggml_zdnn_supports_op(ctx_dev, op);
+    返回 ggml_zdnn_supports_op(ctx_dev, op);
 }
 
 static bool ggml_backend_zdnn_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
-    return
+    返回
         buft->iface.get_name == ggml_backend_zdnn_buffer_type_get_name;
 
     GGML_UNUSED(dev);
@@ -629,16 +629,16 @@ static ggml_backend_device_i ggml_backend_zdnn_device_i = {
 //
 
 static const char * ggml_backend_zdnn_reg_get_name(ggml_backend_reg_t reg) {
-    return GGML_ZDNN_NAME;
+    返回 GGML_ZDNN_NAME;
 
     GGML_UNUSED(reg);
 }
 
 static size_t ggml_backend_zdnn_reg_device_count(ggml_backend_reg_t reg) {
-    if (!zdnn_is_nnpa_installed()) {
-        return 0;
+    如果 (!zdnn_is_nnpa_installed()) {
+        返回 0;
     }
-    return 1;
+    返回 1;
 
     GGML_UNUSED(reg);
 }
@@ -646,7 +646,7 @@ static size_t ggml_backend_zdnn_reg_device_count(ggml_backend_reg_t reg) {
 static ggml_backend_dev_t ggml_backend_zdnn_reg_device_get(ggml_backend_reg_t reg, size_t index) {
     GGML_ASSERT(index == 0);
 
-    return &g_ggml_backend_zdnn_device;
+    返回 &g_ggml_backend_zdnn_device;
 
     GGML_UNUSED(reg);
     GGML_UNUSED(index);
@@ -660,12 +660,12 @@ static ggml_backend_feature g_ggml_backend_zdnn_features[] = {
 };
 
 static ggml_backend_feature * ggml_backend_zdnn_get_features(ggml_backend_reg_t reg) {
-    return g_ggml_backend_zdnn_features;
+    返回 g_ggml_backend_zdnn_features;
 
     GGML_UNUSED(reg);
 }
 
-static void ggml_backend_zdnn_set_n_threads(ggml_backend_t backend, int n_threads) {
+static void ggml_backend_zdnn_set_n_threads(ggml_backend_t backend, 整数 n_threads) {
     GGML_ASSERT(ggml_backend_is_zdnn(backend));
 
     ggml_backend_zdnn_context * ctx = (ggml_backend_zdnn_context *)backend->context;
@@ -673,14 +673,14 @@ static void ggml_backend_zdnn_set_n_threads(ggml_backend_t backend, int n_thread
 }
 
 static void * ggml_backend_zdnn_get_proc_address(ggml_backend_reg_t reg, const char * name) {
-    if (strcmp(name, "ggml_backend_get_features") == 0) {
-        return (void *) ggml_backend_zdnn_get_features;
+    如果 (strcmp(name, "ggml_backend_get_features") == 0) {
+        返回 (void *) ggml_backend_zdnn_get_features;
     }
-    if (strcmp(name, "ggml_backend_set_n_threads") == 0) {
-        return (void *) ggml_backend_zdnn_set_n_threads;
+    如果 (strcmp(name, "ggml_backend_set_n_threads") == 0) {
+        返回 (void *) ggml_backend_zdnn_set_n_threads;
     }
 
-    return NULL;
+    返回 NULL;
 
     GGML_UNUSED(reg);
 }
@@ -716,7 +716,7 @@ ggml_backend_reg_t ggml_backend_zdnn_reg(void) {
             /* .context     = */ &g_ggml_ctx_dev_main
         };
 
-        return &g_ggml_backend_zdnn_reg;
+        返回 &g_ggml_backend_zdnn_reg;
     }
 }
 

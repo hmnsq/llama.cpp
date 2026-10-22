@@ -6,20 +6,20 @@ static const char * ggml_backend_remoting_device_get_name(ggml_backend_dev_t dev
     virtgpu * gpu = DEV_TO_GPU(dev);
 
     // Return the prefixed name that was built once during initialization
-    return gpu->cached_device_info.name;
+    返回 gpu->cached_device_info.name;
 }
 
 static const char * ggml_backend_remoting_device_get_description(ggml_backend_dev_t dev) {
     virtgpu * gpu = DEV_TO_GPU(dev);
 
     // Return the pre-cached description from the virtgpu structure
-    return gpu->cached_device_info.description;
+    返回 gpu->cached_device_info.description;
 }
 
 static enum ggml_backend_dev_type ggml_backend_remoting_device_get_type(ggml_backend_dev_t dev) {
     virtgpu * gpu = DEV_TO_GPU(dev);
 
-    return (enum ggml_backend_dev_type) gpu->cached_device_info.type;
+    返回 (enum ggml_backend_dev_type) gpu->cached_device_info.type;
 }
 
 static void ggml_backend_remoting_device_get_memory(ggml_backend_dev_t dev, size_t * free, size_t * total) {
@@ -30,31 +30,31 @@ static void ggml_backend_remoting_device_get_memory(ggml_backend_dev_t dev, size
 }
 
 static bool ggml_backend_remoting_device_supports_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
-#if USE_ALWAYS_TRUE_SUPPORTS_OP == 1
+#如果 USE_ALWAYS_TRUE_SUPPORTS_OP == 1
     /* ggml-rpc cheats it like this */
     /* with the current implementation of serialize_tensor, the src/view aren't properly passed */
     UNUSED(dev);
     UNUSED(op);
 
-    return true;
-#else
+    返回 true;
+#否则
     virtgpu * gpu = DEV_TO_GPU(dev);
 
-    return apir_device_supports_op(gpu, op);
+    返回 apir_device_supports_op(gpu, op);
 #endif
 }
 
 static bool ggml_backend_remoting_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
     bool supported = buft->device == dev;
 
-    return supported;
+    返回 supported;
 }
 
 static bool ggml_backend_remoting_device_offload_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
     UNUSED(dev);
     UNUSED(op);
 
-    return false;
+    返回 false;
 }
 
 static void ggml_backend_remoting_device_get_props(ggml_backend_dev_t dev, ggml_backend_dev_props * props) {
@@ -78,11 +78,11 @@ ggml_backend_buffer_type_t ggml_backend_remoting_device_get_buffer_type(ggml_bac
     static std::atomic<bool>        initialized = false;
     static ggml_backend_buffer_type buft;
 
-    if (!initialized) {
+    如果 (!initialized) {
         static std::mutex           mutex;
         std::lock_guard<std::mutex> lock(mutex);
 
-        if (!initialized) {
+        如果 (!initialized) {
             buft = {
                 /* .iface    = */ ggml_backend_remoting_buffer_type_interface,
                 /* .device   = */ dev,
@@ -92,7 +92,7 @@ ggml_backend_buffer_type_t ggml_backend_remoting_device_get_buffer_type(ggml_bac
         }
     }
 
-    return &buft;
+    返回 &buft;
 }
 
 static ggml_backend_buffer_type_t ggml_backend_remoting_device_get_buffer_from_ptr_type(ggml_backend_dev_t dev) {
@@ -101,11 +101,11 @@ static ggml_backend_buffer_type_t ggml_backend_remoting_device_get_buffer_from_p
     static std::atomic<bool>        initialized = false;
     static ggml_backend_buffer_type buft;
 
-    if (!initialized) {
+    如果 (!initialized) {
         static std::mutex           mutex;
         std::lock_guard<std::mutex> lock(mutex);
 
-        if (!initialized) {
+        如果 (!initialized) {
             buft = {
                 /* .iface    = */ ggml_backend_remoting_buffer_from_ptr_type_interface,
                 /* .device   = */ dev,
@@ -115,7 +115,7 @@ static ggml_backend_buffer_type_t ggml_backend_remoting_device_get_buffer_from_p
         }
     }
 
-    return &buft;
+    返回 &buft;
 }
 
 static ggml_backend_buffer_t ggml_backend_remoting_device_buffer_from_ptr(ggml_backend_dev_t dev,
@@ -125,7 +125,7 @@ static ggml_backend_buffer_t ggml_backend_remoting_device_buffer_from_ptr(ggml_b
     virtgpu * gpu = DEV_TO_GPU(dev);
 
     ggml_backend_remoting_buffer_context * context = (ggml_backend_remoting_buffer_context *) malloc(sizeof(*context));
-    if (!context) {
+    如果 (!context) {
         GGML_ABORT(GGML_VIRTGPU "%s: Couldn't allocate the buffer context ...", __func__);
     }
 
@@ -138,7 +138,7 @@ static ggml_backend_buffer_t ggml_backend_remoting_device_buffer_from_ptr(ggml_b
         ggml_backend_buffer_init(ggml_backend_remoting_device_get_buffer_from_ptr_type(dev),
                                  ggml_backend_remoting_buffer_from_ptr_interface, (void *) context, size);
 
-    return buffer;
+    返回 buffer;
 }
 
 const ggml_backend_device_i ggml_backend_remoting_device_interface = {

@@ -31,74 +31,74 @@ typedef struct {
 // NOTE: This simple loop-based implementation is used for portability.
 // Production implementations (like libgcc's __ctzdi2) use optimized bit manipulation
 // algorithms with lookup tables and parallel bit operations for O(log n) performance.
-static inline int manual_ctzll(uint64_t x) {
-    if (x == 0) return 64;
-    int count = 0;
-    while ((x & 1) == 0) {
+static inline 整数 manual_ctzll(uint64_t x) {
+    如果 (x == 0) 返回 64;
+    整数 count = 0;
+    当 ((x & 1) == 0) {
         x >>= 1;
         count++;
     }
-    return count;
+    返回 count;
 }
 
 // Manual implementation of population count for bare metal environment
 // NOTE: This simple loop-based implementation is used for portability.
 // Production implementations (like libgcc's __popcountdi2) use optimized bit-parallel
 // algorithms with magic constants and bit manipulation tricks for O(1) performance.
-static inline int manual_popcountll(uint64_t x) {
-    int count = 0;
-    while (x) {
+static inline 整数 manual_popcountll(uint64_t x) {
+    整数 count = 0;
+    当 (x) {
         count += x & 1;
         x >>= 1;
     }
-    return count;
+    返回 count;
 }
 
 // Binary GCD (Stein's algorithm) — avoids expensive 64-bit division/remainder.
 // Uses only shifts, subtraction, and comparison (all single-cycle on ET cores).
 static inline int64_t et_gcd_i64(int64_t a, int64_t b) {
-    while (b) {
+    当 (b) {
         const int64_t t = b;
         b               = a % b;
         a               = t;
     }
-    return a;
+    返回 a;
 }
 
 // Return the number of consecutive rows of width row_elems needed so the
 // combined write footprint spans an integer number of cache lines.
 static inline int64_t et_rows_per_cacheline_group(int64_t row_elems, int64_t elem_size_bytes) {
-    if (row_elems <= 0 || elem_size_bytes <= 0) {
-        return 1;
+    如果 (row_elems <= 0 || elem_size_bytes <= 0) {
+        返回 1;
     }
 
     const int64_t row_bytes = row_elems * elem_size_bytes;
     const int64_t gcd       = et_gcd_i64(ET_CACHE_LINE_SIZE_BYTES, row_bytes);
-    return ET_CACHE_LINE_SIZE_BYTES / gcd;
+    返回 ET_CACHE_LINE_SIZE_BYTES / gcd;
 }
 
 // Calculate relative thread ID from absolute hart ID using shire mask
 // Returns -1 if this hart is not active (not in shire mask)
-static inline int get_relative_thread_id(uint64_t shire_mask) {
-    int hart_id = (int) get_hart_id();
+static inline 整数 get_relative_thread_id(uint64_t shire_mask) {
+    整数 hart_id = (整数) get_hart_id();
 
     // Find starting hart offset from lowest active shire
-    int starting_hart = manual_ctzll(shire_mask) * SOC_MINIONS_PER_SHIRE * NUM_HARTS_PER_MINION;
+    整数 starting_hart = manual_ctzll(shire_mask) * SOC_MINIONS_PER_SHIRE * NUM_HARTS_PER_MINION;
 
     // Return -1 if not an active thread
-    if (hart_id < starting_hart) {
-        return -1;
+    如果 (hart_id < starting_hart) {
+        返回 -1;
     }
 
     // Calculate relative thread ID
-    int thread_id = hart_id - starting_hart;
-    return thread_id;
+    整数 thread_id = hart_id - starting_hart;
+    返回 thread_id;
 }
 
 // Calculate total number of threads from shire mask
-static inline int get_num_threads(uint64_t shire_mask) {
+static inline 整数 get_num_threads(uint64_t shire_mask) {
     // Count active shires using popcount, multiply by minions per shire and harts per minion
-    return manual_popcountll(shire_mask) * SOC_MINIONS_PER_SHIRE * NUM_HARTS_PER_MINION;
+    返回 manual_popcountll(shire_mask) * SOC_MINIONS_PER_SHIRE * NUM_HARTS_PER_MINION;
 }
 
 //******************************************************************************
@@ -120,14 +120,14 @@ static inline int get_num_threads(uint64_t shire_mask) {
 static inline uint32_t __attribute__((always_inline)) et_global_swap_w(volatile void * addr, uint32_t val) {
     uint32_t ret;
     __asm__ __volatile__("amoswapg.w %0, %1, (%2)" : "=r"(ret) : "r"(val), "r"(addr) : "memory");
-    return ret;
+    返回 ret;
 }
 
 // Atomic add (word), returns previous value.
 static inline uint32_t __attribute__((always_inline)) et_global_add_w(volatile void * addr, uint32_t val) {
     uint32_t ret;
     __asm__ __volatile__("amoaddg.w %0, %1, (%2)" : "=r"(ret) : "r"(val), "r"(addr) : "memory");
-    return ret;
+    返回 ret;
 }
 
 // Atomic store (halfword, global). Address must be 16-bit aligned.
@@ -212,16 +212,16 @@ static inline uint64_t __attribute__((always_inline)) et_barrier_global(uint64_t
                                                            SOC_MINIONS_PER_SHIRE * NUM_HARTS_PER_MINION;
     uint64_t last_in_shire  = flbarrier(0, harts_in_shire - 1);
 
-    if (last_in_shire) {
+    如果 (last_in_shire) {
         // Global atomic increment. Count arriving shires
         uint32_t prev = et_global_add_w(et_global_barrier_count, 1);
 
-        if (prev == num_active_shires - 1) {
+        如果 (prev == num_active_shires - 1) {
             // Last shire. reset counter and fan out FCC to all shires
             last_global = 1;
             et_global_swap_w(et_global_barrier_count, 0);
 
-            for (uint64_t sid = 0; sid < 33; sid++) {
+            为 (uint64_t sid = 0; sid < 33; sid++) {
                 // Send FCC 1 credit to all harts (both threads) in each shire
                 fcc_send(sid, THREAD_0, FCC_1, 0xFFFFFFFF);
                 fcc_send(sid, THREAD_1, FCC_1, 0xFFFFFFFF);
@@ -231,7 +231,7 @@ static inline uint64_t __attribute__((always_inline)) et_barrier_global(uint64_t
 
     // All harts wait for the FCC credit from the last shire
     fcc_consume(FCC_1);
-    return last_global;
+    返回 last_global;
 }
 
 // Barrier with scope-derived parameters.
@@ -240,17 +240,17 @@ static inline uint64_t __attribute__((always_inline)) et_barrier_global(uint64_t
 // ET_BARRIER_GLOBAL uses ET_DEFAULT_SHIRE_MASK (32 shires). For a different
 // shire count, use et_barrier_global(n) directly.
 static inline uint64_t __attribute__((always_inline)) et_barrier(et_barrier_scope_t scope) {
-    if (scope == ET_BARRIER_MINION) {
+    如果 (scope == ET_BARRIER_MINION) {
         uint32_t local_minion = (get_hart_id() >> 1) & 0x1F;
         uint32_t mask         = 1u << local_minion;
-        return shire_barrier(local_minion, 0, 2, mask, mask);
-    } else if (scope == ET_BARRIER_SHIRE) {
+        返回 shire_barrier(local_minion, 0, 2, mask, mask);
+    } 否则 如果 (scope == ET_BARRIER_SHIRE) {
         uint64_t shire_id     = get_shire_id();
         uint32_t thread_count = (shire_id == SHIRE_MASTER) ? 32 : 64;
         uint32_t mask         = (shire_id == SHIRE_MASTER) ? 0xFFFF0000U : 0xFFFFFFFFU;
-        return shire_barrier(0, 1, thread_count, mask, mask);
-    } else { /* ET_BARRIER_GLOBAL */
-        return et_barrier_global(manual_popcountll(ET_DEFAULT_SHIRE_MASK));
+        返回 shire_barrier(0, 1, thread_count, mask, mask);
+    } 否则 { /* ET_BARRIER_GLOBAL */
+        返回 et_barrier_global(manual_popcountll(ET_DEFAULT_SHIRE_MASK));
     }
 }
 
@@ -268,7 +268,7 @@ static inline uint64_t __attribute__((always_inline)) et_barrier_raw(uint32_t fl
                                                                      uint32_t thread_count,
                                                                      uint32_t mask_t0,
                                                                      uint32_t mask_t1) {
-    return shire_barrier(flb, fcc, thread_count, mask_t0, mask_t1);
+    返回 shire_barrier(flb, fcc, thread_count, mask_t0, mask_t1);
 }
 
 // One-way semaphore between harts (non-blocking post, blocking wait).
@@ -285,16 +285,16 @@ static inline uint64_t __attribute__((always_inline)) et_barrier_raw(uint32_t fl
 // Must not be mixed with et_barrier() of the same scope in the
 // same kernel (shared FCC channel).
 static inline void __attribute__((always_inline)) et_sem_post(et_barrier_scope_t scope) {
-    if (scope == ET_BARRIER_MINION) {
+    如果 (scope == ET_BARRIER_MINION) {
         uint64_t hart_id      = get_hart_id();
         uint32_t local_minion = (hart_id >> 1) & 0x1F;
         uint32_t mask         = 1u << local_minion;
         uint64_t shire_id     = get_shire_id();
 
-        if (hart_id & 1) {
+        如果 (hart_id & 1) {
             // Hart 1 → hart 0
             fcc_send(shire_id, THREAD_0, FCC_0, mask);
-        } else {
+        } 否则 {
             // Hart 0 → hart 1
             fcc_send(shire_id, THREAD_1, FCC_0, mask);
         }
@@ -303,7 +303,7 @@ static inline void __attribute__((always_inline)) et_sem_post(et_barrier_scope_t
 
 // Block until a post from et_sem_post() is available, then consume it.
 static inline void __attribute__((always_inline)) et_sem_wait(et_barrier_scope_t scope) {
-    if (scope == ET_BARRIER_MINION) {
+    如果 (scope == ET_BARRIER_MINION) {
         fcc_consume(FCC_0);
     }
 }
@@ -416,12 +416,12 @@ static inline void setup_cache_scp(void) {
 //   shire: 0–33 for explicit shire, L2SCP_SHIRE_LOCAL (0x7F) for local
 //   offset: byte offset within the shire's scratchpad
 static inline void * __attribute__((always_inline)) et_shire_l2scp(uint64_t shire, uint64_t offset) {
-    return (void *) (L2SCP_BASE | ((shire & 0x7F) << 23) | (offset & 0x7FFFFF));
+    返回 (void *) (L2SCP_BASE | ((shire & 0x7F) << 23) | (offset & 0x7FFFFF));
 }
 
 // Format 0: local shire shorthand — no cross-shire traffic.
 static inline void * __attribute__((always_inline)) et_shire_l2scp_local(uint64_t offset) {
-    return (void *) (L2SCP_BASE | (L2SCP_SHIRE_LOCAL << 23) | (offset & 0x7FFFFF));
+    返回 (void *) (L2SCP_BASE | (L2SCP_SHIRE_LOCAL << 23) | (offset & 0x7FFFFF));
 }
 
 // Format 1: flat offset into a hardware-striped global address space.
@@ -429,7 +429,7 @@ static inline void * __attribute__((always_inline)) et_shire_l2scp_local(uint64_
 // distributing bandwidth across the mesh.  No shire parameter — the
 // hardware derives the target shire from the address bits.
 static inline void * __attribute__((always_inline)) et_global_l2scp(uint64_t offset) {
-    return (void *) (L2SCP_BASE | (1ULL << 30) | (offset & 0x3FFFFFFF));
+    返回 (void *) (L2SCP_BASE | (1ULL << 30) | (offset & 0x3FFFFFFF));
 }
 
 //******************************************************************************
@@ -524,8 +524,8 @@ static inline void __attribute__((always_inline)) evict_past_l2(const void * add
 // Handles regions larger than the 16-line hardware limit by issuing multiple
 // evict_past_l2 calls.
 static void evict_region_past_l2(const void * addr, size_t bytes) {
-    if (!addr || bytes == 0) {
-        return;
+    如果 (!addr || bytes == 0) {
+        返回;
     }
 
     const uint64_t CL     = 64;
@@ -533,9 +533,9 @@ static void evict_region_past_l2(const void * addr, size_t bytes) {
     uint64_t       end    = ((uint64_t) addr + bytes + CL - 1) & ~(CL - 1);
     uint64_t       nlines = (end - base) / CL;
     // FENCE;
-    for (uint64_t off = 0; off < nlines; off += 16) {
+    为 (uint64_t off = 0; off < nlines; off += 16) {
         uint64_t batch = nlines - off;
-        if (batch > 16) {
+        如果 (batch > 16) {
             batch = 16;
         }
         evict_past_l2((const void *) (base + off * CL), batch, CL);

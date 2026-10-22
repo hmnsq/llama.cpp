@@ -7,7 +7,7 @@
 #   endif
 #   include <windows.h>
 #   include <winevt.h>
-#else
+#否则
 #    include <dlfcn.h>
 #    include <unistd.h>
 #endif
@@ -25,7 +25,7 @@ struct dl_handle_deleter {
     }
 };
 
-#else
+#否则
 
 using dl_handle = void;
 

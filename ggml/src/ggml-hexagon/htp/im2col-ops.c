@@ -87,7 +87,7 @@ struct im2col_cursor {
 static inline void im2col_step_row(struct im2col_cursor * c, const struct htp_im2col_context * ictx) {
     c->r++;
     c->ioh++;
-    if (c->ioh >= ictx->OH) {
+    如果 (c->ioh >= ictx->OH) {
         c->ioh = 0;
         c->in++;
     }
@@ -95,11 +95,11 @@ static inline void im2col_step_row(struct im2col_cursor * c, const struct htp_im
 
 static inline void im2col_step_block(struct im2col_cursor * c, const struct htp_im2col_context * ictx) {
     c->c0 += ictx->pe_owb;
-    if (c->c0 >= ictx->OW) {
+    如果 (c->c0 >= ictx->OW) {
         c->c0 = 0;
         c->r++;
         c->ioh++;
-        if (c->ioh >= ictx->OH) {
+        如果 (c->ioh >= ictx->OH) {
             c->ioh = 0;
             c->in++;
         }
@@ -123,18 +123,18 @@ static void im2col_blocked_dma_stage(struct htp_im2col_context * ictx, dma_queue
     const size_t src_channel_stride = is_2D ? src1->nb[2] : src1->nb[1];
     const size_t batch_offset        = is_2D ? (size_t) in * src1->nb[3] : (size_t) in * src1->nb[2];
 
-    for (uint32_t ikh = 0; ikh < KH; ikh++) {
+    为 (uint32_t ikh = 0; ikh < KH; ikh++) {
         const int32_t iih = (int32_t) ioh * s1 + (int32_t) ikh * d1 - p1;
-        if (iih < 0 || iih >= (int32_t) IH) {
+        如果 (iih < 0 || iih >= (int32_t) IH) {
             dma_queue_push(dma_q, dma_make_data(srcb, 0), 0, 0, 0, 0);
             continue;
         }
         const int32_t lo = win0 < 0 ? -win0 : 0;
         int32_t hi = (int32_t) IW - win0;
-        if (hi > (int32_t) Wb) {
+        如果 (hi > (int32_t) Wb) {
             hi = (int32_t) Wb;
         }
-        if (hi <= lo) {
+        如果 (hi <= lo) {
             dma_queue_push(dma_q, dma_make_data(srcb, 0), 0, 0, 0, 0);
             continue;
         }
@@ -164,44 +164,44 @@ static void FNAME(                                                              
     const uint32_t patch_stride = ictx->patch_stride;                                            \
     const int32_t  win0 = (int32_t) c0 * s0 - p0;                                                \
                                                                                                  \
-    for (uint32_t j = 0; j < nb; j++) {                                                          \
+    为 (uint32_t j = 0; j < nb; j++) {                                                          \
         const uint32_t iow       = c0 + j;                                                       \
         DST_CTYPE *    dst_patch = dstb + (size_t) j * patch_stride;                             \
         const int32_t  iiw0      = (int32_t) iow * s0 - p0;                                      \
-        for (uint32_t ikh = 0; ikh < KH; ikh++) {                                                \
+        为 (uint32_t ikh = 0; ikh < KH; ikh++) {                                                \
             const int32_t iih = (int32_t) ioh * s1 + (int32_t) ikh * d1 - p1;                    \
-            const int     okh = (iih >= 0 && iih < (int32_t) IH);                                \
-            for (uint32_t iic = 0; iic < IC; iic++) {                                            \
+            const 整数     okh = (iih >= 0 && iih < (int32_t) IH);                                \
+            为 (uint32_t iic = 0; iic < IC; iic++) {                                            \
                 DST_CTYPE * out_run = dst_patch + (size_t) (iic * KH + ikh) * KW;                \
-                if (!okh) {                                                                      \
+                如果 (!okh) {                                                                      \
                     SPLAT_FN(out_run, 0, KW);                                                    \
                     continue;                                                                    \
                 }                                                                                \
                 const float * vrow = srcb + (size_t) (iic * KH + ikh) * Wb;                      \
-                if (d0 == 1) {                                                                   \
+                如果 (d0 == 1) {                                                                   \
                     const int32_t lo = iiw0 < 0 ? -iiw0 : 0;                                     \
                     int32_t       hi = (int32_t) IW - iiw0;                                      \
-                    if (hi > (int32_t) KW) {                                                     \
+                    如果 (hi > (int32_t) KW) {                                                     \
                         hi = (int32_t) KW;                                                       \
                     }                                                                            \
-                    if (hi <= lo) {                                                              \
+                    如果 (hi <= lo) {                                                              \
                         SPLAT_FN(out_run, 0, KW);                                                \
-                    } else {                                                                     \
-                        if (lo > 0) {                                                            \
+                    } 否则 {                                                                     \
+                        如果 (lo > 0) {                                                            \
                             SPLAT_FN(out_run, 0, (uint32_t) lo);                                 \
                         }                                                                        \
                         COPY_FN((uint8_t *) (out_run + lo),                                      \
                                 (const uint8_t *) (vrow + (iiw0 + lo - win0)),                   \
                                 (uint32_t) (hi - lo));                                           \
-                        if (hi < (int32_t) KW) {                                                 \
+                        如果 (hi < (int32_t) KW) {                                                 \
                             SPLAT_FN(out_run + hi, 0, (uint32_t) (KW - hi));                     \
                         }                                                                        \
                     }                                                                            \
                     continue;                                                                    \
                 }                                                                                \
-                for (uint32_t ikw = 0; ikw < KW; ikw += 64) {                                    \
+                为 (uint32_t ikw = 0; ikw < KW; ikw += 64) {                                    \
                     const uint32_t chunk = MIN(KW - ikw, 64);                                    \
-                    for (uint32_t c = 0; c < chunk; c++) {                                       \
+                    为 (uint32_t c = 0; c < chunk; c++) {                                       \
                         const int32_t iiw = iiw0 + (int32_t) (ikw + c) * d0;                     \
                         scratch[c] = (iiw < 0 || iiw >= (int32_t) IW) ? 0.0f : vrow[iiw - win0]; \
                     }                                                                            \
@@ -215,7 +215,7 @@ static void FNAME(                                                              
 IM2COL_BLOCKED_COMPUTE_BODY(im2col_blocked_compute_f16, uint16_t, hvx_copy_f16_f32_uu, hvx_splat_u16_u)
 IM2COL_BLOCKED_COMPUTE_BODY(im2col_blocked_compute_f32, float,    hvx_copy_f32_uu,     hvx_splat_f32_u)
 
-static void im2col_blocked_dma_thread(unsigned int nth, unsigned int ith, void * data) {
+static void im2col_blocked_dma_thread(unsigned 整数 nth, unsigned 整数 ith, void * data) {
     (void) nth;
     struct htp_im2col_context * ictx      = (struct htp_im2col_context *) data;
     struct htp_ops_context *    octx      = ictx->octx;
@@ -237,13 +237,13 @@ static void im2col_blocked_dma_thread(unsigned int nth, unsigned int ith, void *
     const uint32_t row_end_max            = ictx->pe_row_base + ictx->pe_nrows;
     const uint32_t row_start              = ictx->pe_row_base + ictx->pe_rows_per_thread * ith;
     const uint32_t row_end                = MIN(row_start + ictx->pe_rows_per_thread, row_end_max);
-    if (row_start >= row_end) {
-        return;
+    如果 (row_start >= row_end) {
+        返回;
     }
     const uint32_t nrows_local  = row_end - row_start;
     const uint32_t total_blocks = nrows_local * nbpr;
-    if (total_blocks == 0) {
-        return;
+    如果 (total_blocks == 0) {
+        返回;
     }
     struct im2col_cursor cur = {
         .r   = row_start,
@@ -253,18 +253,18 @@ static void im2col_blocked_dma_thread(unsigned int nth, unsigned int ith, void *
         .c0  = 0,
     };
     struct im2col_cursor stage = cur;
-    for (uint32_t i = 0; i < total_blocks && i < 2; i++) {
+    为 (uint32_t i = 0; i < total_blocks && i < 2; i++) {
         dma_queue_push(dma_q, dma_make_data(dst_data, dstb2[i]), 0, 0, 0, 0);
         im2col_blocked_dma_stage(ictx, dma_q, srcb2[i], &stage);
         im2col_step_block(&stage, ictx);
     }
-    for (uint32_t bi = 0; bi < total_blocks; bi++) {
+    为 (uint32_t bi = 0; bi < total_blocks; bi++) {
         const uint32_t buf = bi & 1u;
         float * srcb = srcb2[buf];
         void *  dstb = dstb2[buf];
         const uint32_t nb = MIN(owb, OW - cur.c0);
         dma_queue_pop(dma_q);
-        for (uint32_t k = 0; k < KH; k++) {
+        为 (uint32_t k = 0; k < KH; k++) {
             dma_queue_pop(dma_q);
         }
         htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, cur.r);
@@ -274,7 +274,7 @@ static void im2col_blocked_dma_thread(unsigned int nth, unsigned int ith, void *
         dma_queue_push(dma_q, dma_make_data(ddr, dstb),
                        nb * patch_stride * dst_elem, nb * patch_stride * dst_elem,
                        nb * patch_stride * dst_elem, 1);
-        if (bi + 2 < total_blocks) {
+        如果 (bi + 2 < total_blocks) {
             im2col_blocked_dma_stage(ictx, dma_q, srcb, &stage);
             im2col_step_block(&stage, ictx);
         }
@@ -307,13 +307,13 @@ static void im2col_patchembed_compute_f16(
     const uint32_t KH = ictx->KH, KW = ictx->KW;
     const uint32_t OW = ictx->OW, patch_stride = ictx->patch_stride;
 
-    for (uint32_t iow = 0; iow < OW; iow++) {
+    为 (uint32_t iow = 0; iow < OW; iow++) {
         uint16_t * dst_patch = dstb + (size_t) iow * patch_stride;
-        for (uint32_t ikh = 0; ikh < KH; ikh++) {
+        为 (uint32_t ikh = 0; ikh < KH; ikh++) {
             const int32_t iih = (int32_t) ioh * (int32_t) KH + (int32_t) ikh;
-            for (uint32_t iic = 0; iic < IC; iic++) {
+            为 (uint32_t iic = 0; iic < IC; iic++) {
                 uint16_t * out_run = dst_patch + (size_t) (iic * KH + ikh) * KW;
-                if (iih < 0 || iih >= (int32_t) IH) {
+                如果 (iih < 0 || iih >= (int32_t) IH) {
                     hvx_splat_u16_u(out_run, 0, KW);
                     continue;
                 }
@@ -332,13 +332,13 @@ static void im2col_patchembed_compute_f32(
     const uint32_t KH = ictx->KH, KW = ictx->KW;
     const uint32_t OW = ictx->OW, patch_stride = ictx->patch_stride;
 
-    for (uint32_t iow = 0; iow < OW; iow++) {
+    为 (uint32_t iow = 0; iow < OW; iow++) {
         float * dst_patch = dstb + (size_t) iow * patch_stride;
-        for (uint32_t ikh = 0; ikh < KH; ikh++) {
+        为 (uint32_t ikh = 0; ikh < KH; ikh++) {
             const int32_t iih = (int32_t) ioh * (int32_t) KH + (int32_t) ikh;
-            for (uint32_t iic = 0; iic < IC; iic++) {
+            为 (uint32_t iic = 0; iic < IC; iic++) {
                 float * out_run = dst_patch + (size_t) (iic * KH + ikh) * KW;
-                if (iih < 0 || iih >= (int32_t) IH) {
+                如果 (iih < 0 || iih >= (int32_t) IH) {
                     hvx_splat_f32_u(out_run, 0, KW);
                     continue;
                 }
@@ -349,7 +349,7 @@ static void im2col_patchembed_compute_f32(
     }
 }
 
-static void im2col_patchembed_dma_thread(unsigned int nth, unsigned int ith, void * data) {
+static void im2col_patchembed_dma_thread(unsigned 整数 nth, unsigned 整数 ith, void * data) {
     (void) nth;
     struct htp_im2col_context * ictx        = (struct htp_im2col_context *) data;
     struct htp_ops_context *    octx        = ictx->octx;
@@ -367,12 +367,12 @@ static void im2col_patchembed_dma_thread(unsigned int nth, unsigned int ith, voi
     const uint32_t row_end_max              = ictx->pe_row_base + ictx->pe_nrows;
     const uint32_t row_start                = ictx->pe_row_base + ictx->pe_rows_per_thread * ith;
     const uint32_t row_end                  = MIN(row_start + ictx->pe_rows_per_thread, row_end_max);
-    if (row_start >= row_end) {
-        return;
+    如果 (row_start >= row_end) {
+        返回;
     }
     const uint32_t total_rows = row_end - row_start;
-    if (total_rows == 0) {
-        return;
+    如果 (total_rows == 0) {
+        返回;
     }
     struct im2col_cursor cur = {
         .r   = row_start,
@@ -382,12 +382,12 @@ static void im2col_patchembed_dma_thread(unsigned int nth, unsigned int ith, voi
         .c0  = 0,
     };
     struct im2col_cursor stage = cur;
-    for (uint32_t i = 0; i < total_rows && i < 2; i++) {
+    为 (uint32_t i = 0; i < total_rows && i < 2; i++) {
         dma_queue_push(dma_q, dma_make_data(dst_data, dstb2[i]), 0, 0, 0, 0);
         im2col_patchembed_dma_stage(ictx, dma_q, srcb2[i], &stage);
         im2col_step_row(&stage, ictx);
     }
-    for (uint32_t ri = 0; ri < total_rows; ri++) {
+    为 (uint32_t ri = 0; ri < total_rows; ri++) {
         const uint32_t buf = ri & 1u;
         float * srcb = srcb2[buf];
         void *  dstb = dstb2[buf];
@@ -400,7 +400,7 @@ static void im2col_patchembed_dma_thread(unsigned int nth, unsigned int ith, voi
         dma_queue_push(dma_q, dma_make_data(ddr_row, dstb),
                        OW * patch_stride * dst_elem, OW * patch_stride * dst_elem,
                        OW * patch_stride * dst_elem, 1);
-        if (ri + 2 < total_rows) {
+        如果 (ri + 2 < total_rows) {
             im2col_patchembed_dma_stage(ictx, dma_q, srcb, &stage);
             im2col_step_row(&stage, ictx);
         }
@@ -412,10 +412,10 @@ static void im2col_patchembed_dma_thread(unsigned int nth, unsigned int ith, voi
 static inline void im2col_3d_step_row(struct im2col_cursor * c, const struct htp_im2col_context * ictx) {
     c->r++;
     c->ioh++;
-    if (c->ioh >= ictx->OH) {
+    如果 (c->ioh >= ictx->OH) {
         c->ioh = 0;
         c->iod++;
-        if (c->iod >= ictx->OD) {
+        如果 (c->iod >= ictx->OD) {
             c->iod = 0;
             c->in++;
         }
@@ -424,14 +424,14 @@ static inline void im2col_3d_step_row(struct im2col_cursor * c, const struct htp
 
 static inline void im2col_3d_step_block(struct im2col_cursor * c, const struct htp_im2col_context * ictx) {
     c->c0 += ictx->pe_owb;
-    if (c->c0 >= ictx->OW) {
+    如果 (c->c0 >= ictx->OW) {
         c->c0 = 0;
         c->r++;
         c->ioh++;
-        if (c->ioh >= ictx->OH) {
+        如果 (c->ioh >= ictx->OH) {
             c->ioh = 0;
             c->iod++;
-            if (c->iod >= ictx->OD) {
+            如果 (c->iod >= ictx->OD) {
                 c->iod = 0;
                 c->in++;
             }
@@ -457,21 +457,21 @@ static void im2col_3d_blocked_dma_stage(struct htp_im2col_context * ictx, dma_qu
     const size_t vtcm_channel_stride = (size_t) KD * KH * Wb * sizeof(float);
     const size_t batch_offset        = (size_t) (in * IC) * src1->nb[3];
 
-    for (uint32_t ikd = 0; ikd < KD; ikd++) {
+    为 (uint32_t ikd = 0; ikd < KD; ikd++) {
         const int32_t iid = (int32_t) iod * s2 + (int32_t) ikd * d2 - p2;
         const bool valid_d = (iid >= 0 && iid < (int32_t) ID);
-        for (uint32_t ikh = 0; ikh < KH; ikh++) {
+        为 (uint32_t ikh = 0; ikh < KH; ikh++) {
             const int32_t iih = (int32_t) ioh * s1 + (int32_t) ikh * d1 - p1;
-            if (!valid_d || iih < 0 || iih >= (int32_t) IH) {
+            如果 (!valid_d || iih < 0 || iih >= (int32_t) IH) {
                 dma_queue_push(dma_q, dma_make_data(srcb, 0), 0, 0, 0, 0);
                 continue;
             }
             const int32_t lo = win0 < 0 ? -win0 : 0;
             int32_t hi = (int32_t) IW - win0;
-            if (hi > (int32_t) Wb) {
+            如果 (hi > (int32_t) Wb) {
                 hi = (int32_t) Wb;
             }
-            if (hi <= lo) {
+            如果 (hi <= lo) {
                 dma_queue_push(dma_q, dma_make_data(srcb, 0), 0, 0, 0, 0);
                 continue;
             }
@@ -503,46 +503,46 @@ static void FNAME(const struct htp_im2col_context * ictx,                       
     const uint32_t patch_stride = ictx->patch_stride;                                                \
     const uint32_t Wb = ictx->pe_wb;                                                                 \
     const int32_t win0 = (int32_t) c0 * s0 - p0;                                                     \
-    for (uint32_t j = 0; j < nb; j++) {                                                              \
+    为 (uint32_t j = 0; j < nb; j++) {                                                              \
         const uint32_t iow = c0 + j;                                                                 \
         const int32_t iiw0 = (int32_t) iow * s0 - p0;                                                \
         DST_CTYPE * dst_patch = dstb + (size_t) j * patch_stride;                                    \
-        for (uint32_t iic = 0; iic < IC; iic++) {                                                    \
-            for (uint32_t ikd = 0; ikd < KD; ikd++) {                                                \
+        为 (uint32_t iic = 0; iic < IC; iic++) {                                                    \
+            为 (uint32_t ikd = 0; ikd < KD; ikd++) {                                                \
                 const int32_t iid = (int32_t) iod * s2 + (int32_t) ikd * d2 - p2;                    \
-                for (uint32_t ikh = 0; ikh < KH; ikh++) {                                            \
+                为 (uint32_t ikh = 0; ikh < KH; ikh++) {                                            \
                     const int32_t iih = (int32_t) ioh * s1 + (int32_t) ikh * d1 - p1;                \
                     DST_CTYPE * out_run = dst_patch +                                                \
                         (size_t) (iic * KD * KH + ikd * KH + ikh) * KW;                              \
-                    if (iid < 0 || iid >= (int32_t) ID || iih < 0 || iih >= (int32_t) IH) {          \
+                    如果 (iid < 0 || iid >= (int32_t) ID || iih < 0 || iih >= (int32_t) IH) {          \
                         SPLAT_FN(out_run, 0, KW);                                                    \
                         continue;                                                                    \
                     }                                                                                \
                     const float * vrow = srcb + (size_t) (iic * KD * KH + ikd * KH + ikh) * Wb;      \
-                    if (d0 == 1) {                                                                   \
+                    如果 (d0 == 1) {                                                                   \
                         const int32_t lo = iiw0 < 0 ? -iiw0 : 0;                                     \
                         int32_t hi = (int32_t) IW - iiw0;                                            \
-                        if (hi > (int32_t) KW) {                                                     \
+                        如果 (hi > (int32_t) KW) {                                                     \
                             hi = (int32_t) KW;                                                       \
                         }                                                                            \
-                        if (hi <= lo) {                                                              \
+                        如果 (hi <= lo) {                                                              \
                             SPLAT_FN(out_run, 0, KW);                                                \
-                        } else {                                                                     \
-                            if (lo > 0) {                                                            \
+                        } 否则 {                                                                     \
+                            如果 (lo > 0) {                                                            \
                                 SPLAT_FN(out_run, 0, (uint32_t) lo);                                 \
                             }                                                                        \
                             COPY_FN((uint8_t *) (out_run + lo),                                      \
                                     (const uint8_t *) (vrow + (iiw0 + lo - win0)),                   \
                                     (uint32_t) (hi - lo));                                           \
-                            if (hi < (int32_t) KW) {                                                 \
+                            如果 (hi < (int32_t) KW) {                                                 \
                                 SPLAT_FN(out_run + hi, 0, (uint32_t) (KW - hi));                     \
                             }                                                                        \
                         }                                                                            \
                         continue;                                                                    \
                     }                                                                                \
-                    for (uint32_t ikw = 0; ikw < KW; ikw += 64) {                                    \
+                    为 (uint32_t ikw = 0; ikw < KW; ikw += 64) {                                    \
                         const uint32_t chunk = MIN(KW - ikw, 64);                                    \
-                        for (uint32_t c = 0; c < chunk; c++) {                                       \
+                        为 (uint32_t c = 0; c < chunk; c++) {                                       \
                             const int32_t iiw = iiw0 + (int32_t) (ikw + c) * d0;                     \
                             scratch[c] = (iiw < 0 || iiw >= (int32_t) IW) ? 0.0f : vrow[iiw - win0]; \
                         }                                                                            \
@@ -557,7 +557,7 @@ static void FNAME(const struct htp_im2col_context * ictx,                       
 IM2COL_3D_BLOCKED_COMPUTE_BODY(im2col_3d_blocked_compute_f16, uint16_t, hvx_copy_f16_f32_uu, hvx_splat_u16_u)
 IM2COL_3D_BLOCKED_COMPUTE_BODY(im2col_3d_blocked_compute_f32, float,    hvx_copy_f32_uu,     hvx_splat_f32_u)
 
-static void im2col_3d_blocked_dma_thread(unsigned int nth, unsigned int ith, void * data) {
+static void im2col_3d_blocked_dma_thread(unsigned 整数 nth, unsigned 整数 ith, void * data) {
     (void) nth;
     struct htp_im2col_context * ictx        = (struct htp_im2col_context *) data;
     struct htp_ops_context *    octx        = ictx->octx;
@@ -580,13 +580,13 @@ static void im2col_3d_blocked_dma_thread(unsigned int nth, unsigned int ith, voi
     const uint32_t row_end_max  = ictx->pe_row_base + ictx->pe_nrows;
     const uint32_t row_start    = ictx->pe_row_base + ictx->pe_rows_per_thread * ith;
     const uint32_t row_end      = MIN(row_start + ictx->pe_rows_per_thread, row_end_max);
-    if (row_start >= row_end) {
-        return;
+    如果 (row_start >= row_end) {
+        返回;
     }
     const uint32_t nrows_local  = row_end - row_start;
     const uint32_t total_blocks = nrows_local * nbpr;
-    if (total_blocks == 0) {
-        return;
+    如果 (total_blocks == 0) {
+        返回;
     }
     struct im2col_cursor cur = {
         .r   = row_start,
@@ -596,20 +596,20 @@ static void im2col_3d_blocked_dma_thread(unsigned int nth, unsigned int ith, voi
         .c0  = 0,
     };
     struct im2col_cursor stage = cur;
-    for (uint32_t i = 0; i < total_blocks && i < 2; i++) {
+    为 (uint32_t i = 0; i < total_blocks && i < 2; i++) {
         dma_queue_push(dma_q, dma_make_data(dst_data, dstb2[i]), 0, 0, 0, 0);
         im2col_3d_blocked_dma_stage(ictx, dma_q, srcb2[i], &stage);
         im2col_3d_step_block(&stage, ictx);
     }
 
     im2col_3d_blocked_compute_fn_t compute = (im2col_3d_blocked_compute_fn_t) ictx->compute;
-    for (uint32_t bi = 0; bi < total_blocks; bi++) {
+    为 (uint32_t bi = 0; bi < total_blocks; bi++) {
         const uint32_t buf = bi & 1u;
         float * srcb = srcb2[buf];
         void *  dstb = dstb2[buf];
         const uint32_t nb  = MIN(owb, OW - cur.c0);
         dma_queue_pop(dma_q);
-        for (uint32_t p = 0; p < kd_kh; p++) {
+        为 (uint32_t p = 0; p < kd_kh; p++) {
             dma_queue_pop(dma_q);
         }
         htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, cur.r);
@@ -619,7 +619,7 @@ static void im2col_3d_blocked_dma_thread(unsigned int nth, unsigned int ith, voi
         dma_queue_push(dma_q, dma_make_data(ddr, dstb),
                        nb * patch_stride * dst_elem, nb * patch_stride * dst_elem,
                        nb * patch_stride * dst_elem, 1);
-        if (bi + 2 < total_blocks) {
+        如果 (bi + 2 < total_blocks) {
             im2col_3d_blocked_dma_stage(ictx, dma_q, srcb, &stage);
             im2col_3d_step_block(&stage, ictx);
         }
@@ -639,7 +639,7 @@ static void im2col_3d_patchembed_dma_stage(struct htp_im2col_context * ictx, dma
     const size_t vtcm_channel_stride = (size_t) KD * KH * IW * sizeof(float);
     const size_t row_size            = (size_t) KH * IW * sizeof(float);
 
-    for (uint32_t ikd = 0; ikd < KD; ikd++) {
+    为 (uint32_t ikd = 0; ikd < KD; ikd++) {
         const uint32_t iid = iod * KD + ikd;
         float * vdst = srcb + (size_t) ikd * KH * IW;
         const dma_addr_t vsrc = src_data + (size_t) (((in * IC) * ID + iid) * IH + ioh * KH) * IW * sizeof(float);
@@ -659,11 +659,11 @@ static void im2col_3d_patchembed_compute_f16(
     const uint32_t IW           = ictx->IW;
     const uint32_t patch_stride = ictx->patch_stride;
 
-    for (uint32_t iow = 0; iow < OW; iow++) {
+    为 (uint32_t iow = 0; iow < OW; iow++) {
         uint16_t * dst_patch = dstb + (size_t) iow * patch_stride;
-        for (uint32_t iic = 0; iic < IC; iic++) {
-            for (uint32_t ikd = 0; ikd < KD; ikd++) {
-                for (uint32_t ikh = 0; ikh < KH; ikh++) {
+        为 (uint32_t iic = 0; iic < IC; iic++) {
+            为 (uint32_t ikd = 0; ikd < KD; ikd++) {
+                为 (uint32_t ikh = 0; ikh < KH; ikh++) {
                     uint16_t * out_run = dst_patch + (size_t) (iic * KD * KH + ikd * KH + ikh) * KW;
                     const float * src_run = srcb + (size_t) (iic * KD * KH + ikd * KH + ikh) * IW + (size_t) iow * KW;
                     hvx_copy_f16_f32_uu((uint8_t *) out_run, (const uint8_t *) src_run, KW);
@@ -685,11 +685,11 @@ static void im2col_3d_patchembed_compute_f32(
     const uint32_t IW           = ictx->IW;
     const uint32_t patch_stride = ictx->patch_stride;
 
-    for (uint32_t iow = 0; iow < OW; iow++) {
+    为 (uint32_t iow = 0; iow < OW; iow++) {
         float * dst_patch = dstb + (size_t) iow * patch_stride;
-        for (uint32_t iic = 0; iic < IC; iic++) {
-            for (uint32_t ikd = 0; ikd < KD; ikd++) {
-                for (uint32_t ikh = 0; ikh < KH; ikh++) {
+        为 (uint32_t iic = 0; iic < IC; iic++) {
+            为 (uint32_t ikd = 0; ikd < KD; ikd++) {
+                为 (uint32_t ikh = 0; ikh < KH; ikh++) {
                     float * out_run = dst_patch + (size_t) (iic * KD * KH + ikd * KH + ikh) * KW;
                     const float * src_run = srcb + (size_t) (iic * KD * KH + ikd * KH + ikh) * IW + (size_t) iow * KW;
                     hvx_copy_f32_uu((uint8_t *) out_run, (const uint8_t *) src_run, KW);
@@ -699,7 +699,7 @@ static void im2col_3d_patchembed_compute_f32(
     }
 }
 
-static void im2col_3d_patchembed_dma_thread(unsigned int nth, unsigned int ith, void * data) {
+static void im2col_3d_patchembed_dma_thread(unsigned 整数 nth, unsigned 整数 ith, void * data) {
     (void) nth;
     struct htp_im2col_context * ictx        = (struct htp_im2col_context *) data;
     struct htp_ops_context *    octx        = ictx->octx;
@@ -714,8 +714,8 @@ static void im2col_3d_patchembed_dma_thread(unsigned int nth, unsigned int ith, 
     const uint32_t row_end_max  = ictx->pe_row_base + ictx->pe_nrows;
     const uint32_t row_start    = ictx->pe_row_base + ictx->pe_rows_per_thread * ith;
     const uint32_t row_end      = MIN(row_start + ictx->pe_rows_per_thread, row_end_max);
-    if (row_start >= row_end) {
-        return;
+    如果 (row_start >= row_end) {
+        返回;
     }
 
     const uint32_t nrows_local  = row_end - row_start;
@@ -731,19 +731,19 @@ static void im2col_3d_patchembed_dma_thread(unsigned int nth, unsigned int ith, 
         .c0  = 0,
     };
     struct im2col_cursor stage = cur;
-    for (uint32_t i = 0; i < nrows_local && i < 2; i++) {
+    为 (uint32_t i = 0; i < nrows_local && i < 2; i++) {
         dma_queue_push(dma_q, dma_make_data(dst_data, dstb2[i]), 0, 0, 0, 0);
         im2col_3d_patchembed_dma_stage(ictx, dma_q, srcb2[i], &stage);
         im2col_3d_step_row(&stage, ictx);
     }
 
     im2col_3d_patchembed_compute_fn_t compute = (im2col_3d_patchembed_compute_fn_t) ictx->compute;
-    for (uint32_t idx = 0; idx < nrows_local; idx++) {
+    为 (uint32_t idx = 0; idx < nrows_local; idx++) {
         const uint32_t buf = idx & 1u;
         float * srcb = srcb2[buf];
         void *  dstb = dstb2[buf];
         dma_queue_pop(dma_q);
-        for (uint32_t p = 0; p < KD; p++) {
+        为 (uint32_t p = 0; p < KD; p++) {
             dma_queue_pop(dma_q);
         }
         htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, cur.r);
@@ -753,7 +753,7 @@ static void im2col_3d_patchembed_dma_thread(unsigned int nth, unsigned int ith, 
         dma_queue_push(dma_q, dma_make_data(ddr_row, dstb),
                        OW * patch_stride * dst_elem, OW * patch_stride * dst_elem,
                        OW * patch_stride * dst_elem, 1);
-        if (idx + 2 < nrows_local) {
+        如果 (idx + 2 < nrows_local) {
             im2col_3d_patchembed_dma_stage(ictx, dma_q, srcb, &stage);
             im2col_3d_step_row(&stage, ictx);
         }
@@ -762,21 +762,21 @@ static void im2col_3d_patchembed_dma_thread(unsigned int nth, unsigned int ith, 
     dma_queue_flush(dma_q);
 }
 
-int op_im2col(struct htp_ops_context * octx) {
+整数 op_im2col(struct htp_ops_context * octx) {
     const struct htp_im2col_kernel_params * kparams = (const struct htp_im2col_kernel_params *) octx->kernel_params;
-    if (kparams->kernel_type == HTP_IM2COL_KERNEL_UNSUPPORTED) {
-        return HTP_STATUS_NO_SUPPORT;
+    如果 (kparams->kernel_type == HTP_IM2COL_KERNEL_UNSUPPORTED) {
+        返回 HTP_STATUS_NO_SUPPORT;
     }
 
-    if (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
-        return HTP_STATUS_INVAL_PARAMS;
+    如果 (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
+        返回 HTP_STATUS_INVAL_PARAMS;
     }
 
     const struct htp_tensor * dst = octx->dst;
 
     uint32_t row_base = 0;
     uint32_t nrows    = kparams->total_rows;
-    if (octx->ctx->mdev.count > 1) {
+    如果 (octx->ctx->mdev.count > 1) {
         const uint32_t row_size = dst->nb[2];
         const uint32_t rows_per_chunk = (row_size > 0) ? (HEX_L2_LINE_SIZE / hex_gcd_u32(row_size, HEX_L2_LINE_SIZE)) : 1;
         const struct htp_tensor_mdev_range range =
@@ -786,8 +786,8 @@ int op_im2col(struct htp_ops_context * octx) {
         nrows    = range.count;
     }
 
-    if (nrows == 0) {
-        return HTP_STATUS_OK;
+    如果 (nrows == 0) {
+        返回 HTP_STATUS_OK;
     }
 
     struct htp_im2col_context ictx = { 0 };
@@ -820,7 +820,7 @@ int op_im2col(struct htp_ops_context * octx) {
     ictx.OW                     = kparams->OW;
     ictx.patch_stride           = kparams->patch_stride;
 
-    for (uint32_t ith = 0; ith < pth; ith++) {
+    为 (uint32_t ith = 0; ith < pth; ith++) {
         uint32_t r = row_base + ictx.pe_rows_per_thread * ith;
         ictx.thread_ioh[ith] = r % kparams->OH;
         ictx.thread_in[ith]  = r / kparams->OH;
@@ -828,37 +828,37 @@ int op_im2col(struct htp_ops_context * octx) {
 
     ictx.dst_elem = dst->type == HTP_TYPE_F16 ? sizeof(__fp16) : sizeof(float);
 
-    if (kparams->kernel_type == HTP_IM2COL_KERNEL_PATCHEMBED_DMA) {
+    如果 (kparams->kernel_type == HTP_IM2COL_KERNEL_PATCHEMBED_DMA) {
         ictx.compute = dst->type == HTP_TYPE_F16 ? (void *) im2col_patchembed_compute_f16
                                                  : (void *) im2col_patchembed_compute_f32;
         work_queue_run(octx->ctx->work_queue, im2col_patchembed_dma_thread, &ictx, pth);
-        return HTP_STATUS_OK;
-    } else if (kparams->kernel_type == HTP_IM2COL_KERNEL_BLOCKED_DMA) {
+        返回 HTP_STATUS_OK;
+    } 否则 如果 (kparams->kernel_type == HTP_IM2COL_KERNEL_BLOCKED_DMA) {
         ictx.compute = dst->type == HTP_TYPE_F16 ? (void *) im2col_blocked_compute_f16
                                                  : (void *) im2col_blocked_compute_f32;
         work_queue_run(octx->ctx->work_queue, im2col_blocked_dma_thread, &ictx, pth);
-        return HTP_STATUS_OK;
+        返回 HTP_STATUS_OK;
     }
 
-    return HTP_STATUS_NO_SUPPORT;
+    返回 HTP_STATUS_NO_SUPPORT;
 }
 
-int op_im2col_3d(struct htp_ops_context * octx) {
+整数 op_im2col_3d(struct htp_ops_context * octx) {
     const struct htp_im2col_kernel_params * kparams =
         (const struct htp_im2col_kernel_params *) octx->kernel_params;
-    if (kparams->kernel_type == HTP_IM2COL_KERNEL_UNSUPPORTED) {
-        return HTP_STATUS_NO_SUPPORT;
+    如果 (kparams->kernel_type == HTP_IM2COL_KERNEL_UNSUPPORTED) {
+        返回 HTP_STATUS_NO_SUPPORT;
     }
 
-    if (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
-        return HTP_STATUS_INVAL_PARAMS;
+    如果 (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
+        返回 HTP_STATUS_INVAL_PARAMS;
     }
 
     const struct htp_tensor * dst = octx->dst;
 
     uint32_t row_base = 0;
     uint32_t nrows    = kparams->total_rows;
-    if (octx->ctx->mdev.count > 1) {
+    如果 (octx->ctx->mdev.count > 1) {
         const uint32_t row_size = dst->nb[2];
         const uint32_t rows_per_chunk = (row_size > 0) ? (HEX_L2_LINE_SIZE / hex_gcd_u32(row_size, HEX_L2_LINE_SIZE)) : 1;
         const struct htp_tensor_mdev_range range =
@@ -868,8 +868,8 @@ int op_im2col_3d(struct htp_ops_context * octx) {
         nrows    = range.count;
     }
 
-    if (nrows == 0) {
-        return HTP_STATUS_OK;
+    如果 (nrows == 0) {
+        返回 HTP_STATUS_OK;
     }
 
     struct htp_im2col_context ictx = { 0 };
@@ -902,7 +902,7 @@ int op_im2col_3d(struct htp_ops_context * octx) {
     ictx.OW                     = kparams->OW;
     ictx.patch_stride           = kparams->patch_stride;
 
-    for (uint32_t ith = 0; ith < pth; ith++) {
+    为 (uint32_t ith = 0; ith < pth; ith++) {
         uint32_t rem = row_base + ictx.pe_rows_per_thread * ith;
         ictx.thread_ioh[ith] = rem % kparams->OH;
         rem /= kparams->OH;
@@ -912,17 +912,17 @@ int op_im2col_3d(struct htp_ops_context * octx) {
 
     ictx.dst_elem = dst->type == HTP_TYPE_F16 ? sizeof(__fp16) : sizeof(float);
 
-    if (kparams->kernel_type == HTP_IM2COL_KERNEL_PATCHEMBED_DMA) {
+    如果 (kparams->kernel_type == HTP_IM2COL_KERNEL_PATCHEMBED_DMA) {
         ictx.compute = dst->type == HTP_TYPE_F16 ? (void *) im2col_3d_patchembed_compute_f16
                                                  : (void *) im2col_3d_patchembed_compute_f32;
         work_queue_run(octx->ctx->work_queue, im2col_3d_patchembed_dma_thread, &ictx, pth);
-        return HTP_STATUS_OK;
-    } else if (kparams->kernel_type == HTP_IM2COL_KERNEL_BLOCKED_DMA) {
+        返回 HTP_STATUS_OK;
+    } 否则 如果 (kparams->kernel_type == HTP_IM2COL_KERNEL_BLOCKED_DMA) {
         ictx.compute = dst->type == HTP_TYPE_F16 ? (void *) im2col_3d_blocked_compute_f16
                                                  : (void *) im2col_3d_blocked_compute_f32;
         work_queue_run(octx->ctx->work_queue, im2col_3d_blocked_dma_thread, &ictx, pth);
-        return HTP_STATUS_OK;
+        返回 HTP_STATUS_OK;
     }
 
-    return HTP_STATUS_NO_SUPPORT;
+    返回 HTP_STATUS_NO_SUPPORT;
 }

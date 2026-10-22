@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-typedef void (*work_queue_func_t)(unsigned int n, unsigned int i, void *);
+typedef void (*work_queue_func_t)(unsigned 整数 n, unsigned 整数 i, void *);
 
 struct work_queue_s;
 typedef struct work_queue_s * work_queue_t;
@@ -20,14 +20,14 @@ void         work_queue_free(work_queue_t q);
 void work_queue_wakeup(work_queue_t q);
 void work_queue_suspend(work_queue_t q);
 
-bool work_queue_run_async(work_queue_t q, work_queue_func_t func, void * data, unsigned int n);
+bool work_queue_run_async(work_queue_t q, work_queue_func_t func, void * data, unsigned 整数 n);
 
-static inline bool work_queue_run(work_queue_t q, work_queue_func_t func, void * data, unsigned int n) {
-    if (n <= 1) {
+static inline bool work_queue_run(work_queue_t q, work_queue_func_t func, void * data, unsigned 整数 n) {
+    如果 (n <= 1) {
         func(n, 0, data);
-        return true;
+        返回 true;
     }
-    return work_queue_run_async(q, func, data, n);
+    返回 work_queue_run_async(q, func, data, n);
 }
 
 // Legacy compatibility

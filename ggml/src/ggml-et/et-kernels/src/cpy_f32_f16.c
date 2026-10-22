@@ -16,32 +16,32 @@ struct ggml_et_cont_params {
     struct ggml_tensor dst;
 };
 
-int entry_point(struct ggml_et_cont_params * params, void * env) {
+整数 entry_point(struct ggml_et_cont_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env || !params) {
-        return -1;
+    如果 (!kernel_env || !params) {
+        返回 -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    整数 thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    整数 num_threads = get_num_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return 0;
+    如果 (thread_id < 0) {
+        返回 0;
     }
 
     struct ggml_tensor * src0 = &params->src0;
     struct ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F16) {
-        return -1;
+    如果 (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F16) {
+        返回 -1;
     }
 
     const char * src_data = (const char *) src0->data;
     uint16_t *   dst_data = (uint16_t *) dst->data;
 
-    if (!src_data || !dst_data) {
-        return -1;
+    如果 (!src_data || !dst_data) {
+        返回 -1;
     }
 
     const int64_t ne00 = src0->ne[0];
@@ -56,8 +56,8 @@ int entry_point(struct ggml_et_cont_params * params, void * env) {
 
     const int64_t total_elements = ne00 * ne01 * ne02 * ne03;
 
-    if (total_elements == 0) {
-        return 0;
+    如果 (total_elements == 0) {
+        返回 0;
     }
 
     // Check if src is contiguous F32
@@ -72,28 +72,28 @@ int entry_point(struct ggml_et_cont_params * params, void * env) {
     const int64_t cl_per_thread = (total_cl + num_threads - 1) / num_threads;
     const int64_t cl_start      = thread_id * cl_per_thread;
     int64_t       cl_end        = cl_start + cl_per_thread;
-    if (cl_end > total_cl) {
+    如果 (cl_end > total_cl) {
         cl_end = total_cl;
     }
-    if (cl_start >= total_cl) {
-        return 0;
+    如果 (cl_start >= total_cl) {
+        返回 0;
     }
 
     const int64_t es = cl_start * elems_per_cl;
     int64_t       ee = cl_end * elems_per_cl;
-    if (ee > total_elements) {
+    如果 (ee > total_elements) {
         ee = total_elements;
     }
 
-    if (src_contiguous) {
+    如果 (src_contiguous) {
         // Fast path: src is contiguous F32
         const float * src_f32 = (const float *) src_data;
-        for (int64_t i = es; i < ee; ++i) {
+        为 (int64_t i = es; i < ee; ++i) {
             dst_data[i] = fp32_to_fp16(src_f32[i]);
         }
-    } else {
+    } 否则 {
         // General path: stride-aware read
-        for (int64_t idx = es; idx < ee; ++idx) {
+        为 (int64_t idx = es; idx < ee; ++idx) {
             const int64_t i00  = idx % ne00;
             const int64_t rem1 = idx / ne00;
             const int64_t i01  = rem1 % ne01;
@@ -106,5 +106,5 @@ int entry_point(struct ggml_et_cont_params * params, void * env) {
         }
     }
 
-    return 0;
+    返回 0;
 }

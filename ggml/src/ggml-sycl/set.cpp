@@ -16,7 +16,7 @@ inline void set_f32(const float* src, float* dst,
 {
     const size_t idx = item.get_global_id(0);
     const size_t total = ne0 * ne1 * ne2 * ne3;
-    if (idx >= total) return;
+    如果 (idx >= total) 返回;
 
     // Convert linear index to 4D indices
     const size_t i3 = idx / (ne2 * ne1 * ne0);
@@ -53,7 +53,7 @@ void ggml_sycl_op_set(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
     queue_ptr stream = ctx.stream();
 
     // Copy src0 to dst if not inplace
-    if (!inplace)
+    如果 (!inplace)
         stream->memcpy(dst_ptr, src0_ptr, ggml_nbytes(dst));
 
     const int64_t ne[4] = {src1->ne[0], src1->ne[1], src1->ne[2], src1->ne[3]};
