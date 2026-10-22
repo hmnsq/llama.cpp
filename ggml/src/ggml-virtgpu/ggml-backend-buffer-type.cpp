@@ -1,85 +1,85 @@
-#include "ggml-remoting.h"
+#ضمن "ggml-remoting.h"
 
-static ggml_backend_buffer_t ggml_backend_remoting_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft,
+ساكن ggml_backend_میانگیر_t ggml_backend_remoting_میانگیر_type_alloc_میانگیر(ggml_backend_میانگیر_type_t buft,
                                                                             size_t                     size) {
-    virtgpu * gpu = BUFT_TO_GPU(buft);
+    virtgpu * gpu = BUFT_مقصد_GPU(buft);
 
-    ggml_backend_remoting_buffer_context * context = (ggml_backend_remoting_buffer_context *) malloc(sizeof(*context));
-    if (!context) {
+    ggml_backend_remoting_میانگیر_context * context = (ggml_backend_remoting_میانگیر_context *) حافظه_بده(حجم(*context));
+    إذا (!context) {
         GGML_ABORT(GGML_VIRTGPU "%s: Couldn't allocate the buffer context ...", __func__);
     }
 
     context->gpu = gpu;
 
-    bool async__unused, host_buffer__unused, events__unused, mmap_support__unused;
-    bool buffer_from_host_ptr;
-    apir_device_get_props(gpu, &async__unused, &host_buffer__unused, &buffer_from_host_ptr, &events__unused, &mmap_support__unused);
+    منطقي async_استفادهنشده, host_میانگیر_استفادهنشده, events_استفادهنشده, mmap_support_استفادهنشده;
+    منطقي میانگیر_from_host_ptr;
+    apir_device_get_props(gpu, &async_استفادهنشده, &host_میانگیر_استفادهنشده, &میانگیر_from_host_ptr, &events_استفادهنشده, &mmap_support_استفادهنشده);
 
-    if (buffer_from_host_ptr) {
-        context->apir_context = apir_device_buffer_from_ptr(gpu, size, size);
-        context->base         = context->apir_context.shmem.mmap_ptr;
-        context->is_from_ptr  = true;
-    } else {
-        context->apir_context = apir_buffer_type_alloc_buffer(gpu, gpu->cached_buffer_type.host_handle, size);
-        context->is_from_ptr  = false;
-        context->base         = NULL;
+    إذا (میانگیر_from_host_ptr) {
+        context->apir_context = apir_device_میانگیر_from_ptr(gpu, size, size);
+        context->پایه         = context->apir_context.shmem.mmap_ptr;
+        context->is_from_ptr  = درست;
+    } وإلا {
+        context->apir_context = apir_میانگیر_type_alloc_میانگیر(gpu, gpu->cached_میانگیر_type.host_handle, size);
+        context->is_from_ptr  = خطأ;
+        context->پایه         = عدم;
     }
 
-    ggml_backend_buffer_t buffer =
-        ggml_backend_buffer_init(buft, ggml_backend_remoting_buffer_interface, (void *) context, size);
+    ggml_backend_میانگیر_t میانگیر =
+        ggml_backend_میانگیر_init(buft, ggml_backend_remoting_میانگیر_interface, (فراغ *) context, size);
 
-    return buffer;
+    أرجع میانگیر;
 }
 
-static const char * ggml_backend_remoting_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
-    virtgpu * gpu = BUFT_TO_GPU(buft);
+ساكن ثابت حرف * ggml_backend_remoting_میانگیر_type_get_name(ggml_backend_میانگیر_type_t buft) {
+    virtgpu * gpu = BUFT_مقصد_GPU(buft);
 
     // Return the prefixed name that was built once during initialization
-    return gpu->cached_buffer_type.name;
+    أرجع gpu->cached_میانگیر_type.name;
 }
 
-static size_t ggml_backend_remoting_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
-    virtgpu * gpu = BUFT_TO_GPU(buft);
+ساكن size_t ggml_backend_remoting_میانگیر_type_get_alignment(ggml_backend_میانگیر_type_t buft) {
+    virtgpu * gpu = BUFT_مقصد_GPU(buft);
 
-    return gpu->cached_buffer_type.alignment;
+    أرجع gpu->cached_میانگیر_type.alignment;
 }
 
-static size_t ggml_backend_remoting_buffer_type_get_max_size(ggml_backend_buffer_type_t buft) {
-    virtgpu * gpu = BUFT_TO_GPU(buft);
+ساكن size_t ggml_backend_remoting_میانگیر_type_get_max_اندازه(ggml_backend_میانگیر_type_t buft) {
+    virtgpu * gpu = BUFT_مقصد_GPU(buft);
 
-    return gpu->cached_buffer_type.max_size;
+    أرجع gpu->cached_میانگیر_type.max_size;
 }
 
-static size_t ggml_backend_remoting_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft,
-                                                               const ggml_tensor *        tensor) {
-    virtgpu * gpu = BUFT_TO_GPU(buft);
+ساكن size_t ggml_backend_remoting_میانگیر_type_get_alloc_اندازه(ggml_backend_میانگیر_type_t buft,
+                                                               ثابت ggml_tensor *        tensor) {
+    virtgpu * gpu = BUFT_مقصد_GPU(buft);
 
-    if (tensor->buffer == NULL || !tensor->buffer->context ||
-        !buft->device->iface.supports_buft(buft->device, tensor->buffer->buft)) {
-        return ggml_nbytes(tensor);
+    إذا (tensor->میانگیر == عدم || !tensor->میانگیر->context ||
+        !buft->device->iface.supports_buft(buft->device, tensor->میانگیر->buft)) {
+        أرجع ggml_nbytes(tensor);
     }
 
-    return apir_buffer_type_get_alloc_size(gpu, gpu->cached_buffer_type.host_handle, tensor);
+    أرجع apir_میانگیر_type_get_alloc_اندازه(gpu, gpu->cached_میانگیر_type.host_handle, tensor);
 }
 
-const ggml_backend_buffer_type_i ggml_backend_remoting_buffer_type_interface = {
-    /* .get_name            = */ ggml_backend_remoting_buffer_type_get_name,
-    /* .alloc_buffer        = */ ggml_backend_remoting_buffer_type_alloc_buffer,
-    /* .alloc_buffer_n      = */ NULL,
-    /* .get_alignment       = */ ggml_backend_remoting_buffer_type_get_alignment,
-    /* .get_max_size        = */ ggml_backend_remoting_buffer_type_get_max_size,
-    /* .get_alloc_size      = */ ggml_backend_remoting_buffer_type_get_alloc_size,
-    /* .get_alloc_size_n    = */ NULL,
-    /* .is_host             = */ NULL,
+ثابت ggml_backend_میانگیر_type_i ggml_backend_remoting_میانگیر_type_interface = {
+    /* .get_name            = */ ggml_backend_remoting_میانگیر_type_get_name,
+    /* .alloc_buffer        = */ ggml_backend_remoting_میانگیر_type_alloc_میانگیر,
+    /* .alloc_buffer_n      = */ عدم,
+    /* .get_alignment       = */ ggml_backend_remoting_میانگیر_type_get_alignment,
+    /* .get_max_size        = */ ggml_backend_remoting_میانگیر_type_get_max_اندازه,
+    /* .get_alloc_size      = */ ggml_backend_remoting_میانگیر_type_get_alloc_اندازه,
+    /* .get_alloc_size_n    = */ عدم,
+    /* .is_host             = */ عدم,
 };
 
-const ggml_backend_buffer_type_i ggml_backend_remoting_buffer_from_ptr_type_interface = {
-    /* .get_name            = */ ggml_backend_remoting_buffer_type_get_name,
-    /* .alloc_buffer        = */ NULL,
-    /* .alloc_buffer_n      = */ NULL,
-    /* .get_alignment       = */ ggml_backend_remoting_buffer_type_get_alignment,
-    /* .get_max_size        = */ ggml_backend_remoting_buffer_type_get_max_size,
-    /* .get_alloc_size      = */ ggml_backend_remoting_buffer_type_get_alloc_size,
-    /* .get_alloc_size_n    = */ NULL,
-    /* .is_host             = */ NULL,
+ثابت ggml_backend_میانگیر_type_i ggml_backend_remoting_میانگیر_from_ptr_type_interface = {
+    /* .get_name            = */ ggml_backend_remoting_میانگیر_type_get_name,
+    /* .alloc_buffer        = */ عدم,
+    /* .alloc_buffer_n      = */ عدم,
+    /* .get_alignment       = */ ggml_backend_remoting_میانگیر_type_get_alignment,
+    /* .get_max_size        = */ ggml_backend_remoting_میانگیر_type_get_max_اندازه,
+    /* .get_alloc_size      = */ ggml_backend_remoting_میانگیر_type_get_alloc_اندازه,
+    /* .get_alloc_size_n    = */ عدم,
+    /* .is_host             = */ عدم,
 };

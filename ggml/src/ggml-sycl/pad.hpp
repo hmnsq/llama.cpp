@@ -10,13 +10,13 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#ifndef GGML_SYCL_PAD_HPP
-#define GGML_SYCL_PAD_HPP
+#اگر_تعریف_نشده GGML_SYCL_PAD_HPP
+#تعریف_کن GGML_SYCL_PAD_HPP
 
-#include "common.hpp"
+#ضمن "common.hpp"
 
-void ggml_sycl_pad(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+فراغ ggml_sycl_pad(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-void ggml_sycl_op_pad(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+فراغ ggml_sycl_op_pad(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-#endif // GGML_SYCL_PAD_HPP
+#پایان_اگر // GGML_SYCL_PAD_HPP

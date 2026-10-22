@@ -1,196 +1,196 @@
-#include "ggml-decoder.h"
-#include "ggml-impl.h"
-#include "ggml-openvino-extra.h"
+#ضمن "ggml-decoder.h"
+#ضمن "ggml-impl.h"
+#ضمن "ggml-openvino-extra.h"
 
-#include <cstddef>
-#include <cstdint>
-#include <functional>
-#include <memory>
-#include <mutex>
-#include <openvino/runtime/core.hpp>
-#include <openvino/runtime/infer_request.hpp>
-#include <string>
-#include <unordered_map>
-#include <unordered_set>
-#include <utility>
-#include <vector>
+#ضمن <cstddef>
+#ضمن <cstdint>
+#ضمن <functional>
+#ضمن <memory>
+#ضمن <mutex>
+#ضمن <openvino/runtime/core.hpp>
+#ضمن <openvino/runtime/infer_request.hpp>
+#ضمن <string>
+#ضمن <unordered_map>
+#ضمن <unordered_set>
+#ضمن <utility>
+#ضمن <vector>
 
 // Cache key for a translated/compiled graph. Node count plus the two end node names identify a
 // graph during inference, where the same few graphs repeat for the whole session. The list of
 // external input names below tells those apart more precisely, but it walks every node and every
 // src slot, so it is built only when GGML_OPENVINO_FULL_GRAPH_KEY is set. Op tests run many small
 // graphs that can share a node count and end names, and need the full key.
-struct graph_key {
-    int n_nodes;
-    int n_leaves;
-    std::string first_node_name;
-    std::string last_node_name;
+بنية گراف_کلید {
+    صحيح n_nodes;
+    صحيح n_leaves;
+    std::string اولی_گره_name;
+    std::string آخرین_گره_name;
     // Each entry: "<node_idx>:<src_idx>:<op_type>"
-    std::vector<std::string> input_srcs;
+    std::وکتور<std::string> درون_داد_srcs;
 
-    graph_key(const ggml_cgraph * cgraph, bool include_inputs = false) : n_nodes(cgraph->n_nodes), n_leaves(cgraph->n_leafs) {
-        if (n_nodes > 0) {
-            first_node_name = cgraph->nodes[0]->name;
-            last_node_name = cgraph->nodes[n_nodes - 1]->name;
+    گراف_کلید(ثابت ggml_cgraph * cgraph, bool include_inputs = false) : n_nodes(cgraph->n_nodes), n_leaves(cgraph->n_leafs) {
+        إذا (n_nodes > 0) {
+            اولی_گره_name = cgraph->nodes[0]->name;
+            آخرین_گره_name = cgraph->nodes[n_nodes - 1]->name;
         }
 
-        static const bool full_key = ggml_openvino_getenv_int("GGML_OPENVINO_FULL_GRAPH_KEY") != 0;
-        if (!full_key && !include_inputs) {
-            return;
+        ساكن ثابت bool پر_کلید = ggml_openvino_getenv_int("GGML_OPENVINO_FULL_GRAPH_KEY") != 0;
+        إذا (!پر_کلید && !include_inputs) {
+            أرجع;
         }
 
-        std::unordered_set<const ggml_tensor *> node_set;
-        node_set.reserve(cgraph->n_nodes);
-        for (int i = 0; i < cgraph->n_nodes; i++) {
-            node_set.insert(cgraph->nodes[i]);
+        std::unordered_مجموعه<ثابت ggml_tensor *> گره_مجموعه;
+        گره_مجموعه.reserve(cgraph->n_nodes);
+        لكل (صحيح i = 0; i < cgraph->n_nodes; i++) {
+            گره_مجموعه.درج(cgraph->nodes[i]);
         }
 
-        for (int node_idx = 0; node_idx < cgraph->n_nodes; node_idx++) {
-            const ggml_tensor * node = cgraph->nodes[node_idx];
-            for (int src_idx = 0; src_idx < GGML_MAX_SRC; src_idx++) {
-                const ggml_tensor * src = node->src[src_idx];
-                if (src == nullptr || src->buffer == nullptr || node_set.count(src) || src->buffer->usage == GGML_BACKEND_BUFFER_USAGE_WEIGHTS) {
-                    continue;
+        لكل (صحيح گره_idx = 0; گره_idx < cgraph->n_nodes; گره_idx++) {
+            ثابت ggml_tensor * گره = cgraph->nodes[گره_idx];
+            لكل (صحيح src_idx = 0; src_idx < GGML_MAX_SRC; src_idx++) {
+                ثابت ggml_tensor * src = گره->src[src_idx];
+                إذا (src == nullptr || src->میانگیر == nullptr || گره_مجموعه.شمار(src) || src->میانگیر->usage == GGML_BACKEND_میانگیر_USAGE_WEIGHTS) {
+                    استمر;
                 }
 
-                input_srcs.push_back(std::to_string(node_idx) + ":" + std::to_string(src_idx) + ":" +
-                    GgmlOvDecoder::compute_op_type(node));
+                درون_داد_srcs.افزودن_پشت(std::مقصد_string(گره_idx) + ":" + std::مقصد_string(src_idx) + ":" +
+                    GgmlOvDecoder::compute_op_type(گره));
             }
         }
     }
 
-    bool operator==(const graph_key & other) const {
-        return n_nodes == other.n_nodes && n_leaves == other.n_leaves &&
-               first_node_name == other.first_node_name &&
-               last_node_name == other.last_node_name && input_srcs == other.input_srcs;
+    bool عملگر==(ثابت گراف_کلید & other) ثابت {
+        أرجع n_nodes == other.n_nodes && n_leaves == other.n_leaves &&
+               اولی_گره_name == other.اولی_گره_name &&
+               آخرین_گره_name == other.آخرین_گره_name && درون_داد_srcs == other.درون_داد_srcs;
     }
 };
 
-struct graph_key_hash {
-    size_t operator()(const graph_key & key) const {
-        size_t hash = std::hash<int>{}(key.n_nodes);
-        hash ^= std::hash<int>{}(key.n_leaves) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-        if (key.n_nodes > 0) {
-            hash ^= std::hash<std::string>{}(key.first_node_name) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-            hash ^= std::hash<std::string>{}(key.last_node_name) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+بنية گراف_کلید_hash {
+    size_t عملگر()(ثابت گراف_کلید & کلید) ثابت {
+        size_t hash = std::hash<صحيح>{}(کلید.n_nodes);
+        hash ^= std::hash<صحيح>{}(کلید.n_leaves) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+        إذا (کلید.n_nodes > 0) {
+            hash ^= std::hash<std::string>{}(کلید.اولی_گره_name) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+            hash ^= std::hash<std::string>{}(کلید.آخرین_گره_name) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
         }
-        for (const auto & s : key.input_srcs) {
+        لكل (ثابت خودکار & s : کلید.درون_داد_srcs) {
             hash ^= std::hash<std::string>{}(s) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
         }
-        return hash;
+        أرجع hash;
     }
 };
 
-struct decoder_runtime_ctx {
+بنية decoder_runtime_ctx {
     decoder_runtime_ctx(std::shared_ptr<std::mutex> mutex) : mutex(std::move(mutex)) {}
 
     std::shared_ptr<std::mutex> mutex;
     std::shared_ptr<GgmlOvDecoder> ptr;
 };
 
-struct ov_compiled_graph {
+بنية ov_compiled_گراف {
     ov::CompiledModel decode;
     ov::CompiledModel prefill;
-    std::vector<std::string> input_names;
-    std::vector<std::string> output_names;
+    std::وکتور<std::string> درون_داد_نامها;
+    std::وکتور<std::string> output_نامها;
 };
 
 // Only compilation and cache publication use this mutex. Requests, decoders and
 // sequence state belong to individual backend contexts and never enter this cache.
-struct ov_compiled_model_cache {
+بنية ov_compiled_model_cache {
     std::mutex mutex;
-    std::unordered_map<std::string, ov_compiled_graph> graphs;
-    size_t backend_count = 0;
+    std::unordered_map<std::string, ov_compiled_گراف> graphs;
+    size_t backend_شمار = 0;
 };
 
 // Private to one backend instance. Only compiled_cache is shared with other
 // instances; clearing these local caches cannot invalidate their requests.
-struct ov_runtime_context {
+بنية ov_runtime_context {
     // Serializes calls on this backend only, not inference in other contexts.
     std::mutex execution_mutex;
     std::shared_ptr<ov_compiled_model_cache> compiled_cache;
     mutable std::mutex ctx_mutex;
     std::string device;
     bool stateful;
-    std::unordered_map<graph_key, std::shared_ptr<decoder_runtime_ctx>, graph_key_hash> decoder_cache;
-    std::unordered_map<graph_key, std::shared_ptr<ov::InferRequest>, graph_key_hash> infer_request_cache;
-    std::unordered_map<graph_key, std::shared_ptr<ov::InferRequest>, graph_key_hash> infer_request_cache_prefill;
-    std::unordered_map<graph_key, std::vector<std::string>, graph_key_hash> ov_input_names_cache;
-    std::unordered_map<graph_key, std::vector<std::string>, graph_key_hash> ov_output_names_cache;
-    size_t stateful_kv_size;
-    std::map<std::string, std::string> kv_state_input_name_map;
+    std::unordered_map<گراف_کلید, std::shared_ptr<decoder_runtime_ctx>, گراف_کلید_hash> decoder_cache;
+    std::unordered_map<گراف_کلید, std::shared_ptr<ov::InferRequest>, گراف_کلید_hash> infer_request_cache;
+    std::unordered_map<گراف_کلید, std::shared_ptr<ov::InferRequest>, گراف_کلید_hash> infer_request_cache_prefill;
+    std::unordered_map<گراف_کلید, std::وکتور<std::string>, گراف_کلید_hash> ov_درون_داد_نامها_cache;
+    std::unordered_map<گراف_کلید, std::وکتور<std::string>, گراف_کلید_hash> ov_output_نامها_cache;
+    size_t stateful_kv_اندازه;
+    std::map<std::string, std::string> kv_state_درون_داد_name_map;
     // compute-only copies of graphs that carry unselected ggml_build_forward_select() branches
-    struct compute_graph {
-        ggml_cgraph graph;
-        std::vector<ggml_tensor *> nodes;
+    بنية compute_گراف {
+        ggml_cgraph گراف;
+        std::وکتور<ggml_tensor *> nodes;
     };
-    std::unordered_map<const ggml_cgraph *, compute_graph> compute_graphs;
+    std::unordered_map<ثابت ggml_cgraph *, compute_گراف> compute_graphs;
 
-    ov_runtime_context() : device("CPU"), stateful(false), stateful_kv_size(0) {}
+    ov_runtime_context() : device("CPU"), stateful(false), stateful_kv_اندازه(0) {}
 
-    void clear_caches_locked() {
+    فراغ clear_caches_locked() {
         decoder_cache.clear();
         infer_request_cache.clear();
         infer_request_cache_prefill.clear();
-        ov_input_names_cache.clear();
-        ov_output_names_cache.clear();
-        kv_state_input_name_map.clear();
-        stateful_kv_size = 0;
+        ov_درون_داد_نامها_cache.clear();
+        ov_output_نامها_cache.clear();
+        kv_state_درون_داد_name_map.clear();
+        stateful_kv_اندازه = 0;
     }
 
-    void clear_caches() {
-        std::lock_guard<std::mutex> lock(ctx_mutex);
+    فراغ clear_caches() {
+        std::قفل_guard<std::mutex> قفل(ctx_mutex);
         clear_caches_locked();
     }
 };
 
-enum ggml_status ov_graph_compute(struct ggml_cgraph * cgraph, ggml_backend_t backend);
+تعداد ggml_وضعیت ov_گراف_compute(بنية ggml_cgraph * cgraph, ggml_backend_t backend);
 
-size_t checksum(const void * data, size_t size);
+size_t checksum(ثابت فراغ * داده, size_t اندازه);
 
-bool save_ggml_tensor_data_to_txt(const ggml_tensor * tensor, const std::string & file_path);
+bool save_ggml_tensor_داده_مقصد_txt(ثابت ggml_tensor * tensor, ثابت std::string & file_مسیر);
 
-void print_input_tensor_info(const std::string & name, const ov::Tensor & tensor);
+فراغ print_درون_داد_tensor_info(ثابت std::string & name, ثابت ov::Tensor & tensor);
 
-void print_output_tensor_info(const std::string & name, const ov::Tensor & tensor, const void * output_dst);
+فراغ print_output_tensor_info(ثابت std::string & name, ثابت ov::Tensor & tensor, ثابت فراغ * output_dst);
 
-template <typename T>
-std::vector<T> pad_input(const T * data,
-                         size_t rows,
-                         size_t cols,
-                         size_t padded_rows,
-                         size_t padded_cols,
-                         T pad_value) {
-    std::vector<T> padded(padded_rows * padded_cols, pad_value);
+قالب <typename T>
+std::وکتور<T> pad_درون_داد(ثابت T * داده,
+                         size_t ردیفها,
+                         size_t تعداد_ستون_2,
+                         size_t padded_ردیفها,
+                         size_t padded_تعداد_ستون,
+                         T pad_مقدار) {
+    std::وکتور<T> padded(padded_ردیفها * padded_تعداد_ستون, pad_مقدار);
 
-    for (size_t i = 0; i < std::min(rows, padded_rows); ++i) {
-        for (size_t j = 0; j < std::min(cols, padded_cols); ++j) {
-            padded[i * padded_cols + j] = data[i * cols + j];
+    لكل (size_t i = 0; i < std::min(ردیفها, padded_ردیفها); ++i) {
+        لكل (size_t j = 0; j < std::min(تعداد_ستون_2, padded_تعداد_ستون); ++j) {
+            padded[i * padded_تعداد_ستون + j] = داده[i * تعداد_ستون_2 + j];
         }
     }
 
-    return padded;
+    أرجع padded;
 }
 
-template <typename T>
-std::vector<T> pad_input(const ggml_tensor * tensor, size_t padded_rows, size_t padded_cols, T pad_value) {
-    return pad_input<T>(reinterpret_cast<const T *>(tensor->data),
-                        static_cast<size_t>(tensor->ne[1]),  // rows
-                        static_cast<size_t>(tensor->ne[0]),  // cols
-                        padded_rows, padded_cols, pad_value);
+قالب <typename T>
+std::وکتور<T> pad_درون_داد(ثابت ggml_tensor * tensor, size_t padded_ردیفها, size_t padded_تعداد_ستون, T pad_مقدار) {
+    أرجع pad_درون_داد<T>(reinterpret_cast<ثابت T *>(tensor->داده),
+                        static_cast<size_t>(tensor->ne[1]),  //ردیفها
+                        static_cast<size_t>(tensor->ne[0]),  //تعداد_ستون
+                        padded_ردیفها, padded_تعداد_ستون, pad_مقدار);
 }
 
-const ggml_tensor * get_inp_pos_tensor(struct ggml_cgraph * cgraph);
+ثابت ggml_tensor * get_inp_pos_tensor(بنية ggml_cgraph * cgraph);
 
-int64_t get_inp_pos_n_tokens(struct ggml_cgraph * cgraph, const ggml_tensor * inp_pos);
+int64_t get_inp_pos_n_نشانهها(بنية ggml_cgraph * cgraph, ثابت ggml_tensor * inp_pos);
 
-bool get_is_prefill(struct ggml_cgraph * cgraph, const ggml_tensor * inp_pos);
+bool get_is_prefill(بنية ggml_cgraph * cgraph, ثابت ggml_tensor * inp_pos);
 
-bool is_naive(struct ggml_cgraph * cgraph);
+bool is_naive(بنية ggml_cgraph * cgraph);
 
 /**
  * @brief Heuristically checks whether the given computation graph is a split-model fragment.
  * @param cgraph Pointer to the GGML computation graph to analyze.
  * @return true if the graph is identified as split; otherwise false.
  */
-bool is_model_splitted(struct ggml_cgraph * cgraph);
+bool is_model_splitted(بنية ggml_cgraph * cgraph);

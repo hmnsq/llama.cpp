@@ -1,499 +1,499 @@
-#include "ggml-et-kernels.h"
+#ضمن "ggml-et-kernels.h"
 
-#include "ggml-et-kernels-embed.hpp"
-#include "ggml-et-uberkernel-kernel-map.h"
-#include "ggml-impl.h"
+#ضمن "ggml-et-kernels-embed.hpp"
+#ضمن "ggml-et-uberkernel-kernel-map.h"
+#ضمن "ggml-impl.h"
 
-#include <cstdlib>
-#include <cstring>
-#include <fstream>
+#ضمن <cstdlib>
+#ضمن <cstring>
+#ضمن <fstream>
 
-#define ET_TRACE_DECODER_IMPL
-#include <et-trace/decoder.h>
-#include <et-trace/layout.h>
+#تعریف_کن ET_TRACE_DECODER_IMPL
+#ضمن <et-trace/decoder.h>
+#ضمن <et-trace/layout.h>
 
-static constexpr size_t GGML_ET_UBERKERNEL_PARAM_ALIGN = 64;
+ساكن constexpr size_t GGML_ET_UBERKERNEL_PARAM_ALIGN = 64;
 
-static size_t ggml_et_align_up(size_t value, size_t alignment) {
-    return (value + alignment - 1) & ~(alignment - 1);
+ساكن size_t ggml_et_align_به_بالا(size_t value, size_t alignment) {
+    أرجع (value + alignment - 1) & ~(alignment - 1);
 }
 
-static size_t ggml_et_next_capacity(size_t current_capacity, size_t required_capacity) {
-    if (current_capacity == 0) {
-        return required_capacity;
+ساكن size_t ggml_et_بعدی_ظرفیت(size_t current_ظرفیت, size_t required_ظرفیت) {
+    إذا (current_ظرفیت == 0) {
+        أرجع required_ظرفیت;
     }
 
-    size_t next_capacity = current_capacity;
-    while (next_capacity < required_capacity) {
-        next_capacity *= 2;
+    size_t بعدی_ظرفیت = current_ظرفیت;
+    طالما (بعدی_ظرفیت < required_ظرفیت) {
+        بعدی_ظرفیت *= 2;
     }
 
-    return next_capacity;
+    أرجع بعدی_ظرفیت;
 }
 
-static ggml_backend_et_uberkernel_slot & ggml_et_uberkernel_current_slot(ggml_backend_et_uberkernel_context * uk_ctx) {
-    return uk_ctx->slots[uk_ctx->current_slot];
+ساكن ggml_backend_et_uberkernel_جایگاه & ggml_et_uberkernel_current_جایگاه(ggml_backend_et_uberkernel_context * uk_ctx) {
+    أرجع uk_ctx->slots[uk_ctx->current_جایگاه];
 }
 
 // Wait for any in-flight launch that previously used this slot to finish,
 // so the host vectors and device buffers are safe to mutate / free.
-static void ggml_et_uberkernel_slot_wait(ggml_backend_et_uberkernel_slot &     slot,
-                                         const std::shared_ptr<rt::IRuntime> & runtime) {
-    if (!slot.has_pending || !runtime) {
-        return;
+ساكن فراغ ggml_et_uberkernel_جایگاه_wait(ggml_backend_et_uberkernel_جایگاه &     جایگاه,
+                                         ثابت std::shared_ptr<rt::IRuntime> & runtime) {
+    إذا (!جایگاه.has_pending || !runtime) {
+        أرجع;
     }
-    runtime->waitForEvent(slot.pending_event);
-    slot.has_pending = false;
+    runtime->waitForEvent(جایگاه.pending_event);
+    جایگاه.has_pending = خطأ;
 }
 
-static void ggml_et_uberkernel_reset_segment(ggml_backend_et_uberkernel_context * uk_ctx) {
-    if (!uk_ctx) {
-        return;
+ساكن فراغ ggml_et_uberkernel_reset_segment(ggml_backend_et_uberkernel_context * uk_ctx) {
+    إذا (!uk_ctx) {
+        أرجع;
     }
 
-    uk_ctx->shire_mask = 0;
-    auto & slot        = ggml_et_uberkernel_current_slot(uk_ctx);
+    uk_ctx->shire_ماسک = 0;
+    خودکار & جایگاه        = ggml_et_uberkernel_current_جایگاه(uk_ctx);
     // Drain any prior launch on this slot before clearing its host buffers.
     // begin_graph and abort_graph both come through here; in either case we
     // must not yank the source memory out from under an in-flight DMA.
-    ggml_et_uberkernel_slot_wait(slot, ggml_et_runtime());
-    slot.insts.clear();
-    slot.params_blob.clear();
+    ggml_et_uberkernel_جایگاه_wait(جایگاه, ggml_et_runtime());
+    جایگاه.insts.clear();
+    جایگاه.params_blob.clear();
 }
 
-static bool ggml_et_uberkernel_ensure_slot_capacity(ggml_backend_et_uberkernel_slot & slot,
+ساكن منطقي ggml_et_uberkernel_ensure_جایگاه_ظرفیت(ggml_backend_et_uberkernel_جایگاه & جایگاه,
                                                     ggml_backend_et_device_context *  dev_ctx,
-                                                    size_t                            insts_size,
-                                                    size_t                            params_size) {
+                                                    size_t                            insts_اندازه,
+                                                    size_t                            params_اندازه) {
     std::shared_ptr<rt::IRuntime> runtime = ggml_et_runtime();
-    if (!dev_ctx || !runtime) {
-        return false;
+    إذا (!dev_ctx || !runtime) {
+        أرجع خطأ;
     }
 
-    try {
-        if (slot.device_insts == nullptr || insts_size > slot.device_insts_capacity) {
-            const size_t new_capacity = ggml_et_next_capacity(slot.device_insts_capacity, insts_size);
-            if (slot.device_insts) {
-                runtime->freeDevice(dev_ctx->rtid, slot.device_insts);
+    حاول {
+        إذا (جایگاه.device_insts == اشاره_تهی || insts_اندازه > جایگاه.device_insts_ظرفیت) {
+            ثابت size_t new_ظرفیت = ggml_et_بعدی_ظرفیت(جایگاه.device_insts_ظرفیت, insts_اندازه);
+            إذا (جایگاه.device_insts) {
+                runtime->freeDevice(dev_ctx->rtid, جایگاه.device_insts);
             }
-            slot.device_insts          = runtime->mallocDevice(dev_ctx->rtid, new_capacity);
-            slot.device_insts_capacity = slot.device_insts ? new_capacity : 0;
+            جایگاه.device_insts          = runtime->mallocDevice(dev_ctx->rtid, new_ظرفیت);
+            جایگاه.device_insts_ظرفیت = جایگاه.device_insts ? new_ظرفیت : 0;
         }
 
-        if (slot.device_params == nullptr || params_size > slot.device_params_capacity) {
-            const size_t new_capacity = ggml_et_next_capacity(slot.device_params_capacity, params_size);
-            if (slot.device_params) {
-                runtime->freeDevice(dev_ctx->rtid, slot.device_params);
+        إذا (جایگاه.device_params == اشاره_تهی || params_اندازه > جایگاه.device_params_ظرفیت) {
+            ثابت size_t new_ظرفیت = ggml_et_بعدی_ظرفیت(جایگاه.device_params_ظرفیت, params_اندازه);
+            إذا (جایگاه.device_params) {
+                runtime->freeDevice(dev_ctx->rtid, جایگاه.device_params);
             }
-            slot.device_params          = runtime->mallocDevice(dev_ctx->rtid, new_capacity);
-            slot.device_params_capacity = slot.device_params ? new_capacity : 0;
+            جایگاه.device_params          = runtime->mallocDevice(dev_ctx->rtid, new_ظرفیت);
+            جایگاه.device_params_ظرفیت = جایگاه.device_params ? new_ظرفیت : 0;
         }
-    } catch (const std::exception & e) {
+    } امسك (ثابت std::exception & e) {
         GGML_LOG_ERROR("ET: Failed to resize uberkernel buffers: %s\n", e.what());
-        return false;
+        أرجع خطأ;
     }
 
-    return slot.device_insts != nullptr && slot.device_params != nullptr;
+    أرجع جایگاه.device_insts != اشاره_تهی && جایگاه.device_params != اشاره_تهی;
 }
 
 // Get embedded kernel data by name
-static std::vector<std::byte> ggml_et_get_embedded_kernel(const std::string & kernel_name) {
-    auto it = ggml_et_embedded_kernels.find(kernel_name);
-    if (it == ggml_et_embedded_kernels.end()) {
+ساكن std::vector<std::byte> ggml_et_get_embedded_kernel(ثابت std::string & kernel_name) {
+    خودکار it = ggml_et_embedded_kernels.find(kernel_name);
+    إذا (it == ggml_et_embedded_kernels.end()) {
         GGML_LOG_ERROR("ET: Unknown embedded kernel: %s\n", kernel_name.c_str());
-        return {};
+        أرجع {};
     }
 
-    const unsigned char * data = it->second.first;
+    ثابت بیعلامت حرف * داده = it->second.اولی;
     uint64_t              size = it->second.second;
 
-    std::vector<std::byte> buffer(size);
-    std::memcpy(buffer.data(), data, size);
+    std::vector<std::byte> میانگیر(size);
+    std::کپی_حافظه(میانگیر.داده(), داده, size);
 
-    return buffer;
+    أرجع میانگیر;
 }
 
 // Read kernel from file (for development/override)
-static std::vector<std::byte> ggml_et_read_kernel_file(const std::string & kernel_path) {
-    std::ifstream file(kernel_path, std::ios::binary | std::ios::ate);
-    if (!file) {
-        return {};
+ساكن std::vector<std::byte> ggml_et_read_kernel_file(ثابت std::string & kernel_مسیر) {
+    std::ifstream file(kernel_مسیر, std::ios::binary | std::ios::ate);
+    إذا (!file) {
+        أرجع {};
     }
 
-    auto size = file.tellg();
+    خودکار size = file.tellg();
     file.seekg(0, std::ios::beg);
 
-    std::vector<std::byte> buffer(size);
-    file.read(reinterpret_cast<char *>(buffer.data()), size);
+    std::vector<std::byte> میانگیر(size);
+    file.اقرأ(reinterpret_cast<حرف *>(میانگیر.داده()), size);
 
-    return buffer;
+    أرجع میانگیر;
 }
 
 // Load kernel from file or embedded data
-bool ggml_et_load_kernel(ggml_backend_et_device_context * dev_ctx, const std::string & kernel_name) {
+منطقي ggml_et_بارگیری_kernel(ggml_backend_et_device_context * dev_ctx, ثابت std::string & kernel_name) {
     std::shared_ptr<rt::IRuntime> runtime = ggml_et_runtime();
-    if (!runtime) {
+    إذا (!runtime) {
         GGML_LOG_ERROR("ET: Runtime not available for kernel loading\n");
-        return false;
+        أرجع خطأ;
     }
 
     // Check if kernel already loaded
-    if (dev_ctx->loaded_kernels.find(kernel_name) != dev_ctx->loaded_kernels.end()) {
+    إذا (dev_ctx->loaded_kernels.find(kernel_name) != dev_ctx->loaded_kernels.end()) {
         GGML_LOG_DEBUG("ET: Kernel %s already loaded on device %d\n", kernel_name.c_str(), dev_ctx->devidx);
-        return true;
+        أرجع درست;
     }
 
-    std::vector<std::byte> kernel_data;
-    const char *           kernels_path = getenv("GGML_ET_KERNELS_PATH");
+    std::vector<std::byte> kernel_داده;
+    ثابت حرف *           kernels_مسیر = getenv("GGML_ET_KERNELS_PATH");
 
     // If GGML_ET_KERNELS_PATH is set, try to load from file first
-    if (kernels_path) {
-        std::string kernel_file = std::string(kernels_path) + "/" + kernel_name + ".elf";
-        kernel_data             = ggml_et_read_kernel_file(kernel_file);
+    إذا (kernels_مسیر) {
+        std::string kernel_file = std::string(kernels_مسیر) + "/" + kernel_name + ".elf";
+        kernel_داده             = ggml_et_read_kernel_file(kernel_file);
 
-        if (!kernel_data.empty()) {
+        إذا (!kernel_داده.خالی()) {
             GGML_LOG_INFO("ET: Loading kernel %s from file: %s\n", kernel_name.c_str(), kernel_file.c_str());
-        } else {
+        } وإلا {
             GGML_LOG_INFO("ET: Kernel file not found: %s, falling back to embedded\n", kernel_file.c_str());
         }
     }
 
     // If no file data, use embedded kernel
-    if (kernel_data.empty()) {
-        kernel_data = ggml_et_get_embedded_kernel(kernel_name);
-        if (kernel_data.empty()) {
+    إذا (kernel_داده.خالی()) {
+        kernel_داده = ggml_et_get_embedded_kernel(kernel_name);
+        إذا (kernel_داده.خالی()) {
             GGML_LOG_ERROR("ET: Failed to get kernel data for %s\n", kernel_name.c_str());
-            return false;
+            أرجع خطأ;
         }
     }
 
-    try {
+    حاول {
         // Load kernel code using device's default stream
-        auto load_result = runtime->loadCode(dev_ctx->default_stream, kernel_data.data(), kernel_data.size());
-        runtime->waitForEvent(load_result.event_);
+        خودکار بارگیری_نتیجه = runtime->بارگیری_کد(dev_ctx->default_جریان, kernel_داده.داده(), kernel_داده.size());
+        runtime->waitForEvent(بارگیری_نتیجه.event_);
 
         // Store kernel handle
-        dev_ctx->loaded_kernels[kernel_name] = load_result.kernel_;
-        return true;
+        dev_ctx->loaded_kernels[kernel_name] = بارگیری_نتیجه.kernel_;
+        أرجع درست;
 
-    } catch (const std::exception & e) {
+    } امسك (ثابت std::exception & e) {
         GGML_LOG_ERROR("ET: Failed to load kernel %s: %s\n", kernel_name.c_str(), e.what());
-        return false;
+        أرجع خطأ;
     }
 }
 
-static bool ggml_et_launch_kernel_internal(ggml_backend_et_device_context * dev_ctx,
-                                           const std::string &              kernel_name,
-                                           void *                           params,
-                                           size_t                           params_size,
-                                           uint64_t                         shire_mask,
-                                           bool                             enable_print,
-                                           bool                             sync_error_check,
-                                           rt::EventId *                    out_event = nullptr) {
+ساكن منطقي ggml_et_launch_kernel_داخلی(ggml_backend_et_device_context * dev_ctx,
+                                           ثابت std::string &              kernel_name,
+                                           فراغ *                           params,
+                                           size_t                           params_اندازه,
+                                           uint64_t                         shire_ماسک,
+                                           منطقي                             enable_print,
+                                           منطقي                             sync_error_check,
+                                           rt::EventId *                    بیرون_event = اشاره_تهی) {
     std::shared_ptr<rt::IRuntime> runtime = ggml_et_runtime();
-    if (!runtime) {
+    إذا (!runtime) {
         GGML_LOG_ERROR("ET: Runtime not available for kernel launch\n");
-        return false;
+        أرجع خطأ;
     }
 
     // Lazy loading: check if kernel is loaded, load if needed
-    auto kernel_it = dev_ctx->loaded_kernels.find(kernel_name);
-    if (kernel_it == dev_ctx->loaded_kernels.end()) {
+    خودکار kernel_it = dev_ctx->loaded_kernels.find(kernel_name);
+    إذا (kernel_it == dev_ctx->loaded_kernels.end()) {
         // Kernel not loaded - load it
-        if (!ggml_et_load_kernel(dev_ctx, kernel_name)) {
+        إذا (!ggml_et_بارگیری_kernel(dev_ctx, kernel_name)) {
             GGML_LOG_ERROR("ET: Failed to lazy-load kernel %s\n", kernel_name.c_str());
-            return false;
+            أرجع خطأ;
         }
 
         // Update iterator after successful load
         kernel_it = dev_ctx->loaded_kernels.find(kernel_name);
-        if (kernel_it == dev_ctx->loaded_kernels.end()) {
+        إذا (kernel_it == dev_ctx->loaded_kernels.end()) {
             GGML_LOG_ERROR("ET: Kernel %s not found after loading\n", kernel_name.c_str());
-            return false;
+            أرجع خطأ;
         }
     }
 
     rt::KernelId kernel_id = kernel_it->second;
 
-    try {
+    حاول {
         // Setup kernel launch options
         rt::KernelLaunchOptions k_opts;
-        k_opts.setShireMask(shire_mask);  // Default: all shires (0xFFFFFFFF)
-        k_opts.setBarrier(true);          // Wait for completion
-        k_opts.setFlushL3(false);         // No L3 flush needed
-        if (enable_print) {
-            k_opts.setUserTracing(reinterpret_cast<uint64_t>(dev_ctx->trace_buffer),
-                                  static_cast<uint32_t>(ET_TRACE_BUFFER_SIZE),
-                                  0,                      // threshold
-                                  shire_mask,             // shire mask
+        k_opts.مجموعه_Shire_ماسک(shire_ماسک);  // Default: all shires (0xFFFFFFFF)
+        k_opts.مجموعه_Barrier(درست);          // Wait for completion
+        k_opts.مجموعه_Flush_L3(خطأ);         // No L3 flush needed
+        إذا (enable_print) {
+            k_opts.مجموعه_User_Tracing(reinterpret_cast<uint64_t>(dev_ctx->trace_میانگیر),
+                                  static_cast<uint32_t>(ET_TRACE_میانگیر_اندازه),
+                                  0,                      //آستانه
+                                  shire_ماسک,             // shire mask
                                   0xFFFFFFFFFFFFFFFFULL,  // threadMask - all threads
                                   0xFFFFFFFFU,            // eventMask - all events
                                   0xFFFFFFFFU             // filterMask - all levels
             );
         }
 
-        if (sync_error_check) {
-            runtime->waitForStream(dev_ctx->default_stream);
-            auto errors = runtime->retrieveStreamErrors(dev_ctx->default_stream);
-            if (!errors.empty()) {
+        إذا (sync_error_check) {
+            runtime->wait_For_جریان(dev_ctx->default_جریان);
+            خودکار errors = runtime->retrieve_جریان_Errors(dev_ctx->default_جریان);
+            إذا (!errors.خالی()) {
                 GGML_LOG_ERROR("ET: Errors detected before kernel \"%s\" launch\n", kernel_name.c_str());
-                for (const auto & error : errors) {
-                    GGML_LOG_ERROR("ET: Error code: %d\n", (int) error.errorCode_);
+                لكل (ثابت خودکار & error : errors) {
+                    GGML_LOG_ERROR("ET: Error code: %d\n", (صحيح) error.error_کد);
                 }
                 abort();
             }
         }
 
-        rt::EventId launch_event = runtime->kernelLaunch(dev_ctx->default_stream, kernel_id,
-                                                         reinterpret_cast<std::byte *>(params), params_size, k_opts);
-        if (out_event) {
-            *out_event = launch_event;
+        rt::EventId launch_event = runtime->kernelLaunch(dev_ctx->default_جریان, kernel_id,
+                                                         reinterpret_cast<std::byte *>(params), params_اندازه, k_opts);
+        إذا (بیرون_event) {
+            *بیرون_event = launch_event;
         }
 
-        if (enable_print) {
-            std::vector<std::byte> host_trace_buf(ET_TRACE_BUFFER_SIZE);
-            runtime->memcpyDeviceToHost(dev_ctx->default_stream, dev_ctx->trace_buffer, host_trace_buf.data(),
-                                        ET_TRACE_BUFFER_SIZE);
-            runtime->waitForStream(dev_ctx->default_stream);
-            const auto * trace_header = reinterpret_cast<const trace_buffer_std_header_t *>(host_trace_buf.data());
-            const trace_entry_header_t * entry = nullptr;
-            while ((entry = Trace_Decode(trace_header, entry))) {
-                if (entry->type != TRACE_TYPE_STRING) {
-                    continue;
+        إذا (enable_print) {
+            std::vector<std::byte> host_trace_buf(ET_TRACE_میانگیر_اندازه);
+            runtime->memcpy_Device_مقصد_Host(dev_ctx->default_جریان, dev_ctx->trace_میانگیر, host_trace_buf.داده(),
+                                        ET_TRACE_میانگیر_اندازه);
+            runtime->wait_For_جریان(dev_ctx->default_جریان);
+            ثابت خودکار * trace_سرآیند = reinterpret_cast<ثابت trace_میانگیر_std_سرآیند_t *>(host_trace_buf.داده());
+            ثابت trace_مدخل_سرآیند_t * مدخل = اشاره_تهی;
+            طالما ((مدخل = Trace_Decode(trace_سرآیند, مدخل))) {
+                إذا (مدخل->type != TRACE_TYPE_STRING) {
+                    استمر;
                 }
-                const auto * str_entry = reinterpret_cast<const trace_string_t *>(entry);
-                printf("[hart %d] %s", entry->hart_id, str_entry->string);
+                ثابت خودکار * str_مدخل = reinterpret_cast<ثابت trace_string_t *>(مدخل);
+                چاپ_کن("[hart %d] %s", مدخل->hart_id, str_مدخل->string);
             }
         }
 
-        if (sync_error_check) {
+        إذا (sync_error_check) {
             // Already triggered. No need to retrigger
-            if (!enable_print) {
-                runtime->waitForStream(dev_ctx->default_stream);
+            إذا (!enable_print) {
+                runtime->wait_For_جریان(dev_ctx->default_جریان);
             }
-            auto errors = runtime->retrieveStreamErrors(dev_ctx->default_stream);
-            if (!errors.empty()) {
+            خودکار errors = runtime->retrieve_جریان_Errors(dev_ctx->default_جریان);
+            إذا (!errors.خالی()) {
                 GGML_LOG_ERROR("ET: Errors detected during kernel \"%s\" execution\n", kernel_name.c_str());
-                for (const auto & error : errors) {
-                    GGML_LOG_ERROR("ET: Error code: %d\n", (int) error.errorCode_);
+                لكل (ثابت خودکار & error : errors) {
+                    GGML_LOG_ERROR("ET: Error code: %d\n", (صحيح) error.error_کد);
                 }
                 abort();
             }
         }
 
-        return true;
-    } catch (const std::exception & e) {
+        أرجع درست;
+    } امسك (ثابت std::exception & e) {
         GGML_LOG_ERROR("ET: Failed to launch kernel %s: %s\n", kernel_name.c_str(), e.what());
-        return false;
+        أرجع خطأ;
     }
 }
 
-void ggml_et_uberkernel_begin_graph(ggml_backend_et_uberkernel_context * uk_ctx) {
-    if (!uk_ctx) {
-        return;
+فراغ ggml_et_uberkernel_begin_گراف(ggml_backend_et_uberkernel_context * uk_ctx) {
+    إذا (!uk_ctx) {
+        أرجع;
     }
 
-    uk_ctx->failed = false;
+    uk_ctx->failed = خطأ;
     ggml_et_uberkernel_reset_segment(uk_ctx);
 }
 
-static bool ggml_et_launch_uberkernel_segment(ggml_backend_et_device_context *     dev_ctx,
+ساكن منطقي ggml_et_launch_uberkernel_segment(ggml_backend_et_device_context *     dev_ctx,
                                               ggml_backend_et_uberkernel_context * uk_ctx) {
-    if (!uk_ctx || !dev_ctx) {
-        return false;
+    إذا (!uk_ctx || !dev_ctx) {
+        أرجع خطأ;
     }
 
-    auto & slot = ggml_et_uberkernel_current_slot(uk_ctx);
-    if (slot.insts.empty()) {
-        return true;
+    خودکار & جایگاه = ggml_et_uberkernel_current_جایگاه(uk_ctx);
+    إذا (جایگاه.insts.خالی()) {
+        أرجع درست;
     }
 
     std::shared_ptr<rt::IRuntime> runtime = ggml_et_runtime();
-    if (!runtime) {
+    إذا (!runtime) {
         GGML_LOG_ERROR("ET: Runtime not available for uberkernel commit\n");
-        uk_ctx->failed = true;
-        return false;
+        uk_ctx->failed = درست;
+        أرجع خطأ;
     }
 
-    const size_t   insts_size  = slot.insts.size() * sizeof(ggml_et_uberkernel_inst);
-    const size_t   params_size = slot.params_blob.size();
-    const uint64_t shire_mask  = uk_ctx->shire_mask;
-    bool           ok          = false;
+    ثابت size_t   insts_اندازه  = جایگاه.insts.size() * حجم(ggml_et_uberkernel_inst);
+    ثابت size_t   params_اندازه = جایگاه.params_blob.size();
+    ثابت uint64_t shire_ماسک  = uk_ctx->shire_ماسک;
+    منطقي           ok          = خطأ;
 
-    try {
-        if (!ggml_et_uberkernel_ensure_slot_capacity(slot, dev_ctx, insts_size, params_size)) {
+    حاول {
+        إذا (!ggml_et_uberkernel_ensure_جایگاه_ظرفیت(جایگاه, dev_ctx, insts_اندازه, params_اندازه)) {
             GGML_LOG_ERROR("ET: Failed to allocate uberkernel device buffers\n");
-            uk_ctx->failed = true;
+            uk_ctx->failed = درست;
             // Drop this segment but keep the slot drained so we don't leak
             // host vectors into the next graph.
-            slot.insts.clear();
-            slot.params_blob.clear();
-            uk_ctx->shire_mask = 0;
-            return false;
+            جایگاه.insts.clear();
+            جایگاه.params_blob.clear();
+            uk_ctx->shire_ماسک = 0;
+            أرجع خطأ;
         }
 
         // Fire-and-forget H2D + launch on default_stream. In-stream FIFO
         // ordering guarantees the kernel sees fully-uploaded buffers; the
         // host source bytes (slot.insts / slot.params_blob) stay alive
         // because we won't touch this slot again until pending_event fires.
-        runtime->memcpyHostToDevice(dev_ctx->default_stream, reinterpret_cast<const std::byte *>(slot.insts.data()),
-                                    slot.device_insts, insts_size, true);
-        runtime->memcpyHostToDevice(dev_ctx->default_stream, slot.params_blob.data(), slot.device_params, params_size,
-                                    true);
+        runtime->memcpy_Host_مقصد_Device(dev_ctx->default_جریان, reinterpret_cast<ثابت std::byte *>(جایگاه.insts.داده()),
+                                    جایگاه.device_insts, insts_اندازه, درست);
+        runtime->memcpy_Host_مقصد_Device(dev_ctx->default_جریان, جایگاه.params_blob.داده(), جایگاه.device_params, params_اندازه,
+                                    درست);
 
         ggml_et_uberkernel_params params = {
-            static_cast<uint32_t>(slot.insts.size()),
-            static_cast<uint32_t>(sizeof(ggml_et_uberkernel_inst)),
-            reinterpret_cast<uint64_t>(slot.device_insts),
-            reinterpret_cast<uint64_t>(slot.device_params),
+            static_cast<uint32_t>(جایگاه.insts.size()),
+            static_cast<uint32_t>(حجم(ggml_et_uberkernel_inst)),
+            reinterpret_cast<uint64_t>(جایگاه.device_insts),
+            reinterpret_cast<uint64_t>(جایگاه.device_params),
         };
 
         rt::EventId launch_event{};
-        ok = ggml_et_launch_kernel_internal(dev_ctx, "uberkernel", &params, sizeof(params), shire_mask, false, false,
+        ok = ggml_et_launch_kernel_داخلی(dev_ctx, "uberkernel", &params, حجم(params), shire_ماسک, خطأ, خطأ,
                                             &launch_event);
-        if (ok) {
+        إذا (ok) {
             // The kernelLaunch above is the last thing on default_stream
             // that touches this slot's device buffers. Recording its event
             // lets the next reuse of this slot wait on that one event
             // instead of the whole stream.
-            slot.pending_event = launch_event;
-            slot.has_pending   = true;
+            جایگاه.pending_event = launch_event;
+            جایگاه.has_pending   = درست;
         }
-    } catch (const std::exception & e) {
+    } امسك (ثابت std::exception & e) {
         GGML_LOG_ERROR("ET: Failed to commit uberkernel segment: %s\n", e.what());
     }
     uk_ctx->failed = !ok;
 
-    if (ok) {
-        uk_ctx->current_slot = (uk_ctx->current_slot + 1) % ggml_backend_et_uberkernel_context::SLOT_COUNT;
-        auto & next          = ggml_et_uberkernel_current_slot(uk_ctx);
-        ggml_et_uberkernel_slot_wait(next, runtime);
-        next.insts.clear();
-        next.params_blob.clear();
-    } else {
-        slot.insts.clear();
-        slot.params_blob.clear();
+    إذا (ok) {
+        uk_ctx->current_جایگاه = (uk_ctx->current_جایگاه + 1) % ggml_backend_et_uberkernel_context::جایگاه_شمار_2;
+        خودکار & بعدی          = ggml_et_uberkernel_current_جایگاه(uk_ctx);
+        ggml_et_uberkernel_جایگاه_wait(بعدی, runtime);
+        بعدی.insts.clear();
+        بعدی.params_blob.clear();
+    } وإلا {
+        جایگاه.insts.clear();
+        جایگاه.params_blob.clear();
     }
-    uk_ctx->shire_mask = 0;
-    return ok;
+    uk_ctx->shire_ماسک = 0;
+    أرجع ok;
 }
 
-void ggml_et_uberkernel_abort_graph(ggml_backend_et_uberkernel_context * uk_ctx) {
-    if (!uk_ctx) {
-        return;
+فراغ ggml_et_uberkernel_abort_گراف(ggml_backend_et_uberkernel_context * uk_ctx) {
+    إذا (!uk_ctx) {
+        أرجع;
     }
 
-    uk_ctx->failed = false;
+    uk_ctx->failed = خطأ;
     ggml_et_uberkernel_reset_segment(uk_ctx);
 }
 
-bool ggml_et_uberkernel_failed(const ggml_backend_et_uberkernel_context * uk_ctx) {
-    return uk_ctx && uk_ctx->failed;
+منطقي ggml_et_uberkernel_failed(ثابت ggml_backend_et_uberkernel_context * uk_ctx) {
+    أرجع uk_ctx && uk_ctx->failed;
 }
 
-static bool ggml_et_launch_uberkernel(ggml_backend_et_device_context * dev_ctx,
-                                      const std::string &              kernel_name,
-                                      void *                           params,
-                                      size_t                           params_size,
-                                      uint64_t                         shire_mask,
-                                      bool                             enable_print,
-                                      bool                             sync_error_check) {
-    if (!dev_ctx) {
-        return false;
+ساكن منطقي ggml_et_launch_uberkernel(ggml_backend_et_device_context * dev_ctx,
+                                      ثابت std::string &              kernel_name,
+                                      فراغ *                           params,
+                                      size_t                           params_اندازه,
+                                      uint64_t                         shire_ماسک,
+                                      منطقي                             enable_print,
+                                      منطقي                             sync_error_check) {
+    إذا (!dev_ctx) {
+        أرجع خطأ;
     }
 
     ggml_backend_et_uberkernel_context * uk_ctx        = &dev_ctx->uberkernel;
-    const uint16_t                       uberkernel_id = ggml_et_uberkernel_kernel_id_from_name(kernel_name.c_str());
-    if (uberkernel_id == GGML_ET_UBERKERNEL_KERNEL_INVALID) {
-        if (!ggml_et_launch_uberkernel_segment(dev_ctx, uk_ctx)) {
-            return false;
+    ثابت uint16_t                       uberkernel_id = ggml_et_uberkernel_kernel_id_from_name(kernel_name.c_str());
+    إذا (uberkernel_id == GGML_ET_UBERKERNEL_KERNEL_INVALID) {
+        إذا (!ggml_et_launch_uberkernel_segment(dev_ctx, uk_ctx)) {
+            أرجع خطأ;
         }
-        return ggml_et_launch_kernel_internal(dev_ctx, kernel_name, params, params_size, shire_mask, enable_print,
+        أرجع ggml_et_launch_kernel_داخلی(dev_ctx, kernel_name, params, params_اندازه, shire_ماسک, enable_print,
                                               sync_error_check);
     }
 
-    auto &       slot          = ggml_et_uberkernel_current_slot(uk_ctx);
-    const size_t params_offset = ggml_et_align_up(slot.params_blob.size(), GGML_ET_UBERKERNEL_PARAM_ALIGN);
-    if (params_offset > slot.params_blob.size()) {
-        slot.params_blob.resize(params_offset);
+    خودکار &       جایگاه          = ggml_et_uberkernel_current_جایگاه(uk_ctx);
+    ثابت size_t params_جابه_جایی = ggml_et_align_به_بالا(جایگاه.params_blob.size(), GGML_ET_UBERKERNEL_PARAM_ALIGN);
+    إذا (params_جابه_جایی > جایگاه.params_blob.size()) {
+        جایگاه.params_blob.resize(params_جابه_جایی);
     }
 
-    const std::byte * params_bytes = reinterpret_cast<const std::byte *>(params);
-    slot.params_blob.insert(slot.params_blob.end(), params_bytes, params_bytes + params_size);
+    ثابت std::byte * params_بایتها = reinterpret_cast<ثابت std::byte *>(params);
+    جایگاه.params_blob.insert(جایگاه.params_blob.end(), params_بایتها, params_بایتها + params_اندازه);
 
     ggml_et_uberkernel_inst inst = {
         uberkernel_id,
         0,
-        static_cast<uint32_t>(params_offset),
-        static_cast<uint32_t>(params_size),
+        static_cast<uint32_t>(params_جابه_جایی),
+        static_cast<uint32_t>(params_اندازه),
     };
-    slot.insts.push_back(inst);
+    جایگاه.insts.push_back(inst);
 
-    if (slot.insts.size() == 1) {
-        uk_ctx->shire_mask = shire_mask;
+    إذا (جایگاه.insts.size() == 1) {
+        uk_ctx->shire_ماسک = shire_ماسک;
     }
 
-    return true;
+    أرجع درست;
 }
 
-bool ggml_et_uberkernel_end_graph(ggml_backend_et_device_context * dev_ctx) {
-    if (!dev_ctx || !dev_ctx->uberkernel_enabled) {
-        return true;
+منطقي ggml_et_uberkernel_انتها_گراف(ggml_backend_et_device_context * dev_ctx) {
+    إذا (!dev_ctx || !dev_ctx->uberkernel_enabled) {
+        أرجع درست;
     }
 
-    return ggml_et_launch_uberkernel_segment(dev_ctx, &dev_ctx->uberkernel);
+    أرجع ggml_et_launch_uberkernel_segment(dev_ctx, &dev_ctx->uberkernel);
 }
 
-bool ggml_et_launch_kernel(ggml_backend_et_device_context * dev_ctx,
-                           const std::string &              kernel_name,
-                           void *                           params,
-                           size_t                           params_size,
-                           uint64_t                         shire_mask,
-                           bool                             enable_print,
-                           bool                             sync_error_check) {
-    if (!dev_ctx) {
-        return false;
+منطقي ggml_et_launch_kernel(ggml_backend_et_device_context * dev_ctx,
+                           ثابت std::string &              kernel_name,
+                           فراغ *                           params,
+                           size_t                           params_اندازه,
+                           uint64_t                         shire_ماسک,
+                           منطقي                             enable_print,
+                           منطقي                             sync_error_check) {
+    إذا (!dev_ctx) {
+        أرجع خطأ;
     }
 
-    if (!dev_ctx->uberkernel_enabled) {
-        return ggml_et_launch_kernel_internal(dev_ctx, kernel_name, params, params_size, shire_mask, enable_print,
+    إذا (!dev_ctx->uberkernel_enabled) {
+        أرجع ggml_et_launch_kernel_داخلی(dev_ctx, kernel_name, params, params_اندازه, shire_ماسک, enable_print,
                                               sync_error_check);
     }
 
-    return ggml_et_launch_uberkernel(dev_ctx, kernel_name, params, params_size, shire_mask, enable_print,
+    أرجع ggml_et_launch_uberkernel(dev_ctx, kernel_name, params, params_اندازه, shire_ماسک, enable_print,
                                      sync_error_check);
 }
 
-void ggml_et_unload_kernel(ggml_backend_et_device_context * dev_ctx, const std::string & kernel_name) {
+فراغ ggml_et_unload_kernel(ggml_backend_et_device_context * dev_ctx, ثابت std::string & kernel_name) {
     std::shared_ptr<rt::IRuntime> runtime = ggml_et_runtime();
-    if (!runtime) {
-        return;
+    إذا (!runtime) {
+        أرجع;
     }
 
-    auto kernel_it = dev_ctx->loaded_kernels.find(kernel_name);
-    if (kernel_it != dev_ctx->loaded_kernels.end()) {
-        try {
-            runtime->unloadCode(kernel_it->second);
+    خودکار kernel_it = dev_ctx->loaded_kernels.find(kernel_name);
+    إذا (kernel_it != dev_ctx->loaded_kernels.end()) {
+        حاول {
+            runtime->unload_کد(kernel_it->second);
             dev_ctx->loaded_kernels.erase(kernel_it);
-        } catch (const std::exception & e) {
+        } امسك (ثابت std::exception & e) {
             GGML_LOG_ERROR("ET: Failed to unload kernel %s: %s\n", kernel_name.c_str(), e.what());
         }
     }
 }
 
-void ggml_et_unload_all_kernels(ggml_backend_et_device_context * dev_ctx) {
-    if (!dev_ctx) {
-        return;
+فراغ ggml_et_unload_all_kernels(ggml_backend_et_device_context * dev_ctx) {
+    إذا (!dev_ctx) {
+        أرجع;
     }
 
     // Make a copy of kernel names since ggml_et_unload_kernel modifies the map
-    std::vector<std::string> kernel_names;
-    kernel_names.reserve(dev_ctx->loaded_kernels.size());
-    for (const auto & kernel_pair : dev_ctx->loaded_kernels) {
-        kernel_names.push_back(kernel_pair.first);
+    std::vector<std::string> kernel_نامها;
+    kernel_نامها.reserve(dev_ctx->loaded_kernels.size());
+    لكل (ثابت خودکار & kernel_pair : dev_ctx->loaded_kernels) {
+        kernel_نامها.push_back(kernel_pair.اولی);
     }
 
-    for (const auto & kernel_name : kernel_names) {
+    لكل (ثابت خودکار & kernel_name : kernel_نامها) {
         ggml_et_unload_kernel(dev_ctx, kernel_name);
     }
 }
@@ -501,8 +501,8 @@ void ggml_et_unload_all_kernels(ggml_backend_et_device_context * dev_ctx) {
 std::vector<std::pair<std::string, rt::KernelId>> ggml_et_get_loaded_kernels(ggml_backend_et_device_context * dev_ctx) {
     std::vector<std::pair<std::string, rt::KernelId>> loaded_kernels;
     loaded_kernels.reserve(dev_ctx->loaded_kernels.size());
-    for (const auto & kernel_pair : dev_ctx->loaded_kernels) {
+    لكل (ثابت خودکار & kernel_pair : dev_ctx->loaded_kernels) {
         loaded_kernels.push_back(kernel_pair);
     }
-    return loaded_kernels;
+    أرجع loaded_kernels;
 }

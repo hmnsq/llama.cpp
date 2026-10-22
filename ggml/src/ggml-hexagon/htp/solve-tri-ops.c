@@ -1,299 +1,299 @@
-#pragma clang diagnostic ignored "-Wunused-but-set-variable"
+#رهنمود clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <string.h>
+#ضمن <HAP_farf.h>
+#ضمن <string.h>
 
-#include "hex-common.h"
-#include "hex-profile.h"
+#ضمن "hex-common.h"
+#ضمن "hex-profile.h"
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "htp-tensor.h"
-#include "hvx-types.h"
-#include "hvx-utils.h"
+#تعریف_کن GGML_COMMON_DECL_C
+#ضمن "ggml-common.h"
+#ضمن "htp-ctx.h"
+#ضمن "htp-ops.h"
+#ضمن "htp-tensor.h"
+#ضمن "hvx-types.h"
+#ضمن "hvx-utils.h"
 
-struct htp_solve_tri_context {
-    struct htp_ops_context * octx;
-    uint32_t                 jobs_per_thread;
-    uint32_t                 total_jobs;
-    uint32_t                 job_start;
+بنية htp_solve_tri_context {
+    بنية htp_ops_context * octx;
+    uint32_t                 jobs_در_هر_thread;
+    uint32_t                 مجموع_jobs;
+    uint32_t                 کار_شروع;
     uint32_t                 k_chunks;
-    uint32_t                 col_block;
+    uint32_t                 ستون_بلوک;
 };
 
-static inline void solve_tri_row_scalar(const float * A_row,
-                                        const float * B_row,
-                                        float *       X,
-                                        uint32_t      row,
+ساكن مضمن فراغ solve_tri_ردیف_scalar(ثابت عائم * A_ردیف,
+                                        ثابت عائم * B_ردیف,
+                                        عائم *       X,
+                                        uint32_t      ردیف,
                                         uint32_t      k,
                                         uint32_t      col0,
                                         uint32_t      coln,
-                                        float         inv_diag) {
-    for (uint32_t col = col0; col < col0 + coln; ++col) {
-        float sum = 0.0f;
-        for (uint32_t t = 0; t < row; ++t) {
-            sum += A_row[t] * X[t * k + col];
+                                        عائم         inv_diag) {
+    لكل (uint32_t ستون = col0; ستون < col0 + coln; ++ستون) {
+        عائم جمع = 0.0f;
+        لكل (uint32_t t = 0; t < ردیف; ++t) {
+            جمع += A_ردیف[t] * X[t * k + ستون];
         }
-        X[row * k + col] = (B_row[col] - sum) * inv_diag;
+        X[ردیف * k + ستون] = (B_ردیف[ستون] - جمع) * inv_diag;
     }
 }
 
-static inline HVX_Vector hvx_load_partial_f32(const float * src, uint32_t n) {
-    HVX_Vector v = *((const HVX_UVector *) src);
-    HVX_VectorPred mask = Q6_Q_vsetq2_R(n * sizeof(float));
-    return Q6_V_vmux_QVV(mask, v, Q6_V_vzero());
+ساكن مضمن HVX_وکتور hvx_بارگیری_partial_f32(ثابت عائم * src, uint32_t n) {
+    HVX_وکتور v = *((ثابت HVX_UVector *) src);
+    HVX_وکتور_Pred ماسک = Q6_Q_vsetq2_R(n * حجم(عائم));
+    أرجع Q6_V_vmux_QVV(ماسک, v, Q6_V_vzero());
 }
 
-static inline void solve_tri_row_hvx(const float * A_row,
-                                     const float * B_row,
-                                     float *       X,
-                                     uint32_t      row,
+ساكن مضمن فراغ solve_tri_ردیف_hvx(ثابت عائم * A_ردیف,
+                                     ثابت عائم * B_ردیف,
+                                     عائم *       X,
+                                     uint32_t      ردیف,
                                      uint32_t      k,
                                      uint32_t      col0,
                                      uint32_t      coln,
-                                     float         inv_diag) {
-    const bool full = (coln == VLEN_FP32);
+                                     عائم         inv_diag) {
+    ثابت bool پر = (coln == VLEN_FP32);
 
-    HVX_Vector sum_v = Q6_V_vzero();
-    for (uint32_t t = 0; t < row; ++t) {
-        const float   a         = A_row[t];
-        const float * x_row_col = X + t * k + col0;
+    HVX_وکتور جمع_v = Q6_V_vzero();
+    لكل (uint32_t t = 0; t < ردیف; ++t) {
+        ثابت عائم   a         = A_ردیف[t];
+        ثابت عائم * x_ردیف_ستون = X + t * k + col0;
 
-        HVX_Vector x_v = full ? *((const HVX_UVector *) x_row_col) : hvx_load_partial_f32(x_row_col, coln);
-        HVX_Vector a_v = hvx_vec_splat_f32(a);
-        sum_v          = hvx_vec_add_f32_f32(sum_v, hvx_vec_mul_f32_f32(x_v, a_v));
+        HVX_وکتور x_v = پر ? *((ثابت HVX_UVector *) x_ردیف_ستون) : hvx_بارگیری_partial_f32(x_ردیف_ستون, coln);
+        HVX_وکتور a_v = hvx_vec_splat_f32(a);
+        جمع_v          = hvx_vec_جمع_کن_f32_f32(جمع_v, hvx_vec_mul_f32_f32(x_v, a_v));
     }
 
-    const float * b_row_col = B_row + col0;
-    float *       x_out_col = X + row * k + col0;
+    ثابت عائم * b_ردیف_ستون = B_ردیف + col0;
+    عائم *       x_بیرون_ستون = X + ردیف * k + col0;
 
-    HVX_Vector b_v        = full ? *((const HVX_UVector *) b_row_col) : hvx_load_partial_f32(b_row_col, coln);
-    HVX_Vector inv_diag_v = hvx_vec_splat_f32(inv_diag);
+    HVX_وکتور b_v        = پر ? *((ثابت HVX_UVector *) b_ردیف_ستون) : hvx_بارگیری_partial_f32(b_ردیف_ستون, coln);
+    HVX_وکتور inv_diag_v = hvx_vec_splat_f32(inv_diag);
 
-    HVX_Vector out_v = hvx_vec_mul_f32_f32(hvx_vec_sub_f32_f32(b_v, sum_v), inv_diag_v);
-    hvx_vec_store_u((void *) x_out_col, coln * sizeof(float), out_v);
+    HVX_وکتور بیرون_v = hvx_vec_mul_f32_f32(hvx_vec_sub_f32_f32(b_v, جمع_v), inv_diag_v);
+    hvx_vec_store_u((فراغ *) x_بیرون_ستون, coln * حجم(عائم), بیرون_v);
 }
 
 // Batch-level thread: each job is one full batch.
-static void solve_tri_batch_thread_f32(unsigned int nth, unsigned int ith, void * data) {
-    struct htp_solve_tri_context * sctx = (struct htp_solve_tri_context *) data;
-    struct htp_ops_context *       octx = sctx->octx;
+ساكن فراغ solve_tri_batch_thread_f32(بیعلامت صحيح nth, بیعلامت صحيح ith, فراغ * داده) {
+    بنية htp_solve_tri_context * sctx = (بنية htp_solve_tri_context *) داده;
+    بنية htp_ops_context *       octx = sctx->octx;
 
-    const struct htp_tensor * src0 = octx->src[0];  // A
-    const struct htp_tensor * src1 = octx->src[1];  // B
-    const struct htp_tensor * dst  = octx->dst;     // X
+    ثابت بنية htp_tensor * src0 = octx->src[0];  // A
+    ثابت بنية htp_tensor * src1 = octx->src[1];  // B
+    ثابت بنية htp_tensor * dst  = octx->dst;     // X
 
-    const uint32_t n = src0->ne[0];
-    const uint32_t k = src1->ne[0];
+    ثابت uint32_t n = src0->ne[0];
+    ثابت uint32_t k = src1->ne[0];
 
-    const uint32_t ne02 = src0->ne[2];
+    ثابت uint32_t ne02 = src0->ne[2];
 
-    const uint32_t col_block = VLEN_FP32;
-    const uint32_t k_full    = (k / col_block) * col_block;
+    ثابت uint32_t ستون_بلوک = VLEN_FP32;
+    ثابت uint32_t k_پر    = (k / ستون_بلوک) * ستون_بلوک;
 
-    const uint32_t start_batch = sctx->job_start + sctx->jobs_per_thread * ith;
-    const uint32_t end_batch   = MIN(start_batch + sctx->jobs_per_thread, sctx->job_start + sctx->total_jobs);
+    ثابت uint32_t شروع_batch = sctx->کار_شروع + sctx->jobs_در_هر_thread * ith;
+    ثابت uint32_t انتها_batch   = MIN(شروع_batch + sctx->jobs_در_هر_thread, sctx->کار_شروع + sctx->مجموع_jobs);
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
-    htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) start_batch);
+    بنية htp_thread_trace * tr = &octx->ctx->trace[ith];
+    htp_trace_event_شروع(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) شروع_batch);
 
-    for (uint32_t batch = start_batch; batch < end_batch; ++batch) {
-        const uint32_t i03 = batch / ne02;
-        const uint32_t i02 = batch - i03 * ne02;
+    لكل (uint32_t batch = شروع_batch; batch < انتها_batch; ++batch) {
+        ثابت uint32_t i03 = batch / ne02;
+        ثابت uint32_t i02 = batch - i03 * ne02;
 
-        const float * A_batch =
-            (const float *) ((const uint8_t *) (uintptr_t) src0->data + i02 * src0->nb[2] + i03 * src0->nb[3]);
-        const float * B_batch =
-            (const float *) ((const uint8_t *) (uintptr_t) src1->data + i02 * src1->nb[2] + i03 * src1->nb[3]);
-        float * X_batch = (float *) ((uint8_t *) (uintptr_t) dst->data + i02 * dst->nb[2] + i03 * dst->nb[3]);
+        ثابت عائم * A_batch =
+            (ثابت عائم *) ((ثابت uint8_t *) (uintptr_t) src0->داده + i02 * src0->nb[2] + i03 * src0->nb[3]);
+        ثابت عائم * B_batch =
+            (ثابت عائم *) ((ثابت uint8_t *) (uintptr_t) src1->داده + i02 * src1->nb[2] + i03 * src1->nb[3]);
+        عائم * X_batch = (عائم *) ((uint8_t *) (uintptr_t) dst->داده + i02 * dst->nb[2] + i03 * dst->nb[3]);
 
-        for (uint32_t row = 0; row < n; ++row) {
-            const float   diag     = A_batch[row * n + row];
-            const float   inv_diag = 1.0f / diag;
-            const float * A_row    = A_batch + row * n;
-            const float * B_row    = B_batch + row * k;
+        لكل (uint32_t ردیف = 0; ردیف < n; ++ردیف) {
+            ثابت عائم   diag     = A_batch[ردیف * n + ردیف];
+            ثابت عائم   inv_diag = 1.0f / diag;
+            ثابت عائم * A_ردیف    = A_batch + ردیف * n;
+            ثابت عائم * B_ردیف    = B_batch + ردیف * k;
 
             uint32_t col0 = 0;
-            for (; col0 < k_full; col0 += col_block) {
-                solve_tri_row_hvx(A_row, B_row, X_batch, row, k, col0, col_block, inv_diag);
+            لكل (; col0 < k_پر; col0 += ستون_بلوک) {
+                solve_tri_ردیف_hvx(A_ردیف, B_ردیف, X_batch, ردیف, k, col0, ستون_بلوک, inv_diag);
             }
 
-            if (col0 < k) {
-                const uint32_t coln = k - col0;
-                if (coln >= 8) {
-                    solve_tri_row_hvx(A_row, B_row, X_batch, row, k, col0, coln, inv_diag);
-                } else {
-                    solve_tri_row_scalar(A_row, B_row, X_batch, row, k, col0, coln, inv_diag);
+            إذا (col0 < k) {
+                ثابت uint32_t coln = k - col0;
+                إذا (coln >= 8) {
+                    solve_tri_ردیف_hvx(A_ردیف, B_ردیف, X_batch, ردیف, k, col0, coln, inv_diag);
+                } وإلا {
+                    solve_tri_ردیف_scalar(A_ردیف, B_ردیف, X_batch, ردیف, k, col0, coln, inv_diag);
                 }
             }
         }
     }
 
-    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) end_batch);
+    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) انتها_batch);
 
-    FARF(HIGH, "solve-tri-batch %d/%d: A=(%ux%u) B=(%ux%u) batch %u:%u\n",
-         ith, nth, n, n, k, n, start_batch, end_batch);
+    FARF(بالا_2, "solve-tri-batch %d/%d: A=(%ux%u) B=(%ux%u) batch %u:%u\n",
+         ith, nth, n, n, k, n, شروع_batch, انتها_batch);
 }
 
 // Chunk-level thread: each job is one (batch, col_chunk) pair.
-static void solve_tri_chunk_thread_f32(unsigned int nth, unsigned int ith, void * data) {
-    struct htp_solve_tri_context * sctx = (struct htp_solve_tri_context *) data;
-    struct htp_ops_context *       octx = sctx->octx;
+ساكن فراغ solve_tri_chunk_thread_f32(بیعلامت صحيح nth, بیعلامت صحيح ith, فراغ * داده) {
+    بنية htp_solve_tri_context * sctx = (بنية htp_solve_tri_context *) داده;
+    بنية htp_ops_context *       octx = sctx->octx;
 
-    const struct htp_tensor * src0 = octx->src[0];  // A
-    const struct htp_tensor * src1 = octx->src[1];  // B
-    const struct htp_tensor * dst  = octx->dst;     // X
+    ثابت بنية htp_tensor * src0 = octx->src[0];  // A
+    ثابت بنية htp_tensor * src1 = octx->src[1];  // B
+    ثابت بنية htp_tensor * dst  = octx->dst;     // X
 
-    const uint32_t n = src0->ne[0];
-    const uint32_t k = src1->ne[0];
+    ثابت uint32_t n = src0->ne[0];
+    ثابت uint32_t k = src1->ne[0];
 
-    const uint32_t ne02 = src0->ne[2];
+    ثابت uint32_t ne02 = src0->ne[2];
 
-    const uint32_t start_job = sctx->job_start + sctx->jobs_per_thread * ith;
-    const uint32_t end_job   = MIN(start_job + sctx->jobs_per_thread, sctx->job_start + sctx->total_jobs);
+    ثابت uint32_t شروع_کار = sctx->کار_شروع + sctx->jobs_در_هر_thread * ith;
+    ثابت uint32_t انتها_کار   = MIN(شروع_کار + sctx->jobs_در_هر_thread, sctx->کار_شروع + sctx->مجموع_jobs);
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
-    htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) start_job);
+    بنية htp_thread_trace * tr = &octx->ctx->trace[ith];
+    htp_trace_event_شروع(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) شروع_کار);
 
-    for (uint32_t job = start_job; job < end_job; ++job) {
-        const uint32_t batch = job / sctx->k_chunks;
-        const uint32_t chunk = job - batch * sctx->k_chunks;
+    لكل (uint32_t کار = شروع_کار; کار < انتها_کار; ++کار) {
+        ثابت uint32_t batch = کار / sctx->k_chunks;
+        ثابت uint32_t chunk = کار - batch * sctx->k_chunks;
 
-        const uint32_t i03 = batch / ne02;
-        const uint32_t i02 = batch - i03 * ne02;
+        ثابت uint32_t i03 = batch / ne02;
+        ثابت uint32_t i02 = batch - i03 * ne02;
 
-        const float * A_batch =
-            (const float *) ((const uint8_t *) (uintptr_t) src0->data + i02 * src0->nb[2] + i03 * src0->nb[3]);
-        const float * B_batch =
-            (const float *) ((const uint8_t *) (uintptr_t) src1->data + i02 * src1->nb[2] + i03 * src1->nb[3]);
-        float * X_batch = (float *) ((uint8_t *) (uintptr_t) dst->data + i02 * dst->nb[2] + i03 * dst->nb[3]);
+        ثابت عائم * A_batch =
+            (ثابت عائم *) ((ثابت uint8_t *) (uintptr_t) src0->داده + i02 * src0->nb[2] + i03 * src0->nb[3]);
+        ثابت عائم * B_batch =
+            (ثابت عائم *) ((ثابت uint8_t *) (uintptr_t) src1->داده + i02 * src1->nb[2] + i03 * src1->nb[3]);
+        عائم * X_batch = (عائم *) ((uint8_t *) (uintptr_t) dst->داده + i02 * dst->nb[2] + i03 * dst->nb[3]);
 
-        const uint32_t col0 = chunk * sctx->col_block;
-        const uint32_t coln = MIN(sctx->col_block, k - col0);
+        ثابت uint32_t col0 = chunk * sctx->ستون_بلوک;
+        ثابت uint32_t coln = MIN(sctx->ستون_بلوک, k - col0);
 
-        for (uint32_t row = 0; row < n; ++row) {
-            const float diag     = A_batch[row * n + row];
-            const float inv_diag = 1.0f / diag;
+        لكل (uint32_t ردیف = 0; ردیف < n; ++ردیف) {
+            ثابت عائم diag     = A_batch[ردیف * n + ردیف];
+            ثابت عائم inv_diag = 1.0f / diag;
 
-            const float * A_row = A_batch + row * n;
-            const float * B_row = B_batch + row * k;
+            ثابت عائم * A_ردیف = A_batch + ردیف * n;
+            ثابت عائم * B_ردیف = B_batch + ردیف * k;
 
-            if (coln >= 8) {
-                solve_tri_row_hvx(A_row, B_row, X_batch, row, k, col0, coln, inv_diag);
-            } else {
-                solve_tri_row_scalar(A_row, B_row, X_batch, row, k, col0, coln, inv_diag);
+            إذا (coln >= 8) {
+                solve_tri_ردیف_hvx(A_ردیف, B_ردیف, X_batch, ردیف, k, col0, coln, inv_diag);
+            } وإلا {
+                solve_tri_ردیف_scalar(A_ردیف, B_ردیف, X_batch, ردیف, k, col0, coln, inv_diag);
             }
         }
     }
 
-    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) end_job);
+    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) انتها_کار);
 
-    FARF(HIGH, "solve-tri-chunk %d/%d: A=(%ux%u) B=(%ux%u) jobs %u:%u\n",
-         ith, nth, n, n, k, n, start_job, end_job);
+    FARF(بالا_2, "solve-tri-chunk %d/%d: A=(%ux%u) B=(%ux%u) jobs %u:%u\n",
+         ith, nth, n, n, k, n, شروع_کار, انتها_کار);
 }
 
-int op_solve_tri(struct htp_ops_context * octx) {
-    const struct htp_tensor * src0 = octx->src[0];  // A
-    const struct htp_tensor * src1 = octx->src[1];  // B
-    const struct htp_tensor * dst  = octx->dst;     // X
+صحيح op_solve_tri(بنية htp_ops_context * octx) {
+    ثابت بنية htp_tensor * src0 = octx->src[0];  // A
+    ثابت بنية htp_tensor * src1 = octx->src[1];  // B
+    ثابت بنية htp_tensor * dst  = octx->dst;     // X
 
-    if (src0->type != HTP_TYPE_F32 || src1->type != HTP_TYPE_F32 || dst->type != HTP_TYPE_F32) {
-        return HTP_STATUS_NO_SUPPORT;
+    إذا (src0->type != HTP_TYPE_F32 || src1->type != HTP_TYPE_F32 || dst->type != HTP_TYPE_F32) {
+        أرجع HTP_وضعیت_NO_SUPPORT;
     }
 
     // left=true, lower=true, uni=false only
-    if (src0->ne[0] != src0->ne[1]) {
-        return HTP_STATUS_INVAL_PARAMS;
+    إذا (src0->ne[0] != src0->ne[1]) {
+        أرجع HTP_وضعیت_INVAL_PARAMS;
     }
-    if (src0->ne[1] != src1->ne[1]) {
-        return HTP_STATUS_INVAL_PARAMS;
+    إذا (src0->ne[1] != src1->ne[1]) {
+        أرجع HTP_وضعیت_INVAL_PARAMS;
     }
-    if (src0->ne[2] != src1->ne[2] || src0->ne[3] != src1->ne[3]) {
-        return HTP_STATUS_INVAL_PARAMS;
+    إذا (src0->ne[2] != src1->ne[2] || src0->ne[3] != src1->ne[3]) {
+        أرجع HTP_وضعیت_INVAL_PARAMS;
     }
-    if (dst->ne[0] != src1->ne[0] || dst->ne[1] != src1->ne[1] || dst->ne[2] != src1->ne[2] ||
+    إذا (dst->ne[0] != src1->ne[0] || dst->ne[1] != src1->ne[1] || dst->ne[2] != src1->ne[2] ||
         dst->ne[3] != src1->ne[3]) {
-        return HTP_STATUS_INVAL_PARAMS;
+        أرجع HTP_وضعیت_INVAL_PARAMS;
     }
 
-    if (htp_tensor_is_extended(src0) || htp_tensor_is_extended(src1) || htp_tensor_is_extended(dst)) {
-        return HTP_STATUS_NO_SUPPORT;
+    إذا (htp_tensor_is_extended(src0) || htp_tensor_is_extended(src1) || htp_tensor_is_extended(dst)) {
+        أرجع HTP_وضعیت_NO_SUPPORT;
     }
 
-    const uint32_t k = src1->ne[0];
+    ثابت uint32_t k = src1->ne[0];
 
-    const uint32_t col_block     = VLEN_FP32;
-    const uint32_t k_chunks      = (k + col_block - 1) / col_block;
-    const uint32_t total_batches = src0->ne[2] * src0->ne[3];
-    const bool     batched       = total_batches >= (uint32_t) octx->n_threads;
+    ثابت uint32_t ستون_بلوک     = VLEN_FP32;
+    ثابت uint32_t k_chunks      = (k + ستون_بلوک - 1) / ستون_بلوک;
+    ثابت uint32_t مجموع_batches = src0->ne[2] * src0->ne[3];
+    ثابت bool     batched       = مجموع_batches >= (uint32_t) octx->n_نخها;
 
-    FARF(HIGH, "solve-tri: (%ux%ux%ux%u) x (%ux%ux%ux%u) -> (%ux%ux%ux%u) : batched %d\n",
+    FARF(بالا_2, "solve-tri: (%ux%ux%ux%u) x (%ux%ux%ux%u) -> (%ux%ux%ux%u) : batched %d\n",
          src0->ne[0], src0->ne[1], src0->ne[2], src0->ne[3],
          src1->ne[0], src1->ne[1], src1->ne[2], src1->ne[3],
          dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3], batched);
 
-    if (batched) {
-        uint32_t job_start = 0;
-        uint32_t njobs     = total_batches;
+    إذا (batched) {
+        uint32_t کار_شروع = 0;
+        uint32_t njobs     = مجموع_batches;
 
-        if (octx->ctx->mdev.count > 1) {
-            const uint32_t batch_size = dst->nb[2];
-            const uint32_t batches_per_chunk = (batch_size > 0) ? (HEX_L2_LINE_SIZE / hex_gcd_u32(batch_size, HEX_L2_LINE_SIZE)) : 1;
-            const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_batches, htp_tensor_mdev_data_aligned(dst) ? batches_per_chunk : 0, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
-            job_start = range.start;
-            njobs     = range.count;
+        إذا (octx->ctx->mdev.شمار > 1) {
+            ثابت uint32_t batch_اندازه = dst->nb[2];
+            ثابت uint32_t batches_در_هر_chunk = (batch_اندازه > 0) ? (HEX_L2_سطر_اندازه / hex_بزرگترین_مقسوم_علیه_u32(batch_اندازه, HEX_L2_سطر_اندازه)) : 1;
+            ثابت بنية htp_tensor_mdev_range range = htp_tensor_mdev_افراز(مجموع_batches, htp_tensor_mdev_داده_aligned(dst) ? batches_در_هر_chunk : 0, octx->ctx->mdev.idx, octx->ctx->mdev.شمار, &octx->ctx->mdev.شمار_div);
+            کار_شروع = range.شروع;
+            njobs     = range.شمار;
         }
 
-        if (njobs == 0) {
-            return HTP_STATUS_OK;
+        إذا (njobs == 0) {
+            أرجع HTP_وضعیت_OK;
         }
 
         // Batch-level parallelism
-        const uint32_t n_threads = octx->n_threads;
+        ثابت uint32_t n_نخها = octx->n_نخها;
 
-        struct htp_solve_tri_context sctx = {
+        بنية htp_solve_tri_context sctx = {
             .octx            = octx,
-            .jobs_per_thread = fastdiv(njobs + n_threads - 1, &octx->n_threads_div),
-            .total_jobs      = njobs,
-            .job_start       = job_start,
+            .jobs_در_هر_thread = fastdiv(njobs + n_نخها - 1, &octx->n_نخها_div),
+            .مجموع_jobs      = njobs,
+            .کار_شروع       = کار_شروع,
             .k_chunks        = k_chunks,
-            .col_block       = col_block,
+            .ستون_بلوک       = ستون_بلوک,
         };
 
-        work_queue_run(octx->ctx->work_queue, solve_tri_batch_thread_f32, &sctx, n_threads);
-    } else {
+        work_صف_پیاپی(octx->ctx->work_صف, solve_tri_batch_thread_f32, &sctx, n_نخها);
+    } وإلا {
         // Chunk-level parallelism
-        const uint32_t total_jobs = total_batches * k_chunks;
+        ثابت uint32_t مجموع_jobs = مجموع_batches * k_chunks;
 
-        uint32_t job_start = 0;
-        uint32_t njobs     = total_jobs;
+        uint32_t کار_شروع = 0;
+        uint32_t njobs     = مجموع_jobs;
 
-        if (octx->ctx->mdev.count > 1) {
-            const bool can_split = htp_tensor_mdev_data_aligned(dst) && ((dst->nb[1] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0);
-            const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_jobs, can_split ? 1 : 0, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
-            job_start = range.start;
-            njobs     = range.count;
+        إذا (octx->ctx->mdev.شمار > 1) {
+            ثابت bool can_تقسیم = htp_tensor_mdev_داده_aligned(dst) && ((dst->nb[1] & (HTP_TENSOR_MDEV_سطر_اندازه - 1)) == 0);
+            ثابت بنية htp_tensor_mdev_range range = htp_tensor_mdev_افراز(مجموع_jobs, can_تقسیم ? 1 : 0, octx->ctx->mdev.idx, octx->ctx->mdev.شمار, &octx->ctx->mdev.شمار_div);
+            کار_شروع = range.شروع;
+            njobs     = range.شمار;
         }
 
-        if (njobs == 0) {
-            return HTP_STATUS_OK;
+        إذا (njobs == 0) {
+            أرجع HTP_وضعیت_OK;
         }
 
-        const uint32_t n_threads = octx->n_threads;
+        ثابت uint32_t n_نخها = octx->n_نخها;
 
-        struct htp_solve_tri_context sctx = {
+        بنية htp_solve_tri_context sctx = {
             .octx            = octx,
-            .jobs_per_thread = fastdiv(njobs + n_threads - 1, &octx->n_threads_div),
-            .total_jobs      = njobs,
-            .job_start       = job_start,
+            .jobs_در_هر_thread = fastdiv(njobs + n_نخها - 1, &octx->n_نخها_div),
+            .مجموع_jobs      = njobs,
+            .کار_شروع       = کار_شروع,
             .k_chunks        = k_chunks,
-            .col_block       = col_block,
+            .ستون_بلوک       = ستون_بلوک,
         };
 
-        work_queue_run(octx->ctx->work_queue, solve_tri_chunk_thread_f32, &sctx, n_threads);
+        work_صف_پیاپی(octx->ctx->work_صف, solve_tri_chunk_thread_f32, &sctx, n_نخها);
     }
 
-    return HTP_STATUS_OK;
+    أرجع HTP_وضعیت_OK;
 }

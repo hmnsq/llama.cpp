@@ -10,28 +10,28 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#ifndef GGML_SYCL_NORM_HPP
-#define GGML_SYCL_NORM_HPP
+#اگر_تعریف_نشده GGML_SYCL_NORM_HPP
+#تعریف_کن GGML_SYCL_NORM_HPP
 
-#include "common.hpp"
+#ضمن "common.hpp"
 
-void ggml_sycl_op_norm(ggml_backend_sycl_context& ctx, ggml_tensor* dst);
+فراغ ggml_sycl_op_norm(ggml_backend_sycl_context& ctx, ggml_tensor* dst);
 
-void ggml_sycl_op_rms_norm(ggml_backend_sycl_context& ctx, ggml_tensor* dst);
+فراغ ggml_sycl_op_rms_norm(ggml_backend_sycl_context& ctx, ggml_tensor* dst);
 
-void ggml_sycl_op_rms_norm_fused(ggml_backend_sycl_context& ctx, ggml_tensor* dst, ggml_tensor* mul);
+فراغ ggml_sycl_op_rms_norm_fused(ggml_backend_sycl_context& ctx, ggml_tensor* dst, ggml_tensor* mul);
 
-void ggml_sycl_op_rms_norm_scale_fused(ggml_backend_sycl_context& ctx, ggml_tensor* dst, ggml_tensor* scale_tensor);
+فراغ ggml_sycl_op_rms_norm_scale_fused(ggml_backend_sycl_context& ctx, ggml_tensor* dst, ggml_tensor* scale_tensor);
 
-void ggml_sycl_op_rms_norm_fused_add(ggml_backend_sycl_context& ctx, ggml_tensor* dst, ggml_tensor* mul_tensor, ggml_tensor* add_tensor);
+فراغ ggml_sycl_op_rms_norm_fused_جمع_کن(ggml_backend_sycl_context& ctx, ggml_tensor* dst, ggml_tensor* mul_tensor, ggml_tensor* جمع_کن_tensor);
 
-void ggml_sycl_op_rms_norm_back(ggml_backend_sycl_context& ctx, ggml_tensor* dst);
+فراغ ggml_sycl_op_rms_norm_پشت(ggml_backend_sycl_context& ctx, ggml_tensor* dst);
 
-void ggml_sycl_op_group_norm(ggml_backend_sycl_context& ctx, ggml_tensor* dst);
+فراغ ggml_sycl_op_گروه_norm(ggml_backend_sycl_context& ctx, ggml_tensor* dst);
 
-void ggml_sycl_op_l2_norm(ggml_backend_sycl_context& ctx, ggml_tensor* dst);
+فراغ ggml_sycl_op_l2_norm(ggml_backend_sycl_context& ctx, ggml_tensor* dst);
 
-#define GGML_SYCL_L2_BATCH_MAX 8
-void ggml_sycl_l2_norm_batch(ggml_backend_sycl_context & ctx, ggml_tensor ** nodes, int count);
+#تعریف_کن GGML_SYCL_L2_BATCH_MAX 8
+فراغ ggml_sycl_l2_norm_batch(ggml_backend_sycl_context & ctx, ggml_tensor ** nodes, صحيح count);
 
-#endif // GGML_SYCL_NORM_HPP
+#پایان_اگر // GGML_SYCL_NORM_HPP

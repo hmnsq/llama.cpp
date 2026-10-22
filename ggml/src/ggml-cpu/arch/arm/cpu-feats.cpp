@@ -1,39 +1,39 @@
-#include "ggml-backend-impl.h"
-#include "ggml-feats.h"
+#ضمن "ggml-backend-impl.h"
+#ضمن "ggml-feats.h"
 
-#if defined(__aarch64__) || defined(_M_ARM64)
+#إذا defined(__aarch64__) || defined(_M_ARM64)
 
-static int ggml_backend_cpu_aarch64_score() {
-    int score = 1;
-    const ggml_feats_arch64_runtime_t af = ggml_feats_get_arch64_runtime();
-    GGML_UNUSED(af);
+ساكن صحيح ggml_backend_cpu_aarch64_score() {
+    صحيح score = 1;
+    ثابت ggml_feats_arch64_runtime_t af = ggml_feats_get_arch64_runtime();
+    GGML_استفادهنشده(af);
 
-#ifdef GGML_USE_DOTPROD
-    if (!af.has_dotprod) { return 0; }
+#اگر_تعریف_شده GGML_USE_DOTPROD
+    إذا (!af.has_dotprod) { أرجع 0; }
     score += 1<<1;
-#endif
-#ifdef GGML_USE_FP16_VECTOR_ARITHMETIC
-    if (!af.has_fp16) { return 0; }
+#پایان_اگر
+#اگر_تعریف_شده GGML_USE_FP16_وکتور_ARITHMETIC
+    إذا (!af.has_fp16) { أرجع 0; }
     score += 1<<2;
-#endif
-#ifdef GGML_USE_SVE
-    if (!af.has_sve) { return 0; }
+#پایان_اگر
+#اگر_تعریف_شده GGML_USE_SVE
+    إذا (!af.has_sve) { أرجع 0; }
     score += 1<<3;
-#endif
-#ifdef GGML_USE_MATMUL_INT8
-    if (!af.has_i8mm) { return 0; }
+#پایان_اگر
+#اگر_تعریف_شده GGML_USE_MATMUL_INT8
+    إذا (!af.has_i8mm) { أرجع 0; }
     score += 1<<4;
-#endif
-#ifdef GGML_USE_SVE2
-    if (!af.has_sve2) { return 0; }
+#پایان_اگر
+#اگر_تعریف_شده GGML_USE_SVE2
+    إذا (!af.has_sve2) { أرجع 0; }
     score += 1<<5;
-#endif
-#ifdef GGML_USE_SME
-    if (!af.has_sme) { return 0; }
+#پایان_اگر
+#اگر_تعریف_شده GGML_USE_SME
+    إذا (!af.has_sme) { أرجع 0; }
     score += 1<<6;
-#endif
+#پایان_اگر
 
-    return score;
+    أرجع score;
 }
 
 GGML_BACKEND_DL_SCORE_IMPL(ggml_backend_cpu_aarch64_score)

@@ -1,8 +1,8 @@
-#pragma once
+#رهنمود once
 
-#include "ggml-backend.h"
-#include "ggml.h"
+#ضمن "ggml-backend.h"
+#ضمن "ggml.h"
 
 // GGML CPU internal header
 
-ggml_backend_buffer_type_t ggml_backend_cpu_hbm_buffer_type(void);
+ggml_backend_میانگیر_type_t ggml_backend_cpu_hbm_میانگیر_type(فراغ);

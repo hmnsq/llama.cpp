@@ -1,12 +1,12 @@
-#ifndef GGML_ZDNN_MMF_HPP
-#define GGML_ZDNN_MMF_HPP
+#اگر_تعریف_نشده GGML_ZDNN_MMF_HPP
+#تعریف_کن GGML_ZDNN_MMF_HPP
 
-#include "common.hpp"
+#ضمن "common.hpp"
 
-void ggml_zdnn_mul_mat_f(
-    const ggml_backend_zdnn_context * ctx,
-    const               ggml_tensor * src0,
-    const               ggml_tensor * src1,
+فراغ ggml_zdnn_mul_mat_f(
+    ثابت ggml_backend_zdnn_context * ctx,
+    ثابت               ggml_tensor * src0,
+    ثابت               ggml_tensor * src1,
                         ggml_tensor * dst);
 
-#endif  // GGML_ZDNN_MMF_HPP
+#پایان_اگر  // GGML_ZDNN_MMF_HPP

@@ -1,7 +1,7 @@
-#pragma once
+#رهنمود once
 
-#include <sycl/sycl.hpp>
-#include "dpct/helper.hpp"
-#include "common.hpp"
+#ضمن <sycl/sycl.hpp>
+#ضمن "dpct/helper.hpp"
+#ضمن "common.hpp"
 
-void ggml_sycl_upscale(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+فراغ ggml_sycl_upscale(ggml_backend_sycl_context & ctx, ggml_tensor * dst);

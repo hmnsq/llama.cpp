@@ -1,59 +1,59 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#ضمن "../node_context.h"
+#ضمن "../op_table.h"
+#ضمن "../utils.h"
 
-#include <memory>
-#include <openvino/core/node_output.hpp>
-#include <openvino/op/clamp.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/gelu.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/sigmoid.hpp>
-#include <openvino/op/slice.hpp>
+#ضمن <memory>
+#ضمن <openvino/core/node_output.hpp>
+#ضمن <openvino/op/clamp.hpp>
+#ضمن <openvino/op/constant.hpp>
+#ضمن <openvino/op/gelu.hpp>
+#ضمن <openvino/op/multiply.hpp>
+#ضمن <openvino/op/sigmoid.hpp>
+#ضمن <openvino/op/slice.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+نطاق ov {
+نطاق frontend {
+نطاق ggml {
+نطاق op {
 
-OutputVector translate_glu_geglu(const NodeContext & context) {
-    num_inputs_check(context, 1, 2);
+Output_وکتور translate_glu_geglu(ثابت گره_Context & context) {
+    رقم_inputs_check(context, 1, 2);
 
     ov::Output<ov::Node> src0;
     ov::Output<ov::Node> src1;
-    if (context.get_input_size() == 2) {
+    إذا (context.get_درون_داد_اندازه() == 2) {
         // Inputs may be VIEW slices of a combined gate_up tensor (MoE experts):
         // resolve them so each half has its real sliced shape, not the base tensor.
-        src0 = process_view_input_new(context, 0);
-        src1 = process_view_input_new(context, 1);
-    } else {
+        src0 = process_view_درون_داد_new(context, 0);
+        src1 = process_view_درون_داد_new(context, 1);
+    } وإلا {
         // GGML splits along ne[0] (OV last axis) using floor division: nc = ne[0] / 2.
         // Both halves are nc elements; if the dimension is odd, the last element is dropped.
         // Use Slice instead of Split to handle odd dimensions correctly.
         // Resolve a VIEW input (e.g. non-contiguous slice) to its real shape first.
-        auto combined = process_view_input_new(context, 0);
-        auto combined_shape = combined.get_partial_shape();
-        int64_t last_dim_val = combined_shape[combined_shape.rank().get_length() - 1].get_length();
-        int64_t nc = last_dim_val / 2;
+        خودکار combined = process_view_درون_داد_new(context, 0);
+        خودکار combined_shape = combined.get_partial_shape();
+        int64_t آخرین_dim_val = combined_shape[combined_shape.rank().get_درازی() - 1].get_درازی();
+        int64_t nc = آخرین_dim_val / 2;
 
-        auto axis = ov::op::v0::Constant::create(ov::element::i64, {1}, {-1});
-        auto step = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
-        auto start0 = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
-        auto stop0 = ov::op::v0::Constant::create(ov::element::i64, {1}, {nc});
-        auto start1 = ov::op::v0::Constant::create(ov::element::i64, {1}, {nc});
-        auto stop1 = ov::op::v0::Constant::create(ov::element::i64, {1}, {2 * nc});
+        خودکار axis = ov::op::v0::Constant::create(ov::element::i64, {1}, {-1});
+        خودکار گام = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
+        خودکار start0 = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
+        خودکار stop0 = ov::op::v0::Constant::create(ov::element::i64, {1}, {nc});
+        خودکار start1 = ov::op::v0::Constant::create(ov::element::i64, {1}, {nc});
+        خودکار stop1 = ov::op::v0::Constant::create(ov::element::i64, {1}, {2 * nc});
 
-        src0 = std::make_shared<ov::op::v8::Slice>(combined, start0, stop0, step, axis);
-        src1 = std::make_shared<ov::op::v8::Slice>(combined, start1, stop1, step, axis);
+        src0 = std::make_shared<ov::op::v8::برش>(combined, start0, stop0, گام, axis);
+        src1 = std::make_shared<ov::op::v8::برش>(combined, start1, stop1, گام, axis);
     }
 
     int32_t * params = context.get_output_op_params();
-    const int32_t swapped = params[1];
-    if (swapped) {
+    ثابت int32_t swapped = params[1];
+    إذا (swapped) {
         std::swap(src0, src1);
     }
 
-    if (context.is_static()) {
+    إذا (context.is_static()) {
         // TODO: Temporary solution for NPU accuracy issue due to fp16 overflow
         // To be removed once permanent solution is implemented
         // Justification:
@@ -63,10 +63,10 @@ OutputVector translate_glu_geglu(const NodeContext & context) {
         // In practice, FFN intermediates rarely exceed 10 after GEGLU gating.
         src0 = std::make_shared<ov::op::v0::Clamp>(src0, -10.0, 10.0);
     }
-    auto gelu = std::make_shared<ov::op::v7::Gelu>(src0);
-    auto res = std::make_shared<ov::op::v1::Multiply>(gelu, src1);
+    خودکار gelu = std::make_shared<ov::op::v7::Gelu>(src0);
+    خودکار res = std::make_shared<ov::op::v1::Multiply>(gelu, src1);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    أرجع rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

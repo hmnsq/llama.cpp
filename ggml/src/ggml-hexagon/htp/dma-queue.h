@@ -1,525 +1,525 @@
-#ifndef HTP_DMA_H
-#define HTP_DMA_H
+#اگر_تعریف_نشده HTP_DMA_H
+#تعریف_کن HTP_DMA_H
 
-#include <HAP_farf.h>
-#include <hexagon_types.h>
-#include <assert.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <string.h>
-#include "hex-utils.h"
+#ضمن <HAP_farf.h>
+#ضمن <hexagon_types.h>
+#ضمن <assert.h>
+#ضمن <stdbool.h>
+#ضمن <stdint.h>
+#ضمن <string.h>
+#ضمن "hex-utils.h"
 
-#include "hex-profile.h"
+#ضمن "hex-profile.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#اگر_تعریف_شده __cplusplus
+خارجي "C" {
+#پایان_اگر
 
 // Define the HW descriptor structs here since the ones in HexSDK are a bit out of date
-typedef struct dma_descriptor_1d_s {
-    void *   next;
-    uint32_t size:24;
-    uint32_t desc_size:2;
+تعريفنوع بنية dma_descriptor_1d_s {
+    فراغ *   بعدی;
+    uint32_t اندازه:24;
+    uint32_t desc_اندازه:2;
     uint32_t dst_comp:1;
     uint32_t src_comp:1;
     uint32_t dst_bypass:1;
     uint32_t src_bypass:1;
-    uint32_t order:1;
-    uint32_t done:1;
+    uint32_t ترتیب:1;
+    uint32_t انجامشده:1;
     uint32_t src;
     uint32_t dst;
 } dma_descriptor_1d;
 
-#if __HVX_ARCH__ < 75
+#إذا __HVX_ARCH__ < 75
 
-typedef struct dma_descriptor_2d_s {
-    void *   next;
+تعريفنوع بنية dma_descriptor_2d_s {
+    فراغ *   بعدی;
     uint32_t reserved0:24;
-    uint32_t desc_size:2;
+    uint32_t desc_اندازه:2;
     uint32_t dst_comp:1;
     uint32_t src_comp:1;
     uint32_t dst_bypass:1;
     uint32_t src_bypass:1;
-    uint32_t order:1;
-    uint32_t done:1;
+    uint32_t ترتیب:1;
+    uint32_t انجامشده:1;
     uint32_t src;
     uint32_t dst;
     uint32_t desc_type:8;
     uint32_t reserved1:24;
-    uint32_t row_size:16;
+    uint32_t ردیف_اندازه:16;
     uint32_t nrows:16;
     uint32_t src_stride:16;
     uint32_t dst_stride:16;
-    uint32_t src_offset:16;
-    uint32_t dst_offset:16;
+    uint32_t src_جابه_جایی:16;
+    uint32_t dst_جابه_جایی:16;
 } dma_descriptor_2d;
 
-#else
+#وإلا
 
-typedef struct dma_descriptor_2d_s {
-    void *   next;
+تعريفنوع بنية dma_descriptor_2d_s {
+    فراغ *   بعدی;
     uint32_t dst_stride:24;
-    uint32_t desc_size:2;
+    uint32_t desc_اندازه:2;
     uint32_t dst_comp:1;
     uint32_t src_comp:1;
     uint32_t dst_bypass:1;
     uint32_t src_bypass:1;
-    uint32_t order:1;
-    uint32_t done:1;
+    uint32_t ترتیب:1;
+    uint32_t انجامشده:1;
     uint32_t src;
     uint32_t dst;
     uint32_t desc_type:8;
-#if __HVX_ARCH__ > 79
-    uint32_t src_upper:8;
-    uint32_t dst_upper:8;
-    uint32_t allocation:2;
+#إذا __HVX_ARCH__ > 79
+    uint32_t src_فوقانی:8;
+    uint32_t dst_فوقانی:8;
+    uint32_t تخصیص:2;
     uint32_t reserved0:2;
     uint32_t transform:4;
-#else
+#وإلا
     uint32_t reserved0:24;
-#endif
-    uint32_t row_size:24;
+#پایان_اگر
+    uint32_t ردیف_اندازه:24;
     uint32_t nrows_lo:8;
     uint32_t nrows_hi:8;
     uint32_t src_stride:24;
-    uint32_t offset:24;
+    uint32_t جابه_جایی:24;
     uint32_t reserved1:8;
 } dma_descriptor_2d;
 
-#endif
+#پایان_اگر
 
-#if __HVX_ARCH__ > 79
-typedef uint64_t dma_addr_t;
-#else
-typedef uint32_t dma_addr_t;
-#endif
+#إذا __HVX_ARCH__ > 79
+تعريفنوع uint64_t dma_addr_t;
+#وإلا
+تعريفنوع uint32_t dma_addr_t;
+#پایان_اگر
 
-typedef struct {
+تعريفنوع بنية {
     dma_addr_t dst;
     dma_addr_t src;
-} dma_data;
+} dma_داده;
 
 // Hardware descriptor field limits
-#define DMA_MAX_NROWS          0xFFFFu        // 16-bit HW descriptor limit (65535)
-#define DMA_MAX_SIZE_16B       0xFFFFu        // 16-bit HW descriptor limit for row_size (65535)
-#define DMA_MAX_STRIDE_16B     0xFFFFu        // 16-bit HW descriptor limit for strides (65535)
-#define DMA_MAX_SIZE_24B       0x00FFFFFFu    // 24-bit HW descriptor limit for row_size / 1D size (16MB - 1)
-#define DMA_MAX_STRIDE_24B     0x00FFFFFFu    // 24-bit HW descriptor limit for strides (16MB - 1)
-#define DMA_SAFE_CHUNK_SIZE    0x00F00000u    // ~15MB safe contiguous chunk size
+#تعریف_کن DMA_MAX_NROWS          0xFFFFu        // 16-bit HW descriptor limit (65535)
+#تعریف_کن DMA_MAX_اندازه_16_B       0xFFFFu        // 16-bit HW descriptor limit for row_size (65535)
+#تعریف_کن DMA_MAX_STRIDE_16B     0xFFFFu        // 16-bit HW descriptor limit for strides (65535)
+#تعریف_کن DMA_MAX_اندازه_24_B       0x00FFFFFFu    // 24-bit HW descriptor limit for row_size / 1D size (16MB - 1)
+#تعریف_کن DMA_MAX_STRIDE_24B     0x00FFFFFFu    // 24-bit HW descriptor limit for strides (16MB - 1)
+#تعریف_کن DMA_امن_CHUNK_اندازه    0x00F00000u    // ~15MB safe contiguous chunk size
 
-#if __HVX_ARCH__ < 75
-#define DMA_MAX_2D_ROW_SIZE    DMA_MAX_SIZE_16B
-#define DMA_MAX_2D_STRIDE      DMA_MAX_STRIDE_16B
-#else
-#define DMA_MAX_2D_ROW_SIZE    DMA_MAX_SIZE_24B
-#define DMA_MAX_2D_STRIDE      DMA_MAX_STRIDE_24B
-#endif
+#إذا __HVX_ARCH__ < 75
+#تعریف_کن DMA_MAX_2_D_ردیف_اندازه    DMA_MAX_اندازه_16_B
+#تعریف_کن DMA_MAX_2D_STRIDE      DMA_MAX_STRIDE_16B
+#وإلا
+#تعریف_کن DMA_MAX_2_D_ردیف_اندازه    DMA_MAX_اندازه_24_B
+#تعریف_کن DMA_MAX_2D_STRIDE      DMA_MAX_STRIDE_24B
+#پایان_اگر
 
-#define DMA_FALLBACK_CAPACITY  16u            // descriptors in secondary fallback ring
+#تعریف_کن DMA_FALLBACK_ظرفیت  16u            // descriptors in secondary fallback ring
 
-typedef struct dma_ring_s dma_ring;
-struct dma_ring_s {
+تعريفنوع بنية dma_ring_s dma_ring;
+بنية dma_ring_s {
     dma_descriptor_2d * desc;      // descriptor pointers
-    dma_descriptor_2d * tail;      // tail pointer
-    dma_data          * data;      // dst/src data
-    uint32_t            push_idx;
-    uint32_t            pop_idx;
-    uint32_t            capacity;
-    uint32_t            idx_mask;
-    struct htp_thread_trace * trace;
+    dma_descriptor_2d * دم;      // tail pointer
+    dma_داده          * داده;      // dst/src data
+    uint32_t            افزودن_idx;
+    uint32_t            برداشت_idx;
+    uint32_t            ظرفیت;
+    uint32_t            idx_ماسک;
+    بنية htp_thread_trace * trace;
 };
 
-typedef struct dma_queue_s dma_queue;
-typedef dma_queue * dma_queue_t;
+تعريفنوع بنية dma_صف_s dma_صف;
+تعريفنوع dma_صف * dma_صف_t;
 
-struct dma_queue_s {
+بنية dma_صف_s {
     dma_ring *          ring0;     // Main descriptor ring state
     dma_ring *          ring1;     // Secondary fallback descriptor ring state
     bool                alias;     // When set, dma_queue_delete will not free the ring
 };
 
-size_t      dma_queue_sizeof(size_t capacity);
-size_t      dma_queue_alignof(void);
-dma_queue_t dma_queue_init(void * ptr, size_t capacity, struct htp_thread_trace * trace);
-void        dma_queue_free(dma_queue_t q);
+size_t      dma_صف_sizeof(size_t ظرفیت);
+size_t      dma_صف_alignof(فراغ);
+dma_صف_t dma_صف_init(فراغ * ptr, size_t ظرفیت, بنية htp_thread_trace * trace);
+فراغ        dma_صف_free(dma_صف_t q);
 
-size_t      dma_queue_alias_sizeof(void);
-dma_queue_t dma_queue_alias_init(void * ptr, dma_queue_t main_q);
-void        dma_queue_alias_free(dma_queue_t q);
+size_t      dma_صف_alias_sizeof(فراغ);
+dma_صف_t dma_صف_alias_init(فراغ * ptr, dma_صف_t main_q);
+فراغ        dma_صف_alias_free(dma_صف_t q);
 
-bool        dma_queue_push_fallback_2d(dma_queue * q, dma_data ddata, size_t dst_stride, size_t src_stride, size_t row_size, size_t nrows);
-bool        dma_queue_push_fallback_contig(dma_queue * q, dma_data ddata, size_t total);
-#if __HVX_ARCH__ < 75
-bool        dma_queue_push_fallback_1d(dma_queue * q, dma_data ddata, size_t dst_stride, size_t src_stride, size_t row_size, size_t nrows);
-#endif
+bool        dma_صف_افزودن_fallback_2d(dma_صف * q, dma_داده ddata, size_t dst_stride, size_t src_stride, size_t ردیف_اندازه, size_t nrows);
+bool        dma_صف_افزودن_fallback_contig(dma_صف * q, dma_داده ddata, size_t مجموع);
+#إذا __HVX_ARCH__ < 75
+bool        dma_صف_افزودن_fallback_1d(dma_صف * q, dma_داده ddata, size_t dst_stride, size_t src_stride, size_t ردیف_اندازه, size_t nrows);
+#پایان_اگر
 
 // TODO: technically we don't need these and could use Q6_dmstart/wait/etc instead
 // but those do not seem to always compiler properly.
-static inline void dmstart(void * next) {
-    asm volatile(" release(%0):at" : : "r"(next));
-    asm volatile(" dmstart(%0)" : : "r"(next));
+ساكن مضمن فراغ dmstart(فراغ * بعدی) {
+    asm متطاير(" release(%0):at" : : "r"(بعدی));
+    asm متطاير(" dmstart(%0)" : : "r"(بعدی));
 }
 
-static inline void dmlink(void * cur, void * next) {
-    asm volatile(" release(%0):at" : : "r"(next));
-    asm volatile(" dmlink(%0, %1)" : : "r"(cur), "r"(next));
+ساكن مضمن فراغ dmlink(فراغ * cur, فراغ * بعدی) {
+    asm متطاير(" release(%0):at" : : "r"(بعدی));
+    asm متطاير(" dmlink(%0, %1)" : : "r"(cur), "r"(بعدی));
 }
 
-static inline unsigned int dmpoll(void) {
-    unsigned int ret = 0;
-    asm volatile(" %0 = dmpoll" : "=r"(ret) : : "memory");
-    return ret;
+ساكن مضمن بیعلامت صحيح dmpoll(فراغ) {
+    بیعلامت صحيح ret = 0;
+    asm متطاير(" %0 = dmpoll" : "=r"(ret) : : "memory");
+    أرجع ret;
 }
 
-static inline unsigned int dmwait(void) {
-    unsigned int ret = 0;
-    asm volatile(" %0 = dmwait" : "=r"(ret) : : "memory");
-    return ret;
+ساكن مضمن بیعلامت صحيح dmwait(فراغ) {
+    بیعلامت صحيح ret = 0;
+    asm متطاير(" %0 = dmwait" : "=r"(ret) : : "memory");
+    أرجع ret;
 }
 
-static inline dma_data dma_make_data_impl(dma_addr_t dst, dma_addr_t src)
+ساكن مضمن dma_داده dma_make_داده_impl(dma_addr_t dst, dma_addr_t src)
 {
-    dma_data d = { dst, src };
-    return d;
+    dma_داده d = { dst, src };
+    أرجع d;
 }
 
-#define dma_make_data(dst, src) dma_make_data_impl((dma_addr_t) (dst), (dma_addr_t) (src))
+#تعریف_کن dma_make_داده(dst, src) dma_make_داده_impl((dma_addr_t) (dst), (dma_addr_t) (src))
 
-static inline bool dma_ring_push_single_1d(dma_ring * r, dma_data ddata, size_t size) {
-#if __HVX_ARCH__ > 79
-    assert(!((ddata.src | ddata.dst) >> 32) || size == 0);
-#endif
+ساكن مضمن bool dma_ring_افزودن_single_1d(dma_ring * r, dma_داده ddata, size_t اندازه) {
+#إذا __HVX_ARCH__ > 79
+    أكد(!((ddata.src | ddata.dst) >> 32) || اندازه == 0);
+#پایان_اگر
 
-    if (((r->push_idx + 1) & r->idx_mask) == r->pop_idx) {
-        return false;
+    إذا (((r->افزودن_idx + 1) & r->idx_ماسک) == r->برداشت_idx) {
+        أرجع false;
     }
 
-    dma_descriptor_1d * desc = (dma_descriptor_1d *) &r->desc[r->push_idx];
+    dma_descriptor_1d * desc = (dma_descriptor_1d *) &r->desc[r->افزودن_idx];
     desc->src  = (uint32_t) ddata.src;
     desc->dst  = (uint32_t) ddata.dst;
-    desc->size = size;
+    desc->اندازه = اندازه;
 
-    r->data[r->push_idx] = ddata;
+    r->داده[r->افزودن_idx] = ddata;
 
-    htp_trace_event_start(r->trace, HTP_TRACE_EVT_DMA, r->push_idx);
+    htp_trace_event_شروع(r->trace, HTP_TRACE_EVT_DMA, r->افزودن_idx);
 
-    if (size) {
-        desc->next       = NULL;
-        desc->desc_size  = 0; // 1D mode
+    إذا (اندازه) {
+        desc->بعدی       = عدم;
+        desc->desc_اندازه  = 0; // 1D mode
         desc->src_bypass = 1;
         desc->dst_bypass = 1;
-        desc->order      = 0;
-        desc->done       = 0;
+        desc->ترتیب      = 0;
+        desc->انجامشده       = 0;
 
-        dmlink(r->tail, desc);
-        r->tail = (dma_descriptor_2d *) desc;
-    } else {
-        desc->desc_size = 0;
-        desc->done      = 1;
+        dmlink(r->دم, desc);
+        r->دم = (dma_descriptor_2d *) desc;
+    } وإلا {
+        desc->desc_اندازه = 0;
+        desc->انجامشده      = 1;
     }
 
-    r->push_idx = (r->push_idx + 1) & r->idx_mask;
-    return true;
+    r->افزودن_idx = (r->افزودن_idx + 1) & r->idx_ماسک;
+    أرجع true;
 }
 
-static inline bool dma_ring_push_single_2d(dma_ring * r, dma_data ddata, size_t dst_stride, size_t src_stride, size_t row_size, size_t nrows) {
-#if __HVX_ARCH__ > 79
-    assert(!((ddata.src | ddata.dst) >> 40) || nrows == 0);
-    const uint32_t src_hi = (uint32_t) (ddata.src >> 32);
-    const uint32_t dst_hi = (uint32_t) (ddata.dst >> 32);
-    const bool is_ext     = (src_hi | dst_hi) != 0;
-#endif
+ساكن مضمن bool dma_ring_افزودن_single_2d(dma_ring * r, dma_داده ddata, size_t dst_stride, size_t src_stride, size_t ردیف_اندازه, size_t nrows) {
+#إذا __HVX_ARCH__ > 79
+    أكد(!((ddata.src | ddata.dst) >> 40) || nrows == 0);
+    ثابت uint32_t src_hi = (uint32_t) (ddata.src >> 32);
+    ثابت uint32_t dst_hi = (uint32_t) (ddata.dst >> 32);
+    ثابت bool is_ext     = (src_hi | dst_hi) != 0;
+#پایان_اگر
 
-    if (((r->push_idx + 1) & r->idx_mask) == r->pop_idx) {
-        return false;
+    إذا (((r->افزودن_idx + 1) & r->idx_ماسک) == r->برداشت_idx) {
+        أرجع false;
     }
 
-    dma_descriptor_2d * desc = &r->desc[r->push_idx];
+    dma_descriptor_2d * desc = &r->desc[r->افزودن_idx];
 
-    desc->next           = NULL;
+    desc->بعدی           = عدم;
     desc->reserved1      = 0;
-    desc->desc_size      = 1; // 2d mode
+    desc->desc_اندازه      = 1; // 2d mode
     desc->src_bypass     = 1;
     desc->dst_bypass     = 1;
     desc->src_comp       = 0;
     desc->dst_comp       = 0;
-    desc->order          = 0;
-    desc->done           = 0;
+    desc->ترتیب          = 0;
+    desc->انجامشده           = 0;
     desc->src_stride     = src_stride;
     desc->dst_stride     = dst_stride;
     desc->src            = (uint32_t) ddata.src;
     desc->dst            = (uint32_t) ddata.dst;
-    desc->row_size       = row_size;
+    desc->ردیف_اندازه       = ردیف_اندازه;
 
-#if __HVX_ARCH__ < 75
+#إذا __HVX_ARCH__ < 75
     desc->reserved0      = 0;
     desc->desc_type      = 0; // 2d (16-bit) mode
     desc->nrows          = nrows;
-    desc->src_offset     = 0;
-    desc->dst_offset     = 0;
-#else
-#if __HVX_ARCH__ > 79
-    desc->src_upper      = src_hi;
-    desc->dst_upper      = dst_hi;
-    desc->allocation     = 0;
+    desc->src_جابه_جایی     = 0;
+    desc->dst_جابه_جایی     = 0;
+#وإلا
+#إذا __HVX_ARCH__ > 79
+    desc->src_فوقانی      = src_hi;
+    desc->dst_فوقانی      = dst_hi;
+    desc->تخصیص     = 0;
     desc->reserved0      = 0;
     desc->transform      = 0;
     desc->desc_type      = is_ext ? 10 : 9; // 2d 40-bit or 24-bit mode
-#else
+#وإلا
     desc->reserved0      = 0;
     desc->desc_type      = 9; // 2d (24-bit) mode
-#endif
+#پایان_اگر
     desc->nrows_lo       = (nrows & 0xff);
     desc->nrows_hi       = (nrows >> 8);
-    desc->offset         = 0;
-#endif
+    desc->جابه_جایی         = 0;
+#پایان_اگر
 
-    r->data[r->push_idx] = ddata;
+    r->داده[r->افزودن_idx] = ddata;
 
-    htp_trace_event_start(r->trace, HTP_TRACE_EVT_DMA, r->push_idx);
+    htp_trace_event_شروع(r->trace, HTP_TRACE_EVT_DMA, r->افزودن_idx);
 
-    if (nrows) {
-        dmlink(r->tail, desc);
-        r->tail = desc;
-    } else {
-        desc->done = 1;
+    إذا (nrows) {
+        dmlink(r->دم, desc);
+        r->دم = desc;
+    } وإلا {
+        desc->انجامشده = 1;
     }
 
-    r->push_idx = (r->push_idx + 1) & r->idx_mask;
-    return true;
+    r->افزودن_idx = (r->افزودن_idx + 1) & r->idx_ماسک;
+    أرجع true;
 }
 
-#if __HVX_ARCH__ < 75
-static inline bool dma_ring_push_single_contig(dma_ring * r, dma_data ddata, size_t size) {
-    return dma_ring_push_single_1d(r, ddata, size);
+#إذا __HVX_ARCH__ < 75
+ساكن مضمن bool dma_ring_افزودن_single_contig(dma_ring * r, dma_داده ddata, size_t اندازه) {
+    أرجع dma_ring_افزودن_single_1d(r, ddata, اندازه);
 }
-#else
-static inline bool dma_ring_push_single_contig(dma_ring * r, dma_data ddata, size_t size) {
-    return dma_ring_push_single_2d(r, ddata, size, size, size, 1);
+#وإلا
+ساكن مضمن bool dma_ring_افزودن_single_contig(dma_ring * r, dma_داده ddata, size_t اندازه) {
+    أرجع dma_ring_افزودن_single_2d(r, ddata, اندازه, اندازه, اندازه, 1);
 }
-#endif
+#پایان_اگر
 
-static inline dma_data dma_ring_pop(dma_ring * r) {
-    dma_data ddata = { 0 };
+ساكن مضمن dma_داده dma_ring_برداشت(dma_ring * r) {
+    dma_داده ddata = { 0 };
 
-    if (r->push_idx == r->pop_idx) {
-        return ddata;
+    إذا (r->افزودن_idx == r->برداشت_idx) {
+        أرجع ddata;
     }
 
-    ddata = r->data[r->pop_idx];
+    ddata = r->داده[r->برداشت_idx];
 
-    volatile dma_descriptor_2d * desc = &r->desc[r->pop_idx];
+    متطاير dma_descriptor_2d * desc = &r->desc[r->برداشت_idx];
 
     // Wait for desc to complete
-    if (!desc->done) {
+    إذا (!desc->انجامشده) {
         // FARF(ALWAYS, "dma-poll: idx %u dst %p src %p", r->pop_idx, ddata.dst, ddata.src);
-        while (!desc->done) {
+        طالما (!desc->انجامشده) {
             dmpoll();
         }
     }
 
-    htp_trace_event_stop(r->trace, HTP_TRACE_EVT_DMA, r->pop_idx);
+    htp_trace_event_stop(r->trace, HTP_TRACE_EVT_DMA, r->برداشت_idx);
 
-    r->pop_idx = (r->pop_idx + 1) & r->idx_mask;
-    return ddata;
+    r->برداشت_idx = (r->برداشت_idx + 1) & r->idx_ماسک;
+    أرجع ddata;
 }
 
-static inline dma_data dma_ring_pop_nowait(dma_ring * r) {
-    dma_data ddata = { 0 };
+ساكن مضمن dma_داده dma_ring_برداشت_nowait(dma_ring * r) {
+    dma_داده ddata = { 0 };
 
-    if (r->push_idx == r->pop_idx) {
-        return ddata;
+    إذا (r->افزودن_idx == r->برداشت_idx) {
+        أرجع ddata;
     }
 
-    ddata = r->data[r->pop_idx];
+    ddata = r->داده[r->برداشت_idx];
 
-    htp_trace_event_stop(r->trace, HTP_TRACE_EVT_DMA, r->pop_idx);
+    htp_trace_event_stop(r->trace, HTP_TRACE_EVT_DMA, r->برداشت_idx);
 
-    r->pop_idx = (r->pop_idx + 1) & r->idx_mask;
-    return ddata;
+    r->برداشت_idx = (r->برداشت_idx + 1) & r->idx_ماسک;
+    أرجع ddata;
 }
 
-static inline bool dma_ring_empty(dma_ring * r) {
-    return r->push_idx == r->pop_idx;
+ساكن مضمن bool dma_ring_خالی(dma_ring * r) {
+    أرجع r->افزودن_idx == r->برداشت_idx;
 }
 
-static inline void dma_ring_flush(dma_ring * r) {
-    while (!dma_ring_empty(r)) {
-        dma_ring_pop(r);
+ساكن مضمن فراغ dma_ring_flush(dma_ring * r) {
+    طالما (!dma_ring_خالی(r)) {
+        dma_ring_برداشت(r);
     }
 }
 
-static inline uint32_t dma_ring_depth(dma_ring * r) {
-    return (r->push_idx - r->pop_idx) & r->idx_mask;
+ساكن مضمن uint32_t dma_ring_عمق(dma_ring * r) {
+    أرجع (r->افزودن_idx - r->برداشت_idx) & r->idx_ماسک;
 }
 
-static inline uint32_t dma_ring_capacity(dma_ring * r) {
-    return r->capacity;
+ساكن مضمن uint32_t dma_ring_ظرفیت(dma_ring * r) {
+    أرجع r->ظرفیت;
 }
 
-static inline bool dma_queue_push_single_1d(dma_queue * q, dma_data ddata, size_t size) {
-    return dma_ring_push_single_1d(q->ring0, ddata, size);
+ساكن مضمن bool dma_صف_افزودن_single_1d(dma_صف * q, dma_داده ddata, size_t اندازه) {
+    أرجع dma_ring_افزودن_single_1d(q->ring0, ddata, اندازه);
 }
 
-static inline bool dma_queue_push_single_2d(dma_queue * q, dma_data ddata, size_t dst_stride, size_t src_stride, size_t row_size, size_t nrows) {
-    return dma_ring_push_single_2d(q->ring0, ddata, dst_stride, src_stride, row_size, nrows);
+ساكن مضمن bool dma_صف_افزودن_single_2d(dma_صف * q, dma_داده ddata, size_t dst_stride, size_t src_stride, size_t ردیف_اندازه, size_t nrows) {
+    أرجع dma_ring_افزودن_single_2d(q->ring0, ddata, dst_stride, src_stride, ردیف_اندازه, nrows);
 }
 
-static inline dma_data dma_queue_pop(dma_queue * q) {
-    return dma_ring_pop(q->ring0);
+ساكن مضمن dma_داده dma_صف_برداشت(dma_صف * q) {
+    أرجع dma_ring_برداشت(q->ring0);
 }
 
-static inline dma_data dma_queue_pop_nowait(dma_queue * q) {
-    return dma_ring_pop_nowait(q->ring0);
+ساكن مضمن dma_داده dma_صف_برداشت_nowait(dma_صف * q) {
+    أرجع dma_ring_برداشت_nowait(q->ring0);
 }
 
-static inline bool dma_queue_empty(dma_queue * q) {
-    return dma_ring_empty(q->ring0);
+ساكن مضمن bool dma_صف_خالی(dma_صف * q) {
+    أرجع dma_ring_خالی(q->ring0);
 }
 
-static inline void dma_queue_flush(dma_queue * q) {
+ساكن مضمن فراغ dma_صف_flush(dma_صف * q) {
     dma_ring_flush(q->ring0);
 }
 
-static inline uint32_t dma_queue_depth(dma_queue * q) {
-    return dma_ring_depth(q->ring0);
+ساكن مضمن uint32_t dma_صف_عمق(dma_صف * q) {
+    أرجع dma_ring_عمق(q->ring0);
 }
 
-static inline uint32_t dma_queue_capacity(dma_queue * q) {
-    return dma_ring_capacity(q->ring0);
+ساكن مضمن uint32_t dma_صف_ظرفیت(dma_صف * q) {
+    أرجع dma_ring_ظرفیت(q->ring0);
 }
 
-static inline bool dma_queue_push(dma_queue * q, dma_data ddata, size_t dst_stride, size_t src_stride, size_t row_size, size_t nrows) {
-    if (__builtin_expect(nrows == 0, 0)) {
-        return dma_ring_push_single_1d(q->ring0, ddata, 0);
+ساكن مضمن bool dma_صف_افزودن(dma_صف * q, dma_داده ddata, size_t dst_stride, size_t src_stride, size_t ردیف_اندازه, size_t nrows) {
+    إذا (__builtin_expect(nrows == 0, 0)) {
+        أرجع dma_ring_افزودن_single_1d(q->ring0, ddata, 0);
     }
 
     // 1. Hot path: Contiguous or single-row (80-90% of calls)
-    if (nrows == 1 || !((row_size ^ src_stride) | (row_size ^ dst_stride))) {
-        const size_t total = row_size * nrows;
-        if (__builtin_expect(total <= DMA_MAX_SIZE_24B, 1)) {
-            return dma_ring_push_single_contig(q->ring0, ddata, total);
+    إذا (nrows == 1 || !((ردیف_اندازه ^ src_stride) | (ردیف_اندازه ^ dst_stride))) {
+        ثابت size_t مجموع = ردیف_اندازه * nrows;
+        إذا (__builtin_expect(مجموع <= DMA_MAX_اندازه_24_B, 1)) {
+            أرجع dma_ring_افزودن_single_contig(q->ring0, ddata, مجموع);
         }
-        return dma_queue_push_fallback_contig(q, ddata, total);
+        أرجع dma_صف_افزودن_fallback_contig(q, ddata, مجموع);
     }
 
     // 2. Hot path: Standard strided 2D (10-20% of calls)
-    if (__builtin_expect(nrows <= DMA_MAX_NROWS &&
-                         (row_size | src_stride | dst_stride) <= DMA_MAX_2D_ROW_SIZE, 1)) {
-        return dma_ring_push_single_2d(q->ring0, ddata, dst_stride, src_stride, row_size, nrows);
+    إذا (__builtin_expect(nrows <= DMA_MAX_NROWS &&
+                         (ردیف_اندازه | src_stride | dst_stride) <= DMA_MAX_2_D_ردیف_اندازه, 1)) {
+        أرجع dma_ring_افزودن_single_2d(q->ring0, ddata, dst_stride, src_stride, ردیف_اندازه, nrows);
     }
 
     // 3. Cold path: Descriptor chunking fallbacks (< 0.1%)
-#if __HVX_ARCH__ < 75
-    if (row_size <= DMA_MAX_SIZE_16B && (src_stride | dst_stride) <= DMA_MAX_STRIDE_16B) {
-        return dma_queue_push_fallback_2d(q, ddata, dst_stride, src_stride, row_size, nrows);
+#إذا __HVX_ARCH__ < 75
+    إذا (ردیف_اندازه <= DMA_MAX_اندازه_16_B && (src_stride | dst_stride) <= DMA_MAX_STRIDE_16B) {
+        أرجع dma_صف_افزودن_fallback_2d(q, ddata, dst_stride, src_stride, ردیف_اندازه, nrows);
     }
-    return dma_queue_push_fallback_1d(q, ddata, dst_stride, src_stride, row_size, nrows);
-#else
-    return dma_queue_push_fallback_2d(q, ddata, dst_stride, src_stride, row_size, nrows);
-#endif
+    أرجع dma_صف_افزودن_fallback_1d(q, ddata, dst_stride, src_stride, ردیف_اندازه, nrows);
+#وإلا
+    أرجع dma_صف_افزودن_fallback_2d(q, ddata, dst_stride, src_stride, ردیف_اندازه, nrows);
+#پایان_اگر
 }
 
-static inline void dma_sync_read(dma_queue * dma_q, void * dst, dma_addr_t src, size_t bytes) {
-    const uint32_t b = (uint32_t) bytes;
-    if (b > 0) {
-        dma_queue_push(dma_q, dma_make_data(dst, src), b, b, b, 1);
-        dma_queue_pop(dma_q);
-    }
-}
-
-static inline void dma_sync_write(dma_queue * dma_q, dma_addr_t dst, const void * src, size_t bytes) {
-    const uint32_t b = (uint32_t) bytes;
-    if (b > 0) {
-        dma_queue_push(dma_q, dma_make_data(dst, src), b, b, b, 1);
-        dma_queue_pop(dma_q);
+ساكن مضمن فراغ dma_sync_read(dma_صف * dma_q, فراغ * dst, dma_addr_t src, size_t بایتها) {
+    ثابت uint32_t b = (uint32_t) بایتها;
+    إذا (b > 0) {
+        dma_صف_افزودن(dma_q, dma_make_داده(dst, src), b, b, b, 1);
+        dma_صف_برداشت(dma_q);
     }
 }
 
-#define DMA_CACHE_MAX_SIZE 256U
+ساكن مضمن فراغ dma_sync_write(dma_صف * dma_q, dma_addr_t dst, ثابت فراغ * src, size_t بایتها) {
+    ثابت uint32_t b = (uint32_t) بایتها;
+    إذا (b > 0) {
+        dma_صف_افزودن(dma_q, dma_make_داده(dst, src), b, b, b, 1);
+        dma_صف_برداشت(dma_q);
+    }
+}
+
+#تعریف_کن DMA_CACHE_MAX_اندازه 256U
 
 // Fully assoc LRU cache
-typedef struct {
-    uint8_t *base;
-    uint32_t line_size;
-    uint32_t capacity;
-    dma_addr_t src[DMA_CACHE_MAX_SIZE];
-    uint16_t age[DMA_CACHE_MAX_SIZE];
+تعريفنوع بنية {
+    uint8_t *پایه;
+    uint32_t سطر_اندازه;
+    uint32_t ظرفیت;
+    dma_addr_t src[DMA_CACHE_MAX_اندازه];
+    uint16_t age[DMA_CACHE_MAX_اندازه];
 } dma_cache_fa;
 
-static inline void dma_cache_fa_init(dma_cache_fa *c, uint8_t *base, uint32_t line_size, uint32_t capacity)
+ساكن مضمن فراغ dma_cache_fa_init(dma_cache_fa *c, uint8_t *پایه, uint32_t سطر_اندازه, uint32_t ظرفیت)
 {
-    c->capacity  = (capacity > DMA_CACHE_MAX_SIZE) ? DMA_CACHE_MAX_SIZE : capacity;
-    c->base      = base;
-    c->line_size = line_size;
+    c->ظرفیت  = (ظرفیت > DMA_CACHE_MAX_اندازه) ? DMA_CACHE_MAX_اندازه : ظرفیت;
+    c->پایه      = پایه;
+    c->سطر_اندازه = سطر_اندازه;
 
-    for (unsigned i=0; i < c->capacity; i++) {
+    لكل (بیعلامت i=0; i < c->ظرفیت; i++) {
         c->src[i] = 0;
         c->age[i] = 0;
     }
 }
 
-static inline bool dma_cache_fa_push(dma_queue *q, dma_cache_fa *c, dma_addr_t src_addr, uint32_t dst_stride, uint32_t src_stride, uint32_t row_size, uint32_t nrows)
+ساكن مضمن bool dma_cache_fa_افزودن(dma_صف *q, dma_cache_fa *c, dma_addr_t src_addr, uint32_t dst_stride, uint32_t src_stride, uint32_t ردیف_اندازه, uint32_t nrows)
 {
     uint32_t o_idx = 0;
     uint16_t o_age = 0;
     uint8_t *  dst = 0;
 
-    for (unsigned i=0; i < c->capacity; i++) {
-        if (c->src[i] == src_addr) {
+    لكل (بیعلامت i=0; i < c->ظرفیت; i++) {
+        إذا (c->src[i] == src_addr) {
             c->age[i] = 0;
-            dst = c->base + (i * c->line_size); nrows = 0; // dummy dma
-        } else {
+            dst = c->پایه + (i * c->سطر_اندازه); nrows = 0; // dummy dma
+        } وإلا {
             c->age[i]++;
-            if (c->age[i] > o_age) { o_age = c->age[i]; o_idx = i; }
+            إذا (c->age[i] > o_age) { o_age = c->age[i]; o_idx = i; }
         }
     }
-    if (!dst) {
+    إذا (!dst) {
         c->age[o_idx] = 0;
         c->src[o_idx] = src_addr;
-        dst = c->base + o_idx * c->line_size; // normal nrows dma
-        return dma_queue_push(q, dma_make_data(dst, src_addr), dst_stride, src_stride, row_size, nrows);
+        dst = c->پایه + o_idx * c->سطر_اندازه; // normal nrows dma
+        أرجع dma_صف_افزودن(q, dma_make_داده(dst, src_addr), dst_stride, src_stride, ردیف_اندازه, nrows);
     }
 
-    return dma_queue_push_single_1d(q, dma_make_data(dst, src_addr), 0);
+    أرجع dma_صف_افزودن_single_1d(q, dma_make_داده(dst, src_addr), 0);
 }
 
 // Direct mapped cache
-typedef struct {
-    uint8_t *base;
-    uint32_t line_size;
-    uint32_t capacity;
-    uint32_t idx_mask;
-    dma_addr_t src[DMA_CACHE_MAX_SIZE];
+تعريفنوع بنية {
+    uint8_t *پایه;
+    uint32_t سطر_اندازه;
+    uint32_t ظرفیت;
+    uint32_t idx_ماسک;
+    dma_addr_t src[DMA_CACHE_MAX_اندازه];
 } dma_cache_dm;
 
-static inline void dma_cache_dm_init(dma_cache_dm *c, uint8_t *base, uint32_t line_size, uint32_t capacity)
+ساكن مضمن فراغ dma_cache_dm_init(dma_cache_dm *c, uint8_t *پایه, uint32_t سطر_اندازه, uint32_t ظرفیت)
 {
-    c->capacity  = (capacity > DMA_CACHE_MAX_SIZE) ? DMA_CACHE_MAX_SIZE : capacity;
-    c->idx_mask  = c->capacity - 1;
-    c->base      = base;
-    c->line_size = line_size;
+    c->ظرفیت  = (ظرفیت > DMA_CACHE_MAX_اندازه) ? DMA_CACHE_MAX_اندازه : ظرفیت;
+    c->idx_ماسک  = c->ظرفیت - 1;
+    c->پایه      = پایه;
+    c->سطر_اندازه = سطر_اندازه;
 
-    for (unsigned i=0; i < c->capacity; i++) {
+    لكل (بیعلامت i=0; i < c->ظرفیت; i++) {
         c->src[i] = 0;
     }
 }
 
-static inline bool dma_cache_dm_push(dma_queue *q, dma_cache_dm *c, uint32_t slot, dma_addr_t src_addr, uint32_t dst_stride, uint32_t src_stride, uint32_t row_size, uint32_t nrows)
+ساكن مضمن bool dma_cache_dm_افزودن(dma_صف *q, dma_cache_dm *c, uint32_t جایگاه, dma_addr_t src_addr, uint32_t dst_stride, uint32_t src_stride, uint32_t ردیف_اندازه, uint32_t nrows)
 {
-    const uint32_t i = slot & c->idx_mask;
-    uint8_t * dst = c->base + (i * c->line_size);
+    ثابت uint32_t i = جایگاه & c->idx_ماسک;
+    uint8_t * dst = c->پایه + (i * c->سطر_اندازه);
 
-    if (c->src[i] == src_addr) {
-        return dma_queue_push_single_1d(q, dma_make_data(dst, src_addr), 0); // dummy dma
+    إذا (c->src[i] == src_addr) {
+        أرجع dma_صف_افزودن_single_1d(q, dma_make_داده(dst, src_addr), 0); // dummy dma
     }
 
     c->src[i] = src_addr;
-    return dma_queue_push(q, dma_make_data(dst, src_addr), dst_stride, src_stride, row_size, nrows);
+    أرجع dma_صف_افزودن(q, dma_make_داده(dst, src_addr), dst_stride, src_stride, ردیف_اندازه, nrows);
 }
 
-#ifdef __cplusplus
+#اگر_تعریف_شده __cplusplus
 }  // extern "C"
-#endif
+#پایان_اگر
 
-#endif /* HTP_DMA_H */
+#پایان_اگر /* HTP_DMA_H */

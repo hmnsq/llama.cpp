@@ -1,36 +1,36 @@
-#ifndef HVX_TYPES_H
-#define HVX_TYPES_H
+#اگر_تعریف_نشده HVX_TYPES_H
+#تعریف_کن HVX_TYPES_H
 
-#include <stdbool.h>
-#include <stdint.h>
+#ضمن <stdbool.h>
+#ضمن <stdint.h>
 
-#include <hexagon_types.h>
+#ضمن <hexagon_types.h>
 
-#define SIZEOF_FP32 (4)
-#define SIZEOF_FP16 (2)
-#define VLEN        (128)
-#define VLEN_FP32   (VLEN / SIZEOF_FP32)
-#define VLEN_FP16   (VLEN / SIZEOF_FP16)
+#تعریف_کن SIZEOF_FP32 (4)
+#تعریف_کن SIZEOF_FP16 (2)
+#تعریف_کن VLEN        (128)
+#تعریف_کن VLEN_FP32   (VLEN / SIZEOF_FP32)
+#تعریف_کن VLEN_FP16   (VLEN / SIZEOF_FP16)
 
-typedef union {
-    HVX_Vector v;
+تعريفنوع اتحاد {
+    HVX_وکتور v;
     uint8_t    b[VLEN];
     uint16_t   h[VLEN_FP16];
     uint32_t   w[VLEN_FP32];
     __fp16     fp16[VLEN_FP16];
-    float      fp32[VLEN_FP32];
-} __attribute__((aligned(VLEN), packed)) HVX_VectorAlias;
+    عائم      fp32[VLEN_FP32];
+} __attribute__((aligned(VLEN), packed)) HVX_وکتور_Alias;
 
-typedef struct {
-    HVX_Vector v[2];
-} HVX_Vector_x2;
+تعريفنوع بنية {
+    HVX_وکتور v[2];
+} HVX_وکتور_x2;
 
-typedef struct {
-    HVX_Vector v[4];
-} HVX_Vector_x4;
+تعريفنوع بنية {
+    HVX_وکتور v[4];
+} HVX_وکتور_x4;
 
-typedef struct {
-    HVX_Vector v[8];
-} HVX_Vector_x8;
+تعريفنوع بنية {
+    HVX_وکتور v[8];
+} HVX_وکتور_x8;
 
-#endif /* HVX_TYPES_H */
+#پایان_اگر /* HVX_TYPES_H */

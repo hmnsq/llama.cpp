@@ -1,45 +1,45 @@
-#pragma once
+#رهنمود once
 
-#ifdef _WIN32
-#   define WIN32_LEAN_AND_MEAN
+#اگر_تعریف_شده _WIN32
+#   define WIN32_LEAN_AND_میانگین
 #   ifndef NOMINMAX
 #       define NOMINMAX
 #   endif
 #   include <windows.h>
 #   include <winevt.h>
-#else
+#وإلا
 #    include <dlfcn.h>
 #    include <unistd.h>
-#endif
-#include <filesystem>
+#پایان_اگر
+#ضمن <filesystem>
 
 namespace fs = std::filesystem;
 
-#ifdef _WIN32
+#اگر_تعریف_شده _WIN32
 
-using dl_handle = std::remove_pointer_t<HMODULE>;
+using dl_handle = std::remove_اشاره_گر_t<HMODULE>;
 
-struct dl_handle_deleter {
-    void operator()(HMODULE handle) {
+بنية dl_handle_deleter {
+    فراغ عملگر()(HMODULE handle) {
         FreeLibrary(handle);
     }
 };
 
-#else
+#وإلا
 
-using dl_handle = void;
+using dl_handle = فراغ;
 
-struct dl_handle_deleter {
-    void operator()(void * handle) {
+بنية dl_handle_deleter {
+    فراغ عملگر()(فراغ * handle) {
         dlclose(handle);
     }
 };
 
-#endif
+#پایان_اگر
 
 using dl_handle_ptr = std::unique_ptr<dl_handle, dl_handle_deleter>;
 
-dl_handle * dl_load_library(const fs::path & path);
-void * dl_get_sym(dl_handle * handle, const char * name);
-const char * dl_error();
+dl_handle * dl_بارگیری_library(ثابت fs::مسیر & مسیر);
+فراغ * dl_get_sym(dl_handle * handle, ثابت حرف * name);
+ثابت حرف * dl_error();
 

@@ -1,123 +1,123 @@
-#include "ggml-remoting.h"
+#ضمن "ggml-remoting.h"
 
-#define BUFFER_TO_GPU(name) ((ggml_backend_remoting_buffer_context *) (name)->context)->gpu
+#تعریف_کن میانگیر_مقصد_GPU(name) ((ggml_backend_remoting_میانگیر_context *) (name)->context)->gpu
 
-static void * ggml_backend_remoting_buffer_get_base(ggml_backend_buffer_t buffer) {
-    ggml_backend_remoting_buffer_context * context = (ggml_backend_remoting_buffer_context *) buffer->context;
-    if (context->base) {
-        return context->base;
+ساكن فراغ * ggml_backend_remoting_میانگیر_get_پایه(ggml_backend_میانگیر_t میانگیر) {
+    ggml_backend_remoting_میانگیر_context * context = (ggml_backend_remoting_میانگیر_context *) میانگیر->context;
+    إذا (context->پایه) {
+        أرجع context->پایه;
     }
 
-    context->base = apir_buffer_get_base(BUFFER_TO_GPU(buffer), BUFFER_TO_APIR_CONTEXT(buffer));
+    context->پایه = apir_میانگیر_get_پایه(میانگیر_مقصد_GPU(میانگیر), میانگیر_مقصد_APIR_CONTEXT(میانگیر));
 
-    return context->base;
+    أرجع context->پایه;
 }
 
-static void ggml_backend_remoting_buffer_set_tensor(ggml_backend_buffer_t buffer,
+ساكن فراغ ggml_backend_remoting_میانگیر_مجموعه_tensor(ggml_backend_میانگیر_t میانگیر,
                                                     ggml_tensor *         tensor,
-                                                    const void *          data,
-                                                    size_t                offset,
+                                                    ثابت فراغ *          داده,
+                                                    size_t                جابه_جایی,
                                                     size_t                size) {
-    virtgpu * gpu = BUFFER_TO_GPU(buffer);
+    virtgpu * gpu = میانگیر_مقصد_GPU(میانگیر);
 
-    ggml_backend_remoting_buffer_context * context = BUFFER_TO_GGML_CONTEXT(buffer);
-    if (context->is_from_ptr) {
-        memcpy((char *) tensor->data + offset, data, size);
-    } else {
-        apir_buffer_set_tensor(gpu, BUFFER_TO_APIR_CONTEXT(buffer), tensor, data, offset, size);
+    ggml_backend_remoting_میانگیر_context * context = میانگیر_مقصد_GGML_CONTEXT(میانگیر);
+    إذا (context->is_from_ptr) {
+        کپی_حافظه((حرف *) tensor->داده + جابه_جایی, داده, size);
+    } وإلا {
+        apir_میانگیر_مجموعه_tensor(gpu, میانگیر_مقصد_APIR_CONTEXT(میانگیر), tensor, داده, جابه_جایی, size);
     }
 
-    return;
+    أرجع;
 }
 
-static void ggml_backend_remoting_buffer_get_tensor(ggml_backend_buffer_t buffer,
-                                                    const ggml_tensor *   tensor,
-                                                    void *                data,
-                                                    size_t                offset,
+ساكن فراغ ggml_backend_remoting_میانگیر_get_tensor(ggml_backend_میانگیر_t میانگیر,
+                                                    ثابت ggml_tensor *   tensor,
+                                                    فراغ *                داده,
+                                                    size_t                جابه_جایی,
                                                     size_t                size) {
-    virtgpu *                              gpu     = BUFFER_TO_GPU(buffer);
-    ggml_backend_remoting_buffer_context * context = BUFFER_TO_GGML_CONTEXT(buffer);
-    if (context->is_from_ptr) {
-        memcpy(data, (const char *) tensor->data + offset, size);
-    } else {
-        apir_buffer_get_tensor(gpu, BUFFER_TO_APIR_CONTEXT(buffer), tensor, data, offset, size);
+    virtgpu *                              gpu     = میانگیر_مقصد_GPU(میانگیر);
+    ggml_backend_remoting_میانگیر_context * context = میانگیر_مقصد_GGML_CONTEXT(میانگیر);
+    إذا (context->is_from_ptr) {
+        کپی_حافظه(داده, (ثابت حرف *) tensor->داده + جابه_جایی, size);
+    } وإلا {
+        apir_میانگیر_get_tensor(gpu, میانگیر_مقصد_APIR_CONTEXT(میانگیر), tensor, داده, جابه_جایی, size);
     }
 }
 
-static void ggml_backend_remoting_buffer_set_tensor_from_ptr(ggml_backend_buffer_t buffer,
+ساكن فراغ ggml_backend_remoting_میانگیر_مجموعه_tensor_from_ptr(ggml_backend_میانگیر_t میانگیر,
                                                              ggml_tensor *         tensor,
-                                                             const void *          data,
-                                                             size_t                offset,
+                                                             ثابت فراغ *          داده,
+                                                             size_t                جابه_جایی,
                                                              size_t                size) {
-    UNUSED(buffer);
+    استفادهنشده(میانگیر);
 
-    memcpy((char *) tensor->data + offset, data, size);
+    کپی_حافظه((حرف *) tensor->داده + جابه_جایی, داده, size);
 
-    return;
+    أرجع;
 }
 
-static void ggml_backend_remoting_buffer_get_tensor_from_ptr(ggml_backend_buffer_t buffer,
-                                                             const ggml_tensor *   tensor,
-                                                             void *                data,
-                                                             size_t                offset,
+ساكن فراغ ggml_backend_remoting_میانگیر_get_tensor_from_ptr(ggml_backend_میانگیر_t میانگیر,
+                                                             ثابت ggml_tensor *   tensor,
+                                                             فراغ *                داده,
+                                                             size_t                جابه_جایی,
                                                              size_t                size) {
-    UNUSED(buffer);
+    استفادهنشده(میانگیر);
 
-    memcpy(data, (const char *) tensor->data + offset, size);
+    کپی_حافظه(داده, (ثابت حرف *) tensor->داده + جابه_جایی, size);
 }
 
-static bool ggml_backend_remoting_buffer_cpy_tensor(ggml_backend_buffer_t buffer,
-                                                    const ggml_tensor *   src,
+ساكن منطقي ggml_backend_remoting_میانگیر_cpy_tensor(ggml_backend_میانگیر_t میانگیر,
+                                                    ثابت ggml_tensor *   src,
                                                     ggml_tensor *         dst) {
-    virtgpu * gpu = BUFFER_TO_GPU(buffer);
+    virtgpu * gpu = میانگیر_مقصد_GPU(میانگیر);
 
-    bool ret = apir_buffer_cpy_tensor(gpu, BUFFER_TO_APIR_CONTEXT(buffer), src, dst);
+    منطقي ret = apir_میانگیر_cpy_tensor(gpu, میانگیر_مقصد_APIR_CONTEXT(میانگیر), src, dst);
 
-    return ret;
+    أرجع ret;
 }
 
-static void ggml_backend_remoting_buffer_clear(ggml_backend_buffer_t buffer, uint8_t value) {
-    virtgpu * gpu = BUFFER_TO_GPU(buffer);
+ساكن فراغ ggml_backend_remoting_میانگیر_clear(ggml_backend_میانگیر_t میانگیر, uint8_t value) {
+    virtgpu * gpu = میانگیر_مقصد_GPU(میانگیر);
 
-    apir_buffer_clear(gpu, BUFFER_TO_APIR_CONTEXT(buffer), value);
+    apir_میانگیر_clear(gpu, میانگیر_مقصد_APIR_CONTEXT(میانگیر), value);
 
-    return;
+    أرجع;
 }
 
-static void ggml_backend_remoting_buffer_free_buffer(ggml_backend_buffer_t buffer) {
-    virtgpu * gpu = BUFFER_TO_GPU(buffer);
+ساكن فراغ ggml_backend_remoting_میانگیر_free_میانگیر(ggml_backend_میانگیر_t میانگیر) {
+    virtgpu * gpu = میانگیر_مقصد_GPU(میانگیر);
 
-    apir_buffer_free_buffer(gpu, BUFFER_TO_APIR_CONTEXT(buffer));
+    apir_میانگیر_free_میانگیر(gpu, میانگیر_مقصد_APIR_CONTEXT(میانگیر));
 
-    ggml_backend_remoting_buffer_context * context = BUFFER_TO_GGML_CONTEXT(buffer);
-    free(context);
-    buffer->context = NULL;
+    ggml_backend_remoting_میانگیر_context * context = میانگیر_مقصد_GGML_CONTEXT(میانگیر);
+    حرر(context);
+    میانگیر->context = عدم;
 }
 
-const ggml_backend_buffer_i ggml_backend_remoting_buffer_interface = {
-    /* .free_buffer     = */ ggml_backend_remoting_buffer_free_buffer,
-    /* .get_base        = */ ggml_backend_remoting_buffer_get_base,
-    /* .init_tensor     = */ NULL,
-    /* .memset_tensor   = */ NULL,
-    /* .set_tensor      = */ ggml_backend_remoting_buffer_set_tensor,
-    /* .get_tensor      = */ ggml_backend_remoting_buffer_get_tensor,
-    /* .set_tensor_2d   = */ NULL,
-    /* .get_tensor_2d   = */ NULL,
-    /* .cpy_tensor      = */ ggml_backend_remoting_buffer_cpy_tensor,
-    /* .clear           = */ ggml_backend_remoting_buffer_clear,
-    /* .reset           = */ NULL,
+ثابت ggml_backend_میانگیر_i ggml_backend_remoting_میانگیر_interface = {
+    /* .free_buffer     = */ ggml_backend_remoting_میانگیر_free_میانگیر,
+    /* .get_base        = */ ggml_backend_remoting_میانگیر_get_پایه,
+    /* .init_tensor     = */ عدم,
+    /* .memset_tensor   = */ عدم,
+    /* .set_tensor      = */ ggml_backend_remoting_میانگیر_مجموعه_tensor,
+    /* .get_tensor      = */ ggml_backend_remoting_میانگیر_get_tensor,
+    /* .set_tensor_2d   = */ عدم,
+    /* .get_tensor_2d   = */ عدم,
+    /* .cpy_tensor      = */ ggml_backend_remoting_میانگیر_cpy_tensor,
+    /* .clear           = */ ggml_backend_remoting_میانگیر_clear,
+    /* .reset           = */ عدم,
 };
 
-const ggml_backend_buffer_i ggml_backend_remoting_buffer_from_ptr_interface = {
-    /* .free_buffer     = */ ggml_backend_remoting_buffer_free_buffer,
-    /* .get_base        = */ ggml_backend_remoting_buffer_get_base,
-    /* .init_tensor     = */ NULL,
-    /* .memset_tensor   = */ NULL,
-    /* .set_tensor      = */ ggml_backend_remoting_buffer_set_tensor_from_ptr,
-    /* .get_tensor      = */ ggml_backend_remoting_buffer_get_tensor_from_ptr,
-    /* .set_tensor_2d   = */ NULL,
-    /* .get_tensor_2d   = */ NULL,
-    /* .cpy_tensor      = */ ggml_backend_remoting_buffer_cpy_tensor,
-    /* .clear           = */ ggml_backend_remoting_buffer_clear,
-    /* .reset           = */ NULL,
+ثابت ggml_backend_میانگیر_i ggml_backend_remoting_میانگیر_from_ptr_interface = {
+    /* .free_buffer     = */ ggml_backend_remoting_میانگیر_free_میانگیر,
+    /* .get_base        = */ ggml_backend_remoting_میانگیر_get_پایه,
+    /* .init_tensor     = */ عدم,
+    /* .memset_tensor   = */ عدم,
+    /* .set_tensor      = */ ggml_backend_remoting_میانگیر_مجموعه_tensor_from_ptr,
+    /* .get_tensor      = */ ggml_backend_remoting_میانگیر_get_tensor_from_ptr,
+    /* .set_tensor_2d   = */ عدم,
+    /* .get_tensor_2d   = */ عدم,
+    /* .cpy_tensor      = */ ggml_backend_remoting_میانگیر_cpy_tensor,
+    /* .clear           = */ ggml_backend_remoting_میانگیر_clear,
+    /* .reset           = */ عدم,
 };

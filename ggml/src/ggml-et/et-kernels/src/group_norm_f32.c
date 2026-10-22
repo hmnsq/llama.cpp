@@ -9,163 +9,163 @@
 //   destination write footprint still spans an integer number of cache lines.
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "math_fp.h"
-#include "platform.h"
+#ضمن "ggml_tensor.h"
+#ضمن "math_fp.h"
+#ضمن "platform.h"
 
-#include <stdint.h>
+#ضمن <stdint.h>
 
-struct ggml_et_group_norm_params {
-    struct ggml_tensor src0;
-    struct ggml_tensor dst;
+بنية ggml_et_گروه_norm_params {
+    بنية ggml_tensor src0;
+    بنية ggml_tensor dst;
     int32_t            n_groups;
-    float              eps;
+    عائم              eps;
 };
 
-int entry_point(struct ggml_et_group_norm_params * params, void * env) {
+صحيح مدخل_نقطه(بنية ggml_et_گروه_norm_params * params, فراغ * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    إذا (!kernel_env) {
+        أرجع -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    صحيح thread_id   = get_relative_thread_id(kernel_env->shire_ماسک);
+    صحيح رقم_نخها = get_رقم_نخها(kernel_env->shire_ماسک);
 
-    if (thread_id < 0) {
-        return 0;
+    إذا (thread_id < 0) {
+        أرجع 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    إذا (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        أرجع -1;
     }
 
-    struct ggml_tensor * src0 = &params->src0;
-    struct ggml_tensor * dst  = &params->dst;
+    بنية ggml_tensor * src0 = &params->src0;
+    بنية ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+    إذا (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        أرجع -1;
     }
 
-    const float * src0_data = (const float *) src0->data;
-    float *       dst_data  = (float *) dst->data;
+    ثابت عائم * src0_داده = (ثابت عائم *) src0->داده;
+    عائم *       dst_داده  = (عائم *) dst->داده;
 
-    if (!src0_data || !dst_data) {
-        return -1;
+    إذا (!src0_داده || !dst_داده) {
+        أرجع -1;
     }
 
-    const int32_t n_groups = params->n_groups;
-    const float   eps      = params->eps;
+    ثابت int32_t n_groups = params->n_groups;
+    ثابت عائم   eps      = params->eps;
 
-    if (n_groups <= 0 || eps < 0.0f) {
-        return -1;
+    إذا (n_groups <= 0 || eps < 0.0f) {
+        أرجع -1;
     }
 
-    const int64_t ne0 = dst->ne[0];
-    const int64_t ne1 = dst->ne[1];
-    const int64_t ne2 = dst->ne[2];
-    const int64_t ne3 = dst->ne[3];
+    ثابت int64_t ne0 = dst->ne[0];
+    ثابت int64_t ne1 = dst->ne[1];
+    ثابت int64_t ne2 = dst->ne[2];
+    ثابت int64_t ne3 = dst->ne[3];
 
-    if (src0->ne[0] != ne0 || src0->ne[1] != ne1 || src0->ne[2] != ne2 || src0->ne[3] != ne3) {
-        return -1;
+    إذا (src0->ne[0] != ne0 || src0->ne[1] != ne1 || src0->ne[2] != ne2 || src0->ne[3] != ne3) {
+        أرجع -1;
     }
 
-    const int64_t nb1  = dst->nb[1];
-    const int64_t nb2  = dst->nb[2];
-    const int64_t nb3  = dst->nb[3];
-    const int64_t nb01 = src0->nb[1];
-    const int64_t nb02 = src0->nb[2];
-    const int64_t nb03 = src0->nb[3];
+    ثابت int64_t nb1  = dst->nb[1];
+    ثابت int64_t nb2  = dst->nb[2];
+    ثابت int64_t nb3  = dst->nb[3];
+    ثابت int64_t nb01 = src0->nb[1];
+    ثابت int64_t nb02 = src0->nb[2];
+    ثابت int64_t nb03 = src0->nb[3];
 
-    const int64_t channels_per_group = (ne2 + n_groups - 1) / n_groups;
-    if (channels_per_group <= 0) {
-        return -1;
+    ثابت int64_t channels_در_هر_گروه = (ne2 + n_groups - 1) / n_groups;
+    إذا (channels_در_هر_گروه <= 0) {
+        أرجع -1;
     }
 
-    const int64_t active_groups        = (ne2 + channels_per_group - 1) / channels_per_group;
-    const int64_t total_work           = active_groups * ne3;
-    const int64_t rows_per_write_group = et_rows_per_cacheline_group(ne0, sizeof(float));
+    ثابت int64_t فعال_groups        = (ne2 + channels_در_هر_گروه - 1) / channels_در_هر_گروه;
+    ثابت int64_t مجموع_work           = فعال_groups * ne3;
+    ثابت int64_t ردیفها_در_هر_write_گروه = et_ردیفها_در_هر_cacheline_گروه(ne0, حجم(عائم));
 
-    for (int64_t work = thread_id; work < total_work; work += num_threads) {
-        const int64_t i3        = work / active_groups;
-        const int64_t group_idx = work % active_groups;
+    لكل (int64_t work = thread_id; work < مجموع_work; work += رقم_نخها) {
+        ثابت int64_t i3        = work / فعال_groups;
+        ثابت int64_t گروه_idx = work % فعال_groups;
 
-        const int64_t channel_start = group_idx * channels_per_group;
-        int64_t       channel_end   = channel_start + channels_per_group;
-        if (channel_end > ne2) {
-            channel_end = ne2;
+        ثابت int64_t channel_شروع = گروه_idx * channels_در_هر_گروه;
+        int64_t       channel_انتها   = channel_شروع + channels_در_هر_گروه;
+        إذا (channel_انتها > ne2) {
+            channel_انتها = ne2;
         }
 
-        const int64_t channel_count = channel_end - channel_start;
-        if (channel_count <= 0) {
-            continue;
+        ثابت int64_t channel_شمار = channel_انتها - channel_شروع;
+        إذا (channel_شمار <= 0) {
+            استمر;
         }
 
-        float sum   = 0.0f;
-        float denom = 0.0f;
-        for (int64_t i2 = channel_start; i2 < channel_end; ++i2) {
-            for (int64_t i1 = 0; i1 < ne1; ++i1) {
-                const float * src_row = (const float *) ((const char *) src0_data + i3 * nb03 + i2 * nb02 + i1 * nb01);
-                for (int64_t i0 = 0; i0 < ne0; ++i0) {
-                    sum += src_row[i0];
+        عائم جمع   = 0.0f;
+        عائم denom = 0.0f;
+        لكل (int64_t i2 = channel_شروع; i2 < channel_انتها; ++i2) {
+            لكل (int64_t i1 = 0; i1 < ne1; ++i1) {
+                ثابت عائم * src_ردیف = (ثابت عائم *) ((ثابت حرف *) src0_داده + i3 * nb03 + i2 * nb02 + i1 * nb01);
+                لكل (int64_t i0 = 0; i0 < ne0; ++i0) {
+                    جمع += src_ردیف[i0];
                     denom += 1.0f;
                 }
             }
         }
 
-        const float mean = et_fdiv(sum, denom);
+        ثابت عائم میانگین_2 = et_fdiv(جمع, denom);
 
-        float var_sum = 0.0f;
-        for (int64_t i2 = channel_start; i2 < channel_end; ++i2) {
-            for (int64_t i1 = 0; i1 < ne1; ++i1) {
-                const float * src_row = (const float *) ((const char *) src0_data + i3 * nb03 + i2 * nb02 + i1 * nb01);
-                for (int64_t i0 = 0; i0 < ne0; ++i0) {
-                    const float centered = src_row[i0] - mean;
-                    var_sum += centered * centered;
+        عائم var_جمع = 0.0f;
+        لكل (int64_t i2 = channel_شروع; i2 < channel_انتها; ++i2) {
+            لكل (int64_t i1 = 0; i1 < ne1; ++i1) {
+                ثابت عائم * src_ردیف = (ثابت عائم *) ((ثابت حرف *) src0_داده + i3 * nb03 + i2 * nb02 + i1 * nb01);
+                لكل (int64_t i0 = 0; i0 < ne0; ++i0) {
+                    ثابت عائم centered = src_ردیف[i0] - میانگین_2;
+                    var_جمع += centered * centered;
                 }
             }
         }
 
-        const float variance = et_fdiv(var_sum, denom);
-        const float scale    = et_fdiv(1.0f, et_sqrtf(variance + eps));
+        ثابت عائم variance = et_fdiv(var_جمع, denom);
+        ثابت عائم scale    = et_fdiv(1.0f, et_sqrtf(variance + eps));
 
-        if (ne0 % 16 == 0) {
-            for (int64_t i2 = channel_start; i2 < channel_end; ++i2) {
-                for (int64_t i1 = 0; i1 < ne1; ++i1) {
-                    const float * src_row =
-                        (const float *) ((const char *) src0_data + i3 * nb03 + i2 * nb02 + i1 * nb01);
-                    float * dst_row = (float *) ((char *) dst_data + i3 * nb3 + i2 * nb2 + i1 * nb1);
-                    for (int64_t i0 = 0; i0 < ne0; ++i0) {
-                        dst_row[i0] = (src_row[i0] - mean) * scale;
+        إذا (ne0 % 16 == 0) {
+            لكل (int64_t i2 = channel_شروع; i2 < channel_انتها; ++i2) {
+                لكل (int64_t i1 = 0; i1 < ne1; ++i1) {
+                    ثابت عائم * src_ردیف =
+                        (ثابت عائم *) ((ثابت حرف *) src0_داده + i3 * nb03 + i2 * nb02 + i1 * nb01);
+                    عائم * dst_ردیف = (عائم *) ((حرف *) dst_داده + i3 * nb3 + i2 * nb2 + i1 * nb1);
+                    لكل (int64_t i0 = 0; i0 < ne0; ++i0) {
+                        dst_ردیف[i0] = (src_ردیف[i0] - میانگین_2) * scale;
                     }
                 }
             }
-        } else {
-            const int64_t total_rows_in_group = channel_count * ne1;
-            const int64_t total_write_groups  = (total_rows_in_group + rows_per_write_group - 1) / rows_per_write_group;
+        } وإلا {
+            ثابت int64_t مجموع_ردیفها_درون_گروه = channel_شمار * ne1;
+            ثابت int64_t مجموع_write_groups  = (مجموع_ردیفها_درون_گروه + ردیفها_در_هر_write_گروه - 1) / ردیفها_در_هر_write_گروه;
 
-            for (int64_t write_group = 0; write_group < total_write_groups; ++write_group) {
-                const int64_t row_start = write_group * rows_per_write_group;
-                int64_t       row_end   = row_start + rows_per_write_group;
-                if (row_end > total_rows_in_group) {
-                    row_end = total_rows_in_group;
+            لكل (int64_t write_گروه = 0; write_گروه < مجموع_write_groups; ++write_گروه) {
+                ثابت int64_t ردیف_شروع = write_گروه * ردیفها_در_هر_write_گروه;
+                int64_t       ردیف_انتها   = ردیف_شروع + ردیفها_در_هر_write_گروه;
+                إذا (ردیف_انتها > مجموع_ردیفها_درون_گروه) {
+                    ردیف_انتها = مجموع_ردیفها_درون_گروه;
                 }
 
-                for (int64_t row = row_start; row < row_end; ++row) {
-                    const int64_t local_i2 = row / ne1;
-                    const int64_t i1       = row % ne1;
-                    const int64_t i2       = channel_start + local_i2;
+                لكل (int64_t ردیف = ردیف_شروع; ردیف < ردیف_انتها; ++ردیف) {
+                    ثابت int64_t local_i2 = ردیف / ne1;
+                    ثابت int64_t i1       = ردیف % ne1;
+                    ثابت int64_t i2       = channel_شروع + local_i2;
 
-                    const float * src_row =
-                        (const float *) ((const char *) src0_data + i3 * nb03 + i2 * nb02 + i1 * nb01);
-                    float * dst_row = (float *) ((char *) dst_data + i3 * nb3 + i2 * nb2 + i1 * nb1);
-                    for (int64_t i0 = 0; i0 < ne0; ++i0) {
-                        dst_row[i0] = (src_row[i0] - mean) * scale;
+                    ثابت عائم * src_ردیف =
+                        (ثابت عائم *) ((ثابت حرف *) src0_داده + i3 * nb03 + i2 * nb02 + i1 * nb01);
+                    عائم * dst_ردیف = (عائم *) ((حرف *) dst_داده + i3 * nb3 + i2 * nb2 + i1 * nb1);
+                    لكل (int64_t i0 = 0; i0 < ne0; ++i0) {
+                        dst_ردیف[i0] = (src_ردیف[i0] - میانگین_2) * scale;
                     }
                 }
             }
         }
     }
 
-    return 0;
+    أرجع 0;
 }

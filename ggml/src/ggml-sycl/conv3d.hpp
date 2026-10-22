@@ -1,8 +1,8 @@
-#ifndef GGML_SYCL_CONV3D_HPP
-#define GGML_SYCL_CONV3D_HPP
+#اگر_تعریف_نشده GGML_SYCL_CONV3D_HPP
+#تعریف_کن GGML_SYCL_CONV3D_HPP
 
-#include "common.hpp"
+#ضمن "common.hpp"
 
-void ggml_sycl_op_conv_3d(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+فراغ ggml_sycl_op_conv_3d(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-#endif // GGML_SYCL_CONV3D_HPP
+#پایان_اگر // GGML_SYCL_CONV3D_HPP

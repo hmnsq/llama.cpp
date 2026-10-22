@@ -6,16 +6,16 @@
 // GEMM calls, amortizing MKL launch overhead across K and V reuse.
 //
 
-#include "common.hpp"
-#include "fattn-common.hpp"
-#include "convert.hpp"
-#include "fattn.hpp"
+#ضمن "common.hpp"
+#ضمن "fattn-common.hpp"
+#ضمن "convert.hpp"
+#ضمن "fattn.hpp"
 
-#include <oneapi/mkl.hpp>
-#include <cstdio>
-#include <chrono>
+#ضمن <oneapi/mkl.hpp>
+#ضمن <cstdio>
+#ضمن <chrono>
 
-#define MKL_FA_CHUNK_SIZE_KV 8192
+#تعریف_کن MKL_FA_CHUNK_اندازه_KV 8192
 
 // Number of query rows processed per tile. The score buffers (KQ_f32, S_f16)
 // are sized q_tile_rows * chunk_size, so this bounds their footprint
@@ -23,12 +23,12 @@
 // single-ubatch prefill (e.g. ubatch 1024 * gqa 8 = 8192 rows) is exactly one
 // tile, so it runs with no extra iterations. Larger batches tile and stay
 // bounded. Override with GGML_SYCL_MKL_FA_Q_TILE.
-#define MKL_FA_Q_TILE 8192
+#تعریف_کن MKL_FA_Q_TILE 8192
 
-#define MKL_FA_WG_SIZE 256
+#تعریف_کن MKL_FA_WG_اندازه 256
 
-using oneapi::mkl::transpose;
-using oneapi::mkl::blas::column_major::gemm;
+استفاده oneapi::mkl::transpose;
+استفاده oneapi::mkl::blas::ستونی_major::gemm;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -38,27 +38,27 @@ using oneapi::mkl::blas::column_major::gemm;
 // Launches one kernel per GQA group — each kernel copies exactly
 // n_queries * DKQ elements using the per-group dst offset and
 // per-head source stride.
-static void mkl_fa_pack_q_fp16(
-    dpct::queue_ptr stream,
+ساكن فراغ mkl_fa_pack_q_fp16(
+    dpct::صف_ptr stream,
     sycl::half * __restrict dst,
-    const float * __restrict q_src,
-    int n_queries, int DKQ,
-    int gqa_ratio, int kvh_base_head,
-    float q_scale, int64_t q_row_stride, int64_t q_head_stride,
-    int64_t wg_size) {
+    ثابت عائم * __restrict q_src,
+    صحيح n_queries, صحيح DKQ,
+    صحيح gqa_نسبت, صحيح kvh_پایه_سر,
+    عائم q_scale, int64_t q_ردیف_stride, int64_t q_سر_stride,
+    int64_t wg_اندازه) {
 
-    for (int iqg = 0; iqg < gqa_ratio; iqg++) {
-        int     iqh       = kvh_base_head + iqg;
+    لكل (صحيح iqg = 0; iqg < gqa_نسبت; iqg++) {
+        صحيح     iqh       = kvh_پایه_سر + iqg;
         sycl::half * dst_g = dst + (int64_t)iqg * n_queries * DKQ;
 
-        const int64_t n_elem = (int64_t)n_queries * DKQ;
-        const int64_t wg = ((n_elem + wg_size - 1) / wg_size) * wg_size;
+        ثابت int64_t n_elem = (int64_t)n_queries * DKQ;
+        ثابت int64_t wg = ((n_elem + wg_اندازه - 1) / wg_اندازه) * wg_اندازه;
 
         stream->submit([&](sycl::handler & cgh) {
-            cgh.parallel_for(sycl::nd_range<1>(wg, wg_size),
-                [=](sycl::nd_item<1> item) {
-                    int64_t e = item.get_global_id(0);
-                    if (e >= n_elem) return;
+            cgh.parallel_for(sycl::nd_range<1>(wg, wg_اندازه),
+                [=](sycl::nd_قلم<1> قلم) {
+                    int64_t e = قلم.get_global_id(0);
+                    إذا (e >= n_elem) أرجع;
 
                     int64_t q = e / DKQ;
                     int64_t d = e - q * DKQ;
@@ -66,8 +66,8 @@ static void mkl_fa_pack_q_fp16(
                     // Stride-aware source offset: handles permuted,
                     // sliced, or contiguous Q tensor layouts.
                     int64_t src_off = d
-                        + q * q_row_stride
-                        + (int64_t)iqh * q_head_stride;
+                        + q * q_ردیف_stride
+                        + (int64_t)iqh * q_سر_stride;
 
                     dst_g[e] = sycl::half(
                         q_src[src_off] * q_scale);
@@ -79,26 +79,26 @@ static void mkl_fa_pack_q_fp16(
 // Zero-initialize the online softmax state arrays.
 // KQ_max → -inf, KQ_sum → 0, VKQ_accum → 0.
 // Merged into one kernel to avoid per-array launch overhead.
-static void mkl_fa_init_softmax_state(
-    dpct::queue_ptr stream,
-    float * kmax, float * ksum, float * vacc,
-    int n_query_rows, int DV, int64_t wg_size) {
+ساكن فراغ mkl_fa_init_softmax_state(
+    dpct::صف_ptr stream,
+    عائم * kmax, عائم * ksum, عائم * vacc,
+    صحيح n_query_ردیفها, صحيح DV, int64_t wg_اندازه) {
 
-    const float    neg_inf   = -1e30f;
-    const int64_t  n_maxsum  = n_query_rows;
-    const int64_t  n_vacc    = (int64_t)n_query_rows * DV;
-    const int64_t  total     = (n_vacc > n_maxsum) ? n_vacc : n_maxsum;
-    const int64_t  wg = ((total + wg_size - 1) / wg_size) * wg_size;
+    ثابت عائم    neg_inf   = -1e30f;
+    ثابت int64_t  n_maxsum  = n_query_ردیفها;
+    ثابت int64_t  n_vacc    = (int64_t)n_query_ردیفها * DV;
+    ثابت int64_t  مجموع     = (n_vacc > n_maxsum) ? n_vacc : n_maxsum;
+    ثابت int64_t  wg = ((مجموع + wg_اندازه - 1) / wg_اندازه) * wg_اندازه;
 
     stream->submit([&](sycl::handler & cgh) {
-        cgh.parallel_for(sycl::nd_range<1>(wg, wg_size),
-            [=](sycl::nd_item<1> item) {
-                int64_t i = item.get_global_id(0);
-                if (i < n_maxsum) {
+        cgh.parallel_for(sycl::nd_range<1>(wg, wg_اندازه),
+            [=](sycl::nd_قلم<1> قلم) {
+                int64_t i = قلم.get_global_id(0);
+                إذا (i < n_maxsum) {
                     kmax[i] = neg_inf;
                     ksum[i] = 0.0f;
                 }
-                if (i < n_vacc) {
+                إذا (i < n_vacc) {
                     vacc[i] = 0.0f;
                 }
             });
@@ -118,89 +118,89 @@ static void mkl_fa_init_softmax_state(
 // identical to the original one-item-per-row kernel: softcap before
 // mask, native::exp, -1e30 sentinel, half-precision S. Only the float
 // summation order differs (tree vs serial), i.e. last-ulp level.
-static void mkl_fa_online_softmax_chunk(
-    dpct::queue_ptr stream,
-    float * __restrict KQ_f32,
+ساكن فراغ mkl_fa_online_softmax_chunk(
+    dpct::صف_ptr stream,
+    عائم * __restrict KQ_f32,
     sycl::half * __restrict S_f16,
-    float * __restrict KQ_max,
-    float * __restrict KQ_sum,
-    float * __restrict VKQ_accum,
-    int q0, int q_rows, int n_queries, int DV,
-    int chunk_size, int chunk_start,
-    int kvh_head,
-    const sycl::half * mask_data, int64_t mask_head_stride,
-    int64_t mask_row_stride, int mask_n_heads,
-    float logit_softcap, int64_t wg_size) {
+    عائم * __restrict KQ_max,
+    عائم * __restrict KQ_جمع,
+    عائم * __restrict VKQ_accum,
+    صحيح q0, صحيح q_ردیفها, صحيح n_queries, صحيح DV,
+    صحيح chunk_اندازه, صحيح chunk_شروع,
+    صحيح kvh_سر,
+    ثابت sycl::half * ماسک_داده, int64_t ماسک_سر_stride,
+    int64_t ماسک_ردیف_stride, صحيح ماسک_n_heads,
+    عائم logit_softcap, int64_t wg_اندازه) {
 
     // One work-group per query row: exactly q_rows groups of wg_size
     // items. q_rows * wg_size is already a multiple of wg_size, so unlike
     // the one-item-per-row kernels there is no round-up / tail guard.
-    const int64_t wg         = q_rows * wg_size;
-    const int     local_size = (int) wg_size;  // stride in the loops below
+    ثابت int64_t wg         = q_ردیفها * wg_اندازه;
+    ثابت صحيح     local_اندازه = (صحيح) wg_اندازه;  // stride in the loops below
     stream->submit([&](sycl::handler & cgh) {
-        cgh.parallel_for(sycl::nd_range<1>(wg, wg_size),
-            [=](sycl::nd_item<1> item) {
-                const int local_id = (int)item.get_local_id(0);
-                const int row = (int)item.get_group(0); // tile-relative
-                const int jc_abs    = q0 + row;
-                const int gqa_group = jc_abs / n_queries;
-                const int q_row     = jc_abs % n_queries;
+        cgh.parallel_for(sycl::nd_range<1>(wg, wg_اندازه),
+            [=](sycl::nd_قلم<1> قلم) {
+                ثابت صحيح local_id = (صحيح)قلم.get_local_id(0);
+                ثابت صحيح ردیف = (صحيح)قلم.get_گروه(0); // tile-relative
+                ثابت صحيح jc_abs    = q0 + ردیف;
+                ثابت صحيح gqa_گروه = jc_abs / n_queries;
+                ثابت صحيح q_ردیف     = jc_abs % n_queries;
                 // Score buffers are tile-local (relative index).
-                const float * __restrict KQ_row = KQ_f32
-                    + row * (int64_t)chunk_size;
-                sycl::half * __restrict S_row = S_f16
-                    + row * (int64_t)chunk_size;
+                ثابت عائم * __restrict KQ_ردیف = KQ_f32
+                    + ردیف * (int64_t)chunk_اندازه;
+                sycl::half * __restrict S_ردیف = S_f16
+                    + ردیف * (int64_t)chunk_اندازه;
                 // Persistent accumulator is full-sized (absolute index).
-                float * __restrict vkq = VKQ_accum
+                عائم * __restrict vkq = VKQ_accum
                     + jc_abs * (int64_t)DV;
-                const sycl::half * mask_h = nullptr;
+                ثابت sycl::half * ماسک_h = اشاره_تهی;
                 int64_t m_stride = 0;
-                if (mask_data) {
-                    int m_head = (mask_n_heads > 1)
-                        ? (kvh_head + gqa_group) : 0;
-                    mask_h   = mask_data + (int64_t)m_head * mask_head_stride;
-                    m_stride = mask_row_stride;
+                إذا (ماسک_داده) {
+                    صحيح m_سر = (ماسک_n_heads > 1)
+                        ? (kvh_سر + gqa_گروه) : 0;
+                    ماسک_h   = ماسک_داده + (int64_t)m_سر * ماسک_سر_stride;
+                    m_stride = ماسک_ردیف_stride;
                 }
                 // Score at chunk offset i — original per-element math.
-                auto score = [&](int i) {
-                    float s = KQ_row[i];
-                    if (logit_softcap != 0.0f) {
+                خودکار score = [&](صحيح i) {
+                    عائم s = KQ_ردیف[i];
+                    إذا (logit_softcap != 0.0f) {
                         s = logit_softcap * sycl::tanh(s);
                     }
-                    if (mask_h) {
-                        s += (float)mask_h[q_row * m_stride
-                            + (chunk_start + i)];
+                    إذا (ماسک_h) {
+                        s += (عائم)ماسک_h[q_ردیف * m_stride
+                            + (chunk_شروع + i)];
                     }
-                    return s;
+                    أرجع s;
                 };
                 // Pass 1: strided (coalesced) row-wise local maximum.
-                float local_max = -1e30f;
-                for (int i = local_id; i < chunk_size; i += local_size) {
-                    float s = score(i);
-                    if (s > local_max) local_max = s;
+                عائم local_max = -1e30f;
+                لكل (صحيح i = local_id; i < chunk_اندازه; i += local_اندازه) {
+                    عائم s = score(i);
+                    إذا (s > local_max) local_max = s;
                 }
-                const float final_local_max = sycl::reduce_over_group(
-                    item.get_group(), local_max, sycl::maximum<float>());
+                ثابت عائم final_local_max = sycl::reduce_over_گروه(
+                    قلم.get_گروه(), local_max, sycl::بیشینه<عائم>());
                 // Rescale previous accumulator by exp(old_max - new_max)
-                float old_max = KQ_max[jc_abs];
-                float new_max = (old_max > final_local_max) ? old_max : final_local_max;
-                float rescale = (old_max < -1e29f) ? 1.0f
-                    : sycl::native::exp(old_max - new_max);
-                for (int v = local_id; v < DV; v += local_size) {
+                عائم old_max = KQ_max[jc_abs];
+                عائم new_max = (old_max > final_local_max) ? old_max : final_local_max;
+                عائم rescale = (old_max < -1e29f) ? 1.0f
+                    : sycl::native::نمایی_تابع(old_max - new_max);
+                لكل (صحيح v = local_id; v < DV; v += local_اندازه) {
                     vkq[v] *= rescale;
                 }
                 // Pass 2: softmax numerators, strided; S row written once.
-                float local_sum = 0.0f;
-                for (int i = local_id; i < chunk_size; i += local_size) {
-                    float s = score(i);
-                    float val = sycl::native::exp(s - new_max);
-                    S_row[i] = sycl::half(val);
-                    local_sum += val;
+                عائم local_جمع = 0.0f;
+                لكل (صحيح i = local_id; i < chunk_اندازه; i += local_اندازه) {
+                    عائم s = score(i);
+                    عائم val = sycl::native::نمایی_تابع(s - new_max);
+                    S_ردیف[i] = sycl::half(val);
+                    local_جمع += val;
                 }
-                const float total_sum = sycl::reduce_over_group(
-                    item.get_group(), local_sum, sycl::plus<float>());
-                if (local_id == 0) {
-                    KQ_sum[jc_abs] = KQ_sum[jc_abs] * rescale + total_sum;
+                ثابت عائم مجموع_جمع = sycl::reduce_over_گروه(
+                    قلم.get_گروه(), local_جمع, sycl::plus<عائم>());
+                إذا (local_id == 0) {
+                    KQ_جمع[jc_abs] = KQ_جمع[jc_abs] * rescale + مجموع_جمع;
                     KQ_max[jc_abs] = new_max;
                 }
             });
@@ -208,34 +208,34 @@ static void mkl_fa_online_softmax_chunk(
 }
 
 // Write one GQA group's normalized output to its destination head.
-static void mkl_fa_normalize_head(
-    dpct::queue_ptr stream,
-    float * __restrict dst_batch,
-    const float * __restrict VKQ_accum,
-    const float * __restrict KQ_sum,
-    int iqh, int n_queries, int DV, int n_q_heads,
-    int64_t src_offset, int64_t wg_size) {
+ساكن فراغ mkl_fa_normalize_سر(
+    dpct::صف_ptr stream,
+    عائم * __restrict dst_batch,
+    ثابت عائم * __restrict VKQ_accum,
+    ثابت عائم * __restrict KQ_جمع,
+    صحيح iqh, صحيح n_queries, صحيح DV, صحيح n_q_heads,
+    int64_t src_جابه_جایی, int64_t wg_اندازه) {
 
-    const int64_t wg = ((n_queries + wg_size - 1) / wg_size) * wg_size;
+    ثابت int64_t wg = ((n_queries + wg_اندازه - 1) / wg_اندازه) * wg_اندازه;
 
     stream->submit([&](sycl::handler & cgh) {
-        cgh.parallel_for(sycl::nd_range<1>(wg, wg_size),
-            [=](sycl::nd_item<1> item) {
-                int jc = item.get_global_id(0);
-                if (jc >= n_queries) return;
+        cgh.parallel_for(sycl::nd_range<1>(wg, wg_اندازه),
+            [=](sycl::nd_قلم<1> قلم) {
+                صحيح jc = قلم.get_global_id(0);
+                إذا (jc >= n_queries) أرجع;
 
-                int     ksum_idx = (int)(src_offset / DV) + jc;
-                float   inv_sum  = 1.0f / KQ_sum[ksum_idx];
-                const float * __restrict src = VKQ_accum
-                    + src_offset + jc * (int64_t)DV;
+                صحيح     ksum_idx = (صحيح)(src_جابه_جایی / DV) + jc;
+                عائم   inv_جمع  = 1.0f / KQ_جمع[ksum_idx];
+                ثابت عائم * __restrict src = VKQ_accum
+                    + src_جابه_جایی + jc * (int64_t)DV;
                 // Interleaved dst layout (matching TILE):
                 // rows alternate between heads, then increment query.
                 // offset = (query * n_q_heads + head) * DV
-                float * __restrict dst_row = dst_batch
+                عائم * __restrict dst_ردیف = dst_batch
                     + ((int64_t)jc * n_q_heads + iqh) * (int64_t)DV;
 
-                for (int v = 0; v < DV; v++) {
-                    dst_row[v] = src[v] * inv_sum;
+                لكل (صحيح v = 0; v < DV; v++) {
+                    dst_ردیف[v] = src[v] * inv_جمع;
                 }
             });
     });
@@ -253,103 +253,103 @@ static void mkl_fa_normalize_head(
 // interleave vs padded-seq-view distinction is resolved once when the
 // descriptor is built; slicing does not reintroduce it.
 // ---------------------------------------------------------------------------
-enum mkl_fa_kv_desc_mode {
-    MKL_FA_KV_MODE_F16_DENSE       = 0,
-    MKL_FA_KV_MODE_F16_INTERLEAVED = 1,
-    MKL_FA_KV_MODE_QUANT_CONTIG    = 2,
-    MKL_FA_KV_MODE_QUANT_NC        = 3,
+تعداد mkl_fa_kv_desc_نما {
+    MKL_FA_KV_نما_F16_DENSE       = 0,
+    MKL_FA_KV_نما_F16_INTERLEAVED = 1,
+    MKL_FA_KV_نما_QUANT_CONTIG    = 2,
+    MKL_FA_KV_نما_QUANT_NC        = 3,
 };
 
-struct mkl_fa_kv_desc {
-    const char *         data = nullptr;
+بنية mkl_fa_kv_desc {
+    ثابت حرف *         داده = اشاره_تهی;
     ggml_type            type = GGML_TYPE_F16;
     int64_t              D    = 0;      // ne[0]
     int64_t              nb1  = 0;      // byte stride, seq dim
     int64_t              nb2  = 0;      // byte stride, head dim
-    mkl_fa_kv_desc_mode  mode = MKL_FA_KV_MODE_F16_DENSE;
+    mkl_fa_kv_desc_نما  mode = MKL_FA_KV_نما_F16_DENSE;
     int64_t              ts   = 0;      // type size (mode 3 base offset)
     int64_t              s01  = 0;      // nc row stride in blocks (mode 3)
     int64_t              s02  = 0;      // nc head stride in blocks (mode 3)
 };
 
-static mkl_fa_kv_desc mkl_fa_make_desc(const ggml_tensor * T, bool interleaved, int n_kv_heads) {
+ساكن mkl_fa_kv_desc mkl_fa_make_desc(ثابت ggml_tensor * T, منطقي interleaved, صحيح n_kv_heads) {
     mkl_fa_kv_desc d;
-    d.data = (const char *)T->data;
+    d.داده = (ثابت حرف *)T->داده;
     d.type = T->type;
     d.D    = T->ne[0];
     d.nb1  = (int64_t)T->nb[1];
     d.nb2  = (int64_t)T->nb[2];
-    d.ts   = (int64_t)ggml_type_size(T->type);
+    d.ts   = (int64_t)ggml_type_اندازه(T->type);
 
-    if (T->type == GGML_TYPE_F16) {
+    إذا (T->type == GGML_TYPE_F16) {
         // MLA's V cache is a 512-wide view of 576-wide K rows. Treat any
         // padded row stride as strided even when there is only one KV head.
-        d.mode = interleaved || d.nb1 != d.D * (int64_t)sizeof(sycl::half)
-            ? MKL_FA_KV_MODE_F16_INTERLEAVED : MKL_FA_KV_MODE_F16_DENSE;
-    } else if (ggml_is_contiguously_allocated(T) && !interleaved) {
-        d.mode = MKL_FA_KV_MODE_QUANT_CONTIG;
-    } else {
-        d.mode = MKL_FA_KV_MODE_QUANT_NC;
-        const int64_t bs          = (int64_t)ggml_blck_size(T->type);
-        const int64_t blk_per_row = T->ne[0] / bs;
+        d.mode = interleaved || d.nb1 != d.D * (int64_t)حجم(sycl::half)
+            ? MKL_FA_KV_نما_F16_INTERLEAVED : MKL_FA_KV_نما_F16_DENSE;
+    } وإلا إذا (ggml_is_contiguously_allocated(T) && !interleaved) {
+        d.mode = MKL_FA_KV_نما_QUANT_CONTIG;
+    } وإلا {
+        d.mode = MKL_FA_KV_نما_QUANT_NC;
+        ثابت int64_t bs          = (int64_t)ggml_blck_اندازه(T->type);
+        ثابت int64_t blk_در_هر_ردیف = T->ne[0] / bs;
         // True Gemma interleave packs heads within a row (nb[2] < ne[1]*nb[1])
         // → reconstruct physical strides. Padded seq-views (nb[2] > ne[1]*nb[1])
         // already have correct physical strides.
-        const bool gemma = interleaved &&
+        ثابت منطقي gemma = interleaved &&
             ((int64_t)T->nb[2] < (int64_t)T->ne[1] * (int64_t)T->nb[1]);
-        if (gemma) {
-            d.s01 = (int64_t)n_kv_heads * blk_per_row;
-            d.s02 = blk_per_row;
-        } else {
+        إذا (gemma) {
+            d.s01 = (int64_t)n_kv_heads * blk_در_هر_ردیف;
+            d.s02 = blk_در_هر_ردیف;
+        } وإلا {
             d.s01 = d.nb1 / d.ts;
             d.s02 = d.nb2 / d.ts;
         }
     }
-    return d;
+    أرجع d;
 }
 
 // Dequant one KV-head chunk into a dense [this_chunk x D] fp16 buffer.
-static void mkl_fa_dequant_chunk(
-    dpct::queue_ptr stream, const mkl_fa_kv_desc & d, ggml_tensor * dst_ctx,
-    sycl::half * out, int ikvh, int chunk_start, int this_chunk) {
+ساكن فراغ mkl_fa_dequant_chunk(
+    dpct::صف_ptr stream, ثابت mkl_fa_kv_desc & d, ggml_tensor * dst_ctx,
+    sycl::half * بیرون, صحيح ikvh, صحيح chunk_شروع, صحيح this_chunk) {
 
-    const int64_t D = d.D;
-    switch (d.mode) {
-        case MKL_FA_KV_MODE_F16_DENSE: {
-            const char * base = d.data + (int64_t)ikvh * d.nb2
-                + (int64_t)chunk_start * d.nb1;
-            stream->memcpy(out, base, (size_t)this_chunk * D * sizeof(sycl::half));
-            break;
+    ثابت int64_t D = d.D;
+    بدل (d.mode) {
+        حالة MKL_FA_KV_نما_F16_DENSE: {
+            ثابت حرف * پایه = d.داده + (int64_t)ikvh * d.nb2
+                + (int64_t)chunk_شروع * d.nb1;
+            stream->کپی_حافظه(بیرون, پایه, (size_t)this_chunk * D * حجم(sycl::half));
+            اكسر;
         }
-        case MKL_FA_KV_MODE_F16_INTERLEAVED: {
-            const char * base = d.data + (int64_t)ikvh * d.nb2
-                + (int64_t)chunk_start * d.nb1;
-            const int64_t row_halfs = d.nb1 / (int64_t)sizeof(sycl::half);
-            const sycl::half * src = (const sycl::half *)base;
+        حالة MKL_FA_KV_نما_F16_INTERLEAVED: {
+            ثابت حرف * پایه = d.داده + (int64_t)ikvh * d.nb2
+                + (int64_t)chunk_شروع * d.nb1;
+            ثابت int64_t ردیف_halfs = d.nb1 / (int64_t)حجم(sycl::half);
+            ثابت sycl::half * src = (ثابت sycl::half *)پایه;
             stream->parallel_for(
                 sycl::range<2>((size_t)this_chunk, (size_t)D),
-                [=](sycl::item<2> it) {
+                [=](sycl::قلم<2> it) {
                     int64_t r = it.get_id(0);
                     int64_t c = it.get_id(1);
-                    out[r * D + c] = src[r * row_halfs + c];
+                    بیرون[r * D + c] = src[r * ردیف_halfs + c];
                 });
-            break;
+            اكسر;
         }
-        case MKL_FA_KV_MODE_QUANT_CONTIG: {
-            const char * base = d.data + (int64_t)ikvh * d.nb2
-                + (int64_t)chunk_start * d.nb1;
-            to_fp16_sycl_t to_fp16 = ggml_get_to_fp16_sycl(d.type, dst_ctx);
-            to_fp16(base, out, (int64_t)this_chunk * D, stream);
-            break;
+        حالة MKL_FA_KV_نما_QUANT_CONTIG: {
+            ثابت حرف * پایه = d.داده + (int64_t)ikvh * d.nb2
+                + (int64_t)chunk_شروع * d.nb1;
+            مقصد_fp16_sycl_t مقصد_fp16 = ggml_get_مقصد_fp16_sycl(d.type, dst_ctx);
+            مقصد_fp16(پایه, بیرون, (int64_t)this_chunk * D, stream);
+            اكسر;
         }
-        default: {  // MKL_FA_KV_MODE_QUANT_NC
-            to_fp16_nc_sycl_t to_fp16 = ggml_get_to_fp16_nc_sycl(d.type);
-            const int64_t base_blocks = (int64_t)ikvh * d.s02
-                + (int64_t)chunk_start * d.s01;
-            const char * base = d.data + base_blocks * d.ts;
+        افتراضي: {  // MKL_FA_KV_MODE_QUANT_NC
+            مقصد_fp16_nc_sycl_t مقصد_fp16 = ggml_get_مقصد_fp16_nc_sycl(d.type);
+            ثابت int64_t پایه_بلوکها = (int64_t)ikvh * d.s02
+                + (int64_t)chunk_شروع * d.s01;
+            ثابت حرف * پایه = d.داده + پایه_بلوکها * d.ts;
             // ne02 = ne03 = 1 → s02/s03 inert; head+chunk offset carried by base.
-            to_fp16(base, out, D, this_chunk, 1, 1, d.s01, d.s02, d.s02, stream);
-            break;
+            مقصد_fp16(پایه, بیرون, D, this_chunk, 1, 1, d.s01, d.s02, d.s02, stream);
+            اكسر;
         }
     }
 }
@@ -361,293 +361,293 @@ static void mkl_fa_dequant_chunk(
 //   pack GQA Q heads → MKL GEMM KQ → online softmax →
 //   MKL GEMM VKQ → accumulate → normalize → scatter to dst
 // ---------------------------------------------------------------------------
-void ggml_sycl_flash_attn_ext_mkl(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+فراغ ggml_sycl_flash_attn_ext_mkl(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
 
-    const ggml_tensor * Q    = dst->src[0];
-    const ggml_tensor * K    = dst->src[1];
-    const ggml_tensor * V    = dst->src[2];
-    const ggml_tensor * mask = dst->src[3];
+    ثابت ggml_tensor * Q    = dst->src[0];
+    ثابت ggml_tensor * K    = dst->src[1];
+    ثابت ggml_tensor * V    = dst->src[2];
+    ثابت ggml_tensor * ماسک = dst->src[3];
     ggml_tensor * KQV = dst;
 
     GGML_ASSERT(Q->type == GGML_TYPE_F32);
     GGML_ASSERT(KQV->type == GGML_TYPE_F32);
 
     // --- Op params ---
-    float scale = 1.0f, max_bias = 0.0f, logit_softcap = 0.0f;
-    memcpy(&scale,         (const float *)KQV->op_params + 0, sizeof(float));
-    memcpy(&max_bias,      (const float *)KQV->op_params + 1, sizeof(float));
-    memcpy(&logit_softcap, (const float *)KQV->op_params + 2, sizeof(float));
+    عائم scale = 1.0f, max_bias = 0.0f, logit_softcap = 0.0f;
+    کپی_حافظه(&scale,         (ثابت عائم *)KQV->op_params + 0, حجم(عائم));
+    کپی_حافظه(&max_bias,      (ثابت عائم *)KQV->op_params + 1, حجم(عائم));
+    کپی_حافظه(&logit_softcap, (ثابت عائم *)KQV->op_params + 2, حجم(عائم));
 
-    const float q_scale = scale;
+    ثابت عائم q_scale = scale;
 
     // --- Dimensions ---
-    const int DKQ        = (int)K->ne[0];
-    const int DV         = (int)V->ne[0];
-    const int n_queries  = (int)Q->ne[1];
-    const int n_q_heads  = (int)Q->ne[2];
-    const int n_kv_heads = (int)K->ne[2];
-    const int n_batch    = (int)Q->ne[3];
-    const int n_kv       = (int)K->ne[1];
-    const int gqa_ratio  = n_q_heads / n_kv_heads;
-    const int n_query_rows = n_queries * gqa_ratio;
+    ثابت صحيح DKQ        = (صحيح)K->ne[0];
+    ثابت صحيح DV         = (صحيح)V->ne[0];
+    ثابت صحيح n_queries  = (صحيح)Q->ne[1];
+    ثابت صحيح n_q_heads  = (صحيح)Q->ne[2];
+    ثابت صحيح n_kv_heads = (صحيح)K->ne[2];
+    ثابت صحيح n_batch    = (صحيح)Q->ne[3];
+    ثابت صحيح n_kv       = (صحيح)K->ne[1];
+    ثابت صحيح gqa_نسبت  = n_q_heads / n_kv_heads;
+    ثابت صحيح n_query_ردیفها = n_queries * gqa_نسبت;
 
     GGML_ASSERT(n_q_heads % n_kv_heads == 0);
     GGML_ASSERT(max_bias == 0.0f);  // ALiBi not supported
     GGML_ASSERT(Q->ne[3] == K->ne[3] || K->ne[3] == 1);
 
-    const int chunk_size = std::min(MKL_FA_CHUNK_SIZE_KV, n_kv);
+    ثابت صحيح chunk_اندازه = std::min(MKL_FA_CHUNK_اندازه_KV, n_kv);
 
     // Query rows are processed in tiles of q_tile_rows so the score buffers
     // (KQ_f32/S_f16 = q_tile_rows * chunk_size) stay bounded regardless of
     // batch size. n_query_rows <= Q_TILE is a single tile (no extra work).
-    static int q_tile_env = ggml_sycl_get_env("GGML_SYCL_MKL_FA_Q_TILE", MKL_FA_Q_TILE);
-    const int q_tile_rows = std::max(1, std::min(q_tile_env, n_query_rows));
+    ساكن صحيح q_tile_env = ggml_sycl_get_env("GGML_SYCL_MKL_FA_Q_TILE", MKL_FA_Q_TILE);
+    ثابت صحيح q_tile_ردیفها = std::max(1, std::min(q_tile_env, n_query_ردیفها));
 
-    const int64_t wg_size = MKL_FA_WG_SIZE;
+    ثابت int64_t wg_اندازه = MKL_FA_WG_اندازه;
 
     // --- Debug output (gated by GGML_SYCL_MKL_FA_DEBUG=1) ---
-    static int mkl_call_count = 0;
-    mkl_call_count++;
-    static int mkl_debug = ggml_sycl_get_env("GGML_SYCL_MKL_FA_DEBUG", 0);
-    const bool do_print = (mkl_debug == 1);
+    ساكن صحيح mkl_call_شمار = 0;
+    mkl_call_شمار++;
+    ساكن صحيح mkl_debug = ggml_sycl_get_env("GGML_SYCL_MKL_FA_DEBUG", 0);
+    ثابت منطقي do_print = (mkl_debug == 1);
 
-    const int64_t q_row_stride  = Q->nb[1] / sizeof(float);
-    const int64_t q_head_stride = Q->nb[2] / sizeof(float);
+    ثابت int64_t q_ردیف_stride  = Q->nb[1] / حجم(عائم);
+    ثابت int64_t q_سر_stride = Q->nb[2] / حجم(عائم);
 
     // Alias the dequantized buffers only when K and V expose the same values.
     // MLA V is a narrower view of K and needs its own strided dequantization.
-    const bool V_is_K_view = V->ne[0] == K->ne[0] && V->view_src
+    ثابت منطقي V_is_K_view = V->ne[0] == K->ne[0] && V->view_src
         && (V->view_src == K || (V->view_src == K->view_src
             && V->view_offs == K->view_offs));
 
     // Early interleaved detection for debug output.
     // True interleaved detection happens after dequant (nb12_fp16 == nb11_fp16),
     // but we can pre-detect on the original tensor strides.
-    const bool k_early_interleaved =
+    ثابت منطقي k_early_interleaved =
         ((int64_t)K->ne[1] * K->nb[1] != K->nb[2]);
-    const bool v_early_interleaved =
+    ثابت منطقي v_early_interleaved =
         !V_is_K_view && ((int64_t)V->ne[1] * V->nb[1] != V->nb[2]);
 
-    if (do_print) {
+    إذا (do_print) {
         GGML_LOG_INFO("[MKL-FA] #%d D=%d DV=%d n_q=%d n_kv=%d "
                 "n_qh=%d n_kvh=%d gqa=%d batch=%d K=%s V=%s "
                 "chunk=%d buf=%.1fMB%s%s\n",
-                mkl_call_count, DKQ, DV, n_queries, n_kv,
-                n_q_heads, n_kv_heads, gqa_ratio, n_batch,
+                mkl_call_شمار, DKQ, DV, n_queries, n_kv,
+                n_q_heads, n_kv_heads, gqa_نسبت, n_batch,
                 ggml_type_name(K->type), ggml_type_name(V->type),
-                chunk_size,
-                (double)((int64_t)n_query_rows * chunk_size * sizeof(float))
+                chunk_اندازه,
+                (مزدوج)((int64_t)n_query_ردیفها * chunk_اندازه * حجم(عائم))
                     / (1024.0 * 1024.0),
                 k_early_interleaved ? " K_ILV" : "",
                 v_early_interleaved ? " V_ILV" : "");
         GGML_LOG_INFO("[MKL-FA] #%d Q-nb1=%lld Q-nb2=%lld "
                 "q_rs=%lld q_hs=%lld dst_rs=%lld dst_hs=%lld\n",
-                mkl_call_count,
-                (long long)Q->nb[1], (long long)Q->nb[2],
-                (long long)q_row_stride, (long long)q_head_stride,
-                (long long)(KQV->nb[1] / sizeof(float)),
-                (long long)(KQV->nb[2] / sizeof(float)));
+                mkl_call_شمار,
+                (دراز دراز)Q->nb[1], (دراز دراز)Q->nb[2],
+                (دراز دراز)q_ردیف_stride, (دراز دراز)q_سر_stride,
+                (دراز دراز)(KQV->nb[1] / حجم(عائم)),
+                (دراز دراز)(KQV->nb[2] / حجم(عائم)));
     }
 
     // --- Stream and allocators ---
-    dpct::queue_ptr stream = ctx.stream();
+    dpct::صف_ptr stream = ctx.stream();
 
-#define MKL_TAKE_TIME(t0)  auto t0 = std::chrono::steady_clock::now()
-#define MKL_ACCUM(acc, t0) do { if (do_print) { \
+#تعریف_کن MKL_TAKE_زمان(t0)  خودکار t0 = std::chrono::steady_clock::now()
+#تعریف_کن MKL_ACCUM(acc, t0) افعل { إذا (do_print) { \
     acc += (int64_t)std::chrono::duration_cast \
     <std::chrono::microseconds>(std::chrono::steady_clock::now() - (t0)).count(); \
-} } while(0)
+} } طالما(0)
 
-    int64_t gemm_kq_time_us  = 0;
-    int64_t gemm_vkq_time_us = 0;
-    int64_t softmax_time_us  = 0;
-    int64_t dequant_time_us  = 0;
+    int64_t gemm_kq_زمان_us  = 0;
+    int64_t gemm_vkq_زمان_us = 0;
+    int64_t softmax_زمان_us  = 0;
+    int64_t dequant_زمان_us  = 0;
 
-    MKL_TAKE_TIME(t_deq);
+    MKL_TAKE_زمان(t_deq);
 
     // --- K/V dequant descriptors ---
     // Dequant is done per-chunk inside the KV loop (footprint independent of
     // context). Output is always dense row-major fp16 [this_chunk x D], lda=D.
     // Interleaved detection: ne[1]*nb[1] != nb[2] means heads are interleaved.
-    const bool k_interleaved =
+    ثابت منطقي k_interleaved =
         ((int64_t)K->ne[1] * K->nb[1] != K->nb[2]) && K->ne[2] > 1;
-    const bool v_interleaved =
+    ثابت منطقي v_interleaved =
         ((int64_t)V->ne[1] * V->nb[1] != V->nb[2]) && V->ne[2] > 1;
 
-    const mkl_fa_kv_desc K_desc = mkl_fa_make_desc(K, k_interleaved, n_kv_heads);
-    const mkl_fa_kv_desc V_desc = V_is_K_view
+    ثابت mkl_fa_kv_desc K_desc = mkl_fa_make_desc(K, k_interleaved, n_kv_heads);
+    ثابت mkl_fa_kv_desc V_desc = V_is_K_view
         ? K_desc : mkl_fa_make_desc(V, v_interleaved, n_kv_heads);
 
-    MKL_ACCUM(dequant_time_us, t_deq);
+    MKL_ACCUM(dequant_زمان_us, t_deq);
 
     // --- Resolve mask pointers ---
-    int64_t mask_head_stride = 0;
-    int64_t mask_row_stride  = 0;
-    int     mask_n_heads     = 0;
+    int64_t ماسک_سر_stride = 0;
+    int64_t ماسک_ردیف_stride  = 0;
+    صحيح     ماسک_n_heads     = 0;
 
-    if (mask) {
+    إذا (ماسک) {
         // Use actual fp16 device size (2 bytes), NOT sizeof(sycl::half)
         // which may be 4 on the host in oneAPI.
-        mask_head_stride = mask->nb[2] / 2;
-        mask_row_stride  = mask->nb[1] / 2;
-        mask_n_heads     = (int)mask->ne[2];
+        ماسک_سر_stride = ماسک->nb[2] / 2;
+        ماسک_ردیف_stride  = ماسک->nb[1] / 2;
+        ماسک_n_heads     = (صحيح)ماسک->ne[2];
     }
 
     // --- Allocate intermediates from pool ---
     ggml_sycl_pool & pool = ctx.pool();
 
-    ggml_sycl_pool_alloc<float>      KQ_f32(pool);      // [q_tile_rows x chunk]
+    ggml_sycl_pool_alloc<عائم>      KQ_f32(pool);      // [q_tile_rows x chunk]
     ggml_sycl_pool_alloc<sycl::half> S_f16(pool);       // [q_tile_rows x chunk]
-    ggml_sycl_pool_alloc<float>      VKQ_chunk(pool);   // [q_tile_rows x DV]
-    ggml_sycl_pool_alloc<float>      VKQ_accum(pool);   // [n_query_rows x DV] (full)
-    ggml_sycl_pool_alloc<float>      KQ_max(pool);      // [n_query_rows] (full)
-    ggml_sycl_pool_alloc<float>      KQ_sum(pool);      // [n_query_rows] (full)
-    ggml_sycl_pool_alloc<sycl::half> Q_head_f16(pool);  // [n_query_rows x DKQ] (full)
+    ggml_sycl_pool_alloc<عائم>      VKQ_chunk(pool);   // [q_tile_rows x DV]
+    ggml_sycl_pool_alloc<عائم>      VKQ_accum(pool);   // [n_query_rows x DV] (full)
+    ggml_sycl_pool_alloc<عائم>      KQ_max(pool);      // [n_query_rows] (full)
+    ggml_sycl_pool_alloc<عائم>      KQ_جمع(pool);      // [n_query_rows] (full)
+    ggml_sycl_pool_alloc<sycl::half> Q_سر_f16(pool);  // [n_query_rows x DKQ] (full)
     ggml_sycl_pool_alloc<sycl::half> K_chunk_f16(pool); // [chunk x DKQ] (per-chunk dequant)
     ggml_sycl_pool_alloc<sycl::half> V_chunk_f16(pool); // [chunk x DV] (per-chunk dequant)
 
-    KQ_f32.alloc((size_t)q_tile_rows * chunk_size);
-    S_f16.alloc((size_t)q_tile_rows * chunk_size);
-    VKQ_chunk.alloc((size_t)q_tile_rows * DV);
-    VKQ_accum.alloc((size_t)n_query_rows * DV);
-    KQ_max.alloc(n_query_rows);
-    KQ_sum.alloc(n_query_rows);
-    Q_head_f16.alloc((size_t)n_query_rows * DKQ);
-    K_chunk_f16.alloc((size_t)chunk_size * DKQ);
+    KQ_f32.alloc((size_t)q_tile_ردیفها * chunk_اندازه);
+    S_f16.alloc((size_t)q_tile_ردیفها * chunk_اندازه);
+    VKQ_chunk.alloc((size_t)q_tile_ردیفها * DV);
+    VKQ_accum.alloc((size_t)n_query_ردیفها * DV);
+    KQ_max.alloc(n_query_ردیفها);
+    KQ_جمع.alloc(n_query_ردیفها);
+    Q_سر_f16.alloc((size_t)n_query_ردیفها * DKQ);
+    K_chunk_f16.alloc((size_t)chunk_اندازه * DKQ);
 
     sycl::half * V_chunk_f16_ptr;
-    if (V_is_K_view) {
+    إذا (V_is_K_view) {
         V_chunk_f16_ptr = K_chunk_f16.ptr;   // V aliases K (DV == DKQ)
-    } else {
-        V_chunk_f16.alloc((size_t)chunk_size * DV);
+    } وإلا {
+        V_chunk_f16.alloc((size_t)chunk_اندازه * DV);
         V_chunk_f16_ptr = V_chunk_f16.ptr;
     }
 
-    sycl::half * Q_head_f16_ptr  = Q_head_f16.ptr;
-    float      * KQ_f32_ptr      = KQ_f32.ptr;
+    sycl::half * Q_سر_f16_ptr  = Q_سر_f16.ptr;
+    عائم      * KQ_f32_ptr      = KQ_f32.ptr;
     sycl::half * S_f16_ptr       = S_f16.ptr;
-    float      * VKQ_chunk_ptr   = VKQ_chunk.ptr;
-    float      * VKQ_accum_ptr   = VKQ_accum.ptr;
-    float      * KQ_max_ptr      = KQ_max.ptr;
-    float      * KQ_sum_ptr      = KQ_sum.ptr;
+    عائم      * VKQ_chunk_ptr   = VKQ_chunk.ptr;
+    عائم      * VKQ_accum_ptr   = VKQ_accum.ptr;
+    عائم      * KQ_max_ptr      = KQ_max.ptr;
+    عائم      * KQ_جمع_ptr      = KQ_جمع.ptr;
     sycl::half * K_chunk_f16_ptr = K_chunk_f16.ptr;
 
-    const float alpha = 1.0f;
-    const float beta  = 0.0f;
+    ثابت عائم alpha = 1.0f;
+    ثابت عائم beta  = 0.0f;
 
-    for (int ib = 0; ib < n_batch; ib++) {
-        const float * Q_batch = (const float *)Q->data
-            + ib * (Q->nb[3] / sizeof(float));
-        float * dst_batch = (float *)KQV->data
-            + ib * (KQV->nb[3] / sizeof(float));
+    لكل (صحيح ib = 0; ib < n_batch; ib++) {
+        ثابت عائم * Q_batch = (ثابت عائم *)Q->داده
+            + ib * (Q->nb[3] / حجم(عائم));
+        عائم * dst_batch = (عائم *)KQV->داده
+            + ib * (KQV->nb[3] / حجم(عائم));
 
-        const sycl::half * mask_batch = nullptr;
-        if (mask) {
-            int m_batch = (mask->ne[3] > 1) ? ib : 0;
-            mask_batch = (const sycl::half *)mask->data
-                + m_batch * (mask->nb[3] / 2);  // 2 = actual fp16 device size
+        ثابت sycl::half * ماسک_batch = اشاره_تهی;
+        إذا (ماسک) {
+            صحيح m_batch = (ماسک->ne[3] > 1) ? ib : 0;
+            ماسک_batch = (ثابت sycl::half *)ماسک->داده
+                + m_batch * (ماسک->nb[3] / 2);  // 2 = actual fp16 device size
         }
 
-        for (int ikvh = 0; ikvh < n_kv_heads; ikvh++) {
-            int kvh_base_head = ikvh * gqa_ratio;
+        لكل (صحيح ikvh = 0; ikvh < n_kv_heads; ikvh++) {
+            صحيح kvh_پایه_سر = ikvh * gqa_نسبت;
 
             // 1. Pack all GQA Q heads into fp16 (full n_query_rows)
             mkl_fa_pack_q_fp16(stream,
-                Q_head_f16_ptr, Q_batch,
+                Q_سر_f16_ptr, Q_batch,
                 n_queries, DKQ,
-                gqa_ratio, kvh_base_head,
-                q_scale, q_row_stride, q_head_stride, wg_size);
+                gqa_نسبت, kvh_پایه_سر,
+                q_scale, q_ردیف_stride, q_سر_stride, wg_اندازه);
 
             // 2. Initialize softmax state (full n_query_rows)
             mkl_fa_init_softmax_state(stream,
-                KQ_max_ptr, KQ_sum_ptr, VKQ_accum_ptr,
-                n_query_rows, DV, wg_size);
+                KQ_max_ptr, KQ_جمع_ptr, VKQ_accum_ptr,
+                n_query_ردیفها, DV, wg_اندازه);
 
             // Sync before MKL GEMM (MKL may use an internal queue)
             stream->wait();
 
             // 3. KV chunk loop (OUTER): dequant each chunk once, then tile queries.
-            for (int chunk_start = 0; chunk_start < n_kv; chunk_start += chunk_size) {
-                int this_chunk = std::min(chunk_size, n_kv - chunk_start);
+            لكل (صحيح chunk_شروع = 0; chunk_شروع < n_kv; chunk_شروع += chunk_اندازه) {
+                صحيح this_chunk = std::min(chunk_اندازه, n_kv - chunk_شروع);
 
                 // 3a. Dequant this KV chunk to dense fp16 (once per chunk)
                 {
-                    MKL_TAKE_TIME(t0);
+                    MKL_TAKE_زمان(t0);
                     mkl_fa_dequant_chunk(stream, K_desc, KQV,
-                        K_chunk_f16_ptr, ikvh, chunk_start, this_chunk);
-                    if (!V_is_K_view) {
+                        K_chunk_f16_ptr, ikvh, chunk_شروع, this_chunk);
+                    إذا (!V_is_K_view) {
                         mkl_fa_dequant_chunk(stream, V_desc, KQV,
-                            V_chunk_f16_ptr, ikvh, chunk_start, this_chunk);
+                            V_chunk_f16_ptr, ikvh, chunk_شروع, this_chunk);
                     }
                     stream->wait();  // dequant must be ready before MKL GEMM
-                    MKL_ACCUM(dequant_time_us, t0);
+                    MKL_ACCUM(dequant_زمان_us, t0);
                 }
 
                 // 3b. Query tile loop (INNER) — bounds KQ_f32/S_f16 footprint.
-                for (int q0 = 0; q0 < n_query_rows; q0 += q_tile_rows) {
-                    int q_rows = std::min(q_tile_rows, n_query_rows - q0);
+                لكل (صحيح q0 = 0; q0 < n_query_ردیفها; q0 += q_tile_ردیفها) {
+                    صحيح q_ردیفها = std::min(q_tile_ردیفها, n_query_ردیفها - q0);
 
                     // GEMM: KQ = Q_tile × K_chunk^T
                     {
-                        MKL_TAKE_TIME(t0);
+                        MKL_TAKE_زمان(t0);
                         sycl::event ev = gemm(*stream,
                             transpose::trans, transpose::nontrans,
-                            this_chunk, q_rows, DKQ,
+                            this_chunk, q_ردیفها, DKQ,
                             alpha,
                             K_chunk_f16_ptr, DKQ,
-                            Q_head_f16_ptr + (int64_t)q0 * DKQ, DKQ,
+                            Q_سر_f16_ptr + (int64_t)q0 * DKQ, DKQ,
                             beta,
                             KQ_f32_ptr, this_chunk);
-                        try { ev.wait_and_throw(); } catch (sycl::exception & e) {
+                        حاول { ev.wait_and_throw(); } امسك (sycl::exception & e) {
                             GGML_LOG_INFO("[MKL-FA] GEMM KQ: %s\n", e.what());
                             GGML_ABORT("MKL GEMM KQ failed");
                         }
-                        MKL_ACCUM(gemm_kq_time_us, t0);
+                        MKL_ACCUM(gemm_kq_زمان_us, t0);
                     }
                     // Online softmax over this chunk for this query tile
                     {
-                        MKL_TAKE_TIME(t0);
+                        MKL_TAKE_زمان(t0);
                         mkl_fa_online_softmax_chunk(stream,
                             KQ_f32_ptr, S_f16_ptr,
-                            KQ_max_ptr, KQ_sum_ptr, VKQ_accum_ptr,
-                            q0, q_rows, n_queries, DV,
-                            this_chunk, chunk_start,
-                            kvh_base_head,
-                            mask_batch, mask_head_stride,
-                            mask_row_stride, mask_n_heads,
-                            logit_softcap, wg_size);
+                            KQ_max_ptr, KQ_جمع_ptr, VKQ_accum_ptr,
+                            q0, q_ردیفها, n_queries, DV,
+                            this_chunk, chunk_شروع,
+                            kvh_پایه_سر,
+                            ماسک_batch, ماسک_سر_stride,
+                            ماسک_ردیف_stride, ماسک_n_heads,
+                            logit_softcap, wg_اندازه);
                         stream->wait();  // S_f16 must be ready for GEMM
-                        MKL_ACCUM(softmax_time_us, t0);
+                        MKL_ACCUM(softmax_زمان_us, t0);
                     }
 
                     // GEMM: VKQ_chunk = S × V_chunk
                     {
-                        MKL_TAKE_TIME(t0);
+                        MKL_TAKE_زمان(t0);
                         sycl::event ev = gemm(*stream,
                             transpose::nontrans, transpose::nontrans,
-                            DV, q_rows, this_chunk,
+                            DV, q_ردیفها, this_chunk,
                             alpha,
                             V_chunk_f16_ptr, DV,
                             S_f16_ptr, this_chunk,
                             beta,
                             VKQ_chunk_ptr, DV);
-                        try { ev.wait_and_throw(); } catch (sycl::exception & e) {
+                        حاول { ev.wait_and_throw(); } امسك (sycl::exception & e) {
                             GGML_LOG_INFO("[MKL-FA] GEMM VKQ: %s\n", e.what());
                             GGML_ABORT("MKL GEMM VKQ failed");
                         }
-                        MKL_ACCUM(gemm_vkq_time_us, t0);
+                        MKL_ACCUM(gemm_vkq_زمان_us, t0);
                     }
                     // VKQ_accum[q0..] += VKQ_chunk
                     {
-                        const int64_t n_total = (int64_t)q_rows * DV;
-                        const int64_t wg = ((n_total + wg_size - 1) / wg_size)
-                            * wg_size;
-                        float * accum = VKQ_accum_ptr + (int64_t)q0 * DV;
+                        ثابت int64_t n_مجموع = (int64_t)q_ردیفها * DV;
+                        ثابت int64_t wg = ((n_مجموع + wg_اندازه - 1) / wg_اندازه)
+                            * wg_اندازه;
+                        عائم * accum = VKQ_accum_ptr + (int64_t)q0 * DV;
                         stream->submit([&](sycl::handler & cgh) {
-                            cgh.parallel_for(sycl::nd_range<1>(wg, wg_size),
-                                [=](sycl::nd_item<1> item) {
-                                    int64_t i = item.get_global_id(0);
-                                    if (i < n_total) {
+                            cgh.parallel_for(sycl::nd_range<1>(wg, wg_اندازه),
+                                [=](sycl::nd_قلم<1> قلم) {
+                                    int64_t i = قلم.get_global_id(0);
+                                    إذا (i < n_مجموع) {
                                         accum[i] += VKQ_chunk_ptr[i];
                                     }
                                 });
@@ -657,41 +657,41 @@ void ggml_sycl_flash_attn_ext_mkl(ggml_backend_sycl_context & ctx, ggml_tensor *
             }
 
             // 4. Normalize and scatter each GQA head to dst
-            for (int iqg = 0; iqg < gqa_ratio; iqg++) {
-                int     iqh        = kvh_base_head + iqg;
-                int64_t src_offset = (int64_t)iqg * n_queries * DV;
-                mkl_fa_normalize_head(stream,
-                    dst_batch, VKQ_accum_ptr, KQ_sum_ptr,
+            لكل (صحيح iqg = 0; iqg < gqa_نسبت; iqg++) {
+                صحيح     iqh        = kvh_پایه_سر + iqg;
+                int64_t src_جابه_جایی = (int64_t)iqg * n_queries * DV;
+                mkl_fa_normalize_سر(stream,
+                    dst_batch, VKQ_accum_ptr, KQ_جمع_ptr,
                     iqh, n_queries, DV, n_q_heads,
-                    src_offset, wg_size);
+                    src_جابه_جایی, wg_اندازه);
             }
         }
     }
 
-#undef MKL_TAKE_TIME
-#undef MKL_ACCUM
+#لغو_تعریف MKL_TAKE_زمان
+#لغو_تعریف MKL_ACCUM
 
-    if (do_print) {
-        const int64_t v_chunk_elems = V_is_K_view ? 0 : (int64_t)chunk_size * DV;
-        double total_mb = (double)(
-            (int64_t)q_tile_rows * chunk_size * sizeof(float)      // KQ_f32
-          + (int64_t)q_tile_rows * chunk_size * sizeof(sycl::half) // S_f16
-          + (int64_t)q_tile_rows * DV * sizeof(float)              // VKQ_chunk
-          + (int64_t)n_query_rows * DV * sizeof(float)             // VKQ_accum
-          + (int64_t)n_query_rows * sizeof(float)                  // KQ_max
-          + (int64_t)n_query_rows * sizeof(float)                  // KQ_sum
-          + (int64_t)n_query_rows * DKQ * sizeof(sycl::half)       // Q_head_f16
-          + (int64_t)chunk_size * DKQ * sizeof(sycl::half)         // K_chunk_f16
-          + v_chunk_elems * (int64_t)sizeof(sycl::half)            // V_chunk_f16
+    إذا (do_print) {
+        ثابت int64_t v_chunk_elems = V_is_K_view ? 0 : (int64_t)chunk_اندازه * DV;
+        مزدوج مجموع_mb = (مزدوج)(
+            (int64_t)q_tile_ردیفها * chunk_اندازه * حجم(عائم)      // KQ_f32
+          + (int64_t)q_tile_ردیفها * chunk_اندازه * حجم(sycl::half) // S_f16
+          + (int64_t)q_tile_ردیفها * DV * حجم(عائم)              // VKQ_chunk
+          + (int64_t)n_query_ردیفها * DV * حجم(عائم)             // VKQ_accum
+          + (int64_t)n_query_ردیفها * حجم(عائم)                  // KQ_max
+          + (int64_t)n_query_ردیفها * حجم(عائم)                  // KQ_sum
+          + (int64_t)n_query_ردیفها * DKQ * حجم(sycl::half)       // Q_head_f16
+          + (int64_t)chunk_اندازه * DKQ * حجم(sycl::half)         // K_chunk_f16
+          + v_chunk_elems * (int64_t)حجم(sycl::half)            // V_chunk_f16
         ) / (1024.0 * 1024.0);
         GGML_LOG_INFO("[MKL-FA] #%d n_kv=%d n_q=%d q_tile=%d time_us: "
                 "dequant=%lld GEMM_KQ=%lld softmax=%lld GEMM_VKQ=%lld "
                 "buf_mb=%.1f\n",
-                mkl_call_count, n_kv, n_queries, q_tile_rows,
-                (long long)dequant_time_us,
-                (long long)gemm_kq_time_us,
-                (long long)softmax_time_us,
-                (long long)gemm_vkq_time_us,
-                total_mb);
+                mkl_call_شمار, n_kv, n_queries, q_tile_ردیفها,
+                (دراز دراز)dequant_زمان_us,
+                (دراز دراز)gemm_kq_زمان_us,
+                (دراز دراز)softmax_زمان_us,
+                (دراز دراز)gemm_vkq_زمان_us,
+                مجموع_mb);
     }
 }

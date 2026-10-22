@@ -1,177 +1,177 @@
-#ifndef HTP_CTX_H
-#define HTP_CTX_H
+#اگر_تعریف_نشده HTP_CTX_H
+#تعریف_کن HTP_CTX_H
 
-#include "dma-queue.h"
-#include "hmx-queue.h"
-#include "htp-dcache.h"
-#include "htp-ops.h"
-#include "hex-profile.h"
-#include "work-queue.h"
-#include "hex-fastdiv.h"
+#ضمن "dma-queue.h"
+#ضمن "hmx-queue.h"
+#ضمن "htp-dcache.h"
+#ضمن "htp-ops.h"
+#ضمن "hex-profile.h"
+#ضمن "work-queue.h"
+#ضمن "hex-fastdiv.h"
 
-#include <assert.h>
-#include <dspqueue.h>
-#include <stdatomic.h>
-#include <stdint.h>
-#include <stdbool.h>
+#ضمن <assert.h>
+#ضمن <dspqueue.h>
+#ضمن <stdatomic.h>
+#ضمن <stdint.h>
+#ضمن <stdbool.h>
 
-#ifndef HTP_MAX_NTHREADS
-#define HTP_MAX_NTHREADS 10
-#endif
+#اگر_تعریف_نشده HTP_MAX_NTHREADS
+#تعریف_کن HTP_MAX_NTHREADS 10
+#پایان_اگر
 
-#define HTP_MAX_MMAPS 64
+#تعریف_کن HTP_MAX_MMAPS 64
 
 // Memory mapping
-struct htp_mmap {
-    uint64_t size;
-    uint64_t base;
+بنية htp_mmap {
+    uint64_t اندازه;
+    uint64_t پایه;
     uint32_t fd;
     uint32_t flags;
 };
 
 // Scratchpad state
-struct htp_spad {
-    const struct htp_tensor * src;             // original src of the data (for reuse)
-    uint8_t *                 data;            // pointer to an area in vtcm
+بنية htp_spad {
+    ثابت بنية htp_tensor * src;             // original src of the data (for reuse)
+    uint8_t *                 داده;            // pointer to an area in vtcm
     uint32_t                  stride;          // stride used inside this spad
-    uint32_t                  size;            // total size
-    uint32_t                  size_per_thread; // size per thread
+    uint32_t                  اندازه;            // total size
+    uint32_t                  اندازه_در_هر_thread; // size per thread
 };
 
-struct htp_mdev_group {
+بنية htp_mdev_گروه {
     uint16_t              idx;
-    uint16_t              count;
-    struct fastdiv_values count_div;
-    uint8_t *             fence_base;
+    uint16_t              شمار;
+    بنية fastdiv_مقادیر شمار_div;
+    uint8_t *             fence_پایه;
     uint32_t              fence_seq;
 };
 
-struct htp_context;
+بنية htp_context;
 
 // Context while processing an Op
 // TODO: fold this into the main context
-struct htp_ops_context {
-    struct htp_context * ctx;
+بنية htp_ops_context {
+    بنية htp_context * ctx;
 
-    enum htp_op_code    op; // FIXME: rename to opcode
+    تعداد htp_op_کد    op; // FIXME: rename to opcode
     int32_t             op_params[HTP_OP_MAX_PARAMS];
     int32_t             kernel_params[HTP_OP_MAX_KERN_PARAMS];
 
-    const struct htp_tensor * src[HTP_OP_MAX_INPUTS];
-    union {
-        const struct htp_tensor * dst;
-        const struct htp_tensor * dsts[HTP_OP_MAX_OUTPUTS];
+    ثابت بنية htp_tensor * src[HTP_OP_MAX_INPUTS];
+    اتحاد {
+        ثابت بنية htp_tensor * dst;
+        ثابت بنية htp_tensor * dsts[HTP_OP_MAX_OUTPUTS];
     };
 
     // TODO convert these to an array
-    struct htp_spad src0_spad;
-    struct htp_spad src1_spad;
-    struct htp_spad src2_spad;
-    struct htp_spad src3_spad;
-    struct htp_spad dst_spad;
+    بنية htp_spad src0_spad;
+    بنية htp_spad src1_spad;
+    بنية htp_spad src2_spad;
+    بنية htp_spad src3_spad;
+    بنية htp_spad dst_spad;
 
     uint32_t              flags;
-    uint32_t              n_threads;
-    struct fastdiv_values n_threads_div;
-    int                   status;
+    uint32_t              n_نخها;
+    بنية fastdiv_مقادیر n_نخها_div;
+    صحيح                   وضعیت;
 };
 
 // Main context for htp DSP backend
-struct htp_context {
-    dspqueue_t             dsp_queue;
+بنية htp_context {
+    dspqueue_t             dsp_صف;
 
-    struct htp_mmap        mmap[HTP_MAX_MMAPS];
-    dma_queue_t            dma[HTP_MAX_NTHREADS];
-    struct htp_thread_trace trace[HTP_MAX_NTHREADS + 1];
-    work_queue_t           work_queue;
-    hmx_queue_t            hmx_queue;
+    بنية htp_mmap        mmap[HTP_MAX_MMAPS];
+    dma_صف_t            dma[HTP_MAX_NTHREADS];
+    بنية htp_thread_trace trace[HTP_MAX_NTHREADS + 1];
+    work_صف_t           work_صف;
+    hmx_صف_t            hmx_صف;
 
-    uint32_t               n_threads;
-    struct fastdiv_values  n_threads_div;
+    uint32_t               n_نخها;
+    بنية fastdiv_مقادیر  n_نخها_div;
 
-    int                    thread_id;
-    int                    thread_prio;
+    صحيح                    thread_id;
+    صحيح                    thread_prio;
 
     bool                   hmx_enabled;
     bool                   etm;
     uint32_t               profiler;
 
-    uint8_t *              vtcm_base;
-    size_t                 vtcm_size;
+    uint8_t *              vtcm_پایه;
+    size_t                 vtcm_اندازه;
     uint32_t               vtcm_rctx;
     atomic_bool            vtcm_valid;
     atomic_bool            vtcm_needs_release;
 
     uint64_t               max_vmem;
-    struct htp_dirty_range dirty_ranges[HTP_MAX_DIRTY_RANGES];
+    بنية htp_dirty_range dirty_ranges[HTP_MAX_DIRTY_RANGES];
 
     // Persistent DDR scratchpad for MUL_MAT_ID mappings
-    void *                 ddr_spad_base;
-    size_t                 ddr_spad_size;
+    فراغ *                 ddr_spad_پایه;
+    size_t                 ddr_spad_اندازه;
 
-    struct htp_mdev_group  mdev;
-    struct htp_ops_context octx;
+    بنية htp_mdev_گروه  mdev;
+    بنية htp_ops_context octx;
 
     qurt_thread_t          main_thread;
-    void *                 main_stack;
+    فراغ *                 main_پشته;
     atomic_bool            killed;
     size_t                 footprint;
 };
 
-static inline bool htp_ops_context_set_n_threads(struct htp_ops_context * octx, uint32_t n_threads) {
-    if (n_threads == 0 || n_threads > octx->ctx->n_threads) {
-        return false;
+ساكن مضمن bool htp_ops_context_مجموعه_n_نخها(بنية htp_ops_context * octx, uint32_t n_نخها) {
+    إذا (n_نخها == 0 || n_نخها > octx->ctx->n_نخها) {
+        أرجع false;
     }
 
-    if (n_threads != octx->n_threads) {
-        octx->n_threads = n_threads;
-        octx->n_threads_div = n_threads == octx->ctx->n_threads
-            ? octx->ctx->n_threads_div
-            : init_fastdiv_values(n_threads);
+    إذا (n_نخها != octx->n_نخها) {
+        octx->n_نخها = n_نخها;
+        octx->n_نخها_div = n_نخها == octx->ctx->n_نخها
+            ? octx->ctx->n_نخها_div
+            : init_fastdiv_مقادیر(n_نخها);
     }
 
-    return true;
+    أرجع true;
 }
 
-static inline void htp_ops_context_set_status(struct htp_ops_context * octx, int status) {
-    if (status > HTP_STATUS_OK && octx->status == HTP_STATUS_OK) {
-        octx->status = status;
+ساكن مضمن فراغ htp_ops_context_مجموعه_وضعیت(بنية htp_ops_context * octx, صحيح وضعیت) {
+    إذا (وضعیت > HTP_وضعیت_OK && octx->وضعیت == HTP_وضعیت_OK) {
+        octx->وضعیت = وضعیت;
     }
 }
 
-int op_matmul(struct htp_ops_context * octx);
-int op_matmul_id(struct htp_ops_context * octx);
-int op_matmul_nx(struct htp_ops_context * octx);
-int op_matmul_id_nx(struct htp_ops_context * octx);
-int op_binary(struct htp_ops_context * octx);
-int op_unary(struct htp_ops_context * octx);
-int op_sum(struct htp_ops_context * octx);
-int op_sum_rows(struct htp_ops_context * octx);
-int op_argmax(struct htp_ops_context * octx);
-int op_activations(struct htp_ops_context * octx);
-int op_softmax(struct htp_ops_context * octx);
-int op_add_id(struct htp_ops_context * octx);
-int op_rope(struct htp_ops_context * octx);
-int op_flash_attn_ext(struct htp_ops_context * octx);
-int op_set_rows(struct htp_ops_context * octx);
-int op_get_rows(struct htp_ops_context * octx);
-int op_cpy(struct htp_ops_context * octx);
-int op_repeat(struct htp_ops_context * octx);
-int op_argsort(struct htp_ops_context * octx);
-int op_top_k(struct htp_ops_context * octx);
-int op_ssm_conv(struct htp_ops_context * octx);
-int op_cumsum(struct htp_ops_context * octx);
-int op_fill(struct htp_ops_context * octx);
-int op_concat(struct htp_ops_context * octx);
-int op_diag(struct htp_ops_context * octx);
-int op_solve_tri(struct htp_ops_context * octx);
-int op_gated_delta_net(struct htp_ops_context * octx);
-int op_pad(struct htp_ops_context * octx);
-int op_im2col(struct htp_ops_context * octx);
-int op_im2col_3d(struct htp_ops_context * octx);
-int op_pool_2d(struct htp_ops_context * octx);
-int op_pool_1d(struct htp_ops_context * octx);
-int op_allreduce(struct htp_ops_context * octx);
-int op_roll(struct htp_ops_context * octx);
+صحيح op_matmul(بنية htp_ops_context * octx);
+صحيح op_matmul_id(بنية htp_ops_context * octx);
+صحيح op_matmul_nx(بنية htp_ops_context * octx);
+صحيح op_matmul_id_nx(بنية htp_ops_context * octx);
+صحيح op_دودویی(بنية htp_ops_context * octx);
+صحيح op_unary(بنية htp_ops_context * octx);
+صحيح op_جمع(بنية htp_ops_context * octx);
+صحيح op_جمع_ردیفها(بنية htp_ops_context * octx);
+صحيح op_argmax(بنية htp_ops_context * octx);
+صحيح op_activations(بنية htp_ops_context * octx);
+صحيح op_softmax(بنية htp_ops_context * octx);
+صحيح op_جمع_کن_id(بنية htp_ops_context * octx);
+صحيح op_rope(بنية htp_ops_context * octx);
+صحيح op_flash_attn_ext(بنية htp_ops_context * octx);
+صحيح op_مجموعه_ردیفها(بنية htp_ops_context * octx);
+صحيح op_get_ردیفها(بنية htp_ops_context * octx);
+صحيح op_cpy(بنية htp_ops_context * octx);
+صحيح op_repeat(بنية htp_ops_context * octx);
+صحيح op_argsort(بنية htp_ops_context * octx);
+صحيح op_بالاترین_k(بنية htp_ops_context * octx);
+صحيح op_ssm_conv(بنية htp_ops_context * octx);
+صحيح op_cumsum(بنية htp_ops_context * octx);
+صحيح op_fill(بنية htp_ops_context * octx);
+صحيح op_concat(بنية htp_ops_context * octx);
+صحيح op_diag(بنية htp_ops_context * octx);
+صحيح op_solve_tri(بنية htp_ops_context * octx);
+صحيح op_gated_delta_net(بنية htp_ops_context * octx);
+صحيح op_pad(بنية htp_ops_context * octx);
+صحيح op_im2col(بنية htp_ops_context * octx);
+صحيح op_im2col_3d(بنية htp_ops_context * octx);
+صحيح op_pool_2d(بنية htp_ops_context * octx);
+صحيح op_pool_1d(بنية htp_ops_context * octx);
+صحيح op_allreduce(بنية htp_ops_context * octx);
+صحيح op_roll(بنية htp_ops_context * octx);
 
-#endif /* HTP_CTX_H */
+#پایان_اگر /* HTP_CTX_H */

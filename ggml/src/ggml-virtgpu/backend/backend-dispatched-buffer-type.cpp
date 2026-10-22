@@ -1,105 +1,105 @@
-#include "backend-dispatched.h"
-#include "backend-virgl-apir.h"
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
-#include "ggml-impl.h"
+#ضمن "backend-dispatched.h"
+#ضمن "backend-virgl-apir.h"
+#ضمن "ggml-backend-impl.h"
+#ضمن "ggml-backend.h"
+#ضمن "ggml-impl.h"
 
-#include <cstdint>
+#ضمن <cstdint>
 
-uint32_t backend_buffer_type_get_name(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
-    GGML_UNUSED(ctx);
-    ggml_backend_buffer_type_t buft;
-    buft = apir_decode_ggml_buffer_type(dec);
+uint32_t backend_میانگیر_type_get_name(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+    GGML_استفادهنشده(ctx);
+    ggml_backend_میانگیر_type_t buft;
+    buft = apir_decode_ggml_میانگیر_type(dec);
 
-    const char * string = buft->iface.get_name(buft);
+    ثابت حرف * string = buft->iface.get_name(buft);
 
-    const size_t string_size = strlen(string) + 1;
-    apir_encode_array_size(enc, string_size);
-    apir_encode_char_array(enc, string, string_size);
+    ثابت size_t string_اندازه = طول_رشته(string) + 1;
+    apir_encode_array_اندازه(enc, string_اندازه);
+    apir_encode_char_array(enc, string, string_اندازه);
 
-    return 0;
+    أرجع 0;
 }
 
-uint32_t backend_buffer_type_get_alignment(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
-    GGML_UNUSED(ctx);
-    ggml_backend_buffer_type_t buft;
-    buft = apir_decode_ggml_buffer_type(dec);
+uint32_t backend_میانگیر_type_get_alignment(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+    GGML_استفادهنشده(ctx);
+    ggml_backend_میانگیر_type_t buft;
+    buft = apir_decode_ggml_میانگیر_type(dec);
 
     size_t value = buft->iface.get_alignment(buft);
-    apir_encode_size_t(enc, &value);
+    apir_encode_اندازه_t(enc, &value);
 
-    return 0;
+    أرجع 0;
 }
 
-uint32_t backend_buffer_type_get_max_size(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
-    GGML_UNUSED(ctx);
-    ggml_backend_buffer_type_t buft;
-    buft = apir_decode_ggml_buffer_type(dec);
+uint32_t backend_میانگیر_type_get_max_اندازه(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+    GGML_استفادهنشده(ctx);
+    ggml_backend_میانگیر_type_t buft;
+    buft = apir_decode_ggml_میانگیر_type(dec);
 
     size_t value = SIZE_MAX;
-    if (buft->iface.get_max_size) {
-        value = buft->iface.get_max_size(buft);
+    إذا (buft->iface.get_max_اندازه) {
+        value = buft->iface.get_max_اندازه(buft);
     }
 
-    apir_encode_size_t(enc, &value);
+    apir_encode_اندازه_t(enc, &value);
 
-    return 0;
+    أرجع 0;
 }
 
 /* APIR_COMMAND_TYPE_BUFFER_TYPE_IS_HOST is deprecated. Keeping the handler for backward compatibility. */
-uint32_t backend_buffer_type_is_host(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
-    GGML_UNUSED(ctx);
-    GGML_UNUSED(dec);
-    const bool is_host = false;
+uint32_t backend_میانگیر_type_is_host(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+    GGML_استفادهنشده(ctx);
+    GGML_استفادهنشده(dec);
+    ثابت منطقي is_host = خطأ;
 
     apir_encode_bool_t(enc, &is_host);
 
-    return 0;
+    أرجع 0;
 }
 
-uint32_t backend_buffer_type_alloc_buffer(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
-    GGML_UNUSED(ctx);
-    ggml_backend_buffer_type_t buft;
-    buft = apir_decode_ggml_buffer_type(dec);
+uint32_t backend_میانگیر_type_alloc_میانگیر(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+    GGML_استفادهنشده(ctx);
+    ggml_backend_میانگیر_type_t buft;
+    buft = apir_decode_ggml_میانگیر_type(dec);
 
     size_t size;
-    apir_decode_size_t(dec, &size);
+    apir_decode_اندازه_t(dec, &size);
 
-    ggml_backend_buffer_t buffer;
+    ggml_backend_میانگیر_t میانگیر;
 
-    buffer = buft->iface.alloc_buffer(buft, size);
+    میانگیر = buft->iface.alloc_میانگیر(buft, size);
 
-    apir_encode_ggml_buffer(enc, buffer);
+    apir_encode_ggml_میانگیر(enc, میانگیر);
 
-    if (buffer) {
-        apir_track_backend_buffer(buffer);
+    إذا (میانگیر) {
+        apir_track_backend_میانگیر(میانگیر);
     }
 
-    return 0;
+    أرجع 0;
 }
 
-uint32_t backend_buffer_type_get_alloc_size(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
-    GGML_UNUSED(ctx);
-    ggml_backend_buffer_type_t buft;
-    buft = apir_decode_ggml_buffer_type(dec);
+uint32_t backend_میانگیر_type_get_alloc_اندازه(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+    GGML_استفادهنشده(ctx);
+    ggml_backend_میانگیر_type_t buft;
+    buft = apir_decode_ggml_میانگیر_type(dec);
 
-    const ggml_tensor * op = apir_decode_ggml_tensor_inplace(dec);
+    ثابت ggml_tensor * op = apir_decode_ggml_tensor_inplace(dec);
 
     // Check for decode error
-    if (op == nullptr) {
+    إذا (op == اشاره_تهی) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: Failed to decode tensor\n", __func__);
-        apir_decoder_set_fatal(dec);
-        return 1;
+        apir_decoder_مجموعه_fatal(dec);
+        أرجع 1;
     }
 
     size_t value;
-    if (buft->iface.get_alloc_size) {
-        value = buft->iface.get_alloc_size(buft, op);
-    } else {
+    إذا (buft->iface.get_alloc_اندازه) {
+        value = buft->iface.get_alloc_اندازه(buft, op);
+    } وإلا {
         value = ggml_nbytes(op);  // Default fallback
     }
 
-    apir_encode_size_t(enc, &value);
+    apir_encode_اندازه_t(enc, &value);
 
-    return 0;
+    أرجع 0;
 }

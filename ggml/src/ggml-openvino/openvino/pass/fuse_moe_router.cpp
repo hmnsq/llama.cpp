@@ -1,150 +1,150 @@
-#include "fuse_moe_router.h"
+#ضمن "fuse_moe_router.h"
 
-#include <openvino/core/graph_util.hpp>
-#include <openvino/core/rt_info.hpp>
-#include <openvino/op/broadcast.hpp>
-#include <openvino/op/clamp.hpp>
-#include <openvino/op/concat.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/divide.hpp>
-#include <openvino/op/gather.hpp>
-#include <openvino/op/matmul.hpp>
-#include <openvino/op/reduce_sum.hpp>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/shape_of.hpp>
-#include <openvino/op/slice.hpp>
-#include <openvino/op/softmax.hpp>
-#include <openvino/op/squeeze.hpp>
-#include <openvino/op/tile.hpp>
-#include <openvino/op/topk.hpp>
-#include <openvino/op/unsqueeze.hpp>
-#include <openvino/pass/pattern/op/wrap_type.hpp>
+#ضمن <openvino/core/graph_util.hpp>
+#ضمن <openvino/core/rt_info.hpp>
+#ضمن <openvino/op/broadcast.hpp>
+#ضمن <openvino/op/clamp.hpp>
+#ضمن <openvino/op/concat.hpp>
+#ضمن <openvino/op/constant.hpp>
+#ضمن <openvino/op/divide.hpp>
+#ضمن <openvino/op/gather.hpp>
+#ضمن <openvino/op/matmul.hpp>
+#ضمن <openvino/op/reduce_sum.hpp>
+#ضمن <openvino/op/reshape.hpp>
+#ضمن <openvino/op/shape_of.hpp>
+#ضمن <openvino/op/slice.hpp>
+#ضمن <openvino/op/softmax.hpp>
+#ضمن <openvino/op/squeeze.hpp>
+#ضمن <openvino/op/tile.hpp>
+#ضمن <openvino/op/topk.hpp>
+#ضمن <openvino/op/unsqueeze.hpp>
+#ضمن <openvino/pass/pattern/op/wrap_type.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace pass {
+نطاق ov {
+نطاق frontend {
+نطاق ggml {
+نطاق pass {
 
-namespace {
+نطاق {
 
-bool constant_is(const ov::Output<ov::Node> & output, const std::vector<int64_t> & values) {
-    auto node = ov::as_type_ptr<ov::op::v0::Constant>(output.get_node_shared_ptr());
-    return node && node->get_element_type().is_integral_number() && node->cast_vector<int64_t>() == values;
+منطقي constant_is(ثابت ov::Output<ov::Node> & output, ثابت std::vector<int64_t> & مقادیر) {
+    خودکار گره = ov::as_type_ptr<ov::op::v0::Constant>(output.get_گره_shared_ptr());
+    أرجع گره && گره->get_element_type().is_integral_عدد() && گره->cast_وکتور<int64_t>() == مقادیر;
 }
 
 }  // namespace
 
-FuseMoeRouter::FuseMoeRouter() {
-    using namespace ov::pass::pattern;
-    using namespace ov::op;
+Fuse_Moe_مسیریاب::Fuse_Moe_مسیریاب() {
+    استفاده نطاق ov::pass::pattern;
+    استفاده نطاق ov::op;
 
     // Match the GGML rank-4 routing chain. The GPU plugin recognizes the resulting
     // Softmax -> TopK -> ReduceSum -> Divide subgraph as MoERouterFused.
-    auto logits = wrap_type<v0::MatMul>();
-    auto softmax = wrap_type<v8::Softmax>({logits});
-    auto topk = wrap_type<v11::TopK>({softmax, any_input()});
-    topk->set_output_size(2);
-    auto ids = wrap_type<v8::Slice>({topk->output(1), any_input(), any_input(), any_input(), any_input()});
-    auto ids_2d = wrap_type<v0::Squeeze>({ids, any_input()});
-    auto probs = wrap_type<v1::Reshape>({softmax, any_input()});
-    auto data = wrap_type<v0::Squeeze>({probs, any_input()});
-    auto data_batch = wrap_type<v8::Gather>({wrap_type<v3::ShapeOf>({data}), any_input(), any_input()});
-    auto ids_count = wrap_type<v8::Gather>({wrap_type<v3::ShapeOf>({ids_2d}), any_input(), any_input()});
-    auto target = wrap_type<v0::Concat>({data_batch, ids_count});
-    auto broadcast = wrap_type<v3::Broadcast>({ids_2d, target});
-    auto gather = wrap_type<v8::Gather>({data, broadcast, any_input()});
-    auto weights_4d = wrap_type<v0::Unsqueeze>({gather, any_input()});
-    auto weights = wrap_type<v1::Reshape>({weights_4d, any_input()});
-    auto sum = wrap_type<v1::ReduceSum>({weights, any_input()});
-    auto clamp = wrap_type<v0::Clamp>({sum});
-    auto tile = wrap_type<v0::Tile>({clamp, any_input()});
-    auto norm = wrap_type<v1::Divide>({weights, tile});
+    خودکار logits = wrap_type<v0::MatMul>();
+    خودکار softmax = wrap_type<v8::Softmax>({logits});
+    خودکار topk = wrap_type<v11::بالاترین_K>({softmax, any_درون_داد()});
+    topk->مجموعه_output_اندازه(2);
+    خودکار ids = wrap_type<v8::برش>({topk->output(1), any_درون_داد(), any_درون_داد(), any_درون_داد(), any_درون_داد()});
+    خودکار ids_2d = wrap_type<v0::Squeeze>({ids, any_درون_داد()});
+    خودکار probs = wrap_type<v1::Reshape>({softmax, any_درون_داد()});
+    خودکار داده = wrap_type<v0::Squeeze>({probs, any_درون_داد()});
+    خودکار داده_batch = wrap_type<v8::Gather>({wrap_type<v3::Shape_از>({داده}), any_درون_داد(), any_درون_داد()});
+    خودکار ids_شمار = wrap_type<v8::Gather>({wrap_type<v3::Shape_از>({ids_2d}), any_درون_داد(), any_درون_داد()});
+    خودکار هدف = wrap_type<v0::Concat>({داده_batch, ids_شمار});
+    خودکار پخش_2 = wrap_type<v3::پخش>({ids_2d, هدف});
+    خودکار gather = wrap_type<v8::Gather>({داده, پخش_2, any_درون_داد()});
+    خودکار weights_4d = wrap_type<v0::Unsqueeze>({gather, any_درون_داد()});
+    خودکار weights = wrap_type<v1::Reshape>({weights_4d, any_درون_داد()});
+    خودکار جمع = wrap_type<v1::Reduce_جمع>({weights, any_درون_داد()});
+    خودکار clamp = wrap_type<v0::Clamp>({جمع});
+    خودکار tile = wrap_type<v0::Tile>({clamp, any_درون_داد()});
+    خودکار norm = wrap_type<v1::Divide>({weights, tile});
 
-    const auto callback = [=](Matcher & m) {
-        const auto & pm = m.get_pattern_value_map();
-        const auto node = [&](const std::shared_ptr<ov::Node> & p) { return pm.at(p).get_node_shared_ptr(); };
-        const auto input_is = [&](const std::shared_ptr<ov::Node> & p, size_t i, const std::vector<int64_t> & v) {
-            return constant_is(node(p)->input_value(i), v);
+    ثابت خودکار callback = [=](Matcher & m) {
+        ثابت خودکار & pm = m.get_الگو_مقدار_map();
+        ثابت خودکار گره = [&](ثابت std::shared_ptr<ov::Node> & p) { أرجع pm.at(p).get_گره_shared_ptr(); };
+        ثابت خودکار درون_داد_is = [&](ثابت std::shared_ptr<ov::Node> & p, size_t i, ثابت std::vector<int64_t> & v) {
+            أرجع constant_is(گره(p)->درون_داد_مقدار(i), v);
         };
-        auto mm = ov::as_type_ptr<v0::MatMul>(node(logits));
-        auto sm = ov::as_type_ptr<v8::Softmax>(node(softmax));
-        auto tk = ov::as_type_ptr<v11::TopK>(node(topk));
-        auto reduce = ov::as_type_ptr<v1::ReduceSum>(node(sum));
-        auto limit = ov::as_type_ptr<v0::Clamp>(node(clamp));
-        const auto shape = mm->get_output_partial_shape(0);
-        if (shape.rank() != 4 || shape[0] != 1 || shape[1] != 1 || shape[3].is_dynamic() ||
-            mm->get_transpose_a() || mm->get_input_partial_shape(0).rank() != 4 ||
-            mm->get_input_partial_shape(1).rank() != 2 || (sm->get_axis() != -1 && sm->get_axis() != 3) ||
-            tk->get_axis() != 3 || tk->get_mode() != v11::TopK::Mode::MAX ||
-            tk->get_sort_type() != v11::TopK::SortType::SORT_VALUES || tk->get_stable() ||
-            tk->get_index_element_type() != ov::element::i32 ||
-            !tk->output(0).get_target_inputs().empty()) {
-            return false;
+        خودکار mm = ov::as_type_ptr<v0::MatMul>(گره(logits));
+        خودکار sm = ov::as_type_ptr<v8::Softmax>(گره(softmax));
+        خودکار tk = ov::as_type_ptr<v11::بالاترین_K>(گره(topk));
+        خودکار reduce = ov::as_type_ptr<v1::Reduce_جمع>(گره(جمع));
+        خودکار حد = ov::as_type_ptr<v0::Clamp>(گره(clamp));
+        ثابت خودکار shape = mm->get_output_partial_shape(0);
+        إذا (shape.rank() != 4 || shape[0] != 1 || shape[1] != 1 || shape[3].is_dynamic() ||
+            mm->get_transpose_a() || mm->get_درون_داد_partial_shape(0).rank() != 4 ||
+            mm->get_درون_داد_partial_shape(1).rank() != 2 || (sm->get_axis() != -1 && sm->get_axis() != 3) ||
+            tk->get_axis() != 3 || tk->get_نما() != v11::بالاترین_K::نما_2::MAX ||
+            tk->get_مرتب_سازی_type() != v11::بالاترین_K::مرتب_سازی_Type::مرتب_سازی_مقادیر || tk->get_stable() ||
+            tk->get_شاخص_element_type() != ov::element::i32 ||
+            !tk->output(0).get_هدف_inputs().خالی()) {
+            أرجع خطأ;
         }
-        const int64_t experts = shape[3].get_length();
-        auto end = ov::as_type_ptr<v0::Constant>(node(ids)->get_input_node_shared_ptr(2));
-        if (!end || !end->get_element_type().is_integral_number() || ov::shape_size(end->get_shape()) != 1) {
-            return false;
+        ثابت int64_t experts = shape[3].get_درازی();
+        خودکار end = ov::as_type_ptr<v0::Constant>(گره(ids)->get_درون_داد_گره_shared_ptr(2));
+        إذا (!end || !end->get_element_type().is_integral_عدد() || ov::shape_اندازه(end->get_shape()) != 1) {
+            أرجع خطأ;
         }
-        const int64_t k = end->cast_vector<int64_t>()[0];
-        const auto sorted_shape = tk->get_output_partial_shape(1);
-        if (k <= 0 || k > experts || sorted_shape[3].is_dynamic() || sorted_shape[3].get_length() < k ||
-            !input_is(probs, 1, {1, -1, experts, 1}) ||
-            !input_is(data, 1, {0}) || !input_is(ids_2d, 1, {0, 1}) ||
-            !input_is(weights_4d, 1, {0}) || !input_is(weights, 1, {1, 1, -1, k}) ||
-            ov::as_type_ptr<v1::Reshape>(node(probs))->get_special_zero() ||
-            ov::as_type_ptr<v1::Reshape>(node(weights))->get_special_zero() ||
-            !input_is(gather, 2, {1}) || ov::as_type_ptr<v8::Gather>(node(gather))->get_batch_dims() != 1 ||
-            !input_is(data_batch, 1, {0}) || !input_is(data_batch, 2, {0}) ||
-            !input_is(ids_count, 1, {1}) || !input_is(ids_count, 2, {0}) ||
-            ov::as_type_ptr<v8::Gather>(node(data_batch))->get_batch_dims() != 0 ||
-            ov::as_type_ptr<v8::Gather>(node(ids_count))->get_batch_dims() != 0 ||
-            ov::as_type_ptr<v0::Concat>(node(target))->get_axis() != 0 ||
-            ov::as_type_ptr<v3::Broadcast>(node(broadcast))->get_broadcast_spec().m_type != ov::op::BroadcastType::BIDIRECTIONAL ||
-            !reduce->get_keep_dims() || (!input_is(sum, 1, {-1}) && !input_is(sum, 1, {3})) ||
-            !input_is(tile, 1, {1, 1, 1, k}) ||
-            ov::as_type_ptr<v1::Divide>(node(norm))->get_autob().m_type != ov::op::AutoBroadcastType::NUMPY) {
-            return false;
+        ثابت int64_t k = end->cast_وکتور<int64_t>()[0];
+        ثابت خودکار sorted_shape = tk->get_output_partial_shape(1);
+        إذا (k <= 0 || k > experts || sorted_shape[3].is_dynamic() || sorted_shape[3].get_درازی() < k ||
+            !درون_داد_is(probs, 1, {1, -1, experts, 1}) ||
+            !درون_داد_is(داده, 1, {0}) || !درون_داد_is(ids_2d, 1, {0, 1}) ||
+            !درون_داد_is(weights_4d, 1, {0}) || !درون_داد_is(weights, 1, {1, 1, -1, k}) ||
+            ov::as_type_ptr<v1::Reshape>(گره(probs))->get_special_zero() ||
+            ov::as_type_ptr<v1::Reshape>(گره(weights))->get_special_zero() ||
+            !درون_داد_is(gather, 2, {1}) || ov::as_type_ptr<v8::Gather>(گره(gather))->get_batch_dims() != 1 ||
+            !درون_داد_is(داده_batch, 1, {0}) || !درون_داد_is(داده_batch, 2, {0}) ||
+            !درون_داد_is(ids_شمار, 1, {1}) || !درون_داد_is(ids_شمار, 2, {0}) ||
+            ov::as_type_ptr<v8::Gather>(گره(داده_batch))->get_batch_dims() != 0 ||
+            ov::as_type_ptr<v8::Gather>(گره(ids_شمار))->get_batch_dims() != 0 ||
+            ov::as_type_ptr<v0::Concat>(گره(هدف))->get_axis() != 0 ||
+            ov::as_type_ptr<v3::پخش>(گره(پخش_2))->get_پخش_spec().m_type != ov::op::پخش_Type::BIDIRECTIONAL ||
+            !reduce->get_keep_dims() || (!درون_داد_is(جمع, 1, {-1}) && !درون_داد_is(جمع, 1, {3})) ||
+            !درون_داد_is(tile, 1, {1, 1, 1, k}) ||
+            ov::as_type_ptr<v1::Divide>(گره(norm))->get_autob().m_type != ov::op::Auto_پخش_Type::NUMPY) {
+            أرجع خطأ;
         }
         // The top-k softmax sum is at least k / experts. Leave margin for rounding.
         // This guard is only valid for unbiased softmax routing.
-        if (!(limit->get_min() <= 0.5 * double(k) / experts && limit->get_max() >= 2.0)) {
-            return false;
+        إذا (!(حد->get_min() <= 0.5 * مزدوج(k) / experts && حد->get_max() >= 2.0)) {
+            أرجع خطأ;
         }
         std::vector<std::shared_ptr<ov::Node>> slices;
-        for (const auto & input : tk->output(1).get_target_inputs()) {
-            auto slice = ov::as_type_ptr<v8::Slice>(input.get_node()->shared_from_this());
-            if (!slice || input.get_index() != 0 || slice->get_input_size() != 5 ||
-                !constant_is(slice->input_value(1), {0}) || !constant_is(slice->input_value(2), {k}) ||
-                !constant_is(slice->input_value(3), {1}) ||
-                (!constant_is(slice->input_value(4), {3}) && !constant_is(slice->input_value(4), {-1}))) {
-                return false;
+        لكل (ثابت خودکار & درون_داد : tk->output(1).get_هدف_inputs()) {
+            خودکار برش_2 = ov::as_type_ptr<v8::برش>(درون_داد.get_گره()->shared_from_this());
+            إذا (!برش_2 || درون_داد.get_شاخص() != 0 || برش_2->get_درون_داد_اندازه() != 5 ||
+                !constant_is(برش_2->درون_داد_مقدار(1), {0}) || !constant_is(برش_2->درون_داد_مقدار(2), {k}) ||
+                !constant_is(برش_2->درون_داد_مقدار(3), {1}) ||
+                (!constant_is(برش_2->درون_داد_مقدار(4), {3}) && !constant_is(برش_2->درون_داد_مقدار(4), {-1}))) {
+                أرجع خطأ;
             }
-            slices.push_back(slice);
+            slices.push_back(برش_2);
         }
 
         // Remove GGML's leading singleton dimension while building the plugin pattern,
         // then restore it on both outputs for the following GGML nodes.
-        auto axis0 = v0::Constant::create(ov::element::i64, ov::Shape{1}, {0});
-        auto hidden = std::make_shared<v0::Squeeze>(mm->input_value(0), axis0);
-        auto routing = std::make_shared<v0::MatMul>(hidden, mm->input_value(1), false, mm->get_transpose_b());
-        auto probabilities = std::make_shared<v8::Softmax>(routing, -1);
-        auto selected = std::make_shared<v11::TopK>(probabilities,
+        خودکار axis0 = v0::Constant::create(ov::element::i64, ov::Shape{1}, {0});
+        خودکار hidden = std::make_shared<v0::Squeeze>(mm->درون_داد_مقدار(0), axis0);
+        خودکار routing = std::make_shared<v0::MatMul>(hidden, mm->درون_داد_مقدار(1), خطأ, mm->get_transpose_b());
+        خودکار probabilities = std::make_shared<v8::Softmax>(routing, -1);
+        خودکار selected = std::make_shared<v11::بالاترین_K>(probabilities,
             v0::Constant::create(ov::element::i64, ov::Shape{}, {k}), 2,
-            v11::TopK::Mode::MAX, v11::TopK::SortType::SORT_VALUES, tk->get_index_element_type(), false);
-        auto total = std::make_shared<v1::ReduceSum>(selected->output(0),
-            v0::Constant::create(ov::element::i64, ov::Shape{1}, {-1}), true);
-        auto normalized = std::make_shared<v1::Divide>(selected->output(0), total);
-        auto weights_out = std::make_shared<v0::Unsqueeze>(normalized, axis0);
-        auto ids_out = std::make_shared<v0::Unsqueeze>(selected->output(1), axis0);
-        ov::copy_runtime_info({mm, sm, tk, node(norm)}, {hidden, routing, probabilities, selected, total, normalized, weights_out, ids_out});
-        ov::replace_node(node(norm), weights_out);
-        for (const auto & slice : slices) {
-            ov::replace_node(slice, ids_out);
+            v11::بالاترین_K::نما_2::MAX, v11::بالاترین_K::مرتب_سازی_Type::مرتب_سازی_مقادیر, tk->get_شاخص_element_type(), خطأ);
+        خودکار مجموع = std::make_shared<v1::Reduce_جمع>(selected->output(0),
+            v0::Constant::create(ov::element::i64, ov::Shape{1}, {-1}), درست);
+        خودکار normalized = std::make_shared<v1::Divide>(selected->output(0), مجموع);
+        خودکار weights_بیرون = std::make_shared<v0::Unsqueeze>(normalized, axis0);
+        خودکار ids_بیرون = std::make_shared<v0::Unsqueeze>(selected->output(1), axis0);
+        ov::copy_runtime_info({mm, sm, tk, گره(norm)}, {hidden, routing, probabilities, selected, مجموع, normalized, weights_بیرون, ids_بیرون});
+        ov::replace_گره(گره(norm), weights_بیرون);
+        لكل (ثابت خودکار & برش_2 : slices) {
+            ov::replace_گره(برش_2, ids_بیرون);
         }
-        return true;
+        أرجع درست;
     };
-    register_matcher(std::make_shared<Matcher>(norm, "ov::frontend::ggml::pass::FuseMoeRouter"), callback);
+    ثبات_matcher(std::make_shared<Matcher>(norm, "ov::frontend::ggml::pass::FuseMoeRouter"), callback);
 }
 
 }  // namespace pass

@@ -1,170 +1,170 @@
-#pragma clang diagnostic ignored "-Wunused-function"
+#رهنمود clang diagnostic ignored "-Wunused-function"
 
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
+#ضمن <stdbool.h>
+#ضمن <stdlib.h>
+#ضمن <string.h>
 
-#include <qurt_thread.h>
-#include <qurt_futex.h>
-#include <qurt_hvx.h>
+#ضمن <qurt_thread.h>
+#ضمن <qurt_futex.h>
+#ضمن <qurt_hvx.h>
 
-#include <HAP_compute_res.h>
+#ضمن <HAP_compute_res.h>
 
-#include "hmx-queue.h"
+#ضمن "hmx-queue.h"
 
-#define QURT_LOWEST_PRIO (254)
+#تعریف_کن QURT_پایینترین_PRIO (254)
 
-static inline void hmx_lock(hmx_queue_t q)
+ساكن مضمن فراغ hmx_قفل(hmx_صف_t q)
 {
-    if (!q->hmx_locked) {
-        HAP_compute_res_hmx_lock(q->hap_rctx);
+    إذا (!q->hmx_locked) {
+        HAP_compute_res_hmx_قفل(q->hap_rctx);
         q->hmx_locked = true;
     }
 }
 
-static inline void hmx_unlock(hmx_queue_t q)
+ساكن مضمن فراغ hmx_unlock(hmx_صف_t q)
 {
-    if (q->hmx_locked) {
+    إذا (q->hmx_locked) {
         HAP_compute_res_hmx_unlock(q->hap_rctx);
         q->hmx_locked = false;
     }
 }
 
-static inline void hmx_queue_process(hmx_queue_t q, bool* killed) {
-    unsigned int ir = atomic_load(&q->idx_read);
+ساكن مضمن فراغ hmx_صف_process(hmx_صف_t q, bool* killed) {
+    بیعلامت صحيح ir = atomic_بارگیری(&q->idx_read);
 
-    while (ir != atomic_load(&q->idx_write)) {
-        struct hmx_queue_desc *d = &q->desc[ir];
-        if (!d->done) {
-            FARF(HIGH, "hmx-queue-process: ir %u func %p data %p", ir, d->func, d->data);
+    طالما (ir != atomic_بارگیری(&q->idx_write)) {
+        بنية hmx_صف_desc *d = &q->desc[ir];
+        إذا (!d->انجامشده) {
+            FARF(بالا_2, "hmx-queue-process: ir %u func %p data %p", ir, d->func, d->داده);
 
             uintptr_t sig = (uintptr_t) d->func;
-            switch (sig) {
-                case HMX_QUEUE_NOOP:    /* noop */;     break;
-                case HMX_QUEUE_KILL:    *killed = true; break;
-                case HMX_QUEUE_SUSPEND: hmx_unlock(q);  break;
-                case HMX_QUEUE_WAKEUP:  hmx_lock(q);    break;
-                default:
-                    hmx_lock(q);
-                    htp_trace_event_start(q->trace, HTP_TRACE_EVT_HMX_COMP, ir);
-                    d->func(d->data);
+            بدل (sig) {
+                حالة HMX_صف_NOOP:    /* noop */;     اكسر;
+                حالة HMX_صف_KILL:    *killed = true; اكسر;
+                حالة HMX_صف_SUSPEND: hmx_unlock(q);  اكسر;
+                حالة HMX_صف_WAKEUP:  hmx_قفل(q);    اكسر;
+                افتراضي:
+                    hmx_قفل(q);
+                    htp_trace_event_شروع(q->trace, HTP_TRACE_EVT_HMX_COMP, ir);
+                    d->func(d->داده);
                     htp_trace_event_stop(q->trace, HTP_TRACE_EVT_HMX_COMP, ir);
-                    break;
+                    اكسر;
             }
 
-            atomic_fetch_add(&d->done, 1);
+            atomic_fetch_جمع_کن(&d->انجامشده, 1);
         }
 
-        ir = (ir + 1) & q->idx_mask;
+        ir = (ir + 1) & q->idx_ماسک;
         atomic_store(&q->idx_read, ir);
     }
 }
 
-static void hmx_queue_thread(void * arg) {
-    hmx_queue_t q = (hmx_queue_t) arg;
+ساكن فراغ hmx_صف_thread(فراغ * arg) {
+    hmx_صف_t q = (hmx_صف_t) arg;
 
-    FARF(HIGH, "hmx-queue-thread: started");
+    FARF(بالا_2, "hmx-queue-thread: started");
 
     bool killed = false;
 
-    unsigned int poll_cnt  = HMX_QUEUE_POLL_COUNT;
-    unsigned int prev_seqn = 0;
-    while (!killed) {
-        unsigned int seqn = atomic_load(&q->seqn);
-        if (seqn == prev_seqn) {
+    بیعلامت صحيح poll_cnt  = HMX_صف_POLL_شمار;
+    بیعلامت صحيح prev_seqn = 0;
+    طالما (!killed) {
+        بیعلامت صحيح seqn = atomic_بارگیری(&q->seqn);
+        إذا (seqn == prev_seqn) {
             // drop HVX context while spinning
-            if (poll_cnt > 1 && poll_cnt == HMX_QUEUE_POLL_COUNT) {
+            إذا (poll_cnt > 1 && poll_cnt == HMX_صف_POLL_شمار) {
                 qurt_hvx_unlock();
             }
-            if (--poll_cnt) { hex_pause(); continue; }
-            FARF(HIGH, "hmx-queue-thread: sleeping");
+            إذا (--poll_cnt) { hex_pause(); استمر; }
+            FARF(بالا_2, "hmx-queue-thread: sleeping");
             qurt_futex_wait(&q->seqn, prev_seqn);
-            poll_cnt = HMX_QUEUE_POLL_COUNT;
-            continue;
+            poll_cnt = HMX_صف_POLL_شمار;
+            استمر;
         }
         prev_seqn = seqn;
-        poll_cnt  = HMX_QUEUE_POLL_COUNT;
+        poll_cnt  = HMX_صف_POLL_شمار;
 
-        FARF(HIGH, "hmx-queue-thread: new work");
+        FARF(بالا_2, "hmx-queue-thread: new work");
 
-        hmx_queue_process(q, &killed);
+        hmx_صف_process(q, &killed);
     }
 
-    FARF(HIGH, "hmx-queue-thread: stopped");
+    FARF(بالا_2, "hmx-queue-thread: stopped");
 }
 
-size_t hmx_queue_sizeof(size_t capacity, uint32_t stack_size) {
-    capacity = hex_ceil_pow2(capacity);
-    size_t size_q = hex_align_up(sizeof(struct hmx_queue_s), HEX_L2_LINE_SIZE);
-    size_t size_desc = hex_align_up(capacity * sizeof(struct hmx_queue_desc), HEX_L2_LINE_SIZE);
-    size_t size_stack = stack_size;
-    return size_q + size_desc + size_stack;
+size_t hmx_صف_sizeof(size_t ظرفیت, uint32_t پشته_اندازه) {
+    ظرفیت = hex_ceil_pow2(ظرفیت);
+    size_t اندازه_q = hex_align_به_بالا(حجم(بنية hmx_صف_s), HEX_L2_سطر_اندازه);
+    size_t اندازه_desc = hex_align_به_بالا(ظرفیت * حجم(بنية hmx_صف_desc), HEX_L2_سطر_اندازه);
+    size_t اندازه_پشته = پشته_اندازه;
+    أرجع اندازه_q + اندازه_desc + اندازه_پشته;
 }
 
-size_t hmx_queue_alignof(void) {
-    return HEX_L2_LINE_SIZE;
+size_t hmx_صف_alignof(فراغ) {
+    أرجع HEX_L2_سطر_اندازه;
 }
 
-hmx_queue_t hmx_queue_init(void * ptr, size_t capacity, uint32_t stack_size, uint32_t hap_rctx, struct htp_thread_trace * trace) {
-    capacity = hex_ceil_pow2(capacity);
-    size_t size_q = hex_align_up(sizeof(struct hmx_queue_s), HEX_L2_LINE_SIZE);
-    size_t size_desc = hex_align_up(capacity * sizeof(struct hmx_queue_desc), HEX_L2_LINE_SIZE);
+hmx_صف_t hmx_صف_init(فراغ * ptr, size_t ظرفیت, uint32_t پشته_اندازه, uint32_t hap_rctx, بنية htp_thread_trace * trace) {
+    ظرفیت = hex_ceil_pow2(ظرفیت);
+    size_t اندازه_q = hex_align_به_بالا(حجم(بنية hmx_صف_s), HEX_L2_سطر_اندازه);
+    size_t اندازه_desc = hex_align_به_بالا(ظرفیت * حجم(بنية hmx_صف_desc), HEX_L2_سطر_اندازه);
 
-    uint8_t * block = (uint8_t *) ptr;
+    uint8_t * بلوک = (uint8_t *) ptr;
 
-    hmx_queue_t q = (hmx_queue_t) block; block += size_q;
-    memset(q, 0, sizeof(struct hmx_queue_s));
+    hmx_صف_t q = (hmx_صف_t) بلوک; بلوک += اندازه_q;
+    memset(q, 0, حجم(بنية hmx_صف_s));
 
-    q->capacity = capacity;
-    q->idx_mask = capacity - 1;
+    q->ظرفیت = ظرفیت;
+    q->idx_ماسک = ظرفیت - 1;
     q->hap_rctx = hap_rctx;
     q->external_mem = true;
 
-    q->desc = (struct hmx_queue_desc *) block; block += size_desc;
-    memset(q->desc, 0, capacity * sizeof(struct hmx_queue_desc));
+    q->desc = (بنية hmx_صف_desc *) بلوک; بلوک += اندازه_desc;
+    memset(q->desc, 0, ظرفیت * حجم(بنية hmx_صف_desc));
 
-    q->stack = block;
-    memset(q->stack, 0, stack_size);
+    q->پشته = بلوک;
+    memset(q->پشته, 0, پشته_اندازه);
 
     q->trace = trace;
 
     // Match caller thread priority (same pattern as worker-pool.c).
-    int prio = qurt_thread_get_priority(qurt_thread_get_id());
-    if (prio < 1) {
+    صحيح prio = qurt_thread_get_اولویت(qurt_thread_get_id());
+    إذا (prio < 1) {
         prio = 1;
     }
-    if (prio > QURT_LOWEST_PRIO) {
-        prio = QURT_LOWEST_PRIO;
+    إذا (prio > QURT_پایینترین_PRIO) {
+        prio = QURT_پایینترین_PRIO;
     }
 
     qurt_thread_attr_t attr;
     qurt_thread_attr_init(&attr);
-    qurt_thread_attr_set_stack_addr(&attr, q->stack);
-    qurt_thread_attr_set_stack_size(&attr, stack_size);
-    qurt_thread_attr_set_priority(&attr, prio);
-    qurt_thread_attr_set_name(&attr, "hmx-queue");
+    qurt_thread_attr_مجموعه_پشته_addr(&attr, q->پشته);
+    qurt_thread_attr_مجموعه_پشته_اندازه(&attr, پشته_اندازه);
+    qurt_thread_attr_مجموعه_اولویت(&attr, prio);
+    qurt_thread_attr_مجموعه_name(&attr, "hmx-queue");
 
-    int err = qurt_thread_create(&q->thread, &attr, hmx_queue_thread, q);
-    if (err) {
+    صحيح err = qurt_thread_create(&q->thread, &attr, hmx_صف_thread, q);
+    إذا (err) {
         FARF(ERROR, "hmx-worker: thread create failed (%d)", err);
-        return NULL;
+        أرجع عدم;
     }
 
-    FARF(HIGH, "hmx-queue: capacity %u\n", capacity);
+    FARF(بالا_2, "hmx-queue: capacity %u\n", ظرفیت);
 
-    return q;
+    أرجع q;
 }
 
-void hmx_queue_free(hmx_queue_t q) {
-    if (!q) {
-        return;
+فراغ hmx_صف_free(hmx_صف_t q) {
+    إذا (!q) {
+        أرجع;
     }
 
     // Tell the worker to exit.
-    hmx_queue_flush(q);
-    hmx_queue_signal(q, HMX_QUEUE_KILL);
-    hmx_queue_flush(q);
+    hmx_صف_flush(q);
+    hmx_صف_signal(q, HMX_صف_KILL);
+    hmx_صف_flush(q);
 
-    int status;
-    qurt_thread_join(q->thread, &status);
+    صحيح وضعیت;
+    qurt_thread_join(q->thread, &وضعیت);
 }

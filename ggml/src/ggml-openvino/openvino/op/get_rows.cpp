@@ -1,115 +1,115 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#ضمن "../node_context.h"
+#ضمن "../op_table.h"
+#ضمن "../utils.h"
 
-#include <climits>
-#include <openvino/core/node.hpp>
-#include <openvino/core/node_output.hpp>
-#include <openvino/op/add.hpp>
-#include <openvino/op/broadcast.hpp>
-#include <openvino/op/concat.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/gather.hpp>
-#include <openvino/op/shape_of.hpp>
-#include <openvino/op/slice.hpp>
-#include <openvino/op/squeeze.hpp>
-#include <openvino/op/unsqueeze.hpp>
+#ضمن <climits>
+#ضمن <openvino/core/node.hpp>
+#ضمن <openvino/core/node_output.hpp>
+#ضمن <openvino/op/add.hpp>
+#ضمن <openvino/op/broadcast.hpp>
+#ضمن <openvino/op/concat.hpp>
+#ضمن <openvino/op/constant.hpp>
+#ضمن <openvino/op/convert.hpp>
+#ضمن <openvino/op/gather.hpp>
+#ضمن <openvino/op/shape_of.hpp>
+#ضمن <openvino/op/slice.hpp>
+#ضمن <openvino/op/squeeze.hpp>
+#ضمن <openvino/op/unsqueeze.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+نطاق ov {
+نطاق frontend {
+نطاق ggml {
+نطاق op {
 
-OutputVector translate_get_rows(const NodeContext & context) {
-    num_inputs_check(context, 2, 2);
+Output_وکتور translate_get_ردیفها(ثابت گره_Context & context) {
+    رقم_inputs_check(context, 2, 2);
 
     Output<Node> res;
-    Output<Node> data;
-    int64_t row_offset = 0;
-    if (context.get_view_input_size(0) > 0 && context.get_input(0).get_partial_shape().rank() == 2) {
+    Output<Node> داده;
+    int64_t ردیف_جابه_جایی = 0;
+    إذا (context.get_view_درون_داد_اندازه(0) > 0 && context.get_درون_داد(0).get_partial_shape().rank() == 2) {
         // A row range view over a 2D weight Constant folds into the gather indices,
         // which keeps the dequantization subgraph intact for the plugins.
-        const auto view_shape = context.get_view_input_ggml_shape(0, 0);
-        const auto view_stride = context.get_view_input_stride(0, 0);
-        const size_t view_offset = context.get_view_input_offset(0, 0);
-        const size_t row_bytes = view_stride[2];
-        data = context.get_input(0);
-        FRONT_END_OP_CONVERSION_CHECK(row_bytes > 0 && view_offset % row_bytes == 0 &&
-                                          data.get_partial_shape()[1].compatible(view_shape[3]),
+        ثابت خودکار view_shape = context.get_view_درون_داد_ggml_shape(0, 0);
+        ثابت خودکار view_stride = context.get_view_درون_داد_stride(0, 0);
+        ثابت size_t view_جابه_جایی = context.get_view_درون_داد_جابه_جایی(0, 0);
+        ثابت size_t ردیف_بایتها = view_stride[2];
+        داده = context.get_درون_داد(0);
+        FRONT_انتها_OP_CONVERSION_CHECK(ردیف_بایتها > 0 && view_جابه_جایی % ردیف_بایتها == 0 &&
+                                          داده.get_partial_shape()[1].compatible(view_shape[3]),
                                       "GET_ROWS: view over a weight must be a row range");
-        row_offset = static_cast<int64_t>(view_offset / row_bytes);
-    } else {
-        data = process_view_input_new(context, 0);
+        ردیف_جابه_جایی = static_cast<int64_t>(view_جابه_جایی / ردیف_بایتها);
+    } وإلا {
+        داده = process_view_درون_داد_new(context, 0);
     }
 
-    auto op_case = context.get_op_case();
-    if (op_case == 3 || op_case == 4) {
-        return {data};
+    خودکار op_case = context.get_op_case();
+    إذا (op_case == 3 || op_case == 4) {
+        أرجع {داده};
     }
 
     ov::Output<ov::Node> indices;
-    if ((op_case == 1 || op_case == 2) && context.has_input("s_copy_active_slot_len")) {
+    إذا ((op_case == 1 || op_case == 2) && context.has_درون_داد("s_copy_active_slot_len")) {
         // Recurrent state reorder (inp->s_copy): slice the active (op_case 1) or extra (op_case 2)
         // segment from the s_copy index list at runtime, instead of baking the static view offset,
         // so the cached IR works for any number of active sequences.
-        auto s_copy = context.get_input(1);
-        auto len = context.get_input("s_copy_active_slot_len");
-        auto step = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
-        auto axis = ov::op::v0::Constant::create(ov::element::i64, {1}, {3});
-        if (op_case == 1) {
-            auto begin = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
-            indices = std::make_shared<ov::op::v8::Slice>(s_copy, begin, len, step, axis);
-        } else {
-            auto end = ov::op::v0::Constant::create(ov::element::i64, {1}, {INT_MAX});
-            indices = std::make_shared<ov::op::v8::Slice>(s_copy, len, end, step, axis);
+        خودکار s_copy = context.get_درون_داد(1);
+        خودکار len = context.get_درون_داد("s_copy_active_slot_len");
+        خودکار گام = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
+        خودکار axis = ov::op::v0::Constant::create(ov::element::i64, {1}, {3});
+        إذا (op_case == 1) {
+            خودکار begin = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
+            indices = std::make_shared<ov::op::v8::برش>(s_copy, begin, len, گام, axis);
+        } وإلا {
+            خودکار end = ov::op::v0::Constant::create(ov::element::i64, {1}, {بیشترین_صحیح});
+            indices = std::make_shared<ov::op::v8::برش>(s_copy, len, end, گام, axis);
         }
-    } else {
-        indices = process_view_input_new(context, 1);
+    } وإلا {
+        indices = process_view_درون_داد_new(context, 1);
     }
 
     // data[1,b,x,y] ind[1,1,b,x'] test-backend-ops case
     // data[x,y] ind[1,1,1,x'] normal case
     // Squeeze the leading dims down to [b,x']. Stateful models drop one rank, so a hardcoded
     // {0,1} would also strip the batch dim whenever b == 1 (every decode step).
-    const auto indices_rank = indices.get_partial_shape().rank();
-    FRONT_END_OP_CONVERSION_CHECK(indices_rank.is_static(), "Expected static rank for GET_ROWS indices");
+    ثابت خودکار indices_rank = indices.get_partial_shape().rank();
+    FRONT_انتها_OP_CONVERSION_CHECK(indices_rank.is_static(), "Expected static rank for GET_ROWS indices");
     std::vector<int64_t> indices_squeeze_axes;
-    for (int64_t i = 0; i + 2 < indices_rank.get_length(); ++i) {
+    لكل (int64_t i = 0; i + 2 < indices_rank.get_درازی(); ++i) {
         indices_squeeze_axes.push_back(i);
     }
-    if (!indices_squeeze_axes.empty()) {
+    إذا (!indices_squeeze_axes.خالی()) {
         indices = std::make_shared<ov::op::v0::Squeeze>(
             indices, ov::op::v0::Constant::create(ov::element::i64, {indices_squeeze_axes.size()},
                                                   indices_squeeze_axes));
     }
-    if (row_offset != 0) {
-        indices = std::make_shared<ov::op::v1::Add>(
-            indices, ov::op::v0::Constant::create(indices.get_element_type(), {}, {row_offset}));
+    إذا (ردیف_جابه_جایی != 0) {
+        indices = std::make_shared<ov::op::v1::جمع_کن>(
+            indices, ov::op::v0::Constant::create(indices.get_element_type(), {}, {ردیف_جابه_جایی}));
     }
-    if (data.get_partial_shape().rank() == 4) {
-        if (!(data.get_partial_shape()[1].is_dynamic()) && data.get_partial_shape()[1].get_length() == 1) {
+    إذا (داده.get_partial_shape().rank() == 4) {
+        إذا (!(داده.get_partial_shape()[1].is_dynamic()) && داده.get_partial_shape()[1].get_درازی() == 1) {
             // Work-around for a bug in ov cpu plugin for test-backend-ops
-            data = std::make_shared<ov::op::v0::Squeeze>(data,
+            داده = std::make_shared<ov::op::v0::Squeeze>(داده,
                                                          ov::op::v0::Constant::create(ov::element::i64, {2}, {0, 1}));
-            auto axis = ov::op::v0::Constant::create(ov::element::i32, ov::Shape{}, {0});
-            res = std::make_shared<ov::op::v8::Gather>(data, indices, axis);
-        } else {
-            auto axis = ov::op::v0::Constant::create(ov::element::i32, ov::Shape{}, {1});
-            data =
-                std::make_shared<ov::op::v0::Squeeze>(data, ov::op::v0::Constant::create(ov::element::i64, {1}, {0}));
+            خودکار axis = ov::op::v0::Constant::create(ov::element::i32, ov::Shape{}, {0});
+            res = std::make_shared<ov::op::v8::Gather>(داده, indices, axis);
+        } وإلا {
+            خودکار axis = ov::op::v0::Constant::create(ov::element::i32, ov::Shape{}, {1});
+            داده =
+                std::make_shared<ov::op::v0::Squeeze>(داده, ov::op::v0::Constant::create(ov::element::i64, {1}, {0}));
             // data: [batch, rows, ...], indices: [batch, n] - this is a batched gather
             // (batch_dims=1) along the rows axis. The data and indices batch dims are
             // logically equal (both == n_tokens) but reach this node through independent
             // reshapes, so the GPU plugin's gather shape inference cannot prove
             // data.shape[0] == indices.shape[0] and rejects the node. We must tie both
             // batch dims to the SAME value, and crucially that value must stay DYNAMIC.
-            const auto data_ps = data.get_partial_shape();
-            const auto idx_ps = indices.get_partial_shape();
-            const bool data_batch_static = data_ps.rank().is_static() && data_ps[0].is_static();
-            const bool idx_batch_dynamic = idx_ps.rank().is_dynamic() || idx_ps[0].is_dynamic();
+            ثابت خودکار داده_ps = داده.get_partial_shape();
+            ثابت خودکار idx_ps = indices.get_partial_shape();
+            ثابت منطقي داده_batch_static = داده_ps.rank().is_static() && داده_ps[0].is_static();
+            ثابت منطقي idx_batch_dynamic = idx_ps.rank().is_dynamic() || idx_ps[0].is_dynamic();
 
-            if (data_batch_static && idx_batch_dynamic) {
+            إذا (داده_batch_static && idx_batch_dynamic) {
                 // MoE per-expert-scale path: `data` is a statically-tiled REPEAT
                 // (ggml_repeat_4d(scale, 1, n_expert, n_tokens, 1)) whose batch dim is a
                 // compile-time-constant n_tokens, and every batch slice is IDENTICAL (it was
@@ -123,53 +123,53 @@ OutputVector translate_get_rows(const NodeContext & context) {
                 // instead collapse the redundant data batch to 1 and broadcast 1->dynamic to
                 // match the indices batch. Mathematically identical (the slices are equal),
                 // and the whole graph stays dynamic.
-                auto zero = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
-                auto one = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
-                auto axis0 = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
-                auto data_b1 = std::make_shared<ov::op::v8::Slice>(data, zero, one, one, axis0);  // [1, rows, ...]
+                خودکار zero = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
+                خودکار one = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
+                خودکار axis0 = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
+                خودکار داده_b1 = std::make_shared<ov::op::v8::برش>(داده, zero, one, one, axis0);  // [1, rows, ...]
 
-                auto idx_shape = std::make_shared<ov::op::v3::ShapeOf>(indices, ov::element::i64);
-                auto idx_batch = get_dimensions(idx_shape, {0});  // [batch] (dynamic)
-                auto data_b1_shape = std::make_shared<ov::op::v3::ShapeOf>(data_b1, ov::element::i64);
-                const auto rank = data_ps.rank().get_length();
-                std::vector<int> rest_axes;
-                for (int a = 1; a < rank; ++a) {
+                خودکار idx_shape = std::make_shared<ov::op::v3::Shape_از>(indices, ov::element::i64);
+                خودکار idx_batch = get_dimensions(idx_shape, {0});  // [batch] (dynamic)
+                خودکار داده_b1_shape = std::make_shared<ov::op::v3::Shape_از>(داده_b1, ov::element::i64);
+                ثابت خودکار rank = داده_ps.rank().get_درازی();
+                std::vector<صحيح> rest_axes;
+                لكل (صحيح a = 1; a < rank; ++a) {
                     rest_axes.push_back(a);
                 }
-                auto data_rest = get_dimensions(data_b1_shape, rest_axes);  // [rows, ...]
-                auto data_target = std::make_shared<ov::op::v0::Concat>(ov::OutputVector{idx_batch, data_rest}, 0);
-                data =
-                    std::make_shared<ov::op::v3::Broadcast>(data_b1, data_target, ov::op::BroadcastType::BIDIRECTIONAL);
-                res = std::make_shared<ov::op::v8::Gather>(data, indices, axis, 1);
-            } else {
+                خودکار داده_rest = get_dimensions(داده_b1_shape, rest_axes);  // [rows, ...]
+                خودکار داده_هدف = std::make_shared<ov::op::v0::Concat>(ov::Output_وکتور{idx_batch, داده_rest}, 0);
+                داده =
+                    std::make_shared<ov::op::v3::پخش>(داده_b1, داده_هدف, ov::op::پخش_Type::BIDIRECTIONAL);
+                res = std::make_shared<ov::op::v8::Gather>(داده, indices, axis, 1);
+            } وإلا {
                 // General case: tie the indices batch to the data batch (the data batch is
                 // already dynamic, e.g. the routing-weights gather whose data comes from the
                 // activations). Broadcast indices to [data_batch, indices_n].
-                auto data_shape = std::make_shared<ov::op::v3::ShapeOf>(data, ov::element::i64);
-                auto data_batch = get_dimensions(data_shape, {0});  // [batch]
-                auto idx_shape = std::make_shared<ov::op::v3::ShapeOf>(indices, ov::element::i64);
-                auto idx_n = get_dimensions(idx_shape, {1});  // [n]
-                auto idx_target = std::make_shared<ov::op::v0::Concat>(ov::OutputVector{data_batch, idx_n}, 0);
-                indices = std::make_shared<ov::op::v3::Broadcast>(indices, idx_target,
-                                                                  ov::op::BroadcastType::BIDIRECTIONAL);
-                res = std::make_shared<ov::op::v8::Gather>(data, indices, axis, 1);
+                خودکار داده_shape = std::make_shared<ov::op::v3::Shape_از>(داده, ov::element::i64);
+                خودکار داده_batch = get_dimensions(داده_shape, {0});  // [batch]
+                خودکار idx_shape = std::make_shared<ov::op::v3::Shape_از>(indices, ov::element::i64);
+                خودکار idx_n = get_dimensions(idx_shape, {1});  // [n]
+                خودکار idx_هدف = std::make_shared<ov::op::v0::Concat>(ov::Output_وکتور{داده_batch, idx_n}, 0);
+                indices = std::make_shared<ov::op::v3::پخش>(indices, idx_هدف,
+                                                                  ov::op::پخش_Type::BIDIRECTIONAL);
+                res = std::make_shared<ov::op::v8::Gather>(داده, indices, axis, 1);
             }
         }
-    } else if (context.is_stateful() && data.get_partial_shape().rank() == 3) {
-        auto axis = ov::op::v0::Constant::create(ov::element::i32, ov::Shape{}, {1});
-        res = std::make_shared<ov::op::v8::Gather>(data, indices, axis, 1);
-    } else {
-        auto axis = ov::op::v0::Constant::create(ov::element::i32, ov::Shape{}, {0});
-        res = std::make_shared<ov::op::v8::Gather>(data, indices, axis);
+    } وإلا إذا (context.is_stateful() && داده.get_partial_shape().rank() == 3) {
+        خودکار axis = ov::op::v0::Constant::create(ov::element::i32, ov::Shape{}, {1});
+        res = std::make_shared<ov::op::v8::Gather>(داده, indices, axis, 1);
+    } وإلا {
+        خودکار axis = ov::op::v0::Constant::create(ov::element::i32, ov::Shape{}, {0});
+        res = std::make_shared<ov::op::v8::Gather>(داده, indices, axis);
     }
 
-    if (res.get_element_type() != context.get_output_type()) {
+    إذا (res.get_element_type() != context.get_output_type()) {
         res = std::make_shared<ov::op::v0::Convert>(res, context.get_output_type());
     }
-    if (!(context.is_stateful())) {
+    إذا (!(context.is_stateful())) {
         res = std::make_shared<ov::op::v0::Unsqueeze>(res, ov::op::v0::Constant::create(ov::element::i64, {1}, {0}));
     }
-    return rename_outputs_with_suffix({res}, context.get_name());
+    أرجع rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

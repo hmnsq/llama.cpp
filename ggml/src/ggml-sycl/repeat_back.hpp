@@ -1,8 +1,8 @@
-#ifndef GGML_SYCL_REPEAT_BACK_HPP
-#define GGML_SYCL_REPEAT_BACK_HPP
+#اگر_تعریف_نشده GGML_SYCL_REPEAT_پشت_HPP
+#تعریف_کن GGML_SYCL_REPEAT_پشت_HPP
 
-#include "common.hpp"
+#ضمن "common.hpp"
 
-void ggml_sycl_op_repeat_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+فراغ ggml_sycl_op_repeat_پشت(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-#endif  // GGML_SYCL_REPEAT_BACK_HPP
+#پایان_اگر  // GGML_SYCL_REPEAT_BACK_HPP

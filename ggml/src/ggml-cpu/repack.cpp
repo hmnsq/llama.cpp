@@ -1,34 +1,34 @@
-#define GGML_COMMON_IMPL_CPP
-#define GGML_COMMON_DECL_CPP
-#include "ggml-common.h"
-#include "ggml-backend-impl.h"
+#تعریف_کن GGML_COMMON_IMPL_CPP
+#تعریف_کن GGML_COMMON_DECL_CPP
+#ضمن "ggml-common.h"
+#ضمن "ggml-backend-impl.h"
 
-#include "ggml-impl.h"
-#include "ggml-cpu.h"
-#include "ggml-cpu-impl.h"
-#include "simd-mappings.h"
-#include "traits.h"
+#ضمن "ggml-impl.h"
+#ضمن "ggml-cpu.h"
+#ضمن "ggml-cpu-impl.h"
+#ضمن "simd-mappings.h"
+#ضمن "traits.h"
 
-#include "arch-fallback.h"
+#ضمن "arch-fallback.h"
 
-#include <cmath>
-#include <cstring>
-#include <cassert>
-#include <cstdio>  // for GGML_ASSERT
+#ضمن <cmath>
+#ضمن <cstring>
+#ضمن <cassert>
+#ضمن <cstdio>  // for GGML_ASSERT
 
-#include "repack.h"
+#ضمن "repack.h"
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic ignored "-Woverlength-strings"
-#endif
+#إذا defined(__GNUC__)
+#رهنمود GCC diagnostic ignored "-Woverlength-strings"
+#پایان_اگر
 
-#define UNUSED GGML_UNUSED
+#تعریف_کن استفادهنشده GGML_استفادهنشده
 
-static inline int nearest_int(float fval) {
-    assert(fabsf(fval) <= 4194303.f);
-    float val = fval + 12582912.f;
-    int i; memcpy(&i, &val, sizeof(int));
-    return (i & 0x007fffff) - 0x00400000;
+ساكن مضمن صحيح نزدیکترین_int(عائم fval) {
+    أكد(fabsf(fval) <= 4194303.f);
+    عائم val = fval + 12582912.f;
+    صحيح i; کپی_حافظه(&i, &val, حجم(صحيح));
+    أرجع (i & 0x007fffff) - 0x00400000;
 }
 
 // Functions to create the interleaved data layout formats
@@ -46,500 +46,500 @@ static inline int nearest_int(float fval) {
 //                         operations durin unpacking)
 //
 
-extern "C" {
+خارجي "C" {
 
-#if defined __riscv_zvfh
-void ggml_quantize_mat_q8_0_4x1_generic(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
-    assert(QK8_0 == 32);
-    assert(k % QK8_0 == 0);
-    const int nb = k / QK8_0;
+#إذا defined __riscv_zvfh
+فراغ ggml_quantize_mat_q8_0_4x1_generic(ثابت عائم * GGML_RESTRICT x, فراغ * GGML_RESTRICT vy, int64_t k) {
+    أكد(QK8_0 == 32);
+    أكد(k % QK8_0 == 0);
+    ثابت صحيح nb = k / QK8_0;
 
-    block_q8_0x4 * GGML_RESTRICT y = (block_q8_0x4 *) vy;
+    بلوک_q8_0x4 * GGML_RESTRICT y = (بلوک_q8_0x4 *) vy;
 
     // scalar
-    const int blck_size_interleave = 1;
-    float srcv[4][QK8_0];
-    float id[4];
+    ثابت صحيح blck_اندازه_interleave = 1;
+    عائم srcv[4][QK8_0];
+    عائم id[4];
 
-    for (int i = 0; i < nb; i++) {
-        for (int row_iter = 0; row_iter < 4; row_iter++) {
-            float amax = 0.0f; // absolute max
+    لكل (صحيح i = 0; i < nb; i++) {
+        لكل (صحيح ردیف_iter = 0; ردیف_iter < 4; ردیف_iter++) {
+            عائم amax = 0.0f; // absolute max
 
-            for (int j = 0; j < QK8_0; j++) {
-                srcv[row_iter][j] = x[row_iter * k + i * QK8_0 + j];
-                amax = MAX(amax, fabsf(srcv[row_iter][j]));
+            لكل (صحيح j = 0; j < QK8_0; j++) {
+                srcv[ردیف_iter][j] = x[ردیف_iter * k + i * QK8_0 + j];
+                amax = MAX(amax, fabsf(srcv[ردیف_iter][j]));
             }
 
-            const float d = amax / ((1 << 7) - 1);
-            id[row_iter] = d ? 1.0f / d : 0.0f;
+            ثابت عائم d = amax / ((1 << 7) - 1);
+            id[ردیف_iter] = d ? 1.0f / d : 0.0f;
 
-            y[i].d[row_iter] = GGML_CPU_FP32_TO_FP16(d);
+            y[i].d[ردیف_iter] = GGML_CPU_FP32_مقصد_FP16(d);
         }
 
-        for (int j = 0; j < QK8_0 * 4; j++) {
-            int src_offset = (j / (4 * blck_size_interleave)) * blck_size_interleave;
-            int src_id = (j % (4 * blck_size_interleave)) / blck_size_interleave;
-            src_offset += (j % blck_size_interleave);
+        لكل (صحيح j = 0; j < QK8_0 * 4; j++) {
+            صحيح src_جابه_جایی = (j / (4 * blck_اندازه_interleave)) * blck_اندازه_interleave;
+            صحيح src_id = (j % (4 * blck_اندازه_interleave)) / blck_اندازه_interleave;
+            src_جابه_جایی += (j % blck_اندازه_interleave);
 
-            float x0 = srcv[src_id][src_offset] * id[src_id];
+            عائم x0 = srcv[src_id][src_جابه_جایی] * id[src_id];
             y[i].qs[j] = roundf(x0);
         }
     }
 }
 
-void ggml_quantize_mat_q8_K_4x1_generic(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
-    assert(QK_K == 256);
-    assert(k % QK_K == 0);
-    const int nb = k / QK_K;
+فراغ ggml_quantize_mat_q8_K_4x1_generic(ثابت عائم * GGML_RESTRICT x, فراغ * GGML_RESTRICT vy, int64_t k) {
+    أكد(QK_K == 256);
+    أكد(k % QK_K == 0);
+    ثابت صحيح nb = k / QK_K;
 
-    block_q8_Kx4 * GGML_RESTRICT y = (block_q8_Kx4 *) vy;
+    بلوک_q8_Kx4 * GGML_RESTRICT y = (بلوک_q8_Kx4 *) vy;
 
-    const int blck_size_interleave = 1;
-    float srcv[4][QK_K];
-    float iscale[4];
+    ثابت صحيح blck_اندازه_interleave = 1;
+    عائم srcv[4][QK_K];
+    عائم iscale[4];
 
-    for (int i = 0; i < nb; i++) {
-        for (int row_iter = 0; row_iter < 4; row_iter++) {
-            float amax = 0.0f; // absolute max
-            float max = 0;
+    لكل (صحيح i = 0; i < nb; i++) {
+        لكل (صحيح ردیف_iter = 0; ردیف_iter < 4; ردیف_iter++) {
+            عائم amax = 0.0f; // absolute max
+            عائم max = 0;
 
-            for (int j = 0; j < QK_K; j++) {
-                srcv[row_iter][j] = x[row_iter * k + i * QK_K + j];
+            لكل (صحيح j = 0; j < QK_K; j++) {
+                srcv[ردیف_iter][j] = x[ردیف_iter * k + i * QK_K + j];
                 // Update the maximum value of the corresponding super block
-                if(amax < fabsf(srcv[row_iter][j])) {
-                    amax = fabsf(srcv[row_iter][j]);
-                    max = srcv[row_iter][j];
+                إذا(amax < fabsf(srcv[ردیف_iter][j])) {
+                    amax = fabsf(srcv[ردیف_iter][j]);
+                    max = srcv[ردیف_iter][j];
                 }
             }
 
-            iscale[row_iter] = amax ? -127.f/max : 0;
-            y[i].d[row_iter] = amax ? 1/iscale[row_iter] : 0;
+            iscale[ردیف_iter] = amax ? -127.f/max : 0;
+            y[i].d[ردیف_iter] = amax ? 1/iscale[ردیف_iter] : 0;
         }
 
-        for (int j = 0; j < QK_K / 4; j++) {
+        لكل (صحيح j = 0; j < QK_K / 4; j++) {
             y[i].bsums[j] = 0;
         }
-        for (int j = 0; j < QK_K * 4; j++) {
-            int src_id = j % 4;
-            int src_offset = j / 4;
-            int index = ((j >> 6) << 2) + (j & 3);
+        لكل (صحيح j = 0; j < QK_K * 4; j++) {
+            صحيح src_id = j % 4;
+            صحيح src_جابه_جایی = j / 4;
+            صحيح شاخص = ((j >> 6) << 2) + (j & 3);
 
-            float x0 = srcv[src_id][src_offset] * iscale[src_id];
-            y[i].qs[j] = nearest_int(x0);
-            y[i].bsums[index] += y[i].qs[j];
+            عائم x0 = srcv[src_id][src_جابه_جایی] * iscale[src_id];
+            y[i].qs[j] = نزدیکترین_int(x0);
+            y[i].bsums[شاخص] += y[i].qs[j];
         }
     }
 }
-#endif
+#پایان_اگر
 
-void ggml_quantize_mat_q8_0_4x4_generic(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
-    assert(QK8_0 == 32);
-    assert(k % QK8_0 == 0);
-    const int nb = k / QK8_0;
+فراغ ggml_quantize_mat_q8_0_4x4_generic(ثابت عائم * GGML_RESTRICT x, فراغ * GGML_RESTRICT vy, int64_t k) {
+    أكد(QK8_0 == 32);
+    أكد(k % QK8_0 == 0);
+    ثابت صحيح nb = k / QK8_0;
 
-    block_q8_0x4 * GGML_RESTRICT y = (block_q8_0x4 *) vy;
+    بلوک_q8_0x4 * GGML_RESTRICT y = (بلوک_q8_0x4 *) vy;
 
     // scalar
-    const int blck_size_interleave = 4;
-    float srcv[4][QK8_0];
-    float id[4];
+    ثابت صحيح blck_اندازه_interleave = 4;
+    عائم srcv[4][QK8_0];
+    عائم id[4];
 
-    for (int i = 0; i < nb; i++) {
-        for (int row_iter = 0; row_iter < 4; row_iter++) {
-            float amax = 0.0f; // absolute max
+    لكل (صحيح i = 0; i < nb; i++) {
+        لكل (صحيح ردیف_iter = 0; ردیف_iter < 4; ردیف_iter++) {
+            عائم amax = 0.0f; // absolute max
 
-            for (int j = 0; j < QK8_0; j++) {
-                srcv[row_iter][j] = x[row_iter * k + i * QK8_0 + j];
-                amax = MAX(amax, fabsf(srcv[row_iter][j]));
+            لكل (صحيح j = 0; j < QK8_0; j++) {
+                srcv[ردیف_iter][j] = x[ردیف_iter * k + i * QK8_0 + j];
+                amax = MAX(amax, fabsf(srcv[ردیف_iter][j]));
             }
 
-            const float d = amax / ((1 << 7) - 1);
-            id[row_iter] = d ? 1.0f / d : 0.0f;
+            ثابت عائم d = amax / ((1 << 7) - 1);
+            id[ردیف_iter] = d ? 1.0f / d : 0.0f;
 
-            y[i].d[row_iter] = GGML_CPU_FP32_TO_FP16(d);
+            y[i].d[ردیف_iter] = GGML_CPU_FP32_مقصد_FP16(d);
         }
 
-        for (int j = 0; j < QK8_0 * 4; j++) {
-            int src_offset = (j / (4 * blck_size_interleave)) * blck_size_interleave;
-            int src_id = (j % (4 * blck_size_interleave)) / blck_size_interleave;
-            src_offset += (j % blck_size_interleave);
+        لكل (صحيح j = 0; j < QK8_0 * 4; j++) {
+            صحيح src_جابه_جایی = (j / (4 * blck_اندازه_interleave)) * blck_اندازه_interleave;
+            صحيح src_id = (j % (4 * blck_اندازه_interleave)) / blck_اندازه_interleave;
+            src_جابه_جایی += (j % blck_اندازه_interleave);
 
-            float x0 = srcv[src_id][src_offset] * id[src_id];
+            عائم x0 = srcv[src_id][src_جابه_جایی] * id[src_id];
             y[i].qs[j] = roundf(x0);
         }
     }
 }
 
-void ggml_quantize_mat_q8_0_4x8_generic(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
-    assert(QK8_0 == 32);
-    assert(k % QK8_0 == 0);
-    const int nb = k / QK8_0;
+فراغ ggml_quantize_mat_q8_0_4x8_generic(ثابت عائم * GGML_RESTRICT x, فراغ * GGML_RESTRICT vy, int64_t k) {
+    أكد(QK8_0 == 32);
+    أكد(k % QK8_0 == 0);
+    ثابت صحيح nb = k / QK8_0;
 
-    block_q8_0x4 * GGML_RESTRICT y = (block_q8_0x4 *) vy;
+    بلوک_q8_0x4 * GGML_RESTRICT y = (بلوک_q8_0x4 *) vy;
 
     // scalar
-    const int blck_size_interleave = 8;
-    float srcv[4][QK8_0];
-    float id[4];
+    ثابت صحيح blck_اندازه_interleave = 8;
+    عائم srcv[4][QK8_0];
+    عائم id[4];
 
-    for (int i = 0; i < nb; i++) {
-        for (int row_iter = 0; row_iter < 4; row_iter++) {
-            float amax = 0.0f; // absolute max
+    لكل (صحيح i = 0; i < nb; i++) {
+        لكل (صحيح ردیف_iter = 0; ردیف_iter < 4; ردیف_iter++) {
+            عائم amax = 0.0f; // absolute max
 
-            for (int j = 0; j < QK8_0; j++) {
-                srcv[row_iter][j] = x[row_iter * k + i * QK8_0 + j];
-                amax = MAX(amax, fabsf(srcv[row_iter][j]));
+            لكل (صحيح j = 0; j < QK8_0; j++) {
+                srcv[ردیف_iter][j] = x[ردیف_iter * k + i * QK8_0 + j];
+                amax = MAX(amax, fabsf(srcv[ردیف_iter][j]));
             }
 
-            const float d = amax / ((1 << 7) - 1);
-            id[row_iter] = d ? 1.0f / d : 0.0f;
+            ثابت عائم d = amax / ((1 << 7) - 1);
+            id[ردیف_iter] = d ? 1.0f / d : 0.0f;
 
-            y[i].d[row_iter] = GGML_CPU_FP32_TO_FP16(d);
+            y[i].d[ردیف_iter] = GGML_CPU_FP32_مقصد_FP16(d);
         }
 
-        for (int j = 0; j < QK8_0 * 4; j++) {
-            int src_offset = (j / (4 * blck_size_interleave)) * blck_size_interleave;
-            int src_id = (j % (4 * blck_size_interleave)) / blck_size_interleave;
-            src_offset += (j % blck_size_interleave);
+        لكل (صحيح j = 0; j < QK8_0 * 4; j++) {
+            صحيح src_جابه_جایی = (j / (4 * blck_اندازه_interleave)) * blck_اندازه_interleave;
+            صحيح src_id = (j % (4 * blck_اندازه_interleave)) / blck_اندازه_interleave;
+            src_جابه_جایی += (j % blck_اندازه_interleave);
 
-            float x0 = srcv[src_id][src_offset] * id[src_id];
+            عائم x0 = srcv[src_id][src_جابه_جایی] * id[src_id];
             y[i].qs[j] = roundf(x0);
         }
     }
 }
 
-void ggml_quantize_mat_q8_K_4x4_generic(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
-    assert(QK_K == 256);
-    assert(k % QK_K == 0);
-    const int nb = k / QK_K;
+فراغ ggml_quantize_mat_q8_K_4x4_generic(ثابت عائم * GGML_RESTRICT x, فراغ * GGML_RESTRICT vy, int64_t k) {
+    أكد(QK_K == 256);
+    أكد(k % QK_K == 0);
+    ثابت صحيح nb = k / QK_K;
 
-    block_q8_Kx4 * GGML_RESTRICT y = (block_q8_Kx4 *) vy;
+    بلوک_q8_Kx4 * GGML_RESTRICT y = (بلوک_q8_Kx4 *) vy;
 
     // scalar
-    const int blck_size_interleave = 4;
-    float srcv[4][QK_K];
-    float iscale[4];
+    ثابت صحيح blck_اندازه_interleave = 4;
+    عائم srcv[4][QK_K];
+    عائم iscale[4];
 
-    for (int i = 0; i < nb; i++) {
-        for (int row_iter = 0; row_iter < 4; row_iter++) {
-            float amax = 0.0f; // absolute max
-            float max = 0;
+    لكل (صحيح i = 0; i < nb; i++) {
+        لكل (صحيح ردیف_iter = 0; ردیف_iter < 4; ردیف_iter++) {
+            عائم amax = 0.0f; // absolute max
+            عائم max = 0;
 
-            for (int j = 0; j < QK_K; j++) {
-                srcv[row_iter][j] = x[row_iter * k + i * QK_K + j];
+            لكل (صحيح j = 0; j < QK_K; j++) {
+                srcv[ردیف_iter][j] = x[ردیف_iter * k + i * QK_K + j];
                 // Update the maximum value of the corresponding super block
-                if(amax < fabsf(srcv[row_iter][j])) {
-                    amax = fabsf(srcv[row_iter][j]);
-                    max = srcv[row_iter][j];
+                إذا(amax < fabsf(srcv[ردیف_iter][j])) {
+                    amax = fabsf(srcv[ردیف_iter][j]);
+                    max = srcv[ردیف_iter][j];
                 }
             }
 
-            iscale[row_iter] = amax ? -127.f/max : 0;
+            iscale[ردیف_iter] = amax ? -127.f/max : 0;
 
-            y[i].d[row_iter] = amax ? 1/iscale[row_iter] : 0;
+            y[i].d[ردیف_iter] = amax ? 1/iscale[ردیف_iter] : 0;
         }
 
-        for (int j = 0; j < QK_K / 4; j++) {
+        لكل (صحيح j = 0; j < QK_K / 4; j++) {
             y[i].bsums[j] = 0;
         }
 
         // Quants values are interleaved in sequence of four bytes from corresponding super blocks
         // Bsums values are interleaved in sequence of four bsums from each super block taken for interleaving
         // i.e first four bsums from the first super block, followed by first four bsums from second super block and so on
-        for (int j = 0; j < QK_K * 4; j++) {
-            int src_offset = (j / (4 * blck_size_interleave)) * blck_size_interleave;
-            int src_id     = (j % (4 * blck_size_interleave)) / blck_size_interleave;
-            src_offset += (j % blck_size_interleave);
-            int index = (((j & 15) >> 2) << 2) + ((j >> 8) << 4) + ((j >> 6) & 3);
+        لكل (صحيح j = 0; j < QK_K * 4; j++) {
+            صحيح src_جابه_جایی = (j / (4 * blck_اندازه_interleave)) * blck_اندازه_interleave;
+            صحيح src_id     = (j % (4 * blck_اندازه_interleave)) / blck_اندازه_interleave;
+            src_جابه_جایی += (j % blck_اندازه_interleave);
+            صحيح شاخص = (((j & 15) >> 2) << 2) + ((j >> 8) << 4) + ((j >> 6) & 3);
 
-            float x0 = srcv[src_id][src_offset] * iscale[src_id];
-            y[i].qs[j] = nearest_int(x0);
-            y[i].bsums[index] += y[i].qs[j];
+            عائم x0 = srcv[src_id][src_جابه_جایی] * iscale[src_id];
+            y[i].qs[j] = نزدیکترین_int(x0);
+            y[i].bsums[شاخص] += y[i].qs[j];
         }
     }
 }
 
-void ggml_quantize_mat_q8_K_4x8_generic(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
-    assert(QK_K == 256);
-    assert(k % QK_K == 0);
-    const int nb = k / QK_K;
+فراغ ggml_quantize_mat_q8_K_4x8_generic(ثابت عائم * GGML_RESTRICT x, فراغ * GGML_RESTRICT vy, int64_t k) {
+    أكد(QK_K == 256);
+    أكد(k % QK_K == 0);
+    ثابت صحيح nb = k / QK_K;
 
-    block_q8_Kx4 * GGML_RESTRICT y = (block_q8_Kx4 *) vy;
+    بلوک_q8_Kx4 * GGML_RESTRICT y = (بلوک_q8_Kx4 *) vy;
 
     // scalar
-    const int blck_size_interleave = 8;
-    float srcv[4][QK_K];
-    float iscale[4];
+    ثابت صحيح blck_اندازه_interleave = 8;
+    عائم srcv[4][QK_K];
+    عائم iscale[4];
 
-    for (int i = 0; i < nb; i++) {
-        for (int row_iter = 0; row_iter < 4; row_iter++) {
-            float amax = 0.0f; // absolute max
-            float max = 0;
+    لكل (صحيح i = 0; i < nb; i++) {
+        لكل (صحيح ردیف_iter = 0; ردیف_iter < 4; ردیف_iter++) {
+            عائم amax = 0.0f; // absolute max
+            عائم max = 0;
 
-            for (int j = 0; j < QK_K; j++) {
-                srcv[row_iter][j] = x[row_iter * k + i * QK_K + j];
+            لكل (صحيح j = 0; j < QK_K; j++) {
+                srcv[ردیف_iter][j] = x[ردیف_iter * k + i * QK_K + j];
                 // Update the maximum value of the corresponding super block
-                if(amax < fabsf(srcv[row_iter][j])) {
-                    amax = fabsf(srcv[row_iter][j]);
-                    max = srcv[row_iter][j];
+                إذا(amax < fabsf(srcv[ردیف_iter][j])) {
+                    amax = fabsf(srcv[ردیف_iter][j]);
+                    max = srcv[ردیف_iter][j];
                 }
             }
 
-            iscale[row_iter] = amax ? -127.f/max : 0;
+            iscale[ردیف_iter] = amax ? -127.f/max : 0;
 
-            y[i].d[row_iter] = amax ? 1/iscale[row_iter] : 0;
+            y[i].d[ردیف_iter] = amax ? 1/iscale[ردیف_iter] : 0;
         }
 
-        for (int j = 0; j < QK_K / 4; j++) {
+        لكل (صحيح j = 0; j < QK_K / 4; j++) {
             y[i].bsums[j] = 0;
         }
 
         // Quants values are interleaved in sequence of eight bytes from corresponding super blocks
         // Bsums values are interleaved in sequence of four bsums from each super block taken for interleaving
         // i.e first four bsums from the first super block, followed by first four bsums from second super block and so on
-        for (int j = 0; j < QK_K * 4; j++) {
-            int src_offset = (j / (4 * blck_size_interleave)) * blck_size_interleave;
-            int src_id     = (j % (4 * blck_size_interleave)) / blck_size_interleave;
-            src_offset += (j % blck_size_interleave);
-            int index = (((j & 31) >> 3) << 2) + ((j >> 8) << 4) + ((j >> 6) & 3);
+        لكل (صحيح j = 0; j < QK_K * 4; j++) {
+            صحيح src_جابه_جایی = (j / (4 * blck_اندازه_interleave)) * blck_اندازه_interleave;
+            صحيح src_id     = (j % (4 * blck_اندازه_interleave)) / blck_اندازه_interleave;
+            src_جابه_جایی += (j % blck_اندازه_interleave);
+            صحيح شاخص = (((j & 31) >> 3) << 2) + ((j >> 8) << 4) + ((j >> 6) & 3);
 
-            float x0 = srcv[src_id][src_offset] * iscale[src_id];
-            y[i].qs[j] = nearest_int(x0);
-            y[i].bsums[index] += y[i].qs[j];
+            عائم x0 = srcv[src_id][src_جابه_جایی] * iscale[src_id];
+            y[i].qs[j] = نزدیکترین_int(x0);
+            y[i].bsums[شاخص] += y[i].qs[j];
         }
     }
 }
 
 } // extern "C"
 
-template <int64_t INTER_SIZE, ggml_type PARAM_TYPE>
-void ggml_quantize_mat_t(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t nrow, int64_t n_per_row);
+قالب <int64_t INTER_اندازه, ggml_type PARAM_TYPE>
+فراغ ggml_quantize_mat_t(ثابت عائم * GGML_RESTRICT x, فراغ * GGML_RESTRICT vy, int64_t nrow, int64_t n_در_هر_ردیف);
 
-template <> void ggml_quantize_mat_t<4, GGML_TYPE_Q8_0>(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t nrow, int64_t n_per_row) {
-    assert(nrow == 4);
-    UNUSED(nrow);
-    ggml_quantize_mat_q8_0_4x4(x, vy, n_per_row);
+قالب <> فراغ ggml_quantize_mat_t<4, GGML_TYPE_Q8_0>(ثابت عائم * GGML_RESTRICT x, فراغ * GGML_RESTRICT vy, int64_t nrow, int64_t n_در_هر_ردیف) {
+    أكد(nrow == 4);
+    استفادهنشده(nrow);
+    ggml_quantize_mat_q8_0_4x4(x, vy, n_در_هر_ردیف);
 }
 
-template <> void ggml_quantize_mat_t<8, GGML_TYPE_Q8_0>(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t nrow, int64_t n_per_row) {
-    assert(nrow == 4);
-    UNUSED(nrow);
-    ggml_quantize_mat_q8_0_4x8(x, vy, n_per_row);
+قالب <> فراغ ggml_quantize_mat_t<8, GGML_TYPE_Q8_0>(ثابت عائم * GGML_RESTRICT x, فراغ * GGML_RESTRICT vy, int64_t nrow, int64_t n_در_هر_ردیف) {
+    أكد(nrow == 4);
+    استفادهنشده(nrow);
+    ggml_quantize_mat_q8_0_4x8(x, vy, n_در_هر_ردیف);
 }
 
-template <> void ggml_quantize_mat_t<4, GGML_TYPE_Q8_K>(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t nrow, int64_t n_per_row) {
-    assert(nrow == 4);
-    UNUSED(nrow);
-    ggml_quantize_mat_q8_K_4x4(x, vy, n_per_row);
+قالب <> فراغ ggml_quantize_mat_t<4, GGML_TYPE_Q8_K>(ثابت عائم * GGML_RESTRICT x, فراغ * GGML_RESTRICT vy, int64_t nrow, int64_t n_در_هر_ردیف) {
+    أكد(nrow == 4);
+    استفادهنشده(nrow);
+    ggml_quantize_mat_q8_K_4x4(x, vy, n_در_هر_ردیف);
 }
 
-template <> void ggml_quantize_mat_t<8, GGML_TYPE_Q8_K>(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t nrow, int64_t n_per_row) {
-    assert(nrow == 4);
-    UNUSED(nrow);
-    ggml_quantize_mat_q8_K_4x8(x, vy, n_per_row);
+قالب <> فراغ ggml_quantize_mat_t<8, GGML_TYPE_Q8_K>(ثابت عائم * GGML_RESTRICT x, فراغ * GGML_RESTRICT vy, int64_t nrow, int64_t n_در_هر_ردیف) {
+    أكد(nrow == 4);
+    استفادهنشده(nrow);
+    ggml_quantize_mat_q8_K_4x8(x, vy, n_در_هر_ردیف);
 }
 
-#if defined __riscv_zvfh
-template <> void ggml_quantize_mat_t<1, GGML_TYPE_Q8_0>(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t nrow, int64_t n_per_row) {
-    assert(nrow == 4);
-    UNUSED(nrow);
-    ggml_quantize_mat_q8_0_4x1(x, vy, n_per_row);
+#إذا defined __riscv_zvfh
+قالب <> فراغ ggml_quantize_mat_t<1, GGML_TYPE_Q8_0>(ثابت عائم * GGML_RESTRICT x, فراغ * GGML_RESTRICT vy, int64_t nrow, int64_t n_در_هر_ردیف) {
+    أكد(nrow == 4);
+    استفادهنشده(nrow);
+    ggml_quantize_mat_q8_0_4x1(x, vy, n_در_هر_ردیف);
 }
 
-template <> void ggml_quantize_mat_t<1, GGML_TYPE_Q8_K>(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t nrow, int64_t n_per_row) {
-    assert(nrow == 4);
-    UNUSED(nrow);
-    ggml_quantize_mat_q8_K_4x1(x, vy, n_per_row);
+قالب <> فراغ ggml_quantize_mat_t<1, GGML_TYPE_Q8_K>(ثابت عائم * GGML_RESTRICT x, فراغ * GGML_RESTRICT vy, int64_t nrow, int64_t n_در_هر_ردیف) {
+    أكد(nrow == 4);
+    استفادهنشده(nrow);
+    ggml_quantize_mat_q8_K_4x1(x, vy, n_در_هر_ردیف);
 }
-#endif
+#پایان_اگر
 
-template <int M, int N>
-static void ggml_gemv_q6_K_NxM_q8_K_generic_impl(int                        n,
-                                                 float * GGML_RESTRICT      s,
+قالب <صحيح M, صحيح N>
+ساكن فراغ ggml_gemv_q6_K_NxM_q8_K_generic_impl(صحيح                        n,
+                                                 عائم * GGML_RESTRICT      s,
                                                  size_t                     bs,
-                                                 const void * GGML_RESTRICT vx,
-                                                 const void * GGML_RESTRICT vy,
-                                                 int                        nr,
-                                                 int                        nc) {
-    constexpr int blocklen          = M;
-    constexpr int ncols_interleaved = N;
-    const int     qk                = QK_K;
-    const int     nb                = n / qk;
-    const int     blocks_per_half   = 64 / blocklen;
+                                                 ثابت فراغ * GGML_RESTRICT vx,
+                                                 ثابت فراغ * GGML_RESTRICT vy,
+                                                 صحيح                        nr,
+                                                 صحيح                        nc) {
+    constexpr صحيح blocklen          = M;
+    constexpr صحيح ncols_interleaved = N;
+    ثابت صحيح     qk                = QK_K;
+    ثابت صحيح     nb                = n / qk;
+    ثابت صحيح     بلوکها_در_هر_half   = 64 / blocklen;
 
-    assert(n % qk == 0);
-    assert(nc % ncols_interleaved == 0);
+    أكد(n % qk == 0);
+    أكد(nc % ncols_interleaved == 0);
 
-    UNUSED(bs);
-    UNUSED(nr);
+    استفادهنشده(bs);
+    استفادهنشده(nr);
 
-    float sumf[8];
+    عائم sumf[8];
 
-    const block_q8_K * a_ptr = (const block_q8_K *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
-        const block_q6_Kx8 * b_ptr = (const block_q6_Kx8 *) vx + (x * nb);
+    ثابت بلوک_q8_K * a_ptr = (ثابت بلوک_q8_K *) vy;
+    لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+        ثابت بلوک_q6_Kx8 * b_ptr = (ثابت بلوک_q6_Kx8 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) {
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
             sumf[j] = 0.0f;
         }
 
-        for (int l = 0; l < nb; l++) {
-            for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                const int base_l = (k / blocks_per_half) * 128 + (k % blocks_per_half) * blocklen;
-                const int base_h = base_l + 64;
+        لكل (صحيح l = 0; l < nb; l++) {
+            لكل (صحيح k = 0; k < (qk / (2 * blocklen)); k++) {
+                ثابت صحيح پایه_l = (k / بلوکها_در_هر_half) * 128 + (k % بلوکها_در_هر_half) * blocklen;
+                ثابت صحيح پایه_h = پایه_l + 64;
 
-                const int scale_idx_l = base_l / 16;
-                const int scale_idx_h = base_h / 16;
+                ثابت صحيح scale_idx_l = پایه_l / 16;
+                ثابت صحيح scale_idx_h = پایه_h / 16;
 
-                const int qh_shift_l = ((base_l % 128) / 32) * 2;
-                const int qh_shift_h = ((base_h % 128) / 32) * 2;
+                ثابت صحيح qh_لغزش_l = ((پایه_l % 128) / 32) * 2;
+                ثابت صحيح qh_لغزش_h = ((پایه_h % 128) / 32) * 2;
 
-                const int qh_half_l = (base_l / 128) * 32;
-                const int qh_half_h = (base_h / 128) * 32;
+                ثابت صحيح qh_half_l = (پایه_l / 128) * 32;
+                ثابت صحيح qh_half_h = (پایه_h / 128) * 32;
 
-                for (int j = 0; j < ncols_interleaved; j++) {
-                    const int8_t scale_l = b_ptr[l].scales[scale_idx_l * ncols_interleaved + j];
-                    const int8_t scale_h = b_ptr[l].scales[scale_idx_h * ncols_interleaved + j];
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
+                    ثابت int8_t scale_l = b_ptr[l].scales[scale_idx_l * ncols_interleaved + j];
+                    ثابت int8_t scale_h = b_ptr[l].scales[scale_idx_h * ncols_interleaved + j];
 
-                    int sumi_l = 0;
-                    int sumi_h = 0;
+                    صحيح sumi_l = 0;
+                    صحيح sumi_h = 0;
 
-                    for (int i = 0; i < blocklen; i++) {
-                        const int ql_pos = k * ncols_interleaved * blocklen + j * blocklen + i;
-                        const int l_4    = b_ptr[l].ql[ql_pos] & 0xF;
-                        const int hi_4   = (b_ptr[l].ql[ql_pos] >> 4) & 0xF;
+                    لكل (صحيح i = 0; i < blocklen; i++) {
+                        ثابت صحيح ql_pos = k * ncols_interleaved * blocklen + j * blocklen + i;
+                        ثابت صحيح l_4    = b_ptr[l].ql[ql_pos] & 0xF;
+                        ثابت صحيح hi_4   = (b_ptr[l].ql[ql_pos] >> 4) & 0xF;
 
-                        const int qh_idx_l    = qh_half_l + ((base_l + i) % 32);
-                        const int qh_chunk_l  = qh_idx_l / blocklen;
-                        const int qh_pos_l    = qh_idx_l % blocklen;
-                        const int qh_offset_l = qh_chunk_l * (blocklen * ncols_interleaved) + j * blocklen + qh_pos_l;
-                        const int hi_2_l      = (b_ptr[l].qh[qh_offset_l] >> qh_shift_l) & 0x3;
+                        ثابت صحيح qh_idx_l    = qh_half_l + ((پایه_l + i) % 32);
+                        ثابت صحيح qh_chunk_l  = qh_idx_l / blocklen;
+                        ثابت صحيح qh_pos_l    = qh_idx_l % blocklen;
+                        ثابت صحيح qh_جابه_جایی_l = qh_chunk_l * (blocklen * ncols_interleaved) + j * blocklen + qh_pos_l;
+                        ثابت صحيح hi_2_l      = (b_ptr[l].qh[qh_جابه_جایی_l] >> qh_لغزش_l) & 0x3;
 
-                        const int qh_idx_h    = qh_half_h + ((base_h + i) % 32);
-                        const int qh_chunk_h  = qh_idx_h / blocklen;
-                        const int qh_pos_h    = qh_idx_h % blocklen;
-                        const int qh_offset_h = qh_chunk_h * (blocklen * ncols_interleaved) + j * blocklen + qh_pos_h;
-                        const int hi_2_h      = (b_ptr[l].qh[qh_offset_h] >> qh_shift_h) & 0x3;
+                        ثابت صحيح qh_idx_h    = qh_half_h + ((پایه_h + i) % 32);
+                        ثابت صحيح qh_chunk_h  = qh_idx_h / blocklen;
+                        ثابت صحيح qh_pos_h    = qh_idx_h % blocklen;
+                        ثابت صحيح qh_جابه_جایی_h = qh_chunk_h * (blocklen * ncols_interleaved) + j * blocklen + qh_pos_h;
+                        ثابت صحيح hi_2_h      = (b_ptr[l].qh[qh_جابه_جایی_h] >> qh_لغزش_h) & 0x3;
 
-                        const int q_l = ((hi_2_l << 4) | l_4) - 32;
-                        const int q_h = ((hi_2_h << 4) | hi_4) - 32;
+                        ثابت صحيح q_l = ((hi_2_l << 4) | l_4) - 32;
+                        ثابت صحيح q_h = ((hi_2_h << 4) | hi_4) - 32;
 
-                        const int8_t a_l = a_ptr[l].qs[base_l + i];
-                        const int8_t a_h = a_ptr[l].qs[base_h + i];
+                        ثابت int8_t a_l = a_ptr[l].qs[پایه_l + i];
+                        ثابت int8_t a_h = a_ptr[l].qs[پایه_h + i];
 
                         sumi_l += q_l * a_l;
                         sumi_h += q_h * a_h;
                     }
 
                     sumf[j] +=
-                        (sumi_l * scale_l + sumi_h * scale_h) * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * a_ptr[l].d;
+                        (sumi_l * scale_l + sumi_h * scale_h) * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[j]) * a_ptr[l].d;
                 }
             }
         }
 
-        for (int j = 0; j < ncols_interleaved; j++) {
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
             s[x * ncols_interleaved + j] = sumf[j];
         }
     }
 }
 
-template <int M, int N>
-static void ggml_gemm_q6_K_NxM_q8_K_generic_impl(int                        n,
-                                                 float * GGML_RESTRICT      s,
+قالب <صحيح M, صحيح N>
+ساكن فراغ ggml_gemm_q6_K_NxM_q8_K_generic_impl(صحيح                        n,
+                                                 عائم * GGML_RESTRICT      s,
                                                  size_t                     bs,
-                                                 const void * GGML_RESTRICT vx,
-                                                 const void * GGML_RESTRICT vy,
-                                                 int                        nr,
-                                                 int                        nc) {
-    constexpr int blocklen          = M;
-    constexpr int ncols_interleaved = N;
-    const int     qk                = QK_K;
-    const int     nb                = n / qk;
-    const int     blocks_per_half   = 64 / blocklen;
-    const int     q8_half_stride    = 512;
-    const int     q8_low_high_step  = 256;
+                                                 ثابت فراغ * GGML_RESTRICT vx,
+                                                 ثابت فراغ * GGML_RESTRICT vy,
+                                                 صحيح                        nr,
+                                                 صحيح                        nc) {
+    constexpr صحيح blocklen          = M;
+    constexpr صحيح ncols_interleaved = N;
+    ثابت صحيح     qk                = QK_K;
+    ثابت صحيح     nb                = n / qk;
+    ثابت صحيح     بلوکها_در_هر_half   = 64 / blocklen;
+    ثابت صحيح     q8_half_stride    = 512;
+    ثابت صحيح     q8_کم_بالا_گام  = 256;
 
-    assert(n % qk == 0);
-    assert(nr % 4 == 0);
-    assert(nc % ncols_interleaved == 0);
+    أكد(n % qk == 0);
+    أكد(nr % 4 == 0);
+    أكد(nc % ncols_interleaved == 0);
 
-    UNUSED(bs);
+    استفادهنشده(bs);
 
-    float sumf[4][8];
+    عائم sumf[4][8];
 
-    for (int y = 0; y < nr / 4; y++) {
-        const block_q8_Kx4 * a_ptr = (const block_q8_Kx4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
-            const block_q6_Kx8 * b_ptr = (const block_q6_Kx8 *) vx + (x * nb);
+    لكل (صحيح y = 0; y < nr / 4; y++) {
+        ثابت بلوک_q8_Kx4 * a_ptr = (ثابت بلوک_q8_Kx4 *) vy + (y * nb);
+        لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+            ثابت بلوک_q6_Kx8 * b_ptr = (ثابت بلوک_q6_Kx8 *) vx + (x * nb);
 
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                     sumf[m][j] = 0.0f;
                 }
             }
 
-            for (int l = 0; l < nb; l++) {
-                for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                    const int base_l = (k / blocks_per_half) * 128 + (k % blocks_per_half) * blocklen;
-                    const int base_h = base_l + 64;
+            لكل (صحيح l = 0; l < nb; l++) {
+                لكل (صحيح k = 0; k < (qk / (2 * blocklen)); k++) {
+                    ثابت صحيح پایه_l = (k / بلوکها_در_هر_half) * 128 + (k % بلوکها_در_هر_half) * blocklen;
+                    ثابت صحيح پایه_h = پایه_l + 64;
 
-                    const int scale_idx_l = base_l / 16;
-                    const int scale_idx_h = base_h / 16;
+                    ثابت صحيح scale_idx_l = پایه_l / 16;
+                    ثابت صحيح scale_idx_h = پایه_h / 16;
 
-                    const int qh_shift_l = ((base_l % 128) / 32) * 2;
-                    const int qh_shift_h = ((base_h % 128) / 32) * 2;
+                    ثابت صحيح qh_لغزش_l = ((پایه_l % 128) / 32) * 2;
+                    ثابت صحيح qh_لغزش_h = ((پایه_h % 128) / 32) * 2;
 
-                    const int qh_half_l = (base_l / 128) * 32;
-                    const int qh_half_h = (base_h / 128) * 32;
+                    ثابت صحيح qh_half_l = (پایه_l / 128) * 32;
+                    ثابت صحيح qh_half_h = (پایه_h / 128) * 32;
 
-                    const int q8_base = (k / blocks_per_half) * q8_half_stride + (k % blocks_per_half) * (blocklen * 4);
+                    ثابت صحيح q8_پایه = (k / بلوکها_در_هر_half) * q8_half_stride + (k % بلوکها_در_هر_half) * (blocklen * 4);
 
-                    for (int m = 0; m < 4; m++) {
-                        for (int j = 0; j < ncols_interleaved; j++) {
-                            const int8_t scale_l = b_ptr[l].scales[scale_idx_l * ncols_interleaved + j];
-                            const int8_t scale_h = b_ptr[l].scales[scale_idx_h * ncols_interleaved + j];
+                    لكل (صحيح m = 0; m < 4; m++) {
+                        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
+                            ثابت int8_t scale_l = b_ptr[l].scales[scale_idx_l * ncols_interleaved + j];
+                            ثابت int8_t scale_h = b_ptr[l].scales[scale_idx_h * ncols_interleaved + j];
 
-                            int sumi_l = 0;
-                            int sumi_h = 0;
+                            صحيح sumi_l = 0;
+                            صحيح sumi_h = 0;
 
-                            for (int i = 0; i < blocklen; i++) {
-                                const int ql_pos = k * ncols_interleaved * blocklen + j * blocklen + i;
-                                const int l_4    = b_ptr[l].ql[ql_pos] & 0xF;
-                                const int hi_4   = (b_ptr[l].ql[ql_pos] >> 4) & 0xF;
+                            لكل (صحيح i = 0; i < blocklen; i++) {
+                                ثابت صحيح ql_pos = k * ncols_interleaved * blocklen + j * blocklen + i;
+                                ثابت صحيح l_4    = b_ptr[l].ql[ql_pos] & 0xF;
+                                ثابت صحيح hi_4   = (b_ptr[l].ql[ql_pos] >> 4) & 0xF;
 
-                                const int qh_idx_l   = qh_half_l + ((base_l + i) % 32);
-                                const int qh_chunk_l = qh_idx_l / blocklen;
-                                const int qh_pos_l   = qh_idx_l % blocklen;
-                                const int qh_offset_l =
+                                ثابت صحيح qh_idx_l   = qh_half_l + ((پایه_l + i) % 32);
+                                ثابت صحيح qh_chunk_l = qh_idx_l / blocklen;
+                                ثابت صحيح qh_pos_l   = qh_idx_l % blocklen;
+                                ثابت صحيح qh_جابه_جایی_l =
                                     qh_chunk_l * (blocklen * ncols_interleaved) + j * blocklen + qh_pos_l;
-                                const int hi_2_l = (b_ptr[l].qh[qh_offset_l] >> qh_shift_l) & 0x3;
+                                ثابت صحيح hi_2_l = (b_ptr[l].qh[qh_جابه_جایی_l] >> qh_لغزش_l) & 0x3;
 
-                                const int qh_idx_h   = qh_half_h + ((base_h + i) % 32);
-                                const int qh_chunk_h = qh_idx_h / blocklen;
-                                const int qh_pos_h   = qh_idx_h % blocklen;
-                                const int qh_offset_h =
+                                ثابت صحيح qh_idx_h   = qh_half_h + ((پایه_h + i) % 32);
+                                ثابت صحيح qh_chunk_h = qh_idx_h / blocklen;
+                                ثابت صحيح qh_pos_h   = qh_idx_h % blocklen;
+                                ثابت صحيح qh_جابه_جایی_h =
                                     qh_chunk_h * (blocklen * ncols_interleaved) + j * blocklen + qh_pos_h;
-                                const int hi_2_h = (b_ptr[l].qh[qh_offset_h] >> qh_shift_h) & 0x3;
+                                ثابت صحيح hi_2_h = (b_ptr[l].qh[qh_جابه_جایی_h] >> qh_لغزش_h) & 0x3;
 
-                                const int q_l = ((hi_2_l << 4) | l_4) - 32;
-                                const int q_h = ((hi_2_h << 4) | hi_4) - 32;
+                                ثابت صحيح q_l = ((hi_2_l << 4) | l_4) - 32;
+                                ثابت صحيح q_h = ((hi_2_h << 4) | hi_4) - 32;
 
-                                const int8_t q8_l = a_ptr[l].qs[q8_base + m * blocklen + i];
-                                const int8_t q8_h = a_ptr[l].qs[q8_base + m * blocklen + i + q8_low_high_step];
+                                ثابت int8_t q8_l = a_ptr[l].qs[q8_پایه + m * blocklen + i];
+                                ثابت int8_t q8_h = a_ptr[l].qs[q8_پایه + m * blocklen + i + q8_کم_بالا_گام];
 
                                 sumi_l += q_l * q8_l;
                                 sumi_h += q_h * q8_h;
                             }
 
-                            sumf[m][j] += (sumi_l * scale_l + sumi_h * scale_h) * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) *
+                            sumf[m][j] += (sumi_l * scale_l + sumi_h * scale_h) * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[j]) *
                                           a_ptr[l].d[m];
                         }
                     }
                 }
             }
 
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                     s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j];
                 }
             }
@@ -547,936 +547,936 @@ static void ggml_gemm_q6_K_NxM_q8_K_generic_impl(int                        n,
     }
 }
 
-template <int M, int N>
-static void ggml_gemv_q5_K_NxM_q8_K_generic_impl(int                        n,
-                                                 float * GGML_RESTRICT      s,
+قالب <صحيح M, صحيح N>
+ساكن فراغ ggml_gemv_q5_K_NxM_q8_K_generic_impl(صحيح                        n,
+                                                 عائم * GGML_RESTRICT      s,
                                                  size_t                     bs,
-                                                 const void * GGML_RESTRICT vx,
-                                                 const void * GGML_RESTRICT vy,
-                                                 int                        nr,
-                                                 int                        nc) {
-    constexpr int         blocklen          = M;
-    constexpr int         ncols_interleaved = N;
-    const int             qk                = QK_K;
-    const int             nb                = n / qk;
-    static const uint32_t kmask1            = 0x3f3f3f3f;
-    static const uint32_t kmask2            = 0x0f0f0f0f;
-    static const uint32_t kmask3            = 0x03030303;
+                                                 ثابت فراغ * GGML_RESTRICT vx,
+                                                 ثابت فراغ * GGML_RESTRICT vy,
+                                                 صحيح                        nr,
+                                                 صحيح                        nc) {
+    constexpr صحيح         blocklen          = M;
+    constexpr صحيح         ncols_interleaved = N;
+    ثابت صحيح             qk                = QK_K;
+    ثابت صحيح             nb                = n / qk;
+    ساكن ثابت uint32_t kmask1            = 0x3f3f3f3f;
+    ساكن ثابت uint32_t kmask2            = 0x0f0f0f0f;
+    ساكن ثابت uint32_t kmask3            = 0x03030303;
 
-    assert(n % qk == 0);
-    assert(nc % ncols_interleaved == 0);
+    أكد(n % qk == 0);
+    أكد(nc % ncols_interleaved == 0);
 
-    UNUSED(bs);
-    UNUSED(nr);
+    استفادهنشده(bs);
+    استفادهنشده(nr);
 
-    float    sumf[ncols_interleaved];
-    float    sum_minf[ncols_interleaved];
+    عائم    sumf[ncols_interleaved];
+    عائم    جمع_minf[ncols_interleaved];
     uint32_t utmp[32];
-    int      sumi1;
-    int      sumi2;
-    int      sumi;
+    صحيح      sumi1;
+    صحيح      sumi2;
+    صحيح      sumi;
 
-    const block_q8_K * a_ptr = (const block_q8_K *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
-        const block_q5_Kx8 * b_ptr = (const block_q5_Kx8 *) vx + (x * nb);
+    ثابت بلوک_q8_K * a_ptr = (ثابت بلوک_q8_K *) vy;
+    لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+        ثابت بلوک_q5_Kx8 * b_ptr = (ثابت بلوک_q5_Kx8 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) {
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
             sumf[j]     = 0.0;
-            sum_minf[j] = 0.0;
+            جمع_minf[j] = 0.0;
         }
-        for (int l = 0; l < nb; l++) {
-            for (int sb = 0; sb < 8; sb++) {
-                memcpy(utmp + sb * 4, b_ptr[l].scales + sb * K_SCALE_SIZE, K_SCALE_SIZE);
+        لكل (صحيح l = 0; l < nb; l++) {
+            لكل (صحيح sb = 0; sb < 8; sb++) {
+                کپی_حافظه(utmp + sb * 4, b_ptr[l].scales + sb * K_SCALE_اندازه, K_SCALE_اندازه);
                 utmp[sb * 4 + 3]      = ((utmp[sb * 4 + 2] >> 4) & kmask2) | (((utmp[sb * 4 + 1] >> 6) & kmask3) << 4);
-                const uint32_t uaux_0 = utmp[sb * 4 + 1] & kmask1;
+                ثابت uint32_t uaux_0 = utmp[sb * 4 + 1] & kmask1;
                 utmp[sb * 4 + 1]      = (utmp[sb * 4 + 2] & kmask2) | (((utmp[sb * 4 + 0] >> 6) & kmask3) << 4);
                 utmp[sb * 4 + 2]      = uaux_0;
                 utmp[sb * 4 + 0] &= kmask1;
             }
-            for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                constexpr int scale_stride = 32;
+            لكل (صحيح k = 0; k < (qk / (2 * blocklen)); k++) {
+                constexpr صحيح scale_stride = 32;
                 uint8_t *     scales_0     = (uint8_t *) utmp + (k / (32 / blocklen)) * scale_stride;
                 uint8_t *     scales_1     = (uint8_t *) utmp + (k / (32 / blocklen)) * scale_stride + 16;
 
-                const int qh_shift = (k / (32 / blocklen)) * 2;
-                for (int j = 0; j < ncols_interleaved; j++) {
+                ثابت صحيح qh_لغزش = (k / (32 / blocklen)) * 2;
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                     sumi1 = 0;
                     sumi2 = 0;
                     sumi  = 0;
-                    for (int i = 0; i < blocklen; ++i) {
-                        const int b_qs_offset = k * ncols_interleaved * blocklen + j * blocklen + i;
+                    لكل (صحيح i = 0; i < blocklen; ++i) {
+                        ثابت صحيح b_qs_جابه_جایی = k * ncols_interleaved * blocklen + j * blocklen + i;
 
-                        const int qh_idx      = (k * blocklen + i) % 32;
-                        const int qh_chunk    = qh_idx / blocklen;
-                        const int qh_pos      = qh_idx % blocklen;
-                        const int b_qh_offset = qh_chunk * (blocklen * ncols_interleaved) + j * blocklen + qh_pos;
+                        ثابت صحيح qh_idx      = (k * blocklen + i) % 32;
+                        ثابت صحيح qh_chunk    = qh_idx / blocklen;
+                        ثابت صحيح qh_pos      = qh_idx % blocklen;
+                        ثابت صحيح b_qh_جابه_جایی = qh_chunk * (blocklen * ncols_interleaved) + j * blocklen + qh_pos;
 
-                        const uint8_t qh_val = b_ptr[l].qh[b_qh_offset];
-                        const uint8_t h0     = (qh_val >> qh_shift) & 1;
-                        const uint8_t h1     = (qh_val >> (qh_shift + 1)) & 1;
+                        ثابت uint8_t qh_val = b_ptr[l].qh[b_qh_جابه_جایی];
+                        ثابت uint8_t h0     = (qh_val >> qh_لغزش) & 1;
+                        ثابت uint8_t h1     = (qh_val >> (qh_لغزش + 1)) & 1;
 
-                        const int v0 = (int8_t) ((b_ptr[l].qs[b_qs_offset] & 0xF) | (h0 << 4));
-                        const int v1 = (int8_t) ((b_ptr[l].qs[b_qs_offset] >> 4) | (h1 << 4));
+                        ثابت صحيح v0 = (int8_t) ((b_ptr[l].qs[b_qs_جابه_جایی] & 0xF) | (h0 << 4));
+                        ثابت صحيح v1 = (int8_t) ((b_ptr[l].qs[b_qs_جابه_جایی] >> 4) | (h1 << 4));
 
-                        const int q8_offset = (k / (32 / blocklen)) * 64 + (k % (32 / blocklen)) * blocklen + i;
+                        ثابت صحيح q8_جابه_جایی = (k / (32 / blocklen)) * 64 + (k % (32 / blocklen)) * blocklen + i;
 
-                        sumi1 = (v0 * a_ptr[l].qs[q8_offset]);
-                        sumi2 = (v1 * a_ptr[l].qs[q8_offset + 32]);
+                        sumi1 = (v0 * a_ptr[l].qs[q8_جابه_جایی]);
+                        sumi2 = (v1 * a_ptr[l].qs[q8_جابه_جایی + 32]);
                         sumi1 = sumi1 * scales_0[j];
                         sumi2 = sumi2 * scales_1[j];
                         sumi += sumi1 + sumi2;
                     }
-                    sumf[j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * a_ptr[l].d;
+                    sumf[j] += sumi * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[j]) * a_ptr[l].d;
                 }
             }
-            for (int sb = 0; sb < 8; sb++) {
+            لكل (صحيح sb = 0; sb < 8; sb++) {
                 uint8_t * mins = (uint8_t *) utmp + 8 + sb * 16;
-                for (int j = 0; j < ncols_interleaved; j++) {
-                    sum_minf[j] += mins[j] * (a_ptr[l].bsums[sb * 2] + a_ptr[l].bsums[sb * 2 + 1]) *
-                                   GGML_CPU_FP16_TO_FP32(b_ptr[l].dmin[j]) * a_ptr[l].d;
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
+                    جمع_minf[j] += mins[j] * (a_ptr[l].bsums[sb * 2] + a_ptr[l].bsums[sb * 2 + 1]) *
+                                   GGML_CPU_FP16_مقصد_FP32(b_ptr[l].dmin[j]) * a_ptr[l].d;
                 }
             }
         }
-        for (int j = 0; j < ncols_interleaved; j++) {
-            s[x * ncols_interleaved + j] = sumf[j] - sum_minf[j];
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
+            s[x * ncols_interleaved + j] = sumf[j] - جمع_minf[j];
         }
     }
 }
 
-template <int M, int N>
-static void ggml_gemm_q5_K_NxM_q8_K_generic_impl(int                        n,
-                                                 float * GGML_RESTRICT      s,
+قالب <صحيح M, صحيح N>
+ساكن فراغ ggml_gemm_q5_K_NxM_q8_K_generic_impl(صحيح                        n,
+                                                 عائم * GGML_RESTRICT      s,
                                                  size_t                     bs,
-                                                 const void * GGML_RESTRICT vx,
-                                                 const void * GGML_RESTRICT vy,
-                                                 int                        nr,
-                                                 int                        nc) {
-    constexpr int         blocklen          = M;
-    constexpr int         ncols_interleaved = N;
-    const int             qk                = QK_K;
-    const int             nb                = n / qk;
-    static const uint32_t kmask1            = 0x3f3f3f3f;
-    static const uint32_t kmask2            = 0x0f0f0f0f;
-    static const uint32_t kmask3            = 0x03030303;
+                                                 ثابت فراغ * GGML_RESTRICT vx,
+                                                 ثابت فراغ * GGML_RESTRICT vy,
+                                                 صحيح                        nr,
+                                                 صحيح                        nc) {
+    constexpr صحيح         blocklen          = M;
+    constexpr صحيح         ncols_interleaved = N;
+    ثابت صحيح             qk                = QK_K;
+    ثابت صحيح             nb                = n / qk;
+    ساكن ثابت uint32_t kmask1            = 0x3f3f3f3f;
+    ساكن ثابت uint32_t kmask2            = 0x0f0f0f0f;
+    ساكن ثابت uint32_t kmask3            = 0x03030303;
 
-    assert(n % qk == 0);
-    assert(nr % 4 == 0);
-    assert(nc % ncols_interleaved == 0);
+    أكد(n % qk == 0);
+    أكد(nr % 4 == 0);
+    أكد(nc % ncols_interleaved == 0);
 
-    float    sumf[4][ncols_interleaved];
-    float    sum_minf[4][ncols_interleaved];
+    عائم    sumf[4][ncols_interleaved];
+    عائم    جمع_minf[4][ncols_interleaved];
     uint32_t utmp[32];
-    int      sumi1;
-    int      sumi2;
-    int      sumi;
+    صحيح      sumi1;
+    صحيح      sumi2;
+    صحيح      sumi;
 
-    for (int y = 0; y < nr / 4; y++) {
-        const block_q8_Kx4 * a_ptr = (const block_q8_Kx4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
-            const block_q5_Kx8 * b_ptr = (const block_q5_Kx8 *) vx + (x * nb);
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+    لكل (صحيح y = 0; y < nr / 4; y++) {
+        ثابت بلوک_q8_Kx4 * a_ptr = (ثابت بلوک_q8_Kx4 *) vy + (y * nb);
+        لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+            ثابت بلوک_q5_Kx8 * b_ptr = (ثابت بلوک_q5_Kx8 *) vx + (x * nb);
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                     sumf[m][j]     = 0.0;
-                    sum_minf[m][j] = 0.0;
+                    جمع_minf[m][j] = 0.0;
                 }
             }
-            for (int l = 0; l < nb; l++) {
-                for (int sb = 0; sb < 8; sb++) {
-                    memcpy(utmp + sb * 4, b_ptr[l].scales + sb * K_SCALE_SIZE, K_SCALE_SIZE);
+            لكل (صحيح l = 0; l < nb; l++) {
+                لكل (صحيح sb = 0; sb < 8; sb++) {
+                    کپی_حافظه(utmp + sb * 4, b_ptr[l].scales + sb * K_SCALE_اندازه, K_SCALE_اندازه);
                     utmp[sb * 4 + 3] = ((utmp[sb * 4 + 2] >> 4) & kmask2) | (((utmp[sb * 4 + 1] >> 6) & kmask3) << 4);
-                    const uint32_t uaux_0 = utmp[sb * 4 + 1] & kmask1;
+                    ثابت uint32_t uaux_0 = utmp[sb * 4 + 1] & kmask1;
                     utmp[sb * 4 + 1]      = (utmp[sb * 4 + 2] & kmask2) | (((utmp[sb * 4 + 0] >> 6) & kmask3) << 4);
                     utmp[sb * 4 + 2]      = uaux_0;
                     utmp[sb * 4 + 0] &= kmask1;
                 }
-                for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                    constexpr int scale_stride = 32;
+                لكل (صحيح k = 0; k < (qk / (2 * blocklen)); k++) {
+                    constexpr صحيح scale_stride = 32;
                     uint8_t *     scales_0     = (uint8_t *) utmp + (k / (32 / blocklen)) * scale_stride;
                     uint8_t *     scales_1     = (uint8_t *) utmp + (k / (32 / blocklen)) * scale_stride + 16;
 
-                    const int qh_shift = (k / (32 / blocklen)) * 2;
-                    for (int m = 0; m < 4; m++) {
-                        for (int j = 0; j < ncols_interleaved; j++) {
+                    ثابت صحيح qh_لغزش = (k / (32 / blocklen)) * 2;
+                    لكل (صحيح m = 0; m < 4; m++) {
+                        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                             sumi1 = 0;
                             sumi2 = 0;
                             sumi  = 0;
-                            for (int i = 0; i < blocklen; ++i) {
-                                const int b_qs_offset = k * ncols_interleaved * blocklen + j * blocklen + i;
+                            لكل (صحيح i = 0; i < blocklen; ++i) {
+                                ثابت صحيح b_qs_جابه_جایی = k * ncols_interleaved * blocklen + j * blocklen + i;
 
-                                const int qh_idx   = (k * blocklen + i) % 32;
-                                const int qh_chunk = qh_idx / blocklen;
-                                const int qh_pos   = qh_idx % blocklen;
-                                const int b_qh_offset =
+                                ثابت صحيح qh_idx   = (k * blocklen + i) % 32;
+                                ثابت صحيح qh_chunk = qh_idx / blocklen;
+                                ثابت صحيح qh_pos   = qh_idx % blocklen;
+                                ثابت صحيح b_qh_جابه_جایی =
                                     qh_chunk * (blocklen * ncols_interleaved) + j * blocklen + qh_pos;
 
-                                const uint8_t qh_val = b_ptr[l].qh[b_qh_offset];
-                                const uint8_t h0     = (qh_val >> qh_shift) & 1;
-                                const uint8_t h1     = (qh_val >> (qh_shift + 1)) & 1;
+                                ثابت uint8_t qh_val = b_ptr[l].qh[b_qh_جابه_جایی];
+                                ثابت uint8_t h0     = (qh_val >> qh_لغزش) & 1;
+                                ثابت uint8_t h1     = (qh_val >> (qh_لغزش + 1)) & 1;
 
-                                const int v0 = (int8_t) ((b_ptr[l].qs[b_qs_offset] & 0xF) | (h0 << 4));
-                                const int v1 = (int8_t) ((b_ptr[l].qs[b_qs_offset] >> 4) | (h1 << 4));
+                                ثابت صحيح v0 = (int8_t) ((b_ptr[l].qs[b_qs_جابه_جایی] & 0xF) | (h0 << 4));
+                                ثابت صحيح v1 = (int8_t) ((b_ptr[l].qs[b_qs_جابه_جایی] >> 4) | (h1 << 4));
 
-                                const int q8_offset = (k / (32 / blocklen)) * 256 +
+                                ثابت صحيح q8_جابه_جایی = (k / (32 / blocklen)) * 256 +
                                                       (k % (32 / blocklen)) * 4 * blocklen + m * blocklen + i;
 
-                                sumi1 = (v0 * a_ptr[l].qs[q8_offset]);
-                                sumi2 = (v1 * a_ptr[l].qs[q8_offset + 128]);
+                                sumi1 = (v0 * a_ptr[l].qs[q8_جابه_جایی]);
+                                sumi2 = (v1 * a_ptr[l].qs[q8_جابه_جایی + 128]);
                                 sumi1 = sumi1 * scales_0[j];
                                 sumi2 = sumi2 * scales_1[j];
                                 sumi += sumi1 + sumi2;
                             }
-                            sumf[m][j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * a_ptr[l].d[m];
+                            sumf[m][j] += sumi * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[j]) * a_ptr[l].d[m];
                         }
                     }
                 }
-                for (int sb = 0; sb < 8; sb++) {
+                لكل (صحيح sb = 0; sb < 8; sb++) {
                     uint8_t * mins = (uint8_t *) utmp + 8 + sb * 16;
-                    for (int m = 0; m < 4; m++) {
-                        const int16_t * bsums = a_ptr[l].bsums + (sb * 8) + (m * 4) - ((sb % 2) * 6);
-                        for (int j = 0; j < ncols_interleaved; j++) {
-                            sum_minf[m][j] += mins[j] * (bsums[0] + bsums[1]) *
-                                              GGML_CPU_FP16_TO_FP32(b_ptr[l].dmin[j]) * a_ptr[l].d[m];
+                    لكل (صحيح m = 0; m < 4; m++) {
+                        ثابت int16_t * bsums = a_ptr[l].bsums + (sb * 8) + (m * 4) - ((sb % 2) * 6);
+                        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
+                            جمع_minf[m][j] += mins[j] * (bsums[0] + bsums[1]) *
+                                              GGML_CPU_FP16_مقصد_FP32(b_ptr[l].dmin[j]) * a_ptr[l].d[m];
                         }
                     }
                 }
             }
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
-                    s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j] - sum_minf[m][j];
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
+                    s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j] - جمع_minf[m][j];
                 }
             }
         }
     }
 }
 
-extern "C" {
+خارجي "C" {
 
-void ggml_gemv_q4_0_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen = 4;
+فراغ ggml_gemv_q4_0_4x4_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
+    ثابت صحيح qk = QK8_0;
+    ثابت صحيح nb = n / qk;
+    ثابت صحيح ncols_interleaved = 4;
+    ثابت صحيح blocklen = 4;
 
-    assert(nr == 1);
-    assert(n % qk == 0);
-    assert(nc % ncols_interleaved == 0);
+    أكد(nr == 1);
+    أكد(n % qk == 0);
+    أكد(nc % ncols_interleaved == 0);
 
-    UNUSED(s);
-    UNUSED(bs);
-    UNUSED(vx);
-    UNUSED(vy);
-    UNUSED(nr);
-    UNUSED(nc);
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    استفادهنشده(s);
+    استفادهنشده(bs);
+    استفادهنشده(vx);
+    استفادهنشده(vy);
+    استفادهنشده(nr);
+    استفادهنشده(nc);
+    استفادهنشده(nb);
+    استفادهنشده(ncols_interleaved);
+    استفادهنشده(blocklen);
 
-    float sumf[4];
-    int sumi;
+    عائم sumf[4];
+    صحيح sumi;
 
-    const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
-        const block_q4_0x4 * b_ptr = (const block_q4_0x4 *) vx + (x * nb);
+    ثابت بلوک_q8_0 * a_ptr = (ثابت بلوک_q8_0 *) vy;
+    لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+        ثابت بلوک_q4_0x4 * b_ptr = (ثابت بلوک_q4_0x4 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
-        for (int l = 0; l < nb; l++) {
-            for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
+        لكل (صحيح l = 0; l < nb; l++) {
+            لكل (صحيح k = 0; k < (qk / (2 * blocklen)); k++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                     sumi = 0;
-                    for (int i = 0; i < blocklen; ++i) {
-                        const int v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] << 4);
-                        const int v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF0);
+                    لكل (صحيح i = 0; i < blocklen; ++i) {
+                        ثابت صحيح v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] << 4);
+                        ثابت صحيح v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF0);
                         sumi += ((v0 * a_ptr[l].qs[k * blocklen + i]) + (v1 * a_ptr[l].qs[k * blocklen + i + qk / 2])) >> 4;
                     }
-                    sumf[j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d);
+                    sumf[j] += sumi * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_مقصد_FP32(a_ptr[l].d);
                 }
             }
         }
-        for (int j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
     }
 }
 
-void ggml_gemv_q4_0_4x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen = 8;
+فراغ ggml_gemv_q4_0_4x8_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
+    ثابت صحيح qk = QK8_0;
+    ثابت صحيح nb = n / qk;
+    ثابت صحيح ncols_interleaved = 4;
+    ثابت صحيح blocklen = 8;
 
-    assert (n % qk == 0);
-    assert (nc % ncols_interleaved == 0);
+    أكد (n % qk == 0);
+    أكد (nc % ncols_interleaved == 0);
 
-    UNUSED(s);
-    UNUSED(bs);
-    UNUSED(vx);
-    UNUSED(vy);
-    UNUSED(nr);
-    UNUSED(nc);
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    استفادهنشده(s);
+    استفادهنشده(bs);
+    استفادهنشده(vx);
+    استفادهنشده(vy);
+    استفادهنشده(nr);
+    استفادهنشده(nc);
+    استفادهنشده(nb);
+    استفادهنشده(ncols_interleaved);
+    استفادهنشده(blocklen);
 
-    float sumf[4];
-    int sumi;
+    عائم sumf[4];
+    صحيح sumi;
 
-    const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
-        const block_q4_0x4 * b_ptr = (const block_q4_0x4 *) vx + (x * nb);
+    ثابت بلوک_q8_0 * a_ptr = (ثابت بلوک_q8_0 *) vy;
+    لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+        ثابت بلوک_q4_0x4 * b_ptr = (ثابت بلوک_q4_0x4 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
-        for (int l = 0; l < nb; l++) {
-            for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
+        لكل (صحيح l = 0; l < nb; l++) {
+            لكل (صحيح k = 0; k < (qk / (2 * blocklen)); k++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                     sumi = 0;
-                    for (int i = 0; i < blocklen; ++i) {
-                        const int v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] << 4);
-                        const int v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF0);
+                    لكل (صحيح i = 0; i < blocklen; ++i) {
+                        ثابت صحيح v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] << 4);
+                        ثابت صحيح v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF0);
                         sumi += ((v0 * a_ptr[l].qs[k * blocklen + i]) + (v1 * a_ptr[l].qs[k * blocklen + i + qk / 2])) >> 4;
                     }
-                    sumf[j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d);
+                    sumf[j] += sumi * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_مقصد_FP32(a_ptr[l].d);
                 }
             }
         }
-        for (int j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
     }
 }
 
-void ggml_gemv_q4_0_8x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 8;
-    const int blocklen = 8;
+فراغ ggml_gemv_q4_0_8x8_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
+    ثابت صحيح qk = QK8_0;
+    ثابت صحيح nb = n / qk;
+    ثابت صحيح ncols_interleaved = 8;
+    ثابت صحيح blocklen = 8;
 
-    assert (n % qk == 0);
-    assert (nc % ncols_interleaved == 0);
+    أكد (n % qk == 0);
+    أكد (nc % ncols_interleaved == 0);
 
-    UNUSED(s);
-    UNUSED(bs);
-    UNUSED(vx);
-    UNUSED(vy);
-    UNUSED(nr);
-    UNUSED(nc);
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    استفادهنشده(s);
+    استفادهنشده(bs);
+    استفادهنشده(vx);
+    استفادهنشده(vy);
+    استفادهنشده(nr);
+    استفادهنشده(nc);
+    استفادهنشده(nb);
+    استفادهنشده(ncols_interleaved);
+    استفادهنشده(blocklen);
 
-    float sumf[8];
-    int sumi;
+    عائم sumf[8];
+    صحيح sumi;
 
-    const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
-        const block_q4_0x8 * b_ptr = (const block_q4_0x8 *) vx + (x * nb);
+    ثابت بلوک_q8_0 * a_ptr = (ثابت بلوک_q8_0 *) vy;
+    لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+        ثابت بلوک_q4_0x8 * b_ptr = (ثابت بلوک_q4_0x8 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
-        for (int l = 0; l < nb; l++) {
-            for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
+        لكل (صحيح l = 0; l < nb; l++) {
+            لكل (صحيح k = 0; k < (qk / (2 * blocklen)); k++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                     sumi = 0;
-                    for (int i = 0; i < blocklen; ++i) {
-                        const int v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] << 4);
-                        const int v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF0);
+                    لكل (صحيح i = 0; i < blocklen; ++i) {
+                        ثابت صحيح v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] << 4);
+                        ثابت صحيح v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF0);
                         sumi += ((v0 * a_ptr[l].qs[k * blocklen + i]) + (v1 * a_ptr[l].qs[k * blocklen + i + qk / 2])) >> 4;
                     }
-                    sumf[j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d);
+                    sumf[j] += sumi * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_مقصد_FP32(a_ptr[l].d);
                 }
             }
         }
-        for (int j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
     }
 }
 
-void ggml_gemv_q4_K_8x4_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK_K;
-    const int nb = n / qk;
-    const int ncols_interleaved = 8;
-    const int blocklen = 4;
-    static const uint32_t kmask1 = 0x3f3f3f3f;
-    static const uint32_t kmask2 = 0x0f0f0f0f;
-    static const uint32_t kmask3 = 0x03030303;
+فراغ ggml_gemv_q4_K_8x4_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
+    ثابت صحيح qk = QK_K;
+    ثابت صحيح nb = n / qk;
+    ثابت صحيح ncols_interleaved = 8;
+    ثابت صحيح blocklen = 4;
+    ساكن ثابت uint32_t kmask1 = 0x3f3f3f3f;
+    ساكن ثابت uint32_t kmask2 = 0x0f0f0f0f;
+    ساكن ثابت uint32_t kmask3 = 0x03030303;
 
-    assert (n % qk == 0);
-    assert (nc % ncols_interleaved == 0);
+    أكد (n % qk == 0);
+    أكد (nc % ncols_interleaved == 0);
 
-    UNUSED(bs);
-    UNUSED(nr);
+    استفادهنشده(bs);
+    استفادهنشده(nr);
 
-    float sumf[8];
-    float sum_minf[8];
+    عائم sumf[8];
+    عائم جمع_minf[8];
     uint32_t utmp[32];
-    int sumi1;
-    int sumi2;
-    int sumi;
+    صحيح sumi1;
+    صحيح sumi2;
+    صحيح sumi;
 
-    const block_q8_K * a_ptr = (const block_q8_K *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
-        const block_q4_Kx8 * b_ptr = (const block_q4_Kx8 *) vx + (x * nb);
+    ثابت بلوک_q8_K * a_ptr = (ثابت بلوک_q8_K *) vy;
+    لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+        ثابت بلوک_q4_Kx8 * b_ptr = (ثابت بلوک_q4_Kx8 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) {
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
             sumf[j] = 0.0;
-            sum_minf[j] = 0.0;
+            جمع_minf[j] = 0.0;
         }
-        for (int l = 0; l < nb; l++) {
-            for (int sb = 0; sb < 8; sb++) {
-                memcpy(utmp + sb * 4, b_ptr[l].scales + sb * 12, 12);
+        لكل (صحيح l = 0; l < nb; l++) {
+            لكل (صحيح sb = 0; sb < 8; sb++) {
+                کپی_حافظه(utmp + sb * 4, b_ptr[l].scales + sb * 12, 12);
                 utmp[sb * 4 + 3] = ((utmp[sb * 4 + 2] >> 4) & kmask2) | (((utmp[sb * 4 + 1] >> 6) & kmask3) << 4);
-                const uint32_t uaux_0 = utmp[sb * 4 + 1] & kmask1;
+                ثابت uint32_t uaux_0 = utmp[sb * 4 + 1] & kmask1;
                 utmp[sb * 4 + 1] = (utmp[sb * 4 + 2] & kmask2) | (((utmp[sb * 4 + 0] >> 6) & kmask3) << 4);
                 utmp[sb * 4 + 2] = uaux_0;
                 utmp[sb * 4 + 0] &= kmask1;
             }
-            for (int k = 0; k < (qk / (2 * blocklen)); k++) {
+            لكل (صحيح k = 0; k < (qk / (2 * blocklen)); k++) {
                 uint8_t * scales_0 = (uint8_t *) utmp + (k / 8) * 32;
                 uint8_t * scales_1 = (uint8_t *) utmp + (k / 8) * 32 + 16;
-                for (int j = 0; j < ncols_interleaved; j++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                     sumi1 = 0;
                     sumi2 = 0;
                     sumi = 0;
-                    for (int i = 0; i < blocklen; ++i) {
-                        const int v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF);
-                        const int v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4);
+                    لكل (صحيح i = 0; i < blocklen; ++i) {
+                        ثابت صحيح v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF);
+                        ثابت صحيح v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4);
                         sumi1 = (v0 * a_ptr[l].qs[(k / 8) * 64 + (k % 8) * blocklen + i]);
                         sumi2 = (v1 * a_ptr[l].qs[(k / 8) * 64 + (k % 8) * blocklen + i + 32]);
                         sumi1 = sumi1 * scales_0[j];
                         sumi2 = sumi2 * scales_1[j];
                         sumi += sumi1 + sumi2;
                     }
-                    sumf[j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * a_ptr[l].d;
+                    sumf[j] += sumi * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[j]) * a_ptr[l].d;
                 }
             }
-            for (int sb = 0; sb < 8; sb++) {
+            لكل (صحيح sb = 0; sb < 8; sb++) {
                 uint8_t * mins = (uint8_t *) utmp + 8 + sb * 16;
-                for (int j = 0; j < ncols_interleaved; j++) {
-                    sum_minf[j] += mins[j] * (a_ptr[l].bsums[sb * 2] + a_ptr[l].bsums[sb * 2 + 1]) * GGML_CPU_FP16_TO_FP32(b_ptr[l].dmin[j]) * a_ptr[l].d;
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
+                    جمع_minf[j] += mins[j] * (a_ptr[l].bsums[sb * 2] + a_ptr[l].bsums[sb * 2 + 1]) * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].dmin[j]) * a_ptr[l].d;
                 }
             }
         }
-        for (int j = 0; j < ncols_interleaved; j++) {
-            s[x * ncols_interleaved + j] = sumf[j] - sum_minf[j];
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
+            s[x * ncols_interleaved + j] = sumf[j] - جمع_minf[j];
         }
     }
 }
 
-void ggml_gemv_q4_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK_K;
-    const int nb = n / qk;
-    const int ncols_interleaved = 8;
-    const int blocklen = 8;
-    static const uint32_t kmask1 = 0x3f3f3f3f;
-    static const uint32_t kmask2 = 0x0f0f0f0f;
-    static const uint32_t kmask3 = 0x03030303;
+فراغ ggml_gemv_q4_K_8x8_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
+    ثابت صحيح qk = QK_K;
+    ثابت صحيح nb = n / qk;
+    ثابت صحيح ncols_interleaved = 8;
+    ثابت صحيح blocklen = 8;
+    ساكن ثابت uint32_t kmask1 = 0x3f3f3f3f;
+    ساكن ثابت uint32_t kmask2 = 0x0f0f0f0f;
+    ساكن ثابت uint32_t kmask3 = 0x03030303;
 
-    assert (n % qk == 0);
-    assert (nc % ncols_interleaved == 0);
+    أكد (n % qk == 0);
+    أكد (nc % ncols_interleaved == 0);
 
-    UNUSED(bs);
-    UNUSED(nr);
+    استفادهنشده(bs);
+    استفادهنشده(nr);
 
-    float sumf[8];
-    float sum_minf[8];
+    عائم sumf[8];
+    عائم جمع_minf[8];
     uint32_t utmp[32];
-    int sumi1;
-    int sumi2;
-    int sumi;
+    صحيح sumi1;
+    صحيح sumi2;
+    صحيح sumi;
 
-    const block_q8_K * a_ptr = (const block_q8_K *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
-        const block_q4_Kx8 * b_ptr = (const block_q4_Kx8 *) vx + (x * nb);
+    ثابت بلوک_q8_K * a_ptr = (ثابت بلوک_q8_K *) vy;
+    لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+        ثابت بلوک_q4_Kx8 * b_ptr = (ثابت بلوک_q4_Kx8 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) {
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
             sumf[j] = 0.0;
-            sum_minf[j] = 0.0;
+            جمع_minf[j] = 0.0;
         }
-        for (int l = 0; l < nb; l++) {
-            for (int sb = 0; sb < 8; sb++) {
-                memcpy(utmp + sb * 4, b_ptr[l].scales + sb * 12, 12);
+        لكل (صحيح l = 0; l < nb; l++) {
+            لكل (صحيح sb = 0; sb < 8; sb++) {
+                کپی_حافظه(utmp + sb * 4, b_ptr[l].scales + sb * 12, 12);
                 utmp[sb * 4 + 3] = ((utmp[sb * 4 + 2] >> 4) & kmask2) | (((utmp[sb * 4 + 1] >> 6) & kmask3) << 4);
-                const uint32_t uaux_0 = utmp[sb * 4 + 1] & kmask1;
+                ثابت uint32_t uaux_0 = utmp[sb * 4 + 1] & kmask1;
                 utmp[sb * 4 + 1] = (utmp[sb * 4 + 2] & kmask2) | (((utmp[sb * 4 + 0] >> 6) & kmask3) << 4);
                 utmp[sb * 4 + 2] = uaux_0;
                 utmp[sb * 4 + 0] &= kmask1;
             }
-            for (int k = 0; k < (qk / (2 * blocklen)); k++) {
+            لكل (صحيح k = 0; k < (qk / (2 * blocklen)); k++) {
                 uint8_t *scales_0 = (uint8_t*) utmp + (k / 4) * 32;
                 uint8_t *scales_1 = (uint8_t*) utmp + (k / 4) * 32 + 16;
-                for (int j = 0; j < ncols_interleaved; j++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                     sumi1 = 0;
                     sumi2 = 0;
                     sumi = 0;
-                    for (int i = 0; i < blocklen; ++i) {
-                        const int v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF);
-                        const int v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4);
+                    لكل (صحيح i = 0; i < blocklen; ++i) {
+                        ثابت صحيح v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF);
+                        ثابت صحيح v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4);
                         sumi1 = (v0 * a_ptr[l].qs[(k >> 2) * 64 + (k % 4) * blocklen + i]);
                         sumi2 = (v1 * a_ptr[l].qs[(k >> 2) * 64 + (k % 4) * blocklen + i + 32]);
                         sumi1 = sumi1 * scales_0[j];
                         sumi2 = sumi2 * scales_1[j];
                         sumi += sumi1 + sumi2;
                     }
-                    sumf[j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * a_ptr[l].d;
+                    sumf[j] += sumi * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[j]) * a_ptr[l].d;
                 }
             }
-            for (int sb = 0; sb < 8; sb++) {
+            لكل (صحيح sb = 0; sb < 8; sb++) {
                 uint8_t *mins = (uint8_t*) utmp + 8 + sb * 16;
-                for (int j = 0; j < ncols_interleaved; j++) {
-                    sum_minf[j] += mins[j] * (a_ptr[l].bsums[sb * 2] + a_ptr[l].bsums[sb * 2 + 1]) * GGML_CPU_FP16_TO_FP32(b_ptr[l].dmin[j]) * a_ptr[l].d;
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
+                    جمع_minf[j] += mins[j] * (a_ptr[l].bsums[sb * 2] + a_ptr[l].bsums[sb * 2 + 1]) * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].dmin[j]) * a_ptr[l].d;
                 }
             }
         }
-        for (int j = 0; j < ncols_interleaved; j++) {
-            s[x * ncols_interleaved + j] = sumf[j] - sum_minf[j];
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
+            s[x * ncols_interleaved + j] = sumf[j] - جمع_minf[j];
         }
     }
 }
 
-void ggml_gemv_q2_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK_K;
-    const int nb = n / qk;
-    const int ncols_interleaved = 8;
-    const int blocklen = 8;
+فراغ ggml_gemv_q2_K_8x8_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
+    ثابت صحيح qk = QK_K;
+    ثابت صحيح nb = n / qk;
+    ثابت صحيح ncols_interleaved = 8;
+    ثابت صحيح blocklen = 8;
 
-    assert (n % qk == 0);
-    assert (nc % ncols_interleaved == 0);
+    أكد (n % qk == 0);
+    أكد (nc % ncols_interleaved == 0);
 
-    UNUSED(s);
-    UNUSED(bs);
-    UNUSED(vx);
-    UNUSED(vy);
-    UNUSED(nr);
-    UNUSED(nc);
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    استفادهنشده(s);
+    استفادهنشده(bs);
+    استفادهنشده(vx);
+    استفادهنشده(vy);
+    استفادهنشده(nr);
+    استفادهنشده(nc);
+    استفادهنشده(nb);
+    استفادهنشده(ncols_interleaved);
+    استفادهنشده(blocklen);
 
-    float sumf[8];
-    float sum_minf[8];
-    int sumi1,sumi2,sumi3,sumi4;
-    int sumi;
+    عائم sumf[8];
+    عائم جمع_minf[8];
+    صحيح sumi1,sumi2,sumi3,sumi4;
+    صحيح sumi;
 
-    const block_q8_K * a_ptr = (const block_q8_K *)vy;
-    for(int x = 0; x < nc / ncols_interleaved; x++) {
-        const block_q2_Kx8 * b_ptr = (const block_q2_Kx8 *) vx + (x * nb);
-        for (int j = 0; j < ncols_interleaved; j++) {
+    ثابت بلوک_q8_K * a_ptr = (ثابت بلوک_q8_K *)vy;
+    لكل(صحيح x = 0; x < nc / ncols_interleaved; x++) {
+        ثابت بلوک_q2_Kx8 * b_ptr = (ثابت بلوک_q2_Kx8 *) vx + (x * nb);
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
             sumf[j] = 0.0;
-            sum_minf[j] = 0.0;
+            جمع_minf[j] = 0.0;
         }
-        for (int l = 0; l < nb; l++) {
-            for (int k = 0; k < (qk / (4 * blocklen)); k++) {
-                const uint8_t *scales_0 = b_ptr[l].scales + (k / 4) * 64 ;
-                const uint8_t *scales_1 = b_ptr[l].scales + (k / 4) * 64 + 16;
-                const uint8_t *scales_2 = b_ptr[l].scales + (k / 4) * 64 + 32;
-                const uint8_t *scales_3 = b_ptr[l].scales + (k / 4) * 64 + 48;
-                for (int j = 0; j < ncols_interleaved; j++) {
+        لكل (صحيح l = 0; l < nb; l++) {
+            لكل (صحيح k = 0; k < (qk / (4 * blocklen)); k++) {
+                ثابت uint8_t *scales_0 = b_ptr[l].scales + (k / 4) * 64 ;
+                ثابت uint8_t *scales_1 = b_ptr[l].scales + (k / 4) * 64 + 16;
+                ثابت uint8_t *scales_2 = b_ptr[l].scales + (k / 4) * 64 + 32;
+                ثابت uint8_t *scales_3 = b_ptr[l].scales + (k / 4) * 64 + 48;
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                     sumi1 = 0;
                     sumi2 = 0;
                     sumi3 = 0;
                     sumi4 = 0;
                     sumi = 0;
-                    int offset = ((k / 2) % 2) + j * 2;
-                    for (int i = 0; i < blocklen; ++i){
-                        const int v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 3);
-                        const int v1 = (int8_t) ((b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 2 ) & 3);
-                        const int v2 = (int8_t) ((b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4 ) & 3);
-                        const int v3 = (int8_t) ((b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 6 ) & 3);
+                    صحيح جابه_جایی = ((k / 2) % 2) + j * 2;
+                    لكل (صحيح i = 0; i < blocklen; ++i){
+                        ثابت صحيح v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 3);
+                        ثابت صحيح v1 = (int8_t) ((b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 2 ) & 3);
+                        ثابت صحيح v2 = (int8_t) ((b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4 ) & 3);
+                        ثابت صحيح v3 = (int8_t) ((b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 6 ) & 3);
                         sumi1 = (v0 * a_ptr[l].qs[(k >> 2) * 128 + (k % 4) * blocklen + i]);
                         sumi2 = (v1 * a_ptr[l].qs[(k >> 2) * 128 + (k % 4) * blocklen + i + 32]);
                         sumi3 = (v2 * a_ptr[l].qs[(k >> 2) * 128 + (k % 4) * blocklen + i + 64]);
                         sumi4 = (v3 * a_ptr[l].qs[(k >> 2) * 128 + (k % 4) * blocklen + i + 96]);
 
-                        sumi1 = sumi1 * (scales_0[offset] & 0xF);
-                        sumi2 = sumi2 * (scales_1[offset] & 0xF);
-                        sumi3 = sumi3 * (scales_2[offset] & 0xF);
-                        sumi4 = sumi4 * (scales_3[offset] & 0xF);
+                        sumi1 = sumi1 * (scales_0[جابه_جایی] & 0xF);
+                        sumi2 = sumi2 * (scales_1[جابه_جایی] & 0xF);
+                        sumi3 = sumi3 * (scales_2[جابه_جایی] & 0xF);
+                        sumi4 = sumi4 * (scales_3[جابه_جایی] & 0xF);
                         sumi += sumi1 + sumi2 + sumi3 + sumi4;
                     }
-                    sumf[j] += sumi * GGML_FP16_TO_FP32(b_ptr[l].d[j]) * a_ptr[l].d;
+                    sumf[j] += sumi * GGML_FP16_مقصد_FP32(b_ptr[l].d[j]) * a_ptr[l].d;
                 }
             }
-            for(int sb = 0; sb < 8; sb++) {
-                const uint8_t *mins = b_ptr[l].scales + sb * 16;
-                for(int j = 0; j < ncols_interleaved; j++){
-                    sum_minf[j] += ((mins[j * 2] >> 4) * a_ptr[l].bsums[sb * 2] + (mins[(j * 2)+ 1] >> 4) * a_ptr[l].bsums[sb * 2 + 1]) * GGML_FP16_TO_FP32(b_ptr[l].dmin[j]) * a_ptr[l].d;
+            لكل(صحيح sb = 0; sb < 8; sb++) {
+                ثابت uint8_t *mins = b_ptr[l].scales + sb * 16;
+                لكل(صحيح j = 0; j < ncols_interleaved; j++){
+                    جمع_minf[j] += ((mins[j * 2] >> 4) * a_ptr[l].bsums[sb * 2] + (mins[(j * 2)+ 1] >> 4) * a_ptr[l].bsums[sb * 2 + 1]) * GGML_FP16_مقصد_FP32(b_ptr[l].dmin[j]) * a_ptr[l].d;
                 }
             }
         }
-        for (int j = 0; j < ncols_interleaved; j++) {
-            s[x * ncols_interleaved + j] = sumf[j] - sum_minf[j];
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
+            s[x * ncols_interleaved + j] = sumf[j] - جمع_minf[j];
         }
     }
 }
 
-void ggml_gemv_q5_K_8x4_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
+فراغ ggml_gemv_q5_K_8x4_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
     ggml_gemv_q5_K_NxM_q8_K_generic_impl<4, 8>(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemv_q5_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
+فراغ ggml_gemv_q5_K_8x8_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
     ggml_gemv_q5_K_NxM_q8_K_generic_impl<8, 8>(n, s, bs, vx, vy, nr, nc);
 }
 
 
-void ggml_gemv_q6_K_8x4_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
+فراغ ggml_gemv_q6_K_8x4_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
     ggml_gemv_q6_K_NxM_q8_K_generic_impl<4, 8>(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemv_q6_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
+فراغ ggml_gemv_q6_K_8x8_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
     ggml_gemv_q6_K_NxM_q8_K_generic_impl<8, 8>(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemv_iq4_nl_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen = 4;
+فراغ ggml_gemv_iq4_nl_4x4_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
+    ثابت صحيح qk = QK8_0;
+    ثابت صحيح nb = n / qk;
+    ثابت صحيح ncols_interleaved = 4;
+    ثابت صحيح blocklen = 4;
 
-    assert(nr == 1);
-    assert(n % qk == 0);
-    assert(nc % ncols_interleaved == 0);
+    أكد(nr == 1);
+    أكد(n % qk == 0);
+    أكد(nc % ncols_interleaved == 0);
 
-    UNUSED(bs);
-    UNUSED(nr);
+    استفادهنشده(bs);
+    استفادهنشده(nr);
 
-    float sumf[4];
-    int sumi;
+    عائم sumf[4];
+    صحيح sumi;
 
-    const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
-        const block_iq4_nlx4 * b_ptr = (const block_iq4_nlx4 *) vx + (x * nb);
+    ثابت بلوک_q8_0 * a_ptr = (ثابت بلوک_q8_0 *) vy;
+    لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+        ثابت بلوک_iq4_nlx4 * b_ptr = (ثابت بلوک_iq4_nlx4 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
-        for (int l = 0; l < nb; l++) {
-            for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
+        لكل (صحيح l = 0; l < nb; l++) {
+            لكل (صحيح k = 0; k < (qk / (2 * blocklen)); k++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                     sumi = 0;
-                    for (int i = 0; i < blocklen; ++i) {
-                        const int v0 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
-                        const int v1 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
+                    لكل (صحيح i = 0; i < blocklen; ++i) {
+                        ثابت صحيح v0 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
+                        ثابت صحيح v1 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
                         sumi += ((v0 * a_ptr[l].qs[k * blocklen + i]) + (v1 * a_ptr[l].qs[k * blocklen + i + qk / 2]));
                     }
-                    sumf[j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d);
+                    sumf[j] += sumi * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_مقصد_FP32(a_ptr[l].d);
                 }
             }
         }
-        for (int j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
     }
 }
 
-void ggml_gemv_iq4_nl_8x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 8;
-    const int blocklen = 8;
+فراغ ggml_gemv_iq4_nl_8x8_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
+    ثابت صحيح qk = QK8_0;
+    ثابت صحيح nb = n / qk;
+    ثابت صحيح ncols_interleaved = 8;
+    ثابت صحيح blocklen = 8;
 
-    assert(nr == 1);
-    assert(n % qk == 0);
-    assert(nc % ncols_interleaved == 0);
+    أكد(nr == 1);
+    أكد(n % qk == 0);
+    أكد(nc % ncols_interleaved == 0);
 
-    UNUSED(bs);
-    UNUSED(nr);
+    استفادهنشده(bs);
+    استفادهنشده(nr);
 
-    float sumf[8];
-    int sumi;
+    عائم sumf[8];
+    صحيح sumi;
 
-    const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
-        const block_iq4_nlx8 * b_ptr = (const block_iq4_nlx8 *) vx + (x * nb);
+    ثابت بلوک_q8_0 * a_ptr = (ثابت بلوک_q8_0 *) vy;
+    لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+        ثابت بلوک_iq4_nlx8 * b_ptr = (ثابت بلوک_iq4_nlx8 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
-        for (int l = 0; l < nb; l++) {
-            for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
+        لكل (صحيح l = 0; l < nb; l++) {
+            لكل (صحيح k = 0; k < (qk / (2 * blocklen)); k++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                     sumi = 0;
-                    for (int i = 0; i < blocklen; ++i) {
-                        const int v0 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
-                        const int v1 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
+                    لكل (صحيح i = 0; i < blocklen; ++i) {
+                        ثابت صحيح v0 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
+                        ثابت صحيح v1 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
                         sumi += ((v0 * a_ptr[l].qs[k * blocklen + i]) + (v1 * a_ptr[l].qs[k * blocklen + i + qk / 2]));
                     }
-                    sumf[j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d);
+                    sumf[j] += sumi * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_مقصد_FP32(a_ptr[l].d);
                 }
             }
         }
-        for (int j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
     }
 }
 
-void ggml_gemv_mxfp4_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen = 4;
+فراغ ggml_gemv_mxfp4_4x4_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
+    ثابت صحيح qk = QK8_0;
+    ثابت صحيح nb = n / qk;
+    ثابت صحيح ncols_interleaved = 4;
+    ثابت صحيح blocklen = 4;
 
-    assert(nr == 1);
-    assert(n % qk == 0);
-    assert(nc % ncols_interleaved == 0);
+    أكد(nr == 1);
+    أكد(n % qk == 0);
+    أكد(nc % ncols_interleaved == 0);
 
-    UNUSED(bs);
-    UNUSED(nr);
+    استفادهنشده(bs);
+    استفادهنشده(nr);
 
-    float sumf[4];
-    int sumi;
+    عائم sumf[4];
+    صحيح sumi;
 
-    const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
-        const block_mxfp4x4 * b_ptr = (const block_mxfp4x4 *) vx + (x * nb);
+    ثابت بلوک_q8_0 * a_ptr = (ثابت بلوک_q8_0 *) vy;
+    لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+        ثابت بلوک_mxfp4x4 * b_ptr = (ثابت بلوک_mxfp4x4 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
-        for (int l = 0; l < nb; l++) {
-            for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
+        لكل (صحيح l = 0; l < nb; l++) {
+            لكل (صحيح k = 0; k < (qk / (2 * blocklen)); k++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                     sumi = 0;
-                    for (int i = 0; i < blocklen; ++i) {
-                        const int v0 = kvalues_mxfp4[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
-                        const int v1 = kvalues_mxfp4[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
+                    لكل (صحيح i = 0; i < blocklen; ++i) {
+                        ثابت صحيح v0 = kvalues_mxfp4[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
+                        ثابت صحيح v1 = kvalues_mxfp4[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
                         sumi += ((v0 * a_ptr[l].qs[k * blocklen + i]) + (v1 * a_ptr[l].qs[k * blocklen + i + qk / 2]));
                     }
-                    sumf[j] += sumi * GGML_CPU_E8M0_TO_FP32_HALF(b_ptr[l].e[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d);
+                    sumf[j] += sumi * GGML_CPU_E8_M0_مقصد_FP32_HALF(b_ptr[l].e[j]) * GGML_CPU_FP16_مقصد_FP32(a_ptr[l].d);
                 }
             }
         }
-        for (int j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
     }
 }
 
-void ggml_gemv_mxfp4_8x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 8;
-    const int blocklen = 8;
+فراغ ggml_gemv_mxfp4_8x8_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
+    ثابت صحيح qk = QK8_0;
+    ثابت صحيح nb = n / qk;
+    ثابت صحيح ncols_interleaved = 8;
+    ثابت صحيح blocklen = 8;
 
-    assert(nr == 1);
-    assert(n % qk == 0);
-    assert(nc % ncols_interleaved == 0);
+    أكد(nr == 1);
+    أكد(n % qk == 0);
+    أكد(nc % ncols_interleaved == 0);
 
-    UNUSED(bs);
-    UNUSED(nr);
+    استفادهنشده(bs);
+    استفادهنشده(nr);
 
-    float sumf[8];
-    int sumi;
+    عائم sumf[8];
+    صحيح sumi;
 
-    const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
-        const block_mxfp4x8 * b_ptr = (const block_mxfp4x8 *) vx + (x * nb);
+    ثابت بلوک_q8_0 * a_ptr = (ثابت بلوک_q8_0 *) vy;
+    لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+        ثابت بلوک_mxfp4x8 * b_ptr = (ثابت بلوک_mxfp4x8 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
-        for (int l = 0; l < nb; l++) {
-            for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
+        لكل (صحيح l = 0; l < nb; l++) {
+            لكل (صحيح k = 0; k < (qk / (2 * blocklen)); k++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                     sumi = 0;
-                    for (int i = 0; i < blocklen; ++i) {
-                        const int v0 = kvalues_mxfp4[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
-                        const int v1 = kvalues_mxfp4[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
+                    لكل (صحيح i = 0; i < blocklen; ++i) {
+                        ثابت صحيح v0 = kvalues_mxfp4[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
+                        ثابت صحيح v1 = kvalues_mxfp4[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
                         sumi += ((v0 * a_ptr[l].qs[k * blocklen + i]) + (v1 * a_ptr[l].qs[k * blocklen + i + qk / 2]));
                     }
-                    sumf[j] += sumi * GGML_CPU_E8M0_TO_FP32_HALF(b_ptr[l].e[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d);
+                    sumf[j] += sumi * GGML_CPU_E8_M0_مقصد_FP32_HALF(b_ptr[l].e[j]) * GGML_CPU_FP16_مقصد_FP32(a_ptr[l].d);
                 }
             }
         }
-        for (int j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
     }
 }
 
-void ggml_gemv_q8_0_4x4_q8_0_generic(int                        n,
-                                     float * GGML_RESTRICT      s,
+فراغ ggml_gemv_q8_0_4x4_q8_0_generic(صحيح                        n,
+                                     عائم * GGML_RESTRICT      s,
                                      size_t                     bs,
-                                     const void * GGML_RESTRICT vx,
-                                     const void * GGML_RESTRICT vy,
-                                     int                        nr,
-                                     int                        nc) {
-    const int qk                = QK8_0;
-    const int nb                = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen          = 4;
+                                     ثابت فراغ * GGML_RESTRICT vx,
+                                     ثابت فراغ * GGML_RESTRICT vy,
+                                     صحيح                        nr,
+                                     صحيح                        nc) {
+    ثابت صحيح qk                = QK8_0;
+    ثابت صحيح nb                = n / qk;
+    ثابت صحيح ncols_interleaved = 4;
+    ثابت صحيح blocklen          = 4;
 
-    assert(nr == 1);
-    assert(n % qk == 0);
-    assert(nc % ncols_interleaved == 0);
+    أكد(nr == 1);
+    أكد(n % qk == 0);
+    أكد(nc % ncols_interleaved == 0);
 
-    UNUSED(bs);
-    UNUSED(nr);
+    استفادهنشده(bs);
+    استفادهنشده(nr);
 
-    float sumf[4];
-    int   sumi;
+    عائم sumf[4];
+    صحيح   sumi;
 
-    const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
-        const block_q8_0x4 * b_ptr = (const block_q8_0x4 *) vx + (x * nb);
+    ثابت بلوک_q8_0 * a_ptr = (ثابت بلوک_q8_0 *) vy;
+    لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+        ثابت بلوک_q8_0x4 * b_ptr = (ثابت بلوک_q8_0x4 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) {
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
             sumf[j] = 0.0;
         }
-        for (int l = 0; l < nb; l++) {
-            for (int k = 0; k < (qk / blocklen); k++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+        لكل (صحيح l = 0; l < nb; l++) {
+            لكل (صحيح k = 0; k < (qk / blocklen); k++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                     sumi = 0;
-                    for (int i = 0; i < blocklen; ++i) {
-                        const int v0 = b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i];
+                    لكل (صحيح i = 0; i < blocklen; ++i) {
+                        ثابت صحيح v0 = b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i];
                         sumi += v0 * a_ptr[l].qs[k * blocklen + i];
                     }
-                    sumf[j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d);
+                    sumf[j] += sumi * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_مقصد_FP32(a_ptr[l].d);
                 }
             }
         }
-        for (int j = 0; j < ncols_interleaved; j++) {
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
             s[x * ncols_interleaved + j] = sumf[j];
         }
     }
 }
 
-void ggml_gemv_q8_0_4x8_q8_0_generic(int                        n,
-                                     float * GGML_RESTRICT      s,
+فراغ ggml_gemv_q8_0_4x8_q8_0_generic(صحيح                        n,
+                                     عائم * GGML_RESTRICT      s,
                                      size_t                     bs,
-                                     const void * GGML_RESTRICT vx,
-                                     const void * GGML_RESTRICT vy,
-                                     int                        nr,
-                                     int                        nc) {
-    const int qk                = QK8_0;
-    const int nb                = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen          = 8;
+                                     ثابت فراغ * GGML_RESTRICT vx,
+                                     ثابت فراغ * GGML_RESTRICT vy,
+                                     صحيح                        nr,
+                                     صحيح                        nc) {
+    ثابت صحيح qk                = QK8_0;
+    ثابت صحيح nb                = n / qk;
+    ثابت صحيح ncols_interleaved = 4;
+    ثابت صحيح blocklen          = 8;
 
-    assert(nr == 1);
-    assert(n % qk == 0);
-    assert(nc % ncols_interleaved == 0);
+    أكد(nr == 1);
+    أكد(n % qk == 0);
+    أكد(nc % ncols_interleaved == 0);
 
-    UNUSED(bs);
-    UNUSED(nr);
+    استفادهنشده(bs);
+    استفادهنشده(nr);
 
-    float sumf[4];
-    int   sumi;
+    عائم sumf[4];
+    صحيح   sumi;
 
-    const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
-        const block_q8_0x4 * b_ptr = (const block_q8_0x4 *) vx + (x * nb);
+    ثابت بلوک_q8_0 * a_ptr = (ثابت بلوک_q8_0 *) vy;
+    لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+        ثابت بلوک_q8_0x4 * b_ptr = (ثابت بلوک_q8_0x4 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) {
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
             sumf[j] = 0.0;
         }
-        for (int l = 0; l < nb; l++) {
-            for (int k = 0; k < (qk / blocklen); k++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+        لكل (صحيح l = 0; l < nb; l++) {
+            لكل (صحيح k = 0; k < (qk / blocklen); k++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                     sumi = 0;
-                    for (int i = 0; i < blocklen; ++i) {
-                        const int v0 = b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i];
+                    لكل (صحيح i = 0; i < blocklen; ++i) {
+                        ثابت صحيح v0 = b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i];
                         sumi += v0 * a_ptr[l].qs[k * blocklen + i];
                     }
-                    sumf[j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d);
+                    sumf[j] += sumi * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_مقصد_FP32(a_ptr[l].d);
                 }
             }
         }
-        for (int j = 0; j < ncols_interleaved; j++) {
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
             s[x * ncols_interleaved + j] = sumf[j];
         }
     }
 }
 
-void ggml_gemv_q1_0_4x4_q8_0_generic(int                        n,
-                                     float * GGML_RESTRICT      s,
+فراغ ggml_gemv_q1_0_4x4_q8_0_generic(صحيح                        n,
+                                     عائم * GGML_RESTRICT      s,
                                      size_t                     bs,
-                                     const void * GGML_RESTRICT vx,
-                                     const void * GGML_RESTRICT vy,
-                                     int                        nr,
-                                     int                        nc) {
-    const int qk                = QK1_0;
-    const int nb                = n / qk;
-    const int ncols_interleaved = 4;
+                                     ثابت فراغ * GGML_RESTRICT vx,
+                                     ثابت فراغ * GGML_RESTRICT vy,
+                                     صحيح                        nr,
+                                     صحيح                        nc) {
+    ثابت صحيح qk                = QK1_0;
+    ثابت صحيح nb                = n / qk;
+    ثابت صحيح ncols_interleaved = 4;
 
-    assert(nr == 1);
-    assert(n % qk == 0);
-    assert(nc % ncols_interleaved == 0);
+    أكد(nr == 1);
+    أكد(n % qk == 0);
+    أكد(nc % ncols_interleaved == 0);
 
-    UNUSED(bs);
-    UNUSED(nr);
+    استفادهنشده(bs);
+    استفادهنشده(nr);
 
-    float sumf[4];
+    عائم sumf[4];
 
-    const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
-        const block_q1_0x4 * b_ptr = (const block_q1_0x4 *) vx + (x * nb);
+    ثابت بلوک_q8_0 * a_ptr = (ثابت بلوک_q8_0 *) vy;
+    لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+        ثابت بلوک_q1_0x4 * b_ptr = (ثابت بلوک_q1_0x4 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) {
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
             sumf[j] = 0.0;
         }
 
-        for (int l = 0; l < nb; l++) {
-            const float d0[4] = {
-                GGML_CPU_FP16_TO_FP32(b_ptr[l].d[0]),
-                GGML_CPU_FP16_TO_FP32(b_ptr[l].d[1]),
-                GGML_CPU_FP16_TO_FP32(b_ptr[l].d[2]),
-                GGML_CPU_FP16_TO_FP32(b_ptr[l].d[3]),
+        لكل (صحيح l = 0; l < nb; l++) {
+            ثابت عائم d0[4] = {
+                GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[0]),
+                GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[1]),
+                GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[2]),
+                GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[3]),
             };
 
-            for (int k = 0; k < QK1_0 / QK8_0; ++k) {
-                const block_q8_0 * GGML_RESTRICT a_blk = a_ptr + l * (QK1_0 / QK8_0) + k;
-                const float d1 = GGML_CPU_FP16_TO_FP32(a_blk->d);
-                const float scale[4] = { d0[0] * d1, d0[1] * d1, d0[2] * d1, d0[3] * d1 };
+            لكل (صحيح k = 0; k < QK1_0 / QK8_0; ++k) {
+                ثابت بلوک_q8_0 * GGML_RESTRICT a_blk = a_ptr + l * (QK1_0 / QK8_0) + k;
+                ثابت عائم d1 = GGML_CPU_FP16_مقصد_FP32(a_blk->d);
+                ثابت عائم scale[4] = { d0[0] * d1, d0[1] * d1, d0[2] * d1, d0[3] * d1 };
 
-                for (int tile = 0; tile < QK8_0 / 4; ++tile) {
-                    const uint8_t bits_lo = b_ptr[l].qs[k * 16 + 2 * tile + 0];
-                    const uint8_t bits_hi = b_ptr[l].qs[k * 16 + 2 * tile + 1];
+                لكل (صحيح tile = 0; tile < QK8_0 / 4; ++tile) {
+                    ثابت uint8_t بیتها_lo = b_ptr[l].qs[k * 16 + 2 * tile + 0];
+                    ثابت uint8_t بیتها_hi = b_ptr[l].qs[k * 16 + 2 * tile + 1];
 
-                    for (int p = 0; p < 4; ++p) {
-                        const float q = (float) a_blk->qs[tile * 4 + p];
+                    لكل (صحيح p = 0; p < 4; ++p) {
+                        ثابت عائم q = (عائم) a_blk->qs[tile * 4 + p];
 
-                        sumf[0] += ((bits_lo & (1u << p))       ? scale[0] : -scale[0]) * q;
-                        sumf[1] += ((bits_lo & (1u << (4 + p))) ? scale[1] : -scale[1]) * q;
-                        sumf[2] += ((bits_hi & (1u << p))       ? scale[2] : -scale[2]) * q;
-                        sumf[3] += ((bits_hi & (1u << (4 + p))) ? scale[3] : -scale[3]) * q;
+                        sumf[0] += ((بیتها_lo & (1u << p))       ? scale[0] : -scale[0]) * q;
+                        sumf[1] += ((بیتها_lo & (1u << (4 + p))) ? scale[1] : -scale[1]) * q;
+                        sumf[2] += ((بیتها_hi & (1u << p))       ? scale[2] : -scale[2]) * q;
+                        sumf[3] += ((بیتها_hi & (1u << (4 + p))) ? scale[3] : -scale[3]) * q;
                     }
                 }
             }
         }
 
-        for (int j = 0; j < ncols_interleaved; j++) {
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
             s[x * ncols_interleaved + j] = sumf[j];
         }
     }
 }
 
-void ggml_gemv_q1_0_4x8_q8_0_generic(int                        n,
-                                     float * GGML_RESTRICT      s,
+فراغ ggml_gemv_q1_0_4x8_q8_0_generic(صحيح                        n,
+                                     عائم * GGML_RESTRICT      s,
                                      size_t                     bs,
-                                     const void * GGML_RESTRICT vx,
-                                     const void * GGML_RESTRICT vy,
-                                     int                        nr,
-                                     int                        nc) {
-    const int qk                = QK1_0;
-    const int nb                = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen          = 8;
+                                     ثابت فراغ * GGML_RESTRICT vx,
+                                     ثابت فراغ * GGML_RESTRICT vy,
+                                     صحيح                        nr,
+                                     صحيح                        nc) {
+    ثابت صحيح qk                = QK1_0;
+    ثابت صحيح nb                = n / qk;
+    ثابت صحيح ncols_interleaved = 4;
+    ثابت صحيح blocklen          = 8;
 
-    assert(nr == 1);
-    assert(n % qk == 0);
-    assert(nc % ncols_interleaved == 0);
+    أكد(nr == 1);
+    أكد(n % qk == 0);
+    أكد(nc % ncols_interleaved == 0);
 
-    UNUSED(bs);
-    UNUSED(nr);
+    استفادهنشده(bs);
+    استفادهنشده(nr);
 
-    float sumf[4];
+    عائم sumf[4];
 
-    const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
-        const block_q1_0x4 * b_ptr = (const block_q1_0x4 *) vx + (x * nb);
+    ثابت بلوک_q8_0 * a_ptr = (ثابت بلوک_q8_0 *) vy;
+    لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+        ثابت بلوک_q1_0x4 * b_ptr = (ثابت بلوک_q1_0x4 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) {
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
             sumf[j] = 0.0f;
         }
 
-        for (int l = 0; l < nb; l++) {
-            const float d0[4] = {
-                GGML_CPU_FP16_TO_FP32(b_ptr[l].d[0]),
-                GGML_CPU_FP16_TO_FP32(b_ptr[l].d[1]),
-                GGML_CPU_FP16_TO_FP32(b_ptr[l].d[2]),
-                GGML_CPU_FP16_TO_FP32(b_ptr[l].d[3]),
+        لكل (صحيح l = 0; l < nb; l++) {
+            ثابت عائم d0[4] = {
+                GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[0]),
+                GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[1]),
+                GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[2]),
+                GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[3]),
             };
 
-            for (int k = 0; k < qk / blocklen; ++k) {
-                const block_q8_0 * GGML_RESTRICT a_blk = a_ptr + l * (qk / QK8_0) + k / (QK8_0 / blocklen);
-                const float d1 = GGML_CPU_FP16_TO_FP32(a_blk->d);
-                const float scale[4] = { d0[0] * d1, d0[1] * d1, d0[2] * d1, d0[3] * d1 };
-                const uint8_t bits0 = b_ptr[l].qs[k * ncols_interleaved + 0];
-                const uint8_t bits1 = b_ptr[l].qs[k * ncols_interleaved + 1];
-                const uint8_t bits2 = b_ptr[l].qs[k * ncols_interleaved + 2];
-                const uint8_t bits3 = b_ptr[l].qs[k * ncols_interleaved + 3];
-                const int q_offset = (k % (QK8_0 / blocklen)) * blocklen;
+            لكل (صحيح k = 0; k < qk / blocklen; ++k) {
+                ثابت بلوک_q8_0 * GGML_RESTRICT a_blk = a_ptr + l * (qk / QK8_0) + k / (QK8_0 / blocklen);
+                ثابت عائم d1 = GGML_CPU_FP16_مقصد_FP32(a_blk->d);
+                ثابت عائم scale[4] = { d0[0] * d1, d0[1] * d1, d0[2] * d1, d0[3] * d1 };
+                ثابت uint8_t bits0 = b_ptr[l].qs[k * ncols_interleaved + 0];
+                ثابت uint8_t bits1 = b_ptr[l].qs[k * ncols_interleaved + 1];
+                ثابت uint8_t bits2 = b_ptr[l].qs[k * ncols_interleaved + 2];
+                ثابت uint8_t bits3 = b_ptr[l].qs[k * ncols_interleaved + 3];
+                ثابت صحيح q_جابه_جایی = (k % (QK8_0 / blocklen)) * blocklen;
 
-                for (int p = 0; p < blocklen; ++p) {
-                    const float q = (float) a_blk->qs[q_offset + p];
+                لكل (صحيح p = 0; p < blocklen; ++p) {
+                    ثابت عائم q = (عائم) a_blk->qs[q_جابه_جایی + p];
 
                     sumf[0] += ((bits0 & (1u << p)) ? scale[0] : -scale[0]) * q;
                     sumf[1] += ((bits1 & (1u << p)) ? scale[1] : -scale[1]) * q;
@@ -1486,351 +1486,351 @@ void ggml_gemv_q1_0_4x8_q8_0_generic(int                        n,
             }
         }
 
-        for (int j = 0; j < ncols_interleaved; j++) {
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
             s[x * ncols_interleaved + j] = sumf[j];
         }
     }
 }
 
 // Only enable these for RISC-V.
-#if defined __riscv_zvfh
-void ggml_gemv_q4_0_16x1_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 16;
-    const int blocklen = 1;
+#إذا defined __riscv_zvfh
+فراغ ggml_gemv_q4_0_16x1_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
+    ثابت صحيح qk = QK8_0;
+    ثابت صحيح nb = n / qk;
+    ثابت صحيح ncols_interleaved = 16;
+    ثابت صحيح blocklen = 1;
 
-    assert (n % qk == 0);
-    assert (nc % ncols_interleaved == 0);
+    أكد (n % qk == 0);
+    أكد (nc % ncols_interleaved == 0);
 
-    UNUSED(s);
-    UNUSED(bs);
-    UNUSED(vx);
-    UNUSED(vy);
-    UNUSED(nr);
-    UNUSED(nc);
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    استفادهنشده(s);
+    استفادهنشده(bs);
+    استفادهنشده(vx);
+    استفادهنشده(vy);
+    استفادهنشده(nr);
+    استفادهنشده(nc);
+    استفادهنشده(nb);
+    استفادهنشده(ncols_interleaved);
+    استفادهنشده(blocklen);
 
-    float sumf[16];
-    int sumi;
+    عائم sumf[16];
+    صحيح sumi;
 
-    const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
-        const block_q4_0x16 * b_ptr = (const block_q4_0x16 *) vx + (x * nb);
+    ثابت بلوک_q8_0 * a_ptr = (ثابت بلوک_q8_0 *) vy;
+    لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+        ثابت بلوک_q4_0x16 * b_ptr = (ثابت بلوک_q4_0x16 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
-        for (int l = 0; l < nb; l++) {
-            for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
+        لكل (صحيح l = 0; l < nb; l++) {
+            لكل (صحيح k = 0; k < (qk / (2 * blocklen)); k++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                     sumi = 0;
-                    for (int i = 0; i < blocklen; ++i) {
-                        const int v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] << 4);
-                        const int v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF0);
+                    لكل (صحيح i = 0; i < blocklen; ++i) {
+                        ثابت صحيح v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] << 4);
+                        ثابت صحيح v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF0);
                         sumi += ((v0 * a_ptr[l].qs[k * blocklen + i]) + (v1 * a_ptr[l].qs[k * blocklen + i + qk / 2])) >> 4;
                     }
-                    sumf[j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d);
+                    sumf[j] += sumi * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_مقصد_FP32(a_ptr[l].d);
                 }
             }
         }
-        for (int j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
     }
 }
 
-void ggml_gemv_q4_K_16x1_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK_K;
-    const int nb = n / qk;
-    const int ncols_interleaved = 16;
-    const int blocklen = 1;
-    assert (n % qk == 0);
-    assert (nc % ncols_interleaved == 0);
-    UNUSED(s);
-    UNUSED(bs);
-    UNUSED(vx);
-    UNUSED(vy);
-    UNUSED(nr);
-    UNUSED(nc);
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
-    float sumf[16];
-    float sum_minf[16];
+فراغ ggml_gemv_q4_K_16x1_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
+    ثابت صحيح qk = QK_K;
+    ثابت صحيح nb = n / qk;
+    ثابت صحيح ncols_interleaved = 16;
+    ثابت صحيح blocklen = 1;
+    أكد (n % qk == 0);
+    أكد (nc % ncols_interleaved == 0);
+    استفادهنشده(s);
+    استفادهنشده(bs);
+    استفادهنشده(vx);
+    استفادهنشده(vy);
+    استفادهنشده(nr);
+    استفادهنشده(nc);
+    استفادهنشده(nb);
+    استفادهنشده(ncols_interleaved);
+    استفادهنشده(blocklen);
+    عائم sumf[16];
+    عائم جمع_minf[16];
     uint8_t scales[128];
     uint8_t mins[128];
-    int sumi1;
-    int sumi2;
-    int sumi;
-    const block_q8_K * a_ptr = (const block_q8_K *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
-        const block_q4_Kx16 * b_ptr = (const block_q4_Kx16 *) vx + (x * nb);
-        for (int j = 0; j < ncols_interleaved; j++) {
+    صحيح sumi1;
+    صحيح sumi2;
+    صحيح sumi;
+    ثابت بلوک_q8_K * a_ptr = (ثابت بلوک_q8_K *) vy;
+    لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+        ثابت بلوک_q4_Kx16 * b_ptr = (ثابت بلوک_q4_Kx16 *) vx + (x * nb);
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
             sumf[j] = 0.0f;
-            sum_minf[j] = 0.0f;
+            جمع_minf[j] = 0.0f;
         }
-        for (int l = 0; l < nb; l++) {
-            for (int i = 0; i < 128; i++) {
+        لكل (صحيح l = 0; l < nb; l++) {
+            لكل (صحيح i = 0; i < 128; i++) {
                 scales[i] = b_ptr[l].scales[i] & 0x0F;
                 mins[i] = b_ptr[l].scales[i] >> 4;
             }
-            for (int i = 0; i < 64; i++) {
+            لكل (صحيح i = 0; i < 64; i++) {
                 scales[i] |= (b_ptr[l].scales[128 + i] & 0x03) << 4;
                 mins[i] |= (b_ptr[l].scales[128 + i] & 0x0C) << 2;
                 scales[i + 64] |= (b_ptr[l].scales[128 + i] & 0x30);
                 mins[i + 64] |= (b_ptr[l].scales[128 + i] & 0xC0) >> 2;
             }
-            for (int sb = 0; sb < 8; sb++) {
+            لكل (صحيح sb = 0; sb < 8; sb++) {
                 uint8_t *min = &mins[sb * 16];
-                for (int j = 0; j < ncols_interleaved; j++) {
-                    sum_minf[j] += min[j] * (a_ptr[l].bsums[sb * 2] + a_ptr[l].bsums[sb * 2 + 1]) * GGML_CPU_FP16_TO_FP32(b_ptr[l].dmin[j]) * a_ptr[l].d;
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
+                    جمع_minf[j] += min[j] * (a_ptr[l].bsums[sb * 2] + a_ptr[l].bsums[sb * 2 + 1]) * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].dmin[j]) * a_ptr[l].d;
                 }
             }
-            for (int sb = 0; sb < 8; sb += 2) {
+            لكل (صحيح sb = 0; sb < 8; sb += 2) {
                 uint8_t *scales_0 = &scales[sb * 16];
                 uint8_t *scales_1 = &scales[(sb + 1) * 16];
-                for (int i = 0; i < QK4_0; i++) {
-                    for (int j = 0; j < ncols_interleaved; j++) {
+                لكل (صحيح i = 0; i < QK4_0; i++) {
+                    لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                         sumi1 = 0;
                         sumi2 = 0;
                         sumi = 0;
-                        const int v0 = (int8_t) (b_ptr[l].qs[sb * 256 + i * 16 + j] & 0xF);
-                        const int v1 = (int8_t) (b_ptr[l].qs[sb * 256 + i * 16 + j] >> 4);
+                        ثابت صحيح v0 = (int8_t) (b_ptr[l].qs[sb * 256 + i * 16 + j] & 0xF);
+                        ثابت صحيح v1 = (int8_t) (b_ptr[l].qs[sb * 256 + i * 16 + j] >> 4);
                         sumi1 = (v0 * a_ptr[l].qs[sb * 32 + i]);
                         sumi2 = (v1 * a_ptr[l].qs[sb * 32 + 32 + i]);
                         sumi1 = sumi1 * scales_0[j];
                         sumi2 = sumi2 * scales_1[j];
                         sumi += sumi1 + sumi2;
-                        sumf[j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * a_ptr[l].d;
+                        sumf[j] += sumi * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[j]) * a_ptr[l].d;
                     }
                 }
             }
         }
-        for (int j = 0; j < ncols_interleaved; j++) {
-            s[x * ncols_interleaved + j] = sumf[j] - sum_minf[j];
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
+            s[x * ncols_interleaved + j] = sumf[j] - جمع_minf[j];
         }
     }
 }
 
-void ggml_gemv_iq4_nl_16x1_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 16;
-    const int blocklen = 1;
+فراغ ggml_gemv_iq4_nl_16x1_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
+    ثابت صحيح qk = QK8_0;
+    ثابت صحيح nb = n / qk;
+    ثابت صحيح ncols_interleaved = 16;
+    ثابت صحيح blocklen = 1;
 
-    assert(nr == 1);
-    assert(n % qk == 0);
-    assert(nc % ncols_interleaved == 0);
+    أكد(nr == 1);
+    أكد(n % qk == 0);
+    أكد(nc % ncols_interleaved == 0);
 
-    UNUSED(bs);
-    UNUSED(nr);
+    استفادهنشده(bs);
+    استفادهنشده(nr);
 
-    float sumf[16];
-    int sumi;
+    عائم sumf[16];
+    صحيح sumi;
 
-    const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
-        const block_iq4_nlx16 * b_ptr = (const block_iq4_nlx16 *) vx + (x * nb);
+    ثابت بلوک_q8_0 * a_ptr = (ثابت بلوک_q8_0 *) vy;
+    لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+        ثابت بلوک_iq4_nlx16 * b_ptr = (ثابت بلوک_iq4_nlx16 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
-        for (int l = 0; l < nb; l++) {
-            for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
+        لكل (صحيح l = 0; l < nb; l++) {
+            لكل (صحيح k = 0; k < (qk / (2 * blocklen)); k++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                     sumi = 0;
-                    for (int i = 0; i < blocklen; ++i) {
-                        const int v0 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
-                        const int v1 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
+                    لكل (صحيح i = 0; i < blocklen; ++i) {
+                        ثابت صحيح v0 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
+                        ثابت صحيح v1 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
                         sumi += ((v0 * a_ptr[l].qs[k * blocklen + i]) + (v1 * a_ptr[l].qs[k * blocklen + i + qk / 2]));
                     }
-                    sumf[j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d);
+                    sumf[j] += sumi * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_مقصد_FP32(a_ptr[l].d);
                 }
             }
         }
-        for (int j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
     }
 }
 
-void ggml_gemv_q8_0_16x1_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk                = QK8_0;
-    const int nb                = n / qk;
-    const int ncols_interleaved = 16;
-    const int blocklen          = 1;
+فراغ ggml_gemv_q8_0_16x1_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
+    ثابت صحيح qk                = QK8_0;
+    ثابت صحيح nb                = n / qk;
+    ثابت صحيح ncols_interleaved = 16;
+    ثابت صحيح blocklen          = 1;
 
-    assert(nr == 1);
-    assert(n % qk == 0);
-    assert(nc % ncols_interleaved == 0);
+    أكد(nr == 1);
+    أكد(n % qk == 0);
+    أكد(nc % ncols_interleaved == 0);
 
-    UNUSED(bs);
-    UNUSED(nr);
+    استفادهنشده(bs);
+    استفادهنشده(nr);
 
-    float sumf[16];
-    int   sumi;
+    عائم sumf[16];
+    صحيح   sumi;
 
-    const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
-        const block_q8_0x16 * b_ptr = (const block_q8_0x16 *) vx + (x * nb);
+    ثابت بلوک_q8_0 * a_ptr = (ثابت بلوک_q8_0 *) vy;
+    لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+        ثابت بلوک_q8_0x16 * b_ptr = (ثابت بلوک_q8_0x16 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) {
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
             sumf[j] = 0.0;
         }
-        for (int l = 0; l < nb; l++) {
-            for (int k = 0; k < (qk / blocklen); k++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+        لكل (صحيح l = 0; l < nb; l++) {
+            لكل (صحيح k = 0; k < (qk / blocklen); k++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                     sumi = 0;
-                    for (int i = 0; i < blocklen; ++i) {
-                        const int v0 = b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i];
+                    لكل (صحيح i = 0; i < blocklen; ++i) {
+                        ثابت صحيح v0 = b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i];
                         sumi += v0 * a_ptr[l].qs[k * blocklen + i];
                     }
-                    sumf[j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d);
+                    sumf[j] += sumi * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_مقصد_FP32(a_ptr[l].d);
                 }
             }
         }
-        for (int j = 0; j < ncols_interleaved; j++) {
+        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
             s[x * ncols_interleaved + j] = sumf[j];
         }
     }
 }
 
-void ggml_gemv_q2_K_16x1_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    assert(n % QK_K == 0);
-    assert(nr == 1);
-    assert(nc % 16 == 0);
+فراغ ggml_gemv_q2_K_16x1_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
+    أكد(n % QK_K == 0);
+    أكد(nr == 1);
+    أكد(nc % 16 == 0);
 
-    UNUSED(bs);
-    UNUSED(nr);
+    استفادهنشده(bs);
+    استفادهنشده(nr);
 
-    const int nb = n / QK_K;
-    const block_q2_Kx16 * x = (const block_q2_Kx16 *)vx;
-    const block_q8_K    * y = (const block_q8_K *)vy;
+    ثابت صحيح nb = n / QK_K;
+    ثابت بلوک_q2_Kx16 * x = (ثابت بلوک_q2_Kx16 *)vx;
+    ثابت بلوک_q8_K    * y = (ثابت بلوک_q8_K *)vy;
 
     // Layout: Even-Low(0,2,4,6), Odd-Low(1,3,5,7), Even-High(8...), Odd-High(9...)
-    const int sb_perm[16] = {
+    ثابت صحيح sb_perm[16] = {
         0, 4, 1, 5, 2, 6, 3, 7,  // 0-7
         8, 12, 9, 13, 10, 14, 11, 15 // 8-15
     };
 
-    for (int col_tile = 0; col_tile < nc; col_tile += 16) {
-        const block_q2_Kx16 * x_ptr = x + (col_tile / 16) * nb;
-        const block_q8_K    * y_ptr = y;
+    لكل (صحيح ستون_tile = 0; ستون_tile < nc; ستون_tile += 16) {
+        ثابت بلوک_q2_Kx16 * x_ptr = x + (ستون_tile / 16) * nb;
+        ثابت بلوک_q8_K    * y_ptr = y;
 
-        float sumf[16] = {0};
+        عائم sumf[16] = {0};
 
         // Loop over K-blocks
-        for (int k_block = 0; k_block < nb; ++k_block) {
+        لكل (صحيح k_بلوک = 0; k_بلوک < nb; ++k_بلوک) {
             int32_t isum[16]  = {0};
             int32_t summs[16] = {0};
 
-            const uint8_t * qs_rhs = x_ptr[k_block].qs;
-            const uint8_t * sc_rhs = x_ptr[k_block].scales;
-            const int8_t  * qs_lhs = y_ptr[k_block].qs;
-            const int16_t * bs_lhs = y_ptr[k_block].bsums;
+            ثابت uint8_t * qs_rhs = x_ptr[k_بلوک].qs;
+            ثابت uint8_t * sc_rhs = x_ptr[k_بلوک].scales;
+            ثابت int8_t  * qs_lhs = y_ptr[k_بلوک].qs;
+            ثابت int16_t * bs_lhs = y_ptr[k_بلوک].bsums;
 
             // Iterate over sub-blocks 0..15
-            for (int sb = 0; sb < 16; ++sb) {
+            لكل (صحيح sb = 0; sb < 16; ++sb) {
                 // Correction Term
                 int16_t bsum = bs_lhs[sb];
-                int scale_offset = sb_perm[sb] * 16;
+                صحيح scale_جابه_جایی = sb_perm[sb] * 16;
 
-                for (int col = 0; col < 16; ++col) {
-                    uint8_t sc_val = sc_rhs[scale_offset + col];
-                    summs[col] += bsum * (sc_val >> 4); // Min is high 4 bits
+                لكل (صحيح ستون = 0; ستون < 16; ++ستون) {
+                    uint8_t sc_val = sc_rhs[scale_جابه_جایی + ستون];
+                    summs[ستون] += bsum * (sc_val >> 4); // Min is high 4 bits
                 }
 
                 // Main Dot Product
                 // Calculate base offsets for Q2 unpacking based on SB
-                int byte_base;
-                if (sb < 8) byte_base = (sb % 2 == 0) ? 0 : 16;
-                else        byte_base = (sb % 2 == 0) ? 32 : 48;
+                صحيح byte_پایه;
+                إذا (sb < 8) byte_پایه = (sb % 2 == 0) ? 0 : 16;
+                وإلا        byte_پایه = (sb % 2 == 0) ? 32 : 48;
 
-                int shift = ((sb / 2) % 4) * 2;
+                صحيح لغزش = ((sb / 2) % 4) * 2;
 
-                for (int col = 0; col < 16; ++col) {
-                    uint8_t sc_val = sc_rhs[scale_offset + col];
+                لكل (صحيح ستون = 0; ستون < 16; ++ستون) {
+                    uint8_t sc_val = sc_rhs[scale_جابه_جایی + ستون];
                     int32_t d_sb = sc_val & 0xF; // Scale is low 4 bits
 
                     // Process 16 elements (l=0..15)
-                    for (int l = 0; l < 16; ++l) {
+                    لكل (صحيح l = 0; l < 16; ++l) {
                         // Q2: Interleaved by column. Byte `l` contains 4 k-values.
-                        int qs_idx = (byte_base + l) * 16 + col;
-                        uint8_t q2_val = (qs_rhs[qs_idx] >> shift) & 3;
+                        صحيح qs_idx = (byte_پایه + l) * 16 + ستون;
+                        uint8_t q2_val = (qs_rhs[qs_idx] >> لغزش) & 3;
 
                         // Q8: Linear access
-                        int k = sb * 16 + l;
+                        صحيح k = sb * 16 + l;
                         int8_t q8_val = qs_lhs[k];
 
-                        isum[col] += q8_val * q2_val * d_sb;
+                        isum[ستون] += q8_val * q2_val * d_sb;
                     }
                 }
             }
 
             // Finalize K-Block
-            for (int col = 0; col < 16; ++col) {
-                float d_lhs = y_ptr[k_block].d;
-                float d_rhs = GGML_FP16_TO_FP32(x_ptr[k_block].d[col]);
-                float dm_rhs = GGML_FP16_TO_FP32(x_ptr[k_block].dmin[col]);
+            لكل (صحيح ستون = 0; ستون < 16; ++ستون) {
+                عائم d_lhs = y_ptr[k_بلوک].d;
+                عائم d_rhs = GGML_FP16_مقصد_FP32(x_ptr[k_بلوک].d[ستون]);
+                عائم dm_rhs = GGML_FP16_مقصد_FP32(x_ptr[k_بلوک].dmin[ستون]);
 
-                float d_all = d_lhs * d_rhs;
-                float d_min = d_lhs * dm_rhs;
+                عائم d_all = d_lhs * d_rhs;
+                عائم d_min = d_lhs * dm_rhs;
 
-                sumf[col] += (isum[col] * d_all) - (summs[col] * d_min);
+                sumf[ستون] += (isum[ستون] * d_all) - (summs[ستون] * d_min);
             }
         }
 
-        for (int col = 0; col < 16; ++col) {
-            s[col_tile + col] = sumf[col];
+        لكل (صحيح ستون = 0; ستون < 16; ++ستون) {
+            s[ستون_tile + ستون] = sumf[ستون];
         }
     }
 }
-#endif
+#پایان_اگر
 
-void ggml_gemm_q4_0_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen = 4;
+فراغ ggml_gemm_q4_0_4x4_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
+    ثابت صحيح qk = QK8_0;
+    ثابت صحيح nb = n / qk;
+    ثابت صحيح ncols_interleaved = 4;
+    ثابت صحيح blocklen = 4;
 
-    assert (n % qk == 0);
-    assert (nr % 4 == 0);
-    assert (nc % ncols_interleaved == 0);
+    أكد (n % qk == 0);
+    أكد (nr % 4 == 0);
+    أكد (nc % ncols_interleaved == 0);
 
-    UNUSED(s);
-    UNUSED(bs);
-    UNUSED(vx);
-    UNUSED(vy);
-    UNUSED(nr);
-    UNUSED(nc);
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    استفادهنشده(s);
+    استفادهنشده(bs);
+    استفادهنشده(vx);
+    استفادهنشده(vy);
+    استفادهنشده(nr);
+    استفادهنشده(nc);
+    استفادهنشده(nb);
+    استفادهنشده(ncols_interleaved);
+    استفادهنشده(blocklen);
 
     {
-        float sumf[4][4];
-        int sumi;
+        عائم sumf[4][4];
+        صحيح sumi;
 
-        for (int y = 0; y < nr / 4; y++) {
-            const block_q8_0x4 * a_ptr = (const block_q8_0x4 *) vy + (y * nb);
-            for (int x = 0; x < nc / ncols_interleaved; x++) {
-                const block_q4_0x4 * b_ptr = (const block_q4_0x4 *) vx + (x * nb);
-                for (int m = 0; m < 4; m++) {
-                    for (int j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
+        لكل (صحيح y = 0; y < nr / 4; y++) {
+            ثابت بلوک_q8_0x4 * a_ptr = (ثابت بلوک_q8_0x4 *) vy + (y * nb);
+            لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+                ثابت بلوک_q4_0x4 * b_ptr = (ثابت بلوک_q4_0x4 *) vx + (x * nb);
+                لكل (صحيح m = 0; m < 4; m++) {
+                    لكل (صحيح j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
                 }
-                for (int l = 0; l < nb; l++) {
-                    for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                        for (int m = 0; m < 4; m++) {
-                            for (int j = 0; j < ncols_interleaved; j++) {
+                لكل (صحيح l = 0; l < nb; l++) {
+                    لكل (صحيح k = 0; k < (qk / (2 * blocklen)); k++) {
+                        لكل (صحيح m = 0; m < 4; m++) {
+                            لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                                 sumi = 0;
-                                for (int i = 0; i < blocklen; ++i) {
-                                    const int v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] << 4);
-                                    const int v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF0);
+                                لكل (صحيح i = 0; i < blocklen; ++i) {
+                                    ثابت صحيح v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] << 4);
+                                    ثابت صحيح v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF0);
                                     sumi += ((v0 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i]) +
                                             (v1 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i + qk / 2 * 4])) >> 4;
                                 }
-                                sumf[m][j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d[m]);
+                                sumf[m][j] += sumi * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_مقصد_FP32(a_ptr[l].d[m]);
                             }
                         }
                     }
                 }
-                for (int m = 0; m < 4; m++) {
-                    for (int j = 0; j < ncols_interleaved; j++)
+                لكل (صحيح m = 0; m < 4; m++) {
+                    لكل (صحيح j = 0; j < ncols_interleaved; j++)
                         s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j];
                 }
             }
@@ -1838,433 +1838,433 @@ void ggml_gemm_q4_0_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, 
     }
 }
 
-void ggml_gemm_q4_0_4x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen = 8;
+فراغ ggml_gemm_q4_0_4x8_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
+    ثابت صحيح qk = QK8_0;
+    ثابت صحيح nb = n / qk;
+    ثابت صحيح ncols_interleaved = 4;
+    ثابت صحيح blocklen = 8;
 
-    assert (n % qk == 0);
-    assert (nr % 4 == 0);
-    assert (nc % ncols_interleaved == 0);
+    أكد (n % qk == 0);
+    أكد (nr % 4 == 0);
+    أكد (nc % ncols_interleaved == 0);
 
-    UNUSED(s);
-    UNUSED(bs);
-    UNUSED(vx);
-    UNUSED(vy);
-    UNUSED(nr);
-    UNUSED(nc);
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    استفادهنشده(s);
+    استفادهنشده(bs);
+    استفادهنشده(vx);
+    استفادهنشده(vy);
+    استفادهنشده(nr);
+    استفادهنشده(nc);
+    استفادهنشده(nb);
+    استفادهنشده(ncols_interleaved);
+    استفادهنشده(blocklen);
 
-    float sumf[4][4];
-    int sumi;
+    عائم sumf[4][4];
+    صحيح sumi;
 
-    for (int y = 0; y < nr / 4; y++) {
-        const block_q8_0x4 * a_ptr = (const block_q8_0x4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
-            const block_q4_0x4 * b_ptr = (const block_q4_0x4 *) vx + (x * nb);
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
+    لكل (صحيح y = 0; y < nr / 4; y++) {
+        ثابت بلوک_q8_0x4 * a_ptr = (ثابت بلوک_q8_0x4 *) vy + (y * nb);
+        لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+            ثابت بلوک_q4_0x4 * b_ptr = (ثابت بلوک_q4_0x4 *) vx + (x * nb);
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
             }
-            for (int l = 0; l < nb; l++) {
-                for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                    for (int m = 0; m < 4; m++) {
-                        for (int j = 0; j < ncols_interleaved; j++) {
+            لكل (صحيح l = 0; l < nb; l++) {
+                لكل (صحيح k = 0; k < (qk / (2 * blocklen)); k++) {
+                    لكل (صحيح m = 0; m < 4; m++) {
+                        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                             sumi = 0;
-                            for (int i = 0; i < blocklen; ++i) {
-                                const int v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] << 4);
-                                const int v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF0);
+                            لكل (صحيح i = 0; i < blocklen; ++i) {
+                                ثابت صحيح v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] << 4);
+                                ثابت صحيح v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF0);
                                 sumi += ((v0 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i]) +
                                         (v1 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i + qk / 2 * 4])) >> 4;
                             }
-                            sumf[m][j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d[m]);
+                            sumf[m][j] += sumi * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_مقصد_FP32(a_ptr[l].d[m]);
                         }
                     }
                 }
             }
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++)
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++)
                     s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j];
             }
         }
     }
 }
 
-void ggml_gemm_q4_0_8x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 8;
-    const int blocklen = 8;
+فراغ ggml_gemm_q4_0_8x8_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
+    ثابت صحيح qk = QK8_0;
+    ثابت صحيح nb = n / qk;
+    ثابت صحيح ncols_interleaved = 8;
+    ثابت صحيح blocklen = 8;
 
-    assert (n % qk == 0);
-    assert (nr % 4 == 0);
-    assert (nc % ncols_interleaved == 0);
+    أكد (n % qk == 0);
+    أكد (nr % 4 == 0);
+    أكد (nc % ncols_interleaved == 0);
 
-    UNUSED(s);
-    UNUSED(bs);
-    UNUSED(vx);
-    UNUSED(vy);
-    UNUSED(nr);
-    UNUSED(nc);
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    استفادهنشده(s);
+    استفادهنشده(bs);
+    استفادهنشده(vx);
+    استفادهنشده(vy);
+    استفادهنشده(nr);
+    استفادهنشده(nc);
+    استفادهنشده(nb);
+    استفادهنشده(ncols_interleaved);
+    استفادهنشده(blocklen);
 
-    float sumf[4][8];
-    int sumi;
+    عائم sumf[4][8];
+    صحيح sumi;
 
-    for (int y = 0; y < nr / 4; y++) {
-        const block_q8_0x4 * a_ptr = (const block_q8_0x4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
-            const block_q4_0x8 * b_ptr = (const block_q4_0x8 *) vx + (x * nb);
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
+    لكل (صحيح y = 0; y < nr / 4; y++) {
+        ثابت بلوک_q8_0x4 * a_ptr = (ثابت بلوک_q8_0x4 *) vy + (y * nb);
+        لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+            ثابت بلوک_q4_0x8 * b_ptr = (ثابت بلوک_q4_0x8 *) vx + (x * nb);
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
             }
-            for (int l = 0; l < nb; l++) {
-                for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                    for (int m = 0; m < 4; m++) {
-                        for (int j = 0; j < ncols_interleaved; j++) {
+            لكل (صحيح l = 0; l < nb; l++) {
+                لكل (صحيح k = 0; k < (qk / (2 * blocklen)); k++) {
+                    لكل (صحيح m = 0; m < 4; m++) {
+                        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                             sumi = 0;
-                            for (int i = 0; i < blocklen; ++i) {
-                                const int v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] << 4);
-                                const int v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF0);
+                            لكل (صحيح i = 0; i < blocklen; ++i) {
+                                ثابت صحيح v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] << 4);
+                                ثابت صحيح v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF0);
                                 sumi += ((v0 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i]) +
                                          (v1 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i + qk / 2 * 4])) >> 4;
                             }
-                            sumf[m][j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d[m]);
+                            sumf[m][j] += sumi * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_مقصد_FP32(a_ptr[l].d[m]);
                         }
                     }
                 }
             }
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++)
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++)
                     s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j];
             }
         }
     }
 }
 
-void ggml_gemm_q4_K_8x4_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK_K;
-    const int nb = n / qk;
-    const int ncols_interleaved = 8;
-    const int blocklen = 4;
-    static const uint32_t kmask1 = 0x3f3f3f3f;
-    static const uint32_t kmask2 = 0x0f0f0f0f;
-    static const uint32_t kmask3 = 0x03030303;
+فراغ ggml_gemm_q4_K_8x4_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
+    ثابت صحيح qk = QK_K;
+    ثابت صحيح nb = n / qk;
+    ثابت صحيح ncols_interleaved = 8;
+    ثابت صحيح blocklen = 4;
+    ساكن ثابت uint32_t kmask1 = 0x3f3f3f3f;
+    ساكن ثابت uint32_t kmask2 = 0x0f0f0f0f;
+    ساكن ثابت uint32_t kmask3 = 0x03030303;
 
-    assert (n % qk == 0);
-    assert (nr % 4 == 0);
-    assert (nc % ncols_interleaved == 0);
+    أكد (n % qk == 0);
+    أكد (nr % 4 == 0);
+    أكد (nc % ncols_interleaved == 0);
 
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    استفادهنشده(nb);
+    استفادهنشده(ncols_interleaved);
+    استفادهنشده(blocklen);
 
-    float sumf[4][8];
-    float sum_minf[4][8];
+    عائم sumf[4][8];
+    عائم جمع_minf[4][8];
     uint32_t utmp[32];
-    int sumi1;
-    int sumi2;
-    int sumi;
+    صحيح sumi1;
+    صحيح sumi2;
+    صحيح sumi;
 
-    for (int y = 0; y < nr / 4; y++) {
-        const block_q8_Kx4 * a_ptr = (const block_q8_Kx4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
-            const block_q4_Kx8 * b_ptr = (const block_q4_Kx8 *) vx + (x * nb);
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+    لكل (صحيح y = 0; y < nr / 4; y++) {
+        ثابت بلوک_q8_Kx4 * a_ptr = (ثابت بلوک_q8_Kx4 *) vy + (y * nb);
+        لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+            ثابت بلوک_q4_Kx8 * b_ptr = (ثابت بلوک_q4_Kx8 *) vx + (x * nb);
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                     sumf[m][j] = 0.0;
-                    sum_minf[m][j] = 0.0;
+                    جمع_minf[m][j] = 0.0;
                 }
             }
-            for (int l = 0; l < nb; l++) {
-                for (int sb = 0; sb < 8; sb++) {
-                    memcpy(utmp + sb * 4, b_ptr[l].scales + sb * 12, 12);
+            لكل (صحيح l = 0; l < nb; l++) {
+                لكل (صحيح sb = 0; sb < 8; sb++) {
+                    کپی_حافظه(utmp + sb * 4, b_ptr[l].scales + sb * 12, 12);
                     utmp[sb * 4 + 3] = ((utmp[sb * 4 + 2] >> 4) & kmask2) | (((utmp[sb * 4 + 1] >> 6) & kmask3) << 4);
-                    const uint32_t uaux_0 = utmp[sb * 4 + 1] & kmask1;
+                    ثابت uint32_t uaux_0 = utmp[sb * 4 + 1] & kmask1;
                     utmp[sb * 4 + 1] = (utmp[sb * 4 + 2] & kmask2) | (((utmp[sb * 4 + 0] >> 6) & kmask3) << 4);
                     utmp[sb * 4 + 2] = uaux_0;
                     utmp[sb * 4 + 0] &= kmask1;
                 }
-                for (int k = 0; k < (qk / (2 * blocklen)); k++) {
+                لكل (صحيح k = 0; k < (qk / (2 * blocklen)); k++) {
                     uint8_t * scales_0 = (uint8_t *) utmp + (k / 8) * 32;
                     uint8_t * scales_1 = (uint8_t *) utmp + (k / 8) * 32 + 16;
-                    for (int m = 0; m < 4; m++) {
-                        for (int j = 0; j < ncols_interleaved; j++) {
+                    لكل (صحيح m = 0; m < 4; m++) {
+                        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                             sumi1 = 0;
                             sumi2 = 0;
                             sumi = 0;
-                            for (int i = 0; i < blocklen; ++i) {
-                                const int v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF);
-                                const int v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4);
+                            لكل (صحيح i = 0; i < blocklen; ++i) {
+                                ثابت صحيح v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF);
+                                ثابت صحيح v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4);
                                 sumi1 = (v0 * a_ptr[l].qs[(k / 8) * 256 + (k % 8) * 4 * blocklen + m * blocklen + i]);
                                 sumi2 = (v1 * a_ptr[l].qs[(k / 8) * 256 + (k % 8) * 4 * blocklen + m * blocklen + i + 128]);
                                 sumi1 = sumi1 * scales_0[j];
                                 sumi2 = sumi2 * scales_1[j];
                                 sumi += sumi1 + sumi2;
                             }
-                            sumf[m][j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * a_ptr[l].d[m];
+                            sumf[m][j] += sumi * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[j]) * a_ptr[l].d[m];
                         }
                     }
                 }
-                for (int sb = 0; sb < 8; sb++) {
+                لكل (صحيح sb = 0; sb < 8; sb++) {
                     uint8_t * mins = (uint8_t *) utmp + 8 + sb * 16;
-                    for(int m = 0; m < 4; m++) {
-                        const int16_t * bsums = a_ptr[l].bsums + (sb * 8) + (m * 4) - ((sb % 2) * 6);
-                        for(int j = 0; j < ncols_interleaved; j++) {
-                            sum_minf[m][j] += mins[j] * (bsums[0] + bsums[1]) * GGML_CPU_FP16_TO_FP32(b_ptr[l].dmin[j]) * a_ptr[l].d[m];
+                    لكل(صحيح m = 0; m < 4; m++) {
+                        ثابت int16_t * bsums = a_ptr[l].bsums + (sb * 8) + (m * 4) - ((sb % 2) * 6);
+                        لكل(صحيح j = 0; j < ncols_interleaved; j++) {
+                            جمع_minf[m][j] += mins[j] * (bsums[0] + bsums[1]) * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].dmin[j]) * a_ptr[l].d[m];
                         }
                     }
                 }
             }
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
-                    s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j] - sum_minf[m][j];
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
+                    s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j] - جمع_minf[m][j];
                 }
             }
         }
     }
 }
 
-void ggml_gemm_q4_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK_K;
-    const int nb = n / qk;
-    const int ncols_interleaved = 8;
-    const int blocklen = 8;
-    static const uint32_t kmask1 = 0x3f3f3f3f;
-    static const uint32_t kmask2 = 0x0f0f0f0f;
-    static const uint32_t kmask3 = 0x03030303;
+فراغ ggml_gemm_q4_K_8x8_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
+    ثابت صحيح qk = QK_K;
+    ثابت صحيح nb = n / qk;
+    ثابت صحيح ncols_interleaved = 8;
+    ثابت صحيح blocklen = 8;
+    ساكن ثابت uint32_t kmask1 = 0x3f3f3f3f;
+    ساكن ثابت uint32_t kmask2 = 0x0f0f0f0f;
+    ساكن ثابت uint32_t kmask3 = 0x03030303;
 
-    assert (n % qk == 0);
-    assert (nr % 4 == 0);
-    assert (nc % ncols_interleaved == 0);
+    أكد (n % qk == 0);
+    أكد (nr % 4 == 0);
+    أكد (nc % ncols_interleaved == 0);
 
-    UNUSED(bs);
+    استفادهنشده(bs);
 
-    float sumf[4][8];
-    float sum_minf[4][8];
+    عائم sumf[4][8];
+    عائم جمع_minf[4][8];
     uint32_t utmp[32];
-    int sumi1;
-    int sumi2;
-    int sumi;
+    صحيح sumi1;
+    صحيح sumi2;
+    صحيح sumi;
 
-    for (int y = 0; y < nr / 4; y++) {
-        const block_q8_Kx4 * a_ptr = (const block_q8_Kx4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
-            const block_q4_Kx8 * b_ptr = (const block_q4_Kx8 *) vx + (x * nb);
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+    لكل (صحيح y = 0; y < nr / 4; y++) {
+        ثابت بلوک_q8_Kx4 * a_ptr = (ثابت بلوک_q8_Kx4 *) vy + (y * nb);
+        لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+            ثابت بلوک_q4_Kx8 * b_ptr = (ثابت بلوک_q4_Kx8 *) vx + (x * nb);
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                     sumf[m][j] = 0.0;
-                    sum_minf[m][j] = 0.0;
+                    جمع_minf[m][j] = 0.0;
                 }
             }
-            for (int l = 0; l < nb; l++) {
-                for (int sb = 0; sb < 8; sb++) {
-                    memcpy(utmp + sb * 4, b_ptr[l].scales + sb * 12, 12);
+            لكل (صحيح l = 0; l < nb; l++) {
+                لكل (صحيح sb = 0; sb < 8; sb++) {
+                    کپی_حافظه(utmp + sb * 4, b_ptr[l].scales + sb * 12, 12);
                     utmp[sb * 4 + 3] = ((utmp[sb * 4 + 2] >> 4) & kmask2) | (((utmp[sb * 4 + 1] >> 6) & kmask3) << 4);
-                    const uint32_t uaux_0 = utmp[sb * 4 + 1] & kmask1;
+                    ثابت uint32_t uaux_0 = utmp[sb * 4 + 1] & kmask1;
                     utmp[sb * 4 + 1] = (utmp[sb * 4 + 2] & kmask2) | (((utmp[sb * 4 + 0] >> 6) & kmask3) << 4);
                     utmp[sb * 4 + 2] = uaux_0;
                     utmp[sb * 4 + 0] &= kmask1;
                 }
-                for (int k = 0; k < (qk / (2 * blocklen)); k++) {
+                لكل (صحيح k = 0; k < (qk / (2 * blocklen)); k++) {
                     uint8_t *scales_0 = (uint8_t*) utmp + (k / 4) * 32;
                     uint8_t *scales_1 = (uint8_t*) utmp + (k / 4) * 32 + 16;
-                    for (int m = 0; m < 4; m++) {
-                        for (int j = 0; j < ncols_interleaved; j++) {
+                    لكل (صحيح m = 0; m < 4; m++) {
+                        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                             sumi1 = 0;
                             sumi2 = 0;
                             sumi = 0;
-                            for (int i = 0; i < blocklen; ++i) {
-                                const int v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF);
-                                const int v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4);
+                            لكل (صحيح i = 0; i < blocklen; ++i) {
+                                ثابت صحيح v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF);
+                                ثابت صحيح v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4);
                                 sumi1 = (v0 * a_ptr[l].qs[(k >> 2) * 256 + (k % 4) * 4 * blocklen + m * blocklen + i]);
                                 sumi2 = (v1 * a_ptr[l].qs[(k >> 2) * 256 + (k % 4) * 4 * blocklen + m * blocklen + i + 128]);
                                 sumi1 = sumi1 * scales_0[j];
                                 sumi2 = sumi2 * scales_1[j];
                                 sumi += sumi1 + sumi2;
                             }
-                            sumf[m][j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * a_ptr[l].d[m];
+                            sumf[m][j] += sumi * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[j]) * a_ptr[l].d[m];
                         }
                     }
                 }
-                for (int sb = 0; sb < 8; sb++) {
+                لكل (صحيح sb = 0; sb < 8; sb++) {
                     uint8_t *mins = (uint8_t*) utmp + 8 + sb * 16;
-                    for(int m = 0; m < 4; m++) {
-                        const int16_t *bsums = a_ptr[l].bsums + (sb * 8) + (m * 4) - ((sb % 2) * 6);
-                        for(int j = 0; j < ncols_interleaved; j++) {
-                            sum_minf[m][j] += mins[j] * (bsums[0] + bsums[1]) * GGML_CPU_FP16_TO_FP32(b_ptr[l].dmin[j]) * a_ptr[l].d[m];
+                    لكل(صحيح m = 0; m < 4; m++) {
+                        ثابت int16_t *bsums = a_ptr[l].bsums + (sb * 8) + (m * 4) - ((sb % 2) * 6);
+                        لكل(صحيح j = 0; j < ncols_interleaved; j++) {
+                            جمع_minf[m][j] += mins[j] * (bsums[0] + bsums[1]) * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].dmin[j]) * a_ptr[l].d[m];
                         }
                     }
                 }
             }
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
-                    s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j] - sum_minf[m][j];
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
+                    s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j] - جمع_minf[m][j];
                 }
             }
         }
     }
 }
 
-void ggml_gemm_q2_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK_K;
-    const int nb = n / qk;
-    const int ncols_interleaved = 8;
-    const int blocklen = 8;
+فراغ ggml_gemm_q2_K_8x8_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
+    ثابت صحيح qk = QK_K;
+    ثابت صحيح nb = n / qk;
+    ثابت صحيح ncols_interleaved = 8;
+    ثابت صحيح blocklen = 8;
 
-    assert (n % qk == 0);
-    assert (nr % 4 == 0);
-    assert (nc % ncols_interleaved == 0);
+    أكد (n % qk == 0);
+    أكد (nr % 4 == 0);
+    أكد (nc % ncols_interleaved == 0);
 
-    UNUSED(s);
-    UNUSED(bs);
-    UNUSED(vx);
-    UNUSED(vy);
-    UNUSED(nr);
-    UNUSED(nc);
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    استفادهنشده(s);
+    استفادهنشده(bs);
+    استفادهنشده(vx);
+    استفادهنشده(vy);
+    استفادهنشده(nr);
+    استفادهنشده(nc);
+    استفادهنشده(nb);
+    استفادهنشده(ncols_interleaved);
+    استفادهنشده(blocklen);
 
-    float sumf[4][8];
-    float sum_minf[4][8];
-    int sumi1, sumi2, sumi3, sumi4;
-    int sumi;
+    عائم sumf[4][8];
+    عائم جمع_minf[4][8];
+    صحيح sumi1, sumi2, sumi3, sumi4;
+    صحيح sumi;
 
-    for (int y = 0; y < nr / 4; y++) {
-        const block_q8_Kx4 * a_ptr = (const block_q8_Kx4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
-            const block_q2_Kx8 * b_ptr = (const block_q2_Kx8 *) vx + (x * nb);
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+    لكل (صحيح y = 0; y < nr / 4; y++) {
+        ثابت بلوک_q8_Kx4 * a_ptr = (ثابت بلوک_q8_Kx4 *) vy + (y * nb);
+        لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+            ثابت بلوک_q2_Kx8 * b_ptr = (ثابت بلوک_q2_Kx8 *) vx + (x * nb);
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                     sumf[m][j] = 0.0;
-                    sum_minf[m][j] = 0.0;
+                    جمع_minf[m][j] = 0.0;
                 }
             }
-            for (int l = 0; l < nb; l++) {
-                for (int k = 0; k < (qk / (4 * blocklen)); k++) {
+            لكل (صحيح l = 0; l < nb; l++) {
+                لكل (صحيح k = 0; k < (qk / (4 * blocklen)); k++) {
 
-                    const uint8_t *scales_0 = b_ptr[l].scales + (k / 4) * 64 ;
-                    const uint8_t *scales_1 = b_ptr[l].scales + (k / 4) * 64 + 16;
-                    const uint8_t *scales_2 = b_ptr[l].scales + (k / 4) * 64 + 32;
-                    const uint8_t *scales_3 = b_ptr[l].scales + (k / 4) * 64 + 48;
-                    for (int m = 0; m < 4; m++) {
-                        for (int j = 0; j < ncols_interleaved; j++) {
+                    ثابت uint8_t *scales_0 = b_ptr[l].scales + (k / 4) * 64 ;
+                    ثابت uint8_t *scales_1 = b_ptr[l].scales + (k / 4) * 64 + 16;
+                    ثابت uint8_t *scales_2 = b_ptr[l].scales + (k / 4) * 64 + 32;
+                    ثابت uint8_t *scales_3 = b_ptr[l].scales + (k / 4) * 64 + 48;
+                    لكل (صحيح m = 0; m < 4; m++) {
+                        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                             sumi1 = 0;
                             sumi2 = 0;
                             sumi3 = 0;
                             sumi4 = 0;
                             sumi = 0;
-                            int offset = ((k / 2) % 2) + j * 2;
-                            for (int i = 0; i < blocklen; ++i){
-                                const int v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 3);
-                                const int v1 = (int8_t) ((b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 2 ) & 3);
-                                const int v2 = (int8_t) ((b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4 ) & 3);
-                                const int v3 = (int8_t) ((b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 6 ) & 3);
+                            صحيح جابه_جایی = ((k / 2) % 2) + j * 2;
+                            لكل (صحيح i = 0; i < blocklen; ++i){
+                                ثابت صحيح v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 3);
+                                ثابت صحيح v1 = (int8_t) ((b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 2 ) & 3);
+                                ثابت صحيح v2 = (int8_t) ((b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4 ) & 3);
+                                ثابت صحيح v3 = (int8_t) ((b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 6 ) & 3);
                                 sumi1 = (v0 * a_ptr[l].qs[(k >> 2) * 512 + (k % 4) * 4 * blocklen + m * blocklen + i]);
                                 sumi2 = (v1 * a_ptr[l].qs[(k >> 2) * 512  + (k % 4) * 4 * blocklen + m * blocklen + i + 128]);
                                 sumi3 = (v2 * a_ptr[l].qs[(k >> 2) * 512  + (k % 4) * 4 * blocklen + m * blocklen + i + 256]);
                                 sumi4 = (v3 * a_ptr[l].qs[(k >> 2) * 512  + (k % 4) * 4 * blocklen + m * blocklen + i + 384]);
-                                sumi1 = sumi1 * (scales_0[offset] & 0xF);
-                                sumi2 = sumi2 * (scales_1[offset] & 0xF);
-                                sumi3 = sumi3 * (scales_2[offset] & 0xF);
-                                sumi4 = sumi4 * (scales_3[offset] & 0xF);
+                                sumi1 = sumi1 * (scales_0[جابه_جایی] & 0xF);
+                                sumi2 = sumi2 * (scales_1[جابه_جایی] & 0xF);
+                                sumi3 = sumi3 * (scales_2[جابه_جایی] & 0xF);
+                                sumi4 = sumi4 * (scales_3[جابه_جایی] & 0xF);
                                 sumi += sumi1 + sumi2 + sumi3 + sumi4;
                             }
-                            sumf[m][j] += sumi * GGML_FP16_TO_FP32(b_ptr[l].d[j]) * a_ptr[l].d[m];
+                            sumf[m][j] += sumi * GGML_FP16_مقصد_FP32(b_ptr[l].d[j]) * a_ptr[l].d[m];
                         }
                     }
                 }
-                for(int sb = 0; sb < 8; sb++) {
-                    const uint8_t *mins = b_ptr[l].scales + sb * 16;
-                    for(int m = 0; m < 4; m++) {
-                        const int16_t *bsums = a_ptr[l].bsums + (sb * 8) + (m * 4) - ((sb % 2) *  6);
-                        for(int j = 0; j < ncols_interleaved; j++) {
-                            int mins_prod = ((mins[j * 2] >> 4) * bsums[0] + (mins[(j * 2)+ 1] >> 4) * bsums[1]);
-                            sum_minf[m][j] += (mins_prod) * GGML_FP16_TO_FP32(b_ptr[l].dmin[j]) * a_ptr[l].d[m];
+                لكل(صحيح sb = 0; sb < 8; sb++) {
+                    ثابت uint8_t *mins = b_ptr[l].scales + sb * 16;
+                    لكل(صحيح m = 0; m < 4; m++) {
+                        ثابت int16_t *bsums = a_ptr[l].bsums + (sb * 8) + (m * 4) - ((sb % 2) *  6);
+                        لكل(صحيح j = 0; j < ncols_interleaved; j++) {
+                            صحيح mins_prod = ((mins[j * 2] >> 4) * bsums[0] + (mins[(j * 2)+ 1] >> 4) * bsums[1]);
+                            جمع_minf[m][j] += (mins_prod) * GGML_FP16_مقصد_FP32(b_ptr[l].dmin[j]) * a_ptr[l].d[m];
                         }
                     }
                 }
             }
 
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
-                    s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j] - sum_minf[m][j];
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
+                    s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j] - جمع_minf[m][j];
                 }
             }
         }
     }
 }
 
-void ggml_gemm_q5_K_8x4_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
+فراغ ggml_gemm_q5_K_8x4_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
     ggml_gemm_q5_K_NxM_q8_K_generic_impl<4, 8>(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemm_q5_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
+فراغ ggml_gemm_q5_K_8x8_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
     ggml_gemm_q5_K_NxM_q8_K_generic_impl<8, 8>(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemm_q6_K_8x4_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
+فراغ ggml_gemm_q6_K_8x4_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
     ggml_gemm_q6_K_NxM_q8_K_generic_impl<4, 8>(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemm_q6_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
+فراغ ggml_gemm_q6_K_8x8_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
    ggml_gemm_q6_K_NxM_q8_K_generic_impl<8, 8>(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemm_iq4_nl_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen = 4;
+فراغ ggml_gemm_iq4_nl_4x4_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
+    ثابت صحيح qk = QK8_0;
+    ثابت صحيح nb = n / qk;
+    ثابت صحيح ncols_interleaved = 4;
+    ثابت صحيح blocklen = 4;
 
-    assert (n % qk == 0);
-    assert (nr % 4 == 0);
-    assert (nc % ncols_interleaved == 0);
+    أكد (n % qk == 0);
+    أكد (nr % 4 == 0);
+    أكد (nc % ncols_interleaved == 0);
 
-    UNUSED(s);
-    UNUSED(bs);
-    UNUSED(vx);
-    UNUSED(vy);
-    UNUSED(nr);
-    UNUSED(nc);
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    استفادهنشده(s);
+    استفادهنشده(bs);
+    استفادهنشده(vx);
+    استفادهنشده(vy);
+    استفادهنشده(nr);
+    استفادهنشده(nc);
+    استفادهنشده(nb);
+    استفادهنشده(ncols_interleaved);
+    استفادهنشده(blocklen);
 
     {
-        float sumf[4][4];
-        int sumi;
+        عائم sumf[4][4];
+        صحيح sumi;
 
-        for (int y = 0; y < nr / 4; y++) {
-            const block_q8_0x4 * a_ptr = (const block_q8_0x4 *) vy + (y * nb);
-            for (int x = 0; x < nc / ncols_interleaved; x++) {
-                const block_iq4_nlx4 * b_ptr = (const block_iq4_nlx4 *) vx + (x * nb);
-                for (int m = 0; m < 4; m++) {
-                    for (int j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
+        لكل (صحيح y = 0; y < nr / 4; y++) {
+            ثابت بلوک_q8_0x4 * a_ptr = (ثابت بلوک_q8_0x4 *) vy + (y * nb);
+            لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+                ثابت بلوک_iq4_nlx4 * b_ptr = (ثابت بلوک_iq4_nlx4 *) vx + (x * nb);
+                لكل (صحيح m = 0; m < 4; m++) {
+                    لكل (صحيح j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
                 }
-                for (int l = 0; l < nb; l++) {
-                    for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                        for (int m = 0; m < 4; m++) {
-                            for (int j = 0; j < ncols_interleaved; j++) {
+                لكل (صحيح l = 0; l < nb; l++) {
+                    لكل (صحيح k = 0; k < (qk / (2 * blocklen)); k++) {
+                        لكل (صحيح m = 0; m < 4; m++) {
+                            لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                                 sumi = 0;
-                                for (int i = 0; i < blocklen; ++i) {
-                                    const int v0 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
-                                    const int v1 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
+                                لكل (صحيح i = 0; i < blocklen; ++i) {
+                                    ثابت صحيح v0 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
+                                    ثابت صحيح v1 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
                                     sumi += ((v0 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i]) +
                                             (v1 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i + qk / 2 * 4]));
                                 }
-                                sumf[m][j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d[m]);
+                                sumf[m][j] += sumi * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_مقصد_FP32(a_ptr[l].d[m]);
                             }
                         }
                     }
                 }
-                for (int m = 0; m < 4; m++) {
-                    for (int j = 0; j < ncols_interleaved; j++)
+                لكل (صحيح m = 0; m < 4; m++) {
+                    لكل (صحيح j = 0; j < ncols_interleaved; j++)
                         s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j];
                 }
             }
@@ -2272,183 +2272,183 @@ void ggml_gemm_iq4_nl_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs
     }
 }
 
-void ggml_gemm_iq4_nl_8x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 8;
-    const int blocklen = 8;
+فراغ ggml_gemm_iq4_nl_8x8_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
+    ثابت صحيح qk = QK8_0;
+    ثابت صحيح nb = n / qk;
+    ثابت صحيح ncols_interleaved = 8;
+    ثابت صحيح blocklen = 8;
 
-    assert(n % qk == 0);
-    assert(nr % 4 == 0);
-    assert(nc % ncols_interleaved == 0);
+    أكد(n % qk == 0);
+    أكد(nr % 4 == 0);
+    أكد(nc % ncols_interleaved == 0);
 
-    float sumf[4][8];
-    int sumi;
+    عائم sumf[4][8];
+    صحيح sumi;
 
-    for (int y = 0; y < nr / 4; y++) {
-        const block_q8_0x4 * a_ptr = (const block_q8_0x4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
-            const block_iq4_nlx8 * b_ptr = (const block_iq4_nlx8 *) vx + (x * nb);
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
+    لكل (صحيح y = 0; y < nr / 4; y++) {
+        ثابت بلوک_q8_0x4 * a_ptr = (ثابت بلوک_q8_0x4 *) vy + (y * nb);
+        لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+            ثابت بلوک_iq4_nlx8 * b_ptr = (ثابت بلوک_iq4_nlx8 *) vx + (x * nb);
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
             }
-            for (int l = 0; l < nb; l++) {
-                for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                    for (int m = 0; m < 4; m++) {
-                        for (int j = 0; j < ncols_interleaved; j++) {
+            لكل (صحيح l = 0; l < nb; l++) {
+                لكل (صحيح k = 0; k < (qk / (2 * blocklen)); k++) {
+                    لكل (صحيح m = 0; m < 4; m++) {
+                        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                             sumi = 0;
-                            for (int i = 0; i < blocklen; ++i) {
-                                const int v0 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
-                                const int v1 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
+                            لكل (صحيح i = 0; i < blocklen; ++i) {
+                                ثابت صحيح v0 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
+                                ثابت صحيح v1 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
                                 sumi += ((v0 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i]) +
                                          (v1 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i + qk / 2 * 4]));
                             }
-                            sumf[m][j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d[m]);
+                            sumf[m][j] += sumi * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_مقصد_FP32(a_ptr[l].d[m]);
                         }
                     }
                 }
             }
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++)
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++)
                     s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j];
             }
         }
     }
 }
 
-void ggml_gemm_mxfp4_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen = 4;
+فراغ ggml_gemm_mxfp4_4x4_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
+    ثابت صحيح qk = QK8_0;
+    ثابت صحيح nb = n / qk;
+    ثابت صحيح ncols_interleaved = 4;
+    ثابت صحيح blocklen = 4;
 
-    assert(n % qk == 0);
-    assert(nr % 4 == 0);
-    assert(nc % ncols_interleaved == 0);
+    أكد(n % qk == 0);
+    أكد(nr % 4 == 0);
+    أكد(nc % ncols_interleaved == 0);
 
-    float sumf[4][4];
-    int sumi;
+    عائم sumf[4][4];
+    صحيح sumi;
 
-    for (int y = 0; y < nr / 4; y++) {
-        const block_q8_0x4 * a_ptr = (const block_q8_0x4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
-            const block_mxfp4x4 * b_ptr = (const block_mxfp4x4 *) vx + (x * nb);
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
+    لكل (صحيح y = 0; y < nr / 4; y++) {
+        ثابت بلوک_q8_0x4 * a_ptr = (ثابت بلوک_q8_0x4 *) vy + (y * nb);
+        لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+            ثابت بلوک_mxfp4x4 * b_ptr = (ثابت بلوک_mxfp4x4 *) vx + (x * nb);
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
             }
-            for (int l = 0; l < nb; l++) {
-                for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                    for (int m = 0; m < 4; m++) {
-                        for (int j = 0; j < ncols_interleaved; j++) {
+            لكل (صحيح l = 0; l < nb; l++) {
+                لكل (صحيح k = 0; k < (qk / (2 * blocklen)); k++) {
+                    لكل (صحيح m = 0; m < 4; m++) {
+                        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                             sumi = 0;
-                            for (int i = 0; i < blocklen; ++i) {
-                                const int v0 = kvalues_mxfp4[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
-                                const int v1 = kvalues_mxfp4[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
+                            لكل (صحيح i = 0; i < blocklen; ++i) {
+                                ثابت صحيح v0 = kvalues_mxfp4[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
+                                ثابت صحيح v1 = kvalues_mxfp4[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
                                 sumi += ((v0 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i]) +
                                          (v1 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i + qk / 2 * 4]));
                             }
-                            sumf[m][j] += sumi * GGML_CPU_E8M0_TO_FP32_HALF(b_ptr[l].e[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d[m]);
+                            sumf[m][j] += sumi * GGML_CPU_E8_M0_مقصد_FP32_HALF(b_ptr[l].e[j]) * GGML_CPU_FP16_مقصد_FP32(a_ptr[l].d[m]);
                         }
                     }
                 }
             }
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++)
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++)
                     s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j];
             }
         }
     }
 }
 
-void ggml_gemm_mxfp4_8x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 8;
-    const int blocklen = 8;
+فراغ ggml_gemm_mxfp4_8x8_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
+    ثابت صحيح qk = QK8_0;
+    ثابت صحيح nb = n / qk;
+    ثابت صحيح ncols_interleaved = 8;
+    ثابت صحيح blocklen = 8;
 
-    assert(n % qk == 0);
-    assert(nr % 4 == 0);
-    assert(nc % ncols_interleaved == 0);
+    أكد(n % qk == 0);
+    أكد(nr % 4 == 0);
+    أكد(nc % ncols_interleaved == 0);
 
-    float sumf[4][8];
-    int sumi;
+    عائم sumf[4][8];
+    صحيح sumi;
 
-    for (int y = 0; y < nr / 4; y++) {
-        const block_q8_0x4 * a_ptr = (const block_q8_0x4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
-            const block_mxfp4x8 * b_ptr = (const block_mxfp4x8 *) vx + (x * nb);
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
+    لكل (صحيح y = 0; y < nr / 4; y++) {
+        ثابت بلوک_q8_0x4 * a_ptr = (ثابت بلوک_q8_0x4 *) vy + (y * nb);
+        لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+            ثابت بلوک_mxfp4x8 * b_ptr = (ثابت بلوک_mxfp4x8 *) vx + (x * nb);
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
             }
-            for (int l = 0; l < nb; l++) {
-                for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                    for (int m = 0; m < 4; m++) {
-                        for (int j = 0; j < ncols_interleaved; j++) {
+            لكل (صحيح l = 0; l < nb; l++) {
+                لكل (صحيح k = 0; k < (qk / (2 * blocklen)); k++) {
+                    لكل (صحيح m = 0; m < 4; m++) {
+                        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                             sumi = 0;
-                            for (int i = 0; i < blocklen; ++i) {
-                                const int v0 = kvalues_mxfp4[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
-                                const int v1 = kvalues_mxfp4[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
+                            لكل (صحيح i = 0; i < blocklen; ++i) {
+                                ثابت صحيح v0 = kvalues_mxfp4[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
+                                ثابت صحيح v1 = kvalues_mxfp4[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
                                 sumi += ((v0 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i]) +
                                          (v1 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i + qk / 2 * 4]));
                             }
-                            sumf[m][j] += sumi * GGML_CPU_E8M0_TO_FP32_HALF(b_ptr[l].e[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d[m]);
+                            sumf[m][j] += sumi * GGML_CPU_E8_M0_مقصد_FP32_HALF(b_ptr[l].e[j]) * GGML_CPU_FP16_مقصد_FP32(a_ptr[l].d[m]);
                         }
                     }
                 }
             }
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++)
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++)
                     s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j];
             }
         }
     }
 }
 
-void ggml_gemm_q8_0_4x4_q8_0_generic(int                        n,
-                                     float * GGML_RESTRICT      s,
+فراغ ggml_gemm_q8_0_4x4_q8_0_generic(صحيح                        n,
+                                     عائم * GGML_RESTRICT      s,
                                      size_t                     bs,
-                                     const void * GGML_RESTRICT vx,
-                                     const void * GGML_RESTRICT vy,
-                                     int                        nr,
-                                     int                        nc) {
-    const int qk                = QK8_0;
-    const int nb                = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen          = 4;
+                                     ثابت فراغ * GGML_RESTRICT vx,
+                                     ثابت فراغ * GGML_RESTRICT vy,
+                                     صحيح                        nr,
+                                     صحيح                        nc) {
+    ثابت صحيح qk                = QK8_0;
+    ثابت صحيح nb                = n / qk;
+    ثابت صحيح ncols_interleaved = 4;
+    ثابت صحيح blocklen          = 4;
 
-    assert(n % qk == 0);
-    assert(nr % 4 == 0);
-    assert(nc % ncols_interleaved == 0);
+    أكد(n % qk == 0);
+    أكد(nr % 4 == 0);
+    أكد(nc % ncols_interleaved == 0);
 
-    float sumf[4][4];
-    int   sumi;
+    عائم sumf[4][4];
+    صحيح   sumi;
 
-    for (int y = 0; y < nr / 4; y++) {
-        const block_q8_0x4 * a_ptr = (const block_q8_0x4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
-            const block_q8_0x4 * b_ptr = (const block_q8_0x4 *) vx + (x * nb);
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+    لكل (صحيح y = 0; y < nr / 4; y++) {
+        ثابت بلوک_q8_0x4 * a_ptr = (ثابت بلوک_q8_0x4 *) vy + (y * nb);
+        لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+            ثابت بلوک_q8_0x4 * b_ptr = (ثابت بلوک_q8_0x4 *) vx + (x * nb);
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                     sumf[m][j] = 0.0;
                 }
             }
-            for (int l = 0; l < nb; l++) {
-                for (int k = 0; k < (qk / blocklen); k++) {
-                    for (int m = 0; m < 4; m++) {
-                        for (int j = 0; j < ncols_interleaved; j++) {
+            لكل (صحيح l = 0; l < nb; l++) {
+                لكل (صحيح k = 0; k < (qk / blocklen); k++) {
+                    لكل (صحيح m = 0; m < 4; m++) {
+                        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                             sumi = 0;
-                            for (int i = 0; i < blocklen; ++i) {
-                                const int v0 = b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i];
+                            لكل (صحيح i = 0; i < blocklen; ++i) {
+                                ثابت صحيح v0 = b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i];
                                 sumi += v0 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i];
                             }
                             sumf[m][j] +=
-                                sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d[m]);
+                                sumi * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_مقصد_FP32(a_ptr[l].d[m]);
                         }
                     }
                 }
             }
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                     s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j];
                 }
             }
@@ -2458,51 +2458,51 @@ void ggml_gemm_q8_0_4x4_q8_0_generic(int                        n,
 
 
 
-void ggml_gemm_q8_0_4x8_q8_0_generic(int                        n,
-                                     float * GGML_RESTRICT      s,
+فراغ ggml_gemm_q8_0_4x8_q8_0_generic(صحيح                        n,
+                                     عائم * GGML_RESTRICT      s,
                                      size_t                     bs,
-                                     const void * GGML_RESTRICT vx,
-                                     const void * GGML_RESTRICT vy,
-                                     int                        nr,
-                                     int                        nc) {
-    const int qk                = QK8_0;
-    const int nb                = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen          = 8;
+                                     ثابت فراغ * GGML_RESTRICT vx,
+                                     ثابت فراغ * GGML_RESTRICT vy,
+                                     صحيح                        nr,
+                                     صحيح                        nc) {
+    ثابت صحيح qk                = QK8_0;
+    ثابت صحيح nb                = n / qk;
+    ثابت صحيح ncols_interleaved = 4;
+    ثابت صحيح blocklen          = 8;
 
-    assert(n % qk == 0);
-    assert(nr % 4 == 0);
-    assert(nc % ncols_interleaved == 0);
+    أكد(n % qk == 0);
+    أكد(nr % 4 == 0);
+    أكد(nc % ncols_interleaved == 0);
 
-    float sumf[4][4];
-    int   sumi;
+    عائم sumf[4][4];
+    صحيح   sumi;
 
-    for (int y = 0; y < nr / 4; y++) {
-        const block_q8_0x4 * a_ptr = (const block_q8_0x4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
-            const block_q8_0x4 * b_ptr = (const block_q8_0x4 *) vx + (x * nb);
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+    لكل (صحيح y = 0; y < nr / 4; y++) {
+        ثابت بلوک_q8_0x4 * a_ptr = (ثابت بلوک_q8_0x4 *) vy + (y * nb);
+        لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+            ثابت بلوک_q8_0x4 * b_ptr = (ثابت بلوک_q8_0x4 *) vx + (x * nb);
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                     sumf[m][j] = 0.0;
                 }
             }
-            for (int l = 0; l < nb; l++) {
-                for (int k = 0; k < (qk / blocklen); k++) {
-                    for (int m = 0; m < 4; m++) {
-                        for (int j = 0; j < ncols_interleaved; j++) {
+            لكل (صحيح l = 0; l < nb; l++) {
+                لكل (صحيح k = 0; k < (qk / blocklen); k++) {
+                    لكل (صحيح m = 0; m < 4; m++) {
+                        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                             sumi = 0;
-                            for (int i = 0; i < blocklen; ++i) {
-                                const int v0 = b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i];
+                            لكل (صحيح i = 0; i < blocklen; ++i) {
+                                ثابت صحيح v0 = b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i];
                                 sumi += v0 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i];
                             }
                             sumf[m][j] +=
-                                sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d[m]);
+                                sumi * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_مقصد_FP32(a_ptr[l].d[m]);
                         }
                     }
                 }
             }
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                     s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j];
                 }
             }
@@ -2510,84 +2510,84 @@ void ggml_gemm_q8_0_4x8_q8_0_generic(int                        n,
     }
 }
 
-void ggml_gemm_q1_0_4x4_q8_0_generic(int                        n,
-                                     float * GGML_RESTRICT      s,
+فراغ ggml_gemm_q1_0_4x4_q8_0_generic(صحيح                        n,
+                                     عائم * GGML_RESTRICT      s,
                                      size_t                     bs,
-                                     const void * GGML_RESTRICT vx,
-                                     const void * GGML_RESTRICT vy,
-                                     int                        nr,
-                                     int                        nc) {
-    const int qk                = QK1_0;
-    const int nb                = n / qk;
-    const int ncols_interleaved = 4;
+                                     ثابت فراغ * GGML_RESTRICT vx,
+                                     ثابت فراغ * GGML_RESTRICT vy,
+                                     صحيح                        nr,
+                                     صحيح                        nc) {
+    ثابت صحيح qk                = QK1_0;
+    ثابت صحيح nb                = n / qk;
+    ثابت صحيح ncols_interleaved = 4;
 
-    assert(n % qk == 0);
-    assert(nr % 4 == 0);
-    assert(nc % ncols_interleaved == 0);
+    أكد(n % qk == 0);
+    أكد(nr % 4 == 0);
+    أكد(nc % ncols_interleaved == 0);
 
-    float sumf[4][4];
+    عائم sumf[4][4];
 
-    for (int y = 0; y < nr / 4; y++) {
-        const block_q8_0x4 * a_ptr = (const block_q8_0x4 *) vy + (4 * y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
-            const block_q1_0x4 * b_ptr = (const block_q1_0x4 *) vx + (x * nb);
+    لكل (صحيح y = 0; y < nr / 4; y++) {
+        ثابت بلوک_q8_0x4 * a_ptr = (ثابت بلوک_q8_0x4 *) vy + (4 * y * nb);
+        لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+            ثابت بلوک_q1_0x4 * b_ptr = (ثابت بلوک_q1_0x4 *) vx + (x * nb);
 
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                     sumf[m][j] = 0.0;
                 }
             }
 
-            for (int l = 0; l < nb; l++) {
-                const float d0[4] = {
-                    GGML_CPU_FP16_TO_FP32(b_ptr[l].d[0]),
-                    GGML_CPU_FP16_TO_FP32(b_ptr[l].d[1]),
-                    GGML_CPU_FP16_TO_FP32(b_ptr[l].d[2]),
-                    GGML_CPU_FP16_TO_FP32(b_ptr[l].d[3]),
+            لكل (صحيح l = 0; l < nb; l++) {
+                ثابت عائم d0[4] = {
+                    GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[0]),
+                    GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[1]),
+                    GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[2]),
+                    GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[3]),
                 };
 
-                for (int k = 0; k < QK1_0 / QK8_0; ++k) {
-                    const block_q8_0x4 * GGML_RESTRICT a_blk = a_ptr + 4 * l + k;
-                    const float a_d[4] = {
-                        GGML_CPU_FP16_TO_FP32(a_blk->d[0]),
-                        GGML_CPU_FP16_TO_FP32(a_blk->d[1]),
-                        GGML_CPU_FP16_TO_FP32(a_blk->d[2]),
-                        GGML_CPU_FP16_TO_FP32(a_blk->d[3]),
+                لكل (صحيح k = 0; k < QK1_0 / QK8_0; ++k) {
+                    ثابت بلوک_q8_0x4 * GGML_RESTRICT a_blk = a_ptr + 4 * l + k;
+                    ثابت عائم a_d[4] = {
+                        GGML_CPU_FP16_مقصد_FP32(a_blk->d[0]),
+                        GGML_CPU_FP16_مقصد_FP32(a_blk->d[1]),
+                        GGML_CPU_FP16_مقصد_FP32(a_blk->d[2]),
+                        GGML_CPU_FP16_مقصد_FP32(a_blk->d[3]),
                     };
 
-                    for (int tile = 0; tile < QK8_0 / 4; ++tile) {
-                        const uint8_t bits_lo = b_ptr[l].qs[k * 16 + 2 * tile + 0];
-                        const uint8_t bits_hi = b_ptr[l].qs[k * 16 + 2 * tile + 1];
-                        const int tile_offset = tile * 16;
+                    لكل (صحيح tile = 0; tile < QK8_0 / 4; ++tile) {
+                        ثابت uint8_t بیتها_lo = b_ptr[l].qs[k * 16 + 2 * tile + 0];
+                        ثابت uint8_t بیتها_hi = b_ptr[l].qs[k * 16 + 2 * tile + 1];
+                        ثابت صحيح tile_جابه_جایی = tile * 16;
 
-                        for (int p = 0; p < 4; ++p) {
-                            const int8_t q_row[4] = {
-                                a_blk->qs[tile_offset + 0 * 4 + p],
-                                a_blk->qs[tile_offset + 1 * 4 + p],
-                                a_blk->qs[tile_offset + 2 * 4 + p],
-                                a_blk->qs[tile_offset + 3 * 4 + p],
+                        لكل (صحيح p = 0; p < 4; ++p) {
+                            ثابت int8_t q_ردیف[4] = {
+                                a_blk->qs[tile_جابه_جایی + 0 * 4 + p],
+                                a_blk->qs[tile_جابه_جایی + 1 * 4 + p],
+                                a_blk->qs[tile_جابه_جایی + 2 * 4 + p],
+                                a_blk->qs[tile_جابه_جایی + 3 * 4 + p],
                             };
-                            const int sign[4] = {
-                                (bits_lo & (1u << p))       ? 1 : -1,
-                                (bits_lo & (1u << (4 + p))) ? 1 : -1,
-                                (bits_hi & (1u << p))       ? 1 : -1,
-                                (bits_hi & (1u << (4 + p))) ? 1 : -1,
+                            ثابت صحيح sign[4] = {
+                                (بیتها_lo & (1u << p))       ? 1 : -1,
+                                (بیتها_lo & (1u << (4 + p))) ? 1 : -1,
+                                (بیتها_hi & (1u << p))       ? 1 : -1,
+                                (بیتها_hi & (1u << (4 + p))) ? 1 : -1,
                             };
 
-                            for (int m = 0; m < 4; ++m) {
-                                const float row_scale = a_d[m];
-                                sumf[m][0] += sign[0] * q_row[m] * d0[0] * row_scale;
-                                sumf[m][1] += sign[1] * q_row[m] * d0[1] * row_scale;
-                                sumf[m][2] += sign[2] * q_row[m] * d0[2] * row_scale;
-                                sumf[m][3] += sign[3] * q_row[m] * d0[3] * row_scale;
+                            لكل (صحيح m = 0; m < 4; ++m) {
+                                ثابت عائم ردیف_scale = a_d[m];
+                                sumf[m][0] += sign[0] * q_ردیف[m] * d0[0] * ردیف_scale;
+                                sumf[m][1] += sign[1] * q_ردیف[m] * d0[1] * ردیف_scale;
+                                sumf[m][2] += sign[2] * q_ردیف[m] * d0[2] * ردیف_scale;
+                                sumf[m][3] += sign[3] * q_ردیف[m] * d0[3] * ردیف_scale;
                             }
                         }
                     }
                 }
             }
 
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                     s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j];
                 }
             }
@@ -2595,84 +2595,84 @@ void ggml_gemm_q1_0_4x4_q8_0_generic(int                        n,
     }
 }
 
-void ggml_gemm_q1_0_4x8_q8_0_generic(int                        n,
-                                     float * GGML_RESTRICT      s,
+فراغ ggml_gemm_q1_0_4x8_q8_0_generic(صحيح                        n,
+                                     عائم * GGML_RESTRICT      s,
                                      size_t                     bs,
-                                     const void * GGML_RESTRICT vx,
-                                     const void * GGML_RESTRICT vy,
-                                     int                        nr,
-                                     int                        nc) {
-    const int qk                = QK1_0;
-    const int nb                = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen          = 8;
+                                     ثابت فراغ * GGML_RESTRICT vx,
+                                     ثابت فراغ * GGML_RESTRICT vy,
+                                     صحيح                        nr,
+                                     صحيح                        nc) {
+    ثابت صحيح qk                = QK1_0;
+    ثابت صحيح nb                = n / qk;
+    ثابت صحيح ncols_interleaved = 4;
+    ثابت صحيح blocklen          = 8;
 
-    assert(n % qk == 0);
-    assert(nr % 4 == 0);
-    assert(nc % ncols_interleaved == 0);
+    أكد(n % qk == 0);
+    أكد(nr % 4 == 0);
+    أكد(nc % ncols_interleaved == 0);
 
-    float sumf[4][4];
+    عائم sumf[4][4];
 
-    for (int y = 0; y < nr / 4; y++) {
-        const block_q8_0x4 * a_ptr = (const block_q8_0x4 *) vy + (4 * y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
-            const block_q1_0x4 * b_ptr = (const block_q1_0x4 *) vx + (x * nb);
+    لكل (صحيح y = 0; y < nr / 4; y++) {
+        ثابت بلوک_q8_0x4 * a_ptr = (ثابت بلوک_q8_0x4 *) vy + (4 * y * nb);
+        لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+            ثابت بلوک_q1_0x4 * b_ptr = (ثابت بلوک_q1_0x4 *) vx + (x * nb);
 
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                     sumf[m][j] = 0.0f;
                 }
             }
 
-            for (int l = 0; l < nb; l++) {
-                const float d0[4] = {
-                    GGML_CPU_FP16_TO_FP32(b_ptr[l].d[0]),
-                    GGML_CPU_FP16_TO_FP32(b_ptr[l].d[1]),
-                    GGML_CPU_FP16_TO_FP32(b_ptr[l].d[2]),
-                    GGML_CPU_FP16_TO_FP32(b_ptr[l].d[3]),
+            لكل (صحيح l = 0; l < nb; l++) {
+                ثابت عائم d0[4] = {
+                    GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[0]),
+                    GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[1]),
+                    GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[2]),
+                    GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[3]),
                 };
 
-                for (int k = 0; k < qk / blocklen; ++k) {
-                    const block_q8_0x4 * GGML_RESTRICT a_blk = a_ptr + 4 * l + k / (QK8_0 / blocklen);
-                    const float a_d[4] = {
-                        GGML_CPU_FP16_TO_FP32(a_blk->d[0]),
-                        GGML_CPU_FP16_TO_FP32(a_blk->d[1]),
-                        GGML_CPU_FP16_TO_FP32(a_blk->d[2]),
-                        GGML_CPU_FP16_TO_FP32(a_blk->d[3]),
+                لكل (صحيح k = 0; k < qk / blocklen; ++k) {
+                    ثابت بلوک_q8_0x4 * GGML_RESTRICT a_blk = a_ptr + 4 * l + k / (QK8_0 / blocklen);
+                    ثابت عائم a_d[4] = {
+                        GGML_CPU_FP16_مقصد_FP32(a_blk->d[0]),
+                        GGML_CPU_FP16_مقصد_FP32(a_blk->d[1]),
+                        GGML_CPU_FP16_مقصد_FP32(a_blk->d[2]),
+                        GGML_CPU_FP16_مقصد_FP32(a_blk->d[3]),
                     };
-                    const uint8_t bits0 = b_ptr[l].qs[k * ncols_interleaved + 0];
-                    const uint8_t bits1 = b_ptr[l].qs[k * ncols_interleaved + 1];
-                    const uint8_t bits2 = b_ptr[l].qs[k * ncols_interleaved + 2];
-                    const uint8_t bits3 = b_ptr[l].qs[k * ncols_interleaved + 3];
-                    const int q_offset = (k % (QK8_0 / blocklen)) * 4 * blocklen;
+                    ثابت uint8_t bits0 = b_ptr[l].qs[k * ncols_interleaved + 0];
+                    ثابت uint8_t bits1 = b_ptr[l].qs[k * ncols_interleaved + 1];
+                    ثابت uint8_t bits2 = b_ptr[l].qs[k * ncols_interleaved + 2];
+                    ثابت uint8_t bits3 = b_ptr[l].qs[k * ncols_interleaved + 3];
+                    ثابت صحيح q_جابه_جایی = (k % (QK8_0 / blocklen)) * 4 * blocklen;
 
-                    for (int p = 0; p < blocklen; ++p) {
-                        const int8_t q_row[4] = {
-                            a_blk->qs[q_offset + 0 * blocklen + p],
-                            a_blk->qs[q_offset + 1 * blocklen + p],
-                            a_blk->qs[q_offset + 2 * blocklen + p],
-                            a_blk->qs[q_offset + 3 * blocklen + p],
+                    لكل (صحيح p = 0; p < blocklen; ++p) {
+                        ثابت int8_t q_ردیف[4] = {
+                            a_blk->qs[q_جابه_جایی + 0 * blocklen + p],
+                            a_blk->qs[q_جابه_جایی + 1 * blocklen + p],
+                            a_blk->qs[q_جابه_جایی + 2 * blocklen + p],
+                            a_blk->qs[q_جابه_جایی + 3 * blocklen + p],
                         };
-                        const int sign[4] = {
+                        ثابت صحيح sign[4] = {
                             (bits0 & (1u << p)) ? 1 : -1,
                             (bits1 & (1u << p)) ? 1 : -1,
                             (bits2 & (1u << p)) ? 1 : -1,
                             (bits3 & (1u << p)) ? 1 : -1,
                         };
 
-                        for (int m = 0; m < 4; ++m) {
-                            const float row_scale = a_d[m];
-                            sumf[m][0] += sign[0] * q_row[m] * d0[0] * row_scale;
-                            sumf[m][1] += sign[1] * q_row[m] * d0[1] * row_scale;
-                            sumf[m][2] += sign[2] * q_row[m] * d0[2] * row_scale;
-                            sumf[m][3] += sign[3] * q_row[m] * d0[3] * row_scale;
+                        لكل (صحيح m = 0; m < 4; ++m) {
+                            ثابت عائم ردیف_scale = a_d[m];
+                            sumf[m][0] += sign[0] * q_ردیف[m] * d0[0] * ردیف_scale;
+                            sumf[m][1] += sign[1] * q_ردیف[m] * d0[1] * ردیف_scale;
+                            sumf[m][2] += sign[2] * q_ردیف[m] * d0[2] * ردیف_scale;
+                            sumf[m][3] += sign[3] * q_ردیف[m] * d0[3] * ردیف_scale;
                         }
                     }
                 }
             }
 
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                     s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j];
                 }
             }
@@ -2681,238 +2681,238 @@ void ggml_gemm_q1_0_4x8_q8_0_generic(int                        n,
 }
 
 // Only enable these for RISC-V.
-#if defined __riscv_zvfh
-void ggml_gemm_q4_0_16x1_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 16;
-    const int blocklen = 1;
+#إذا defined __riscv_zvfh
+فراغ ggml_gemm_q4_0_16x1_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
+    ثابت صحيح qk = QK8_0;
+    ثابت صحيح nb = n / qk;
+    ثابت صحيح ncols_interleaved = 16;
+    ثابت صحيح blocklen = 1;
 
-    assert (n % qk == 0);
-    assert (nr % 4 == 0);
-    assert (nc % ncols_interleaved == 0);
+    أكد (n % qk == 0);
+    أكد (nr % 4 == 0);
+    أكد (nc % ncols_interleaved == 0);
 
-    UNUSED(s);
-    UNUSED(bs);
-    UNUSED(vx);
-    UNUSED(vy);
-    UNUSED(nr);
-    UNUSED(nc);
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    استفادهنشده(s);
+    استفادهنشده(bs);
+    استفادهنشده(vx);
+    استفادهنشده(vy);
+    استفادهنشده(nr);
+    استفادهنشده(nc);
+    استفادهنشده(nb);
+    استفادهنشده(ncols_interleaved);
+    استفادهنشده(blocklen);
 
-    float sumf[4][16];
-    int sumi;
+    عائم sumf[4][16];
+    صحيح sumi;
 
-    for (int y = 0; y < nr / 4; y++) {
-        const block_q8_0x4 * a_ptr = (const block_q8_0x4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
-            const block_q4_0x16 * b_ptr = (const block_q4_0x16 *) vx + (x * nb);
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
+    لكل (صحيح y = 0; y < nr / 4; y++) {
+        ثابت بلوک_q8_0x4 * a_ptr = (ثابت بلوک_q8_0x4 *) vy + (y * nb);
+        لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+            ثابت بلوک_q4_0x16 * b_ptr = (ثابت بلوک_q4_0x16 *) vx + (x * nb);
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
             }
-            for (int l = 0; l < nb; l++) {
-                for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                    for (int m = 0; m < 4; m++) {
-                        for (int j = 0; j < ncols_interleaved; j++) {
+            لكل (صحيح l = 0; l < nb; l++) {
+                لكل (صحيح k = 0; k < (qk / (2 * blocklen)); k++) {
+                    لكل (صحيح m = 0; m < 4; m++) {
+                        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                             sumi = 0;
-                            for (int i = 0; i < blocklen; ++i) {
-                                const int v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] << 4);
-                                const int v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF0);
+                            لكل (صحيح i = 0; i < blocklen; ++i) {
+                                ثابت صحيح v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] << 4);
+                                ثابت صحيح v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF0);
                                 sumi += ((v0 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i]) +
                                          (v1 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i + qk / 2 * 4])) >> 4;
                             }
-                            sumf[m][j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d[m]);
+                            sumf[m][j] += sumi * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_مقصد_FP32(a_ptr[l].d[m]);
                         }
                     }
                 }
             }
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++)
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++)
                     s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j];
             }
         }
     }
 }
 
-void ggml_gemm_q4_K_16x1_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK_K;
-    const int nb = n / qk;
-    const int ncols_interleaved = 16;
-    const int blocklen = 1;
+فراغ ggml_gemm_q4_K_16x1_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
+    ثابت صحيح qk = QK_K;
+    ثابت صحيح nb = n / qk;
+    ثابت صحيح ncols_interleaved = 16;
+    ثابت صحيح blocklen = 1;
 
-    assert (n % qk == 0);
-    assert (nr % 4 == 0);
-    assert (nc % ncols_interleaved == 0);
+    أكد (n % qk == 0);
+    أكد (nr % 4 == 0);
+    أكد (nc % ncols_interleaved == 0);
 
-    UNUSED(s);
-    UNUSED(bs);
-    UNUSED(vx);
-    UNUSED(vy);
-    UNUSED(nr);
-    UNUSED(nc);
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    استفادهنشده(s);
+    استفادهنشده(bs);
+    استفادهنشده(vx);
+    استفادهنشده(vy);
+    استفادهنشده(nr);
+    استفادهنشده(nc);
+    استفادهنشده(nb);
+    استفادهنشده(ncols_interleaved);
+    استفادهنشده(blocklen);
 
-    float sumf[4][16];
-    float sum_minf[4][16];
+    عائم sumf[4][16];
+    عائم جمع_minf[4][16];
     uint8_t scales[128];
     uint8_t mins[128];
-    int sumi1;
-    int sumi2;
-    int sumi;
+    صحيح sumi1;
+    صحيح sumi2;
+    صحيح sumi;
 
-    for (int y = 0; y < nr / 4; y++) {
-        const block_q8_Kx4 * a_ptr = (const block_q8_Kx4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
-            const block_q4_Kx16 * b_ptr = (const block_q4_Kx16 *) vx + (x * nb);
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+    لكل (صحيح y = 0; y < nr / 4; y++) {
+        ثابت بلوک_q8_Kx4 * a_ptr = (ثابت بلوک_q8_Kx4 *) vy + (y * nb);
+        لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+            ثابت بلوک_q4_Kx16 * b_ptr = (ثابت بلوک_q4_Kx16 *) vx + (x * nb);
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                     sumf[m][j] = 0.0;
-                    sum_minf[m][j] = 0.0;
+                    جمع_minf[m][j] = 0.0;
                 }
             }
-            for (int l = 0; l < nb; l++) {
-                for (int i = 0; i < 128; i++) {
+            لكل (صحيح l = 0; l < nb; l++) {
+                لكل (صحيح i = 0; i < 128; i++) {
                     scales[i] = b_ptr[l].scales[i] & 0x0F;
                     mins[i] = b_ptr[l].scales[i] >> 4;
                 }
-                for (int i = 0; i < 64; i++) {
+                لكل (صحيح i = 0; i < 64; i++) {
                     scales[i] |= (b_ptr[l].scales[128 + i] & 0x03) << 4;
                     mins[i] |= (b_ptr[l].scales[128 + i] & 0x0C) << 2;
                     scales[i + 64] |= (b_ptr[l].scales[128 + i] & 0x30);
                     mins[i + 64] |= (b_ptr[l].scales[128 + i] & 0xC0) >> 2;
                 }
 
-                for (int sb = 0; sb < 8; sb++) {
+                لكل (صحيح sb = 0; sb < 8; sb++) {
                     uint8_t *min = &mins[sb * 16];
-                    for(int m = 0; m < 4; m++) {
-                        const int16_t bsums = a_ptr[l].bsums[sb * 8 + m] + a_ptr[l].bsums[sb * 8 + m + 4];
-                        for(int j = 0; j < ncols_interleaved; j++) {
-                            sum_minf[m][j] += min[j] * bsums * GGML_CPU_FP16_TO_FP32(b_ptr[l].dmin[j]) * a_ptr[l].d[m];
+                    لكل(صحيح m = 0; m < 4; m++) {
+                        ثابت int16_t bsums = a_ptr[l].bsums[sb * 8 + m] + a_ptr[l].bsums[sb * 8 + m + 4];
+                        لكل(صحيح j = 0; j < ncols_interleaved; j++) {
+                            جمع_minf[m][j] += min[j] * bsums * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].dmin[j]) * a_ptr[l].d[m];
                         }
                     }
                 }
 
-                for (int sb = 0; sb < 8; sb += 2) {
+                لكل (صحيح sb = 0; sb < 8; sb += 2) {
                     uint8_t *scales_0 = &scales[sb * 16];
                     uint8_t *scales_1 = &scales[(sb + 1) * 16];
 
-                    for (int i = 0; i < QK4_0; i++) {
-                        for (int m = 0; m < 4; m++) {
-                            for (int j = 0; j < ncols_interleaved; j++) {
+                    لكل (صحيح i = 0; i < QK4_0; i++) {
+                        لكل (صحيح m = 0; m < 4; m++) {
+                            لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                                 sumi1 = 0;
                                 sumi2 = 0;
                                 sumi = 0;
 
-                                const int v0 = (int8_t) (b_ptr[l].qs[sb * 256 + i * 16 + j] & 0xF);
-                                const int v1 = (int8_t) (b_ptr[l].qs[sb * 256 + i * 16 + j] >> 4);
+                                ثابت صحيح v0 = (int8_t) (b_ptr[l].qs[sb * 256 + i * 16 + j] & 0xF);
+                                ثابت صحيح v1 = (int8_t) (b_ptr[l].qs[sb * 256 + i * 16 + j] >> 4);
                                 sumi1 = (v0 * a_ptr[l].qs[sb * 4 * 32 + i * 4 + m]);
                                 sumi2 = (v1 * a_ptr[l].qs[sb * 4 * 32 + 32 * 4 + i * 4 + m]);
                                 sumi1 = sumi1 * scales_0[j];
                                 sumi2 = sumi2 * scales_1[j];
                                 sumi += sumi1 + sumi2;
 
-                                sumf[m][j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * a_ptr[l].d[m];
+                                sumf[m][j] += sumi * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[j]) * a_ptr[l].d[m];
                             }
                         }
                     }
                 }
             }
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
-                    s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j] - sum_minf[m][j];
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
+                    s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j] - جمع_minf[m][j];
                 }
             }
         }
     }
 }
 
-void ggml_gemm_iq4_nl_16x1_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 16;
-    const int blocklen = 1;
+فراغ ggml_gemm_iq4_nl_16x1_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
+    ثابت صحيح qk = QK8_0;
+    ثابت صحيح nb = n / qk;
+    ثابت صحيح ncols_interleaved = 16;
+    ثابت صحيح blocklen = 1;
 
-    assert(n % qk == 0);
-    assert(nr % 4 == 0);
-    assert(nc % ncols_interleaved == 0);
+    أكد(n % qk == 0);
+    أكد(nr % 4 == 0);
+    أكد(nc % ncols_interleaved == 0);
 
-    float sumf[4][16];
-    int sumi;
+    عائم sumf[4][16];
+    صحيح sumi;
 
-    for (int y = 0; y < nr / 4; y++) {
-        const block_q8_0x4 * a_ptr = (const block_q8_0x4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
-            const block_iq4_nlx16 * b_ptr = (const block_iq4_nlx16 *) vx + (x * nb);
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
+    لكل (صحيح y = 0; y < nr / 4; y++) {
+        ثابت بلوک_q8_0x4 * a_ptr = (ثابت بلوک_q8_0x4 *) vy + (y * nb);
+        لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+            ثابت بلوک_iq4_nlx16 * b_ptr = (ثابت بلوک_iq4_nlx16 *) vx + (x * nb);
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
             }
-            for (int l = 0; l < nb; l++) {
-                for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                    for (int m = 0; m < 4; m++) {
-                        for (int j = 0; j < ncols_interleaved; j++) {
+            لكل (صحيح l = 0; l < nb; l++) {
+                لكل (صحيح k = 0; k < (qk / (2 * blocklen)); k++) {
+                    لكل (صحيح m = 0; m < 4; m++) {
+                        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                             sumi = 0;
-                            for (int i = 0; i < blocklen; ++i) {
-                                const int v0 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
-                                const int v1 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
+                            لكل (صحيح i = 0; i < blocklen; ++i) {
+                                ثابت صحيح v0 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
+                                ثابت صحيح v1 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
                                 sumi += ((v0 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i]) +
                                          (v1 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i + (qk / 2) * 4]));
                             }
-                            sumf[m][j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d[m]);
+                            sumf[m][j] += sumi * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_مقصد_FP32(a_ptr[l].d[m]);
                         }
                     }
                 }
             }
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++)
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++)
                     s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j];
             }
         }
     }
 }
 
-void ggml_gemm_q8_0_16x1_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk                = QK8_0;
-    const int nb                = n / qk;
-    const int ncols_interleaved = 16;
-    const int blocklen          = 1;
+فراغ ggml_gemm_q8_0_16x1_q8_0_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
+    ثابت صحيح qk                = QK8_0;
+    ثابت صحيح nb                = n / qk;
+    ثابت صحيح ncols_interleaved = 16;
+    ثابت صحيح blocklen          = 1;
 
-    assert(n % qk == 0);
-    assert(nr % 4 == 0);
-    assert(nc % ncols_interleaved == 0);
+    أكد(n % qk == 0);
+    أكد(nr % 4 == 0);
+    أكد(nc % ncols_interleaved == 0);
 
-    float sumf[4][16];
-    int   sumi;
+    عائم sumf[4][16];
+    صحيح   sumi;
 
-    for (int y = 0; y < nr / 4; y++) {
-        const block_q8_0x4 * a_ptr = (const block_q8_0x4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
-            const block_q8_0x16 * b_ptr = (const block_q8_0x16 *) vx + (x * nb);
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+    لكل (صحيح y = 0; y < nr / 4; y++) {
+        ثابت بلوک_q8_0x4 * a_ptr = (ثابت بلوک_q8_0x4 *) vy + (y * nb);
+        لكل (صحيح x = 0; x < nc / ncols_interleaved; x++) {
+            ثابت بلوک_q8_0x16 * b_ptr = (ثابت بلوک_q8_0x16 *) vx + (x * nb);
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                     sumf[m][j] = 0.0;
                 }
             }
-            for (int l = 0; l < nb; l++) {
-                for (int k = 0; k < (qk / blocklen); k++) {
-                    for (int m = 0; m < 4; m++) {
-                        for (int j = 0; j < ncols_interleaved; j++) {
+            لكل (صحيح l = 0; l < nb; l++) {
+                لكل (صحيح k = 0; k < (qk / blocklen); k++) {
+                    لكل (صحيح m = 0; m < 4; m++) {
+                        لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                             sumi = 0;
-                            for (int i = 0; i < blocklen; ++i) {
-                                const int v0 = b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i];
+                            لكل (صحيح i = 0; i < blocklen; ++i) {
+                                ثابت صحيح v0 = b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i];
                                 sumi += v0 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i];
                             }
                             sumf[m][j] +=
-                                sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d[m]);
+                                sumi * GGML_CPU_FP16_مقصد_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_مقصد_FP32(a_ptr[l].d[m]);
                         }
                     }
                 }
             }
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+            لكل (صحيح m = 0; m < 4; m++) {
+                لكل (صحيح j = 0; j < ncols_interleaved; j++) {
                     s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j];
                 }
             }
@@ -2921,282 +2921,282 @@ void ggml_gemm_q8_0_16x1_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs,
 }
 
 
-void ggml_gemm_q2_K_16x1_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    assert(n % QK_K == 0);
-    assert(nr % 4 == 0);
-    assert(nc % 16 == 0);
-    const int nb = n / QK_K;
-    const block_q2_Kx16 * x = (const block_q2_Kx16 *)vx;
-    const block_q8_Kx4  * y = (const block_q8_Kx4 *)vy;
+فراغ ggml_gemm_q2_K_16x1_q8_K_generic(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy, صحيح nr, صحيح nc) {
+    أكد(n % QK_K == 0);
+    أكد(nr % 4 == 0);
+    أكد(nc % 16 == 0);
+    ثابت صحيح nb = n / QK_K;
+    ثابت بلوک_q2_Kx16 * x = (ثابت بلوک_q2_Kx16 *)vx;
+    ثابت بلوک_q8_Kx4  * y = (ثابت بلوک_q8_Kx4 *)vy;
 
-    const int sb_perm[16] = {
+    ثابت صحيح sb_perm[16] = {
         0, 4, 1, 5, 2, 6, 3, 7,
         8, 12, 9, 13, 10, 14, 11, 15
     };
 
     // Iterate Rows in tiles of 4
-    for (int row_tile = 0; row_tile < nr; row_tile += 4) {
+    لكل (صحيح ردیف_tile = 0; ردیف_tile < nr; ردیف_tile += 4) {
         // Iterate Columns in tiles of 16
-        for (int col_tile = 0; col_tile < nc; col_tile += 16) {
+        لكل (صحيح ستون_tile = 0; ستون_tile < nc; ستون_tile += 16) {
 
-            const block_q2_Kx16 * x_ptr = x + (col_tile / 16) * nb;
-            const block_q8_Kx4  * y_ptr = y + (row_tile / 4) * nb;
+            ثابت بلوک_q2_Kx16 * x_ptr = x + (ستون_tile / 16) * nb;
+            ثابت بلوک_q8_Kx4  * y_ptr = y + (ردیف_tile / 4) * nb;
 
-            float sumf[4][16];
-            memset(sumf, 0, sizeof(sumf));
+            عائم sumf[4][16];
+            memset(sumf, 0, حجم(sumf));
 
-            for (int k_block = 0; k_block < nb; ++k_block) {
+            لكل (صحيح k_بلوک = 0; k_بلوک < nb; ++k_بلوک) {
                 int32_t isum[4][16];
                 int32_t summs[4][16];
-                memset(isum, 0, sizeof(isum));
-                memset(summs, 0, sizeof(summs));
+                memset(isum, 0, حجم(isum));
+                memset(summs, 0, حجم(summs));
 
-                const uint8_t * qs_rhs = x_ptr[k_block].qs;
-                const uint8_t * sc_rhs = x_ptr[k_block].scales;
-                const int8_t  * qs_lhs = y_ptr[k_block].qs;
-                const int16_t * bs_lhs = y_ptr[k_block].bsums;
+                ثابت uint8_t * qs_rhs = x_ptr[k_بلوک].qs;
+                ثابت uint8_t * sc_rhs = x_ptr[k_بلوک].scales;
+                ثابت int8_t  * qs_lhs = y_ptr[k_بلوک].qs;
+                ثابت int16_t * bs_lhs = y_ptr[k_بلوک].bsums;
 
-                for (int sb = 0; sb < 16; ++sb) {
-                    int scale_offset = sb_perm[sb] * 16;
+                لكل (صحيح sb = 0; sb < 16; ++sb) {
+                    صحيح scale_جابه_جایی = sb_perm[sb] * 16;
 
-                    int byte_base;
-                    if (sb < 8) byte_base = (sb % 2 == 0) ? 0 : 16;
-                    else        byte_base = (sb % 2 == 0) ? 32 : 48;
-                    int shift = ((sb / 2) % 4) * 2;
+                    صحيح byte_پایه;
+                    إذا (sb < 8) byte_پایه = (sb % 2 == 0) ? 0 : 16;
+                    وإلا        byte_پایه = (sb % 2 == 0) ? 32 : 48;
+                    صحيح لغزش = ((sb / 2) % 4) * 2;
 
-                    for (int col = 0; col < 16; ++col) {
-                        uint8_t sc_val = sc_rhs[scale_offset + col];
+                    لكل (صحيح ستون = 0; ستون < 16; ++ستون) {
+                        uint8_t sc_val = sc_rhs[scale_جابه_جایی + ستون];
                         int32_t d_sb = sc_val & 0xF;
                         int32_t m_sb = sc_val >> 4;
 
                         // Correction Term
-                        for (int r = 0; r < 4; ++r) {
-                            int bsum_idx = (sb / 4) * 16 + r * 4 + (sb % 4);
-                            summs[r][col] += bs_lhs[bsum_idx] * m_sb;
+                        لكل (صحيح r = 0; r < 4; ++r) {
+                            صحيح bsum_idx = (sb / 4) * 16 + r * 4 + (sb % 4);
+                            summs[r][ستون] += bs_lhs[bsum_idx] * m_sb;
                         }
 
                         // Main Dot Product
-                        for (int l = 0; l < 16; ++l) {
-                            int qs_idx = (byte_base + l) * 16 + col;
-                            uint8_t q2_val = (qs_rhs[qs_idx] >> shift) & 3;
+                        لكل (صحيح l = 0; l < 16; ++l) {
+                            صحيح qs_idx = (byte_پایه + l) * 16 + ستون;
+                            uint8_t q2_val = (qs_rhs[qs_idx] >> لغزش) & 3;
 
                             // Calculate Q8 index for this specific k and row
-                            int k = sb * 16 + l;
-                            int q8_idx = (k / 4) * 16 + (k % 4);
+                            صحيح k = sb * 16 + l;
+                            صحيح q8_idx = (k / 4) * 16 + (k % 4);
 
-                            for (int r = 0; r < 4; ++r) {
+                            لكل (صحيح r = 0; r < 4; ++r) {
                                 // Add r*4 to jump to the correct row within the 4x4 chunk
                                 int8_t q8_val = qs_lhs[q8_idx + r * 4];
-                                isum[r][col] += q8_val * q2_val * d_sb;
+                                isum[r][ستون] += q8_val * q2_val * d_sb;
                             }
                         }
                     }
                 }
 
                 // Finalize K-Block
-                for (int col = 0; col < 16; ++col) {
-                    float d_rhs = GGML_FP16_TO_FP32(x_ptr[k_block].d[col]);
-                    float dm_rhs = GGML_FP16_TO_FP32(x_ptr[k_block].dmin[col]);
+                لكل (صحيح ستون = 0; ستون < 16; ++ستون) {
+                    عائم d_rhs = GGML_FP16_مقصد_FP32(x_ptr[k_بلوک].d[ستون]);
+                    عائم dm_rhs = GGML_FP16_مقصد_FP32(x_ptr[k_بلوک].dmin[ستون]);
 
-                    for (int r = 0; r < 4; ++r) {
-                        float d_lhs = y_ptr[k_block].d[r];
-                        float d_all = d_lhs * d_rhs;
-                        float d_min = d_lhs * dm_rhs;
-                        sumf[r][col] += (isum[r][col] * d_all) - (summs[r][col] * d_min);
+                    لكل (صحيح r = 0; r < 4; ++r) {
+                        عائم d_lhs = y_ptr[k_بلوک].d[r];
+                        عائم d_all = d_lhs * d_rhs;
+                        عائم d_min = d_lhs * dm_rhs;
+                        sumf[r][ستون] += (isum[r][ستون] * d_all) - (summs[r][ستون] * d_min);
                     }
                 }
             }
 
-            for (int r = 0; r < 4; ++r) {
-                for (int col = 0; col < 16; ++col) {
-                    s[(row_tile + r) * bs + (col_tile + col)] = sumf[r][col];
+            لكل (صحيح r = 0; r < 4; ++r) {
+                لكل (صحيح ستون = 0; ستون < 16; ++ستون) {
+                    s[(ردیف_tile + r) * bs + (ستون_tile + ستون)] = sumf[r][ستون];
                 }
             }
         }
     }
 }
-#endif
+#پایان_اگر
 
 } // extern "C"
 
-static block_q8_0x4 make_block_q8_0x4(block_q8_0 * in, unsigned int blck_size_interleave) {
-    block_q8_0x4 out;
+ساكن بلوک_q8_0x4 make_بلوک_q8_0x4(بلوک_q8_0 * درون, بیعلامت صحيح blck_اندازه_interleave) {
+    بلوک_q8_0x4 بیرون;
 
-    for (int i = 0; i < 4; i++) {
-        out.d[i] = in[i].d;
+    لكل (صحيح i = 0; i < 4; i++) {
+        بیرون.d[i] = درون[i].d;
     }
 
-    const int end = QK8_0 * 4 / blck_size_interleave;
-    for (int i = 0; i < end; ++i) {
-        int src_id     = i % 4;
-        int src_offset = (i / 4) * blck_size_interleave;
-        int dst_offset = i * blck_size_interleave;
-        memcpy(&out.qs[dst_offset], &in[src_id].qs[src_offset], blck_size_interleave);
+    ثابت صحيح end = QK8_0 * 4 / blck_اندازه_interleave;
+    لكل (صحيح i = 0; i < end; ++i) {
+        صحيح src_id     = i % 4;
+        صحيح src_جابه_جایی = (i / 4) * blck_اندازه_interleave;
+        صحيح dst_جابه_جایی = i * blck_اندازه_interleave;
+        کپی_حافظه(&بیرون.qs[dst_جابه_جایی], &درون[src_id].qs[src_جابه_جایی], blck_اندازه_interleave);
     }
-    return out;
+    أرجع بیرون;
 }
 
-static block_q1_0x4 make_block_q1_0x4(block_q1_0 * in, unsigned int blck_size_interleave) {
-    block_q1_0x4 out;
+ساكن بلوک_q1_0x4 make_بلوک_q1_0x4(بلوک_q1_0 * درون, بیعلامت صحيح blck_اندازه_interleave) {
+    بلوک_q1_0x4 بیرون;
 
-    for (int i = 0; i < 4; i++) {
-        out.d[i] = in[i].d;
+    لكل (صحيح i = 0; i < 4; i++) {
+        بیرون.d[i] = درون[i].d;
     }
 
-    GGML_ASSERT(blck_size_interleave == 4 || blck_size_interleave == 8);
+    GGML_ASSERT(blck_اندازه_interleave == 4 || blck_اندازه_interleave == 8);
 
-    if (blck_size_interleave == 4) {
-        for (int k = 0; k < QK1_0 / QK8_0; ++k) {
-            for (int tile = 0; tile < QK8_0 / 4; ++tile) {
+    إذا (blck_اندازه_interleave == 4) {
+        لكل (صحيح k = 0; k < QK1_0 / QK8_0; ++k) {
+            لكل (صحيح tile = 0; tile < QK8_0 / 4; ++tile) {
                 uint8_t packed_lo = 0;
                 uint8_t packed_hi = 0;
 
-                const int weight_base = k * QK8_0 + tile * 4;
-                for (int pos = 0; pos < 4; ++pos) {
-                    const int weight_idx = weight_base + pos;
-                    const int byte_idx   = weight_idx / 8;
-                    const int bit_idx    = weight_idx % 8;
+                ثابت صحيح وزن_پایه = k * QK8_0 + tile * 4;
+                لكل (صحيح pos = 0; pos < 4; ++pos) {
+                    ثابت صحيح وزن_idx = وزن_پایه + pos;
+                    ثابت صحيح byte_idx   = وزن_idx / 8;
+                    ثابت صحيح بیت_idx    = وزن_idx % 8;
 
-                    packed_lo |= ((in[0].qs[byte_idx] >> bit_idx) & 1u) << pos;
-                    packed_lo |= ((in[1].qs[byte_idx] >> bit_idx) & 1u) << (4 + pos);
-                    packed_hi |= ((in[2].qs[byte_idx] >> bit_idx) & 1u) << pos;
-                    packed_hi |= ((in[3].qs[byte_idx] >> bit_idx) & 1u) << (4 + pos);
+                    packed_lo |= ((درون[0].qs[byte_idx] >> بیت_idx) & 1u) << pos;
+                    packed_lo |= ((درون[1].qs[byte_idx] >> بیت_idx) & 1u) << (4 + pos);
+                    packed_hi |= ((درون[2].qs[byte_idx] >> بیت_idx) & 1u) << pos;
+                    packed_hi |= ((درون[3].qs[byte_idx] >> بیت_idx) & 1u) << (4 + pos);
                 }
 
-                out.qs[k * 16 + 2 * tile + 0] = packed_lo;
-                out.qs[k * 16 + 2 * tile + 1] = packed_hi;
+                بیرون.qs[k * 16 + 2 * tile + 0] = packed_lo;
+                بیرون.qs[k * 16 + 2 * tile + 1] = packed_hi;
             }
         }
-        return out;
+        أرجع بیرون;
     }
 
-    for (int byte_idx = 0; byte_idx < QK1_0 / 8; ++byte_idx) {
-        out.qs[byte_idx * 4 + 0] = in[0].qs[byte_idx];
-        out.qs[byte_idx * 4 + 1] = in[1].qs[byte_idx];
-        out.qs[byte_idx * 4 + 2] = in[2].qs[byte_idx];
-        out.qs[byte_idx * 4 + 3] = in[3].qs[byte_idx];
+    لكل (صحيح byte_idx = 0; byte_idx < QK1_0 / 8; ++byte_idx) {
+        بیرون.qs[byte_idx * 4 + 0] = درون[0].qs[byte_idx];
+        بیرون.qs[byte_idx * 4 + 1] = درون[1].qs[byte_idx];
+        بیرون.qs[byte_idx * 4 + 2] = درون[2].qs[byte_idx];
+        بیرون.qs[byte_idx * 4 + 3] = درون[3].qs[byte_idx];
     }
 
-    return out;
+    أرجع بیرون;
 }
 
-static block_q4_0x4 make_block_q4_0x4(block_q4_0 * in, int blck_size_interleave) {
-    block_q4_0x4 out;
+ساكن بلوک_q4_0x4 make_بلوک_q4_0x4(بلوک_q4_0 * درون, صحيح blck_اندازه_interleave) {
+    بلوک_q4_0x4 بیرون;
 
-    for (int i = 0; i < 4; i++) {
-        out.d[i] = in[i].d;
+    لكل (صحيح i = 0; i < 4; i++) {
+        بیرون.d[i] = درون[i].d;
     }
 
-    const int end = QK4_0 * 2 / blck_size_interleave;
+    ثابت صحيح end = QK4_0 * 2 / blck_اندازه_interleave;
 
-    if (blck_size_interleave == 8) {
-        const uint64_t xor_mask = 0x8888888888888888ULL;
-        for (int i = 0; i < end; ++i) {
-            int src_id = i % 4;
-            int src_offset = (i / 4) * blck_size_interleave;
-            int dst_offset = i * blck_size_interleave;
+    إذا (blck_اندازه_interleave == 8) {
+        ثابت uint64_t xor_ماسک = 0x8888888888888888ULL;
+        لكل (صحيح i = 0; i < end; ++i) {
+            صحيح src_id = i % 4;
+            صحيح src_جابه_جایی = (i / 4) * blck_اندازه_interleave;
+            صحيح dst_جابه_جایی = i * blck_اندازه_interleave;
 
             uint64_t elems;
             // Using memcpy to avoid unaligned memory accesses
-            memcpy(&elems, &in[src_id].qs[src_offset], sizeof(uint64_t));
-            elems ^= xor_mask;
-            memcpy(&out.qs[dst_offset], &elems, sizeof(uint64_t));
+            کپی_حافظه(&elems, &درون[src_id].qs[src_جابه_جایی], حجم(uint64_t));
+            elems ^= xor_ماسک;
+            کپی_حافظه(&بیرون.qs[dst_جابه_جایی], &elems, حجم(uint64_t));
         }
-    } else if (blck_size_interleave == 4) {
-        const uint32_t xor_mask = 0x88888888;
-        for (int i = 0; i < end; ++i) {
-            int src_id = i % 4;
-            int src_offset = (i / 4) * blck_size_interleave;
-            int dst_offset = i * blck_size_interleave;
+    } وإلا إذا (blck_اندازه_interleave == 4) {
+        ثابت uint32_t xor_ماسک = 0x88888888;
+        لكل (صحيح i = 0; i < end; ++i) {
+            صحيح src_id = i % 4;
+            صحيح src_جابه_جایی = (i / 4) * blck_اندازه_interleave;
+            صحيح dst_جابه_جایی = i * blck_اندازه_interleave;
 
             uint32_t elems;
-            memcpy(&elems, &in[src_id].qs[src_offset], sizeof(uint32_t));
-            elems ^= xor_mask;
-            memcpy(&out.qs[dst_offset], &elems, sizeof(uint32_t));
+            کپی_حافظه(&elems, &درون[src_id].qs[src_جابه_جایی], حجم(uint32_t));
+            elems ^= xor_ماسک;
+            کپی_حافظه(&بیرون.qs[dst_جابه_جایی], &elems, حجم(uint32_t));
         }
-    } else {
-        GGML_ASSERT(false);
+    } وإلا {
+        GGML_ASSERT(خطأ);
     }
 
-    return out;
+    أرجع بیرون;
 }
 
 // interleave 8 block_q4_0s in blocks of blck_size_interleave
 // returns an interleaved block_q4_0x8
 // in the interleaved block_q4_0x8, place deltas for 8 block_q4_0 blocks
 // first, then interleave quants from 8 block_q4_0s in blocks of blck_size_interleave
-static block_q4_0x8 make_block_q4_0x8(block_q4_0 * in, unsigned int blck_size_interleave) {
-    block_q4_0x8 out;
+ساكن بلوک_q4_0x8 make_بلوک_q4_0x8(بلوک_q4_0 * درون, بیعلامت صحيح blck_اندازه_interleave) {
+    بلوک_q4_0x8 بیرون;
 
-    for (int i = 0; i < 8; i++) {
-        out.d[i] = in[i].d;
+    لكل (صحيح i = 0; i < 8; i++) {
+        بیرون.d[i] = درون[i].d;
     }
 
-    const int end = QK4_0 * 4 / blck_size_interleave;
-    const uint64_t xor_mask = 0x8888888888888888ULL;
+    ثابت صحيح end = QK4_0 * 4 / blck_اندازه_interleave;
+    ثابت uint64_t xor_ماسک = 0x8888888888888888ULL;
 
-    for (int i = 0; i < end; ++i) {
-        int src_id = i % 8;
-        int src_offset = (i / 8) * blck_size_interleave;
-        int dst_offset = i * blck_size_interleave;
+    لكل (صحيح i = 0; i < end; ++i) {
+        صحيح src_id = i % 8;
+        صحيح src_جابه_جایی = (i / 8) * blck_اندازه_interleave;
+        صحيح dst_جابه_جایی = i * blck_اندازه_interleave;
 
         uint64_t elems;
-        memcpy(&elems, &in[src_id].qs[src_offset], sizeof(uint64_t));
-        elems ^= xor_mask;
-        memcpy(&out.qs[dst_offset], &elems, sizeof(uint64_t));
+        کپی_حافظه(&elems, &درون[src_id].qs[src_جابه_جایی], حجم(uint64_t));
+        elems ^= xor_ماسک;
+        کپی_حافظه(&بیرون.qs[dst_جابه_جایی], &elems, حجم(uint64_t));
     }
 
-    return out;
+    أرجع بیرون;
 }
 
-static block_q4_0x16 make_block_q4_0x16(block_q4_0 * in, unsigned int blck_size_interleave) {
-    block_q4_0x16 out;
+ساكن بلوک_q4_0x16 make_بلوک_q4_0x16(بلوک_q4_0 * درون, بیعلامت صحيح blck_اندازه_interleave) {
+    بلوک_q4_0x16 بیرون;
 
-    for (int i = 0; i < 16; i++) {
-        out.d[i] = in[i].d;
+    لكل (صحيح i = 0; i < 16; i++) {
+        بیرون.d[i] = درون[i].d;
     }
 
-    const int end = QK4_0 * 8 / blck_size_interleave;
+    ثابت صحيح end = QK4_0 * 8 / blck_اندازه_interleave;
 
-    if (blck_size_interleave == 1) {
-        const uint8_t xor_mask = 0x88;
-        for (int i = 0; i < end; ++i) {
-            int src_id = i % 16;
-            int src_offset = i / 16;
-            int dst_offset = i;
+    إذا (blck_اندازه_interleave == 1) {
+        ثابت uint8_t xor_ماسک = 0x88;
+        لكل (صحيح i = 0; i < end; ++i) {
+            صحيح src_id = i % 16;
+            صحيح src_جابه_جایی = i / 16;
+            صحيح dst_جابه_جایی = i;
 
-            out.qs[dst_offset] = in[src_id].qs[src_offset] ^ xor_mask;
+            بیرون.qs[dst_جابه_جایی] = درون[src_id].qs[src_جابه_جایی] ^ xor_ماسک;
         }
-    } else {
-        GGML_ASSERT(false);
+    } وإلا {
+        GGML_ASSERT(خطأ);
     }
 
-    return out;
+    أرجع بیرون;
 }
 
-static block_q4_Kx8 make_block_q4_Kx8(block_q4_K * in, unsigned int blck_size_interleave) {
-    block_q4_Kx8 out;
+ساكن بلوک_q4_Kx8 make_بلوک_q4_Kx8(بلوک_q4_K * درون, بیعلامت صحيح blck_اندازه_interleave) {
+    بلوک_q4_Kx8 بیرون;
     //Delta(scale) and dmin values of the eight Q4_K structures are copied onto the output interleaved structure
-    for (int i = 0; i < 8; i++) {
-        out.d[i] = in[i].GGML_COMMON_AGGR_U.GGML_COMMON_AGGR_S.d;
+    لكل (صحيح i = 0; i < 8; i++) {
+        بیرون.d[i] = درون[i].GGML_COMMON_AGGR_U.GGML_COMMON_AGGR_S.d;
     }
 
-    for (int i = 0; i < 8; i++) {
-        out.dmin[i] = in[i].GGML_COMMON_AGGR_U.GGML_COMMON_AGGR_S.dmin;
+    لكل (صحيح i = 0; i < 8; i++) {
+        بیرون.dmin[i] = درون[i].GGML_COMMON_AGGR_U.GGML_COMMON_AGGR_S.dmin;
     }
 
-    const int end = QK_K * 4 / blck_size_interleave;
+    ثابت صحيح end = QK_K * 4 / blck_اندازه_interleave;
 
     // Interleave Q4_K quants by taking 8 bytes at a time
-    for (int i = 0; i < end; ++i) {
-        int src_id = i % 8;
-        int src_offset = (i / 8) * blck_size_interleave;
-        int dst_offset = i * blck_size_interleave;
+    لكل (صحيح i = 0; i < end; ++i) {
+        صحيح src_id = i % 8;
+        صحيح src_جابه_جایی = (i / 8) * blck_اندازه_interleave;
+        صحيح dst_جابه_جایی = i * blck_اندازه_interleave;
 
         // buffer large enough for the max interleave block size (8 bytes)
         uint64_t elems;
-        memcpy(&elems, &in[src_id].qs[src_offset], blck_size_interleave);
-        memcpy(&out.qs[dst_offset], &elems, blck_size_interleave);
+        کپی_حافظه(&elems, &درون[src_id].qs[src_جابه_جایی], blck_اندازه_interleave);
+        کپی_حافظه(&بیرون.qs[dst_جابه_جایی], &elems, blck_اندازه_interleave);
     }
 
     // The below logic is designed so as to unpack and rearrange scales and mins values in Q4_K
@@ -3206,126 +3206,126 @@ static block_q4_Kx8 make_block_q4_Kx8(block_q4_K * in, unsigned int blck_size_in
     // For eg - First 12 bytes contains 8 scales and 8 mins - each of first sub block from different Q4_K structures
     uint8_t s[8], m[8];
 
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 8; j++) {
-            s[j] = in[j].scales[i] & 63;
-            m[j] = in[j].scales[i + 4] & 63;
+    لكل (صحيح i = 0; i < 4; i++) {
+        لكل (صحيح j = 0; j < 8; j++) {
+            s[j] = درون[j].scales[i] & 63;
+            m[j] = درون[j].scales[i + 4] & 63;
         }
 
-        out.scales[i * 12]      = (s[0] & 63) + ((s[4] & 48) << 2);
-        out.scales[i * 12 + 1]  = (s[1] & 63) + ((s[5] & 48) << 2);
-        out.scales[i * 12 + 2]  = (s[2] & 63) + ((s[6] & 48) << 2);
-        out.scales[i * 12 + 3]  = (s[3] & 63) + ((s[7] & 48) << 2);
-        out.scales[i * 12 + 4]  = (m[0] & 63) + ((m[4] & 48) << 2);
-        out.scales[i * 12 + 5]  = (m[1] & 63) + ((m[5] & 48) << 2);
-        out.scales[i * 12 + 6]  = (m[2] & 63) + ((m[6] & 48) << 2);
-        out.scales[i * 12 + 7]  = (m[3] & 63) + ((m[7] & 48) << 2);
-        out.scales[i * 12 + 8]  = (s[4] & 15) + ((m[4] & 15) << 4);
-        out.scales[i * 12 + 9]  = (s[5] & 15) + ((m[5] & 15) << 4);
-        out.scales[i * 12 + 10] = (s[6] & 15) + ((m[6] & 15) << 4);
-        out.scales[i * 12 + 11] = (s[7] & 15) + ((m[7] & 15) << 4);
+        بیرون.scales[i * 12]      = (s[0] & 63) + ((s[4] & 48) << 2);
+        بیرون.scales[i * 12 + 1]  = (s[1] & 63) + ((s[5] & 48) << 2);
+        بیرون.scales[i * 12 + 2]  = (s[2] & 63) + ((s[6] & 48) << 2);
+        بیرون.scales[i * 12 + 3]  = (s[3] & 63) + ((s[7] & 48) << 2);
+        بیرون.scales[i * 12 + 4]  = (m[0] & 63) + ((m[4] & 48) << 2);
+        بیرون.scales[i * 12 + 5]  = (m[1] & 63) + ((m[5] & 48) << 2);
+        بیرون.scales[i * 12 + 6]  = (m[2] & 63) + ((m[6] & 48) << 2);
+        بیرون.scales[i * 12 + 7]  = (m[3] & 63) + ((m[7] & 48) << 2);
+        بیرون.scales[i * 12 + 8]  = (s[4] & 15) + ((m[4] & 15) << 4);
+        بیرون.scales[i * 12 + 9]  = (s[5] & 15) + ((m[5] & 15) << 4);
+        بیرون.scales[i * 12 + 10] = (s[6] & 15) + ((m[6] & 15) << 4);
+        بیرون.scales[i * 12 + 11] = (s[7] & 15) + ((m[7] & 15) << 4);
 
     }
 
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 8; j++) {
-            s[j] = ((in[j].scales[i] & 192) >> 2) | (in[j].scales[i+8] & 15);
-            m[j] = ((in[j].scales[i + 4] & 192) >> 2) | ((in[j].scales[i+8] & 240) >> 4);
+    لكل (صحيح i = 0; i < 4; i++) {
+        لكل (صحيح j = 0; j < 8; j++) {
+            s[j] = ((درون[j].scales[i] & 192) >> 2) | (درون[j].scales[i+8] & 15);
+            m[j] = ((درون[j].scales[i + 4] & 192) >> 2) | ((درون[j].scales[i+8] & 240) >> 4);
         }
 
-        out.scales[i * 12 + 48] = (s[0] & 63) + ((s[4] & 48) << 2);
-        out.scales[i * 12 + 49] = (s[1] & 63) + ((s[5] & 48) << 2);
-        out.scales[i * 12 + 50] = (s[2] & 63) + ((s[6] & 48) << 2);
-        out.scales[i * 12 + 51] = (s[3] & 63) + ((s[7] & 48) << 2);
-        out.scales[i * 12 + 52] = (m[0] & 63) + ((m[4] & 48) << 2);
-        out.scales[i * 12 + 53] = (m[1] & 63) + ((m[5] & 48) << 2);
-        out.scales[i * 12 + 54] = (m[2] & 63) + ((m[6] & 48) << 2);
-        out.scales[i * 12 + 55] = (m[3] & 63) + ((m[7] & 48) << 2);
-        out.scales[i * 12 + 56] = (s[4] & 15) + ((m[4] & 15) << 4);
-        out.scales[i * 12 + 57] = (s[5] & 15) + ((m[5] & 15) << 4);
-        out.scales[i * 12 + 58] = (s[6] & 15) + ((m[6] & 15) << 4);
-        out.scales[i * 12 + 59] = (s[7] & 15) + ((m[7] & 15) << 4);
+        بیرون.scales[i * 12 + 48] = (s[0] & 63) + ((s[4] & 48) << 2);
+        بیرون.scales[i * 12 + 49] = (s[1] & 63) + ((s[5] & 48) << 2);
+        بیرون.scales[i * 12 + 50] = (s[2] & 63) + ((s[6] & 48) << 2);
+        بیرون.scales[i * 12 + 51] = (s[3] & 63) + ((s[7] & 48) << 2);
+        بیرون.scales[i * 12 + 52] = (m[0] & 63) + ((m[4] & 48) << 2);
+        بیرون.scales[i * 12 + 53] = (m[1] & 63) + ((m[5] & 48) << 2);
+        بیرون.scales[i * 12 + 54] = (m[2] & 63) + ((m[6] & 48) << 2);
+        بیرون.scales[i * 12 + 55] = (m[3] & 63) + ((m[7] & 48) << 2);
+        بیرون.scales[i * 12 + 56] = (s[4] & 15) + ((m[4] & 15) << 4);
+        بیرون.scales[i * 12 + 57] = (s[5] & 15) + ((m[5] & 15) << 4);
+        بیرون.scales[i * 12 + 58] = (s[6] & 15) + ((m[6] & 15) << 4);
+        بیرون.scales[i * 12 + 59] = (s[7] & 15) + ((m[7] & 15) << 4);
 
     }
 
-    return out;
+    أرجع بیرون;
 }
 
-static block_q4_Kx16 make_block_q4_Kx16(block_q4_K * in, unsigned int blck_size_interleave) {
-    block_q4_Kx16 out;
+ساكن بلوک_q4_Kx16 make_بلوک_q4_Kx16(بلوک_q4_K * درون, بیعلامت صحيح blck_اندازه_interleave) {
+    بلوک_q4_Kx16 بیرون;
     //Delta(scale) and dmin values of the 16 Q4_K structures are copied onto the output interleaved structure
-    for (int i = 0; i < 16; i++) {
-        out.d[i] = in[i].GGML_COMMON_AGGR_U.GGML_COMMON_AGGR_S.d;
+    لكل (صحيح i = 0; i < 16; i++) {
+        بیرون.d[i] = درون[i].GGML_COMMON_AGGR_U.GGML_COMMON_AGGR_S.d;
     }
 
-    for (int i = 0; i < 16; i++) {
-        out.dmin[i] = in[i].GGML_COMMON_AGGR_U.GGML_COMMON_AGGR_S.dmin;
+    لكل (صحيح i = 0; i < 16; i++) {
+        بیرون.dmin[i] = درون[i].GGML_COMMON_AGGR_U.GGML_COMMON_AGGR_S.dmin;
     }
 
-    const int end = QK_K * 8 / blck_size_interleave;
+    ثابت صحيح end = QK_K * 8 / blck_اندازه_interleave;
 
-    if (blck_size_interleave == 1) {
-        for (int i = 0; i < end; ++i) {
-            int src_id = i % 16;
-            int src_offset = i / 16;
-            int dst_offset = i;
+    إذا (blck_اندازه_interleave == 1) {
+        لكل (صحيح i = 0; i < end; ++i) {
+            صحيح src_id = i % 16;
+            صحيح src_جابه_جایی = i / 16;
+            صحيح dst_جابه_جایی = i;
 
-            out.qs[dst_offset] = in[src_id].qs[src_offset];
+            بیرون.qs[dst_جابه_جایی] = درون[src_id].qs[src_جابه_جایی];
         }
 
         // RVV repacking.
         //
         // Extract sums and mins for all 8 sub-blocks for each block of Q4_K.
         uint8_t s[128], m[128];
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 16; j++) {
-                s[i * 16 + j] = in[j].scales[i] & 63;
-                m[i * 16 + j] = in[j].scales[i + 4] & 63;
+        لكل (صحيح i = 0; i < 4; i++) {
+            لكل (صحيح j = 0; j < 16; j++) {
+                s[i * 16 + j] = درون[j].scales[i] & 63;
+                m[i * 16 + j] = درون[j].scales[i + 4] & 63;
             }
         }
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 16; j++) {
-                s[64 + i * 16 + j] = ((in[j].scales[i] & 192) >> 2) | (in[j].scales[i+8] & 15);
-                m[64 + i * 16 + j] = ((in[j].scales[i + 4] & 192) >> 2) | ((in[j].scales[i+8] & 240) >> 4);
+        لكل (صحيح i = 0; i < 4; i++) {
+            لكل (صحيح j = 0; j < 16; j++) {
+                s[64 + i * 16 + j] = ((درون[j].scales[i] & 192) >> 2) | (درون[j].scales[i+8] & 15);
+                m[64 + i * 16 + j] = ((درون[j].scales[i + 4] & 192) >> 2) | ((درون[j].scales[i+8] & 240) >> 4);
             }
         }
 
-        for (int i = 0; i < 128; i++) {
-            out.scales[i] = (s[i] & 15) | ((m[i] & 15) << 4);
+        لكل (صحيح i = 0; i < 128; i++) {
+            بیرون.scales[i] = (s[i] & 15) | ((m[i] & 15) << 4);
         }
-        for (int i = 0; i < 64; i++) {
-            out.scales[128 + i] = ((s[i] & 48) >> 4) | ((m[i] & 48) >> 2) | (s[64 + i] & 48) | ((m[64 + i] & 48) << 2);
+        لكل (صحيح i = 0; i < 64; i++) {
+            بیرون.scales[128 + i] = ((s[i] & 48) >> 4) | ((m[i] & 48) >> 2) | (s[64 + i] & 48) | ((m[64 + i] & 48) << 2);
         }
-    } else {
-        GGML_ASSERT(false);
+    } وإلا {
+        GGML_ASSERT(خطأ);
     }
 
-    return out;
+    أرجع بیرون;
 }
 
-static block_q2_Kx8 make_block_q2_Kx8(block_q2_K * in, unsigned int blck_size_interleave) {
-    block_q2_Kx8 out;
+ساكن بلوک_q2_Kx8 make_بلوک_q2_Kx8(بلوک_q2_K * درون, بیعلامت صحيح blck_اندازه_interleave) {
+    بلوک_q2_Kx8 بیرون;
 
     // Delta(scale) and dmin values of the eight Q2_K structures are copied onto the output interleaved structure
-    for (int i = 0; i < 8; i++) {
-        out.d[i] = in[i].GGML_COMMON_AGGR_U.GGML_COMMON_AGGR_S.d;
+    لكل (صحيح i = 0; i < 8; i++) {
+        بیرون.d[i] = درون[i].GGML_COMMON_AGGR_U.GGML_COMMON_AGGR_S.d;
     }
 
-    for (int i = 0; i < 8; i++) {
-        out.dmin[i] = in[i].GGML_COMMON_AGGR_U.GGML_COMMON_AGGR_S.dmin;
+    لكل (صحيح i = 0; i < 8; i++) {
+        بیرون.dmin[i] = درون[i].GGML_COMMON_AGGR_U.GGML_COMMON_AGGR_S.dmin;
     }
 
-    const int end = QK_K * 2 / blck_size_interleave;
+    ثابت صحيح end = QK_K * 2 / blck_اندازه_interleave;
 
     // Interleave Q2_K quants by taking 8 bytes at a time
-    for (int i = 0; i < end; ++i) {
-        int src_id = i % 8;
-        int src_offset = (i / 8) * blck_size_interleave;
-        int dst_offset = i * blck_size_interleave;
+    لكل (صحيح i = 0; i < end; ++i) {
+        صحيح src_id = i % 8;
+        صحيح src_جابه_جایی = (i / 8) * blck_اندازه_interleave;
+        صحيح dst_جابه_جایی = i * blck_اندازه_interleave;
 
         uint64_t elems;
-        memcpy(&elems, &in[src_id].qs[src_offset], sizeof(uint64_t));
-        memcpy(&out.qs[dst_offset], &elems, sizeof(uint64_t));
+        کپی_حافظه(&elems, &درون[src_id].qs[src_جابه_جایی], حجم(uint64_t));
+        کپی_حافظه(&بیرون.qs[dst_جابه_جایی], &elems, حجم(uint64_t));
     }
 
     // The below logic is designed so as to unpack and rearrange scales and mins values in Q2_K
@@ -3334,49 +3334,49 @@ static block_q2_Kx8 make_block_q2_Kx8(block_q2_K * in, unsigned int blck_size_in
     // Every 16 byte is packed such that it contains scales and mins for corresponding sub blocks from Q2_K structure
     // For eg - First 16 bytes contains 16 scales and 16 mins - each of first and second sub blocks from different Q2_K structures
 
-    for (int i = 0; i < 128; i++) {
+    لكل (صحيح i = 0; i < 128; i++) {
         // Index for selecting which q2k super block
-        int src1 = (i % 16) / 2;
+        صحيح src1 = (i % 16) / 2;
         // Index for selecting scale
-        int src2 = ((i / 16) * 2) + (i % 2);
+        صحيح src2 = ((i / 16) * 2) + (i % 2);
 
-        out.scales[i] = in[src1].scales[src2];
+        بیرون.scales[i] = درون[src1].scales[src2];
     }
-    return out;
+    أرجع بیرون;
 }
 
-static block_q5_Kx8 make_block_q5_Kx8(block_q5_K * in, unsigned int blck_size_interleave) {
-    block_q5_Kx8 out;
+ساكن بلوک_q5_Kx8 make_بلوک_q5_Kx8(بلوک_q5_K * درون, بیعلامت صحيح blck_اندازه_interleave) {
+    بلوک_q5_Kx8 بیرون;
     //Delta(scale) and dmin values of the eight Q5_K structures are copied onto the output interleaved structure
-    for (int i = 0; i < 8; i++) {
-        out.d[i] = in[i].GGML_COMMON_AGGR_U.GGML_COMMON_AGGR_S.d;
+    لكل (صحيح i = 0; i < 8; i++) {
+        بیرون.d[i] = درون[i].GGML_COMMON_AGGR_U.GGML_COMMON_AGGR_S.d;
     }
 
-    for (int i = 0; i < 8; i++) {
-        out.dmin[i] = in[i].GGML_COMMON_AGGR_U.GGML_COMMON_AGGR_S.dmin;
+    لكل (صحيح i = 0; i < 8; i++) {
+        بیرون.dmin[i] = درون[i].GGML_COMMON_AGGR_U.GGML_COMMON_AGGR_S.dmin;
     }
 
-    const int end = QK_K * 4 / blck_size_interleave;
+    ثابت صحيح end = QK_K * 4 / blck_اندازه_interleave;
 
     // Interleave Q5_K quants by taking blck_size_interleave bytes at a time
-    for (int i = 0; i < end; ++i) {
-        int src_id     = i % 8;
-        int src_offset = (i / 8) * blck_size_interleave;
-        int dst_offset = i * blck_size_interleave;
+    لكل (صحيح i = 0; i < end; ++i) {
+        صحيح src_id     = i % 8;
+        صحيح src_جابه_جایی = (i / 8) * blck_اندازه_interleave;
+        صحيح dst_جابه_جایی = i * blck_اندازه_interleave;
 
-        memcpy(&out.qs[dst_offset], &in[src_id].qs[src_offset], blck_size_interleave);
+        کپی_حافظه(&بیرون.qs[dst_جابه_جایی], &درون[src_id].qs[src_جابه_جایی], blck_اندازه_interleave);
     }
 
     // Repeat for high bits with the same chunk size, since
     // the high bits are interleaved in Q5_K and the index is
     // qh_idx = (qs_idx % 32);
     // qh_val = qh[qh_idx] >> (qs_idx / 32);
-    for (int i = 0; i < end / 4; ++i) {
-        int src_id     = i % 8;
-        int src_offset = (i / 8) * blck_size_interleave;
-        int dst_offset = i * blck_size_interleave;
+    لكل (صحيح i = 0; i < end / 4; ++i) {
+        صحيح src_id     = i % 8;
+        صحيح src_جابه_جایی = (i / 8) * blck_اندازه_interleave;
+        صحيح dst_جابه_جایی = i * blck_اندازه_interleave;
 
-        memcpy(&out.qh[dst_offset], &in[src_id].qh[src_offset], blck_size_interleave);
+        کپی_حافظه(&بیرون.qh[dst_جابه_جایی], &درون[src_id].qh[src_جابه_جایی], blck_اندازه_interleave);
     }
 
     // The below logic is copied over from Q4_K
@@ -3387,563 +3387,563 @@ static block_q5_Kx8 make_block_q5_Kx8(block_q5_K * in, unsigned int blck_size_in
     // For eg - First 12 bytes contains 8 scales and 8 mins - each of first sub block from different Q5_K structures
     uint8_t s[8], m[8];
 
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 8; j++) {
-            s[j] = in[j].scales[i] & 63;
-            m[j] = in[j].scales[i + 4] & 63;
+    لكل (صحيح i = 0; i < 4; i++) {
+        لكل (صحيح j = 0; j < 8; j++) {
+            s[j] = درون[j].scales[i] & 63;
+            m[j] = درون[j].scales[i + 4] & 63;
         }
 
-        out.scales[i * 12]      = (s[0] & 63) + ((s[4] & 48) << 2);
-        out.scales[i * 12 + 1]  = (s[1] & 63) + ((s[5] & 48) << 2);
-        out.scales[i * 12 + 2]  = (s[2] & 63) + ((s[6] & 48) << 2);
-        out.scales[i * 12 + 3]  = (s[3] & 63) + ((s[7] & 48) << 2);
-        out.scales[i * 12 + 4]  = (m[0] & 63) + ((m[4] & 48) << 2);
-        out.scales[i * 12 + 5]  = (m[1] & 63) + ((m[5] & 48) << 2);
-        out.scales[i * 12 + 6]  = (m[2] & 63) + ((m[6] & 48) << 2);
-        out.scales[i * 12 + 7]  = (m[3] & 63) + ((m[7] & 48) << 2);
-        out.scales[i * 12 + 8]  = (s[4] & 15) + ((m[4] & 15) << 4);
-        out.scales[i * 12 + 9]  = (s[5] & 15) + ((m[5] & 15) << 4);
-        out.scales[i * 12 + 10] = (s[6] & 15) + ((m[6] & 15) << 4);
-        out.scales[i * 12 + 11] = (s[7] & 15) + ((m[7] & 15) << 4);
+        بیرون.scales[i * 12]      = (s[0] & 63) + ((s[4] & 48) << 2);
+        بیرون.scales[i * 12 + 1]  = (s[1] & 63) + ((s[5] & 48) << 2);
+        بیرون.scales[i * 12 + 2]  = (s[2] & 63) + ((s[6] & 48) << 2);
+        بیرون.scales[i * 12 + 3]  = (s[3] & 63) + ((s[7] & 48) << 2);
+        بیرون.scales[i * 12 + 4]  = (m[0] & 63) + ((m[4] & 48) << 2);
+        بیرون.scales[i * 12 + 5]  = (m[1] & 63) + ((m[5] & 48) << 2);
+        بیرون.scales[i * 12 + 6]  = (m[2] & 63) + ((m[6] & 48) << 2);
+        بیرون.scales[i * 12 + 7]  = (m[3] & 63) + ((m[7] & 48) << 2);
+        بیرون.scales[i * 12 + 8]  = (s[4] & 15) + ((m[4] & 15) << 4);
+        بیرون.scales[i * 12 + 9]  = (s[5] & 15) + ((m[5] & 15) << 4);
+        بیرون.scales[i * 12 + 10] = (s[6] & 15) + ((m[6] & 15) << 4);
+        بیرون.scales[i * 12 + 11] = (s[7] & 15) + ((m[7] & 15) << 4);
     }
 
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 8; j++) {
-            s[j] = ((in[j].scales[i] & 192) >> 2) | (in[j].scales[i + 8] & 15);
-            m[j] = ((in[j].scales[i + 4] & 192) >> 2) | ((in[j].scales[i + 8] & 240) >> 4);
+    لكل (صحيح i = 0; i < 4; i++) {
+        لكل (صحيح j = 0; j < 8; j++) {
+            s[j] = ((درون[j].scales[i] & 192) >> 2) | (درون[j].scales[i + 8] & 15);
+            m[j] = ((درون[j].scales[i + 4] & 192) >> 2) | ((درون[j].scales[i + 8] & 240) >> 4);
         }
 
-        out.scales[i * 12 + 48] = (s[0] & 63) + ((s[4] & 48) << 2);
-        out.scales[i * 12 + 49] = (s[1] & 63) + ((s[5] & 48) << 2);
-        out.scales[i * 12 + 50] = (s[2] & 63) + ((s[6] & 48) << 2);
-        out.scales[i * 12 + 51] = (s[3] & 63) + ((s[7] & 48) << 2);
-        out.scales[i * 12 + 52] = (m[0] & 63) + ((m[4] & 48) << 2);
-        out.scales[i * 12 + 53] = (m[1] & 63) + ((m[5] & 48) << 2);
-        out.scales[i * 12 + 54] = (m[2] & 63) + ((m[6] & 48) << 2);
-        out.scales[i * 12 + 55] = (m[3] & 63) + ((m[7] & 48) << 2);
-        out.scales[i * 12 + 56] = (s[4] & 15) + ((m[4] & 15) << 4);
-        out.scales[i * 12 + 57] = (s[5] & 15) + ((m[5] & 15) << 4);
-        out.scales[i * 12 + 58] = (s[6] & 15) + ((m[6] & 15) << 4);
-        out.scales[i * 12 + 59] = (s[7] & 15) + ((m[7] & 15) << 4);
+        بیرون.scales[i * 12 + 48] = (s[0] & 63) + ((s[4] & 48) << 2);
+        بیرون.scales[i * 12 + 49] = (s[1] & 63) + ((s[5] & 48) << 2);
+        بیرون.scales[i * 12 + 50] = (s[2] & 63) + ((s[6] & 48) << 2);
+        بیرون.scales[i * 12 + 51] = (s[3] & 63) + ((s[7] & 48) << 2);
+        بیرون.scales[i * 12 + 52] = (m[0] & 63) + ((m[4] & 48) << 2);
+        بیرون.scales[i * 12 + 53] = (m[1] & 63) + ((m[5] & 48) << 2);
+        بیرون.scales[i * 12 + 54] = (m[2] & 63) + ((m[6] & 48) << 2);
+        بیرون.scales[i * 12 + 55] = (m[3] & 63) + ((m[7] & 48) << 2);
+        بیرون.scales[i * 12 + 56] = (s[4] & 15) + ((m[4] & 15) << 4);
+        بیرون.scales[i * 12 + 57] = (s[5] & 15) + ((m[5] & 15) << 4);
+        بیرون.scales[i * 12 + 58] = (s[6] & 15) + ((m[6] & 15) << 4);
+        بیرون.scales[i * 12 + 59] = (s[7] & 15) + ((m[7] & 15) << 4);
     }
 
-    return out;
+    أرجع بیرون;
 }
 
-static block_q6_Kx8 make_block_q6_Kx8(block_q6_K * in, unsigned int blck_size_interleave) {
-    block_q6_Kx8  out;
-    constexpr int n_blocks = 8;  // Kx8
-    for (int i = 0; i < n_blocks; i++) {
-        out.d[i] = in[i].d;
+ساكن بلوک_q6_Kx8 make_بلوک_q6_Kx8(بلوک_q6_K * درون, بیعلامت صحيح blck_اندازه_interleave) {
+    بلوک_q6_Kx8  بیرون;
+    constexpr صحيح n_بلوکها = 8;  // Kx8
+    لكل (صحيح i = 0; i < n_بلوکها; i++) {
+        بیرون.d[i] = درون[i].d;
     }
 
-    const int end_ls = QK_K * 4 / blck_size_interleave;
+    ثابت صحيح انتها_ls = QK_K * 4 / blck_اندازه_interleave;
     // Interleave Q6_K quants by taking blck_size_interleave bytes at a time
-    for (int i = 0; i < end_ls; ++i) {
-        int src_id     = i % n_blocks;
-        int src_offset = (i / n_blocks) * blck_size_interleave;
-        int dst_offset = i * blck_size_interleave;
+    لكل (صحيح i = 0; i < انتها_ls; ++i) {
+        صحيح src_id     = i % n_بلوکها;
+        صحيح src_جابه_جایی = (i / n_بلوکها) * blck_اندازه_interleave;
+        صحيح dst_جابه_جایی = i * blck_اندازه_interleave;
 
         uint64_t elem_ls;
-        memcpy(&elem_ls, &in[src_id].ql[src_offset], blck_size_interleave);
-        memcpy(&out.ql[dst_offset], &elem_ls, blck_size_interleave);
+        کپی_حافظه(&elem_ls, &درون[src_id].ql[src_جابه_جایی], blck_اندازه_interleave);
+        کپی_حافظه(&بیرون.ql[dst_جابه_جایی], &elem_ls, blck_اندازه_interleave);
     }
 
     // Interleave high bits using same chunk size as low bits
-    const int end_hs = end_ls / 2;
-    for (int i = 0; i < end_hs; ++i) {
-        int src_id     = i % n_blocks;
-        int src_offset = (i / n_blocks) * blck_size_interleave;
-        int dst_offset = i * blck_size_interleave;
+    ثابت صحيح انتها_hs = انتها_ls / 2;
+    لكل (صحيح i = 0; i < انتها_hs; ++i) {
+        صحيح src_id     = i % n_بلوکها;
+        صحيح src_جابه_جایی = (i / n_بلوکها) * blck_اندازه_interleave;
+        صحيح dst_جابه_جایی = i * blck_اندازه_interleave;
 
         uint64_t elem_hs;
-        memcpy(&elem_hs, &in[src_id].qh[src_offset], blck_size_interleave);
-        memcpy(&out.qh[dst_offset], &elem_hs, blck_size_interleave);
+        کپی_حافظه(&elem_hs, &درون[src_id].qh[src_جابه_جایی], blck_اندازه_interleave);
+        کپی_حافظه(&بیرون.qh[dst_جابه_جایی], &elem_hs, blck_اندازه_interleave);
     }
 
     // The below logic is designed so as to unpack and rearrange scales in Q6_K
     // The output Q6_Kx8 structure interleaves the 8 bit scales in the same fashion as the quants
     // Q6_K structure has an 8-bit scale per 16 elements -> 16 scales
     // scales: [0 bl0 0 bl1 ... 0 bl7][1 bl0 ... 1 bl7] ... [15 bl0 ... 15 bl7]  (bl = block)
-    constexpr int n_scales = QK_K / 16;
+    constexpr صحيح n_scales = QK_K / 16;
 
-    for (int i = 0; i < n_blocks; i++) {
-        for (int j = 0; j < n_scales; j++) {
-            out.scales[j * n_blocks + i] = in[i].scales[j];
+    لكل (صحيح i = 0; i < n_بلوکها; i++) {
+        لكل (صحيح j = 0; j < n_scales; j++) {
+            بیرون.scales[j * n_بلوکها + i] = درون[i].scales[j];
         }
     }
 
-    return out;
+    أرجع بیرون;
 }
 
-static block_q2_Kx16 make_block_q2_Kx16(const block_q2_K * in, unsigned int blck_size_interleave) {
-    block_q2_Kx16 out;
-    constexpr int N_COLS = 16;
+ساكن بلوک_q2_Kx16 make_بلوک_q2_Kx16(ثابت بلوک_q2_K * درون, بیعلامت صحيح blck_اندازه_interleave) {
+    بلوک_q2_Kx16 بیرون;
+    constexpr صحيح N_تعداد_ستون = 16;
 
     // 1. Copy Super-Scales (d) and Super-Mins (dmin)
-    for (int i = 0; i < N_COLS; i++) {
-        out.d[i]    = in[i].GGML_COMMON_AGGR_U.GGML_COMMON_AGGR_S.d;
-        out.dmin[i] = in[i].GGML_COMMON_AGGR_U.GGML_COMMON_AGGR_S.dmin;
+    لكل (صحيح i = 0; i < N_تعداد_ستون; i++) {
+        بیرون.d[i]    = درون[i].GGML_COMMON_AGGR_U.GGML_COMMON_AGGR_S.d;
+        بیرون.dmin[i] = درون[i].GGML_COMMON_AGGR_U.GGML_COMMON_AGGR_S.dmin;
     }
 
     // 2. Interleave Q2_K Data
-    const int bytes_per_col = 64;
-    const int total_bytes = N_COLS * bytes_per_col;
-    const int end = total_bytes / blck_size_interleave;
+    ثابت صحيح بایتها_در_هر_ستون = 64;
+    ثابت صحيح مجموع_بایتها = N_تعداد_ستون * بایتها_در_هر_ستون;
+    ثابت صحيح end = مجموع_بایتها / blck_اندازه_interleave;
 
-    for (int i = 0; i < end; ++i) {
-        int src_col_id = i % N_COLS;
-        int src_offset = (i / N_COLS) * blck_size_interleave;
-        int dst_offset = i * blck_size_interleave;
-        memcpy(&out.qs[dst_offset], &in[src_col_id].qs[src_offset], blck_size_interleave);
+    لكل (صحيح i = 0; i < end; ++i) {
+        صحيح src_ستون_id = i % N_تعداد_ستون;
+        صحيح src_جابه_جایی = (i / N_تعداد_ستون) * blck_اندازه_interleave;
+        صحيح dst_جابه_جایی = i * blck_اندازه_interleave;
+        کپی_حافظه(&بیرون.qs[dst_جابه_جایی], &درون[src_ستون_id].qs[src_جابه_جایی], blck_اندازه_interleave);
     }
 
     // 3. Repack Scales into the Optimized "Sequential-Parallel" Layout
-    int out_idx = 0;
+    صحيح بیرون_idx = 0;
 
     // Arrays define the sub-block order for each group
-    const int even_low_sbs[]  = {0, 2, 4, 6};
-    const int odd_low_sbs[]   = {1, 3, 5, 7};
-    const int even_high_sbs[] = {8, 10, 12, 14};
-    const int odd_high_sbs[]  = {9, 11, 13, 15};
+    ثابت صحيح even_کم_sbs[]  = {0, 2, 4, 6};
+    ثابت صحيح odd_کم_sbs[]   = {1, 3, 5, 7};
+    ثابت صحيح even_بالا_sbs[] = {8, 10, 12, 14};
+    ثابت صحيح odd_بالا_sbs[]  = {9, 11, 13, 15};
 
     // Pack Group 1: Even-Low
-    for (int sb : even_low_sbs) {
-        for (int col = 0; col < N_COLS; col++) {
-            out.scales[out_idx++] = in[col].scales[sb];
+    لكل (صحيح sb : even_کم_sbs) {
+        لكل (صحيح ستون = 0; ستون < N_تعداد_ستون; ستون++) {
+            بیرون.scales[بیرون_idx++] = درون[ستون].scales[sb];
         }
     }
 
     // Pack Group 2: Odd-Low
-    for (int sb : odd_low_sbs) {
-        for (int col = 0; col < N_COLS; col++) {
-            out.scales[out_idx++] = in[col].scales[sb];
+    لكل (صحيح sb : odd_کم_sbs) {
+        لكل (صحيح ستون = 0; ستون < N_تعداد_ستون; ستون++) {
+            بیرون.scales[بیرون_idx++] = درون[ستون].scales[sb];
         }
     }
 
     // Pack Group 3: Even-High
-    for (int sb : even_high_sbs) {
-        for (int col = 0; col < N_COLS; col++) {
-            out.scales[out_idx++] = in[col].scales[sb];
+    لكل (صحيح sb : even_بالا_sbs) {
+        لكل (صحيح ستون = 0; ستون < N_تعداد_ستون; ستون++) {
+            بیرون.scales[بیرون_idx++] = درون[ستون].scales[sb];
         }
     }
 
     // Pack Group 4: Odd-High
-    for (int sb : odd_high_sbs) {
-        for (int col = 0; col < N_COLS; col++) {
-            out.scales[out_idx++] = in[col].scales[sb];
+    لكل (صحيح sb : odd_بالا_sbs) {
+        لكل (صحيح ستون = 0; ستون < N_تعداد_ستون; ستون++) {
+            بیرون.scales[بیرون_idx++] = درون[ستون].scales[sb];
         }
     }
 
-    return out;
+    أرجع بیرون;
 }
 
-static int repack_q4_0_to_q4_0_4_bl(struct ggml_tensor * t, int interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
+ساكن صحيح repack_q4_0_مقصد_q4_0_4_bl(بنية ggml_tensor * t, صحيح interleave_بلوک, ثابت فراغ * GGML_RESTRICT داده, size_t داده_اندازه) {
     GGML_ASSERT(t->type == GGML_TYPE_Q4_0);
-    GGML_ASSERT(interleave_block == 4 || interleave_block == 8);
-    constexpr int nrows_interleaved = 4;
+    GGML_ASSERT(interleave_بلوک == 4 || interleave_بلوک == 8);
+    constexpr صحيح nrows_interleaved = 4;
 
-    block_q4_0x4 * dst = (block_q4_0x4 *)t->data;
-    const block_q4_0 * src = (const block_q4_0 *)data;
-    block_q4_0 dst_tmp[4];
-    int nrow = ggml_nrows(t);
-    int nblocks = t->ne[0] / QK4_0;
+    بلوک_q4_0x4 * dst = (بلوک_q4_0x4 *)t->داده;
+    ثابت بلوک_q4_0 * src = (ثابت بلوک_q4_0 *)داده;
+    بلوک_q4_0 dst_tmp[4];
+    صحيح nrow = ggml_nrows(t);
+    صحيح nblocks = t->ne[0] / QK4_0;
 
-    GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q4_0));
+    GGML_ASSERT(داده_اندازه == nrow * nblocks * حجم(بلوک_q4_0));
 
-    if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+    إذا (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
+        أرجع -1;
     }
 
-    for (int b = 0; b < nrow; b += nrows_interleaved) {
-        for (int64_t x = 0; x < nblocks; x++) {
-            for (int i = 0; i < nrows_interleaved; i++) {
+    لكل (صحيح b = 0; b < nrow; b += nrows_interleaved) {
+        لكل (int64_t x = 0; x < nblocks; x++) {
+            لكل (صحيح i = 0; i < nrows_interleaved; i++) {
                 dst_tmp[i] = src[x + i * nblocks];
             }
-            *dst++ = make_block_q4_0x4(dst_tmp, interleave_block);
+            *dst++ = make_بلوک_q4_0x4(dst_tmp, interleave_بلوک);
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    أرجع 0;
 
-    GGML_UNUSED(data_size);
+    GGML_استفادهنشده(داده_اندازه);
 }
 
-static int repack_q4_K_to_q4_K_8_bl(struct ggml_tensor * t, int interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
+ساكن صحيح repack_q4_K_مقصد_q4_K_8_bl(بنية ggml_tensor * t, صحيح interleave_بلوک, ثابت فراغ * GGML_RESTRICT داده, size_t داده_اندازه) {
     GGML_ASSERT(t->type == GGML_TYPE_Q4_K);
-    GGML_ASSERT(interleave_block == 8 || interleave_block == 4);
-    constexpr int nrows_interleaved = 8;
+    GGML_ASSERT(interleave_بلوک == 8 || interleave_بلوک == 4);
+    constexpr صحيح nrows_interleaved = 8;
 
-    block_q4_Kx8 * dst = (block_q4_Kx8*)t->data;
-    const block_q4_K * src = (const block_q4_K*) data;
-    block_q4_K dst_tmp[8];
-    int nrow = ggml_nrows(t);
-    int nblocks = t->ne[0] / QK_K;
+    بلوک_q4_Kx8 * dst = (بلوک_q4_Kx8*)t->داده;
+    ثابت بلوک_q4_K * src = (ثابت بلوک_q4_K*) داده;
+    بلوک_q4_K dst_tmp[8];
+    صحيح nrow = ggml_nrows(t);
+    صحيح nblocks = t->ne[0] / QK_K;
 
-    GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q4_K));
+    GGML_ASSERT(داده_اندازه == nrow * nblocks * حجم(بلوک_q4_K));
 
-    if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+    إذا (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
+        أرجع -1;
     }
 
-    for (int b = 0; b < nrow; b += nrows_interleaved) {
-        for (int64_t x = 0; x < nblocks; x++) {
-            for (int i  = 0; i < nrows_interleaved; i++ ) {
+    لكل (صحيح b = 0; b < nrow; b += nrows_interleaved) {
+        لكل (int64_t x = 0; x < nblocks; x++) {
+            لكل (صحيح i  = 0; i < nrows_interleaved; i++ ) {
                 dst_tmp[i] = src[x + i * nblocks];
             }
-            *dst++ = make_block_q4_Kx8(dst_tmp, interleave_block);
+            *dst++ = make_بلوک_q4_Kx8(dst_tmp, interleave_بلوک);
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    أرجع 0;
 
-    GGML_UNUSED(data_size);
+    GGML_استفادهنشده(داده_اندازه);
 }
 
-static int repack_q4_K_to_q4_K_16_bl(struct ggml_tensor * t, int interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
+ساكن صحيح repack_q4_K_مقصد_q4_K_16_bl(بنية ggml_tensor * t, صحيح interleave_بلوک, ثابت فراغ * GGML_RESTRICT داده, size_t داده_اندازه) {
     GGML_ASSERT(t->type == GGML_TYPE_Q4_K);
-    constexpr int nrows_interleaved = 16;
+    constexpr صحيح nrows_interleaved = 16;
 
-    block_q4_Kx16 * dst = (block_q4_Kx16*)t->data;
-    const block_q4_K * src = (const block_q4_K*) data;
-    block_q4_K dst_tmp[16];
-    int nrow = ggml_nrows(t);
-    int nblocks = t->ne[0] / QK_K;
+    بلوک_q4_Kx16 * dst = (بلوک_q4_Kx16*)t->داده;
+    ثابت بلوک_q4_K * src = (ثابت بلوک_q4_K*) داده;
+    بلوک_q4_K dst_tmp[16];
+    صحيح nrow = ggml_nrows(t);
+    صحيح nblocks = t->ne[0] / QK_K;
 
-    GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q4_K));
+    GGML_ASSERT(داده_اندازه == nrow * nblocks * حجم(بلوک_q4_K));
 
-    if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+    إذا (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
+        أرجع -1;
     }
 
-    for (int b = 0; b < nrow; b += nrows_interleaved) {
-        for (int64_t x = 0; x < nblocks; x++) {
-            for (int i  = 0; i < nrows_interleaved; i++ ) {
+    لكل (صحيح b = 0; b < nrow; b += nrows_interleaved) {
+        لكل (int64_t x = 0; x < nblocks; x++) {
+            لكل (صحيح i  = 0; i < nrows_interleaved; i++ ) {
                 dst_tmp[i] = src[x + i * nblocks];
             }
-            *dst++ = make_block_q4_Kx16(dst_tmp, interleave_block);
+            *dst++ = make_بلوک_q4_Kx16(dst_tmp, interleave_بلوک);
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    أرجع 0;
 
-    GGML_UNUSED(data_size);
+    GGML_استفادهنشده(داده_اندازه);
 }
 
-static int repack_q2_K_to_q2_K_8_bl(struct ggml_tensor * t, int interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
+ساكن صحيح repack_q2_K_مقصد_q2_K_8_bl(بنية ggml_tensor * t, صحيح interleave_بلوک, ثابت فراغ * GGML_RESTRICT داده, size_t داده_اندازه) {
     GGML_ASSERT(t->type == GGML_TYPE_Q2_K);
-    GGML_ASSERT(interleave_block == 8);
-    constexpr int nrows_interleaved = 8;
+    GGML_ASSERT(interleave_بلوک == 8);
+    constexpr صحيح nrows_interleaved = 8;
 
-    block_q2_Kx8 * dst = (block_q2_Kx8*)t->data;
-    const block_q2_K * src = (const block_q2_K*) data;
-    block_q2_K dst_tmp[8];
-    int nrow = ggml_nrows(t);
-    int nblocks = t->ne[0] / QK_K;
+    بلوک_q2_Kx8 * dst = (بلوک_q2_Kx8*)t->داده;
+    ثابت بلوک_q2_K * src = (ثابت بلوک_q2_K*) داده;
+    بلوک_q2_K dst_tmp[8];
+    صحيح nrow = ggml_nrows(t);
+    صحيح nblocks = t->ne[0] / QK_K;
 
-    GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q2_K));
+    GGML_ASSERT(داده_اندازه == nrow * nblocks * حجم(بلوک_q2_K));
 
-    if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+    إذا (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
+        أرجع -1;
     }
 
-    for (int b = 0; b < nrow; b += nrows_interleaved) {
-        for (int64_t x = 0; x < nblocks; x++) {
-            for (int i = 0; i < nrows_interleaved; i++) {
+    لكل (صحيح b = 0; b < nrow; b += nrows_interleaved) {
+        لكل (int64_t x = 0; x < nblocks; x++) {
+            لكل (صحيح i = 0; i < nrows_interleaved; i++) {
                 dst_tmp[i] = src[x + i * nblocks];
             }
-            *dst++ = make_block_q2_Kx8(dst_tmp, interleave_block);
+            *dst++ = make_بلوک_q2_Kx8(dst_tmp, interleave_بلوک);
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    أرجع 0;
 
-    GGML_UNUSED(data_size);
+    GGML_استفادهنشده(داده_اندازه);
 }
 
-static int repack_q2_K_to_q2_K_16_bl(struct ggml_tensor * t, int interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
+ساكن صحيح repack_q2_K_مقصد_q2_K_16_bl(بنية ggml_tensor * t, صحيح interleave_بلوک, ثابت فراغ * GGML_RESTRICT داده, size_t داده_اندازه) {
     GGML_ASSERT(t->type == GGML_TYPE_Q2_K);
-    constexpr int nrows_interleaved = 16;
+    constexpr صحيح nrows_interleaved = 16;
 
-    block_q2_Kx16 * dst = (block_q2_Kx16*)t->data;
-    const block_q2_K * src = (const block_q2_K*) data;
+    بلوک_q2_Kx16 * dst = (بلوک_q2_Kx16*)t->داده;
+    ثابت بلوک_q2_K * src = (ثابت بلوک_q2_K*) داده;
 
-    block_q2_K dst_tmp[nrows_interleaved];
+    بلوک_q2_K dst_tmp[nrows_interleaved];
 
-    int nrow = ggml_nrows(t);
-    int nblocks = t->ne[0] / QK_K;
+    صحيح nrow = ggml_nrows(t);
+    صحيح nblocks = t->ne[0] / QK_K;
 
-    GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q2_K));
+    GGML_ASSERT(داده_اندازه == nrow * nblocks * حجم(بلوک_q2_K));
 
-    if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+    إذا (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
+        أرجع -1;
     }
 
-    for (int b = 0; b < nrow; b += nrows_interleaved) {
-        for (int64_t x = 0; x < nblocks; x++) {
+    لكل (صحيح b = 0; b < nrow; b += nrows_interleaved) {
+        لكل (int64_t x = 0; x < nblocks; x++) {
             // This loop gathers 16 separate blocks (one from each column)
             // that correspond to the same K-dimension chunk.
-            for (int i  = 0; i < nrows_interleaved; i++ ) {
+            لكل (صحيح i  = 0; i < nrows_interleaved; i++ ) {
                 dst_tmp[i] = src[x + i * nblocks];
             }
 
-            *dst++ = make_block_q2_Kx16(dst_tmp, interleave_block);
+            *dst++ = make_بلوک_q2_Kx16(dst_tmp, interleave_بلوک);
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    أرجع 0;
 
-    GGML_UNUSED(data_size);
+    GGML_استفادهنشده(داده_اندازه);
 }
 
-static int repack_q4_0_to_q4_0_16_bl(struct ggml_tensor * t, int interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
+ساكن صحيح repack_q4_0_مقصد_q4_0_16_bl(بنية ggml_tensor * t, صحيح interleave_بلوک, ثابت فراغ * GGML_RESTRICT داده, size_t داده_اندازه) {
     GGML_ASSERT(t->type == GGML_TYPE_Q4_0);
-    constexpr int nrows_interleaved = 16;
+    constexpr صحيح nrows_interleaved = 16;
 
-    block_q4_0x16 * dst = (block_q4_0x16*)t->data;
-    const block_q4_0 * src = (const block_q4_0*) data;
-    block_q4_0 dst_tmp[16];
-    int nrow = ggml_nrows(t);
-    int nblocks = t->ne[0] / QK4_0;
+    بلوک_q4_0x16 * dst = (بلوک_q4_0x16*)t->داده;
+    ثابت بلوک_q4_0 * src = (ثابت بلوک_q4_0*) داده;
+    بلوک_q4_0 dst_tmp[16];
+    صحيح nrow = ggml_nrows(t);
+    صحيح nblocks = t->ne[0] / QK4_0;
 
-    GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q4_0));
+    GGML_ASSERT(داده_اندازه == nrow * nblocks * حجم(بلوک_q4_0));
 
-    if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+    إذا (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
+        أرجع -1;
     }
 
-    for (int b = 0; b < nrow; b += nrows_interleaved) {
-        for (int64_t x = 0; x < nblocks; x++) {
-            for (int i  = 0; i < nrows_interleaved; i++ ) {
+    لكل (صحيح b = 0; b < nrow; b += nrows_interleaved) {
+        لكل (int64_t x = 0; x < nblocks; x++) {
+            لكل (صحيح i  = 0; i < nrows_interleaved; i++ ) {
                 dst_tmp[i] = src[x + i * nblocks];
             }
-            *dst++ = make_block_q4_0x16(dst_tmp, interleave_block);
+            *dst++ = make_بلوک_q4_0x16(dst_tmp, interleave_بلوک);
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    أرجع 0;
 
-    GGML_UNUSED(data_size);
+    GGML_استفادهنشده(داده_اندازه);
 }
 
-static int repack_q5_K_to_q5_K_8_bl(struct ggml_tensor *       t,
-                                    int                        interleave_block,
-                                    const void * GGML_RESTRICT data,
-                                    size_t                     data_size) {
+ساكن صحيح repack_q5_K_مقصد_q5_K_8_bl(بنية ggml_tensor *       t,
+                                    صحيح                        interleave_بلوک,
+                                    ثابت فراغ * GGML_RESTRICT داده,
+                                    size_t                     داده_اندازه) {
     GGML_ASSERT(t->type == GGML_TYPE_Q5_K);
-    GGML_ASSERT(interleave_block == 4 || interleave_block == 8);
-    constexpr int nrows_interleaved = 8;
+    GGML_ASSERT(interleave_بلوک == 4 || interleave_بلوک == 8);
+    constexpr صحيح nrows_interleaved = 8;
 
-    block_q5_Kx8 *     dst = (block_q5_Kx8 *) t->data;
-    const block_q5_K * src = (const block_q5_K *) data;
-    block_q5_K         dst_tmp[8];
-    int                nrow    = ggml_nrows(t);
-    int                nblocks = t->ne[0] / QK_K;
+    بلوک_q5_Kx8 *     dst = (بلوک_q5_Kx8 *) t->داده;
+    ثابت بلوک_q5_K * src = (ثابت بلوک_q5_K *) داده;
+    بلوک_q5_K         dst_tmp[8];
+    صحيح                nrow    = ggml_nrows(t);
+    صحيح                nblocks = t->ne[0] / QK_K;
 
-    GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q5_K));
+    GGML_ASSERT(داده_اندازه == nrow * nblocks * حجم(بلوک_q5_K));
 
-    if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+    إذا (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
+        أرجع -1;
     }
 
-    for (int b = 0; b < nrow; b += nrows_interleaved) {
-        for (int64_t x = 0; x < nblocks; x++) {
-            for (int i = 0; i < nrows_interleaved; i++) {
+    لكل (صحيح b = 0; b < nrow; b += nrows_interleaved) {
+        لكل (int64_t x = 0; x < nblocks; x++) {
+            لكل (صحيح i = 0; i < nrows_interleaved; i++) {
                 dst_tmp[i] = src[x + i * nblocks];
             }
-            *dst++ = make_block_q5_Kx8(dst_tmp, interleave_block);
+            *dst++ = make_بلوک_q5_Kx8(dst_tmp, interleave_بلوک);
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    أرجع 0;
 }
 
-static int repack_q6_K_to_q6_K_8_bl(struct ggml_tensor * t, int interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
+ساكن صحيح repack_q6_K_مقصد_q6_K_8_bl(بنية ggml_tensor * t, صحيح interleave_بلوک, ثابت فراغ * GGML_RESTRICT داده, size_t داده_اندازه) {
     GGML_ASSERT(t->type == GGML_TYPE_Q6_K);
-    GGML_ASSERT(interleave_block == 4 || interleave_block == 8);
-    constexpr int nrows_interleaved = 8;
+    GGML_ASSERT(interleave_بلوک == 4 || interleave_بلوک == 8);
+    constexpr صحيح nrows_interleaved = 8;
 
-    block_q6_Kx8 * dst = (block_q6_Kx8 *)t->data;
-    const block_q6_K * src = (const block_q6_K *) data;
-    block_q6_K dst_tmp[8];
-    int nrow = ggml_nrows(t);
-    int nblocks = t->ne[0] / QK_K;
+    بلوک_q6_Kx8 * dst = (بلوک_q6_Kx8 *)t->داده;
+    ثابت بلوک_q6_K * src = (ثابت بلوک_q6_K *) داده;
+    بلوک_q6_K dst_tmp[8];
+    صحيح nrow = ggml_nrows(t);
+    صحيح nblocks = t->ne[0] / QK_K;
 
-    GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q6_K));
+    GGML_ASSERT(داده_اندازه == nrow * nblocks * حجم(بلوک_q6_K));
 
-    if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+    إذا (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
+        أرجع -1;
     }
 
-    for (int b = 0; b < nrow; b += nrows_interleaved) {
-        for (int64_t x = 0; x < nblocks; x++) {
-            for (int i = 0; i < nrows_interleaved; i++) {
+    لكل (صحيح b = 0; b < nrow; b += nrows_interleaved) {
+        لكل (int64_t x = 0; x < nblocks; x++) {
+            لكل (صحيح i = 0; i < nrows_interleaved; i++) {
                 dst_tmp[i] = src[x + i * nblocks];
             }
-            *dst++ = make_block_q6_Kx8(dst_tmp, interleave_block);
+            *dst++ = make_بلوک_q6_Kx8(dst_tmp, interleave_بلوک);
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    أرجع 0;
 }
 
-static int repack_q4_0_to_q4_0_8_bl(struct ggml_tensor * t, int interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
+ساكن صحيح repack_q4_0_مقصد_q4_0_8_bl(بنية ggml_tensor * t, صحيح interleave_بلوک, ثابت فراغ * GGML_RESTRICT داده, size_t داده_اندازه) {
     GGML_ASSERT(t->type == GGML_TYPE_Q4_0);
-    GGML_ASSERT(interleave_block == 8);
-    constexpr int nrows_interleaved = 8;
+    GGML_ASSERT(interleave_بلوک == 8);
+    constexpr صحيح nrows_interleaved = 8;
 
-    block_q4_0x8 * dst = (block_q4_0x8*)t->data;
-    const block_q4_0 * src = (const block_q4_0*) data;
-    block_q4_0 dst_tmp[8];
-    int nrow = ggml_nrows(t);
-    int nblocks = t->ne[0] / QK4_0;
+    بلوک_q4_0x8 * dst = (بلوک_q4_0x8*)t->داده;
+    ثابت بلوک_q4_0 * src = (ثابت بلوک_q4_0*) داده;
+    بلوک_q4_0 dst_tmp[8];
+    صحيح nrow = ggml_nrows(t);
+    صحيح nblocks = t->ne[0] / QK4_0;
 
-    GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q4_0));
+    GGML_ASSERT(داده_اندازه == nrow * nblocks * حجم(بلوک_q4_0));
 
-    if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+    إذا (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
+        أرجع -1;
     }
 
-    for (int b = 0; b < nrow; b += nrows_interleaved) {
-        for (int64_t x = 0; x < nblocks; x++) {
-            for (int i  = 0; i < nrows_interleaved; i++ ) {
+    لكل (صحيح b = 0; b < nrow; b += nrows_interleaved) {
+        لكل (int64_t x = 0; x < nblocks; x++) {
+            لكل (صحيح i  = 0; i < nrows_interleaved; i++ ) {
                 dst_tmp[i] = src[x + i * nblocks];
             }
-            *dst++ = make_block_q4_0x8(dst_tmp, interleave_block);
+            *dst++ = make_بلوک_q4_0x8(dst_tmp, interleave_بلوک);
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    أرجع 0;
 
-    GGML_UNUSED(data_size);
+    GGML_استفادهنشده(داده_اندازه);
 }
 
-static int repack_q8_0_to_q8_0_4_bl(struct ggml_tensor *       t,
-                                    int                        interleave_block,
-                                    const void * GGML_RESTRICT data,
-                                    size_t                     data_size) {
+ساكن صحيح repack_q8_0_مقصد_q8_0_4_bl(بنية ggml_tensor *       t,
+                                    صحيح                        interleave_بلوک,
+                                    ثابت فراغ * GGML_RESTRICT داده,
+                                    size_t                     داده_اندازه) {
     GGML_ASSERT(t->type == GGML_TYPE_Q8_0);
-    GGML_ASSERT(interleave_block == 4 || interleave_block == 8);
-    constexpr int nrows_interleaved = 4;
+    GGML_ASSERT(interleave_بلوک == 4 || interleave_بلوک == 8);
+    constexpr صحيح nrows_interleaved = 4;
 
-    block_q8_0x4 *     dst = (block_q8_0x4 *) t->data;
-    const block_q8_0 * src = (const block_q8_0 *) data;
-    block_q8_0         dst_tmp[4];
-    int                nrow    = ggml_nrows(t);
-    int                nblocks = t->ne[0] / QK8_0;
+    بلوک_q8_0x4 *     dst = (بلوک_q8_0x4 *) t->داده;
+    ثابت بلوک_q8_0 * src = (ثابت بلوک_q8_0 *) داده;
+    بلوک_q8_0         dst_tmp[4];
+    صحيح                nrow    = ggml_nrows(t);
+    صحيح                nblocks = t->ne[0] / QK8_0;
 
-    GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q8_0));
+    GGML_ASSERT(داده_اندازه == nrow * nblocks * حجم(بلوک_q8_0));
 
-    if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+    إذا (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
+        أرجع -1;
     }
 
-    for (int b = 0; b < nrow; b += nrows_interleaved) {
-        for (int64_t x = 0; x < nblocks; x++) {
-            for (int i = 0; i < nrows_interleaved; i++) {
+    لكل (صحيح b = 0; b < nrow; b += nrows_interleaved) {
+        لكل (int64_t x = 0; x < nblocks; x++) {
+            لكل (صحيح i = 0; i < nrows_interleaved; i++) {
                 dst_tmp[i] = src[x + i * nblocks];
             }
-            *dst++ = make_block_q8_0x4(dst_tmp, interleave_block);
+            *dst++ = make_بلوک_q8_0x4(dst_tmp, interleave_بلوک);
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    أرجع 0;
 }
 
-static int repack_q1_0_to_q1_0_4_bl(struct ggml_tensor *       t,
-                                    int                        interleave_block,
-                                    const void * GGML_RESTRICT data,
-                                    size_t                     data_size) {
+ساكن صحيح repack_q1_0_مقصد_q1_0_4_bl(بنية ggml_tensor *       t,
+                                    صحيح                        interleave_بلوک,
+                                    ثابت فراغ * GGML_RESTRICT داده,
+                                    size_t                     داده_اندازه) {
     GGML_ASSERT(t->type == GGML_TYPE_Q1_0);
-    GGML_ASSERT(interleave_block == 4 || interleave_block == 8);
-    constexpr int nrows_interleaved = 4;
+    GGML_ASSERT(interleave_بلوک == 4 || interleave_بلوک == 8);
+    constexpr صحيح nrows_interleaved = 4;
 
-    block_q1_0x4 *     dst = (block_q1_0x4 *) t->data;
-    const block_q1_0 * src = (const block_q1_0 *) data;
-    block_q1_0         dst_tmp[4];
-    int                nrow    = ggml_nrows(t);
-    int                nblocks = t->ne[0] / QK1_0;
+    بلوک_q1_0x4 *     dst = (بلوک_q1_0x4 *) t->داده;
+    ثابت بلوک_q1_0 * src = (ثابت بلوک_q1_0 *) داده;
+    بلوک_q1_0         dst_tmp[4];
+    صحيح                nrow    = ggml_nrows(t);
+    صحيح                nblocks = t->ne[0] / QK1_0;
 
-    GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q1_0));
+    GGML_ASSERT(داده_اندازه == nrow * nblocks * حجم(بلوک_q1_0));
 
-    if (t->ne[1] % nrows_interleaved != 0) {
-        return -1;
+    إذا (t->ne[1] % nrows_interleaved != 0) {
+        أرجع -1;
     }
 
-    for (int b = 0; b < nrow; b += nrows_interleaved) {
-        for (int64_t x = 0; x < nblocks; x++) {
-            for (int i = 0; i < nrows_interleaved; i++) {
+    لكل (صحيح b = 0; b < nrow; b += nrows_interleaved) {
+        لكل (int64_t x = 0; x < nblocks; x++) {
+            لكل (صحيح i = 0; i < nrows_interleaved; i++) {
                 dst_tmp[i] = src[x + i * nblocks];
             }
-            *dst++ = make_block_q1_0x4(dst_tmp, interleave_block);
+            *dst++ = make_بلوک_q1_0x4(dst_tmp, interleave_بلوک);
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    أرجع 0;
 }
 
-static block_q8_0x16 make_block_q8_0x16(block_q8_0 * in, unsigned int blck_size_interleave) {
-    block_q8_0x16 out;
+ساكن بلوک_q8_0x16 make_بلوک_q8_0x16(بلوک_q8_0 * درون, بیعلامت صحيح blck_اندازه_interleave) {
+    بلوک_q8_0x16 بیرون;
 
-    for (int i = 0; i < 16; i++) {
-        out.d[i] = in[i].d;
+    لكل (صحيح i = 0; i < 16; i++) {
+        بیرون.d[i] = درون[i].d;
     }
 
-    const int end = QK8_0 * 16 / blck_size_interleave;
+    ثابت صحيح end = QK8_0 * 16 / blck_اندازه_interleave;
 
-    if (blck_size_interleave == 1) {
-        for (int i = 0; i < end; ++i) {
-            int src_id     = i % 16;
-            int src_offset = i / 16;
-            int dst_offset = i;
-            out.qs[dst_offset] = in[src_id].qs[src_offset];
+    إذا (blck_اندازه_interleave == 1) {
+        لكل (صحيح i = 0; i < end; ++i) {
+            صحيح src_id     = i % 16;
+            صحيح src_جابه_جایی = i / 16;
+            صحيح dst_جابه_جایی = i;
+            بیرون.qs[dst_جابه_جایی] = درون[src_id].qs[src_جابه_جایی];
         }
-    } else {
-        GGML_ASSERT(false);
+    } وإلا {
+        GGML_ASSERT(خطأ);
     }
 
-    return out;
+    أرجع بیرون;
 }
 
-static int repack_q8_0_to_q8_0_16_bl(struct ggml_tensor *       t,
-                                    int                        interleave_block,
-                                    const void * GGML_RESTRICT data,
-                                    size_t                     data_size) {
+ساكن صحيح repack_q8_0_مقصد_q8_0_16_bl(بنية ggml_tensor *       t,
+                                    صحيح                        interleave_بلوک,
+                                    ثابت فراغ * GGML_RESTRICT داده,
+                                    size_t                     داده_اندازه) {
     GGML_ASSERT(t->type == GGML_TYPE_Q8_0);
-    constexpr int nrows_interleaved = 16;
+    constexpr صحيح nrows_interleaved = 16;
 
-    block_q8_0x16 *     dst = (block_q8_0x16 *) t->data;
-    const block_q8_0 * src = (const block_q8_0 *) data;
-    block_q8_0         dst_tmp[16];
-    int                nrow    = ggml_nrows(t);
-    int                nblocks = t->ne[0] / QK8_0;
+    بلوک_q8_0x16 *     dst = (بلوک_q8_0x16 *) t->داده;
+    ثابت بلوک_q8_0 * src = (ثابت بلوک_q8_0 *) داده;
+    بلوک_q8_0         dst_tmp[16];
+    صحيح                nrow    = ggml_nrows(t);
+    صحيح                nblocks = t->ne[0] / QK8_0;
 
-    GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q8_0));
+    GGML_ASSERT(داده_اندازه == nrow * nblocks * حجم(بلوک_q8_0));
 
-    if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+    إذا (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
+        أرجع -1;
     }
 
-    for (int b = 0; b < nrow; b += nrows_interleaved) {
-        for (int64_t x = 0; x < nblocks; x++) {
-            for (int i = 0; i < nrows_interleaved; i++) {
+    لكل (صحيح b = 0; b < nrow; b += nrows_interleaved) {
+        لكل (int64_t x = 0; x < nblocks; x++) {
+            لكل (صحيح i = 0; i < nrows_interleaved; i++) {
                 dst_tmp[i] = src[x + i * nblocks];
             }
-            *dst++ = make_block_q8_0x16(dst_tmp, interleave_block);
+            *dst++ = make_بلوک_q8_0x16(dst_tmp, interleave_بلوک);
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    أرجع 0;
 }
 
-static block_iq4_nlx4 make_block_iq4_nlx4(block_iq4_nl * in, unsigned int blck_size_interleave) {
-    block_iq4_nlx4 out;
+ساكن بلوک_iq4_nlx4 make_بلوک_iq4_nlx4(بلوک_iq4_nl * درون, بیعلامت صحيح blck_اندازه_interleave) {
+    بلوک_iq4_nlx4 بیرون;
 
-    for (int i = 0; i < 4; i++) {
-        out.d[i] = in[i].d;
+    لكل (صحيح i = 0; i < 4; i++) {
+        بیرون.d[i] = درون[i].d;
     }
 
-    const int end = QK4_NL * 2 / blck_size_interleave;
+    ثابت صحيح end = QK4_NL * 2 / blck_اندازه_interleave;
 
     // TODO: this branch seems wrong
     //if (blck_size_interleave == 8) {
@@ -3956,338 +3956,338 @@ static block_iq4_nlx4 make_block_iq4_nlx4(block_iq4_nl * in, unsigned int blck_s
     //        memcpy(&out.qs[dst_offset], &in[src_id].qs[src_offset], sizeof(uint64_t));
     //    }
     //} else
-    if (blck_size_interleave == 4) {
-        for (int i = 0; i < end; ++i) {
-            int src_id = i % 4;
-            int src_offset = (i / 4) * blck_size_interleave;
-            int dst_offset = i * blck_size_interleave;
+    إذا (blck_اندازه_interleave == 4) {
+        لكل (صحيح i = 0; i < end; ++i) {
+            صحيح src_id = i % 4;
+            صحيح src_جابه_جایی = (i / 4) * blck_اندازه_interleave;
+            صحيح dst_جابه_جایی = i * blck_اندازه_interleave;
 
-            memcpy(&out.qs[dst_offset], &in[src_id].qs[src_offset], sizeof(uint32_t));
+            کپی_حافظه(&بیرون.qs[dst_جابه_جایی], &درون[src_id].qs[src_جابه_جایی], حجم(uint32_t));
         }
-    } else {
-        GGML_ASSERT(false);
+    } وإلا {
+        GGML_ASSERT(خطأ);
     }
 
-    return out;
+    أرجع بیرون;
 }
 
-static int repack_iq4_nl_to_iq4_nl_4_bl(struct ggml_tensor * t, int interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
+ساكن صحيح repack_iq4_nl_مقصد_iq4_nl_4_bl(بنية ggml_tensor * t, صحيح interleave_بلوک, ثابت فراغ * GGML_RESTRICT داده, size_t داده_اندازه) {
     GGML_ASSERT(t->type == GGML_TYPE_IQ4_NL);
-    GGML_ASSERT(interleave_block == 4);
+    GGML_ASSERT(interleave_بلوک == 4);
 
-    const block_iq4_nl   * src = (const block_iq4_nl   *)data;
-          block_iq4_nlx4 * dst = (      block_iq4_nlx4 *)t->data;
+    ثابت بلوک_iq4_nl   * src = (ثابت بلوک_iq4_nl   *)داده;
+          بلوک_iq4_nlx4 * dst = (      بلوک_iq4_nlx4 *)t->داده;
 
-    block_iq4_nl dst_tmp[4];
+    بلوک_iq4_nl dst_tmp[4];
 
-    int nrow = ggml_nrows(t);
-    int nrows_interleaved = 4;
-    int nblocks = t->ne[0] / QK4_NL;
+    صحيح nrow = ggml_nrows(t);
+    صحيح nrows_interleaved = 4;
+    صحيح nblocks = t->ne[0] / QK4_NL;
 
-    GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_iq4_nl));
+    GGML_ASSERT(داده_اندازه == nrow * nblocks * حجم(بلوک_iq4_nl));
 
-    if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+    إذا (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
+        أرجع -1;
     }
 
-    for (int b = 0; b < nrow; b += nrows_interleaved) {
-        for (int64_t x = 0; x < nblocks; x++) {
-            for (int i = 0; i < nrows_interleaved; i++) {
+    لكل (صحيح b = 0; b < nrow; b += nrows_interleaved) {
+        لكل (int64_t x = 0; x < nblocks; x++) {
+            لكل (صحيح i = 0; i < nrows_interleaved; i++) {
                 dst_tmp[i] = src[x + i * nblocks];
             }
-            *dst++ = make_block_iq4_nlx4(dst_tmp, interleave_block);
+            *dst++ = make_بلوک_iq4_nlx4(dst_tmp, interleave_بلوک);
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    أرجع 0;
 
-    GGML_UNUSED(data_size);
+    GGML_استفادهنشده(داده_اندازه);
 }
 
-static block_iq4_nlx8 make_block_iq4_nlx8(block_iq4_nl * in, unsigned int blck_size_interleave) {
-    block_iq4_nlx8 out;
+ساكن بلوک_iq4_nlx8 make_بلوک_iq4_nlx8(بلوک_iq4_nl * درون, بیعلامت صحيح blck_اندازه_interleave) {
+    بلوک_iq4_nlx8 بیرون;
 
-    for (int i = 0; i < 8; i++) {
-        out.d[i] = in[i].d;
+    لكل (صحيح i = 0; i < 8; i++) {
+        بیرون.d[i] = درون[i].d;
     }
 
-    const int end = QK4_NL * 4 / blck_size_interleave;
+    ثابت صحيح end = QK4_NL * 4 / blck_اندازه_interleave;
 
-    if (blck_size_interleave == 8) {
-        for (int i = 0; i < end; ++i) {
-            int src_id = i % 8;
-            int src_offset = (i / 8) * blck_size_interleave;
-            int dst_offset = i * blck_size_interleave;
+    إذا (blck_اندازه_interleave == 8) {
+        لكل (صحيح i = 0; i < end; ++i) {
+            صحيح src_id = i % 8;
+            صحيح src_جابه_جایی = (i / 8) * blck_اندازه_interleave;
+            صحيح dst_جابه_جایی = i * blck_اندازه_interleave;
 
-            memcpy(&out.qs[dst_offset], &in[src_id].qs[src_offset], sizeof(uint64_t));
+            کپی_حافظه(&بیرون.qs[dst_جابه_جایی], &درون[src_id].qs[src_جابه_جایی], حجم(uint64_t));
         }
-    } else {
-        GGML_ASSERT(false);
+    } وإلا {
+        GGML_ASSERT(خطأ);
     }
 
-    return out;
+    أرجع بیرون;
 }
 
-static int repack_iq4_nl_to_iq4_nl_8_bl(struct ggml_tensor * t, int interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
+ساكن صحيح repack_iq4_nl_مقصد_iq4_nl_8_bl(بنية ggml_tensor * t, صحيح interleave_بلوک, ثابت فراغ * GGML_RESTRICT داده, size_t داده_اندازه) {
     GGML_ASSERT(t->type == GGML_TYPE_IQ4_NL);
-    GGML_ASSERT(interleave_block == 8);
+    GGML_ASSERT(interleave_بلوک == 8);
 
-    const block_iq4_nl   * src = (const block_iq4_nl   *)data;
-          block_iq4_nlx8 * dst = (      block_iq4_nlx8 *)t->data;
+    ثابت بلوک_iq4_nl   * src = (ثابت بلوک_iq4_nl   *)داده;
+          بلوک_iq4_nlx8 * dst = (      بلوک_iq4_nlx8 *)t->داده;
 
-    block_iq4_nl dst_tmp[8];
+    بلوک_iq4_nl dst_tmp[8];
 
-    int nrow = ggml_nrows(t);
-    int nrows_interleaved = 8;
-    int nblocks = t->ne[0] / QK4_NL;
+    صحيح nrow = ggml_nrows(t);
+    صحيح nrows_interleaved = 8;
+    صحيح nblocks = t->ne[0] / QK4_NL;
 
-    GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_iq4_nl));
+    GGML_ASSERT(داده_اندازه == nrow * nblocks * حجم(بلوک_iq4_nl));
 
-    if (t->ne[1] % nrows_interleaved != 0) {
-        return -1;
+    إذا (t->ne[1] % nrows_interleaved != 0) {
+        أرجع -1;
     }
 
-    for (int b = 0; b < nrow; b += nrows_interleaved) {
-        for (int64_t x = 0; x < nblocks; x++) {
-            for (int i = 0; i < nrows_interleaved; i++) {
+    لكل (صحيح b = 0; b < nrow; b += nrows_interleaved) {
+        لكل (int64_t x = 0; x < nblocks; x++) {
+            لكل (صحيح i = 0; i < nrows_interleaved; i++) {
                 dst_tmp[i] = src[x + i * nblocks];
             }
-            *dst++ = make_block_iq4_nlx8(dst_tmp, interleave_block);
+            *dst++ = make_بلوک_iq4_nlx8(dst_tmp, interleave_بلوک);
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    أرجع 0;
 
-    GGML_UNUSED(data_size);
+    GGML_استفادهنشده(داده_اندازه);
 }
 
-static block_iq4_nlx16 make_block_iq4_nlx16(block_iq4_nl * in, unsigned int blck_size_interleave) {
-    block_iq4_nlx16 out;
+ساكن بلوک_iq4_nlx16 make_بلوک_iq4_nlx16(بلوک_iq4_nl * درون, بیعلامت صحيح blck_اندازه_interleave) {
+    بلوک_iq4_nlx16 بیرون;
 
-    for (int i = 0; i < 16; i++) {
-        out.d[i] = in[i].d;
+    لكل (صحيح i = 0; i < 16; i++) {
+        بیرون.d[i] = درون[i].d;
     }
 
-    const int end = QK4_NL * 8 / blck_size_interleave;
+    ثابت صحيح end = QK4_NL * 8 / blck_اندازه_interleave;
 
-    if (blck_size_interleave == 1) {
-        for (int i = 0; i < end; ++i) {
-            int src_id = i % 16;
-            int src_offset = i / 16;
-            int dst_offset = i;
+    إذا (blck_اندازه_interleave == 1) {
+        لكل (صحيح i = 0; i < end; ++i) {
+            صحيح src_id = i % 16;
+            صحيح src_جابه_جایی = i / 16;
+            صحيح dst_جابه_جایی = i;
 
-            out.qs[dst_offset] = in[src_id].qs[src_offset];
+            بیرون.qs[dst_جابه_جایی] = درون[src_id].qs[src_جابه_جایی];
         }
-    } else {
-        GGML_ASSERT(false);
+    } وإلا {
+        GGML_ASSERT(خطأ);
     }
 
-    return out;
+    أرجع بیرون;
 }
 
-static int repack_iq4_nl_to_iq4_nl_16_bl(struct ggml_tensor * t, int interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
+ساكن صحيح repack_iq4_nl_مقصد_iq4_nl_16_bl(بنية ggml_tensor * t, صحيح interleave_بلوک, ثابت فراغ * GGML_RESTRICT داده, size_t داده_اندازه) {
     GGML_ASSERT(t->type == GGML_TYPE_IQ4_NL);
-    GGML_ASSERT(interleave_block == 1);
+    GGML_ASSERT(interleave_بلوک == 1);
 
-    const block_iq4_nl    * src = (const block_iq4_nl   *)data;
-          block_iq4_nlx16 * dst = (      block_iq4_nlx16 *)t->data;
+    ثابت بلوک_iq4_nl    * src = (ثابت بلوک_iq4_nl   *)داده;
+          بلوک_iq4_nlx16 * dst = (      بلوک_iq4_nlx16 *)t->داده;
 
-    block_iq4_nl dst_tmp[16];
+    بلوک_iq4_nl dst_tmp[16];
 
-    int nrow = ggml_nrows(t);
-    int nrows_interleaved = 16;
-    int nblocks = t->ne[0] / QK4_NL;
+    صحيح nrow = ggml_nrows(t);
+    صحيح nrows_interleaved = 16;
+    صحيح nblocks = t->ne[0] / QK4_NL;
 
-    GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_iq4_nl));
+    GGML_ASSERT(داده_اندازه == nrow * nblocks * حجم(بلوک_iq4_nl));
 
-    if (t->ne[1] % nrows_interleaved != 0) {
-        return -1;
+    إذا (t->ne[1] % nrows_interleaved != 0) {
+        أرجع -1;
     }
 
-    for (int b = 0; b < nrow; b += nrows_interleaved) {
-        for (int64_t x = 0; x < nblocks; x++) {
-            for (int i = 0; i < nrows_interleaved; i++) {
+    لكل (صحيح b = 0; b < nrow; b += nrows_interleaved) {
+        لكل (int64_t x = 0; x < nblocks; x++) {
+            لكل (صحيح i = 0; i < nrows_interleaved; i++) {
                 dst_tmp[i] = src[x + i * nblocks];
             }
-            *dst++ = make_block_iq4_nlx16(dst_tmp, interleave_block);
+            *dst++ = make_بلوک_iq4_nlx16(dst_tmp, interleave_بلوک);
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    أرجع 0;
 
-    GGML_UNUSED(data_size);
+    GGML_استفادهنشده(داده_اندازه);
 }
 
-static block_mxfp4x4 make_block_mxfp4x4(block_mxfp4 * in, unsigned int blck_size_interleave) {
-    block_mxfp4x4 out;
+ساكن بلوک_mxfp4x4 make_بلوک_mxfp4x4(بلوک_mxfp4 * درون, بیعلامت صحيح blck_اندازه_interleave) {
+    بلوک_mxfp4x4 بیرون;
 
-    for (int i = 0; i < 4; i++) {
-        out.e[i] = in[i].e;
+    لكل (صحيح i = 0; i < 4; i++) {
+        بیرون.e[i] = درون[i].e;
     }
 
-    const int end = QK_MXFP4 * 2 / blck_size_interleave;
+    ثابت صحيح end = QK_MXFP4 * 2 / blck_اندازه_interleave;
 
-    if (blck_size_interleave == 4) {
-        for (int i = 0; i < end; ++i) {
-            int src_id = i % 4;
-            int src_offset = (i / 4) * blck_size_interleave;
-            int dst_offset = i * blck_size_interleave;
+    إذا (blck_اندازه_interleave == 4) {
+        لكل (صحيح i = 0; i < end; ++i) {
+            صحيح src_id = i % 4;
+            صحيح src_جابه_جایی = (i / 4) * blck_اندازه_interleave;
+            صحيح dst_جابه_جایی = i * blck_اندازه_interleave;
 
-            memcpy(&out.qs[dst_offset], &in[src_id].qs[src_offset], sizeof(uint32_t));
+            کپی_حافظه(&بیرون.qs[dst_جابه_جایی], &درون[src_id].qs[src_جابه_جایی], حجم(uint32_t));
         }
-    } else {
-        GGML_ASSERT(false);
+    } وإلا {
+        GGML_ASSERT(خطأ);
     }
 
-    return out;
+    أرجع بیرون;
 }
 
-static int repack_mxfp4_to_mxfp4_4_bl(struct ggml_tensor * t, int interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
+ساكن صحيح repack_mxfp4_مقصد_mxfp4_4_bl(بنية ggml_tensor * t, صحيح interleave_بلوک, ثابت فراغ * GGML_RESTRICT داده, size_t داده_اندازه) {
     GGML_ASSERT(t->type == GGML_TYPE_MXFP4);
-    GGML_ASSERT(interleave_block == 4);
+    GGML_ASSERT(interleave_بلوک == 4);
 
-    const block_mxfp4   * src = (const block_mxfp4   *)data;
-          block_mxfp4x4 * dst = (      block_mxfp4x4 *)t->data;
+    ثابت بلوک_mxfp4   * src = (ثابت بلوک_mxfp4   *)داده;
+          بلوک_mxfp4x4 * dst = (      بلوک_mxfp4x4 *)t->داده;
 
-    block_mxfp4 dst_tmp[4];
+    بلوک_mxfp4 dst_tmp[4];
 
-    int nrow = ggml_nrows(t);
-    int nrows_interleaved = 4;
-    int nblocks = t->ne[0] / QK_MXFP4;
+    صحيح nrow = ggml_nrows(t);
+    صحيح nrows_interleaved = 4;
+    صحيح nblocks = t->ne[0] / QK_MXFP4;
 
-    GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_mxfp4));
+    GGML_ASSERT(داده_اندازه == nrow * nblocks * حجم(بلوک_mxfp4));
 
-    if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+    إذا (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
+        أرجع -1;
     }
 
-    for (int b = 0; b < nrow; b += nrows_interleaved) {
-        for (int64_t x = 0; x < nblocks; x++) {
-            for (int i = 0; i < nrows_interleaved; i++) {
+    لكل (صحيح b = 0; b < nrow; b += nrows_interleaved) {
+        لكل (int64_t x = 0; x < nblocks; x++) {
+            لكل (صحيح i = 0; i < nrows_interleaved; i++) {
                 dst_tmp[i] = src[x + i * nblocks];
             }
-            *dst++ = make_block_mxfp4x4(dst_tmp, interleave_block);
+            *dst++ = make_بلوک_mxfp4x4(dst_tmp, interleave_بلوک);
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    أرجع 0;
 
-    GGML_UNUSED(data_size);
+    GGML_استفادهنشده(داده_اندازه);
 }
 
-static block_mxfp4x8 make_block_mxfp4x8(block_mxfp4 * in, unsigned int blck_size_interleave) {
-    block_mxfp4x8 out;
+ساكن بلوک_mxfp4x8 make_بلوک_mxfp4x8(بلوک_mxfp4 * درون, بیعلامت صحيح blck_اندازه_interleave) {
+    بلوک_mxfp4x8 بیرون;
 
-    for (int i = 0; i < 8; i++) {
-        out.e[i] = in[i].e;
+    لكل (صحيح i = 0; i < 8; i++) {
+        بیرون.e[i] = درون[i].e;
     }
 
-    const int end = QK_MXFP4 * 4 / blck_size_interleave;
+    ثابت صحيح end = QK_MXFP4 * 4 / blck_اندازه_interleave;
 
-    if (blck_size_interleave == 8) {
-        for (int i = 0; i < end; ++i) {
-            int src_id = i % 8;
-            int src_offset = (i / 8) * blck_size_interleave;
-            int dst_offset = i * blck_size_interleave;
+    إذا (blck_اندازه_interleave == 8) {
+        لكل (صحيح i = 0; i < end; ++i) {
+            صحيح src_id = i % 8;
+            صحيح src_جابه_جایی = (i / 8) * blck_اندازه_interleave;
+            صحيح dst_جابه_جایی = i * blck_اندازه_interleave;
 
-            memcpy(&out.qs[dst_offset], &in[src_id].qs[src_offset], sizeof(uint64_t));
+            کپی_حافظه(&بیرون.qs[dst_جابه_جایی], &درون[src_id].qs[src_جابه_جایی], حجم(uint64_t));
         }
-    } else {
-        GGML_ASSERT(false);
+    } وإلا {
+        GGML_ASSERT(خطأ);
     }
 
-    return out;
+    أرجع بیرون;
 }
 
-static int repack_mxfp4_to_mxfp4_8_bl(struct ggml_tensor * t, int interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
+ساكن صحيح repack_mxfp4_مقصد_mxfp4_8_bl(بنية ggml_tensor * t, صحيح interleave_بلوک, ثابت فراغ * GGML_RESTRICT داده, size_t داده_اندازه) {
     GGML_ASSERT(t->type == GGML_TYPE_MXFP4);
-    GGML_ASSERT(interleave_block == 8);
+    GGML_ASSERT(interleave_بلوک == 8);
 
-    const block_mxfp4   * src = (const block_mxfp4   *)data;
-          block_mxfp4x8 * dst = (      block_mxfp4x8 *)t->data;
+    ثابت بلوک_mxfp4   * src = (ثابت بلوک_mxfp4   *)داده;
+          بلوک_mxfp4x8 * dst = (      بلوک_mxfp4x8 *)t->داده;
 
-    block_mxfp4 dst_tmp[8];
+    بلوک_mxfp4 dst_tmp[8];
 
-    int nrow = ggml_nrows(t);
-    int nrows_interleaved = 8;
-    int nblocks = t->ne[0] / QK_MXFP4;
+    صحيح nrow = ggml_nrows(t);
+    صحيح nrows_interleaved = 8;
+    صحيح nblocks = t->ne[0] / QK_MXFP4;
 
-    GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_mxfp4));
+    GGML_ASSERT(داده_اندازه == nrow * nblocks * حجم(بلوک_mxfp4));
 
-    if (t->ne[1] % nrows_interleaved != 0) {
-        return -1;
+    إذا (t->ne[1] % nrows_interleaved != 0) {
+        أرجع -1;
     }
 
-    for (int b = 0; b < nrow; b += nrows_interleaved) {
-        for (int64_t x = 0; x < nblocks; x++) {
-            for (int i = 0; i < nrows_interleaved; i++) {
+    لكل (صحيح b = 0; b < nrow; b += nrows_interleaved) {
+        لكل (int64_t x = 0; x < nblocks; x++) {
+            لكل (صحيح i = 0; i < nrows_interleaved; i++) {
                 dst_tmp[i] = src[x + i * nblocks];
             }
-            *dst++ = make_block_mxfp4x8(dst_tmp, interleave_block);
+            *dst++ = make_بلوک_mxfp4x8(dst_tmp, interleave_بلوک);
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    أرجع 0;
 
-    GGML_UNUSED(data_size);
+    GGML_استفادهنشده(داده_اندازه);
 }
 
-namespace ggml::cpu::repack {
+نطاق ggml::cpu::repack {
 // repack
-template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS>
-int repack(struct ggml_tensor *, const void *, size_t);
+قالب <نام_نوع BLOC_TYPE, int64_t INTER_اندازه, int64_t NB_تعداد_ستون>
+صحيح repack(بنية ggml_tensor *, ثابت فراغ *, size_t);
 
 // TODO: generalise.
-template <> int repack<block_q1_0, 4, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q1_0_to_q1_0_4_bl(t, 4, data, data_size);
+قالب <> صحيح repack<بلوک_q1_0, 4, 4>(بنية ggml_tensor * t, ثابت فراغ * داده, size_t داده_اندازه) {
+    أرجع repack_q1_0_مقصد_q1_0_4_bl(t, 4, داده, داده_اندازه);
 }
 
-template <> int repack<block_q1_0, 8, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q1_0_to_q1_0_4_bl(t, 8, data, data_size);
+قالب <> صحيح repack<بلوک_q1_0, 8, 4>(بنية ggml_tensor * t, ثابت فراغ * داده, size_t داده_اندازه) {
+    أرجع repack_q1_0_مقصد_q1_0_4_bl(t, 8, داده, داده_اندازه);
 }
 
-template <> int repack<block_q4_0, 4, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q4_0_to_q4_0_4_bl(t, 4, data, data_size);
+قالب <> صحيح repack<بلوک_q4_0, 4, 4>(بنية ggml_tensor * t, ثابت فراغ * داده, size_t داده_اندازه) {
+    أرجع repack_q4_0_مقصد_q4_0_4_bl(t, 4, داده, داده_اندازه);
 }
 
-template <> int repack<block_q4_0, 8, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q4_0_to_q4_0_4_bl(t, 8, data, data_size);
+قالب <> صحيح repack<بلوک_q4_0, 8, 4>(بنية ggml_tensor * t, ثابت فراغ * داده, size_t داده_اندازه) {
+    أرجع repack_q4_0_مقصد_q4_0_4_bl(t, 8, داده, داده_اندازه);
 }
 
-template <> int repack<block_q4_0, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q4_0_to_q4_0_8_bl(t, 8, data, data_size);
+قالب <> صحيح repack<بلوک_q4_0, 8, 8>(بنية ggml_tensor * t, ثابت فراغ * داده, size_t داده_اندازه) {
+    أرجع repack_q4_0_مقصد_q4_0_8_bl(t, 8, داده, داده_اندازه);
 }
 
-template <> int repack<block_q4_K, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q4_K_to_q4_K_8_bl(t, 8, data, data_size);
+قالب <> صحيح repack<بلوک_q4_K, 8, 8>(بنية ggml_tensor * t, ثابت فراغ * داده, size_t داده_اندازه) {
+    أرجع repack_q4_K_مقصد_q4_K_8_bl(t, 8, داده, داده_اندازه);
 }
 
-template <> int repack<block_q4_K, 4, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q4_K_to_q4_K_8_bl(t, 4, data, data_size);
+قالب <> صحيح repack<بلوک_q4_K, 4, 8>(بنية ggml_tensor * t, ثابت فراغ * داده, size_t داده_اندازه) {
+    أرجع repack_q4_K_مقصد_q4_K_8_bl(t, 4, داده, داده_اندازه);
 }
 
-template <> int repack<block_q2_K, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q2_K_to_q2_K_8_bl(t, 8, data, data_size);
+قالب <> صحيح repack<بلوک_q2_K, 8, 8>(بنية ggml_tensor * t, ثابت فراغ * داده, size_t داده_اندازه) {
+    أرجع repack_q2_K_مقصد_q2_K_8_bl(t, 8, داده, داده_اندازه);
 }
 
-template <> int repack<block_q5_K, 4, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q5_K_to_q5_K_8_bl(t, 4, data, data_size);
+قالب <> صحيح repack<بلوک_q5_K, 4, 8>(بنية ggml_tensor * t, ثابت فراغ * داده, size_t داده_اندازه) {
+    أرجع repack_q5_K_مقصد_q5_K_8_bl(t, 4, داده, داده_اندازه);
 }
 
-template <> int repack<block_q5_K, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q5_K_to_q5_K_8_bl(t, 8, data, data_size);
+قالب <> صحيح repack<بلوک_q5_K, 8, 8>(بنية ggml_tensor * t, ثابت فراغ * داده, size_t داده_اندازه) {
+    أرجع repack_q5_K_مقصد_q5_K_8_bl(t, 8, داده, داده_اندازه);
 }
 
-template <> int repack<block_q6_K, 4, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q6_K_to_q6_K_8_bl(t, 4, data, data_size);
+قالب <> صحيح repack<بلوک_q6_K, 4, 8>(بنية ggml_tensor * t, ثابت فراغ * داده, size_t داده_اندازه) {
+    أرجع repack_q6_K_مقصد_q6_K_8_bl(t, 4, داده, داده_اندازه);
 }
 
-template <> int repack<block_q6_K, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q6_K_to_q6_K_8_bl(t, 8, data, data_size);
+قالب <> صحيح repack<بلوک_q6_K, 8, 8>(بنية ggml_tensor * t, ثابت فراغ * داده, size_t داده_اندازه) {
+    أرجع repack_q6_K_مقصد_q6_K_8_bl(t, 8, داده, داده_اندازه);
 }
 
-template <> int repack<block_iq4_nl, 4, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_iq4_nl_to_iq4_nl_4_bl(t, 4, data, data_size);
+قالب <> صحيح repack<بلوک_iq4_nl, 4, 4>(بنية ggml_tensor * t, ثابت فراغ * داده, size_t داده_اندازه) {
+    أرجع repack_iq4_nl_مقصد_iq4_nl_4_bl(t, 4, داده, داده_اندازه);
 }
 
 // TODO: needs to be revisited
@@ -4295,367 +4295,367 @@ template <> int repack<block_iq4_nl, 4, 4>(struct ggml_tensor * t, const void * 
 //    return repack_iq4_nl_to_iq4_nl_4_bl(t, 8, data, data_size);
 //}
 
-template <> int repack<block_iq4_nl, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_iq4_nl_to_iq4_nl_8_bl(t, 8, data, data_size);
+قالب <> صحيح repack<بلوک_iq4_nl, 8, 8>(بنية ggml_tensor * t, ثابت فراغ * داده, size_t داده_اندازه) {
+    أرجع repack_iq4_nl_مقصد_iq4_nl_8_bl(t, 8, داده, داده_اندازه);
 }
 
-template <> int repack<block_mxfp4, 4, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_mxfp4_to_mxfp4_4_bl(t, 4, data, data_size);
+قالب <> صحيح repack<بلوک_mxfp4, 4, 4>(بنية ggml_tensor * t, ثابت فراغ * داده, size_t داده_اندازه) {
+    أرجع repack_mxfp4_مقصد_mxfp4_4_bl(t, 4, داده, داده_اندازه);
 }
 
-template <> int repack<block_mxfp4, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_mxfp4_to_mxfp4_8_bl(t, 8, data, data_size);
+قالب <> صحيح repack<بلوک_mxfp4, 8, 8>(بنية ggml_tensor * t, ثابت فراغ * داده, size_t داده_اندازه) {
+    أرجع repack_mxfp4_مقصد_mxfp4_8_bl(t, 8, داده, داده_اندازه);
 }
 
-template <> int repack<block_q8_0, 4, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q8_0_to_q8_0_4_bl(t, 4, data, data_size);
+قالب <> صحيح repack<بلوک_q8_0, 4, 4>(بنية ggml_tensor * t, ثابت فراغ * داده, size_t داده_اندازه) {
+    أرجع repack_q8_0_مقصد_q8_0_4_bl(t, 4, داده, داده_اندازه);
 }
 
-template <> int repack<block_q8_0, 8, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q8_0_to_q8_0_4_bl(t, 8, data, data_size);
+قالب <> صحيح repack<بلوک_q8_0, 8, 4>(بنية ggml_tensor * t, ثابت فراغ * داده, size_t داده_اندازه) {
+    أرجع repack_q8_0_مقصد_q8_0_4_bl(t, 8, داده, داده_اندازه);
 }
 
-#if defined __riscv_zvfh
-template <> int repack<block_q4_0, 1, 16>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q4_0_to_q4_0_16_bl(t, 1, data, data_size);
+#إذا defined __riscv_zvfh
+قالب <> صحيح repack<بلوک_q4_0, 1, 16>(بنية ggml_tensor * t, ثابت فراغ * داده, size_t داده_اندازه) {
+    أرجع repack_q4_0_مقصد_q4_0_16_bl(t, 1, داده, داده_اندازه);
 }
 
-template <> int repack<block_q4_K, 1, 16>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q4_K_to_q4_K_16_bl(t, 1, data, data_size);
+قالب <> صحيح repack<بلوک_q4_K, 1, 16>(بنية ggml_tensor * t, ثابت فراغ * داده, size_t داده_اندازه) {
+    أرجع repack_q4_K_مقصد_q4_K_16_bl(t, 1, داده, داده_اندازه);
 }
 
-template <> int repack<block_iq4_nl, 1, 16>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_iq4_nl_to_iq4_nl_16_bl(t, 1, data, data_size);
+قالب <> صحيح repack<بلوک_iq4_nl, 1, 16>(بنية ggml_tensor * t, ثابت فراغ * داده, size_t داده_اندازه) {
+    أرجع repack_iq4_nl_مقصد_iq4_nl_16_bl(t, 1, داده, داده_اندازه);
 }
 
-template <> int repack<block_q8_0, 1, 16>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q8_0_to_q8_0_16_bl(t, 1, data, data_size);
+قالب <> صحيح repack<بلوک_q8_0, 1, 16>(بنية ggml_tensor * t, ثابت فراغ * داده, size_t داده_اندازه) {
+    أرجع repack_q8_0_مقصد_q8_0_16_bl(t, 1, داده, داده_اندازه);
 }
 
-template <> int repack<block_q2_K, 1, 16>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q2_K_to_q2_K_16_bl(t, 1, data, data_size);
+قالب <> صحيح repack<بلوک_q2_K, 1, 16>(بنية ggml_tensor * t, ثابت فراغ * داده, size_t داده_اندازه) {
+    أرجع repack_q2_K_مقصد_q2_K_16_bl(t, 1, داده, داده_اندازه);
 }
-#endif
+#پایان_اگر
 
 // gemv
-template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PARAM_TYPE>
-void gemv(int, float *, size_t, const void *, const void *, int, int);
+قالب <نام_نوع BLOC_TYPE, int64_t INTER_اندازه, int64_t NB_تعداد_ستون, ggml_type PARAM_TYPE>
+فراغ gemv(صحيح, عائم *, size_t, ثابت فراغ *, ثابت فراغ *, صحيح, صحيح);
 
-template <> void gemv<block_q1_0, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemv<بلوک_q1_0, 4, 4, GGML_TYPE_Q8_0>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemv_q1_0_4x4_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q1_0, 8, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemv<بلوک_q1_0, 8, 4, GGML_TYPE_Q8_0>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemv_q1_0_4x8_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q4_0, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemv<بلوک_q4_0, 4, 4, GGML_TYPE_Q8_0>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemv_q4_0_4x4_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q4_0, 8, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemv<بلوک_q4_0, 8, 4, GGML_TYPE_Q8_0>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemv_q4_0_4x8_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q4_0, 8, 8, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemv<بلوک_q4_0, 8, 8, GGML_TYPE_Q8_0>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemv_q4_0_8x8_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <>
-void gemv<block_q2_K, 8, 8, GGML_TYPE_Q8_K>(int          n,
-                                            float *      s,
+قالب <>
+فراغ gemv<بلوک_q2_K, 8, 8, GGML_TYPE_Q8_K>(صحيح          n,
+                                            عائم *      s,
                                             size_t       bs,
-                                            const void * vx,
-                                            const void * vy,
-                                            int          nr,
-                                            int          nc) {
+                                            ثابت فراغ * vx,
+                                            ثابت فراغ * vy,
+                                            صحيح          nr,
+                                            صحيح          nc) {
     ggml_gemv_q2_K_8x8_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q4_K, 4, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemv<بلوک_q4_K, 4, 8, GGML_TYPE_Q8_K>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemv_q4_K_8x4_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q4_K, 8, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemv<بلوک_q4_K, 8, 8, GGML_TYPE_Q8_K>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemv_q4_K_8x8_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q5_K, 4, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemv<بلوک_q5_K, 4, 8, GGML_TYPE_Q8_K>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemv_q5_K_8x4_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q5_K, 8, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemv<بلوک_q5_K, 8, 8, GGML_TYPE_Q8_K>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemv_q5_K_8x8_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q6_K, 4, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemv<بلوک_q6_K, 4, 8, GGML_TYPE_Q8_K>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemv_q6_K_8x4_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q6_K, 8, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemv<بلوک_q6_K, 8, 8, GGML_TYPE_Q8_K>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemv_q6_K_8x8_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_iq4_nl, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemv<بلوک_iq4_nl, 4, 4, GGML_TYPE_Q8_0>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemv_iq4_nl_4x4_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_iq4_nl, 8, 8, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemv<بلوک_iq4_nl, 8, 8, GGML_TYPE_Q8_0>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemv_iq4_nl_8x8_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_mxfp4, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemv<بلوک_mxfp4, 4, 4, GGML_TYPE_Q8_0>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemv_mxfp4_4x4_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_mxfp4, 8, 8, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemv<بلوک_mxfp4, 8, 8, GGML_TYPE_Q8_0>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemv_mxfp4_8x8_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q8_0, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemv<بلوک_q8_0, 4, 4, GGML_TYPE_Q8_0>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemv_q8_0_4x4_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q8_0, 8, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemv<بلوک_q8_0, 8, 4, GGML_TYPE_Q8_0>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemv_q8_0_4x8_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-#if defined __riscv_zvfh
-template <> void gemv<block_q4_0, 1, 16, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+#إذا defined __riscv_zvfh
+قالب <> فراغ gemv<بلوک_q4_0, 1, 16, GGML_TYPE_Q8_0>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemv_q4_0_16x1_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q4_K, 1, 16, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemv<بلوک_q4_K, 1, 16, GGML_TYPE_Q8_K>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemv_q4_K_16x1_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_iq4_nl, 1, 16, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemv<بلوک_iq4_nl, 1, 16, GGML_TYPE_Q8_0>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemv_iq4_nl_16x1_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q8_0, 1, 16, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemv<بلوک_q8_0, 1, 16, GGML_TYPE_Q8_0>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemv_q8_0_16x1_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q2_K, 1, 16, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemv<بلوک_q2_K, 1, 16, GGML_TYPE_Q8_K>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemv_q2_K_16x1_q8_K(n, s, bs, vx, vy, nr, nc);
 }
-#endif
+#پایان_اگر
 
 // gemm
-template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PARAM_TYPE>
-void gemm(int, float *, size_t, const void *, const void *, int, int);
+قالب <نام_نوع BLOC_TYPE, int64_t INTER_اندازه, int64_t NB_تعداد_ستون, ggml_type PARAM_TYPE>
+فراغ gemm(صحيح, عائم *, size_t, ثابت فراغ *, ثابت فراغ *, صحيح, صحيح);
 
-template <> void gemm<block_q1_0, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemm<بلوک_q1_0, 4, 4, GGML_TYPE_Q8_0>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemm_q1_0_4x4_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q1_0, 8, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemm<بلوک_q1_0, 8, 4, GGML_TYPE_Q8_0>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemm_q1_0_4x8_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q4_0, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemm<بلوک_q4_0, 4, 4, GGML_TYPE_Q8_0>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemm_q4_0_4x4_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q4_0, 8, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemm<بلوک_q4_0, 8, 4, GGML_TYPE_Q8_0>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemm_q4_0_4x8_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <>
-void gemm<block_q4_0, 8, 8, GGML_TYPE_Q8_0>(int          n,
-                                            float *      s,
+قالب <>
+فراغ gemm<بلوک_q4_0, 8, 8, GGML_TYPE_Q8_0>(صحيح          n,
+                                            عائم *      s,
                                             size_t       bs,
-                                            const void * vx,
-                                            const void * vy,
-                                            int          nr,
-                                            int          nc) {
+                                            ثابت فراغ * vx,
+                                            ثابت فراغ * vy,
+                                            صحيح          nr,
+                                            صحيح          nc) {
     ggml_gemm_q4_0_8x8_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q2_K, 8, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemm<بلوک_q2_K, 8, 8, GGML_TYPE_Q8_K>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemm_q2_K_8x8_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q4_K, 4, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemm<بلوک_q4_K, 4, 8, GGML_TYPE_Q8_K>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemm_q4_K_8x4_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q4_K, 8, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemm<بلوک_q4_K, 8, 8, GGML_TYPE_Q8_K>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemm_q4_K_8x8_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q5_K, 4, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemm<بلوک_q5_K, 4, 8, GGML_TYPE_Q8_K>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemm_q5_K_8x4_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q5_K, 8, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemm<بلوک_q5_K, 8, 8, GGML_TYPE_Q8_K>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemm_q5_K_8x8_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q6_K, 4, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemm<بلوک_q6_K, 4, 8, GGML_TYPE_Q8_K>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemm_q6_K_8x4_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q6_K, 8, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemm<بلوک_q6_K, 8, 8, GGML_TYPE_Q8_K>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemm_q6_K_8x8_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_iq4_nl, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemm<بلوک_iq4_nl, 4, 4, GGML_TYPE_Q8_0>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemm_iq4_nl_4x4_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_iq4_nl, 8, 8, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemm<بلوک_iq4_nl, 8, 8, GGML_TYPE_Q8_0>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemm_iq4_nl_8x8_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_mxfp4, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemm<بلوک_mxfp4, 4, 4, GGML_TYPE_Q8_0>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemm_mxfp4_4x4_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_mxfp4, 8, 8, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemm<بلوک_mxfp4, 8, 8, GGML_TYPE_Q8_0>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemm_mxfp4_8x8_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q8_0, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemm<بلوک_q8_0, 4, 4, GGML_TYPE_Q8_0>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemm_q8_0_4x4_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q8_0, 8, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemm<بلوک_q8_0, 8, 4, GGML_TYPE_Q8_0>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemm_q8_0_4x8_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-#if defined __riscv_zvfh
-template <> void gemm<block_q4_0, 1, 16, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+#إذا defined __riscv_zvfh
+قالب <> فراغ gemm<بلوک_q4_0, 1, 16, GGML_TYPE_Q8_0>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemm_q4_0_16x1_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q4_K, 1, 16, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemm<بلوک_q4_K, 1, 16, GGML_TYPE_Q8_K>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemm_q4_K_16x1_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_iq4_nl, 1, 16, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemm<بلوک_iq4_nl, 1, 16, GGML_TYPE_Q8_0>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemm_iq4_nl_16x1_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q8_0, 1, 16, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemm<بلوک_q8_0, 1, 16, GGML_TYPE_Q8_0>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemm_q8_0_16x1_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q2_K, 1, 16, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+قالب <> فراغ gemm<بلوک_q2_K, 1, 16, GGML_TYPE_Q8_K>(صحيح n, عائم * s, size_t bs, ثابت فراغ * vx, ثابت فراغ * vy, صحيح nr, صحيح nc) {
     ggml_gemm_q2_K_16x1_q8_K(n, s, bs, vx, vy, nr, nc);
 }
-#endif
+#پایان_اگر
 
-class tensor_traits_base : public ggml::cpu::tensor_traits {
-  public:
-    virtual int repack(struct ggml_tensor * t, const void * data, size_t data_size) = 0;
+صنف tensor_traits_پایه : عام ggml::cpu::tensor_traits {
+  عام:
+    مجازی صحيح repack(بنية ggml_tensor * t, ثابت فراغ * داده, size_t داده_اندازه) = 0;
 };
 
-template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PARAM_TYPE> class tensor_traits : public tensor_traits_base {
+قالب <نام_نوع BLOC_TYPE, int64_t INTER_اندازه, int64_t NB_تعداد_ستون, ggml_type PARAM_TYPE> صنف tensor_traits : عام tensor_traits_پایه {
 
-    bool work_size(int /* n_threads */, const struct ggml_tensor * op, size_t & size) override {
+    منطقي work_اندازه(صحيح /* n_threads */, ثابت بنية ggml_tensor * op, size_t & size) override {
         // not realy a GGML_TYPE_Q8_0 but same size.
-        switch (op->op) {
-            case GGML_OP_MUL_MAT:
+        بدل (op->op) {
+            حالة GGML_OP_MUL_MAT:
                 {
-                    size = ggml_row_size(PARAM_TYPE, ggml_nelements(op->src[1]));
-                    return true;
+                    size = ggml_ردیف_اندازه(PARAM_TYPE, ggml_nelements(op->src[1]));
+                    أرجع درست;
                 }
-            case GGML_OP_MUL_MAT_ID:
+            حالة GGML_OP_MUL_MAT_ID:
                 {
-                    size = ggml_row_size(PARAM_TYPE, ggml_nelements(op->src[1]));
-                    size = GGML_PAD(size, sizeof(int64_t)); // + padding for next block.
+                    size = ggml_ردیف_اندازه(PARAM_TYPE, ggml_nelements(op->src[1]));
+                    size = GGML_PAD(size, حجم(int64_t)); // + padding for next block.
 
-                    const int64_t ne02 = op->src[0]->ne[2]; // n_as, n_expert
-                    const int64_t ne12 = op->src[1]->ne[2]; // n_tokens
+                    ثابت int64_t ne02 = op->src[0]->ne[2]; // n_as, n_expert
+                    ثابت int64_t ne12 = op->src[1]->ne[2]; // n_tokens
 
-                    const size_t sizeof_mmid_row_mapping = sizeof(int64_t);
+                    ثابت size_t sizeof_mmid_ردیف_mapping = حجم(int64_t);
 
-                    size += sizeof_mmid_row_mapping*ne02*(ne12 + 1);
+                    size += sizeof_mmid_ردیف_mapping*ne02*(ne12 + 1);
 
-                    return true;
+                    أرجع درست;
                 }
-            default:
+            افتراضي:
                 // GGML_ABORT("fatal error");
-                break;
+                اكسر;
         }
-        return false;
+        أرجع خطأ;
     }
 
-    bool compute_forward(struct ggml_compute_params * params, struct ggml_tensor * op) override {
-        switch (op->op) {
-            case GGML_OP_MUL_MAT:
+    منطقي compute_forward(بنية ggml_compute_params * params, بنية ggml_tensor * op) override {
+        بدل (op->op) {
+            حالة GGML_OP_MUL_MAT:
                 forward_mul_mat(params, op);
-                return true;
-            case GGML_OP_MUL_MAT_ID:
+                أرجع درست;
+            حالة GGML_OP_MUL_MAT_ID:
                 forward_mul_mat_id(params, op);
-                return true;
-            default:
+                أرجع درست;
+            افتراضي:
                 // GGML_ABORT("fatal error");
-                break;
+                اكسر;
         }
-        return false;
+        أرجع خطأ;
     }
 
-    void forward_mul_mat_one_chunk(ggml_compute_params * params,
+    فراغ forward_mul_mat_one_chunk(ggml_compute_params * params,
                                    ggml_tensor *         op,
-                                   int64_t               src0_start,
-                                   int64_t               src0_end,
-                                   int64_t               src1_start,
-                                   int64_t               src1_end) {
-        const ggml_tensor * src0 = op->src[0];
-        const ggml_tensor * src1 = op->src[1];
+                                   int64_t               src0_شروع,
+                                   int64_t               src0_انتها,
+                                   int64_t               src1_شروع,
+                                   int64_t               src1_انتها) {
+        ثابت ggml_tensor * src0 = op->src[0];
+        ثابت ggml_tensor * src1 = op->src[1];
         ggml_tensor *       dst  = op;
 
-        GGML_TENSOR_BINARY_OP_LOCALS
+        GGML_TENSOR_دودویی_OP_LOCALS
 
-        const size_t src1_col_stride = ggml_row_size(PARAM_TYPE, ne10);
+        ثابت size_t src1_ستون_stride = ggml_ردیف_اندازه(PARAM_TYPE, ne10);
 
         GGML_ASSERT(ne03 == 1 && ne13 == 1);
         GGML_ASSERT(ne12 % ne02 == 0);
-        const int64_t r2 = ne12 / ne02;
+        ثابت int64_t r2 = ne12 / ne02;
 
-        const int64_t i12 = src1_start / ne1;
-        const int64_t i11 = src1_start - i12 * ne1;
+        ثابت int64_t i12 = src1_شروع / ne1;
+        ثابت int64_t i11 = src1_شروع - i12 * ne1;
 
         // Determine batch index
-        const int64_t i02 = i12 / r2;
+        ثابت int64_t i02 = i12 / r2;
 
-        const int64_t i1 = i11;
-        const int64_t i2 = i12;
+        ثابت int64_t i1 = i11;
+        ثابت int64_t i2 = i12;
 
-        const char * src0_ptr = (const char *) src0->data + i02 * nb02;
-        const char * src1_ptr = (const char *) params->wdata + (i11 + i12 * ne11) * src1_col_stride;
-        char *       dst_ptr  = ((char *) dst->data + (i1 * nb1 + i2 * nb2));
+        ثابت حرف * src0_ptr = (ثابت حرف *) src0->داده + i02 * nb02;
+        ثابت حرف * src1_ptr = (ثابت حرف *) params->wdata + (i11 + i12 * ne11) * src1_ستون_stride;
+        حرف *       dst_ptr  = ((حرف *) dst->داده + (i1 * nb1 + i2 * nb2));
 
-        const int64_t nrows = src1_end - src1_start;
-        const int64_t ncols = src0_end - src0_start;
+        ثابت int64_t nrows = src1_انتها - src1_شروع;
+        ثابت int64_t ncols = src0_انتها - src0_شروع;
 
-        GGML_ASSERT(src1_ptr + src1_col_stride * nrows <= (const char *) params->wdata + params->wsize);
+        GGML_ASSERT(src1_ptr + src1_ستون_stride * nrows <= (ثابت حرف *) params->wdata + params->wsize);
 
         // If there are more than three rows in src1, use gemm; otherwise, use gemv.
-        if (nrows > 3) {
-            gemm<BLOC_TYPE, INTER_SIZE, NB_COLS, PARAM_TYPE>(ne00, (float *) (dst_ptr) + src0_start, nb1 / nb0,
-                                                             src0_ptr + src0_start * nb01, src1_ptr,
+        إذا (nrows > 3) {
+            gemm<BLOC_TYPE, INTER_اندازه, NB_تعداد_ستون, PARAM_TYPE>(ne00, (عائم *) (dst_ptr) + src0_شروع, nb1 / nb0,
+                                                             src0_ptr + src0_شروع * nb01, src1_ptr,
                                                              nrows - (nrows % 4), ncols);
         }
-        for (int iter = nrows - (nrows % 4); iter < nrows; iter++) {
-            gemv<BLOC_TYPE, INTER_SIZE, NB_COLS, PARAM_TYPE>(ne00, (float *) (dst_ptr + (iter * nb1)) + src0_start,
-                                                             ne01, src0_ptr + src0_start * nb01,
-                                                             src1_ptr + (src1_col_stride * iter), 1 /* nrows */, ncols);
+        لكل (صحيح iter = nrows - (nrows % 4); iter < nrows; iter++) {
+            gemv<BLOC_TYPE, INTER_اندازه, NB_تعداد_ستون, PARAM_TYPE>(ne00, (عائم *) (dst_ptr + (iter * nb1)) + src0_شروع,
+                                                             ne01, src0_ptr + src0_شروع * nb01,
+                                                             src1_ptr + (src1_ستون_stride * iter), 1 /* nrows */, ncols);
         }
     }
 
-    void forward_mul_mat(ggml_compute_params * params, ggml_tensor * op) {
-        const ggml_tensor * src0 = op->src[0];
-        const ggml_tensor * src1 = op->src[1];
+    فراغ forward_mul_mat(ggml_compute_params * params, ggml_tensor * op) {
+        ثابت ggml_tensor * src0 = op->src[0];
+        ثابت ggml_tensor * src1 = op->src[1];
         ggml_tensor *       dst  = op;
 
-        GGML_TENSOR_BINARY_OP_LOCALS
+        GGML_TENSOR_دودویی_OP_LOCALS
 
-        const int ith = params->ith;
-        const int nth = params->nth;
+        ثابت صحيح ith = params->ith;
+        ثابت صحيح nth = params->nth;
 
         GGML_ASSERT(ne0 == ne01);
         GGML_ASSERT(ne1 == ne11);
@@ -4663,7 +4663,7 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PAR
         GGML_ASSERT(ne3 == ne13);
 
         // dst cannot be transposed or permuted
-        GGML_ASSERT(nb0 == sizeof(float));
+        GGML_ASSERT(nb0 == حجم(عائم));
         GGML_ASSERT(nb0 <= nb1);
         GGML_ASSERT(nb1 <= nb2);
         GGML_ASSERT(nb2 <= nb3);
@@ -4679,39 +4679,39 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PAR
         GGML_ASSERT(ggml_n_dims(op->src[0]) == 2);
         // GGML_ASSERT(ggml_n_dims(op->src[1]) == 2);
 
-        char *       wdata = static_cast<char *>(params->wdata);
-        const size_t nbw1  = ggml_row_size(PARAM_TYPE, ne10);
-        const size_t nbw2  = nbw1 * ne11;
+        حرف *       wdata = static_cast<حرف *>(params->wdata);
+        ثابت size_t nbw1  = ggml_ردیف_اندازه(PARAM_TYPE, ne10);
+        ثابت size_t nbw2  = nbw1 * ne11;
 
-        assert(params->wsize >= nbw2 * ne12);
+        أكد(params->wsize >= nbw2 * ne12);
 
-        const ggml_from_float_t from_float = ggml_get_type_traits_cpu(PARAM_TYPE)->from_float;
+        ثابت ggml_from_float_t from_float = ggml_get_type_traits_cpu(PARAM_TYPE)->from_float;
 
         // INFO: Quantization is done in planes to avoid extra complexity in chunking.
         // Flattening dimensions not multiple of INTER_SIZE would require extra handling depending on how
         // the planes are broadcast.
-        for (int64_t i12 = 0; i12 < ne12; i12++) {
-            char * data_ptr  = (char *) src1->data + i12 * nb12;
-            char * wdata_ptr = wdata + i12 * nbw2;
+        لكل (int64_t i12 = 0; i12 < ne12; i12++) {
+            حرف * داده_ptr  = (حرف *) src1->داده + i12 * nb12;
+            حرف * wdata_ptr = wdata + i12 * nbw2;
 
-            for (int64_t i11 = ith * 4; i11 < ne11 - ne11 % 4; i11 += nth * 4) {
-                ggml_quantize_mat_t<INTER_SIZE, PARAM_TYPE>((float *) (data_ptr + i11 * nb11),
-                                                            (void *) (wdata_ptr + i11 * nbw1), 4, ne10);
+            لكل (int64_t i11 = ith * 4; i11 < ne11 - ne11 % 4; i11 += nth * 4) {
+                ggml_quantize_mat_t<INTER_اندازه, PARAM_TYPE>((عائم *) (داده_ptr + i11 * nb11),
+                                                            (فراغ *) (wdata_ptr + i11 * nbw1), 4, ne10);
             }
 
-            const int64_t i11_processed = ne11 - ne11 % 4;
-            for (int64_t i11 = i11_processed + ith; i11 < ne11; i11 += nth) {
-                from_float((float *) (data_ptr + i11 * nb11), (void *) (wdata_ptr + i11 * nbw1), ne10);
+            ثابت int64_t i11_processed = ne11 - ne11 % 4;
+            لكل (int64_t i11 = i11_processed + ith; i11 < ne11; i11 += nth) {
+                from_float((عائم *) (داده_ptr + i11 * nb11), (فراغ *) (wdata_ptr + i11 * nbw1), ne10);
             }
         }
 
         // disable for NUMA
-        const bool disable_chunking = ggml_is_numa();
+        ثابت منطقي disable_chunking = ggml_is_numa();
 
         // 4x chunks per thread
-        const int64_t nr0 = ggml_nrows(op->src[0]);
+        ثابت int64_t nr0 = ggml_nrows(op->src[0]);
 
-        int     nth_scaled  = nth * 4;
+        صحيح     nth_scaled  = nth * 4;
         int64_t chunk_size0 = (nr0 + nth_scaled - 1) / nth_scaled;
         int64_t nchunk0     = (nr0 + chunk_size0 - 1) / chunk_size0;
 
@@ -4724,81 +4724,81 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PAR
 
         // Ensure minimum chunk size to avoid alignment issues with high thread counts
         // Minimum chunk size should be at least NB_COLS to prevent overlapping chunks after alignment
-        const int64_t min_chunk_size = NB_COLS;
-        if (nchunk0 > 0 && (nr0 / nchunk0) < min_chunk_size && nr0 >= min_chunk_size) {
-            nchunk0 = (nr0 + min_chunk_size - 1) / min_chunk_size;
+        ثابت int64_t min_chunk_اندازه = NB_تعداد_ستون;
+        إذا (nchunk0 > 0 && (nr0 / nchunk0) < min_chunk_اندازه && nr0 >= min_chunk_اندازه) {
+            nchunk0 = (nr0 + min_chunk_اندازه - 1) / min_chunk_اندازه;
         }
 
         int64_t dr0 = (nr0 + nchunk0 - 1) / nchunk0;
         // Only increase nchunk0 to nth if it won't make chunks too small
-        if (nth == 1 || ((nchunk0 < nth || disable_chunking) && (nr0 + nth - 1) / nth >= min_chunk_size)) {
+        إذا (nth == 1 || ((nchunk0 < nth || disable_chunking) && (nr0 + nth - 1) / nth >= min_chunk_اندازه)) {
             nchunk0 = nth;
             dr0 = (nr0 + nchunk0 - 1) / nchunk0;
         }
 
         // Ensure nchunk doesn't exceed the number of rows divided by minimum chunk size
         // This prevents creating too many tiny chunks that could overlap after alignment
-        const int64_t max_nchunk = (nr0 + min_chunk_size - 1) / min_chunk_size;
+        ثابت int64_t max_nchunk = (nr0 + min_chunk_اندازه - 1) / min_chunk_اندازه;
         nchunk0                  = MIN(nchunk0, max_nchunk);
 
-        if (ith == 0) {
+        إذا (ith == 0) {
             // Every thread starts at ith, so the first unprocessed chunk is nth.  This save a bit of coordination right at the start.
-            ggml_threadpool_chunk_set(params->threadpool, nth);
+            ggml_threadpool_chunk_مجموعه(params->threadpool, nth);
         }
 
         ggml_barrier(params->threadpool);
 
         // The first chunk comes from our thread_id, the rest will get auto-assigned.
-        int current_chunk = ith;
+        صحيح current_chunk = ith;
 
-        while (current_chunk < nchunk0 * nchunk1) {
-            const int64_t ith0 = current_chunk % nchunk0;
-            const int64_t ith1 = current_chunk / nchunk0;
+        طالما (current_chunk < nchunk0 * nchunk1) {
+            ثابت int64_t ith0 = current_chunk % nchunk0;
+            ثابت int64_t ith1 = current_chunk / nchunk0;
 
-            int64_t src0_start = dr0 * ith0;
-            int64_t src0_end   = MIN(src0_start + dr0, nr0);
+            int64_t src0_شروع = dr0 * ith0;
+            int64_t src0_انتها   = MIN(src0_شروع + dr0, nr0);
 
             // full-plane range for src1
-            int64_t src1_start = ith1 * ne11;
-            int64_t src1_end = (ith1 + 1) * ne11;
+            int64_t src1_شروع = ith1 * ne11;
+            int64_t src1_انتها = (ith1 + 1) * ne11;
 
             // Align boundaries to NB_COLS - round up to ensure all data is included
             // The chunk size limiting above ensures chunks are large enough to prevent overlaps
-            src0_start = (src0_start % NB_COLS) ? src0_start + NB_COLS - (src0_start % NB_COLS) : src0_start;
-            src0_end   = (src0_end % NB_COLS) ? src0_end + NB_COLS - (src0_end % NB_COLS) : src0_end;
-            src0_end   = MIN(src0_end, ne01);
+            src0_شروع = (src0_شروع % NB_تعداد_ستون) ? src0_شروع + NB_تعداد_ستون - (src0_شروع % NB_تعداد_ستون) : src0_شروع;
+            src0_انتها   = (src0_انتها % NB_تعداد_ستون) ? src0_انتها + NB_تعداد_ستون - (src0_انتها % NB_تعداد_ستون) : src0_انتها;
+            src0_انتها   = MIN(src0_انتها, ne01);
 
             // Make sure current plane is the last one before exiting
-            if (src0_start >= src0_end) {
-                current_chunk = ggml_threadpool_chunk_add(params->threadpool, 1);
-                continue;
+            إذا (src0_شروع >= src0_انتها) {
+                current_chunk = ggml_threadpool_chunk_جمع_کن(params->threadpool, 1);
+                استمر;
             }
 
-            forward_mul_mat_one_chunk(params, dst, src0_start, src0_end, src1_start, src1_end);
+            forward_mul_mat_one_chunk(params, dst, src0_شروع, src0_انتها, src1_شروع, src1_انتها);
 
-            current_chunk = ggml_threadpool_chunk_add(params->threadpool, 1);
+            current_chunk = ggml_threadpool_chunk_جمع_کن(params->threadpool, 1);
         }
     }
 
-    void forward_mul_mat_id(ggml_compute_params * params, ggml_tensor * op) {
-        const ggml_tensor * src0 = op->src[0];
-        const ggml_tensor * src1 = op->src[1];
-        const ggml_tensor * ids  = op->src[2];
+    فراغ forward_mul_mat_id(ggml_compute_params * params, ggml_tensor * op) {
+        ثابت ggml_tensor * src0 = op->src[0];
+        ثابت ggml_tensor * src1 = op->src[1];
+        ثابت ggml_tensor * ids  = op->src[2];
         ggml_tensor *       dst  = op;
 
-        GGML_TENSOR_BINARY_OP_LOCALS
+        GGML_TENSOR_دودویی_OP_LOCALS
 
-        const int ith = params->ith;
-        const int nth = params->nth;
+        ثابت صحيح ith = params->ith;
+        ثابت صحيح nth = params->nth;
 
-        const ggml_from_float_t from_float = ggml_get_type_traits_cpu(PARAM_TYPE)->from_float;
+        ثابت ggml_from_float_t from_float = ggml_get_type_traits_cpu(PARAM_TYPE)->from_float;
 
         // we don't support permuted src0 or src1
-        GGML_ASSERT(nb00 == ggml_type_size(src0->type));
-        GGML_ASSERT(nb10 == ggml_type_size(src1->type));
+        GGML_ASSERT(nb00 == ggml_type_اندازه(src0->type));
+        GGML_ASSERT(nb10 == ggml_type_اندازه(src1->type));
 
         // dst cannot be transposed or permuted
-        GGML_ASSERT(nb0 == sizeof(float));
+        GGML_ASSERT(nb0 == حجم(عائم));
         GGML_ASSERT(nb0 <= nb1);
         GGML_ASSERT(nb1 <= nb2);
         GGML_ASSERT(nb2 <= nb3);
@@ -4810,55 +4810,55 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PAR
         GGML_ASSERT(src1->type == GGML_TYPE_F32);
 
         // row groups
-        const int n_ids = ids->ne[0]; // n_expert_used
-        const int n_as  = ne02;       // n_expert
+        ثابت صحيح n_ids = ids->ne[0]; // n_expert_used
+        ثابت صحيح n_as  = ne02;       // n_expert
 
-        const size_t nbw1 = ggml_row_size(PARAM_TYPE, ne10);
-        const size_t nbw2 = nbw1*ne11;
-        const size_t nbw3 = nbw2*ne12;
+        ثابت size_t nbw1 = ggml_ردیف_اندازه(PARAM_TYPE, ne10);
+        ثابت size_t nbw2 = nbw1*ne11;
+        ثابت size_t nbw3 = nbw2*ne12;
 
-        struct mmid_row_mapping {
+        بنية mmid_ردیف_mapping {
             int32_t i1;
             int32_t i2;
         };
 
         GGML_ASSERT(params->wsize >=
-                (GGML_PAD(nbw3, sizeof(int64_t)) +
-                 n_as*(ne12 + 1)*sizeof(mmid_row_mapping))
+                (GGML_PAD(nbw3, حجم(int64_t)) +
+                 n_as*(ne12 + 1)*حجم(mmid_ردیف_mapping))
                 );
 
-        auto * wdata          = (char *)params->wdata;
-        auto * wdata_src1_end = (char *)wdata + GGML_PAD(nbw3, sizeof(int64_t));
+        خودکار * wdata          = (حرف *)params->wdata;
+        خودکار * wdata_src1_انتها = (حرف *)wdata + GGML_PAD(nbw3, حجم(int64_t));
 
         // total of [n_as][ne12 + 1] elements of type mmid_row_mapping (2*int32_t = int64_t)
-        auto * matrix_row_counts = (int64_t *) (wdata_src1_end);                                        // [n_as]
-        struct mmid_row_mapping * matrix_rows = (struct mmid_row_mapping *) (matrix_row_counts + n_as); // [n_as][ne12]
+        خودکار * ماتریس_ردیف_counts = (int64_t *) (wdata_src1_انتها);                                        // [n_as]
+        بنية mmid_ردیف_mapping * ماتریس_ردیفها = (بنية mmid_ردیف_mapping *) (ماتریس_ردیف_counts + n_as); // [n_as][ne12]
 
         // src1: float32 => param type
-        for (int64_t i12 = 0; i12 < ne12; ++i12) {
-            for (int64_t i11 = ith; i11 < ne11; i11 += nth) {
-                from_float((float *)((char *) src1->data + i12 * nb12 + i11 * nb11),
-                           (void *)               (wdata + i12 * nbw2 + i11 * nbw1),
+        لكل (int64_t i12 = 0; i12 < ne12; ++i12) {
+            لكل (int64_t i11 = ith; i11 < ne11; i11 += nth) {
+                from_float((عائم *)((حرف *) src1->داده + i12 * nb12 + i11 * nb11),
+                           (فراغ *)               (wdata + i12 * nbw2 + i11 * nbw1),
                            ne10);
             }
         }
 
-#define MMID_MATRIX_ROW(row_id, i1) matrix_rows[(row_id) * ne12 + (i1)]
+#تعریف_کن MMID_ماتریس_ردیف(ردیف_id, i1) ماتریس_ردیفها[(ردیف_id) * ne12 + (i1)]
 
-        if (ith == 0) {
+        إذا (ith == 0) {
             // initialize matrix_row_counts
-            memset(matrix_row_counts, 0, n_as * sizeof(int64_t));
+            memset(ماتریس_ردیف_counts, 0, n_as * حجم(int64_t));
 
             // group rows by src0 matrix
-            for (int32_t iid1 = 0; iid1 < ids->ne[1]; ++iid1) {
-                for (int32_t id = 0; id < n_ids; ++id) {
-                    const int32_t i02 =
-                        *(const int32_t *) ((const char *) ids->data + iid1 * ids->nb[1] + id * ids->nb[0]);
+            لكل (int32_t iid1 = 0; iid1 < ids->ne[1]; ++iid1) {
+                لكل (int32_t id = 0; id < n_ids; ++id) {
+                    ثابت int32_t i02 =
+                        *(ثابت int32_t *) ((ثابت حرف *) ids->داده + iid1 * ids->nb[1] + id * ids->nb[0]);
 
                     GGML_ASSERT(i02 >= 0 && i02 < n_as);
 
-                    MMID_MATRIX_ROW(i02, matrix_row_counts[i02]) = { id, iid1 };
-                    matrix_row_counts[i02] += 1;
+                    MMID_ماتریس_ردیف(i02, ماتریس_ردیف_counts[i02]) = { id, iid1 };
+                    ماتریس_ردیف_counts[i02] += 1;
                 }
             }
         }
@@ -4866,390 +4866,390 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PAR
         ggml_barrier(params->threadpool);
 
         // compute each matrix multiplication in sequence
-        for (int cur_a = 0; cur_a < n_as; ++cur_a) {
-            const int64_t cne1 = matrix_row_counts[cur_a];
+        لكل (صحيح cur_a = 0; cur_a < n_as; ++cur_a) {
+            ثابت int64_t cne1 = ماتریس_ردیف_counts[cur_a];
 
-            if (cne1 == 0) {
-                continue;
+            إذا (cne1 == 0) {
+                استمر;
             }
 
-            const auto * src0_cur = (const char *) src0->data + cur_a*nb02;
+            ثابت خودکار * src0_cur = (ثابت حرف *) src0->داده + cur_a*nb02;
 
             //const int64_t nr0 = ne01; // src0 rows
-            const int64_t nr1 = cne1; // src1 rows
+            ثابت int64_t nr1 = cne1; // src1 rows
 
-            int64_t src0_cur_start = (ith * ne01) / nth;
-            int64_t src0_cur_end   = ((ith + 1) * ne01) / nth;
+            int64_t src0_cur_شروع = (ith * ne01) / nth;
+            int64_t src0_cur_انتها   = ((ith + 1) * ne01) / nth;
 
             // Align boundaries to NB_COLS - round up to ensure all data is included
-            src0_cur_start = (src0_cur_start % NB_COLS) ? src0_cur_start + NB_COLS - (src0_cur_start % NB_COLS) : src0_cur_start;
-            src0_cur_end   = (src0_cur_end   % NB_COLS) ? src0_cur_end   + NB_COLS - (src0_cur_end   % NB_COLS) : src0_cur_end;
-            if (src0_cur_end > ne01) {
-                src0_cur_end = ne01;
+            src0_cur_شروع = (src0_cur_شروع % NB_تعداد_ستون) ? src0_cur_شروع + NB_تعداد_ستون - (src0_cur_شروع % NB_تعداد_ستون) : src0_cur_شروع;
+            src0_cur_انتها   = (src0_cur_انتها   % NB_تعداد_ستون) ? src0_cur_انتها   + NB_تعداد_ستون - (src0_cur_انتها   % NB_تعداد_ستون) : src0_cur_انتها;
+            إذا (src0_cur_انتها > ne01) {
+                src0_cur_انتها = ne01;
             }
 
-            if (src0_cur_start >= src0_cur_end) {
-                return;
+            إذا (src0_cur_شروع >= src0_cur_انتها) {
+                أرجع;
             }
 
-            for (int ir1 = 0; ir1 < nr1; ir1++) {
-                struct mmid_row_mapping row_mapping = MMID_MATRIX_ROW(cur_a, ir1);
+            لكل (صحيح ir1 = 0; ir1 < nr1; ir1++) {
+                بنية mmid_ردیف_mapping ردیف_mapping = MMID_ماتریس_ردیف(cur_a, ir1);
 
-                const int id = row_mapping.i1;  // selected expert index
+                ثابت صحيح id = ردیف_mapping.i1;  // selected expert index
 
-                const int64_t i11 = id % ne11;
-                const int64_t i12 = row_mapping.i2;  // row index in src1
+                ثابت int64_t i11 = id % ne11;
+                ثابت int64_t i12 = ردیف_mapping.i2;  // row index in src1
 
-                const int64_t i1 = id;               // selected expert index
-                const int64_t i2 = i12;              // row
+                ثابت int64_t i1 = id;               // selected expert index
+                ثابت int64_t i2 = i12;              //ردیف
 
-                const auto * src1_col = (const char *) wdata + (i11 * nbw1 + i12 * nbw2);
+                ثابت خودکار * src1_ستون = (ثابت حرف *) wdata + (i11 * nbw1 + i12 * nbw2);
 
-                gemv<BLOC_TYPE, INTER_SIZE, NB_COLS, PARAM_TYPE>(
-                    ne00, (float *) ((char *) dst->data + (i1 * nb1 + i2 * nb2)) + src0_cur_start, ne01,
-                    src0_cur + src0_cur_start * nb01, src1_col, 1, src0_cur_end - src0_cur_start);
+                gemv<BLOC_TYPE, INTER_اندازه, NB_تعداد_ستون, PARAM_TYPE>(
+                    ne00, (عائم *) ((حرف *) dst->داده + (i1 * nb1 + i2 * nb2)) + src0_cur_شروع, ne01,
+                    src0_cur + src0_cur_شروع * nb01, src1_ستون, 1, src0_cur_انتها - src0_cur_شروع);
             }
         }
-#undef MMID_MATRIX_ROW
+#لغو_تعریف MMID_ماتریس_ردیف
     }
 
-    int repack(struct ggml_tensor * t, const void * data, size_t data_size) override {
+    صحيح repack(بنية ggml_tensor * t, ثابت فراغ * داده, size_t داده_اندازه) override {
         GGML_LOG_DEBUG("%s: repack tensor %s with %s_%dx%d\n", __func__, t->name, ggml_type_name(t->type),
-                       (int) NB_COLS, (int) INTER_SIZE);
-        return ggml::cpu::repack::repack<BLOC_TYPE, INTER_SIZE, NB_COLS>(t, data, data_size);
+                       (صحيح) NB_تعداد_ستون, (صحيح) INTER_اندازه);
+        أرجع ggml::cpu::repack::repack<BLOC_TYPE, INTER_اندازه, NB_تعداد_ستون>(t, داده, داده_اندازه);
     }
 };
 
 }  // namespace ggml::cpu::repack
 
-static const ggml::cpu::tensor_traits * ggml_repack_get_optimal_repack_type(const struct ggml_tensor * cur) {
+ساكن ثابت ggml::cpu::tensor_traits * ggml_repack_get_optimal_repack_type(ثابت بنية ggml_tensor * cur) {
     // instance for Q1_0
-    static const ggml::cpu::repack::tensor_traits<block_q1_0, 4, 4, GGML_TYPE_Q8_0> q1_0_4x4_q8_0;
-    static const ggml::cpu::repack::tensor_traits<block_q1_0, 8, 4, GGML_TYPE_Q8_0> q1_0_4x8_q8_0;
+    ساكن ثابت ggml::cpu::repack::tensor_traits<بلوک_q1_0, 4, 4, GGML_TYPE_Q8_0> q1_0_4x4_q8_0;
+    ساكن ثابت ggml::cpu::repack::tensor_traits<بلوک_q1_0, 8, 4, GGML_TYPE_Q8_0> q1_0_4x8_q8_0;
 
     // instance for Q4
-    static const ggml::cpu::repack::tensor_traits<block_q4_0, 4, 4, GGML_TYPE_Q8_0> q4_0_4x4_q8_0;
-    static const ggml::cpu::repack::tensor_traits<block_q4_0, 8, 4, GGML_TYPE_Q8_0> q4_0_4x8_q8_0;
-    static const ggml::cpu::repack::tensor_traits<block_q4_0, 8, 8, GGML_TYPE_Q8_0> q4_0_8x8_q8_0;
+    ساكن ثابت ggml::cpu::repack::tensor_traits<بلوک_q4_0, 4, 4, GGML_TYPE_Q8_0> q4_0_4x4_q8_0;
+    ساكن ثابت ggml::cpu::repack::tensor_traits<بلوک_q4_0, 8, 4, GGML_TYPE_Q8_0> q4_0_4x8_q8_0;
+    ساكن ثابت ggml::cpu::repack::tensor_traits<بلوک_q4_0, 8, 8, GGML_TYPE_Q8_0> q4_0_8x8_q8_0;
 
     // instance for Q4_K
-    static const ggml::cpu::repack::tensor_traits<block_q4_K, 4, 8, GGML_TYPE_Q8_K> q4_K_8x4_q8_K;
-    static const ggml::cpu::repack::tensor_traits<block_q4_K, 8, 8, GGML_TYPE_Q8_K> q4_K_8x8_q8_K;
+    ساكن ثابت ggml::cpu::repack::tensor_traits<بلوک_q4_K, 4, 8, GGML_TYPE_Q8_K> q4_K_8x4_q8_K;
+    ساكن ثابت ggml::cpu::repack::tensor_traits<بلوک_q4_K, 8, 8, GGML_TYPE_Q8_K> q4_K_8x8_q8_K;
 
     // instance for Q5_K
-    static const ggml::cpu::repack::tensor_traits<block_q5_K, 4, 8, GGML_TYPE_Q8_K> q5_K_8x4_q8_K;
-    static const ggml::cpu::repack::tensor_traits<block_q5_K, 8, 8, GGML_TYPE_Q8_K> q5_K_8x8_q8_K;
+    ساكن ثابت ggml::cpu::repack::tensor_traits<بلوک_q5_K, 4, 8, GGML_TYPE_Q8_K> q5_K_8x4_q8_K;
+    ساكن ثابت ggml::cpu::repack::tensor_traits<بلوک_q5_K, 8, 8, GGML_TYPE_Q8_K> q5_K_8x8_q8_K;
 
     // instance for Q6_K
-    static const ggml::cpu::repack::tensor_traits<block_q6_K, 4, 8, GGML_TYPE_Q8_K> q6_K_8x4_q8_K;
-    static const ggml::cpu::repack::tensor_traits<block_q6_K, 8, 8, GGML_TYPE_Q8_K> q6_K_8x8_q8_K;
+    ساكن ثابت ggml::cpu::repack::tensor_traits<بلوک_q6_K, 4, 8, GGML_TYPE_Q8_K> q6_K_8x4_q8_K;
+    ساكن ثابت ggml::cpu::repack::tensor_traits<بلوک_q6_K, 8, 8, GGML_TYPE_Q8_K> q6_K_8x8_q8_K;
 
     // instance for Q2
-    static const ggml::cpu::repack::tensor_traits<block_q2_K, 8, 8, GGML_TYPE_Q8_K> q2_K_8x8_q8_K;
+    ساكن ثابت ggml::cpu::repack::tensor_traits<بلوک_q2_K, 8, 8, GGML_TYPE_Q8_K> q2_K_8x8_q8_K;
 
     // instance for IQ4
-    static const ggml::cpu::repack::tensor_traits<block_iq4_nl, 4, 4, GGML_TYPE_Q8_0> iq4_nl_4x4_q8_0;
-    static const ggml::cpu::repack::tensor_traits<block_iq4_nl, 8, 8, GGML_TYPE_Q8_0> iq4_nl_8x8_q8_0;
+    ساكن ثابت ggml::cpu::repack::tensor_traits<بلوک_iq4_nl, 4, 4, GGML_TYPE_Q8_0> iq4_nl_4x4_q8_0;
+    ساكن ثابت ggml::cpu::repack::tensor_traits<بلوک_iq4_nl, 8, 8, GGML_TYPE_Q8_0> iq4_nl_8x8_q8_0;
 
     // instance for MXFP4
-    static const ggml::cpu::repack::tensor_traits<block_mxfp4, 4, 4, GGML_TYPE_Q8_0> mxfp4_4x4_q8_0;
-    static const ggml::cpu::repack::tensor_traits<block_mxfp4, 8, 8, GGML_TYPE_Q8_0> mxfp4_8x8_q8_0;
+    ساكن ثابت ggml::cpu::repack::tensor_traits<بلوک_mxfp4, 4, 4, GGML_TYPE_Q8_0> mxfp4_4x4_q8_0;
+    ساكن ثابت ggml::cpu::repack::tensor_traits<بلوک_mxfp4, 8, 8, GGML_TYPE_Q8_0> mxfp4_8x8_q8_0;
 
     // instance for Q8_0
-    static const ggml::cpu::repack::tensor_traits<block_q8_0, 4, 4, GGML_TYPE_Q8_0> q8_0_4x4_q8_0;
-    static const ggml::cpu::repack::tensor_traits<block_q8_0, 8, 4, GGML_TYPE_Q8_0> q8_0_4x8_q8_0;
+    ساكن ثابت ggml::cpu::repack::tensor_traits<بلوک_q8_0, 4, 4, GGML_TYPE_Q8_0> q8_0_4x4_q8_0;
+    ساكن ثابت ggml::cpu::repack::tensor_traits<بلوک_q8_0, 8, 4, GGML_TYPE_Q8_0> q8_0_4x8_q8_0;
 
     // instances for RISC-V
     //
     // These implement outer-product style matrix multiplication kernels with
     // an interleave of 1.
-#if defined __riscv_zvfh
-    static const ggml::cpu::repack::tensor_traits<block_q4_0, 1, 16, GGML_TYPE_Q8_0> q4_0_16x1_q8_0;
-    static const ggml::cpu::repack::tensor_traits<block_q4_K, 1, 16, GGML_TYPE_Q8_K> q4_K_16x1_q8_K;
-    static const ggml::cpu::repack::tensor_traits<block_iq4_nl, 1, 16, GGML_TYPE_Q8_0> iq4_nl_16x1_q8_0;
-    static const ggml::cpu::repack::tensor_traits<block_q8_0, 1, 16, GGML_TYPE_Q8_0> q8_0_16x1_q8_0;
-    static const ggml::cpu::repack::tensor_traits<block_q2_K, 1, 16, GGML_TYPE_Q8_K> q2_K_16x1_q8_K;
-#endif
+#إذا defined __riscv_zvfh
+    ساكن ثابت ggml::cpu::repack::tensor_traits<بلوک_q4_0, 1, 16, GGML_TYPE_Q8_0> q4_0_16x1_q8_0;
+    ساكن ثابت ggml::cpu::repack::tensor_traits<بلوک_q4_K, 1, 16, GGML_TYPE_Q8_K> q4_K_16x1_q8_K;
+    ساكن ثابت ggml::cpu::repack::tensor_traits<بلوک_iq4_nl, 1, 16, GGML_TYPE_Q8_0> iq4_nl_16x1_q8_0;
+    ساكن ثابت ggml::cpu::repack::tensor_traits<بلوک_q8_0, 1, 16, GGML_TYPE_Q8_0> q8_0_16x1_q8_0;
+    ساكن ثابت ggml::cpu::repack::tensor_traits<بلوک_q2_K, 1, 16, GGML_TYPE_Q8_K> q2_K_16x1_q8_K;
+#پایان_اگر
 
-    if (cur->type == GGML_TYPE_Q4_0) {
-        if (ggml_cpu_has_avx2() || (ggml_cpu_has_sve() && ggml_cpu_has_matmul_int8() && ggml_cpu_get_sve_cnt() == QK8_0)) {
-            if (cur->ne[1] % 8 == 0) {
-                return &q4_0_8x8_q8_0;
+    إذا (cur->type == GGML_TYPE_Q4_0) {
+        إذا (ggml_cpu_has_avx2() || (ggml_cpu_has_sve() && ggml_cpu_has_matmul_int8() && ggml_cpu_get_sve_cnt() == QK8_0)) {
+            إذا (cur->ne[1] % 8 == 0) {
+                أرجع &q4_0_8x8_q8_0;
             }
         }
-        if (ggml_cpu_has_neon() && ggml_cpu_has_matmul_int8()) {
-            if (cur->ne[1] % 4 == 0) {
-                return &q4_0_4x8_q8_0;
+        إذا (ggml_cpu_has_neon() && ggml_cpu_has_matmul_int8()) {
+            إذا (cur->ne[1] % 4 == 0) {
+                أرجع &q4_0_4x8_q8_0;
             }
         }
-        if (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
-            if (cur->ne[1] % 4 == 0) {
-                return &q4_0_4x4_q8_0;
+        إذا (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
+            إذا (cur->ne[1] % 4 == 0) {
+                أرجع &q4_0_4x4_q8_0;
             }
         }
-        if (ggml_cpu_has_vxe()) {
-            if (cur->ne[1] % 4 == 0) {
-                return &q4_0_4x4_q8_0;
+        إذا (ggml_cpu_has_vxe()) {
+            إذا (cur->ne[1] % 4 == 0) {
+                أرجع &q4_0_4x4_q8_0;
             }
         }
-        if (ggml_cpu_has_riscv_v()) {
-            #if defined __riscv_zvfh
-            switch (__riscv_vlenb() * 8) {
-                case 128:  { break; } // TODO
-                case 256:  { if (cur->ne[1] % 16 == 0) { return &q4_0_16x1_q8_0; } break; }
-                case 512:  { break; } // TODO
-                case 1024: { break; } // TODO
-                default:   { return nullptr; }
+        إذا (ggml_cpu_has_riscv_v()) {
+            #إذا defined __riscv_zvfh
+            بدل (__riscv_vlenb() * 8) {
+                حالة 128:  { اكسر; } // TODO
+                حالة 256:  { إذا (cur->ne[1] % 16 == 0) { أرجع &q4_0_16x1_q8_0; } اكسر; }
+                حالة 512:  { اكسر; } // TODO
+                حالة 1024: { اكسر; } // TODO
+                افتراضي:   { أرجع اشاره_تهی; }
             }
-            #endif
+            #پایان_اگر
         }
-    } else if (cur->type == GGML_TYPE_Q4_K) {
-        if (ggml_cpu_has_avx2()) {
-            if (cur->ne[1] % 8 == 0) {
-                return &q4_K_8x8_q8_K;
-            }
-        }
-        if (ggml_cpu_has_neon() && ggml_cpu_has_matmul_int8()) {
-            if (cur->ne[1] % 8 == 0) {
-                return &q4_K_8x8_q8_K;
+    } وإلا إذا (cur->type == GGML_TYPE_Q4_K) {
+        إذا (ggml_cpu_has_avx2()) {
+            إذا (cur->ne[1] % 8 == 0) {
+                أرجع &q4_K_8x8_q8_K;
             }
         }
-        if (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
-            if (cur->ne[1] % 8 == 0) {
-                return &q4_K_8x4_q8_K;
+        إذا (ggml_cpu_has_neon() && ggml_cpu_has_matmul_int8()) {
+            إذا (cur->ne[1] % 8 == 0) {
+                أرجع &q4_K_8x8_q8_K;
             }
         }
-        if (ggml_cpu_has_riscv_v()) {
-            #if defined __riscv_zvfh
-            switch (__riscv_vlenb() * 8) {
-                case 128:  { break; } // TODO
-                case 256:  { if (cur->ne[1] % 16 == 0) { return &q4_K_16x1_q8_K; } break; }
-                case 512:  { break; } // TODO
-                case 1024: { break; } // TODO
-                default:   { return nullptr; }
-            }
-            #endif
-        }
-    } else if (cur->type == GGML_TYPE_Q2_K) {
-        if (ggml_cpu_has_avx512()) {
-            if (cur->ne[1] % 8 == 0) {
-                return &q2_K_8x8_q8_K;
+        إذا (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
+            إذا (cur->ne[1] % 8 == 0) {
+                أرجع &q4_K_8x4_q8_K;
             }
         }
-        if (ggml_cpu_has_riscv_v()) {
-            #if defined __riscv_zvfh
-            switch (__riscv_vlenb() * 8) {
-                case 128:  { break; } // TODO
-                case 256:  { if (cur->ne[1] % 16 == 0) { return &q2_K_16x1_q8_K; } break; }
-                case 512:  { break; } // TODO
-                case 1024: { break; } // TODO
-                default:   { return nullptr; }
+        إذا (ggml_cpu_has_riscv_v()) {
+            #إذا defined __riscv_zvfh
+            بدل (__riscv_vlenb() * 8) {
+                حالة 128:  { اكسر; } // TODO
+                حالة 256:  { إذا (cur->ne[1] % 16 == 0) { أرجع &q4_K_16x1_q8_K; } اكسر; }
+                حالة 512:  { اكسر; } // TODO
+                حالة 1024: { اكسر; } // TODO
+                افتراضي:   { أرجع اشاره_تهی; }
             }
-            #endif
+            #پایان_اگر
         }
-    } else if (cur->type == GGML_TYPE_Q5_K) {
-        if (ggml_cpu_has_neon() && ggml_cpu_has_matmul_int8()) {
-            if (cur->ne[1] % 8 == 0) {
-                return &q5_K_8x8_q8_K;
-            }
-        }
-        if (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
-            if (cur->ne[1] % 8 == 0) {
-                return &q5_K_8x4_q8_K;
+    } وإلا إذا (cur->type == GGML_TYPE_Q2_K) {
+        إذا (ggml_cpu_has_avx512()) {
+            إذا (cur->ne[1] % 8 == 0) {
+                أرجع &q2_K_8x8_q8_K;
             }
         }
-    } else if (cur->type == GGML_TYPE_Q6_K) {
-        if (ggml_cpu_has_neon() && ggml_cpu_has_matmul_int8()) {
-            if (cur->ne[1] % 8 == 0) {
-                return &q6_K_8x8_q8_K;
+        إذا (ggml_cpu_has_riscv_v()) {
+            #إذا defined __riscv_zvfh
+            بدل (__riscv_vlenb() * 8) {
+                حالة 128:  { اكسر; } // TODO
+                حالة 256:  { إذا (cur->ne[1] % 16 == 0) { أرجع &q2_K_16x1_q8_K; } اكسر; }
+                حالة 512:  { اكسر; } // TODO
+                حالة 1024: { اكسر; } // TODO
+                افتراضي:   { أرجع اشاره_تهی; }
+            }
+            #پایان_اگر
+        }
+    } وإلا إذا (cur->type == GGML_TYPE_Q5_K) {
+        إذا (ggml_cpu_has_neon() && ggml_cpu_has_matmul_int8()) {
+            إذا (cur->ne[1] % 8 == 0) {
+                أرجع &q5_K_8x8_q8_K;
             }
         }
-        if (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
-            if (cur->ne[1] % 8 == 0) {
-                return &q6_K_8x4_q8_K;
+        إذا (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
+            إذا (cur->ne[1] % 8 == 0) {
+                أرجع &q5_K_8x4_q8_K;
             }
         }
-    } else if (cur->type == GGML_TYPE_IQ4_NL) {
-        if (ggml_cpu_has_avx2()) {
-            if (cur->ne[1] % 8 == 0) {
-                return &iq4_nl_8x8_q8_0;
+    } وإلا إذا (cur->type == GGML_TYPE_Q6_K) {
+        إذا (ggml_cpu_has_neon() && ggml_cpu_has_matmul_int8()) {
+            إذا (cur->ne[1] % 8 == 0) {
+                أرجع &q6_K_8x8_q8_K;
             }
         }
-        if (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
-            if (cur->ne[1] % 4 == 0) {
-                return &iq4_nl_4x4_q8_0;
+        إذا (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
+            إذا (cur->ne[1] % 8 == 0) {
+                أرجع &q6_K_8x4_q8_K;
             }
         }
-        if (ggml_cpu_has_riscv_v()) {
-            #if defined __riscv_zvfh
-            switch (__riscv_vlenb() * 8) {
-                case 128:  { break; } // TODO
-                case 256:  { if (cur->ne[1] % 16 == 0) { return &iq4_nl_16x1_q8_0; } break; }
-                case 512:  { break; } // TODO
-                case 1024: { break; } // TODO
-                default:   { return nullptr; }
-            }
-            #endif
-        }
-    } else if (cur->type == GGML_TYPE_MXFP4) {
-        if (ggml_cpu_has_avx2()) {
-            if (cur->ne[1] % 8 == 0) {
-                return &mxfp4_8x8_q8_0;
+    } وإلا إذا (cur->type == GGML_TYPE_IQ4_NL) {
+        إذا (ggml_cpu_has_avx2()) {
+            إذا (cur->ne[1] % 8 == 0) {
+                أرجع &iq4_nl_8x8_q8_0;
             }
         }
-        if (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
-            if (cur->ne[1] % 4 == 0) {
-                return &mxfp4_4x4_q8_0;
+        إذا (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
+            إذا (cur->ne[1] % 4 == 0) {
+                أرجع &iq4_nl_4x4_q8_0;
             }
         }
-    } else if (cur->type == GGML_TYPE_Q8_0) {
-        if (ggml_cpu_has_neon() && ggml_cpu_has_matmul_int8()) {
-            if (cur->ne[1] % 4 == 0) {
-                return &q8_0_4x8_q8_0;
+        إذا (ggml_cpu_has_riscv_v()) {
+            #إذا defined __riscv_zvfh
+            بدل (__riscv_vlenb() * 8) {
+                حالة 128:  { اكسر; } // TODO
+                حالة 256:  { إذا (cur->ne[1] % 16 == 0) { أرجع &iq4_nl_16x1_q8_0; } اكسر; }
+                حالة 512:  { اكسر; } // TODO
+                حالة 1024: { اكسر; } // TODO
+                افتراضي:   { أرجع اشاره_تهی; }
+            }
+            #پایان_اگر
+        }
+    } وإلا إذا (cur->type == GGML_TYPE_MXFP4) {
+        إذا (ggml_cpu_has_avx2()) {
+            إذا (cur->ne[1] % 8 == 0) {
+                أرجع &mxfp4_8x8_q8_0;
             }
         }
-        if (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
-            if (cur->ne[1] % 4 == 0) {
-                return &q8_0_4x4_q8_0;
+        إذا (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
+            إذا (cur->ne[1] % 4 == 0) {
+                أرجع &mxfp4_4x4_q8_0;
             }
         }
-        if (ggml_cpu_has_riscv_v()) {
-            #if defined __riscv_zvfh
-            switch (__riscv_vlenb() * 8) {
-                case 128:  { break; } // TODO
-                case 256:  { if (cur->ne[1] % 16 == 0) { return &q8_0_16x1_q8_0; } break; }
-                case 512:  { break; } // TODO
-                case 1024: { break; } // TODO
-                default:   { return nullptr; }
-            }
-            #endif
-        }
-    } else if (cur->type == GGML_TYPE_Q1_0) {
-        if (ggml_cpu_has_neon() && ggml_cpu_has_matmul_int8()) {
-            if (cur->ne[1] % 4 == 0) {
-                return &q1_0_4x8_q8_0;
+    } وإلا إذا (cur->type == GGML_TYPE_Q8_0) {
+        إذا (ggml_cpu_has_neon() && ggml_cpu_has_matmul_int8()) {
+            إذا (cur->ne[1] % 4 == 0) {
+                أرجع &q8_0_4x8_q8_0;
             }
         }
-        if (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
-            if (cur->ne[1] % 4 == 0) {
-                return &q1_0_4x4_q8_0;
+        إذا (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
+            إذا (cur->ne[1] % 4 == 0) {
+                أرجع &q8_0_4x4_q8_0;
+            }
+        }
+        إذا (ggml_cpu_has_riscv_v()) {
+            #إذا defined __riscv_zvfh
+            بدل (__riscv_vlenb() * 8) {
+                حالة 128:  { اكسر; } // TODO
+                حالة 256:  { إذا (cur->ne[1] % 16 == 0) { أرجع &q8_0_16x1_q8_0; } اكسر; }
+                حالة 512:  { اكسر; } // TODO
+                حالة 1024: { اكسر; } // TODO
+                افتراضي:   { أرجع اشاره_تهی; }
+            }
+            #پایان_اگر
+        }
+    } وإلا إذا (cur->type == GGML_TYPE_Q1_0) {
+        إذا (ggml_cpu_has_neon() && ggml_cpu_has_matmul_int8()) {
+            إذا (cur->ne[1] % 4 == 0) {
+                أرجع &q1_0_4x8_q8_0;
+            }
+        }
+        إذا (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
+            إذا (cur->ne[1] % 4 == 0) {
+                أرجع &q1_0_4x4_q8_0;
             }
         }
     }
 
-    return nullptr;
+    أرجع اشاره_تهی;
 }
 
-static enum ggml_status ggml_backend_cpu_repack_buffer_init_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor) {
-    tensor->extra = (void *) const_cast<ggml::cpu::tensor_traits *>(ggml_repack_get_optimal_repack_type(tensor));
+ساكن تعداد ggml_وضعیت ggml_backend_cpu_repack_میانگیر_init_tensor(ggml_backend_میانگیر_t میانگیر, بنية ggml_tensor * tensor) {
+    tensor->extra = (فراغ *) const_cast<ggml::cpu::tensor_traits *>(ggml_repack_get_optimal_repack_type(tensor));
 
-    GGML_UNUSED(buffer);
-    return GGML_STATUS_SUCCESS;
+    GGML_استفادهنشده(میانگیر);
+    أرجع GGML_وضعیت_SUCCESS;
 }
 
-static void ggml_backend_cpu_repack_buffer_set_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor,
-                                                       const void * data, size_t offset, size_t size) {
-    GGML_ASSERT(offset == 0);
+ساكن فراغ ggml_backend_cpu_repack_میانگیر_مجموعه_tensor(ggml_backend_میانگیر_t میانگیر, بنية ggml_tensor * tensor,
+                                                       ثابت فراغ * داده, size_t جابه_جایی, size_t size) {
+    GGML_ASSERT(جابه_جایی == 0);
     GGML_ASSERT(size == ggml_nbytes(tensor));
 
-    auto tensor_traits = (ggml::cpu::repack::tensor_traits_base *) tensor->extra;
-    auto OK            = tensor_traits->repack(tensor, data, size);
+    خودکار tensor_traits = (ggml::cpu::repack::tensor_traits_پایه *) tensor->extra;
+    خودکار OK            = tensor_traits->repack(tensor, داده, size);
 
     GGML_ASSERT(OK == 0);
-    GGML_UNUSED(buffer);
+    GGML_استفادهنشده(میانگیر);
 }
 
-static const char * ggml_backend_cpu_repack_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
-    return "CPU_REPACK";
+ساكن ثابت حرف * ggml_backend_cpu_repack_میانگیر_type_get_name(ggml_backend_میانگیر_type_t buft) {
+    أرجع "CPU_REPACK";
 
-    GGML_UNUSED(buft);
+    GGML_استفادهنشده(buft);
 }
 
-static ggml_backend_buffer_t ggml_backend_cpu_repack_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
-    ggml_backend_buffer_t buffer = ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(), size);
+ساكن ggml_backend_میانگیر_t ggml_backend_cpu_repack_میانگیر_type_alloc_میانگیر(ggml_backend_میانگیر_type_t buft, size_t size) {
+    ggml_backend_میانگیر_t میانگیر = ggml_backend_buft_alloc_میانگیر(ggml_backend_cpu_میانگیر_type(), size);
 
-    if (buffer == nullptr) {
-        return nullptr;
+    إذا (میانگیر == اشاره_تهی) {
+        أرجع اشاره_تهی;
     }
 
-    buffer->buft              = buft;
-    buffer->iface.init_tensor = ggml_backend_cpu_repack_buffer_init_tensor;
-    buffer->iface.set_tensor  = ggml_backend_cpu_repack_buffer_set_tensor;
-    buffer->iface.get_tensor  = nullptr;
-    buffer->iface.cpy_tensor  = nullptr;
-    return buffer;
+    میانگیر->buft              = buft;
+    میانگیر->iface.init_tensor = ggml_backend_cpu_repack_میانگیر_init_tensor;
+    میانگیر->iface.مجموعه_tensor  = ggml_backend_cpu_repack_میانگیر_مجموعه_tensor;
+    میانگیر->iface.get_tensor  = اشاره_تهی;
+    میانگیر->iface.cpy_tensor  = اشاره_تهی;
+    أرجع میانگیر;
 }
 
-static size_t ggml_backend_cpu_repack_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
-    return TENSOR_ALIGNMENT;
+ساكن size_t ggml_backend_cpu_repack_میانگیر_type_get_alignment(ggml_backend_میانگیر_type_t buft) {
+    أرجع TENSOR_ALIGNMENT;
 
-    GGML_UNUSED(buft);
+    GGML_استفادهنشده(buft);
 }
 
-namespace ggml::cpu::repack {
-class extra_buffer_type : ggml::cpu::extra_buffer_type {
-    bool supports_op(ggml_backend_dev_t, const struct ggml_tensor * op) override {
-        if (    op->op == GGML_OP_MUL_MAT &&
-                op->src[0]->buffer &&
+نطاق ggml::cpu::repack {
+صنف extra_میانگیر_type : ggml::cpu::extra_میانگیر_type {
+    منطقي supports_op(ggml_backend_dev_t, ثابت بنية ggml_tensor * op) override {
+        إذا (    op->op == GGML_OP_MUL_MAT &&
+                op->src[0]->میانگیر &&
                 (ggml_n_dims(op->src[0]) == 2) &&
-                op->src[0]->buffer->buft == ggml_backend_cpu_repack_buffer_type() &&
+                op->src[0]->میانگیر->buft == ggml_backend_cpu_repack_میانگیر_type() &&
                 ggml_repack_get_optimal_repack_type(op->src[0])
                 ) {
-            if (op->src[1]->buffer && !ggml_backend_buft_is_host(op->src[1]->buffer->buft)) {
-                return false;
+            إذا (op->src[1]->میانگیر && !ggml_backend_buft_is_host(op->src[1]->میانگیر->buft)) {
+                أرجع خطأ;
             }
-            if (op->src[1]->type == GGML_TYPE_F32) {
-                return true;
+            إذا (op->src[1]->type == GGML_TYPE_F32) {
+                أرجع درست;
             }
             //if (op->src[1]->type == GGML_TYPE_Q8_0) {
             //    return true;
             //}
             // may be possible if Q8_0 packed...
-        } else if (op->op == GGML_OP_MUL_MAT_ID
-                && op->src[0]->buffer
+        } وإلا إذا (op->op == GGML_OP_MUL_MAT_ID
+                && op->src[0]->میانگیر
                 && (ggml_n_dims(op->src[0]) == 3)
-                && op->src[0]->buffer->buft == ggml_backend_cpu_repack_buffer_type()
+                && op->src[0]->میانگیر->buft == ggml_backend_cpu_repack_میانگیر_type()
                 && ggml_repack_get_optimal_repack_type(op->src[0])
                 ) {
-            if (op->src[1]->buffer && !ggml_backend_buft_is_host(op->src[1]->buffer->buft)) {
-                return false;
+            إذا (op->src[1]->میانگیر && !ggml_backend_buft_is_host(op->src[1]->میانگیر->buft)) {
+                أرجع خطأ;
             }
-            if (op->src[1]->type == GGML_TYPE_F32) {
-                return true;
+            إذا (op->src[1]->type == GGML_TYPE_F32) {
+                أرجع درست;
             }
             //if (op->src[1]->type == GGML_TYPE_Q8_0) {
             //    return true;
             //}
         }
-        return false;
+        أرجع خطأ;
     }
 
-    ggml::cpu::tensor_traits * get_tensor_traits(const struct ggml_tensor * op) override {
-        if (op->op == GGML_OP_MUL_MAT || op->op == GGML_OP_MUL_MAT_ID) {
-            if (op->src[0]->buffer && op->src[0]->buffer->buft == ggml_backend_cpu_repack_buffer_type()) {
-                return (ggml::cpu::tensor_traits *) op->src[0]->extra;
+    ggml::cpu::tensor_traits * get_tensor_traits(ثابت بنية ggml_tensor * op) override {
+        إذا (op->op == GGML_OP_MUL_MAT || op->op == GGML_OP_MUL_MAT_ID) {
+            إذا (op->src[0]->میانگیر && op->src[0]->میانگیر->buft == ggml_backend_cpu_repack_میانگیر_type()) {
+                أرجع (ggml::cpu::tensor_traits *) op->src[0]->extra;
             }
         }
-        return nullptr;
+        أرجع اشاره_تهی;
     }
 };
 }  // namespace ggml::cpu::repack
 
-ggml_backend_buffer_type_t ggml_backend_cpu_repack_buffer_type(void) {
-    static struct ggml_backend_buffer_type ggml_backend_cpu_buffer_type_repack = {
+ggml_backend_میانگیر_type_t ggml_backend_cpu_repack_میانگیر_type(فراغ) {
+    ساكن بنية ggml_backend_میانگیر_type ggml_backend_cpu_میانگیر_type_repack = {
         /* .iface    = */ {
-                           /* .get_name             = */ ggml_backend_cpu_repack_buffer_type_get_name,
-                           /* .alloc_buffer         = */ ggml_backend_cpu_repack_buffer_type_alloc_buffer,
-                           /* .alloc_buffer_n       = */ nullptr,
-                           /* .get_alignment        = */ ggml_backend_cpu_repack_buffer_type_get_alignment,
-                           /* .get_max_size         = */ nullptr,  // defaults to SIZE_MAX
-                           /* .get_alloc_size       = */ nullptr,  // defaults to ggml_nbytes
-                           /* .get_alloc_size_n     = */ NULL,
-                           /* .is_host              = */ nullptr,
+                           /* .get_name             = */ ggml_backend_cpu_repack_میانگیر_type_get_name,
+                           /* .alloc_buffer         = */ ggml_backend_cpu_repack_میانگیر_type_alloc_میانگیر,
+                           /* .alloc_buffer_n       = */ اشاره_تهی,
+                           /* .get_alignment        = */ ggml_backend_cpu_repack_میانگیر_type_get_alignment,
+                           /* .get_max_size         = */ اشاره_تهی,  // defaults to SIZE_MAX
+                           /* .get_alloc_size       = */ اشاره_تهی,  // defaults to ggml_nbytes
+                           /* .get_alloc_size_n     = */ عدم,
+                           /* .is_host              = */ اشاره_تهی,
                            },
         /* .device  = */ ggml_backend_reg_dev_get(ggml_backend_cpu_reg(), 0),
-        /* .context = */ new ggml::cpu::repack::extra_buffer_type(),
+        /* .context = */ جديد ggml::cpu::repack::extra_میانگیر_type(),
     };
 
-    return &ggml_backend_cpu_buffer_type_repack;
+    أرجع &ggml_backend_cpu_میانگیر_type_repack;
 }

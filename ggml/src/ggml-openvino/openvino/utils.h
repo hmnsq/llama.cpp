@@ -1,99 +1,99 @@
-#pragma once
+#رهنمود once
 
-#include "node_context.h"
+#ضمن "node_context.h"
 
-#include <memory>
-#include <openvino/core/node.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/shape_of.hpp>
-#include <openvino/op/slice.hpp>
-#include <utility>
+#ضمن <memory>
+#ضمن <openvino/core/node.hpp>
+#ضمن <openvino/op/convert.hpp>
+#ضمن <openvino/op/shape_of.hpp>
+#ضمن <openvino/op/slice.hpp>
+#ضمن <utility>
 
 namespace ov {
 namespace frontend {
 namespace ggml {
 
-std::string getCurrentTime();
+std::string get_Current_زمان();
 
-void num_inputs_check(const NodeContext & context, size_t min_inputs, size_t max_inputs);
+فراغ رقم_inputs_check(ثابت گره_Context & context, size_t min_inputs, size_t max_inputs);
 
-int non_cont_dim(std::vector<size_t> ne, std::vector<size_t> nb);
+صحيح non_cont_dim(std::وکتور<size_t> ne, std::وکتور<size_t> nb);
 
-template <typename T> std::vector<int> argsort_descend(const std::vector<T> & v) {
-    std::vector<int> idx(v.size());
-    std::iota(idx.begin(), idx.end(), 0);
-    std::sort(idx.begin(), idx.end(), [&v](int i1, int i2) { return v[i1] > v[i2]; });
-    return idx;
+قالب <typename T> std::وکتور<صحيح> argsort_descend(ثابت std::وکتور<T> & v) {
+    std::وکتور<صحيح> idx(v.اندازه());
+    std::iota(idx.begin(), idx.انتها(), 0);
+    std::مرتب_سازی(idx.begin(), idx.انتها(), [&v](صحيح i1, صحيح i2) { أرجع v[i1] > v[i2]; });
+    أرجع idx;
 }
 
-template <typename T> std::vector<T> sorted_descend(std::vector<T> v) {
-    std::sort(v.begin(), v.end(), [](T a, T b) { return a > b; });
-    return v;
+قالب <typename T> std::وکتور<T> sorted_descend(std::وکتور<T> v) {
+    std::مرتب_سازی(v.begin(), v.انتها(), [](T a, T b) { أرجع a > b; });
+    أرجع v;
 }
 
-template <typename T> bool is_permuted(const std::vector<T> & strides) {
-    for (size_t i = 0; i < strides.size() - 1; ++i) {
-        if (strides[i] < strides[i + 1]) {
-            return true;
+قالب <typename T> bool is_permuted(ثابت std::وکتور<T> & strides) {
+    لكل (size_t i = 0; i < strides.اندازه() - 1; ++i) {
+        إذا (strides[i] < strides[i + 1]) {
+            أرجع true;
         }
     }
-    return false;
+    أرجع false;
 }
 
-template <typename T> std::vector<T> permute(const std::vector<T> & x, const std::vector<int> & perm) {
-    std::vector<T> result;
-    result.reserve(perm.size());
-    for (int i : perm) {
-        result.push_back(x[i]);
+قالب <typename T> std::وکتور<T> جایگشت_2(ثابت std::وکتور<T> & x, ثابت std::وکتور<صحيح> & perm) {
+    std::وکتور<T> نتیجه;
+    نتیجه.reserve(perm.اندازه());
+    لكل (صحيح i : perm) {
+        نتیجه.افزودن_پشت(x[i]);
     }
-    return result;
+    أرجع نتیجه;
 }
 
-std::shared_ptr<ov::Node> get_dimensions(const std::shared_ptr<ov::op::v3::ShapeOf> & shape,
-                                         const std::vector<int> & dims);
-std::shared_ptr<ov::Node> get_dimensions(const std::shared_ptr<ov::Node> & node, const std::vector<int> & dims);
+std::shared_ptr<ov::گره_2> get_dimensions(ثابت std::shared_ptr<ov::op::v3::Shape_از> & shape,
+                                         ثابت std::وکتور<صحيح> & dims);
+std::shared_ptr<ov::گره_2> get_dimensions(ثابت std::shared_ptr<ov::گره_2> & گره, ثابت std::وکتور<صحيح> & dims);
 
-OutputVector rename_outputs_with_suffix(const OutputVector & outputs, const std::string & suffix);
+Output_وکتور rename_outputs_with_suffix(ثابت Output_وکتور & outputs, ثابت std::string & suffix);
 
-std::pair<ov::Output<Node>, ov::Output<Node>> make_sin_cos(int32_t * rope_params,
-                                                           std::shared_ptr<ov::Node> inp_pos,
-                                                           std::shared_ptr<ov::Node> rope_freqs_weight = nullptr,
-                                                           int mode = 0,
+std::pair<ov::Output<گره_2>, ov::Output<گره_2>> make_sin_cos(int32_t * rope_params,
+                                                           std::shared_ptr<ov::گره_2> inp_pos,
+                                                           std::shared_ptr<ov::گره_2> rope_freqs_وزن = nullptr,
+                                                           صحيح نما = 0,
                                                            bool stateful = false,
-                                                           int64_t head_dim = 0);
+                                                           int64_t سر_dim = 0);
 
-ov::Output<ov::Node> process_view_input(const NodeContext & context, int input_index, int slice_len = 0, int axis = -1);
+ov::Output<ov::گره_2> process_view_درون_داد(ثابت گره_Context & context, صحيح درون_داد_شاخص, صحيح برش_len = 0, صحيح axis = -1);
 
-ov::Output<ov::Node> process_view_input_new(const NodeContext & context, int input_index);
+ov::Output<ov::گره_2> process_view_درون_داد_new(ثابت گره_Context & context, صحيح درون_داد_شاخص);
 
 namespace op {
-template <typename T> OutputVector translate_1to1_match_2_inputs(const NodeContext & context) {
-    num_inputs_check(context, 2, 2);
-    auto input_0 = process_view_input_new(context, 0);
-    auto input_1 = process_view_input_new(context, 1);
+قالب <typename T> Output_وکتور translate_1to1_تطابق_2_inputs(ثابت گره_Context & context) {
+    رقم_inputs_check(context, 2, 2);
+    خودکار درون_داد_0 = process_view_درون_داد_new(context, 0);
+    خودکار درون_داد_1 = process_view_درون_داد_new(context, 1);
 
-    auto output_type = context.get_output_type();
-    if (input_0.get_element_type() != input_1.get_element_type()) {
-        if (input_0.get_element_type() != ov::element::f32) {
-            input_0 = std::make_shared<ov::op::v0::Convert>(input_0, ov::element::f32);
+    خودکار output_type = context.get_output_type();
+    إذا (درون_داد_0.get_element_type() != درون_داد_1.get_element_type()) {
+        إذا (درون_داد_0.get_element_type() != ov::element::f32) {
+            درون_داد_0 = std::make_shared<ov::op::v0::Convert>(درون_داد_0, ov::element::f32);
         }
-        if (input_1.get_element_type() != ov::element::f32) {
-            input_1 = std::make_shared<ov::op::v0::Convert>(input_1, ov::element::f32);
+        إذا (درون_داد_1.get_element_type() != ov::element::f32) {
+            درون_داد_1 = std::make_shared<ov::op::v0::Convert>(درون_داد_1, ov::element::f32);
         }
     }
 
-    ov::Output<ov::Node> res = std::make_shared<T>(input_0, input_1);
-    if (res.get_element_type() != output_type) {
+    ov::Output<ov::گره_2> res = std::make_shared<T>(درون_داد_0, درون_داد_1);
+    إذا (res.get_element_type() != output_type) {
         res = std::make_shared<ov::op::v0::Convert>(res, output_type);
     }
-    return rename_outputs_with_suffix({res}, context.get_name());
+    أرجع rename_outputs_with_suffix({res}, context.get_name());
 }
 
-template <typename T> OutputVector translate_1to1_match_1_input(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
-    auto input = process_view_input_new(context, 0);
-    auto res = std::make_shared<T>(input);
-    return rename_outputs_with_suffix({res}, context.get_name());
+قالب <typename T> Output_وکتور translate_1to1_تطابق_1_درون_داد(ثابت گره_Context & context) {
+    رقم_inputs_check(context, 1, 1);
+    خودکار درون_داد = process_view_درون_داد_new(context, 0);
+    خودکار res = std::make_shared<T>(درون_داد);
+    أرجع rename_outputs_with_suffix({res}, context.get_name());
 }
 }  // namespace op
 

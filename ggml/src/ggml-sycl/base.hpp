@@ -1,5 +1,5 @@
-#ifndef GGML_SYCL_BASE_HPP
-#define GGML_SYCL_BASE_HPP
+#اگر_تعریف_نشده GGML_SYCL_پایه_HPP
+#تعریف_کن GGML_SYCL_پایه_HPP
 
 /**
  * Module: base
@@ -14,30 +14,30 @@
  * - High stability and backward compatibility required.
  */
 
-#include <cstdio>
+#ضمن <cstdio>
 
-extern int g_ggml_sycl_debug;
-extern int g_ggml_sycl_dev_debug;
+خارجي صحيح g_ggml_sycl_debug;
+خارجي صحيح g_ggml_sycl_dev_debug;
 
-#if defined(__clang__) && __has_builtin(__builtin_expect)
+#إذا defined(__clang__) && __has_builtin(__builtin_expect)
 // Hint the optimizer to pipeline the more likely following instruction in branches
-#    define LIKELY(expr)   __builtin_expect(expr, true)
-#    define UNLIKELY(expr) __builtin_expect(expr, false)
-#else
-#    define LIKELY(expr)   (expr)
-#    define UNLIKELY(expr) (expr)
-#endif
+#    define LIKELY(عبارت)   __builtin_expect(عبارت, درست)
+#    define UNLIKELY(عبارت) __builtin_expect(عبارت, خطأ)
+#وإلا
+#    define LIKELY(عبارت)   (عبارت)
+#    define UNLIKELY(عبارت) (عبارت)
+#پایان_اگر
 
-#define GGML_SYCL_DEBUG(...)              \
-    do {                                  \
-        if (UNLIKELY(g_ggml_sycl_debug))  \
+#تعریف_کن GGML_SYCL_DEBUG(...)              \
+    افعل {                                  \
+        إذا (UNLIKELY(g_ggml_sycl_debug))  \
             fprintf(stderr, __VA_ARGS__); \
-    } while (0)
+    } طالما (0)
 
-#define GGML_SYCL_DEV_DEBUG(...)          \
-    do {                                  \
-        if (UNLIKELY(g_ggml_sycl_dev_debug))  \
+#تعریف_کن GGML_SYCL_DEV_DEBUG(...)          \
+    افعل {                                  \
+        إذا (UNLIKELY(g_ggml_sycl_dev_debug))  \
             fprintf(stderr, __VA_ARGS__); \
-    } while (0)
+    } طالما (0)
 
-#endif  // GGML_SYCL_BASE_HPP
+#پایان_اگر  // GGML_SYCL_BASE_HPP

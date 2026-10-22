@@ -1,8 +1,8 @@
-#ifndef GGML_SYCL_GLA_HPP
-#define GGML_SYCL_GLA_HPP
+#اگر_تعریف_نشده GGML_SYCL_GLA_HPP
+#تعریف_کن GGML_SYCL_GLA_HPP
 
-#include "common.hpp"
+#ضمن "common.hpp"
 
-void ggml_sycl_op_gated_linear_attn(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+فراغ ggml_sycl_op_gated_خطی_attn(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-#endif  // GGML_SYCL_GLA_HPP
+#پایان_اگر  // GGML_SYCL_GLA_HPP

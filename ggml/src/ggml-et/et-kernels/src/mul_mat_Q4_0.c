@@ -3,63 +3,63 @@
 // Matrix multiplication: C[M,N] = A[M,K] * B[K,N]
 //******************************************************************************
 
-#include "block_ops.h"
-#include "ggml_tensor.h"
-#include "math_fp.h"
-#include "platform.h"
-#include "quants.h"
+#ضمن "block_ops.h"
+#ضمن "ggml_tensor.h"
+#ضمن "math_fp.h"
+#ضمن "platform.h"
+#ضمن "quants.h"
 
-#include <stdint.h>
+#ضمن <stdint.h>
 
-#define STRIDE_M                   2048 /* 32 shires x 32 minions x 2 harts */
-#define STRIDE_M_KSPLIT            1024 /* 32 shires x 32 minions (both harts share rows) */
-#define KSPLIT_MIN_K_BLOCKS        256  /* K >= 8192 elements */
-#define KSPLIT_SMALL_ROWS_K_BLOCKS 64   /* K >= 2048 elements for very small M */
-#define KSPLIT_MAX_ROWS            8    /* max rows per minion for K-split */
-#define TILE_KB                    256  /* K-tile size in Q4_0 blocks (8192 elems, 32KB B data) */
-#define KSPLIT_GROUP_ROWS          4
-#define SIMPLE_X2_ROWS             2
+#تعریف_کن STRIDE_M                   2048 /* 32 shires x 32 minions x 2 harts */
+#تعریف_کن STRIDE_M_KSPLIT            1024 /* 32 shires x 32 minions (both harts share rows) */
+#تعریف_کن KSPLIT_MIN_K_بلوکها        256  /* K >= 8192 elements */
+#تعریف_کن KSPLIT_SMALL_ردیفها_K_بلوکها 64   /* K >= 2048 elements for very small M */
+#تعریف_کن KSPLIT_MAX_ردیفها            8    /* max rows per minion for K-split */
+#تعریف_کن TILE_KB                    256  /* K-tile size in Q4_0 blocks (8192 elems, 32KB B data) */
+#تعریف_کن KSPLIT_گروه_ردیفها          4
+#تعریف_کن SIMPLE_X2_ردیفها             2
 
-int entry_point(struct ggml_et_binary_params * params, void * env) {
+صحيح مدخل_نقطه(بنية ggml_et_دودویی_params * params, فراغ * env) {
     uint64_t hart_id = get_hart_id();
 
     // Matrix dimensions
-    const int64_t K    = params->src0.ne[0];
-    const int64_t M    = params->src0.ne[1];
-    const int64_t N    = params->src1.ne[1];
-    const int64_t ne02 = params->src0.ne[2];
-    const int64_t ne03 = params->src0.ne[3];
-    const int64_t ne12 = params->src1.ne[2];
-    const int64_t ne13 = params->src1.ne[3];
+    ثابت int64_t K    = params->src0.ne[0];
+    ثابت int64_t M    = params->src0.ne[1];
+    ثابت int64_t N    = params->src1.ne[1];
+    ثابت int64_t ne02 = params->src0.ne[2];
+    ثابت int64_t ne03 = params->src0.ne[3];
+    ثابت int64_t ne12 = params->src1.ne[2];
+    ثابت int64_t ne13 = params->src1.ne[3];
 
     // Strides (in bytes)
-    const size_t nb01 = params->src0.nb[1];
-    const size_t nb02 = params->src0.nb[2];
-    const size_t nb03 = params->src0.nb[3];
+    ثابت size_t nb01 = params->src0.nb[1];
+    ثابت size_t nb02 = params->src0.nb[2];
+    ثابت size_t nb03 = params->src0.nb[3];
 
-    const size_t nb11 = params->src1.nb[1];
-    const size_t nb12 = params->src1.nb[2];
-    const size_t nb13 = params->src1.nb[3];
+    ثابت size_t nb11 = params->src1.nb[1];
+    ثابت size_t nb12 = params->src1.nb[2];
+    ثابت size_t nb13 = params->src1.nb[3];
 
-    const size_t nbd1 = params->dst.nb[1];
-    const size_t nbd2 = params->dst.nb[2];
-    const size_t nbd3 = params->dst.nb[3];
+    ثابت size_t nbd1 = params->dst.nb[1];
+    ثابت size_t nbd2 = params->dst.nb[2];
+    ثابت size_t nbd3 = params->dst.nb[3];
 
     // Q4_0 block size is 32
-    const int64_t K_blocks      = K / 32;
-    const int     use_simple_x2 = ((nb01 & 31) == 0);
+    ثابت int64_t K_بلوکها      = K / 32;
+    ثابت صحيح     use_simple_x2 = ((nb01 & 31) == 0);
 
     // Broadcasting ratios
-    const int64_t r2 = ne12 / ne02;
-    const int64_t r3 = ne13 / ne03;
+    ثابت int64_t r2 = ne12 / ne02;
+    ثابت int64_t r3 = ne13 / ne03;
 
     // K-split decision
-    const int64_t minion_id             = hart_id >> 1;          /* 0..1023 global */
-    const int64_t local_minion          = (hart_id >> 1) & 0x1F; /* 0..31 within shire */
-    const int     is_hart1              = hart_id & 1;
-    const int64_t rows_per_minion       = (M + STRIDE_M_KSPLIT - 1) / STRIDE_M_KSPLIT;
-    const int64_t k_half                = K_blocks / 2;
-    const int     use_ksplit_small_rows = (rows_per_minion <= 2) && (K_blocks >= KSPLIT_SMALL_ROWS_K_BLOCKS);
+    ثابت int64_t minion_id             = hart_id >> 1;          /* 0..1023 global */
+    ثابت int64_t local_minion          = (hart_id >> 1) & 0x1F; /* 0..31 within shire */
+    ثابت صحيح     is_hart1              = hart_id & 1;
+    ثابت int64_t ردیفها_در_هر_minion       = (M + STRIDE_M_KSPLIT - 1) / STRIDE_M_KSPLIT;
+    ثابت int64_t k_half                = K_بلوکها / 2;
+    ثابت صحيح     use_ksplit_small_ردیفها = (ردیفها_در_هر_minion <= 2) && (K_بلوکها >= KSPLIT_SMALL_ردیفها_K_بلوکها);
     /*
      * K-split when K is large enough to benefit, and either:
      *   - few rows (≤4): always safe, proven working
@@ -70,60 +70,60 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
      * that case the simple row-striped path leaves half the machine idle, so
      * using both harts on each row pays off even for moderate K.
      */
-    const int     use_ksplit            = ((K_blocks >= KSPLIT_MIN_K_BLOCKS) && (rows_per_minion <= KSPLIT_MAX_ROWS) &&
-                                           (rows_per_minion <= 4 || k_half <= TILE_KB)) ||
-                                          use_ksplit_small_rows;
-    const int     use_ksplit_group      = !use_ksplit && (K_blocks >= KSPLIT_MIN_K_BLOCKS) && (rows_per_minion > 4) &&
-                                          (rows_per_minion <= KSPLIT_MAX_ROWS);
+    ثابت صحيح     use_ksplit            = ((K_بلوکها >= KSPLIT_MIN_K_بلوکها) && (ردیفها_در_هر_minion <= KSPLIT_MAX_ردیفها) &&
+                                           (ردیفها_در_هر_minion <= 4 || k_half <= TILE_KB)) ||
+                                          use_ksplit_small_ردیفها;
+    ثابت صحيح     use_ksplit_گروه      = !use_ksplit && (K_بلوکها >= KSPLIT_MIN_K_بلوکها) && (ردیفها_در_هر_minion > 4) &&
+                                          (ردیفها_در_هر_minion <= KSPLIT_MAX_ردیفها);
 
-    if (use_ksplit) {
+    إذا (use_ksplit) {
         /* Each hart processes half the K dimension */
-        const int64_t k_start = is_hart1 ? k_half : 0;
-        const int64_t k_len   = is_hart1 ? (K_blocks - k_half) : k_half;
+        ثابت int64_t k_شروع = is_hart1 ? k_half : 0;
+        ثابت int64_t k_len   = is_hart1 ? (K_بلوکها - k_half) : k_half;
 
         /* One cache-line-aligned L2SCP slot per minion for exchange */
-        volatile float * l2scp_slot = (volatile float *) et_shire_l2scp_local(local_minion * 64);
+        متطاير عائم * l2scp_جایگاه = (متطاير عائم *) et_shire_l2scp_local(local_minion * 64);
 
-        for (int64_t i3 = 0; i3 < ne13; i3++) {
-            const int64_t i03       = i3 / r3;
-            const char *  src0_ptr3 = (const char *) params->src0.data + i03 * nb03;
-            const char *  src1_ptr3 = (const char *) params->src1.data + i3 * nb13;
-            char *        dst_ptr3  = (char *) params->dst.data + i3 * nbd3;
+        لكل (int64_t i3 = 0; i3 < ne13; i3++) {
+            ثابت int64_t i03       = i3 / r3;
+            ثابت حرف *  src0_ptr3 = (ثابت حرف *) params->src0.داده + i03 * nb03;
+            ثابت حرف *  src1_ptr3 = (ثابت حرف *) params->src1.داده + i3 * nb13;
+            حرف *        dst_ptr3  = (حرف *) params->dst.داده + i3 * nbd3;
 
-            for (int64_t i2 = 0; i2 < ne12; i2++) {
-                const int64_t i02       = i2 / r2;
-                const char *  src0_ptr2 = src0_ptr3 + i02 * nb02;
-                const char *  src1_ptr2 = src1_ptr3 + i2 * nb12;
-                char *        dst_ptr2  = dst_ptr3 + i2 * nbd2;
+            لكل (int64_t i2 = 0; i2 < ne12; i2++) {
+                ثابت int64_t i02       = i2 / r2;
+                ثابت حرف *  src0_ptr2 = src0_ptr3 + i02 * nb02;
+                ثابت حرف *  src1_ptr2 = src1_ptr3 + i2 * nb12;
+                حرف *        dst_ptr2  = dst_ptr3 + i2 * nbd2;
 
-                for (int64_t n = 0; n < N; n++) {
-                    const float * b_col_base = (const float *) (src1_ptr2 + n * nb11);
+                لكل (int64_t n = 0; n < N; n++) {
+                    ثابت عائم * b_ستون_پایه = (ثابت عائم *) (src1_ptr2 + n * nb11);
 
-                    for (int64_t m = minion_id; m < M; m += STRIDE_M_KSPLIT) {
-                        const block_q4_0 * q_row = (const block_q4_0 *) (src0_ptr2 + m * nb01);
+                    لكل (int64_t m = minion_id; m < M; m += STRIDE_M_KSPLIT) {
+                        ثابت بلوک_q4_0 * q_ردیف = (ثابت بلوک_q4_0 *) (src0_ptr2 + m * nb01);
 
-                        float partial = compute_row_dot_q4_0(q_row + k_start, b_col_base + k_start * 32, k_len);
+                        عائم partial = compute_ردیف_dot_q4_0(q_ردیف + k_شروع, b_ستون_پایه + k_شروع * 32, k_len);
 
-                        if (is_hart1) {
-                            *l2scp_slot = partial;
+                        إذا (is_hart1) {
+                            *l2scp_جایگاه = partial;
                             FENCE;
-                            flush_to_l2((const void *) l2scp_slot, 1, 64);
+                            flush_مقصد_l2((ثابت فراغ *) l2scp_جایگاه, 1, 64);
                             WAIT_CACHEOPS;
                             et_sem_post(ET_BARRIER_MINION);
                             et_sem_wait(ET_BARRIER_MINION);
-                        } else {
+                        } وإلا {
                             et_sem_wait(ET_BARRIER_MINION);
-                            float other = *l2scp_slot;
+                            عائم other = *l2scp_جایگاه;
                             et_sem_post(ET_BARRIER_MINION);
 
-                            float * dst_entry = (float *) (dst_ptr2 + n * nbd1 + m * sizeof(float));
-                            atomic_store_f32((volatile float *) dst_entry, partial + other);
+                            عائم * dst_مدخل = (عائم *) (dst_ptr2 + n * nbd1 + m * حجم(عائم));
+                            atomic_store_f32((متطاير عائم *) dst_مدخل, partial + other);
                         }
                     }
                 }
             }
         }
-    } else if (use_ksplit_group) {
+    } وإلا إذا (use_ksplit_گروه) {
         /*
          * Grouped K-split for the 5-8 rows/minion regime.
          *
@@ -132,99 +132,99 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
          * This keeps the K-split bandwidth benefit while cutting semaphore
          * traffic by 4x relative to the old per-row exchange.
          */
-        const int64_t    k_start    = is_hart1 ? k_half : 0;
-        const int64_t    k_len      = is_hart1 ? (K_blocks - k_half) : k_half;
-        volatile float * l2scp_slot = (volatile float *) et_shire_l2scp_local(local_minion * 64);
+        ثابت int64_t    k_شروع    = is_hart1 ? k_half : 0;
+        ثابت int64_t    k_len      = is_hart1 ? (K_بلوکها - k_half) : k_half;
+        متطاير عائم * l2scp_جایگاه = (متطاير عائم *) et_shire_l2scp_local(local_minion * 64);
 
-        for (int64_t i3 = 0; i3 < ne13; i3++) {
-            const int64_t i03       = i3 / r3;
-            const char *  src0_ptr3 = (const char *) params->src0.data + i03 * nb03;
-            const char *  src1_ptr3 = (const char *) params->src1.data + i3 * nb13;
-            char *        dst_ptr3  = (char *) params->dst.data + i3 * nbd3;
+        لكل (int64_t i3 = 0; i3 < ne13; i3++) {
+            ثابت int64_t i03       = i3 / r3;
+            ثابت حرف *  src0_ptr3 = (ثابت حرف *) params->src0.داده + i03 * nb03;
+            ثابت حرف *  src1_ptr3 = (ثابت حرف *) params->src1.داده + i3 * nb13;
+            حرف *        dst_ptr3  = (حرف *) params->dst.داده + i3 * nbd3;
 
-            for (int64_t i2 = 0; i2 < ne12; i2++) {
-                const int64_t i02       = i2 / r2;
-                const char *  src0_ptr2 = src0_ptr3 + i02 * nb02;
-                const char *  src1_ptr2 = src1_ptr3 + i2 * nb12;
-                char *        dst_ptr2  = dst_ptr3 + i2 * nbd2;
+            لكل (int64_t i2 = 0; i2 < ne12; i2++) {
+                ثابت int64_t i02       = i2 / r2;
+                ثابت حرف *  src0_ptr2 = src0_ptr3 + i02 * nb02;
+                ثابت حرف *  src1_ptr2 = src1_ptr3 + i2 * nb12;
+                حرف *        dst_ptr2  = dst_ptr3 + i2 * nbd2;
 
-                for (int64_t n = 0; n < N; n++) {
-                    const float * b_col_base = (const float *) (src1_ptr2 + n * nb11);
+                لكل (int64_t n = 0; n < N; n++) {
+                    ثابت عائم * b_ستون_پایه = (ثابت عائم *) (src1_ptr2 + n * nb11);
 
-                    for (int64_t m_base = minion_id; m_base < M; m_base += STRIDE_M_KSPLIT * KSPLIT_GROUP_ROWS) {
-                        const int64_t m0 = m_base;
-                        const int64_t m1 = m0 + STRIDE_M_KSPLIT;
-                        const int64_t m2 = m1 + STRIDE_M_KSPLIT;
-                        const int64_t m3 = m2 + STRIDE_M_KSPLIT;
+                    لكل (int64_t m_پایه = minion_id; m_پایه < M; m_پایه += STRIDE_M_KSPLIT * KSPLIT_گروه_ردیفها) {
+                        ثابت int64_t m0 = m_پایه;
+                        ثابت int64_t m1 = m0 + STRIDE_M_KSPLIT;
+                        ثابت int64_t m2 = m1 + STRIDE_M_KSPLIT;
+                        ثابت int64_t m3 = m2 + STRIDE_M_KSPLIT;
 
-                        float s0 = 0.0f, s1 = 0.0f, s2 = 0.0f, s3 = 0.0f;
+                        عائم s0 = 0.0f, s1 = 0.0f, s2 = 0.0f, s3 = 0.0f;
 
-                        for (int64_t kb = 0; kb < K_blocks; kb += TILE_KB) {
+                        لكل (int64_t kb = 0; kb < K_بلوکها; kb += TILE_KB) {
                             int64_t tile_len = k_len - kb;
-                            if (tile_len > TILE_KB) {
+                            إذا (tile_len > TILE_KB) {
                                 tile_len = TILE_KB;
                             }
-                            if (tile_len <= 0) {
-                                break;
+                            إذا (tile_len <= 0) {
+                                اكسر;
                             }
-                            const float * b_tile = b_col_base + (k_start + kb) * 32;
-                            const int64_t row_kb = k_start + kb;
+                            ثابت عائم * b_tile = b_ستون_پایه + (k_شروع + kb) * 32;
+                            ثابت int64_t ردیف_kb = k_شروع + kb;
 
-                            if (m0 < M) {
-                                s0 += compute_row_dot_q4_0((const block_q4_0 *) (src0_ptr2 + m0 * nb01) + row_kb,
+                            إذا (m0 < M) {
+                                s0 += compute_ردیف_dot_q4_0((ثابت بلوک_q4_0 *) (src0_ptr2 + m0 * nb01) + ردیف_kb,
                                                            b_tile, tile_len);
                             }
-                            if (m1 < M) {
-                                s1 += compute_row_dot_q4_0((const block_q4_0 *) (src0_ptr2 + m1 * nb01) + row_kb,
+                            إذا (m1 < M) {
+                                s1 += compute_ردیف_dot_q4_0((ثابت بلوک_q4_0 *) (src0_ptr2 + m1 * nb01) + ردیف_kb,
                                                            b_tile, tile_len);
                             }
-                            if (m2 < M) {
-                                s2 += compute_row_dot_q4_0((const block_q4_0 *) (src0_ptr2 + m2 * nb01) + row_kb,
+                            إذا (m2 < M) {
+                                s2 += compute_ردیف_dot_q4_0((ثابت بلوک_q4_0 *) (src0_ptr2 + m2 * nb01) + ردیف_kb,
                                                            b_tile, tile_len);
                             }
-                            if (m3 < M) {
-                                s3 += compute_row_dot_q4_0((const block_q4_0 *) (src0_ptr2 + m3 * nb01) + row_kb,
+                            إذا (m3 < M) {
+                                s3 += compute_ردیف_dot_q4_0((ثابت بلوک_q4_0 *) (src0_ptr2 + m3 * nb01) + ردیف_kb,
                                                            b_tile, tile_len);
                             }
                         }
 
-                        if (is_hart1) {
-                            l2scp_slot[0] = s0;
-                            l2scp_slot[1] = s1;
-                            l2scp_slot[2] = s2;
-                            l2scp_slot[3] = s3;
+                        إذا (is_hart1) {
+                            l2scp_جایگاه[0] = s0;
+                            l2scp_جایگاه[1] = s1;
+                            l2scp_جایگاه[2] = s2;
+                            l2scp_جایگاه[3] = s3;
                             FENCE;
-                            flush_to_l2((const void *) l2scp_slot, 1, 64);
+                            flush_مقصد_l2((ثابت فراغ *) l2scp_جایگاه, 1, 64);
                             WAIT_CACHEOPS;
                             et_sem_post(ET_BARRIER_MINION);
                             et_sem_wait(ET_BARRIER_MINION);
-                        } else {
+                        } وإلا {
                             et_sem_wait(ET_BARRIER_MINION);
-                            const float p0 = l2scp_slot[0];
-                            const float p1 = l2scp_slot[1];
-                            const float p2 = l2scp_slot[2];
-                            const float p3 = l2scp_slot[3];
+                            ثابت عائم p0 = l2scp_جایگاه[0];
+                            ثابت عائم p1 = l2scp_جایگاه[1];
+                            ثابت عائم p2 = l2scp_جایگاه[2];
+                            ثابت عائم p3 = l2scp_جایگاه[3];
                             et_sem_post(ET_BARRIER_MINION);
 
-                            float * c_base = (float *) (dst_ptr2 + n * nbd1);
-                            if (m0 < M) {
-                                atomic_store_f32((volatile float *) (c_base + m0), s0 + p0);
+                            عائم * c_پایه = (عائم *) (dst_ptr2 + n * nbd1);
+                            إذا (m0 < M) {
+                                atomic_store_f32((متطاير عائم *) (c_پایه + m0), s0 + p0);
                             }
-                            if (m1 < M) {
-                                atomic_store_f32((volatile float *) (c_base + m1), s1 + p1);
+                            إذا (m1 < M) {
+                                atomic_store_f32((متطاير عائم *) (c_پایه + m1), s1 + p1);
                             }
-                            if (m2 < M) {
-                                atomic_store_f32((volatile float *) (c_base + m2), s2 + p2);
+                            إذا (m2 < M) {
+                                atomic_store_f32((متطاير عائم *) (c_پایه + m2), s2 + p2);
                             }
-                            if (m3 < M) {
-                                atomic_store_f32((volatile float *) (c_base + m3), s3 + p3);
+                            إذا (m3 < M) {
+                                atomic_store_f32((متطاير عائم *) (c_پایه + m3), s3 + p3);
                             }
                         }
                     }
                 }
             }
         }
-    } else if (K_blocks > TILE_KB) {
+    } وإلا إذا (K_بلوکها > TILE_KB) {
         /*
          * Tile-outer with scalar row groups: process up to 4 rows per
          * hart sharing each B tile before advancing to the next tile.
@@ -232,67 +232,67 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
          * tiles — avoids the flw/fadd.s/fsw stack ops that corrupt vector
          * register state on ET-SoC-1's MMX-style shared FP file.
          */
-        for (int64_t i3 = 0; i3 < ne13; i3++) {
-            const int64_t i03       = i3 / r3;
-            const char *  src0_ptr3 = (const char *) params->src0.data + i03 * nb03;
-            const char *  src1_ptr3 = (const char *) params->src1.data + i3 * nb13;
-            char *        dst_ptr3  = (char *) params->dst.data + i3 * nbd3;
+        لكل (int64_t i3 = 0; i3 < ne13; i3++) {
+            ثابت int64_t i03       = i3 / r3;
+            ثابت حرف *  src0_ptr3 = (ثابت حرف *) params->src0.داده + i03 * nb03;
+            ثابت حرف *  src1_ptr3 = (ثابت حرف *) params->src1.داده + i3 * nb13;
+            حرف *        dst_ptr3  = (حرف *) params->dst.داده + i3 * nbd3;
 
-            for (int64_t i2 = 0; i2 < ne12; i2++) {
-                const int64_t i02       = i2 / r2;
-                const char *  src0_ptr2 = src0_ptr3 + i02 * nb02;
-                const char *  src1_ptr2 = src1_ptr3 + i2 * nb12;
-                char *        dst_ptr2  = dst_ptr3 + i2 * nbd2;
+            لكل (int64_t i2 = 0; i2 < ne12; i2++) {
+                ثابت int64_t i02       = i2 / r2;
+                ثابت حرف *  src0_ptr2 = src0_ptr3 + i02 * nb02;
+                ثابت حرف *  src1_ptr2 = src1_ptr3 + i2 * nb12;
+                حرف *        dst_ptr2  = dst_ptr3 + i2 * nbd2;
 
-                for (int64_t n = 0; n < N; n++) {
-                    const float * b_col_base = (const float *) (src1_ptr2 + n * nb11);
+                لكل (int64_t n = 0; n < N; n++) {
+                    ثابت عائم * b_ستون_پایه = (ثابت عائم *) (src1_ptr2 + n * nb11);
 
-                    for (int64_t m0 = hart_id; m0 < M; m0 += STRIDE_M * 4) {
-                        const int64_t m1 = m0 + STRIDE_M;
-                        const int64_t m2 = m0 + STRIDE_M * 2;
-                        const int64_t m3 = m0 + STRIDE_M * 3;
+                    لكل (int64_t m0 = hart_id; m0 < M; m0 += STRIDE_M * 4) {
+                        ثابت int64_t m1 = m0 + STRIDE_M;
+                        ثابت int64_t m2 = m0 + STRIDE_M * 2;
+                        ثابت int64_t m3 = m0 + STRIDE_M * 3;
 
-                        float s0 = 0.0f, s1 = 0.0f, s2 = 0.0f, s3 = 0.0f;
+                        عائم s0 = 0.0f, s1 = 0.0f, s2 = 0.0f, s3 = 0.0f;
 
-                        for (int64_t kb = 0; kb < K_blocks; kb += TILE_KB) {
-                            int64_t tile_len = K_blocks - kb;
-                            if (tile_len > TILE_KB) {
+                        لكل (int64_t kb = 0; kb < K_بلوکها; kb += TILE_KB) {
+                            int64_t tile_len = K_بلوکها - kb;
+                            إذا (tile_len > TILE_KB) {
                                 tile_len = TILE_KB;
                             }
-                            const float * b_tile = b_col_base + kb * 32;
+                            ثابت عائم * b_tile = b_ستون_پایه + kb * 32;
 
-                            s0 += compute_row_dot_q4_0((const block_q4_0 *) (src0_ptr2 + m0 * nb01) + kb, b_tile,
+                            s0 += compute_ردیف_dot_q4_0((ثابت بلوک_q4_0 *) (src0_ptr2 + m0 * nb01) + kb, b_tile,
                                                        tile_len);
-                            if (m1 < M) {
-                                s1 += compute_row_dot_q4_0((const block_q4_0 *) (src0_ptr2 + m1 * nb01) + kb, b_tile,
+                            إذا (m1 < M) {
+                                s1 += compute_ردیف_dot_q4_0((ثابت بلوک_q4_0 *) (src0_ptr2 + m1 * nb01) + kb, b_tile,
                                                            tile_len);
                             }
-                            if (m2 < M) {
-                                s2 += compute_row_dot_q4_0((const block_q4_0 *) (src0_ptr2 + m2 * nb01) + kb, b_tile,
+                            إذا (m2 < M) {
+                                s2 += compute_ردیف_dot_q4_0((ثابت بلوک_q4_0 *) (src0_ptr2 + m2 * nb01) + kb, b_tile,
                                                            tile_len);
                             }
-                            if (m3 < M) {
-                                s3 += compute_row_dot_q4_0((const block_q4_0 *) (src0_ptr2 + m3 * nb01) + kb, b_tile,
+                            إذا (m3 < M) {
+                                s3 += compute_ردیف_dot_q4_0((ثابت بلوک_q4_0 *) (src0_ptr2 + m3 * nb01) + kb, b_tile,
                                                            tile_len);
                             }
                         }
 
-                        float * dst_base = (float *) (dst_ptr2 + n * nbd1);
-                        atomic_store_f32((volatile float *) (dst_base + m0), s0);
-                        if (m1 < M) {
-                            atomic_store_f32((volatile float *) (dst_base + m1), s1);
+                        عائم * dst_پایه = (عائم *) (dst_ptr2 + n * nbd1);
+                        atomic_store_f32((متطاير عائم *) (dst_پایه + m0), s0);
+                        إذا (m1 < M) {
+                            atomic_store_f32((متطاير عائم *) (dst_پایه + m1), s1);
                         }
-                        if (m2 < M) {
-                            atomic_store_f32((volatile float *) (dst_base + m2), s2);
+                        إذا (m2 < M) {
+                            atomic_store_f32((متطاير عائم *) (dst_پایه + m2), s2);
                         }
-                        if (m3 < M) {
-                            atomic_store_f32((volatile float *) (dst_base + m3), s3);
+                        إذا (m3 < M) {
+                            atomic_store_f32((متطاير عائم *) (dst_پایه + m3), s3);
                         }
                     }
                 }
             }
         }
-    } else {
+    } وإلا {
         /*
          * Simple path for small K.
          *
@@ -300,59 +300,59 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
          * pattern. That lets us compute two rows together and reuse each loaded
          * B chunk across both rows instead of reloading it in a second dot call.
          */
-        for (int64_t i3 = 0; i3 < ne13; i3++) {
-            const int64_t i03       = i3 / r3;
-            const char *  src0_ptr3 = (const char *) params->src0.data + i03 * nb03;
-            const char *  src1_ptr3 = (const char *) params->src1.data + i3 * nb13;
-            char *        dst_ptr3  = (char *) params->dst.data + i3 * nbd3;
+        لكل (int64_t i3 = 0; i3 < ne13; i3++) {
+            ثابت int64_t i03       = i3 / r3;
+            ثابت حرف *  src0_ptr3 = (ثابت حرف *) params->src0.داده + i03 * nb03;
+            ثابت حرف *  src1_ptr3 = (ثابت حرف *) params->src1.داده + i3 * nb13;
+            حرف *        dst_ptr3  = (حرف *) params->dst.داده + i3 * nbd3;
 
-            for (int64_t i2 = 0; i2 < ne12; i2++) {
-                const int64_t i02       = i2 / r2;
-                const char *  src0_ptr2 = src0_ptr3 + i02 * nb02;
-                const char *  src1_ptr2 = src1_ptr3 + i2 * nb12;
-                char *        dst_ptr2  = dst_ptr3 + i2 * nbd2;
+            لكل (int64_t i2 = 0; i2 < ne12; i2++) {
+                ثابت int64_t i02       = i2 / r2;
+                ثابت حرف *  src0_ptr2 = src0_ptr3 + i02 * nb02;
+                ثابت حرف *  src1_ptr2 = src1_ptr3 + i2 * nb12;
+                حرف *        dst_ptr2  = dst_ptr3 + i2 * nbd2;
 
-                for (int64_t n = 0; n < N; n++) {
-                    const float * b_col_base = (const float *) (src1_ptr2 + n * nb11);
+                لكل (int64_t n = 0; n < N; n++) {
+                    ثابت عائم * b_ستون_پایه = (ثابت عائم *) (src1_ptr2 + n * nb11);
                     q4_dot_state  q4_state;
                     q4_dot_begin(&q4_state);
 
-                    if (use_simple_x2) {
-                        for (int64_t m0 = hart_id; m0 < M; m0 += STRIDE_M * SIMPLE_X2_ROWS) {
-                            const int64_t      m1     = m0 + STRIDE_M;
-                            const block_q4_0 * q_row0 = (const block_q4_0 *) (src0_ptr2 + m0 * nb01);
+                    إذا (use_simple_x2) {
+                        لكل (int64_t m0 = hart_id; m0 < M; m0 += STRIDE_M * SIMPLE_X2_ردیفها) {
+                            ثابت int64_t      m1     = m0 + STRIDE_M;
+                            ثابت بلوک_q4_0 * q_row0 = (ثابت بلوک_q4_0 *) (src0_ptr2 + m0 * nb01);
 
-                            if (m1 < M) {
-                                const block_q4_0 * q_row1 = (const block_q4_0 *) (src0_ptr2 + m1 * nb01);
-                                float              s0, s1;
-                                q4_dot_compute_x2_aligned(q_row0, q_row1, b_col_base, K_blocks, &s0, &s1);
+                            إذا (m1 < M) {
+                                ثابت بلوک_q4_0 * q_row1 = (ثابت بلوک_q4_0 *) (src0_ptr2 + m1 * nb01);
+                                عائم              s0, s1;
+                                q4_dot_compute_x2_aligned(q_row0, q_row1, b_ستون_پایه, K_بلوکها, &s0, &s1);
 
-                                float * dst0 = (float *) (dst_ptr2 + n * nbd1 + m0 * sizeof(float));
-                                float * dst1 = (float *) (dst_ptr2 + n * nbd1 + m1 * sizeof(float));
-                                atomic_store_f32((volatile float *) dst0, s0);
-                                atomic_store_f32((volatile float *) dst1, s1);
-                            } else {
-                                float   sum = q4_dot_compute(q_row0, b_col_base, K_blocks);
-                                float * dst = (float *) (dst_ptr2 + n * nbd1 + m0 * sizeof(float));
-                                atomic_store_f32((volatile float *) dst, sum);
+                                عائم * dst0 = (عائم *) (dst_ptr2 + n * nbd1 + m0 * حجم(عائم));
+                                عائم * dst1 = (عائم *) (dst_ptr2 + n * nbd1 + m1 * حجم(عائم));
+                                atomic_store_f32((متطاير عائم *) dst0, s0);
+                                atomic_store_f32((متطاير عائم *) dst1, s1);
+                            } وإلا {
+                                عائم   جمع = q4_dot_compute(q_row0, b_ستون_پایه, K_بلوکها);
+                                عائم * dst = (عائم *) (dst_ptr2 + n * nbd1 + m0 * حجم(عائم));
+                                atomic_store_f32((متطاير عائم *) dst, جمع);
                             }
                         }
-                    } else {
-                        for (int64_t m = hart_id; m < M; m += STRIDE_M) {
-                            const block_q4_0 * q_row = (const block_q4_0 *) (src0_ptr2 + m * nb01);
+                    } وإلا {
+                        لكل (int64_t m = hart_id; m < M; m += STRIDE_M) {
+                            ثابت بلوک_q4_0 * q_ردیف = (ثابت بلوک_q4_0 *) (src0_ptr2 + m * nb01);
 
-                            float sum = q4_dot_compute(q_row, b_col_base, K_blocks);
+                            عائم جمع = q4_dot_compute(q_ردیف, b_ستون_پایه, K_بلوکها);
 
-                            float * dst_entry = (float *) (dst_ptr2 + n * nbd1 + m * sizeof(float));
-                            atomic_store_f32((volatile float *) dst_entry, sum);
+                            عائم * dst_مدخل = (عائم *) (dst_ptr2 + n * nbd1 + m * حجم(عائم));
+                            atomic_store_f32((متطاير عائم *) dst_مدخل, جمع);
                         }
                     }
 
-                    q4_dot_end(&q4_state);
+                    q4_dot_انتها(&q4_state);
                 }
             }
         }
     }
 
-    return 0;
+    أرجع 0;
 }

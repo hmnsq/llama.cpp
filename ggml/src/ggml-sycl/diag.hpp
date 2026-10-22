@@ -1,5 +1,5 @@
-#pragma once
+#رهنمود once
 
-#include "common.hpp"
+#ضمن "common.hpp"
 
-void ggml_sycl_diag(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+فراغ ggml_sycl_diag(ggml_backend_sycl_context & ctx, ggml_tensor * dst);

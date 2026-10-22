@@ -11,15 +11,15 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#ifndef GGML_SYCL_QUANTS_HPP
-#define GGML_SYCL_QUANTS_HPP
+#اگر_تعریف_نشده GGML_SYCL_QUANTS_HPP
+#تعریف_کن GGML_SYCL_QUANTS_HPP
 
-#include <utility>
+#ضمن <utility>
 
-#include "ggml-common.h"
-#include "ggml.h"
+#ضمن "ggml-common.h"
+#ضمن "ggml.h"
 
-namespace ggml_sycl_reordered {
+نطاق ggml_sycl_reordered {
 
 // The reordered block moves quants (qs) and  scales(d) to two
 // uniform regions of memory that is contiguous in the same tensor.
@@ -31,7 +31,7 @@ namespace ggml_sycl_reordered {
 // Notes: out-of-bounds qs will run into d values
 // Alignment relies on the allocated size of qs
 
-template <ggml_type type> struct block_q_t;
+قالب <ggml_type type> بنية بلوک_q_t;
 
 // qk number of weights / quants in a block
 // qr number of weights in a byte (described as 'before dequantization')
@@ -39,234 +39,234 @@ template <ggml_type type> struct block_q_t;
 //    using the lower bits, e.g for Q6 quants QR6 is 2
 // qi number of 32 bit integers needed to represent all the quants from a block (`qs` field)
 // See ggml-common.h to see how these are calculated
-template <> struct block_q_t<GGML_TYPE_Q4_0> {
-    struct traits {
-        static constexpr uint32_t qk       = QK4_0;
-        static constexpr uint32_t qi       = QI4_0;
-        static constexpr uint32_t qr       = QR4_0;
-        static constexpr uint32_t vdr_mmvq = 2;
+قالب <> بنية بلوک_q_t<GGML_TYPE_Q4_0> {
+    بنية traits {
+        ساكن constexpr uint32_t qk       = QK4_0;
+        ساكن constexpr uint32_t qi       = QI4_0;
+        ساكن constexpr uint32_t qr       = QR4_0;
+        ساكن constexpr uint32_t vdr_mmvq = 2;
     };
 
-    static constexpr std::pair<int, int> get_block_offset(const int block_index, const int /* nblocks */) {
-        return { block_index * (QK4_0 / QR4_0), 0 };
+    ساكن constexpr std::pair<صحيح, صحيح> get_بلوک_جابه_جایی(ثابت صحيح بلوک_شاخص, ثابت صحيح /* nblocks */) {
+        أرجع { بلوک_شاخص * (QK4_0 / QR4_0), 0 };
     }
 
-    static constexpr std::pair<int, int> get_d_offset(int nrows, int ncols, const int block_index) {
-        return { (ncols / QR4_0 * nrows) + block_index * sizeof(ggml_half), 0 };
+    ساكن constexpr std::pair<صحيح, صحيح> get_d_جابه_جایی(صحيح nrows, صحيح ncols, ثابت صحيح بلوک_شاخص) {
+        أرجع { (ncols / QR4_0 * nrows) + بلوک_شاخص * حجم(ggml_half), 0 };
     }
 
-    static constexpr int block_to_q8_1_ratio() { return traits::qk / QK8_1; }
+    ساكن constexpr صحيح بلوک_مقصد_q8_1_نسبت() { أرجع traits::qk / QK8_1; }
 };
 
-template <> struct block_q_t<GGML_TYPE_Q2_K> {
-    struct traits {
-        static constexpr uint32_t qk       = QK_K;
-        static constexpr uint32_t qi       = QI2_K;
-        static constexpr uint32_t qr       = QR2_K;
-        static constexpr uint32_t vdr_mmvq = 1;
+قالب <> بنية بلوک_q_t<GGML_TYPE_Q2_K> {
+    بنية traits {
+        ساكن constexpr uint32_t qk       = QK_K;
+        ساكن constexpr uint32_t qi       = QI2_K;
+        ساكن constexpr uint32_t qr       = QR2_K;
+        ساكن constexpr uint32_t vdr_mmvq = 1;
     };
 
     // Reordered layout: [qs (QK_K/4 per block)] [scales (QK_K/16 per block)] [dm]
-    static constexpr std::pair<int, int> get_block_offset(const int block_index, const int /* n_blocks */) {
-        return { block_index * (QK_K / 4), 0 };
+    ساكن constexpr std::pair<صحيح, صحيح> get_بلوک_جابه_جایی(ثابت صحيح بلوک_شاخص, ثابت صحيح /* n_blocks */) {
+        أرجع { بلوک_شاخص * (QK_K / 4), 0 };
     }
 
-    static constexpr std::pair<int, int> get_d_offset(int nrows, int ncols, const int block_index) {
-        auto nblocks        = (nrows * (ncols / QK_K));
-        auto total_qs_bytes = nblocks * (QK_K / 4);
-        return { total_qs_bytes + block_index * (QK_K / 16),
-                 total_qs_bytes + nblocks * (QK_K / 16) + block_index * sizeof(ggml_half2) };
+    ساكن constexpr std::pair<صحيح, صحيح> get_d_جابه_جایی(صحيح nrows, صحيح ncols, ثابت صحيح بلوک_شاخص) {
+        خودکار nblocks        = (nrows * (ncols / QK_K));
+        خودکار مجموع_qs_بایتها = nblocks * (QK_K / 4);
+        أرجع { مجموع_qs_بایتها + بلوک_شاخص * (QK_K / 16),
+                 مجموع_qs_بایتها + nblocks * (QK_K / 16) + بلوک_شاخص * حجم(ggml_half2) };
     }
 
-    static constexpr int block_to_q8_1_ratio() { return traits::qk / QK8_1; }
+    ساكن constexpr صحيح بلوک_مقصد_q8_1_نسبت() { أرجع traits::qk / QK8_1; }
 };
 
-template <> struct block_q_t<GGML_TYPE_Q3_K> {
-    struct traits {
-        static constexpr uint32_t qk       = QK_K;
-        static constexpr uint32_t qi       = QI3_K;
-        static constexpr uint32_t qr       = QR3_K;
-        static constexpr uint32_t vdr_mmvq = 1;
+قالب <> بنية بلوک_q_t<GGML_TYPE_Q3_K> {
+    بنية traits {
+        ساكن constexpr uint32_t qk       = QK_K;
+        ساكن constexpr uint32_t qi       = QI3_K;
+        ساكن constexpr uint32_t qr       = QR3_K;
+        ساكن constexpr uint32_t vdr_mmvq = 1;
     };
 
     // Reordered layout: [qs (QK_K/4 per block)] [hmask (QK_K/8 per block)] [scales] [d]
-    static constexpr std::pair<int, int> get_block_offset(const int block_index, const int n_blocks) {
-        auto qs_offset    = block_index * (QK_K / 4);
-        auto hmask_offset = n_blocks * (QK_K / 4) + block_index * (QK_K / 8);
-        return { qs_offset, hmask_offset };
+    ساكن constexpr std::pair<صحيح, صحيح> get_بلوک_جابه_جایی(ثابت صحيح بلوک_شاخص, ثابت صحيح n_بلوکها) {
+        خودکار qs_جابه_جایی    = بلوک_شاخص * (QK_K / 4);
+        خودکار hmask_جابه_جایی = n_بلوکها * (QK_K / 4) + بلوک_شاخص * (QK_K / 8);
+        أرجع { qs_جابه_جایی, hmask_جابه_جایی };
     }
 
-    static constexpr std::pair<int, int> get_d_offset(int nrows, int ncols, const int block_index) {
-        auto nblocks        = (nrows * (ncols / QK_K));
-        auto total_qs_bytes = nblocks * (QK_K / 4) + nblocks * (QK_K / 8);
-        return { total_qs_bytes + block_index * 12,
-                 total_qs_bytes + nblocks * 12 + block_index * sizeof(ggml_half) };
+    ساكن constexpr std::pair<صحيح, صحيح> get_d_جابه_جایی(صحيح nrows, صحيح ncols, ثابت صحيح بلوک_شاخص) {
+        خودکار nblocks        = (nrows * (ncols / QK_K));
+        خودکار مجموع_qs_بایتها = nblocks * (QK_K / 4) + nblocks * (QK_K / 8);
+        أرجع { مجموع_qs_بایتها + بلوک_شاخص * 12,
+                 مجموع_qs_بایتها + nblocks * 12 + بلوک_شاخص * حجم(ggml_half) };
     }
 
-    static constexpr int block_to_q8_1_ratio() { return traits::qk / QK8_1; }
+    ساكن constexpr صحيح بلوک_مقصد_q8_1_نسبت() { أرجع traits::qk / QK8_1; }
 };
 
-template <> struct block_q_t<GGML_TYPE_Q4_K> {
-    struct traits {
-        static constexpr uint32_t qk       = QK_K;
-        static constexpr uint32_t qi       = QI4_K;
-        static constexpr uint32_t qr       = QR4_K;
-        static constexpr uint32_t vdr_mmvq = 2;
+قالب <> بنية بلوک_q_t<GGML_TYPE_Q4_K> {
+    بنية traits {
+        ساكن constexpr uint32_t qk       = QK_K;
+        ساكن constexpr uint32_t qi       = QI4_K;
+        ساكن constexpr uint32_t qr       = QR4_K;
+        ساكن constexpr uint32_t vdr_mmvq = 2;
     };
 
-    static constexpr std::pair<int, int> get_block_offset(const int block_index, const int /* nblocks */) {
-        return { block_index * (traits::qk / traits::qr), 0 };
+    ساكن constexpr std::pair<صحيح, صحيح> get_بلوک_جابه_جایی(ثابت صحيح بلوک_شاخص, ثابت صحيح /* nblocks */) {
+        أرجع { بلوک_شاخص * (traits::qk / traits::qr), 0 };
     }
 
-    static constexpr std::pair<int, int> get_d_offset(int nrows, int ncols, const int block_index) {
-        auto nblocks = (nrows * (ncols / QK_K));
-        return { nblocks * (QK_K / 2) + (block_index * K_SCALE_SIZE),
-                 (nblocks * QK_K / 2) + (nblocks * K_SCALE_SIZE) + (block_index * sizeof(ggml_half2)) };
+    ساكن constexpr std::pair<صحيح, صحيح> get_d_جابه_جایی(صحيح nrows, صحيح ncols, ثابت صحيح بلوک_شاخص) {
+        خودکار nblocks = (nrows * (ncols / QK_K));
+        أرجع { nblocks * (QK_K / 2) + (بلوک_شاخص * K_SCALE_اندازه),
+                 (nblocks * QK_K / 2) + (nblocks * K_SCALE_اندازه) + (بلوک_شاخص * حجم(ggml_half2)) };
     }
 
-    static constexpr int block_to_q8_1_ratio() { return traits::qk / QK8_1; }
+    ساكن constexpr صحيح بلوک_مقصد_q8_1_نسبت() { أرجع traits::qk / QK8_1; }
 };
 
-template <> struct block_q_t<GGML_TYPE_Q5_K> {
-    struct traits {
-        static constexpr uint32_t qk       = QK_K;
-        static constexpr uint32_t qi       = QI5_K;
-        static constexpr uint32_t qr       = QR5_K;
-        static constexpr uint32_t vdr_mmvq = 2;
+قالب <> بنية بلوک_q_t<GGML_TYPE_Q5_K> {
+    بنية traits {
+        ساكن constexpr uint32_t qk       = QK_K;
+        ساكن constexpr uint32_t qi       = QI5_K;
+        ساكن constexpr uint32_t qr       = QR5_K;
+        ساكن constexpr uint32_t vdr_mmvq = 2;
     };
 
     // Reordered layout: [qs (QK_K/2 per block)] [qh (QK_K/8 per block)] [scales] [dm]
-    static constexpr std::pair<int, int> get_block_offset(const int block_index, const int n_blocks) {
-        auto qs_offset = block_index * (QK_K / 2);
-        auto qh_offset = n_blocks * (QK_K / 2) + block_index * (QK_K / 8);
-        return { qs_offset, qh_offset };
+    ساكن constexpr std::pair<صحيح, صحيح> get_بلوک_جابه_جایی(ثابت صحيح بلوک_شاخص, ثابت صحيح n_بلوکها) {
+        خودکار qs_جابه_جایی = بلوک_شاخص * (QK_K / 2);
+        خودکار qh_جابه_جایی = n_بلوکها * (QK_K / 2) + بلوک_شاخص * (QK_K / 8);
+        أرجع { qs_جابه_جایی, qh_جابه_جایی };
     }
 
-    static constexpr std::pair<int, int> get_d_offset(int nrows, int ncols, const int block_index) {
-        auto nblocks        = (nrows * (ncols / QK_K));
-        auto total_qs_bytes = nblocks * (QK_K / 2) + nblocks * (QK_K / 8);
-        return { total_qs_bytes + block_index * K_SCALE_SIZE,
-                 total_qs_bytes + nblocks * K_SCALE_SIZE + block_index * sizeof(ggml_half2) };
+    ساكن constexpr std::pair<صحيح, صحيح> get_d_جابه_جایی(صحيح nrows, صحيح ncols, ثابت صحيح بلوک_شاخص) {
+        خودکار nblocks        = (nrows * (ncols / QK_K));
+        خودکار مجموع_qs_بایتها = nblocks * (QK_K / 2) + nblocks * (QK_K / 8);
+        أرجع { مجموع_qs_بایتها + بلوک_شاخص * K_SCALE_اندازه,
+                 مجموع_qs_بایتها + nblocks * K_SCALE_اندازه + بلوک_شاخص * حجم(ggml_half2) };
     }
 
-    static constexpr int block_to_q8_1_ratio() { return traits::qk / QK8_1; }
+    ساكن constexpr صحيح بلوک_مقصد_q8_1_نسبت() { أرجع traits::qk / QK8_1; }
 };
 
-template <> struct block_q_t<GGML_TYPE_Q6_K> {
-    struct traits {
-        static constexpr uint32_t qk       = QK_K;
-        static constexpr uint32_t qi       = QI6_K;
-        static constexpr uint32_t qr       = QR6_K;
-        static constexpr uint32_t vdr_mmvq = 1;
+قالب <> بنية بلوک_q_t<GGML_TYPE_Q6_K> {
+    بنية traits {
+        ساكن constexpr uint32_t qk       = QK_K;
+        ساكن constexpr uint32_t qi       = QI6_K;
+        ساكن constexpr uint32_t qr       = QR6_K;
+        ساكن constexpr uint32_t vdr_mmvq = 1;
     };
 
-    static constexpr std::pair<int, int> get_block_offset(const int block_index, const int n_blocks) {
-        auto low_bits_index  = block_index * (QK_K / QR6_K);
+    ساكن constexpr std::pair<صحيح, صحيح> get_بلوک_جابه_جایی(ثابت صحيح بلوک_شاخص, ثابت صحيح n_بلوکها) {
+        خودکار کم_بیتها_شاخص  = بلوک_شاخص * (QK_K / QR6_K);
         // the index of high bits it's after all low bits
-        auto high_bits_index = n_blocks * (QK_K / 2) + (block_index * (QK_K / 4));
-        return { low_bits_index, high_bits_index };
+        خودکار بالا_بیتها_شاخص = n_بلوکها * (QK_K / 2) + (بلوک_شاخص * (QK_K / 4));
+        أرجع { کم_بیتها_شاخص, بالا_بیتها_شاخص };
     }
 
-    static constexpr std::pair<int, int> get_d_offset(int nrows, int ncols, const int block_index) {
-        auto nblocks        = (nrows * (ncols / QK_K));
-        auto total_qs_bytes = nblocks * (QK_K / 2) + nblocks * (QK_K / 4);
-        auto block_scales   = total_qs_bytes + block_index * (QK_K / 16);
-        auto sb_scale       = total_qs_bytes + nblocks * (QK_K / 16) + block_index * sizeof(ggml_half);
-        return { block_scales, sb_scale };
+    ساكن constexpr std::pair<صحيح, صحيح> get_d_جابه_جایی(صحيح nrows, صحيح ncols, ثابت صحيح بلوک_شاخص) {
+        خودکار nblocks        = (nrows * (ncols / QK_K));
+        خودکار مجموع_qs_بایتها = nblocks * (QK_K / 2) + nblocks * (QK_K / 4);
+        خودکار بلوک_scales   = مجموع_qs_بایتها + بلوک_شاخص * (QK_K / 16);
+        خودکار sb_scale       = مجموع_qs_بایتها + nblocks * (QK_K / 16) + بلوک_شاخص * حجم(ggml_half);
+        أرجع { بلوک_scales, sb_scale };
     }
 
-    static constexpr int block_to_q8_1_ratio() { return traits::qk / QK8_1; }
+    ساكن constexpr صحيح بلوک_مقصد_q8_1_نسبت() { أرجع traits::qk / QK8_1; }
 };
 
-template <> struct block_q_t<GGML_TYPE_IQ3_XXS> {
-    struct traits {
-        static constexpr uint32_t qk       = QK_K;
-        static constexpr uint32_t qi       = QI3_XXS / 2;
-        static constexpr uint32_t qr       = QR3_XXS;
-        static constexpr uint32_t vdr_mmvq = 1;
+قالب <> بنية بلوک_q_t<GGML_TYPE_IQ3_XXS> {
+    بنية traits {
+        ساكن constexpr uint32_t qk       = QK_K;
+        ساكن constexpr uint32_t qi       = QI3_XXS / 2;
+        ساكن constexpr uint32_t qr       = QR3_XXS;
+        ساكن constexpr uint32_t vdr_mmvq = 1;
     };
 
     // Reordered layout: [96-byte qs records for all blocks][2-byte d records for all blocks].
-    static constexpr std::pair<int, int> get_block_offset(const int block_index, const int /* nblocks */) {
-        return { block_index * (3 * QK_K / 8), 0 };
+    ساكن constexpr std::pair<صحيح, صحيح> get_بلوک_جابه_جایی(ثابت صحيح بلوک_شاخص, ثابت صحيح /* nblocks */) {
+        أرجع { بلوک_شاخص * (3 * QK_K / 8), 0 };
     }
 
-    static constexpr std::pair<int, int> get_d_offset(int nrows, int ncols, const int block_index) {
-        const int nblocks = nrows * (ncols / QK_K);
-        return { nblocks * (3 * QK_K / 8) + block_index * sizeof(ggml_half), 0 };
+    ساكن constexpr std::pair<صحيح, صحيح> get_d_جابه_جایی(صحيح nrows, صحيح ncols, ثابت صحيح بلوک_شاخص) {
+        ثابت صحيح nblocks = nrows * (ncols / QK_K);
+        أرجع { nblocks * (3 * QK_K / 8) + بلوک_شاخص * حجم(ggml_half), 0 };
     }
 
-    static constexpr int block_to_q8_1_ratio() { return traits::qk / QK8_1; }
+    ساكن constexpr صحيح بلوک_مقصد_q8_1_نسبت() { أرجع traits::qk / QK8_1; }
 };
 
-template <> struct block_q_t<GGML_TYPE_IQ3_S> {
-    struct traits {
-        static constexpr uint32_t qk       = QK_K;
-        static constexpr uint32_t qi       = QI3_S / 2;
-        static constexpr uint32_t qr       = QR3_S;
-        static constexpr uint32_t vdr_mmvq = 1;
+قالب <> بنية بلوک_q_t<GGML_TYPE_IQ3_S> {
+    بنية traits {
+        ساكن constexpr uint32_t qk       = QK_K;
+        ساكن constexpr uint32_t qi       = QI3_S / 2;
+        ساكن constexpr uint32_t qr       = QR3_S;
+        ساكن constexpr uint32_t vdr_mmvq = 1;
     };
 
     // Reordered layout: [qs][qh][signs][{d, scales} per block]. Keeping the small
     // metadata together leaves the generic reordered dot interface at two offset pairs.
-    static constexpr std::pair<int, int> get_block_offset(const int block_index, const int nblocks) {
-        return { block_index * (QK_K / 4),
-                 nblocks * (QK_K / 4) + block_index * (QK_K / 32) };
+    ساكن constexpr std::pair<صحيح, صحيح> get_بلوک_جابه_جایی(ثابت صحيح بلوک_شاخص, ثابت صحيح nblocks) {
+        أرجع { بلوک_شاخص * (QK_K / 4),
+                 nblocks * (QK_K / 4) + بلوک_شاخص * (QK_K / 32) };
     }
 
-    static constexpr std::pair<int, int> get_d_offset(int nrows, int ncols, const int block_index) {
-        const int nblocks = nrows * (ncols / QK_K);
-        const int signs_base = nblocks * (QK_K / 4 + QK_K / 32);
-        const int metadata_base = signs_base + nblocks * (QK_K / 8);
-        return { signs_base + block_index * (QK_K / 8),
-                 metadata_base + block_index * (sizeof(ggml_half) + IQ3S_N_SCALE) };
+    ساكن constexpr std::pair<صحيح, صحيح> get_d_جابه_جایی(صحيح nrows, صحيح ncols, ثابت صحيح بلوک_شاخص) {
+        ثابت صحيح nblocks = nrows * (ncols / QK_K);
+        ثابت صحيح signs_پایه = nblocks * (QK_K / 4 + QK_K / 32);
+        ثابت صحيح metadata_پایه = signs_پایه + nblocks * (QK_K / 8);
+        أرجع { signs_پایه + بلوک_شاخص * (QK_K / 8),
+                 metadata_پایه + بلوک_شاخص * (حجم(ggml_half) + IQ3S_N_SCALE) };
     }
 
-    static constexpr int block_to_q8_1_ratio() { return traits::qk / QK8_1; }
+    ساكن constexpr صحيح بلوک_مقصد_q8_1_نسبت() { أرجع traits::qk / QK8_1; }
 };
 
-template <> struct block_q_t<GGML_TYPE_Q8_0> {
-    struct traits {
-        static constexpr uint32_t qk       = QK8_0;      // 32
-        static constexpr uint32_t qi       = QI8_0;      // 8
-        static constexpr uint32_t qr       = QR8_0;      // 1
-        static constexpr uint32_t vdr_mmvq = 4;
+قالب <> بنية بلوک_q_t<GGML_TYPE_Q8_0> {
+    بنية traits {
+        ساكن constexpr uint32_t qk       = QK8_0;      // 32
+        ساكن constexpr uint32_t qi       = QI8_0;      // 8
+        ساكن constexpr uint32_t qr       = QR8_0;      // 1
+        ساكن constexpr uint32_t vdr_mmvq = 4;
     };
 
     // Q8_0 reorder layout: [qs0|qs1|...|qsN][d0|d1|...|dN]
     // Each block has 32 int8 weights (32 bytes) followed by all scales
-    static constexpr std::pair<int, int> get_block_offset(const int block_index, const int /* nblocks */) {
-        return { block_index * QK8_0, 0 };
+    ساكن constexpr std::pair<صحيح, صحيح> get_بلوک_جابه_جایی(ثابت صحيح بلوک_شاخص, ثابت صحيح /* nblocks */) {
+        أرجع { بلوک_شاخص * QK8_0, 0 };
     }
 
-    static constexpr std::pair<int, int> get_d_offset(int nrows, int ncols, const int block_index) {
-        return { (ncols * nrows) + block_index * sizeof(ggml_half), 0 };
+    ساكن constexpr std::pair<صحيح, صحيح> get_d_جابه_جایی(صحيح nrows, صحيح ncols, ثابت صحيح بلوک_شاخص) {
+        أرجع { (ncols * nrows) + بلوک_شاخص * حجم(ggml_half), 0 };
     }
 
-    static constexpr int block_to_q8_1_ratio() { return traits::qk / QK8_1; }  // 1
+    ساكن constexpr صحيح بلوک_مقصد_q8_1_نسبت() { أرجع traits::qk / QK8_1; }  // 1
 };
 
-template <> struct block_q_t<GGML_TYPE_MXFP4> {
-    struct traits {
-        static constexpr uint32_t qk       = QK_MXFP4;  // 32
-        static constexpr uint32_t qi       = QI_MXFP4;  // 4
-        static constexpr uint32_t qr       = QR_MXFP4;  // 2
-        static constexpr uint32_t vdr_mmvq = 2;
+قالب <> بنية بلوک_q_t<GGML_TYPE_MXFP4> {
+    بنية traits {
+        ساكن constexpr uint32_t qk       = QK_MXFP4;  // 32
+        ساكن constexpr uint32_t qi       = QI_MXFP4;  // 4
+        ساكن constexpr uint32_t qr       = QR_MXFP4;  // 2
+        ساكن constexpr uint32_t vdr_mmvq = 2;
     };
 
     // MXFP4 reorder layout: [qs0|qs1|...|qsN][e0|e1|...|eN]
     // The 17-byte AoS block leaves qs unaligned; split out, every 16-byte nibble block is aligned.
-    static constexpr std::pair<int, int> get_block_offset(const int block_index, const int /* nblocks */) {
-        return { block_index * (QK_MXFP4 / 2), 0 };
+    ساكن constexpr std::pair<صحيح, صحيح> get_بلوک_جابه_جایی(ثابت صحيح بلوک_شاخص, ثابت صحيح /* nblocks */) {
+        أرجع { بلوک_شاخص * (QK_MXFP4 / 2), 0 };
     }
 
-    static constexpr std::pair<int, int> get_d_offset(int nrows, int ncols, const int block_index) {
-        return { (ncols / 2 * nrows) + block_index, 0 };
+    ساكن constexpr std::pair<صحيح, صحيح> get_d_جابه_جایی(صحيح nrows, صحيح ncols, ثابت صحيح بلوک_شاخص) {
+        أرجع { (ncols / 2 * nrows) + بلوک_شاخص, 0 };
     }
 
-    static constexpr int block_to_q8_1_ratio() { return traits::qk / QK8_1; }  // 1
+    ساكن constexpr صحيح بلوک_مقصد_q8_1_نسبت() { أرجع traits::qk / QK8_1; }  // 1
 };
 
 }  // namespace ggml_sycl_reordered
 
-#endif  // GGML_SYCL_QUANTS_HPP
+#پایان_اگر  // GGML_SYCL_QUANTS_HPP

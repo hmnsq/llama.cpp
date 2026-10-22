@@ -1,189 +1,189 @@
-#ifndef HVX_SQRT_H
-#define HVX_SQRT_H
+#اگر_تعریف_نشده HVX_SQRT_H
+#تعریف_کن HVX_SQRT_H
 
-#include <stdbool.h>
-#include <stdint.h>
+#ضمن <stdbool.h>
+#ضمن <stdint.h>
 
-#include "hex-utils.h"
+#ضمن "hex-utils.h"
 
-#include "hvx-base.h"
+#ضمن "hvx-base.h"
 
-#define RSQRT_CONST        0x5f3759df  // Constant for fast inverse square root calculation
-#define RSQRT_ONE_HALF     0x3f000000  // 0.5
-#define RSQRT_THREE_HALVES 0x3fc00000  // 1.5
+#تعریف_کن RSQRT_CONST        0x5f3759df  // Constant for fast inverse square root calculation
+#تعریف_کن RSQRT_ONE_HALF     0x3f000000  // 0.5
+#تعریف_کن RSQRT_THREE_HALVES 0x3fc00000  // 1.5
 
-#if __HVX_ARCH__ < 79
-#define HVX_OP_MUL(a, b) Q6_Vsf_equals_Vqf32(Q6_Vqf32_vmpy_VsfVsf(a, b))
-#else
-#define HVX_OP_MUL(a, b) Q6_Vsf_vmpy_VsfVsf(a, b)
-#endif
+#إذا __HVX_ARCH__ < 79
+#تعریف_کن HVX_OP_MUL(a, b) Q6_Vsf_equals_Vqf32(Q6_Vqf32_vmpy_VsfVsf(a, b))
+#وإلا
+#تعریف_کن HVX_OP_MUL(a, b) Q6_Vsf_vmpy_VsfVsf(a, b)
+#پایان_اگر
 
-static inline HVX_Vector hvx_vec_rsqrt_f32(HVX_Vector in_vec) {
+ساكن مضمن HVX_وکتور hvx_vec_rsqrt_f32(HVX_وکتور درون_vec) {
     //Algorithm :
     //  x2 = input*0.5
     //  y  = * (long *) &input
     //  y  = 0x5f3759df - (y>>1)
     //  y  = y*(threehalfs - x2*y*y)
 
-    HVX_Vector rsqrtconst = Q6_V_vsplat_R(RSQRT_CONST);
-    HVX_Vector onehalf    = Q6_V_vsplat_R(RSQRT_ONE_HALF);
-    HVX_Vector threehalfs = Q6_V_vsplat_R(RSQRT_THREE_HALVES);
+    HVX_وکتور rsqrtconst = Q6_V_vsplat_R(RSQRT_CONST);
+    HVX_وکتور onehalf    = Q6_V_vsplat_R(RSQRT_ONE_HALF);
+    HVX_وکتور threehalfs = Q6_V_vsplat_R(RSQRT_THREE_HALVES);
 
-    HVX_Vector x2, y, ypower2, temp;
+    HVX_وکتور x2, y, ypower2, موقت;
 
-    x2 = Q6_Vqf32_vmpy_VsfVsf(in_vec, onehalf);
+    x2 = Q6_Vqf32_vmpy_VsfVsf(درون_vec, onehalf);
     x2 = Q6_Vqf32_vadd_Vqf32Vsf(x2, Q6_V_vzero());
 
-    y = Q6_Vw_vasr_VwR(in_vec, 1);
+    y = Q6_Vw_vasr_VwR(درون_vec, 1);
     y = Q6_Vw_vsub_VwVw(rsqrtconst, y);
 
     // 1st iteration
     ypower2 = Q6_Vqf32_vmpy_VsfVsf(y, y);
     ypower2 = Q6_Vqf32_vadd_Vqf32Vsf(ypower2, Q6_V_vzero());
-    temp    = Q6_Vqf32_vmpy_Vqf32Vqf32(x2, ypower2);
-    temp    = Q6_Vqf32_vsub_VsfVsf(threehalfs, Q6_Vsf_equals_Vqf32(temp));
-    temp    = Q6_Vqf32_vmpy_VsfVsf(y, Q6_Vsf_equals_Vqf32(temp));
+    موقت    = Q6_Vqf32_vmpy_Vqf32Vqf32(x2, ypower2);
+    موقت    = Q6_Vqf32_vsub_VsfVsf(threehalfs, Q6_Vsf_equals_Vqf32(موقت));
+    موقت    = Q6_Vqf32_vmpy_VsfVsf(y, Q6_Vsf_equals_Vqf32(موقت));
 
     // 2nd iteration
-    y       = Q6_Vqf32_vadd_Vqf32Vsf(temp, Q6_V_vzero());
+    y       = Q6_Vqf32_vadd_Vqf32Vsf(موقت, Q6_V_vzero());
     ypower2 = Q6_Vqf32_vmpy_Vqf32Vqf32(y, y);
     ypower2 = Q6_Vqf32_vadd_Vqf32Vsf(ypower2, Q6_V_vzero());
-    temp    = Q6_Vqf32_vmpy_Vqf32Vqf32(x2, ypower2);
-    temp    = Q6_Vqf32_vsub_VsfVsf(threehalfs, Q6_Vsf_equals_Vqf32(temp));
-    temp    = Q6_Vqf32_vmpy_Vqf32Vqf32(y, temp);
+    موقت    = Q6_Vqf32_vmpy_Vqf32Vqf32(x2, ypower2);
+    موقت    = Q6_Vqf32_vsub_VsfVsf(threehalfs, Q6_Vsf_equals_Vqf32(موقت));
+    موقت    = Q6_Vqf32_vmpy_Vqf32Vqf32(y, موقت);
 
     // 3rd iteration
-    y       = Q6_Vqf32_vadd_Vqf32Vsf(temp, Q6_V_vzero());
+    y       = Q6_Vqf32_vadd_Vqf32Vsf(موقت, Q6_V_vzero());
     ypower2 = Q6_Vqf32_vmpy_Vqf32Vqf32(y, y);
     ypower2 = Q6_Vqf32_vadd_Vqf32Vsf(ypower2, Q6_V_vzero());
-    temp    = Q6_Vqf32_vmpy_Vqf32Vqf32(x2, ypower2);
-    temp    = Q6_Vqf32_vsub_VsfVsf(threehalfs, Q6_Vsf_equals_Vqf32(temp));
-    temp    = Q6_Vqf32_vmpy_Vqf32Vqf32(y, temp);
+    موقت    = Q6_Vqf32_vmpy_Vqf32Vqf32(x2, ypower2);
+    موقت    = Q6_Vqf32_vsub_VsfVsf(threehalfs, Q6_Vsf_equals_Vqf32(موقت));
+    موقت    = Q6_Vqf32_vmpy_Vqf32Vqf32(y, موقت);
 
-    return Q6_Vsf_equals_Vqf32(temp);
+    أرجع Q6_Vsf_equals_Vqf32(موقت);
 }
 
 // Compute sqrt(x) as x*inv_sqrt(x)
-#define hvx_sqrt_f32_loop_body(dst_type, src_type, vec_store)                \
-    do {                                                                     \
-        dst_type * restrict vdst = (dst_type *) dst;                         \
-        src_type * restrict vsrc = (src_type *) src;                         \
+#تعریف_کن hvx_sqrt_f32_loop_body(dst_type, src_type, vec_store)                \
+    افعل {                                                                     \
+        dst_type * محدود vdst = (dst_type *) dst;                         \
+        src_type * محدود vsrc = (src_type *) src;                         \
                                                                              \
-        const uint32_t nvec = n / VLEN_FP32;                                 \
-        const uint32_t nloe = n % VLEN_FP32;                                 \
+        ثابت uint32_t nvec = n / VLEN_FP32;                                 \
+        ثابت uint32_t nloe = n % VLEN_FP32;                                 \
                                                                              \
         uint32_t i = 0;                                                      \
                                                                              \
         _Pragma("unroll(4)")                                                 \
-        for (; i < nvec; i++) {                                              \
-            HVX_Vector inv_sqrt = hvx_vec_rsqrt_f32(vsrc[i]);                \
-            HVX_Vector sqrt_res = HVX_OP_MUL(inv_sqrt, vsrc[i]);             \
+        لكل (; i < nvec; i++) {                                              \
+            HVX_وکتور inv_sqrt = hvx_vec_rsqrt_f32(vsrc[i]);                \
+            HVX_وکتور sqrt_res = HVX_OP_MUL(inv_sqrt, vsrc[i]);             \
             vdst[i] = sqrt_res;                                              \
         }                                                                    \
-        if (nloe) {                                                          \
-            HVX_Vector inv_sqrt = hvx_vec_rsqrt_f32(vsrc[i]);                \
-            HVX_Vector sqrt_res = HVX_OP_MUL(inv_sqrt, vsrc[i]);             \
-            vec_store((void *) &vdst[i], nloe * SIZEOF_FP32, sqrt_res);      \
+        إذا (nloe) {                                                          \
+            HVX_وکتور inv_sqrt = hvx_vec_rsqrt_f32(vsrc[i]);                \
+            HVX_وکتور sqrt_res = HVX_OP_MUL(inv_sqrt, vsrc[i]);             \
+            vec_store((فراغ *) &vdst[i], nloe * SIZEOF_FP32, sqrt_res);      \
         }                                                                    \
-    } while(0)
+    } طالما(0)
 
-static inline void hvx_sqrt_f32_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
-    assert((unsigned long) dst % 128 == 0);
-    assert((unsigned long) src % 128 == 0);
-    hvx_sqrt_f32_loop_body(HVX_Vector, HVX_Vector, hvx_vec_store_a);
+ساكن مضمن فراغ hvx_sqrt_f32_aa(uint8_t * محدود dst, ثابت uint8_t * محدود src, uint32_t n) {
+    أكد((بیعلامت دراز) dst % 128 == 0);
+    أكد((بیعلامت دراز) src % 128 == 0);
+    hvx_sqrt_f32_loop_body(HVX_وکتور, HVX_وکتور, hvx_vec_store_a);
 }
 
-static inline void hvx_sqrt_f32_au(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
-    assert((unsigned long) dst % 128 == 0);
-    hvx_sqrt_f32_loop_body(HVX_Vector, HVX_UVector, hvx_vec_store_a);
+ساكن مضمن فراغ hvx_sqrt_f32_au(uint8_t * محدود dst, ثابت uint8_t * محدود src, uint32_t n) {
+    أكد((بیعلامت دراز) dst % 128 == 0);
+    hvx_sqrt_f32_loop_body(HVX_وکتور, HVX_UVector, hvx_vec_store_a);
 }
 
-static inline void hvx_sqrt_f32_ua(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
-    assert((unsigned long) src % 128 == 0);
-    hvx_sqrt_f32_loop_body(HVX_UVector, HVX_Vector, hvx_vec_store_u);
+ساكن مضمن فراغ hvx_sqrt_f32_ua(uint8_t * محدود dst, ثابت uint8_t * محدود src, uint32_t n) {
+    أكد((بیعلامت دراز) src % 128 == 0);
+    hvx_sqrt_f32_loop_body(HVX_UVector, HVX_وکتور, hvx_vec_store_u);
 }
 
-static inline void hvx_sqrt_f32_uu(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
+ساكن مضمن فراغ hvx_sqrt_f32_uu(uint8_t * محدود dst, ثابت uint8_t * محدود src, uint32_t n) {
     hvx_sqrt_f32_loop_body(HVX_UVector, HVX_UVector, hvx_vec_store_u);
 }
 
-static inline void hvx_sqrt_f32(uint8_t * restrict dst, const uint8_t * restrict src, const int num_elems) {
-    if ((unsigned long) dst % 128 == 0) {
-        if ((unsigned long) src % 128 == 0) {
-            hvx_sqrt_f32_aa(dst, src, num_elems);
-        } else {
-            hvx_sqrt_f32_au(dst, src, num_elems);
+ساكن مضمن فراغ hvx_sqrt_f32(uint8_t * محدود dst, ثابت uint8_t * محدود src, ثابت صحيح رقم_elems) {
+    إذا ((بیعلامت دراز) dst % 128 == 0) {
+        إذا ((بیعلامت دراز) src % 128 == 0) {
+            hvx_sqrt_f32_aa(dst, src, رقم_elems);
+        } وإلا {
+            hvx_sqrt_f32_au(dst, src, رقم_elems);
         }
-    } else {
-        if ((unsigned long) src % 128 == 0) {
-            hvx_sqrt_f32_ua(dst, src, num_elems);
-        } else {
-            hvx_sqrt_f32_uu(dst, src, num_elems);
+    } وإلا {
+        إذا ((بیعلامت دراز) src % 128 == 0) {
+            hvx_sqrt_f32_ua(dst, src, رقم_elems);
+        } وإلا {
+            hvx_sqrt_f32_uu(dst, src, رقم_elems);
         }
     }
 }
 
 // Compute sqrt(x) for f16 by promoting to f32, applying hvx_vec_rsqrt_f32, and narrowing back.
-#define hvx_sqrt_f16_loop_body(dst_type, src_type, vec_store)                          \
-    do {                                                                               \
-        dst_type * restrict vdst = (dst_type *) dst;                                   \
-        src_type * restrict vsrc = (src_type *) src;                                   \
+#تعریف_کن hvx_sqrt_f16_loop_body(dst_type, src_type, vec_store)                          \
+    افعل {                                                                               \
+        dst_type * محدود vdst = (dst_type *) dst;                                   \
+        src_type * محدود vsrc = (src_type *) src;                                   \
                                                                                        \
-        const uint32_t nvec = n / VLEN_FP16;                                           \
-        const uint32_t nloe = n % VLEN_FP16;                                           \
+        ثابت uint32_t nvec = n / VLEN_FP16;                                           \
+        ثابت uint32_t nloe = n % VLEN_FP16;                                           \
                                                                                        \
         uint32_t i = 0;                                                                \
                                                                                        \
         _Pragma("unroll(4)")                                                           \
-        for (; i < nvec; i++) {                                                        \
-            HVX_VectorPair p = hvx_vec_f16_to_f32(vsrc[i]);                            \
-            HVX_Vector r0 = HVX_OP_MUL(hvx_vec_rsqrt_f32(Q6_V_lo_W(p)), Q6_V_lo_W(p)); \
-            HVX_Vector r1 = HVX_OP_MUL(hvx_vec_rsqrt_f32(Q6_V_hi_W(p)), Q6_V_hi_W(p)); \
-            vdst[i] = hvx_vec_f32_to_f16(r0, r1);                                      \
+        لكل (; i < nvec; i++) {                                                        \
+            HVX_وکتور_Pair p = hvx_vec_f16_مقصد_f32(vsrc[i]);                            \
+            HVX_وکتور r0 = HVX_OP_MUL(hvx_vec_rsqrt_f32(Q6_V_lo_W(p)), Q6_V_lo_W(p)); \
+            HVX_وکتور r1 = HVX_OP_MUL(hvx_vec_rsqrt_f32(Q6_V_hi_W(p)), Q6_V_hi_W(p)); \
+            vdst[i] = hvx_vec_f32_مقصد_f16(r0, r1);                                      \
         }                                                                              \
-        if (nloe) {                                                                    \
-            HVX_VectorPair p = hvx_vec_f16_to_f32(vsrc[i]);                            \
-            HVX_Vector r0 = HVX_OP_MUL(hvx_vec_rsqrt_f32(Q6_V_lo_W(p)), Q6_V_lo_W(p)); \
-            HVX_Vector r1 = HVX_OP_MUL(hvx_vec_rsqrt_f32(Q6_V_hi_W(p)), Q6_V_hi_W(p)); \
-            HVX_Vector v = hvx_vec_f32_to_f16(r0, r1);                                 \
-            vec_store((void *) &vdst[i], nloe * SIZEOF_FP16, v);                       \
+        إذا (nloe) {                                                                    \
+            HVX_وکتور_Pair p = hvx_vec_f16_مقصد_f32(vsrc[i]);                            \
+            HVX_وکتور r0 = HVX_OP_MUL(hvx_vec_rsqrt_f32(Q6_V_lo_W(p)), Q6_V_lo_W(p)); \
+            HVX_وکتور r1 = HVX_OP_MUL(hvx_vec_rsqrt_f32(Q6_V_hi_W(p)), Q6_V_hi_W(p)); \
+            HVX_وکتور v = hvx_vec_f32_مقصد_f16(r0, r1);                                 \
+            vec_store((فراغ *) &vdst[i], nloe * SIZEOF_FP16, v);                       \
         }                                                                              \
-    } while(0)
+    } طالما(0)
 
-static inline void hvx_sqrt_f16_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
-    assert((unsigned long) dst % 128 == 0);
-    assert((unsigned long) src % 128 == 0);
-    hvx_sqrt_f16_loop_body(HVX_Vector, HVX_Vector, hvx_vec_store_a);
+ساكن مضمن فراغ hvx_sqrt_f16_aa(uint8_t * محدود dst, ثابت uint8_t * محدود src, uint32_t n) {
+    أكد((بیعلامت دراز) dst % 128 == 0);
+    أكد((بیعلامت دراز) src % 128 == 0);
+    hvx_sqrt_f16_loop_body(HVX_وکتور, HVX_وکتور, hvx_vec_store_a);
 }
 
-static inline void hvx_sqrt_f16_au(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
-    assert((unsigned long) dst % 128 == 0);
-    hvx_sqrt_f16_loop_body(HVX_Vector, HVX_UVector, hvx_vec_store_a);
+ساكن مضمن فراغ hvx_sqrt_f16_au(uint8_t * محدود dst, ثابت uint8_t * محدود src, uint32_t n) {
+    أكد((بیعلامت دراز) dst % 128 == 0);
+    hvx_sqrt_f16_loop_body(HVX_وکتور, HVX_UVector, hvx_vec_store_a);
 }
 
-static inline void hvx_sqrt_f16_ua(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
-    assert((unsigned long) src % 128 == 0);
-    hvx_sqrt_f16_loop_body(HVX_UVector, HVX_Vector, hvx_vec_store_u);
+ساكن مضمن فراغ hvx_sqrt_f16_ua(uint8_t * محدود dst, ثابت uint8_t * محدود src, uint32_t n) {
+    أكد((بیعلامت دراز) src % 128 == 0);
+    hvx_sqrt_f16_loop_body(HVX_UVector, HVX_وکتور, hvx_vec_store_u);
 }
 
-static inline void hvx_sqrt_f16_uu(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
+ساكن مضمن فراغ hvx_sqrt_f16_uu(uint8_t * محدود dst, ثابت uint8_t * محدود src, uint32_t n) {
     hvx_sqrt_f16_loop_body(HVX_UVector, HVX_UVector, hvx_vec_store_u);
 }
 
-static inline void hvx_sqrt_f16(uint8_t * restrict dst, const uint8_t * restrict src, const int num_elems) {
-    if ((unsigned long) dst % 128 == 0) {
-        if ((unsigned long) src % 128 == 0) {
-            hvx_sqrt_f16_aa(dst, src, num_elems);
-        } else {
-            hvx_sqrt_f16_au(dst, src, num_elems);
+ساكن مضمن فراغ hvx_sqrt_f16(uint8_t * محدود dst, ثابت uint8_t * محدود src, ثابت صحيح رقم_elems) {
+    إذا ((بیعلامت دراز) dst % 128 == 0) {
+        إذا ((بیعلامت دراز) src % 128 == 0) {
+            hvx_sqrt_f16_aa(dst, src, رقم_elems);
+        } وإلا {
+            hvx_sqrt_f16_au(dst, src, رقم_elems);
         }
-    } else {
-        if ((unsigned long) src % 128 == 0) {
-            hvx_sqrt_f16_ua(dst, src, num_elems);
-        } else {
-            hvx_sqrt_f16_uu(dst, src, num_elems);
+    } وإلا {
+        إذا ((بیعلامت دراز) src % 128 == 0) {
+            hvx_sqrt_f16_ua(dst, src, رقم_elems);
+        } وإلا {
+            hvx_sqrt_f16_uu(dst, src, رقم_elems);
         }
     }
 }
 
-#endif /* HVX_SQRT_H */
+#پایان_اگر /* HVX_SQRT_H */

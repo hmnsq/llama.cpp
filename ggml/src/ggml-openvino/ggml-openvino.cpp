@@ -1,48 +1,48 @@
-#include "ggml-openvino.h"
+#ضمن "ggml-openvino.h"
 
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
-#include "ggml-impl.h"
-#include "ggml-openvino-extra.h"
-#include "ggml-openvino/openvino/op_table.h"
-#include "ggml-openvino/utils.h"
-#include "ggml-quants.h"
-#include "ggml.h"
-#include "model-cache.h"
+#ضمن "ggml-backend-impl.h"
+#ضمن "ggml-backend.h"
+#ضمن "ggml-impl.h"
+#ضمن "ggml-openvino-extra.h"
+#ضمن "ggml-openvino/openvino/op_table.h"
+#ضمن "ggml-openvino/utils.h"
+#ضمن "ggml-quants.h"
+#ضمن "ggml.h"
+#ضمن "model-cache.h"
 
-#include <algorithm>
-#include <atomic>
-#include <cerrno>
-#include <climits>
-#include <cstdint>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <memory>
-#include <mutex>
-#include <openvino/core/type/element_type.hpp>
-#include <openvino/openvino.hpp>
-#include <openvino/runtime/allocator.hpp>
-#include <openvino/runtime/intel_gpu/ocl/ocl.hpp>
-#include <openvino/runtime/intel_npu/level_zero/level_zero.hpp>
-#include <openvino/runtime/properties.hpp>
-#include <openvino/runtime/tensor.hpp>
-#include <algorithm>
-#include <map>
-#include <set>
-#include <string>
-#include <vector>
+#ضمن <algorithm>
+#ضمن <atomic>
+#ضمن <cerrno>
+#ضمن <climits>
+#ضمن <cstdint>
+#ضمن <cstdio>
+#ضمن <cstdlib>
+#ضمن <cstring>
+#ضمن <memory>
+#ضمن <mutex>
+#ضمن <openvino/core/type/element_type.hpp>
+#ضمن <openvino/openvino.hpp>
+#ضمن <openvino/runtime/allocator.hpp>
+#ضمن <openvino/runtime/intel_gpu/ocl/ocl.hpp>
+#ضمن <openvino/runtime/intel_npu/level_zero/level_zero.hpp>
+#ضمن <openvino/runtime/properties.hpp>
+#ضمن <openvino/runtime/tensor.hpp>
+#ضمن <algorithm>
+#ضمن <map>
+#ضمن <set>
+#ضمن <string>
+#ضمن <vector>
 
-#ifdef _WIN32
-#    define WIN32_LEAN_AND_MEAN
+#اگر_تعریف_شده _WIN32
+#    define WIN32_LEAN_AND_میانگین
 #    ifndef NOMINMAX
 #        define NOMINMAX
 #    endif
 #    include <windows.h>
-#else
+#وإلا
 #    include <sys/mman.h>
 #    include <unistd.h>
-#endif
+#پایان_اگر
 
 // =====================================================
 // OpenVINO Buffer Implementation using ov::Tensor
@@ -61,77 +61,77 @@
 // - CPU repack buffer: tensor->extra stores tensor_traits with repacked data
 // =====================================================
 
-namespace {
+نطاق {
 // Buffer context that manages per-tensor allocations (no contiguous buffer for weights)
-struct ggml_backend_openvino_buffer_context {
-    int device;
+بنية ggml_backend_openvino_میانگیر_context {
+    صحيح device;
     std::string name;
     size_t id;
 
     // For non-weight buffers (KV cache, compute), we still use contiguous allocation
-    void * data;
+    فراغ * داده;
     size_t size;
-    bool is_remote;
+    منطقي is_remote;
 
     // File-backed spill or cache-only virtual memory.
-    void * spill_mapping = nullptr;
-    size_t spill_size = 0;
+    فراغ * spill_mapping = اشاره_تهی;
+    size_t spill_اندازه = 0;
 
     // Wrapping of the buffer
-    std::shared_ptr<ov::Tensor> ov_buffer;
+    std::shared_ptr<ov::Tensor> ov_میانگیر;
 
     // Track all extras for cleanup
-    std::map<ggml_tensor *, ggml_openvino_extra_base *> tensor_extras;
-    std::map<const void *, uint64_t> weight_fingerprints;
-    std::vector<ggml_openvino_source_mapping> source_mappings;
+    std::map<ggml_tensor *, ggml_openvino_extra_پایه *> tensor_extras;
+    std::map<ثابت فراغ *, uint64_t> وزن_fingerprints;
+    std::vector<ggml_openvino_منبع_mapping> منبع_mappings;
 
     // Used for re-allocation on device for kvcache
-    void * data_prev;
+    فراغ * داده_prev;
 
-    ggml_backend_openvino_buffer_context(int device, size_t size, bool is_remote = false) :
+    ggml_backend_openvino_میانگیر_context(صحيح device, size_t size, منطقي is_remote = خطأ) :
         device(device),
         name(std::string(GGML_OPENVINO_NAME) + std::to_string(device)),
         id([]() {
-            static std::atomic<size_t> next_id{1};
-            return next_id.fetch_add(1);
+            ساكن std::atomic<size_t> بعدی_id{1};
+            أرجع بعدی_id.fetch_add(1);
         }()),
-        data(nullptr),
+        داده(اشاره_تهی),
         size(size),
         is_remote(is_remote) {
-        if (size == 0) {
-            return;
+        إذا (size == 0) {
+            أرجع;
         }
 
-        const auto & device_name = ggml_openvino_get_device_name();
+        ثابت خودکار & device_name = ggml_openvino_get_device_name();
 
-        if (is_remote) {
+        إذا (is_remote) {
             GGML_ASSERT(ggml_openvino_is_gpu());
-            auto remote_context = ggml_openvino_get_remote_context();
-            auto gpu_context = remote_context->as<ov::intel_gpu::ocl::ClContext>();
+            خودکار remote_context = ggml_openvino_get_remote_context();
+            خودکار gpu_context = remote_context->as<ov::intel_gpu::ocl::ClContext>();
             ov::intel_gpu::ocl::USMTensor usm_tensor =
                 gpu_context.create_usm_device_tensor(ov::element::u8, ov::Shape{size});
-            data = usm_tensor.get();
-            ov_buffer = std::make_shared<ov::intel_gpu::ocl::USMTensor>(std::move(usm_tensor));
-        } else {
-#ifdef _WIN32
-            if (ggml_openvino_model_cache_only()) {
-                data = spill_mapping = VirtualAlloc(nullptr, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-                if (data == nullptr) {
-                    return;
+            داده = usm_tensor.get();
+            ov_میانگیر = std::make_shared<ov::intel_gpu::ocl::USMTensor>(std::move(usm_tensor));
+        } وإلا {
+#اگر_تعریف_شده _WIN32
+            إذا (ggml_openvino_model_cache_only()) {
+                داده = spill_mapping = VirtualAlloc(اشاره_تهی, size, MEM_RESERVE | MEM_COMMIT, صفحه_READWRITE);
+                إذا (داده == اشاره_تهی) {
+                    أرجع;
                 }
-                spill_size = size;
-                ov_buffer = std::make_shared<ov::Tensor>(ov::element::u8, ov::Shape{size}, data);
-            } else
-#else
-            if (ggml_openvino_model_cache_only()) {
-                void * m = mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-                if (m == MAP_FAILED) {
-                    return;
+                spill_اندازه = size;
+                ov_میانگیر = std::make_shared<ov::Tensor>(ov::element::u8, ov::Shape{size}, داده);
+            } وإلا
+#وإلا
+            إذا (ggml_openvino_model_cache_only()) {
+                فراغ * m = mmap(اشاره_تهی, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+                إذا (m == MAP_FAILED) {
+                    أرجع;
                 }
-                data = spill_mapping = m;
-                spill_size = size;
-                ov_buffer = std::make_shared<ov::Tensor>(ov::element::u8, ov::Shape{size}, data);
-            } else if (const char * spill_dir = ggml_openvino_getenv_str("GGML_OPENVINO_SPILL_DIR")) {
+                داده = spill_mapping = m;
+                spill_اندازه = size;
+                ov_میانگیر = std::make_shared<ov::Tensor>(ov::element::u8, ov::Shape{size}, داده);
+            } وإلا إذا (ثابت حرف * spill_dir = ggml_openvino_getenv_str("GGML_OPENVINO_SPILL_DIR")) {
                 // Disk-backed weight buffer: back the repacked weights with a temp file via MAP_SHARED
                 // instead of anonymous memory. Anonymous pages can only be evicted to swap, so the
                 // repacked buffer stays pinned alongside the mmap'd source and both are resident at once
@@ -142,84 +142,84 @@ struct ggml_backend_openvino_buffer_context {
                 //
                 // The directory must be real storage. Pointing this at a tmpfs mount (/tmp on many
                 // systems) backs the "spill" with RAM and makes matters worse.
-                char path[PATH_MAX];
-                snprintf(path, sizeof(path), "%s/ggml-ov-weights-%d-XXXXXX", spill_dir, (int) getpid());
-                int fd = mkstemp(path);
-                if (fd < 0) {
+                حرف path[PATH_MAX];
+                snprintf(path, حجم(path), "%s/ggml-ov-weights-%d-XXXXXX", spill_dir, (صحيح) getpid());
+                صحيح fd = mkstemp(path);
+                إذا (fd < 0) {
                     GGML_LOG_ERROR("%s: mkstemp(%s) failed: %s\n", __func__, path, strerror(errno));
-                    return;
+                    أرجع;
                 }
                 unlink(path);  // anonymous-but-file-backed: freed on process exit
-                if (ftruncate(fd, (off_t) size) != 0) {
+                إذا (ftruncate(fd, (off_t) size) != 0) {
                     GGML_LOG_ERROR("%s: ftruncate(%zu) failed: %s\n", __func__, size, strerror(errno));
                     close(fd);
-                    return;
+                    أرجع;
                 }
-                void * m = mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+                فراغ * m = mmap(اشاره_تهی, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
                 close(fd);  // the mapping keeps the file alive
-                if (m == MAP_FAILED) {
+                إذا (m == MAP_FAILED) {
                     GGML_LOG_ERROR("%s: mmap(%zu) failed: %s\n", __func__, size, strerror(errno));
-                    return;
+                    أرجع;
                 }
-                data = m;
+                داده = m;
                 spill_mapping = m;
-                spill_size = size;
+                spill_اندازه = size;
                 GGML_LOG_INFO("%s: weight buffer spilled to %s (%zu MB, file-backed)\n", __func__, spill_dir,
                               size / 1024 / 1024);
-                ov_buffer = std::make_shared<ov::Tensor>(ov::element::u8, ov::Shape{size}, data);
-            } else
-#endif
+                ov_میانگیر = std::make_shared<ov::Tensor>(ov::element::u8, ov::Shape{size}, داده);
+            } وإلا
+#پایان_اگر
             {
-#ifdef _WIN32
-                if (ggml_openvino_getenv_str("GGML_OPENVINO_SPILL_DIR")) {
+#اگر_تعریف_شده _WIN32
+                إذا (ggml_openvino_getenv_str("GGML_OPENVINO_SPILL_DIR")) {
                     GGML_LOG_WARN("%s: GGML_OPENVINO_SPILL_DIR is not supported on Windows, ignoring\n", __func__);
                 }
-#endif
-                data = ggml_aligned_malloc(size);
-                GGML_ASSERT(data);
-                memset(data, 0, size);
-                ov_buffer = std::make_shared<ov::Tensor>(ov::element::u8, ov::Shape{size}, data);
+#پایان_اگر
+                داده = ggml_aligned_malloc(size);
+                GGML_ASSERT(داده);
+                memset(داده, 0, size);
+                ov_میانگیر = std::make_shared<ov::Tensor>(ov::element::u8, ov::Shape{size}, داده);
             }
         }
 
-        if (data == nullptr) {
+        إذا (داده == اشاره_تهی) {
             GGML_LOG_ERROR("%s: failed to allocate %zu bytes\n", __func__, size);
-            return;
+            أرجع;
         }
 
-        if (reinterpret_cast<uintptr_t>(data) % TENSOR_ALIGNMENT != 0) {
+        إذا (reinterpret_cast<uintptr_t>(داده) % TENSOR_ALIGNMENT != 0) {
             GGML_LOG_ERROR("%s: %s buffer is not aligned to %d bytes\n", __func__, device_name.c_str(),
                            TENSOR_ALIGNMENT);
             GGML_ABORT("fatal error");
         }
     }
 
-    ~ggml_backend_openvino_buffer_context() {
+    ~ggml_backend_openvino_میانگیر_context() {
         // Clean up all tensor extras
         // GGML_LOG_DEBUG("Deleting OpenVINO buffer context #%zu for device %d, size %zu MB\n", id, device,
         //                size / 1024 / 1024);
-        for (auto & pair : tensor_extras) {
-            delete pair.second;
+        لكل (خودکار & pair : tensor_extras) {
+            حذف pair.second;
         }
         tensor_extras.clear();
-#ifdef _WIN32
-        if (spill_mapping != nullptr) {
+#اگر_تعریف_شده _WIN32
+        إذا (spill_mapping != اشاره_تهی) {
             VirtualFree(spill_mapping, 0, MEM_RELEASE);
-        } else
-#else
-        if (spill_mapping != nullptr) {
-            munmap(spill_mapping, spill_size);
-        } else
-#endif
-        if (!is_remote && data != nullptr) {
-            ggml_aligned_free(data, size);
+        } وإلا
+#وإلا
+        إذا (spill_mapping != اشاره_تهی) {
+            munmap(spill_mapping, spill_اندازه);
+        } وإلا
+#پایان_اگر
+        إذا (!is_remote && داده != اشاره_تهی) {
+            ggml_aligned_free(داده, size);
         }
     }
 };
 
 // Buffer type context (per-device)
-struct ggml_backend_openvino_buffer_type_context {
-    int device;
+بنية ggml_backend_openvino_میانگیر_type_context {
+    صحيح device;
     std::string name;
 };
 }  // namespace
@@ -237,106 +237,106 @@ struct ggml_backend_openvino_buffer_type_context {
 // keeping the mapping valid. A later recompile would re-read these Constants
 // from now-zeroed memory and produce garbage, so once released we fail fast
 // if the cache-miss compile branch is reached again (see utils.cpp).
-namespace {
-struct ov_weight_buffer_registry {
+نطاق {
+بنية ov_وزن_میانگیر_registry {
     std::mutex mutex;
     // (data, size) of every non-remote weight buffer, for madvise.
-    std::vector<std::pair<void *, size_t>> buffers;
-    bool released = false;
+    std::vector<std::pair<فراغ *, size_t>> buffers;
+    منطقي released = خطأ;
 };
 
-ov_weight_buffer_registry & ov_weight_registry() {
-    static ov_weight_buffer_registry reg;
-    return reg;
+ov_وزن_میانگیر_registry & ov_وزن_registry() {
+    ساكن ov_وزن_میانگیر_registry reg;
+    أرجع reg;
 }
 }  // namespace
 
-void ggml_openvino_register_weight_buffer(void * data, size_t size) {
-    if (data == nullptr || size == 0) {
-        return;
+فراغ ggml_openvino_ثبات_وزن_میانگیر(فراغ * داده, size_t size) {
+    إذا (داده == اشاره_تهی || size == 0) {
+        أرجع;
     }
-    auto & reg = ov_weight_registry();
-    std::lock_guard<std::mutex> lock(reg.mutex);
-    for (const auto & b : reg.buffers) {
-        if (b.first == data) {
-            return;  // already registered
+    خودکار & reg = ov_وزن_registry();
+    std::lock_guard<std::mutex> قفل(reg.mutex);
+    لكل (ثابت خودکار & b : reg.buffers) {
+        إذا (b.اولی == داده) {
+            أرجع;  // already registered
         }
     }
-    reg.buffers.emplace_back(data, size);
+    reg.buffers.emplace_back(داده, size);
 }
 
-bool ggml_openvino_weight_buffers_released() {
-    auto & reg = ov_weight_registry();
-    std::lock_guard<std::mutex> lock(reg.mutex);
-    return reg.released;
+منطقي ggml_openvino_وزن_buffers_released() {
+    خودکار & reg = ov_وزن_registry();
+    std::lock_guard<std::mutex> قفل(reg.mutex);
+    أرجع reg.released;
 }
 
-void ggml_openvino_release_weight_buffers() {
-    auto & reg = ov_weight_registry();
-    std::lock_guard<std::mutex> lock(reg.mutex);
-    if (reg.released) {
-        return;
+فراغ ggml_openvino_release_وزن_buffers() {
+    خودکار & reg = ov_وزن_registry();
+    std::lock_guard<std::mutex> قفل(reg.mutex);
+    إذا (reg.released) {
+        أرجع;
     }
-    size_t total = 0;
-#if !defined(_WIN32)
-    for (const auto & b : reg.buffers) {
+    size_t مجموع = 0;
+#إذا !defined(_WIN32)
+    لكل (ثابت خودکار & b : reg.buffers) {
         // Align down/up to page boundaries so madvise only drops whole pages
         // fully owned by this buffer.
-        const size_t page = (size_t) sysconf(_SC_PAGESIZE);
-        const uintptr_t ustart = reinterpret_cast<uintptr_t>(b.first);
-        const size_t offset_to_page = (page - (ustart & (page - 1))) & (page - 1);
-        if (b.second > offset_to_page) {
-            const size_t aligned_len = (b.second - offset_to_page) & ~(page - 1);
-            if (aligned_len > 0) {
-                char * astart = static_cast<char *>(b.first) + offset_to_page;
-                if (madvise(astart, aligned_len, MADV_DONTNEED) == 0) {
-                    total += aligned_len;
+        ثابت size_t صفحه = (size_t) sysconf(_SC_PAGESIZE);
+        ثابت uintptr_t ustart = reinterpret_cast<uintptr_t>(b.اولی);
+        ثابت size_t جابه_جایی_مقصد_صفحه = (صفحه - (ustart & (صفحه - 1))) & (صفحه - 1);
+        إذا (b.second > جابه_جایی_مقصد_صفحه) {
+            ثابت size_t aligned_len = (b.second - جابه_جایی_مقصد_صفحه) & ~(صفحه - 1);
+            إذا (aligned_len > 0) {
+                حرف * astart = static_cast<حرف *>(b.اولی) + جابه_جایی_مقصد_صفحه;
+                إذا (madvise(astart, aligned_len, MADV_DONTNEED) == 0) {
+                    مجموع += aligned_len;
                 }
             }
         }
     }
-#endif
-    reg.released = true;
-    GGML_LOG_INFO("%s: released %zu MB of host weight buffers (%zu buffers)\n", __func__, total / 1024 / 1024,
+#پایان_اگر
+    reg.released = درست;
+    GGML_LOG_INFO("%s: released %zu MB of host weight buffers (%zu buffers)\n", __func__, مجموع / 1024 / 1024,
                   reg.buffers.size());
 }
 
 // Buffer interface functions
-static void ggml_backend_openvino_buffer_free_buffer(ggml_backend_buffer_t buffer) {
-    ggml_backend_openvino_buffer_context * ctx = (ggml_backend_openvino_buffer_context *) buffer->context;
-    delete ctx;
+ساكن فراغ ggml_backend_openvino_میانگیر_free_میانگیر(ggml_backend_میانگیر_t میانگیر) {
+    ggml_backend_openvino_میانگیر_context * ctx = (ggml_backend_openvino_میانگیر_context *) میانگیر->context;
+    حذف ctx;
 }
 
-static void * ggml_backend_openvino_buffer_get_base(ggml_backend_buffer_t buffer) {
-    ggml_backend_openvino_buffer_context * ctx = (ggml_backend_openvino_buffer_context *) buffer->context;
-    return ctx->data;
+ساكن فراغ * ggml_backend_openvino_میانگیر_get_پایه(ggml_backend_میانگیر_t میانگیر) {
+    ggml_backend_openvino_میانگیر_context * ctx = (ggml_backend_openvino_میانگیر_context *) میانگیر->context;
+    أرجع ctx->داده;
 }
 
-static bool is_stateful_enabled() {
-    return ggml_openvino_getenv_int("GGML_OPENVINO_STATEFUL_EXECUTION") != 0;
+ساكن منطقي is_stateful_enabled() {
+    أرجع ggml_openvino_getenv_int("GGML_OPENVINO_STATEFUL_EXECUTION") != 0;
 }
 
-static enum ggml_status ggml_backend_openvino_buffer_init_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor) {
+ساكن تعداد ggml_وضعیت ggml_backend_openvino_میانگیر_init_tensor(ggml_backend_میانگیر_t میانگیر, ggml_tensor * tensor) {
     // GGML_LOG_DEBUG("%s: buffer usage=%d, tensor name=%s\n", __func__, buffer->usage, tensor->name);
-    ggml_backend_openvino_buffer_context * ctx = (ggml_backend_openvino_buffer_context *) buffer->context;
+    ggml_backend_openvino_میانگیر_context * ctx = (ggml_backend_openvino_میانگیر_context *) میانگیر->context;
 
     // Put kvcache on device memory for GPU (NPU memory is too small even for kvcache)
-    if (strncmp(tensor->name, "cache_", 6) == 0 && !ctx->is_remote && ggml_openvino_is_gpu() &&
+    إذا (مقایسه_رشته(tensor->name, "cache_", 6) == 0 && !ctx->is_remote && ggml_openvino_is_gpu() &&
         !is_stateful_enabled()) {
-        GGML_ASSERT(ctx->tensor_extras.empty());
-        auto device = ctx->device;
-        auto size = ctx->size;
-        auto * data_prev = ctx->data;
-        delete ctx;
-        ctx = new ggml_backend_openvino_buffer_context(device, size, true);
-        buffer->context = ctx;
-        tensor->data = (char *) ctx->data + ((char *) tensor->data - (char *) data_prev);
+        GGML_ASSERT(ctx->tensor_extras.خالی());
+        خودکار device = ctx->device;
+        خودکار size = ctx->size;
+        خودکار * داده_prev = ctx->داده;
+        حذف ctx;
+        ctx = جديد ggml_backend_openvino_میانگیر_context(device, size, درست);
+        میانگیر->context = ctx;
+        tensor->داده = (حرف *) ctx->داده + ((حرف *) tensor->داده - (حرف *) داده_prev);
     }
 
     // Views share the extra from view_src
-    if (tensor->view_src != nullptr) {
-        GGML_ASSERT(tensor->view_src->buffer->buft == buffer->buft);
-        if (tensor->view_src->extra != nullptr) {
+    إذا (tensor->view_src != اشاره_تهی) {
+        GGML_ASSERT(tensor->view_src->میانگیر->buft == میانگیر->buft);
+        إذا (tensor->view_src->extra != اشاره_تهی) {
             // The cached ov::Tensor carries the shape it was built with, so sharing view_src's
             // extra hands out the wrong shape for a reshaping view (e.g. Vcur reshaped from
             // [n_embd, n_tokens] to [head_size, n_heads_kv, n_tokens]). When such a view is a
@@ -344,111 +344,111 @@ static enum ggml_status ggml_backend_openvino_buffer_init_tensor(ggml_backend_bu
             // ggml_openvino_create_tensor_extra reads ne and data off the view, so the offset is
             // handled too. Only safe for a contiguous view - the ov::Tensor assumes dense strides.
             // Skip empty views: they have no data, and on GPU one can sit at the end of the USM buffer.
-            if (!ggml_are_same_shape(tensor, tensor->view_src) && ggml_is_contiguous(tensor) &&
-                !ggml_is_quantized(tensor->type) && tensor->data != nullptr && ggml_nbytes(tensor) > 0) {
-                if (ggml_openvino_tensor_extra * extra =
+            إذا (!ggml_are_same_shape(tensor, tensor->view_src) && ggml_is_contiguous(tensor) &&
+                !ggml_is_quantized(tensor->type) && tensor->داده != اشاره_تهی && ggml_nbytes(tensor) > 0) {
+                إذا (ggml_openvino_tensor_extra * extra =
                         ggml_openvino_create_tensor_extra(tensor, ctx->is_remote)) {
-                    auto it = ctx->tensor_extras.find(tensor);
-                    if (it != ctx->tensor_extras.end()) {
-                        delete it->second;
+                    خودکار it = ctx->tensor_extras.find(tensor);
+                    إذا (it != ctx->tensor_extras.end()) {
+                        حذف it->second;
                     }
                     ctx->tensor_extras[tensor] = extra;
                     tensor->extra = extra;
-                    return GGML_STATUS_SUCCESS;
+                    أرجع GGML_وضعیت_SUCCESS;
                 }
             }
             tensor->extra = tensor->view_src->extra;
         }
-        return GGML_STATUS_SUCCESS;
+        أرجع GGML_وضعیت_SUCCESS;
     }
 
-    ctx = (ggml_backend_openvino_buffer_context *) buffer->context;
+    ctx = (ggml_backend_openvino_میانگیر_context *) میانگیر->context;
 
-    if (tensor->data != nullptr && !ggml_is_quantized(tensor->type)) {
+    إذا (tensor->داده != اشاره_تهی && !ggml_is_quantized(tensor->type)) {
         ggml_openvino_tensor_extra * extra = ggml_openvino_create_tensor_extra(tensor, ctx->is_remote);
-        if (extra != nullptr) {
-            auto it = ctx->tensor_extras.find(tensor);
-            if (it != ctx->tensor_extras.end()) {
-                delete it->second;
+        إذا (extra != اشاره_تهی) {
+            خودکار it = ctx->tensor_extras.find(tensor);
+            إذا (it != ctx->tensor_extras.end()) {
+                حذف it->second;
             }
             ctx->tensor_extras[tensor] = extra;
             tensor->extra = extra;
         }
     }
 
-    return GGML_STATUS_SUCCESS;
+    أرجع GGML_وضعیت_SUCCESS;
 }
 
-static void ggml_backend_openvino_buffer_memset_tensor(ggml_backend_buffer_t buffer,
+ساكن فراغ ggml_backend_openvino_میانگیر_memset_tensor(ggml_backend_میانگیر_t میانگیر,
                                                        ggml_tensor * tensor,
                                                        uint8_t value,
-                                                       size_t offset,
+                                                       size_t جابه_جایی,
                                                        size_t size) {
     // GGML_LOG_DEBUG("%s: buffer usage=%d, tensor name=%s\n", __func__, buffer->usage, tensor->name);
-    GGML_ASSERT(tensor != nullptr && tensor->data != nullptr);
-    ggml_backend_openvino_buffer_context * ctx = (ggml_backend_openvino_buffer_context *) buffer->context;
+    GGML_ASSERT(tensor != اشاره_تهی && tensor->داده != اشاره_تهی);
+    ggml_backend_openvino_میانگیر_context * ctx = (ggml_backend_openvino_میانگیر_context *) میانگیر->context;
 
-    if (ctx->is_remote) {
+    إذا (ctx->is_remote) {
         // For remote (device) buffers, use OpenCL USM memfill
-        cl_command_queue queue = ggml_openvino_get_cl_queue();
-        auto mem_fill_fn = ggml_openvino_get_clEnqueueMemFillINTEL();
-        if (mem_fill_fn != nullptr) {
+        cl_command_صف queue = ggml_openvino_get_cl_صف();
+        خودکار mem_fill_fn = ggml_openvino_get_cl_افزودن_به_صف_Mem_Fill_INTEL();
+        إذا (mem_fill_fn != اشاره_تهی) {
             uint8_t pattern = value;
-            cl_int err = mem_fill_fn(queue, (char *) tensor->data + offset, &pattern, sizeof(pattern), size, 0, nullptr,
-                                     nullptr);
-            if (err != CL_SUCCESS) {
+            cl_int err = mem_fill_fn(queue, (حرف *) tensor->داده + جابه_جایی, &pattern, حجم(pattern), size, 0, اشاره_تهی,
+                                     اشاره_تهی);
+            إذا (err != CL_SUCCESS) {
                 GGML_LOG_ERROR("%s: clEnqueueMemFillINTEL failed with error %d\n", __func__, err);
             }
-            clFinish(queue);
-        } else {
+            cl_پایان(queue);
+        } وإلا {
             GGML_LOG_ERROR("%s: clEnqueueMemFillINTEL not available for GPU buffer\n", __func__);
         }
-    } else {
-        memset((char *) tensor->data + offset, value, size);
+    } وإلا {
+        memset((حرف *) tensor->داده + جابه_جایی, value, size);
     }
 }
 
-static void ggml_backend_openvino_buffer_set_tensor(ggml_backend_buffer_t buffer,
+ساكن فراغ ggml_backend_openvino_میانگیر_مجموعه_tensor(ggml_backend_میانگیر_t میانگیر,
                                                     ggml_tensor * tensor,
-                                                    const void * data,
-                                                    size_t offset,
+                                                    ثابت فراغ * داده,
+                                                    size_t جابه_جایی,
                                                     size_t size) {
     // GGML_LOG_DEBUG("%s: buffer usage=%d, tensor name=%s\n", __func__, buffer->usage, tensor->name);
-    GGML_ASSERT(tensor != nullptr && tensor->data != nullptr);
-    ggml_backend_openvino_buffer_context * ctx = (ggml_backend_openvino_buffer_context *) buffer->context;
+    GGML_ASSERT(tensor != اشاره_تهی && tensor->داده != اشاره_تهی);
+    ggml_backend_openvino_میانگیر_context * ctx = (ggml_backend_openvino_میانگیر_context *) میانگیر->context;
 
     // Check if this is a weight buffer (usage is set BEFORE set_tensor is called, except in test-backend-ops)
-    bool is_weight_buffer = (buffer->usage == GGML_BACKEND_BUFFER_USAGE_WEIGHTS);
+    منطقي is_وزن_میانگیر = (میانگیر->usage == GGML_BACKEND_میانگیر_USAGE_WEIGHTS);
     // Full tensor set: offset=0, full size, not a view
-    bool is_full_tensor_set = (offset == 0 && size == ggml_nbytes(tensor) && tensor->view_src == nullptr);
-    if (is_weight_buffer && ggml_openvino_getenv_str("GGML_OPENVINO_COMPILED_MODEL_CACHE_DIR")) {
-        if (is_full_tensor_set) {
-            ctx->weight_fingerprints[tensor->data] = ggml_openvino_source_fingerprint(data, size, ctx->source_mappings);
+    منطقي is_پر_tensor_مجموعه = (جابه_جایی == 0 && size == ggml_nbytes(tensor) && tensor->view_src == اشاره_تهی);
+    إذا (is_وزن_میانگیر && ggml_openvino_getenv_str("GGML_OPENVINO_COMPILED_MODEL_CACHE_DIR")) {
+        إذا (is_پر_tensor_مجموعه) {
+            ctx->وزن_fingerprints[tensor->داده] = ggml_openvino_منبع_fingerprint(داده, size, ctx->منبع_mappings);
         }
-        if (ggml_openvino_model_cache_only()) {
-            if (!is_full_tensor_set) {
+        إذا (ggml_openvino_model_cache_only()) {
+            إذا (!is_پر_tensor_مجموعه) {
                 GGML_ABORT("ggml-openvino: cache-only mode requires whole mmap weight uploads");
             }
-            return;
+            أرجع;
         }
     }
     // 2D tensor (typical weight shape), or a 3D quantized MoE expert weight (MUL_MAT_ID). Dense 3D
     // expert weights are handled later in create_weight_node instead.
-    bool is_2d = (tensor->ne[2] == 1 && tensor->ne[3] == 1);
-    bool is_supported_weight_shape = is_2d || (tensor->ne[3] == 1 && ggml_is_quantized(tensor->type));
+    منطقي is_2d = (tensor->ne[2] == 1 && tensor->ne[3] == 1);
+    منطقي is_supported_وزن_shape = is_2d || (tensor->ne[3] == 1 && ggml_is_quantized(tensor->type));
 
-    if (is_weight_buffer && is_full_tensor_set && is_supported_weight_shape) {
-        try {
-            auto result = process_weight_tensor(tensor, data, tensor->data);
-            result.weight_node->set_friendly_name(tensor->name);
+    إذا (is_وزن_میانگیر && is_پر_tensor_مجموعه && is_supported_وزن_shape) {
+        حاول {
+            خودکار نتیجه = process_وزن_tensor(tensor, داده, tensor->داده);
+            نتیجه.وزن_گره->مجموعه_friendly_name(tensor->name);
 
             // const auto & layout = result.layout;
-            ggml_openvino_extra_base * extra;
+            ggml_openvino_extra_پایه * extra;
 
             // Quantized path with extracted weight/scale/zp tensors
-            if (result.is_quantized()) {
-                extra = new ggml_openvino_quantized_weight_extra(std::move(result.weights), std::move(result.scales),
-                                                                 std::move(result.zp), result.weight_node);
+            إذا (نتیجه.is_quantized()) {
+                extra = جديد ggml_openvino_quantized_وزن_extra(std::move(نتیجه.weights), std::move(نتیجه.scales),
+                                                                 std::move(نتیجه.zp), نتیجه.وزن_گره);
 
                 // if (layout.is_requant) {
                 //     GGML_LOG_DEBUG("%s: requantized %s to %s (u%d, block_size=%ld)\n", __func__, tensor->name,
@@ -459,9 +459,9 @@ static void ggml_backend_openvino_buffer_set_tensor(ggml_backend_buffer_t buffer
                 //     GGML_LOG_DEBUG("%s: extracted quantized weight node for %s (u%d, %zu weights, %ld blocks)\n",
                 //                    __func__, tensor->name, layout.is_u4 ? 4 : 8, layout.weights_size, n_blocks);
                 // }
-            } else {
+            } وإلا {
                 // F16/F32/BF16 weight or F16-requant
-                extra = new ggml_openvino_weight_extra(std::move(result.weights), result.weight_node);
+                extra = جديد ggml_openvino_وزن_extra(std::move(نتیجه.weights), نتیجه.وزن_گره);
 
                 // if (layout.total_size > 0) {
                 //     GGML_LOG_DEBUG("%s: requantized %s to F16\n", __func__, tensor->name);
@@ -475,836 +475,836 @@ static void ggml_backend_openvino_buffer_set_tensor(ggml_backend_buffer_t buffer
 
             // Register the host buffer so its pages can be dropped after the GPU
             // plugin has its own device copy (GGML_OPENVINO_RELEASE_WEIGHTS).
-            if (!ctx->is_remote) {
+            إذا (!ctx->is_remote) {
                 // Weights are set once at model load. Setting a weight after a release
                 // means a second model is loading while the first's compiled graph is
                 // pinned — that graph would be wrongly reused with this model's key.
                 // Fail loud rather than return silently-wrong results.
-                if (ggml_openvino_weight_buffers_released()) {
+                إذا (ggml_openvino_وزن_buffers_released()) {
                     GGML_ABORT(
                         "ggml-openvino: loading a new model while GGML_OPENVINO_RELEASE_WEIGHTS pinned a previous "
                         "model's compiled graph. This mode supports a single model per process; unset it for "
                         "multi-model runs.");
                 }
-                ggml_openvino_register_weight_buffer(ctx->data, ctx->size);
+                ggml_openvino_ثبات_وزن_میانگیر(ctx->داده, ctx->size);
             }
 
-        } catch (const std::exception & e) {
+        } امسك (ثابت std::exception & e) {
             GGML_LOG_ERROR("%s: failed to process weight tensor for %s: %s\n", __func__, tensor->name, e.what());
-            memcpy((char *) tensor->data + offset, data, size);
+            کپی_حافظه((حرف *) tensor->داده + جابه_جایی, داده, size);
         }
-    } else {
+    } وإلا {
         // Non-weight tensor (KV cache, activations, etc.) - copy data. test-backend-ops also goes here
-        if (ctx->is_remote) {
-            cl_command_queue queue = ggml_openvino_get_cl_queue();
-            auto mem_cpy_fn = ggml_openvino_get_clEnqueueMemcpyINTEL();
-            if (mem_cpy_fn != nullptr) {
+        إذا (ctx->is_remote) {
+            cl_command_صف queue = ggml_openvino_get_cl_صف();
+            خودکار mem_cpy_fn = ggml_openvino_get_cl_افزودن_به_صف_Memcpy_INTEL();
+            إذا (mem_cpy_fn != اشاره_تهی) {
                 cl_int err =
-                    mem_cpy_fn(queue, CL_TRUE, (char *) tensor->data + offset, data, size, 0, nullptr, nullptr);
-                if (err != CL_SUCCESS) {
+                    mem_cpy_fn(queue, CL_TRUE, (حرف *) tensor->داده + جابه_جایی, داده, size, 0, اشاره_تهی, اشاره_تهی);
+                إذا (err != CL_SUCCESS) {
                     GGML_LOG_ERROR("%s: clEnqueueMemcpyINTEL failed with error %d\n", __func__, err);
                 }
-            } else {
+            } وإلا {
                 GGML_LOG_ERROR("%s: clEnqueueMemcpyINTEL not available for GPU buffer\n", __func__);
             }
-        } else {
-            memcpy((char *) tensor->data + offset, data, size);
+        } وإلا {
+            کپی_حافظه((حرف *) tensor->داده + جابه_جایی, داده, size);
         }
 
         ggml_openvino_tensor_extra * extra = ggml_openvino_create_tensor_extra(tensor, ctx->is_remote);
-        if (extra == nullptr) {
+        إذا (extra == اشاره_تهی) {
             // GGML_LOG_ERROR("%s: failed to create tensor extra for %s\n", __func__, tensor->name);
-            return;
+            أرجع;
         }
 
-        auto it = ctx->tensor_extras.find(tensor);
-        if (it != ctx->tensor_extras.end()) {
-            delete it->second;
+        خودکار it = ctx->tensor_extras.find(tensor);
+        إذا (it != ctx->tensor_extras.end()) {
+            حذف it->second;
         }
         ctx->tensor_extras[tensor] = extra;
         tensor->extra = extra;
     }
 }
 
-static void ggml_backend_openvino_buffer_get_tensor(ggml_backend_buffer_t buffer,
-                                                    const ggml_tensor * tensor,
-                                                    void * data,
-                                                    size_t offset,
+ساكن فراغ ggml_backend_openvino_میانگیر_get_tensor(ggml_backend_میانگیر_t میانگیر,
+                                                    ثابت ggml_tensor * tensor,
+                                                    فراغ * داده,
+                                                    size_t جابه_جایی,
                                                     size_t size) {
     // GGML_LOG_DEBUG("%s: buffer usage=%d, tensor name=%s\n", __func__, buffer->usage, tensor->name);
-    GGML_ASSERT(tensor != nullptr && tensor->data != nullptr);
-    ggml_backend_openvino_buffer_context * ctx = (ggml_backend_openvino_buffer_context *) buffer->context;
+    GGML_ASSERT(tensor != اشاره_تهی && tensor->داده != اشاره_تهی);
+    ggml_backend_openvino_میانگیر_context * ctx = (ggml_backend_openvino_میانگیر_context *) میانگیر->context;
 
-    if (ggml_openvino_model_cache_only() && buffer->usage == GGML_BACKEND_BUFFER_USAGE_WEIGHTS) {
+    إذا (ggml_openvino_model_cache_only() && میانگیر->usage == GGML_BACKEND_میانگیر_USAGE_WEIGHTS) {
         GGML_ABORT("ggml-openvino: cannot read unloaded weights in cache-only mode");
     }
 
-    if (ctx->is_remote) {
+    إذا (ctx->is_remote) {
         // For remote (device) buffers, use OpenCL USM memcpy (device-to-host)
-        cl_command_queue queue = ggml_openvino_get_cl_queue();
-        auto mem_cpy_fn = ggml_openvino_get_clEnqueueMemcpyINTEL();
-        if (mem_cpy_fn != nullptr) {
+        cl_command_صف queue = ggml_openvino_get_cl_صف();
+        خودکار mem_cpy_fn = ggml_openvino_get_cl_افزودن_به_صف_Memcpy_INTEL();
+        إذا (mem_cpy_fn != اشاره_تهی) {
             cl_int err =
-                mem_cpy_fn(queue, CL_TRUE, data, (const char *) tensor->data + offset, size, 0, nullptr, nullptr);
-            if (err != CL_SUCCESS) {
+                mem_cpy_fn(queue, CL_TRUE, داده, (ثابت حرف *) tensor->داده + جابه_جایی, size, 0, اشاره_تهی, اشاره_تهی);
+            إذا (err != CL_SUCCESS) {
                 GGML_LOG_ERROR("%s: clEnqueueMemcpyINTEL failed with error %d\n", __func__, err);
             }
-        } else {
+        } وإلا {
             GGML_LOG_ERROR("%s: clEnqueueMemcpyINTEL not available for GPU buffer\n", __func__);
         }
-    } else {
-        memcpy(data, (const char *) tensor->data + offset, size);
+    } وإلا {
+        کپی_حافظه(داده, (ثابت حرف *) tensor->داده + جابه_جایی, size);
     }
 }
 
-static bool ggml_backend_openvino_buffer_cpy_tensor(ggml_backend_buffer_t buffer,
-                                                    const ggml_tensor * src,
+ساكن منطقي ggml_backend_openvino_میانگیر_cpy_tensor(ggml_backend_میانگیر_t میانگیر,
+                                                    ثابت ggml_tensor * src,
                                                     ggml_tensor * dst) {
     // GGML_LOG_DEBUG("%s: src tensor name=%s, dst tensor name=%s\n", __func__, src->name, dst->name);
-    GGML_ASSERT(src != nullptr && dst != nullptr);
-    ggml_backend_openvino_buffer_context * ctx = (ggml_backend_openvino_buffer_context *) buffer->context;
+    GGML_ASSERT(src != اشاره_تهی && dst != اشاره_تهی);
+    ggml_backend_openvino_میانگیر_context * ctx = (ggml_backend_openvino_میانگیر_context *) میانگیر->context;
 
-    if (ctx->is_remote) {
+    إذا (ctx->is_remote) {
         // For remote (device) buffers, use OpenCL USM memcpy
-        cl_command_queue queue = ggml_openvino_get_cl_queue();
-        auto mem_cpy_fn = ggml_openvino_get_clEnqueueMemcpyINTEL();
-        if (mem_cpy_fn == nullptr) {
+        cl_command_صف queue = ggml_openvino_get_cl_صف();
+        خودکار mem_cpy_fn = ggml_openvino_get_cl_افزودن_به_صف_Memcpy_INTEL();
+        إذا (mem_cpy_fn == اشاره_تهی) {
             GGML_LOG_ERROR("%s: clEnqueueMemcpyINTEL not available for GPU buffer\n", __func__);
-            return false;
+            أرجع خطأ;
         }
         // Can copy from host to device
-        if (ggml_backend_buffer_is_host(src->buffer)) {
-            cl_int err = mem_cpy_fn(queue, CL_TRUE, dst->data, src->data, ggml_nbytes(src), 0, nullptr, nullptr);
-            if (err != CL_SUCCESS) {
+        إذا (ggml_backend_میانگیر_is_host(src->میانگیر)) {
+            cl_int err = mem_cpy_fn(queue, CL_TRUE, dst->داده, src->داده, ggml_nbytes(src), 0, اشاره_تهی, اشاره_تهی);
+            إذا (err != CL_SUCCESS) {
                 GGML_LOG_ERROR("%s: clEnqueueMemcpyINTEL (host-to-device) failed with error %d\n", __func__, err);
-                return false;
+                أرجع خطأ;
             }
-            return true;
+            أرجع درست;
         }
         // Can also copy from device to device if both are OpenVINO remote buffers
-        if (ggml_backend_buffer_is_openvino(src->buffer)) {
-            ggml_backend_openvino_buffer_context * src_ctx =
-                (ggml_backend_openvino_buffer_context *) src->buffer->context;
-            if (src_ctx->is_remote) {
-                cl_int err = mem_cpy_fn(queue, CL_TRUE, dst->data, src->data, ggml_nbytes(src), 0, nullptr, nullptr);
-                if (err != CL_SUCCESS) {
+        إذا (ggml_backend_میانگیر_is_openvino(src->میانگیر)) {
+            ggml_backend_openvino_میانگیر_context * src_ctx =
+                (ggml_backend_openvino_میانگیر_context *) src->میانگیر->context;
+            إذا (src_ctx->is_remote) {
+                cl_int err = mem_cpy_fn(queue, CL_TRUE, dst->داده, src->داده, ggml_nbytes(src), 0, اشاره_تهی, اشاره_تهی);
+                إذا (err != CL_SUCCESS) {
                     GGML_LOG_ERROR("%s: clEnqueueMemcpyINTEL (device-to-device) failed with error %d\n", __func__, err);
-                    return false;
+                    أرجع خطأ;
                 }
-                return true;
+                أرجع درست;
             }
         }
-        return false;
+        أرجع خطأ;
     }
 
     // Host buffer - can copy from any host buffer
-    if (ggml_backend_buffer_is_host(src->buffer)) {
-        memcpy(dst->data, src->data, ggml_nbytes(src));
-        return true;
+    إذا (ggml_backend_میانگیر_is_host(src->میانگیر)) {
+        کپی_حافظه(dst->داده, src->داده, ggml_nbytes(src));
+        أرجع درست;
     }
-    return false;
+    أرجع خطأ;
 }
 
-static void ggml_backend_openvino_buffer_clear(ggml_backend_buffer_t buffer, uint8_t value) {
-    ggml_backend_openvino_buffer_context * ctx = (ggml_backend_openvino_buffer_context *) buffer->context;
-    GGML_ASSERT(ctx->data != nullptr);
-    if (ctx->is_remote) {
-        cl_command_queue queue = ggml_openvino_get_cl_queue();
-        auto mem_fill_fn = ggml_openvino_get_clEnqueueMemFillINTEL();
-        if (mem_fill_fn != nullptr) {
+ساكن فراغ ggml_backend_openvino_میانگیر_clear(ggml_backend_میانگیر_t میانگیر, uint8_t value) {
+    ggml_backend_openvino_میانگیر_context * ctx = (ggml_backend_openvino_میانگیر_context *) میانگیر->context;
+    GGML_ASSERT(ctx->داده != اشاره_تهی);
+    إذا (ctx->is_remote) {
+        cl_command_صف queue = ggml_openvino_get_cl_صف();
+        خودکار mem_fill_fn = ggml_openvino_get_cl_افزودن_به_صف_Mem_Fill_INTEL();
+        إذا (mem_fill_fn != اشاره_تهی) {
             uint8_t pattern = value;
-            cl_int err = mem_fill_fn(queue, ctx->data, &pattern, sizeof(pattern), ctx->size, 0, nullptr, nullptr);
-            if (err != CL_SUCCESS) {
+            cl_int err = mem_fill_fn(queue, ctx->داده, &pattern, حجم(pattern), ctx->size, 0, اشاره_تهی, اشاره_تهی);
+            إذا (err != CL_SUCCESS) {
                 GGML_LOG_WARN("%s: clEnqueueMemFillINTEL failed with error %d\n", __func__, err);
             }
-            clFinish(queue);
-        } else {
+            cl_پایان(queue);
+        } وإلا {
             GGML_LOG_WARN("%s: clEnqueueMemFillINTEL not available for GPU buffer clear\n", __func__);
         }
-    } else {
-        memset(ctx->data, value, ctx->size);
+    } وإلا {
+        memset(ctx->داده, value, ctx->size);
     }
 }
 
-static const ggml_backend_buffer_i ggml_backend_openvino_buffer_interface = {
-    /* .free_buffer     = */ ggml_backend_openvino_buffer_free_buffer,
-    /* .get_base        = */ ggml_backend_openvino_buffer_get_base,
-    /* .init_tensor     = */ ggml_backend_openvino_buffer_init_tensor,
-    /* .memset_tensor   = */ ggml_backend_openvino_buffer_memset_tensor,
-    /* .set_tensor      = */ ggml_backend_openvino_buffer_set_tensor,
-    /* .get_tensor      = */ ggml_backend_openvino_buffer_get_tensor,
-    /* .set_tensor_2d   = */ NULL,
-    /* .get_tensor_2d   = */ NULL,
-    /* .cpy_tensor      = */ ggml_backend_openvino_buffer_cpy_tensor,
-    /* .clear           = */ ggml_backend_openvino_buffer_clear,
-    /* .reset           = */ NULL,
+ساكن ثابت ggml_backend_میانگیر_i ggml_backend_openvino_میانگیر_interface = {
+    /* .free_buffer     = */ ggml_backend_openvino_میانگیر_free_میانگیر,
+    /* .get_base        = */ ggml_backend_openvino_میانگیر_get_پایه,
+    /* .init_tensor     = */ ggml_backend_openvino_میانگیر_init_tensor,
+    /* .memset_tensor   = */ ggml_backend_openvino_میانگیر_memset_tensor,
+    /* .set_tensor      = */ ggml_backend_openvino_میانگیر_مجموعه_tensor,
+    /* .get_tensor      = */ ggml_backend_openvino_میانگیر_get_tensor,
+    /* .set_tensor_2d   = */ عدم,
+    /* .get_tensor_2d   = */ عدم,
+    /* .cpy_tensor      = */ ggml_backend_openvino_میانگیر_cpy_tensor,
+    /* .clear           = */ ggml_backend_openvino_میانگیر_clear,
+    /* .reset           = */ عدم,
 };
 
 // Buffer type interface functions
-static const char * ggml_backend_openvino_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
-    ggml_backend_openvino_buffer_type_context * ctx = (ggml_backend_openvino_buffer_type_context *) buft->context;
-    return ctx->name.c_str();
+ساكن ثابت حرف * ggml_backend_openvino_میانگیر_type_get_name(ggml_backend_میانگیر_type_t buft) {
+    ggml_backend_openvino_میانگیر_type_context * ctx = (ggml_backend_openvino_میانگیر_type_context *) buft->context;
+    أرجع ctx->name.c_str();
 }
 
-static ggml_backend_buffer_t ggml_backend_openvino_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft,
+ساكن ggml_backend_میانگیر_t ggml_backend_openvino_میانگیر_type_alloc_میانگیر(ggml_backend_میانگیر_type_t buft,
                                                                             size_t size) {
-    ggml_backend_openvino_buffer_type_context * buft_ctx = (ggml_backend_openvino_buffer_type_context *) buft->context;
+    ggml_backend_openvino_میانگیر_type_context * buft_ctx = (ggml_backend_openvino_میانگیر_type_context *) buft->context;
 
     // Create buffer context with contiguous memory allocation
-    ggml_backend_openvino_buffer_context * ctx = new ggml_backend_openvino_buffer_context(buft_ctx->device, size);
+    ggml_backend_openvino_میانگیر_context * ctx = جديد ggml_backend_openvino_میانگیر_context(buft_ctx->device, size);
 
-    if (ctx->data == nullptr && size > 0) {
+    إذا (ctx->داده == اشاره_تهی && size > 0) {
         GGML_LOG_ERROR("%s: failed to allocate buffer of size %zu\n", __func__, size);
-        delete ctx;
-        return nullptr;
+        حذف ctx;
+        أرجع اشاره_تهی;
     }
 
-    return ggml_backend_buffer_init(buft, ggml_backend_openvino_buffer_interface, ctx, size);
+    أرجع ggml_backend_میانگیر_init(buft, ggml_backend_openvino_میانگیر_interface, ctx, size);
 }
 
-static size_t ggml_backend_openvino_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
-    GGML_UNUSED(buft);
-    return TENSOR_ALIGNMENT;
+ساكن size_t ggml_backend_openvino_میانگیر_type_get_alignment(ggml_backend_میانگیر_type_t buft) {
+    GGML_استفادهنشده(buft);
+    أرجع TENSOR_ALIGNMENT;
 }
 
-static size_t ggml_backend_openvino_buffer_type_get_max_size(ggml_backend_buffer_type_t buft) {
-    GGML_UNUSED(buft);
+ساكن size_t ggml_backend_openvino_میانگیر_type_get_max_اندازه(ggml_backend_میانگیر_type_t buft) {
+    GGML_استفادهنشده(buft);
     // A GPU caps a single memory object, so let ggml split a large buffer into parts that fit
-    return ggml_openvino_max_alloc_size();
+    أرجع ggml_openvino_max_alloc_اندازه();
 }
 
-static size_t ggml_backend_openvino_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft,
-                                                               const ggml_tensor * tensor) {
-    GGML_UNUSED(buft);
+ساكن size_t ggml_backend_openvino_میانگیر_type_get_alloc_اندازه(ggml_backend_میانگیر_type_t buft,
+                                                               ثابت ggml_tensor * tensor) {
+    GGML_استفادهنشده(buft);
 
     // For quantized weight tensors, we need extra space for extracted data.
-    if (!ggml_openvino_model_cache_only() && ggml_is_quantized(tensor->type) && tensor->ne[3] == 1) {
+    إذا (!ggml_openvino_model_cache_only() && ggml_is_quantized(tensor->type) && tensor->ne[3] == 1) {
         ggml_openvino_extracted_layout layout = ggml_openvino_get_extracted_layout(tensor);
-        if (layout.total_size > 0) {
+        إذا (layout.مجموع_اندازه > 0) {
             // GGML_LOG_DEBUG("%s: tensor %s needs %zu bytes (original %zu, extracted: weights=%zu scales=%zu zp=%zu)\n",
             //                __func__, tensor->name, layout.total_size, ggml_nbytes(tensor), layout.weights_size,
             //                layout.scales_size, layout.zp_size);
-            return layout.total_size;
+            أرجع layout.مجموع_اندازه;
         }
     }
 
-    return ggml_nbytes(tensor);
+    أرجع ggml_nbytes(tensor);
 }
 
-static const ggml_backend_buffer_type_i ggml_backend_openvino_buffer_type_interface = {
-    /* .get_name            = */ ggml_backend_openvino_buffer_type_get_name,
-    /* .alloc_buffer        = */ ggml_backend_openvino_buffer_type_alloc_buffer,
-    /* .alloc_buffer_n      = */ NULL,
-    /* .get_alignment       = */ ggml_backend_openvino_buffer_type_get_alignment,
-    /* .get_max_size        = */ ggml_backend_openvino_buffer_type_get_max_size,
-    /* .get_alloc_size      = */ ggml_backend_openvino_buffer_type_get_alloc_size,
-    /* .get_alloc_size_n    = */ NULL,
-    /* .is_host             = */ nullptr,
+ساكن ثابت ggml_backend_میانگیر_type_i ggml_backend_openvino_میانگیر_type_interface = {
+    /* .get_name            = */ ggml_backend_openvino_میانگیر_type_get_name,
+    /* .alloc_buffer        = */ ggml_backend_openvino_میانگیر_type_alloc_میانگیر,
+    /* .alloc_buffer_n      = */ عدم,
+    /* .get_alignment       = */ ggml_backend_openvino_میانگیر_type_get_alignment,
+    /* .get_max_size        = */ ggml_backend_openvino_میانگیر_type_get_max_اندازه,
+    /* .get_alloc_size      = */ ggml_backend_openvino_میانگیر_type_get_alloc_اندازه,
+    /* .get_alloc_size_n    = */ عدم,
+    /* .is_host             = */ اشاره_تهی,
 };
 
 // Get buffer type for a specific device
-GGML_BACKEND_API ggml_backend_buffer_type_t ggml_backend_openvino_buffer_type(int device) {
-    GGML_ASSERT(device >= 0 && device < ggml_backend_openvino_get_device_count());
+GGML_BACKEND_API ggml_backend_میانگیر_type_t ggml_backend_openvino_میانگیر_type(صحيح device) {
+    GGML_ASSERT(device >= 0 && device < ggml_backend_openvino_get_device_شمار());
 
-    static std::mutex mutex;
-    std::lock_guard<std::mutex> lock(mutex);
+    ساكن std::mutex mutex;
+    std::lock_guard<std::mutex> قفل(mutex);
 
-    static std::vector<ggml_backend_buffer_type> buffer_types;
-    static std::vector<ggml_backend_openvino_buffer_type_context> buffer_type_contexts;
+    ساكن std::vector<ggml_backend_میانگیر_type> میانگیر_types;
+    ساكن std::vector<ggml_backend_openvino_میانگیر_type_context> میانگیر_type_contexts;
 
-    if (buffer_types.empty()) {
-        int device_count = ggml_backend_openvino_get_device_count();
-        buffer_types.resize(device_count);
-        buffer_type_contexts.resize(device_count);
+    إذا (میانگیر_types.خالی()) {
+        صحيح device_شمار = ggml_backend_openvino_get_device_شمار();
+        میانگیر_types.resize(device_شمار);
+        میانگیر_type_contexts.resize(device_شمار);
 
-        for (int i = 0; i < device_count; i++) {
-            buffer_type_contexts[i].device = i;
-            buffer_type_contexts[i].name = std::string(GGML_OPENVINO_NAME) + std::to_string(i);
+        لكل (صحيح i = 0; i < device_شمار; i++) {
+            میانگیر_type_contexts[i].device = i;
+            میانگیر_type_contexts[i].name = std::string(GGML_OPENVINO_NAME) + std::to_string(i);
 
-            buffer_types[i] = ggml_backend_buffer_type{
-                /* .iface   = */ ggml_backend_openvino_buffer_type_interface,
+            میانگیر_types[i] = ggml_backend_میانگیر_type{
+                /* .iface   = */ ggml_backend_openvino_میانگیر_type_interface,
                 /* .device  = */ ggml_backend_reg_dev_get(ggml_backend_openvino_reg(), i),
-                /* .context = */ &buffer_type_contexts[i],
+                /* .context = */ &میانگیر_type_contexts[i],
             };
         }
     }
 
-    return &buffer_types[device];
+    أرجع &میانگیر_types[device];
 }
 
 // =====================================================
 // OpenVINO Host Buffer Implementation
 // =====================================================
 
-static const char * ggml_backend_openvino_host_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
-    ggml_backend_openvino_buffer_type_context * ctx = (ggml_backend_openvino_buffer_type_context *) buft->context;
-    return ctx->name.c_str();
+ساكن ثابت حرف * ggml_backend_openvino_host_میانگیر_type_get_name(ggml_backend_میانگیر_type_t buft) {
+    ggml_backend_openvino_میانگیر_type_context * ctx = (ggml_backend_openvino_میانگیر_type_context *) buft->context;
+    أرجع ctx->name.c_str();
 }
 
-static bool ggml_backend_openvino_host_buffer_type_is_host(ggml_backend_buffer_type_t buft) {
-    GGML_UNUSED(buft);
-    return true;
+ساكن منطقي ggml_backend_openvino_host_میانگیر_type_is_host(ggml_backend_میانگیر_type_t buft) {
+    GGML_استفادهنشده(buft);
+    أرجع درست;
 }
 
-static const ggml_backend_buffer_type_i ggml_backend_openvino_host_buffer_type_interface = {
-    /* .get_name            = */ ggml_backend_openvino_host_buffer_type_get_name,
-    /* .alloc_buffer        = */ ggml_backend_openvino_buffer_type_alloc_buffer,
-    /* .alloc_buffer_n      = */ NULL,
-    /* .get_alignment       = */ ggml_backend_openvino_buffer_type_get_alignment,
-    /* .get_max_size        = */ ggml_backend_openvino_buffer_type_get_max_size,
-    /* .get_alloc_size      = */ ggml_backend_openvino_buffer_type_get_alloc_size,
-    /* .get_alloc_size_n    = */ NULL,
-    /* .is_host             = */ ggml_backend_openvino_host_buffer_type_is_host,
+ساكن ثابت ggml_backend_میانگیر_type_i ggml_backend_openvino_host_میانگیر_type_interface = {
+    /* .get_name            = */ ggml_backend_openvino_host_میانگیر_type_get_name,
+    /* .alloc_buffer        = */ ggml_backend_openvino_میانگیر_type_alloc_میانگیر,
+    /* .alloc_buffer_n      = */ عدم,
+    /* .get_alignment       = */ ggml_backend_openvino_میانگیر_type_get_alignment,
+    /* .get_max_size        = */ ggml_backend_openvino_میانگیر_type_get_max_اندازه,
+    /* .get_alloc_size      = */ ggml_backend_openvino_میانگیر_type_get_alloc_اندازه,
+    /* .get_alloc_size_n    = */ عدم,
+    /* .is_host             = */ ggml_backend_openvino_host_میانگیر_type_is_host,
 };
 
-GGML_BACKEND_API ggml_backend_buffer_type_t ggml_backend_openvino_host_buffer_type(int device) {
-    GGML_ASSERT(device >= 0 && device < ggml_backend_openvino_get_device_count());
+GGML_BACKEND_API ggml_backend_میانگیر_type_t ggml_backend_openvino_host_میانگیر_type(صحيح device) {
+    GGML_ASSERT(device >= 0 && device < ggml_backend_openvino_get_device_شمار());
 
-    static std::mutex mutex;
-    std::lock_guard<std::mutex> lock(mutex);
+    ساكن std::mutex mutex;
+    std::lock_guard<std::mutex> قفل(mutex);
 
-    static std::vector<ggml_backend_buffer_type> buffer_types;
-    static std::vector<ggml_backend_openvino_buffer_type_context> buffer_type_contexts;
+    ساكن std::vector<ggml_backend_میانگیر_type> میانگیر_types;
+    ساكن std::vector<ggml_backend_openvino_میانگیر_type_context> میانگیر_type_contexts;
 
-    if (buffer_types.empty()) {
-        int device_count = ggml_backend_openvino_get_device_count();
-        buffer_types.resize(device_count);
-        buffer_type_contexts.resize(device_count);
+    إذا (میانگیر_types.خالی()) {
+        صحيح device_شمار = ggml_backend_openvino_get_device_شمار();
+        میانگیر_types.resize(device_شمار);
+        میانگیر_type_contexts.resize(device_شمار);
 
-        for (int i = 0; i < device_count; i++) {
-            buffer_type_contexts[i].device = i;
-            buffer_type_contexts[i].name = std::string(GGML_OPENVINO_NAME) + std::to_string(i) + "_HOST";
+        لكل (صحيح i = 0; i < device_شمار; i++) {
+            میانگیر_type_contexts[i].device = i;
+            میانگیر_type_contexts[i].name = std::string(GGML_OPENVINO_NAME) + std::to_string(i) + "_HOST";
 
-            buffer_types[i] = ggml_backend_buffer_type{
-                /* .iface   = */ ggml_backend_openvino_host_buffer_type_interface,
+            میانگیر_types[i] = ggml_backend_میانگیر_type{
+                /* .iface   = */ ggml_backend_openvino_host_میانگیر_type_interface,
                 /* .device  = */ ggml_backend_reg_dev_get(ggml_backend_openvino_reg(), i),
-                /* .context = */ &buffer_type_contexts[i],
+                /* .context = */ &میانگیر_type_contexts[i],
             };
         }
     }
 
-    return &buffer_types[device];
+    أرجع &میانگیر_types[device];
 }
 
-bool ggml_backend_buffer_is_openvino(ggml_backend_buffer_t buffer) {
-    return buffer->iface.free_buffer == ggml_backend_openvino_buffer_free_buffer;
+منطقي ggml_backend_میانگیر_is_openvino(ggml_backend_میانگیر_t میانگیر) {
+    أرجع میانگیر->iface.free_میانگیر == ggml_backend_openvino_میانگیر_free_میانگیر;
 }
 
-size_t ggml_backend_openvino_buffer_get_ctx_id(ggml_backend_buffer_t buffer) {
-    if (!ggml_backend_buffer_is_openvino(buffer)) {
-        return 0;
+size_t ggml_backend_openvino_میانگیر_get_ctx_id(ggml_backend_میانگیر_t میانگیر) {
+    إذا (!ggml_backend_میانگیر_is_openvino(میانگیر)) {
+        أرجع 0;
     }
-    ggml_backend_openvino_buffer_context * ctx = (ggml_backend_openvino_buffer_context *) buffer->context;
-    return ctx->id;
+    ggml_backend_openvino_میانگیر_context * ctx = (ggml_backend_openvino_میانگیر_context *) میانگیر->context;
+    أرجع ctx->id;
 }
 
-bool ggml_openvino_buffer_is_remote(const ggml_tensor * tensor) {
-    if (tensor == nullptr || tensor->buffer == nullptr) {
-        return false;
+منطقي ggml_openvino_میانگیر_is_remote(ثابت ggml_tensor * tensor) {
+    إذا (tensor == اشاره_تهی || tensor->میانگیر == اشاره_تهی) {
+        أرجع خطأ;
     }
-    if (!ggml_backend_buffer_is_openvino(tensor->buffer)) {
-        return false;
+    إذا (!ggml_backend_میانگیر_is_openvino(tensor->میانگیر)) {
+        أرجع خطأ;
     }
-    auto * ctx = static_cast<ggml_backend_openvino_buffer_context *>(tensor->buffer->context);
-    return ctx->is_remote;
+    خودکار * ctx = static_cast<ggml_backend_openvino_میانگیر_context *>(tensor->میانگیر->context);
+    أرجع ctx->is_remote;
 }
 
-void ggml_openvino_buffer_register_extra(ggml_tensor * tensor, ggml_openvino_extra_base * extra) {
-    GGML_ASSERT(tensor != nullptr);
-    GGML_ASSERT(tensor->buffer != nullptr);
-    GGML_ASSERT(ggml_backend_buffer_is_openvino(tensor->buffer));
+فراغ ggml_openvino_میانگیر_ثبات_extra(ggml_tensor * tensor, ggml_openvino_extra_پایه * extra) {
+    GGML_ASSERT(tensor != اشاره_تهی);
+    GGML_ASSERT(tensor->میانگیر != اشاره_تهی);
+    GGML_ASSERT(ggml_backend_میانگیر_is_openvino(tensor->میانگیر));
 
-    auto * ctx = static_cast<ggml_backend_openvino_buffer_context *>(tensor->buffer->context);
+    خودکار * ctx = static_cast<ggml_backend_openvino_میانگیر_context *>(tensor->میانگیر->context);
 
-    auto it = ctx->tensor_extras.find(tensor);
-    if (it != ctx->tensor_extras.end()) {
-        delete it->second;
+    خودکار it = ctx->tensor_extras.find(tensor);
+    إذا (it != ctx->tensor_extras.end()) {
+        حذف it->second;
     }
 
     ctx->tensor_extras[tensor] = extra;
     tensor->extra = extra;
 }
 
-bool ggml_backend_buft_is_openvino(ggml_backend_buffer_type_t buft) {
-    return buft->iface.get_name == ggml_backend_openvino_buffer_type_get_name;
+منطقي ggml_backend_buft_is_openvino(ggml_backend_میانگیر_type_t buft) {
+    أرجع buft->iface.get_name == ggml_backend_openvino_میانگیر_type_get_name;
 }
 
-bool ggml_backend_buft_is_openvino_host(ggml_backend_buffer_type_t buft) {
-    return buft->iface.get_name == ggml_backend_openvino_host_buffer_type_get_name;
+منطقي ggml_backend_buft_is_openvino_host(ggml_backend_میانگیر_type_t buft) {
+    أرجع buft->iface.get_name == ggml_backend_openvino_host_میانگیر_type_get_name;
 }
 
-uint64_t ggml_backend_openvino_weight_fingerprint(const ggml_tensor * tensor) {
-    if (ggml_backend_buffer_is_openvino(tensor->buffer)) {
-        auto * ctx = static_cast<ggml_backend_openvino_buffer_context *>(tensor->buffer->context);
-        auto it = ctx->weight_fingerprints.find(tensor->data);
-        if (it != ctx->weight_fingerprints.end()) {
-            return it->second;
+uint64_t ggml_backend_openvino_وزن_fingerprint(ثابت ggml_tensor * tensor) {
+    إذا (ggml_backend_میانگیر_is_openvino(tensor->میانگیر)) {
+        خودکار * ctx = static_cast<ggml_backend_openvino_میانگیر_context *>(tensor->میانگیر->context);
+        خودکار it = ctx->وزن_fingerprints.find(tensor->داده);
+        إذا (it != ctx->وزن_fingerprints.end()) {
+            أرجع it->second;
         }
         GGML_ABORT("ggml-openvino: missing source identity for weight %s", tensor->name);
     }
-    std::vector<ggml_openvino_source_mapping> mappings;
-    return ggml_openvino_source_fingerprint(tensor->data, ggml_nbytes(tensor), mappings);
+    std::vector<ggml_openvino_منبع_mapping> mappings;
+    أرجع ggml_openvino_منبع_fingerprint(tensor->داده, ggml_nbytes(tensor), mappings);
 }
 
-static void ggml_backend_openvino_free(ggml_backend_t backend) {
+ساكن فراغ ggml_backend_openvino_free(ggml_backend_t backend) {
     ggml_backend_openvino_context * ctx = (ggml_backend_openvino_context *) backend->context;
 
-    if (ctx->runtime_context) {
-        auto r_ctx = std::static_pointer_cast<ov_runtime_context>(ctx->runtime_context);
-        auto cache = r_ctx->compiled_cache;
+    إذا (ctx->runtime_context) {
+        خودکار r_ctx = std::static_pointer_cast<ov_runtime_context>(ctx->runtime_context);
+        خودکار cache = r_ctx->compiled_cache;
         r_ctx->clear_caches();
-        std::lock_guard<std::mutex> cache_lock(cache->mutex);
-        if (--cache->backend_count == 0) {
+        std::lock_guard<std::mutex> cache_قفل(cache->mutex);
+        إذا (--cache->backend_شمار == 0) {
             // If host weight buffers were released (GGML_OPENVINO_RELEASE_WEIGHTS), the
             // dropped pages can never be repopulated, so a recompile is impossible. Keep
             // the compiled-model cache alive across backend teardown so the next context
             // reuses it instead of recompiling against zeroed weights.
-            if (!ggml_openvino_weight_buffers_released()) {
+            إذا (!ggml_openvino_وزن_buffers_released()) {
                 cache->graphs.clear();
             }
         }
     }
 
-    delete ctx;
-    delete backend;
+    حذف ctx;
+    حذف backend;
 }
 
-static const char * ggml_backend_openvino_get_name(ggml_backend_t backend) {
-    return GGML_OPENVINO_NAME;
-    GGML_UNUSED(backend);
+ساكن ثابت حرف * ggml_backend_openvino_get_name(ggml_backend_t backend) {
+    أرجع GGML_OPENVINO_NAME;
+    GGML_استفادهنشده(backend);
 }
 
-static enum ggml_status ggml_backend_openvino_graph_compute(ggml_backend_t backend, ggml_cgraph * cgraph) {
-    return ov_graph_compute(cgraph, backend);
-    GGML_UNUSED(backend);
+ساكن تعداد ggml_وضعیت ggml_backend_openvino_گراف_compute(ggml_backend_t backend, ggml_cgraph * cgraph) {
+    أرجع ov_گراف_compute(cgraph, backend);
+    GGML_استفادهنشده(backend);
 }
 
-static const ggml_backend_i ggml_backend_openvino_interface = {
+ساكن ثابت ggml_backend_i ggml_backend_openvino_interface = {
     /* .get_name                = */ ggml_backend_openvino_get_name,
     /* .free                    = */ ggml_backend_openvino_free,
-    /* .set_tensor_async        = */ NULL,
-    /* .get_tensor_async        = */ NULL,
-    /* .set_tensor_2d_async     = */ NULL,
-    /* .get_tensor_2d_async     = */ NULL,
-    /* .cpy_tensor_async        = */ NULL,
-    /* .synchronize             = */ NULL,
-    /* .graph_plan_create       = */ NULL,
-    /* .graph_plan_free         = */ NULL,
-    /* .graph_plan_update       = */ NULL,
-    /* .graph_plan_compute      = */ NULL,
-    /* .graph_compute           = */ ggml_backend_openvino_graph_compute,
-    /* .event_record            = */ NULL,
-    /* .event_wait              = */ NULL,
-    /* .graph_optimize          = */ NULL,
+    /* .set_tensor_async        = */ عدم,
+    /* .get_tensor_async        = */ عدم,
+    /* .set_tensor_2d_async     = */ عدم,
+    /* .get_tensor_2d_async     = */ عدم,
+    /* .cpy_tensor_async        = */ عدم,
+    /* .synchronize             = */ عدم,
+    /* .graph_plan_create       = */ عدم,
+    /* .graph_plan_free         = */ عدم,
+    /* .graph_plan_update       = */ عدم,
+    /* .graph_plan_compute      = */ عدم,
+    /* .graph_compute           = */ ggml_backend_openvino_گراف_compute,
+    /* .event_record            = */ عدم,
+    /* .event_wait              = */ عدم,
+    /* .graph_optimize          = */ عدم,
 };
 
-int ggml_backend_openvino_get_device_count() {
-    return (int) ggml_openvino_get_available_devices().size();
+صحيح ggml_backend_openvino_get_device_شمار() {
+    أرجع (صحيح) ggml_openvino_get_موجود_devices().size();
 }
 
-static ggml_guid_t ggml_backend_openvino_guid(void) {
-    static ggml_guid guid = {0x12, 0xa8, 0xae, 0xf4, 0xc0, 0x1e, 0x61, 0x97,
+ساكن ggml_guid_t ggml_backend_openvino_guid(فراغ) {
+    ساكن ggml_guid guid = {0x12, 0xa8, 0xae, 0xf4, 0xc0, 0x1e, 0x61, 0x97,
                              0x8f, 0xeb, 0x33, 0x04, 0xa1, 0x33, 0x51, 0x2d};
-    return &guid;
+    أرجع &guid;
 }
 
-static std::shared_ptr<ov_runtime_context> get_ov_runtime_context_ptr() {
+ساكن std::shared_ptr<ov_runtime_context> get_ov_runtime_context_ptr() {
     // Share compiled models, but give every backend its own requests and KV state.
-    static auto cache = std::make_shared<ov_compiled_model_cache>();
-    auto r_ctx = std::make_shared<ov_runtime_context>();
+    ساكن خودکار cache = std::make_shared<ov_compiled_model_cache>();
+    خودکار r_ctx = std::make_shared<ov_runtime_context>();
     r_ctx->device = ggml_openvino_get_device_name();
     r_ctx->stateful = is_stateful_enabled() && !ggml_openvino_is_npu();
     r_ctx->compiled_cache = cache;
-    std::lock_guard<std::mutex> cache_lock(cache->mutex);
-    ++cache->backend_count;
-    return r_ctx;
+    std::lock_guard<std::mutex> cache_قفل(cache->mutex);
+    ++cache->backend_شمار;
+    أرجع r_ctx;
 }
 
 // backend API
-GGML_BACKEND_API ggml_backend_t ggml_backend_openvino_init(int device) {
-    if (device < 0 || device >= ggml_backend_openvino_get_device_count()) {
+GGML_BACKEND_API ggml_backend_t ggml_backend_openvino_init(صحيح device) {
+    إذا (device < 0 || device >= ggml_backend_openvino_get_device_شمار()) {
         GGML_LOG_ERROR("%s: invalid device %d\n", __func__, device);
-        return nullptr;
+        أرجع اشاره_تهی;
     }
 
-    ggml_backend_openvino_context * ctx = new ggml_backend_openvino_context;
-    if (ctx == nullptr) {
+    ggml_backend_openvino_context * ctx = جديد ggml_backend_openvino_context;
+    إذا (ctx == اشاره_تهی) {
         GGML_LOG_ERROR("%s: failed to allocate context\n", __func__);
-        return nullptr;
+        أرجع اشاره_تهی;
     }
 
     ctx->runtime_context = get_ov_runtime_context_ptr();
-    if (ctx->runtime_context == nullptr) {
+    إذا (ctx->runtime_context == اشاره_تهی) {
         GGML_LOG_ERROR("%s: failed to allocate runtime context\n", __func__);
-        delete ctx;
-        return nullptr;
+        حذف ctx;
+        أرجع اشاره_تهی;
     }
 
-    ggml_backend_t openvino_backend = new ggml_backend{
+    ggml_backend_t openvino_backend = جديد ggml_backend{
         /* .guid      = */ ggml_backend_openvino_guid(),
         /* .interface = */ ggml_backend_openvino_interface,
         /* .device    = */ ggml_backend_reg_dev_get(ggml_backend_openvino_reg(), device),
         /* .context   = */ ctx,
     };
 
-    return openvino_backend;
+    أرجع openvino_backend;
 }
 
-GGML_BACKEND_API bool ggml_backend_is_openvino(ggml_backend_t backend) {
-    return backend != NULL && ggml_guid_matches(backend->guid, ggml_backend_openvino_guid());
+GGML_BACKEND_API منطقي ggml_backend_is_openvino(ggml_backend_t backend) {
+    أرجع backend != عدم && ggml_guid_matches(backend->guid, ggml_backend_openvino_guid());
 }
 
-namespace {
-struct ggml_backend_openvino_device_context {
-    int device;
+نطاق {
+بنية ggml_backend_openvino_device_context {
+    صحيح device;
     std::string name;
     std::string ov_name;  // OpenVINO device id: CPU, GPU, GPU.1, NPU, ...
     std::string description;
-    size_t total_memory;
+    size_t مجموع_حافظه;
 };
 }
 
-static bool ov_device_has_prefix(const std::string & s, const std::string & prefix) {
-    return s.size() >= prefix.size() && std::equal(prefix.begin(), prefix.end(), s.begin());
+ساكن منطقي ov_device_has_پیشوند(ثابت std::string & s, ثابت std::string & prefix) {
+    أرجع s.size() >= prefix.size() && std::equal(prefix.begin(), prefix.end(), s.begin());
 }
 
-static bool ov_try_get_size_t_property(const std::string & device, const std::string & property, size_t & out) {
-    try {
-        const ov::Any value = ov_singleton_core().get_property(device, property);
-        if (value.is<size_t>()) {
-            out = value.as<size_t>();
-            return true;
+ساكن منطقي ov_try_get_اندازه_t_property(ثابت std::string & device, ثابت std::string & property, size_t & بیرون) {
+    حاول {
+        ثابت ov::Any value = ov_singleton_core().get_property(device, property);
+        إذا (value.is<size_t>()) {
+            بیرون = value.as<size_t>();
+            أرجع درست;
         }
-        if (value.is<uint64_t>()) {
-            out = (size_t) value.as<uint64_t>();
-            return true;
+        إذا (value.is<uint64_t>()) {
+            بیرون = (size_t) value.as<uint64_t>();
+            أرجع درست;
         }
-        if (value.is<unsigned long long>()) {
-            out = (size_t) value.as<unsigned long long>();
-            return true;
+        إذا (value.is<بیعلامت دراز دراز>()) {
+            بیرون = (size_t) value.as<بیعلامت دراز دراز>();
+            أرجع درست;
         }
-        if (value.is<int64_t>()) {
-            const int64_t v = value.as<int64_t>();
-            if (v >= 0) {
-                out = (size_t) v;
-                return true;
+        إذا (value.is<int64_t>()) {
+            ثابت int64_t v = value.as<int64_t>();
+            إذا (v >= 0) {
+                بیرون = (size_t) v;
+                أرجع درست;
             }
         }
-    } catch (...) {
+    } امسك (...) {
     }
-    return false;
+    أرجع خطأ;
 }
 
 // System memory available to new allocations (MemAvailable on Linux), SIZE_MAX if unknown
-static size_t ov_system_available_memory() {
-#ifdef _WIN32
-    MEMORYSTATUSEX status;
-    status.dwLength = sizeof(status);
-    if (GlobalMemoryStatusEx(&status)) {
-        return (size_t) status.ullAvailPhys;
+ساكن size_t ov_system_موجود_حافظه() {
+#اگر_تعریف_شده _WIN32
+    MEMORYSTATUSEX وضعیت;
+    وضعیت.dw_درازی = حجم(وضعیت);
+    إذا (Global_حافظه_وضعیت_Ex(&وضعیت)) {
+        أرجع (size_t) وضعیت.ullAvailPhys;
     }
-#else
-    if (FILE * f = fopen("/proc/meminfo", "r")) {
-        char line[256];
-        unsigned long long kb = 0;
-        bool found = false;
-        while (!found && fgets(line, sizeof(line), f)) {
-            found = sscanf(line, "MemAvailable: %llu kB", &kb) == 1;
+#وإلا
+    إذا (FILE * f = fopen("/proc/meminfo", "r")) {
+        حرف سطر[256];
+        بیعلامت دراز دراز kb = 0;
+        منطقي یافت = خطأ;
+        طالما (!یافت && fgets(سطر, حجم(سطر), f)) {
+            یافت = از_رشته_بخوان(سطر, "MemAvailable: %llu kB", &kb) == 1;
         }
         fclose(f);
-        if (found) {
-            return (size_t) std::min<unsigned long long>(kb * 1024, SIZE_MAX);
+        إذا (یافت) {
+            أرجع (size_t) std::min<بیعلامت دراز دراز>(kb * 1024, SIZE_MAX);
         }
     }
-#endif
-    return SIZE_MAX;
+#پایان_اگر
+    أرجع SIZE_MAX;
 }
 
 // iGPU and NPU allocate from system RAM, so their free memory can't exceed what the OS has available
-static bool ov_device_shares_system_memory(const std::string & device) {
-    if (ov_device_has_prefix(device, "NPU")) {
-        return true;
+ساكن منطقي ov_device_shares_system_حافظه(ثابت std::string & device) {
+    إذا (ov_device_has_پیشوند(device, "NPU")) {
+        أرجع درست;
     }
-    if (!ov_device_has_prefix(device, "GPU")) {
-        return false;
+    إذا (!ov_device_has_پیشوند(device, "GPU")) {
+        أرجع خطأ;
     }
-    try {
-        return ov_singleton_core().get_property(device, ov::device::type) == ov::device::Type::INTEGRATED;
-    } catch (...) {
-        return false;
+    حاول {
+        أرجع ov_singleton_core().get_property(device, ov::device::type) == ov::device::Type::INTEGRATED;
+    } امسك (...) {
+        أرجع خطأ;
     }
 }
 
 // usm_host / usm_shared allocations live in system RAM on a discrete GPU
-static bool ov_gpu_stat_is_host_memory(const std::string & key) {
-    return key == "usm_host" || key == "usm_shared";
+ساكن منطقي ov_gpu_stat_is_host_حافظه(ثابت std::string & کلید) {
+    أرجع کلید == "usm_host" || کلید == "usm_shared";
 }
 
-static bool ov_try_get_gpu_used_memory(const std::string & device, size_t & out) {
-    out = 0;
-    try {
-        const ov::Any stats_any = ov_singleton_core().get_property(device, "GPU_MEMORY_STATISTICS");
-        if (stats_any.is<std::map<std::string, uint64_t>>()) {
-            const auto stats = stats_any.as<std::map<std::string, uint64_t>>();
-            for (const auto & kv : stats) {
-                if (!ov_gpu_stat_is_host_memory(kv.first)) {
-                    out += (size_t) kv.second;
+ساكن منطقي ov_try_get_gpu_استفاده_شده_حافظه(ثابت std::string & device, size_t & بیرون) {
+    بیرون = 0;
+    حاول {
+        ثابت ov::Any stats_any = ov_singleton_core().get_property(device, "GPU_MEMORY_STATISTICS");
+        إذا (stats_any.is<std::map<std::string, uint64_t>>()) {
+            ثابت خودکار stats = stats_any.as<std::map<std::string, uint64_t>>();
+            لكل (ثابت خودکار & kv : stats) {
+                إذا (!ov_gpu_stat_is_host_حافظه(kv.اولی)) {
+                    بیرون += (size_t) kv.second;
                 }
             }
-            return true;
+            أرجع درست;
         }
-        if (stats_any.is<ov::AnyMap>()) {
-            const auto stats = stats_any.as<ov::AnyMap>();
-            for (const auto & kv : stats) {
-                if (ov_gpu_stat_is_host_memory(kv.first)) {
-                    continue;
+        إذا (stats_any.is<ov::AnyMap>()) {
+            ثابت خودکار stats = stats_any.as<ov::AnyMap>();
+            لكل (ثابت خودکار & kv : stats) {
+                إذا (ov_gpu_stat_is_host_حافظه(kv.اولی)) {
+                    استمر;
                 }
-                if (kv.second.is<size_t>()) {
-                    out += kv.second.as<size_t>();
-                } else if (kv.second.is<uint64_t>()) {
-                    out += (size_t) kv.second.as<uint64_t>();
-                } else if (kv.second.is<unsigned long long>()) {
-                    out += (size_t) kv.second.as<unsigned long long>();
+                إذا (kv.second.is<size_t>()) {
+                    بیرون += kv.second.as<size_t>();
+                } وإلا إذا (kv.second.is<uint64_t>()) {
+                    بیرون += (size_t) kv.second.as<uint64_t>();
+                } وإلا إذا (kv.second.is<بیعلامت دراز دراز>()) {
+                    بیرون += (size_t) kv.second.as<بیعلامت دراز دراز>();
                 }
             }
-            return true;
+            أرجع درست;
         }
-    } catch (...) {
+    } امسك (...) {
     }
-    return false;
+    أرجع خطأ;
 }
 
-static const char * ggml_backend_openvino_device_get_name(ggml_backend_dev_t dev) {
+ساكن ثابت حرف * ggml_backend_openvino_device_get_name(ggml_backend_dev_t dev) {
     ggml_backend_openvino_device_context * ctx = (ggml_backend_openvino_device_context *) dev->context;
-    return ctx->name.c_str();
+    أرجع ctx->name.c_str();
 }
 
-static const char * ggml_backend_openvino_device_get_description(ggml_backend_dev_t dev) {
+ساكن ثابت حرف * ggml_backend_openvino_device_get_description(ggml_backend_dev_t dev) {
     ggml_backend_openvino_device_context * ctx = (ggml_backend_openvino_device_context *) dev->context;
-    return ctx->description.c_str();
+    أرجع ctx->description.c_str();
 }
 
-static void ggml_backend_openvino_device_get_memory(ggml_backend_dev_t dev, size_t * free, size_t * total) {
+ساكن فراغ ggml_backend_openvino_device_get_حافظه(ggml_backend_dev_t dev, size_t * حرر, size_t * مجموع) {
     ggml_backend_openvino_device_context * ctx = (ggml_backend_openvino_device_context *) dev->context;
 
     // total_memory is only set for GPU/NPU; used = this process's OpenVINO allocations on the device
-    size_t used = 0;
-    const bool known = ctx->total_memory > 0 &&
-                       (ov_device_has_prefix(ctx->ov_name, "GPU") ?
-                            ov_try_get_gpu_used_memory(ctx->ov_name, used) :
-                            ov_try_get_size_t_property(ctx->ov_name, "NPU_DEVICE_ALLOC_MEM_SIZE", used));
-    if (known) {
-        *total = ctx->total_memory;
-        *free = (used >= *total) ? 0 : (*total - used);
-    } else {
+    size_t استفاده_شده = 0;
+    ثابت منطقي معلوم = ctx->مجموع_حافظه > 0 &&
+                       (ov_device_has_پیشوند(ctx->ov_name, "GPU") ?
+                            ov_try_get_gpu_استفاده_شده_حافظه(ctx->ov_name, استفاده_شده) :
+                            ov_try_get_اندازه_t_property(ctx->ov_name, "NPU_DEVICE_ALLOC_MEM_SIZE", استفاده_شده));
+    إذا (معلوم) {
+        *مجموع = ctx->مجموع_حافظه;
+        *حرر = (استفاده_شده >= *مجموع) ? 0 : (*مجموع - استفاده_شده);
+    } وإلا {
         // CPU, or a plugin without memory properties: report system memory
-#ifdef _WIN32
-        MEMORYSTATUSEX status;
-        status.dwLength = sizeof(status);
-        GlobalMemoryStatusEx(&status);
-        *total = status.ullTotalPhys;
-        *free = status.ullAvailPhys;
-#else
-        long pages = sysconf(_SC_PHYS_PAGES);
-        long page_size = sysconf(_SC_PAGE_SIZE);
-        *total = pages * page_size;
+#اگر_تعریف_شده _WIN32
+        MEMORYSTATUSEX وضعیت;
+        وضعیت.dw_درازی = حجم(وضعیت);
+        Global_حافظه_وضعیت_Ex(&وضعیت);
+        *مجموع = وضعیت.ull_مجموع_Phys;
+        *حرر = وضعیت.ullAvailPhys;
+#وإلا
+        دراز صفحات = sysconf(_SC_PHYS_PAGES);
+        دراز صفحه_اندازه = sysconf(_SC_PAGE_SIZE);
+        *مجموع = صفحات * صفحه_اندازه;
 
         // "free" system memory is ill-defined, for practical purposes assume that all of it is free:
-        *free = *total;
-#endif  // _WIN32
+        *حرر = *مجموع;
+#پایان_اگر  // _WIN32
     }
 
-    if (ov_device_shares_system_memory(ctx->ov_name)) {
-        *free = std::min(*free, ov_system_available_memory());
+    إذا (ov_device_shares_system_حافظه(ctx->ov_name)) {
+        *حرر = std::min(*حرر, ov_system_موجود_حافظه());
     }
 }
 
-static enum ggml_backend_dev_type ggml_backend_openvino_device_get_type(ggml_backend_dev_t dev) {
+ساكن تعداد ggml_backend_dev_type ggml_backend_openvino_device_get_type(ggml_backend_dev_t dev) {
     ggml_backend_openvino_device_context * ctx = (ggml_backend_openvino_device_context *) dev->context;
     // Only the device selected by GGML_OPENVINO_DEVICE is offered for offload. The others are
     // registered for discovery (--list-devices) only; llama.cpp skips IGPU devices when a GPU exists.
-    return ctx->ov_name == ggml_openvino_get_device_name() ? GGML_BACKEND_DEVICE_TYPE_GPU : GGML_BACKEND_DEVICE_TYPE_IGPU;
+    أرجع ctx->ov_name == ggml_openvino_get_device_name() ? GGML_BACKEND_DEVICE_TYPE_GPU : GGML_BACKEND_DEVICE_TYPE_IGPU;
 }
 
-static void ggml_backend_openvino_device_get_props(ggml_backend_dev_t dev, ggml_backend_dev_props * props) {
+ساكن فراغ ggml_backend_openvino_device_get_props(ggml_backend_dev_t dev, ggml_backend_dev_props * props) {
     props->name = ggml_backend_openvino_device_get_name(dev);
     props->description = ggml_backend_openvino_device_get_description(dev);
     props->type = ggml_backend_openvino_device_get_type(dev);
-    ggml_backend_openvino_device_get_memory(dev, &props->memory_free, &props->memory_total);
+    ggml_backend_openvino_device_get_حافظه(dev, &props->حافظه_free, &props->حافظه_مجموع);
 
     props->caps = {
-        /* .async                 = */ false,
-        /* .host_buffer           = */ false,
-        /* .buffer_from_host_ptr  = */ false,
-        /* .events                = */ false,
-        /* .mmap_support          = */ true,
+        /* .async                 = */ خطأ,
+        /* .host_buffer           = */ خطأ,
+        /* .buffer_from_host_ptr  = */ خطأ,
+        /* .events                = */ خطأ,
+        /* .mmap_support          = */ درست,
     };
 }
 
-static ggml_backend_t ggml_backend_openvino_device_init(ggml_backend_dev_t dev, const char * params) {
-    GGML_UNUSED(params);
+ساكن ggml_backend_t ggml_backend_openvino_device_init(ggml_backend_dev_t dev, ثابت حرف * params) {
+    GGML_استفادهنشده(params);
     ggml_backend_openvino_device_context * ctx = (ggml_backend_openvino_device_context *) dev->context;
-    if (ctx->ov_name != ggml_openvino_get_device_name()) {
+    إذا (ctx->ov_name != ggml_openvino_get_device_name()) {
         // Not an error: test-backend-ops initializes every device
         GGML_LOG_WARN("%s: %s (OpenVINO %s) is not the selected device, no ops will run on it; "
                       "set GGML_OPENVINO_DEVICE=%s to use it\n",
                       __func__, ctx->name.c_str(), ctx->ov_name.c_str(), ctx->ov_name.c_str());
     }
-    return ggml_backend_openvino_init(ctx->device);
+    أرجع ggml_backend_openvino_init(ctx->device);
 }
 
-static ggml_backend_buffer_type_t ggml_backend_openvino_device_get_buffer_type(ggml_backend_dev_t dev) {
+ساكن ggml_backend_میانگیر_type_t ggml_backend_openvino_device_get_میانگیر_type(ggml_backend_dev_t dev) {
     ggml_backend_openvino_device_context * ctx = (ggml_backend_openvino_device_context *) dev->context;
-    return ggml_backend_openvino_buffer_type(ctx->device);
+    أرجع ggml_backend_openvino_میانگیر_type(ctx->device);
 }
 
-static ggml_backend_buffer_type_t ggml_backend_openvino_device_get_host_buffer_type(ggml_backend_dev_t dev) {
+ساكن ggml_backend_میانگیر_type_t ggml_backend_openvino_device_get_host_میانگیر_type(ggml_backend_dev_t dev) {
     ggml_backend_openvino_device_context * ctx = (ggml_backend_openvino_device_context *) dev->context;
-    return ggml_backend_openvino_host_buffer_type(ctx->device);
+    أرجع ggml_backend_openvino_host_میانگیر_type(ctx->device);
 }
 
-static bool has_view_op_input(const ggml_tensor * op) {
-    for (int i = 0; i < GGML_MAX_SRC; i++) {
-        if (op->src[i] == nullptr) {
-            break;
+ساكن منطقي has_view_op_درون_داد(ثابت ggml_tensor * op) {
+    لكل (صحيح i = 0; i < GGML_MAX_SRC; i++) {
+        إذا (op->src[i] == اشاره_تهی) {
+            اكسر;
         }
-        if (op->src[i]->op == GGML_OP_VIEW) {
-            return true;
+        إذا (op->src[i]->op == GGML_OP_VIEW) {
+            أرجع درست;
         }
     }
-    return false;
+    أرجع خطأ;
 }
 
 // OV slices whole elements per axis, so each stride must be a multiple of the next smaller one
 // (e.g. a batch stride of m*nb[1] + pad bytes cannot be expressed and would be read wrongly).
-static bool has_strides_on_element_grid(const ggml_tensor * t) {
+ساكن منطقي has_strides_on_element_grid(ثابت ggml_tensor * t) {
     std::vector<size_t> strides;
-    for (int i = 0; i < GGML_MAX_DIMS; i++) {
-        if (t->ne[i] > 1) {
+    لكل (صحيح i = 0; i < GGML_MAX_DIMS; i++) {
+        إذا (t->ne[i] > 1) {
             strides.push_back(t->nb[i]);
         }
     }
     std::sort(strides.begin(), strides.end());
-    for (size_t i = 1; i < strides.size(); i++) {
-        if (strides[i - 1] == 0 || strides[i] % strides[i - 1] != 0) {
-            return false;
+    لكل (size_t i = 1; i < strides.size(); i++) {
+        إذا (strides[i - 1] == 0 || strides[i] % strides[i - 1] != 0) {
+            أرجع خطأ;
         }
     }
-    return true;
+    أرجع درست;
 }
 
-static bool has_non_contiguous_view_input(const ggml_tensor * op) {
-    for (int i = 0; i < GGML_MAX_SRC; i++) {
-        if (op->src[i] == nullptr) {
-            break;
+ساكن منطقي has_non_contiguous_view_درون_داد(ثابت ggml_tensor * op) {
+    لكل (صحيح i = 0; i < GGML_MAX_SRC; i++) {
+        إذا (op->src[i] == اشاره_تهی) {
+            اكسر;
         }
-        if (op->src[i]->op == GGML_OP_VIEW && !ggml_is_contiguous(op->src[i])) {
-            return true;
+        إذا (op->src[i]->op == GGML_OP_VIEW && !ggml_is_contiguous(op->src[i])) {
+            أرجع درست;
         }
     }
-    return false;
+    أرجع خطأ;
 }
 
-static bool is_supported_flash_attn_pattern(const ggml_tensor * op) {
+ساكن منطقي is_supported_flash_attn_الگو(ثابت ggml_tensor * op) {
     // Each Q/K/V input must follow one of:
     //   PERMUTE -> VIEW  -> base (view_src==nullptr)   (llama KV-cache path)
     //   PERMUTE -> RESHAPE -> base (view_src==nullptr)  (whisper Q)
     //   VIEW -> base (view_src==nullptr)                (whisper K/V from kv_pad)
-    for (int i = 0; i < 3; i++) {
-        const ggml_tensor * src = op->src[i];
-        if (src->op == GGML_OP_PERMUTE) {
-            if (src->src[0] == nullptr) {
-                return false;
+    لكل (صحيح i = 0; i < 3; i++) {
+        ثابت ggml_tensor * src = op->src[i];
+        إذا (src->op == GGML_OP_جایگشت) {
+            إذا (src->src[0] == اشاره_تهی) {
+                أرجع خطأ;
             }
-            if (src->src[0]->op != GGML_OP_VIEW && src->src[0]->op != GGML_OP_RESHAPE) {
-                return false;
+            إذا (src->src[0]->op != GGML_OP_VIEW && src->src[0]->op != GGML_OP_RESHAPE) {
+                أرجع خطأ;
             }
-            if (src->src[0]->src[0] == nullptr || src->src[0]->src[0]->view_src != nullptr) {
-                return false;
+            إذا (src->src[0]->src[0] == اشاره_تهی || src->src[0]->src[0]->view_src != اشاره_تهی) {
+                أرجع خطأ;
             }
-        } else if (src->op == GGML_OP_VIEW) {
-            if (src->src[0] == nullptr || src->src[0]->view_src != nullptr) {
-                return false;
+        } وإلا إذا (src->op == GGML_OP_VIEW) {
+            إذا (src->src[0] == اشاره_تهی || src->src[0]->view_src != اشاره_تهی) {
+                أرجع خطأ;
             }
-        } else if (src->op == GGML_OP_CPY) {
-            if (src->src[0] == nullptr || src->src[0]->op != GGML_OP_PERMUTE || src->src[0]->src[0] == nullptr) {
-                return false;
+        } وإلا إذا (src->op == GGML_OP_CPY) {
+            إذا (src->src[0] == اشاره_تهی || src->src[0]->op != GGML_OP_جایگشت || src->src[0]->src[0] == اشاره_تهی) {
+                أرجع خطأ;
             }
-        } else {
-            return false;
+        } وإلا {
+            أرجع خطأ;
         }
     }
-    return true;
+    أرجع درست;
 }
 
-static bool is_gemma3n_flash_attn_pattern(const ggml_tensor * op) {
-    if (!is_supported_flash_attn_pattern(op)) {
-        return false;
+ساكن منطقي is_gemma3n_flash_attn_الگو(ثابت ggml_tensor * op) {
+    إذا (!is_supported_flash_attn_الگو(op)) {
+        أرجع خطأ;
     }
 
-    const ggml_tensor * q_base =
-        op->src[0] != nullptr && op->src[0]->src[0] != nullptr ? op->src[0]->src[0]->src[0] : nullptr;
-    const ggml_tensor * k_base =
-        op->src[1] != nullptr && op->src[1]->src[0] != nullptr ? op->src[1]->src[0]->src[0] : nullptr;
-    const ggml_tensor * v_base =
-        op->src[2] != nullptr && op->src[2]->src[0] != nullptr ? op->src[2]->src[0]->src[0] : nullptr;
+    ثابت ggml_tensor * q_پایه =
+        op->src[0] != اشاره_تهی && op->src[0]->src[0] != اشاره_تهی ? op->src[0]->src[0]->src[0] : اشاره_تهی;
+    ثابت ggml_tensor * k_پایه =
+        op->src[1] != اشاره_تهی && op->src[1]->src[0] != اشاره_تهی ? op->src[1]->src[0]->src[0] : اشاره_تهی;
+    ثابت ggml_tensor * v_پایه =
+        op->src[2] != اشاره_تهی && op->src[2]->src[0] != اشاره_تهی ? op->src[2]->src[0]->src[0] : اشاره_تهی;
 
-    if (q_base == nullptr || q_base->op != GGML_OP_ROPE) {
-        return false;
+    إذا (q_پایه == اشاره_تهی || q_پایه->op != GGML_OP_ROPE) {
+        أرجع خطأ;
     }
 
     // gemma3n direct attention path (no KV cache): q=ROPE, k=ROPE, v=RMS_NORM
     // Only match this specific pattern to avoid falsely catching other models
     // (e.g. Gemma4) that also use scale=1.0 with KV-cache backed attention.
-    const bool is_qkv_direct =
-        k_base != nullptr && v_base != nullptr && k_base->op == GGML_OP_ROPE && v_base->op == GGML_OP_RMS_NORM;
+    ثابت منطقي is_qkv_مستقیم =
+        k_پایه != اشاره_تهی && v_پایه != اشاره_تهی && k_پایه->op == GGML_OP_ROPE && v_پایه->op == GGML_OP_RMS_NORM;
 
-    return is_qkv_direct;
+    أرجع is_qkv_مستقیم;
 }
 
-static bool checked_mul_size(size_t a, size_t b, size_t & out) {
-    if (a == 0 || b == 0) {
-        out = 0;
-        return true;
+ساكن منطقي checked_mul_اندازه(size_t a, size_t b, size_t & بیرون) {
+    إذا (a == 0 || b == 0) {
+        بیرون = 0;
+        أرجع درست;
     }
-    if (a > SIZE_MAX / b) {
-        return false;
+    إذا (a > SIZE_MAX / b) {
+        أرجع خطأ;
     }
-    out = a * b;
-    return true;
+    بیرون = a * b;
+    أرجع درست;
 }
 
-static bool tensor_view_fits_src_buffer(const ggml_tensor * tensor) {
-    if (tensor->view_src == nullptr) {
-        return true;
+ساكن منطقي tensor_view_میگنجد_src_میانگیر(ثابت ggml_tensor * tensor) {
+    إذا (tensor->view_src == اشاره_تهی) {
+        أرجع درست;
     }
 
-    const size_t src_nbytes = ggml_nbytes(tensor->view_src);
-    if (tensor->view_offs > src_nbytes) {
-        return false;
+    ثابت size_t src_nbytes = ggml_nbytes(tensor->view_src);
+    إذا (tensor->view_offs > src_nbytes) {
+        أرجع خطأ;
     }
 
-    const size_t tensor_nbytes = ggml_nbytes(tensor);
-    return tensor_nbytes <= src_nbytes - tensor->view_offs;
+    ثابت size_t tensor_nbytes = ggml_nbytes(tensor);
+    أرجع tensor_nbytes <= src_nbytes - tensor->view_offs;
 }
 
-static bool cpy_output_view_is_supported(const ggml_tensor * op) {
-    if (op->view_src == nullptr) {
-        return true;
+ساكن منطقي cpy_output_view_is_supported(ثابت ggml_tensor * op) {
+    إذا (op->view_src == اشاره_تهی) {
+        أرجع درست;
     }
 
-    if (!tensor_view_fits_src_buffer(op)) {
-        return false;
+    إذا (!tensor_view_میگنجد_src_میانگیر(op)) {
+        أرجع خطأ;
     }
 
-    return ggml_nbytes(op) == 0 || ggml_is_contiguous(op) || GgmlOvDecoder::is_conv_state_writeback(op);
+    أرجع ggml_nbytes(op) == 0 || ggml_is_contiguous(op) || GgmlOvDecoder::is_conv_state_writeback(op);
 }
 
-static bool mul_mat_id_requires_large_tmp(const ggml_tensor * op) {
-    const ggml_tensor * as = op->src[0];
-    const ggml_tensor * ids = op->src[2];
-    if (as == nullptr || ids == nullptr) {
-        return true;
+ساكن منطقي mul_mat_id_requires_large_tmp(ثابت ggml_tensor * op) {
+    ثابت ggml_tensor * as = op->src[0];
+    ثابت ggml_tensor * ids = op->src[2];
+    إذا (as == اشاره_تهی || ids == اشاره_تهی) {
+        أرجع درست;
     }
 
     // The MXFP4 MUL_MAT_ID translation (translate_mul_mat_id_mxfp4_packed in mul_mat_id.cpp)
@@ -1312,299 +1312,299 @@ static bool mul_mat_id_requires_large_tmp(const ggml_tensor * op) {
     // would create a very large temporary and let the scheduler fall back instead. Every other weight
     // type goes through GatherMatmul, which never materializes this temporary.
     size_t tmp_elems = 1;
-    if (!checked_mul_size(tmp_elems, static_cast<size_t>(ids->ne[1]), tmp_elems) ||
-        !checked_mul_size(tmp_elems, static_cast<size_t>(ids->ne[0]), tmp_elems) ||
-        !checked_mul_size(tmp_elems, static_cast<size_t>(as->ne[1]), tmp_elems) ||
-        !checked_mul_size(tmp_elems, static_cast<size_t>(as->ne[0]), tmp_elems)) {
-        return true;
+    إذا (!checked_mul_اندازه(tmp_elems, static_cast<size_t>(ids->ne[1]), tmp_elems) ||
+        !checked_mul_اندازه(tmp_elems, static_cast<size_t>(ids->ne[0]), tmp_elems) ||
+        !checked_mul_اندازه(tmp_elems, static_cast<size_t>(as->ne[1]), tmp_elems) ||
+        !checked_mul_اندازه(tmp_elems, static_cast<size_t>(as->ne[0]), tmp_elems)) {
+        أرجع درست;
     }
 
-    size_t tmp_bytes = 0;
-    if (!checked_mul_size(tmp_elems, sizeof(float), tmp_bytes)) {
-        return true;
+    size_t tmp_بایتها = 0;
+    إذا (!checked_mul_اندازه(tmp_elems, حجم(عائم), tmp_بایتها)) {
+        أرجع درست;
     }
 
-    static constexpr size_t mul_mat_id_tmp_limit = 1ULL << 30;  // 1 GiB
-    return tmp_bytes > mul_mat_id_tmp_limit;
+    ساكن constexpr size_t mul_mat_id_tmp_حد = 1ULL << 30;  // 1 GiB
+    أرجع tmp_بایتها > mul_mat_id_tmp_حد;
 }
 
-static bool tensor_name_starts_with(const ggml_tensor * tensor, const char * prefix) {
-    return tensor != nullptr && strncmp(tensor->name, prefix, strlen(prefix)) == 0;
+ساكن منطقي tensor_name_starts_with(ثابت ggml_tensor * tensor, ثابت حرف * prefix) {
+    أرجع tensor != اشاره_تهی && مقایسه_رشته(tensor->name, prefix, طول_رشته(prefix)) == 0;
 }
 
-static bool is_msa_block_mask_expansion(const ggml_tensor * op) {
-    if (tensor_name_starts_with(op, "msa_")) {
-        return true;
+ساكن منطقي is_msa_بلوک_ماسک_expansion(ثابت ggml_tensor * op) {
+    إذا (tensor_name_starts_with(op, "msa_")) {
+        أرجع درست;
     }
 
-    const ggml_tensor * src = op->src[0];
-    while (src != nullptr && (src->op == GGML_OP_RESHAPE || src->op == GGML_OP_REPEAT)) {
-        if (tensor_name_starts_with(src, "msa_block_mask")) {
-            return true;
+    ثابت ggml_tensor * src = op->src[0];
+    طالما (src != اشاره_تهی && (src->op == GGML_OP_RESHAPE || src->op == GGML_OP_REPEAT)) {
+        إذا (tensor_name_starts_with(src, "msa_block_mask")) {
+            أرجع درست;
         }
         src = src->src[0];
     }
 
-    return tensor_name_starts_with(src, "msa_block_mask");
+    أرجع tensor_name_starts_with(src, "msa_block_mask");
 }
 
-namespace {
-struct ggml_openvino_op_support {
-    bool is_supported = true;
+نطاق {
+بنية ggml_openvino_op_support {
+    منطقي is_supported = درست;
     std::string reason;
 
-    operator bool() const {
-        return is_supported;
+    عملگر منطقي() ثابت {
+        أرجع is_supported;
     }
 };
 } // namespace
 
-static ggml_openvino_op_support is_op_supported_case(const ggml_tensor * op) {
-    if (is_msa_block_mask_expansion(op)) {
-        return {false, "MSA block mask expansion is not supported"};
+ساكن ggml_openvino_op_support is_op_supported_case(ثابت ggml_tensor * op) {
+    إذا (is_msa_بلوک_ماسک_expansion(op)) {
+        أرجع {خطأ, "MSA block mask expansion is not supported"};
     }
 
-    switch (op->op) {
-    case GGML_OP_CONCAT: {
-        if (op->type == GGML_TYPE_I64) {
-            return {false, "CONCAT with I64 type is not supported"};
+    بدل (op->op) {
+    حالة GGML_OP_CONCAT: {
+        إذا (op->type == GGML_TYPE_I64) {
+            أرجع {خطأ, "CONCAT with I64 type is not supported"};
         }
         // quantized inputs are dequantized, so the output cannot be written in the quantized type
-        if (ggml_is_quantized(op->type)) {
-            return {false, "CONCAT with quantized type is not supported"};
+        إذا (ggml_is_quantized(op->type)) {
+            أرجع {خطأ, "CONCAT with quantized type is not supported"};
         }
-        if (ggml_openvino_is_gpu() && op->type == GGML_TYPE_BF16 && has_view_op_input(op)) {
-            return {false, "CONCAT with BF16 type and VIEW input is not supported on GPU"};
+        إذا (ggml_openvino_is_gpu() && op->type == GGML_TYPE_BF16 && has_view_op_درون_داد(op)) {
+            أرجع {خطأ, "CONCAT with BF16 type and VIEW input is not supported on GPU"};
         }
-        break;
+        اكسر;
     }
-    case GGML_OP_SET: {
-        const auto nb1 = static_cast<size_t>(op->op_params[0]);
-        const auto nb2 = static_cast<size_t>(op->op_params[1]);
-        const auto nb3 = static_cast<size_t>(op->op_params[2]);
+    حالة GGML_OP_مجموعه: {
+        ثابت خودکار nb1 = static_cast<size_t>(op->op_params[0]);
+        ثابت خودکار nb2 = static_cast<size_t>(op->op_params[1]);
+        ثابت خودکار nb3 = static_cast<size_t>(op->op_params[2]);
 
         // OpenVINO SET translation currently supports dst layouts that match src0 strides.
-        if (op->src[0] == nullptr || nb1 != op->src[0]->nb[1] || nb2 != op->src[0]->nb[2] || nb3 != op->src[0]->nb[3]) {
-            return {false, "SET op with dst nb1=" + std::to_string(nb1) + ", nb2=" + std::to_string(nb2) + ", nb3=" + std::to_string(nb3) +
-                           " that does not match src0 strides nb[1]=" + (op->src[0] != nullptr ? std::to_string(op->src[0]->nb[1]) : "null") +
-                           ", nb[2]=" + (op->src[0] != nullptr ? std::to_string(op->src[0]->nb[2]) : "null") +
-                           ", nb[3]=" + (op->src[0] != nullptr ? std::to_string(op->src[0]->nb[3]) : "null")};
+        إذا (op->src[0] == اشاره_تهی || nb1 != op->src[0]->nb[1] || nb2 != op->src[0]->nb[2] || nb3 != op->src[0]->nb[3]) {
+            أرجع {خطأ, "SET op with dst nb1=" + std::to_string(nb1) + ", nb2=" + std::to_string(nb2) + ", nb3=" + std::to_string(nb3) +
+                           " that does not match src0 strides nb[1]=" + (op->src[0] != اشاره_تهی ? std::to_string(op->src[0]->nb[1]) : "null") +
+                           ", nb[2]=" + (op->src[0] != اشاره_تهی ? std::to_string(op->src[0]->nb[2]) : "null") +
+                           ", nb[3]=" + (op->src[0] != اشاره_تهی ? std::to_string(op->src[0]->nb[3]) : "null")};
         }
-        break;
+        اكسر;
     }
-    case GGML_OP_GET_ROWS:
-    case GGML_OP_SET_ROWS: {
-        if (op->ne[3] != 1) {
-            return {false, "GET_ROWS/SET_ROWS with ne[3] != 1 (ne[3]=" + std::to_string(op->ne[3]) + ") is not supported"};
+    حالة GGML_OP_GET_ردیفها:
+    حالة GGML_OP_مجموعه_ردیفها: {
+        إذا (op->ne[3] != 1) {
+            أرجع {خطأ, "GET_ROWS/SET_ROWS with ne[3] != 1 (ne[3]=" + std::to_string(op->ne[3]) + ") is not supported"};
         }
-        if (op->op == GGML_OP_GET_ROWS && ggml_openvino_is_gpu() &&
+        إذا (op->op == GGML_OP_GET_ردیفها && ggml_openvino_is_gpu() &&
             op->src[0]->type == GGML_TYPE_BF16) {
-            return {false, "GET_ROWS with BF16 src0 is not supported on GPU"};
+            أرجع {خطأ, "GET_ROWS with BF16 src0 is not supported on GPU"};
         }
-        if (op->ne[0] == 256 && (op->src[0]->type == GGML_TYPE_Q4_K || op->src[0]->type == GGML_TYPE_Q5_K ||
+        إذا (op->ne[0] == 256 && (op->src[0]->type == GGML_TYPE_Q4_K || op->src[0]->type == GGML_TYPE_Q5_K ||
                                  op->src[0]->type == GGML_TYPE_Q4_1 || op->src[0]->type == GGML_TYPE_Q5_1)) {
             // These are all f16-arithmetic dequant rounding errors that intermittently exceed the
             // tight 1e-7 NMSE threshold depending on the random test data (see ggml-quants.cpp
             // make_int8_weights/make_int4_weights: dequant is done in f16, not f32, to keep the
             // Convert/Subtract/Multiply chain fusable into GatherMatmulCompressed/FullyConnectedCompressed
             // for the shared non-test code paths).
-            return {false, "GET_ROWS/SET_ROWS with ne[0] == 256 and type " + std::string(ggml_type_name(op->src[0]->type)) +
+            أرجع {خطأ, "GET_ROWS/SET_ROWS with ne[0] == 256 and type " + std::string(ggml_type_name(op->src[0]->type)) +
                            " rejected due to f16-arithmetic dequant rounding errors that intermittently exceed 1e-7 NMSE threshold"};
         }
-        break;
+        اكسر;
     }
-    case GGML_OP_RESHAPE: {
-        if (strncmp(op->name, "ffn_norm_exps", sizeof("ffn_norm_exps") - 1) == 0) {
-            return {false, "RESHAPE for ffn_norm_exps is not supported"};
+    حالة GGML_OP_RESHAPE: {
+        إذا (مقایسه_رشته(op->name, "ffn_norm_exps", حجم("ffn_norm_exps") - 1) == 0) {
+            أرجع {خطأ, "RESHAPE for ffn_norm_exps is not supported"};
         }
-        break;
+        اكسر;
     }
-    case GGML_OP_ADD:
-    case GGML_OP_MUL:
-    case GGML_OP_SUB: {
-        if (op->src[1]->op == GGML_OP_PERMUTE) {
-            return {false, "ADD/MUL/SUB with PERMUTE src1 is not supported"};
+    حالة GGML_OP_جمع_کن:
+    حالة GGML_OP_MUL:
+    حالة GGML_OP_SUB: {
+        إذا (op->src[1]->op == GGML_OP_جایگشت) {
+            أرجع {خطأ, "ADD/MUL/SUB with PERMUTE src1 is not supported"};
         }
-        if (op->src[0]->type != op->src[1]->type &&
+        إذا (op->src[0]->type != op->src[1]->type &&
             (op->src[0]->type == GGML_TYPE_BF16 || op->src[1]->type == GGML_TYPE_BF16)) {
-            return {false, "ADD/MUL/SUB with BF16 and a different src1 type is not supported"};
+            أرجع {خطأ, "ADD/MUL/SUB with BF16 and a different src1 type is not supported"};
         }
         // >8-expert MoE ReduceSum drifts past the 1e-7 tolerance (f32 order vs CPU); intermittent.
-        if (op->op == GGML_OP_ADD && is_moe_expert_sum_add(op) && op->src[1]->src[0]->ne[1] > 8) {
-            return {false, "MoE expert-plane sum with more than 8 experts is not supported"};
+        إذا (op->op == GGML_OP_جمع_کن && is_moe_expert_جمع_جمع_کن(op) && op->src[1]->src[0]->ne[1] > 8) {
+            أرجع {خطأ, "MoE expert-plane sum with more than 8 experts is not supported"};
         }
-        for (int i = 0; i < 4; i++) {
-            if (op->src[0]->ne[i] != op->src[1]->ne[i] && (op->src[0]->ne[i] != 1 && op->src[1]->ne[i] != 1)) {
-                return {false, "ADD/MUL/SUB with incompatible broadcast shapes: src0->ne[" + std::to_string(i) + "]=" +
+        لكل (صحيح i = 0; i < 4; i++) {
+            إذا (op->src[0]->ne[i] != op->src[1]->ne[i] && (op->src[0]->ne[i] != 1 && op->src[1]->ne[i] != 1)) {
+                أرجع {خطأ, "ADD/MUL/SUB with incompatible broadcast shapes: src0->ne[" + std::to_string(i) + "]=" +
                                std::to_string(op->src[0]->ne[i]) + ", src1->ne[" + std::to_string(i) + "]=" +
                                std::to_string(op->src[1]->ne[i])};
             }
         }
-        break;
+        اكسر;
     }
-    case GGML_OP_SCALE: {
-        if (op->type == GGML_TYPE_BF16) {
-            return {false, "SCALE with BF16 type is not supported"};
+    حالة GGML_OP_SCALE: {
+        إذا (op->type == GGML_TYPE_BF16) {
+            أرجع {خطأ, "SCALE with BF16 type is not supported"};
         }
-        break;
+        اكسر;
     }
-    case GGML_OP_ADD_ID: {
+    حالة GGML_OP_جمع_کن_ID: {
         // Keep support aligned with the CPU backend implementation, which only handles f32 inputs/output and i32 ids.
-        if (op->type != GGML_TYPE_F32 || op->src[0]->type != GGML_TYPE_F32 || op->src[1]->type != GGML_TYPE_F32 ||
+        إذا (op->type != GGML_TYPE_F32 || op->src[0]->type != GGML_TYPE_F32 || op->src[1]->type != GGML_TYPE_F32 ||
             op->src[2]->type != GGML_TYPE_I32) {
-            return {false, "ADD_ID only supports F32 inputs/output and I32 ids"};
+            أرجع {خطأ, "ADD_ID only supports F32 inputs/output and I32 ids"};
         }
-        break;
+        اكسر;
     }
-    case GGML_OP_DIV: {
+    حالة GGML_OP_DIV: {
         // The GPU plugin can fuse broadcast DIV into the preceding FFN GEMM path
         // and produce infs for per-channel scale vectors. Keep those DIVs on CPU
         // until the fused GPU kernel is reliable. (falied case llama-arch-test mpt)
-        if (ggml_openvino_is_gpu() && op->src[1]->ne[0] == op->ne[0] &&
+        إذا (ggml_openvino_is_gpu() && op->src[1]->ne[0] == op->ne[0] &&
             op->src[1]->ne[1] == 1 && op->src[1]->ne[2] == 1 && op->src[1]->ne[3] == 1) {
-            return {false, "DIV per-channel scale broadcast is not supported on GPU"};
+            أرجع {خطأ, "DIV per-channel scale broadcast is not supported on GPU"};
         }
-        break;
+        اكسر;
     }
-    case GGML_OP_POOL_2D: {
-        if (ggml_openvino_is_gpu()) {
-            const int32_t * params = op->op_params;
-            const int k0 = params[1];
-            const int k1 = params[2];
-            const int p0 = params[5];
-            const int p1 = params[6];
-            if ((p0 > 0 || p1 > 0) && (k0 < 3 || k1 < 3)) {
-                return {false, "POOL_2D with padding and kernel size < 3 is not supported on " + ggml_openvino_get_device_name()};
+    حالة GGML_OP_POOL_2D: {
+        إذا (ggml_openvino_is_gpu()) {
+            ثابت int32_t * params = op->op_params;
+            ثابت صحيح k0 = params[1];
+            ثابت صحيح k1 = params[2];
+            ثابت صحيح p0 = params[5];
+            ثابت صحيح p1 = params[6];
+            إذا ((p0 > 0 || p1 > 0) && (k0 < 3 || k1 < 3)) {
+                أرجع {خطأ, "POOL_2D with padding and kernel size < 3 is not supported on " + ggml_openvino_get_device_name()};
             }
         }
-        break;
+        اكسر;
     }
-    case GGML_OP_SUM: {
-        if (op->src[0]->op == GGML_OP_PERMUTE) {
-            return {false, "SUM with PERMUTE input is not supported"};
+    حالة GGML_OP_جمع: {
+        إذا (op->src[0]->op == GGML_OP_جایگشت) {
+            أرجع {خطأ, "SUM with PERMUTE input is not supported"};
         }
-        break;
+        اكسر;
     }
-    case GGML_OP_MEAN: {
-        if (op->src[0]->op == GGML_OP_PERMUTE && op->src[0]->src[0] != nullptr && op->src[0]->src[0]->op == GGML_OP_VIEW) {
-            return {false, "MEAN with PERMUTE of VIEW input is not supported"};
+    حالة GGML_OP_میانگین: {
+        إذا (op->src[0]->op == GGML_OP_جایگشت && op->src[0]->src[0] != اشاره_تهی && op->src[0]->src[0]->op == GGML_OP_VIEW) {
+            أرجع {خطأ, "MEAN with PERMUTE of VIEW input is not supported"};
         }
-        break;
+        اكسر;
     }
-    case GGML_OP_SUM_ROWS: {
-        if (op->src[0]->op == GGML_OP_PERMUTE) {
-            return {false, "SUM_ROWS with PERMUTE input is not supported"};
+    حالة GGML_OP_جمع_ردیفها: {
+        إذا (op->src[0]->op == GGML_OP_جایگشت) {
+            أرجع {خطأ, "SUM_ROWS with PERMUTE input is not supported"};
         }
-        break;
+        اكسر;
     }
-    case GGML_OP_FLASH_ATTN_EXT: {
-        float scale = 1.0f;
-        float max_bias = 0.0f;
-        float logit_softcap = 0.0f;
-        const auto * op_params = op->op_params;
-        memcpy(&scale, (const float *) op_params + 0, sizeof(float));
-        memcpy(&max_bias, (const float *) op_params + 1, sizeof(float));
-        memcpy(&logit_softcap, (const float *) op_params + 2, sizeof(float));
+    حالة GGML_OP_FLASH_ATTN_EXT: {
+        عائم scale = 1.0f;
+        عائم max_bias = 0.0f;
+        عائم logit_softcap = 0.0f;
+        ثابت خودکار * op_params = op->op_params;
+        کپی_حافظه(&scale, (ثابت عائم *) op_params + 0, حجم(عائم));
+        کپی_حافظه(&max_bias, (ثابت عائم *) op_params + 1, حجم(عائم));
+        کپی_حافظه(&logit_softcap, (ثابت عائم *) op_params + 2, حجم(عائم));
 
         // Keep gemma3n flash-attn pattern on CPU for GPU runs to avoid
         // accuracy drift in the OpenVINO path. Restrict by scale=1.0 to avoid
         // affecting non-gemma3n models such as Llama-3.2.
-        if (fabsf(scale - 1.0f) < 1e-6f && is_gemma3n_flash_attn_pattern(op)) {
-            return {false, "FLASH_ATTN_EXT gemma3n pattern on GPU is not supported"};
+        إذا (fabsf(scale - 1.0f) < 1e-6f && is_gemma3n_flash_attn_الگو(op)) {
+            أرجع {خطأ, "FLASH_ATTN_EXT gemma3n pattern on GPU is not supported"};
         }
 
-        if (op->src[4] != nullptr) {
-            return {false, "FLASH_ATTN_EXT with sinks is not supported"};
+        إذا (op->src[4] != اشاره_تهی) {
+            أرجع {خطأ, "FLASH_ATTN_EXT with sinks is not supported"};
         }
-        if (!is_supported_flash_attn_pattern(op)) {
-            return {false, "FLASH_ATTN_EXT unsupported attention pattern"};
+        إذا (!is_supported_flash_attn_الگو(op)) {
+            أرجع {خطأ, "FLASH_ATTN_EXT unsupported attention pattern"};
         }
-        if (max_bias > 0) {
-            return {false, "FLASH_ATTN_EXT with max_bias > 0 (max_bias=" + std::to_string(max_bias) + ") is not supported"};
+        إذا (max_bias > 0) {
+            أرجع {خطأ, "FLASH_ATTN_EXT with max_bias > 0 (max_bias=" + std::to_string(max_bias) + ") is not supported"};
         }
-        if (logit_softcap != 0) {
-            return {false, "FLASH_ATTN_EXT with logit_softcap != 0 (logit_softcap=" + std::to_string(logit_softcap) + ") is not supported"};
+        إذا (logit_softcap != 0) {
+            أرجع {خطأ, "FLASH_ATTN_EXT with logit_softcap != 0 (logit_softcap=" + std::to_string(logit_softcap) + ") is not supported"};
         }
-        break;
+        اكسر;
     }
-    case GGML_OP_PERMUTE: {
-        if (op->type == GGML_TYPE_BF16 && ggml_openvino_is_gpu()) {
-            return {false, "PERMUTE with BF16 type is not supported on GPU"};
+    حالة GGML_OP_جایگشت: {
+        إذا (op->type == GGML_TYPE_BF16 && ggml_openvino_is_gpu()) {
+            أرجع {خطأ, "PERMUTE with BF16 type is not supported on GPU"};
         }
-        break;
+        اكسر;
     }
-    case GGML_OP_DUP: {
+    حالة GGML_OP_DUP: {
         // translated as CONT, so only a plain copy
-        if (op->type != op->src[0]->type || !ggml_are_same_shape(op, op->src[0]) || !ggml_is_contiguous(op->src[0])) {
-            return {false, "DUP with type conversion or non-contiguous src is not supported"};
+        إذا (op->type != op->src[0]->type || !ggml_are_same_shape(op, op->src[0]) || !ggml_is_contiguous(op->src[0])) {
+            أرجع {خطأ, "DUP with type conversion or non-contiguous src is not supported"};
         }
-        break;
+        اكسر;
     }
-    case GGML_OP_CPY: {
-        if (op->src[0]->type != GGML_TYPE_BF16 && op->src[1]->type == GGML_TYPE_BF16) {
-            return {false, "CPY with BF16 src[1] type is not supported"};
+    حالة GGML_OP_CPY: {
+        إذا (op->src[0]->type != GGML_TYPE_BF16 && op->src[1]->type == GGML_TYPE_BF16) {
+            أرجع {خطأ, "CPY with BF16 src[1] type is not supported"};
         }
-        if (ggml_openvino_is_npu() && (op->src[0]->type == GGML_TYPE_BF16 || op->src[1]->type == GGML_TYPE_BF16)) {
-            return {false, "CPY with BF16 is not supported is not supported on NPU"};
+        إذا (ggml_openvino_is_npu() && (op->src[0]->type == GGML_TYPE_BF16 || op->src[1]->type == GGML_TYPE_BF16)) {
+            أرجع {خطأ, "CPY with BF16 is not supported is not supported on NPU"};
         }
         // CPY to a quantized destination (e.g. f32 -> q4_0) is numerically unstable with OpenVINO backend.
-        if (ggml_is_quantized(op->type)) {
-            return {false, "CPY to quantized destination (e.g. f32 -> q4_0) is numerically unstable"};
+        إذا (ggml_is_quantized(op->type)) {
+            أرجع {خطأ, "CPY to quantized destination (e.g. f32 -> q4_0) is numerically unstable"};
         }
-        if (ggml_nelements(op->src[0]) != ggml_nelements(op->src[1])) {
-            return {false, "CPY with mismatched element counts is not supported: src0=" + std::to_string(ggml_nelements(op->src[0])) +
+        إذا (ggml_nelements(op->src[0]) != ggml_nelements(op->src[1])) {
+            أرجع {خطأ, "CPY with mismatched element counts is not supported: src0=" + std::to_string(ggml_nelements(op->src[0])) +
                            " != src1=" + std::to_string(ggml_nelements(op->src[1]))};
         }
         // op test case with non-contiguous src or dst
-        if ((op->ne[0] == 3 && op->ne[1] == 4 && op->ne[2] == 3 && op->ne[3] == 2) ||
+        إذا ((op->ne[0] == 3 && op->ne[1] == 4 && op->ne[2] == 3 && op->ne[3] == 2) ||
             (op->ne[0] == 1 && op->ne[1] == 4 && op->ne[2] == 3 && op->ne[3] == 2) ||
             (op->ne[0] == 2 && op->ne[1] == 4 && op->ne[2] == 3 && op->ne[3] == 2)) {
-            return {false, "CPY with non-contiguous shape [" + std::to_string(op->ne[0]) + ", " +
+            أرجع {خطأ, "CPY with non-contiguous shape [" + std::to_string(op->ne[0]) + ", " +
                            std::to_string(op->ne[1]) + ", " + std::to_string(op->ne[2]) + ", " +
                            std::to_string(op->ne[3]) + "] is not supported"};
         }
-        if (!cpy_output_view_is_supported(op)) {
-            return {false, "CPY with non-contiguous output view is not supported"};
+        إذا (!cpy_output_view_is_supported(op)) {
+            أرجع {خطأ, "CPY with non-contiguous output view is not supported"};
         }
-        break;
+        اكسر;
     }
-    case GGML_OP_MUL_MAT: {
-        if (ggml_openvino_is_gpu() && op->src[0] != nullptr && op->src[1] != nullptr &&
+    حالة GGML_OP_MUL_MAT: {
+        إذا (ggml_openvino_is_gpu() && op->src[0] != اشاره_تهی && op->src[1] != اشاره_تهی &&
             ggml_is_quantized(op->src[0]->type) && strcmp(op->src[0]->name, "a") == 0 &&
             strcmp(op->src[1]->name, "b") == 0 && op->src[0]->ne[1] == 1 && op->src[1]->ne[1] == 64 &&
             op->src[0]->ne[0] == 256 && op->src[1]->ne[0] == 256) {
-            return {false, "MUL_MAT quantized benchmark test case on GPU is not supported"};
+            أرجع {خطأ, "MUL_MAT quantized benchmark test case on GPU is not supported"};
         }
-        if (ggml_openvino_is_gpu() && op->type == GGML_TYPE_F32 && op->ne[0] == 1 && op->ne[1] == 1 &&
-            (op->src[0]->buffer == nullptr || op->src[0]->buffer->usage != GGML_BACKEND_BUFFER_USAGE_WEIGHTS)) {
-            return {false, "MUL_MAT scalar dot product with non-weight src[0] on GPU is not supported"};
+        إذا (ggml_openvino_is_gpu() && op->type == GGML_TYPE_F32 && op->ne[0] == 1 && op->ne[1] == 1 &&
+            (op->src[0]->میانگیر == اشاره_تهی || op->src[0]->میانگیر->usage != GGML_BACKEND_میانگیر_USAGE_WEIGHTS)) {
+            أرجع {خطأ, "MUL_MAT scalar dot product with non-weight src[0] on GPU is not supported"};
         }
         // The GPU plugin fails to compile u4 weights with an f16 zero point for some row counts
         // (clFinish CL_OUT_OF_RESOURCES). Op tests build Q4_1/Q4_K weights in that form; model weights use a
         // u4 zero point. Op tests check support before allocating, while model loading checks with a dummy
         // buffer, so only unbound weights are excluded. Remove once the GPU plugin is fixed.
-        if (ggml_openvino_is_gpu() && (op->src[0]->type == GGML_TYPE_Q4_1 || op->src[0]->type == GGML_TYPE_Q4_K) &&
-            op->src[0]->buffer == nullptr) {
-            return {false, "MUL_MAT with unbound Q4_1/Q4_K src[0] on GPU is not supported"};
+        إذا (ggml_openvino_is_gpu() && (op->src[0]->type == GGML_TYPE_Q4_1 || op->src[0]->type == GGML_TYPE_Q4_K) &&
+            op->src[0]->میانگیر == اشاره_تهی) {
+            أرجع {خطأ, "MUL_MAT with unbound Q4_1/Q4_K src[0] on GPU is not supported"};
         }
-        if (op->src[0]->ne[3] != op->src[1]->ne[3] && op->src[0]->ne[3] != 1 && op->src[1]->ne[3] != 1) {
-            return {false, "MUL_MAT with incompatible broadcast on ne[3]: src0->ne[3]=" + std::to_string(op->src[0]->ne[3]) +
+        إذا (op->src[0]->ne[3] != op->src[1]->ne[3] && op->src[0]->ne[3] != 1 && op->src[1]->ne[3] != 1) {
+            أرجع {خطأ, "MUL_MAT with incompatible broadcast on ne[3]: src0->ne[3]=" + std::to_string(op->src[0]->ne[3]) +
                            ", src1->ne[3]=" + std::to_string(op->src[1]->ne[3])};
         }
-        if (op->src[0]->op == GGML_OP_VIEW && op->src[1]->op == GGML_OP_VIEW) {
-            return {false, "MUL_MAT with both inputs as VIEW is not supported"};
+        إذا (op->src[0]->op == GGML_OP_VIEW && op->src[1]->op == GGML_OP_VIEW) {
+            أرجع {خطأ, "MUL_MAT with both inputs as VIEW is not supported"};
         }
-        break;
+        اكسر;
     }
-    case GGML_OP_MUL_MAT_ID: {
+    حالة GGML_OP_MUL_MAT_ID: {
         // Single-expert (or empty) MUL_MAT_ID is a degenerate shape that stresses GatherMatmul edge
         // cases and never occurs in real MoE; let it fall back to CPU.
-        if (op->src[0] != nullptr && op->src[0]->ne[2] <= 1) {
-            return {false, "MUL_MAT_ID with single-expert or empty ne[2] <= 1 (ne[2]=" +
+        إذا (op->src[0] != اشاره_تهی && op->src[0]->ne[2] <= 1) {
+            أرجع {خطأ, "MUL_MAT_ID with single-expert or empty ne[2] <= 1 (ne[2]=" +
                            std::to_string(op->src[0]->ne[2]) + ") is not supported"};
         }
-        if (ggml_openvino_is_gpu() && op->src[0] != nullptr && !ggml_is_quantized(op->src[0]->type)) {
-            return {false, "MUL_MAT_ID with non-quantized weights on GPU is not supported"};
+        إذا (ggml_openvino_is_gpu() && op->src[0] != اشاره_تهی && !ggml_is_quantized(op->src[0]->type)) {
+            أرجع {خطأ, "MUL_MAT_ID with non-quantized weights on GPU is not supported"};
         }
         // The GPU plugin's GatherMatmul returns wrong values for the layouts test-backend-ops
         // produces: it builds a rank-4 input layout ([n_used, n_tokens, k, 1]) instead of rank 3
@@ -1612,175 +1612,175 @@ static ggml_openvino_op_support is_op_supported_case(const ggml_tensor * op) {
         // The same graph is correct on the CPU plugin, and correct on GPU for every real model,
         // which always feeds experts from a bound tensor buffer. Standalone op-test tensors have
         // no buffer at all, so use that to exclude them and let the scheduler run them on CPU.
-        if (ggml_openvino_is_gpu() && op->src[0] != nullptr && op->src[0]->buffer == nullptr) {
-            return {false, "MUL_MAT_ID with unbound expert tensors on GPU is not supported"};
+        إذا (ggml_openvino_is_gpu() && op->src[0] != اشاره_تهی && op->src[0]->میانگیر == اشاره_تهی) {
+            أرجع {خطأ, "MUL_MAT_ID with unbound expert tensors on GPU is not supported"};
         }
         // Only MXFP4 still needs the large-temporary guard; every other quantized type goes
         // through GatherMatmul, which never materializes the selected expert weights.
-        if (ggml_openvino_is_gpu() && op->src[0] != nullptr && op->src[0]->type == GGML_TYPE_MXFP4 &&
+        إذا (ggml_openvino_is_gpu() && op->src[0] != اشاره_تهی && op->src[0]->type == GGML_TYPE_MXFP4 &&
             mul_mat_id_requires_large_tmp(op)) {
-            return {false, "MUL_MAT_ID with MXFP4 weights requires large temporary on GPU"};
+            أرجع {خطأ, "MUL_MAT_ID with MXFP4 weights requires large temporary on GPU"};
         }
-        break;
+        اكسر;
     }
-    case GGML_OP_ROPE: {
-        if (op->view_src != nullptr && !ggml_is_contiguous(op->src[0])) {
-            return {false, "ROPE on VIEW / non-contiguous input is not supported"};
+    حالة GGML_OP_ROPE: {
+        إذا (op->view_src != اشاره_تهی && !ggml_is_contiguous(op->src[0])) {
+            أرجع {خطأ, "ROPE on VIEW / non-contiguous input is not supported"};
         }
-        break;
+        اكسر;
     }
-    case GGML_OP_TRANSPOSE: {
-        if (op->type == GGML_TYPE_BF16) {
-            return {false, "TRANSPOSE with BF16 type is not supported"};
+    حالة GGML_OP_TRANSPOSE: {
+        إذا (op->type == GGML_TYPE_BF16) {
+            أرجع {خطأ, "TRANSPOSE with BF16 type is not supported"};
         }
-        break;
+        اكسر;
     }
-    case GGML_OP_REPEAT: {
-        if (ggml_openvino_is_gpu() && op->type == GGML_TYPE_BF16) {
-            return {false, "REPEAT with BF16 type is not supported on GPU"};
+    حالة GGML_OP_REPEAT: {
+        إذا (ggml_openvino_is_gpu() && op->type == GGML_TYPE_BF16) {
+            أرجع {خطأ, "REPEAT with BF16 type is not supported on GPU"};
         }
-        break;
+        اكسر;
     }
-    case GGML_OP_GATED_DELTA_NET: {
+    حالة GGML_OP_GATED_DELTA_NET: {
         // enable after https://github.com/openvinotoolkit/openvino/pull/35917 is included in OV release
         // return true;
         // if (ggml_openvino_is_gpu() && op->src[0]->ne[2] > 1) {
         //     // CVS-186471
         //     return true;
         // }
-        if (op->src[2]->op == GGML_OP_PERMUTE) {
-            return {false, "GATED_DELTA_NET with PERMUTE src2 is not supported"};
+        إذا (op->src[2]->op == GGML_OP_جایگشت) {
+            أرجع {خطأ, "GATED_DELTA_NET with PERMUTE src2 is not supported"};
         }
         // kda (per-key-dimension gating) not supported by fused GatedDeltaNet op
-        if (op->src[3]->ne[0] != 1) {
-            return {false, "GATED_DELTA_NET with kda (per-key-dimension gating) is not supported"};
+        إذا (op->src[3]->ne[0] != 1) {
+            أرجع {خطأ, "GATED_DELTA_NET with kda (per-key-dimension gating) is not supported"};
         }
         // K > 1 (multiple state snapshots) not supported by fused op
-        if (((const int32_t *) op->op_params)[0] > 1) {
-            return {false, "GATED_DELTA_NET with K > 1 (multiple state snapshots) is not supported"};
+        إذا (((ثابت int32_t *) op->op_params)[0] > 1) {
+            أرجع {خطأ, "GATED_DELTA_NET with K > 1 (multiple state snapshots) is not supported"};
         }
-        break;
+        اكسر;
     }
-    case GGML_OP_SSM_CONV: {
+    حالة GGML_OP_SSM_CONV: {
         // qwen3next is numerically unstable with OpenVINO SSM_CONV.
         // Keep this op on CPU until the OpenVINO implementation is fixed.
         // return true;
-        break;
+        اكسر;
     }
-    case GGML_OP_VIEW: {
+    حالة GGML_OP_VIEW: {
         // Skip TOPK_MOE fused tests until it is fully supported.
         // The argsort_top_k VIEW wrapping ARGSORT is named "selected_experts" in test_topk_moe.
-        if (strcmp(op->name, "selected_experts") == 0) {
-            return {false, "VIEW for selected_experts (argsort_top_k) is not supported"};
+        إذا (strcmp(op->name, "selected_experts") == 0) {
+            أرجع {خطأ, "VIEW for selected_experts (argsort_top_k) is not supported"};
         }
-        break;
+        اكسر;
     }
-    case GGML_OP_CONV_2D:
-    case GGML_OP_CONV_2D_DW: {
-        if (op->src[0]->ne[0] <= 0 || op->src[0]->ne[1] <= 0) {
-            return {false, "CONV_2D kernel size must be positive"};
+    حالة GGML_OP_CONV_2D:
+    حالة GGML_OP_CONV_2D_DW: {
+        إذا (op->src[0]->ne[0] <= 0 || op->src[0]->ne[1] <= 0) {
+            أرجع {خطأ, "CONV_2D kernel size must be positive"};
         }
-        if (op->src[0]->op == GGML_OP_PERMUTE || op->src[1]->op == GGML_OP_PERMUTE) {
-            return {false, "CONV_2D with PERMUTE input is not supported"};
+        إذا (op->src[0]->op == GGML_OP_جایگشت || op->src[1]->op == GGML_OP_جایگشت) {
+            أرجع {خطأ, "CONV_2D with PERMUTE input is not supported"};
         }
-        if (has_non_contiguous_view_input(op)) {
-            return {false, "CONV_2D with non-contiguous view input is not supported"};
+        إذا (has_non_contiguous_view_درون_داد(op)) {
+            أرجع {خطأ, "CONV_2D with non-contiguous view input is not supported"};
         }
-        const int32_t * params = op->op_params;
-        const int p0 = params[2];
-        const int p1 = params[3];
-        const int d0 = params[4];
-        const int d1 = params[5];
-        const int64_t dilated_kw = (int64_t) d0 * (op->src[0]->ne[0] - 1) + 1;
-        const int64_t dilated_kh = (int64_t) d1 * (op->src[0]->ne[1] - 1) + 1;
-        const int64_t padded_w   = op->src[1]->ne[0] + 2 * p0;
-        const int64_t padded_h   = op->src[1]->ne[1] + 2 * p1;
-        if (padded_w < dilated_kw || padded_h < dilated_kh) {
-            return {false, "CONV_2D padded input is smaller than kernel"};
+        ثابت int32_t * params = op->op_params;
+        ثابت صحيح p0 = params[2];
+        ثابت صحيح p1 = params[3];
+        ثابت صحيح d0 = params[4];
+        ثابت صحيح d1 = params[5];
+        ثابت int64_t dilated_kw = (int64_t) d0 * (op->src[0]->ne[0] - 1) + 1;
+        ثابت int64_t dilated_kh = (int64_t) d1 * (op->src[0]->ne[1] - 1) + 1;
+        ثابت int64_t padded_w   = op->src[1]->ne[0] + 2 * p0;
+        ثابت int64_t padded_h   = op->src[1]->ne[1] + 2 * p1;
+        إذا (padded_w < dilated_kw || padded_h < dilated_kh) {
+            أرجع {خطأ, "CONV_2D padded input is smaller than kernel"};
         }
-        break;
+        اكسر;
     }
-    case GGML_OP_CONV_3D: {
-        if (op->src[0]->ne[0] <= 0 || op->src[0]->ne[1] <= 0 || op->src[0]->ne[2] <= 0) {
-            return {false, "CONV_3D kernel size must be positive"};
+    حالة GGML_OP_CONV_3D: {
+        إذا (op->src[0]->ne[0] <= 0 || op->src[0]->ne[1] <= 0 || op->src[0]->ne[2] <= 0) {
+            أرجع {خطأ, "CONV_3D kernel size must be positive"};
         }
-        if (op->src[0]->op == GGML_OP_PERMUTE || op->src[1]->op == GGML_OP_PERMUTE) {
-            return {false, "CONV_3D with PERMUTE input is not supported"};
+        إذا (op->src[0]->op == GGML_OP_جایگشت || op->src[1]->op == GGML_OP_جایگشت) {
+            أرجع {خطأ, "CONV_3D with PERMUTE input is not supported"};
         }
-        if (has_non_contiguous_view_input(op)) {
-            return {false, "CONV_3D with non-contiguous view input is not supported"};
+        إذا (has_non_contiguous_view_درون_داد(op)) {
+            أرجع {خطأ, "CONV_3D with non-contiguous view input is not supported"};
         }
-        const int32_t * params = op->op_params;
-        const int p0 = params[3];
-        const int p1 = params[4];
-        const int p2 = params[5];
-        const int d0 = params[6];
-        const int d1 = params[7];
-        const int d2 = params[8];
-        const int64_t dilated_kw = (int64_t) d0 * (op->src[0]->ne[0] - 1) + 1;
-        const int64_t dilated_kh = (int64_t) d1 * (op->src[0]->ne[1] - 1) + 1;
-        const int64_t dilated_kd = (int64_t) d2 * (op->src[0]->ne[2] - 1) + 1;
-        const int64_t padded_w   = op->src[1]->ne[0] + 2 * p0;
-        const int64_t padded_h   = op->src[1]->ne[1] + 2 * p1;
-        const int64_t padded_d   = op->src[1]->ne[2] + 2 * p2;
-        if (padded_w < dilated_kw || padded_h < dilated_kh || padded_d < dilated_kd) {
-            return {false, "CONV_3D padded input is smaller than kernel"};
+        ثابت int32_t * params = op->op_params;
+        ثابت صحيح p0 = params[3];
+        ثابت صحيح p1 = params[4];
+        ثابت صحيح p2 = params[5];
+        ثابت صحيح d0 = params[6];
+        ثابت صحيح d1 = params[7];
+        ثابت صحيح d2 = params[8];
+        ثابت int64_t dilated_kw = (int64_t) d0 * (op->src[0]->ne[0] - 1) + 1;
+        ثابت int64_t dilated_kh = (int64_t) d1 * (op->src[0]->ne[1] - 1) + 1;
+        ثابت int64_t dilated_kd = (int64_t) d2 * (op->src[0]->ne[2] - 1) + 1;
+        ثابت int64_t padded_w   = op->src[1]->ne[0] + 2 * p0;
+        ثابت int64_t padded_h   = op->src[1]->ne[1] + 2 * p1;
+        ثابت int64_t padded_d   = op->src[1]->ne[2] + 2 * p2;
+        إذا (padded_w < dilated_kw || padded_h < dilated_kh || padded_d < dilated_kd) {
+            أرجع {خطأ, "CONV_3D padded input is smaller than kernel"};
         }
-        break;
+        اكسر;
     }
-    case GGML_OP_CONV_TRANSPOSE_1D:
-    case GGML_OP_CONV_TRANSPOSE_2D: {
-        if (op->src[0]->ne[0] <= 0 || op->src[0]->ne[1] <= 0) {
-            return {false, "CONV_TRANSPOSE kernel size must be positive"};
+    حالة GGML_OP_CONV_TRANSPOSE_1D:
+    حالة GGML_OP_CONV_TRANSPOSE_2D: {
+        إذا (op->src[0]->ne[0] <= 0 || op->src[0]->ne[1] <= 0) {
+            أرجع {خطأ, "CONV_TRANSPOSE kernel size must be positive"};
         }
-        if (op->src[0]->op == GGML_OP_PERMUTE || op->src[1]->op == GGML_OP_PERMUTE) {
-            return {false, "CONV_TRANSPOSE with PERMUTE input is not supported"};
+        إذا (op->src[0]->op == GGML_OP_جایگشت || op->src[1]->op == GGML_OP_جایگشت) {
+            أرجع {خطأ, "CONV_TRANSPOSE with PERMUTE input is not supported"};
         }
-        if (has_non_contiguous_view_input(op)) {
-            return {false, "CONV_TRANSPOSE with non-contiguous view input is not supported"};
+        إذا (has_non_contiguous_view_درون_داد(op)) {
+            أرجع {خطأ, "CONV_TRANSPOSE with non-contiguous view input is not supported"};
         }
-        break;
+        اكسر;
     }
-    case GGML_OP_IM2COL: {
-        if (op->src[0]->ne[0] <= 0 || op->src[0]->ne[1] <= 0) {
-            return {false, "IM2COL kernel size must be positive"};
+    حالة GGML_OP_IM2_ستون: {
+        إذا (op->src[0]->ne[0] <= 0 || op->src[0]->ne[1] <= 0) {
+            أرجع {خطأ, "IM2COL kernel size must be positive"};
         }
-        break;
+        اكسر;
     }
-    case GGML_OP_IM2COL_3D: {
-        if (op->src[0]->ne[0] <= 0 || op->src[0]->ne[1] <= 0 || op->src[0]->ne[2] <= 0) {
-            return {false, "IM2COL_3D kernel size must be positive"};
+    حالة GGML_OP_IM2_ستون_3_D: {
+        إذا (op->src[0]->ne[0] <= 0 || op->src[0]->ne[1] <= 0 || op->src[0]->ne[2] <= 0) {
+            أرجع {خطأ, "IM2COL_3D kernel size must be positive"};
         }
-        break;
+        اكسر;
     }
-    default:
-        break;
+    افتراضي:
+        اكسر;
     }
-    return {true, ""};
+    أرجع {درست, ""};
 }
 
-static ggml_openvino_op_support ggml_backend_openvino_device_supports_op_impl(ggml_backend_dev_t dev, const ggml_tensor * op) {
-    GGML_ASSERT(dev->reg != nullptr);
+ساكن ggml_openvino_op_support ggml_backend_openvino_device_supports_op_impl(ggml_backend_dev_t dev, ثابت ggml_tensor * op) {
+    GGML_ASSERT(dev->reg != اشاره_تهی);
 
     ggml_backend_openvino_device_context * dev_ctx = (ggml_backend_openvino_device_context *) dev->context;
-    if (dev_ctx->ov_name != ggml_openvino_get_device_name()) {
+    إذا (dev_ctx->ov_name != ggml_openvino_get_device_name()) {
         // Data placed on a non-selected device (e.g. with -dev) can never run here; stop with a hint
         // instead of the generic scheduler abort. Unallocated tensors (test-backend-ops) pass through.
-        for (int i = -1; i < GGML_MAX_SRC; i++) {
-            const ggml_tensor * t = i < 0 ? op : op->src[i];
-            ggml_backend_buffer_t buf = t == nullptr ? nullptr : (t->view_src ? t->view_src->buffer : t->buffer);
-            if (buf != nullptr &&
+        لكل (صحيح i = -1; i < GGML_MAX_SRC; i++) {
+            ثابت ggml_tensor * t = i < 0 ? op : op->src[i];
+            ggml_backend_میانگیر_t buf = t == اشاره_تهی ? اشاره_تهی : (t->view_src ? t->view_src->میانگیر : t->میانگیر);
+            إذا (buf != اشاره_تهی &&
                 (ggml_backend_buft_is_openvino(buf->buft) || ggml_backend_buft_is_openvino_host(buf->buft)) &&
-                ((ggml_backend_openvino_buffer_type_context *) buf->buft->context)->device == dev_ctx->device) {
+                ((ggml_backend_openvino_میانگیر_type_context *) buf->buft->context)->device == dev_ctx->device) {
                 GGML_ABORT("%s is not the selected OpenVINO device (%s). The OpenVINO device is chosen with the "
                            "GGML_OPENVINO_DEVICE environment variable, not -dev: set GGML_OPENVINO_DEVICE=%s",
                            dev_ctx->name.c_str(), ggml_openvino_get_device_name().c_str(), dev_ctx->ov_name.c_str());
             }
         }
-        return {false, "device is not the selected OpenVINO device"};
+        أرجع {خطأ, "device is not the selected OpenVINO device"};
     }
 
-    static std::unordered_set<ggml_type> supported_types{
+    ساكن std::unordered_set<ggml_type> supported_types{
         GGML_TYPE_F32,  GGML_TYPE_F16,  GGML_TYPE_BF16, GGML_TYPE_I64,  GGML_TYPE_I32,  GGML_TYPE_Q4_0,
         GGML_TYPE_Q4_1, GGML_TYPE_Q4_K, GGML_TYPE_Q5_1, GGML_TYPE_Q5_K, GGML_TYPE_Q8_0, GGML_TYPE_Q6_K,
         GGML_TYPE_MXFP4};
@@ -1789,8 +1789,8 @@ static ggml_openvino_op_support ggml_backend_openvino_device_supports_op_impl(gg
     // the map use the full macro name (e.g. "GGML_OP_ADD"), while
     // the ggml_*_op_name() helpers return only the trailing part (e.g. "ADD").
     // each set is built once and cached.
-    static const auto build_supported_sets = [] {
-        const auto & table = ov::frontend::ggml::get_supported_ops();
+    ساكن ثابت خودکار build_supported_sets = [] {
+        ثابت خودکار & جدول = ov::frontend::ggml::get_supported_ops();
         std::unordered_set<ggml_op> ops;
         std::unordered_set<ggml_unary_op> unary_ops;
         std::unordered_set<ggml_glu_op> glu_ops;
@@ -1798,182 +1798,182 @@ static ggml_openvino_op_support ggml_backend_openvino_device_supports_op_impl(gg
         // GGML_OP_NONE has no translator but is always safe to add to the supported set.
         ops.insert(GGML_OP_NONE);
 
-        for (int i = 0; i < GGML_OP_COUNT; ++i) {
-            const std::string key = std::string("GGML_OP_") + ggml_op_name(static_cast<ggml_op>(i));
-            if (table.count(key)) {
+        لكل (صحيح i = 0; i < GGML_OP_شمار; ++i) {
+            ثابت std::string کلید = std::string("GGML_OP_") + ggml_op_name(static_cast<ggml_op>(i));
+            إذا (جدول.count(کلید)) {
                 ops.insert(static_cast<ggml_op>(i));
             }
         }
-        for (int i = 0; i < GGML_UNARY_OP_COUNT; ++i) {
-            const std::string key = std::string("GGML_UNARY_OP_") + ggml_unary_op_name(static_cast<ggml_unary_op>(i));
-            if (table.count(key)) {
+        لكل (صحيح i = 0; i < GGML_UNARY_OP_شمار; ++i) {
+            ثابت std::string کلید = std::string("GGML_UNARY_OP_") + ggml_unary_op_name(static_cast<ggml_unary_op>(i));
+            إذا (جدول.count(کلید)) {
                 unary_ops.insert(static_cast<ggml_unary_op>(i));
             }
         }
-        for (int i = 0; i < GGML_GLU_OP_COUNT; ++i) {
-            const std::string key = std::string("GGML_GLU_OP_") + ggml_glu_op_name(static_cast<ggml_glu_op>(i));
-            if (table.count(key)) {
+        لكل (صحيح i = 0; i < GGML_GLU_OP_شمار; ++i) {
+            ثابت std::string کلید = std::string("GGML_GLU_OP_") + ggml_glu_op_name(static_cast<ggml_glu_op>(i));
+            إذا (جدول.count(کلید)) {
                 glu_ops.insert(static_cast<ggml_glu_op>(i));
             }
         }
-        return std::make_tuple(ops, unary_ops, glu_ops);
+        أرجع std::make_tuple(ops, unary_ops, glu_ops);
     };
-    static const auto supported_sets = build_supported_sets();
-    static const auto & supported_ops = std::get<0>(supported_sets);
-    static const auto & supported_unary_ops = std::get<1>(supported_sets);
-    static const auto & supported_glu_ops = std::get<2>(supported_sets);
+    ساكن ثابت خودکار supported_sets = build_supported_sets();
+    ساكن ثابت خودکار & supported_ops = std::get<0>(supported_sets);
+    ساكن ثابت خودکار & supported_unary_ops = std::get<1>(supported_sets);
+    ساكن ثابت خودکار & supported_glu_ops = std::get<2>(supported_sets);
 
-    switch (op->op) {
-    case GGML_OP_UNARY: {
-        auto supported = supported_unary_ops.find(ggml_get_unary_op(op)) != supported_unary_ops.end();
-        if (!supported) {
-            return {false, "unary op " + std::string(ggml_unary_op_name(ggml_get_unary_op(op))) + " has no op translator"};
+    بدل (op->op) {
+    حالة GGML_OP_UNARY: {
+        خودکار supported = supported_unary_ops.find(ggml_get_unary_op(op)) != supported_unary_ops.end();
+        إذا (!supported) {
+            أرجع {خطأ, "unary op " + std::string(ggml_unary_op_name(ggml_get_unary_op(op))) + " has no op translator"};
         }
-        if (op->type == GGML_TYPE_F32 && (ggml_get_unary_op(op) == GGML_UNARY_OP_EXP ||
+        إذا (op->type == GGML_TYPE_F32 && (ggml_get_unary_op(op) == GGML_UNARY_OP_EXP ||
                                           ggml_get_unary_op(op) == GGML_UNARY_OP_EXPM1)) {
-            return {false, "UNARY_EXP / UNARY_EXPM1 with F32 type is not supported"};
+            أرجع {خطأ, "UNARY_EXP / UNARY_EXPM1 with F32 type is not supported"};
         }
-        break;
+        اكسر;
     }
-    case GGML_OP_GLU: {
-        auto supported = supported_glu_ops.find(ggml_get_glu_op(op)) != supported_glu_ops.end();
-        if (!supported) {
-            return {false, "GLU op " + std::string(ggml_glu_op_name(ggml_get_glu_op(op))) + " has no op translator"};
+    حالة GGML_OP_GLU: {
+        خودکار supported = supported_glu_ops.find(ggml_get_glu_op(op)) != supported_glu_ops.end();
+        إذا (!supported) {
+            أرجع {خطأ, "GLU op " + std::string(ggml_glu_op_name(ggml_get_glu_op(op))) + " has no op translator"};
         }
         // if (has_view_op_input(op)) {
         //     return {false, "GLU op " + std::string(ggml_glu_op_name(ggml_get_glu_op(op))) + " with view input is not supported"};
         // }
-        if (op->src[1] == nullptr && op->src[0]->ne[0] % 2 != 0) {
+        إذا (op->src[1] == اشاره_تهی && op->src[0]->ne[0] % 2 != 0) {
             // triggers bug in ov gpu
-            return {false, "GLU op with odd src0 ne[0] and null src1 is not supported"};
+            أرجع {خطأ, "GLU op with odd src0 ne[0] and null src1 is not supported"};
         }
-        break;
+        اكسر;
     }
-    default: {
-        auto supported = supported_ops.find(op->op) != supported_ops.end();
-        if (!supported) {
-            return {false, "op " + std::string(ggml_op_name(op->op)) + " has no op translator"};
+    افتراضي: {
+        خودکار supported = supported_ops.find(op->op) != supported_ops.end();
+        إذا (!supported) {
+            أرجع {خطأ, "op " + std::string(ggml_op_name(op->op)) + " has no op translator"};
         }
-        static std::set<ggml_op> ops_not_support_view_input{};
-        if (ops_not_support_view_input.find(op->op) != ops_not_support_view_input.end() && has_view_op_input(op)) {
-            return {false, "op " + std::string(ggml_op_name(op->op)) + " with VIEW input is not supported"};
+        ساكن std::set<ggml_op> ops_not_support_view_درون_داد{};
+        إذا (ops_not_support_view_درون_داد.find(op->op) != ops_not_support_view_درون_داد.end() && has_view_op_درون_داد(op)) {
+            أرجع {خطأ, "op " + std::string(ggml_op_name(op->op)) + " with VIEW input is not supported"};
         }
     }
     }
 
-    if (supported_types.find(op->type) == supported_types.end()) {
-        return {false, "tensor type " + std::string(ggml_type_name(op->type)) + " is not supported"};
+    إذا (supported_types.find(op->type) == supported_types.end()) {
+        أرجع {خطأ, "tensor type " + std::string(ggml_type_name(op->type)) + " is not supported"};
     }
-    for (int i = 0; i < GGML_MAX_SRC; i++) {
-        auto * src = op->src[i];
-        if (src == nullptr) {
-            break;
+    لكل (صحيح i = 0; i < GGML_MAX_SRC; i++) {
+        خودکار * src = op->src[i];
+        إذا (src == اشاره_تهی) {
+            اكسر;
         }
-        if (supported_types.find(src->type) == supported_types.end()) {
-            return {false, "src[" + std::to_string(i) + "] type " + std::string(ggml_type_name(src->type)) + " is not supported"};
+        إذا (supported_types.find(src->type) == supported_types.end()) {
+            أرجع {خطأ, "src[" + std::to_string(i) + "] type " + std::string(ggml_type_name(src->type)) + " is not supported"};
         }
-        if (!has_strides_on_element_grid(src)) {
-            return {false, "src[" + std::to_string(i) + "] strides are not multiples of each other"};
+        إذا (!has_strides_on_element_grid(src)) {
+            أرجع {خطأ, "src[" + std::to_string(i) + "] strides are not multiples of each other"};
         }
-        const bool is_supported_3d_moe_expert =
+        ثابت منطقي is_supported_3d_moe_expert =
             op->op == GGML_OP_MUL_MAT_ID && i == 0 && (src->type == GGML_TYPE_MXFP4 || src->ne[3] == 1);
-        if (ggml_is_quantized(src->type) && src->ne[2] != 1 && !is_supported_3d_moe_expert) {
-            return {false, "3D quantized tensor for src[" + std::to_string(i) + "] is not supported"};
+        إذا (ggml_is_quantized(src->type) && src->ne[2] != 1 && !is_supported_3d_moe_expert) {
+            أرجع {خطأ, "3D quantized tensor for src[" + std::to_string(i) + "] is not supported"};
         }
     }
 
-    auto op_support_case = is_op_supported_case(op);
-    if (!op_support_case.is_supported) {
-        return op_support_case;
+    خودکار op_support_case = is_op_supported_case(op);
+    إذا (!op_support_case.is_supported) {
+        أرجع op_support_case;
     }
-    return {true, ""};
+    أرجع {درست, ""};
 }
 
-static bool ggml_backend_openvino_device_supports_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
-    auto res = ggml_backend_openvino_device_supports_op_impl(dev, op);
-    if (!res.is_supported) {
-        static const bool log_unsupported = ggml_openvino_getenv_int("GGML_OPENVINO_LOG_UNSUPPORTED_OPS") != 0;
-        if (log_unsupported) {
+ساكن منطقي ggml_backend_openvino_device_supports_op(ggml_backend_dev_t dev, ثابت ggml_tensor * op) {
+    خودکار res = ggml_backend_openvino_device_supports_op_impl(dev, op);
+    إذا (!res.is_supported) {
+        ساكن ثابت منطقي log_unsupported = ggml_openvino_getenv_int("GGML_OPENVINO_LOG_UNSUPPORTED_OPS") != 0;
+        إذا (log_unsupported) {
             GGML_LOG_WARN("OpenVINO op unsupported: op '%s' (%s), type %s: %s\n",
                           op->name, ggml_op_name(op->op), ggml_type_name(op->type), res.reason.c_str());
         }
     }
-    return res.is_supported;
+    أرجع res.is_supported;
 }
 
-static bool ggml_backend_openvino_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
-    return ggml_backend_buft_is_openvino(buft) || ggml_backend_buft_is_host(buft);
-    GGML_UNUSED(dev);
+ساكن منطقي ggml_backend_openvino_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_میانگیر_type_t buft) {
+    أرجع ggml_backend_buft_is_openvino(buft) || ggml_backend_buft_is_host(buft);
+    GGML_استفادهنشده(dev);
 }
 
-static const struct ggml_backend_device_i ggml_backend_openvino_device_interface = {
+ساكن ثابت بنية ggml_backend_device_i ggml_backend_openvino_device_interface = {
     /* .get_name             = */ ggml_backend_openvino_device_get_name,
     /* .get_description      = */ ggml_backend_openvino_device_get_description,
-    /* .get_memory           = */ ggml_backend_openvino_device_get_memory,
+    /* .get_memory           = */ ggml_backend_openvino_device_get_حافظه,
     /* .get_type             = */ ggml_backend_openvino_device_get_type,
     /* .get_props            = */ ggml_backend_openvino_device_get_props,
     /* .init_backend         = */ ggml_backend_openvino_device_init,
-    /* .get_buffer_type      = */ ggml_backend_openvino_device_get_buffer_type,
-    /* .get_host_buffer_type = */ ggml_backend_openvino_device_get_host_buffer_type,
-    /* .buffer_from_host_ptr = */ NULL,
+    /* .get_buffer_type      = */ ggml_backend_openvino_device_get_میانگیر_type,
+    /* .get_host_buffer_type = */ ggml_backend_openvino_device_get_host_میانگیر_type,
+    /* .buffer_from_host_ptr = */ عدم,
     /* .supports_op          = */ ggml_backend_openvino_device_supports_op,
     /* .supports_buft        = */ ggml_backend_openvino_device_supports_buft,
-    /* .offload_op           = */ NULL,
-    /* .event_new            = */ NULL,
-    /* .event_free           = */ NULL,
-    /* .event_synchronize    = */ NULL,
+    /* .offload_op           = */ عدم,
+    /* .event_new            = */ عدم,
+    /* .event_free           = */ عدم,
+    /* .event_synchronize    = */ عدم,
 };
 
-namespace {
-struct ggml_backend_openvino_reg_context {
+نطاق {
+بنية ggml_backend_openvino_reg_context {
     std::vector<ggml_backend_dev_t> devices;
 };
 }
 
-static const char * ggml_backend_openvino_reg_get_name(ggml_backend_reg_t reg) {
-    return GGML_OPENVINO_NAME;
-    GGML_UNUSED(reg);
+ساكن ثابت حرف * ggml_backend_openvino_reg_get_name(ggml_backend_reg_t reg) {
+    أرجع GGML_OPENVINO_NAME;
+    GGML_استفادهنشده(reg);
 }
 
-static size_t ggml_backend_openvino_reg_get_device_count(ggml_backend_reg_t reg) {
-    GGML_UNUSED(reg);
-    return (size_t) ggml_backend_openvino_get_device_count();
+ساكن size_t ggml_backend_openvino_reg_get_device_شمار(ggml_backend_reg_t reg) {
+    GGML_استفادهنشده(reg);
+    أرجع (size_t) ggml_backend_openvino_get_device_شمار();
 }
 
-static ggml_backend_dev_t ggml_backend_openvino_reg_get_device(ggml_backend_reg_t reg, size_t index) {
+ساكن ggml_backend_dev_t ggml_backend_openvino_reg_get_device(ggml_backend_reg_t reg, size_t شاخص) {
     ggml_backend_openvino_reg_context * ctx = (ggml_backend_openvino_reg_context *) reg->context;
-    GGML_ASSERT(index < ctx->devices.size());
-    return ctx->devices[index];
+    GGML_ASSERT(شاخص < ctx->devices.size());
+    أرجع ctx->devices[شاخص];
 }
 
-static const struct ggml_backend_reg_i ggml_backend_openvino_reg_interface = {
+ساكن ثابت بنية ggml_backend_reg_i ggml_backend_openvino_reg_interface = {
     /* .get_name         = */ ggml_backend_openvino_reg_get_name,
-    /* .get_device_count = */ ggml_backend_openvino_reg_get_device_count,
+    /* .get_device_count = */ ggml_backend_openvino_reg_get_device_شمار,
     /* .get_device       = */ ggml_backend_openvino_reg_get_device,
-    /* .get_proc_address = */ NULL,
+    /* .get_proc_address = */ عدم,
 };
 
-static void ggml_openvino_init() {
+ساكن فراغ ggml_openvino_init() {
     // Initialize device config singleton from env var
     ggml_openvino_init_device_config();
     GGML_LOG_INFO("OpenVINO: using device %s\n", ggml_openvino_get_device_name().c_str());
 }
 
-GGML_BACKEND_API ggml_backend_reg_t ggml_backend_openvino_reg(void) {
-    static ggml_backend_reg reg;
+GGML_BACKEND_API ggml_backend_reg_t ggml_backend_openvino_reg(فراغ) {
+    ساكن ggml_backend_reg reg;
 
-    static bool initialized = false;
+    ساكن منطقي initialized = خطأ;
     {
-        static std::mutex mutex;
-        std::lock_guard<std::mutex> lock(mutex);
-        if (!initialized) {
+        ساكن std::mutex mutex;
+        std::lock_guard<std::mutex> قفل(mutex);
+        إذا (!initialized) {
             ggml_openvino_init();
-            const std::vector<std::string> openvino_devices = ggml_openvino_get_available_devices();
+            ثابت std::vector<std::string> openvino_devices = ggml_openvino_get_موجود_devices();
 
-            ggml_backend_openvino_reg_context * ctx = new ggml_backend_openvino_reg_context;
+            ggml_backend_openvino_reg_context * ctx = جديد ggml_backend_openvino_reg_context;
 
-            for (int i = 0; i < ggml_backend_openvino_get_device_count(); i++) {
-                ggml_backend_openvino_device_context * dev_ctx = new ggml_backend_openvino_device_context;
+            لكل (صحيح i = 0; i < ggml_backend_openvino_get_device_شمار(); i++) {
+                ggml_backend_openvino_device_context * dev_ctx = جديد ggml_backend_openvino_device_context;
                 dev_ctx->device = i;
                 // Not the raw OpenVINO id: "CPU" would shadow the ggml CPU backend in ggml_backend_dev_by_name
                 dev_ctx->name = GGML_OPENVINO_NAME + std::to_string(i);
@@ -1982,29 +1982,29 @@ GGML_BACKEND_API ggml_backend_reg_t ggml_backend_openvino_reg(void) {
                 dev_ctx->description = "GGML_OPENVINO_DEVICE=" + dev_ctx->ov_name +
                                        (dev_ctx->ov_name == ggml_openvino_get_device_name() ? " (selected)" : "") +
                                        " - " + ggml_openvino_get_device_description(dev_ctx->ov_name);
-                dev_ctx->total_memory = 0;
-                if (ov_device_has_prefix(dev_ctx->ov_name, "GPU")) {
-                    ov_try_get_size_t_property(dev_ctx->ov_name, "GPU_DEVICE_TOTAL_MEM_SIZE", dev_ctx->total_memory);
-                } else if (ov_device_has_prefix(dev_ctx->ov_name, "NPU")) {
-                    ov_try_get_size_t_property(dev_ctx->ov_name, "NPU_DEVICE_TOTAL_MEM_SIZE", dev_ctx->total_memory);
+                dev_ctx->مجموع_حافظه = 0;
+                إذا (ov_device_has_پیشوند(dev_ctx->ov_name, "GPU")) {
+                    ov_try_get_اندازه_t_property(dev_ctx->ov_name, "GPU_DEVICE_TOTAL_MEM_SIZE", dev_ctx->مجموع_حافظه);
+                } وإلا إذا (ov_device_has_پیشوند(dev_ctx->ov_name, "NPU")) {
+                    ov_try_get_اندازه_t_property(dev_ctx->ov_name, "NPU_DEVICE_TOTAL_MEM_SIZE", dev_ctx->مجموع_حافظه);
                 }
 
                 ggml_backend_dev_t dev =
-                    new ggml_backend_device{/* .interface = */ ggml_backend_openvino_device_interface,
+                    جديد ggml_backend_device{/* .interface = */ ggml_backend_openvino_device_interface,
                                             /* .reg       = */ &reg,
                                             /* .context   = */ dev_ctx};
                 ctx->devices.push_back(dev);
             }
 
-            reg = ggml_backend_reg{/* .api_version = */ GGML_BACKEND_API_VERSION,
+            reg = ggml_backend_reg{/* .api_version = */ GGML_BACKEND_API_نسخه,
                                    /* .iface       = */ ggml_backend_openvino_reg_interface,
                                    /* .context     = */ ctx};
         }
 
-        initialized = true;
+        initialized = درست;
     }
 
-    return &reg;
+    أرجع &reg;
 }
 
 GGML_BACKEND_DL_IMPL(ggml_backend_openvino_reg)
