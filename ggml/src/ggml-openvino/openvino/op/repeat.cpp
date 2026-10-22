@@ -1,44 +1,44 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#अन्तर्भाव "../node_context.h"
+#अन्तर्भाव "../op_table.h"
+#अन्तर्भाव "../utils.h"
 
-#include <memory>
-#include <openvino/op/broadcast.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/divide.hpp>
-#include <openvino/op/shape_of.hpp>
-#include <openvino/op/tile.hpp>
-#include <vector>
+#अन्तर्भाव <memory>
+#अन्तर्भाव <openvino/op/broadcast.hpp>
+#अन्तर्भाव <openvino/op/constant.hpp>
+#अन्तर्भाव <openvino/op/divide.hpp>
+#अन्तर्भाव <openvino/op/shape_of.hpp>
+#अन्तर्भाव <openvino/op/tile.hpp>
+#अन्तर्भाव <vector>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+नामाकाश ov {
+नामाकाश frontend {
+नामाकाश ggml {
+नामाकाश op {
 
 // GGML_OP_REPEAT tiles src[0] to fill the destination shape. Every destination
 // dimension is an integer multiple of the corresponding source dimension.
-OutputVector translate_repeat(const NodeContext & context) {
-    num_inputs_check(context, 1, 2);
+OutputVector translate_repeat(ध्रुव गाँठ_Context & context) {
+    अंक_inputs_check(context, 1, 2);
 
-    auto input = process_view_input_new(context, 0);
+    auto निवेश = process_view_निवेश_new(context, 0);
 
-    const auto input_shape = context.get_input_shape(0).to_shape();
-    const auto output_shape = context.get_output_shape().to_shape();
+    ध्रुव auto निवेश_shape = context.get_निवेश_shape(0).to_shape();
+    ध्रुव auto output_shape = context.get_output_shape().to_shape();
 
     std::vector<int64_t> repeats(4, 1);
-    for (size_t axis = 0; axis < 4; ++axis) {
-        const int64_t input_dim = input_shape[axis];
-        const int64_t output_dim = output_shape[axis];
+    प्रति (size_t axis = 0; axis < 4; ++axis) {
+        ध्रुव int64_t निवेश_dim = निवेश_shape[axis];
+        ध्रुव int64_t output_dim = output_shape[axis];
 
-        FRONT_END_OP_CONVERSION_CHECK(input_dim > 0 && output_dim > 0 && output_dim % input_dim == 0,
-                                      "REPEAT input shape ", input_shape, " cannot tile to match ", output_shape);
+        FRONT_END_OP_CONVERSION_CHECK(निवेश_dim > 0 && output_dim > 0 && output_dim % निवेश_dim == 0,
+                                      "REPEAT input shape ", निवेश_shape, " cannot tile to match ", output_shape);
 
-        repeats[axis] = output_dim / input_dim;
+        repeats[axis] = output_dim / निवेश_dim;
     }
 
-    auto repeats_node = ov::op::v0::Constant::create(ov::element::i64, {repeats.size()}, repeats);
-    ov::Output<ov::Node> res = std::make_shared<ov::op::v0::Tile>(input, repeats_node);
-    return rename_outputs_with_suffix({res}, context.get_name());
+    auto repeats_गाँठ = ov::op::v0::Constant::create(ov::element::i64, {repeats.size()}, repeats);
+    ov::Output<ov::Node> res = std::make_shared<ov::op::v0::Tile>(निवेश, repeats_गाँठ);
+    प्रत्यागम rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op
