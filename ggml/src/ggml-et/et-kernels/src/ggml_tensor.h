@@ -3,42 +3,42 @@
 #ifndef GGML_TENSOR_H
 #define GGML_TENSOR_H
 
-#include <stddef.h>
-#include <stdint.h>
+#ضمن <stddef.h>
+#ضمن <stdint.h>
 
-#include "ggml.h"
+#ضمن "ggml.h"
 
-struct ggml_et_binary_params {
-    struct ggml_tensor src0;
-    struct ggml_tensor src1;
-    struct ggml_tensor dst;
+بنية ggml_et_بيناري_params {
+    بنية ggml_tensor src0;
+    بنية ggml_tensor src1;
+    بنية ggml_tensor dst;
 };
 
 // bias.data == NULL -> unfused MUL_MAT; otherwise dst = mat_mul(...) + bias.
-struct ggml_et_mm_q8_params {
-    struct ggml_tensor src0;
-    struct ggml_tensor src1;
-    struct ggml_tensor dst;
-    struct ggml_tensor bias;
+بنية ggml_et_mm_q8_params {
+    بنية ggml_tensor src0;
+    بنية ggml_tensor src1;
+    بنية ggml_tensor dst;
+    بنية ggml_tensor bias;
 };
 
-struct ggml_et_mul_mat_id_params {
-    struct ggml_tensor src0;  // [K, M, n_expert]
-    struct ggml_tensor src1;  // [K, n_expert_used, batch]
-    struct ggml_tensor src2;  // [n_expert_used, batch] (I32 expert indices)
-    struct ggml_tensor dst;   // [M, n_expert_used, batch, 1]
+بنية ggml_et_mul_mat_id_params {
+    بنية ggml_tensor src0;  // [K, M, n_expert]
+    بنية ggml_tensor src1;  // [K, n_expert_used, batch]
+    بنية ggml_tensor src2;  // [n_expert_used, batch] (I32 expert indices)
+    بنية ggml_tensor dst;   // [M, n_expert_used, batch, 1]
 };
 
 // ne[i] == 1 axes are skipped: their stride is unobservable.
-static inline int ggml_tensor_is_contiguous(const struct ggml_tensor * t, int type_size) {
+ساكن مضمن صحيح ggml_tensor_is_contiguous(ثابت بنية ggml_tensor * t, صحيح type_size) {
     int64_t expected = type_size;
-    for (int i = 0; i < GGML_MAX_DIMS; i++) {
-        if (t->ne[i] > 1 && (int64_t) t->nb[i] != expected) {
-            return 0;
+    لكل (صحيح i = 0; i < GGML_MAX_DIMS; i++) {
+        إذا (t->ne[i] > 1 && (int64_t) t->nb[i] != expected) {
+            أرجع 0;
         }
         expected *= t->ne[i];
     }
-    return 1;
+    أرجع 1;
 }
 
 #endif  // GGML_TENSOR_H
