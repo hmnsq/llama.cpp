@@ -25,20 +25,20 @@ namespace ggml {
 namespace op {
 
 static bool is_static_one(const ov::Dimension & dim) {
-    return dim.is_static() && dim.get_length() == 1;
+    ສົ່ງຄືນ dim.is_static() && dim.get_length() == 1;
 }
 
 static bool same_static_dim(const ov::Dimension & lhs, const ov::Dimension & rhs) {
-    return lhs.is_static() && rhs.is_static() && lhs.get_length() == rhs.get_length();
+    ສົ່ງຄືນ lhs.is_static() && rhs.is_static() && lhs.get_length() == rhs.get_length();
 }
 
 static bool is_attention_sinks_input_shape(const ov::PartialShape & candidate, const ov::PartialShape & logits_shape) {
-    if (candidate.rank().is_dynamic() || logits_shape.rank().is_dynamic() || candidate.rank().get_length() != 4 ||
+    ຖ້າ (candidate.rank().is_dynamic() || logits_shape.rank().is_dynamic() || candidate.rank().get_length() != 4 ||
         logits_shape.rank().get_length() != 4) {
-        return false;
+        ສົ່ງຄືນ false;
     }
 
-    return is_static_one(candidate[0]) && is_static_one(candidate[1]) && is_static_one(candidate[2]) &&
+    ສົ່ງຄືນ is_static_one(candidate[0]) && is_static_one(candidate[1]) && is_static_one(candidate[2]) &&
            same_static_dim(candidate[3], logits_shape[1]);
 }
 
@@ -52,8 +52,8 @@ OutputVector translate_soft_max(const NodeContext & context) {
 
     float scale = 1.0f;
     float max_bias = 0.0f;
-    memcpy(&scale, (float *) context.get_output_op_params() + 0, sizeof(float));
-    memcpy(&max_bias, (float *) context.get_output_op_params() + 1, sizeof(float));
+    memcpy(&scale, (float *) context.get_output_op_params() + 0, parimaa_na(float));
+    memcpy(&max_bias, (float *) context.get_output_op_params() + 1, parimaa_na(float));
 
     ov::Output<ov::Node> logits = context.get_input(0);
     const bool second_input_is_sinks =
@@ -63,7 +63,7 @@ OutputVector translate_soft_max(const NodeContext & context) {
     const size_t sinks_input_idx = second_input_is_sinks ? 1 : 2;
 
     // Apply scale first: logits = src0 * scale
-    if (scale != 1.0f) {
+    ຖ້າ (scale != 1.0f) {
         auto scale_const =
             std::make_shared<ov::op::v0::Constant>(ov::element::f32, ov::Shape{}, std::vector<float>{scale});
         logits = std::make_shared<ov::op::v1::Multiply>(logits, scale_const);
@@ -74,23 +74,23 @@ OutputVector translate_soft_max(const NodeContext & context) {
 
     // Optional mask add: logits += mask
     // For max_bias > 0 (ALiBi), apply per-head slope to mask before adding.
-    if (has_mask) {
+    ຖ້າ (has_mask) {
         ov::Output<ov::Node> mask = context.get_input(1);
 
         // For stateful
         std::string mask_name = "KQ_mask_sliced";
-        if (context.get_input_names()[1].find("swa") != std::string::npos) {
+        ຖ້າ (context.get_input_names()[1].find("swa") != std::string::npos) {
             mask_name = "KQ_mask_swa_sliced";
         }
-        if (context.has_input(mask_name)) {
+        ຖ້າ (context.has_input(mask_name)) {
             mask = context.get_input(mask_name);
         }
 
-        if (mask.get_element_type() != logits.get_element_type()) {
+        ຖ້າ (mask.get_element_type() != logits.get_element_type()) {
             mask = std::make_shared<ov::op::v0::Convert>(mask, logits.get_element_type());
         }
 
-        if (max_bias > 0.0f) {
+        ຖ້າ (max_bias > 0.0f) {
             auto out_shape = context.get_output_shape().to_shape();
             FRONT_END_CHECK_IMPLEMENTED(out_shape.size() == 4, "OpenVINO softmax ALiBi path expects rank-4 tensor");
 
@@ -102,14 +102,14 @@ OutputVector translate_soft_max(const NodeContext & context) {
             const float m1 = std::pow(2.0f, -(max_bias / 2.0f) / static_cast<float>(n_head_log2));
 
             std::vector<float> slopes(n_head);
-            for (uint32_t h = 0; h < n_head; ++h) {
+            ສຳລັບ (uint32_t h = 0; h < n_head; ++h) {
                 slopes[h] = h < n_head_log2 ? std::pow(m0, static_cast<float>(h + 1)) :
                                               std::pow(m1, static_cast<float>(2 * (h - n_head_log2) + 1));
             }
 
             ov::Output<ov::Node> slope_node =
                 std::make_shared<ov::op::v0::Constant>(ov::element::f32, ov::Shape{n_head}, slopes);
-            if (slope_node.get_element_type() != mask.get_element_type()) {
+            ຖ້າ (slope_node.get_element_type() != mask.get_element_type()) {
                 slope_node = std::make_shared<ov::op::v0::Convert>(slope_node, mask.get_element_type());
             }
 
@@ -123,9 +123,9 @@ OutputVector translate_soft_max(const NodeContext & context) {
     }
 
     ov::Output<ov::Node> softmax_input = logits;
-    if (has_sinks) {
+    ຖ້າ (has_sinks) {
         ov::Output<ov::Node> sinks = context.get_input(sinks_input_idx);
-        if (sinks.get_element_type() != logits.get_element_type()) {
+        ຖ້າ (sinks.get_element_type() != logits.get_element_type()) {
             sinks = std::make_shared<ov::op::v0::Convert>(sinks, logits.get_element_type());
         }
 
@@ -151,13 +151,13 @@ OutputVector translate_soft_max(const NodeContext & context) {
         auto original_last_dim = std::make_shared<ov::op::v8::Slice>(logits_shape, three, four, one, shape_axis);
         auto res = std::make_shared<ov::op::v8::Slice>(softmax_with_sink, zero, original_last_dim, one, three);
 
-        return rename_outputs_with_suffix({res}, context.get_name());
+        ສົ່ງຄືນ rename_outputs_with_suffix({res}, context.get_name());
     }
 
     // Softmax along last dimension (equivalent to ggml softmax over ne[0]).
     auto res = std::make_shared<ov::op::v8::Softmax>(softmax_input, -1);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ສົ່ງຄືນ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

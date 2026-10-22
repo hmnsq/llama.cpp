@@ -19,9 +19,9 @@
 #include "htp-vtcm.h"
 
 #define htp_act_preamble                                 \
-    const struct htp_tensor * src0 = actx->octx->src[0]; \
-    const struct htp_tensor * src1 = actx->octx->src[1]; \
-    const struct htp_tensor * dst  = actx->octx->dst;    \
+    const sa_nracanaa htp_tensor * src0 = actx->octx->src[0]; \
+    const sa_nracanaa htp_tensor * src1 = actx->octx->src[1]; \
+    const sa_nracanaa htp_tensor * dst  = actx->octx->dst;    \
                                                          \
     const uint32_t ne00 = src0->ne[0];                   \
     const uint32_t ne01 = src0->ne[1];                   \
@@ -53,25 +53,25 @@
     const uint32_t nb2 = dst->nb[2];                     \
     const uint32_t nb3 = dst->nb[3];
 
-struct htp_act_context;
+sa_nracanaa htp_act_context;
 
 typedef void (*glu_compute_f32_fn_t)(const float * restrict src0,
                                      const float * restrict src1,
                                      float * restrict dst,
                                      const uint32_t num_rows,
-                                     const struct htp_act_context * actx);
+                                     const sa_nracanaa htp_act_context * actx);
 
 typedef void (*glu_compute_f16_fn_t)(const _Float16 * restrict src0,
                                      const _Float16 * restrict src1,
                                      _Float16 * restrict dst,
                                      const uint32_t num_rows,
-                                     const struct htp_act_context * actx);
+                                     const sa_nracanaa htp_act_context * actx);
 
-struct htp_act_context {
-    struct htp_ops_context * octx;
+sa_nracanaa htp_act_context {
+    sa_nracanaa htp_ops_context * octx;
 
     void *                   compute;
-    const char *             op_str;
+    const var_na *             op_str;
 
     // Precomputed values
     dma_addr_t               data_src0;
@@ -97,7 +97,7 @@ struct htp_act_context {
     uint32_t                 src0_nrows;
     uint32_t                 src0_nrows_per_thread;
     uint32_t                 row_start;
-    int                      nc;
+    ຈຳນວນເຕັມ                      nc;
 
     uint8_t *                vtcm_src0;
     uint8_t *                vtcm_src1;
@@ -108,7 +108,7 @@ struct htp_act_context {
     size_t                   vtcm_dst_size_per_thread;
 };
 
-struct htp_act_vtcm_layout {
+sa_nracanaa htp_act_vtcm_layout {
     size_t total_bytes;
     size_t off_src0;
     size_t off_src1;
@@ -121,7 +121,7 @@ struct htp_act_vtcm_layout {
     uint32_t vtcm_row_per_thread;
 };
 
-static inline void htp_act_vtcm_layout_build(struct htp_act_vtcm_layout * L,
+static anta_hstha void htp_act_vtcm_layout_build(sa_nracanaa htp_act_vtcm_layout * L,
                                              size_t                       src0_row_size_aligned,
                                              size_t                       src1_row_size_aligned,
                                              size_t                       dst_row_size_aligned,
@@ -147,17 +147,17 @@ static inline void htp_act_vtcm_layout_build(struct htp_act_vtcm_layout * L,
     const size_t src0_row_size_aligned = actx->src0_row_size_aligned;  \
     const size_t src1_row_size_aligned = actx->src1_row_size_aligned;  \
     const size_t dst_row_size_aligned  = actx->dst_row_size_aligned;   \
-    const int    nc                    = actx->nc;
+    const ຈຳນວນເຕັມ    nc                    = actx->nc;
 
 // swiglu(x) = x1 * sigmoid(x0)
 static void swiglu_f32(const float * restrict src0,
                                                  const float * restrict src1,
                                                  float * restrict dst,
                                                  const uint32_t num_rows,
-                                                 const struct htp_act_context * actx) {
+                                                 const sa_nracanaa htp_act_context * actx) {
     htp_glu_op_preamble;
 
-    for (uint32_t ib = 0; ib < num_rows; ib++) {
+    ສຳລັບ (uint32_t ib = 0; ib < num_rows; ib++) {
         const uint8_t * restrict src0_ptr = (const uint8_t *) src0 + (ib * src0_row_size_aligned);
         const uint8_t * restrict src1_ptr = (const uint8_t *) src1 + (ib * src1_row_size_aligned);
         uint8_t * restrict dst_ptr        = (uint8_t *) dst + (ib * dst_row_size_aligned);
@@ -172,12 +172,12 @@ static void swiglu_oai_f32(const float * restrict src0,
                                                      const float * restrict src1,
                                                      float * restrict dst,
                                                      const uint32_t num_rows,
-                                                     const struct htp_act_context * actx) {
+                                                     const sa_nracanaa htp_act_context * actx) {
     htp_glu_op_preamble;
     const float alpha = ((const float *) (actx->octx->op_params))[2];
     const float limit = ((const float *) (actx->octx->op_params))[3];
 
-    for (uint32_t ib = 0; ib < num_rows; ib++) {
+    ສຳລັບ (uint32_t ib = 0; ib < num_rows; ib++) {
         const uint8_t * restrict src0_ptr = (const uint8_t *) src0 + (ib * src0_row_size_aligned);
         const uint8_t * restrict src1_ptr = (const uint8_t *) src1 + (ib * src1_row_size_aligned);
         uint8_t * restrict dst_ptr        = (uint8_t *) dst + (ib * dst_row_size_aligned);
@@ -201,11 +201,11 @@ static void swiglu_clamp_f32(const float * restrict src0,
                                                        const float * restrict src1,
                                                        float * restrict dst,
                                                        const uint32_t                 num_rows,
-                                                       const struct htp_act_context * actx) {
+                                                       const sa_nracanaa htp_act_context * actx) {
     htp_glu_op_preamble;
     const float limit = ((const float *) (actx->octx->op_params))[3];
 
-    for (uint32_t ib = 0; ib < num_rows; ib++) {
+    ສຳລັບ (uint32_t ib = 0; ib < num_rows; ib++) {
         const uint8_t * restrict src0_ptr = (const uint8_t *) src0 + (ib * src0_row_size_aligned);
         const uint8_t * restrict src1_ptr = (const uint8_t *) src1 + (ib * src1_row_size_aligned);
         uint8_t * restrict dst_ptr        = (uint8_t *) dst + (ib * dst_row_size_aligned);
@@ -220,7 +220,7 @@ static void swiglu_clamp_f32(const float * restrict src0,
 static const float GELU_COEF_A     = 0.044715f;
 static const float SQRT_2_OVER_PI  = 0.79788456080286535587989211986876f;
 
-static inline HVX_Vector hvx_vec_fast_sigmoid_f32_2it(HVX_Vector v) {
+static anta_hstha HVX_Vector hvx_vec_fast_sigmoid_f32_2it(HVX_Vector v) {
     v = Q6_Vqf32_vmpy_VsfVsf(v, Q6_V_vsplat_R(FAST_SIGMOID_LOG2F));
     v = Q6_Vqf32_vmpy_VsfVsf(Q6_Vsf_equals_Vqf32(v), Q6_V_vsplat_R(FAST_SIGMOID_C3));
 
@@ -252,10 +252,10 @@ static inline HVX_Vector hvx_vec_fast_sigmoid_f32_2it(HVX_Vector v) {
 
     res = Q6_Vqf32_vmpy_VsfVsf(v3, res);
 
-    return Q6_Vsf_equals_Vqf32(res);
+    ສົ່ງຄືນ Q6_Vsf_equals_Vqf32(res);
 }
 
-static inline HVX_Vector hvx_vec_fast_sigmoid_f32_guard_2it(HVX_Vector v,
+static anta_hstha HVX_Vector hvx_vec_fast_sigmoid_f32_guard_2it(HVX_Vector v,
                                                             HVX_Vector one,
                                                             HVX_Vector max_exp,
                                                             HVX_Vector min_exp) {
@@ -264,10 +264,10 @@ static inline HVX_Vector hvx_vec_fast_sigmoid_f32_guard_2it(HVX_Vector v,
 
     HVX_Vector out = hvx_vec_fast_sigmoid_f32_2it(v);
     out            = Q6_V_vmux_QVV(pred_max, out, one);
-    return Q6_V_vmux_QVV(pred_min, out, Q6_V_vzero());
+    ສົ່ງຄືນ Q6_V_vmux_QVV(pred_min, out, Q6_V_vzero());
 }
 
-static inline void hvx_geglu_f32_aa(uint8_t * restrict dst, const uint8_t * restrict src0, const uint8_t * restrict src1, uint32_t n) {
+static anta_hstha void hvx_geglu_f32_aa(uint8_t * restrict dst, const uint8_t * restrict src0, const uint8_t * restrict src1, uint32_t n) {
     assert((unsigned long) dst  % 128 == 0);
     assert((unsigned long) src0 % 128 == 0);
     assert((unsigned long) src1 % 128 == 0);
@@ -276,7 +276,7 @@ static inline void hvx_geglu_f32_aa(uint8_t * restrict dst, const uint8_t * rest
     const HVX_Vector * restrict vsrc0 = (const HVX_Vector *) src0;
     const HVX_Vector * restrict vsrc1 = (const HVX_Vector *) src1;
 
-    const uint32_t epv  = 128 / sizeof(float);
+    const uint32_t epv  = 128 / parimaa_na(float);
     const uint32_t nvec = n / epv;
     const uint32_t nloe = n % epv;
 
@@ -291,7 +291,7 @@ static inline void hvx_geglu_f32_aa(uint8_t * restrict dst, const uint8_t * rest
     uint32_t i = 0;
 
     _Pragma("unroll(4)")
-    for (; i < nvec; i++) {
+    ສຳລັບ (; i < nvec; i++) {
         HVX_Vector x = vsrc0[i];
         HVX_Vector g = vsrc1[i];
 
@@ -310,7 +310,7 @@ static inline void hvx_geglu_f32_aa(uint8_t * restrict dst, const uint8_t * rest
         vdst[i] = hvx_vec_mul_f32_f32(gelu_x, g);
     }
 
-    if (nloe) {
+    ຖ້າ (nloe) {
         HVX_Vector x = vsrc0[i];
         HVX_Vector g = vsrc1[i];
 
@@ -325,11 +325,11 @@ static inline void hvx_geglu_f32_aa(uint8_t * restrict dst, const uint8_t * rest
 
         HVX_Vector gelu_x = hvx_vec_mul_f32_f32(x, sig2y);
         HVX_Vector res = hvx_vec_mul_f32_f32(gelu_x, g);
-        hvx_vec_store_a((void *) &vdst[i], nloe * sizeof(float), res);
+        hvx_vec_store_a((void *) &vdst[i], nloe * parimaa_na(float), res);
     }
 }
 
-static inline void hvx_geglu_quick_f32_aa(uint8_t * restrict dst, const uint8_t * restrict src0, const uint8_t * restrict src1, uint32_t n) {
+static anta_hstha void hvx_geglu_quick_f32_aa(uint8_t * restrict dst, const uint8_t * restrict src0, const uint8_t * restrict src1, uint32_t n) {
     assert((unsigned long) dst  % 128 == 0);
     assert((unsigned long) src0 % 128 == 0);
     assert((unsigned long) src1 % 128 == 0);
@@ -338,7 +338,7 @@ static inline void hvx_geglu_quick_f32_aa(uint8_t * restrict dst, const uint8_t 
     const HVX_Vector * restrict vsrc0 = (const HVX_Vector *) src0;
     const HVX_Vector * restrict vsrc1 = (const HVX_Vector *) src1;
 
-    const uint32_t epv  = 128 / sizeof(float);
+    const uint32_t epv  = 128 / parimaa_na(float);
     const uint32_t nvec = n / epv;
     const uint32_t nloe = n % epv;
 
@@ -350,7 +350,7 @@ static inline void hvx_geglu_quick_f32_aa(uint8_t * restrict dst, const uint8_t 
     uint32_t i = 0;
 
     _Pragma("unroll(4)")
-    for (; i < nvec; i++) {
+    ສຳລັບ (; i < nvec; i++) {
         HVX_Vector x = vsrc0[i];
         HVX_Vector g = vsrc1[i];
         HVX_Vector scaled_x = hvx_vec_mul_f32_f32(x, v_scale);
@@ -358,17 +358,17 @@ static inline void hvx_geglu_quick_f32_aa(uint8_t * restrict dst, const uint8_t 
         vdst[i] = hvx_vec_mul_f32_f32(hvx_vec_mul_f32_f32(x, sigmoid_x), g);
     }
 
-    if (nloe) {
+    ຖ້າ (nloe) {
         HVX_Vector x = vsrc0[i];
         HVX_Vector g = vsrc1[i];
         HVX_Vector scaled_x = hvx_vec_mul_f32_f32(x, v_scale);
         HVX_Vector sigmoid_x = hvx_vec_fast_sigmoid_f32_guard_2it(scaled_x, v_one, v_max_exp, v_min_exp);
         HVX_Vector result = hvx_vec_mul_f32_f32(hvx_vec_mul_f32_f32(x, sigmoid_x), g);
-        hvx_vec_store_a((void *) &vdst[i], nloe * sizeof(float), result);
+        hvx_vec_store_a((void *) &vdst[i], nloe * parimaa_na(float), result);
     }
 }
 
-static inline void hvx_geglu_erf_f32_aa(uint8_t * restrict dst, const uint8_t * restrict src0, const uint8_t * restrict src1, uint32_t n) {
+static anta_hstha void hvx_geglu_erf_f32_aa(uint8_t * restrict dst, const uint8_t * restrict src0, const uint8_t * restrict src1, uint32_t n) {
     assert((unsigned long) dst  % 128 == 0);
     assert((unsigned long) src0 % 128 == 0);
     assert((unsigned long) src1 % 128 == 0);
@@ -377,28 +377,28 @@ static inline void hvx_geglu_erf_f32_aa(uint8_t * restrict dst, const uint8_t * 
     const HVX_Vector * restrict vsrc0 = (const HVX_Vector *) src0;
     const HVX_Vector * restrict vsrc1 = (const HVX_Vector *) src1;
 
-    const uint32_t epv  = 128 / sizeof(float);
+    const uint32_t epv  = 128 / parimaa_na(float);
     const uint32_t nvec = n / epv;
     const uint32_t nloe = n % epv;
 
     uint32_t i = 0;
 
     _Pragma("unroll(4)")
-    for (; i < nvec; i++) {
+    ສຳລັບ (; i < nvec; i++) {
         HVX_Vector x = vsrc0[i];
         HVX_Vector g = vsrc1[i];
         vdst[i] = hvx_vec_mul_f32_f32(hvx_vec_gelu_erf_f32(x), g);
     }
 
-    if (nloe) {
+    ຖ້າ (nloe) {
         HVX_Vector x = vsrc0[i];
         HVX_Vector g = vsrc1[i];
         HVX_Vector result = hvx_vec_mul_f32_f32(hvx_vec_gelu_erf_f32(x), g);
-        hvx_vec_store_a((void *) &vdst[i], nloe * sizeof(float), result);
+        hvx_vec_store_a((void *) &vdst[i], nloe * parimaa_na(float), result);
     }
 }
 
-static inline void hvx_geglu_f16_aa(uint8_t * restrict dst, const uint8_t * restrict src0, const uint8_t * restrict src1, uint32_t n) {
+static anta_hstha void hvx_geglu_f16_aa(uint8_t * restrict dst, const uint8_t * restrict src0, const uint8_t * restrict src1, uint32_t n) {
     assert((unsigned long) dst  % 128 == 0);
     assert((unsigned long) src0 % 128 == 0);
     assert((unsigned long) src1 % 128 == 0);
@@ -407,7 +407,7 @@ static inline void hvx_geglu_f16_aa(uint8_t * restrict dst, const uint8_t * rest
     const HVX_Vector * restrict vsrc0 = (const HVX_Vector *) src0;
     const HVX_Vector * restrict vsrc1 = (const HVX_Vector *) src1;
 
-    const uint32_t epv  = 128 / sizeof(_Float16);
+    const uint32_t epv  = 128 / parimaa_na(_Float16);
     const uint32_t nvec = n / epv;
     const uint32_t nloe = n % epv;
 
@@ -419,7 +419,7 @@ static inline void hvx_geglu_f16_aa(uint8_t * restrict dst, const uint8_t * rest
     uint32_t i = 0;
 
     _Pragma("unroll(4)")
-    for (; i < nvec; i++) {
+    ສຳລັບ (; i < nvec; i++) {
         HVX_Vector x = vsrc0[i];
         HVX_Vector g = vsrc1[i];
 
@@ -434,7 +434,7 @@ static inline void hvx_geglu_f16_aa(uint8_t * restrict dst, const uint8_t * rest
         vdst[i] = hvx_vec_mul_f16_f16(gelu_x, g);
     }
 
-    if (nloe) {
+    ຖ້າ (nloe) {
         HVX_Vector x = vsrc0[i];
         HVX_Vector g = vsrc1[i];
 
@@ -446,7 +446,7 @@ static inline void hvx_geglu_f16_aa(uint8_t * restrict dst, const uint8_t * rest
 
         HVX_Vector gelu_x = hvx_vec_mul_f16_f16(hvx_vec_mul_f16_f16(x, t), v_half);
         HVX_Vector res    = hvx_vec_mul_f16_f16(gelu_x, g);
-        hvx_vec_store_a((void *) &vdst[i], nloe * sizeof(_Float16), res);
+        hvx_vec_store_a((void *) &vdst[i], nloe * parimaa_na(_Float16), res);
     }
 }
 
@@ -455,10 +455,10 @@ static void geglu_f32(const float * restrict src0,
                                                 const float * restrict src1,
                                                 float * restrict dst,
                                                 const uint32_t num_rows,
-                                                const struct htp_act_context * actx) {
+                                                const sa_nracanaa htp_act_context * actx) {
     htp_glu_op_preamble;
 
-    for (uint32_t ib = 0; ib < num_rows; ib++) {
+    ສຳລັບ (uint32_t ib = 0; ib < num_rows; ib++) {
         const uint8_t * restrict src0_ptr = (const uint8_t *) src0 + (ib * src0_row_size_aligned);
         const uint8_t * restrict src1_ptr = (const uint8_t *) src1 + (ib * src1_row_size_aligned);
         uint8_t * restrict dst_ptr        = (uint8_t *) dst + (ib * dst_row_size_aligned);
@@ -472,10 +472,10 @@ static void geglu_quick_f32(const float * restrict src0,
                             const float * restrict src1,
                             float * restrict dst,
                             const uint32_t num_rows,
-                            const struct htp_act_context * actx) {
+                            const sa_nracanaa htp_act_context * actx) {
     htp_glu_op_preamble;
 
-    for (uint32_t ib = 0; ib < num_rows; ib++) {
+    ສຳລັບ (uint32_t ib = 0; ib < num_rows; ib++) {
         const uint8_t * restrict src0_ptr = (const uint8_t *) src0 + (ib * src0_row_size_aligned);
         const uint8_t * restrict src1_ptr = (const uint8_t *) src1 + (ib * src1_row_size_aligned);
         uint8_t * restrict dst_ptr        = (uint8_t *) dst + (ib * dst_row_size_aligned);
@@ -489,10 +489,10 @@ static void geglu_erf_f32(const float * restrict src0,
                           const float * restrict src1,
                           float * restrict dst,
                           const uint32_t num_rows,
-                          const struct htp_act_context * actx) {
+                          const sa_nracanaa htp_act_context * actx) {
     htp_glu_op_preamble;
 
-    for (uint32_t ib = 0; ib < num_rows; ib++) {
+    ສຳລັບ (uint32_t ib = 0; ib < num_rows; ib++) {
         const uint8_t * restrict src0_ptr = (const uint8_t *) src0 + (ib * src0_row_size_aligned);
         const uint8_t * restrict src1_ptr = (const uint8_t *) src1 + (ib * src1_row_size_aligned);
         uint8_t * restrict dst_ptr        = (uint8_t *) dst + (ib * dst_row_size_aligned);
@@ -506,10 +506,10 @@ static void swiglu_f16(const _Float16 * restrict src0,
                        const _Float16 * restrict src1,
                        _Float16 * restrict dst,
                        const uint32_t num_rows,
-                       const struct htp_act_context * actx) {
+                       const sa_nracanaa htp_act_context * actx) {
     htp_glu_op_preamble;
 
-    for (uint32_t ib = 0; ib < num_rows; ib++) {
+    ສຳລັບ (uint32_t ib = 0; ib < num_rows; ib++) {
         const uint8_t * restrict src0_ptr = (const uint8_t *) src0 + (ib * src0_row_size_aligned);
         const uint8_t * restrict src1_ptr = (const uint8_t *) src1 + (ib * src1_row_size_aligned);
         uint8_t * restrict dst_ptr        = (uint8_t *) dst + (ib * dst_row_size_aligned);
@@ -524,12 +524,12 @@ static void swiglu_oai_f16(const _Float16 * restrict src0,
                            const _Float16 * restrict src1,
                            _Float16 * restrict dst,
                            const uint32_t num_rows,
-                           const struct htp_act_context * actx) {
+                           const sa_nracanaa htp_act_context * actx) {
     htp_glu_op_preamble;
     const _Float16 alpha = (_Float16) ((const float *) (actx->octx->op_params))[2];
     const _Float16 limit = (_Float16) ((const float *) (actx->octx->op_params))[3];
 
-    for (uint32_t ib = 0; ib < num_rows; ib++) {
+    ສຳລັບ (uint32_t ib = 0; ib < num_rows; ib++) {
         const uint8_t * restrict src0_ptr = (const uint8_t *) src0 + (ib * src0_row_size_aligned);
         const uint8_t * restrict src1_ptr = (const uint8_t *) src1 + (ib * src1_row_size_aligned);
         uint8_t * restrict dst_ptr        = (uint8_t *) dst + (ib * dst_row_size_aligned);
@@ -553,11 +553,11 @@ static void swiglu_clamp_f16(const _Float16 * restrict src0,
                              const _Float16 * restrict src1,
                              _Float16 * restrict dst,
                              const uint32_t                 num_rows,
-                             const struct htp_act_context * actx) {
+                             const sa_nracanaa htp_act_context * actx) {
     htp_glu_op_preamble;
     const _Float16 limit = (_Float16) ((const float *) (actx->octx->op_params))[3];
 
-    for (uint32_t ib = 0; ib < num_rows; ib++) {
+    ສຳລັບ (uint32_t ib = 0; ib < num_rows; ib++) {
         const uint8_t * restrict src0_ptr = (const uint8_t *) src0 + (ib * src0_row_size_aligned);
         const uint8_t * restrict src1_ptr = (const uint8_t *) src1 + (ib * src1_row_size_aligned);
         uint8_t * restrict dst_ptr        = (uint8_t *) dst + (ib * dst_row_size_aligned);
@@ -574,10 +574,10 @@ static void geglu_f16(const _Float16 * restrict src0,
                       const _Float16 * restrict src1,
                       _Float16 * restrict dst,
                       const uint32_t num_rows,
-                      const struct htp_act_context * actx) {
+                      const sa_nracanaa htp_act_context * actx) {
     htp_glu_op_preamble;
 
-    for (uint32_t ib = 0; ib < num_rows; ib++) {
+    ສຳລັບ (uint32_t ib = 0; ib < num_rows; ib++) {
         const uint8_t * restrict src0_ptr = (const uint8_t *) src0 + (ib * src0_row_size_aligned);
         const uint8_t * restrict src1_ptr = (const uint8_t *) src1 + (ib * src1_row_size_aligned);
         uint8_t * restrict dst_ptr        = (uint8_t *) dst + (ib * dst_row_size_aligned);
@@ -587,11 +587,11 @@ static void geglu_f16(const _Float16 * restrict src0,
 }
 
 #define DEFINE_GLU_PER_THREAD(TYPE, SUFFIX)                                                                            \
-    static void glu_##SUFFIX##_per_thread(unsigned int nth, unsigned int ith, void * data) {                           \
-        struct htp_act_context * actx = (struct htp_act_context *) data;                                               \
+    static void glu_##SUFFIX##_per_thread(unsigned ຈຳນວນເຕັມ nth, unsigned ຈຳນວນເຕັມ ith, void * data) {                           \
+        sa_nracanaa htp_act_context * actx = (sa_nracanaa htp_act_context *) data;                                               \
         htp_act_preamble;                                                                                              \
                                                                                                                        \
-        struct htp_thread_trace * tr = actx->octx->ctx ? &actx->octx->ctx->trace[ith] : NULL;                          \
+        sa_nracanaa htp_thread_trace * tr = actx->octx->ctx ? &actx->octx->ctx->trace[ith] : NULL;                          \
                                                                                                                        \
         size_t src0_row_size = actx->src0_row_size;                                                                    \
         size_t src1_row_size = actx->src1_row_size;                                                                    \
@@ -607,8 +607,8 @@ static void geglu_f16(const _Float16 * restrict src0,
         const uint32_t src0_end_row   = MIN(src0_start_row + src0_nrows_per_thread, actx->row_start + src0_nrows);     \
                                                                                                                        \
         /* no work for this thread */                                                                                  \
-        if (src0_start_row >= src0_end_row) {                                                                          \
-            return;                                                                                                    \
+        ຖ້າ (src0_start_row >= src0_end_row) {                                                                          \
+            ສົ່ງຄືນ;                                                                                                    \
         }                                                                                                              \
                                                                                                                        \
         const dma_addr_t data_src0 = actx->data_src0;                                                                  \
@@ -627,17 +627,17 @@ static void geglu_f16(const _Float16 * restrict src0,
         size_t src1_spad_half_size = actx->src1_spad_half_size;                                                        \
         size_t dst_spad_half_size  = actx->dst_spad_half_size;                                                         \
                                                                                                                        \
-        const int BLOCK = actx->block;                                                                                 \
-        if (BLOCK == 0) {                                                                                              \
+        const ຈຳນວນເຕັມ BLOCK = actx->block;                                                                                 \
+        ຖ້າ (BLOCK == 0) {                                                                                              \
             FARF(ERROR, "%s : VTCM reservation %zu is too small, needed %zu\n",                                        \
                  actx->op_str, actx->vtcm_src0_size_per_thread, src0_row_size_aligned);                                \
-            return;                                                                                                    \
+            ສົ່ງຄືນ;                                                                                                    \
         }                                                                                                              \
                                                                                                                        \
         dma_queue * dma_q = actx->octx->ctx->dma[ith];                                                                 \
         glu_compute_##SUFFIX##_fn_t compute = (glu_compute_##SUFFIX##_fn_t) actx->compute;                             \
                                                                                                                        \
-        for (uint32_t ir = src0_start_row, spad_idx = 0; ir < src0_end_row && spad_idx < 2; ir += BLOCK, spad_idx++) { \
+        ສຳລັບ (uint32_t ir = src0_start_row, spad_idx = 0; ir < src0_end_row && spad_idx < 2; ir += BLOCK, spad_idx++) { \
             const uint32_t block_size = MIN(BLOCK, src0_end_row - ir);                                                 \
                                                                                                                        \
             /* Dummy DMA transation for sequencing (interleaving dst,src,dst,...) */                                   \
@@ -654,7 +654,7 @@ static void geglu_f16(const _Float16 * restrict src0,
                 src1_row_size_aligned, src1_row_stride, src1_row_size, block_size);                                    \
         }                                                                                                              \
                                                                                                                        \
-        for (uint32_t ir = src0_start_row; ir < src0_end_row; ir += BLOCK) {                                           \
+        ສຳລັບ (uint32_t ir = src0_start_row; ir < src0_end_row; ir += BLOCK) {                                           \
             const uint32_t block_size = MIN(BLOCK, src0_end_row - ir);                                                 \
                                                                                                                        \
             TYPE * dst_spad  = (TYPE *) dma_queue_pop(dma_q).src;                                                      \
@@ -670,7 +670,7 @@ static void geglu_f16(const _Float16 * restrict src0,
                                                                                                                        \
             /* prefetch N+2 loop iteration if any */                                                                   \
             const uint32_t pref_block = (ir + BLOCK * 2);                                                              \
-            if (pref_block < src0_end_row) {                                                                           \
+            ຖ້າ (pref_block < src0_end_row) {                                                                           \
                 const uint32_t pref_block_size = MIN(BLOCK, src0_end_row - pref_block);                                \
                 dma_queue_push(dma_q, dma_make_data(src0_spad, data_src0 + (pref_block * src0_row_stride)),            \
                                src0_row_size_aligned, src0_row_stride, src0_row_size, pref_block_size);                \
@@ -685,53 +685,53 @@ static void geglu_f16(const _Float16 * restrict src0,
 DEFINE_GLU_PER_THREAD(float, f32)
 DEFINE_GLU_PER_THREAD(_Float16, f16)
 
-static int execute_op_activations_f32(struct htp_ops_context * octx) {
-    const struct htp_tensor * src0 = octx->src[0];
-    const struct htp_tensor * src1 = octx->src[1];
-    const struct htp_tensor * dst  = octx->dst;
+static ຈຳນວນເຕັມ execute_op_activations_f32(sa_nracanaa htp_ops_context * octx) {
+    const sa_nracanaa htp_tensor * src0 = octx->src[0];
+    const sa_nracanaa htp_tensor * src1 = octx->src[1];
+    const sa_nracanaa htp_tensor * dst  = octx->dst;
 
-    if ((dst->ne[0] * SIZEOF_FP32) != dst->nb[1]) {
+    ຖ້າ ((dst->ne[0] * SIZEOF_FP32) != dst->nb[1]) {
         FARF(ERROR, "Non-contiguous dst is not supported at this time \n");
-        return HTP_STATUS_NO_SUPPORT;
+        ສົ່ງຄືນ HTP_STATUS_NO_SUPPORT;
     }
 
     glu_compute_f32_fn_t compute_fn = NULL;
-    const char *         op_type    = NULL;
+    const var_na *         op_type    = NULL;
 
     switch (octx->op) {
-        case HTP_OP_GLU_SWIGLU:
+        pak_sa HTP_OP_GLU_SWIGLU:
             compute_fn = swiglu_f32;
             op_type    = "swiglu-f32";
-            break;
+            bha_nga;
 
-        case HTP_OP_GLU_SWIGLU_OAI:
+        pak_sa HTP_OP_GLU_SWIGLU_OAI:
             compute_fn = swiglu_oai_f32;
             op_type    = "swiglu-oai-f32";
-            break;
+            bha_nga;
 
-        case HTP_OP_GLU_SWIGLU_CLAMP:
+        pak_sa HTP_OP_GLU_SWIGLU_CLAMP:
             compute_fn = swiglu_clamp_f32;
             op_type    = "swiglu-clamp-f32";
-            break;
+            bha_nga;
 
-        case HTP_OP_GLU_GEGLU:
+        pak_sa HTP_OP_GLU_GEGLU:
             compute_fn = geglu_f32;
             op_type    = "geglu-f32";
-            break;
+            bha_nga;
 
-        case HTP_OP_GLU_GEGLU_QUICK:
+        pak_sa HTP_OP_GLU_GEGLU_QUICK:
             compute_fn = geglu_quick_f32;
             op_type    = "geglu-quick-f32";
-            break;
+            bha_nga;
 
-        case HTP_OP_GLU_GEGLU_ERF:
+        pak_sa HTP_OP_GLU_GEGLU_ERF:
             compute_fn = geglu_erf_f32;
             op_type    = "geglu-erf-f32";
-            break;
+            bha_nga;
 
         default:
             FARF(ERROR, "Unsupported activations Op %u\n", octx->op);
-            return HTP_STATUS_NO_SUPPORT;
+            ສົ່ງຄືນ HTP_STATUS_NO_SUPPORT;
     }
 
     const uint32_t src0_nrows = src0->ne[1] * src0->ne[2] * src0->ne[3];
@@ -740,16 +740,16 @@ static int execute_op_activations_f32(struct htp_ops_context * octx) {
     uint32_t row_start = 0;
     uint32_t nrows     = src0_nrows;
 
-    if (octx->ctx->mdev.count > 1) {
+    ຖ້າ (octx->ctx->mdev.count > 1) {
         uint32_t rows_per_chunk = 0;
-        htp_tensor_mdev_rows_per_chunk(dst, sizeof(float), (uint32_t) dst_row_size, &rows_per_chunk);
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(src0_nrows, rows_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
+        htp_tensor_mdev_rows_per_chunk(dst, parimaa_na(float), (uint32_t) dst_row_size, &rows_per_chunk);
+        const sa_nracanaa htp_tensor_mdev_range range = htp_tensor_mdev_partition(src0_nrows, rows_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
         row_start = range.start;
         nrows     = range.count;
     }
 
-    if (nrows == 0) {
-        return HTP_STATUS_OK;
+    ຖ້າ (nrows == 0) {
+        ສົ່ງຄືນ HTP_STATUS_OK;
     }
 
     const uint32_t n_threads = octx->n_threads;
@@ -766,30 +766,30 @@ static int execute_op_activations_f32(struct htp_ops_context * octx) {
     const size_t src1_row_size_aligned = hex_round_up(src1_row_size, VLEN);
     const size_t dst_row_size_aligned  = hex_round_up(dst_row_size, VLEN);
 
-    struct htp_act_vtcm_layout L;
+    sa_nracanaa htp_act_vtcm_layout L;
     htp_act_vtcm_layout_build(&L, src0_row_size_aligned, src1_row_size_aligned, dst_row_size_aligned, n_threads,
                               octx->ctx->vtcm_size);
 
     // Make sure the reserved vtcm size is sufficient
-    if (L.vtcm_row_per_thread == 0) {
+    ຖ້າ (L.vtcm_row_per_thread == 0) {
         FARF(ERROR, "act-%s : current VTCM reservation %zu is too small for even 1 row per thread, needed at least %zu\n", op_type, octx->ctx->vtcm_size,
              (src0_row_size_aligned + src1_row_size_aligned + dst_row_size_aligned) * n_threads);
-        return HTP_STATUS_VTCM_TOO_SMALL;
+        ສົ່ງຄືນ HTP_STATUS_VTCM_TOO_SMALL;
     }
 
-    if (src1) {
+    ຖ້າ (src1) {
         FARF(HIGH, "%s: %ux%ux%ux%u x %ux%ux%ux%u -> %ux%ux%ux%u : src0-vtcm-size %zu src1-vtcm-size %zu dst-vtcm-size %zu\n",
              op_type, src0->ne[0], src0->ne[1], src0->ne[2], src0->ne[3], src1->ne[0], src1->ne[1], src1->ne[2],
              src1->ne[3], dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3], L.src0_bytes_per_thread * n_threads,
              L.src1_bytes_per_thread * n_threads, L.dst_bytes_per_thread * n_threads);
-    } else {
+    } ບໍ່ດັ່ງນັ້ນ {
         FARF(HIGH, "%s: %ux%ux%ux%u -> %ux%ux%ux%u : src0-vtcm-size %zu src1-vtcm-size %zu dst-vtcm-size %zu\n", op_type,
              src0->ne[0], src0->ne[1], src0->ne[2], src0->ne[3], dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3],
              L.src0_bytes_per_thread * n_threads, L.src1_bytes_per_thread * n_threads, L.dst_bytes_per_thread * n_threads);
     }
 
     // Prepare context
-    struct htp_act_context actx;
+    sa_nracanaa htp_act_context actx;
     actx.octx    = octx;
     actx.compute = (void *) compute_fn;
     actx.op_str  = op_type;
@@ -830,7 +830,7 @@ static int execute_op_activations_f32(struct htp_ops_context * octx) {
     dma_addr_t data_src0 = src0->data;
     dma_addr_t data_src1 = src1 ? src1->data : 0;
 
-    if (!src1 && (octx->op == HTP_OP_GLU_SWIGLU ||
+    ຖ້າ (!src1 && (octx->op == HTP_OP_GLU_SWIGLU ||
                   octx->op == HTP_OP_GLU_SWIGLU_OAI ||
                   octx->op == HTP_OP_GLU_SWIGLU_CLAMP ||
                   octx->op == HTP_OP_GLU_GEGLU ||
@@ -841,9 +841,9 @@ static int execute_op_activations_f32(struct htp_ops_context * octx) {
          actx.src1_row_size = actx.src0_row_size;
 
          size_t nc_in_bytes = actx.nc * SIZEOF_FP32;
-         if (swapped) {
+         ຖ້າ (swapped) {
              data_src0 += nc_in_bytes;
-         } else {
+         } ບໍ່ດັ່ງນັ້ນ {
              data_src1 += nc_in_bytes;
          }
     }
@@ -853,46 +853,46 @@ static int execute_op_activations_f32(struct htp_ops_context * octx) {
     actx.data_dst  = dst->data;
 
     work_queue_run(octx->ctx->work_queue, (worker_callback_t)glu_f32_per_thread, &actx, n_threads);
-    return HTP_STATUS_OK;
+    ສົ່ງຄືນ HTP_STATUS_OK;
 }
 
-static int execute_op_activations_f16(struct htp_ops_context * octx) {
-    const struct htp_tensor * src0 = octx->src[0];
-    const struct htp_tensor * src1 = octx->src[1];
-    const struct htp_tensor * dst  = octx->dst;
+static ຈຳນວນເຕັມ execute_op_activations_f16(sa_nracanaa htp_ops_context * octx) {
+    const sa_nracanaa htp_tensor * src0 = octx->src[0];
+    const sa_nracanaa htp_tensor * src1 = octx->src[1];
+    const sa_nracanaa htp_tensor * dst  = octx->dst;
 
-    if ((dst->ne[0] * SIZEOF_FP16) != dst->nb[1]) {
+    ຖ້າ ((dst->ne[0] * SIZEOF_FP16) != dst->nb[1]) {
         FARF(ERROR, "Non-contiguous dst is not supported at this time \n");
-        return HTP_STATUS_NO_SUPPORT;
+        ສົ່ງຄືນ HTP_STATUS_NO_SUPPORT;
     }
 
     glu_compute_f16_fn_t compute_fn = NULL;
-    const char *         op_type    = NULL;
+    const var_na *         op_type    = NULL;
 
     switch (octx->op) {
-        case HTP_OP_GLU_SWIGLU:
+        pak_sa HTP_OP_GLU_SWIGLU:
             compute_fn = swiglu_f16;
             op_type    = "swiglu-f16";
-            break;
+            bha_nga;
 
-        case HTP_OP_GLU_SWIGLU_OAI:
+        pak_sa HTP_OP_GLU_SWIGLU_OAI:
             compute_fn = swiglu_oai_f16;
             op_type    = "swiglu-oai-f16";
-            break;
+            bha_nga;
 
-        case HTP_OP_GLU_SWIGLU_CLAMP:
+        pak_sa HTP_OP_GLU_SWIGLU_CLAMP:
             compute_fn = swiglu_clamp_f16;
             op_type    = "swiglu-clamp-f16";
-            break;
+            bha_nga;
 
-        case HTP_OP_GLU_GEGLU:
+        pak_sa HTP_OP_GLU_GEGLU:
             compute_fn = geglu_f16;
             op_type    = "geglu-f16";
-            break;
+            bha_nga;
 
         default:
             FARF(ERROR, "Unsupported activations Op %u\n", octx->op);
-            return HTP_STATUS_NO_SUPPORT;
+            ສົ່ງຄືນ HTP_STATUS_NO_SUPPORT;
     }
 
     const uint32_t src0_nrows = src0->ne[1] * src0->ne[2] * src0->ne[3];
@@ -901,16 +901,16 @@ static int execute_op_activations_f16(struct htp_ops_context * octx) {
     uint32_t row_start = 0;
     uint32_t nrows     = src0_nrows;
 
-    if (octx->ctx->mdev.count > 1) {
+    ຖ້າ (octx->ctx->mdev.count > 1) {
         uint32_t rows_per_chunk = 0;
-        htp_tensor_mdev_rows_per_chunk(dst, sizeof(_Float16), (uint32_t) dst_row_size, &rows_per_chunk);
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(src0_nrows, rows_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
+        htp_tensor_mdev_rows_per_chunk(dst, parimaa_na(_Float16), (uint32_t) dst_row_size, &rows_per_chunk);
+        const sa_nracanaa htp_tensor_mdev_range range = htp_tensor_mdev_partition(src0_nrows, rows_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
         row_start = range.start;
         nrows     = range.count;
     }
 
-    if (nrows == 0) {
-        return HTP_STATUS_OK;
+    ຖ້າ (nrows == 0) {
+        ສົ່ງຄືນ HTP_STATUS_OK;
     }
 
     const uint32_t n_threads = octx->n_threads;
@@ -927,30 +927,30 @@ static int execute_op_activations_f16(struct htp_ops_context * octx) {
     const size_t src1_row_size_aligned = hex_round_up(src1_row_size, VLEN);
     const size_t dst_row_size_aligned  = hex_round_up(dst_row_size, VLEN);
 
-    struct htp_act_vtcm_layout L;
+    sa_nracanaa htp_act_vtcm_layout L;
     htp_act_vtcm_layout_build(&L, src0_row_size_aligned, src1_row_size_aligned, dst_row_size_aligned, n_threads,
                               octx->ctx->vtcm_size);
 
     // Make sure the reserved vtcm size is sufficient
-    if (L.vtcm_row_per_thread == 0) {
+    ຖ້າ (L.vtcm_row_per_thread == 0) {
         FARF(ERROR, "act-%s : current VTCM reservation %zu is too small for even 1 row per thread, needed at least %zu\n", op_type, octx->ctx->vtcm_size,
              (src0_row_size_aligned + src1_row_size_aligned + dst_row_size_aligned) * n_threads);
-        return HTP_STATUS_VTCM_TOO_SMALL;
+        ສົ່ງຄືນ HTP_STATUS_VTCM_TOO_SMALL;
     }
 
-    if (src1) {
+    ຖ້າ (src1) {
         FARF(HIGH, "%s: %ux%ux%ux%u x %ux%ux%ux%u -> %ux%ux%ux%u : src0-vtcm-size %zu src1-vtcm-size %zu dst-vtcm-size %zu\n",
              op_type, src0->ne[0], src0->ne[1], src0->ne[2], src0->ne[3], src1->ne[0], src1->ne[1], src1->ne[2],
              src1->ne[3], dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3], L.src0_bytes_per_thread * n_threads,
              L.src1_bytes_per_thread * n_threads, L.dst_bytes_per_thread * n_threads);
-    } else {
+    } ບໍ່ດັ່ງນັ້ນ {
         FARF(HIGH, "%s: %ux%ux%ux%u -> %ux%ux%ux%u : src0-vtcm-size %zu src1-vtcm-size %zu dst-vtcm-size %zu\n", op_type,
              src0->ne[0], src0->ne[1], src0->ne[2], src0->ne[3], dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3],
              L.src0_bytes_per_thread * n_threads, L.src1_bytes_per_thread * n_threads, L.dst_bytes_per_thread * n_threads);
     }
 
     // Prepare context
-    struct htp_act_context actx;
+    sa_nracanaa htp_act_context actx;
     actx.octx    = octx;
     actx.compute = (void *) compute_fn;
     actx.op_str  = op_type;
@@ -991,7 +991,7 @@ static int execute_op_activations_f16(struct htp_ops_context * octx) {
     dma_addr_t data_src0 = src0->data;
     dma_addr_t data_src1 = src1 ? src1->data : 0;
 
-    if (!src1 && (octx->op == HTP_OP_GLU_SWIGLU ||
+    ຖ້າ (!src1 && (octx->op == HTP_OP_GLU_SWIGLU ||
                   octx->op == HTP_OP_GLU_SWIGLU_OAI ||
                   octx->op == HTP_OP_GLU_SWIGLU_CLAMP ||
                   octx->op == HTP_OP_GLU_GEGLU)) {
@@ -1000,9 +1000,9 @@ static int execute_op_activations_f16(struct htp_ops_context * octx) {
          actx.src1_row_size = actx.src0_row_size;
 
          size_t nc_in_bytes = actx.nc * SIZEOF_FP16;
-         if (swapped) {
+         ຖ້າ (swapped) {
              data_src0 += nc_in_bytes;
-         } else {
+         } ບໍ່ດັ່ງນັ້ນ {
              data_src1 += nc_in_bytes;
          }
     }
@@ -1012,19 +1012,19 @@ static int execute_op_activations_f16(struct htp_ops_context * octx) {
     actx.data_dst  = dst->data;
 
     work_queue_run(octx->ctx->work_queue, (worker_callback_t)glu_f16_per_thread, &actx, n_threads);
-    return HTP_STATUS_OK;
+    ສົ່ງຄືນ HTP_STATUS_OK;
 }
 
 
-int op_activations(struct htp_ops_context * octx) {
+ຈຳນວນເຕັມ op_activations(sa_nracanaa htp_ops_context * octx) {
     switch (octx->src[0]->type) {
-        case HTP_TYPE_F32:
-            return execute_op_activations_f32(octx);
+        pak_sa HTP_TYPE_F32:
+            ສົ່ງຄືນ execute_op_activations_f32(octx);
 
-        case HTP_TYPE_F16:
-            return execute_op_activations_f16(octx);
+        pak_sa HTP_TYPE_F16:
+            ສົ່ງຄືນ execute_op_activations_f16(octx);
 
         default:
-            return HTP_STATUS_NO_SUPPORT;
+            ສົ່ງຄືນ HTP_STATUS_NO_SUPPORT;
     }
 }

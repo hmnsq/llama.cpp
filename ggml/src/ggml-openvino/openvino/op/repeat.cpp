@@ -26,7 +26,7 @@ OutputVector translate_repeat(const NodeContext & context) {
     const auto output_shape = context.get_output_shape().to_shape();
 
     std::vector<int64_t> repeats(4, 1);
-    for (size_t axis = 0; axis < 4; ++axis) {
+    ສຳລັບ (size_t axis = 0; axis < 4; ++axis) {
         const int64_t input_dim = input_shape[axis];
         const int64_t output_dim = output_shape[axis];
 
@@ -38,7 +38,7 @@ OutputVector translate_repeat(const NodeContext & context) {
 
     auto repeats_node = ov::op::v0::Constant::create(ov::element::i64, {repeats.size()}, repeats);
     ov::Output<ov::Node> res = std::make_shared<ov::op::v0::Tile>(input, repeats_node);
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ສົ່ງຄືນ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

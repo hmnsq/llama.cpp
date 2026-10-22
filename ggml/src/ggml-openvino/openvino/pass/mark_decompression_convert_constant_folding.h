@@ -6,10 +6,10 @@
 
 #ifdef OPENVINO_STATIC_LIBRARY
 #    define TRANSFORMATIONS_API
-#else
+#ບໍ່ດັ່ງນັ້ນ
 #    ifdef IMPLEMENT_OPENVINO_API
 #        define TRANSFORMATIONS_API OPENVINO_CORE_EXPORTS
-#    else
+#    ບໍ່ດັ່ງນັ້ນ
 #        define TRANSFORMATIONS_API OPENVINO_CORE_IMPORTS
 #    endif  // IMPLEMENT_OPENVINO_API
 #endif      // OPENVINO_STATIC_LIBRARY

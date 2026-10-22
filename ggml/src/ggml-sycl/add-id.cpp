@@ -17,18 +17,18 @@ static void add_id_kernel(
   const int64_t i1 = item_ct1.get_group(2);
   const int64_t i2 = item_ct1.get_group(1);
 
-  const int i11 =
-      *(const int32_t*)((const char*)src2 + i1 * sizeof(int32_t) + i2 * nb21);
+  const ຈຳນວນເຕັມ i11 =
+      *(const int32_t*)((const var_na*)src2 + i1 * parimaa_na(int32_t) + i2 * nb21);
 
-  const size_t nb1 = ne0 * sizeof(float);
+  const size_t nb1 = ne0 * parimaa_na(float);
   const size_t nb2 = ne1 * nb1;
 
-  float* dst_row = (float*)((char*)dst + i1 * nb1 + i2 * nb2);
+  float* dst_row = (float*)((var_na*)dst + i1 * nb1 + i2 * nb2);
   const float* src0_row =
-      (const float*)((const char*)src0 + i1 * nb01 + i2 * nb02);
-  const float* src1_row = (const float*)((const char*)src1 + i11 * nb11);
+      (const float*)((const var_na*)src0 + i1 * nb01 + i2 * nb02);
+  const float* src1_row = (const float*)((const var_na*)src1 + i11 * nb11);
 
-  for (int64_t i0 = item_ct1.get_local_id(2); i0 < ne0;
+  ສຳລັບ (int64_t i0 = item_ct1.get_local_id(2); i0 < ne0;
        i0 += item_ct1.get_local_range(2)) {
     dst_row[i0] = src0_row[i0] + src1_row[i0];
   }
@@ -46,19 +46,19 @@ void ggml_sycl_add_id(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
   GGML_ASSERT(src1->type == GGML_TYPE_F32);
   GGML_ASSERT(src2->type == GGML_TYPE_I32);
 
-  GGML_ASSERT(nb00 == sizeof(float));
-  GGML_ASSERT(nb10 == sizeof(float));
-  GGML_ASSERT(nb20 == sizeof(int32_t));
+  GGML_ASSERT(nb00 == parimaa_na(float));
+  GGML_ASSERT(nb10 == parimaa_na(float));
+  GGML_ASSERT(nb20 == parimaa_na(int32_t));
 
   const float* src0_d = (const float*)src0->data;
   const float* src1_d = (const float*)src1->data;
   const int32_t* src2_d = (const int32_t*)src2->data;
   float* dst_d = (float*)dst->data;
 
-  const unsigned int max_work_group_size = ggml_sycl_info().max_work_group_sizes[ctx.device];
+  const unsigned ຈຳນວນເຕັມ max_work_group_size = ggml_sycl_info().max_work_group_sizes[ctx.device];
   GGML_ASSERT(max_work_group_size % (WARP_SIZE * WARP_SIZE) == 0);
 
-  int threads = std::min((unsigned int)ne00, max_work_group_size);  // cols
+  ຈຳນວນເຕັມ threads = std::min((unsigned ຈຳນວນເຕັມ)ne00, max_work_group_size);  // cols
 
   ctx.stream()->parallel_for(
       sycl::nd_range<3>(

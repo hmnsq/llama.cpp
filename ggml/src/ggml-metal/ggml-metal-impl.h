@@ -193,7 +193,7 @@
 //
 // - strides (e.g. nb00) use uint64_t
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -222,7 +222,7 @@ typedef struct {
     int32_t  nc0;
 } ggml_metal_kargs_concat;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -247,7 +247,7 @@ typedef struct {
     float    max;
 } ggml_metal_kargs_unary;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -276,7 +276,7 @@ typedef struct {
     uint64_t o1[8];
 } ggml_metal_kargs_bin;
 
-typedef struct {
+typedef sa_nracanaa {
     int64_t ne0;
     int64_t ne1;
     size_t nb01;
@@ -285,7 +285,7 @@ typedef struct {
     size_t nb21;
 } ggml_metal_kargs_add_id;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -304,7 +304,7 @@ typedef struct {
     uint64_t nb3;
 } ggml_metal_kargs_repeat;
 
-typedef struct {
+typedef sa_nracanaa {
     int64_t  nk0;
     int64_t  ne00;
     int64_t  ne01;
@@ -324,7 +324,7 @@ typedef struct {
     uint64_t nb3;
 } ggml_metal_kargs_cpy;
 
-typedef struct {
+typedef sa_nracanaa {
     int64_t  ne10;
     int64_t  ne11;
     int64_t  ne12;
@@ -339,7 +339,7 @@ typedef struct {
     bool     inplace;
 } ggml_metal_kargs_set;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -374,7 +374,7 @@ typedef struct {
     bool     inplace;
 } ggml_metal_kargs_rope;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  ne0;
     int32_t  ne1;
     int32_t  ne2;
@@ -386,7 +386,7 @@ typedef struct {
     int32_t  nblocks;
 } ggml_metal_kargs_flash_attn_ext_kv_f16;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  ne11;
     int32_t  ne_12_2; // assume K and V are same shape
     int32_t  ne_12_3;
@@ -404,7 +404,7 @@ typedef struct {
     uint64_t nb33;
 } ggml_metal_kargs_flash_attn_ext_pad;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  ne01;
     int32_t  ne30;
     int32_t  ne31;
@@ -415,7 +415,7 @@ typedef struct {
     uint64_t nb33;
 } ggml_metal_kargs_flash_attn_ext_blk;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  ne01;
     int32_t  ne02;
     int32_t  ne03;
@@ -450,7 +450,7 @@ typedef struct {
     float    logit_softcap;
 } ggml_metal_kargs_flash_attn_ext;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  ne01;
     int32_t  ne02;
     int32_t  ne03;
@@ -486,7 +486,7 @@ typedef struct {
     int32_t  n_kv_max_padded;
 } ggml_metal_kargs_flash_attn_ext_vec;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  ne30;
     int32_t  ne31;
     int32_t  ne32;
@@ -498,11 +498,11 @@ typedef struct {
     int32_t  n_kv_max_padded;
 } ggml_metal_kargs_flash_attn_ext_vec_idx;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  nrows;
 } ggml_metal_kargs_flash_attn_ext_vec_reduce;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  ne00;
     int32_t  ne02;
     uint64_t nb01;
@@ -519,7 +519,7 @@ typedef struct {
     int16_t  r3;
 } ggml_metal_kargs_mul_mm;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -541,7 +541,7 @@ typedef struct {
     int16_t  r3;
 } ggml_metal_kargs_mul_mv;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -562,7 +562,7 @@ typedef struct {
     int16_t  r3;
 } ggml_metal_kargs_mul_mv_ext;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  ne10;
     int32_t  ne11;  // n_expert_used (bcast)
     uint64_t nb11;
@@ -572,7 +572,7 @@ typedef struct {
     uint64_t nb21;
 } ggml_metal_kargs_mul_mm_id_map0;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -580,7 +580,7 @@ typedef struct {
     uint64_t nb02;
 } ggml_metal_kargs_mul_mm_id_amax;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  ne00;
     int32_t  ne02;
     uint64_t nb01;
@@ -598,7 +598,7 @@ typedef struct {
     int16_t  r3;
 } ggml_metal_kargs_mul_mm_id;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  nei0;
     int32_t  nei1;
     uint64_t nbi1;
@@ -623,7 +623,7 @@ typedef struct {
 
 // NORM
 // RMS_NORM
-typedef struct {
+typedef sa_nracanaa {
     int32_t  ne00;
     int32_t  ne00_t;
     uint64_t nb1;
@@ -639,7 +639,7 @@ typedef struct {
     float    scale;
 } ggml_metal_kargs_norm;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -659,7 +659,7 @@ typedef struct {
     float    eps;
 } ggml_metal_kargs_l2_norm;
 
-typedef struct {
+typedef sa_nracanaa {
     int64_t  ne00;
     int64_t  ne01;
     int64_t  ne02;
@@ -670,7 +670,7 @@ typedef struct {
     float    eps;
 } ggml_metal_kargs_group_norm;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  IC;
     int32_t  IL;
     int32_t  K;
@@ -679,7 +679,7 @@ typedef struct {
     uint64_t nb1;
 } ggml_metal_kargs_conv_transpose_1d;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  T_in;
     int32_t  T_out;
     int32_t  OC;
@@ -689,12 +689,12 @@ typedef struct {
     int32_t  p0;
 } ggml_metal_kargs_col2im_1d;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t T;
     int32_t C;
 } ggml_metal_kargs_snake;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  IC;
     int32_t  IH;
     int32_t  IW;
@@ -708,7 +708,7 @@ typedef struct {
     uint64_t nb3;
 } ggml_metal_kargs_conv_transpose_2d;
 
-typedef struct {
+typedef sa_nracanaa {
     uint64_t nb00;
     uint64_t nb01;
     uint64_t nb02;
@@ -738,7 +738,7 @@ typedef struct {
     int32_t  d1;
 } ggml_metal_kargs_conv_2d;
 
-typedef struct {
+typedef sa_nracanaa {
     uint64_t nb00;  // kernel strides
     uint64_t nb01;
     uint64_t nb02;
@@ -766,7 +766,7 @@ typedef struct {
     int32_t  d1;    // dilation y
 } ggml_metal_kargs_conv_2d_dw;
 
-typedef struct {
+typedef sa_nracanaa {
     uint64_t  ofs0;
     uint64_t  ofs1;
     int32_t  IW;
@@ -784,7 +784,7 @@ typedef struct {
     int32_t  KHW; // KH * KW, pre-computed on CPU to save GPU resources
 } ggml_metal_kargs_im2col;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  IW;
     int32_t  IH;
     int32_t  ID;
@@ -820,7 +820,7 @@ typedef struct {
     uint64_t nb3;
 } ggml_metal_kargs_conv_3d;
 
-typedef struct{
+typedef sa_nracanaa{
     int32_t  ne00;
     uint64_t nb01;
     int32_t  ne10;
@@ -833,11 +833,11 @@ typedef struct{
     float    limit;
 } ggml_metal_kargs_glu;
 
-typedef struct {
+typedef sa_nracanaa {
     uint64_t np;
 } ggml_metal_kargs_sum;
 
-typedef struct {
+typedef sa_nracanaa {
     int64_t  ne00;
     int64_t  ne01;
     int64_t  ne02;
@@ -856,7 +856,7 @@ typedef struct {
     uint64_t nb3;
 } ggml_metal_kargs_sum_rows;
 
-typedef struct {
+typedef sa_nracanaa {
     int64_t  ne00;
     int64_t  ne01;
     int64_t  ne02;
@@ -876,7 +876,7 @@ typedef struct {
     bool     outb;
 } ggml_metal_kargs_cumsum_blk;
 
-typedef struct {
+typedef sa_nracanaa {
     int64_t  ne00;
     int64_t  ne01;
     int64_t  ne02;
@@ -895,7 +895,7 @@ typedef struct {
     uint64_t nbt3;
 } ggml_metal_kargs_cumsum_add;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -918,7 +918,7 @@ typedef struct {
     int32_t  n_head_log2;
 } ggml_metal_kargs_soft_max;
 
-typedef struct {
+typedef sa_nracanaa {
     int64_t  ne00;
     int64_t  ne01;
     int64_t  ne02;
@@ -936,7 +936,7 @@ typedef struct {
     uint64_t nb2;
 } ggml_metal_kargs_ssm_conv;
 
-typedef struct {
+typedef sa_nracanaa {
     int64_t  d_state;
     int64_t  d_inner;
     int64_t  n_head;
@@ -973,7 +973,7 @@ typedef struct {
     uint64_t nb0;
 } ggml_metal_kargs_ssm_scan;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -1012,7 +1012,7 @@ typedef struct {
     uint64_t nb_out; // 0 => snapshots are appended after the attn scores (unfused)
 } ggml_metal_kargs_gated_delta_net;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -1039,7 +1039,7 @@ typedef struct {
     uint64_t nb3;
 } ggml_metal_kargs_solve_tri;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  ne00t;
     int32_t  ne00;
     uint64_t nb01;
@@ -1054,7 +1054,7 @@ typedef struct {
     uint64_t nb3;
 } ggml_metal_kargs_get_rows;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  nk0;
     int32_t  ne01;
     uint64_t nb01;
@@ -1070,7 +1070,7 @@ typedef struct {
     uint64_t nb3;
 } ggml_metal_kargs_set_rows;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -1089,7 +1089,7 @@ typedef struct {
     uint64_t nb3;
 } ggml_metal_kargs_diag;
 
-typedef struct {
+typedef sa_nracanaa {
     int64_t  ne00;
     int64_t  ne01;
     int64_t  ne02;
@@ -1113,7 +1113,7 @@ typedef struct {
     float    poffs;
 } ggml_metal_kargs_upscale;
 
-typedef struct {
+typedef sa_nracanaa {
     int64_t  ne00;
     int64_t  ne01;
     int64_t  ne02;
@@ -1136,7 +1136,7 @@ typedef struct {
     int32_t  lp3;
 } ggml_metal_kargs_pad;
 
-typedef struct {
+typedef sa_nracanaa {
     int64_t  ne00;
     int64_t  ne01;
     int64_t  ne02;
@@ -1157,7 +1157,7 @@ typedef struct {
     int32_t  p1;
 } ggml_metal_kargs_pad_reflect_1d;
 
-typedef struct {
+typedef sa_nracanaa {
     int64_t  ne00;
     int64_t  ne01;
     int64_t  ne02;
@@ -1180,13 +1180,13 @@ typedef struct {
     int32_t  s3;
 } ggml_metal_kargs_roll;
 
-typedef struct {
+typedef sa_nracanaa {
     uint64_t nb1;
-    int      dim;
-    int      max_period;
+    ຈຳນວນເຕັມ      dim;
+    ຈຳນວນເຕັມ      max_period;
 } ggml_metal_kargs_timestep_embedding;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -1205,7 +1205,7 @@ typedef struct {
     uint64_t nb3;
 } ggml_metal_kargs_tri;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -1221,7 +1221,7 @@ typedef struct {
     int32_t  top_k;
 } ggml_metal_kargs_argsort;
 
-typedef struct {
+typedef sa_nracanaa {
     int64_t  ne00;
     int64_t  ne01;
     int64_t  ne02;
@@ -1238,7 +1238,7 @@ typedef struct {
     int32_t  len;
 } ggml_metal_kargs_argsort_merge;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  ne00;   // number of columns (elements per row)
     int32_t  ne01;   // rows
     int32_t  ne02;
@@ -1254,7 +1254,7 @@ typedef struct {
 #define GGML_METAL_FWHT_TG_MIN_N 512
 #define GGML_METAL_FWHT_TG_NT    256
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  ne01;      // n_tokens
     uint64_t nb01;      // logits row stride
     uint64_t nb1_ids;   // ids row stride
@@ -1262,26 +1262,26 @@ typedef struct {
     float    scale;
 } ggml_metal_kargs_topk_moe;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t ne00; // n_embd
     int32_t ne02; // n_tokens
 } ggml_metal_kargs_moe_reduce;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t nrows;
 } ggml_metal_kargs_fwht;
 
-typedef struct {
+typedef sa_nracanaa {
     int64_t  ne0;
     float    start;
     float    step;
 } ggml_metal_kargs_arange;
 
-typedef struct {
+typedef sa_nracanaa {
     int64_t val;
 } ggml_metal_kargs_memset;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  n_kv;
     int32_t  n_batch;
     int32_t  mask_ne3;
@@ -1298,7 +1298,7 @@ typedef struct {
     uint64_t nbm3;
 } ggml_metal_kargs_lightning_indexer;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  n_tokens;
     int32_t  n_iter;
     uint64_t nb_m0;
@@ -1311,7 +1311,7 @@ typedef struct {
     float    eps;
 } ggml_metal_kargs_dsv4_hc_comb;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  n_embd;
     int32_t  n_tokens;
     uint64_t nb_x0;
@@ -1325,7 +1325,7 @@ typedef struct {
     float    scale;
 } ggml_metal_kargs_dsv4_hc_pre;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  n_embd;
     int32_t  n_tokens;
     uint64_t nb_x0;
@@ -1343,7 +1343,7 @@ typedef struct {
     uint64_t nb_d2;
 } ggml_metal_kargs_dsv4_hc_post;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  ne00;
     int32_t  ne01;
     int32_t  ne02;
@@ -1358,7 +1358,7 @@ typedef struct {
     uint64_t nb13;
 } ggml_metal_kargs_count_equal;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  k0;
     int32_t  k1;
     int32_t  s0;
@@ -1372,7 +1372,7 @@ typedef struct {
     int64_t  np;
 } ggml_metal_kargs_pool_2d;
 
-typedef struct {
+typedef sa_nracanaa {
     int32_t  k0;
     int32_t  s0;
     int32_t  p0;
@@ -1381,22 +1381,22 @@ typedef struct {
     int64_t  np;
 } ggml_metal_kargs_pool_1d;
 
-typedef struct {
+typedef sa_nracanaa {
     int64_t ne00;
     uint64_t nb01;
     int64_t npart;
     int64_t ne01;
 } ggml_metal_kargs_argmax;
 
-typedef struct {
+typedef sa_nracanaa {
     int64_t  np;
 } ggml_metal_kargs_opt_step_adamw;
 
-typedef struct {
+typedef sa_nracanaa {
     int64_t  np;
 } ggml_metal_kargs_opt_step_sgd;
 
-typedef struct {
+typedef sa_nracanaa {
     int64_t ne;
 } ggml_metal_kargs_silu_back;
 

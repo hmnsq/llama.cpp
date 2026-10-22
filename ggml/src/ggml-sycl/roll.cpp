@@ -3,31 +3,31 @@
 
 using namespace sycl;
 
-static inline int wrap_add(int i, int shift, int n) {
+static anta_hstha ຈຳນວນເຕັມ wrap_add(ຈຳນວນເຕັມ i, ຈຳນວນເຕັມ shift, ຈຳນວນເຕັມ n) {
 
-    int s = i + shift;
-    return (s >= n) ? (s - n) : s;
+    ຈຳນວນເຕັມ s = i + shift;
+    ສົ່ງຄືນ (s >= n) ? (s - n) : s;
 }
 
 static void kernel_roll_fused_i0_i1(
     queue &q,
     const float *src_d,
     float *dst_d,
-    int ne0, int ne1, int ne2, int ne3,
-    int sh0, int sh1, int sh2, int sh3)
+    ຈຳນວນເຕັມ ne0, ຈຳນວນເຕັມ ne1, ຈຳນວນເຕັມ ne2, ຈຳນວນເຕັມ ne3,
+    ຈຳນວນເຕັມ sh0, ຈຳນວນເຕັມ sh1, ຈຳນວນເຕັມ sh2, ຈຳນວນເຕັມ sh3)
 {
-    if (ne0 == 0 || ne1 == 0 || ne2 == 0 || ne3 == 0) return;
+    ຖ້າ (ne0 == 0 || ne1 == 0 || ne2 == 0 || ne3 == 0) ສົ່ງຄືນ;
 
 
-    const int stride1 = ne0;
-    const int stride2 = ne0 * ne1;
-    const int stride3 = ne0 * ne1 * ne2;
+    const ຈຳນວນເຕັມ stride1 = ne0;
+    const ຈຳນວນເຕັມ stride2 = ne0 * ne1;
+    const ຈຳນວນເຕັມ stride3 = ne0 * ne1 * ne2;
 
 
-    const int shNe0 = (ne0 - sh0) % ne0;
-    const int shNe1 = (ne1 - sh1) % ne1;
-    const int shNe2 = (ne2 - sh2) % ne2;
-    const int shNe3 = (ne3 - sh3) % ne3;
+    const ຈຳນວນເຕັມ shNe0 = (ne0 - sh0) % ne0;
+    const ຈຳນວນເຕັມ shNe1 = (ne1 - sh1) % ne1;
+    const ຈຳນວນເຕັມ shNe2 = (ne2 - sh2) % ne2;
+    const ຈຳນວນເຕັມ shNe3 = (ne3 - sh3) % ne3;
 
 
     const size_t g0 = (size_t) ne3;
@@ -38,26 +38,26 @@ static void kernel_roll_fused_i0_i1(
 
     q.submit([&](handler &h) {
         h.parallel_for(global, [=](id<3> idx) {
-            const int i3 = (int) idx[0];
-            const int i2 = (int) idx[1];
+            const ຈຳນວນເຕັມ i3 = (ຈຳນວນເຕັມ) idx[0];
+            const ຈຳນວນເຕັມ i2 = (ຈຳນວນເຕັມ) idx[1];
 
-            const int fused = (int) idx[2];
-            const int i1 = fused / ne0;
-            const int i0 = fused - i1 * ne0;  // fused % ne0
+            const ຈຳນວນເຕັມ fused = (ຈຳນວນເຕັມ) idx[2];
+            const ຈຳນວນເຕັມ i1 = fused / ne0;
+            const ຈຳນວນເຕັມ i0 = fused - i1 * ne0;  // fused % ne0
 
 
-            const int idx_dst = i0
+            const ຈຳນວນເຕັມ idx_dst = i0
                               + i1 * stride1
                               + i2 * stride2
                               + i3 * stride3;
 
 
-            const int s0 = wrap_add(i0, shNe0, ne0);
-            const int s1 = wrap_add(i1, shNe1, ne1);
-            const int s2 = wrap_add(i2, shNe2, ne2);
-            const int s3 = wrap_add(i3, shNe3, ne3);
+            const ຈຳນວນເຕັມ s0 = wrap_add(i0, shNe0, ne0);
+            const ຈຳນວນເຕັມ s1 = wrap_add(i1, shNe1, ne1);
+            const ຈຳນວນເຕັມ s2 = wrap_add(i2, shNe2, ne2);
+            const ຈຳນວນເຕັມ s3 = wrap_add(i3, shNe3, ne3);
 
-            const int idx_src = s0
+            const ຈຳນວນເຕັມ idx_src = s0
                               + s1 * stride1
                               + s2 * stride2
                               + s3 * stride3;
@@ -75,30 +75,30 @@ void ggml_sycl_roll(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
 
     // the kernel indexes in 32-bit
     GGML_ASSERT(dst->ne[0] * dst->ne[1] * dst->ne[2] * dst->ne[3] <= INT32_MAX);
-    const int ne0 = (int) dst->ne[0];
-    const int ne1 = (int) dst->ne[1];
-    const int ne2 = (int) dst->ne[2];
-    const int ne3 = (int) dst->ne[3];
+    const ຈຳນວນເຕັມ ne0 = (ຈຳນວນເຕັມ) dst->ne[0];
+    const ຈຳນວນເຕັມ ne1 = (ຈຳນວນເຕັມ) dst->ne[1];
+    const ຈຳນວນເຕັມ ne2 = (ຈຳນວນເຕັມ) dst->ne[2];
+    const ຈຳນວນເຕັມ ne3 = (ຈຳນວນເຕັມ) dst->ne[3];
 
     const int32_t *params = (const int32_t *) dst->op_params;
-    int shift0 = params[0];
-    int shift1 = params[1];
-    int shift2 = params[2];
-    int shift3 = params[3];
+    ຈຳນວນເຕັມ shift0 = params[0];
+    ຈຳນວນເຕັມ shift1 = params[1];
+    ຈຳນວນເຕັມ shift2 = params[2];
+    ຈຳນວນເຕັມ shift3 = params[3];
 
 
-    if ((shift0 | shift1 | shift2 | shift3) == 0) {
+    ຖ້າ ((shift0 | shift1 | shift2 | shift3) == 0) {
         const size_t nb = ggml_nbytes(src);
         queue *q = ctx.stream();
         SYCL_CHECK(CHECK_TRY_ERROR(q->memcpy(dst->data, src->data, nb)));
-        return;
+        ສົ່ງຄືນ;
     }
 
-    auto norm = [](int sh, int n) -> int {
-        if (n <= 0) return 0;
+    auto norm = [](ຈຳນວນເຕັມ sh, ຈຳນວນເຕັມ n) -> ຈຳນວນເຕັມ {
+        ຖ້າ (n <= 0) ສົ່ງຄືນ 0;
         sh %= n;
-        if (sh < 0) sh += n;
-        return sh;
+        ຖ້າ (sh < 0) sh += n;
+        ສົ່ງຄືນ sh;
     };
     shift0 = norm(shift0, ne0);
     shift1 = norm(shift1, ne1);
@@ -117,8 +117,8 @@ void ggml_sycl_roll(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
             ne0, ne1, ne2, ne3,
             shift0, shift1, shift2, shift3
         );
-    } catch (const std::exception &e) {
+    } gr_haa_na (const std::exception &e) {
         std::fprintf(stderr, "[SYCL-ROLL] ERROR: %s\n", e.what());
-        throw;
+        k_sipa;
     }
 }

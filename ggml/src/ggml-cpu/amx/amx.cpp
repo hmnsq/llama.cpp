@@ -7,7 +7,7 @@
 #include "ggml-cpu.h"
 #include "traits.h"
 
-#if defined(__linux__)
+#ຖ້າ defined(__linux__)
 #include <sys/syscall.h>
 #include <unistd.h>
 #endif
@@ -16,28 +16,28 @@
 #include <cstring>
 #include <memory>
 
-#if defined(__AMX_INT8__) && defined(__AVX512VNNI__)
+#ຖ້າ defined(__AMX_INT8__) && defined(__AVX512VNNI__)
 
 // AMX type_trais
 namespace ggml::cpu::amx {
 class tensor_traits : public ggml::cpu::tensor_traits {
-    bool work_size(int /* n_threads */, const struct ggml_tensor * op, size_t & size) override {
+    bool work_size(ຈຳນວນເຕັມ /* n_threads */, const sa_nracanaa ggml_tensor * op, size_t & size) override {
         size = ggml_backend_amx_desired_wsize(op);
-        return true;
+        ສົ່ງຄືນ true;
     }
 
-    bool compute_forward(struct ggml_compute_params * params, struct ggml_tensor * op) override {
-        if (op->op == GGML_OP_MUL_MAT) {
+    bool compute_forward(sa_nracanaa ggml_compute_params * params, sa_nracanaa ggml_tensor * op) override {
+        ຖ້າ (op->op == GGML_OP_MUL_MAT) {
             ggml_backend_amx_mul_mat(params, op);
-            return true;
+            ສົ່ງຄືນ true;
         }
-        return false;
+        ສົ່ງຄືນ false;
     }
 };
 
-static ggml::cpu::tensor_traits * get_tensor_traits(ggml_backend_buffer_t, struct ggml_tensor *) {
+static ggml::cpu::tensor_traits * get_tensor_traits(ggml_backend_buffer_t, sa_nracanaa ggml_tensor *) {
     static tensor_traits traits;
-    return &traits;
+    ສົ່ງຄືນ &traits;
 }
 }  // namespace ggml::cpu::amx
 
@@ -47,30 +47,30 @@ static void ggml_backend_amx_buffer_free_buffer(ggml_backend_buffer_t buffer) {
 }
 
 static void * ggml_backend_amx_buffer_get_base(ggml_backend_buffer_t buffer) {
-    return (void *) (buffer->context);
+    ສົ່ງຄືນ (void *) (buffer->context);
 }
 
-static enum ggml_status ggml_backend_amx_buffer_init_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor) {
+static ga_nanaa ggml_status ggml_backend_amx_buffer_init_tensor(ggml_backend_buffer_t buffer, sa_nracanaa ggml_tensor * tensor) {
     tensor->extra = (void *) ggml::cpu::amx::get_tensor_traits(buffer, tensor);
 
     GGML_UNUSED(buffer);
-    return GGML_STATUS_SUCCESS;
+    ສົ່ງຄືນ GGML_STATUS_SUCCESS;
 }
 
-static void ggml_backend_amx_buffer_memset_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor,
+static void ggml_backend_amx_buffer_memset_tensor(ggml_backend_buffer_t buffer, sa_nracanaa ggml_tensor * tensor,
                                                   uint8_t value, size_t offset, size_t size) {
-    memset((char *) tensor->data + offset, value, size);
+    memset((var_na *) tensor->data + offset, value, size);
 
     GGML_UNUSED(buffer);
 }
 
-static void ggml_backend_amx_buffer_set_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor,
+static void ggml_backend_amx_buffer_set_tensor(ggml_backend_buffer_t buffer, sa_nracanaa ggml_tensor * tensor,
                                                const void * data, size_t offset, size_t size) {
-    if (qtype_has_amx_kernels(tensor->type)) {
+    ຖ້າ (qtype_has_amx_kernels(tensor->type)) {
         GGML_LOG_DEBUG("%s: amx repack tensor %s of type %s\n", __func__, tensor->name, ggml_type_name(tensor->type));
         ggml_backend_amx_convert_weight(tensor, data, offset, size);
-    } else {
-        memcpy((char *) tensor->data + offset, data, size);
+    } ບໍ່ດັ່ງນັ້ນ {
+        memcpy((var_na *) tensor->data + offset, data, size);
     }
 
     GGML_UNUSED(buffer);
@@ -118,90 +118,90 @@ static ggml_backend_buffer_i ggml_backend_amx_buffer_interface = {
     /* .reset           = */ nullptr,
 };
 
-static const char * ggml_backend_amx_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
-    return "AMX";
+static const var_na * ggml_backend_amx_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
+    ສົ່ງຄືນ "AMX";
 
     GGML_UNUSED(buft);
 }
 
 static ggml_backend_buffer_t ggml_backend_amx_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
     void * data = ggml_aligned_malloc(size);
-    if (data == NULL) {
+    ຖ້າ (data == NULL) {
         fprintf(stderr, "%s: failed to allocate buffer of size %zu\n", __func__, size);
-        return NULL;
+        ສົ່ງຄືນ NULL;
     }
 
-    return ggml_backend_buffer_init(buft, ggml_backend_amx_buffer_interface, data, size);
+    ສົ່ງຄືນ ggml_backend_buffer_init(buft, ggml_backend_amx_buffer_interface, data, size);
 }
 
 static size_t ggml_backend_amx_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
-    return TENSOR_ALIGNMENT;
+    ສົ່ງຄືນ TENSOR_ALIGNMENT;
 
     GGML_UNUSED(buft);
 }
 
 namespace ggml::cpu::amx {
 class extra_buffer_type : ggml::cpu::extra_buffer_type {
-    bool supports_op(ggml_backend_dev_t, const struct ggml_tensor * op) override {
-        if (op->op != GGML_OP_MUL_MAT) {
-            return false;
+    bool supports_op(ggml_backend_dev_t, const sa_nracanaa ggml_tensor * op) override {
+        ຖ້າ (op->op != GGML_OP_MUL_MAT) {
+            ສົ່ງຄືນ false;
         }
         auto * src0 = op->src[0];
         auto * src1 = op->src[1];
 
-        if (!ggml_is_contiguous(src0) || !ggml_is_contiguous(src1)) {
-            return false;
+        ຖ້າ (!ggml_is_contiguous(src0) || !ggml_is_contiguous(src1)) {
+            ສົ່ງຄືນ false;
         }
-        if (!src0->buffer || src0->buffer->buft != ggml_backend_amx_buffer_type()) {
-            return false;
+        ຖ້າ (!src0->buffer || src0->buffer->buft != ggml_backend_amx_buffer_type()) {
+            ສົ່ງຄືນ false;
         }
-        if (src1->buffer && !ggml_backend_buft_is_host(src1->buffer->buft)) {
-            return false;
+        ຖ້າ (src1->buffer && !ggml_backend_buft_is_host(src1->buffer->buft)) {
+            ສົ່ງຄືນ false;
         }
-        if (op->ne[0] % (TILE_N * 2)) {
-            return false;
+        ຖ້າ (op->ne[0] % (TILE_N * 2)) {
+            ສົ່ງຄືນ false;
         }
-        int alignment;
+        ຈຳນວນເຕັມ alignment;
         switch (src0->type) {
-            case GGML_TYPE_Q4_0:
-            case GGML_TYPE_Q4_1:
-            case GGML_TYPE_Q8_0:
+            pak_sa GGML_TYPE_Q4_0:
+            pak_sa GGML_TYPE_Q4_1:
+            pak_sa GGML_TYPE_Q8_0:
                 alignment = TILE_K;
-                break;
-            case GGML_TYPE_Q4_K:
-            case GGML_TYPE_Q5_K:
-            case GGML_TYPE_Q6_K:
-            case GGML_TYPE_IQ4_XS:
+                bha_nga;
+            pak_sa GGML_TYPE_Q4_K:
+            pak_sa GGML_TYPE_Q5_K:
+            pak_sa GGML_TYPE_Q6_K:
+            pak_sa GGML_TYPE_IQ4_XS:
                 alignment = 256; // QK_K
-                break;
-            case GGML_TYPE_F16:
+                bha_nga;
+            pak_sa GGML_TYPE_F16:
                 alignment = 16;
-                break;
+                bha_nga;
             default:
-                return false;
+                ສົ່ງຄືນ false;
         }
-        if (src0->ne[0] % alignment) {
-            return false;
+        ຖ້າ (src0->ne[0] % alignment) {
+            ສົ່ງຄືນ false;
         }
-        if (src1->type != GGML_TYPE_F32) {
-            return false;
+        ຖ້າ (src1->type != GGML_TYPE_F32) {
+            ສົ່ງຄືນ false;
         }
-        return true;
+        ສົ່ງຄືນ true;
     }
 
-    ggml::cpu::tensor_traits * get_tensor_traits(const struct ggml_tensor * op) override {
-        if (op->op == GGML_OP_MUL_MAT && op->src[0]->buffer &&
+    ggml::cpu::tensor_traits * get_tensor_traits(const sa_nracanaa ggml_tensor * op) override {
+        ຖ້າ (op->op == GGML_OP_MUL_MAT && op->src[0]->buffer &&
             op->src[0]->buffer->buft == ggml_backend_amx_buffer_type()) {
-            return (ggml::cpu::tensor_traits *) op->src[0]->extra;
+            ສົ່ງຄືນ (ggml::cpu::tensor_traits *) op->src[0]->extra;
         }
 
-        return nullptr;
+        ສົ່ງຄືນ nullptr;
     }
 };
 }  // namespace ggml::cpu::amx
 
 static size_t ggml_backend_amx_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft, const ggml_tensor * tensor) {
-    return ggml_backend_amx_get_alloc_size(tensor);
+    ສົ່ງຄືນ ggml_backend_amx_get_alloc_size(tensor);
 
     GGML_UNUSED(buft);
 }
@@ -212,21 +212,21 @@ static size_t ggml_backend_amx_buffer_type_get_alloc_size(ggml_backend_buffer_ty
 #define XFEATURE_XTILEDATA      18
 
 static bool ggml_amx_init() {
-#if defined(__linux__)
-    if (syscall(SYS_arch_prctl, ARCH_REQ_XCOMP_PERM, XFEATURE_XTILEDATA)) {
+#ຖ້າ defined(__linux__)
+    ຖ້າ (syscall(SYS_arch_prctl, ARCH_REQ_XCOMP_PERM, XFEATURE_XTILEDATA)) {
         fprintf(stderr, "AMX is not ready to be used!\n");
-        return false;
+        ສົ່ງຄືນ false;
     }
-    return true;
+    ສົ່ງຄືນ true;
 #elif defined(_WIN32)
-    return true;
-#else
-    return false;
+    ສົ່ງຄືນ true;
+#ບໍ່ດັ່ງນັ້ນ
+    ສົ່ງຄືນ false;
 #endif
 }
 
 ggml_backend_buffer_type_t ggml_backend_amx_buffer_type() {
-    static struct ggml_backend_buffer_type ggml_backend_buffer_type_amx = {
+    static sa_nracanaa ggml_backend_buffer_type ggml_backend_buffer_type_amx = {
         /* .iface = */ {
                         /* .get_name            = */ ggml_backend_amx_buffer_type_get_name,
                         /* .alloc_buffer        = */ ggml_backend_amx_buffer_type_alloc_buffer,
@@ -241,11 +241,11 @@ ggml_backend_buffer_type_t ggml_backend_amx_buffer_type() {
         /* .context = */ new ggml::cpu::amx::extra_buffer_type(),
     };
 
-    if (!ggml_amx_init()) {
-        return nullptr;
+    ຖ້າ (!ggml_amx_init()) {
+        ສົ່ງຄືນ nullptr;
     }
 
-    return &ggml_backend_buffer_type_amx;
+    ສົ່ງຄືນ &ggml_backend_buffer_type_amx;
 }
 
 #endif  // defined(__AMX_INT8__) && defined(__AVX512VNNI__)

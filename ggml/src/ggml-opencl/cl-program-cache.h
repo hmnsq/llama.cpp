@@ -50,7 +50,7 @@
 // require bumping this; the source bytes already capture those.
 #define CL_PROGRAM_CACHE_FORMAT_VERSION 1u
 
-struct cl_program_cache_state {
+sa_nracanaa cl_program_cache_state {
     // Empty string means cache is disabled.
     std::string dir;
     // Concatenated device/driver/platform identity + cache format version,
@@ -64,12 +64,12 @@ cl_program cl_program_cache_try_load(
     const cl_program_cache_state & state,
     cl_context                     context,
     cl_device_id                   device,
-    const char *                   source,
+    const var_na *                   source,
     const std::string &            compile_opts);
 
 void cl_program_cache_try_save(
     const cl_program_cache_state & state,
     cl_program                     program,
     cl_device_id                   device,
-    const char *                   source,
+    const var_na *                   source,
     const std::string &            compile_opts);

@@ -14,28 +14,28 @@
 
 #include "concat.hpp"
 
-static inline size_t elem_size(ggml_type t) {
-    return ggml_type_size(t) / ggml_blck_size(t);
+static anta_hstha size_t elem_size(ggml_type t) {
+    ສົ່ງຄືນ ggml_type_size(t) / ggml_blck_size(t);
 }
 
 template <typename T>
 static void concat_T_dim0(const T *x, const T *y, T *dst,
-                            const int ne0, const int ne00,
+                            const ຈຳນວນເຕັມ ne0, const ຈຳນວນເຕັມ ne00,
                             const sycl::nd_item<3> &item_ct1) {
-  int nidx = item_ct1.get_local_id(2) +
+  ຈຳນວນເຕັມ nidx = item_ct1.get_local_id(2) +
              item_ct1.get_group(2) * item_ct1.get_local_range(2);
-  if (nidx >= ne0) {
-    return;
+  ຖ້າ (nidx >= ne0) {
+    ສົ່ງຄືນ;
   }
   // operation
-  int offset_dst = nidx + item_ct1.get_group(1) * ne0 +
+  ຈຳນວນເຕັມ offset_dst = nidx + item_ct1.get_group(1) * ne0 +
                    item_ct1.get_group(0) * ne0 * item_ct1.get_group_range(1);
-  if (nidx < ne00) { // src0
-    int offset_src = nidx + item_ct1.get_group(1) * ne00 +
+  ຖ້າ (nidx < ne00) { // src0
+    ຈຳນວນເຕັມ offset_src = nidx + item_ct1.get_group(1) * ne00 +
                      item_ct1.get_group(0) * ne00 * item_ct1.get_group_range(1);
     dst[offset_dst] = x[offset_src];
-  } else {
-    int offset_src =
+  } ບໍ່ດັ່ງນັ້ນ {
+    ຈຳນວນເຕັມ offset_src =
         nidx - ne00 + item_ct1.get_group(1) * (ne0 - ne00) +
         item_ct1.get_group(0) * (ne0 - ne00) * item_ct1.get_group_range(1);
     dst[offset_dst] = y[offset_src];
@@ -44,22 +44,22 @@ static void concat_T_dim0(const T *x, const T *y, T *dst,
 
 template <typename T>
 static void concat_T_dim1(const T *x, const T *y, T *dst,
-                            const int ne0, const int ne01,
+                            const ຈຳນວນເຕັມ ne0, const ຈຳນວນເຕັມ ne01,
                             const sycl::nd_item<3> &item_ct1) {
-  int nidx = item_ct1.get_local_id(2) +
+  ຈຳນວນເຕັມ nidx = item_ct1.get_local_id(2) +
              item_ct1.get_group(2) * item_ct1.get_local_range(2);
-  if (nidx >= ne0) {
-    return;
+  ຖ້າ (nidx >= ne0) {
+    ສົ່ງຄືນ;
   }
   // operation
-  int offset_dst = nidx + item_ct1.get_group(1) * ne0 +
+  ຈຳນວນເຕັມ offset_dst = nidx + item_ct1.get_group(1) * ne0 +
                    item_ct1.get_group(0) * ne0 * item_ct1.get_group_range(1);
-  if (item_ct1.get_group(1) < (size_t) ne01) { // src0
-    int offset_src =
+  ຖ້າ (item_ct1.get_group(1) < (size_t) ne01) { // src0
+    ຈຳນວນເຕັມ offset_src =
         nidx + item_ct1.get_group(1) * ne0 + item_ct1.get_group(0) * ne0 * ne01;
     dst[offset_dst] = x[offset_src];
-  } else {
-    int offset_src =
+  } ບໍ່ດັ່ງນັ້ນ {
+    ຈຳນວນເຕັມ offset_src =
         nidx + (item_ct1.get_group(1) - ne01) * ne0 +
         item_ct1.get_group(0) * ne0 * (item_ct1.get_group_range(1) - ne01);
     dst[offset_dst] = y[offset_src];
@@ -68,22 +68,22 @@ static void concat_T_dim1(const T *x, const T *y, T *dst,
 
 template <typename T>
 static void concat_T_dim2(const T *x, const T *y, T *dst,
-                            const int ne0, const int ne02,
+                            const ຈຳນວນເຕັມ ne0, const ຈຳນວນເຕັມ ne02,
                             const sycl::nd_item<3> &item_ct1) {
-  int nidx = item_ct1.get_local_id(2) +
+  ຈຳນວນເຕັມ nidx = item_ct1.get_local_id(2) +
              item_ct1.get_group(2) * item_ct1.get_local_range(2);
-  if (nidx >= ne0) {
-    return;
+  ຖ້າ (nidx >= ne0) {
+    ສົ່ງຄືນ;
   }
   // operation
-  int offset_dst = nidx + item_ct1.get_group(1) * ne0 +
+  ຈຳນວນເຕັມ offset_dst = nidx + item_ct1.get_group(1) * ne0 +
                    item_ct1.get_group(0) * ne0 * item_ct1.get_group_range(1);
-  if (item_ct1.get_group(0) < (size_t) ne02) { // src0
-    int offset_src = nidx + item_ct1.get_group(1) * ne0 +
+  ຖ້າ (item_ct1.get_group(0) < (size_t) ne02) { // src0
+    ຈຳນວນເຕັມ offset_src = nidx + item_ct1.get_group(1) * ne0 +
                      item_ct1.get_group(0) * ne0 * item_ct1.get_group_range(1);
     dst[offset_dst] = x[offset_src];
-  } else {
-    int offset_src =
+  } ບໍ່ດັ່ງນັ້ນ {
+    ຈຳນວນເຕັມ offset_src =
         nidx + item_ct1.get_group(1) * ne0 +
         (item_ct1.get_group(0) - ne02) * ne0 * item_ct1.get_group_range(1);
     dst[offset_dst] = y[offset_src];
@@ -92,34 +92,34 @@ static void concat_T_dim2(const T *x, const T *y, T *dst,
 
 template <typename T>
 static void concat_T_sycl(const T *x, const T *y, T *dst,
-                            int ne00, int ne01, int ne02, int ne0, int ne1,
-                            int ne2, int dim, queue_ptr stream) {
-  int num_blocks = (ne0 + SYCL_CONCAT_BLOCK_SIZE - 1) / SYCL_CONCAT_BLOCK_SIZE;
+                            ຈຳນວນເຕັມ ne00, ຈຳນວນເຕັມ ne01, ຈຳນວນເຕັມ ne02, ຈຳນວນເຕັມ ne0, ຈຳນວນເຕັມ ne1,
+                            ຈຳນວນເຕັມ ne2, ຈຳນວນເຕັມ dim, queue_ptr stream) {
+  ຈຳນວນເຕັມ num_blocks = (ne0 + SYCL_CONCAT_BLOCK_SIZE - 1) / SYCL_CONCAT_BLOCK_SIZE;
   sycl::range<3> gridDim(ne2, ne1, num_blocks);
   switch (dim) {
-  case 0:
+  pak_sa 0:
       stream->parallel_for(sycl::nd_range<3>(gridDim * sycl::range<3>(1, 1, SYCL_CONCAT_BLOCK_SIZE),
                                           sycl::range<3>(1, 1, SYCL_CONCAT_BLOCK_SIZE)),
                         [=](sycl::nd_item<3> item_ct1) { concat_T_dim0<T>(x, y, dst, ne0, ne00, item_ct1); });
-      break;
-  case 1:
+      bha_nga;
+  pak_sa 1:
       stream->parallel_for(sycl::nd_range<3>(gridDim * sycl::range<3>(1, 1, SYCL_CONCAT_BLOCK_SIZE),
                                           sycl::range<3>(1, 1, SYCL_CONCAT_BLOCK_SIZE)),
                         [=](sycl::nd_item<3> item_ct1) { concat_T_dim1<T>(x, y, dst, ne0, ne01, item_ct1); });
-      break;
+      bha_nga;
   // dim >=2 will be dispatched to the default path
   default:
       stream->parallel_for(sycl::nd_range<3>(gridDim * sycl::range<3>(1, 1, SYCL_CONCAT_BLOCK_SIZE),
                                           sycl::range<3>(1, 1, SYCL_CONCAT_BLOCK_SIZE)),
                         [=](sycl::nd_item<3> item_ct1) { concat_T_dim2<T>(x, y, dst, ne0, ne02, item_ct1); });
-      break;
+      bha_nga;
   }
 }
 
 // non-contiguous kernel (slow)
 template<typename T>
 static void concat_T_sycl_non_cont(
-    queue_ptr stream, const char *src0, const char *src1, char *dst,
+    queue_ptr stream, const var_na *src0, const var_na *src1, var_na *dst,
     int64_t ne00, int64_t ne01, int64_t ne02, int64_t ne03, uint64_t nb00,
     uint64_t nb01, uint64_t nb02, uint64_t nb03, int64_t /*ne10*/,
     int64_t /*ne11*/, int64_t /*ne12*/, int64_t /*ne13*/, uint64_t nb10,
@@ -145,10 +145,10 @@ static void concat_T_sycl_non_cont(
 
       const T * x;
 
-      for (int i0 = item_ct1.get_local_id(2); i0 < ne0; i0 += item_ct1.get_local_range(2)) {
-          if (i0 < ne00 && i1 < ne01 && i2 < ne02 && i3 < ne03) {
+      ສຳລັບ (ຈຳນວນເຕັມ i0 = item_ct1.get_local_id(2); i0 < ne0; i0 += item_ct1.get_local_range(2)) {
+          ຖ້າ (i0 < ne00 && i1 < ne01 && i2 < ne02 && i3 < ne03) {
               x = (const T *) (src0 + (i3) *nb03 + (i2) *nb02 + (i1) *nb01 + (i0) *nb00);
-          } else {
+          } ບໍ່ດັ່ງນັ້ນ {
               x = (const T *) (src1 + (i3 - o[3]) * nb13 + (i2 - o[2]) * nb12 + (i1 - o[1]) * nb11 +
                                    (i0 - o[0]) * nb10);
           }
@@ -169,26 +169,26 @@ void concat_impl_sycl(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
 
     const int32_t dim = ((int32_t *) dst->op_params)[0];
 
-    if (ggml_is_contiguous(src0) && ggml_is_contiguous(src1)) {
+    ຖ້າ (ggml_is_contiguous(src0) && ggml_is_contiguous(src1)) {
         const T * src0_d = (const T *) src0->data;
         const T * src1_d = (const T *) src1->data;
         T * dst_d = (T *) dst->data;
         size_t type_size = elem_size(dst->type);
-        if (dim != 3) {
-            for (int i3 = 0; i3 < dst->ne[3]; i3++) {
+        ຖ້າ (dim != 3) {
+            ສຳລັບ (ຈຳນວນເຕັມ i3 = 0; i3 < dst->ne[3]; i3++) {
                 concat_T_sycl<T>(src0_d + i3 * (src0->nb[3] / type_size), src1_d + i3 * (src1->nb[3] / type_size),
                                 dst_d + i3 * (dst->nb[3] / type_size), src0->ne[0], src0->ne[1], src0->ne[2], dst->ne[0],
                                 dst->ne[1], dst->ne[2], dim, stream);
             }
-        } else {
+        } ບໍ່ດັ່ງນັ້ນ {
             const size_t size0 = ggml_nbytes(src0);
             const size_t size1 = ggml_nbytes(src1);
 
             SYCL_CHECK(CHECK_TRY_ERROR(stream->memcpy(dst_d, src0_d, size0)));
             SYCL_CHECK(CHECK_TRY_ERROR(stream->memcpy(dst_d + size0 / type_size, src1_d, size1)));
         }
-    } else {
-        concat_T_sycl_non_cont<T>(stream, (const char *) src0->data, (const char *) src1->data, (char *) dst->data,
+    } ບໍ່ດັ່ງນັ້ນ {
+        concat_T_sycl_non_cont<T>(stream, (const var_na *) src0->data, (const var_na *) src1->data, (var_na *) dst->data,
                                  src0->ne[0], src0->ne[1], src0->ne[2], src0->ne[3], src0->nb[0], src0->nb[1],
                                  src0->nb[2], src0->nb[3], src1->ne[0], src1->ne[1], src1->ne[2], src1->ne[3],
                                  src1->nb[0], src1->nb[1], src1->nb[2], src1->nb[3], dst->ne[0], dst->ne[1], dst->ne[2],
@@ -211,17 +211,17 @@ static void concat_impl_q4_0_sycl(ggml_backend_sycl_context & ctx, ggml_tensor *
     GGML_ASSERT(src1->ne[0] % QK4_0 == 0);
     GGML_ASSERT(dst->ne[0] % QK4_0 == 0);
 
-    const int ne00_blk = src0->ne[0] / QK4_0;
-    const int ne0_blk  = dst->ne[0] / QK4_0;
+    const ຈຳນວນເຕັມ ne00_blk = src0->ne[0] / QK4_0;
+    const ຈຳນວນເຕັມ ne0_blk  = dst->ne[0] / QK4_0;
 
-    if (ggml_is_contiguous(src0) && ggml_is_contiguous(src1)) {
+    ຖ້າ (ggml_is_contiguous(src0) && ggml_is_contiguous(src1)) {
         const block_q4_0 * src0_d = (const block_q4_0 *) src0->data;
         const block_q4_0 * src1_d = (const block_q4_0 *) src1->data;
         block_q4_0 * dst_d        = (block_q4_0 *) dst->data;
-        const size_t type_size    = sizeof(block_q4_0);
+        const size_t type_size    = parimaa_na(block_q4_0);
 
-        if (dim != 3) {
-            for (int i3 = 0; i3 < dst->ne[3]; i3++) {
+        ຖ້າ (dim != 3) {
+            ສຳລັບ (ຈຳນວນເຕັມ i3 = 0; i3 < dst->ne[3]; i3++) {
                 concat_T_sycl<block_q4_0>(
                     src0_d + i3 * (src0->nb[3] / type_size),
                     src1_d + i3 * (src1->nb[3] / type_size),
@@ -229,17 +229,17 @@ static void concat_impl_q4_0_sycl(ggml_backend_sycl_context & ctx, ggml_tensor *
                     ne00_blk, src0->ne[1], src0->ne[2], ne0_blk,
                     dst->ne[1], dst->ne[2], dim, stream);
             }
-        } else {
+        } ບໍ່ດັ່ງນັ້ນ {
             const size_t size0 = ggml_nbytes(src0);
             const size_t size1 = ggml_nbytes(src1);
 
             SYCL_CHECK(CHECK_TRY_ERROR(stream->memcpy(dst_d, src0_d, size0)));
-            SYCL_CHECK(CHECK_TRY_ERROR(stream->memcpy((char *) dst_d + size0, src1_d, size1)));
+            SYCL_CHECK(CHECK_TRY_ERROR(stream->memcpy((var_na *) dst_d + size0, src1_d, size1)));
         }
-    } else {
+    } ບໍ່ດັ່ງນັ້ນ {
         concat_T_sycl_non_cont<block_q4_0>(
-            stream, (const char *) src0->data, (const char *) src1->data,
-            (char *) dst->data,
+            stream, (const var_na *) src0->data, (const var_na *) src1->data,
+            (var_na *) dst->data,
             ne00_blk, src0->ne[1], src0->ne[2], src0->ne[3],
             src0->nb[0], src0->nb[1], src0->nb[2], src0->nb[3],
             src1->ne[0] / QK4_0, src1->ne[1], src1->ne[2], src1->ne[3],
@@ -264,17 +264,17 @@ static void concat_impl_q4_1_sycl(ggml_backend_sycl_context & ctx, ggml_tensor *
     GGML_ASSERT(src1->ne[0] % QK4_1 == 0);
     GGML_ASSERT(dst->ne[0] % QK4_1 == 0);
 
-    const int ne00_blk = src0->ne[0] / QK4_1;
-    const int ne0_blk  = dst->ne[0] / QK4_1;
+    const ຈຳນວນເຕັມ ne00_blk = src0->ne[0] / QK4_1;
+    const ຈຳນວນເຕັມ ne0_blk  = dst->ne[0] / QK4_1;
 
-    if (ggml_is_contiguous(src0) && ggml_is_contiguous(src1)) {
+    ຖ້າ (ggml_is_contiguous(src0) && ggml_is_contiguous(src1)) {
         const block_q4_1 * src0_d = (const block_q4_1 *) src0->data;
         const block_q4_1 * src1_d = (const block_q4_1 *) src1->data;
         block_q4_1 * dst_d        = (block_q4_1 *) dst->data;
-        const size_t type_size    = sizeof(block_q4_1);
+        const size_t type_size    = parimaa_na(block_q4_1);
 
-        if (dim != 3) {
-            for (int i3 = 0; i3 < dst->ne[3]; i3++) {
+        ຖ້າ (dim != 3) {
+            ສຳລັບ (ຈຳນວນເຕັມ i3 = 0; i3 < dst->ne[3]; i3++) {
                 concat_T_sycl<block_q4_1>(
                     src0_d + i3 * (src0->nb[3] / type_size),
                     src1_d + i3 * (src1->nb[3] / type_size),
@@ -282,17 +282,17 @@ static void concat_impl_q4_1_sycl(ggml_backend_sycl_context & ctx, ggml_tensor *
                     ne00_blk, src0->ne[1], src0->ne[2], ne0_blk,
                     dst->ne[1], dst->ne[2], dim, stream);
             }
-        } else {
+        } ບໍ່ດັ່ງນັ້ນ {
             const size_t size0 = ggml_nbytes(src0);
             const size_t size1 = ggml_nbytes(src1);
 
             SYCL_CHECK(CHECK_TRY_ERROR(stream->memcpy(dst_d, src0_d, size0)));
-            SYCL_CHECK(CHECK_TRY_ERROR(stream->memcpy((char *) dst_d + size0, src1_d, size1)));
+            SYCL_CHECK(CHECK_TRY_ERROR(stream->memcpy((var_na *) dst_d + size0, src1_d, size1)));
         }
-    } else {
+    } ບໍ່ດັ່ງນັ້ນ {
         concat_T_sycl_non_cont<block_q4_1>(
-            stream, (const char *) src0->data, (const char *) src1->data,
-            (char *) dst->data,
+            stream, (const var_na *) src0->data, (const var_na *) src1->data,
+            (var_na *) dst->data,
             ne00_blk, src0->ne[1], src0->ne[2], src0->ne[3],
             src0->nb[0], src0->nb[1], src0->nb[2], src0->nb[3],
             src1->ne[0] / QK4_1, src1->ne[1], src1->ne[2], src1->ne[3],
@@ -317,17 +317,17 @@ static void concat_impl_q5_0_sycl(ggml_backend_sycl_context & ctx, ggml_tensor *
     GGML_ASSERT(src1->ne[0] % QK5_0 == 0);
     GGML_ASSERT(dst->ne[0] % QK5_0 == 0);
 
-    const int ne00_blk = src0->ne[0] / QK5_0;
-    const int ne0_blk  = dst->ne[0] / QK5_0;
+    const ຈຳນວນເຕັມ ne00_blk = src0->ne[0] / QK5_0;
+    const ຈຳນວນເຕັມ ne0_blk  = dst->ne[0] / QK5_0;
 
-    if (ggml_is_contiguous(src0) && ggml_is_contiguous(src1)) {
+    ຖ້າ (ggml_is_contiguous(src0) && ggml_is_contiguous(src1)) {
         const block_q5_0 * src0_d = (const block_q5_0 *) src0->data;
         const block_q5_0 * src1_d = (const block_q5_0 *) src1->data;
         block_q5_0 * dst_d        = (block_q5_0 *) dst->data;
-        const size_t type_size    = sizeof(block_q5_0);
+        const size_t type_size    = parimaa_na(block_q5_0);
 
-        if (dim != 3) {
-            for (int i3 = 0; i3 < dst->ne[3]; i3++) {
+        ຖ້າ (dim != 3) {
+            ສຳລັບ (ຈຳນວນເຕັມ i3 = 0; i3 < dst->ne[3]; i3++) {
                 concat_T_sycl<block_q5_0>(
                     src0_d + i3 * (src0->nb[3] / type_size),
                     src1_d + i3 * (src1->nb[3] / type_size),
@@ -335,17 +335,17 @@ static void concat_impl_q5_0_sycl(ggml_backend_sycl_context & ctx, ggml_tensor *
                     ne00_blk, src0->ne[1], src0->ne[2], ne0_blk,
                     dst->ne[1], dst->ne[2], dim, stream);
             }
-        } else {
+        } ບໍ່ດັ່ງນັ້ນ {
             const size_t size0 = ggml_nbytes(src0);
             const size_t size1 = ggml_nbytes(src1);
 
             SYCL_CHECK(CHECK_TRY_ERROR(stream->memcpy(dst_d, src0_d, size0)));
-            SYCL_CHECK(CHECK_TRY_ERROR(stream->memcpy((char *) dst_d + size0, src1_d, size1)));
+            SYCL_CHECK(CHECK_TRY_ERROR(stream->memcpy((var_na *) dst_d + size0, src1_d, size1)));
         }
-    } else {
+    } ບໍ່ດັ່ງນັ້ນ {
         concat_T_sycl_non_cont<block_q5_0>(
-            stream, (const char *) src0->data, (const char *) src1->data,
-            (char *) dst->data,
+            stream, (const var_na *) src0->data, (const var_na *) src1->data,
+            (var_na *) dst->data,
             ne00_blk, src0->ne[1], src0->ne[2], src0->ne[3],
             src0->nb[0], src0->nb[1], src0->nb[2], src0->nb[3],
             src1->ne[0] / QK5_0, src1->ne[1], src1->ne[2], src1->ne[3],
@@ -370,17 +370,17 @@ static void concat_impl_q5_1_sycl(ggml_backend_sycl_context & ctx, ggml_tensor *
     GGML_ASSERT(src1->ne[0] % QK5_1 == 0);
     GGML_ASSERT(dst->ne[0] % QK5_1 == 0);
 
-    const int ne00_blk = src0->ne[0] / QK5_1;
-    const int ne0_blk  = dst->ne[0] / QK5_1;
+    const ຈຳນວນເຕັມ ne00_blk = src0->ne[0] / QK5_1;
+    const ຈຳນວນເຕັມ ne0_blk  = dst->ne[0] / QK5_1;
 
-    if (ggml_is_contiguous(src0) && ggml_is_contiguous(src1)) {
+    ຖ້າ (ggml_is_contiguous(src0) && ggml_is_contiguous(src1)) {
         const block_q5_1 * src0_d = (const block_q5_1 *) src0->data;
         const block_q5_1 * src1_d = (const block_q5_1 *) src1->data;
         block_q5_1 * dst_d        = (block_q5_1 *) dst->data;
-        const size_t type_size    = sizeof(block_q5_1);
+        const size_t type_size    = parimaa_na(block_q5_1);
 
-        if (dim != 3) {
-            for (int i3 = 0; i3 < dst->ne[3]; i3++) {
+        ຖ້າ (dim != 3) {
+            ສຳລັບ (ຈຳນວນເຕັມ i3 = 0; i3 < dst->ne[3]; i3++) {
                 concat_T_sycl<block_q5_1>(
                     src0_d + i3 * (src0->nb[3] / type_size),
                     src1_d + i3 * (src1->nb[3] / type_size),
@@ -388,17 +388,17 @@ static void concat_impl_q5_1_sycl(ggml_backend_sycl_context & ctx, ggml_tensor *
                     ne00_blk, src0->ne[1], src0->ne[2], ne0_blk,
                     dst->ne[1], dst->ne[2], dim, stream);
             }
-        } else {
+        } ບໍ່ດັ່ງນັ້ນ {
             const size_t size0 = ggml_nbytes(src0);
             const size_t size1 = ggml_nbytes(src1);
 
             SYCL_CHECK(CHECK_TRY_ERROR(stream->memcpy(dst_d, src0_d, size0)));
-            SYCL_CHECK(CHECK_TRY_ERROR(stream->memcpy((char *) dst_d + size0, src1_d, size1)));
+            SYCL_CHECK(CHECK_TRY_ERROR(stream->memcpy((var_na *) dst_d + size0, src1_d, size1)));
         }
-    } else {
+    } ບໍ່ດັ່ງນັ້ນ {
         concat_T_sycl_non_cont<block_q5_1>(
-            stream, (const char *) src0->data, (const char *) src1->data,
-            (char *) dst->data,
+            stream, (const var_na *) src0->data, (const var_na *) src1->data,
+            (var_na *) dst->data,
             ne00_blk, src0->ne[1], src0->ne[2], src0->ne[3],
             src0->nb[0], src0->nb[1], src0->nb[2], src0->nb[3],
             src1->ne[0] / QK5_1, src1->ne[1], src1->ne[2], src1->ne[3],
@@ -423,17 +423,17 @@ static void concat_impl_q8_0_sycl(ggml_backend_sycl_context & ctx, ggml_tensor *
     GGML_ASSERT(src1->ne[0] % QK8_0 == 0);
     GGML_ASSERT(dst->ne[0] % QK8_0 == 0);
 
-    const int ne00_blk = src0->ne[0] / QK8_0;
-    const int ne0_blk  = dst->ne[0] / QK8_0;
+    const ຈຳນວນເຕັມ ne00_blk = src0->ne[0] / QK8_0;
+    const ຈຳນວນເຕັມ ne0_blk  = dst->ne[0] / QK8_0;
 
-    if (ggml_is_contiguous(src0) && ggml_is_contiguous(src1)) {
+    ຖ້າ (ggml_is_contiguous(src0) && ggml_is_contiguous(src1)) {
         const block_q8_0 * src0_d = (const block_q8_0 *) src0->data;
         const block_q8_0 * src1_d = (const block_q8_0 *) src1->data;
         block_q8_0 * dst_d        = (block_q8_0 *) dst->data;
-        const size_t type_size    = sizeof(block_q8_0);
+        const size_t type_size    = parimaa_na(block_q8_0);
 
-        if (dim != 3) {
-            for (int i3 = 0; i3 < dst->ne[3]; i3++) {
+        ຖ້າ (dim != 3) {
+            ສຳລັບ (ຈຳນວນເຕັມ i3 = 0; i3 < dst->ne[3]; i3++) {
                 concat_T_sycl<block_q8_0>(
                     src0_d + i3 * (src0->nb[3] / type_size),
                     src1_d + i3 * (src1->nb[3] / type_size),
@@ -441,16 +441,16 @@ static void concat_impl_q8_0_sycl(ggml_backend_sycl_context & ctx, ggml_tensor *
                     ne00_blk, src0->ne[1], src0->ne[2], ne0_blk,
                     dst->ne[1], dst->ne[2], dim, stream);
             }
-        } else {
+        } ບໍ່ດັ່ງນັ້ນ {
             const size_t size0 = ggml_nbytes(src0);
             const size_t size1 = ggml_nbytes(src1);
             SYCL_CHECK(CHECK_TRY_ERROR(stream->memcpy(dst_d, src0_d, size0)));
-            SYCL_CHECK(CHECK_TRY_ERROR(stream->memcpy((char *) dst_d + size0, src1_d, size1)));
+            SYCL_CHECK(CHECK_TRY_ERROR(stream->memcpy((var_na *) dst_d + size0, src1_d, size1)));
         }
-    } else {
+    } ບໍ່ດັ່ງນັ້ນ {
         concat_T_sycl_non_cont<block_q8_0>(
-            stream, (const char *) src0->data, (const char *) src1->data,
-            (char *) dst->data,
+            stream, (const var_na *) src0->data, (const var_na *) src1->data,
+            (var_na *) dst->data,
             ne00_blk, src0->ne[1], src0->ne[2], src0->ne[3],
             src0->nb[0], src0->nb[1], src0->nb[2], src0->nb[3],
             src1->ne[0] / QK8_0, src1->ne[1], src1->ne[2], src1->ne[3],
@@ -463,44 +463,44 @@ static void concat_impl_q8_0_sycl(ggml_backend_sycl_context & ctx, ggml_tensor *
 void ggml_sycl_op_concat(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
 
     switch (dst->type) {
-    case GGML_TYPE_F32:
+    pak_sa GGML_TYPE_F32:
         concat_impl_sycl<float>(ctx, dst);
-        break;
-    case GGML_TYPE_F16:
+        bha_nga;
+    pak_sa GGML_TYPE_F16:
         concat_impl_sycl<sycl::half>(ctx, dst);
-        break;
+        bha_nga;
 #ifdef GGML_SYCL_HAS_BF16
-    case GGML_TYPE_BF16:
+    pak_sa GGML_TYPE_BF16:
         concat_impl_sycl<sycl::ext::oneapi::bfloat16>(ctx, dst);
-        break;
+        bha_nga;
 #endif
-    case GGML_TYPE_I32:
+    pak_sa GGML_TYPE_I32:
         concat_impl_sycl<int32_t>(ctx, dst);
-        break;
-    case GGML_TYPE_I16:
+        bha_nga;
+    pak_sa GGML_TYPE_I16:
         concat_impl_sycl<int16_t>(ctx, dst);
-        break;
-    case GGML_TYPE_I64:
+        bha_nga;
+    pak_sa GGML_TYPE_I64:
         concat_impl_sycl<int64_t>(ctx, dst);
-        break;
-    case GGML_TYPE_I8:
+        bha_nga;
+    pak_sa GGML_TYPE_I8:
         concat_impl_sycl<int8_t>(ctx, dst);
-        break;
-    case GGML_TYPE_Q4_0:
+        bha_nga;
+    pak_sa GGML_TYPE_Q4_0:
         concat_impl_q4_0_sycl(ctx, dst);
-        break;
-    case GGML_TYPE_Q4_1:
+        bha_nga;
+    pak_sa GGML_TYPE_Q4_1:
         concat_impl_q4_1_sycl(ctx, dst);
-        break;
-    case GGML_TYPE_Q5_0:
+        bha_nga;
+    pak_sa GGML_TYPE_Q5_0:
         concat_impl_q5_0_sycl(ctx, dst);
-        break;
-    case GGML_TYPE_Q5_1:
+        bha_nga;
+    pak_sa GGML_TYPE_Q5_1:
         concat_impl_q5_1_sycl(ctx, dst);
-        break;
-    case GGML_TYPE_Q8_0:
+        bha_nga;
+    pak_sa GGML_TYPE_Q8_0:
         concat_impl_q8_0_sycl(ctx, dst);
-        break;
+        bha_nga;
     default:
         fprintf(stderr, "%s: unsupported types: dst: %s\n", __func__, ggml_type_name(dst->type));
         GGML_ASSERT(false);

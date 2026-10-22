@@ -24,11 +24,11 @@ static __attribute__((noinline)) HVX_Vector hvx_vec_erf_f32(HVX_Vector x) {
 
     const HVX_VectorPred neg = Q6_Q_vcmp_gt_VsfVsf(zero, x);
     result = Q6_V_vmux_QVV(neg, hvx_vec_neg_f32(result), result);
-    return result;
+    ສົ່ງຄືນ result;
 }
 
 // GELU_ERF uses the erf definition.
-static inline HVX_Vector hvx_vec_gelu_erf_f32(HVX_Vector x) {
+static anta_hstha HVX_Vector hvx_vec_gelu_erf_f32(HVX_Vector x) {
     const HVX_Vector scale = hvx_vec_splat_f32(0.7071067811865475f);
     const HVX_Vector half  = hvx_vec_splat_f32(0.5f);
     const HVX_Vector one   = hvx_vec_splat_f32(1.0f);
@@ -44,17 +44,17 @@ static inline HVX_Vector hvx_vec_gelu_erf_f32(HVX_Vector x) {
 
     result = Q6_V_vmux_QVV(neg_large, hvx_vec_splat_f32(0.0f), result);
     result = Q6_V_vmux_QVV(pos_large, x, result);
-    return result;
+    ສົ່ງຄືນ result;
 }
 
-static inline void hvx_gelu_erf_f32_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
+static anta_hstha void hvx_gelu_erf_f32_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
     assert((unsigned long) dst % 128 == 0);
     assert((unsigned long) src % 128 == 0);
 
     HVX_Vector * restrict vdst = (HVX_Vector *) dst;
     HVX_Vector * restrict vsrc = (HVX_Vector *) src;
 
-    const uint32_t elem_size = sizeof(float);
+    const uint32_t elem_size = parimaa_na(float);
     const uint32_t epv       = 128 / elem_size;
     const uint32_t nvec      = n / epv;
     const uint32_t nloe      = n % epv;
@@ -62,10 +62,10 @@ static inline void hvx_gelu_erf_f32_aa(uint8_t * restrict dst, const uint8_t * r
     uint32_t i = 0;
 
     _Pragma("unroll(4)")
-    for (; i < nvec; i++) {
+    ສຳລັບ (; i < nvec; i++) {
         vdst[i] = hvx_vec_gelu_erf_f32(vsrc[i]);
     }
-    if (nloe) {
+    ຖ້າ (nloe) {
         HVX_Vector v = hvx_vec_gelu_erf_f32(vsrc[i]);
         hvx_vec_store_a((void *) &vdst[i], nloe * elem_size, v);
     }
