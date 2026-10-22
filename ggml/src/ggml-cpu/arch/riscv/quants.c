@@ -1,23 +1,23 @@
 #define GGML_COMMON_IMPL_C
-#include "ggml-common.h"
-#include "ggml-quants.h"
-#include "ggml-impl.h"
-#include "ggml-cpu.h"
-#include "simd-mappings.h"
+#ضمن "ggml-common.h"
+#ضمن "ggml-quants.h"
+#ضمن "ggml-impl.h"
+#ضمن "ggml-cpu.h"
+#ضمن "simd-mappings.h"
 
-#include "../../quants.h"
-#include "../../ggml-cpu-impl.h"
+#ضمن "../../quants.h"
+#ضمن "../../ggml-cpu-impl.h"
 
-#include <math.h>
-#include <string.h>
-#include <assert.h>
-#include <float.h>
-#include <stdlib.h> // for qsort
-#include <stdio.h>  // for GGML_ASSERT
+#ضمن <math.h>
+#ضمن <string.h>
+#ضمن <assert.h>
+#ضمن <float.h>
+#ضمن <stdlib.h> // for qsort
+#ضمن <stdio.h>  // for GGML_ASSERT
 
 #ifdef _MSC_VER
 #define NOINLINE __declspec(noinline)
-#else
+#وإلا
 #define NOINLINE __attribute__((__noinline__))
 #endif
 
@@ -29,28 +29,28 @@
 
 #define UNUSED GGML_UNUSED
 
-void quantize_row_q8_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
-    assert(QK8_0 == 32);
-    assert(k % QK8_0 == 0);
-    const int nb = k / QK8_0;
+فراغ quantize_row_q8_0(ثابت عائم * GGML_RESTRICT x, فراغ * GGML_RESTRICT vy, int64_t k) {
+    أكد(QK8_0 == 32);
+    أكد(k % QK8_0 == 0);
+    ثابت صحيح nb = k / QK8_0;
 
     block_q8_0 * GGML_RESTRICT y = vy;
 
-#if defined(__riscv_v)
+#إذا defined(__riscv_v)
 
     size_t vl = QK8_0;
 
-    for (int i = 0; i < nb; i++) {
+    لكل (صحيح i = 0; i < nb; i++) {
         // load elements
         vfloat32m8_t v_x   = __riscv_vle32_v_f32m8(x+i*QK8_0, vl);
 
         vfloat32m8_t vfabs = __riscv_vfabs_v_f32m8(v_x, vl);
         vfloat32m1_t tmp   = __riscv_vfmv_v_f_f32m1(0.0f, vl);
         vfloat32m1_t vmax  = __riscv_vfredmax_vs_f32m8_f32m1(vfabs, tmp, vl);
-        float amax = __riscv_vfmv_f_s_f32m1_f32(vmax);
+        عائم amax = __riscv_vfmv_f_s_f32m1_f32(vmax);
 
-        const float d = amax / ((1 << 7) - 1);
-        const float id = d ? 1.0f/d : 0.0f;
+        ثابت عائم d = amax / ((1 << 7) - 1);
+        ثابت عائم id = d ? 1.0f/d : 0.0f;
 
         y[i].d = GGML_CPU_FP32_TO_FP16(d);
 
@@ -63,34 +63,34 @@ void quantize_row_q8_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
         // store result
         __riscv_vse8_v_i8m2(y[i].qs , vs, vl);
     }
-#else
+#وإلا
     GGML_UNUSED(nb);
     // scalar
     quantize_row_q8_0_ref(x, y, k);
 #endif
 }
 
-void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
-    assert(k % QK8_1 == 0);
-    const int nb = k / QK8_1;
+فراغ quantize_row_q8_1(ثابت عائم * GGML_RESTRICT x, فراغ * GGML_RESTRICT vy, int64_t k) {
+    أكد(k % QK8_1 == 0);
+    ثابت صحيح nb = k / QK8_1;
 
     block_q8_1 * GGML_RESTRICT y = vy;
 
-#if defined(__riscv_v)
+#إذا defined(__riscv_v)
 
     size_t vl = QK8_1;
 
-    for (int i = 0; i < nb; i++) {
+    لكل (صحيح i = 0; i < nb; i++) {
         // load elements
         vfloat32m8_t v_x   = __riscv_vle32_v_f32m8(x+i*QK8_1, vl);
 
         vfloat32m8_t vfabs = __riscv_vfabs_v_f32m8(v_x, vl);
         vfloat32m1_t tmp   = __riscv_vfmv_v_f_f32m1(0.0, vl);
         vfloat32m1_t vmax  = __riscv_vfredmax_vs_f32m8_f32m1(vfabs, tmp, vl);
-        float amax = __riscv_vfmv_f_s_f32m1_f32(vmax);
+        عائم amax = __riscv_vfmv_f_s_f32m1_f32(vmax);
 
-        const float d  = amax / ((1 << 7) - 1);
-        const float id = d ? 1.0f/d : 0.0f;
+        ثابت عائم d  = amax / ((1 << 7) - 1);
+        ثابت عائم id = d ? 1.0f/d : 0.0f;
 
         y[i].d = GGML_CPU_FP32_TO_FP16(d);
 
@@ -108,27 +108,27 @@ void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
         vint16m1_t vwrs = __riscv_vwredsum_vs_i8m2_i16m1(vs, tmp2, vl);
 
         // set y[i].s
-        int sum = __riscv_vmv_x_s_i16m1_i16(vwrs);
+        صحيح sum = __riscv_vmv_x_s_i16m1_i16(vwrs);
         y[i].s = GGML_CPU_FP32_TO_FP16(sum*d);
     }
 
-#else
+#وإلا
     GGML_UNUSED(nb);
     // scalar
     quantize_row_q8_1_ref(x, y, k);
 #endif
 }
 
-void quantize_row_q8_K(const float * GGML_RESTRICT x, void * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
+فراغ quantize_row_q8_K(ثابت عائم * GGML_RESTRICT x, فراغ * GGML_RESTRICT y, int64_t k) {
+    أكد(k % QK_K == 0);
     size_t nb = k / QK_K;
 
-#if defined __riscv_v
+#إذا defined __riscv_v
     block_q8_K * y_blocks = (block_q8_K *)y;
-    const size_t vlmax_f32m8 = __riscv_vsetvlmax_e32m8();
+    ثابت size_t vlmax_f32m8 = __riscv_vsetvlmax_e32m8();
 
-    for (size_t i = 0; i < nb; i++) {
-        const float* x_block = x + i * QK_K;
+    لكل (size_t i = 0; i < nb; i++) {
+        ثابت عائم* x_block = x + i * QK_K;
         block_q8_K* y_block = &y_blocks[i];
 
         // 1. Calculate Min/Max
@@ -137,7 +137,7 @@ void quantize_row_q8_K(const float * GGML_RESTRICT x, void * GGML_RESTRICT y, in
 
         size_t rem = QK_K;
         size_t offset = 0;
-        while (rem > 0) {
+        طالما (rem > 0) {
             size_t vl = __riscv_vsetvl_e32m8(rem);
             vfloat32m8_t v_curr = __riscv_vle32_v_f32m8(x_block + offset, vl);
             max_v = __riscv_vfmax_vv_f32m8(max_v, v_curr, vl);
@@ -152,19 +152,19 @@ void quantize_row_q8_K(const float * GGML_RESTRICT x, void * GGML_RESTRICT y, in
         vfloat32m1_t v_scalar_max = __riscv_vfredmax_vs_f32m8_f32m1(max_v, v_init_max, vlmax_f32m8);
         vfloat32m1_t v_scalar_min = __riscv_vfredmin_vs_f32m8_f32m1(min_v, v_init_min, vlmax_f32m8);
 
-        float max_val = __riscv_vfmv_f_s_f32m1_f32(v_scalar_max);
-        float min_val = __riscv_vfmv_f_s_f32m1_f32(v_scalar_min);
+        عائم max_val = __riscv_vfmv_f_s_f32m1_f32(v_scalar_max);
+        عائم min_val = __riscv_vfmv_f_s_f32m1_f32(v_scalar_min);
 
-        float amax = fabsf(max_val) > fabsf(min_val) ? fabsf(max_val) : fabsf(min_val);
+        عائم amax = fabsf(max_val) > fabsf(min_val) ? fabsf(max_val) : fabsf(min_val);
 
-        if (amax == 0.0f) {
+        إذا (amax == 0.0f) {
             y_block->d = 0.0f;
             memset(y_block->qs, 0, QK_K);
-            memset(y_block->bsums, 0, sizeof(y_block->bsums));
-            continue;
+            memset(y_block->bsums, 0, حجم(y_block->bsums));
+            استمر;
         }
 
-        const float iscale = -127.f / (fabsf(max_val) > fabsf(min_val) ? max_val : min_val);
+        ثابت عائم iscale = -127.f / (fabsf(max_val) > fabsf(min_val) ? max_val : min_val);
         y_block->d = 1.0f / iscale;
 
         // 2. Quantize and Calculate Sums
@@ -172,7 +172,7 @@ void quantize_row_q8_K(const float * GGML_RESTRICT x, void * GGML_RESTRICT y, in
         rem = QK_K;
         vint16m1_t v_zero_sum = __riscv_vmv_v_x_i16m1(0, 1);
 
-        while (rem > 0) {
+        طالما (rem > 0) {
             size_t vl = __riscv_vsetvl_e32m8(rem);
             vfloat32m8_t v_f = __riscv_vle32_v_f32m8(x_block + offset, vl);
 
@@ -186,7 +186,7 @@ void quantize_row_q8_K(const float * GGML_RESTRICT x, void * GGML_RESTRICT y, in
 
             // first iteration clear
 
-            int sum_idx;
+            صحيح sum_idx;
             vint8m1_t chunk_m1;
             vint16m1_t v_sum;
             sum_idx = offset / 16;
@@ -196,7 +196,7 @@ void quantize_row_q8_K(const float * GGML_RESTRICT x, void * GGML_RESTRICT y, in
 
             // remaining iterations
             vint8m2_t slid_q = v_q;
-            for (size_t k = 16; k < vl; k += 16) {
+            لكل (size_t k = 16; k < vl; k += 16) {
                 slid_q = __riscv_vslidedown_vx_i8m2(slid_q, 16, vl);
 
                 sum_idx = (offset + k) / 16;
@@ -210,7 +210,7 @@ void quantize_row_q8_K(const float * GGML_RESTRICT x, void * GGML_RESTRICT y, in
             offset += vl;
         }
     }
-#else
+#وإلا
     GGML_UNUSED(nb);
     // scalar
     quantize_row_q8_K_ref(x, y, k);
@@ -219,27 +219,27 @@ void quantize_row_q8_K(const float * GGML_RESTRICT x, void * GGML_RESTRICT y, in
 
 //===================================== Dot products =================================
 
-void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined(__riscv_v)
-    const int qk = QK8_0;
-    const int nb = n / qk;
+فراغ ggml_vec_dot_q4_0_q8_0(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+#إذا defined(__riscv_v)
+    ثابت صحيح qk = QK8_0;
+    ثابت صحيح nb = n / qk;
 
-    assert(n % qk == 0);
-    assert(nrc == 1);
+    أكد(n % qk == 0);
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_q4_0 * GGML_RESTRICT x = vx;
-    const block_q8_0 * GGML_RESTRICT y = vy;
+    ثابت block_q4_0 * GGML_RESTRICT x = vx;
+    ثابت block_q8_0 * GGML_RESTRICT y = vy;
 
-    int ib = 0;
-    float sumf = 0;
+    صحيح ib = 0;
+    عائم sumf = 0;
 
     size_t vl = qk / 2;
 
-    for (; ib < nb; ++ib) {
+    لكل (; ib < nb; ++ib) {
         // load elements
         vuint8m1_t tx = __riscv_vle8_v_u8m1(x[ib].qs, vl);
 
@@ -263,38 +263,38 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
         vint32m1_t vec_zero = __riscv_vmv_v_x_i32m1(0, vl);
         vint32m1_t vs2 = __riscv_vwredsum_vs_i16m2_i32m1(vec_mul2, vec_zero, vl);
 
-        int sumi = __riscv_vmv_x_s_i32m1_i32(vs2);
+        صحيح sumi = __riscv_vmv_x_s_i32m1_i32(vs2);
 
         sumf += sumi*GGML_CPU_FP16_TO_FP32(x[ib].d)*GGML_CPU_FP16_TO_FP32(y[ib].d);
     }
 
     *s = sumf;
-#else
+#وإلا
     ggml_vec_dot_q4_0_q8_0_generic(n, s, bs, vx, bx, vy, by, nrc);
 #endif
 }
 
-void ggml_vec_dot_q4_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined(__riscv_v)
-    const int qk = QK8_1;
-    const int nb = n / qk;
+فراغ ggml_vec_dot_q4_1_q8_1(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+#إذا defined(__riscv_v)
+    ثابت صحيح qk = QK8_1;
+    ثابت صحيح nb = n / qk;
 
-    assert(n % qk == 0);
-    assert(nrc == 1);
+    أكد(n % qk == 0);
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_q4_1 * GGML_RESTRICT x = vx;
-    const block_q8_1 * GGML_RESTRICT y = vy;
+    ثابت block_q4_1 * GGML_RESTRICT x = vx;
+    ثابت block_q8_1 * GGML_RESTRICT y = vy;
 
-    int ib = 0;
-    float sumf = 0;
+    صحيح ib = 0;
+    عائم sumf = 0;
 
     size_t vl = qk / 2;
 
-    for (; ib < nb; ++ib) {
+    لكل (; ib < nb; ++ib) {
         // load elements
         vuint8m1_t tx = __riscv_vle8_v_u8m1(x[ib].qs, vl);
 
@@ -314,48 +314,48 @@ void ggml_vec_dot_q4_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
         vint32m1_t vec_zero = __riscv_vmv_v_x_i32m1(0, vl);
         vint32m1_t vs2 = __riscv_vwredsum_vs_i16m2_i32m1(vec_mul2, vec_zero, vl);
 
-        int sumi = __riscv_vmv_x_s_i32m1_i32(vs2);
+        صحيح sumi = __riscv_vmv_x_s_i32m1_i32(vs2);
 
         sumf += (GGML_CPU_FP16_TO_FP32(x[ib].d)*GGML_CPU_FP16_TO_FP32(y[ib].d))*sumi + GGML_CPU_FP16_TO_FP32(x[ib].m)*GGML_CPU_FP16_TO_FP32(y[ib].s);
     }
 
     *s = sumf;
-#else
+#وإلا
     ggml_vec_dot_q4_1_q8_1_generic(n, s, bs, vx, bx, vy, by, nrc);
 #endif
 }
 
-void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined(__riscv_v)
-    const int qk = QK8_0;
-    const int nb = n / qk;
+فراغ ggml_vec_dot_q5_0_q8_0(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+#إذا defined(__riscv_v)
+    ثابت صحيح qk = QK8_0;
+    ثابت صحيح nb = n / qk;
 
-    int ib = 0;
-    float sumf = 0;
+    صحيح ib = 0;
+    عائم sumf = 0;
 
-    assert(n % qk == 0);
-    assert(qk == QK5_0);
-    assert(nrc == 1);
+    أكد(n % qk == 0);
+    أكد(qk == QK5_0);
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_q5_0 * GGML_RESTRICT x = vx;
-    const block_q8_0 * GGML_RESTRICT y = vy;
+    ثابت block_q5_0 * GGML_RESTRICT x = vx;
+    ثابت block_q8_0 * GGML_RESTRICT y = vy;
 
     size_t vl;
     size_t vlenb = __riscv_vlenb();
 
-    for (; ib < nb; ++ib) {
+    لكل (; ib < nb; ++ib) {
         vl = qk / 2;
         vuint8m1_t v0 = __riscv_vle8_v_u8m1(x[ib].qs, vl);
         vint8m1_t v0l = __riscv_vreinterpret_v_u8m1_i8m1(__riscv_vand_vx_u8m1(v0, 0x0F, vl));
         vint8m1_t v0h = __riscv_vreinterpret_v_u8m1_i8m1(__riscv_vsrl_vx_u8m1(v0, 4, vl));
         vint8m2_t v0c;
-        if (vlenb == 16) {
+        إذا (vlenb == 16) {
             v0c = __riscv_vcreate_v_i8m1_i8m2(v0l, v0h);
-        } else {
+        } وإلا {
             v0l = __riscv_vslideup_vx_i8m1(v0l, v0h, 16, 32);
             v0c = __riscv_vlmul_ext_v_i8m1_i8m2(v0l);
         }
@@ -374,42 +374,42 @@ void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     }
 
     *s = sumf;
-#else
+#وإلا
     ggml_vec_dot_q5_0_q8_0_generic(n, s, bs, vx, bx, vy, by, nrc);
 #endif
 }
 
-void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined(__riscv_v)
-    const int qk = QK8_1;
-    const int nb = n / qk;
+فراغ ggml_vec_dot_q5_1_q8_1(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+#إذا defined(__riscv_v)
+    ثابت صحيح qk = QK8_1;
+    ثابت صحيح nb = n / qk;
 
-    int ib = 0;
-    float sumf = 0;
+    صحيح ib = 0;
+    عائم sumf = 0;
 
-    assert(n % qk == 0);
-    assert(qk == QK5_1);
-    assert(nrc == 1);
+    أكد(n % qk == 0);
+    أكد(qk == QK5_1);
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_q5_1 * GGML_RESTRICT x = vx;
-    const block_q8_1 * GGML_RESTRICT y = vy;
+    ثابت block_q5_1 * GGML_RESTRICT x = vx;
+    ثابت block_q8_1 * GGML_RESTRICT y = vy;
 
     size_t vl;
     size_t vlenb = __riscv_vlenb();
 
-    for (; ib < nb; ++ib) {
+    لكل (; ib < nb; ++ib) {
         vl = qk / 2;
         vuint8m1_t v0 = __riscv_vle8_v_u8m1(x[ib].qs, vl);
         vint8m1_t v0l = __riscv_vreinterpret_v_u8m1_i8m1(__riscv_vand_vx_u8m1(v0, 0x0F, vl));
         vint8m1_t v0h = __riscv_vreinterpret_v_u8m1_i8m1(__riscv_vsrl_vx_u8m1(v0, 4, vl));
         vint8m2_t v0c;
-        if (vlenb == 16) {
+        إذا (vlenb == 16) {
             v0c = __riscv_vcreate_v_i8m1_i8m2(v0l, v0h);
-        } else {
+        } وإلا {
             v0l = __riscv_vslideup_vx_i8m1(v0l, v0h, 16, 32);
             v0c = __riscv_vlmul_ext_v_i8m1_i8m2(v0l);
         }
@@ -427,32 +427,32 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
     }
 
     *s = sumf;
-#else
+#وإلا
     ggml_vec_dot_q5_1_q8_1_generic(n, s, bs, vx, bx, vy, by, nrc);
 #endif
 }
 
-void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
+فراغ ggml_vec_dot_q8_0_q8_0(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    ثابت صحيح qk = QK8_0;
+    ثابت صحيح nb = n / qk;
 
-    assert(n % qk == 0);
-    assert(nrc == 1);
+    أكد(n % qk == 0);
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_q8_0 * GGML_RESTRICT x = vx;
-    const block_q8_0 * GGML_RESTRICT y = vy;
+    ثابت block_q8_0 * GGML_RESTRICT x = vx;
+    ثابت block_q8_0 * GGML_RESTRICT y = vy;
 
-    int ib = 0;
-    float sumf = 0;
+    صحيح ib = 0;
+    عائم sumf = 0;
 
-#if defined(__riscv_v)
+#إذا defined(__riscv_v)
     size_t vl = qk;
 
-    for (; ib < nb; ++ib) {
+    لكل (; ib < nb; ++ib) {
         // load elements
         vint8m2_t bx_0 = __riscv_vle8_v_i8m2(x[ib].qs, vl);
         vint8m2_t by_0 = __riscv_vle8_v_i8m2(y[ib].qs, vl);
@@ -462,13 +462,13 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
         vint32m1_t v_zero = __riscv_vmv_v_x_i32m1(0, vl);
         vint32m1_t v_sum = __riscv_vwredsum_vs_i16m4_i32m1(vw_mul, v_zero, vl);
 
-        int sumi = __riscv_vmv_x_s_i32m1_i32(v_sum);
+        صحيح sumi = __riscv_vmv_x_s_i32m1_i32(v_sum);
 
         sumf += sumi*(GGML_CPU_FP16_TO_FP32(x[ib].d)*GGML_CPU_FP16_TO_FP32(y[ib].d));
     }
 
     *s = sumf;
-#else
+#وإلا
 
     UNUSED(nb);
     UNUSED(x);
@@ -480,38 +480,38 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-#if defined(__riscv_v)
-static NOINLINE void ggml_vec_dot_q1_0_q8_0_vl256(const int n, float * GGML_RESTRICT s, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy) {
-    const int qk = QK1_0;
-    const int nb = n / qk;
-    assert(n % qk == 0);
+#إذا defined(__riscv_v)
+ساكن NOINLINE فراغ ggml_vec_dot_q1_0_q8_0_vl256(ثابت صحيح n, عائم * GGML_RESTRICT s, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy) {
+    ثابت صحيح qk = QK1_0;
+    ثابت صحيح nb = n / qk;
+    أكد(n % qk == 0);
 
-    const block_q1_0 * GGML_RESTRICT x = vx;
-    const block_q8_0 * GGML_RESTRICT y = vy;
+    ثابت block_q1_0 * GGML_RESTRICT x = vx;
+    ثابت block_q8_0 * GGML_RESTRICT y = vy;
 
     //LMUL = 1, VLMAX = 32
-    const size_t vl32 = __riscv_vsetvl_e8m1(32);
-    assert(vl32 == 32);
+    ثابت size_t vl32 = __riscv_vsetvl_e8m1(32);
+    أكد(vl32 == 32);
 
-    const vint16m1_t zero = __riscv_vmv_v_x_i16m1(0, 1);
+    ثابت vint16m1_t zero = __riscv_vmv_v_x_i16m1(0, 1);
 
-    float sumf = 0;
+    عائم sumf = 0;
 
-    for (int ib = 0; ib < nb; ++ib) {
-        const float d0 = GGML_CPU_FP16_TO_FP32(x[ib].d);
+    لكل (صحيح ib = 0; ib < nb; ++ib) {
+        ثابت عائم d0 = GGML_CPU_FP16_TO_FP32(x[ib].d);
 
-        float acc = 0;
+        عائم acc = 0;
 
-        for (int k = 0; k < 4; ++k) {
-            const block_q8_0 * GGML_RESTRICT yb = &y[ib * 4 + k];
-            const vbool8_t is_not_zero = __riscv_vlm_v_b8(x[ib].qs + 4 * k, vl32);
+        لكل (صحيح k = 0; k < 4; ++k) {
+            ثابت block_q8_0 * GGML_RESTRICT yb = &y[ib * 4 + k];
+            ثابت vbool8_t is_not_zero = __riscv_vlm_v_b8(x[ib].qs + 4 * k, vl32);
 
-            const vint8m1_t qy = __riscv_vle8_v_i8m1(yb->qs, vl32);
-            const vint8m1_t neg_qy = __riscv_vneg_v_i8m1(qy, vl32);
-            const vint8m1_t sy = __riscv_vmerge_vvm_i8m1(neg_qy, qy, is_not_zero, vl32);
+            ثابت vint8m1_t qy = __riscv_vle8_v_i8m1(yb->qs, vl32);
+            ثابت vint8m1_t neg_qy = __riscv_vneg_v_i8m1(qy, vl32);
+            ثابت vint8m1_t sy = __riscv_vmerge_vvm_i8m1(neg_qy, qy, is_not_zero, vl32);
 
-            const vint16m1_t red = __riscv_vwredsum_vs_i8m1_i16m1(sy, zero, vl32);
-            acc += GGML_CPU_FP16_TO_FP32(yb->d) * (float)__riscv_vmv_x_s_i16m1_i16(red);
+            ثابت vint16m1_t red = __riscv_vwredsum_vs_i8m1_i16m1(sy, zero, vl32);
+            acc += GGML_CPU_FP16_TO_FP32(yb->d) * (عائم)__riscv_vmv_x_s_i16m1_i16(red);
         }
 
         sumf += d0 * acc;
@@ -520,37 +520,37 @@ static NOINLINE void ggml_vec_dot_q1_0_q8_0_vl256(const int n, float * GGML_REST
     *s = sumf;
 }
 
-static NOINLINE void ggml_vec_dot_q1_0_q8_0_vl128(const int n, float * GGML_RESTRICT s, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy) {
-    const int qk = QK1_0;
-    const int nb = n / qk;
-    assert(n % qk == 0);
+ساكن NOINLINE فراغ ggml_vec_dot_q1_0_q8_0_vl128(ثابت صحيح n, عائم * GGML_RESTRICT s, ثابت فراغ * GGML_RESTRICT vx, ثابت فراغ * GGML_RESTRICT vy) {
+    ثابت صحيح qk = QK1_0;
+    ثابت صحيح nb = n / qk;
+    أكد(n % qk == 0);
 
-    const block_q1_0 * GGML_RESTRICT x = vx;
-    const block_q8_0 * GGML_RESTRICT y = vy;
+    ثابت block_q1_0 * GGML_RESTRICT x = vx;
+    ثابت block_q8_0 * GGML_RESTRICT y = vy;
 
     //LMUL = 2, VLMAX = 32
-    const size_t vl32 = __riscv_vsetvl_e8m2(32);
-    assert(vl32 == 32);
+    ثابت size_t vl32 = __riscv_vsetvl_e8m2(32);
+    أكد(vl32 == 32);
 
-    const vint16m1_t zero = __riscv_vmv_v_x_i16m1(0, 1);
+    ثابت vint16m1_t zero = __riscv_vmv_v_x_i16m1(0, 1);
 
-    float sumf = 0;
+    عائم sumf = 0;
 
-    for (int ib = 0; ib < nb; ++ib) {
-        const float d0 = GGML_CPU_FP16_TO_FP32(x[ib].d);
+    لكل (صحيح ib = 0; ib < nb; ++ib) {
+        ثابت عائم d0 = GGML_CPU_FP16_TO_FP32(x[ib].d);
 
-        float acc = 0;
+        عائم acc = 0;
 
-        for (int k = 0; k < 4; ++k) {
-            const block_q8_0 * GGML_RESTRICT yb = &y[ib * 4 + k];
-            const vbool4_t is_not_zero = __riscv_vlm_v_b4(x[ib].qs + 4 * k, vl32);
+        لكل (صحيح k = 0; k < 4; ++k) {
+            ثابت block_q8_0 * GGML_RESTRICT yb = &y[ib * 4 + k];
+            ثابت vbool4_t is_not_zero = __riscv_vlm_v_b4(x[ib].qs + 4 * k, vl32);
 
-            const vint8m2_t qy = __riscv_vle8_v_i8m2(yb->qs, vl32);
-            const vint8m2_t neg_qy =__riscv_vneg_v_i8m2(qy, vl32);
-            const vint8m2_t sy = __riscv_vmerge_vvm_i8m2(neg_qy, qy, is_not_zero, vl32);
+            ثابت vint8m2_t qy = __riscv_vle8_v_i8m2(yb->qs, vl32);
+            ثابت vint8m2_t neg_qy =__riscv_vneg_v_i8m2(qy, vl32);
+            ثابت vint8m2_t sy = __riscv_vmerge_vvm_i8m2(neg_qy, qy, is_not_zero, vl32);
 
-            const vint16m1_t red = __riscv_vwredsum_vs_i8m2_i16m1(sy, zero, vl32);
-            acc += GGML_CPU_FP16_TO_FP32(yb->d) * (float)__riscv_vmv_x_s_i16m1_i16(red);
+            ثابت vint16m1_t red = __riscv_vwredsum_vs_i8m2_i16m1(sy, zero, vl32);
+            acc += GGML_CPU_FP16_TO_FP32(yb->d) * (عائم)__riscv_vmv_x_s_i16m1_i16(red);
         }
 
         sumf += d0 * acc;
@@ -560,49 +560,49 @@ static NOINLINE void ggml_vec_dot_q1_0_q8_0_vl128(const int n, float * GGML_REST
 }
 #endif
 
-void ggml_vec_dot_q1_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined(__riscv_v)
-    assert(nrc == 1);
+فراغ ggml_vec_dot_q1_0_q8_0(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+#إذا defined(__riscv_v)
+    أكد(nrc == 1);
 
-    const size_t vlen_bits = __riscv_vlenb() * 8;
+    ثابت size_t vlen_bits = __riscv_vlenb() * 8;
 
-    if (vlen_bits >= 256) {
+    إذا (vlen_bits >= 256) {
         ggml_vec_dot_q1_0_q8_0_vl256(n, s, vx, vy);
-    } else if (vlen_bits >= 128) {
+    } وإلا إذا (vlen_bits >= 128) {
         ggml_vec_dot_q1_0_q8_0_vl128(n, s, vx, vy);
-    } else {
+    } وإلا {
         ggml_vec_dot_q1_0_q8_0_generic(n, s, bs, vx, bx, vy, by, nrc);
     }
-#else
+#وإلا
     ggml_vec_dot_q1_0_q8_0_generic(n, s, bs, vx, bx, vy, by, nrc);
 #endif
 }
 
-#if defined __riscv_xtheadvector
-void ggml_vec_dot_q2_K_q8_K_xtheadvector(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(nrc == 1);
+#إذا defined __riscv_xtheadvector
+فراغ ggml_vec_dot_q2_K_q8_K_xtheadvector(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_q2_K * GGML_RESTRICT x = vx;
-    const block_q8_K * GGML_RESTRICT y = vy;
+    ثابت block_q2_K * GGML_RESTRICT x = vx;
+    ثابت block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ثابت صحيح nb = n / QK_K;
 
-    float sumf = 0;
+    عائم sumf = 0;
     uint8_t atmp[16];
 
-    for (int i = 0; i < nb; ++i) {
-        const uint8_t * q2 = x[i].qs;
-        const  int8_t * q8 = y[i].qs;
-        const uint8_t * sc = x[i].scales;
-        const float dall = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
-        const float dmin = -y[i].d * GGML_CPU_FP16_TO_FP32(x[i].dmin);
+    لكل (صحيح i = 0; i < nb; ++i) {
+        ثابت uint8_t * q2 = x[i].qs;
+        ثابت  int8_t * q8 = y[i].qs;
+        ثابت uint8_t * sc = x[i].scales;
+        ثابت عائم dall = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
+        ثابت عائم dmin = -y[i].d * GGML_CPU_FP16_TO_FP32(x[i].dmin);
         uint8_t *patmp = atmp;
-        int vsums;
-        int tmp;
+        صحيح vsums;
+        صحيح tmp;
         __asm__ __volatile__(
             "th.vsetvli zero, %[vl16], e8, m1\n\t"
             "th.vmv.v.x v8, zero\n\t"
@@ -627,9 +627,9 @@ void ggml_vec_dot_q2_K_q8_K_xtheadvector(int n, float * GGML_RESTRICT s, size_t 
             , "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31"
         );
         sumf += dmin * vsums;
-        int isum = 0;
+        صحيح isum = 0;
 
-        for (int j = 0; j < QK_K/128; ++j) {
+        لكل (صحيح j = 0; j < QK_K/128; ++j) {
             __asm__ __volatile__(
                 "th.vsetvli zero, %[vl32], e8, m2\n\t"
                 "th.vlb.v v0, (%[q2])\n\t"
@@ -688,34 +688,34 @@ void ggml_vec_dot_q2_K_q8_K_xtheadvector(int n, float * GGML_RESTRICT s, size_t 
 }
 #endif
 
-#if defined __riscv_v
-void ggml_vec_dot_q2_K_q8_K_vl128(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(nrc == 1);
+#إذا defined __riscv_v
+فراغ ggml_vec_dot_q2_K_q8_K_vl128(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_q2_K * GGML_RESTRICT x = vx;
-    const block_q8_K * GGML_RESTRICT y = vy;
+    ثابت block_q2_K * GGML_RESTRICT x = vx;
+    ثابت block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ثابت صحيح nb = n / QK_K;
 
-    float sumf = 0;
+    عائم sumf = 0;
     uint8_t atmp[16];
 
     uint8_t temp_01[32] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                             1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 
-    for (int i = 0; i < nb; ++i) {
-        const uint8_t * q2 = x[i].qs;
-        const  int8_t * q8 = y[i].qs;
-        const uint8_t * sc = x[i].scales;
-        const float dall = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
-        const float dmin = -y[i].d * GGML_CPU_FP16_TO_FP32(x[i].dmin);
+    لكل (صحيح i = 0; i < nb; ++i) {
+        ثابت uint8_t * q2 = x[i].qs;
+        ثابت  int8_t * q8 = y[i].qs;
+        ثابت uint8_t * sc = x[i].scales;
+        ثابت عائم dall = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
+        ثابت عائم dmin = -y[i].d * GGML_CPU_FP16_TO_FP32(x[i].dmin);
         uint8_t *patmp = atmp;
-        int vsums;
-        int tmp, t1, t2, t3, t4, t5, t6, t7;
+        صحيح vsums;
+        صحيح tmp, t1, t2, t3, t4, t5, t6, t7;
         __asm__ __volatile__(
             "vsetivli zero, 16, e8, m1\n\t"
             "vmv.v.x v8, zero\n\t"
@@ -742,9 +742,9 @@ void ggml_vec_dot_q2_K_q8_K_vl128(int n, float * GGML_RESTRICT s, size_t bs, con
             , "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31"
         );
         sumf += dmin * vsums;
-        int isum = 0;
+        صحيح isum = 0;
 
-        for (int j = 0; j < QK_K/128; ++j) {
+        لكل (صحيح j = 0; j < QK_K/128; ++j) {
             __asm__ __volatile__(
                 "lb zero, 31(%[q2])\n\t"
                 "addi %[tmp], %[q2], 16\n\t"
@@ -844,31 +844,31 @@ void ggml_vec_dot_q2_K_q8_K_vl128(int n, float * GGML_RESTRICT s, size_t bs, con
     *s = sumf;
 }
 
-void ggml_vec_dot_q2_K_q8_K_vl256(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(nrc == 1);
+فراغ ggml_vec_dot_q2_K_q8_K_vl256(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_q2_K * GGML_RESTRICT x = vx;
-    const block_q8_K * GGML_RESTRICT y = vy;
+    ثابت block_q2_K * GGML_RESTRICT x = vx;
+    ثابت block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ثابت صحيح nb = n / QK_K;
 
-    float sumf = 0;
+    عائم sumf = 0;
     uint8_t atmp[16];
 
     uint8_t temp_01[32] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                             1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 
-    for (int i = 0; i < nb; ++i) {
-        const uint8_t * q2 = x[i].qs;
-        const int8_t *  q8 = y[i].qs;
-        const uint8_t * sc = x[i].scales;
+    لكل (صحيح i = 0; i < nb; ++i) {
+        ثابت uint8_t * q2 = x[i].qs;
+        ثابت int8_t *  q8 = y[i].qs;
+        ثابت uint8_t * sc = x[i].scales;
 
-        const float dall = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
-        const float dmin = -y[i].d * GGML_CPU_FP16_TO_FP32(x[i].dmin);
+        ثابت عائم dall = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
+        ثابت عائم dmin = -y[i].d * GGML_CPU_FP16_TO_FP32(x[i].dmin);
 
         size_t vl = 16;
 
@@ -891,9 +891,9 @@ void ggml_vec_dot_q2_K_q8_K_vl256(int n, float * GGML_RESTRICT s, size_t bs, con
         vuint8m1_t v_b   = __riscv_vle8_v_u8m1(temp_01, vl);
 
         uint8_t is   = 0;
-        int     isum = 0;
+        صحيح     isum = 0;
 
-        for (int j = 0; j < QK_K / 128; ++j) {
+        لكل (صحيح j = 0; j < QK_K / 128; ++j) {
             // load Q2
             vuint8m1_t q2_x = __riscv_vle8_v_u8m1(q2, vl);
 
@@ -941,50 +941,50 @@ void ggml_vec_dot_q2_K_q8_K_vl256(int n, float * GGML_RESTRICT s, size_t bs, con
 }
 #endif
 
-void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined __riscv_xtheadvector
+فراغ ggml_vec_dot_q2_K_q8_K(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+#إذا defined __riscv_xtheadvector
     ggml_vec_dot_q2_K_q8_K_xtheadvector(n, s, bs, vx, bx, vy, by, nrc);
-#elif defined __riscv_v
-    switch (__riscv_vlenb() * 8) {
-        case 128:
+#وإلاإذا defined __riscv_v
+    بدل (__riscv_vlenb() * 8) {
+        حالة 128:
             ggml_vec_dot_q2_K_q8_K_vl128(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        default:
+            اكسر;
+        افتراضي:
             ggml_vec_dot_q2_K_q8_K_vl256(n, s, bs, vx, bx, vy, by, nrc);
-            break;
+            اكسر;
     }
-#else
+#وإلا
     ggml_vec_dot_q2_K_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
 #endif
 }
 
-#if defined __riscv_xtheadvector
-void ggml_vec_dot_q3_K_q8_K_xtheadvector(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+#إذا defined __riscv_xtheadvector
+فراغ ggml_vec_dot_q3_K_q8_K_xtheadvector(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const uint32_t kmask1 = 0x03030303;
-    const uint32_t kmask2 = 0x0f0f0f0f;
+    ثابت uint32_t kmask1 = 0x03030303;
+    ثابت uint32_t kmask2 = 0x0f0f0f0f;
 
-    const block_q3_K * GGML_RESTRICT x = vx;
-    const block_q8_K * GGML_RESTRICT y = vy;
+    ثابت block_q3_K * GGML_RESTRICT x = vx;
+    ثابت block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ثابت صحيح nb = n / QK_K;
 
     uint32_t utmp[4];
-    float sumf = 0;
+    عائم sumf = 0;
 
-    for (int i = 0; i < nb; ++i) {
-        const uint8_t * restrict q3 = x[i].qs;
-        const uint8_t * restrict qh = x[i].hmask;
-        const  int8_t * restrict q8 = y[i].qs;
+    لكل (صحيح i = 0; i < nb; ++i) {
+        ثابت uint8_t * restrict q3 = x[i].qs;
+        ثابت uint8_t * restrict qh = x[i].hmask;
+        ثابت  int8_t * restrict q8 = y[i].qs;
 
         int8_t * scale = (int8_t *)utmp;
-        int tmp;
+        صحيح tmp;
         __asm__ __volatile__(
             "li %[tmp], 12\n\t"
             "th.vsetvli zero, %[tmp], e8, m1\n\t"
@@ -1023,8 +1023,8 @@ void ggml_vec_dot_q3_K_q8_K_xtheadvector(int n, float * GGML_RESTRICT s, size_t 
         );
 
         uint8_t m = 1;
-        int isum = 0;
-        for (int j = 0; j < QK_K; j += 128) {
+        صحيح isum = 0;
+        لكل (صحيح j = 0; j < QK_K; j += 128) {
             __asm__ __volatile__(
                 // fixme: use v0p7 mask layout directly
                 "th.vsetvli zero, %[vl32], e8, m2\n\t"
@@ -1095,7 +1095,7 @@ void ggml_vec_dot_q3_K_q8_K_xtheadvector(int n, float * GGML_RESTRICT s, size_t 
             q3 += 32;    q8 += 128;   scale += 8;
         }
 
-        const float d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
+        ثابت عائم d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
         sumf += d * isum;
     }
 
@@ -1103,34 +1103,34 @@ void ggml_vec_dot_q3_K_q8_K_xtheadvector(int n, float * GGML_RESTRICT s, size_t 
 }
 #endif
 
-#if defined __riscv_v
-void ggml_vec_dot_q3_K_q8_K_vl128(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+#إذا defined __riscv_v
+فراغ ggml_vec_dot_q3_K_q8_K_vl128(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const uint32_t kmask1 = 0x03030303;
-    const uint32_t kmask2 = 0x0f0f0f0f;
+    ثابت uint32_t kmask1 = 0x03030303;
+    ثابت uint32_t kmask2 = 0x0f0f0f0f;
 
-    const block_q3_K * GGML_RESTRICT x = vx;
-    const block_q8_K * GGML_RESTRICT y = vy;
+    ثابت block_q3_K * GGML_RESTRICT x = vx;
+    ثابت block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ثابت صحيح nb = n / QK_K;
 
     uint32_t utmp[4];
-    float sumf = 0;
+    عائم sumf = 0;
     uint32_t aux[3];
 
-    for (int i = 0; i < nb; ++i) {
-        const uint8_t * restrict q3 = x[i].qs;
-        const uint8_t * restrict qh = x[i].hmask;
-        const  int8_t * restrict q8 = y[i].qs;
+    لكل (صحيح i = 0; i < nb; ++i) {
+        ثابت uint8_t * restrict q3 = x[i].qs;
+        ثابت uint8_t * restrict qh = x[i].hmask;
+        ثابت  int8_t * restrict q8 = y[i].qs;
 
         int8_t * scale = (int8_t *)utmp;
-        int tmp, t1, t2, t3, t4, t5, t6, t7;
+        صحيح tmp, t1, t2, t3, t4, t5, t6, t7;
         __asm__ __volatile__(
             "vsetivli zero, 12, e8, m1\n\t"
             "vle8.v v0, (%[s6b])\n\t"
@@ -1165,8 +1165,8 @@ void ggml_vec_dot_q3_K_q8_K_vl128(int n, float * GGML_RESTRICT s, size_t bs, con
         );
 
         uint8_t m = 1;
-        int isum = 0;
-        for (int j = 0; j < QK_K; j += 128) {
+        صحيح isum = 0;
+        لكل (صحيح j = 0; j < QK_K; j += 128) {
             __asm__ __volatile__(
                 "lb zero, 31(%[q3])\n\t"
                 "vsetvli zero, %[vl32], e8, m2, ta, mu\n\t"
@@ -1247,36 +1247,36 @@ void ggml_vec_dot_q3_K_q8_K_vl128(int n, float * GGML_RESTRICT s, size_t bs, con
             q3 += 32;    q8 += 128;   scale += 8;
         }
 
-        const float d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
+        ثابت عائم d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
         sumf += d * isum;
     }
 
     *s = sumf;
 }
 
-void ggml_vec_dot_q3_K_q8_K_vl256(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+فراغ ggml_vec_dot_q3_K_q8_K_vl256(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const uint32_t kmask1 = 0x03030303;
-    const uint32_t kmask2 = 0x0f0f0f0f;
+    ثابت uint32_t kmask1 = 0x03030303;
+    ثابت uint32_t kmask2 = 0x0f0f0f0f;
 
-    const block_q3_K * GGML_RESTRICT x = vx;
-    const block_q8_K * GGML_RESTRICT y = vy;
+    ثابت block_q3_K * GGML_RESTRICT x = vx;
+    ثابت block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ثابت صحيح nb = n / QK_K;
     uint32_t utmp[4];
-    float sumf = 0;
+    عائم sumf = 0;
     uint32_t aux[3];
 
-    for (int i = 0; i < nb; ++i) {
-        const uint8_t * GGML_RESTRICT q3 = x[i].qs;
-        const uint8_t * GGML_RESTRICT qh = x[i].hmask;
-        const  int8_t * GGML_RESTRICT q8 = y[i].qs;
+    لكل (صحيح i = 0; i < nb; ++i) {
+        ثابت uint8_t * GGML_RESTRICT q3 = x[i].qs;
+        ثابت uint8_t * GGML_RESTRICT qh = x[i].hmask;
+        ثابت  int8_t * GGML_RESTRICT q8 = y[i].qs;
 
         memcpy(aux, x[i].scales, 12);
         utmp[3] = ((aux[1] >> 4) & kmask2) | (((aux[2] >> 6) & kmask1) << 4);
@@ -1285,7 +1285,7 @@ void ggml_vec_dot_q3_K_q8_K_vl256(int n, float * GGML_RESTRICT s, size_t bs, con
         utmp[0] = (aux[0] & kmask2) | (((aux[2] >> 0) & kmask1) << 4);
 
         int8_t * scale = (int8_t *)utmp;
-        for (int j = 0; j < 16; ++j) scale[j] -= 32;
+        لكل (صحيح j = 0; j < 16; ++j) scale[j] -= 32;
 
 
         size_t vl = 32;
@@ -1294,9 +1294,9 @@ void ggml_vec_dot_q3_K_q8_K_vl256(int n, float * GGML_RESTRICT s, size_t bs, con
         vint32m1_t vzero = __riscv_vmv_v_x_i32m1(0, 1);
         vuint8m1_t vqh = __riscv_vle8_v_u8m1(qh, vl);
 
-        int sum_t = 0;
+        صحيح sum_t = 0;
 
-        for (int j = 0; j < QK_K; j += 128) {
+        لكل (صحيح j = 0; j < QK_K; j += 128) {
 
             vl = 32;
 
@@ -1358,7 +1358,7 @@ void ggml_vec_dot_q3_K_q8_K_vl256(int n, float * GGML_RESTRICT s, size_t bs, con
 
         }
 
-        const float d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
+        ثابت عائم d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
 
         sumf += d*sum_t;
 
@@ -1367,34 +1367,34 @@ void ggml_vec_dot_q3_K_q8_K_vl256(int n, float * GGML_RESTRICT s, size_t bs, con
     *s = sumf;
 }
 
-void ggml_vec_dot_q3_K_q8_K_vl512(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+فراغ ggml_vec_dot_q3_K_q8_K_vl512(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const uint32_t kmask1 = 0x03030303;
-    const uint32_t kmask2 = 0x0f0f0f0f;
+    ثابت uint32_t kmask1 = 0x03030303;
+    ثابت uint32_t kmask2 = 0x0f0f0f0f;
 
-    const block_q3_K * GGML_RESTRICT x = vx;
-    const block_q8_K * GGML_RESTRICT y = vy;
+    ثابت block_q3_K * GGML_RESTRICT x = vx;
+    ثابت block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ثابت صحيح nb = n / QK_K;
 
     // mask for processing 16 elements per prod register
-    const vuint16m1_t va_index = __riscv_vid_v_u16m1(32);
-    const vbool16_t va_mask = __riscv_vmsgtu_vx_u16m1_b16(va_index, 15, 32);
+    ثابت vuint16m1_t va_index = __riscv_vid_v_u16m1(32);
+    ثابت vbool16_t va_mask = __riscv_vmsgtu_vx_u16m1_b16(va_index, 15, 32);
 
     uint32_t utmp[4];
-    float sumf = 0;
+    عائم sumf = 0;
     uint32_t aux[3];
 
-    for (int i = 0; i < nb; ++i) {
-        const uint8_t * GGML_RESTRICT q3 = x[i].qs;
-        const uint8_t * GGML_RESTRICT qh = x[i].hmask;
-        const  int8_t * GGML_RESTRICT q8 = y[i].qs;
+    لكل (صحيح i = 0; i < nb; ++i) {
+        ثابت uint8_t * GGML_RESTRICT q3 = x[i].qs;
+        ثابت uint8_t * GGML_RESTRICT qh = x[i].hmask;
+        ثابت  int8_t * GGML_RESTRICT q8 = y[i].qs;
 
         memcpy(aux, x[i].scales, 12);
         utmp[3] = ((aux[1] >> 4) & kmask2) | (((aux[2] >> 6) & kmask1) << 4);
@@ -1403,7 +1403,7 @@ void ggml_vec_dot_q3_K_q8_K_vl512(int n, float * GGML_RESTRICT s, size_t bs, con
         utmp[0] = (aux[0] & kmask2) | (((aux[2] >> 0) & kmask1) << 4);
 
         int8_t * scale = (int8_t *)utmp;
-        for (int j = 0; j < 16; ++j) scale[j] -= 32;
+        لكل (صحيح j = 0; j < 16; ++j) scale[j] -= 32;
 
 
         size_t vl = 32;
@@ -1412,14 +1412,14 @@ void ggml_vec_dot_q3_K_q8_K_vl512(int n, float * GGML_RESTRICT s, size_t bs, con
         vint32m1_t vzero = __riscv_vmv_v_x_i32m1(0, 1);
         vuint8mf2_t vqh = __riscv_vle8_v_u8mf2(qh, vl);
 
-        int sum_t = 0;
+        صحيح sum_t = 0;
 
         vint32m2_t vaux_0 = __riscv_vmv_v_x_i32m2(0, vl);
         vint32m2_t vaux_1 = __riscv_vmv_v_x_i32m2(0, vl);
         vint32m2_t vaux_2 = __riscv_vmv_v_x_i32m2(0, vl);
         vint32m2_t vaux_3 = __riscv_vmv_v_x_i32m2(0, vl);
 
-        for (int j = 0; j < QK_K; j += 128) {
+        لكل (صحيح j = 0; j < QK_K; j += 128) {
 
             vl = 32;
 
@@ -1477,7 +1477,7 @@ void ggml_vec_dot_q3_K_q8_K_vl512(int n, float * GGML_RESTRICT s, size_t bs, con
 
         sum_t += __riscv_vmv_x_s_i32m1_i32(isum1);
 
-        const float d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
+        ثابت عائم d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
 
         sumf += d*sum_t;
     }
@@ -1485,34 +1485,34 @@ void ggml_vec_dot_q3_K_q8_K_vl512(int n, float * GGML_RESTRICT s, size_t bs, con
     *s = sumf;
 }
 
-void ggml_vec_dot_q3_K_q8_K_vl1024(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+فراغ ggml_vec_dot_q3_K_q8_K_vl1024(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const uint32_t kmask1 = 0x03030303;
-    const uint32_t kmask2 = 0x0f0f0f0f;
+    ثابت uint32_t kmask1 = 0x03030303;
+    ثابت uint32_t kmask2 = 0x0f0f0f0f;
 
-    const block_q3_K * GGML_RESTRICT x = vx;
-    const block_q8_K * GGML_RESTRICT y = vy;
+    ثابت block_q3_K * GGML_RESTRICT x = vx;
+    ثابت block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ثابت صحيح nb = n / QK_K;
 
     // mask for processing 16 elements per prod register
-    const vuint16mf2_t va_index = __riscv_vid_v_u16mf2(32);
-    const vbool32_t va_mask = __riscv_vmsgtu_vx_u16mf2_b32(va_index, 15, 32);
+    ثابت vuint16mf2_t va_index = __riscv_vid_v_u16mf2(32);
+    ثابت vbool32_t va_mask = __riscv_vmsgtu_vx_u16mf2_b32(va_index, 15, 32);
 
     uint32_t utmp[4];
-    float sumf = 0;
+    عائم sumf = 0;
     uint32_t aux[3];
 
-    for (int i = 0; i < nb; ++i) {
-        const uint8_t * GGML_RESTRICT q3 = x[i].qs;
-        const uint8_t * GGML_RESTRICT qh = x[i].hmask;
-        const  int8_t * GGML_RESTRICT q8 = y[i].qs;
+    لكل (صحيح i = 0; i < nb; ++i) {
+        ثابت uint8_t * GGML_RESTRICT q3 = x[i].qs;
+        ثابت uint8_t * GGML_RESTRICT qh = x[i].hmask;
+        ثابت  int8_t * GGML_RESTRICT q8 = y[i].qs;
 
         memcpy(aux, x[i].scales, 12);
         utmp[3] = ((aux[1] >> 4) & kmask2) | (((aux[2] >> 6) & kmask1) << 4);
@@ -1521,7 +1521,7 @@ void ggml_vec_dot_q3_K_q8_K_vl1024(int n, float * GGML_RESTRICT s, size_t bs, co
         utmp[0] = (aux[0] & kmask2) | (((aux[2] >> 0) & kmask1) << 4);
 
         int8_t * scale = (int8_t *)utmp;
-        for (int j = 0; j < 16; ++j) scale[j] -= 32;
+        لكل (صحيح j = 0; j < 16; ++j) scale[j] -= 32;
 
 
         size_t vl = 32;
@@ -1530,14 +1530,14 @@ void ggml_vec_dot_q3_K_q8_K_vl1024(int n, float * GGML_RESTRICT s, size_t bs, co
         vint32m1_t vzero = __riscv_vmv_v_x_i32m1(0, 1);
         vuint8mf4_t vqh = __riscv_vle8_v_u8mf4(qh, vl);
 
-        int sum_t = 0;
+        صحيح sum_t = 0;
 
         vint32m1_t vaux_0 = __riscv_vmv_v_x_i32m1(0, vl);
         vint32m1_t vaux_1 = __riscv_vmv_v_x_i32m1(0, vl);
         vint32m1_t vaux_2 = __riscv_vmv_v_x_i32m1(0, vl);
         vint32m1_t vaux_3 = __riscv_vmv_v_x_i32m1(0, vl);
 
-        for (int j = 0; j < QK_K; j += 128) {
+        لكل (صحيح j = 0; j < QK_K; j += 128) {
 
             vl = 32;
 
@@ -1595,7 +1595,7 @@ void ggml_vec_dot_q3_K_q8_K_vl1024(int n, float * GGML_RESTRICT s, size_t bs, co
 
         sum_t += __riscv_vmv_x_s_i32m1_i32(isum1);
 
-        const float d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
+        ثابت عائم d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
 
         sumf += d*sum_t;
     }
@@ -1604,62 +1604,62 @@ void ggml_vec_dot_q3_K_q8_K_vl1024(int n, float * GGML_RESTRICT s, size_t bs, co
 }
 #endif
 
-void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined __riscv_xtheadvector
+فراغ ggml_vec_dot_q3_K_q8_K(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+#إذا defined __riscv_xtheadvector
     ggml_vec_dot_q3_K_q8_K_xtheadvector(n, s, bs, vx, bx, vy, by, nrc);
-#elif defined __riscv_v
-    switch (__riscv_vlenb() * 8) {
-        case 128:
+#وإلاإذا defined __riscv_v
+    بدل (__riscv_vlenb() * 8) {
+        حالة 128:
             ggml_vec_dot_q3_K_q8_K_vl128(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        case 256:
+            اكسر;
+        حالة 256:
             ggml_vec_dot_q3_K_q8_K_vl256(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        case 512:
+            اكسر;
+        حالة 512:
             ggml_vec_dot_q3_K_q8_K_vl512(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        case 1024:
+            اكسر;
+        حالة 1024:
             ggml_vec_dot_q3_K_q8_K_vl1024(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        default:
+            اكسر;
+        افتراضي:
             ggml_vec_dot_q3_K_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-            break;
+            اكسر;
     }
-#else
+#وإلا
     ggml_vec_dot_q3_K_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
 #endif
 }
 
-#if defined __riscv_xtheadvector
-static NOINLINE void ggml_vec_dot_q4_K_q8_K_xtheadvector(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+#إذا defined __riscv_xtheadvector
+ساكن NOINLINE فراغ ggml_vec_dot_q4_K_q8_K_xtheadvector(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_q4_K * GGML_RESTRICT x = vx;
-    const block_q8_K * GGML_RESTRICT y = vy;
+    ثابت block_q4_K * GGML_RESTRICT x = vx;
+    ثابت block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ثابت صحيح nb = n / QK_K;
 
-    static const uint32_t kmask1 = 0x3f3f3f3f;
-    static const uint32_t kmask2 = 0x0f0f0f0f;
-    static const uint32_t kmask3 = 0x03030303;
+    ساكن ثابت uint32_t kmask1 = 0x3f3f3f3f;
+    ساكن ثابت uint32_t kmask2 = 0x0f0f0f0f;
+    ساكن ثابت uint32_t kmask3 = 0x03030303;
 
     uint32_t utmp[4];
 
-    const uint8_t * scales = (const uint8_t*)&utmp[0];
-    const uint8_t * mins   = (const uint8_t*)&utmp[2];
+    ثابت uint8_t * scales = (ثابت uint8_t*)&utmp[0];
+    ثابت uint8_t * mins   = (ثابت uint8_t*)&utmp[2];
 
-    float sumf = 0;
+    عائم sumf = 0;
 
-    for (int i = 0; i < nb; ++i) {
-        const float d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
-        const float dmin = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].dmin);
+    لكل (صحيح i = 0; i < nb; ++i) {
+        ثابت عائم d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
+        ثابت عائم dmin = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].dmin);
 
-        int tmp, tmp2, sumi;
+        صحيح tmp, tmp2, sumi;
         __asm__ __volatile__(
             "li %[t1], 12\n\t"
             "th.vsetvli zero, %[t1], e8, m1\n\t"
@@ -1708,14 +1708,14 @@ static NOINLINE void ggml_vec_dot_q4_K_q8_K_xtheadvector(int n, float * GGML_RES
         );
         sumf -= dmin * sumi;
 
-        const uint8_t * restrict q4 = x[i].qs;
-        const int8_t  * restrict q8 = y[i].qs;
+        ثابت uint8_t * restrict q4 = x[i].qs;
+        ثابت int8_t  * restrict q8 = y[i].qs;
 
         sumi = 0;
-        const uint8_t * scale = scales;
+        ثابت uint8_t * scale = scales;
 
-        for (int j = 0; j < QK_K/128; ++j) {
-            int vl128 = 128, vl64 = 64, vl32 = 32;
+        لكل (صحيح j = 0; j < QK_K/128; ++j) {
+            صحيح vl128 = 128, vl64 = 64, vl32 = 32;
             __asm__ __volatile__(
                 "th.vsetvli zero, %[vl128], e8, m8\n\t"
                 "th.vlb.v v8, (%[q8])\n\t"
@@ -1766,44 +1766,44 @@ static NOINLINE void ggml_vec_dot_q4_K_q8_K_xtheadvector(int n, float * GGML_RES
 }
 #endif
 
-#if defined __riscv_v
-static NOINLINE void ggml_vec_dot_q4_K_q8_K_vl128(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+#إذا defined __riscv_v
+ساكن NOINLINE فراغ ggml_vec_dot_q4_K_q8_K_vl128(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_q4_K * GGML_RESTRICT x = vx;
-    const block_q8_K * GGML_RESTRICT y = vy;
+    ثابت block_q4_K * GGML_RESTRICT x = vx;
+    ثابت block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ثابت صحيح nb = n / QK_K;
 
-    static const uint32_t kmask1 = 0x3f3f3f3f;
-    static const uint32_t kmask2 = 0x0f0f0f0f;
-    static const uint32_t kmask3 = 0x03030303;
+    ساكن ثابت uint32_t kmask1 = 0x3f3f3f3f;
+    ساكن ثابت uint32_t kmask2 = 0x0f0f0f0f;
+    ساكن ثابت uint32_t kmask3 = 0x03030303;
 
     uint32_t utmp[4];
 
-    const uint8_t * scales = (const uint8_t*)&utmp[0];
-    const uint8_t * mins   = (const uint8_t*)&utmp[2];
+    ثابت uint8_t * scales = (ثابت uint8_t*)&utmp[0];
+    ثابت uint8_t * mins   = (ثابت uint8_t*)&utmp[2];
 
-    float sumf = 0;
-    for (int i = 0; i < nb; ++i) {
-        const float d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
-        const float dmin = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].dmin);
+    عائم sumf = 0;
+    لكل (صحيح i = 0; i < nb; ++i) {
+        ثابت عائم d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
+        ثابت عائم dmin = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].dmin);
 
-        float ftmp, ft2;
-        const uint8_t * restrict q40;
-        const uint8_t * restrict q41;
-        const uint8_t * restrict q42;
-        const uint8_t * restrict q43;
-        const int8_t  * restrict q80;
-        const int8_t  * restrict q81;
-        const int8_t  * restrict q82;
-        const int8_t  * restrict q83;
-        int s0, s1, s2, s3;
+        عائم ftmp, ft2;
+        ثابت uint8_t * restrict q40;
+        ثابت uint8_t * restrict q41;
+        ثابت uint8_t * restrict q42;
+        ثابت uint8_t * restrict q43;
+        ثابت int8_t  * restrict q80;
+        ثابت int8_t  * restrict q81;
+        ثابت int8_t  * restrict q82;
+        ثابت int8_t  * restrict q83;
+        صحيح s0, s1, s2, s3;
 
         __asm__ __volatile__(
             "li %[s1], 8\n\t"
@@ -1972,34 +1972,34 @@ static NOINLINE void ggml_vec_dot_q4_K_q8_K_vl128(int n, float * GGML_RESTRICT s
     *s = sumf;
 }
 
-static NOINLINE void ggml_vec_dot_q4_K_q8_K_vl256(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+ساكن NOINLINE فراغ ggml_vec_dot_q4_K_q8_K_vl256(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_q4_K * GGML_RESTRICT x = vx;
-    const block_q8_K * GGML_RESTRICT y = vy;
+    ثابت block_q4_K * GGML_RESTRICT x = vx;
+    ثابت block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ثابت صحيح nb = n / QK_K;
 
-    static const uint32_t kmask1 = 0x3f3f3f3f;
-    static const uint32_t kmask2 = 0x0f0f0f0f;
-    static const uint32_t kmask3 = 0x03030303;
+    ساكن ثابت uint32_t kmask1 = 0x3f3f3f3f;
+    ساكن ثابت uint32_t kmask2 = 0x0f0f0f0f;
+    ساكن ثابت uint32_t kmask3 = 0x03030303;
 
     uint32_t utmp[4];
 
-    const uint8_t * scales = (const uint8_t*)&utmp[0];
-    const uint8_t * mins   = (const uint8_t*)&utmp[2];
+    ثابت uint8_t * scales = (ثابت uint8_t*)&utmp[0];
+    ثابت uint8_t * mins   = (ثابت uint8_t*)&utmp[2];
 
-    float sumf = 0;
-    for (int i = 0; i < nb; ++i) {
+    عائم sumf = 0;
+    لكل (صحيح i = 0; i < nb; ++i) {
         size_t vl = 8;
 
-        const float d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
-        const float dmin = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].dmin);
+        ثابت عائم d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
+        ثابت عائم dmin = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].dmin);
 
         vint16mf2_t q8sums_0 = __riscv_vlse16_v_i16mf2(y[i].bsums, 4, vl);
         vint16mf2_t q8sums_1 = __riscv_vlse16_v_i16mf2(y[i].bsums+1, 4, vl);
@@ -2007,7 +2007,7 @@ static NOINLINE void ggml_vec_dot_q4_K_q8_K_vl256(int n, float * GGML_RESTRICT s
 
         memcpy(utmp, x[i].scales, 12);
         utmp[3] = ((utmp[2] >> 4) & kmask2) | (((utmp[1] >> 6) & kmask3) << 4);
-        const uint32_t uaux = utmp[1] & kmask1;
+        ثابت uint32_t uaux = utmp[1] & kmask1;
         utmp[1] = (utmp[2] & kmask2) | (((utmp[0] >> 6) & kmask3) << 4);
         utmp[2] = uaux;
         utmp[0] &= kmask1;
@@ -2019,8 +2019,8 @@ static NOINLINE void ggml_vec_dot_q4_K_q8_K_vl256(int n, float * GGML_RESTRICT s
         vint32m1_t sumi = __riscv_vredsum_vs_i32m1_i32m1(prod, __riscv_vmv_v_x_i32m1(0, 1), vl);
         sumf -= dmin * __riscv_vmv_x_s_i32m1_i32(sumi);
 
-        const uint8_t * GGML_RESTRICT q4 = x[i].qs;
-        const int8_t  * GGML_RESTRICT q8 = y[i].qs;
+        ثابت uint8_t * GGML_RESTRICT q4 = x[i].qs;
+        ثابت int8_t  * GGML_RESTRICT q8 = y[i].qs;
 
         vl = 32;
 
@@ -2029,7 +2029,7 @@ static NOINLINE void ggml_vec_dot_q4_K_q8_K_vl256(int n, float * GGML_RESTRICT s
 
         vint16m1_t vzero = __riscv_vmv_v_x_i16m1(0, 1);
 
-        for (int j = 0; j < QK_K/64; ++j) {
+        لكل (صحيح j = 0; j < QK_K/64; ++j) {
             // load Q4
             vuint8m1_t q4_x = __riscv_vle8_v_u8m1(q4, vl);
 
@@ -2061,62 +2061,62 @@ static NOINLINE void ggml_vec_dot_q4_K_q8_K_vl256(int n, float * GGML_RESTRICT s
 }
 #endif
 
-void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined __riscv_xtheadvector
+فراغ ggml_vec_dot_q4_K_q8_K(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+#إذا defined __riscv_xtheadvector
     ggml_vec_dot_q4_K_q8_K_xtheadvector(n, s, bs, vx, bx, vy, by, nrc);
-#elif defined __riscv_v
-    switch (__riscv_vlenb() * 8) {
-        case 128:
+#وإلاإذا defined __riscv_v
+    بدل (__riscv_vlenb() * 8) {
+        حالة 128:
             ggml_vec_dot_q4_K_q8_K_vl128(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        default: // 256 and above
+            اكسر;
+        افتراضي: // 256 and above
             ggml_vec_dot_q4_K_q8_K_vl256(n, s, bs, vx, bx, vy, by, nrc);
-            break;
+            اكسر;
     }
-#else
+#وإلا
     ggml_vec_dot_q4_K_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
 #endif
 }
 
-void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy,  size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+فراغ ggml_vec_dot_q5_K_q8_K(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy,  size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_q5_K * GGML_RESTRICT x = vx;
-    const block_q8_K * GGML_RESTRICT y = vy;
+    ثابت block_q5_K * GGML_RESTRICT x = vx;
+    ثابت block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ثابت صحيح nb = n / QK_K;
 
-    static const uint32_t kmask1 = 0x3f3f3f3f;
-    static const uint32_t kmask2 = 0x0f0f0f0f;
-    static const uint32_t kmask3 = 0x03030303;
+    ساكن ثابت uint32_t kmask1 = 0x3f3f3f3f;
+    ساكن ثابت uint32_t kmask2 = 0x0f0f0f0f;
+    ساكن ثابت uint32_t kmask3 = 0x03030303;
 
     uint32_t utmp[4];
 
-#if defined __riscv_v
+#إذا defined __riscv_v
 
-    const uint8_t * scales = (const uint8_t*)&utmp[0];
-    const uint8_t * mins   = (const uint8_t*)&utmp[2];
+    ثابت uint8_t * scales = (ثابت uint8_t*)&utmp[0];
+    ثابت uint8_t * mins   = (ثابت uint8_t*)&utmp[2];
 
-    float sumf = 0;
-    float sums = 0.0;
+    عائم sumf = 0;
+    عائم sums = 0.0;
 
     size_t vl;
 
-    for (int i = 0; i < nb; ++i) {
+    لكل (صحيح i = 0; i < nb; ++i) {
 
         vl = 8;
 
-        const uint8_t * GGML_RESTRICT q5 = x[i].qs;
-        const uint8_t * GGML_RESTRICT hm = x[i].qh;
-        const  int8_t * GGML_RESTRICT q8 = y[i].qs;
+        ثابت uint8_t * GGML_RESTRICT q5 = x[i].qs;
+        ثابت uint8_t * GGML_RESTRICT hm = x[i].qh;
+        ثابت  int8_t * GGML_RESTRICT q8 = y[i].qs;
 
-        const float d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
-        const float dmin = GGML_CPU_FP16_TO_FP32(x[i].dmin) * y[i].d;
+        ثابت عائم d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
+        ثابت عائم dmin = GGML_CPU_FP16_TO_FP32(x[i].dmin) * y[i].d;
 
         vint16m1_t q8sums_0 = __riscv_vlse16_v_i16m1(y[i].bsums, 4, vl);
         vint16m1_t q8sums_1 = __riscv_vlse16_v_i16m1(y[i].bsums+1, 4, vl);
@@ -2124,7 +2124,7 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
         memcpy(utmp, x[i].scales, 12);
         utmp[3] = ((utmp[2] >> 4) & kmask2) | (((utmp[1] >> 6) & kmask3) << 4);
-        const uint32_t uaux = utmp[1] & kmask1;
+        ثابت uint32_t uaux = utmp[1] & kmask1;
         utmp[1] = (utmp[2] & kmask2) | (((utmp[0] >> 6) & kmask3) << 4);
         utmp[2] = uaux;
         utmp[0] &= kmask1;
@@ -2138,13 +2138,13 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
         vl = 32;
         int32_t aux32 = 0;
-        int is = 0;
+        صحيح is = 0;
 
         uint8_t m = 1;
         vint32m1_t vzero = __riscv_vmv_v_x_i32m1(0, 1);
         vuint8m2_t vqh = __riscv_vle8_v_u8m2(hm, vl);
 
-        for (int j = 0; j < QK_K/64; ++j) {
+        لكل (صحيح j = 0; j < QK_K/64; ++j) {
             // load Q5 and Q8
             vuint8m2_t q5_x = __riscv_vle8_v_u8m2(q5, vl);
             vint8m2_t  q8_y1 = __riscv_vle8_v_i8m2(q8, vl);
@@ -2182,7 +2182,7 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = sumf+sums;
 
-#else
+#وإلا
 
     UNUSED(x);
     UNUSED(y);
@@ -2196,36 +2196,36 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-#if defined __riscv_xtheadvector
-static NOINLINE void ggml_vec_dot_q6_K_q8_K_xtheadvector(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+#إذا defined __riscv_xtheadvector
+ساكن NOINLINE فراغ ggml_vec_dot_q6_K_q8_K_xtheadvector(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_q6_K * GGML_RESTRICT x = vx;
-    const block_q8_K * GGML_RESTRICT y = vy;
+    ثابت block_q6_K * GGML_RESTRICT x = vx;
+    ثابت block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ثابت صحيح nb = n / QK_K;
 
-    float sumf = 0;
+    عائم sumf = 0;
 
-    for (int i = 0; i < nb; ++i) {
+    لكل (صحيح i = 0; i < nb; ++i) {
 
-        const float d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
+        ثابت عائم d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
 
-        const uint8_t * restrict q6 = x[i].ql;
-        const uint8_t * restrict qh = x[i].qh;
-        const  int8_t * restrict q8 = y[i].qs;
+        ثابت uint8_t * restrict q6 = x[i].ql;
+        ثابت uint8_t * restrict qh = x[i].qh;
+        ثابت  int8_t * restrict q8 = y[i].qs;
 
-        const int8_t * restrict scale = x[i].scales;
+        ثابت int8_t * restrict scale = x[i].scales;
 
-        int sum_t = 0;
-        int t0;
+        صحيح sum_t = 0;
+        صحيح t0;
 
-        for (int j = 0; j < QK_K/128; ++j) {
+        لكل (صحيح j = 0; j < QK_K/128; ++j) {
             __asm__ __volatile__(
                 "th.vsetvli zero, %[vl32], e8, m2\n\t" // vl == 32
                 "th.vlb.v v4, (%[qh])\n\t"
@@ -2291,36 +2291,36 @@ static NOINLINE void ggml_vec_dot_q6_K_q8_K_xtheadvector(int n, float * GGML_RES
 }
 #endif
 
-#if defined __riscv_v
-static NOINLINE void ggml_vec_dot_q6_K_q8_K_vl128(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+#إذا defined __riscv_v
+ساكن NOINLINE فراغ ggml_vec_dot_q6_K_q8_K_vl128(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_q6_K * GGML_RESTRICT x = vx;
-    const block_q8_K * GGML_RESTRICT y = vy;
+    ثابت block_q6_K * GGML_RESTRICT x = vx;
+    ثابت block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ثابت صحيح nb = n / QK_K;
 
-    float sumf = 0.0f;
-    for (int i = 0; i < nb; ++i) {
+    عائم sumf = 0.0f;
+    لكل (صحيح i = 0; i < nb; ++i) {
         __builtin_prefetch(&x[i + 1].d, 0, 1);
 
-        const float d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
+        ثابت عائم d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
 
-        const uint8_t * restrict q6 = x[i].ql;
-        const uint8_t * restrict qh = x[i].qh;
-        const  int8_t * restrict q8 = y[i].qs;
+        ثابت uint8_t * restrict q6 = x[i].ql;
+        ثابت uint8_t * restrict qh = x[i].qh;
+        ثابت  int8_t * restrict q8 = y[i].qs;
 
-        const int8_t * restrict scale = x[i].scales;
+        ثابت int8_t * restrict scale = x[i].scales;
 
-        int q6h;
-        float ftmp;
+        صحيح q6h;
+        عائم ftmp;
 
-        for (int j = 0; j < QK_K/128; ++j) {
+        لكل (صحيح j = 0; j < QK_K/128; ++j) {
             __asm__ __volatile__(
                 "addi %[q6h], %[q6], 32\n\t"
                 "ld t0, 0(%[scale])\n\t"
@@ -2419,37 +2419,37 @@ static NOINLINE void ggml_vec_dot_q6_K_q8_K_vl128(int n, float * GGML_RESTRICT s
     *s = sumf;
 }
 
-static NOINLINE void ggml_vec_dot_q6_K_q8_K_vl256(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+ساكن NOINLINE فراغ ggml_vec_dot_q6_K_q8_K_vl256(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_q6_K * GGML_RESTRICT x = vx;
-    const block_q8_K * GGML_RESTRICT y = vy;
+    ثابت block_q6_K * GGML_RESTRICT x = vx;
+    ثابت block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ثابت صحيح nb = n / QK_K;
 
-    float sumf = 0;
-    for (int i = 0; i < nb; ++i) {
-        const float d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
+    عائم sumf = 0;
+    لكل (صحيح i = 0; i < nb; ++i) {
+        ثابت عائم d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
 
-        const uint8_t * GGML_RESTRICT q6 = x[i].ql;
-        const uint8_t * GGML_RESTRICT qh = x[i].qh;
-        const  int8_t * GGML_RESTRICT q8 = y[i].qs;
+        ثابت uint8_t * GGML_RESTRICT q6 = x[i].ql;
+        ثابت uint8_t * GGML_RESTRICT qh = x[i].qh;
+        ثابت  int8_t * GGML_RESTRICT q8 = y[i].qs;
 
-        const int8_t * GGML_RESTRICT scale = x[i].scales;
+        ثابت int8_t * GGML_RESTRICT scale = x[i].scales;
 
         size_t vl;
 
         vint32m1_t vzero = __riscv_vmv_v_x_i32m1(0, 1);
 
-        int sum_t = 0;
-        int is = 0;
+        صحيح sum_t = 0;
+        صحيح is = 0;
 
-        for (int j = 0; j < QK_K/128; ++j) {
+        لكل (صحيح j = 0; j < QK_K/128; ++j) {
 
             vl = 32;
 
@@ -2515,47 +2515,47 @@ static NOINLINE void ggml_vec_dot_q6_K_q8_K_vl256(int n, float * GGML_RESTRICT s
     *s = sumf;
 }
 
-static NOINLINE void ggml_vec_dot_q6_K_q8_K_vl512(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+ساكن NOINLINE فراغ ggml_vec_dot_q6_K_q8_K_vl512(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_q6_K * GGML_RESTRICT x = vx;
-    const block_q8_K * GGML_RESTRICT y = vy;
+    ثابت block_q6_K * GGML_RESTRICT x = vx;
+    ثابت block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ثابت صحيح nb = n / QK_K;
 
     // mask for processing 16 elements per prod register
-    const vuint16m1_t va_index = __riscv_vid_v_u16m1(32);
-    const vbool16_t va_mask = __riscv_vmsgtu_vx_u16m1_b16(va_index, 15, 32);
+    ثابت vuint16m1_t va_index = __riscv_vid_v_u16m1(32);
+    ثابت vbool16_t va_mask = __riscv_vmsgtu_vx_u16m1_b16(va_index, 15, 32);
 
-    float sumf = 0;
+    عائم sumf = 0;
 
-    for (int i = 0; i < nb; ++i) {
-        const float d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
+    لكل (صحيح i = 0; i < nb; ++i) {
+        ثابت عائم d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
 
-        const uint8_t * GGML_RESTRICT q6 = x[i].ql;
-        const uint8_t * GGML_RESTRICT qh = x[i].qh;
-        const  int8_t * GGML_RESTRICT q8 = y[i].qs;
+        ثابت uint8_t * GGML_RESTRICT q6 = x[i].ql;
+        ثابت uint8_t * GGML_RESTRICT qh = x[i].qh;
+        ثابت  int8_t * GGML_RESTRICT q8 = y[i].qs;
 
-        const int8_t * GGML_RESTRICT scale = x[i].scales;
+        ثابت int8_t * GGML_RESTRICT scale = x[i].scales;
 
         size_t vl = 32;
 
         vint32m1_t vzero = __riscv_vmv_v_x_i32m1(0, 1);
 
-        int sum_t = 0;
-        int is = 0;
+        صحيح sum_t = 0;
+        صحيح is = 0;
 
         vint32m2_t vaux_0 = __riscv_vmv_v_x_i32m2(0, vl);
         vint32m2_t vaux_1 = __riscv_vmv_v_x_i32m2(0, vl);
         vint32m2_t vaux_2 = __riscv_vmv_v_x_i32m2(0, vl);
         vint32m2_t vaux_3 = __riscv_vmv_v_x_i32m2(0, vl);
 
-        for (int j = 0; j < QK_K/128; ++j) {
+        لكل (صحيح j = 0; j < QK_K/128; ++j) {
             // load qh
             vuint8mf2_t qh_x = __riscv_vle8_v_u8mf2(qh, vl);
 
@@ -2615,47 +2615,47 @@ static NOINLINE void ggml_vec_dot_q6_K_q8_K_vl512(int n, float * GGML_RESTRICT s
     *s = sumf;
 }
 
-static NOINLINE void ggml_vec_dot_q6_K_q8_K_vl1024(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+ساكن NOINLINE فراغ ggml_vec_dot_q6_K_q8_K_vl1024(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_q6_K * GGML_RESTRICT x = vx;
-    const block_q8_K * GGML_RESTRICT y = vy;
+    ثابت block_q6_K * GGML_RESTRICT x = vx;
+    ثابت block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ثابت صحيح nb = n / QK_K;
 
     // mask for processing 16 elements per prod register
-    const vuint16mf2_t va_index = __riscv_vid_v_u16mf2(32);
-    const vbool32_t va_mask = __riscv_vmsgtu_vx_u16mf2_b32(va_index, 15, 32);
+    ثابت vuint16mf2_t va_index = __riscv_vid_v_u16mf2(32);
+    ثابت vbool32_t va_mask = __riscv_vmsgtu_vx_u16mf2_b32(va_index, 15, 32);
 
-    float sumf = 0;
+    عائم sumf = 0;
 
-    for (int i = 0; i < nb; ++i) {
-        const float d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
+    لكل (صحيح i = 0; i < nb; ++i) {
+        ثابت عائم d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
 
-        const uint8_t * GGML_RESTRICT q6 = x[i].ql;
-        const uint8_t * GGML_RESTRICT qh = x[i].qh;
-        const  int8_t * GGML_RESTRICT q8 = y[i].qs;
+        ثابت uint8_t * GGML_RESTRICT q6 = x[i].ql;
+        ثابت uint8_t * GGML_RESTRICT qh = x[i].qh;
+        ثابت  int8_t * GGML_RESTRICT q8 = y[i].qs;
 
-        const int8_t * GGML_RESTRICT scale = x[i].scales;
+        ثابت int8_t * GGML_RESTRICT scale = x[i].scales;
 
         size_t vl = 32;
 
         vint32m1_t vzero = __riscv_vmv_v_x_i32m1(0, 1);
 
-        int sum_t = 0;
-        int is = 0;
+        صحيح sum_t = 0;
+        صحيح is = 0;
 
         vint32m1_t vaux_0 = __riscv_vmv_v_x_i32m1(0, vl);
         vint32m1_t vaux_1 = __riscv_vmv_v_x_i32m1(0, vl);
         vint32m1_t vaux_2 = __riscv_vmv_v_x_i32m1(0, vl);
         vint32m1_t vaux_3 = __riscv_vmv_v_x_i32m1(0, vl);
 
-        for (int j = 0; j < QK_K/128; ++j) {
+        لكل (صحيح j = 0; j < QK_K/128; ++j) {
             // load qh
             vuint8mf4_t qh_x = __riscv_vle8_v_u8mf4(qh, vl);
 
@@ -2717,48 +2717,48 @@ static NOINLINE void ggml_vec_dot_q6_K_q8_K_vl1024(int n, float * GGML_RESTRICT 
 }
 #endif
 
-void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined __riscv_xtheadvector
+فراغ ggml_vec_dot_q6_K_q8_K(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+#إذا defined __riscv_xtheadvector
     ggml_vec_dot_q6_K_q8_K_xtheadvector(n, s, bs, vx, bx, vy, by, nrc);
-#elif defined __riscv_v
-    switch (__riscv_vlenb() * 8) {
-        case 128:
+#وإلاإذا defined __riscv_v
+    بدل (__riscv_vlenb() * 8) {
+        حالة 128:
             ggml_vec_dot_q6_K_q8_K_vl128(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        case 256:
+            اكسر;
+        حالة 256:
             ggml_vec_dot_q6_K_q8_K_vl256(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        case 512:
+            اكسر;
+        حالة 512:
             ggml_vec_dot_q6_K_q8_K_vl512(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        case 1024:
+            اكسر;
+        حالة 1024:
             ggml_vec_dot_q6_K_q8_K_vl1024(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        default:
+            اكسر;
+        افتراضي:
             ggml_vec_dot_q6_K_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-            break;
+            اكسر;
     }
-#else
+#وإلا
     ggml_vec_dot_q6_K_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
 #endif
 }
 
-#if defined __riscv_v
-static NOINLINE void ggml_vec_dot_iq1_s_q8_K_vl128(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+#إذا defined __riscv_v
+ساكن NOINLINE فراغ ggml_vec_dot_iq1_s_q8_K_vl128(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_iq1_s * GGML_RESTRICT x = vx;
-    const block_q8_K  * GGML_RESTRICT y = vy;
+    ثابت block_iq1_s * GGML_RESTRICT x = vx;
+    ثابت block_q8_K  * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ثابت صحيح nb = n / QK_K;
 
-    float sumf = 0;
-    for (int i = 0; i < nb; ++i) {
+    عائم sumf = 0;
+    لكل (صحيح i = 0; i < nb; ++i) {
         // Load qh once for the entire superblock.
         vuint16m1_t qh = __riscv_vle16_v_u16m1(x[i].qh, 8);
 
@@ -2778,7 +2778,7 @@ static NOINLINE void ggml_vec_dot_iq1_s_q8_K_vl128(int n, float * GGML_RESTRICT 
         vuint8m2_t qs = __riscv_vle8_v_u8m2(x[i].qs, 32);
 
         // Prepare the indices.
-        const uint64_t shift = 0x0009000600030000;
+        ثابت uint64_t shift = 0x0009000600030000;
         vuint16m4_t qh_shift = __riscv_vreinterpret_v_u64m4_u16m4(__riscv_vmv_v_x_u64m4(shift, 8));
         vuint16m4_t qh_gather_index = __riscv_vreinterpret_v_i16m4_u16m4(
             __riscv_vdiv_vx_i16m4(__riscv_vreinterpret_v_u16m4_i16m4(__riscv_vid_v_u16m4(32)), 4, 32));
@@ -2797,7 +2797,7 @@ static NOINLINE void ggml_vec_dot_iq1_s_q8_K_vl128(int n, float * GGML_RESTRICT 
         // Sub-blocks 1-2
         {
             vuint16m1_t grid_index0 = __riscv_vget_v_u16m4_u16m1(index, 0);
-            vint8m4_t grid0 = __riscv_vreinterpret_v_i64m4_i8m4(__riscv_vluxei16_v_i64m4((const int64_t*)iq1s_grid, grid_index0, 8));
+            vint8m4_t grid0 = __riscv_vreinterpret_v_i64m4_i8m4(__riscv_vluxei16_v_i64m4((ثابت int64_t*)iq1s_grid, grid_index0, 8));
             vint8m4_t q80 = __riscv_vle8_v_i8m4(&y[i].qs[0], 64);
             vint16m8_t lsum0 = __riscv_vwmul_vv_i16m8(grid0, q80, 128);
             lsums_s[0] = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m4_i32m1(__riscv_vget_v_i16m8_i16m4(lsum0, 0), one_scalar, 32));
@@ -2807,7 +2807,7 @@ static NOINLINE void ggml_vec_dot_iq1_s_q8_K_vl128(int n, float * GGML_RESTRICT 
         // Sub-blocks 3-4
         {
             vuint16m1_t grid_index0 = __riscv_vget_v_u16m4_u16m1(index, 1);
-            vint8m4_t grid0 = __riscv_vreinterpret_v_i64m4_i8m4(__riscv_vluxei16_v_i64m4((const int64_t*)iq1s_grid, grid_index0, 8));
+            vint8m4_t grid0 = __riscv_vreinterpret_v_i64m4_i8m4(__riscv_vluxei16_v_i64m4((ثابت int64_t*)iq1s_grid, grid_index0, 8));
             vint8m4_t q80 = __riscv_vle8_v_i8m4(&y[i].qs[64], 64);
             vint16m8_t lsum0 = __riscv_vwmul_vv_i16m8(grid0, q80, 128);
             lsums_s[2] = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m4_i32m1(__riscv_vget_v_i16m8_i16m4(lsum0, 0), one_scalar, 32));
@@ -2817,7 +2817,7 @@ static NOINLINE void ggml_vec_dot_iq1_s_q8_K_vl128(int n, float * GGML_RESTRICT 
         // Sub-blocks 5-6
         {
             vuint16m1_t grid_index0 = __riscv_vget_v_u16m4_u16m1(index, 2);
-            vint8m4_t grid0 = __riscv_vreinterpret_v_i64m4_i8m4(__riscv_vluxei16_v_i64m4((const int64_t*)iq1s_grid, grid_index0, 8));
+            vint8m4_t grid0 = __riscv_vreinterpret_v_i64m4_i8m4(__riscv_vluxei16_v_i64m4((ثابت int64_t*)iq1s_grid, grid_index0, 8));
             vint8m4_t q80 = __riscv_vle8_v_i8m4(&y[i].qs[128], 64);
             vint16m8_t lsum0 = __riscv_vwmul_vv_i16m8(grid0, q80, 128);
             lsums_s[4] = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m4_i32m1(__riscv_vget_v_i16m8_i16m4(lsum0, 0), one_scalar, 32));
@@ -2827,7 +2827,7 @@ static NOINLINE void ggml_vec_dot_iq1_s_q8_K_vl128(int n, float * GGML_RESTRICT 
         // Sub-blocks 7-8
         {
             vuint16m1_t grid_index0 = __riscv_vget_v_u16m4_u16m1(index, 3);
-            vint8m4_t grid0 = __riscv_vreinterpret_v_i64m4_i8m4(__riscv_vluxei16_v_i64m4((const int64_t*)iq1s_grid, grid_index0, 8));
+            vint8m4_t grid0 = __riscv_vreinterpret_v_i64m4_i8m4(__riscv_vluxei16_v_i64m4((ثابت int64_t*)iq1s_grid, grid_index0, 8));
             vint8m4_t q80 = __riscv_vle8_v_i8m4(&y[i].qs[192], 64);
             vint16m8_t lsum0 = __riscv_vwmul_vv_i16m8(grid0, q80, 128);
             lsums_s[6] = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m4_i32m1(__riscv_vget_v_i16m8_i16m4(lsum0, 0), one_scalar, 32));
@@ -2838,39 +2838,39 @@ static NOINLINE void ggml_vec_dot_iq1_s_q8_K_vl128(int n, float * GGML_RESTRICT 
 
         // Calculate the bsums.
         vint16m2_t bsums_0 = __riscv_vle16_v_i16m2(y[i].bsums, 16);
-        const vuint32m2_t bsums_i32 = __riscv_vreinterpret_v_u16m2_u32m2(__riscv_vreinterpret_v_i16m2_u16m2(bsums_0));
-        const vint16m1_t bsums_i32_0 = __riscv_vreinterpret_v_u16m1_i16m1(__riscv_vnsrl_wx_u16m1(bsums_i32, 0, 8));
-        const vint16m1_t bsums_i32_1 = __riscv_vreinterpret_v_u16m1_i16m1(__riscv_vnsrl_wx_u16m1(bsums_i32, 16, 8));
-        const vint32m2_t bsums = __riscv_vwadd_vv_i32m2(bsums_i32_0, bsums_i32_1, 8);
+        ثابت vuint32m2_t bsums_i32 = __riscv_vreinterpret_v_u16m2_u32m2(__riscv_vreinterpret_v_i16m2_u16m2(bsums_0));
+        ثابت vint16m1_t bsums_i32_0 = __riscv_vreinterpret_v_u16m1_i16m1(__riscv_vnsrl_wx_u16m1(bsums_i32, 0, 8));
+        ثابت vint16m1_t bsums_i32_1 = __riscv_vreinterpret_v_u16m1_i16m1(__riscv_vnsrl_wx_u16m1(bsums_i32, 16, 8));
+        ثابت vint32m2_t bsums = __riscv_vwadd_vv_i32m2(bsums_i32_0, bsums_i32_1, 8);
 
         // Accumulation.
         vint32m2_t sumi_v = __riscv_vmul_vv_i32m2(ls, lsums, 8);
         vint32m2_t sumi1_v = __riscv_vmul_vv_i32m2(__riscv_vmul_vv_i32m2(ls, delta, 8), bsums, 8);
 
         // Update sumf.
-        int sumi = __riscv_vmv_x_s_i32m1_i32(__riscv_vredsum_vs_i32m2_i32m1(sumi_v, __riscv_vmv_v_x_i32m1(0.0f, 1), 8));
-        int sumi1 = __riscv_vmv_x_s_i32m1_i32(__riscv_vredsum_vs_i32m2_i32m1(sumi1_v, __riscv_vmv_v_x_i32m1(0.0f, 1), 8));
+        صحيح sumi = __riscv_vmv_x_s_i32m1_i32(__riscv_vredsum_vs_i32m2_i32m1(sumi_v, __riscv_vmv_v_x_i32m1(0.0f, 1), 8));
+        صحيح sumi1 = __riscv_vmv_x_s_i32m1_i32(__riscv_vredsum_vs_i32m2_i32m1(sumi1_v, __riscv_vmv_v_x_i32m1(0.0f, 1), 8));
         sumf += GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d * (sumi + IQ1S_DELTA * sumi1);
     }
 
     *s = sumf;
 }
 
-static NOINLINE void ggml_vec_dot_iq1_s_q8_K_vl256(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+ساكن NOINLINE فراغ ggml_vec_dot_iq1_s_q8_K_vl256(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_iq1_s * GGML_RESTRICT x = vx;
-    const block_q8_K  * GGML_RESTRICT y = vy;
+    ثابت block_iq1_s * GGML_RESTRICT x = vx;
+    ثابت block_q8_K  * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ثابت صحيح nb = n / QK_K;
 
-    float sumf = 0;
-    for (int i = 0; i < nb; ++i) {
+    عائم sumf = 0;
+    لكل (صحيح i = 0; i < nb; ++i) {
         // Load qh once for the entire superblock.
         vuint16mf2_t qh = __riscv_vle16_v_u16mf2(x[i].qh, 8);
 
@@ -2890,7 +2890,7 @@ static NOINLINE void ggml_vec_dot_iq1_s_q8_K_vl256(int n, float * GGML_RESTRICT 
         vuint8m1_t qs = __riscv_vle8_v_u8m1(x[i].qs, 32);
 
         // Prepare the indices.
-        const uint64_t shift = 0x0009000600030000;
+        ثابت uint64_t shift = 0x0009000600030000;
         vuint16m2_t qh_shift = __riscv_vreinterpret_v_u64m2_u16m2(__riscv_vmv_v_x_u64m2(shift, 8));
         vuint16m2_t qh_gather_index = __riscv_vreinterpret_v_i16m2_u16m2(
             __riscv_vdiv_vx_i16m2(__riscv_vreinterpret_v_u16m2_i16m2(__riscv_vid_v_u16m2(32)), 4, 32));
@@ -2909,7 +2909,7 @@ static NOINLINE void ggml_vec_dot_iq1_s_q8_K_vl256(int n, float * GGML_RESTRICT 
         // Sub-blocks 1-4
         {
             vuint16m1_t grid_index0 = __riscv_vget_v_u16m2_u16m1(index, 0);
-            vint8m4_t grid0 = __riscv_vreinterpret_v_i64m4_i8m4(__riscv_vluxei16_v_i64m4((const int64_t*)iq1s_grid, grid_index0, 16));
+            vint8m4_t grid0 = __riscv_vreinterpret_v_i64m4_i8m4(__riscv_vluxei16_v_i64m4((ثابت int64_t*)iq1s_grid, grid_index0, 16));
             vint8m4_t q80 = __riscv_vle8_v_i8m4(y[i].qs, 128);
             vint16m8_t lsum0 = __riscv_vwmul_vv_i16m8(grid0, q80, 128);
             lsums_s[0] = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m2_i32m1(__riscv_vget_v_i16m8_i16m2(lsum0, 0), one_scalar, 32));
@@ -2921,7 +2921,7 @@ static NOINLINE void ggml_vec_dot_iq1_s_q8_K_vl256(int n, float * GGML_RESTRICT 
         // Sub-blocks 5-8
         {
             vuint16m1_t grid_index1 = __riscv_vget_v_u16m2_u16m1(index, 1);
-            vint8m4_t grid1 = __riscv_vreinterpret_v_i64m4_i8m4(__riscv_vluxei16_v_i64m4((const int64_t*)iq1s_grid, grid_index1, 16));
+            vint8m4_t grid1 = __riscv_vreinterpret_v_i64m4_i8m4(__riscv_vluxei16_v_i64m4((ثابت int64_t*)iq1s_grid, grid_index1, 16));
             vint8m4_t q81 = __riscv_vle8_v_i8m4(&y[i].qs[128], 128);
             vint16m8_t lsum1 = __riscv_vwmul_vv_i16m8(grid1, q81, 128);
             lsums_s[4] = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m2_i32m1(__riscv_vget_v_i16m8_i16m2(lsum1, 0), one_scalar, 32));
@@ -2934,39 +2934,39 @@ static NOINLINE void ggml_vec_dot_iq1_s_q8_K_vl256(int n, float * GGML_RESTRICT 
 
         // Calculate the bsums.
         vint16m1_t bsums_0 = __riscv_vle16_v_i16m1(y[i].bsums, 16);
-        const vuint32m1_t bsums_i32 = __riscv_vreinterpret_v_u16m1_u32m1(__riscv_vreinterpret_v_i16m1_u16m1(bsums_0));
-        const vint16mf2_t bsums_i32_0 = __riscv_vreinterpret_v_u16mf2_i16mf2(__riscv_vnsrl_wx_u16mf2(bsums_i32, 0, 8));
-        const vint16mf2_t bsums_i32_1 = __riscv_vreinterpret_v_u16mf2_i16mf2(__riscv_vnsrl_wx_u16mf2(bsums_i32, 16, 8));
-        const vint32m1_t bsums = __riscv_vwadd_vv_i32m1(bsums_i32_0, bsums_i32_1, 8);
+        ثابت vuint32m1_t bsums_i32 = __riscv_vreinterpret_v_u16m1_u32m1(__riscv_vreinterpret_v_i16m1_u16m1(bsums_0));
+        ثابت vint16mf2_t bsums_i32_0 = __riscv_vreinterpret_v_u16mf2_i16mf2(__riscv_vnsrl_wx_u16mf2(bsums_i32, 0, 8));
+        ثابت vint16mf2_t bsums_i32_1 = __riscv_vreinterpret_v_u16mf2_i16mf2(__riscv_vnsrl_wx_u16mf2(bsums_i32, 16, 8));
+        ثابت vint32m1_t bsums = __riscv_vwadd_vv_i32m1(bsums_i32_0, bsums_i32_1, 8);
 
         // Accumulation.
         vint32m1_t sumi_v = __riscv_vmul_vv_i32m1(ls, lsums, 8);
         vint32m1_t sumi1_v = __riscv_vmul_vv_i32m1(__riscv_vmul_vv_i32m1(ls, delta, 8), bsums, 8);
 
         // Update sumf.
-        int sumi = __riscv_vmv_x_s_i32m1_i32(__riscv_vredsum_vs_i32m1_i32m1(sumi_v, __riscv_vmv_v_x_i32m1(0.0f, 1), 8));
-        int sumi1 = __riscv_vmv_x_s_i32m1_i32(__riscv_vredsum_vs_i32m1_i32m1(sumi1_v, __riscv_vmv_v_x_i32m1(0.0f, 1), 8));
+        صحيح sumi = __riscv_vmv_x_s_i32m1_i32(__riscv_vredsum_vs_i32m1_i32m1(sumi_v, __riscv_vmv_v_x_i32m1(0.0f, 1), 8));
+        صحيح sumi1 = __riscv_vmv_x_s_i32m1_i32(__riscv_vredsum_vs_i32m1_i32m1(sumi1_v, __riscv_vmv_v_x_i32m1(0.0f, 1), 8));
         sumf += GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d * (sumi + IQ1S_DELTA * sumi1);
     }
 
     *s = sumf;
 }
 
-static NOINLINE void ggml_vec_dot_iq1_s_q8_K_vl512(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+ساكن NOINLINE فراغ ggml_vec_dot_iq1_s_q8_K_vl512(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_iq1_s * GGML_RESTRICT x = vx;
-    const block_q8_K  * GGML_RESTRICT y = vy;
+    ثابت block_iq1_s * GGML_RESTRICT x = vx;
+    ثابت block_q8_K  * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ثابت صحيح nb = n / QK_K;
 
-    float sumf = 0;
-    for (int i = 0; i < nb; ++i) {
+    عائم sumf = 0;
+    لكل (صحيح i = 0; i < nb; ++i) {
         // Load qh once for the entire superblock.
         vuint16mf4_t qh = __riscv_vle16_v_u16mf4(x[i].qh, 8);
 
@@ -2986,7 +2986,7 @@ static NOINLINE void ggml_vec_dot_iq1_s_q8_K_vl512(int n, float * GGML_RESTRICT 
         vuint8mf2_t qs = __riscv_vle8_v_u8mf2(x[i].qs, 32);
 
         // Prepare the indices.
-        const uint64_t shift = 0x0009000600030000;
+        ثابت uint64_t shift = 0x0009000600030000;
         vuint16m1_t qh_shift = __riscv_vreinterpret_v_u64m1_u16m1(__riscv_vmv_v_x_u64m1(shift, 8));
         vuint16m1_t qh_gather_index = __riscv_vreinterpret_v_i16m1_u16m1(
             __riscv_vdiv_vx_i16m1(__riscv_vreinterpret_v_u16m1_i16m1(__riscv_vid_v_u16m1(32)), 4, 32));
@@ -3004,7 +3004,7 @@ static NOINLINE void ggml_vec_dot_iq1_s_q8_K_vl512(int n, float * GGML_RESTRICT 
 
         // Sub-blocks 1-8
         {
-            vint8m4_t grid0 = __riscv_vreinterpret_v_i64m4_i8m4(__riscv_vluxei16_v_i64m4((const int64_t*)iq1s_grid, index, 32));
+            vint8m4_t grid0 = __riscv_vreinterpret_v_i64m4_i8m4(__riscv_vluxei16_v_i64m4((ثابت int64_t*)iq1s_grid, index, 32));
             vint8m4_t q80 = __riscv_vle8_v_i8m4(y[i].qs, 256);
             vint16m8_t lsum0 = __riscv_vwmul_vv_i16m8(grid0, q80, 256);
             lsums_s[0] = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m1_i32m1(__riscv_vget_v_i16m8_i16m1(lsum0, 0), one_scalar, 32));
@@ -3021,43 +3021,43 @@ static NOINLINE void ggml_vec_dot_iq1_s_q8_K_vl512(int n, float * GGML_RESTRICT 
 
         // Calculate the bsums.
         vint16mf2_t bsums_0 = __riscv_vle16_v_i16mf2(y[i].bsums, 16);
-        const vuint32mf2_t bsums_i32 = __riscv_vreinterpret_v_u16mf2_u32mf2(__riscv_vreinterpret_v_i16mf2_u16mf2(bsums_0));
-        const vint16mf4_t bsums_i32_0 = __riscv_vreinterpret_v_u16mf4_i16mf4(__riscv_vnsrl_wx_u16mf4(bsums_i32, 0, 8));
-        const vint16mf4_t bsums_i32_1 = __riscv_vreinterpret_v_u16mf4_i16mf4(__riscv_vnsrl_wx_u16mf4(bsums_i32, 16, 8));
-        const vint32mf2_t bsums = __riscv_vwadd_vv_i32mf2(bsums_i32_0, bsums_i32_1, 8);
+        ثابت vuint32mf2_t bsums_i32 = __riscv_vreinterpret_v_u16mf2_u32mf2(__riscv_vreinterpret_v_i16mf2_u16mf2(bsums_0));
+        ثابت vint16mf4_t bsums_i32_0 = __riscv_vreinterpret_v_u16mf4_i16mf4(__riscv_vnsrl_wx_u16mf4(bsums_i32, 0, 8));
+        ثابت vint16mf4_t bsums_i32_1 = __riscv_vreinterpret_v_u16mf4_i16mf4(__riscv_vnsrl_wx_u16mf4(bsums_i32, 16, 8));
+        ثابت vint32mf2_t bsums = __riscv_vwadd_vv_i32mf2(bsums_i32_0, bsums_i32_1, 8);
 
         // Accumulation.
         vint32mf2_t sumi_v = __riscv_vmul_vv_i32mf2(ls, lsums, 8);
         vint32mf2_t sumi1_v = __riscv_vmul_vv_i32mf2(__riscv_vmul_vv_i32mf2(ls, delta, 8), bsums, 8);
 
         // Update sumf.
-        int sumi = __riscv_vmv_x_s_i32m1_i32(__riscv_vredsum_vs_i32mf2_i32m1(sumi_v, __riscv_vmv_v_x_i32m1(0.0f, 1), 8));
-        int sumi1 = __riscv_vmv_x_s_i32m1_i32(__riscv_vredsum_vs_i32mf2_i32m1(sumi1_v, __riscv_vmv_v_x_i32m1(0.0f, 1), 8));
+        صحيح sumi = __riscv_vmv_x_s_i32m1_i32(__riscv_vredsum_vs_i32mf2_i32m1(sumi_v, __riscv_vmv_v_x_i32m1(0.0f, 1), 8));
+        صحيح sumi1 = __riscv_vmv_x_s_i32m1_i32(__riscv_vredsum_vs_i32mf2_i32m1(sumi1_v, __riscv_vmv_v_x_i32m1(0.0f, 1), 8));
         sumf += GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d * (sumi + IQ1S_DELTA * sumi1);
     }
 
     *s = sumf;
 }
 
-static NOINLINE void ggml_vec_dot_iq1_s_q8_K_vl1024(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+ساكن NOINLINE فراغ ggml_vec_dot_iq1_s_q8_K_vl1024(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_iq1_s * GGML_RESTRICT x = vx;
-    const block_q8_K  * GGML_RESTRICT y = vy;
+    ثابت block_iq1_s * GGML_RESTRICT x = vx;
+    ثابت block_q8_K  * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ثابت صحيح nb = n / QK_K;
 
     // Mask for processing 32 elements per lsum register.
     vuint16m1_t l_index = __riscv_vid_v_u16m1(64);
     vbool16_t l_mask = __riscv_vmsgtu_vx_u16m1_b16(l_index, 31, 64);
 
-    float sumf = 0;
-    for (int i = 0; i < nb; ++i) {
+    عائم sumf = 0;
+    لكل (صحيح i = 0; i < nb; ++i) {
         // Load qh once for the entire superblock.
         vuint16mf4_t qh = __riscv_vle16_v_u16mf4(x[i].qh, 8);
 
@@ -3077,7 +3077,7 @@ static NOINLINE void ggml_vec_dot_iq1_s_q8_K_vl1024(int n, float * GGML_RESTRICT
         vuint8mf2_t qs = __riscv_vle8_v_u8mf2(x[i].qs, 32);
 
         // Prepare the indices.
-        const uint64_t shift = 0x0009000600030000;
+        ثابت uint64_t shift = 0x0009000600030000;
         vuint16m1_t qh_shift = __riscv_vreinterpret_v_u64m1_u16m1(__riscv_vmv_v_x_u64m1(shift, 8));
         vuint16m1_t qh_gather_index = __riscv_vreinterpret_v_i16m1_u16m1(
             __riscv_vdiv_vx_i16m1(__riscv_vreinterpret_v_u16m1_i16m1(__riscv_vid_v_u16m1(32)), 4, 32));
@@ -3095,7 +3095,7 @@ static NOINLINE void ggml_vec_dot_iq1_s_q8_K_vl1024(int n, float * GGML_RESTRICT
 
         // Sub-blocks 1-8
         {
-            vint8m2_t grid0 = __riscv_vreinterpret_v_i64m2_i8m2(__riscv_vluxei16_v_i64m2((const int64_t*)iq1s_grid, index, 32));
+            vint8m2_t grid0 = __riscv_vreinterpret_v_i64m2_i8m2(__riscv_vluxei16_v_i64m2((ثابت int64_t*)iq1s_grid, index, 32));
             vint8m2_t q80 = __riscv_vle8_v_i8m2(y[i].qs, 256);
             vint16m4_t lsum0 = __riscv_vwmul_vv_i16m4(grid0, q80, 256);
 
@@ -3114,18 +3114,18 @@ static NOINLINE void ggml_vec_dot_iq1_s_q8_K_vl1024(int n, float * GGML_RESTRICT
 
         // Calculate the bsums.
         vint16mf2_t bsums_0 = __riscv_vle16_v_i16mf2(y[i].bsums, 16);
-        const vuint32mf2_t bsums_i32 = __riscv_vreinterpret_v_u16mf2_u32mf2(__riscv_vreinterpret_v_i16mf2_u16mf2(bsums_0));
-        const vint16mf4_t bsums_i32_0 = __riscv_vreinterpret_v_u16mf4_i16mf4(__riscv_vnsrl_wx_u16mf4(bsums_i32, 0, 8));
-        const vint16mf4_t bsums_i32_1 = __riscv_vreinterpret_v_u16mf4_i16mf4(__riscv_vnsrl_wx_u16mf4(bsums_i32, 16, 8));
-        const vint32mf2_t bsums = __riscv_vwadd_vv_i32mf2(bsums_i32_0, bsums_i32_1, 8);
+        ثابت vuint32mf2_t bsums_i32 = __riscv_vreinterpret_v_u16mf2_u32mf2(__riscv_vreinterpret_v_i16mf2_u16mf2(bsums_0));
+        ثابت vint16mf4_t bsums_i32_0 = __riscv_vreinterpret_v_u16mf4_i16mf4(__riscv_vnsrl_wx_u16mf4(bsums_i32, 0, 8));
+        ثابت vint16mf4_t bsums_i32_1 = __riscv_vreinterpret_v_u16mf4_i16mf4(__riscv_vnsrl_wx_u16mf4(bsums_i32, 16, 8));
+        ثابت vint32mf2_t bsums = __riscv_vwadd_vv_i32mf2(bsums_i32_0, bsums_i32_1, 8);
 
         // Accumulation.
         vint32mf2_t sumi_v = __riscv_vmul_vv_i32mf2(ls, lsums, 8);
         vint32mf2_t sumi1_v = __riscv_vmul_vv_i32mf2(__riscv_vmul_vv_i32mf2(ls, delta, 8), bsums, 8);
 
         // Update sumf.
-        int sumi = __riscv_vmv_x_s_i32m1_i32(__riscv_vredsum_vs_i32mf2_i32m1(sumi_v, __riscv_vmv_v_x_i32m1(0.0f, 1), 8));
-        int sumi1 = __riscv_vmv_x_s_i32m1_i32(__riscv_vredsum_vs_i32mf2_i32m1(sumi1_v, __riscv_vmv_v_x_i32m1(0.0f, 1), 8));
+        صحيح sumi = __riscv_vmv_x_s_i32m1_i32(__riscv_vredsum_vs_i32mf2_i32m1(sumi_v, __riscv_vmv_v_x_i32m1(0.0f, 1), 8));
+        صحيح sumi1 = __riscv_vmv_x_s_i32m1_i32(__riscv_vredsum_vs_i32mf2_i32m1(sumi1_v, __riscv_vmv_v_x_i32m1(0.0f, 1), 8));
         sumf += GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d * (sumi + IQ1S_DELTA * sumi1);
     }
 
@@ -3133,51 +3133,51 @@ static NOINLINE void ggml_vec_dot_iq1_s_q8_K_vl1024(int n, float * GGML_RESTRICT
 }
 #endif
 
-void ggml_vec_dot_iq1_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined __riscv_v
-    switch (__riscv_vlenb() * 8) {
-        case 128:
+فراغ ggml_vec_dot_iq1_s_q8_K(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+#إذا defined __riscv_v
+    بدل (__riscv_vlenb() * 8) {
+        حالة 128:
             ggml_vec_dot_iq1_s_q8_K_vl128(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        case 256:
+            اكسر;
+        حالة 256:
             ggml_vec_dot_iq1_s_q8_K_vl256(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        case 512:
+            اكسر;
+        حالة 512:
             ggml_vec_dot_iq1_s_q8_K_vl512(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        case 1024:
+            اكسر;
+        حالة 1024:
             ggml_vec_dot_iq1_s_q8_K_vl1024(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        default:
+            اكسر;
+        افتراضي:
             ggml_vec_dot_iq1_s_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-            break;
+            اكسر;
     }
-#else
+#وإلا
     ggml_vec_dot_iq1_s_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
 #endif
 }
 
-#if defined __riscv_v
-static NOINLINE void ggml_vec_dot_iq1_m_q8_K_vl128(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+#إذا defined __riscv_v
+ساكن NOINLINE فراغ ggml_vec_dot_iq1_m_q8_K_vl128(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_iq1_m * GGML_RESTRICT x = vx;
-    const block_q8_K  * GGML_RESTRICT y = vy;
+    ثابت block_iq1_m * GGML_RESTRICT x = vx;
+    ثابت block_q8_K  * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ثابت صحيح nb = n / QK_K;
 
     iq1m_scale_t scale;
-    float sumf = 0.0f;
-    for (int i = 0; i < nb; ++i) {
-        const int8_t   * q8 = y[i].qs;
-        const uint8_t  * qs = x[i].qs;
-        const uint8_t  * qh = x[i].qh;
-        const uint16_t * sc = (const uint16_t *)x[i].scales;
+    عائم sumf = 0.0f;
+    لكل (صحيح i = 0; i < nb; ++i) {
+        ثابت int8_t   * q8 = y[i].qs;
+        ثابت uint8_t  * qs = x[i].qs;
+        ثابت uint8_t  * qh = x[i].qh;
+        ثابت uint16_t * sc = (ثابت uint16_t *)x[i].scales;
 
         scale.u16 = (sc[0] >> 12) | ((sc[1] >> 8) & 0x00f0) | ((sc[2] >> 4) & 0x0f00) | (sc[3] & 0xf000);
 
@@ -3187,33 +3187,33 @@ static NOINLINE void ggml_vec_dot_iq1_m_q8_K_vl128(int n, float * GGML_RESTRICT 
 
         // We process 8 16-element sub-blocks together.
         #pragma GCC unroll 1
-        for (int ib = 0; ib < QK_K/128; ib++) {
+        لكل (صحيح ib = 0; ib < QK_K/128; ib++) {
             // Load qh for 8 sub-blocks.
-            const vuint8mf2_t qh_8 = __riscv_vle8_v_u8mf2(qh, 8);
-            const vuint16m1_t qh_16_lo = __riscv_vzext_vf2_u16m1(qh_8, 8);
-            const vuint16m1_t qh_16_hi = __riscv_vsll_vx_u16m1(qh_16_lo, 8, 8);
-            const vuint16m2_t qhb = __riscv_vzext_vf2_u16m2(
+            ثابت vuint8mf2_t qh_8 = __riscv_vle8_v_u8mf2(qh, 8);
+            ثابت vuint16m1_t qh_16_lo = __riscv_vzext_vf2_u16m1(qh_8, 8);
+            ثابت vuint16m1_t qh_16_hi = __riscv_vsll_vx_u16m1(qh_16_lo, 8, 8);
+            ثابت vuint16m2_t qhb = __riscv_vzext_vf2_u16m2(
                 __riscv_vreinterpret_v_u16m1_u8m1(__riscv_vor_vv_u16m1(qh_16_lo, qh_16_hi, 8)), 16);
             qh += 8;
 
             // Prepare grid indices.
-            const vuint16m2_t qsb = __riscv_vzext_vf2_u16m2(__riscv_vle8_v_u8m1(&qs[0], 16), 16);
-            const vuint16m2_t shift = __riscv_vreinterpret_v_u32m2_u16m2(__riscv_vmv_v_x_u32m2(0x00040008, 8));
+            ثابت vuint16m2_t qsb = __riscv_vzext_vf2_u16m2(__riscv_vle8_v_u8m1(&qs[0], 16), 16);
+            ثابت vuint16m2_t shift = __riscv_vreinterpret_v_u32m2_u16m2(__riscv_vmv_v_x_u32m2(0x00040008, 8));
             vuint16m2_t index = __riscv_vor_vv_u16m2(qsb, __riscv_vand_vx_u16m2(__riscv_vsll_vv_u16m2(qhb, shift, 16), 0x700, 16), 16);
             index = __riscv_vsll_vx_u16m2(index, 3, 16);
             qs += 16;
 
             // Prepare the deltas.
-            const vbool8_t mask = __riscv_vmsgtu_vx_u16m2_b8(
+            ثابت vbool8_t mask = __riscv_vmsgtu_vx_u16m2_b8(
                 __riscv_vand_vv_u16m2(qhb, __riscv_vreinterpret_v_u32m2_u16m2(__riscv_vmv_v_x_u32m2(0x00800008, 8)), 16), 0, 16);
-            const vint64m8_t delta_pos = __riscv_vmv_v_x_i64m8(0x0101010101010101, 16);
-            const vint8m8_t delta = __riscv_vreinterpret_v_i64m8_i8m8(
+            ثابت vint64m8_t delta_pos = __riscv_vmv_v_x_i64m8(0x0101010101010101, 16);
+            ثابت vint8m8_t delta = __riscv_vreinterpret_v_i64m8_i8m8(
                 __riscv_vmerge_vxm_i64m8(delta_pos, 0xffffffffffffffff, mask, 16));
 
             // Sub-blocks 0-3
             {
                 // Load the grid.
-                const vint8m4_t iq1b = __riscv_vreinterpret_v_i64m4_i8m4(__riscv_vreinterpret_v_u64m4_i64m4(
+                ثابت vint8m4_t iq1b = __riscv_vreinterpret_v_i64m4_i8m4(__riscv_vreinterpret_v_u64m4_i64m4(
                     __riscv_vluxei16_v_u64m4(iq1s_grid, __riscv_vget_v_u16m2_u16m1(index, 0), 8)));
 
                 // Calculate the lsums.
@@ -3221,16 +3221,16 @@ static NOINLINE void ggml_vec_dot_iq1_m_q8_K_vl128(int n, float * GGML_RESTRICT 
                 // Sub-block 0, 1
                 {
                     // Load q8 for each sub-block.
-                    const vint8m2_t q8b = __riscv_vle8_v_i8m2(q8, 32);
+                    ثابت vint8m2_t q8b = __riscv_vle8_v_i8m2(q8, 32);
                     q8 += 32;
 
                     // Calculate the lsums.
-                    const vint16m4_t lsum1 = __riscv_vwmul_vv_i16m4(__riscv_vget_v_i8m4_i8m2(iq1b, 0), q8b, 32);
-                    const vint16m4_t lsum2 = __riscv_vwmul_vv_i16m4(__riscv_vget_v_i8m8_i8m2(delta, 0), q8b, 32);
+                    ثابت vint16m4_t lsum1 = __riscv_vwmul_vv_i16m4(__riscv_vget_v_i8m4_i8m2(iq1b, 0), q8b, 32);
+                    ثابت vint16m4_t lsum2 = __riscv_vwmul_vv_i16m4(__riscv_vget_v_i8m8_i8m2(delta, 0), q8b, 32);
 
                     // Prepare the scales.
-                    const int16_t ls_0 = 2*((sc[0] >> 0) & 0x7) + 1;
-                    const int16_t ls_1 = 2*((sc[0] >> 3) & 0x7) + 1;
+                    ثابت int16_t ls_0 = 2*((sc[0] >> 0) & 0x7) + 1;
+                    ثابت int16_t ls_1 = 2*((sc[0] >> 3) & 0x7) + 1;
 
                     // Accumulate in acc0 and acc1 for each sub-block.
                     acc1 = __riscv_vwmacc_vx_i32m4(acc1, ls_0, __riscv_vget_v_i16m4_i16m2(lsum1, 0), 16);
@@ -3242,16 +3242,16 @@ static NOINLINE void ggml_vec_dot_iq1_m_q8_K_vl128(int n, float * GGML_RESTRICT 
                 // Sub-block 2, 3
                 {
                     // Load q8 for each sub-block.
-                    const vint8m2_t q8b = __riscv_vle8_v_i8m2(q8, 32);
+                    ثابت vint8m2_t q8b = __riscv_vle8_v_i8m2(q8, 32);
                     q8 += 32;
 
                     // Calculate the lsums.
-                    const vint16m4_t lsum1 = __riscv_vwmul_vv_i16m4(__riscv_vget_v_i8m4_i8m2(iq1b, 1), q8b, 32);
-                    const vint16m4_t lsum2 = __riscv_vwmul_vv_i16m4(__riscv_vget_v_i8m8_i8m2(delta, 1), q8b, 32);
+                    ثابت vint16m4_t lsum1 = __riscv_vwmul_vv_i16m4(__riscv_vget_v_i8m4_i8m2(iq1b, 1), q8b, 32);
+                    ثابت vint16m4_t lsum2 = __riscv_vwmul_vv_i16m4(__riscv_vget_v_i8m8_i8m2(delta, 1), q8b, 32);
 
                     // Prepare the scales.
-                    const int16_t ls_0 = 2*((sc[0] >> 6) & 0x7) + 1;
-                    const int16_t ls_1 = 2*((sc[0] >> 9) & 0x7) + 1;
+                    ثابت int16_t ls_0 = 2*((sc[0] >> 6) & 0x7) + 1;
+                    ثابت int16_t ls_1 = 2*((sc[0] >> 9) & 0x7) + 1;
 
                     // Accumulate in acc0 and acc1 for each sub-block.
                     acc1 = __riscv_vwmacc_vx_i32m4(acc1, ls_0, __riscv_vget_v_i16m4_i16m2(lsum1, 0), 16);
@@ -3265,7 +3265,7 @@ static NOINLINE void ggml_vec_dot_iq1_m_q8_K_vl128(int n, float * GGML_RESTRICT 
             // Sub-blocks 4-7
             {
                 // Load the grid.
-                const vint8m4_t iq1b = __riscv_vreinterpret_v_i64m4_i8m4(__riscv_vreinterpret_v_u64m4_i64m4(
+                ثابت vint8m4_t iq1b = __riscv_vreinterpret_v_i64m4_i8m4(__riscv_vreinterpret_v_u64m4_i64m4(
                     __riscv_vluxei16_v_u64m4(iq1s_grid, __riscv_vget_v_u16m2_u16m1(index, 1), 8)));
 
                 // Calculate the lsums.
@@ -3273,16 +3273,16 @@ static NOINLINE void ggml_vec_dot_iq1_m_q8_K_vl128(int n, float * GGML_RESTRICT 
                 // Sub-block 4, 5
                 {
                     // Load q8 for each sub-block.
-                    const vint8m2_t q8b = __riscv_vle8_v_i8m2(q8, 32);
+                    ثابت vint8m2_t q8b = __riscv_vle8_v_i8m2(q8, 32);
                     q8 += 32;
 
                     // Calculate the lsums.
-                    const vint16m4_t lsum1 = __riscv_vwmul_vv_i16m4(__riscv_vget_v_i8m4_i8m2(iq1b, 0), q8b, 32);
-                    const vint16m4_t lsum2 = __riscv_vwmul_vv_i16m4(__riscv_vget_v_i8m8_i8m2(delta, 2), q8b, 32);
+                    ثابت vint16m4_t lsum1 = __riscv_vwmul_vv_i16m4(__riscv_vget_v_i8m4_i8m2(iq1b, 0), q8b, 32);
+                    ثابت vint16m4_t lsum2 = __riscv_vwmul_vv_i16m4(__riscv_vget_v_i8m8_i8m2(delta, 2), q8b, 32);
 
                     // Prepare the scales.
-                    const int16_t ls_0 = 2*((sc[0] >> 0) & 0x7) + 1;
-                    const int16_t ls_1 = 2*((sc[0] >> 3) & 0x7) + 1;
+                    ثابت int16_t ls_0 = 2*((sc[0] >> 0) & 0x7) + 1;
+                    ثابت int16_t ls_1 = 2*((sc[0] >> 3) & 0x7) + 1;
 
                     // Accumulate in acc0 and acc1 for each sub-block.
                     acc1 = __riscv_vwmacc_vx_i32m4(acc1, ls_0, __riscv_vget_v_i16m4_i16m2(lsum1, 0), 16);
@@ -3294,16 +3294,16 @@ static NOINLINE void ggml_vec_dot_iq1_m_q8_K_vl128(int n, float * GGML_RESTRICT 
                 // Sub-block 6, 7
                 {
                     // Load q8 for each sub-block.
-                    const vint8m2_t q8b = __riscv_vle8_v_i8m2(q8, 32);
+                    ثابت vint8m2_t q8b = __riscv_vle8_v_i8m2(q8, 32);
                     q8 += 32;
 
                     // Calculate the lsums.
-                    const vint16m4_t lsum1 = __riscv_vwmul_vv_i16m4(__riscv_vget_v_i8m4_i8m2(iq1b, 1), q8b, 32);
-                    const vint16m4_t lsum2 = __riscv_vwmul_vv_i16m4(__riscv_vget_v_i8m8_i8m2(delta, 3), q8b, 32);
+                    ثابت vint16m4_t lsum1 = __riscv_vwmul_vv_i16m4(__riscv_vget_v_i8m4_i8m2(iq1b, 1), q8b, 32);
+                    ثابت vint16m4_t lsum2 = __riscv_vwmul_vv_i16m4(__riscv_vget_v_i8m8_i8m2(delta, 3), q8b, 32);
 
                     // Prepare the scales.
-                    const int16_t ls_0 = 2*((sc[0] >> 6) & 0x7) + 1;
-                    const int16_t ls_1 = 2*((sc[0] >> 9) & 0x7) + 1;
+                    ثابت int16_t ls_0 = 2*((sc[0] >> 6) & 0x7) + 1;
+                    ثابت int16_t ls_1 = 2*((sc[0] >> 9) & 0x7) + 1;
 
                     // Accumulate in acc0 and acc1 for each sub-block.
                     acc1 = __riscv_vwmacc_vx_i32m4(acc1, ls_0, __riscv_vget_v_i16m4_i16m2(lsum1, 0), 16);
@@ -3317,34 +3317,34 @@ static NOINLINE void ggml_vec_dot_iq1_m_q8_K_vl128(int n, float * GGML_RESTRICT 
 
         // Reduce and accumulate in `sumf`.
         vint32m1_t one = __riscv_vmv_v_x_i32m1(0, 1);
-        int sumi1 = __riscv_vmv_x_s_i32m1_i32(__riscv_vredsum_vs_i32m4_i32m1(acc1, one, 16));
-        int sumi2 = __riscv_vmv_x_s_i32m1_i32(__riscv_vredsum_vs_i32m4_i32m1(acc2, one, 16));
+        صحيح sumi1 = __riscv_vmv_x_s_i32m1_i32(__riscv_vredsum_vs_i32m4_i32m1(acc1, one, 16));
+        صحيح sumi2 = __riscv_vmv_x_s_i32m1_i32(__riscv_vredsum_vs_i32m4_i32m1(acc2, one, 16));
         sumf += y[i].d * GGML_CPU_FP16_TO_FP32(scale.f16) * (sumi1 + IQ1M_DELTA * sumi2);
     }
 
     *s = sumf;
 }
 
-static NOINLINE void ggml_vec_dot_iq1_m_q8_K_vl256(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+ساكن NOINLINE فراغ ggml_vec_dot_iq1_m_q8_K_vl256(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_iq1_m * GGML_RESTRICT x = vx;
-    const block_q8_K  * GGML_RESTRICT y = vy;
+    ثابت block_iq1_m * GGML_RESTRICT x = vx;
+    ثابت block_q8_K  * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ثابت صحيح nb = n / QK_K;
 
     iq1m_scale_t scale;
-    float sumf = 0.0f;
-    for (int i = 0; i < nb; ++i) {
-        const int8_t   * q8 = y[i].qs;
-        const uint8_t  * qs = x[i].qs;
-        const uint8_t  * qh = x[i].qh;
-        const uint16_t * sc = (const uint16_t *)x[i].scales;
+    عائم sumf = 0.0f;
+    لكل (صحيح i = 0; i < nb; ++i) {
+        ثابت int8_t   * q8 = y[i].qs;
+        ثابت uint8_t  * qs = x[i].qs;
+        ثابت uint8_t  * qh = x[i].qh;
+        ثابت uint16_t * sc = (ثابت uint16_t *)x[i].scales;
 
         scale.u16 = (sc[0] >> 12) | ((sc[1] >> 8) & 0x00f0) | ((sc[2] >> 4) & 0x0f00) | (sc[3] & 0xf000);
 
@@ -3354,20 +3354,20 @@ static NOINLINE void ggml_vec_dot_iq1_m_q8_K_vl256(int n, float * GGML_RESTRICT 
 
         // We process 8 16-element sub-blocks together.
         #pragma GCC unroll 1
-        for (int ib = 0; ib < QK_K/128; ib++) {
+        لكل (صحيح ib = 0; ib < QK_K/128; ib++) {
             // Load qh for 8 sub-blocks.
-            const vuint8mf4_t qh_8 = __riscv_vle8_v_u8mf4(qh, 8);
-            const vuint16mf2_t qh_16_lo = __riscv_vzext_vf2_u16mf2(qh_8, 8);
-            const vuint16mf2_t qh_16_hi = __riscv_vsll_vx_u16mf2(qh_16_lo, 8, 8);
-            const vuint16m1_t qhb = __riscv_vzext_vf2_u16m1(
+            ثابت vuint8mf4_t qh_8 = __riscv_vle8_v_u8mf4(qh, 8);
+            ثابت vuint16mf2_t qh_16_lo = __riscv_vzext_vf2_u16mf2(qh_8, 8);
+            ثابت vuint16mf2_t qh_16_hi = __riscv_vsll_vx_u16mf2(qh_16_lo, 8, 8);
+            ثابت vuint16m1_t qhb = __riscv_vzext_vf2_u16m1(
                 __riscv_vreinterpret_v_u16mf2_u8mf2(__riscv_vor_vv_u16mf2(qh_16_lo, qh_16_hi, 8)), 16);
             qh += 8;
 
             __asm__ __volatile__("" ::: "memory");
 
             // Prepare grid indices.
-            const vuint16m1_t qsb = __riscv_vzext_vf2_u16m1(__riscv_vle8_v_u8mf2(&qs[0], 16), 16);
-            const vuint16m1_t shift = __riscv_vreinterpret_v_u32m1_u16m1(__riscv_vmv_v_x_u32m1(0x00040008, 8));
+            ثابت vuint16m1_t qsb = __riscv_vzext_vf2_u16m1(__riscv_vle8_v_u8mf2(&qs[0], 16), 16);
+            ثابت vuint16m1_t shift = __riscv_vreinterpret_v_u32m1_u16m1(__riscv_vmv_v_x_u32m1(0x00040008, 8));
             vuint16m1_t index = __riscv_vor_vv_u16m1(qsb, __riscv_vand_vx_u16m1(__riscv_vsll_vv_u16m1(qhb, shift, 16), 0x700, 16), 16);
             index = __riscv_vsll_vx_u16m1(index, 3, 16);
             qs += 16;
@@ -3375,33 +3375,33 @@ static NOINLINE void ggml_vec_dot_iq1_m_q8_K_vl256(int n, float * GGML_RESTRICT 
             __asm__ __volatile__("" ::: "memory");
 
             // Load the grid.
-            const vint8m4_t iq1b = __riscv_vreinterpret_v_i64m4_i8m4(__riscv_vreinterpret_v_u64m4_i64m4(
+            ثابت vint8m4_t iq1b = __riscv_vreinterpret_v_i64m4_i8m4(__riscv_vreinterpret_v_u64m4_i64m4(
                 __riscv_vluxei16_v_u64m4(iq1s_grid, index, 16)));
 
             // Prepare the deltas.
-            const vbool16_t mask = __riscv_vmsgtu_vx_u16m1_b16(
+            ثابت vbool16_t mask = __riscv_vmsgtu_vx_u16m1_b16(
                 __riscv_vand_vv_u16m1(qhb, __riscv_vreinterpret_v_u32m1_u16m1(__riscv_vmv_v_x_u32m1(0x00800008, 8)), 16), 0, 16);
-            const vint64m4_t delta_pos = __riscv_vmv_v_x_i64m4(0x0101010101010101, 16);
-            const vint8m4_t delta = __riscv_vreinterpret_v_i64m4_i8m4(
+            ثابت vint64m4_t delta_pos = __riscv_vmv_v_x_i64m4(0x0101010101010101, 16);
+            ثابت vint8m4_t delta = __riscv_vreinterpret_v_i64m4_i8m4(
                 __riscv_vmerge_vxm_i64m4(delta_pos, 0xffffffffffffffff, mask, 16));
 
             // Load q8 for sub-blocks.
-            const vint8m4_t q8b = __riscv_vle8_v_i8m4(q8, 128);
+            ثابت vint8m4_t q8b = __riscv_vle8_v_i8m4(q8, 128);
             q8 += 128;
 
             // Calculate the lsums.
-            const vint16m8_t lsum1 = __riscv_vwmul_vv_i16m8(iq1b, q8b, 128);
-            const vint16m8_t lsum2 = __riscv_vwmul_vv_i16m8(delta, q8b, 128);
+            ثابت vint16m8_t lsum1 = __riscv_vwmul_vv_i16m8(iq1b, q8b, 128);
+            ثابت vint16m8_t lsum2 = __riscv_vwmul_vv_i16m8(delta, q8b, 128);
 
             // Prepare the scales.
-            const int16_t ls_0_0 = 2*((sc[0] >> 0) & 0x7) + 1;
-            const int16_t ls_0_1 = 2*((sc[0] >> 3) & 0x7) + 1;
-            const int16_t ls_1_0 = 2*((sc[0] >> 6) & 0x7) + 1;
-            const int16_t ls_1_1 = 2*((sc[0] >> 9) & 0x7) + 1;
-            const int16_t ls_2_0 = 2*((sc[1] >> 0) & 0x7) + 1;
-            const int16_t ls_2_1 = 2*((sc[1] >> 3) & 0x7) + 1;
-            const int16_t ls_3_0 = 2*((sc[1] >> 6) & 0x7) + 1;
-            const int16_t ls_3_1 = 2*((sc[1] >> 9) & 0x7) + 1;
+            ثابت int16_t ls_0_0 = 2*((sc[0] >> 0) & 0x7) + 1;
+            ثابت int16_t ls_0_1 = 2*((sc[0] >> 3) & 0x7) + 1;
+            ثابت int16_t ls_1_0 = 2*((sc[0] >> 6) & 0x7) + 1;
+            ثابت int16_t ls_1_1 = 2*((sc[0] >> 9) & 0x7) + 1;
+            ثابت int16_t ls_2_0 = 2*((sc[1] >> 0) & 0x7) + 1;
+            ثابت int16_t ls_2_1 = 2*((sc[1] >> 3) & 0x7) + 1;
+            ثابت int16_t ls_3_0 = 2*((sc[1] >> 6) & 0x7) + 1;
+            ثابت int16_t ls_3_1 = 2*((sc[1] >> 9) & 0x7) + 1;
             sc += 2;
 
             // Accumulate in acc0 and acc1 for each sub-block.
@@ -3430,39 +3430,39 @@ static NOINLINE void ggml_vec_dot_iq1_m_q8_K_vl256(int n, float * GGML_RESTRICT 
 
         // Reduce and accumulate in `sumf`.
         vint32m1_t one = __riscv_vmv_v_x_i32m1(0, 1);
-        int sumi1 = __riscv_vmv_x_s_i32m1_i32(__riscv_vredsum_vs_i32m2_i32m1(acc1, one, 16));
-        int sumi2 = __riscv_vmv_x_s_i32m1_i32(__riscv_vredsum_vs_i32m2_i32m1(acc2, one, 16));
+        صحيح sumi1 = __riscv_vmv_x_s_i32m1_i32(__riscv_vredsum_vs_i32m2_i32m1(acc1, one, 16));
+        صحيح sumi2 = __riscv_vmv_x_s_i32m1_i32(__riscv_vredsum_vs_i32m2_i32m1(acc2, one, 16));
         sumf += y[i].d * GGML_CPU_FP16_TO_FP32(scale.f16) * (sumi1 + IQ1M_DELTA * sumi2);
     }
 
     *s = sumf;
 }
 
-static NOINLINE void ggml_vec_dot_iq1_m_q8_K_vl512(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+ساكن NOINLINE فراغ ggml_vec_dot_iq1_m_q8_K_vl512(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_iq1_m * GGML_RESTRICT x = vx;
-    const block_q8_K  * GGML_RESTRICT y = vy;
+    ثابت block_iq1_m * GGML_RESTRICT x = vx;
+    ثابت block_q8_K  * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ثابت صحيح nb = n / QK_K;
 
     iq1m_scale_t scale;
 
     // Mask for processing 16 elements per lsum register.
-    const vuint16m1_t l_index = __riscv_vid_v_u16m1(32);
-    const vbool16_t l_mask = __riscv_vmsgtu_vx_u16m1_b16(l_index, 15, 32);
+    ثابت vuint16m1_t l_index = __riscv_vid_v_u16m1(32);
+    ثابت vbool16_t l_mask = __riscv_vmsgtu_vx_u16m1_b16(l_index, 15, 32);
 
-    float sumf = 0.0f;
-    for (int i = 0; i < nb; ++i) {
-        const int8_t   * q8 = y[i].qs;
-        const uint8_t  * qs = x[i].qs;
-        const uint8_t  * qh = x[i].qh;
-        const uint16_t * sc = (const uint16_t *)x[i].scales;
+    عائم sumf = 0.0f;
+    لكل (صحيح i = 0; i < nb; ++i) {
+        ثابت int8_t   * q8 = y[i].qs;
+        ثابت uint8_t  * qs = x[i].qs;
+        ثابت uint8_t  * qh = x[i].qh;
+        ثابت uint16_t * sc = (ثابت uint16_t *)x[i].scales;
 
         scale.u16 = (sc[0] >> 12) | ((sc[1] >> 8) & 0x00f0) | ((sc[2] >> 4) & 0x0f00) | (sc[3] & 0xf000);
 
@@ -3472,57 +3472,57 @@ static NOINLINE void ggml_vec_dot_iq1_m_q8_K_vl512(int n, float * GGML_RESTRICT 
 
         // We process all the sub-blocks together.
         #pragma GCC unroll 1
-        for (int ib = 0; ib < QK_K/256; ib++) {
+        لكل (صحيح ib = 0; ib < QK_K/256; ib++) {
             // Load qh for all 16 sub-blocks.
-            const vuint8mf4_t qh_8 = __riscv_vle8_v_u8mf4(qh, 16);
-            const vuint16mf2_t qh_16_lo = __riscv_vzext_vf2_u16mf2(qh_8, 16);
-            const vuint16mf2_t qh_16_hi = __riscv_vsll_vx_u16mf2(qh_16_lo, 8, 16);
-            const vuint16m1_t qhb = __riscv_vzext_vf2_u16m1(
+            ثابت vuint8mf4_t qh_8 = __riscv_vle8_v_u8mf4(qh, 16);
+            ثابت vuint16mf2_t qh_16_lo = __riscv_vzext_vf2_u16mf2(qh_8, 16);
+            ثابت vuint16mf2_t qh_16_hi = __riscv_vsll_vx_u16mf2(qh_16_lo, 8, 16);
+            ثابت vuint16m1_t qhb = __riscv_vzext_vf2_u16m1(
                 __riscv_vreinterpret_v_u16mf2_u8mf2(__riscv_vor_vv_u16mf2(qh_16_lo, qh_16_hi, 16)), 32);
             __asm__ __volatile__("" ::: "memory");
 
             // Prepare grid indices.
-            const vuint16m1_t qsb = __riscv_vzext_vf2_u16m1(__riscv_vle8_v_u8mf2(&qs[0], 32), 32);
-            const vuint16m1_t shift = __riscv_vreinterpret_v_u32m1_u16m1(__riscv_vmv_v_x_u32m1(0x00040008, 16));
+            ثابت vuint16m1_t qsb = __riscv_vzext_vf2_u16m1(__riscv_vle8_v_u8mf2(&qs[0], 32), 32);
+            ثابت vuint16m1_t shift = __riscv_vreinterpret_v_u32m1_u16m1(__riscv_vmv_v_x_u32m1(0x00040008, 16));
             vuint16m1_t index = __riscv_vor_vv_u16m1(qsb, __riscv_vand_vx_u16m1(__riscv_vsll_vv_u16m1(qhb, shift, 32), 0x700, 32), 32);
             index = __riscv_vsll_vx_u16m1(index, 3, 32);
             __asm__ __volatile__("" ::: "memory");
 
             // Load the grid.
-            const vint8m4_t iq1b = __riscv_vreinterpret_v_i64m4_i8m4(__riscv_vreinterpret_v_u64m4_i64m4(
+            ثابت vint8m4_t iq1b = __riscv_vreinterpret_v_i64m4_i8m4(__riscv_vreinterpret_v_u64m4_i64m4(
                 __riscv_vluxei16_v_u64m4(iq1s_grid, index, 32)));
 
             // Prepare the deltas.
-            const vbool16_t mask = __riscv_vmsgtu_vx_u16m1_b16(
+            ثابت vbool16_t mask = __riscv_vmsgtu_vx_u16m1_b16(
                 __riscv_vand_vv_u16m1(qhb, __riscv_vreinterpret_v_u32m1_u16m1(__riscv_vmv_v_x_u32m1(0x00800008, 16)), 32), 0, 32);
-            const vint64m4_t delta_pos = __riscv_vmv_v_x_i64m4(0x0101010101010101, 32);
-            const vint8m4_t delta = __riscv_vreinterpret_v_i64m4_i8m4(
+            ثابت vint64m4_t delta_pos = __riscv_vmv_v_x_i64m4(0x0101010101010101, 32);
+            ثابت vint8m4_t delta = __riscv_vreinterpret_v_i64m4_i8m4(
                 __riscv_vmerge_vxm_i64m4(delta_pos, 0xffffffffffffffff, mask, 32));
 
             // Load q8 for sub-blocks.
-            const vint8m4_t q8b = __riscv_vle8_v_i8m4(q8, 256);
+            ثابت vint8m4_t q8b = __riscv_vle8_v_i8m4(q8, 256);
 
             // Calculate the lsums.
-            const vint16m8_t lsum1 = __riscv_vwmul_vv_i16m8(iq1b, q8b, 256);
-            const vint16m8_t lsum2 = __riscv_vwmul_vv_i16m8(delta, q8b, 256);
+            ثابت vint16m8_t lsum1 = __riscv_vwmul_vv_i16m8(iq1b, q8b, 256);
+            ثابت vint16m8_t lsum2 = __riscv_vwmul_vv_i16m8(delta, q8b, 256);
 
             // Prepare the scales.
-            const int16_t ls_0 = 2*((sc[0] >> 0) & 0x7) + 1;
-            const int16_t ls_1 = 2*((sc[0] >> 3) & 0x7) + 1;
-            const int16_t ls_2 = 2*((sc[0] >> 6) & 0x7) + 1;
-            const int16_t ls_3 = 2*((sc[0] >> 9) & 0x7) + 1;
-            const int16_t ls_4 = 2*((sc[1] >> 0) & 0x7) + 1;
-            const int16_t ls_5 = 2*((sc[1] >> 3) & 0x7) + 1;
-            const int16_t ls_6 = 2*((sc[1] >> 6) & 0x7) + 1;
-            const int16_t ls_7 = 2*((sc[1] >> 9) & 0x7) + 1;
-            const int16_t ls_8 = 2*((sc[2] >> 0) & 0x7) + 1;
-            const int16_t ls_9 = 2*((sc[2] >> 3) & 0x7) + 1;
-            const int16_t ls_10 = 2*((sc[2] >> 6) & 0x7) + 1;
-            const int16_t ls_11 = 2*((sc[2] >> 9) & 0x7) + 1;
-            const int16_t ls_12 = 2*((sc[3] >> 0) & 0x7) + 1;
-            const int16_t ls_13 = 2*((sc[3] >> 3) & 0x7) + 1;
-            const int16_t ls_14 = 2*((sc[3] >> 6) & 0x7) + 1;
-            const int16_t ls_15 = 2*((sc[3] >> 9) & 0x7) + 1;
+            ثابت int16_t ls_0 = 2*((sc[0] >> 0) & 0x7) + 1;
+            ثابت int16_t ls_1 = 2*((sc[0] >> 3) & 0x7) + 1;
+            ثابت int16_t ls_2 = 2*((sc[0] >> 6) & 0x7) + 1;
+            ثابت int16_t ls_3 = 2*((sc[0] >> 9) & 0x7) + 1;
+            ثابت int16_t ls_4 = 2*((sc[1] >> 0) & 0x7) + 1;
+            ثابت int16_t ls_5 = 2*((sc[1] >> 3) & 0x7) + 1;
+            ثابت int16_t ls_6 = 2*((sc[1] >> 6) & 0x7) + 1;
+            ثابت int16_t ls_7 = 2*((sc[1] >> 9) & 0x7) + 1;
+            ثابت int16_t ls_8 = 2*((sc[2] >> 0) & 0x7) + 1;
+            ثابت int16_t ls_9 = 2*((sc[2] >> 3) & 0x7) + 1;
+            ثابت int16_t ls_10 = 2*((sc[2] >> 6) & 0x7) + 1;
+            ثابت int16_t ls_11 = 2*((sc[2] >> 9) & 0x7) + 1;
+            ثابت int16_t ls_12 = 2*((sc[3] >> 0) & 0x7) + 1;
+            ثابت int16_t ls_13 = 2*((sc[3] >> 3) & 0x7) + 1;
+            ثابت int16_t ls_14 = 2*((sc[3] >> 6) & 0x7) + 1;
+            ثابت int16_t ls_15 = 2*((sc[3] >> 9) & 0x7) + 1;
 
             // Accumulate in acc0 and acc1 for each sub-block.
             acc1 = __riscv_vwmacc_vx_i32m2(          acc1, ls_0, __riscv_vget_v_i16m8_i16m1(lsum1, 0), 16);
@@ -3570,34 +3570,34 @@ static NOINLINE void ggml_vec_dot_iq1_m_q8_K_vl512(int n, float * GGML_RESTRICT 
 
         // Reduce and accumulate in `sumf`.
         vint32m1_t one = __riscv_vmv_v_x_i32m1(0, 1);
-        int sumi1 = __riscv_vmv_x_s_i32m1_i32(__riscv_vredsum_vs_i32m2_i32m1(acc1, one, 32));
-        int sumi2 = __riscv_vmv_x_s_i32m1_i32(__riscv_vredsum_vs_i32m2_i32m1(acc2, one, 32));
+        صحيح sumi1 = __riscv_vmv_x_s_i32m1_i32(__riscv_vredsum_vs_i32m2_i32m1(acc1, one, 32));
+        صحيح sumi2 = __riscv_vmv_x_s_i32m1_i32(__riscv_vredsum_vs_i32m2_i32m1(acc2, one, 32));
         sumf += y[i].d * GGML_CPU_FP16_TO_FP32(scale.f16) * (sumi1 + IQ1M_DELTA * sumi2);
     }
 
     *s = sumf;
 }
 
-static NOINLINE void ggml_vec_dot_iq1_m_q8_K_vl1024(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+ساكن NOINLINE فراغ ggml_vec_dot_iq1_m_q8_K_vl1024(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_iq1_m * GGML_RESTRICT x = vx;
-    const block_q8_K  * GGML_RESTRICT y = vy;
+    ثابت block_iq1_m * GGML_RESTRICT x = vx;
+    ثابت block_q8_K  * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ثابت صحيح nb = n / QK_K;
 
     iq1m_scale_t scale;
-    float sumf = 0.0f;
-    for (int i = 0; i < nb; ++i) {
-        const int8_t   * q8 = y[i].qs;
-        const uint8_t  * qs = x[i].qs;
-        const uint8_t  * qh = x[i].qh;
-        const uint16_t * sc = (const uint16_t *)x[i].scales;
+    عائم sumf = 0.0f;
+    لكل (صحيح i = 0; i < nb; ++i) {
+        ثابت int8_t   * q8 = y[i].qs;
+        ثابت uint8_t  * qs = x[i].qs;
+        ثابت uint8_t  * qh = x[i].qh;
+        ثابت uint16_t * sc = (ثابت uint16_t *)x[i].scales;
 
         scale.u16 = (sc[0] >> 12) | ((sc[1] >> 8) & 0x00f0) | ((sc[2] >> 4) & 0x0f00) | (sc[3] & 0xf000);
 
@@ -3607,60 +3607,60 @@ static NOINLINE void ggml_vec_dot_iq1_m_q8_K_vl1024(int n, float * GGML_RESTRICT
 
         // We process all the sub-blocks together.
         #pragma GCC unroll 1
-        for (int ib = 0; ib < QK_K/256; ib++) {
+        لكل (صحيح ib = 0; ib < QK_K/256; ib++) {
             // Load qh for all 16 sub-blocks.
-            const vuint8mf8_t qh_8 = __riscv_vle8_v_u8mf8(qh, 16);
-            const vuint16mf4_t qh_16_lo = __riscv_vzext_vf2_u16mf4(qh_8, 16);
-            const vuint16mf4_t qh_16_hi = __riscv_vsll_vx_u16mf4(qh_16_lo, 8, 16);
-            const vuint16mf2_t qhb = __riscv_vzext_vf2_u16mf2(
+            ثابت vuint8mf8_t qh_8 = __riscv_vle8_v_u8mf8(qh, 16);
+            ثابت vuint16mf4_t qh_16_lo = __riscv_vzext_vf2_u16mf4(qh_8, 16);
+            ثابت vuint16mf4_t qh_16_hi = __riscv_vsll_vx_u16mf4(qh_16_lo, 8, 16);
+            ثابت vuint16mf2_t qhb = __riscv_vzext_vf2_u16mf2(
                 __riscv_vreinterpret_v_u16mf4_u8mf4(__riscv_vor_vv_u16mf4(qh_16_lo, qh_16_hi, 16)), 32);
             __asm__ __volatile__("" ::: "memory");
 
             // Prepare grid indices.
-            const vuint16mf2_t qsb = __riscv_vzext_vf2_u16mf2(__riscv_vle8_v_u8mf4(&qs[0], 32), 32);
-            const vuint16mf2_t shift = __riscv_vreinterpret_v_u32mf2_u16mf2(__riscv_vmv_v_x_u32mf2(0x00040008, 16));
+            ثابت vuint16mf2_t qsb = __riscv_vzext_vf2_u16mf2(__riscv_vle8_v_u8mf4(&qs[0], 32), 32);
+            ثابت vuint16mf2_t shift = __riscv_vreinterpret_v_u32mf2_u16mf2(__riscv_vmv_v_x_u32mf2(0x00040008, 16));
             vuint16mf2_t index = __riscv_vor_vv_u16mf2(qsb, __riscv_vand_vx_u16mf2(__riscv_vsll_vv_u16mf2(qhb, shift, 32), 0x700, 32), 32);
             index = __riscv_vsll_vx_u16mf2(index, 3, 32);
             __asm__ __volatile__("" ::: "memory");
 
             // Load the grid.
-            const vint8m2_t iq1b = __riscv_vreinterpret_v_i64m2_i8m2(__riscv_vreinterpret_v_u64m2_i64m2(
+            ثابت vint8m2_t iq1b = __riscv_vreinterpret_v_i64m2_i8m2(__riscv_vreinterpret_v_u64m2_i64m2(
                 __riscv_vluxei16_v_u64m2(iq1s_grid, index, 32)));
 
             // Prepare the deltas.
-            const vbool32_t mask = __riscv_vmsgtu_vx_u16mf2_b32(
+            ثابت vbool32_t mask = __riscv_vmsgtu_vx_u16mf2_b32(
                 __riscv_vand_vv_u16mf2(qhb, __riscv_vreinterpret_v_u32mf2_u16mf2(__riscv_vmv_v_x_u32mf2(0x00800008, 16)), 32), 0, 32);
-            const vint64m2_t delta_pos = __riscv_vmv_v_x_i64m2(0x0101010101010101, 32);
-            const vint8m2_t delta = __riscv_vreinterpret_v_i64m2_i8m2(
+            ثابت vint64m2_t delta_pos = __riscv_vmv_v_x_i64m2(0x0101010101010101, 32);
+            ثابت vint8m2_t delta = __riscv_vreinterpret_v_i64m2_i8m2(
                 __riscv_vmerge_vxm_i64m2(delta_pos, 0xffffffffffffffff, mask, 32));
 
             // Load q8 for sub-blocks.
-            const vint8m2_t q8b = __riscv_vle8_v_i8m2(q8, 256);
+            ثابت vint8m2_t q8b = __riscv_vle8_v_i8m2(q8, 256);
 
             // Calculate the lsums.
-            const vint16m4_t lsum1 = __riscv_vwmul_vv_i16m4(iq1b, q8b, 256);
-            const vint16m4_t lsum2 = __riscv_vwmul_vv_i16m4(delta, q8b, 256);
+            ثابت vint16m4_t lsum1 = __riscv_vwmul_vv_i16m4(iq1b, q8b, 256);
+            ثابت vint16m4_t lsum2 = __riscv_vwmul_vv_i16m4(delta, q8b, 256);
 
             // Prepare the scales.
-            const int16_t ls_0 = 2*((sc[0] >> 0) & 0x7) + 1;
-            const int16_t ls_1 = 2*((sc[0] >> 3) & 0x7) + 1;
-            const int16_t ls_2 = 2*((sc[0] >> 6) & 0x7) + 1;
-            const int16_t ls_3 = 2*((sc[0] >> 9) & 0x7) + 1;
-            const int16_t ls_4 = 2*((sc[1] >> 0) & 0x7) + 1;
-            const int16_t ls_5 = 2*((sc[1] >> 3) & 0x7) + 1;
-            const int16_t ls_6 = 2*((sc[1] >> 6) & 0x7) + 1;
-            const int16_t ls_7 = 2*((sc[1] >> 9) & 0x7) + 1;
-            const int16_t ls_8 = 2*((sc[2] >> 0) & 0x7) + 1;
-            const int16_t ls_9 = 2*((sc[2] >> 3) & 0x7) + 1;
-            const int16_t ls_10 = 2*((sc[2] >> 6) & 0x7) + 1;
-            const int16_t ls_11 = 2*((sc[2] >> 9) & 0x7) + 1;
-            const int16_t ls_12 = 2*((sc[3] >> 0) & 0x7) + 1;
-            const int16_t ls_13 = 2*((sc[3] >> 3) & 0x7) + 1;
-            const int16_t ls_14 = 2*((sc[3] >> 6) & 0x7) + 1;
-            const int16_t ls_15 = 2*((sc[3] >> 9) & 0x7) + 1;
+            ثابت int16_t ls_0 = 2*((sc[0] >> 0) & 0x7) + 1;
+            ثابت int16_t ls_1 = 2*((sc[0] >> 3) & 0x7) + 1;
+            ثابت int16_t ls_2 = 2*((sc[0] >> 6) & 0x7) + 1;
+            ثابت int16_t ls_3 = 2*((sc[0] >> 9) & 0x7) + 1;
+            ثابت int16_t ls_4 = 2*((sc[1] >> 0) & 0x7) + 1;
+            ثابت int16_t ls_5 = 2*((sc[1] >> 3) & 0x7) + 1;
+            ثابت int16_t ls_6 = 2*((sc[1] >> 6) & 0x7) + 1;
+            ثابت int16_t ls_7 = 2*((sc[1] >> 9) & 0x7) + 1;
+            ثابت int16_t ls_8 = 2*((sc[2] >> 0) & 0x7) + 1;
+            ثابت int16_t ls_9 = 2*((sc[2] >> 3) & 0x7) + 1;
+            ثابت int16_t ls_10 = 2*((sc[2] >> 6) & 0x7) + 1;
+            ثابت int16_t ls_11 = 2*((sc[2] >> 9) & 0x7) + 1;
+            ثابت int16_t ls_12 = 2*((sc[3] >> 0) & 0x7) + 1;
+            ثابت int16_t ls_13 = 2*((sc[3] >> 3) & 0x7) + 1;
+            ثابت int16_t ls_14 = 2*((sc[3] >> 6) & 0x7) + 1;
+            ثابت int16_t ls_15 = 2*((sc[3] >> 9) & 0x7) + 1;
 
             // Mask for processing 16 elements per lsum register.
-            const vuint16m1_t l_index = __riscv_vid_v_u16m1(64);
+            ثابت vuint16m1_t l_index = __riscv_vid_v_u16m1(64);
 
             // Accumulate in acc1 and acc2 for each sub-block.
             acc1 = __riscv_vwmacc_vx_i32m2(acc1, ls_0,  __riscv_vget_v_i16m4_i16m1(lsum1, 0), 16);
@@ -3672,7 +3672,7 @@ static NOINLINE void ggml_vec_dot_iq1_m_q8_K_vl1024(int n, float * GGML_RESTRICT
             acc1 = __riscv_vwmacc_vx_i32m2(acc1, ls_12, __riscv_vget_v_i16m4_i16m1(lsum1, 3), 16);
             acc2 = __riscv_vwmacc_vx_i32m2(acc2, ls_12, __riscv_vget_v_i16m4_i16m1(lsum2, 3), 16);
             //
-            const vbool16_t l_mask_16_32 = __riscv_vmsgtu_vx_u16m1_b16(l_index, 15, 64);
+            ثابت vbool16_t l_mask_16_32 = __riscv_vmsgtu_vx_u16m1_b16(l_index, 15, 64);
             acc1 = __riscv_vwmacc_vx_i32m2_m(l_mask_16_32, acc1, ls_1, __riscv_vget_v_i16m4_i16m1(lsum1, 0), 32);
             acc2 = __riscv_vwmacc_vx_i32m2_m(l_mask_16_32, acc2, ls_1, __riscv_vget_v_i16m4_i16m1(lsum2, 0), 32);
             acc1 = __riscv_vwmacc_vx_i32m2_m(l_mask_16_32, acc1, ls_5, __riscv_vget_v_i16m4_i16m1(lsum1, 1), 32);
@@ -3682,7 +3682,7 @@ static NOINLINE void ggml_vec_dot_iq1_m_q8_K_vl1024(int n, float * GGML_RESTRICT
             acc1 = __riscv_vwmacc_vx_i32m2_m(l_mask_16_32, acc1, ls_13, __riscv_vget_v_i16m4_i16m1(lsum1, 3), 32);
             acc2 = __riscv_vwmacc_vx_i32m2_m(l_mask_16_32, acc2, ls_13, __riscv_vget_v_i16m4_i16m1(lsum2, 3), 32);
             //
-            const vbool16_t l_mask_32_48 = __riscv_vmsgtu_vx_u16m1_b16(l_index, 31, 64);
+            ثابت vbool16_t l_mask_32_48 = __riscv_vmsgtu_vx_u16m1_b16(l_index, 31, 64);
             acc1 = __riscv_vwmacc_vx_i32m2_m(l_mask_32_48, acc1, ls_2,  __riscv_vget_v_i16m4_i16m1(lsum1, 0), 48);
             acc2 = __riscv_vwmacc_vx_i32m2_m(l_mask_32_48, acc2, ls_2,  __riscv_vget_v_i16m4_i16m1(lsum2, 0), 48);
             acc1 = __riscv_vwmacc_vx_i32m2_m(l_mask_32_48, acc1, ls_6,  __riscv_vget_v_i16m4_i16m1(lsum1, 1), 48);
@@ -3692,7 +3692,7 @@ static NOINLINE void ggml_vec_dot_iq1_m_q8_K_vl1024(int n, float * GGML_RESTRICT
             acc1 = __riscv_vwmacc_vx_i32m2_m(l_mask_32_48, acc1, ls_14, __riscv_vget_v_i16m4_i16m1(lsum1, 3), 48);
             acc2 = __riscv_vwmacc_vx_i32m2_m(l_mask_32_48, acc2, ls_14, __riscv_vget_v_i16m4_i16m1(lsum2, 3), 48);
             //
-            const vbool16_t l_mask_48_64 = __riscv_vmsgtu_vx_u16m1_b16(l_index, 47, 64);
+            ثابت vbool16_t l_mask_48_64 = __riscv_vmsgtu_vx_u16m1_b16(l_index, 47, 64);
             acc1 = __riscv_vwmacc_vx_i32m2_m(l_mask_48_64, acc1, ls_3,  __riscv_vget_v_i16m4_i16m1(lsum1, 0), 64);
             acc2 = __riscv_vwmacc_vx_i32m2_m(l_mask_48_64, acc2, ls_3,  __riscv_vget_v_i16m4_i16m1(lsum2, 0), 64);
             acc1 = __riscv_vwmacc_vx_i32m2_m(l_mask_48_64, acc1, ls_7,  __riscv_vget_v_i16m4_i16m1(lsum1, 1), 64);
@@ -3707,8 +3707,8 @@ static NOINLINE void ggml_vec_dot_iq1_m_q8_K_vl1024(int n, float * GGML_RESTRICT
 
         // Reduce and accumulate in `sumf`.
         vint32m1_t one = __riscv_vmv_v_x_i32m1(0, 1);
-        int sumi1 = __riscv_vmv_x_s_i32m1_i32(__riscv_vredsum_vs_i32m2_i32m1(acc1, one, 64));
-        int sumi2 = __riscv_vmv_x_s_i32m1_i32(__riscv_vredsum_vs_i32m2_i32m1(acc2, one, 64));
+        صحيح sumi1 = __riscv_vmv_x_s_i32m1_i32(__riscv_vredsum_vs_i32m2_i32m1(acc1, one, 64));
+        صحيح sumi2 = __riscv_vmv_x_s_i32m1_i32(__riscv_vredsum_vs_i32m2_i32m1(acc2, one, 64));
         sumf += y[i].d * GGML_CPU_FP16_TO_FP32(scale.f16) * (sumi1 + IQ1M_DELTA * sumi2);
     }
 
@@ -3716,50 +3716,50 @@ static NOINLINE void ggml_vec_dot_iq1_m_q8_K_vl1024(int n, float * GGML_RESTRICT
 }
 #endif
 
-void ggml_vec_dot_iq1_m_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined __riscv_v
-    switch (__riscv_vlenb() * 8) {
-        case 128:
+فراغ ggml_vec_dot_iq1_m_q8_K(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+#إذا defined __riscv_v
+    بدل (__riscv_vlenb() * 8) {
+        حالة 128:
             ggml_vec_dot_iq1_m_q8_K_vl128(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        case 256:
+            اكسر;
+        حالة 256:
             ggml_vec_dot_iq1_m_q8_K_vl256(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        case 512:
+            اكسر;
+        حالة 512:
             ggml_vec_dot_iq1_m_q8_K_vl512(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        case 1024:
+            اكسر;
+        حالة 1024:
             ggml_vec_dot_iq1_m_q8_K_vl1024(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        default:
+            اكسر;
+        افتراضي:
             ggml_vec_dot_iq1_m_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-            break;
+            اكسر;
     }
-#else
+#وإلا
     ggml_vec_dot_iq1_m_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
 #endif
 }
 
-#if defined __riscv_v
-static const uint8_t sign_gather_indices_arr[64] = {
+#إذا defined __riscv_v
+ساكن ثابت uint8_t sign_gather_indices_arr[64] = {
     0,0,0,0,0,0,0,0, 1,1,1,1,1,1,1,1, 2,2,2,2,2,2,2,2, 3,3,3,3,3,3,3,3,
     4,4,4,4,4,4,4,4, 5,5,5,5,5,5,5,5, 6,6,6,6,6,6,6,6, 7,7,7,7,7,7,7,7
 };
 
-static const uint8_t sign_bit_masks_arr[64] = {
+ساكن ثابت uint8_t sign_bit_masks_arr[64] = {
     1,2,4,8,16,32,64,128, 1,2,4,8,16,32,64,128, 1,2,4,8,16,32,64,128, 1,2,4,8,16,32,64,128,
     1,2,4,8,16,32,64,128, 1,2,4,8,16,32,64,128, 1,2,4,8,16,32,64,128, 1,2,4,8,16,32,64,128
 };
 
-static NOINLINE void ggml_vec_dot_iq2_s_q8_K_vl128(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
+ساكن NOINLINE فراغ ggml_vec_dot_iq2_s_q8_K_vl128(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
     UNUSED(nrc); UNUSED(bx); UNUSED(by); UNUSED(bs);
 
-    const block_iq2_s * GGML_RESTRICT x = vx;
-    const block_q8_K  * GGML_RESTRICT y = vy;
+    ثابت block_iq2_s * GGML_RESTRICT x = vx;
+    ثابت block_q8_K  * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
-    const uint64_t * grid64 = (const uint64_t *)iq2s_grid;
+    ثابت صحيح nb = n / QK_K;
+    ثابت uint64_t * grid64 = (ثابت uint64_t *)iq2s_grid;
 
     // Pre-load Constants
     vuint8m2_t v_ids = __riscv_vid_v_u8m2(32);
@@ -3770,20 +3770,20 @@ static NOINLINE void ggml_vec_dot_iq2_s_q8_K_vl128(int n, float * GGML_RESTRICT 
     uint16_t shift_qh_arr[4] = {11, 9, 7, 5};
     vuint16mf2_t v_shift_qh = __riscv_vle16_v_u16mf2(shift_qh_arr, 4);
 
-    float sumf = 0.0f;
+    عائم sumf = 0.0f;
 
-    for (int i = 0; i < nb; ++i) {
-        const float combined_scale = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
+    لكل (صحيح i = 0; i < nb; ++i) {
+        ثابت عائم combined_scale = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
 
-        const uint8_t * GGML_RESTRICT qs = x[i].qs;
-        const uint8_t * GGML_RESTRICT qh = x[i].qh;
-        const uint8_t * GGML_RESTRICT scales = x[i].scales;
-        const int8_t  * GGML_RESTRICT q8 = y[i].qs;
+        ثابت uint8_t * GGML_RESTRICT qs = x[i].qs;
+        ثابت uint8_t * GGML_RESTRICT qh = x[i].qh;
+        ثابت uint8_t * GGML_RESTRICT scales = x[i].scales;
+        ثابت int8_t  * GGML_RESTRICT q8 = y[i].qs;
 
-        const uint8_t * signs_ptr = qs + 32;
-        float sum_block = 0.0f;
+        ثابت uint8_t * signs_ptr = qs + 32;
+        عائم sum_block = 0.0f;
 
-        for (int ib = 0; ib < 8; ++ib) {
+        لكل (صحيح ib = 0; ib < 8; ++ib) {
 
             // Load Low Bits [4 bytes]
             vuint8mf4_t v_qs_u8 = __riscv_vle8_v_u8mf4(qs, 4);
@@ -3842,15 +3842,15 @@ static NOINLINE void ggml_vec_dot_iq2_s_q8_K_vl128(int n, float * GGML_RESTRICT 
     *s = 0.125f * sumf;
 }
 
-static NOINLINE void ggml_vec_dot_iq2_s_q8_K_vl256(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
+ساكن NOINLINE فراغ ggml_vec_dot_iq2_s_q8_K_vl256(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
     UNUSED(nrc); UNUSED(bx); UNUSED(by); UNUSED(bs);
 
-    const block_iq2_s * GGML_RESTRICT x = vx;
-    const block_q8_K  * GGML_RESTRICT y = vy;
+    ثابت block_iq2_s * GGML_RESTRICT x = vx;
+    ثابت block_q8_K  * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
-    const uint64_t * grid64 = (const uint64_t *)iq2s_grid;
+    ثابت صحيح nb = n / QK_K;
+    ثابت uint64_t * grid64 = (ثابت uint64_t *)iq2s_grid;
 
     // --- Pre-load Constants ---
     uint16_t gather_qh_arr[8] = {0, 0, 0, 0, 1, 1, 1, 1};
@@ -3862,28 +3862,28 @@ static NOINLINE void ggml_vec_dot_iq2_s_q8_K_vl256(int n, float * GGML_RESTRICT 
     vuint8m2_t v_sign_gather_indices = __riscv_vle8_v_u8m2(sign_gather_indices_arr, 64);
     vuint8m2_t v_sign_masks = __riscv_vle8_v_u8m2(sign_bit_masks_arr, 64);
 
-    float sumf = 0.0f;
+    عائم sumf = 0.0f;
 
-    for (int i = 0; i < nb; ++i) {
-        const float combined_scale = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
+    لكل (صحيح i = 0; i < nb; ++i) {
+        ثابت عائم combined_scale = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
 
-        const uint8_t * GGML_RESTRICT qs = x[i].qs;
-        const uint8_t * GGML_RESTRICT qh = x[i].qh;
-        const uint8_t * GGML_RESTRICT scales = x[i].scales;
-        const int8_t  * GGML_RESTRICT q8 = y[i].qs;
+        ثابت uint8_t * GGML_RESTRICT qs = x[i].qs;
+        ثابت uint8_t * GGML_RESTRICT qh = x[i].qh;
+        ثابت uint8_t * GGML_RESTRICT scales = x[i].scales;
+        ثابت int8_t  * GGML_RESTRICT q8 = y[i].qs;
 
-        const uint8_t * signs_ptr = qs + 32;
+        ثابت uint8_t * signs_ptr = qs + 32;
 
-        float sum_block = 0.0f;
+        عائم sum_block = 0.0f;
 
-        for (int ib = 0; ib < 4; ++ib) {
+        لكل (صحيح ib = 0; ib < 4; ++ib) {
             // Combine low + high bits
             vuint8mf4_t v_qs_u8 = __riscv_vle8_v_u8mf4(qs, 8);
             qs += 8;
             uint16_t qh_val;
             memcpy(&qh_val, qh, 2);
             qh += 2;
-            vuint8mf8_t v_qh_raw = __riscv_vle8_v_u8mf8((const uint8_t*)&qh_val, 2);
+            vuint8mf8_t v_qh_raw = __riscv_vle8_v_u8mf8((ثابت uint8_t*)&qh_val, 2);
             vuint16mf4_t v_qh_u16 = __riscv_vwcvtu_x_x_v_u16mf4(v_qh_raw, 2);
             vuint16mf2_t v_qh_u16_ext = __riscv_vlmul_ext_v_u16mf4_u16mf2(v_qh_u16);
             vuint16mf2_t v_qh_expanded = __riscv_vrgather_vv_u16mf2(v_qh_u16_ext, v_gather_qh, 8);
@@ -3944,15 +3944,15 @@ static NOINLINE void ggml_vec_dot_iq2_s_q8_K_vl256(int n, float * GGML_RESTRICT 
     *s = 0.125f * sumf;
 }
 
-static NOINLINE void ggml_vec_dot_iq2_s_q8_K_vl512(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
+ساكن NOINLINE فراغ ggml_vec_dot_iq2_s_q8_K_vl512(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
     UNUSED(nrc); UNUSED(bx); UNUSED(by); UNUSED(bs);
 
-    const block_iq2_s * GGML_RESTRICT x = vx;
-    const block_q8_K  * GGML_RESTRICT y = vy;
+    ثابت block_iq2_s * GGML_RESTRICT x = vx;
+    ثابت block_q8_K  * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
-    const uint64_t * grid64 = (const uint64_t *)iq2s_grid;
+    ثابت صحيح nb = n / QK_K;
+    ثابت uint64_t * grid64 = (ثابت uint64_t *)iq2s_grid;
 
     vuint8m2_t v_ids = __riscv_vid_v_u8m2(128);
     vuint8m2_t v_sign_gather_indices = __riscv_vsrl_vx_u8m2(v_ids, 3, 128);
@@ -3970,21 +3970,21 @@ static NOINLINE void ggml_vec_dot_iq2_s_q8_K_vl512(int n, float * GGML_RESTRICT 
     // Masks for selecting lower/upper 16 lanes within a 32-lane i16m1 register
     vuint16m1_t v_ids16 = __riscv_vid_v_u16m1(32);
     vbool16_t m_hi16 = __riscv_vmsgeu_vx_u16m1_b16(v_ids16, 16, 32);
-    float sumf = 0.0f;
+    عائم sumf = 0.0f;
 
-    for (int i = 0; i < nb; ++i) {
-        const float combined_scale = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
+    لكل (صحيح i = 0; i < nb; ++i) {
+        ثابت عائم combined_scale = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
 
-        const uint8_t * GGML_RESTRICT qs = x[i].qs;
-        const uint8_t * GGML_RESTRICT qh = x[i].qh;
-        const uint8_t * GGML_RESTRICT scales = x[i].scales;
-        const int8_t  * GGML_RESTRICT q8 = y[i].qs;
+        ثابت uint8_t * GGML_RESTRICT qs = x[i].qs;
+        ثابت uint8_t * GGML_RESTRICT qh = x[i].qh;
+        ثابت uint8_t * GGML_RESTRICT scales = x[i].scales;
+        ثابت int8_t  * GGML_RESTRICT q8 = y[i].qs;
 
-        const uint8_t * signs_ptr = qs + 32;
+        ثابت uint8_t * signs_ptr = qs + 32;
 
-        float sum_block = 0.0f;
+        عائم sum_block = 0.0f;
 
-        for (int ib = 0; ib < 2; ++ib) {
+        لكل (صحيح ib = 0; ib < 2; ++ib) {
             vuint8mf4_t v_qs_u8 = __riscv_vle8_v_u8mf4(qs, 16);
             qs += 16;
 
@@ -4054,15 +4054,15 @@ static NOINLINE void ggml_vec_dot_iq2_s_q8_K_vl512(int n, float * GGML_RESTRICT 
     *s = 0.125f * sumf;
 }
 
-static NOINLINE void ggml_vec_dot_iq2_s_q8_K_vl1024(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
+ساكن NOINLINE فراغ ggml_vec_dot_iq2_s_q8_K_vl1024(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
     UNUSED(nrc); UNUSED(bx); UNUSED(by); UNUSED(bs);
 
-    const block_iq2_s * GGML_RESTRICT x = vx;
-    const block_q8_K  * GGML_RESTRICT y = vy;
+    ثابت block_iq2_s * GGML_RESTRICT x = vx;
+    ثابت block_q8_K  * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
-    const uint64_t * grid64 = (const uint64_t *)iq2s_grid;
+    ثابت صحيح nb = n / QK_K;
+    ثابت uint64_t * grid64 = (ثابت uint64_t *)iq2s_grid;
     vuint8m2_t v_ids = __riscv_vid_v_u8m2(256);
     vuint8m2_t v_sign_gather_indices = __riscv_vsrl_vx_u8m2(v_ids, 3, 256);
 
@@ -4093,19 +4093,19 @@ static NOINLINE void ggml_vec_dot_iq2_s_q8_K_vl1024(int n, float * GGML_RESTRICT
         __riscv_vmsltu_vx_u16m4_b4(v_ids64, 48, 64), 64);
     vbool4_t m_g3 = __riscv_vmsgeu_vx_u16m4_b4(v_ids64, 48, 64);
 
-    float sumf = 0.0f;
+    عائم sumf = 0.0f;
 
-    for (int i = 0; i < nb; ++i) {
-        const float combined_scale = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
+    لكل (صحيح i = 0; i < nb; ++i) {
+        ثابت عائم combined_scale = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
 
-        const uint8_t * GGML_RESTRICT qs = x[i].qs;
-        const uint8_t * GGML_RESTRICT qh = x[i].qh;
-        const uint8_t * GGML_RESTRICT scales = x[i].scales;
-        const int8_t  * GGML_RESTRICT q8 = y[i].qs;
+        ثابت uint8_t * GGML_RESTRICT qs = x[i].qs;
+        ثابت uint8_t * GGML_RESTRICT qh = x[i].qh;
+        ثابت uint8_t * GGML_RESTRICT scales = x[i].scales;
+        ثابت int8_t  * GGML_RESTRICT q8 = y[i].qs;
 
-        const uint8_t * signs_ptr = qs + 32;
+        ثابت uint8_t * signs_ptr = qs + 32;
 
-        float sum_block = 0.0f;
+        عائم sum_block = 0.0f;
 
         vuint8mf4_t v_qs_u8 = __riscv_vle8_v_u8mf4(qs, 32);
         qs += 32;
@@ -4188,7 +4188,7 @@ static NOINLINE void ggml_vec_dot_iq2_s_q8_K_vl1024(int n, float * GGML_RESTRICT
         vuint8m1_t v_hi_g = __riscv_vrgather_vv_u8m1(v_hi_ext, v_half, 16);
         vuint8m1_t v_nib = __riscv_vmerge_vvm_u8m1(v_lo_g, v_hi_g, m_even, 16);
 
-        static const uint8_t iq2s_scale_lut_16_local[16] = {
+        ساكن ثابت uint8_t iq2s_scale_lut_16_local[16] = {
             1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31
         };
         vuint8m1_t v_lut = __riscv_vle8_v_u8m1(iq2s_scale_lut_16_local, 16);
@@ -4210,29 +4210,29 @@ static NOINLINE void ggml_vec_dot_iq2_s_q8_K_vl1024(int n, float * GGML_RESTRICT
 }
 #endif
 
-void ggml_vec_dot_iq2_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined __riscv_v
-    switch (__riscv_vlenb() * 8) {
-        case 128:
+فراغ ggml_vec_dot_iq2_s_q8_K(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+#إذا defined __riscv_v
+    بدل (__riscv_vlenb() * 8) {
+        حالة 128:
             ggml_vec_dot_iq2_s_q8_K_vl128(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        case 256:
+            اكسر;
+        حالة 256:
             ggml_vec_dot_iq2_s_q8_K_vl256(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        case 512:
+            اكسر;
+        حالة 512:
             ggml_vec_dot_iq2_s_q8_K_vl512(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        default:
+            اكسر;
+        افتراضي:
             ggml_vec_dot_iq2_s_q8_K_vl1024(n, s, bs, vx, bx, vy, by, nrc);
-            break;
+            اكسر;
     }
-#else
+#وإلا
     ggml_vec_dot_iq2_s_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
 #endif
 }
 
-#if defined __riscv_v
-static const int8_t keven_signs_q2xs[1024] = {
+#إذا defined __riscv_v
+ساكن ثابت int8_t keven_signs_q2xs[1024] = {
      1,  1,  1,  1,  1,  1,  1,  1, -1,  1,  1,  1,  1,  1,  1, -1,  1, -1,  1,  1,  1,  1,  1, -1, -1, -1,  1,  1,  1,  1,  1,  1,
      1,  1, -1,  1,  1,  1,  1, -1, -1,  1, -1,  1,  1,  1,  1,  1,  1, -1, -1,  1,  1,  1,  1,  1, -1, -1, -1,  1,  1,  1,  1, -1,
      1,  1,  1, -1,  1,  1,  1, -1, -1,  1,  1, -1,  1,  1,  1,  1,  1, -1,  1, -1,  1,  1,  1,  1, -1, -1,  1, -1,  1,  1,  1, -1,
@@ -4267,33 +4267,33 @@ static const int8_t keven_signs_q2xs[1024] = {
      1,  1, -1, -1, -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, -1,  1,  1, -1, -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, -1, -1, -1, -1,
 };
 
-static NOINLINE void ggml_vec_dot_iq2_xs_q8_K_vl128(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+ساكن NOINLINE فراغ ggml_vec_dot_iq2_xs_q8_K_vl128(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_iq2_xs * GGML_RESTRICT x = vx;
-    const block_q8_K   * GGML_RESTRICT y = vy;
+    ثابت block_iq2_xs * GGML_RESTRICT x = vx;
+    ثابت block_q8_K   * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
-    const uint64_t * signs64 = (const uint64_t *)keven_signs_q2xs;
-    const uint64_t * grid64  = (const uint64_t *)iq2xs_grid;
+    ثابت صحيح nb = n / QK_K;
+    ثابت uint64_t * signs64 = (ثابت uint64_t *)keven_signs_q2xs;
+    ثابت uint64_t * grid64  = (ثابت uint64_t *)iq2xs_grid;
 
-    float sumf = 0.0f;
+    عائم sumf = 0.0f;
 #pragma GCC unroll 1
-    for (int i = 0; i < nb; ++i) {
-        const float d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
-        const uint16_t * GGML_RESTRICT qs = x[i].qs;
-        const int8_t   * GGML_RESTRICT q8 = y[i].qs;
-        const uint8_t  * GGML_RESTRICT scales = x[i].scales;
+    لكل (صحيح i = 0; i < nb; ++i) {
+        ثابت عائم d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
+        ثابت uint16_t * GGML_RESTRICT qs = x[i].qs;
+        ثابت int8_t   * GGML_RESTRICT q8 = y[i].qs;
+        ثابت uint8_t  * GGML_RESTRICT scales = x[i].scales;
 
         int32_t sum_int = 0;
 
         // Loop over 4 subblocks of 64 elements
-        for (int ib64 = 0; ib64 < QK_K / 64; ++ib64) {
+        لكل (صحيح ib64 = 0; ib64 < QK_K / 64; ++ib64) {
 
             // Load indices.
             vuint16m1_t v_qs = __riscv_vle16_v_u16m1(qs, 8);
@@ -4309,12 +4309,12 @@ static NOINLINE void ggml_vec_dot_iq2_xs_q8_K_vl128(int n, float * GGML_RESTRICT
             vint8m4_t q2u = __riscv_vreinterpret_v_u8m4_i8m4(__riscv_vreinterpret_v_u64m4_u8m4(vq2_64));
             vint8m4_t q2s = __riscv_vreinterpret_v_u8m4_i8m4(__riscv_vreinterpret_v_u64m4_u8m4(vs2_64));
             vint8m4_t q2_final = __riscv_vmul_vv_i8m4(q2u, q2s, 64);
-            asm volatile("" ::: "memory");
+            asm متطاير("" ::: "memory");
             vint8m4_t q8v = __riscv_vle8_v_i8m4(q8, 64);
             q8 += 64;
 
             vint16m8_t prod = __riscv_vwmul_vv_i16m8(q2_final, q8v, 64);
-            asm volatile("" ::: "memory");
+            asm متطاير("" ::: "memory");
             vint32m1_t zero_vec = __riscv_vmv_v_x_i32m1(0, 1);
 
             int32_t sum0 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m2_i32m1(
@@ -4329,8 +4329,8 @@ static NOINLINE void ggml_vec_dot_iq2_xs_q8_K_vl128(int n, float * GGML_RESTRICT
             int32_t sum3 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m2_i32m1(
                            __riscv_vget_v_i16m8_i16m2(prod, 3), zero_vec, 16));
 
-            const uint8_t scale_byte_1 = scales[0];
-            const uint8_t scale_byte_2 = scales[1];
+            ثابت uint8_t scale_byte_1 = scales[0];
+            ثابت uint8_t scale_byte_2 = scales[1];
             scales += 2;
 
             sum_int += sum0 * ((scale_byte_1 & 0x0F) * 2 + 1);
@@ -4344,32 +4344,32 @@ static NOINLINE void ggml_vec_dot_iq2_xs_q8_K_vl128(int n, float * GGML_RESTRICT
     *s = 0.125f * sumf;
 }
 
-static NOINLINE void ggml_vec_dot_iq2_xs_q8_K_vl256(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+ساكن NOINLINE فراغ ggml_vec_dot_iq2_xs_q8_K_vl256(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_iq2_xs * GGML_RESTRICT x = vx;
-    const block_q8_K   * GGML_RESTRICT y = vy;
+    ثابت block_iq2_xs * GGML_RESTRICT x = vx;
+    ثابت block_q8_K   * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
-    const uint64_t * signs64 = (const uint64_t *)keven_signs_q2xs;
-    const uint64_t * grid64  = (const uint64_t *)iq2xs_grid;
+    ثابت صحيح nb = n / QK_K;
+    ثابت uint64_t * signs64 = (ثابت uint64_t *)keven_signs_q2xs;
+    ثابت uint64_t * grid64  = (ثابت uint64_t *)iq2xs_grid;
 
-    float sumf = 0.0f;
+    عائم sumf = 0.0f;
 
-    for (int i = 0; i < nb; ++i) {
-        const float d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
-        const uint16_t * GGML_RESTRICT qs = x[i].qs;
-        const int8_t   * GGML_RESTRICT q8 = y[i].qs;
-        const uint8_t  * GGML_RESTRICT scales = x[i].scales;
+    لكل (صحيح i = 0; i < nb; ++i) {
+        ثابت عائم d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
+        ثابت uint16_t * GGML_RESTRICT qs = x[i].qs;
+        ثابت int8_t   * GGML_RESTRICT q8 = y[i].qs;
+        ثابت uint8_t  * GGML_RESTRICT scales = x[i].scales;
 
         int32_t sum_int = 0;
 
-        for (int ib128 = 0; ib128 < 2; ++ib128) {
+        لكل (صحيح ib128 = 0; ib128 < 2; ++ib128) {
 
             vuint16m1_t v_qs = __riscv_vle16_v_u16m1(qs, 16);
             qs += 16;
@@ -4387,14 +4387,14 @@ static NOINLINE void ggml_vec_dot_iq2_xs_q8_K_vl256(int n, float * GGML_RESTRICT
 
             // Apply signs to get dequantized IQ2 values
             vint8m4_t q2_final = __riscv_vmul_vv_i8m4(q2u, q2s, 128);
-            asm volatile("" ::: "memory");
+            asm متطاير("" ::: "memory");
 
             // Load corresponding Q8 weights
             vint8m4_t q8v = __riscv_vle8_v_i8m4(q8, 128);
             q8 += 128;
 
             vint16m8_t prod = __riscv_vwmul_vv_i16m8(q2_final, q8v, 128);
-            asm volatile("" ::: "memory");
+            asm متطاير("" ::: "memory");
 
             uint8_t sc0 = scales[0];
             uint8_t sc1 = scales[1];
@@ -4431,30 +4431,30 @@ static NOINLINE void ggml_vec_dot_iq2_xs_q8_K_vl256(int n, float * GGML_RESTRICT
             sum_int += s7 * ((sc3 >> 4) * 2 + 1);
         }
 
-        sumf += d * (float)sum_int;
+        sumf += d * (عائم)sum_int;
     }
     *s = 0.125f * sumf;
 }
 
-static NOINLINE void ggml_vec_dot_iq2_xs_q8_K_vl512(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+ساكن NOINLINE فراغ ggml_vec_dot_iq2_xs_q8_K_vl512(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
+    أكد(nrc == 1);
     UNUSED(nrc); UNUSED(bx); UNUSED(by); UNUSED(bs);
 
-    const block_iq2_xs * GGML_RESTRICT x = vx;
-    const block_q8_K   * GGML_RESTRICT y = vy;
+    ثابت block_iq2_xs * GGML_RESTRICT x = vx;
+    ثابت block_q8_K   * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
-    const uint64_t * signs64 = (const uint64_t *)keven_signs_q2xs;
-    const uint64_t * grid64  = (const uint64_t *)iq2xs_grid;
+    ثابت صحيح nb = n / QK_K;
+    ثابت uint64_t * signs64 = (ثابت uint64_t *)keven_signs_q2xs;
+    ثابت uint64_t * grid64  = (ثابت uint64_t *)iq2xs_grid;
 
-    float sumf = 0.0f;
-     for (int i = 0; i < nb; ++i) {
-        const float combined_scale = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
+    عائم sumf = 0.0f;
+     لكل (صحيح i = 0; i < nb; ++i) {
+        ثابت عائم combined_scale = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
 
-        const uint16_t * GGML_RESTRICT qs = x[i].qs;
-        const uint8_t  * GGML_RESTRICT scales = x[i].scales;
-        const int8_t   * GGML_RESTRICT q8 = y[i].qs;
+        ثابت uint16_t * GGML_RESTRICT qs = x[i].qs;
+        ثابت uint8_t  * GGML_RESTRICT scales = x[i].scales;
+        ثابت int8_t   * GGML_RESTRICT q8 = y[i].qs;
 
         vint8m4_t q8_all = __riscv_vle8_v_i8m4(q8, 256);
 
@@ -4475,11 +4475,11 @@ static NOINLINE void ggml_vec_dot_iq2_xs_q8_K_vl512(int n, float * GGML_RESTRICT
 
         vint8m4_t q2_signed = __riscv_vmul_vv_i8m4(q2_all, s2_all, 256);
         vint16m8_t dot_all = __riscv_vwmul_vv_i16m8(q2_signed, q8_all, 256);
-        float sum = 0.0f;
+        عائم sum = 0.0f;
         vint32m1_t zero_vec = __riscv_vmv_v_x_i32m1(0, 1);
 
 #pragma GCC unroll 1
-        for (int j = 0; j < 8; ++j) {
+        لكل (صحيح j = 0; j < 8; ++j) {
             uint8_t sc = scales[j];
             int16_t sc_lo = 2 * (sc & 0x0F) + 1;
             int16_t sc_hi = 2 * (sc >> 4)   + 1;
@@ -4492,7 +4492,7 @@ static NOINLINE void ggml_vec_dot_iq2_xs_q8_K_vl512(int n, float * GGML_RESTRICT
                 __riscv_vslidedown_vx_i16m8(dot_all, j * 32 + 16, 16), zero_vec, 16);
             int32_t isum1 = __riscv_vmv_x_s_i32m1_i32(sum_v1);
 
-            sum += (float)isum0 * sc_lo + (float)isum1 * sc_hi;
+            sum += (عائم)isum0 * sc_lo + (عائم)isum1 * sc_hi;
         }
 
         sumf += sum * combined_scale;
@@ -4501,54 +4501,54 @@ static NOINLINE void ggml_vec_dot_iq2_xs_q8_K_vl512(int n, float * GGML_RESTRICT
 }
 #endif
 
-void ggml_vec_dot_iq2_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined __riscv_v
-      switch (__riscv_vlenb() * 8) {
-          case 128:
+فراغ ggml_vec_dot_iq2_xs_q8_K(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+#إذا defined __riscv_v
+      بدل (__riscv_vlenb() * 8) {
+          حالة 128:
               ggml_vec_dot_iq2_xs_q8_K_vl128(n, s, bs, vx, bx, vy, by, nrc);
-              break;
-          case 256:
+              اكسر;
+          حالة 256:
               ggml_vec_dot_iq2_xs_q8_K_vl256(n, s, bs, vx, bx, vy, by, nrc);
-              break;
-          default: // 512 and above
+              اكسر;
+          افتراضي: // 512 and above
               ggml_vec_dot_iq2_xs_q8_K_vl512(n, s, bs, vx, bx, vy, by, nrc);
-              break;
+              اكسر;
       }
-#else
+#وإلا
     ggml_vec_dot_iq2_xs_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
 #endif
 }
 
-#if defined __riscv_v
-static NOINLINE void ggml_vec_dot_iq2_xxs_q8_K_vl128(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+#إذا defined __riscv_v
+ساكن NOINLINE فراغ ggml_vec_dot_iq2_xxs_q8_K_vl128(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_iq2_xxs * GGML_RESTRICT x = vx;
-    const block_q8_K    * GGML_RESTRICT y = vy;
+    ثابت block_iq2_xxs * GGML_RESTRICT x = vx;
+    ثابت block_q8_K    * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
-    const uint64_t * signs64 = (const uint64_t *)keven_signs_q2xs;
-    const uint64_t * grid64  = (const uint64_t *)iq2xxs_grid;
+    ثابت صحيح nb = n / QK_K;
+    ثابت uint64_t * signs64 = (ثابت uint64_t *)keven_signs_q2xs;
+    ثابت uint64_t * grid64  = (ثابت uint64_t *)iq2xxs_grid;
 
     uint32_t shift_constants[4] = {0, 7, 14, 21};
     vuint32m1_t v_shifts = __riscv_vle32_v_u32m1(shift_constants, 4);
 
-    float sumf = 0.0f;
-    for (int i = 0; i < nb; ++i) {
-        const float combined_scale = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
+    عائم sumf = 0.0f;
+    لكل (صحيح i = 0; i < nb; ++i) {
+        ثابت عائم combined_scale = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
 
-        const uint8_t  * GGML_RESTRICT q2_ptr = (const uint8_t *) x[i].qs;
-        const int8_t   * GGML_RESTRICT q8 = y[i].qs;
+        ثابت uint8_t  * GGML_RESTRICT q2_ptr = (ثابت uint8_t *) x[i].qs;
+        ثابت int8_t   * GGML_RESTRICT q8 = y[i].qs;
 
-        float sum = 0.0f;
+        عائم sum = 0.0f;
 
         #pragma GCC unroll 1
-        for (int ib32 = 0; ib32 < QK_K / 32; ib32 += 2) {
+        لكل (صحيح ib32 = 0; ib32 < QK_K / 32; ib32 += 2) {
             vint8m2_t q8_1 = __riscv_vle8_v_i8m2(q8, 32); q8 += 32;
             vint8m2_t q8_2 = __riscv_vle8_v_i8m2(q8, 32); q8 += 32;
 
@@ -4611,35 +4611,35 @@ static NOINLINE void ggml_vec_dot_iq2_xxs_q8_K_vl128(int n, float * GGML_RESTRIC
     *s = 0.125f * sumf;
 }
 
-static NOINLINE void ggml_vec_dot_iq2_xxs_q8_K_vl256(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+ساكن NOINLINE فراغ ggml_vec_dot_iq2_xxs_q8_K_vl256(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_iq2_xxs * GGML_RESTRICT x = vx;
-    const block_q8_K    * GGML_RESTRICT y = vy;
+    ثابت block_iq2_xxs * GGML_RESTRICT x = vx;
+    ثابت block_q8_K    * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
-    const uint64_t * signs64 = (const uint64_t *)keven_signs_q2xs;
-    const uint64_t * grid64  = (const uint64_t *)iq2xxs_grid;
+    ثابت صحيح nb = n / QK_K;
+    ثابت uint64_t * signs64 = (ثابت uint64_t *)keven_signs_q2xs;
+    ثابت uint64_t * grid64  = (ثابت uint64_t *)iq2xxs_grid;
 
     uint32_t shift_constants[4] = {0, 7, 14, 21};
     vuint32mf2_t v_shifts = __riscv_vle32_v_u32mf2(shift_constants, 4);
 
-    float sumf = 0.0f;
+    عائم sumf = 0.0f;
 
-    for (int i = 0; i < nb; ++i) {
-        const float combined_scale = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
+    لكل (صحيح i = 0; i < nb; ++i) {
+        ثابت عائم combined_scale = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
 
-        const uint8_t  * GGML_RESTRICT q2_ptr = (const uint8_t *) x[i].qs;
-        const int8_t   * GGML_RESTRICT q8 = y[i].qs;
+        ثابت uint8_t  * GGML_RESTRICT q2_ptr = (ثابت uint8_t *) x[i].qs;
+        ثابت int8_t   * GGML_RESTRICT q8 = y[i].qs;
 
-        float sum = 0.0f;
+        عائم sum = 0.0f;
 
-        for (int ib32 = 0; ib32 < QK_K / 32; ib32 += 2) {
+        لكل (صحيح ib32 = 0; ib32 < QK_K / 32; ib32 += 2) {
             vint8m1_t q8_1 = __riscv_vle8_v_i8m1(q8, 32); q8 += 32;
             vint8m1_t q8_2 = __riscv_vle8_v_i8m1(q8, 32); q8 += 32;
 
@@ -4705,17 +4705,17 @@ static NOINLINE void ggml_vec_dot_iq2_xxs_q8_K_vl256(int n, float * GGML_RESTRIC
     *s = 0.125f * sumf;
 }
 
-static NOINLINE void ggml_vec_dot_iq2_xxs_q8_K_vl512(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+ساكن NOINLINE فراغ ggml_vec_dot_iq2_xxs_q8_K_vl512(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
+    أكد(nrc == 1);
     UNUSED(nrc); UNUSED(bx); UNUSED(by); UNUSED(bs);
 
-    const block_iq2_xxs * GGML_RESTRICT x = vx;
-    const block_q8_K    * GGML_RESTRICT y = vy;
+    ثابت block_iq2_xxs * GGML_RESTRICT x = vx;
+    ثابت block_q8_K    * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
-    const uint64_t * signs64 = (const uint64_t *)keven_signs_q2xs;
-    const uint64_t * grid64  = (const uint64_t *)iq2xxs_grid;
+    ثابت صحيح nb = n / QK_K;
+    ثابت uint64_t * signs64 = (ثابت uint64_t *)keven_signs_q2xs;
+    ثابت uint64_t * grid64  = (ثابت uint64_t *)iq2xxs_grid;
     // Shift pattern {0,7,14,21} repeated 8 times for all 8 sub-blocks
     uint8_t shift_arr[32] = {
         0, 7, 14, 21, 0, 7, 14, 21, 0, 7, 14, 21, 0, 7, 14, 21,
@@ -4730,16 +4730,16 @@ static NOINLINE void ggml_vec_dot_iq2_xxs_q8_K_vl512(int n, float * GGML_RESTRIC
     };
     vuint8mf2_t v_sign_gather_idx = __riscv_vle8_v_u8mf2(gather_arr, 32);
 
-    float sumf = 0.0f;
-    for (int i = 0; i < nb; ++i) {
-        const float combined_scale = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
+    عائم sumf = 0.0f;
+    لكل (صحيح i = 0; i < nb; ++i) {
+        ثابت عائم combined_scale = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
 
-        const uint8_t  * GGML_RESTRICT q2_ptr = (const uint8_t *) x[i].qs;
-        const int8_t   * GGML_RESTRICT q8 = y[i].qs;
+        ثابت uint8_t  * GGML_RESTRICT q2_ptr = (ثابت uint8_t *) x[i].qs;
+        ثابت int8_t   * GGML_RESTRICT q8 = y[i].qs;
         vint8m4_t q8_all = __riscv_vle8_v_i8m4(q8, 256);
 
         // De-interleave all 8 Index/Scale pairs for the 8x32-element sub-blocks
-        vuint32mf2x2_t tuple = __riscv_vlseg2e32_v_u32mf2x2((const uint32_t*)q2_ptr, 8);
+        vuint32mf2x2_t tuple = __riscv_vlseg2e32_v_u32mf2x2((ثابت uint32_t*)q2_ptr, 8);
         vuint32mf2_t v_ind32 = __riscv_vget_v_u32mf2x2_u32mf2(tuple, 0);
         vuint32mf2_t v_sc32  = __riscv_vget_v_u32mf2x2_u32mf2(tuple, 1);
 
@@ -4760,16 +4760,16 @@ static NOINLINE void ggml_vec_dot_iq2_xxs_q8_K_vl512(int n, float * GGML_RESTRIC
         vint8m4_t q8s_all = __riscv_vmul_vv_i8m4(q8_all, s2_all, 256);
         vint16m8_t dot_all = __riscv_vwmul_vv_i16m8(q8s_all, q2_all, 256);
 
-        float sum = 0.0f;
+        عائم sum = 0.0f;
         vint32m1_t zero_vec = __riscv_vmv_v_x_i32m1(0, 1);
 
-        for (int j = 0; j < 8; ++j) {
+        لكل (صحيح j = 0; j < 8; ++j) {
             uint32_t s_p = __riscv_vmv_x_s_u32mf2_u32(__riscv_vslidedown_vx_u32mf2(v_sc32, j, 8));
             int16_t sc = 2 * ((s_p >> 28) & 0xF) + 1;
             dot_all=__riscv_vslidedown_vx_i16m8(dot_all,j*32,32);
             vint32m1_t sum_v = __riscv_vwredsum_vs_i16m8_i32m1(dot_all, zero_vec, 32);
             int32_t isum = __riscv_vmv_x_s_i32m1_i32(sum_v);
-            sum += (float)isum * sc;
+            sum += (عائم)isum * sc;
         }
 
         sumf += sum * combined_scale;
@@ -4778,33 +4778,33 @@ static NOINLINE void ggml_vec_dot_iq2_xxs_q8_K_vl512(int n, float * GGML_RESTRIC
 }
 #endif
 
-void ggml_vec_dot_iq2_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined __riscv_v
-    switch (__riscv_vlenb() * 8) {
-        case 128:
+فراغ ggml_vec_dot_iq2_xxs_q8_K(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+#إذا defined __riscv_v
+    بدل (__riscv_vlenb() * 8) {
+        حالة 128:
             ggml_vec_dot_iq2_xxs_q8_K_vl128(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        case 256:
+            اكسر;
+        حالة 256:
             ggml_vec_dot_iq2_xxs_q8_K_vl256(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        default: // 512 and above
+            اكسر;
+        افتراضي: // 512 and above
             ggml_vec_dot_iq2_xxs_q8_K_vl512(n, s, bs, vx, bx, vy, by, nrc);
-            break;
+            اكسر;
     }
-#else
+#وإلا
     ggml_vec_dot_iq2_xxs_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
 #endif
 }
 
-#if defined __riscv_v
-static NOINLINE void ggml_vec_dot_iq3_s_q8_K_vl128(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
+#إذا defined __riscv_v
+ساكن NOINLINE فراغ ggml_vec_dot_iq3_s_q8_K_vl128(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
     UNUSED(nrc); UNUSED(bx); UNUSED(by); UNUSED(bs);
-    const block_iq3_s * GGML_RESTRICT x = vx;
-    const block_q8_K  * GGML_RESTRICT y = vy;
+    ثابت block_iq3_s * GGML_RESTRICT x = vx;
+    ثابت block_q8_K  * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
-    const uint32_t * grid32 = (const uint32_t *)iq3s_grid;
+    ثابت صحيح nb = n / QK_K;
+    ثابت uint32_t * grid32 = (ثابت uint32_t *)iq3s_grid;
 
     vuint8mf2_t v_id_8  = __riscv_vid_v_u8mf2(8);
     vuint8m2_t  v_id_32 = __riscv_vid_v_u8m2(32);
@@ -4818,21 +4818,21 @@ static NOINLINE void ggml_vec_dot_iq3_s_q8_K_vl128(int n, float * GGML_RESTRICT 
         v_sign_masks          = __riscv_vsll_vv_u8m2(v_one_32, v_shifts, 32);
     }
 
-    float sumf = 0.0f;
+    عائم sumf = 0.0f;
 
-    for (int i = 0; i < nb; ++i) {
-        const float d              = GGML_CPU_FP16_TO_FP32(x[i].d);
-        const float combined_scale = d * y[i].d;
+    لكل (صحيح i = 0; i < nb; ++i) {
+        ثابت عائم d              = GGML_CPU_FP16_TO_FP32(x[i].d);
+        ثابت عائم combined_scale = d * y[i].d;
 
-        const uint8_t * GGML_RESTRICT qs     = x[i].qs;
-        const uint8_t * GGML_RESTRICT qh     = x[i].qh;
-        const uint8_t * GGML_RESTRICT scales = x[i].scales;
-        const uint8_t * GGML_RESTRICT signs  = x[i].signs;
-        const int8_t  * GGML_RESTRICT q8     = y[i].qs;
+        ثابت uint8_t * GGML_RESTRICT qs     = x[i].qs;
+        ثابت uint8_t * GGML_RESTRICT qh     = x[i].qh;
+        ثابت uint8_t * GGML_RESTRICT scales = x[i].scales;
+        ثابت uint8_t * GGML_RESTRICT signs  = x[i].signs;
+        ثابت int8_t  * GGML_RESTRICT q8     = y[i].qs;
 
-        float sum_block = 0.0f;
+        عائم sum_block = 0.0f;
 
-        for (int ib = 0; ib < 8; ++ib) {
+        لكل (صحيح ib = 0; ib < 8; ++ib) {
 
             // Grid lookup
             vuint8m2_t v_grid_u8;
@@ -4856,7 +4856,7 @@ static NOINLINE void ggml_vec_dot_iq3_s_q8_K_vl128(int n, float * GGML_RESTRICT 
                 vuint32m2_t v_grid_packed = __riscv_vluxei16_v_u32m2(grid32, v_grid_offsets, 8);
                 v_grid_u8 = __riscv_vreinterpret_v_u32m2_u8m2(v_grid_packed);
             }
-            __asm__ volatile ("" ::: "memory");
+            __asm__ متطاير ("" ::: "memory");
 
             //Sign application and dot product
             int32_t s_val;
@@ -4879,12 +4879,12 @@ static NOINLINE void ggml_vec_dot_iq3_s_q8_K_vl128(int n, float * GGML_RESTRICT 
                 s_val = __riscv_vmv_x_s_i32m1_i32(
                     __riscv_vwredsum_vs_i16m4_i32m1(v_dot, v_zero, 32));
             }
-            __asm__ volatile ("" ::: "memory");
+            __asm__ متطاير ("" ::: "memory");
             {
                 uint8_t sc_byte = scales[ib >> 1];
-                int sc_val = (ib & 1) ? (sc_byte >> 4) : (sc_byte & 0xF);
+                صحيح sc_val = (ib & 1) ? (sc_byte >> 4) : (sc_byte & 0xF);
                 sc_val = sc_val * 2 + 1;
-                sum_block += (float)(s_val * sc_val);
+                sum_block += (عائم)(s_val * sc_val);
             }
         }
         sumf += sum_block * combined_scale;
@@ -4892,44 +4892,44 @@ static NOINLINE void ggml_vec_dot_iq3_s_q8_K_vl128(int n, float * GGML_RESTRICT 
     *s = sumf;
 }
 
-static NOINLINE void ggml_vec_dot_iq3_s_q8_K_vl256(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
+ساكن NOINLINE فراغ ggml_vec_dot_iq3_s_q8_K_vl256(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_iq3_s * GGML_RESTRICT x = vx;
-    const block_q8_K  * GGML_RESTRICT y = vy;
+    ثابت block_iq3_s * GGML_RESTRICT x = vx;
+    ثابت block_q8_K  * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ثابت صحيح nb = n / QK_K;
 
-    const uint64_t * grid64 = (const uint64_t *)iq3s_grid;
+    ثابت uint64_t * grid64 = (ثابت uint64_t *)iq3s_grid;
 
     // --- Pre-load Constants ---
-    const uint16_t qh_bit_shifts_arr[16] = {
+    ثابت uint16_t qh_bit_shifts_arr[16] = {
         0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
     };
     vuint8m2_t v_sign_gather_indices = __riscv_vle8_v_u8m2(sign_gather_indices_arr, 64);
     vuint8m2_t v_sign_masks = __riscv_vle8_v_u8m2(sign_bit_masks_arr, 64);
     vuint16m1_t v_qh_shifts = __riscv_vle16_v_u16m1(qh_bit_shifts_arr, 16);
 
-    float sumf = 0.0f;
+    عائم sumf = 0.0f;
 
-    for (int i = 0; i < nb; ++i) {
-        const float d = GGML_CPU_FP16_TO_FP32(x[i].d);
-        const float combined_scale = d * y[i].d;
+    لكل (صحيح i = 0; i < nb; ++i) {
+        ثابت عائم d = GGML_CPU_FP16_TO_FP32(x[i].d);
+        ثابت عائم combined_scale = d * y[i].d;
 
-        const uint8_t * GGML_RESTRICT qs = x[i].qs;
-        const uint8_t * GGML_RESTRICT qh = x[i].qh;
-        const uint8_t * GGML_RESTRICT scales = x[i].scales;
-        const uint8_t * GGML_RESTRICT signs = x[i].signs;
-        const int8_t  * GGML_RESTRICT q8 = y[i].qs;
+        ثابت uint8_t * GGML_RESTRICT qs = x[i].qs;
+        ثابت uint8_t * GGML_RESTRICT qh = x[i].qh;
+        ثابت uint8_t * GGML_RESTRICT scales = x[i].scales;
+        ثابت uint8_t * GGML_RESTRICT signs = x[i].signs;
+        ثابت int8_t  * GGML_RESTRICT q8 = y[i].qs;
 
-        float sum_block = 0.0f;
+        عائم sum_block = 0.0f;
 
         // Loop: Process 64 weights (16 mini-blocks of 4) per iteration
-        for (int ib = 0; ib < 4; ++ib) {
+        لكل (صحيح ib = 0; ib < 4; ++ib) {
 
             vuint8mf2_t v_qs_u8 = __riscv_vle8_v_u8mf2(qs, 16);
             qs += 16;
@@ -4949,7 +4949,7 @@ static NOINLINE void ggml_vec_dot_iq3_s_q8_K_vl256(int n, float * GGML_RESTRICT 
             vuint16m1_t v_grid_offsets = __riscv_vor_vv_u16m1(v_qs_u16, v_qh_val, 16);
 
             // Grid value is 4xuint8
-            vuint32m2_t v_grid_packed = __riscv_vluxei16_v_u32m2((const uint32_t *)grid64, v_grid_offsets, 16);
+            vuint32m2_t v_grid_packed = __riscv_vluxei16_v_u32m2((ثابت uint32_t *)grid64, v_grid_offsets, 16);
             vuint8m2_t v_grid_u8 = __riscv_vreinterpret_v_u32m2_u8m2(v_grid_packed);
             vuint8mf4_t v_signs_raw = __riscv_vle8_v_u8mf4(signs, 8);
             signs += 8;
@@ -4977,8 +4977,8 @@ static NOINLINE void ggml_vec_dot_iq3_s_q8_K_vl256(int n, float * GGML_RESTRICT 
 
             // Apply sub-scales
             uint8_t sc_byte = *scales++;
-            int sc_lo = (sc_byte & 0xF) * 2 + 1;
-            int sc_hi = (sc_byte >> 4)  * 2 + 1;
+            صحيح sc_lo = (sc_byte & 0xF) * 2 + 1;
+            صحيح sc_hi = (sc_byte >> 4)  * 2 + 1;
 
             sum_block += s_lo * sc_lo + s_hi * sc_hi;
         }
@@ -4987,14 +4987,14 @@ static NOINLINE void ggml_vec_dot_iq3_s_q8_K_vl256(int n, float * GGML_RESTRICT 
     *s = sumf;
 }
 
-static NOINLINE void ggml_vec_dot_iq3_s_q8_K_vl512(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
+ساكن NOINLINE فراغ ggml_vec_dot_iq3_s_q8_K_vl512(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
     UNUSED(nrc); UNUSED(bx); UNUSED(by); UNUSED(bs);
-    const block_iq3_s * GGML_RESTRICT x = vx;
-    const block_q8_K  * GGML_RESTRICT y = vy;
+    ثابت block_iq3_s * GGML_RESTRICT x = vx;
+    ثابت block_q8_K  * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
-    const uint32_t * grid32 = (const uint32_t *)iq3s_grid;
+    ثابت صحيح nb = n / QK_K;
+    ثابت uint32_t * grid32 = (ثابت uint32_t *)iq3s_grid;
 
     // Generate Constants
     vuint8mf2_t v_id_32 = __riscv_vid_v_u8mf2(32);
@@ -5007,19 +5007,19 @@ static NOINLINE void ggml_vec_dot_iq3_s_q8_K_vl512(int n, float * GGML_RESTRICT 
     vuint8m2_t v_sign_masks = __riscv_vsll_vv_u8m2(v_one_128, v_sign_shift_amts, 128);
     vuint8m2_t v_scale_indices = __riscv_vsrl_vx_u8m2(v_id_128, 5, 128);
 
-    float sumf = 0.0f;
+    عائم sumf = 0.0f;
 
-    for (int i = 0; i < nb; ++i) {
-        const float combined_scale = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
+    لكل (صحيح i = 0; i < nb; ++i) {
+        ثابت عائم combined_scale = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
 
-        const uint8_t * GGML_RESTRICT qs = x[i].qs;
-        const uint8_t * GGML_RESTRICT qh = x[i].qh;
-        const uint8_t * GGML_RESTRICT scales = x[i].scales;
-        const uint8_t * GGML_RESTRICT signs = x[i].signs;
-        const int8_t  * GGML_RESTRICT q8 = y[i].qs;
+        ثابت uint8_t * GGML_RESTRICT qs = x[i].qs;
+        ثابت uint8_t * GGML_RESTRICT qh = x[i].qh;
+        ثابت uint8_t * GGML_RESTRICT scales = x[i].scales;
+        ثابت uint8_t * GGML_RESTRICT signs = x[i].signs;
+        ثابت int8_t  * GGML_RESTRICT q8 = y[i].qs;
 
-        float sum_block = 0.0f;
-        for (int ib = 0; ib < 2; ++ib) {
+        عائم sum_block = 0.0f;
+        لكل (صحيح ib = 0; ib < 2; ++ib) {
             vuint8mf2_t v_qs_u8 = __riscv_vle8_v_u8mf2(qs, 32);
             qs += 32;
             vuint8mf2_t v_qh_loaded = __riscv_vle8_v_u8mf2(qh, 4);
@@ -5077,61 +5077,61 @@ static NOINLINE void ggml_vec_dot_iq3_s_q8_K_vl512(int n, float * GGML_RESTRICT 
 }
 #endif
 
-void ggml_vec_dot_iq3_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined __riscv_v
-    switch (__riscv_vlenb() * 8) {
-        case 128:
+فراغ ggml_vec_dot_iq3_s_q8_K(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+#إذا defined __riscv_v
+    بدل (__riscv_vlenb() * 8) {
+        حالة 128:
             ggml_vec_dot_iq3_s_q8_K_vl128(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        case 256:
+            اكسر;
+        حالة 256:
             ggml_vec_dot_iq3_s_q8_K_vl256(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        default: // 512 and above
+            اكسر;
+        افتراضي: // 512 and above
             ggml_vec_dot_iq3_s_q8_K_vl512(n, s, bs, vx, bx, vy, by, nrc);
-            break;
+            اكسر;
     }
-#else
+#وإلا
     ggml_vec_dot_iq3_s_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
 #endif
 }
 
-#if defined __riscv_v
-static NOINLINE void ggml_vec_dot_iq3_xxs_q8_K_vl128(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
+#إذا defined __riscv_v
+ساكن NOINLINE فراغ ggml_vec_dot_iq3_xxs_q8_K_vl128(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
     UNUSED(nrc); UNUSED(bx); UNUSED(by); UNUSED(bs);
 
-    const block_iq3_xxs * GGML_RESTRICT x = vx;
-    const block_q8_K    * GGML_RESTRICT y = vy;
-    const int nb = n / QK_K;
+    ثابت block_iq3_xxs * GGML_RESTRICT x = vx;
+    ثابت block_q8_K    * GGML_RESTRICT y = vy;
+    ثابت صحيح nb = n / QK_K;
 
-    const uint64_t * signs64 = (const uint64_t *)keven_signs_q2xs;
-    const uint32_t * grid32  = (const uint32_t *)iq3xxs_grid;
+    ثابت uint64_t * signs64 = (ثابت uint64_t *)keven_signs_q2xs;
+    ثابت uint32_t * grid32  = (ثابت uint32_t *)iq3xxs_grid;
 
     // constants for unpacking logic
-    const uint32_t shifts_val[8] = {0, 7, 14, 21, 0, 7, 14, 21};
+    ثابت uint32_t shifts_val[8] = {0, 7, 14, 21, 0, 7, 14, 21};
     vuint32m2_t v_shifts = __riscv_vle32_v_u32m2(shifts_val, 8);
 
-    const uint32_t gather_idx_val[8] = {0, 0, 0, 0, 1, 1, 1, 1};
+    ثابت uint32_t gather_idx_val[8] = {0, 0, 0, 0, 1, 1, 1, 1};
     vuint32m2_t v_gather_idx = __riscv_vle32_v_u32m2(gather_idx_val, 8);
 
     uint32_t aux32[2];
-    float sumf = 0.0f;
+    عائم sumf = 0.0f;
 
-    for (int i = 0; i < nb; ++i) {
-        const float d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
+    لكل (صحيح i = 0; i < nb; ++i) {
+        ثابت عائم d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
 
-        const uint8_t * GGML_RESTRICT q3_indices = x[i].qs;
-        const uint8_t * GGML_RESTRICT metadata   = x[i].qs + QK_K/4;
-        const int8_t  * GGML_RESTRICT q8         = y[i].qs;
+        ثابت uint8_t * GGML_RESTRICT q3_indices = x[i].qs;
+        ثابت uint8_t * GGML_RESTRICT metadata   = x[i].qs + QK_K/4;
+        ثابت int8_t  * GGML_RESTRICT q8         = y[i].qs;
 
-        float block_sum = 0.0f;
+        عائم block_sum = 0.0f;
 
         // Process 64 weights per loop
-        for (int ib = 0; ib < QK_K / 64; ++ib) {
+        لكل (صحيح ib = 0; ib < QK_K / 64; ++ib) {
 
             // load of metadata via memcpy
-            memcpy(aux32, metadata, 2 * sizeof(uint32_t));
-            metadata += 2 * sizeof(uint32_t);
+            memcpy(aux32, metadata, 2 * حجم(uint32_t));
+            metadata += 2 * حجم(uint32_t);
 
             vuint8m1_t v_q3_idx_u8 = __riscv_vle8_v_u8m1(q3_indices, 16);
             q3_indices += 16;
@@ -5159,13 +5159,13 @@ static NOINLINE void ggml_vec_dot_iq3_xxs_q8_K_vl128(int n, float * GGML_RESTRIC
                                  __riscv_vreinterpret_v_u64m4_u8m4(v_s_vals_u64));
 
             vint8m4_t v_q3_signed = __riscv_vmul_vv_i8m4(v_q3_magnitudes, v_s_vals, 64);
-            asm volatile("" ::: "memory");
+            asm متطاير("" ::: "memory");
             vint8m4_t v_q8 = __riscv_vle8_v_i8m4(q8, 64);
             q8 += 64;
 
             vint16m8_t v_dot = __riscv_vwmul_vv_i16m8(v_q8, v_q3_signed, 64);
 
-            asm volatile("" ::: "memory");
+            asm متطاير("" ::: "memory");
 
             vint16m4_t v_dot_1 = __riscv_vget_v_i16m8_i16m4(v_dot, 0);
             vint16m4_t v_dot_2 = __riscv_vget_v_i16m8_i16m4(v_dot, 1);
@@ -5178,8 +5178,8 @@ static NOINLINE void ggml_vec_dot_iq3_xxs_q8_K_vl128(int n, float * GGML_RESTRIC
             int32_t sum1_i = __riscv_vmv_x_s_i32m1_i32(v_sum_1);
             int32_t sum2_i = __riscv_vmv_x_s_i32m1_i32(v_sum_2);
 
-            const float scale1_f = (float)(2 * (aux32[0] >> 28) + 1);
-            const float scale2_f = (float)(2 * (aux32[1] >> 28) + 1);
+            ثابت عائم scale1_f = (عائم)(2 * (aux32[0] >> 28) + 1);
+            ثابت عائم scale2_f = (عائم)(2 * (aux32[1] >> 28) + 1);
 
             block_sum += sum1_i * scale1_f + sum2_i * scale2_f;
         }
@@ -5189,48 +5189,48 @@ static NOINLINE void ggml_vec_dot_iq3_xxs_q8_K_vl128(int n, float * GGML_RESTRIC
     *s = 0.25f * sumf;
 }
 
-static NOINLINE void ggml_vec_dot_iq3_xxs_q8_K_vl256(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+ساكن NOINLINE فراغ ggml_vec_dot_iq3_xxs_q8_K_vl256(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_iq3_xxs * GGML_RESTRICT x = vx;
-    const block_q8_K    * GGML_RESTRICT y = vy;
-    const int nb = n / QK_K;
+    ثابت block_iq3_xxs * GGML_RESTRICT x = vx;
+    ثابت block_q8_K    * GGML_RESTRICT y = vy;
+    ثابت صحيح nb = n / QK_K;
 
-    const uint64_t * signs64 = (const uint64_t *)keven_signs_q2xs;
-    const uint32_t * grid32  = (const uint32_t *)iq3xxs_grid;
+    ثابت uint64_t * signs64 = (ثابت uint64_t *)keven_signs_q2xs;
+    ثابت uint32_t * grid32  = (ثابت uint32_t *)iq3xxs_grid;
 
     // constants for unpacking logic
-    const uint32_t shifts_val[8] = {0, 7, 14, 21, 0, 7, 14, 21};
+    ثابت uint32_t shifts_val[8] = {0, 7, 14, 21, 0, 7, 14, 21};
     vuint32m1_t v_shifts = __riscv_vle32_v_u32m1(shifts_val, 8);
 
-    const uint32_t gather_idx_val[8] = {0, 0, 0, 0, 1, 1, 1, 1};
+    ثابت uint32_t gather_idx_val[8] = {0, 0, 0, 0, 1, 1, 1, 1};
     vuint32m1_t v_gather_idx = __riscv_vle32_v_u32m1(gather_idx_val, 8);
 
     uint32_t aux32[2];
-    float sumf = 0.0f;
+    عائم sumf = 0.0f;
 
-    for (int i = 0; i < nb; ++i) {
-        const float d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
+    لكل (صحيح i = 0; i < nb; ++i) {
+        ثابت عائم d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
 
-        const uint8_t * GGML_RESTRICT q3_indices = x[i].qs;
-        const uint8_t * GGML_RESTRICT metadata   = x[i].qs + QK_K/4;
-        const int8_t  * GGML_RESTRICT q8         = y[i].qs;
+        ثابت uint8_t * GGML_RESTRICT q3_indices = x[i].qs;
+        ثابت uint8_t * GGML_RESTRICT metadata   = x[i].qs + QK_K/4;
+        ثابت int8_t  * GGML_RESTRICT q8         = y[i].qs;
 
-        float block_sum = 0.0f;
+        عائم block_sum = 0.0f;
 
-        for (int ib = 0; ib < QK_K / 64; ++ib) {
+        لكل (صحيح ib = 0; ib < QK_K / 64; ++ib) {
             // Load q8 (64 bytes)
             vint8m2_t v_q8 = __riscv_vle8_v_i8m2(q8, 64);
             q8 += 64;
 
             // load of metadata via memcpy
-            memcpy(aux32, metadata, 2 * sizeof(uint32_t));
-            metadata += 2 * sizeof(uint32_t);
+            memcpy(aux32, metadata, 2 * حجم(uint32_t));
+            metadata += 2 * حجم(uint32_t);
 
             // Load q3 indices and gather magnitudes
             vuint8mf2_t v_q3_idx_u8 = __riscv_vle8_v_u8mf2(q3_indices, 16);
@@ -5271,8 +5271,8 @@ static NOINLINE void ggml_vec_dot_iq3_xxs_q8_K_vl256(int n, float * GGML_RESTRIC
             int32_t sum1_i = __riscv_vmv_x_s_i32m1_i32(v_sum_1);
             int32_t sum2_i = __riscv_vmv_x_s_i32m1_i32(v_sum_2);
 
-            const float scale1_f = (float)(2 * (aux32[0] >> 28) + 1);
-            const float scale2_f = (float)(2 * (aux32[1] >> 28) + 1);
+            ثابت عائم scale1_f = (عائم)(2 * (aux32[0] >> 28) + 1);
+            ثابت عائم scale2_f = (عائم)(2 * (aux32[1] >> 28) + 1);
 
             block_sum += sum1_i * scale1_f + sum2_i * scale2_f;
         }
@@ -5282,16 +5282,16 @@ static NOINLINE void ggml_vec_dot_iq3_xxs_q8_K_vl256(int n, float * GGML_RESTRIC
     *s = 0.25f * sumf;
 }
 
-static NOINLINE void ggml_vec_dot_iq3_xxs_q8_K_vl512(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+ساكن NOINLINE فراغ ggml_vec_dot_iq3_xxs_q8_K_vl512(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
+    أكد(nrc == 1);
     UNUSED(nrc); UNUSED(bx); UNUSED(by); UNUSED(bs);
-    const block_iq3_xxs * GGML_RESTRICT x = vx;
-    const block_q8_K    * GGML_RESTRICT y = vy;
-    const int nb = n / QK_K;
+    ثابت block_iq3_xxs * GGML_RESTRICT x = vx;
+    ثابت block_q8_K    * GGML_RESTRICT y = vy;
+    ثابت صحيح nb = n / QK_K;
 
-    const uint64_t * signs64 = (const uint64_t *)keven_signs_q2xs;
-    const uint32_t * grid32  = (const uint32_t *)iq3xxs_grid;
+    ثابت uint64_t * signs64 = (ثابت uint64_t *)keven_signs_q2xs;
+    ثابت uint32_t * grid32  = (ثابت uint32_t *)iq3xxs_grid;
 
     // generate constants for unpacking metadata words into sign indices
     vuint32m1_t v_shifts;
@@ -5307,17 +5307,17 @@ static NOINLINE void ggml_vec_dot_iq3_xxs_q8_K_vl512(int n, float * GGML_RESTRIC
         v_gather_idx = __riscv_vsrl_vx_u16mf2(v_idx, 2, 16);
     }
 
-    float sumf = 0.0f;
+    عائم sumf = 0.0f;
 
-    for (int i = 0; i < nb; ++i) {
-        const float d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
+    لكل (صحيح i = 0; i < nb; ++i) {
+        ثابت عائم d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
 
-        const uint8_t * GGML_RESTRICT q3_indices = x[i].qs;
-        const uint8_t * GGML_RESTRICT metadata   = x[i].qs + QK_K/4;
-        const int8_t  * GGML_RESTRICT q8         = y[i].qs;
+        ثابت uint8_t * GGML_RESTRICT q3_indices = x[i].qs;
+        ثابت uint8_t * GGML_RESTRICT metadata   = x[i].qs + QK_K/4;
+        ثابت int8_t  * GGML_RESTRICT q8         = y[i].qs;
 
-        float block_sum = 0.0f;
-        for (int ib128 = 0; ib128 < 2; ++ib128) {
+        عائم block_sum = 0.0f;
+        لكل (صحيح ib128 = 0; ib128 < 2; ++ib128) {
 
             vint8m2_t v_q8 = __riscv_vle8_v_i8m2(q8, 128);
             q8 += 128;
@@ -5329,7 +5329,7 @@ static NOINLINE void ggml_vec_dot_iq3_xxs_q8_K_vl512(int n, float * GGML_RESTRIC
             vint8m2_t v_q3_magnitudes = __riscv_vreinterpret_v_u8m2_i8m2(
             __riscv_vreinterpret_v_u32m2_u8m2(v_q3_mag_u32));
             vuint32m1_t v_aux = __riscv_vreinterpret_v_u8m1_u32m1(__riscv_vle8_v_u8m1(metadata, 16));
-            metadata += 4 * sizeof(uint32_t);
+            metadata += 4 * حجم(uint32_t);
 
             vuint32m1_t v_aux_expanded = __riscv_vrgatherei16_vv_u32m1(v_aux, v_gather_idx, 16);
 
@@ -5362,7 +5362,7 @@ static NOINLINE void ggml_vec_dot_iq3_xxs_q8_K_vl512(int n, float * GGML_RESTRIC
             int32_t scale2 = (int32_t)__riscv_vmv_x_s_u32m1_u32(__riscv_vslidedown_vx_u32m1(v_scales, 2, 4));
             int32_t scale3 = (int32_t)__riscv_vmv_x_s_u32m1_u32(__riscv_vslidedown_vx_u32m1(v_scales, 3, 4));
 
-            block_sum += (float)(group0_sum * scale0 + group1_sum * scale1 +
+            block_sum += (عائم)(group0_sum * scale0 + group1_sum * scale1 +
                                  group2_sum * scale2 + group3_sum * scale3);
         }
 
@@ -5371,17 +5371,17 @@ static NOINLINE void ggml_vec_dot_iq3_xxs_q8_K_vl512(int n, float * GGML_RESTRIC
     *s = 0.25f * sumf;
 }
 
-static NOINLINE void ggml_vec_dot_iq3_xxs_q8_K_vl1024(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+ساكن NOINLINE فراغ ggml_vec_dot_iq3_xxs_q8_K_vl1024(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
+    أكد(nrc == 1);
     UNUSED(nrc); UNUSED(bx); UNUSED(by); UNUSED(bs);
 
-    const block_iq3_xxs * GGML_RESTRICT x = vx;
-    const block_q8_K    * GGML_RESTRICT y = vy;
-    const int nb = n / QK_K;
+    ثابت block_iq3_xxs * GGML_RESTRICT x = vx;
+    ثابت block_q8_K    * GGML_RESTRICT y = vy;
+    ثابت صحيح nb = n / QK_K;
 
-    const uint64_t * signs64 = (const uint64_t *)keven_signs_q2xs;
-    const uint32_t * grid32  = (const uint32_t *)iq3xxs_grid;
+    ثابت uint64_t * signs64 = (ثابت uint64_t *)keven_signs_q2xs;
+    ثابت uint32_t * grid32  = (ثابت uint32_t *)iq3xxs_grid;
 
     vuint32m1_t v_shifts;
     {
@@ -5395,15 +5395,15 @@ static NOINLINE void ggml_vec_dot_iq3_xxs_q8_K_vl1024(int n, float * GGML_RESTRI
         v_gather_idx         = __riscv_vsrl_vx_u16mf2(v_id_16, 2, 32);
     }
 
-    float sumf = 0.0f;
+    عائم sumf = 0.0f;
     uint32_t aux32[8]; // Buffer for block metadata
 
-    for (int i = 0; i < nb; ++i) {
-        const float d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
+    لكل (صحيح i = 0; i < nb; ++i) {
+        ثابت عائم d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
 
-        const uint8_t * GGML_RESTRICT q3_indices = x[i].qs;
-        const uint8_t * GGML_RESTRICT metadata   = x[i].qs + QK_K/4;
-        const int8_t  * GGML_RESTRICT q8         = y[i].qs;
+        ثابت uint8_t * GGML_RESTRICT q3_indices = x[i].qs;
+        ثابت uint8_t * GGML_RESTRICT metadata   = x[i].qs + QK_K/4;
+        ثابت int8_t  * GGML_RESTRICT q8         = y[i].qs;
 
         vint8m2_t v_q8 = __riscv_vle8_v_i8m2(q8, 256);
         vuint8mf2_t v_q3_idx_raw = __riscv_vle8_v_u8mf2(q3_indices, 64);
@@ -5414,7 +5414,7 @@ static NOINLINE void ggml_vec_dot_iq3_xxs_q8_K_vl1024(int n, float * GGML_RESTRI
         vint8m2_t v_q3_mags = __riscv_vreinterpret_v_u8m2_i8m2(
                               __riscv_vreinterpret_v_u32m2_u8m2(v_q3_grid_vals));
 
-        memcpy(aux32, metadata, 8 * sizeof(uint32_t));
+        memcpy(aux32, metadata, 8 * حجم(uint32_t));
         vuint32m1_t v_aux_8 = __riscv_vle32_v_u32m1(aux32, 8);
 
         vuint32m1_t v_aux_32 = __riscv_vrgatherei16_vv_u32m1(v_aux_8, v_gather_idx, 32);
@@ -5433,12 +5433,12 @@ static NOINLINE void ggml_vec_dot_iq3_xxs_q8_K_vl1024(int n, float * GGML_RESTRI
         vint8m2_t v_q3_final = __riscv_vmul_vv_i8m2(v_q3_mags, v_signs, 256);
 
         vint16m4_t v_dot = __riscv_vwmul_vv_i16m4(v_q8, v_q3_final, 256);
-        float block_sum = 0.0f;
+        عائم block_sum = 0.0f;
         vint32m1_t v_zero = __riscv_vmv_v_x_i32m1(0, 1);
         vint16m4_t v_accum = v_dot;
 
-        for (int j = 0; j < 8; ++j) {
-            float scale = (float)(2 * (aux32[j] >> 28) + 1);
+        لكل (صحيح j = 0; j < 8; ++j) {
+            عائم scale = (عائم)(2 * (aux32[j] >> 28) + 1);
 
             vint32m1_t v_partial_sum = __riscv_vwredsum_vs_i16m4_i32m1(v_accum, v_zero, 32);
 
@@ -5454,51 +5454,51 @@ static NOINLINE void ggml_vec_dot_iq3_xxs_q8_K_vl1024(int n, float * GGML_RESTRI
 }
 #endif
 
-void ggml_vec_dot_iq3_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined __riscv_v
-    switch (__riscv_vlenb() * 8) {
-        case 128:
+فراغ ggml_vec_dot_iq3_xxs_q8_K(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+#إذا defined __riscv_v
+    بدل (__riscv_vlenb() * 8) {
+        حالة 128:
             ggml_vec_dot_iq3_xxs_q8_K_vl128(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        case 256:
+            اكسر;
+        حالة 256:
             ggml_vec_dot_iq3_xxs_q8_K_vl256(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        case 512:
+            اكسر;
+        حالة 512:
             ggml_vec_dot_iq3_xxs_q8_K_vl512(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        default: // 1024 and above
+            اكسر;
+        افتراضي: // 1024 and above
             ggml_vec_dot_iq3_xxs_q8_K_vl1024(n, s, bs, vx, bx, vy, by, nrc);
-            break;
+            اكسر;
     }
-#else
+#وإلا
     ggml_vec_dot_iq3_xxs_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
 #endif
 }
 
-#if defined __riscv_v
-static NOINLINE void ggml_vec_dot_iq4_nl_q8_0_vl128(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(nrc == 1);
+#إذا defined __riscv_v
+ساكن NOINLINE فراغ ggml_vec_dot_iq4_nl_q8_0_vl128(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
-    assert(n % QK4_NL == 0);
+    أكد(n % QK4_NL == 0);
     static_assert(QK4_NL == QK8_0, "QK4_NL and QK8_0 must be the same");
 
-    const block_iq4_nl * GGML_RESTRICT x = vx;
-    const block_q8_0   * GGML_RESTRICT y = vy;
+    ثابت block_iq4_nl * GGML_RESTRICT x = vx;
+    ثابت block_q8_0   * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK4_NL;
+    ثابت صحيح nb = n / QK4_NL;
 
-    int ib = 0;
-    float sumf = 0;
+    صحيح ib = 0;
+    عائم sumf = 0;
 
     // Load the lookup table once.
-    const vint8m2_t values = __riscv_vle8_v_i8m2(kvalues_iq4nl, 16);
-    int acc1, acc2;
+    ثابت vint8m2_t بەهاکان = __riscv_vle8_v_i8m2(kvalues_iq4nl, 16);
+    صحيح acc1, acc2;
 
     // We process 2 blocks at once.
-    for (; ib + 1 < nb; ib += 2) {
+    لكل (; ib + 1 < nb; ib += 2) {
         // Weights and activations.
         vuint8m1_t iq4_packed1 = __riscv_vle8_v_u8m1(x[ib + 0].qs, 16);
         vint8m2_t q8b1 = __riscv_vle8_v_i8m2(y[ib + 0].qs, 32);
@@ -5516,8 +5516,8 @@ static NOINLINE void ggml_vec_dot_iq4_nl_q8_0_vl128(int n, float * GGML_RESTRICT
         );
 
         // Gather values from the lookup table.
-        vint8m2_t iq4b1 = __riscv_vrgather_vv_i8m2(values, iq4bits1, 32);
-        vint8m2_t iq4b2 = __riscv_vrgather_vv_i8m2(values, iq4bits2, 32);
+        vint8m2_t iq4b1 = __riscv_vrgather_vv_i8m2(بەهاکان, iq4bits1, 32);
+        vint8m2_t iq4b2 = __riscv_vrgather_vv_i8m2(بەهاکان, iq4bits2, 32);
 
         // Accumulation.
         vint16m4_t sum1 = __riscv_vwmul_vv_i16m4(q8b1, iq4b1, 32);
@@ -5531,29 +5531,29 @@ static NOINLINE void ggml_vec_dot_iq4_nl_q8_0_vl128(int n, float * GGML_RESTRICT
     *s = sumf;
 }
 
-static NOINLINE void ggml_vec_dot_iq4_nl_q8_0_vl256(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(nrc == 1);
+ساكن NOINLINE فراغ ggml_vec_dot_iq4_nl_q8_0_vl256(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
-    assert(n % QK4_NL == 0);
+    أكد(n % QK4_NL == 0);
     static_assert(QK4_NL == QK8_0, "QK4_NL and QK8_0 must be the same");
 
-    const block_iq4_nl * GGML_RESTRICT x = vx;
-    const block_q8_0   * GGML_RESTRICT y = vy;
+    ثابت block_iq4_nl * GGML_RESTRICT x = vx;
+    ثابت block_q8_0   * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK4_NL;
+    ثابت صحيح nb = n / QK4_NL;
 
-    int ib = 0;
-    float sumf = 0;
+    صحيح ib = 0;
+    عائم sumf = 0;
 
     // Load the lookup table once.
-    const vint8mf2_t values = __riscv_vle8_v_i8mf2(kvalues_iq4nl, 16);
-    int acc1, acc2;
+    ثابت vint8mf2_t بەهاکان = __riscv_vle8_v_i8mf2(kvalues_iq4nl, 16);
+    صحيح acc1, acc2;
 
     // We process 2 blocks at once.
-    for (; ib + 1 < nb; ib += 2) {
+    لكل (; ib + 1 < nb; ib += 2) {
         // Weights and activations.
         vuint8mf2_t iq4_packed1 = __riscv_vle8_v_u8mf2(x[ib + 0].qs, 16);
         vint8mf2_t q8b_lo1 = __riscv_vle8_v_i8mf2(y[ib + 0].qs, 16);
@@ -5569,10 +5569,10 @@ static NOINLINE void ggml_vec_dot_iq4_nl_q8_0_vl256(int n, float * GGML_RESTRICT
         vuint8mf2_t iq4bits_hi2 = __riscv_vsrl_vx_u8mf2(iq4_packed2, 4, 16);
 
         // Gather values from the lookup table.
-        vint8mf2_t iq4b_lo1 = __riscv_vrgather_vv_i8mf2(values, iq4bits_lo1, 16);
-        vint8mf2_t iq4b_hi1 = __riscv_vrgather_vv_i8mf2(values, iq4bits_hi1, 16);
-        vint8mf2_t iq4b_lo2 = __riscv_vrgather_vv_i8mf2(values, iq4bits_lo2, 16);
-        vint8mf2_t iq4b_hi2 = __riscv_vrgather_vv_i8mf2(values, iq4bits_hi2, 16);
+        vint8mf2_t iq4b_lo1 = __riscv_vrgather_vv_i8mf2(بەهاکان, iq4bits_lo1, 16);
+        vint8mf2_t iq4b_hi1 = __riscv_vrgather_vv_i8mf2(بەهاکان, iq4bits_hi1, 16);
+        vint8mf2_t iq4b_lo2 = __riscv_vrgather_vv_i8mf2(بەهاکان, iq4bits_lo2, 16);
+        vint8mf2_t iq4b_hi2 = __riscv_vrgather_vv_i8mf2(بەهاکان, iq4bits_hi2, 16);
 
         // Accumulation.
         vint16m1_t sum1 = __riscv_vwmul_vv_i16m1(q8b_lo1, iq4b_lo1, 16);
@@ -5589,74 +5589,74 @@ static NOINLINE void ggml_vec_dot_iq4_nl_q8_0_vl256(int n, float * GGML_RESTRICT
 }
 #endif
 
-void ggml_vec_dot_iq4_nl_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined __riscv_v
-    switch (__riscv_vlenb() * 8) {
-        case 128:
+فراغ ggml_vec_dot_iq4_nl_q8_0(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+#إذا defined __riscv_v
+    بدل (__riscv_vlenb() * 8) {
+        حالة 128:
             ggml_vec_dot_iq4_nl_q8_0_vl128(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        default: // 256 and above
+            اكسر;
+        افتراضي: // 256 and above
             ggml_vec_dot_iq4_nl_q8_0_vl256(n, s, bs, vx, bx, vy, by, nrc);
-            break;
+            اكسر;
     }
-#else
+#وإلا
     ggml_vec_dot_iq4_nl_q8_0_generic(n, s, bs, vx, bx, vy, by, nrc);
 #endif
 }
 
-#if defined __riscv_v
-static NOINLINE void ggml_vec_dot_iq4_xs_q8_K_vl128(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(nrc == 1);
+#إذا defined __riscv_v
+ساكن NOINLINE فراغ ggml_vec_dot_iq4_xs_q8_K_vl128(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
-    assert(n % QK_K == 0);
+    أكد(n % QK_K == 0);
 
-    const block_iq4_xs * GGML_RESTRICT x = vx;
-    const block_q8_K   * GGML_RESTRICT y = vy;
+    ثابت block_iq4_xs * GGML_RESTRICT x = vx;
+    ثابت block_q8_K   * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ثابت صحيح nb = n / QK_K;
 
-    const vint8m4_t values = __riscv_vle8_v_i8m4(kvalues_iq4nl, 16);
-    float sumf = 0;
+    ثابت vint8m4_t بەهاکان = __riscv_vle8_v_i8m4(kvalues_iq4nl, 16);
+    عائم sumf = 0;
 
-    for (int ibl = 0; ibl < nb; ++ibl) {
-        const int8_t  * q8 = y[ibl].qs;
-        const uint8_t * iq4 = x[ibl].qs;
+    لكل (صحيح ibl = 0; ibl < nb; ++ibl) {
+        ثابت int8_t  * q8 = y[ibl].qs;
+        ثابت uint8_t * iq4 = x[ibl].qs;
         uint16_t h = x[ibl].scales_h;
 
         // We process 2 sub-blocks together.
-        int sumi1 = 0, sumi2 = 0;
+        صحيح sumi1 = 0, sumi2 = 0;
         #pragma GCC unroll 1
-        for (int ib = 0; ib < QK_K / 64; ++ib) {
+        لكل (صحيح ib = 0; ib < QK_K / 64; ++ib) {
             // Load the packed weights.
-            const vuint8m2_t iq4_packed = __riscv_vle8_v_u8m2(iq4, 32);
+            ثابت vuint8m2_t iq4_packed = __riscv_vle8_v_u8m2(iq4, 32);
             iq4 += 32;
 
             // Unpack the weight blocks.
-            const vuint8m2_t iq4bits_lo = __riscv_vand_vx_u8m2(iq4_packed, 0xf, 32);
-            const vuint8m2_t iq4bits_hi = __riscv_vsrl_vx_u8m2(iq4_packed, 4, 32);
-            const vuint8m4_t iq4bits = __riscv_vcreate_v_u8m2_u8m4(iq4bits_lo, iq4bits_hi);
-            const vuint8m4_t iq4bits_reorder = __riscv_vcreate_v_u8m1_u8m4(
+            ثابت vuint8m2_t iq4bits_lo = __riscv_vand_vx_u8m2(iq4_packed, 0xf, 32);
+            ثابت vuint8m2_t iq4bits_hi = __riscv_vsrl_vx_u8m2(iq4_packed, 4, 32);
+            ثابت vuint8m4_t iq4bits = __riscv_vcreate_v_u8m2_u8m4(iq4bits_lo, iq4bits_hi);
+            ثابت vuint8m4_t iq4bits_reorder = __riscv_vcreate_v_u8m1_u8m4(
                 __riscv_vmv_v_v_u8m1(__riscv_vget_v_u8m4_u8m1(iq4bits, 0), 16),
                 __riscv_vmv_v_v_u8m1(__riscv_vget_v_u8m4_u8m1(iq4bits, 2), 16),
                 __riscv_vmv_v_v_u8m1(__riscv_vget_v_u8m4_u8m1(iq4bits, 1), 16),
                 __riscv_vmv_v_v_u8m1(__riscv_vget_v_u8m4_u8m1(iq4bits, 3), 16)
             );
-            const vint8m4_t iq4b = __riscv_vrgather_vv_i8m4(values, iq4bits_reorder, 64);
+            ثابت vint8m4_t iq4b = __riscv_vrgather_vv_i8m4(بەهاکان, iq4bits_reorder, 64);
 
             // Multiply with activations.
-            const vint8m4_t q8b = __riscv_vle8_v_i8m4(q8, 64);
+            ثابت vint8m4_t q8b = __riscv_vle8_v_i8m4(q8, 64);
             q8 += 64;
-            const vint16m8_t prod = __riscv_vwmul_vv_i16m8(iq4b, q8b, 64);
+            ثابت vint16m8_t prod = __riscv_vwmul_vv_i16m8(iq4b, q8b, 64);
 
             // Reduce separately.
-            const int acc0 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m4_i32m1(__riscv_vget_v_i16m8_i16m4(prod, 0), __riscv_vmv_v_x_i32m1(0, 1), 32));
-            const int acc1 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m4_i32m1(__riscv_vget_v_i16m8_i16m4(prod, 1), __riscv_vmv_v_x_i32m1(0, 1), 32));
+            ثابت صحيح acc0 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m4_i32m1(__riscv_vget_v_i16m8_i16m4(prod, 0), __riscv_vmv_v_x_i32m1(0, 1), 32));
+            ثابت صحيح acc1 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m4_i32m1(__riscv_vget_v_i16m8_i16m4(prod, 1), __riscv_vmv_v_x_i32m1(0, 1), 32));
 
-            const int ls1 = ((x[ibl].scales_l[ib] & 0xf)  | ((h << 4) & 0x30)) - 32;
-            const int ls2 = ((x[ibl].scales_l[ib] >>  4)  | ((h << 2) & 0x30)) - 32;
+            ثابت صحيح ls1 = ((x[ibl].scales_l[ib] & 0xf)  | ((h << 4) & 0x30)) - 32;
+            ثابت صحيح ls2 = ((x[ibl].scales_l[ib] >>  4)  | ((h << 2) & 0x30)) - 32;
             h >>= 4;
 
             sumi1 += acc0 * ls1;
@@ -5671,21 +5671,21 @@ static NOINLINE void ggml_vec_dot_iq4_xs_q8_K_vl128(int n, float * GGML_RESTRICT
     *s = sumf;
 }
 
-static NOINLINE void ggml_vec_dot_iq4_xs_q8_K_vl256(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(nrc == 1);
+ساكن NOINLINE فراغ ggml_vec_dot_iq4_xs_q8_K_vl256(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
-    assert(n % QK_K == 0);
+    أكد(n % QK_K == 0);
 
-    const block_iq4_xs * GGML_RESTRICT x = vx;
-    const block_q8_K   * GGML_RESTRICT y = vy;
+    ثابت block_iq4_xs * GGML_RESTRICT x = vx;
+    ثابت block_q8_K   * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ثابت صحيح nb = n / QK_K;
 
-    const vint8m4_t values = __riscv_vle8_v_i8m4(kvalues_iq4nl, 16);
-    float sumf = 0;
+    ثابت vint8m4_t بەهاکان = __riscv_vle8_v_i8m4(kvalues_iq4nl, 16);
+    عائم sumf = 0;
 
     // Indices for re-ordering IQ4 data.
     uint16_t index[16] = {
@@ -5696,15 +5696,15 @@ static NOINLINE void ggml_vec_dot_iq4_xs_q8_K_vl256(int n, float * GGML_RESTRICT
     };
     vuint16m1_t i_vec = __riscv_vle16_v_u16m1(index, 16);
 
-    for (int ibl = 0; ibl < nb; ++ibl) {
-        const int8_t  * q8 = y[ibl].qs;
-        const uint8_t * iq4 = x[ibl].qs;
+    لكل (صحيح ibl = 0; ibl < nb; ++ibl) {
+        ثابت int8_t  * q8 = y[ibl].qs;
+        ثابت uint8_t * iq4 = x[ibl].qs;
         uint16_t h = x[ibl].scales_h;
 
-        int sumi1 = 0, sumi2 = 0, sumi3 = 0, sumi4 = 0;
+        صحيح sumi1 = 0, sumi2 = 0, sumi3 = 0, sumi4 = 0;
 
         #pragma GCC unroll 1
-        for (int ib = 0; ib < QK_K / 128; ++ib) {
+        لكل (صحيح ib = 0; ib < QK_K / 128; ++ib) {
             // Weights and activations.
             vuint8m2_t iq4_packed = __riscv_vle8_v_u8m2(iq4, 64);
             iq4 += 64;
@@ -5714,7 +5714,7 @@ static NOINLINE void ggml_vec_dot_iq4_xs_q8_K_vl256(int n, float * GGML_RESTRICT
             vuint8m2_t iq4bits_hi = __riscv_vsrl_vx_u8m2(iq4_packed, 4, 64);
             vuint8m4_t iq4bits = __riscv_vcreate_v_u8m2_u8m4(iq4bits_lo, iq4bits_hi);
             vuint8m4_t iq4bits_reorder = __riscv_vreinterpret_v_u64m4_u8m4(__riscv_vrgatherei16_vv_u64m4(__riscv_vreinterpret_v_u8m4_u64m4(iq4bits), i_vec, 16));
-            vint8m4_t iq4b = __riscv_vrgather_vv_i8m4(values, iq4bits_reorder, 128);
+            vint8m4_t iq4b = __riscv_vrgather_vv_i8m4(بەهاکان, iq4bits_reorder, 128);
 
             __asm__ __volatile__("" ::: "memory");
 
@@ -5726,15 +5726,15 @@ static NOINLINE void ggml_vec_dot_iq4_xs_q8_K_vl256(int n, float * GGML_RESTRICT
             __asm__ __volatile__("" ::: "memory");
 
             // Reduce separately.
-            int acc0 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m2_i32m1(__riscv_vget_v_i16m8_i16m2(prod, 0), __riscv_vmv_v_x_i32m1(0, 1), 32));
-            int acc1 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m2_i32m1(__riscv_vget_v_i16m8_i16m2(prod, 1), __riscv_vmv_v_x_i32m1(0, 1), 32));
-            int acc2 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m2_i32m1(__riscv_vget_v_i16m8_i16m2(prod, 2), __riscv_vmv_v_x_i32m1(0, 1), 32));
-            int acc3 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m2_i32m1(__riscv_vget_v_i16m8_i16m2(prod, 3), __riscv_vmv_v_x_i32m1(0, 1), 32));
+            صحيح acc0 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m2_i32m1(__riscv_vget_v_i16m8_i16m2(prod, 0), __riscv_vmv_v_x_i32m1(0, 1), 32));
+            صحيح acc1 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m2_i32m1(__riscv_vget_v_i16m8_i16m2(prod, 1), __riscv_vmv_v_x_i32m1(0, 1), 32));
+            صحيح acc2 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m2_i32m1(__riscv_vget_v_i16m8_i16m2(prod, 2), __riscv_vmv_v_x_i32m1(0, 1), 32));
+            صحيح acc3 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m2_i32m1(__riscv_vget_v_i16m8_i16m2(prod, 3), __riscv_vmv_v_x_i32m1(0, 1), 32));
 
-            int ls1 = ((x[ibl].scales_l[ib * 2 + 0] & 0xf)  | ((h << 4) & 0x30)) - 32;
-            int ls2 = ((x[ibl].scales_l[ib * 2 + 0] >>  4)  | ((h << 2) & 0x30)) - 32;
-            int ls3 = ((x[ibl].scales_l[ib * 2 + 1] &  0xf) | ((h << 0) & 0x30)) - 32;
-            int ls4 = ((x[ibl].scales_l[ib * 2 + 1] >>  4)  | ((h >> 2) & 0x30)) - 32;
+            صحيح ls1 = ((x[ibl].scales_l[ib * 2 + 0] & 0xf)  | ((h << 4) & 0x30)) - 32;
+            صحيح ls2 = ((x[ibl].scales_l[ib * 2 + 0] >>  4)  | ((h << 2) & 0x30)) - 32;
+            صحيح ls3 = ((x[ibl].scales_l[ib * 2 + 1] &  0xf) | ((h << 0) & 0x30)) - 32;
+            صحيح ls4 = ((x[ibl].scales_l[ib * 2 + 1] >>  4)  | ((h >> 2) & 0x30)) - 32;
             h >>= 8;
 
             sumi1 += acc0 * ls1;
@@ -5751,24 +5751,24 @@ static NOINLINE void ggml_vec_dot_iq4_xs_q8_K_vl256(int n, float * GGML_RESTRICT
     *s = sumf;
 }
 
-static NOINLINE void ggml_vec_dot_iq4_xs_q8_K_vl512(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(nrc == 1);
+ساكن NOINLINE فراغ ggml_vec_dot_iq4_xs_q8_K_vl512(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
-    assert(n % QK_K == 0);
+    أكد(n % QK_K == 0);
 
-    const block_iq4_xs * GGML_RESTRICT x = vx;
-    const block_q8_K   * GGML_RESTRICT y = vy;
+    ثابت block_iq4_xs * GGML_RESTRICT x = vx;
+    ثابت block_q8_K   * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ثابت صحيح nb = n / QK_K;
 
-    const vint8m4_t values = __riscv_vle8_v_i8m4(kvalues_iq4nl, 16);
-    float sumf = 0;
+    ثابت vint8m4_t بەهاکان = __riscv_vle8_v_i8m4(kvalues_iq4nl, 16);
+    عائم sumf = 0;
 
     // Indices for re-ordering IQ4 data.
-    const uint16_t index[32] = {
+    ثابت uint16_t index[32] = {
         0, 1, 16, 17,
         2, 3, 18, 19,
         4, 5,20, 21,
@@ -5778,56 +5778,56 @@ static NOINLINE void ggml_vec_dot_iq4_xs_q8_K_vl512(int n, float * GGML_RESTRICT
         12, 13,28, 29,
         14, 15, 30, 31,
     };
-    const vuint16m1_t i_vec = __riscv_vle16_v_u16m1(index, 32);
+    ثابت vuint16m1_t i_vec = __riscv_vle16_v_u16m1(index, 32);
 
-    for (int ibl = 0; ibl < nb; ++ibl) {
-        const int8_t  * q8 = y[ibl].qs;
-        const uint8_t * iq4 = x[ibl].qs;
+    لكل (صحيح ibl = 0; ibl < nb; ++ibl) {
+        ثابت int8_t  * q8 = y[ibl].qs;
+        ثابت uint8_t * iq4 = x[ibl].qs;
         uint16_t h = x[ibl].scales_h;
 
-        int sumi = 0;
+        صحيح sumi = 0;
 
         #pragma GCC unroll 1
         // Process the entire super-block together.
-        for (int ib = 0; ib < QK_K / 256; ++ib) {
+        لكل (صحيح ib = 0; ib < QK_K / 256; ++ib) {
             // Weights and activations.
-            const vuint8m2_t iq4_packed = __riscv_vle8_v_u8m2(iq4, 128);
+            ثابت vuint8m2_t iq4_packed = __riscv_vle8_v_u8m2(iq4, 128);
             iq4 += 128;
 
             // Unpack the weight blocks.
-            const vuint8m2_t iq4bits_lo = __riscv_vand_vx_u8m2(iq4_packed, 0xf, 128);
-            const vuint8m2_t iq4bits_hi = __riscv_vsrl_vx_u8m2(iq4_packed, 4, 128);
-            const vuint8m4_t iq4bits = __riscv_vcreate_v_u8m2_u8m4(iq4bits_lo, iq4bits_hi);
-            const vuint8m4_t iq4bits_reorder = __riscv_vreinterpret_v_u64m4_u8m4(__riscv_vrgatherei16_vv_u64m4(__riscv_vreinterpret_v_u8m4_u64m4(iq4bits), i_vec, 32));
-            const vint8m4_t iq4b = __riscv_vrgather_vv_i8m4(values, iq4bits_reorder, 256);
+            ثابت vuint8m2_t iq4bits_lo = __riscv_vand_vx_u8m2(iq4_packed, 0xf, 128);
+            ثابت vuint8m2_t iq4bits_hi = __riscv_vsrl_vx_u8m2(iq4_packed, 4, 128);
+            ثابت vuint8m4_t iq4bits = __riscv_vcreate_v_u8m2_u8m4(iq4bits_lo, iq4bits_hi);
+            ثابت vuint8m4_t iq4bits_reorder = __riscv_vreinterpret_v_u64m4_u8m4(__riscv_vrgatherei16_vv_u64m4(__riscv_vreinterpret_v_u8m4_u64m4(iq4bits), i_vec, 32));
+            ثابت vint8m4_t iq4b = __riscv_vrgather_vv_i8m4(بەهاکان, iq4bits_reorder, 256);
 
             __asm__ __volatile__("" ::: "memory");
 
             // Multiply with activations.
-            const vint8m4_t q8b = __riscv_vle8_v_i8m4(q8, 256);
-            const vint16m8_t prod = __riscv_vwmul_vv_i16m8(iq4b, q8b, 256);
+            ثابت vint8m4_t q8b = __riscv_vle8_v_i8m4(q8, 256);
+            ثابت vint16m8_t prod = __riscv_vwmul_vv_i16m8(iq4b, q8b, 256);
             q8 += 256;
 
             // Reduce separately.
-            const int acc0 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m1_i32m1(__riscv_vget_v_i16m8_i16m1(prod, 0), __riscv_vmv_v_x_i32m1(0, 1), 32));
-            const int acc1 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m1_i32m1(__riscv_vget_v_i16m8_i16m1(prod, 1), __riscv_vmv_v_x_i32m1(0, 1), 32));
-            const int acc2 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m1_i32m1(__riscv_vget_v_i16m8_i16m1(prod, 2), __riscv_vmv_v_x_i32m1(0, 1), 32));
-            const int acc3 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m1_i32m1(__riscv_vget_v_i16m8_i16m1(prod, 3), __riscv_vmv_v_x_i32m1(0, 1), 32));
-            const int acc4 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m1_i32m1(__riscv_vget_v_i16m8_i16m1(prod, 4), __riscv_vmv_v_x_i32m1(0, 1), 32));
-            const int acc5 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m1_i32m1(__riscv_vget_v_i16m8_i16m1(prod, 5), __riscv_vmv_v_x_i32m1(0, 1), 32));
-            const int acc6 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m1_i32m1(__riscv_vget_v_i16m8_i16m1(prod, 6), __riscv_vmv_v_x_i32m1(0, 1), 32));
-            const int acc7 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m1_i32m1(__riscv_vget_v_i16m8_i16m1(prod, 7), __riscv_vmv_v_x_i32m1(0, 1), 32));
+            ثابت صحيح acc0 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m1_i32m1(__riscv_vget_v_i16m8_i16m1(prod, 0), __riscv_vmv_v_x_i32m1(0, 1), 32));
+            ثابت صحيح acc1 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m1_i32m1(__riscv_vget_v_i16m8_i16m1(prod, 1), __riscv_vmv_v_x_i32m1(0, 1), 32));
+            ثابت صحيح acc2 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m1_i32m1(__riscv_vget_v_i16m8_i16m1(prod, 2), __riscv_vmv_v_x_i32m1(0, 1), 32));
+            ثابت صحيح acc3 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m1_i32m1(__riscv_vget_v_i16m8_i16m1(prod, 3), __riscv_vmv_v_x_i32m1(0, 1), 32));
+            ثابت صحيح acc4 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m1_i32m1(__riscv_vget_v_i16m8_i16m1(prod, 4), __riscv_vmv_v_x_i32m1(0, 1), 32));
+            ثابت صحيح acc5 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m1_i32m1(__riscv_vget_v_i16m8_i16m1(prod, 5), __riscv_vmv_v_x_i32m1(0, 1), 32));
+            ثابت صحيح acc6 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m1_i32m1(__riscv_vget_v_i16m8_i16m1(prod, 6), __riscv_vmv_v_x_i32m1(0, 1), 32));
+            ثابت صحيح acc7 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m1_i32m1(__riscv_vget_v_i16m8_i16m1(prod, 7), __riscv_vmv_v_x_i32m1(0, 1), 32));
 
 
-            const int ls0 = ((x[ibl].scales_l[0] & 0xf)  | ((h << 4) & 0x30)) - 32;
-            const int ls1 = ((x[ibl].scales_l[0] >>  4)  | ((h << 2) & 0x30)) - 32;
-            const int ls2 = ((x[ibl].scales_l[1] &  0xf) | ((h << 0) & 0x30)) - 32;
-            const int ls3 = ((x[ibl].scales_l[1] >>  4)  | ((h >> 2) & 0x30)) - 32;
+            ثابت صحيح ls0 = ((x[ibl].scales_l[0] & 0xf)  | ((h << 4) & 0x30)) - 32;
+            ثابت صحيح ls1 = ((x[ibl].scales_l[0] >>  4)  | ((h << 2) & 0x30)) - 32;
+            ثابت صحيح ls2 = ((x[ibl].scales_l[1] &  0xf) | ((h << 0) & 0x30)) - 32;
+            ثابت صحيح ls3 = ((x[ibl].scales_l[1] >>  4)  | ((h >> 2) & 0x30)) - 32;
             h >>= 8;
-            const int ls4 = ((x[ibl].scales_l[2] & 0xf)  | ((h << 4) & 0x30)) - 32;
-            const int ls5 = ((x[ibl].scales_l[2] >>  4)  | ((h << 2) & 0x30)) - 32;
-            const int ls6 = ((x[ibl].scales_l[3] &  0xf) | ((h << 0) & 0x30)) - 32;
-            const int ls7 = ((x[ibl].scales_l[3] >>  4)  | ((h >> 2) & 0x30)) - 32;
+            ثابت صحيح ls4 = ((x[ibl].scales_l[2] & 0xf)  | ((h << 4) & 0x30)) - 32;
+            ثابت صحيح ls5 = ((x[ibl].scales_l[2] >>  4)  | ((h << 2) & 0x30)) - 32;
+            ثابت صحيح ls6 = ((x[ibl].scales_l[3] &  0xf) | ((h << 0) & 0x30)) - 32;
+            ثابت صحيح ls7 = ((x[ibl].scales_l[3] >>  4)  | ((h >> 2) & 0x30)) - 32;
 
             sumi += acc0 * ls0;
             sumi += acc1 * ls1;
@@ -5847,24 +5847,24 @@ static NOINLINE void ggml_vec_dot_iq4_xs_q8_K_vl512(int n, float * GGML_RESTRICT
     *s = sumf;
 }
 
-static NOINLINE void ggml_vec_dot_iq4_xs_q8_K_vl1024(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(nrc == 1);
+ساكن NOINLINE فراغ ggml_vec_dot_iq4_xs_q8_K_vl1024(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
-    assert(n % QK_K == 0);
+    أكد(n % QK_K == 0);
 
-    const block_iq4_xs * GGML_RESTRICT x = vx;
-    const block_q8_K   * GGML_RESTRICT y = vy;
+    ثابت block_iq4_xs * GGML_RESTRICT x = vx;
+    ثابت block_q8_K   * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ثابت صحيح nb = n / QK_K;
 
-    const vint8m2_t values = __riscv_vle8_v_i8m2(kvalues_iq4nl, 16);
-    float sumf = 0;
+    ثابت vint8m2_t بەهاکان = __riscv_vle8_v_i8m2(kvalues_iq4nl, 16);
+    عائم sumf = 0;
 
     // Indices for re-ordering IQ4 data.
-    const uint16_t index[32] = {
+    ثابت uint16_t index[32] = {
         0, 1, 16, 17,
         2, 3, 18, 19,
         4, 5,20, 21,
@@ -5874,59 +5874,59 @@ static NOINLINE void ggml_vec_dot_iq4_xs_q8_K_vl1024(int n, float * GGML_RESTRIC
         12, 13,28, 29,
         14, 15, 30, 31,
     };
-    const vuint16mf2_t i_vec = __riscv_vle16_v_u16mf2(index, 32);
+    ثابت vuint16mf2_t i_vec = __riscv_vle16_v_u16mf2(index, 32);
 
-    for (int ibl = 0; ibl < nb; ++ibl) {
-        const int8_t  * q8 = y[ibl].qs;
-        const uint8_t * iq4 = x[ibl].qs;
+    لكل (صحيح ibl = 0; ibl < nb; ++ibl) {
+        ثابت int8_t  * q8 = y[ibl].qs;
+        ثابت uint8_t * iq4 = x[ibl].qs;
         uint16_t h = x[ibl].scales_h;
 
-        int sumi = 0;
+        صحيح sumi = 0;
 
         #pragma GCC unroll 1
         // Process the entire super-block together.
-        for (int ib = 0; ib < QK_K / 256; ++ib) {
+        لكل (صحيح ib = 0; ib < QK_K / 256; ++ib) {
             // Weights and activations.
-            const vuint8m1_t iq4_packed = __riscv_vle8_v_u8m1(iq4, 128);
+            ثابت vuint8m1_t iq4_packed = __riscv_vle8_v_u8m1(iq4, 128);
             iq4 += 128;
 
             // Unpack the weight blocks.
-            const vuint8m1_t iq4bits_lo = __riscv_vand_vx_u8m1(iq4_packed, 0xf, 128);
-            const vuint8m1_t iq4bits_hi = __riscv_vsrl_vx_u8m1(iq4_packed, 4, 128);
-            const vuint8m2_t iq4bits = __riscv_vcreate_v_u8m1_u8m2(iq4bits_lo, iq4bits_hi);
-            const vuint8m2_t iq4bits_reorder = __riscv_vreinterpret_v_u64m2_u8m2(__riscv_vrgatherei16_vv_u64m2(__riscv_vreinterpret_v_u8m2_u64m2(iq4bits), i_vec, 32));
-            const vint8m2_t iq4b = __riscv_vrgather_vv_i8m2(values, iq4bits_reorder, 256);
+            ثابت vuint8m1_t iq4bits_lo = __riscv_vand_vx_u8m1(iq4_packed, 0xf, 128);
+            ثابت vuint8m1_t iq4bits_hi = __riscv_vsrl_vx_u8m1(iq4_packed, 4, 128);
+            ثابت vuint8m2_t iq4bits = __riscv_vcreate_v_u8m1_u8m2(iq4bits_lo, iq4bits_hi);
+            ثابت vuint8m2_t iq4bits_reorder = __riscv_vreinterpret_v_u64m2_u8m2(__riscv_vrgatherei16_vv_u64m2(__riscv_vreinterpret_v_u8m2_u64m2(iq4bits), i_vec, 32));
+            ثابت vint8m2_t iq4b = __riscv_vrgather_vv_i8m2(بەهاکان, iq4bits_reorder, 256);
 
             __asm__ __volatile__("" ::: "memory");
 
             // Multiply with activations.
-            const vint8m2_t q8b = __riscv_vle8_v_i8m2(q8, 256);
-            const vint16m4_t prod = __riscv_vwmul_vv_i16m4(iq4b, q8b, 256);
+            ثابت vint8m2_t q8b = __riscv_vle8_v_i8m2(q8, 256);
+            ثابت vint16m4_t prod = __riscv_vwmul_vv_i16m4(iq4b, q8b, 256);
             q8 += 256;
 
             // Mask for processing 32 elements per prod register.
-            const vuint16m1_t p_index = __riscv_vid_v_u16m1(64);
-            const vbool16_t p_mask = __riscv_vmsgtu_vx_u16m1_b16(p_index, 31, 64);
+            ثابت vuint16m1_t p_index = __riscv_vid_v_u16m1(64);
+            ثابت vbool16_t p_mask = __riscv_vmsgtu_vx_u16m1_b16(p_index, 31, 64);
 
             // Reduce separately.
-            const int acc0 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m1_i32m1(        __riscv_vget_v_i16m4_i16m1(prod, 0), __riscv_vmv_v_x_i32m1(0, 1), 32));
-            const int acc1 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m1_i32m1_m(p_mask, __riscv_vget_v_i16m4_i16m1(prod, 0), __riscv_vmv_v_x_i32m1(0, 1), 64));
-            const int acc2 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m1_i32m1(        __riscv_vget_v_i16m4_i16m1(prod, 1), __riscv_vmv_v_x_i32m1(0, 1), 32));
-            const int acc3 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m1_i32m1_m(p_mask, __riscv_vget_v_i16m4_i16m1(prod, 1), __riscv_vmv_v_x_i32m1(0, 1), 64));
-            const int acc4 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m1_i32m1(        __riscv_vget_v_i16m4_i16m1(prod, 2), __riscv_vmv_v_x_i32m1(0, 1), 32));
-            const int acc5 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m1_i32m1_m(p_mask, __riscv_vget_v_i16m4_i16m1(prod, 2), __riscv_vmv_v_x_i32m1(0, 1), 64));
-            const int acc6 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m1_i32m1(        __riscv_vget_v_i16m4_i16m1(prod, 3), __riscv_vmv_v_x_i32m1(0, 1), 32));
-            const int acc7 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m1_i32m1_m(p_mask, __riscv_vget_v_i16m4_i16m1(prod, 3), __riscv_vmv_v_x_i32m1(0, 1), 64));
+            ثابت صحيح acc0 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m1_i32m1(        __riscv_vget_v_i16m4_i16m1(prod, 0), __riscv_vmv_v_x_i32m1(0, 1), 32));
+            ثابت صحيح acc1 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m1_i32m1_m(p_mask, __riscv_vget_v_i16m4_i16m1(prod, 0), __riscv_vmv_v_x_i32m1(0, 1), 64));
+            ثابت صحيح acc2 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m1_i32m1(        __riscv_vget_v_i16m4_i16m1(prod, 1), __riscv_vmv_v_x_i32m1(0, 1), 32));
+            ثابت صحيح acc3 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m1_i32m1_m(p_mask, __riscv_vget_v_i16m4_i16m1(prod, 1), __riscv_vmv_v_x_i32m1(0, 1), 64));
+            ثابت صحيح acc4 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m1_i32m1(        __riscv_vget_v_i16m4_i16m1(prod, 2), __riscv_vmv_v_x_i32m1(0, 1), 32));
+            ثابت صحيح acc5 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m1_i32m1_m(p_mask, __riscv_vget_v_i16m4_i16m1(prod, 2), __riscv_vmv_v_x_i32m1(0, 1), 64));
+            ثابت صحيح acc6 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m1_i32m1(        __riscv_vget_v_i16m4_i16m1(prod, 3), __riscv_vmv_v_x_i32m1(0, 1), 32));
+            ثابت صحيح acc7 = __riscv_vmv_x_s_i32m1_i32(__riscv_vwredsum_vs_i16m1_i32m1_m(p_mask, __riscv_vget_v_i16m4_i16m1(prod, 3), __riscv_vmv_v_x_i32m1(0, 1), 64));
 
-            const int ls0 = ((x[ibl].scales_l[0] & 0xf)  | ((h << 4) & 0x30)) - 32;
-            const int ls1 = ((x[ibl].scales_l[0] >>  4)  | ((h << 2) & 0x30)) - 32;
-            const int ls2 = ((x[ibl].scales_l[1] &  0xf) | ((h << 0) & 0x30)) - 32;
-            const int ls3 = ((x[ibl].scales_l[1] >>  4)  | ((h >> 2) & 0x30)) - 32;
+            ثابت صحيح ls0 = ((x[ibl].scales_l[0] & 0xf)  | ((h << 4) & 0x30)) - 32;
+            ثابت صحيح ls1 = ((x[ibl].scales_l[0] >>  4)  | ((h << 2) & 0x30)) - 32;
+            ثابت صحيح ls2 = ((x[ibl].scales_l[1] &  0xf) | ((h << 0) & 0x30)) - 32;
+            ثابت صحيح ls3 = ((x[ibl].scales_l[1] >>  4)  | ((h >> 2) & 0x30)) - 32;
             h >>= 8;
-            const int ls4 = ((x[ibl].scales_l[2] & 0xf)  | ((h << 4) & 0x30)) - 32;
-            const int ls5 = ((x[ibl].scales_l[2] >>  4)  | ((h << 2) & 0x30)) - 32;
-            const int ls6 = ((x[ibl].scales_l[3] &  0xf) | ((h << 0) & 0x30)) - 32;
-            const int ls7 = ((x[ibl].scales_l[3] >>  4)  | ((h >> 2) & 0x30)) - 32;
+            ثابت صحيح ls4 = ((x[ibl].scales_l[2] & 0xf)  | ((h << 4) & 0x30)) - 32;
+            ثابت صحيح ls5 = ((x[ibl].scales_l[2] >>  4)  | ((h << 2) & 0x30)) - 32;
+            ثابت صحيح ls6 = ((x[ibl].scales_l[3] &  0xf) | ((h << 0) & 0x30)) - 32;
+            ثابت صحيح ls7 = ((x[ibl].scales_l[3] >>  4)  | ((h >> 2) & 0x30)) - 32;
 
             sumi += acc0 * ls0;
             sumi += acc1 * ls1;
@@ -5947,69 +5947,69 @@ static NOINLINE void ggml_vec_dot_iq4_xs_q8_K_vl1024(int n, float * GGML_RESTRIC
 }
 #endif
 
-void ggml_vec_dot_iq4_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined __riscv_v
-    switch (__riscv_vlenb() * 8) {
-        case 128:
+فراغ ggml_vec_dot_iq4_xs_q8_K(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+#إذا defined __riscv_v
+    بدل (__riscv_vlenb() * 8) {
+        حالة 128:
             ggml_vec_dot_iq4_xs_q8_K_vl128(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        case 256:
+            اكسر;
+        حالة 256:
             ggml_vec_dot_iq4_xs_q8_K_vl256(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        case 512:
+            اكسر;
+        حالة 512:
             ggml_vec_dot_iq4_xs_q8_K_vl512(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        case 1024:
+            اكسر;
+        حالة 1024:
             ggml_vec_dot_iq4_xs_q8_K_vl1024(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        default:
+            اكسر;
+        افتراضي:
             ggml_vec_dot_iq4_xs_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-            break;
+            اكسر;
     }
-#else
+#وإلا
     ggml_vec_dot_iq4_xs_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
 #endif
 }
 
-#if defined __riscv_v
-static NOINLINE void ggml_vec_dot_tq1_0_q8_K_vl128(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(nrc == 1);
+#إذا defined __riscv_v
+ساكن NOINLINE فراغ ggml_vec_dot_tq1_0_q8_K_vl128(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_tq1_0 * GGML_RESTRICT x = vx;
-    const block_q8_K  * GGML_RESTRICT y = vy;
+    ثابت block_tq1_0 * GGML_RESTRICT x = vx;
+    ثابت block_q8_K  * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ثابت صحيح nb = n / QK_K;
 
-    float sumf = 0.0f;
+    عائم sumf = 0.0f;
     uint8_t pow[16] = {1, 1, 1, 1, 3, 3, 3, 3, 9, 9, 9, 9, 27, 27, 27, 27};
 
-    for (int i = 0; i < nb; i++) {
-        const uint8_t * GGML_RESTRICT tq = x[i].qs;
-        const int8_t  * GGML_RESTRICT q8 = y[i].qs;
+    لكل (صحيح i = 0; i < nb; i++) {
+        ثابت uint8_t * GGML_RESTRICT tq = x[i].qs;
+        ثابت int8_t  * GGML_RESTRICT q8 = y[i].qs;
 
         // First loop.
         vint16m4_t suml1;
         {
-            const int vl = 32;
-            const vuint8m2_t tqb = __riscv_vle8_v_u8m2(tq, vl);
+            ثابت صحيح vl = 32;
+            ثابت vuint8m2_t tqb = __riscv_vle8_v_u8m2(tq, vl);
             tq += 32;
 
             {
-                const vuint16m4_t tq0 = __riscv_vsrl_vx_u16m4(__riscv_vwmulu_vx_u16m4(tqb, 3, vl), 8, vl);
-                const vint16m4_t q80 = __riscv_vwcvt_x_x_v_i16m4(__riscv_vle8_v_i8m2(q8, vl), vl);
+                ثابت vuint16m4_t tq0 = __riscv_vsrl_vx_u16m4(__riscv_vwmulu_vx_u16m4(tqb, 3, vl), 8, vl);
+                ثابت vint16m4_t q80 = __riscv_vwcvt_x_x_v_i16m4(__riscv_vle8_v_i8m2(q8, vl), vl);
                 suml1 = __riscv_vmul_vv_i16m4(__riscv_vreinterpret_v_u16m4_i16m4(__riscv_vsub_vx_u16m4(tq0, 1, vl)), q80, vl);
                 q8 += 32;
             }
 
             uint8_t pow3 = 3;
             #pragma GCC unroll 1
-            for (int t = 0; t < 4; t++) {
-                const vuint16m4_t tqn = __riscv_vsrl_vx_u16m4(__riscv_vwmulu_vx_u16m4(__riscv_vmul_vx_u8m2(tqb, pow3, vl), 3, vl), 8, vl);
-                const vint16m4_t q8n = __riscv_vwcvt_x_x_v_i16m4(__riscv_vle8_v_i8m2(q8, vl), vl);
+            لكل (صحيح t = 0; t < 4; t++) {
+                ثابت vuint16m4_t tqn = __riscv_vsrl_vx_u16m4(__riscv_vwmulu_vx_u16m4(__riscv_vmul_vx_u8m2(tqb, pow3, vl), 3, vl), 8, vl);
+                ثابت vint16m4_t q8n = __riscv_vwcvt_x_x_v_i16m4(__riscv_vle8_v_i8m2(q8, vl), vl);
                 suml1 = __riscv_vmacc_vv_i16m4(suml1, __riscv_vreinterpret_v_u16m4_i16m4(__riscv_vsub_vx_u16m4(tqn, 1, vl)), q8n, vl);
                 pow3 *= 3;
                 q8 += 32;
@@ -6019,21 +6019,21 @@ static NOINLINE void ggml_vec_dot_tq1_0_q8_K_vl128(int n, float * GGML_RESTRICT 
         // Second loop.
         vint16m2_t suml2;
         {
-            const int vl = 16;
-            const vuint8m1_t tqb = __riscv_vle8_v_u8m1(tq, vl);
+            ثابت صحيح vl = 16;
+            ثابت vuint8m1_t tqb = __riscv_vle8_v_u8m1(tq, vl);
 
             {
-                const vuint16m2_t tq0 = __riscv_vsrl_vx_u16m2(__riscv_vwmulu_vx_u16m2(tqb, 3, vl), 8, vl);
-                const vint16m2_t q80 = __riscv_vwcvt_x_x_v_i16m2(__riscv_vle8_v_i8m1(q8, vl), vl);
+                ثابت vuint16m2_t tq0 = __riscv_vsrl_vx_u16m2(__riscv_vwmulu_vx_u16m2(tqb, 3, vl), 8, vl);
+                ثابت vint16m2_t q80 = __riscv_vwcvt_x_x_v_i16m2(__riscv_vle8_v_i8m1(q8, vl), vl);
                 suml2 = __riscv_vmul_vv_i16m2(__riscv_vreinterpret_v_u16m2_i16m2(__riscv_vsub_vx_u16m2(tq0, 1, vl)), q80, vl);
                 q8 += 16;
             }
 
             uint8_t pow3 = 3;
             #pragma GCC unroll 1
-            for (int t = 0; t < 4; t++) {
-                const vuint16m2_t tqn = __riscv_vsrl_vx_u16m2(__riscv_vwmulu_vx_u16m2(__riscv_vmul_vx_u8m1(tqb, pow3, vl), 3, vl), 8, vl);
-                const vint16m2_t q8n = __riscv_vwcvt_x_x_v_i16m2(__riscv_vle8_v_i8m1(q8, vl), vl);
+            لكل (صحيح t = 0; t < 4; t++) {
+                ثابت vuint16m2_t tqn = __riscv_vsrl_vx_u16m2(__riscv_vwmulu_vx_u16m2(__riscv_vmul_vx_u8m1(tqb, pow3, vl), 3, vl), 8, vl);
+                ثابت vint16m2_t q8n = __riscv_vwcvt_x_x_v_i16m2(__riscv_vle8_v_i8m1(q8, vl), vl);
                 suml2 = __riscv_vmacc_vv_i16m2(suml2, __riscv_vreinterpret_v_u16m2_i16m2(__riscv_vsub_vx_u16m2(tqn, 1, vl)), q8n, vl);
                 pow3 *= 3;
                 q8 += 16;
@@ -6043,19 +6043,19 @@ static NOINLINE void ggml_vec_dot_tq1_0_q8_K_vl128(int n, float * GGML_RESTRICT 
         // Third loop.
         vint16m2_t suml3;
         {
-            const int vl = 16;
+            ثابت صحيح vl = 16;
 
             uint32_t qh;
             memcpy(&qh, &x[i].qh[0], 4);
             // Prevent fusion with vmv.
             __asm__ __volatile__("" : "+r"(qh));
-            const vuint8m1_t tqb = __riscv_vreinterpret_v_u32m1_u8m1(__riscv_vmv_v_x_u32m1(qh, vl / 4));
+            ثابت vuint8m1_t tqb = __riscv_vreinterpret_v_u32m1_u8m1(__riscv_vmv_v_x_u32m1(qh, vl / 4));
 
-            const vuint8m1_t p = __riscv_vle8_v_u8m1(pow, vl);
+            ثابت vuint8m1_t p = __riscv_vle8_v_u8m1(pow, vl);
 
-            const vuint16m2_t tq0 = __riscv_vsrl_vx_u16m2(__riscv_vwmulu_vx_u16m2(__riscv_vmul_vv_u8m1(tqb, p, vl), 3, vl), 8, vl);
+            ثابت vuint16m2_t tq0 = __riscv_vsrl_vx_u16m2(__riscv_vwmulu_vx_u16m2(__riscv_vmul_vv_u8m1(tqb, p, vl), 3, vl), 8, vl);
 
-            const vint16m2_t q80 = __riscv_vwcvt_x_x_v_i16m2(__riscv_vle8_v_i8m1(q8, vl), vl);
+            ثابت vint16m2_t q80 = __riscv_vwcvt_x_x_v_i16m2(__riscv_vle8_v_i8m1(q8, vl), vl);
 
             suml3 = __riscv_vmul_vv_i16m2(__riscv_vreinterpret_v_u16m2_i16m2(__riscv_vsub_vx_u16m2(tq0, 1, vl)), q80, vl);
         }
@@ -6071,26 +6071,26 @@ static NOINLINE void ggml_vec_dot_tq1_0_q8_K_vl128(int n, float * GGML_RESTRICT 
     *s = sumf;
 }
 
-static NOINLINE void ggml_vec_dot_tq1_0_q8_K_vl256(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(nrc == 1);
+ساكن NOINLINE فراغ ggml_vec_dot_tq1_0_q8_K_vl256(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_tq1_0 * GGML_RESTRICT x = vx;
-    const block_q8_K  * GGML_RESTRICT y = vy;
+    ثابت block_tq1_0 * GGML_RESTRICT x = vx;
+    ثابت block_q8_K  * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ثابت صحيح nb = n / QK_K;
 
-    float sumf = 0.0f;
+    عائم sumf = 0.0f;
     uint8_t pow[16] = {1, 1, 1, 1, 3, 3, 3, 3, 9, 9, 9, 9, 27, 27, 27, 27};
 
-    for (int i = 0; i < nb; i++) {
+    لكل (صحيح i = 0; i < nb; i++) {
         // First loop.
         vint16m2_t suml1;
         {
-            const int vl = 32;
+            ثابت صحيح vl = 32;
             vuint8m1_t tq = __riscv_vle8_v_u8m1(x[i].qs, vl);
 
             vuint16m2_t tq0 = __riscv_vsrl_vx_u16m2(__riscv_vwmulu_vx_u16m2(tq, 3, vl), 8, vl);
@@ -6119,7 +6119,7 @@ static NOINLINE void ggml_vec_dot_tq1_0_q8_K_vl256(int n, float * GGML_RESTRICT 
         // Second loop.
         vint16m1_t suml2;
         {
-            const int vl = 16;
+            ثابت صحيح vl = 16;
             vuint8mf2_t tq = __riscv_vle8_v_u8mf2(x[i].qs + 32, vl);
 
             vuint16m1_t tq0 = __riscv_vsrl_vx_u16m1(__riscv_vwmulu_vx_u16m1(tq, 3 * 1, vl), 8, vl);
@@ -6148,7 +6148,7 @@ static NOINLINE void ggml_vec_dot_tq1_0_q8_K_vl256(int n, float * GGML_RESTRICT 
         // Third loop.
         vint16m1_t suml3;
         {
-            const int vl = 16;
+            ثابت صحيح vl = 16;
 
             uint32_t qh;
             memcpy(&qh, &x[i].qh[0], 4);
@@ -6175,26 +6175,26 @@ static NOINLINE void ggml_vec_dot_tq1_0_q8_K_vl256(int n, float * GGML_RESTRICT 
     *s = sumf;
 }
 
-static NOINLINE void ggml_vec_dot_tq1_0_q8_K_vl512(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(nrc == 1);
+ساكن NOINLINE فراغ ggml_vec_dot_tq1_0_q8_K_vl512(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_tq1_0 * GGML_RESTRICT x = vx;
-    const block_q8_K  * GGML_RESTRICT y = vy;
+    ثابت block_tq1_0 * GGML_RESTRICT x = vx;
+    ثابت block_q8_K  * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ثابت صحيح nb = n / QK_K;
 
-    float sumf = 0.0f;
+    عائم sumf = 0.0f;
     uint8_t pow[16] = {1, 1, 1, 1, 3, 3, 3, 3, 9, 9, 9, 9, 27, 27, 27, 27};
 
-    for (int i = 0; i < nb; i++) {
+    لكل (صحيح i = 0; i < nb; i++) {
         // First loop.
         vint16m1_t suml1;
         {
-            const int vl = 32;
+            ثابت صحيح vl = 32;
             vuint8mf2_t tq = __riscv_vle8_v_u8mf2(x[i].qs, vl);
 
             vuint16m1_t tq0 = __riscv_vsrl_vx_u16m1(__riscv_vwmulu_vx_u16m1(tq, 3, vl), 8, vl);
@@ -6223,7 +6223,7 @@ static NOINLINE void ggml_vec_dot_tq1_0_q8_K_vl512(int n, float * GGML_RESTRICT 
         // Second loop.
         vint16mf2_t suml2;
         {
-            const int vl = 16;
+            ثابت صحيح vl = 16;
             vuint8mf4_t tq = __riscv_vle8_v_u8mf4(x[i].qs + 32, vl);
 
             vuint16mf2_t tq0 = __riscv_vsrl_vx_u16mf2(__riscv_vwmulu_vx_u16mf2(tq, 3 * 1, vl), 8, vl);
@@ -6252,7 +6252,7 @@ static NOINLINE void ggml_vec_dot_tq1_0_q8_K_vl512(int n, float * GGML_RESTRICT 
         // Third loop.
         vint16mf2_t suml3;
         {
-            const int vl = 16;
+            ثابت صحيح vl = 16;
 
             uint32_t qh;
             memcpy(&qh, &x[i].qh[0], 4);
@@ -6278,47 +6278,47 @@ static NOINLINE void ggml_vec_dot_tq1_0_q8_K_vl512(int n, float * GGML_RESTRICT 
 }
 #endif
 
-void ggml_vec_dot_tq1_0_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined __riscv_v
-    switch (__riscv_vlenb() * 8) {
-        case 128:
+فراغ ggml_vec_dot_tq1_0_q8_K(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+#إذا defined __riscv_v
+    بدل (__riscv_vlenb() * 8) {
+        حالة 128:
             ggml_vec_dot_tq1_0_q8_K_vl128(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        case 256:
+            اكسر;
+        حالة 256:
             ggml_vec_dot_tq1_0_q8_K_vl256(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        default: // 512 and above
+            اكسر;
+        افتراضي: // 512 and above
             ggml_vec_dot_tq1_0_q8_K_vl512(n, s, bs, vx, bx, vy, by, nrc);
-            break;
+            اكسر;
     }
-#else
+#وإلا
     ggml_vec_dot_tq1_0_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
 #endif
 }
 
-#if defined __riscv_v
-static NOINLINE void ggml_vec_dot_tq2_0_q8_K_vl128(const int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+#إذا defined __riscv_v
+ساكن NOINLINE فراغ ggml_vec_dot_tq2_0_q8_K_vl128(ثابت صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_tq2_0 * GGML_RESTRICT x = vx;
-    const block_q8_K  * GGML_RESTRICT y = vy;
+    ثابت block_tq2_0 * GGML_RESTRICT x = vx;
+    ثابت block_q8_K  * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
-    float sumf = 0.0f;
-    for (int i = 0; i < nb; ++i) {
+    ثابت صحيح nb = n / QK_K;
+    عائم sumf = 0.0f;
+    لكل (صحيح i = 0; i < nb; ++i) {
         int32_t sumi = 0;
 
-        for (size_t j = 0; j < sizeof(x[0].qs); j += 32) {
-            const int8_t * py0 = &y[i].qs[j * 4 + 0 * 32];
-            const int8_t * py1 = &y[i].qs[j * 4 + 1 * 32];
-            const int8_t * py2 = &y[i].qs[j * 4 + 2 * 32];
-            const int8_t * py3 = &y[i].qs[j * 4 + 3 * 32];
-            const uint8_t* px  = &x[i].qs[j];
+        لكل (size_t j = 0; j < حجم(x[0].qs); j += 32) {
+            ثابت int8_t * py0 = &y[i].qs[j * 4 + 0 * 32];
+            ثابت int8_t * py1 = &y[i].qs[j * 4 + 1 * 32];
+            ثابت int8_t * py2 = &y[i].qs[j * 4 + 2 * 32];
+            ثابت int8_t * py3 = &y[i].qs[j * 4 + 3 * 32];
+            ثابت uint8_t* px  = &x[i].qs[j];
 
             size_t vl = __riscv_vsetvl_e16m4(32);
             vint16m4_t vacc16 = __riscv_vmv_v_x_i16m4(0, vl);
@@ -6336,7 +6336,7 @@ static NOINLINE void ggml_vec_dot_tq2_0_q8_K_vl128(const int n, float * GGML_RES
                 // Accumulate
                 vacc16 = __riscv_vwmacc_vv_i16m4(vacc16, vq, vy, vl);
             }
-            __asm__ volatile("" ::: "memory");
+            __asm__ متطاير("" ::: "memory");
             // Process bits 3:2
             {
                 vuint8m2_t t1 = __riscv_vsrl_vx_u8m2(vx_u8, 2, vl);
@@ -6346,7 +6346,7 @@ static NOINLINE void ggml_vec_dot_tq2_0_q8_K_vl128(const int n, float * GGML_RES
                 vint8m2_t vy = __riscv_vle8_v_i8m2(py1, vl);
                 vacc16 = __riscv_vwmacc_vv_i16m4(vacc16, vq, vy, vl);
             }
-            __asm__ volatile("" ::: "memory");
+            __asm__ متطاير("" ::: "memory");
             // Process bits 5:4
             {
                 vuint8m2_t t2 = __riscv_vsrl_vx_u8m2(vx_u8, 4, vl);
@@ -6356,7 +6356,7 @@ static NOINLINE void ggml_vec_dot_tq2_0_q8_K_vl128(const int n, float * GGML_RES
                 vint8m2_t vy = __riscv_vle8_v_i8m2(py2, vl);
                 vacc16 = __riscv_vwmacc_vv_i16m4(vacc16, vq, vy, vl);
             }
-            __asm__ volatile("" ::: "memory");
+            __asm__ متطاير("" ::: "memory");
             // Process bits 7:6
             {
                 vuint8m2_t t3 = __riscv_vsrl_vx_u8m2(vx_u8, 6, vl);
@@ -6365,43 +6365,43 @@ static NOINLINE void ggml_vec_dot_tq2_0_q8_K_vl128(const int n, float * GGML_RES
                 vint8m2_t vy = __riscv_vle8_v_i8m2(py3, vl);
                 vacc16 = __riscv_vwmacc_vv_i16m4(vacc16, vq, vy, vl);
             }
-            __asm__ volatile("" ::: "memory");
+            __asm__ متطاير("" ::: "memory");
             vl = __riscv_vsetvl_e16m4(32);
             vint32m1_t vzero32 = __riscv_vmv_v_x_i32m1(0, 1);
             vint32m1_t vred32 = __riscv_vwredsum_vs_i16m4_i32m1(vacc16, vzero32, vl);
             sumi += __riscv_vmv_x_s_i32m1_i32(vred32);
         }
 
-        const float d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
-        sumf += (float)sumi * d;
+        ثابت عائم d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
+        sumf += (عائم)sumi * d;
     }
 
     *s = sumf;
 }
 
-static NOINLINE void ggml_vec_dot_tq2_0_q8_K_vl256(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+ساكن NOINLINE فراغ ggml_vec_dot_tq2_0_q8_K_vl256(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(n % QK_K == 0);
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_tq2_0 * GGML_RESTRICT x = vx;
-    const block_q8_K  * GGML_RESTRICT y = vy;
+    ثابت block_tq2_0 * GGML_RESTRICT x = vx;
+    ثابت block_q8_K  * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ثابت صحيح nb = n / QK_K;
 
-    float sumf = 0.0f;
-    for (int i = 0; i < nb; ++i) {
+    عائم sumf = 0.0f;
+    لكل (صحيح i = 0; i < nb; ++i) {
         int32_t sumi = 0;
 
-        for (size_t j = 0; j < sizeof(x[0].qs); j += 32) {
-            const int8_t * py0 = &y[i].qs[j * 4 + 0 * 32];
-            const int8_t * py1 = &y[i].qs[j * 4 + 1 * 32];
-            const int8_t * py2 = &y[i].qs[j * 4 + 2 * 32];
-            const int8_t * py3 = &y[i].qs[j * 4 + 3 * 32];
-            const uint8_t* px  = &x[i].qs[j];
+        لكل (size_t j = 0; j < حجم(x[0].qs); j += 32) {
+            ثابت int8_t * py0 = &y[i].qs[j * 4 + 0 * 32];
+            ثابت int8_t * py1 = &y[i].qs[j * 4 + 1 * 32];
+            ثابت int8_t * py2 = &y[i].qs[j * 4 + 2 * 32];
+            ثابت int8_t * py3 = &y[i].qs[j * 4 + 3 * 32];
+            ثابت uint8_t* px  = &x[i].qs[j];
 
             size_t vlmax_16m2 = __riscv_vsetvl_e16m2(32);
             vint16m2_t vacc16 = __riscv_vmv_v_x_i16m2(0, vlmax_16m2);
@@ -6443,53 +6443,53 @@ static NOINLINE void ggml_vec_dot_tq2_0_q8_K_vl256(int n, float * GGML_RESTRICT 
 
             sumi += __riscv_vmv_x_s_i32m1_i32(vred32);
         }
-        const float d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
-        sumf += (float)sumi * d;
+        ثابت عائم d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
+        sumf += (عائم)sumi * d;
     }
 
     *s = sumf;
 }
 #endif
 
-void ggml_vec_dot_tq2_0_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined __riscv_v
-    switch (__riscv_vlenb() * 8) {
-        case 128:
+فراغ ggml_vec_dot_tq2_0_q8_K(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+#إذا defined __riscv_v
+    بدل (__riscv_vlenb() * 8) {
+        حالة 128:
             ggml_vec_dot_tq2_0_q8_K_vl128(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        default: // 256 and above
+            اكسر;
+        افتراضي: // 256 and above
             ggml_vec_dot_tq2_0_q8_K_vl256(n, s, bs, vx, bx, vy, by, nrc);
-            break;
+            اكسر;
     }
-#else
+#وإلا
     ggml_vec_dot_tq2_0_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
 #endif
 }
 
-#if defined __riscv_v
-static NOINLINE void ggml_vec_dot_mxfp4_q8_0_vl128(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(nrc == 1);
+#إذا defined __riscv_v
+ساكن NOINLINE فراغ ggml_vec_dot_mxfp4_q8_0_vl128(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
-    assert(n % QK_MXFP4 == 0);
+    أكد(n % QK_MXFP4 == 0);
     static_assert(QK_MXFP4 == QK8_0, "QK_MXFP4 and QK8_0 must be the same");
 
-    const block_mxfp4 * GGML_RESTRICT x = vx;
-    const block_q8_0  * GGML_RESTRICT y = vy;
+    ثابت block_mxfp4 * GGML_RESTRICT x = vx;
+    ثابت block_q8_0  * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_MXFP4;
+    ثابت صحيح nb = n / QK_MXFP4;
 
-    int ib = 0;
-    float sumf = 0;
+    صحيح ib = 0;
+    عائم sumf = 0;
 
     // Load the lookup table once.
-    const vint8m2_t values = __riscv_vle8_v_i8m2(kvalues_mxfp4, 16);
-    int acc1, acc2;
+    ثابت vint8m2_t بەهاکان = __riscv_vle8_v_i8m2(kvalues_mxfp4, 16);
+    صحيح acc1, acc2;
 
     // We process 2 blocks at once.
-    for (; ib + 1 < nb; ib += 2) {
+    لكل (; ib + 1 < nb; ib += 2) {
         // Weights and activations.
         vuint8m1_t mx_packed1 = __riscv_vle8_v_u8m1(x[ib + 0].qs, 16);
         vint8m2_t q8b1 = __riscv_vle8_v_i8m2(y[ib + 0].qs, 32);
@@ -6507,8 +6507,8 @@ static NOINLINE void ggml_vec_dot_mxfp4_q8_0_vl128(int n, float * GGML_RESTRICT 
         );
 
         // Gather values from the lookup table.
-        vint8m2_t mxb1 = __riscv_vrgather_vv_i8m2(values, mxbits1, 32);
-        vint8m2_t mxb2 = __riscv_vrgather_vv_i8m2(values, mxbits2, 32);
+        vint8m2_t mxb1 = __riscv_vrgather_vv_i8m2(بەهاکان, mxbits1, 32);
+        vint8m2_t mxb2 = __riscv_vrgather_vv_i8m2(بەهاکان, mxbits2, 32);
 
         // Accumulation.
         vint16m4_t sum1 = __riscv_vwmul_vv_i16m4(q8b1, mxb1, 32);
@@ -6522,29 +6522,29 @@ static NOINLINE void ggml_vec_dot_mxfp4_q8_0_vl128(int n, float * GGML_RESTRICT 
     *s = sumf;
 }
 
-static NOINLINE void ggml_vec_dot_mxfp4_q8_0_vl256(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(nrc == 1);
+ساكن NOINLINE فراغ ggml_vec_dot_mxfp4_q8_0_vl256(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+    أكد(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
-    assert(n % QK_MXFP4 == 0);
+    أكد(n % QK_MXFP4 == 0);
     static_assert(QK_MXFP4 == QK8_0, "QK_MXFP4 and QK8_0 must be the same");
 
-    const block_mxfp4 * GGML_RESTRICT x = vx;
-    const block_q8_0  * GGML_RESTRICT y = vy;
+    ثابت block_mxfp4 * GGML_RESTRICT x = vx;
+    ثابت block_q8_0  * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_MXFP4;
+    ثابت صحيح nb = n / QK_MXFP4;
 
-    int ib = 0;
-    float sumf = 0;
+    صحيح ib = 0;
+    عائم sumf = 0;
 
     // Load the lookup table once.
-    const vint8mf2_t values = __riscv_vle8_v_i8mf2(kvalues_mxfp4, 16);
-    int acc1, acc2;
+    ثابت vint8mf2_t بەهاکان = __riscv_vle8_v_i8mf2(kvalues_mxfp4, 16);
+    صحيح acc1, acc2;
 
     // We process 2 blocks at once.
-    for (; ib + 1 < nb; ib+=2) {
+    لكل (; ib + 1 < nb; ib+=2) {
         // Weights and activations.
         vuint8mf2_t mx_packed1 = __riscv_vle8_v_u8mf2(x[ib + 0].qs, 16);
         vint8mf2_t q8b_lo1 = __riscv_vle8_v_i8mf2(y[ib + 0].qs, 16);
@@ -6560,10 +6560,10 @@ static NOINLINE void ggml_vec_dot_mxfp4_q8_0_vl256(int n, float * GGML_RESTRICT 
         vuint8mf2_t mxbits_hi2 = __riscv_vsrl_vx_u8mf2(mx_packed2, 4, 16);
 
         // Gather values from the lookup table.
-        vint8mf2_t mxb_lo1 = __riscv_vrgather_vv_i8mf2(values, mxbits_lo1, 16);
-        vint8mf2_t mxb_hi1 = __riscv_vrgather_vv_i8mf2(values, mxbits_hi1, 16);
-        vint8mf2_t mxb_lo2 = __riscv_vrgather_vv_i8mf2(values, mxbits_lo2, 16);
-        vint8mf2_t mxb_hi2 = __riscv_vrgather_vv_i8mf2(values, mxbits_hi2, 16);
+        vint8mf2_t mxb_lo1 = __riscv_vrgather_vv_i8mf2(بەهاکان, mxbits_lo1, 16);
+        vint8mf2_t mxb_hi1 = __riscv_vrgather_vv_i8mf2(بەهاکان, mxbits_hi1, 16);
+        vint8mf2_t mxb_lo2 = __riscv_vrgather_vv_i8mf2(بەهاکان, mxbits_lo2, 16);
+        vint8mf2_t mxb_hi2 = __riscv_vrgather_vv_i8mf2(بەهاکان, mxbits_hi2, 16);
 
         // Accumulation.
         vint16m1_t sum1 = __riscv_vwmul_vv_i16m1(q8b_lo1, mxb_lo1, 16);
@@ -6580,17 +6580,17 @@ static NOINLINE void ggml_vec_dot_mxfp4_q8_0_vl256(int n, float * GGML_RESTRICT 
 }
 #endif
 
-void ggml_vec_dot_mxfp4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-#if defined __riscv_v
-    switch (__riscv_vlenb() * 8) {
-        case 128:
+فراغ ggml_vec_dot_mxfp4_q8_0(صحيح n, عائم * GGML_RESTRICT s, size_t bs, ثابت فراغ * GGML_RESTRICT vx, size_t bx, ثابت فراغ * GGML_RESTRICT vy, size_t by, صحيح nrc) {
+#إذا defined __riscv_v
+    بدل (__riscv_vlenb() * 8) {
+        حالة 128:
             ggml_vec_dot_mxfp4_q8_0_vl128(n, s, bs, vx, bx, vy, by, nrc);
-            break;
-        default: // 256 and above
+            اكسر;
+        افتراضي: // 256 and above
             ggml_vec_dot_mxfp4_q8_0_vl256(n, s, bs, vx, bx, vy, by, nrc);
-            break;
+            اكسر;
     }
-#else
+#وإلا
     ggml_vec_dot_mxfp4_q8_0_generic(n, s, bs, vx, bx, vy, by, nrc);
 #endif
 }

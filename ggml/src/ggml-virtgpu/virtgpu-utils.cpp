@@ -1,152 +1,152 @@
-#include "virtgpu-utils.h"
+#ضمن "virtgpu-utils.h"
 
-#include <malloc.h>
-#include <stdlib.h>
+#ضمن <malloc.h>
+#ضمن <stdlib.h>
 
-#include <cstring>
+#ضمن <cstring>
 
-#define NODE_ALLOC_ALIGN 64
-#define NODE_PTR_MASK    (~((uintptr_t) NODE_ALLOC_ALIGN - 1))
-#define NODE_LEVEL_MASK  ((uintptr_t) NODE_ALLOC_ALIGN - 1)
-#define NULL_NODE        0
+#define گرێ_ALLOC_ALIGN 64
+#define گرێ_PTR_MASK    (~((uintptr_t) گرێ_ALLOC_ALIGN - 1))
+#define گرێ_LEVEL_MASK  ((uintptr_t) گرێ_ALLOC_ALIGN - 1)
+#define NULL_گرێ        0
 
 #define os_malloc_aligned(_size, _align) _aligned_malloc(_size, _align)
-#define os_free_aligned(_ptr)            free(_ptr)
+#define os_free_aligned(_ptr)            حرر(_ptr)
 #define p_atomic_cmpxchg(v, old, _new)   __sync_val_compare_and_swap((v), (old), (_new))
 
-static inline uint64_t util_logbase2_64(uint64_t n) {
-#if defined(HAVE___BUILTIN_CLZLL)
-    return ((sizeof(uint64_t) * 8 - 1) - __builtin_clzll(n | 1));
-#else
+ساكن مضمن uint64_t util_logbase2_64(uint64_t n) {
+#إذا defined(HAVE___BUILTIN_CLZLL)
+    أرجع ((حجم(uint64_t) * 8 - 1) - __builtin_clzll(n | 1));
+#وإلا
     uint64_t pos = 0ull;
-    if (n >= 1ull << 32) {
+    إذا (n >= 1ull << 32) {
         n >>= 32;
         pos += 32;
     }
-    if (n >= 1ull << 16) {
+    إذا (n >= 1ull << 16) {
         n >>= 16;
         pos += 16;
     }
-    if (n >= 1ull << 8) {
+    إذا (n >= 1ull << 8) {
         n >>= 8;
         pos += 8;
     }
-    if (n >= 1ull << 4) {
+    إذا (n >= 1ull << 4) {
         n >>= 4;
         pos += 4;
     }
-    if (n >= 1ull << 2) {
+    إذا (n >= 1ull << 2) {
         n >>= 2;
         pos += 2;
     }
-    if (n >= 1ull << 1) {
+    إذا (n >= 1ull << 1) {
         pos += 1;
     }
-    return pos;
+    أرجع pos;
 #endif
 }
 
-void util_sparse_array_init(util_sparse_array * arr, size_t elem_size, size_t node_size) {
-    memset(arr, 0, sizeof(*arr));
+فراغ util_sparse_array_init(util_sparse_array * arr, size_t elem_size, size_t گرێ_size) {
+    memset(arr, 0, حجم(*arr));
     arr->elem_size      = elem_size;
-    arr->node_size_log2 = util_logbase2_64(node_size);
-    assert(node_size >= 2 && node_size == (1ull << arr->node_size_log2));
+    arr->گرێ_size_log2 = util_logbase2_64(گرێ_size);
+    أكد(گرێ_size >= 2 && گرێ_size == (1ull << arr->گرێ_size_log2));
 }
 
-static inline void * os_malloc_aligned(size_t size, size_t alignment) {
-    void * ptr;
-    alignment = (alignment + sizeof(void *) - 1) & ~(sizeof(void *) - 1);
-    if (posix_memalign(&ptr, alignment, size) != 0) {
-        return NULL;
+ساكن مضمن فراغ * os_malloc_aligned(size_t size, size_t alignment) {
+    فراغ * ptr;
+    alignment = (alignment + حجم(فراغ *) - 1) & ~(حجم(فراغ *) - 1);
+    إذا (posix_memalign(&ptr, alignment, size) != 0) {
+        أرجع عدم;
     }
-    return ptr;
+    أرجع ptr;
 }
 
-static inline void * _util_sparse_array_node_data(uintptr_t handle) {
-    return (void *) (handle & NODE_PTR_MASK);
+ساكن مضمن فراغ * util_sparse_array_گرێ_data(uintptr_t handle) {
+    أرجع (فراغ *) (handle & گرێ_PTR_MASK);
 }
 
-static inline unsigned _util_sparse_array_node_level(uintptr_t handle) {
-    return handle & NODE_LEVEL_MASK;
+ساكن مضمن unsigned util_sparse_array_گرێ_level(uintptr_t handle) {
+    أرجع handle & گرێ_LEVEL_MASK;
 }
 
-static inline void _util_sparse_array_node_finish(util_sparse_array * arr, uintptr_t node) {
-    if (_util_sparse_array_node_level(node) > 0) {
-        uintptr_t * children  = (uintptr_t *) _util_sparse_array_node_data(node);
-        size_t      node_size = 1ull << arr->node_size_log2;
-        for (size_t i = 0; i < node_size; i++) {
-            if (children[i]) {
-                _util_sparse_array_node_finish(arr, children[i]);
+ساكن مضمن فراغ util_sparse_array_گرێ_finish(util_sparse_array * arr, uintptr_t گرێ) {
+    إذا (util_sparse_array_گرێ_level(گرێ) > 0) {
+        uintptr_t * children  = (uintptr_t *) util_sparse_array_گرێ_data(گرێ);
+        size_t      گرێ_size = 1ull << arr->گرێ_size_log2;
+        لكل (size_t i = 0; i < گرێ_size; i++) {
+            إذا (children[i]) {
+                util_sparse_array_گرێ_finish(arr, children[i]);
             }
         }
     }
 
-    os_free_aligned(_util_sparse_array_node_data(node));
+    os_free_aligned(util_sparse_array_گرێ_data(گرێ));
 }
 
-static inline uintptr_t _util_sparse_array_node(void * data, unsigned level) {
-    assert(data != NULL);
-    assert(((uintptr_t) data & NODE_LEVEL_MASK) == 0);
-    assert((level & NODE_PTR_MASK) == 0);
-    return (uintptr_t) data | level;
+ساكن مضمن uintptr_t util_sparse_array_گرێ(فراغ * data, unsigned level) {
+    أكد(data != عدم);
+    أكد(((uintptr_t) data & گرێ_LEVEL_MASK) == 0);
+    أكد((level & گرێ_PTR_MASK) == 0);
+    أرجع (uintptr_t) data | level;
 }
 
-inline uintptr_t _util_sparse_array_node_alloc(util_sparse_array * arr, unsigned level) {
+مضمن uintptr_t util_sparse_array_گرێ_alloc(util_sparse_array * arr, unsigned level) {
     size_t size;
-    if (level == 0) {
-        size = arr->elem_size << arr->node_size_log2;
-    } else {
-        size = sizeof(uintptr_t) << arr->node_size_log2;
+    إذا (level == 0) {
+        size = arr->elem_size << arr->گرێ_size_log2;
+    } وإلا {
+        size = حجم(uintptr_t) << arr->گرێ_size_log2;
     }
 
-    void * data = os_malloc_aligned(size, NODE_ALLOC_ALIGN);
+    فراغ * data = os_malloc_aligned(size, گرێ_ALLOC_ALIGN);
     memset(data, 0, size);
 
-    return _util_sparse_array_node(data, level);
+    أرجع util_sparse_array_گرێ(data, level);
 }
 
-static inline uintptr_t _util_sparse_array_set_or_free_node(uintptr_t * node_ptr, uintptr_t cmp_node, uintptr_t node) {
-    uintptr_t prev_node = p_atomic_cmpxchg(node_ptr, cmp_node, node);
+ساكن مضمن uintptr_t util_sparse_array_set_or_free_گرێ(uintptr_t * گرێ_ptr, uintptr_t cmp_گرێ, uintptr_t گرێ) {
+    uintptr_t prev_گرێ = p_atomic_cmpxchg(گرێ_ptr, cmp_گرێ, گرێ);
 
-    if (prev_node != cmp_node) {
+    إذا (prev_گرێ != cmp_گرێ) {
         /* We lost the race.  Free this one and return the one that was already
        * allocated.
        */
-        os_free_aligned(_util_sparse_array_node_data(node));
-        return prev_node;
-    } else {
-        return node;
+        os_free_aligned(util_sparse_array_گرێ_data(گرێ));
+        أرجع prev_گرێ;
+    } وإلا {
+        أرجع گرێ;
     }
 }
 
-void * util_sparse_array_get(util_sparse_array * arr, uint64_t idx) {
-    const unsigned node_size_log2 = arr->node_size_log2;
-    uintptr_t      root           = p_atomic_read(&arr->root);
-    if (unlikely(!root)) {
-        unsigned root_level = 0;
-        uint64_t idx_iter   = idx >> node_size_log2;
-        while (idx_iter) {
-            idx_iter >>= node_size_log2;
-            root_level++;
+فراغ * util_sparse_array_get(util_sparse_array * arr, uint64_t idx) {
+    ثابت unsigned گرێ_size_log2 = arr->گرێ_size_log2;
+    uintptr_t      ڕەگ           = p_atomic_read(&arr->ڕەگ);
+    إذا (unlikely(!ڕەگ)) {
+        unsigned ڕەگ_level = 0;
+        uint64_t idx_iter   = idx >> گرێ_size_log2;
+        طالما (idx_iter) {
+            idx_iter >>= گرێ_size_log2;
+            ڕەگ_level++;
         }
-        uintptr_t new_root = _util_sparse_array_node_alloc(arr, root_level);
-        root               = _util_sparse_array_set_or_free_node(&arr->root, NULL_NODE, new_root);
+        uintptr_t new_ڕەگ = util_sparse_array_گرێ_alloc(arr, ڕەگ_level);
+        ڕەگ               = util_sparse_array_set_or_free_گرێ(&arr->ڕەگ, NULL_گرێ, new_ڕەگ);
     }
 
-    while (1) {
-        unsigned root_level = _util_sparse_array_node_level(root);
-        uint64_t root_idx   = idx >> (root_level * node_size_log2);
-        if (likely(root_idx < (1ull << node_size_log2))) {
-            break;
+    طالما (1) {
+        unsigned ڕەگ_level = util_sparse_array_گرێ_level(ڕەگ);
+        uint64_t ڕەگ_idx   = idx >> (ڕەگ_level * گرێ_size_log2);
+        إذا (likely(ڕەگ_idx < (1ull << گرێ_size_log2))) {
+            اكسر;
         }
 
         /* In this case, we have a root but its level is low enough that the
        * requested index is out-of-bounds.
        */
-        uintptr_t new_root = _util_sparse_array_node_alloc(arr, root_level + 1);
+        uintptr_t new_ڕەگ = util_sparse_array_گرێ_alloc(arr, ڕەگ_level + 1);
 
-        uintptr_t * new_root_children = (uintptr_t *) _util_sparse_array_node_data(new_root);
-        new_root_children[0]          = root;
+        uintptr_t * new_ڕەگ_children = (uintptr_t *) util_sparse_array_گرێ_data(new_ڕەگ);
+        new_ڕەگ_children[0]          = ڕەگ;
 
         /* We only add one at a time instead of the whole tree because it's
        * easier to ensure correctness of both the tree building and the
@@ -154,26 +154,26 @@ void * util_sparse_array_get(util_sparse_array * arr, uint64_t idx) {
        * worry about trying to free multiple things without freeing the old
        * things.
        */
-        root = _util_sparse_array_set_or_free_node(&arr->root, root, new_root);
+        ڕەگ = util_sparse_array_set_or_free_گرێ(&arr->ڕەگ, ڕەگ, new_ڕەگ);
     }
 
-    void *   node_data  = _util_sparse_array_node_data(root);
-    unsigned node_level = _util_sparse_array_node_level(root);
-    while (node_level > 0) {
-        uint64_t child_idx = (idx >> (node_level * node_size_log2)) & ((1ull << node_size_log2) - 1);
+    فراغ *   گرێ_data  = util_sparse_array_گرێ_data(ڕەگ);
+    unsigned گرێ_level = util_sparse_array_گرێ_level(ڕەگ);
+    طالما (گرێ_level > 0) {
+        uint64_t child_idx = (idx >> (گرێ_level * گرێ_size_log2)) & ((1ull << گرێ_size_log2) - 1);
 
-        uintptr_t * children = (uintptr_t *) node_data;
+        uintptr_t * children = (uintptr_t *) گرێ_data;
         uintptr_t   child    = p_atomic_read(&children[child_idx]);
 
-        if (unlikely(!child)) {
-            child = _util_sparse_array_node_alloc(arr, node_level - 1);
-            child = _util_sparse_array_set_or_free_node(&children[child_idx], NULL_NODE, child);
+        إذا (unlikely(!child)) {
+            child = util_sparse_array_گرێ_alloc(arr, گرێ_level - 1);
+            child = util_sparse_array_set_or_free_گرێ(&children[child_idx], NULL_گرێ, child);
         }
 
-        node_data  = _util_sparse_array_node_data(child);
-        node_level = _util_sparse_array_node_level(child);
+        گرێ_data  = util_sparse_array_گرێ_data(child);
+        گرێ_level = util_sparse_array_گرێ_level(child);
     }
 
-    uint64_t elem_idx = idx & ((1ull << node_size_log2) - 1);
-    return (void *) ((char *) node_data + (elem_idx * arr->elem_size));
+    uint64_t elem_idx = idx & ((1ull << گرێ_size_log2) - 1);
+    أرجع (فراغ *) ((حرف *) گرێ_data + (elem_idx * arr->elem_size));
 }
