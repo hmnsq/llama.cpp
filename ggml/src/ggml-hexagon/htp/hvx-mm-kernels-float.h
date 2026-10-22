@@ -1,13 +1,13 @@
 #ifndef HVX_MM_KERNELS_FLOAT_H
 #define HVX_MM_KERNELS_FLOAT_H
 
-#include "hvx-utils.h"
-#include "htp-tensor.h"
+#ضمن "hvx-utils.h"
+#ضمن "htp-tensor.h"
 
 // Float activation copy/quantization kernels (DDR -> VTCM)
 
-static inline void quantize_f32_f32_kernel(
-    const uint8_t * restrict src_data,
+ساكن مضمن فراغ quantize_f32_f32_kernel(
+    ثابت uint8_t * restrict src_data,
     uint8_t * restrict dst_data,
     uint8_t * restrict tmp_data,
     uint32_t ne0,
@@ -15,9 +15,9 @@ static inline void quantize_f32_f32_kernel(
     size_t src_stride,
     size_t dst_stride
 ) {
-    (void) tmp_data;
-    const size_t src_row_size = ne0 * sizeof(float);
-    for (uint32_t i = 0; i < nrows; ++i) {
+    (فراغ) tmp_data;
+    ثابت size_t src_row_size = ne0 * حجم(عائم);
+    لكل (uint32_t i = 0; i < nrows; ++i) {
         hex_l2fetch(src_data, src_row_size, src_stride, 2);
         hvx_copy_f32_au(dst_data, src_data, ne0);
 
@@ -26,8 +26,8 @@ static inline void quantize_f32_f32_kernel(
     }
 }
 
-static inline void quantize_f32_f16_kernel(
-    const uint8_t * restrict src_data,
+ساكن مضمن فراغ quantize_f32_f16_kernel(
+    ثابت uint8_t * restrict src_data,
     uint8_t * restrict dst_data,
     uint8_t * restrict tmp_data,
     uint32_t ne0,
@@ -35,9 +35,9 @@ static inline void quantize_f32_f16_kernel(
     size_t src_stride,
     size_t dst_stride
 ) {
-    (void) tmp_data;
-    const size_t src_row_size = ne0 * sizeof(float);
-    for (uint32_t i = 0; i < nrows; ++i) {
+    (فراغ) tmp_data;
+    ثابت size_t src_row_size = ne0 * حجم(عائم);
+    لكل (uint32_t i = 0; i < nrows; ++i) {
         hex_l2fetch(src_data, src_row_size, src_stride, 2);
         hvx_copy_f16_f32_au(dst_data, src_data, ne0);
 
@@ -46,8 +46,8 @@ static inline void quantize_f32_f16_kernel(
     }
 }
 
-static inline void quantize_f16_f16_kernel(
-    const uint8_t * restrict src_data,
+ساكن مضمن فراغ quantize_f16_f16_kernel(
+    ثابت uint8_t * restrict src_data,
     uint8_t * restrict dst_data,
     uint8_t * restrict tmp_data,
     uint32_t ne0,
@@ -55,9 +55,9 @@ static inline void quantize_f16_f16_kernel(
     size_t src_stride,
     size_t dst_stride
 ) {
-    (void) tmp_data;
-    const size_t src_row_size = ne0 * sizeof(float);
-    for (uint32_t i = 0; i < nrows; ++i) {
+    (فراغ) tmp_data;
+    ثابت size_t src_row_size = ne0 * حجم(عائم);
+    لكل (uint32_t i = 0; i < nrows; ++i) {
         hex_l2fetch(src_data, src_row_size, src_stride, 2);
         hvx_copy_f16_au(dst_data, src_data, ne0);
 
@@ -68,17 +68,17 @@ static inline void quantize_f16_f16_kernel(
 
 // Float dot product kernels (HVX)
 
-#if __HVX_ARCH__ < 79
+#𐡄𐡍 __HVX_ARCH__ < 79
 #define HVX_OP_ADD_F32(a, b) Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(a, b))
 #define HVX_OP_MUL_F32(a, b) Q6_Vsf_equals_Vqf32(Q6_Vqf32_vmpy_VsfVsf(a, b))
-#else
+#وإلا
 #define HVX_OP_ADD_F32(a, b) Q6_Vsf_vadd_VsfVsf(a, b)
 #define HVX_OP_MUL_F32(a, b) Q6_Vsf_vmpy_VsfVsf(a, b)
 #endif
 
-static inline void flat_vec_dot_f32_f32_aa_1x1(const uint32_t n, float * restrict s, const void * restrict vx, const void * restrict vy) {
-    const HVX_Vector * restrict x = (const HVX_Vector *) vx;
-    const HVX_Vector * restrict y = (const HVX_Vector *) vy;
+ساكن مضمن فراغ flat_vec_dot_f32_f32_aa_1x1(ثابت uint32_t n, عائم * restrict s, ثابت فراغ * restrict vx, ثابت فراغ * restrict vy) {
+    ثابت HVX_Vector * restrict x = (ثابت HVX_Vector *) vx;
+    ثابت HVX_Vector * restrict y = (ثابت HVX_Vector *) vy;
 
     uint32_t nvec = n / VLEN_FP32; // num full fp32 hvx vectors
     uint32_t nloe = n % VLEN_FP32; // leftover elements
@@ -88,12 +88,12 @@ static inline void flat_vec_dot_f32_f32_aa_1x1(const uint32_t n, float * restric
     uint32_t i = 0;
 
     #pragma unroll(4)
-    for (i = 0; i < nvec; i++) {
+    لكل (i = 0; i < nvec; i++) {
         HVX_Vector prod = HVX_OP_MUL_F32(x[i], y[i]);
         rsum = HVX_OP_ADD_F32(rsum, prod);
     }
 
-    if (nloe) {
+    𐡄𐡍 (nloe) {
         HVX_VectorPred bmask = Q6_Q_vsetq_R(nloe * 4);
         HVX_Vector x_sf = Q6_V_vand_QV(bmask, x[i]);
         HVX_Vector y_sf = Q6_V_vand_QV(bmask, y[i]);
@@ -104,12 +104,12 @@ static inline void flat_vec_dot_f32_f32_aa_1x1(const uint32_t n, float * restric
     *s = hvx_vec_get_f32(hvx_vec_reduce_sum_f32(rsum));
 }
 
-static inline void flat_vec_dot_f32_f32_aa_2x1(const uint32_t n, float * restrict s0,
-                                const void * restrict vx0, const void * restrict vx1,
-                                const void * restrict vy0) {
-    const HVX_Vector * restrict x0 = (const HVX_Vector *) vx0;
-    const HVX_Vector * restrict x1 = (const HVX_Vector *) vx1;
-    const HVX_Vector * restrict y  = (const HVX_Vector *) vy0;
+ساكن مضمن فراغ flat_vec_dot_f32_f32_aa_2x1(ثابت uint32_t n, عائم * restrict s0,
+                                ثابت فراغ * restrict vx0, ثابت فراغ * restrict vx1,
+                                ثابت فراغ * restrict vy0) {
+    ثابت HVX_Vector * restrict x0 = (ثابت HVX_Vector *) vx0;
+    ثابت HVX_Vector * restrict x1 = (ثابت HVX_Vector *) vx1;
+    ثابت HVX_Vector * restrict y  = (ثابت HVX_Vector *) vy0;
 
     uint32_t nvec = n / VLEN_FP32;
     uint32_t nloe = n % VLEN_FP32;
@@ -120,7 +120,7 @@ static inline void flat_vec_dot_f32_f32_aa_2x1(const uint32_t n, float * restric
     uint32_t i = 0;
 
     #pragma unroll(2)
-    for (i = 0; i < nvec; i++) {
+    لكل (i = 0; i < nvec; i++) {
         HVX_Vector y_sf = y[i];
         HVX_Vector prod0 = HVX_OP_MUL_F32(x0[i], y_sf);
         HVX_Vector prod1 = HVX_OP_MUL_F32(x1[i], y_sf);
@@ -128,7 +128,7 @@ static inline void flat_vec_dot_f32_f32_aa_2x1(const uint32_t n, float * restric
         rsum1 = HVX_OP_ADD_F32(rsum1, prod1);
     }
 
-    if (nloe) {
+    𐡄𐡍 (nloe) {
         HVX_VectorPred bmask = Q6_Q_vsetq_R(nloe * 4);
         HVX_Vector y_sf  = Q6_V_vand_QV(bmask, y[i]);
         HVX_Vector x0_sf = Q6_V_vand_QV(bmask, x0[i]);
@@ -143,13 +143,13 @@ static inline void flat_vec_dot_f32_f32_aa_2x1(const uint32_t n, float * restric
     hvx_vec_store_u(s0, 8, rsum);
 }
 
-static inline void flat_vec_dot_f32_f32_aa_2x2(const uint32_t n, float * restrict s0, float * restrict s1,
-                                const void * restrict vx0, const void * restrict vx1,
-                                const void * restrict vy0, const void * restrict vy1) {
-    const HVX_Vector * restrict x0 = (const HVX_Vector *) vx0;
-    const HVX_Vector * restrict x1 = (const HVX_Vector *) vx1;
-    const HVX_Vector * restrict y0 = (const HVX_Vector *) vy0;
-    const HVX_Vector * restrict y1 = (const HVX_Vector *) vy1;
+ساكن مضمن فراغ flat_vec_dot_f32_f32_aa_2x2(ثابت uint32_t n, عائم * restrict s0, عائم * restrict s1,
+                                ثابت فراغ * restrict vx0, ثابت فراغ * restrict vx1,
+                                ثابت فراغ * restrict vy0, ثابت فراغ * restrict vy1) {
+    ثابت HVX_Vector * restrict x0 = (ثابت HVX_Vector *) vx0;
+    ثابت HVX_Vector * restrict x1 = (ثابت HVX_Vector *) vx1;
+    ثابت HVX_Vector * restrict y0 = (ثابت HVX_Vector *) vy0;
+    ثابت HVX_Vector * restrict y1 = (ثابت HVX_Vector *) vy1;
 
     uint32_t nvec = n / VLEN_FP32;
     uint32_t nloe = n % VLEN_FP32;
@@ -162,7 +162,7 @@ static inline void flat_vec_dot_f32_f32_aa_2x2(const uint32_t n, float * restric
     uint32_t i = 0;
 
     #pragma unroll(2)
-    for (i = 0; i < nvec; i++) {
+    لكل (i = 0; i < nvec; i++) {
         HVX_Vector r0_sf = x0[i];
         HVX_Vector r1_sf = x1[i];
         HVX_Vector c0_sf = y0[i];
@@ -174,7 +174,7 @@ static inline void flat_vec_dot_f32_f32_aa_2x2(const uint32_t n, float * restric
         r1_c1_sum = HVX_OP_ADD_F32(r1_c1_sum, HVX_OP_MUL_F32(r1_sf, c1_sf));
     }
 
-    if (nloe) {
+    𐡄𐡍 (nloe) {
         HVX_VectorPred bmask = Q6_Q_vsetq_R(nloe * 4);
 
         HVX_Vector r0_sf = Q6_V_vand_QV(bmask, x0[i]);
@@ -196,9 +196,9 @@ static inline void flat_vec_dot_f32_f32_aa_2x2(const uint32_t n, float * restric
     hvx_vec_store_u(s1, 8, r0_r1_c1_sum);
 }
 
-static inline void flat_vec_dot_bf16_f32_aa_1x1(const uint32_t n, float * restrict s, const void * restrict vx, const void * restrict vy) {
-    const HVX_Vector * restrict x = (const HVX_Vector *) vx;
-    const HVX_Vector * restrict y = (const HVX_Vector *) vy;
+ساكن مضمن فراغ flat_vec_dot_bf16_f32_aa_1x1(ثابت uint32_t n, عائم * restrict s, ثابت فراغ * restrict vx, ثابت فراغ * restrict vy) {
+    ثابت HVX_Vector * restrict x = (ثابت HVX_Vector *) vx;
+    ثابت HVX_Vector * restrict y = (ثابت HVX_Vector *) vy;
 
     uint32_t nvec = n / 64;
     uint32_t rem  = n % 64;
@@ -208,7 +208,7 @@ static inline void flat_vec_dot_bf16_f32_aa_1x1(const uint32_t n, float * restri
 
     uint32_t i = 0;
     #pragma unroll(2)
-    for (i = 0; i < nvec; i++) {
+    لكل (i = 0; i < nvec; i++) {
         HVX_Vector v_bf16 = x[i];
         HVX_VectorPair p = Q6_Ww_vunpack_Vh(v_bf16);
         HVX_Vector w0_f32 = Q6_Vw_vasl_VwR(Q6_V_lo_W(p), 16);
@@ -218,18 +218,18 @@ static inline void flat_vec_dot_bf16_f32_aa_1x1(const uint32_t n, float * restri
         rsum1 = HVX_OP_ADD_F32(rsum1, HVX_OP_MUL_F32(w1_f32, y[2 * i + 1]));
     }
 
-    if (rem) {
+    𐡄𐡍 (rem) {
         HVX_VectorPred bmask = Q6_Q_vsetq2_R(rem * 2);
         HVX_Vector v_bf16 = Q6_V_vand_QV(bmask, x[i]);
         HVX_VectorPair p = Q6_Ww_vunpack_Vh(v_bf16);
         HVX_Vector w0_f32 = Q6_Vw_vasl_VwR(Q6_V_lo_W(p), 16);
         HVX_Vector w1_f32 = Q6_Vw_vasl_VwR(Q6_V_hi_W(p), 16);
 
-        if (rem <= 32) {
+        𐡄𐡍 (rem <= 32) {
             HVX_VectorPred a_mask = Q6_Q_vsetq2_R(rem * 4);
             HVX_Vector y0 = Q6_V_vand_QV(a_mask, y[2 * i + 0]);
             rsum0 = HVX_OP_ADD_F32(rsum0, HVX_OP_MUL_F32(w0_f32, y0));
-        } else {
+        } وإلا {
             HVX_Vector y0 = y[2 * i + 0];
             rsum0 = HVX_OP_ADD_F32(rsum0, HVX_OP_MUL_F32(w0_f32, y0));
 
@@ -243,12 +243,12 @@ static inline void flat_vec_dot_bf16_f32_aa_1x1(const uint32_t n, float * restri
     *s = hvx_vec_get_f32(hvx_vec_reduce_sum_f32(rsum));
 }
 
-static inline void flat_vec_dot_bf16_f32_aa_2x1(const uint32_t n, float * restrict s0,
-                                const void * restrict vx0, const void * restrict vx1,
-                                const void * restrict vy0) {
-    const HVX_Vector * restrict x0 = (const HVX_Vector *) vx0;
-    const HVX_Vector * restrict x1 = (const HVX_Vector *) vx1;
-    const HVX_Vector * restrict y  = (const HVX_Vector *) vy0;
+ساكن مضمن فراغ flat_vec_dot_bf16_f32_aa_2x1(ثابت uint32_t n, عائم * restrict s0,
+                                ثابت فراغ * restrict vx0, ثابت فراغ * restrict vx1,
+                                ثابت فراغ * restrict vy0) {
+    ثابت HVX_Vector * restrict x0 = (ثابت HVX_Vector *) vx0;
+    ثابت HVX_Vector * restrict x1 = (ثابت HVX_Vector *) vx1;
+    ثابت HVX_Vector * restrict y  = (ثابت HVX_Vector *) vy0;
 
     uint32_t nvec = n / 64;
     uint32_t rem  = n % 64;
@@ -258,7 +258,7 @@ static inline void flat_vec_dot_bf16_f32_aa_2x1(const uint32_t n, float * restri
 
     uint32_t i = 0;
     #pragma unroll(2)
-    for (i = 0; i < nvec; i++) {
+    لكل (i = 0; i < nvec; i++) {
         HVX_VectorPair p0 = Q6_Ww_vunpack_Vh(x0[i]);
         HVX_VectorPair p1 = Q6_Ww_vunpack_Vh(x1[i]);
         HVX_Vector w00_f32 = Q6_Vw_vasl_VwR(Q6_V_lo_W(p0), 16);
@@ -275,7 +275,7 @@ static inline void flat_vec_dot_bf16_f32_aa_2x1(const uint32_t n, float * restri
         rsum1 = HVX_OP_ADD_F32(rsum1, HVX_OP_MUL_F32(w11_f32, y1));
     }
 
-    if (rem) {
+    𐡄𐡍 (rem) {
         HVX_VectorPred bmask = Q6_Q_vsetq2_R(rem * 2);
         HVX_VectorPair p0 = Q6_Ww_vunpack_Vh(Q6_V_vand_QV(bmask, x0[i]));
         HVX_VectorPair p1 = Q6_Ww_vunpack_Vh(Q6_V_vand_QV(bmask, x1[i]));
@@ -284,12 +284,12 @@ static inline void flat_vec_dot_bf16_f32_aa_2x1(const uint32_t n, float * restri
         HVX_Vector w10_f32 = Q6_Vw_vasl_VwR(Q6_V_lo_W(p1), 16);
         HVX_Vector w11_f32 = Q6_Vw_vasl_VwR(Q6_V_hi_W(p1), 16);
 
-        if (rem <= 32) {
+        𐡄𐡍 (rem <= 32) {
             HVX_VectorPred a_mask = Q6_Q_vsetq2_R(rem * 4);
             HVX_Vector y0 = Q6_V_vand_QV(a_mask, y[2 * i + 0]);
             rsum0 = HVX_OP_ADD_F32(rsum0, HVX_OP_MUL_F32(w00_f32, y0));
             rsum1 = HVX_OP_ADD_F32(rsum1, HVX_OP_MUL_F32(w10_f32, y0));
-        } else {
+        } وإلا {
             HVX_Vector y0 = y[2 * i + 0];
             rsum0 = HVX_OP_ADD_F32(rsum0, HVX_OP_MUL_F32(w00_f32, y0));
             rsum1 = HVX_OP_ADD_F32(rsum1, HVX_OP_MUL_F32(w10_f32, y0));
@@ -305,13 +305,13 @@ static inline void flat_vec_dot_bf16_f32_aa_2x1(const uint32_t n, float * restri
     hvx_vec_store_u(s0, 8, rsum);
 }
 
-static inline void flat_vec_dot_bf16_f32_aa_2x2(const uint32_t n, float * restrict s0, float * restrict s1,
-                                const void * restrict vx0, const void * restrict vx1,
-                                const void * restrict vy0, const void * restrict vy1) {
-    const HVX_Vector * restrict x0 = (const HVX_Vector *) vx0;
-    const HVX_Vector * restrict x1 = (const HVX_Vector *) vx1;
-    const HVX_Vector * restrict y0 = (const HVX_Vector *) vy0;
-    const HVX_Vector * restrict y1 = (const HVX_Vector *) vy1;
+ساكن مضمن فراغ flat_vec_dot_bf16_f32_aa_2x2(ثابت uint32_t n, عائم * restrict s0, عائم * restrict s1,
+                                ثابت فراغ * restrict vx0, ثابت فراغ * restrict vx1,
+                                ثابت فراغ * restrict vy0, ثابت فراغ * restrict vy1) {
+    ثابت HVX_Vector * restrict x0 = (ثابت HVX_Vector *) vx0;
+    ثابت HVX_Vector * restrict x1 = (ثابت HVX_Vector *) vx1;
+    ثابت HVX_Vector * restrict y0 = (ثابت HVX_Vector *) vy0;
+    ثابت HVX_Vector * restrict y1 = (ثابت HVX_Vector *) vy1;
 
     uint32_t nvec = n / 64;
     uint32_t rem  = n % 64;
@@ -323,7 +323,7 @@ static inline void flat_vec_dot_bf16_f32_aa_2x2(const uint32_t n, float * restri
 
     uint32_t i = 0;
     #pragma unroll(2)
-    for (i = 0; i < nvec; i++) {
+    لكل (i = 0; i < nvec; i++) {
         HVX_VectorPair p0 = Q6_Ww_vunpack_Vh(x0[i]);
         HVX_VectorPair p1 = Q6_Ww_vunpack_Vh(x1[i]);
         HVX_Vector w00_f32 = Q6_Vw_vasl_VwR(Q6_V_lo_W(p0), 16);
@@ -347,7 +347,7 @@ static inline void flat_vec_dot_bf16_f32_aa_2x2(const uint32_t n, float * restri
         r1_c1_sum = HVX_OP_ADD_F32(r1_c1_sum, HVX_OP_MUL_F32(w11_f32, c1_1));
     }
 
-    if (rem) {
+    𐡄𐡍 (rem) {
         HVX_VectorPred bmask = Q6_Q_vsetq2_R(rem * 2);
         HVX_VectorPair p0 = Q6_Ww_vunpack_Vh(Q6_V_vand_QV(bmask, x0[i]));
         HVX_VectorPair p1 = Q6_Ww_vunpack_Vh(Q6_V_vand_QV(bmask, x1[i]));
@@ -356,7 +356,7 @@ static inline void flat_vec_dot_bf16_f32_aa_2x2(const uint32_t n, float * restri
         HVX_Vector w10_f32 = Q6_Vw_vasl_VwR(Q6_V_lo_W(p1), 16);
         HVX_Vector w11_f32 = Q6_Vw_vasl_VwR(Q6_V_hi_W(p1), 16);
 
-        if (rem <= 32) {
+        𐡄𐡍 (rem <= 32) {
             HVX_VectorPred a_mask = Q6_Q_vsetq2_R(rem * 4);
             HVX_Vector c0_0 = Q6_V_vand_QV(a_mask, y0[2 * i + 0]);
             HVX_Vector c1_0 = Q6_V_vand_QV(a_mask, y1[2 * i + 0]);
@@ -364,7 +364,7 @@ static inline void flat_vec_dot_bf16_f32_aa_2x2(const uint32_t n, float * restri
             r0_c1_sum = HVX_OP_ADD_F32(r0_c1_sum, HVX_OP_MUL_F32(w00_f32, c1_0));
             r1_c0_sum = HVX_OP_ADD_F32(r1_c0_sum, HVX_OP_MUL_F32(w10_f32, c0_0));
             r1_c1_sum = HVX_OP_ADD_F32(r1_c1_sum, HVX_OP_MUL_F32(w10_f32, c1_0));
-        } else {
+        } وإلا {
             HVX_Vector c0_0 = y0[2 * i + 0];
             HVX_Vector c1_0 = y1[2 * i + 0];
             r0_c0_sum = HVX_OP_ADD_F32(r0_c0_sum, HVX_OP_MUL_F32(w00_f32, c0_0));
@@ -392,9 +392,9 @@ static inline void flat_vec_dot_bf16_f32_aa_2x2(const uint32_t n, float * restri
 #undef HVX_OP_ADD_F32
 #undef HVX_OP_MUL_F32
 
-static inline void flat_vec_dot_f16_f16_aa_1x1(const uint32_t n, float * restrict s, const void * restrict vx, const void * restrict vy) {
-    const HVX_Vector * restrict x = (const HVX_Vector *) vx;
-    const HVX_Vector * restrict y = (const HVX_Vector *) vy;
+ساكن مضمن فراغ flat_vec_dot_f16_f16_aa_1x1(ثابت uint32_t n, عائم * restrict s, ثابت فراغ * restrict vx, ثابت فراغ * restrict vy) {
+    ثابت HVX_Vector * restrict x = (ثابت HVX_Vector *) vx;
+    ثابت HVX_Vector * restrict y = (ثابت HVX_Vector *) vy;
 
     uint32_t nvec = n / VLEN_FP16; // num full fp16 hvx vectors
     uint32_t nloe = n % VLEN_FP16; // leftover elements
@@ -404,11 +404,11 @@ static inline void flat_vec_dot_f16_f16_aa_1x1(const uint32_t n, float * restric
     uint32_t i = 0;
 
     #pragma unroll(4)
-    for (i = 0; i < nvec; i++) {
+    لكل (i = 0; i < nvec; i++) {
         rsum_p = hvx_vec_mpyacc_f32_f16(rsum_p, x[i], y[i]);
     }
 
-    if (nloe) {
+    𐡄𐡍 (nloe) {
         HVX_VectorPred bmask = Q6_Q_vsetq_R(nloe * 2);
         HVX_Vector x_hf = Q6_V_vand_QV(bmask, x[i]);
         HVX_Vector y_hf = Q6_V_vand_QV(bmask, y[i]);
@@ -419,12 +419,12 @@ static inline void flat_vec_dot_f16_f16_aa_1x1(const uint32_t n, float * restric
     hvx_vec_store_u(s, 4, hvx_vec_reduce_sum_f32(rsum));
 }
 
-static inline void flat_vec_dot_f16_f16_aa_2x1(const uint32_t n, float * restrict s0,
-                                const void * restrict vx0, const void * restrict vx1,
-                                const void * restrict vy0) {
-    const HVX_Vector * restrict x0 = (const HVX_Vector *) vx0;
-    const HVX_Vector * restrict x1 = (const HVX_Vector *) vx1;
-    const HVX_Vector * restrict y  = (const HVX_Vector *) vy0;
+ساكن مضمن فراغ flat_vec_dot_f16_f16_aa_2x1(ثابت uint32_t n, عائم * restrict s0,
+                                ثابت فراغ * restrict vx0, ثابت فراغ * restrict vx1,
+                                ثابت فراغ * restrict vy0) {
+    ثابت HVX_Vector * restrict x0 = (ثابت HVX_Vector *) vx0;
+    ثابت HVX_Vector * restrict x1 = (ثابت HVX_Vector *) vx1;
+    ثابت HVX_Vector * restrict y  = (ثابت HVX_Vector *) vy0;
 
     uint32_t nvec = n / VLEN_FP16;
     uint32_t nloe = n % VLEN_FP16;
@@ -435,13 +435,13 @@ static inline void flat_vec_dot_f16_f16_aa_2x1(const uint32_t n, float * restric
     uint32_t i = 0;
 
     #pragma unroll(2)
-    for (i = 0; i < nvec; i++) {
+    لكل (i = 0; i < nvec; i++) {
         HVX_Vector y_hf = y[i];
         rsum0_p = hvx_vec_mpyacc_f32_f16(rsum0_p, x0[i], y_hf);
         rsum1_p = hvx_vec_mpyacc_f32_f16(rsum1_p, x1[i], y_hf);
     }
 
-    if (nloe) {
+    𐡄𐡍 (nloe) {
         HVX_VectorPred bmask = Q6_Q_vsetq_R(nloe * 2);
         HVX_Vector y_hf  = Q6_V_vand_QV(bmask, y[i]);
         HVX_Vector x0_hf = Q6_V_vand_QV(bmask, x0[i]);
@@ -456,13 +456,13 @@ static inline void flat_vec_dot_f16_f16_aa_2x1(const uint32_t n, float * restric
     hvx_vec_store_u(s0, 8, rsum);
 }
 
-static inline void flat_vec_dot_f16_f16_aa_2x2(const uint32_t n, float * restrict s0, float * restrict s1,
-                                const void * restrict vx0, const void * restrict vx1,
-                                const void * restrict vy0, const void * restrict vy1) {
-    const HVX_Vector * restrict x0 = (const HVX_Vector *) vx0;
-    const HVX_Vector * restrict x1 = (const HVX_Vector *) vx1;
-    const HVX_Vector * restrict y0 = (const HVX_Vector *) vy0;
-    const HVX_Vector * restrict y1 = (const HVX_Vector *) vy1;
+ساكن مضمن فراغ flat_vec_dot_f16_f16_aa_2x2(ثابت uint32_t n, عائم * restrict s0, عائم * restrict s1,
+                                ثابت فراغ * restrict vx0, ثابت فراغ * restrict vx1,
+                                ثابت فراغ * restrict vy0, ثابت فراغ * restrict vy1) {
+    ثابت HVX_Vector * restrict x0 = (ثابت HVX_Vector *) vx0;
+    ثابت HVX_Vector * restrict x1 = (ثابت HVX_Vector *) vx1;
+    ثابت HVX_Vector * restrict y0 = (ثابت HVX_Vector *) vy0;
+    ثابت HVX_Vector * restrict y1 = (ثابت HVX_Vector *) vy1;
 
     uint32_t nvec = n / VLEN_FP16;
     uint32_t nloe = n % VLEN_FP16;
@@ -476,7 +476,7 @@ static inline void flat_vec_dot_f16_f16_aa_2x2(const uint32_t n, float * restric
     uint32_t i = 0;
 
     #pragma unroll(2)
-    for (i = 0; i < nvec; i++) {
+    لكل (i = 0; i < nvec; i++) {
         HVX_Vector r0_hf = x0[i];
         HVX_Vector r1_hf = x1[i];
         HVX_Vector c0_hf = y0[i];
@@ -489,7 +489,7 @@ static inline void flat_vec_dot_f16_f16_aa_2x2(const uint32_t n, float * restric
         r1_c1_sum_p = hvx_vec_mpyacc_f32_f16(r1_c1_sum_p, r1_hf, c1_hf);
     }
 
-    if (nloe) {
+    𐡄𐡍 (nloe) {
         HVX_VectorPred bmask = Q6_Q_vsetq_R(nloe * 2);
 
         HVX_Vector r0_hf = Q6_V_vand_QV(bmask, x0[i]);
@@ -518,29 +518,29 @@ static inline void flat_vec_dot_f16_f16_aa_2x2(const uint32_t n, float * restric
 
 
 
-static inline void hvx_tensor_add_f32_grid(
-    const struct htp_tensor * restrict dst,
-    const struct htp_tensor * restrict src2,
+ساكن مضمن فراغ hvx_tensor_add_f32_grid(
+    ثابت بنية htp_tensor * restrict dst,
+    ثابت بنية htp_tensor * restrict src2,
     uint32_t start_row,
     uint32_t end_row,
     uint32_t start_col,
     uint32_t end_col,
-    const struct fastdiv_values * div_ne11_12,
-    const struct fastdiv_values * div_ne11
+    ثابت بنية fastdiv_values * div_ne11_12,
+    ثابت بنية fastdiv_values * div_ne11
 ) {
-    if (start_row >= end_row || start_col >= end_col) return;
-    const uint32_t nb1 = dst->nb[1]; // row stride in bytes
+    𐡄𐡍 (start_row >= end_row || start_col >= end_col) أرجع;
+    ثابت uint32_t nb1 = dst->nb[1]; // row stride in bytes
 
-    const uint32_t ne11 = dst->ne[1];
-    const uint32_t ne12 = dst->ne[2];
-    const uint32_t ne11_12 = ne11 * ne12;
+    ثابت uint32_t ne11 = dst->ne[1];
+    ثابت uint32_t ne12 = dst->ne[2];
+    ثابت uint32_t ne11_12 = ne11 * ne12;
 
-    const bool is_broadcast1 = (src2->ne[1] == 1);
-    const bool is_broadcast2 = (src2->ne[2] == 1);
-    const bool is_broadcast3 = (src2->ne[3] == 1);
+    ثابت bool is_broadcast1 = (src2->ne[1] == 1);
+    ثابت bool is_broadcast2 = (src2->ne[2] == 1);
+    ثابت bool is_broadcast3 = (src2->ne[3] == 1);
 
-    for (uint32_t r = start_row; r < end_row; r++) {
-        float * dst_row = (float *) ((uint8_t *) dst->data + (size_t) r * nb1);
+    لكل (uint32_t r = start_row; r < end_row; r++) {
+        عائم * dst_row = (عائم *) ((uint8_t *) dst->data + (size_t) r * nb1);
 
         uint32_t i13 = fastdiv(r, div_ne11_12);
         uint32_t i12 = fastdiv(r - i13 * ne11_12, div_ne11);
@@ -550,13 +550,13 @@ static inline void hvx_tensor_add_f32_grid(
         uint32_t i22 = is_broadcast2 ? 0 : i12;
         uint32_t i21 = is_broadcast1 ? 0 : i11;
 
-        const float * src2_row = (const float *) ((const uint8_t *) src2->data +
+        ثابت عائم * src2_row = (ثابت عائم *) ((ثابت uint8_t *) src2->data +
                                   (size_t) i21 * src2->nb[1] + (size_t) i22 * src2->nb[2] + (size_t) i23 * src2->nb[3]);
 
-        float * dst_ptr = &dst_row[start_col];
-        const float * src2_ptr = &src2_row[start_col];
-        int remaining = end_col - start_col;
-        while (remaining >= 32) {
+        عائم * dst_ptr = &dst_row[start_col];
+        ثابت عائم * src2_ptr = &src2_row[start_col];
+        صحيح remaining = end_col - start_col;
+        طالما (remaining >= 32) {
             HVX_Vector v_out = hvx_vmemu(dst_ptr);
             HVX_Vector v_z   = hvx_vmemu(src2_ptr);
             hvx_vmemu(dst_ptr) = hvx_vec_add_f32_f32(v_out, v_z);
@@ -564,10 +564,10 @@ static inline void hvx_tensor_add_f32_grid(
             src2_ptr += 32;
             remaining -= 32;
         }
-        if (remaining > 0) {
+        𐡄𐡍 (remaining > 0) {
             HVX_Vector v_out = hvx_vmemu(dst_ptr);
             HVX_Vector v_z   = hvx_vmemu(src2_ptr);
-            hvx_vec_store_u(dst_ptr, remaining * sizeof(float), hvx_vec_add_f32_f32(v_out, v_z));
+            hvx_vec_store_u(dst_ptr, remaining * حجم(عائم), hvx_vec_add_f32_f32(v_out, v_z));
         }
     }
 }

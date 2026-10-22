@@ -7,84 +7,84 @@
 // dst:  [N, N, ne2, ne3]   (diagonal matrix per batch)
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "platform.h"
+#ضمن "ggml_tensor.h"
+#ضمن "platform.h"
 
-#include <stdint.h>
+#ضمن <stdint.h>
 
-struct ggml_et_diag_params {
-    struct ggml_tensor src0;  // F32 input vector
-    struct ggml_tensor dst;   // F32 output diagonal matrix
+بنية ggml_et_diag_params {
+    بنية ggml_tensor src0;  // F32 input vector
+    بنية ggml_tensor dst;   // F32 output diagonal matrix
 };
 
-int entry_point(struct ggml_et_diag_params * params, void * env) {
+صحيح entry_point(بنية ggml_et_diag_params * params, فراغ * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    𐡄𐡍 (!kernel_env) {
+        أرجع -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    صحيح thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    صحيح num_threads = get_num_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return 0;
+    𐡄𐡍 (thread_id < 0) {
+        أرجع 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    𐡄𐡍 (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        أرجع -1;
     }
 
-    struct ggml_tensor * src0 = &params->src0;
-    struct ggml_tensor * dst  = &params->dst;
+    بنية ggml_tensor * src0 = &params->src0;
+    بنية ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+    𐡄𐡍 (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        أرجع -1;
     }
 
-    float * src0_data = (float *) src0->data;
-    float * dst_data  = (float *) dst->data;
+    عائم * src0_data = (عائم *) src0->data;
+    عائم * dst_data  = (عائم *) dst->data;
 
-    if (!src0_data || !dst_data) {
-        return -1;
+    𐡄𐡍 (!src0_data || !dst_data) {
+        أرجع -1;
     }
 
-    const int64_t ne0 = dst->ne[0];  // N (row width = column count)
-    const int64_t ne1 = dst->ne[1];  // N (number of rows)
-    const int64_t ne2 = dst->ne[2];
-    const int64_t ne3 = dst->ne[3];
+    ثابت int64_t ne0 = dst->ne[0];  // N (row width = column count)
+    ثابت int64_t ne1 = dst->ne[1];  // N (number of rows)
+    ثابت int64_t ne2 = dst->ne[2];
+    ثابت int64_t ne3 = dst->ne[3];
 
-    const size_t nb1 = dst->nb[1], nb2 = dst->nb[2], nb3 = dst->nb[3];
-    const size_t nb02 = src0->nb[2], nb03 = src0->nb[3];
+    ثابت size_t nb1 = dst->nb[1], nb2 = dst->nb[2], nb3 = dst->nb[3];
+    ثابت size_t nb02 = src0->nb[2], nb03 = src0->nb[3];
 
     // Total rows across all batches — parallelize over these
-    const int64_t total_rows = ne1 * ne2 * ne3;
+    ثابت int64_t total_rows = ne1 * ne2 * ne3;
 
     // Prepare zero vector for SIMD zeroing
-    float zero = 0.0f;
-    __asm__ volatile("fbc.ps f10, %[z]\n" : : [z] "m"(zero) : "f10");
+    عائم zero = 0.0f;
+    __asm__ متطاير("fbc.ps f10, %[z]\n" : : [z] "m"(zero) : "f10");
 
-    for (int64_t row = thread_id; row < total_rows; row += num_threads) {
+    لكل (int64_t row = thread_id; row < total_rows; row += num_threads) {
         int64_t i1 = row % ne1;
         int64_t i2 = (row / ne1) % ne2;
         int64_t i3 = row / (ne1 * ne2);
 
-        float * dst_row = (float *) ((char *) dst_data + i1 * nb1 + i2 * nb2 + i3 * nb3);
+        عائم * dst_row = (عائم *) ((حرف *) dst_data + i1 * nb1 + i2 * nb2 + i3 * nb3);
 
         // Zero the entire row with SIMD
         int64_t       i0      = 0;
-        const int64_t vec_end = (ne0 / 8) * 8;
-        for (; i0 < vec_end; i0 += 8) {
-            __asm__ volatile("fsw.ps f10, %[d]\n" : [d] "=m"(*(float (*)[8]) & dst_row[i0])::"f10");
+        ثابت int64_t vec_end = (ne0 / 8) * 8;
+        لكل (; i0 < vec_end; i0 += 8) {
+            __asm__ متطاير("fsw.ps f10, %[d]\n" : [d] "=m"(*(عائم (*)[8]) & dst_row[i0])::"f10");
         }
-        for (; i0 < ne0; i0++) {
+        لكل (; i0 < ne0; i0++) {
             dst_row[i0] = 0.0f;
         }
 
         // Place the diagonal element: dst[i1][i1] = src0[i1]
-        const float * src_ptr = (const float *) ((const char *) src0_data + i2 * nb02 + i3 * nb03);
+        ثابت عائم * src_ptr = (ثابت عائم *) ((ثابت حرف *) src0_data + i2 * nb02 + i3 * nb03);
         dst_row[i1]           = src_ptr[i1];
     }
 
-    return 0;
+    أرجع 0;
 }

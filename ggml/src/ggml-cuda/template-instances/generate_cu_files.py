@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-from glob import glob
-import os
+من glob استورد glob
+استورد os
 
 HEAD_SIZES_KQ = [40, 64, 72, 80, 96, 112, 128, 192, 256, 320, 512, 576]
 
@@ -65,55 +65,55 @@ DECL_MMF_CASE({type});
 
 
 def get_short_name(long_quant_name):
-    return long_quant_name.replace("GGML_TYPE_", "").lower()
+    أرجع long_quant_name.replace("GGML_TYPE_", "").lower()
 
 
-for filename in glob("*.cu"):
+لكل filename في glob("*.cu"):
     os.remove(filename)
 
-for head_size_kq in HEAD_SIZES_KQ:
+لكل head_size_kq في HEAD_SIZES_KQ:
     head_size_v = HEAD_SIZES_V_OVERRIDE.get(head_size_kq, head_size_kq)
-    with open(f"fattn-tile-instance-dkq{head_size_kq}-dv{head_size_v}.cu", "w") as f:
-        f.write(SOURCE_FATTN_TILE.format(head_size_kq=head_size_kq, head_size_v=head_size_v))
+    with open(f"fattn-tile-instance-dkq{head_size_kq}-dv{head_size_v}.cu", "w") كـ f:
+        f.اكتب(SOURCE_FATTN_TILE.format(head_size_kq=head_size_kq, head_size_v=head_size_v))
 
-for type_k in TYPES_KV:
-    for type_v in TYPES_KV:
-        with open(f"fattn-vec-instance-{get_short_name(type_k)}-{get_short_name(type_v)}.cu", "w") as f:
-            f.write(SOURCE_FATTN_VEC.format(type_k=type_k, type_v=type_v))
+لكل type_k في TYPES_KV:
+    لكل type_v في TYPES_KV:
+        with open(f"fattn-vec-instance-{get_short_name(type_k)}-{get_short_name(type_v)}.cu", "w") كـ f:
+            f.اكتب(SOURCE_FATTN_VEC.format(type_k=type_k, type_v=type_v))
 
-for ncols in [8, 16, 32, 64]:
-    for ncols2 in [1, 2, 4, 8, 16, 32]:
-        if ncols2 > ncols:
-            continue
+لكل ncols في [8, 16, 32, 64]:
+    لكل ncols2 في [1, 2, 4, 8, 16, 32]:
+        𐡄𐡍 ncols2 > ncols:
+            استمر
         ncols1 = ncols // ncols2
-        with open(f"fattn-mma-f16-instance-ncols1_{ncols1}-ncols2_{ncols2}.cu", "w") as f:
-            f.write(SOURCE_FATTN_MMA_START)
+        with open(f"fattn-mma-f16-instance-ncols1_{ncols1}-ncols2_{ncols2}.cu", "w") كـ f:
+            f.اكتب(SOURCE_FATTN_MMA_START)
 
-            for head_size_kq in HEAD_SIZES_KQ:
-                if head_size_kq == 40:
-                    continue
-                if head_size_kq == 72:
-                    continue
+            لكل head_size_kq في HEAD_SIZES_KQ:
+                𐡄𐡍 head_size_kq == 40:
+                    استمر
+                𐡄𐡍 head_size_kq == 72:
+                    استمر
                 # Skip compilation of unused ncols2 values for niche head sizes:
-                if head_size_kq == 192 and ncols2 not in (8, 16): # MiMo-V2.5
-                    continue
-                if head_size_kq == 320 and ncols2 != 32: # Mistral Small 4
-                    continue
-                if head_size_kq == 512 and ncols2 not in (2, 4, 8): # Gemma 4 (+ MTP)
-                    continue
-                if head_size_kq == 576 and ncols2 not in (4, 16, 32): # Deepseek, GLM 4.7 Flash
-                    continue
-                if head_size_kq not in (192, 320, 576) and ncols2 in (16, 32):
-                    continue
+                𐡄𐡍 head_size_kq == 192 𐡅 ncols2 𐡋𐡀 في (8, 16): # MiMo-V2.5
+                    استمر
+                𐡄𐡍 head_size_kq == 320 𐡅 ncols2 != 32: # Mistral Small 4
+                    استمر
+                𐡄𐡍 head_size_kq == 512 𐡅 ncols2 𐡋𐡀 في (2, 4, 8): # Gemma 4 (+ MTP)
+                    استمر
+                𐡄𐡍 head_size_kq == 576 𐡅 ncols2 𐡋𐡀 في (4, 16, 32): # Deepseek, GLM 4.7 Flash
+                    استمر
+                𐡄𐡍 head_size_kq 𐡋𐡀 في (192, 320, 576) 𐡅 ncols2 في (16, 32):
+                    استمر
                 head_size_v = HEAD_SIZES_V_OVERRIDE.get(head_size_kq, head_size_kq)
-                f.write(SOURCE_FATTN_MMA_CASE.format(ncols1=ncols1, ncols2=ncols2, head_size_kq=head_size_kq, head_size_v=head_size_v))
+                f.اكتب(SOURCE_FATTN_MMA_CASE.format(ncols1=ncols1, ncols2=ncols2, head_size_kq=head_size_kq, head_size_v=head_size_v))
 
-for type in TYPES_MMQ:
-    with open(f"mmq-instance-{get_short_name(type)}.cu", "w") as f:
-        f.write(SOURCE_MMQ.format(type=type))
-        if type in TYPES_MMQ_W4A4:
-            f.write(SOURCE_MMQ_W4A4.format(type=type))
+لكل type في TYPES_MMQ:
+    with open(f"mmq-instance-{get_short_name(type)}.cu", "w") كـ f:
+        f.اكتب(SOURCE_MMQ.format(type=type))
+        𐡄𐡍 type في TYPES_MMQ_W4A4:
+            f.اكتب(SOURCE_MMQ_W4A4.format(type=type))
 
-for type in range(1, 17):
-    with open(f"mmf-instance-ncols_{type}.cu", "w") as f:
-        f.write(SOURCE_MMF.format(type=type))
+لكل type في range(1, 17):
+    with open(f"mmf-instance-ncols_{type}.cu", "w") كـ f:
+        f.اكتب(SOURCE_MMF.format(type=type))

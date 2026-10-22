@@ -1,28 +1,28 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#ضمن "../node_context.h"
+#ضمن "../op_table.h"
+#ضمن "../utils.h"
 
-#include <memory>
-#include <openvino/core/node_output.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/slice.hpp>
-#include <openvino/op/swish.hpp>
+#ضمن <memory>
+#ضمن <openvino/core/node_output.hpp>
+#ضمن <openvino/op/constant.hpp>
+#ضمن <openvino/op/multiply.hpp>
+#ضمن <openvino/op/slice.hpp>
+#ضمن <openvino/op/swish.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+نطاق ov {
+نطاق frontend {
+نطاق ggml {
+نطاق op {
 
-OutputVector translate_glu_geglu_quick(const NodeContext & context) {
+OutputVector translate_glu_geglu_quick(ثابت NodeContext & context) {
     num_inputs_check(context, 1, 2);
 
     ov::Output<ov::Node> src0;
     ov::Output<ov::Node> src1;
-    if (context.get_input_size() == 2) {
+    𐡄𐡍 (context.get_input_size() == 2) {
         src0 = process_view_input_new(context, 0);
         src1 = process_view_input_new(context, 1);
-    } else {
+    } وإلا {
         // split along last axis, nc = ne[0] / 2
         auto combined = process_view_input_new(context, 0);
         auto combined_shape = combined.get_partial_shape();
@@ -41,8 +41,8 @@ OutputVector translate_glu_geglu_quick(const NodeContext & context) {
     }
 
     int32_t * params = context.get_output_op_params();
-    const int32_t swapped = params[1];
-    if (swapped) {
+    ثابت int32_t swapped = params[1];
+    𐡄𐡍 (swapped) {
         std::swap(src0, src1);
     }
 
@@ -53,7 +53,7 @@ OutputVector translate_glu_geglu_quick(const NodeContext & context) {
     auto gated   = std::make_shared<ov::op::v4::Swish>(src0, coef);
     auto res     = std::make_shared<ov::op::v1::Multiply>(gated, src1);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    أرجع rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op
