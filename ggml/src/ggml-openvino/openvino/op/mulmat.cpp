@@ -1,43 +1,43 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#ಅನ್ತರ್ಭಾವ "../node_context.h"
+#ಅನ್ತರ್ಭಾವ "../op_table.h"
+#ಅನ್ತರ್ಭಾವ "../utils.h"
 
-#include <climits>
-#include <cstdint>
-#include <memory>
-#include <openvino/core/node.hpp>
-#include <openvino/core/node_output.hpp>
-#include <openvino/op/broadcast.hpp>
-#include <openvino/op/concat.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/matmul.hpp>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/slice.hpp>
-#include <openvino/op/transpose.hpp>
-#include <openvino/op/unsqueeze.hpp>
-#include <openvino/op/util/op_types.hpp>
-#include <vector>
+#ಅನ್ತರ್ಭಾವ <climits>
+#ಅನ್ತರ್ಭಾವ <cstdint>
+#ಅನ್ತರ್ಭಾವ <memory>
+#ಅನ್ತರ್ಭಾವ <openvino/core/node.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/core/node_output.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/broadcast.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/concat.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/constant.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/convert.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/matmul.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/reshape.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/slice.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/transpose.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/unsqueeze.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/util/op_types.hpp>
+#ಅನ್ತರ್ಭಾವ <vector>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+ನಾಮಾಕಾಶ ov {
+ನಾಮಾಕಾಶ frontend {
+ನಾಮಾಕಾಶ ggml {
+ನಾಮಾಕಾಶ op {
 
-OutputVector translate_mulmat(const NodeContext & context) {
-    num_inputs_check(context, 2, 2);
+OutputVector translate_mulmat(ಧ್ರುವ ಗಂಟು_Context & context) {
+    ಅಂಕೆ_inputs_check(context, 2, 2);
 
-    int op_case = context.get_op_case();
+    ಪೂರ್ಣಾಙ್ಕ op_case = context.get_op_case();
 
-    ov::Output<ov::Node> B = process_view_input_new(context, 0);
-    ov::Output<ov::Node> A = process_view_input_new(context, 1);
+    ov::Output<ov::Node> B = process_view_ಒಳಹರಿವು_new(context, 0);
+    ov::Output<ov::Node> A = process_view_ಒಳಹರಿವು_new(context, 1);
 
-    if (A.get_element_type() != B.get_element_type()) {
-        B = std::make_shared<ov::op::v0::Convert>(B, context.get_input_type(1));
+    ಯದಿ (A.get_element_type() != B.get_element_type()) {
+        B = std::make_shared<ov::op::v0::Convert>(B, context.get_ಒಳಹರಿವು_type(1));
     }
 
-    auto B_shape = context.get_input_shape(0).to_shape();
-    auto A_shape = context.get_input_shape(1).to_shape();
+    auto B_shape = context.get_ಒಳಹರಿವು_shape(0).to_shape();
+    auto A_shape = context.get_ಒಳಹರಿವು_shape(1).to_shape();
     int64_t A_batch = A_shape[1];
     int64_t B_batch = B_shape[1];
 
@@ -48,10 +48,10 @@ OutputVector translate_mulmat(const NodeContext & context) {
     Output<Node> Z = A_batch_larger ? B : A;
     auto Z_shape = A_batch_larger ? B_shape : A_shape;
     int64_t factor = batch_large / batch_small;
-    if (factor > 1 && batch_small > 1) {
-        auto batch_large_node = ov::op::v0::Constant::create(ov::element::i64, {1}, std::vector<int64_t>{batch_large});
-        auto batch_small_node = ov::op::v0::Constant::create(ov::element::i64, {1}, std::vector<int64_t>{batch_small});
-        auto factor_node = ov::op::v0::Constant::create(ov::element::i64, {1}, std::vector<int64_t>{factor});
+    ಯದಿ (factor > 1 && batch_small > 1) {
+        auto batch_large_ಗಂಟು = ov::op::v0::Constant::create(ov::element::i64, {1}, std::vector<int64_t>{batch_large});
+        auto batch_small_ಗಂಟು = ov::op::v0::Constant::create(ov::element::i64, {1}, std::vector<int64_t>{batch_small});
+        auto factor_ಗಂಟು = ov::op::v0::Constant::create(ov::element::i64, {1}, std::vector<int64_t>{factor});
 
         auto unsqueeze_axes = ov::op::v0::Constant::create(ov::element::i64, Shape{}, {2});
         auto Z_unsqueezed = std::make_shared<ov::op::v0::Unsqueeze>(Z, unsqueeze_axes);
@@ -60,30 +60,30 @@ OutputVector translate_mulmat(const NodeContext & context) {
             ov::element::i64, {5}, {(int64_t) 1, (int64_t) 1, factor, (int64_t) 1, (int64_t) 1});
         auto new_Z_shape = ov::op::v0::Constant::create(ov::element::i64, {4},
                                                         {(int64_t) 0, batch_large, (int64_t) -1, (int64_t) Z_shape[3]});
-        if (op_case == 2) {
+        ಯದಿ (op_case == 2) {
             new_Z_shape = ov::op::v0::Constant::create(ov::element::i64, {4},
                                                        {(int64_t) 0, batch_large, (int64_t) Z_shape[2], (int64_t) -1});
         }
 
         auto Z_broadcasted = std::make_shared<ov::op::v3::Broadcast>(Z_unsqueezed, broadcast_shape,
                                                                      ov::op::BroadcastType::BIDIRECTIONAL);
-        Z = std::make_shared<ov::op::v1::Reshape>(Z_broadcasted, new_Z_shape, true);
+        Z = std::make_shared<ov::op::v1::Reshape>(Z_broadcasted, new_Z_shape, ಸತ್ಯ);
     }
-    if (A_batch_larger) {
+    ಯದಿ (A_batch_larger) {
         B = Z;
-    } else {
+    } ಅನ್ಯಥಾ {
         A = Z;
     }
 
-    bool transpose_b = true;
-    ov::Output<Node> res = std::make_shared<ov::op::v0::MatMul>(A, B, false, transpose_b);
+    ತಾರ್ಕಿಕ transpose_b = ಸತ್ಯ;
+    ov::Output<Node> res = std::make_shared<ov::op::v0::MatMul>(A, B, ಅಸತ್ಯ, transpose_b);
 
-    const auto output_type = context.get_output_type();
-    if (res.get_element_type() != output_type) {
+    ಧ್ರುವ auto output_type = context.get_output_type();
+    ಯದಿ (res.get_element_type() != output_type) {
         res = std::make_shared<ov::op::v0::Convert>(res, output_type);
     }
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ಪ್ರತ್ಯಾಗಮ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

@@ -1,20 +1,20 @@
 #pragma once
 
-#include "ggml-vulkan.h"
+#ಅನ್ತರ್ಭಾವ "ggml-vulkan.h"
 
-#include <vulkan/vulkan_core.h>
+#ಅನ್ತರ್ಭಾವ <vulkan/vulkan_core.h>
 
-#if defined(GGML_VULKAN_RUN_TESTS) || defined(GGML_VULKAN_CHECK_RESULTS)
-#include <chrono>
-#include "ggml-cpu.h"
+#ಯದಿ defined(GGML_VULKAN_RUN_TESTS) || defined(GGML_VULKAN_CHECK_RESULTS)
+#ಅನ್ತರ್ಭಾವ <chrono>
+#ಅನ್ತರ್ಭಾವ "ggml-cpu.h"
 #endif
 
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 
-#if VK_HEADER_VERSION >= 301
+#ಯದಿ VK_HEADER_VERSION >= 301
 namespace vk::detail { class DispatchLoaderDynamic; }
 using vk::detail::DispatchLoaderDynamic;
-#else
+#ಅನ್ಯಥಾ
 namespace vk { class DispatchLoaderDynamic; }
 using vk::DispatchLoaderDynamic;
 #endif
@@ -23,78 +23,78 @@ DispatchLoaderDynamic & ggml_vk_default_dispatcher();
 
 #define VULKAN_HPP_DEFAULT_DISPATCHER ggml_vk_default_dispatcher()
 
-#include <vulkan/vulkan.hpp>
+#ಅನ್ತರ್ಭಾವ <vulkan/vulkan.hpp>
 
 #ifndef VK_NV_cooperative_matrix_decode_vector
 #define VK_NV_cooperative_matrix_decode_vector 1
 #define VK_NV_COOPERATIVE_MATRIX_DECODE_VECTOR_EXTENSION_NAME "VK_NV_cooperative_matrix_decode_vector"
 #define VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_DECODE_VECTOR_FEATURES_NV ((VkStructureType)1000689000)
-typedef struct VkPhysicalDeviceCooperativeMatrixDecodeVectorFeaturesNV {
+ಪ್ರಕಾರನಿರ್ದೇಶ ಸಂರಚನಾ VkPhysicalDeviceCooperativeMatrixDecodeVectorFeaturesNV {
     VkStructureType    sType;
-    void*              pNext;
+    ಶೂನ್ಯ*              pNext;
     VkBool32           cooperativeMatrixDecodeVector;
 } VkPhysicalDeviceCooperativeMatrixDecodeVectorFeaturesNV;
 #endif
 
-#if __has_include(<spirv/unified1/spirv.hpp>)
+#ಯದಿ __has_include(<spirv/unified1/spirv.hpp>)
 #    include <spirv/unified1/spirv.hpp>
-#elif __has_include(<spirv-headers/spirv.hpp>)
+#ನೋಚೇದ್ಯದಿ __has_include(<spirv-headers/spirv.hpp>)
 #    include <spirv-headers/spirv.hpp>
-#elif __has_include(<spirv.hpp>)
+#ನೋಚೇದ್ಯದಿ __has_include(<spirv.hpp>)
 #    include <spirv.hpp>
-#else
+#ಅನ್ಯಥಾ
      // Fallback to let the compiler throw a standard "file not found" error
 #    include <spirv/unified1/spirv.hpp>
 #endif
 
-#include <algorithm>
-#include <cmath>
-#include <functional>
-#include <iomanip>
-#include <iostream>
-#include <tuple>
-#include <vector>
-#include <deque>
-#include <sstream>
-#include <utility>
-#include <memory>
-#include <limits>
-#include <map>
-#include <set>
-#include <unordered_map>
-#include <shared_mutex>
-#include <mutex>
-#include <future>
-#include <condition_variable>
-#include <thread>
+#ಅನ್ತರ್ಭಾವ <algorithm>
+#ಅನ್ತರ್ಭಾವ <cmath>
+#ಅನ್ತರ್ಭಾವ <functional>
+#ಅನ್ತರ್ಭಾವ <iomanip>
+#ಅನ್ತರ್ಭಾವ <iostream>
+#ಅನ್ತರ್ಭಾವ <tuple>
+#ಅನ್ತರ್ಭಾವ <vector>
+#ಅನ್ತರ್ಭಾವ <deque>
+#ಅನ್ತರ್ಭಾವ <sstream>
+#ಅನ್ತರ್ಭಾವ <utility>
+#ಅನ್ತರ್ಭಾವ <memory>
+#ಅನ್ತರ್ಭಾವ <limits>
+#ಅನ್ತರ್ಭಾವ <map>
+#ಅನ್ತರ್ಭಾವ <set>
+#ಅನ್ತರ್ಭಾವ <unordered_map>
+#ಅನ್ತರ್ಭಾವ <shared_mutex>
+#ಅನ್ತರ್ಭಾವ <mutex>
+#ಅನ್ತರ್ಭಾವ <future>
+#ಅನ್ತರ್ಭಾವ <condition_variable>
+#ಅನ್ತರ್ಭಾವ <thread>
 
-#if defined(_MSC_VER)
+#ಯದಿ defined(_MSC_VER)
 # define NOMINMAX 1
 # include <windows.h>
 # define YIELD() YieldProcessor()
-#elif defined(__clang__) || defined(__GNUC__)
-# if defined(__x86_64__) ||defined(__i386__)
+#ನೋಚೇದ್ಯದಿ defined(__clang__) || defined(__GNUC__)
+# ಯದಿ defined(__x86_64__) ||defined(__i386__)
 #  include <immintrin.h>
 #  define YIELD() _mm_pause()
 # elif defined(__arm__) || defined(__aarch64__)
-#  if defined(__clang__)
+#  ಯದಿ defined(__clang__)
 #   include <arm_acle.h>
 #   define YIELD() __yield()
-#  else
-#   define YIELD() asm volatile("yield")
+#  ಅನ್ಯಥಾ
+#   define YIELD() asm ಚಞ್ಚಲ("yield")
 #  endif
 # endif
 #endif
 
-#if !defined(YIELD)
+#ಯದಿ !defined(YIELD)
 #define YIELD()
 #endif
 
-#include "ggml-impl.h"
-#include "ggml-backend-impl.h"
-#include "ggml-vulkan-shaders.hpp"
+#ಅನ್ತರ್ಭಾವ "ggml-impl.h"
+#ಅನ್ತರ್ಭಾವ "ggml-backend-impl.h"
+#ಅನ್ತರ್ಭಾವ "ggml-vulkan-shaders.hpp"
 
-#if !defined(VK_KHR_shader_bfloat16)
+#ಯದಿ !defined(VK_KHR_shader_bfloat16)
 
 #define VK_KHR_shader_bfloat16 1
 #define VK_KHR_SHADER_BFLOAT16_SPEC_VERSION                          1
@@ -102,23 +102,23 @@ typedef struct VkPhysicalDeviceCooperativeMatrixDecodeVectorFeaturesNV {
 #define VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_BFLOAT16_FEATURES_KHR ((VkStructureType)1000141000)
 #define VK_COMPONENT_TYPE_BFLOAT16_KHR                               ((VkComponentTypeKHR)1000141000)
 
-typedef struct VkPhysicalDeviceShaderBfloat16FeaturesKHR {
+ಪ್ರಕಾರನಿರ್ದೇಶ ಸಂರಚನಾ VkPhysicalDeviceShaderBfloat16FeaturesKHR {
     VkStructureType                       sType;
-    void*                                 pNext;
+    ಶೂನ್ಯ*                                 pNext;
     VkBool32                              shaderBFloat16Type;
     VkBool32                              shaderBFloat16DotProduct;
     VkBool32                              shaderBFloat16CooperativeMatrix;
 } VkPhysicalDeviceShaderBfloat16FeaturesKHR;
 #endif
 
-#if !defined(VK_VALVE_shader_mixed_float_dot_product)
+#ಯದಿ !defined(VK_VALVE_shader_mixed_float_dot_product)
 #define VK_VALVE_shader_mixed_float_dot_product 1
 #define VK_VALVE_SHADER_MIXED_FLOAT_DOT_PRODUCT_SPEC_VERSION 1
 #define VK_VALVE_SHADER_MIXED_FLOAT_DOT_PRODUCT_EXTENSION_NAME "VK_VALVE_shader_mixed_float_dot_product"
 #define VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MIXED_FLOAT_DOT_PRODUCT_FEATURES_VALVE ((VkStructureType)1000673000)
-typedef struct VkPhysicalDeviceShaderMixedFloatDotProductFeaturesVALVE {
+ಪ್ರಕಾರನಿರ್ದೇಶ ಸಂರಚನಾ VkPhysicalDeviceShaderMixedFloatDotProductFeaturesVALVE {
     VkStructureType    sType;
-    void*              pNext;
+    ಶೂನ್ಯ*              pNext;
     VkBool32           shaderMixedFloatDotProductFloat16AccFloat32;
     VkBool32           shaderMixedFloatDotProductFloat16AccFloat16;
     VkBool32           shaderMixedFloatDotProductBFloat16Acc;
@@ -126,14 +126,14 @@ typedef struct VkPhysicalDeviceShaderMixedFloatDotProductFeaturesVALVE {
 } VkPhysicalDeviceShaderMixedFloatDotProductFeaturesVALVE;
 #endif
 
-#if !defined(VK_EXT_shader_ocp_microscaling_types)
+#ಯದಿ !defined(VK_EXT_shader_ocp_microscaling_types)
 #define VK_EXT_shader_ocp_microscaling_types 1
 #define VK_EXT_SHADER_OCP_MICROSCALING_TYPES_SPEC_VERSION 1
 #define VK_EXT_SHADER_OCP_MICROSCALING_TYPES_EXTENSION_NAME "VK_EXT_shader_ocp_microscaling_types"
 #define VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_OCP_MICROSCALING_TYPES_FEATURES_EXT ((VkStructureType)1000672000)
-typedef struct VkPhysicalDeviceShaderOCPMicroscalingTypesFeaturesEXT {
+ಪ್ರಕಾರನಿರ್ದೇಶ ಸಂರಚನಾ VkPhysicalDeviceShaderOCPMicroscalingTypesFeaturesEXT {
     VkStructureType    sType;
-    void*              pNext;
+    ಶೂನ್ಯ*              pNext;
     VkBool32           shaderFloat4;
     VkBool32           shaderFloat6;
     VkBool32           shaderFloat8UnsignedE8M0;
@@ -141,14 +141,14 @@ typedef struct VkPhysicalDeviceShaderOCPMicroscalingTypesFeaturesEXT {
 } VkPhysicalDeviceShaderOCPMicroscalingTypesFeaturesEXT;
 #endif
 
-#if !defined(VK_EXT_shader_float8)
+#ಯದಿ !defined(VK_EXT_shader_float8)
 #define VK_EXT_shader_float8 1
 #define VK_EXT_SHADER_FLOAT8_SPEC_VERSION 1
 #define VK_EXT_SHADER_FLOAT8_EXTENSION_NAME "VK_EXT_shader_float8"
 #define VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT8_FEATURES_EXT ((VkStructureType)1000567000)
-typedef struct VkPhysicalDeviceShaderFloat8FeaturesEXT {
+ಪ್ರಕಾರನಿರ್ದೇಶ ಸಂರಚನಾ VkPhysicalDeviceShaderFloat8FeaturesEXT {
     VkStructureType    sType;
-    void*              pNext;
+    ಶೂನ್ಯ*              pNext;
     VkBool32           shaderFloat8;
     VkBool32           shaderFloat8CooperativeMatrix;
 } VkPhysicalDeviceShaderFloat8FeaturesEXT;
@@ -160,23 +160,23 @@ typedef struct VkPhysicalDeviceShaderFloat8FeaturesEXT {
 #define VK_DEVICE_QUEUE_CREATE_INTERNALLY_SYNCHRONIZED_BIT_KHR ((VkDeviceQueueCreateFlagBits)0x00000004)
 
 // Compile-time constant guaranteed; no runtime initialization overhead
-static constexpr vk::DeviceQueueCreateFlagBits eInternallySynchronizedKHR =
+ಸ್ಥಿರ constexpr vk::DeviceQueueCreateFlagBits eInternallySynchronizedKHR =
     static_cast<vk::DeviceQueueCreateFlagBits>(0x00000004);
 
-typedef struct VkPhysicalDeviceInternallySynchronizedQueuesFeaturesKHR {
+ಪ್ರಕಾರನಿರ್ದೇಶ ಸಂರಚನಾ VkPhysicalDeviceInternallySynchronizedQueuesFeaturesKHR {
     VkStructureType    sType;
-    void* pNext;
+    ಶೂನ್ಯ* pNext;
     VkBool32           internallySynchronizedQueues;
 } VkPhysicalDeviceInternallySynchronizedQueuesFeaturesKHR;
-#else
-static constexpr vk::DeviceQueueCreateFlagBits eInternallySynchronizedKHR = vk::DeviceQueueCreateFlagBits::eInternallySynchronizedKHR;
+#ಅನ್ಯಥಾ
+ಸ್ಥಿರ constexpr vk::DeviceQueueCreateFlagBits eInternallySynchronizedKHR = vk::DeviceQueueCreateFlagBits::eInternallySynchronizedKHR;
 #endif
 
 #define ROUNDUP_POW2(M, N) (((M) + (N) - 1) & ~((N) - 1))
 
 #define CEIL_DIV(M, N) (((M) / (N)) + (((M) % (N)) != 0))
 
-static bool is_pow2(uint32_t x) { return x > 1 && (x & (x-1)) == 0; }
+ಸ್ಥಿರ bool is_pow2(uint32_t x) { ಪ್ರತ್ಯಾಗಮ x > 1 && (x & (x-1)) == 0; }
 
 #define VK_VENDOR_ID_AMD 0x1002
 
@@ -192,8 +192,8 @@ static bool is_pow2(uint32_t x) { return x > 1 && (x & (x-1)) == 0; }
 
 #define VK_DEVICE_DESCRIPTOR_POOL_SIZE 256
 
-#define VK_CHECK(err, msg, dev)                                     \
-    do {                                                            \
+#define VK_CHECK(err, ಸಂದೇಶ, dev)                                     \
+    ಕುರು {                                                            \
         vk::Result err_;                                            \
         try {                                                       \
             err_ = (err);                                           \
@@ -203,35 +203,35 @@ static bool is_pow2(uint32_t x) { return x > 1 && (x & (x-1)) == 0; }
                 #err, __FILE__, __LINE__);                          \
             throw;                                                  \
         }                                                           \
-        if (err_ != vk::Result::eSuccess) {                         \
+        ಯದಿ (err_ != vk::Result::eSuccess) {                         \
             GGML_LOG_ERROR("ggml_vulkan: %s error %s at %s:%d\n",   \
                 #err, to_string(err_).c_str(), __FILE__, __LINE__); \
             throw vk::SystemError(vk::make_error_code(err_),        \
-                "ggml_vulkan: " msg);                               \
+                "ggml_vulkan: " ಸಂದೇಶ);                               \
         }                                                           \
-    } while (0)
+    } ಯಾವತ್ (0)
 
 #ifdef GGML_VULKAN_DEBUG
-#define VK_LOG_DEBUG(msg) std::cerr << msg << std::endl
-#else
-#define VK_LOG_DEBUG(msg) ((void) 0)
+#define VK_LOG_DEBUG(ಸಂದೇಶ) std::cerr << ಸಂದೇಶ << std::endl
+#ಅನ್ಯಥಾ
+#define VK_LOG_DEBUG(ಸಂದೇಶ) ((ಶೂನ್ಯ) 0)
 #endif // GGML_VULKAN_DEBUG
 
-#define MAX_PARAMETER_COUNT 12
+#define MAX_PARAMETER_ಎಣಿಕೆ 12
 
-#define MAX_FUSED_ADDS (MAX_PARAMETER_COUNT - 3)
+#define MAX_FUSED_ADDS (MAX_PARAMETER_ಎಣಿಕೆ - 3)
 
-struct vk_pipeline_struct;
+ಸಂರಚನಾ vk_pipeline_struct;
 
-typedef std::shared_ptr<struct vk_pipeline_struct> vk_pipeline;
+ಪ್ರಕಾರನಿರ್ದೇಶ std::shared_ptr<ಸಂರಚನಾ vk_pipeline_struct> vk_pipeline;
 
-struct vk_pipeline_struct {
+ಸಂರಚನಾ vk_pipeline_struct {
     std::string name;
     vk::ShaderModule shader_module;
     vk::PipelineLayout layout;
     vk::Pipeline pipeline;
-    uint32_t push_constant_size;
-    uint32_t parameter_count;
+    uint32_t ತಳ್ಳು_constant_size;
+    uint32_t parameter_ಎಣಿಕೆ;
     std::array<uint32_t, 3> wg_denoms;
     uint32_t align;
     // true if fields have been set by ggml_vk_create_pipeline
@@ -242,9 +242,9 @@ struct vk_pipeline_struct {
     // set to true when the shader has been compiled
     std::atomic<bool> compiled {};
     // number of registers used, extracted from pipeline executable properties
-    uint32_t register_count {};
+    uint32_t register_ಎಣಿಕೆ {};
 
-#if defined(VK_EXT_shader_64bit_indexing)
+#ಯದಿ defined(VK_EXT_shader_64bit_indexing)
     bool is_64b_indexing {};
 #endif
     // linked list of pipelines for multiple compilation variants.
@@ -252,64 +252,64 @@ struct vk_pipeline_struct {
     vk_pipeline next;
 };
 
-typedef std::weak_ptr<vk_pipeline_struct> vk_pipeline_ref;
+ಪ್ರಕಾರನಿರ್ದೇಶ std::weak_ptr<vk_pipeline_struct> vk_pipeline_ref;
 
-struct vk_matmul_pipeline_key {
+ಸಂರಚನಾ vk_matmul_pipeline_ಕೀಲಿ {
     ggml_type type_a;
     ggml_type type_b;
     bool mul_mat_id;
     bool f16acc;
 
-    bool operator<(const vk_matmul_pipeline_key & o) const {
-        return std::tie(type_a, type_b, mul_mat_id, f16acc)
+    bool operator<(ಧ್ರುವ vk_matmul_pipeline_ಕೀಲಿ & o) ಧ್ರುವ {
+        ಪ್ರತ್ಯಾಗಮ std::tie(type_a, type_b, mul_mat_id, f16acc)
              < std::tie(o.type_a, o.type_b, o.mul_mat_id, o.f16acc);
     }
 };
 
-struct vk_matmul_pipeline_pair {
+ಸಂರಚನಾ vk_matmul_pipeline_pair {
     vk_pipeline unaligned;
     vk_pipeline aligned;
     uint32_t align;
 };
 
-struct vk_tile_config {
+ಸಂರಚನಾ vk_tile_config {
     std::vector<uint32_t> warptile;
     std::array<uint32_t, 3> wg_denoms;
     uint32_t align;
 };
 
 using matmul_tile_selector_t = std::function<uint32_t(
-    uint32_t m, uint32_t n, uint32_t k, uint32_t shader_core_count,
-    const std::vector<vk_matmul_pipeline_pair>& configs)>;
+    uint32_t m, uint32_t n, uint32_t k, uint32_t shader_core_ಎಣಿಕೆ,
+    ಧ್ರುವ std::vector<vk_matmul_pipeline_pair>& configs)>;
 
-struct vk_device_struct;
+ಸಂರಚನಾ vk_device_struct;
 
-typedef std::shared_ptr<vk_device_struct> vk_device;
+ಪ್ರಕಾರನಿರ್ದೇಶ std::shared_ptr<vk_device_struct> vk_device;
 
-typedef std::weak_ptr<vk_device_struct> vk_device_ref;
+ಪ್ರಕಾರನಿರ್ದೇಶ std::weak_ptr<vk_device_struct> vk_device_ref;
 
-struct vk_buffer_struct;
+ಸಂರಚನಾ vk_buffer_struct;
 
-typedef std::shared_ptr<vk_buffer_struct> vk_buffer;
+ಪ್ರಕಾರನಿರ್ದೇಶ std::shared_ptr<vk_buffer_struct> vk_buffer;
 
-typedef std::weak_ptr<vk_buffer_struct> vk_buffer_ref;
+ಪ್ರಕಾರನಿರ್ದೇಶ std::weak_ptr<vk_buffer_struct> vk_buffer_ref;
 
-struct ggml_backend_vk_buffer_type_context {
+ಸಂರಚನಾ ggml_backend_vk_buffer_type_context {
     std::string name;
     vk_device device;
 };
 
-struct vk_command_buffer {
+ಸಂರಚನಾ vk_command_buffer {
     vk::CommandBuffer buf;
     uint64_t use_counter = 0;
     bool in_use = false;
 };
 
-struct vk_queue;
+ಸಂರಚನಾ vk_queue;
 
-struct vk_command_pool {
-    void init(vk_device& device, vk_queue *q_);
-    void destroy(vk::Device& device);
+ಸಂರಚನಾ vk_command_pool {
+    ಶೂನ್ಯ init(vk_device& device, vk_queue *q_);
+    ಶೂನ್ಯ destroy(vk::Device& device);
 
     vk::CommandPool pool;
     // Using deque so the pointers to command buffers
@@ -318,37 +318,37 @@ struct vk_command_pool {
 
     vk_queue *q;
 
-    size_t buffers_in_use() const {
-        return std::count_if(cmd_buffers.begin(), cmd_buffers.end(),
-            [](const auto& cb) { return cb.in_use; });
+    size_t buffers_in_use() ಧ್ರುವ {
+        ಪ್ರತ್ಯಾಗಮ std::ಎಣಿಕೆ_if(cmd_buffers.begin(), cmd_buffers.end(),
+            [](ಧ್ರುವ auto& cb) { ಪ್ರತ್ಯಾಗಮ cb.in_use; });
     }
 };
 
-struct vk_queue_handle {
+ಸಂರಚನಾ vk_queue_handle {
     vk::Queue queue;
     vk_device_ref device;
     std::mutex * device_submit_mutex = nullptr;
-    virtual void submit(vk::ArrayProxy<const vk::SubmitInfo> submits, vk::Fence fence) = 0;
-    virtual void lock()   {}   // no-op by default (internally synchronized case)
-    virtual void unlock() {}
-    virtual ~vk_queue_handle() = default;
+    ಆಭಾಸ ಶೂನ್ಯ submit(vk::ArrayProxy<ಧ್ರುವ vk::SubmitInfo> submits, vk::Fence fence) = 0;
+    ಆಭಾಸ ಶೂನ್ಯ lock()   {}   // no-op by default (internally synchronized case)
+    ಆಭಾಸ ಶೂನ್ಯ unlock() {}
+    ಆಭಾಸ ~vk_queue_handle() = ಸ್ವಭಾವ;
 };
 
-struct vk_queue_handle_synchronized : vk_queue_handle {
+ಸಂರಚನಾ vk_queue_handle_synchronized : vk_queue_handle {
     std::mutex mutex;
-    void submit(vk::ArrayProxy<const vk::SubmitInfo> submits, vk::Fence fence) override;
+    ಶೂನ್ಯ submit(vk::ArrayProxy<ಧ್ರುವ vk::SubmitInfo> submits, vk::Fence fence) override;
 
-    void lock()   override { mutex.lock(); }
-    void unlock() override { mutex.unlock(); }
+    ಶೂನ್ಯ lock()   override { mutex.lock(); }
+    ಶೂನ್ಯ unlock() override { mutex.unlock(); }
 };
 
-struct vk_queue_handle_unsynchronized : vk_queue_handle {
-    void submit(vk::ArrayProxy<const vk::SubmitInfo> submits, vk::Fence fence) override;
+ಸಂರಚನಾ vk_queue_handle_unsynchronized : vk_queue_handle {
+    ಶೂನ್ಯ submit(vk::ArrayProxy<ಧ್ರುವ vk::SubmitInfo> submits, vk::Fence fence) override;
 
     // lock()/unlock() inherited no-ops
 };
 
-struct vk_queue {
+ಸಂರಚನಾ vk_queue {
     uint32_t queue_family_index;
     std::shared_ptr<vk_queue_handle> handle;
 
@@ -359,11 +359,11 @@ struct vk_queue {
     bool transfer_only;
 };
 
-static constexpr uint32_t mul_mat_vec_max_cols = 8;
+ಸ್ಥಿರ constexpr uint32_t mul_mat_vec_max_cols = 8;
 
-static constexpr uint32_t p021_max_gqa_ratio = 8;
+ಸ್ಥಿರ constexpr uint32_t p021_max_gqa_ratio = 8;
 
-enum vk_device_architecture {
+ಗಣನಾ vk_device_architecture {
     OTHER,
     AMD_GCN,
     AMD_RDNA1,
@@ -377,21 +377,21 @@ enum vk_device_architecture {
     QUALCOMM_ADRENO,
 };
 
-enum vk_conv_shapes {
+ಗಣನಾ vk_conv_shapes {
     CONV_SHAPE_128x128,
     CONV_SHAPE_64x32,
     CONV_SHAPE_32x256,
     CONV_SHAPE_64x128,
-    CONV_SHAPE_COUNT,
+    CONV_SHAPE_ಎಣಿಕೆ,
 };
 
-struct vk_conv_block_size {
+ಸಂರಚನಾ vk_conv_block_size {
     uint32_t K;
     uint32_t NPQ;
     uint32_t CRS;
 };
 
-inline vk_conv_block_size vk_conv_block_sizes[CONV_SHAPE_COUNT] = {
+ಅನ್ತಃಸ್ಥ vk_conv_block_size vk_conv_block_sizes[CONV_SHAPE_ಎಣಿಕೆ] = {
     // K   NPQ  CRS
     { 128, 128, 16 }, // CONV_SHAPE_128x128
     {  64,  32, 32 }, // CONV_SHAPE_64x32
@@ -399,19 +399,19 @@ inline vk_conv_block_size vk_conv_block_sizes[CONV_SHAPE_COUNT] = {
     {  64, 128, 16 }, // CONV_SHAPE_64x128
 };
 
-enum dmmv_wg_sizes {
+ಗಣನಾ dmmv_wg_sizes {
     DMMV_WG_SIZE_SUBGROUP,
     DMMV_WG_SIZE_LARGE,
-    DMMV_WG_SIZE_COUNT,
+    DMMV_WG_SIZE_ಎಣಿಕೆ,
 };
 
-enum FaCodePath {
+ಗಣನಾ FaCodePath {
     FA_SCALAR,
     FA_COOPMAT1,
     FA_COOPMAT2,
 };
 
-struct vk_fa_pipeline_state {
+ಸಂರಚನಾ vk_fa_pipeline_state {
     uint32_t HSK, HSV;
     uint32_t Br, Bc;
     uint32_t D_split, row_split;
@@ -425,13 +425,13 @@ struct vk_fa_pipeline_state {
     ggml_type k_type;
     ggml_type v_type;
 
-    bool operator<(const vk_fa_pipeline_state &b) const {
-        return std::tie(HSK, HSV, Br, Bc, D_split, row_split, shmem_staging, path, workgroup_size, subgroup_size, aligned, f32acc, flags, limit_occupancy_shmem, k_type, v_type) <
+    bool operator<(ಧ್ರುವ vk_fa_pipeline_state &b) ಧ್ರುವ {
+        ಪ್ರತ್ಯಾಗಮ std::tie(HSK, HSV, Br, Bc, D_split, row_split, shmem_staging, path, workgroup_size, subgroup_size, aligned, f32acc, flags, limit_occupancy_shmem, k_type, v_type) <
                std::tie(b.HSK, b.HSV, b.Br, b.Bc, b.D_split, b.row_split, b.shmem_staging, b.path, b.workgroup_size, b.subgroup_size, b.aligned, b.f32acc, b.flags, b.limit_occupancy_shmem, b.k_type, b.v_type);
     }
 };
 
-struct vk_conv2d_pipeline_state {
+ಸಂರಚನಾ vk_conv2d_pipeline_state {
     vk_conv2d_pipeline_state(uint32_t s0, uint32_t s1, uint32_t p0, uint32_t p1, uint32_t d0, uint32_t d1, uint32_t KW, uint32_t KH, uint32_t aligned)
         : s0(s0), s1(s1), p0(p0), p1(p1), d0(d0), d1(d1), KW(KW), KH(KH), aligned(aligned) {}
 
@@ -439,13 +439,13 @@ struct vk_conv2d_pipeline_state {
     // when set, shader can skip K/CRS/NPQ bounds checks and address clamps
     uint32_t aligned;
 
-    bool operator<(const vk_conv2d_pipeline_state &b) const {
-        return std::tie(s0, s1, p0, p1, d0, d1, KW, KH, aligned) <
+    bool operator<(ಧ್ರುವ vk_conv2d_pipeline_state &b) ಧ್ರುವ {
+        ಪ್ರತ್ಯಾಗಮ std::tie(s0, s1, p0, p1, d0, d1, KW, KH, aligned) <
                std::tie(b.s0, b.s1, b.p0, b.p1, b.d0, b.d1, b.KW, b.KH, b.aligned);
     }
 };
 
-struct vk_conv3d_pipeline_state {
+ಸಂರಚನಾ vk_conv3d_pipeline_state {
     vk_conv3d_pipeline_state(uint32_t s0, uint32_t s1, uint32_t s2, uint32_t p0, uint32_t p1, uint32_t p2,
                              uint32_t d0, uint32_t d1, uint32_t d2, uint32_t KW, uint32_t KH, uint32_t KD, uint32_t aligned)
         : s0(s0), s1(s1), s2(s2), p0(p0), p1(p1), p2(p2), d0(d0), d1(d1), d2(d2), KW(KW), KH(KH), KD(KD), aligned(aligned) {}
@@ -453,71 +453,71 @@ struct vk_conv3d_pipeline_state {
     uint32_t s0, s1, s2, p0, p1, p2, d0, d1, d2, KW, KH, KD;
     uint32_t aligned;
 
-    bool operator<(const vk_conv3d_pipeline_state &b) const {
-        return std::tie(s0, s1, s2, p0, p1, p2, d0, d1, d2, KW, KH, KD, aligned) <
+    bool operator<(ಧ್ರುವ vk_conv3d_pipeline_state &b) ಧ್ರುವ {
+        ಪ್ರತ್ಯಾಗಮ std::tie(s0, s1, s2, p0, p1, p2, d0, d1, d2, KW, KH, KD, aligned) <
                std::tie(b.s0, b.s1, b.s2, b.p0, b.p1, b.p2, b.d0, b.d1, b.d2, b.KW, b.KH, b.KD, b.aligned);
     }
 };
 
-struct vk_solve_tri_pipeline_state {
+ಸಂರಚನಾ vk_solve_tri_pipeline_state {
     vk_solve_tri_pipeline_state(uint32_t N, uint32_t K)
         : N(N), K(K) {}
 
     uint32_t N, K;
 
-    bool operator<(const vk_solve_tri_pipeline_state &b) const {
-        return std::tie(N, K) <
+    bool operator<(ಧ್ರುವ vk_solve_tri_pipeline_state &b) ಧ್ರುವ {
+        ಪ್ರತ್ಯಾಗಮ std::tie(N, K) <
                std::tie(b.N, b.K);
     }
 };
 
-enum shader_reduction_mode {
+ಗಣನಾ shader_reduction_mode {
     SHADER_REDUCTION_MODE_SHMEM,
     SHADER_REDUCTION_MODE_HYBRID,
     SHADER_REDUCTION_MODE_SUBGROUP,
-    SHADER_REDUCTION_MODE_COUNT,
+    SHADER_REDUCTION_MODE_ಎಣಿಕೆ,
 };
 
-static constexpr uint32_t num_argsort_pipelines = 11;
+ಸ್ಥಿರ constexpr uint32_t ಅಂಕೆ_argsort_pipelines = 11;
 
-static constexpr uint32_t num_topk_moe_pipelines = 10;
+ಸ್ಥಿರ constexpr uint32_t ಅಂಕೆ_topk_moe_pipelines = 10;
 
-static constexpr uint32_t num_topk_pipelines = 11;
+ಸ್ಥಿರ constexpr uint32_t ಅಂಕೆ_topk_pipelines = 11;
 
-static constexpr std::initializer_list<ggml_op> topk_moe_early_softmax_norm{ GGML_OP_SOFT_MAX, GGML_OP_RESHAPE,  GGML_OP_ARGSORT,
+ಸ್ಥಿರ constexpr std::initializer_list<ggml_op> topk_moe_early_softmax_norm{ GGML_OP_SOFT_MAX, GGML_OP_RESHAPE,  GGML_OP_ARGSORT,
                                                                              GGML_OP_VIEW,     GGML_OP_GET_ROWS, GGML_OP_RESHAPE,
                                                                              GGML_OP_SUM_ROWS, GGML_OP_CLAMP,    GGML_OP_DIV,
                                                                              GGML_OP_RESHAPE };
 
-static constexpr std::initializer_list<ggml_op> topk_moe_sigmoid_norm_bias{ GGML_OP_UNARY,    GGML_OP_RESHAPE,  GGML_OP_ADD,
+ಸ್ಥಿರ constexpr std::initializer_list<ggml_op> topk_moe_sigmoid_norm_bias{ GGML_OP_UNARY,    GGML_OP_RESHAPE,  GGML_OP_ADD,
                                                                             GGML_OP_ARGSORT,  GGML_OP_VIEW,     GGML_OP_GET_ROWS,
                                                                             GGML_OP_RESHAPE,  GGML_OP_SUM_ROWS, GGML_OP_CLAMP,
                                                                             GGML_OP_DIV,      GGML_OP_RESHAPE };
 
-static constexpr std::initializer_list<ggml_op> topk_moe_sqrt_softplus_norm_bias{ GGML_OP_UNARY,    GGML_OP_SQRT,
+ಸ್ಥಿರ constexpr std::initializer_list<ggml_op> topk_moe_sqrt_softplus_norm_bias{ GGML_OP_UNARY,    GGML_OP_SQRT,
                                                                                   GGML_OP_RESHAPE,  GGML_OP_ADD,
                                                                                   GGML_OP_ARGSORT,  GGML_OP_VIEW,
                                                                                   GGML_OP_GET_ROWS, GGML_OP_RESHAPE,
                                                                                   GGML_OP_SUM_ROWS, GGML_OP_CLAMP,
                                                                                   GGML_OP_DIV,      GGML_OP_RESHAPE };
 
-static constexpr std::initializer_list<ggml_op> topk_moe_early_softmax     { GGML_OP_SOFT_MAX, GGML_OP_RESHAPE,  GGML_OP_ARGSORT,
+ಸ್ಥಿರ constexpr std::initializer_list<ggml_op> topk_moe_early_softmax     { GGML_OP_SOFT_MAX, GGML_OP_RESHAPE,  GGML_OP_ARGSORT,
                                                                              GGML_OP_VIEW,     GGML_OP_GET_ROWS };
 
-static constexpr std::initializer_list<ggml_op> topk_moe_late_softmax      { GGML_OP_ARGSORT,  GGML_OP_VIEW,
+ಸ್ಥಿರ constexpr std::initializer_list<ggml_op> topk_moe_late_softmax      { GGML_OP_ARGSORT,  GGML_OP_VIEW,
                                                                              GGML_OP_GET_ROWS, GGML_OP_RESHAPE,
                                                                              GGML_OP_SOFT_MAX, GGML_OP_RESHAPE };
 
-static constexpr std::initializer_list<ggml_op> snake_pattern              { GGML_OP_MUL,      GGML_OP_SIN,
+ಸ್ಥಿರ constexpr std::initializer_list<ggml_op> snake_pattern              { GGML_OP_MUL,      GGML_OP_SIN,
                                                                              GGML_OP_SQR,      GGML_OP_MUL,
                                                                              GGML_OP_ADD };
 
-static constexpr std::initializer_list<ggml_op> topk_qsa_pattern { GGML_OP_GET_ROWS, GGML_OP_PERMUTE,
+ಸ್ಥಿರ constexpr std::initializer_list<ggml_op> topk_qsa_pattern { GGML_OP_GET_ROWS, GGML_OP_PERMUTE,
                                                                    GGML_OP_CONT,     GGML_OP_CPY,
                                                                    GGML_OP_RESHAPE,  GGML_OP_ADD,
-                                                                   GGML_OP_TOP_K };
+                                                                   GGML_OP_ತುದಿ_K };
 
-static constexpr std::initializer_list<std::array<int, 3>> topk_qsa_edges {
+ಸ್ಥಿರ constexpr std::initializer_list<std::array<ಪೂರ್ಣಾಙ್ಕ, 3>> topk_qsa_edges {
     { 1, 0, 0 }, // permute->src[0] == get_rows
     { 2, 0, 1 }, // cont->src[0]    == permute
     { 4, 0, 3 }, // reshape->src[0] == cpy (mask cast)
@@ -526,26 +526,26 @@ static constexpr std::initializer_list<std::array<int, 3>> topk_qsa_edges {
     { 6, 0, 5 }, // top_k->src[0]   == add
 };
 
-static constexpr std::initializer_list<ggml_op> rms_norm_mul_add_mul_pattern { GGML_OP_RMS_NORM, GGML_OP_MUL, GGML_OP_ADD, GGML_OP_MUL };
+ಸ್ಥಿರ constexpr std::initializer_list<ggml_op> rms_norm_mul_add_mul_pattern { GGML_OP_RMS_NORM, GGML_OP_MUL, GGML_OP_ADD, GGML_OP_MUL };
 
-static constexpr std::initializer_list<ggml_op> rms_norm_mul_add_pattern     { GGML_OP_RMS_NORM, GGML_OP_MUL, GGML_OP_ADD };
+ಸ್ಥಿರ constexpr std::initializer_list<ggml_op> rms_norm_mul_add_pattern     { GGML_OP_RMS_NORM, GGML_OP_MUL, GGML_OP_ADD };
 
-static constexpr std::initializer_list<ggml_op> rms_norm_mul_rope_view_set_rows_pattern { GGML_OP_RMS_NORM, GGML_OP_MUL, GGML_OP_ROPE, GGML_OP_VIEW, GGML_OP_SET_ROWS };
+ಸ್ಥಿರ constexpr std::initializer_list<ggml_op> rms_norm_mul_rope_view_set_rows_pattern { GGML_OP_RMS_NORM, GGML_OP_MUL, GGML_OP_ROPE, GGML_OP_VIEW, GGML_OP_SET_ROWS };
 
-static constexpr std::initializer_list<ggml_op> rms_norm_view_set_rows_pattern { GGML_OP_RMS_NORM, GGML_OP_VIEW, GGML_OP_SET_ROWS };
+ಸ್ಥಿರ constexpr std::initializer_list<ggml_op> rms_norm_view_set_rows_pattern { GGML_OP_RMS_NORM, GGML_OP_VIEW, GGML_OP_SET_ROWS };
 
-static constexpr std::initializer_list<ggml_op> rope_view_set_rows_pattern { GGML_OP_ROPE, GGML_OP_VIEW, GGML_OP_SET_ROWS };
+ಸ್ಥಿರ constexpr std::initializer_list<ggml_op> rope_view_set_rows_pattern { GGML_OP_ROPE, GGML_OP_VIEW, GGML_OP_SET_ROWS };
 
 // scale_out*sigmoid(scale_in*x) as the hc_post weights (qwen4exp hc_combine)
-static constexpr std::initializer_list<ggml_op> hc_post_gate_pattern { GGML_OP_SCALE, GGML_OP_UNARY, GGML_OP_SCALE, GGML_OP_DSV4_HC_POST };
+ಸ್ಥಿರ constexpr std::initializer_list<ggml_op> hc_post_gate_pattern { GGML_OP_SCALE, GGML_OP_UNARY, GGML_OP_SCALE, GGML_OP_DSV4_HC_POST };
 
-static constexpr std::initializer_list<std::array<int, 3>> hc_post_gate_edges {
+ಸ್ಥಿರ constexpr std::initializer_list<std::array<ಪೂರ್ಣಾಙ್ಕ, 3>> hc_post_gate_edges {
     { 1, 0, 0 }, // sigmoid->src[0] == scale
     { 2, 0, 1 }, // scale->src[0]   == sigmoid
     { 3, 2, 2 }, // hc_post->src[2] == scale (post)
 };
 
-static constexpr std::initializer_list<std::array<int, 3>> topk_moe_early_softmax_norm_edges {
+ಸ್ಥಿರ constexpr std::initializer_list<std::array<ಪೂರ್ಣಾಙ್ಕ, 3>> topk_moe_early_softmax_norm_edges {
     { 1, 0, 0 }, // reshape->src[0]  == softmax
     { 2, 0, 0 }, // argsort->src[0]  == softmax
     { 3, 0, 2 }, // view->src[0]     == argsort
@@ -559,7 +559,7 @@ static constexpr std::initializer_list<std::array<int, 3>> topk_moe_early_softma
     { 9, 0, 8 }, // reshape->src[0]  == div
 };
 
-static constexpr std::initializer_list<std::array<int, 3>> topk_moe_sigmoid_norm_bias_edges {
+ಸ್ಥಿರ constexpr std::initializer_list<std::array<ಪೂರ್ಣಾಙ್ಕ, 3>> topk_moe_sigmoid_norm_bias_edges {
     { 1, 0, 0 }, // reshape->src[0]  == sigmoid
     { 2, 0, 0 }, // add->src[0]      == sigmoid
     { 3, 0, 2 }, // argsort->src[0]  == add
@@ -574,7 +574,7 @@ static constexpr std::initializer_list<std::array<int, 3>> topk_moe_sigmoid_norm
     {10, 0, 9 }, // reshape->src[0]  == div
 };
 
-static constexpr std::initializer_list<std::array<int, 3>> topk_moe_sqrt_softplus_norm_bias_edges {
+ಸ್ಥಿರ constexpr std::initializer_list<std::array<ಪೂರ್ಣಾಙ್ಕ, 3>> topk_moe_sqrt_softplus_norm_bias_edges {
     { 1, 0, 0 }, // sqrt->src[0]     == softplus
     { 2, 0, 1 }, // reshape->src[0]  == sqrt
     { 3, 0, 1 }, // add->src[0]      == sqrt
@@ -590,7 +590,7 @@ static constexpr std::initializer_list<std::array<int, 3>> topk_moe_sqrt_softplu
     {11, 0,10 }, // reshape->src[0]  == div
 };
 
-static constexpr std::initializer_list<std::array<int, 3>> topk_moe_early_softmax_edges {
+ಸ್ಥಿರ constexpr std::initializer_list<std::array<ಪೂರ್ಣಾಙ್ಕ, 3>> topk_moe_early_softmax_edges {
     { 1, 0, 0 }, // reshape->src[0]  == softmax
     { 2, 0, 0 }, // argsort->src[0]  == softmax
     { 3, 0, 2 }, // view->src[0]     == argsort
@@ -598,7 +598,7 @@ static constexpr std::initializer_list<std::array<int, 3>> topk_moe_early_softma
     { 4, 1, 3 }, // get_rows->src[1] == view
 };
 
-static constexpr std::initializer_list<std::array<int, 3>> topk_moe_late_softmax_edges {
+ಸ್ಥಿರ constexpr std::initializer_list<std::array<ಪೂರ್ಣಾಙ್ಕ, 3>> topk_moe_late_softmax_edges {
     { 1, 0, 0 }, // view->src[0]     == argsort
     { 2, 1, 1 }, // get_rows->src[1] == view
     { 3, 0, 2 }, // reshape->src[0]  == get_rows
@@ -606,43 +606,43 @@ static constexpr std::initializer_list<std::array<int, 3>> topk_moe_late_softmax
     { 5, 0, 4 }, // reshape->src[0]  == soft_max
 };
 
-enum topk_moe_mode {
+ಗಣನಾ topk_moe_mode {
     TOPK_MOE_EARLY_SOFTMAX,
     TOPK_MOE_EARLY_SOFTMAX_NORM,
     TOPK_MOE_LATE_SOFTMAX,
     TOPK_MOE_SIGMOID_NORM_BIAS,
     TOPK_MOE_SQRT_SOFTPLUS_NORM_BIAS,
-    TOPK_MOE_COUNT,
+    TOPK_MOE_ಎಣಿಕೆ,
 };
 
-enum rms_norm_mode {
+ಗಣನಾ rms_norm_mode {
     RMS_NORM_MUL,
     RMS_NORM_MUL_ADD,
     RMS_NORM_MUL_ADD_MUL,
     RMS_NORM_MUL_ROPE,
     RMS_NORM_MUL_ROPE_VIEW_SET_ROWS,
     RMS_NORM_VIEW_SET_ROWS,
-    RMS_NORM_COUNT,
+    RMS_NORM_ಎಣಿಕೆ,
 };
 
-static constexpr std::initializer_list<std::array<int, 3>> rope_view_set_rows_edges {
+ಸ್ಥಿರ constexpr std::initializer_list<std::array<ಪೂರ್ಣಾಙ್ಕ, 3>> rope_view_set_rows_edges {
     { 1, 0, 0 }, // view->src[0]     == rope
     { 2, 0, 1 }, // set_rows->src[0] == view
 };
 
-static constexpr std::initializer_list<std::array<int, 3>> rms_norm_mul_rope_view_set_rows_edges {
+ಸ್ಥಿರ constexpr std::initializer_list<std::array<ಪೂರ್ಣಾಙ್ಕ, 3>> rms_norm_mul_rope_view_set_rows_edges {
     { 1, 0, 0 }, // mul->src[0]      == rms
     { 2, 0, 1 }, // rope->src[0]     == mul
     { 3, 0, 2 }, // view->src[0]     == rope
     { 4, 0, 3 }, // set_rows->src[0] == view
 };
 
-static constexpr std::initializer_list<std::array<int, 3>> rms_norm_view_set_rows_edges {
+ಸ್ಥಿರ constexpr std::initializer_list<std::array<ಪೂರ್ಣಾಙ್ಕ, 3>> rms_norm_view_set_rows_edges {
     { 1, 0, 0 }, // view->src[0]     == rms_norm
     { 2, 0, 1 }, // set_rows->src[0] == view
 };
 
-static constexpr std::array<ggml_type, 9> lightning_indexer_k_types = {
+ಸ್ಥಿರ constexpr std::array<ggml_type, 9> lightning_indexer_k_types = {
     GGML_TYPE_F32,
     GGML_TYPE_F16,
     GGML_TYPE_BF16,
@@ -656,7 +656,7 @@ static constexpr std::array<ggml_type, 9> lightning_indexer_k_types = {
 
 class vk_memory_logger;
 
-struct vk_device_struct {
+ಸಂರಚನಾ vk_device_struct {
     std::recursive_mutex mutex;
     std::mutex queue_submit_mutex;
 
@@ -693,7 +693,7 @@ struct vk_device_struct {
     bool has_internally_synchronized_queues = false;
     uint32_t subgroup_size;
     uint32_t subgroup_size_log2;
-    uint32_t shader_core_count;
+    uint32_t shader_core_ಎಣಿಕೆ;
     bool uma;
     bool prefer_host_memory;
     bool float_controls_rte_fp16;
@@ -757,50 +757,50 @@ struct vk_device_struct {
 
     bool serialize_submissions {};
 
-    const ggml_cgraph * diag_cgraph {};
-    int diag_prev_start = -1;
-    int diag_prev_end = -1;
+    ಧ್ರುವ ggml_cgraph * diag_cgraph {};
+    ಪೂರ್ಣಾಙ್ಕ diag_prev_start = -1;
+    ಪೂರ್ಣಾಙ್ಕ diag_prev_end = -1;
 
     size_t idx;
 
-    bool mul_mat_l[GGML_TYPE_COUNT];
-    bool mul_mat_m[GGML_TYPE_COUNT];
-    bool mul_mat_s[GGML_TYPE_COUNT];
-    bool mul_mat_id_l[GGML_TYPE_COUNT];
-    bool mul_mat_id_m[GGML_TYPE_COUNT];
-    bool mul_mat_id_s[GGML_TYPE_COUNT];
+    bool mul_mat_l[GGML_TYPE_ಎಣಿಕೆ];
+    bool mul_mat_m[GGML_TYPE_ಎಣಿಕೆ];
+    bool mul_mat_s[GGML_TYPE_ಎಣಿಕೆ];
+    bool mul_mat_id_l[GGML_TYPE_ಎಣಿಕೆ];
+    bool mul_mat_id_m[GGML_TYPE_ಎಣಿಕೆ];
+    bool mul_mat_id_s[GGML_TYPE_ಎಣಿಕೆ];
 
     // Separate flags for the q8_1 (integer dot) mmq path, whose shader uses
     // a different shared-memory layout than the float matmul shaders.
-    bool mul_mat_l_int[GGML_TYPE_COUNT];
-    bool mul_mat_m_int[GGML_TYPE_COUNT];
-    bool mul_mat_s_int[GGML_TYPE_COUNT];
-    bool mul_mat_id_l_int[GGML_TYPE_COUNT];
-    bool mul_mat_id_m_int[GGML_TYPE_COUNT];
-    bool mul_mat_id_s_int[GGML_TYPE_COUNT];
+    bool mul_mat_l_int[GGML_TYPE_ಎಣಿಕೆ];
+    bool mul_mat_m_int[GGML_TYPE_ಎಣಿಕೆ];
+    bool mul_mat_s_int[GGML_TYPE_ಎಣಿಕೆ];
+    bool mul_mat_id_l_int[GGML_TYPE_ಎಣಿಕೆ];
+    bool mul_mat_id_m_int[GGML_TYPE_ಎಣಿಕೆ];
+    bool mul_mat_id_s_int[GGML_TYPE_ಎಣಿಕೆ];
 
     vk::DescriptorSetLayout dsl;
 
-    std::map<vk_matmul_pipeline_key, std::vector<vk_matmul_pipeline_pair>> pipeline_matmul;
+    std::map<vk_matmul_pipeline_ಕೀಲಿ, std::vector<vk_matmul_pipeline_pair>> pipeline_matmul;
     matmul_tile_selector_t matmul_tile_selector;
     matmul_tile_selector_t matmul_id_tile_selector;
 
     vk_pipeline pipeline_matmul_split_k_reduce;
     vk_pipeline pipeline_quantize_q8_1_x4;
 
-    vk_pipeline pipeline_dequant[GGML_TYPE_COUNT];
-    vk_pipeline pipeline_dequant_transpose[GGML_TYPE_COUNT]; // fused dequant+transpose for FA quant-KV
-    vk_pipeline pipeline_dequant_mul_mat_vec_f32_f32[DMMV_WG_SIZE_COUNT][GGML_TYPE_COUNT][mul_mat_vec_max_cols];
-    vk_pipeline pipeline_dequant_mul_mat_vec_f16_f32[DMMV_WG_SIZE_COUNT][GGML_TYPE_COUNT][mul_mat_vec_max_cols];
-    vk_pipeline pipeline_dequant_mul_mat_vec_id_f32[DMMV_WG_SIZE_COUNT][GGML_TYPE_COUNT];
+    vk_pipeline pipeline_dequant[GGML_TYPE_ಎಣಿಕೆ];
+    vk_pipeline pipeline_dequant_transpose[GGML_TYPE_ಎಣಿಕೆ]; // fused dequant+transpose for FA quant-KV
+    vk_pipeline pipeline_dequant_mul_mat_vec_f32_f32[DMMV_WG_SIZE_ಎಣಿಕೆ][GGML_TYPE_ಎಣಿಕೆ][mul_mat_vec_max_cols];
+    vk_pipeline pipeline_dequant_mul_mat_vec_f16_f32[DMMV_WG_SIZE_ಎಣಿಕೆ][GGML_TYPE_ಎಣಿಕೆ][mul_mat_vec_max_cols];
+    vk_pipeline pipeline_dequant_mul_mat_vec_id_f32[DMMV_WG_SIZE_ಎಣಿಕೆ][GGML_TYPE_ಎಣಿಕೆ];
 
-    vk_pipeline pipeline_dequant_mul_mat_vec_q8_1_f32[DMMV_WG_SIZE_COUNT][GGML_TYPE_COUNT][mul_mat_vec_max_cols];
-    vk_pipeline pipeline_dequant_mul_mat_vec_id_q8_1_f32[DMMV_WG_SIZE_COUNT][GGML_TYPE_COUNT];
+    vk_pipeline pipeline_dequant_mul_mat_vec_q8_1_f32[DMMV_WG_SIZE_ಎಣಿಕೆ][GGML_TYPE_ಎಣಿಕೆ][mul_mat_vec_max_cols];
+    vk_pipeline pipeline_dequant_mul_mat_vec_id_q8_1_f32[DMMV_WG_SIZE_ಎಣಿಕೆ][GGML_TYPE_ಎಣಿಕೆ];
 
     vk_pipeline pipeline_mul_mat_vec_p021_f16_f32[p021_max_gqa_ratio];
     vk_pipeline pipeline_mul_mat_vec_nc_f16_f32;
-    vk_pipeline pipeline_get_rows[GGML_TYPE_COUNT];
-    vk_pipeline pipeline_get_rows_f32[GGML_TYPE_COUNT];
+    vk_pipeline pipeline_get_rows[GGML_TYPE_ಎಣಿಕೆ];
+    vk_pipeline pipeline_get_rows_f32[GGML_TYPE_ಎಣಿಕೆ];
     vk_pipeline pipeline_get_rows_back_f32;
     vk_pipeline pipeline_acc_f32;
     vk_pipeline pipeline_set_f32;
@@ -837,13 +837,13 @@ struct vk_device_struct {
     vk_pipeline pipeline_repeat_i16;
     vk_pipeline pipeline_cpy_32, pipeline_cpy_f32_f16, pipeline_cpy_16, pipeline_cpy_f16_f32, pipeline_cpy_f32_bf16, pipeline_cpy_bf16_f32, pipeline_cpy_bf16_f16, pipeline_cpy_f32_i32, pipeline_cpy_i32_f32;
     vk_pipeline pipeline_contig_cpy_32, pipeline_contig_cpy_f32_f16, pipeline_contig_cpy_16, pipeline_contig_cpy_f16_f32, pipeline_contig_cpy_f32_bf16, pipeline_contig_cpy_bf16_f32, pipeline_contig_cpy_bf16_f16, pipeline_contig_cpy_f32_i32, pipeline_contig_cpy_i32_f32;
-    vk_pipeline pipeline_cpy_f32_quant[GGML_TYPE_COUNT];
-    vk_pipeline pipeline_cpy_quant_f32[GGML_TYPE_COUNT];
+    vk_pipeline pipeline_cpy_f32_quant[GGML_TYPE_ಎಣಿಕೆ];
+    vk_pipeline pipeline_cpy_quant_f32[GGML_TYPE_ಎಣಿಕೆ];
     vk_pipeline pipeline_cpy_transpose_16, pipeline_cpy_transpose_32;
     vk_pipeline pipeline_cpy_transpose_02_16, pipeline_cpy_transpose_02_32;
     // [src0 0=fp32,1=fp16][dst]
-    vk_pipeline pipeline_set_rows_i32[2][GGML_TYPE_COUNT];
-    vk_pipeline pipeline_set_rows_i64[2][GGML_TYPE_COUNT];
+    vk_pipeline pipeline_set_rows_i32[2][GGML_TYPE_ಎಣಿಕೆ];
+    vk_pipeline pipeline_set_rows_i64[2][GGML_TYPE_ಎಣಿಕೆ];
     vk_pipeline pipeline_norm_f32;
     vk_pipeline pipeline_group_norm_f32;
     vk_pipeline pipeline_rms_norm_f32;
@@ -924,9 +924,9 @@ struct vk_device_struct {
     vk_pipeline pipeline_rope_neox_f32, pipeline_rope_neox_f16, pipeline_rope_neox_f32_f16;
     vk_pipeline pipeline_rope_multi_f32, pipeline_rope_multi_f16, pipeline_rope_multi_f32_f16;
     vk_pipeline pipeline_rope_vision_f32, pipeline_rope_vision_f16;
-    vk_pipeline pipeline_argsort_f32[num_argsort_pipelines];
-    vk_pipeline pipeline_argsort_large_f32[num_argsort_pipelines];
-    vk_pipeline pipeline_topk_f32[num_topk_pipelines];
+    vk_pipeline pipeline_argsort_f32[ಅಂಕೆ_argsort_pipelines];
+    vk_pipeline pipeline_argsort_large_f32[ಅಂಕೆ_argsort_pipelines];
+    vk_pipeline pipeline_topk_f32[ಅಂಕೆ_topk_pipelines];
     vk_pipeline pipeline_topk_radix_f32;
     vk_pipeline pipeline_topk_radix_qsa; // qwen4 QSA indexer fusion (f16 mask)
     vk_pipeline pipeline_sum_rows_f32;
@@ -938,7 +938,7 @@ struct vk_device_struct {
     vk_pipeline pipeline_cumsum_multipass1_f32;
     vk_pipeline pipeline_cumsum_multipass2_f32;
     vk_pipeline pipeline_argmax_f32;
-    vk_pipeline pipeline_count_equal_i32;
+    vk_pipeline pipeline_ಎಣಿಕೆ_equal_i32;
     vk_pipeline pipeline_dsv4_hc_comb_f32;
     vk_pipeline pipeline_dsv4_hc_pre_f32;
     vk_pipeline pipeline_dsv4_hc_pre_gated_f32;
@@ -962,7 +962,7 @@ struct vk_device_struct {
     vk_pipeline pipeline_rwkv_wkv6_f32;
     vk_pipeline pipeline_rwkv_wkv7_f32;
     vk_pipeline pipeline_gated_linear_attn_f32;
-    vk_pipeline pipeline_lightning_indexer_f32[GGML_TYPE_COUNT];
+    vk_pipeline pipeline_lightning_indexer_f32[GGML_TYPE_ಎಣಿಕೆ];
     // [size_idx][kda] where size_idx: 0=d16, 1=d32, 2=d64, 3=d128
     vk_pipeline pipeline_gated_delta_net[4][2];
     vk_pipeline pipeline_ssm_scan_f32_d128;
@@ -972,12 +972,12 @@ struct vk_device_struct {
     vk_pipeline pipeline_ssm_conv_bias_silu_f32;
     vk_pipeline pipeline_opt_step_adamw_f32;
     vk_pipeline pipeline_opt_step_sgd_f32;
-    std::map<vk_conv2d_pipeline_state, vk_pipeline> pipeline_conv2d_f32[CONV_SHAPE_COUNT];
-    std::map<vk_conv2d_pipeline_state, vk_pipeline> pipeline_conv2d_f16_f32[CONV_SHAPE_COUNT];
-    std::map<vk_conv2d_pipeline_state, vk_pipeline> pipeline_conv_transpose_2d_f32[CONV_SHAPE_COUNT];
-    std::map<vk_conv2d_pipeline_state, vk_pipeline> pipeline_conv_transpose_2d_f16_f32[CONV_SHAPE_COUNT];
-    std::map<vk_conv3d_pipeline_state, vk_pipeline> pipeline_conv3d_f32[CONV_SHAPE_COUNT];
-    std::map<vk_conv3d_pipeline_state, vk_pipeline> pipeline_conv3d_f16_f32[CONV_SHAPE_COUNT];
+    std::map<vk_conv2d_pipeline_state, vk_pipeline> pipeline_conv2d_f32[CONV_SHAPE_ಎಣಿಕೆ];
+    std::map<vk_conv2d_pipeline_state, vk_pipeline> pipeline_conv2d_f16_f32[CONV_SHAPE_ಎಣಿಕೆ];
+    std::map<vk_conv2d_pipeline_state, vk_pipeline> pipeline_conv_transpose_2d_f32[CONV_SHAPE_ಎಣಿಕೆ];
+    std::map<vk_conv2d_pipeline_state, vk_pipeline> pipeline_conv_transpose_2d_f16_f32[CONV_SHAPE_ಎಣಿಕೆ];
+    std::map<vk_conv3d_pipeline_state, vk_pipeline> pipeline_conv3d_f32[CONV_SHAPE_ಎಣಿಕೆ];
+    std::map<vk_conv3d_pipeline_state, vk_pipeline> pipeline_conv3d_f16_f32[CONV_SHAPE_ಎಣಿಕೆ];
     vk_pipeline pipeline_conv2d_dw_whcn_f32, pipeline_conv2d_dw_whcn_f16_f32;
     vk_pipeline pipeline_conv2d_dw_cwhn_f32, pipeline_conv2d_dw_cwhn_f16_f32;
 
@@ -991,10 +991,10 @@ struct vk_device_struct {
 
     vk_pipeline pipeline_flash_attn_split_k_reduce;
     std::map<std::tuple<uint32_t, uint32_t, uint32_t, uint32_t>, std::pair<vk_pipeline, vk_pipeline>> pipeline_xe_fa_decode_dual_phases;
-    vk_pipeline pipeline_count_experts;
+    vk_pipeline pipeline_ಎಣಿಕೆ_experts;
 
     // [2] is for whether to take n_experts from spec constant (0) or push constant (1)
-    vk_pipeline pipeline_topk_moe[num_topk_moe_pipelines][2];
+    vk_pipeline pipeline_topk_moe[ಅಂಕೆ_topk_moe_pipelines][2];
 
     std::vector<vk_pipeline_ref> all_pipelines;
 
@@ -1005,7 +1005,7 @@ struct vk_device_struct {
 
     bool disable_fusion;
     bool disable_descriptor_reuse;
-    std::atomic<uint64_t> buffer_destroy_count {};
+    std::atomic<uint64_t> buffer_destroy_ಎಣಿಕೆ {};
     bool disable_host_visible_vidmem;
     bool allow_sysmem_fallback;
     bool disable_graph_optimize;
@@ -1016,7 +1016,7 @@ struct vk_device_struct {
 
 };
 
-inline void vk_command_pool::init(vk_device& device, vk_queue *q_) {
+ಅನ್ತಃಸ್ಥ ಶೂನ್ಯ vk_command_pool::init(vk_device& device, vk_queue *q_) {
     cmd_buffers.clear();
     q = q_;
 
@@ -1026,51 +1026,51 @@ inline void vk_command_pool::init(vk_device& device, vk_queue *q_) {
     pool = device->device.createCommandPool(command_pool_create_info);
 }
 
-inline void vk_command_pool::destroy(vk::Device& device) {
+ಅನ್ತಃಸ್ಥ ಶೂನ್ಯ vk_command_pool::destroy(vk::Device& device) {
     device.destroyCommandPool(pool);
     pool = nullptr;
     cmd_buffers.clear();
 }
 
-struct vk_buffer_struct {
+ಸಂರಚನಾ vk_buffer_struct {
     vk::Buffer buffer = VK_NULL_HANDLE;
     vk::DeviceMemory device_memory = VK_NULL_HANDLE;
     vk::MemoryPropertyFlags memory_property_flags;
-    void * ptr;
+    ಶೂನ್ಯ * ptr;
     size_t size = 0;
     vk::DeviceAddress bda_addr {};
 
     vk_device device;
 
     ~vk_buffer_struct() {
-        if (size == 0) {
-            return;
+        ಯದಿ (size == 0) {
+            ಪ್ರತ್ಯಾಗಮ;
         }
         VK_LOG_DEBUG("~vk_buffer_struct(" << buffer << ", " << size << ")");
 
         // bump before destroying, so a thread that sees the buffer gone also sees the new count
-        device->buffer_destroy_count.fetch_add(1, std::memory_order_release);
+        device->buffer_destroy_ಎಣಿಕೆ.fetch_add(1, std::memory_order_release);
         device->device.freeMemory(device_memory);
         device->device.destroyBuffer(buffer);
     }
 };
 
-struct vk_subbuffer {
+ಸಂರಚನಾ vk_subbuffer {
     vk_buffer buffer;
     uint64_t offset;
     uint64_t size;
 
-    operator vk::DescriptorBufferInfo() const {
-        return { buffer->buffer, offset, size };
+    operator vk::DescriptorBufferInfo() ಧ್ರುವ {
+        ಪ್ರತ್ಯಾಗಮ { buffer->buffer, offset, size };
     }
 };
 
-struct vk_semaphore {
+ಸಂರಚನಾ vk_semaphore {
     vk::Semaphore s;
-    uint64_t value;
+    uint64_t ಮೌಲ್ಯ;
 };
 
-struct vk_event {
+ಸಂರಚನಾ vk_event {
     std::vector<vk::Event> events_free; // Events available for reuse
     std::vector<vk::Event> events_submitted; // Events that are fully submitted and can be reused on next synchronize
     vk::Event event;
@@ -1081,13 +1081,13 @@ struct vk_event {
     uint64_t cmd_buffer_use_counter = 0;
 };
 
-struct vk_submission {
+ಸಂರಚನಾ vk_submission {
     vk_command_buffer* buffer = nullptr;
     std::vector<vk_semaphore> wait_semaphores;
     std::vector<vk_semaphore> signal_semaphores;
 };
 
-typedef std::vector<vk_submission> vk_sequence;
+ಪ್ರಕಾರನಿರ್ದೇಶ std::vector<vk_submission> vk_sequence;
 
 #define MAT_VEC_FUSION_FLAGS_BIAS0 0x1
 
@@ -1097,27 +1097,27 @@ typedef std::vector<vk_submission> vk_sequence;
 
 #define MAT_VEC_FUSION_FLAGS_SCALE1 0x8
 
-struct vk_staging_memcpy {
-    vk_staging_memcpy(void * _dst, const void * _src, size_t _n) : dst(_dst), src(_src), n(_n) {}
+ಸಂರಚನಾ vk_staging_memcpy {
+    vk_staging_memcpy(ಶೂನ್ಯ * _dst, ಧ್ರುವ ಶೂನ್ಯ * _src, size_t _n) : dst(_dst), src(_src), n(_n) {}
 
-    void * dst;
-    const void * src;
+    ಶೂನ್ಯ * dst;
+    ಧ್ರುವ ಶೂನ್ಯ * src;
     size_t n;
 };
 
-struct vk_staging_memset {
-    vk_staging_memset(void * _dst, uint32_t _val, size_t _n) : dst(_dst), val(_val), n(_n) {}
+ಸಂರಚನಾ vk_staging_memset {
+    vk_staging_memset(ಶೂನ್ಯ * _dst, uint32_t _val, size_t _n) : dst(_dst), val(_val), n(_n) {}
 
-    void * dst;
+    ಶೂನ್ಯ * dst;
     uint32_t val;
     size_t n;
 };
 
-struct vk_context_struct {
+ಸಂರಚನಾ vk_context_struct {
     vk_submission * s;
     std::vector<vk_sequence> seqs;
 
-    int exit_tensor_idx;
+    ಪೂರ್ಣಾಙ್ಕ exit_tensor_idx;
 
     std::vector<vk_staging_memcpy> in_memcpys;
     std::vector<vk_staging_memcpy> out_memcpys;
@@ -1128,97 +1128,97 @@ struct vk_context_struct {
     vk_command_pool * p {};
 };
 
-typedef std::shared_ptr<vk_context_struct> vk_context;
+ಪ್ರಕಾರನಿರ್ದೇಶ std::shared_ptr<vk_context_struct> vk_context;
 
-typedef std::weak_ptr<vk_context_struct> vk_context_ref;
+ಪ್ರಕಾರನಿರ್ದೇಶ std::weak_ptr<vk_context_struct> vk_context_ref;
 
-struct ggml_vk_garbage_collector {
+ಸಂರಚನಾ ggml_vk_garbage_collector {
     std::vector<vk_semaphore> tl_semaphores;
     std::vector<vk_semaphore> semaphores;
     std::vector<vk::Event> events;
     std::vector<vk_context> contexts;
 };
 
-#define VK_LOG_MEMORY(msg) if (vk_memory_logger_enabled) { std::cerr << "ggml_vulkan memory: " << msg << std::endl; }
+#define VK_LOG_MEMORY(ಸಂದೇಶ) ಯದಿ (vk_memory_logger_enabled) { std::cerr << "ggml_vulkan memory: " << ಸಂದೇಶ << std::endl; }
 
-static std::string format_size(size_t size) {
-    const size_t kib = 1024;
-    const size_t mib = kib * 1024;
-    const size_t gib = mib * 1024;
+ಸ್ಥಿರ std::string format_size(size_t size) {
+    ಧ್ರುವ size_t kib = 1024;
+    ಧ್ರುವ size_t mib = kib * 1024;
+    ಧ್ರುವ size_t gib = mib * 1024;
 
     std::ostringstream oss;
     oss << std::fixed << std::setprecision(2);
 
-    if (size >= gib) {
-        oss << static_cast<double>(size) / gib << " GiB";
-    } else if (size >= mib) {
-        oss << static_cast<double>(size) / mib << " MiB";
-    } else if (size >= kib) {
-        oss << static_cast<double>(size) / kib << " KiB";
-    } else {
+    ಯದಿ (size >= gib) {
+        oss << static_cast<ದ್ವಿಗುಣ>(size) / gib << " GiB";
+    } ಅನ್ಯಥಾ ಯದಿ (size >= mib) {
+        oss << static_cast<ದ್ವಿಗುಣ>(size) / mib << " MiB";
+    } ಅನ್ಯಥಾ ಯದಿ (size >= kib) {
+        oss << static_cast<ದ್ವಿಗುಣ>(size) / kib << " KiB";
+    } ಅನ್ಯಥಾ {
         oss << size << " B";
     }
 
-    return oss.str();
+    ಪ್ರತ್ಯಾಗಮ oss.str();
 }
 
 class vk_memory_logger {
-public:
+ಸಾರ್ವಜನಿಕ:
     vk_memory_logger(): total_device(0), total_host(0) {}
-    void log_allocation(vk_buffer_ref buf_ref, size_t size);
-    void log_deallocation(vk_buffer_ref buf_ref);
+    ಶೂನ್ಯ log_allocation(vk_buffer_ref buf_ref, size_t size);
+    ಶೂನ್ಯ log_deallocation(vk_buffer_ref buf_ref);
 
-private:
+ಗುಪ್ತ:
     std::map<vk::Buffer, size_t> allocations; // Track allocations
     size_t total_device;
     size_t total_host;
-    static std::mutex log_mutex;
+    ಸ್ಥಿರ std::mutex log_mutex;
 };
 
-inline std::mutex vk_memory_logger::log_mutex;
+ಅನ್ತಃಸ್ಥ std::mutex vk_memory_logger::log_mutex;
 
 class vk_perf_logger {
-  public:
-    void print_timings(bool force = false);
+  ಸಾರ್ವಜನಿಕ:
+    ಶೂನ್ಯ print_timings(bool force = false);
 
 
-    std::string get_node_fusion_name(const ggml_tensor * node, const char *fusion_name, uint64_t *n_flops);
+    std::string get_ಗಂಟು_fusion_name(ಧ್ರುವ ggml_tensor * ಗಂಟು, ಧ್ರುವ ವರ್ಣ *fusion_name, uint64_t *n_flops);
 
 
-    void log_timing(const ggml_tensor * node, const char *fusion_name, uint64_t time) {
+    ಶೂನ್ಯ log_timing(ಧ್ರುವ ggml_tensor * ಗಂಟು, ಧ್ರುವ ವರ್ಣ *fusion_name, uint64_t time) {
         uint64_t n_flops;
-        std::string name = get_node_fusion_name(node, fusion_name, &n_flops);
-        if (n_flops) {
-            flops[name].push_back(n_flops);
+        std::string name = get_ಗಂಟು_fusion_name(ಗಂಟು, fusion_name, &n_flops);
+        ಯದಿ (n_flops) {
+            flops[name].ತಳ್ಳು_back(n_flops);
         }
-        timings[name].push_back(time);
+        timings[name].ತಳ್ಳು_back(time);
     }
 
-    void log_timing(const std::vector<ggml_tensor *> &nodes, const std::vector<const char *> &names, uint64_t time) {
+    ಶೂನ್ಯ log_timing(ಧ್ರುವ std::vector<ggml_tensor *> &nodes, ಧ್ರುವ std::vector<ಧ್ರುವ ವರ್ಣ *> &names, uint64_t time) {
         uint64_t total_flops = 0;
         std::string name;
-        for (size_t n = 0; n < nodes.size(); ++n) {
+        ಪ್ರತಿ (size_t n = 0; n < nodes.size(); ++n) {
             uint64_t n_flops = 0;
-            name += get_node_fusion_name(nodes[n], names[n], &n_flops);
+            name += get_ಗಂಟು_fusion_name(nodes[n], names[n], &n_flops);
             total_flops += n_flops;
 
-            if (n != nodes.size() - 1) {
+            ಯದಿ (n != nodes.size() - 1) {
                 name += ", ";
             }
         }
-        if (total_flops) {
-            flops[name].push_back(total_flops);
+        ಯದಿ (total_flops) {
+            flops[name].ತಳ್ಳು_back(total_flops);
         }
-        timings[name].push_back(time);
+        timings[name].ತಳ್ಳು_back(time);
     }
 
-  private:
+  ಗುಪ್ತ:
     std::map<std::string, std::vector<uint64_t>> timings;
     std::map<std::string, std::vector<uint64_t>> flops;
-    uint32_t print_count {};
+    uint32_t print_ಎಣಿಕೆ {};
 };
 
-struct ggml_backend_vk_context {
+ಸಂರಚನಾ ggml_backend_vk_context {
     std::string name;
 
     vk_device device;
@@ -1239,13 +1239,13 @@ struct ggml_backend_vk_context {
 
     // Cache most recent tensor that was converted into prealloc_y, and what pipeline it used to convert.
     vk_pipeline_struct * prealloc_y_last_pipeline_used {};
-    const ggml_tensor * prealloc_y_last_tensor_used {};
+    ಧ್ರುವ ggml_tensor * prealloc_y_last_tensor_used {};
     // True when the K dimension in prealloc_y is padded.
     bool prealloc_y_last_k_padded {};
 
     // Track which nodes have been used since the last sync, and whether they were written to
-    std::vector<const ggml_tensor *> unsynced_nodes_written;
-    std::vector<const ggml_tensor *> unsynced_nodes_read;
+    std::vector<ಧ್ರುವ ggml_tensor *> unsynced_nodes_written;
+    std::vector<ಧ್ರುವ ggml_tensor *> unsynced_nodes_read;
     // Track which prealloc buffers have pending reads that need to be synchronized.
     // These are checked before writing to the buffer (and call ggml_vk_sync_buffers if set),
     // and set to true after the buffer contents are consumed.
@@ -1263,7 +1263,7 @@ struct ggml_backend_vk_context {
     std::vector<vk::DescriptorSet> descriptor_sets;
     // last bindings written to each set; descriptor_sets is append-only so an index always names the same set
     std::vector<std::vector<vk::DescriptorBufferInfo>> descriptor_set_bindings;
-    uint64_t descriptor_set_bindings_destroy_count {};
+    uint64_t descriptor_set_bindings_destroy_ಎಣಿಕೆ {};
     uint32_t descriptor_set_idx {};
     uint32_t pipeline_descriptor_set_requirements {};
 
@@ -1272,30 +1272,30 @@ struct ggml_backend_vk_context {
 
     // number of additional consecutive nodes that are being fused with the
     // node currently being processed
-    int num_additional_fused_ops {};
+    ಪೂರ್ಣಾಙ್ಕ ಅಂಕೆ_additional_fused_ops {};
     // Bitmask of which fused ops need to write an intermediate value to memory.
     // Bit 'i' means nodes[start_of_fusion + i] writes to memory.
     // If there's no fusion, bit 0 is still set.
-    int fused_ops_write_mask {};
+    ಪೂರ್ಣಾಙ್ಕ fused_ops_write_mask {};
     topk_moe_mode fused_topk_moe_mode {};
     bool fused_topk_moe_scale {};
     // QSA indexer gather+add+top_k fused into one radix-select
     bool fused_topk_qsa {};
     bool fused_hc_post_gate {};
-    rms_norm_mode fused_rms_norm_mode {RMS_NORM_COUNT};
+    rms_norm_mode fused_rms_norm_mode {RMS_NORM_ಎಣಿಕೆ};
 
     // for GGML_VK_PERF_LOGGER
     std::unique_ptr<vk_perf_logger> perf_logger;
     vk::QueryPool query_pool;
-    std::vector<const char *> query_fusion_names;
-    std::vector<int> query_fusion_node_count;
+    std::vector<ಧ್ರುವ ವರ್ಣ *> query_fusion_names;
+    std::vector<ಪೂರ್ಣಾಙ್ಕ> query_fusion_ಗಂಟು_ಎಣಿಕೆ;
     std::vector<ggml_tensor *> query_nodes;
-    std::vector<int> query_node_idx;
-    int32_t num_queries {};
+    std::vector<ಪೂರ್ಣಾಙ್ಕ> query_ಗಂಟು_idx;
+    int32_t ಅಂಕೆ_queries {};
     int32_t query_idx {};
 };
 
-struct ggml_backend_vk_buffer_context {
+ಸಂರಚನಾ ggml_backend_vk_buffer_context {
     vk_device_ref device;
     vk_buffer dev_buffer;
     std::string name;
@@ -1310,13 +1310,13 @@ struct ggml_backend_vk_buffer_context {
 
 };
 
-struct vk_host_allocation {
-    void *    base = nullptr;
+ಸಂರಚನಾ vk_host_allocation {
+    ಶೂನ್ಯ *    base = nullptr;
     size_t    size = 0;
     vk_buffer views[GGML_VK_MAX_DEVICES];  // indexed by device->idx; null = not (yet) mapped here
 };
 
-struct vk_instance_t {
+ಸಂರಚನಾ vk_instance_t {
     vk::Instance instance;
 
     bool debug_utils_support = false;  // VK_EXT_debug_utils enabled
@@ -1325,7 +1325,7 @@ struct vk_instance_t {
     PFN_vkQueueEndDebugUtilsLabelEXT   pfn_vkQueueEndDebugUtilsLabelEXT   = {};
     PFN_vkCmdBeginDebugUtilsLabelEXT   pfn_vkCmdBeginDebugUtilsLabelEXT   = {};
     PFN_vkCmdEndDebugUtilsLabelEXT pfn_vkCmdEndDebugUtilsLabelEXT = {};
-    PFN_vkCmdInsertDebugUtilsLabelEXT  pfn_vkCmdInsertDebugUtilsLabelEXT  = {};
+    PFN_vk_Cmd_ಸೇರಿಸು_Debug_Utils_Label_EXT  pfn_vk_Cmd_ಸೇರಿಸು_Debug_Utils_Label_EXT  = {};
 
     std::vector<size_t> device_indices;
     std::vector<bool>   device_supports_membudget;
@@ -1341,15 +1341,15 @@ struct vk_instance_t {
     bool multi_device = false;
 };
 
-typedef void (*ggml_vk_func_t)(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst);
+ಪ್ರಕಾರನಿರ್ದೇಶ ಶೂನ್ಯ (*ggml_vk_func_t)(ggml_backend_vk_context * ctx, vk_context& subctx, ಧ್ರುವ ggml_tensor * src0, ಧ್ರುವ ggml_tensor * src1, ggml_tensor * dst);
 
-static constexpr uint32_t kSpvOpCooperativeMatrixLoadTensorNV = 5367;
+ಸ್ಥಿರ constexpr uint32_t kSpvOpCooperativeMatrixLoadTensorNV = 5367;
 
-static constexpr uint32_t kSpvCapabilityCooperativeMatrixDecodeVectorNV = 5447;
+ಸ್ಥಿರ constexpr uint32_t kSpvCapabilityCooperativeMatrixDecodeVectorNV = 5447;
 
-static constexpr uint32_t kSpvTensorAddressingDecodeVectorFuncBit = 0x4;
+ಸ್ಥಿರ constexpr uint32_t kSpvTensorAddressingDecodeVectorFuncBit = 0x4;
 
-struct vk_fa_tuning_params {
+ಸಂರಚನಾ vk_fa_tuning_params {
     FaCodePath path;
     uint32_t workgroup_size;
     uint32_t subgroup_size;
@@ -1361,7 +1361,7 @@ struct vk_fa_tuning_params {
     bool disable_subgroups;
     uint32_t limit_occupancy_shmem;
 
-    void print() const {
+    ಶೂನ್ಯ print() ಧ್ರುವ {
         std::cerr << "path=" << path << " workgroup_size=" << workgroup_size << " subgroup_size=" << subgroup_size <<
                      " block_rows=" << block_rows << " block_cols=" << block_cols << " d_split=" << d_split <<
                      " row_split=" << row_split << " shmem_staging=" << shmem_staging << " disable_subgroups=" << disable_subgroups <<
@@ -1369,7 +1369,7 @@ struct vk_fa_tuning_params {
     }
 };
 
-struct GpuPipelineConfig {
+ಸಂರಚನಾ GpuPipelineConfig {
     // GPU architecture identifier.
     // Example: vk_device_architecture::AMD_GCN
     vk_device_architecture arch;
@@ -1383,14 +1383,14 @@ struct GpuPipelineConfig {
     uint32_t default_subgroup_size = 0;
 };
 
-static constexpr uint32_t RDNA_DEFAULT_SUBGROUP_SIZE = 32;
+ಸ್ಥಿರ constexpr uint32_t RDNA_DEFAULT_SUBGROUP_SIZE = 32;
 
-struct CompileTask {
+ಸಂರಚನಾ CompileTask {
     vk_pipeline pipeline;
     size_t spv_size;
-    const void * spv_data;
+    ಧ್ರುವ ಶೂನ್ಯ * spv_data;
     std::string entrypoint;
-    uint32_t parameter_count;
+    uint32_t parameter_ಎಣಿಕೆ;
     std::array<uint32_t, 3> wg_denoms;
     std::vector<uint32_t> specialization_constants;
     bool disable_robustness;
@@ -1398,50 +1398,50 @@ struct CompileTask {
     uint32_t required_subgroup_size;
 };
 
-struct ggml_vk_debug_label {
+ಸಂರಚನಾ ggml_vk_debug_label {
     // at most one of these is set, depending on the scope the label was opened in
     vk_context_struct * subctx {};
     vk_queue_handle *   qhandle {};
 
     // one region per dispatch, e.g. "matmul_q4_k_f32_f16acc_aligned_m (192,8,1)".
     // RGP cannot recover the pipeline name on its own, it only has the hash
-    ggml_vk_debug_label(vk_context & ctx, const std::string & pipeline_name, uint32_t wg0, uint32_t wg1, uint32_t wg2);
+    ggml_vk_debug_label(vk_context & ctx, ಧ್ರುವ std::string & pipeline_name, uint32_t wg0, uint32_t wg1, uint32_t wg2);
 
 
     // one region per graph node
     // fused nodes are joined with '+', e.g. "RMS_NORM+MUL+ROPE Qcur-19"
-    ggml_vk_debug_label(vk_context & ctx, const ggml_cgraph * cgraph, int node_idx, int n_fused);
+    ggml_vk_debug_label(vk_context & ctx, ಧ್ರುವ ggml_cgraph * cgraph, ಪೂರ್ಣಾಙ್ಕ ಗಂಟು_idx, ಪೂರ್ಣಾಙ್ಕ n_fused);
 
 
     // one region per graph evaluation, opened on the queue instead of a command buffer
     // so it spans every submit the evaluation makes
-    ggml_vk_debug_label(vk_queue_handle * handle, const char * name);
+    ggml_vk_debug_label(vk_queue_handle * handle, ಧ್ರುವ ವರ್ಣ * name);
 
 
     // call before the command buffer can end, the destructor covers the rest
-    void close();
+    ಶೂನ್ಯ close();
 
 
     ~ggml_vk_debug_label() {
         close();
     }
 
-    ggml_vk_debug_label(const ggml_vk_debug_label &) = delete;
-    ggml_vk_debug_label & operator=(const ggml_vk_debug_label &) = delete;
+    ggml_vk_debug_label(ಧ್ರುವ ggml_vk_debug_label &) = delete;
+    ggml_vk_debug_label & operator=(ಧ್ರುವ ggml_vk_debug_label &) = delete;
 
-private:
+ಗುಪ್ತ:
     // the constructors check this too, so the name is not built when markers are off
-    void begin(vk_context & ctx, const std::string & name);
+    ಶೂನ್ಯ begin(vk_context & ctx, ಧ್ರುವ std::string & name);
 
 };
 
 #define UNUSED GGML_UNUSED
 
-struct ggml_backend_vk_device_context {
+ಸಂರಚನಾ ggml_backend_vk_device_context {
     size_t device;
     std::string name;
     std::string description;
     bool is_integrated_gpu;
     std::string pci_bus_id;
-    int op_offload_min_batch_size;
+    ಪೂರ್ಣಾಙ್ಕ op_offload_min_batch_size;
 };

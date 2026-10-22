@@ -1,32 +1,32 @@
-#include "ggml-zendnn.h"
+#ಅನ್ತರ್ಭಾವ "ggml-zendnn.h"
 
-#include "ggml-backend-impl.h"
-#include "ggml-impl.h"
+#ಅನ್ತರ್ಭಾವ "ggml-backend-impl.h"
+#ಅನ್ತರ್ಭಾವ "ggml-impl.h"
 
 #define GGML_COMMON_DECL_CPP
-#include "ggml-common.h"
+#ಅನ್ತರ್ಭಾವ "ggml-common.h"
 
-#include "zendnnl.hpp"
+#ಅನ್ತರ್ಭಾವ "zendnnl.hpp"
 
-#include <cstring>
+#ಅನ್ತರ್ಭಾವ <cstring>
 
 
-struct ggml_backend_zendnn_context {
-    int n_threads = GGML_DEFAULT_N_THREADS;
-    std::unique_ptr<char[]> work_data;
+ಸಂರಚನಾ ggml_backend_zendnn_context {
+    ಪೂರ್ಣಾಙ್ಕ n_threads = GGML_DEFAULT_N_THREADS;
+    std::unique_ptr<ವರ್ಣ[]> work_data;
     size_t work_size = 0;
 };
 
 template<typename T>
 zendnnl::common::data_type_t ggml_to_zendnn_type() {
-    if constexpr (std::is_same_v<T, float>) {
-        return zendnnl::common::data_type_t::f32;
-    } else if constexpr (std::is_same_v<T, ggml_bf16_t>) {
-        return zendnnl::common::data_type_t::bf16;
-    } else if constexpr (std::is_same_v<T, block_q8_0>) {
-        return zendnnl::common::data_type_t::s8;
-    } else {
-        return zendnnl::common::data_type_t::none;
+    ಯದಿ constexpr (std::is_same_v<T, ಭಿನ್ನ>) {
+        ಪ್ರತ್ಯಾಗಮ zendnnl::common::data_type_t::f32;
+    } ಅನ್ಯಥಾ ಯದಿ constexpr (std::is_same_v<T, ggml_bf16_t>) {
+        ಪ್ರತ್ಯಾಗಮ zendnnl::common::data_type_t::bf16;
+    } ಅನ್ಯಥಾ ಯದಿ constexpr (std::is_same_v<T, block_q8_0>) {
+        ಪ್ರತ್ಯಾಗಮ zendnnl::common::data_type_t::s8;
+    } ಅನ್ಯಥಾ {
+        ಪ್ರತ್ಯಾಗಮ zendnnl::common::data_type_t::none;
     }
 }
 
@@ -36,21 +36,21 @@ zendnnl::common::data_type_t ggml_to_zendnn_type() {
  * quant_params.src_scale.dims themselves, since that depends on the batch size(s) in use.
  */
 template <typename TA, typename TB, typename TC>
-static zendnnl::lowoha::matmul::matmul_params ggml_zendnn_make_matmul_params(ggml_backend_zendnn_context * ctx) {
+ಸ್ಥಿರ zendnnl::lowoha::matmul::matmul_params ggml_zendnn_make_matmul_params(ggml_backend_zendnn_context * ctx) {
     zendnnl::lowoha::matmul::matmul_params params;
     params.dtypes.src = ggml_to_zendnn_type<TB>();
     params.dtypes.wei = ggml_to_zendnn_type<TA>();
     params.dtypes.dst = ggml_to_zendnn_type<TC>();
-    params.num_threads = ctx->n_threads;
+    params.ಅಂಕೆ_threads = ctx->n_threads;
 
-    if constexpr (std::is_same_v<TA, block_q8_0>) {
+    ಯದಿ constexpr (std::is_same_v<TA, block_q8_0>) {
         params.dtypes.compute = zendnnl::common::data_type_t::s8;
-        params.dynamic_quant = true;
+        params.dynamic_quant = ಸತ್ಯ;
         params.quant_params.src_scale.buff = nullptr;
         params.quant_params.src_scale.dt   = zendnnl::common::data_type_t::bf16;
         params.packing.pack_format_b = 1;
     }
-    return params;
+    ಪ್ರತ್ಯಾಗಮ params;
 }
 
 /**
@@ -66,20 +66,20 @@ static zendnnl::lowoha::matmul::matmul_params ggml_zendnn_make_matmul_params(ggm
  *   k = inner dimension (columns of B, rows of A)
  */
 template <typename TA, typename TB, typename TC>
-static bool ggml_zendnn_matmul(ggml_backend_zendnn_context * ctx, int64_t m, int64_t n, int64_t k,
-                               const TA * A, int64_t lda, const TB * B, int64_t ldb, TC * C,
+ಸ್ಥಿರ ತಾರ್ಕಿಕ ggml_zendnn_matmul(ggml_backend_zendnn_context * ctx, int64_t m, int64_t n, int64_t k,
+                               ಧ್ರುವ TA * A, int64_t lda, ಧ್ರುವ TB * B, int64_t ldb, TC * C,
                                int64_t ldc) {
 
     zendnnl::lowoha::matmul::matmul_params params = ggml_zendnn_make_matmul_params<TA, TB, TC>(ctx);
 
     zendnnl::lowoha::matmul::matmul_batch_params_t batch_params;
 
-    if constexpr (std::is_same_v<TA, block_q8_0>) {
+    ಯದಿ constexpr (std::is_same_v<TA, block_q8_0>) {
         params.quant_params.src_scale.dims = {n, k / QK8_0};
     }
 
     zendnnl::error_handling::status_t status = zendnnl::lowoha::matmul::matmul_direct(
-        'r', false, true,   // row-major, don't transpose B, transpose A (because it's column-major)
+        'r', ಅಸತ್ಯ, ಸತ್ಯ,   // row-major, don't transpose B, transpose A (because it's column-major)
         n,                  // M: rows of B and C
         m,                  // N: cols of A^T and C
         k,                  // K: cols of B, rows of A
@@ -89,79 +89,79 @@ static bool ggml_zendnn_matmul(ggml_backend_zendnn_context * ctx, int64_t m, int
         nullptr,            // bias
         0.0f,               // beta
         C, ldc,             // output C[n,m]
-        true,               // is_weights_const
+        ಸತ್ಯ,               // is_weights_const
         batch_params,       // batch_params
         params              // params
     );
 
-    if (status != zendnnl::error_handling::status_t::success) {
-        GGML_LOG_ERROR("%s, ZenDNN matmul failed: status=%d\n", __func__, static_cast<int>(status));
-        return false;
+    ಯದಿ (status != zendnnl::error_handling::status_t::success) {
+        GGML_LOG_ERROR("%s, ZenDNN matmul failed: status=%d\n", __func__, static_cast<ಪೂರ್ಣಾಙ್ಕ>(status));
+        ಪ್ರತ್ಯಾಗಮ ಅಸತ್ಯ;
     }
-    return true;
+    ಪ್ರತ್ಯಾಗಮ ಸತ್ಯ;
 }
 
-static bool ggml_zendnn_gemm(ggml_backend_zendnn_context * ctx, int64_t m, int64_t n, int64_t k,
-                              const void * A, int64_t lda, const void * B, int64_t ldb, void * C,
-                              int64_t ldc, int Atype, int Btype, int Ctype) {
+ಸ್ಥಿರ ತಾರ್ಕಿಕ ggml_zendnn_gemm(ggml_backend_zendnn_context * ctx, int64_t m, int64_t n, int64_t k,
+                              ಧ್ರುವ ಶೂನ್ಯ * A, int64_t lda, ಧ್ರುವ ಶೂನ್ಯ * B, int64_t ldb, ಶೂನ್ಯ * C,
+                              int64_t ldc, ಪೂರ್ಣಾಙ್ಕ Atype, ಪೂರ್ಣಾಙ್ಕ Btype, ಪೂರ್ಣಾಙ್ಕ Ctype) {
 
-    assert(m >= 0);
-    assert(n >= 0);
-    assert(k >= 0);
-    assert(lda >= k);
-    assert(ldb >= k);
-    assert(ldc >= m);
+    ಪ್ರತಿಜ್ಞಾ(m >= 0);
+    ಪ್ರತಿಜ್ಞಾ(n >= 0);
+    ಪ್ರತಿಜ್ಞಾ(k >= 0);
+    ಪ್ರತಿಜ್ಞಾ(lda >= k);
+    ಪ್ರತಿಜ್ಞಾ(ldb >= k);
+    ಪ್ರತಿಜ್ಞಾ(ldc >= m);
 
     // categorize types
-    switch (Atype) {
-        case GGML_TYPE_F32:
-            if (Btype != GGML_TYPE_F32 || Ctype != GGML_TYPE_F32)
-                return false;
-            return ggml_zendnn_matmul<float, float, float>(
+    ವಿಕಲ್ಪ (Atype) {
+        ಪಕ್ಷ GGML_TYPE_F32:
+            ಯದಿ (Btype != GGML_TYPE_F32 || Ctype != GGML_TYPE_F32)
+                ಪ್ರತ್ಯಾಗಮ ಅಸತ್ಯ;
+            ಪ್ರತ್ಯಾಗಮ ggml_zendnn_matmul<ಭಿನ್ನ, ಭಿನ್ನ, ಭಿನ್ನ>(
                 ctx, m, n, k,
-                (const float *)A, lda,
-                (const float *)B, ldb,
-                (float *)C, ldc);
-        case GGML_TYPE_BF16:
-            if (Btype != GGML_TYPE_BF16)
-                return false;
-            if (Ctype == GGML_TYPE_BF16)
-                return ggml_zendnn_matmul<ggml_bf16_t, ggml_bf16_t, ggml_bf16_t>(
+                (ಧ್ರುವ ಭಿನ್ನ *)A, lda,
+                (ಧ್ರುವ ಭಿನ್ನ *)B, ldb,
+                (ಭಿನ್ನ *)C, ldc);
+        ಪಕ್ಷ GGML_TYPE_BF16:
+            ಯದಿ (Btype != GGML_TYPE_BF16)
+                ಪ್ರತ್ಯಾಗಮ ಅಸತ್ಯ;
+            ಯದಿ (Ctype == GGML_TYPE_BF16)
+                ಪ್ರತ್ಯಾಗಮ ggml_zendnn_matmul<ggml_bf16_t, ggml_bf16_t, ggml_bf16_t>(
                     ctx, m, n, k,
-                    (const ggml_bf16_t *)A, lda,
-                    (const ggml_bf16_t *)B, ldb,
+                    (ಧ್ರುವ ggml_bf16_t *)A, lda,
+                    (ಧ್ರುವ ggml_bf16_t *)B, ldb,
                     (ggml_bf16_t *)C, ldc);
-            if (Ctype == GGML_TYPE_F32)
-                return ggml_zendnn_matmul<ggml_bf16_t, ggml_bf16_t, float>(
+            ಯದಿ (Ctype == GGML_TYPE_F32)
+                ಪ್ರತ್ಯಾಗಮ ggml_zendnn_matmul<ggml_bf16_t, ggml_bf16_t, ಭಿನ್ನ>(
                     ctx, m, n, k,
-                    (const ggml_bf16_t *)A, lda,
-                    (const ggml_bf16_t *)B, ldb,
-                    (float *)C, ldc);
-            return false;
-        case GGML_TYPE_Q8_0:
-            if (Btype != GGML_TYPE_F32 || Ctype != GGML_TYPE_F32)
-                return false;
-            return ggml_zendnn_matmul<block_q8_0, float, float>(
+                    (ಧ್ರುವ ggml_bf16_t *)A, lda,
+                    (ಧ್ರುವ ggml_bf16_t *)B, ldb,
+                    (ಭಿನ್ನ *)C, ldc);
+            ಪ್ರತ್ಯಾಗಮ ಅಸತ್ಯ;
+        ಪಕ್ಷ GGML_TYPE_Q8_0:
+            ಯದಿ (Btype != GGML_TYPE_F32 || Ctype != GGML_TYPE_F32)
+                ಪ್ರತ್ಯಾಗಮ ಅಸತ್ಯ;
+            ಪ್ರತ್ಯಾಗಮ ggml_zendnn_matmul<block_q8_0, ಭಿನ್ನ, ಭಿನ್ನ>(
                 ctx, m, n, k,
-                (const block_q8_0 *)A, lda,
-                (const float *)B, ldb,
-                (float *)C, ldc);
-        default:
-            return false; // unsupported type
+                (ಧ್ರುವ block_q8_0 *)A, lda,
+                (ಧ್ರುವ ಭಿನ್ನ *)B, ldb,
+                (ಭಿನ್ನ *)C, ldc);
+        ಸ್ವಭಾವ:
+            ಪ್ರತ್ಯಾಗಮ ಅಸತ್ಯ; // unsupported type
     }
 }
 
-static void ggml_zendnn_compute_forward_mul_mat(
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_zendnn_compute_forward_mul_mat(
     ggml_backend_zendnn_context * ctx,
     ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];  // weights
-    const ggml_tensor * src1 = dst->src[1];  // inputs
+    ಧ್ರುವ ggml_tensor * src0 = dst->src[0];  // weights
+    ಧ್ರುವ ggml_tensor * src1 = dst->src[1];  // inputs
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ದ್ವಿಮಾನ_OP_LOCALS
 
-    ggml_type         const vec_dot_type = src0->type;
-    ggml_from_float_t const from_float = ggml_get_type_traits(vec_dot_type)->from_float_ref;
+    ggml_type         ಧ್ರುವ vec_dot_type = src0->type;
+    ggml_from_float_t ಧ್ರುವ from_float = ggml_get_type_traits(vec_dot_type)->from_float_ref;
 
     GGML_ASSERT(ne0 == ne01);
     GGML_ASSERT(ne1 == ne11);
@@ -173,55 +173,55 @@ static void ggml_zendnn_compute_forward_mul_mat(
     GGML_ASSERT(nb10 == ggml_type_size(src1->type));
 
     // dst cannot be transposed or permuted
-    GGML_ASSERT(nb0 == sizeof(float));
+    GGML_ASSERT(nb0 == ಪರಿಮಾಣ(ಭಿನ್ನ));
     GGML_ASSERT(nb0 <= nb1);
     GGML_ASSERT(nb1 <= nb2);
     GGML_ASSERT(nb2 <= nb3);
 
     // broadcast factors
-    const int64_t r2 = ne12/ne02;
-    const int64_t r3 = ne13/ne03;
+    ಧ್ರುವ int64_t r2 = ne12/ne02;
+    ಧ್ರುವ int64_t r3 = ne13/ne03;
 
-    void * work_data = ctx->work_data.get();
+    ಶೂನ್ಯ * work_data = ctx->work_data.get();
 
     // ZenDNN requires FP32 for dynamic quantization, so conversion is skipped
-    if (src1->type != vec_dot_type && src0->type != GGML_TYPE_Q8_0) {
-        const size_t nbw1 = ggml_row_size(vec_dot_type, ne10);
-        const size_t nbw2 = nbw1 * ne11;
-        const size_t nbw3 = nbw2 * ne12;
-        const size_t desired_wsize = ne13 * nbw3;
-        if (ctx->work_size < desired_wsize) {
-            ctx->work_data.reset(new char[desired_wsize]);
+    ಯದಿ (src1->type != vec_dot_type && src0->type != GGML_TYPE_Q8_0) {
+        ಧ್ರುವ size_t nbw1 = ggml_row_size(vec_dot_type, ne10);
+        ಧ್ರುವ size_t nbw2 = nbw1 * ne11;
+        ಧ್ರುವ size_t nbw3 = nbw2 * ne12;
+        ಧ್ರುವ size_t desired_wsize = ne13 * nbw3;
+        ಯದಿ (ctx->work_size < desired_wsize) {
+            ctx->work_data.reset(ನೂತನ ವರ್ಣ[desired_wsize]);
             ctx->work_size = desired_wsize;
         }
         work_data = ctx->work_data.get();
 
         // #pragma omp parallel for num_threads(ctx->n_threads)
-        #pragma omp parallel for collapse(3) num_threads(ctx->n_threads) schedule(static)
-        for (int64_t i13 = 0; i13 < ne13; ++i13) {
-            for (int64_t i12 = 0; i12 < ne12; ++i12) {
-                for (int64_t i11 = 0; i11 < ne11; ++i11) {
-                    const float * src1_f32 = (float *)((char *)src1->data + i11*nb11 + i12*nb12 + i13*nb13);
-                    void * src1_conv = (char *)work_data + i11*nbw1 + i12*nbw2 + i13*nbw3;
+        #pragma omp parallel ಪ್ರತಿ collapse(3) ಅಂಕೆ_threads(ctx->n_threads) schedule(ಸ್ಥಿರ)
+        ಪ್ರತಿ (int64_t i13 = 0; i13 < ne13; ++i13) {
+            ಪ್ರತಿ (int64_t i12 = 0; i12 < ne12; ++i12) {
+                ಪ್ರತಿ (int64_t i11 = 0; i11 < ne11; ++i11) {
+                    ಧ್ರುವ ಭಿನ್ನ * src1_f32 = (ಭಿನ್ನ *)((ವರ್ಣ *)src1->data + i11*nb11 + i12*nb12 + i13*nb13);
+                    ಶೂನ್ಯ * src1_conv = (ವರ್ಣ *)work_data + i11*nbw1 + i12*nbw2 + i13*nbw3;
                     from_float(src1_f32, src1_conv, ne10);
                 }
             }
         }
     }
 
-    for (int64_t i13 = 0; i13 < ne13; i13++) {
-        for (int64_t i12 = 0; i12 < ne12; i12++) {
-            const void* wdata = (src1->type == vec_dot_type || src0->type == GGML_TYPE_Q8_0) ? src1->data : work_data;
-            const size_t row_size = ggml_row_size(vec_dot_type, ne10);
-            if (!ggml_zendnn_gemm(ctx,
+    ಪ್ರತಿ (int64_t i13 = 0; i13 < ne13; i13++) {
+        ಪ್ರತಿ (int64_t i12 = 0; i12 < ne12; i12++) {
+            ಧ್ರುವ ಶೂನ್ಯ* wdata = (src1->type == vec_dot_type || src0->type == GGML_TYPE_Q8_0) ? src1->data : work_data;
+            ಧ್ರುವ size_t row_size = ggml_row_size(vec_dot_type, ne10);
+            ಯದಿ (!ggml_zendnn_gemm(ctx,
                                   ne01,     // m
                                   ne11,     // n
                                   ne10,     // k
-                                  static_cast<const char *>(src0->data) + (i12/r2)*nb02 + (i13/r3)*nb03,
+                                  static_cast<ಧ್ರುವ ವರ್ಣ *>(src0->data) + (i12/r2)*nb02 + (i13/r3)*nb03,
                                   ne00,     // lda
-                                  static_cast<const char *>(wdata) + (i12*ne11 + i13*ne12*ne11)*row_size,
+                                  static_cast<ಧ್ರುವ ವರ್ಣ *>(wdata) + (i12*ne11 + i13*ne12*ne11)*row_size,
                                   ne10,     // ldb
-                                  static_cast<char *>(dst->data) + i12*nb2 + i13*nb3,
+                                  static_cast<ವರ್ಣ *>(dst->data) + i12*nb2 + i13*nb3,
                                   ne01,     // ldc
                                   src0->type,
                                   src0->type == GGML_TYPE_Q8_0 ? GGML_TYPE_F32 : vec_dot_type,
@@ -231,7 +231,7 @@ static void ggml_zendnn_compute_forward_mul_mat(
     }
 }
 
-struct mmid_row_mapping {
+ಸಂರಚನಾ mmid_row_mapping {
     int32_t i1;
     int32_t i2;
 };
@@ -243,36 +243,36 @@ struct mmid_row_mapping {
  * per expert, hence the vector.
  */
 template <typename TA, typename TB, typename TC>
-static bool ggml_zendnn_group_matmul(ggml_backend_zendnn_context * ctx, int64_t m, int64_t k,
-                                     const std::vector<int64_t> & n,
-                                     const std::vector<const void *> & A, int64_t lda,
-                                     const std::vector<const void *> & B, int64_t ldb,
-                                     const std::vector<void *> & C, int64_t ldc) {
+ಸ್ಥಿರ ತಾರ್ಕಿಕ ggml_zendnn_group_matmul(ggml_backend_zendnn_context * ctx, int64_t m, int64_t k,
+                                     ಧ್ರುವ std::vector<int64_t> & n,
+                                     ಧ್ರುವ std::vector<ಧ್ರುವ ಶೂನ್ಯ *> & A, int64_t lda,
+                                     ಧ್ರುವ std::vector<ಧ್ರುವ ಶೂನ್ಯ *> & B, int64_t ldb,
+                                     ಧ್ರುವ std::vector<ಶೂನ್ಯ *> & C, int64_t ldc) {
 
-    const int n_experts = n.size();
+    ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ n_experts = n.size();
 
     zendnnl::lowoha::matmul::matmul_params base_params = ggml_zendnn_make_matmul_params<TA, TB, TC>(ctx);
 
-    std::vector<char>         layout(n_experts, 'r');
-    std::vector<bool>         trans_a(n_experts, false);
-    std::vector<bool>         trans_b(n_experts, true);
-    std::vector<int>          batch_m(n_experts);
-    std::vector<int>          batch_n(n_experts, m);
-    std::vector<int>          batch_k(n_experts, k);
-    std::vector<float>        alpha(n_experts, 1.0f);
-    std::vector<float>        beta(n_experts, 0.0f);
-    std::vector<const void *> bias(n_experts, nullptr);
-    std::vector<int>          lda_v(n_experts, lda);
-    std::vector<int>          ldb_v(n_experts, ldb);
-    std::vector<int>          ldc_v(n_experts, ldc);
-    std::vector<bool>         is_wei_const(n_experts, true);
+    std::vector<ವರ್ಣ>         layout(n_experts, 'r');
+    std::vector<ತಾರ್ಕಿಕ>         trans_a(n_experts, ಅಸತ್ಯ);
+    std::vector<ತಾರ್ಕಿಕ>         trans_b(n_experts, ಸತ್ಯ);
+    std::vector<ಪೂರ್ಣಾಙ್ಕ>          batch_m(n_experts);
+    std::vector<ಪೂರ್ಣಾಙ್ಕ>          batch_n(n_experts, m);
+    std::vector<ಪೂರ್ಣಾಙ್ಕ>          batch_k(n_experts, k);
+    std::vector<ಭಿನ್ನ>        alpha(n_experts, 1.0f);
+    std::vector<ಭಿನ್ನ>        beta(n_experts, 0.0f);
+    std::vector<ಧ್ರುವ ಶೂನ್ಯ *> bias(n_experts, nullptr);
+    std::vector<ಪೂರ್ಣಾಙ್ಕ>          lda_v(n_experts, lda);
+    std::vector<ಪೂರ್ಣಾಙ್ಕ>          ldb_v(n_experts, ldb);
+    std::vector<ಪೂರ್ಣಾಙ್ಕ>          ldc_v(n_experts, ldc);
+    std::vector<ತಾರ್ಕಿಕ>         is_wei_const(n_experts, ಸತ್ಯ);
     std::vector<zendnnl::lowoha::matmul::matmul_params> params(n_experts, base_params);
 
-    for (int i = 0; i < n_experts; i++) {
+    ಪ್ರತಿ (ಪೂರ್ಣಾಙ್ಕ i = 0; i < n_experts; i++) {
         batch_m[i] = n[i];
 
         // src_scale.dims depends on this expert's row count, unlike the rest of base_params
-        if constexpr (std::is_same_v<TA, block_q8_0>) {
+        ಯದಿ constexpr (std::is_same_v<TA, block_q8_0>) {
             params[i].quant_params.src_scale.dims = {n[i], k / QK8_0};
         }
     }
@@ -282,77 +282,77 @@ static bool ggml_zendnn_group_matmul(ggml_backend_zendnn_context * ctx, int64_t 
         B, ldb_v, A, lda_v, bias, beta,
         C, ldc_v, is_wei_const, params);
 
-    if (status != zendnnl::error_handling::status_t::success) {
-        GGML_LOG_ERROR("%s, ZenDNN group matmul failed: status=%d\n", __func__, static_cast<int>(status));
-        return false;
+    ಯದಿ (status != zendnnl::error_handling::status_t::success) {
+        GGML_LOG_ERROR("%s, ZenDNN group matmul failed: status=%d\n", __func__, static_cast<ಪೂರ್ಣಾಙ್ಕ>(status));
+        ಪ್ರತ್ಯಾಗಮ ಅಸತ್ಯ;
     }
-    return true;
+    ಪ್ರತ್ಯಾಗಮ ಸತ್ಯ;
 }
 
-static bool ggml_zendnn_group_gemm(ggml_backend_zendnn_context * ctx, int64_t m, int64_t k,
-                                    const std::vector<int64_t> & n,
-                                    const std::vector<const void *> & A, int64_t lda,
-                                    const std::vector<const void *> & B, int64_t ldb,
-                                    const std::vector<void *> & C, int64_t ldc,
-                                    int Atype, int Btype, int Ctype) {
+ಸ್ಥಿರ ತಾರ್ಕಿಕ ggml_zendnn_group_gemm(ggml_backend_zendnn_context * ctx, int64_t m, int64_t k,
+                                    ಧ್ರುವ std::vector<int64_t> & n,
+                                    ಧ್ರುವ std::vector<ಧ್ರುವ ಶೂನ್ಯ *> & A, int64_t lda,
+                                    ಧ್ರುವ std::vector<ಧ್ರುವ ಶೂನ್ಯ *> & B, int64_t ldb,
+                                    ಧ್ರುವ std::vector<ಶೂನ್ಯ *> & C, int64_t ldc,
+                                    ಪೂರ್ಣಾಙ್ಕ Atype, ಪೂರ್ಣಾಙ್ಕ Btype, ಪೂರ್ಣಾಙ್ಕ Ctype) {
 
-    assert(m >= 0);
-    for (size_t i = 0; i < n.size(); i++) {
-        assert(n[i] >= 0);
+    ಪ್ರತಿಜ್ಞಾ(m >= 0);
+    ಪ್ರತಿ (size_t i = 0; i < n.size(); i++) {
+        ಪ್ರತಿಜ್ಞಾ(n[i] >= 0);
     }
-    assert(k >= 0);
-    assert(lda >= k);
-    assert(ldb >= k);
-    assert(ldc >= m);
+    ಪ್ರತಿಜ್ಞಾ(k >= 0);
+    ಪ್ರತಿಜ್ಞಾ(lda >= k);
+    ಪ್ರತಿಜ್ಞಾ(ldb >= k);
+    ಪ್ರತಿಜ್ಞಾ(ldc >= m);
 
     // categorize types
-    switch (Atype) {
-        case GGML_TYPE_F32:
-            if (Btype != GGML_TYPE_F32 || Ctype != GGML_TYPE_F32)
-                return false;
-            return ggml_zendnn_group_matmul<float, float, float>(ctx, m, k, n, A, lda, B, ldb, C, ldc);
-        case GGML_TYPE_BF16:
-            if (Btype != GGML_TYPE_BF16)
-                return false;
-            if (Ctype == GGML_TYPE_BF16)
-                return ggml_zendnn_group_matmul<ggml_bf16_t, ggml_bf16_t, ggml_bf16_t>(
+    ವಿಕಲ್ಪ (Atype) {
+        ಪಕ್ಷ GGML_TYPE_F32:
+            ಯದಿ (Btype != GGML_TYPE_F32 || Ctype != GGML_TYPE_F32)
+                ಪ್ರತ್ಯಾಗಮ ಅಸತ್ಯ;
+            ಪ್ರತ್ಯಾಗಮ ggml_zendnn_group_matmul<ಭಿನ್ನ, ಭಿನ್ನ, ಭಿನ್ನ>(ctx, m, k, n, A, lda, B, ldb, C, ldc);
+        ಪಕ್ಷ GGML_TYPE_BF16:
+            ಯದಿ (Btype != GGML_TYPE_BF16)
+                ಪ್ರತ್ಯಾಗಮ ಅಸತ್ಯ;
+            ಯದಿ (Ctype == GGML_TYPE_BF16)
+                ಪ್ರತ್ಯಾಗಮ ggml_zendnn_group_matmul<ggml_bf16_t, ggml_bf16_t, ggml_bf16_t>(
                     ctx, m, k, n, A, lda, B, ldb, C, ldc);
-            if (Ctype == GGML_TYPE_F32)
-                return ggml_zendnn_group_matmul<ggml_bf16_t, ggml_bf16_t, float>(ctx, m, k, n, A, lda, B, ldb, C, ldc);
-            return false;
-        case GGML_TYPE_Q8_0:
-            if (Btype != GGML_TYPE_F32 || Ctype != GGML_TYPE_F32)
-                return false;
-            return ggml_zendnn_group_matmul<block_q8_0, float, float>(ctx, m, k, n, A, lda, B, ldb, C, ldc);
-        default:
-            return false; // unsupported type
+            ಯದಿ (Ctype == GGML_TYPE_F32)
+                ಪ್ರತ್ಯಾಗಮ ggml_zendnn_group_matmul<ggml_bf16_t, ggml_bf16_t, ಭಿನ್ನ>(ctx, m, k, n, A, lda, B, ldb, C, ldc);
+            ಪ್ರತ್ಯಾಗಮ ಅಸತ್ಯ;
+        ಪಕ್ಷ GGML_TYPE_Q8_0:
+            ಯದಿ (Btype != GGML_TYPE_F32 || Ctype != GGML_TYPE_F32)
+                ಪ್ರತ್ಯಾಗಮ ಅಸತ್ಯ;
+            ಪ್ರತ್ಯಾಗಮ ggml_zendnn_group_matmul<block_q8_0, ಭಿನ್ನ, ಭಿನ್ನ>(ctx, m, k, n, A, lda, B, ldb, C, ldc);
+        ಸ್ವಭಾವ:
+            ಪ್ರತ್ಯಾಗಮ ಅಸತ್ಯ; // unsupported type
     }
 }
 
-static void ggml_zendnn_compute_forward_mul_mat_id(
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_zendnn_compute_forward_mul_mat_id(
     ggml_backend_zendnn_context * ctx,
     ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];  // expert weights
-    const ggml_tensor * src1 = dst->src[1];  // inputs
-    const ggml_tensor * ids  = dst->src[2];  // expert ids
+    ಧ್ರುವ ggml_tensor * src0 = dst->src[0];  // expert weights
+    ಧ್ರುವ ggml_tensor * src1 = dst->src[1];  // inputs
+    ಧ್ರುವ ggml_tensor * ids  = dst->src[2];  // expert ids
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ದ್ವಿಮಾನ_OP_LOCALS
 
     // exit for no tokens to process
-    if (ne2 == 0 || ne11 == 0) {
-        return;
+    ಯದಿ (ne2 == 0 || ne11 == 0) {
+        ಪ್ರತ್ಯಾಗಮ;
     }
 
-    ggml_type         const vec_dot_type = src0->type;
-    ggml_from_float_t const from_float = ggml_get_type_traits(vec_dot_type)->from_float_ref;
+    ggml_type         ಧ್ರುವ vec_dot_type = src0->type;
+    ggml_from_float_t ಧ್ರುವ from_float = ggml_get_type_traits(vec_dot_type)->from_float_ref;
 
     // we don't support permuted src0 or src1
     GGML_ASSERT(nb00 == ggml_type_size(src0->type));
     GGML_ASSERT(nb10 == ggml_type_size(src1->type));
 
     // dst cannot be transposed or permuted
-    GGML_ASSERT(nb0 == sizeof(float));
+    GGML_ASSERT(nb0 == ಪರಿಮಾಣ(ಭಿನ್ನ));
     GGML_ASSERT(nb0 <= nb1);
     GGML_ASSERT(nb1 <= nb2);
     GGML_ASSERT(nb2 <= nb3);
@@ -362,22 +362,22 @@ static void ggml_zendnn_compute_forward_mul_mat_id(
     GGML_ASSERT(ne3  == 1);
 
     // row groups
-    const int n_ids = ids->ne[0]; // n_expert_used
-    const int n_as  = ne02;       // n_experts
+    ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ n_ids = ids->ne[0]; // n_expert_used
+    ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ n_as  = ne02;       // n_experts
 
     std::vector<int64_t> matrix_row_counts(n_as, 0);
     std::vector<std::vector<mmid_row_mapping>> matrix_rows(n_as);
 
     int64_t total_rows = 0;
-    int     n_active_experts = 0;
+    ಪೂರ್ಣಾಙ್ಕ     n_active_experts = 0;
     // group rows by expert (preprocessing step)
-    for (int64_t iid1 = 0; iid1 < ids->ne[1]; ++iid1) {
-        for (int id = 0; id < n_ids; ++id) {
-            const int32_t i02 = *(const int32_t *)((const char *)ids->data + iid1*ids->nb[1] + id*ids->nb[0]);
+    ಪ್ರತಿ (int64_t iid1 = 0; iid1 < ids->ne[1]; ++iid1) {
+        ಪ್ರತಿ (ಪೂರ್ಣಾಙ್ಕ id = 0; id < n_ids; ++id) {
+            ಧ್ರುವ int32_t i02 = *(ಧ್ರುವ int32_t *)((ಧ್ರುವ ವರ್ಣ *)ids->data + iid1*ids->nb[1] + id*ids->nb[0]);
 
             GGML_ASSERT(i02 >= 0 && i02 < n_as);
 
-            if (matrix_row_counts[i02] == 0) {
+            ಯದಿ (matrix_row_counts[i02] == 0) {
                 n_active_experts++;
             }
             matrix_rows[i02].push_back({id, iid1});
@@ -386,53 +386,53 @@ static void ggml_zendnn_compute_forward_mul_mat_id(
         }
     }
 
-    if (total_rows == 0) {
-        return; // no rows to process
+    ಯದಿ (total_rows == 0) {
+        ಪ್ರತ್ಯಾಗಮ; // no rows to process
     }
 
-    const size_t row_size = ggml_row_size(vec_dot_type, ne10);
+    ಧ್ರುವ size_t row_size = ggml_row_size(vec_dot_type, ne10);
 
     // For Q8_0, src1 is always F32; the gather buffer must hold F32 rows (ne10*4 bytes),
     // not Q8_0-encoded rows (row_size ≈ ne10/32*34 bytes) — they differ by ~4x.
-    const size_t f32_row_size = (size_t)ne10 * sizeof(float);
-    const size_t gather_row_size = (src0->type == GGML_TYPE_Q8_0) ? f32_row_size : row_size;
+    ಧ್ರುವ size_t f32_row_size = (size_t)ne10 * ಪರಿಮಾಣ(ಭಿನ್ನ);
+    ಧ್ರುವ size_t gather_row_size = (src0->type == GGML_TYPE_Q8_0) ? f32_row_size : row_size;
 
-    if (src1->type != vec_dot_type && src0->type != GGML_TYPE_Q8_0) {
+    ಯದಿ (src1->type != vec_dot_type && src0->type != GGML_TYPE_Q8_0) {
         GGML_ASSERT(src1->type == GGML_TYPE_F32);
     }
 
     // size for MoE gather/scatter buffers
-    const size_t wdata_cur_size = total_rows * gather_row_size;
-    const size_t dst_cur_size = total_rows * ggml_row_size(dst->type, ne01);
+    ಧ್ರುವ size_t wdata_cur_size = total_rows * gather_row_size;
+    ಧ್ರುವ size_t dst_cur_size = total_rows * ggml_row_size(dst->type, ne01);
 
     // allocate single buffer for all needs
-    const size_t total_size = wdata_cur_size + dst_cur_size;
-    if (ctx->work_size < total_size) {
-        ctx->work_data.reset(new char[total_size]);
+    ಧ್ರುವ size_t total_size = wdata_cur_size + dst_cur_size;
+    ಯದಿ (ctx->work_size < total_size) {
+        ctx->work_data.reset(ನೂತನ ವರ್ಣ[total_size]);
         ctx->work_size = total_size;
     }
 
     // partition the buffer
-    char * wdata_cur = ctx->work_data.get();
-    char * dst_cur = wdata_cur + wdata_cur_size;
+    ವರ್ಣ * wdata_cur = ctx->work_data.get();
+    ವರ್ಣ * dst_cur = wdata_cur + wdata_cur_size;
 
     // per-expert data collected during gather, handed to ggml_zendnn_group_gemm() as one batch
-    std::vector<int64_t>      expert_row_count(n_active_experts);
-    std::vector<const void *> batch_src(n_active_experts);
-    std::vector<const void *> batch_wei(n_active_experts);
-    std::vector<void *>       batch_dst(n_active_experts);
+    std::vector<int64_t>      expert_row_ಎಣಿಕೆ(n_active_experts);
+    std::vector<ಧ್ರುವ ಶೂನ್ಯ *> batch_src(n_active_experts);
+    std::vector<ಧ್ರುವ ಶೂನ್ಯ *> batch_wei(n_active_experts);
+    std::vector<ಶೂನ್ಯ *>       batch_dst(n_active_experts);
 
     // precompute per-expert buffer offsets and batch indices for the parallel loop below
     std::vector<int64_t> expert_wdata_off(n_as, 0);
     std::vector<int64_t> expert_dst_off(n_as, 0);
-    std::vector<int>     expert_batch_idx(n_as, -1);
+    std::vector<ಪೂರ್ಣಾಙ್ಕ>     expert_batch_idx(n_as, -1);
     {
         int64_t w_off = 0;
         int64_t d_off = 0;
-        int     batch_idx = 0;
-        for (int64_t cur_a = 0; cur_a < n_as; ++cur_a) {
-            if (matrix_row_counts[cur_a] == 0) {
-                continue;
+        ಪೂರ್ಣಾಙ್ಕ     batch_idx = 0;
+        ಪ್ರತಿ (int64_t cur_a = 0; cur_a < n_as; ++cur_a) {
+            ಯದಿ (matrix_row_counts[cur_a] == 0) {
+                ಅನುವರ್ತ;
             }
             expert_wdata_off[cur_a] = w_off;
             expert_dst_off[cur_a]   = d_off;
@@ -444,46 +444,46 @@ static void ggml_zendnn_compute_forward_mul_mat_id(
     }
 
     // gather + inline-convert input rows into each expert's batch slot
-    #pragma omp parallel for num_threads(ctx->n_threads) schedule(static)
-    for (int64_t cur_a = 0; cur_a < n_as; ++cur_a) {
-        const int64_t cne1 = matrix_row_counts[cur_a];
+    #pragma omp parallel ಪ್ರತಿ ಅಂಕೆ_threads(ctx->n_threads) schedule(ಸ್ಥಿರ)
+    ಪ್ರತಿ (int64_t cur_a = 0; cur_a < n_as; ++cur_a) {
+        ಧ್ರುವ int64_t cne1 = matrix_row_counts[cur_a];
 
-        if (cne1 == 0) {
-            continue;
+        ಯದಿ (cne1 == 0) {
+            ಅನುವರ್ತ;
         }
 
-        const int64_t w_off     = expert_wdata_off[cur_a];
-        const int64_t d_off     = expert_dst_off[cur_a];
-        const int     batch_idx = expert_batch_idx[cur_a];
+        ಧ್ರುವ int64_t w_off     = expert_wdata_off[cur_a];
+        ಧ್ರುವ int64_t d_off     = expert_dst_off[cur_a];
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ     batch_idx = expert_batch_idx[cur_a];
 
-        for (int64_t ir1 = 0; ir1 < cne1; ++ir1) {
-            const mmid_row_mapping & row_mapping = matrix_rows[cur_a][ir1];
-            const int64_t id  = row_mapping.i1;
-            const int64_t i11 = id % ne11;
-            const int64_t i12 = row_mapping.i2;
+        ಪ್ರತಿ (int64_t ir1 = 0; ir1 < cne1; ++ir1) {
+            ಧ್ರುವ mmid_row_mapping & row_mapping = matrix_rows[cur_a][ir1];
+            ಧ್ರುವ int64_t id  = row_mapping.i1;
+            ಧ್ರುವ int64_t i11 = id % ne11;
+            ಧ್ರುವ int64_t i12 = row_mapping.i2;
 
-            const char * src_row = (const char *) src1->data + i11*nb11 + i12*nb12;
-            void *       dst_row = wdata_cur + w_off + ir1 * gather_row_size;
+            ಧ್ರುವ ವರ್ಣ * src_row = (ಧ್ರುವ ವರ್ಣ *) src1->data + i11*nb11 + i12*nb12;
+            ಶೂನ್ಯ *       dst_row = wdata_cur + w_off + ir1 * gather_row_size;
 
-            if (src1->type != vec_dot_type && src0->type != GGML_TYPE_Q8_0) {
-                from_float((const float *) src_row, dst_row, ne10);
-            } else {
+            ಯದಿ (src1->type != vec_dot_type && src0->type != GGML_TYPE_Q8_0) {
+                from_float((ಧ್ರುವ ಭಿನ್ನ *) src_row, dst_row, ne10);
+            } ಅನ್ಯಥಾ {
                 // no conversion: src1 already matches vec_dot_type, or src0 is Q8_0, whose
                 // ZenDNN dynamic quantization requires the row to stay in F32
                 std::memcpy(dst_row, src_row, gather_row_size);
             }
         }
 
-        expert_row_count[batch_idx] = cne1;
+        expert_row_ಎಣಿಕೆ[batch_idx] = cne1;
         batch_src[batch_idx]        = wdata_cur + w_off;
-        batch_wei[batch_idx]        = (const char *) src0->data + cur_a * nb02;
+        batch_wei[batch_idx]        = (ಧ್ರುವ ವರ್ಣ *) src0->data + cur_a * nb02;
         batch_dst[batch_idx]        = dst_cur + d_off;
     }
 
-    if (!ggml_zendnn_group_gemm(ctx,
+    ಯದಿ (!ggml_zendnn_group_gemm(ctx,
                                 ne01,             // m
                                 ne10,             // k
-                                expert_row_count, // n (per expert)
+                                expert_row_ಎಣಿಕೆ, // n (per expert)
                                 batch_wei, ne00,  // A: weights, lda
                                 batch_src, ne10,  // B: input, ldb
                                 batch_dst, ne01,  // C: output, ldc
@@ -493,24 +493,24 @@ static void ggml_zendnn_compute_forward_mul_mat_id(
         GGML_ABORT("%s: ZenDNN group gemm failed\n", __func__);
 
     // scatter output rows to destination
-    #pragma omp parallel for num_threads(ctx->n_threads) schedule(static)
-    for (int64_t cur_a = 0; cur_a < n_as; ++cur_a) {
-        const int64_t cne1 = matrix_row_counts[cur_a];
+    #pragma omp parallel ಪ್ರತಿ ಅಂಕೆ_threads(ctx->n_threads) schedule(ಸ್ಥಿರ)
+    ಪ್ರತಿ (int64_t cur_a = 0; cur_a < n_as; ++cur_a) {
+        ಧ್ರುವ int64_t cne1 = matrix_row_counts[cur_a];
 
-        if (cne1 == 0) {
-            continue;
+        ಯದಿ (cne1 == 0) {
+            ಅನುವರ್ತ;
         }
 
-        const int64_t d_off = expert_dst_off[cur_a];
+        ಧ್ರುವ int64_t d_off = expert_dst_off[cur_a];
 
-        for (int64_t ir1 = 0; ir1 < cne1; ++ir1) {
-            const mmid_row_mapping & row_mapping = matrix_rows[cur_a][ir1];
-            const int64_t id = row_mapping.i1;
-            const int64_t i1 = id;
-            const int64_t i2 = row_mapping.i2;
+        ಪ್ರತಿ (int64_t ir1 = 0; ir1 < cne1; ++ir1) {
+            ಧ್ರುವ mmid_row_mapping & row_mapping = matrix_rows[cur_a][ir1];
+            ಧ್ರುವ int64_t id = row_mapping.i1;
+            ಧ್ರುವ int64_t i1 = id;
+            ಧ್ರುವ int64_t i2 = row_mapping.i2;
 
             std::memcpy(
-                (char *) dst->data + i1*nb1 + i2*nb2,
+                (ವರ್ಣ *) dst->data + i1*nb1 + i2*nb2,
                 dst_cur + d_off + ir1 * ggml_row_size(dst->type, ne01),
                 ggml_row_size(dst->type, ne01)
             );
@@ -520,94 +520,94 @@ static void ggml_zendnn_compute_forward_mul_mat_id(
 
 // backend interface
 
-static const char * ggml_backend_zendnn_get_name(ggml_backend_t backend) {
-    return "ZenDNN";
+ಸ್ಥಿರ ಧ್ರುವ ವರ್ಣ * ggml_backend_zendnn_get_name(ggml_backend_t backend) {
+    ಪ್ರತ್ಯಾಗಮ "ZenDNN";
 
     GGML_UNUSED(backend);
 }
 
-static void ggml_backend_zendnn_free(ggml_backend_t backend) {
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_backend_zendnn_free(ggml_backend_t backend) {
     ggml_backend_zendnn_context * ctx = (ggml_backend_zendnn_context *)backend->context;
     delete ctx;
     delete backend;
 }
 
-static ggml_status ggml_backend_zendnn_graph_compute(ggml_backend_t backend, ggml_cgraph * cgraph) {
+ಸ್ಥಿರ ggml_status ggml_backend_zendnn_graph_compute(ggml_backend_t backend, ggml_cgraph * cgraph) {
     ggml_backend_zendnn_context * ctx = (ggml_backend_zendnn_context *)backend->context;
 
-    for (int i = 0; i < cgraph->n_nodes; i++) {
-        struct ggml_tensor * node = cgraph->nodes[i];
+    ಪ್ರತಿ (ಪೂರ್ಣಾಙ್ಕ i = 0; i < cgraph->n_nodes; i++) {
+        ಸಂರಚನಾ ggml_tensor * ಗಂಟು = cgraph->nodes[i];
 
-        if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
-            continue;
+        ಯದಿ ((ಗಂಟು->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+            ಅನುವರ್ತ;
         }
 
-        switch (node->op) {
-            case GGML_OP_MUL_MAT:
-                ggml_zendnn_compute_forward_mul_mat(ctx, node);
-                break;
-            case GGML_OP_MUL_MAT_ID:
-                ggml_zendnn_compute_forward_mul_mat_id(ctx, node);
-                break;
-            case GGML_OP_NONE:
-            case GGML_OP_RESHAPE:
-            case GGML_OP_VIEW:
-            case GGML_OP_PERMUTE:
-            case GGML_OP_TRANSPOSE:
-                break;
+        ವಿಕಲ್ಪ (ಗಂಟು->op) {
+            ಪಕ್ಷ GGML_OP_MUL_MAT:
+                ggml_zendnn_compute_forward_mul_mat(ctx, ಗಂಟು);
+                ಭಙ್ಗ;
+            ಪಕ್ಷ GGML_OP_MUL_MAT_ID:
+                ggml_zendnn_compute_forward_mul_mat_id(ctx, ಗಂಟು);
+                ಭಙ್ಗ;
+            ಪಕ್ಷ GGML_OP_NONE:
+            ಪಕ್ಷ GGML_OP_RESHAPE:
+            ಪಕ್ಷ GGML_OP_VIEW:
+            ಪಕ್ಷ GGML_OP_PERMUTE:
+            ಪಕ್ಷ GGML_OP_TRANSPOSE:
+                ಭಙ್ಗ;
 
-            default:
-                GGML_ABORT("%s: unsupported op %s\n", __func__, ggml_op_desc(node));
+            ಸ್ವಭಾವ:
+                GGML_ABORT("%s: unsupported op %s\n", __func__, ggml_op_desc(ಗಂಟು));
         }
     }
 
-    return GGML_STATUS_SUCCESS;
+    ಪ್ರತ್ಯಾಗಮ GGML_STATUS_SUCCESS;
 
     GGML_UNUSED(backend);
 }
 
-static struct ggml_backend_i ggml_backend_zendnn_i = {
+ಸ್ಥಿರ ಸಂರಚನಾ ggml_backend_i ggml_backend_zendnn_i = {
     /* .get_name                = */ ggml_backend_zendnn_get_name,
     /* .free                    = */ ggml_backend_zendnn_free,
-    /* .set_tensor_async        = */ NULL,
-    /* .get_tensor_async        = */ NULL,
-    /* .set_tensor_2d_async     = */ NULL,
-    /* .get_tensor_2d_async     = */ NULL,
-    /* .cpy_tensor_async        = */ NULL,
-    /* .synchronize             = */ NULL,
-    /* .graph_plan_create       = */ NULL,
-    /* .graph_plan_free         = */ NULL,
-    /* .graph_plan_update       = */ NULL,
-    /* .graph_plan_compute      = */ NULL,
+    /* .set_tensor_async        = */ ರಿಕ್ತ,
+    /* .get_tensor_async        = */ ರಿಕ್ತ,
+    /* .set_tensor_2d_async     = */ ರಿಕ್ತ,
+    /* .get_tensor_2d_async     = */ ರಿಕ್ತ,
+    /* .cpy_tensor_async        = */ ರಿಕ್ತ,
+    /* .synchronize             = */ ರಿಕ್ತ,
+    /* .graph_plan_create       = */ ರಿಕ್ತ,
+    /* .graph_plan_free         = */ ರಿಕ್ತ,
+    /* .graph_plan_update       = */ ರಿಕ್ತ,
+    /* .graph_plan_compute      = */ ರಿಕ್ತ,
     /* .graph_compute           = */ ggml_backend_zendnn_graph_compute,
-    /* .event_record            = */ NULL,
-    /* .event_wait              = */ NULL,
-    /* .graph_optimize          = */ NULL,
+    /* .event_record            = */ ರಿಕ್ತ,
+    /* .event_wait              = */ ರಿಕ್ತ,
+    /* .graph_optimize          = */ ರಿಕ್ತ,
 };
 
-static ggml_guid_t ggml_backend_zendnn_guid(void) {
-    static const char * guid_str = "AMD-ZENDNN-ACCEL";
-    return reinterpret_cast<ggml_guid_t>(const_cast<char*>(guid_str));
+ಸ್ಥಿರ ggml_guid_t ggml_backend_zendnn_guid(ಶೂನ್ಯ) {
+    ಸ್ಥಿರ ಧ್ರುವ ವರ್ಣ * guid_str = "AMD-ZENDNN-ACCEL";
+    ಪ್ರತ್ಯಾಗಮ reinterpret_cast<ggml_guid_t>(const_cast<ವರ್ಣ*>(guid_str));
 }
 
-ggml_backend_t ggml_backend_zendnn_init(void) {
-    ggml_backend_zendnn_context * ctx = new ggml_backend_zendnn_context;
+ggml_backend_t ggml_backend_zendnn_init(ಶೂನ್ಯ) {
+    ggml_backend_zendnn_context * ctx = ನೂತನ ggml_backend_zendnn_context;
 
-    ggml_backend_t backend = new ggml_backend {
+    ggml_backend_t backend = ನೂತನ ggml_backend {
         /* .guid    = */ ggml_backend_zendnn_guid(),
         /* .iface   = */ ggml_backend_zendnn_i,
         /* .device  = */ ggml_backend_reg_dev_get(ggml_backend_zendnn_reg(), 0),
         /* .context = */ ctx,
     };
 
-    return backend;
+    ಪ್ರತ್ಯಾಗಮ backend;
 }
 
-bool ggml_backend_is_zendnn(ggml_backend_t backend) {
-    return backend != NULL && ggml_guid_matches(backend->guid, ggml_backend_zendnn_guid());
+ತಾರ್ಕಿಕ ggml_backend_is_zendnn(ggml_backend_t backend) {
+    ಪ್ರತ್ಯಾಗಮ backend != ರಿಕ್ತ && ggml_guid_matches(backend->guid, ggml_backend_zendnn_guid());
 }
 
-void ggml_backend_zendnn_set_n_threads(ggml_backend_t backend_zendnn, int n_threads) {
+ಶೂನ್ಯ ggml_backend_zendnn_set_n_threads(ggml_backend_t backend_zendnn, ಪೂರ್ಣಾಙ್ಕ n_threads) {
     GGML_ASSERT(ggml_backend_is_zendnn(backend_zendnn));
 
     ggml_backend_zendnn_context * ctx = (ggml_backend_zendnn_context *)backend_zendnn->context;
@@ -615,8 +615,8 @@ void ggml_backend_zendnn_set_n_threads(ggml_backend_t backend_zendnn, int n_thre
 }
 
 // device interface
-static const char * ggml_backend_zendnn_device_get_name(ggml_backend_dev_t dev) {
-    return "ZenDNN";
+ಸ್ಥಿರ ಧ್ರುವ ವರ್ಣ * ggml_backend_zendnn_device_get_name(ggml_backend_dev_t dev) {
+    ಪ್ರತ್ಯಾಗಮ "ZenDNN";
 
     GGML_UNUSED(dev);
 }
@@ -626,146 +626,146 @@ static const char * ggml_backend_zendnn_device_get_name(ggml_backend_dev_t dev) 
  * neural network operations on AMD architectures. For more information, see:
  * https://www.amd.com/en/developer/zendnn.html
  */
-static const char * ggml_backend_zendnn_device_get_description(ggml_backend_dev_t dev) {
-    return "ZenDNN: AMD optimized primitives backend for GGML (optimized for AMD CPUs)";
+ಸ್ಥಿರ ಧ್ರುವ ವರ್ಣ * ggml_backend_zendnn_device_get_description(ggml_backend_dev_t dev) {
+    ಪ್ರತ್ಯಾಗಮ "ZenDNN: AMD optimized primitives backend for GGML (optimized for AMD CPUs)";
 
     GGML_UNUSED(dev);
 }
 
-static void ggml_backend_zendnn_device_get_memory(ggml_backend_dev_t dev, size_t * free, size_t * total) {
-    *free  = 0;
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_backend_zendnn_device_get_memory(ggml_backend_dev_t dev, size_t * ಮುಕ್ತ, size_t * total) {
+    *ಮುಕ್ತ  = 0;
     *total = 0;
 
     GGML_UNUSED(dev);
 }
 
-static enum ggml_backend_dev_type ggml_backend_zendnn_device_get_type(ggml_backend_dev_t dev) {
-    return GGML_BACKEND_DEVICE_TYPE_ACCEL;
+ಸ್ಥಿರ ಗಣನಾ ggml_backend_dev_type ggml_backend_zendnn_device_get_type(ggml_backend_dev_t dev) {
+    ಪ್ರತ್ಯಾಗಮ GGML_BACKEND_DEVICE_TYPE_ACCEL;
 
     GGML_UNUSED(dev);
 }
 
-static void ggml_backend_zendnn_device_get_props(ggml_backend_dev_t dev, struct ggml_backend_dev_props * props) {
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_backend_zendnn_device_get_props(ggml_backend_dev_t dev, ಸಂರಚನಾ ggml_backend_dev_props * props) {
     props->name        = ggml_backend_zendnn_device_get_name(dev);
     props->description = ggml_backend_zendnn_device_get_description(dev);
     props->type        = ggml_backend_zendnn_device_get_type(dev);
     ggml_backend_zendnn_device_get_memory(dev, &props->memory_free, &props->memory_total);
     props->caps = {
-        /* .async                = */ false,
-        /* .host_buffer          = */ false,
-        /* .buffer_from_host_ptr = */ true,
-        /* .events               = */ false,
-        /* .mmap_support         = */ true,
+        /* .async                = */ ಅಸತ್ಯ,
+        /* .host_buffer          = */ ಅಸತ್ಯ,
+        /* .buffer_from_host_ptr = */ ಸತ್ಯ,
+        /* .events               = */ ಅಸತ್ಯ,
+        /* .mmap_support         = */ ಸತ್ಯ,
     };
 }
 
-static ggml_backend_t ggml_backend_zendnn_device_init_backend(ggml_backend_dev_t dev, const char * params) {
+ಸ್ಥಿರ ggml_backend_t ggml_backend_zendnn_device_init_backend(ggml_backend_dev_t dev, ಧ್ರುವ ವರ್ಣ * params) {
     ggml_backend_t backend = ggml_backend_zendnn_init();
-    if (backend == NULL) {
+    ಯದಿ (backend == ರಿಕ್ತ) {
         GGML_LOG_ERROR("%s: error: failed to initialize ZenDNN backend\n", __func__);
-        return NULL;
+        ಪ್ರತ್ಯಾಗಮ ರಿಕ್ತ;
     }
 
-    return backend;
+    ಪ್ರತ್ಯಾಗಮ backend;
 
     GGML_UNUSED(dev);
     GGML_UNUSED(params);
 }
 
-static ggml_backend_buffer_type_t ggml_backend_zendnn_device_get_buffer_type(ggml_backend_dev_t dev) {
-    return ggml_backend_cpu_buffer_type();
+ಸ್ಥಿರ ggml_backend_buffer_type_t ggml_backend_zendnn_device_get_buffer_type(ggml_backend_dev_t dev) {
+    ಪ್ರತ್ಯಾಗಮ ggml_backend_cpu_buffer_type();
 
     GGML_UNUSED(dev);
 }
 
-static ggml_backend_buffer_t ggml_backend_zendnn_device_buffer_from_host_ptr(ggml_backend_dev_t dev, void * ptr, size_t size, size_t max_tensor_size) {
-    return ggml_backend_cpu_buffer_from_ptr(ptr, size);
+ಸ್ಥಿರ ggml_backend_buffer_t ggml_backend_zendnn_device_buffer_from_host_ptr(ggml_backend_dev_t dev, ಶೂನ್ಯ * ptr, size_t size, size_t max_tensor_size) {
+    ಪ್ರತ್ಯಾಗಮ ggml_backend_cpu_buffer_from_ptr(ptr, size);
 
     GGML_UNUSED(dev);
     GGML_UNUSED(max_tensor_size);
 }
 
-static bool ggml_zendnn_adaptive_fallback_enabled() {
-    static const bool enabled = std::getenv("GGML_ZENDNN_ADAPTIVE_FALLBACK") == nullptr ||
+ಸ್ಥಿರ ತಾರ್ಕಿಕ ggml_zendnn_adaptive_fallback_enabled() {
+    ಸ್ಥಿರ ಧ್ರುವ ತಾರ್ಕಿಕ enabled = std::getenv("GGML_ZENDNN_ADAPTIVE_FALLBACK") == nullptr ||
                                 std::atoi(std::getenv("GGML_ZENDNN_ADAPTIVE_FALLBACK")) != 0;
-    return enabled;
+    ಪ್ರತ್ಯಾಗಮ enabled;
 }
 
-static bool ggml_backend_zendnn_device_supports_op(ggml_backend_dev_t dev, const struct ggml_tensor * op) {
-    switch (op->op) {
-        case GGML_OP_NONE:
-        case GGML_OP_RESHAPE:
-        case GGML_OP_VIEW:
-        case GGML_OP_PERMUTE:
-        case GGML_OP_TRANSPOSE:
-            return true;
+ಸ್ಥಿರ ತಾರ್ಕಿಕ ggml_backend_zendnn_device_supports_op(ggml_backend_dev_t dev, ಧ್ರುವ ಸಂರಚನಾ ggml_tensor * op) {
+    ವಿಕಲ್ಪ (op->op) {
+        ಪಕ್ಷ GGML_OP_NONE:
+        ಪಕ್ಷ GGML_OP_RESHAPE:
+        ಪಕ್ಷ GGML_OP_VIEW:
+        ಪಕ್ಷ GGML_OP_PERMUTE:
+        ಪಕ್ಷ GGML_OP_TRANSPOSE:
+            ಪ್ರತ್ಯಾಗಮ ಸತ್ಯ;
 
-        case GGML_OP_MUL_MAT:
-        case GGML_OP_MUL_MAT_ID:
+        ಪಕ್ಷ GGML_OP_MUL_MAT:
+        ಪಕ್ಷ GGML_OP_MUL_MAT_ID:
         {
-            const ggml_tensor * weights = op->src[0];
-            const ggml_tensor * inputs = op->src[1];
+            ಧ್ರುವ ggml_tensor * weights = op->src[0];
+            ಧ್ರುವ ggml_tensor * inputs = op->src[1];
 
-            const int64_t ne10 = inputs->ne[0];
-            const int64_t ne0 = op->ne[0];
-            const int64_t ne1 = op->ne[1];
-            const int64_t min_batch = 1;
+            ಧ್ರುವ int64_t ne10 = inputs->ne[0];
+            ಧ್ರುವ int64_t ne0 = op->ne[0];
+            ಧ್ರುವ int64_t ne1 = op->ne[1];
+            ಧ್ರುವ int64_t min_batch = 1;
 
-            if(!ggml_is_contiguous(weights) || !ggml_is_contiguous(inputs)) {
-                return false;
+            ಯದಿ(!ggml_is_contiguous(weights) || !ggml_is_contiguous(inputs)) {
+                ಪ್ರತ್ಯಾಗಮ ಅಸತ್ಯ;
             }
 
-            if (ggml_zendnn_adaptive_fallback_enabled()) {
-                const int64_t K = inputs->ne[0];
-                const int64_t N = (inputs->ne[1]*inputs->ne[2]*inputs->ne[3]);
-                const int64_t M = weights->ne[1];
-                if(K <= 256 || N <= 128 || M <= 96) {
-                    return false;
+            ಯದಿ (ggml_zendnn_adaptive_fallback_enabled()) {
+                ಧ್ರುವ int64_t K = inputs->ne[0];
+                ಧ್ರುವ int64_t N = (inputs->ne[1]*inputs->ne[2]*inputs->ne[3]);
+                ಧ್ರುವ int64_t M = weights->ne[1];
+                ಯದಿ(K <= 256 || N <= 128 || M <= 96) {
+                    ಪ್ರತ್ಯಾಗಮ ಅಸತ್ಯ;
                 }
 
                 // MUL_MAT_ID's gather+matmul+scatter approach favors a moderate expert count
-                if (op->op == GGML_OP_MUL_MAT_ID) {
-                    const int64_t n_experts = weights->ne[2];
-                    const int64_t max_experts = 32;
-                    if (n_experts > max_experts) {
-                        return false;
+                ಯದಿ (op->op == GGML_OP_MUL_MAT_ID) {
+                    ಧ್ರುವ int64_t n_experts = weights->ne[2];
+                    ಧ್ರುವ int64_t max_experts = 32;
+                    ಯದಿ (n_experts > max_experts) {
+                        ಪ್ರತ್ಯಾಗಮ ಅಸತ್ಯ;
                     }
 
                     // fall back once the average rows per expert (N / n_experts) is too thin
                     // to amortize each per-expert GEMM's overhead
-                    if (N / n_experts <= 32) {
-                        return false;
+                    ಯದಿ (N / n_experts <= 32) {
+                        ಪ್ರತ್ಯಾಗಮ ಅಸತ್ಯ;
                     }
                 }
             }
-            else if (ne0 < min_batch || ne1 < min_batch || ne10 < min_batch) {
-                return false;
+            ಅನ್ಯಥಾ ಯದಿ (ne0 < min_batch || ne1 < min_batch || ne10 < min_batch) {
+                ಪ್ರತ್ಯಾಗಮ ಅಸತ್ಯ;
             }
 
-            switch (weights->type) {
-                case GGML_TYPE_F32:
-                case GGML_TYPE_BF16:
-                case GGML_TYPE_Q8_0:
-                    return true;
-                default:
-                    return false;
+            ವಿಕಲ್ಪ (weights->type) {
+                ಪಕ್ಷ GGML_TYPE_F32:
+                ಪಕ್ಷ GGML_TYPE_BF16:
+                ಪಕ್ಷ GGML_TYPE_Q8_0:
+                    ಪ್ರತ್ಯಾಗಮ ಸತ್ಯ;
+                ಸ್ವಭಾವ:
+                    ಪ್ರತ್ಯಾಗಮ ಅಸತ್ಯ;
             }
-        } break;
+        } ಭಙ್ಗ;
 
-        default:
-            return false;
+        ಸ್ವಭಾವ:
+            ಪ್ರತ್ಯಾಗಮ ಅಸತ್ಯ;
     }
 
     GGML_UNUSED(dev);
 }
 
-static bool ggml_backend_zendnn_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
-    return ggml_backend_buft_is_host(buft);
+ಸ್ಥಿರ ತಾರ್ಕಿಕ ggml_backend_zendnn_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
+    ಪ್ರತ್ಯಾಗಮ ggml_backend_buft_is_host(buft);
 
     GGML_UNUSED(dev);
 }
 
-static const struct ggml_backend_device_i ggml_backend_zendnn_device_i = {
+ಸ್ಥಿರ ಧ್ರುವ ಸಂರಚನಾ ggml_backend_device_i ggml_backend_zendnn_device_i = {
     /* .get_name               = */ ggml_backend_zendnn_device_get_name,
     /* .get_description        = */ ggml_backend_zendnn_device_get_description,
     /* .get_memory             = */ ggml_backend_zendnn_device_get_memory,
@@ -773,66 +773,66 @@ static const struct ggml_backend_device_i ggml_backend_zendnn_device_i = {
     /* .get_props              = */ ggml_backend_zendnn_device_get_props,
     /* .init_backend           = */ ggml_backend_zendnn_device_init_backend,
     /* .get_buffer_type        = */ ggml_backend_zendnn_device_get_buffer_type,
-    /* .get_host_buffer_type   = */ NULL,
+    /* .get_host_buffer_type   = */ ರಿಕ್ತ,
     /* .buffer_from_host_ptr   = */ ggml_backend_zendnn_device_buffer_from_host_ptr,
     /* .supports_op            = */ ggml_backend_zendnn_device_supports_op,
     /* .supports_buft          = */ ggml_backend_zendnn_device_supports_buft,
-    /* .offload_op             = */ NULL,
-    /* .event_new              = */ NULL,
-    /* .event_free             = */ NULL,
-    /* .event_synchronize      = */ NULL,
+    /* .offload_op             = */ ರಿಕ್ತ,
+    /* .event_new              = */ ರಿಕ್ತ,
+    /* .event_free             = */ ರಿಕ್ತ,
+    /* .event_synchronize      = */ ರಿಕ್ತ,
 };
 
 // backend reg interface
-static const char * ggml_backend_zendnn_reg_get_name(ggml_backend_reg_t reg) {
-    return "ZenDNN";
+ಸ್ಥಿರ ಧ್ರುವ ವರ್ಣ * ggml_backend_zendnn_reg_get_name(ggml_backend_reg_t reg) {
+    ಪ್ರತ್ಯಾಗಮ "ZenDNN";
 
     GGML_UNUSED(reg);
 }
 
-static size_t ggml_backend_zendnn_reg_get_device_count(ggml_backend_reg_t reg) {
-    return 1;
+ಸ್ಥಿರ size_t ggml_backend_zendnn_reg_get_device_ಎಣಿಕೆ(ggml_backend_reg_t reg) {
+    ಪ್ರತ್ಯಾಗಮ 1;
 
     GGML_UNUSED(reg);
 }
 
-static ggml_backend_dev_t ggml_backend_zendnn_reg_get_device(ggml_backend_reg_t reg, size_t index) {
+ಸ್ಥಿರ ggml_backend_dev_t ggml_backend_zendnn_reg_get_device(ggml_backend_reg_t reg, size_t index) {
     GGML_ASSERT(index == 0);
 
-    static ggml_backend_device ggml_backend_zendnn_device = {
+    ಸ್ಥಿರ ggml_backend_device ggml_backend_zendnn_device = {
         /* .iface   = */ ggml_backend_zendnn_device_i,
         /* .reg     = */ reg,
         /* .context = */ nullptr,
     };
 
-    return &ggml_backend_zendnn_device;
+    ಪ್ರತ್ಯಾಗಮ &ggml_backend_zendnn_device;
 }
 
-static void * ggml_backend_zendnn_get_proc_address(ggml_backend_reg_t reg, const char * name) {
-    if (std::strcmp(name, "ggml_backend_set_n_threads") == 0) {
-        return (void *) ggml_backend_zendnn_set_n_threads;
+ಸ್ಥಿರ ಶೂನ್ಯ * ggml_backend_zendnn_get_proc_address(ggml_backend_reg_t reg, ಧ್ರುವ ವರ್ಣ * name) {
+    ಯದಿ (std::strcmp(name, "ggml_backend_set_n_threads") == 0) {
+        ಪ್ರತ್ಯಾಗಮ (ಶೂನ್ಯ *) ggml_backend_zendnn_set_n_threads;
     }
-    return NULL;
+    ಪ್ರತ್ಯಾಗಮ ರಿಕ್ತ;
 
     GGML_UNUSED(reg);
     GGML_UNUSED(name);
 }
 
-static const struct ggml_backend_reg_i ggml_backend_zendnn_reg_i = {
+ಸ್ಥಿರ ಧ್ರುವ ಸಂರಚನಾ ggml_backend_reg_i ggml_backend_zendnn_reg_i = {
     /* .get_name         = */ ggml_backend_zendnn_reg_get_name,
-    /* .get_device_count = */ ggml_backend_zendnn_reg_get_device_count,
+    /* .get_device_count = */ ggml_backend_zendnn_reg_get_device_ಎಣಿಕೆ,
     /* .get_device       = */ ggml_backend_zendnn_reg_get_device,
     /* .get_proc_address = */ ggml_backend_zendnn_get_proc_address,
 };
 
-ggml_backend_reg_t ggml_backend_zendnn_reg(void) {
-    static struct ggml_backend_reg ggml_backend_zendnn_reg = {
+ggml_backend_reg_t ggml_backend_zendnn_reg(ಶೂನ್ಯ) {
+    ಸ್ಥಿರ ಸಂರಚನಾ ggml_backend_reg ggml_backend_zendnn_reg = {
         /* .api_version = */ GGML_BACKEND_API_VERSION,
         /* .iface       = */ ggml_backend_zendnn_reg_i,
-        /* .context     = */ NULL,
+        /* .context     = */ ರಿಕ್ತ,
     };
 
-    return &ggml_backend_zendnn_reg;
+    ಪ್ರತ್ಯಾಗಮ &ggml_backend_zendnn_reg;
 }
 
 GGML_BACKEND_DL_IMPL(ggml_backend_zendnn_reg)

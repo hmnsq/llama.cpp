@@ -1,130 +1,130 @@
 #ifndef HVX_SCALE_H
 #define HVX_SCALE_H
 
-#include <assert.h>
-#include <stddef.h>
-#include <stdint.h>
+#ಅನ್ತರ್ಭಾವ <assert.h>
+#ಅನ್ತರ್ಭಾವ <stddef.h>
+#ಅನ್ತರ್ಭಾವ <stdint.h>
 
-#include "hvx-base.h"
+#ಅನ್ತರ್ಭಾವ "hvx-base.h"
 
 #define hvx_scale_f32_loop_body(dst_type, src_type, vec_store)                       \
-    do {                                                                             \
+    ಕುರು {                                                                             \
         dst_type * restrict vdst = (dst_type *) dst;                                 \
         src_type * restrict vsrc = (src_type *) src;                                 \
                                                                                      \
         HVX_Vector vs = hvx_vec_splat_f32(scale);                                    \
                                                                                      \
-        const uint32_t elem_size = sizeof(float);                                    \
-        const uint32_t epv = 128 / elem_size;                                        \
-        const uint32_t nvec = n / epv;                                               \
-        const uint32_t nloe = n % epv;                                               \
+        ಧ್ರುವ uint32_t elem_size = ಪರಿಮಾಣ(ಭಿನ್ನ);                                    \
+        ಧ್ರುವ uint32_t epv = 128 / elem_size;                                        \
+        ಧ್ರುವ uint32_t nvec = n / epv;                                               \
+        ಧ್ರುವ uint32_t nloe = n % epv;                                               \
                                                                                      \
         uint32_t i = 0;                                                              \
                                                                                      \
         _Pragma("unroll(4)")                                                         \
-        for (; i < nvec; ++i) {                                                      \
+        ಪ್ರತಿ (; i < nvec; ++i) {                                                      \
             HVX_Vector v = Q6_Vqf32_vmpy_VsfVsf(vsrc[i], vs);                        \
             vdst[i]      = Q6_Vsf_equals_Vqf32(v);                                   \
         }                                                                            \
-        if (nloe) {                                                                  \
+        ಯದಿ (nloe) {                                                                  \
             HVX_Vector v = Q6_Vqf32_vmpy_VsfVsf(vsrc[i], vs);                        \
-            vec_store((void *) &vdst[i], nloe * elem_size, Q6_Vsf_equals_Vqf32(v));  \
+            vec_store((ಶೂನ್ಯ *) &vdst[i], nloe * elem_size, Q6_Vsf_equals_Vqf32(v));  \
         }                                                                            \
-    } while(0)
+    } ಯಾವತ್(0)
 
-static inline void hvx_scale_f32_aa(uint8_t * restrict dst, const uint8_t * restrict src, const int n, const float scale) {
-    assert((size_t) dst % 128 == 0);
-    assert((size_t) src % 128 == 0);
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ ಶೂನ್ಯ hvx_scale_f32_aa(uint8_t * restrict dst, ಧ್ರುವ uint8_t * restrict src, ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ n, ಧ್ರುವ ಭಿನ್ನ scale) {
+    ಪ್ರತಿಜ್ಞಾ((size_t) dst % 128 == 0);
+    ಪ್ರತಿಜ್ಞಾ((size_t) src % 128 == 0);
     hvx_scale_f32_loop_body(HVX_Vector, HVX_Vector, hvx_vec_store_a);
 }
 
-static inline void hvx_scale_f32_au(uint8_t * restrict dst, const uint8_t * restrict src, const int n, const float scale) {
-    assert((size_t) dst % 128 == 0);
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ ಶೂನ್ಯ hvx_scale_f32_au(uint8_t * restrict dst, ಧ್ರುವ uint8_t * restrict src, ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ n, ಧ್ರುವ ಭಿನ್ನ scale) {
+    ಪ್ರತಿಜ್ಞಾ((size_t) dst % 128 == 0);
     hvx_scale_f32_loop_body(HVX_Vector, HVX_UVector, hvx_vec_store_a);
 }
 
-static inline void hvx_scale_f32_ua(uint8_t * restrict dst, const uint8_t * restrict src, const int n, const float scale) {
-    assert((size_t) src % 128 == 0);
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ ಶೂನ್ಯ hvx_scale_f32_ua(uint8_t * restrict dst, ಧ್ರುವ uint8_t * restrict src, ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ n, ಧ್ರುವ ಭಿನ್ನ scale) {
+    ಪ್ರತಿಜ್ಞಾ((size_t) src % 128 == 0);
     hvx_scale_f32_loop_body(HVX_UVector, HVX_Vector, hvx_vec_store_u);
 }
 
-static inline void hvx_scale_f32_uu(uint8_t * restrict dst, const uint8_t * restrict src, const int n, const float scale) {
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ ಶೂನ್ಯ hvx_scale_f32_uu(uint8_t * restrict dst, ಧ್ರುವ uint8_t * restrict src, ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ n, ಧ್ರುವ ಭಿನ್ನ scale) {
     hvx_scale_f32_loop_body(HVX_UVector, HVX_UVector, hvx_vec_store_u);
 }
 
-static inline void hvx_scale_f32(uint8_t * restrict dst, const uint8_t * restrict src, const int n, const float scale) {
-    if (((size_t) dst & 127) == 0) {
-        if (((size_t) src & 127) == 0) {
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ ಶೂನ್ಯ hvx_scale_f32(uint8_t * restrict dst, ಧ್ರುವ uint8_t * restrict src, ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ n, ಧ್ರುವ ಭಿನ್ನ scale) {
+    ಯದಿ (((size_t) dst & 127) == 0) {
+        ಯದಿ (((size_t) src & 127) == 0) {
             hvx_scale_f32_aa(dst, src, n, scale);
-        } else {
+        } ಅನ್ಯಥಾ {
             hvx_scale_f32_au(dst, src, n, scale);
         }
-    } else {
-        if (((size_t) src & 127) == 0) {
+    } ಅನ್ಯಥಾ {
+        ಯದಿ (((size_t) src & 127) == 0) {
             hvx_scale_f32_ua(dst, src, n, scale);
-        } else {
+        } ಅನ್ಯಥಾ {
             hvx_scale_f32_uu(dst, src, n, scale);
         }
     }
 }
 
 #define hvx_scale_offset_f32_loop_body(dst_type, src_type, vec_store)                     \
-    do {                                                                                  \
+    ಕುರು {                                                                                  \
         dst_type * restrict vdst = (dst_type *) dst;                                      \
         src_type * restrict vsrc = (src_type *) src;                                      \
                                                                                           \
         HVX_Vector vs = hvx_vec_splat_f32(scale);                                         \
         HVX_Vector vo = hvx_vec_splat_f32(offset);                                        \
                                                                                           \
-        const uint32_t elem_size = sizeof(float);                                         \
-        const uint32_t epv = 128 / elem_size;                                             \
-        const uint32_t nvec = n / epv;                                                    \
-        const uint32_t nloe = n % epv;                                                    \
+        ಧ್ರುವ uint32_t elem_size = ಪರಿಮಾಣ(ಭಿನ್ನ);                                         \
+        ಧ್ರುವ uint32_t epv = 128 / elem_size;                                             \
+        ಧ್ರುವ uint32_t nvec = n / epv;                                                    \
+        ಧ್ರುವ uint32_t nloe = n % epv;                                                    \
                                                                                           \
         uint32_t i = 0;                                                                   \
                                                                                           \
         _Pragma("unroll(4)")                                                              \
-        for (; i < nvec; ++i) {                                                           \
+        ಪ್ರತಿ (; i < nvec; ++i) {                                                           \
             HVX_Vector v = Q6_Vqf32_vadd_Vqf32Vsf(Q6_Vqf32_vmpy_VsfVsf(vsrc[i], vs), vo); \
             vdst[i] = Q6_Vsf_equals_Vqf32(v);                                             \
         }                                                                                 \
-        if (nloe) {                                                                       \
+        ಯದಿ (nloe) {                                                                       \
             HVX_Vector v = Q6_Vqf32_vadd_Vqf32Vsf(Q6_Vqf32_vmpy_VsfVsf(vsrc[i], vs), vo); \
-            vec_store((void *) &vdst[i], nloe * elem_size, Q6_Vsf_equals_Vqf32(v));       \
+            vec_store((ಶೂನ್ಯ *) &vdst[i], nloe * elem_size, Q6_Vsf_equals_Vqf32(v));       \
         }                                                                                 \
-    } while(0)
+    } ಯಾವತ್(0)
 
-static inline void hvx_scale_offset_f32_aa(uint8_t * restrict dst, const uint8_t * restrict src, const int n, const float scale, const float offset) {
-    assert((size_t) dst % 128 == 0);
-    assert((size_t) src % 128 == 0);
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ ಶೂನ್ಯ hvx_scale_offset_f32_aa(uint8_t * restrict dst, ಧ್ರುವ uint8_t * restrict src, ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ n, ಧ್ರುವ ಭಿನ್ನ scale, ಧ್ರುವ ಭಿನ್ನ offset) {
+    ಪ್ರತಿಜ್ಞಾ((size_t) dst % 128 == 0);
+    ಪ್ರತಿಜ್ಞಾ((size_t) src % 128 == 0);
     hvx_scale_offset_f32_loop_body(HVX_Vector, HVX_Vector, hvx_vec_store_a);
 }
 
-static inline void hvx_scale_offset_f32_au(uint8_t * restrict dst, const uint8_t * restrict src, const int n, const float scale, const float offset) {
-    assert((size_t) dst % 128 == 0);
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ ಶೂನ್ಯ hvx_scale_offset_f32_au(uint8_t * restrict dst, ಧ್ರುವ uint8_t * restrict src, ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ n, ಧ್ರುವ ಭಿನ್ನ scale, ಧ್ರುವ ಭಿನ್ನ offset) {
+    ಪ್ರತಿಜ್ಞಾ((size_t) dst % 128 == 0);
     hvx_scale_offset_f32_loop_body(HVX_Vector, HVX_UVector, hvx_vec_store_a);
 }
 
-static inline void hvx_scale_offset_f32_ua(uint8_t * restrict dst, const uint8_t * restrict src, const int n, const float scale, const float offset) {
-    assert((size_t) src % 128 == 0);
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ ಶೂನ್ಯ hvx_scale_offset_f32_ua(uint8_t * restrict dst, ಧ್ರುವ uint8_t * restrict src, ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ n, ಧ್ರುವ ಭಿನ್ನ scale, ಧ್ರುವ ಭಿನ್ನ offset) {
+    ಪ್ರತಿಜ್ಞಾ((size_t) src % 128 == 0);
     hvx_scale_offset_f32_loop_body(HVX_UVector, HVX_Vector, hvx_vec_store_u);
 }
 
-static inline void hvx_scale_offset_f32_uu(uint8_t * restrict dst, const uint8_t * restrict src, const int n, const float scale, const float offset) {
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ ಶೂನ್ಯ hvx_scale_offset_f32_uu(uint8_t * restrict dst, ಧ್ರುವ uint8_t * restrict src, ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ n, ಧ್ರುವ ಭಿನ್ನ scale, ಧ್ರುವ ಭಿನ್ನ offset) {
     hvx_scale_offset_f32_loop_body(HVX_UVector, HVX_UVector, hvx_vec_store_u);
 }
 
-static inline void hvx_scale_offset_f32(uint8_t * restrict dst, const uint8_t * restrict src, const int n, const float scale, const float offset) {
-    if (((size_t) dst & 127) == 0) {
-        if (((size_t) src & 127) == 0) {
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ ಶೂನ್ಯ hvx_scale_offset_f32(uint8_t * restrict dst, ಧ್ರುವ uint8_t * restrict src, ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ n, ಧ್ರುವ ಭಿನ್ನ scale, ಧ್ರುವ ಭಿನ್ನ offset) {
+    ಯದಿ (((size_t) dst & 127) == 0) {
+        ಯದಿ (((size_t) src & 127) == 0) {
             hvx_scale_offset_f32_aa(dst, src, n, scale, offset);
-        } else {
+        } ಅನ್ಯಥಾ {
             hvx_scale_offset_f32_au(dst, src, n, scale, offset);
         }
-    } else {
-        if (((size_t) src & 127) == 0) {
+    } ಅನ್ಯಥಾ {
+        ಯದಿ (((size_t) src & 127) == 0) {
             hvx_scale_offset_f32_ua(dst, src, n, scale, offset);
-        } else {
+        } ಅನ್ಯಥಾ {
             hvx_scale_offset_f32_uu(dst, src, n, scale, offset);
         }
     }
@@ -132,65 +132,65 @@ static inline void hvx_scale_offset_f32(uint8_t * restrict dst, const uint8_t * 
 
 // Scale+offset computed by promoting f16 -> f32, then narrowing the result back to f16.
 #define hvx_scale_offset_f16_loop_body(dst_type, src_type, vec_store)                                                \
-    do {                                                                                                             \
+    ಕುರು {                                                                                                             \
         dst_type * restrict vdst = (dst_type *) dst;                                                                 \
         src_type * restrict vsrc = (src_type *) src;                                                                 \
                                                                                                                      \
         HVX_Vector vs = hvx_vec_splat_f32(scale);                                                                    \
         HVX_Vector vo = hvx_vec_splat_f32(offset);                                                                   \
                                                                                                                      \
-        const uint32_t nvec = n / VLEN_FP16;                                                                         \
-        const uint32_t nloe = n % VLEN_FP16;                                                                         \
+        ಧ್ರುವ uint32_t nvec = n / VLEN_FP16;                                                                         \
+        ಧ್ರುವ uint32_t nloe = n % VLEN_FP16;                                                                         \
                                                                                                                      \
         uint32_t i = 0;                                                                                              \
                                                                                                                      \
         _Pragma("unroll(4)")                                                                                         \
-        for (; i < nvec; ++i) {                                                                                      \
+        ಪ್ರತಿ (; i < nvec; ++i) {                                                                                      \
             HVX_VectorPair p = hvx_vec_f16_to_f32(vsrc[i]);                                                          \
             HVX_Vector r0 = Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_Vqf32Vsf(Q6_Vqf32_vmpy_VsfVsf(Q6_V_lo_W(p), vs), vo)); \
             HVX_Vector r1 = Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_Vqf32Vsf(Q6_Vqf32_vmpy_VsfVsf(Q6_V_hi_W(p), vs), vo)); \
             vdst[i] = hvx_vec_f32_to_f16(r0, r1);                                                                    \
         }                                                                                                            \
-        if (nloe) {                                                                                                  \
+        ಯದಿ (nloe) {                                                                                                  \
             HVX_VectorPair p = hvx_vec_f16_to_f32(vsrc[i]);                                                          \
             HVX_Vector r0 = Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_Vqf32Vsf(Q6_Vqf32_vmpy_VsfVsf(Q6_V_lo_W(p), vs), vo)); \
             HVX_Vector r1 = Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_Vqf32Vsf(Q6_Vqf32_vmpy_VsfVsf(Q6_V_hi_W(p), vs), vo)); \
             HVX_Vector v = hvx_vec_f32_to_f16(r0, r1);                                                               \
-            vec_store((void *) &vdst[i], nloe * SIZEOF_FP16, v);                                                     \
+            vec_store((ಶೂನ್ಯ *) &vdst[i], nloe * SIZEOF_FP16, v);                                                     \
         }                                                                                                            \
-    } while(0)
+    } ಯಾವತ್(0)
 
-static inline void hvx_scale_offset_f16_aa(uint8_t * restrict dst, const uint8_t * restrict src, const int n, const float scale, const float offset) {
-    assert((size_t) dst % 128 == 0);
-    assert((size_t) src % 128 == 0);
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ ಶೂನ್ಯ hvx_scale_offset_f16_aa(uint8_t * restrict dst, ಧ್ರುವ uint8_t * restrict src, ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ n, ಧ್ರುವ ಭಿನ್ನ scale, ಧ್ರುವ ಭಿನ್ನ offset) {
+    ಪ್ರತಿಜ್ಞಾ((size_t) dst % 128 == 0);
+    ಪ್ರತಿಜ್ಞಾ((size_t) src % 128 == 0);
     hvx_scale_offset_f16_loop_body(HVX_Vector, HVX_Vector, hvx_vec_store_a);
 }
 
-static inline void hvx_scale_offset_f16_au(uint8_t * restrict dst, const uint8_t * restrict src, const int n, const float scale, const float offset) {
-    assert((size_t) dst % 128 == 0);
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ ಶೂನ್ಯ hvx_scale_offset_f16_au(uint8_t * restrict dst, ಧ್ರುವ uint8_t * restrict src, ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ n, ಧ್ರುವ ಭಿನ್ನ scale, ಧ್ರುವ ಭಿನ್ನ offset) {
+    ಪ್ರತಿಜ್ಞಾ((size_t) dst % 128 == 0);
     hvx_scale_offset_f16_loop_body(HVX_Vector, HVX_UVector, hvx_vec_store_a);
 }
 
-static inline void hvx_scale_offset_f16_ua(uint8_t * restrict dst, const uint8_t * restrict src, const int n, const float scale, const float offset) {
-    assert((size_t) src % 128 == 0);
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ ಶೂನ್ಯ hvx_scale_offset_f16_ua(uint8_t * restrict dst, ಧ್ರುವ uint8_t * restrict src, ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ n, ಧ್ರುವ ಭಿನ್ನ scale, ಧ್ರುವ ಭಿನ್ನ offset) {
+    ಪ್ರತಿಜ್ಞಾ((size_t) src % 128 == 0);
     hvx_scale_offset_f16_loop_body(HVX_UVector, HVX_Vector, hvx_vec_store_u);
 }
 
-static inline void hvx_scale_offset_f16_uu(uint8_t * restrict dst, const uint8_t * restrict src, const int n, const float scale, const float offset) {
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ ಶೂನ್ಯ hvx_scale_offset_f16_uu(uint8_t * restrict dst, ಧ್ರುವ uint8_t * restrict src, ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ n, ಧ್ರುವ ಭಿನ್ನ scale, ಧ್ರುವ ಭಿನ್ನ offset) {
     hvx_scale_offset_f16_loop_body(HVX_UVector, HVX_UVector, hvx_vec_store_u);
 }
 
-static inline void hvx_scale_offset_f16(uint8_t * restrict dst, const uint8_t * restrict src, const int n, const float scale, const float offset) {
-    if (((size_t) dst & 127) == 0) {
-        if (((size_t) src & 127) == 0) {
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ ಶೂನ್ಯ hvx_scale_offset_f16(uint8_t * restrict dst, ಧ್ರುವ uint8_t * restrict src, ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ n, ಧ್ರುವ ಭಿನ್ನ scale, ಧ್ರುವ ಭಿನ್ನ offset) {
+    ಯದಿ (((size_t) dst & 127) == 0) {
+        ಯದಿ (((size_t) src & 127) == 0) {
             hvx_scale_offset_f16_aa(dst, src, n, scale, offset);
-        } else {
+        } ಅನ್ಯಥಾ {
             hvx_scale_offset_f16_au(dst, src, n, scale, offset);
         }
-    } else {
-        if (((size_t) src & 127) == 0) {
+    } ಅನ್ಯಥಾ {
+        ಯದಿ (((size_t) src & 127) == 0) {
             hvx_scale_offset_f16_ua(dst, src, n, scale, offset);
-        } else {
+        } ಅನ್ಯಥಾ {
             hvx_scale_offset_f16_uu(dst, src, n, scale, offset);
         }
     }

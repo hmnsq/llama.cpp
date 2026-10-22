@@ -2,411 +2,411 @@
 #define HTP_OPNODE_H
 
 #define GGML_COMMON_IMPL_CPP
-#include "ggml-backend-impl.h"
-#include "ggml-common.h"
+#ಅನ್ತರ್ಭಾವ "ggml-backend-impl.h"
+#ಅನ್ತರ್ಭಾವ "ggml-common.h"
 
-#include <algorithm>
-#include <string>
-#include <vector>
-#include <memory>
-#include <stdio.h>
-#include "htp-ops.h"
-#include "htp/matmul-ops.h"
-#include "htp/flash-attn-ops.h"
-#include "htp/unary-ops.h"
-#include "htp/binary-ops.h"
-#include "htp/allreduce-ops.h"
-#include "htp/ssm-conv.h"
-#include "htp/gated-delta-net-ops.h"
-#include "htp/softmax-ops.h"
-#include "htp/argsort-ops.h"
-#include "htp/get-rows-ops.h"
+#ಅನ್ತರ್ಭಾವ <algorithm>
+#ಅನ್ತರ್ಭಾವ <string>
+#ಅನ್ತರ್ಭಾವ <vector>
+#ಅನ್ತರ್ಭಾವ <memory>
+#ಅನ್ತರ್ಭಾವ <stdio.h>
+#ಅನ್ತರ್ಭಾವ "htp-ops.h"
+#ಅನ್ತರ್ಭಾವ "htp/matmul-ops.h"
+#ಅನ್ತರ್ಭಾವ "htp/flash-attn-ops.h"
+#ಅನ್ತರ್ಭಾವ "htp/unary-ops.h"
+#ಅನ್ತರ್ಭಾವ "htp/binary-ops.h"
+#ಅನ್ತರ್ಭಾವ "htp/allreduce-ops.h"
+#ಅನ್ತರ್ಭಾವ "htp/ssm-conv.h"
+#ಅನ್ತರ್ಭಾವ "htp/gated-delta-net-ops.h"
+#ಅನ್ತರ್ಭಾವ "htp/softmax-ops.h"
+#ಅನ್ತರ್ಭಾವ "htp/argsort-ops.h"
+#ಅನ್ತರ್ಭಾವ "htp/get-rows-ops.h"
 
-struct htp_opnode {
-    ggml_tensor * node   { nullptr };
+ಸಂರಚನಾ htp_opnode {
+    ggml_tensor * ಗಂಟು   { nullptr };
     htp_op_code   opcode { HTP_OP_INVALID };
     int32_t       kernel_params[HTP_OP_MAX_KERN_PARAMS] {0};
 
     std::vector<ggml_tensor *>                fused;
     std::vector<std::shared_ptr<ggml_tensor>> dummy;
 
-    std::vector<const ggml_tensor *> inputs;
-    std::vector<const ggml_tensor *> outputs;
+    std::vector<ಧ್ರುವ ggml_tensor *> inputs;
+    std::vector<ಧ್ರುವ ggml_tensor *> outputs;
     std::string                      name;
 
-    int n_active_src(const ggml_tensor * t) const {
-        if (!t) return 0;
-        for (int i = GGML_MAX_SRC - 1; i >= 0; i--) {
-            if (t->src[i]) {
-                return i + 1;
+    ಪೂರ್ಣಾಙ್ಕ n_active_src(ಧ್ರುವ ggml_tensor * t) ಧ್ರುವ {
+        ಯದಿ (!t) ಪ್ರತ್ಯಾಗಮ 0;
+        ಪ್ರತಿ (ಪೂರ್ಣಾಙ್ಕ i = GGML_MAX_SRC - 1; i >= 0; i--) {
+            ಯದಿ (t->src[i]) {
+                ಪ್ರತ್ಯಾಗಮ i + 1;
             }
         }
-        return 0;
+        ಪ್ರತ್ಯಾಗಮ 0;
     }
 
-    void init(ggml_tensor * node) {
-        this->node = node;
-        if (this->node) {
-            if (this->node->op == GGML_OP_MUL_MAT &&
-                ggml_get_op_params_i32(this->node, 1) == GGML_HINT_SRC0_IS_HADAMARD) {
+    ಶೂನ್ಯ init(ggml_tensor * ಗಂಟು) {
+        this->ಗಂಟು = ಗಂಟು;
+        ಯದಿ (this->ಗಂಟು) {
+            ಯದಿ (this->ಗಂಟು->op == GGML_OP_MUL_MAT &&
+                ggml_get_op_params_i32(this->ಗಂಟು, 1) == GGML_HINT_SRC0_IS_HADAMARD) {
                 this->name = "MUL_MAT_HADAMARD";
-                this->inputs.push_back(this->node->src[1]);
-            } else {
-                this->name = ggml_op_desc(this->node);
+                this->inputs.ತಳ್ಳು_back(this->ಗಂಟು->src[1]);
+            } ಅನ್ಯಥಾ {
+                this->name = ggml_op_desc(this->ಗಂಟು);
 
                 // Build inputs (preserving optional nullptrs)
-                int n_inputs = n_active_src(this->node);
+                ಪೂರ್ಣಾಙ್ಕ n_inputs = n_active_src(this->ಗಂಟು);
                 this->inputs.resize(n_inputs, nullptr);
-                for (int i = 0; i < n_inputs; i++) {
-                    this->inputs[i] = this->node->src[i];
+                ಪ್ರತಿ (ಪೂರ್ಣಾಙ್ಕ i = 0; i < n_inputs; i++) {
+                    this->inputs[i] = this->ಗಂಟು->src[i];
                 }
             }
 
             // Build outputs
-            this->outputs.push_back(this->dst());
+            this->outputs.ತಳ್ಳು_back(this->dst());
         }
     }
 
-    htp_opnode(htp_op_code opcode = HTP_OP_INVALID, ggml_tensor * node = nullptr) : opcode(opcode) {
-        init(node);
+    htp_opnode(htp_op_code opcode = HTP_OP_INVALID, ggml_tensor * ಗಂಟು = nullptr) : opcode(opcode) {
+        init(ಗಂಟು);
     }
 
-    ggml_op             op()   const { return node->op; }
-    const ggml_tensor * src0() const { return node->src[0]; }
-    const ggml_tensor * src1() const { return node->src[1]; }
-    const ggml_tensor * dst()  const { return outputs.empty() ? node : outputs.back(); }
+    ggml_op             op()   ಧ್ರುವ { ಪ್ರತ್ಯಾಗಮ ಗಂಟು->op; }
+    ಧ್ರುವ ggml_tensor * src0() ಧ್ರುವ { ಪ್ರತ್ಯಾಗಮ ಗಂಟು->src[0]; }
+    ಧ್ರುವ ggml_tensor * src1() ಧ್ರುವ { ಪ್ರತ್ಯಾಗಮ ಗಂಟು->src[1]; }
+    ಧ್ರುವ ggml_tensor * dst()  ಧ್ರುವ { ಪ್ರತ್ಯಾಗಮ outputs.empty() ? ಗಂಟು : outputs.back(); }
 
-    ggml_tensor * add_dummy(const ggml_tensor & t) {
-        dummy.push_back(std::make_shared<ggml_tensor>(t));
-        return dummy.back().get();
+    ggml_tensor * add_dummy(ಧ್ರುವ ggml_tensor & t) {
+        dummy.ತಳ್ಳು_back(std::make_shared<ggml_tensor>(t));
+        ಪ್ರತ್ಯಾಗಮ dummy.back().get();
     }
 
-    void add_fused(ggml_tensor * t, bool extra_dst = false) {
-        fused.push_back(t);
+    ಶೂನ್ಯ add_fused(ggml_tensor * t, bool extra_dst = false) {
+        fused.ತಳ್ಳು_back(t);
 
         name += "+";
         name += ggml_op_desc(t);
 
-        if (extra_dst) {
-            outputs.push_back(t);
-        } else {
+        ಯದಿ (extra_dst) {
+            outputs.ತಳ್ಳು_back(t);
+        } ಅನ್ಯಥಾ {
             outputs.clear();
-            outputs.push_back(t);
+            outputs.ತಳ್ಳು_back(t);
         }
 
         // Remove the newly fused intermediate output tensor t from inputs (if it was there)
         inputs.erase(std::remove(inputs.begin(), inputs.end(), t), inputs.end());
 
         // Append new inputs from t, preserving middle nullptrs
-        int n_inputs = n_active_src(t);
-        for (int i = 0; i < n_inputs; i++) {
-            const auto * src = t->src[i];
-            if (!src) {
-                inputs.push_back(nullptr);
-            } else if (src != node &&
+        ಪೂರ್ಣಾಙ್ಕ n_inputs = n_active_src(t);
+        ಪ್ರತಿ (ಪೂರ್ಣಾಙ್ಕ i = 0; i < n_inputs; i++) {
+            ಧ್ರುವ auto * src = t->src[i];
+            ಯದಿ (!src) {
+                inputs.ತಳ್ಳು_back(nullptr);
+            } ಅನ್ಯಥಾ ಯದಿ (src != ಗಂಟು &&
                        std::find(fused.begin(), fused.end(), src) == fused.end() &&
                        std::find(inputs.begin(), inputs.end(), src) == inputs.end()) {
-                inputs.push_back(src);
+                inputs.ತಳ್ಳು_back(src);
             }
         }
     }
 
-    const std::vector<const ggml_tensor *> & get_inputs() const {
-        return inputs;
+    ಧ್ರುವ std::vector<ಧ್ರುವ ggml_tensor *> & get_inputs() ಧ್ರುವ {
+        ಪ್ರತ್ಯಾಗಮ inputs;
     }
 
-    const std::vector<const ggml_tensor *> & get_outputs() const {
-        return outputs;
+    ಧ್ರುವ std::vector<ಧ್ರುವ ggml_tensor *> & get_outputs() ಧ್ರುವ {
+        ಪ್ರತ್ಯಾಗಮ outputs;
     }
 
-    std::string op_name() const {
-        return name;
+    std::string op_name() ಧ್ರುವ {
+        ಪ್ರತ್ಯಾಗಮ name;
     }
 
-    bool is_empty() const {
-        return ggml_op_is_empty(node->op);
+    bool is_empty() ಧ್ರುವ {
+        ಪ್ರತ್ಯಾಗಮ ggml_op_is_empty(ಗಂಟು->op);
     }
 
-    bool stackable() const {
-        switch (this->op()) {
-            case GGML_OP_MUL_MAT:
-                if (ggml_get_op_params_i32(this->node, 1) == GGML_HINT_SRC0_IS_HADAMARD) {
-                    return false;
+    bool stackable() ಧ್ರುವ {
+        ವಿಕಲ್ಪ (this->op()) {
+            ಪಕ್ಷ GGML_OP_MUL_MAT:
+                ಯದಿ (ggml_get_op_params_i32(this->ಗಂಟು, 1) == GGML_HINT_SRC0_IS_HADAMARD) {
+                    ಪ್ರತ್ಯಾಗಮ false;
                 }
-                return ggml_is_quantized(this->src0()->type);
-            case GGML_OP_MUL_MAT_ID:
-                return ggml_is_quantized(this->src0()->type);
-            default:
-                return false;
+                ಪ್ರತ್ಯಾಗಮ ggml_is_quantized(this->src0()->type);
+            ಪಕ್ಷ GGML_OP_MUL_MAT_ID:
+                ಪ್ರತ್ಯಾಗಮ ggml_is_quantized(this->src0()->type);
+            ಸ್ವಭಾವ:
+                ಪ್ರತ್ಯಾಗಮ false;
         }
     }
 
-    bool same_input(const htp_opnode& n) const {
-        return n.src1() == this->src1();
+    bool same_ಒಳಹರಿವು(ಧ್ರುವ htp_opnode& n) ಧ್ರುವ {
+        ಪ್ರತ್ಯಾಗಮ n.src1() == this->src1();
     }
 };
 
-struct htp_opformat {
-    char strides[64 * GGML_MAX_SRC];
-    char dims[64 * GGML_MAX_SRC];
-    char types[16 * GGML_MAX_SRC];
-    char buffs[64 * GGML_MAX_SRC];
-    char names[64 * GGML_MAX_SRC];
-    char kparams[128];
+ಸಂರಚನಾ htp_opformat {
+    ವರ್ಣ strides[64 * GGML_MAX_SRC];
+    ವರ್ಣ dims[64 * GGML_MAX_SRC];
+    ವರ್ಣ types[16 * GGML_MAX_SRC];
+    ವರ್ಣ buffs[64 * GGML_MAX_SRC];
+    ವರ್ಣ names[64 * GGML_MAX_SRC];
+    ವರ್ಣ kparams[128];
 
-    int format_tensor_dims(char * str, size_t max_size, const struct ggml_tensor * t) {
-        if (!t) {
-            return snprintf(str, max_size, "NONE");
+    ಪೂರ್ಣಾಙ್ಕ format_tensor_dims(ವರ್ಣ * str, size_t max_size, ಧ್ರುವ ಸಂರಚನಾ ggml_tensor * t) {
+        ಯದಿ (!t) {
+            ಪ್ರತ್ಯಾಗಮ snprintf(str, max_size, "NONE");
         }
-        if (t->ne[2] == 1 && t->ne[3] == 1) {
-            return snprintf(str, max_size, "%d:%d", (int) t->ne[0], (int) t->ne[1]);
-        } else {
-            return snprintf(str, max_size, "%d:%d:%d:%d", (int) t->ne[0], (int) t->ne[1], (int) t->ne[2], (int) t->ne[3]);
+        ಯದಿ (t->ne[2] == 1 && t->ne[3] == 1) {
+            ಪ್ರತ್ಯಾಗಮ snprintf(str, max_size, "%d:%d", (ಪೂರ್ಣಾಙ್ಕ) t->ne[0], (ಪೂರ್ಣಾಙ್ಕ) t->ne[1]);
+        } ಅನ್ಯಥಾ {
+            ಪ್ರತ್ಯಾಗಮ snprintf(str, max_size, "%d:%d:%d:%d", (ಪೂರ್ಣಾಙ್ಕ) t->ne[0], (ಪೂರ್ಣಾಙ್ಕ) t->ne[1], (ಪೂರ್ಣಾಙ್ಕ) t->ne[2], (ಪೂರ್ಣಾಙ್ಕ) t->ne[3]);
         }
     }
 
-    void format_op_dims(char * str, size_t max_size, const htp_opnode & node) {
-        char * p = str;
-        char * p_end = str + max_size;
-        auto inputs = node.get_inputs();
+    ಶೂನ್ಯ format_op_dims(ವರ್ಣ * str, size_t max_size, ಧ್ರುವ htp_opnode & ಗಂಟು) {
+        ವರ್ಣ * p = str;
+        ವರ್ಣ * p_end = str + max_size;
+        auto inputs = ಗಂಟು.get_inputs();
 
-        if (!inputs.empty()) {
+        ಯದಿ (!inputs.empty()) {
             p += std::min((size_t)format_tensor_dims(p, p_end - p, inputs[0]), (size_t)(p_end - p));
 
-            for (size_t i = 1; i < inputs.size(); i++) {
-                if (p < p_end) {
+            ಪ್ರತಿ (size_t i = 1; i < inputs.size(); i++) {
+                ಯದಿ (p < p_end) {
                     p += std::min((size_t)snprintf(p, p_end - p, " x "), (size_t)(p_end - p));
                 }
-                if (p < p_end) {
+                ಯದಿ (p < p_end) {
                     p += std::min((size_t)format_tensor_dims(p, p_end - p, inputs[i]), (size_t)(p_end - p));
                 }
             }
 
-            if (p < p_end) {
+            ಯದಿ (p < p_end) {
                 p += std::min((size_t)snprintf(p, p_end - p, " -> "), (size_t)(p_end - p));
             }
         }
 
-        char self[64];
-        format_tensor_dims(self, sizeof(self), node.dst());
-        if (p < p_end) {
+        ವರ್ಣ self[64];
+        format_tensor_dims(self, ಪರಿಮಾಣ(self), ಗಂಟು.dst());
+        ಯದಿ (p < p_end) {
             p += std::min((size_t)snprintf(p, p_end - p, "%s", self), (size_t)(p_end - p));
         }
     }
 
-    int format_tensor_strides(char * str, size_t max_size, const struct ggml_tensor * t) {
-        if (!t) {
-            return snprintf(str, max_size, "NONE");
+    ಪೂರ್ಣಾಙ್ಕ format_tensor_strides(ವರ್ಣ * str, size_t max_size, ಧ್ರುವ ಸಂರಚನಾ ggml_tensor * t) {
+        ಯದಿ (!t) {
+            ಪ್ರತ್ಯಾಗಮ snprintf(str, max_size, "NONE");
         }
-        const char * c = ggml_is_contiguous(t) ? "" : "!";
+        ಧ್ರುವ ವರ್ಣ * c = ggml_is_contiguous(t) ? "" : "!";
 
-        if (t->ne[2] == 1 && t->ne[3] == 1) {
-            return snprintf(str, max_size, "%zu:%zu%s", (size_t) t->nb[0], (size_t) t->nb[1], c);
-        } else {
-            return snprintf(str, max_size, "%zu:%zu:%zu:%zu%s", (size_t) t->nb[0], (size_t) t->nb[1], (size_t) t->nb[2], (size_t) t->nb[3], c);
+        ಯದಿ (t->ne[2] == 1 && t->ne[3] == 1) {
+            ಪ್ರತ್ಯಾಗಮ snprintf(str, max_size, "%zu:%zu%s", (size_t) t->nb[0], (size_t) t->nb[1], c);
+        } ಅನ್ಯಥಾ {
+            ಪ್ರತ್ಯಾಗಮ snprintf(str, max_size, "%zu:%zu:%zu:%zu%s", (size_t) t->nb[0], (size_t) t->nb[1], (size_t) t->nb[2], (size_t) t->nb[3], c);
         }
     }
 
-    void format_op_strides(char * str, size_t max_size, const htp_opnode & node) {
-        char * p = str;
-        char * p_end = str + max_size;
-        auto inputs = node.get_inputs();
+    ಶೂನ್ಯ format_op_strides(ವರ್ಣ * str, size_t max_size, ಧ್ರುವ htp_opnode & ಗಂಟು) {
+        ವರ್ಣ * p = str;
+        ವರ್ಣ * p_end = str + max_size;
+        auto inputs = ಗಂಟು.get_inputs();
 
-        if (!inputs.empty()) {
+        ಯದಿ (!inputs.empty()) {
             p += std::min((size_t)format_tensor_strides(p, p_end - p, inputs[0]), (size_t)(p_end - p));
 
-            for (size_t i = 1; i < inputs.size(); i++) {
-                if (p < p_end) {
+            ಪ್ರತಿ (size_t i = 1; i < inputs.size(); i++) {
+                ಯದಿ (p < p_end) {
                     p += std::min((size_t)snprintf(p, p_end - p, " x "), (size_t)(p_end - p));
                 }
-                if (p < p_end) {
+                ಯದಿ (p < p_end) {
                     p += std::min((size_t)format_tensor_strides(p, p_end - p, inputs[i]), (size_t)(p_end - p));
                 }
             }
 
-            if (p < p_end) {
+            ಯದಿ (p < p_end) {
                 p += std::min((size_t)snprintf(p, p_end - p, " -> "), (size_t)(p_end - p));
             }
         }
 
-        char self[64];
-        format_tensor_strides(self, sizeof(self), node.dst());
-        if (p < p_end) {
+        ವರ್ಣ self[64];
+        format_tensor_strides(self, ಪರಿಮಾಣ(self), ಗಂಟು.dst());
+        ಯದಿ (p < p_end) {
             p += std::min((size_t)snprintf(p, p_end - p, "%s", self), (size_t)(p_end - p));
         }
     }
 
-    void format_op_types(char * str, size_t max_size, const htp_opnode & node) {
-        char * p = str;
-        char * p_end = str + max_size;
-        auto inputs = node.get_inputs();
+    ಶೂನ್ಯ format_op_types(ವರ್ಣ * str, size_t max_size, ಧ್ರುವ htp_opnode & ಗಂಟು) {
+        ವರ್ಣ * p = str;
+        ವರ್ಣ * p_end = str + max_size;
+        auto inputs = ಗಂಟು.get_inputs();
 
-        if (!inputs.empty()) {
-            if (p < p_end) {
+        ಯದಿ (!inputs.empty()) {
+            ಯದಿ (p < p_end) {
                 p += std::min((size_t)snprintf(p, p_end - p, "%s", inputs[0] ? ggml_type_name(inputs[0]->type) : "NONE"), (size_t)(p_end - p));
             }
 
-            for (size_t i = 1; i < inputs.size(); i++) {
-                if (p < p_end) {
+            ಪ್ರತಿ (size_t i = 1; i < inputs.size(); i++) {
+                ಯದಿ (p < p_end) {
                     p += std::min((size_t)snprintf(p, p_end - p, " x "), (size_t)(p_end - p));
                 }
-                if (p < p_end) {
+                ಯದಿ (p < p_end) {
                     p += std::min((size_t)snprintf(p, p_end - p, "%s", inputs[i] ? ggml_type_name(inputs[i]->type) : "NONE"), (size_t)(p_end - p));
                 }
             }
 
-            if (p < p_end) {
+            ಯದಿ (p < p_end) {
                 p += std::min((size_t)snprintf(p, p_end - p, " -> "), (size_t)(p_end - p));
             }
         }
 
-        if (p < p_end) {
-            p += std::min((size_t)snprintf(p, p_end - p, "%s", ggml_type_name(node.dst()->type)), (size_t)(p_end - p));
+        ಯದಿ (p < p_end) {
+            p += std::min((size_t)snprintf(p, p_end - p, "%s", ggml_type_name(ಗಂಟು.dst()->type)), (size_t)(p_end - p));
         }
     }
 
-    const char * tensor_buff_name(const struct ggml_tensor * t) {
-        if (t && t->buffer) {
-            return ggml_backend_buffer_name(t->buffer);
+    ಧ್ರುವ ವರ್ಣ * tensor_buff_name(ಧ್ರುವ ಸಂರಚನಾ ggml_tensor * t) {
+        ಯದಿ (t && t->buffer) {
+            ಪ್ರತ್ಯಾಗಮ ggml_backend_buffer_name(t->buffer);
         }
-        return "NONE";
+        ಪ್ರತ್ಯಾಗಮ "NONE";
     }
 
-    void format_op_buffs(char * str, size_t max_size, const htp_opnode & node) {
-        char * p = str;
-        char * p_end = str + max_size;
-        auto inputs = node.get_inputs();
+    ಶೂನ್ಯ format_op_buffs(ವರ್ಣ * str, size_t max_size, ಧ್ರುವ htp_opnode & ಗಂಟು) {
+        ವರ್ಣ * p = str;
+        ವರ್ಣ * p_end = str + max_size;
+        auto inputs = ಗಂಟು.get_inputs();
 
-        if (!inputs.empty()) {
-            if (p < p_end) {
+        ಯದಿ (!inputs.empty()) {
+            ಯದಿ (p < p_end) {
                 p += std::min((size_t)snprintf(p, p_end - p, "%s", tensor_buff_name(inputs[0])), (size_t)(p_end - p));
             }
 
-            for (size_t i = 1; i < inputs.size(); i++) {
-                if (p < p_end) {
+            ಪ್ರತಿ (size_t i = 1; i < inputs.size(); i++) {
+                ಯದಿ (p < p_end) {
                     p += std::min((size_t)snprintf(p, p_end - p, " x "), (size_t)(p_end - p));
                 }
-                if (p < p_end) {
+                ಯದಿ (p < p_end) {
                     p += std::min((size_t)snprintf(p, p_end - p, "%s", tensor_buff_name(inputs[i])), (size_t)(p_end - p));
                 }
             }
 
-            if (p < p_end) {
+            ಯದಿ (p < p_end) {
                 p += std::min((size_t)snprintf(p, p_end - p, " -> "), (size_t)(p_end - p));
             }
         }
 
-        if (p < p_end) {
-            p += std::min((size_t)snprintf(p, p_end - p, "%s", tensor_buff_name(node.dst())), (size_t)(p_end - p));
+        ಯದಿ (p < p_end) {
+            p += std::min((size_t)snprintf(p, p_end - p, "%s", tensor_buff_name(ಗಂಟು.dst())), (size_t)(p_end - p));
         }
     }
 
-    void format_op_names(char * str, size_t max_size, const htp_opnode & node) {
-        char * p = str;
-        char * p_end = str + max_size;
-        auto inputs = node.get_inputs();
+    ಶೂನ್ಯ format_op_names(ವರ್ಣ * str, size_t max_size, ಧ್ರುವ htp_opnode & ಗಂಟು) {
+        ವರ್ಣ * p = str;
+        ವರ್ಣ * p_end = str + max_size;
+        auto inputs = ಗಂಟು.get_inputs();
 
-        if (!inputs.empty()) {
-            if (p < p_end) {
+        ಯದಿ (!inputs.empty()) {
+            ಯದಿ (p < p_end) {
                 p += std::min((size_t)snprintf(p, p_end - p, "%s", inputs[0] ? inputs[0]->name : "NONE"), (size_t)(p_end - p));
             }
 
-            for (size_t i = 1; i < inputs.size(); i++) {
-                if (p < p_end) {
+            ಪ್ರತಿ (size_t i = 1; i < inputs.size(); i++) {
+                ಯದಿ (p < p_end) {
                     p += std::min((size_t)snprintf(p, p_end - p, " x "), (size_t)(p_end - p));
                 }
-                if (p < p_end) {
+                ಯದಿ (p < p_end) {
                     p += std::min((size_t)snprintf(p, p_end - p, "%s", inputs[i] ? inputs[i]->name : "NONE"), (size_t)(p_end - p));
                 }
             }
 
-            if (p < p_end) {
+            ಯದಿ (p < p_end) {
                 p += std::min((size_t)snprintf(p, p_end - p, " -> "), (size_t)(p_end - p));
             }
         }
 
-        if (p < p_end) {
-            p += std::min((size_t)snprintf(p, p_end - p, "%s", node.dst()->name), (size_t)(p_end - p));
+        ಯದಿ (p < p_end) {
+            p += std::min((size_t)snprintf(p, p_end - p, "%s", ಗಂಟು.dst()->name), (size_t)(p_end - p));
         }
     }
-    void format_kernel_params(char * str, size_t max_size, const htp_opnode & node) {
-        if (node.opcode == HTP_OP_MUL_MAT || node.opcode == HTP_OP_MUL_MAT_ID ||
-            node.opcode == HTP_OP_MUL_MAT_NX || node.opcode == HTP_OP_MUL_MAT_ID_NX ||
-            node.opcode == HTP_OP_MUL_MAT_ADD) {
-            const auto * kparams = (const struct htp_mm_kernel_params *) node.kernel_params;
-            const char * path = "unknown";
+    ಶೂನ್ಯ format_kernel_params(ವರ್ಣ * str, size_t max_size, ಧ್ರುವ htp_opnode & ಗಂಟು) {
+        ಯದಿ (ಗಂಟು.opcode == HTP_OP_MUL_MAT || ಗಂಟು.opcode == HTP_OP_MUL_MAT_ID ||
+            ಗಂಟು.opcode == HTP_OP_MUL_MAT_NX || ಗಂಟು.opcode == HTP_OP_MUL_MAT_ID_NX ||
+            ಗಂಟು.opcode == HTP_OP_MUL_MAT_ADD) {
+            ಧ್ರುವ auto * kparams = (ಧ್ರುವ ಸಂರಚನಾ htp_mm_kernel_params *) ಗಂಟು.kernel_params;
+            ಧ್ರುವ ವರ್ಣ * path = "unknown";
             int32_t type = kparams->kernel_type;
-            if (type == HTP_MM_KERNEL_HMX_2D || type == HTP_MM_KERNEL_HMX_BATCHED) {
+            ಯದಿ (type == HTP_MM_KERNEL_HMX_2D || type == HTP_MM_KERNEL_HMX_BATCHED) {
                 path = (kparams->tile_size > 0) ? "hmx-tiled" : "hmx-flat";
-            } else if (type == HTP_MM_KERNEL_HVX_F16_F16_VTCM || type == HTP_MM_KERNEL_HVX_F32_F32_VTCM ||
+            } ಅನ್ಯಥಾ ಯದಿ (type == HTP_MM_KERNEL_HVX_F16_F16_VTCM || type == HTP_MM_KERNEL_HVX_F32_F32_VTCM ||
                        type == HTP_MM_KERNEL_HVX_BF16_F32_VTCM) {
                 path = "hvx-flat";
-            } else if (type == HTP_MM_KERNEL_HVX_QUANT_ROW || type == HTP_MM_KERNEL_HVX_QUANT_BLOCK) {
+            } ಅನ್ಯಥಾ ಯದಿ (type == HTP_MM_KERNEL_HVX_QUANT_ROW || type == HTP_MM_KERNEL_HVX_QUANT_BLOCK) {
                 path = "hvx-tiled";
             }
-            snprintf(str, max_size, "%s vtcm %d", path, (int) kparams->vtcm_size);
-        } else if (node.opcode == HTP_OP_FLASH_ATTN_EXT) {
-            const auto * kparams = (const struct htp_fa_kernel_params *) node.kernel_params;
-            const char * path = "unknown";
+            snprintf(str, max_size, "%s vtcm %d", path, (ಪೂರ್ಣಾಙ್ಕ) kparams->vtcm_size);
+        } ಅನ್ಯಥಾ ಯದಿ (ಗಂಟು.opcode == HTP_OP_FLASH_ATTN_EXT) {
+            ಧ್ರುವ auto * kparams = (ಧ್ರುವ ಸಂರಚನಾ htp_fa_kernel_params *) ಗಂಟು.kernel_params;
+            ಧ್ರುವ ವರ್ಣ * path = "unknown";
             int32_t type = kparams->kernel_type;
-            if (type == HTP_FA_KERNEL_HMX) {
+            ಯದಿ (type == HTP_FA_KERNEL_HMX) {
                 path = kparams->u.hmx.pipeline ? "hmx-pipe" : "hmx-seq";
-            } else if (type == HTP_FA_KERNEL_HVX) {
+            } ಅನ್ಯಥಾ ಯದಿ (type == HTP_FA_KERNEL_HVX) {
                 path = "hvx";
             }
-            snprintf(str, max_size, "%s vtcm %d", path, (int) kparams->vtcm_size);
-        } else if (htp_op_is_unary(node.opcode)) {
-            const auto * kparams = (const struct htp_unary_kernel_params *) node.kernel_params;
-            snprintf(str, max_size, "%s vtcm %d", kparams->col_tile ? "wide-row" : "row-block", (int) kparams->vtcm_size);
-        } else if (node.opcode == HTP_OP_MDEV_GROUP && node.node) {
-            snprintf(str, max_size, "idx %d count %d", (int) node.node->op_params[0], (int) node.dst()->ne[1]);
-        } else if ((node.opcode == HTP_OP_FENCE || node.opcode == HTP_OP_CPY_FENCE) && node.node) {
-            snprintf(str, max_size, "seq 0x%x", (uint32_t) node.node->op_params[0]);
-        } else if (node.opcode == HTP_OP_ALLREDUCE && node.node) {
-            snprintf(str, max_size, "seq 0x%x -> 0x%x", (uint32_t) node.node->op_params[0], (uint32_t) node.node->op_params[1]);
-        } else if (node.opcode == HTP_OP_SSM_CONV) {
-            const auto * kparams = (const struct htp_ssm_conv_kernel_params *) node.kernel_params;
-            snprintf(str, max_size, "%s vtcm %d", kparams->n_t == 1 ? "decode" : "prefill", (int) kparams->vtcm_size);
-        } else if (node.opcode == HTP_OP_SOFTMAX) {
-            const auto * kparams = (const struct htp_softmax_kernel_params *) node.kernel_params;
-            snprintf(str, max_size, "k%d nth %d vtcm %d", (int) kparams->kernel_id, (int) kparams->n_threads, (int) kparams->vtcm_size);
-        } else if (node.opcode == HTP_OP_GATED_DELTA_NET) {
-            const auto * kparams = (const struct htp_gdn_kernel_params *) node.kernel_params;
-            const char * path = (kparams->kernel_type == HTP_GDN_KERNEL_HMX_CHUNKED) ? "hmx-chunked" : "hvx-recurrent";
+            snprintf(str, max_size, "%s vtcm %d", path, (ಪೂರ್ಣಾಙ್ಕ) kparams->vtcm_size);
+        } ಅನ್ಯಥಾ ಯದಿ (htp_op_is_unary(ಗಂಟು.opcode)) {
+            ಧ್ರುವ auto * kparams = (ಧ್ರುವ ಸಂರಚನಾ htp_unary_kernel_params *) ಗಂಟು.kernel_params;
+            snprintf(str, max_size, "%s vtcm %d", kparams->col_tile ? "wide-row" : "row-block", (ಪೂರ್ಣಾಙ್ಕ) kparams->vtcm_size);
+        } ಅನ್ಯಥಾ ಯದಿ (ಗಂಟು.opcode == HTP_OP_MDEV_GROUP && ಗಂಟು.ಗಂಟು) {
+            snprintf(str, max_size, "idx %d count %d", (ಪೂರ್ಣಾಙ್ಕ) ಗಂಟು.ಗಂಟು->op_params[0], (ಪೂರ್ಣಾಙ್ಕ) ಗಂಟು.dst()->ne[1]);
+        } ಅನ್ಯಥಾ ಯದಿ ((ಗಂಟು.opcode == HTP_OP_FENCE || ಗಂಟು.opcode == HTP_OP_CPY_FENCE) && ಗಂಟು.ಗಂಟು) {
+            snprintf(str, max_size, "seq 0x%x", (uint32_t) ಗಂಟು.ಗಂಟು->op_params[0]);
+        } ಅನ್ಯಥಾ ಯದಿ (ಗಂಟು.opcode == HTP_OP_ALLREDUCE && ಗಂಟು.ಗಂಟು) {
+            snprintf(str, max_size, "seq 0x%x -> 0x%x", (uint32_t) ಗಂಟು.ಗಂಟು->op_params[0], (uint32_t) ಗಂಟು.ಗಂಟು->op_params[1]);
+        } ಅನ್ಯಥಾ ಯದಿ (ಗಂಟು.opcode == HTP_OP_SSM_CONV) {
+            ಧ್ರುವ auto * kparams = (ಧ್ರುವ ಸಂರಚನಾ htp_ssm_conv_kernel_params *) ಗಂಟು.kernel_params;
+            snprintf(str, max_size, "%s vtcm %d", kparams->n_t == 1 ? "decode" : "prefill", (ಪೂರ್ಣಾಙ್ಕ) kparams->vtcm_size);
+        } ಅನ್ಯಥಾ ಯದಿ (ಗಂಟು.opcode == HTP_OP_SOFTMAX) {
+            ಧ್ರುವ auto * kparams = (ಧ್ರುವ ಸಂರಚನಾ htp_softmax_kernel_params *) ಗಂಟು.kernel_params;
+            snprintf(str, max_size, "k%d nth %d vtcm %d", (ಪೂರ್ಣಾಙ್ಕ) kparams->kernel_id, (ಪೂರ್ಣಾಙ್ಕ) kparams->n_threads, (ಪೂರ್ಣಾಙ್ಕ) kparams->vtcm_size);
+        } ಅನ್ಯಥಾ ಯದಿ (ಗಂಟು.opcode == HTP_OP_GATED_DELTA_NET) {
+            ಧ್ರುವ auto * kparams = (ಧ್ರುವ ಸಂರಚನಾ htp_gdn_kernel_params *) ಗಂಟು.kernel_params;
+            ಧ್ರುವ ವರ್ಣ * path = (kparams->kernel_type == HTP_GDN_KERNEL_HMX_CHUNKED) ? "hmx-chunked" : "hvx-recurrent";
             snprintf(str, max_size, "%s-%s vtcm %u", path, kparams->kda ? "kda" : "scalar",
-                     (unsigned int) (kparams->vtcm_size ? kparams->vtcm_size : kparams->vtcm_per_thread * kparams->n_threads));
-        } else if (node.opcode == HTP_OP_MUL || node.opcode == HTP_OP_ADD || node.opcode == HTP_OP_ADD_ID ||
-                   node.opcode == HTP_OP_SUB || node.opcode == HTP_OP_DIV) {
-            const auto * kparams = (const struct htp_binary_kernel_params *) node.kernel_params;
-            snprintf(str, max_size, "vtcm %u", (unsigned int) kparams->vtcm_size);
-        } else if (node.opcode == HTP_OP_ARGSORT || node.opcode == HTP_OP_TOP_K) {
-            const auto * kparams = (const struct htp_sort_kernel_params *) node.kernel_params;
+                     (unsigned ಪೂರ್ಣಾಙ್ಕ) (kparams->vtcm_size ? kparams->vtcm_size : kparams->vtcm_per_thread * kparams->n_threads));
+        } ಅನ್ಯಥಾ ಯದಿ (ಗಂಟು.opcode == HTP_OP_MUL || ಗಂಟು.opcode == HTP_OP_ADD || ಗಂಟು.opcode == HTP_OP_ADD_ID ||
+                   ಗಂಟು.opcode == HTP_OP_SUB || ಗಂಟು.opcode == HTP_OP_DIV) {
+            ಧ್ರುವ auto * kparams = (ಧ್ರುವ ಸಂರಚನಾ htp_ದ್ವಿಮಾನ_kernel_params *) ಗಂಟು.kernel_params;
+            snprintf(str, max_size, "vtcm %u", (unsigned ಪೂರ್ಣಾಙ್ಕ) kparams->vtcm_size);
+        } ಅನ್ಯಥಾ ಯದಿ (ಗಂಟು.opcode == HTP_OP_ARGSORT || ಗಂಟು.opcode == HTP_OP_ತುದಿ_K) {
+            ಧ್ರುವ auto * kparams = (ಧ್ರುವ ಸಂರಚನಾ htp_sort_kernel_params *) ಗಂಟು.kernel_params;
             snprintf(str, max_size, "%s nth %d nchk %d chk %d vtcm %d",
-                     node.opcode == HTP_OP_TOP_K ? "top_k" : "argsort",
-                     (int) kparams->n_threads, (int) kparams->n_chunks,
-                     (int) kparams->chunk_elems, (int) kparams->vtcm_size);
-        } else if (node.opcode == HTP_OP_GET_ROWS) {
-            const auto * kparams = (const struct htp_get_rows_kernel_params *) node.kernel_params;
-            const char * ktype_str = "unknown";
-            switch (kparams->kernel_type) {
-                case HTP_GET_ROWS_KERNEL_SAMETYPE: ktype_str = "sametype"; break;
-                case HTP_GET_ROWS_KERNEL_TILED:    ktype_str = "tiled"; break;
-                case HTP_GET_ROWS_KERNEL_FLAT:     ktype_str = "flat"; break;
+                     ಗಂಟು.opcode == HTP_OP_ತುದಿ_K ? "top_k" : "argsort",
+                     (ಪೂರ್ಣಾಙ್ಕ) kparams->n_threads, (ಪೂರ್ಣಾಙ್ಕ) kparams->n_chunks,
+                     (ಪೂರ್ಣಾಙ್ಕ) kparams->chunk_elems, (ಪೂರ್ಣಾಙ್ಕ) kparams->vtcm_size);
+        } ಅನ್ಯಥಾ ಯದಿ (ಗಂಟು.opcode == HTP_OP_GET_ROWS) {
+            ಧ್ರುವ auto * kparams = (ಧ್ರುವ ಸಂರಚನಾ htp_get_rows_kernel_params *) ಗಂಟು.kernel_params;
+            ಧ್ರುವ ವರ್ಣ * ktype_str = "unknown";
+            ವಿಕಲ್ಪ (kparams->kernel_type) {
+                ಪಕ್ಷ HTP_GET_ROWS_KERNEL_SAMETYPE: ktype_str = "sametype"; ಭಙ್ಗ;
+                ಪಕ್ಷ HTP_GET_ROWS_KERNEL_TILED:    ktype_str = "tiled"; ಭಙ್ಗ;
+                ಪಕ್ಷ HTP_GET_ROWS_KERNEL_FLAT:     ktype_str = "flat"; ಭಙ್ಗ;
             }
-            snprintf(str, max_size, "%s%s vtcm %u", ktype_str, kparams->n_threads > 1 ? "-multi" : "", (unsigned int) kparams->vtcm_size);
-        } else {
+            snprintf(str, max_size, "%s%s vtcm %u", ktype_str, kparams->n_threads > 1 ? "-multi" : "", (unsigned ಪೂರ್ಣಾಙ್ಕ) kparams->vtcm_size);
+        } ಅನ್ಯಥಾ {
             snprintf(str, max_size, "----");
         }
 
     }
 
-    void format(const htp_opnode & node) {
-        format_op_dims(dims, sizeof(dims), node);
-        format_op_strides(strides, sizeof(strides), node);
-        format_op_types(types, sizeof(types), node);
-        format_op_buffs(buffs, sizeof(buffs), node);
-        format_op_names(names, sizeof(names), node);
-        format_kernel_params(kparams, sizeof(kparams), node);
+    ಶೂನ್ಯ format(ಧ್ರುವ htp_opnode & ಗಂಟು) {
+        format_op_dims(dims, ಪರಿಮಾಣ(dims), ಗಂಟು);
+        format_op_strides(strides, ಪರಿಮಾಣ(strides), ಗಂಟು);
+        format_op_types(types, ಪರಿಮಾಣ(types), ಗಂಟು);
+        format_op_buffs(buffs, ಪರಿಮಾಣ(buffs), ಗಂಟು);
+        format_op_names(names, ಪರಿಮಾಣ(names), ಗಂಟು);
+        format_kernel_params(kparams, ಪರಿಮಾಣ(kparams), ಗಂಟು);
     }
 
     htp_opformat() {
@@ -417,7 +417,7 @@ struct htp_opformat {
         names[0]   = '\0';
         kparams[0] = '\0';
     }
-    htp_opformat(const htp_opnode & node) { format(node); }
+    htp_opformat(ಧ್ರುವ htp_opnode & ಗಂಟು) { format(ಗಂಟು); }
 };
 
 #endif // HTP_OPNODE_H

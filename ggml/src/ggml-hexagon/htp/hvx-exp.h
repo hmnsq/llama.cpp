@@ -1,12 +1,12 @@
 #ifndef HVX_EXP_H
 #define HVX_EXP_H
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <math.h>
+#ಅನ್ತರ್ಭಾವ <stdbool.h>
+#ಅನ್ತರ್ಭಾವ <stdint.h>
+#ಅನ್ತರ್ಭಾವ <math.h>
 
-#include "hvx-base.h"
-#include "hvx-floor.h"
+#ಅನ್ತರ್ಭಾವ "hvx-base.h"
+#ಅನ್ತರ್ಭಾವ "hvx-floor.h"
 
 #define EXP_COEFF_5 (0x39506967)  // 0.000198757 = 1/(7!)
 #define EXP_COEFF_4 (0x3AB743CE)  // 0.0013982   = 1/(6!)
@@ -21,7 +21,7 @@
 #define EXP_RANGE_R (0x42B17218)  // ln(FLT_MAX) approx = 88.7228
 #define EXP_RANGE_L (0xC2B00000)  // -88.0 (approx log(FLT_MIN))
 
-static inline HVX_Vector hvx_vec_exp_f32(HVX_Vector in_vec) {
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ HVX_Vector hvx_vec_exp_f32(HVX_Vector in_vec) {
     HVX_Vector z_qf32_v;
     HVX_Vector x_v;
     HVX_Vector x_qf32_v;
@@ -50,11 +50,11 @@ static inline HVX_Vector hvx_vec_exp_f32(HVX_Vector in_vec) {
     HVX_Vector temp_v = in_vec;
 
     // Clamp inputs to (-88.0, 88.0) to avoid overflow/underflow
-    HVX_VectorPred pred_cap_right = Q6_Q_vcmp_gt_VsfVsf(in_vec, Q6_V_vsplat_R(EXP_RANGE_R));
-    HVX_VectorPred pred_cap_left  = Q6_Q_vcmp_gt_VsfVsf(Q6_V_vsplat_R(EXP_RANGE_L), in_vec);
+    HVX_VectorPred pred_cap_ಬಲ = Q6_Q_vcmp_gt_VsfVsf(in_vec, Q6_V_vsplat_R(EXP_RANGE_R));
+    HVX_VectorPred pred_cap_ಎಡ  = Q6_Q_vcmp_gt_VsfVsf(Q6_V_vsplat_R(EXP_RANGE_L), in_vec);
 
-    in_vec = Q6_V_vmux_QVV(pred_cap_right, Q6_V_vsplat_R(EXP_RANGE_R), temp_v);
-    in_vec = Q6_V_vmux_QVV(pred_cap_left, Q6_V_vsplat_R(EXP_RANGE_L), in_vec);
+    in_vec = Q6_V_vmux_QVV(pred_cap_ಬಲ, Q6_V_vsplat_R(EXP_RANGE_R), temp_v);
+    in_vec = Q6_V_vmux_QVV(pred_cap_ಎಡ, Q6_V_vsplat_R(EXP_RANGE_L), in_vec);
 
     epsilon_v = Q6_Vqf32_vmpy_VsfVsf(log2e, in_vec);
     epsilon_v = Q6_Vsf_equals_Vqf32(epsilon_v);
@@ -136,90 +136,90 @@ static inline HVX_Vector hvx_vec_exp_f32(HVX_Vector in_vec) {
 
     y_v = Q6_V_vmux_QVV(qy_v_negative_exponent, zero_v, y_v);
 
-    return y_v;
+    ಪ್ರತ್ಯಾಗಮ y_v;
 }
 
-static inline HVX_Vector hvx_vec_exp_f32_guard(HVX_Vector in_vec, HVX_Vector max_exp, HVX_Vector inf) {
-    const HVX_VectorPred pred0 = Q6_Q_vcmp_gt_VsfVsf(in_vec, max_exp);
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ HVX_Vector hvx_vec_exp_f32_guard(HVX_Vector in_vec, HVX_Vector max_exp, HVX_Vector inf) {
+    ಧ್ರುವ HVX_VectorPred pred0 = Q6_Q_vcmp_gt_VsfVsf(in_vec, max_exp);
 
     HVX_Vector out = hvx_vec_exp_f32(in_vec);
 
-    return Q6_V_vmux_QVV(pred0, inf, out);
+    ಪ್ರತ್ಯಾಗಮ Q6_V_vmux_QVV(pred0, inf, out);
 }
 
-static inline void hvx_exp_f32(uint8_t * restrict dst, const uint8_t * restrict src, const int num_elems, bool negate) {
-    int left_over       = num_elems & (VLEN_FP32 - 1);
-    int num_elems_whole = num_elems - left_over;
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ ಶೂನ್ಯ hvx_exp_f32(uint8_t * restrict dst, ಧ್ರುವ uint8_t * restrict src, ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ ಅಂಕೆ_elems, bool negate) {
+    ಪೂರ್ಣಾಙ್ಕ ಎಡ_over       = ಅಂಕೆ_elems & (VLEN_FP32 - 1);
+    ಪೂರ್ಣಾಙ್ಕ ಅಂಕೆ_elems_whole = ಅಂಕೆ_elems - ಎಡ_over;
 
-    int unaligned_addr = 0;
-    int unaligned_loop = 0;
-    if ((0 == hex_is_aligned((void *) src, VLEN)) || (0 == hex_is_aligned((void *) dst, VLEN))) {
+    ಪೂರ್ಣಾಙ್ಕ unaligned_addr = 0;
+    ಪೂರ್ಣಾಙ್ಕ unaligned_loop = 0;
+    ಯದಿ ((0 == hex_is_aligned((ಶೂನ್ಯ *) src, VLEN)) || (0 == hex_is_aligned((ಶೂನ್ಯ *) dst, VLEN))) {
         unaligned_addr = 1;
     }
     // assert((0 == unaligned_addr) || (0 == num_elems_whole));
-    if ((1 == unaligned_addr) && (num_elems_whole != 0)) {
+    ಯದಿ ((1 == unaligned_addr) && (ಅಂಕೆ_elems_whole != 0)) {
         unaligned_loop = 1;
     }
 
     HVX_Vector vec_out = Q6_V_vzero();
 
-    static const float kInf    = INFINITY;
-    static const float kMaxExp = 88.7228f;
+    ಸ್ಥಿರ ಧ್ರುವ ಭಿನ್ನ kInf    = INFINITY;
+    ಸ್ಥಿರ ಧ್ರುವ ಭಿನ್ನ kMaxExp = 88.7228f;
 
-    const HVX_Vector max_exp = hvx_vec_splat_f32(kMaxExp);
-    const HVX_Vector inf     = hvx_vec_splat_f32(kInf);
+    ಧ್ರುವ HVX_Vector max_exp = hvx_vec_splat_f32(kMaxExp);
+    ಧ್ರುವ HVX_Vector inf     = hvx_vec_splat_f32(kInf);
 
-    if (0 == unaligned_loop) {
+    ಯದಿ (0 == unaligned_loop) {
         HVX_Vector * p_vec_in1 = (HVX_Vector *) src;
         HVX_Vector * p_vec_out = (HVX_Vector *) dst;
 
         #pragma unroll(2)
-        for (int i = 0; i < num_elems_whole; i += VLEN_FP32) {
-            if (true == negate) {
+        ಪ್ರತಿ (ಪೂರ್ಣಾಙ್ಕ i = 0; i < ಅಂಕೆ_elems_whole; i += VLEN_FP32) {
+            ಯದಿ (true == negate) {
                 HVX_Vector neg_vec_in = hvx_vec_neg_f32(*p_vec_in1++);
                 *p_vec_out++          = hvx_vec_exp_f32_guard(neg_vec_in, max_exp, inf);
-            } else {
+            } ಅನ್ಯಥಾ {
                 *p_vec_out++ = hvx_vec_exp_f32_guard(*p_vec_in1++, max_exp, inf);
             }
         }
-    } else {
+    } ಅನ್ಯಥಾ {
         #pragma unroll(2)
-        for (int i = 0; i < num_elems_whole; i += VLEN_FP32) {
+        ಪ್ರತಿ (ಪೂರ್ಣಾಙ್ಕ i = 0; i < ಅಂಕೆ_elems_whole; i += VLEN_FP32) {
             HVX_Vector in = *(HVX_UVector *) (src + i * SIZEOF_FP32);
 
-            if (true == negate) {
+            ಯದಿ (true == negate) {
                 HVX_Vector neg_vec_in                    = hvx_vec_neg_f32(in);
                 *(HVX_UVector *) (dst + i * SIZEOF_FP32) = hvx_vec_exp_f32_guard(neg_vec_in, max_exp, inf);
-            } else {
+            } ಅನ್ಯಥಾ {
                 *(HVX_UVector *) (dst + i * SIZEOF_FP32) = hvx_vec_exp_f32_guard(in, max_exp, inf);
             }
         }
     }
 
-    if (left_over > 0) {
-        const float * srcf = (float *) src + num_elems_whole;
-        float *       dstf = (float *) dst + num_elems_whole;
+    ಯದಿ (ಎಡ_over > 0) {
+        ಧ್ರುವ ಭಿನ್ನ * srcf = (ಭಿನ್ನ *) src + ಅಂಕೆ_elems_whole;
+        ಭಿನ್ನ *       dstf = (ಭಿನ್ನ *) dst + ಅಂಕೆ_elems_whole;
 
         HVX_Vector in = *(HVX_UVector *) srcf;
 
-        if (true == negate) {
+        ಯದಿ (true == negate) {
             HVX_Vector neg_vec_in = hvx_vec_neg_f32(in);
 
             vec_out = hvx_vec_exp_f32_guard(neg_vec_in, max_exp, inf);
-        } else {
+        } ಅನ್ಯಥಾ {
             vec_out = hvx_vec_exp_f32_guard(in, max_exp, inf);
         }
 
-        hvx_vec_store_u((void *) dstf, left_over * SIZEOF_FP32, vec_out);
+        hvx_vec_store_u((ಶೂನ್ಯ *) dstf, ಎಡ_over * SIZEOF_FP32, vec_out);
     }
 }
 
-static inline HVX_Vector hvx_vec_exp2_f16(HVX_Vector x_v) {
-    const HVX_Vector zero_v    = Q6_V_vzero();
-    const HVX_Vector half_hf_v = Q6_Vh_vsplat_R(0x3800);  // fp16 0.5
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ HVX_Vector hvx_vec_exp2_f16(HVX_Vector x_v) {
+    ಧ್ರುವ HVX_Vector zero_v    = Q6_V_vzero();
+    ಧ್ರುವ HVX_Vector half_hf_v = Q6_Vh_vsplat_R(0x3800);  // fp16 0.5
 
     // Clamp input to prevent integer underflow in FP16-to-INT16 conversion
-    const HVX_Vector v_clamp_min = hvx_vec_splat_f16(-24.0f);
+    ಧ್ರುವ HVX_Vector v_clamp_min = hvx_vec_splat_f16(-24.0f);
     x_v = Q6_Vhf_vmax_VhfVhf(v_clamp_min, x_v);
 
     // k = round_toward_neg_inf(x);  f = (float)k;  frac = x - f
@@ -249,7 +249,7 @@ static inline HVX_Vector hvx_vec_exp2_f16(HVX_Vector x_v) {
     y_exp                      = Q6_Vh_vadd_VhVh(k_v, y_exp);
     HVX_VectorPred q_underflow = Q6_Q_vcmp_gt_VhVh(zero_v, y_exp);
     y                          = Q6_Vh_vaslacc_VhVhR(y, k_v, 10);
-    return Q6_V_vmux_QVV(q_underflow, zero_v, y);
+    ಪ್ರತ್ಯಾಗಮ Q6_V_vmux_QVV(q_underflow, zero_v, y);
 }
 
 #endif /* HVX_EXP_H */

@@ -1,37 +1,37 @@
 #ifndef HTP_WORK_QUEUE_H
 #define HTP_WORK_QUEUE_H
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <stddef.h>
+#ಅನ್ತರ್ಭಾವ <stdbool.h>
+#ಅನ್ತರ್ಭಾವ <stdint.h>
+#ಅನ್ತರ್ಭಾವ <stddef.h>
 
-typedef void (*work_queue_func_t)(unsigned int n, unsigned int i, void *);
+ಪ್ರಕಾರನಿರ್ದೇಶ ಶೂನ್ಯ (*work_queue_func_t)(unsigned ಪೂರ್ಣಾಙ್ಕ n, unsigned ಪೂರ್ಣಾಙ್ಕ i, ಶೂನ್ಯ *);
 
-struct work_queue_s;
-typedef struct work_queue_s * work_queue_t;
+ಸಂರಚನಾ work_queue_s;
+ಪ್ರಕಾರನಿರ್ದೇಶ ಸಂರಚನಾ work_queue_s * work_queue_t;
 
 #define WORK_QUEUE_MAX_N_THREADS      10
 
-size_t       work_queue_sizeof(uint32_t n_threads, uint32_t capacity, uint32_t stack_size);
-size_t       work_queue_alignof(void);
-work_queue_t work_queue_init(void * ptr, uint32_t n_threads, uint32_t capacity, uint32_t stack_size);
-void         work_queue_free(work_queue_t q);
+size_t       work_queue_sizeof(uint32_t n_threads, uint32_t capacity, uint32_t ರಾಶಿ_size);
+size_t       work_queue_alignof(ಶೂನ್ಯ);
+work_queue_t work_queue_init(ಶೂನ್ಯ * ptr, uint32_t n_threads, uint32_t capacity, uint32_t ರಾಶಿ_size);
+ಶೂನ್ಯ         work_queue_free(work_queue_t q);
 
-void work_queue_wakeup(work_queue_t q);
-void work_queue_suspend(work_queue_t q);
+ಶೂನ್ಯ work_queue_wakeup(work_queue_t q);
+ಶೂನ್ಯ work_queue_suspend(work_queue_t q);
 
-bool work_queue_run_async(work_queue_t q, work_queue_func_t func, void * data, unsigned int n);
+bool work_queue_run_async(work_queue_t q, work_queue_func_t func, ಶೂನ್ಯ * data, unsigned ಪೂರ್ಣಾಙ್ಕ n);
 
-static inline bool work_queue_run(work_queue_t q, work_queue_func_t func, void * data, unsigned int n) {
-    if (n <= 1) {
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ bool work_queue_run(work_queue_t q, work_queue_func_t func, ಶೂನ್ಯ * data, unsigned ಪೂರ್ಣಾಙ್ಕ n) {
+    ಯದಿ (n <= 1) {
         func(n, 0, data);
-        return true;
+        ಪ್ರತ್ಯಾಗಮ true;
     }
-    return work_queue_run_async(q, func, data, n);
+    ಪ್ರತ್ಯಾಗಮ work_queue_run_async(q, func, data, n);
 }
 
 // Legacy compatibility
-typedef work_queue_func_t     worker_callback_t;
+ಪ್ರಕಾರನಿರ್ದೇಶ work_queue_func_t     worker_callback_t;
 #define worker_pool_run_func  work_queue_run
 #define worker_pool           work_queue
 

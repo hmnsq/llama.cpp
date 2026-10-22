@@ -1,16 +1,16 @@
 #ifndef HTP_IM2COL_OPS_H
 #define HTP_IM2COL_OPS_H
 
-#include "hex-common.h"
-#include <stdint.h>
+#ಅನ್ತರ್ಭಾವ "hex-common.h"
+#ಅನ್ತರ್ಭಾವ <stdint.h>
 
-enum htp_im2col_kernel_type {
+ಗಣನಾ htp_im2col_kernel_type {
     HTP_IM2COL_KERNEL_UNSUPPORTED    = 0,
     HTP_IM2COL_KERNEL_PATCHEMBED_DMA = 1,
     HTP_IM2COL_KERNEL_BLOCKED_DMA    = 2,
 };
 
-struct htp_im2col_vtcm_layout {
+ಸಂರಚನಾ htp_im2col_vtcm_layout {
     uint32_t off_src;
     uint32_t off_dst;
     uint32_t src_bytes_per_thread;
@@ -18,8 +18,8 @@ struct htp_im2col_vtcm_layout {
     uint32_t total_bytes;
 };
 
-static inline void htp_im2col_vtcm_layout_build(
-    struct htp_im2col_vtcm_layout * layout,
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ ಶೂನ್ಯ htp_im2col_vtcm_layout_build(
+    ಸಂರಚನಾ htp_im2col_vtcm_layout * layout,
     uint32_t src_row_bytes,
     uint32_t dst_row_bytes,
     uint32_t n_threads) {
@@ -32,7 +32,7 @@ static inline void htp_im2col_vtcm_layout_build(
     layout->total_bytes = layout->off_dst + layout->dst_bytes_per_thread * n_threads;
 }
 
-struct htp_im2col_kernel_params {
+ಸಂರಚನಾ htp_im2col_kernel_params {
     uint8_t  kernel_type;
     uint8_t  is_2d;
     uint8_t  is_3d;
@@ -59,10 +59,10 @@ struct htp_im2col_kernel_params {
     uint32_t total_rows;
 };
 
-#if defined(__cplusplus)
-static_assert(sizeof(struct htp_im2col_kernel_params) <= 128, "htp_im2col_kernel_params is too large for kernel_params blob");
-#else
-_Static_assert(sizeof(struct htp_im2col_kernel_params) <= 128, "htp_im2col_kernel_params is too large for kernel_params blob");
+#ಯದಿ defined(__cplusplus)
+static_assert(ಪರಿಮಾಣ(ಸಂರಚನಾ htp_im2col_kernel_params) <= 128, "htp_im2col_kernel_params is too large for kernel_params blob");
+#ಅನ್ಯಥಾ
+_Static_assert(ಪರಿಮಾಣ(ಸಂರಚನಾ htp_im2col_kernel_params) <= 128, "htp_im2col_kernel_params is too large for kernel_params blob");
 #endif
 
 #endif // HTP_IM2COL_OPS_H

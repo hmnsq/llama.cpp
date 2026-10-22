@@ -1,85 +1,85 @@
-#include "ggml-remoting.h"
+#ಅನ್ತರ್ಭಾವ "ggml-remoting.h"
 
-static ggml_backend_buffer_t ggml_backend_remoting_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft,
+ಸ್ಥಿರ ggml_backend_buffer_t ggml_backend_remoting_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft,
                                                                             size_t                     size) {
     virtgpu * gpu = BUFT_TO_GPU(buft);
 
-    ggml_backend_remoting_buffer_context * context = (ggml_backend_remoting_buffer_context *) malloc(sizeof(*context));
-    if (!context) {
+    ggml_backend_remoting_buffer_context * context = (ggml_backend_remoting_buffer_context *) malloc(ಪರಿಮಾಣ(*context));
+    ಯದಿ (!context) {
         GGML_ABORT(GGML_VIRTGPU "%s: Couldn't allocate the buffer context ...", __func__);
     }
 
     context->gpu = gpu;
 
-    bool async__unused, host_buffer__unused, events__unused, mmap_support__unused;
-    bool buffer_from_host_ptr;
+    ತಾರ್ಕಿಕ async__unused, host_buffer__unused, events__unused, mmap_support__unused;
+    ತಾರ್ಕಿಕ buffer_from_host_ptr;
     apir_device_get_props(gpu, &async__unused, &host_buffer__unused, &buffer_from_host_ptr, &events__unused, &mmap_support__unused);
 
-    if (buffer_from_host_ptr) {
+    ಯದಿ (buffer_from_host_ptr) {
         context->apir_context = apir_device_buffer_from_ptr(gpu, size, size);
         context->base         = context->apir_context.shmem.mmap_ptr;
-        context->is_from_ptr  = true;
-    } else {
+        context->is_from_ptr  = ಸತ್ಯ;
+    } ಅನ್ಯಥಾ {
         context->apir_context = apir_buffer_type_alloc_buffer(gpu, gpu->cached_buffer_type.host_handle, size);
-        context->is_from_ptr  = false;
-        context->base         = NULL;
+        context->is_from_ptr  = ಅಸತ್ಯ;
+        context->base         = ರಿಕ್ತ;
     }
 
     ggml_backend_buffer_t buffer =
-        ggml_backend_buffer_init(buft, ggml_backend_remoting_buffer_interface, (void *) context, size);
+        ggml_backend_buffer_init(buft, ggml_backend_remoting_buffer_interface, (ಶೂನ್ಯ *) context, size);
 
-    return buffer;
+    ಪ್ರತ್ಯಾಗಮ buffer;
 }
 
-static const char * ggml_backend_remoting_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
+ಸ್ಥಿರ ಧ್ರುವ ವರ್ಣ * ggml_backend_remoting_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
     virtgpu * gpu = BUFT_TO_GPU(buft);
 
     // Return the prefixed name that was built once during initialization
-    return gpu->cached_buffer_type.name;
+    ಪ್ರತ್ಯಾಗಮ gpu->cached_buffer_type.name;
 }
 
-static size_t ggml_backend_remoting_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
+ಸ್ಥಿರ size_t ggml_backend_remoting_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
     virtgpu * gpu = BUFT_TO_GPU(buft);
 
-    return gpu->cached_buffer_type.alignment;
+    ಪ್ರತ್ಯಾಗಮ gpu->cached_buffer_type.alignment;
 }
 
-static size_t ggml_backend_remoting_buffer_type_get_max_size(ggml_backend_buffer_type_t buft) {
+ಸ್ಥಿರ size_t ggml_backend_remoting_buffer_type_get_max_size(ggml_backend_buffer_type_t buft) {
     virtgpu * gpu = BUFT_TO_GPU(buft);
 
-    return gpu->cached_buffer_type.max_size;
+    ಪ್ರತ್ಯಾಗಮ gpu->cached_buffer_type.max_size;
 }
 
-static size_t ggml_backend_remoting_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft,
-                                                               const ggml_tensor *        tensor) {
+ಸ್ಥಿರ size_t ggml_backend_remoting_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft,
+                                                               ಧ್ರುವ ggml_tensor *        tensor) {
     virtgpu * gpu = BUFT_TO_GPU(buft);
 
-    if (tensor->buffer == NULL || !tensor->buffer->context ||
+    ಯದಿ (tensor->buffer == ರಿಕ್ತ || !tensor->buffer->context ||
         !buft->device->iface.supports_buft(buft->device, tensor->buffer->buft)) {
-        return ggml_nbytes(tensor);
+        ಪ್ರತ್ಯಾಗಮ ggml_nbytes(tensor);
     }
 
-    return apir_buffer_type_get_alloc_size(gpu, gpu->cached_buffer_type.host_handle, tensor);
+    ಪ್ರತ್ಯಾಗಮ apir_buffer_type_get_alloc_size(gpu, gpu->cached_buffer_type.host_handle, tensor);
 }
 
-const ggml_backend_buffer_type_i ggml_backend_remoting_buffer_type_interface = {
+ಧ್ರುವ ggml_backend_buffer_type_i ggml_backend_remoting_buffer_type_interface = {
     /* .get_name            = */ ggml_backend_remoting_buffer_type_get_name,
     /* .alloc_buffer        = */ ggml_backend_remoting_buffer_type_alloc_buffer,
-    /* .alloc_buffer_n      = */ NULL,
+    /* .alloc_buffer_n      = */ ರಿಕ್ತ,
     /* .get_alignment       = */ ggml_backend_remoting_buffer_type_get_alignment,
     /* .get_max_size        = */ ggml_backend_remoting_buffer_type_get_max_size,
     /* .get_alloc_size      = */ ggml_backend_remoting_buffer_type_get_alloc_size,
-    /* .get_alloc_size_n    = */ NULL,
-    /* .is_host             = */ NULL,
+    /* .get_alloc_size_n    = */ ರಿಕ್ತ,
+    /* .is_host             = */ ರಿಕ್ತ,
 };
 
-const ggml_backend_buffer_type_i ggml_backend_remoting_buffer_from_ptr_type_interface = {
+ಧ್ರುವ ggml_backend_buffer_type_i ggml_backend_remoting_buffer_from_ptr_type_interface = {
     /* .get_name            = */ ggml_backend_remoting_buffer_type_get_name,
-    /* .alloc_buffer        = */ NULL,
-    /* .alloc_buffer_n      = */ NULL,
+    /* .alloc_buffer        = */ ರಿಕ್ತ,
+    /* .alloc_buffer_n      = */ ರಿಕ್ತ,
     /* .get_alignment       = */ ggml_backend_remoting_buffer_type_get_alignment,
     /* .get_max_size        = */ ggml_backend_remoting_buffer_type_get_max_size,
     /* .get_alloc_size      = */ ggml_backend_remoting_buffer_type_get_alloc_size,
-    /* .get_alloc_size_n    = */ NULL,
-    /* .is_host             = */ NULL,
+    /* .get_alloc_size_n    = */ ರಿಕ್ತ,
+    /* .is_host             = */ ರಿಕ್ತ,
 };

@@ -7,11 +7,11 @@
 #   endif
 #   include <windows.h>
 #   include <winevt.h>
-#else
+#ಅನ್ಯಥಾ
 #    include <dlfcn.h>
 #    include <unistd.h>
 #endif
-#include <filesystem>
+#ಅನ್ತರ್ಭಾವ <filesystem>
 
 namespace fs = std::filesystem;
 
@@ -19,13 +19,13 @@ namespace fs = std::filesystem;
 
 using dl_handle = std::remove_pointer_t<HMODULE>;
 
-struct dl_handle_deleter {
-    void operator()(HMODULE handle) {
+ಸಂರಚನಾ dl_handle_deleter {
+    ಶೂನ್ಯ operator()(HMODULE handle) {
         FreeLibrary(handle);
     }
 };
 
-static inline dl_handle * dl_load_library(const fs::path & path) {
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ dl_handle * dl_load_library(ಧ್ರುವ fs::path & path) {
     // suppress error dialogs for missing DLLs
     DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
     SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
@@ -34,46 +34,46 @@ static inline dl_handle * dl_load_library(const fs::path & path) {
 
     SetErrorMode(old_mode);
 
-    return handle;
+    ಪ್ರತ್ಯಾಗಮ handle;
 }
 
-static inline void * dl_get_sym(dl_handle * handle, const char * name) {
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ ಶೂನ್ಯ * dl_get_sym(dl_handle * handle, ಧ್ರುವ ವರ್ಣ * name) {
     DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
     SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
 
-    void * p = (void *) GetProcAddress(handle, name);
+    ಶೂನ್ಯ * p = (ಶೂನ್ಯ *) GetProcAddress(handle, name);
 
     SetErrorMode(old_mode);
 
-    return p;
+    ಪ್ರತ್ಯಾಗಮ p;
 }
 
-static inline const char * dl_error() {
-    return "";
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ ಧ್ರುವ ವರ್ಣ * dl_error() {
+    ಪ್ರತ್ಯಾಗಮ "";
 }
 
-#else
+#ಅನ್ಯಥಾ
 
-using dl_handle = void;
+using dl_handle = ಶೂನ್ಯ;
 
-struct dl_handle_deleter {
-    void operator()(void * handle) {
+ಸಂರಚನಾ dl_handle_deleter {
+    ಶೂನ್ಯ operator()(ಶೂನ್ಯ * handle) {
         dlclose(handle);
     }
 };
 
-static inline dl_handle * dl_load_library(const fs::path & path) {
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ dl_handle * dl_load_library(ಧ್ರುವ fs::path & path) {
     dl_handle * handle = dlopen(path.string().c_str(), RTLD_NOW | RTLD_LOCAL);
-    return handle;
+    ಪ್ರತ್ಯಾಗಮ handle;
 }
 
-static inline void * dl_get_sym(dl_handle * handle, const char * name) {
-    return dlsym(handle, name);
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ ಶೂನ್ಯ * dl_get_sym(dl_handle * handle, ಧ್ರುವ ವರ್ಣ * name) {
+    ಪ್ರತ್ಯಾಗಮ dlsym(handle, name);
 }
 
-static inline const char * dl_error() {
-    const char *rslt = dlerror();
-    return rslt != nullptr ? rslt : "";
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ ಧ್ರುವ ವರ್ಣ * dl_error() {
+    ಧ್ರುವ ವರ್ಣ *rslt = dlerror();
+    ಪ್ರತ್ಯಾಗಮ rslt != nullptr ? rslt : "";
 }
 
 #endif

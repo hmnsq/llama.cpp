@@ -13,10 +13,10 @@
 #ifndef GGML_SYCL_POOL_HPP
 #define GGML_SYCL_POOL_HPP
 
-#include "common.hpp"
-#include "presets.hpp"
+#ಅನ್ತರ್ಭಾವ "common.hpp"
+#ಅನ್ತರ್ಭಾವ "presets.hpp"
 
-void ggml_sycl_op_pool2d(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
-void ggml_sycl_op_pool1d(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+ಶೂನ್ಯ ggml_sycl_op_pool2d(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+ಶೂನ್ಯ ggml_sycl_op_pool1d(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
 #endif // GGML_SYCL_POOL_HPP

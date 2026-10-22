@@ -13,27 +13,27 @@
 #ifndef GGML_SYCL_DEQUANTIZE_HPP
 #define GGML_SYCL_DEQUANTIZE_HPP
 
-#include "common.hpp"
-#include "convert.hpp"
+#ಅನ್ತರ್ಭಾವ "common.hpp"
+#ಅನ್ತರ್ಭಾವ "convert.hpp"
 
-typedef void (*dequantize_kernel_t)(const void * vx, const int64_t ib, const int iqs, dfloat2 & v);
-typedef void (*dequantize_kernel_t_reorder)(const void *d, const int64_t ib, const void *qs,
-                                            const int iqs, dfloat2 &v);
-typedef void (*dequantize_kernel_f32_t)(const void * vx, const int64_t ib, const int iqs, float & v0, float & v1);
+ಪ್ರಕಾರನಿರ್ದೇಶ ಶೂನ್ಯ (*dequantize_kernel_t)(ಧ್ರುವ ಶೂನ್ಯ * vx, ಧ್ರುವ int64_t ib, ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ iqs, dfloat2 & v);
+ಪ್ರಕಾರನಿರ್ದೇಶ ಶೂನ್ಯ (*dequantize_kernel_t_reorder)(ಧ್ರುವ ಶೂನ್ಯ *d, ಧ್ರುವ int64_t ib, ಧ್ರುವ ಶೂನ್ಯ *qs,
+                                            ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ iqs, dfloat2 &v);
+ಪ್ರಕಾರನಿರ್ದೇಶ ಶೂನ್ಯ (*dequantize_kernel_f32_t)(ಧ್ರುವ ಶೂನ್ಯ * vx, ಧ್ರುವ int64_t ib, ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ iqs, ಭಿನ್ನ & v0, ಭಿನ್ನ & v1);
 
-#if QK_K == 256
-static inline void get_scale_min_k4(int j, const uint8_t * q, uint8_t & d, uint8_t & m);
+#ಯದಿ QK_K == 256
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ ಶೂನ್ಯ get_scale_min_k4(ಪೂರ್ಣಾಙ್ಕ j, ಧ್ರುವ uint8_t * q, uint8_t & d, uint8_t & m);
 #endif
 
-static __dpct_inline__ void dequantize_q2_0(const void *vx, const int64_t ib,
-                                            const int iqs, dfloat2 &v) {
-    const block_q2_0 * x = (const block_q2_0 *) vx;
+ಸ್ಥಿರ __dpct_inline__ ಶೂನ್ಯ dequantize_q2_0(ಧ್ರುವ ಶೂನ್ಯ *vx, ಧ್ರುವ int64_t ib,
+                                            ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ iqs, dfloat2 &v) {
+    ಧ್ರುವ block_q2_0 * x = (ಧ್ರುವ block_q2_0 *) vx;
 
-    const dfloat d = x[ib].d;
+    ಧ್ರುವ dfloat d = x[ib].d;
 
-    const int byte_idx = iqs / 4;
-    const int shift = (iqs % 4) * 2;
-    const uint8_t vui = x[ib].qs[byte_idx];
+    ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ byte_idx = iqs / 4;
+    ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ shift = (iqs % 4) * 2;
+    ಧ್ರುವ uint8_t vui = x[ib].qs[byte_idx];
 
     v.x() = (vui >> shift) & 3;
     v.y() = (vui >> (shift + 2)) & 3;
@@ -41,19 +41,19 @@ static __dpct_inline__ void dequantize_q2_0(const void *vx, const int64_t ib,
 #ifdef GGML_SYCL_F16
     v.s0() = ((dfloat)v.s0() - 1.0f) * d;
     v.s1() = ((dfloat)v.s1() - 1.0f) * d;
-#else
+#ಅನ್ಯಥಾ
     v.x() = ((dfloat)v.x() - 1.0f) * d;
     v.y() = ((dfloat)v.y() - 1.0f) * d;
 #endif // GGML_SYCL_F16
 }
 
-static __dpct_inline__ void dequantize_q4_0(const void *vx, const int64_t ib,
-                                            const int iqs, dfloat2 &v) {
-    const block_q4_0 * x = (const block_q4_0 *) vx;
+ಸ್ಥಿರ __dpct_inline__ ಶೂನ್ಯ dequantize_q4_0(ಧ್ರುವ ಶೂನ್ಯ *vx, ಧ್ರುವ int64_t ib,
+                                            ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ iqs, dfloat2 &v) {
+    ಧ್ರುವ block_q4_0 * x = (ಧ್ರುವ block_q4_0 *) vx;
 
-    const dfloat d = x[ib].d;
+    ಧ್ರುವ dfloat d = x[ib].d;
 
-    const int vui = x[ib].qs[iqs];
+    ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ vui = x[ib].qs[iqs];
 
     v.x() = vui & 0xF;
     v.y() = vui >> 4;
@@ -64,19 +64,19 @@ static __dpct_inline__ void dequantize_q4_0(const void *vx, const int64_t ib,
     v.s0() = (v.s0() - 8.0f) * d;
     v.s1() = (v.s1() - 8.0f) * d;
 
-#else
+#ಅನ್ಯಥಾ
     v.x() = (v.x() - 8.0f) * d;
     v.y() = (v.y() - 8.0f) * d;
 #endif // GGML_SYCL_F16
 }
 
-static __dpct_inline__ void dequantize_q4_0_reorder(const void *d_ptr, const int64_t ib, const void *qs,
-                                            const int iqs, dfloat2 &v) {
+ಸ್ಥಿರ __dpct_inline__ ಶೂನ್ಯ dequantize_q4_0_reorder(ಧ್ರುವ ಶೂನ್ಯ *d_ptr, ಧ್ರುವ int64_t ib, ಧ್ರುವ ಶೂನ್ಯ *qs,
+                                            ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ iqs, dfloat2 &v) {
     // const block_q4_0 * x = (const block_q4_0 *) vx;
 
-    const dfloat d = (const dfloat)*((const sycl::half*)d_ptr+ib);
+    ಧ್ರುವ dfloat d = (ಧ್ರುವ dfloat)*((ಧ್ರುವ sycl::half*)d_ptr+ib);
 
-    const int vui = *((const uint8_t *)qs+iqs);
+    ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ vui = *((ಧ್ರುವ uint8_t *)qs+iqs);
 
     v.x() = vui & 0xF;
     v.y() = vui >> 4;
@@ -87,50 +87,50 @@ static __dpct_inline__ void dequantize_q4_0_reorder(const void *d_ptr, const int
     v.s0() = (v.s0() - 8.0f) * d;
     v.s1() = (v.s1() - 8.0f) * d;
 
-#else
+#ಅನ್ಯಥಾ
     v.x() = (v.x() - 8.0f) * d;
     v.y() = (v.y() - 8.0f) * d;
 #endif // GGML_SYCL_F16
 }
 
-static __dpct_inline__ void dequantize_q1_0_reorder(const void *d_ptr, const int64_t ib, const void *qs,
-                                            const int iqs, dfloat2 &v) {
+ಸ್ಥಿರ __dpct_inline__ ಶೂನ್ಯ dequantize_q1_0_reorder(ಧ್ರುವ ಶೂನ್ಯ *d_ptr, ಧ್ರುವ int64_t ib, ಧ್ರುವ ಶೂನ್ಯ *qs,
+                                            ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ iqs, dfloat2 &v) {
     // Q1_0 reorder layout: scale values followed by quantized bits
-    const dfloat d = (const dfloat)*((const sycl::half*)d_ptr+ib);
+    ಧ್ರುವ dfloat d = (ಧ್ರುವ dfloat)*((ಧ್ರುವ sycl::half*)d_ptr+ib);
 
-    const int bit_index_0 = iqs + 0;
-    const int bit_index_1 = iqs + 1;
+    ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ bit_index_0 = iqs + 0;
+    ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ bit_index_1 = iqs + 1;
 
-    const int bit_0 = (*((const uint8_t *)qs + bit_index_0 / 8) >> (bit_index_0 % 8)) & 1;
-    const int bit_1 = (*((const uint8_t *)qs + bit_index_1 / 8) >> (bit_index_1 % 8)) & 1;
-
-    v.x() = (2 * bit_0 - 1) * d;
-    v.y() = (2 * bit_1 - 1) * d;
-}
-
-static __dpct_inline__ void dequantize_q1_0(const void *vx, const int64_t ib,
-                                            const int iqs, dfloat2 &v) {
-    const block_q1_0 * x = (const block_q1_0 *) vx;
-    const dfloat d = x[ib].d;
-
-    const int bit_index_0 = iqs + 0;
-    const int bit_index_1 = iqs + 1;
-
-    const int bit_0 = (x[ib].qs[bit_index_0 / 8] >> (bit_index_0 % 8)) & 1;
-    const int bit_1 = (x[ib].qs[bit_index_1 / 8] >> (bit_index_1 % 8)) & 1;
+    ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ bit_0 = (*((ಧ್ರುವ uint8_t *)qs + bit_index_0 / 8) >> (bit_index_0 % 8)) & 1;
+    ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ bit_1 = (*((ಧ್ರುವ uint8_t *)qs + bit_index_1 / 8) >> (bit_index_1 % 8)) & 1;
 
     v.x() = (2 * bit_0 - 1) * d;
     v.y() = (2 * bit_1 - 1) * d;
 }
 
-static __dpct_inline__ void dequantize_q4_1(const void *vx, const int64_t ib,
-                                            const int iqs, dfloat2 &v) {
-    const block_q4_1 * x = (const block_q4_1 *) vx;
+ಸ್ಥಿರ __dpct_inline__ ಶೂನ್ಯ dequantize_q1_0(ಧ್ರುವ ಶೂನ್ಯ *vx, ಧ್ರುವ int64_t ib,
+                                            ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ iqs, dfloat2 &v) {
+    ಧ್ರುವ block_q1_0 * x = (ಧ್ರುವ block_q1_0 *) vx;
+    ಧ್ರುವ dfloat d = x[ib].d;
 
-    const dfloat d = x[ib].dm[0];
-    const dfloat m = x[ib].dm[1];
+    ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ bit_index_0 = iqs + 0;
+    ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ bit_index_1 = iqs + 1;
 
-    const int vui = x[ib].qs[iqs];
+    ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ bit_0 = (x[ib].qs[bit_index_0 / 8] >> (bit_index_0 % 8)) & 1;
+    ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ bit_1 = (x[ib].qs[bit_index_1 / 8] >> (bit_index_1 % 8)) & 1;
+
+    v.x() = (2 * bit_0 - 1) * d;
+    v.y() = (2 * bit_1 - 1) * d;
+}
+
+ಸ್ಥಿರ __dpct_inline__ ಶೂನ್ಯ dequantize_q4_1(ಧ್ರುವ ಶೂನ್ಯ *vx, ಧ್ರುವ int64_t ib,
+                                            ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ iqs, dfloat2 &v) {
+    ಧ್ರುವ block_q4_1 * x = (ಧ್ರುವ block_q4_1 *) vx;
+
+    ಧ್ರುವ dfloat d = x[ib].dm[0];
+    ಧ್ರುವ dfloat m = x[ib].dm[1];
+
+    ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ vui = x[ib].qs[iqs];
 
     v.x() = vui & 0xF;
     v.y() = vui >> 4;
@@ -141,574 +141,574 @@ static __dpct_inline__ void dequantize_q4_1(const void *vx, const int64_t ib,
     v.s0() = sycl::fma(v.s0(), d, m);
     v.s1() = sycl::fma(v.s1(), d, m);
 
-#else
+#ಅನ್ಯಥಾ
     v.x() = sycl::fma(v.x(), d, m);
     v.y() = sycl::fma(v.y(), d, m);
 #endif // GGML_SYCL_F16
 }
 
-static __dpct_inline__ void dequantize_q4_K(const void *vx, const int64_t ib,
-                                            const int iqs, dfloat2 &v) {
-#if QK_K == 256
-    const block_q4_K * x = (const block_q4_K *) vx;
-    const sycl::half2 dm = x[ib].dm;
-    const float dall = dm[0];
-    const float dmin = dm[1];
+ಸ್ಥಿರ __dpct_inline__ ಶೂನ್ಯ dequantize_q4_K(ಧ್ರುವ ಶೂನ್ಯ *vx, ಧ್ರುವ int64_t ib,
+                                            ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ iqs, dfloat2 &v) {
+#ಯದಿ QK_K == 256
+    ಧ್ರುವ block_q4_K * x = (ಧ್ರುವ block_q4_K *) vx;
+    ಧ್ರುವ sycl::half2 dm = x[ib].dm;
+    ಧ್ರುವ ಭಿನ್ನ dall = dm[0];
+    ಧ್ರುವ ಭಿನ್ನ dmin = dm[1];
 
-    auto dequantize_one = [&](const int idx) -> dfloat {
-        const int il = idx / 64;
-        const int in = idx % 64;
-        const int is = 2 * il + (in >= 32 ? 1 : 0);
-        const int off = in & 31;
-        const int qsi = 32 * il + off;
-
-        uint8_t sc;
-        uint8_t m;
-        get_scale_min_k4(is, x[ib].scales, sc, m);
-
-        const uint8_t q = x[ib].qs[qsi];
-        const uint8_t qv = (in >= 32) ? (q >> 4) : (q & 0xF);
-        return sycl::fma((dfloat) qv, (dfloat) (dall * sc), (dfloat) (-dmin * m));
-    };
-
-    v.x() = dequantize_one(iqs + 0);
-    v.y() = dequantize_one(iqs + 1);
-#else
-    GGML_ABORT("Q4_K dequantize not supported for QK_K != 256");
-#endif
-}
-
-static __dpct_inline__ void dequantize_q4_K_f32(const void *vx, const int64_t ib,
-                                                const int iqs, float &v0, float &v1) {
-#if QK_K == 256
-    const block_q4_K * x = (const block_q4_K *) vx;
-    const sycl::half2 dm = x[ib].dm;
-    const float dall = dm[0];
-    const float dmin = dm[1];
-
-    auto dequantize_one = [&](const int idx) -> float {
-        const int il = idx / 64;
-        const int in = idx % 64;
-        const int is = 2 * il + (in >= 32 ? 1 : 0);
-        const int qsi = 32 * il + (in & 31);
+    auto dequantize_one = [&](ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ idx) -> dfloat {
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ il = idx / 64;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ in = idx % 64;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ is = 2 * il + (in >= 32 ? 1 : 0);
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ off = in & 31;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ qsi = 32 * il + off;
 
         uint8_t sc;
         uint8_t m;
         get_scale_min_k4(is, x[ib].scales, sc, m);
 
-        const float d = dall * sc;
-        const float mn = dmin * m;
-        const uint8_t q = x[ib].qs[qsi];
-        const uint8_t qv = (in >= 32) ? (q >> 4) : (q & 0xF);
-
-        return d * qv - mn;
-    };
-
-    v0 = dequantize_one(iqs + 0);
-    v1 = dequantize_one(iqs + 1);
-#else
-    GGML_ABORT("Q4_K dequantize not supported for QK_K != 256");
-#endif
-}
-
-static __dpct_inline__ void dequantize_q2_K(const void *vx, const int64_t ib,
-                                            const int iqs, dfloat2 &v) {
-#if QK_K == 256
-    const block_q2_K * x = (const block_q2_K *) vx;
-    const float dall = x[ib].dm[0];
-    const float dmin = x[ib].dm[1];
-
-    auto dequantize_one = [&](const int idx) -> dfloat {
-        const int n = idx / 128;
-        const int r = idx % 128;
-        const int g = r / 32;
-        const int l = r % 32;
-        const int is = 8 * n + l / 16;
-
-        const uint8_t q = x[ib].qs[32 * n + l];
-        const uint8_t sc = x[ib].scales[is + 2 * g];
-        const float d = dall * (sc & 0xF);
-        const float m = dmin * (sc >> 4);
-
-        return (dfloat) d * (dfloat) ((q >> (2 * g)) & 3) - (dfloat) m;
+        ಧ್ರುವ uint8_t q = x[ib].qs[qsi];
+        ಧ್ರುವ uint8_t qv = (in >= 32) ? (q >> 4) : (q & 0xF);
+        ಪ್ರತ್ಯಾಗಮ sycl::fma((dfloat) qv, (dfloat) (dall * sc), (dfloat) (-dmin * m));
     };
 
     v.x() = dequantize_one(iqs + 0);
     v.y() = dequantize_one(iqs + 1);
-#else
-    GGML_ABORT("Q2_K dequantize not supported for QK_K != 256");
+#ಅನ್ಯಥಾ
+    GGML_ABORT("Q4_K dequantize not supported for QK_K != 256");
 #endif
 }
 
-static __dpct_inline__ void dequantize_q2_K_f32(const void *vx, const int64_t ib,
-                                                const int iqs, float &v0, float &v1) {
-#if QK_K == 256
-    const block_q2_K * x = (const block_q2_K *) vx;
-    const float dall = x[ib].dm[0];
-    const float dmin = x[ib].dm[1];
+ಸ್ಥಿರ __dpct_inline__ ಶೂನ್ಯ dequantize_q4_K_f32(ಧ್ರುವ ಶೂನ್ಯ *vx, ಧ್ರುವ int64_t ib,
+                                                ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ iqs, ಭಿನ್ನ &v0, ಭಿನ್ನ &v1) {
+#ಯದಿ QK_K == 256
+    ಧ್ರುವ block_q4_K * x = (ಧ್ರುವ block_q4_K *) vx;
+    ಧ್ರುವ sycl::half2 dm = x[ib].dm;
+    ಧ್ರುವ ಭಿನ್ನ dall = dm[0];
+    ಧ್ರುವ ಭಿನ್ನ dmin = dm[1];
 
-    auto dequantize_one = [&](const int idx) -> float {
-        const int n = idx / 128;
-        const int r = idx % 128;
-        const int g = r / 32;
-        const int l = r % 32;
-        const int is = 8 * n + l / 16;
+    auto dequantize_one = [&](ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ idx) -> ಭಿನ್ನ {
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ il = idx / 64;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ in = idx % 64;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ is = 2 * il + (in >= 32 ? 1 : 0);
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ qsi = 32 * il + (in & 31);
 
-        const uint8_t q = x[ib].qs[32 * n + l];
-        const uint8_t sc = x[ib].scales[is + 2 * g];
-        const float d = dall * (sc & 0xF);
-        const float m = dmin * (sc >> 4);
+        uint8_t sc;
+        uint8_t m;
+        get_scale_min_k4(is, x[ib].scales, sc, m);
 
-        return d * ((q >> (2 * g)) & 3) - m;
+        ಧ್ರುವ ಭಿನ್ನ d = dall * sc;
+        ಧ್ರುವ ಭಿನ್ನ mn = dmin * m;
+        ಧ್ರುವ uint8_t q = x[ib].qs[qsi];
+        ಧ್ರುವ uint8_t qv = (in >= 32) ? (q >> 4) : (q & 0xF);
+
+        ಪ್ರತ್ಯಾಗಮ d * qv - mn;
     };
 
     v0 = dequantize_one(iqs + 0);
     v1 = dequantize_one(iqs + 1);
-#else
+#ಅನ್ಯಥಾ
+    GGML_ABORT("Q4_K dequantize not supported for QK_K != 256");
+#endif
+}
+
+ಸ್ಥಿರ __dpct_inline__ ಶೂನ್ಯ dequantize_q2_K(ಧ್ರುವ ಶೂನ್ಯ *vx, ಧ್ರುವ int64_t ib,
+                                            ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ iqs, dfloat2 &v) {
+#ಯದಿ QK_K == 256
+    ಧ್ರುವ block_q2_K * x = (ಧ್ರುವ block_q2_K *) vx;
+    ಧ್ರುವ ಭಿನ್ನ dall = x[ib].dm[0];
+    ಧ್ರುವ ಭಿನ್ನ dmin = x[ib].dm[1];
+
+    auto dequantize_one = [&](ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ idx) -> dfloat {
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ n = idx / 128;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ r = idx % 128;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ g = r / 32;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ l = r % 32;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ is = 8 * n + l / 16;
+
+        ಧ್ರುವ uint8_t q = x[ib].qs[32 * n + l];
+        ಧ್ರುವ uint8_t sc = x[ib].scales[is + 2 * g];
+        ಧ್ರುವ ಭಿನ್ನ d = dall * (sc & 0xF);
+        ಧ್ರುವ ಭಿನ್ನ m = dmin * (sc >> 4);
+
+        ಪ್ರತ್ಯಾಗಮ (dfloat) d * (dfloat) ((q >> (2 * g)) & 3) - (dfloat) m;
+    };
+
+    v.x() = dequantize_one(iqs + 0);
+    v.y() = dequantize_one(iqs + 1);
+#ಅನ್ಯಥಾ
     GGML_ABORT("Q2_K dequantize not supported for QK_K != 256");
 #endif
 }
 
-static __dpct_inline__ void dequantize_q3_K(const void *vx, const int64_t ib,
-                                            const int iqs, dfloat2 &v) {
-#if QK_K == 256
-    const block_q3_K * x = (const block_q3_K *) vx;
-    const float d_all = x[ib].d;
+ಸ್ಥಿರ __dpct_inline__ ಶೂನ್ಯ dequantize_q2_K_f32(ಧ್ರುವ ಶೂನ್ಯ *vx, ಧ್ರುವ int64_t ib,
+                                                ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ iqs, ಭಿನ್ನ &v0, ಭಿನ್ನ &v1) {
+#ಯದಿ QK_K == 256
+    ಧ್ರುವ block_q2_K * x = (ಧ್ರುವ block_q2_K *) vx;
+    ಧ್ರುವ ಭಿನ್ನ dall = x[ib].dm[0];
+    ಧ್ರುವ ಭಿನ್ನ dmin = x[ib].dm[1];
 
-    auto dequantize_one = [&](const int idx) -> dfloat {
-        const int n = idx / 128;
-        const int r = idx % 128;
-        const int j = r / 32;
-        const int l = r % 32;
+    auto dequantize_one = [&](ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ idx) -> ಭಿನ್ನ {
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ n = idx / 128;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ r = idx % 128;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ g = r / 32;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ l = r % 32;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ is = 8 * n + l / 16;
 
-        const int is0 = l / 16;
-        const int is = 8 * n + 2 * j + is0;
-        const int shift = 2 * j;
-        const uint8_t m = 1 << (4 * n + j);
+        ಧ್ರುವ uint8_t q = x[ib].qs[32 * n + l];
+        ಧ್ರುವ uint8_t sc = x[ib].scales[is + 2 * g];
+        ಧ್ರುವ ಭಿನ್ನ d = dall * (sc & 0xF);
+        ಧ್ರುವ ಭಿನ್ನ m = dmin * (sc >> 4);
 
-        const int8_t us = is <  4 ? (x[ib].scales[is - 0] & 0xF) | (((x[ib].scales[is + 8] >> 0) & 3) << 4) :
+        ಪ್ರತ್ಯಾಗಮ d * ((q >> (2 * g)) & 3) - m;
+    };
+
+    v0 = dequantize_one(iqs + 0);
+    v1 = dequantize_one(iqs + 1);
+#ಅನ್ಯಥಾ
+    GGML_ABORT("Q2_K dequantize not supported for QK_K != 256");
+#endif
+}
+
+ಸ್ಥಿರ __dpct_inline__ ಶೂನ್ಯ dequantize_q3_K(ಧ್ರುವ ಶೂನ್ಯ *vx, ಧ್ರುವ int64_t ib,
+                                            ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ iqs, dfloat2 &v) {
+#ಯದಿ QK_K == 256
+    ಧ್ರುವ block_q3_K * x = (ಧ್ರುವ block_q3_K *) vx;
+    ಧ್ರುವ ಭಿನ್ನ d_all = x[ib].d;
+
+    auto dequantize_one = [&](ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ idx) -> dfloat {
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ n = idx / 128;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ r = idx % 128;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ j = r / 32;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ l = r % 32;
+
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ is0 = l / 16;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ is = 8 * n + 2 * j + is0;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ shift = 2 * j;
+        ಧ್ರುವ uint8_t m = 1 << (4 * n + j);
+
+        ಧ್ರುವ int8_t us = is <  4 ? (x[ib].scales[is - 0] & 0xF) | (((x[ib].scales[is + 8] >> 0) & 3) << 4) :
                          is <  8 ? (x[ib].scales[is - 0] & 0xF) | (((x[ib].scales[is + 4] >> 2) & 3) << 4) :
                          is < 12 ? (x[ib].scales[is - 8] >> 4)  | (((x[ib].scales[is + 0] >> 4) & 3) << 4) :
                                    (x[ib].scales[is - 8] >> 4)  | (((x[ib].scales[is - 4] >> 6) & 3) << 4);
 
-        const float dl = d_all * (us - 32);
-        const uint8_t q = x[ib].qs[32 * n + l];
-        const uint8_t h = x[ib].hmask[l];
-        const int8_t qv = ((q >> shift) & 3) - ((h & m) ? 0 : 4);
+        ಧ್ರುವ ಭಿನ್ನ dl = d_all * (us - 32);
+        ಧ್ರುವ uint8_t q = x[ib].qs[32 * n + l];
+        ಧ್ರುವ uint8_t h = x[ib].hmask[l];
+        ಧ್ರುವ int8_t qv = ((q >> shift) & 3) - ((h & m) ? 0 : 4);
 
-        return (dfloat) (dl * qv);
+        ಪ್ರತ್ಯಾಗಮ (dfloat) (dl * qv);
     };
 
     v.x() = dequantize_one(iqs + 0);
     v.y() = dequantize_one(iqs + 1);
-#else
+#ಅನ್ಯಥಾ
     GGML_ABORT("Q3_K dequantize not supported for QK_K != 256");
 #endif
 }
 
-static __dpct_inline__ void dequantize_q5_K(const void *vx, const int64_t ib,
-                                            const int iqs, dfloat2 &v) {
-#if QK_K == 256
-    const block_q5_K * x = (const block_q5_K *) vx;
-    const float dall = x[ib].dm[0];
-    const float dmin = x[ib].dm[1];
+ಸ್ಥಿರ __dpct_inline__ ಶೂನ್ಯ dequantize_q5_K(ಧ್ರುವ ಶೂನ್ಯ *vx, ಧ್ರುವ int64_t ib,
+                                            ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ iqs, dfloat2 &v) {
+#ಯದಿ QK_K == 256
+    ಧ್ರುವ block_q5_K * x = (ಧ್ರುವ block_q5_K *) vx;
+    ಧ್ರುವ ಭಿನ್ನ dall = x[ib].dm[0];
+    ಧ್ರುವ ಭಿನ್ನ dmin = x[ib].dm[1];
 
-    auto dequantize_one = [&](const int idx) -> dfloat {
-        const int il = idx / 64;
-        const int in = idx % 64;
-        const int is = 2 * il + (in >= 32 ? 1 : 0);
-        const int ir = (in & 31) / 2;
-        const int iq = in & 1;
+    auto dequantize_one = [&](ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ idx) -> dfloat {
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ il = idx / 64;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ in = idx % 64;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ is = 2 * il + (in >= 32 ? 1 : 0);
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ ir = (in & 31) / 2;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ iq = in & 1;
 
-        const uint8_t q = x[ib].qs[32 * il + 2 * ir + iq];
-        const uint8_t h = x[ib].qh[2 * ir + iq];
-        const uint8_t qv = (in >= 32) ? (q >> 4) : (q & 0xF);
+        ಧ್ರುವ uint8_t q = x[ib].qs[32 * il + 2 * ir + iq];
+        ಧ್ರುವ uint8_t h = x[ib].qh[2 * ir + iq];
+        ಧ್ರುವ uint8_t qv = (in >= 32) ? (q >> 4) : (q & 0xF);
 
         uint8_t sc;
         uint8_t m;
         get_scale_min_k4(is, x[ib].scales, sc, m);
 
-        const float d = dall * sc;
-        const float mn = dmin * m;
-        const uint8_t hm = 1 << (2 * il + (in >= 32 ? 1 : 0));
+        ಧ್ರುವ ಭಿನ್ನ d = dall * sc;
+        ಧ್ರುವ ಭಿನ್ನ mn = dmin * m;
+        ಧ್ರುವ uint8_t hm = 1 << (2 * il + (in >= 32 ? 1 : 0));
 
-        return sycl::fma((dfloat) (qv + ((h & hm) ? 16 : 0)), (dfloat) d, (dfloat) (-mn));
+        ಪ್ರತ್ಯಾಗಮ sycl::fma((dfloat) (qv + ((h & hm) ? 16 : 0)), (dfloat) d, (dfloat) (-mn));
     };
 
     v.x() = dequantize_one(iqs + 0);
     v.y() = dequantize_one(iqs + 1);
-#else
+#ಅನ್ಯಥಾ
     GGML_ABORT("Q5_K dequantize not supported for QK_K != 256");
 #endif
 }
 
-static __dpct_inline__ void dequantize_q5_K_f32(const void *vx, const int64_t ib,
-                                                const int iqs, float &v0, float &v1) {
-#if QK_K == 256
-    const block_q5_K * x = (const block_q5_K *) vx;
-    const float dall = x[ib].dm[0];
-    const float dmin = x[ib].dm[1];
+ಸ್ಥಿರ __dpct_inline__ ಶೂನ್ಯ dequantize_q5_K_f32(ಧ್ರುವ ಶೂನ್ಯ *vx, ಧ್ರುವ int64_t ib,
+                                                ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ iqs, ಭಿನ್ನ &v0, ಭಿನ್ನ &v1) {
+#ಯದಿ QK_K == 256
+    ಧ್ರುವ block_q5_K * x = (ಧ್ರುವ block_q5_K *) vx;
+    ಧ್ರುವ ಭಿನ್ನ dall = x[ib].dm[0];
+    ಧ್ರುವ ಭಿನ್ನ dmin = x[ib].dm[1];
 
-    auto dequantize_one = [&](const int idx) -> float {
-        const int il = idx / 64;
-        const int in = idx % 64;
-        const int is = 2 * il + (in >= 32 ? 1 : 0);
-        const int ir = (in & 31) / 2;
-        const int iq = in & 1;
+    auto dequantize_one = [&](ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ idx) -> ಭಿನ್ನ {
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ il = idx / 64;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ in = idx % 64;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ is = 2 * il + (in >= 32 ? 1 : 0);
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ ir = (in & 31) / 2;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ iq = in & 1;
 
-        const uint8_t q = x[ib].qs[32 * il + 2 * ir + iq];
-        const uint8_t h = x[ib].qh[2 * ir + iq];
-        const uint8_t qv = (in >= 32) ? (q >> 4) : (q & 0xF);
+        ಧ್ರುವ uint8_t q = x[ib].qs[32 * il + 2 * ir + iq];
+        ಧ್ರುವ uint8_t h = x[ib].qh[2 * ir + iq];
+        ಧ್ರುವ uint8_t qv = (in >= 32) ? (q >> 4) : (q & 0xF);
 
         uint8_t sc;
         uint8_t m;
         get_scale_min_k4(is, x[ib].scales, sc, m);
 
-        const float d = dall * sc;
-        const float mn = dmin * m;
-        const uint8_t hm = 1 << (2 * il + (in >= 32 ? 1 : 0));
+        ಧ್ರುವ ಭಿನ್ನ d = dall * sc;
+        ಧ್ರುವ ಭಿನ್ನ mn = dmin * m;
+        ಧ್ರುವ uint8_t hm = 1 << (2 * il + (in >= 32 ? 1 : 0));
 
-        return (qv + ((h & hm) ? 16 : 0)) * d - mn;
+        ಪ್ರತ್ಯಾಗಮ (qv + ((h & hm) ? 16 : 0)) * d - mn;
     };
 
     v0 = dequantize_one(iqs + 0);
     v1 = dequantize_one(iqs + 1);
-#else
+#ಅನ್ಯಥಾ
     GGML_ABORT("Q5_K dequantize not supported for QK_K != 256");
 #endif
 }
 
-static __dpct_inline__ void dequantize_q6_K(const void *vx, const int64_t ib,
-                                            const int iqs, dfloat2 &v) {
-#if QK_K == 256
-    const block_q6_K * x = (const block_q6_K *) vx;
-    const float d = x[ib].d;
+ಸ್ಥಿರ __dpct_inline__ ಶೂನ್ಯ dequantize_q6_K(ಧ್ರುವ ಶೂನ್ಯ *vx, ಧ್ರುವ int64_t ib,
+                                            ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ iqs, dfloat2 &v) {
+#ಯದಿ QK_K == 256
+    ಧ್ರುವ block_q6_K * x = (ಧ್ರುವ block_q6_K *) vx;
+    ಧ್ರುವ ಭಿನ್ನ d = x[ib].d;
 
-    auto dequantize_one = [&](const int idx) -> dfloat {
-        const int ip = idx / 128;
-        const int in = idx % 128;
-        const int il = in & 31;
-        const int ig = in / 32;
-        const int is = 8 * ip + il / 16;
+    auto dequantize_one = [&](ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ idx) -> dfloat {
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ ip = idx / 128;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ in = idx % 128;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ il = in & 31;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ ig = in / 32;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ is = 8 * ip + il / 16;
 
-        const uint8_t ql0 = x[ib].ql[64 * ip + il];
-        const uint8_t ql1 = x[ib].ql[64 * ip + il + 32];
-        const uint8_t qh = x[ib].qh[32 * ip + il];
-        const int8_t * sc = x[ib].scales + is;
+        ಧ್ರುವ uint8_t ql0 = x[ib].ql[64 * ip + il];
+        ಧ್ರುವ uint8_t ql1 = x[ib].ql[64 * ip + il + 32];
+        ಧ್ರುವ uint8_t qh = x[ib].qh[32 * ip + il];
+        ಧ್ರುವ int8_t * sc = x[ib].scales + is;
 
         uint8_t qv;
         int8_t scale;
-        if (ig == 0) {
+        ಯದಿ (ig == 0) {
             qv = (ql0 & 0xF) | (((qh >> 0) & 3) << 4);
             scale = sc[0];
-        } else if (ig == 1) {
+        } ಅನ್ಯಥಾ ಯದಿ (ig == 1) {
             qv = (ql1 & 0xF) | (((qh >> 2) & 3) << 4);
             scale = sc[2];
-        } else if (ig == 2) {
+        } ಅನ್ಯಥಾ ಯದಿ (ig == 2) {
             qv = (ql0 >> 4) | (((qh >> 4) & 3) << 4);
             scale = sc[4];
-        } else {
+        } ಅನ್ಯಥಾ {
             qv = (ql1 >> 4) | (((qh >> 6) & 3) << 4);
             scale = sc[6];
         }
 
-        return (dfloat) (d * scale * ((int8_t) qv - 32));
+        ಪ್ರತ್ಯಾಗಮ (dfloat) (d * scale * ((int8_t) qv - 32));
     };
 
     v.x() = dequantize_one(iqs + 0);
     v.y() = dequantize_one(iqs + 1);
-#else
+#ಅನ್ಯಥಾ
     GGML_ABORT("Q6_K dequantize not supported for QK_K != 256");
 #endif
 }
 
-static __dpct_inline__ void dequantize_mxfp4(const void *vx, const int64_t ib,
-                                             const int iqs, dfloat2 &v) {
-    const block_mxfp4 * x = (const block_mxfp4 *) vx;
-    const float d = ggml_sycl_e8m0_to_fp32(x[ib].e);
-    const uint8_t q = x[ib].qs[iqs];
+ಸ್ಥಿರ __dpct_inline__ ಶೂನ್ಯ dequantize_mxfp4(ಧ್ರುವ ಶೂನ್ಯ *vx, ಧ್ರುವ int64_t ib,
+                                             ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ iqs, dfloat2 &v) {
+    ಧ್ರುವ block_mxfp4 * x = (ಧ್ರುವ block_mxfp4 *) vx;
+    ಧ್ರುವ ಭಿನ್ನ d = ggml_sycl_e8m0_to_fp32(x[ib].e);
+    ಧ್ರುವ uint8_t q = x[ib].qs[iqs];
 
     v.x() = d * kvalues_mxfp4[q & 0xF] * 0.5f;
     v.y() = d * kvalues_mxfp4[q >> 4] * 0.5f;
 }
 
-static __dpct_inline__ void dequantize_nvfp4(const void *vx, const int64_t ib,
-                                             const int iqs, dfloat2 &v) {
-    const block_nvfp4 & xb = ((const block_nvfp4 *) vx)[ib];
+ಸ್ಥಿರ __dpct_inline__ ಶೂನ್ಯ dequantize_nvfp4(ಧ್ರುವ ಶೂನ್ಯ *vx, ಧ್ರುವ int64_t ib,
+                                             ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ iqs, dfloat2 &v) {
+    ಧ್ರುವ block_nvfp4 & xb = ((ಧ್ರುವ block_nvfp4 *) vx)[ib];
 
-    auto dequantize_one = [&](const int idx) -> dfloat {
-        const int sub = idx / QK_NVFP4_SUB;
-        const int j = idx % QK_NVFP4_SUB;
-        const int jh = j % (QK_NVFP4_SUB / 2);
+    auto dequantize_one = [&](ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ idx) -> dfloat {
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ sub = idx / QK_NVFP4_SUB;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ j = idx % QK_NVFP4_SUB;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ jh = j % (QK_NVFP4_SUB / 2);
 
-        const float d = ggml_sycl_ue4m3_to_fp32(xb.d[sub]);
-        const uint8_t q = xb.qs[sub * (QK_NVFP4_SUB / 2) + jh];
-        const uint8_t qv = (j < (QK_NVFP4_SUB / 2)) ? (q & 0x0F) : (q >> 4);
+        ಧ್ರುವ ಭಿನ್ನ d = ggml_sycl_ue4m3_to_fp32(xb.d[sub]);
+        ಧ್ರುವ uint8_t q = xb.qs[sub * (QK_NVFP4_SUB / 2) + jh];
+        ಧ್ರುವ uint8_t qv = (j < (QK_NVFP4_SUB / 2)) ? (q & 0x0F) : (q >> 4);
 
-        return d * kvalues_mxfp4[qv];
+        ಪ್ರತ್ಯಾಗಮ d * kvalues_mxfp4[qv];
     };
 
     v.x() = dequantize_one(iqs + 0);
     v.y() = dequantize_one(iqs + 1);
 }
 
-static __dpct_inline__ void dequantize_iq2_xxs(const void *vx, const int64_t ib,
-                                               const int iqs, dfloat2 &v) {
-#if QK_K == 256
-    const block_iq2_xxs * x = (const block_iq2_xxs *) vx;
+ಸ್ಥಿರ __dpct_inline__ ಶೂನ್ಯ dequantize_iq2_xxs(ಧ್ರುವ ಶೂನ್ಯ *vx, ಧ್ರುವ int64_t ib,
+                                               ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ iqs, dfloat2 &v) {
+#ಯದಿ QK_K == 256
+    ಧ್ರುವ block_iq2_xxs * x = (ಧ್ರುವ block_iq2_xxs *) vx;
 
-    auto dequantize_one = [&](const int idx) -> dfloat {
-        const int ib8 = idx / 32;
-        const int r = idx % 32;
-        const int il = r / 8;
-        const int j = r % 8;
+    auto dequantize_one = [&](ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ idx) -> dfloat {
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ ib8 = idx / 32;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ r = idx % 32;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ il = r / 8;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ j = r % 8;
 
-        const uint16_t * q2 = x[ib].qs + 4 * ib8;
-        const uint8_t * aux8 = (const uint8_t *) q2;
-        const uint8_t * grid = (const uint8_t *) (iq2xxs_grid + aux8[il]);
-        const uint32_t aux32 = q2[2] | (q2[3] << 16);
-        const float d = (float) x[ib].d * (0.5f + (aux32 >> 28)) * 0.25f;
-        const uint8_t signs = ksigns_iq2xs[(aux32 >> (7 * il)) & 127];
+        ಧ್ರುವ uint16_t * q2 = x[ib].qs + 4 * ib8;
+        ಧ್ರುವ uint8_t * aux8 = (ಧ್ರುವ uint8_t *) q2;
+        ಧ್ರುವ uint8_t * grid = (ಧ್ರುವ uint8_t *) (iq2xxs_grid + aux8[il]);
+        ಧ್ರುವ uint32_t aux32 = q2[2] | (q2[3] << 16);
+        ಧ್ರುವ ಭಿನ್ನ d = (ಭಿನ್ನ) x[ib].d * (0.5f + (aux32 >> 28)) * 0.25f;
+        ಧ್ರುವ uint8_t signs = ksigns_iq2xs[(aux32 >> (7 * il)) & 127];
 
-        return d * grid[j] * ((signs & kmask_iq2xs[j]) ? -1.f : 1.f);
+        ಪ್ರತ್ಯಾಗಮ d * grid[j] * ((signs & kmask_iq2xs[j]) ? -1.f : 1.f);
     };
 
     v.x() = dequantize_one(iqs + 0);
     v.y() = dequantize_one(iqs + 1);
-#else
+#ಅನ್ಯಥಾ
     GGML_ABORT("IQ2_XXS dequantize not supported for QK_K != 256");
 #endif
 }
 
-static __dpct_inline__ void dequantize_iq2_xs(const void *vx, const int64_t ib,
-                                              const int iqs, dfloat2 &v) {
-#if QK_K == 256
-    const block_iq2_xs * x = (const block_iq2_xs *) vx;
+ಸ್ಥಿರ __dpct_inline__ ಶೂನ್ಯ dequantize_iq2_xs(ಧ್ರುವ ಶೂನ್ಯ *vx, ಧ್ರುವ int64_t ib,
+                                              ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ iqs, dfloat2 &v) {
+#ಯದಿ QK_K == 256
+    ಧ್ರುವ block_iq2_xs * x = (ಧ್ರುವ block_iq2_xs *) vx;
 
-    auto dequantize_one = [&](const int idx) -> dfloat {
-        const int ib8 = idx / 32;
-        const int r = idx % 32;
-        const int il = r / 8;
-        const int j = r % 8;
+    auto dequantize_one = [&](ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ idx) -> dfloat {
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ ib8 = idx / 32;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ r = idx % 32;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ il = r / 8;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ j = r % 8;
 
-        const uint16_t * q2 = x[ib].qs + 4 * ib8;
-        const uint8_t * grid = (const uint8_t *) (iq2xs_grid + (q2[il] & 511));
-        const float d = (float) x[ib].d * (0.5f + ((x[ib].scales[ib8] >> (4 * (il / 2))) & 0xf)) * 0.25f;
-        const uint8_t signs = ksigns_iq2xs[q2[il] >> 9];
+        ಧ್ರುವ uint16_t * q2 = x[ib].qs + 4 * ib8;
+        ಧ್ರುವ uint8_t * grid = (ಧ್ರುವ uint8_t *) (iq2xs_grid + (q2[il] & 511));
+        ಧ್ರುವ ಭಿನ್ನ d = (ಭಿನ್ನ) x[ib].d * (0.5f + ((x[ib].scales[ib8] >> (4 * (il / 2))) & 0xf)) * 0.25f;
+        ಧ್ರುವ uint8_t signs = ksigns_iq2xs[q2[il] >> 9];
 
-        return d * grid[j] * ((signs & kmask_iq2xs[j]) ? -1.f : 1.f);
+        ಪ್ರತ್ಯಾಗಮ d * grid[j] * ((signs & kmask_iq2xs[j]) ? -1.f : 1.f);
     };
 
     v.x() = dequantize_one(iqs + 0);
     v.y() = dequantize_one(iqs + 1);
-#else
+#ಅನ್ಯಥಾ
     GGML_ABORT("IQ2_XS dequantize not supported for QK_K != 256");
 #endif
 }
 
-static __dpct_inline__ void dequantize_iq2_s(const void *vx, const int64_t ib,
-                                             const int iqs, dfloat2 &v) {
-#if QK_K == 256
-    const block_iq2_s * x = (const block_iq2_s *) vx;
+ಸ್ಥಿರ __dpct_inline__ ಶೂನ್ಯ dequantize_iq2_s(ಧ್ರುವ ಶೂನ್ಯ *vx, ಧ್ರುವ int64_t ib,
+                                             ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ iqs, dfloat2 &v) {
+#ಯದಿ QK_K == 256
+    ಧ್ರುವ block_iq2_s * x = (ಧ್ರುವ block_iq2_s *) vx;
 
-    auto dequantize_one = [&](const int idx) -> dfloat {
-        const int ib8 = idx / 32;
-        const int r = idx % 32;
-        const int il = r / 8;
-        const int j = r % 8;
+    auto dequantize_one = [&](ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ idx) -> dfloat {
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ ib8 = idx / 32;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ r = idx % 32;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ il = r / 8;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ j = r % 8;
 
-        const uint16_t grid_id = x[ib].qs[4 * ib8 + il] | ((x[ib].qh[ib8] << (8 - 2 * il)) & 0x300);
-        const uint8_t * grid = (const uint8_t *) (iq2s_grid + grid_id);
-        const float d = (float) x[ib].d * (0.5f + ((x[ib].scales[ib8] >> (4 * (il / 2))) & 0xf)) * 0.25f;
-        const uint8_t signs = x[ib].qs[QK_K / 8 + 4 * ib8 + il];
+        ಧ್ರುವ uint16_t grid_id = x[ib].qs[4 * ib8 + il] | ((x[ib].qh[ib8] << (8 - 2 * il)) & 0x300);
+        ಧ್ರುವ uint8_t * grid = (ಧ್ರುವ uint8_t *) (iq2s_grid + grid_id);
+        ಧ್ರುವ ಭಿನ್ನ d = (ಭಿನ್ನ) x[ib].d * (0.5f + ((x[ib].scales[ib8] >> (4 * (il / 2))) & 0xf)) * 0.25f;
+        ಧ್ರುವ uint8_t signs = x[ib].qs[QK_K / 8 + 4 * ib8 + il];
 
-        return d * grid[j] * ((signs & kmask_iq2xs[j]) ? -1.f : 1.f);
+        ಪ್ರತ್ಯಾಗಮ d * grid[j] * ((signs & kmask_iq2xs[j]) ? -1.f : 1.f);
     };
 
     v.x() = dequantize_one(iqs + 0);
     v.y() = dequantize_one(iqs + 1);
-#else
+#ಅನ್ಯಥಾ
     GGML_ABORT("IQ2_S dequantize not supported for QK_K != 256");
 #endif
 }
 
-static __dpct_inline__ void dequantize_iq3_xxs(const void *vx, const int64_t ib,
-                                               const int iqs, dfloat2 &v) {
-#if QK_K == 256
-    const block_iq3_xxs * x = (const block_iq3_xxs *) vx;
+ಸ್ಥಿರ __dpct_inline__ ಶೂನ್ಯ dequantize_iq3_xxs(ಧ್ರುವ ಶೂನ್ಯ *vx, ಧ್ರುವ int64_t ib,
+                                               ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ iqs, dfloat2 &v) {
+#ಯದಿ QK_K == 256
+    ಧ್ರುವ block_iq3_xxs * x = (ಧ್ರುವ block_iq3_xxs *) vx;
 
-    auto dequantize_one = [&](const int idx) -> dfloat {
-        const int ib8 = idx / 32;
-        const int r = idx % 32;
-        const int il = r / 8;
-        const int j = r % 8;
+    auto dequantize_one = [&](ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ idx) -> dfloat {
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ ib8 = idx / 32;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ r = idx % 32;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ il = r / 8;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ j = r % 8;
 
-        const uint8_t * q3 = x[ib].qs + 8 * ib8;
-        const uint16_t * gas = (const uint16_t *) (x[ib].qs + QK_K / 4) + 2 * ib8;
-        const uint8_t * grid1 = (const uint8_t *) (iq3xxs_grid + q3[2 * il + 0]);
-        const uint8_t * grid2 = (const uint8_t *) (iq3xxs_grid + q3[2 * il + 1]);
-        const uint32_t aux32 = gas[0] | (gas[1] << 16);
-        const float d = (float) x[ib].d * (0.5f + (aux32 >> 28)) * 0.5f;
-        const uint8_t signs = ksigns_iq2xs[(aux32 >> (7 * il)) & 127];
+        ಧ್ರುವ uint8_t * q3 = x[ib].qs + 8 * ib8;
+        ಧ್ರುವ uint16_t * gas = (ಧ್ರುವ uint16_t *) (x[ib].qs + QK_K / 4) + 2 * ib8;
+        ಧ್ರುವ uint8_t * grid1 = (ಧ್ರುವ uint8_t *) (iq3xxs_grid + q3[2 * il + 0]);
+        ಧ್ರುವ uint8_t * grid2 = (ಧ್ರುವ uint8_t *) (iq3xxs_grid + q3[2 * il + 1]);
+        ಧ್ರುವ uint32_t aux32 = gas[0] | (gas[1] << 16);
+        ಧ್ರುವ ಭಿನ್ನ d = (ಭಿನ್ನ) x[ib].d * (0.5f + (aux32 >> 28)) * 0.5f;
+        ಧ್ರುವ uint8_t signs = ksigns_iq2xs[(aux32 >> (7 * il)) & 127];
 
-        if (j < 4) {
-            return d * grid1[j] * ((signs & kmask_iq2xs[j + 0]) ? -1.f : 1.f);
+        ಯದಿ (j < 4) {
+            ಪ್ರತ್ಯಾಗಮ d * grid1[j] * ((signs & kmask_iq2xs[j + 0]) ? -1.f : 1.f);
         }
-        return d * grid2[j - 4] * ((signs & kmask_iq2xs[j + 0]) ? -1.f : 1.f);
+        ಪ್ರತ್ಯಾಗಮ d * grid2[j - 4] * ((signs & kmask_iq2xs[j + 0]) ? -1.f : 1.f);
     };
 
     v.x() = dequantize_one(iqs + 0);
     v.y() = dequantize_one(iqs + 1);
-#else
+#ಅನ್ಯಥಾ
     GGML_ABORT("IQ3_XXS dequantize not supported for QK_K != 256");
 #endif
 }
 
-static __dpct_inline__ void dequantize_iq3_s(const void *vx, const int64_t ib,
-                                             const int iqs, dfloat2 &v) {
-#if QK_K == 256
-    const block_iq3_s * x = (const block_iq3_s *) vx;
+ಸ್ಥಿರ __dpct_inline__ ಶೂನ್ಯ dequantize_iq3_s(ಧ್ರುವ ಶೂನ್ಯ *vx, ಧ್ರುವ int64_t ib,
+                                             ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ iqs, dfloat2 &v) {
+#ಯದಿ QK_K == 256
+    ಧ್ರುವ block_iq3_s * x = (ಧ್ರುವ block_iq3_s *) vx;
 
-    auto dequantize_one = [&](const int idx) -> dfloat {
-        const int ib8 = idx / 32;
-        const int r = idx % 32;
-        const int il = r / 8;
-        const int j = r % 8;
+    auto dequantize_one = [&](ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ idx) -> dfloat {
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ ib8 = idx / 32;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ r = idx % 32;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ il = r / 8;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ j = r % 8;
 
-        const uint8_t * qs = x[ib].qs + 8 * ib8;
-        const uint16_t grid1_id = qs[2 * il + 0] | ((x[ib].qh[ib8] << (8 - 2 * il)) & 256);
-        const uint16_t grid2_id = qs[2 * il + 1] | ((x[ib].qh[ib8] << (7 - 2 * il)) & 256);
-        const uint8_t * grid1 = (const uint8_t *) (iq3s_grid + grid1_id);
-        const uint8_t * grid2 = (const uint8_t *) (iq3s_grid + grid2_id);
-        const float d = (float) x[ib].d * (1 + 2 * ((x[ib].scales[ib8 / 2] >> (4 * (ib8 % 2))) & 0xf));
-        const uint8_t signs = x[ib].signs[4 * ib8 + il];
+        ಧ್ರುವ uint8_t * qs = x[ib].qs + 8 * ib8;
+        ಧ್ರುವ uint16_t grid1_id = qs[2 * il + 0] | ((x[ib].qh[ib8] << (8 - 2 * il)) & 256);
+        ಧ್ರುವ uint16_t grid2_id = qs[2 * il + 1] | ((x[ib].qh[ib8] << (7 - 2 * il)) & 256);
+        ಧ್ರುವ uint8_t * grid1 = (ಧ್ರುವ uint8_t *) (iq3s_grid + grid1_id);
+        ಧ್ರುವ uint8_t * grid2 = (ಧ್ರುವ uint8_t *) (iq3s_grid + grid2_id);
+        ಧ್ರುವ ಭಿನ್ನ d = (ಭಿನ್ನ) x[ib].d * (1 + 2 * ((x[ib].scales[ib8 / 2] >> (4 * (ib8 % 2))) & 0xf));
+        ಧ್ರುವ uint8_t signs = x[ib].signs[4 * ib8 + il];
 
-        if (j < 4) {
-            return d * grid1[j] * ((signs & kmask_iq2xs[j + 0]) ? -1.f : 1.f);
+        ಯದಿ (j < 4) {
+            ಪ್ರತ್ಯಾಗಮ d * grid1[j] * ((signs & kmask_iq2xs[j + 0]) ? -1.f : 1.f);
         }
-        return d * grid2[j - 4] * ((signs & kmask_iq2xs[j + 0]) ? -1.f : 1.f);
+        ಪ್ರತ್ಯಾಗಮ d * grid2[j - 4] * ((signs & kmask_iq2xs[j + 0]) ? -1.f : 1.f);
     };
 
     v.x() = dequantize_one(iqs + 0);
     v.y() = dequantize_one(iqs + 1);
-#else
+#ಅನ್ಯಥಾ
     GGML_ABORT("IQ3_S dequantize not supported for QK_K != 256");
 #endif
 }
 
-static __dpct_inline__ void dequantize_iq1_s(const void *vx, const int64_t ib,
-                                             const int iqs, dfloat2 &v) {
-#if QK_K == 256
-    const block_iq1_s * x = (const block_iq1_s *) vx;
+ಸ್ಥಿರ __dpct_inline__ ಶೂನ್ಯ dequantize_iq1_s(ಧ್ರುವ ಶೂನ್ಯ *vx, ಧ್ರುವ int64_t ib,
+                                             ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ iqs, dfloat2 &v) {
+#ಯದಿ QK_K == 256
+    ಧ್ರುವ block_iq1_s * x = (ಧ್ರುವ block_iq1_s *) vx;
 
-    auto dequantize_one = [&](const int idx) -> dfloat {
-        const int ib8 = idx / 32;
-        const int r = idx % 32;
-        const int il = r / 8;
-        const int j = r % 8;
+    auto dequantize_one = [&](ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ idx) -> dfloat {
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ ib8 = idx / 32;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ r = idx % 32;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ il = r / 8;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ j = r % 8;
 
-        const float delta = (x[ib].qh[ib8] & 0x8000) ? (-1.f - IQ1S_DELTA) : (-1.f + IQ1S_DELTA);
-        const float d = (float) x[ib].d * (2 * ((x[ib].qh[ib8] >> 12) & 7) + 1);
-        const uint16_t grid_id = x[ib].qs[4 * ib8 + il] | (((x[ib].qh[ib8] >> (3 * il)) & 7) << 8);
-        const uint32_t g = iq1s_grid_gpu[grid_id];
-        const int8_t qv = (j < 4) ? ((g >> (8 * j)) & 0x0F) : ((g >> (8 * (j - 4) + 4)) & 0x0F);
+        ಧ್ರುವ ಭಿನ್ನ delta = (x[ib].qh[ib8] & 0x8000) ? (-1.f - IQ1S_DELTA) : (-1.f + IQ1S_DELTA);
+        ಧ್ರುವ ಭಿನ್ನ d = (ಭಿನ್ನ) x[ib].d * (2 * ((x[ib].qh[ib8] >> 12) & 7) + 1);
+        ಧ್ರುವ uint16_t grid_id = x[ib].qs[4 * ib8 + il] | (((x[ib].qh[ib8] >> (3 * il)) & 7) << 8);
+        ಧ್ರುವ uint32_t g = iq1s_grid_gpu[grid_id];
+        ಧ್ರುವ int8_t qv = (j < 4) ? ((g >> (8 * j)) & 0x0F) : ((g >> (8 * (j - 4) + 4)) & 0x0F);
 
-        return d * (qv + delta);
+        ಪ್ರತ್ಯಾಗಮ d * (qv + delta);
     };
 
     v.x() = dequantize_one(iqs + 0);
     v.y() = dequantize_one(iqs + 1);
-#else
+#ಅನ್ಯಥಾ
     GGML_ABORT("IQ1_S dequantize not supported for QK_K != 256");
 #endif
 }
 
-static __dpct_inline__ void dequantize_iq1_m(const void *vx, const int64_t ib,
-                                             const int iqs, dfloat2 &v) {
-#if QK_K == 256
-    const block_iq1_m * x = (const block_iq1_m *) vx;
+ಸ್ಥಿರ __dpct_inline__ ಶೂನ್ಯ dequantize_iq1_m(ಧ್ರುವ ಶೂನ್ಯ *vx, ಧ್ರುವ int64_t ib,
+                                             ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ iqs, dfloat2 &v) {
+#ಯದಿ QK_K == 256
+    ಧ್ರುವ block_iq1_m * x = (ಧ್ರುವ block_iq1_m *) vx;
 
-    auto dequantize_one = [&](const int idx) -> dfloat {
-        const int ib8 = idx / 32;
-        const int r = idx % 32;
-        const int il = r / 8;
-        const int j = r % 8;
+    auto dequantize_one = [&](ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ idx) -> dfloat {
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ ib8 = idx / 32;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ r = idx % 32;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ il = r / 8;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ j = r % 8;
 
-        const uint16_t * sc = (const uint16_t *) x[ib].scales;
+        ಧ್ರುವ uint16_t * sc = (ಧ್ರುವ uint16_t *) x[ib].scales;
         iq1m_scale_t scale;
         scale.u16 = (sc[0] >> 12) | ((sc[1] >> 8) & 0x00f0) | ((sc[2] >> 4) & 0x0f00) | (sc[3] & 0xf000);
 
-        const int ib16 = 2 * ib8 + il / 2;
-        const float d = (float) scale.f16 * (2 * ((sc[ib16 / 4] >> (3 * (ib16 % 4))) & 0x7) + 1);
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ ib16 = 2 * ib8 + il / 2;
+        ಧ್ರುವ ಭಿನ್ನ d = (ಭಿನ್ನ) scale.f16 * (2 * ((sc[ib16 / 4] >> (3 * (ib16 % 4))) & 0x7) + 1);
 
-        const uint8_t qh = x[ib].qh[2 * ib8 + il / 2];
-        const float delta = (qh & (0x08 << (4 * (il % 2)))) ? (-1.f - IQ1M_DELTA) : (-1.f + IQ1M_DELTA);
+        ಧ್ರುವ uint8_t qh = x[ib].qh[2 * ib8 + il / 2];
+        ಧ್ರುವ ಭಿನ್ನ delta = (qh & (0x08 << (4 * (il % 2)))) ? (-1.f - IQ1M_DELTA) : (-1.f + IQ1M_DELTA);
 
-        const uint16_t grid_id = x[ib].qs[4 * ib8 + il] | (((qh >> (4 * (il % 2))) & 7) << 8);
-        const uint32_t g = iq1s_grid_gpu[grid_id];
-        const int8_t qv = (j < 4) ? ((g >> (8 * j)) & 0x0F) : ((g >> (8 * (j - 4) + 4)) & 0x0F);
+        ಧ್ರುವ uint16_t grid_id = x[ib].qs[4 * ib8 + il] | (((qh >> (4 * (il % 2))) & 7) << 8);
+        ಧ್ರುವ uint32_t g = iq1s_grid_gpu[grid_id];
+        ಧ್ರುವ int8_t qv = (j < 4) ? ((g >> (8 * j)) & 0x0F) : ((g >> (8 * (j - 4) + 4)) & 0x0F);
 
-        return d * (qv + delta);
+        ಪ್ರತ್ಯಾಗಮ d * (qv + delta);
     };
 
     v.x() = dequantize_one(iqs + 0);
     v.y() = dequantize_one(iqs + 1);
-#else
+#ಅನ್ಯಥಾ
     GGML_ABORT("IQ1_M dequantize not supported for QK_K != 256");
 #endif
 }
 
-static __dpct_inline__ void dequantize_iq4_nl(const void *vx, const int64_t ib,
-                                              const int iqs, dfloat2 &v) {
-    const block_iq4_nl * x = (const block_iq4_nl *) vx;
-    const float d = (float) x[ib].d;
+ಸ್ಥಿರ __dpct_inline__ ಶೂನ್ಯ dequantize_iq4_nl(ಧ್ರುವ ಶೂನ್ಯ *vx, ಧ್ರುವ int64_t ib,
+                                              ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ iqs, dfloat2 &v) {
+    ಧ್ರುವ block_iq4_nl * x = (ಧ್ರುವ block_iq4_nl *) vx;
+    ಧ್ರುವ ಭಿನ್ನ d = (ಭಿನ್ನ) x[ib].d;
 
-    auto dequantize_one = [&](const int idx) -> dfloat {
-        if (idx < 16) {
-            return d * kvalues_iq4nl[x[ib].qs[idx] & 0xF];
+    auto dequantize_one = [&](ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ idx) -> dfloat {
+        ಯದಿ (idx < 16) {
+            ಪ್ರತ್ಯಾಗಮ d * kvalues_iq4nl[x[ib].qs[idx] & 0xF];
         }
-        return d * kvalues_iq4nl[x[ib].qs[idx - 16] >> 4];
+        ಪ್ರತ್ಯಾಗಮ d * kvalues_iq4nl[x[ib].qs[idx - 16] >> 4];
     };
 
     v.x() = dequantize_one(iqs + 0);
     v.y() = dequantize_one(iqs + 1);
 }
 
-static __dpct_inline__ void dequantize_iq4_xs(const void *vx, const int64_t ib,
-                                              const int iqs, dfloat2 &v) {
-#if QK_K == 256
-    const block_iq4_xs * x = (const block_iq4_xs *) vx;
+ಸ್ಥಿರ __dpct_inline__ ಶೂನ್ಯ dequantize_iq4_xs(ಧ್ರುವ ಶೂನ್ಯ *vx, ಧ್ರುವ int64_t ib,
+                                              ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ iqs, dfloat2 &v) {
+#ಯದಿ QK_K == 256
+    ಧ್ರುವ block_iq4_xs * x = (ಧ್ರುವ block_iq4_xs *) vx;
 
-    auto dequantize_one = [&](const int idx) -> dfloat {
-        const int ib8 = idx / 32;
-        const int r = idx % 32;
-        const int byte_idx = (r < 16) ? r : (r - 16);
-        const uint8_t q = x[ib].qs[16 * ib8 + byte_idx];
-        const uint8_t qv = (r < 16) ? (q & 0x0F) : (q >> 4);
+    auto dequantize_one = [&](ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ idx) -> dfloat {
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ ib8 = idx / 32;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ r = idx % 32;
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ byte_idx = (r < 16) ? r : (r - 16);
+        ಧ್ರುವ uint8_t q = x[ib].qs[16 * ib8 + byte_idx];
+        ಧ್ರುವ uint8_t qv = (r < 16) ? (q & 0x0F) : (q >> 4);
 
-        const float d = (float) x[ib].d * ((((x[ib].scales_l[ib8 / 2] >> (4 * (ib8 % 2))) & 0xf) |
+        ಧ್ರುವ ಭಿನ್ನ d = (ಭಿನ್ನ) x[ib].d * ((((x[ib].scales_l[ib8 / 2] >> (4 * (ib8 % 2))) & 0xf) |
                         (((x[ib].scales_h >> (2 * ib8)) & 3) << 4)) - 32);
-        return d * kvalues_iq4nl[qv];
+        ಪ್ರತ್ಯಾಗಮ d * kvalues_iq4nl[qv];
     };
 
     v.x() = dequantize_one(iqs + 0);
     v.y() = dequantize_one(iqs + 1);
-#else
+#ಅನ್ಯಥಾ
     GGML_ABORT("IQ4_XS dequantize not supported for QK_K != 256");
 #endif
 }
 
-static __dpct_inline__ void dequantize_q5_0(const void *vx, const int64_t ib,
-                                            const int iqs, dfloat2 &v) {
-    const block_q5_0 * x = (const block_q5_0 *) vx;
+ಸ್ಥಿರ __dpct_inline__ ಶೂನ್ಯ dequantize_q5_0(ಧ್ರುವ ಶೂನ್ಯ *vx, ಧ್ರುವ int64_t ib,
+                                            ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ iqs, dfloat2 &v) {
+    ಧ್ರುವ block_q5_0 * x = (ಧ್ರುವ block_q5_0 *) vx;
 
-    const dfloat d = x[ib].d;
+    ಧ್ರುವ dfloat d = x[ib].d;
 
     uint32_t qh;
-    memcpy(&qh, x[ib].qh, sizeof(qh));
+    memcpy(&qh, x[ib].qh, ಪರಿಮಾಣ(qh));
 
-    const int xh_0 = ((qh >> (iqs +  0)) << 4) & 0x10;
-    const int xh_1 = ((qh >> (iqs + 12))     ) & 0x10;
+    ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ xh_0 = ((qh >> (iqs +  0)) << 4) & 0x10;
+    ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ xh_1 = ((qh >> (iqs + 12))     ) & 0x10;
 
     v.x() = ((x[ib].qs[iqs] & 0xf) | xh_0);
     v.y() = ((x[ib].qs[iqs] >> 4) | xh_1);
@@ -719,24 +719,24 @@ static __dpct_inline__ void dequantize_q5_0(const void *vx, const int64_t ib,
     v.s0() = (v.s0() - 16.0f) * d;
     v.s1() = (v.s1() - 16.0f) * d;
 
-#else
+#ಅನ್ಯಥಾ
     v.x() = (v.x() - 16.0f) * d;
     v.y() = (v.y() - 16.0f) * d;
 #endif // GGML_SYCL_F16
 }
 
-static __dpct_inline__ void dequantize_q5_1(const void *vx, const int64_t ib,
-                                            const int iqs, dfloat2 &v) {
-    const block_q5_1 * x = (const block_q5_1 *) vx;
+ಸ್ಥಿರ __dpct_inline__ ಶೂನ್ಯ dequantize_q5_1(ಧ್ರುವ ಶೂನ್ಯ *vx, ಧ್ರುವ int64_t ib,
+                                            ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ iqs, dfloat2 &v) {
+    ಧ್ರುವ block_q5_1 * x = (ಧ್ರುವ block_q5_1 *) vx;
 
-    const dfloat d = x[ib].dm[0];
-    const dfloat m = x[ib].dm[1];
+    ಧ್ರುವ dfloat d = x[ib].dm[0];
+    ಧ್ರುವ dfloat m = x[ib].dm[1];
 
     uint32_t qh;
-    memcpy(&qh, x[ib].qh, sizeof(qh));
+    memcpy(&qh, x[ib].qh, ಪರಿಮಾಣ(qh));
 
-    const int xh_0 = ((qh >> (iqs +  0)) << 4) & 0x10;
-    const int xh_1 = ((qh >> (iqs + 12))     ) & 0x10;
+    ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ xh_0 = ((qh >> (iqs +  0)) << 4) & 0x10;
+    ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ xh_1 = ((qh >> (iqs + 12))     ) & 0x10;
 
     v.x() = ((x[ib].qs[iqs] & 0xf) | xh_0);
     v.y() = ((x[ib].qs[iqs] >> 4) | xh_1);
@@ -746,33 +746,33 @@ static __dpct_inline__ void dequantize_q5_1(const void *vx, const int64_t ib,
     // v = v + {m, m};
     v.s0() = sycl::fma(v.s0(), d, m);
     v.s1() = sycl::fma(v.s1(), d, m);
-#else
+#ಅನ್ಯಥಾ
     v.x() = sycl::fma(v.x(), d, m);
     v.y() = sycl::fma(v.y(), d, m);
 #endif // GGML_SYCL_F16
 }
 
-static __dpct_inline__ void dequantize_q8_0_reorder(const void *d_ptr, const int64_t ib, const void *qs,
-                                            const int iqs, dfloat2 &v) {
-    const dfloat d = (const dfloat)*((const sycl::half*)d_ptr + ib);
+ಸ್ಥಿರ __dpct_inline__ ಶೂನ್ಯ dequantize_q8_0_reorder(ಧ್ರುವ ಶೂನ್ಯ *d_ptr, ಧ್ರುವ int64_t ib, ಧ್ರುವ ಶೂನ್ಯ *qs,
+                                            ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ iqs, dfloat2 &v) {
+    ಧ್ರುವ dfloat d = (ಧ್ರುವ dfloat)*((ಧ್ರುವ sycl::half*)d_ptr + ib);
 
-    v.x() = ((const int8_t *)qs)[iqs + 0];
-    v.y() = ((const int8_t *)qs)[iqs + 1];
+    v.x() = ((ಧ್ರುವ int8_t *)qs)[iqs + 0];
+    v.y() = ((ಧ್ರುವ int8_t *)qs)[iqs + 1];
 
 #ifdef GGML_SYCL_F16
     v.s0() *= d;
     v.s1() *= d;
-#else
+#ಅನ್ಯಥಾ
     v.x() *= d;
     v.y() *= d;
 #endif // GGML_SYCL_F16
 }
 
-static __dpct_inline__ void dequantize_q8_0(const void *vx, const int64_t ib,
-                                            const int iqs, dfloat2 &v) {
-    const block_q8_0 * x = (const block_q8_0 *) vx;
+ಸ್ಥಿರ __dpct_inline__ ಶೂನ್ಯ dequantize_q8_0(ಧ್ರುವ ಶೂನ್ಯ *vx, ಧ್ರುವ int64_t ib,
+                                            ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ iqs, dfloat2 &v) {
+    ಧ್ರುವ block_q8_0 * x = (ಧ್ರುವ block_q8_0 *) vx;
 
-    const dfloat d = x[ib].d;
+    ಧ್ರುವ dfloat d = x[ib].d;
 
     v.x() = x[ib].qs[iqs + 0];
     v.y() = x[ib].qs[iqs + 1];
@@ -781,56 +781,56 @@ static __dpct_inline__ void dequantize_q8_0(const void *vx, const int64_t ib,
     // v = v * {d, d};
     v.s0() *= d;
     v.s1() *= d;
-#else
+#ಅನ್ಯಥಾ
     v.x() *= d;
     v.y() *= d;
 #endif // GGML_SYCL_F16
 }
 
 template<typename dst_t>
-static void dequantize_block_q4_0(const void * __restrict__ vx, dst_t * __restrict__ yy, int64_t nb32,
-                                  const sycl::nd_item<3> &item_ct1) {
+ಸ್ಥಿರ ಶೂನ್ಯ dequantize_block_q4_0(ಧ್ರುವ ಶೂನ್ಯ * __restrict__ vx, dst_t * __restrict__ yy, int64_t nb32,
+                                  ಧ್ರುವ sycl::nd_item<3> &item_ct1) {
 
-    const int64_t i = item_ct1.get_group(2);
+    ಧ್ರುವ int64_t i = item_ct1.get_group(2);
 
     // assume 32 threads
-    const int64_t tid = item_ct1.get_local_id(2);
-    const int64_t il  = tid/8;
-    const int64_t ir  = tid%8;
-    const int64_t ib = 8*i + ir;
-    if (ib >= nb32) {
-        return;
+    ಧ್ರುವ int64_t tid = item_ct1.get_local_id(2);
+    ಧ್ರುವ int64_t il  = tid/8;
+    ಧ್ರುವ int64_t ir  = tid%8;
+    ಧ್ರುವ int64_t ib = 8*i + ir;
+    ಯದಿ (ib >= nb32) {
+        ಪ್ರತ್ಯಾಗಮ;
     }
 
     dst_t * y = yy + 256*i + 32*ir + 4*il;
 
-    const block_q4_0 * x = (const block_q4_0 *)vx + ib;
-    const float d = sycl::vec<sycl::half, 1>(x->d)
-                        .convert<float, sycl::rounding_mode::automatic>()[0];
-    const float dm = -8*d;
+    ಧ್ರುವ block_q4_0 * x = (ಧ್ರುವ block_q4_0 *)vx + ib;
+    ಧ್ರುವ ಭಿನ್ನ d = sycl::vec<sycl::half, 1>(x->d)
+                        .convert<ಭಿನ್ನ, sycl::rounding_mode::automatic>()[0];
+    ಧ್ರುವ ಭಿನ್ನ dm = -8*d;
 
-    const uint8_t * q = x->qs + 4*il;
+    ಧ್ರುವ uint8_t * q = x->qs + 4*il;
 
-    for (int l = 0; l < 4; ++l) {
+    ಪ್ರತಿ (ಪೂರ್ಣಾಙ್ಕ l = 0; l < 4; ++l) {
         y[l+ 0] = d * (q[l] & 0xF) + dm;
         y[l+16] = d * (q[l] >>  4) + dm;
     }
 }
 
 template<typename dst_t>
-static void dequantize_block_q4_0_reorder(const void * __restrict__ vx, dst_t * __restrict__ yy, int64_t k,
-                                  const sycl::nd_item<3> &item_ct1) {
+ಸ್ಥಿರ ಶೂನ್ಯ dequantize_block_q4_0_reorder(ಧ್ರುವ ಶೂನ್ಯ * __restrict__ vx, dst_t * __restrict__ yy, int64_t k,
+                                  ಧ್ರುವ sycl::nd_item<3> &item_ct1) {
     // one thread per qs byte, like dequantize_block<dequantize_q4_0>; the reorder layout makes the byte reads contiguous
     // grid-stride loop because the launcher may shrink the work-group to keep the global range below INT_MAX
     // float math, not dequantize_q4_0_reorder: that helper computes in half with GGML_SYCL_F16, which changes f32 output
-    const sycl::half * d_ptr  = (const sycl::half *) ((const uint8_t *) vx + k/2);
-    const int64_t      stride = item_ct1.get_local_range(2) * item_ct1.get_group_range(2);
+    ಧ್ರುವ sycl::half * d_ptr  = (ಧ್ರುವ sycl::half *) ((ಧ್ರುವ uint8_t *) vx + k/2);
+    ಧ್ರುವ int64_t      stride = item_ct1.get_local_range(2) * item_ct1.get_group_range(2);
 
-    for (int64_t iq = item_ct1.get_global_id(2); iq < k/2; iq += stride) {
-        const int64_t ib  = iq / (QK4_0/2);
-        const int64_t iqs = iq % (QK4_0/2);
-        const int     vq  = ((const uint8_t *) vx)[iq];
-        const float   d   = float(d_ptr[ib]);
+    ಪ್ರತಿ (int64_t iq = item_ct1.get_global_id(2); iq < k/2; iq += stride) {
+        ಧ್ರುವ int64_t ib  = iq / (QK4_0/2);
+        ಧ್ರುವ int64_t iqs = iq % (QK4_0/2);
+        ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ     vq  = ((ಧ್ರುವ uint8_t *) vx)[iq];
+        ಧ್ರುವ ಭಿನ್ನ   d   = ಭಿನ್ನ(d_ptr[ib]);
 
         dst_t * y = yy + ib*QK4_0 + iqs;
         y[0]       = d * ((vq & 0xF) - 8);
@@ -840,17 +840,17 @@ static void dequantize_block_q4_0_reorder(const void * __restrict__ vx, dst_t * 
 
 // Dequantize Q8_0 from reorder layout: [all qs (k bytes)][all d values]
 template<typename dst_t>
-static void dequantize_block_q8_0_reorder(const void * __restrict__ vx, dst_t * __restrict__ yy, int64_t k,
-                                  const sycl::nd_item<3> &item_ct1) {
+ಸ್ಥಿರ ಶೂನ್ಯ dequantize_block_q8_0_reorder(ಧ್ರುವ ಶೂನ್ಯ * __restrict__ vx, dst_t * __restrict__ yy, int64_t k,
+                                  ಧ್ರುವ sycl::nd_item<3> &item_ct1) {
     // two values per thread, like dequantize_block<dequantize_q8_0>; the reorder layout keeps all qs contiguous
     // grid-stride loop because the launcher may shrink the work-group to keep the global range below INT_MAX
     // float math, not dequantize_q8_0_reorder: that helper computes in half with GGML_SYCL_F16, which changes f32 output
-    const int8_t *     qs     = (const int8_t *) vx;
-    const sycl::half * d_ptr  = (const sycl::half *) ((const uint8_t *) vx + k);
-    const int64_t      stride = 2 * item_ct1.get_local_range(2) * item_ct1.get_group_range(2);
+    ಧ್ರುವ int8_t *     qs     = (ಧ್ರುವ int8_t *) vx;
+    ಧ್ರುವ sycl::half * d_ptr  = (ಧ್ರುವ sycl::half *) ((ಧ್ರುವ uint8_t *) vx + k);
+    ಧ್ರುವ int64_t      stride = 2 * item_ct1.get_local_range(2) * item_ct1.get_group_range(2);
 
-    for (int64_t i = 2 * item_ct1.get_global_id(2); i < k; i += stride) {
-        const float d = float(d_ptr[i / QK8_0]);
+    ಪ್ರತಿ (int64_t i = 2 * item_ct1.get_global_id(2); i < k; i += stride) {
+        ಧ್ರುವ ಭಿನ್ನ d = ಭಿನ್ನ(d_ptr[i / QK8_0]);
 
         yy[i + 0] = d * qs[i + 0];
         yy[i + 1] = d * qs[i + 1];
@@ -858,49 +858,49 @@ static void dequantize_block_q8_0_reorder(const void * __restrict__ vx, dst_t * 
 }
 
 template<typename dst_t>
-static void dequantize_block_q8_0_reorder_wide(const void * __restrict__ vx, dst_t * __restrict__ yy, int64_t k,
-                                               const sycl::id<1> idx) {
-    const int64_t i = 4 * (int64_t) idx[0];
+ಸ್ಥಿರ ಶೂನ್ಯ dequantize_block_q8_0_reorder_wide(ಧ್ರುವ ಶೂನ್ಯ * __restrict__ vx, dst_t * __restrict__ yy, int64_t k,
+                                               ಧ್ರುವ sycl::id<1> idx) {
+    ಧ್ರುವ int64_t i = 4 * (int64_t) idx[0];
 
-    const int8_t *     qs    = (const int8_t *) vx;
-    const sycl::half * d_ptr = (const sycl::half *) ((const uint8_t *) vx + k);
+    ಧ್ರುವ int8_t *     qs    = (ಧ್ರುವ int8_t *) vx;
+    ಧ್ರುವ sycl::half * d_ptr = (ಧ್ರುವ sycl::half *) ((ಧ್ರುವ uint8_t *) vx + k);
 
-    const float d0 = float(d_ptr[i / QK8_0]);
-    const float d1 = float(d_ptr[(i + 2) / QK8_0]);
+    ಧ್ರುವ ಭಿನ್ನ d0 = ಭಿನ್ನ(d_ptr[i / QK8_0]);
+    ಧ್ರುವ ಭಿನ್ನ d1 = ಭಿನ್ನ(d_ptr[(i + 2) / QK8_0]);
 
-    sycl::vec<float, 4> p;
-    p[0] = d0 * (float) qs[i + 0];
-    p[1] = d0 * (float) qs[i + 1];
-    p[2] = d1 * (float) qs[i + 2];
-    p[3] = d1 * (float) qs[i + 3];
+    sycl::vec<ಭಿನ್ನ, 4> p;
+    p[0] = d0 * (ಭಿನ್ನ) qs[i + 0];
+    p[1] = d0 * (ಭಿನ್ನ) qs[i + 1];
+    p[2] = d1 * (ಭಿನ್ನ) qs[i + 2];
+    p[3] = d1 * (ಭಿನ್ನ) qs[i + 3];
 
     *reinterpret_cast<sycl::vec<dst_t, 4> *>(yy + i) = p.convert<dst_t, sycl::rounding_mode::automatic>();
 }
 
 template<typename dst_t>
-static void dequantize_block_q4_1(const void * __restrict__ vx, dst_t * __restrict__ yy, int64_t nb32,
-                                  const sycl::nd_item<3> &item_ct1) {
+ಸ್ಥಿರ ಶೂನ್ಯ dequantize_block_q4_1(ಧ್ರುವ ಶೂನ್ಯ * __restrict__ vx, dst_t * __restrict__ yy, int64_t nb32,
+                                  ಧ್ರುವ sycl::nd_item<3> &item_ct1) {
 
-    const int64_t i = item_ct1.get_group(2);
+    ಧ್ರುವ int64_t i = item_ct1.get_group(2);
 
     // assume 32 threads
-    const int64_t tid = item_ct1.get_local_id(2);
-    const int64_t il  = tid/8;
-    const int64_t ir  = tid%8;
-    const int64_t ib = 8*i + ir;
-    if (ib >= nb32) {
-        return;
+    ಧ್ರುವ int64_t tid = item_ct1.get_local_id(2);
+    ಧ್ರುವ int64_t il  = tid/8;
+    ಧ್ರುವ int64_t ir  = tid%8;
+    ಧ್ರುವ int64_t ib = 8*i + ir;
+    ಯದಿ (ib >= nb32) {
+        ಪ್ರತ್ಯಾಗಮ;
     }
 
     dst_t * y = yy + 256*i + 32*ir + 4*il;
 
-    const block_q4_1 * x = (const block_q4_1 *)vx + ib;
-    const sycl::float2 d =
-        x->dm.convert<float, sycl::rounding_mode::automatic>();
+    ಧ್ರುವ block_q4_1 * x = (ಧ್ರುವ block_q4_1 *)vx + ib;
+    ಧ್ರುವ sycl::float2 d =
+        x->dm.convert<ಭಿನ್ನ, sycl::rounding_mode::automatic>();
 
-    const uint8_t * q = x->qs + 4*il;
+    ಧ್ರುವ uint8_t * q = x->qs + 4*il;
 
-    for (int l = 0; l < 4; ++l) {
+    ಪ್ರತಿ (ಪೂರ್ಣಾಙ್ಕ l = 0; l < 4; ++l) {
         y[l + 0] = d.x() * (q[l] & 0xF) + d.y();
         y[l + 16] = d.x() * (q[l] >> 4) + d.y();
     }
@@ -910,35 +910,35 @@ static void dequantize_block_q4_1(const void * __restrict__ vx, dst_t * __restri
 //================================== k-quants
 
 template<typename dst_t>
-static void dequantize_block_q2_K(const void * __restrict__ vx, dst_t * __restrict__ yy,
-                                  const sycl::nd_item<3> &item_ct1) {
+ಸ್ಥಿರ ಶೂನ್ಯ dequantize_block_q2_K(ಧ್ರುವ ಶೂನ್ಯ * __restrict__ vx, dst_t * __restrict__ yy,
+                                  ಧ್ರುವ sycl::nd_item<3> &item_ct1) {
 
-    const int64_t i = item_ct1.get_group(2);
-    const block_q2_K * x = (const block_q2_K *) vx;
+    ಧ್ರುವ int64_t i = item_ct1.get_group(2);
+    ಧ್ರುವ block_q2_K * x = (ಧ್ರುವ block_q2_K *) vx;
 
-    const int64_t tid = item_ct1.get_local_id(2);
-#if QK_K == 256
-    const int64_t n   = tid/32;
-    const int64_t l   = tid - 32*n;
-    const int64_t is  = 8*n + l/16;
+    ಧ್ರುವ int64_t tid = item_ct1.get_local_id(2);
+#ಯದಿ QK_K == 256
+    ಧ್ರುವ int64_t n   = tid/32;
+    ಧ್ರುವ int64_t l   = tid - 32*n;
+    ಧ್ರುವ int64_t is  = 8*n + l/16;
 
-    const uint8_t q = x[i].qs[32*n + l];
+    ಧ್ರುವ uint8_t q = x[i].qs[32*n + l];
     dst_t * y = yy + i*QK_K + 128*n;
 
-    float dall = x[i].dm[0];
-    float dmin = x[i].dm[1];
+    ಭಿನ್ನ dall = x[i].dm[0];
+    ಭಿನ್ನ dmin = x[i].dm[1];
     y[l+ 0] = dall * (x[i].scales[is+0] & 0xF) * ((q >> 0) & 3) - dmin * (x[i].scales[is+0] >> 4);
     y[l+32] = dall * (x[i].scales[is+2] & 0xF) * ((q >> 2) & 3) - dmin * (x[i].scales[is+2] >> 4);
     y[l+64] = dall * (x[i].scales[is+4] & 0xF) * ((q >> 4) & 3) - dmin * (x[i].scales[is+4] >> 4);
     y[l+96] = dall * (x[i].scales[is+6] & 0xF) * ((q >> 6) & 3) - dmin * (x[i].scales[is+6] >> 4);
-#else
-    const int64_t is = tid/16;  // 0 or 1
-    const int64_t il = tid%16;  // 0...15
-    const uint8_t q = x[i].qs[il] >> (2*is);
+#ಅನ್ಯಥಾ
+    ಧ್ರುವ int64_t is = tid/16;  // 0 or 1
+    ಧ್ರುವ int64_t il = tid%16;  // 0...15
+    ಧ್ರುವ uint8_t q = x[i].qs[il] >> (2*is);
     dst_t * y = yy + i*QK_K + 16*is + il;
 
-    float dall = x[i].dm[0];
-    float dmin = x[i].dm[1];
+    ಭಿನ್ನ dall = x[i].dm[0];
+    ಭಿನ್ನ dmin = x[i].dm[1];
     y[ 0] = dall * (x[i].scales[is+0] & 0xF) * ((q >> 0) & 3) - dmin * (x[i].scales[is+0] >> 4);
     y[32] = dall * (x[i].scales[is+2] & 0xF) * ((q >> 4) & 3) - dmin * (x[i].scales[is+2] >> 4);
 #endif
@@ -946,37 +946,37 @@ static void dequantize_block_q2_K(const void * __restrict__ vx, dst_t * __restri
 }
 
 template<typename dst_t>
-static void dequantize_block_q2_K_reorder(const void * __restrict__ vx, dst_t * __restrict__ yy, const int64_t i,
-                                          const sycl::nd_item<3> & item_ct1, int64_t n_blocks) {
-#if QK_K == 256
-    if (i >= n_blocks) {
-        return;
+ಸ್ಥಿರ ಶೂನ್ಯ dequantize_block_q2_K_reorder(ಧ್ರುವ ಶೂನ್ಯ * __restrict__ vx, dst_t * __restrict__ yy, ಧ್ರುವ int64_t i,
+                                          ಧ್ರುವ sycl::nd_item<3> & item_ct1, int64_t n_blocks) {
+#ಯದಿ QK_K == 256
+    ಯದಿ (i >= n_blocks) {
+        ಪ್ರತ್ಯಾಗಮ;
     }
 
-    const uint8_t * base          = static_cast<const uint8_t *>(vx);
-    const size_t    qs_offset     = i * (QK_K / 4);
-    const size_t    scales_offset = n_blocks * (QK_K / 4) + i * (QK_K / 16);
-    const size_t    dm_offset     = n_blocks * (QK_K / 4) + n_blocks * (QK_K / 16) + i * sizeof(ggml_half2);
+    ಧ್ರುವ uint8_t * base          = static_cast<ಧ್ರುವ uint8_t *>(vx);
+    ಧ್ರುವ size_t    qs_offset     = i * (QK_K / 4);
+    ಧ್ರುವ size_t    scales_offset = n_blocks * (QK_K / 4) + i * (QK_K / 16);
+    ಧ್ರುವ size_t    dm_offset     = n_blocks * (QK_K / 4) + n_blocks * (QK_K / 16) + i * ಪರಿಮಾಣ(ggml_half2);
 
-    const uint8_t *     qs     = base + qs_offset;
-    const uint8_t *     scales = base + scales_offset;
-    const ggml_half2 * dm     = reinterpret_cast<const ggml_half2 *>(base + dm_offset);
+    ಧ್ರುವ uint8_t *     qs     = base + qs_offset;
+    ಧ್ರುವ uint8_t *     scales = base + scales_offset;
+    ಧ್ರುವ ggml_half2 * dm     = reinterpret_cast<ಧ್ರುವ ggml_half2 *>(base + dm_offset);
 
-    const int64_t tid = item_ct1.get_local_id(2);
-    const int64_t n    = tid / 32;
-    const int64_t l    = tid - 32 * n;
-    const int64_t is   = 8 * n + l / 16;
+    ಧ್ರುವ int64_t tid = item_ct1.get_local_id(2);
+    ಧ್ರುವ int64_t n    = tid / 32;
+    ಧ್ರುವ int64_t l    = tid - 32 * n;
+    ಧ್ರುವ int64_t is   = 8 * n + l / 16;
 
-    const uint8_t q = qs[32 * n + l];
+    ಧ್ರುವ uint8_t q = qs[32 * n + l];
     dst_t * y = yy + 128 * n;
 
-    const float dall = (*dm)[0];
-    const float dmin = (*dm)[1];
+    ಧ್ರುವ ಭಿನ್ನ dall = (*dm)[0];
+    ಧ್ರುವ ಭಿನ್ನ dmin = (*dm)[1];
     y[l+ 0] = dall * (scales[is+0] & 0xF) * ((q >> 0) & 3) - dmin * (scales[is+0] >> 4);
     y[l+32] = dall * (scales[is+2] & 0xF) * ((q >> 2) & 3) - dmin * (scales[is+2] >> 4);
     y[l+64] = dall * (scales[is+4] & 0xF) * ((q >> 4) & 3) - dmin * (scales[is+4] >> 4);
     y[l+96] = dall * (scales[is+6] & 0xF) * ((q >> 6) & 3) - dmin * (scales[is+6] >> 4);
-#else
+#ಅನ್ಯಥಾ
     GGML_UNUSED(vx);
     GGML_UNUSED(yy);
     GGML_UNUSED(i);
@@ -987,53 +987,53 @@ static void dequantize_block_q2_K_reorder(const void * __restrict__ vx, dst_t * 
 }
 
 template<typename dst_t>
-static void dequantize_block_q3_K(const void * __restrict__ vx, dst_t * __restrict__ yy,
-                                  const sycl::nd_item<3> &item_ct1) {
+ಸ್ಥಿರ ಶೂನ್ಯ dequantize_block_q3_K(ಧ್ರುವ ಶೂನ್ಯ * __restrict__ vx, dst_t * __restrict__ yy,
+                                  ಧ್ರುವ sycl::nd_item<3> &item_ct1) {
 
-    const int64_t i = item_ct1.get_group(2);
-    const block_q3_K * x = (const block_q3_K *) vx;
+    ಧ್ರುವ int64_t i = item_ct1.get_group(2);
+    ಧ್ರುವ block_q3_K * x = (ಧ್ರುವ block_q3_K *) vx;
 
-#if QK_K == 256
-    const int64_t r = item_ct1.get_local_id(2) / 4;
-    const int64_t tid = r/2;
-    const int64_t is0 = r%2;
-    const int64_t l0 = 16 * is0 + 4 * (item_ct1.get_local_id(2) % 4);
-    const int64_t n = tid / 4;
-    const int64_t j = tid - 4*n;
+#ಯದಿ QK_K == 256
+    ಧ್ರುವ int64_t r = item_ct1.get_local_id(2) / 4;
+    ಧ್ರುವ int64_t tid = r/2;
+    ಧ್ರುವ int64_t is0 = r%2;
+    ಧ್ರುವ int64_t l0 = 16 * is0 + 4 * (item_ct1.get_local_id(2) % 4);
+    ಧ್ರುವ int64_t n = tid / 4;
+    ಧ್ರುವ int64_t j = tid - 4*n;
 
     uint8_t m = 1 << (4*n + j);
     int64_t is = 8*n + 2*j + is0;
-    int shift = 2*j;
+    ಪೂರ್ಣಾಙ್ಕ shift = 2*j;
 
     int8_t us = is <  4 ? (x[i].scales[is-0] & 0xF) | (((x[i].scales[is+8] >> 0) & 3) << 4) :
                 is <  8 ? (x[i].scales[is-0] & 0xF) | (((x[i].scales[is+4] >> 2) & 3) << 4) :
                 is < 12 ? (x[i].scales[is-8] >>  4) | (((x[i].scales[is+0] >> 4) & 3) << 4) :
                           (x[i].scales[is-8] >>  4) | (((x[i].scales[is-4] >> 6) & 3) << 4);
-    float d_all = x[i].d;
-    float dl = d_all * (us - 32);
+    ಭಿನ್ನ d_all = x[i].d;
+    ಭಿನ್ನ dl = d_all * (us - 32);
 
     dst_t * y = yy + i*QK_K + 128*n + 32*j;
-    const uint8_t * q = x[i].qs + 32*n;
-    const uint8_t * hm = x[i].hmask;
+    ಧ್ರುವ uint8_t * q = x[i].qs + 32*n;
+    ಧ್ರುವ uint8_t * hm = x[i].hmask;
 
-    for (int l = l0; l < l0+4; ++l) y[l] = dl * ((int8_t)((q[l] >> shift) & 3) - ((hm[l] & m) ? 0 : 4));
-#else
-    const int64_t tid = item_ct1.get_local_id(2);
-    const int64_t is  = tid/16;  // 0 or 1
-    const int64_t il  = tid%16;  // 0...15
-    const int64_t im  = il/8;    // 0...1
-    const int64_t in  = il%8;    // 0...7
+    ಪ್ರತಿ (ಪೂರ್ಣಾಙ್ಕ l = l0; l < l0+4; ++l) y[l] = dl * ((int8_t)((q[l] >> shift) & 3) - ((hm[l] & m) ? 0 : 4));
+#ಅನ್ಯಥಾ
+    ಧ್ರುವ int64_t tid = item_ct1.get_local_id(2);
+    ಧ್ರುವ int64_t is  = tid/16;  // 0 or 1
+    ಧ್ರುವ int64_t il  = tid%16;  // 0...15
+    ಧ್ರುವ int64_t im  = il/8;    // 0...1
+    ಧ್ರುವ int64_t in  = il%8;    // 0...7
 
     dst_t * y = yy + i*QK_K + 16*is + il;
 
-    const uint8_t q = x[i].qs[il] >> (2*is);
-    const uint8_t h = x[i].hmask[in] >> (2*is + im);
-    const float   d = (float)x[i].d;
+    ಧ್ರುವ uint8_t q = x[i].qs[il] >> (2*is);
+    ಧ್ರುವ uint8_t h = x[i].hmask[in] >> (2*is + im);
+    ಧ್ರುವ ಭಿನ್ನ   d = (ಭಿನ್ನ)x[i].d;
 
-    if (is == 0) {
+    ಯದಿ (is == 0) {
         y[ 0] = d * ((x[i].scales[0] & 0xF) - 8) * ((int8_t)((q >> 0) & 3) - ((h >> 0) & 1 ? 0 : 4));
         y[32] = d * ((x[i].scales[1] & 0xF) - 8) * ((int8_t)((q >> 4) & 3) - ((h >> 4) & 1 ? 0 : 4));
-    } else {
+    } ಅನ್ಯಥಾ {
         y[ 0] = d * ((x[i].scales[0] >>  4) - 8) * ((int8_t)((q >> 0) & 3) - ((h >> 0) & 1 ? 0 : 4));
         y[32] = d * ((x[i].scales[1] >>  4) - 8) * ((int8_t)((q >> 4) & 3) - ((h >> 4) & 1 ? 0 : 4));
     }
@@ -1042,33 +1042,33 @@ static void dequantize_block_q3_K(const void * __restrict__ vx, dst_t * __restri
 }
 
 template<typename dst_t>
-static void dequantize_block_q3_K_reorder(const void * __restrict__ vx, dst_t * __restrict__ yy, const int64_t i,
-                                          const sycl::nd_item<3> & item_ct1, int64_t n_blocks) {
-#if QK_K == 256
-    if (i >= n_blocks) {
-        return;
+ಸ್ಥಿರ ಶೂನ್ಯ dequantize_block_q3_K_reorder(ಧ್ರುವ ಶೂನ್ಯ * __restrict__ vx, dst_t * __restrict__ yy, ಧ್ರುವ int64_t i,
+                                          ಧ್ರುವ sycl::nd_item<3> & item_ct1, int64_t n_blocks) {
+#ಯದಿ QK_K == 256
+    ಯದಿ (i >= n_blocks) {
+        ಪ್ರತ್ಯಾಗಮ;
     }
 
-    const uint8_t * base          = static_cast<const uint8_t *>(vx);
-    const size_t    qs_offset     = i * (QK_K / 4);
-    const size_t    hmask_offset  = n_blocks * (QK_K / 4) + i * (QK_K / 8);
-    const size_t    scales_offset = n_blocks * (QK_K / 4) + n_blocks * (QK_K / 8) + i * 12;
-    const size_t    d_offset      = n_blocks * (QK_K / 4) + n_blocks * (QK_K / 8) + n_blocks * 12 +
-                                 i * sizeof(ggml_half);
+    ಧ್ರುವ uint8_t * base          = static_cast<ಧ್ರುವ uint8_t *>(vx);
+    ಧ್ರುವ size_t    qs_offset     = i * (QK_K / 4);
+    ಧ್ರುವ size_t    hmask_offset  = n_blocks * (QK_K / 4) + i * (QK_K / 8);
+    ಧ್ರುವ size_t    scales_offset = n_blocks * (QK_K / 4) + n_blocks * (QK_K / 8) + i * 12;
+    ಧ್ರುವ size_t    d_offset      = n_blocks * (QK_K / 4) + n_blocks * (QK_K / 8) + n_blocks * 12 +
+                                 i * ಪರಿಮಾಣ(ggml_half);
 
-    const uint8_t * qs     = base + qs_offset;
-    const uint8_t * hmask  = base + hmask_offset;
-    const uint8_t * scales = base + scales_offset;
-    const float     d_all  = static_cast<float>(*reinterpret_cast<const ggml_half *>(base + d_offset));
+    ಧ್ರುವ uint8_t * qs     = base + qs_offset;
+    ಧ್ರುವ uint8_t * hmask  = base + hmask_offset;
+    ಧ್ರುವ uint8_t * scales = base + scales_offset;
+    ಧ್ರುವ ಭಿನ್ನ     d_all  = static_cast<ಭಿನ್ನ>(*reinterpret_cast<ಧ್ರುವ ggml_half *>(base + d_offset));
 
-    const int64_t r    = item_ct1.get_local_id(2) / 4;
-    const int64_t tid  = r / 2;
-    const int64_t is0  = r % 2;
-    const int64_t l0   = 16 * is0 + 4 * (item_ct1.get_local_id(2) % 4);
-    const int64_t n    = tid / 4;
-    const int64_t j    = tid - 4 * n;
-    const int64_t is   = 8 * n + 2 * j + is0;
-    const int     shift = 2 * j;
+    ಧ್ರುವ int64_t r    = item_ct1.get_local_id(2) / 4;
+    ಧ್ರುವ int64_t tid  = r / 2;
+    ಧ್ರುವ int64_t is0  = r % 2;
+    ಧ್ರುವ int64_t l0   = 16 * is0 + 4 * (item_ct1.get_local_id(2) % 4);
+    ಧ್ರುವ int64_t n    = tid / 4;
+    ಧ್ರುವ int64_t j    = tid - 4 * n;
+    ಧ್ರುವ int64_t is   = 8 * n + 2 * j + is0;
+    ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ     shift = 2 * j;
     uint8_t       m    = 1 << (4 * n + j);
 
     uint8_t us = is < 4
@@ -1079,16 +1079,16 @@ static void dequantize_block_q3_K_reorder(const void * __restrict__ vx, dst_t * 
                 ? (scales[is - 8] >> 4) | (((scales[is + 0] >> 4) & 3) << 4)
                 : (scales[is - 8] >> 4) | (((scales[is - 4] >> 6) & 3) << 4);
 
-    const float dl = d_all * (us - 32);
+    ಧ್ರುವ ಭಿನ್ನ dl = d_all * (us - 32);
 
     dst_t * y = yy + 128 * n + 32 * j;
-    const uint8_t * q  = qs + 32 * n;
-    const uint8_t * hm = hmask;
+    ಧ್ರುವ uint8_t * q  = qs + 32 * n;
+    ಧ್ರುವ uint8_t * hm = hmask;
 
-    for (int l = l0; l < l0 + 4; ++l) {
+    ಪ್ರತಿ (ಪೂರ್ಣಾಙ್ಕ l = l0; l < l0 + 4; ++l) {
         y[l] = dl * ((int8_t) ((q[l] >> shift) & 3) - ((hm[l] & m) ? 0 : 4));
     }
-#else
+#ಅನ್ಯಥಾ
     GGML_UNUSED(vx);
     GGML_UNUSED(yy);
     GGML_UNUSED(i);
@@ -1098,12 +1098,12 @@ static void dequantize_block_q3_K_reorder(const void * __restrict__ vx, dst_t * 
 #endif
 }
 
-#if QK_K == 256
-static inline void get_scale_min_k4(int j, const uint8_t * q, uint8_t & d, uint8_t & m) {
-    if (j < 4) {
+#ಯದಿ QK_K == 256
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ ಶೂನ್ಯ get_scale_min_k4(ಪೂರ್ಣಾಙ್ಕ j, ಧ್ರುವ uint8_t * q, uint8_t & d, uint8_t & m) {
+    ಯದಿ (j < 4) {
         d = q[j] & 63;
         m = q[j + 4] & 63;
-    } else {
+    } ಅನ್ಯಥಾ {
         d = (q[j+4] & 0xF) | ((q[j-4] >> 6) << 4);
         m = (q[j+4] >>  4) | ((q[j-0] >> 6) << 4);
     }
@@ -1112,28 +1112,28 @@ static inline void get_scale_min_k4(int j, const uint8_t * q, uint8_t & d, uint8
 
 // Work-items that cover one 256-weight K-quant block: four 64-element chunks, 8 work-items
 // per chunk, 4 qs bytes per work-item.
-static constexpr int SYCL_DEQK_WI_PER_BLOCK = 32;
+ಸ್ಥಿರ constexpr ಪೂರ್ಣಾಙ್ಕ SYCL_DEQK_WI_PER_BLOCK = 32;
 
 template <typename dst_t>
-static inline void dequantize_q4_K_wide_one(dst_t * __restrict__ y, const uint8_t * __restrict__ qs,
-                                            const uint8_t * __restrict__ scales, const float dall,
-                                            const float dmin, const int tid) {
-    const int il = tid >> 3;        // 64-element chunk, 0..3
-    const int ir = (tid & 7) * 4;   // 4 qs bytes within the chunk
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ ಶೂನ್ಯ dequantize_q4_K_wide_one(dst_t * __restrict__ y, ಧ್ರುವ uint8_t * __restrict__ qs,
+                                            ಧ್ರುವ uint8_t * __restrict__ scales, ಧ್ರುವ ಭಿನ್ನ dall,
+                                            ಧ್ರುವ ಭಿನ್ನ dmin, ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ tid) {
+    ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ il = tid >> 3;        // 64-element chunk, 0..3
+    ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ ir = (tid & 7) * 4;   // 4 qs bytes within the chunk
 
     uint8_t sc, m;
     get_scale_min_k4(2 * il + 0, scales, sc, m);
-    const float d1 = dall * sc;
-    const float m1 = dmin * m;
+    ಧ್ರುವ ಭಿನ್ನ d1 = dall * sc;
+    ಧ್ರುವ ಭಿನ್ನ m1 = dmin * m;
     get_scale_min_k4(2 * il + 1, scales, sc, m);
-    const float d2 = dall * sc;
-    const float m2 = dmin * m;
+    ಧ್ರುವ ಭಿನ್ನ d2 = dall * sc;
+    ಧ್ರುವ ಭಿನ್ನ m2 = dmin * m;
 
-    const sycl::vec<uint8_t, 4> q = vec_aligned_load<uint8_t, 4>(qs + 32 * il + ir);
+    ಧ್ರುವ sycl::vec<uint8_t, 4> q = vec_aligned_load<uint8_t, 4>(qs + 32 * il + ir);
 
     sycl::vec<dst_t, 4> lo, hi;
 #pragma unroll
-    for (int l = 0; l < 4; ++l) {
+    ಪ್ರತಿ (ಪೂರ್ಣಾಙ್ಕ l = 0; l < 4; ++l) {
         lo[l] = d1 * (q[l] & 0xF) - m1;
         hi[l] = d2 * (q[l] >> 4)  - m2;
     }
@@ -1143,64 +1143,64 @@ static inline void dequantize_q4_K_wide_one(dst_t * __restrict__ y, const uint8_
 }
 
 template <typename dst_t>
-static void dequantize_block_q4_K_wide(const void * __restrict__ vx, dst_t * __restrict__ yy, int64_t nb,
-                                       const sycl::nd_item<1> & it) {
+ಸ್ಥಿರ ಶೂನ್ಯ dequantize_block_q4_K_wide(ಧ್ರುವ ಶೂನ್ಯ * __restrict__ vx, dst_t * __restrict__ yy, int64_t nb,
+                                       ಧ್ರುವ sycl::nd_item<1> & it) {
     static_assert(QK_K == 256, "wide K-quant dequant assumes QK_K == 256");
-    const int64_t g   = it.get_global_id(0);
-    const int64_t b   = g / SYCL_DEQK_WI_PER_BLOCK;
-    const int     tid = (int) (g % SYCL_DEQK_WI_PER_BLOCK);
-    if (b >= nb) {
-        return;
+    ಧ್ರುವ int64_t g   = it.get_global_id(0);
+    ಧ್ರುವ int64_t b   = g / SYCL_DEQK_WI_PER_BLOCK;
+    ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ     tid = (ಪೂರ್ಣಾಙ್ಕ) (g % SYCL_DEQK_WI_PER_BLOCK);
+    ಯದಿ (b >= nb) {
+        ಪ್ರತ್ಯಾಗಮ;
     }
-    const block_q4_K * x = (const block_q4_K *) vx + b;
-    dequantize_q4_K_wide_one(yy + b * QK_K, x->qs, x->scales, (float) x->dm[0], (float) x->dm[1], tid);
+    ಧ್ರುವ block_q4_K * x = (ಧ್ರುವ block_q4_K *) vx + b;
+    dequantize_q4_K_wide_one(yy + b * QK_K, x->qs, x->scales, (ಭಿನ್ನ) x->dm[0], (ಭಿನ್ನ) x->dm[1], tid);
 }
 
 
 template <typename dst_t>
-inline void dequantize_q4_K_common(dst_t * __restrict__ y, const uint8_t * __restrict__ qs_ptr, const float dall,
-                                   const float dmin, uint8_t * __restrict__ scales_local, int il, int ir) {
-    const int is = 2 * il;
-    constexpr int n  = 4;
+ಅನ್ತಃಸ್ಥ ಶೂನ್ಯ dequantize_q4_K_common(dst_t * __restrict__ y, ಧ್ರುವ uint8_t * __restrict__ qs_ptr, ಧ್ರುವ ಭಿನ್ನ dall,
+                                   ಧ್ರುವ ಭಿನ್ನ dmin, uint8_t * __restrict__ scales_local, ಪೂರ್ಣಾಙ್ಕ il, ಪೂರ್ಣಾಙ್ಕ ir) {
+    ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ is = 2 * il;
+    constexpr ಪೂರ್ಣಾಙ್ಕ n  = 4;
 
     uint8_t sc, m;
     get_scale_min_k4(is + 0, scales_local, sc, m);
-    const float d1 = dall * sc;
-    const float m1 = dmin * m;
+    ಧ್ರುವ ಭಿನ್ನ d1 = dall * sc;
+    ಧ್ರುವ ಭಿನ್ನ m1 = dmin * m;
 
     get_scale_min_k4(is + 1, scales_local, sc, m);
-    const float d2 = dall * sc;
-    const float m2 = dmin * m;
+    ಧ್ರುವ ಭಿನ್ನ d2 = dall * sc;
+    ಧ್ರುವ ಭಿನ್ನ m2 = dmin * m;
 
     sycl::vec<uint8_t, n> q_vec = vec_aligned_load<uint8_t, n>(qs_ptr + 32 * il + n * ir);
-    for (int l = 0; l < n; ++l) {
+    ಪ್ರತಿ (ಪೂರ್ಣಾಙ್ಕ l = 0; l < n; ++l) {
         y[l + 0]  = d1 * (q_vec[l] & 0xF) - m1;
         y[l + 32] = d2 * (q_vec[l] >> 4) - m2;
     }
 }
 
 template <typename dst_t>
-static void dequantize_block_q4_K_reorder(const void * __restrict__ vx, dst_t * __restrict__ yy, const int64_t i,
-                                          uint8_t * scales_local, const sycl::nd_item<1> & item_ct1, int64_t nb) {
-    const int64_t tid = item_ct1.get_local_id(0);  // thread index within block
-    const int64_t il  = tid / 8;
-    const int64_t ir  = tid % 8;
+ಸ್ಥಿರ ಶೂನ್ಯ dequantize_block_q4_K_reorder(ಧ್ರುವ ಶೂನ್ಯ * __restrict__ vx, dst_t * __restrict__ yy, ಧ್ರುವ int64_t i,
+                                          uint8_t * scales_local, ಧ್ರುವ sycl::nd_item<1> & item_ct1, int64_t nb) {
+    ಧ್ರುವ int64_t tid = item_ct1.get_local_id(0);  // thread index within block
+    ಧ್ರುವ int64_t il  = tid / 8;
+    ಧ್ರುವ int64_t ir  = tid % 8;
 
     dst_t * y = yy + 64 * il + 4 * ir;
 
-    const uint8_t * base          = static_cast<const uint8_t *>(vx);
-    const size_t    qs_offset     = i * (QK_K / 2);
-    const size_t    scales_offset = nb * (QK_K / 2) + i * K_SCALE_SIZE;
-    const size_t    dm_offset     = nb * (QK_K / 2) + nb * K_SCALE_SIZE + i * sizeof(ggml_half2);
+    ಧ್ರುವ uint8_t * base          = static_cast<ಧ್ರುವ uint8_t *>(vx);
+    ಧ್ರುವ size_t    qs_offset     = i * (QK_K / 2);
+    ಧ್ರುವ size_t    scales_offset = nb * (QK_K / 2) + i * K_SCALE_SIZE;
+    ಧ್ರುವ size_t    dm_offset     = nb * (QK_K / 2) + nb * K_SCALE_SIZE + i * ಪರಿಮಾಣ(ggml_half2);
 
-    const uint8_t *    qs_ptr     = base + qs_offset;
-    const uint8_t *    scales_ptr = base + scales_offset;
-    ggml_half2         dm_values  = *reinterpret_cast<const ggml_half2 *>(base + dm_offset);
+    ಧ್ರುವ uint8_t *    qs_ptr     = base + qs_offset;
+    ಧ್ರುವ uint8_t *    scales_ptr = base + scales_offset;
+    ggml_half2         dm_ಮೌಲ್ಯಗಳು  = *reinterpret_cast<ಧ್ರುವ ggml_half2 *>(base + dm_offset);
 
-    const float dall = dm_values.x();
-    const float dmin = dm_values.y();
+    ಧ್ರುವ ಭಿನ್ನ dall = dm_ಮೌಲ್ಯಗಳು.x();
+    ಧ್ರುವ ಭಿನ್ನ dmin = dm_ಮೌಲ್ಯಗಳು.y();
 
-    if (tid < 12) {
+    ಯದಿ (tid < 12) {
         scales_local[tid] = scales_ptr[tid];
     }
 
@@ -1209,30 +1209,30 @@ static void dequantize_block_q4_K_reorder(const void * __restrict__ vx, dst_t * 
 }
 
 template <typename dst_t>
-static inline void dequantize_q5_K_wide_one(dst_t * __restrict__ y, const uint8_t * __restrict__ qs,
-                                            const uint8_t * __restrict__ qh_ptr,
-                                            const uint8_t * __restrict__ scales, const float dall,
-                                            const float dmin, const int tid) {
-    const int il = tid >> 3;        // 64-element chunk, 0..3
-    const int ir = (tid & 7) * 4;   // 4 qs bytes within the chunk; qh holds the 5th bit
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ ಶೂನ್ಯ dequantize_q5_K_wide_one(dst_t * __restrict__ y, ಧ್ರುವ uint8_t * __restrict__ qs,
+                                            ಧ್ರುವ uint8_t * __restrict__ qh_ptr,
+                                            ಧ್ರುವ uint8_t * __restrict__ scales, ಧ್ರುವ ಭಿನ್ನ dall,
+                                            ಧ್ರುವ ಭಿನ್ನ dmin, ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ tid) {
+    ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ il = tid >> 3;        // 64-element chunk, 0..3
+    ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ ir = (tid & 7) * 4;   // 4 qs bytes within the chunk; qh holds the 5th bit
 
     uint8_t sc, m;
     get_scale_min_k4(2 * il + 0, scales, sc, m);
-    const float d1 = dall * sc;
-    const float m1 = dmin * m;
+    ಧ್ರುವ ಭಿನ್ನ d1 = dall * sc;
+    ಧ್ರುವ ಭಿನ್ನ m1 = dmin * m;
     get_scale_min_k4(2 * il + 1, scales, sc, m);
-    const float d2 = dall * sc;
-    const float m2 = dmin * m;
+    ಧ್ರುವ ಭಿನ್ನ d2 = dall * sc;
+    ಧ್ರುವ ಭಿನ್ನ m2 = dmin * m;
 
-    const sycl::vec<uint8_t, 4> q = vec_aligned_load<uint8_t, 4>(qs + 32 * il + ir);
-    const sycl::vec<uint8_t, 4> h = vec_aligned_load<uint8_t, 4>(qh_ptr + ir);
+    ಧ್ರುವ sycl::vec<uint8_t, 4> q = vec_aligned_load<uint8_t, 4>(qs + 32 * il + ir);
+    ಧ್ರುವ sycl::vec<uint8_t, 4> h = vec_aligned_load<uint8_t, 4>(qh_ptr + ir);
 
-    const uint8_t hm1 = 1 << (2 * il);
-    const uint8_t hm2 = hm1 << 1;
+    ಧ್ರುವ uint8_t hm1 = 1 << (2 * il);
+    ಧ್ರುವ uint8_t hm2 = hm1 << 1;
 
     sycl::vec<dst_t, 4> lo, hi;
 #pragma unroll
-    for (int l = 0; l < 4; ++l) {
+    ಪ್ರತಿ (ಪೂರ್ಣಾಙ್ಕ l = 0; l < 4; ++l) {
         lo[l] = d1 * ((q[l] & 0xF) + ((h[l] & hm1) ? 16 : 0)) - m1;
         hi[l] = d2 * ((q[l] >>  4) + ((h[l] & hm2) ? 16 : 0)) - m2;
     }
@@ -1242,52 +1242,52 @@ static inline void dequantize_q5_K_wide_one(dst_t * __restrict__ y, const uint8_
 }
 
 template <typename dst_t>
-static void dequantize_block_q5_K_wide(const void * __restrict__ vx, dst_t * __restrict__ yy, int64_t nb,
-                                       const sycl::nd_item<1> & it) {
+ಸ್ಥಿರ ಶೂನ್ಯ dequantize_block_q5_K_wide(ಧ್ರುವ ಶೂನ್ಯ * __restrict__ vx, dst_t * __restrict__ yy, int64_t nb,
+                                       ಧ್ರುವ sycl::nd_item<1> & it) {
     static_assert(QK_K == 256, "wide K-quant dequant assumes QK_K == 256");
-    const int64_t g   = it.get_global_id(0);
-    const int64_t b   = g / SYCL_DEQK_WI_PER_BLOCK;
-    const int     tid = (int) (g % SYCL_DEQK_WI_PER_BLOCK);
-    if (b >= nb) {
-        return;
+    ಧ್ರುವ int64_t g   = it.get_global_id(0);
+    ಧ್ರುವ int64_t b   = g / SYCL_DEQK_WI_PER_BLOCK;
+    ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ     tid = (ಪೂರ್ಣಾಙ್ಕ) (g % SYCL_DEQK_WI_PER_BLOCK);
+    ಯದಿ (b >= nb) {
+        ಪ್ರತ್ಯಾಗಮ;
     }
-    const block_q5_K * x = (const block_q5_K *) vx + b;
-    dequantize_q5_K_wide_one(yy + b * QK_K, x->qs, x->qh, x->scales, (float) x->dm[0], (float) x->dm[1], tid);
+    ಧ್ರುವ block_q5_K * x = (ಧ್ರುವ block_q5_K *) vx + b;
+    dequantize_q5_K_wide_one(yy + b * QK_K, x->qs, x->qh, x->scales, (ಭಿನ್ನ) x->dm[0], (ಭಿನ್ನ) x->dm[1], tid);
 }
 
 template <typename dst_t>
-static void dequantize_block_q5_K_reorder(const void * __restrict__ vx, dst_t * __restrict__ yy, const int64_t ib,
-                                          uint8_t * scales_local, const sycl::nd_item<3> & item_ct1, int64_t n_blocks) {
+ಸ್ಥಿರ ಶೂನ್ಯ dequantize_block_q5_K_reorder(ಧ್ರುವ ಶೂನ್ಯ * __restrict__ vx, dst_t * __restrict__ yy, ಧ್ರುವ int64_t ib,
+                                          uint8_t * scales_local, ಧ್ರುವ sycl::nd_item<3> & item_ct1, int64_t n_blocks) {
 
-#if QK_K == 256
+#ಯದಿ QK_K == 256
     // assume 64 threads
-    const int64_t tid = item_ct1.get_local_id(2);
-    const int64_t il  = tid / 16;   // 0...3
-    const int64_t ir  = tid % 16;   // 0...15
-    const int64_t is  = 2 * il;
+    ಧ್ರುವ int64_t tid = item_ct1.get_local_id(2);
+    ಧ್ರುವ int64_t il  = tid / 16;   // 0...3
+    ಧ್ರುವ int64_t ir  = tid % 16;   // 0...15
+    ಧ್ರುವ int64_t is  = 2 * il;
 
     dst_t * y = yy + 64 * il + 2 * ir;
 
-    const uint8_t * base = static_cast<const uint8_t *>(vx);
+    ಧ್ರುವ uint8_t * base = static_cast<ಧ್ರುವ uint8_t *>(vx);
 
     // Reordered layout: [qs (QK_K/2 per block)] [qh (QK_K/8 per block)] [scales (K_SCALE_SIZE per block)] [dm (half2 per block)]
-    const size_t qs_offset     = ib * (QK_K / 2);
-    const size_t qh_offset     = n_blocks * (QK_K / 2) + ib * (QK_K / 8);
-    const size_t scales_offset = n_blocks * (QK_K / 2) + n_blocks * (QK_K / 8) + ib * K_SCALE_SIZE;
-    const size_t dm_offset     = n_blocks * (QK_K / 2) + n_blocks * (QK_K / 8) + n_blocks * K_SCALE_SIZE + ib * sizeof(ggml_half2);
+    ಧ್ರುವ size_t qs_offset     = ib * (QK_K / 2);
+    ಧ್ರುವ size_t qh_offset     = n_blocks * (QK_K / 2) + ib * (QK_K / 8);
+    ಧ್ರುವ size_t scales_offset = n_blocks * (QK_K / 2) + n_blocks * (QK_K / 8) + ib * K_SCALE_SIZE;
+    ಧ್ರುವ size_t dm_offset     = n_blocks * (QK_K / 2) + n_blocks * (QK_K / 8) + n_blocks * K_SCALE_SIZE + ib * ಪರಿಮಾಣ(ggml_half2);
 
-    const uint8_t *  qs_ptr     = base + qs_offset;
-    const uint8_t *  qh_ptr     = base + qh_offset;
-    const uint8_t *  scales_ptr = base + scales_offset;
-    const ggml_half2 dm_values  = *reinterpret_cast<const ggml_half2 *>(base + dm_offset);
+    ಧ್ರುವ uint8_t *  qs_ptr     = base + qs_offset;
+    ಧ್ರುವ uint8_t *  qh_ptr     = base + qh_offset;
+    ಧ್ರುವ uint8_t *  scales_ptr = base + scales_offset;
+    ಧ್ರುವ ggml_half2 dm_ಮೌಲ್ಯಗಳು  = *reinterpret_cast<ಧ್ರುವ ggml_half2 *>(base + dm_offset);
 
-    const float dall = dm_values.x();
-    const float dmin = dm_values.y();
+    ಧ್ರುವ ಭಿನ್ನ dall = dm_ಮೌಲ್ಯಗಳು.x();
+    ಧ್ರುವ ಭಿನ್ನ dmin = dm_ಮೌಲ್ಯಗಳು.y();
 
-    const uint8_t * ql = qs_ptr + 32 * il + 2 * ir;
-    const uint8_t * qh = qh_ptr + 2 * ir;
+    ಧ್ರುವ uint8_t * ql = qs_ptr + 32 * il + 2 * ir;
+    ಧ್ರುವ uint8_t * qh = qh_ptr + 2 * ir;
 
-    if (tid < K_SCALE_SIZE) {
+    ಯದಿ (tid < K_SCALE_SIZE) {
         scales_local[tid] = scales_ptr[tid];
     }
 
@@ -1295,9 +1295,9 @@ static void dequantize_block_q5_K_reorder(const void * __restrict__ vx, dst_t * 
 
     uint8_t sc, m;
     get_scale_min_k4(is + 0, scales_local, sc, m);
-    const float d1 = dall * sc; const float m1 = dmin * m;
+    ಧ್ರುವ ಭಿನ್ನ d1 = dall * sc; ಧ್ರುವ ಭಿನ್ನ m1 = dmin * m;
     get_scale_min_k4(is + 1, scales_local, sc, m);
-    const float d2 = dall * sc; const float m2 = dmin * m;
+    ಧ್ರುವ ಭಿನ್ನ d2 = dall * sc; ಧ್ರುವ ಭಿನ್ನ m2 = dmin * m;
 
     uint8_t hm  = 1 << (2 * il);
     y[ 0] = d1 * ((ql[ 0] & 0xF) + (qh[ 0] & hm ? 16 : 0)) - m1;
@@ -1305,52 +1305,52 @@ static void dequantize_block_q5_K_reorder(const void * __restrict__ vx, dst_t * 
     hm <<= 1;
     y[32] = d2 * ((ql[ 0] >>  4) + (qh[ 0] & hm ? 16 : 0)) - m2;
     y[33] = d2 * ((ql[ 1] >>  4) + (qh[ 1] & hm ? 16 : 0)) - m2;
-#else
+#ಅನ್ಯಥಾ
     GGML_UNUSED(ib); GGML_UNUSED(tid); GGML_UNUSED(yy); GGML_UNUSED(scales_local); GGML_UNUSED(n_blocks);
     GGML_ABORT("Q5_K reorder dequantize not supported for QK_K != 256");
 #endif
 }
 
 template<typename dst_t>
-static void dequantize_block_q6_K(const void * __restrict__ vx, dst_t * __restrict__ yy,
-                                  const sycl::nd_item<3> &item_ct1) {
-    const block_q6_K * x = (const block_q6_K *) vx;
+ಸ್ಥಿರ ಶೂನ್ಯ dequantize_block_q6_K(ಧ್ರುವ ಶೂನ್ಯ * __restrict__ vx, dst_t * __restrict__ yy,
+                                  ಧ್ರುವ sycl::nd_item<3> &item_ct1) {
+    ಧ್ರುವ block_q6_K * x = (ಧ್ರುವ block_q6_K *) vx;
 
-    const int64_t i = item_ct1.get_group(2);
-#if QK_K == 256
+    ಧ್ರುವ int64_t i = item_ct1.get_group(2);
+#ಯದಿ QK_K == 256
 
     // assume 64 threads - this is very slightly better than the one below
-    const int64_t tid = item_ct1.get_local_id(2);
-    const int64_t ip  = tid/32;   // ip is 0 or 1
-    const int64_t il  = tid - 32*ip; // 0...32
-    const int64_t is  = 8*ip + il/16;
+    ಧ್ರುವ int64_t tid = item_ct1.get_local_id(2);
+    ಧ್ರುವ int64_t ip  = tid/32;   // ip is 0 or 1
+    ಧ್ರುವ int64_t il  = tid - 32*ip; // 0...32
+    ಧ್ರುವ int64_t is  = 8*ip + il/16;
 
     dst_t * y = yy + i*QK_K + 128*ip + il;
 
-    const float d = x[i].d;
+    ಧ್ರುವ ಭಿನ್ನ d = x[i].d;
 
-    const uint8_t * ql = x[i].ql + 64*ip + il;
-    const uint8_t   qh = x[i].qh[32*ip + il];
-    const int8_t  * sc = x[i].scales + is;
+    ಧ್ರುವ uint8_t * ql = x[i].ql + 64*ip + il;
+    ಧ್ರುವ uint8_t   qh = x[i].qh[32*ip + il];
+    ಧ್ರುವ int8_t  * sc = x[i].scales + is;
 
     y[ 0] = d * sc[0] * ((int8_t)((ql[ 0] & 0xF) | (((qh >> 0) & 3) << 4)) - 32);
     y[32] = d * sc[2] * ((int8_t)((ql[32] & 0xF) | (((qh >> 2) & 3) << 4)) - 32);
     y[64] = d * sc[4] * ((int8_t)((ql[ 0]  >> 4) | (((qh >> 4) & 3) << 4)) - 32);
     y[96] = d * sc[6] * ((int8_t)((ql[32]  >> 4) | (((qh >> 6) & 3) << 4)) - 32);
-#else
+#ಅನ್ಯಥಾ
 
     // assume 32 threads
-    const int64_t tid = item_ct1.get_local_id(2);
-    const int64_t ip  = tid/16;         // 0 or 1
-    const int64_t il  = tid - 16*ip;    // 0...15
+    ಧ್ರುವ int64_t tid = item_ct1.get_local_id(2);
+    ಧ್ರುವ int64_t ip  = tid/16;         // 0 or 1
+    ಧ್ರುವ int64_t il  = tid - 16*ip;    // 0...15
 
     dst_t * y = yy + i*QK_K + 16*ip + il;
 
-    const float d = x[i].d;
+    ಧ್ರುವ ಭಿನ್ನ d = x[i].d;
 
-    const uint8_t   ql = x[i].ql[16*ip + il];
-    const uint8_t   qh = x[i].qh[il] >> (2*ip);
-    const int8_t  * sc = x[i].scales;
+    ಧ್ರುವ uint8_t   ql = x[i].ql[16*ip + il];
+    ಧ್ರುವ uint8_t   qh = x[i].qh[il] >> (2*ip);
+    ಧ್ರುವ int8_t  * sc = x[i].scales;
 
     y[ 0] = d * sc[ip+0] * ((int8_t)((ql & 0xF) | (((qh >> 0) & 3) << 4)) - 32);
     y[32] = d * sc[ip+2] * ((int8_t)((ql  >> 4) | (((qh >> 4) & 3) << 4)) - 32);
@@ -1358,29 +1358,29 @@ static void dequantize_block_q6_K(const void * __restrict__ vx, dst_t * __restri
 }
 
 template <typename dst_t>
-static void dequantize_block_q6_K_reorder(const void * __restrict__ vx, dst_t * __restrict__ yy, const int64_t ib,
-                                          const sycl::nd_item<3> & item_ct1, int64_t n_blocks) {
+ಸ್ಥಿರ ಶೂನ್ಯ dequantize_block_q6_K_reorder(ಧ್ರುವ ಶೂನ್ಯ * __restrict__ vx, dst_t * __restrict__ yy, ಧ್ರುವ int64_t ib,
+                                          ಧ್ರುವ sycl::nd_item<3> & item_ct1, int64_t n_blocks) {
 
-    const int64_t tid = item_ct1.get_local_id(2);
-    const int64_t ip  = tid / 32;       // ip is 0 or 1
-    const int64_t il  = tid - 32 * ip;  // 0...32
-    const int64_t is  = 8 * ip + il / 16;
+    ಧ್ರುವ int64_t tid = item_ct1.get_local_id(2);
+    ಧ್ರುವ int64_t ip  = tid / 32;       // ip is 0 or 1
+    ಧ್ರುವ int64_t il  = tid - 32 * ip;  // 0...32
+    ಧ್ರುವ int64_t is  = 8 * ip + il / 16;
 
-    const uint8_t *   base_ptr           = static_cast<const uint8_t *>(vx);
-    const auto        ql_offset          = ib * (QK_K / 2);
-    const auto        qh_offset          = (QK_K / 2) * n_blocks + (QK_K / 4) * ib;
-    const auto        base_scales_offset = (QK_K / 2) * n_blocks + (QK_K / 4) * n_blocks + (QK_K / 16) * ib;
-    const auto        base_d_offset      = ((QK_K / 2) + (QK_K / 4) + (QK_K / 16)) * n_blocks;
-    const uint8_t *   ql_ptr             = base_ptr + ql_offset;
-    const uint8_t *   qh_ptr             = base_ptr + qh_offset;
-    const uint8_t *   scales_ptr         = base_ptr + base_scales_offset;
-    const ggml_half * d                  = (const ggml_half *) (base_ptr + base_d_offset) + ib;
+    ಧ್ರುವ uint8_t *   base_ptr           = static_cast<ಧ್ರುವ uint8_t *>(vx);
+    ಧ್ರುವ auto        ql_offset          = ib * (QK_K / 2);
+    ಧ್ರುವ auto        qh_offset          = (QK_K / 2) * n_blocks + (QK_K / 4) * ib;
+    ಧ್ರುವ auto        base_scales_offset = (QK_K / 2) * n_blocks + (QK_K / 4) * n_blocks + (QK_K / 16) * ib;
+    ಧ್ರುವ auto        base_d_offset      = ((QK_K / 2) + (QK_K / 4) + (QK_K / 16)) * n_blocks;
+    ಧ್ರುವ uint8_t *   ql_ptr             = base_ptr + ql_offset;
+    ಧ್ರುವ uint8_t *   qh_ptr             = base_ptr + qh_offset;
+    ಧ್ರುವ uint8_t *   scales_ptr         = base_ptr + base_scales_offset;
+    ಧ್ರುವ ggml_half * d                  = (ಧ್ರುವ ggml_half *) (base_ptr + base_d_offset) + ib;
 
     dst_t * y = yy + 128 * ip + il;
 
-    const uint8_t * ql = ql_ptr + 64 * ip + il;
-    const uint8_t   qh = *(qh_ptr + 32 * ip + il);
-    const int8_t *  sc = reinterpret_cast<const int8_t *>(scales_ptr + is);
+    ಧ್ರುವ uint8_t * ql = ql_ptr + 64 * ip + il;
+    ಧ್ರುವ uint8_t   qh = *(qh_ptr + 32 * ip + il);
+    ಧ್ರುವ int8_t *  sc = reinterpret_cast<ಧ್ರುವ int8_t *>(scales_ptr + is);
 
     y[0]  = *d * sc[0] * ((int8_t) ((ql[0] & 0xF) | (((qh >> 0) & 3) << 4)) - 32);
     y[32] = *d * sc[2] * ((int8_t) ((ql[32] & 0xF) | (((qh >> 2) & 3) << 4)) - 32);
@@ -1389,144 +1389,144 @@ static void dequantize_block_q6_K_reorder(const void * __restrict__ vx, dst_t * 
 }
 
 template<typename dst_t>
-static void dequantize_block_iq2_xxs(const void * __restrict__ vx, dst_t * __restrict__ yy,
-                                     const sycl::nd_item<3> &item_ct1,
-                                     const uint64_t *iq2xxs_grid_ptr,
-                                     const uint8_t *ksigns_iq2xs_ptr,
-                                     const uint8_t *kmask_iq2xs_ptr) {
+ಸ್ಥಿರ ಶೂನ್ಯ dequantize_block_iq2_xxs(ಧ್ರುವ ಶೂನ್ಯ * __restrict__ vx, dst_t * __restrict__ yy,
+                                     ಧ್ರುವ sycl::nd_item<3> &item_ct1,
+                                     ಧ್ರುವ uint64_t *iq2xxs_grid_ptr,
+                                     ಧ್ರುವ uint8_t *ksigns_iq2xs_ptr,
+                                     ಧ್ರುವ uint8_t *kmask_iq2xs_ptr) {
 
-    const int64_t i = item_ct1.get_group(2);
-    const block_iq2_xxs * x = (const block_iq2_xxs  *) vx;
+    ಧ್ರುವ int64_t i = item_ct1.get_group(2);
+    ಧ್ರುವ block_iq2_xxs * x = (ಧ್ರುವ block_iq2_xxs  *) vx;
 
-    const int64_t tid = item_ct1.get_local_id(2);
-#if QK_K == 256
-    const int64_t il = tid/8; // 0...3
-    const int64_t ib = tid%8; // 0...7
+    ಧ್ರುವ int64_t tid = item_ct1.get_local_id(2);
+#ಯದಿ QK_K == 256
+    ಧ್ರುವ int64_t il = tid/8; // 0...3
+    ಧ್ರುವ int64_t ib = tid%8; // 0...7
     dst_t * y = yy + i*QK_K + 32*ib + 8*il;
-    const uint16_t * q2 = x[i].qs + 4*ib;
-    const uint8_t  * aux8 = (const uint8_t *)q2;
-    const uint8_t  * grid = (const uint8_t *)(iq2xxs_grid_ptr + aux8[il]);
-    const uint32_t aux32 = q2[2] | (q2[3] << 16);
-    const float d = (float)x[i].d * (0.5f + (aux32 >> 28)) * 0.25f;
-    const uint8_t signs = ksigns_iq2xs_ptr[(aux32 >> 7*il) & 127];
-    for (int j = 0; j < 8; ++j) y[j] = d * grid[j] * (signs & kmask_iq2xs_ptr[j] ? -1.f : 1.f);
-#else
-    assert(false);
+    ಧ್ರುವ uint16_t * q2 = x[i].qs + 4*ib;
+    ಧ್ರುವ uint8_t  * aux8 = (ಧ್ರುವ uint8_t *)q2;
+    ಧ್ರುವ uint8_t  * grid = (ಧ್ರುವ uint8_t *)(iq2xxs_grid_ptr + aux8[il]);
+    ಧ್ರುವ uint32_t aux32 = q2[2] | (q2[3] << 16);
+    ಧ್ರುವ ಭಿನ್ನ d = (ಭಿನ್ನ)x[i].d * (0.5f + (aux32 >> 28)) * 0.25f;
+    ಧ್ರುವ uint8_t signs = ksigns_iq2xs_ptr[(aux32 >> 7*il) & 127];
+    ಪ್ರತಿ (ಪೂರ್ಣಾಙ್ಕ j = 0; j < 8; ++j) y[j] = d * grid[j] * (signs & kmask_iq2xs_ptr[j] ? -1.f : 1.f);
+#ಅನ್ಯಥಾ
+    ಪ್ರತಿಜ್ಞಾ(ಅಸತ್ಯ);
 #endif
 
 }
 
 template<typename dst_t>
-static void dequantize_block_iq2_xs(const void * __restrict__ vx, dst_t * __restrict__ yy,
-                                    const sycl::nd_item<3> &item_ct1,
-                                    const uint64_t *iq2xs_grid,
-                                    const uint8_t *ksigns_iq2xs,
-                                    const uint8_t *kmask_iq2xs) {
+ಸ್ಥಿರ ಶೂನ್ಯ dequantize_block_iq2_xs(ಧ್ರುವ ಶೂನ್ಯ * __restrict__ vx, dst_t * __restrict__ yy,
+                                    ಧ್ರುವ sycl::nd_item<3> &item_ct1,
+                                    ಧ್ರುವ uint64_t *iq2xs_grid,
+                                    ಧ್ರುವ uint8_t *ksigns_iq2xs,
+                                    ಧ್ರುವ uint8_t *kmask_iq2xs) {
 
-    const int64_t i = item_ct1.get_group(2);
-    const block_iq2_xs * x = (const block_iq2_xs *) vx;
+    ಧ್ರುವ int64_t i = item_ct1.get_group(2);
+    ಧ್ರುವ block_iq2_xs * x = (ಧ್ರುವ block_iq2_xs *) vx;
 
-    const int64_t tid = item_ct1.get_local_id(2);
-#if QK_K == 256
-    const int64_t il = tid/8; // 0...3
-    const int64_t ib = tid%8; // 0...7
+    ಧ್ರುವ int64_t tid = item_ct1.get_local_id(2);
+#ಯದಿ QK_K == 256
+    ಧ್ರುವ int64_t il = tid/8; // 0...3
+    ಧ್ರುವ int64_t ib = tid%8; // 0...7
     dst_t * y = yy + i*QK_K + 32*ib + 8*il;
-    const uint16_t * q2 = x[i].qs + 4*ib;
-    const uint8_t  * grid = (const uint8_t *)(iq2xs_grid + (q2[il] & 511));
-    const float d = (float)x[i].d * (0.5f + ((x[i].scales[ib] >> 4*(il/2)) & 0xf)) * 0.25f;
-    const uint8_t signs = ksigns_iq2xs[q2[il] >> 9];
-    for (int j = 0; j < 8; ++j) y[j] = d * grid[j] * (signs & kmask_iq2xs[j] ? -1.f : 1.f);
-#else
-    assert(false);
+    ಧ್ರುವ uint16_t * q2 = x[i].qs + 4*ib;
+    ಧ್ರುವ uint8_t  * grid = (ಧ್ರುವ uint8_t *)(iq2xs_grid + (q2[il] & 511));
+    ಧ್ರುವ ಭಿನ್ನ d = (ಭಿನ್ನ)x[i].d * (0.5f + ((x[i].scales[ib] >> 4*(il/2)) & 0xf)) * 0.25f;
+    ಧ್ರುವ uint8_t signs = ksigns_iq2xs[q2[il] >> 9];
+    ಪ್ರತಿ (ಪೂರ್ಣಾಙ್ಕ j = 0; j < 8; ++j) y[j] = d * grid[j] * (signs & kmask_iq2xs[j] ? -1.f : 1.f);
+#ಅನ್ಯಥಾ
+    ಪ್ರತಿಜ್ಞಾ(ಅಸತ್ಯ);
 #endif
 
 }
 
 template <typename dst_t>
-__dpct_inline__ static void
-dequantize_block_iq2_s(const void *__restrict__ vx, dst_t *__restrict__ yy,
-                       const sycl::nd_item<3> &item_ct1) {
+__dpct_inline__ ಸ್ಥಿರ ಶೂನ್ಯ
+dequantize_block_iq2_s(ಧ್ರುವ ಶೂನ್ಯ *__restrict__ vx, dst_t *__restrict__ yy,
+                       ಧ್ರುವ sycl::nd_item<3> &item_ct1) {
 
-    const int64_t i = item_ct1.get_group(2);
-    const block_iq2_s * x = (const block_iq2_s *) vx;
+    ಧ್ರುವ int64_t i = item_ct1.get_group(2);
+    ಧ್ರುವ block_iq2_s * x = (ಧ್ರುವ block_iq2_s *) vx;
 
-    const int64_t tid = item_ct1.get_local_id(2);
-#if QK_K == 256
-    const int64_t il = tid/8; // 0...3
-    const int64_t ib = tid%8; // 0...7
+    ಧ್ರುವ int64_t tid = item_ct1.get_local_id(2);
+#ಯದಿ QK_K == 256
+    ಧ್ರುವ int64_t il = tid/8; // 0...3
+    ಧ್ರುವ int64_t ib = tid%8; // 0...7
     dst_t * y = yy + i*QK_K + 32*ib + 8*il;
-    const uint8_t * grid = (const uint8_t *)(iq2s_grid + (x[i].qs[4*ib+il] | ((x[i].qh[ib] << (8-2*il)) & 0x300)));
-    const float d = (float)x[i].d * (0.5f + ((x[i].scales[ib] >> 4*(il/2)) & 0xf)) * 0.25f;
-    const uint8_t signs = x[i].qs[QK_K/8+4*ib+il];
+    ಧ್ರುವ uint8_t * grid = (ಧ್ರುವ uint8_t *)(iq2s_grid + (x[i].qs[4*ib+il] | ((x[i].qh[ib] << (8-2*il)) & 0x300)));
+    ಧ್ರುವ ಭಿನ್ನ d = (ಭಿನ್ನ)x[i].d * (0.5f + ((x[i].scales[ib] >> 4*(il/2)) & 0xf)) * 0.25f;
+    ಧ್ರುವ uint8_t signs = x[i].qs[QK_K/8+4*ib+il];
 #pragma unroll
-    for (int j = 0; j < 8; ++j)
+    ಪ್ರತಿ (ಪೂರ್ಣಾಙ್ಕ j = 0; j < 8; ++j)
         y[j] = d * grid[j] * (signs & kmask_iq2xs[j] ? -1.f : 1.f);
-#else
-    assert(false);
+#ಅನ್ಯಥಾ
+    ಪ್ರತಿಜ್ಞಾ(ಅಸತ್ಯ);
 
 #endif
 
 }
 
 template<typename dst_t>
-static void dequantize_block_iq3_xxs(const void * __restrict__ vx, dst_t * __restrict__ yy,
-                                     const sycl::nd_item<3> &item_ct1,
-                                     const uint32_t *iq3xxs_grid,
-                                     const uint8_t *ksigns_iq2xs,
-                                     const uint8_t *kmask_iq2xs) {
+ಸ್ಥಿರ ಶೂನ್ಯ dequantize_block_iq3_xxs(ಧ್ರುವ ಶೂನ್ಯ * __restrict__ vx, dst_t * __restrict__ yy,
+                                     ಧ್ರುವ sycl::nd_item<3> &item_ct1,
+                                     ಧ್ರುವ uint32_t *iq3xxs_grid,
+                                     ಧ್ರುವ uint8_t *ksigns_iq2xs,
+                                     ಧ್ರುವ uint8_t *kmask_iq2xs) {
 
-    const int64_t i = item_ct1.get_group(2);
-    const block_iq3_xxs * x = (const block_iq3_xxs  *) vx;
+    ಧ್ರುವ int64_t i = item_ct1.get_group(2);
+    ಧ್ರುವ block_iq3_xxs * x = (ಧ್ರುವ block_iq3_xxs  *) vx;
 
-    const int64_t tid = item_ct1.get_local_id(2);
-#if QK_K == 256
-    const int64_t il = tid/8; // 0...3
-    const int64_t ib = tid%8; // 0...7
+    ಧ್ರುವ int64_t tid = item_ct1.get_local_id(2);
+#ಯದಿ QK_K == 256
+    ಧ್ರುವ int64_t il = tid/8; // 0...3
+    ಧ್ರುವ int64_t ib = tid%8; // 0...7
     dst_t * y = yy + i*QK_K + 32*ib + 8*il;
-    const uint8_t  * q3 = x[i].qs + 8*ib;
-    const uint16_t * gas = (const uint16_t *)(x[i].qs + QK_K/4) + 2*ib;
-    const uint8_t  * grid1 = (const uint8_t *)(iq3xxs_grid + q3[2*il+0]);
-    const uint8_t  * grid2 = (const uint8_t *)(iq3xxs_grid + q3[2*il+1]);
-    const uint32_t aux32 = gas[0] | (gas[1] << 16);
-    const float d = (float)x[i].d * (0.5f + (aux32 >> 28)) * 0.5f;
-    const uint8_t signs = ksigns_iq2xs[(aux32 >> 7*il) & 127];
-    for (int j = 0; j < 4; ++j) {
+    ಧ್ರುವ uint8_t  * q3 = x[i].qs + 8*ib;
+    ಧ್ರುವ uint16_t * gas = (ಧ್ರುವ uint16_t *)(x[i].qs + QK_K/4) + 2*ib;
+    ಧ್ರುವ uint8_t  * grid1 = (ಧ್ರುವ uint8_t *)(iq3xxs_grid + q3[2*il+0]);
+    ಧ್ರುವ uint8_t  * grid2 = (ಧ್ರುವ uint8_t *)(iq3xxs_grid + q3[2*il+1]);
+    ಧ್ರುವ uint32_t aux32 = gas[0] | (gas[1] << 16);
+    ಧ್ರುವ ಭಿನ್ನ d = (ಭಿನ್ನ)x[i].d * (0.5f + (aux32 >> 28)) * 0.5f;
+    ಧ್ರುವ uint8_t signs = ksigns_iq2xs[(aux32 >> 7*il) & 127];
+    ಪ್ರತಿ (ಪೂರ್ಣಾಙ್ಕ j = 0; j < 4; ++j) {
         y[j+0] = d * grid1[j] * (signs & kmask_iq2xs[j+0] ? -1.f : 1.f);
         y[j+4] = d * grid2[j] * (signs & kmask_iq2xs[j+4] ? -1.f : 1.f);
     }
-#else
-    assert(false);
+#ಅನ್ಯಥಾ
+    ಪ್ರತಿಜ್ಞಾ(ಅಸತ್ಯ);
 #endif
 
 }
 
 template<typename dst_t>
-static void dequantize_block_iq3_xxs_reorder(const void * __restrict__ vx, dst_t * __restrict__ yy, const int64_t i,
-                                             const sycl::nd_item<3> & item_ct1, const int64_t nb,
-                                             const uint32_t * iq3xxs_grid,
-                                             const uint8_t * ksigns_iq2xs,
-                                             const uint8_t * kmask_iq2xs) {
-    const int64_t tid = item_ct1.get_local_id(2);
-#if QK_K == 256
-    const int64_t il = tid / 8;
-    const int64_t ib = tid % 8;
-    const uint8_t * base = static_cast<const uint8_t *>(vx);
-    const uint8_t * qs = base + i * (3 * QK_K / 8);
-    const ggml_half * d = reinterpret_cast<const ggml_half *>(base + nb * (3 * QK_K / 8));
-    const uint8_t * q3 = qs + 8 * ib;
-    const uint16_t * gas = reinterpret_cast<const uint16_t *>(qs + QK_K / 4) + 2 * ib;
-    const uint8_t * grid1 = reinterpret_cast<const uint8_t *>(iq3xxs_grid + q3[2*il+0]);
-    const uint8_t * grid2 = reinterpret_cast<const uint8_t *>(iq3xxs_grid + q3[2*il+1]);
-    const uint32_t aux32 = gas[0] | (gas[1] << 16);
-    const float dl = (float) d[i] * (0.5f + (aux32 >> 28)) * 0.5f;
-    const uint8_t signs = ksigns_iq2xs[(aux32 >> (7 * il)) & 127];
+ಸ್ಥಿರ ಶೂನ್ಯ dequantize_block_iq3_xxs_reorder(ಧ್ರುವ ಶೂನ್ಯ * __restrict__ vx, dst_t * __restrict__ yy, ಧ್ರುವ int64_t i,
+                                             ಧ್ರುವ sycl::nd_item<3> & item_ct1, ಧ್ರುವ int64_t nb,
+                                             ಧ್ರುವ uint32_t * iq3xxs_grid,
+                                             ಧ್ರುವ uint8_t * ksigns_iq2xs,
+                                             ಧ್ರುವ uint8_t * kmask_iq2xs) {
+    ಧ್ರುವ int64_t tid = item_ct1.get_local_id(2);
+#ಯದಿ QK_K == 256
+    ಧ್ರುವ int64_t il = tid / 8;
+    ಧ್ರುವ int64_t ib = tid % 8;
+    ಧ್ರುವ uint8_t * base = static_cast<ಧ್ರುವ uint8_t *>(vx);
+    ಧ್ರುವ uint8_t * qs = base + i * (3 * QK_K / 8);
+    ಧ್ರುವ ggml_half * d = reinterpret_cast<ಧ್ರುವ ggml_half *>(base + nb * (3 * QK_K / 8));
+    ಧ್ರುವ uint8_t * q3 = qs + 8 * ib;
+    ಧ್ರುವ uint16_t * gas = reinterpret_cast<ಧ್ರುವ uint16_t *>(qs + QK_K / 4) + 2 * ib;
+    ಧ್ರುವ uint8_t * grid1 = reinterpret_cast<ಧ್ರುವ uint8_t *>(iq3xxs_grid + q3[2*il+0]);
+    ಧ್ರುವ uint8_t * grid2 = reinterpret_cast<ಧ್ರುವ uint8_t *>(iq3xxs_grid + q3[2*il+1]);
+    ಧ್ರುವ uint32_t aux32 = gas[0] | (gas[1] << 16);
+    ಧ್ರುವ ಭಿನ್ನ dl = (ಭಿನ್ನ) d[i] * (0.5f + (aux32 >> 28)) * 0.5f;
+    ಧ್ರುವ uint8_t signs = ksigns_iq2xs[(aux32 >> (7 * il)) & 127];
     dst_t * y = yy + 32 * ib + 8 * il;
 #pragma unroll
-    for (int j = 0; j < 4; ++j) {
+    ಪ್ರತಿ (ಪೂರ್ಣಾಙ್ಕ j = 0; j < 4; ++j) {
         y[j+0] = dl * grid1[j] * (signs & kmask_iq2xs[j+0] ? -1.f : 1.f);
         y[j+4] = dl * grid2[j] * (signs & kmask_iq2xs[j+4] ? -1.f : 1.f);
     }
-#else
+#ಅನ್ಯಥಾ
     GGML_UNUSED(vx);
     GGML_UNUSED(yy);
     GGML_UNUSED(i);
@@ -1540,66 +1540,66 @@ static void dequantize_block_iq3_xxs_reorder(const void * __restrict__ vx, dst_t
 }
 
 template <typename dst_t>
-__dpct_inline__ static void
-dequantize_block_iq3_s(const void *__restrict__ vx, dst_t *__restrict__ yy,
-                       const sycl::nd_item<3> &item_ct1,
-                       const uint8_t *kmask_iq2xs, const uint32_t *iq3s_grid) {
+__dpct_inline__ ಸ್ಥಿರ ಶೂನ್ಯ
+dequantize_block_iq3_s(ಧ್ರುವ ಶೂನ್ಯ *__restrict__ vx, dst_t *__restrict__ yy,
+                       ಧ್ರುವ sycl::nd_item<3> &item_ct1,
+                       ಧ್ರುವ uint8_t *kmask_iq2xs, ಧ್ರುವ uint32_t *iq3s_grid) {
 
-    const int64_t i = item_ct1.get_group(2);
-    const block_iq3_s * x = (const block_iq3_s *) vx;
+    ಧ್ರುವ int64_t i = item_ct1.get_group(2);
+    ಧ್ರುವ block_iq3_s * x = (ಧ್ರುವ block_iq3_s *) vx;
 
-    const int64_t tid = item_ct1.get_local_id(2);
-#if QK_K == 256
-    const int64_t il = tid/8; // 0...3
-    const int64_t ib = tid%8; // 0...7
+    ಧ್ರುವ int64_t tid = item_ct1.get_local_id(2);
+#ಯದಿ QK_K == 256
+    ಧ್ರುವ int64_t il = tid/8; // 0...3
+    ಧ್ರುವ int64_t ib = tid%8; // 0...7
     dst_t * y = yy + i*QK_K + 32*ib + 8*il;
-    const uint8_t * qs = x[i].qs + 8*ib;
-    const uint8_t * grid1 = (const uint8_t *)(iq3s_grid + (qs[2*il+0] | ((x[i].qh[ib] << (8-2*il)) & 256)));
-    const uint8_t * grid2 = (const uint8_t *)(iq3s_grid + (qs[2*il+1] | ((x[i].qh[ib] << (7-2*il)) & 256)));
-    const float d = (float)x[i].d * (1 + 2*((x[i].scales[ib/2] >> 4*(ib%2)) & 0xf));
-    const uint8_t signs = x[i].signs[4*ib + il];
+    ಧ್ರುವ uint8_t * qs = x[i].qs + 8*ib;
+    ಧ್ರುವ uint8_t * grid1 = (ಧ್ರುವ uint8_t *)(iq3s_grid + (qs[2*il+0] | ((x[i].qh[ib] << (8-2*il)) & 256)));
+    ಧ್ರುವ uint8_t * grid2 = (ಧ್ರುವ uint8_t *)(iq3s_grid + (qs[2*il+1] | ((x[i].qh[ib] << (7-2*il)) & 256)));
+    ಧ್ರುವ ಭಿನ್ನ d = (ಭಿನ್ನ)x[i].d * (1 + 2*((x[i].scales[ib/2] >> 4*(ib%2)) & 0xf));
+    ಧ್ರುವ uint8_t signs = x[i].signs[4*ib + il];
 #pragma unroll
-    for (int j = 0; j < 4; ++j) {
+    ಪ್ರತಿ (ಪೂರ್ಣಾಙ್ಕ j = 0; j < 4; ++j) {
         y[j+0] = d * grid1[j] * (signs & kmask_iq2xs[j+0] ? -1.f : 1.f);
         y[j+4] = d * grid2[j] * (signs & kmask_iq2xs[j+4] ? -1.f : 1.f);
     }
-#else
-    assert(false);
+#ಅನ್ಯಥಾ
+    ಪ್ರತಿಜ್ಞಾ(ಅಸತ್ಯ);
 #endif
 
 }
 
 template <typename dst_t>
-__dpct_inline__ static void
-dequantize_block_iq3_s_reorder(const void * __restrict__ vx, dst_t * __restrict__ yy, const int64_t i,
-                               const sycl::nd_item<3> & item_ct1, const int64_t nb,
-                               const uint8_t * kmask_iq2xs, const uint32_t * iq3s_grid) {
-    const int64_t tid = item_ct1.get_local_id(2);
-#if QK_K == 256
-    const int64_t il = tid / 8;
-    const int64_t ib = tid % 8;
-    const uint8_t * base = static_cast<const uint8_t *>(vx);
-    const uint8_t * qs = base + i * (QK_K / 4);
-    const uint8_t * qh = base + nb * (QK_K / 4) + i * (QK_K / 32);
-    const uint8_t * signs_base = base + nb * (QK_K / 4 + QK_K / 32) + i * (QK_K / 8);
-    const uint8_t * metadata = base + nb * (QK_K / 4 + QK_K / 32 + QK_K / 8) +
-                               i * (sizeof(ggml_half) + IQ3S_N_SCALE);
-    const ggml_half d = *reinterpret_cast<const ggml_half *>(metadata);
-    const uint8_t * scales = metadata + sizeof(ggml_half);
-    const uint8_t * qs_ib = qs + 8 * ib;
-    const uint8_t * grid1 = reinterpret_cast<const uint8_t *>(
+__dpct_inline__ ಸ್ಥಿರ ಶೂನ್ಯ
+dequantize_block_iq3_s_reorder(ಧ್ರುವ ಶೂನ್ಯ * __restrict__ vx, dst_t * __restrict__ yy, ಧ್ರುವ int64_t i,
+                               ಧ್ರುವ sycl::nd_item<3> & item_ct1, ಧ್ರುವ int64_t nb,
+                               ಧ್ರುವ uint8_t * kmask_iq2xs, ಧ್ರುವ uint32_t * iq3s_grid) {
+    ಧ್ರುವ int64_t tid = item_ct1.get_local_id(2);
+#ಯದಿ QK_K == 256
+    ಧ್ರುವ int64_t il = tid / 8;
+    ಧ್ರುವ int64_t ib = tid % 8;
+    ಧ್ರುವ uint8_t * base = static_cast<ಧ್ರುವ uint8_t *>(vx);
+    ಧ್ರುವ uint8_t * qs = base + i * (QK_K / 4);
+    ಧ್ರುವ uint8_t * qh = base + nb * (QK_K / 4) + i * (QK_K / 32);
+    ಧ್ರುವ uint8_t * signs_base = base + nb * (QK_K / 4 + QK_K / 32) + i * (QK_K / 8);
+    ಧ್ರುವ uint8_t * metadata = base + nb * (QK_K / 4 + QK_K / 32 + QK_K / 8) +
+                               i * (ಪರಿಮಾಣ(ggml_half) + IQ3S_N_SCALE);
+    ಧ್ರುವ ggml_half d = *reinterpret_cast<ಧ್ರುವ ggml_half *>(metadata);
+    ಧ್ರುವ uint8_t * scales = metadata + ಪರಿಮಾಣ(ggml_half);
+    ಧ್ರುವ uint8_t * qs_ib = qs + 8 * ib;
+    ಧ್ರುವ uint8_t * grid1 = reinterpret_cast<ಧ್ರುವ uint8_t *>(
         iq3s_grid + (qs_ib[2*il+0] | ((qh[ib] << (8 - 2*il)) & 256)));
-    const uint8_t * grid2 = reinterpret_cast<const uint8_t *>(
+    ಧ್ರುವ uint8_t * grid2 = reinterpret_cast<ಧ್ರುವ uint8_t *>(
         iq3s_grid + (qs_ib[2*il+1] | ((qh[ib] << (7 - 2*il)) & 256)));
-    const float dl = (float) d * (1 + 2 * ((scales[ib/2] >> (4 * (ib%2))) & 0xf));
-    const uint8_t signs = signs_base[4 * ib + il];
+    ಧ್ರುವ ಭಿನ್ನ dl = (ಭಿನ್ನ) d * (1 + 2 * ((scales[ib/2] >> (4 * (ib%2))) & 0xf));
+    ಧ್ರುವ uint8_t signs = signs_base[4 * ib + il];
     dst_t * y = yy + 32 * ib + 8 * il;
 #pragma unroll
-    for (int j = 0; j < 4; ++j) {
+    ಪ್ರತಿ (ಪೂರ್ಣಾಙ್ಕ j = 0; j < 4; ++j) {
         y[j+0] = dl * grid1[j] * (signs & kmask_iq2xs[j+0] ? -1.f : 1.f);
         y[j+4] = dl * grid2[j] * (signs & kmask_iq2xs[j+4] ? -1.f : 1.f);
     }
-#else
+#ಅನ್ಯಥಾ
     GGML_UNUSED(vx);
     GGML_UNUSED(yy);
     GGML_UNUSED(i);
@@ -1612,85 +1612,85 @@ dequantize_block_iq3_s_reorder(const void * __restrict__ vx, dst_t * __restrict_
 }
 
 template <typename dst_t>
-__dpct_inline__ static void
-dequantize_block_iq1_s(const void *__restrict__ vx, dst_t *__restrict__ yy,
-                       const sycl::nd_item<3> &item_ct1,
-                       const uint32_t *iq1s_grid_gpu) {
+__dpct_inline__ ಸ್ಥಿರ ಶೂನ್ಯ
+dequantize_block_iq1_s(ಧ್ರುವ ಶೂನ್ಯ *__restrict__ vx, dst_t *__restrict__ yy,
+                       ಧ್ರುವ sycl::nd_item<3> &item_ct1,
+                       ಧ್ರುವ uint32_t *iq1s_grid_gpu) {
 
-    const int64_t i = item_ct1.get_group(2);
-    const block_iq1_s * x = (const block_iq1_s  *) vx;
+    ಧ್ರುವ int64_t i = item_ct1.get_group(2);
+    ಧ್ರುವ block_iq1_s * x = (ಧ್ರುವ block_iq1_s  *) vx;
 
-    const int64_t tid = item_ct1.get_local_id(2);
-#if QK_K == 256
-    const int64_t il = tid/8; // 0...3
-    const int64_t ib = tid%8; // 0...7
+    ಧ್ರುವ int64_t tid = item_ct1.get_local_id(2);
+#ಯದಿ QK_K == 256
+    ಧ್ರುವ int64_t il = tid/8; // 0...3
+    ಧ್ರುವ int64_t ib = tid%8; // 0...7
     dst_t * y = yy + i*QK_K + 32*ib + 8*il;
-    const float delta = x[i].qh[ib] & 0x8000 ? -1 - IQ1S_DELTA : -1 + IQ1S_DELTA;
-    const float d = (float)x[i].d * (2*((x[i].qh[ib] >> 12) & 7) + 1);
-    uint32_t grid32[2]; const int8_t * q = (const int8_t *)grid32;
+    ಧ್ರುವ ಭಿನ್ನ delta = x[i].qh[ib] & 0x8000 ? -1 - IQ1S_DELTA : -1 + IQ1S_DELTA;
+    ಧ್ರುವ ಭಿನ್ನ d = (ಭಿನ್ನ)x[i].d * (2*((x[i].qh[ib] >> 12) & 7) + 1);
+    uint32_t grid32[2]; ಧ್ರುವ int8_t * q = (ಧ್ರುವ int8_t *)grid32;
     grid32[0] = iq1s_grid_gpu[x[i].qs[4*ib+il] | (((x[i].qh[ib] >> 3*il) & 7) << 8)];
     grid32[1] = (grid32[0] >> 4) & 0x0f0f0f0f;
     grid32[0] &= 0x0f0f0f0f;
 #pragma unroll
-    for (int j = 0; j < 8; ++j) {
+    ಪ್ರತಿ (ಪೂರ್ಣಾಙ್ಕ j = 0; j < 8; ++j) {
         y[j] = d * (q[j] + delta);
     }
-#else
-    assert(false);
+#ಅನ್ಯಥಾ
+    ಪ್ರತಿಜ್ಞಾ(ಅಸತ್ಯ);
 #endif
 
 }
 
 template <typename dst_t>
-__dpct_inline__ static void
-dequantize_block_iq1_m(const void *__restrict__ vx, dst_t *__restrict__ yy,
-                       const sycl::nd_item<3> &item_ct1,
-                       const uint32_t *iq1s_grid_gpu) {
+__dpct_inline__ ಸ್ಥಿರ ಶೂನ್ಯ
+dequantize_block_iq1_m(ಧ್ರುವ ಶೂನ್ಯ *__restrict__ vx, dst_t *__restrict__ yy,
+                       ಧ್ರುವ sycl::nd_item<3> &item_ct1,
+                       ಧ್ರುವ uint32_t *iq1s_grid_gpu) {
 
-    const int64_t i = item_ct1.get_group(2);
-    const block_iq1_m * x = (const block_iq1_m  *) vx;
+    ಧ್ರುವ int64_t i = item_ct1.get_group(2);
+    ಧ್ರುವ block_iq1_m * x = (ಧ್ರುವ block_iq1_m  *) vx;
 
-    const int64_t tid = item_ct1.get_local_id(2);
-#if QK_K == 256
-    const int64_t il = tid/8; // 0...3
-    const int64_t ib = tid%8; // 0...7
+    ಧ್ರುವ int64_t tid = item_ct1.get_local_id(2);
+#ಯದಿ QK_K == 256
+    ಧ್ರುವ int64_t il = tid/8; // 0...3
+    ಧ್ರುವ int64_t ib = tid%8; // 0...7
     dst_t * y = yy + i*QK_K + 32*ib + 8*il;
-    const uint16_t * sc = (const uint16_t *)x[i].scales;
+    ಧ್ರುವ uint16_t * sc = (ಧ್ರುವ uint16_t *)x[i].scales;
     iq1m_scale_t scale;
     scale.u16 = (sc[0] >> 12) | ((sc[1] >> 8) & 0x00f0) | ((sc[2] >> 4) & 0x0f00) | (sc[3] & 0xf000);
-    const int ib16 = 2*ib + il/2; // sc[ib16/4] >> 3*(ib16%4) -> sc[ib/2] >> 3*((2*ib+il/2)%4);
-    const float d = (float)scale.f16 * (2*((sc[ib16/4] >> 3*(ib16%4)) & 0x7) + 1);
-    const float delta = x[i].qh[2*ib+il/2] & (0x08 << 4*(il%2)) ? -1 - IQ1M_DELTA : -1 + IQ1M_DELTA;
-    uint32_t grid32[2]; const int8_t * q = (const int8_t *)grid32;
+    ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ ib16 = 2*ib + il/2; // sc[ib16/4] >> 3*(ib16%4) -> sc[ib/2] >> 3*((2*ib+il/2)%4);
+    ಧ್ರುವ ಭಿನ್ನ d = (ಭಿನ್ನ)scale.f16 * (2*((sc[ib16/4] >> 3*(ib16%4)) & 0x7) + 1);
+    ಧ್ರುವ ಭಿನ್ನ delta = x[i].qh[2*ib+il/2] & (0x08 << 4*(il%2)) ? -1 - IQ1M_DELTA : -1 + IQ1M_DELTA;
+    uint32_t grid32[2]; ಧ್ರುವ int8_t * q = (ಧ್ರುವ int8_t *)grid32;
     grid32[0] = iq1s_grid_gpu[x[i].qs[4*ib+il] | (((x[i].qh[2*ib+il/2] >> 4*(il%2)) & 7) << 8)];
     grid32[1] = (grid32[0] >> 4) & 0x0f0f0f0f;
     grid32[0] &= 0x0f0f0f0f;
 #pragma unroll
-    for (int j = 0; j < 8; ++j) {
+    ಪ್ರತಿ (ಪೂರ್ಣಾಙ್ಕ j = 0; j < 8; ++j) {
         y[j] = d * (q[j] + delta);
     }
-#else
-    assert(false);
+#ಅನ್ಯಥಾ
+    ಪ್ರತಿಜ್ಞಾ(ಅಸತ್ಯ);
 #endif
 
 }
 
 template <typename dst_t>
-__dpct_inline__ static void
-dequantize_block_iq4_nl(const void *__restrict__ vx, dst_t *__restrict__ yy,
-                        const sycl::nd_item<3> &item_ct1) {
+__dpct_inline__ ಸ್ಥಿರ ಶೂನ್ಯ
+dequantize_block_iq4_nl(ಧ್ರುವ ಶೂನ್ಯ *__restrict__ vx, dst_t *__restrict__ yy,
+                        ಧ್ರುವ sycl::nd_item<3> &item_ct1) {
 
-    const int64_t i = item_ct1.get_group(2);
-    const block_iq4_nl * x = (const block_iq4_nl *) vx + i*(QK_K/QK4_NL);
+    ಧ್ರುವ int64_t i = item_ct1.get_group(2);
+    ಧ್ರುವ block_iq4_nl * x = (ಧ್ರುವ block_iq4_nl *) vx + i*(QK_K/QK4_NL);
 
-    const int64_t tid = item_ct1.get_local_id(2);
-    const int64_t il = tid/8; // 0...3
-    const int64_t ib = tid%8; // 0...7
+    ಧ್ರುವ int64_t tid = item_ct1.get_local_id(2);
+    ಧ್ರುವ int64_t il = tid/8; // 0...3
+    ಧ್ರುವ int64_t ib = tid%8; // 0...7
     dst_t * y = yy + i*QK_K + 32*ib + 4*il;
-    const uint8_t  * q4 = x[ib].qs + 4*il;
-    const float d = (float)x[ib].d;
+    ಧ್ರುವ uint8_t  * q4 = x[ib].qs + 4*il;
+    ಧ್ರುವ ಭಿನ್ನ d = (ಭಿನ್ನ)x[ib].d;
 #pragma unroll
-    for (int j = 0; j < 4; ++j) {
+    ಪ್ರತಿ (ಪೂರ್ಣಾಙ್ಕ j = 0; j < 4; ++j) {
         y[j+ 0] = d * kvalues_iq4nl[q4[j] & 0xf];
         y[j+16] = d * kvalues_iq4nl[q4[j] >>  4];
     }
@@ -1699,39 +1699,39 @@ dequantize_block_iq4_nl(const void *__restrict__ vx, dst_t *__restrict__ yy,
 
 
 template <typename dst_t>
-__dpct_inline__ static void
-dequantize_block_iq4_xs(const void *__restrict__ vx, dst_t *__restrict__ yy,
-                        const sycl::nd_item<3> &item_ct1) {
-    const int64_t i = item_ct1.get_group(2);
-    const block_iq4_xs * x = (const block_iq4_xs *)vx;
+__dpct_inline__ ಸ್ಥಿರ ಶೂನ್ಯ
+dequantize_block_iq4_xs(ಧ್ರುವ ಶೂನ್ಯ *__restrict__ vx, dst_t *__restrict__ yy,
+                        ಧ್ರುವ sycl::nd_item<3> &item_ct1) {
+    ಧ್ರುವ int64_t i = item_ct1.get_group(2);
+    ಧ್ರುವ block_iq4_xs * x = (ಧ್ರುವ block_iq4_xs *)vx;
 
-    const int64_t tid = item_ct1.get_local_id(2);
-    const int64_t il = tid/8; // 0...3
-    const int64_t ib = tid%8; // 0...7
+    ಧ್ರುವ int64_t tid = item_ct1.get_local_id(2);
+    ಧ್ರುವ int64_t il = tid/8; // 0...3
+    ಧ್ರುವ int64_t ib = tid%8; // 0...7
     dst_t * y = yy + i*QK_K + 32*ib + 4*il;
-    const uint8_t  * q4 = x[i].qs + 16*ib + 4*il;
-    const float d = (float)x[i].d * ((((x[i].scales_l[ib/2] >> 4*(ib%2)) & 0xf) | (((x[i].scales_h >> 2*ib) & 3) << 4)) - 32);
+    ಧ್ರುವ uint8_t  * q4 = x[i].qs + 16*ib + 4*il;
+    ಧ್ರುವ ಭಿನ್ನ d = (ಭಿನ್ನ)x[i].d * ((((x[i].scales_l[ib/2] >> 4*(ib%2)) & 0xf) | (((x[i].scales_h >> 2*ib) & 3) << 4)) - 32);
 #pragma unroll
-    for (int j = 0; j < 4; ++j) {
+    ಪ್ರತಿ (ಪೂರ್ಣಾಙ್ಕ j = 0; j < 4; ++j) {
         y[j+ 0] = d * kvalues_iq4nl[q4[j] & 0xf];
         y[j+16] = d * kvalues_iq4nl[q4[j] >>  4];
     }
 }
 
 template<typename dst_t>
-static void dequantize_block_mxfp4(const void * __restrict__ vx, dst_t * __restrict__ yy,
-                                   const sycl::nd_item<3> &item_ct1) {
+ಸ್ಥಿರ ಶೂನ್ಯ dequantize_block_mxfp4(ಧ್ರುವ ಶೂನ್ಯ * __restrict__ vx, dst_t * __restrict__ yy,
+                                   ಧ್ರುವ sycl::nd_item<3> &item_ct1) {
     // auto                item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    const int64_t       i        = item_ct1.get_group(2);
-    const block_mxfp4 * x = (const block_mxfp4 *) vx + i*(QK_K/QK_MXFP4);
+    ಧ್ರುವ int64_t       i        = item_ct1.get_group(2);
+    ಧ್ರುವ block_mxfp4 * x = (ಧ್ರುವ block_mxfp4 *) vx + i*(QK_K/QK_MXFP4);
 
-    const int64_t    tid = item_ct1.get_local_id(2);
-    const int64_t il = tid/8; // 0...3
-    const int64_t ib = tid%8; // 0...7
+    ಧ್ರುವ int64_t    tid = item_ct1.get_local_id(2);
+    ಧ್ರುವ int64_t il = tid/8; // 0...3
+    ಧ್ರುವ int64_t ib = tid%8; // 0...7
     dst_t * y = yy + i*QK_K + 32*ib + 4*il;
-    const uint8_t  * q4 = x[ib].qs + 4*il;
-    const float d = ggml_sycl_e8m0_to_fp32(x[ib].e);
-    for (int j = 0; j < 4; ++j) {
+    ಧ್ರುವ uint8_t  * q4 = x[ib].qs + 4*il;
+    ಧ್ರುವ ಭಿನ್ನ d = ggml_sycl_e8m0_to_fp32(x[ib].e);
+    ಪ್ರತಿ (ಪೂರ್ಣಾಙ್ಕ j = 0; j < 4; ++j) {
         y[j+ 0] = d * kvalues_mxfp4[q4[j] & 0xf]*0.5f;
         y[j+16] = d * kvalues_mxfp4[q4[j] >>  4]*0.5f;
     }
@@ -1739,19 +1739,19 @@ static void dequantize_block_mxfp4(const void * __restrict__ vx, dst_t * __restr
 
 // Reordered MXFP4 ([qs...][e...], see ggml_sycl_reordered::block_q_t<MXFP4>): one work-item per block.
 template <typename dst_t>
-static void dequantize_block_mxfp4_reorder(const void * __restrict__ vx, dst_t * __restrict__ yy, int64_t k,
-                                           const sycl::nd_item<3> & item_ct1) {
-    const int64_t ib = (int64_t) item_ct1.get_group(2) * WARP_SIZE + item_ct1.get_local_id(2);
-    if (ib >= k / QK_MXFP4) {
-        return;
+ಸ್ಥಿರ ಶೂನ್ಯ dequantize_block_mxfp4_reorder(ಧ್ರುವ ಶೂನ್ಯ * __restrict__ vx, dst_t * __restrict__ yy, int64_t k,
+                                           ಧ್ರುವ sycl::nd_item<3> & item_ct1) {
+    ಧ್ರುವ int64_t ib = (int64_t) item_ct1.get_group(2) * WARP_SIZE + item_ct1.get_local_id(2);
+    ಯದಿ (ib >= k / QK_MXFP4) {
+        ಪ್ರತ್ಯಾಗಮ;
     }
 
-    const uint8_t * qs = (const uint8_t *) vx + ib * (QK_MXFP4 / 2);
-    const float     d  = ggml_sycl_e8m0_to_fp32(((const uint8_t *) vx)[k / 2 + ib]) * 0.5f;
+    ಧ್ರುವ uint8_t * qs = (ಧ್ರುವ uint8_t *) vx + ib * (QK_MXFP4 / 2);
+    ಧ್ರುವ ಭಿನ್ನ     d  = ggml_sycl_e8m0_to_fp32(((ಧ್ರುವ uint8_t *) vx)[k / 2 + ib]) * 0.5f;
     dst_t *         y  = yy + ib * QK_MXFP4;
 
 #pragma unroll
-    for (int j = 0; j < QK_MXFP4 / 2; ++j) {
+    ಪ್ರತಿ (ಪೂರ್ಣಾಙ್ಕ j = 0; j < QK_MXFP4 / 2; ++j) {
         y[j]                = d * kvalues_mxfp4[qs[j] & 0xf];
         y[j + QK_MXFP4 / 2] = d * kvalues_mxfp4[qs[j] >> 4];
     }
@@ -1759,30 +1759,30 @@ static void dequantize_block_mxfp4_reorder(const void * __restrict__ vx, dst_t *
 
 
 template <typename dst_t>
-static void dequantize_block_nvfp4(
-        const void * __restrict__ vx,
+ಸ್ಥಿರ ಶೂನ್ಯ dequantize_block_nvfp4(
+        ಧ್ರುವ ಶೂನ್ಯ * __restrict__ vx,
         dst_t * __restrict__ yy,
-        const int64_t ne) {
+        ಧ್ರುವ int64_t ne) {
     auto          item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    const int64_t i        = item_ct1.get_group(2);
-    const int     tid      = item_ct1.get_local_id(2);
+    ಧ್ರುವ int64_t i        = item_ct1.get_group(2);
+    ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ     tid      = item_ct1.get_local_id(2);
 
-    const int64_t base = i * QK_NVFP4;
-    if (base >= ne) {
-        return;
+    ಧ್ರುವ int64_t base = i * QK_NVFP4;
+    ಯದಿ (base >= ne) {
+        ಪ್ರತ್ಯಾಗಮ;
     }
 
-    const block_nvfp4 * x = (const block_nvfp4 *) vx;
-    const block_nvfp4 & xb = x[i];
+    ಧ್ರುವ block_nvfp4 * x = (ಧ್ರುವ block_nvfp4 *) vx;
+    ಧ್ರುವ block_nvfp4 & xb = x[i];
 
-    const int sub = tid / (QK_NVFP4_SUB / 2);
-    const int j = tid % (QK_NVFP4_SUB / 2);
+    ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ sub = tid / (QK_NVFP4_SUB / 2);
+    ಧ್ರುವ ಪೂರ್ಣಾಙ್ಕ j = tid % (QK_NVFP4_SUB / 2);
 
-    const float d = ggml_sycl_ue4m3_to_fp32(xb.d[sub]);
-    const uint8_t q = xb.qs[sub * (QK_NVFP4_SUB / 2) + j];
+    ಧ್ರುವ ಭಿನ್ನ d = ggml_sycl_ue4m3_to_fp32(xb.d[sub]);
+    ಧ್ರುವ uint8_t q = xb.qs[sub * (QK_NVFP4_SUB / 2) + j];
 
-    const int64_t y0 = base + sub * QK_NVFP4_SUB + j;
-    const int64_t y1 = y0 + QK_NVFP4_SUB / 2;
+    ಧ್ರುವ int64_t y0 = base + sub * QK_NVFP4_SUB + j;
+    ಧ್ರುವ int64_t y1 = y0 + QK_NVFP4_SUB / 2;
 
     yy[y0] = ggml_sycl_cast<dst_t>(d * kvalues_mxfp4[q & 0x0F]);
     yy[y1] = ggml_sycl_cast<dst_t>(d * kvalues_mxfp4[q >> 4]);

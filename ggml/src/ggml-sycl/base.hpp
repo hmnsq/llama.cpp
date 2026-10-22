@@ -14,30 +14,30 @@
  * - High stability and backward compatibility required.
  */
 
-#include <cstdio>
+#ಅನ್ತರ್ಭಾವ <cstdio>
 
-extern int g_ggml_sycl_debug;
-extern int g_ggml_sycl_dev_debug;
+ಬಾಹ್ಯ ಪೂರ್ಣಾಙ್ಕ g_ggml_sycl_debug;
+ಬಾಹ್ಯ ಪೂರ್ಣಾಙ್ಕ g_ggml_sycl_dev_debug;
 
-#if defined(__clang__) && __has_builtin(__builtin_expect)
+#ಯದಿ defined(__clang__) && __has_builtin(__builtin_expect)
 // Hint the optimizer to pipeline the more likely following instruction in branches
-#    define LIKELY(expr)   __builtin_expect(expr, true)
-#    define UNLIKELY(expr) __builtin_expect(expr, false)
-#else
-#    define LIKELY(expr)   (expr)
-#    define UNLIKELY(expr) (expr)
+#    define LIKELY(ಅಭಿವ್ಯಕ್ತಿ)   __builtin_expect(ಅಭಿವ್ಯಕ್ತಿ, ಸತ್ಯ)
+#    define UNLIKELY(ಅಭಿವ್ಯಕ್ತಿ) __builtin_expect(ಅಭಿವ್ಯಕ್ತಿ, ಅಸತ್ಯ)
+#ಅನ್ಯಥಾ
+#    define LIKELY(ಅಭಿವ್ಯಕ್ತಿ)   (ಅಭಿವ್ಯಕ್ತಿ)
+#    define UNLIKELY(ಅಭಿವ್ಯಕ್ತಿ) (ಅಭಿವ್ಯಕ್ತಿ)
 #endif
 
 #define GGML_SYCL_DEBUG(...)              \
-    do {                                  \
-        if (UNLIKELY(g_ggml_sycl_debug))  \
+    ಕುರು {                                  \
+        ಯದಿ (UNLIKELY(g_ggml_sycl_debug))  \
             fprintf(stderr, __VA_ARGS__); \
-    } while (0)
+    } ಯಾವತ್ (0)
 
 #define GGML_SYCL_DEV_DEBUG(...)          \
-    do {                                  \
-        if (UNLIKELY(g_ggml_sycl_dev_debug))  \
+    ಕುರು {                                  \
+        ಯದಿ (UNLIKELY(g_ggml_sycl_dev_debug))  \
             fprintf(stderr, __VA_ARGS__); \
-    } while (0)
+    } ಯಾವತ್ (0)
 
 #endif  // GGML_SYCL_BASE_HPP

@@ -1,196 +1,196 @@
-#include "ggml-decoder.h"
-#include "ggml-impl.h"
-#include "ggml-openvino-extra.h"
+#ಅನ್ತರ್ಭಾವ "ggml-decoder.h"
+#ಅನ್ತರ್ಭಾವ "ggml-impl.h"
+#ಅನ್ತರ್ಭಾವ "ggml-openvino-extra.h"
 
-#include <cstddef>
-#include <cstdint>
-#include <functional>
-#include <memory>
-#include <mutex>
-#include <openvino/runtime/core.hpp>
-#include <openvino/runtime/infer_request.hpp>
-#include <string>
-#include <unordered_map>
-#include <unordered_set>
-#include <utility>
-#include <vector>
+#ಅನ್ತರ್ಭಾವ <cstddef>
+#ಅನ್ತರ್ಭಾವ <cstdint>
+#ಅನ್ತರ್ಭಾವ <functional>
+#ಅನ್ತರ್ಭಾವ <memory>
+#ಅನ್ತರ್ಭಾವ <mutex>
+#ಅನ್ತರ್ಭಾವ <openvino/runtime/core.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/runtime/infer_request.hpp>
+#ಅನ್ತರ್ಭಾವ <string>
+#ಅನ್ತರ್ಭಾವ <unordered_map>
+#ಅನ್ತರ್ಭಾವ <unordered_set>
+#ಅನ್ತರ್ಭಾವ <utility>
+#ಅನ್ತರ್ಭಾವ <vector>
 
 // Cache key for a translated/compiled graph. Node count plus the two end node names identify a
 // graph during inference, where the same few graphs repeat for the whole session. The list of
 // external input names below tells those apart more precisely, but it walks every node and every
 // src slot, so it is built only when GGML_OPENVINO_FULL_GRAPH_KEY is set. Op tests run many small
 // graphs that can share a node count and end names, and need the full key.
-struct graph_key {
-    int n_nodes;
-    int n_leaves;
-    std::string first_node_name;
-    std::string last_node_name;
+ಸಂರಚನಾ graph_ಕೀಲಿ {
+    ಪೂರ್ಣಾಙ್ಕ n_nodes;
+    ಪೂರ್ಣಾಙ್ಕ n_leaves;
+    std::string first_ಗಂಟು_name;
+    std::string last_ಗಂಟು_name;
     // Each entry: "<node_idx>:<src_idx>:<op_type>"
-    std::vector<std::string> input_srcs;
+    std::vector<std::string> ಒಳಹರಿವು_srcs;
 
-    graph_key(const ggml_cgraph * cgraph, bool include_inputs = false) : n_nodes(cgraph->n_nodes), n_leaves(cgraph->n_leafs) {
-        if (n_nodes > 0) {
-            first_node_name = cgraph->nodes[0]->name;
-            last_node_name = cgraph->nodes[n_nodes - 1]->name;
+    graph_ಕೀಲಿ(ಧ್ರುವ ggml_cgraph * cgraph, bool include_inputs = false) : n_nodes(cgraph->n_nodes), n_leaves(cgraph->n_leafs) {
+        ಯದಿ (n_nodes > 0) {
+            first_ಗಂಟು_name = cgraph->nodes[0]->name;
+            last_ಗಂಟು_name = cgraph->nodes[n_nodes - 1]->name;
         }
 
-        static const bool full_key = ggml_openvino_getenv_int("GGML_OPENVINO_FULL_GRAPH_KEY") != 0;
-        if (!full_key && !include_inputs) {
-            return;
+        ಸ್ಥಿರ ಧ್ರುವ bool full_ಕೀಲಿ = ggml_openvino_getenv_int("GGML_OPENVINO_FULL_GRAPH_KEY") != 0;
+        ಯದಿ (!full_ಕೀಲಿ && !include_inputs) {
+            ಪ್ರತ್ಯಾಗಮ;
         }
 
-        std::unordered_set<const ggml_tensor *> node_set;
-        node_set.reserve(cgraph->n_nodes);
-        for (int i = 0; i < cgraph->n_nodes; i++) {
-            node_set.insert(cgraph->nodes[i]);
+        std::unordered_set<ಧ್ರುವ ggml_tensor *> ಗಂಟು_set;
+        ಗಂಟು_set.reserve(cgraph->n_nodes);
+        ಪ್ರತಿ (ಪೂರ್ಣಾಙ್ಕ i = 0; i < cgraph->n_nodes; i++) {
+            ಗಂಟು_set.ಸೇರಿಸು(cgraph->nodes[i]);
         }
 
-        for (int node_idx = 0; node_idx < cgraph->n_nodes; node_idx++) {
-            const ggml_tensor * node = cgraph->nodes[node_idx];
-            for (int src_idx = 0; src_idx < GGML_MAX_SRC; src_idx++) {
-                const ggml_tensor * src = node->src[src_idx];
-                if (src == nullptr || src->buffer == nullptr || node_set.count(src) || src->buffer->usage == GGML_BACKEND_BUFFER_USAGE_WEIGHTS) {
-                    continue;
+        ಪ್ರತಿ (ಪೂರ್ಣಾಙ್ಕ ಗಂಟು_idx = 0; ಗಂಟು_idx < cgraph->n_nodes; ಗಂಟು_idx++) {
+            ಧ್ರುವ ggml_tensor * ಗಂಟು = cgraph->nodes[ಗಂಟು_idx];
+            ಪ್ರತಿ (ಪೂರ್ಣಾಙ್ಕ src_idx = 0; src_idx < GGML_MAX_SRC; src_idx++) {
+                ಧ್ರುವ ggml_tensor * src = ಗಂಟು->src[src_idx];
+                ಯದಿ (src == nullptr || src->buffer == nullptr || ಗಂಟು_set.ಎಣಿಕೆ(src) || src->buffer->usage == GGML_BACKEND_BUFFER_USAGE_WEIGHTS) {
+                    ಅನುವರ್ತ;
                 }
 
-                input_srcs.push_back(std::to_string(node_idx) + ":" + std::to_string(src_idx) + ":" +
-                    GgmlOvDecoder::compute_op_type(node));
+                ಒಳಹರಿವು_srcs.ತಳ್ಳು_back(std::to_string(ಗಂಟು_idx) + ":" + std::to_string(src_idx) + ":" +
+                    GgmlOvDecoder::compute_op_type(ಗಂಟು));
             }
         }
     }
 
-    bool operator==(const graph_key & other) const {
-        return n_nodes == other.n_nodes && n_leaves == other.n_leaves &&
-               first_node_name == other.first_node_name &&
-               last_node_name == other.last_node_name && input_srcs == other.input_srcs;
+    bool operator==(ಧ್ರುವ graph_ಕೀಲಿ & other) ಧ್ರುವ {
+        ಪ್ರತ್ಯಾಗಮ n_nodes == other.n_nodes && n_leaves == other.n_leaves &&
+               first_ಗಂಟು_name == other.first_ಗಂಟು_name &&
+               last_ಗಂಟು_name == other.last_ಗಂಟು_name && ಒಳಹರಿವು_srcs == other.ಒಳಹರಿವು_srcs;
     }
 };
 
-struct graph_key_hash {
-    size_t operator()(const graph_key & key) const {
-        size_t hash = std::hash<int>{}(key.n_nodes);
-        hash ^= std::hash<int>{}(key.n_leaves) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-        if (key.n_nodes > 0) {
-            hash ^= std::hash<std::string>{}(key.first_node_name) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-            hash ^= std::hash<std::string>{}(key.last_node_name) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+ಸಂರಚನಾ graph_ಕೀಲಿ_hash {
+    size_t operator()(ಧ್ರುವ graph_ಕೀಲಿ & ಕೀಲಿ) ಧ್ರುವ {
+        size_t hash = std::hash<ಪೂರ್ಣಾಙ್ಕ>{}(ಕೀಲಿ.n_nodes);
+        hash ^= std::hash<ಪೂರ್ಣಾಙ್ಕ>{}(ಕೀಲಿ.n_leaves) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+        ಯದಿ (ಕೀಲಿ.n_nodes > 0) {
+            hash ^= std::hash<std::string>{}(ಕೀಲಿ.first_ಗಂಟು_name) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+            hash ^= std::hash<std::string>{}(ಕೀಲಿ.last_ಗಂಟು_name) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
         }
-        for (const auto & s : key.input_srcs) {
+        ಪ್ರತಿ (ಧ್ರುವ auto & s : ಕೀಲಿ.ಒಳಹರಿವು_srcs) {
             hash ^= std::hash<std::string>{}(s) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
         }
-        return hash;
+        ಪ್ರತ್ಯಾಗಮ hash;
     }
 };
 
-struct decoder_runtime_ctx {
+ಸಂರಚನಾ decoder_runtime_ctx {
     decoder_runtime_ctx(std::shared_ptr<std::mutex> mutex) : mutex(std::move(mutex)) {}
 
     std::shared_ptr<std::mutex> mutex;
     std::shared_ptr<GgmlOvDecoder> ptr;
 };
 
-struct ov_compiled_graph {
+ಸಂರಚನಾ ov_compiled_graph {
     ov::CompiledModel decode;
     ov::CompiledModel prefill;
-    std::vector<std::string> input_names;
+    std::vector<std::string> ಒಳಹರಿವು_names;
     std::vector<std::string> output_names;
 };
 
 // Only compilation and cache publication use this mutex. Requests, decoders and
 // sequence state belong to individual backend contexts and never enter this cache.
-struct ov_compiled_model_cache {
+ಸಂರಚನಾ ov_compiled_model_cache {
     std::mutex mutex;
     std::unordered_map<std::string, ov_compiled_graph> graphs;
-    size_t backend_count = 0;
+    size_t backend_ಎಣಿಕೆ = 0;
 };
 
 // Private to one backend instance. Only compiled_cache is shared with other
 // instances; clearing these local caches cannot invalidate their requests.
-struct ov_runtime_context {
+ಸಂರಚನಾ ov_runtime_context {
     // Serializes calls on this backend only, not inference in other contexts.
     std::mutex execution_mutex;
     std::shared_ptr<ov_compiled_model_cache> compiled_cache;
     mutable std::mutex ctx_mutex;
     std::string device;
     bool stateful;
-    std::unordered_map<graph_key, std::shared_ptr<decoder_runtime_ctx>, graph_key_hash> decoder_cache;
-    std::unordered_map<graph_key, std::shared_ptr<ov::InferRequest>, graph_key_hash> infer_request_cache;
-    std::unordered_map<graph_key, std::shared_ptr<ov::InferRequest>, graph_key_hash> infer_request_cache_prefill;
-    std::unordered_map<graph_key, std::vector<std::string>, graph_key_hash> ov_input_names_cache;
-    std::unordered_map<graph_key, std::vector<std::string>, graph_key_hash> ov_output_names_cache;
+    std::unordered_map<graph_ಕೀಲಿ, std::shared_ptr<decoder_runtime_ctx>, graph_ಕೀಲಿ_hash> decoder_cache;
+    std::unordered_map<graph_ಕೀಲಿ, std::shared_ptr<ov::InferRequest>, graph_ಕೀಲಿ_hash> infer_request_cache;
+    std::unordered_map<graph_ಕೀಲಿ, std::shared_ptr<ov::InferRequest>, graph_ಕೀಲಿ_hash> infer_request_cache_prefill;
+    std::unordered_map<graph_ಕೀಲಿ, std::vector<std::string>, graph_ಕೀಲಿ_hash> ov_ಒಳಹರಿವು_names_cache;
+    std::unordered_map<graph_ಕೀಲಿ, std::vector<std::string>, graph_ಕೀಲಿ_hash> ov_output_names_cache;
     size_t stateful_kv_size;
-    std::map<std::string, std::string> kv_state_input_name_map;
+    std::map<std::string, std::string> kv_state_ಒಳಹರಿವು_name_map;
     // compute-only copies of graphs that carry unselected ggml_build_forward_select() branches
-    struct compute_graph {
+    ಸಂರಚನಾ compute_graph {
         ggml_cgraph graph;
         std::vector<ggml_tensor *> nodes;
     };
-    std::unordered_map<const ggml_cgraph *, compute_graph> compute_graphs;
+    std::unordered_map<ಧ್ರುವ ggml_cgraph *, compute_graph> compute_graphs;
 
     ov_runtime_context() : device("CPU"), stateful(false), stateful_kv_size(0) {}
 
-    void clear_caches_locked() {
+    ಶೂನ್ಯ clear_caches_locked() {
         decoder_cache.clear();
         infer_request_cache.clear();
         infer_request_cache_prefill.clear();
-        ov_input_names_cache.clear();
+        ov_ಒಳಹರಿವು_names_cache.clear();
         ov_output_names_cache.clear();
-        kv_state_input_name_map.clear();
+        kv_state_ಒಳಹರಿವು_name_map.clear();
         stateful_kv_size = 0;
     }
 
-    void clear_caches() {
+    ಶೂನ್ಯ clear_caches() {
         std::lock_guard<std::mutex> lock(ctx_mutex);
         clear_caches_locked();
     }
 };
 
-enum ggml_status ov_graph_compute(struct ggml_cgraph * cgraph, ggml_backend_t backend);
+ಗಣನಾ ggml_status ov_graph_compute(ಸಂರಚನಾ ggml_cgraph * cgraph, ggml_backend_t backend);
 
-size_t checksum(const void * data, size_t size);
+size_t checksum(ಧ್ರುವ ಶೂನ್ಯ * data, size_t size);
 
-bool save_ggml_tensor_data_to_txt(const ggml_tensor * tensor, const std::string & file_path);
+bool save_ggml_tensor_data_to_txt(ಧ್ರುವ ggml_tensor * tensor, ಧ್ರುವ std::string & file_path);
 
-void print_input_tensor_info(const std::string & name, const ov::Tensor & tensor);
+ಶೂನ್ಯ print_ಒಳಹರಿವು_tensor_info(ಧ್ರುವ std::string & name, ಧ್ರುವ ov::Tensor & tensor);
 
-void print_output_tensor_info(const std::string & name, const ov::Tensor & tensor, const void * output_dst);
+ಶೂನ್ಯ print_output_tensor_info(ಧ್ರುವ std::string & name, ಧ್ರುವ ov::Tensor & tensor, ಧ್ರುವ ಶೂನ್ಯ * output_dst);
 
 template <typename T>
-std::vector<T> pad_input(const T * data,
+std::vector<T> pad_ಒಳಹರಿವು(ಧ್ರುವ T * data,
                          size_t rows,
                          size_t cols,
                          size_t padded_rows,
                          size_t padded_cols,
-                         T pad_value) {
-    std::vector<T> padded(padded_rows * padded_cols, pad_value);
+                         T pad_ಮೌಲ್ಯ) {
+    std::vector<T> padded(padded_rows * padded_cols, pad_ಮೌಲ್ಯ);
 
-    for (size_t i = 0; i < std::min(rows, padded_rows); ++i) {
-        for (size_t j = 0; j < std::min(cols, padded_cols); ++j) {
+    ಪ್ರತಿ (size_t i = 0; i < std::min(rows, padded_rows); ++i) {
+        ಪ್ರತಿ (size_t j = 0; j < std::min(cols, padded_cols); ++j) {
             padded[i * padded_cols + j] = data[i * cols + j];
         }
     }
 
-    return padded;
+    ಪ್ರತ್ಯಾಗಮ padded;
 }
 
 template <typename T>
-std::vector<T> pad_input(const ggml_tensor * tensor, size_t padded_rows, size_t padded_cols, T pad_value) {
-    return pad_input<T>(reinterpret_cast<const T *>(tensor->data),
+std::vector<T> pad_ಒಳಹರಿವು(ಧ್ರುವ ggml_tensor * tensor, size_t padded_rows, size_t padded_cols, T pad_ಮೌಲ್ಯ) {
+    ಪ್ರತ್ಯಾಗಮ pad_ಒಳಹರಿವು<T>(reinterpret_cast<ಧ್ರುವ T *>(tensor->data),
                         static_cast<size_t>(tensor->ne[1]),  // rows
                         static_cast<size_t>(tensor->ne[0]),  // cols
-                        padded_rows, padded_cols, pad_value);
+                        padded_rows, padded_cols, pad_ಮೌಲ್ಯ);
 }
 
-const ggml_tensor * get_inp_pos_tensor(struct ggml_cgraph * cgraph);
+ಧ್ರುವ ggml_tensor * get_inp_pos_tensor(ಸಂರಚನಾ ggml_cgraph * cgraph);
 
-int64_t get_inp_pos_n_tokens(struct ggml_cgraph * cgraph, const ggml_tensor * inp_pos);
+int64_t get_inp_pos_n_tokens(ಸಂರಚನಾ ggml_cgraph * cgraph, ಧ್ರುವ ggml_tensor * inp_pos);
 
-bool get_is_prefill(struct ggml_cgraph * cgraph, const ggml_tensor * inp_pos);
+bool get_is_prefill(ಸಂರಚನಾ ggml_cgraph * cgraph, ಧ್ರುವ ggml_tensor * inp_pos);
 
-bool is_naive(struct ggml_cgraph * cgraph);
+bool is_naive(ಸಂರಚನಾ ggml_cgraph * cgraph);
 
 /**
  * @brief Heuristically checks whether the given computation graph is a split-model fragment.
  * @param cgraph Pointer to the GGML computation graph to analyze.
  * @return true if the graph is identified as split; otherwise false.
  */
-bool is_model_splitted(struct ggml_cgraph * cgraph);
+bool is_model_splitted(ಸಂರಚನಾ ggml_cgraph * cgraph);

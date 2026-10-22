@@ -7,31 +7,31 @@
 // and a shift:
 //
 // n/d = (mulhi(n, mp) + n) >> L;
-struct fastdiv_values {
+ಸಂರಚನಾ fastdiv_ಮೌಲ್ಯಗಳು {
     uint32_t mp;
     uint32_t l;
 };
 
-static inline struct fastdiv_values init_fastdiv_values(uint32_t d) {
-    struct fastdiv_values result = { 0, 0 };
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ ಸಂರಚನಾ fastdiv_ಮೌಲ್ಯಗಳು init_fastdiv_ಮೌಲ್ಯಗಳು(uint32_t d) {
+    ಸಂರಚನಾ fastdiv_ಮೌಲ್ಯಗಳು result = { 0, 0 };
     // compute L = ceil(log2(d));
-    while (result.l < 32 && ((uint32_t) 1 << result.l) < d) {
+    ಯಾವತ್ (result.l < 32 && ((uint32_t) 1 << result.l) < d) {
         ++(result.l);
     }
 
     result.mp = (uint32_t) (((uint64_t) 1 << 32) * (((uint64_t) 1 << result.l) - d) / d + 1);
-    return result;
+    ಪ್ರತ್ಯಾಗಮ result;
 }
 
-static inline uint32_t fastdiv(uint32_t n, const struct fastdiv_values * vals) {
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ uint32_t fastdiv(uint32_t n, ಧ್ರುವ ಸಂರಚನಾ fastdiv_ಮೌಲ್ಯಗಳು * vals) {
     // Compute high 32 bits of n * mp
-    const uint32_t hi = (uint32_t) (((uint64_t) n * vals->mp) >> 32);  // mulhi(n, mp)
+    ಧ್ರುವ uint32_t hi = (uint32_t) (((uint64_t) n * vals->mp) >> 32);  // mulhi(n, mp)
     // add n, apply bit shift
-    return (hi + n) >> vals->l;
+    ಪ್ರತ್ಯಾಗಮ (hi + n) >> vals->l;
 }
 
-static inline uint32_t fastmodulo(uint32_t n, uint32_t d, const struct fastdiv_values * vals) {
-    return n - fastdiv(n, vals) * d;
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ uint32_t fastmodulo(uint32_t n, uint32_t d, ಧ್ರುವ ಸಂರಚನಾ fastdiv_ಮೌಲ್ಯಗಳು * vals) {
+    ಪ್ರತ್ಯಾಗಮ n - fastdiv(n, vals) * d;
 }
 
 #endif /* HEX_FASTDIV_H */

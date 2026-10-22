@@ -1,20 +1,20 @@
 #pragma once
 
-#include <atomic>
-#include <cassert>
-#include <cerrno>
-#include <cstdarg>
-#include <cstddef>
-#include <cstdint>
-#include <cstdio>
-#include <cstdlib>
-#include <ctime>
+#ಅನ್ತರ್ಭಾವ <atomic>
+#ಅನ್ತರ್ಭಾವ <cassert>
+#ಅನ್ತರ್ಭಾವ <cerrno>
+#ಅನ್ತರ್ಭಾವ <cstdarg>
+#ಅನ್ತರ್ಭಾವ <cstddef>
+#ಅನ್ತರ್ಭಾವ <cstdint>
+#ಅನ್ತರ್ಭಾವ <cstdio>
+#ಅನ್ತರ್ಭಾವ <cstdlib>
+#ಅನ್ತರ್ಭಾವ <ctime>
 
 #define unlikely(x) __builtin_expect(!!(x), 0)
 #define likely(x)   __builtin_expect(!!(x), 1)
 
 #ifndef UNUSED
-#    define UNUSED(x) (void) (x)
+#    define UNUSED(x) (ಶೂನ್ಯ) (x)
 #endif
 
 /** Checks is a value is a power of two. Does not handle zero. */
@@ -28,59 +28,59 @@
 
 #define p_atomic_read(_v) __atomic_load_n((_v), __ATOMIC_ACQUIRE)
 
-static inline bool util_is_power_of_two_nonzero64(uint64_t v) {
-    return IS_POT_NONZERO(v);
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ bool util_is_power_of_two_nonzero64(uint64_t v) {
+    ಪ್ರತ್ಯಾಗಮ IS_POT_NONZERO(v);
 }
 
-static inline uint64_t align64(uint64_t value, uint64_t alignment) {
-    assert(util_is_power_of_two_nonzero64(alignment));
-    return ALIGN_POT(value, alignment);
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ uint64_t align64(uint64_t ಮೌಲ್ಯ, uint64_t alignment) {
+    ಪ್ರತಿಜ್ಞಾ(util_is_power_of_two_nonzero64(alignment));
+    ಪ್ರತ್ಯಾಗಮ ALIGN_POT(ಮೌಲ್ಯ, alignment);
 }
 
-struct list_head {
+ಸಂರಚನಾ list_head {
     list_head * prev;
     list_head * next;
 };
 
-struct util_sparse_array {
+ಸಂರಚನಾ util_sparse_array {
     size_t   elem_size;
-    unsigned node_size_log2;
+    unsigned ಗಂಟು_size_log2;
 
-    uintptr_t root;
+    uintptr_t ಬೇರು;
 };
 
-void * util_sparse_array_get(util_sparse_array * arr, uint64_t idx);
-void   util_sparse_array_init(util_sparse_array * arr, size_t elem_size, size_t node_size);
+ಶೂನ್ಯ * util_sparse_array_get(util_sparse_array * arr, uint64_t idx);
+ಶೂನ್ಯ   util_sparse_array_init(util_sparse_array * arr, size_t elem_size, size_t ಗಂಟು_size);
 
-inline void os_time_sleep(int64_t usecs) {
+ಅನ್ತಃಸ್ಥ ಶೂನ್ಯ os_time_sleep(int64_t usecs) {
     timespec time;
     time.tv_sec  = usecs / 1000000;
     time.tv_nsec = (usecs % 1000000) * 1000;
-    while (clock_nanosleep(CLOCK_MONOTONIC, 0, &time, &time) == EINTR)
+    ಯಾವತ್ (clock_nanosleep(CLOCK_MONOTONIC, 0, &time, &time) == EINTR)
         ;
 }
 
-struct timer_data {
+ಸಂರಚನಾ timer_data {
     long long start;
     long long total;
-    long long count;
+    long long ಎಣಿಕೆ;
 };
 
-static inline void start_timer(timer_data * timer) {
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ ಶೂನ್ಯ start_timer(timer_data * timer) {
     timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     timer->start = (long long) ts.tv_sec * 1000000000LL + ts.tv_nsec;
 }
 
 // returns the duration in ns
-static inline long long stop_timer(timer_data * timer) {
+ಸ್ಥಿರ ಅನ್ತಃಸ್ಥ long long stop_timer(timer_data * timer) {
     timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     long long timer_end = (long long) ts.tv_sec * 1000000000LL + ts.tv_nsec;
 
     long long duration = (timer_end - timer->start);
     timer->total += duration;
-    timer->count += 1;
+    timer->ಎಣಿಕೆ += 1;
 
-    return duration;
+    ಪ್ರತ್ಯಾಗಮ duration;
 }

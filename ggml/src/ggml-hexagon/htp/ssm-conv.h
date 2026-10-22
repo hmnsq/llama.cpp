@@ -1,12 +1,12 @@
 #ifndef HTP_SSM_CONV_H
 #define HTP_SSM_CONV_H
 
-#include <stdint.h>
+#ಅನ್ತರ್ಭಾವ <stdint.h>
 
-#include "hex-fastdiv.h"
-#include "htp-ops.h"
+#ಅನ್ತರ್ಭಾವ "hex-fastdiv.h"
+#ಅನ್ತರ್ಭಾವ "htp-ops.h"
 
-struct htp_ssm_conv_kernel_params {
+ಸಂರಚನಾ htp_ssm_conv_kernel_params {
     uint32_t n_threads;
     uint32_t d_conv;
     uint32_t d_inner;
@@ -24,10 +24,10 @@ struct htp_ssm_conv_kernel_params {
     uint32_t vtcm_size;
 };
 
-#if defined(__cplusplus)
-static_assert(sizeof(struct htp_ssm_conv_kernel_params) <= 128, "htp_ssm_conv_kernel_params is too large for kernel_params blob");
-#else
-_Static_assert(sizeof(struct htp_ssm_conv_kernel_params) <= 128, "htp_ssm_conv_kernel_params is too large for kernel_params blob");
+#ಯದಿ defined(__cplusplus)
+static_assert(ಪರಿಮಾಣ(ಸಂರಚನಾ htp_ssm_conv_kernel_params) <= 128, "htp_ssm_conv_kernel_params is too large for kernel_params blob");
+#ಅನ್ಯಥಾ
+_Static_assert(ಪರಿಮಾಣ(ಸಂರಚನಾ htp_ssm_conv_kernel_params) <= 128, "htp_ssm_conv_kernel_params is too large for kernel_params blob");
 #endif
 
 #endif // HTP_SSM_CONV_H

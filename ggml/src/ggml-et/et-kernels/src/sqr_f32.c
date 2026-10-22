@@ -3,86 +3,86 @@
 // Element-wise square: y[i] = x[i] * x[i]
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "platform.h"
+#ಅನ್ತರ್ಭಾವ "ggml_tensor.h"
+#ಅನ್ತರ್ಭಾವ "platform.h"
 
-#include <stdint.h>
+#ಅನ್ತರ್ಭಾವ <stdint.h>
 
 // SQR kernel parameters structure (unary op: src0 -> dst)
-struct ggml_et_sqr_params {
-    struct ggml_tensor src0;  // F32 input tensor
-    struct ggml_tensor dst;   // F32 output tensor
+ಸಂರಚನಾ ggml_et_sqr_params {
+    ಸಂರಚನಾ ggml_tensor src0;  // F32 input tensor
+    ಸಂರಚನಾ ggml_tensor dst;   // F32 output tensor
 };
 
-int entry_point(struct ggml_et_sqr_params * params, void * env) {
+ಪೂರ್ಣಾಙ್ಕ entry_point(ಸಂರಚನಾ ggml_et_sqr_params * params, ಶೂನ್ಯ * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    ಯದಿ (!kernel_env) {
+        ಪ್ರತ್ಯಾಗಮ -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    ಪೂರ್ಣಾಙ್ಕ thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    ಪೂರ್ಣಾಙ್ಕ ಅಂಕೆ_threads = get_ಅಂಕೆ_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return 0;
+    ಯದಿ (thread_id < 0) {
+        ಪ್ರತ್ಯಾಗಮ 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;  // Invalid pointer
+    ಯದಿ (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        ಪ್ರತ್ಯಾಗಮ -1;  // Invalid pointer
     }
 
-    struct ggml_tensor * src0 = &params->src0;
-    struct ggml_tensor * dst  = &params->dst;
+    ಸಂರಚನಾ ggml_tensor * src0 = &params->src0;
+    ಸಂರಚನಾ ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;  // Unsupported type combination
+    ಯದಿ (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        ಪ್ರತ್ಯಾಗಮ -1;  // Unsupported type combination
     }
 
-    float * src0_data = (float *) src0->data;
-    float * dst_data  = (float *) dst->data;
+    ಭಿನ್ನ * src0_data = (ಭಿನ್ನ *) src0->data;
+    ಭಿನ್ನ * dst_data  = (ಭಿನ್ನ *) dst->data;
 
-    if (!src0_data || !dst_data) {
-        return -1;  // Null data pointer
+    ಯದಿ (!src0_data || !dst_data) {
+        ಪ್ರತ್ಯಾಗಮ -1;  // Null data pointer
     }
 
     // Both src and dst are contiguous F32: flatten and distribute by cache lines
-    const int64_t total_elements         = dst->ne[0] * dst->ne[1] * dst->ne[2] * dst->ne[3];
-    const int64_t elements_per_cacheline = 16;  // 64 bytes / 4 bytes per float
-    const int64_t total_cachelines       = (total_elements + elements_per_cacheline - 1) / elements_per_cacheline;
+    ಧ್ರುವ int64_t total_elements         = dst->ne[0] * dst->ne[1] * dst->ne[2] * dst->ne[3];
+    ಧ್ರುವ int64_t elements_per_cacheline = 16;  // 64 bytes / 4 bytes per float
+    ಧ್ರುವ int64_t total_cachelines       = (total_elements + elements_per_cacheline - 1) / elements_per_cacheline;
 
-    const int64_t cl_per_thread = (total_cachelines + num_threads - 1) / num_threads;
-    const int64_t cl_start      = thread_id * cl_per_thread;
+    ಧ್ರುವ int64_t cl_per_thread = (total_cachelines + ಅಂಕೆ_threads - 1) / ಅಂಕೆ_threads;
+    ಧ್ರುವ int64_t cl_start      = thread_id * cl_per_thread;
     int64_t       cl_end        = cl_start + cl_per_thread;
-    if (cl_end > total_cachelines) {
+    ಯದಿ (cl_end > total_cachelines) {
         cl_end = total_cachelines;
     }
 
-    if (cl_start >= total_cachelines) {
-        return 0;
+    ಯದಿ (cl_start >= total_cachelines) {
+        ಪ್ರತ್ಯಾಗಮ 0;
     }
 
-    const int64_t elem_start = cl_start * elements_per_cacheline;
+    ಧ್ರುವ int64_t elem_start = cl_start * elements_per_cacheline;
     int64_t       elem_end   = cl_end * elements_per_cacheline;
-    if (elem_end > total_elements) {
+    ಯದಿ (elem_end > total_elements) {
         elem_end = total_elements;
     }
 
-    const float * src_ptr = src0_data + elem_start;
-    float *       dst_ptr = dst_data + elem_start;
-    const int32_t count   = (int32_t) (elem_end - elem_start);
+    ಧ್ರುವ ಭಿನ್ನ * src_ptr = src0_data + elem_start;
+    ಭಿನ್ನ *       dst_ptr = dst_data + elem_start;
+    ಧ್ರುವ int32_t ಎಣಿಕೆ   = (int32_t) (elem_end - elem_start);
 
     // Process 8 elements at a time: dst[i] = src[i] * src[i]
-    for (int32_t i0 = 0; i0 < count; i0 += 8) {
-        __asm__ volatile(
+    ಪ್ರತಿ (int32_t i0 = 0; i0 < ಎಣಿಕೆ; i0 += 8) {
+        __asm__ ಚಞ್ಚಲ(
             "flw.ps f10, %[x_vec]\n"   // Load 8 input values
             "fmul.ps f11, f10, f10\n"  // x * x (8-wide)
             "fsw.ps f11, %[result]\n"  // Store 8 results
 
-            : [result] "=m"(*(float (*)[8]) & dst_ptr[i0])
-            : [x_vec] "m"(*(const float (*)[8]) & src_ptr[i0])
+            : [result] "=m"(*(ಭಿನ್ನ (*)[8]) & dst_ptr[i0])
+            : [x_vec] "m"(*(ಧ್ರುವ ಭಿನ್ನ (*)[8]) & src_ptr[i0])
             : "f10", "f11");
     }
 
-    return 0;
+    ಪ್ರತ್ಯಾಗಮ 0;
 }
