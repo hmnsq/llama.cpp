@@ -1,18 +1,18 @@
 #pragma once
 
-#include <sycl/sycl.hpp>
-#include <sycl/ext/intel/experimental/grf_size_properties.hpp>
-#include "dpct/helper.hpp"
-#include "common.hpp"
-#include "convert.hpp"
-#include "vecdotq.hpp"
-#include "fattn.hpp"
+#अन्तर्भाव <sycl/sycl.hpp>
+#अन्तर्भाव <sycl/ext/intel/experimental/grf_size_properties.hpp>
+#अन्तर्भाव "dpct/helper.hpp"
+#अन्तर्भाव "common.hpp"
+#अन्तर्भाव "convert.hpp"
+#अन्तर्भाव "vecdotq.hpp"
+#अन्तर्भाव "fattn.hpp"
 
-#include "ggml.h"
+#अन्तर्भाव "ggml.h"
 
-#include <cstdint>
-#include <cmath>
-#include <float.h>
+#अन्तर्भाव <cstdint>
+#अन्तर्भाव <cmath>
+#अन्तर्भाव <float.h>
 
 
 #define FATTN_KQ_STRIDE       256
@@ -20,180 +20,180 @@
 #define SOFTMAX_FTZ_THRESHOLD -20.0f                   // Softmax exp. of values smaller than this are flushed to zero to avoid NaNs.
 #define FATTN_KQ_MAX_OFFSET (3.0f*0.6931f)
 
-typedef void (*fattn_kernel_t)(
-    const char* Q,
-    const char* K,
-    const char* V,
-    const char* mask,
-    const char* sinks,
-    const int* KV_max,
-    float* dst,
+प्रकारनिर्देश शून्य (*fattn_kernel_t)(
+    ध्रुव वर्ण* Q,
+    ध्रुव वर्ण* K,
+    ध्रुव वर्ण* V,
+    ध्रुव वर्ण* mask,
+    ध्रुव वर्ण* sinks,
+    ध्रुव पूर्णाङ्क* KV_max,
+    भिन्न* dst,
     sycl::float2* dst_meta,
-    const float scale,
-    const float max_bias,
-    const float m0,
-    const float m1,
-    const uint32_t n_head_log2,
-    const float logit_softcap,
-    const int32_t ne00,
-    const sycl::uint3 ne01,
-    const int32_t ne02,
-    const int32_t ne03,
-    const int32_t nb01,
-    const int32_t nb02,
-    const int32_t nb03,
-    const int32_t ne10,
-    const int32_t ne11,
-    const int32_t ne12,
-    const int32_t ne13,
-    const int32_t nb11,
-    const int32_t nb12,
-    const int64_t nb13,
-    const int32_t nb21,
-    const int32_t nb22,
-    const int64_t nb23,
-    const int32_t ne31,
-    const int32_t ne32,
-    const int32_t ne33,
-    const int32_t nb31,
-    const int32_t nb32,
-    const int64_t nb33);
+    ध्रुव भिन्न scale,
+    ध्रुव भिन्न max_bias,
+    ध्रुव भिन्न m0,
+    ध्रुव भिन्न m1,
+    ध्रुव uint32_t n_head_log2,
+    ध्रुव भिन्न logit_softcap,
+    ध्रुव int32_t ne00,
+    ध्रुव sycl::uint3 ne01,
+    ध्रुव int32_t ne02,
+    ध्रुव int32_t ne03,
+    ध्रुव int32_t nb01,
+    ध्रुव int32_t nb02,
+    ध्रुव int32_t nb03,
+    ध्रुव int32_t ne10,
+    ध्रुव int32_t ne11,
+    ध्रुव int32_t ne12,
+    ध्रुव int32_t ne13,
+    ध्रुव int32_t nb11,
+    ध्रुव int32_t nb12,
+    ध्रुव int64_t nb13,
+    ध्रुव int32_t nb21,
+    ध्रुव int32_t nb22,
+    ध्रुव int64_t nb23,
+    ध्रुव int32_t ne31,
+    ध्रुव int32_t ne32,
+    ध्रुव int32_t ne33,
+    ध्रुव int32_t nb31,
+    ध्रुव int32_t nb32,
+    ध्रुव int64_t nb33);
 
-typedef float (*vec_dot_KQ_t)(
-    const char * __restrict__ K_c, const void * __restrict__ Q_v, const int * __restrict__ Q_q8 , const void * __restrict__ Q_ds);
+प्रकारनिर्देश भिन्न (*vec_dot_KQ_t)(
+    ध्रुव वर्ण * __restrict__ K_c, ध्रुव शून्य * __restrict__ Q_v, ध्रुव पूर्णाङ्क * __restrict__ Q_q8 , ध्रुव शून्य * __restrict__ Q_ds);
 
-template <int D, int nthreads>
-static __dpct_inline__ float vec_dot_fattn_vec_KQ_f16(const char * __restrict__ K_c,
-                                                      const void * __restrict__ Q_v,
-                                                      const int * __restrict__ Q_q8,
-                                                      const void * __restrict__ Q_ds_v) {
-    const sycl::half2 * K_h2 = (const sycl::half2 *) K_c;
+template <पूर्णाङ्क D, पूर्णाङ्क nthreads>
+स्थिर __dpct_inline__ भिन्न vec_dot_fattn_vec_KQ_f16(ध्रुव वर्ण * __restrict__ K_c,
+                                                      ध्रुव शून्य * __restrict__ Q_v,
+                                                      ध्रुव पूर्णाङ्क * __restrict__ Q_q8,
+                                                      ध्रुव शून्य * __restrict__ Q_ds_v) {
+    ध्रुव sycl::half2 * K_h2 = (ध्रुव sycl::half2 *) K_c;
     GGML_UNUSED(Q_q8);
     GGML_UNUSED(Q_ds_v);
 
-    constexpr int cpy_nb = ggml_sycl_get_max_cpy_bytes();
-    constexpr int cpy_ne = cpy_nb / 4;
+    constexpr पूर्णाङ्क cpy_nb = ggml_sycl_get_max_cpy_bytes();
+    constexpr पूर्णाङ्क cpy_ne = cpy_nb / 4;
 
-    float sum = 0.0f;
+    भिन्न sum = 0.0f;
 
 #pragma unroll
-    for (int k_KQ_0 = 0; k_KQ_0 < D/2; k_KQ_0 += nthreads*cpy_ne) {
+    प्रति (पूर्णाङ्क k_KQ_0 = 0; k_KQ_0 < D/2; k_KQ_0 += nthreads*cpy_ne) {
         sycl::half2 tmp[cpy_ne];
-        ggml_sycl_memcpy_1<sizeof(tmp)>(
+        ggml_sycl_memcpy_1<परिमाण(tmp)>(
             tmp,
             K_h2 + k_KQ_0 + (sycl::ext::oneapi::this_work_item::get_nd_item<3>().get_local_id(2) % nthreads) * cpy_ne);
 #pragma unroll
-        for (int k_KQ_1 = 0; k_KQ_1 < cpy_ne; ++k_KQ_1) {
+        प्रति (पूर्णाङ्क k_KQ_1 = 0; k_KQ_1 < cpy_ne; ++k_KQ_1) {
 #ifdef GGML_SYCL_F16
-            ggml_sycl_mad(sum,                tmp[k_KQ_1] , ((const sycl::half2 *) Q_v)[k_KQ_0/nthreads + k_KQ_1]);
-#else
-            ggml_sycl_mad(sum, __half22float2(tmp[k_KQ_1]), ((const sycl::float2 *) Q_v)[k_KQ_0/nthreads + k_KQ_1]);
+            ggml_sycl_mad(sum,                tmp[k_KQ_1] , ((ध्रुव sycl::half2 *) Q_v)[k_KQ_0/nthreads + k_KQ_1]);
+#अन्यथा
+            ggml_sycl_mad(sum, __half22float2(tmp[k_KQ_1]), ((ध्रुव sycl::float2 *) Q_v)[k_KQ_0/nthreads + k_KQ_1]);
 #endif // GGML_SYCL_F16
         }
     }
 
-    return sum;
+    प्रत्यागम sum;
 }
 
-template <int D, int nthreads, int warp_size>
-static __dpct_inline__ float vec_dot_fattn_vec_KQ_q4_0(const char * __restrict__ K_c,
-                                                       const void * __restrict__ Q_v,
-                                                       const int * __restrict__ Q_q8,
-                                                       const void * __restrict__ Q_ds_v) {
+template <पूर्णाङ्क D, पूर्णाङ्क nthreads, पूर्णाङ्क warp_size>
+स्थिर __dpct_inline__ भिन्न vec_dot_fattn_vec_KQ_q4_0(ध्रुव वर्ण * __restrict__ K_c,
+                                                       ध्रुव शून्य * __restrict__ Q_v,
+                                                       ध्रुव पूर्णाङ्क * __restrict__ Q_q8,
+                                                       ध्रुव शून्य * __restrict__ Q_ds_v) {
     auto item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
 
-    const block_q4_0 * K_q4_0   = (const block_q4_0 *) K_c;
+    ध्रुव block_q4_0 * K_q4_0   = (ध्रुव block_q4_0 *) K_c;
     GGML_UNUSED(Q_v);
 
-    float sum = 0.0f;
+    भिन्न sum = 0.0f;
 
 #pragma unroll
-    for (int k_KQ_0 = 0; k_KQ_0 < int(D/sizeof(int)); k_KQ_0 += nthreads) {
-        const int k_KQ =
+    प्रति (पूर्णाङ्क k_KQ_0 = 0; k_KQ_0 < पूर्णाङ्क(D/परिमाण(पूर्णाङ्क)); k_KQ_0 += nthreads) {
+        ध्रुव पूर्णाङ्क k_KQ =
             k_KQ_0 + (nthreads == warp_size ? item_ct1.get_local_id(2) : item_ct1.get_local_id(2) % nthreads);
 
-        const int ib    = k_KQ /  QI8_1;
-        const int iqs4  = k_KQ %  QI4_0;
-        const int shift = k_KQ & (QI8_1/2);
+        ध्रुव पूर्णाङ्क ib    = k_KQ /  QI8_1;
+        ध्रुव पूर्णाङ्क iqs4  = k_KQ %  QI4_0;
+        ध्रुव पूर्णाङ्क shift = k_KQ & (QI8_1/2);
 
-        int v;
-        ggml_sycl_memcpy_1<sizeof(int), 2>(&v, K_q4_0[ib].qs + sizeof(int)*iqs4);
+        पूर्णाङ्क v;
+        ggml_sycl_memcpy_1<परिमाण(पूर्णाङ्क), 2>(&v, K_q4_0[ib].qs + परिमाण(पूर्णाङ्क)*iqs4);
         v = (v >> shift) & 0x0F0F0F0F;
-        const int u = Q_q8[k_KQ_0/nthreads];
+        ध्रुव पूर्णाङ्क u = Q_q8[k_KQ_0/nthreads];
 
-        const int sumi = ggml_sycl_dp4a(v, u, 0);
+        ध्रुव पूर्णाङ्क sumi = ggml_sycl_dp4a(v, u, 0);
 
-        const sycl::float2 Q_ds = ((const sycl::float2 *) Q_ds_v)[k_KQ_0 / nthreads];
+        ध्रुव sycl::float2 Q_ds = ((ध्रुव sycl::float2 *) Q_ds_v)[k_KQ_0 / nthreads];
         sum += __half2float(K_q4_0[ib].d) * (sumi*Q_ds.x() - (8/QI8_1)*Q_ds.y());
     }
 
-    return sum;
+    प्रत्यागम sum;
 }
 
-template <int D, int nthreads , int warp_size>
-static __dpct_inline__ float vec_dot_fattn_vec_KQ_q4_1(const char * __restrict__ K_c,
-                                                       const void * __restrict__ Q_v,
-                                                       const int * __restrict__ Q_q8,
-                                                       const void * __restrict__ Q_ds_v) {
+template <पूर्णाङ्क D, पूर्णाङ्क nthreads , पूर्णाङ्क warp_size>
+स्थिर __dpct_inline__ भिन्न vec_dot_fattn_vec_KQ_q4_1(ध्रुव वर्ण * __restrict__ K_c,
+                                                       ध्रुव शून्य * __restrict__ Q_v,
+                                                       ध्रुव पूर्णाङ्क * __restrict__ Q_q8,
+                                                       ध्रुव शून्य * __restrict__ Q_ds_v) {
     auto               item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    const block_q4_1 * K_q4_1   = (const block_q4_1 *) K_c;
+    ध्रुव block_q4_1 * K_q4_1   = (ध्रुव block_q4_1 *) K_c;
     GGML_UNUSED(Q_v);
 
-    float sum = 0.0f;
+    भिन्न sum = 0.0f;
 
 #pragma unroll
-    for (int k_KQ_0 = 0; k_KQ_0 < int(D/sizeof(int)); k_KQ_0 += nthreads) {
-        const int k_KQ =
+    प्रति (पूर्णाङ्क k_KQ_0 = 0; k_KQ_0 < पूर्णाङ्क(D/परिमाण(पूर्णाङ्क)); k_KQ_0 += nthreads) {
+        ध्रुव पूर्णाङ्क k_KQ =
             k_KQ_0 + (nthreads == warp_size ? item_ct1.get_local_id(2) : item_ct1.get_local_id(2) % nthreads);
 
-        const int ib    = k_KQ /  QI8_1;
-        const int iqs4  = k_KQ %  QI4_1;
-        const int shift = k_KQ & (QI8_1/2);
+        ध्रुव पूर्णाङ्क ib    = k_KQ /  QI8_1;
+        ध्रुव पूर्णाङ्क iqs4  = k_KQ %  QI4_1;
+        ध्रुव पूर्णाङ्क shift = k_KQ & (QI8_1/2);
 
-        int v;
-        ggml_sycl_memcpy_1<sizeof(int)>(&v, K_q4_1[ib].qs + sizeof(int)*iqs4);
+        पूर्णाङ्क v;
+        ggml_sycl_memcpy_1<परिमाण(पूर्णाङ्क)>(&v, K_q4_1[ib].qs + परिमाण(पूर्णाङ्क)*iqs4);
         v = (v >> shift) & 0x0F0F0F0F;
-        const int u = Q_q8[k_KQ_0/nthreads];
+        ध्रुव पूर्णाङ्क u = Q_q8[k_KQ_0/nthreads];
 
-        const int sumi = ggml_sycl_dp4a(v, u, 0);
+        ध्रुव पूर्णाङ्क sumi = ggml_sycl_dp4a(v, u, 0);
 
-        const sycl::float2 K_dm = (K_q4_1[ib].dm).template convert<float, sycl::rounding_mode::automatic>();
-        const sycl::float2 Q_ds = ((const sycl::float2 *) Q_ds_v)[k_KQ_0 / nthreads];
+        ध्रुव sycl::float2 K_dm = (K_q4_1[ib].dm).template convert<भिन्न, sycl::rounding_mode::automatic>();
+        ध्रुव sycl::float2 Q_ds = ((ध्रुव sycl::float2 *) Q_ds_v)[k_KQ_0 / nthreads];
 
         sum += K_dm.x()*Q_ds.x()*sumi + K_dm.y()*Q_ds.y()/QI8_1;
     }
 
-    return sum;
+    प्रत्यागम sum;
 }
 
-template <int D, int nthreads, int warp_size>
-static __dpct_inline__ float vec_dot_fattn_vec_KQ_q5_0(const char * __restrict__ K_c,
-                                                       const void * __restrict__ Q_v,
-                                                       const int * __restrict__ Q_q8,
-                                                       const void * __restrict__ Q_ds_v) {
+template <पूर्णाङ्क D, पूर्णाङ्क nthreads, पूर्णाङ्क warp_size>
+स्थिर __dpct_inline__ भिन्न vec_dot_fattn_vec_KQ_q5_0(ध्रुव वर्ण * __restrict__ K_c,
+                                                       ध्रुव शून्य * __restrict__ Q_v,
+                                                       ध्रुव पूर्णाङ्क * __restrict__ Q_q8,
+                                                       ध्रुव शून्य * __restrict__ Q_ds_v) {
     auto               item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    const block_q5_0 * K_q5_0   = (const block_q5_0 *) K_c;
+    ध्रुव block_q5_0 * K_q5_0   = (ध्रुव block_q5_0 *) K_c;
     GGML_UNUSED(Q_v);
 
-    float sum = 0.0f;
+    भिन्न sum = 0.0f;
 
 #pragma unroll
-    for (int k_KQ_0 = 0; k_KQ_0 < int(D/sizeof(int)); k_KQ_0 += nthreads) {
-        const int k_KQ =
+    प्रति (पूर्णाङ्क k_KQ_0 = 0; k_KQ_0 < पूर्णाङ्क(D/परिमाण(पूर्णाङ्क)); k_KQ_0 += nthreads) {
+        ध्रुव पूर्णाङ्क k_KQ =
             k_KQ_0 + (nthreads == warp_size ? item_ct1.get_local_id(2) : item_ct1.get_local_id(2) % nthreads);
 
-        const int ib    = k_KQ /  QI8_1;
-        const int iqs4  = k_KQ %  QI5_0;
-        const int iqs8  = k_KQ %  QI8_1;
-        const int shift = k_KQ & (QI8_1/2);
+        ध्रुव पूर्णाङ्क ib    = k_KQ /  QI8_1;
+        ध्रुव पूर्णाङ्क iqs4  = k_KQ %  QI5_0;
+        ध्रुव पूर्णाङ्क iqs8  = k_KQ %  QI8_1;
+        ध्रुव पूर्णाङ्क shift = k_KQ & (QI8_1/2);
 
-        int v;
-        ggml_sycl_memcpy_1<sizeof(int), 2>(&v, K_q5_0[ib].qs + sizeof(int)*iqs4);
+        पूर्णाङ्क v;
+        ggml_sycl_memcpy_1<परिमाण(पूर्णाङ्क), 2>(&v, K_q5_0[ib].qs + परिमाण(पूर्णाङ्क)*iqs4);
         v = (v >> shift) & 0x0F0F0F0F;
 
         {
-            int vh;
-            ggml_sycl_memcpy_1<sizeof(int), 2>(&vh, K_q5_0[ib].qh);
+            पूर्णाङ्क vh;
+            ggml_sycl_memcpy_1<परिमाण(पूर्णाङ्क), 2>(&vh, K_q5_0[ib].qh);
             vh >>= iqs8 * QI5_0;
 
             v |= (vh <<  4) & 0x00000010; // 0 ->  4
@@ -202,46 +202,46 @@ static __dpct_inline__ float vec_dot_fattn_vec_KQ_q5_0(const char * __restrict__
             v |= (vh << 25) & 0x10000000; // 3 -> 28
         }
 
-        const int u = Q_q8[k_KQ_0/nthreads];
+        ध्रुव पूर्णाङ्क u = Q_q8[k_KQ_0/nthreads];
 
-        const int sumi = ggml_sycl_dp4a(v, u, 0);
+        ध्रुव पूर्णाङ्क sumi = ggml_sycl_dp4a(v, u, 0);
 
-        const sycl::float2 Q_ds = ((const sycl::float2 *) Q_ds_v)[k_KQ_0 / nthreads];
+        ध्रुव sycl::float2 Q_ds = ((ध्रुव sycl::float2 *) Q_ds_v)[k_KQ_0 / nthreads];
 
         sum += __half2float(K_q5_0[ib].d) * (sumi*Q_ds.x() - (16/QI8_1)*Q_ds.y());
     }
 
-    return sum;
+    प्रत्यागम sum;
 }
 
-template <int D, int nthreads, int warp_size>
-static __dpct_inline__ float vec_dot_fattn_vec_KQ_q5_1(const char * __restrict__ K_c,
-                                                       const void * __restrict__ Q_v,
-                                                       const int * __restrict__ Q_q8,
-                                                       const void * __restrict__ Q_ds_v) {
+template <पूर्णाङ्क D, पूर्णाङ्क nthreads, पूर्णाङ्क warp_size>
+स्थिर __dpct_inline__ भिन्न vec_dot_fattn_vec_KQ_q5_1(ध्रुव वर्ण * __restrict__ K_c,
+                                                       ध्रुव शून्य * __restrict__ Q_v,
+                                                       ध्रुव पूर्णाङ्क * __restrict__ Q_q8,
+                                                       ध्रुव शून्य * __restrict__ Q_ds_v) {
     auto               item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    const block_q5_1 * K_q5_1   = (const block_q5_1 *) K_c;
+    ध्रुव block_q5_1 * K_q5_1   = (ध्रुव block_q5_1 *) K_c;
     GGML_UNUSED(Q_v);
 
-    float sum = 0.0f;
+    भिन्न sum = 0.0f;
 
 #pragma unroll
-    for (int k_KQ_0 = 0; k_KQ_0 < int(D/sizeof(int)); k_KQ_0 += nthreads) {
-        const int k_KQ =
+    प्रति (पूर्णाङ्क k_KQ_0 = 0; k_KQ_0 < पूर्णाङ्क(D/परिमाण(पूर्णाङ्क)); k_KQ_0 += nthreads) {
+        ध्रुव पूर्णाङ्क k_KQ =
             k_KQ_0 + (nthreads == warp_size ? item_ct1.get_local_id(2) : item_ct1.get_local_id(2) % nthreads);
 
-        const int ib    = k_KQ /  QI8_1;
-        const int iqs4  = k_KQ %  QI5_1;
-        const int iqs8  = k_KQ %  QI8_1;
-        const int shift = k_KQ & (QI8_1/2);
+        ध्रुव पूर्णाङ्क ib    = k_KQ /  QI8_1;
+        ध्रुव पूर्णाङ्क iqs4  = k_KQ %  QI5_1;
+        ध्रुव पूर्णाङ्क iqs8  = k_KQ %  QI8_1;
+        ध्रुव पूर्णाङ्क shift = k_KQ & (QI8_1/2);
 
-        int v;
-        ggml_sycl_memcpy_1<sizeof(int)>(&v, K_q5_1[ib].qs + sizeof(int)*iqs4);
+        पूर्णाङ्क v;
+        ggml_sycl_memcpy_1<परिमाण(पूर्णाङ्क)>(&v, K_q5_1[ib].qs + परिमाण(पूर्णाङ्क)*iqs4);
         v = (v >> shift) & 0x0F0F0F0F;
 
         {
-            int vh;
-            ggml_sycl_memcpy_1<sizeof(int)>(&vh, K_q5_1[ib].qh);
+            पूर्णाङ्क vh;
+            ggml_sycl_memcpy_1<परिमाण(पूर्णाङ्क)>(&vh, K_q5_1[ib].qh);
             vh >>= iqs8 * QI5_0;
 
             v |= (vh <<  4) & 0x00000010; // 0 ->  4
@@ -250,404 +250,404 @@ static __dpct_inline__ float vec_dot_fattn_vec_KQ_q5_1(const char * __restrict__
             v |= (vh << 25) & 0x10000000; // 3 -> 28
         }
 
-        const int u = Q_q8[k_KQ_0/nthreads];
+        ध्रुव पूर्णाङ्क u = Q_q8[k_KQ_0/nthreads];
 
-        const int sumi = ggml_sycl_dp4a(v, u, 0);
+        ध्रुव पूर्णाङ्क sumi = ggml_sycl_dp4a(v, u, 0);
 
-        const sycl::float2 K_dm = (K_q5_1[ib].dm).template convert<float, sycl::rounding_mode::automatic>();
-        const sycl::float2 Q_ds = ((const sycl::float2 *) Q_ds_v)[k_KQ_0 / nthreads];
+        ध्रुव sycl::float2 K_dm = (K_q5_1[ib].dm).template convert<भिन्न, sycl::rounding_mode::automatic>();
+        ध्रुव sycl::float2 Q_ds = ((ध्रुव sycl::float2 *) Q_ds_v)[k_KQ_0 / nthreads];
 
         sum += K_dm.x()*Q_ds.x()*sumi + K_dm.y()*Q_ds.y()/QI8_1;
     }
 
-    return sum;
+    प्रत्यागम sum;
 }
 
-template <int D, int nthreads, int warp_size>
-static __dpct_inline__ float vec_dot_fattn_vec_KQ_q8_0(const char * __restrict__ K_c,
-                                                       const void * __restrict__ Q_v,
-                                                       const int * __restrict__ Q_q8,
-                                                       const void * __restrict__ Q_ds_v) {
+template <पूर्णाङ्क D, पूर्णाङ्क nthreads, पूर्णाङ्क warp_size>
+स्थिर __dpct_inline__ भिन्न vec_dot_fattn_vec_KQ_q8_0(ध्रुव वर्ण * __restrict__ K_c,
+                                                       ध्रुव शून्य * __restrict__ Q_v,
+                                                       ध्रुव पूर्णाङ्क * __restrict__ Q_q8,
+                                                       ध्रुव शून्य * __restrict__ Q_ds_v) {
     auto               item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    const block_q8_0 * K_q8_0   = (const block_q8_0 *) K_c;
+    ध्रुव block_q8_0 * K_q8_0   = (ध्रुव block_q8_0 *) K_c;
     GGML_UNUSED(Q_v);
 
-    float sum = 0.0f;
+    भिन्न sum = 0.0f;
 
 #pragma unroll
-    for (int k_KQ_0 = 0; k_KQ_0 < int(D/sizeof(int)); k_KQ_0 += nthreads) {
-        const int k_KQ =
+    प्रति (पूर्णाङ्क k_KQ_0 = 0; k_KQ_0 < पूर्णाङ्क(D/परिमाण(पूर्णाङ्क)); k_KQ_0 += nthreads) {
+        ध्रुव पूर्णाङ्क k_KQ =
             k_KQ_0 + (nthreads == warp_size ? item_ct1.get_local_id(2) : item_ct1.get_local_id(2) % nthreads);
 
-        const int ib  = k_KQ / QI8_0;
-        const int iqs = k_KQ % QI8_0;
+        ध्रुव पूर्णाङ्क ib  = k_KQ / QI8_0;
+        ध्रुव पूर्णाङ्क iqs = k_KQ % QI8_0;
 
-        int v;
-        ggml_sycl_memcpy_1<sizeof(v), 2>(&v, K_q8_0[ib].qs + 4*iqs);
+        पूर्णाङ्क v;
+        ggml_sycl_memcpy_1<परिमाण(v), 2>(&v, K_q8_0[ib].qs + 4*iqs);
 
-        const sycl::float2 * Q_ds = (const sycl::float2 *) Q_ds_v;
-        const float          Q_d  = Q_ds[k_KQ_0 / nthreads].x();
+        ध्रुव sycl::float2 * Q_ds = (ध्रुव sycl::float2 *) Q_ds_v;
+        ध्रुव भिन्न          Q_d  = Q_ds[k_KQ_0 / nthreads].x();
 
-        sum += vec_dot_q8_0_q8_1_impl<float, 1>(&v, &Q_q8[k_KQ_0/nthreads], K_q8_0[ib].d, Q_d);
+        sum += vec_dot_q8_0_q8_1_impl<भिन्न, 1>(&v, &Q_q8[k_KQ_0/nthreads], K_q8_0[ib].d, Q_d);
     }
 
-    return sum;
+    प्रत्यागम sum;
 }
 
-template <typename Tds, int ni, int warp_size>
-static __dpct_inline__ void quantize_q8_1_to_shared(const float * __restrict__ x,
-                                                    const float scale,
-                                                    int * __restrict__ yq32,
-                                                    void * __restrict__ yds) {
+template <typename Tds, पूर्णाङ्क ni, पूर्णाङ्क warp_size>
+स्थिर __dpct_inline__ शून्य quantize_q8_1_to_shared(ध्रुव भिन्न * __restrict__ x,
+                                                    ध्रुव भिन्न scale,
+                                                    पूर्णाङ्क * __restrict__ yq32,
+                                                    शून्य * __restrict__ yds) {
     auto item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
 
-    float vals[sizeof(int)] = { 0.0f };
+    भिन्न vals[परिमाण(पूर्णाङ्क)] = { 0.0f };
 #pragma unroll
-    for (int l = 0; l < int(sizeof(int)); ++l) {
+    प्रति (पूर्णाङ्क l = 0; l < पूर्णाङ्क(परिमाण(पूर्णाङ्क)); ++l) {
         vals[l] =
             (ni == warp_size || item_ct1.get_local_id(2) < ni) ? scale * x[4 * item_ct1.get_local_id(2) + l] : 0.0f;
     }
 
-    float amax = sycl::fabs(vals[0]);
-    float sum  = vals[0];
+    भिन्न amax = sycl::fabs(vals[0]);
+    भिन्न sum  = vals[0];
 #pragma unroll
-    for (int l = 1; l < int(sizeof(int)); ++l) {
+    प्रति (पूर्णाङ्क l = 1; l < पूर्णाङ्क(परिमाण(पूर्णाङ्क)); ++l) {
         amax = sycl::fmax(amax, sycl::fabs(vals[l]));
         sum += vals[l];
     }
 #pragma unroll
-    for (int mask = QI8_1/2; mask > 0; mask >>= 1) {
+    प्रति (पूर्णाङ्क mask = QI8_1/2; mask > 0; mask >>= 1) {
         amax = sycl::fmax(
             amax, dpct::permute_sub_group_by_xor(sycl::ext::oneapi::this_work_item::get_sub_group(), amax, mask));
         sum += dpct::permute_sub_group_by_xor(sycl::ext::oneapi::this_work_item::get_sub_group(), sum, mask);
     }
 
-    const float d = amax / 127;
-    int q32 = 0;
+    ध्रुव भिन्न d = amax / 127;
+    पूर्णाङ्क q32 = 0;
     int8_t * q8 = (int8_t *) &q32;
 
-    if (d != 0.0f) {
+    यदि (d != 0.0f) {
 #pragma unroll
-        for (int l = 0; l < int(sizeof(int)); ++l) {
+        प्रति (पूर्णाङ्क l = 0; l < पूर्णाङ्क(परिमाण(पूर्णाङ्क)); ++l) {
             q8[l] = sycl::round(vals[l] / d);
         }
     }
 
     yq32[item_ct1.get_local_id(2)] = q32;
-    if (item_ct1.get_local_id(2) % QI8_1 == 0 && (ni == warp_size || item_ct1.get_local_id(2) < ni)) {
-        if (std::is_same<Tds, sycl::half2>::value) {
+    यदि (item_ct1.get_local_id(2) % QI8_1 == 0 && (ni == warp_size || item_ct1.get_local_id(2) < ni)) {
+        यदि (std::is_same<Tds, sycl::half2>::value) {
             ((sycl::half2  *) yds)[item_ct1.get_local_id(2)/QI8_1] =  make_half2(d, sum);
-        } else {
+        } अन्यथा {
             ((sycl::float2 *) yds)[item_ct1.get_local_id(2)/QI8_1] = make_float2(d, sum);
         }
     }
 }
 
-typedef void (*dequantize_V_t)(const void *, void *, const int64_t);
+प्रकारनिर्देश शून्य (*dequantize_V_t)(ध्रुव शून्य *, शून्य *, ध्रुव int64_t);
 
-template <typename T, int ne>
-static __dpct_inline__ void dequantize_V_f16(const void * __restrict__ vx, void * __restrict__ dst, const int64_t i0) {
-    if constexpr (std::is_same_v<T, sycl::half>) {
-        ggml_sycl_memcpy_1<ne * sizeof(sycl::half)>(dst, (const sycl::half *) vx + i0);
-    } else if constexpr (std::is_same_v<T, float>) {
+template <typename T, पूर्णाङ्क ne>
+स्थिर __dpct_inline__ शून्य dequantize_V_f16(ध्रुव शून्य * __restrict__ vx, शून्य * __restrict__ dst, ध्रुव int64_t i0) {
+    यदि constexpr (std::is_same_v<T, sycl::half>) {
+        ggml_sycl_memcpy_1<ne * परिमाण(sycl::half)>(dst, (ध्रुव sycl::half *) vx + i0);
+    } अन्यथा यदि constexpr (std::is_same_v<T, भिन्न>) {
         static_assert(ne % 2 == 0, "bad ne");
         sycl::half2 tmp[ne / 2];
-        ggml_sycl_memcpy_1<ne * sizeof(sycl::half)>(tmp, (const sycl::half *) vx + i0);
+        ggml_sycl_memcpy_1<ne * परिमाण(sycl::half)>(tmp, (ध्रुव sycl::half *) vx + i0);
         sycl::float2 * dst_f2 = (sycl::float2 *) dst;
 #pragma unroll
-        for (int l = 0; l < ne/2; ++l) {
-            dst_f2[l] = tmp[l].template convert<float, sycl::rounding_mode::automatic>();
+        प्रति (पूर्णाङ्क l = 0; l < ne/2; ++l) {
+            dst_f2[l] = tmp[l].template convert<भिन्न, sycl::rounding_mode::automatic>();
         }
-    } else {
-        static_assert(std::is_same_v<T, void>, "unsupported type");
+    } अन्यथा {
+        static_assert(std::is_same_v<T, शून्य>, "unsupported type");
     }
 }
 
-template <typename T, int ne>
-static __dpct_inline__ void dequantize_V_q4_0(const void * __restrict__ vx, void * __restrict__ dst, const int64_t i0) {
-    const block_q4_0 * x = (const block_q4_0 *) vx;
+template <typename T, पूर्णाङ्क ne>
+स्थिर __dpct_inline__ शून्य dequantize_V_q4_0(ध्रुव शून्य * __restrict__ vx, शून्य * __restrict__ dst, ध्रुव int64_t i0) {
+    ध्रुव block_q4_0 * x = (ध्रुव block_q4_0 *) vx;
 
-    const int64_t ib    =  i0          /  QK4_0;
-    const int     iqs   =  i0          % (QK4_0/2);
-    const int     shift = (i0 % QK4_0) / (QK4_0/2);
+    ध्रुव int64_t ib    =  i0          /  QK4_0;
+    ध्रुव पूर्णाङ्क     iqs   =  i0          % (QK4_0/2);
+    ध्रुव पूर्णाङ्क     shift = (i0 % QK4_0) / (QK4_0/2);
 
-    int q;
+    पूर्णाङ्क q;
     static_assert(ne == 2 || ne == 4, "bad ne");
     ggml_sycl_memcpy_1<ne, 2>(&q, x[ib].qs + iqs);
     q >>= 4*shift;
     q &= 0x0F0F0F0F;
-    q = dpct::vectorized_binary<sycl::char4>(q, 0x08080808, dpct::sub_sat());
+    q = dpct::vectorized_द्विआधारी<sycl::char4>(q, 0x08080808, dpct::sub_sat());
 
-    const int8_t * q8 = (const int8_t *) &q;
+    ध्रुव int8_t * q8 = (ध्रुव int8_t *) &q;
 
 #ifdef GGML_SYCL_F16
-    if constexpr (std::is_same_v<T, sycl::half>) {
-        const sycl::half2 d = sycl::half2(x[ib].d);
+    यदि constexpr (std::is_same_v<T, sycl::half>) {
+        ध्रुव sycl::half2 d = sycl::half2(x[ib].d);
 
 #pragma unroll
-        for (int l0 = 0; l0 < ne; l0 += 2) {
+        प्रति (पूर्णाङ्क l0 = 0; l0 < ne; l0 += 2) {
             ((sycl::half2 *) dst)[l0 / 2] = d * sycl::half2(q8[l0 + 0], q8[l0 + 1]);
         }
-    } else
+    } अन्यथा
 #endif // GGML_SYCL_F16
-    if constexpr (std::is_same_v<T, float>) {
-        const float d = x[ib].d;
+    यदि constexpr (std::is_same_v<T, भिन्न>) {
+        ध्रुव भिन्न d = x[ib].d;
 
 #pragma unroll
-        for (int l = 0; l < ne; ++l) {
-            ((float *) dst)[l] = d * q8[l];
+        प्रति (पूर्णाङ्क l = 0; l < ne; ++l) {
+            ((भिन्न *) dst)[l] = d * q8[l];
         }
-    } else {
-        static_assert(std::is_same_v<T, void>, "bad type");
+    } अन्यथा {
+        static_assert(std::is_same_v<T, शून्य>, "bad type");
     }
 }
 
-template <typename T, int ne>
-static __dpct_inline__ void dequantize_V_q4_1(const void * __restrict__ vx, void * __restrict__ dst, const int64_t i0) {
-    const block_q4_1 * x = (const block_q4_1 *) vx;
+template <typename T, पूर्णाङ्क ne>
+स्थिर __dpct_inline__ शून्य dequantize_V_q4_1(ध्रुव शून्य * __restrict__ vx, शून्य * __restrict__ dst, ध्रुव int64_t i0) {
+    ध्रुव block_q4_1 * x = (ध्रुव block_q4_1 *) vx;
 
-    const int64_t ib    =  i0          /  QK4_1;
-    const int     iqs   =  i0          % (QK4_1/2);
-    const int     shift = (i0 % QK4_1) / (QK4_1/2);
+    ध्रुव int64_t ib    =  i0          /  QK4_1;
+    ध्रुव पूर्णाङ्क     iqs   =  i0          % (QK4_1/2);
+    ध्रुव पूर्णाङ्क     shift = (i0 % QK4_1) / (QK4_1/2);
 
-    int q;
+    पूर्णाङ्क q;
     static_assert(ne == 2 || ne == 4, "bad ne");
     ggml_sycl_memcpy_1<ne>(&q, x[ib].qs + iqs);
     q >>= 4*shift;
     q &= 0x0F0F0F0F;
 
-    const int8_t * q8 = (const int8_t *) &q;
+    ध्रुव int8_t * q8 = (ध्रुव int8_t *) &q;
 
 #ifdef GGML_SYCL_F16
-    if constexpr (std::is_same_v<T, sycl::half>) {
-        const sycl::half2 dm = x[ib].dm;
-        const sycl::half2 d  = sycl::half2(dm[0]);
-        const sycl::half2 m  = sycl::half2(dm[1]);
+    यदि constexpr (std::is_same_v<T, sycl::half>) {
+        ध्रुव sycl::half2 dm = x[ib].dm;
+        ध्रुव sycl::half2 d  = sycl::half2(dm[0]);
+        ध्रुव sycl::half2 m  = sycl::half2(dm[1]);
 
 #pragma unroll
-        for (int l0 = 0; l0 < ne; l0 += 2) {
+        प्रति (पूर्णाङ्क l0 = 0; l0 < ne; l0 += 2) {
             ((sycl::half2 *) dst)[l0 / 2] = d * sycl::half2(q8[l0 + 0], q8[l0 + 1]) + m;
         }
-    } else
+    } अन्यथा
 #endif // GGML_SYCL_F16
-    if constexpr (std::is_same_v<T, float>) {
-        const sycl::float2 dm = (x[ib].dm).template convert<float, sycl::rounding_mode::automatic>();
+    यदि constexpr (std::is_same_v<T, भिन्न>) {
+        ध्रुव sycl::float2 dm = (x[ib].dm).template convert<भिन्न, sycl::rounding_mode::automatic>();
 
 #pragma unroll
-        for (int l = 0; l < ne; ++l) {
-            ((float *) dst)[l] = dm.x() * q8[l] + dm.y();
+        प्रति (पूर्णाङ्क l = 0; l < ne; ++l) {
+            ((भिन्न *) dst)[l] = dm.x() * q8[l] + dm.y();
         }
-    } else {
-        static_assert(std::is_same_v<T, void>, "bad type");
+    } अन्यथा {
+        static_assert(std::is_same_v<T, शून्य>, "bad type");
     }
 }
 
-template <typename T, int ne>
-static __dpct_inline__ void dequantize_V_q5_0(const void * __restrict__ vx, void * __restrict__ dst, const int64_t i0) {
-    const block_q5_0 * x = (const block_q5_0 *) vx;
+template <typename T, पूर्णाङ्क ne>
+स्थिर __dpct_inline__ शून्य dequantize_V_q5_0(ध्रुव शून्य * __restrict__ vx, शून्य * __restrict__ dst, ध्रुव int64_t i0) {
+    ध्रुव block_q5_0 * x = (ध्रुव block_q5_0 *) vx;
 
-    const int64_t ib    =  i0          /  QK5_0;
-    const int     idq   =  i0          %  QK5_0;
-    const int     iqs   =  i0          % (QK5_0/2);
-    const int     shift = (i0 % QK5_0) / (QK5_0/2);
+    ध्रुव int64_t ib    =  i0          /  QK5_0;
+    ध्रुव पूर्णाङ्क     idq   =  i0          %  QK5_0;
+    ध्रुव पूर्णाङ्क     iqs   =  i0          % (QK5_0/2);
+    ध्रुव पूर्णाङ्क     shift = (i0 % QK5_0) / (QK5_0/2);
 
-    int q;
+    पूर्णाङ्क q;
     static_assert(ne == 2 || ne == 4, "bad ne");
     ggml_sycl_memcpy_1<ne, 2>(&q, x[ib].qs + iqs);
     q >>= 4*shift;
     q &= 0x0F0F0F0F;
 
     {
-        int qh;
+        पूर्णाङ्क qh;
         ggml_sycl_memcpy_1<ne, 2>(&qh, x[ib].qh);
 #pragma unroll
-        for (int l = 0; l < ne; ++l) {
+        प्रति (पूर्णाङ्क l = 0; l < ne; ++l) {
             q |= ((qh >> (idq + l)) & 0x00000001) << (8*l + 4);
         }
     }
 
-    q = dpct::vectorized_binary<sycl::char4>(q, 0x10101010, dpct::sub_sat());
+    q = dpct::vectorized_द्विआधारी<sycl::char4>(q, 0x10101010, dpct::sub_sat());
 
-    const int8_t * q8 = (const int8_t *) &q;
+    ध्रुव int8_t * q8 = (ध्रुव int8_t *) &q;
 
 #ifdef GGML_SYCL_F16
-    if constexpr (std::is_same_v<T, sycl::half>) {
-        const sycl::half2 d = sycl::half2(x[ib].d);
+    यदि constexpr (std::is_same_v<T, sycl::half>) {
+        ध्रुव sycl::half2 d = sycl::half2(x[ib].d);
 
 #pragma unroll
-        for (int l0 = 0; l0 < ne; l0 += 2) {
+        प्रति (पूर्णाङ्क l0 = 0; l0 < ne; l0 += 2) {
             ((sycl::half2 *) dst)[l0 / 2] = d * sycl::half2(q8[l0 + 0], q8[l0 + 1]);
         }
-    } else
+    } अन्यथा
 #endif // GGML_SYCL_F16
-    if constexpr (std::is_same_v<T, float>) {
-        const float d = x[ib].d;
+    यदि constexpr (std::is_same_v<T, भिन्न>) {
+        ध्रुव भिन्न d = x[ib].d;
 
 #pragma unroll
-        for (int l = 0; l < ne; ++l) {
-            ((float *) dst)[l] = d * q8[l];
+        प्रति (पूर्णाङ्क l = 0; l < ne; ++l) {
+            ((भिन्न *) dst)[l] = d * q8[l];
         }
-    } else {
-        static_assert(std::is_same_v<T, void>, "bad type");
+    } अन्यथा {
+        static_assert(std::is_same_v<T, शून्य>, "bad type");
     }
 }
 
-template <typename T, int ne>
-static __dpct_inline__ void dequantize_V_q5_1(const void * __restrict__ vx, void * __restrict__ dst, const int64_t i0) {
-    const block_q5_1 * x = (const block_q5_1 *) vx;
+template <typename T, पूर्णाङ्क ne>
+स्थिर __dpct_inline__ शून्य dequantize_V_q5_1(ध्रुव शून्य * __restrict__ vx, शून्य * __restrict__ dst, ध्रुव int64_t i0) {
+    ध्रुव block_q5_1 * x = (ध्रुव block_q5_1 *) vx;
 
-    const int64_t ib    =  i0          /  QK5_1;
-    const int     idq   =  i0          %  QK5_1;
-    const int     iqs   =  i0          % (QK5_1/2);
-    const int     shift = (i0 % QK5_1) / (QK5_1/2);
+    ध्रुव int64_t ib    =  i0          /  QK5_1;
+    ध्रुव पूर्णाङ्क     idq   =  i0          %  QK5_1;
+    ध्रुव पूर्णाङ्क     iqs   =  i0          % (QK5_1/2);
+    ध्रुव पूर्णाङ्क     shift = (i0 % QK5_1) / (QK5_1/2);
 
-    int q;
+    पूर्णाङ्क q;
     static_assert(ne == 2 || ne == 4, "bad ne");
     ggml_sycl_memcpy_1<ne>(&q, x[ib].qs + iqs);
     q >>= 4*shift;
     q &= 0x0F0F0F0F;
 
     {
-        int qh;
+        पूर्णाङ्क qh;
         ggml_sycl_memcpy_1<ne>(&qh, x[ib].qh);
 #pragma unroll
-        for (int l = 0; l < ne; ++l) {
+        प्रति (पूर्णाङ्क l = 0; l < ne; ++l) {
             q |= ((qh >> (idq + l)) & 0x00000001) << (8*l + 4);
         }
     }
 
-    const int8_t * q8 = (const int8_t *) &q;
+    ध्रुव int8_t * q8 = (ध्रुव int8_t *) &q;
 
 #ifdef GGML_SYCL_F16
-    if constexpr (std::is_same_v<T, sycl::half>) {
-        const sycl::half2 dm = x[ib].dm;
-        const sycl::half2 d  = sycl::half2(dm[0]);
-        const sycl::half2 m  = sycl::half2(dm[1]);
+    यदि constexpr (std::is_same_v<T, sycl::half>) {
+        ध्रुव sycl::half2 dm = x[ib].dm;
+        ध्रुव sycl::half2 d  = sycl::half2(dm[0]);
+        ध्रुव sycl::half2 m  = sycl::half2(dm[1]);
 
 #pragma unroll
-        for (int l0 = 0; l0 < ne; l0 += 2) {
+        प्रति (पूर्णाङ्क l0 = 0; l0 < ne; l0 += 2) {
             ((sycl::half2 *) dst)[l0 / 2] = d * sycl::half2(q8[l0 + 0], q8[l0 + 1]) + m;
         }
-    } else
+    } अन्यथा
 #endif // GGML_SYCL_F16
-    if constexpr (std::is_same_v<T, float>) {
-        const sycl::float2 dm = (x[ib].dm).template convert<float, sycl::rounding_mode::automatic>();
+    यदि constexpr (std::is_same_v<T, भिन्न>) {
+        ध्रुव sycl::float2 dm = (x[ib].dm).template convert<भिन्न, sycl::rounding_mode::automatic>();
 
 #pragma unroll
-        for (int l = 0; l < ne; ++l) {
-            ((float *) dst)[l] = dm.x() * q8[l] + dm.y();
+        प्रति (पूर्णाङ्क l = 0; l < ne; ++l) {
+            ((भिन्न *) dst)[l] = dm.x() * q8[l] + dm.y();
         }
-    } else {
-        static_assert(std::is_same_v<T, void>, "bad type");
+    } अन्यथा {
+        static_assert(std::is_same_v<T, शून्य>, "bad type");
     }
 }
 
-template <typename T, int ne>
-static __dpct_inline__ void dequantize_V_q8_0(const void * __restrict__ vx, void * __restrict__ dst, const int64_t i0) {
-    const block_q8_0 * x = (const block_q8_0 *) vx;
+template <typename T, पूर्णाङ्क ne>
+स्थिर __dpct_inline__ शून्य dequantize_V_q8_0(ध्रुव शून्य * __restrict__ vx, शून्य * __restrict__ dst, ध्रुव int64_t i0) {
+    ध्रुव block_q8_0 * x = (ध्रुव block_q8_0 *) vx;
 
-    const int64_t ib  = i0 / QK8_0;
-    const int     iqs = i0 % QK8_0;
+    ध्रुव int64_t ib  = i0 / QK8_0;
+    ध्रुव पूर्णाङ्क     iqs = i0 % QK8_0;
 
     static_assert(ne % 2 == 0, "bad ne");
     int8_t qs[ne];
     ggml_sycl_memcpy_1<ne, 2>(qs, x[ib].qs + iqs);
 
 #ifdef GGML_SYCL_F16
-    if constexpr (std::is_same<T, sycl::half>::value) {
-        const sycl::half2 d = sycl::half2(x[ib].d);
+    यदि constexpr (std::is_same<T, sycl::half>::value) {
+        ध्रुव sycl::half2 d = sycl::half2(x[ib].d);
 
 #pragma unroll
-        for (int l0 = 0; l0 < ne; l0 += 2) {
+        प्रति (पूर्णाङ्क l0 = 0; l0 < ne; l0 += 2) {
             ((sycl::half2 *) dst)[l0 / 2] = d * make_half2(qs[l0 + 0], qs[l0 + 1]);
         }
-    } else
+    } अन्यथा
 #endif // GGML_SYCL_F16
-    if constexpr (std::is_same<T, float>::value) {
-        const float d = x[ib].d;
+    यदि constexpr (std::is_same<T, भिन्न>::value) {
+        ध्रुव भिन्न d = x[ib].d;
 
 #pragma unroll
-        for (int l = 0; l < ne; ++l) {
-            ((float *) dst)[l] = d * qs[l];
+        प्रति (पूर्णाङ्क l = 0; l < ne; ++l) {
+            ((भिन्न *) dst)[l] = d * qs[l];
         }
-    } else {
-        static_assert(std::is_same_v<T, void>, "unsupported type");
+    } अन्यथा {
+        static_assert(std::is_same_v<T, शून्य>, "unsupported type");
     }
 }
 
-template <int type_K, int D, int nthreads, int warp_size>
+template <पूर्णाङ्क type_K, पूर्णाङ्क D, पूर्णाङ्क nthreads, पूर्णाङ्क warp_size>
 constexpr vec_dot_KQ_t get_vec_dot_KQ() {
-    if constexpr (type_K == GGML_TYPE_F16) {
-        return vec_dot_fattn_vec_KQ_f16<D, nthreads>;
-    } else if constexpr (type_K == GGML_TYPE_Q4_0) {
-        return vec_dot_fattn_vec_KQ_q4_0<D, nthreads, warp_size>;
-    } else if constexpr (type_K == GGML_TYPE_Q4_1) {
-        return vec_dot_fattn_vec_KQ_q4_1<D, nthreads, warp_size>;
-    } else if constexpr (type_K == GGML_TYPE_Q5_0) {
-        return vec_dot_fattn_vec_KQ_q5_0<D, nthreads, warp_size>;
-    } else if constexpr (type_K == GGML_TYPE_Q5_1) {
-        return vec_dot_fattn_vec_KQ_q5_1<D, nthreads, warp_size>;
-    } else if constexpr (type_K == GGML_TYPE_Q8_0) {
-        return vec_dot_fattn_vec_KQ_q8_0<D, nthreads, warp_size>;
-    } else {
+    यदि constexpr (type_K == GGML_TYPE_F16) {
+        प्रत्यागम vec_dot_fattn_vec_KQ_f16<D, nthreads>;
+    } अन्यथा यदि constexpr (type_K == GGML_TYPE_Q4_0) {
+        प्रत्यागम vec_dot_fattn_vec_KQ_q4_0<D, nthreads, warp_size>;
+    } अन्यथा यदि constexpr (type_K == GGML_TYPE_Q4_1) {
+        प्रत्यागम vec_dot_fattn_vec_KQ_q4_1<D, nthreads, warp_size>;
+    } अन्यथा यदि constexpr (type_K == GGML_TYPE_Q5_0) {
+        प्रत्यागम vec_dot_fattn_vec_KQ_q5_0<D, nthreads, warp_size>;
+    } अन्यथा यदि constexpr (type_K == GGML_TYPE_Q5_1) {
+        प्रत्यागम vec_dot_fattn_vec_KQ_q5_1<D, nthreads, warp_size>;
+    } अन्यथा यदि constexpr (type_K == GGML_TYPE_Q8_0) {
+        प्रत्यागम vec_dot_fattn_vec_KQ_q8_0<D, nthreads, warp_size>;
+    } अन्यथा {
         static_assert(type_K == -1, "bad type");
-        return nullptr;
+        प्रत्यागम nullptr;
     }
 }
 
-template <int type_V, typename T, int ne>
+template <पूर्णाङ्क type_V, typename T, पूर्णाङ्क ne>
 constexpr dequantize_V_t get_dequantize_V() {
-    if constexpr (type_V == GGML_TYPE_F16) {
-        return dequantize_V_f16<T, ne>;
-    } else if constexpr (type_V == GGML_TYPE_Q4_0) {
-        return dequantize_V_q4_0<T, ne>;
-    } else if constexpr (type_V == GGML_TYPE_Q4_1) {
-        return dequantize_V_q4_1<T, ne>;
-    } else if constexpr (type_V == GGML_TYPE_Q5_0) {
-        return dequantize_V_q5_0<T, ne>;
-    } else if constexpr (type_V == GGML_TYPE_Q5_1) {
-        return dequantize_V_q5_1<T, ne>;
-    } else if constexpr (type_V == GGML_TYPE_Q8_0) {
-        return dequantize_V_q8_0<T, ne>;
-    } else {
+    यदि constexpr (type_V == GGML_TYPE_F16) {
+        प्रत्यागम dequantize_V_f16<T, ne>;
+    } अन्यथा यदि constexpr (type_V == GGML_TYPE_Q4_0) {
+        प्रत्यागम dequantize_V_q4_0<T, ne>;
+    } अन्यथा यदि constexpr (type_V == GGML_TYPE_Q4_1) {
+        प्रत्यागम dequantize_V_q4_1<T, ne>;
+    } अन्यथा यदि constexpr (type_V == GGML_TYPE_Q5_0) {
+        प्रत्यागम dequantize_V_q5_0<T, ne>;
+    } अन्यथा यदि constexpr (type_V == GGML_TYPE_Q5_1) {
+        प्रत्यागम dequantize_V_q5_1<T, ne>;
+    } अन्यथा यदि constexpr (type_V == GGML_TYPE_Q8_0) {
+        प्रत्यागम dequantize_V_q8_0<T, ne>;
+    } अन्यथा {
         static_assert(type_V == -1, "bad type");
-        return nullptr;
+        प्रत्यागम nullptr;
     }
 }
 
-template <int ncols1, int warp_size>
-static void flash_attn_mask_to_KV_max(const sycl::half2 * __restrict__ mask,
-                                      int * __restrict__ KV_max,
-                                      const int ne30,
-                                      const int s31,
-                                      const int s33,
-                                      int *     buf_iw) {
+template <पूर्णाङ्क ncols1, पूर्णाङ्क warp_size>
+स्थिर शून्य flash_attn_mask_to_KV_max(ध्रुव sycl::half2 * __restrict__ mask,
+                                      पूर्णाङ्क * __restrict__ KV_max,
+                                      ध्रुव पूर्णाङ्क ne30,
+                                      ध्रुव पूर्णाङ्क s31,
+                                      ध्रुव पूर्णाङ्क s33,
+                                      पूर्णाङ्क *     buf_iw) {
     auto      item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    const int ne31     = item_ct1.get_group_range(2);
-    const int tid      = item_ct1.get_local_id(2);
-    const int sequence = item_ct1.get_group(1);
-    const int jt       = item_ct1.get_group(2);
+    ध्रुव पूर्णाङ्क ne31     = item_ct1.get_group_range(2);
+    ध्रुव पूर्णाङ्क tid      = item_ct1.get_local_id(2);
+    ध्रुव पूर्णाङ्क sequence = item_ct1.get_group(1);
+    ध्रुव पूर्णाङ्क jt       = item_ct1.get_group(2);
 
     mask += sequence*s33 + jt*ncols1*s31;
 
-    if (tid < warp_size) {
+    यदि (tid < warp_size) {
         buf_iw[tid] = 1;
     }
     item_ct1.barrier(sycl::access::fence_space::local_space);
 
-    int KV_max_sj = (ne30 - 1) * FATTN_KQ_STRIDE;
-    for (; KV_max_sj >= 0; KV_max_sj -= FATTN_KQ_STRIDE) {
-        int all_inf = 1;
+    पूर्णाङ्क KV_max_sj = (ne30 - 1) * FATTN_KQ_STRIDE;
+    प्रति (; KV_max_sj >= 0; KV_max_sj -= FATTN_KQ_STRIDE) {
+        पूर्णाङ्क all_inf = 1;
 
 #pragma unroll
-        for (int j = 0; j < ncols1; ++j) {
-            const sycl::float2 tmp =
-                mask[j * s31 + KV_max_sj / 2 + tid].template convert<float, sycl::rounding_mode::automatic>();
-            all_inf = all_inf && int(sycl::isinf((float) (tmp.x()))) && int(sycl::isinf((float) (tmp.y())));
+        प्रति (पूर्णाङ्क j = 0; j < ncols1; ++j) {
+            ध्रुव sycl::float2 tmp =
+                mask[j * s31 + KV_max_sj / 2 + tid].template convert<भिन्न, sycl::rounding_mode::automatic>();
+            all_inf = all_inf && पूर्णाङ्क(sycl::isinf((भिन्न) (tmp.x()))) && पूर्णाङ्क(sycl::isinf((भिन्न) (tmp.y())));
         }
 
         all_inf = warp_reduce_all<warp_size>(all_inf);
-        if (tid % warp_size == 0) {
+        यदि (tid % warp_size == 0) {
             buf_iw[tid / warp_size] = all_inf;
         }
         item_ct1.barrier(sycl::access::fence_space::local_space);
@@ -655,8 +655,8 @@ static void flash_attn_mask_to_KV_max(const sycl::half2 * __restrict__ mask,
         item_ct1.barrier(sycl::access::fence_space::local_space);
         all_inf = warp_reduce_all<warp_size>(all_inf);
 
-        if (!all_inf) {
-            break;
+        यदि (!all_inf) {
+            भङ्ग;
         }
     }
 
@@ -665,101 +665,101 @@ static void flash_attn_mask_to_KV_max(const sycl::half2 * __restrict__ mask,
     // In either case, walk back the decrementation by FATTN_KQ_STRIDE.
     KV_max_sj += FATTN_KQ_STRIDE;
 
-    if (item_ct1.get_local_id(2) != 0) {
-        return;
+    यदि (item_ct1.get_local_id(2) != 0) {
+        प्रत्यागम;
     }
 
     KV_max[sequence*ne31 + jt] = KV_max_sj;
 }
 
-template <int D, int ncols1, int ncols2>  // D == head size
+template <पूर्णाङ्क D, पूर्णाङ्क ncols1, पूर्णाङ्क ncols2>  // D == head size
 
-static void flash_attn_stream_k_fixup(float * __restrict__ dst,
-                                      const sycl::float2 * __restrict__ dst_fixup,
-                                      const int ne01,
-                                      const int ne02,
-                                      const int ne03,
-                                      const int ne11,
-                                      const int ne12,
-                                      const int nbatch_fa) {
+स्थिर शून्य flash_attn_stream_k_fixup(भिन्न * __restrict__ dst,
+                                      ध्रुव sycl::float2 * __restrict__ dst_fixup,
+                                      ध्रुव पूर्णाङ्क ne01,
+                                      ध्रुव पूर्णाङ्क ne02,
+                                      ध्रुव पूर्णाङ्क ne03,
+                                      ध्रुव पूर्णाङ्क ne11,
+                                      ध्रुव पूर्णाङ्क ne12,
+                                      ध्रुव पूर्णाङ्क nbatch_fa) {
     auto          item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    constexpr int ncols    = ncols1 * ncols2;
+    constexpr पूर्णाङ्क ncols    = ncols1 * ncols2;
 
-    const int bidx0 = item_ct1.get_group(2);
-    const int j     = item_ct1.get_group(1);
-    const int c     = item_ct1.get_group(0);
-    const int jc    = j*ncols2 + c;
-    const int tid   = item_ct1.get_local_id(2);
+    ध्रुव पूर्णाङ्क bidx0 = item_ct1.get_group(2);
+    ध्रुव पूर्णाङ्क j     = item_ct1.get_group(1);
+    ध्रुव पूर्णाङ्क c     = item_ct1.get_group(0);
+    ध्रुव पूर्णाङ्क jc    = j*ncols2 + c;
+    ध्रुव पूर्णाङ्क tid   = item_ct1.get_local_id(2);
 
-    const float * dst_fixup_data = ((const float *) dst_fixup) + item_ct1.get_group_range(2) * (2 * 2 * ncols);
+    ध्रुव भिन्न * dst_fixup_data = ((ध्रुव भिन्न *) dst_fixup) + item_ct1.get_group_range(2) * (2 * 2 * ncols);
 
-    const int gqa_ratio = ne02 / ne12; // With grouped query attention there are > 1 Q matrices per K, V matrix.
+    ध्रुव पूर्णाङ्क gqa_ratio = ne02 / ne12; // With grouped query attention there are > 1 Q matrices per K, V matrix.
 
-    const int iter_k     = (ne11      + (nbatch_fa - 1)) / nbatch_fa;
-    const int iter_j     = (ne01      + (ncols1    - 1)) / ncols1;
-    const int iter_z_gqa = (gqa_ratio + (ncols2    - 1)) / ncols2;
+    ध्रुव पूर्णाङ्क iter_k     = (ne11      + (nbatch_fa - 1)) / nbatch_fa;
+    ध्रुव पूर्णाङ्क iter_j     = (ne01      + (ncols1    - 1)) / ncols1;
+    ध्रुव पूर्णाङ्क iter_z_gqa = (gqa_ratio + (ncols2    - 1)) / ncols2;
 
-    const int kbc0 = int64_t(bidx0 + 0) * (iter_k * iter_j * iter_z_gqa * ne12 * ne03) / item_ct1.get_group_range(2);
-    const int kbc0_stop =
+    ध्रुव पूर्णाङ्क kbc0 = int64_t(bidx0 + 0) * (iter_k * iter_j * iter_z_gqa * ne12 * ne03) / item_ct1.get_group_range(2);
+    ध्रुव पूर्णाङ्क kbc0_stop =
         int64_t(bidx0 + 1) * (iter_k * iter_j * iter_z_gqa * ne12 * ne03) / item_ct1.get_group_range(2);
 
-    const bool did_not_have_any_data   = kbc0 == kbc0_stop;
-    const bool wrote_beginning_of_tile = kbc0 % iter_k == 0;
-    const bool did_not_write_last      = kbc0/iter_k == kbc0_stop/iter_k && kbc0_stop % iter_k != 0;
-    if (did_not_have_any_data || wrote_beginning_of_tile || did_not_write_last) {
-        return;
+    ध्रुव तार्किक did_not_have_any_data   = kbc0 == kbc0_stop;
+    ध्रुव तार्किक wrote_beginning_of_tile = kbc0 % iter_k == 0;
+    ध्रुव तार्किक did_not_write_last      = kbc0/iter_k == kbc0_stop/iter_k && kbc0_stop % iter_k != 0;
+    यदि (did_not_have_any_data || wrote_beginning_of_tile || did_not_write_last) {
+        प्रत्यागम;
     }
 
     // z_KV == K/V head index, zt_gqa = Q head start index per K/V head, jt = token position start index
-    const int sequence =  kbc0 /(iter_k*iter_j*iter_z_gqa*ne12);
-    const int z_KV     = (kbc0 - iter_k*iter_j*iter_z_gqa*ne12 * sequence)/(iter_k*iter_j*iter_z_gqa);
-    const int zt_gqa   = (kbc0 - iter_k*iter_j*iter_z_gqa*ne12 * sequence - iter_k*iter_j*iter_z_gqa * z_KV)/(iter_k*iter_j);
-    const int jt       = (kbc0 - iter_k*iter_j*iter_z_gqa*ne12 * sequence - iter_k*iter_j*iter_z_gqa * z_KV - iter_k*iter_j * zt_gqa) / iter_k;
+    ध्रुव पूर्णाङ्क sequence =  kbc0 /(iter_k*iter_j*iter_z_gqa*ne12);
+    ध्रुव पूर्णाङ्क z_KV     = (kbc0 - iter_k*iter_j*iter_z_gqa*ne12 * sequence)/(iter_k*iter_j*iter_z_gqa);
+    ध्रुव पूर्णाङ्क zt_gqa   = (kbc0 - iter_k*iter_j*iter_z_gqa*ne12 * sequence - iter_k*iter_j*iter_z_gqa * z_KV)/(iter_k*iter_j);
+    ध्रुव पूर्णाङ्क jt       = (kbc0 - iter_k*iter_j*iter_z_gqa*ne12 * sequence - iter_k*iter_j*iter_z_gqa * z_KV - iter_k*iter_j * zt_gqa) / iter_k;
 
-    const int zt_Q = z_KV*gqa_ratio + zt_gqa*ncols2; // Global Q head start index.
+    ध्रुव पूर्णाङ्क zt_Q = z_KV*gqa_ratio + zt_gqa*ncols2; // Global Q head start index.
 
-    if (jt*ncols1 + j >= ne01 || zt_gqa*ncols2 + c >= gqa_ratio) {
-        return;
+    यदि (jt*ncols1 + j >= ne01 || zt_gqa*ncols2 + c >= gqa_ratio) {
+        प्रत्यागम;
     }
 
     dst += sequence*ne02*ne01*D + jt*ne02*(ncols1*D) + zt_Q*D + (j*ne02 + c)*D + tid;
 
     // Load the partial result that needs a fixup:
-    float dst_val = 0.0f;
-    float max_val = 0.0f;
-    float rowsum  = 0.0f;
+    भिन्न dst_val = 0.0f;
+    भिन्न max_val = 0.0f;
+    भिन्न rowsum  = 0.0f;
     {
         dst_val = *dst;
 
-        const sycl::float2 tmp = dst_fixup[bidx0 * ncols + jc];
+        ध्रुव sycl::float2 tmp = dst_fixup[bidx0 * ncols + jc];
         max_val                = tmp.x();
         rowsum                 = tmp.y();
     }
 
     // Iterate over previous blocks and compute the combined results.
     // All SYCL blocks that get here must have a previous block that needs a fixup.
-    int bidx = bidx0 - 1;
-    int kbc_stop = kbc0;
-    while(true) {
-        const int kbc = int64_t(bidx) * (iter_k * iter_j * iter_z_gqa * ne12 * ne03) / item_ct1.get_group_range(2);
-        if (kbc == kbc_stop) { // Did not have any data.
+    पूर्णाङ्क bidx = bidx0 - 1;
+    पूर्णाङ्क kbc_stop = kbc0;
+    यावत्(सत्य) {
+        ध्रुव पूर्णाङ्क kbc = int64_t(bidx) * (iter_k * iter_j * iter_z_gqa * ne12 * ne03) / item_ct1.get_group_range(2);
+        यदि (kbc == kbc_stop) { // Did not have any data.
             bidx--;
             kbc_stop = kbc;
-            continue;
+            अनुवर्त;
         }
 
-        const float dst_add = dst_fixup_data[bidx*ncols*D + jc*D + tid];
+        ध्रुव भिन्न dst_add = dst_fixup_data[bidx*ncols*D + jc*D + tid];
 
-        const sycl::float2 tmp = dst_fixup[(item_ct1.get_group_range(2) + bidx) * ncols + jc];
+        ध्रुव sycl::float2 tmp = dst_fixup[(item_ct1.get_group_range(2) + bidx) * ncols + jc];
 
         // Scale the current and new value accumulators depending on the max. values.
-        const float max_val_new = sycl::fmax(max_val, tmp.x());
+        ध्रुव भिन्न max_val_new = sycl::fmax(max_val, tmp.x());
 
-        const float diff_val = max_val - max_val_new;
-        const float diff_add = tmp.x() - max_val_new;
+        ध्रुव भिन्न diff_val = max_val - max_val_new;
+        ध्रुव भिन्न diff_add = tmp.x() - max_val_new;
 
-        const float scale_val = diff_val >= SOFTMAX_FTZ_THRESHOLD ? sycl::native::exp(diff_val) : 0.0f;
-        const float scale_add = diff_add >= SOFTMAX_FTZ_THRESHOLD ? sycl::native::exp(diff_add) : 0.0f;
+        ध्रुव भिन्न scale_val = diff_val >= SOFTMAX_FTZ_THRESHOLD ? sycl::native::exp(diff_val) : 0.0f;
+        ध्रुव भिन्न scale_add = diff_add >= SOFTMAX_FTZ_THRESHOLD ? sycl::native::exp(diff_add) : 0.0f;
 
         dst_val = scale_val*dst_val + scale_add*dst_add;
         rowsum  = scale_val * rowsum + scale_add * tmp.y();
@@ -767,8 +767,8 @@ static void flash_attn_stream_k_fixup(float * __restrict__ dst,
         max_val = max_val_new;
 
         // If this block started in a previous tile we are done and don't need to combine additional partial results.
-        if (kbc % iter_k == 0 || kbc/iter_k < kbc0/iter_k) {
-            break;
+        यदि (kbc % iter_k == 0 || kbc/iter_k < kbc0/iter_k) {
+            भङ्ग;
         }
         bidx--;
         kbc_stop = kbc;
@@ -778,12 +778,12 @@ static void flash_attn_stream_k_fixup(float * __restrict__ dst,
     *dst = dst_val / rowsum;
 }
 
-template <int D>  // D == head size
+template <पूर्णाङ्क D>  // D == head size
 
-static void flash_attn_combine_results(const float * __restrict__ VKQ_parts,
-                                       const sycl::float2 * __restrict__ VKQ_meta,
-                                       float * __restrict__ dst,
-                                       const int parallel_blocks,
+स्थिर शून्य flash_attn_combine_results(ध्रुव भिन्न * __restrict__ VKQ_parts,
+                                       ध्रुव sycl::float2 * __restrict__ VKQ_meta,
+                                       भिन्न * __restrict__ dst,
+                                       ध्रुव पूर्णाङ्क parallel_blocks,
                                        uint8_t * dpct_local) {
     // Dimension 0: threadIdx.x
     // Dimension 1: blockIdx.x
@@ -792,38 +792,38 @@ static void flash_attn_combine_results(const float * __restrict__ VKQ_parts,
     // Memory layout is permuted with [0, 2, 1, 3]
 
     auto      item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    const int ne01     = item_ct1.get_group_range(2);
-    const int ne02     = item_ct1.get_group_range(1);
+    ध्रुव पूर्णाङ्क ne01     = item_ct1.get_group_range(2);
+    ध्रुव पूर्णाङ्क ne02     = item_ct1.get_group_range(1);
 
-    const int col      = item_ct1.get_group(2);
-    const int head     = item_ct1.get_group(1);
-    const int sequence = item_ct1.get_group(0);
+    ध्रुव पूर्णाङ्क col      = item_ct1.get_group(2);
+    ध्रुव पूर्णाङ्क head     = item_ct1.get_group(1);
+    ध्रुव पूर्णाङ्क sequence = item_ct1.get_group(0);
 
-    const int j_dst_unrolled = (sequence*ne01 + col)*ne02 + head;
+    ध्रुव पूर्णाङ्क j_dst_unrolled = (sequence*ne01 + col)*ne02 + head;
 
     VKQ_parts += j_dst_unrolled * parallel_blocks*D;
     VKQ_meta  += j_dst_unrolled * parallel_blocks;
     dst       += j_dst_unrolled *                 D;
 
-    const int tid = item_ct1.get_local_id(2);
+    ध्रुव पूर्णाङ्क tid = item_ct1.get_local_id(2);
     __builtin_assume(tid < D);
 
     auto meta = (sycl::float2 *) dpct_local;
-    for (int i = tid; i < 2*parallel_blocks; i += D) {
-        ((float *) meta)[i] = ((const float *)VKQ_meta) [i];
+    प्रति (पूर्णाङ्क i = tid; i < 2*parallel_blocks; i += D) {
+        ((भिन्न *) meta)[i] = ((ध्रुव भिन्न *)VKQ_meta) [i];
     }
 
     item_ct1.barrier(sycl::access::fence_space::local_space);
 
-    float kqmax = meta[0].x();
-    for (int l = 1; l < parallel_blocks; ++l) {
+    भिन्न kqmax = meta[0].x();
+    प्रति (पूर्णाङ्क l = 1; l < parallel_blocks; ++l) {
         kqmax = sycl::max(kqmax, meta[l].x());
     }
 
-    float VKQ_numerator   = 0.0f;
-    float VKQ_denominator = 0.0f;
-    for (int l = 0; l < parallel_blocks; ++l) {
-        const float KQ_max_scale = sycl::native::exp(meta[l].x() - kqmax);
+    भिन्न VKQ_numerator   = 0.0f;
+    भिन्न VKQ_denominator = 0.0f;
+    प्रति (पूर्णाङ्क l = 0; l < parallel_blocks; ++l) {
+        ध्रुव भिन्न KQ_max_scale = sycl::native::exp(meta[l].x() - kqmax);
 
         VKQ_numerator   += KQ_max_scale * VKQ_parts[l*D + tid];
         VKQ_denominator += KQ_max_scale * meta[l].y();
@@ -835,76 +835,76 @@ static void flash_attn_combine_results(const float * __restrict__ VKQ_parts,
 // Carries the sub-group size (and grf_size_automatic when use_large_grf) as
 // kernel properties via get(properties_tag), in place of the
 // reqd_sub_group_size attribute and the deprecated parallel_for overload.
-template <typename KernelFunc, uint32_t Size, bool UseGrf>
-struct props_kernel {
+template <typename KernelFunc, uint32_t Size, तार्किक UseGrf>
+संरचना props_kernel {
     KernelFunc kernel;
 
-    void operator()(sycl::nd_item<3> item) const {
+    शून्य operator()(sycl::nd_item<3> item) ध्रुव {
         kernel(item);
     }
 
-    auto get(sycl::ext::oneapi::experimental::properties_tag) const {
-        if constexpr (UseGrf) {
-            return sycl::ext::oneapi::experimental::properties{
+    auto get(sycl::ext::oneapi::experimental::properties_tag) ध्रुव {
+        यदि constexpr (UseGrf) {
+            प्रत्यागम sycl::ext::oneapi::experimental::properties{
                 sycl::ext::intel::experimental::grf_size_automatic,
                 sycl::ext::oneapi::experimental::sub_group_size<Size> };
-        } else {
-            return sycl::ext::oneapi::experimental::properties{
+        } अन्यथा {
+            प्रत्यागम sycl::ext::oneapi::experimental::properties{
                 sycl::ext::oneapi::experimental::sub_group_size<Size> };
         }
     }
 };
 
-template <fattn_kernel_t fattn_kernel, int warp_size, bool use_large_grf = false>
-static void lauch_kernel(
+template <fattn_kernel_t fattn_kernel, पूर्णाङ्क warp_size, तार्किक use_large_grf = असत्य>
+स्थिर शून्य lauch_kernel(
     dpct::dim3 group_range,
     dpct::dim3 local_range,
     queue_ptr q,
-    unsigned int local_mem_size,
-    const char* __restrict__ Q,
-    const char* __restrict__ K,
-    const char* __restrict__ V,
-    const char* __restrict__ mask,
-    const char* __restrict__ sinks,
-    const int* __restrict__ KV_max,
-    float* __restrict__ dst,
+    unsigned पूर्णाङ्क local_mem_size,
+    ध्रुव वर्ण* __restrict__ Q,
+    ध्रुव वर्ण* __restrict__ K,
+    ध्रुव वर्ण* __restrict__ V,
+    ध्रुव वर्ण* __restrict__ mask,
+    ध्रुव वर्ण* __restrict__ sinks,
+    ध्रुव पूर्णाङ्क* __restrict__ KV_max,
+    भिन्न* __restrict__ dst,
     sycl::float2* __restrict__ dst_meta,
-    const float scale,
-    const float max_bias,
-    const float m0,
-    const float m1,
-    const uint32_t n_head_log2,
-    const float logit_softcap,
-    const int32_t ne00,
-    const sycl::uint3 ne01,
-    const int32_t ne02,
-    const int32_t ne03,
-    const int32_t nb01,
-    const int32_t nb02,
-    const int32_t nb03,
-    const int32_t ne10,
-    const int32_t ne11,
-    const int32_t ne12,
-    const int32_t ne13,
-    const int32_t nb11,
-    const int32_t nb12,
-    const int64_t nb13,
-    const int32_t nb21,
-    const int32_t nb22,
-    const int64_t nb23,
-    const int32_t ne31,
-    const int32_t ne32,
-    const int32_t ne33,
-    const int32_t nb31,
-    const int32_t nb32,
-    const int64_t nb33) {
+    ध्रुव भिन्न scale,
+    ध्रुव भिन्न max_bias,
+    ध्रुव भिन्न m0,
+    ध्रुव भिन्न m1,
+    ध्रुव uint32_t n_head_log2,
+    ध्रुव भिन्न logit_softcap,
+    ध्रुव int32_t ne00,
+    ध्रुव sycl::uint3 ne01,
+    ध्रुव int32_t ne02,
+    ध्रुव int32_t ne03,
+    ध्रुव int32_t nb01,
+    ध्रुव int32_t nb02,
+    ध्रुव int32_t nb03,
+    ध्रुव int32_t ne10,
+    ध्रुव int32_t ne11,
+    ध्रुव int32_t ne12,
+    ध्रुव int32_t ne13,
+    ध्रुव int32_t nb11,
+    ध्रुव int32_t nb12,
+    ध्रुव int64_t nb13,
+    ध्रुव int32_t nb21,
+    ध्रुव int32_t nb22,
+    ध्रुव int64_t nb23,
+    ध्रुव int32_t ne31,
+    ध्रुव int32_t ne32,
+    ध्रुव int32_t ne33,
+    ध्रुव int32_t nb31,
+    ध्रुव int32_t nb32,
+    ध्रुव int64_t nb33) {
     GGML_UNUSED(local_mem_size);
 
-    const auto rng = sycl::nd_range<3>(
+    ध्रुव auto rng = sycl::nd_range<3>(
         static_cast<sycl::range<3>>(group_range * local_range),
         static_cast<sycl::range<3>>(local_range));
 
-    const auto kernel = [=](sycl::nd_item<3> item_ct1) {
+    ध्रुव auto kernel = [=](sycl::nd_item<3> item_ct1) {
         GGML_UNUSED(item_ct1);
         fattn_kernel(Q, K, V, mask, sinks, KV_max, dst, dst_meta, scale,
                      max_bias, m0, m1, n_head_log2, logit_softcap, ne00,
@@ -920,21 +920,21 @@ static void lauch_kernel(
 }
 
 // use_large_grf lets the compiler choose the large register file. Opt in where spilling limits the kernel, not thread occupancy.
-template <int DV, int ncols1, int ncols2, fattn_kernel_t fattn_kernel, int warp_size, bool use_large_grf = false>
-void launch_fattn(
-    ggml_backend_sycl_context & ctx, ggml_tensor * dst, const int nwarps, const size_t nbytes_shared,
-    const int nbatch_fa, const bool need_f16_K, const bool need_f16_V, const bool stream_k) {
+template <पूर्णाङ्क DV, पूर्णाङ्क ncols1, पूर्णाङ्क ncols2, fattn_kernel_t fattn_kernel, पूर्णाङ्क warp_size, तार्किक use_large_grf = असत्य>
+शून्य launch_fattn(
+    ggml_backend_sycl_context & ctx, ggml_tensor * dst, ध्रुव पूर्णाङ्क nwarps, ध्रुव size_t nbytes_shared,
+    ध्रुव पूर्णाङ्क nbatch_fa, ध्रुव तार्किक need_f16_K, ध्रुव तार्किक need_f16_V, ध्रुव तार्किक stream_k) {
 
-    constexpr int ncols = ncols1 * ncols2;
+    constexpr पूर्णाङ्क ncols = ncols1 * ncols2;
 
-    const ggml_tensor * Q = dst->src[0];
-    const ggml_tensor * K = dst->src[1];
-    const ggml_tensor * V = dst->src[2];
+    ध्रुव ggml_tensor * Q = dst->src[0];
+    ध्रुव ggml_tensor * K = dst->src[1];
+    ध्रुव ggml_tensor * V = dst->src[2];
 
-    const bool V_is_K_view = V->view_src && (V->view_src == K || (V->view_src == K->view_src && V->view_offs == K->view_offs));
+    ध्रुव तार्किक V_is_K_view = V->view_src && (V->view_src == K || (V->view_src == K->view_src && V->view_offs == K->view_offs));
 
-    const ggml_tensor * mask  = dst->src[3];
-    const ggml_tensor * sinks = dst->src[4];
+    ध्रुव ggml_tensor * mask  = dst->src[3];
+    ध्रुव ggml_tensor * sinks = dst->src[4];
 
     ggml_tensor * KQV = dst;
 
@@ -949,117 +949,117 @@ void launch_fattn(
 
     ggml_sycl_pool & pool = ctx.pool();
     dpct::queue_ptr  main_stream = ctx.stream();
-    const int id  = ggml_sycl_get_device();
-    const int nsm = ggml_sycl_info().devices[id].nsm;
+    ध्रुव पूर्णाङ्क id  = ggml_sycl_get_device();
+    ध्रुव पूर्णाङ्क nsm = ggml_sycl_info().devices[id].nsm;
 
-    const ggml_sycl_fattn_extra  extra = ggml_sycl_fattn_get_extra(dst);
-    ggml_sycl_pool_alloc<int>    KV_max(pool);
-    ggml_sycl_pool_alloc<float>  dst_tmp(pool);
+    ध्रुव ggml_sycl_fattn_extra  extra = ggml_sycl_fattn_get_extra(dst);
+    ggml_sycl_pool_alloc<पूर्णाङ्क>    KV_max(pool);
+    ggml_sycl_pool_alloc<भिन्न>  dst_tmp(pool);
     ggml_sycl_pool_alloc<sycl::float2> dst_tmp_meta(pool);
 
-    const char * K_data = (const char *) K->data;
+    ध्रुव वर्ण * K_data = (ध्रुव वर्ण *) K->data;
     size_t nb11 = K->nb[1];
     size_t nb12 = K->nb[2];
     size_t nb13 = K->nb[3];
 
-    const char * V_data = (const char *) V->data;
+    ध्रुव वर्ण * V_data = (ध्रुव वर्ण *) V->data;
     size_t nb21 = V->nb[1];
     size_t nb22 = V->nb[2];
     size_t nb23 = V->nb[3];
 
-    if (need_f16_K && K->type != GGML_TYPE_F16) {
-        const size_t bs = ggml_blck_size(K->type);
-        const size_t ts = ggml_type_size(K->type);
+    यदि (need_f16_K && K->type != GGML_TYPE_F16) {
+        ध्रुव size_t bs = ggml_blck_size(K->type);
+        ध्रुव size_t ts = ggml_type_size(K->type);
 
         GGML_ASSERT(extra.K_buffer_ptr);
         sycl::half * K_f16_ptr = (sycl::half *) extra.K_buffer_ptr;
-        if (ggml_is_contiguously_allocated(K)) {
+        यदि (ggml_is_contiguously_allocated(K)) {
             to_fp16_sycl_t to_fp16 = ggml_get_to_fp16_sycl(K->type, dst);
             to_fp16(K_data, K_f16_ptr, ggml_nelements(K), main_stream);
 
-            nb11 = nb11 * bs * sizeof(sycl::half) / ts;
-            nb12 = nb12 * bs * sizeof(sycl::half) / ts;
-            nb13 = nb13 * bs * sizeof(sycl::half) / ts;
-        } else {
+            nb11 = nb11 * bs * परिमाण(sycl::half) / ts;
+            nb12 = nb12 * bs * परिमाण(sycl::half) / ts;
+            nb13 = nb13 * bs * परिमाण(sycl::half) / ts;
+        } अन्यथा {
             GGML_ASSERT(K->nb[0] == ts);
             to_fp16_nc_sycl_t to_fp16 = ggml_get_to_fp16_nc_sycl(K->type);
-            const int64_t s01 = nb11 / ts;
-            const int64_t s02 = nb12 / ts;
-            const int64_t s03 = nb13 / ts;
+            ध्रुव int64_t s01 = nb11 / ts;
+            ध्रुव int64_t s02 = nb12 / ts;
+            ध्रुव int64_t s03 = nb13 / ts;
             to_fp16(K_data, K_f16_ptr, K->ne[0], K->ne[1], K->ne[2], K->ne[3], s01, s02, s03, main_stream);
 
-            nb11 = K->ne[0] * sizeof(sycl::half);
+            nb11 = K->ne[0] * परिमाण(sycl::half);
             nb12 = K->ne[1] * nb11;
             nb13 = K->ne[2] * nb12;
         }
-        K_data = (char *) K_f16_ptr;
+        K_data = (वर्ण *) K_f16_ptr;
     }
 
-    if (need_f16_V && V->type != GGML_TYPE_F16) {
-        if (V_is_K_view) {
+    यदि (need_f16_V && V->type != GGML_TYPE_F16) {
+        यदि (V_is_K_view) {
             V_data = K_data;
             nb21   = nb11;
             nb22   = nb12;
             nb23   = nb13;
-        } else {
-            const size_t bs = ggml_blck_size(V->type);
-            const size_t ts = ggml_type_size(V->type);
+        } अन्यथा {
+            ध्रुव size_t bs = ggml_blck_size(V->type);
+            ध्रुव size_t ts = ggml_type_size(V->type);
 
             GGML_ASSERT(extra.V_buffer_ptr);
             sycl::half * V_f16_ptr = (sycl::half *) extra.V_buffer_ptr;
-            if (ggml_is_contiguously_allocated(V)) {
+            यदि (ggml_is_contiguously_allocated(V)) {
                 to_fp16_sycl_t to_fp16 = ggml_get_to_fp16_sycl(V->type, dst);
                 to_fp16(V_data, V_f16_ptr, ggml_nelements(V), main_stream);
-                V_data = (char *) V_f16_ptr;
+                V_data = (वर्ण *) V_f16_ptr;
 
-                nb21 = nb21 * bs * sizeof(sycl::half) / ts;
-                nb22 = nb22 * bs * sizeof(sycl::half) / ts;
-                nb23 = nb23 * bs * sizeof(sycl::half) / ts;
-            } else {
+                nb21 = nb21 * bs * परिमाण(sycl::half) / ts;
+                nb22 = nb22 * bs * परिमाण(sycl::half) / ts;
+                nb23 = nb23 * bs * परिमाण(sycl::half) / ts;
+            } अन्यथा {
                 GGML_ASSERT(V->nb[0] == ts);
                 to_fp16_nc_sycl_t to_fp16 = ggml_get_to_fp16_nc_sycl(V->type);
-                const int64_t s01 = nb21 / ts;
-                const int64_t s02 = nb22 / ts;
-                const int64_t s03 = nb23 / ts;
+                ध्रुव int64_t s01 = nb21 / ts;
+                ध्रुव int64_t s02 = nb22 / ts;
+                ध्रुव int64_t s03 = nb23 / ts;
                 to_fp16(V_data, V_f16_ptr, V->ne[0], V->ne[1], V->ne[2], V->ne[3], s01, s02, s03, main_stream);
 
-                nb21 = V->ne[0] * sizeof(sycl::half);
+                nb21 = V->ne[0] * परिमाण(sycl::half);
                 nb22 = V->ne[1] * nb21;
                 nb23 = V->ne[2] * nb22;
             }
-            V_data = (char *) V_f16_ptr;
+            V_data = (वर्ण *) V_f16_ptr;
         }
     }
 
-    const int ntiles_x     = ((Q->ne[1] + ncols1 - 1) / ncols1);
-    const int gqa_ratio    = Q->ne[2] / K->ne[2];
-    const int ntiles_z_gqa = ((gqa_ratio + ncols2 - 1) / ncols2);
-    const int ntiles_total = ntiles_x * ntiles_z_gqa * K->ne[2] * Q->ne[3];
+    ध्रुव पूर्णाङ्क ntiles_x     = ((Q->ne[1] + ncols1 - 1) / ncols1);
+    ध्रुव पूर्णाङ्क gqa_ratio    = Q->ne[2] / K->ne[2];
+    ध्रुव पूर्णाङ्क ntiles_z_gqa = ((gqa_ratio + ncols2 - 1) / ncols2);
+    ध्रुव पूर्णाङ्क ntiles_total = ntiles_x * ntiles_z_gqa * K->ne[2] * Q->ne[3];
 
     // Optional optimization where the mask is scanned to determine whether part of the calculation can be skipped.
     // Only worth the overhead if there is at lease one FATTN_KQ_STRIDE x FATTN_KQ_STRIDE square to be skipped or
     //     multiple sequences of possibly different lengths.
-    if (mask && K->ne[1] % FATTN_KQ_STRIDE == 0 && (Q->ne[1] >= 1024 || Q->ne[3] > 1)) {
-        const int s31 = mask->nb[1] / sizeof(sycl::half2);
-        const int s33 = mask->nb[3] / sizeof(sycl::half2);
+    यदि (mask && K->ne[1] % FATTN_KQ_STRIDE == 0 && (Q->ne[1] >= 1024 || Q->ne[3] > 1)) {
+        ध्रुव पूर्णाङ्क s31 = mask->nb[1] / परिमाण(sycl::half2);
+        ध्रुव पूर्णाङ्क s33 = mask->nb[3] / परिमाण(sycl::half2);
 
-        const dpct::dim3 blocks_num_KV_max(ntiles_x, Q->ne[3], 1);
-        const dpct::dim3 block_dim_KV_max(FATTN_KQ_STRIDE / 2, 1, 1);
+        ध्रुव dpct::dim3 blocks_अंक_KV_max(ntiles_x, Q->ne[3], 1);
+        ध्रुव dpct::dim3 block_dim_KV_max(FATTN_KQ_STRIDE / 2, 1, 1);
 
-        const int ne_KV_max = blocks_num_KV_max.x*blocks_num_KV_max.y;
-        const int iter_k = K->ne[1] / FATTN_KQ_STRIDE;
+        ध्रुव पूर्णाङ्क ne_KV_max = blocks_अंक_KV_max.x*blocks_अंक_KV_max.y;
+        ध्रुव पूर्णाङ्क iter_k = K->ne[1] / FATTN_KQ_STRIDE;
 
         KV_max.alloc(ne_KV_max);
         {
             dpct::has_capability_or_fail(main_stream->get_device(), { sycl::aspect::fp16 });
 
             main_stream->submit([&](sycl::handler & cgh) {
-                sycl::local_accessor<int, 1> buf_iw_acc_ct1(sycl::range<1>(warp_size), cgh);
+                sycl::local_accessor<पूर्णाङ्क, 1> buf_iw_acc_ct1(sycl::range<1>(warp_size), cgh);
 
-                auto mask_data_ct0  = (const sycl::half2 *) mask->data;
+                auto mask_data_ct0  = (ध्रुव sycl::half2 *) mask->data;
                 auto KV_max_ptr_ct1 = KV_max.ptr;
 
-                cgh.parallel_for(sycl::nd_range<3>(blocks_num_KV_max * block_dim_KV_max, block_dim_KV_max),
+                cgh.parallel_for(sycl::nd_range<3>(blocks_अंक_KV_max * block_dim_KV_max, block_dim_KV_max),
                                  [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(warp_size)]] {
                                      GGML_UNUSED(item_ct1);
                                      flash_attn_mask_to_KV_max<ncols1, warp_size>(
@@ -1071,27 +1071,27 @@ void launch_fattn(
         SYCL_CHECK(0);
     }
 
-    const dpct::dim3 block_dim(warp_size, nwarps, 1);
+    ध्रुव dpct::dim3 block_dim(warp_size, nwarps, 1);
 
     // Max. number of active blocks limited by occupancy.
-    int max_blocks_per_sm = ggml_sycl_info().devices[id].max_wg_per_cu;
-    int parallel_blocks = max_blocks_per_sm;
-    dpct::dim3 blocks_num;
-    if (stream_k) {
+    पूर्णाङ्क max_blocks_per_sm = ggml_sycl_info().devices[id].max_wg_per_cu;
+    पूर्णाङ्क parallel_blocks = max_blocks_per_sm;
+    dpct::dim3 blocks_अंक;
+    यदि (stream_k) {
         // For short contexts it can be faster to have the SMs work on whole tiles because this lets us skip the fixup.
-        const int max_blocks = max_blocks_per_sm*nsm;
-        const int nblocks_stream_k = max_blocks;
-        const bool use_stream_k = true;
+        ध्रुव पूर्णाङ्क max_blocks = max_blocks_per_sm*nsm;
+        ध्रुव पूर्णाङ्क nblocks_stream_k = max_blocks;
+        ध्रुव तार्किक use_stream_k = सत्य;
 
-        blocks_num.x = use_stream_k ? nblocks_stream_k : ntiles_total;
-        blocks_num.y = 1;
-        blocks_num.z = 1;
+        blocks_अंक.x = use_stream_k ? nblocks_stream_k : ntiles_total;
+        blocks_अंक.y = 1;
+        blocks_अंक.z = 1;
 
-        if (ntiles_total % blocks_num.x != 0) { // Fixup is only needed if the SMs work on fractional tiles.
-            dst_tmp_meta.alloc((size_t(blocks_num.x) * ncols * (2 + DV/2)));
+        यदि (ntiles_total % blocks_अंक.x != 0) { // Fixup is only needed if the SMs work on fractional tiles.
+            dst_tmp_meta.alloc((size_t(blocks_अंक.x) * ncols * (2 + DV/2)));
         }
-    } else {
-        const int ntiles_KQ = (K->ne[1] + nbatch_fa - 1) / nbatch_fa; // Max. number of parallel blocks limited by tensor size.
+    } अन्यथा {
+        ध्रुव पूर्णाङ्क ntiles_KQ = (K->ne[1] + nbatch_fa - 1) / nbatch_fa; // Max. number of parallel blocks limited by tensor size.
 
         // parallel_blocks must not be larger than what the tensor size allows:
         parallel_blocks = std::min(parallel_blocks, ntiles_KQ);
@@ -1100,76 +1100,76 @@ void launch_fattn(
 
         // If ntiles_total % blocks_per_wave != 0 then some efficiency is lost due to tail effects.
         // Test whether parallel_blocks can be set to a higher value for better efficiency.
-        const int blocks_per_wave = nsm * max_blocks_per_sm;
-        int nwaves_best = 0;
-        int efficiency_percent_best = 0;
-        for (int parallel_blocks_test = parallel_blocks; parallel_blocks_test <= ntiles_KQ; ++parallel_blocks_test) {
-            const int nblocks_total = ntiles_total * parallel_blocks_test;
-            const int nwaves = (nblocks_total + blocks_per_wave - 1) / blocks_per_wave;
-            const int efficiency_percent = 100 * nblocks_total / (nwaves*blocks_per_wave);
+        ध्रुव पूर्णाङ्क blocks_per_wave = nsm * max_blocks_per_sm;
+        पूर्णाङ्क nwaves_best = 0;
+        पूर्णाङ्क efficiency_percent_best = 0;
+        प्रति (पूर्णाङ्क parallel_blocks_test = parallel_blocks; parallel_blocks_test <= ntiles_KQ; ++parallel_blocks_test) {
+            ध्रुव पूर्णाङ्क nblocks_total = ntiles_total * parallel_blocks_test;
+            ध्रुव पूर्णाङ्क nwaves = (nblocks_total + blocks_per_wave - 1) / blocks_per_wave;
+            ध्रुव पूर्णाङ्क efficiency_percent = 100 * nblocks_total / (nwaves*blocks_per_wave);
 
             // Stop trying configurations with more waves if we already have good efficiency to avoid excessive overhead.
-            if (efficiency_percent_best >= 95 && nwaves > nwaves_best) {
-                break;
+            यदि (efficiency_percent_best >= 95 && nwaves > nwaves_best) {
+                भङ्ग;
             }
 
-            if (efficiency_percent > efficiency_percent_best) {
+            यदि (efficiency_percent > efficiency_percent_best) {
                 nwaves_best = nwaves;
                 efficiency_percent_best = efficiency_percent;
                 parallel_blocks = parallel_blocks_test;
             }
         }
 
-        blocks_num.x = ntiles_x;
-        blocks_num.y = parallel_blocks;
-        blocks_num.z = ntiles_z_gqa*K->ne[2]*Q->ne[3];
+        blocks_अंक.x = ntiles_x;
+        blocks_अंक.y = parallel_blocks;
+        blocks_अंक.z = ntiles_z_gqa*K->ne[2]*Q->ne[3];
 
-        if (parallel_blocks > 1) {
+        यदि (parallel_blocks > 1) {
             dst_tmp.alloc(parallel_blocks*ggml_nelements(KQV));
             dst_tmp_meta.alloc(parallel_blocks*ggml_nrows(KQV));
         }
     }
 
-    float scale         = 1.0f;
-    float max_bias      = 0.0f;
-    float logit_softcap = 0.0f;
+    भिन्न scale         = 1.0f;
+    भिन्न max_bias      = 0.0f;
+    भिन्न logit_softcap = 0.0f;
 
-    memcpy(&scale,         (const float *) KQV->op_params + 0, sizeof(float));
-    memcpy(&max_bias,      (const float *) KQV->op_params + 1, sizeof(float));
-    memcpy(&logit_softcap, (const float *) KQV->op_params + 2, sizeof(float));
+    memcpy(&scale,         (ध्रुव भिन्न *) KQV->op_params + 0, परिमाण(भिन्न));
+    memcpy(&max_bias,      (ध्रुव भिन्न *) KQV->op_params + 1, परिमाण(भिन्न));
+    memcpy(&logit_softcap, (ध्रुव भिन्न *) KQV->op_params + 2, परिमाण(भिन्न));
 
-    if (logit_softcap != 0.0f) {
+    यदि (logit_softcap != 0.0f) {
         scale /= logit_softcap;
     }
 
-    const uint32_t n_head      = Q->ne[2];
-    const uint32_t n_head_log2 = 1u << uint32_t(floorf(log2f(float(n_head))));
+    ध्रुव uint32_t n_head      = Q->ne[2];
+    ध्रुव uint32_t n_head_log2 = 1u << uint32_t(floorf(log2f(भिन्न(n_head))));
 
-    const float m0 = powf(2.0f, -(max_bias       ) / n_head_log2);
-    const float m1 = powf(2.0f, -(max_bias / 2.0f) / n_head_log2);
+    ध्रुव भिन्न m0 = powf(2.0f, -(max_bias       ) / n_head_log2);
+    ध्रुव भिन्न m1 = powf(2.0f, -(max_bias / 2.0f) / n_head_log2);
 
     // TODO other tensor dimensions after removal of WMMA kernel:
-    const sycl::uint3 ne01 = init_fastdiv_values(Q->ne[1]);
+    ध्रुव sycl::uint3 ne01 = init_fastdiv_मूल्यावली(Q->ne[1]);
 
     GGML_ASSERT(block_dim.x % warp_size == 0);
 
     lauch_kernel<fattn_kernel, warp_size, use_large_grf>(
-        blocks_num, block_dim, main_stream, (unsigned int) nbytes_shared, (const char *) Q->data, K_data, V_data,
-        mask ? ((const char *) mask->data) : nullptr, sinks ? ((const char *) sinks->data) : nullptr, KV_max.ptr,
-        !stream_k && parallel_blocks > 1 ? dst_tmp.ptr : (float *) KQV->data, (sycl::float2 *)dst_tmp_meta.ptr, scale, max_bias, m0, m1,
+        blocks_अंक, block_dim, main_stream, (unsigned पूर्णाङ्क) nbytes_shared, (ध्रुव वर्ण *) Q->data, K_data, V_data,
+        mask ? ((ध्रुव वर्ण *) mask->data) : nullptr, sinks ? ((ध्रुव वर्ण *) sinks->data) : nullptr, KV_max.ptr,
+        !stream_k && parallel_blocks > 1 ? dst_tmp.ptr : (भिन्न *) KQV->data, (sycl::float2 *)dst_tmp_meta.ptr, scale, max_bias, m0, m1,
         n_head_log2, logit_softcap, Q->ne[0], ne01, Q->ne[2], Q->ne[3], Q->nb[1], Q->nb[2], Q->nb[3], K->ne[0],
         K->ne[1], K->ne[2], K->ne[3], nb11, nb12, nb13, nb21, nb22, nb23, mask ? mask->ne[1] : 0,
         mask ? mask->ne[2] : 0, mask ? mask->ne[3] : 0, mask ? mask->nb[1] : 0, mask ? mask->nb[2] : 0,
         mask ? mask->nb[3] : 0);
     SYCL_CHECK(0);
 
-    if (stream_k) {
-        if (ntiles_total % blocks_num.x != 0) { // Fixup is only needed if the SMs work on fractional tiles.
-            const dpct::dim3 block_dim_combine(DV, 1, 1);
-            const dpct::dim3 blocks_num_combine = { blocks_num.x, ncols1, ncols2 };
+    यदि (stream_k) {
+        यदि (ntiles_total % blocks_अंक.x != 0) { // Fixup is only needed if the SMs work on fractional tiles.
+            ध्रुव dpct::dim3 block_dim_combine(DV, 1, 1);
+            ध्रुव dpct::dim3 blocks_अंक_combine = { blocks_अंक.x, ncols1, ncols2 };
 
             main_stream->submit([&](sycl::handler & cgh) {
-                auto KQV_data_ct0         = (float *) KQV->data;
+                auto KQV_data_ct0         = (भिन्न *) KQV->data;
                 auto dst_tmp_meta_ptr_ct1 = dst_tmp_meta.ptr;
                 auto Q_ne_ct2             = Q->ne[1];
                 auto Q_ne_ct3             = Q->ne[2];
@@ -1177,7 +1177,7 @@ void launch_fattn(
                 auto K_ne_ct5             = K->ne[1];
                 auto K_ne_ct6             = K->ne[2];
 
-                cgh.parallel_for(sycl::nd_range<3>(blocks_num_combine * block_dim_combine, block_dim_combine),
+                cgh.parallel_for(sycl::nd_range<3>(blocks_अंक_combine * block_dim_combine, block_dim_combine),
                                  [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(warp_size)]] {
                                      GGML_UNUSED(item_ct1);
                                      flash_attn_stream_k_fixup<DV, ncols1, ncols2>(KQV_data_ct0, dst_tmp_meta_ptr_ct1,
@@ -1186,18 +1186,18 @@ void launch_fattn(
                                  });
             });
         }
-    } else if (parallel_blocks > 1) {
-        const dpct::dim3 block_dim_combine(DV, 1, 1);
-        const dpct::dim3 blocks_num_combine(Q->ne[1], Q->ne[2], Q->ne[3]);
-        const size_t     nbytes_shared_combine = parallel_blocks * sizeof(sycl::float2);
+    } अन्यथा यदि (parallel_blocks > 1) {
+        ध्रुव dpct::dim3 block_dim_combine(DV, 1, 1);
+        ध्रुव dpct::dim3 blocks_अंक_combine(Q->ne[1], Q->ne[2], Q->ne[3]);
+        ध्रुव size_t     nbytes_shared_combine = parallel_blocks * परिमाण(sycl::float2);
         main_stream->submit([&](sycl::handler & cgh) {
             sycl::local_accessor<uint8_t, 1> dpct_local_acc_ct1(sycl::range<1>(nbytes_shared_combine), cgh);
 
             auto dst_tmp_ptr_ct0      = dst_tmp.ptr;
             auto dst_tmp_meta_ptr_ct1 = dst_tmp_meta.ptr;
-            auto KQV_data_ct2         = (float *) KQV->data;
+            auto KQV_data_ct2         = (भिन्न *) KQV->data;
 
-            cgh.parallel_for(sycl::nd_range<3>(blocks_num_combine * block_dim_combine, block_dim_combine),
+            cgh.parallel_for(sycl::nd_range<3>(blocks_अंक_combine * block_dim_combine, block_dim_combine),
                              [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(warp_size)]] {
                                  GGML_UNUSED(item_ct1);
                                  flash_attn_combine_results<DV>(
