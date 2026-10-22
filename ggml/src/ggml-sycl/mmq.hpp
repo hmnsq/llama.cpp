@@ -10,24 +10,24 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#ifndef GGML_SYCL_MMQ_HPP
-#define GGML_SYCL_MMQ_HPP
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ GGML_SYCL_MMQ_HPP
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_SYCL_MMQ_HPP
 
-#include "common.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "common.hpp"
 
-void ggml_sycl_op_mul_mat_q(
+ਖਾਲੀ ggml_sycl_op_mul_mat_q(
     ggml_backend_sycl_context & ctx,
-    const ggml_tensor* src0,
-    const ggml_tensor* src1,
+    ਅਚਲ ggml_tensor* src0,
+    ਅਚਲ ggml_tensor* src1,
     ggml_tensor* dst,
-    const char* src0_dd_i,
-    const float* src1_ddf_i,
-    const char* src1_ddq_i,
-    float* dst_dd_i,
-    const int64_t row_low,
-    const int64_t row_high,
-    const int64_t src1_ncols,
-    const int64_t src1_padded_row_size,
-    const dpct::queue_ptr& stream);
+    ਅਚਲ ਅੱਖਰ* src0_dd_i,
+    ਅਚਲ ਦਸ਼ਮਲਵ* src1_ddf_i,
+    ਅਚਲ ਅੱਖਰ* src1_ddq_i,
+    ਦਸ਼ਮਲਵ* dst_dd_i,
+    ਅਚਲ int64_t ਪੰਕਤੀ_ਨੀਵਾਂ,
+    ਅਚਲ int64_t ਪੰਕਤੀ_ਉੱਚਾ,
+    ਅਚਲ int64_t src1_ncols,
+    ਅਚਲ int64_t src1_padded_ਪੰਕਤੀ_ਮਾਪ,
+    ਅਚਲ dpct::ਕਤਾਰ_ptr& stream);
 
-#endif // GGML_SYCL_MMQ_HPP
+#ਜੇ_ਅੰਤ // GGML_SYCL_MMQ_HPP

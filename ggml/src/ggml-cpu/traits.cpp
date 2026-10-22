@@ -1,36 +1,36 @@
-#include "traits.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "traits.h"
 
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-backend-impl.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-backend.h"
 
-namespace ggml::cpu {
+ਨਾਮਾਕਾਸ਼ ggml::cpu {
 tensor_traits::~tensor_traits() {}
 
-extra_buffer_type::~extra_buffer_type() {}
+extra_ਬਫਰ_type::~extra_ਬਫਰ_type() {}
 }  // namespace ggml::cpu
 
-bool ggml_cpu_extra_compute_forward(struct ggml_compute_params * params, struct ggml_tensor * op) {
-    for (auto extra : ggml_backend_cpu_get_extra_buffer_types()) {
-        if (extra && extra->context) {
-            auto buf_extra     = (ggml::cpu::extra_buffer_type *) extra->context;
-            auto tensor_traits = buf_extra->get_tensor_traits(op);
-            if (tensor_traits && tensor_traits->compute_forward(params, op)) {
-                return true;
+ਤਾਰਕਿਕ ggml_cpu_extra_compute_forward(ਬਣਤਰ ggml_compute_params * params, ਬਣਤਰ ggml_tensor * op) {
+    ਲਈ (ਸਵੈਚਾਲਿਤ extra : ggml_backend_cpu_get_extra_ਬਫਰ_types()) {
+        ਜੇ (extra && extra->context) {
+            ਸਵੈਚਾਲਿਤ buf_extra     = (ggml::cpu::extra_ਬਫਰ_type *) extra->context;
+            ਸਵੈਚਾਲਿਤ tensor_traits = buf_extra->get_tensor_traits(op);
+            ਜੇ (tensor_traits && tensor_traits->compute_forward(params, op)) {
+                ਵਾਪਸ ਸੱਚ;
             }
         }
     }
-    return false;
+    ਵਾਪਸ ਝੂਠ;
 }
 
-bool ggml_cpu_extra_work_size(int n_threads, const struct ggml_tensor * op, size_t * size) {
-    for (auto extra : ggml_backend_cpu_get_extra_buffer_types()) {
-        if (extra && extra->context) {
-            auto buf_extra     = (ggml::cpu::extra_buffer_type *) extra->context;
-            auto tensor_traits = buf_extra->get_tensor_traits(op);
-            if (tensor_traits && tensor_traits->work_size(n_threads, op, *size)) {
-                return true;
+ਤਾਰਕਿਕ ggml_cpu_extra_work_ਮਾਪ(ਪੂਰਨ n_ਧਾਗੇ, ਅਚਲ ਬਣਤਰ ggml_tensor * op, size_t * size) {
+    ਲਈ (ਸਵੈਚਾਲਿਤ extra : ggml_backend_cpu_get_extra_ਬਫਰ_types()) {
+        ਜੇ (extra && extra->context) {
+            ਸਵੈਚਾਲਿਤ buf_extra     = (ggml::cpu::extra_ਬਫਰ_type *) extra->context;
+            ਸਵੈਚਾਲਿਤ tensor_traits = buf_extra->get_tensor_traits(op);
+            ਜੇ (tensor_traits && tensor_traits->work_ਮਾਪ(n_ਧਾਗੇ, op, *size)) {
+                ਵਾਪਸ ਸੱਚ;
             }
         }
     }
-    return false;
+    ਵਾਪਸ ਝੂਠ;
 }

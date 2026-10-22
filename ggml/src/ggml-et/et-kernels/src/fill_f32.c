@@ -4,84 +4,84 @@
 // dst[i] = c  for all elements
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "platform.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml_tensor.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "platform.h"
 
-#include <stdint.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdint.h>
 
-struct ggml_et_fill_params {
-    struct ggml_tensor dst;  // F32 output tensor (contiguous)
-    float              c;    // Constant value to fill
+ਬਣਤਰ ggml_et_fill_params {
+    ਬਣਤਰ ggml_tensor dst;  // F32 output tensor (contiguous)
+    ਦਸ਼ਮਲਵ              c;    // Constant value to fill
 };
 
-int entry_point(struct ggml_et_fill_params * params, void * env) {
+ਪੂਰਨ ਇੰਦਰਾਜ_ਬਿੰਦੂ(ਬਣਤਰ ggml_et_fill_params * params, ਖਾਲੀ * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    ਜੇ (!kernel_env) {
+        ਵਾਪਸ -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    ਪੂਰਨ thread_id   = get_relative_thread_id(kernel_env->shire_ਨਕਾਬ);
+    ਪੂਰਨ ਅੰਕ_ਧਾਗੇ = get_ਅੰਕ_ਧਾਗੇ(kernel_env->shire_ਨਕਾਬ);
 
-    if (thread_id < 0) {
-        return 0;
+    ਜੇ (thread_id < 0) {
+        ਵਾਪਸ 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    ਜੇ (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        ਵਾਪਸ -1;
     }
 
-    struct ggml_tensor * dst = &params->dst;
+    ਬਣਤਰ ggml_tensor * dst = &params->dst;
 
-    if (dst->type != GGML_TYPE_F32) {
-        return -1;
+    ਜੇ (dst->type != GGML_TYPE_F32) {
+        ਵਾਪਸ -1;
     }
 
-    float * dst_data = (float *) dst->data;
-    if (!dst_data) {
-        return -1;
+    ਦਸ਼ਮਲਵ * dst_ਅੰਕੜੇ = (ਦਸ਼ਮਲਵ *) dst->ਅੰਕੜੇ;
+    ਜੇ (!dst_ਅੰਕੜੇ) {
+        ਵਾਪਸ -1;
     }
 
-    const int64_t total_elements = dst->ne[0] * dst->ne[1] * dst->ne[2] * dst->ne[3];
+    ਅਚਲ int64_t ਕੁੱਲ_elements = dst->ne[0] * dst->ne[1] * dst->ne[2] * dst->ne[3];
 
-    if (total_elements == 0) {
-        return 0;
+    ਜੇ (ਕੁੱਲ_elements == 0) {
+        ਵਾਪਸ 0;
     }
 
     // Distribute by cache lines (16 floats = 64 bytes)
-    const int64_t elems_per_cl  = 16;
-    const int64_t total_cl      = (total_elements + elems_per_cl - 1) / elems_per_cl;
-    const int64_t cl_per_thread = (total_cl + num_threads - 1) / num_threads;
-    const int64_t cl_start      = thread_id * cl_per_thread;
-    int64_t       cl_end        = cl_start + cl_per_thread;
-    if (cl_end > total_cl) {
-        cl_end = total_cl;
+    ਅਚਲ int64_t elems_ਪ੍ਰਤੀ_cl  = 16;
+    ਅਚਲ int64_t ਕੁੱਲ_cl      = (ਕੁੱਲ_elements + elems_ਪ੍ਰਤੀ_cl - 1) / elems_ਪ੍ਰਤੀ_cl;
+    ਅਚਲ int64_t cl_ਪ੍ਰਤੀ_thread = (ਕੁੱਲ_cl + ਅੰਕ_ਧਾਗੇ - 1) / ਅੰਕ_ਧਾਗੇ;
+    ਅਚਲ int64_t cl_ਸ਼ੁਰੂ      = thread_id * cl_ਪ੍ਰਤੀ_thread;
+    int64_t       cl_ਸਿਰਾ        = cl_ਸ਼ੁਰੂ + cl_ਪ੍ਰਤੀ_thread;
+    ਜੇ (cl_ਸਿਰਾ > ਕੁੱਲ_cl) {
+        cl_ਸਿਰਾ = ਕੁੱਲ_cl;
     }
-    if (cl_start >= total_cl) {
-        return 0;
+    ਜੇ (cl_ਸ਼ੁਰੂ >= ਕੁੱਲ_cl) {
+        ਵਾਪਸ 0;
     }
 
-    const int64_t es = cl_start * elems_per_cl;
-    int64_t       ee = cl_end * elems_per_cl;
-    if (ee > total_elements) {
-        ee = total_elements;
+    ਅਚਲ int64_t es = cl_ਸ਼ੁਰੂ * elems_ਪ੍ਰਤੀ_cl;
+    int64_t       ee = cl_ਸਿਰਾ * elems_ਪ੍ਰਤੀ_cl;
+    ਜੇ (ee > ਕੁੱਲ_elements) {
+        ee = ਕੁੱਲ_elements;
     }
 
     // Broadcast constant to all SIMD lanes
-    float c = params->c;
-    __asm__ volatile("fbc.ps f10, %[v]\n" : : [v] "m"(c) : "f10");
+    ਦਸ਼ਮਲਵ c = params->c;
+    __asm__ ਅਸਥਿਰ("fbc.ps f10, %[v]\n" : : [v] "m"(c) : "f10");
 
     // Vector fill (8-wide)
     int64_t       i       = es;
-    const int64_t vec_end = es + ((ee - es) / 8) * 8;
-    for (; i < vec_end; i += 8) {
-        __asm__ volatile("fsw.ps f10, %[d]\n" : [d] "=m"(*(float (*)[8]) & dst_data[i])::"f10");
+    ਅਚਲ int64_t vec_ਸਿਰਾ = es + ((ee - es) / 8) * 8;
+    ਲਈ (; i < vec_ਸਿਰਾ; i += 8) {
+        __asm__ ਅਸਥਿਰ("fsw.ps f10, %[d]\n" : [d] "=m"(*(ਦਸ਼ਮਲਵ (*)[8]) & dst_ਅੰਕੜੇ[i])::"f10");
     }
     // Scalar tail
-    for (; i < ee; i++) {
-        dst_data[i] = c;
+    ਲਈ (; i < ee; i++) {
+        dst_ਅੰਕੜੇ[i] = c;
     }
 
-    return 0;
+    ਵਾਪਸ 0;
 }

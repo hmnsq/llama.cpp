@@ -1,26 +1,26 @@
-#include "frontend.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "frontend.h"
 
-#include "input_model.h"
-#include "op_table.h"
-#include "translate_session.h"
-#include <openvino/core/type.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ "input_model.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "op_table.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "translate_session.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/core/type.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
+ਨਾਮਾਕਾਸ਼ ov {
+ਨਾਮਾਕਾਸ਼ frontend {
+ਨਾਮਾਕਾਸ਼ ggml {
 
-FrontEnd::FrontEnd() {}
+Front_ਸਿਰਾ::Front_ਸਿਰਾ() {}
 
-std::shared_ptr<Model> FrontEnd::convert(const InputModel::Ptr & model, bool naive) {
-    auto ggml_model = ov::as_type_ptr<ggml::InputModel>(model);
-    FRONT_END_GENERAL_CHECK(ggml_model, "Invalid input model");
+std::shared_ptr<Model> Front_ਸਿਰਾ::convert(ਅਚਲ ਨਿਵੇਸ਼_Model::Ptr & model, ਤਾਰਕਿਕ naive) {
+    ਸਵੈਚਾਲਿਤ ggml_model = ov::as_type_ptr<ggml::ਨਿਵੇਸ਼_Model>(model);
+    FRONT_ਸਿਰਾ_GENERAL_CHECK(ggml_model, "Invalid input model");
     std::shared_ptr<Model> converted_model;
-    const auto & supported_ops = get_supported_ops();
+    ਅਚਲ ਸਵੈਚਾਲਿਤ & supported_ops = get_supported_ops();
     {
         TranslateSession translate_session(model, supported_ops, naive);
         converted_model = translate_session.get_converted_model();
     }
-    return converted_model;
+    ਵਾਪਸ converted_model;
 }
 
 }  // namespace ggml

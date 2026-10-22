@@ -1,73 +1,73 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "../node_context.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "../op_table.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "../utils.h"
 
-#include <cstdint>
-#include <openvino/frontend/exception.hpp>
-#include <openvino/op/add.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/range.hpp>
-#include <openvino/op/reduce_prod.hpp>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/scatter_update.hpp>
-#include <openvino/op/shape_of.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cstdint>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/frontend/exception.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/add.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/constant.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/convert.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/range.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/reduce_prod.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/reshape.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/scatter_update.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/shape_of.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+ਨਾਮਾਕਾਸ਼ ov {
+ਨਾਮਾਕਾਸ਼ frontend {
+ਨਾਮਾਕਾਸ਼ ggml {
+ਨਾਮਾਕਾਸ਼ op {
 
 // GGML SET writes src1 into a view of src0 and returns the updated tensor.
-OutputVector translate_set(const NodeContext & context) {
-    num_inputs_check(context, 2, 2);
+Output_ਸਦਿਸ਼ translate_ਸੈੱਟ(ਅਚਲ ਗੰਢ_Context & context) {
+    ਅੰਕ_inputs_check(context, 2, 2);
 
-    auto dst = process_view_input_new(context, 0);
-    auto src = process_view_input_new(context, 1);
+    ਸਵੈਚਾਲਿਤ dst = process_view_ਨਿਵੇਸ਼_new(context, 0);
+    ਸਵੈਚਾਲਿਤ src = process_view_ਨਿਵੇਸ਼_new(context, 1);
 
     src = std::make_shared<ov::op::v0::Convert>(src, context.get_output_type());
 
-    const auto dst_stride = context.get_input_stride(0);
-    FRONT_END_OP_CONVERSION_CHECK(dst_stride.size() >= 4, "SET requires 4D destination strides");
+    ਅਚਲ ਸਵੈਚਾਲਿਤ dst_stride = context.get_ਨਿਵੇਸ਼_stride(0);
+    FRONT_ਸਿਰਾ_OP_CONVERSION_CHECK(dst_stride.size() >= 4, "SET requires 4D destination strides");
 
-    const auto * op_params = reinterpret_cast<const uint32_t *>(context.get_output_op_params());
-    const size_t offset = static_cast<size_t>(op_params[3]);
+    ਅਚਲ ਸਵੈਚਾਲਿਤ * op_params = reinterpret_cast<ਅਚਲ uint32_t *>(context.get_output_op_params());
+    ਅਚਲ size_t ਵਿੱਥ = static_cast<size_t>(op_params[3]);
 
-    const size_t elem_size = dst_stride.back();
-    FRONT_END_OP_CONVERSION_CHECK(elem_size != 0 && offset % elem_size == 0,
+    ਅਚਲ size_t elem_ਮਾਪ = dst_stride.back();
+    FRONT_ਸਿਰਾ_OP_CONVERSION_CHECK(elem_ਮਾਪ != 0 && ਵਿੱਥ % elem_ਮਾਪ == 0,
                                   "SET offset must be aligned to destination element size");
 
-    const int64_t offset_elems = static_cast<int64_t>(offset / elem_size);
+    ਅਚਲ int64_t ਵਿੱਥ_elems = static_cast<int64_t>(ਵਿੱਥ / elem_ਮਾਪ);
 
-    auto dst_flat = std::make_shared<ov::op::v1::Reshape>(
+    ਸਵੈਚਾਲਿਤ dst_flat = std::make_shared<ov::op::v1::Reshape>(
         dst,
         ov::op::v0::Constant::create(ov::element::i64, {1}, {-1}),
-        false);
+        ਝੂਠ);
 
-    auto src_flat = std::make_shared<ov::op::v1::Reshape>(
+    ਸਵੈਚਾਲਿਤ src_flat = std::make_shared<ov::op::v1::Reshape>(
         src,
         ov::op::v0::Constant::create(ov::element::i64, {1}, {-1}),
-        false);
+        ਝੂਠ);
 
-    auto src_shape = std::make_shared<ov::op::v3::ShapeOf>(src_flat, ov::element::i64);
-    auto src_len = std::make_shared<ov::op::v1::ReduceProd>(
+    ਸਵੈਚਾਲਿਤ src_shape = std::make_shared<ov::op::v3::Shape_ਦਾ>(src_flat, ov::element::i64);
+    ਸਵੈਚਾਲਿਤ src_len = std::make_shared<ov::op::v1::ReduceProd>(
         src_shape,
         ov::op::v0::Constant::create(ov::element::i64, {1}, {0}),
-        false);
+        ਝੂਠ);
 
-    auto start = ov::op::v0::Constant::create(ov::element::i64, {}, {offset_elems});
-    auto stop = std::make_shared<ov::op::v1::Add>(start, src_len);
-    auto step = ov::op::v0::Constant::create(ov::element::i64, {}, {1});
+    ਸਵੈਚਾਲਿਤ start = ov::op::v0::Constant::create(ov::element::i64, {}, {ਵਿੱਥ_elems});
+    ਸਵੈਚਾਲਿਤ stop = std::make_shared<ov::op::v1::ਜੋੜੋ>(start, src_len);
+    ਸਵੈਚਾਲਿਤ ਕਦਮ = ov::op::v0::Constant::create(ov::element::i64, {}, {1});
 
-    auto indices = std::make_shared<ov::op::v4::Range>(start, stop, step, ov::element::i64);
-    auto axis = ov::op::v0::Constant::create(ov::element::i64, {}, {0});
+    ਸਵੈਚਾਲਿਤ indices = std::make_shared<ov::op::v4::Range>(start, stop, ਕਦਮ, ov::element::i64);
+    ਸਵੈਚਾਲਿਤ axis = ov::op::v0::Constant::create(ov::element::i64, {}, {0});
 
-    auto updated_flat = std::make_shared<ov::op::v3::ScatterUpdate>(dst_flat, indices, src_flat, axis);
+    ਸਵੈਚਾਲਿਤ updated_flat = std::make_shared<ov::op::v3::ScatterUpdate>(dst_flat, indices, src_flat, axis);
 
-    auto dst_shape = std::make_shared<ov::op::v3::ShapeOf>(dst, ov::element::i64);
-    auto res = std::make_shared<ov::op::v1::Reshape>(updated_flat, dst_shape, false);
+    ਸਵੈਚਾਲਿਤ dst_shape = std::make_shared<ov::op::v3::Shape_ਦਾ>(dst, ov::element::i64);
+    ਸਵੈਚਾਲਿਤ res = std::make_shared<ov::op::v1::Reshape>(updated_flat, dst_shape, ਝੂਠ);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ਵਾਪਸ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

@@ -1,8 +1,8 @@
-#ifndef GGML_SYCL_SET_ROWS_HPP
-#define GGML_SYCL_SET_ROWS_HPP
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ GGML_SYCL_ਸੈੱਟ_ਪੰਕਤੀਆਂ_HPP
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_SYCL_ਸੈੱਟ_ਪੰਕਤੀਆਂ_HPP
 
-#include "common.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "common.hpp"
 
-void ggml_sycl_op_set_rows(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+ਖਾਲੀ ggml_sycl_op_ਸੈੱਟ_ਪੰਕਤੀਆਂ(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-#endif // GGML_SYCL_SET_ROWS_HPP
+#ਜੇ_ਅੰਤ // GGML_SYCL_SET_ROWS_HPP

@@ -1,27 +1,27 @@
-#ifndef GGML_SYCL_MEMTRACE_HPP
-#define GGML_SYCL_MEMTRACE_HPP
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ GGML_SYCL_MEMTRACE_HPP
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_SYCL_MEMTRACE_HPP
 
-#include <cstddef>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cstddef>
 
-#define GGML_SYCL_MEMTRACE_TAG "[SYCL-MEMTRACE]"
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_SYCL_MEMTRACE_ਟੈਗ "[SYCL-MEMTRACE]"
 
-enum ggml_sycl_mem_type {
-    GGML_SYCL_MEM_BUFFER = 0,
+ਗਿਣਤੀ ggml_sycl_mem_type {
+    GGML_SYCL_MEM_ਬਫਰ = 0,
     GGML_SYCL_MEM_POOL_LEG,
     GGML_SYCL_MEM_POOL_VMM,
     GGML_SYCL_MEM_ASYNC,
-    GGML_SYCL_MEM_DIRECT,
+    GGML_SYCL_MEM_ਸਿੱਧਾ,
 
-    GGML_SYCL_MEM_TYPE_COUNT,
+    GGML_SYCL_MEM_TYPE_ਗਿਣਤੀ,
 };
 
-bool ggml_sycl_memtrace_enabled();
+ਤਾਰਕਿਕ ggml_sycl_memtrace_enabled();
 
-void ggml_sycl_memtrace_add(ggml_sycl_mem_type type, const void * ptr, size_t bytes);
-void ggml_sycl_memtrace_del(const void * ptr);
+ਖਾਲੀ ggml_sycl_memtrace_ਜੋੜੋ(ggml_sycl_mem_type type, ਅਚਲ ਖਾਲੀ * ptr, size_t ਬਾਈਟਾਂ);
+ਖਾਲੀ ggml_sycl_memtrace_del(ਅਚਲ ਖਾਲੀ * ptr);
 
-void ggml_sycl_memtrace_report(const char * tag);
-void ggml_sycl_memtrace_report_device(const char * tag, int device, size_t dev_free, size_t dev_total);
-void ggml_sycl_memtrace_fail(ggml_sycl_mem_type type, size_t bytes);
+ਖਾਲੀ ggml_sycl_memtrace_report(ਅਚਲ ਅੱਖਰ * ਟੈਗ);
+ਖਾਲੀ ggml_sycl_memtrace_report_device(ਅਚਲ ਅੱਖਰ * ਟੈਗ, ਪੂਰਨ device, size_t dev_free, size_t dev_ਕੁੱਲ);
+ਖਾਲੀ ggml_sycl_memtrace_fail(ggml_sycl_mem_type type, size_t ਬਾਈਟਾਂ);
 
-#endif  // GGML_SYCL_MEMTRACE_HPP
+#ਜੇ_ਅੰਤ  // GGML_SYCL_MEMTRACE_HPP

@@ -1,243 +1,243 @@
-#ifndef GGML_COMMON_DECL
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ GGML_COMMON_DECL
 
-#if defined(GGML_COMMON_DECL_C)
-#include <stdint.h>
+#ਜੇ defined(GGML_COMMON_DECL_C)
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdint.h>
 
-typedef uint16_t ggml_half;
-typedef uint32_t ggml_half2;
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ uint16_t ggml_half;
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ uint32_t ggml_half2;
 
-#define GGML_COMMON_AGGR_U
-#define GGML_COMMON_AGGR_S
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_AGGR_U
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_AGGR_S
 
-#define GGML_COMMON_DECL
-#elif defined(GGML_COMMON_DECL_CPP)
-#include <cstdint>
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_DECL
+#ਜਾਂਜੇ defined(GGML_COMMON_DECL_CPP)
+#ਅਨ੍ਤਰ੍ਭਾਵ <cstdint>
 
-typedef uint16_t ggml_half;
-typedef uint32_t ggml_half2;
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ uint16_t ggml_half;
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ uint32_t ggml_half2;
 
 // std-c++ allow anonymous unions but some compiler warn on it
-#define GGML_COMMON_AGGR_U data
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_AGGR_U ਅੰਕੜੇ
 // std-c++ do not allow it.
-#define GGML_COMMON_AGGR_S data
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_AGGR_S ਅੰਕੜੇ
 
-#define GGML_COMMON_DECL
-#elif defined(GGML_COMMON_DECL_METAL)
-#include <metal_stdlib>
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_DECL
+#ਜਾਂਜੇ defined(GGML_COMMON_DECL_METAL)
+#ਅਨ੍ਤਰ੍ਭਾਵ <metal_stdlib>
 
-typedef half  ggml_half;
-typedef half2 ggml_half2;
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ half  ggml_half;
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ half2 ggml_half2;
 
-#define GGML_COMMON_AGGR_U
-#define GGML_COMMON_AGGR_S
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_AGGR_U
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_AGGR_S
 
-#define GGML_COMMON_DECL
-#elif defined(GGML_COMMON_DECL_CUDA)
-#if defined(GGML_COMMON_DECL_MUSA)
-#include <musa_fp16.h>
-#else
-#include <cuda_fp16.h>
-#endif
-#include <cstdint>
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_DECL
+#ਜਾਂਜੇ defined(GGML_COMMON_DECL_CUDA)
+#ਜੇ defined(GGML_COMMON_DECL_MUSA)
+#ਅਨ੍ਤਰ੍ਭਾਵ <musa_fp16.h>
+#ਨਹੀਂਤਾਂ
+#ਅਨ੍ਤਰ੍ਭਾਵ <cuda_fp16.h>
+#ਜੇ_ਅੰਤ
+#ਅਨ੍ਤਰ੍ਭਾਵ <cstdint>
 
-typedef half  ggml_half;
-typedef half2 ggml_half2;
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ half  ggml_half;
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ half2 ggml_half2;
 
-#define GGML_COMMON_AGGR_U
-#define GGML_COMMON_AGGR_S data
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_AGGR_U
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_AGGR_S ਅੰਕੜੇ
 
-#define GGML_COMMON_DECL
-#elif defined(GGML_COMMON_DECL_HIP)
-#include <hip/hip_fp16.h>
-#include <cstdint>
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_DECL
+#ਜਾਂਜੇ defined(GGML_COMMON_DECL_HIP)
+#ਅਨ੍ਤਰ੍ਭਾਵ <hip/hip_fp16.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cstdint>
 
-typedef half  ggml_half;
-typedef half2 ggml_half2;
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ half  ggml_half;
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ half2 ggml_half2;
 
-#define GGML_COMMON_AGGR_U
-#define GGML_COMMON_AGGR_S data
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_AGGR_U
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_AGGR_S ਅੰਕੜੇ
 
-#define GGML_COMMON_DECL
-#elif defined(GGML_COMMON_DECL_SYCL)
-#include <sycl/half_type.hpp>
-#include <cstdint>
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_DECL
+#ਜਾਂਜੇ defined(GGML_COMMON_DECL_SYCL)
+#ਅਨ੍ਤਰ੍ਭਾਵ <sycl/half_type.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cstdint>
 
-typedef sycl::half  ggml_half;
-typedef sycl::half2 ggml_half2;
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ sycl::half  ggml_half;
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ sycl::half2 ggml_half2;
 
-#define GGML_COMMON_AGGR_U
-#define GGML_COMMON_AGGR_S data
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_AGGR_U
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_AGGR_S ਅੰਕੜੇ
 
-#define GGML_COMMON_DECL
-#endif
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_DECL
+#ਜੇ_ਅੰਤ
 
-#if defined(GGML_COMMON_DECL)
+#ਜੇ defined(GGML_COMMON_DECL)
 
-#ifndef __cplusplus
-#ifndef static_assert
-#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201100L)
-#define static_assert(cond, msg) _Static_assert(cond, msg)
-#else
-#define static_assert(cond, msg) struct global_scope_noop_trick
-#endif
-#endif
-#endif // __cplusplus
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ __cplusplus
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ static_assert
+#ਜੇ defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201100L)
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ static_assert(cond, ਸੁਨੇਹਾ_2) _Static_assert(cond, ਸੁਨੇਹਾ_2)
+#ਨਹੀਂਤਾਂ
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ static_assert(cond, ਸੁਨੇਹਾ_2) ਬਣਤਰ global_scope_noop_trick
+#ਜੇ_ਅੰਤ
+#ਜੇ_ਅੰਤ
+#ਜੇ_ਅੰਤ // __cplusplus
 
 // QK = number of values after dequantization
 // QK_K = super-block size
 
-#define QK_K 256
-#define K_SCALE_SIZE 12
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QK_K 256
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ K_SCALE_ਮਾਪ 12
 
-#if defined(GGML_COMMON_DECL_CUDA) || defined(GGML_COMMON_DECL_HIP) || defined(GGML_COMMON_DECL_SYCL)
+#ਜੇ defined(GGML_COMMON_DECL_CUDA) || defined(GGML_COMMON_DECL_HIP) || defined(GGML_COMMON_DECL_SYCL)
 // QR = QK / number of values before dequantization
 // QI = number of 32 bit integers before dequantization
 
-#define QI1_0 (QK1_0 / 32)
-#define QR1_0 1
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QI1_0 (QK1_0 / 32)
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QR1_0 1
 
-#define QI2_0 (QK2_0 / 32)
-#define QR2_0 1
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QI2_0 (QK2_0 / 32)
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QR2_0 1
 
 
-#define QI4_0 (QK4_0 / (4 * QR4_0))
-#define QR4_0 2
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QI4_0 (QK4_0 / (4 * QR4_0))
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QR4_0 2
 
-#define QI4_1 (QK4_1 / (4 * QR4_1))
-#define QR4_1 2
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QI4_1 (QK4_1 / (4 * QR4_1))
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QR4_1 2
 
-#define QI_MXFP4 (QK_MXFP4 / (4 * QR_MXFP4))
-#define QR_MXFP4 2
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QI_MXFP4 (QK_MXFP4 / (4 * QR_MXFP4))
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QR_MXFP4 2
 
-#define QI_NVFP4 (QK_NVFP4 / (4 * QR_NVFP4))
-#define QR_NVFP4 2
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QI_NVFP4 (QK_NVFP4 / (4 * QR_NVFP4))
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QR_NVFP4 2
 
-#define QI5_0 (QK5_0 / (4 * QR5_0))
-#define QR5_0 2
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QI5_0 (QK5_0 / (4 * QR5_0))
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QR5_0 2
 
-#define QI5_1 (QK5_1 / (4 * QR5_1))
-#define QR5_1 2
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QI5_1 (QK5_1 / (4 * QR5_1))
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QR5_1 2
 
-#define QI8_0 (QK8_0 / (4 * QR8_0))
-#define QR8_0 1
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QI8_0 (QK8_0 / (4 * QR8_0))
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QR8_0 1
 
-#define QI8_1 (QK8_1 / (4 * QR8_1))
-#define QR8_1 1
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QI8_1 (QK8_1 / (4 * QR8_1))
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QR8_1 1
 
-#define QI2_K (QK_K / (4*QR2_K))
-#define QR2_K 4
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QI2_K (QK_K / (4*QR2_K))
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QR2_K 4
 
-#define QI3_K (QK_K / (4*QR3_K))
-#define QR3_K 4
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QI3_K (QK_K / (4*QR3_K))
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QR3_K 4
 
-#define QI4_K (QK_K / (4*QR4_K))
-#define QR4_K 2
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QI4_K (QK_K / (4*QR4_K))
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QR4_K 2
 
-#define QI5_K (QK_K / (4*QR5_K))
-#define QR5_K 2
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QI5_K (QK_K / (4*QR5_K))
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QR5_K 2
 
-#define QI6_K (QK_K / (4*QR6_K))
-#define QR6_K 2
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QI6_K (QK_K / (4*QR6_K))
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QR6_K 2
 
-#define QI2_XXS (QK_K / (4*QR2_XXS))
-#define QR2_XXS 4
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QI2_XXS (QK_K / (4*QR2_XXS))
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QR2_XXS 4
 
-#define QI2_XS (QK_K / (4*QR2_XS))
-#define QR2_XS 4
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QI2_XS (QK_K / (4*QR2_XS))
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QR2_XS 4
 
-#define QI2_S (QK_K / (4*QR2_S))
-#define QR2_S 4
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QI2_S (QK_K / (4*QR2_S))
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QR2_S 4
 
-#define QI3_XXS (QK_K / (4*QR3_XXS))
-#define QR3_XXS 4
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QI3_XXS (QK_K / (4*QR3_XXS))
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QR3_XXS 4
 
-#define QI3_XS (QK_K / (4*QR3_XS))
-#define QR3_XS 4
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QI3_XS (QK_K / (4*QR3_XS))
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QR3_XS 4
 
-#define QI1_S (QK_K / (4*QR1_S))
-#define QR1_S 8
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QI1_S (QK_K / (4*QR1_S))
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QR1_S 8
 
-#define QI1_M (QK_K / (4*QR1_M))
-#define QR1_M 8
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QI1_M (QK_K / (4*QR1_M))
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QR1_M 8
 
-#define QI4_NL (QK4_NL / (4*QR4_NL))
-#define QR4_NL 2
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QI4_NL (QK4_NL / (4*QR4_NL))
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QR4_NL 2
 
-#define QI4_XS (QK_K / (4*QR4_XS))
-#define QR4_XS 2
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QI4_XS (QK_K / (4*QR4_XS))
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QR4_XS 2
 
-#define QI3_S (QK_K / (4*QR3_S))
-#define QR3_S 4
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QI3_S (QK_K / (4*QR3_S))
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QR3_S 4
 
-#endif // GGML_COMMON_DECL_CUDA || GGML_COMMON_DECL_HIP
+#ਜੇ_ਅੰਤ // GGML_COMMON_DECL_CUDA || GGML_COMMON_DECL_HIP
 
-#ifdef _MSC_VER
-#define GGML_EXTENSION
-#else // _MSC_VER
-#define GGML_EXTENSION __extension__
-#endif // _MSC_VER
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ _MSC_VER
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_EXTENSION
+#ਨਹੀਂਤਾਂ // _MSC_VER
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_EXTENSION __extension__
+#ਜੇ_ਅੰਤ // _MSC_VER
 
-#define QK1_0 128
-typedef struct {
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QK1_0 128
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
     ggml_half d;           // delta
     uint8_t qs[QK1_0 / 8]; // bits / quants
-} block_q1_0;
-static_assert(sizeof(block_q1_0) == sizeof(ggml_half) + QK1_0 / 8, "wrong q1_0 block size/padding");
+} ਖੰਡ_q1_0;
+static_assert(ਆਕਾਰ(ਖੰਡ_q1_0) == ਆਕਾਰ(ggml_half) + QK1_0 / 8, "wrong q1_0 block size/padding");
 
-#define QK2_0 64
-typedef struct {
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QK2_0 64
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
     ggml_half d;              // delta (scale)
     uint8_t qs[QK2_0 / 4];   // 2 bits per element
-} block_q2_0;
-static_assert(sizeof(block_q2_0) == sizeof(ggml_half) + QK2_0 / 4, "wrong q2_0 block size/padding");
+} ਖੰਡ_q2_0;
+static_assert(ਆਕਾਰ(ਖੰਡ_q2_0) == ਆਕਾਰ(ggml_half) + QK2_0 / 4, "wrong q2_0 block size/padding");
 
-#define QK4_0 32
-typedef struct {
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QK4_0 32
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
     ggml_half d;           // delta
     uint8_t qs[QK4_0 / 2]; // nibbles / quants
-} block_q4_0;
-static_assert(sizeof(block_q4_0) == sizeof(ggml_half) + QK4_0 / 2, "wrong q4_0 block size/padding");
+} ਖੰਡ_q4_0;
+static_assert(ਆਕਾਰ(ਖੰਡ_q4_0) == ਆਕਾਰ(ggml_half) + QK4_0 / 2, "wrong q4_0 block size/padding");
 
-#define QK4_1 32
-typedef struct {
-    GGML_EXTENSION union {
-        struct {
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QK4_1 32
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
+    GGML_EXTENSION ਸੰਘ {
+        ਬਣਤਰ {
             ggml_half d; // delta
             ggml_half m; // min
         } GGML_COMMON_AGGR_S;
         ggml_half2 dm;
     } GGML_COMMON_AGGR_U;
     uint8_t qs[QK4_1 / 2]; // nibbles / quants
-} block_q4_1;
-static_assert(sizeof(block_q4_1) == 2 * sizeof(ggml_half) + QK4_1 / 2, "wrong q4_1 block size/padding");
+} ਖੰਡ_q4_1;
+static_assert(ਆਕਾਰ(ਖੰਡ_q4_1) == 2 * ਆਕਾਰ(ggml_half) + QK4_1 / 2, "wrong q4_1 block size/padding");
 
-#define QK_MXFP4 32
-typedef struct {
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QK_MXFP4 32
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
     uint8_t e; // E8M0
     uint8_t qs[QK_MXFP4/2];
-} block_mxfp4;
-static_assert(sizeof(block_mxfp4) == sizeof(uint8_t) + QK_MXFP4/2, "wrong mxfp4 block size/padding");
+} ਖੰਡ_mxfp4;
+static_assert(ਆਕਾਰ(ਖੰਡ_mxfp4) == ਆਕਾਰ(uint8_t) + QK_MXFP4/2, "wrong mxfp4 block size/padding");
 
-#define QK_NVFP4 64
-#define QK_NVFP4_SUB 16  // sub-block size for per-group scales
-typedef struct {
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QK_NVFP4 64
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QK_NVFP4_SUB 16  // sub-block size for per-group scales
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
     uint8_t d[QK_NVFP4/QK_NVFP4_SUB]; // UE4M3 scales (4 bytes, one per 16-element sub-block)
     uint8_t qs[QK_NVFP4/2];           // packed 4-bit E2M1 values (32 bytes)
-} block_nvfp4;
-static_assert(sizeof(block_nvfp4) == sizeof(uint8_t)*(QK_NVFP4/QK_NVFP4_SUB) + QK_NVFP4/2, "wrong nvfp4 block size/padding");
+} ਖੰਡ_nvfp4;
+static_assert(ਆਕਾਰ(ਖੰਡ_nvfp4) == ਆਕਾਰ(uint8_t)*(QK_NVFP4/QK_NVFP4_SUB) + QK_NVFP4/2, "wrong nvfp4 block size/padding");
 
-#define QK5_0 32
-typedef struct {
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QK5_0 32
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
     ggml_half d;           // delta
     uint8_t qh[4];         // 5-th bit of quants
     uint8_t qs[QK5_0 / 2]; // nibbles / quants
-} block_q5_0;
-static_assert(sizeof(block_q5_0) == sizeof(ggml_half) + sizeof(uint32_t) + QK5_0 / 2, "wrong q5_0 block size/padding");
+} ਖੰਡ_q5_0;
+static_assert(ਆਕਾਰ(ਖੰਡ_q5_0) == ਆਕਾਰ(ggml_half) + ਆਕਾਰ(uint32_t) + QK5_0 / 2, "wrong q5_0 block size/padding");
 
-#define QK5_1 32
-typedef struct {
-    GGML_EXTENSION union {
-        struct {
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QK5_1 32
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
+    GGML_EXTENSION ਸੰਘ {
+        ਬਣਤਰ {
             ggml_half d; // delta
             ggml_half m; // min
         } GGML_COMMON_AGGR_S;
@@ -245,47 +245,47 @@ typedef struct {
     } GGML_COMMON_AGGR_U;
     uint8_t qh[4];         // 5-th bit of quants
     uint8_t qs[QK5_1 / 2]; // nibbles / quants
-} block_q5_1;
-static_assert(sizeof(block_q5_1) == 2 * sizeof(ggml_half) + sizeof(uint32_t) + QK5_1 / 2, "wrong q5_1 block size/padding");
+} ਖੰਡ_q5_1;
+static_assert(ਆਕਾਰ(ਖੰਡ_q5_1) == 2 * ਆਕਾਰ(ggml_half) + ਆਕਾਰ(uint32_t) + QK5_1 / 2, "wrong q5_1 block size/padding");
 
-#define QK8_0 32
-typedef struct {
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QK8_0 32
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
     ggml_half d;       // delta
     int8_t  qs[QK8_0]; // quants
-} block_q8_0;
-static_assert(sizeof(block_q8_0) == sizeof(ggml_half) + QK8_0, "wrong q8_0 block size/padding");
+} ਖੰਡ_q8_0;
+static_assert(ਆਕਾਰ(ਖੰਡ_q8_0) == ਆਕਾਰ(ggml_half) + QK8_0, "wrong q8_0 block size/padding");
 
-#define QK8_1 32
-typedef struct {
-    GGML_EXTENSION union {
-        struct {
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QK8_1 32
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
+    GGML_EXTENSION ਸੰਘ {
+        ਬਣਤਰ {
             ggml_half d; // delta
             ggml_half s; // d * sum(qs[i])
         } GGML_COMMON_AGGR_S;
         ggml_half2 ds;
     } GGML_COMMON_AGGR_U;
     int8_t qs[QK8_1]; // quants
-} block_q8_1;
-static_assert(sizeof(block_q8_1) == 2*sizeof(ggml_half) + QK8_1, "wrong q8_1 block size/padding");
+} ਖੰਡ_q8_1;
+static_assert(ਆਕਾਰ(ਖੰਡ_q8_1) == 2*ਆਕਾਰ(ggml_half) + QK8_1, "wrong q8_1 block size/padding");
 
 //
 // Ternary quantization
 //
 
 // 1.6875 bpw
-typedef struct {
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
     uint8_t qs[(QK_K - 4 * QK_K / 64) / 5]; // 5 elements per byte (3^5 = 243 < 256)
     uint8_t qh[QK_K/64]; // 4 elements per byte
     ggml_half d;
-} block_tq1_0;
-static_assert(sizeof(block_tq1_0) == sizeof(ggml_half) + QK_K / 64 + (QK_K - 4 * QK_K / 64) / 5, "wrong tq1_0 block size/padding");
+} ਖੰਡ_tq1_0;
+static_assert(ਆਕਾਰ(ਖੰਡ_tq1_0) == ਆਕਾਰ(ggml_half) + QK_K / 64 + (QK_K - 4 * QK_K / 64) / 5, "wrong tq1_0 block size/padding");
 
 // 2.0625 bpw
-typedef struct {
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
     uint8_t qs[QK_K/4]; // 2 bits per element
     ggml_half d;
-} block_tq2_0;
-static_assert(sizeof(block_tq2_0) == sizeof(ggml_half) + QK_K / 4, "wrong tq2_0 block size/padding");
+} ਖੰਡ_tq2_0;
+static_assert(ਆਕਾਰ(ਖੰਡ_tq2_0) == ਆਕਾਰ(ggml_half) + QK_K / 4, "wrong tq2_0 block size/padding");
 
 //
 // Super-block quantization structures
@@ -295,222 +295,222 @@ static_assert(sizeof(block_tq2_0) == sizeof(ggml_half) + QK_K / 4, "wrong tq2_0 
 // weight is represented as x = a * q + b
 // 16 blocks of 16 elements each
 // Effectively 2.625 bits per weight
-typedef struct {
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
     uint8_t scales[QK_K/16]; // scales and mins, quantized with 4 bits
     uint8_t qs[QK_K/4];      // quants
-    GGML_EXTENSION union {
-        struct {
+    GGML_EXTENSION ਸੰਘ {
+        ਬਣਤਰ {
             ggml_half d;    // super-block scale for quantized scales
             ggml_half dmin; // super-block scale for quantized mins
         } GGML_COMMON_AGGR_S;
         ggml_half2 dm;
     } GGML_COMMON_AGGR_U;
-} block_q2_K;
-static_assert(sizeof(block_q2_K) == 2*sizeof(ggml_half) + QK_K/16 + QK_K/4, "wrong q2_K block size/padding");
+} ਖੰਡ_q2_K;
+static_assert(ਆਕਾਰ(ਖੰਡ_q2_K) == 2*ਆਕਾਰ(ggml_half) + QK_K/16 + QK_K/4, "wrong q2_K block size/padding");
 
 // 3-bit quantization
 // weight is represented as x = a * q
 // 16 blocks of 16 elements each
 // Effectively 3.4375 bits per weight
-typedef struct {
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
     uint8_t hmask[QK_K/8]; // quants - high bit
     uint8_t qs[QK_K/4];    // quants - low 2 bits
     uint8_t scales[12];    // scales, quantized with 6 bits
     ggml_half d;           // super-block scale
-} block_q3_K;
-static_assert(sizeof(block_q3_K) == sizeof(ggml_half) + QK_K / 4 + QK_K / 8 + 12, "wrong q3_K block size/padding");
+} ਖੰਡ_q3_K;
+static_assert(ਆਕਾਰ(ਖੰਡ_q3_K) == ਆਕਾਰ(ggml_half) + QK_K / 4 + QK_K / 8 + 12, "wrong q3_K block size/padding");
 
 // 4-bit quantization
 // 8 blocks of 32 elements each
 // weight is represented as x = a * q + b
 // Effectively 4.5 bits per weight
-typedef struct {
-    GGML_EXTENSION union {
-        struct {
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
+    GGML_EXTENSION ਸੰਘ {
+        ਬਣਤਰ {
             ggml_half d;    // super-block scale for quantized scales
             ggml_half dmin; // super-block scale for quantized mins
         } GGML_COMMON_AGGR_S;
         ggml_half2 dm;
     } GGML_COMMON_AGGR_U;
-    uint8_t scales[K_SCALE_SIZE]; // scales and mins, quantized with 6 bits
+    uint8_t scales[K_SCALE_ਮਾਪ]; // scales and mins, quantized with 6 bits
     uint8_t qs[QK_K/2];           // 4--bit quants
-} block_q4_K;
-static_assert(sizeof(block_q4_K) == 2*sizeof(ggml_half) + K_SCALE_SIZE + QK_K/2, "wrong q4_K block size/padding");
+} ਖੰਡ_q4_K;
+static_assert(ਆਕਾਰ(ਖੰਡ_q4_K) == 2*ਆਕਾਰ(ggml_half) + K_SCALE_ਮਾਪ + QK_K/2, "wrong q4_K block size/padding");
 
 // 5-bit quantization
 // 8 blocks of 32 elements each
 // weight is represented as x = a * q + b
 // Effectively 5.5 bits per weight
-typedef struct {
-    GGML_EXTENSION union {
-        struct {
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
+    GGML_EXTENSION ਸੰਘ {
+        ਬਣਤਰ {
             ggml_half d;    // super-block scale for quantized scales
             ggml_half dmin; // super-block scale for quantized mins
         } GGML_COMMON_AGGR_S;
         ggml_half2 dm;
     } GGML_COMMON_AGGR_U;
-    uint8_t scales[K_SCALE_SIZE]; // scales and mins, quantized with 6 bits
+    uint8_t scales[K_SCALE_ਮਾਪ]; // scales and mins, quantized with 6 bits
     uint8_t qh[QK_K/8];           // quants, high bit
     uint8_t qs[QK_K/2];           // quants, low 4 bits
-} block_q5_K;
-static_assert(sizeof(block_q5_K) == 2*sizeof(ggml_half) + K_SCALE_SIZE + QK_K/2 + QK_K/8, "wrong q5_K block size/padding");
+} ਖੰਡ_q5_K;
+static_assert(ਆਕਾਰ(ਖੰਡ_q5_K) == 2*ਆਕਾਰ(ggml_half) + K_SCALE_ਮਾਪ + QK_K/2 + QK_K/8, "wrong q5_K block size/padding");
 
 // 6-bit quantization
 // weight is represented as x = a * q
 // 16 blocks of 16 elements each
 // Effectively 6.5625 bits per weight
-typedef struct {
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
     uint8_t ql[QK_K/2];      // quants, lower 4 bits
     uint8_t qh[QK_K/4];      // quants, upper 2 bits
     int8_t  scales[QK_K/16]; // scales, quantized with 8 bits
     ggml_half d;             // super-block scale
-} block_q6_K;
-static_assert(sizeof(block_q6_K) == sizeof(ggml_half) + QK_K / 16 + 3*QK_K/4, "wrong q6_K block size/padding");
+} ਖੰਡ_q6_K;
+static_assert(ਆਕਾਰ(ਖੰਡ_q6_K) == ਆਕਾਰ(ggml_half) + QK_K / 16 + 3*QK_K/4, "wrong q6_K block size/padding");
 
 // This is only used for intermediate quantization and dot products
-typedef struct {
-    float   d;              // delta
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
+    ਦਸ਼ਮਲਵ   d;              // delta
     int8_t  qs[QK_K];       // quants
     int16_t bsums[QK_K/16]; // sum of quants in groups of 16
-} block_q8_K;
-static_assert(sizeof(block_q8_K) == sizeof(float) + QK_K + QK_K/16*sizeof(int16_t), "wrong q8_K block size/padding");
+} ਖੰਡ_q8_K;
+static_assert(ਆਕਾਰ(ਖੰਡ_q8_K) == ਆਕਾਰ(ਦਸ਼ਮਲਵ) + QK_K + QK_K/16*ਆਕਾਰ(int16_t), "wrong q8_K block size/padding");
 
 // (Almost) "true" 2-bit quantization.
 // Due to the need to use blocks as per ggml design, it ends up using
 // 2.0625 bpw because of the 16-bit scale for each block of 256.
-typedef struct {
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
     ggml_half d;
     uint16_t qs[QK_K/8];
-} block_iq2_xxs;
-static_assert(sizeof(block_iq2_xxs) == sizeof(ggml_half) + QK_K/8*sizeof(uint16_t), "wrong iq2_xxs block size/padding");
+} ਖੰਡ_iq2_xxs;
+static_assert(ਆਕਾਰ(ਖੰਡ_iq2_xxs) == ਆਕਾਰ(ggml_half) + QK_K/8*ਆਕਾਰ(uint16_t), "wrong iq2_xxs block size/padding");
 
 // 2.3125 bpw quants
-typedef struct {
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
     ggml_half d;
     uint16_t qs[QK_K/8];
     uint8_t  scales[QK_K/32];
-} block_iq2_xs;
-static_assert(sizeof(block_iq2_xs) == sizeof(ggml_half) + QK_K/8*sizeof(uint16_t) + QK_K/32, "wrong iq2_xs block size/padding");
+} ਖੰਡ_iq2_xs;
+static_assert(ਆਕਾਰ(ਖੰਡ_iq2_xs) == ਆਕਾਰ(ggml_half) + QK_K/8*ਆਕਾਰ(uint16_t) + QK_K/32, "wrong iq2_xs block size/padding");
 
 // 2.5625 bpw quants
-typedef struct {
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
     ggml_half d;
     uint8_t qs[QK_K/4];
     uint8_t qh[QK_K/32];
     uint8_t scales[QK_K/32];
-} block_iq2_s;
-static_assert(sizeof(block_iq2_s) == sizeof(ggml_half) + QK_K/4 + QK_K/16, "wrong iq2_s block size/padding");
+} ਖੰਡ_iq2_s;
+static_assert(ਆਕਾਰ(ਖੰਡ_iq2_s) == ਆਕਾਰ(ggml_half) + QK_K/4 + QK_K/16, "wrong iq2_s block size/padding");
 
 // (Almost) "true" 3-bit quantization.
 // Due to the need to use blocks as per ggml design, it ends up using
 // 3.0625 bpw because of the 16-bit scale for each block of 256.
-typedef struct {
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
     ggml_half d;
     uint8_t qs[3*QK_K/8];
-} block_iq3_xxs;
-static_assert(sizeof(block_iq3_xxs) == sizeof(ggml_half) + 3*(QK_K/8), "wrong iq3_xxs block size/padding");
+} ਖੰਡ_iq3_xxs;
+static_assert(ਆਕਾਰ(ਖੰਡ_iq3_xxs) == ਆਕਾਰ(ggml_half) + 3*(QK_K/8), "wrong iq3_xxs block size/padding");
 
 // 3.4375 bpw
-#define IQ3S_N_SCALE QK_K/64
-typedef struct {
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ IQ3S_N_SCALE QK_K/64
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
     ggml_half d;
     uint8_t qs[QK_K/4];
     uint8_t qh[QK_K/32];
     uint8_t signs[QK_K/8];
     uint8_t scales[IQ3S_N_SCALE];
-} block_iq3_s;
-static_assert(sizeof(block_iq3_s) == sizeof(ggml_half) + 13*(QK_K/32) + IQ3S_N_SCALE, "wrong iq3_s block size/padding");
+} ਖੰਡ_iq3_s;
+static_assert(ਆਕਾਰ(ਖੰਡ_iq3_s) == ਆਕਾਰ(ggml_half) + 13*(QK_K/32) + IQ3S_N_SCALE, "wrong iq3_s block size/padding");
 
 // 1.5625 bpw
-typedef struct {
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
     ggml_half d;
     uint8_t  qs[QK_K/8];
     uint16_t qh[QK_K/32];
-} block_iq1_s;
-static_assert(sizeof(block_iq1_s) == sizeof(ggml_half) + QK_K/8 + QK_K/16, "wrong iq1_s block size/padding");
+} ਖੰਡ_iq1_s;
+static_assert(ਆਕਾਰ(ਖੰਡ_iq1_s) == ਆਕਾਰ(ggml_half) + QK_K/8 + QK_K/16, "wrong iq1_s block size/padding");
 
 // 1.75 bpw
-typedef struct {
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
     uint8_t  qs[QK_K/8];      // grid index, low 8 bits
     uint8_t  qh[QK_K/16];     // grid index, high 3 bits + grid shift bit (for two groups of 8)
     uint8_t  scales[QK_K/32]; // 3-bit block scales (4-bit if QK_K == 64)
-} block_iq1_m;
-static_assert(sizeof(block_iq1_m) == QK_K/8 + QK_K/16 + QK_K/32, "wrong iq1_m block size/padding");
+} ਖੰਡ_iq1_m;
+static_assert(ਆਕਾਰ(ਖੰਡ_iq1_m) == QK_K/8 + QK_K/16 + QK_K/32, "wrong iq1_m block size/padding");
 
 // Used by IQ1_M quants
-typedef union {
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਸੰਘ {
     ggml_half f16;
     uint16_t  u16;
 } iq1m_scale_t;
 
 // Non-linear quants
-#define QK4_NL 32
-typedef struct {
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QK4_NL 32
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
     ggml_half d;
     uint8_t qs[QK4_NL/2];
-} block_iq4_nl;
-static_assert(sizeof(block_iq4_nl) == sizeof(ggml_half) + QK4_NL/2, "wrong iq4_nl block size/padding");
+} ਖੰਡ_iq4_nl;
+static_assert(ਆਕਾਰ(ਖੰਡ_iq4_nl) == ਆਕਾਰ(ggml_half) + QK4_NL/2, "wrong iq4_nl block size/padding");
 
-typedef struct {
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
     ggml_half d;
     uint16_t scales_h;
     uint8_t  scales_l[QK_K/64];
     uint8_t  qs[QK_K/2];
-} block_iq4_xs;
-static_assert(sizeof(block_iq4_xs) == sizeof(ggml_half) + sizeof(uint16_t) + QK_K/64 + QK_K/2, "wrong iq4_xs block size/padding");
+} ਖੰਡ_iq4_xs;
+static_assert(ਆਕਾਰ(ਖੰਡ_iq4_xs) == ਆਕਾਰ(ggml_half) + ਆਕਾਰ(uint16_t) + QK_K/64 + QK_K/2, "wrong iq4_xs block size/padding");
 
-#endif // GGML_COMMON_DECL
-#endif // GGML_COMMON_DECL
+#ਜੇ_ਅੰਤ // GGML_COMMON_DECL
+#ਜੇ_ਅੰਤ // GGML_COMMON_DECL
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef GGML_COMMON_IMPL
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ GGML_COMMON_IMPL
 
-#if defined(GGML_COMMON_IMPL_C)
-#include <stdint.h>
+#ਜੇ defined(GGML_COMMON_IMPL_C)
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdint.h>
 
-#define GGML_TABLE_BEGIN(type, name, size) static const type name[size] = {
-#define GGML_TABLE_END() };
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_ਸਾਰਣੀ_BEGIN(type, name, ਮਾਪ) ਸਥਿਰ ਅਚਲ type name[ਮਾਪ] = {
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_ਸਾਰਣੀ_ਸਿਰਾ() };
 
-#define GGML_COMMON_IMPL
-#elif defined(GGML_COMMON_IMPL_CPP)
-#include <cstdint>
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_IMPL
+#ਜਾਂਜੇ defined(GGML_COMMON_IMPL_CPP)
+#ਅਨ੍ਤਰ੍ਭਾਵ <cstdint>
 
-#define GGML_TABLE_BEGIN(type, name, size) static const type name[size] = {
-#define GGML_TABLE_END() };
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_ਸਾਰਣੀ_BEGIN(type, name, ਮਾਪ) ਸਥਿਰ ਅਚਲ type name[ਮਾਪ] = {
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_ਸਾਰਣੀ_ਸਿਰਾ() };
 
-#define GGML_COMMON_IMPL
-#elif defined(GGML_COMMON_IMPL_METAL)
-#include <metal_stdlib>
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_IMPL
+#ਜਾਂਜੇ defined(GGML_COMMON_IMPL_METAL)
+#ਅਨ੍ਤਰ੍ਭਾਵ <metal_stdlib>
 
-#define GGML_TABLE_BEGIN(type, name, size) static const constant type name[size] = {
-#define GGML_TABLE_END() };
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_ਸਾਰਣੀ_BEGIN(type, name, ਮਾਪ) ਸਥਿਰ ਅਚਲ constant type name[ਮਾਪ] = {
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_ਸਾਰਣੀ_ਸਿਰਾ() };
 
-#define GGML_COMMON_IMPL
-#elif defined(GGML_COMMON_IMPL_CUDA) || defined(GGML_COMMON_IMPL_HIP) || defined(GGML_COMMON_IMPL_MUSA)
-#include <cstdint>
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_IMPL
+#ਜਾਂਜੇ defined(GGML_COMMON_IMPL_CUDA) || defined(GGML_COMMON_IMPL_HIP) || defined(GGML_COMMON_IMPL_MUSA)
+#ਅਨ੍ਤਰ੍ਭਾਵ <cstdint>
 
-#define GGML_TABLE_BEGIN(type, name, size) static const __device__ type name[size] = {
-#define GGML_TABLE_END() };
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_ਸਾਰਣੀ_BEGIN(type, name, ਮਾਪ) ਸਥਿਰ ਅਚਲ __device__ type name[ਮਾਪ] = {
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_ਸਾਰਣੀ_ਸਿਰਾ() };
 
-#define GGML_COMMON_IMPL
-#elif defined(GGML_COMMON_IMPL_SYCL)
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_IMPL
+#ਜਾਂਜੇ defined(GGML_COMMON_IMPL_SYCL)
 
-#include <cstdint>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cstdint>
 
-#define GGML_TABLE_BEGIN(type, name, size) static const type name[size] = {
-#define GGML_TABLE_END() };
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_ਸਾਰਣੀ_BEGIN(type, name, ਮਾਪ) ਸਥਿਰ ਅਚਲ type name[ਮਾਪ] = {
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_ਸਾਰਣੀ_ਸਿਰਾ() };
 
-#define GGML_COMMON_IMPL
-#endif
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_IMPL
+#ਜੇ_ਅੰਤ
 
-#if defined(GGML_COMMON_IMPL)
+#ਜੇ defined(GGML_COMMON_IMPL)
 
-GGML_TABLE_BEGIN(uint8_t, kmask_iq2xs, 8)
+GGML_ਸਾਰਣੀ_BEGIN(uint8_t, kmask_iq2xs, 8)
     1, 2, 4, 8, 16, 32, 64, 128
-GGML_TABLE_END()
+GGML_ਸਾਰਣੀ_ਸਿਰਾ()
 
-GGML_TABLE_BEGIN(uint8_t, ksigns_iq2xs, 128)
+GGML_ਸਾਰਣੀ_BEGIN(uint8_t, ksigns_iq2xs, 128)
       0, 129, 130,   3, 132,   5,   6, 135, 136,   9,  10, 139,  12, 141, 142,  15,
     144,  17,  18, 147,  20, 149, 150,  23,  24, 153, 154,  27, 156,  29,  30, 159,
     160,  33,  34, 163,  36, 165, 166,  39,  40, 169, 170,  43, 172,  45,  46, 175,
@@ -519,9 +519,9 @@ GGML_TABLE_BEGIN(uint8_t, ksigns_iq2xs, 128)
      80, 209, 210,  83, 212,  85,  86, 215, 216,  89,  90, 219,  92, 221, 222,  95,
      96, 225, 226,  99, 228, 101, 102, 231, 232, 105, 106, 235, 108, 237, 238, 111,
     240, 113, 114, 243, 116, 245, 246, 119, 120, 249, 250, 123, 252, 125, 126, 255,
-GGML_TABLE_END()
+GGML_ਸਾਰਣੀ_ਸਿਰਾ()
 
-GGML_TABLE_BEGIN(uint64_t, ksigns64, 128)
+GGML_ਸਾਰਣੀ_BEGIN(uint64_t, ksigns64, 128)
     0x0000000000000000, 0xff000000000000ff, 0xff0000000000ff00, 0x000000000000ffff,
     0xff00000000ff0000, 0x0000000000ff00ff, 0x0000000000ffff00, 0xff00000000ffffff,
     0xff000000ff000000, 0x00000000ff0000ff, 0x00000000ff00ff00, 0xff000000ff00ffff,
@@ -554,10 +554,10 @@ GGML_TABLE_BEGIN(uint64_t, ksigns64, 128)
     0x00ffffff00ff0000, 0xffffffff00ff00ff, 0xffffffff00ffff00, 0x00ffffff00ffffff,
     0x00ffffffff000000, 0xffffffffff0000ff, 0xffffffffff00ff00, 0x00ffffffff00ffff,
     0xffffffffffff0000, 0x00ffffffffff00ff, 0x00ffffffffffff00, 0xffffffffffffffff,
-GGML_TABLE_END()
+GGML_ਸਾਰਣੀ_ਸਿਰਾ()
 
 
-GGML_TABLE_BEGIN(uint64_t, iq2xxs_grid, 256)
+GGML_ਸਾਰਣੀ_BEGIN(uint64_t, iq2xxs_grid, 256)
     0x0808080808080808, 0x080808080808082b, 0x0808080808081919, 0x0808080808082b08,
     0x0808080808082b2b, 0x0808080808190819, 0x0808080808191908, 0x08080808082b0808,
     0x08080808082b082b, 0x08080808082b2b08, 0x08080808082b2b2b, 0x0808080819080819,
@@ -622,9 +622,9 @@ GGML_TABLE_BEGIN(uint64_t, iq2xxs_grid, 256)
     0x2b19190819081908, 0x2b19191919190819, 0x2b192b082b080819, 0x2b192b19082b0808,
     0x2b2b08080808082b, 0x2b2b080819190808, 0x2b2b08082b081919, 0x2b2b081908082b19,
     0x2b2b082b08080808, 0x2b2b190808192b08, 0x2b2b2b0819190808, 0x2b2b2b1908081908,
-GGML_TABLE_END()
+GGML_ਸਾਰਣੀ_ਸਿਰਾ()
 
-GGML_TABLE_BEGIN(uint64_t, iq2xs_grid, 512)
+GGML_ਸਾਰਣੀ_BEGIN(uint64_t, iq2xs_grid, 512)
     0x0808080808080808, 0x080808080808082b, 0x0808080808081919, 0x0808080808082b08,
     0x0808080808082b2b, 0x0808080808190819, 0x0808080808191908, 0x080808080819192b,
     0x0808080808192b19, 0x08080808082b0808, 0x08080808082b082b, 0x08080808082b1919,
@@ -753,9 +753,9 @@ GGML_TABLE_BEGIN(uint64_t, iq2xs_grid, 512)
     0x2b2b2b08082b0808, 0x2b2b2b08082b082b, 0x2b2b2b08082b2b08, 0x2b2b2b082b2b0808,
     0x2b2b2b082b2b2b08, 0x2b2b2b1908081908, 0x2b2b2b192b081908, 0x2b2b2b192b08192b,
     0x2b2b2b2b082b2b08, 0x2b2b2b2b082b2b2b, 0x2b2b2b2b2b190819, 0x2b2b2b2b2b2b2b2b,
-GGML_TABLE_END()
+GGML_ਸਾਰਣੀ_ਸਿਰਾ()
 
-GGML_TABLE_BEGIN(uint64_t, iq2s_grid, 1024)
+GGML_ਸਾਰਣੀ_BEGIN(uint64_t, iq2s_grid, 1024)
     0x0808080808080808, 0x080808080808082b, 0x0808080808081919, 0x0808080808082b08,
     0x0808080808082b2b, 0x0808080808190819, 0x0808080808191908, 0x080808080819192b,
     0x0808080808192b19, 0x08080808082b0808, 0x08080808082b082b, 0x08080808082b1919,
@@ -1012,9 +1012,9 @@ GGML_TABLE_BEGIN(uint64_t, iq2s_grid, 1024)
     0x2b2b2b0808082b2b, 0x2b2b2b08082b2b08, 0x2b2b2b082b2b082b, 0x2b2b2b1919191908,
     0x2b2b2b192b08192b, 0x2b2b2b2b08082b08, 0x2b2b2b2b08082b2b, 0x2b2b2b2b082b0808,
     0x2b2b2b2b082b082b, 0x2b2b2b2b082b2b08, 0x2b2b2b2b2b082b08, 0x2b2b2b2b2b2b2b2b,
-GGML_TABLE_END()
+GGML_ਸਾਰਣੀ_ਸਿਰਾ()
 
-GGML_TABLE_BEGIN(uint32_t, iq3xxs_grid, 256)
+GGML_ਸਾਰਣੀ_BEGIN(uint32_t, iq3xxs_grid, 256)
     0x04040404, 0x04040414, 0x04040424, 0x04040c0c, 0x04040c1c, 0x04040c3e, 0x04041404, 0x04041414,
     0x04041c0c, 0x04042414, 0x04043e1c, 0x04043e2c, 0x040c040c, 0x040c041c, 0x040c0c04, 0x040c0c14,
     0x040c140c, 0x040c142c, 0x040c1c04, 0x040c1c14, 0x040c240c, 0x040c2c24, 0x040c3e04, 0x04140404,
@@ -1047,9 +1047,9 @@ GGML_TABLE_BEGIN(uint32_t, iq3xxs_grid, 256)
     0x34341c1c, 0x343e041c, 0x343e140c, 0x3e04041c, 0x3e04042c, 0x3e04043e, 0x3e040c04, 0x3e041c14,
     0x3e042c14, 0x3e0c1434, 0x3e0c2404, 0x3e140c14, 0x3e14242c, 0x3e142c14, 0x3e1c0404, 0x3e1c0c2c,
     0x3e1c1c1c, 0x3e1c3404, 0x3e24140c, 0x3e24240c, 0x3e2c0404, 0x3e2c0414, 0x3e2c1424, 0x3e341c04,
-GGML_TABLE_END()
+GGML_ਸਾਰਣੀ_ਸਿਰਾ()
 
-GGML_TABLE_BEGIN(uint32_t, iq3s_grid, 512)
+GGML_ਸਾਰਣੀ_BEGIN(uint32_t, iq3s_grid, 512)
     0x01010101, 0x01010103, 0x01010105, 0x0101010b, 0x0101010f, 0x01010301, 0x01010303, 0x01010305,
     0x01010309, 0x0101030d, 0x01010501, 0x01010503, 0x0101050b, 0x01010707, 0x01010901, 0x01010905,
     0x0101090b, 0x0101090f, 0x01010b03, 0x01010b07, 0x01010d01, 0x01010d05, 0x01010f03, 0x01010f09,
@@ -1114,25 +1114,25 @@ GGML_TABLE_BEGIN(uint32_t, iq3s_grid, 512)
     0x0f030509, 0x0f030907, 0x0f03090b, 0x0f050103, 0x0f050109, 0x0f050301, 0x0f05030d, 0x0f050503,
     0x0f050701, 0x0f050b03, 0x0f070105, 0x0f070705, 0x0f07070b, 0x0f070b07, 0x0f090103, 0x0f09010b,
     0x0f090307, 0x0f090501, 0x0f090b01, 0x0f0b0505, 0x0f0b0905, 0x0f0d0105, 0x0f0d0703, 0x0f0f0101,
-GGML_TABLE_END()
+GGML_ਸਾਰਣੀ_ਸਿਰਾ()
 
 // TODO: fix name to kvalues_iq4_nl
-GGML_TABLE_BEGIN(int8_t, kvalues_iq4nl, 16)
+GGML_ਸਾਰਣੀ_BEGIN(int8_t, kvalues_iq4nl, 16)
     -127, -104, -83, -65, -49, -35, -22, -10, 1, 13, 25, 38, 53, 69, 89, 113,
-GGML_TABLE_END()
+GGML_ਸਾਰਣੀ_ਸਿਰਾ()
 
 // e2m1 values (doubled), shared by MXFP4 and NVFP4
 // ref: https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf
-GGML_TABLE_BEGIN(int8_t, kvalues_fp4, 16)
+GGML_ਸਾਰਣੀ_BEGIN(int8_t, kvalues_fp4, 16)
     0, 1, 2, 3, 4, 6, 8, 12, 0, -1, -2, -3, -4, -6, -8, -12,
-GGML_TABLE_END()
-#define kvalues_mxfp4 kvalues_fp4
+GGML_ਸਾਰਣੀ_ਸਿਰਾ()
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ kvalues_mxfp4 kvalues_fp4
 
-#define NGRID_IQ1S 2048
-#define IQ1S_DELTA 0.125f
-#define IQ1M_DELTA 0.125f
-#if defined(GGML_COMMON_IMPL_C) || defined(GGML_COMMON_IMPL_CPP)
-GGML_TABLE_BEGIN(uint64_t, iq1s_grid, NGRID_IQ1S)
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ NGRID_IQ1S 2048
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ IQ1S_DELTA 0.125f
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ IQ1M_DELTA 0.125f
+#ਜੇ defined(GGML_COMMON_IMPL_C) || defined(GGML_COMMON_IMPL_CPP)
+GGML_ਸਾਰਣੀ_BEGIN(uint64_t, iq1s_grid, NGRID_IQ1S)
     0xffffffffffffffff, 0xffffffffffffff01, 0xffffffffffff0000, 0xffffffffffff01ff,
     0xffffffffffff0101, 0xffffffffff00ff00, 0xffffffffff000000, 0xffffffffff01ffff,
     0xffffffffff01ff01, 0xffffffffff0101ff, 0xffffffffff010101, 0xffffffff00ff0000,
@@ -1645,9 +1645,9 @@ GGML_TABLE_BEGIN(uint64_t, iq1s_grid, NGRID_IQ1S)
     0x010101010000ff00, 0x01010101000000ff, 0x0101010100000001, 0x0101010101ffffff,
     0x0101010101ffff01, 0x0101010101ff01ff, 0x0101010101ff0101, 0x0101010101000000,
     0x010101010101ffff, 0x010101010101ff01, 0x01010101010101ff, 0x0101010101010101,
-GGML_TABLE_END()
-#else
-GGML_TABLE_BEGIN(uint32_t, iq1s_grid_gpu, NGRID_IQ1S)
+GGML_ਸਾਰਣੀ_ਸਿਰਾ()
+#ਨਹੀਂਤਾਂ
+GGML_ਸਾਰਣੀ_BEGIN(uint32_t, iq1s_grid_gpu, NGRID_IQ1S)
     0x00000000, 0x00000002, 0x00000101, 0x00000200, 0x00000202, 0x00010001, 0x00010101, 0x00020000,
     0x00020002, 0x00020200, 0x00020202, 0x01000101, 0x01010001, 0x01010100, 0x01010102, 0x01020101,
     0x02000000, 0x02000002, 0x02000200, 0x02000202, 0x02010101, 0x02020000, 0x02020002, 0x02020200,
@@ -1904,8 +1904,8 @@ GGML_TABLE_BEGIN(uint32_t, iq1s_grid_gpu, NGRID_IQ1S)
     0x21222112, 0x21222211, 0x22212010, 0x22212112, 0x20202020, 0x20202022, 0x20202220, 0x20202222,
     0x20222020, 0x20222022, 0x20222220, 0x20222222, 0x21212021, 0x21212120, 0x21212122, 0x22202020,
     0x22202022, 0x22202220, 0x22202222, 0x22212121, 0x22222020, 0x22222022, 0x22222220, 0x22222222,
-GGML_TABLE_END()
-#endif
+GGML_ਸਾਰਣੀ_ਸਿਰਾ()
+#ਜੇ_ਅੰਤ
 
-#endif // GGML_COMMON_IMPL
-#endif // GGML_COMMON_IMPL
+#ਜੇ_ਅੰਤ // GGML_COMMON_IMPL
+#ਜੇ_ਅੰਤ // GGML_COMMON_IMPL

@@ -1,23 +1,23 @@
-#ifndef GGML_ZDNN_UTILITIES_HPP
-#define GGML_ZDNN_UTILITIES_HPP
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ GGML_ZDNN_UTILITIES_HPP
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_ZDNN_UTILITIES_HPP
 
-#include "common.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "common.hpp"
 
-zdnn_data_types ggml_zdnn_type_mapping(ggml_type type);
+zdnn_ਅੰਕੜੇ_types ggml_zdnn_type_mapping(ggml_type type);
 
-void ggml_zdnn_create_tensor(zdnn_tensor_desc & pre_tfm_desc,
+ਖਾਲੀ ggml_zdnn_create_tensor(zdnn_tensor_desc & pre_tfm_desc,
                              zdnn_tensor_desc & tfm_desc,
                              zdnn_ztensor     & ztensor,
-                      const ggml_tensor       * src,
-                      const int64_t           * ne,
-                      const zdnn_data_layouts   layout);
+                      ਅਚਲ ggml_tensor       * src,
+                      ਅਚਲ int64_t           * ne,
+                      ਅਚਲ zdnn_ਅੰਕੜੇ_layouts   layout);
 
-void ggml_zdnn_load_tensor(zdnn_ztensor & ztensor, void * buffer);
+ਖਾਲੀ ggml_zdnn_ਲੱਦੋ_tensor(zdnn_ztensor & ztensor, ਖਾਲੀ * ਬਫਰ);
 
-int64_t ggml_zdnn_q_group_size(const ggml_tensor * tensor);
+int64_t ggml_zdnn_q_ਸਮੂਹ_ਮਾਪ(ਅਚਲ ggml_tensor * tensor);
 
-void ggml_zdnn_load_tensor_q(ggml_backend_zdnn_buffer * buffer, const ggml_tensor * tensor);
+ਖਾਲੀ ggml_zdnn_ਲੱਦੋ_tensor_q(ggml_backend_zdnn_ਬਫਰ * ਬਫਰ, ਅਚਲ ggml_tensor * tensor);
 
-void ggml_zdnn_init_tensor(ggml_backend_zdnn_buffer * buffer, const ggml_tensor * tensor);
+ਖਾਲੀ ggml_zdnn_init_tensor(ggml_backend_zdnn_ਬਫਰ * ਬਫਰ, ਅਚਲ ggml_tensor * tensor);
 
-#endif  // GGML_ZDNN_UTILITIES_HPP
+#ਜੇ_ਅੰਤ  // GGML_ZDNN_UTILITIES_HPP

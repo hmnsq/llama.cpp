@@ -1,84 +1,84 @@
-#pragma clang diagnostic ignored "-Wunused-variable"
-#pragma clang diagnostic ignored "-Wunused-function"
-#pragma clang diagnostic ignored "-Wunused-but-set-variable"
+#ਹਦਾਇਤ clang diagnostic ignored "-Wunused-variable"
+#ਹਦਾਇਤ clang diagnostic ignored "-Wunused-function"
+#ਹਦਾਇਤ clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <HAP_perf.h>
-#include <qurt_memory.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <HAP_farf.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <HAP_perf.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <qurt_memory.h>
 
-#include <math.h>
-#include <string.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <math.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <string.h>
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "cpy-ops.h"
-#include "dma-copy.h"
-#include "htp-ctx.h"
-#include "htp-fence.h"
-#include "htp-ops.h"
-#include "htp-tensor.h"
-#include "hvx-utils.h"
-#include "gather-rows.h"
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_DECL_C
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-common.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "cpy-ops.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "dma-copy.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "htp-ctx.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "htp-fence.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "htp-ops.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "htp-tensor.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hvx-utils.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "gather-rows.h"
 
-struct htp_copy_context {
-    struct htp_ops_context *              octx;
-    const struct htp_copy_kernel_params * kparams;
+ਬਣਤਰ htp_copy_context {
+    ਬਣਤਰ htp_ops_context *              octx;
+    ਅਚਲ ਬਣਤਰ htp_copy_kernel_params * kparams;
 
-    uint32_t row_start;
+    uint32_t ਪੰਕਤੀ_ਸ਼ੁਰੂ;
     uint32_t nrows;
-    uint32_t src0_nrows_per_thread;
+    uint32_t src0_nrows_ਪ੍ਰਤੀ_thread;
 
-    uint32_t elem_start;
+    uint32_t elem_ਸ਼ੁਰੂ;
     uint32_t nelem;
-    uint32_t elem_per_thread;
+    uint32_t elem_ਪ੍ਰਤੀ_thread;
 
     uint8_t * vtcm_src0;
     uint8_t * vtcm_dst;
 };
 
-#define cpy_preamble                              \
-    const struct htp_tensor *src0 = octx->src[0]; \
-    const struct htp_tensor *dst  = octx->dst;    \
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ cpy_preamble                              \
+    ਅਚਲ ਬਣਤਰ htp_tensor *src0 = octx->src[0]; \
+    ਅਚਲ ਬਣਤਰ htp_tensor *dst  = octx->dst;    \
                                                   \
-    const uint32_t ne00 = src0->ne[0];            \
-    const uint32_t ne01 = src0->ne[1];            \
-    const uint32_t ne02 = src0->ne[2];            \
-    const uint32_t ne03 = src0->ne[3];            \
+    ਅਚਲ uint32_t ne00 = src0->ne[0];            \
+    ਅਚਲ uint32_t ne01 = src0->ne[1];            \
+    ਅਚਲ uint32_t ne02 = src0->ne[2];            \
+    ਅਚਲ uint32_t ne03 = src0->ne[3];            \
                                                   \
-    const uint32_t nb00 = src0->nb[0];            \
-    const uint32_t nb01 = src0->nb[1];            \
-    const uint32_t nb02 = src0->nb[2];            \
-    const uint32_t nb03 = src0->nb[3];            \
+    ਅਚਲ uint32_t nb00 = src0->nb[0];            \
+    ਅਚਲ uint32_t nb01 = src0->nb[1];            \
+    ਅਚਲ uint32_t nb02 = src0->nb[2];            \
+    ਅਚਲ uint32_t nb03 = src0->nb[3];            \
                                                   \
-    const uint32_t  ne0 = dst->ne[0];             \
-    const uint32_t  ne1 = dst->ne[1];             \
-    const uint32_t  ne2 = dst->ne[2];             \
-    const uint32_t  ne3 = dst->ne[3];             \
+    ਅਚਲ uint32_t  ne0 = dst->ne[0];             \
+    ਅਚਲ uint32_t  ne1 = dst->ne[1];             \
+    ਅਚਲ uint32_t  ne2 = dst->ne[2];             \
+    ਅਚਲ uint32_t  ne3 = dst->ne[3];             \
                                                   \
-    const uint32_t  nb0 = dst->nb[0];             \
-    const uint32_t  nb1 = dst->nb[1];             \
-    const uint32_t  nb2 = dst->nb[2];             \
-    const uint32_t  nb3 = dst->nb[3];
+    ਅਚਲ uint32_t  nb0 = dst->nb[0];             \
+    ਅਚਲ uint32_t  nb1 = dst->nb[1];             \
+    ਅਚਲ uint32_t  nb2 = dst->nb[2];             \
+    ਅਚਲ uint32_t  nb3 = dst->nb[3];
 
-#define DEFINE_CPY_RESHAPE(NAME, ELEM_TYPE, ELEM_SIZE)                                                \
-static void cpy_thread_##NAME##_reshape(unsigned int nth, unsigned int ith, void * data) {            \
-    struct htp_copy_context * ct = (struct htp_copy_context *) data;                                  \
-    struct htp_ops_context * octx = ct->octx;                                                         \
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ DEFINE_CPY_RESHAPE(NAME, ELEM_TYPE, ELEM_ਮਾਪ)                                                \
+ਸਥਿਰ ਖਾਲੀ cpy_thread_##NAME##_reshape(ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ nth, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ ith, ਖਾਲੀ * ਅੰਕੜੇ) {            \
+    ਬਣਤਰ htp_copy_context * ct = (ਬਣਤਰ htp_copy_context *) ਅੰਕੜੇ;                                  \
+    ਬਣਤਰ htp_ops_context * octx = ct->octx;                                                         \
     cpy_preamble;                                                                                     \
-    const uint32_t th_nelem = ct->elem_per_thread;                                                    \
-    const uint32_t th_start = ct->elem_start + ith * th_nelem;                                        \
-    const uint32_t th_end   = MIN(th_start + th_nelem, ct->elem_start + ct->nelem);                   \
-    if (th_start >= th_end) return;                                                                   \
+    ਅਚਲ uint32_t th_nelem = ct->elem_ਪ੍ਰਤੀ_thread;                                                    \
+    ਅਚਲ uint32_t th_ਸ਼ੁਰੂ = ct->elem_ਸ਼ੁਰੂ + ith * th_nelem;                                        \
+    ਅਚਲ uint32_t th_ਸਿਰਾ   = MIN(th_ਸ਼ੁਰੂ + th_nelem, ct->elem_ਸ਼ੁਰੂ + ct->nelem);                   \
+    ਜੇ (th_ਸ਼ੁਰੂ >= th_ਸਿਰਾ) ਵਾਪਸ;                                                                   \
                                                                                                       \
-    dma_queue * dma_q = octx->ctx->dma[ith];                                                          \
+    dma_ਕਤਾਰ * dma_q = octx->ctx->dma[ith];                                                          \
                                                                                                       \
-    const uint32_t ne01_ne00      = ne01 * ne00;                                                      \
-    const uint32_t ne02_ne01_ne00 = ne02 * ne01_ne00;                                                 \
-    const uint32_t ne1_ne0        = ne1 * ne0;                                                        \
-    const uint32_t ne2_ne1_ne0    = ne2 * ne1_ne0;                                                    \
+    ਅਚਲ uint32_t ne01_ne00      = ne01 * ne00;                                                      \
+    ਅਚਲ uint32_t ne02_ne01_ne00 = ne02 * ne01_ne00;                                                 \
+    ਅਚਲ uint32_t ne1_ne0        = ne1 * ne0;                                                        \
+    ਅਚਲ uint32_t ne2_ne1_ne0    = ne2 * ne1_ne0;                                                    \
                                                                                                       \
-    const struct htp_copy_reshape_params * rsh = &ct->kparams->u.reshape;                             \
-    uint32_t e = th_start;                                                                            \
+    ਅਚਲ ਬਣਤਰ htp_copy_reshape_params * rsh = &ct->kparams->u.reshape;                             \
+    uint32_t e = th_ਸ਼ੁਰੂ;                                                                            \
     uint32_t i13 = fastdiv(e, &rsh->div_ne2_ne1_ne0);                                                 \
     uint32_t rem = e - i13 * ne2_ne1_ne0;                                                             \
     uint32_t i12 = fastdiv(rem, &rsh->div_ne1_ne0);                                                   \
@@ -93,145 +93,145 @@ static void cpy_thread_##NAME##_reshape(unsigned int nth, unsigned int ith, void
     uint32_t i01 = fastdiv(rem2_s, &rsh->div_ne00);                                                   \
     uint32_t i00 = rem2_s - i01 * ne00;                                                               \
                                                                                                       \
-    dma_addr_t dst_addr  = dst->data  + i10*nb0  + i11*nb1  + i12*nb2  + i13*nb3;                     \
-    dma_addr_t src0_addr = src0->data + i00*nb00 + i01*nb01 + i02*nb02 + i03*nb03;                    \
+    dma_addr_t dst_addr  = dst->ਅੰਕੜੇ  + i10*nb0  + i11*nb1  + i12*nb2  + i13*nb3;                     \
+    dma_addr_t src0_addr = src0->ਅੰਕੜੇ + i00*nb00 + i01*nb01 + i02*nb02 + i03*nb03;                    \
                                                                                                       \
-    const bool rows_contig = (nb00 == ELEM_SIZE) && (nb0 == ELEM_SIZE);                               \
+    ਅਚਲ bool ਪੰਕਤੀਆਂ_contig = (nb00 == ELEM_ਮਾਪ) && (nb0 == ELEM_ਮਾਪ);                               \
                                                                                                       \
-    while (e < th_end) {                                                                              \
-        const uint32_t run = MIN(MIN(ne00 - i00, ne0 - i10), th_end - e);                             \
-        if (rows_contig) {                                                                            \
-            dma_cpy_sametype_reshape_contig(dma_q, dst_addr, src0_addr, run * ELEM_SIZE);             \
-        } else {                                                                                      \
-            dma_cpy_push_2d_chunked(dma_q, dst_addr, src0_addr, nb0, nb00, ELEM_SIZE, run);           \
+    ਜਦੋਂ (e < th_ਸਿਰਾ) {                                                                              \
+        ਅਚਲ uint32_t ਲੜੀਵਾਰ = MIN(MIN(ne00 - i00, ne0 - i10), th_ਸਿਰਾ - e);                             \
+        ਜੇ (ਪੰਕਤੀਆਂ_contig) {                                                                            \
+            dma_cpy_sametype_reshape_contig(dma_q, dst_addr, src0_addr, ਲੜੀਵਾਰ * ELEM_ਮਾਪ);             \
+        } ਨਹੀਂਤਾਂ {                                                                                      \
+            dma_cpy_ਧੱਕੋ_2d_chunked(dma_q, dst_addr, src0_addr, nb0, nb00, ELEM_ਮਾਪ, ਲੜੀਵਾਰ);           \
         }                                                                                             \
-        e += run;                                                                                     \
+        e += ਲੜੀਵਾਰ;                                                                                     \
                                                                                                       \
-        dst_addr += run * nb0;                                                                        \
-        i10      += run;                                                                              \
-        if (i10 == ne0) {                                                                             \
+        dst_addr += ਲੜੀਵਾਰ * nb0;                                                                        \
+        i10      += ਲੜੀਵਾਰ;                                                                              \
+        ਜੇ (i10 == ne0) {                                                                             \
             i10 = 0;                                                                                  \
-            if (++i11 == ne1) {                                                                       \
+            ਜੇ (++i11 == ne1) {                                                                       \
                 i11 = 0;                                                                              \
-                if (++i12 == ne2) {                                                                   \
+                ਜੇ (++i12 == ne2) {                                                                   \
                     i12 = 0;                                                                          \
                     i13++;                                                                            \
                 }                                                                                     \
             }                                                                                         \
-            dst_addr = dst->data + i11*nb1 + i12*nb2 + i13*nb3;                                       \
+            dst_addr = dst->ਅੰਕੜੇ + i11*nb1 + i12*nb2 + i13*nb3;                                       \
         }                                                                                             \
                                                                                                       \
-        src0_addr += run * nb00;                                                                      \
-        i00       += run;                                                                             \
-        if (i00 == ne00) {                                                                            \
+        src0_addr += ਲੜੀਵਾਰ * nb00;                                                                      \
+        i00       += ਲੜੀਵਾਰ;                                                                             \
+        ਜੇ (i00 == ne00) {                                                                            \
             i00 = 0;                                                                                  \
-            if (++i01 == ne01) {                                                                      \
+            ਜੇ (++i01 == ne01) {                                                                      \
                 i01 = 0;                                                                              \
-                if (++i02 == ne02) {                                                                  \
+                ਜੇ (++i02 == ne02) {                                                                  \
                     i02 = 0;                                                                          \
                     i03++;                                                                            \
                 }                                                                                     \
             }                                                                                         \
-            src0_addr = src0->data + i01*nb01 + i02*nb02 + i03*nb03;                                  \
+            src0_addr = src0->ਅੰਕੜੇ + i01*nb01 + i02*nb02 + i03*nb03;                                  \
         }                                                                                             \
     }                                                                                                 \
-    dma_queue_flush(dma_q);                                                                           \
+    dma_ਕਤਾਰ_flush(dma_q);                                                                           \
 }
 
-DEFINE_CPY_RESHAPE(f32,  float, 4)
+DEFINE_CPY_RESHAPE(f32,  ਦਸ਼ਮਲਵ, 4)
 DEFINE_CPY_RESHAPE(f16, __fp16, 2)
 DEFINE_CPY_RESHAPE(i32, int32_t, 4)
 
-struct cpy_row_cursor {
+ਬਣਤਰ cpy_ਪੰਕਤੀ_cursor {
     uint32_t r;
     uint32_t i01;
     uint32_t i02;
     uint32_t i03;
 };
 
-static inline void cpy_cursor_advance(struct cpy_row_cursor * c, uint32_t n, uint32_t ne01, uint32_t ne02) {
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ cpy_cursor_advance(ਬਣਤਰ cpy_ਪੰਕਤੀ_cursor * c, uint32_t n, uint32_t ne01, uint32_t ne02) {
     c->r   += n;
     c->i01 += n;
-    if (c->i01 == ne01) {
+    ਜੇ (c->i01 == ne01) {
         c->i01 = 0;
-        if (++c->i02 == ne02) {
+        ਜੇ (++c->i02 == ne02) {
             c->i02 = 0;
             c->i03++;
         }
     }
 }
 
-#define DEFINE_CPY_CONVERT_SAMESHAPE(NAME, CONV_FUNC)                                        \
-static void cpy_thread_##NAME##_sameshape(unsigned int nth, unsigned int ith, void * data) { \
-    struct htp_copy_context * ct = (struct htp_copy_context *) data;                         \
-    struct htp_ops_context * octx = ct->octx;                                                \
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ DEFINE_CPY_CONVERT_SAMESHAPE(NAME, CONV_FUNC)                                        \
+ਸਥਿਰ ਖਾਲੀ cpy_thread_##NAME##_sameshape(ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ nth, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ ith, ਖਾਲੀ * ਅੰਕੜੇ) { \
+    ਬਣਤਰ htp_copy_context * ct = (ਬਣਤਰ htp_copy_context *) ਅੰਕੜੇ;                         \
+    ਬਣਤਰ htp_ops_context * octx = ct->octx;                                                \
     cpy_preamble;                                                                            \
                                                                                              \
-    const uint32_t dr  = ct->src0_nrows_per_thread;                                          \
-    const uint32_t ir0 = ct->row_start + dr * ith;                                           \
-    const uint32_t ir1 = MIN(ir0 + dr, ct->row_start + ct->nrows);                           \
-    if (ir0 >= ir1) return;                                                                  \
+    ਅਚਲ uint32_t dr  = ct->src0_nrows_ਪ੍ਰਤੀ_thread;                                          \
+    ਅਚਲ uint32_t ir0 = ct->ਪੰਕਤੀ_ਸ਼ੁਰੂ + dr * ith;                                           \
+    ਅਚਲ uint32_t ir1 = MIN(ir0 + dr, ct->ਪੰਕਤੀ_ਸ਼ੁਰੂ + ct->nrows);                           \
+    ਜੇ (ir0 >= ir1) ਵਾਪਸ;                                                                  \
                                                                                              \
-    dma_queue * dma_q = octx->ctx->dma[ith];                                                 \
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];                                   \
+    dma_ਕਤਾਰ * dma_q = octx->ctx->dma[ith];                                                 \
+    ਬਣਤਰ htp_thread_trace * tr = &octx->ctx->trace[ith];                                   \
                                                                                              \
-    const struct htp_copy_convert_params * cvt = &ct->kparams->u.convert;                    \
-    const uint32_t src0_buf_size = cvt->src0_buf_size;                                       \
-    const uint32_t dst_buf_size  = cvt->dst_buf_size;                                        \
-    const uint32_t src0_row_stride = cvt->src0_row_stride;                                   \
-    const uint32_t dst_row_stride  = cvt->dst_row_stride;                                    \
-    const uint32_t blk_rows        = cvt->blk_rows;                                          \
-    uint8_t * vtcm_src0_base = ct->vtcm_src0 + ith * cvt->spad0_size_per_thread;             \
-    uint8_t * vtcm_dst_base  = ct->vtcm_dst  + ith * cvt->spad1_size_per_thread;             \
-    const uint32_t src0_row_size = ne00 * ct->kparams->src0_type_size;                       \
-    const uint32_t dst_row_size  = ne00 * ct->kparams->dst_type_size;                        \
+    ਅਚਲ ਬਣਤਰ htp_copy_convert_params * cvt = &ct->kparams->u.convert;                    \
+    ਅਚਲ uint32_t src0_buf_ਮਾਪ = cvt->src0_buf_ਮਾਪ;                                       \
+    ਅਚਲ uint32_t dst_buf_ਮਾਪ  = cvt->dst_buf_ਮਾਪ;                                        \
+    ਅਚਲ uint32_t src0_ਪੰਕਤੀ_stride = cvt->src0_ਪੰਕਤੀ_stride;                                   \
+    ਅਚਲ uint32_t dst_ਪੰਕਤੀ_stride  = cvt->dst_ਪੰਕਤੀ_stride;                                    \
+    ਅਚਲ uint32_t blk_ਪੰਕਤੀਆਂ        = cvt->blk_ਪੰਕਤੀਆਂ;                                          \
+    uint8_t * vtcm_src0_ਅਧਾਰ = ct->vtcm_src0 + ith * cvt->spad0_ਮਾਪ_ਪ੍ਰਤੀ_thread;             \
+    uint8_t * vtcm_dst_ਅਧਾਰ  = ct->vtcm_dst  + ith * cvt->spad1_ਮਾਪ_ਪ੍ਰਤੀ_thread;             \
+    ਅਚਲ uint32_t src0_ਪੰਕਤੀ_ਮਾਪ = ne00 * ct->kparams->src0_type_ਮਾਪ;                       \
+    ਅਚਲ uint32_t dst_ਪੰਕਤੀ_ਮਾਪ  = ne00 * ct->kparams->dst_type_ਮਾਪ;                        \
                                                                                              \
-    const uint32_t ne02_ne01 = ne02 * ne01;                                                  \
+    ਅਚਲ uint32_t ne02_ne01 = ne02 * ne01;                                                  \
     uint32_t i03 = fastdiv(ir0, &cvt->div_ne02_ne01);                                        \
     uint32_t rem = ir0 - i03 * ne02_ne01;                                                    \
     uint32_t i02 = fastdiv(rem, &cvt->div_ne01);                                             \
     uint32_t i01 = rem - i02 * ne01;                                                         \
                                                                                              \
-    struct cpy_row_cursor f = { ir0, i01, i02, i03 };                                        \
-    struct cpy_row_cursor c = f;                                                             \
+    ਬਣਤਰ cpy_ਪੰਕਤੀ_cursor f = { ir0, i01, i02, i03 };                                        \
+    ਬਣਤਰ cpy_ਪੰਕਤੀ_cursor c = f;                                                             \
                                                                                              \
-    for (uint32_t b = 0; b < 2 && f.r < ir1; ++b) {                                          \
-        uint8_t * src_spad = vtcm_src0_base + b * src0_buf_size;                             \
-        uint8_t * dst_spad = vtcm_dst_base  + b * dst_buf_size;                              \
-        const uint32_t nr = MIN(blk_rows, MIN(ne01 - f.i01, ir1 - f.r));                     \
-        dma_addr_t f_src0_addr = src0->data + f.i01*nb01 + f.i02*nb02 + f.i03*nb03;          \
-        dma_queue_push(dma_q, dma_make_data(dst->data, dst_spad),                            \
-                       dst_row_size, dst_buf_size, dst_row_size, 0);                         \
-        dma_queue_push(dma_q, dma_make_data(src_spad, f_src0_addr),                          \
-                       src0_row_stride, nb01, src0_row_size, nr);                            \
+    ਲਈ (uint32_t b = 0; b < 2 && f.r < ir1; ++b) {                                          \
+        uint8_t * src_spad = vtcm_src0_ਅਧਾਰ + b * src0_buf_ਮਾਪ;                             \
+        uint8_t * dst_spad = vtcm_dst_ਅਧਾਰ  + b * dst_buf_ਮਾਪ;                              \
+        ਅਚਲ uint32_t nr = MIN(blk_ਪੰਕਤੀਆਂ, MIN(ne01 - f.i01, ir1 - f.r));                     \
+        dma_addr_t f_src0_addr = src0->ਅੰਕੜੇ + f.i01*nb01 + f.i02*nb02 + f.i03*nb03;          \
+        dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(dst->ਅੰਕੜੇ, dst_spad),                            \
+                       dst_ਪੰਕਤੀ_ਮਾਪ, dst_buf_ਮਾਪ, dst_ਪੰਕਤੀ_ਮਾਪ, 0);                         \
+        dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(src_spad, f_src0_addr),                          \
+                       src0_ਪੰਕਤੀ_stride, nb01, src0_ਪੰਕਤੀ_ਮਾਪ, nr);                            \
         cpy_cursor_advance(&f, nr, ne01, ne02);                                              \
     }                                                                                        \
                                                                                              \
-    for (uint32_t blk = 0; c.r < ir1; ++blk) {                                               \
-        const uint32_t nr = MIN(blk_rows, MIN(ne01 - c.i01, ir1 - c.r));                     \
-        uint8_t * dst_spad = (uint8_t *) (uintptr_t) dma_queue_pop(dma_q).src;               \
-        uint8_t * src_spad = (uint8_t *) (uintptr_t) dma_queue_pop(dma_q).dst;               \
+    ਲਈ (uint32_t blk = 0; c.r < ir1; ++blk) {                                               \
+        ਅਚਲ uint32_t nr = MIN(blk_ਪੰਕਤੀਆਂ, MIN(ne01 - c.i01, ir1 - c.r));                     \
+        uint8_t * dst_spad = (uint8_t *) (uintptr_t) dma_ਕਤਾਰ_ਕੱਢੋ(dma_q).src;               \
+        uint8_t * src_spad = (uint8_t *) (uintptr_t) dma_ਕਤਾਰ_ਕੱਢੋ(dma_q).dst;               \
                                                                                              \
-        htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) blk);                   \
-        for (uint32_t r = 0; r < nr; ++r) {                                                  \
-            CONV_FUNC(dst_spad + r * dst_row_stride, src_spad + r * src0_row_stride, ne00);  \
+        htp_trace_event_ਸ਼ੁਰੂ(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) blk);                   \
+        ਲਈ (uint32_t r = 0; r < nr; ++r) {                                                  \
+            CONV_FUNC(dst_spad + r * dst_ਪੰਕਤੀ_stride, src_spad + r * src0_ਪੰਕਤੀ_stride, ne00);  \
         }                                                                                    \
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) blk);                    \
                                                                                              \
-        dma_addr_t c_dst_addr = dst->data + c.i01*nb1 + c.i02*nb2 + c.i03*nb3;               \
-        dma_queue_push(dma_q, dma_make_data(c_dst_addr, dst_spad),                           \
-                       nb1, dst_row_stride, dst_row_size, nr);                               \
+        dma_addr_t c_dst_addr = dst->ਅੰਕੜੇ + c.i01*nb1 + c.i02*nb2 + c.i03*nb3;               \
+        dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(c_dst_addr, dst_spad),                           \
+                       nb1, dst_ਪੰਕਤੀ_stride, dst_ਪੰਕਤੀ_ਮਾਪ, nr);                               \
         cpy_cursor_advance(&c, nr, ne01, ne02);                                              \
                                                                                              \
-        if (f.r < ir1) {                                                                     \
-            const uint32_t fnr = MIN(blk_rows, MIN(ne01 - f.i01, ir1 - f.r));                \
-            dma_addr_t f_src0_addr = src0->data + f.i01*nb01 + f.i02*nb02 + f.i03*nb03;      \
-            dma_queue_push(dma_q, dma_make_data(src_spad, f_src0_addr),                      \
-                           src0_row_stride, nb01, src0_row_size, fnr);                       \
+        ਜੇ (f.r < ir1) {                                                                     \
+            ਅਚਲ uint32_t fnr = MIN(blk_ਪੰਕਤੀਆਂ, MIN(ne01 - f.i01, ir1 - f.r));                \
+            dma_addr_t f_src0_addr = src0->ਅੰਕੜੇ + f.i01*nb01 + f.i02*nb02 + f.i03*nb03;      \
+            dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(src_spad, f_src0_addr),                      \
+                           src0_ਪੰਕਤੀ_stride, nb01, src0_ਪੰਕਤੀ_ਮਾਪ, fnr);                       \
             cpy_cursor_advance(&f, fnr, ne01, ne02);                                         \
         }                                                                                    \
     }                                                                                        \
-    dma_queue_flush(dma_q);                                                                  \
+    dma_ਕਤਾਰ_flush(dma_q);                                                                  \
 }
 
 DEFINE_CPY_CONVERT_SAMESHAPE(f16_f32, hvx_copy_f16_f32_aa)
@@ -239,247 +239,247 @@ DEFINE_CPY_CONVERT_SAMESHAPE(f32_f16, hvx_copy_f32_f16_aa)
 DEFINE_CPY_CONVERT_SAMESHAPE(i32_f32, hvx_copy_i32_f32_aa)
 DEFINE_CPY_CONVERT_SAMESHAPE(f32_i32, hvx_copy_f32_i32_aa)
 
-static int cpy_scalar(struct htp_ops_context * octx, const struct htp_copy_kernel_params * kparams) {
-    if (octx->ctx->mdev.count > 1 && octx->ctx->mdev.idx > 0) {
-        return HTP_STATUS_OK;
+ਸਥਿਰ ਪੂਰਨ cpy_scalar(ਬਣਤਰ htp_ops_context * octx, ਅਚਲ ਬਣਤਰ htp_copy_kernel_params * kparams) {
+    ਜੇ (octx->ctx->mdev.ਗਿਣਤੀ_2 > 1 && octx->ctx->mdev.idx > 0) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_OK;
     }
 
-    const struct htp_tensor * src0 = octx->src[0];
-    const struct htp_tensor * dst  = octx->dst;
+    ਅਚਲ ਬਣਤਰ htp_tensor * src0 = octx->src[0];
+    ਅਚਲ ਬਣਤਰ htp_tensor * dst  = octx->dst;
 
-    if (src0->type == dst->type) {
-        dma_cpy_sametype_reshape_contig(octx->ctx->dma[0], dst->data, src0->data, kparams->src0_type_size);
-        dma_queue_flush(octx->ctx->dma[0]);
-        return HTP_STATUS_OK;
+    ਜੇ (src0->type == dst->type) {
+        dma_cpy_sametype_reshape_contig(octx->ctx->dma[0], dst->ਅੰਕੜੇ, src0->ਅੰਕੜੇ, kparams->src0_type_ਮਾਪ);
+        dma_ਕਤਾਰ_flush(octx->ctx->dma[0]);
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_OK;
     }
 
-    dma_queue * dma_q = octx->ctx->dma[0];
-    dma_addr_t s_vtcm = (dma_addr_t)(uintptr_t) octx->ctx->vtcm_base;
+    dma_ਕਤਾਰ * dma_q = octx->ctx->dma[0];
+    dma_addr_t s_vtcm = (dma_addr_t)(uintptr_t) octx->ctx->vtcm_ਅਧਾਰ;
     dma_addr_t d_vtcm = s_vtcm + VLEN;
-    const uint32_t s_size = kparams->src0_type_size;
-    const uint32_t d_size = kparams->dst_type_size;
+    ਅਚਲ uint32_t s_ਮਾਪ = kparams->src0_type_ਮਾਪ;
+    ਅਚਲ uint32_t d_ਮਾਪ = kparams->dst_type_ਮਾਪ;
 
-    dma_queue_push(dma_q, dma_make_data(s_vtcm, src0->data), s_size, s_size, s_size, 1);
-    dma_queue_pop(dma_q);
+    dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(s_vtcm, src0->ਅੰਕੜੇ), s_ਮਾਪ, s_ਮਾਪ, s_ਮਾਪ, 1);
+    dma_ਕਤਾਰ_ਕੱਢੋ(dma_q);
 
-    uint8_t * s_ptr = (uint8_t *) octx->ctx->vtcm_base;
+    uint8_t * s_ptr = (uint8_t *) octx->ctx->vtcm_ਅਧਾਰ;
     uint8_t * d_ptr = s_ptr + VLEN;
 
-    const HVX_Vector v_src = hvx_vmem(s_ptr);
-    HVX_Vector v_dst;
+    ਅਚਲ HVX_ਸਦਿਸ਼ v_src = hvx_vmem(s_ptr);
+    HVX_ਸਦਿਸ਼ v_dst;
 
-    if (src0->type == HTP_TYPE_F32 && dst->type == HTP_TYPE_I32) {
+    ਜੇ (src0->type == HTP_TYPE_F32 && dst->type == HTP_TYPE_I32) {
         v_dst = Q6_Vw_equals_Vsf(v_src);
-    } else if (src0->type == HTP_TYPE_I32 && dst->type == HTP_TYPE_F32) {
+    } ਨਹੀਂਤਾਂ ਜੇ (src0->type == HTP_TYPE_I32 && dst->type == HTP_TYPE_F32) {
         v_dst = Q6_Vsf_equals_Vw(v_src);
-    } else if (src0->type == HTP_TYPE_F32 && dst->type == HTP_TYPE_F16) {
-        v_dst = hvx_vec_f32_to_f16(v_src, v_src);
-    } else if (src0->type == HTP_TYPE_F16 && dst->type == HTP_TYPE_F32) {
-        v_dst = Q6_V_lo_W(hvx_vec_f16_to_f32(v_src));
-    } else {
-        return HTP_STATUS_NO_SUPPORT;
+    } ਨਹੀਂਤਾਂ ਜੇ (src0->type == HTP_TYPE_F32 && dst->type == HTP_TYPE_F16) {
+        v_dst = hvx_vec_f32_ਮੰਜ਼ਿਲ_f16(v_src, v_src);
+    } ਨਹੀਂਤਾਂ ਜੇ (src0->type == HTP_TYPE_F16 && dst->type == HTP_TYPE_F32) {
+        v_dst = Q6_V_lo_W(hvx_vec_f16_ਮੰਜ਼ਿਲ_f32(v_src));
+    } ਨਹੀਂਤਾਂ {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_NO_SUPPORT;
     }
 
     hvx_vmem(d_ptr) = v_dst;
 
-    dma_queue_push(dma_q, dma_make_data(dst->data, d_vtcm), d_size, d_size, d_size, 1);
-    dma_queue_flush(dma_q);
-    return HTP_STATUS_OK;
+    dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(dst->ਅੰਕੜੇ, d_vtcm), d_ਮਾਪ, d_ਮਾਪ, d_ਮਾਪ, 1);
+    dma_ਕਤਾਰ_flush(dma_q);
+    ਵਾਪਸ HTP_ਸਥਿਤੀ_OK;
 }
 
-static int cpy_1d_contig(struct htp_ops_context * octx, const struct htp_copy_kernel_params * kparams) {
-    const struct htp_tensor * src0 = octx->src[0];
-    const struct htp_tensor * dst  = octx->dst;
+ਸਥਿਰ ਪੂਰਨ cpy_1d_contig(ਬਣਤਰ htp_ops_context * octx, ਅਚਲ ਬਣਤਰ htp_copy_kernel_params * kparams) {
+    ਅਚਲ ਬਣਤਰ htp_tensor * src0 = octx->src[0];
+    ਅਚਲ ਬਣਤਰ htp_tensor * dst  = octx->dst;
 
-    uint32_t elem_start = 0;
-    uint32_t nelem      = kparams->total_elems;
+    uint32_t elem_ਸ਼ੁਰੂ = 0;
+    uint32_t nelem      = kparams->ਕੁੱਲ_elems;
 
-    if (octx->ctx->mdev.count > 1) {
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(
-            kparams->total_elems, 1, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
-        elem_start = range.start;
-        nelem      = range.count;
+    ਜੇ (octx->ctx->mdev.ਗਿਣਤੀ_2 > 1) {
+        ਅਚਲ ਬਣਤਰ htp_tensor_mdev_range range = htp_tensor_mdev_ਹਿੱਸੇ_ਕਰੋ(
+            kparams->ਕੁੱਲ_elems, 1, octx->ctx->mdev.idx, octx->ctx->mdev.ਗਿਣਤੀ_2, &octx->ctx->mdev.ਗਿਣਤੀ_div);
+        elem_ਸ਼ੁਰੂ = range.ਸ਼ੁਰੂ;
+        nelem      = range.ਗਿਣਤੀ_2;
     }
 
-    if (nelem > 0) {
-        dma_queue * q = octx->ctx->dma[0];
-        const uint32_t type_size = kparams->src0_type_size;
-        dma_addr_t dst_addr  = dst->data  + elem_start * type_size;
-        dma_addr_t src0_addr = src0->data + elem_start * type_size;
-        dma_cpy_sametype_reshape_contig(q, dst_addr, src0_addr, nelem * type_size);
-        dma_queue_flush(q);
+    ਜੇ (nelem > 0) {
+        dma_ਕਤਾਰ * q = octx->ctx->dma[0];
+        ਅਚਲ uint32_t type_ਮਾਪ = kparams->src0_type_ਮਾਪ;
+        dma_addr_t dst_addr  = dst->ਅੰਕੜੇ  + elem_ਸ਼ੁਰੂ * type_ਮਾਪ;
+        dma_addr_t src0_addr = src0->ਅੰਕੜੇ + elem_ਸ਼ੁਰੂ * type_ਮਾਪ;
+        dma_cpy_sametype_reshape_contig(q, dst_addr, src0_addr, nelem * type_ਮਾਪ);
+        dma_ਕਤਾਰ_flush(q);
     }
 
-    return HTP_STATUS_OK;
+    ਵਾਪਸ HTP_ਸਥਿਤੀ_OK;
 }
 
-static int cpy_sameshape_sametype(struct htp_ops_context * octx, const struct htp_copy_kernel_params * kparams) {
-    const struct htp_tensor * src0 = octx->src[0];
-    const struct htp_tensor * dst  = octx->dst;
+ਸਥਿਰ ਪੂਰਨ cpy_sameshape_sametype(ਬਣਤਰ htp_ops_context * octx, ਅਚਲ ਬਣਤਰ htp_copy_kernel_params * kparams) {
+    ਅਚਲ ਬਣਤਰ htp_tensor * src0 = octx->src[0];
+    ਅਚਲ ਬਣਤਰ htp_tensor * dst  = octx->dst;
 
-    uint32_t row_start = 0;
-    uint32_t nrows     = kparams->total_rows;
+    uint32_t ਪੰਕਤੀ_ਸ਼ੁਰੂ = 0;
+    uint32_t nrows     = kparams->ਕੁੱਲ_ਪੰਕਤੀਆਂ;
 
-    if (octx->ctx->mdev.count > 1) {
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(
-            kparams->total_rows, 1, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
-        row_start = range.start;
-        nrows     = range.count;
+    ਜੇ (octx->ctx->mdev.ਗਿਣਤੀ_2 > 1) {
+        ਅਚਲ ਬਣਤਰ htp_tensor_mdev_range range = htp_tensor_mdev_ਹਿੱਸੇ_ਕਰੋ(
+            kparams->ਕੁੱਲ_ਪੰਕਤੀਆਂ, 1, octx->ctx->mdev.idx, octx->ctx->mdev.ਗਿਣਤੀ_2, &octx->ctx->mdev.ਗਿਣਤੀ_div);
+        ਪੰਕਤੀ_ਸ਼ੁਰੂ = range.ਸ਼ੁਰੂ;
+        nrows     = range.ਗਿਣਤੀ_2;
     }
 
-    if (nrows > 0) {
-        dma_queue * q = octx->ctx->dma[0];
-        dma_cpy_sametype_sameshape_range(q, dst, src0, kparams->src0_type_size, row_start, nrows);
-        dma_queue_flush(q);
+    ਜੇ (nrows > 0) {
+        dma_ਕਤਾਰ * q = octx->ctx->dma[0];
+        dma_cpy_sametype_sameshape_range(q, dst, src0, kparams->src0_type_ਮਾਪ, ਪੰਕਤੀ_ਸ਼ੁਰੂ, nrows);
+        dma_ਕਤਾਰ_flush(q);
     }
 
-    return HTP_STATUS_OK;
+    ਵਾਪਸ HTP_ਸਥਿਤੀ_OK;
 }
 
-static int cpy_sameshape_convert(struct htp_ops_context * octx, const struct htp_copy_kernel_params * kparams) {
-    const struct htp_tensor * src0 = octx->src[0];
-    const struct htp_tensor * dst  = octx->dst;
+ਸਥਿਰ ਪੂਰਨ cpy_sameshape_convert(ਬਣਤਰ htp_ops_context * octx, ਅਚਲ ਬਣਤਰ htp_copy_kernel_params * kparams) {
+    ਅਚਲ ਬਣਤਰ htp_tensor * src0 = octx->src[0];
+    ਅਚਲ ਬਣਤਰ htp_tensor * dst  = octx->dst;
 
-    if (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
-        return HTP_STATUS_INVAL_PARAMS;
+    ਜੇ (!htp_ops_context_ਸੈੱਟ_n_ਧਾਗੇ(octx, kparams->n_ਧਾਗੇ)) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_INVAL_PARAMS;
     }
 
-    uint32_t row_start = 0;
-    uint32_t nrows     = kparams->total_rows;
+    uint32_t ਪੰਕਤੀ_ਸ਼ੁਰੂ = 0;
+    uint32_t nrows     = kparams->ਕੁੱਲ_ਪੰਕਤੀਆਂ;
 
-    if (octx->ctx->mdev.count > 1) {
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(
-            kparams->total_rows, 1, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
-        row_start = range.start;
-        nrows     = range.count;
+    ਜੇ (octx->ctx->mdev.ਗਿਣਤੀ_2 > 1) {
+        ਅਚਲ ਬਣਤਰ htp_tensor_mdev_range range = htp_tensor_mdev_ਹਿੱਸੇ_ਕਰੋ(
+            kparams->ਕੁੱਲ_ਪੰਕਤੀਆਂ, 1, octx->ctx->mdev.idx, octx->ctx->mdev.ਗਿਣਤੀ_2, &octx->ctx->mdev.ਗਿਣਤੀ_div);
+        ਪੰਕਤੀ_ਸ਼ੁਰੂ = range.ਸ਼ੁਰੂ;
+        nrows     = range.ਗਿਣਤੀ_2;
     }
 
-    if (nrows == 0) {
-        return HTP_STATUS_OK;
+    ਜੇ (nrows == 0) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_OK;
     }
 
-    if (kparams->vtcm_size > octx->ctx->vtcm_size) {
-        return HTP_STATUS_VTCM_TOO_SMALL;
+    ਜੇ (kparams->vtcm_ਮਾਪ > octx->ctx->vtcm_ਮਾਪ) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_VTCM_TOO_SMALL;
     }
 
-    const uint32_t n_threads = octx->n_threads;
-    const struct htp_copy_convert_params * cvt = &kparams->u.convert;
+    ਅਚਲ uint32_t n_ਧਾਗੇ = octx->n_ਧਾਗੇ;
+    ਅਚਲ ਬਣਤਰ htp_copy_convert_params * cvt = &kparams->u.convert;
 
-    struct htp_copy_context ct;
+    ਬਣਤਰ htp_copy_context ct;
     ct.octx                  = octx;
     ct.kparams               = kparams;
-    ct.row_start             = row_start;
+    ct.ਪੰਕਤੀ_ਸ਼ੁਰੂ             = ਪੰਕਤੀ_ਸ਼ੁਰੂ;
     ct.nrows                 = nrows;
-    ct.src0_nrows_per_thread = fastdiv(nrows + n_threads - 1, &octx->n_threads_div);
+    ct.src0_nrows_ਪ੍ਰਤੀ_thread = fastdiv(nrows + n_ਧਾਗੇ - 1, &octx->n_ਧਾਗੇ_div);
 
-    uint8_t * vtcm_base = (uint8_t *) octx->ctx->vtcm_base;
-    ct.vtcm_src0 = vtcm_base;
-    ct.vtcm_dst  = vtcm_base + (size_t) n_threads * cvt->spad0_size_per_thread;
+    uint8_t * vtcm_ਅਧਾਰ = (uint8_t *) octx->ctx->vtcm_ਅਧਾਰ;
+    ct.vtcm_src0 = vtcm_ਅਧਾਰ;
+    ct.vtcm_dst  = vtcm_ਅਧਾਰ + (size_t) n_ਧਾਗੇ * cvt->spad0_ਮਾਪ_ਪ੍ਰਤੀ_thread;
 
-    work_queue_func_t copy_fun = NULL;
-    if (dst->type == HTP_TYPE_F16 && src0->type == HTP_TYPE_F32) {
+    work_ਕਤਾਰ_func_t copy_fun = ਨਿਰਾ;
+    ਜੇ (dst->type == HTP_TYPE_F16 && src0->type == HTP_TYPE_F32) {
         copy_fun = cpy_thread_f16_f32_sameshape;
-    } else if (dst->type == HTP_TYPE_F32 && src0->type == HTP_TYPE_F16) {
+    } ਨਹੀਂਤਾਂ ਜੇ (dst->type == HTP_TYPE_F32 && src0->type == HTP_TYPE_F16) {
         copy_fun = cpy_thread_f32_f16_sameshape;
-    } else if (dst->type == HTP_TYPE_I32 && src0->type == HTP_TYPE_F32) {
+    } ਨਹੀਂਤਾਂ ਜੇ (dst->type == HTP_TYPE_I32 && src0->type == HTP_TYPE_F32) {
         copy_fun = cpy_thread_i32_f32_sameshape;
-    } else if (dst->type == HTP_TYPE_F32 && src0->type == HTP_TYPE_I32) {
+    } ਨਹੀਂਤਾਂ ਜੇ (dst->type == HTP_TYPE_F32 && src0->type == HTP_TYPE_I32) {
         copy_fun = cpy_thread_f32_i32_sameshape;
-    } else {
-        return HTP_STATUS_NO_SUPPORT;
+    } ਨਹੀਂਤਾਂ {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_NO_SUPPORT;
     }
 
-    work_queue_run(octx->ctx->work_queue, copy_fun, &ct, n_threads);
-    return HTP_STATUS_OK;
+    work_ਕਤਾਰ_ਲੜੀਵਾਰ(octx->ctx->work_ਕਤਾਰ, copy_fun, &ct, n_ਧਾਗੇ);
+    ਵਾਪਸ HTP_ਸਥਿਤੀ_OK;
 }
 
-static int cpy_reshape(struct htp_ops_context * octx, const struct htp_copy_kernel_params * kparams) {
-    const struct htp_tensor * src0 = octx->src[0];
-    const struct htp_tensor * dst  = octx->dst;
+ਸਥਿਰ ਪੂਰਨ cpy_reshape(ਬਣਤਰ htp_ops_context * octx, ਅਚਲ ਬਣਤਰ htp_copy_kernel_params * kparams) {
+    ਅਚਲ ਬਣਤਰ htp_tensor * src0 = octx->src[0];
+    ਅਚਲ ਬਣਤਰ htp_tensor * dst  = octx->dst;
 
-    if (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
-        return HTP_STATUS_INVAL_PARAMS;
+    ਜੇ (!htp_ops_context_ਸੈੱਟ_n_ਧਾਗੇ(octx, kparams->n_ਧਾਗੇ)) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_INVAL_PARAMS;
     }
 
-    uint32_t elem_start = 0;
-    uint32_t nelem      = kparams->total_elems;
+    uint32_t elem_ਸ਼ੁਰੂ = 0;
+    uint32_t nelem      = kparams->ਕੁੱਲ_elems;
 
-    if (octx->ctx->mdev.count > 1) {
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(
-            kparams->total_elems, 1, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
-        elem_start = range.start;
-        nelem      = range.count;
+    ਜੇ (octx->ctx->mdev.ਗਿਣਤੀ_2 > 1) {
+        ਅਚਲ ਬਣਤਰ htp_tensor_mdev_range range = htp_tensor_mdev_ਹਿੱਸੇ_ਕਰੋ(
+            kparams->ਕੁੱਲ_elems, 1, octx->ctx->mdev.idx, octx->ctx->mdev.ਗਿਣਤੀ_2, &octx->ctx->mdev.ਗਿਣਤੀ_div);
+        elem_ਸ਼ੁਰੂ = range.ਸ਼ੁਰੂ;
+        nelem      = range.ਗਿਣਤੀ_2;
     }
 
-    if (nelem == 0) {
-        return HTP_STATUS_OK;
+    ਜੇ (nelem == 0) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_OK;
     }
 
-    const uint32_t n_threads = octx->n_threads;
+    ਅਚਲ uint32_t n_ਧਾਗੇ = octx->n_ਧਾਗੇ;
 
-    struct htp_copy_context ct;
+    ਬਣਤਰ htp_copy_context ct;
     ct.octx            = octx;
     ct.kparams         = kparams;
-    ct.elem_start      = elem_start;
+    ct.elem_ਸ਼ੁਰੂ      = elem_ਸ਼ੁਰੂ;
     ct.nelem           = nelem;
-    ct.elem_per_thread = fastdiv(nelem + n_threads - 1, &octx->n_threads_div);
+    ct.elem_ਪ੍ਰਤੀ_thread = fastdiv(nelem + n_ਧਾਗੇ - 1, &octx->n_ਧਾਗੇ_div);
 
-    work_queue_func_t copy_fun = NULL;
-    switch (src0->type) {
-        case HTP_TYPE_F32: copy_fun = cpy_thread_f32_reshape; break;
-        case HTP_TYPE_F16: copy_fun = cpy_thread_f16_reshape; break;
-        case HTP_TYPE_I32: copy_fun = cpy_thread_i32_reshape; break;
-        default: return HTP_STATUS_NO_SUPPORT;
+    work_ਕਤਾਰ_func_t copy_fun = ਨਿਰਾ;
+    ਚੋਣ (src0->type) {
+        ਹਾਲਤ HTP_TYPE_F32: copy_fun = cpy_thread_f32_reshape; ਰੋਕੋ;
+        ਹਾਲਤ HTP_TYPE_F16: copy_fun = cpy_thread_f16_reshape; ਰੋਕੋ;
+        ਹਾਲਤ HTP_TYPE_I32: copy_fun = cpy_thread_i32_reshape; ਰੋਕੋ;
+        ਮੂਲ: ਵਾਪਸ HTP_ਸਥਿਤੀ_NO_SUPPORT;
     }
 
-    work_queue_run(octx->ctx->work_queue, copy_fun, &ct, n_threads);
-    return HTP_STATUS_OK;
+    work_ਕਤਾਰ_ਲੜੀਵਾਰ(octx->ctx->work_ਕਤਾਰ, copy_fun, &ct, n_ਧਾਗੇ);
+    ਵਾਪਸ HTP_ਸਥਿਤੀ_OK;
 }
 
-int op_cpy(struct htp_ops_context * octx) {
-    const struct htp_copy_kernel_params * kparams = (const struct htp_copy_kernel_params *) octx->kernel_params;
-    int status = HTP_STATUS_OK;
+ਪੂਰਨ op_cpy(ਬਣਤਰ htp_ops_context * octx) {
+    ਅਚਲ ਬਣਤਰ htp_copy_kernel_params * kparams = (ਅਚਲ ਬਣਤਰ htp_copy_kernel_params *) octx->kernel_params;
+    ਪੂਰਨ ਸਥਿਤੀ = HTP_ਸਥਿਤੀ_OK;
 
-    switch (kparams->kernel_type) {
-        case HTP_COPY_KERNEL_SCALAR:
-            status = cpy_scalar(octx, kparams);
-            break;
-        case HTP_COPY_KERNEL_1D_CONTIG:
-            status = cpy_1d_contig(octx, kparams);
-            break;
-        case HTP_COPY_KERNEL_SAMESHAPE_SAMETYPE:
-            status = cpy_sameshape_sametype(octx, kparams);
-            break;
-        case HTP_COPY_KERNEL_SAMESHAPE_CONVERT:
-            status = cpy_sameshape_convert(octx, kparams);
-            break;
-        case HTP_COPY_KERNEL_RESHAPE:
-            status = cpy_reshape(octx, kparams);
-            break;
-        case HTP_COPY_KERNEL_GATHER_ROWS:
-            status = htp_gather_rows(octx, octx->src[0], NULL, &kparams->u.gather, kparams->n_threads);
-            break;
-        default:
-            status = HTP_STATUS_NO_SUPPORT;
-            break;
+    ਚੋਣ (kparams->kernel_type) {
+        ਹਾਲਤ HTP_COPY_KERNEL_SCALAR:
+            ਸਥਿਤੀ = cpy_scalar(octx, kparams);
+            ਰੋਕੋ;
+        ਹਾਲਤ HTP_COPY_KERNEL_1D_CONTIG:
+            ਸਥਿਤੀ = cpy_1d_contig(octx, kparams);
+            ਰੋਕੋ;
+        ਹਾਲਤ HTP_COPY_KERNEL_SAMESHAPE_SAMETYPE:
+            ਸਥਿਤੀ = cpy_sameshape_sametype(octx, kparams);
+            ਰੋਕੋ;
+        ਹਾਲਤ HTP_COPY_KERNEL_SAMESHAPE_CONVERT:
+            ਸਥਿਤੀ = cpy_sameshape_convert(octx, kparams);
+            ਰੋਕੋ;
+        ਹਾਲਤ HTP_COPY_KERNEL_RESHAPE:
+            ਸਥਿਤੀ = cpy_reshape(octx, kparams);
+            ਰੋਕੋ;
+        ਹਾਲਤ HTP_COPY_KERNEL_GATHER_ਪੰਕਤੀਆਂ:
+            ਸਥਿਤੀ = htp_gather_ਪੰਕਤੀਆਂ(octx, octx->src[0], ਨਿਰਾ, &kparams->u.gather, kparams->n_ਧਾਗੇ);
+            ਰੋਕੋ;
+        ਮੂਲ:
+            ਸਥਿਤੀ = HTP_ਸਥਿਤੀ_NO_SUPPORT;
+            ਰੋਕੋ;
     }
 
-    htp_ops_context_set_status(octx, status);
+    htp_ops_context_ਸੈੱਟ_ਸਥਿਤੀ(octx, ਸਥਿਤੀ);
 
-    if (octx->op == HTP_OP_CPY_FENCE) {
-        if (octx->ctx->mdev.count > 1) {
-            htp_mdev_group_barrier(octx);
+    ਜੇ (octx->op == HTP_OP_CPY_FENCE) {
+        ਜੇ (octx->ctx->mdev.ਗਿਣਤੀ_2 > 1) {
+            htp_mdev_ਸਮੂਹ_barrier(octx);
         }
 
-        if (octx->ctx->mdev.idx == 0) {
-            const struct htp_tensor * sync = octx->src[1];
-            const uint32_t seq = (uint32_t) octx->op_params[0];
-            atomic_uint * sync_fence = (atomic_uint *) (uintptr_t) sync->data;
-            htp_fence_write(sync_fence, seq, octx->status);
+        ਜੇ (octx->ctx->mdev.idx == 0) {
+            ਅਚਲ ਬਣਤਰ htp_tensor * sync = octx->src[1];
+            ਅਚਲ uint32_t seq = (uint32_t) octx->op_params[0];
+            atomic_uint * sync_fence = (atomic_uint *) (uintptr_t) sync->ਅੰਕੜੇ;
+            htp_fence_write(sync_fence, seq, octx->ਸਥਿਤੀ);
 
-            FARF(HIGH, "ggml-hex: sync-release : fence %p seq 0x%x status %d\n", sync_fence, seq, octx->status);
+            FARF(ਉੱਚਾ_2, "ggml-hex: sync-release : fence %p seq 0x%x status %d\n", sync_fence, seq, octx->ਸਥਿਤੀ);
         }
     }
 
-    return octx->status;
+    ਵਾਪਸ octx->ਸਥਿਤੀ;
 }

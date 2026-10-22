@@ -1,82 +1,82 @@
 # include "ggml-backend-impl.h"
 
-#if defined(__powerpc64__) || defined(__ppc64__) || defined(__PPC64__)
+#ਜੇ defined(__powerpc64__) || defined(__ppc64__) || defined(__PPC64__)
 
-#if defined(__linux__)
-#include <sys/auxv.h>
-#endif
+#ਜੇ defined(__linux__)
+#ਅਨ੍ਤਰ੍ਭਾਵ <sys/auxv.h>
+#ਜੇ_ਅੰਤ
 
-#include <string>
+#ਅਨ੍ਤਰ੍ਭਾਵ <string>
 
-struct powerpc_features {
+ਬਣਤਰ powerpc_features {
     std::string platform = "";
-    int power_version    = -1;
+    ਪੂਰਨ power_ਸੰਸਕਰਣ    = -1;
 
-    bool has_vsx         = false;
+    ਤਾਰਕਿਕ has_vsx         = ਝੂਠ;
 
     powerpc_features() {
-#if defined(__linux__)
-        unsigned long auxval = getauxval(AT_PLATFORM);
-        if (auxval) {
-            platform = std::string(reinterpret_cast<const char*>(auxval));
+#ਜੇ defined(__linux__)
+        ਬਿਨਾਨਿਸ਼ਾਨੀ ਲੰਮਾ auxval = getauxval(AT_PLATFORM);
+        ਜੇ (auxval) {
+            platform = std::string(reinterpret_cast<ਅਚਲ ਅੱਖਰ*>(auxval));
             // TBD: Do systems exist that return this in uppercase?
-            if (platform.substr(0, 5) == "power") {
+            ਜੇ (platform.substr(0, 5) == "power") {
                 // Extractt a numeric suffix, if one exists
-                int vpos = -1;
-                for (int i = platform.length() - 1; i >= 0; i--) {
-                    if (std::isdigit(platform[i])) {
+                ਪੂਰਨ vpos = -1;
+                ਲਈ (ਪੂਰਨ i = platform.ਲੰਮਾਈ() - 1; i >= 0; i--) {
+                    ਜੇ (std::ਅੰਕ_ਹੈ(platform[i])) {
                         vpos = i;
-                    } else {
-                        break;
+                    } ਨਹੀਂਤਾਂ {
+                        ਰੋਕੋ;
                     }
                 }
-                if (vpos > -1) {
-                    power_version = std::stoi(platform.substr(vpos));
+                ਜੇ (vpos > -1) {
+                    power_ਸੰਸਕਰਣ = std::stoi(platform.substr(vpos));
                 }
             }
         }
-#endif
-        if (power_version >= 9) {
-            has_vsx = true;
+#ਜੇ_ਅੰਤ
+        ਜੇ (power_ਸੰਸਕਰਣ >= 9) {
+            has_vsx = ਸੱਚ;
         }
     }
 };
 
-static int ggml_backend_cpu_powerpc_score() {
-    int score = 1;
+ਸਥਿਰ ਪੂਰਨ ggml_backend_cpu_powerpc_score() {
+    ਪੂਰਨ score = 1;
     powerpc_features pf;
 
 // Platform scores
-#if defined(GGML_USE_POWER7)
-    if (pf.power_version < 7) { return 0; }
+#ਜੇ defined(GGML_USE_POWER7)
+    ਜੇ (pf.power_ਸੰਸਕਰਣ < 7) { ਵਾਪਸ 0; }
     score += 1<<1;
-#endif
-#if defined(GGML_USE_POWER8)
-    if (pf.power_version < 8) { return 0; }
+#ਜੇ_ਅੰਤ
+#ਜੇ defined(GGML_USE_POWER8)
+    ਜੇ (pf.power_ਸੰਸਕਰਣ < 8) { ਵਾਪਸ 0; }
     score += 1<<2;
-#endif
-#if defined(GGML_USE_POWER9)
-    if (pf.power_version < 9) { return 0; }
+#ਜੇ_ਅੰਤ
+#ਜੇ defined(GGML_USE_POWER9)
+    ਜੇ (pf.power_ਸੰਸਕਰਣ < 9) { ਵਾਪਸ 0; }
     score += 1<<3;
-#endif
-#if defined(GGML_USE_POWER10)
-    if (pf.power_version < 10) { return 0; }
+#ਜੇ_ਅੰਤ
+#ਜੇ defined(GGML_USE_POWER10)
+    ਜੇ (pf.power_ਸੰਸਕਰਣ < 10) { ਵਾਪਸ 0; }
     score += 1<<4;
-#endif
-#if defined(GGML_USE_POWER11)
-    if (pf.power_version < 11) { return 0; }
+#ਜੇ_ਅੰਤ
+#ਜੇ defined(GGML_USE_POWER11)
+    ਜੇ (pf.power_ਸੰਸਕਰਣ < 11) { ਵਾਪਸ 0; }
     score += 1<<5;
-#endif
+#ਜੇ_ਅੰਤ
 
 // Feature scores
-#if defined(GGML_USE_VSX)
-    if (!pf.has_vsx) { return 0; }
+#ਜੇ defined(GGML_USE_VSX)
+    ਜੇ (!pf.has_vsx) { ਵਾਪਸ 0; }
     score += 1<<6;
-#endif
+#ਜੇ_ਅੰਤ
 
-    return score;
+    ਵਾਪਸ score;
 }
 
 GGML_BACKEND_DL_SCORE_IMPL(ggml_backend_cpu_powerpc_score)
 
-#endif // defined(__powerpc64__) || defined(__ppc64__) || defined(__PPC64__)
+#ਜੇ_ਅੰਤ // defined(__powerpc64__) || defined(__ppc64__) || defined(__PPC64__)

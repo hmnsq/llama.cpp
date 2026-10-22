@@ -1,138 +1,138 @@
-#ifndef HTP_UNARY_OPS_H
-#define HTP_UNARY_OPS_H
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ HTP_UNARY_OPS_H
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_UNARY_OPS_H
 
-#include "hex-common.h"
-#include "htp-ops.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hex-common.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "htp-ops.h"
 
 // Op-specific struct for precomputed unary params
-struct htp_unary_kernel_params {
-    uint32_t  n_threads;
-    uint32_t  col_tile;
-    uint32_t  vtcm_row_per_thread;
-    uint32_t  block;
-    uint32_t  broadcast_weight;
+ਬਣਤਰ htp_unary_kernel_params {
+    uint32_t  n_ਧਾਗੇ;
+    uint32_t  ਖਾਨਾ_tile;
+    uint32_t  vtcm_ਪੰਕਤੀ_ਪ੍ਰਤੀ_thread;
+    uint32_t  ਖੰਡ;
+    uint32_t  ਪ੍ਰਸਾਰਣ_ਭਾਰ;
 
-    uint32_t  vtcm_src0_size_per_thread;
-    uint32_t  vtcm_src1_size_per_thread;
-    uint32_t  vtcm_dst_size_per_thread;
+    uint32_t  vtcm_src0_ਮਾਪ_ਪ੍ਰਤੀ_thread;
+    uint32_t  vtcm_src1_ਮਾਪ_ਪ੍ਰਤੀ_thread;
+    uint32_t  vtcm_dst_ਮਾਪ_ਪ੍ਰਤੀ_thread;
 
-    uint32_t  vtcm_src0_size;
-    uint32_t  vtcm_src1_size;
-    uint32_t  vtcm_dst_size;
+    uint32_t  vtcm_src0_ਮਾਪ;
+    uint32_t  vtcm_src1_ਮਾਪ;
+    uint32_t  vtcm_dst_ਮਾਪ;
 
-    uint32_t  src0_row_size_aligned;
-    uint32_t  src1_row_size_aligned;
-    uint32_t  dst_row_size_aligned;
+    uint32_t  src0_ਪੰਕਤੀ_ਮਾਪ_aligned;
+    uint32_t  src1_ਪੰਕਤੀ_ਮਾਪ_aligned;
+    uint32_t  dst_ਪੰਕਤੀ_ਮਾਪ_aligned;
 
-    uint32_t  vtcm_size;
+    uint32_t  vtcm_ਮਾਪ;
 
     // Fastdiv helpers
-    struct fastdiv_values div_ne01;
-    struct fastdiv_values div_ne02;
-    struct fastdiv_values div_ne012;
-    struct fastdiv_values div_tpr;
+    ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ div_ne01;
+    ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ div_ne02;
+    ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ div_ne012;
+    ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ div_tpr;
 };
 
-#if defined(__cplusplus)
-static_assert(sizeof(struct htp_unary_kernel_params) <= 128, "htp_unary_kernel_params is too large for kernel_params blob");
-#else
-_Static_assert(sizeof(struct htp_unary_kernel_params) <= 128, "htp_unary_kernel_params is too large for kernel_params blob");
-#endif
+#ਜੇ defined(__cplusplus)
+static_assert(ਆਕਾਰ(ਬਣਤਰ htp_unary_kernel_params) <= 128, "htp_unary_kernel_params is too large for kernel_params blob");
+#ਨਹੀਂਤਾਂ
+_Static_assert(ਆਕਾਰ(ਬਣਤਰ htp_unary_kernel_params) <= 128, "htp_unary_kernel_params is too large for kernel_params blob");
+#ਜੇ_ਅੰਤ
 
-static inline bool htp_op_is_unary(uint32_t opcode) {
-    switch (opcode) {
-        case HTP_OP_CLAMP:
-        case HTP_OP_LEAKY_RELU:
-        case HTP_OP_NORM:
-        case HTP_OP_RMS_NORM:
-        case HTP_OP_RMS_NORM_MUL:
-        case HTP_OP_SCALE:
-        case HTP_OP_SQR:
-        case HTP_OP_SQRT:
-        case HTP_OP_UNARY_NEG:
-        case HTP_OP_UNARY_EXP:
-        case HTP_OP_UNARY_SIGMOID:
-        case HTP_OP_UNARY_SILU:
-        case HTP_OP_UNARY_GELU:
-        case HTP_OP_UNARY_GELU_QUICK:
-        case HTP_OP_UNARY_GELU_ERF:
-        case HTP_OP_UNARY_SOFTPLUS:
-        case HTP_OP_UNARY_TANH:
-        case HTP_OP_UNARY_ABS:
-        case HTP_OP_UNARY_LOG:
-        case HTP_OP_UNARY_RELU:
-        case HTP_OP_UNARY_STEP:
-        case HTP_OP_L2_NORM:
-        case HTP_OP_TRI:
-        case HTP_OP_HADAMARD:
-            return true;
-        default:
-            return false;
+ਸਥਿਰ ਸਤਰਅੰਦਰ bool htp_op_is_unary(uint32_t opcode) {
+    ਚੋਣ (opcode) {
+        ਹਾਲਤ HTP_OP_CLAMP:
+        ਹਾਲਤ HTP_OP_LEAKY_RELU:
+        ਹਾਲਤ HTP_OP_NORM:
+        ਹਾਲਤ HTP_OP_RMS_NORM:
+        ਹਾਲਤ HTP_OP_RMS_NORM_MUL:
+        ਹਾਲਤ HTP_OP_SCALE:
+        ਹਾਲਤ HTP_OP_SQR:
+        ਹਾਲਤ HTP_OP_SQRT:
+        ਹਾਲਤ HTP_OP_UNARY_NEG:
+        ਹਾਲਤ HTP_OP_UNARY_EXP:
+        ਹਾਲਤ HTP_OP_UNARY_SIGMOID:
+        ਹਾਲਤ HTP_OP_UNARY_SILU:
+        ਹਾਲਤ HTP_OP_UNARY_GELU:
+        ਹਾਲਤ HTP_OP_UNARY_GELU_ਤੇਜ਼:
+        ਹਾਲਤ HTP_OP_UNARY_GELU_ERF:
+        ਹਾਲਤ HTP_OP_UNARY_SOFTPLUS:
+        ਹਾਲਤ HTP_OP_UNARY_TANH:
+        ਹਾਲਤ HTP_OP_UNARY_ABS:
+        ਹਾਲਤ HTP_OP_UNARY_LOG:
+        ਹਾਲਤ HTP_OP_UNARY_RELU:
+        ਹਾਲਤ HTP_OP_UNARY_ਕਦਮ:
+        ਹਾਲਤ HTP_OP_L2_NORM:
+        ਹਾਲਤ HTP_OP_TRI:
+        ਹਾਲਤ HTP_OP_HADAMARD:
+            ਵਾਪਸ true;
+        ਮੂਲ:
+            ਵਾਪਸ false;
     }
 }
 
-struct htp_unary_vtcm_layout {
-    size_t total_bytes;
+ਬਣਤਰ htp_unary_vtcm_layout {
+    size_t ਕੁੱਲ_ਬਾਈਟਾਂ;
     size_t off_src0;
     size_t off_src1;
     size_t off_dst;
 
-    size_t src0_bytes;
-    size_t src1_bytes;
-    size_t dst_bytes;
+    size_t src0_ਬਾਈਟਾਂ;
+    size_t src1_ਬਾਈਟਾਂ;
+    size_t dst_ਬਾਈਟਾਂ;
 };
 
-static inline void htp_unary_vtcm_layout_build(
-    struct htp_unary_vtcm_layout * L,
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ htp_unary_vtcm_layout_build(
+    ਬਣਤਰ htp_unary_vtcm_layout * L,
     uint32_t op,
     uint32_t ne00,
     uint32_t ne10,
     uint32_t ne11,
-    bool broadcast_weight,
-    uint32_t n_threads,
-    size_t vtcm_size,
-    size_t elem_size,
-    uint32_t * out_col_tile,
-    uint32_t * out_vtcm_row_per_thread
+    bool ਪ੍ਰਸਾਰਣ_ਭਾਰ,
+    uint32_t n_ਧਾਗੇ,
+    size_t vtcm_ਮਾਪ,
+    size_t elem_ਮਾਪ,
+    uint32_t * ਬਾਹਰਲਾ_ਖਾਨਾ_tile,
+    uint32_t * ਬਾਹਰਲਾ_vtcm_ਪੰਕਤੀ_ਪ੍ਰਤੀ_thread
 ) {
-    const size_t dst_elem_size      = (op == HTP_OP_HADAMARD) ? sizeof(float) : elem_size;
-    const size_t src0_data_row_size = ne00 * elem_size;
-    const size_t dst_data_row_size  = ne10 * dst_elem_size;
+    ਅਚਲ size_t dst_elem_ਮਾਪ      = (op == HTP_OP_HADAMARD) ? ਆਕਾਰ(ਦਸ਼ਮਲਵ) : elem_ਮਾਪ;
+    ਅਚਲ size_t src0_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ = ne00 * elem_ਮਾਪ;
+    ਅਚਲ size_t dst_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ  = ne10 * dst_elem_ਮਾਪ;
 
-    const size_t src0_row_size_aligned = hex_round_up(src0_data_row_size, 128);
-    const size_t dst_row_size_aligned  = hex_round_up(dst_data_row_size,  128);
+    ਅਚਲ size_t src0_ਪੰਕਤੀ_ਮਾਪ_aligned = hex_ਗੇੜਾ_ਉੱਪਰ(src0_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ, 128);
+    ਅਚਲ size_t dst_ਪੰਕਤੀ_ਮਾਪ_aligned  = hex_ਗੇੜਾ_ਉੱਪਰ(dst_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ,  128);
 
-    size_t src1_row_size_aligned = 0;
-    if (op == HTP_OP_RMS_NORM_MUL) {
+    size_t src1_ਪੰਕਤੀ_ਮਾਪ_aligned = 0;
+    ਜੇ (op == HTP_OP_RMS_NORM_MUL) {
         // RMS_NORM_MUL fusion is F32-only; its weight tensor is always F32.
-        const size_t src1_data_row_size = ne11 * sizeof(float);
-        src1_row_size_aligned = hex_round_up(src1_data_row_size, 128);
+        ਅਚਲ size_t src1_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ = ne11 * ਆਕਾਰ(ਦਸ਼ਮਲਵ);
+        src1_ਪੰਕਤੀ_ਮਾਪ_aligned = hex_ਗੇੜਾ_ਉੱਪਰ(src1_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ, 128);
     }
 
-    size_t vtcm_size_per_row = 0;
-    size_t vtcm_row_per_thread = 0;
+    size_t vtcm_ਮਾਪ_ਪ੍ਰਤੀ_ਪੰਕਤੀ = 0;
+    size_t vtcm_ਪੰਕਤੀ_ਪ੍ਰਤੀ_thread = 0;
 
-    if (op == HTP_OP_RMS_NORM_MUL) {
-        if (broadcast_weight) {
-            size_t available_vtcm = vtcm_size;
-            size_t src1_vtcm_total = n_threads * src1_row_size_aligned;
-            if (available_vtcm > src1_vtcm_total) {
-                available_vtcm -= src1_vtcm_total;
-            } else {
-                available_vtcm = 0;
+    ਜੇ (op == HTP_OP_RMS_NORM_MUL) {
+        ਜੇ (ਪ੍ਰਸਾਰਣ_ਭਾਰ) {
+            size_t ਉਪਲਬਧ_vtcm = vtcm_ਮਾਪ;
+            size_t src1_vtcm_ਕੁੱਲ = n_ਧਾਗੇ * src1_ਪੰਕਤੀ_ਮਾਪ_aligned;
+            ਜੇ (ਉਪਲਬਧ_vtcm > src1_vtcm_ਕੁੱਲ) {
+                ਉਪਲਬਧ_vtcm -= src1_vtcm_ਕੁੱਲ;
+            } ਨਹੀਂਤਾਂ {
+                ਉਪਲਬਧ_vtcm = 0;
             }
-            vtcm_size_per_row = 2 * (src0_row_size_aligned + dst_row_size_aligned);
-            vtcm_row_per_thread = available_vtcm / (n_threads * vtcm_size_per_row);
-        } else {
-            vtcm_size_per_row = 2 * (src0_row_size_aligned + dst_row_size_aligned + src1_row_size_aligned);
-            vtcm_row_per_thread = vtcm_size / (n_threads * vtcm_size_per_row);
+            vtcm_ਮਾਪ_ਪ੍ਰਤੀ_ਪੰਕਤੀ = 2 * (src0_ਪੰਕਤੀ_ਮਾਪ_aligned + dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
+            vtcm_ਪੰਕਤੀ_ਪ੍ਰਤੀ_thread = ਉਪਲਬਧ_vtcm / (n_ਧਾਗੇ * vtcm_ਮਾਪ_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
+        } ਨਹੀਂਤਾਂ {
+            vtcm_ਮਾਪ_ਪ੍ਰਤੀ_ਪੰਕਤੀ = 2 * (src0_ਪੰਕਤੀ_ਮਾਪ_aligned + dst_ਪੰਕਤੀ_ਮਾਪ_aligned + src1_ਪੰਕਤੀ_ਮਾਪ_aligned);
+            vtcm_ਪੰਕਤੀ_ਪ੍ਰਤੀ_thread = vtcm_ਮਾਪ / (n_ਧਾਗੇ * vtcm_ਮਾਪ_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
         }
-    } else {
-        vtcm_size_per_row   = 2 * (src0_row_size_aligned + dst_row_size_aligned);
-        vtcm_row_per_thread = vtcm_size / (n_threads * vtcm_size_per_row);
+    } ਨਹੀਂਤਾਂ {
+        vtcm_ਮਾਪ_ਪ੍ਰਤੀ_ਪੰਕਤੀ   = 2 * (src0_ਪੰਕਤੀ_ਮਾਪ_aligned + dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        vtcm_ਪੰਕਤੀ_ਪ੍ਰਤੀ_thread = vtcm_ਮਾਪ / (n_ਧਾਗੇ * vtcm_ਮਾਪ_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
     }
 
-    const bool is_reduction = (op == HTP_OP_NORM || op == HTP_OP_RMS_NORM ||
+    ਅਚਲ bool is_reduction = (op == HTP_OP_NORM || op == HTP_OP_RMS_NORM ||
                                op == HTP_OP_RMS_NORM_MUL || op == HTP_OP_L2_NORM ||
                                op == HTP_OP_HADAMARD);
     // The tiled fallback path below only has F32 task functions (unary_task_f32_tiled_*);
@@ -141,44 +141,44 @@ static inline void htp_unary_vtcm_layout_build(
     // budget), execute_op_unary() will see BLOCK == 0 and skip computation for that op
     // (logged via FARF(ERROR, ...)) since there is no F16 tiled fallback. This is a known
     // limitation; supporting it would require adding F16 tiled kernels.
-    const bool is_f16 = (elem_size == sizeof(_Float16));
-    uint32_t col_tile = 0;
+    ਅਚਲ bool is_f16 = (elem_ਮਾਪ == ਆਕਾਰ(_Float16));
+    uint32_t ਖਾਨਾ_tile = 0;
 
-    if (vtcm_row_per_thread == 0 && !is_reduction && !is_f16) {
-        const size_t per_thread_budget = vtcm_size / n_threads;
-        const size_t col_tile_bytes = hex_align_down(per_thread_budget / 4, 128);
-        col_tile = (uint32_t) (col_tile_bytes / elem_size);
+    ਜੇ (vtcm_ਪੰਕਤੀ_ਪ੍ਰਤੀ_thread == 0 && !is_reduction && !is_f16) {
+        ਅਚਲ size_t ਪ੍ਰਤੀ_thread_budget = vtcm_ਮਾਪ / n_ਧਾਗੇ;
+        ਅਚਲ size_t ਖਾਨਾ_tile_ਬਾਈਟਾਂ = hex_align_ਥੱਲੇ(ਪ੍ਰਤੀ_thread_budget / 4, 128);
+        ਖਾਨਾ_tile = (uint32_t) (ਖਾਨਾ_tile_ਬਾਈਟਾਂ / elem_ਮਾਪ);
 
-        L->src0_bytes = col_tile_bytes * 2;
-        L->dst_bytes  = col_tile_bytes * 2;
-        L->src1_bytes = 0;
-    } else {
-        L->src0_bytes = src0_row_size_aligned * vtcm_row_per_thread * 2;
-        L->dst_bytes  = dst_row_size_aligned * vtcm_row_per_thread * 2;
-        if (op == HTP_OP_RMS_NORM_MUL) {
-            if (broadcast_weight) {
-                L->src1_bytes = src1_row_size_aligned;
-            } else {
-                L->src1_bytes = src1_row_size_aligned * vtcm_row_per_thread * 2;
+        L->src0_ਬਾਈਟਾਂ = ਖਾਨਾ_tile_ਬਾਈਟਾਂ * 2;
+        L->dst_ਬਾਈਟਾਂ  = ਖਾਨਾ_tile_ਬਾਈਟਾਂ * 2;
+        L->src1_ਬਾਈਟਾਂ = 0;
+    } ਨਹੀਂਤਾਂ {
+        L->src0_ਬਾਈਟਾਂ = src0_ਪੰਕਤੀ_ਮਾਪ_aligned * vtcm_ਪੰਕਤੀ_ਪ੍ਰਤੀ_thread * 2;
+        L->dst_ਬਾਈਟਾਂ  = dst_ਪੰਕਤੀ_ਮਾਪ_aligned * vtcm_ਪੰਕਤੀ_ਪ੍ਰਤੀ_thread * 2;
+        ਜੇ (op == HTP_OP_RMS_NORM_MUL) {
+            ਜੇ (ਪ੍ਰਸਾਰਣ_ਭਾਰ) {
+                L->src1_ਬਾਈਟਾਂ = src1_ਪੰਕਤੀ_ਮਾਪ_aligned;
+            } ਨਹੀਂਤਾਂ {
+                L->src1_ਬਾਈਟਾਂ = src1_ਪੰਕਤੀ_ਮਾਪ_aligned * vtcm_ਪੰਕਤੀ_ਪ੍ਰਤੀ_thread * 2;
             }
-        } else {
-            L->src1_bytes = 0;
+        } ਨਹੀਂਤਾਂ {
+            L->src1_ਬਾਈਟਾਂ = 0;
         }
     }
 
     L->off_src0 = 0;
-    if (op == HTP_OP_RMS_NORM_MUL) {
-        L->off_src1 = L->off_src0 + L->src0_bytes * n_threads;
-        L->off_dst  = L->off_src1 + L->src1_bytes * n_threads;
-    } else {
+    ਜੇ (op == HTP_OP_RMS_NORM_MUL) {
+        L->off_src1 = L->off_src0 + L->src0_ਬਾਈਟਾਂ * n_ਧਾਗੇ;
+        L->off_dst  = L->off_src1 + L->src1_ਬਾਈਟਾਂ * n_ਧਾਗੇ;
+    } ਨਹੀਂਤਾਂ {
         L->off_src1 = 0;
-        L->off_dst  = L->off_src0 + L->src0_bytes * n_threads;
+        L->off_dst  = L->off_src0 + L->src0_ਬਾਈਟਾਂ * n_ਧਾਗੇ;
     }
 
-    L->total_bytes = L->off_dst + L->dst_bytes * n_threads;
+    L->ਕੁੱਲ_ਬਾਈਟਾਂ = L->off_dst + L->dst_ਬਾਈਟਾਂ * n_ਧਾਗੇ;
 
-    *out_col_tile = col_tile;
-    *out_vtcm_row_per_thread = vtcm_row_per_thread;
+    *ਬਾਹਰਲਾ_ਖਾਨਾ_tile = ਖਾਨਾ_tile;
+    *ਬਾਹਰਲਾ_vtcm_ਪੰਕਤੀ_ਪ੍ਰਤੀ_thread = vtcm_ਪੰਕਤੀ_ਪ੍ਰਤੀ_thread;
 }
 
-#endif /* HTP_UNARY_OPS_H */
+#ਜੇ_ਅੰਤ /* HTP_UNARY_OPS_H */

@@ -10,92 +10,92 @@
 // - destination view strides/offset are cacheline-aligned
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "platform.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml_tensor.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "platform.h"
 
-#include <stdint.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdint.h>
 
-struct ggml_et_set_params {
-    struct ggml_tensor src1;
-    struct ggml_tensor dst;
+ਬਣਤਰ ggml_et_ਸੈੱਟ_params {
+    ਬਣਤਰ ggml_tensor src1;
+    ਬਣਤਰ ggml_tensor dst;
     int32_t            nb1;
     int32_t            nb2;
     int32_t            nb3;
-    int32_t            offset;
+    int32_t            ਵਿੱਥ;
 };
 
-static inline void copy_row_aligned(float * dst, const float * src, int32_t n) {
-    for (int32_t i = 0; i < n; i += 8) {
-        __asm__ volatile(
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ copy_ਪੰਕਤੀ_aligned(ਦਸ਼ਮਲਵ * dst, ਅਚਲ ਦਸ਼ਮਲਵ * src, int32_t n) {
+    ਲਈ (int32_t i = 0; i < n; i += 8) {
+        __asm__ ਅਸਥਿਰ(
             "flw.ps f11, %[src_vec]\n"
             "fsw.ps f11, %[dst_vec]\n"
-            : [dst_vec] "=m"(*(float (*)[8]) & dst[i])
-            : [src_vec] "m"(*(const float (*)[8]) & src[i])
+            : [dst_vec] "=m"(*(ਦਸ਼ਮਲਵ (*)[8]) & dst[i])
+            : [src_vec] "m"(*(ਅਚਲ ਦਸ਼ਮਲਵ (*)[8]) & src[i])
             : "f11");
     }
 }
 
-int entry_point(struct ggml_et_set_params * params, void * env) {
+ਪੂਰਨ ਇੰਦਰਾਜ_ਬਿੰਦੂ(ਬਣਤਰ ggml_et_ਸੈੱਟ_params * params, ਖਾਲੀ * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    ਜੇ (!kernel_env) {
+        ਵਾਪਸ -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    ਪੂਰਨ thread_id   = get_relative_thread_id(kernel_env->shire_ਨਕਾਬ);
+    ਪੂਰਨ ਅੰਕ_ਧਾਗੇ = get_ਅੰਕ_ਧਾਗੇ(kernel_env->shire_ਨਕਾਬ);
 
-    if (thread_id < 0) {
-        return 0;
+    ਜੇ (thread_id < 0) {
+        ਵਾਪਸ 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    ਜੇ (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        ਵਾਪਸ -1;
     }
 
-    struct ggml_tensor * src1 = &params->src1;
-    struct ggml_tensor * dst  = &params->dst;
+    ਬਣਤਰ ggml_tensor * src1 = &params->src1;
+    ਬਣਤਰ ggml_tensor * dst  = &params->dst;
 
-    if (src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+    ਜੇ (src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        ਵਾਪਸ -1;
     }
 
-    const float * src1_data = (const float *) src1->data;
-    float *       dst_data  = (float *) dst->data;
-    if (!src1_data || !dst_data) {
-        return -1;
+    ਅਚਲ ਦਸ਼ਮਲਵ * src1_ਅੰਕੜੇ = (ਅਚਲ ਦਸ਼ਮਲਵ *) src1->ਅੰਕੜੇ;
+    ਦਸ਼ਮਲਵ *       dst_ਅੰਕੜੇ  = (ਦਸ਼ਮਲਵ *) dst->ਅੰਕੜੇ;
+    ਜੇ (!src1_ਅੰਕੜੇ || !dst_ਅੰਕੜੇ) {
+        ਵਾਪਸ -1;
     }
 
-    const int64_t ne10 = src1->ne[0];
-    const int64_t ne11 = src1->ne[1];
-    const int64_t ne12 = src1->ne[2];
-    const int64_t ne13 = src1->ne[3];
+    ਅਚਲ int64_t ne10 = src1->ne[0];
+    ਅਚਲ int64_t ne11 = src1->ne[1];
+    ਅਚਲ int64_t ne12 = src1->ne[2];
+    ਅਚਲ int64_t ne13 = src1->ne[3];
 
-    if (src1->nb[0] != sizeof(float) || dst->nb[0] != sizeof(float) || ne10 % 16 != 0) {
-        return -1;
+    ਜੇ (src1->nb[0] != ਆਕਾਰ(ਦਸ਼ਮਲਵ) || dst->nb[0] != ਆਕਾਰ(ਦਸ਼ਮਲਵ) || ne10 % 16 != 0) {
+        ਵਾਪਸ -1;
     }
 
-    const int64_t nb11 = src1->nb[1];
-    const int64_t nb12 = src1->nb[2];
-    const int64_t nb13 = src1->nb[3];
+    ਅਚਲ int64_t nb11 = src1->nb[1];
+    ਅਚਲ int64_t nb12 = src1->nb[2];
+    ਅਚਲ int64_t nb13 = src1->nb[3];
 
-    const int64_t dnb1   = params->nb1;
-    const int64_t dnb2   = params->nb2;
-    const int64_t dnb3   = params->nb3;
-    const int64_t offset = params->offset;
+    ਅਚਲ int64_t dnb1   = params->nb1;
+    ਅਚਲ int64_t dnb2   = params->nb2;
+    ਅਚਲ int64_t dnb3   = params->nb3;
+    ਅਚਲ int64_t ਵਿੱਥ = params->ਵਿੱਥ;
 
-    const int64_t total_rows = ne11 * ne12 * ne13;
+    ਅਚਲ int64_t ਕੁੱਲ_ਪੰਕਤੀਆਂ = ne11 * ne12 * ne13;
 
-    for (int64_t row = thread_id; row < total_rows; row += num_threads) {
-        const int64_t i1 = row % ne11;
-        const int64_t i2 = (row / ne11) % ne12;
-        const int64_t i3 = row / (ne11 * ne12);
+    ਲਈ (int64_t ਪੰਕਤੀ = thread_id; ਪੰਕਤੀ < ਕੁੱਲ_ਪੰਕਤੀਆਂ; ਪੰਕਤੀ += ਅੰਕ_ਧਾਗੇ) {
+        ਅਚਲ int64_t i1 = ਪੰਕਤੀ % ne11;
+        ਅਚਲ int64_t i2 = (ਪੰਕਤੀ / ne11) % ne12;
+        ਅਚਲ int64_t i3 = ਪੰਕਤੀ / (ne11 * ne12);
 
-        const float * src_row = (const float *) ((const char *) src1_data + i1 * nb11 + i2 * nb12 + i3 * nb13);
-        float *       dst_row = (float *) ((char *) dst_data + offset + i1 * dnb1 + i2 * dnb2 + i3 * dnb3);
+        ਅਚਲ ਦਸ਼ਮਲਵ * src_ਪੰਕਤੀ = (ਅਚਲ ਦਸ਼ਮਲਵ *) ((ਅਚਲ ਅੱਖਰ *) src1_ਅੰਕੜੇ + i1 * nb11 + i2 * nb12 + i3 * nb13);
+        ਦਸ਼ਮਲਵ *       dst_ਪੰਕਤੀ = (ਦਸ਼ਮਲਵ *) ((ਅੱਖਰ *) dst_ਅੰਕੜੇ + ਵਿੱਥ + i1 * dnb1 + i2 * dnb2 + i3 * dnb3);
 
-        copy_row_aligned(dst_row, src_row, (int32_t) ne10);
+        copy_ਪੰਕਤੀ_aligned(dst_ਪੰਕਤੀ, src_ਪੰਕਤੀ, (int32_t) ne10);
     }
 
-    return 0;
+    ਵਾਪਸ 0;
 }

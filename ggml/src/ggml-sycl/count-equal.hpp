@@ -1,9 +1,9 @@
-#ifndef GGML_SYCL_COUNT_EQUAL_HPP
-#define GGML_SYCL_COUNT_EQUAL_HPP
-#include "common.hpp"
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ GGML_SYCL_ਗਿਣਤੀ_EQUAL_HPP
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_SYCL_ਗਿਣਤੀ_EQUAL_HPP
+#ਅਨ੍ਤਰ੍ਭਾਵ "common.hpp"
 
-#define SYCL_COUNT_EQUAL_CHUNK_SIZE 128
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ SYCL_ਗਿਣਤੀ_EQUAL_CHUNK_ਮਾਪ 128
 
-void ggml_sycl_count_equal(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+ਖਾਲੀ ggml_sycl_ਗਿਣਤੀ_equal(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-#endif //GGML_SYCL_COUNT_EQUAL_HPP
+#ਜੇ_ਅੰਤ //GGML_SYCL_COUNT_EQUAL_HPP

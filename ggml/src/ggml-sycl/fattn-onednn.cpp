@@ -1,48 +1,48 @@
-#include <array>
-#include <cstdint>
-#include <cstdio>
-#include <cstring>
-#include <string>
-#include <optional>
-#include <unordered_map>
-#include <vector>
+#ਅਨ੍ਤਰ੍ਭਾਵ <array>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cstdint>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cstdio>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cstring>
+#ਅਨ੍ਤਰ੍ਭਾਵ <string>
+#ਅਨ੍ਤਰ੍ਭਾਵ <optional>
+#ਅਨ੍ਤਰ੍ਭਾਵ <unordered_map>
+#ਅਨ੍ਤਰ੍ਭਾਵ <vector>
 
-#include "fattn-onednn.hpp"
-#include "fattn-tile.hpp"
-#include "convert.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "fattn-onednn.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "fattn-tile.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "convert.hpp"
 
 // set minimum query length to treat as prefill (32)
-#define GGML_SYCL_FA_ONEDNN_MIN_Q 32
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_SYCL_FA_ONEDNN_MIN_Q 32
 
-bool ggml_sycl_fattn_onednn_binds_kv(const ggml_tensor * K, const ggml_tensor * V) {
-    if (K->type != GGML_TYPE_F16 || V->type != GGML_TYPE_F16) {
-        return false;
+ਤਾਰਕਿਕ ggml_sycl_fattn_onednn_binds_kv(ਅਚਲ ggml_tensor * K, ਅਚਲ ggml_tensor * V) {
+    ਜੇ (K->type != GGML_TYPE_F16 || V->type != GGML_TYPE_F16) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    auto bindable = [](const ggml_tensor * t) {
-        return t->nb[0] == sizeof(sycl::half) && t->nb[1] % sizeof(sycl::half) == 0 &&
-               t->nb[2] % sizeof(sycl::half) == 0 && t->nb[3] % sizeof(sycl::half) == 0;
+    ਸਵੈਚਾਲਿਤ bindable = [](ਅਚਲ ggml_tensor * t) {
+        ਵਾਪਸ t->nb[0] == ਆਕਾਰ(sycl::half) && t->nb[1] % ਆਕਾਰ(sycl::half) == 0 &&
+               t->nb[2] % ਆਕਾਰ(sycl::half) == 0 && t->nb[3] % ਆਕਾਰ(sycl::half) == 0;
     };
-    return bindable(K) && bindable(V);
+    ਵਾਪਸ bindable(K) && bindable(V);
 }
 
-bool ggml_sycl_flash_attn_ext_onednn_supported(const ggml_tensor * dst, bool use_shape_limit) {
-#if !GGML_SYCL_DNNL
-    GGML_UNUSED(dst);
-    GGML_UNUSED(use_shape_limit);
-    return false;
-#else
-    if (!g_ggml_sycl_fa_onednn) {
-        return false;
+ਤਾਰਕਿਕ ggml_sycl_flash_attn_ext_onednn_supported(ਅਚਲ ggml_tensor * dst, ਤਾਰਕਿਕ use_shape_ਹੱਦਬੰਦੀ) {
+#ਜੇ !GGML_SYCL_DNNL
+    GGML_ਅਣਵਰਤਿਆ(dst);
+    GGML_ਅਣਵਰਤਿਆ(use_shape_ਹੱਦਬੰਦੀ);
+    ਵਾਪਸ ਝੂਠ;
+#ਨਹੀਂਤਾਂ
+    ਜੇ (!g_ggml_sycl_fa_onednn) {
+        ਵਾਪਸ ਝੂਠ;
     }
     // without a fused SDPA kernel oneDNN falls back to the same matmul, so reuse the check
-    if (!ggml_sycl_dnnl_has_optimized_gemm(ggml_sycl_get_device())) {
-        return false;
+    ਜੇ (!ggml_sycl_dnnl_has_optimized_gemm(ggml_sycl_get_device())) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    const ggml_tensor * Q     = dst->src[0];
-    const ggml_tensor * K     = dst->src[1];
-    const ggml_tensor * V     = dst->src[2];
-    const ggml_tensor * mask  = dst->src[3];
-    const ggml_tensor * sinks = dst->src[4];
+    ਅਚਲ ggml_tensor * Q     = dst->src[0];
+    ਅਚਲ ggml_tensor * K     = dst->src[1];
+    ਅਚਲ ggml_tensor * V     = dst->src[2];
+    ਅਚਲ ggml_tensor * ਨਕਾਬ  = dst->src[3];
+    ਅਚਲ ggml_tensor * sinks = dst->src[4];
 
     // F16 KV: native SDPA at any KV length.
     // Non-F16: dequant to F16 then SDPA at prefill lengths. Only the
@@ -51,282 +51,282 @@ bool ggml_sycl_flash_attn_ext_onednn_supported(const ggml_tensor * dst, bool use
     // are excluded: BF16 needs a strided conversion kernel that does not
     // exist yet; IQ types are model-weight-only quants with no dequant
     // registration and are never used as KV caches.
-    if (K->type != GGML_TYPE_F16 || V->type != GGML_TYPE_F16) {
-        auto kt = K->type, vt = V->type;
-        bool k_ok = kt == GGML_TYPE_F32 || kt == GGML_TYPE_Q4_0 || kt == GGML_TYPE_Q4_1 ||
+    ਜੇ (K->type != GGML_TYPE_F16 || V->type != GGML_TYPE_F16) {
+        ਸਵੈਚਾਲਿਤ kt = K->type, vt = V->type;
+        ਤਾਰਕਿਕ k_ok = kt == GGML_TYPE_F32 || kt == GGML_TYPE_Q4_0 || kt == GGML_TYPE_Q4_1 ||
                     kt == GGML_TYPE_Q5_0 || kt == GGML_TYPE_Q5_1 || kt == GGML_TYPE_Q8_0;
-        bool v_ok = vt == GGML_TYPE_F32 || vt == GGML_TYPE_Q4_0 || vt == GGML_TYPE_Q4_1 ||
+        ਤਾਰਕਿਕ v_ok = vt == GGML_TYPE_F32 || vt == GGML_TYPE_Q4_0 || vt == GGML_TYPE_Q4_1 ||
                     vt == GGML_TYPE_Q5_0 || vt == GGML_TYPE_Q5_1 || vt == GGML_TYPE_Q8_0;
-        if (!k_ok || !v_ok) {
-            return false;
+        ਜੇ (!k_ok || !v_ok) {
+            ਵਾਪਸ ਝੂਠ;
         }
-        if (use_shape_limit && (Q->ne[1] < 32 || K->ne[1] < 1024)) {
-            return false;
+        ਜੇ (use_shape_ਹੱਦਬੰਦੀ && (Q->ne[1] < 32 || K->ne[1] < 1024)) {
+            ਵਾਪਸ ਝੂਠ;
         }
-        for (const ggml_tensor * t : {K, V}) {
-            if (t->type == GGML_TYPE_F16 && t->nb[1] % (t->ne[0] * 2) != 0) {
-                return false;
+        ਲਈ (ਅਚਲ ggml_tensor * t : {K, V}) {
+            ਜੇ (t->type == GGML_TYPE_F16 && t->nb[1] % (t->ne[0] * 2) != 0) {
+                ਵਾਪਸ ਝੂਠ;
             }
         }
     }
     // This is the improved SPDA gate. Rather than gating Alchemist GPUs from all SPDA features, we instead target only the failing shapes.
     // If the GPU being assessed isn't in the grouping below, it has full access to all SPDA shapes. Otherwise, if it's an Alchemist GPU, we block only the shapes with head sizes that fail.
     // It is much easier to compare the device to a small list of failing cases than to define all the passing ones.
-    const gpu_arch arch = ggml_sycl_info().devices[ggml_sycl_get_device()].hw_info.arch;
-    bool support_spda = !(arch == gpu_arch::intel_gpu_dg2_g10 ||
+    ਅਚਲ gpu_arch arch = ggml_sycl_info().devices[ggml_sycl_get_device()].hw_info.arch;
+    ਤਾਰਕਿਕ support_spda = !(arch == gpu_arch::intel_gpu_dg2_g10 ||
                          arch == gpu_arch::intel_gpu_dg2_g11 ||
                          arch == gpu_arch::intel_gpu_dg2_g12);
 
-    if (!support_spda && K->ne[0] == 64) {
-        return false;
+    ਜੇ (!support_spda && K->ne[0] == 64) {
+        ਵਾਪਸ ਝੂਠ;
     }
     // Optional KV-length ceiling (GGML_SYCL_FA_ONEDNN_MAX_KV, 0 = unlimited). Escape hatch:
     // very long sequences make the fused SDPA slow enough to risk the xe driver watchdog on
     // some stacks; past the cap we fall back to the native FA kernel instead.
-    if (g_ggml_sycl_fa_onednn_max_kv > 0 && K->ne[1] > g_ggml_sycl_fa_onednn_max_kv) {
-        return false;
+    ਜੇ (g_ggml_sycl_fa_onednn_max_kv > 0 && K->ne[1] > g_ggml_sycl_fa_onednn_max_kv) {
+        ਵਾਪਸ ਝੂਠ;
     }
     // gate for the following cases
     // 1. if the oneDNN graph Add node has no input --> skip
     // 2. types other than f16 need different logical_tensor declaration
     // 3. the mask must be shape [1, 1, q, seq]
     // 4. sinks: excludes attention sink (Xiao et al., 2024) that can't be modeled by oneDNN graph
-    if (!mask || mask->type != GGML_TYPE_F16 || mask->ne[2] != 1 || mask->ne[3] != 1 || sinks) {
-        return false;
+    ਜੇ (!ਨਕਾਬ || ਨਕਾਬ->type != GGML_TYPE_F16 || ਨਕਾਬ->ne[2] != 1 || ਨਕਾਬ->ne[3] != 1 || sinks) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    float max_bias = 0.0f, logit_softcap = 0.0f;
-    memcpy(&max_bias,      (const float *) dst->op_params + 1, sizeof(float));
-    memcpy(&logit_softcap, (const float *) dst->op_params + 2, sizeof(float));
-    if (max_bias != 0.0f || logit_softcap != 0.0f) {
-        return false;
+    ਦਸ਼ਮਲਵ max_bias = 0.0f, logit_softcap = 0.0f;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&max_bias,      (ਅਚਲ ਦਸ਼ਮਲਵ *) dst->op_params + 1, ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&logit_softcap, (ਅਚਲ ਦਸ਼ਮਲਵ *) dst->op_params + 2, ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+    ਜੇ (max_bias != 0.0f || logit_softcap != 0.0f) {
+        ਵਾਪਸ ਝੂਠ;
     }
     // K and V must share head_dim: the SDPA graph uses a single `d` for both.
-    const int64_t d = K->ne[0];
-    if (V->ne[0] != d || Q->ne[3] != 1) {
-        return false;
+    ਅਚਲ int64_t d = K->ne[0];
+    ਜੇ (V->ne[0] != d || Q->ne[3] != 1) {
+        ਵਾਪਸ ਝੂਠ;
     }
     // GQA must divide evenly.
-    if (K->ne[2] == 0 || Q->ne[2] % K->ne[2] != 0) {
-        return false;
+    ਜੇ (K->ne[2] == 0 || Q->ne[2] % K->ne[2] != 0) {
+        ਵਾਪਸ ਝੂਠ;
     }
     // Prefill only.
-    if (use_shape_limit && Q->ne[1] < GGML_SYCL_FA_ONEDNN_MIN_Q) {
-        return false;
+    ਜੇ (use_shape_ਹੱਦਬੰਦੀ && Q->ne[1] < GGML_SYCL_FA_ONEDNN_MIN_Q) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    return true;
-#endif
+    ਵਾਪਸ ਸੱਚ;
+#ਜੇ_ਅੰਤ
 }
 
-#if GGML_SYCL_DNNL
+#ਜੇ GGML_SYCL_DNNL
 
-#include "dnnl.hpp"
-#include "dnnl_sycl.hpp"
-#include "oneapi/dnnl/dnnl_graph.hpp"   // graph API lives only under oneapi/dnnl/, not at the include root
+#ਅਨ੍ਤਰ੍ਭਾਵ "dnnl.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "dnnl_sycl.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "oneapi/dnnl/dnnl_graph.hpp"   // graph API lives only under oneapi/dnnl/, not at the include root
 
-using namespace dnnl;
-using namespace dnnl::graph;
+ਵਰਤੋਂ ਨਾਮਾਕਾਸ਼ dnnl;
+ਵਰਤੋਂ ਨਾਮਾਕਾਸ਼ dnnl::graph;
 
 // strided src (f16 or f32) -> contiguous f16 [ne0,ne1,ne2,ne3] (ne0 innermost). nb* are BYTE strides.
-template <typename src_t>
-static void cont_to_f16_sycl(const char * src, sycl::half * dst,
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ src_t>
+ਸਥਿਰ ਖਾਲੀ cont_ਮੰਜ਼ਿਲ_f16_sycl(ਅਚਲ ਅੱਖਰ * src, sycl::half * dst,
         int64_t ne0, int64_t ne1, int64_t ne2, int64_t ne3,
-        size_t nb1, size_t nb2, size_t nb3, dpct::queue_ptr stream) {
-    const int64_t n = ne0 * ne1 * ne2 * ne3;
+        size_t nb1, size_t nb2, size_t nb3, dpct::ਕਤਾਰ_ptr stream) {
+    ਅਚਲ int64_t n = ne0 * ne1 * ne2 * ne3;
     stream->parallel_for(sycl::range<1>(n), [=](sycl::id<1> ix) {
-        const int64_t gid = ix[0];
+        ਅਚਲ int64_t gid = ix[0];
         int64_t       i   = gid;
-        const int64_t i0 = i % ne0; i /= ne0;
-        const int64_t i1 = i % ne1; i /= ne1;
-        const int64_t i2 = i % ne2; const int64_t i3 = i / ne2;
-        const src_t * p = (const src_t *) (src + i1 * nb1 + i2 * nb2 + i3 * nb3) + i0;
+        ਅਚਲ int64_t i0 = i % ne0; i /= ne0;
+        ਅਚਲ int64_t i1 = i % ne1; i /= ne1;
+        ਅਚਲ int64_t i2 = i % ne2; ਅਚਲ int64_t i3 = i / ne2;
+        ਅਚਲ src_t * p = (ਅਚਲ src_t *) (src + i1 * nb1 + i2 * nb2 + i3 * nb3) + i0;
         dst[gid] = (sycl::half) (*p);
     });
 }
 
 // oneDNN SDPA out (f16 contiguous [mb,H,q,d]) -> ggml dst (f32 [head_dim,H,n_tok,mb], contiguous).
-static void permute_sdpa_out_sycl(const sycl::half * out, float * dst,
-        int64_t mb, int64_t H, int64_t q, int64_t d, dpct::queue_ptr stream) {
-    const int64_t n = mb * H * q * d;
+ਸਥਿਰ ਖਾਲੀ ਕ੍ਰਮ_ਬਦਲੋ_sdpa_ਬਾਹਰਲਾ_sycl(ਅਚਲ sycl::half * ਬਾਹਰਲਾ, ਦਸ਼ਮਲਵ * dst,
+        int64_t mb, int64_t H, int64_t q, int64_t d, dpct::ਕਤਾਰ_ptr stream) {
+    ਅਚਲ int64_t n = mb * H * q * d;
     stream->parallel_for(sycl::range<1>(n), [=](sycl::id<1> ix) {
-        const int64_t gid = ix[0];
+        ਅਚਲ int64_t gid = ix[0];
         int64_t       i   = gid;
-        const int64_t e = i % d; i /= d;
-        const int64_t t = i % q; i /= q;
-        const int64_t h = i % H; const int64_t b = i / H;
-        dst[e + h * d + t * d * H + b * d * H * q] = (float) out[gid];
+        ਅਚਲ int64_t e = i % d; i /= d;
+        ਅਚਲ int64_t t = i % q; i /= q;
+        ਅਚਲ int64_t h = i % H; ਅਚਲ int64_t b = i / H;
+        dst[e + h * d + t * d * H + b * d * H * q] = (ਦਸ਼ਮਲਵ) ਬਾਹਰਲਾ[gid];
     });
 }
 
-struct sdpa_partition {
-    compiled_partition          cp;
+ਬਣਤਰ sdpa_ਹਿੱਸੇ_ਕਰੋ {
+    compiled_ਹਿੱਸੇ_ਕਰੋ          cp;
     std::vector<logical_tensor> ins;
-    logical_tensor              out;
-    size_t id_q = 0, id_k = 0, id_v = 0, id_scale = 0, id_mask = 0;
-    bool   ok = false;
+    logical_tensor              ਬਾਹਰਲਾ;
+    size_t id_q = 0, id_k = 0, id_v = 0, id_scale = 0, id_ਨਕਾਬ = 0;
+    ਤਾਰਕਿਕ   ok = ਝੂਠ;
 };
 
 // Build + compile the contiguous-input GQA SDPA graph (MatMul->Divide->Add->SoftMax->MatMul), f32 out.
 // Mirrors the hardware-verified scratch/onednn_sdpa_probe.cpp build_gqa (partitions=1, sdp_primitive_kernel_t).
-static sdpa_partition build_sdpa(const engine & eng, int H, int Hkv, int q, int seq, int d,
-                                 const std::array<int64_t, 5> & k_str, const std::array<int64_t, 5> & v_str) try {
-    using ltype = logical_tensor::layout_type;
-    using dt    = logical_tensor::data_type;
-    using ldims = logical_tensor::dims;
-    const dt    fi = dt::f32, t = dt::f16;
-    const int   rep = H / Hkv;
-    const ldims q_sz = {1, Hkv, rep, q, d}, kv_sz = {1, Hkv, 1, seq, d}, s_sz = {1, Hkv, rep, q, seq},
+ਸਥਿਰ sdpa_ਹਿੱਸੇ_ਕਰੋ build_sdpa(ਅਚਲ engine & eng, ਪੂਰਨ H, ਪੂਰਨ Hkv, ਪੂਰਨ q, ਪੂਰਨ seq, ਪੂਰਨ d,
+                                 ਅਚਲ std::array<int64_t, 5> & k_str, ਅਚਲ std::array<int64_t, 5> & v_str) ਕੋਸ਼ਿਸ਼ {
+    ਵਰਤੋਂ ltype = logical_tensor::layout_type;
+    ਵਰਤੋਂ dt    = logical_tensor::ਅੰਕੜੇ_type;
+    ਵਰਤੋਂ ldims = logical_tensor::dims;
+    ਅਚਲ dt    fi = dt::f32, t = dt::f16;
+    ਅਚਲ ਪੂਰਨ   rep = H / Hkv;
+    ਅਚਲ ldims q_sz = {1, Hkv, rep, q, d}, kv_sz = {1, Hkv, 1, seq, d}, s_sz = {1, Hkv, rep, q, seq},
                 sc = {1, 1, 1, 1, 1}, msk = {1, 1, 1, q, seq}, o_sz = {1, Hkv, rep, q, d};
-    const ldims k_st(k_str.begin(), k_str.end()), v_st(v_str.begin(), v_str.end());
+    ਅਚਲ ldims k_st(k_str.begin(), k_str.end()), v_st(v_str.begin(), v_str.end());
     int64_t        id = 0;
-    sdpa_partition E;
+    sdpa_ਹਿੱਸੇ_ਕਰੋ E;
 
-    auto query  = logical_tensor(id++, t,  q_sz, ltype::strided);
-    auto key    = logical_tensor(id++, t,  kv_sz, k_st);
-    auto score  = logical_tensor(id++, fi, s_sz, ltype::strided);
-    auto bmm1   = op(id++, op::kind::MatMul, "bmm1");
-    bmm1.set_attr<bool>(op::attr::transpose_b, true);          // key is [.., seq, d]
-    bmm1.add_inputs({query, key}); bmm1.add_outputs({score});
+    ਸਵੈਚਾਲਿਤ query  = logical_tensor(id++, t,  q_sz, ltype::strided);
+    ਸਵੈਚਾਲਿਤ ਕੁੰਜੀ    = logical_tensor(id++, t,  kv_sz, k_st);
+    ਸਵੈਚਾਲਿਤ score  = logical_tensor(id++, fi, s_sz, ltype::strided);
+    ਸਵੈਚਾਲਿਤ bmm1   = op(id++, op::ਕਿਸਮ_2::MatMul, "bmm1");
+    bmm1.ਸੈੱਟ_attr<ਤਾਰਕਿਕ>(op::attr::transpose_b, ਸੱਚ);          // key is [.., seq, d]
+    bmm1.ਜੋੜੋ_inputs({query, ਕੁੰਜੀ}); bmm1.ਜੋੜੋ_outputs({score});
 
-    auto scale  = logical_tensor(id++, t,  sc,   ltype::strided);
-    auto scaled = logical_tensor(id++, fi, s_sz, ltype::strided);
-    auto sdiv   = op(id++, op::kind::Divide, "scale_div");     // score / (1/kq_scale) == score * kq_scale
-    sdiv.add_inputs({score, scale}); sdiv.add_outputs({scaled});
+    ਸਵੈਚਾਲਿਤ scale  = logical_tensor(id++, t,  sc,   ltype::strided);
+    ਸਵੈਚਾਲਿਤ scaled = logical_tensor(id++, fi, s_sz, ltype::strided);
+    ਸਵੈਚਾਲਿਤ sdiv   = op(id++, op::ਕਿਸਮ_2::Divide, "scale_div");     // score / (1/kq_scale) == score * kq_scale
+    sdiv.ਜੋੜੋ_inputs({score, scale}); sdiv.ਜੋੜੋ_outputs({scaled});
 
-    auto mask   = logical_tensor(id++, t,  msk,  ltype::strided);
-    auto masked = logical_tensor(id++, fi, s_sz, ltype::strided);
-    auto madd   = op(id++, op::kind::Add, "mask_add");
-    madd.add_inputs({scaled, mask}); madd.add_outputs({masked});
+    ਸਵੈਚਾਲਿਤ ਨਕਾਬ   = logical_tensor(id++, t,  msk,  ltype::strided);
+    ਸਵੈਚਾਲਿਤ masked = logical_tensor(id++, fi, s_sz, ltype::strided);
+    ਸਵੈਚਾਲਿਤ madd   = op(id++, op::ਕਿਸਮ_2::ਜੋੜੋ, "mask_add");
+    madd.ਜੋੜੋ_inputs({scaled, ਨਕਾਬ}); madd.ਜੋੜੋ_outputs({masked});
 
-    auto probs  = logical_tensor(id++, t,  s_sz, ltype::strided);
-    auto smax   = op(id++, op::kind::SoftMax, "softmax");
-    smax.set_attr<int64_t>(op::attr::axis, -1);
-    smax.set_attr<std::string>(op::attr::mode, "inf_as_zero");
-    smax.add_inputs({masked}); smax.add_outputs({probs});
+    ਸਵੈਚਾਲਿਤ probs  = logical_tensor(id++, t,  s_sz, ltype::strided);
+    ਸਵੈਚਾਲਿਤ smax   = op(id++, op::ਕਿਸਮ_2::SoftMax, "softmax");
+    smax.ਸੈੱਟ_attr<int64_t>(op::attr::axis, -1);
+    smax.ਸੈੱਟ_attr<std::string>(op::attr::mode, "inf_as_zero");
+    smax.ਜੋੜੋ_inputs({masked}); smax.ਜੋੜੋ_outputs({probs});
 
-    auto value  = logical_tensor(id++, t,  kv_sz, v_st);
+    ਸਵੈਚਾਲਿਤ value  = logical_tensor(id++, t,  kv_sz, v_st);
     // f16 output is REQUIRED to hit sdp_primitive_kernel_t (the systolic micro-kernel); an f32 output
     // falls to larger_partition_kernel_t which materializes N^2 (confirmed: scratch/onednn_sdpa_kernel_probe.cpp).
     // converted to the f32 ggml dst in the permute below.
-    auto output = logical_tensor(id++, t,  o_sz, ltype::strided);   // f16 contiguous [mb,Hkv,rep,q,d]
-    auto bmm2   = op(id++, op::kind::MatMul, "bmm2");
-    bmm2.add_inputs({probs, value}); bmm2.add_outputs({output});
+    ਸਵੈਚਾਲਿਤ output = logical_tensor(id++, t,  o_sz, ltype::strided);   // f16 contiguous [mb,Hkv,rep,q,d]
+    ਸਵੈਚਾਲਿਤ bmm2   = op(id++, op::ਕਿਸਮ_2::MatMul, "bmm2");
+    bmm2.ਜੋੜੋ_inputs({probs, value}); bmm2.ਜੋੜੋ_outputs({output});
 
-    dnnl::graph::graph g(eng.get_kind());
-    g.add_op(bmm1); g.add_op(sdiv); g.add_op(madd); g.add_op(smax); g.add_op(bmm2);
+    dnnl::graph::graph g(eng.get_ਕਿਸਮ());
+    g.ਜੋੜੋ_op(bmm1); g.ਜੋੜੋ_op(sdiv); g.ਜੋੜੋ_op(madd); g.ਜੋੜੋ_op(smax); g.ਜੋੜੋ_op(bmm2);
     g.finalize();
 
-    auto parts = g.get_partitions();
-    if (parts.size() != 1 || !parts[0].is_supported()) {
+    ਸਵੈਚਾਲਿਤ parts = g.get_partitions();
+    ਜੇ (parts.size() != 1 || !parts[0].is_supported()) {
         GGML_LOG_WARN("%s: oneDNN did not fuse the SDPA graph; falling back to TILE kernel\n", __func__);
-        return E;   // ok stays false -> caller falls back to TILE
+        ਵਾਪਸ E;   // ok stays false -> caller falls back to TILE
     }
-    E.ins      = parts[0].get_input_ports();
-    E.out      = parts[0].get_output_ports()[0];
-    E.cp       = parts[0].compile(E.ins, {E.out}, eng);
-    E.out      = E.cp.query_logical_tensor(E.out.get_id());
-    E.id_q     = query.get_id(); E.id_k = key.get_id(); E.id_v = value.get_id();
-    E.id_scale = scale.get_id(); E.id_mask = mask.get_id();
-    E.ok       = true;
-    return E;
+    E.ins      = parts[0].get_ਨਿਵੇਸ਼_ports();
+    E.ਬਾਹਰਲਾ      = parts[0].get_output_ports()[0];
+    E.cp       = parts[0].compile(E.ins, {E.ਬਾਹਰਲਾ}, eng);
+    E.ਬਾਹਰਲਾ      = E.cp.query_logical_tensor(E.ਬਾਹਰਲਾ.get_id());
+    E.id_q     = query.get_id(); E.id_k = ਕੁੰਜੀ.get_id(); E.id_v = value.get_id();
+    E.id_scale = scale.get_id(); E.id_ਨਕਾਬ = ਨਕਾਬ.get_id();
+    E.ok       = ਸੱਚ;
+    ਵਾਪਸ E;
 }
-catch (const std::exception & e) {
+ਫੜੋ (ਅਚਲ std::exception & e) {
     // compile() can reject a stride set the partitioner never inspects; memoise the failure so the
     // fallback costs one build rather than one per call.
     GGML_LOG_WARN("%s: oneDNN SDPA partition build failed (%s); falling back to TILE kernel\n", __func__, e.what());
-    return {};
+    ਵਾਪਸ {};
 }
 
-void ggml_sycl_flash_attn_ext_onednn(ggml_backend_sycl_context & ctx, ggml_tensor * dst) try {
-    const ggml_tensor * Q    = dst->src[0];
-    const ggml_tensor * K    = dst->src[1];
-    const ggml_tensor * V    = dst->src[2];
-    const ggml_tensor * mask = dst->src[3];
+ਖਾਲੀ ggml_sycl_flash_attn_ext_onednn(ggml_backend_sycl_context & ctx, ggml_tensor * dst) ਕੋਸ਼ਿਸ਼ {
+    ਅਚਲ ggml_tensor * Q    = dst->src[0];
+    ਅਚਲ ggml_tensor * K    = dst->src[1];
+    ਅਚਲ ggml_tensor * V    = dst->src[2];
+    ਅਚਲ ggml_tensor * ਨਕਾਬ = dst->src[3];
 
-    const int64_t d   = K->ne[0];   // head_dim
-    const int64_t seq = K->ne[1];   // n_kv
-    const int64_t Hkv = K->ne[2];   // n_head_kv
-    const int64_t H   = Q->ne[2];   // n_head
-    const int64_t q   = Q->ne[1];   // n_tok
-    const int64_t mb  = Q->ne[3];   // batch (== 1, gated)
+    ਅਚਲ int64_t d   = K->ne[0];   // head_dim
+    ਅਚਲ int64_t seq = K->ne[1];   // n_kv
+    ਅਚਲ int64_t Hkv = K->ne[2];   // n_head_kv
+    ਅਚਲ int64_t H   = Q->ne[2];   // n_head
+    ਅਚਲ int64_t q   = Q->ne[1];   // n_tok
+    ਅਚਲ int64_t mb  = Q->ne[3];   // batch (== 1, gated)
 
-    float kq_scale = 1.0f;
-    memcpy(&kq_scale, (const float *) dst->op_params + 0, sizeof(float));
+    ਦਸ਼ਮਲਵ kq_scale = 1.0f;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&kq_scale, (ਅਚਲ ਦਸ਼ਮਲਵ *) dst->op_params + 0, ਆਕਾਰ(ਦਸ਼ਮਲਵ));
 
-    dpct::queue_ptr stream = ctx.stream();
+    dpct::ਕਤਾਰ_ptr stream = ctx.stream();
     dnnl::engine    eng    = ctx.engine_dnnl(stream);
-    dnnl::stream    strm   = ctx.stream_dnnl(stream);
+    dnnl::stream    strm   = ctx.ਧਾਰਾ_dnnl(stream);
 
-    const ggml_sycl_fattn_extra extra = ggml_sycl_fattn_get_extra(dst);
+    ਅਚਲ ggml_sycl_fattn_extra extra = ggml_sycl_fattn_get_extra(dst);
 
     // Q: always f32 -- copy to dense f16.
     std::optional<ggml_sycl_pool_alloc<sycl::half>> Qf_pool;
-    sycl::half * Qf_ptr = (sycl::half *) extra.Q_buffer_ptr;
-    if (!Qf_ptr) {
+    sycl::half * Qf_ptr = (sycl::half *) extra.Q_ਬਫਰ_ptr;
+    ਜੇ (!Qf_ptr) {
         Qf_pool.emplace(ctx.pool(), (size_t) H * q * d);
         Qf_ptr = Qf_pool->get();
     }
-    cont_to_f16_sycl<float>((const char *) Q->data, Qf_ptr, d, q, H, mb, Q->nb[1], Q->nb[2], Q->nb[3], stream);
+    cont_ਮੰਜ਼ਿਲ_f16_sycl<ਦਸ਼ਮਲਵ>((ਅਚਲ ਅੱਖਰ *) Q->ਅੰਕੜੇ, Qf_ptr, d, q, H, mb, Q->nb[1], Q->nb[2], Q->nb[3], stream);
 
     // K/V: bind the f16 cache in place. llama.cpp permutes it to [token][head][dim], so its head
     // plane is strided rather than dense, which is what an explicit stride vector expresses.
     // Quantized and f32 KV still stage a dense copy -- the layout the k_str/v_str defaults describe.
-    sycl::half * K_ptr = nullptr;
-    sycl::half * V_ptr = nullptr;
+    sycl::half * K_ptr = ਖਾਲੀ_ਸੂਚਕ;
+    sycl::half * V_ptr = ਖਾਲੀ_ਸੂਚਕ;
     std::array<int64_t, 5> k_str{ Hkv * seq * d, seq * d, seq * d, d, 1 };
     std::array<int64_t, 5> v_str = k_str;
     std::optional<ggml_sycl_pool_alloc<sycl::half>> Kf_pool;
     std::optional<ggml_sycl_pool_alloc<sycl::half>> Vf_pool;
     // Helper: hand out reserved space, or fall back to the pool.
-    auto stage_k = [&](size_t n) { if (extra.K_buffer_ptr) { return (sycl::half *) extra.K_buffer_ptr; }
-                                  Kf_pool.emplace(ctx.pool(), n); return Kf_pool->get(); };
-    auto stage_v = [&](size_t n) { if (extra.V_buffer_ptr) { return (sycl::half *) extra.V_buffer_ptr; }
-                                  Vf_pool.emplace(ctx.pool(), n); return Vf_pool->get(); };
+    ਸਵੈਚਾਲਿਤ stage_k = [&](size_t n) { ਜੇ (extra.K_ਬਫਰ_ptr) { ਵਾਪਸ (sycl::half *) extra.K_ਬਫਰ_ptr; }
+                                  Kf_pool.emplace(ctx.pool(), n); ਵਾਪਸ Kf_pool->get(); };
+    ਸਵੈਚਾਲਿਤ stage_v = [&](size_t n) { ਜੇ (extra.V_ਬਫਰ_ptr) { ਵਾਪਸ (sycl::half *) extra.V_ਬਫਰ_ptr; }
+                                  Vf_pool.emplace(ctx.pool(), n); ਵਾਪਸ Vf_pool->get(); };
 
-    auto elem_strides = [](const ggml_tensor * t) {
-        const int64_t s1 = (int64_t) (t->nb[1] / t->nb[0]);
-        const int64_t s2 = (int64_t) (t->nb[2] / t->nb[0]);
-        const int64_t s3 = (int64_t) (t->nb[3] / t->nb[0]);
+    ਸਵੈਚਾਲਿਤ elem_strides = [](ਅਚਲ ggml_tensor * t) {
+        ਅਚਲ int64_t s1 = (int64_t) (t->nb[1] / t->nb[0]);
+        ਅਚਲ int64_t s2 = (int64_t) (t->nb[2] / t->nb[0]);
+        ਅਚਲ int64_t s3 = (int64_t) (t->nb[3] / t->nb[0]);
         // dims are {mb=1, Hkv, rep=1, seq, d}; the size-1 dims at 0 and 2 never advance an address.
-        return std::array<int64_t, 5>{ s3, s2, s2, s1, 1 };
+        ਵਾਪਸ std::array<int64_t, 5>{ s3, s2, s2, s1, 1 };
     };
 
-    if (ggml_sycl_fattn_onednn_binds_kv(K, V)) {
-        K_ptr = (sycl::half *) K->data;
-        V_ptr = (sycl::half *) V->data;
+    ਜੇ (ggml_sycl_fattn_onednn_binds_kv(K, V)) {
+        K_ptr = (sycl::half *) K->ਅੰਕੜੇ;
+        V_ptr = (sycl::half *) V->ਅੰਕੜੇ;
         k_str = elem_strides(K);
         v_str = elem_strides(V);
-    } else if (K->type == GGML_TYPE_F16 && V->type == GGML_TYPE_F16) {
+    } ਨਹੀਂਤਾਂ ਜੇ (K->type == GGML_TYPE_F16 && V->type == GGML_TYPE_F16) {
         K_ptr = stage_k((size_t) Hkv * seq * d);
         V_ptr = stage_v((size_t) Hkv * seq * d);
-        cont_to_f16_sycl<sycl::half>((const char *) K->data, K_ptr, d, seq, Hkv, mb, K->nb[1], K->nb[2], K->nb[3], stream);
-        cont_to_f16_sycl<sycl::half>((const char *) V->data, V_ptr, d, seq, Hkv, mb, V->nb[1], V->nb[2], V->nb[3], stream);
-    } else if (ggml_is_quantized(K->type)) {
+        cont_ਮੰਜ਼ਿਲ_f16_sycl<sycl::half>((ਅਚਲ ਅੱਖਰ *) K->ਅੰਕੜੇ, K_ptr, d, seq, Hkv, mb, K->nb[1], K->nb[2], K->nb[3], stream);
+        cont_ਮੰਜ਼ਿਲ_f16_sycl<sycl::half>((ਅਚਲ ਅੱਖਰ *) V->ਅੰਕੜੇ, V_ptr, d, seq, Hkv, mb, V->nb[1], V->nb[2], V->nb[3], stream);
+    } ਨਹੀਂਤਾਂ ਜੇ (ggml_is_quantized(K->type)) {
         // Quantized K/V: dequant to dense F16 using pool, same lifetime as F16 path.
         K_ptr = stage_k((size_t) ggml_nelements(K));
         {
-            const char * K_data = (const char *)K->data;
-            const bool k_non_dense = ((int64_t)K->ne[1] * K->nb[1] != K->nb[2]) && K->ne[2] > 1;
-            const bool k_gemma = k_non_dense &&
+            ਅਚਲ ਅੱਖਰ * K_ਅੰਕੜੇ = (ਅਚਲ ਅੱਖਰ *)K->ਅੰਕੜੇ;
+            ਅਚਲ ਤਾਰਕਿਕ k_non_dense = ((int64_t)K->ne[1] * K->nb[1] != K->nb[2]) && K->ne[2] > 1;
+            ਅਚਲ ਤਾਰਕਿਕ k_gemma = k_non_dense &&
                 ((int64_t)K->nb[2] < (int64_t)K->ne[1] * (int64_t)K->nb[1]);
-            if (ggml_is_contiguously_allocated(K) && !k_non_dense) {
-                to_fp16_sycl_t to_fp16 = ggml_get_to_fp16_sycl(K->type, dst);
-                to_fp16(K_data, K_ptr, ggml_nelements(K), stream);
-            } else {
-                const size_t bs = ggml_blck_size(K->type);
-                const size_t ts = ggml_type_size(K->type);
-                to_fp16_nc_sycl_t to_fp16 = ggml_get_to_fp16_nc_sycl(K->type);
+            ਜੇ (ggml_is_contiguously_allocated(K) && !k_non_dense) {
+                ਮੰਜ਼ਿਲ_fp16_sycl_t ਮੰਜ਼ਿਲ_fp16 = ggml_get_ਮੰਜ਼ਿਲ_fp16_sycl(K->type, dst);
+                ਮੰਜ਼ਿਲ_fp16(K_ਅੰਕੜੇ, K_ptr, ggml_nelements(K), stream);
+            } ਨਹੀਂਤਾਂ {
+                ਅਚਲ size_t bs = ggml_blck_ਮਾਪ(K->type);
+                ਅਚਲ size_t ts = ggml_type_ਮਾਪ(K->type);
+                ਮੰਜ਼ਿਲ_fp16_nc_sycl_t ਮੰਜ਼ਿਲ_fp16 = ggml_get_ਮੰਜ਼ਿਲ_fp16_nc_sycl(K->type);
                 int64_t s01, s02, s03;
-                if (k_gemma) {
-                    const int64_t blk_per_row = (int64_t)K->ne[0] / bs;
-                    s01 = (int64_t)Hkv * blk_per_row;
-                    s02 = blk_per_row;
+                ਜੇ (k_gemma) {
+                    ਅਚਲ int64_t blk_ਪ੍ਰਤੀ_ਪੰਕਤੀ = (int64_t)K->ne[0] / bs;
+                    s01 = (int64_t)Hkv * blk_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+                    s02 = blk_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
                     s03 = (int64_t)K->ne[1] * s01;
-                } else {
+                } ਨਹੀਂਤਾਂ {
                     s01 = (int64_t)K->nb[1] / ts;
                     s02 = (int64_t)K->nb[2] / ts;
                     s03 = (int64_t)K->nb[3] / ts;
                 }
-                to_fp16(K_data, K_ptr,
+                ਮੰਜ਼ਿਲ_fp16(K_ਅੰਕੜੇ, K_ptr,
                         K->ne[0], K->ne[1], K->ne[2], K->ne[3],
                         s01, s02, s03, stream);
             }
@@ -338,40 +338,40 @@ void ggml_sycl_flash_attn_ext_onednn(ggml_backend_sycl_context & ctx, ggml_tenso
         // data. Master's F16 path also never aliases K and V.
         V_ptr = stage_v((size_t) ggml_nelements(V));
         {
-            const char * V_data = (const char *)V->data;
-            const bool v_non_dense = ((int64_t)V->ne[1] * V->nb[1] != V->nb[2]) && V->ne[2] > 1;
-            const bool v_gemma = v_non_dense &&
+            ਅਚਲ ਅੱਖਰ * V_ਅੰਕੜੇ = (ਅਚਲ ਅੱਖਰ *)V->ਅੰਕੜੇ;
+            ਅਚਲ ਤਾਰਕਿਕ v_non_dense = ((int64_t)V->ne[1] * V->nb[1] != V->nb[2]) && V->ne[2] > 1;
+            ਅਚਲ ਤਾਰਕਿਕ v_gemma = v_non_dense &&
                 ((int64_t)V->nb[2] < (int64_t)V->ne[1] * (int64_t)V->nb[1]);
-            if (ggml_is_contiguously_allocated(V) && !v_non_dense) {
-                to_fp16_sycl_t to_fp16 = ggml_get_to_fp16_sycl(V->type, dst);
-                to_fp16(V_data, V_ptr, ggml_nelements(V), stream);
-            } else {
-                const size_t bs = ggml_blck_size(V->type);
-                const size_t ts = ggml_type_size(V->type);
-                to_fp16_nc_sycl_t to_fp16 = ggml_get_to_fp16_nc_sycl(V->type);
+            ਜੇ (ggml_is_contiguously_allocated(V) && !v_non_dense) {
+                ਮੰਜ਼ਿਲ_fp16_sycl_t ਮੰਜ਼ਿਲ_fp16 = ggml_get_ਮੰਜ਼ਿਲ_fp16_sycl(V->type, dst);
+                ਮੰਜ਼ਿਲ_fp16(V_ਅੰਕੜੇ, V_ptr, ggml_nelements(V), stream);
+            } ਨਹੀਂਤਾਂ {
+                ਅਚਲ size_t bs = ggml_blck_ਮਾਪ(V->type);
+                ਅਚਲ size_t ts = ggml_type_ਮਾਪ(V->type);
+                ਮੰਜ਼ਿਲ_fp16_nc_sycl_t ਮੰਜ਼ਿਲ_fp16 = ggml_get_ਮੰਜ਼ਿਲ_fp16_nc_sycl(V->type);
                 int64_t s01, s02, s03;
-                if (v_gemma) {
-                    const int64_t blk_per_row = (int64_t)V->ne[0] / bs;
-                    s01 = (int64_t)V->ne[2] * blk_per_row;
-                    s02 = blk_per_row;
+                ਜੇ (v_gemma) {
+                    ਅਚਲ int64_t blk_ਪ੍ਰਤੀ_ਪੰਕਤੀ = (int64_t)V->ne[0] / bs;
+                    s01 = (int64_t)V->ne[2] * blk_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+                    s02 = blk_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
                     s03 = (int64_t)V->ne[1] * s01;
-                } else {
+                } ਨਹੀਂਤਾਂ {
                     s01 = (int64_t)V->nb[1] / ts;
                     s02 = (int64_t)V->nb[2] / ts;
                     s03 = (int64_t)V->nb[3] / ts;
                 }
-                to_fp16(V_data, V_ptr,
+                ਮੰਜ਼ਿਲ_fp16(V_ਅੰਕੜੇ, V_ptr,
                         V->ne[0], V->ne[1], V->ne[2], V->ne[3],
                         s01, s02, s03, stream);
             }
         }
-    } else {
+    } ਨਹੀਂਤਾਂ {
         // F32: strided copy to dense F16 via cont_to_f16_sycl<float>.
         K_ptr = stage_k((size_t) ggml_nelements(K));
-        cont_to_f16_sycl<float>((const char *) K->data, K_ptr, K->ne[0], K->ne[1], K->ne[2], K->ne[3],
+        cont_ਮੰਜ਼ਿਲ_f16_sycl<ਦਸ਼ਮਲਵ>((ਅਚਲ ਅੱਖਰ *) K->ਅੰਕੜੇ, K_ptr, K->ne[0], K->ne[1], K->ne[2], K->ne[3],
                                 K->nb[1], K->nb[2], K->nb[3], stream);
         V_ptr = stage_v((size_t) ggml_nelements(V));
-        cont_to_f16_sycl<float>((const char *) V->data, V_ptr, V->ne[0], V->ne[1], V->ne[2], V->ne[3],
+        cont_ਮੰਜ਼ਿਲ_f16_sycl<ਦਸ਼ਮਲਵ>((ਅਚਲ ਅੱਖਰ *) V->ਅੰਕੜੇ, V_ptr, V->ne[0], V->ne[1], V->ne[2], V->ne[3],
                                 V->nb[1], V->nb[2], V->nb[3], stream);
     }
 
@@ -383,10 +383,10 @@ void ggml_sycl_flash_attn_ext_onednn(ggml_backend_sycl_context & ctx, ggml_tenso
     // garbage scale (output collapses to a repeated token). Write the scalar from a kernel
     // instead -- the value is captured into the command, so no host memory has to outlive the
     // call, and the enqueue stays async.
-    const sycl::half scale_h = (sycl::half) (1.0f / kq_scale);
+    ਅਚਲ sycl::half scale_h = (sycl::half) (1.0f / kq_scale);
     std::optional<ggml_sycl_pool_alloc<sycl::half>> scbuf;
-    sycl::half * scale_dev = (sycl::half *) extra.scale_buffer_ptr;
-    if (!scale_dev) {
+    sycl::half * scale_dev = (sycl::half *) extra.scale_ਬਫਰ_ptr;
+    ਜੇ (!scale_dev) {
         scbuf.emplace(ctx.pool(), 1);
         scale_dev = scbuf->get();
     }
@@ -394,61 +394,61 @@ void ggml_sycl_flash_attn_ext_onednn(ggml_backend_sycl_context & ctx, ggml_tenso
 
     // f16 contiguous SDPA out [mb,H,q,d]
     std::optional<ggml_sycl_pool_alloc<sycl::half>> outf_pool;
-    sycl::half * outf_ptr = (sycl::half *) extra.out_buffer_ptr;
-    if (!outf_ptr) {
+    sycl::half * outf_ptr = (sycl::half *) extra.ਬਾਹਰਲਾ_ਬਫਰ_ptr;
+    ਜੇ (!outf_ptr) {
         outf_pool.emplace(ctx.pool(), (size_t) H * q * d);
         outf_ptr = outf_pool->get();
     }
 
     // compile once per (device, shape, KV strides), reuse across layers/calls. Stride 2 always
     // repeats stride 1 and stride 4 is always 1, so the key covers every entry that can differ.
-    static std::unordered_map<std::string, sdpa_partition> cache;
-    char keyb[256];
-    snprintf(keyb, sizeof(keyb), "%d:%lld:%lld:%lld:%lld:%lld:%lld:%lld:%lld:%lld:%lld:%lld", ggml_sycl_get_device(),
-             (long long) H, (long long) Hkv, (long long) q, (long long) seq, (long long) d,
-             (long long) k_str[0], (long long) k_str[1], (long long) k_str[3],
-             (long long) v_str[0], (long long) v_str[1], (long long) v_str[3]);
-    auto it = cache.find(keyb);
-    if (it == cache.end()) {
-        it = cache.emplace(keyb, build_sdpa(eng, (int) H, (int) Hkv, (int) q, (int) seq, (int) d, k_str, v_str)).first;
+    ਸਥਿਰ std::unordered_map<std::string, sdpa_ਹਿੱਸੇ_ਕਰੋ> cache;
+    ਅੱਖਰ keyb[256];
+    snprintf(keyb, ਆਕਾਰ(keyb), "%d:%lld:%lld:%lld:%lld:%lld:%lld:%lld:%lld:%lld:%lld:%lld", ggml_sycl_get_device(),
+             (ਲੰਮਾ ਲੰਮਾ) H, (ਲੰਮਾ ਲੰਮਾ) Hkv, (ਲੰਮਾ ਲੰਮਾ) q, (ਲੰਮਾ ਲੰਮਾ) seq, (ਲੰਮਾ ਲੰਮਾ) d,
+             (ਲੰਮਾ ਲੰਮਾ) k_str[0], (ਲੰਮਾ ਲੰਮਾ) k_str[1], (ਲੰਮਾ ਲੰਮਾ) k_str[3],
+             (ਲੰਮਾ ਲੰਮਾ) v_str[0], (ਲੰਮਾ ਲੰਮਾ) v_str[1], (ਲੰਮਾ ਲੰਮਾ) v_str[3]);
+    ਸਵੈਚਾਲਿਤ it = cache.find(keyb);
+    ਜੇ (it == cache.end()) {
+        it = cache.emplace(keyb, build_sdpa(eng, (ਪੂਰਨ) H, (ਪੂਰਨ) Hkv, (ਪੂਰਨ) q, (ਪੂਰਨ) seq, (ਪੂਰਨ) d, k_str, v_str)).ਪਹਿਲਾ;
     }
-    sdpa_partition & E = it->second;
-    if (!E.ok) {
+    sdpa_ਹਿੱਸੇ_ਕਰੋ & E = it->second;
+    ਜੇ (!E.ok) {
         // oneDNN can decline a shape or a stride set that _supported() never sees; build_sdpa warns per key.
         ggml_sycl_flash_attn_ext_tile(ctx, dst);
-        return;
+        ਵਾਪਸ;
     }
 
-    auto id2ptr = [&](size_t r) -> void * {
-        if (r == E.id_q)     return Qf_ptr;
-        if (r == E.id_k)     return K_ptr;
-        if (r == E.id_v)     return V_ptr;
-        if (r == E.id_scale) return scale_dev;
-        if (r == E.id_mask)  return (void *) mask->data;
-        return nullptr;
+    ਸਵੈਚਾਲਿਤ id2ptr = [&](size_t r) -> ਖਾਲੀ * {
+        ਜੇ (r == E.id_q)     ਵਾਪਸ Qf_ptr;
+        ਜੇ (r == E.id_k)     ਵਾਪਸ K_ptr;
+        ਜੇ (r == E.id_v)     ਵਾਪਸ V_ptr;
+        ਜੇ (r == E.id_scale) ਵਾਪਸ scale_dev;
+        ਜੇ (r == E.id_ਨਕਾਬ)  ਵਾਪਸ (ਖਾਲੀ *) ਨਕਾਬ->ਅੰਕੜੇ;
+        ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
     };
     std::vector<tensor> ti;
     ti.reserve(E.ins.size());
-    for (auto & lt : E.ins) {
+    ਲਈ (ਸਵੈਚਾਲਿਤ & lt : E.ins) {
         ti.emplace_back(lt, eng, id2ptr(lt.get_id()));
     }
-    tensor to(E.out, eng, outf_ptr);
-    E.cp.execute(strm, ti, {to});
+    tensor ਮੰਜ਼ਿਲ(E.ਬਾਹਰਲਾ, eng, outf_ptr);
+    E.cp.execute(strm, ti, {ਮੰਜ਼ਿਲ});
 
-    permute_sdpa_out_sycl(outf_ptr, (float *) dst->data, mb, H, q, d, stream);
+    ਕ੍ਰਮ_ਬਦਲੋ_sdpa_ਬਾਹਰਲਾ_sycl(outf_ptr, (ਦਸ਼ਮਲਵ *) dst->ਅੰਕੜੇ, mb, H, q, d, stream);
     // Single device needs no sync: the dnnl stream wraps this same in-order queue, so the SDPA
     // serializes with the staging kernels before it and the permute/pool reuse after it. The
     // garbage output formerly blamed on the missing sync here was the scale use-after-return
     // fixed above. Keep the conservative wait for multi-GPU, where other devices' streams can
     // race the pool:
-    if (ggml_sycl_info().device_count > 1) {
+    ਜੇ (ggml_sycl_info().device_ਗਿਣਤੀ > 1) {
         stream->wait_and_throw();
     }
 }
-catch (const std::exception & e) {
+ਫੜੋ (ਅਚਲ std::exception & e) {
     // any oneDNN/SYCL failure is non-fatal: fall back to the existing kernel (strictly additive).
     GGML_LOG_WARN("%s: oneDNN SDPA failed (%s); falling back to TILE kernel\n", __func__, e.what());
     ggml_sycl_flash_attn_ext_tile(ctx, dst);
 }
 
-#endif // GGML_SYCL_DNNL
+#ਜੇ_ਅੰਤ // GGML_SYCL_DNNL

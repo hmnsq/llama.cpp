@@ -1,116 +1,116 @@
-#pragma clang diagnostic ignored "-Wunused-variable"
-#pragma clang diagnostic ignored "-Wunused-function"
-#pragma clang diagnostic ignored "-Wunused-but-set-variable"
+#ਹਦਾਇਤ clang diagnostic ignored "-Wunused-variable"
+#ਹਦਾਇਤ clang diagnostic ignored "-Wunused-function"
+#ਹਦਾਇਤ clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <assert.h>
-#include <HAP_compute_res.h>
-#include <HAP_farf.h>
-#include <math.h>
-#include <stdbool.h>
-#include <stdatomic.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <assert.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <HAP_compute_res.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <HAP_farf.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <math.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdbool.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdatomic.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stddef.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdint.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <string.h>
 
-#include "dma-queue.h"
-#include "hex-fastdiv.h"
-#include "hex-profile.h"
-#include "hmx-queue.h"
-#include "hmx-utils.h"
-#include "hvx-utils.h"
-#include "hvx-dump.h"
-#include "hvx-copy.h"
-#include "hvx-reduce.h"
-#include "hvx-flash-attn.h"
-#include "htp-vtcm.h"
-#include "work-queue.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "dma-queue.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hex-fastdiv.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hex-profile.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hmx-queue.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hmx-utils.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hvx-utils.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hvx-dump.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hvx-copy.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hvx-reduce.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hvx-flash-attn.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "htp-vtcm.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "work-queue.h"
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "htp-tensor.h"
-#include "hvx-quant.h"
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_DECL_C
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-common.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "htp-ctx.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "htp-ops.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "htp-tensor.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hvx-quant.h"
 
-#include "flash-attn-ops.h"
-#include "hvx-fa-kernels.h"
-#include "hmx-fa-kernels.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "flash-attn-ops.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hvx-fa-kernels.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hmx-fa-kernels.h"
 
 // Must be multiple of 32
-#define FLASH_ATTN_BLOCK_SIZE (32 * 2)
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ FLASH_ATTN_ਖੰਡ_ਮਾਪ (32 * 2)
 
-struct htp_fa_context {
-    const struct htp_ops_context * octx;
+ਬਣਤਰ htp_fa_context {
+    ਅਚਲ ਬਣਤਰ htp_ops_context * octx;
 
-    struct fastdiv_values src0_div21;
-    struct fastdiv_values src0_div1;
+    ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ src0_div21;
+    ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ src0_div1;
 
-    struct fastdiv_values broadcast_rk2;
-    struct fastdiv_values broadcast_rk3;
-    struct fastdiv_values broadcast_rv2;
-    struct fastdiv_values broadcast_rv3;
+    ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ ਪ੍ਰਸਾਰਣ_rk2;
+    ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ ਪ੍ਰਸਾਰਣ_rk3;
+    ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ ਪ੍ਰਸਾਰਣ_rv2;
+    ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ ਪ੍ਰਸਾਰਣ_rv3;
 
-    struct fastdiv_values src3_div2;
-    struct fastdiv_values src3_div3;
+    ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ src3_div2;
+    ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ src3_div3;
 
-    float scale;
-    float max_bias;
+    ਦਸ਼ਮਲਵ scale;
+    ਦਸ਼ਮਲਵ max_bias;
     bool  has_softcap;
     __fp16 logit_softcap;
 
-    uint32_t n_head_log2;
-    float m0;
-    float m1;
+    uint32_t n_ਸਿਰ_log2;
+    ਦਸ਼ਮਲਵ m0;
+    ਦਸ਼ਮਲਵ m1;
     __fp16 slopes[512];
 
-    uint32_t n_blocks;
-    uint32_t n_active_blocks;
-    bool     shared_active_blocks;
+    uint32_t n_ਖੰਡਾਂ;
+    uint32_t n_ਸਰਗਰਮ_ਖੰਡਾਂ;
+    bool     shared_ਸਰਗਰਮ_ਖੰਡਾਂ;
 
-    size_t size_q_row_padded;
-    size_t size_k_row_padded;
-    size_t size_v_row_padded;
+    size_t ਮਾਪ_q_ਪੰਕਤੀ_padded;
+    size_t ਮਾਪ_k_ਪੰਕਤੀ_padded;
+    size_t ਮਾਪ_v_ਪੰਕਤੀ_padded;
 
-    size_t size_k_block;
-    size_t size_v_block;
-    size_t size_m_block;
+    size_t ਮਾਪ_k_ਖੰਡ;
+    size_t ਮਾਪ_v_ਖੰਡ;
+    size_t ਮਾਪ_m_ਖੰਡ;
 
     uint32_t qrows;
-    uint32_t qrows_per_thread;
-    uint32_t qrow_start;
+    uint32_t qrows_ਪ੍ਰਤੀ_thread;
+    uint32_t qrow_ਸ਼ੁਰੂ;
 
     bool is_q_fp32;
 
-    size_t size_q_block;
-    size_t size_vkq_acc;
+    size_t ਮਾਪ_q_ਖੰਡ;
+    size_t ਮਾਪ_vkq_acc;
 
     uint8_t *  spad_q;
     uint8_t *  spad_k;
     uint8_t *  spad_v;
     uint8_t *  spad_m;
     uint8_t *  spad_a;
-    float *    spad_sinks;
-    uint16_t   active_blocks[FA_MAX_KV_BLOCKS];
+    ਦਸ਼ਮਲਵ *    spad_sinks;
+    uint16_t   ਸਰਗਰਮ_ਖੰਡਾਂ[FA_MAX_KV_ਖੰਡਾਂ];
 
-    const struct htp_tensor * k;
-    const struct htp_tensor * v;
+    ਅਚਲ ਬਣਤਰ htp_tensor * k;
+    ਅਚਲ ਬਣਤਰ htp_tensor * v;
 };
 
-struct hmx_fa_context {
-    const struct htp_ops_context * octx;
-    const struct htp_tensor *      sinks;  // attention sinks (src[4]), NULL if absent
-    const struct htp_tensor *      k;
-    const struct htp_tensor *      v;
+ਬਣਤਰ hmx_fa_context {
+    ਅਚਲ ਬਣਤਰ htp_ops_context * octx;
+    ਅਚਲ ਬਣਤਰ htp_tensor *      sinks;  // attention sinks (src[4]), NULL if absent
+    ਅਚਲ ਬਣਤਰ htp_tensor *      k;
+    ਅਚਲ ਬਣਤਰ htp_tensor *      v;
     bool         pipeline;  // true when n_kv_blocks >= FA_MIN_KV_BLOCKS && n_threads >= 2
-    uint32_t     n_threads;
+    uint32_t     n_ਧਾਗੇ;
 
     // Op parameters
     __fp16       scale;
-    float        max_bias;
+    ਦਸ਼ਮਲਵ        max_bias;
     bool         has_softcap;
     __fp16       logit_softcap;
-    uint32_t     n_head_log2;
-    float        m0, m1;
+    uint32_t     n_ਸਿਰ_log2;
+    ਦਸ਼ਮਲਵ        m0, m1;
 
     // Dimensions
     uint32_t     DK, DV;
@@ -119,10 +119,10 @@ struct hmx_fa_context {
     uint32_t     n_kv_heads;  // number of KV heads
     uint32_t     n_heads;     // number of Q heads
     uint32_t     G;           // GQA factor = n_heads / n_kv_heads
-    struct fastdiv_values div_G;
-    struct fastdiv_values src3_div2;
-    struct fastdiv_values src3_div3;
-    uint32_t     n_kv_blocks;
+    ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ div_G;
+    ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ src3_div2;
+    ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ src3_div3;
+    uint32_t     n_kv_ਖੰਡਾਂ;
     uint32_t     neq1;        // Q token count
 
     // Types
@@ -146,77 +146,77 @@ struct hmx_fa_context {
     __fp16 *     vtcm_p_tiles[2];      // P = softmax(S) [g_br, Bc]
     __fp16 *     vtcm_d_tiles[2];      // Diagonal rescale, g_br/32 packed diagonal tiles (double-buffered)
     __fp16 *     vtcm_d_inv_l;         // Diagonal rescale (1/l), same packed layout
-    HVX_Vector * vtcm_m_vec;           // Row max [g_br]
-    HVX_Vector * vtcm_l_vec;           // Row sum [g_br]
-    HVX_Vector * vtcm_s_rowmax;        // Softmax intermediate [g_br]
-    HVX_Vector * vtcm_p_rowsum;        // Softmax intermediate [g_br]
-    HVX_Vector * vtcm_row_bufs;        // Per-thread softmax row scratch [n_threads][2][Bc/64]
+    HVX_ਸਦਿਸ਼ * vtcm_m_vec;           // Row max [g_br]
+    HVX_ਸਦਿਸ਼ * vtcm_l_vec;           // Row sum [g_br]
+    HVX_ਸਦਿਸ਼ * vtcm_s_rowmax;        // Softmax intermediate [g_br]
+    HVX_ਸਦਿਸ਼ * vtcm_p_rowsum;        // Softmax intermediate [g_br]
+    HVX_ਸਦਿਸ਼ * vtcm_ਪੰਕਤੀ_bufs;        // Per-thread softmax row scratch [n_threads][2][Bc/64]
     uint8_t *    vtcm_hmx_scales_id;   // HMX output scales (identity)
     uint8_t *    vtcm_hmx_scales_qk;   // HMX output scales (qk_scale)
-    __fp16 *     vtcm_mask_buf;        // VTCM mask buffer [Br * m_line], DMA'd per KV block
+    __fp16 *     vtcm_ਨਕਾਬ_buf;        // VTCM mask buffer [Br * m_line], DMA'd per KV block
     __fp16 *     vtcm_slopes;          // ALiBi slopes [g_br]
-    float *      vtcm_sinks;           // Attention sinks
-    size_t       row_buf_stride;       // HVX vectors per row buffer (Bc/64)
-    size_t       mask_buf_row_stride;  // elements (__fp16) per row in mask buffer
-    size_t       q_tile_bytes;
-    size_t       k_tile_bytes;
-    size_t       o_tile_bytes;
-    size_t       col_vec_bytes;
-    size_t       d_tile_bytes;
-    bool         mask_broadcast;       // true when mask->ne[2] == 1 (head-independent, single 2D DMA)
+    ਦਸ਼ਮਲਵ *      vtcm_sinks;           // Attention sinks
+    size_t       ਪੰਕਤੀ_buf_stride;       // HVX vectors per row buffer (Bc/64)
+    size_t       ਨਕਾਬ_buf_ਪੰਕਤੀ_stride;  // elements (__fp16) per row in mask buffer
+    size_t       q_tile_ਬਾਈਟਾਂ;
+    size_t       k_tile_ਬਾਈਟਾਂ;
+    size_t       o_tile_ਬਾਈਟਾਂ;
+    size_t       ਖਾਨਾ_vec_ਬਾਈਟਾਂ;
+    size_t       d_tile_ਬਾਈਟਾਂ;
+    bool         ਨਕਾਬ_ਪ੍ਰਸਾਰਣ;       // true when mask->ne[2] == 1 (head-independent, single 2D DMA)
     dma_cache_fa m_cache;
 };
 
 // Scan mask rows [q_start, q_start + n_rows_q) and build compact list of KV blocks with any entry != -inf.
-static uint32_t fa_scan_active_blocks(
-        dma_queue *               dma_q,
-        const struct htp_tensor * mask,
-        uint32_t                  q_start,
-        uint32_t                  n_rows_q,
+ਸਥਿਰ uint32_t fa_ਜਾਂਚ_ਸਰਗਰਮ_ਖੰਡਾਂ(
+        dma_ਕਤਾਰ *               dma_q,
+        ਅਚਲ ਬਣਤਰ htp_tensor * ਨਕਾਬ,
+        uint32_t                  q_ਸ਼ੁਰੂ,
+        uint32_t                  n_ਪੰਕਤੀਆਂ_q,
         uint32_t                  im2,
         uint32_t                  im3,
         uint32_t                  nek1,
         uint32_t                  Bc,
-        uint32_t                  n_kv_blocks,
-        void *                    vtcm_scratch,
-        size_t                    scratch_bytes,
-        uint16_t *                active_blocks) {
-    const size_t row_bytes  = (size_t) nek1 * sizeof(__fp16);
-    const size_t row_stride = hex_round_up(row_bytes, 128);
+        uint32_t                  n_kv_ਖੰਡਾਂ,
+        ਖਾਲੀ *                    vtcm_scratch,
+        size_t                    scratch_ਬਾਈਟਾਂ,
+        uint16_t *                ਸਰਗਰਮ_ਖੰਡਾਂ) {
+    ਅਚਲ size_t ਪੰਕਤੀ_ਬਾਈਟਾਂ  = (size_t) nek1 * ਆਕਾਰ(__fp16);
+    ਅਚਲ size_t ਪੰਕਤੀ_stride = hex_ਗੇੜਾ_ਉੱਪਰ(ਪੰਕਤੀ_ਬਾਈਟਾਂ, 128);
 
-    if (!mask || n_kv_blocks <= 1 || n_kv_blocks > FA_MAX_KV_BLOCKS ||
-        (size_t) n_rows_q * row_stride > scratch_bytes) {
-        #pragma clang loop vectorize(disable)
-        for (uint32_t b = 0; b < n_kv_blocks; ++b) {
-            active_blocks[b] = (uint16_t) b;
+    ਜੇ (!ਨਕਾਬ || n_kv_ਖੰਡਾਂ <= 1 || n_kv_ਖੰਡਾਂ > FA_MAX_KV_ਖੰਡਾਂ ||
+        (size_t) n_ਪੰਕਤੀਆਂ_q * ਪੰਕਤੀ_stride > scratch_ਬਾਈਟਾਂ) {
+        #ਹਦਾਇਤ clang loop vectorize(disable)
+        ਲਈ (uint32_t b = 0; b < n_kv_ਖੰਡਾਂ; ++b) {
+            ਸਰਗਰਮ_ਖੰਡਾਂ[b] = (uint16_t) b;
         }
-        return n_kv_blocks;
+        ਵਾਪਸ n_kv_ਖੰਡਾਂ;
     }
 
-    const dma_addr_t m_src = mask->data + q_start * mask->nb[1] + im2 * mask->nb[2] + im3 * mask->nb[3];
-    dma_queue_push(dma_q, dma_make_data(vtcm_scratch, m_src), row_stride, mask->nb[1], row_bytes, n_rows_q);
-    const uint8_t * m_buf = (const uint8_t *) dma_queue_pop(dma_q).dst;
+    ਅਚਲ dma_addr_t m_src = ਨਕਾਬ->ਅੰਕੜੇ + q_ਸ਼ੁਰੂ * ਨਕਾਬ->nb[1] + im2 * ਨਕਾਬ->nb[2] + im3 * ਨਕਾਬ->nb[3];
+    dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(vtcm_scratch, m_src), ਪੰਕਤੀ_stride, ਨਕਾਬ->nb[1], ਪੰਕਤੀ_ਬਾਈਟਾਂ, n_ਪੰਕਤੀਆਂ_q);
+    ਅਚਲ uint8_t * m_buf = (ਅਚਲ uint8_t *) dma_ਕਤਾਰ_ਕੱਢੋ(dma_q).dst;
 
-    const HVX_Vector v_ninf   = Q6_Vh_vsplat_R(0xFC00);
-    uint32_t         n_active = 0;
+    ਅਚਲ HVX_ਸਦਿਸ਼ v_ninf   = Q6_Vh_vsplat_R(0xFC00);
+    uint32_t         n_ਸਰਗਰਮ = 0;
 
-    for (uint32_t b = 0; b < n_kv_blocks; ++b) {
-        const uint32_t col0 = b * Bc;
-        const uint32_t cols = MIN(Bc, nek1 - col0);
+    ਲਈ (uint32_t b = 0; b < n_kv_ਖੰਡਾਂ; ++b) {
+        ਅਚਲ uint32_t col0 = b * Bc;
+        ਅਚਲ uint32_t ਖਾਨੇ_ਗਿਣਤੀ_2 = MIN(Bc, nek1 - col0);
 
-        for (uint32_t r = 0; r < n_rows_q; ++r) {
-            const __fp16 * row_ptr = (const __fp16 *) (m_buf + r * row_stride) + col0;
-            HVX_Vector v_any = Q6_V_vzero();
+        ਲਈ (uint32_t r = 0; r < n_ਪੰਕਤੀਆਂ_q; ++r) {
+            ਅਚਲ __fp16 * ਪੰਕਤੀ_ptr = (ਅਚਲ __fp16 *) (m_buf + r * ਪੰਕਤੀ_stride) + col0;
+            HVX_ਸਦਿਸ਼ v_any = Q6_V_vzero();
             uint32_t c = 0;
-            for (; c + 64 <= cols; c += 64) {
-                const HVX_Vector v_m = *(const HVX_Vector *) (row_ptr + c);
+            ਲਈ (; c + 64 <= ਖਾਨੇ_ਗਿਣਤੀ_2; c += 64) {
+                ਅਚਲ HVX_ਸਦਿਸ਼ v_m = *(ਅਚਲ HVX_ਸਦਿਸ਼ *) (ਪੰਕਤੀ_ptr + c);
                 v_any = Q6_V_vor_VV(v_any, Q6_V_vxor_VV(v_m, v_ninf));
             }
-            if (c < cols) {
-                const uint32_t rem = cols - c;
-                const HVX_VectorPred q_rem = Q6_Q_vsetq2_R(rem * sizeof(__fp16));
-                const HVX_Vector v_m = *(const HVX_Vector *) (row_ptr + c);
-                const HVX_Vector v_diff = Q6_V_vand_QV(q_rem, Q6_V_vxor_VV(v_m, v_ninf));
+            ਜੇ (c < ਖਾਨੇ_ਗਿਣਤੀ_2) {
+                ਅਚਲ uint32_t rem = ਖਾਨੇ_ਗਿਣਤੀ_2 - c;
+                ਅਚਲ HVX_ਸਦਿਸ਼_Pred q_rem = Q6_Q_vsetq2_R(rem * ਆਕਾਰ(__fp16));
+                ਅਚਲ HVX_ਸਦਿਸ਼ v_m = *(ਅਚਲ HVX_ਸਦਿਸ਼ *) (ਪੰਕਤੀ_ptr + c);
+                ਅਚਲ HVX_ਸਦਿਸ਼ v_diff = Q6_V_vand_QV(q_rem, Q6_V_vxor_VV(v_m, v_ninf));
                 v_any = Q6_V_vor_VV(v_any, v_diff);
             }
             v_any = Q6_V_vor_VV(v_any, Q6_V_vror_VR(v_any, 64));
@@ -224,352 +224,352 @@ static uint32_t fa_scan_active_blocks(
             v_any = Q6_V_vor_VV(v_any, Q6_V_vror_VR(v_any, 16));
             v_any = Q6_V_vor_VV(v_any, Q6_V_vror_VR(v_any, 8));
             v_any = Q6_V_vor_VV(v_any, Q6_V_vror_VR(v_any, 4));
-            if (Q6_R_vextract_VR(v_any, 0) != 0) {
-                active_blocks[n_active++] = (uint16_t) b;
-                break;
+            ਜੇ (Q6_R_vextract_VR(v_any, 0) != 0) {
+                ਸਰਗਰਮ_ਖੰਡਾਂ[n_ਸਰਗਰਮ++] = (uint16_t) b;
+                ਰੋਕੋ;
             }
         }
     }
 
-    if (n_active == 0 && n_kv_blocks > 0) {
-        active_blocks[0] = 0;
-        n_active = 1;
+    ਜੇ (n_ਸਰਗਰਮ == 0 && n_kv_ਖੰਡਾਂ > 0) {
+        ਸਰਗਰਮ_ਖੰਡਾਂ[0] = 0;
+        n_ਸਰਗਰਮ = 1;
     }
-    return n_active;
+    ਵਾਪਸ n_ਸਰਗਰਮ;
 }
 
-static void flash_attn_ext_f16_thread(unsigned int nth, unsigned int ith, void * data) {
-    struct htp_fa_context * factx = (struct htp_fa_context *) data;
-    const struct htp_ops_context * octx = factx->octx;
-    const struct htp_tensor * q     = octx->src[0];
-    const struct htp_tensor * k     = octx->src[1];
-    const struct htp_tensor * v     = octx->src[2];
-    const struct htp_tensor * mask  = octx->src[3];
-    const struct htp_tensor * sinks = octx->src[4];
-    const struct htp_tensor * dst   = octx->dst;
+ਸਥਿਰ ਖਾਲੀ flash_attn_ext_f16_thread(ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ nth, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ ith, ਖਾਲੀ * ਅੰਕੜੇ) {
+    ਬਣਤਰ htp_fa_context * factx = (ਬਣਤਰ htp_fa_context *) ਅੰਕੜੇ;
+    ਅਚਲ ਬਣਤਰ htp_ops_context * octx = factx->octx;
+    ਅਚਲ ਬਣਤਰ htp_tensor * q     = octx->src[0];
+    ਅਚਲ ਬਣਤਰ htp_tensor * k     = octx->src[1];
+    ਅਚਲ ਬਣਤਰ htp_tensor * v     = octx->src[2];
+    ਅਚਲ ਬਣਤਰ htp_tensor * ਨਕਾਬ  = octx->src[3];
+    ਅਚਲ ਬਣਤਰ htp_tensor * sinks = octx->src[4];
+    ਅਚਲ ਬਣਤਰ htp_tensor * dst   = octx->dst;
 
-    const uint32_t neq0 = q->ne[0];
-    const uint32_t neq1 = q->ne[1];
-    const uint32_t neq2 = q->ne[2];
-    const uint32_t neq3 = q->ne[3];
+    ਅਚਲ uint32_t neq0 = q->ne[0];
+    ਅਚਲ uint32_t neq1 = q->ne[1];
+    ਅਚਲ uint32_t neq2 = q->ne[2];
+    ਅਚਲ uint32_t neq3 = q->ne[3];
 
-    const uint32_t nek0 = k->ne[0];
-    const uint32_t nek1 = k->ne[1];
-    const uint32_t nek2 = k->ne[2];
-    const uint32_t nek3 = k->ne[3];
+    ਅਚਲ uint32_t nek0 = k->ne[0];
+    ਅਚਲ uint32_t nek1 = k->ne[1];
+    ਅਚਲ uint32_t nek2 = k->ne[2];
+    ਅਚਲ uint32_t nek3 = k->ne[3];
 
-    const uint32_t nev0 = v->ne[0];
-    const uint32_t nev1 = v->ne[1];
-    const uint32_t nev2 = v->ne[2];
-    const uint32_t nev3 = v->ne[3];
+    ਅਚਲ uint32_t nev0 = v->ne[0];
+    ਅਚਲ uint32_t nev1 = v->ne[1];
+    ਅਚਲ uint32_t nev2 = v->ne[2];
+    ਅਚਲ uint32_t nev3 = v->ne[3];
 
-    const uint32_t nbq1 = q->nb[1];
-    const uint32_t nbq2 = q->nb[2];
-    const uint32_t nbq3 = q->nb[3];
+    ਅਚਲ uint32_t nbq1 = q->nb[1];
+    ਅਚਲ uint32_t nbq2 = q->nb[2];
+    ਅਚਲ uint32_t nbq3 = q->nb[3];
 
-    const uint32_t nbk1 = k->nb[1];
-    const uint32_t nbk2 = k->nb[2];
-    const uint32_t nbk3 = k->nb[3];
+    ਅਚਲ uint32_t nbk1 = k->nb[1];
+    ਅਚਲ uint32_t nbk2 = k->nb[2];
+    ਅਚਲ uint32_t nbk3 = k->nb[3];
 
-    const uint32_t nbv1 = v->nb[1];
-    const uint32_t nbv2 = v->nb[2];
-    const uint32_t nbv3 = v->nb[3];
+    ਅਚਲ uint32_t nbv1 = v->nb[1];
+    ਅਚਲ uint32_t nbv2 = v->nb[2];
+    ਅਚਲ uint32_t nbv3 = v->nb[3];
 
-    const uint32_t ne1 = dst->ne[1];
-    const uint32_t ne2 = dst->ne[2];
-    const uint32_t ne3 = dst->ne[3];
+    ਅਚਲ uint32_t ne1 = dst->ne[1];
+    ਅਚਲ uint32_t ne2 = dst->ne[2];
+    ਅਚਲ uint32_t ne3 = dst->ne[3];
 
-    const uint32_t nb1 = dst->nb[1];
-    const uint32_t nb2 = dst->nb[2];
-    const uint32_t nb3 = dst->nb[3];
+    ਅਚਲ uint32_t nb1 = dst->nb[1];
+    ਅਚਲ uint32_t nb2 = dst->nb[2];
+    ਅਚਲ uint32_t nb3 = dst->nb[3];
 
     // total rows in q
-    const uint32_t dr  = factx->qrows_per_thread;
-    const uint32_t ir0 = factx->qrow_start + dr * ith;
-    const uint32_t ir1 = MIN(ir0 + dr, factx->qrow_start + factx->qrows);
+    ਅਚਲ uint32_t dr  = factx->qrows_ਪ੍ਰਤੀ_thread;
+    ਅਚਲ uint32_t ir0 = factx->qrow_ਸ਼ੁਰੂ + dr * ith;
+    ਅਚਲ uint32_t ir1 = MIN(ir0 + dr, factx->qrow_ਸ਼ੁਰੂ + factx->qrows);
 
-    if (ir0 >= ir1) return;
+    ਜੇ (ir0 >= ir1) ਵਾਪਸ;
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
+    ਬਣਤਰ htp_thread_trace * tr = &octx->ctx->trace[ith];
 
-    dma_queue * dma_q = octx->ctx->dma[ith];
+    dma_ਕਤਾਰ * dma_q = octx->ctx->dma[ith];
 
-    const uint32_t DK = nek0;
-    const uint32_t DV = nev0;
+    ਅਚਲ uint32_t DK = nek0;
+    ਅਚਲ uint32_t DV = nev0;
 
-    const size_t size_q_row = DK * ((q->type == HTP_TYPE_F32) ? 4 : 2);
-    const size_t size_k_row = htp_tensor_get_row_size(k->type, DK);
-    const size_t size_v_row = htp_tensor_get_row_size(v->type, DV);
+    ਅਚਲ size_t ਮਾਪ_q_ਪੰਕਤੀ = DK * ((q->type == HTP_TYPE_F32) ? 4 : 2);
+    ਅਚਲ size_t ਮਾਪ_k_ਪੰਕਤੀ = htp_tensor_get_ਪੰਕਤੀ_ਮਾਪ(k->type, DK);
+    ਅਚਲ size_t ਮਾਪ_v_ਪੰਕਤੀ = htp_tensor_get_ਪੰਕਤੀ_ਮਾਪ(v->type, DV);
 
     // Scratchpad buffers for Q, K, V, Mask, and VKQ32 accumulator
-    uint8_t * spad_q = factx->spad_q + factx->size_q_block * ith;
-    uint8_t * spad_k = factx->spad_k + factx->size_k_block * 2 * ith;
-    uint8_t * spad_v = factx->spad_v + factx->size_v_block * 2 * ith;
-    uint8_t * spad_m = factx->spad_m + (mask ? factx->size_m_block * HVX_FA_DMA_CACHE_SIZE : 0) * ith;
-    uint8_t * spad_a = factx->spad_a + factx->size_vkq_acc * ith;
+    uint8_t * spad_q = factx->spad_q + factx->ਮਾਪ_q_ਖੰਡ * ith;
+    uint8_t * spad_k = factx->spad_k + factx->ਮਾਪ_k_ਖੰਡ * 2 * ith;
+    uint8_t * spad_v = factx->spad_v + factx->ਮਾਪ_v_ਖੰਡ * 2 * ith;
+    uint8_t * spad_m = factx->spad_m + (ਨਕਾਬ ? factx->ਮਾਪ_m_ਖੰਡ * HVX_FA_DMA_CACHE_ਮਾਪ : 0) * ith;
+    uint8_t * spad_a = factx->spad_a + factx->ਮਾਪ_vkq_acc * ith;
 
     dma_cache_dm m_cache;
-    dma_cache_dm_init(&m_cache, spad_m, factx->size_m_block, HVX_FA_DMA_CACHE_SIZE);
+    dma_cache_dm_init(&m_cache, spad_m, factx->ਮਾਪ_m_ਖੰਡ, HVX_FA_DMA_CACHE_ਮਾਪ);
 
-    uint16_t thread_active_blocks[FA_MAX_KV_BLOCKS];
-    const uint16_t * active_blocks = factx->shared_active_blocks ? factx->active_blocks : thread_active_blocks;
-    uint32_t n_active_blocks       = factx->n_active_blocks;
-    dma_addr_t prev_mp_base        = 0;
+    uint16_t thread_ਸਰਗਰਮ_ਖੰਡਾਂ[FA_MAX_KV_ਖੰਡਾਂ];
+    ਅਚਲ uint16_t * ਸਰਗਰਮ_ਖੰਡਾਂ = factx->shared_ਸਰਗਰਮ_ਖੰਡਾਂ ? factx->ਸਰਗਰਮ_ਖੰਡਾਂ : thread_ਸਰਗਰਮ_ਖੰਡਾਂ;
+    uint32_t n_ਸਰਗਰਮ_ਖੰਡਾਂ       = factx->n_ਸਰਗਰਮ_ਖੰਡਾਂ;
+    dma_addr_t prev_mp_ਅਧਾਰ        = 0;
 
-    if (!factx->shared_active_blocks && !mask) {
-        #pragma clang loop vectorize(disable)
-        for (uint32_t b = 0; b < factx->n_blocks; ++b) {
-            thread_active_blocks[b] = (uint16_t) b;
+    ਜੇ (!factx->shared_ਸਰਗਰਮ_ਖੰਡਾਂ && !ਨਕਾਬ) {
+        #ਹਦਾਇਤ clang loop vectorize(disable)
+        ਲਈ (uint32_t b = 0; b < factx->n_ਖੰਡਾਂ; ++b) {
+            thread_ਸਰਗਰਮ_ਖੰਡਾਂ[b] = (uint16_t) b;
         }
     }
 
-    const size_t size_vkq_acc_single = hex_round_up(DV * sizeof(float), 128);
+    ਅਚਲ size_t ਮਾਪ_vkq_acc_single = hex_ਗੇੜਾ_ਉੱਪਰ(DV * ਆਕਾਰ(ਦਸ਼ਮਲਵ), 128);
 
     uint32_t ir = ir0;
-    while (ir < ir1) {
-        const uint32_t iq3 = fastdiv(ir, &factx->src0_div21);
-        const uint32_t iq2 = fastdiv(ir - iq3*neq2*neq1, &factx->src0_div1);
-        const uint32_t iq1 = (ir - iq3*neq2*neq1 - iq2 * neq1);
+    ਜਦੋਂ (ir < ir1) {
+        ਅਚਲ uint32_t iq3 = fastdiv(ir, &factx->src0_div21);
+        ਅਚਲ uint32_t iq2 = fastdiv(ir - iq3*neq2*neq1, &factx->src0_div1);
+        ਅਚਲ uint32_t iq1 = (ir - iq3*neq2*neq1 - iq2 * neq1);
 
-        const uint32_t ik3 = fastdiv(iq3, &factx->broadcast_rk3);
-        const uint32_t ik2 = fastdiv(iq2, &factx->broadcast_rk2);
+        ਅਚਲ uint32_t ik3 = fastdiv(iq3, &factx->ਪ੍ਰਸਾਰਣ_rk3);
+        ਅਚਲ uint32_t ik2 = fastdiv(iq2, &factx->ਪ੍ਰਸਾਰਣ_rk2);
 
-        const uint32_t iv3 = fastdiv(iq3, &factx->broadcast_rv3);
-        const uint32_t iv2 = fastdiv(iq2, &factx->broadcast_rv2);
+        ਅਚਲ uint32_t iv3 = fastdiv(iq3, &factx->ਪ੍ਰਸਾਰਣ_rv3);
+        ਅਚਲ uint32_t iv2 = fastdiv(iq2, &factx->ਪ੍ਰਸਾਰਣ_rv2);
 
         uint32_t G_local = 1;
-        if (neq1 == 1 && (mask == NULL || mask->ne[2] == 1)) {
-            while (ir + G_local < ir1 && G_local < FA_HVX_G_MAX) {
-                const uint32_t next_ir = ir + G_local;
-                const uint32_t next_iq3 = fastdiv(next_ir, &factx->src0_div21);
-                const uint32_t next_iq2 = fastdiv(next_ir - next_iq3*neq2*neq1, &factx->src0_div1);
-                const uint32_t next_iq1 = (next_ir - next_iq3*neq2*neq1 - next_iq2 * neq1);
+        ਜੇ (neq1 == 1 && (ਨਕਾਬ == ਨਿਰਾ || ਨਕਾਬ->ne[2] == 1)) {
+            ਜਦੋਂ (ir + G_local < ir1 && G_local < FA_HVX_G_MAX) {
+                ਅਚਲ uint32_t ਅਗਲਾ_ir = ir + G_local;
+                ਅਚਲ uint32_t ਅਗਲਾ_iq3 = fastdiv(ਅਗਲਾ_ir, &factx->src0_div21);
+                ਅਚਲ uint32_t ਅਗਲਾ_iq2 = fastdiv(ਅਗਲਾ_ir - ਅਗਲਾ_iq3*neq2*neq1, &factx->src0_div1);
+                ਅਚਲ uint32_t ਅਗਲਾ_iq1 = (ਅਗਲਾ_ir - ਅਗਲਾ_iq3*neq2*neq1 - ਅਗਲਾ_iq2 * neq1);
 
-                const uint32_t next_ik3 = fastdiv(next_iq3, &factx->broadcast_rk3);
-                const uint32_t next_ik2 = fastdiv(next_iq2, &factx->broadcast_rk2);
+                ਅਚਲ uint32_t ਅਗਲਾ_ik3 = fastdiv(ਅਗਲਾ_iq3, &factx->ਪ੍ਰਸਾਰਣ_rk3);
+                ਅਚਲ uint32_t ਅਗਲਾ_ik2 = fastdiv(ਅਗਲਾ_iq2, &factx->ਪ੍ਰਸਾਰਣ_rk2);
 
-                const uint32_t next_iv3 = fastdiv(next_iq3, &factx->broadcast_rv3);
-                const uint32_t next_iv2 = fastdiv(next_iq2, &factx->broadcast_rv2);
+                ਅਚਲ uint32_t ਅਗਲਾ_iv3 = fastdiv(ਅਗਲਾ_iq3, &factx->ਪ੍ਰਸਾਰਣ_rv3);
+                ਅਚਲ uint32_t ਅਗਲਾ_iv2 = fastdiv(ਅਗਲਾ_iq2, &factx->ਪ੍ਰਸਾਰਣ_rv2);
 
-                if (next_ik2 != ik2 || next_ik3 != ik3 || next_iv2 != iv2 || next_iv3 != iv3 || next_iq1 != iq1 || next_iq3 != iq3) {
-                    break;
+                ਜੇ (ਅਗਲਾ_ik2 != ik2 || ਅਗਲਾ_ik3 != ik3 || ਅਗਲਾ_iv2 != iv2 || ਅਗਲਾ_iv3 != iv3 || ਅਗਲਾ_iq1 != iq1 || ਅਗਲਾ_iq3 != iq3) {
+                    ਰੋਕੋ;
                 }
                 G_local++;
             }
         }
 
-        dma_addr_t mp_base = 0;
-        if (mask) {
-            const uint32_t im2 = fastmodulo(iq2, mask->ne[2], &factx->src3_div2);
-            const uint32_t im3 = fastmodulo(iq3, mask->ne[3], &factx->src3_div3);
-            mp_base = mask->data + iq1*mask->nb[1] + im2*mask->nb[2] + im3*mask->nb[3];
-            if (!factx->shared_active_blocks && mp_base != prev_mp_base) {
-                n_active_blocks = fa_scan_active_blocks(
-                    dma_q, mask, iq1, 1, im2, im3, nek1, FLASH_ATTN_BLOCK_SIZE,
-                    factx->n_blocks, spad_k, factx->size_k_block * 2, thread_active_blocks);
-                prev_mp_base = mp_base;
+        dma_addr_t mp_ਅਧਾਰ = 0;
+        ਜੇ (ਨਕਾਬ) {
+            ਅਚਲ uint32_t im2 = fastmodulo(iq2, ਨਕਾਬ->ne[2], &factx->src3_div2);
+            ਅਚਲ uint32_t im3 = fastmodulo(iq3, ਨਕਾਬ->ne[3], &factx->src3_div3);
+            mp_ਅਧਾਰ = ਨਕਾਬ->ਅੰਕੜੇ + iq1*ਨਕਾਬ->nb[1] + im2*ਨਕਾਬ->nb[2] + im3*ਨਕਾਬ->nb[3];
+            ਜੇ (!factx->shared_ਸਰਗਰਮ_ਖੰਡਾਂ && mp_ਅਧਾਰ != prev_mp_ਅਧਾਰ) {
+                n_ਸਰਗਰਮ_ਖੰਡਾਂ = fa_ਜਾਂਚ_ਸਰਗਰਮ_ਖੰਡਾਂ(
+                    dma_q, ਨਕਾਬ, iq1, 1, im2, im3, nek1, FLASH_ATTN_ਖੰਡ_ਮਾਪ,
+                    factx->n_ਖੰਡਾਂ, spad_k, factx->ਮਾਪ_k_ਖੰਡ * 2, thread_ਸਰਗਰਮ_ਖੰਡਾਂ);
+                prev_mp_ਅਧਾਰ = mp_ਅਧਾਰ;
             }
         }
 
         uint32_t heads[FA_HVX_G_MAX];
-        HVX_Vector slope_vecs[FA_HVX_G_MAX] __attribute__((aligned(128)));
-        HVX_Vector S_vec[FA_HVX_G_MAX]      __attribute__((aligned(128)));
-        HVX_Vector M_vec[FA_HVX_G_MAX]      __attribute__((aligned(128)));
+        HVX_ਸਦਿਸ਼ ਢਲਾਨ_vecs[FA_HVX_G_MAX] __attribute__((aligned(128)));
+        HVX_ਸਦਿਸ਼ S_vec[FA_HVX_G_MAX]      __attribute__((aligned(128)));
+        HVX_ਸਦਿਸ਼ M_vec[FA_HVX_G_MAX]      __attribute__((aligned(128)));
         uint8_t * q_ptrs[FA_HVX_G_MAX];
-        float * vkq_ptrs[FA_HVX_G_MAX];
+        ਦਸ਼ਮਲਵ * vkq_ptrs[FA_HVX_G_MAX];
 
-        for (uint32_t g = 0; g < G_local; ++g) {
-            const uint32_t r = ir + g;
-            const uint32_t r_iq3 = fastdiv(r, &factx->src0_div21);
-            const uint32_t r_iq2 = fastdiv(r - r_iq3*neq2*neq1, &factx->src0_div1);
-            const uint32_t r_iq1 = (r - r_iq3*neq2*neq1 - r_iq2 * neq1);
+        ਲਈ (uint32_t g = 0; g < G_local; ++g) {
+            ਅਚਲ uint32_t r = ir + g;
+            ਅਚਲ uint32_t r_iq3 = fastdiv(r, &factx->src0_div21);
+            ਅਚਲ uint32_t r_iq2 = fastdiv(r - r_iq3*neq2*neq1, &factx->src0_div1);
+            ਅਚਲ uint32_t r_iq1 = (r - r_iq3*neq2*neq1 - r_iq2 * neq1);
 
             heads[g] = r_iq2;
-            const __fp16 slope = factx->slopes[r_iq2];
-            slope_vecs[g] = hvx_vec_splat_f16(slope);
+            ਅਚਲ __fp16 ਢਲਾਨ = factx->slopes[r_iq2];
+            ਢਲਾਨ_vecs[g] = hvx_vec_splat_f16(ਢਲਾਨ);
 
             S_vec[g] = hvx_vec_splat_f32(0.0f);
             M_vec[g] = hvx_vec_splat_f32(HTP_FA_M_INITIAL_VAL);
 
-            uint8_t * q_dst = spad_q + g * factx->size_q_row_padded;
+            uint8_t * q_dst = spad_q + g * factx->ਮਾਪ_q_ਪੰਕਤੀ_padded;
             q_ptrs[g] = q_dst;
 
-            float * vkq_dst = (float *)(spad_a + g * size_vkq_acc_single);
+            ਦਸ਼ਮਲਵ * vkq_dst = (ਦਸ਼ਮਲਵ *)(spad_a + g * ਮਾਪ_vkq_acc_single);
             vkq_ptrs[g] = vkq_dst;
             hvx_splat_f32_a((uint8_t *) vkq_dst, 0, DV);
 
             // Fetch Q row g
-            const dma_addr_t q_row_ptr = q->data + r_iq1*nbq1 + r_iq2*nbq2 + r_iq3*nbq3;
-            dma_queue_push(dma_q, dma_make_data(q_dst, q_row_ptr), factx->size_q_row_padded, nbq1, size_q_row, 1);
+            ਅਚਲ dma_addr_t q_ਪੰਕਤੀ_ptr = q->ਅੰਕੜੇ + r_iq1*nbq1 + r_iq2*nbq2 + r_iq3*nbq3;
+            dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(q_dst, q_ਪੰਕਤੀ_ptr), factx->ਮਾਪ_q_ਪੰਕਤੀ_padded, nbq1, ਮਾਪ_q_ਪੰਕਤੀ, 1);
         }
 
         // Prefetch first two active blocks
-        for (uint32_t step = 0; step < MIN(n_active_blocks, 2); ++step) {
-            const uint32_t ib = active_blocks[step];
-            const uint32_t ic_start = ib * FLASH_ATTN_BLOCK_SIZE;
-            const uint32_t current_block_size = MIN(FLASH_ATTN_BLOCK_SIZE, nek1 - ic_start);
+        ਲਈ (uint32_t ਕਦਮ = 0; ਕਦਮ < MIN(n_ਸਰਗਰਮ_ਖੰਡਾਂ, 2); ++ਕਦਮ) {
+            ਅਚਲ uint32_t ib = ਸਰਗਰਮ_ਖੰਡਾਂ[ਕਦਮ];
+            ਅਚਲ uint32_t ic_ਸ਼ੁਰੂ = ib * FLASH_ATTN_ਖੰਡ_ਮਾਪ;
+            ਅਚਲ uint32_t current_ਖੰਡ_ਮਾਪ = MIN(FLASH_ATTN_ਖੰਡ_ਮਾਪ, nek1 - ic_ਸ਼ੁਰੂ);
 
             // K
-            const dma_addr_t k_src = k->data + ic_start*nbk1 + ik2*nbk2 + ik3*nbk3;
-            uint8_t * k_dst = spad_k + (step % 2) * factx->size_k_block;
-            dma_queue_push(dma_q, dma_make_data(k_dst, k_src), factx->size_k_row_padded, nbk1, size_k_row, current_block_size);
+            ਅਚਲ dma_addr_t k_src = k->ਅੰਕੜੇ + ic_ਸ਼ੁਰੂ*nbk1 + ik2*nbk2 + ik3*nbk3;
+            uint8_t * k_dst = spad_k + (ਕਦਮ % 2) * factx->ਮਾਪ_k_ਖੰਡ;
+            dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(k_dst, k_src), factx->ਮਾਪ_k_ਪੰਕਤੀ_padded, nbk1, ਮਾਪ_k_ਪੰਕਤੀ, current_ਖੰਡ_ਮਾਪ);
 
             // V
-            const dma_addr_t v_src = v->data + ic_start*nbv1 + iv2*nbv2 + iv3*nbv3;
-            uint8_t * v_dst = spad_v + (step % 2) * factx->size_v_block;
-            dma_queue_push(dma_q, dma_make_data(v_dst, v_src), factx->size_v_row_padded, nbv1, size_v_row, current_block_size);
+            ਅਚਲ dma_addr_t v_src = v->ਅੰਕੜੇ + ic_ਸ਼ੁਰੂ*nbv1 + iv2*nbv2 + iv3*nbv3;
+            uint8_t * v_dst = spad_v + (ਕਦਮ % 2) * factx->ਮਾਪ_v_ਖੰਡ;
+            dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(v_dst, v_src), factx->ਮਾਪ_v_ਪੰਕਤੀ_padded, nbv1, ਮਾਪ_v_ਪੰਕਤੀ, current_ਖੰਡ_ਮਾਪ);
 
             // Mask
-            if (mask) {
-                const dma_addr_t m_src = mp_base + ic_start * sizeof(__fp16);
-                dma_cache_dm_push(dma_q, &m_cache, ib, m_src, current_block_size * 2, current_block_size * 2, current_block_size * 2, 1);
+            ਜੇ (ਨਕਾਬ) {
+                ਅਚਲ dma_addr_t m_src = mp_ਅਧਾਰ + ic_ਸ਼ੁਰੂ * ਆਕਾਰ(__fp16);
+                dma_cache_dm_ਧੱਕੋ(dma_q, &m_cache, ib, m_src, current_ਖੰਡ_ਮਾਪ * 2, current_ਖੰਡ_ਮਾਪ * 2, current_ਖੰਡ_ਮਾਪ * 2, 1);
             }
         }
 
         // Pop all Q rows
-        for (uint32_t g = 0; g < G_local; ++g) {
-            uint8_t * q_ptr_vtcm = (void *) dma_queue_pop(dma_q).dst;
-            if (factx->is_q_fp32) {
+        ਲਈ (uint32_t g = 0; g < G_local; ++g) {
+            uint8_t * q_ptr_vtcm = (ਖਾਲੀ *) dma_ਕਤਾਰ_ਕੱਢੋ(dma_q).dst;
+            ਜੇ (factx->is_q_fp32) {
                 hvx_copy_f16_f32_aa(q_ptr_vtcm, q_ptr_vtcm, DK);
             }
         }
 
-        const HVX_Vector v_neg_inf = Q6_Vh_vsplat_R(0xfbff);
-        const bool has_softcap     = factx->has_softcap;
-        const HVX_Vector v_cap     = has_softcap ? hvx_vec_splat_f16(factx->logit_softcap) : Q6_V_vzero();
-        const HVX_Vector vinf      = Q6_Vh_vsplat_R(0xFC00);
-        const HVX_Vector vmin      = Q6_Vh_vsplat_R(0xFBFF);
-        const HVX_Vector v_log2e   = hvx_vec_splat_f16(EXP_LOG2E_F);
-        const uint32_t stride_v2   = factx->size_v_row_padded * 2;
+        ਅਚਲ HVX_ਸਦਿਸ਼ v_neg_inf = Q6_Vh_vsplat_R(0xfbff);
+        ਅਚਲ bool has_softcap     = factx->has_softcap;
+        ਅਚਲ HVX_ਸਦਿਸ਼ v_cap     = has_softcap ? hvx_vec_splat_f16(factx->logit_softcap) : Q6_V_vzero();
+        ਅਚਲ HVX_ਸਦਿਸ਼ vinf      = Q6_Vh_vsplat_R(0xFC00);
+        ਅਚਲ HVX_ਸਦਿਸ਼ vmin      = Q6_Vh_vsplat_R(0xFBFF);
+        ਅਚਲ HVX_ਸਦਿਸ਼ v_log2e   = hvx_vec_splat_f16(EXP_LOG2E_F);
+        ਅਚਲ uint32_t stride_v2   = factx->ਮਾਪ_v_ਪੰਕਤੀ_padded * 2;
 
-        for (uint32_t step = 0; step < n_active_blocks; ++step) {
-            const uint32_t ib = active_blocks[step];
-            const uint32_t ic_start = ib * FLASH_ATTN_BLOCK_SIZE;
-            const uint32_t current_block_size = MIN(FLASH_ATTN_BLOCK_SIZE, nek1 - ic_start);
+        ਲਈ (uint32_t ਕਦਮ = 0; ਕਦਮ < n_ਸਰਗਰਮ_ਖੰਡਾਂ; ++ਕਦਮ) {
+            ਅਚਲ uint32_t ib = ਸਰਗਰਮ_ਖੰਡਾਂ[ਕਦਮ];
+            ਅਚਲ uint32_t ic_ਸ਼ੁਰੂ = ib * FLASH_ATTN_ਖੰਡ_ਮਾਪ;
+            ਅਚਲ uint32_t current_ਖੰਡ_ਮਾਪ = MIN(FLASH_ATTN_ਖੰਡ_ਮਾਪ, nek1 - ic_ਸ਼ੁਰੂ);
 
             // Wait for DMA
-            uint8_t * k_base = (void *) dma_queue_pop(dma_q).dst; // K
-            uint8_t * v_base = (void *) dma_queue_pop(dma_q).dst; // V
-            __fp16  * m_base = mask ? (__fp16 *) dma_queue_pop(dma_q).dst : NULL; // M
+            uint8_t * k_ਅਧਾਰ = (ਖਾਲੀ *) dma_ਕਤਾਰ_ਕੱਢੋ(dma_q).dst; // K
+            uint8_t * v_ਅਧਾਰ = (ਖਾਲੀ *) dma_ਕਤਾਰ_ਕੱਢੋ(dma_q).dst; // V
+            __fp16  * m_ਅਧਾਰ = ਨਕਾਬ ? (__fp16 *) dma_ਕਤਾਰ_ਕੱਢੋ(dma_q).dst : ਨਿਰਾ; // M
 
-            if (factx->k->type == HTP_TYPE_Q8_0) {
-                htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_FA_K_PREP, ir);
-                for (uint32_t r = 0; r < current_block_size; ++r) {
-                    __fp16 * row_k = (__fp16 *)(k_base + r * factx->size_k_row_padded);
-                    hvx_dequantize_row_flat_q8_0_f16(row_k, row_k, DK);
+            ਜੇ (factx->k->type == HTP_TYPE_Q8_0) {
+                htp_trace_event_ਸ਼ੁਰੂ(tr, HTP_TRACE_EVT_HVX_FA_K_PREP, ir);
+                ਲਈ (uint32_t r = 0; r < current_ਖੰਡ_ਮਾਪ; ++r) {
+                    __fp16 * ਪੰਕਤੀ_k = (__fp16 *)(k_ਅਧਾਰ + r * factx->ਮਾਪ_k_ਪੰਕਤੀ_padded);
+                    hvx_dequantize_ਪੰਕਤੀ_flat_q8_0_f16(ਪੰਕਤੀ_k, ਪੰਕਤੀ_k, DK);
                 }
                 htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_FA_K_PREP, ir);
             }
-            if (factx->v->type == HTP_TYPE_Q8_0) {
-                htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_FA_V_PREP, ir);
-                for (uint32_t r = 0; r < current_block_size; ++r) {
-                    __fp16 * row_v = (__fp16 *)(v_base + r * factx->size_v_row_padded);
-                    hvx_dequantize_row_flat_q8_0_f16(row_v, row_v, DV);
+            ਜੇ (factx->v->type == HTP_TYPE_Q8_0) {
+                htp_trace_event_ਸ਼ੁਰੂ(tr, HTP_TRACE_EVT_HVX_FA_V_PREP, ir);
+                ਲਈ (uint32_t r = 0; r < current_ਖੰਡ_ਮਾਪ; ++r) {
+                    __fp16 * ਪੰਕਤੀ_v = (__fp16 *)(v_ਅਧਾਰ + r * factx->ਮਾਪ_v_ਪੰਕਤੀ_padded);
+                    hvx_dequantize_ਪੰਕਤੀ_flat_q8_0_f16(ਪੰਕਤੀ_v, ਪੰਕਤੀ_v, DV);
                 }
                 htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_FA_V_PREP, ir);
             }
 
-            for (uint32_t g = 0; g < G_local; ++g) {
-                const uint32_t head_ir = ir + g;
+            ਲਈ (uint32_t g = 0; g < G_local; ++g) {
+                ਅਚਲ uint32_t ਸਿਰ_ir = ir + g;
                 uint8_t * q_ptr_vtcm = q_ptrs[g];
-                float * VKQ32 = vkq_ptrs[g];
-                const HVX_Vector slope_vec = slope_vecs[g];
+                ਦਸ਼ਮਲਵ * VKQ32 = vkq_ptrs[g];
+                ਅਚਲ HVX_ਸਦਿਸ਼ ਢਲਾਨ_vec = ਢਲਾਨ_vecs[g];
 
-                htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_FA_QK, head_ir);
+                htp_trace_event_ਸ਼ੁਰੂ(tr, HTP_TRACE_EVT_HVX_FA_QK, ਸਿਰ_ir);
 
-                HVX_Vector scores_f16 = Q6_V_vzero();
-                if (current_block_size > 0) {
-                    HVX_Vector scores0 = hvx_dot_f16_f16_aa_rx32(q_ptr_vtcm, k_base, factx->size_k_row_padded, DK, factx->scale);
-                    HVX_Vector scores1 = (current_block_size > 32) ? hvx_dot_f16_f16_aa_rx32(q_ptr_vtcm, k_base + 32 * factx->size_k_row_padded, factx->size_k_row_padded, DK, factx->scale) : Q6_V_vzero();
-                    scores_f16 = hvx_vec_f32_to_f16(scores0, scores1);
+                HVX_ਸਦਿਸ਼ scores_f16 = Q6_V_vzero();
+                ਜੇ (current_ਖੰਡ_ਮਾਪ > 0) {
+                    HVX_ਸਦਿਸ਼ scores0 = hvx_dot_f16_f16_aa_rx32(q_ptr_vtcm, k_ਅਧਾਰ, factx->ਮਾਪ_k_ਪੰਕਤੀ_padded, DK, factx->scale);
+                    HVX_ਸਦਿਸ਼ scores1 = (current_ਖੰਡ_ਮਾਪ > 32) ? hvx_dot_f16_f16_aa_rx32(q_ptr_vtcm, k_ਅਧਾਰ + 32 * factx->ਮਾਪ_k_ਪੰਕਤੀ_padded, factx->ਮਾਪ_k_ਪੰਕਤੀ_padded, DK, factx->scale) : Q6_V_vzero();
+                    scores_f16 = hvx_vec_f32_ਮੰਜ਼ਿਲ_f16(scores0, scores1);
                 }
 
-                if (has_softcap) {
+                ਜੇ (has_softcap) {
                     scores_f16 = hvx_vec_tanh_f16(scores_f16);
                     scores_f16 = hvx_vec_mul_f16_f16(scores_f16, v_cap);
                 }
 
-                HVX_VectorPred q_tail_keep = Q6_Q_vsetq2_R(current_block_size * sizeof(__fp16));
+                HVX_ਸਦਿਸ਼_Pred q_ਪੂਛ_keep = Q6_Q_vsetq2_R(current_ਖੰਡ_ਮਾਪ * ਆਕਾਰ(__fp16));
 
-                if (mask) {
-                    HVX_Vector m_vals_f16 = *(const HVX_UVector *) m_base;
-                    HVX_VectorPred is_inf = Q6_Q_vcmp_eq_VhVh(m_vals_f16, vinf);
+                ਜੇ (ਨਕਾਬ) {
+                    HVX_ਸਦਿਸ਼ m_vals_f16 = *(ਅਚਲ HVX_UVector *) m_ਅਧਾਰ;
+                    HVX_ਸਦਿਸ਼_Pred is_inf = Q6_Q_vcmp_eq_VhVh(m_vals_f16, vinf);
                     m_vals_f16 = Q6_V_vmux_QVV(is_inf, vmin, m_vals_f16);
 
-                    HVX_Vector m_scaled = hvx_vec_mul_f16_f16(m_vals_f16, slope_vec);
-                    scores_f16 = Q6_V_vmux_QVV(q_tail_keep, hvx_vec_add_f16_f16(scores_f16, m_scaled), v_neg_inf);
-                } else {
-                    scores_f16 = Q6_V_vmux_QVV(q_tail_keep, scores_f16, v_neg_inf);
+                    HVX_ਸਦਿਸ਼ m_scaled = hvx_vec_mul_f16_f16(m_vals_f16, ਢਲਾਨ_vec);
+                    scores_f16 = Q6_V_vmux_QVV(q_ਪੂਛ_keep, hvx_vec_ਜੋੜੋ_f16_f16(scores_f16, m_scaled), v_neg_inf);
+                } ਨਹੀਂਤਾਂ {
+                    scores_f16 = Q6_V_vmux_QVV(q_ਪੂਛ_keep, scores_f16, v_neg_inf);
                 }
 
-                HVX_Vector v_max_f16 = hvx_vec_reduce_max_f16(scores_f16);
-                HVX_Vector v_max     = Q6_V_lo_W(hvx_vec_f16_to_f32(v_max_f16));
-                htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_FA_QK, head_ir);
+                HVX_ਸਦਿਸ਼ v_max_f16 = hvx_vec_reduce_max_f16(scores_f16);
+                HVX_ਸਦਿਸ਼ v_max     = Q6_V_lo_W(hvx_vec_f16_ਮੰਜ਼ਿਲ_f32(v_max_f16));
+                htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_FA_QK, ਸਿਰ_ir);
 
                 // prefetch K for step + 2 after last head finished QK
-                if (g + 1 == G_local && step + 2 < n_active_blocks) {
-                    const uint32_t next_ib = active_blocks[step + 2];
-                    const uint32_t next_ic_start = next_ib * FLASH_ATTN_BLOCK_SIZE;
-                    const uint32_t next_block_size = MIN(FLASH_ATTN_BLOCK_SIZE, nek1 - next_ic_start);
+                ਜੇ (g + 1 == G_local && ਕਦਮ + 2 < n_ਸਰਗਰਮ_ਖੰਡਾਂ) {
+                    ਅਚਲ uint32_t ਅਗਲਾ_ib = ਸਰਗਰਮ_ਖੰਡਾਂ[ਕਦਮ + 2];
+                    ਅਚਲ uint32_t ਅਗਲਾ_ic_ਸ਼ੁਰੂ = ਅਗਲਾ_ib * FLASH_ATTN_ਖੰਡ_ਮਾਪ;
+                    ਅਚਲ uint32_t ਅਗਲਾ_ਖੰਡ_ਮਾਪ = MIN(FLASH_ATTN_ਖੰਡ_ਮਾਪ, nek1 - ਅਗਲਾ_ic_ਸ਼ੁਰੂ);
 
-                    const dma_addr_t k_src = k->data + next_ic_start*nbk1 + ik2*nbk2 + ik3*nbk3;
-                    dma_queue_push(dma_q, dma_make_data(k_base, k_src), factx->size_k_row_padded, nbk1, size_k_row, next_block_size);
+                    ਅਚਲ dma_addr_t k_src = k->ਅੰਕੜੇ + ਅਗਲਾ_ic_ਸ਼ੁਰੂ*nbk1 + ik2*nbk2 + ik3*nbk3;
+                    dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(k_ਅਧਾਰ, k_src), factx->ਮਾਪ_k_ਪੰਕਤੀ_padded, nbk1, ਮਾਪ_k_ਪੰਕਤੀ, ਅਗਲਾ_ਖੰਡ_ਮਾਪ);
                 }
 
-                htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_FA_SFM, head_ir);
+                htp_trace_event_ਸ਼ੁਰੂ(tr, HTP_TRACE_EVT_HVX_FA_SFM, ਸਿਰ_ir);
                 {
-                    HVX_Vector M_new_vec = Q6_Vsf_vmax_VsfVsf(v_max, M_vec[g]);
-                    HVX_Vector diff_vec  = HVX_OP_SUB_F32(M_vec[g], M_new_vec);
+                    HVX_ਸਦਿਸ਼ M_new_vec = Q6_Vsf_vmax_VsfVsf(v_max, M_vec[g]);
+                    HVX_ਸਦਿਸ਼ diff_vec  = HVX_OP_SUB_F32(M_vec[g], M_new_vec);
 
-                    HVX_Vector diff_f16   = hvx_vec_f32_to_f16(diff_vec, diff_vec);
-                    HVX_Vector diff_base2 = hvx_vec_mul_f16_f16(diff_f16, v_log2e);
-                    HVX_Vector ms_f16     = hvx_vec_exp2_f16(diff_base2);
-                    HVX_Vector ms_vec     = Q6_V_lo_W(hvx_vec_f16_to_f32(ms_f16));
+                    HVX_ਸਦਿਸ਼ diff_f16   = hvx_vec_f32_ਮੰਜ਼ਿਲ_f16(diff_vec, diff_vec);
+                    HVX_ਸਦਿਸ਼ diff_base2 = hvx_vec_mul_f16_f16(diff_f16, v_log2e);
+                    HVX_ਸਦਿਸ਼ ms_f16     = hvx_vec_exp2_f16(diff_base2);
+                    HVX_ਸਦਿਸ਼ ms_vec     = Q6_V_lo_W(hvx_vec_f16_ਮੰਜ਼ਿਲ_f32(ms_f16));
 
                     M_vec[g] = M_new_vec;
 
-                    HVX_Vector v_m_vec_f16 = hvx_vec_f32_to_f16(M_vec[g], M_vec[g]);
-                    HVX_Vector v_s_minus_m = Q6_Vqf16_vsub_VhfVhf(scores_f16, v_m_vec_f16);
-                    HVX_Vector v_s_minus_m_base2 = hvx_vec_mul_f16_f16(Q6_Vhf_equals_Vqf16(v_s_minus_m), v_log2e);
+                    HVX_ਸਦਿਸ਼ v_m_vec_f16 = hvx_vec_f32_ਮੰਜ਼ਿਲ_f16(M_vec[g], M_vec[g]);
+                    HVX_ਸਦਿਸ਼ v_s_minus_m = Q6_Vqf16_vsub_VhfVhf(scores_f16, v_m_vec_f16);
+                    HVX_ਸਦਿਸ਼ v_s_minus_m_base2 = hvx_vec_mul_f16_f16(Q6_Vhf_equals_Vqf16(v_s_minus_m), v_log2e);
 
-                    HVX_Vector P = hvx_vec_exp2_f16(v_s_minus_m_base2);
-                    P = Q6_V_vmux_QVV(q_tail_keep, P, Q6_V_vzero());
+                    HVX_ਸਦਿਸ਼ P = hvx_vec_exp2_f16(v_s_minus_m_base2);
+                    P = Q6_V_vmux_QVV(q_ਪੂਛ_keep, P, Q6_V_vzero());
 
-                    HVX_VectorPair P_pair = hvx_vec_f16_to_f32(P);
-                    HVX_Vector P0 = Q6_V_lo_W(P_pair);
-                    HVX_Vector P1 = Q6_V_hi_W(P_pair);
-                    HVX_Vector p_sum_vec = hvx_vec_reduce_sum_f32(HVX_OP_ADD_F32(P0, P1));
+                    HVX_ਸਦਿਸ਼_Pair P_pair = hvx_vec_f16_ਮੰਜ਼ਿਲ_f32(P);
+                    HVX_ਸਦਿਸ਼ P0 = Q6_V_lo_W(P_pair);
+                    HVX_ਸਦਿਸ਼ P1 = Q6_V_hi_W(P_pair);
+                    HVX_ਸਦਿਸ਼ p_ਜੋੜ_vec = hvx_vec_reduce_ਜੋੜ_f32(HVX_OP_ਜੋੜੋ_F32(P0, P1));
 
-                    S_vec[g] = HVX_OP_ADD_F32(HVX_OP_MUL_F32(S_vec[g], ms_vec), p_sum_vec);
+                    S_vec[g] = HVX_OP_ਜੋੜੋ_F32(HVX_OP_MUL_F32(S_vec[g], ms_vec), p_ਜੋੜ_vec);
 
-                    const uint8_t * v_ptr = v_base;
+                    ਅਚਲ uint8_t * v_ptr = v_ਅਧਾਰ;
 
-                    if (DV == 64) {
-                        HVX_VectorPair vkq0 = *((const HVX_VectorPair *) VKQ32);
+                    ਜੇ (DV == 64) {
+                        HVX_ਸਦਿਸ਼_Pair vkq0 = *((ਅਚਲ HVX_ਸਦਿਸ਼_Pair *) VKQ32);
                         vkq0 = Q6_W_vcombine_VV(
                             HVX_OP_MUL_F32(Q6_V_hi_W(vkq0), ms_vec),
                             HVX_OP_MUL_F32(Q6_V_lo_W(vkq0), ms_vec)
                         );
 
-                        for (uint32_t j = 0; j < current_block_size; j += 2) {
-                            HVX_Vector S0 = hvx_vec_repl_f16(Q6_V_vror_VR(P, j * 2));
-                            const HVX_Vector * vx0 = (const HVX_Vector *) v_ptr;
-                            if (j + 1 == current_block_size) {
+                        ਲਈ (uint32_t j = 0; j < current_ਖੰਡ_ਮਾਪ; j += 2) {
+                            HVX_ਸਦਿਸ਼ S0 = hvx_vec_repl_f16(Q6_V_vror_VR(P, j * 2));
+                            ਅਚਲ HVX_ਸਦਿਸ਼ * vx0 = (ਅਚਲ HVX_ਸਦਿਸ਼ *) v_ptr;
+                            ਜੇ (j + 1 == current_ਖੰਡ_ਮਾਪ) {
                                 vkq0 = hvx_vec_mpyacc_f32_f16(vkq0, Q6_Vh_vshuff_Vh(vx0[0]), S0);
-                                break;
+                                ਰੋਕੋ;
                             }
 
-                            HVX_Vector S1 = hvx_vec_repl_f16(Q6_V_vror_VR(P, (j + 1) * 2));
-                            const HVX_Vector * vx1 = (const HVX_Vector *) (v_ptr + factx->size_v_row_padded);
+                            HVX_ਸਦਿਸ਼ S1 = hvx_vec_repl_f16(Q6_V_vror_VR(P, (j + 1) * 2));
+                            ਅਚਲ HVX_ਸਦਿਸ਼ * vx1 = (ਅਚਲ HVX_ਸਦਿਸ਼ *) (v_ptr + factx->ਮਾਪ_v_ਪੰਕਤੀ_padded);
                             vkq0 = hvx_vec_mpyacc_f32_f16(vkq0, Q6_Vh_vshuff_Vh(vx0[0]), S0);
                             vkq0 = hvx_vec_mpyacc_f32_f16(vkq0, Q6_Vh_vshuff_Vh(vx1[0]), S1);
                             v_ptr += stride_v2;
                         }
 
-                        *((HVX_VectorPair *) VKQ32) = vkq0;
-                    } else if (DV == 128) {
-                        HVX_VectorPair vkq0 = ((const HVX_VectorPair *) VKQ32)[0];
-                        HVX_VectorPair vkq1 = ((const HVX_VectorPair *) VKQ32)[1];
+                        *((HVX_ਸਦਿਸ਼_Pair *) VKQ32) = vkq0;
+                    } ਨਹੀਂਤਾਂ ਜੇ (DV == 128) {
+                        HVX_ਸਦਿਸ਼_Pair vkq0 = ((ਅਚਲ HVX_ਸਦਿਸ਼_Pair *) VKQ32)[0];
+                        HVX_ਸਦਿਸ਼_Pair vkq1 = ((ਅਚਲ HVX_ਸਦਿਸ਼_Pair *) VKQ32)[1];
                         vkq0 = Q6_W_vcombine_VV(
                             HVX_OP_MUL_F32(Q6_V_hi_W(vkq0), ms_vec),
                             HVX_OP_MUL_F32(Q6_V_lo_W(vkq0), ms_vec)
@@ -579,17 +579,17 @@ static void flash_attn_ext_f16_thread(unsigned int nth, unsigned int ith, void *
                             HVX_OP_MUL_F32(Q6_V_lo_W(vkq1), ms_vec)
                         );
 
-                        for (uint32_t j = 0; j < current_block_size; j += 2) {
-                            HVX_Vector S0 = hvx_vec_repl_f16(Q6_V_vror_VR(P, j * 2));
-                            const HVX_Vector * vx0 = (const HVX_Vector *) v_ptr;
-                            if (j + 1 == current_block_size) {
+                        ਲਈ (uint32_t j = 0; j < current_ਖੰਡ_ਮਾਪ; j += 2) {
+                            HVX_ਸਦਿਸ਼ S0 = hvx_vec_repl_f16(Q6_V_vror_VR(P, j * 2));
+                            ਅਚਲ HVX_ਸਦਿਸ਼ * vx0 = (ਅਚਲ HVX_ਸਦਿਸ਼ *) v_ptr;
+                            ਜੇ (j + 1 == current_ਖੰਡ_ਮਾਪ) {
                                 vkq0 = hvx_vec_mpyacc_f32_f16(vkq0, Q6_Vh_vshuff_Vh(vx0[0]), S0);
                                 vkq1 = hvx_vec_mpyacc_f32_f16(vkq1, Q6_Vh_vshuff_Vh(vx0[1]), S0);
-                                break;
+                                ਰੋਕੋ;
                             }
 
-                            HVX_Vector S1 = hvx_vec_repl_f16(Q6_V_vror_VR(P, (j + 1) * 2));
-                            const HVX_Vector * vx1 = (const HVX_Vector *) (v_ptr + factx->size_v_row_padded);
+                            HVX_ਸਦਿਸ਼ S1 = hvx_vec_repl_f16(Q6_V_vror_VR(P, (j + 1) * 2));
+                            ਅਚਲ HVX_ਸਦਿਸ਼ * vx1 = (ਅਚਲ HVX_ਸਦਿਸ਼ *) (v_ptr + factx->ਮਾਪ_v_ਪੰਕਤੀ_padded);
                             vkq0 = hvx_vec_mpyacc_f32_f16(vkq0, Q6_Vh_vshuff_Vh(vx0[0]), S0);
                             vkq0 = hvx_vec_mpyacc_f32_f16(vkq0, Q6_Vh_vshuff_Vh(vx1[0]), S1);
                             vkq1 = hvx_vec_mpyacc_f32_f16(vkq1, Q6_Vh_vshuff_Vh(vx0[1]), S0);
@@ -597,13 +597,13 @@ static void flash_attn_ext_f16_thread(unsigned int nth, unsigned int ith, void *
                             v_ptr += stride_v2;
                         }
 
-                        ((HVX_VectorPair *) VKQ32)[0] = vkq0;
-                        ((HVX_VectorPair *) VKQ32)[1] = vkq1;
-                    } else if (DV == 256) {
-                        HVX_VectorPair vkq0 = ((const HVX_VectorPair *) VKQ32)[0];
-                        HVX_VectorPair vkq1 = ((const HVX_VectorPair *) VKQ32)[1];
-                        HVX_VectorPair vkq2 = ((const HVX_VectorPair *) VKQ32)[2];
-                        HVX_VectorPair vkq3 = ((const HVX_VectorPair *) VKQ32)[3];
+                        ((HVX_ਸਦਿਸ਼_Pair *) VKQ32)[0] = vkq0;
+                        ((HVX_ਸਦਿਸ਼_Pair *) VKQ32)[1] = vkq1;
+                    } ਨਹੀਂਤਾਂ ਜੇ (DV == 256) {
+                        HVX_ਸਦਿਸ਼_Pair vkq0 = ((ਅਚਲ HVX_ਸਦਿਸ਼_Pair *) VKQ32)[0];
+                        HVX_ਸਦਿਸ਼_Pair vkq1 = ((ਅਚਲ HVX_ਸਦਿਸ਼_Pair *) VKQ32)[1];
+                        HVX_ਸਦਿਸ਼_Pair vkq2 = ((ਅਚਲ HVX_ਸਦਿਸ਼_Pair *) VKQ32)[2];
+                        HVX_ਸਦਿਸ਼_Pair vkq3 = ((ਅਚਲ HVX_ਸਦਿਸ਼_Pair *) VKQ32)[3];
                         vkq0 = Q6_W_vcombine_VV(
                             HVX_OP_MUL_F32(Q6_V_hi_W(vkq0), ms_vec),
                             HVX_OP_MUL_F32(Q6_V_lo_W(vkq0), ms_vec)
@@ -621,19 +621,19 @@ static void flash_attn_ext_f16_thread(unsigned int nth, unsigned int ith, void *
                             HVX_OP_MUL_F32(Q6_V_lo_W(vkq3), ms_vec)
                         );
 
-                        for (uint32_t j = 0; j < current_block_size; j += 2) {
-                            HVX_Vector S0 = hvx_vec_repl_f16(Q6_V_vror_VR(P, j * 2));
-                            const HVX_Vector * vx0 = (const HVX_Vector *) v_ptr;
-                            if (j + 1 == current_block_size) {
+                        ਲਈ (uint32_t j = 0; j < current_ਖੰਡ_ਮਾਪ; j += 2) {
+                            HVX_ਸਦਿਸ਼ S0 = hvx_vec_repl_f16(Q6_V_vror_VR(P, j * 2));
+                            ਅਚਲ HVX_ਸਦਿਸ਼ * vx0 = (ਅਚਲ HVX_ਸਦਿਸ਼ *) v_ptr;
+                            ਜੇ (j + 1 == current_ਖੰਡ_ਮਾਪ) {
                                 vkq0 = hvx_vec_mpyacc_f32_f16(vkq0, Q6_Vh_vshuff_Vh(vx0[0]), S0);
                                 vkq1 = hvx_vec_mpyacc_f32_f16(vkq1, Q6_Vh_vshuff_Vh(vx0[1]), S0);
                                 vkq2 = hvx_vec_mpyacc_f32_f16(vkq2, Q6_Vh_vshuff_Vh(vx0[2]), S0);
                                 vkq3 = hvx_vec_mpyacc_f32_f16(vkq3, Q6_Vh_vshuff_Vh(vx0[3]), S0);
-                                break;
+                                ਰੋਕੋ;
                             }
 
-                            HVX_Vector S1 = hvx_vec_repl_f16(Q6_V_vror_VR(P, (j + 1) * 2));
-                            const HVX_Vector * vx1 = (const HVX_Vector *) (v_ptr + factx->size_v_row_padded);
+                            HVX_ਸਦਿਸ਼ S1 = hvx_vec_repl_f16(Q6_V_vror_VR(P, (j + 1) * 2));
+                            ਅਚਲ HVX_ਸਦਿਸ਼ * vx1 = (ਅਚਲ HVX_ਸਦਿਸ਼ *) (v_ptr + factx->ਮਾਪ_v_ਪੰਕਤੀ_padded);
                             vkq0 = hvx_vec_mpyacc_f32_f16(vkq0, Q6_Vh_vshuff_Vh(vx0[0]), S0);
                             vkq0 = hvx_vec_mpyacc_f32_f16(vkq0, Q6_Vh_vshuff_Vh(vx1[0]), S1);
                             vkq1 = hvx_vec_mpyacc_f32_f16(vkq1, Q6_Vh_vshuff_Vh(vx0[1]), S0);
@@ -645,93 +645,93 @@ static void flash_attn_ext_f16_thread(unsigned int nth, unsigned int ith, void *
                             v_ptr += stride_v2;
                         }
 
-                        ((HVX_VectorPair *) VKQ32)[0] = vkq0;
-                        ((HVX_VectorPair *) VKQ32)[1] = vkq1;
-                        ((HVX_VectorPair *) VKQ32)[2] = vkq2;
-                        ((HVX_VectorPair *) VKQ32)[3] = vkq3;
-                    } else {
-                        hvx_scale_vec_f32_aa((uint8_t *) VKQ32, (const uint8_t *) VKQ32, DV, ms_vec);
+                        ((HVX_ਸਦਿਸ਼_Pair *) VKQ32)[0] = vkq0;
+                        ((HVX_ਸਦਿਸ਼_Pair *) VKQ32)[1] = vkq1;
+                        ((HVX_ਸਦਿਸ਼_Pair *) VKQ32)[2] = vkq2;
+                        ((HVX_ਸਦਿਸ਼_Pair *) VKQ32)[3] = vkq3;
+                    } ਨਹੀਂਤਾਂ {
+                        hvx_scale_vec_f32_aa((uint8_t *) VKQ32, (ਅਚਲ uint8_t *) VKQ32, DV, ms_vec);
 
-                        for (uint32_t j = 0; j < current_block_size; j += 2) {
-                            if (j + 1 == current_block_size) {
-                                HVX_Vector S0 = hvx_vec_repl_f16(Q6_V_vror_VR(P, j * 2));
+                        ਲਈ (uint32_t j = 0; j < current_ਖੰਡ_ਮਾਪ; j += 2) {
+                            ਜੇ (j + 1 == current_ਖੰਡ_ਮਾਪ) {
+                                HVX_ਸਦਿਸ਼ S0 = hvx_vec_repl_f16(Q6_V_vror_VR(P, j * 2));
                                 hvx_mad_f32_f16_aa_vec(VKQ32, v_ptr, S0, DV);
-                                break;
+                                ਰੋਕੋ;
                             }
 
-                            HVX_Vector S0 = hvx_vec_repl_f16(Q6_V_vror_VR(P, j * 2));
-                            HVX_Vector S1 = hvx_vec_repl_f16(Q6_V_vror_VR(P, (j + 1) * 2));
+                            HVX_ਸਦਿਸ਼ S0 = hvx_vec_repl_f16(Q6_V_vror_VR(P, j * 2));
+                            HVX_ਸਦਿਸ਼ S1 = hvx_vec_repl_f16(Q6_V_vror_VR(P, (j + 1) * 2));
 
-                            hvx_mad_f32_f16_aa_rx2_vec(VKQ32, v_ptr, v_ptr + factx->size_v_row_padded, S0, S1, DV);
+                            hvx_mad_f32_f16_aa_rx2_vec(VKQ32, v_ptr, v_ptr + factx->ਮਾਪ_v_ਪੰਕਤੀ_padded, S0, S1, DV);
                             v_ptr += stride_v2;
                         }
                     }
                 }
-                htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_FA_SFM, head_ir);
+                htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_FA_SFM, ਸਿਰ_ir);
 
                 // prefetch V and mask for step + 2 after last head finished V accumulation
-                if (g + 1 == G_local && step + 2 < n_active_blocks) {
-                    const uint32_t next_ib = active_blocks[step + 2];
-                    const uint32_t next_ic_start = next_ib * FLASH_ATTN_BLOCK_SIZE;
-                    const uint32_t next_block_size = MIN(FLASH_ATTN_BLOCK_SIZE, nek1 - next_ic_start);
+                ਜੇ (g + 1 == G_local && ਕਦਮ + 2 < n_ਸਰਗਰਮ_ਖੰਡਾਂ) {
+                    ਅਚਲ uint32_t ਅਗਲਾ_ib = ਸਰਗਰਮ_ਖੰਡਾਂ[ਕਦਮ + 2];
+                    ਅਚਲ uint32_t ਅਗਲਾ_ic_ਸ਼ੁਰੂ = ਅਗਲਾ_ib * FLASH_ATTN_ਖੰਡ_ਮਾਪ;
+                    ਅਚਲ uint32_t ਅਗਲਾ_ਖੰਡ_ਮਾਪ = MIN(FLASH_ATTN_ਖੰਡ_ਮਾਪ, nek1 - ਅਗਲਾ_ic_ਸ਼ੁਰੂ);
 
                     // V
-                    const dma_addr_t v_src = v->data + next_ic_start*nbv1 + iv2*nbv2 + iv3*nbv3;
-                    dma_queue_push(dma_q, dma_make_data(v_base, v_src), factx->size_v_row_padded, nbv1, size_v_row, next_block_size);
+                    ਅਚਲ dma_addr_t v_src = v->ਅੰਕੜੇ + ਅਗਲਾ_ic_ਸ਼ੁਰੂ*nbv1 + iv2*nbv2 + iv3*nbv3;
+                    dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(v_ਅਧਾਰ, v_src), factx->ਮਾਪ_v_ਪੰਕਤੀ_padded, nbv1, ਮਾਪ_v_ਪੰਕਤੀ, ਅਗਲਾ_ਖੰਡ_ਮਾਪ);
 
                     // Mask
-                    if (mask) {
-                        const dma_addr_t m_src = mp_base + next_ic_start * sizeof(__fp16);
-                        dma_cache_dm_push(dma_q, &m_cache, next_ib, m_src, next_block_size * 2, next_block_size * 2, next_block_size * 2, 1);
+                    ਜੇ (ਨਕਾਬ) {
+                        ਅਚਲ dma_addr_t m_src = mp_ਅਧਾਰ + ਅਗਲਾ_ic_ਸ਼ੁਰੂ * ਆਕਾਰ(__fp16);
+                        dma_cache_dm_ਧੱਕੋ(dma_q, &m_cache, ਅਗਲਾ_ib, m_src, ਅਗਲਾ_ਖੰਡ_ਮਾਪ * 2, ਅਗਲਾ_ਖੰਡ_ਮਾਪ * 2, ਅਗਲਾ_ਖੰਡ_ਮਾਪ * 2, 1);
                     }
                 }
             } // end for g
         } // end for step
 
-        for (uint32_t g = 0; g < G_local; ++g) {
-            const uint32_t head_ir = ir + g;
-            const uint32_t h = heads[g];
-            float * VKQ32 = vkq_ptrs[g];
+        ਲਈ (uint32_t g = 0; g < G_local; ++g) {
+            ਅਚਲ uint32_t ਸਿਰ_ir = ir + g;
+            ਅਚਲ uint32_t h = heads[g];
+            ਦਸ਼ਮਲਵ * VKQ32 = vkq_ptrs[g];
 
-            htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_O_PROC, head_ir);
+            htp_trace_event_ਸ਼ੁਰੂ(tr, HTP_TRACE_EVT_HVX_O_PROC, ਸਿਰ_ir);
 
-            float M = hvx_vec_get_f32(M_vec[g]);
-            float S = hvx_vec_get_f32(S_vec[g]);
+            ਦਸ਼ਮਲਵ M = hvx_vec_get_f32(M_vec[g]);
+            ਦਸ਼ਮਲਵ S = hvx_vec_get_f32(S_vec[g]);
 
-            if (sinks) {
-                const float s = factx->spad_sinks[h];
+            ਜੇ (sinks) {
+                ਅਚਲ ਦਸ਼ਮਲਵ s = factx->spad_sinks[h];
 
-                float vs = 1.0f;
+                ਦਸ਼ਮਲਵ vs = 1.0f;
 
-                if (s > M) {
-                    HVX_Vector diff_vec = hvx_vec_splat_f32(M - s);
-                    HVX_Vector ms_vec   = hvx_vec_exp_f32(diff_vec);
-                    hvx_scale_vec_f32_aa((uint8_t *) VKQ32, (const uint8_t *) VKQ32, DV, ms_vec);
+                ਜੇ (s > M) {
+                    HVX_ਸਦਿਸ਼ diff_vec = hvx_vec_splat_f32(M - s);
+                    HVX_ਸਦਿਸ਼ ms_vec   = hvx_vec_exp_f32(diff_vec);
+                    hvx_scale_vec_f32_aa((uint8_t *) VKQ32, (ਅਚਲ uint8_t *) VKQ32, DV, ms_vec);
 
-                    float ms = hvx_vec_get_f32(ms_vec);
+                    ਦਸ਼ਮਲਵ ms = hvx_vec_get_f32(ms_vec);
                     S = S * ms + vs;
-                } else {
-                    HVX_Vector diff_vec = hvx_vec_splat_f32(s - M);
+                } ਨਹੀਂਤਾਂ {
+                    HVX_ਸਦਿਸ਼ diff_vec = hvx_vec_splat_f32(s - M);
                     vs = hvx_vec_get_f32(hvx_vec_exp_f32(diff_vec));
                     S += vs;
                 }
             }
 
-            const float S_inv = S == 0.0f ? 0.0f : 1.0f/S;
-            hvx_scale_f32_aa((uint8_t *) VKQ32, (const uint8_t *) VKQ32, DV, S_inv);
+            ਅਚਲ ਦਸ਼ਮਲਵ S_inv = S == 0.0f ? 0.0f : 1.0f/S;
+            hvx_scale_f32_aa((uint8_t *) VKQ32, (ਅਚਲ uint8_t *) VKQ32, DV, S_inv);
 
-            const uint32_t r_iq3 = fastdiv(head_ir, &factx->src0_div21);
-            const uint32_t r_iq2 = fastdiv(head_ir - r_iq3*neq2*neq1, &factx->src0_div1);
-            const uint32_t r_iq1 = (head_ir - r_iq3*neq2*neq1 - r_iq2 * neq1);
+            ਅਚਲ uint32_t r_iq3 = fastdiv(ਸਿਰ_ir, &factx->src0_div21);
+            ਅਚਲ uint32_t r_iq2 = fastdiv(ਸਿਰ_ir - r_iq3*neq2*neq1, &factx->src0_div1);
+            ਅਚਲ uint32_t r_iq1 = (ਸਿਰ_ir - r_iq3*neq2*neq1 - r_iq2 * neq1);
 
-            uint8_t * dst_ptr = (uint8_t *) dst->data + r_iq2 * dst->nb[1] + r_iq1 * dst->nb[2] + r_iq3 * dst->nb[3];
+            uint8_t * dst_ptr = (uint8_t *) dst->ਅੰਕੜੇ + r_iq2 * dst->nb[1] + r_iq1 * dst->nb[2] + r_iq3 * dst->nb[3];
 
-            if (dst->type == HTP_TYPE_F32) {
+            ਜੇ (dst->type == HTP_TYPE_F32) {
                 hvx_copy_f32_ua(dst_ptr, (uint8_t *) VKQ32, DV);
-            } else if (dst->type == HTP_TYPE_F16) {
+            } ਨਹੀਂਤਾਂ ਜੇ (dst->type == HTP_TYPE_F16) {
                 hvx_copy_f16_f32_ua(dst_ptr, (uint8_t *) VKQ32, DV);
             }
-            htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_O_PROC, head_ir);
+            htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_O_PROC, ਸਿਰ_ir);
         }
 
         ir += G_local;
@@ -742,680 +742,680 @@ static void flash_attn_ext_f16_thread(unsigned int nth, unsigned int ith, void *
 // HMX Phase args and thread logic
 // ============================================================================
 
-typedef struct {
-    struct hmx_fa_context * factx;
-    uint32_t                kv_rows;
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
+    ਬਣਤਰ hmx_fa_context * factx;
+    uint32_t                kv_ਪੰਕਤੀਆਂ;
     size_t                  src_stride;
-    void *                  curr_k;
-    uint32_t                kv_start;
-    uint32_t                rows_per_t;
+    ਖਾਲੀ *                  curr_k;
+    uint32_t                kv_ਸ਼ੁਰੂ;
+    uint32_t                ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_t;
     size_t                  buf_idx;
-} fa_k_int_args_t;
+} fa_k_int_ਦਲੀਲਾਂ_t;
 
-static void fa_k_interleave_thread(unsigned int n, unsigned int i, void * data) {
-    fa_k_int_args_t *       args  = (fa_k_int_args_t *) data;
-    struct hmx_fa_context * factx = args->factx;
+ਸਥਿਰ ਖਾਲੀ fa_k_interleave_thread(ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ n, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ i, ਖਾਲੀ * ਅੰਕੜੇ) {
+    fa_k_int_ਦਲੀਲਾਂ_t *       ਦਲੀਲਾਂ_2  = (fa_k_int_ਦਲੀਲਾਂ_t *) ਅੰਕੜੇ;
+    ਬਣਤਰ hmx_fa_context * factx = ਦਲੀਲਾਂ_2->factx;
 
-    const uint32_t total_rows = args->kv_rows;
-    const uint32_t rows_per_t = args->rows_per_t;
-    const uint32_t start      = i * rows_per_t;
-    const uint32_t end        = (uint32_t) hex_smin(start + rows_per_t, total_rows);
+    ਅਚਲ uint32_t ਕੁੱਲ_ਪੰਕਤੀਆਂ = ਦਲੀਲਾਂ_2->kv_ਪੰਕਤੀਆਂ;
+    ਅਚਲ uint32_t ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_t = ਦਲੀਲਾਂ_2->ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_t;
+    ਅਚਲ uint32_t ਸ਼ੁਰੂ      = i * ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_t;
+    ਅਚਲ uint32_t ਸਿਰਾ        = (uint32_t) hex_smin(ਸ਼ੁਰੂ + ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_t, ਕੁੱਲ_ਪੰਕਤੀਆਂ);
 
-    if (start >= total_rows) {
-        return;
+    ਜੇ (ਸ਼ੁਰੂ >= ਕੁੱਲ_ਪੰਕਤੀਆਂ) {
+        ਵਾਪਸ;
     }
 
-    struct htp_thread_trace * tr = &factx->octx->ctx->trace[i];
-    htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_FA_K_PREP, (uint16_t) (args->kv_start + start));
-    if (factx->k->type == HTP_TYPE_Q8_0) {
-        for (uint32_t r = start; r < end; ++r) {
-            __fp16 * row_k = (__fp16 *)((char *)args->curr_k + r * args->src_stride * sizeof(__fp16));
-            hvx_dequantize_row_flat_q8_0_f16(row_k, row_k, factx->DK);
+    ਬਣਤਰ htp_thread_trace * tr = &factx->octx->ctx->trace[i];
+    htp_trace_event_ਸ਼ੁਰੂ(tr, HTP_TRACE_EVT_HVX_FA_K_PREP, (uint16_t) (ਦਲੀਲਾਂ_2->kv_ਸ਼ੁਰੂ + ਸ਼ੁਰੂ));
+    ਜੇ (factx->k->type == HTP_TYPE_Q8_0) {
+        ਲਈ (uint32_t r = ਸ਼ੁਰੂ; r < ਸਿਰਾ; ++r) {
+            __fp16 * ਪੰਕਤੀ_k = (__fp16 *)((ਅੱਖਰ *)ਦਲੀਲਾਂ_2->curr_k + r * ਦਲੀਲਾਂ_2->src_stride * ਆਕਾਰ(__fp16));
+            hvx_dequantize_ਪੰਕਤੀ_flat_q8_0_f16(ਪੰਕਤੀ_k, ਪੰਕਤੀ_k, factx->DK);
         }
     }
-    hmx_interleave_rows_to_tiles(factx->vtcm_k_tiles[args->buf_idx], (const __fp16 *) args->curr_k, total_rows, factx->DK_pad,
-                             args->src_stride, start, end);
-    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_FA_K_PREP, (uint16_t) (args->kv_start + start));
+    hmx_interleave_ਪੰਕਤੀਆਂ_ਮੰਜ਼ਿਲ_tiles(factx->vtcm_k_tiles[ਦਲੀਲਾਂ_2->buf_idx], (ਅਚਲ __fp16 *) ਦਲੀਲਾਂ_2->curr_k, ਕੁੱਲ_ਪੰਕਤੀਆਂ, factx->DK_pad,
+                             ਦਲੀਲਾਂ_2->src_stride, ਸ਼ੁਰੂ, ਸਿਰਾ);
+    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_FA_K_PREP, (uint16_t) (ਦਲੀਲਾਂ_2->kv_ਸ਼ੁਰੂ + ਸ਼ੁਰੂ));
 }
 
-static void fa_phase_k_interleave(struct hmx_fa_context * factx, uint32_t kv_rows, size_t src_stride, void * curr_k, uint32_t kv_start, size_t buf_idx) {
-    work_queue_t wp = factx->octx->ctx->work_queue;
+ਸਥਿਰ ਖਾਲੀ fa_phase_k_interleave(ਬਣਤਰ hmx_fa_context * factx, uint32_t kv_ਪੰਕਤੀਆਂ, size_t src_stride, ਖਾਲੀ * curr_k, uint32_t kv_ਸ਼ੁਰੂ, size_t buf_idx) {
+    work_ਕਤਾਰ_t wp = factx->octx->ctx->work_ਕਤਾਰ;
     uint32_t n = 1;
-    if (factx->n_threads > 1 && kv_rows >= factx->n_threads * 2) {
-        n = factx->n_threads;
+    ਜੇ (factx->n_ਧਾਗੇ > 1 && kv_ਪੰਕਤੀਆਂ >= factx->n_ਧਾਗੇ * 2) {
+        n = factx->n_ਧਾਗੇ;
     }
-    uint32_t rows_per_t = hex_align_up(hmx_ceil_div(kv_rows, n), 2);
-    fa_k_int_args_t args = { factx, kv_rows, src_stride, curr_k, kv_start, rows_per_t, buf_idx };
-    if (n > 1) {
-        work_queue_run(wp, fa_k_interleave_thread, &args, n);
-    } else {
-        fa_k_interleave_thread(1, 0, &args);
+    uint32_t ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_t = hex_align_ਉੱਪਰ(hmx_ceil_div(kv_ਪੰਕਤੀਆਂ, n), 2);
+    fa_k_int_ਦਲੀਲਾਂ_t ਦਲੀਲਾਂ_2 = { factx, kv_ਪੰਕਤੀਆਂ, src_stride, curr_k, kv_ਸ਼ੁਰੂ, ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_t, buf_idx };
+    ਜੇ (n > 1) {
+        work_ਕਤਾਰ_ਲੜੀਵਾਰ(wp, fa_k_interleave_thread, &ਦਲੀਲਾਂ_2, n);
+    } ਨਹੀਂਤਾਂ {
+        fa_k_interleave_thread(1, 0, &ਦਲੀਲਾਂ_2);
     }
 }
 
-typedef struct {
-    struct hmx_fa_context * factx;
-    uint32_t                kv_rows;
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
+    ਬਣਤਰ hmx_fa_context * factx;
+    uint32_t                kv_ਪੰਕਤੀਆਂ;
     size_t                  src_stride;
-    void *                  v_src;
-    void *                  v_tiles_dst;
-    size_t                  n_col_tiles;
-    uint32_t                kv_start;
-    uint32_t                rows_per_t;
-} fa_v_int_args_t;
+    ਖਾਲੀ *                  v_src;
+    ਖਾਲੀ *                  v_tiles_dst;
+    size_t                  n_ਖਾਨਾ_tiles;
+    uint32_t                kv_ਸ਼ੁਰੂ;
+    uint32_t                ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_t;
+} fa_v_int_ਦਲੀਲਾਂ_t;
 
-static void fa_v_interleave_thread(unsigned int n, unsigned int i, void * data) {
-    fa_v_int_args_t *       args  = (fa_v_int_args_t *) data;
-    struct hmx_fa_context * factx = args->factx;
+ਸਥਿਰ ਖਾਲੀ fa_v_interleave_thread(ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ n, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ i, ਖਾਲੀ * ਅੰਕੜੇ) {
+    fa_v_int_ਦਲੀਲਾਂ_t *       ਦਲੀਲਾਂ_2  = (fa_v_int_ਦਲੀਲਾਂ_t *) ਅੰਕੜੇ;
+    ਬਣਤਰ hmx_fa_context * factx = ਦਲੀਲਾਂ_2->factx;
 
-    const uint32_t total_rows = args->kv_rows;
-    const uint32_t rows_per_t = args->rows_per_t;
-    const uint32_t start      = i * rows_per_t;
-    const uint32_t end        = (uint32_t) hex_smin(start + rows_per_t, total_rows);
+    ਅਚਲ uint32_t ਕੁੱਲ_ਪੰਕਤੀਆਂ = ਦਲੀਲਾਂ_2->kv_ਪੰਕਤੀਆਂ;
+    ਅਚਲ uint32_t ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_t = ਦਲੀਲਾਂ_2->ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_t;
+    ਅਚਲ uint32_t ਸ਼ੁਰੂ      = i * ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_t;
+    ਅਚਲ uint32_t ਸਿਰਾ        = (uint32_t) hex_smin(ਸ਼ੁਰੂ + ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_t, ਕੁੱਲ_ਪੰਕਤੀਆਂ);
 
-    if (start >= total_rows) {
-        return;
+    ਜੇ (ਸ਼ੁਰੂ >= ਕੁੱਲ_ਪੰਕਤੀਆਂ) {
+        ਵਾਪਸ;
     }
 
-    __fp16 * v_tiles_dst = (__fp16 *) args->v_tiles_dst;
+    __fp16 * v_tiles_dst = (__fp16 *) ਦਲੀਲਾਂ_2->v_tiles_dst;
 
-    struct htp_thread_trace * tr = &factx->octx->ctx->trace[i];
-    htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_FA_V_PREP, (uint16_t) (args->kv_start + start));
-    if (factx->v->type == HTP_TYPE_Q8_0) {
-        for (uint32_t r = start; r < end; ++r) {
-            __fp16 * row_v = (__fp16 *)((char *)args->v_src + r * args->src_stride * sizeof(__fp16));
-            hvx_dequantize_row_flat_q8_0_f16(row_v, row_v, factx->DV);
+    ਬਣਤਰ htp_thread_trace * tr = &factx->octx->ctx->trace[i];
+    htp_trace_event_ਸ਼ੁਰੂ(tr, HTP_TRACE_EVT_HVX_FA_V_PREP, (uint16_t) (ਦਲੀਲਾਂ_2->kv_ਸ਼ੁਰੂ + ਸ਼ੁਰੂ));
+    ਜੇ (factx->v->type == HTP_TYPE_Q8_0) {
+        ਲਈ (uint32_t r = ਸ਼ੁਰੂ; r < ਸਿਰਾ; ++r) {
+            __fp16 * ਪੰਕਤੀ_v = (__fp16 *)((ਅੱਖਰ *)ਦਲੀਲਾਂ_2->v_src + r * ਦਲੀਲਾਂ_2->src_stride * ਆਕਾਰ(__fp16));
+            hvx_dequantize_ਪੰਕਤੀ_flat_q8_0_f16(ਪੰਕਤੀ_v, ਪੰਕਤੀ_v, factx->DV);
         }
     }
-    hmx_interleave_cols_to_tiles(v_tiles_dst, (const __fp16 *) args->v_src, total_rows, factx->DV_pad,
-                             args->src_stride, (uint32_t) args->n_col_tiles, start, end);
-    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_FA_V_PREP, (uint16_t) (args->kv_start + start));
+    hmx_interleave_ਖਾਨੇ_ਗਿਣਤੀ_ਮੰਜ਼ਿਲ_tiles(v_tiles_dst, (ਅਚਲ __fp16 *) ਦਲੀਲਾਂ_2->v_src, ਕੁੱਲ_ਪੰਕਤੀਆਂ, factx->DV_pad,
+                             ਦਲੀਲਾਂ_2->src_stride, (uint32_t) ਦਲੀਲਾਂ_2->n_ਖਾਨਾ_tiles, ਸ਼ੁਰੂ, ਸਿਰਾ);
+    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_FA_V_PREP, (uint16_t) (ਦਲੀਲਾਂ_2->kv_ਸ਼ੁਰੂ + ਸ਼ੁਰੂ));
 }
 
-static void fa_phase_v_interleave(struct hmx_fa_context * factx,
-                                  uint32_t                kv_rows,
+ਸਥਿਰ ਖਾਲੀ fa_phase_v_interleave(ਬਣਤਰ hmx_fa_context * factx,
+                                  uint32_t                kv_ਪੰਕਤੀਆਂ,
                                   size_t                  src_stride,
-                                  void *                  v_src,
-                                  void *                  v_tiles_dst,
-                                  size_t                  n_col_tiles,
-                                  uint32_t                kv_start) {
-    work_queue_t wp = factx->octx->ctx->work_queue;
+                                  ਖਾਲੀ *                  v_src,
+                                  ਖਾਲੀ *                  v_tiles_dst,
+                                  size_t                  n_ਖਾਨਾ_tiles,
+                                  uint32_t                kv_ਸ਼ੁਰੂ) {
+    work_ਕਤਾਰ_t wp = factx->octx->ctx->work_ਕਤਾਰ;
     uint32_t n = 1;
-    if (factx->n_threads > 1 && kv_rows >= factx->n_threads * 2) {
-        n = factx->n_threads;
+    ਜੇ (factx->n_ਧਾਗੇ > 1 && kv_ਪੰਕਤੀਆਂ >= factx->n_ਧਾਗੇ * 2) {
+        n = factx->n_ਧਾਗੇ;
     }
-    uint32_t rows_per_t = hex_align_up(hmx_ceil_div(kv_rows, n), 2);
-    fa_v_int_args_t args = { factx, kv_rows, src_stride, v_src, v_tiles_dst, n_col_tiles, kv_start, rows_per_t };
-    if (n > 1) {
-        work_queue_run(wp, fa_v_interleave_thread, &args, n);
-    } else {
-        fa_v_interleave_thread(1, 0, &args);
+    uint32_t ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_t = hex_align_ਉੱਪਰ(hmx_ceil_div(kv_ਪੰਕਤੀਆਂ, n), 2);
+    fa_v_int_ਦਲੀਲਾਂ_t ਦਲੀਲਾਂ_2 = { factx, kv_ਪੰਕਤੀਆਂ, src_stride, v_src, v_tiles_dst, n_ਖਾਨਾ_tiles, kv_ਸ਼ੁਰੂ, ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_t };
+    ਜੇ (n > 1) {
+        work_ਕਤਾਰ_ਲੜੀਵਾਰ(wp, fa_v_interleave_thread, &ਦਲੀਲਾਂ_2, n);
+    } ਨਹੀਂਤਾਂ {
+        fa_v_interleave_thread(1, 0, &ਦਲੀਲਾਂ_2);
     }
 }
 
-typedef struct {
-    struct hmx_fa_context *   factx;
-    const struct htp_tensor * q;
-    uint32_t                  q_start;
-    uint32_t                  kv_head;
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
+    ਬਣਤਰ hmx_fa_context *   factx;
+    ਅਚਲ ਬਣਤਰ htp_tensor * q;
+    uint32_t                  q_ਸ਼ੁਰੂ;
+    uint32_t                  kv_ਸਿਰ;
     uint32_t                  ib3;
-    size_t                    n_rows_g;
-    size_t                    rows_per_t;
-    size_t                    n_rows_q;
+    size_t                    n_ਪੰਕਤੀਆਂ_g;
+    size_t                    ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_t;
+    size_t                    n_ਪੰਕਤੀਆਂ_q;
     bool                      q_transposed;
     atomic_uint               barrier;
-} fa_q_load_args_t;
+} fa_q_ਲੱਦੋ_ਦਲੀਲਾਂ_t;
 
-static void fa_q_load_thread(unsigned int n, unsigned int i, void * data) {
-    fa_q_load_args_t *      args  = (fa_q_load_args_t *) data;
-    struct hmx_fa_context * factx = args->factx;
+ਸਥਿਰ ਖਾਲੀ fa_q_ਲੱਦੋ_thread(ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ n, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ i, ਖਾਲੀ * ਅੰਕੜੇ) {
+    fa_q_ਲੱਦੋ_ਦਲੀਲਾਂ_t *      ਦਲੀਲਾਂ_2  = (fa_q_ਲੱਦੋ_ਦਲੀਲਾਂ_t *) ਅੰਕੜੇ;
+    ਬਣਤਰ hmx_fa_context * factx = ਦਲੀਲਾਂ_2->factx;
 
-    const size_t n_rows_g = args->n_rows_g;
-    const size_t G        = factx->G;
-    const size_t DK       = factx->DK;
+    ਅਚਲ size_t n_ਪੰਕਤੀਆਂ_g = ਦਲੀਲਾਂ_2->n_ਪੰਕਤੀਆਂ_g;
+    ਅਚਲ size_t G        = factx->G;
+    ਅਚਲ size_t DK       = factx->DK;
 
     // Partition the padded Q rows (g_br) across threads.
     // Keep start/end even so r and r+1 are always in the same thread's range.
-    const size_t rows_per_t = args->rows_per_t;
-    const size_t start      = (size_t) i * rows_per_t;
-    const size_t end        = hex_smin(start + rows_per_t, factx->g_br);
+    ਅਚਲ size_t ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_t = ਦਲੀਲਾਂ_2->ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_t;
+    ਅਚਲ size_t ਸ਼ੁਰੂ      = (size_t) i * ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_t;
+    ਅਚਲ size_t ਸਿਰਾ        = hex_smin(ਸ਼ੁਰੂ + ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_t, factx->g_br);
 
-    struct htp_thread_trace * tr = &factx->octx->ctx->trace[i];
-    htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_FA_Q_PREP, (uint16_t) (args->q_start * G + start));
+    ਬਣਤਰ htp_thread_trace * tr = &factx->octx->ctx->trace[i];
+    htp_trace_event_ਸ਼ੁਰੂ(tr, HTP_TRACE_EVT_HVX_FA_Q_PREP, (uint16_t) (ਦਲੀਲਾਂ_2->q_ਸ਼ੁਰੂ * G + ਸ਼ੁਰੂ));
 
     // Parallel initialization of per-block state
     {
-        const uint32_t g_br = factx->g_br;
-        const uint32_t DV   = factx->DV;
+        ਅਚਲ uint32_t g_br = factx->g_br;
+        ਅਚਲ uint32_t DV   = factx->DV;
 
-        const size_t col_vec_bytes = factx->col_vec_bytes;
-        const size_t d_tile_bytes  = factx->d_tile_bytes;
+        ਅਚਲ size_t ਖਾਨਾ_vec_ਬਾਈਟਾਂ = factx->ਖਾਨਾ_vec_ਬਾਈਟਾਂ;
+        ਅਚਲ size_t d_tile_ਬਾਈਟਾਂ  = factx->d_tile_ਬਾਈਟਾਂ;
 
         // Initialize vtcm_l_vec & vtcm_m_vec
-        const size_t l_bytes_per_t = hex_align_up(col_vec_bytes / n, 128);
-        const size_t l_start       = i * l_bytes_per_t;
-        const size_t l_end         = hex_smin(l_start + l_bytes_per_t, col_vec_bytes);
+        ਅਚਲ size_t l_ਬਾਈਟਾਂ_ਪ੍ਰਤੀ_t = hex_align_ਉੱਪਰ(ਖਾਨਾ_vec_ਬਾਈਟਾਂ / n, 128);
+        ਅਚਲ size_t l_ਸ਼ੁਰੂ       = i * l_ਬਾਈਟਾਂ_ਪ੍ਰਤੀ_t;
+        ਅਚਲ size_t l_ਸਿਰਾ         = hex_smin(l_ਸ਼ੁਰੂ + l_ਬਾਈਟਾਂ_ਪ੍ਰਤੀ_t, ਖਾਨਾ_vec_ਬਾਈਟਾਂ);
 
-        const size_t m_bytes_per_t = hex_align_up(col_vec_bytes / n, 128);
-        const size_t m_start       = i * m_bytes_per_t;
-        const size_t m_end         = hex_smin(m_start + m_bytes_per_t, col_vec_bytes);
+        ਅਚਲ size_t m_ਬਾਈਟਾਂ_ਪ੍ਰਤੀ_t = hex_align_ਉੱਪਰ(ਖਾਨਾ_vec_ਬਾਈਟਾਂ / n, 128);
+        ਅਚਲ size_t m_ਸ਼ੁਰੂ       = i * m_ਬਾਈਟਾਂ_ਪ੍ਰਤੀ_t;
+        ਅਚਲ size_t m_ਸਿਰਾ         = hex_smin(m_ਸ਼ੁਰੂ + m_ਬਾਈਟਾਂ_ਪ੍ਰਤੀ_t, ਖਾਨਾ_vec_ਬਾਈਟਾਂ);
 
-        if (l_start < col_vec_bytes) {
-            hvx_splat_u8_a((char *) factx->vtcm_l_vec + l_start, 0, l_end - l_start);
+        ਜੇ (l_ਸ਼ੁਰੂ < ਖਾਨਾ_vec_ਬਾਈਟਾਂ) {
+            hvx_splat_u8_a((ਅੱਖਰ *) factx->vtcm_l_vec + l_ਸ਼ੁਰੂ, 0, l_ਸਿਰਾ - l_ਸ਼ੁਰੂ);
         }
-        if (m_start < col_vec_bytes) {
-            hvx_splat_f32_a((char *) factx->vtcm_m_vec + m_start, HTP_FA_M_INITIAL_VAL, (m_end - m_start) / sizeof(float));
+        ਜੇ (m_ਸ਼ੁਰੂ < ਖਾਨਾ_vec_ਬਾਈਟਾਂ) {
+            hvx_splat_f32_a((ਅੱਖਰ *) factx->vtcm_m_vec + m_ਸ਼ੁਰੂ, HTP_FA_M_INITIAL_VAL, (m_ਸਿਰਾ - m_ਸ਼ੁਰੂ) / ਆਕਾਰ(ਦਸ਼ਮਲਵ));
         }
 
         // Zero the whole rescale region: vtcm_d_tiles[0], the optional vtcm_d_tiles[1]
         // and vtcm_d_inv_l are equal-sized and allocated back to back, so one run covers
         // them all.  The scatter only ever writes the diagonal, ignore the rest.
-        const size_t d_bytes_per_t = hex_align_up(d_tile_bytes / n, 128);
-        const size_t d_start       = i * d_bytes_per_t;
-        const size_t d_end         = hex_smin(d_start + d_bytes_per_t, d_tile_bytes);
-        if (d_start < d_tile_bytes) {
-            hvx_splat_u8_a((char *) factx->vtcm_d_tiles[0] + d_start, 0, d_end - d_start);
+        ਅਚਲ size_t d_ਬਾਈਟਾਂ_ਪ੍ਰਤੀ_t = hex_align_ਉੱਪਰ(d_tile_ਬਾਈਟਾਂ / n, 128);
+        ਅਚਲ size_t d_ਸ਼ੁਰੂ       = i * d_ਬਾਈਟਾਂ_ਪ੍ਰਤੀ_t;
+        ਅਚਲ size_t d_ਸਿਰਾ         = hex_smin(d_ਸ਼ੁਰੂ + d_ਬਾਈਟਾਂ_ਪ੍ਰਤੀ_t, d_tile_ਬਾਈਟਾਂ);
+        ਜੇ (d_ਸ਼ੁਰੂ < d_tile_ਬਾਈਟਾਂ) {
+            hvx_splat_u8_a((ਅੱਖਰ *) factx->vtcm_d_tiles[0] + d_ਸ਼ੁਰੂ, 0, d_ਸਿਰਾ - d_ਸ਼ੁਰੂ);
         }
     }
 
-    if (start < factx->g_br) {
-        const struct htp_tensor * q       = args->q;
-        const uint32_t            q_start = args->q_start;
-        const uint32_t            kv_head = args->kv_head;
-        const uint32_t            ib3     = args->ib3;
+    ਜੇ (ਸ਼ੁਰੂ < factx->g_br) {
+        ਅਚਲ ਬਣਤਰ htp_tensor * q       = ਦਲੀਲਾਂ_2->q;
+        ਅਚਲ uint32_t            q_ਸ਼ੁਰੂ = ਦਲੀਲਾਂ_2->q_ਸ਼ੁਰੂ;
+        ਅਚਲ uint32_t            kv_ਸਿਰ = ਦਲੀਲਾਂ_2->kv_ਸਿਰ;
+        ਅਚਲ uint32_t            ib3     = ਦਲੀਲਾਂ_2->ib3;
 
-        const bool use_q_dma = (factx->vtcm_q_dma != NULL);
+        ਅਚਲ bool use_q_dma = (factx->vtcm_q_dma != ਨਿਰਾ);
 
         __fp16 * q_tiles = factx->vtcm_q_tiles;
-        const size_t DK_pad = factx->DK_pad;
-        if (use_q_dma) {
-            const size_t g_rows_end = hex_smin(end, n_rows_g);
-            const uint32_t d_limit = factx->is_q_fp32 ? DK / 32 : DK / 64;
+        ਅਚਲ size_t DK_pad = factx->DK_pad;
+        ਜੇ (use_q_dma) {
+            ਅਚਲ size_t g_ਪੰਕਤੀਆਂ_ਸਿਰਾ = hex_smin(ਸਿਰਾ, n_ਪੰਕਤੀਆਂ_g);
+            ਅਚਲ uint32_t d_ਹੱਦਬੰਦੀ = factx->is_q_fp32 ? DK / 32 : DK / 64;
 
             uint8_t * q_flat  = (uint8_t *) factx->vtcm_q_dma;
-            if (DK_pad != DK) {
-                if (factx->is_q_fp32) {
-                    hmx_fa_q_prep_fp32_pad(q_tiles, q_flat, start, end, g_rows_end, DK, DK_pad, G, args->n_rows_q, &factx->div_G, args->q_transposed);
-                } else {
-                    hmx_fa_q_prep_fp16_pad(q_tiles, q_flat, start, end, g_rows_end, DK, DK_pad, G, args->n_rows_q, &factx->div_G, args->q_transposed);
+            ਜੇ (DK_pad != DK) {
+                ਜੇ (factx->is_q_fp32) {
+                    hmx_fa_q_prep_fp32_pad(q_tiles, q_flat, ਸ਼ੁਰੂ, ਸਿਰਾ, g_ਪੰਕਤੀਆਂ_ਸਿਰਾ, DK, DK_pad, G, ਦਲੀਲਾਂ_2->n_ਪੰਕਤੀਆਂ_q, &factx->div_G, ਦਲੀਲਾਂ_2->q_transposed);
+                } ਨਹੀਂਤਾਂ {
+                    hmx_fa_q_prep_fp16_pad(q_tiles, q_flat, ਸ਼ੁਰੂ, ਸਿਰਾ, g_ਪੰਕਤੀਆਂ_ਸਿਰਾ, DK, DK_pad, G, ਦਲੀਲਾਂ_2->n_ਪੰਕਤੀਆਂ_q, &factx->div_G, ਦਲੀਲਾਂ_2->q_transposed);
                 }
-            } else if (factx->is_q_fp32) {
-                switch (d_limit) {
-                case 2:  hmx_fa_q_prep_fp32_d2(q_tiles, q_flat, start, end, g_rows_end, DK, G, args->n_rows_q, &factx->div_G, args->q_transposed); break;
-                case 4:  hmx_fa_q_prep_fp32_d4(q_tiles, q_flat, start, end, g_rows_end, DK, G, args->n_rows_q, &factx->div_G, args->q_transposed); break;
-                default: hmx_fa_q_prep_fp32(   q_tiles, q_flat, start, end, g_rows_end, DK, G, args->n_rows_q, &factx->div_G, d_limit, args->q_transposed); break;
+            } ਨਹੀਂਤਾਂ ਜੇ (factx->is_q_fp32) {
+                ਚੋਣ (d_ਹੱਦਬੰਦੀ) {
+                ਹਾਲਤ 2:  hmx_fa_q_prep_fp32_d2(q_tiles, q_flat, ਸ਼ੁਰੂ, ਸਿਰਾ, g_ਪੰਕਤੀਆਂ_ਸਿਰਾ, DK, G, ਦਲੀਲਾਂ_2->n_ਪੰਕਤੀਆਂ_q, &factx->div_G, ਦਲੀਲਾਂ_2->q_transposed); ਰੋਕੋ;
+                ਹਾਲਤ 4:  hmx_fa_q_prep_fp32_d4(q_tiles, q_flat, ਸ਼ੁਰੂ, ਸਿਰਾ, g_ਪੰਕਤੀਆਂ_ਸਿਰਾ, DK, G, ਦਲੀਲਾਂ_2->n_ਪੰਕਤੀਆਂ_q, &factx->div_G, ਦਲੀਲਾਂ_2->q_transposed); ਰੋਕੋ;
+                ਮੂਲ: hmx_fa_q_prep_fp32(   q_tiles, q_flat, ਸ਼ੁਰੂ, ਸਿਰਾ, g_ਪੰਕਤੀਆਂ_ਸਿਰਾ, DK, G, ਦਲੀਲਾਂ_2->n_ਪੰਕਤੀਆਂ_q, &factx->div_G, d_ਹੱਦਬੰਦੀ, ਦਲੀਲਾਂ_2->q_transposed); ਰੋਕੋ;
                 }
-            } else {
-                switch (d_limit) {
-                case 1:  hmx_fa_q_prep_fp16_d1(q_tiles, q_flat, start, end, g_rows_end, DK, G, args->n_rows_q, &factx->div_G, args->q_transposed); break;
-                case 2:  hmx_fa_q_prep_fp16_d2(q_tiles, q_flat, start, end, g_rows_end, DK, G, args->n_rows_q, &factx->div_G, args->q_transposed); break;
-                default: hmx_fa_q_prep_fp16(   q_tiles, q_flat, start, end, g_rows_end, DK, G, args->n_rows_q, &factx->div_G, d_limit, args->q_transposed); break;
+            } ਨਹੀਂਤਾਂ {
+                ਚੋਣ (d_ਹੱਦਬੰਦੀ) {
+                ਹਾਲਤ 1:  hmx_fa_q_prep_fp16_d1(q_tiles, q_flat, ਸ਼ੁਰੂ, ਸਿਰਾ, g_ਪੰਕਤੀਆਂ_ਸਿਰਾ, DK, G, ਦਲੀਲਾਂ_2->n_ਪੰਕਤੀਆਂ_q, &factx->div_G, ਦਲੀਲਾਂ_2->q_transposed); ਰੋਕੋ;
+                ਹਾਲਤ 2:  hmx_fa_q_prep_fp16_d2(q_tiles, q_flat, ਸ਼ੁਰੂ, ਸਿਰਾ, g_ਪੰਕਤੀਆਂ_ਸਿਰਾ, DK, G, ਦਲੀਲਾਂ_2->n_ਪੰਕਤੀਆਂ_q, &factx->div_G, ਦਲੀਲਾਂ_2->q_transposed); ਰੋਕੋ;
+                ਮੂਲ: hmx_fa_q_prep_fp16(   q_tiles, q_flat, ਸ਼ੁਰੂ, ਸਿਰਾ, g_ਪੰਕਤੀਆਂ_ਸਿਰਾ, DK, G, ਦਲੀਲਾਂ_2->n_ਪੰਕਤੀਆਂ_q, &factx->div_G, d_ਹੱਦਬੰਦੀ, ਦਲੀਲਾਂ_2->q_transposed); ਰੋਕੋ;
                 }
             }
-        } else {
+        } ਨਹੀਂਤਾਂ {
             // Fallback: direct-from-DDR/L2 path
-            hmx_fa_q_prep_fallback(q_tiles, q->data, q->nb[1], q->nb[2], q->nb[3],
-                                   q_start, kv_head, ib3, start, end, n_rows_g, G, DK, DK_pad, factx->is_q_fp32, &factx->div_G);
+            hmx_fa_q_prep_fallback(q_tiles, q->ਅੰਕੜੇ, q->nb[1], q->nb[2], q->nb[3],
+                                   q_ਸ਼ੁਰੂ, kv_ਸਿਰ, ib3, ਸ਼ੁਰੂ, ਸਿਰਾ, n_ਪੰਕਤੀਆਂ_g, G, DK, DK_pad, factx->is_q_fp32, &factx->div_G);
         }
     }
 
     // Synchronize threads before zeroing out vtcm_o_tiles[0] to prevent race condition
-    if (n > 1) {
-        atomic_fetch_sub(&args->barrier, 1);
-        while (atomic_load(&args->barrier) > 0) {
+    ਜੇ (n > 1) {
+        atomic_fetch_sub(&ਦਲੀਲਾਂ_2->barrier, 1);
+        ਜਦੋਂ (atomic_ਲੱਦੋ(&ਦਲੀਲਾਂ_2->barrier) > 0) {
             // spin wait
         }
     }
 
     // Zero out vtcm_o_tiles[0] as it was used as temp_q_vtcm
     {
-        const uint32_t g_br = factx->g_br;
-        const uint32_t DV   = factx->DV;
-        const size_t o_tile_bytes  = factx->o_tile_bytes;
-        const size_t o_bytes_per_t = hex_align_up(o_tile_bytes / n, 128);
-        const size_t o_start       = i * o_bytes_per_t;
-        const size_t o_end         = hex_smin(o_start + o_bytes_per_t, o_tile_bytes);
-        if (o_start < o_tile_bytes) {
-            hvx_splat_u8_a((char *) factx->vtcm_o_tiles[0] + o_start, 0, o_end - o_start);
+        ਅਚਲ uint32_t g_br = factx->g_br;
+        ਅਚਲ uint32_t DV   = factx->DV;
+        ਅਚਲ size_t o_tile_ਬਾਈਟਾਂ  = factx->o_tile_ਬਾਈਟਾਂ;
+        ਅਚਲ size_t o_ਬਾਈਟਾਂ_ਪ੍ਰਤੀ_t = hex_align_ਉੱਪਰ(o_tile_ਬਾਈਟਾਂ / n, 128);
+        ਅਚਲ size_t o_ਸ਼ੁਰੂ       = i * o_ਬਾਈਟਾਂ_ਪ੍ਰਤੀ_t;
+        ਅਚਲ size_t o_ਸਿਰਾ         = hex_smin(o_ਸ਼ੁਰੂ + o_ਬਾਈਟਾਂ_ਪ੍ਰਤੀ_t, o_tile_ਬਾਈਟਾਂ);
+        ਜੇ (o_ਸ਼ੁਰੂ < o_tile_ਬਾਈਟਾਂ) {
+            hvx_splat_u8_a((ਅੱਖਰ *) factx->vtcm_o_tiles[0] + o_ਸ਼ੁਰੂ, 0, o_ਸਿਰਾ - o_ਸ਼ੁਰੂ);
         }
     }
-    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_FA_Q_PREP, (uint16_t) (args->q_start * G + start));
+    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_FA_Q_PREP, (uint16_t) (ਦਲੀਲਾਂ_2->q_ਸ਼ੁਰੂ * G + ਸ਼ੁਰੂ));
 }
 
-static void fa_phase_q_load(struct hmx_fa_context *   factx,
-                            const struct htp_tensor * q,
-                            uint32_t                  q_start,
-                            uint32_t                  kv_head,
+ਸਥਿਰ ਖਾਲੀ fa_phase_q_ਲੱਦੋ(ਬਣਤਰ hmx_fa_context *   factx,
+                            ਅਚਲ ਬਣਤਰ htp_tensor * q,
+                            uint32_t                  q_ਸ਼ੁਰੂ,
+                            uint32_t                  kv_ਸਿਰ,
                             uint32_t                  ib3,
-                            size_t                    n_rows_g) {
-    work_queue_t wp = factx->octx->ctx->work_queue;
+                            size_t                    n_ਪੰਕਤੀਆਂ_g) {
+    work_ਕਤਾਰ_t wp = factx->octx->ctx->work_ਕਤਾਰ;
     uint32_t n = 1;
-    if (factx->n_threads > 1 && n_rows_g >= (size_t) (factx->n_threads * 2)) {
-        n = factx->n_threads;
+    ਜੇ (factx->n_ਧਾਗੇ > 1 && n_ਪੰਕਤੀਆਂ_g >= (size_t) (factx->n_ਧਾਗੇ * 2)) {
+        n = factx->n_ਧਾਗੇ;
     }
-    size_t rows_per_t = hex_align_up(hmx_ceil_div(factx->g_br, n), 2);
-    const uint32_t n_rows_q = hex_smin(factx->Br, factx->neq1 - q_start);
-    fa_q_load_args_t args;
-    args.factx = factx;
-    args.q = q;
-    args.q_start = q_start;
-    args.kv_head = kv_head;
-    args.ib3 = ib3;
-    args.n_rows_g = n_rows_g;
-    args.rows_per_t = rows_per_t;
-    args.n_rows_q = n_rows_q;
-    args.q_transposed = q->nb[1] < q->nb[2];
-    atomic_init(&args.barrier, n);
-    if (n > 1) {
-        work_queue_run(wp, fa_q_load_thread, &args, n);
-    } else {
-        fa_q_load_thread(1, 0, &args);
+    size_t ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_t = hex_align_ਉੱਪਰ(hmx_ceil_div(factx->g_br, n), 2);
+    ਅਚਲ uint32_t n_ਪੰਕਤੀਆਂ_q = hex_smin(factx->Br, factx->neq1 - q_ਸ਼ੁਰੂ);
+    fa_q_ਲੱਦੋ_ਦਲੀਲਾਂ_t ਦਲੀਲਾਂ_2;
+    ਦਲੀਲਾਂ_2.factx = factx;
+    ਦਲੀਲਾਂ_2.q = q;
+    ਦਲੀਲਾਂ_2.q_ਸ਼ੁਰੂ = q_ਸ਼ੁਰੂ;
+    ਦਲੀਲਾਂ_2.kv_ਸਿਰ = kv_ਸਿਰ;
+    ਦਲੀਲਾਂ_2.ib3 = ib3;
+    ਦਲੀਲਾਂ_2.n_ਪੰਕਤੀਆਂ_g = n_ਪੰਕਤੀਆਂ_g;
+    ਦਲੀਲਾਂ_2.ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_t = ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_t;
+    ਦਲੀਲਾਂ_2.n_ਪੰਕਤੀਆਂ_q = n_ਪੰਕਤੀਆਂ_q;
+    ਦਲੀਲਾਂ_2.q_transposed = q->nb[1] < q->nb[2];
+    atomic_init(&ਦਲੀਲਾਂ_2.barrier, n);
+    ਜੇ (n > 1) {
+        work_ਕਤਾਰ_ਲੜੀਵਾਰ(wp, fa_q_ਲੱਦੋ_thread, &ਦਲੀਲਾਂ_2, n);
+    } ਨਹੀਂਤਾਂ {
+        fa_q_ਲੱਦੋ_thread(1, 0, &ਦਲੀਲਾਂ_2);
     }
 }
 
-typedef struct {
-    struct hmx_fa_context *   factx;
-    const struct htp_tensor * dst;
-    const __fp16 *            o_tile_src;
-    uint32_t                  q_start;
-    uint32_t                  kv_head;
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
+    ਬਣਤਰ hmx_fa_context *   factx;
+    ਅਚਲ ਬਣਤਰ htp_tensor * dst;
+    ਅਚਲ __fp16 *            o_tile_src;
+    uint32_t                  q_ਸ਼ੁਰੂ;
+    uint32_t                  kv_ਸਿਰ;
     uint32_t                  ib3;
-    size_t                    n_rows_g;
-    size_t                    rows_per_t;
-} fa_o_store_args_t;
+    size_t                    n_ਪੰਕਤੀਆਂ_g;
+    size_t                    ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_t;
+} fa_o_store_ਦਲੀਲਾਂ_t;
 
-static void fa_o_store_thread_f32(unsigned int n, unsigned int i, void * data) {
-    fa_o_store_args_t *     args  = (fa_o_store_args_t *) data;
-    struct hmx_fa_context * factx = args->factx;
+ਸਥਿਰ ਖਾਲੀ fa_o_store_thread_f32(ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ n, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ i, ਖਾਲੀ * ਅੰਕੜੇ) {
+    fa_o_store_ਦਲੀਲਾਂ_t *     ਦਲੀਲਾਂ_2  = (fa_o_store_ਦਲੀਲਾਂ_t *) ਅੰਕੜੇ;
+    ਬਣਤਰ hmx_fa_context * factx = ਦਲੀਲਾਂ_2->factx;
 
-    const size_t n_rows_g = args->n_rows_g;
-    const size_t G        = factx->G;
-    const size_t DV       = factx->DV;
+    ਅਚਲ size_t n_ਪੰਕਤੀਆਂ_g = ਦਲੀਲਾਂ_2->n_ਪੰਕਤੀਆਂ_g;
+    ਅਚਲ size_t G        = factx->G;
+    ਅਚਲ size_t DV       = factx->DV;
 
-    const size_t rows_per_t = args->rows_per_t;
-    const size_t start      = (size_t) i * rows_per_t;
-    const size_t end        = hex_smin(start + rows_per_t, n_rows_g);
+    ਅਚਲ size_t ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_t = ਦਲੀਲਾਂ_2->ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_t;
+    ਅਚਲ size_t ਸ਼ੁਰੂ      = (size_t) i * ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_t;
+    ਅਚਲ size_t ਸਿਰਾ        = hex_smin(ਸ਼ੁਰੂ + ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_t, n_ਪੰਕਤੀਆਂ_g);
 
-    if (start >= n_rows_g) {
-        return;
+    ਜੇ (ਸ਼ੁਰੂ >= n_ਪੰਕਤੀਆਂ_g) {
+        ਵਾਪਸ;
     }
 
-    struct htp_thread_trace * tr = &factx->octx->ctx->trace[i];
-    htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_O_PROC, (uint16_t) (args->q_start * G + start));
+    ਬਣਤਰ htp_thread_trace * tr = &factx->octx->ctx->trace[i];
+    htp_trace_event_ਸ਼ੁਰੂ(tr, HTP_TRACE_EVT_HVX_O_PROC, (uint16_t) (ਦਲੀਲਾਂ_2->q_ਸ਼ੁਰੂ * G + ਸ਼ੁਰੂ));
 
-    const struct htp_tensor * dst        = args->dst;
-    const __fp16 *            o_tile_src = args->o_tile_src;
-    const uint32_t            q_start    = args->q_start;
-    const uint32_t            kv_head    = args->kv_head;
-    const uint32_t            ib3        = args->ib3;
+    ਅਚਲ ਬਣਤਰ htp_tensor * dst        = ਦਲੀਲਾਂ_2->dst;
+    ਅਚਲ __fp16 *            o_tile_src = ਦਲੀਲਾਂ_2->o_tile_src;
+    ਅਚਲ uint32_t            q_ਸ਼ੁਰੂ    = ਦਲੀਲਾਂ_2->q_ਸ਼ੁਰੂ;
+    ਅਚਲ uint32_t            kv_ਸਿਰ    = ਦਲੀਲਾਂ_2->kv_ਸਿਰ;
+    ਅਚਲ uint32_t            ib3        = ਦਲੀਲਾਂ_2->ib3;
 
-    const size_t DV_pad = factx->DV_pad;
+    ਅਚਲ size_t DV_pad = factx->DV_pad;
 
-    size_t q_idx = fastdiv(start, &factx->div_G);
-    size_t h_idx = fastmodulo(start, G, &factx->div_G);
+    size_t q_idx = fastdiv(ਸ਼ੁਰੂ, &factx->div_G);
+    size_t h_idx = fastmodulo(ਸ਼ੁਰੂ, G, &factx->div_G);
 
-    for (size_t r = start; r < end; ++r) {
-        float * out = (float *) ((uint8_t *) dst->data + (kv_head * G + h_idx) * dst->nb[1] +
-                                 (q_start + q_idx) * dst->nb[2] + ib3 * dst->nb[3]);
+    ਲਈ (size_t r = ਸ਼ੁਰੂ; r < ਸਿਰਾ; ++r) {
+        ਦਸ਼ਮਲਵ * ਬਾਹਰਲਾ = (ਦਸ਼ਮਲਵ *) ((uint8_t *) dst->ਅੰਕੜੇ + (kv_ਸਿਰ * G + h_idx) * dst->nb[1] +
+                                 (q_ਸ਼ੁਰੂ + q_idx) * dst->nb[2] + ib3 * dst->nb[3]);
 
-        size_t         r0            = r / HMX_FP16_TILE_N_ROWS;
-        size_t         r1            = r % HMX_FP16_TILE_N_ROWS;
-        const __fp16 * tile_row_base = o_tile_src + r0 * HMX_FP16_TILE_N_ROWS * DV_pad;
+        size_t         r0            = r / HMX_FP16_TILE_N_ਪੰਕਤੀਆਂ;
+        size_t         r1            = r % HMX_FP16_TILE_N_ਪੰਕਤੀਆਂ;
+        ਅਚਲ __fp16 * tile_ਪੰਕਤੀ_ਅਧਾਰ = o_tile_src + r0 * HMX_FP16_TILE_N_ਪੰਕਤੀਆਂ * DV_pad;
 
-        for (uint32_t d = 0; d < DV / 32; ++d) {
-            const HVX_Vector * in_tile = (const HVX_Vector *) (tile_row_base + d * HMX_FP16_TILE_N_ELMS);
-            HVX_VectorPair     vp      = hvx_vec_f16_to_f32_shuff(in_tile[r1 / 2]);
-            if (r1 % 2 == 0) {
-                *(HVX_UVector *) (out + d * 32) = Q6_V_lo_W(vp);
-            } else {
-                *(HVX_UVector *) (out + d * 32) = Q6_V_hi_W(vp);
+        ਲਈ (uint32_t d = 0; d < DV / 32; ++d) {
+            ਅਚਲ HVX_ਸਦਿਸ਼ * ਵਿੱਚ_tile = (ਅਚਲ HVX_ਸਦਿਸ਼ *) (tile_ਪੰਕਤੀ_ਅਧਾਰ + d * HMX_FP16_TILE_N_ELMS);
+            HVX_ਸਦਿਸ਼_Pair     vp      = hvx_vec_f16_ਮੰਜ਼ਿਲ_f32_shuff(ਵਿੱਚ_tile[r1 / 2]);
+            ਜੇ (r1 % 2 == 0) {
+                *(HVX_UVector *) (ਬਾਹਰਲਾ + d * 32) = Q6_V_lo_W(vp);
+            } ਨਹੀਂਤਾਂ {
+                *(HVX_UVector *) (ਬਾਹਰਲਾ + d * 32) = Q6_V_hi_W(vp);
             }
         }
         // Ragged tail: DV not a multiple of 32 (e.g. 72 -> last 8 lanes). Partial vector-write
         // for the remaining (DV % 32) floats.
-        const uint32_t d_tail = DV / 32;
-        const uint32_t rem    = DV - d_tail * 32;
-        if (rem) {
-            const HVX_Vector * in_tile = (const HVX_Vector *) (tile_row_base + d_tail * HMX_FP16_TILE_N_ELMS);
-            HVX_VectorPair     vp      = hvx_vec_f16_to_f32_shuff(in_tile[r1 / 2]);
-            HVX_Vector         vd      = (r1 % 2 == 0) ? Q6_V_lo_W(vp) : Q6_V_hi_W(vp);
-            hvx_vec_store_u((void *) (out + d_tail * 32), rem * sizeof(float), vd);
+        ਅਚਲ uint32_t d_ਪੂਛ = DV / 32;
+        ਅਚਲ uint32_t rem    = DV - d_ਪੂਛ * 32;
+        ਜੇ (rem) {
+            ਅਚਲ HVX_ਸਦਿਸ਼ * ਵਿੱਚ_tile = (ਅਚਲ HVX_ਸਦਿਸ਼ *) (tile_ਪੰਕਤੀ_ਅਧਾਰ + d_ਪੂਛ * HMX_FP16_TILE_N_ELMS);
+            HVX_ਸਦਿਸ਼_Pair     vp      = hvx_vec_f16_ਮੰਜ਼ਿਲ_f32_shuff(ਵਿੱਚ_tile[r1 / 2]);
+            HVX_ਸਦਿਸ਼         vd      = (r1 % 2 == 0) ? Q6_V_lo_W(vp) : Q6_V_hi_W(vp);
+            hvx_vec_store_u((ਖਾਲੀ *) (ਬਾਹਰਲਾ + d_ਪੂਛ * 32), rem * ਆਕਾਰ(ਦਸ਼ਮਲਵ), vd);
         }
 
         h_idx++;
-        if (h_idx == G) {
+        ਜੇ (h_idx == G) {
             h_idx = 0;
             q_idx++;
         }
     }
-    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_O_PROC, (uint16_t) (args->q_start * G + start));
+    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_O_PROC, (uint16_t) (ਦਲੀਲਾਂ_2->q_ਸ਼ੁਰੂ * G + ਸ਼ੁਰੂ));
 }
 
-static void fa_o_store_thread_f16(unsigned int n, unsigned int i, void * data) {
-    fa_o_store_args_t *     args  = (fa_o_store_args_t *) data;
-    struct hmx_fa_context * factx = args->factx;
+ਸਥਿਰ ਖਾਲੀ fa_o_store_thread_f16(ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ n, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ i, ਖਾਲੀ * ਅੰਕੜੇ) {
+    fa_o_store_ਦਲੀਲਾਂ_t *     ਦਲੀਲਾਂ_2  = (fa_o_store_ਦਲੀਲਾਂ_t *) ਅੰਕੜੇ;
+    ਬਣਤਰ hmx_fa_context * factx = ਦਲੀਲਾਂ_2->factx;
 
-    const size_t n_rows_g   = args->n_rows_g;
-    const size_t rows_per_t = args->rows_per_t;
-    const size_t G          = factx->G;
-    const size_t DV         = factx->DV;
-    const size_t start      = (size_t) i * rows_per_t;
-    const size_t end        = hex_smin(start + rows_per_t, n_rows_g);
+    ਅਚਲ size_t n_ਪੰਕਤੀਆਂ_g   = ਦਲੀਲਾਂ_2->n_ਪੰਕਤੀਆਂ_g;
+    ਅਚਲ size_t ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_t = ਦਲੀਲਾਂ_2->ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_t;
+    ਅਚਲ size_t G          = factx->G;
+    ਅਚਲ size_t DV         = factx->DV;
+    ਅਚਲ size_t ਸ਼ੁਰੂ      = (size_t) i * ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_t;
+    ਅਚਲ size_t ਸਿਰਾ        = hex_smin(ਸ਼ੁਰੂ + ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_t, n_ਪੰਕਤੀਆਂ_g);
 
-    if (start >= n_rows_g) {
-        return;
+    ਜੇ (ਸ਼ੁਰੂ >= n_ਪੰਕਤੀਆਂ_g) {
+        ਵਾਪਸ;
     }
 
-    struct htp_thread_trace * tr = &factx->octx->ctx->trace[i];
-    htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_O_PROC, (uint16_t) (args->q_start * G + start));
+    ਬਣਤਰ htp_thread_trace * tr = &factx->octx->ctx->trace[i];
+    htp_trace_event_ਸ਼ੁਰੂ(tr, HTP_TRACE_EVT_HVX_O_PROC, (uint16_t) (ਦਲੀਲਾਂ_2->q_ਸ਼ੁਰੂ * G + ਸ਼ੁਰੂ));
 
-    const struct htp_tensor * dst        = args->dst;
-    const __fp16 *            o_tile_src = args->o_tile_src;
-    const uint32_t            q_start    = args->q_start;
-    const uint32_t            kv_head    = args->kv_head;
-    const uint32_t            ib3        = args->ib3;
+    ਅਚਲ ਬਣਤਰ htp_tensor * dst        = ਦਲੀਲਾਂ_2->dst;
+    ਅਚਲ __fp16 *            o_tile_src = ਦਲੀਲਾਂ_2->o_tile_src;
+    ਅਚਲ uint32_t            q_ਸ਼ੁਰੂ    = ਦਲੀਲਾਂ_2->q_ਸ਼ੁਰੂ;
+    ਅਚਲ uint32_t            kv_ਸਿਰ    = ਦਲੀਲਾਂ_2->kv_ਸਿਰ;
+    ਅਚਲ uint32_t            ib3        = ਦਲੀਲਾਂ_2->ib3;
 
     // O-tiles use the padded head dim (DV_pad); dst holds the real DV lanes.
-    const size_t DV_pad = factx->DV_pad;
+    ਅਚਲ size_t DV_pad = factx->DV_pad;
 
-    size_t q_idx = fastdiv(start, &factx->div_G);
-    size_t h_idx = fastmodulo(start, G, &factx->div_G);
+    size_t q_idx = fastdiv(ਸ਼ੁਰੂ, &factx->div_G);
+    size_t h_idx = fastmodulo(ਸ਼ੁਰੂ, G, &factx->div_G);
 
-    for (size_t r = start; r < end; ++r) {
-        __fp16 * out = (__fp16 *) ((uint8_t *) dst->data + (kv_head * G + h_idx) * dst->nb[1] +
-                                   (q_start + q_idx) * dst->nb[2] + ib3 * dst->nb[3]);
+    ਲਈ (size_t r = ਸ਼ੁਰੂ; r < ਸਿਰਾ; ++r) {
+        __fp16 * ਬਾਹਰਲਾ = (__fp16 *) ((uint8_t *) dst->ਅੰਕੜੇ + (kv_ਸਿਰ * G + h_idx) * dst->nb[1] +
+                                   (q_ਸ਼ੁਰੂ + q_idx) * dst->nb[2] + ib3 * dst->nb[3]);
 
-        size_t         r0            = r / HMX_FP16_TILE_N_ROWS;
-        size_t         r1            = r % HMX_FP16_TILE_N_ROWS;
-        const __fp16 * tile_row_base = o_tile_src + r0 * HMX_FP16_TILE_N_ROWS * DV_pad;
+        size_t         r0            = r / HMX_FP16_TILE_N_ਪੰਕਤੀਆਂ;
+        size_t         r1            = r % HMX_FP16_TILE_N_ਪੰਕਤੀਆਂ;
+        ਅਚਲ __fp16 * tile_ਪੰਕਤੀ_ਅਧਾਰ = o_tile_src + r0 * HMX_FP16_TILE_N_ਪੰਕਤੀਆਂ * DV_pad;
 
-        for (uint32_t d = 0; d < DV / 64; ++d) {
-            const __fp16 *     in_dtile = tile_row_base + d * HMX_FP16_TILE_N_ELMS * 2;
-            const HVX_Vector * pv_in0   = ((const HVX_Vector *) in_dtile) + r1 / 2;
-            const HVX_Vector * pv_in1   = pv_in0 + 16;
-            HVX_VectorPair     vp       = Q6_W_vdeal_VVR(*pv_in1, *pv_in0, -2);
-            if (r1 % 2 == 0) {
-                *(HVX_UVector *) (out + d * 64) = Q6_V_lo_W(vp);
-            } else {
-                *(HVX_UVector *) (out + d * 64) = Q6_V_hi_W(vp);
+        ਲਈ (uint32_t d = 0; d < DV / 64; ++d) {
+            ਅਚਲ __fp16 *     ਵਿੱਚ_dtile = tile_ਪੰਕਤੀ_ਅਧਾਰ + d * HMX_FP16_TILE_N_ELMS * 2;
+            ਅਚਲ HVX_ਸਦਿਸ਼ * pv_in0   = ((ਅਚਲ HVX_ਸਦਿਸ਼ *) ਵਿੱਚ_dtile) + r1 / 2;
+            ਅਚਲ HVX_ਸਦਿਸ਼ * pv_in1   = pv_in0 + 16;
+            HVX_ਸਦਿਸ਼_Pair     vp       = Q6_W_vdeal_VVR(*pv_in1, *pv_in0, -2);
+            ਜੇ (r1 % 2 == 0) {
+                *(HVX_UVector *) (ਬਾਹਰਲਾ + d * 64) = Q6_V_lo_W(vp);
+            } ਨਹੀਂਤਾਂ {
+                *(HVX_UVector *) (ਬਾਹਰਲਾ + d * 64) = Q6_V_hi_W(vp);
             }
         }
         // Ragged tail when DV is not a multiple of 64.
-        const uint32_t d_tail = DV / 64;
-        const uint32_t rem    = DV - d_tail * 64;
-        if (rem) {
-            const __fp16 *     in_dtile = tile_row_base + d_tail * HMX_FP16_TILE_N_ELMS * 2;
-            const HVX_Vector * pv_in0   = ((const HVX_Vector *) in_dtile) + r1 / 2;
-            const HVX_Vector * pv_in1   = pv_in0 + 16;
-            HVX_VectorPair     vp       = Q6_W_vdeal_VVR(*pv_in1, *pv_in0, -2);
-            HVX_Vector         vd       = (r1 % 2 == 0) ? Q6_V_lo_W(vp) : Q6_V_hi_W(vp);
-            hvx_vec_store_u((void *) (out + d_tail * 64), rem * sizeof(__fp16), vd);
+        ਅਚਲ uint32_t d_ਪੂਛ = DV / 64;
+        ਅਚਲ uint32_t rem    = DV - d_ਪੂਛ * 64;
+        ਜੇ (rem) {
+            ਅਚਲ __fp16 *     ਵਿੱਚ_dtile = tile_ਪੰਕਤੀ_ਅਧਾਰ + d_ਪੂਛ * HMX_FP16_TILE_N_ELMS * 2;
+            ਅਚਲ HVX_ਸਦਿਸ਼ * pv_in0   = ((ਅਚਲ HVX_ਸਦਿਸ਼ *) ਵਿੱਚ_dtile) + r1 / 2;
+            ਅਚਲ HVX_ਸਦਿਸ਼ * pv_in1   = pv_in0 + 16;
+            HVX_ਸਦਿਸ਼_Pair     vp       = Q6_W_vdeal_VVR(*pv_in1, *pv_in0, -2);
+            HVX_ਸਦਿਸ਼         vd       = (r1 % 2 == 0) ? Q6_V_lo_W(vp) : Q6_V_hi_W(vp);
+            hvx_vec_store_u((ਖਾਲੀ *) (ਬਾਹਰਲਾ + d_ਪੂਛ * 64), rem * ਆਕਾਰ(__fp16), vd);
         }
 
         h_idx++;
-        if (h_idx == G) {
+        ਜੇ (h_idx == G) {
             h_idx = 0;
             q_idx++;
         }
     }
-    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_O_PROC, (uint16_t) (args->q_start * G + start));
+    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_O_PROC, (uint16_t) (ਦਲੀਲਾਂ_2->q_ਸ਼ੁਰੂ * G + ਸ਼ੁਰੂ));
 }
 
-static void fa_phase_o_store(struct hmx_fa_context *   factx,
-                             const struct htp_tensor * dst,
-                             const __fp16 *            o_tile_src,
-                             uint32_t                  q_start,
-                             uint32_t                  kv_head,
+ਸਥਿਰ ਖਾਲੀ fa_phase_o_store(ਬਣਤਰ hmx_fa_context *   factx,
+                             ਅਚਲ ਬਣਤਰ htp_tensor * dst,
+                             ਅਚਲ __fp16 *            o_tile_src,
+                             uint32_t                  q_ਸ਼ੁਰੂ,
+                             uint32_t                  kv_ਸਿਰ,
                              uint32_t                  ib3,
-                             size_t                    n_rows_g) {
-    work_queue_t wp = factx->octx->ctx->work_queue;
+                             size_t                    n_ਪੰਕਤੀਆਂ_g) {
+    work_ਕਤਾਰ_t wp = factx->octx->ctx->work_ਕਤਾਰ;
     uint32_t n = 1;
-    if (factx->n_threads > 1 && n_rows_g >= (size_t) (factx->n_threads * 2)) {
-        n = factx->n_threads;
+    ਜੇ (factx->n_ਧਾਗੇ > 1 && n_ਪੰਕਤੀਆਂ_g >= (size_t) (factx->n_ਧਾਗੇ * 2)) {
+        n = factx->n_ਧਾਗੇ;
     }
-    size_t rows_per_t = hmx_ceil_div(n_rows_g, n);
-    fa_o_store_args_t args = { factx, dst, o_tile_src, q_start, kv_head, ib3, n_rows_g, rows_per_t };
-    worker_callback_t store_fn = factx->is_dst_fp32 ? fa_o_store_thread_f32 : fa_o_store_thread_f16;
-    if (n > 1) {
-        work_queue_run(wp, store_fn, &args, n);
-    } else {
-        store_fn(1, 0, &args);
+    size_t ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_t = hmx_ceil_div(n_ਪੰਕਤੀਆਂ_g, n);
+    fa_o_store_ਦਲੀਲਾਂ_t ਦਲੀਲਾਂ_2 = { factx, dst, o_tile_src, q_ਸ਼ੁਰੂ, kv_ਸਿਰ, ib3, n_ਪੰਕਤੀਆਂ_g, ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_t };
+    ਕਾਮਾ_callback_t store_fn = factx->is_dst_fp32 ? fa_o_store_thread_f32 : fa_o_store_thread_f16;
+    ਜੇ (n > 1) {
+        work_ਕਤਾਰ_ਲੜੀਵਾਰ(wp, store_fn, &ਦਲੀਲਾਂ_2, n);
+    } ਨਹੀਂਤਾਂ {
+        store_fn(1, 0, &ਦਲੀਲਾਂ_2);
     }
 }
 
-typedef struct {
-    struct hmx_fa_context *   factx;
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
+    ਬਣਤਰ hmx_fa_context *   factx;
     size_t                    buf_idx;
-    size_t                    kv_rows;
-    size_t                    n_rows_g;
-    size_t                    n_col_tiles;
-    size_t                    n_tiles_per_bc;
-    size_t                    n_row_tiles;
-    size_t                    n_row_tiles_g_br;
+    size_t                    kv_ਪੰਕਤੀਆਂ;
+    size_t                    n_ਪੰਕਤੀਆਂ_g;
+    size_t                    n_ਖਾਨਾ_tiles;
+    size_t                    n_tiles_ਪ੍ਰਤੀ_bc;
+    size_t                    n_ਪੰਕਤੀ_tiles;
+    size_t                    n_ਪੰਕਤੀ_tiles_g_br;
     uint32_t                  Bc;
     uint32_t                  G;
-    uint32_t                  kv_head;
-    uint32_t                  kv_start;
-    uint32_t                  q_start;
+    uint32_t                  kv_ਸਿਰ;
+    uint32_t                  kv_ਸ਼ੁਰੂ;
+    uint32_t                  q_ਸ਼ੁਰੂ;
     uint32_t                  ib3;
     bool                      has_alibi;  // true when max_bias != 0 (need slope * mask + add)
     __fp16 *                  slopes;
-    const struct htp_tensor * mask;
-    const __fp16 *            mask_vtcm;             // VTCM mask buffer base (NULL = DDR fallback)
-    size_t                    mask_vtcm_row_stride;  // elements (__fp16) per row in VTCM mask buffer
-    struct fastdiv_values     thread_div;
-} fa_softmax_args_t;
+    ਅਚਲ ਬਣਤਰ htp_tensor * ਨਕਾਬ;
+    ਅਚਲ __fp16 *            ਨਕਾਬ_vtcm;             // VTCM mask buffer base (NULL = DDR fallback)
+    size_t                    ਨਕਾਬ_vtcm_ਪੰਕਤੀ_stride;  // elements (__fp16) per row in VTCM mask buffer
+    ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ     thread_div;
+} fa_softmax_ਦਲੀਲਾਂ_t;
 
-static inline void fa_softmax_impl(
-    unsigned int n, unsigned int i, void * data,
-    const bool has_mask,
-    const bool mask_broadcast,
-    const bool is_g1,
-    const bool has_alibi,
-    const bool has_softcap
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ fa_softmax_impl(
+    ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ n, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ i, ਖਾਲੀ * ਅੰਕੜੇ,
+    ਅਚਲ bool has_ਨਕਾਬ,
+    ਅਚਲ bool ਨਕਾਬ_ਪ੍ਰਸਾਰਣ,
+    ਅਚਲ bool is_g1,
+    ਅਚਲ bool has_alibi,
+    ਅਚਲ bool has_softcap
 ) {
-    fa_softmax_args_t *     args  = (fa_softmax_args_t *) data;
-    struct hmx_fa_context * factx = args->factx;
+    fa_softmax_ਦਲੀਲਾਂ_t *     ਦਲੀਲਾਂ_2  = (fa_softmax_ਦਲੀਲਾਂ_t *) ਅੰਕੜੇ;
+    ਬਣਤਰ hmx_fa_context * factx = ਦਲੀਲਾਂ_2->factx;
 
-    const size_t n_rows_g       = args->n_rows_g;
-    const size_t kv_rows        = args->kv_rows;
-    const size_t Bc             = args->Bc;
-    const size_t G              = args->G;
-    const size_t n_tiles_per_bc = args->n_tiles_per_bc;
-    const size_t n_row_vec_cnt  = hmx_ceil_div(n_rows_g, 64);
-    const uint32_t im3          = has_mask ? fastmodulo(args->ib3, args->mask->ne[3], &factx->src3_div3) : 0;
+    ਅਚਲ size_t n_ਪੰਕਤੀਆਂ_g       = ਦਲੀਲਾਂ_2->n_ਪੰਕਤੀਆਂ_g;
+    ਅਚਲ size_t kv_ਪੰਕਤੀਆਂ        = ਦਲੀਲਾਂ_2->kv_ਪੰਕਤੀਆਂ;
+    ਅਚਲ size_t Bc             = ਦਲੀਲਾਂ_2->Bc;
+    ਅਚਲ size_t G              = ਦਲੀਲਾਂ_2->G;
+    ਅਚਲ size_t n_tiles_ਪ੍ਰਤੀ_bc = ਦਲੀਲਾਂ_2->n_tiles_ਪ੍ਰਤੀ_bc;
+    ਅਚਲ size_t n_ਪੰਕਤੀ_vec_cnt  = hmx_ceil_div(n_ਪੰਕਤੀਆਂ_g, 64);
+    ਅਚਲ uint32_t im3          = has_ਨਕਾਬ ? fastmodulo(ਦਲੀਲਾਂ_2->ib3, ਦਲੀਲਾਂ_2->ਨਕਾਬ->ne[3], &factx->src3_div3) : 0;
 
-    size_t vec_start = 0;
-    size_t vec_end   = n_row_vec_cnt;
-    if (n > 1) {
-        const size_t vecs_per_t = fastdiv(n_row_vec_cnt + n - 1, &args->thread_div);
-        vec_start = i * vecs_per_t;
-        vec_end   = hex_smin(vec_start + vecs_per_t, n_row_vec_cnt);
+    size_t vec_ਸ਼ੁਰੂ = 0;
+    size_t vec_ਸਿਰਾ   = n_ਪੰਕਤੀ_vec_cnt;
+    ਜੇ (n > 1) {
+        ਅਚਲ size_t vecs_ਪ੍ਰਤੀ_t = fastdiv(n_ਪੰਕਤੀ_vec_cnt + n - 1, &ਦਲੀਲਾਂ_2->thread_div);
+        vec_ਸ਼ੁਰੂ = i * vecs_ਪ੍ਰਤੀ_t;
+        vec_ਸਿਰਾ   = hex_smin(vec_ਸ਼ੁਰੂ + vecs_ਪ੍ਰਤੀ_t, n_ਪੰਕਤੀ_vec_cnt);
     }
 
-    if (vec_start >= n_row_vec_cnt) {
-        return;
+    ਜੇ (vec_ਸ਼ੁਰੂ >= n_ਪੰਕਤੀ_vec_cnt) {
+        ਵਾਪਸ;
     }
 
-    struct htp_thread_trace * tr = &factx->octx->ctx->trace[i];
-    htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_FA_SFM, (uint16_t) (args->q_start * G + vec_start * 64));
+    ਬਣਤਰ htp_thread_trace * tr = &factx->octx->ctx->trace[i];
+    htp_trace_event_ਸ਼ੁਰੂ(tr, HTP_TRACE_EVT_HVX_FA_SFM, (uint16_t) (ਦਲੀਲਾਂ_2->q_ਸ਼ੁਰੂ * G + vec_ਸ਼ੁਰੂ * 64));
 
     // Per-thread row scratch: thread i uses bufs at offset i * 2 * stride
-    const size_t row_buf_stride = factx->row_buf_stride;
-    HVX_Vector * my_row_buf0    = factx->vtcm_row_bufs + i * 2 * row_buf_stride;
-    HVX_Vector * my_row_buf1    = my_row_buf0 + row_buf_stride;
+    ਅਚਲ size_t ਪੰਕਤੀ_buf_stride = factx->ਪੰਕਤੀ_buf_stride;
+    HVX_ਸਦਿਸ਼ * my_ਪੰਕਤੀ_buf0    = factx->vtcm_ਪੰਕਤੀ_bufs + i * 2 * ਪੰਕਤੀ_buf_stride;
+    HVX_ਸਦਿਸ਼ * my_ਪੰਕਤੀ_buf1    = my_ਪੰਕਤੀ_buf0 + ਪੰਕਤੀ_buf_stride;
 
-    const HVX_Vector v_neg_inf = Q6_Vh_vsplat_R(0xfbff);
+    ਅਚਲ HVX_ਸਦਿਸ਼ v_neg_inf = Q6_Vh_vsplat_R(0xfbff);
 
-    for (size_t r_vec_idx = vec_start; r_vec_idx < vec_end; ++r_vec_idx) {
-        HVX_Vector rowmax_acc_v = v_neg_inf;
-        HVX_Vector rowsum_acc_v = Q6_V_vzero();
-        HVX_Vector m_prev_v0    = factx->vtcm_m_vec[r_vec_idx * 2 + 0];
-        HVX_Vector m_prev_v1    = factx->vtcm_m_vec[r_vec_idx * 2 + 1];
+    ਲਈ (size_t r_vec_idx = vec_ਸ਼ੁਰੂ; r_vec_idx < vec_ਸਿਰਾ; ++r_vec_idx) {
+        HVX_ਸਦਿਸ਼ rowmax_acc_v = v_neg_inf;
+        HVX_ਸਦਿਸ਼ rowsum_acc_v = Q6_V_vzero();
+        HVX_ਸਦਿਸ਼ m_prev_v0    = factx->vtcm_m_vec[r_vec_idx * 2 + 0];
+        HVX_ਸਦਿਸ਼ m_prev_v1    = factx->vtcm_m_vec[r_vec_idx * 2 + 1];
 
-        HVX_Vector v_slopes = Q6_V_vzero();
-        if (has_alibi) {
-            v_slopes = hvx_vmem(args->slopes + r_vec_idx * 64);
+        HVX_ਸਦਿਸ਼ v_slopes = Q6_V_vzero();
+        ਜੇ (has_alibi) {
+            v_slopes = hvx_vmem(ਦਲੀਲਾਂ_2->slopes + r_vec_idx * 64);
         }
 
-        for (uint32_t r_vec_off = 0; r_vec_off < 64; r_vec_off += 2) {
+        ਲਈ (uint32_t r_vec_off = 0; r_vec_off < 64; r_vec_off += 2) {
             uint32_t r = r_vec_idx * 64 + r_vec_off;
-            if (r >= hex_align_up(n_rows_g, 2)) {
-                break;
+            ਜੇ (r >= hex_align_ਉੱਪਰ(n_ਪੰਕਤੀਆਂ_g, 2)) {
+                ਰੋਕੋ;
             }
 
-            uint32_t r0 = r / HMX_FP16_TILE_N_ROWS;
-            uint32_t r1 = r % HMX_FP16_TILE_N_ROWS;
+            uint32_t r0 = r / HMX_FP16_TILE_N_ਪੰਕਤੀਆਂ;
+            uint32_t r1 = r % HMX_FP16_TILE_N_ਪੰਕਤੀਆਂ;
 
-            const __fp16 * s_ld_base = factx->vtcm_s_tiles[args->buf_idx] + r0 * HMX_FP16_TILE_N_ROWS * Bc;
-            __fp16 *       p_st_base = factx->vtcm_p_tiles[args->buf_idx] + r0 * HMX_FP16_TILE_N_ROWS * Bc;
+            ਅਚਲ __fp16 * s_ld_ਅਧਾਰ = factx->vtcm_s_tiles[ਦਲੀਲਾਂ_2->buf_idx] + r0 * HMX_FP16_TILE_N_ਪੰਕਤੀਆਂ * Bc;
+            __fp16 *       p_st_ਅਧਾਰ = factx->vtcm_p_tiles[ਦਲੀਲਾਂ_2->buf_idx] + r0 * HMX_FP16_TILE_N_ਪੰਕਤੀਆਂ * Bc;
 
             // Decode 2 rows from S tiles into per-thread row buffers
-            if (has_softcap) {
-                const HVX_Vector v_cap = hvx_vec_splat_f16(factx->logit_softcap);
-                for (size_t c = 0; c < kv_rows; c += 64) {
+            ਜੇ (has_softcap) {
+                ਅਚਲ HVX_ਸਦਿਸ਼ v_cap = hvx_vec_splat_f16(factx->logit_softcap);
+                ਲਈ (size_t c = 0; c < kv_ਪੰਕਤੀਆਂ; c += 64) {
                     size_t             ci       = c / 64;
-                    const __fp16 *     in_dtile = s_ld_base + ci * HMX_FP16_TILE_N_ELMS * 2;
-                    const HVX_Vector * pv_s_in0 = ((const HVX_Vector *) in_dtile) + r1 / 2;
-                    const HVX_Vector * pv_s_in1 = pv_s_in0 + 16;
+                    ਅਚਲ __fp16 *     ਵਿੱਚ_dtile = s_ld_ਅਧਾਰ + ci * HMX_FP16_TILE_N_ELMS * 2;
+                    ਅਚਲ HVX_ਸਦਿਸ਼ * pv_s_in0 = ((ਅਚਲ HVX_ਸਦਿਸ਼ *) ਵਿੱਚ_dtile) + r1 / 2;
+                    ਅਚਲ HVX_ਸਦਿਸ਼ * pv_s_in1 = pv_s_in0 + 16;
 
-                    HVX_VectorPair vp_s_drow = Q6_W_vdeal_VVR(*pv_s_in1, *pv_s_in0, -2);
-                    HVX_Vector     v_s_row0  = Q6_V_lo_W(vp_s_drow);
-                    HVX_Vector     v_s_row1  = Q6_V_hi_W(vp_s_drow);
+                    HVX_ਸਦਿਸ਼_Pair vp_s_drow = Q6_W_vdeal_VVR(*pv_s_in1, *pv_s_in0, -2);
+                    HVX_ਸਦਿਸ਼     v_s_row0  = Q6_V_lo_W(vp_s_drow);
+                    HVX_ਸਦਿਸ਼     v_s_row1  = Q6_V_hi_W(vp_s_drow);
 
-                    HVX_Vector t0   = hvx_vec_tanh_f16(v_s_row0);
-                    my_row_buf0[ci] = hvx_vec_mul_f16_f16(t0, v_cap);
+                    HVX_ਸਦਿਸ਼ t0   = hvx_vec_tanh_f16(v_s_row0);
+                    my_ਪੰਕਤੀ_buf0[ci] = hvx_vec_mul_f16_f16(t0, v_cap);
 
-                    HVX_Vector t1   = hvx_vec_tanh_f16(v_s_row1);
-                    my_row_buf1[ci] = hvx_vec_mul_f16_f16(t1, v_cap);
+                    HVX_ਸਦਿਸ਼ t1   = hvx_vec_tanh_f16(v_s_row1);
+                    my_ਪੰਕਤੀ_buf1[ci] = hvx_vec_mul_f16_f16(t1, v_cap);
                 }
-            } else {
+            } ਨਹੀਂਤਾਂ {
                 size_t c = 0;
-                for (; c + 64 < kv_rows; c += 128) {
+                ਲਈ (; c + 64 < kv_ਪੰਕਤੀਆਂ; c += 128) {
                     size_t             ci0       = c / 64;
                     size_t             ci1       = ci0 + 1;
-                    const __fp16 *     in_dtile0 = s_ld_base + ci0 * HMX_FP16_TILE_N_ELMS * 2;
-                    const __fp16 *     in_dtile1 = s_ld_base + ci1 * HMX_FP16_TILE_N_ELMS * 2;
-                    const HVX_Vector * pv_s_in0_0 = ((const HVX_Vector *) in_dtile0) + r1 / 2;
-                    const HVX_Vector * pv_s_in1_0 = pv_s_in0_0 + 16;
-                    const HVX_Vector * pv_s_in0_1 = ((const HVX_Vector *) in_dtile1) + r1 / 2;
-                    const HVX_Vector * pv_s_in1_1 = pv_s_in0_1 + 16;
+                    ਅਚਲ __fp16 *     ਵਿੱਚ_dtile0 = s_ld_ਅਧਾਰ + ci0 * HMX_FP16_TILE_N_ELMS * 2;
+                    ਅਚਲ __fp16 *     ਵਿੱਚ_dtile1 = s_ld_ਅਧਾਰ + ci1 * HMX_FP16_TILE_N_ELMS * 2;
+                    ਅਚਲ HVX_ਸਦਿਸ਼ * pv_s_in0_0 = ((ਅਚਲ HVX_ਸਦਿਸ਼ *) ਵਿੱਚ_dtile0) + r1 / 2;
+                    ਅਚਲ HVX_ਸਦਿਸ਼ * pv_s_in1_0 = pv_s_in0_0 + 16;
+                    ਅਚਲ HVX_ਸਦਿਸ਼ * pv_s_in0_1 = ((ਅਚਲ HVX_ਸਦਿਸ਼ *) ਵਿੱਚ_dtile1) + r1 / 2;
+                    ਅਚਲ HVX_ਸਦਿਸ਼ * pv_s_in1_1 = pv_s_in0_1 + 16;
 
-                    HVX_VectorPair vp_s_drow0 = Q6_W_vdeal_VVR(*pv_s_in1_0, *pv_s_in0_0, -2);
-                    my_row_buf0[ci0]          = Q6_V_lo_W(vp_s_drow0);
-                    my_row_buf1[ci0]          = Q6_V_hi_W(vp_s_drow0);
+                    HVX_ਸਦਿਸ਼_Pair vp_s_drow0 = Q6_W_vdeal_VVR(*pv_s_in1_0, *pv_s_in0_0, -2);
+                    my_ਪੰਕਤੀ_buf0[ci0]          = Q6_V_lo_W(vp_s_drow0);
+                    my_ਪੰਕਤੀ_buf1[ci0]          = Q6_V_hi_W(vp_s_drow0);
 
-                    HVX_VectorPair vp_s_drow1 = Q6_W_vdeal_VVR(*pv_s_in1_1, *pv_s_in0_1, -2);
-                    my_row_buf0[ci1]          = Q6_V_lo_W(vp_s_drow1);
-                    my_row_buf1[ci1]          = Q6_V_hi_W(vp_s_drow1);
+                    HVX_ਸਦਿਸ਼_Pair vp_s_drow1 = Q6_W_vdeal_VVR(*pv_s_in1_1, *pv_s_in0_1, -2);
+                    my_ਪੰਕਤੀ_buf0[ci1]          = Q6_V_lo_W(vp_s_drow1);
+                    my_ਪੰਕਤੀ_buf1[ci1]          = Q6_V_hi_W(vp_s_drow1);
                 }
-                for (; c < kv_rows; c += 64) {
+                ਲਈ (; c < kv_ਪੰਕਤੀਆਂ; c += 64) {
                     size_t             ci       = c / 64;
-                    const __fp16 *     in_dtile = s_ld_base + ci * HMX_FP16_TILE_N_ELMS * 2;
-                    const HVX_Vector * pv_s_in0 = ((const HVX_Vector *) in_dtile) + r1 / 2;
-                    const HVX_Vector * pv_s_in1 = pv_s_in0 + 16;
+                    ਅਚਲ __fp16 *     ਵਿੱਚ_dtile = s_ld_ਅਧਾਰ + ci * HMX_FP16_TILE_N_ELMS * 2;
+                    ਅਚਲ HVX_ਸਦਿਸ਼ * pv_s_in0 = ((ਅਚਲ HVX_ਸਦਿਸ਼ *) ਵਿੱਚ_dtile) + r1 / 2;
+                    ਅਚਲ HVX_ਸਦਿਸ਼ * pv_s_in1 = pv_s_in0 + 16;
 
-                    HVX_VectorPair vp_s_drow = Q6_W_vdeal_VVR(*pv_s_in1, *pv_s_in0, -2);
-                    my_row_buf0[ci]          = Q6_V_lo_W(vp_s_drow);
-                    my_row_buf1[ci]          = Q6_V_hi_W(vp_s_drow);
+                    HVX_ਸਦਿਸ਼_Pair vp_s_drow = Q6_W_vdeal_VVR(*pv_s_in1, *pv_s_in0, -2);
+                    my_ਪੰਕਤੀ_buf0[ci]          = Q6_V_lo_W(vp_s_drow);
+                    my_ਪੰਕਤੀ_buf1[ci]          = Q6_V_hi_W(vp_s_drow);
                 }
             }
 
             // Apply mask & compute rowmax(S)
-            HVX_Vector v_slope0 = Q6_V_vzero();
-            HVX_Vector v_slope1 = Q6_V_vzero();
-            if (has_alibi) {
+            HVX_ਸਦਿਸ਼ v_slope0 = Q6_V_vzero();
+            HVX_ਸਦਿਸ਼ v_slope1 = Q6_V_vzero();
+            ਜੇ (has_alibi) {
                 v_slope0 = hvx_vec_repl_f16(Q6_V_vror_VR(v_slopes, r_vec_off * 2));
-                v_slope1 = (r + 1 < n_rows_g) ? hvx_vec_repl_f16(Q6_V_vror_VR(v_slopes, (r_vec_off + 1) * 2)) : Q6_V_vzero();
+                v_slope1 = (r + 1 < n_ਪੰਕਤੀਆਂ_g) ? hvx_vec_repl_f16(Q6_V_vror_VR(v_slopes, (r_vec_off + 1) * 2)) : Q6_V_vzero();
             }
 
-            const HVX_Vector v_threshold = Q6_Vh_vsplat_R(0xcc00);  // fp16 -16.0
+            ਅਚਲ HVX_ਸਦਿਸ਼ v_ਹੱਦ = Q6_Vh_vsplat_R(0xcc00);  // fp16 -16.0
 
-            HVX_Vector v_s_rowmax0 = v_neg_inf;
-            HVX_Vector v_s_rowmax1 = v_neg_inf;
-            if (has_mask) {
-                for (size_t c = 0; c < kv_rows; c += 64) {
+            HVX_ਸਦਿਸ਼ v_s_rowmax0 = v_neg_inf;
+            HVX_ਸਦਿਸ਼ v_s_rowmax1 = v_neg_inf;
+            ਜੇ (has_ਨਕਾਬ) {
+                ਲਈ (size_t c = 0; c < kv_ਪੰਕਤੀਆਂ; c += 64) {
                     size_t         ci          = c / 64;
-                    const size_t   ne          = hex_smin(kv_rows - c, 64);
-                    HVX_VectorPred q_tail_keep = Q6_Q_vsetq2_R(ne * sizeof(__fp16));
+                    ਅਚਲ size_t   ne          = hex_smin(kv_ਪੰਕਤੀਆਂ - c, 64);
+                    HVX_ਸਦਿਸ਼_Pred q_ਪੂਛ_keep = Q6_Q_vsetq2_R(ne * ਆਕਾਰ(__fp16));
 
-                    HVX_Vector v_mask0, v_mask1;
+                    HVX_ਸਦਿਸ਼ v_mask0, v_mask1;
 
-                    if (mask_broadcast) {
-                        if (is_g1) {
-                            const size_t qi0 = r + 0;
-                            v_mask0 = *(const HVX_Vector *) (args->mask_vtcm + qi0 * args->mask_vtcm_row_stride + c);
+                    ਜੇ (ਨਕਾਬ_ਪ੍ਰਸਾਰਣ) {
+                        ਜੇ (is_g1) {
+                            ਅਚਲ size_t qi0 = r + 0;
+                            v_mask0 = *(ਅਚਲ HVX_ਸਦਿਸ਼ *) (ਦਲੀਲਾਂ_2->ਨਕਾਬ_vtcm + qi0 * ਦਲੀਲਾਂ_2->ਨਕਾਬ_vtcm_ਪੰਕਤੀ_stride + c);
                             v_mask1 = v_neg_inf;
-                            if (r + 1 < n_rows_g) {
-                                const size_t qi1 = r + 1;
-                                v_mask1 = *(const HVX_Vector *) (args->mask_vtcm + qi1 * args->mask_vtcm_row_stride + c);
+                            ਜੇ (r + 1 < n_ਪੰਕਤੀਆਂ_g) {
+                                ਅਚਲ size_t qi1 = r + 1;
+                                v_mask1 = *(ਅਚਲ HVX_ਸਦਿਸ਼ *) (ਦਲੀਲਾਂ_2->ਨਕਾਬ_vtcm + qi1 * ਦਲੀਲਾਂ_2->ਨਕਾਬ_vtcm_ਪੰਕਤੀ_stride + c);
                             }
-                        } else {
-                            const size_t qi0 = fastdiv(r + 0, &factx->div_G);
-                            v_mask0 = *(const HVX_Vector *) (args->mask_vtcm + qi0 * args->mask_vtcm_row_stride + c);
+                        } ਨਹੀਂਤਾਂ {
+                            ਅਚਲ size_t qi0 = fastdiv(r + 0, &factx->div_G);
+                            v_mask0 = *(ਅਚਲ HVX_ਸਦਿਸ਼ *) (ਦਲੀਲਾਂ_2->ਨਕਾਬ_vtcm + qi0 * ਦਲੀਲਾਂ_2->ਨਕਾਬ_vtcm_ਪੰਕਤੀ_stride + c);
                             v_mask1 = v_neg_inf;
-                            if (r + 1 < n_rows_g) {
-                                const size_t qi1 = fastdiv(r + 1, &factx->div_G);
-                                if (qi1 == qi0) {
+                            ਜੇ (r + 1 < n_ਪੰਕਤੀਆਂ_g) {
+                                ਅਚਲ size_t qi1 = fastdiv(r + 1, &factx->div_G);
+                                ਜੇ (qi1 == qi0) {
                                     v_mask1 = v_mask0;
-                                } else {
-                                    v_mask1 = *(const HVX_Vector *) (args->mask_vtcm + qi1 * args->mask_vtcm_row_stride + c);
+                                } ਨਹੀਂਤਾਂ {
+                                    v_mask1 = *(ਅਚਲ HVX_ਸਦਿਸ਼ *) (ਦਲੀਲਾਂ_2->ਨਕਾਬ_vtcm + qi1 * ਦਲੀਲਾਂ_2->ਨਕਾਬ_vtcm_ਪੰਕਤੀ_stride + c);
                                 }
                             }
                         }
-                    } else {
+                    } ਨਹੀਂਤਾਂ {
                         // Head-dependent mask: pre-interleaved per row r.
-                        const size_t r0 = r + 0;
-                        v_mask0 = *(const HVX_Vector *) (args->mask_vtcm + r0 * args->mask_vtcm_row_stride + c);
+                        ਅਚਲ size_t r0 = r + 0;
+                        v_mask0 = *(ਅਚਲ HVX_ਸਦਿਸ਼ *) (ਦਲੀਲਾਂ_2->ਨਕਾਬ_vtcm + r0 * ਦਲੀਲਾਂ_2->ਨਕਾਬ_vtcm_ਪੰਕਤੀ_stride + c);
                         v_mask1 = v_neg_inf;
-                        if (r + 1 < n_rows_g) {
-                            const size_t r1 = r + 1;
-                            v_mask1 = *(const HVX_Vector *) (args->mask_vtcm + r1 * args->mask_vtcm_row_stride + c);
+                        ਜੇ (r + 1 < n_ਪੰਕਤੀਆਂ_g) {
+                            ਅਚਲ size_t r1 = r + 1;
+                            v_mask1 = *(ਅਚਲ HVX_ਸਦਿਸ਼ *) (ਦਲੀਲਾਂ_2->ਨਕਾਬ_vtcm + r1 * ਦਲੀਲਾਂ_2->ਨਕਾਬ_vtcm_ਪੰਕਤੀ_stride + c);
                         }
                     }
 
                     // Threshold: mask values below -16.0 are treated as -inf (causal mask).
-                    HVX_VectorPred q_keep0 = Q6_Q_and_QQ(Q6_Q_vcmp_gt_VhfVhf(v_mask0, v_threshold), q_tail_keep);
-                    HVX_VectorPred q_keep1 = Q6_Q_and_QQ(Q6_Q_vcmp_gt_VhfVhf(v_mask1, v_threshold), q_tail_keep);
+                    HVX_ਸਦਿਸ਼_Pred q_keep0 = Q6_Q_and_QQ(Q6_Q_vcmp_gt_VhfVhf(v_mask0, v_ਹੱਦ), q_ਪੂਛ_keep);
+                    HVX_ਸਦਿਸ਼_Pred q_keep1 = Q6_Q_and_QQ(Q6_Q_vcmp_gt_VhfVhf(v_mask1, v_ਹੱਦ), q_ਪੂਛ_keep);
 
                     // Scale mask values by log2(e) for base-2 calculations
-                    const HVX_Vector v_log2e = hvx_vec_splat_f16(EXP_LOG2E_F);
-                    HVX_Vector v_mask0_scaled = hvx_vec_mul_f16_f16(v_mask0, v_log2e);
-                    HVX_Vector v_mask1_scaled = hvx_vec_mul_f16_f16(v_mask1, v_log2e);
+                    ਅਚਲ HVX_ਸਦਿਸ਼ v_log2e = hvx_vec_splat_f16(EXP_LOG2E_F);
+                    HVX_ਸਦਿਸ਼ v_mask0_scaled = hvx_vec_mul_f16_f16(v_mask0, v_log2e);
+                    HVX_ਸਦਿਸ਼ v_mask1_scaled = hvx_vec_mul_f16_f16(v_mask1, v_log2e);
 
-                    if (has_alibi) {
-                        HVX_Vector v_sm0 = hvx_vec_mul_f16_f16(v_mask0_scaled, v_slope0);
-                        HVX_Vector v_sm1 = hvx_vec_mul_f16_f16(v_mask1_scaled, v_slope1);
-                        my_row_buf0[ci]  = Q6_V_vmux_QVV(q_keep0, hvx_vec_add_f16_f16(my_row_buf0[ci], v_sm0), v_neg_inf);
-                        my_row_buf1[ci]  = Q6_V_vmux_QVV(q_keep1, hvx_vec_add_f16_f16(my_row_buf1[ci], v_sm1), v_neg_inf);
-                    } else {
-                        my_row_buf0[ci] = Q6_V_vmux_QVV(q_keep0, hvx_vec_add_f16_f16(my_row_buf0[ci], v_mask0_scaled), v_neg_inf);
-                        my_row_buf1[ci] = Q6_V_vmux_QVV(q_keep1, hvx_vec_add_f16_f16(my_row_buf1[ci], v_mask1_scaled), v_neg_inf);
+                    ਜੇ (has_alibi) {
+                        HVX_ਸਦਿਸ਼ v_sm0 = hvx_vec_mul_f16_f16(v_mask0_scaled, v_slope0);
+                        HVX_ਸਦਿਸ਼ v_sm1 = hvx_vec_mul_f16_f16(v_mask1_scaled, v_slope1);
+                        my_ਪੰਕਤੀ_buf0[ci]  = Q6_V_vmux_QVV(q_keep0, hvx_vec_ਜੋੜੋ_f16_f16(my_ਪੰਕਤੀ_buf0[ci], v_sm0), v_neg_inf);
+                        my_ਪੰਕਤੀ_buf1[ci]  = Q6_V_vmux_QVV(q_keep1, hvx_vec_ਜੋੜੋ_f16_f16(my_ਪੰਕਤੀ_buf1[ci], v_sm1), v_neg_inf);
+                    } ਨਹੀਂਤਾਂ {
+                        my_ਪੰਕਤੀ_buf0[ci] = Q6_V_vmux_QVV(q_keep0, hvx_vec_ਜੋੜੋ_f16_f16(my_ਪੰਕਤੀ_buf0[ci], v_mask0_scaled), v_neg_inf);
+                        my_ਪੰਕਤੀ_buf1[ci] = Q6_V_vmux_QVV(q_keep1, hvx_vec_ਜੋੜੋ_f16_f16(my_ਪੰਕਤੀ_buf1[ci], v_mask1_scaled), v_neg_inf);
                     }
 
-                    v_s_rowmax0 = Q6_Vhf_vmax_VhfVhf(v_s_rowmax0, my_row_buf0[ci]);
-                    v_s_rowmax1 = Q6_Vhf_vmax_VhfVhf(v_s_rowmax1, my_row_buf1[ci]);
+                    v_s_rowmax0 = Q6_Vhf_vmax_VhfVhf(v_s_rowmax0, my_ਪੰਕਤੀ_buf0[ci]);
+                    v_s_rowmax1 = Q6_Vhf_vmax_VhfVhf(v_s_rowmax1, my_ਪੰਕਤੀ_buf1[ci]);
                 }
-            } else {
+            } ਨਹੀਂਤਾਂ {
                 size_t c = 0;
-                for (; c + 64 < kv_rows; c += 128) {
+                ਲਈ (; c + 64 < kv_ਪੰਕਤੀਆਂ; c += 128) {
                     size_t ci0 = c / 64;
                     size_t ci1 = ci0 + 1;
-                    v_s_rowmax0 = Q6_Vhf_vmax_VhfVhf(v_s_rowmax0, my_row_buf0[ci0]);
-                    v_s_rowmax1 = Q6_Vhf_vmax_VhfVhf(v_s_rowmax1, my_row_buf1[ci0]);
-                    v_s_rowmax0 = Q6_Vhf_vmax_VhfVhf(v_s_rowmax0, my_row_buf0[ci1]);
-                    v_s_rowmax1 = Q6_Vhf_vmax_VhfVhf(v_s_rowmax1, my_row_buf1[ci1]);
+                    v_s_rowmax0 = Q6_Vhf_vmax_VhfVhf(v_s_rowmax0, my_ਪੰਕਤੀ_buf0[ci0]);
+                    v_s_rowmax1 = Q6_Vhf_vmax_VhfVhf(v_s_rowmax1, my_ਪੰਕਤੀ_buf1[ci0]);
+                    v_s_rowmax0 = Q6_Vhf_vmax_VhfVhf(v_s_rowmax0, my_ਪੰਕਤੀ_buf0[ci1]);
+                    v_s_rowmax1 = Q6_Vhf_vmax_VhfVhf(v_s_rowmax1, my_ਪੰਕਤੀ_buf1[ci1]);
                 }
-                for (; c < kv_rows; c += 64) {
+                ਲਈ (; c < kv_ਪੰਕਤੀਆਂ; c += 64) {
                     size_t         ci          = c / 64;
-                    const size_t   ne          = hex_smin(kv_rows - c, 64);
-                    HVX_VectorPred q_tail_keep = Q6_Q_vsetq2_R(ne * sizeof(__fp16));
-                    if (ne < 64) {
-                        my_row_buf0[ci] = Q6_V_vmux_QVV(q_tail_keep, my_row_buf0[ci], v_neg_inf);
-                        my_row_buf1[ci] = Q6_V_vmux_QVV(q_tail_keep, my_row_buf1[ci], v_neg_inf);
+                    ਅਚਲ size_t   ne          = hex_smin(kv_ਪੰਕਤੀਆਂ - c, 64);
+                    HVX_ਸਦਿਸ਼_Pred q_ਪੂਛ_keep = Q6_Q_vsetq2_R(ne * ਆਕਾਰ(__fp16));
+                    ਜੇ (ne < 64) {
+                        my_ਪੰਕਤੀ_buf0[ci] = Q6_V_vmux_QVV(q_ਪੂਛ_keep, my_ਪੰਕਤੀ_buf0[ci], v_neg_inf);
+                        my_ਪੰਕਤੀ_buf1[ci] = Q6_V_vmux_QVV(q_ਪੂਛ_keep, my_ਪੰਕਤੀ_buf1[ci], v_neg_inf);
                     }
-                    v_s_rowmax0 = Q6_Vhf_vmax_VhfVhf(v_s_rowmax0, my_row_buf0[ci]);
-                    v_s_rowmax1 = Q6_Vhf_vmax_VhfVhf(v_s_rowmax1, my_row_buf1[ci]);
+                    v_s_rowmax0 = Q6_Vhf_vmax_VhfVhf(v_s_rowmax0, my_ਪੰਕਤੀ_buf0[ci]);
+                    v_s_rowmax1 = Q6_Vhf_vmax_VhfVhf(v_s_rowmax1, my_ਪੰਕਤੀ_buf1[ci]);
                 }
             }
 
@@ -1423,150 +1423,150 @@ static inline void fa_softmax_impl(
             v_s_rowmax1 = hvx_vec_reduce_max_f16(v_s_rowmax1);
 
             // Splat m_prev[r], m_prev[r+1] from the float per-row accumulators and convert to fp16 vectors
-            HVX_Vector v_m_prev0, v_m_prev1;
-            if (r_vec_off < 32) {
-                HVX_Vector v0 = hvx_vec_repl_f32(Q6_V_vror_VR(m_prev_v0, r_vec_off * 4));
-                v_m_prev0 = hvx_vec_f32_to_f16(v0, v0);
-                if (r + 1 < n_rows_g) {
-                    HVX_Vector v1 = hvx_vec_repl_f32(Q6_V_vror_VR(m_prev_v0, (r_vec_off + 1) * 4));
-                    v_m_prev1 = hvx_vec_f32_to_f16(v1, v1);
-                } else {
+            HVX_ਸਦਿਸ਼ v_m_prev0, v_m_prev1;
+            ਜੇ (r_vec_off < 32) {
+                HVX_ਸਦਿਸ਼ v0 = hvx_vec_repl_f32(Q6_V_vror_VR(m_prev_v0, r_vec_off * 4));
+                v_m_prev0 = hvx_vec_f32_ਮੰਜ਼ਿਲ_f16(v0, v0);
+                ਜੇ (r + 1 < n_ਪੰਕਤੀਆਂ_g) {
+                    HVX_ਸਦਿਸ਼ v1 = hvx_vec_repl_f32(Q6_V_vror_VR(m_prev_v0, (r_vec_off + 1) * 4));
+                    v_m_prev1 = hvx_vec_f32_ਮੰਜ਼ਿਲ_f16(v1, v1);
+                } ਨਹੀਂਤਾਂ {
                     v_m_prev1 = Q6_V_vzero();
                 }
-            } else {
-                HVX_Vector v0 = hvx_vec_repl_f32(Q6_V_vror_VR(m_prev_v1, (r_vec_off - 32) * 4));
-                v_m_prev0 = hvx_vec_f32_to_f16(v0, v0);
-                if (r + 1 < n_rows_g) {
-                    HVX_Vector v1 = hvx_vec_repl_f32(Q6_V_vror_VR(m_prev_v1, (r_vec_off + 1 - 32) * 4));
-                    v_m_prev1 = hvx_vec_f32_to_f16(v1, v1);
-                } else {
+            } ਨਹੀਂਤਾਂ {
+                HVX_ਸਦਿਸ਼ v0 = hvx_vec_repl_f32(Q6_V_vror_VR(m_prev_v1, (r_vec_off - 32) * 4));
+                v_m_prev0 = hvx_vec_f32_ਮੰਜ਼ਿਲ_f16(v0, v0);
+                ਜੇ (r + 1 < n_ਪੰਕਤੀਆਂ_g) {
+                    HVX_ਸਦਿਸ਼ v1 = hvx_vec_repl_f32(Q6_V_vror_VR(m_prev_v1, (r_vec_off + 1 - 32) * 4));
+                    v_m_prev1 = hvx_vec_f32_ਮੰਜ਼ਿਲ_f16(v1, v1);
+                } ਨਹੀਂਤਾਂ {
                     v_m_prev1 = Q6_V_vzero();
                 }
             }
 
-            HVX_Vector v_dup_m0 = Q6_Vhf_vmax_VhfVhf(v_m_prev0, v_s_rowmax0);
-            HVX_Vector v_dup_m1 = Q6_Vhf_vmax_VhfVhf(v_m_prev1, v_s_rowmax1);
+            HVX_ਸਦਿਸ਼ v_dup_m0 = Q6_Vhf_vmax_VhfVhf(v_m_prev0, v_s_rowmax0);
+            HVX_ਸਦਿਸ਼ v_dup_m1 = Q6_Vhf_vmax_VhfVhf(v_m_prev1, v_s_rowmax1);
 
             // Insert row r, r+1 rowmax into rowmax_acc_v
             {
-                HVX_VectorPred p_start = Q6_Q_vsetq_R(r_vec_off * 2);
-                HVX_VectorPred p_mid   = Q6_Q_vsetq_R((r_vec_off + 1) * 2);
-                HVX_VectorPred p_end   = Q6_Q_vsetq2_R((r_vec_off + 2) * 2);
-                HVX_VectorPred p_lane0 = Q6_Q_and_QQn(p_mid, p_start);
-                HVX_VectorPred p_lane1 = Q6_Q_and_QQn(p_end, p_mid);
+                HVX_ਸਦਿਸ਼_Pred p_ਸ਼ੁਰੂ = Q6_Q_vsetq_R(r_vec_off * 2);
+                HVX_ਸਦਿਸ਼_Pred p_mid   = Q6_Q_vsetq_R((r_vec_off + 1) * 2);
+                HVX_ਸਦਿਸ਼_Pred p_ਸਿਰਾ   = Q6_Q_vsetq2_R((r_vec_off + 2) * 2);
+                HVX_ਸਦਿਸ਼_Pred p_lane0 = Q6_Q_and_QQn(p_mid, p_ਸ਼ੁਰੂ);
+                HVX_ਸਦਿਸ਼_Pred p_lane1 = Q6_Q_and_QQn(p_ਸਿਰਾ, p_mid);
                 rowmax_acc_v           = Q6_V_vmux_QVV(p_lane0, v_dup_m0, rowmax_acc_v);
                 rowmax_acc_v           = Q6_V_vmux_QVV(p_lane1, v_dup_m1, rowmax_acc_v);
             }
 
             // Compute P = exp(S - m_new)
-            const HVX_Vector v_zero      = Q6_V_vzero();
-            HVX_Vector       v_p_rowsum0 = v_zero;
-            HVX_Vector       v_p_rowsum1 = v_zero;
+            ਅਚਲ HVX_ਸਦਿਸ਼ v_zero      = Q6_V_vzero();
+            HVX_ਸਦਿਸ਼       v_p_rowsum0 = v_zero;
+            HVX_ਸਦਿਸ਼       v_p_rowsum1 = v_zero;
 
             size_t c = 0;
-            for (; c + 64 < kv_rows; c += 128) {
+            ਲਈ (; c + 64 < kv_ਪੰਕਤੀਆਂ; c += 128) {
                 size_t     ci0          = c / 64;
                 size_t     ci1          = ci0 + 1;
 
-                HVX_Vector v_s_minus_m0_0 = Q6_Vqf16_vsub_VhfVhf(my_row_buf0[ci0], v_dup_m0);
-                HVX_Vector v_s_minus_m1_0 = Q6_Vqf16_vsub_VhfVhf(my_row_buf1[ci0], v_dup_m1);
-                HVX_Vector v_s_minus_m0_1 = Q6_Vqf16_vsub_VhfVhf(my_row_buf0[ci1], v_dup_m0);
-                HVX_Vector v_s_minus_m1_1 = Q6_Vqf16_vsub_VhfVhf(my_row_buf1[ci1], v_dup_m1);
+                HVX_ਸਦਿਸ਼ v_s_minus_m0_0 = Q6_Vqf16_vsub_VhfVhf(my_ਪੰਕਤੀ_buf0[ci0], v_dup_m0);
+                HVX_ਸਦਿਸ਼ v_s_minus_m1_0 = Q6_Vqf16_vsub_VhfVhf(my_ਪੰਕਤੀ_buf1[ci0], v_dup_m1);
+                HVX_ਸਦਿਸ਼ v_s_minus_m0_1 = Q6_Vqf16_vsub_VhfVhf(my_ਪੰਕਤੀ_buf0[ci1], v_dup_m0);
+                HVX_ਸਦਿਸ਼ v_s_minus_m1_1 = Q6_Vqf16_vsub_VhfVhf(my_ਪੰਕਤੀ_buf1[ci1], v_dup_m1);
 
-                HVX_Vector v_p_row0_hf_0  = hvx_vec_exp2_f16(Q6_Vhf_equals_Vqf16(v_s_minus_m0_0));
-                HVX_Vector v_p_row1_hf_0  = hvx_vec_exp2_f16(Q6_Vhf_equals_Vqf16(v_s_minus_m1_0));
-                HVX_Vector v_p_row0_hf_1  = hvx_vec_exp2_f16(Q6_Vhf_equals_Vqf16(v_s_minus_m0_1));
-                HVX_Vector v_p_row1_hf_1  = hvx_vec_exp2_f16(Q6_Vhf_equals_Vqf16(v_s_minus_m1_1));
+                HVX_ਸਦਿਸ਼ v_p_row0_hf_0  = hvx_vec_exp2_f16(Q6_Vhf_equals_Vqf16(v_s_minus_m0_0));
+                HVX_ਸਦਿਸ਼ v_p_row1_hf_0  = hvx_vec_exp2_f16(Q6_Vhf_equals_Vqf16(v_s_minus_m1_0));
+                HVX_ਸਦਿਸ਼ v_p_row0_hf_1  = hvx_vec_exp2_f16(Q6_Vhf_equals_Vqf16(v_s_minus_m0_1));
+                HVX_ਸਦਿਸ਼ v_p_row1_hf_1  = hvx_vec_exp2_f16(Q6_Vhf_equals_Vqf16(v_s_minus_m1_1));
 
-                __fp16 *     out_dtile0  = p_st_base + ci0 * HMX_FP16_TILE_N_ELMS * 2;
-                __fp16 *     out_dtile1  = p_st_base + ci1 * HMX_FP16_TILE_N_ELMS * 2;
-                HVX_Vector * pv_p_out0_0  = ((HVX_Vector *) out_dtile0) + r1 / 2;
-                HVX_Vector * pv_p_out1_0  = pv_p_out0_0 + 16;
-                HVX_Vector * pv_p_out0_1  = ((HVX_Vector *) out_dtile1) + r1 / 2;
-                HVX_Vector * pv_p_out1_1  = pv_p_out0_1 + 16;
+                __fp16 *     ਬਾਹਰਲਾ_dtile0  = p_st_ਅਧਾਰ + ci0 * HMX_FP16_TILE_N_ELMS * 2;
+                __fp16 *     ਬਾਹਰਲਾ_dtile1  = p_st_ਅਧਾਰ + ci1 * HMX_FP16_TILE_N_ELMS * 2;
+                HVX_ਸਦਿਸ਼ * pv_p_out0_0  = ((HVX_ਸਦਿਸ਼ *) ਬਾਹਰਲਾ_dtile0) + r1 / 2;
+                HVX_ਸਦਿਸ਼ * pv_p_out1_0  = pv_p_out0_0 + 16;
+                HVX_ਸਦਿਸ਼ * pv_p_out0_1  = ((HVX_ਸਦਿਸ਼ *) ਬਾਹਰਲਾ_dtile1) + r1 / 2;
+                HVX_ਸਦਿਸ਼ * pv_p_out1_1  = pv_p_out0_1 + 16;
 
-                HVX_VectorPair vp_p_dual0 = Q6_W_vshuff_VVR(v_p_row1_hf_0, v_p_row0_hf_0, -2);
+                HVX_ਸਦਿਸ਼_Pair vp_p_dual0 = Q6_W_vshuff_VVR(v_p_row1_hf_0, v_p_row0_hf_0, -2);
                 *pv_p_out0_0               = Q6_V_lo_W(vp_p_dual0);
                 *pv_p_out1_0               = Q6_V_hi_W(vp_p_dual0);
 
-                HVX_VectorPair vp_p_dual1 = Q6_W_vshuff_VVR(v_p_row1_hf_1, v_p_row0_hf_1, -2);
+                HVX_ਸਦਿਸ਼_Pair vp_p_dual1 = Q6_W_vshuff_VVR(v_p_row1_hf_1, v_p_row0_hf_1, -2);
                 *pv_p_out0_1               = Q6_V_lo_W(vp_p_dual1);
                 *pv_p_out1_1               = Q6_V_hi_W(vp_p_dual1);
 
-                HVX_VectorPair vp_p0_0 = hvx_vec_f16_to_f32_shuff(v_p_row0_hf_0);
-                HVX_VectorPair vp_p1_0 = hvx_vec_f16_to_f32_shuff(v_p_row1_hf_0);
-                HVX_VectorPair vp_p0_1 = hvx_vec_f16_to_f32_shuff(v_p_row0_hf_1);
-                HVX_VectorPair vp_p1_1 = hvx_vec_f16_to_f32_shuff(v_p_row1_hf_1);
+                HVX_ਸਦਿਸ਼_Pair vp_p0_0 = hvx_vec_f16_ਮੰਜ਼ਿਲ_f32_shuff(v_p_row0_hf_0);
+                HVX_ਸਦਿਸ਼_Pair vp_p1_0 = hvx_vec_f16_ਮੰਜ਼ਿਲ_f32_shuff(v_p_row1_hf_0);
+                HVX_ਸਦਿਸ਼_Pair vp_p0_1 = hvx_vec_f16_ਮੰਜ਼ਿਲ_f32_shuff(v_p_row0_hf_1);
+                HVX_ਸਦਿਸ਼_Pair vp_p1_1 = hvx_vec_f16_ਮੰਜ਼ਿਲ_f32_shuff(v_p_row1_hf_1);
 
                 v_p_rowsum0 = Q6_Vqf32_vadd_Vqf32Vqf32(v_p_rowsum0, Q6_Vqf32_vadd_VsfVsf(Q6_V_lo_W(vp_p0_0), Q6_V_hi_W(vp_p0_0)));
                 v_p_rowsum0 = Q6_Vqf32_vadd_Vqf32Vqf32(v_p_rowsum0, Q6_Vqf32_vadd_VsfVsf(Q6_V_lo_W(vp_p0_1), Q6_V_hi_W(vp_p0_1)));
                 v_p_rowsum1 = Q6_Vqf32_vadd_Vqf32Vqf32(v_p_rowsum1, Q6_Vqf32_vadd_VsfVsf(Q6_V_lo_W(vp_p1_0), Q6_V_hi_W(vp_p1_0)));
                 v_p_rowsum1 = Q6_Vqf32_vadd_Vqf32Vqf32(v_p_rowsum1, Q6_Vqf32_vadd_VsfVsf(Q6_V_lo_W(vp_p1_1), Q6_V_hi_W(vp_p1_1)));
             }
-            for (size_t c_rem = c; c_rem < kv_rows; c_rem += 64) {
+            ਲਈ (size_t c_rem = c; c_rem < kv_ਪੰਕਤੀਆਂ; c_rem += 64) {
                 size_t     ci           = c_rem / 64;
-                HVX_Vector v_s_minus_m0 = Q6_Vqf16_vsub_VhfVhf(my_row_buf0[ci], v_dup_m0);
-                HVX_Vector v_s_minus_m1 = Q6_Vqf16_vsub_VhfVhf(my_row_buf1[ci], v_dup_m1);
+                HVX_ਸਦਿਸ਼ v_s_minus_m0 = Q6_Vqf16_vsub_VhfVhf(my_ਪੰਕਤੀ_buf0[ci], v_dup_m0);
+                HVX_ਸਦਿਸ਼ v_s_minus_m1 = Q6_Vqf16_vsub_VhfVhf(my_ਪੰਕਤੀ_buf1[ci], v_dup_m1);
 
-                HVX_Vector v_p_row0_hf  = hvx_vec_exp2_f16(Q6_Vhf_equals_Vqf16(v_s_minus_m0));
-                HVX_Vector v_p_row1_hf  = hvx_vec_exp2_f16(Q6_Vhf_equals_Vqf16(v_s_minus_m1));
-                __fp16 *     out_dtile  = p_st_base + ci * HMX_FP16_TILE_N_ELMS * 2;
-                HVX_Vector * pv_p_out0  = ((HVX_Vector *) out_dtile) + r1 / 2;
-                HVX_Vector * pv_p_out1  = pv_p_out0 + 16;
+                HVX_ਸਦਿਸ਼ v_p_row0_hf  = hvx_vec_exp2_f16(Q6_Vhf_equals_Vqf16(v_s_minus_m0));
+                HVX_ਸਦਿਸ਼ v_p_row1_hf  = hvx_vec_exp2_f16(Q6_Vhf_equals_Vqf16(v_s_minus_m1));
+                __fp16 *     ਬਾਹਰਲਾ_dtile  = p_st_ਅਧਾਰ + ci * HMX_FP16_TILE_N_ELMS * 2;
+                HVX_ਸਦਿਸ਼ * pv_p_out0  = ((HVX_ਸਦਿਸ਼ *) ਬਾਹਰਲਾ_dtile) + r1 / 2;
+                HVX_ਸਦਿਸ਼ * pv_p_out1  = pv_p_out0 + 16;
 
-                HVX_VectorPair vp_p_dual = Q6_W_vshuff_VVR(v_p_row1_hf, v_p_row0_hf, -2);
+                HVX_ਸਦਿਸ਼_Pair vp_p_dual = Q6_W_vshuff_VVR(v_p_row1_hf, v_p_row0_hf, -2);
                 *pv_p_out0               = Q6_V_lo_W(vp_p_dual);
                 *pv_p_out1               = Q6_V_hi_W(vp_p_dual);
 
-                HVX_VectorPair vp_p0 = hvx_vec_f16_to_f32_shuff(v_p_row0_hf);
-                HVX_VectorPair vp_p1 = hvx_vec_f16_to_f32_shuff(v_p_row1_hf);
+                HVX_ਸਦਿਸ਼_Pair vp_p0 = hvx_vec_f16_ਮੰਜ਼ਿਲ_f32_shuff(v_p_row0_hf);
+                HVX_ਸਦਿਸ਼_Pair vp_p1 = hvx_vec_f16_ਮੰਜ਼ਿਲ_f32_shuff(v_p_row1_hf);
 
                 v_p_rowsum0 = Q6_Vqf32_vadd_Vqf32Vqf32(v_p_rowsum0, Q6_Vqf32_vadd_VsfVsf(Q6_V_lo_W(vp_p0), Q6_V_hi_W(vp_p0)));
                 v_p_rowsum1 = Q6_Vqf32_vadd_Vqf32Vqf32(v_p_rowsum1, Q6_Vqf32_vadd_VsfVsf(Q6_V_lo_W(vp_p1), Q6_V_hi_W(vp_p1)));
             }
 
-            HVX_Vector rowsum0_sf = hvx_vec_reduce_sum_f32(Q6_Vsf_equals_Vqf32(v_p_rowsum0));
-            HVX_Vector rowsum1_sf = hvx_vec_reduce_sum_f32(Q6_Vsf_equals_Vqf32(v_p_rowsum1));
+            HVX_ਸਦਿਸ਼ rowsum0_sf = hvx_vec_reduce_ਜੋੜ_f32(Q6_Vsf_equals_Vqf32(v_p_rowsum0));
+            HVX_ਸਦਿਸ਼ rowsum1_sf = hvx_vec_reduce_ਜੋੜ_f32(Q6_Vsf_equals_Vqf32(v_p_rowsum1));
             {
-                HVX_Vector rv0_v = hvx_vec_f32_to_f16(rowsum0_sf, rowsum0_sf);
-                HVX_Vector rv1_v = hvx_vec_f32_to_f16(rowsum1_sf, rowsum1_sf);
+                HVX_ਸਦਿਸ਼ rv0_v = hvx_vec_f32_ਮੰਜ਼ਿਲ_f16(rowsum0_sf, rowsum0_sf);
+                HVX_ਸਦਿਸ਼ rv1_v = hvx_vec_f32_ਮੰਜ਼ਿਲ_f16(rowsum1_sf, rowsum1_sf);
 
-                HVX_VectorPred p_start = Q6_Q_vsetq_R(r_vec_off * 2);
-                HVX_VectorPred p_mid   = Q6_Q_vsetq_R((r_vec_off + 1) * 2);
-                HVX_VectorPred p_end   = Q6_Q_vsetq2_R((r_vec_off + 2) * 2);
-                HVX_VectorPred p_lane0 = Q6_Q_and_QQn(p_mid, p_start);
-                HVX_VectorPred p_lane1 = Q6_Q_and_QQn(p_end, p_mid);
+                HVX_ਸਦਿਸ਼_Pred p_ਸ਼ੁਰੂ = Q6_Q_vsetq_R(r_vec_off * 2);
+                HVX_ਸਦਿਸ਼_Pred p_mid   = Q6_Q_vsetq_R((r_vec_off + 1) * 2);
+                HVX_ਸਦਿਸ਼_Pred p_ਸਿਰਾ   = Q6_Q_vsetq2_R((r_vec_off + 2) * 2);
+                HVX_ਸਦਿਸ਼_Pred p_lane0 = Q6_Q_and_QQn(p_mid, p_ਸ਼ੁਰੂ);
+                HVX_ਸਦਿਸ਼_Pred p_lane1 = Q6_Q_and_QQn(p_ਸਿਰਾ, p_mid);
                 rowsum_acc_v           = Q6_V_vmux_QVV(p_lane0, rv0_v, rowsum_acc_v);
                 rowsum_acc_v           = Q6_V_vmux_QVV(p_lane1, rv1_v, rowsum_acc_v);
             }
         }
 
         // Inline fa_ml_update_and_build_d for this vector (lock-free and in parallel)
-        HVX_VectorPair rowmax_acc_pair    = hvx_vec_f16_to_f32(rowmax_acc_v);
-        HVX_Vector     v_rowmax_acc_f32_0 = Q6_V_lo_W(rowmax_acc_pair);
-        HVX_Vector     v_rowmax_acc_f32_1 = Q6_V_hi_W(rowmax_acc_pair);
+        HVX_ਸਦਿਸ਼_Pair rowmax_acc_pair    = hvx_vec_f16_ਮੰਜ਼ਿਲ_f32(rowmax_acc_v);
+        HVX_ਸਦਿਸ਼     v_rowmax_acc_f32_0 = Q6_V_lo_W(rowmax_acc_pair);
+        HVX_ਸਦਿਸ਼     v_rowmax_acc_f32_1 = Q6_V_hi_W(rowmax_acc_pair);
 
-        HVX_Vector v_m_curr0 = Q6_Vsf_vmax_VsfVsf(m_prev_v0, v_rowmax_acc_f32_0);
-        HVX_Vector v_m_curr1 = Q6_Vsf_vmax_VsfVsf(m_prev_v1, v_rowmax_acc_f32_1);
+        HVX_ਸਦਿਸ਼ v_m_curr0 = Q6_Vsf_vmax_VsfVsf(m_prev_v0, v_rowmax_acc_f32_0);
+        HVX_ਸਦਿਸ਼ v_m_curr1 = Q6_Vsf_vmax_VsfVsf(m_prev_v1, v_rowmax_acc_f32_1);
 
-        HVX_Vector v_m_diff0 = HVX_OP_SUB_F32(m_prev_v0, v_m_curr0);
-        HVX_Vector v_m_diff1 = HVX_OP_SUB_F32(m_prev_v1, v_m_curr1);
+        HVX_ਸਦਿਸ਼ v_m_diff0 = HVX_OP_SUB_F32(m_prev_v0, v_m_curr0);
+        HVX_ਸਦਿਸ਼ v_m_diff1 = HVX_OP_SUB_F32(m_prev_v1, v_m_curr1);
 
-        HVX_Vector v_m_diff_f16   = hvx_vec_f32_to_f16(v_m_diff0, v_m_diff1);
-        HVX_Vector exp_m_diff_f16 = hvx_vec_exp2_f16(v_m_diff_f16);
+        HVX_ਸਦਿਸ਼ v_m_diff_f16   = hvx_vec_f32_ਮੰਜ਼ਿਲ_f16(v_m_diff0, v_m_diff1);
+        HVX_ਸਦਿਸ਼ exp_m_diff_f16 = hvx_vec_exp2_f16(v_m_diff_f16);
 
-        HVX_VectorPair exp_m_diff_pair = hvx_vec_f16_to_f32(exp_m_diff_f16);
-        HVX_Vector exp_m_diff0 = Q6_V_lo_W(exp_m_diff_pair);
-        HVX_Vector exp_m_diff1 = Q6_V_hi_W(exp_m_diff_pair);
+        HVX_ਸਦਿਸ਼_Pair exp_m_diff_pair = hvx_vec_f16_ਮੰਜ਼ਿਲ_f32(exp_m_diff_f16);
+        HVX_ਸਦਿਸ਼ exp_m_diff0 = Q6_V_lo_W(exp_m_diff_pair);
+        HVX_ਸਦਿਸ਼ exp_m_diff1 = Q6_V_hi_W(exp_m_diff_pair);
 
-        HVX_VectorPair rowsum_acc_pair = hvx_vec_f16_to_f32(rowsum_acc_v);
-        HVX_Vector     v_rowsum_acc_f32_0 = Q6_V_lo_W(rowsum_acc_pair);
-        HVX_Vector     v_rowsum_acc_f32_1 = Q6_V_hi_W(rowsum_acc_pair);
+        HVX_ਸਦਿਸ਼_Pair rowsum_acc_pair = hvx_vec_f16_ਮੰਜ਼ਿਲ_f32(rowsum_acc_v);
+        HVX_ਸਦਿਸ਼     v_rowsum_acc_f32_0 = Q6_V_lo_W(rowsum_acc_pair);
+        HVX_ਸਦਿਸ਼     v_rowsum_acc_f32_1 = Q6_V_hi_W(rowsum_acc_pair);
 
-        HVX_Vector l_prev_v0 = factx->vtcm_l_vec[r_vec_idx * 2 + 0];
-        HVX_Vector l_prev_v1 = factx->vtcm_l_vec[r_vec_idx * 2 + 1];
-        HVX_Vector v_l_curr0 = HVX_OP_ADD_F32(HVX_OP_MUL_F32(l_prev_v0, exp_m_diff0), v_rowsum_acc_f32_0);
-        HVX_Vector v_l_curr1 = HVX_OP_ADD_F32(HVX_OP_MUL_F32(l_prev_v1, exp_m_diff1), v_rowsum_acc_f32_1);
+        HVX_ਸਦਿਸ਼ l_prev_v0 = factx->vtcm_l_vec[r_vec_idx * 2 + 0];
+        HVX_ਸਦਿਸ਼ l_prev_v1 = factx->vtcm_l_vec[r_vec_idx * 2 + 1];
+        HVX_ਸਦਿਸ਼ v_l_curr0 = HVX_OP_ਜੋੜੋ_F32(HVX_OP_MUL_F32(l_prev_v0, exp_m_diff0), v_rowsum_acc_f32_0);
+        HVX_ਸਦਿਸ਼ v_l_curr1 = HVX_OP_ਜੋੜੋ_F32(HVX_OP_MUL_F32(l_prev_v1, exp_m_diff1), v_rowsum_acc_f32_1);
 
         factx->vtcm_m_vec[r_vec_idx * 2 + 0] = v_m_curr0;
         factx->vtcm_m_vec[r_vec_idx * 2 + 1] = v_m_curr1;
@@ -1574,31 +1574,31 @@ static inline void fa_softmax_impl(
         factx->vtcm_l_vec[r_vec_idx * 2 + 1] = v_l_curr1;
 
         // Build diagonal tile D = diag(exp(m_diff))
-        const HVX_Vector     v_offsets = *(const HVX_Vector *) d_tile_scatter_offsets;
-        const HVX_VectorPred q_32_mask = Q6_Q_vsetq_R(32 * sizeof(__fp16));
-        HVX_Vector           v_exp_m_diff = exp_m_diff_f16;
+        ਅਚਲ HVX_ਸਦਿਸ਼     v_offsets = *(ਅਚਲ HVX_ਸਦਿਸ਼ *) d_tile_scatter_offsets;
+        ਅਚਲ HVX_ਸਦਿਸ਼_Pred q_32_ਨਕਾਬ = Q6_Q_vsetq_R(32 * ਆਕਾਰ(__fp16));
+        HVX_ਸਦਿਸ਼           v_exp_m_diff = exp_m_diff_f16;
 
-        __fp16 * const d_tiles_out = factx->vtcm_d_tiles[args->buf_idx];
+        __fp16 * ਅਚਲ d_tiles_ਬਾਹਰਲਾ = factx->vtcm_d_tiles[ਦਲੀਲਾਂ_2->buf_idx];
 
         size_t t0 = r_vec_idx * 2;
-        if (t0 < args->n_row_tiles) {
-            const HVX_Vector v_content = v_exp_m_diff;
-            __fp16 *         out_base  = d_tiles_out + t0 * HMX_FP16_TILE_N_ELMS;
-            Q6_vscatter_QRMVhV(q_32_mask, (size_t) out_base, HMX_FP16_TILE_SIZE - 1, v_offsets, v_content);
+        ਜੇ (t0 < ਦਲੀਲਾਂ_2->n_ਪੰਕਤੀ_tiles) {
+            ਅਚਲ HVX_ਸਦਿਸ਼ v_content = v_exp_m_diff;
+            __fp16 *         ਬਾਹਰਲਾ_ਅਧਾਰ  = d_tiles_ਬਾਹਰਲਾ + t0 * HMX_FP16_TILE_N_ELMS;
+            Q6_vscatter_QRMVhV(q_32_ਨਕਾਬ, (size_t) ਬਾਹਰਲਾ_ਅਧਾਰ, HMX_FP16_TILE_ਮਾਪ - 1, v_offsets, v_content);
         }
 
         size_t t1 = r_vec_idx * 2 + 1;
-        if (t1 < args->n_row_tiles) {
-            const HVX_Vector v_content = Q6_V_vror_VR(v_exp_m_diff, 64);
-            __fp16 *         out_base  = d_tiles_out + t1 * HMX_FP16_TILE_N_ELMS;
-            Q6_vscatter_QRMVhV(q_32_mask, (size_t) out_base, HMX_FP16_TILE_SIZE - 1, v_offsets, v_content);
+        ਜੇ (t1 < ਦਲੀਲਾਂ_2->n_ਪੰਕਤੀ_tiles) {
+            ਅਚਲ HVX_ਸਦਿਸ਼ v_content = Q6_V_vror_VR(v_exp_m_diff, 64);
+            __fp16 *         ਬਾਹਰਲਾ_ਅਧਾਰ  = d_tiles_ਬਾਹਰਲਾ + t1 * HMX_FP16_TILE_N_ELMS;
+            Q6_vscatter_QRMVhV(q_32_ਨਕਾਬ, (size_t) ਬਾਹਰਲਾ_ਅਧਾਰ, HMX_FP16_TILE_ਮਾਪ - 1, v_offsets, v_content);
         }
     }
-    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_FA_SFM, (uint16_t) (args->q_start * G + vec_start * 64));
+    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_FA_SFM, (uint16_t) (ਦਲੀਲਾਂ_2->q_ਸ਼ੁਰੂ * G + vec_ਸ਼ੁਰੂ * 64));
 }
 
-static void fa_softmax_thread_nomask(unsigned int n, unsigned int i, void * data) {
-    fa_softmax_impl(n, i, data,
+ਸਥਿਰ ਖਾਲੀ fa_softmax_thread_nomask(ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ n, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ i, ਖਾਲੀ * ਅੰਕੜੇ) {
+    fa_softmax_impl(n, i, ਅੰਕੜੇ,
                     /*has_mask=*/false,
                     /*mask_broadcast=*/false,
                     /*is_g1=*/false,
@@ -1606,8 +1606,8 @@ static void fa_softmax_thread_nomask(unsigned int n, unsigned int i, void * data
                     /*has_softcap=*/false);
 }
 
-static void fa_softmax_thread_mask_broadcast_g1(unsigned int n, unsigned int i, void * data) {
-    fa_softmax_impl(n, i, data,
+ਸਥਿਰ ਖਾਲੀ fa_softmax_thread_ਨਕਾਬ_ਪ੍ਰਸਾਰਣ_g1(ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ n, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ i, ਖਾਲੀ * ਅੰਕੜੇ) {
+    fa_softmax_impl(n, i, ਅੰਕੜੇ,
                     /*has_mask=*/true,
                     /*mask_broadcast=*/true,
                     /*is_g1=*/true,
@@ -1615,8 +1615,8 @@ static void fa_softmax_thread_mask_broadcast_g1(unsigned int n, unsigned int i, 
                     /*has_softcap=*/false);
 }
 
-static void fa_softmax_thread_mask_broadcast_gn(unsigned int n, unsigned int i, void * data) {
-    fa_softmax_impl(n, i, data,
+ਸਥਿਰ ਖਾਲੀ fa_softmax_thread_ਨਕਾਬ_ਪ੍ਰਸਾਰਣ_gn(ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ n, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ i, ਖਾਲੀ * ਅੰਕੜੇ) {
+    fa_softmax_impl(n, i, ਅੰਕੜੇ,
                     /*has_mask=*/true,
                     /*mask_broadcast=*/true,
                     /*is_g1=*/false,
@@ -1624,121 +1624,121 @@ static void fa_softmax_thread_mask_broadcast_gn(unsigned int n, unsigned int i, 
                     /*has_softcap=*/false);
 }
 
-static void fa_softmax_thread(unsigned int n, unsigned int i, void * data) {
-    fa_softmax_args_t *     args  = (fa_softmax_args_t *) data;
-    struct hmx_fa_context * factx = args->factx;
+ਸਥਿਰ ਖਾਲੀ fa_softmax_thread(ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ n, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ i, ਖਾਲੀ * ਅੰਕੜੇ) {
+    fa_softmax_ਦਲੀਲਾਂ_t *     ਦਲੀਲਾਂ_2  = (fa_softmax_ਦਲੀਲਾਂ_t *) ਅੰਕੜੇ;
+    ਬਣਤਰ hmx_fa_context * factx = ਦਲੀਲਾਂ_2->factx;
 
-    const bool has_mask       = (args->mask != NULL);
-    const bool mask_broadcast = factx->mask_broadcast;
-    const bool is_g1          = (args->G == 1);
-    const bool has_alibi      = args->has_alibi;
-    const bool has_softcap    = factx->has_softcap;
+    ਅਚਲ bool has_ਨਕਾਬ       = (ਦਲੀਲਾਂ_2->ਨਕਾਬ != ਨਿਰਾ);
+    ਅਚਲ bool ਨਕਾਬ_ਪ੍ਰਸਾਰਣ = factx->ਨਕਾਬ_ਪ੍ਰਸਾਰਣ;
+    ਅਚਲ bool is_g1          = (ਦਲੀਲਾਂ_2->G == 1);
+    ਅਚਲ bool has_alibi      = ਦਲੀਲਾਂ_2->has_alibi;
+    ਅਚਲ bool has_softcap    = factx->has_softcap;
 
-    fa_softmax_impl(n, i, data, has_mask, mask_broadcast, is_g1, has_alibi, has_softcap);
+    fa_softmax_impl(n, i, ਅੰਕੜੇ, has_ਨਕਾਬ, ਨਕਾਬ_ਪ੍ਰਸਾਰਣ, is_g1, has_alibi, has_softcap);
 }
 
-static inline HVX_Vector hvx_fa_load_sinks(const float * sinks_data, size_t idx, size_t count) {
-    const HVX_Vector * v_src    = (const HVX_Vector *) sinks_data + (idx >> 5);
-    const size_t       lane_off = idx & 31;
-    const size_t       byte_off = lane_off * sizeof(float);
-    return (lane_off + count > 32)
+ਸਥਿਰ ਸਤਰਅੰਦਰ HVX_ਸਦਿਸ਼ hvx_fa_ਲੱਦੋ_sinks(ਅਚਲ ਦਸ਼ਮਲਵ * sinks_ਅੰਕੜੇ, size_t idx, size_t ਗਿਣਤੀ_2) {
+    ਅਚਲ HVX_ਸਦਿਸ਼ * v_src    = (ਅਚਲ HVX_ਸਦਿਸ਼ *) sinks_ਅੰਕੜੇ + (idx >> 5);
+    ਅਚਲ size_t       lane_off = idx & 31;
+    ਅਚਲ size_t       byte_off = lane_off * ਆਕਾਰ(ਦਸ਼ਮਲਵ);
+    ਵਾਪਸ (lane_off + ਗਿਣਤੀ_2 > 32)
         ? Q6_V_valign_VVR(v_src[1], v_src[0], byte_off)
         : Q6_V_vror_VR(v_src[0], byte_off);
 }
 
-static __attribute__((noinline)) void fa_build_d_diag_inv_l(struct hmx_fa_context * factx,
-                                                            size_t                  n_row_tiles,
-                                                            size_t                  n_row_tiles_g_br,
-                                                            uint32_t                kv_head,
-                                                            size_t                  n_rows_g) {
-    (void) n_row_tiles_g_br;
+ਸਥਿਰ __attribute__((noinline)) ਖਾਲੀ fa_build_d_diag_inv_l(ਬਣਤਰ hmx_fa_context * factx,
+                                                            size_t                  n_ਪੰਕਤੀ_tiles,
+                                                            size_t                  n_ਪੰਕਤੀ_tiles_g_br,
+                                                            uint32_t                kv_ਸਿਰ,
+                                                            size_t                  n_ਪੰਕਤੀਆਂ_g) {
+    (ਖਾਲੀ) n_ਪੰਕਤੀ_tiles_g_br;
 
     // sinks: l += exp(sink - m * ln2) in f32, m and l are in the log2 domain
-    if (factx->sinks) {
-        const float *    sinks_data   = factx->vtcm_sinks;
-        const size_t     G            = factx->G;
-        const size_t     head_base    = (size_t) kv_head * G;
-        const HVX_Vector v_ln2        = Q6_V_vsplat_R(EXP_LOGN2);
-        const HVX_Vector v_head_sinks = (G <= 32) ? hvx_fa_load_sinks(sinks_data, head_base, G) : Q6_V_vzero();
-        HVX_Vector       v_sink       = Q6_V_vzero();
+    ਜੇ (factx->sinks) {
+        ਅਚਲ ਦਸ਼ਮਲਵ *    sinks_ਅੰਕੜੇ   = factx->vtcm_sinks;
+        ਅਚਲ size_t     G            = factx->G;
+        ਅਚਲ size_t     ਸਿਰ_ਅਧਾਰ    = (size_t) kv_ਸਿਰ * G;
+        ਅਚਲ HVX_ਸਦਿਸ਼ v_ln2        = Q6_V_vsplat_R(EXP_LOGN2);
+        ਅਚਲ HVX_ਸਦਿਸ਼ v_ਸਿਰ_sinks = (G <= 32) ? hvx_fa_ਲੱਦੋ_sinks(sinks_ਅੰਕੜੇ, ਸਿਰ_ਅਧਾਰ, G) : Q6_V_vzero();
+        HVX_ਸਦਿਸ਼       v_sink       = Q6_V_vzero();
         size_t           g_prev       = SIZE_MAX;
 
-        for (size_t i = 0; i < n_row_tiles; ++i) {
+        ਲਈ (size_t i = 0; i < n_ਪੰਕਤੀ_tiles; ++i) {
             // the sink pattern of a tile only depends on (i * 32) % G, rebuild it when that changes
-            const size_t r0 = i * 32;
-            const size_t g0 = fastmodulo(r0, G, &factx->div_G);
-            if (g0 != g_prev) {
-                const size_t rem_g = G - g0;
-                if (G <= 32) {
-                    const HVX_Vector v_lo = Q6_V_vror_VR(v_head_sinks, g0 * sizeof(float));
-                    const HVX_Vector v_hi = Q6_V_vror_VR(v_head_sinks, 128 - rem_g * sizeof(float));
-                    v_sink = Q6_V_vmux_QVV(Q6_Q_vsetq2_R(rem_g * sizeof(float)), v_lo, v_hi);
-                    for (size_t len = G; len < 32; len <<= 1) {
-                        const HVX_VectorPred q_keep    = Q6_Q_vsetq_R(len * sizeof(float));
-                        const HVX_Vector     v_shifted = Q6_V_vror_VR(v_sink, 128 - len * sizeof(float));
+            ਅਚਲ size_t r0 = i * 32;
+            ਅਚਲ size_t g0 = fastmodulo(r0, G, &factx->div_G);
+            ਜੇ (g0 != g_prev) {
+                ਅਚਲ size_t rem_g = G - g0;
+                ਜੇ (G <= 32) {
+                    ਅਚਲ HVX_ਸਦਿਸ਼ v_lo = Q6_V_vror_VR(v_ਸਿਰ_sinks, g0 * ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+                    ਅਚਲ HVX_ਸਦਿਸ਼ v_hi = Q6_V_vror_VR(v_ਸਿਰ_sinks, 128 - rem_g * ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+                    v_sink = Q6_V_vmux_QVV(Q6_Q_vsetq2_R(rem_g * ਆਕਾਰ(ਦਸ਼ਮਲਵ)), v_lo, v_hi);
+                    ਲਈ (size_t len = G; len < 32; len <<= 1) {
+                        ਅਚਲ HVX_ਸਦਿਸ਼_Pred q_keep    = Q6_Q_vsetq_R(len * ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+                        ਅਚਲ HVX_ਸਦਿਸ਼     v_shifted = Q6_V_vror_VR(v_sink, 128 - len * ਆਕਾਰ(ਦਸ਼ਮਲਵ));
                         v_sink = Q6_V_vmux_QVV(q_keep, v_sink, v_shifted);
                     }
-                } else if (rem_g >= 32) {
-                    v_sink = hvx_fa_load_sinks(sinks_data, head_base + g0, 32);
-                } else {
-                    const HVX_Vector v_lo = hvx_fa_load_sinks(sinks_data, head_base + g0, rem_g);
-                    const HVX_Vector v_hi = hvx_fa_load_sinks(sinks_data, head_base, 32 - rem_g);
-                    v_sink = Q6_V_vmux_QVV(Q6_Q_vsetq_R(rem_g * sizeof(float)), v_lo, Q6_V_vror_VR(v_hi, 128 - rem_g * sizeof(float)));
+                } ਨਹੀਂਤਾਂ ਜੇ (rem_g >= 32) {
+                    v_sink = hvx_fa_ਲੱਦੋ_sinks(sinks_ਅੰਕੜੇ, ਸਿਰ_ਅਧਾਰ + g0, 32);
+                } ਨਹੀਂਤਾਂ {
+                    ਅਚਲ HVX_ਸਦਿਸ਼ v_lo = hvx_fa_ਲੱਦੋ_sinks(sinks_ਅੰਕੜੇ, ਸਿਰ_ਅਧਾਰ + g0, rem_g);
+                    ਅਚਲ HVX_ਸਦਿਸ਼ v_hi = hvx_fa_ਲੱਦੋ_sinks(sinks_ਅੰਕੜੇ, ਸਿਰ_ਅਧਾਰ, 32 - rem_g);
+                    v_sink = Q6_V_vmux_QVV(Q6_Q_vsetq_R(rem_g * ਆਕਾਰ(ਦਸ਼ਮਲਵ)), v_lo, Q6_V_vror_VR(v_hi, 128 - rem_g * ਆਕਾਰ(ਦਸ਼ਮਲਵ)));
                 }
                 g_prev = g0;
             }
 
-            HVX_Vector v_d = HVX_OP_SUB_F32(v_sink, HVX_OP_MUL_F32(factx->vtcm_m_vec[i], v_ln2));
-            if (r0 + 32 > n_rows_g) {
-                const HVX_VectorPred q_valid = Q6_Q_vsetq_R((n_rows_g - r0) * sizeof(float));
+            HVX_ਸਦਿਸ਼ v_d = HVX_OP_SUB_F32(v_sink, HVX_OP_MUL_F32(factx->vtcm_m_vec[i], v_ln2));
+            ਜੇ (r0 + 32 > n_ਪੰਕਤੀਆਂ_g) {
+                ਅਚਲ HVX_ਸਦਿਸ਼_Pred q_valid = Q6_Q_vsetq_R((n_ਪੰਕਤੀਆਂ_g - r0) * ਆਕਾਰ(ਦਸ਼ਮਲਵ));
                 v_d = Q6_V_vmux_QVV(q_valid, v_d, Q6_V_vzero());
             }
-            factx->vtcm_l_vec[i] = HVX_OP_ADD_F32(factx->vtcm_l_vec[i], hvx_vec_exp_f32(v_d));
+            factx->vtcm_l_vec[i] = HVX_OP_ਜੋੜੋ_F32(factx->vtcm_l_vec[i], hvx_vec_exp_f32(v_d));
         }
     }
 
-    const HVX_Vector     v_offsets = *(const HVX_Vector *) d_tile_scatter_offsets;
-    const HVX_VectorPred q_32_mask = Q6_Q_vsetq_R(32 * sizeof(__fp16));
-    const HVX_Vector     one       = hvx_vec_splat_f32(1.0f);
+    ਅਚਲ HVX_ਸਦਿਸ਼     v_offsets = *(ਅਚਲ HVX_ਸਦਿਸ਼ *) d_tile_scatter_offsets;
+    ਅਚਲ HVX_ਸਦਿਸ਼_Pred q_32_ਨਕਾਬ = Q6_Q_vsetq_R(32 * ਆਕਾਰ(__fp16));
+    ਅਚਲ HVX_ਸਦਿਸ਼     one       = hvx_vec_splat_f32(1.0f);
 
-    HVX_Vector v_content = Q6_V_vzero();
-    for (size_t i = 0; i < n_row_tiles; ++i) {
-        if ((i % 2) == 0) {
-            HVX_Vector inv_lo = HVX_OP_MUL_F32(one, hvx_vec_inverse_f32(factx->vtcm_l_vec[i]));
-            HVX_Vector inv_hi = (i + 1 < n_row_tiles) ? HVX_OP_MUL_F32(one, hvx_vec_inverse_f32(factx->vtcm_l_vec[i + 1])) : Q6_V_vzero();
-            v_content = hvx_vec_f32_to_f16(inv_lo, inv_hi);
-        } else {
+    HVX_ਸਦਿਸ਼ v_content = Q6_V_vzero();
+    ਲਈ (size_t i = 0; i < n_ਪੰਕਤੀ_tiles; ++i) {
+        ਜੇ ((i % 2) == 0) {
+            HVX_ਸਦਿਸ਼ inv_lo = HVX_OP_MUL_F32(one, hvx_vec_inverse_f32(factx->vtcm_l_vec[i]));
+            HVX_ਸਦਿਸ਼ inv_hi = (i + 1 < n_ਪੰਕਤੀ_tiles) ? HVX_OP_MUL_F32(one, hvx_vec_inverse_f32(factx->vtcm_l_vec[i + 1])) : Q6_V_vzero();
+            v_content = hvx_vec_f32_ਮੰਜ਼ਿਲ_f16(inv_lo, inv_hi);
+        } ਨਹੀਂਤਾਂ {
             v_content = Q6_V_vror_VR(v_content, 64);
         }
 
-        __fp16 * out_base = factx->vtcm_d_inv_l + i * HMX_FP16_TILE_N_ELMS;
-        Q6_vscatter_QRMVhV(q_32_mask, (size_t) out_base, HMX_FP16_TILE_SIZE - 1, v_offsets, v_content);
+        __fp16 * ਬਾਹਰਲਾ_ਅਧਾਰ = factx->vtcm_d_inv_l + i * HMX_FP16_TILE_N_ELMS;
+        Q6_vscatter_QRMVhV(q_32_ਨਕਾਬ, (size_t) ਬਾਹਰਲਾ_ਅਧਾਰ, HMX_FP16_TILE_ਮਾਪ - 1, v_offsets, v_content);
     }
 }
 
-static void fa_phase_softmax_and_build_d(struct hmx_fa_context * factx,
-                                         fa_softmax_args_t *     sargs,
-                                         size_t                  n_row_tiles,
-                                         size_t                  n_row_tiles_g_br) {
-    work_queue_t wp = factx->octx->ctx->work_queue;
-    const size_t n_row_vec_cnt = hmx_ceil_div(sargs->n_rows_g, 64);
+ਸਥਿਰ ਖਾਲੀ fa_phase_softmax_and_build_d(ਬਣਤਰ hmx_fa_context * factx,
+                                         fa_softmax_ਦਲੀਲਾਂ_t *     sargs,
+                                         size_t                  n_ਪੰਕਤੀ_tiles,
+                                         size_t                  n_ਪੰਕਤੀ_tiles_g_br) {
+    work_ਕਤਾਰ_t wp = factx->octx->ctx->work_ਕਤਾਰ;
+    ਅਚਲ size_t n_ਪੰਕਤੀ_vec_cnt = hmx_ceil_div(sargs->n_ਪੰਕਤੀਆਂ_g, 64);
 
-    worker_callback_t softmax_fn = fa_softmax_thread;
-    if (sargs->mask == NULL && !factx->has_softcap && !sargs->has_alibi) {
+    ਕਾਮਾ_callback_t softmax_fn = fa_softmax_thread;
+    ਜੇ (sargs->ਨਕਾਬ == ਨਿਰਾ && !factx->has_softcap && !sargs->has_alibi) {
         softmax_fn = fa_softmax_thread_nomask;
-    } else if (sargs->mask != NULL && factx->mask_broadcast && !factx->has_softcap && !sargs->has_alibi) {
-        if (sargs->G == 1) {
-            softmax_fn = fa_softmax_thread_mask_broadcast_g1;
-        } else {
-            softmax_fn = fa_softmax_thread_mask_broadcast_gn;
+    } ਨਹੀਂਤਾਂ ਜੇ (sargs->ਨਕਾਬ != ਨਿਰਾ && factx->ਨਕਾਬ_ਪ੍ਰਸਾਰਣ && !factx->has_softcap && !sargs->has_alibi) {
+        ਜੇ (sargs->G == 1) {
+            softmax_fn = fa_softmax_thread_ਨਕਾਬ_ਪ੍ਰਸਾਰਣ_g1;
+        } ਨਹੀਂਤਾਂ {
+            softmax_fn = fa_softmax_thread_ਨਕਾਬ_ਪ੍ਰਸਾਰਣ_gn;
         }
     }
 
-    if (factx->n_threads > 1 && n_row_vec_cnt >= 2) {
-        uint32_t n_use = (uint32_t) hex_smin((size_t) factx->n_threads, n_row_vec_cnt);
-        sargs->thread_div = init_fastdiv_values(n_use);
-        work_queue_run(wp, softmax_fn, sargs, n_use);
-    } else {
+    ਜੇ (factx->n_ਧਾਗੇ > 1 && n_ਪੰਕਤੀ_vec_cnt >= 2) {
+        uint32_t n_use = (uint32_t) hex_smin((size_t) factx->n_ਧਾਗੇ, n_ਪੰਕਤੀ_vec_cnt);
+        sargs->thread_div = init_fastdiv_ਮੁੱਲਾਂ(n_use);
+        work_ਕਤਾਰ_ਲੜੀਵਾਰ(wp, softmax_fn, sargs, n_use);
+    } ਨਹੀਂਤਾਂ {
         softmax_fn(1, 0, sargs);
     }
 }
@@ -1747,220 +1747,220 @@ static void fa_phase_softmax_and_build_d(struct hmx_fa_context * factx,
 // HMX job structs and worker functions
 // ============================================================================
 
-typedef struct {
-    const __fp16 * q_tiles;
-    const __fp16 * k_tiles;
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
+    ਅਚਲ __fp16 * q_tiles;
+    ਅਚਲ __fp16 * k_tiles;
     __fp16 *       s_tiles;
-    size_t         n_row_tiles;
-    size_t         n_col_tiles;
+    size_t         n_ਪੰਕਤੀ_tiles;
+    size_t         n_ਖਾਨਾ_tiles;
     size_t         n_dot_tiles;  // DK / 32
-    size_t         n_tiles_per_bc;
+    size_t         n_tiles_ਪ੍ਰਤੀ_bc;
     uint8_t *      hmx_scales;
-} hmx_fa_qk_job_t;
+} hmx_fa_qk_ਕੰਮ_t;
 
-static void hmx_fa_qk_dot_worker(void * data) {
-    hmx_fa_qk_job_t * job            = (hmx_fa_qk_job_t *) data;
-    const size_t      n_row_tiles    = job->n_row_tiles;
-    const size_t      n_col_tiles    = job->n_col_tiles;
-    const size_t      n_dot_tiles    = job->n_dot_tiles;
-    const size_t      n_tiles_per_bc = job->n_tiles_per_bc;
-    const __fp16 * restrict q_tiles  = job->q_tiles;
-    const __fp16 * restrict k_tiles  = job->k_tiles;
-    __fp16 * restrict s_tiles        = job->s_tiles;
-    __builtin_assume(n_row_tiles > 0);
-    __builtin_assume(n_col_tiles > 0);
+ਸਥਿਰ ਖਾਲੀ hmx_fa_qk_dot_ਕਾਮਾ(ਖਾਲੀ * ਅੰਕੜੇ) {
+    hmx_fa_qk_ਕੰਮ_t * ਕੰਮ            = (hmx_fa_qk_ਕੰਮ_t *) ਅੰਕੜੇ;
+    ਅਚਲ size_t      n_ਪੰਕਤੀ_tiles    = ਕੰਮ->n_ਪੰਕਤੀ_tiles;
+    ਅਚਲ size_t      n_ਖਾਨਾ_tiles    = ਕੰਮ->n_ਖਾਨਾ_tiles;
+    ਅਚਲ size_t      n_dot_tiles    = ਕੰਮ->n_dot_tiles;
+    ਅਚਲ size_t      n_tiles_ਪ੍ਰਤੀ_bc = ਕੰਮ->n_tiles_ਪ੍ਰਤੀ_bc;
+    ਅਚਲ __fp16 * ਸੀਮਿਤ q_tiles  = ਕੰਮ->q_tiles;
+    ਅਚਲ __fp16 * ਸੀਮਿਤ k_tiles  = ਕੰਮ->k_tiles;
+    __fp16 * ਸੀਮਿਤ s_tiles        = ਕੰਮ->s_tiles;
+    __builtin_assume(n_ਪੰਕਤੀ_tiles > 0);
+    __builtin_assume(n_ਖਾਨਾ_tiles > 0);
     __builtin_assume(n_dot_tiles > 0);
 
-    asm volatile(HMX_SET_BIAS("%0") :: "r"((unsigned int)job->hmx_scales));
-    const size_t dot_stride = n_dot_tiles * HMX_FP16_TILE_N_ELMS;
-    for (size_t r = 0; r < n_row_tiles; ++r) {
-        const __fp16 * row_tiles = q_tiles + r * dot_stride;
-        const __fp16 * col_tiles = k_tiles;
-        __fp16 *       out_tile  = s_tiles + r * n_tiles_per_bc * HMX_FP16_TILE_N_ELMS;
+    asm ਅਸਥਿਰ(HMX_ਸੈੱਟ_BIAS("%0") :: "r"((ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ)ਕੰਮ->hmx_scales));
+    ਅਚਲ size_t dot_stride = n_dot_tiles * HMX_FP16_TILE_N_ELMS;
+    ਲਈ (size_t r = 0; r < n_ਪੰਕਤੀ_tiles; ++r) {
+        ਅਚਲ __fp16 * ਪੰਕਤੀ_tiles = q_tiles + r * dot_stride;
+        ਅਚਲ __fp16 * ਖਾਨਾ_tiles = k_tiles;
+        __fp16 *       ਬਾਹਰਲਾ_tile  = s_tiles + r * n_tiles_ਪ੍ਰਤੀ_bc * HMX_FP16_TILE_N_ELMS;
 
-        for (size_t c = 0; c < n_col_tiles; ++c) {
-            hmx_fa_qk_dot_tile(row_tiles, col_tiles, out_tile, n_dot_tiles);
-            col_tiles += dot_stride;
-            out_tile  += HMX_FP16_TILE_N_ELMS;
+        ਲਈ (size_t c = 0; c < n_ਖਾਨਾ_tiles; ++c) {
+            hmx_fa_qk_dot_tile(ਪੰਕਤੀ_tiles, ਖਾਨਾ_tiles, ਬਾਹਰਲਾ_tile, n_dot_tiles);
+            ਖਾਨਾ_tiles += dot_stride;
+            ਬਾਹਰਲਾ_tile  += HMX_FP16_TILE_N_ELMS;
         }
     }
 }
 
-typedef struct {
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
     __fp16 *       o_curr;
-    const __fp16 * o_prev;
-    const __fp16 * p_tiles;
-    const __fp16 * v_tiles;
-    const __fp16 * d_tiles;
+    ਅਚਲ __fp16 * o_prev;
+    ਅਚਲ __fp16 * p_tiles;
+    ਅਚਲ __fp16 * v_tiles;
+    ਅਚਲ __fp16 * d_tiles;
     uint8_t *      hmx_scales;
-    size_t         n_row_tiles;
-    size_t         n_col_tiles;
-    size_t         n_row_tiles_g_br;
-    size_t         n_tiles_per_bc;
+    size_t         n_ਪੰਕਤੀ_tiles;
+    size_t         n_ਖਾਨਾ_tiles;
+    size_t         n_ਪੰਕਤੀ_tiles_g_br;
+    size_t         n_tiles_ਪ੍ਰਤੀ_bc;
     size_t         DV;
-} hmx_fa_o_update_job_t;
+} hmx_fa_o_update_ਕੰਮ_t;
 
-static void hmx_fa_o_update_worker(void * data) {
-    hmx_fa_o_update_job_t * job              = (hmx_fa_o_update_job_t *) data;
-    const size_t            n_row_tiles      = job->n_row_tiles;
-    const size_t            n_col_tiles      = job->n_col_tiles;
-    const size_t            n_row_tiles_g_br = job->n_row_tiles_g_br;
-    const size_t            n_tiles_per_bc   = job->n_tiles_per_bc;
-    const size_t            DV_tiles         = job->DV / 32;
-    const __fp16 * restrict d_tiles          = job->d_tiles;
-    const __fp16 * restrict p_tiles          = job->p_tiles;
-    const __fp16 * restrict v_tiles          = job->v_tiles;
-    const __fp16 * restrict o_prev           = job->o_prev;
-    __fp16 * restrict o_curr                 = job->o_curr;
-    __builtin_assume(n_row_tiles > 0);
-    __builtin_assume(n_col_tiles > 0);
+ਸਥਿਰ ਖਾਲੀ hmx_fa_o_update_ਕਾਮਾ(ਖਾਲੀ * ਅੰਕੜੇ) {
+    hmx_fa_o_update_ਕੰਮ_t * ਕੰਮ              = (hmx_fa_o_update_ਕੰਮ_t *) ਅੰਕੜੇ;
+    ਅਚਲ size_t            n_ਪੰਕਤੀ_tiles      = ਕੰਮ->n_ਪੰਕਤੀ_tiles;
+    ਅਚਲ size_t            n_ਖਾਨਾ_tiles      = ਕੰਮ->n_ਖਾਨਾ_tiles;
+    ਅਚਲ size_t            n_ਪੰਕਤੀ_tiles_g_br = ਕੰਮ->n_ਪੰਕਤੀ_tiles_g_br;
+    ਅਚਲ size_t            n_tiles_ਪ੍ਰਤੀ_bc   = ਕੰਮ->n_tiles_ਪ੍ਰਤੀ_bc;
+    ਅਚਲ size_t            DV_tiles         = ਕੰਮ->DV / 32;
+    ਅਚਲ __fp16 * ਸੀਮਿਤ d_tiles          = ਕੰਮ->d_tiles;
+    ਅਚਲ __fp16 * ਸੀਮਿਤ p_tiles          = ਕੰਮ->p_tiles;
+    ਅਚਲ __fp16 * ਸੀਮਿਤ v_tiles          = ਕੰਮ->v_tiles;
+    ਅਚਲ __fp16 * ਸੀਮਿਤ o_prev           = ਕੰਮ->o_prev;
+    __fp16 * ਸੀਮਿਤ o_curr                 = ਕੰਮ->o_curr;
+    __builtin_assume(n_ਪੰਕਤੀ_tiles > 0);
+    __builtin_assume(n_ਖਾਨਾ_tiles > 0);
     __builtin_assume(DV_tiles > 0);
 
-    asm volatile(HMX_SET_BIAS("%0") :: "r"((unsigned int)job->hmx_scales));
-    const size_t o_stride = n_row_tiles_g_br * HMX_FP16_TILE_N_ELMS;
-    const size_t v_stride = n_tiles_per_bc * HMX_FP16_TILE_N_ELMS;
-    for (size_t r = 0; r < n_row_tiles; ++r) {
-        const __fp16 * d_diag     = d_tiles + r * HMX_FP16_TILE_N_ELMS;
-        const __fp16 * p_tile_in  = p_tiles + (r * n_tiles_per_bc) * HMX_FP16_TILE_N_ELMS;
-        const __fp16 * o_rc       = o_prev + r * HMX_FP16_TILE_N_ELMS;
-        const __fp16 * v_tile_in  = v_tiles;
-        __fp16       * o_tile_out = o_curr + r * HMX_FP16_TILE_N_ELMS;
+    asm ਅਸਥਿਰ(HMX_ਸੈੱਟ_BIAS("%0") :: "r"((ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ)ਕੰਮ->hmx_scales));
+    ਅਚਲ size_t o_stride = n_ਪੰਕਤੀ_tiles_g_br * HMX_FP16_TILE_N_ELMS;
+    ਅਚਲ size_t v_stride = n_tiles_ਪ੍ਰਤੀ_bc * HMX_FP16_TILE_N_ELMS;
+    ਲਈ (size_t r = 0; r < n_ਪੰਕਤੀ_tiles; ++r) {
+        ਅਚਲ __fp16 * d_diag     = d_tiles + r * HMX_FP16_TILE_N_ELMS;
+        ਅਚਲ __fp16 * p_tile_ਵਿੱਚ  = p_tiles + (r * n_tiles_ਪ੍ਰਤੀ_bc) * HMX_FP16_TILE_N_ELMS;
+        ਅਚਲ __fp16 * o_rc       = o_prev + r * HMX_FP16_TILE_N_ELMS;
+        ਅਚਲ __fp16 * v_tile_ਵਿੱਚ  = v_tiles;
+        __fp16       * o_tile_ਬਾਹਰਲਾ = o_curr + r * HMX_FP16_TILE_N_ELMS;
 
-        for (size_t c = 0; c < DV_tiles; ++c) {
-            hmx_fa_o_update_tile(d_diag, o_rc, p_tile_in, v_tile_in, o_tile_out, n_col_tiles);
+        ਲਈ (size_t c = 0; c < DV_tiles; ++c) {
+            hmx_fa_o_update_tile(d_diag, o_rc, p_tile_ਵਿੱਚ, v_tile_ਵਿੱਚ, o_tile_ਬਾਹਰਲਾ, n_ਖਾਨਾ_tiles);
             o_rc       += o_stride;
-            v_tile_in  += v_stride;
-            o_tile_out += o_stride;
+            v_tile_ਵਿੱਚ  += v_stride;
+            o_tile_ਬਾਹਰਲਾ += o_stride;
         }
     }
 }
 
-typedef struct {
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
     __fp16 *       o_curr;   // output (row-major tile layout)
-    const __fp16 * o_prev;   // input (column-major tile layout)
-    const __fp16 * d_tiles;  // diag(1/l) tiles
+    ਅਚਲ __fp16 * o_prev;   // input (column-major tile layout)
+    ਅਚਲ __fp16 * d_tiles;  // diag(1/l) tiles
     uint8_t *      hmx_scales;
-    size_t         n_row_tiles;
-    size_t         n_row_tiles_g_br;
+    size_t         n_ਪੰਕਤੀ_tiles;
+    size_t         n_ਪੰਕਤੀ_tiles_g_br;
     size_t         DV;
-} hmx_fa_o_norm_job_t;
+} hmx_fa_o_norm_ਕੰਮ_t;
 
-static void hmx_fa_o_norm_worker(void * data) {
-    hmx_fa_o_norm_job_t * job              = (hmx_fa_o_norm_job_t *) data;
-    const size_t          n_row_tiles      = job->n_row_tiles;
-    const size_t          n_row_tiles_g_br = job->n_row_tiles_g_br;
-    const size_t          DV_tiles         = job->DV / 32;
-    const __fp16 * restrict d_tiles        = job->d_tiles;
-    const __fp16 * restrict o_prev         = job->o_prev;
-    __fp16 * restrict o_curr               = job->o_curr;
-    __builtin_assume(n_row_tiles > 0);
+ਸਥਿਰ ਖਾਲੀ hmx_fa_o_norm_ਕਾਮਾ(ਖਾਲੀ * ਅੰਕੜੇ) {
+    hmx_fa_o_norm_ਕੰਮ_t * ਕੰਮ              = (hmx_fa_o_norm_ਕੰਮ_t *) ਅੰਕੜੇ;
+    ਅਚਲ size_t          n_ਪੰਕਤੀ_tiles      = ਕੰਮ->n_ਪੰਕਤੀ_tiles;
+    ਅਚਲ size_t          n_ਪੰਕਤੀ_tiles_g_br = ਕੰਮ->n_ਪੰਕਤੀ_tiles_g_br;
+    ਅਚਲ size_t          DV_tiles         = ਕੰਮ->DV / 32;
+    ਅਚਲ __fp16 * ਸੀਮਿਤ d_tiles        = ਕੰਮ->d_tiles;
+    ਅਚਲ __fp16 * ਸੀਮਿਤ o_prev         = ਕੰਮ->o_prev;
+    __fp16 * ਸੀਮਿਤ o_curr               = ਕੰਮ->o_curr;
+    __builtin_assume(n_ਪੰਕਤੀ_tiles > 0);
     __builtin_assume(DV_tiles > 0);
 
-    asm volatile(HMX_SET_BIAS("%0") :: "r"((unsigned int)job->hmx_scales));
-    const size_t o_stride = n_row_tiles_g_br * HMX_FP16_TILE_N_ELMS;
-    for (size_t r = 0; r < n_row_tiles; ++r) {
-        const __fp16 * d_diag = d_tiles + r * HMX_FP16_TILE_N_ELMS;
-        const __fp16 * o_rc = o_prev + r * HMX_FP16_TILE_N_ELMS;
-        __fp16 *       o_out = o_curr + r * DV_tiles * HMX_FP16_TILE_N_ELMS;
+    asm ਅਸਥਿਰ(HMX_ਸੈੱਟ_BIAS("%0") :: "r"((ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ)ਕੰਮ->hmx_scales));
+    ਅਚਲ size_t o_stride = n_ਪੰਕਤੀ_tiles_g_br * HMX_FP16_TILE_N_ELMS;
+    ਲਈ (size_t r = 0; r < n_ਪੰਕਤੀ_tiles; ++r) {
+        ਅਚਲ __fp16 * d_diag = d_tiles + r * HMX_FP16_TILE_N_ELMS;
+        ਅਚਲ __fp16 * o_rc = o_prev + r * HMX_FP16_TILE_N_ELMS;
+        __fp16 *       o_ਬਾਹਰਲਾ = o_curr + r * DV_tiles * HMX_FP16_TILE_N_ELMS;
 
-        for (size_t c = 0; c < DV_tiles; ++c) {
-            hmx_fa_o_norm_tile(d_diag, o_rc, o_out);
+        ਲਈ (size_t c = 0; c < DV_tiles; ++c) {
+            hmx_fa_o_norm_tile(d_diag, o_rc, o_ਬਾਹਰਲਾ);
             o_rc  += o_stride;
-            o_out += HMX_FP16_TILE_N_ELMS;
+            o_ਬਾਹਰਲਾ += HMX_FP16_TILE_N_ELMS;
         }
     }
 }
 
 // Populate per-GQA-row ALiBi slopes for a given KV head.
-static __attribute__((noinline)) void fa_compute_slopes(
-                              const struct hmx_fa_context * factx,
-                              uint32_t                      kv_head,
-                              size_t                        n_rows_g) {
+ਸਥਿਰ __attribute__((noinline)) ਖਾਲੀ fa_compute_slopes(
+                              ਅਚਲ ਬਣਤਰ hmx_fa_context * factx,
+                              uint32_t                      kv_ਸਿਰ,
+                              size_t                        n_ਪੰਕਤੀਆਂ_g) {
     __fp16 * slopes = factx->vtcm_slopes;
-    if (factx->max_bias == 0.0f) {
-        hvx_splat_f16_a(slopes, 1.0f, n_rows_g);
-        return;
+    ਜੇ (factx->max_bias == 0.0f) {
+        hvx_splat_f16_a(slopes, 1.0f, n_ਪੰਕਤੀਆਂ_g);
+        ਵਾਪਸ;
     }
 
-    const uint32_t G           = factx->G;
-    const uint32_t n_head_log2 = factx->n_head_log2;
-    const float    m0          = factx->m0;
-    const float    m1          = factx->m1;
+    ਅਚਲ uint32_t G           = factx->G;
+    ਅਚਲ uint32_t n_ਸਿਰ_log2 = factx->n_ਸਿਰ_log2;
+    ਅਚਲ ਦਸ਼ਮਲਵ    m0          = factx->m0;
+    ਅਚਲ ਦਸ਼ਮਲਵ    m1          = factx->m1;
 
-    __fp16 temp_slopes[512] __attribute__((aligned(128)));
-    if (G <= 32) {
+    __fp16 ਆਰਜ਼ੀ_slopes[512] __attribute__((aligned(128)));
+    ਜੇ (G <= 32) {
         // Fast path: Compute G unique slope values in vector registers
-        HVX_Vector v_val = hvx_alibi_slopes(kv_head, G, n_head_log2, m0, m1);
+        HVX_ਸਦਿਸ਼ v_val = hvx_alibi_slopes(kv_ਸਿਰ, G, n_ਸਿਰ_log2, m0, m1);
 
-        __fp16 temp_slopes_aligned[64] __attribute__((aligned(128)));
-        hvx_vmem(temp_slopes_aligned) = hvx_vec_f32_to_f16(v_val, Q6_V_vzero());
+        __fp16 ਆਰਜ਼ੀ_slopes_aligned[64] __attribute__((aligned(128)));
+        hvx_vmem(ਆਰਜ਼ੀ_slopes_aligned) = hvx_vec_f32_ਮੰਜ਼ਿਲ_f16(v_val, Q6_V_vzero());
 
-        for (uint32_t i = 0; i < G; ++i) {
-            temp_slopes[i] = temp_slopes_aligned[i];
+        ਲਈ (uint32_t i = 0; i < G; ++i) {
+            ਆਰਜ਼ੀ_slopes[i] = ਆਰਜ਼ੀ_slopes_aligned[i];
         }
-    } else {
+    } ਨਹੀਂਤਾਂ {
         // Fallback path: G > 32 (rare configurations)
-        for (uint32_t i = 0; i < G; ++i) {
-            temp_slopes[i] = (__fp16)alibi_slope(kv_head * G + i, n_head_log2, m0, m1);
+        ਲਈ (uint32_t i = 0; i < G; ++i) {
+            ਆਰਜ਼ੀ_slopes[i] = (__fp16)alibi_ਢਲਾਨ(kv_ਸਿਰ * G + i, n_ਸਿਰ_log2, m0, m1);
         }
     }
 
     // Allocate stack buffer to avoid scalar writes to VTCM (which generates L2 misses)
-    __fp16 local_slopes[n_rows_g] __attribute__((aligned(128)));
-    for (size_t r = 0; r < n_rows_g; ++r) {
-        local_slopes[r] = temp_slopes[fastmodulo(r, G, &factx->div_G)];
+    __fp16 local_slopes[n_ਪੰਕਤੀਆਂ_g] __attribute__((aligned(128)));
+    ਲਈ (size_t r = 0; r < n_ਪੰਕਤੀਆਂ_g; ++r) {
+        local_slopes[r] = ਆਰਜ਼ੀ_slopes[fastmodulo(r, G, &factx->div_G)];
     }
 
     // Copy to VTCM slopes using HVX block copy (both are aligned to 128 bytes)
-    hvx_copy_f16_aa((uint8_t *)slopes, (const uint8_t *)local_slopes, n_rows_g);
+    hvx_copy_f16_aa((uint8_t *)slopes, (ਅਚਲ uint8_t *)local_slopes, n_ਪੰਕਤੀਆਂ_g);
 }
 
-static void fa_push_mask_dma_gqa(
-    dma_queue *               dma_q,
-    const struct htp_tensor * mask,
-    uint32_t                  q_start,
+ਸਥਿਰ ਖਾਲੀ fa_ਧੱਕੋ_ਨਕਾਬ_dma_gqa(
+    dma_ਕਤਾਰ *               dma_q,
+    ਅਚਲ ਬਣਤਰ htp_tensor * ਨਕਾਬ,
+    uint32_t                  q_ਸ਼ੁਰੂ,
     uint32_t                  im3,
-    uint32_t                  kv_start,
-    uint32_t                  kv_head,
+    uint32_t                  kv_ਸ਼ੁਰੂ,
+    uint32_t                  kv_ਸਿਰ,
     uint32_t                  G,
-    uint32_t                  m_line_bytes,
-    uint32_t                  kv_rows,
-    uint32_t                  n_rows_q,
-    struct hmx_fa_context *   factx
+    uint32_t                  m_ਸਤਰ_ਬਾਈਟਾਂ,
+    uint32_t                  kv_ਪੰਕਤੀਆਂ,
+    uint32_t                  n_ਪੰਕਤੀਆਂ_q,
+    ਬਣਤਰ hmx_fa_context *   factx
 ) {
-    for (uint32_t g = 0; g < G; ++g) {
-        const uint32_t h_idx = kv_head * G + g;
-        const uint32_t im2 = fastmodulo(h_idx, mask->ne[2], &factx->src3_div2);
-        const dma_addr_t ms_src = mask->data + q_start * mask->nb[1] +
-                                  im2 * mask->nb[2] + im3 * mask->nb[3] + kv_start * sizeof(__fp16);
-        uint8_t * ms_dst = (uint8_t *) factx->vtcm_mask_buf + g * m_line_bytes;
-        dma_queue_push(dma_q, dma_make_data(ms_dst, ms_src), G * m_line_bytes, mask->nb[1], kv_rows * sizeof(__fp16), n_rows_q);
+    ਲਈ (uint32_t g = 0; g < G; ++g) {
+        ਅਚਲ uint32_t h_idx = kv_ਸਿਰ * G + g;
+        ਅਚਲ uint32_t im2 = fastmodulo(h_idx, ਨਕਾਬ->ne[2], &factx->src3_div2);
+        ਅਚਲ dma_addr_t ms_src = ਨਕਾਬ->ਅੰਕੜੇ + q_ਸ਼ੁਰੂ * ਨਕਾਬ->nb[1] +
+                                  im2 * ਨਕਾਬ->nb[2] + im3 * ਨਕਾਬ->nb[3] + kv_ਸ਼ੁਰੂ * ਆਕਾਰ(__fp16);
+        uint8_t * ms_dst = (uint8_t *) factx->vtcm_ਨਕਾਬ_buf + g * m_ਸਤਰ_ਬਾਈਟਾਂ;
+        dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(ms_dst, ms_src), G * m_ਸਤਰ_ਬਾਈਟਾਂ, ਨਕਾਬ->nb[1], kv_ਪੰਕਤੀਆਂ * ਆਕਾਰ(__fp16), n_ਪੰਕਤੀਆਂ_q);
     }
 }
 
-static void fa_pop_mask_dma_gqa(dma_queue * dma_q, uint32_t G) {
-    for (uint32_t g = 0; g < G; ++g) {
-        dma_queue_pop(dma_q);
+ਸਥਿਰ ਖਾਲੀ fa_ਕੱਢੋ_ਨਕਾਬ_dma_gqa(dma_ਕਤਾਰ * dma_q, uint32_t G) {
+    ਲਈ (uint32_t g = 0; g < G; ++g) {
+        dma_ਕਤਾਰ_ਕੱਢੋ(dma_q);
     }
 }
 
-static inline void fa_prefetch_block(dma_queue * dma_q, const struct htp_tensor * k, const struct htp_tensor * v, const struct htp_tensor * mask,
-                                     uint32_t b, size_t Bc, size_t size_k_row_padded, size_t size_k_row, size_t size_v_row_padded, size_t size_v_row,
-                                     uint32_t ik2, uint32_t ik3, uint32_t iv2, uint32_t iv3, uint32_t q_start, uint32_t im3, uint32_t kv_head, uint32_t G,
-                                     size_t m_line_bytes, size_t n_rows_q, size_t nek1, size_t prefetch_buf, struct hmx_fa_context * factx) {
-    const uint32_t  prefetch_start = b * Bc;
-    const uint32_t  prefetch_rows  = hex_smin(Bc, nek1 - prefetch_start);
-    const dma_addr_t k_prefetch_src = k->data + prefetch_start * k->nb[1] + ik2 * k->nb[2] + ik3 * k->nb[3];
-    dma_queue_push(dma_q, dma_make_data(factx->vtcm_k_fp16[prefetch_buf], k_prefetch_src), size_k_row_padded, k->nb[1], size_k_row, prefetch_rows);
-    const dma_addr_t v_prefetch_src = v->data + prefetch_start * v->nb[1] + iv2 * v->nb[2] + iv3 * v->nb[3];
-    dma_queue_push(dma_q, dma_make_data(factx->vtcm_v_fp16[prefetch_buf], v_prefetch_src), size_v_row_padded, v->nb[1], size_v_row, prefetch_rows);
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ fa_prefetch_ਖੰਡ(dma_ਕਤਾਰ * dma_q, ਅਚਲ ਬਣਤਰ htp_tensor * k, ਅਚਲ ਬਣਤਰ htp_tensor * v, ਅਚਲ ਬਣਤਰ htp_tensor * ਨਕਾਬ,
+                                     uint32_t b, size_t Bc, size_t ਮਾਪ_k_ਪੰਕਤੀ_padded, size_t ਮਾਪ_k_ਪੰਕਤੀ, size_t ਮਾਪ_v_ਪੰਕਤੀ_padded, size_t ਮਾਪ_v_ਪੰਕਤੀ,
+                                     uint32_t ik2, uint32_t ik3, uint32_t iv2, uint32_t iv3, uint32_t q_ਸ਼ੁਰੂ, uint32_t im3, uint32_t kv_ਸਿਰ, uint32_t G,
+                                     size_t m_ਸਤਰ_ਬਾਈਟਾਂ, size_t n_ਪੰਕਤੀਆਂ_q, size_t nek1, size_t prefetch_buf, ਬਣਤਰ hmx_fa_context * factx) {
+    ਅਚਲ uint32_t  prefetch_ਸ਼ੁਰੂ = b * Bc;
+    ਅਚਲ uint32_t  prefetch_ਪੰਕਤੀਆਂ  = hex_smin(Bc, nek1 - prefetch_ਸ਼ੁਰੂ);
+    ਅਚਲ dma_addr_t k_prefetch_src = k->ਅੰਕੜੇ + prefetch_ਸ਼ੁਰੂ * k->nb[1] + ik2 * k->nb[2] + ik3 * k->nb[3];
+    dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(factx->vtcm_k_fp16[prefetch_buf], k_prefetch_src), ਮਾਪ_k_ਪੰਕਤੀ_padded, k->nb[1], ਮਾਪ_k_ਪੰਕਤੀ, prefetch_ਪੰਕਤੀਆਂ);
+    ਅਚਲ dma_addr_t v_prefetch_src = v->ਅੰਕੜੇ + prefetch_ਸ਼ੁਰੂ * v->nb[1] + iv2 * v->nb[2] + iv3 * v->nb[3];
+    dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(factx->vtcm_v_fp16[prefetch_buf], v_prefetch_src), ਮਾਪ_v_ਪੰਕਤੀ_padded, v->nb[1], ਮਾਪ_v_ਪੰਕਤੀ, prefetch_ਪੰਕਤੀਆਂ);
 
-    if (mask) {
-        if (__builtin_expect(factx->mask_broadcast, true)) {
-            const dma_addr_t ms_src = mask->data + q_start * mask->nb[1] + im3 * mask->nb[3] + prefetch_start * sizeof(__fp16);
-            dma_cache_fa_push(dma_q, &factx->m_cache, ms_src, m_line_bytes, mask->nb[1], prefetch_rows * sizeof(__fp16), n_rows_q);
-        } else {
-            fa_push_mask_dma_gqa(dma_q, mask, q_start, im3, prefetch_start, kv_head, G, m_line_bytes, prefetch_rows, n_rows_q, factx);
+    ਜੇ (ਨਕਾਬ) {
+        ਜੇ (__builtin_expect(factx->ਨਕਾਬ_ਪ੍ਰਸਾਰਣ, true)) {
+            ਅਚਲ dma_addr_t ms_src = ਨਕਾਬ->ਅੰਕੜੇ + q_ਸ਼ੁਰੂ * ਨਕਾਬ->nb[1] + im3 * ਨਕਾਬ->nb[3] + prefetch_ਸ਼ੁਰੂ * ਆਕਾਰ(__fp16);
+            dma_cache_fa_ਧੱਕੋ(dma_q, &factx->m_cache, ms_src, m_ਸਤਰ_ਬਾਈਟਾਂ, ਨਕਾਬ->nb[1], prefetch_ਪੰਕਤੀਆਂ * ਆਕਾਰ(__fp16), n_ਪੰਕਤੀਆਂ_q);
+        } ਨਹੀਂਤਾਂ {
+            fa_ਧੱਕੋ_ਨਕਾਬ_dma_gqa(dma_q, ਨਕਾਬ, q_ਸ਼ੁਰੂ, im3, prefetch_ਸ਼ੁਰੂ, kv_ਸਿਰ, G, m_ਸਤਰ_ਬਾਈਟਾਂ, prefetch_ਪੰਕਤੀਆਂ, n_ਪੰਕਤੀਆਂ_q, factx);
         }
     }
 }
@@ -1969,54 +1969,54 @@ static inline void fa_prefetch_block(dma_queue * dma_q, const struct htp_tensor 
 // Core HMX flash attention algorithm (GQA-merged)
 // ============================================================================
 
-int hmx_flash_attn_ext(struct htp_ops_context * octx) {
-    struct htp_thread_trace * tr_hvx = &octx->ctx->trace[0];
-    struct htp_thread_trace * tr_hmx = &octx->ctx->trace[HTP_MAX_NTHREADS];
-    const struct htp_tensor * q    = octx->src[0];
-    const struct htp_tensor * k    = octx->src[1];
-    const struct htp_tensor * v    = octx->src[2];
-    const struct htp_tensor * mask = (octx->src[3] && octx->src[3]->data) ? octx->src[3] : NULL;
-    const struct htp_tensor * dst  = octx->dst;
+ਪੂਰਨ hmx_flash_attn_ext(ਬਣਤਰ htp_ops_context * octx) {
+    ਬਣਤਰ htp_thread_trace * tr_hvx = &octx->ctx->trace[0];
+    ਬਣਤਰ htp_thread_trace * tr_hmx = &octx->ctx->trace[HTP_MAX_NTHREADS];
+    ਅਚਲ ਬਣਤਰ htp_tensor * q    = octx->src[0];
+    ਅਚਲ ਬਣਤਰ htp_tensor * k    = octx->src[1];
+    ਅਚਲ ਬਣਤਰ htp_tensor * v    = octx->src[2];
+    ਅਚਲ ਬਣਤਰ htp_tensor * ਨਕਾਬ = (octx->src[3] && octx->src[3]->ਅੰਕੜੇ) ? octx->src[3] : ਨਿਰਾ;
+    ਅਚਲ ਬਣਤਰ htp_tensor * dst  = octx->dst;
 
-    struct htp_context * const ctx = octx->ctx;
+    ਬਣਤਰ htp_context * ਅਚਲ ctx = octx->ctx;
 
-    if (!ctx->hmx_enabled) {
-        return HTP_STATUS_NO_SUPPORT;
+    ਜੇ (!ctx->hmx_enabled) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_NO_SUPPORT;
     }
 
     // Dimensions
-    const uint32_t neq0 = q->ne[0];  // head_dim (DK)
-    const uint32_t neq1 = q->ne[1];  // n_tokens
-    const uint32_t neq2 = q->ne[2];  // n_heads
-    const uint32_t neq3 = q->ne[3];  // n_seqs
+    ਅਚਲ uint32_t neq0 = q->ne[0];  // head_dim (DK)
+    ਅਚਲ uint32_t neq1 = q->ne[1];  // n_tokens
+    ਅਚਲ uint32_t neq2 = q->ne[2];  // n_heads
+    ਅਚਲ uint32_t neq3 = q->ne[3];  // n_seqs
 
-    const uint32_t nek0 = k->ne[0];  // head_dim
-    const uint32_t nek1 = k->ne[1];  // kv_len
+    ਅਚਲ uint32_t nek0 = k->ne[0];  // head_dim
+    ਅਚਲ uint32_t nek1 = k->ne[1];  // kv_len
 
-    const uint32_t nev0 = v->ne[0];  // head_dim (DV)
+    ਅਚਲ uint32_t nev0 = v->ne[0];  // head_dim (DV)
 
-    const uint32_t DK = neq0;
-    const uint32_t DV = nev0;
+    ਅਚਲ uint32_t DK = neq0;
+    ਅਚਲ uint32_t DV = nev0;
 
     // HMX tiles head_dim in units of 64. head_dim need not be 64- (or 32-) aligned:
     // we can operate on DK/DV rounded up to 64 with tail lanes [D, D_pad) zero-filled.
-    const uint32_t DK_pad = hex_round_up(DK, 64);
-    const uint32_t DV_pad = hex_round_up(DV, 64);
-    if (DK == 0 || DV == 0) {
-        return HTP_STATUS_NO_SUPPORT;
+    ਅਚਲ uint32_t DK_pad = hex_ਗੇੜਾ_ਉੱਪਰ(DK, 64);
+    ਅਚਲ uint32_t DV_pad = hex_ਗੇੜਾ_ਉੱਪਰ(DV, 64);
+    ਜੇ (DK == 0 || DV == 0) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_NO_SUPPORT;
     }
 
-    const struct htp_fa_kernel_params * kparams = (const struct htp_fa_kernel_params *) octx->kernel_params;
-    const uint32_t n_kv_heads = k->ne[2];
+    ਅਚਲ ਬਣਤਰ htp_fa_kernel_params * kparams = (ਅਚਲ ਬਣਤਰ htp_fa_kernel_params *) octx->kernel_params;
+    ਅਚਲ uint32_t n_kv_heads = k->ne[2];
 
     // ======== Build context ========
-    struct hmx_fa_context factx;
-    memset(&factx, 0, sizeof(factx));
+    ਬਣਤਰ hmx_fa_context factx;
+    memset(&factx, 0, ਆਕਾਰ(factx));
     factx.octx           = octx;
     factx.sinks          = octx->src[4];  // NULL if this op has no attention sinks
     factx.k              = k;
     factx.v              = v;
-    factx.n_threads      = kparams->n_threads;
+    factx.n_ਧਾਗੇ      = kparams->n_ਧਾਗੇ;
     factx.DK             = DK;
     factx.DV             = DV;
     factx.DK_pad         = DK_pad;
@@ -2030,12 +2030,12 @@ int hmx_flash_attn_ext(struct htp_ops_context * octx) {
     factx.Br             = kparams->Br;
     factx.Bc             = kparams->Bc;
     factx.g_br           = kparams->u.hmx.g_br;
-    factx.n_kv_blocks    = kparams->n_kv_blocks;
+    factx.n_kv_ਖੰਡਾਂ    = kparams->n_kv_ਖੰਡਾਂ;
     factx.is_q_fp32      = (q->type == HTP_TYPE_F32);
     factx.is_dst_fp32    = (dst->type == HTP_TYPE_F32);
     factx.pipeline       = (kparams->u.hmx.pipeline != 0);
-    factx.mask_broadcast = (kparams->u.hmx.mask_broadcast != 0);
-    if (mask) {
+    factx.ਨਕਾਬ_ਪ੍ਰਸਾਰਣ = (kparams->u.hmx.ਨਕਾਬ_ਪ੍ਰਸਾਰਣ != 0);
+    ਜੇ (ਨਕਾਬ) {
         factx.src3_div2  = kparams->src3_div2;
         factx.src3_div3  = kparams->src3_div3;
     }
@@ -2044,50 +2044,50 @@ int hmx_flash_attn_ext(struct htp_ops_context * octx) {
     factx.scale         = (__fp16) kparams->scale;
     factx.max_bias      = kparams->max_bias;
     factx.logit_softcap = 0;
-    if (factx.has_softcap) {
+    ਜੇ (factx.has_softcap) {
         factx.logit_softcap = (__fp16) kparams->logit_softcap;
     }
 
-    factx.n_head_log2 = kparams->n_head_log2;
+    factx.n_ਸਿਰ_log2 = kparams->n_ਸਿਰ_log2;
     factx.m0          = kparams->m0;
     factx.m1          = kparams->m1;
 
-    const uint32_t Br = factx.Br;
-    const uint32_t Bc = factx.Bc;
-    const uint32_t g_br = factx.g_br;
-    const bool pipeline = factx.pipeline;
-    const uint32_t n_threads = factx.n_threads;
-    const uint32_t G = factx.G;
+    ਅਚਲ uint32_t Br = factx.Br;
+    ਅਚਲ uint32_t Bc = factx.Bc;
+    ਅਚਲ uint32_t g_br = factx.g_br;
+    ਅਚਲ bool pipeline = factx.pipeline;
+    ਅਚਲ uint32_t n_ਧਾਗੇ = factx.n_ਧਾਗੇ;
+    ਅਚਲ uint32_t G = factx.G;
 
     // Multi-device: prefer head-parallel partitioning (each core owns a disjoint head
     // shard), falling back to Q-block (token) split when heads don't divide evenly.
-    const uint32_t n_q_blocks = (neq1 + Br - 1) / Br;
-    uint32_t q_start_min  = 0;
-    uint32_t q_start_max  = neq1;
-    uint32_t kv_head_min  = 0;
-    uint32_t kv_head_max  = n_kv_heads;
+    ਅਚਲ uint32_t n_q_ਖੰਡਾਂ = (neq1 + Br - 1) / Br;
+    uint32_t q_ਸ਼ੁਰੂ_min  = 0;
+    uint32_t q_ਸ਼ੁਰੂ_max  = neq1;
+    uint32_t kv_ਸਿਰ_min  = 0;
+    uint32_t kv_ਸਿਰ_max  = n_kv_heads;
 
-    if (octx->ctx->mdev.count > 1) {
-        const uint32_t mdev_count = octx->ctx->mdev.count;
-        const uint32_t mdev_idx   = octx->ctx->mdev.idx;
-        const uint32_t dst_e_size = (dst->type == HTP_TYPE_F32) ? sizeof(float) : sizeof(__fp16);
-        const bool can_split      = htp_tensor_can_row_partition(dst, dst_e_size);
+    ਜੇ (octx->ctx->mdev.ਗਿਣਤੀ_2 > 1) {
+        ਅਚਲ uint32_t mdev_ਗਿਣਤੀ = octx->ctx->mdev.ਗਿਣਤੀ_2;
+        ਅਚਲ uint32_t mdev_idx   = octx->ctx->mdev.idx;
+        ਅਚਲ uint32_t dst_e_ਮਾਪ = (dst->type == HTP_TYPE_F32) ? ਆਕਾਰ(ਦਸ਼ਮਲਵ) : ਆਕਾਰ(__fp16);
+        ਅਚਲ bool can_ਵੰਡੋ      = htp_tensor_can_ਪੰਕਤੀ_ਹਿੱਸੇ_ਕਰੋ(dst, dst_e_ਮਾਪ);
 
-        if (kparams->head_split && can_split && n_kv_heads >= mdev_count && n_kv_heads % mdev_count == 0) {
-            const uint32_t kv_per_core = n_kv_heads / mdev_count;
-            kv_head_min = mdev_idx * kv_per_core;
-            kv_head_max = kv_head_min + kv_per_core;
-        } else {
-            const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(n_q_blocks, can_split ? 1 : 0, mdev_idx, mdev_count, &octx->ctx->mdev.count_div);
-            const uint32_t block_start = range.start;
-            const uint32_t block_end   = range.start + range.count;
+        ਜੇ (kparams->ਸਿਰ_ਵੰਡੋ && can_ਵੰਡੋ && n_kv_heads >= mdev_ਗਿਣਤੀ && n_kv_heads % mdev_ਗਿਣਤੀ == 0) {
+            ਅਚਲ uint32_t kv_ਪ੍ਰਤੀ_core = n_kv_heads / mdev_ਗਿਣਤੀ;
+            kv_ਸਿਰ_min = mdev_idx * kv_ਪ੍ਰਤੀ_core;
+            kv_ਸਿਰ_max = kv_ਸਿਰ_min + kv_ਪ੍ਰਤੀ_core;
+        } ਨਹੀਂਤਾਂ {
+            ਅਚਲ ਬਣਤਰ htp_tensor_mdev_range range = htp_tensor_mdev_ਹਿੱਸੇ_ਕਰੋ(n_q_ਖੰਡਾਂ, can_ਵੰਡੋ ? 1 : 0, mdev_idx, mdev_ਗਿਣਤੀ, &octx->ctx->mdev.ਗਿਣਤੀ_div);
+            ਅਚਲ uint32_t ਖੰਡ_ਸ਼ੁਰੂ = range.ਸ਼ੁਰੂ;
+            ਅਚਲ uint32_t ਖੰਡ_ਸਿਰਾ   = range.ਸ਼ੁਰੂ + range.ਗਿਣਤੀ_2;
 
-            if (block_start >= block_end) {
-                return HTP_STATUS_OK;
+            ਜੇ (ਖੰਡ_ਸ਼ੁਰੂ >= ਖੰਡ_ਸਿਰਾ) {
+                ਵਾਪਸ HTP_ਸਥਿਤੀ_OK;
             }
 
-            q_start_min = block_start * Br;
-            q_start_max = MIN(block_end * Br, neq1);
+            q_ਸ਼ੁਰੂ_min = ਖੰਡ_ਸ਼ੁਰੂ * Br;
+            q_ਸ਼ੁਰੂ_max = MIN(ਖੰਡ_ਸਿਰਾ * Br, neq1);
         }
     }
 
@@ -2096,175 +2096,175 @@ int hmx_flash_attn_ext(struct htp_ops_context * octx) {
     // throughout the KV loop below. The DMA copies only the real DK/DV columns; the
     // staging rows are padded to hold DK_pad/DV_pad columns (tail zero-filled below)
     // so the HMX interleave/tile logic can operate on 64-aligned head dims.
-    const size_t size_k_row        = htp_tensor_get_row_size(k->type, DK);
-    const size_t size_v_row        = htp_tensor_get_row_size(v->type, DV);
-    const size_t size_k_row_padded = hex_round_up(DK_pad * sizeof(__fp16), 128);
-    const size_t size_v_row_padded = hex_round_up(DV_pad * sizeof(__fp16), 128);
+    ਅਚਲ size_t ਮਾਪ_k_ਪੰਕਤੀ        = htp_tensor_get_ਪੰਕਤੀ_ਮਾਪ(k->type, DK);
+    ਅਚਲ size_t ਮਾਪ_v_ਪੰਕਤੀ        = htp_tensor_get_ਪੰਕਤੀ_ਮਾਪ(v->type, DV);
+    ਅਚਲ size_t ਮਾਪ_k_ਪੰਕਤੀ_padded = hex_ਗੇੜਾ_ਉੱਪਰ(DK_pad * ਆਕਾਰ(__fp16), 128);
+    ਅਚਲ size_t ਮਾਪ_v_ਪੰਕਤੀ_padded = hex_ਗੇੜਾ_ਉੱਪਰ(DV_pad * ਆਕਾਰ(__fp16), 128);
 
     // Build the VTCM layout once (shared with the host estimator) and place every
     // scratch buffer at its computed offset. Padded head dims size the HMX tiles.
-    struct hmx_fa_vtcm_layout L;
-    hmx_fa_vtcm_layout_build(&L, G, DK_pad, DV_pad, Br, Bc, n_threads, pipeline, factx.is_q_fp32, factx.sinks != NULL, factx.n_heads);
+    ਬਣਤਰ hmx_fa_vtcm_layout L;
+    hmx_fa_vtcm_layout_build(&L, G, DK_pad, DV_pad, Br, Bc, n_ਧਾਗੇ, pipeline, factx.is_q_fp32, factx.sinks != ਨਿਰਾ, factx.n_heads);
 
-    if (L.total_bytes > ctx->vtcm_size) {
-        return HTP_STATUS_VTCM_TOO_SMALL;
+    ਜੇ (L.ਕੁੱਲ_ਬਾਈਟਾਂ > ctx->vtcm_ਮਾਪ) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_VTCM_TOO_SMALL;
     }
 
-    uint8_t * const base = ctx->vtcm_base;
+    uint8_t * ਅਚਲ ਅਧਾਰ = ctx->vtcm_ਅਧਾਰ;
 
-    factx.vtcm_q_dma          = VTCM_LAYOUT_PTR(__fp16, base, L.off_q_dma);
-    factx.vtcm_q_tiles        = VTCM_LAYOUT_PTR(__fp16, base, L.off_q_tiles);
-    factx.vtcm_o_tiles[0]     = VTCM_LAYOUT_PTR(__fp16, base, L.off_o_tiles[0]);
-    factx.vtcm_o_tiles[1]     = VTCM_LAYOUT_PTR(__fp16, base, L.off_o_tiles[1]);
-    factx.vtcm_k_fp16[0]      = VTCM_LAYOUT_PTR(__fp16, base, L.off_k_fp16[0]);
-    factx.vtcm_k_fp16[1]      = VTCM_LAYOUT_PTR(__fp16, base, L.off_k_fp16[1]);
-    factx.vtcm_v_fp16[0]      = VTCM_LAYOUT_PTR(__fp16, base, L.off_v_fp16[0]);
-    factx.vtcm_v_fp16[1]      = VTCM_LAYOUT_PTR(__fp16, base, L.off_v_fp16[1]);
-    factx.vtcm_k_tiles[0]     = VTCM_LAYOUT_PTR(__fp16, base, L.off_k_tiles[0]);
-    factx.vtcm_k_tiles[1]     = VTCM_LAYOUT_PTR_OPTIONAL(__fp16, base, L.off_k_tiles[1], pipeline);
-    factx.vtcm_v_tiles[0]     = VTCM_LAYOUT_PTR(__fp16, base, L.off_v_tiles[0]);
-    factx.vtcm_v_tiles[1]     = VTCM_LAYOUT_PTR_OPTIONAL(__fp16, base, L.off_v_tiles[1], pipeline);
-    factx.vtcm_s_tiles[0]     = VTCM_LAYOUT_PTR(__fp16, base, L.off_s_tiles[0]);
-    factx.vtcm_s_tiles[1]     = VTCM_LAYOUT_PTR_OPTIONAL(__fp16, base, L.off_s_tiles[1], pipeline);
-    factx.vtcm_p_tiles[0]     = VTCM_LAYOUT_PTR(__fp16, base, L.off_p_tiles[0]);
-    factx.vtcm_p_tiles[1]     = VTCM_LAYOUT_PTR_OPTIONAL(__fp16, base, L.off_p_tiles[1], pipeline);
-    factx.vtcm_d_tiles[0]     = VTCM_LAYOUT_PTR(__fp16, base, L.off_d_tiles[0]);
-    factx.vtcm_d_tiles[1]     = VTCM_LAYOUT_PTR_OPTIONAL(__fp16, base, L.off_d_tiles[1], pipeline);
-    factx.vtcm_d_inv_l        = VTCM_LAYOUT_PTR(__fp16, base, L.off_d_inv_l);
-    factx.vtcm_m_vec          = VTCM_LAYOUT_PTR(HVX_Vector, base, L.off_m_vec);
-    factx.vtcm_l_vec          = VTCM_LAYOUT_PTR(HVX_Vector, base, L.off_l_vec);
-    factx.vtcm_s_rowmax       = VTCM_LAYOUT_PTR(HVX_Vector, base, L.off_s_rowmax);
-    factx.vtcm_p_rowsum       = VTCM_LAYOUT_PTR(HVX_Vector, base, L.off_p_rowsum);
-    factx.vtcm_row_bufs       = VTCM_LAYOUT_PTR(HVX_Vector, base, L.off_row_bufs);
-    factx.row_buf_stride      = L.row_buf_stride;
-    factx.vtcm_hmx_scales_id  = VTCM_LAYOUT_PTR(uint8_t, base, L.off_hmx_scales_id);
-    factx.vtcm_hmx_scales_qk  = VTCM_LAYOUT_PTR(uint8_t, base, L.off_hmx_scales_qk);
-    factx.vtcm_mask_buf       = VTCM_LAYOUT_PTR(__fp16, base, L.off_mask_buf);
-    factx.mask_buf_row_stride = L.mask_buf_row_stride;
-    factx.q_tile_bytes        = L.q_tile_bytes;
-    factx.k_tile_bytes        = L.k_tile_bytes;
-    factx.o_tile_bytes        = L.o_tile_bytes;
-    factx.col_vec_bytes       = L.col_vec_bytes;
-    factx.d_tile_bytes        = L.d_tile_bytes;
-    factx.vtcm_slopes         = VTCM_LAYOUT_PTR(__fp16, base, L.off_slopes);
-    factx.vtcm_sinks          = VTCM_LAYOUT_PTR_OPTIONAL(float, base, L.off_sinks, factx.sinks != NULL);
+    factx.vtcm_q_dma          = VTCM_LAYOUT_PTR(__fp16, ਅਧਾਰ, L.off_q_dma);
+    factx.vtcm_q_tiles        = VTCM_LAYOUT_PTR(__fp16, ਅਧਾਰ, L.off_q_tiles);
+    factx.vtcm_o_tiles[0]     = VTCM_LAYOUT_PTR(__fp16, ਅਧਾਰ, L.off_o_tiles[0]);
+    factx.vtcm_o_tiles[1]     = VTCM_LAYOUT_PTR(__fp16, ਅਧਾਰ, L.off_o_tiles[1]);
+    factx.vtcm_k_fp16[0]      = VTCM_LAYOUT_PTR(__fp16, ਅਧਾਰ, L.off_k_fp16[0]);
+    factx.vtcm_k_fp16[1]      = VTCM_LAYOUT_PTR(__fp16, ਅਧਾਰ, L.off_k_fp16[1]);
+    factx.vtcm_v_fp16[0]      = VTCM_LAYOUT_PTR(__fp16, ਅਧਾਰ, L.off_v_fp16[0]);
+    factx.vtcm_v_fp16[1]      = VTCM_LAYOUT_PTR(__fp16, ਅਧਾਰ, L.off_v_fp16[1]);
+    factx.vtcm_k_tiles[0]     = VTCM_LAYOUT_PTR(__fp16, ਅਧਾਰ, L.off_k_tiles[0]);
+    factx.vtcm_k_tiles[1]     = VTCM_LAYOUT_PTR_OPTIONAL(__fp16, ਅਧਾਰ, L.off_k_tiles[1], pipeline);
+    factx.vtcm_v_tiles[0]     = VTCM_LAYOUT_PTR(__fp16, ਅਧਾਰ, L.off_v_tiles[0]);
+    factx.vtcm_v_tiles[1]     = VTCM_LAYOUT_PTR_OPTIONAL(__fp16, ਅਧਾਰ, L.off_v_tiles[1], pipeline);
+    factx.vtcm_s_tiles[0]     = VTCM_LAYOUT_PTR(__fp16, ਅਧਾਰ, L.off_s_tiles[0]);
+    factx.vtcm_s_tiles[1]     = VTCM_LAYOUT_PTR_OPTIONAL(__fp16, ਅਧਾਰ, L.off_s_tiles[1], pipeline);
+    factx.vtcm_p_tiles[0]     = VTCM_LAYOUT_PTR(__fp16, ਅਧਾਰ, L.off_p_tiles[0]);
+    factx.vtcm_p_tiles[1]     = VTCM_LAYOUT_PTR_OPTIONAL(__fp16, ਅਧਾਰ, L.off_p_tiles[1], pipeline);
+    factx.vtcm_d_tiles[0]     = VTCM_LAYOUT_PTR(__fp16, ਅਧਾਰ, L.off_d_tiles[0]);
+    factx.vtcm_d_tiles[1]     = VTCM_LAYOUT_PTR_OPTIONAL(__fp16, ਅਧਾਰ, L.off_d_tiles[1], pipeline);
+    factx.vtcm_d_inv_l        = VTCM_LAYOUT_PTR(__fp16, ਅਧਾਰ, L.off_d_inv_l);
+    factx.vtcm_m_vec          = VTCM_LAYOUT_PTR(HVX_ਸਦਿਸ਼, ਅਧਾਰ, L.off_m_vec);
+    factx.vtcm_l_vec          = VTCM_LAYOUT_PTR(HVX_ਸਦਿਸ਼, ਅਧਾਰ, L.off_l_vec);
+    factx.vtcm_s_rowmax       = VTCM_LAYOUT_PTR(HVX_ਸਦਿਸ਼, ਅਧਾਰ, L.off_s_rowmax);
+    factx.vtcm_p_rowsum       = VTCM_LAYOUT_PTR(HVX_ਸਦਿਸ਼, ਅਧਾਰ, L.off_p_rowsum);
+    factx.vtcm_ਪੰਕਤੀ_bufs       = VTCM_LAYOUT_PTR(HVX_ਸਦਿਸ਼, ਅਧਾਰ, L.off_ਪੰਕਤੀ_bufs);
+    factx.ਪੰਕਤੀ_buf_stride      = L.ਪੰਕਤੀ_buf_stride;
+    factx.vtcm_hmx_scales_id  = VTCM_LAYOUT_PTR(uint8_t, ਅਧਾਰ, L.off_hmx_scales_id);
+    factx.vtcm_hmx_scales_qk  = VTCM_LAYOUT_PTR(uint8_t, ਅਧਾਰ, L.off_hmx_scales_qk);
+    factx.vtcm_ਨਕਾਬ_buf       = VTCM_LAYOUT_PTR(__fp16, ਅਧਾਰ, L.off_ਨਕਾਬ_buf);
+    factx.ਨਕਾਬ_buf_ਪੰਕਤੀ_stride = L.ਨਕਾਬ_buf_ਪੰਕਤੀ_stride;
+    factx.q_tile_ਬਾਈਟਾਂ        = L.q_tile_ਬਾਈਟਾਂ;
+    factx.k_tile_ਬਾਈਟਾਂ        = L.k_tile_ਬਾਈਟਾਂ;
+    factx.o_tile_ਬਾਈਟਾਂ        = L.o_tile_ਬਾਈਟਾਂ;
+    factx.ਖਾਨਾ_vec_ਬਾਈਟਾਂ       = L.ਖਾਨਾ_vec_ਬਾਈਟਾਂ;
+    factx.d_tile_ਬਾਈਟਾਂ        = L.d_tile_ਬਾਈਟਾਂ;
+    factx.vtcm_slopes         = VTCM_LAYOUT_PTR(__fp16, ਅਧਾਰ, L.off_slopes);
+    factx.vtcm_sinks          = VTCM_LAYOUT_PTR_OPTIONAL(ਦਸ਼ਮਲਵ, ਅਧਾਰ, L.off_sinks, factx.sinks != ਨਿਰਾ);
 
-    const size_t m_line_bytes = L.m_line_bytes;  // used by the mask DMAs in the KV loop
+    ਅਚਲ size_t m_ਸਤਰ_ਬਾਈਟਾਂ = L.m_ਸਤਰ_ਬਾਈਟਾਂ;  // used by the mask DMAs in the KV loop
 
-    dma_cache_fa_init(&factx.m_cache, (uint8_t *) factx.vtcm_mask_buf, L.m_buf_slot_bytes, HMX_FA_DMA_CACHE_SIZE);
+    dma_cache_fa_init(&factx.m_cache, (uint8_t *) factx.vtcm_ਨਕਾਬ_buf, L.m_buf_ਥਾਂ_ਬਾਈਟਾਂ, HMX_FA_DMA_CACHE_ਮਾਪ);
 
     // Head-dim padding: the K/V DMA staging buffers and the flat-Q buffer are laid out
     // with padded row strides (size_{k,v,q}_row_padded, covering D_pad columns) but the
     // DMA only writes the real D columns per row. Zero the whole staging buffers once up
     // front so tail lanes [D, D_pad) stay zero for all KV blocks. No-op when already aligned.
-    if (DK_pad != DK || DV_pad != DV) {
-        const size_t k_buf_bytes = (size_t) factx.Bc * size_k_row_padded;
-        const size_t v_buf_bytes = (size_t) factx.Bc * size_v_row_padded;
-        hvx_splat_u8_a((char *) factx.vtcm_k_fp16[0], 0, k_buf_bytes);
-        hvx_splat_u8_a((char *) factx.vtcm_k_fp16[1], 0, k_buf_bytes);
-        hvx_splat_u8_a((char *) factx.vtcm_v_fp16[0], 0, v_buf_bytes);
-        hvx_splat_u8_a((char *) factx.vtcm_v_fp16[1], 0, v_buf_bytes);
+    ਜੇ (DK_pad != DK || DV_pad != DV) {
+        ਅਚਲ size_t k_buf_ਬਾਈਟਾਂ = (size_t) factx.Bc * ਮਾਪ_k_ਪੰਕਤੀ_padded;
+        ਅਚਲ size_t v_buf_ਬਾਈਟਾਂ = (size_t) factx.Bc * ਮਾਪ_v_ਪੰਕਤੀ_padded;
+        hvx_splat_u8_a((ਅੱਖਰ *) factx.vtcm_k_fp16[0], 0, k_buf_ਬਾਈਟਾਂ);
+        hvx_splat_u8_a((ਅੱਖਰ *) factx.vtcm_k_fp16[1], 0, k_buf_ਬਾਈਟਾਂ);
+        hvx_splat_u8_a((ਅੱਖਰ *) factx.vtcm_v_fp16[0], 0, v_buf_ਬਾਈਟਾਂ);
+        hvx_splat_u8_a((ਅੱਖਰ *) factx.vtcm_v_fp16[1], 0, v_buf_ਬਾਈਟਾਂ);
         // Flat-Q DMA scratch
-        if (factx.vtcm_q_dma) {
-            const size_t q_dma_bytes = hex_align_up(factx.g_br * DK * (factx.is_q_fp32 ? sizeof(float) : sizeof(__fp16)), 128);
-            hvx_splat_u8_a((char *) factx.vtcm_q_dma, 0, q_dma_bytes);
+        ਜੇ (factx.vtcm_q_dma) {
+            ਅਚਲ size_t q_dma_ਬਾਈਟਾਂ = hex_align_ਉੱਪਰ(factx.g_br * DK * (factx.is_q_fp32 ? ਆਕਾਰ(ਦਸ਼ਮਲਵ) : ਆਕਾਰ(__fp16)), 128);
+            hvx_splat_u8_a((ਅੱਖਰ *) factx.vtcm_q_dma, 0, q_dma_ਬਾਈਟਾਂ);
         }
     }
 
     // ======== Initialize HMX output scales ========
-    hmx_init_column_scales(factx.vtcm_hmx_scales_id, Q6_V_vsplat_R(0x3c00)); // 1.0
+    hmx_init_ਕਾਲਮ_scales(factx.vtcm_hmx_scales_id, Q6_V_vsplat_R(0x3c00)); // 1.0
     {
-        union { __fp16 f; uint16_t u; } sc = { .f = factx.scale };
-        hmx_init_column_scales(factx.vtcm_hmx_scales_qk, Q6_V_vsplat_R(sc.u));
+        ਸੰਘ { __fp16 f; uint16_t u; } sc = { .f = factx.scale };
+        hmx_init_ਕਾਲਮ_scales(factx.vtcm_hmx_scales_qk, Q6_V_vsplat_R(sc.u));
     }
 
     // ======== DMA setup ========
-    dma_queue * const dma_q = ctx->dma[0];
+    dma_ਕਤਾਰ * ਅਚਲ dma_q = ctx->dma[0];
 
-    if (factx.sinks) {
-        dma_queue_push(dma_q, dma_make_data(factx.vtcm_sinks, factx.sinks->data), L.sinks_bytes, 0, factx.sinks->size, 1);
-        dma_queue_pop(dma_q);
+    ਜੇ (factx.sinks) {
+        dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(factx.vtcm_sinks, factx.sinks->ਅੰਕੜੇ), L.sinks_ਬਾਈਟਾਂ, 0, factx.sinks->ਮਾਪ, 1);
+        dma_ਕਤਾਰ_ਕੱਢੋ(dma_q);
     }
 
-    const size_t n_row_tiles_g_br = g_br / HMX_FP16_TILE_N_ROWS;
-    const size_t n_tiles_per_bc   = Bc / HMX_FP16_TILE_N_COLS;
+    ਅਚਲ size_t n_ਪੰਕਤੀ_tiles_g_br = g_br / HMX_FP16_TILE_N_ਪੰਕਤੀਆਂ;
+    ਅਚਲ size_t n_tiles_ਪ੍ਰਤੀ_bc   = Bc / HMX_FP16_TILE_N_ਖਾਨੇ_ਗਿਣਤੀ;
 
-    const size_t qo_element_size = factx.is_q_fp32 ? sizeof(float) : sizeof(__fp16);
+    ਅਚਲ size_t qo_element_ਮਾਪ = factx.is_q_fp32 ? ਆਕਾਰ(ਦਸ਼ਮਲਵ) : ਆਕਾਰ(__fp16);
 
-    const bool q_transposed                 = q->nb[1] < q->nb[2];
-    const size_t q_src_stride               = q_transposed ? q->nb[2] : q->nb[1];
-    const size_t q_row_bytes_untransposed   = factx.G * factx.DK * qo_element_size;
-    const size_t q_row_bytes_trans_factor   = factx.DK * qo_element_size;
+    ਅਚਲ bool q_transposed                 = q->nb[1] < q->nb[2];
+    ਅਚਲ size_t q_src_stride               = q_transposed ? q->nb[2] : q->nb[1];
+    ਅਚਲ size_t q_ਪੰਕਤੀ_ਬਾਈਟਾਂ_untransposed   = factx.G * factx.DK * qo_element_ਮਾਪ;
+    ਅਚਲ size_t q_ਪੰਕਤੀ_ਬਾਈਟਾਂ_trans_ਗੁਣਕ   = factx.DK * qo_element_ਮਾਪ;
 
     // ======== Reusable job descriptors for pipeline ========
-    hmx_fa_qk_job_t       qk_job;
-    hmx_fa_o_update_job_t ou_job;
-    hmx_fa_o_norm_job_t   on_job;
+    hmx_fa_qk_ਕੰਮ_t       qk_ਕੰਮ;
+    hmx_fa_o_update_ਕੰਮ_t ou_ਕੰਮ;
+    hmx_fa_o_norm_ਕੰਮ_t   on_ਕੰਮ;
 
     // ======== Main loop ========
-    for (uint32_t ib3 = 0; ib3 < neq3; ++ib3) {
-        const uint32_t im3 = mask ? fastmodulo(ib3, mask->ne[3], &factx.src3_div3) : 0;
-        for (uint32_t q_start = q_start_min; q_start < q_start_max; q_start += Br) {
-            const uint32_t n_rows_q    = hex_smin(Br, neq1 - q_start);
-            const size_t   n_rows_g    = n_rows_q * G;
-            const size_t   g_br_actual = hex_align_up(n_rows_g, HMX_FP16_TILE_N_ROWS);
-            const size_t   n_row_tiles = g_br_actual / HMX_FP16_TILE_N_ROWS;
+    ਲਈ (uint32_t ib3 = 0; ib3 < neq3; ++ib3) {
+        ਅਚਲ uint32_t im3 = ਨਕਾਬ ? fastmodulo(ib3, ਨਕਾਬ->ne[3], &factx.src3_div3) : 0;
+        ਲਈ (uint32_t q_ਸ਼ੁਰੂ = q_ਸ਼ੁਰੂ_min; q_ਸ਼ੁਰੂ < q_ਸ਼ੁਰੂ_max; q_ਸ਼ੁਰੂ += Br) {
+            ਅਚਲ uint32_t n_ਪੰਕਤੀਆਂ_q    = hex_smin(Br, neq1 - q_ਸ਼ੁਰੂ);
+            ਅਚਲ size_t   n_ਪੰਕਤੀਆਂ_g    = n_ਪੰਕਤੀਆਂ_q * G;
+            ਅਚਲ size_t   g_br_actual = hex_align_ਉੱਪਰ(n_ਪੰਕਤੀਆਂ_g, HMX_FP16_TILE_N_ਪੰਕਤੀਆਂ);
+            ਅਚਲ size_t   n_ਪੰਕਤੀ_tiles = g_br_actual / HMX_FP16_TILE_N_ਪੰਕਤੀਆਂ;
 
-            uint16_t active_blocks[FA_MAX_KV_BLOCKS];
-            uint32_t n_active_blocks = factx.n_kv_blocks;
-            if (mask && factx.mask_broadcast && factx.n_kv_blocks > 1) {
-                const size_t scratch_bytes = factx.k_tile_bytes * (factx.pipeline ? 2 : 1);
-                n_active_blocks = fa_scan_active_blocks(
-                    dma_q, mask, q_start, n_rows_q, 0, im3, nek1, Bc,
-                    factx.n_kv_blocks, factx.vtcm_k_tiles[0], scratch_bytes, active_blocks);
-            } else {
-                #pragma clang loop vectorize(disable)
-                for (uint32_t b = 0; b < factx.n_kv_blocks; ++b) {
-                    active_blocks[b] = (uint16_t) b;
+            uint16_t ਸਰਗਰਮ_ਖੰਡਾਂ[FA_MAX_KV_ਖੰਡਾਂ];
+            uint32_t n_ਸਰਗਰਮ_ਖੰਡਾਂ = factx.n_kv_ਖੰਡਾਂ;
+            ਜੇ (ਨਕਾਬ && factx.ਨਕਾਬ_ਪ੍ਰਸਾਰਣ && factx.n_kv_ਖੰਡਾਂ > 1) {
+                ਅਚਲ size_t scratch_ਬਾਈਟਾਂ = factx.k_tile_ਬਾਈਟਾਂ * (factx.pipeline ? 2 : 1);
+                n_ਸਰਗਰਮ_ਖੰਡਾਂ = fa_ਜਾਂਚ_ਸਰਗਰਮ_ਖੰਡਾਂ(
+                    dma_q, ਨਕਾਬ, q_ਸ਼ੁਰੂ, n_ਪੰਕਤੀਆਂ_q, 0, im3, nek1, Bc,
+                    factx.n_kv_ਖੰਡਾਂ, factx.vtcm_k_tiles[0], scratch_ਬਾਈਟਾਂ, ਸਰਗਰਮ_ਖੰਡਾਂ);
+            } ਨਹੀਂਤਾਂ {
+                #ਹਦਾਇਤ clang loop vectorize(disable)
+                ਲਈ (uint32_t b = 0; b < factx.n_kv_ਖੰਡਾਂ; ++b) {
+                    ਸਰਗਰਮ_ਖੰਡਾਂ[b] = (uint16_t) b;
                 }
             }
-            const uint32_t b0       = (n_active_blocks > 0) ? active_blocks[0] : 0;
-            const uint32_t b0_start = b0 * Bc;
-            const uint32_t b0_rows  = hex_smin(Bc, nek1 - b0_start);
+            ਅਚਲ uint32_t b0       = (n_ਸਰਗਰਮ_ਖੰਡਾਂ > 0) ? ਸਰਗਰਮ_ਖੰਡਾਂ[0] : 0;
+            ਅਚਲ uint32_t b0_ਸ਼ੁਰੂ = b0 * Bc;
+            ਅਚਲ uint32_t b0_ਪੰਕਤੀਆਂ  = hex_smin(Bc, nek1 - b0_ਸ਼ੁਰੂ);
 
-            for (uint32_t kv_head = kv_head_min; kv_head < kv_head_max; ++kv_head) {
-                const uint32_t ik2 = kv_head;
-                const uint32_t ik3 = fastdiv(ib3, &kparams->broadcast_rk3);
-                const uint32_t iv2 = kv_head;
-                const uint32_t iv3 = fastdiv(ib3, &kparams->broadcast_rv3);
+            ਲਈ (uint32_t kv_ਸਿਰ = kv_ਸਿਰ_min; kv_ਸਿਰ < kv_ਸਿਰ_max; ++kv_ਸਿਰ) {
+                ਅਚਲ uint32_t ik2 = kv_ਸਿਰ;
+                ਅਚਲ uint32_t ik3 = fastdiv(ib3, &kparams->ਪ੍ਰਸਾਰਣ_rk3);
+                ਅਚਲ uint32_t iv2 = kv_ਸਿਰ;
+                ਅਚਲ uint32_t iv3 = fastdiv(ib3, &kparams->ਪ੍ਰਸਾਰਣ_rv3);
 
                 // 1. Push Q and KV DMAs for the first kv_head of this q_start block.
                 // Subsequent kv_head iterations are enqueued early at the end of the previous iteration.
-                if (kv_head == kv_head_min) {
-                    const dma_addr_t q_ptr = q->data + q_start * q->nb[1] +
-                                            (kv_head * factx.G) * q->nb[2] + ib3 * q->nb[3];
-                    const size_t q_row_bytes = q_transposed ? n_rows_q * q_row_bytes_trans_factor : q_row_bytes_untransposed;
-                    const size_t n_rows      = q_transposed ? factx.G : n_rows_q;
-                    dma_queue_push(dma_q, dma_make_data(factx.vtcm_q_dma, q_ptr), q_row_bytes, hex_smax(q_src_stride, q_row_bytes), q_row_bytes, n_rows);
+                ਜੇ (kv_ਸਿਰ == kv_ਸਿਰ_min) {
+                    ਅਚਲ dma_addr_t q_ptr = q->ਅੰਕੜੇ + q_ਸ਼ੁਰੂ * q->nb[1] +
+                                            (kv_ਸਿਰ * factx.G) * q->nb[2] + ib3 * q->nb[3];
+                    ਅਚਲ size_t q_ਪੰਕਤੀ_ਬਾਈਟਾਂ = q_transposed ? n_ਪੰਕਤੀਆਂ_q * q_ਪੰਕਤੀ_ਬਾਈਟਾਂ_trans_ਗੁਣਕ : q_ਪੰਕਤੀ_ਬਾਈਟਾਂ_untransposed;
+                    ਅਚਲ size_t n_ਪੰਕਤੀਆਂ      = q_transposed ? factx.G : n_ਪੰਕਤੀਆਂ_q;
+                    dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(factx.vtcm_q_dma, q_ptr), q_ਪੰਕਤੀ_ਬਾਈਟਾਂ, hex_smax(q_src_stride, q_ਪੰਕਤੀ_ਬਾਈਟਾਂ), q_ਪੰਕਤੀ_ਬਾਈਟਾਂ, n_ਪੰਕਤੀਆਂ);
 
-                    if (n_active_blocks > 0) {
-                        const dma_addr_t k_src = k->data + b0_start * k->nb[1] + ik2 * k->nb[2] + ik3 * k->nb[3];
-                        dma_queue_push(dma_q, dma_make_data(factx.vtcm_k_fp16[0], k_src), size_k_row_padded, k->nb[1], size_k_row, b0_rows);
+                    ਜੇ (n_ਸਰਗਰਮ_ਖੰਡਾਂ > 0) {
+                        ਅਚਲ dma_addr_t k_src = k->ਅੰਕੜੇ + b0_ਸ਼ੁਰੂ * k->nb[1] + ik2 * k->nb[2] + ik3 * k->nb[3];
+                        dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(factx.vtcm_k_fp16[0], k_src), ਮਾਪ_k_ਪੰਕਤੀ_padded, k->nb[1], ਮਾਪ_k_ਪੰਕਤੀ, b0_ਪੰਕਤੀਆਂ);
 
-                        const dma_addr_t v_src = v->data + b0_start * v->nb[1] + iv2 * v->nb[2] + iv3 * v->nb[3];
-                        dma_queue_push(dma_q, dma_make_data(factx.vtcm_v_fp16[0], v_src), size_v_row_padded, v->nb[1], size_v_row, b0_rows);
+                        ਅਚਲ dma_addr_t v_src = v->ਅੰਕੜੇ + b0_ਸ਼ੁਰੂ * v->nb[1] + iv2 * v->nb[2] + iv3 * v->nb[3];
+                        dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(factx.vtcm_v_fp16[0], v_src), ਮਾਪ_v_ਪੰਕਤੀ_padded, v->nb[1], ਮਾਪ_v_ਪੰਕਤੀ, b0_ਪੰਕਤੀਆਂ);
 
-                        if (factx.pipeline && mask) {
-                            if (__builtin_expect(factx.mask_broadcast, true)) {
-                                const dma_addr_t ms_src = mask->data + q_start * mask->nb[1] + im3 * mask->nb[3] + b0_start * sizeof(__fp16);
-                                dma_cache_fa_push(dma_q, &factx.m_cache, ms_src, m_line_bytes, mask->nb[1], b0_rows * sizeof(__fp16), n_rows_q);
-                            } else {
-                                fa_push_mask_dma_gqa(dma_q, mask, q_start, im3, b0_start, kv_head, G, m_line_bytes, b0_rows, n_rows_q, &factx);
+                        ਜੇ (factx.pipeline && ਨਕਾਬ) {
+                            ਜੇ (__builtin_expect(factx.ਨਕਾਬ_ਪ੍ਰਸਾਰਣ, true)) {
+                                ਅਚਲ dma_addr_t ms_src = ਨਕਾਬ->ਅੰਕੜੇ + q_ਸ਼ੁਰੂ * ਨਕਾਬ->nb[1] + im3 * ਨਕਾਬ->nb[3] + b0_ਸ਼ੁਰੂ * ਆਕਾਰ(__fp16);
+                                dma_cache_fa_ਧੱਕੋ(dma_q, &factx.m_cache, ms_src, m_ਸਤਰ_ਬਾਈਟਾਂ, ਨਕਾਬ->nb[1], b0_ਪੰਕਤੀਆਂ * ਆਕਾਰ(__fp16), n_ਪੰਕਤੀਆਂ_q);
+                            } ਨਹੀਂਤਾਂ {
+                                fa_ਧੱਕੋ_ਨਕਾਬ_dma_gqa(dma_q, ਨਕਾਬ, q_ਸ਼ੁਰੂ, im3, b0_ਸ਼ੁਰੂ, kv_ਸਿਰ, G, m_ਸਤਰ_ਬਾਈਟਾਂ, b0_ਪੰਕਤੀਆਂ, n_ਪੰਕਤੀਆਂ_q, &factx);
                             }
                         }
                     }
                 }
 
                 // 2. Pop Q DMA (blocks until Q is loaded)
-                dma_queue_pop(dma_q);
+                dma_ਕਤਾਰ_ਕੱਢੋ(dma_q);
 
                 // ---- Load Q block & Initialize per-block state ----
-                fa_phase_q_load(&factx, q, q_start, kv_head, ib3, n_rows_g);
+                fa_phase_q_ਲੱਦੋ(&factx, q, q_ਸ਼ੁਰੂ, kv_ਸਿਰ, ib3, n_ਪੰਕਤੀਆਂ_g);
 
                 __fp16 * o_tile_prev = factx.vtcm_o_tiles[0];
                 __fp16 * o_tile_curr = factx.vtcm_o_tiles[1];
@@ -2272,58 +2272,58 @@ int hmx_flash_attn_ext(struct htp_ops_context * octx) {
                 // ---- KV block loop with DMA double-buffering ----
                 size_t buf_idx = 0;
 
-                htp_trace_event_start(tr_hvx, HTP_TRACE_EVT_HVX_A_PREP, (uint16_t) q_start);
-                fa_compute_slopes(&factx, kv_head, n_rows_g);
-                htp_trace_event_stop(tr_hvx, HTP_TRACE_EVT_HVX_A_PREP, (uint16_t) q_start);
+                htp_trace_event_ਸ਼ੁਰੂ(tr_hvx, HTP_TRACE_EVT_HVX_A_PREP, (uint16_t) q_ਸ਼ੁਰੂ);
+                fa_compute_slopes(&factx, kv_ਸਿਰ, n_ਪੰਕਤੀਆਂ_g);
+                htp_trace_event_stop(tr_hvx, HTP_TRACE_EVT_HVX_A_PREP, (uint16_t) q_ਸ਼ੁਰੂ);
 
-                const size_t k_src_stride = size_k_row_padded / sizeof(__fp16);
-                const size_t v_src_stride = size_v_row_padded / sizeof(__fp16);
+                ਅਚਲ size_t k_src_stride = ਮਾਪ_k_ਪੰਕਤੀ_padded / ਆਕਾਰ(__fp16);
+                ਅਚਲ size_t v_src_stride = ਮਾਪ_v_ਪੰਕਤੀ_padded / ਆਕਾਰ(__fp16);
 
-                hmx_queue_t hmx_q = ctx->hmx_queue;
+                hmx_ਕਤਾਰ_t hmx_q = ctx->hmx_ਕਤਾਰ;
 
-                if (factx.pipeline) {
+                ਜੇ (factx.pipeline) {
                     // Double-buffered job structs because HMX queue runs asynchronously
-                    hmx_fa_qk_job_t qk_job[2];
-                    hmx_fa_o_update_job_t ou_job[2];
+                    hmx_fa_qk_ਕੰਮ_t qk_ਕੰਮ[2];
+                    hmx_fa_o_update_ਕੰਮ_t ou_ਕੰਮ[2];
 
                     // Prefetch second active block early if there are multiple active blocks
-                    if (n_active_blocks > 1) {
-                        fa_prefetch_block(dma_q, k, v, mask, active_blocks[1], Bc, size_k_row_padded, size_k_row, size_v_row_padded, size_v_row,
-                                          ik2, ik3, iv2, iv3, q_start, im3, kv_head, G, m_line_bytes, n_rows_q, nek1, 1, &factx);
+                    ਜੇ (n_ਸਰਗਰਮ_ਖੰਡਾਂ > 1) {
+                        fa_prefetch_ਖੰਡ(dma_q, k, v, ਨਕਾਬ, ਸਰਗਰਮ_ਖੰਡਾਂ[1], Bc, ਮਾਪ_k_ਪੰਕਤੀ_padded, ਮਾਪ_k_ਪੰਕਤੀ, ਮਾਪ_v_ਪੰਕਤੀ_padded, ਮਾਪ_v_ਪੰਕਤੀ,
+                                          ik2, ik3, iv2, iv3, q_ਸ਼ੁਰੂ, im3, kv_ਸਿਰ, G, m_ਸਤਰ_ਬਾਈਟਾਂ, n_ਪੰਕਤੀਆਂ_q, nek1, 1, &factx);
                     }
 
                     // Prep and start QK-dot(0)
-                    void * curr_k0 = (void *) dma_queue_pop(dma_q).dst;
-                    fa_phase_k_interleave(&factx, b0_rows, k_src_stride, curr_k0, b0_start, 0);
+                    ਖਾਲੀ * curr_k0 = (ਖਾਲੀ *) dma_ਕਤਾਰ_ਕੱਢੋ(dma_q).dst;
+                    fa_phase_k_interleave(&factx, b0_ਪੰਕਤੀਆਂ, k_src_stride, curr_k0, b0_ਸ਼ੁਰੂ, 0);
 
-                    qk_job[0].q_tiles        = factx.vtcm_q_tiles;
-                    qk_job[0].k_tiles        = factx.vtcm_k_tiles[0];
-                    qk_job[0].s_tiles        = factx.vtcm_s_tiles[0];
-                    qk_job[0].n_row_tiles    = n_row_tiles;
-                    qk_job[0].n_col_tiles    = hmx_ceil_div(b0_rows, HMX_FP16_TILE_N_COLS);
-                    qk_job[0].n_dot_tiles    = DK_pad / 32;
-                    qk_job[0].n_tiles_per_bc = n_tiles_per_bc;
-                    qk_job[0].hmx_scales     = factx.vtcm_hmx_scales_qk;
-                    hmx_queue_push(hmx_q, hmx_queue_make_desc(hmx_fa_qk_dot_worker, &qk_job[0]));
+                    qk_ਕੰਮ[0].q_tiles        = factx.vtcm_q_tiles;
+                    qk_ਕੰਮ[0].k_tiles        = factx.vtcm_k_tiles[0];
+                    qk_ਕੰਮ[0].s_tiles        = factx.vtcm_s_tiles[0];
+                    qk_ਕੰਮ[0].n_ਪੰਕਤੀ_tiles    = n_ਪੰਕਤੀ_tiles;
+                    qk_ਕੰਮ[0].n_ਖਾਨਾ_tiles    = hmx_ceil_div(b0_ਪੰਕਤੀਆਂ, HMX_FP16_TILE_N_ਖਾਨੇ_ਗਿਣਤੀ);
+                    qk_ਕੰਮ[0].n_dot_tiles    = DK_pad / 32;
+                    qk_ਕੰਮ[0].n_tiles_ਪ੍ਰਤੀ_bc = n_tiles_ਪ੍ਰਤੀ_bc;
+                    qk_ਕੰਮ[0].hmx_scales     = factx.vtcm_hmx_scales_qk;
+                    hmx_ਕਤਾਰ_ਧੱਕੋ(hmx_q, hmx_ਕਤਾਰ_make_desc(hmx_fa_qk_dot_ਕਾਮਾ, &qk_ਕੰਮ[0]));
 
-                    for (uint32_t step = 0; step < n_active_blocks; ++step) {
-                        const uint32_t kv_blk      = active_blocks[step];
-                        const uint32_t kv_start    = kv_blk * Bc;
-                        const uint32_t kv_rows     = hex_smin(Bc, nek1 - kv_start);
-                        const size_t   n_col_tiles = hmx_ceil_div(kv_rows, HMX_FP16_TILE_N_COLS);
+                    ਲਈ (uint32_t ਕਦਮ = 0; ਕਦਮ < n_ਸਰਗਰਮ_ਖੰਡਾਂ; ++ਕਦਮ) {
+                        ਅਚਲ uint32_t kv_blk      = ਸਰਗਰਮ_ਖੰਡਾਂ[ਕਦਮ];
+                        ਅਚਲ uint32_t kv_ਸ਼ੁਰੂ    = kv_blk * Bc;
+                        ਅਚਲ uint32_t kv_ਪੰਕਤੀਆਂ     = hex_smin(Bc, nek1 - kv_ਸ਼ੁਰੂ);
+                        ਅਚਲ size_t   n_ਖਾਨਾ_tiles = hmx_ceil_div(kv_ਪੰਕਤੀਆਂ, HMX_FP16_TILE_N_ਖਾਨੇ_ਗਿਣਤੀ);
 
                         // ---- 1. Pop and run V-prep for current block ----
-                        void * curr_v = (void *) dma_queue_pop(dma_q).dst;
-                        fa_phase_v_interleave(&factx, kv_rows, v_src_stride, curr_v, factx.vtcm_v_tiles[buf_idx], n_tiles_per_bc, kv_start);
+                        ਖਾਲੀ * curr_v = (ਖਾਲੀ *) dma_ਕਤਾਰ_ਕੱਢੋ(dma_q).dst;
+                        fa_phase_v_interleave(&factx, kv_ਪੰਕਤੀਆਂ, v_src_stride, curr_v, factx.vtcm_v_tiles[buf_idx], n_tiles_ਪ੍ਰਤੀ_bc, kv_ਸ਼ੁਰੂ);
 
                         // ---- 2. Pop and run mask-prep for current block ----
-                        __fp16 * current_mask_vtcm = NULL;
-                        if (mask) {
-                            if (__builtin_expect(factx.mask_broadcast, true)) {
-                                current_mask_vtcm = (__fp16 *) dma_queue_pop(dma_q).dst;
-                            } else {
-                                fa_pop_mask_dma_gqa(dma_q, G);
-                                current_mask_vtcm = factx.vtcm_mask_buf;
+                        __fp16 * current_ਨਕਾਬ_vtcm = ਨਿਰਾ;
+                        ਜੇ (ਨਕਾਬ) {
+                            ਜੇ (__builtin_expect(factx.ਨਕਾਬ_ਪ੍ਰਸਾਰਣ, true)) {
+                                current_ਨਕਾਬ_vtcm = (__fp16 *) dma_ਕਤਾਰ_ਕੱਢੋ(dma_q).dst;
+                            } ਨਹੀਂਤਾਂ {
+                                fa_ਕੱਢੋ_ਨਕਾਬ_dma_gqa(dma_q, G);
+                                current_ਨਕਾਬ_vtcm = factx.vtcm_ਨਕਾਬ_buf;
                             }
                         }
 
@@ -2333,221 +2333,221 @@ int hmx_flash_attn_ext(struct htp_ops_context * octx) {
                         // oldest descriptor, so push order alone decides which pop waits for which job.
                         // If OU went in after QK(i+1), the pop below would retire QK(i+1) and leave
                         // OU(i-1) in flight into the next iteration, where V-prep overwrites V[prev_buf].
-                        if (step > 0) {
-                            const uint32_t prev_blk      = active_blocks[step - 1];
-                            const size_t prev_buf        = 1 - buf_idx;
-                            ou_job[prev_buf].o_curr      = o_tile_curr;
-                            ou_job[prev_buf].o_prev      = o_tile_prev;
-                            ou_job[prev_buf].p_tiles     = factx.vtcm_p_tiles[prev_buf];
-                            ou_job[prev_buf].v_tiles     = factx.vtcm_v_tiles[prev_buf];
-                            ou_job[prev_buf].d_tiles     = factx.vtcm_d_tiles[prev_buf];
-                            ou_job[prev_buf].hmx_scales  = factx.vtcm_hmx_scales_id;
-                            ou_job[prev_buf].n_row_tiles = n_row_tiles;
-                            ou_job[prev_buf].n_col_tiles =
-                                hmx_ceil_div(hex_smin(Bc, nek1 - prev_blk * Bc), HMX_FP16_TILE_N_COLS);
-                            ou_job[prev_buf].n_row_tiles_g_br = n_row_tiles_g_br;
-                            ou_job[prev_buf].n_tiles_per_bc   = n_tiles_per_bc;
-                            ou_job[prev_buf].DV               = DV_pad;
-                            hmx_queue_push(hmx_q, hmx_queue_make_desc(hmx_fa_o_update_worker, &ou_job[prev_buf]));
+                        ਜੇ (ਕਦਮ > 0) {
+                            ਅਚਲ uint32_t prev_blk      = ਸਰਗਰਮ_ਖੰਡਾਂ[ਕਦਮ - 1];
+                            ਅਚਲ size_t prev_buf        = 1 - buf_idx;
+                            ou_ਕੰਮ[prev_buf].o_curr      = o_tile_curr;
+                            ou_ਕੰਮ[prev_buf].o_prev      = o_tile_prev;
+                            ou_ਕੰਮ[prev_buf].p_tiles     = factx.vtcm_p_tiles[prev_buf];
+                            ou_ਕੰਮ[prev_buf].v_tiles     = factx.vtcm_v_tiles[prev_buf];
+                            ou_ਕੰਮ[prev_buf].d_tiles     = factx.vtcm_d_tiles[prev_buf];
+                            ou_ਕੰਮ[prev_buf].hmx_scales  = factx.vtcm_hmx_scales_id;
+                            ou_ਕੰਮ[prev_buf].n_ਪੰਕਤੀ_tiles = n_ਪੰਕਤੀ_tiles;
+                            ou_ਕੰਮ[prev_buf].n_ਖਾਨਾ_tiles =
+                                hmx_ceil_div(hex_smin(Bc, nek1 - prev_blk * Bc), HMX_FP16_TILE_N_ਖਾਨੇ_ਗਿਣਤੀ);
+                            ou_ਕੰਮ[prev_buf].n_ਪੰਕਤੀ_tiles_g_br = n_ਪੰਕਤੀ_tiles_g_br;
+                            ou_ਕੰਮ[prev_buf].n_tiles_ਪ੍ਰਤੀ_bc   = n_tiles_ਪ੍ਰਤੀ_bc;
+                            ou_ਕੰਮ[prev_buf].DV               = DV_pad;
+                            hmx_ਕਤਾਰ_ਧੱਕੋ(hmx_q, hmx_ਕਤਾਰ_make_desc(hmx_fa_o_update_ਕਾਮਾ, &ou_ਕੰਮ[prev_buf]));
                         }
 
                         // ---- 4. Pop and run K-prep for next active block & push next QK-dot ----
-                        if (step + 1 < n_active_blocks) {
-                            const uint32_t next_blk   = active_blocks[step + 1];
-                            const uint32_t next_start = next_blk * Bc;
-                            const uint32_t next_rows  = hex_smin(Bc, nek1 - next_start);
-                            const size_t   next_buf   = 1 - buf_idx;
+                        ਜੇ (ਕਦਮ + 1 < n_ਸਰਗਰਮ_ਖੰਡਾਂ) {
+                            ਅਚਲ uint32_t ਅਗਲਾ_blk   = ਸਰਗਰਮ_ਖੰਡਾਂ[ਕਦਮ + 1];
+                            ਅਚਲ uint32_t ਅਗਲਾ_ਸ਼ੁਰੂ = ਅਗਲਾ_blk * Bc;
+                            ਅਚਲ uint32_t ਅਗਲਾ_ਪੰਕਤੀਆਂ  = hex_smin(Bc, nek1 - ਅਗਲਾ_ਸ਼ੁਰੂ);
+                            ਅਚਲ size_t   ਅਗਲਾ_buf   = 1 - buf_idx;
 
-                            void * next_k = (void *) dma_queue_pop(dma_q).dst;
-                            fa_phase_k_interleave(&factx, next_rows, k_src_stride, next_k, next_start, next_buf);
+                            ਖਾਲੀ * ਅਗਲਾ_k = (ਖਾਲੀ *) dma_ਕਤਾਰ_ਕੱਢੋ(dma_q).dst;
+                            fa_phase_k_interleave(&factx, ਅਗਲਾ_ਪੰਕਤੀਆਂ, k_src_stride, ਅਗਲਾ_k, ਅਗਲਾ_ਸ਼ੁਰੂ, ਅਗਲਾ_buf);
 
-                            qk_job[next_buf].q_tiles        = factx.vtcm_q_tiles;
-                            qk_job[next_buf].k_tiles        = factx.vtcm_k_tiles[next_buf];
-                            qk_job[next_buf].s_tiles        = factx.vtcm_s_tiles[next_buf];
-                            qk_job[next_buf].n_row_tiles    = n_row_tiles;
-                            qk_job[next_buf].n_col_tiles    = hmx_ceil_div(next_rows, HMX_FP16_TILE_N_COLS);
-                            qk_job[next_buf].n_dot_tiles    = DK_pad / 32;
-                            qk_job[next_buf].n_tiles_per_bc = n_tiles_per_bc;
-                            qk_job[next_buf].hmx_scales     = factx.vtcm_hmx_scales_qk;
-                            hmx_queue_push(hmx_q, hmx_queue_make_desc(hmx_fa_qk_dot_worker, &qk_job[next_buf]));
+                            qk_ਕੰਮ[ਅਗਲਾ_buf].q_tiles        = factx.vtcm_q_tiles;
+                            qk_ਕੰਮ[ਅਗਲਾ_buf].k_tiles        = factx.vtcm_k_tiles[ਅਗਲਾ_buf];
+                            qk_ਕੰਮ[ਅਗਲਾ_buf].s_tiles        = factx.vtcm_s_tiles[ਅਗਲਾ_buf];
+                            qk_ਕੰਮ[ਅਗਲਾ_buf].n_ਪੰਕਤੀ_tiles    = n_ਪੰਕਤੀ_tiles;
+                            qk_ਕੰਮ[ਅਗਲਾ_buf].n_ਖਾਨਾ_tiles    = hmx_ceil_div(ਅਗਲਾ_ਪੰਕਤੀਆਂ, HMX_FP16_TILE_N_ਖਾਨੇ_ਗਿਣਤੀ);
+                            qk_ਕੰਮ[ਅਗਲਾ_buf].n_dot_tiles    = DK_pad / 32;
+                            qk_ਕੰਮ[ਅਗਲਾ_buf].n_tiles_ਪ੍ਰਤੀ_bc = n_tiles_ਪ੍ਰਤੀ_bc;
+                            qk_ਕੰਮ[ਅਗਲਾ_buf].hmx_scales     = factx.vtcm_hmx_scales_qk;
+                            hmx_ਕਤਾਰ_ਧੱਕੋ(hmx_q, hmx_ਕਤਾਰ_make_desc(hmx_fa_qk_dot_ਕਾਮਾ, &qk_ਕੰਮ[ਅਗਲਾ_buf]));
                         }
 
                         // ---- 5. Wait for current block's QK-dot to finish ----
-                        hmx_queue_pop(hmx_q);
+                        hmx_ਕਤਾਰ_ਕੱਢੋ(hmx_q);
 
                         // ---- 6. Phase 2: softmax + build_D ----
-                        fa_softmax_args_t sargs;
-                        memset(&sargs, 0, sizeof(sargs));
+                        fa_softmax_ਦਲੀਲਾਂ_t sargs;
+                        memset(&sargs, 0, ਆਕਾਰ(sargs));
                         sargs.factx                = &factx;
                         sargs.buf_idx              = buf_idx;
-                        sargs.kv_rows              = kv_rows;
-                        sargs.n_rows_g             = n_rows_g;
-                        sargs.n_col_tiles          = n_col_tiles;
-                        sargs.n_tiles_per_bc       = n_tiles_per_bc;
-                        sargs.n_row_tiles          = n_row_tiles;
-                        sargs.n_row_tiles_g_br     = n_row_tiles_g_br;
+                        sargs.kv_ਪੰਕਤੀਆਂ              = kv_ਪੰਕਤੀਆਂ;
+                        sargs.n_ਪੰਕਤੀਆਂ_g             = n_ਪੰਕਤੀਆਂ_g;
+                        sargs.n_ਖਾਨਾ_tiles          = n_ਖਾਨਾ_tiles;
+                        sargs.n_tiles_ਪ੍ਰਤੀ_bc       = n_tiles_ਪ੍ਰਤੀ_bc;
+                        sargs.n_ਪੰਕਤੀ_tiles          = n_ਪੰਕਤੀ_tiles;
+                        sargs.n_ਪੰਕਤੀ_tiles_g_br     = n_ਪੰਕਤੀ_tiles_g_br;
                         sargs.Bc                   = Bc;
                         sargs.G                    = G;
-                        sargs.kv_head              = kv_head;
-                        sargs.kv_start             = kv_start;
-                        sargs.q_start              = q_start;
+                        sargs.kv_ਸਿਰ              = kv_ਸਿਰ;
+                        sargs.kv_ਸ਼ੁਰੂ             = kv_ਸ਼ੁਰੂ;
+                        sargs.q_ਸ਼ੁਰੂ              = q_ਸ਼ੁਰੂ;
                         sargs.ib3                  = ib3;
                         sargs.has_alibi            = (factx.max_bias != 0.0f);
-                        sargs.mask                 = mask;
-                        sargs.mask_vtcm            = current_mask_vtcm;
-                        sargs.mask_vtcm_row_stride = factx.mask_buf_row_stride;
+                        sargs.ਨਕਾਬ                 = ਨਕਾਬ;
+                        sargs.ਨਕਾਬ_vtcm            = current_ਨਕਾਬ_vtcm;
+                        sargs.ਨਕਾਬ_vtcm_ਪੰਕਤੀ_stride = factx.ਨਕਾਬ_buf_ਪੰਕਤੀ_stride;
                         sargs.slopes               = factx.vtcm_slopes;
 
                         // Run Softmax on HVX (blocking call)
-                        fa_phase_softmax_and_build_d(&factx, &sargs, n_row_tiles, n_row_tiles_g_br);
+                        fa_phase_softmax_and_build_d(&factx, &sargs, n_ਪੰਕਤੀ_tiles, n_ਪੰਕਤੀ_tiles_g_br);
 
                         // Wait for HMX O update for step - 1 to finish
-                        if (step > 0) {
-                            hmx_queue_pop(hmx_q);
-                            hex_swap_ptr((void **) &o_tile_curr, (void **) &o_tile_prev);
+                        ਜੇ (ਕਦਮ > 0) {
+                            hmx_ਕਤਾਰ_ਕੱਢੋ(hmx_q);
+                            hex_ਅਦਲਾ_ਬਦਲੀ_ptr((ਖਾਲੀ **) &o_tile_curr, (ਖਾਲੀ **) &o_tile_prev);
                         }
 
                         // Prefetch block step + 2
-                        if (step + 2 < n_active_blocks) {
-                            fa_prefetch_block(dma_q, k, v, mask, active_blocks[step + 2], Bc, size_k_row_padded, size_k_row, size_v_row_padded, size_v_row,
-                                              ik2, ik3, iv2, iv3, q_start, im3, kv_head, G, m_line_bytes, n_rows_q, nek1, buf_idx, &factx);
+                        ਜੇ (ਕਦਮ + 2 < n_ਸਰਗਰਮ_ਖੰਡਾਂ) {
+                            fa_prefetch_ਖੰਡ(dma_q, k, v, ਨਕਾਬ, ਸਰਗਰਮ_ਖੰਡਾਂ[ਕਦਮ + 2], Bc, ਮਾਪ_k_ਪੰਕਤੀ_padded, ਮਾਪ_k_ਪੰਕਤੀ, ਮਾਪ_v_ਪੰਕਤੀ_padded, ਮਾਪ_v_ਪੰਕਤੀ,
+                                              ik2, ik3, iv2, iv3, q_ਸ਼ੁਰੂ, im3, kv_ਸਿਰ, G, m_ਸਤਰ_ਬਾਈਟਾਂ, n_ਪੰਕਤੀਆਂ_q, nek1, buf_idx, &factx);
                         }
 
                         buf_idx = 1 - buf_idx;
                     }
 
                     // Epilogue
-                    if (n_active_blocks > 0) {
-                        const uint32_t last_blk = active_blocks[n_active_blocks - 1];
-                        const size_t last_cols  = hmx_ceil_div(hex_smin(Bc, nek1 - last_blk * Bc), HMX_FP16_TILE_N_COLS);
-                        ou_job[0].o_curr           = o_tile_curr;
-                        ou_job[0].o_prev           = o_tile_prev;
-                        ou_job[0].p_tiles          = factx.vtcm_p_tiles[1 - buf_idx];
-                        ou_job[0].v_tiles          = factx.vtcm_v_tiles[1 - buf_idx];
-                        ou_job[0].d_tiles          = factx.vtcm_d_tiles[1 - buf_idx];
-                        ou_job[0].hmx_scales       = factx.vtcm_hmx_scales_id;
-                        ou_job[0].n_row_tiles      = n_row_tiles;
-                        ou_job[0].n_col_tiles      = last_cols;
-                        ou_job[0].n_row_tiles_g_br = n_row_tiles_g_br;
-                        ou_job[0].n_tiles_per_bc   = n_tiles_per_bc;
-                        ou_job[0].DV               = DV_pad;
-                        hmx_queue_push(hmx_q, hmx_queue_make_desc(hmx_fa_o_update_worker, &ou_job[0]));
+                    ਜੇ (n_ਸਰਗਰਮ_ਖੰਡਾਂ > 0) {
+                        ਅਚਲ uint32_t ਆਖਰੀ_blk = ਸਰਗਰਮ_ਖੰਡਾਂ[n_ਸਰਗਰਮ_ਖੰਡਾਂ - 1];
+                        ਅਚਲ size_t ਆਖਰੀ_ਖਾਨੇ_ਗਿਣਤੀ  = hmx_ceil_div(hex_smin(Bc, nek1 - ਆਖਰੀ_blk * Bc), HMX_FP16_TILE_N_ਖਾਨੇ_ਗਿਣਤੀ);
+                        ou_ਕੰਮ[0].o_curr           = o_tile_curr;
+                        ou_ਕੰਮ[0].o_prev           = o_tile_prev;
+                        ou_ਕੰਮ[0].p_tiles          = factx.vtcm_p_tiles[1 - buf_idx];
+                        ou_ਕੰਮ[0].v_tiles          = factx.vtcm_v_tiles[1 - buf_idx];
+                        ou_ਕੰਮ[0].d_tiles          = factx.vtcm_d_tiles[1 - buf_idx];
+                        ou_ਕੰਮ[0].hmx_scales       = factx.vtcm_hmx_scales_id;
+                        ou_ਕੰਮ[0].n_ਪੰਕਤੀ_tiles      = n_ਪੰਕਤੀ_tiles;
+                        ou_ਕੰਮ[0].n_ਖਾਨਾ_tiles      = ਆਖਰੀ_ਖਾਨੇ_ਗਿਣਤੀ;
+                        ou_ਕੰਮ[0].n_ਪੰਕਤੀ_tiles_g_br = n_ਪੰਕਤੀ_tiles_g_br;
+                        ou_ਕੰਮ[0].n_tiles_ਪ੍ਰਤੀ_bc   = n_tiles_ਪ੍ਰਤੀ_bc;
+                        ou_ਕੰਮ[0].DV               = DV_pad;
+                        hmx_ਕਤਾਰ_ਧੱਕੋ(hmx_q, hmx_ਕਤਾਰ_make_desc(hmx_fa_o_update_ਕਾਮਾ, &ou_ਕੰਮ[0]));
 
                         // Overlapped: run HVX build diag inv L while HMX is busy executing the update
-                        htp_trace_event_start(tr_hvx, HTP_TRACE_EVT_HVX_O_PROC, (uint16_t) q_start);
-                        fa_build_d_diag_inv_l(&factx, n_row_tiles, n_row_tiles_g_br, kv_head, n_rows_g);
-                        htp_trace_event_stop(tr_hvx, HTP_TRACE_EVT_HVX_O_PROC, (uint16_t) q_start);
-                        hmx_queue_pop(hmx_q);
+                        htp_trace_event_ਸ਼ੁਰੂ(tr_hvx, HTP_TRACE_EVT_HVX_O_PROC, (uint16_t) q_ਸ਼ੁਰੂ);
+                        fa_build_d_diag_inv_l(&factx, n_ਪੰਕਤੀ_tiles, n_ਪੰਕਤੀ_tiles_g_br, kv_ਸਿਰ, n_ਪੰਕਤੀਆਂ_g);
+                        htp_trace_event_stop(tr_hvx, HTP_TRACE_EVT_HVX_O_PROC, (uint16_t) q_ਸ਼ੁਰੂ);
+                        hmx_ਕਤਾਰ_ਕੱਢੋ(hmx_q);
 
-                        hex_swap_ptr((void **) &o_tile_curr, (void **) &o_tile_prev);
+                        hex_ਅਦਲਾ_ਬਦਲੀ_ptr((ਖਾਲੀ **) &o_tile_curr, (ਖਾਲੀ **) &o_tile_prev);
                     }
 
-                } else {
+                } ਨਹੀਂਤਾਂ {
                     // Fallback path
-                    for (uint32_t step = 0; step < n_active_blocks; ++step) {
-                        const uint32_t kv_blk      = active_blocks[step];
-                        const uint32_t kv_start    = kv_blk * Bc;
-                        const uint32_t kv_rows     = hex_smin(Bc, nek1 - kv_start);
-                        const size_t   n_col_tiles = hmx_ceil_div(kv_rows, HMX_FP16_TILE_N_COLS);
+                    ਲਈ (uint32_t ਕਦਮ = 0; ਕਦਮ < n_ਸਰਗਰਮ_ਖੰਡਾਂ; ++ਕਦਮ) {
+                        ਅਚਲ uint32_t kv_blk      = ਸਰਗਰਮ_ਖੰਡਾਂ[ਕਦਮ];
+                        ਅਚਲ uint32_t kv_ਸ਼ੁਰੂ    = kv_blk * Bc;
+                        ਅਚਲ uint32_t kv_ਪੰਕਤੀਆਂ     = hex_smin(Bc, nek1 - kv_ਸ਼ੁਰੂ);
+                        ਅਚਲ size_t   n_ਖਾਨਾ_tiles = hmx_ceil_div(kv_ਪੰਕਤੀਆਂ, HMX_FP16_TILE_N_ਖਾਨੇ_ਗਿਣਤੀ);
 
-                        if (mask) {
-                            if (__builtin_expect(factx.mask_broadcast, true)) {
-                                const dma_addr_t ms_src = mask->data + q_start * mask->nb[1] + im3 * mask->nb[3] + kv_start * sizeof(__fp16);
-                                dma_cache_fa_push(dma_q, &factx.m_cache, ms_src, m_line_bytes, mask->nb[1], kv_rows * sizeof(__fp16), n_rows_q);
-                            } else {
-                                fa_push_mask_dma_gqa(dma_q, mask, q_start, im3, kv_start, kv_head, G, m_line_bytes, kv_rows, n_rows_q, &factx);
+                        ਜੇ (ਨਕਾਬ) {
+                            ਜੇ (__builtin_expect(factx.ਨਕਾਬ_ਪ੍ਰਸਾਰਣ, true)) {
+                                ਅਚਲ dma_addr_t ms_src = ਨਕਾਬ->ਅੰਕੜੇ + q_ਸ਼ੁਰੂ * ਨਕਾਬ->nb[1] + im3 * ਨਕਾਬ->nb[3] + kv_ਸ਼ੁਰੂ * ਆਕਾਰ(__fp16);
+                                dma_cache_fa_ਧੱਕੋ(dma_q, &factx.m_cache, ms_src, m_ਸਤਰ_ਬਾਈਟਾਂ, ਨਕਾਬ->nb[1], kv_ਪੰਕਤੀਆਂ * ਆਕਾਰ(__fp16), n_ਪੰਕਤੀਆਂ_q);
+                            } ਨਹੀਂਤਾਂ {
+                                fa_ਧੱਕੋ_ਨਕਾਬ_dma_gqa(dma_q, ਨਕਾਬ, q_ਸ਼ੁਰੂ, im3, kv_ਸ਼ੁਰੂ, kv_ਸਿਰ, G, m_ਸਤਰ_ਬਾਈਟਾਂ, kv_ਪੰਕਤੀਆਂ, n_ਪੰਕਤੀਆਂ_q, &factx);
                             }
                         }
 
-                        if (step + 1 < n_active_blocks) {
-                            const uint32_t  prefetch_blk   = active_blocks[step + 1];
-                            const uint32_t  prefetch_start = prefetch_blk * Bc;
-                            const uint32_t  prefetch_rows  = hex_smin(Bc, nek1 - prefetch_start);
-                            const size_t    prefetch_buf   = 1 - buf_idx;
-                            const dma_addr_t k_prefetch_src = k->data + prefetch_start * k->nb[1] + ik2 * k->nb[2] + ik3 * k->nb[3];
-                            dma_queue_push(dma_q, dma_make_data(factx.vtcm_k_fp16[prefetch_buf], k_prefetch_src), size_k_row_padded, k->nb[1], size_k_row, prefetch_rows);
-                            const dma_addr_t v_prefetch_src = v->data + prefetch_start * v->nb[1] + iv2 * v->nb[2] + iv3 * v->nb[3];
-                            dma_queue_push(dma_q, dma_make_data(factx.vtcm_v_fp16[prefetch_buf], v_prefetch_src), size_v_row_padded, v->nb[1], size_v_row, prefetch_rows);
+                        ਜੇ (ਕਦਮ + 1 < n_ਸਰਗਰਮ_ਖੰਡਾਂ) {
+                            ਅਚਲ uint32_t  prefetch_blk   = ਸਰਗਰਮ_ਖੰਡਾਂ[ਕਦਮ + 1];
+                            ਅਚਲ uint32_t  prefetch_ਸ਼ੁਰੂ = prefetch_blk * Bc;
+                            ਅਚਲ uint32_t  prefetch_ਪੰਕਤੀਆਂ  = hex_smin(Bc, nek1 - prefetch_ਸ਼ੁਰੂ);
+                            ਅਚਲ size_t    prefetch_buf   = 1 - buf_idx;
+                            ਅਚਲ dma_addr_t k_prefetch_src = k->ਅੰਕੜੇ + prefetch_ਸ਼ੁਰੂ * k->nb[1] + ik2 * k->nb[2] + ik3 * k->nb[3];
+                            dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(factx.vtcm_k_fp16[prefetch_buf], k_prefetch_src), ਮਾਪ_k_ਪੰਕਤੀ_padded, k->nb[1], ਮਾਪ_k_ਪੰਕਤੀ, prefetch_ਪੰਕਤੀਆਂ);
+                            ਅਚਲ dma_addr_t v_prefetch_src = v->ਅੰਕੜੇ + prefetch_ਸ਼ੁਰੂ * v->nb[1] + iv2 * v->nb[2] + iv3 * v->nb[3];
+                            dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(factx.vtcm_v_fp16[prefetch_buf], v_prefetch_src), ਮਾਪ_v_ਪੰਕਤੀ_padded, v->nb[1], ਮਾਪ_v_ਪੰਕਤੀ, prefetch_ਪੰਕਤੀਆਂ);
                         }
 
                         // Wait for current K DMA and interleave
-                        void * curr_k = (void *) dma_queue_pop(dma_q).dst;
-                        fa_phase_k_interleave(&factx, kv_rows, k_src_stride, curr_k, kv_start, 0);
+                        ਖਾਲੀ * curr_k = (ਖਾਲੀ *) dma_ਕਤਾਰ_ਕੱਢੋ(dma_q).dst;
+                        fa_phase_k_interleave(&factx, kv_ਪੰਕਤੀਆਂ, k_src_stride, curr_k, kv_ਸ਼ੁਰੂ, 0);
 
                         {
-                            qk_job.q_tiles        = factx.vtcm_q_tiles;
-                            qk_job.k_tiles        = factx.vtcm_k_tiles[0];
-                            qk_job.s_tiles        = factx.vtcm_s_tiles[0];
-                            qk_job.n_row_tiles    = n_row_tiles;
-                            qk_job.n_col_tiles    = n_col_tiles;
-                            qk_job.n_dot_tiles    = (size_t) (DK_pad / 32);
-                            qk_job.n_tiles_per_bc = n_tiles_per_bc;
-                            qk_job.hmx_scales     = factx.vtcm_hmx_scales_qk;
+                            qk_ਕੰਮ.q_tiles        = factx.vtcm_q_tiles;
+                            qk_ਕੰਮ.k_tiles        = factx.vtcm_k_tiles[0];
+                            qk_ਕੰਮ.s_tiles        = factx.vtcm_s_tiles[0];
+                            qk_ਕੰਮ.n_ਪੰਕਤੀ_tiles    = n_ਪੰਕਤੀ_tiles;
+                            qk_ਕੰਮ.n_ਖਾਨਾ_tiles    = n_ਖਾਨਾ_tiles;
+                            qk_ਕੰਮ.n_dot_tiles    = (size_t) (DK_pad / 32);
+                            qk_ਕੰਮ.n_tiles_ਪ੍ਰਤੀ_bc = n_tiles_ਪ੍ਰਤੀ_bc;
+                            qk_ਕੰਮ.hmx_scales     = factx.vtcm_hmx_scales_qk;
 
-                            hmx_queue_push(ctx->hmx_queue, hmx_queue_make_desc(hmx_fa_qk_dot_worker, &qk_job));
-                            hmx_queue_pop(ctx->hmx_queue);
+                            hmx_ਕਤਾਰ_ਧੱਕੋ(ctx->hmx_ਕਤਾਰ, hmx_ਕਤਾਰ_make_desc(hmx_fa_qk_dot_ਕਾਮਾ, &qk_ਕੰਮ));
+                            hmx_ਕਤਾਰ_ਕੱਢੋ(ctx->hmx_ਕਤਾਰ);
                         }
 
                         // Wait for current V DMA and interleave
-                        void * curr_v = (void *) dma_queue_pop(dma_q).dst;
-                        fa_phase_v_interleave(&factx, kv_rows, v_src_stride, curr_v, factx.vtcm_v_tiles[0], n_tiles_per_bc, kv_start);
+                        ਖਾਲੀ * curr_v = (ਖਾਲੀ *) dma_ਕਤਾਰ_ਕੱਢੋ(dma_q).dst;
+                        fa_phase_v_interleave(&factx, kv_ਪੰਕਤੀਆਂ, v_src_stride, curr_v, factx.vtcm_v_tiles[0], n_tiles_ਪ੍ਰਤੀ_bc, kv_ਸ਼ੁਰੂ);
 
                         // ---- Phase 3: softmax + build_D ----
-                        __fp16 * current_mask_vtcm = NULL;
-                        if (mask) {
-                            if (__builtin_expect(factx.mask_broadcast, true)) {
-                                current_mask_vtcm = (__fp16 *) dma_queue_pop(dma_q).dst;
-                            } else {
-                                fa_pop_mask_dma_gqa(dma_q, G);
-                                current_mask_vtcm = factx.vtcm_mask_buf;
+                        __fp16 * current_ਨਕਾਬ_vtcm = ਨਿਰਾ;
+                        ਜੇ (ਨਕਾਬ) {
+                            ਜੇ (__builtin_expect(factx.ਨਕਾਬ_ਪ੍ਰਸਾਰਣ, true)) {
+                                current_ਨਕਾਬ_vtcm = (__fp16 *) dma_ਕਤਾਰ_ਕੱਢੋ(dma_q).dst;
+                            } ਨਹੀਂਤਾਂ {
+                                fa_ਕੱਢੋ_ਨਕਾਬ_dma_gqa(dma_q, G);
+                                current_ਨਕਾਬ_vtcm = factx.vtcm_ਨਕਾਬ_buf;
                             }
                         }
 
-                        fa_softmax_args_t sargs;
-                        memset(&sargs, 0, sizeof(sargs));
+                        fa_softmax_ਦਲੀਲਾਂ_t sargs;
+                        memset(&sargs, 0, ਆਕਾਰ(sargs));
                         sargs.factx                = &factx;
-                        sargs.kv_rows              = kv_rows;
-                        sargs.n_rows_g             = n_rows_g;
-                        sargs.n_col_tiles          = n_col_tiles;
-                        sargs.n_tiles_per_bc       = n_tiles_per_bc;
-                        sargs.n_row_tiles          = n_row_tiles;
-                        sargs.n_row_tiles_g_br     = n_row_tiles_g_br;
+                        sargs.kv_ਪੰਕਤੀਆਂ              = kv_ਪੰਕਤੀਆਂ;
+                        sargs.n_ਪੰਕਤੀਆਂ_g             = n_ਪੰਕਤੀਆਂ_g;
+                        sargs.n_ਖਾਨਾ_tiles          = n_ਖਾਨਾ_tiles;
+                        sargs.n_tiles_ਪ੍ਰਤੀ_bc       = n_tiles_ਪ੍ਰਤੀ_bc;
+                        sargs.n_ਪੰਕਤੀ_tiles          = n_ਪੰਕਤੀ_tiles;
+                        sargs.n_ਪੰਕਤੀ_tiles_g_br     = n_ਪੰਕਤੀ_tiles_g_br;
                         sargs.Bc                   = Bc;
                         sargs.G                    = G;
-                        sargs.kv_head              = kv_head;
-                        sargs.kv_start             = kv_start;
-                        sargs.q_start              = q_start;
+                        sargs.kv_ਸਿਰ              = kv_ਸਿਰ;
+                        sargs.kv_ਸ਼ੁਰੂ             = kv_ਸ਼ੁਰੂ;
+                        sargs.q_ਸ਼ੁਰੂ              = q_ਸ਼ੁਰੂ;
                         sargs.ib3                  = ib3;
                         sargs.has_alibi            = (factx.max_bias != 0.0f);
-                        sargs.mask                 = mask;
-                        sargs.mask_vtcm            = current_mask_vtcm;
-                        sargs.mask_vtcm_row_stride = factx.mask_buf_row_stride;
+                        sargs.ਨਕਾਬ                 = ਨਕਾਬ;
+                        sargs.ਨਕਾਬ_vtcm            = current_ਨਕਾਬ_vtcm;
+                        sargs.ਨਕਾਬ_vtcm_ਪੰਕਤੀ_stride = factx.ਨਕਾਬ_buf_ਪੰਕਤੀ_stride;
                         sargs.slopes               = factx.vtcm_slopes;
-                        fa_phase_softmax_and_build_d(&factx, &sargs, n_row_tiles, n_row_tiles_g_br);
+                        fa_phase_softmax_and_build_d(&factx, &sargs, n_ਪੰਕਤੀ_tiles, n_ਪੰਕਤੀ_tiles_g_br);
 
                         {
-                            ou_job.o_curr           = o_tile_curr;
-                            ou_job.o_prev           = o_tile_prev;
-                            ou_job.p_tiles          = factx.vtcm_p_tiles[0];
-                            ou_job.v_tiles          = factx.vtcm_v_tiles[0];
-                            ou_job.d_tiles          = factx.vtcm_d_tiles[0];
-                            ou_job.hmx_scales       = factx.vtcm_hmx_scales_id;
-                            ou_job.n_row_tiles      = n_row_tiles;
-                            ou_job.n_col_tiles      = n_col_tiles;
-                            ou_job.n_row_tiles_g_br = n_row_tiles_g_br;
-                            ou_job.n_tiles_per_bc   = n_tiles_per_bc;
-                            ou_job.DV               = DV_pad;
+                            ou_ਕੰਮ.o_curr           = o_tile_curr;
+                            ou_ਕੰਮ.o_prev           = o_tile_prev;
+                            ou_ਕੰਮ.p_tiles          = factx.vtcm_p_tiles[0];
+                            ou_ਕੰਮ.v_tiles          = factx.vtcm_v_tiles[0];
+                            ou_ਕੰਮ.d_tiles          = factx.vtcm_d_tiles[0];
+                            ou_ਕੰਮ.hmx_scales       = factx.vtcm_hmx_scales_id;
+                            ou_ਕੰਮ.n_ਪੰਕਤੀ_tiles      = n_ਪੰਕਤੀ_tiles;
+                            ou_ਕੰਮ.n_ਖਾਨਾ_tiles      = n_ਖਾਨਾ_tiles;
+                            ou_ਕੰਮ.n_ਪੰਕਤੀ_tiles_g_br = n_ਪੰਕਤੀ_tiles_g_br;
+                            ou_ਕੰਮ.n_tiles_ਪ੍ਰਤੀ_bc   = n_tiles_ਪ੍ਰਤੀ_bc;
+                            ou_ਕੰਮ.DV               = DV_pad;
 
-                            hmx_queue_push(ctx->hmx_queue, hmx_queue_make_desc(hmx_fa_o_update_worker, &ou_job));
-                            if (step + 1 == n_active_blocks) {
+                            hmx_ਕਤਾਰ_ਧੱਕੋ(ctx->hmx_ਕਤਾਰ, hmx_ਕਤਾਰ_make_desc(hmx_fa_o_update_ਕਾਮਾ, &ou_ਕੰਮ));
+                            ਜੇ (ਕਦਮ + 1 == n_ਸਰਗਰਮ_ਖੰਡਾਂ) {
                                 // Overlapped: run HVX build diag inv L while HMX is busy executing the update
-                                htp_trace_event_start(tr_hvx, HTP_TRACE_EVT_HVX_O_PROC, (uint16_t) q_start);
-                                fa_build_d_diag_inv_l(&factx, n_row_tiles, n_row_tiles_g_br, kv_head, n_rows_g);
-                                htp_trace_event_stop(tr_hvx, HTP_TRACE_EVT_HVX_O_PROC, (uint16_t) q_start);
+                                htp_trace_event_ਸ਼ੁਰੂ(tr_hvx, HTP_TRACE_EVT_HVX_O_PROC, (uint16_t) q_ਸ਼ੁਰੂ);
+                                fa_build_d_diag_inv_l(&factx, n_ਪੰਕਤੀ_tiles, n_ਪੰਕਤੀ_tiles_g_br, kv_ਸਿਰ, n_ਪੰਕਤੀਆਂ_g);
+                                htp_trace_event_stop(tr_hvx, HTP_TRACE_EVT_HVX_O_PROC, (uint16_t) q_ਸ਼ੁਰੂ);
                             }
-                            hmx_queue_pop(ctx->hmx_queue);
+                            hmx_ਕਤਾਰ_ਕੱਢੋ(ctx->hmx_ਕਤਾਰ);
 
-                            hex_swap_ptr((void **) &o_tile_curr, (void **) &o_tile_prev);
+                            hex_ਅਦਲਾ_ਬਦਲੀ_ptr((ਖਾਲੀ **) &o_tile_curr, (ਖਾਲੀ **) &o_tile_prev);
                         }
 
                         buf_idx = 1 - buf_idx;
@@ -2555,31 +2555,31 @@ int hmx_flash_attn_ext(struct htp_ops_context * octx) {
                 }
 
                 // Enqueue DMAs for the next kv_head early so they overlap with O-PROC
-                const uint32_t next_kv_head = kv_head + 1;
-                const bool has_next = (next_kv_head < kv_head_max);
+                ਅਚਲ uint32_t ਅਗਲਾ_kv_ਸਿਰ = kv_ਸਿਰ + 1;
+                ਅਚਲ bool has_ਅਗਲਾ = (ਅਗਲਾ_kv_ਸਿਰ < kv_ਸਿਰ_max);
 
-                if (has_next) {
-                    const dma_addr_t next_q_ptr = q->data + q_start * q->nb[1] + (next_kv_head * factx.G) * q->nb[2] + ib3 * q->nb[3];
-                    const size_t next_q_row_bytes = q_transposed ? n_rows_q * q_row_bytes_trans_factor : q_row_bytes_untransposed;
-                    const size_t next_n_rows      = q_transposed ? factx.G : n_rows_q;
-                    dma_queue_push(dma_q, dma_make_data(factx.vtcm_q_dma, next_q_ptr), next_q_row_bytes, hex_smax(q_src_stride, next_q_row_bytes), next_q_row_bytes, next_n_rows);
+                ਜੇ (has_ਅਗਲਾ) {
+                    ਅਚਲ dma_addr_t ਅਗਲਾ_q_ptr = q->ਅੰਕੜੇ + q_ਸ਼ੁਰੂ * q->nb[1] + (ਅਗਲਾ_kv_ਸਿਰ * factx.G) * q->nb[2] + ib3 * q->nb[3];
+                    ਅਚਲ size_t ਅਗਲਾ_q_ਪੰਕਤੀ_ਬਾਈਟਾਂ = q_transposed ? n_ਪੰਕਤੀਆਂ_q * q_ਪੰਕਤੀ_ਬਾਈਟਾਂ_trans_ਗੁਣਕ : q_ਪੰਕਤੀ_ਬਾਈਟਾਂ_untransposed;
+                    ਅਚਲ size_t ਅਗਲਾ_n_ਪੰਕਤੀਆਂ      = q_transposed ? factx.G : n_ਪੰਕਤੀਆਂ_q;
+                    dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(factx.vtcm_q_dma, ਅਗਲਾ_q_ptr), ਅਗਲਾ_q_ਪੰਕਤੀ_ਬਾਈਟਾਂ, hex_smax(q_src_stride, ਅਗਲਾ_q_ਪੰਕਤੀ_ਬਾਈਟਾਂ), ਅਗਲਾ_q_ਪੰਕਤੀ_ਬਾਈਟਾਂ, ਅਗਲਾ_n_ਪੰਕਤੀਆਂ);
 
-                    if (n_active_blocks > 0) {
-                        const uint32_t next_ik2 = next_kv_head;
-                        const uint32_t next_iv2 = next_kv_head;
+                    ਜੇ (n_ਸਰਗਰਮ_ਖੰਡਾਂ > 0) {
+                        ਅਚਲ uint32_t ਅਗਲਾ_ik2 = ਅਗਲਾ_kv_ਸਿਰ;
+                        ਅਚਲ uint32_t ਅਗਲਾ_iv2 = ਅਗਲਾ_kv_ਸਿਰ;
 
-                        const dma_addr_t next_k_src = k->data + b0_start * k->nb[1] + next_ik2 * k->nb[2] + ik3 * k->nb[3];
-                        dma_queue_push(dma_q, dma_make_data(factx.vtcm_k_fp16[0], next_k_src), size_k_row_padded, k->nb[1], size_k_row, b0_rows);
+                        ਅਚਲ dma_addr_t ਅਗਲਾ_k_src = k->ਅੰਕੜੇ + b0_ਸ਼ੁਰੂ * k->nb[1] + ਅਗਲਾ_ik2 * k->nb[2] + ik3 * k->nb[3];
+                        dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(factx.vtcm_k_fp16[0], ਅਗਲਾ_k_src), ਮਾਪ_k_ਪੰਕਤੀ_padded, k->nb[1], ਮਾਪ_k_ਪੰਕਤੀ, b0_ਪੰਕਤੀਆਂ);
 
-                        const dma_addr_t next_v_src = v->data + b0_start * v->nb[1] + next_iv2 * v->nb[2] + iv3 * v->nb[3];
-                        dma_queue_push(dma_q, dma_make_data(factx.vtcm_v_fp16[0], next_v_src), size_v_row_padded, v->nb[1], size_v_row, b0_rows);
+                        ਅਚਲ dma_addr_t ਅਗਲਾ_v_src = v->ਅੰਕੜੇ + b0_ਸ਼ੁਰੂ * v->nb[1] + ਅਗਲਾ_iv2 * v->nb[2] + iv3 * v->nb[3];
+                        dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(factx.vtcm_v_fp16[0], ਅਗਲਾ_v_src), ਮਾਪ_v_ਪੰਕਤੀ_padded, v->nb[1], ਮਾਪ_v_ਪੰਕਤੀ, b0_ਪੰਕਤੀਆਂ);
 
-                        if (factx.pipeline && mask) {
-                            if (__builtin_expect(factx.mask_broadcast, true)) {
-                                const dma_addr_t ms_src = mask->data + q_start * mask->nb[1] + im3 * mask->nb[3] + b0_start * sizeof(__fp16);
-                                dma_cache_fa_push(dma_q, &factx.m_cache, ms_src, m_line_bytes, mask->nb[1], b0_rows * sizeof(__fp16), n_rows_q);
-                            } else {
-                                fa_push_mask_dma_gqa(dma_q, mask, q_start, im3, b0_start, next_kv_head, G, m_line_bytes, b0_rows, n_rows_q, &factx);
+                        ਜੇ (factx.pipeline && ਨਕਾਬ) {
+                            ਜੇ (__builtin_expect(factx.ਨਕਾਬ_ਪ੍ਰਸਾਰਣ, true)) {
+                                ਅਚਲ dma_addr_t ms_src = ਨਕਾਬ->ਅੰਕੜੇ + q_ਸ਼ੁਰੂ * ਨਕਾਬ->nb[1] + im3 * ਨਕਾਬ->nb[3] + b0_ਸ਼ੁਰੂ * ਆਕਾਰ(__fp16);
+                                dma_cache_fa_ਧੱਕੋ(dma_q, &factx.m_cache, ms_src, m_ਸਤਰ_ਬਾਈਟਾਂ, ਨਕਾਬ->nb[1], b0_ਪੰਕਤੀਆਂ * ਆਕਾਰ(__fp16), n_ਪੰਕਤੀਆਂ_q);
+                            } ਨਹੀਂਤਾਂ {
+                                fa_ਧੱਕੋ_ਨਕਾਬ_dma_gqa(dma_q, ਨਕਾਬ, q_ਸ਼ੁਰੂ, im3, b0_ਸ਼ੁਰੂ, ਅਗਲਾ_kv_ਸਿਰ, G, m_ਸਤਰ_ਬਾਈਟਾਂ, b0_ਪੰਕਤੀਆਂ, n_ਪੰਕਤੀਆਂ_q, &factx);
                             }
                         }
                     }
@@ -2587,59 +2587,59 @@ int hmx_flash_attn_ext(struct htp_ops_context * octx) {
 
                 // ---- Final normalization ----
                 {
-                    on_job.o_curr           = o_tile_curr;
-                    on_job.o_prev           = o_tile_prev;
-                    on_job.d_tiles          = factx.vtcm_d_inv_l;
-                    on_job.hmx_scales       = factx.vtcm_hmx_scales_id;
-                    on_job.n_row_tiles      = n_row_tiles;
-                    on_job.n_row_tiles_g_br = n_row_tiles_g_br;
-                    on_job.DV               = DV_pad;
-                    hmx_queue_push(ctx->hmx_queue, hmx_queue_make_desc(hmx_fa_o_norm_worker, &on_job));
-                    hmx_queue_pop(ctx->hmx_queue);
+                    on_ਕੰਮ.o_curr           = o_tile_curr;
+                    on_ਕੰਮ.o_prev           = o_tile_prev;
+                    on_ਕੰਮ.d_tiles          = factx.vtcm_d_inv_l;
+                    on_ਕੰਮ.hmx_scales       = factx.vtcm_hmx_scales_id;
+                    on_ਕੰਮ.n_ਪੰਕਤੀ_tiles      = n_ਪੰਕਤੀ_tiles;
+                    on_ਕੰਮ.n_ਪੰਕਤੀ_tiles_g_br = n_ਪੰਕਤੀ_tiles_g_br;
+                    on_ਕੰਮ.DV               = DV_pad;
+                    hmx_ਕਤਾਰ_ਧੱਕੋ(ctx->hmx_ਕਤਾਰ, hmx_ਕਤਾਰ_make_desc(hmx_fa_o_norm_ਕਾਮਾ, &on_ਕੰਮ));
+                    hmx_ਕਤਾਰ_ਕੱਢੋ(ctx->hmx_ਕਤਾਰ);
                 }
 
                 // ---- Store O block ----
-                fa_phase_o_store(&factx, dst, o_tile_curr, q_start, kv_head, ib3, n_rows_g);
+                fa_phase_o_store(&factx, dst, o_tile_curr, q_ਸ਼ੁਰੂ, kv_ਸਿਰ, ib3, n_ਪੰਕਤੀਆਂ_g);
             }
         }
     }
 
-    return HTP_STATUS_OK;
+    ਵਾਪਸ HTP_ਸਥਿਤੀ_OK;
 }
 
-int op_flash_attn_ext(struct htp_ops_context * octx) {
-    const struct htp_tensor * q    = octx->src[0];
-    const struct htp_tensor * k    = octx->src[1];
-    const struct htp_tensor * v    = octx->src[2];
-    const struct htp_tensor * mask = octx->src[3];
-    const struct htp_tensor * dst  = octx->dst;
+ਪੂਰਨ op_flash_attn_ext(ਬਣਤਰ htp_ops_context * octx) {
+    ਅਚਲ ਬਣਤਰ htp_tensor * q    = octx->src[0];
+    ਅਚਲ ਬਣਤਰ htp_tensor * k    = octx->src[1];
+    ਅਚਲ ਬਣਤਰ htp_tensor * v    = octx->src[2];
+    ਅਚਲ ਬਣਤਰ htp_tensor * ਨਕਾਬ = octx->src[3];
+    ਅਚਲ ਬਣਤਰ htp_tensor * dst  = octx->dst;
 
     // Check support
-    if ((q->type != HTP_TYPE_F16 && q->type != HTP_TYPE_F32) ||
+    ਜੇ ((q->type != HTP_TYPE_F16 && q->type != HTP_TYPE_F32) ||
         (k->type != HTP_TYPE_F16 && k->type != HTP_TYPE_Q8_0) ||
         (v->type != HTP_TYPE_F16 && v->type != HTP_TYPE_Q8_0)) {
-        return HTP_STATUS_NO_SUPPORT;
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_NO_SUPPORT;
     }
 
-    if (htp_tensor_is_extended(dst)) {
-        return HTP_STATUS_NO_SUPPORT;
+    ਜੇ (htp_tensor_is_extended(dst)) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_NO_SUPPORT;
     }
 
-    const struct htp_fa_kernel_params * kparams = (const struct htp_fa_kernel_params *) octx->kernel_params;
+    ਅਚਲ ਬਣਤਰ htp_fa_kernel_params * kparams = (ਅਚਲ ਬਣਤਰ htp_fa_kernel_params *) octx->kernel_params;
 
-    if (kparams->kernel_type == HTP_FA_KERNEL_UNSUPPORTED || kparams->n_kv_blocks > FA_MAX_KV_BLOCKS) {
-        return HTP_STATUS_NO_SUPPORT;
+    ਜੇ (kparams->kernel_type == HTP_FA_KERNEL_UNSUPPORTED || kparams->n_kv_ਖੰਡਾਂ > FA_MAX_KV_ਖੰਡਾਂ) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_NO_SUPPORT;
     }
 
-    if (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
-        return HTP_STATUS_INVAL_PARAMS;
+    ਜੇ (!htp_ops_context_ਸੈੱਟ_n_ਧਾਗੇ(octx, kparams->n_ਧਾਗੇ)) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_INVAL_PARAMS;
     }
 
-    if (kparams->kernel_type == HTP_FA_KERNEL_HMX) {
-        return hmx_flash_attn_ext(octx);
+    ਜੇ (kparams->kernel_type == HTP_FA_KERNEL_HMX) {
+        ਵਾਪਸ hmx_flash_attn_ext(octx);
     }
 
-    struct htp_fa_context factx;
+    ਬਣਤਰ htp_fa_context factx;
     factx.octx = octx;
     factx.k = k;
     factx.v = v;
@@ -2647,125 +2647,125 @@ int op_flash_attn_ext(struct htp_ops_context * octx) {
     factx.src0_div21 = kparams->u.hvx.src0_div21;
     factx.src0_div1  = kparams->u.hvx.src0_div1;
 
-    factx.broadcast_rk2 = kparams->broadcast_rk2;
-    factx.broadcast_rk3 = kparams->broadcast_rk3;
-    factx.broadcast_rv2 = kparams->broadcast_rv2;
-    factx.broadcast_rv3 = kparams->broadcast_rv3;
+    factx.ਪ੍ਰਸਾਰਣ_rk2 = kparams->ਪ੍ਰਸਾਰਣ_rk2;
+    factx.ਪ੍ਰਸਾਰਣ_rk3 = kparams->ਪ੍ਰਸਾਰਣ_rk3;
+    factx.ਪ੍ਰਸਾਰਣ_rv2 = kparams->ਪ੍ਰਸਾਰਣ_rv2;
+    factx.ਪ੍ਰਸਾਰਣ_rv3 = kparams->ਪ੍ਰਸਾਰਣ_rv3;
 
-    if (mask) {
+    ਜੇ (ਨਕਾਬ) {
         factx.src3_div2 = kparams->src3_div2;
         factx.src3_div3 = kparams->src3_div3;
     }
 
     factx.is_q_fp32 = (q->type == HTP_TYPE_F32);
-    factx.size_q_row_padded = kparams->u.hvx.size_q_row_padded;
-    factx.size_k_row_padded = kparams->u.hvx.size_k_row_padded;
-    factx.size_v_row_padded = kparams->u.hvx.size_v_row_padded;
+    factx.ਮਾਪ_q_ਪੰਕਤੀ_padded = kparams->u.hvx.ਮਾਪ_q_ਪੰਕਤੀ_padded;
+    factx.ਮਾਪ_k_ਪੰਕਤੀ_padded = kparams->u.hvx.ਮਾਪ_k_ਪੰਕਤੀ_padded;
+    factx.ਮਾਪ_v_ਪੰਕਤੀ_padded = kparams->u.hvx.ਮਾਪ_v_ਪੰਕਤੀ_padded;
 
-    factx.n_blocks = kparams->n_kv_blocks;
+    factx.n_ਖੰਡਾਂ = kparams->n_kv_ਖੰਡਾਂ;
 
     factx.scale = kparams->scale;
     factx.max_bias = kparams->max_bias;
     factx.has_softcap = (kparams->logit_softcap != 0.0f);
     factx.logit_softcap = 0;
-    if (factx.has_softcap) {
+    ਜੇ (factx.has_softcap) {
         factx.logit_softcap = (__fp16) kparams->logit_softcap;
     }
 
-    factx.n_head_log2 = kparams->n_head_log2;
+    factx.n_ਸਿਰ_log2 = kparams->n_ਸਿਰ_log2;
     factx.m0          = kparams->m0;
     factx.m1          = kparams->m1;
 
-    const uint32_t n_head = q->ne[2];
-    if (n_head > 512) {
-        return HTP_STATUS_NO_SUPPORT;
+    ਅਚਲ uint32_t n_ਸਿਰ = q->ne[2];
+    ਜੇ (n_ਸਿਰ > 512) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_NO_SUPPORT;
     }
-    for (uint32_t h = 0; h < n_head; ++h) {
-        factx.slopes[h] = (__fp16) ((kparams->max_bias > 0.0f) ? alibi_slope(h, factx.n_head_log2, factx.m0, factx.m1) : 1.0f);
+    ਲਈ (uint32_t h = 0; h < n_ਸਿਰ; ++h) {
+        factx.slopes[h] = (__fp16) ((kparams->max_bias > 0.0f) ? alibi_ਢਲਾਨ(h, factx.n_ਸਿਰ_log2, factx.m0, factx.m1) : 1.0f);
     }
 
     // total rows in q
-    const uint32_t neq1 = q->ne[1];
-    const uint32_t neq2 = q->ne[2];
-    const uint32_t neq3 = q->ne[3];
-    const uint32_t total_qrows = neq1 * neq2 * neq3;
+    ਅਚਲ uint32_t neq1 = q->ne[1];
+    ਅਚਲ uint32_t neq2 = q->ne[2];
+    ਅਚਲ uint32_t neq3 = q->ne[3];
+    ਅਚਲ uint32_t ਕੁੱਲ_qrows = neq1 * neq2 * neq3;
 
-    uint32_t qrow_start = 0;
-    uint32_t qrows      = total_qrows;
+    uint32_t qrow_ਸ਼ੁਰੂ = 0;
+    uint32_t qrows      = ਕੁੱਲ_qrows;
 
-    if (octx->ctx->mdev.count > 1) {
-        const uint32_t mdev_count = octx->ctx->mdev.count;
-        const uint32_t mdev_idx   = octx->ctx->mdev.idx;
-        const uint32_t n_kv_heads = k->ne[2];
-        const uint32_t dst_e_size = (dst->type == HTP_TYPE_F32) ? sizeof(float) : sizeof(__fp16);
-        const bool can_split      = htp_tensor_can_row_partition(dst, dst_e_size);
+    ਜੇ (octx->ctx->mdev.ਗਿਣਤੀ_2 > 1) {
+        ਅਚਲ uint32_t mdev_ਗਿਣਤੀ = octx->ctx->mdev.ਗਿਣਤੀ_2;
+        ਅਚਲ uint32_t mdev_idx   = octx->ctx->mdev.idx;
+        ਅਚਲ uint32_t n_kv_heads = k->ne[2];
+        ਅਚਲ uint32_t dst_e_ਮਾਪ = (dst->type == HTP_TYPE_F32) ? ਆਕਾਰ(ਦਸ਼ਮਲਵ) : ਆਕਾਰ(__fp16);
+        ਅਚਲ bool can_ਵੰਡੋ      = htp_tensor_can_ਪੰਕਤੀ_ਹਿੱਸੇ_ਕਰੋ(dst, dst_e_ਮਾਪ);
 
         // head range is contiguous in flat row space only when neq3 == 1
-        if (kparams->head_split && can_split && neq3 == 1 && n_kv_heads >= mdev_count && n_kv_heads % mdev_count == 0) {
-            const uint32_t G              = kparams->G;
-            const uint32_t kv_per_core    = n_kv_heads / mdev_count;
-            const uint32_t heads_per_core = kv_per_core * G;
-            const uint32_t head_start     = mdev_idx * heads_per_core;
-            qrow_start = head_start * neq1;
-            qrows      = heads_per_core * neq1;
-        } else {
-            const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_qrows, can_split ? 1 : 0, mdev_idx, mdev_count, &octx->ctx->mdev.count_div);
-            qrow_start = range.start;
-            qrows      = range.count;
+        ਜੇ (kparams->ਸਿਰ_ਵੰਡੋ && can_ਵੰਡੋ && neq3 == 1 && n_kv_heads >= mdev_ਗਿਣਤੀ && n_kv_heads % mdev_ਗਿਣਤੀ == 0) {
+            ਅਚਲ uint32_t G              = kparams->G;
+            ਅਚਲ uint32_t kv_ਪ੍ਰਤੀ_core    = n_kv_heads / mdev_ਗਿਣਤੀ;
+            ਅਚਲ uint32_t heads_ਪ੍ਰਤੀ_core = kv_ਪ੍ਰਤੀ_core * G;
+            ਅਚਲ uint32_t ਸਿਰ_ਸ਼ੁਰੂ     = mdev_idx * heads_ਪ੍ਰਤੀ_core;
+            qrow_ਸ਼ੁਰੂ = ਸਿਰ_ਸ਼ੁਰੂ * neq1;
+            qrows      = heads_ਪ੍ਰਤੀ_core * neq1;
+        } ਨਹੀਂਤਾਂ {
+            ਅਚਲ ਬਣਤਰ htp_tensor_mdev_range range = htp_tensor_mdev_ਹਿੱਸੇ_ਕਰੋ(ਕੁੱਲ_qrows, can_ਵੰਡੋ ? 1 : 0, mdev_idx, mdev_ਗਿਣਤੀ, &octx->ctx->mdev.ਗਿਣਤੀ_div);
+            qrow_ਸ਼ੁਰੂ = range.ਸ਼ੁਰੂ;
+            qrows      = range.ਗਿਣਤੀ_2;
         }
     }
 
-    if (qrows == 0) {
-        return HTP_STATUS_OK;
+    ਜੇ (qrows == 0) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_OK;
     }
 
-    const uint32_t n_threads = octx->n_threads;
+    ਅਚਲ uint32_t n_ਧਾਗੇ = octx->n_ਧਾਗੇ;
 
     factx.qrows            = qrows;
-    factx.qrow_start       = qrow_start;
-    factx.qrows_per_thread = fastdiv(qrows + n_threads - 1, &octx->n_threads_div);
+    factx.qrow_ਸ਼ੁਰੂ       = qrow_ਸ਼ੁਰੂ;
+    factx.qrows_ਪ੍ਰਤੀ_thread = fastdiv(qrows + n_ਧਾਗੇ - 1, &octx->n_ਧਾਗੇ_div);
 
-    const bool has_mask  = (mask != NULL);
-    const bool has_sinks = (octx->src[4] != NULL);
-    struct hvx_fa_vtcm_layout L;
-    hvx_fa_vtcm_layout_build(&L, k->ne[0], v->ne[0], factx.is_q_fp32, has_mask, has_sinks, n_head, n_threads);
+    ਅਚਲ bool has_ਨਕਾਬ  = (ਨਕਾਬ != ਨਿਰਾ);
+    ਅਚਲ bool has_sinks = (octx->src[4] != ਨਿਰਾ);
+    ਬਣਤਰ hvx_fa_vtcm_layout L;
+    hvx_fa_vtcm_layout_build(&L, k->ne[0], v->ne[0], factx.is_q_fp32, has_ਨਕਾਬ, has_sinks, n_ਸਿਰ, n_ਧਾਗੇ);
 
-    if (L.total_bytes > octx->ctx->vtcm_size) {
-        return HTP_STATUS_VTCM_TOO_SMALL;
+    ਜੇ (L.ਕੁੱਲ_ਬਾਈਟਾਂ > octx->ctx->vtcm_ਮਾਪ) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_VTCM_TOO_SMALL;
     }
 
-    factx.size_q_block = L.size_q_block;
-    factx.size_k_block = L.size_k_block;
-    factx.size_v_block = L.size_v_block;
-    factx.size_m_block = L.size_m_block;
-    factx.size_vkq_acc = L.size_vkq_acc;
+    factx.ਮਾਪ_q_ਖੰਡ = L.ਮਾਪ_q_ਖੰਡ;
+    factx.ਮਾਪ_k_ਖੰਡ = L.ਮਾਪ_k_ਖੰਡ;
+    factx.ਮਾਪ_v_ਖੰਡ = L.ਮਾਪ_v_ਖੰਡ;
+    factx.ਮਾਪ_m_ਖੰਡ = L.ਮਾਪ_m_ਖੰਡ;
+    factx.ਮਾਪ_vkq_acc = L.ਮਾਪ_vkq_acc;
 
-    uint8_t * const base = octx->ctx->vtcm_base;
+    uint8_t * ਅਚਲ ਅਧਾਰ = octx->ctx->vtcm_ਅਧਾਰ;
 
-    factx.spad_q               = VTCM_LAYOUT_PTR(uint8_t, base, L.off_q);
-    factx.spad_k               = VTCM_LAYOUT_PTR(uint8_t, base, L.off_k);
-    factx.spad_v               = VTCM_LAYOUT_PTR(uint8_t, base, L.off_v);
-    factx.spad_m               = VTCM_LAYOUT_PTR_OPTIONAL(uint8_t, base, L.off_m, has_mask);
-    factx.spad_a               = VTCM_LAYOUT_PTR(uint8_t, base, L.off_a);
-    factx.spad_sinks           = VTCM_LAYOUT_PTR_OPTIONAL(float, base, L.off_sinks, has_sinks);
-    factx.n_active_blocks      = factx.n_blocks;
-    factx.shared_active_blocks = false;
+    factx.spad_q               = VTCM_LAYOUT_PTR(uint8_t, ਅਧਾਰ, L.off_q);
+    factx.spad_k               = VTCM_LAYOUT_PTR(uint8_t, ਅਧਾਰ, L.off_k);
+    factx.spad_v               = VTCM_LAYOUT_PTR(uint8_t, ਅਧਾਰ, L.off_v);
+    factx.spad_m               = VTCM_LAYOUT_PTR_OPTIONAL(uint8_t, ਅਧਾਰ, L.off_m, has_ਨਕਾਬ);
+    factx.spad_a               = VTCM_LAYOUT_PTR(uint8_t, ਅਧਾਰ, L.off_a);
+    factx.spad_sinks           = VTCM_LAYOUT_PTR_OPTIONAL(ਦਸ਼ਮਲਵ, ਅਧਾਰ, L.off_sinks, has_sinks);
+    factx.n_ਸਰਗਰਮ_ਖੰਡਾਂ      = factx.n_ਖੰਡਾਂ;
+    factx.shared_ਸਰਗਰਮ_ਖੰਡਾਂ = false;
 
-    if (has_mask && neq1 == 1 && neq3 == 1 && mask->ne[2] == 1 && factx.n_blocks > 1 && factx.n_blocks <= FA_MAX_KV_BLOCKS) {
-        factx.n_active_blocks = fa_scan_active_blocks(
-            octx->ctx->dma[0], mask, 0, 1, 0, 0, k->ne[1], FLASH_ATTN_BLOCK_SIZE,
-            factx.n_blocks, factx.spad_k, factx.size_k_block * 2, factx.active_blocks);
-        factx.shared_active_blocks = true;
+    ਜੇ (has_ਨਕਾਬ && neq1 == 1 && neq3 == 1 && ਨਕਾਬ->ne[2] == 1 && factx.n_ਖੰਡਾਂ > 1 && factx.n_ਖੰਡਾਂ <= FA_MAX_KV_ਖੰਡਾਂ) {
+        factx.n_ਸਰਗਰਮ_ਖੰਡਾਂ = fa_ਜਾਂਚ_ਸਰਗਰਮ_ਖੰਡਾਂ(
+            octx->ctx->dma[0], ਨਕਾਬ, 0, 1, 0, 0, k->ne[1], FLASH_ATTN_ਖੰਡ_ਮਾਪ,
+            factx.n_ਖੰਡਾਂ, factx.spad_k, factx.ਮਾਪ_k_ਖੰਡ * 2, factx.ਸਰਗਰਮ_ਖੰਡਾਂ);
+        factx.shared_ਸਰਗਰਮ_ਖੰਡਾਂ = true;
     }
 
-    if (has_sinks) {
-        const struct htp_tensor * sinks = octx->src[4];
-        dma_queue * dma_q = octx->ctx->dma[0];
-        dma_queue_push(dma_q, dma_make_data(factx.spad_sinks, sinks->data), L.size_sinks, 0, sinks->size, 1);
-        dma_queue_pop(dma_q);
+    ਜੇ (has_sinks) {
+        ਅਚਲ ਬਣਤਰ htp_tensor * sinks = octx->src[4];
+        dma_ਕਤਾਰ * dma_q = octx->ctx->dma[0];
+        dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(factx.spad_sinks, sinks->ਅੰਕੜੇ), L.ਮਾਪ_sinks, 0, sinks->ਮਾਪ, 1);
+        dma_ਕਤਾਰ_ਕੱਢੋ(dma_q);
     }
 
-    work_queue_run(octx->ctx->work_queue, flash_attn_ext_f16_thread, &factx, n_threads);
+    work_ਕਤਾਰ_ਲੜੀਵਾਰ(octx->ctx->work_ਕਤਾਰ, flash_attn_ext_f16_thread, &factx, n_ਧਾਗੇ);
 
-    return HTP_STATUS_OK;
+    ਵਾਪਸ HTP_ਸਥਿਤੀ_OK;
 }

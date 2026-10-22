@@ -1,291 +1,291 @@
-#include "ggml-rpc.h"
-#include "ggml-impl.h"
-#include "ggml-backend-impl.h"
-#include "ggml-cpp.h"
-#include "transport.h"
-#include "log.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-rpc.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-impl.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-backend-impl.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-cpp.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "transport.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "log.h"
 
-#include <array>
-#include <chrono>
-#include <cinttypes>
-#include <optional>
-#include <string>
-#include <thread>
-#include <vector>
-#include <queue>
-#include <condition_variable>
-#include <future>
-#include <memory>
-#include <mutex>
-#include <unordered_map>
-#include <unordered_set>
-#include <cstring>
-#include <fstream>
-#include <filesystem>
-#include <algorithm>
-#include <atomic>
+#ਅਨ੍ਤਰ੍ਭਾਵ <array>
+#ਅਨ੍ਤਰ੍ਭਾਵ <chrono>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cinttypes>
+#ਅਨ੍ਤਰ੍ਭਾਵ <optional>
+#ਅਨ੍ਤਰ੍ਭਾਵ <string>
+#ਅਨ੍ਤਰ੍ਭਾਵ <thread>
+#ਅਨ੍ਤਰ੍ਭਾਵ <vector>
+#ਅਨ੍ਤਰ੍ਭਾਵ <queue>
+#ਅਨ੍ਤਰ੍ਭਾਵ <condition_variable>
+#ਅਨ੍ਤਰ੍ਭਾਵ <future>
+#ਅਨ੍ਤਰ੍ਭਾਵ <memory>
+#ਅਨ੍ਤਰ੍ਭਾਵ <mutex>
+#ਅਨ੍ਤਰ੍ਭਾਵ <unordered_map>
+#ਅਨ੍ਤਰ੍ਭਾਵ <unordered_set>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cstring>
+#ਅਨ੍ਤਰ੍ਭਾਵ <fstream>
+#ਅਨ੍ਤਰ੍ਭਾਵ <filesystem>
+#ਅਨ੍ਤਰ੍ਭਾਵ <algorithm>
+#ਅਨ੍ਤਰ੍ਭਾਵ <atomic>
 
-namespace fs = std::filesystem;
+ਨਾਮਾਕਾਸ਼ fs = std::filesystem;
 
 // macro for nicer error messages on server crash
-#define RPC_STATUS_ASSERT(x) if (!(x)) GGML_ABORT("Remote RPC server crashed or returned malformed response")
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ RPC_ਸਥਿਤੀ_ASSERT(x) ਜੇ (!(x)) GGML_ABORT("Remote RPC server crashed or returned malformed response")
 
 // all RPC structures must be packed
-#pragma pack(push, 1)
+#ਹਦਾਇਤ pack(ਧੱਕੋ, 1)
 // ggml_tensor is serialized into rpc_tensor
-struct rpc_tensor {
+ਬਣਤਰ rpc_tensor {
     uint64_t id;
     uint32_t type;
-    uint64_t buffer;
+    uint64_t ਬਫਰ;
     uint32_t ne[GGML_MAX_DIMS];
     uint32_t nb[GGML_MAX_DIMS];
     uint32_t op;
-    int32_t  op_params[GGML_MAX_OP_PARAMS / sizeof(int32_t)];
+    int32_t  op_params[GGML_MAX_OP_PARAMS / ਆਕਾਰ(int32_t)];
     int32_t  flags;
     uint64_t src[GGML_MAX_SRC];
     uint64_t view_src;
     uint64_t view_offs;
-    uint64_t data;
-    char name[GGML_MAX_NAME];
+    uint64_t ਅੰਕੜੇ;
+    ਅੱਖਰ name[GGML_MAX_NAME];
 
-    int32_t use_count;
+    int32_t use_ਗਿਣਤੀ;
 };
 
-static_assert(sizeof(rpc_tensor) % 8 == 0, "rpc_tensor size must be multiple of 8");
+static_assert(ਆਕਾਰ(rpc_tensor) % 8 == 0, "rpc_tensor size must be multiple of 8");
 
 // RPC commands
-enum rpc_cmd {
-    RPC_CMD_ALLOC_BUFFER = 0,
+ਗਿਣਤੀ rpc_cmd {
+    RPC_CMD_ALLOC_ਬਫਰ = 0,
     RPC_CMD_GET_ALIGNMENT,
-    RPC_CMD_GET_MAX_SIZE,
-    RPC_CMD_BUFFER_GET_BASE,
-    RPC_CMD_FREE_BUFFER,
-    RPC_CMD_BUFFER_CLEAR,
-    RPC_CMD_SET_TENSOR,
-    RPC_CMD_SET_TENSOR_HASH,
+    RPC_CMD_GET_MAX_ਮਾਪ,
+    RPC_CMD_ਬਫਰ_GET_ਅਧਾਰ,
+    RPC_CMD_FREE_ਬਫਰ,
+    RPC_CMD_ਬਫਰ_CLEAR,
+    RPC_CMD_ਸੈੱਟ_TENSOR,
+    RPC_CMD_ਸੈੱਟ_TENSOR_HASH,
     RPC_CMD_GET_TENSOR,
     RPC_CMD_COPY_TENSOR,
-    RPC_CMD_GRAPH_COMPUTE,
-    RPC_CMD_GET_DEVICE_MEMORY,
+    RPC_CMD_ਗ੍ਰਾਫ_COMPUTE,
+    RPC_CMD_GET_DEVICE_ਸਮ੍ਰਿਤੀ,
     RPC_CMD_INIT_TENSOR,
-    RPC_CMD_GET_ALLOC_SIZE,
+    RPC_CMD_GET_ALLOC_ਮਾਪ,
     RPC_CMD_HELLO,
-    RPC_CMD_DEVICE_COUNT,
-    RPC_CMD_GRAPH_RECOMPUTE,
+    RPC_CMD_DEVICE_ਗਿਣਤੀ,
+    RPC_CMD_ਗ੍ਰਾਫ_RECOMPUTE,
     RPC_CMD_MEMSET_TENSOR,
-    RPC_CMD_SET_TENSOR_2D,
+    RPC_CMD_ਸੈੱਟ_TENSOR_2_D,
     RPC_CMD_GET_TENSOR_2D,
     RPC_CMD_COMM_INIT,
     RPC_CMD_COMM_ALLREDUCE,
     RPC_CMD_COMM_FREE,
     RPC_CMD_NONE,
-    RPC_CMD_COUNT,
+    RPC_CMD_ਗਿਣਤੀ,
 };
 
 static_assert(RPC_CMD_HELLO == 14, "RPC_CMD_HELLO must be always 14");
 
-static const char * rpc_cmd_name(enum rpc_cmd cmd) {
-    switch (cmd) {
-        case RPC_CMD_ALLOC_BUFFER:      return "ALLOC_BUFFER";
-        case RPC_CMD_GET_ALIGNMENT:     return "GET_ALIGNMENT";
-        case RPC_CMD_GET_MAX_SIZE:      return "GET_MAX_SIZE";
-        case RPC_CMD_BUFFER_GET_BASE:   return "BUFFER_GET_BASE";
-        case RPC_CMD_FREE_BUFFER:       return "FREE_BUFFER";
-        case RPC_CMD_BUFFER_CLEAR:      return "BUFFER_CLEAR";
-        case RPC_CMD_SET_TENSOR:        return "SET_TENSOR";
-        case RPC_CMD_SET_TENSOR_HASH:   return "SET_TENSOR_HASH";
-        case RPC_CMD_GET_TENSOR:        return "GET_TENSOR";
-        case RPC_CMD_COPY_TENSOR:       return "COPY_TENSOR";
-        case RPC_CMD_GRAPH_COMPUTE:     return "GRAPH_COMPUTE";
-        case RPC_CMD_GET_DEVICE_MEMORY: return "GET_DEVICE_MEMORY";
-        case RPC_CMD_INIT_TENSOR:       return "INIT_TENSOR";
-        case RPC_CMD_GET_ALLOC_SIZE:    return "GET_ALLOC_SIZE";
-        case RPC_CMD_HELLO:             return "HELLO";
-        case RPC_CMD_DEVICE_COUNT:      return "DEVICE_COUNT";
-        case RPC_CMD_GRAPH_RECOMPUTE:   return "GRAPH_RECOMPUTE";
-        case RPC_CMD_MEMSET_TENSOR:     return "MEMSET_TENSOR";
-        case RPC_CMD_SET_TENSOR_2D:     return "SET_TENSOR_2D";
-        case RPC_CMD_GET_TENSOR_2D:     return "GET_TENSOR_2D";
-        case RPC_CMD_COMM_INIT:         return "COMM_INIT";
-        case RPC_CMD_COMM_ALLREDUCE:    return "COMM_ALLREDUCE";
-        case RPC_CMD_COMM_FREE:         return "COMM_FREE";
-        case RPC_CMD_NONE:              return "NONE";
-        default:                        return "UNKNOWN";
+ਸਥਿਰ ਅਚਲ ਅੱਖਰ * rpc_cmd_name(ਗਿਣਤੀ rpc_cmd cmd) {
+    ਚੋਣ (cmd) {
+        ਹਾਲਤ RPC_CMD_ALLOC_ਬਫਰ:      ਵਾਪਸ "ALLOC_BUFFER";
+        ਹਾਲਤ RPC_CMD_GET_ALIGNMENT:     ਵਾਪਸ "GET_ALIGNMENT";
+        ਹਾਲਤ RPC_CMD_GET_MAX_ਮਾਪ:      ਵਾਪਸ "GET_MAX_SIZE";
+        ਹਾਲਤ RPC_CMD_ਬਫਰ_GET_ਅਧਾਰ:   ਵਾਪਸ "BUFFER_GET_BASE";
+        ਹਾਲਤ RPC_CMD_FREE_ਬਫਰ:       ਵਾਪਸ "FREE_BUFFER";
+        ਹਾਲਤ RPC_CMD_ਬਫਰ_CLEAR:      ਵਾਪਸ "BUFFER_CLEAR";
+        ਹਾਲਤ RPC_CMD_ਸੈੱਟ_TENSOR:        ਵਾਪਸ "SET_TENSOR";
+        ਹਾਲਤ RPC_CMD_ਸੈੱਟ_TENSOR_HASH:   ਵਾਪਸ "SET_TENSOR_HASH";
+        ਹਾਲਤ RPC_CMD_GET_TENSOR:        ਵਾਪਸ "GET_TENSOR";
+        ਹਾਲਤ RPC_CMD_COPY_TENSOR:       ਵਾਪਸ "COPY_TENSOR";
+        ਹਾਲਤ RPC_CMD_ਗ੍ਰਾਫ_COMPUTE:     ਵਾਪਸ "GRAPH_COMPUTE";
+        ਹਾਲਤ RPC_CMD_GET_DEVICE_ਸਮ੍ਰਿਤੀ: ਵਾਪਸ "GET_DEVICE_MEMORY";
+        ਹਾਲਤ RPC_CMD_INIT_TENSOR:       ਵਾਪਸ "INIT_TENSOR";
+        ਹਾਲਤ RPC_CMD_GET_ALLOC_ਮਾਪ:    ਵਾਪਸ "GET_ALLOC_SIZE";
+        ਹਾਲਤ RPC_CMD_HELLO:             ਵਾਪਸ "HELLO";
+        ਹਾਲਤ RPC_CMD_DEVICE_ਗਿਣਤੀ:      ਵਾਪਸ "DEVICE_COUNT";
+        ਹਾਲਤ RPC_CMD_ਗ੍ਰਾਫ_RECOMPUTE:   ਵਾਪਸ "GRAPH_RECOMPUTE";
+        ਹਾਲਤ RPC_CMD_MEMSET_TENSOR:     ਵਾਪਸ "MEMSET_TENSOR";
+        ਹਾਲਤ RPC_CMD_ਸੈੱਟ_TENSOR_2_D:     ਵਾਪਸ "SET_TENSOR_2D";
+        ਹਾਲਤ RPC_CMD_GET_TENSOR_2D:     ਵਾਪਸ "GET_TENSOR_2D";
+        ਹਾਲਤ RPC_CMD_COMM_INIT:         ਵਾਪਸ "COMM_INIT";
+        ਹਾਲਤ RPC_CMD_COMM_ALLREDUCE:    ਵਾਪਸ "COMM_ALLREDUCE";
+        ਹਾਲਤ RPC_CMD_COMM_FREE:         ਵਾਪਸ "COMM_FREE";
+        ਹਾਲਤ RPC_CMD_NONE:              ਵਾਪਸ "NONE";
+        ਮੂਲ:                        ਵਾਪਸ "UNKNOWN";
     }
 }
 
 // Try RPC_CMD_SET_TENSOR_HASH first when data size is larger than this threshold
-const size_t HASH_THRESHOLD = 10 * 1024 * 1024;
+ਅਚਲ size_t HASH_ਹੱਦ = 10 * 1024 * 1024;
 
 // Maximum number of graphs cached per device; client and server must use the same value
 // so that both sides clear their caches at the same point in the message stream
-const size_t GRAPH_CACHE_MAX = 1024;
+ਅਚਲ size_t ਗ੍ਰਾਫ_CACHE_MAX = 1024;
 
-struct rpc_msg_hello_req {
-    uint8_t conn_caps[RPC_CONN_CAPS_SIZE];
+ਬਣਤਰ rpc_ਸੁਨੇਹਾ_hello_req {
+    uint8_t conn_caps[RPC_CONN_CAPS_ਮਾਪ];
 };
 
-struct rpc_msg_hello_rsp {
+ਬਣਤਰ rpc_ਸੁਨੇਹਾ_hello_rsp {
     uint8_t major;
     uint8_t minor;
     uint8_t patch;
     uint8_t padding;
-    uint8_t conn_caps[RPC_CONN_CAPS_SIZE];
+    uint8_t conn_caps[RPC_CONN_CAPS_ਮਾਪ];
 };
 
-struct rpc_msg_device_count_rsp {
-    uint32_t device_count;
+ਬਣਤਰ rpc_ਸੁਨੇਹਾ_device_ਗਿਣਤੀ_rsp {
+    uint32_t device_ਗਿਣਤੀ;
 };
 
-struct rpc_msg_get_alloc_size_req {
+ਬਣਤਰ rpc_ਸੁਨੇਹਾ_get_alloc_ਮਾਪ_req {
     uint32_t   device;
     rpc_tensor tensor;
     rpc_tensor srcs[GGML_MAX_SRC];
 };
 
-struct rpc_msg_get_alloc_size_rsp {
-    uint64_t alloc_size;
+ਬਣਤਰ rpc_ਸੁਨੇਹਾ_get_alloc_ਮਾਪ_rsp {
+    uint64_t alloc_ਮਾਪ;
 };
 
-struct rpc_msg_init_tensor_req {
+ਬਣਤਰ rpc_ਸੁਨੇਹਾ_init_tensor_req {
     rpc_tensor tensor;
 };
 
-struct rpc_msg_alloc_buffer_req {
+ਬਣਤਰ rpc_ਸੁਨੇਹਾ_alloc_ਬਫਰ_req {
     uint32_t device;
     uint64_t size;
 };
 
-struct rpc_msg_alloc_buffer_rsp {
+ਬਣਤਰ rpc_ਸੁਨੇਹਾ_alloc_ਬਫਰ_rsp {
     uint64_t remote_ptr;
-    uint64_t remote_size;
+    uint64_t remote_ਮਾਪ;
 };
 
-struct rpc_msg_get_alignment_req {
+ਬਣਤਰ rpc_ਸੁਨੇਹਾ_get_alignment_req {
     uint32_t device;
 };
 
-struct rpc_msg_get_alignment_rsp {
+ਬਣਤਰ rpc_ਸੁਨੇਹਾ_get_alignment_rsp {
     uint64_t alignment;
 };
 
-struct rpc_msg_get_max_size_req {
+ਬਣਤਰ rpc_ਸੁਨੇਹਾ_get_max_ਮਾਪ_req {
     uint32_t device;
 };
 
-struct rpc_msg_get_max_size_rsp {
+ਬਣਤਰ rpc_ਸੁਨੇਹਾ_get_max_ਮਾਪ_rsp {
     uint64_t max_size;
 };
 
-struct rpc_msg_buffer_get_base_req {
+ਬਣਤਰ rpc_ਸੁਨੇਹਾ_ਬਫਰ_get_ਅਧਾਰ_req {
     uint64_t remote_ptr;
 };
 
-struct rpc_msg_buffer_get_base_rsp {
-    uint64_t base_ptr;
+ਬਣਤਰ rpc_ਸੁਨੇਹਾ_ਬਫਰ_get_ਅਧਾਰ_rsp {
+    uint64_t ਅਧਾਰ_ptr;
 };
 
-struct rpc_msg_free_buffer_req {
+ਬਣਤਰ rpc_ਸੁਨੇਹਾ_free_ਬਫਰ_req {
     uint64_t remote_ptr;
 };
 
-struct rpc_msg_buffer_clear_req {
+ਬਣਤਰ rpc_ਸੁਨੇਹਾ_ਬਫਰ_clear_req {
     uint64_t remote_ptr;
     uint8_t value;
 };
 
-struct rpc_msg_memset_tensor_req {
+ਬਣਤਰ rpc_ਸੁਨੇਹਾ_memset_tensor_req {
     rpc_tensor tensor;
-    uint64_t offset;
+    uint64_t ਵਿੱਥ;
     uint64_t size;
     uint8_t value;
 };
 
-struct rpc_msg_set_tensor_hash_req {
+ਬਣਤਰ rpc_ਸੁਨੇਹਾ_ਸੈੱਟ_tensor_hash_req {
     rpc_tensor tensor;
-    uint64_t offset;
+    uint64_t ਵਿੱਥ;
     uint64_t hash;
 };
 
-struct rpc_msg_set_tensor_hash_rsp {
-    uint8_t result;
+ਬਣਤਰ rpc_ਸੁਨੇਹਾ_ਸੈੱਟ_tensor_hash_rsp {
+    uint8_t ਨਤੀਜਾ;
 };
 
-struct rpc_msg_get_tensor_req {
+ਬਣਤਰ rpc_ਸੁਨੇਹਾ_get_tensor_req {
     rpc_tensor tensor;
-    uint64_t offset;
+    uint64_t ਵਿੱਥ;
     uint64_t size;
 };
 
-struct rpc_msg_copy_tensor_req {
+ਬਣਤਰ rpc_ਸੁਨੇਹਾ_copy_tensor_req {
     rpc_tensor src;
     rpc_tensor dst;
 };
 
-struct rpc_msg_copy_tensor_rsp {
-    uint8_t result;
+ਬਣਤਰ rpc_ਸੁਨੇਹਾ_copy_tensor_rsp {
+    uint8_t ਨਤੀਜਾ;
 };
 
-struct rpc_msg_get_device_memory_req {
+ਬਣਤਰ rpc_ਸੁਨੇਹਾ_get_device_ਸਮ੍ਰਿਤੀ_req {
     uint32_t device;
 };
 
-struct rpc_msg_get_device_memory_rsp {
+ਬਣਤਰ rpc_ਸੁਨੇਹਾ_get_device_ਸਮ੍ਰਿਤੀ_rsp {
     uint64_t free_mem;
-    uint64_t total_mem;
+    uint64_t ਕੁੱਲ_mem;
 };
 
-struct rpc_msg_graph_recompute_req {
+ਬਣਤਰ rpc_ਸੁਨੇਹਾ_ਗ੍ਰਾਫ_recompute_req {
     uint32_t device;
     uint64_t uid;
 };
 
-struct rpc_msg_get_tensor_2d_req {
+ਬਣਤਰ rpc_ਸੁਨੇਹਾ_get_tensor_2d_req {
     rpc_tensor tensor;
-    uint64_t offset;
+    uint64_t ਵਿੱਥ;
     uint64_t size;
     uint64_t n_copies;
     uint64_t stride;
 };
 
-struct rpc_msg_comm_init_req {
+ਬਣਤਰ rpc_ਸੁਨੇਹਾ_comm_init_req {
     uint32_t device;
     uint32_t rank;
     uint32_t world;
-    uint32_t port;      // rank 0: port to listen on; rank > 0: rank 0's comm port
-    char     host[64];  // rank > 0: rank 0's host
+    uint32_t ਪੋਰਟ;      // rank 0: port to listen on; rank > 0: rank 0's comm port
+    ਅੱਖਰ     host[64];  // rank > 0: rank 0's host
 };
 
-struct rpc_msg_comm_init_rsp {
+ਬਣਤਰ rpc_ਸੁਨੇਹਾ_comm_init_rsp {
     uint8_t ok;
 };
 
-struct rpc_msg_comm_allreduce_req {
+ਬਣਤਰ rpc_ਸੁਨੇਹਾ_comm_allreduce_req {
     uint32_t   device;
     rpc_tensor tensor;
 };
 
-struct rpc_msg_comm_free_req {
+ਬਣਤਰ rpc_ਸੁਨੇਹਾ_comm_free_req {
     uint32_t device;
 };
 
-#pragma pack(pop)
+#ਹਦਾਇਤ pack(ਕੱਢੋ)
 
 // RPC data structures
 
-static ggml_guid_t ggml_backend_rpc_guid() {
-    static ggml_guid guid = {0x99, 0x68, 0x5b, 0x6c, 0xd2, 0x83, 0x3d, 0x24, 0x25, 0x36, 0x72, 0xe1, 0x5b, 0x0e, 0x14, 0x03};
-    return &guid;
+ਸਥਿਰ ggml_guid_t ggml_backend_rpc_guid() {
+    ਸਥਿਰ ggml_guid guid = {0x99, 0x68, 0x5b, 0x6c, 0xd2, 0x83, 0x3d, 0x24, 0x25, 0x36, 0x72, 0xe1, 0x5b, 0x0e, 0x14, 0x03};
+    ਵਾਪਸ &guid;
 }
 
-struct ggml_backend_rpc_device_context {
+ਬਣਤਰ ggml_backend_rpc_device_context {
     std::string endpoint;
     uint32_t    device;
     std::string name;
     std::string description;
 };
 
-struct ggml_backend_rpc_buffer_type_context {
+ਬਣਤਰ ggml_backend_rpc_ਬਫਰ_type_context {
     std::string endpoint;
     uint32_t    device;
     std::string name;
@@ -293,763 +293,763 @@ struct ggml_backend_rpc_buffer_type_context {
     size_t      max_size;
 };
 
-class rpc_dispatcher;
-struct ggml_backend_rpc_context {
+ਵਰਗ rpc_dispatcher;
+ਬਣਤਰ ggml_backend_rpc_context {
     std::shared_ptr<rpc_dispatcher> dispatcher;
     std::string                     endpoint;
     uint32_t                        device;
     std::string                     name;
 };
 
-struct ggml_backend_rpc_buffer_context {
+ਬਣਤਰ ggml_backend_rpc_ਬਫਰ_context {
     std::shared_ptr<rpc_dispatcher>   dispatcher;
-    void                            * base_ptr;
+    ਖਾਲੀ                            * ਅਧਾਰ_ptr;
     uint64_t                          remote_ptr;
 };
 
 // RPC helper functions
 
 // Computes FNV-1a hash of the data
-static uint64_t fnv_hash(const uint8_t * data, size_t len, uint64_t hash = 0xcbf29ce484222325ULL) {
-    const uint64_t fnv_prime = 0x100000001b3ULL;
+ਸਥਿਰ uint64_t fnv_hash(ਅਚਲ uint8_t * ਅੰਕੜੇ, size_t len, uint64_t hash = 0xcbf29ce484222325ULL) {
+    ਅਚਲ uint64_t fnv_ਅਭਾਜ = 0x100000001b3ULL;
 
-    for (size_t i = 0; i < len; ++i) {
-        hash ^= data[i];
-        hash *= fnv_prime;
+    ਲਈ (size_t i = 0; i < len; ++i) {
+        hash ^= ਅੰਕੜੇ[i];
+        hash *= fnv_ਅਭਾਜ;
     }
-    return hash;
+    ਵਾਪਸ hash;
 }
 
-static bool send_msg(socket_ptr sock, const void * msg, size_t msg_size) {
-    if (!sock->send_data(&msg_size, sizeof(msg_size))) {
-        return false;
+ਸਥਿਰ ਤਾਰਕਿਕ send_ਸੁਨੇਹਾ(socket_ptr sock, ਅਚਲ ਖਾਲੀ * ਸੁਨੇਹਾ_2, size_t ਸੁਨੇਹਾ_ਮਾਪ) {
+    ਜੇ (!sock->send_ਅੰਕੜੇ(&ਸੁਨੇਹਾ_ਮਾਪ, ਆਕਾਰ(ਸੁਨੇਹਾ_ਮਾਪ))) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    if (!sock->send_data(msg, msg_size)) {
-        return false;
+    ਜੇ (!sock->send_ਅੰਕੜੇ(ਸੁਨੇਹਾ_2, ਸੁਨੇਹਾ_ਮਾਪ)) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    return sock->flush();
+    ਵਾਪਸ sock->flush();
 }
 
-static bool recv_msg(socket_ptr sock, void * msg, size_t msg_size) {
+ਸਥਿਰ ਤਾਰਕਿਕ recv_ਸੁਨੇਹਾ(socket_ptr sock, ਖਾਲੀ * ਸੁਨੇਹਾ_2, size_t ਸੁਨੇਹਾ_ਮਾਪ) {
     uint64_t size;
-    if (!sock->recv_data(&size, sizeof(size))) {
-        return false;
+    ਜੇ (!sock->recv_ਅੰਕੜੇ(&size, ਆਕਾਰ(size))) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    if (size != msg_size) {
-        return false;
+    ਜੇ (size != ਸੁਨੇਹਾ_ਮਾਪ) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    return sock->recv_data(msg, msg_size);
+    ਵਾਪਸ sock->recv_ਅੰਕੜੇ(ਸੁਨੇਹਾ_2, ਸੁਨੇਹਾ_ਮਾਪ);
 }
 
-static bool recv_msg(socket_ptr sock, std::vector<uint8_t> & input) {
+ਸਥਿਰ ਤਾਰਕਿਕ recv_ਸੁਨੇਹਾ(socket_ptr sock, std::vector<uint8_t> & ਨਿਵੇਸ਼) {
     uint64_t size;
-    if (!sock->recv_data(&size, sizeof(size))) {
-        return false;
+    ਜੇ (!sock->recv_ਅੰਕੜੇ(&size, ਆਕਾਰ(size))) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    try {
-        input.resize(size);
-    } catch (const std::bad_alloc & e) {
+    ਕੋਸ਼ਿਸ਼ {
+        ਨਿਵੇਸ਼.resize(size);
+    } ਫੜੋ (ਅਚਲ std::bad_alloc & e) {
         LOG_ERROR("Failed to allocate input buffer of size %" PRIu64 "\n", size);
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
-    return sock->recv_data(input.data(), size);
+    ਵਾਪਸ sock->recv_ਅੰਕੜੇ(ਨਿਵੇਸ਼.ਅੰਕੜੇ(), size);
 }
 
-static bool parse_endpoint(const std::string & endpoint, std::string & host, int & port) {
+ਸਥਿਰ ਤਾਰਕਿਕ parse_endpoint(ਅਚਲ std::string & endpoint, std::string & host, ਪੂਰਨ & ਪੋਰਟ) {
     size_t pos = endpoint.find(':');
-    if (pos == std::string::npos) {
-        return false;
+    ਜੇ (pos == std::string::npos) {
+        ਵਾਪਸ ਝੂਠ;
     }
     host = endpoint.substr(0, pos);
-    try {
-        port = std::stoi(endpoint.substr(pos + 1));
-    } catch (...) {
-        return false;
+    ਕੋਸ਼ਿਸ਼ {
+        ਪੋਰਟ = std::stoi(endpoint.substr(pos + 1));
+    } ਫੜੋ (...) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    return true;
+    ਵਾਪਸ ਸੱਚ;
 }
 
 // RPC request : | rpc_cmd (1 byte) | request_size (8 bytes) | request_data (request_size bytes) |
 // No response
-static bool send_rpc_cmd(socket_ptr sock, enum rpc_cmd cmd, const void * input, size_t input_size) {
+ਸਥਿਰ ਤਾਰਕਿਕ send_rpc_cmd(socket_ptr sock, ਗਿਣਤੀ rpc_cmd cmd, ਅਚਲ ਖਾਲੀ * ਨਿਵੇਸ਼, size_t ਨਿਵੇਸ਼_ਮਾਪ) {
     uint8_t cmd_byte = cmd;
-    if (!sock->send_data(&cmd_byte, sizeof(cmd_byte))) {
-        return false;
+    ਜੇ (!sock->send_ਅੰਕੜੇ(&cmd_byte, ਆਕਾਰ(cmd_byte))) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    if (!sock->send_data(&input_size, sizeof(input_size))) {
-        return false;
+    ਜੇ (!sock->send_ਅੰਕੜੇ(&ਨਿਵੇਸ਼_ਮਾਪ, ਆਕਾਰ(ਨਿਵੇਸ਼_ਮਾਪ))) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    if (!sock->send_data(input, input_size)) {
-        return false;
+    ਜੇ (!sock->send_ਅੰਕੜੇ(ਨਿਵੇਸ਼, ਨਿਵੇਸ਼_ਮਾਪ)) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    return sock->flush();
+    ਵਾਪਸ sock->flush();
 }
 
 // RPC request : | rpc_cmd (1 byte) | request_size (8 bytes) | request_data (request_size bytes) |
 // RPC response: | response_size (8 bytes) | response_data (response_size bytes) |
-static bool send_rpc_cmd(socket_ptr sock, enum rpc_cmd cmd, const void * input, size_t input_size, void * output, size_t output_size) {
-    if (!send_rpc_cmd(sock, cmd, input, input_size)) {
-        return false;
+ਸਥਿਰ ਤਾਰਕਿਕ send_rpc_cmd(socket_ptr sock, ਗਿਣਤੀ rpc_cmd cmd, ਅਚਲ ਖਾਲੀ * ਨਿਵੇਸ਼, size_t ਨਿਵੇਸ਼_ਮਾਪ, ਖਾਲੀ * output, size_t output_ਮਾਪ) {
+    ਜੇ (!send_rpc_cmd(sock, cmd, ਨਿਵੇਸ਼, ਨਿਵੇਸ਼_ਮਾਪ)) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    uint64_t out_size;
-    if (!sock->recv_data(&out_size, sizeof(out_size))) {
-        return false;
+    uint64_t ਬਾਹਰਲਾ_ਮਾਪ;
+    ਜੇ (!sock->recv_ਅੰਕੜੇ(&ਬਾਹਰਲਾ_ਮਾਪ, ਆਕਾਰ(ਬਾਹਰਲਾ_ਮਾਪ))) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    if (out_size != output_size) {
-        return false;
+    ਜੇ (ਬਾਹਰਲਾ_ਮਾਪ != output_ਮਾਪ) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    if (!sock->recv_data(output, output_size)) {
-        return false;
+    ਜੇ (!sock->recv_ਅੰਕੜੇ(output, output_ਮਾਪ)) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    return true;
+    ਵਾਪਸ ਸੱਚ;
 }
 
 // RPC client-side implementation
 
 // with busy spinning on, the dispatcher still blocks on its queue after this long without commands
-static constexpr auto RPC_BUSY_SPIN_IDLE_TIME = std::chrono::milliseconds(100);
+ਸਥਿਰ constexpr ਸਵੈਚਾਲਿਤ RPC_BUSY_SPIN_IDLE_ਸਮਾਂ = std::chrono::milliseconds(100);
 
-static inline void rpc_cpu_relax() {
-#if defined(__aarch64__) && (defined(__clang__) || defined(__GNUC__))
-    __asm__ volatile("yield" ::: "memory");
-#else
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ rpc_cpu_relax() {
+#ਜੇ defined(__aarch64__) && (defined(__clang__) || defined(__GNUC__))
+    __asm__ ਅਸਥਿਰ("yield" ::: "memory");
+#ਨਹੀਂਤਾਂ
     std::this_thread::yield();
-#endif
+#ਜੇ_ਅੰਤ
 }
 
 // Performs HELLO handshake with transport auto-negotiation.
 // Advertises local capabilities via conn_caps; if the server responds with
 // matching capabilities, the socket is upgraded transparently.
-static bool negotiate_hello(const std::shared_ptr<socket_t> & sock) {
-    rpc_msg_hello_req request = {};
-    rpc_msg_hello_rsp response = {};
+ਸਥਿਰ ਤਾਰਕਿਕ negotiate_hello(ਅਚਲ std::shared_ptr<socket_t> & sock) {
+    rpc_ਸੁਨੇਹਾ_hello_req request = {};
+    rpc_ਸੁਨੇਹਾ_hello_rsp response = {};
 
     sock->get_caps(request.conn_caps);
 
-    bool status = send_rpc_cmd(sock, RPC_CMD_HELLO, &request, sizeof(request), &response, sizeof(response));
-    RPC_STATUS_ASSERT(status);
+    ਤਾਰਕਿਕ ਸਥਿਤੀ = send_rpc_cmd(sock, RPC_CMD_HELLO, &request, ਆਕਾਰ(request), &response, ਆਕਾਰ(response));
+    RPC_ਸਥਿਤੀ_ASSERT(ਸਥਿਤੀ);
 
-    if (response.major != RPC_PROTO_MAJOR_VERSION || response.minor > RPC_PROTO_MINOR_VERSION) {
+    ਜੇ (response.major != RPC_PROTO_MAJOR_ਸੰਸਕਰਣ || response.minor > RPC_PROTO_MINOR_ਸੰਸਕਰਣ) {
         LOG_ERROR("RPC server version mismatch: %d.%d.%d\n",
                        response.major, response.minor, response.patch);
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
 
     sock->update_caps(response.conn_caps);
     LOG_DBG("[%s] handshake ok: server version %d.%d.%d, transport: %s\n",
             __func__, response.major, response.minor, response.patch, sock->transport_name());
-    return true;
+    ਵਾਪਸ ਸੱਚ;
 }
 
-template <typename T>
-class message_queue {
-public:
-    message_queue() {}
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T>
+ਵਰਗ ਸੁਨੇਹਾ_ਕਤਾਰ {
+ਜਨਤਕ:
+    ਸੁਨੇਹਾ_ਕਤਾਰ() {}
 
-    bool push(const T &value) {
-        std::unique_lock<std::mutex> lock(mutex);
-        if (interrupted) {
-            return false;
+    ਤਾਰਕਿਕ ਧੱਕੋ(ਅਚਲ T &value) {
+        std::unique_lock<std::mutex> ਤਾਲਾ(mutex);
+        ਜੇ (interrupted) {
+            ਵਾਪਸ ਝੂਠ;
         }
-        queue.push(value);
+        queue.ਧੱਕੋ(value);
         cvar.notify_all();
-        return true;
+        ਵਾਪਸ ਸੱਚ;
     }
 
-    bool pop(T* out) {
-        std::unique_lock<std::mutex> lock(mutex);
-        cvar.wait(lock, [this] { return !queue.empty() || interrupted; });
-        if (interrupted) {
-            return false;
+    ਤਾਰਕਿਕ ਕੱਢੋ(T* ਬਾਹਰਲਾ) {
+        std::unique_lock<std::mutex> ਤਾਲਾ(mutex);
+        cvar.wait(ਤਾਲਾ, [ਇਹ] { ਵਾਪਸ !queue.ਖਾਲੀ_ਥਾਵਾਂ() || interrupted; });
+        ਜੇ (interrupted) {
+            ਵਾਪਸ ਝੂਠ;
         }
-        *out = queue.front();
-        queue.pop();
-        return true;
+        *ਬਾਹਰਲਾ = queue.front();
+        queue.ਕੱਢੋ();
+        ਵਾਪਸ ਸੱਚ;
     }
 
-    bool try_pop(T* out) {
-        std::unique_lock<std::mutex> lock(mutex);
-        if (interrupted || queue.empty()) {
-            return false;
+    ਤਾਰਕਿਕ try_ਕੱਢੋ(T* ਬਾਹਰਲਾ) {
+        std::unique_lock<std::mutex> ਤਾਲਾ(mutex);
+        ਜੇ (interrupted || queue.ਖਾਲੀ_ਥਾਵਾਂ()) {
+            ਵਾਪਸ ਝੂਠ;
         }
-        *out = queue.front();
-        queue.pop();
-        return true;
+        *ਬਾਹਰਲਾ = queue.front();
+        queue.ਕੱਢੋ();
+        ਵਾਪਸ ਸੱਚ;
     }
 
-    void interrupt() {
-        std::unique_lock<std::mutex> lock(mutex);
-        interrupted = true;
-        lock.unlock();
+    ਖਾਲੀ ਰੁਕਾਵਟ() {
+        std::unique_lock<std::mutex> ਤਾਲਾ(mutex);
+        interrupted = ਸੱਚ;
+        ਤਾਲਾ.unlock();
         cvar.notify_all();
     }
 
-private:
-    bool interrupted = false;
+ਨਿਜੀ:
+    ਤਾਰਕਿਕ interrupted = ਝੂਠ;
     std::queue<T> queue;
     std::mutex mutex;
     std::condition_variable cvar;
 };
 
-class rpc_dispatcher {
-public:
+ਵਰਗ rpc_dispatcher {
+ਜਨਤਕ:
     rpc_dispatcher() {
     }
 
-    void send(enum rpc_cmd cmd, std::shared_ptr<const void> input, size_t input_size);
-    void send(enum rpc_cmd cmd, std::shared_ptr<const void> input, size_t input_size, void * output, size_t output_size);
-    void send_async(enum rpc_cmd cmd, std::shared_ptr<const void> input, size_t input_size);
-    void send_async(enum rpc_cmd cmd, std::shared_ptr<const void> input, size_t input_size, void * output, size_t output_size);
+    ਖਾਲੀ send(ਗਿਣਤੀ rpc_cmd cmd, std::shared_ptr<ਅਚਲ ਖਾਲੀ> ਨਿਵੇਸ਼, size_t ਨਿਵੇਸ਼_ਮਾਪ);
+    ਖਾਲੀ send(ਗਿਣਤੀ rpc_cmd cmd, std::shared_ptr<ਅਚਲ ਖਾਲੀ> ਨਿਵੇਸ਼, size_t ਨਿਵੇਸ਼_ਮਾਪ, ਖਾਲੀ * output, size_t output_ਮਾਪ);
+    ਖਾਲੀ send_async(ਗਿਣਤੀ rpc_cmd cmd, std::shared_ptr<ਅਚਲ ਖਾਲੀ> ਨਿਵੇਸ਼, size_t ਨਿਵੇਸ਼_ਮਾਪ);
+    ਖਾਲੀ send_async(ਗਿਣਤੀ rpc_cmd cmd, std::shared_ptr<ਅਚਲ ਖਾਲੀ> ਨਿਵੇਸ਼, size_t ਨਿਵੇਸ਼_ਮਾਪ, ਖਾਲੀ * output, size_t output_ਮਾਪ);
 
     ggml_backend_event_t event_new(ggml_backend_dev_t dev);
-    void event_free(ggml_backend_event_t event);
-    void event_synchronize(ggml_backend_event_t event);
-    void event_record(ggml_backend_event_t event);
-    void synchronize();
-    void busy_spin_acquire();
-    void busy_spin_release();
-    void graph_compute(uint32_t device, const ggml_cgraph * cgraph);
+    ਖਾਲੀ event_free(ggml_backend_event_t event);
+    ਖਾਲੀ event_synchronize(ggml_backend_event_t event);
+    ਖਾਲੀ event_ਰਿਕਾਰਡ(ggml_backend_event_t event);
+    ਖਾਲੀ synchronize();
+    ਖਾਲੀ busy_spin_acquire();
+    ਖਾਲੀ busy_spin_release();
+    ਖਾਲੀ ਗ੍ਰਾਫ_compute(uint32_t device, ਅਚਲ ggml_cgraph * cgraph);
 
-    void start(const std::string & endpoint);
-    void work();
+    ਖਾਲੀ start(ਅਚਲ std::string & endpoint);
+    ਖਾਲੀ work();
 
     ~rpc_dispatcher();
 
-private:
-    struct rpc_msg {
+ਨਿਜੀ:
+    ਬਣਤਰ rpc_ਸੁਨੇਹਾ {
         rpc_cmd                       cmd;
-        std::shared_ptr<const void>   input;
-        size_t                        input_size;
-        void                        * output;
-        size_t                        output_size;
-        std::promise<void>            completion;
+        std::shared_ptr<ਅਚਲ ਖਾਲੀ>   ਨਿਵੇਸ਼;
+        size_t                        ਨਿਵੇਸ਼_ਮਾਪ;
+        ਖਾਲੀ                        * output;
+        size_t                        output_ਮਾਪ;
+        std::promise<ਖਾਲੀ>            completion;
     };
-    using rpc_msg_ptr   = std::shared_ptr<rpc_msg>;
-    using rpc_msg_queue = message_queue<rpc_msg_ptr>;
-    struct rpc_event {
-        rpc_msg_ptr              msg;
-        std::shared_future<void> sf;
+    ਵਰਤੋਂ rpc_ਸੁਨੇਹਾ_ptr   = std::shared_ptr<rpc_ਸੁਨੇਹਾ>;
+    ਵਰਤੋਂ rpc_ਸੁਨੇਹਾ_ਕਤਾਰ = ਸੁਨੇਹਾ_ਕਤਾਰ<rpc_ਸੁਨੇਹਾ_ptr>;
+    ਬਣਤਰ rpc_event {
+        rpc_ਸੁਨੇਹਾ_ptr              ਸੁਨੇਹਾ_2;
+        std::shared_future<ਖਾਲੀ> sf;
     };
-    std::mutex graph_mutex;
-    std::unordered_map<uint32_t, std::unordered_set<uint64_t>> graph_uids;
-    rpc_msg_queue    queue;
+    std::mutex ਗ੍ਰਾਫ_mutex;
+    std::unordered_map<uint32_t, std::unordered_set<uint64_t>> ਗ੍ਰਾਫ_uids;
+    rpc_ਸੁਨੇਹਾ_ਕਤਾਰ    queue;
     socket_ptr       sock;
     std::atomic_uint busy_spin_users = 0;
     std::atomic_bool running;
     std::thread      thread;
 };
 
-static void rpc_dispatcher_trampoline(rpc_dispatcher * dispatcher)
+ਸਥਿਰ ਖਾਲੀ rpc_dispatcher_trampoline(rpc_dispatcher * dispatcher)
 {
     dispatcher->work();
 }
 
-void rpc_dispatcher::send(enum rpc_cmd cmd, std::shared_ptr<const void> input, size_t input_size) {
-    auto msg = std::make_shared<rpc_msg>();
-    msg->cmd = cmd;
-    msg->input = input;
-    msg->input_size = input_size;
-    msg->output = nullptr;
-    msg->output_size = 0;
-    GGML_ASSERT(queue.push(msg));
-    auto future = msg->completion.get_future();
+ਖਾਲੀ rpc_dispatcher::send(ਗਿਣਤੀ rpc_cmd cmd, std::shared_ptr<ਅਚਲ ਖਾਲੀ> ਨਿਵੇਸ਼, size_t ਨਿਵੇਸ਼_ਮਾਪ) {
+    ਸਵੈਚਾਲਿਤ ਸੁਨੇਹਾ_2 = std::make_shared<rpc_ਸੁਨੇਹਾ>();
+    ਸੁਨੇਹਾ_2->cmd = cmd;
+    ਸੁਨੇਹਾ_2->ਨਿਵੇਸ਼ = ਨਿਵੇਸ਼;
+    ਸੁਨੇਹਾ_2->ਨਿਵੇਸ਼_ਮਾਪ = ਨਿਵੇਸ਼_ਮਾਪ;
+    ਸੁਨੇਹਾ_2->output = ਖਾਲੀ_ਸੂਚਕ;
+    ਸੁਨੇਹਾ_2->output_ਮਾਪ = 0;
+    GGML_ASSERT(queue.ਧੱਕੋ(ਸੁਨੇਹਾ_2));
+    ਸਵੈਚਾਲਿਤ future = ਸੁਨੇਹਾ_2->completion.get_future();
     future.wait();
 }
 
-void rpc_dispatcher::send_async(enum rpc_cmd cmd, std::shared_ptr<const void> input, size_t input_size) {
-    auto msg = std::make_shared<rpc_msg>();
-    msg->cmd = cmd;
-    msg->input = input;
-    msg->input_size = input_size;
-    msg->output = nullptr;
-    msg->output_size = 0;
-    GGML_ASSERT(queue.push(msg));
+ਖਾਲੀ rpc_dispatcher::send_async(ਗਿਣਤੀ rpc_cmd cmd, std::shared_ptr<ਅਚਲ ਖਾਲੀ> ਨਿਵੇਸ਼, size_t ਨਿਵੇਸ਼_ਮਾਪ) {
+    ਸਵੈਚਾਲਿਤ ਸੁਨੇਹਾ_2 = std::make_shared<rpc_ਸੁਨੇਹਾ>();
+    ਸੁਨੇਹਾ_2->cmd = cmd;
+    ਸੁਨੇਹਾ_2->ਨਿਵੇਸ਼ = ਨਿਵੇਸ਼;
+    ਸੁਨੇਹਾ_2->ਨਿਵੇਸ਼_ਮਾਪ = ਨਿਵੇਸ਼_ਮਾਪ;
+    ਸੁਨੇਹਾ_2->output = ਖਾਲੀ_ਸੂਚਕ;
+    ਸੁਨੇਹਾ_2->output_ਮਾਪ = 0;
+    GGML_ASSERT(queue.ਧੱਕੋ(ਸੁਨੇਹਾ_2));
 }
 
-void rpc_dispatcher::send(enum rpc_cmd cmd, std::shared_ptr<const void> input, size_t input_size, void * output, size_t output_size) {
-    auto msg = std::make_shared<rpc_msg>();
-    msg->cmd = cmd;
-    msg->input = input;
-    msg->input_size = input_size;
-    msg->output = output;
-    msg->output_size = output_size;
-    GGML_ASSERT(queue.push(msg));
-    auto future = msg->completion.get_future();
+ਖਾਲੀ rpc_dispatcher::send(ਗਿਣਤੀ rpc_cmd cmd, std::shared_ptr<ਅਚਲ ਖਾਲੀ> ਨਿਵੇਸ਼, size_t ਨਿਵੇਸ਼_ਮਾਪ, ਖਾਲੀ * output, size_t output_ਮਾਪ) {
+    ਸਵੈਚਾਲਿਤ ਸੁਨੇਹਾ_2 = std::make_shared<rpc_ਸੁਨੇਹਾ>();
+    ਸੁਨੇਹਾ_2->cmd = cmd;
+    ਸੁਨੇਹਾ_2->ਨਿਵੇਸ਼ = ਨਿਵੇਸ਼;
+    ਸੁਨੇਹਾ_2->ਨਿਵੇਸ਼_ਮਾਪ = ਨਿਵੇਸ਼_ਮਾਪ;
+    ਸੁਨੇਹਾ_2->output = output;
+    ਸੁਨੇਹਾ_2->output_ਮਾਪ = output_ਮਾਪ;
+    GGML_ASSERT(queue.ਧੱਕੋ(ਸੁਨੇਹਾ_2));
+    ਸਵੈਚਾਲਿਤ future = ਸੁਨੇਹਾ_2->completion.get_future();
     future.wait();
 }
 
-void rpc_dispatcher::send_async(enum rpc_cmd cmd, std::shared_ptr<const void> input, size_t input_size, void * output, size_t output_size) {
-    auto msg = std::make_shared<rpc_msg>();
-    msg->cmd = cmd;
-    msg->input = input;
-    msg->input_size = input_size;
-    msg->output = output;
-    msg->output_size = output_size;
-    GGML_ASSERT(queue.push(msg));
+ਖਾਲੀ rpc_dispatcher::send_async(ਗਿਣਤੀ rpc_cmd cmd, std::shared_ptr<ਅਚਲ ਖਾਲੀ> ਨਿਵੇਸ਼, size_t ਨਿਵੇਸ਼_ਮਾਪ, ਖਾਲੀ * output, size_t output_ਮਾਪ) {
+    ਸਵੈਚਾਲਿਤ ਸੁਨੇਹਾ_2 = std::make_shared<rpc_ਸੁਨੇਹਾ>();
+    ਸੁਨੇਹਾ_2->cmd = cmd;
+    ਸੁਨੇਹਾ_2->ਨਿਵੇਸ਼ = ਨਿਵੇਸ਼;
+    ਸੁਨੇਹਾ_2->ਨਿਵੇਸ਼_ਮਾਪ = ਨਿਵੇਸ਼_ਮਾਪ;
+    ਸੁਨੇਹਾ_2->output = output;
+    ਸੁਨੇਹਾ_2->output_ਮਾਪ = output_ਮਾਪ;
+    GGML_ASSERT(queue.ਧੱਕੋ(ਸੁਨੇਹਾ_2));
 }
 
 ggml_backend_event_t rpc_dispatcher::event_new(ggml_backend_dev_t dev) {
-    rpc_event * ev = new rpc_event;
-    ev->msg = std::make_shared<rpc_msg>();
-    ev->msg->cmd = RPC_CMD_NONE;
-    ev->sf = ev->msg->completion.get_future().share();
-    GGML_ASSERT(queue.push(ev->msg));
-    return new ggml_backend_event {
+    rpc_event * ev = ਨਵਾਂ rpc_event;
+    ev->ਸੁਨੇਹਾ_2 = std::make_shared<rpc_ਸੁਨੇਹਾ>();
+    ev->ਸੁਨੇਹਾ_2->cmd = RPC_CMD_NONE;
+    ev->sf = ev->ਸੁਨੇਹਾ_2->completion.get_future().share();
+    GGML_ASSERT(queue.ਧੱਕੋ(ev->ਸੁਨੇਹਾ_2));
+    ਵਾਪਸ ਨਵਾਂ ggml_backend_event {
         /* .device  = */ dev,
         /* .context = */ ev,
     };
 }
 
-void rpc_dispatcher::event_free(ggml_backend_event_t event) {
+ਖਾਲੀ rpc_dispatcher::event_free(ggml_backend_event_t event) {
     rpc_event * ev = (rpc_event *)event->context;
-    delete ev;
+    ਮਿਟਾਓ ev;
 }
 
-void rpc_dispatcher::event_synchronize(ggml_backend_event_t event) {
+ਖਾਲੀ rpc_dispatcher::event_synchronize(ggml_backend_event_t event) {
     rpc_event * ev = (rpc_event *)event->context;
     ev->sf.wait();
 }
 
-void rpc_dispatcher::event_record(ggml_backend_event_t event) {
+ਖਾਲੀ rpc_dispatcher::event_ਰਿਕਾਰਡ(ggml_backend_event_t event) {
     rpc_event * ev = (rpc_event *)event->context;
-    ev->msg = std::make_shared<rpc_msg>();
-    ev->msg->cmd = RPC_CMD_NONE;
-    ev->sf = ev->msg->completion.get_future().share();
-    GGML_ASSERT(queue.push(ev->msg));
+    ev->ਸੁਨੇਹਾ_2 = std::make_shared<rpc_ਸੁਨੇਹਾ>();
+    ev->ਸੁਨੇਹਾ_2->cmd = RPC_CMD_NONE;
+    ev->sf = ev->ਸੁਨੇਹਾ_2->completion.get_future().share();
+    GGML_ASSERT(queue.ਧੱਕੋ(ev->ਸੁਨੇਹਾ_2));
 }
 
-void rpc_dispatcher::synchronize() {
+ਖਾਲੀ rpc_dispatcher::synchronize() {
     // to ensure all messages are processed, submit dummy message and wait for it to complete
-    auto msg = std::make_shared<rpc_msg>();
-    msg->cmd = RPC_CMD_NONE;
-    GGML_ASSERT(queue.push(msg));
-    msg->completion.get_future().wait();
+    ਸਵੈਚਾਲਿਤ ਸੁਨੇਹਾ_2 = std::make_shared<rpc_ਸੁਨੇਹਾ>();
+    ਸੁਨੇਹਾ_2->cmd = RPC_CMD_NONE;
+    GGML_ASSERT(queue.ਧੱਕੋ(ਸੁਨੇਹਾ_2));
+    ਸੁਨੇਹਾ_2->completion.get_future().wait();
 }
 
-void rpc_dispatcher::busy_spin_acquire() {
+ਖਾਲੀ rpc_dispatcher::busy_spin_acquire() {
     busy_spin_users.fetch_add(1, std::memory_order_relaxed);
 }
 
-void rpc_dispatcher::busy_spin_release() {
-    const unsigned previous = busy_spin_users.fetch_sub(1, std::memory_order_relaxed);
-    GGML_ASSERT(previous > 0);
+ਖਾਲੀ rpc_dispatcher::busy_spin_release() {
+    ਅਚਲ ਬਿਨਾਨਿਸ਼ਾਨੀ ਪਿਛਲਾ = busy_spin_users.fetch_sub(1, std::memory_order_relaxed);
+    GGML_ASSERT(ਪਿਛਲਾ > 0);
 }
 
-void rpc_dispatcher::start(const std::string & endpoint) {
+ਖਾਲੀ rpc_dispatcher::start(ਅਚਲ std::string & endpoint) {
     std::string host;
-    int port;
-    if (!parse_endpoint(endpoint, host, port)) {
+    ਪੂਰਨ ਪੋਰਟ;
+    ਜੇ (!parse_endpoint(endpoint, host, ਪੋਰਟ)) {
         GGML_ABORT("Failed to parse endpoint: %s\n", endpoint.c_str());
     }
-    if (!rpc_transport_init()) {
+    ਜੇ (!rpc_transport_init()) {
         GGML_ABORT("RPC transport initialization failed\n");
     }
 
-    sock = socket_t::connect(host.c_str(), port);
-    if (sock == nullptr) {
+    sock = socket_t::connect(host.c_str(), ਪੋਰਟ);
+    ਜੇ (sock == ਖਾਲੀ_ਸੂਚਕ) {
         GGML_ABORT("Failed to connect to %s\n", endpoint.c_str());
     }
-    if (!negotiate_hello(sock)) {
+    ਜੇ (!negotiate_hello(sock)) {
         GGML_ABORT("RPC handshake failed for %s\n", endpoint.c_str());
     }
     LOG_DBG("[%s] connected to %s\n", __func__, endpoint.c_str());
-    running = true;
-    thread = std::thread(rpc_dispatcher_trampoline, this);
+    running = ਸੱਚ;
+    thread = std::thread(rpc_dispatcher_trampoline, ਇਹ);
 }
 
-void rpc_dispatcher::work() {
-    auto last_cmd = std::chrono::steady_clock::now();
-    while (running) {
-        rpc_msg_ptr msg_ptr;
+ਖਾਲੀ rpc_dispatcher::work() {
+    ਸਵੈਚਾਲਿਤ ਆਖਰੀ_cmd = std::chrono::steady_clock::now();
+    ਜਦੋਂ (running) {
+        rpc_ਸੁਨੇਹਾ_ptr ਸੁਨੇਹਾ_ptr;
         // spin only while commands keep coming, so an idle dispatcher does not keep a core busy
-        const bool spin = busy_spin_users.load(std::memory_order_relaxed) != 0 &&
-                          std::chrono::steady_clock::now() - last_cmd < RPC_BUSY_SPIN_IDLE_TIME;
-        if (spin) {
-            if (!queue.try_pop(&msg_ptr)) {
+        ਅਚਲ ਤਾਰਕਿਕ spin = busy_spin_users.load(std::memory_order_relaxed) != 0 &&
+                          std::chrono::steady_clock::now() - ਆਖਰੀ_cmd < RPC_BUSY_SPIN_IDLE_ਸਮਾਂ;
+        ਜੇ (spin) {
+            ਜੇ (!queue.try_ਕੱਢੋ(&ਸੁਨੇਹਾ_ptr)) {
                 rpc_cpu_relax();
-                continue;
+                ਜਾਰੀ;
             }
-        } else if (!queue.pop(&msg_ptr)) {
-            break;
+        } ਨਹੀਂਤਾਂ ਜੇ (!queue.ਕੱਢੋ(&ਸੁਨੇਹਾ_ptr)) {
+            ਰੋਕੋ;
         }
-        if (msg_ptr->cmd != RPC_CMD_NONE) {
-            LOG_DBG2("[%s] %s (in: %s, out: %s)\n", __func__, rpc_cmd_name(msg_ptr->cmd),
-                     rpc_log_format_size(msg_ptr->input_size).c_str(), rpc_log_format_size(msg_ptr->output_size).c_str());
-            const bool trace = rpc_log_debug_level() >= 3;
-            const auto t0 = std::chrono::steady_clock::now();
-            if (msg_ptr->output) {
-                bool status = send_rpc_cmd(sock, msg_ptr->cmd, msg_ptr->input.get(), msg_ptr->input_size, msg_ptr->output, msg_ptr->output_size);
-                RPC_STATUS_ASSERT(status);
-            } else {
-                bool status = send_rpc_cmd(sock, msg_ptr->cmd, msg_ptr->input.get(), msg_ptr->input_size);
-                RPC_STATUS_ASSERT(status);
+        ਜੇ (ਸੁਨੇਹਾ_ptr->cmd != RPC_CMD_NONE) {
+            LOG_DBG2("[%s] %s (in: %s, out: %s)\n", __func__, rpc_cmd_name(ਸੁਨੇਹਾ_ptr->cmd),
+                     rpc_log_format_ਮਾਪ(ਸੁਨੇਹਾ_ptr->ਨਿਵੇਸ਼_ਮਾਪ).c_str(), rpc_log_format_ਮਾਪ(ਸੁਨੇਹਾ_ptr->output_ਮਾਪ).c_str());
+            ਅਚਲ ਤਾਰਕਿਕ trace = rpc_log_debug_level() >= 3;
+            ਅਚਲ ਸਵੈਚਾਲਿਤ t0 = std::chrono::steady_clock::now();
+            ਜੇ (ਸੁਨੇਹਾ_ptr->output) {
+                ਤਾਰਕਿਕ ਸਥਿਤੀ = send_rpc_cmd(sock, ਸੁਨੇਹਾ_ptr->cmd, ਸੁਨੇਹਾ_ptr->ਨਿਵੇਸ਼.get(), ਸੁਨੇਹਾ_ptr->ਨਿਵੇਸ਼_ਮਾਪ, ਸੁਨੇਹਾ_ptr->output, ਸੁਨੇਹਾ_ptr->output_ਮਾਪ);
+                RPC_ਸਥਿਤੀ_ASSERT(ਸਥਿਤੀ);
+            } ਨਹੀਂਤਾਂ {
+                ਤਾਰਕਿਕ ਸਥਿਤੀ = send_rpc_cmd(sock, ਸੁਨੇਹਾ_ptr->cmd, ਸੁਨੇਹਾ_ptr->ਨਿਵੇਸ਼.get(), ਸੁਨੇਹਾ_ptr->ਨਿਵੇਸ਼_ਮਾਪ);
+                RPC_ਸਥਿਤੀ_ASSERT(ਸਥਿਤੀ);
             }
-            if (trace) {
-                const std::chrono::duration<double, std::milli> elapsed = std::chrono::steady_clock::now() - t0;
-                LOG_DBG3("[%s] %s done in %.3f ms\n", __func__, rpc_cmd_name(msg_ptr->cmd), elapsed.count());
+            ਜੇ (trace) {
+                ਅਚਲ std::chrono::duration<ਦੁੱਗਣਾ, std::milli> elapsed = std::chrono::steady_clock::now() - t0;
+                LOG_DBG3("[%s] %s done in %.3f ms\n", __func__, rpc_cmd_name(ਸੁਨੇਹਾ_ptr->cmd), elapsed.count());
             }
-        } else {
+        } ਨਹੀਂਤਾਂ {
             LOG_DBG3("[%s] sync barrier\n", __func__);
         }
-        msg_ptr->completion.set_value();
-        last_cmd = std::chrono::steady_clock::now();
+        ਸੁਨੇਹਾ_ptr->completion.set_value();
+        ਆਖਰੀ_cmd = std::chrono::steady_clock::now();
     }
 }
 
 rpc_dispatcher::~rpc_dispatcher() {
-    running = false;
-    queue.interrupt();
-    sock = nullptr;
-    if (thread.joinable()) {
+    running = ਝੂਠ;
+    queue.ਰੁਕਾਵਟ();
+    sock = ਖਾਲੀ_ਸੂਚਕ;
+    ਜੇ (thread.joinable()) {
         thread.join();
     }
 }
 
-static std::shared_ptr<rpc_dispatcher> get_dispatcher(const std::string & endpoint) {
-    static std::mutex mutex;
-    std::lock_guard<std::mutex> lock(mutex);
-    static std::unordered_map<std::string, std::weak_ptr<rpc_dispatcher>> dispatchers;
+ਸਥਿਰ std::shared_ptr<rpc_dispatcher> get_dispatcher(ਅਚਲ std::string & endpoint) {
+    ਸਥਿਰ std::mutex mutex;
+    std::lock_guard<std::mutex> ਤਾਲਾ(mutex);
+    ਸਥਿਰ std::unordered_map<std::string, std::weak_ptr<rpc_dispatcher>> dispatchers;
 
-    auto it = dispatchers.find(endpoint);
-    if (it != dispatchers.end()) {
-        if (auto dispatcher = it->second.lock()) {
-            return dispatcher;
+    ਸਵੈਚਾਲਿਤ it = dispatchers.find(endpoint);
+    ਜੇ (it != dispatchers.end()) {
+        ਜੇ (ਸਵੈਚਾਲਿਤ dispatcher = it->second.ਤਾਲਾ()) {
+            ਵਾਪਸ dispatcher;
         }
     }
 
-    auto dispatcher = std::make_shared<rpc_dispatcher>();
+    ਸਵੈਚਾਲਿਤ dispatcher = std::make_shared<rpc_dispatcher>();
     dispatcher->start(endpoint);
     dispatchers[endpoint] = dispatcher;
-    return dispatcher;
+    ਵਾਪਸ dispatcher;
 }
 
-static void ggml_backend_rpc_buffer_free_buffer(ggml_backend_buffer_t buffer) {
-    ggml_backend_rpc_buffer_context * ctx = (ggml_backend_rpc_buffer_context *)buffer->context;
-    auto request = std::make_shared<rpc_msg_free_buffer_req>();
+ਸਥਿਰ ਖਾਲੀ ggml_backend_rpc_ਬਫਰ_free_ਬਫਰ(ggml_backend_ਬਫਰ_t ਬਫਰ) {
+    ggml_backend_rpc_ਬਫਰ_context * ctx = (ggml_backend_rpc_ਬਫਰ_context *)ਬਫਰ->context;
+    ਸਵੈਚਾਲਿਤ request = std::make_shared<rpc_ਸੁਨੇਹਾ_free_ਬਫਰ_req>();
     request->remote_ptr = ctx->remote_ptr;
     LOG_DBG2("[%s] remote_ptr: 0x%" PRIx64 "\n", __func__, request->remote_ptr);
-    ctx->dispatcher->send(RPC_CMD_FREE_BUFFER, request, sizeof(*request));
-    delete ctx;
+    ctx->dispatcher->send(RPC_CMD_FREE_ਬਫਰ, request, ਆਕਾਰ(*request));
+    ਮਿਟਾਓ ctx;
 }
 
-static void * ggml_backend_rpc_buffer_get_base(ggml_backend_buffer_t buffer) {
-    ggml_backend_rpc_buffer_context * ctx = (ggml_backend_rpc_buffer_context *)buffer->context;
-    if (ctx->base_ptr != nullptr) {
-        return ctx->base_ptr;
+ਸਥਿਰ ਖਾਲੀ * ggml_backend_rpc_ਬਫਰ_get_ਅਧਾਰ(ggml_backend_ਬਫਰ_t ਬਫਰ) {
+    ggml_backend_rpc_ਬਫਰ_context * ctx = (ggml_backend_rpc_ਬਫਰ_context *)ਬਫਰ->context;
+    ਜੇ (ctx->ਅਧਾਰ_ptr != ਖਾਲੀ_ਸੂਚਕ) {
+        ਵਾਪਸ ctx->ਅਧਾਰ_ptr;
     }
-    auto request = std::make_shared<rpc_msg_buffer_get_base_req>();
+    ਸਵੈਚਾਲਿਤ request = std::make_shared<rpc_ਸੁਨੇਹਾ_ਬਫਰ_get_ਅਧਾਰ_req>();
     request->remote_ptr = ctx->remote_ptr;
     LOG_DBG2("[%s] remote_ptr: 0x%" PRIx64 "\n", __func__, ctx->remote_ptr);
-    rpc_msg_buffer_get_base_rsp response;
-    ctx->dispatcher->send(RPC_CMD_BUFFER_GET_BASE, request, sizeof(*request), &response, sizeof(response));
-    ctx->base_ptr = reinterpret_cast<void *>(response.base_ptr);
-    return ctx->base_ptr;
+    rpc_ਸੁਨੇਹਾ_ਬਫਰ_get_ਅਧਾਰ_rsp response;
+    ctx->dispatcher->send(RPC_CMD_ਬਫਰ_GET_ਅਧਾਰ, request, ਆਕਾਰ(*request), &response, ਆਕਾਰ(response));
+    ctx->ਅਧਾਰ_ptr = reinterpret_cast<ਖਾਲੀ *>(response.ਅਧਾਰ_ptr);
+    ਵਾਪਸ ctx->ਅਧਾਰ_ptr;
 }
 
-static bool ggml_backend_buffer_is_rpc(ggml_backend_buffer_t buffer) {
-    return buffer->iface.free_buffer == ggml_backend_rpc_buffer_free_buffer;
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_backend_ਬਫਰ_is_rpc(ggml_backend_ਬਫਰ_t ਬਫਰ) {
+    ਵਾਪਸ ਬਫਰ->iface.free_ਬਫਰ == ggml_backend_rpc_ਬਫਰ_free_ਬਫਰ;
 }
 
-static rpc_tensor serialize_tensor(const ggml_tensor * tensor, const rpc_dispatcher * dispatcher = nullptr) {
-    rpc_tensor result;
-    if (!tensor) {
-        memset(&result, 0, sizeof(result));
-        return result;
+ਸਥਿਰ rpc_tensor serialize_tensor(ਅਚਲ ggml_tensor * tensor, ਅਚਲ rpc_dispatcher * dispatcher = ਖਾਲੀ_ਸੂਚਕ) {
+    rpc_tensor ਨਤੀਜਾ;
+    ਜੇ (!tensor) {
+        memset(&ਨਤੀਜਾ, 0, ਆਕਾਰ(ਨਤੀਜਾ));
+        ਵਾਪਸ ਨਤੀਜਾ;
     }
 
-    result.id = reinterpret_cast<uint64_t>(tensor);
-    result.type = tensor->type;
-    if (tensor->buffer && ggml_backend_buffer_is_rpc(tensor->buffer)) {
-        ggml_backend_buffer_t buffer = tensor->buffer;
-        ggml_backend_rpc_buffer_context * ctx = (ggml_backend_rpc_buffer_context *)buffer->context;
+    ਨਤੀਜਾ.id = reinterpret_cast<uint64_t>(tensor);
+    ਨਤੀਜਾ.type = tensor->type;
+    ਜੇ (tensor->ਬਫਰ && ggml_backend_ਬਫਰ_is_rpc(tensor->ਬਫਰ)) {
+        ggml_backend_ਬਫਰ_t ਬਫਰ = tensor->ਬਫਰ;
+        ggml_backend_rpc_ਬਫਰ_context * ctx = (ggml_backend_rpc_ਬਫਰ_context *)ਬਫਰ->context;
         // ref: https://github.com/ggml-org/llama.cpp/pull/26500
-        if (ctx != nullptr && (dispatcher == nullptr || ctx->dispatcher.get() == dispatcher)) {
-            result.buffer = ctx->remote_ptr;
-            result.data = reinterpret_cast<uint64_t>(tensor->data);
-        } else {
-            result.buffer = 0;
-            result.data = 0;
+        ਜੇ (ctx != ਖਾਲੀ_ਸੂਚਕ && (dispatcher == ਖਾਲੀ_ਸੂਚਕ || ctx->dispatcher.get() == dispatcher)) {
+            ਨਤੀਜਾ.ਬਫਰ = ctx->remote_ptr;
+            ਨਤੀਜਾ.ਅੰਕੜੇ = reinterpret_cast<uint64_t>(tensor->ਅੰਕੜੇ);
+        } ਨਹੀਂਤਾਂ {
+            ਨਤੀਜਾ.ਬਫਰ = 0;
+            ਨਤੀਜਾ.ਅੰਕੜੇ = 0;
         }
-    } else {
-        result.buffer = 0;
-        result.data   = 0;
+    } ਨਹੀਂਤਾਂ {
+        ਨਤੀਜਾ.ਬਫਰ = 0;
+        ਨਤੀਜਾ.ਅੰਕੜੇ   = 0;
     }
-    for (uint32_t i = 0; i < GGML_MAX_DIMS; i++) {
-        result.ne[i] = tensor->ne[i];
-        result.nb[i] = tensor->nb[i];
+    ਲਈ (uint32_t i = 0; i < GGML_MAX_DIMS; i++) {
+        ਨਤੀਜਾ.ne[i] = tensor->ne[i];
+        ਨਤੀਜਾ.nb[i] = tensor->nb[i];
     }
-    result.op = tensor->op;
-    for (uint32_t i = 0; i < GGML_MAX_OP_PARAMS / sizeof(int32_t); i++) {
-        result.op_params[i] = tensor->op_params[i];
+    ਨਤੀਜਾ.op = tensor->op;
+    ਲਈ (uint32_t i = 0; i < GGML_MAX_OP_PARAMS / ਆਕਾਰ(int32_t); i++) {
+        ਨਤੀਜਾ.op_params[i] = tensor->op_params[i];
     }
-    result.flags = tensor->flags;
-    for (uint32_t i = 0; i < GGML_MAX_SRC; i++) {
-        result.src[i] = reinterpret_cast<uint64_t>(tensor->src[i]);
+    ਨਤੀਜਾ.flags = tensor->flags;
+    ਲਈ (uint32_t i = 0; i < GGML_MAX_SRC; i++) {
+        ਨਤੀਜਾ.src[i] = reinterpret_cast<uint64_t>(tensor->src[i]);
     }
-    result.view_src = reinterpret_cast<uint64_t>(tensor->view_src);
-    result.view_offs = tensor->view_offs;
+    ਨਤੀਜਾ.view_src = reinterpret_cast<uint64_t>(tensor->view_src);
+    ਨਤੀਜਾ.view_offs = tensor->view_offs;
 
     // Avoid sending uninitialized data over the wire
-    memset(result.name, 0, sizeof(result.name));
-    result.use_count = 0;
+    memset(ਨਤੀਜਾ.name, 0, ਆਕਾਰ(ਨਤੀਜਾ.name));
+    ਨਤੀਜਾ.use_ਗਿਣਤੀ = 0;
 
-    snprintf(result.name, GGML_MAX_NAME, "%s", tensor->name);
-    return result;
+    snprintf(ਨਤੀਜਾ.name, GGML_MAX_NAME, "%s", tensor->name);
+    ਵਾਪਸ ਨਤੀਜਾ;
 }
 
-static enum ggml_status ggml_backend_rpc_buffer_init_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor) {
-    ggml_backend_rpc_buffer_context * ctx = (ggml_backend_rpc_buffer_context *)buffer->context;
+ਸਥਿਰ ਗਿਣਤੀ ggml_ਸਥਿਤੀ ggml_backend_rpc_ਬਫਰ_init_tensor(ggml_backend_ਬਫਰ_t ਬਫਰ, ggml_tensor * tensor) {
+    ggml_backend_rpc_ਬਫਰ_context * ctx = (ggml_backend_rpc_ਬਫਰ_context *)ਬਫਰ->context;
 
     // CUDA backend on the server pads everything to 512 due to CUDA limitations.
     // Due to bandwidth constraints, we only call the server init tensor functions if necessary.
     // In particular, only quantized tensors need padding
-    if (ggml_is_quantized(tensor->type) && (tensor->ne[0] % 512 != 0) && (tensor->view_src == nullptr)) {
+    ਜੇ (ggml_is_quantized(tensor->type) && (tensor->ne[0] % 512 != 0) && (tensor->view_src == ਖਾਲੀ_ਸੂਚਕ)) {
         LOG_DBG2("[%s] tensor: %s\n", __func__, rpc_log_format_tensor(tensor).c_str());
-        auto request = std::make_shared<rpc_msg_init_tensor_req>();
+        ਸਵੈਚਾਲਿਤ request = std::make_shared<rpc_ਸੁਨੇਹਾ_init_tensor_req>();
         request->tensor = serialize_tensor(tensor);
-        ctx->dispatcher->send(RPC_CMD_INIT_TENSOR, request, sizeof(*request));
+        ctx->dispatcher->send(RPC_CMD_INIT_TENSOR, request, ਆਕਾਰ(*request));
     }
-    return GGML_STATUS_SUCCESS;
+    ਵਾਪਸ GGML_ਸਥਿਤੀ_SUCCESS;
 }
 
-static void ggml_backend_rpc_buffer_memset_tensor(
-        ggml_backend_buffer_t buffer, ggml_tensor * tensor, uint8_t value, size_t offset, size_t size) {
-    ggml_backend_rpc_buffer_context * ctx = (ggml_backend_rpc_buffer_context *)buffer->context;
-    auto request = std::make_shared<rpc_msg_memset_tensor_req>();
+ਸਥਿਰ ਖਾਲੀ ggml_backend_rpc_ਬਫਰ_memset_tensor(
+        ggml_backend_ਬਫਰ_t ਬਫਰ, ggml_tensor * tensor, uint8_t value, size_t ਵਿੱਥ, size_t size) {
+    ggml_backend_rpc_ਬਫਰ_context * ctx = (ggml_backend_rpc_ਬਫਰ_context *)ਬਫਰ->context;
+    ਸਵੈਚਾਲਿਤ request = std::make_shared<rpc_ਸੁਨੇਹਾ_memset_tensor_req>();
     request->tensor = serialize_tensor(tensor);
-    request->offset = offset;
+    request->ਵਿੱਥ = ਵਿੱਥ;
     request->size   = size;
     request->value  = value;
-    LOG_DBG2("[%s] tensor: %s, offset: %zu, size: %s, value: %u\n", __func__, rpc_log_format_tensor(tensor).c_str(), offset,
-             rpc_log_format_size(size).c_str(), value);
-    ctx->dispatcher->send(RPC_CMD_MEMSET_TENSOR, request, sizeof(*request));
+    LOG_DBG2("[%s] tensor: %s, offset: %zu, size: %s, value: %u\n", __func__, rpc_log_format_tensor(tensor).c_str(), ਵਿੱਥ,
+             rpc_log_format_ਮਾਪ(size).c_str(), value);
+    ctx->dispatcher->send(RPC_CMD_MEMSET_TENSOR, request, ਆਕਾਰ(*request));
 }
 
 // input serialization format: | rpc_tensor | cache_flag (1 byte) | offset (8 bytes) | data (size bytes)
-static std::shared_ptr<uint8_t> serialize_set_tensor(const rpc_tensor & rpc_tensor, uint8_t cache_flag, uint64_t offset, const void * data, size_t size, size_t & input_size) {
-    input_size = sizeof(rpc_tensor) + sizeof(cache_flag) + sizeof(offset) + size;
-    uint8_t * input = new uint8_t[input_size]();
-    uint8_t * p = input;
-    memcpy(p, &rpc_tensor, sizeof(rpc_tensor)); p += sizeof(rpc_tensor);
-    memcpy(p, &cache_flag, sizeof(cache_flag)); p += sizeof(cache_flag);
-    memcpy(p, &offset,     sizeof(offset));     p += sizeof(offset);
-    memcpy(p, data, size);
-    return std::shared_ptr<uint8_t>(input, std::default_delete<uint8_t[]>());
+ਸਥਿਰ std::shared_ptr<uint8_t> serialize_ਸੈੱਟ_tensor(ਅਚਲ rpc_tensor & rpc_tensor, uint8_t cache_flag, uint64_t ਵਿੱਥ, ਅਚਲ ਖਾਲੀ * ਅੰਕੜੇ, size_t size, size_t & ਨਿਵੇਸ਼_ਮਾਪ) {
+    ਨਿਵੇਸ਼_ਮਾਪ = ਆਕਾਰ(rpc_tensor) + ਆਕਾਰ(cache_flag) + ਆਕਾਰ(ਵਿੱਥ) + size;
+    uint8_t * ਨਿਵੇਸ਼ = ਨਵਾਂ uint8_t[ਨਿਵੇਸ਼_ਮਾਪ]();
+    uint8_t * p = ਨਿਵੇਸ਼;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(p, &rpc_tensor, ਆਕਾਰ(rpc_tensor)); p += ਆਕਾਰ(rpc_tensor);
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(p, &cache_flag, ਆਕਾਰ(cache_flag)); p += ਆਕਾਰ(cache_flag);
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(p, &ਵਿੱਥ,     ਆਕਾਰ(ਵਿੱਥ));     p += ਆਕਾਰ(ਵਿੱਥ);
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(p, ਅੰਕੜੇ, size);
+    ਵਾਪਸ std::shared_ptr<uint8_t>(ਨਿਵੇਸ਼, std::default_delete<uint8_t[]>());
 }
 
 // the hash cache is meant for weights, so that a model reload can skip re-sending them.
 // compute-buffer inputs (the activations ggml_backend_sched copies between backends) must not
 // take this path, otherwise with `rpc-server -c` every ubatch above the threshold is written
 // to the cache directory and later served from there.
-static bool rpc_use_hash_cache(const ggml_tensor * tensor, size_t size) {
-    return size > HASH_THRESHOLD && tensor->buffer->usage == GGML_BACKEND_BUFFER_USAGE_WEIGHTS;
+ਸਥਿਰ ਤਾਰਕਿਕ rpc_use_hash_cache(ਅਚਲ ggml_tensor * tensor, size_t size) {
+    ਵਾਪਸ size > HASH_ਹੱਦ && tensor->ਬਫਰ->usage == GGML_BACKEND_ਬਫਰ_USAGE_WEIGHTS;
 }
 
-static void ggml_backend_rpc_buffer_set_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor, const void * data, size_t offset, size_t size) {
-    ggml_backend_rpc_buffer_context * ctx = (ggml_backend_rpc_buffer_context *)buffer->context;
+ਸਥਿਰ ਖਾਲੀ ggml_backend_rpc_ਬਫਰ_ਸੈੱਟ_tensor(ggml_backend_ਬਫਰ_t ਬਫਰ, ggml_tensor * tensor, ਅਚਲ ਖਾਲੀ * ਅੰਕੜੇ, size_t ਵਿੱਥ, size_t size) {
+    ggml_backend_rpc_ਬਫਰ_context * ctx = (ggml_backend_rpc_ਬਫਰ_context *)ਬਫਰ->context;
     rpc_tensor rpc_tensor = serialize_tensor(tensor);
     uint8_t cache_flag = 0;
-    LOG_DBG2("[%s] tensor: %s, offset: %zu, size: %s\n", __func__, rpc_log_format_tensor(tensor).c_str(), offset,
-             rpc_log_format_size(size).c_str());
-    if (rpc_use_hash_cache(tensor, size)) {
-        auto request = std::make_shared<rpc_msg_set_tensor_hash_req>();
+    LOG_DBG2("[%s] tensor: %s, offset: %zu, size: %s\n", __func__, rpc_log_format_tensor(tensor).c_str(), ਵਿੱਥ,
+             rpc_log_format_ਮਾਪ(size).c_str());
+    ਜੇ (rpc_use_hash_cache(tensor, size)) {
+        ਸਵੈਚਾਲਿਤ request = std::make_shared<rpc_ਸੁਨੇਹਾ_ਸੈੱਟ_tensor_hash_req>();
         request->tensor = rpc_tensor;
-        request->offset = offset;
-        request->hash = fnv_hash((const uint8_t*)data, size);
-        rpc_msg_set_tensor_hash_rsp response;
-        ctx->dispatcher->send(RPC_CMD_SET_TENSOR_HASH, request, sizeof(*request), &response, sizeof(response));
+        request->ਵਿੱਥ = ਵਿੱਥ;
+        request->hash = fnv_hash((ਅਚਲ uint8_t*)ਅੰਕੜੇ, size);
+        rpc_ਸੁਨੇਹਾ_ਸੈੱਟ_tensor_hash_rsp response;
+        ctx->dispatcher->send(RPC_CMD_ਸੈੱਟ_TENSOR_HASH, request, ਆਕਾਰ(*request), &response, ਆਕਾਰ(response));
         LOG_DBG2("[%s] tensor: %s, hash: 0x%" PRIx64 ", cache: %s\n", __func__, rpc_log_format_tensor(tensor).c_str(),
-                 request->hash, response.result ? "hit" : "miss");
-        if (response.result) {
+                 request->hash, response.ਨਤੀਜਾ ? "hit" : "miss");
+        ਜੇ (response.ਨਤੀਜਾ) {
             // the server has the same data, no need to send it
-            return;
+            ਵਾਪਸ;
         }
         // the server has no cache entry for this tensor - ask it to save one
         cache_flag = 1;
     }
-    size_t input_size;
-    auto input = serialize_set_tensor(rpc_tensor, cache_flag, offset, data, size, input_size);
-    ctx->dispatcher->send(RPC_CMD_SET_TENSOR, input, input_size);
+    size_t ਨਿਵੇਸ਼_ਮਾਪ;
+    ਸਵੈਚਾਲਿਤ ਨਿਵੇਸ਼ = serialize_ਸੈੱਟ_tensor(rpc_tensor, cache_flag, ਵਿੱਥ, ਅੰਕੜੇ, size, ਨਿਵੇਸ਼_ਮਾਪ);
+    ctx->dispatcher->send(RPC_CMD_ਸੈੱਟ_TENSOR, ਨਿਵੇਸ਼, ਨਿਵੇਸ਼_ਮਾਪ);
 }
 
-static void ggml_backend_rpc_buffer_set_tensor_2d(ggml_backend_buffer_t buffer, ggml_tensor * tensor, const void * data,
-        size_t offset, size_t size, size_t n_copies, size_t stride_tensor, size_t stride_data) {
-    ggml_backend_rpc_buffer_context * ctx = (ggml_backend_rpc_buffer_context *)buffer->context;
+ਸਥਿਰ ਖਾਲੀ ggml_backend_rpc_ਬਫਰ_ਸੈੱਟ_tensor_2d(ggml_backend_ਬਫਰ_t ਬਫਰ, ggml_tensor * tensor, ਅਚਲ ਖਾਲੀ * ਅੰਕੜੇ,
+        size_t ਵਿੱਥ, size_t size, size_t n_copies, size_t stride_tensor, size_t stride_ਅੰਕੜੇ) {
+    ggml_backend_rpc_ਬਫਰ_context * ctx = (ggml_backend_rpc_ਬਫਰ_context *)ਬਫਰ->context;
     rpc_tensor rpc_tensor = serialize_tensor(tensor);
     LOG_DBG2("[%s] tensor: %s, offset: %zu, size: %s, n_copies: %zu, stride: %zu\n", __func__,
-             rpc_log_format_tensor(tensor).c_str(), offset, rpc_log_format_size(size).c_str(), n_copies, stride_tensor);
+             rpc_log_format_tensor(tensor).c_str(), ਵਿੱਥ, rpc_log_format_ਮਾਪ(size).c_str(), n_copies, stride_tensor);
     // input serialization format: | rpc_tensor | offset (8 bytes) | size (8 bytes) | n_copies (8 bytes) | stride (8 bytes) | data (size * n_copies bytes) |
-    size_t input_size = sizeof(rpc_tensor) + 4*sizeof(uint64_t) + size*n_copies;
-    uint8_t * input = new uint8_t[input_size]();
-    uint8_t * dest = input;
-    memcpy(dest, &rpc_tensor, sizeof(rpc_tensor));
-    dest += sizeof(rpc_tensor);
-    uint64_t header[4] = { offset, size, n_copies, stride_tensor };
-    memcpy(dest, header, sizeof(header));
-    dest += sizeof(header);
-    for (size_t i = 0; i < n_copies; i++) {
-        memcpy(dest + i*size, (const char *)data + i*stride_data, size);
+    size_t ਨਿਵੇਸ਼_ਮਾਪ = ਆਕਾਰ(rpc_tensor) + 4*ਆਕਾਰ(uint64_t) + size*n_copies;
+    uint8_t * ਨਿਵੇਸ਼ = ਨਵਾਂ uint8_t[ਨਿਵੇਸ਼_ਮਾਪ]();
+    uint8_t * dest = ਨਿਵੇਸ਼;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(dest, &rpc_tensor, ਆਕਾਰ(rpc_tensor));
+    dest += ਆਕਾਰ(rpc_tensor);
+    uint64_t ਸਿਰਲੇਖ[4] = { ਵਿੱਥ, size, n_copies, stride_tensor };
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(dest, ਸਿਰਲੇਖ, ਆਕਾਰ(ਸਿਰਲੇਖ));
+    dest += ਆਕਾਰ(ਸਿਰਲੇਖ);
+    ਲਈ (size_t i = 0; i < n_copies; i++) {
+        ਸਮ੍ਰਿਤੀ_ਨਕਲ(dest + i*size, (ਅਚਲ ਅੱਖਰ *)ਅੰਕੜੇ + i*stride_ਅੰਕੜੇ, size);
     }
-    std::shared_ptr<uint8_t> input_ptr(input, std::default_delete<uint8_t[]>());
-    ctx->dispatcher->send(RPC_CMD_SET_TENSOR_2D, input_ptr, input_size);
+    std::shared_ptr<uint8_t> ਨਿਵੇਸ਼_ptr(ਨਿਵੇਸ਼, std::default_delete<uint8_t[]>());
+    ctx->dispatcher->send(RPC_CMD_ਸੈੱਟ_TENSOR_2_D, ਨਿਵੇਸ਼_ptr, ਨਿਵੇਸ਼_ਮਾਪ);
 }
 
-static void ggml_backend_rpc_buffer_get_tensor_2d(ggml_backend_buffer_t buffer, const ggml_tensor * tensor, void * data,
-        size_t offset, size_t size, size_t n_copies, size_t stride_tensor, size_t stride_data) {
-    ggml_backend_rpc_buffer_context * ctx = (ggml_backend_rpc_buffer_context *)buffer->context;
+ਸਥਿਰ ਖਾਲੀ ggml_backend_rpc_ਬਫਰ_get_tensor_2d(ggml_backend_ਬਫਰ_t ਬਫਰ, ਅਚਲ ggml_tensor * tensor, ਖਾਲੀ * ਅੰਕੜੇ,
+        size_t ਵਿੱਥ, size_t size, size_t n_copies, size_t stride_tensor, size_t stride_ਅੰਕੜੇ) {
+    ggml_backend_rpc_ਬਫਰ_context * ctx = (ggml_backend_rpc_ਬਫਰ_context *)ਬਫਰ->context;
     LOG_DBG2("[%s] tensor: %s, offset: %zu, size: %s, n_copies: %zu, stride: %zu\n", __func__,
-             rpc_log_format_tensor(tensor).c_str(), offset, rpc_log_format_size(size).c_str(), n_copies, stride_tensor);
-    auto request = std::make_shared<rpc_msg_get_tensor_2d_req>();
+             rpc_log_format_tensor(tensor).c_str(), ਵਿੱਥ, rpc_log_format_ਮਾਪ(size).c_str(), n_copies, stride_tensor);
+    ਸਵੈਚਾਲਿਤ request = std::make_shared<rpc_ਸੁਨੇਹਾ_get_tensor_2d_req>();
     request->tensor   = serialize_tensor(tensor);
-    request->offset   = offset;
+    request->ਵਿੱਥ   = ਵਿੱਥ;
     request->size     = size;
     request->n_copies = n_copies;
     request->stride   = stride_tensor;
-    if (stride_data == size) {
-        ctx->dispatcher->send(RPC_CMD_GET_TENSOR_2D, request, sizeof(*request), data, size*n_copies);
-    } else {
+    ਜੇ (stride_ਅੰਕੜੇ == size) {
+        ctx->dispatcher->send(RPC_CMD_GET_TENSOR_2D, request, ਆਕਾਰ(*request), ਅੰਕੜੇ, size*n_copies);
+    } ਨਹੀਂਤਾਂ {
         std::vector<uint8_t> packed(size*n_copies);
-        ctx->dispatcher->send(RPC_CMD_GET_TENSOR_2D, request, sizeof(*request), packed.data(), packed.size());
-        for (size_t i = 0; i < n_copies; i++) {
-            memcpy((char *)data + i*stride_data, packed.data() + i*size, size);
+        ctx->dispatcher->send(RPC_CMD_GET_TENSOR_2D, request, ਆਕਾਰ(*request), packed.ਅੰਕੜੇ(), packed.size());
+        ਲਈ (size_t i = 0; i < n_copies; i++) {
+            ਸਮ੍ਰਿਤੀ_ਨਕਲ((ਅੱਖਰ *)ਅੰਕੜੇ + i*stride_ਅੰਕੜੇ, packed.ਅੰਕੜੇ() + i*size, size);
         }
     }
 }
 
-static void ggml_backend_rpc_buffer_get_tensor(ggml_backend_buffer_t buffer, const ggml_tensor * tensor, void * data, size_t offset, size_t size) {
-    ggml_backend_rpc_buffer_context * ctx = (ggml_backend_rpc_buffer_context *)buffer->context;
-    LOG_DBG2("[%s] tensor: %s, offset: %zu, size: %s\n", __func__, rpc_log_format_tensor(tensor).c_str(), offset,
-             rpc_log_format_size(size).c_str());
-    auto request = std::make_shared<rpc_msg_get_tensor_req>();
+ਸਥਿਰ ਖਾਲੀ ggml_backend_rpc_ਬਫਰ_get_tensor(ggml_backend_ਬਫਰ_t ਬਫਰ, ਅਚਲ ggml_tensor * tensor, ਖਾਲੀ * ਅੰਕੜੇ, size_t ਵਿੱਥ, size_t size) {
+    ggml_backend_rpc_ਬਫਰ_context * ctx = (ggml_backend_rpc_ਬਫਰ_context *)ਬਫਰ->context;
+    LOG_DBG2("[%s] tensor: %s, offset: %zu, size: %s\n", __func__, rpc_log_format_tensor(tensor).c_str(), ਵਿੱਥ,
+             rpc_log_format_ਮਾਪ(size).c_str());
+    ਸਵੈਚਾਲਿਤ request = std::make_shared<rpc_ਸੁਨੇਹਾ_get_tensor_req>();
     request->tensor = serialize_tensor(tensor);
-    request->offset = offset;
+    request->ਵਿੱਥ = ਵਿੱਥ;
     request->size = size;
-    ctx->dispatcher->send(RPC_CMD_GET_TENSOR, request, sizeof(*request), data, size);
+    ctx->dispatcher->send(RPC_CMD_GET_TENSOR, request, ਆਕਾਰ(*request), ਅੰਕੜੇ, size);
 }
 
-static bool ggml_backend_rpc_buffer_cpy_tensor(ggml_backend_buffer_t buffer, const ggml_tensor * src, ggml_tensor * dst) {
-    if (ggml_backend_buffer_is_rpc(src->buffer)) {
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_backend_rpc_ਬਫਰ_cpy_tensor(ggml_backend_ਬਫਰ_t ਬਫਰ, ਅਚਲ ggml_tensor * src, ggml_tensor * dst) {
+    ਜੇ (ggml_backend_ਬਫਰ_is_rpc(src->ਬਫਰ)) {
         // check if src and dst are on the same server
-        ggml_backend_buffer_t src_buffer = src->buffer;
-        ggml_backend_rpc_buffer_context * src_ctx = (ggml_backend_rpc_buffer_context *)src_buffer->context;
-        ggml_backend_buffer_t dst_buffer = dst->buffer;
-        ggml_backend_rpc_buffer_context * dst_ctx = (ggml_backend_rpc_buffer_context *)dst_buffer->context;
-        if (src_ctx->dispatcher != dst_ctx->dispatcher) {
+        ggml_backend_ਬਫਰ_t src_ਬਫਰ = src->ਬਫਰ;
+        ggml_backend_rpc_ਬਫਰ_context * src_ctx = (ggml_backend_rpc_ਬਫਰ_context *)src_ਬਫਰ->context;
+        ggml_backend_ਬਫਰ_t dst_ਬਫਰ = dst->ਬਫਰ;
+        ggml_backend_rpc_ਬਫਰ_context * dst_ctx = (ggml_backend_rpc_ਬਫਰ_context *)dst_ਬਫਰ->context;
+        ਜੇ (src_ctx->dispatcher != dst_ctx->dispatcher) {
             LOG_DBG2("[%s] src and dst are on different servers, falling back to a host copy\n", __func__);
-            return false;
+            ਵਾਪਸ ਝੂਠ;
         }
-        ggml_backend_rpc_buffer_context * ctx = (ggml_backend_rpc_buffer_context *)buffer->context;
+        ggml_backend_rpc_ਬਫਰ_context * ctx = (ggml_backend_rpc_ਬਫਰ_context *)ਬਫਰ->context;
         LOG_DBG2("[%s] src: %s -> dst: %s\n", __func__, rpc_log_format_tensor(src).c_str(), rpc_log_format_tensor(dst).c_str());
-        auto request = std::make_shared<rpc_msg_copy_tensor_req>();
+        ਸਵੈਚਾਲਿਤ request = std::make_shared<rpc_ਸੁਨੇਹਾ_copy_tensor_req>();
         request->src = serialize_tensor(src);
         request->dst = serialize_tensor(dst);
-        rpc_msg_copy_tensor_rsp response;
-        ctx->dispatcher->send(RPC_CMD_COPY_TENSOR, request, sizeof(*request), &response, sizeof(response));
-        return response.result;
+        rpc_ਸੁਨੇਹਾ_copy_tensor_rsp response;
+        ctx->dispatcher->send(RPC_CMD_COPY_TENSOR, request, ਆਕਾਰ(*request), &response, ਆਕਾਰ(response));
+        ਵਾਪਸ response.ਨਤੀਜਾ;
     }
-    return false;
+    ਵਾਪਸ ਝੂਠ;
 }
 
-static void ggml_backend_rpc_buffer_clear(ggml_backend_buffer_t buffer, uint8_t value) {
-    ggml_backend_rpc_buffer_context * ctx = (ggml_backend_rpc_buffer_context *)buffer->context;
-    auto request = std::make_shared<rpc_msg_buffer_clear_req>();
+ਸਥਿਰ ਖਾਲੀ ggml_backend_rpc_ਬਫਰ_clear(ggml_backend_ਬਫਰ_t ਬਫਰ, uint8_t value) {
+    ggml_backend_rpc_ਬਫਰ_context * ctx = (ggml_backend_rpc_ਬਫਰ_context *)ਬਫਰ->context;
+    ਸਵੈਚਾਲਿਤ request = std::make_shared<rpc_ਸੁਨੇਹਾ_ਬਫਰ_clear_req>();
     request->remote_ptr = ctx->remote_ptr;
     request->value = value;
     LOG_DBG2("[%s] remote_ptr: 0x%" PRIx64 ", value: %u\n", __func__, request->remote_ptr, request->value);
-    ctx->dispatcher->send(RPC_CMD_BUFFER_CLEAR, request, sizeof(*request));
+    ctx->dispatcher->send(RPC_CMD_ਬਫਰ_CLEAR, request, ਆਕਾਰ(*request));
 }
 
-static ggml_backend_buffer_i ggml_backend_rpc_buffer_interface = {
-    /* .free_buffer     = */ ggml_backend_rpc_buffer_free_buffer,
-    /* .get_base        = */ ggml_backend_rpc_buffer_get_base,
-    /* .init_tensor     = */ ggml_backend_rpc_buffer_init_tensor,
-    /* .memset_tensor   = */ ggml_backend_rpc_buffer_memset_tensor,
-    /* .set_tensor      = */ ggml_backend_rpc_buffer_set_tensor,
-    /* .get_tensor      = */ ggml_backend_rpc_buffer_get_tensor,
-    /* .set_tensor_2d   = */ ggml_backend_rpc_buffer_set_tensor_2d,
-    /* .get_tensor_2d   = */ ggml_backend_rpc_buffer_get_tensor_2d,
-    /* .cpy_tensor      = */ ggml_backend_rpc_buffer_cpy_tensor,
-    /* .clear           = */ ggml_backend_rpc_buffer_clear,
-    /* .reset           = */ NULL,
+ਸਥਿਰ ggml_backend_ਬਫਰ_i ggml_backend_rpc_ਬਫਰ_interface = {
+    /* .free_buffer     = */ ggml_backend_rpc_ਬਫਰ_free_ਬਫਰ,
+    /* .get_base        = */ ggml_backend_rpc_ਬਫਰ_get_ਅਧਾਰ,
+    /* .init_tensor     = */ ggml_backend_rpc_ਬਫਰ_init_tensor,
+    /* .memset_tensor   = */ ggml_backend_rpc_ਬਫਰ_memset_tensor,
+    /* .set_tensor      = */ ggml_backend_rpc_ਬਫਰ_ਸੈੱਟ_tensor,
+    /* .get_tensor      = */ ggml_backend_rpc_ਬਫਰ_get_tensor,
+    /* .set_tensor_2d   = */ ggml_backend_rpc_ਬਫਰ_ਸੈੱਟ_tensor_2d,
+    /* .get_tensor_2d   = */ ggml_backend_rpc_ਬਫਰ_get_tensor_2d,
+    /* .cpy_tensor      = */ ggml_backend_rpc_ਬਫਰ_cpy_tensor,
+    /* .clear           = */ ggml_backend_rpc_ਬਫਰ_clear,
+    /* .reset           = */ ਨਿਰਾ,
 };
 
-static const char * ggml_backend_rpc_buffer_type_name(ggml_backend_buffer_type_t buft) {
-    ggml_backend_rpc_buffer_type_context * buft_ctx = (ggml_backend_rpc_buffer_type_context *)buft->context;
-    return buft_ctx->name.c_str();
+ਸਥਿਰ ਅਚਲ ਅੱਖਰ * ggml_backend_rpc_ਬਫਰ_type_name(ggml_backend_ਬਫਰ_type_t buft) {
+    ggml_backend_rpc_ਬਫਰ_type_context * buft_ctx = (ggml_backend_rpc_ਬਫਰ_type_context *)buft->context;
+    ਵਾਪਸ buft_ctx->name.c_str();
 }
 
-static ggml_backend_buffer_t ggml_backend_rpc_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
-    ggml_backend_rpc_buffer_type_context * buft_ctx = (ggml_backend_rpc_buffer_type_context *)buft->context;
-    auto request = std::make_shared<rpc_msg_alloc_buffer_req>();
+ਸਥਿਰ ggml_backend_ਬਫਰ_t ggml_backend_rpc_ਬਫਰ_type_alloc_ਬਫਰ(ggml_backend_ਬਫਰ_type_t buft, size_t size) {
+    ggml_backend_rpc_ਬਫਰ_type_context * buft_ctx = (ggml_backend_rpc_ਬਫਰ_type_context *)buft->context;
+    ਸਵੈਚਾਲਿਤ request = std::make_shared<rpc_ਸੁਨੇਹਾ_alloc_ਬਫਰ_req>();
     request->device = buft_ctx->device;
     request->size = size;
-    rpc_msg_alloc_buffer_rsp response;
+    rpc_ਸੁਨੇਹਾ_alloc_ਬਫਰ_rsp response;
 
-    auto dispatcher = get_dispatcher(buft_ctx->endpoint);
-    dispatcher->send(RPC_CMD_ALLOC_BUFFER, request, sizeof(*request), &response, sizeof(response));
-    if (response.remote_ptr != 0) {
+    ਸਵੈਚਾਲਿਤ dispatcher = get_dispatcher(buft_ctx->endpoint);
+    dispatcher->send(RPC_CMD_ALLOC_ਬਫਰ, request, ਆਕਾਰ(*request), &response, ਆਕਾਰ(response));
+    ਜੇ (response.remote_ptr != 0) {
         LOG_DBG("[%s] endpoint: %s, device: %u, size: %s -> remote_ptr: 0x%" PRIx64 ", remote_size: %s\n",
-                __func__, buft_ctx->endpoint.c_str(), buft_ctx->device, rpc_log_format_size(request->size).c_str(),
-                response.remote_ptr, rpc_log_format_size(response.remote_size).c_str());
-        ggml_backend_buffer_t buffer = ggml_backend_buffer_init(buft,
-            ggml_backend_rpc_buffer_interface,
-            new ggml_backend_rpc_buffer_context{dispatcher, nullptr, response.remote_ptr},
-            response.remote_size);
-        return buffer;
-    } else {
+                __func__, buft_ctx->endpoint.c_str(), buft_ctx->device, rpc_log_format_ਮਾਪ(request->size).c_str(),
+                response.remote_ptr, rpc_log_format_ਮਾਪ(response.remote_ਮਾਪ).c_str());
+        ggml_backend_ਬਫਰ_t ਬਫਰ = ggml_backend_ਬਫਰ_init(buft,
+            ggml_backend_rpc_ਬਫਰ_interface,
+            ਨਵਾਂ ggml_backend_rpc_ਬਫਰ_context{dispatcher, ਖਾਲੀ_ਸੂਚਕ, response.remote_ptr},
+            response.remote_ਮਾਪ);
+        ਵਾਪਸ ਬਫਰ;
+    } ਨਹੀਂਤਾਂ {
         LOG_WARN("[%s] endpoint: %s, device: %u, size: %s -> failed\n",
-                __func__, buft_ctx->endpoint.c_str(), buft_ctx->device, rpc_log_format_size(request->size).c_str());
-        return nullptr;
+                __func__, buft_ctx->endpoint.c_str(), buft_ctx->device, rpc_log_format_ਮਾਪ(request->size).c_str());
+        ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
     }
 }
 
-static size_t get_alignment(const std::shared_ptr<rpc_dispatcher> & dispatcher, uint32_t device) {
-    auto request = std::make_shared<rpc_msg_get_alignment_req>();
+ਸਥਿਰ size_t get_alignment(ਅਚਲ std::shared_ptr<rpc_dispatcher> & dispatcher, uint32_t device) {
+    ਸਵੈਚਾਲਿਤ request = std::make_shared<rpc_ਸੁਨੇਹਾ_get_alignment_req>();
     request->device = device;
-    rpc_msg_get_alignment_rsp response;
-    dispatcher->send(RPC_CMD_GET_ALIGNMENT, request, sizeof(*request), &response, sizeof(response));
-    LOG_DBG2("[%s] device: %u, alignment: %s\n", __func__, device, rpc_log_format_size(response.alignment).c_str());
-    return response.alignment;
+    rpc_ਸੁਨੇਹਾ_get_alignment_rsp response;
+    dispatcher->send(RPC_CMD_GET_ALIGNMENT, request, ਆਕਾਰ(*request), &response, ਆਕਾਰ(response));
+    LOG_DBG2("[%s] device: %u, alignment: %s\n", __func__, device, rpc_log_format_ਮਾਪ(response.alignment).c_str());
+    ਵਾਪਸ response.alignment;
 }
 
-static size_t ggml_backend_rpc_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
-    ggml_backend_rpc_buffer_type_context * buft_ctx = (ggml_backend_rpc_buffer_type_context *)buft->context;
-    return buft_ctx->alignment;
+ਸਥਿਰ size_t ggml_backend_rpc_ਬਫਰ_type_get_alignment(ggml_backend_ਬਫਰ_type_t buft) {
+    ggml_backend_rpc_ਬਫਰ_type_context * buft_ctx = (ggml_backend_rpc_ਬਫਰ_type_context *)buft->context;
+    ਵਾਪਸ buft_ctx->alignment;
 }
 
-static size_t get_max_size(const std::shared_ptr<rpc_dispatcher> & dispatcher, uint32_t device) {
-    auto request = std::make_shared<rpc_msg_get_max_size_req>();
+ਸਥਿਰ size_t get_max_ਮਾਪ(ਅਚਲ std::shared_ptr<rpc_dispatcher> & dispatcher, uint32_t device) {
+    ਸਵੈਚਾਲਿਤ request = std::make_shared<rpc_ਸੁਨੇਹਾ_get_max_ਮਾਪ_req>();
     request->device = device;
-    rpc_msg_get_max_size_rsp response;
-    dispatcher->send(RPC_CMD_GET_MAX_SIZE, request, sizeof(*request), &response, sizeof(response));
-    LOG_DBG2("[%s] device: %u, max_size: %s\n", __func__, device, rpc_log_format_size(response.max_size).c_str());
-    return response.max_size;
+    rpc_ਸੁਨੇਹਾ_get_max_ਮਾਪ_rsp response;
+    dispatcher->send(RPC_CMD_GET_MAX_ਮਾਪ, request, ਆਕਾਰ(*request), &response, ਆਕਾਰ(response));
+    LOG_DBG2("[%s] device: %u, max_size: %s\n", __func__, device, rpc_log_format_ਮਾਪ(response.max_size).c_str());
+    ਵਾਪਸ response.max_size;
 }
 
-static size_t ggml_backend_rpc_get_max_size(ggml_backend_buffer_type_t buft) {
-    ggml_backend_rpc_buffer_type_context * buft_ctx = (ggml_backend_rpc_buffer_type_context *)buft->context;
-    return buft_ctx->max_size;
+ਸਥਿਰ size_t ggml_backend_rpc_get_max_ਮਾਪ(ggml_backend_ਬਫਰ_type_t buft) {
+    ggml_backend_rpc_ਬਫਰ_type_context * buft_ctx = (ggml_backend_rpc_ਬਫਰ_type_context *)buft->context;
+    ਵਾਪਸ buft_ctx->max_size;
 }
 
-static size_t ggml_backend_rpc_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft, const ggml_tensor * tensor) {
+ਸਥਿਰ size_t ggml_backend_rpc_ਬਫਰ_type_get_alloc_ਮਾਪ(ggml_backend_ਬਫਰ_type_t buft, ਅਚਲ ggml_tensor * tensor) {
     // should we query the remote server for the actual size
-    bool rpc_get = false;
+    ਤਾਰਕਿਕ rpc_get = ਝੂਠ;
 
     // See comments in init_tensor.
-    rpc_get |= ggml_is_quantized(tensor->type) && (tensor->ne[0] % 512 != 0) && (tensor->view_src == nullptr);
+    rpc_get |= ggml_is_quantized(tensor->type) && (tensor->ne[0] % 512 != 0) && (tensor->view_src == ਖਾਲੀ_ਸੂਚਕ);
 
     // [TAG_ALLOC_SIZE_EXPAND]
     // ops that may require additional memory for fleeting data on certain backends
     // ref: https://github.com/ggml-org/llama.cpp/pull/15966
-    rpc_get |= ggml_op_alloc_size_may_expand(tensor->op);
+    rpc_get |= ggml_op_alloc_ਮਾਪ_may_expand(tensor->op);
 
-    if (rpc_get) {
-        ggml_backend_rpc_buffer_type_context * buft_ctx = (ggml_backend_rpc_buffer_type_context *)buft->context;
+    ਜੇ (rpc_get) {
+        ggml_backend_rpc_ਬਫਰ_type_context * buft_ctx = (ggml_backend_rpc_ਬਫਰ_type_context *)buft->context;
 
         // the reported size must never be below ggml_nbytes: rpc_tensor stores nb[] as uint32_t,
         // so a stride over 4 GiB is truncated on the wire and the remote size comes back too small
         // TODO: change rpc_tensor nb to 64-bit int
-        const size_t min_size = ggml_nbytes(tensor);
+        ਅਚਲ size_t min_ਮਾਪ = ggml_nbytes(tensor);
 
         // Cache key for calls to read the alloc_size.
         // We deliberately exclude src tensor dimensions from the key because:
@@ -1058,1219 +1058,1219 @@ static size_t ggml_backend_rpc_buffer_type_get_alloc_size(ggml_backend_buffer_ty
         //    cached value from reservation is always >= any subsequent request
         // 3. Including src dims causes cache misses per-ubatch (e.g. growing KV cache)
         //    which blocks the main thread behind in-flight GRAPH_COMPUTE commands
-        struct alloc_size_cache_key {
+        ਬਣਤਰ alloc_ਮਾਪ_cache_ਕੁੰਜੀ {
             uint32_t device;
             uint32_t type;
             uint32_t op;
-            int32_t  op_params[GGML_MAX_OP_PARAMS / sizeof(int32_t)];
+            int32_t  op_params[GGML_MAX_OP_PARAMS / ਆਕਾਰ(int32_t)];
             uint32_t ne[GGML_MAX_DIMS];
             uint64_t nb[GGML_MAX_DIMS];
         };
 
-        alloc_size_cache_key key = {};
-        key.device = buft_ctx->device;
-        key.type = tensor->type;
-        key.op = tensor->op;
-        memcpy(key.op_params, tensor->op_params, sizeof(key.op_params));
-        for (int i = 0; i < GGML_MAX_DIMS; i++) {
-            key.ne[i] = (uint32_t)tensor->ne[i];
-            key.nb[i] = (uint64_t)tensor->nb[i];
+        alloc_ਮਾਪ_cache_ਕੁੰਜੀ ਕੁੰਜੀ = {};
+        ਕੁੰਜੀ.device = buft_ctx->device;
+        ਕੁੰਜੀ.type = tensor->type;
+        ਕੁੰਜੀ.op = tensor->op;
+        ਸਮ੍ਰਿਤੀ_ਨਕਲ(ਕੁੰਜੀ.op_params, tensor->op_params, ਆਕਾਰ(ਕੁੰਜੀ.op_params));
+        ਲਈ (ਪੂਰਨ i = 0; i < GGML_MAX_DIMS; i++) {
+            ਕੁੰਜੀ.ne[i] = (uint32_t)tensor->ne[i];
+            ਕੁੰਜੀ.nb[i] = (uint64_t)tensor->nb[i];
         }
 
-        uint64_t cache_hash = fnv_hash((const uint8_t *)&key, sizeof(key));
-        cache_hash = fnv_hash((const uint8_t *)buft_ctx->endpoint.data(), buft_ctx->endpoint.size(), cache_hash);
+        uint64_t cache_hash = fnv_hash((ਅਚਲ uint8_t *)&ਕੁੰਜੀ, ਆਕਾਰ(ਕੁੰਜੀ));
+        cache_hash = fnv_hash((ਅਚਲ uint8_t *)buft_ctx->endpoint.ਅੰਕੜੇ(), buft_ctx->endpoint.size(), cache_hash);
 
         // alloc sizes are immutable for a given tensor configuration
-        static std::mutex cache_mutex;
-        static std::unordered_map<uint64_t, size_t> cache;
+        ਸਥਿਰ std::mutex cache_mutex;
+        ਸਥਿਰ std::unordered_map<uint64_t, size_t> cache;
 
         {
-            std::lock_guard<std::mutex> lock(cache_mutex);
-            auto it = cache.find(cache_hash);
-            if (it != cache.end()) {
+            std::lock_guard<std::mutex> ਤਾਲਾ(cache_mutex);
+            ਸਵੈਚਾਲਿਤ it = cache.find(cache_hash);
+            ਜੇ (it != cache.end()) {
                 LOG_DBG3("[%s] cache hit: %s -> %s\n", __func__, rpc_log_format_tensor(tensor).c_str(),
-                         rpc_log_format_size(it->second).c_str());
-                return std::max<size_t>(it->second, min_size);
+                         rpc_log_format_ਮਾਪ(it->second).c_str());
+                ਵਾਪਸ std::max<size_t>(it->second, min_ਮਾਪ);
             }
         }
 
-        auto request = std::make_shared<rpc_msg_get_alloc_size_req>();
+        ਸਵੈਚਾਲਿਤ request = std::make_shared<rpc_ਸੁਨੇਹਾ_get_alloc_ਮਾਪ_req>();
         request->device = buft_ctx->device;
         request->tensor = serialize_tensor(tensor);
 
         // .get_alloc_size could be a function of the tensor's srcs, so we must serialize them as well
-        for (int i = 0; i < GGML_MAX_SRC; i++) {
+        ਲਈ (ਪੂਰਨ i = 0; i < GGML_MAX_SRC; i++) {
             request->srcs[i] = serialize_tensor(tensor->src[i]);
         }
 
         LOG_DBG2("[%s] cache miss: %s, querying server\n", __func__, rpc_log_format_tensor(tensor).c_str());
-        rpc_msg_get_alloc_size_rsp response;
-        auto dispatcher = get_dispatcher(buft_ctx->endpoint);
-        dispatcher->send(RPC_CMD_GET_ALLOC_SIZE, request, sizeof(*request), &response, sizeof(response));
+        rpc_ਸੁਨੇਹਾ_get_alloc_ਮਾਪ_rsp response;
+        ਸਵੈਚਾਲਿਤ dispatcher = get_dispatcher(buft_ctx->endpoint);
+        dispatcher->send(RPC_CMD_GET_ALLOC_ਮਾਪ, request, ਆਕਾਰ(*request), &response, ਆਕਾਰ(response));
 
         {
-            std::lock_guard<std::mutex> lock(cache_mutex);
-            cache[cache_hash] = response.alloc_size;
+            std::lock_guard<std::mutex> ਤਾਲਾ(cache_mutex);
+            cache[cache_hash] = response.alloc_ਮਾਪ;
         }
 
         LOG_DBG2("[%s] %s -> alloc_size: %s\n", __func__, rpc_log_format_tensor(tensor).c_str(),
-                 rpc_log_format_size(response.alloc_size).c_str());
+                 rpc_log_format_ਮਾਪ(response.alloc_ਮਾਪ).c_str());
 
-        return std::max<size_t>(response.alloc_size, min_size);
+        ਵਾਪਸ std::max<size_t>(response.alloc_ਮਾਪ, min_ਮਾਪ);
     }
 
-    return ggml_nbytes(tensor);
+    ਵਾਪਸ ggml_nbytes(tensor);
 }
 
-static ggml_backend_buffer_type_i ggml_backend_rpc_buffer_type_interface = {
-    /* .get_name            = */ ggml_backend_rpc_buffer_type_name,
-    /* .alloc_buffer        = */ ggml_backend_rpc_buffer_type_alloc_buffer,
-    /* .alloc_buffer_n      = */ NULL,
-    /* .get_alignment       = */ ggml_backend_rpc_buffer_type_get_alignment,
-    /* .get_max_size        = */ ggml_backend_rpc_get_max_size,
-    /* .get_alloc_size      = */ ggml_backend_rpc_buffer_type_get_alloc_size,
-    /* .get_alloc_size_n    = */ NULL,
-    /* .is_host             = */ NULL,
+ਸਥਿਰ ggml_backend_ਬਫਰ_type_i ggml_backend_rpc_ਬਫਰ_type_interface = {
+    /* .get_name            = */ ggml_backend_rpc_ਬਫਰ_type_name,
+    /* .alloc_buffer        = */ ggml_backend_rpc_ਬਫਰ_type_alloc_ਬਫਰ,
+    /* .alloc_buffer_n      = */ ਨਿਰਾ,
+    /* .get_alignment       = */ ggml_backend_rpc_ਬਫਰ_type_get_alignment,
+    /* .get_max_size        = */ ggml_backend_rpc_get_max_ਮਾਪ,
+    /* .get_alloc_size      = */ ggml_backend_rpc_ਬਫਰ_type_get_alloc_ਮਾਪ,
+    /* .get_alloc_size_n    = */ ਨਿਰਾ,
+    /* .is_host             = */ ਨਿਰਾ,
 };
 
-static const char * ggml_backend_rpc_name(ggml_backend_t backend) {
+ਸਥਿਰ ਅਚਲ ਅੱਖਰ * ggml_backend_rpc_name(ggml_backend_t backend) {
     ggml_backend_rpc_context * rpc_ctx = (ggml_backend_rpc_context *)backend->context;
 
-    return rpc_ctx->name.c_str();
+    ਵਾਪਸ rpc_ctx->name.c_str();
 }
 
-static void ggml_backend_rpc_free(ggml_backend_t backend) {
+ਸਥਿਰ ਖਾਲੀ ggml_backend_rpc_free(ggml_backend_t backend) {
     ggml_backend_rpc_context * rpc_ctx = (ggml_backend_rpc_context *)backend->context;
-    delete rpc_ctx;
-    delete backend;
+    ਮਿਟਾਓ rpc_ctx;
+    ਮਿਟਾਓ backend;
 }
 
-static void ggml_backend_rpc_set_tensor_async(ggml_backend_t backend, ggml_tensor * tensor, const void * data, size_t offset, size_t size) {
+ਸਥਿਰ ਖਾਲੀ ggml_backend_rpc_ਸੈੱਟ_tensor_async(ggml_backend_t backend, ggml_tensor * tensor, ਅਚਲ ਖਾਲੀ * ਅੰਕੜੇ, size_t ਵਿੱਥ, size_t size) {
     ggml_backend_rpc_context * ctx = (ggml_backend_rpc_context *)backend->context;
     rpc_tensor rpc_tensor = serialize_tensor(tensor);
     uint8_t cache_flag = 0;
-    LOG_DBG2("[%s] tensor: %s, offset: %zu, size: %s\n", __func__, rpc_log_format_tensor(tensor).c_str(), offset,
-             rpc_log_format_size(size).c_str());
-    if (rpc_use_hash_cache(tensor, size)) {
-        auto request = std::make_shared<rpc_msg_set_tensor_hash_req>();
+    LOG_DBG2("[%s] tensor: %s, offset: %zu, size: %s\n", __func__, rpc_log_format_tensor(tensor).c_str(), ਵਿੱਥ,
+             rpc_log_format_ਮਾਪ(size).c_str());
+    ਜੇ (rpc_use_hash_cache(tensor, size)) {
+        ਸਵੈਚਾਲਿਤ request = std::make_shared<rpc_ਸੁਨੇਹਾ_ਸੈੱਟ_tensor_hash_req>();
         request->tensor = rpc_tensor;
-        request->offset = offset;
-        request->hash = fnv_hash((const uint8_t*)data, size);
-        rpc_msg_set_tensor_hash_rsp response;
+        request->ਵਿੱਥ = ਵਿੱਥ;
+        request->hash = fnv_hash((ਅਚਲ uint8_t*)ਅੰਕੜੇ, size);
+        rpc_ਸੁਨੇਹਾ_ਸੈੱਟ_tensor_hash_rsp response;
         // TODO: make this async
-        ctx->dispatcher->send(RPC_CMD_SET_TENSOR_HASH, request, sizeof(*request), &response, sizeof(response));
+        ctx->dispatcher->send(RPC_CMD_ਸੈੱਟ_TENSOR_HASH, request, ਆਕਾਰ(*request), &response, ਆਕਾਰ(response));
         LOG_DBG2("[%s] tensor: %s, hash: 0x%" PRIx64 ", cache: %s\n", __func__, rpc_log_format_tensor(tensor).c_str(),
-                 request->hash, response.result ? "hit" : "miss");
-        if (response.result) {
+                 request->hash, response.ਨਤੀਜਾ ? "hit" : "miss");
+        ਜੇ (response.ਨਤੀਜਾ) {
             // the server has the same data, no need to send it
-            return;
+            ਵਾਪਸ;
         }
         // the server has no cache entry for this tensor - ask it to save one
         cache_flag = 1;
     }
-    size_t input_size;
-    auto input = serialize_set_tensor(rpc_tensor, cache_flag, offset, data, size, input_size);
-    ctx->dispatcher->send_async(RPC_CMD_SET_TENSOR, input, input_size);
+    size_t ਨਿਵੇਸ਼_ਮਾਪ;
+    ਸਵੈਚਾਲਿਤ ਨਿਵੇਸ਼ = serialize_ਸੈੱਟ_tensor(rpc_tensor, cache_flag, ਵਿੱਥ, ਅੰਕੜੇ, size, ਨਿਵੇਸ਼_ਮਾਪ);
+    ctx->dispatcher->send_async(RPC_CMD_ਸੈੱਟ_TENSOR, ਨਿਵੇਸ਼, ਨਿਵੇਸ਼_ਮਾਪ);
 }
 
-static void ggml_backend_rpc_get_tensor_async(ggml_backend_t backend, const ggml_tensor * tensor, void * data, size_t offset, size_t size) {
+ਸਥਿਰ ਖਾਲੀ ggml_backend_rpc_get_tensor_async(ggml_backend_t backend, ਅਚਲ ggml_tensor * tensor, ਖਾਲੀ * ਅੰਕੜੇ, size_t ਵਿੱਥ, size_t size) {
     ggml_backend_rpc_context * ctx = (ggml_backend_rpc_context *)backend->context;
-    LOG_DBG2("[%s] tensor: %s, offset: %zu, size: %s\n", __func__, rpc_log_format_tensor(tensor).c_str(), offset,
-             rpc_log_format_size(size).c_str());
-    auto request = std::make_shared<rpc_msg_get_tensor_req>();
+    LOG_DBG2("[%s] tensor: %s, offset: %zu, size: %s\n", __func__, rpc_log_format_tensor(tensor).c_str(), ਵਿੱਥ,
+             rpc_log_format_ਮਾਪ(size).c_str());
+    ਸਵੈਚਾਲਿਤ request = std::make_shared<rpc_ਸੁਨੇਹਾ_get_tensor_req>();
     request->tensor = serialize_tensor(tensor);
-    request->offset = offset;
+    request->ਵਿੱਥ = ਵਿੱਥ;
     request->size = size;
-    ctx->dispatcher->send_async(RPC_CMD_GET_TENSOR, request, sizeof(*request), data, size);
+    ctx->dispatcher->send_async(RPC_CMD_GET_TENSOR, request, ਆਕਾਰ(*request), ਅੰਕੜੇ, size);
 }
 
-static void ggml_backend_rpc_synchronize(ggml_backend_t backend) {
+ਸਥਿਰ ਖਾਲੀ ggml_backend_rpc_synchronize(ggml_backend_t backend) {
     ggml_backend_rpc_context * rpc_ctx = (ggml_backend_rpc_context *)backend->context;
     rpc_ctx->dispatcher->synchronize();
 }
 
-static void add_tensor(ggml_tensor * tensor, const ggml_cgraph * cgraph, const rpc_dispatcher * dispatcher, std::vector<rpc_tensor> & tensors, std::unordered_set<ggml_tensor*> & visited) {
-    if (tensor == nullptr) {
-        return;
+ਸਥਿਰ ਖਾਲੀ ਜੋੜੋ_tensor(ggml_tensor * tensor, ਅਚਲ ggml_cgraph * cgraph, ਅਚਲ rpc_dispatcher * dispatcher, std::vector<rpc_tensor> & tensors, std::unordered_set<ggml_tensor*> & ਦੇਖਿਆ) {
+    ਜੇ (tensor == ਖਾਲੀ_ਸੂਚਕ) {
+        ਵਾਪਸ;
     }
-    if (visited.find(tensor) != visited.end()) {
-        return;
+    ਜੇ (ਦੇਖਿਆ.find(tensor) != ਦੇਖਿਆ.end()) {
+        ਵਾਪਸ;
     }
-    visited.insert(tensor);
-    for (int i = 0; i < GGML_MAX_SRC; i++) {
-        add_tensor(tensor->src[i], cgraph, dispatcher, tensors, visited);
+    ਦੇਖਿਆ.insert(tensor);
+    ਲਈ (ਪੂਰਨ i = 0; i < GGML_MAX_SRC; i++) {
+        ਜੋੜੋ_tensor(tensor->src[i], cgraph, dispatcher, tensors, ਦੇਖਿਆ);
     }
-    add_tensor(tensor->view_src, cgraph, dispatcher, tensors, visited);
-    rpc_tensor result = serialize_tensor(tensor, dispatcher);
-    const size_t hash_pos = ggml_hash_find(&cgraph->visited_hash_set, tensor);
-    if (hash_pos != GGML_HASHSET_FULL && ggml_bitset_get(cgraph->visited_hash_set.used, hash_pos)) {
-        result.use_count = cgraph->use_counts[hash_pos];
+    ਜੋੜੋ_tensor(tensor->view_src, cgraph, dispatcher, tensors, ਦੇਖਿਆ);
+    rpc_tensor ਨਤੀਜਾ = serialize_tensor(tensor, dispatcher);
+    ਅਚਲ size_t hash_pos = ggml_hash_ਲੱਭੋ(&cgraph->ਦੇਖਿਆ_hash_ਸੈੱਟ, tensor);
+    ਜੇ (hash_pos != GGML_HASHSET_ਭਰਿਆ && ggml_bitset_get(cgraph->ਦੇਖਿਆ_hash_ਸੈੱਟ.ਵਰਤਿਆ, hash_pos)) {
+        ਨਤੀਜਾ.use_ਗਿਣਤੀ = cgraph->use_counts[hash_pos];
     }
-    tensors.push_back(result);
+    tensors.push_back(ਨਤੀਜਾ);
 }
 
-static uint8_t * serialize_graph(uint32_t device, const ggml_cgraph * cgraph, const rpc_dispatcher * dispatcher, size_t * output_size) {
+ਸਥਿਰ uint8_t * serialize_ਗ੍ਰਾਫ(uint32_t device, ਅਚਲ ggml_cgraph * cgraph, ਅਚਲ rpc_dispatcher * dispatcher, size_t * output_ਮਾਪ) {
     uint32_t n_nodes = cgraph->n_nodes;
     std::vector<rpc_tensor> tensors;
-    std::unordered_set<ggml_tensor*> visited;
-    for (uint32_t i = 0; i < n_nodes; i++) {
-        add_tensor(cgraph->nodes[i], cgraph, dispatcher, tensors, visited);
+    std::unordered_set<ggml_tensor*> ਦੇਖਿਆ;
+    ਲਈ (uint32_t i = 0; i < n_nodes; i++) {
+        ਜੋੜੋ_tensor(cgraph->nodes[i], cgraph, dispatcher, tensors, ਦੇਖਿਆ);
     }
     // serialization format:
     // | device (4 bytes) | uid (8 bytes) | n_nodes (4 bytes) | nodes (n_nodes * sizeof(uint64_t) | n_tensors (4 bytes) | tensors (n_tensors * sizeof(rpc_tensor)) |
     uint32_t n_tensors = tensors.size();
-    *output_size = 2*sizeof(uint32_t) + sizeof(uint64_t) + n_nodes * sizeof(uint64_t) + sizeof(uint32_t) + n_tensors * sizeof(rpc_tensor);
-    uint8_t * output = new uint8_t[*output_size]();
+    *output_ਮਾਪ = 2*ਆਕਾਰ(uint32_t) + ਆਕਾਰ(uint64_t) + n_nodes * ਆਕਾਰ(uint64_t) + ਆਕਾਰ(uint32_t) + n_tensors * ਆਕਾਰ(rpc_tensor);
+    uint8_t * output = ਨਵਾਂ uint8_t[*output_ਮਾਪ]();
     uint8_t * dest = output;
-    memcpy(dest, &device, sizeof(device));
-    dest += sizeof(device);
-    memcpy(dest, &cgraph->uid, sizeof(cgraph->uid));
-    dest += sizeof(cgraph->uid);
-    memcpy(dest, &n_nodes, sizeof(n_nodes));
-    dest += sizeof(n_nodes);
-    for (uint32_t i = 0; i < n_nodes; i++) {
-        memcpy(dest + i * sizeof(uint64_t), &cgraph->nodes[i], sizeof(uint64_t));
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(dest, &device, ਆਕਾਰ(device));
+    dest += ਆਕਾਰ(device);
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(dest, &cgraph->uid, ਆਕਾਰ(cgraph->uid));
+    dest += ਆਕਾਰ(cgraph->uid);
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(dest, &n_nodes, ਆਕਾਰ(n_nodes));
+    dest += ਆਕਾਰ(n_nodes);
+    ਲਈ (uint32_t i = 0; i < n_nodes; i++) {
+        ਸਮ੍ਰਿਤੀ_ਨਕਲ(dest + i * ਆਕਾਰ(uint64_t), &cgraph->nodes[i], ਆਕਾਰ(uint64_t));
     }
-    dest += n_nodes * sizeof(uint64_t);
-    memcpy(dest, &n_tensors, sizeof(n_tensors));
-    dest += sizeof(n_tensors);
-    rpc_tensor * out_tensors = (rpc_tensor *)dest;
-    memcpy(out_tensors, tensors.data(), n_tensors * sizeof(rpc_tensor));
-    return output;
+    dest += n_nodes * ਆਕਾਰ(uint64_t);
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(dest, &n_tensors, ਆਕਾਰ(n_tensors));
+    dest += ਆਕਾਰ(n_tensors);
+    rpc_tensor * ਬਾਹਰਲਾ_tensors = (rpc_tensor *)dest;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(ਬਾਹਰਲਾ_tensors, tensors.ਅੰਕੜੇ(), n_tensors * ਆਕਾਰ(rpc_tensor));
+    ਵਾਪਸ output;
 }
 
-void rpc_dispatcher::graph_compute(uint32_t device, const ggml_cgraph * cgraph) {
-    std::lock_guard<std::mutex> lock(graph_mutex);
+ਖਾਲੀ rpc_dispatcher::ਗ੍ਰਾਫ_compute(uint32_t device, ਅਚਲ ggml_cgraph * cgraph) {
+    std::lock_guard<std::mutex> ਤਾਲਾ(ਗ੍ਰਾਫ_mutex);
     GGML_ASSERT(cgraph->n_nodes > 0);
-    auto & device_graph_uids = graph_uids[device];
-    bool reuse = cgraph->uid != 0 && device_graph_uids.count(cgraph->uid) > 0;
+    ਸਵੈਚਾਲਿਤ & device_ਗ੍ਰਾਫ_uids = ਗ੍ਰਾਫ_uids[device];
+    ਤਾਰਕਿਕ reuse = cgraph->uid != 0 && device_ਗ੍ਰਾਫ_uids.count(cgraph->uid) > 0;
     LOG_DBG("[%s] device: %u, uid: %" PRIu64 ", n_nodes: %u, reuse: %s\n", __func__, device, cgraph->uid, cgraph->n_nodes, reuse ? "yes" : "no");
-    if (reuse) {
-        auto request = std::make_shared<rpc_msg_graph_recompute_req>();
+    ਜੇ (reuse) {
+        ਸਵੈਚਾਲਿਤ request = std::make_shared<rpc_ਸੁਨੇਹਾ_ਗ੍ਰਾਫ_recompute_req>();
         request->device = device;
         request->uid    = cgraph->uid;
-        send_async(RPC_CMD_GRAPH_RECOMPUTE, request, sizeof(*request));
-    } else {
-        if (cgraph->uid != 0) {
-            if (device_graph_uids.size() >= GRAPH_CACHE_MAX) {
+        send_async(RPC_CMD_ਗ੍ਰਾਫ_RECOMPUTE, request, ਆਕਾਰ(*request));
+    } ਨਹੀਂਤਾਂ {
+        ਜੇ (cgraph->uid != 0) {
+            ਜੇ (device_ਗ੍ਰਾਫ_uids.size() >= ਗ੍ਰਾਫ_CACHE_MAX) {
                 LOG_DBG("[%s] clearing graph cache for device %u (%zu entries)\n",
-                        __func__, device, device_graph_uids.size());
-                device_graph_uids.clear();
+                        __func__, device, device_ਗ੍ਰਾਫ_uids.size());
+                device_ਗ੍ਰਾਫ_uids.clear();
             }
-            device_graph_uids.insert(cgraph->uid);
+            device_ਗ੍ਰਾਫ_uids.insert(cgraph->uid);
         }
-        size_t input_size = 0;
-        uint8_t * input = serialize_graph(device, cgraph, this, &input_size);
-        LOG_DBG2("[%s] serialized graph: %s\n", __func__, rpc_log_format_size(input_size).c_str());
-        std::shared_ptr<uint8_t> input_ptr(input, std::default_delete<uint8_t[]>());
-        send_async(RPC_CMD_GRAPH_COMPUTE, input_ptr, input_size);
+        size_t ਨਿਵੇਸ਼_ਮਾਪ = 0;
+        uint8_t * ਨਿਵੇਸ਼ = serialize_ਗ੍ਰਾਫ(device, cgraph, ਇਹ, &ਨਿਵੇਸ਼_ਮਾਪ);
+        LOG_DBG2("[%s] serialized graph: %s\n", __func__, rpc_log_format_ਮਾਪ(ਨਿਵੇਸ਼_ਮਾਪ).c_str());
+        std::shared_ptr<uint8_t> ਨਿਵੇਸ਼_ptr(ਨਿਵੇਸ਼, std::default_delete<uint8_t[]>());
+        send_async(RPC_CMD_ਗ੍ਰਾਫ_COMPUTE, ਨਿਵੇਸ਼_ptr, ਨਿਵੇਸ਼_ਮਾਪ);
     }
 }
 
-static enum ggml_status ggml_backend_rpc_graph_compute(ggml_backend_t backend, ggml_cgraph * cgraph) {
+ਸਥਿਰ ਗਿਣਤੀ ggml_ਸਥਿਤੀ ggml_backend_rpc_ਗ੍ਰਾਫ_compute(ggml_backend_t backend, ggml_cgraph * cgraph) {
     ggml_backend_rpc_context * rpc_ctx = (ggml_backend_rpc_context *)backend->context;
-    rpc_ctx->dispatcher->graph_compute(rpc_ctx->device, cgraph);
-    return GGML_STATUS_SUCCESS;
+    rpc_ctx->dispatcher->ਗ੍ਰਾਫ_compute(rpc_ctx->device, cgraph);
+    ਵਾਪਸ GGML_ਸਥਿਤੀ_SUCCESS;
 }
 
-static void ggml_backend_rpc_event_record(ggml_backend_t backend, ggml_backend_event_t event) {
+ਸਥਿਰ ਖਾਲੀ ggml_backend_rpc_event_ਰਿਕਾਰਡ(ggml_backend_t backend, ggml_backend_event_t event) {
     ggml_backend_rpc_context * rpc_ctx = (ggml_backend_rpc_context *)backend->context;
-    rpc_ctx->dispatcher->event_record(event);
+    rpc_ctx->dispatcher->event_ਰਿਕਾਰਡ(event);
 }
 
-static void ggml_backend_rpc_event_wait(ggml_backend_t backend, ggml_backend_event_t event) {
+ਸਥਿਰ ਖਾਲੀ ggml_backend_rpc_event_wait(ggml_backend_t backend, ggml_backend_event_t event) {
     // this is noop for RPC as we have a single stream
-    GGML_UNUSED(backend);
-    GGML_UNUSED(event);
+    GGML_ਅਣਵਰਤਿਆ(backend);
+    GGML_ਅਣਵਰਤਿਆ(event);
 }
 
-static void ggml_backend_rpc_set_tensor_2d_async(ggml_backend_t backend, ggml_tensor * tensor, const void * data,
-        size_t offset, size_t size, size_t n_copies, size_t stride_tensor, size_t stride_data) {
-    ggml_backend_tensor_set_2d(tensor, data, offset, size, n_copies, stride_tensor, stride_data);
-    GGML_UNUSED(backend);
+ਸਥਿਰ ਖਾਲੀ ggml_backend_rpc_ਸੈੱਟ_tensor_2d_async(ggml_backend_t backend, ggml_tensor * tensor, ਅਚਲ ਖਾਲੀ * ਅੰਕੜੇ,
+        size_t ਵਿੱਥ, size_t size, size_t n_copies, size_t stride_tensor, size_t stride_ਅੰਕੜੇ) {
+    ggml_backend_tensor_ਸੈੱਟ_2d(tensor, ਅੰਕੜੇ, ਵਿੱਥ, size, n_copies, stride_tensor, stride_ਅੰਕੜੇ);
+    GGML_ਅਣਵਰਤਿਆ(backend);
 }
 
-static void ggml_backend_rpc_get_tensor_2d_async(ggml_backend_t backend, const ggml_tensor * tensor, void * data,
-        size_t offset, size_t size, size_t n_copies, size_t stride_tensor, size_t stride_data) {
-    ggml_backend_tensor_get_2d(tensor, data, offset, size, n_copies, stride_tensor, stride_data);
-    GGML_UNUSED(backend);
+ਸਥਿਰ ਖਾਲੀ ggml_backend_rpc_get_tensor_2d_async(ggml_backend_t backend, ਅਚਲ ggml_tensor * tensor, ਖਾਲੀ * ਅੰਕੜੇ,
+        size_t ਵਿੱਥ, size_t size, size_t n_copies, size_t stride_tensor, size_t stride_ਅੰਕੜੇ) {
+    ggml_backend_tensor_get_2d(tensor, ਅੰਕੜੇ, ਵਿੱਥ, size, n_copies, stride_tensor, stride_ਅੰਕੜੇ);
+    GGML_ਅਣਵਰਤਿਆ(backend);
 }
 
-static ggml_backend_i ggml_backend_rpc_interface = {
+ਸਥਿਰ ggml_backend_i ggml_backend_rpc_interface = {
     /* .get_name                = */ ggml_backend_rpc_name,
     /* .free                    = */ ggml_backend_rpc_free,
-    /* .set_tensor_async        = */ ggml_backend_rpc_set_tensor_async,
+    /* .set_tensor_async        = */ ggml_backend_rpc_ਸੈੱਟ_tensor_async,
     /* .get_tensor_async        = */ ggml_backend_rpc_get_tensor_async,
-    /* .set_tensor_2d_async     = */ ggml_backend_rpc_set_tensor_2d_async,
+    /* .set_tensor_2d_async     = */ ggml_backend_rpc_ਸੈੱਟ_tensor_2d_async,
     /* .get_tensor_2d_async     = */ ggml_backend_rpc_get_tensor_2d_async,
-    /* .cpy_tensor_async        = */ NULL,
+    /* .cpy_tensor_async        = */ ਨਿਰਾ,
     /* .synchronize             = */ ggml_backend_rpc_synchronize,
-    /* .graph_plan_create       = */ NULL,
-    /* .graph_plan_free         = */ NULL,
-    /* .graph_plan_update       = */ NULL,
-    /* .graph_plan_compute      = */ NULL,
-    /* .graph_compute           = */ ggml_backend_rpc_graph_compute,
-    /* .event_record            = */ ggml_backend_rpc_event_record,
+    /* .graph_plan_create       = */ ਨਿਰਾ,
+    /* .graph_plan_free         = */ ਨਿਰਾ,
+    /* .graph_plan_update       = */ ਨਿਰਾ,
+    /* .graph_plan_compute      = */ ਨਿਰਾ,
+    /* .graph_compute           = */ ggml_backend_rpc_ਗ੍ਰਾਫ_compute,
+    /* .event_record            = */ ggml_backend_rpc_event_ਰਿਕਾਰਡ,
     /* .event_wait              = */ ggml_backend_rpc_event_wait,
-    /* .graph_optimize          = */ NULL,
+    /* .graph_optimize          = */ ਨਿਰਾ,
 };
 
-ggml_backend_buffer_type_t ggml_backend_rpc_buffer_type(const char * endpoint, uint32_t device) {
-    static std::mutex mutex;
-    std::lock_guard<std::mutex> lock(mutex);
+ggml_backend_ਬਫਰ_type_t ggml_backend_rpc_ਬਫਰ_type(ਅਚਲ ਅੱਖਰ * endpoint, uint32_t device) {
+    ਸਥਿਰ std::mutex mutex;
+    std::lock_guard<std::mutex> ਤਾਲਾ(mutex);
     std::string buft_name = "RPC" + std::to_string(device) + "[" + std::string(endpoint) + "]";
     // NOTE: buffer types are allocated and never freed; this is by design
-    static std::unordered_map<std::string, ggml_backend_buffer_type_t> buft_map;
-    auto it = buft_map.find(buft_name);
-    if (it != buft_map.end()) {
-        return it->second;
+    ਸਥਿਰ std::unordered_map<std::string, ggml_backend_ਬਫਰ_type_t> buft_map;
+    ਸਵੈਚਾਲਿਤ it = buft_map.find(buft_name);
+    ਜੇ (it != buft_map.end()) {
+        ਵਾਪਸ it->second;
     }
-    auto dispatcher = get_dispatcher(endpoint);
+    ਸਵੈਚਾਲਿਤ dispatcher = get_dispatcher(endpoint);
     size_t alignment = get_alignment(dispatcher, device);
-    size_t max_size = get_max_size(dispatcher, device);
-    ggml_backend_rpc_buffer_type_context * buft_ctx = new ggml_backend_rpc_buffer_type_context {
+    size_t max_size = get_max_ਮਾਪ(dispatcher, device);
+    ggml_backend_rpc_ਬਫਰ_type_context * buft_ctx = ਨਵਾਂ ggml_backend_rpc_ਬਫਰ_type_context {
         /* .endpoint  = */ endpoint,
         /* .device    = */ device,
         /* .name      = */ buft_name,
         /* .alignment = */ alignment,
         /* .max_size  = */ max_size
     };
-    auto reg = ggml_backend_rpc_add_server(endpoint);
-    ggml_backend_buffer_type_t buft = new ggml_backend_buffer_type {
-        /* .iface   = */ ggml_backend_rpc_buffer_type_interface,
+    ਸਵੈਚਾਲਿਤ reg = ggml_backend_rpc_ਜੋੜੋ_server(endpoint);
+    ggml_backend_ਬਫਰ_type_t buft = ਨਵਾਂ ggml_backend_ਬਫਰ_type {
+        /* .iface   = */ ggml_backend_rpc_ਬਫਰ_type_interface,
         /* .device  = */ ggml_backend_reg_dev_get(reg, device),
         /* .context = */ buft_ctx
     };
     buft_map[buft_name] = buft;
     LOG_DBG("[%s] created %s (alignment: %s, max_size: %s)\n", __func__, buft_name.c_str(),
-            rpc_log_format_size(alignment).c_str(), rpc_log_format_size(max_size).c_str());
-    return buft;
+            rpc_log_format_ਮਾਪ(alignment).c_str(), rpc_log_format_ਮਾਪ(max_size).c_str());
+    ਵਾਪਸ buft;
 }
 
-ggml_backend_t ggml_backend_rpc_init(const char * endpoint, uint32_t device) {
+ggml_backend_t ggml_backend_rpc_init(ਅਚਲ ਅੱਖਰ * endpoint, uint32_t device) {
     std::string dev_name = "RPC" + std::to_string(device) + "[" + std::string(endpoint) + "]";
-    auto dispatcher = get_dispatcher(endpoint);
-    ggml_backend_rpc_context * ctx = new ggml_backend_rpc_context {
+    ਸਵੈਚਾਲਿਤ dispatcher = get_dispatcher(endpoint);
+    ggml_backend_rpc_context * ctx = ਨਵਾਂ ggml_backend_rpc_context {
         /* .dispatcher = */ dispatcher,
         /* .endpoint   = */ endpoint,
         /* .device     = */ device,
         /* .name       = */ dev_name,
     };
-    auto reg = ggml_backend_rpc_add_server(endpoint);
+    ਸਵੈਚਾਲਿਤ reg = ggml_backend_rpc_ਜੋੜੋ_server(endpoint);
     LOG_DBG("[%s] %s\n", __func__, dev_name.c_str());
-    ggml_backend_t backend = new ggml_backend {
+    ggml_backend_t backend = ਨਵਾਂ ggml_backend {
         /* .guid    = */ ggml_backend_rpc_guid(),
         /* .iface   = */ ggml_backend_rpc_interface,
         /* .device  = */ ggml_backend_reg_dev_get(reg, device),
         /* .context = */ ctx
     };
-    return backend;
+    ਵਾਪਸ backend;
 }
 
-bool ggml_backend_is_rpc(ggml_backend_t backend) {
-    return backend != NULL && ggml_guid_matches(backend->guid, ggml_backend_rpc_guid());
+ਤਾਰਕਿਕ ggml_backend_is_rpc(ggml_backend_t backend) {
+    ਵਾਪਸ backend != ਨਿਰਾ && ggml_guid_matches(backend->guid, ggml_backend_rpc_guid());
 }
 
-void ggml_backend_rpc_get_device_memory(const char * endpoint, uint32_t device, size_t * free, size_t * total) {
-    auto dispatcher = get_dispatcher(endpoint);
-    auto request = std::make_shared<rpc_msg_get_device_memory_req>();
+ਖਾਲੀ ggml_backend_rpc_get_device_ਸਮ੍ਰਿਤੀ(ਅਚਲ ਅੱਖਰ * endpoint, uint32_t device, size_t * ਮੁਕਤ, size_t * ਕੁੱਲ) {
+    ਸਵੈਚਾਲਿਤ dispatcher = get_dispatcher(endpoint);
+    ਸਵੈਚਾਲਿਤ request = std::make_shared<rpc_ਸੁਨੇਹਾ_get_device_ਸਮ੍ਰਿਤੀ_req>();
     request->device = device;
-    rpc_msg_get_device_memory_rsp response;
-    dispatcher->send(RPC_CMD_GET_DEVICE_MEMORY, request, sizeof(*request), &response, sizeof(response));
+    rpc_ਸੁਨੇਹਾ_get_device_ਸਮ੍ਰਿਤੀ_rsp response;
+    dispatcher->send(RPC_CMD_GET_DEVICE_ਸਮ੍ਰਿਤੀ, request, ਆਕਾਰ(*request), &response, ਆਕਾਰ(response));
     LOG_DBG2("[%s] device: %u, free: %s, total: %s\n", __func__, device,
-             rpc_log_format_size(response.free_mem).c_str(), rpc_log_format_size(response.total_mem).c_str());
-    *free = response.free_mem;
-    *total = response.total_mem;
+             rpc_log_format_ਮਾਪ(response.free_mem).c_str(), rpc_log_format_ਮਾਪ(response.ਕੁੱਲ_mem).c_str());
+    *ਮੁਕਤ = response.free_mem;
+    *ਕੁੱਲ = response.ਕੁੱਲ_mem;
 }
 
 // RPC server-side implementation
 
-class rpc_server {
-public:
-    rpc_server(std::vector<ggml_backend_t> all_backends, const char * cache_dir)
+ਵਰਗ rpc_server {
+ਜਨਤਕ:
+    rpc_server(std::vector<ggml_backend_t> all_backends, ਅਚਲ ਅੱਖਰ * cache_dir)
         : backends(std::move(all_backends)), cache_dir(cache_dir) {
         stored_graphs.resize(backends.size());
-        comm_states.resize(backends.size());
+        comm_ਹਾਲਤਾਂ.resize(backends.size());
     }
     ~rpc_server();
 
-    void hello(rpc_msg_hello_rsp & response);
-    bool alloc_buffer(const rpc_msg_alloc_buffer_req & request, rpc_msg_alloc_buffer_rsp & response);
-    bool get_alignment(const rpc_msg_get_alignment_req & request, rpc_msg_get_alignment_rsp & response);
-    bool get_max_size(const rpc_msg_get_max_size_req & request, rpc_msg_get_max_size_rsp & response);
-    bool buffer_get_base(const rpc_msg_buffer_get_base_req & request, rpc_msg_buffer_get_base_rsp & response);
-    bool free_buffer(const rpc_msg_free_buffer_req & request);
-    bool buffer_clear(const rpc_msg_buffer_clear_req & request);
-    bool memset_tensor(const rpc_msg_memset_tensor_req & request);
-    bool set_tensor(const std::vector<uint8_t> & input);
-    bool set_tensor_2d(const std::vector<uint8_t> & input);
-    bool set_tensor_hash(const rpc_msg_set_tensor_hash_req & request, rpc_msg_set_tensor_hash_rsp & response);
-    bool get_tensor(const rpc_msg_get_tensor_req & request, std::vector<uint8_t> & response);
-    bool get_tensor_2d(const rpc_msg_get_tensor_2d_req & request, std::vector<uint8_t> & response);
-    bool copy_tensor(const rpc_msg_copy_tensor_req & request, rpc_msg_copy_tensor_rsp & response);
-    bool graph_compute(const std::vector<uint8_t> & input);
-    bool graph_recompute(const rpc_msg_graph_recompute_req & request);
-    bool comm_init(const rpc_msg_comm_init_req & request, rpc_msg_comm_init_rsp & response);
-    bool comm_allreduce(const rpc_msg_comm_allreduce_req & request);
-    bool comm_free(const rpc_msg_comm_free_req & request);
-    bool init_tensor(const rpc_msg_init_tensor_req & request);
-    bool get_alloc_size(const rpc_msg_get_alloc_size_req & request, rpc_msg_get_alloc_size_rsp & response);
-    bool get_device_memory(const rpc_msg_get_device_memory_req & request, rpc_msg_get_device_memory_rsp & response);
+    ਖਾਲੀ hello(rpc_ਸੁਨੇਹਾ_hello_rsp & response);
+    ਤਾਰਕਿਕ alloc_ਬਫਰ(ਅਚਲ rpc_ਸੁਨੇਹਾ_alloc_ਬਫਰ_req & request, rpc_ਸੁਨੇਹਾ_alloc_ਬਫਰ_rsp & response);
+    ਤਾਰਕਿਕ get_alignment(ਅਚਲ rpc_ਸੁਨੇਹਾ_get_alignment_req & request, rpc_ਸੁਨੇਹਾ_get_alignment_rsp & response);
+    ਤਾਰਕਿਕ get_max_ਮਾਪ(ਅਚਲ rpc_ਸੁਨੇਹਾ_get_max_ਮਾਪ_req & request, rpc_ਸੁਨੇਹਾ_get_max_ਮਾਪ_rsp & response);
+    ਤਾਰਕਿਕ ਬਫਰ_get_ਅਧਾਰ(ਅਚਲ rpc_ਸੁਨੇਹਾ_ਬਫਰ_get_ਅਧਾਰ_req & request, rpc_ਸੁਨੇਹਾ_ਬਫਰ_get_ਅਧਾਰ_rsp & response);
+    ਤਾਰਕਿਕ free_ਬਫਰ(ਅਚਲ rpc_ਸੁਨੇਹਾ_free_ਬਫਰ_req & request);
+    ਤਾਰਕਿਕ ਬਫਰ_clear(ਅਚਲ rpc_ਸੁਨੇਹਾ_ਬਫਰ_clear_req & request);
+    ਤਾਰਕਿਕ memset_tensor(ਅਚਲ rpc_ਸੁਨੇਹਾ_memset_tensor_req & request);
+    ਤਾਰਕਿਕ ਸੈੱਟ_tensor(ਅਚਲ std::vector<uint8_t> & ਨਿਵੇਸ਼);
+    ਤਾਰਕਿਕ ਸੈੱਟ_tensor_2d(ਅਚਲ std::vector<uint8_t> & ਨਿਵੇਸ਼);
+    ਤਾਰਕਿਕ ਸੈੱਟ_tensor_hash(ਅਚਲ rpc_ਸੁਨੇਹਾ_ਸੈੱਟ_tensor_hash_req & request, rpc_ਸੁਨੇਹਾ_ਸੈੱਟ_tensor_hash_rsp & response);
+    ਤਾਰਕਿਕ get_tensor(ਅਚਲ rpc_ਸੁਨੇਹਾ_get_tensor_req & request, std::vector<uint8_t> & response);
+    ਤਾਰਕਿਕ get_tensor_2d(ਅਚਲ rpc_ਸੁਨੇਹਾ_get_tensor_2d_req & request, std::vector<uint8_t> & response);
+    ਤਾਰਕਿਕ copy_tensor(ਅਚਲ rpc_ਸੁਨੇਹਾ_copy_tensor_req & request, rpc_ਸੁਨੇਹਾ_copy_tensor_rsp & response);
+    ਤਾਰਕਿਕ ਗ੍ਰਾਫ_compute(ਅਚਲ std::vector<uint8_t> & ਨਿਵੇਸ਼);
+    ਤਾਰਕਿਕ ਗ੍ਰਾਫ_recompute(ਅਚਲ rpc_ਸੁਨੇਹਾ_ਗ੍ਰਾਫ_recompute_req & request);
+    ਤਾਰਕਿਕ comm_init(ਅਚਲ rpc_ਸੁਨੇਹਾ_comm_init_req & request, rpc_ਸੁਨੇਹਾ_comm_init_rsp & response);
+    ਤਾਰਕਿਕ comm_allreduce(ਅਚਲ rpc_ਸੁਨੇਹਾ_comm_allreduce_req & request);
+    ਤਾਰਕਿਕ comm_free(ਅਚਲ rpc_ਸੁਨੇਹਾ_comm_free_req & request);
+    ਤਾਰਕਿਕ init_tensor(ਅਚਲ rpc_ਸੁਨੇਹਾ_init_tensor_req & request);
+    ਤਾਰਕਿਕ get_alloc_ਮਾਪ(ਅਚਲ rpc_ਸੁਨੇਹਾ_get_alloc_ਮਾਪ_req & request, rpc_ਸੁਨੇਹਾ_get_alloc_ਮਾਪ_rsp & response);
+    ਤਾਰਕਿਕ get_device_ਸਮ੍ਰਿਤੀ(ਅਚਲ rpc_ਸੁਨੇਹਾ_get_device_ਸਮ੍ਰਿਤੀ_req & request, rpc_ਸੁਨੇਹਾ_get_device_ਸਮ੍ਰਿਤੀ_rsp & response);
 
-    struct stored_graph {
-        std::vector<uint8_t>   buffer;
+    ਬਣਤਰ stored_ਗ੍ਰਾਫ {
+        std::vector<uint8_t>   ਬਫਰ;
         ggml_cgraph          * graph;
     };
 
-private:
-    void sync_all_backends();
-    bool get_cached_file(uint64_t hash, std::vector<uint8_t> & data);
-    ggml_tensor * deserialize_tensor(struct ggml_context * ctx, const rpc_tensor * tensor);
-    ggml_tensor * create_node(uint64_t id,
-                              struct ggml_context * ctx,
-                              const std::unordered_map<uint64_t, const rpc_tensor*> & tensor_ptrs,
-                              std::unordered_map<uint64_t, struct ggml_tensor*> & tensor_map);
+ਨਿਜੀ:
+    ਖਾਲੀ sync_all_backends();
+    ਤਾਰਕਿਕ get_cached_file(uint64_t hash, std::vector<uint8_t> & ਅੰਕੜੇ);
+    ggml_tensor * deserialize_tensor(ਬਣਤਰ ggml_context * ctx, ਅਚਲ rpc_tensor * tensor);
+    ggml_tensor * create_ਗੰਢ(uint64_t id,
+                              ਬਣਤਰ ggml_context * ctx,
+                              ਅਚਲ std::unordered_map<uint64_t, ਅਚਲ rpc_tensor*> & tensor_ptrs,
+                              std::unordered_map<uint64_t, ਬਣਤਰ ggml_tensor*> & tensor_map);
 
 
     // pairwise allreduce over a direct connection to the peer server
-    struct comm_state {
+    ਬਣਤਰ comm_state {
         socket_ptr              peer;
         uint32_t                rank = 0;
         uint32_t                world = 0;
-        ggml_backend_buffer_ptr scratch;
-        size_t                  scratch_size = 0;
+        ggml_backend_ਬਫਰ_ptr scratch;
+        size_t                  scratch_ਮਾਪ = 0;
         std::vector<uint8_t>    send_buf;
         std::vector<uint8_t>    recv_buf;
     };
 
     std::vector<ggml_backend_t> backends;
-    const char * cache_dir;
-    std::unordered_set<ggml_backend_buffer_t> buffers;
+    ਅਚਲ ਅੱਖਰ * cache_dir;
+    std::unordered_set<ggml_backend_ਬਫਰ_t> buffers;
     // computed graphs cached per backend, keyed by uid
-    std::vector<std::unordered_map<uint64_t, stored_graph>> stored_graphs;
-    std::vector<comm_state> comm_states;
+    std::vector<std::unordered_map<uint64_t, stored_ਗ੍ਰਾਫ>> stored_graphs;
+    std::vector<comm_state> comm_ਹਾਲਤਾਂ;
 };
 
-void rpc_server::hello(rpc_msg_hello_rsp & response) {
-    response.major = RPC_PROTO_MAJOR_VERSION;
-    response.minor = RPC_PROTO_MINOR_VERSION;
-    response.patch = RPC_PROTO_PATCH_VERSION;
+ਖਾਲੀ rpc_server::hello(rpc_ਸੁਨੇਹਾ_hello_rsp & response) {
+    response.major = RPC_PROTO_MAJOR_ਸੰਸਕਰਣ;
+    response.minor = RPC_PROTO_MINOR_ਸੰਸਕਰਣ;
+    response.patch = RPC_PROTO_PATCH_ਸੰਸਕਰਣ;
     LOG_DBG("[%s] version: %d.%d.%d\n", __func__, response.major, response.minor, response.patch);
 }
 
-bool rpc_server::get_alloc_size(const rpc_msg_get_alloc_size_req & request, rpc_msg_get_alloc_size_rsp & response) {
+ਤਾਰਕਿਕ rpc_server::get_alloc_ਮਾਪ(ਅਚਲ rpc_ਸੁਨੇਹਾ_get_alloc_ਮਾਪ_req & request, rpc_ਸੁਨੇਹਾ_get_alloc_ਮਾਪ_rsp & response) {
     uint32_t dev_id = request.device;
-    if (dev_id >= backends.size()) {
-        return false;
+    ਜੇ (dev_id >= backends.size()) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    ggml_backend_buffer_type_t buft;
-    struct ggml_init_params params {
+    ggml_backend_ਬਫਰ_type_t buft;
+    ਬਣਤਰ ggml_init_params params {
         /*.mem_size   =*/ ggml_tensor_overhead()*(1 + GGML_MAX_SRC),
-        /*.mem_buffer =*/ NULL,
-        /*.no_alloc   =*/ true,
+        /*.mem_buffer =*/ ਨਿਰਾ,
+        /*.no_alloc   =*/ ਸੱਚ,
     };
 
     ggml_context_ptr ctx_ptr { ggml_init(params) };
-    GGML_ASSERT(ctx_ptr != nullptr);
+    GGML_ASSERT(ctx_ptr != ਖਾਲੀ_ਸੂਚਕ);
     ggml_context * ctx = ctx_ptr.get();
 
     ggml_tensor * tensor = deserialize_tensor(ctx, &request.tensor);
-    if (tensor == nullptr) {
+    ਜੇ (tensor == ਖਾਲੀ_ਸੂਚਕ) {
         LOG_ERROR("Null tensor pointer passed to server get_alloc_size function.\n");
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
-    for (int i = 0; i < GGML_MAX_SRC; i++) {
-        if (request.srcs[i].id != 0) {
+    ਲਈ (ਪੂਰਨ i = 0; i < GGML_MAX_SRC; i++) {
+        ਜੇ (request.srcs[i].id != 0) {
             tensor->src[i] = deserialize_tensor(ctx, &request.srcs[i]);
         }
     }
 
     LOG_DBG2("[%s] device: %u, tensor: %s, buffer: %p, data: %p\n", __func__, dev_id, rpc_log_format_tensor(tensor).c_str(),
-             (void*)tensor->buffer, tensor->data);
-    if (tensor->buffer == nullptr) {
+             (ਖਾਲੀ*)tensor->ਬਫਰ, tensor->ਅੰਕੜੇ);
+    ਜੇ (tensor->ਬਫਰ == ਖਾਲੀ_ਸੂਚਕ) {
         //No buffer allocated.
-        buft = ggml_backend_get_default_buffer_type(backends[dev_id]);
-    } else {
-        buft = tensor->buffer->buft;
+        buft = ggml_backend_get_default_ਬਫਰ_type(backends[dev_id]);
+    } ਨਹੀਂਤਾਂ {
+        buft = tensor->ਬਫਰ->buft;
     }
 
-    response.alloc_size = ggml_backend_buft_get_alloc_size(buft, tensor);
+    response.alloc_ਮਾਪ = ggml_backend_buft_get_alloc_ਮਾਪ(buft, tensor);
 
-    return true;
+    ਵਾਪਸ ਸੱਚ;
 }
 
-bool rpc_server::alloc_buffer(const rpc_msg_alloc_buffer_req & request, rpc_msg_alloc_buffer_rsp & response) {
+ਤਾਰਕਿਕ rpc_server::alloc_ਬਫਰ(ਅਚਲ rpc_ਸੁਨੇਹਾ_alloc_ਬਫਰ_req & request, rpc_ਸੁਨੇਹਾ_alloc_ਬਫਰ_rsp & response) {
     uint32_t dev_id = request.device;
-    if (dev_id >= backends.size()) {
-        return false;
+    ਜੇ (dev_id >= backends.size()) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    ggml_backend_buffer_type_t buft = ggml_backend_get_default_buffer_type(backends[dev_id]);
-    ggml_backend_buffer_t buffer = ggml_backend_buft_alloc_buffer(buft, request.size);
+    ggml_backend_ਬਫਰ_type_t buft = ggml_backend_get_default_ਬਫਰ_type(backends[dev_id]);
+    ggml_backend_ਬਫਰ_t ਬਫਰ = ggml_backend_buft_alloc_ਬਫਰ(buft, request.size);
     response.remote_ptr = 0;
-    response.remote_size = 0;
-    if (buffer != nullptr) {
-        response.remote_ptr = reinterpret_cast<uint64_t>(buffer);
-        response.remote_size = buffer->size;
+    response.remote_ਮਾਪ = 0;
+    ਜੇ (ਬਫਰ != ਖਾਲੀ_ਸੂਚਕ) {
+        response.remote_ptr = reinterpret_cast<uint64_t>(ਬਫਰ);
+        response.remote_ਮਾਪ = ਬਫਰ->size;
         LOG_DBG("[%s] device: %u, size: %s -> remote_ptr: 0x%" PRIx64 ", remote_size: %s\n",
-                __func__, dev_id, rpc_log_format_size(request.size).c_str(), response.remote_ptr,
-                rpc_log_format_size(response.remote_size).c_str());
-        buffers.insert(buffer);
-    } else {
-        LOG_WARN("[%s] device: %u, size: %s -> failed\n", __func__, dev_id, rpc_log_format_size(request.size).c_str());
+                __func__, dev_id, rpc_log_format_ਮਾਪ(request.size).c_str(), response.remote_ptr,
+                rpc_log_format_ਮਾਪ(response.remote_ਮਾਪ).c_str());
+        buffers.insert(ਬਫਰ);
+    } ਨਹੀਂਤਾਂ {
+        LOG_WARN("[%s] device: %u, size: %s -> failed\n", __func__, dev_id, rpc_log_format_ਮਾਪ(request.size).c_str());
     }
-    return true;
+    ਵਾਪਸ ਸੱਚ;
 }
 
-bool rpc_server::get_alignment(const rpc_msg_get_alignment_req & request, rpc_msg_get_alignment_rsp & response) {
+ਤਾਰਕਿਕ rpc_server::get_alignment(ਅਚਲ rpc_ਸੁਨੇਹਾ_get_alignment_req & request, rpc_ਸੁਨੇਹਾ_get_alignment_rsp & response) {
     uint32_t dev_id = request.device;
-    if (dev_id >= backends.size()) {
-        return false;
+    ਜੇ (dev_id >= backends.size()) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    ggml_backend_buffer_type_t buft = ggml_backend_get_default_buffer_type(backends[dev_id]);
+    ggml_backend_ਬਫਰ_type_t buft = ggml_backend_get_default_ਬਫਰ_type(backends[dev_id]);
     size_t alignment = ggml_backend_buft_get_alignment(buft);
-    LOG_DBG2("[%s] device: %u, alignment: %s\n", __func__, dev_id, rpc_log_format_size(alignment).c_str());
+    LOG_DBG2("[%s] device: %u, alignment: %s\n", __func__, dev_id, rpc_log_format_ਮਾਪ(alignment).c_str());
     response.alignment = alignment;
-    return true;
+    ਵਾਪਸ ਸੱਚ;
 }
 
-bool rpc_server::get_max_size(const rpc_msg_get_max_size_req & request, rpc_msg_get_max_size_rsp & response) {
+ਤਾਰਕਿਕ rpc_server::get_max_ਮਾਪ(ਅਚਲ rpc_ਸੁਨੇਹਾ_get_max_ਮਾਪ_req & request, rpc_ਸੁਨੇਹਾ_get_max_ਮਾਪ_rsp & response) {
     uint32_t dev_id = request.device;
-    if (dev_id >= backends.size()) {
-        return false;
+    ਜੇ (dev_id >= backends.size()) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    ggml_backend_buffer_type_t buft = ggml_backend_get_default_buffer_type(backends[dev_id]);
-    size_t max_size = ggml_backend_buft_get_max_size(buft);
-    LOG_DBG2("[%s] device: %u, max_size: %s\n", __func__, dev_id, rpc_log_format_size(max_size).c_str());
+    ggml_backend_ਬਫਰ_type_t buft = ggml_backend_get_default_ਬਫਰ_type(backends[dev_id]);
+    size_t max_size = ggml_backend_buft_get_max_ਮਾਪ(buft);
+    LOG_DBG2("[%s] device: %u, max_size: %s\n", __func__, dev_id, rpc_log_format_ਮਾਪ(max_size).c_str());
     response.max_size = max_size;
-    return true;
+    ਵਾਪਸ ਸੱਚ;
 }
 
-bool rpc_server::buffer_get_base(const rpc_msg_buffer_get_base_req & request, rpc_msg_buffer_get_base_rsp & response) {
+ਤਾਰਕਿਕ rpc_server::ਬਫਰ_get_ਅਧਾਰ(ਅਚਲ rpc_ਸੁਨੇਹਾ_ਬਫਰ_get_ਅਧਾਰ_req & request, rpc_ਸੁਨੇਹਾ_ਬਫਰ_get_ਅਧਾਰ_rsp & response) {
     LOG_DBG2("[%s] remote_ptr: 0x%" PRIx64 "\n", __func__, request.remote_ptr);
-    ggml_backend_buffer_t buffer = reinterpret_cast<ggml_backend_buffer_t>(request.remote_ptr);
-    if (buffers.find(buffer) == buffers.end()) {
+    ggml_backend_ਬਫਰ_t ਬਫਰ = reinterpret_cast<ggml_backend_ਬਫਰ_t>(request.remote_ptr);
+    ਜੇ (buffers.find(ਬਫਰ) == buffers.end()) {
         LOG_ERROR("[%s] buffer not found\n", __func__);
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
-    void * base = ggml_backend_buffer_get_base(buffer);
-    response.base_ptr = reinterpret_cast<uint64_t>(base);
-    return true;
+    ਖਾਲੀ * ਅਧਾਰ = ggml_backend_ਬਫਰ_get_ਅਧਾਰ(ਬਫਰ);
+    response.ਅਧਾਰ_ptr = reinterpret_cast<uint64_t>(ਅਧਾਰ);
+    ਵਾਪਸ ਸੱਚ;
 }
 
-bool rpc_server::free_buffer(const rpc_msg_free_buffer_req & request) {
+ਤਾਰਕਿਕ rpc_server::free_ਬਫਰ(ਅਚਲ rpc_ਸੁਨੇਹਾ_free_ਬਫਰ_req & request) {
     sync_all_backends();
     LOG_DBG2("[%s] remote_ptr: 0x%" PRIx64 "\n", __func__, request.remote_ptr);
-    ggml_backend_buffer_t buffer = reinterpret_cast<ggml_backend_buffer_t>(request.remote_ptr);
-    if (buffers.find(buffer) == buffers.end()) {
+    ggml_backend_ਬਫਰ_t ਬਫਰ = reinterpret_cast<ggml_backend_ਬਫਰ_t>(request.remote_ptr);
+    ਜੇ (buffers.find(ਬਫਰ) == buffers.end()) {
         LOG_ERROR("[%s] buffer not found\n", __func__);
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
     // Discard all cached graphs to avoid use-after-free in graph_recompute,
     // since their nodes may hold pointers to the buffer being freed. The client
     // will have to re-serialize its graphs from now on.
-    for (auto & sgs : stored_graphs) {
-        for (auto & sg : sgs) {
-            sg.second.graph = nullptr;
+    ਲਈ (ਸਵੈਚਾਲਿਤ & sgs : stored_graphs) {
+        ਲਈ (ਸਵੈਚਾਲਿਤ & sg : sgs) {
+            sg.second.graph = ਖਾਲੀ_ਸੂਚਕ;
         }
     }
-    ggml_backend_buffer_free(buffer);
-    buffers.erase(buffer);
-    return true;
+    ggml_backend_ਬਫਰ_free(ਬਫਰ);
+    buffers.erase(ਬਫਰ);
+    ਵਾਪਸ ਸੱਚ;
 }
 
-bool rpc_server::buffer_clear(const rpc_msg_buffer_clear_req & request) {
+ਤਾਰਕਿਕ rpc_server::ਬਫਰ_clear(ਅਚਲ rpc_ਸੁਨੇਹਾ_ਬਫਰ_clear_req & request) {
     sync_all_backends();
     LOG_DBG2("[%s] remote_ptr: 0x%" PRIx64 ", value: %u\n", __func__, request.remote_ptr, request.value);
-    ggml_backend_buffer_t buffer = reinterpret_cast<ggml_backend_buffer_t>(request.remote_ptr);
-    if (buffers.find(buffer) == buffers.end()) {
+    ggml_backend_ਬਫਰ_t ਬਫਰ = reinterpret_cast<ggml_backend_ਬਫਰ_t>(request.remote_ptr);
+    ਜੇ (buffers.find(ਬਫਰ) == buffers.end()) {
         LOG_ERROR("[%s] buffer not found\n", __func__);
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
-    ggml_backend_buffer_clear(buffer, request.value);
-    return true;
+    ggml_backend_ਬਫਰ_clear(ਬਫਰ, request.value);
+    ਵਾਪਸ ਸੱਚ;
 }
 
-bool rpc_server::memset_tensor(const rpc_msg_memset_tensor_req & request) {
+ਤਾਰਕਿਕ rpc_server::memset_tensor(ਅਚਲ rpc_ਸੁਨੇਹਾ_memset_tensor_req & request) {
     sync_all_backends();
-    struct ggml_init_params params {
+    ਬਣਤਰ ggml_init_params params {
         /*.mem_size   =*/ ggml_tensor_overhead(),
-        /*.mem_buffer =*/ NULL,
-        /*.no_alloc   =*/ true,
+        /*.mem_buffer =*/ ਨਿਰਾ,
+        /*.no_alloc   =*/ ਸੱਚ,
     };
     ggml_context_ptr ctx_ptr { ggml_init(params) };
-    GGML_ASSERT(ctx_ptr != nullptr);
+    GGML_ASSERT(ctx_ptr != ਖਾਲੀ_ਸੂਚਕ);
     ggml_context * ctx = ctx_ptr.get();
     ggml_tensor * tensor = deserialize_tensor(ctx, &request.tensor);
-    if (tensor == nullptr || tensor->buffer == nullptr) {
+    ਜੇ (tensor == ਖਾਲੀ_ਸੂਚਕ || tensor->ਬਫਰ == ਖਾਲੀ_ਸੂਚਕ) {
         LOG_ERROR("[%s] error deserializing tensor\n", __func__);
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    const uint64_t tensor_size = ggml_nbytes(tensor);
-    if (request.offset > tensor_size || request.size > tensor_size - request.offset) {
+    ਅਚਲ uint64_t tensor_ਮਾਪ = ggml_nbytes(tensor);
+    ਜੇ (request.ਵਿੱਥ > tensor_ਮਾਪ || request.size > tensor_ਮਾਪ - request.ਵਿੱਥ) {
         LOG_ERROR("[%s] tensor region (offset=%" PRIu64 ", size=%" PRIu64 ") out of tensor bounds [0, %" PRIu64 ")\n",
-                       __func__, request.offset, request.size, tensor_size);
-        return false;
+                       __func__, request.ਵਿੱਥ, request.size, tensor_ਮਾਪ);
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    const uint64_t buffer_start = (uint64_t) ggml_backend_buffer_get_base(tensor->buffer);
-    const uint64_t buffer_size = ggml_backend_buffer_get_size(tensor->buffer);
-    if (request.tensor.data < buffer_start) {
+    ਅਚਲ uint64_t ਬਫਰ_ਸ਼ੁਰੂ = (uint64_t) ggml_backend_ਬਫਰ_get_ਅਧਾਰ(tensor->ਬਫਰ);
+    ਅਚਲ uint64_t ਬਫਰ_ਮਾਪ = ggml_backend_ਬਫਰ_get_ਮਾਪ(tensor->ਬਫਰ);
+    ਜੇ (request.tensor.ਅੰਕੜੇ < ਬਫਰ_ਸ਼ੁਰੂ) {
         LOG_ERROR("[%s] tensor data before buffer start\n", __func__);
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
-    const uint64_t data_offset = request.tensor.data - buffer_start;
-    if (data_offset > buffer_size ||
-        request.offset > buffer_size - data_offset ||
-        request.size > buffer_size - data_offset - request.offset) {
+    ਅਚਲ uint64_t ਅੰਕੜੇ_ਵਿੱਥ = request.tensor.ਅੰਕੜੇ - ਬਫਰ_ਸ਼ੁਰੂ;
+    ਜੇ (ਅੰਕੜੇ_ਵਿੱਥ > ਬਫਰ_ਮਾਪ ||
+        request.ਵਿੱਥ > ਬਫਰ_ਮਾਪ - ਅੰਕੜੇ_ਵਿੱਥ ||
+        request.size > ਬਫਰ_ਮਾਪ - ਅੰਕੜੇ_ਵਿੱਥ - request.ਵਿੱਥ) {
         LOG_ERROR("[%s] tensor region out of buffer bounds\n", __func__);
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
-    if (tensor->buffer->iface.memset_tensor == nullptr) {
+    ਜੇ (tensor->ਬਫਰ->iface.memset_tensor == ਖਾਲੀ_ਸੂਚਕ) {
         LOG_ERROR("[%s] memset not implemented by backend buffer\n", __func__);
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
 
     LOG_DBG2("[%s] tensor: %s, buffer: %p, data: %p, offset: %" PRIu64 ", size: %s, value: %u\n",
-            __func__, rpc_log_format_tensor(tensor).c_str(), (void *) tensor->buffer, tensor->data, request.offset,
-            rpc_log_format_size(request.size).c_str(), request.value);
-    ggml_backend_tensor_memset(tensor, request.value, request.offset, request.size);
-    return true;
+            __func__, rpc_log_format_tensor(tensor).c_str(), (ਖਾਲੀ *) tensor->ਬਫਰ, tensor->ਅੰਕੜੇ, request.ਵਿੱਥ,
+            rpc_log_format_ਮਾਪ(request.size).c_str(), request.value);
+    ggml_backend_tensor_memset(tensor, request.value, request.ਵਿੱਥ, request.size);
+    ਵਾਪਸ ਸੱਚ;
 }
 
-ggml_tensor * rpc_server::deserialize_tensor(struct ggml_context * ctx, const rpc_tensor * tensor) {
+ggml_tensor * rpc_server::deserialize_tensor(ਬਣਤਰ ggml_context * ctx, ਅਚਲ rpc_tensor * tensor) {
     // Validate tensor type before using it
-    if (tensor->type >= GGML_TYPE_COUNT) {
+    ਜੇ (tensor->type >= GGML_TYPE_ਗਿਣਤੀ) {
         LOG_ERROR("[%s] invalid tensor type received: %u\n", __func__, tensor->type);
-        return nullptr;
+        ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
     }
 
     // Fix: Prevent division by zero if blck_size is 0 (e.g., deprecated types)
-    if (ggml_blck_size((enum ggml_type)tensor->type) == 0) {
+    ਜੇ (ggml_blck_ਮਾਪ((ਗਿਣਤੀ ggml_type)tensor->type) == 0) {
         LOG_ERROR("[%s] invalid tensor type received (blck_size is 0): %u\n", __func__, tensor->type);
-        return nullptr;
+        ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
     }
 
-    ggml_tensor * result = ggml_new_tensor_4d(ctx, (ggml_type) tensor->type,
+    ggml_tensor * ਨਤੀਜਾ = ggml_new_tensor_4d(ctx, (ggml_type) tensor->type,
         tensor->ne[0], tensor->ne[1], tensor->ne[2], tensor->ne[3]);
 
     // ggml_new_tensor_4d might fail if dimensions are invalid, although less likely to crash than invalid type
-    if (result == nullptr) {
+    ਜੇ (ਨਤੀਜਾ == ਖਾਲੀ_ਸੂਚਕ) {
         LOG_ERROR("[%s] ggml_new_tensor_4d failed for type %u\n", __func__, tensor->type);
-        return nullptr;
+        ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
     }
 
-    for (uint32_t i = 0; i < GGML_MAX_DIMS; i++) {
-        result->nb[i] = tensor->nb[i];
+    ਲਈ (uint32_t i = 0; i < GGML_MAX_DIMS; i++) {
+        ਨਤੀਜਾ->nb[i] = tensor->nb[i];
     }
-    result->buffer = reinterpret_cast<ggml_backend_buffer_t>(tensor->buffer);
-    if (result->buffer && buffers.find(result->buffer) == buffers.end()) {
-        result->buffer = nullptr;
+    ਨਤੀਜਾ->ਬਫਰ = reinterpret_cast<ggml_backend_ਬਫਰ_t>(tensor->ਬਫਰ);
+    ਜੇ (ਨਤੀਜਾ->ਬਫਰ && buffers.find(ਨਤੀਜਾ->ਬਫਰ) == buffers.end()) {
+        ਨਤੀਜਾ->ਬਫਰ = ਖਾਲੀ_ਸੂਚਕ;
     }
 
-    if (result->buffer && ggml_nelements(result) > 0) {
+    ਜੇ (ਨਤੀਜਾ->ਬਫਰ && ggml_nelements(ਨਤੀਜਾ) > 0) {
         // require that the tensor data does not go beyond the buffer end
-        uint64_t tensor_size = (uint64_t) ggml_nbytes(result);
-        uint64_t buffer_start = (uint64_t) ggml_backend_buffer_get_base(result->buffer);
-        uint64_t buffer_size = (uint64_t) ggml_backend_buffer_get_size(result->buffer);
-        if (tensor->data + tensor_size < tensor->data ||
-            tensor->data < buffer_start || tensor->data + tensor_size > buffer_start + buffer_size) {
+        uint64_t tensor_ਮਾਪ = (uint64_t) ggml_nbytes(ਨਤੀਜਾ);
+        uint64_t ਬਫਰ_ਸ਼ੁਰੂ = (uint64_t) ggml_backend_ਬਫਰ_get_ਅਧਾਰ(ਨਤੀਜਾ->ਬਫਰ);
+        uint64_t ਬਫਰ_ਮਾਪ = (uint64_t) ggml_backend_ਬਫਰ_get_ਮਾਪ(ਨਤੀਜਾ->ਬਫਰ);
+        ਜੇ (tensor->ਅੰਕੜੇ + tensor_ਮਾਪ < tensor->ਅੰਕੜੇ ||
+            tensor->ਅੰਕੜੇ < ਬਫਰ_ਸ਼ੁਰੂ || tensor->ਅੰਕੜੇ + tensor_ਮਾਪ > ਬਫਰ_ਸ਼ੁਰੂ + ਬਫਰ_ਮਾਪ) {
             LOG_ERROR("[%s] tensor '%s' (op %s, type %s, ne [%" PRId64 ", %" PRId64 ", %" PRId64 ", %" PRId64 "]) "
                       "data [0x%" PRIx64 ", 0x%" PRIx64 ") out of buffer bounds [0x%" PRIx64 ", 0x%" PRIx64 ")\n",
-                      __func__, tensor->name, ggml_op_name((ggml_op) tensor->op), ggml_type_name(result->type),
-                      result->ne[0], result->ne[1], result->ne[2], result->ne[3],
-                      tensor->data, tensor->data + tensor_size, buffer_start, buffer_start + buffer_size);
-            return nullptr;
+                      __func__, tensor->name, ggml_op_name((ggml_op) tensor->op), ggml_type_name(ਨਤੀਜਾ->type),
+                      ਨਤੀਜਾ->ne[0], ਨਤੀਜਾ->ne[1], ਨਤੀਜਾ->ne[2], ਨਤੀਜਾ->ne[3],
+                      tensor->ਅੰਕੜੇ, tensor->ਅੰਕੜੇ + tensor_ਮਾਪ, ਬਫਰ_ਸ਼ੁਰੂ, ਬਫਰ_ਸ਼ੁਰੂ + ਬਫਰ_ਮਾਪ);
+            ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
         }
     }
 
-    result->op = (ggml_op) tensor->op;
-    for (uint32_t i = 0; i < GGML_MAX_OP_PARAMS / sizeof(int32_t); i++) {
-        result->op_params[i] = tensor->op_params[i];
+    ਨਤੀਜਾ->op = (ggml_op) tensor->op;
+    ਲਈ (uint32_t i = 0; i < GGML_MAX_OP_PARAMS / ਆਕਾਰ(int32_t); i++) {
+        ਨਤੀਜਾ->op_params[i] = tensor->op_params[i];
     }
-    result->flags = tensor->flags;
-    result->data = reinterpret_cast<void *>(tensor->data);
-    ggml_set_name(result, tensor->name);
-    return result;
+    ਨਤੀਜਾ->flags = tensor->flags;
+    ਨਤੀਜਾ->ਅੰਕੜੇ = reinterpret_cast<ਖਾਲੀ *>(tensor->ਅੰਕੜੇ);
+    ggml_ਸੈੱਟ_name(ਨਤੀਜਾ, tensor->name);
+    ਵਾਪਸ ਨਤੀਜਾ;
 }
 
 
-bool rpc_server::set_tensor(const std::vector<uint8_t> & input) {
+ਤਾਰਕਿਕ rpc_server::ਸੈੱਟ_tensor(ਅਚਲ std::vector<uint8_t> & ਨਿਵੇਸ਼) {
     sync_all_backends();
     // serialization format: | rpc_tensor | cache_flag (1 byte) | offset (8 bytes) | data (size bytes) |
     uint8_t  cache_flag;
-    uint64_t offset;
-    const size_t header_size = sizeof(rpc_tensor) + sizeof(cache_flag) + sizeof(offset);
-    if (input.size() < header_size) {
-        return false;
+    uint64_t ਵਿੱਥ;
+    ਅਚਲ size_t ਸਿਰਲੇਖ_ਮਾਪ = ਆਕਾਰ(rpc_tensor) + ਆਕਾਰ(cache_flag) + ਆਕਾਰ(ਵਿੱਥ);
+    ਜੇ (ਨਿਵੇਸ਼.size() < ਸਿਰਲੇਖ_ਮਾਪ) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    const rpc_tensor * in_tensor = (const rpc_tensor *)input.data();
-    memcpy(&cache_flag, input.data() + sizeof(rpc_tensor), sizeof(cache_flag));
-    memcpy(&offset,     input.data() + sizeof(rpc_tensor) + sizeof(cache_flag), sizeof(offset));
-    const size_t size = input.size() - header_size;
+    ਅਚਲ rpc_tensor * ਵਿੱਚ_tensor = (ਅਚਲ rpc_tensor *)ਨਿਵੇਸ਼.ਅੰਕੜੇ();
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&cache_flag, ਨਿਵੇਸ਼.ਅੰਕੜੇ() + ਆਕਾਰ(rpc_tensor), ਆਕਾਰ(cache_flag));
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&ਵਿੱਥ,     ਨਿਵੇਸ਼.ਅੰਕੜੇ() + ਆਕਾਰ(rpc_tensor) + ਆਕਾਰ(cache_flag), ਆਕਾਰ(ਵਿੱਥ));
+    ਅਚਲ size_t size = ਨਿਵੇਸ਼.size() - ਸਿਰਲੇਖ_ਮਾਪ;
 
-    struct ggml_init_params params {
+    ਬਣਤਰ ggml_init_params params {
         /*.mem_size   =*/ ggml_tensor_overhead(),
-        /*.mem_buffer =*/ NULL,
-        /*.no_alloc   =*/ true,
+        /*.mem_buffer =*/ ਨਿਰਾ,
+        /*.no_alloc   =*/ ਸੱਚ,
     };
     ggml_context_ptr ctx_ptr { ggml_init(params) };
-    GGML_ASSERT(ctx_ptr != nullptr);
+    GGML_ASSERT(ctx_ptr != ਖਾਲੀ_ਸੂਚਕ);
     ggml_context * ctx = ctx_ptr.get();
-    ggml_tensor * tensor = deserialize_tensor(ctx, in_tensor);
-    if (tensor == nullptr || tensor->buffer == nullptr) {
+    ggml_tensor * tensor = deserialize_tensor(ctx, ਵਿੱਚ_tensor);
+    ਜੇ (tensor == ਖਾਲੀ_ਸੂਚਕ || tensor->ਬਫਰ == ਖਾਲੀ_ਸੂਚਕ) {
         LOG_ERROR("[%s] error deserializing tensor\n", __func__);
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
     LOG_DBG2("[%s] tensor: %s, buffer: %p, data: %p, offset: %" PRIu64 ", size: %s\n",
-            __func__, rpc_log_format_tensor(tensor).c_str(), (void*)tensor->buffer, tensor->data, offset,
-            rpc_log_format_size(size).c_str());
+            __func__, rpc_log_format_tensor(tensor).c_str(), (ਖਾਲੀ*)tensor->ਬਫਰ, tensor->ਅੰਕੜੇ, ਵਿੱਥ,
+            rpc_log_format_ਮਾਪ(size).c_str());
 
     // sanitize tensor->data
     {
-        const size_t p0 = (size_t) ggml_backend_buffer_get_base(tensor->buffer);
-        const size_t p1 = p0 + ggml_backend_buffer_get_size(tensor->buffer);
+        ਅਚਲ size_t p0 = (size_t) ggml_backend_ਬਫਰ_get_ਅਧਾਰ(tensor->ਬਫਰ);
+        ਅਚਲ size_t p1 = p0 + ggml_backend_ਬਫਰ_get_ਮਾਪ(tensor->ਬਫਰ);
 
-        if (in_tensor->data + offset < p0 || in_tensor->data + offset >= p1 || size > (p1 - in_tensor->data - offset)) {
+        ਜੇ (ਵਿੱਚ_tensor->ਅੰਕੜੇ + ਵਿੱਥ < p0 || ਵਿੱਚ_tensor->ਅੰਕੜੇ + ਵਿੱਥ >= p1 || size > (p1 - ਵਿੱਚ_tensor->ਅੰਕੜੇ - ਵਿੱਥ)) {
             LOG_ERROR("[%s] tensor data region (data=0x%" PRIx64 ", offset=%" PRIu64 ", size=%zu) out of buffer bounds [0x%zx, 0x%zx)\n",
-                           __func__, in_tensor->data, offset, size, p0, p1);
-            return false;
+                           __func__, ਵਿੱਚ_tensor->ਅੰਕੜੇ, ਵਿੱਥ, size, p0, p1);
+            ਵਾਪਸ ਝੂਠ;
         }
     }
 
-    const void * data = input.data() + header_size;
-    if (cache_dir && cache_flag) {
-        uint64_t hash = fnv_hash((const uint8_t*)data, size);
-        char hash_str[17];
-        snprintf(hash_str, sizeof(hash_str), "%016" PRIx64, hash);
+    ਅਚਲ ਖਾਲੀ * ਅੰਕੜੇ = ਨਿਵੇਸ਼.ਅੰਕੜੇ() + ਸਿਰਲੇਖ_ਮਾਪ;
+    ਜੇ (cache_dir && cache_flag) {
+        uint64_t hash = fnv_hash((ਅਚਲ uint8_t*)ਅੰਕੜੇ, size);
+        ਅੱਖਰ hash_str[17];
+        snprintf(hash_str, ਆਕਾਰ(hash_str), "%016" PRIx64, hash);
         // save to cache_dir/hash_str
         fs::path cache_file = fs::path(cache_dir) / hash_str;
         std::ofstream ofs(cache_file, std::ios::binary);
-        ofs.write((const char *)data, size);
+        ofs.ਲਿਖ((ਅਚਲ ਅੱਖਰ *)ਅੰਕੜੇ, size);
         LOG_INFO("[%s] saved to '%s'\n", __func__, cache_file.string().c_str());
     }
-    ggml_backend_tensor_set(tensor, data, offset, size);
-    return true;
+    ggml_backend_tensor_ਸੈੱਟ(tensor, ਅੰਕੜੇ, ਵਿੱਥ, size);
+    ਵਾਪਸ ਸੱਚ;
 }
 
-bool rpc_server::set_tensor_2d(const std::vector<uint8_t> & input) {
+ਤਾਰਕਿਕ rpc_server::ਸੈੱਟ_tensor_2d(ਅਚਲ std::vector<uint8_t> & ਨਿਵੇਸ਼) {
     sync_all_backends();
     // serialization format: | rpc_tensor | offset (8 bytes) | size (8 bytes) | n_copies (8 bytes) | stride (8 bytes) | data (size * n_copies bytes) |
-    if (input.size() < sizeof(rpc_tensor) + 4*sizeof(uint64_t)) {
-        return false;
+    ਜੇ (ਨਿਵੇਸ਼.size() < ਆਕਾਰ(rpc_tensor) + 4*ਆਕਾਰ(uint64_t)) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    const rpc_tensor * in_tensor = (const rpc_tensor *)input.data();
-    uint64_t header[4];
-    memcpy(header, input.data() + sizeof(rpc_tensor), sizeof(header));
-    const uint64_t offset   = header[0];
-    const uint64_t size     = header[1];
-    const uint64_t n_copies = header[2];
-    const uint64_t stride   = header[3];
+    ਅਚਲ rpc_tensor * ਵਿੱਚ_tensor = (ਅਚਲ rpc_tensor *)ਨਿਵੇਸ਼.ਅੰਕੜੇ();
+    uint64_t ਸਿਰਲੇਖ[4];
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(ਸਿਰਲੇਖ, ਨਿਵੇਸ਼.ਅੰਕੜੇ() + ਆਕਾਰ(rpc_tensor), ਆਕਾਰ(ਸਿਰਲੇਖ));
+    ਅਚਲ uint64_t ਵਿੱਥ   = ਸਿਰਲੇਖ[0];
+    ਅਚਲ uint64_t size     = ਸਿਰਲੇਖ[1];
+    ਅਚਲ uint64_t n_copies = ਸਿਰਲੇਖ[2];
+    ਅਚਲ uint64_t stride   = ਸਿਰਲੇਖ[3];
 
-    const uint64_t data_size = input.size() - sizeof(rpc_tensor) - 4*sizeof(uint64_t);
-    if (n_copies == 0 || size == 0 || size > data_size / n_copies || size * n_copies != data_size) {
-        return false;
+    ਅਚਲ uint64_t ਅੰਕੜੇ_ਮਾਪ = ਨਿਵੇਸ਼.size() - ਆਕਾਰ(rpc_tensor) - 4*ਆਕਾਰ(uint64_t);
+    ਜੇ (n_copies == 0 || size == 0 || size > ਅੰਕੜੇ_ਮਾਪ / n_copies || size * n_copies != ਅੰਕੜੇ_ਮਾਪ) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    struct ggml_init_params params {
+    ਬਣਤਰ ggml_init_params params {
         /*.mem_size   =*/ ggml_tensor_overhead(),
-        /*.mem_buffer =*/ NULL,
-        /*.no_alloc   =*/ true,
+        /*.mem_buffer =*/ ਨਿਰਾ,
+        /*.no_alloc   =*/ ਸੱਚ,
     };
     ggml_context_ptr ctx_ptr { ggml_init(params) };
-    GGML_ASSERT(ctx_ptr != nullptr);
+    GGML_ASSERT(ctx_ptr != ਖਾਲੀ_ਸੂਚਕ);
     ggml_context * ctx = ctx_ptr.get();
-    ggml_tensor * tensor = deserialize_tensor(ctx, in_tensor);
-    if (tensor == nullptr || tensor->buffer == nullptr) {
+    ggml_tensor * tensor = deserialize_tensor(ctx, ਵਿੱਚ_tensor);
+    ਜੇ (tensor == ਖਾਲੀ_ਸੂਚਕ || tensor->ਬਫਰ == ਖਾਲੀ_ਸੂਚਕ) {
         LOG_ERROR("[%s] error deserializing tensor\n", __func__);
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
     LOG_DBG2("[%s] tensor: %s, buffer: %p, data: %p, offset: %" PRIu64 ", size: %s, n_copies: %" PRIu64 ", stride: %" PRIu64 "\n",
-            __func__, rpc_log_format_tensor(tensor).c_str(), (void*)tensor->buffer, tensor->data, offset,
-            rpc_log_format_size(size).c_str(), n_copies, stride);
+            __func__, rpc_log_format_tensor(tensor).c_str(), (ਖਾਲੀ*)tensor->ਬਫਰ, tensor->ਅੰਕੜੇ, ਵਿੱਥ,
+            rpc_log_format_ਮਾਪ(size).c_str(), n_copies, stride);
 
     // sanitize tensor->data
     {
-        if (stride != 0 && n_copies - 1 > (UINT64_MAX - size) / stride) {
-            return false;
+        ਜੇ (stride != 0 && n_copies - 1 > (UINT64_MAX - size) / stride) {
+            ਵਾਪਸ ਝੂਠ;
         }
-        const uint64_t span = (n_copies - 1)*stride + size;
-        const uint64_t p0 = (uint64_t) ggml_backend_buffer_get_base(tensor->buffer);
-        const uint64_t p1 = p0 + ggml_backend_buffer_get_size(tensor->buffer);
+        ਅਚਲ uint64_t ਵਿਸਤਾਰ = (n_copies - 1)*stride + size;
+        ਅਚਲ uint64_t p0 = (uint64_t) ggml_backend_ਬਫਰ_get_ਅਧਾਰ(tensor->ਬਫਰ);
+        ਅਚਲ uint64_t p1 = p0 + ggml_backend_ਬਫਰ_get_ਮਾਪ(tensor->ਬਫਰ);
 
-        if (in_tensor->data < p0 || in_tensor->data > p1 || offset > p1 - in_tensor->data || span > p1 - in_tensor->data - offset) {
+        ਜੇ (ਵਿੱਚ_tensor->ਅੰਕੜੇ < p0 || ਵਿੱਚ_tensor->ਅੰਕੜੇ > p1 || ਵਿੱਥ > p1 - ਵਿੱਚ_tensor->ਅੰਕੜੇ || ਵਿਸਤਾਰ > p1 - ਵਿੱਚ_tensor->ਅੰਕੜੇ - ਵਿੱਥ) {
             LOG_ERROR("[%s] tensor data region (data=0x%" PRIx64 ", offset=%" PRIu64 ", span=%" PRIu64 ") out of buffer bounds [0x%" PRIx64 ", 0x%" PRIx64 ")\n",
-                      __func__, in_tensor->data, offset, span, p0, p1);
-            return false;
+                      __func__, ਵਿੱਚ_tensor->ਅੰਕੜੇ, ਵਿੱਥ, ਵਿਸਤਾਰ, p0, p1);
+            ਵਾਪਸ ਝੂਠ;
         }
-        if (offset > ggml_nbytes(tensor) || span > ggml_nbytes(tensor) - offset) {
+        ਜੇ (ਵਿੱਥ > ggml_nbytes(tensor) || ਵਿਸਤਾਰ > ggml_nbytes(tensor) - ਵਿੱਥ) {
             LOG_ERROR("[%s] tensor write region (offset=%" PRIu64 ", span=%" PRIu64 ") out of tensor bounds (%zu)\n",
-                      __func__, offset, span, ggml_nbytes(tensor));
-            return false;
+                      __func__, ਵਿੱਥ, ਵਿਸਤਾਰ, ggml_nbytes(tensor));
+            ਵਾਪਸ ਝੂਠ;
         }
     }
 
-    const void * data = input.data() + sizeof(rpc_tensor) + 4*sizeof(uint64_t);
-    ggml_backend_tensor_set_2d(tensor, data, offset, size, n_copies, stride, size);
-    return true;
+    ਅਚਲ ਖਾਲੀ * ਅੰਕੜੇ = ਨਿਵੇਸ਼.ਅੰਕੜੇ() + ਆਕਾਰ(rpc_tensor) + 4*ਆਕਾਰ(uint64_t);
+    ggml_backend_tensor_ਸੈੱਟ_2d(tensor, ਅੰਕੜੇ, ਵਿੱਥ, size, n_copies, stride, size);
+    ਵਾਪਸ ਸੱਚ;
 }
 
-bool rpc_server::get_cached_file(uint64_t hash, std::vector<uint8_t> & data) {
-    if (!cache_dir) {
-        return false;
+ਤਾਰਕਿਕ rpc_server::get_cached_file(uint64_t hash, std::vector<uint8_t> & ਅੰਕੜੇ) {
+    ਜੇ (!cache_dir) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    char hash_str[17];
-    snprintf(hash_str, sizeof(hash_str), "%016" PRIx64, hash);
+    ਅੱਖਰ hash_str[17];
+    snprintf(hash_str, ਆਕਾਰ(hash_str), "%016" PRIx64, hash);
     fs::path cache_file = fs::path(cache_dir) / hash_str;
     std::error_code ec;
-    if (!fs::exists(cache_file, ec)) {
-        return false;
+    ਜੇ (!fs::exists(cache_file, ec)) {
+        ਵਾਪਸ ਝੂਠ;
     }
     std::ifstream ifs(cache_file, std::ios::binary);
     ifs.seekg(0, std::ios::end);
     size_t size = ifs.tellg();
     ifs.seekg(0, std::ios::beg);
-    data.resize(size);
-    ifs.read((char *)data.data(), size);
-    return true;
+    ਅੰਕੜੇ.resize(size);
+    ifs.ਪਠ((ਅੱਖਰ *)ਅੰਕੜੇ.ਅੰਕੜੇ(), size);
+    ਵਾਪਸ ਸੱਚ;
 }
 
-bool rpc_server::set_tensor_hash(const rpc_msg_set_tensor_hash_req & request, rpc_msg_set_tensor_hash_rsp & response)
+ਤਾਰਕਿਕ rpc_server::ਸੈੱਟ_tensor_hash(ਅਚਲ rpc_ਸੁਨੇਹਾ_ਸੈੱਟ_tensor_hash_req & request, rpc_ਸੁਨੇਹਾ_ਸੈੱਟ_tensor_hash_rsp & response)
 {
     sync_all_backends();
-    struct ggml_init_params params {
+    ਬਣਤਰ ggml_init_params params {
         /*.mem_size   =*/ ggml_tensor_overhead(),
-        /*.mem_buffer =*/ NULL,
-        /*.no_alloc   =*/ true,
+        /*.mem_buffer =*/ ਨਿਰਾ,
+        /*.no_alloc   =*/ ਸੱਚ,
     };
     ggml_context_ptr ctx_ptr { ggml_init(params) };
-    GGML_ASSERT(ctx_ptr != nullptr);
+    GGML_ASSERT(ctx_ptr != ਖਾਲੀ_ਸੂਚਕ);
     ggml_context * ctx = ctx_ptr.get();
     ggml_tensor * tensor = deserialize_tensor(ctx, &request.tensor);
-    if (tensor == nullptr || tensor->buffer == nullptr) {
+    ਜੇ (tensor == ਖਾਲੀ_ਸੂਚਕ || tensor->ਬਫਰ == ਖਾਲੀ_ਸੂਚਕ) {
         LOG_ERROR("[%s] error deserializing tensor\n", __func__);
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
 
     std::vector<uint8_t> cached_file;
-    if (!get_cached_file(request.hash, cached_file)) {
+    ਜੇ (!get_cached_file(request.hash, cached_file)) {
         LOG_DBG2("[%s] tensor: %s, offset: %" PRIu64 ", hash: 0x%" PRIx64 ", cache miss\n",
-                __func__, rpc_log_format_tensor(tensor).c_str(), request.offset, request.hash);
-        response.result = 0;
-        return true;
+                __func__, rpc_log_format_tensor(tensor).c_str(), request.ਵਿੱਥ, request.hash);
+        response.ਨਤੀਜਾ = 0;
+        ਵਾਪਸ ਸੱਚ;
     }
     size_t size = cached_file.size();
     LOG_DBG2("[%s] tensor: %s, buffer: %p, data: %p, offset: %" PRIu64 ", size: %s, hash: 0x%" PRIx64 ", cache hit\n",
-            __func__, rpc_log_format_tensor(tensor).c_str(), (void*)tensor->buffer, tensor->data, request.offset,
-            rpc_log_format_size(size).c_str(), request.hash);
+            __func__, rpc_log_format_tensor(tensor).c_str(), (ਖਾਲੀ*)tensor->ਬਫਰ, tensor->ਅੰਕੜੇ, request.ਵਿੱਥ,
+            rpc_log_format_ਮਾਪ(size).c_str(), request.hash);
 
     // sanitize tensor->data
     {
-        const size_t p0 = (size_t) ggml_backend_buffer_get_base(tensor->buffer);
-        const size_t p1 = p0 + ggml_backend_buffer_get_size(tensor->buffer);
+        ਅਚਲ size_t p0 = (size_t) ggml_backend_ਬਫਰ_get_ਅਧਾਰ(tensor->ਬਫਰ);
+        ਅਚਲ size_t p1 = p0 + ggml_backend_ਬਫਰ_get_ਮਾਪ(tensor->ਬਫਰ);
 
-        if (request.tensor.data + request.offset < p0
-         || request.tensor.data + request.offset >= p1
-         || size > (p1 - request.tensor.data - request.offset)) {
+        ਜੇ (request.tensor.ਅੰਕੜੇ + request.ਵਿੱਥ < p0
+         || request.tensor.ਅੰਕੜੇ + request.ਵਿੱਥ >= p1
+         || size > (p1 - request.tensor.ਅੰਕੜੇ - request.ਵਿੱਥ)) {
             LOG_ERROR("[%s] tensor data region (data=0x%" PRIx64 ", offset=%" PRIu64 ", size=%zu, hash=0x%" PRIx64 ") out of buffer bounds [0x%zx, 0x%zx)\n",
-                           __func__, request.tensor.data, request.offset, size, request.hash, p0, p1);
-            return false;
+                           __func__, request.tensor.ਅੰਕੜੇ, request.ਵਿੱਥ, size, request.hash, p0, p1);
+            ਵਾਪਸ ਝੂਠ;
         }
     }
-    ggml_backend_tensor_set(tensor, cached_file.data(), request.offset, size);
-    response.result = 1;
-    return true;
+    ggml_backend_tensor_ਸੈੱਟ(tensor, cached_file.ਅੰਕੜੇ(), request.ਵਿੱਥ, size);
+    response.ਨਤੀਜਾ = 1;
+    ਵਾਪਸ ਸੱਚ;
 }
 
-bool rpc_server::init_tensor(const rpc_msg_init_tensor_req & request) {
+ਤਾਰਕਿਕ rpc_server::init_tensor(ਅਚਲ rpc_ਸੁਨੇਹਾ_init_tensor_req & request) {
     sync_all_backends();
-    struct ggml_init_params params {
+    ਬਣਤਰ ggml_init_params params {
         /*.mem_size   =*/ ggml_tensor_overhead(),
-        /*.mem_buffer =*/ NULL,
-        /*.no_alloc   =*/ true,
+        /*.mem_buffer =*/ ਨਿਰਾ,
+        /*.no_alloc   =*/ ਸੱਚ,
     };
     ggml_context_ptr ctx_ptr { ggml_init(params) };
-    GGML_ASSERT(ctx_ptr != nullptr);
+    GGML_ASSERT(ctx_ptr != ਖਾਲੀ_ਸੂਚਕ);
     ggml_context * ctx = ctx_ptr.get();
     ggml_tensor * tensor = deserialize_tensor(ctx, &request.tensor);
-    if (tensor == nullptr) {
+    ਜੇ (tensor == ਖਾਲੀ_ਸੂਚਕ) {
         LOG_ERROR("Null tensor pointer passed to server init_tensor function.\n");
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
     LOG_DBG2("[%s] tensor: %s, buffer: %p, data: %p\n", __func__, rpc_log_format_tensor(tensor).c_str(),
-            (void*)tensor->buffer, tensor->data);
+            (ਖਾਲੀ*)tensor->ਬਫਰ, tensor->ਅੰਕੜੇ);
     // Call the backend's buffer_init_tensor function
-    ggml_backend_buffer_t buffer = tensor->buffer;
-    if (buffer && buffer->iface.init_tensor) {
-        buffer->iface.init_tensor(buffer, tensor);
-    } else {
-        if (!buffer) {
+    ggml_backend_ਬਫਰ_t ਬਫਰ = tensor->ਬਫਰ;
+    ਜੇ (ਬਫਰ && ਬਫਰ->iface.init_tensor) {
+        ਬਫਰ->iface.init_tensor(ਬਫਰ, tensor);
+    } ਨਹੀਂਤਾਂ {
+        ਜੇ (!ਬਫਰ) {
             LOG_ERROR("Tensor with null buffer passed to init_tensor function\n");
         }
     }
 
-    if (tensor->extra != nullptr) {
+    ਜੇ (tensor->extra != ਖਾਲੀ_ਸੂਚਕ) {
         // This pointer can either be passed around client/server, or probably better stored server-side and kept track of.
         // Currently unimplemented.
         LOG_ERROR("tensor->extra populated by the backend, this is currently unsupported.\n");
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    return true;
+    ਵਾਪਸ ਸੱਚ;
 }
 
-bool rpc_server::get_tensor(const rpc_msg_get_tensor_req & request, std::vector<uint8_t> & response) {
+ਤਾਰਕਿਕ rpc_server::get_tensor(ਅਚਲ rpc_ਸੁਨੇਹਾ_get_tensor_req & request, std::vector<uint8_t> & response) {
     sync_all_backends();
-    struct ggml_init_params params {
+    ਬਣਤਰ ggml_init_params params {
         /*.mem_size   =*/ ggml_tensor_overhead(),
-        /*.mem_buffer =*/ NULL,
-        /*.no_alloc   =*/ true,
+        /*.mem_buffer =*/ ਨਿਰਾ,
+        /*.no_alloc   =*/ ਸੱਚ,
     };
     ggml_context_ptr ctx_ptr { ggml_init(params) };
-    GGML_ASSERT(ctx_ptr != nullptr);
+    GGML_ASSERT(ctx_ptr != ਖਾਲੀ_ਸੂਚਕ);
     ggml_context * ctx = ctx_ptr.get();
     ggml_tensor * tensor = deserialize_tensor(ctx, &request.tensor);
-    if (tensor == nullptr || tensor->buffer == nullptr) {
+    ਜੇ (tensor == ਖਾਲੀ_ਸੂਚਕ || tensor->ਬਫਰ == ਖਾਲੀ_ਸੂਚਕ) {
         LOG_ERROR("[%s] error deserializing tensor\n", __func__);
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
     LOG_DBG2("[%s] tensor: %s, buffer: %p, data: %p, offset: %" PRIu64 ", size: %s\n", __func__,
-             rpc_log_format_tensor(tensor).c_str(), (void*)tensor->buffer, tensor->data, request.offset,
-             rpc_log_format_size(request.size).c_str());
+             rpc_log_format_tensor(tensor).c_str(), (ਖਾਲੀ*)tensor->ਬਫਰ, tensor->ਅੰਕੜੇ, request.ਵਿੱਥ,
+             rpc_log_format_ਮਾਪ(request.size).c_str());
 
     // sanitize tensor->data
     {
-        const size_t p0 = (size_t) ggml_backend_buffer_get_base(tensor->buffer);
-        const size_t p1 = p0 + ggml_backend_buffer_get_size(tensor->buffer);
+        ਅਚਲ size_t p0 = (size_t) ggml_backend_ਬਫਰ_get_ਅਧਾਰ(tensor->ਬਫਰ);
+        ਅਚਲ size_t p1 = p0 + ggml_backend_ਬਫਰ_get_ਮਾਪ(tensor->ਬਫਰ);
 
-        if (request.tensor.data + request.offset < p0 ||
-            request.tensor.data + request.offset >= p1 ||
-            request.size > (p1 - request.tensor.data - request.offset)) {
+        ਜੇ (request.tensor.ਅੰਕੜੇ + request.ਵਿੱਥ < p0 ||
+            request.tensor.ਅੰਕੜੇ + request.ਵਿੱਥ >= p1 ||
+            request.size > (p1 - request.tensor.ਅੰਕੜੇ - request.ਵਿੱਥ)) {
                 LOG_ERROR("[%s] requested tensor region (data=0x%" PRIx64 ", offset=%" PRIu64 ", size=%" PRIu64 ") out of buffer bounds [0x%zx, 0x%zx)\n",
-                               __func__, request.tensor.data, request.offset, request.size, p0, p1);
-                return false;
+                               __func__, request.tensor.ਅੰਕੜੇ, request.ਵਿੱਥ, request.size, p0, p1);
+                ਵਾਪਸ ਝੂਠ;
         }
     }
 
     response.resize(request.size, 0);
-    ggml_backend_tensor_get(tensor, response.data(), request.offset, request.size);
-    return true;
+    ggml_backend_tensor_get(tensor, response.ਅੰਕੜੇ(), request.ਵਿੱਥ, request.size);
+    ਵਾਪਸ ਸੱਚ;
 }
 
-bool rpc_server::get_tensor_2d(const rpc_msg_get_tensor_2d_req & request, std::vector<uint8_t> & response) {
+ਤਾਰਕਿਕ rpc_server::get_tensor_2d(ਅਚਲ rpc_ਸੁਨੇਹਾ_get_tensor_2d_req & request, std::vector<uint8_t> & response) {
     sync_all_backends();
-    struct ggml_init_params params {
+    ਬਣਤਰ ggml_init_params params {
         /*.mem_size   =*/ ggml_tensor_overhead(),
-        /*.mem_buffer =*/ NULL,
-        /*.no_alloc   =*/ true,
+        /*.mem_buffer =*/ ਨਿਰਾ,
+        /*.no_alloc   =*/ ਸੱਚ,
     };
     ggml_context_ptr ctx_ptr { ggml_init(params) };
-    GGML_ASSERT(ctx_ptr != nullptr);
+    GGML_ASSERT(ctx_ptr != ਖਾਲੀ_ਸੂਚਕ);
     ggml_context * ctx = ctx_ptr.get();
     ggml_tensor * tensor = deserialize_tensor(ctx, &request.tensor);
-    if (tensor == nullptr || tensor->buffer == nullptr) {
+    ਜੇ (tensor == ਖਾਲੀ_ਸੂਚਕ || tensor->ਬਫਰ == ਖਾਲੀ_ਸੂਚਕ) {
         LOG_ERROR("[%s] error deserializing tensor\n", __func__);
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
     LOG_DBG2("[%s] tensor: %s, buffer: %p, data: %p, offset: %" PRIu64 ", size: %s, n_copies: %" PRIu64 ", stride: %" PRIu64 "\n",
-            __func__, rpc_log_format_tensor(tensor).c_str(), (void*)tensor->buffer, tensor->data, request.offset,
-            rpc_log_format_size(request.size).c_str(), request.n_copies, request.stride);
+            __func__, rpc_log_format_tensor(tensor).c_str(), (ਖਾਲੀ*)tensor->ਬਫਰ, tensor->ਅੰਕੜੇ, request.ਵਿੱਥ,
+            rpc_log_format_ਮਾਪ(request.size).c_str(), request.n_copies, request.stride);
 
     // sanitize tensor->data
     {
-        if (request.n_copies == 0 || request.size == 0 || request.size > UINT64_MAX / request.n_copies) {
-            return false;
+        ਜੇ (request.n_copies == 0 || request.size == 0 || request.size > UINT64_MAX / request.n_copies) {
+            ਵਾਪਸ ਝੂਠ;
         }
-        if (request.stride != 0 && request.n_copies - 1 > (UINT64_MAX - request.size) / request.stride) {
-            return false;
+        ਜੇ (request.stride != 0 && request.n_copies - 1 > (UINT64_MAX - request.size) / request.stride) {
+            ਵਾਪਸ ਝੂਠ;
         }
-        const uint64_t span = (request.n_copies - 1)*request.stride + request.size;
-        const uint64_t p0 = (uint64_t) ggml_backend_buffer_get_base(tensor->buffer);
-        const uint64_t p1 = p0 + ggml_backend_buffer_get_size(tensor->buffer);
+        ਅਚਲ uint64_t ਵਿਸਤਾਰ = (request.n_copies - 1)*request.stride + request.size;
+        ਅਚਲ uint64_t p0 = (uint64_t) ggml_backend_ਬਫਰ_get_ਅਧਾਰ(tensor->ਬਫਰ);
+        ਅਚਲ uint64_t p1 = p0 + ggml_backend_ਬਫਰ_get_ਮਾਪ(tensor->ਬਫਰ);
 
-        if (request.tensor.data < p0 || request.tensor.data > p1 || request.offset > p1 - request.tensor.data ||
-                span > p1 - request.tensor.data - request.offset) {
+        ਜੇ (request.tensor.ਅੰਕੜੇ < p0 || request.tensor.ਅੰਕੜੇ > p1 || request.ਵਿੱਥ > p1 - request.tensor.ਅੰਕੜੇ ||
+                ਵਿਸਤਾਰ > p1 - request.tensor.ਅੰਕੜੇ - request.ਵਿੱਥ) {
             LOG_ERROR("[%s] tensor data region (data=0x%" PRIx64 ", offset=%" PRIu64 ", span=%" PRIu64 ") out of buffer bounds [0x%" PRIx64 ", 0x%" PRIx64 ")\n",
-                      __func__, request.tensor.data, request.offset, span, p0, p1);
-            return false;
+                      __func__, request.tensor.ਅੰਕੜੇ, request.ਵਿੱਥ, ਵਿਸਤਾਰ, p0, p1);
+            ਵਾਪਸ ਝੂਠ;
         }
-        if (request.offset > ggml_nbytes(tensor) || span > ggml_nbytes(tensor) - request.offset) {
+        ਜੇ (request.ਵਿੱਥ > ggml_nbytes(tensor) || ਵਿਸਤਾਰ > ggml_nbytes(tensor) - request.ਵਿੱਥ) {
             LOG_ERROR("[%s] tensor read region (offset=%" PRIu64 ", span=%" PRIu64 ") out of tensor bounds (%zu)\n",
-                      __func__, request.offset, span, ggml_nbytes(tensor));
-            return false;
+                      __func__, request.ਵਿੱਥ, ਵਿਸਤਾਰ, ggml_nbytes(tensor));
+            ਵਾਪਸ ਝੂਠ;
         }
     }
 
     response.resize(request.size * request.n_copies, 0);
-    ggml_backend_tensor_get_2d(tensor, response.data(), request.offset, request.size, request.n_copies, request.stride, request.size);
-    return true;
+    ggml_backend_tensor_get_2d(tensor, response.ਅੰਕੜੇ(), request.ਵਿੱਥ, request.size, request.n_copies, request.stride, request.size);
+    ਵਾਪਸ ਸੱਚ;
 }
 
-bool rpc_server::copy_tensor(const rpc_msg_copy_tensor_req & request, rpc_msg_copy_tensor_rsp & response) {
+ਤਾਰਕਿਕ rpc_server::copy_tensor(ਅਚਲ rpc_ਸੁਨੇਹਾ_copy_tensor_req & request, rpc_ਸੁਨੇਹਾ_copy_tensor_rsp & response) {
     sync_all_backends();
-    struct ggml_init_params params {
+    ਬਣਤਰ ggml_init_params params {
         /*.mem_size   =*/ 2*ggml_tensor_overhead(),
-        /*.mem_buffer =*/ NULL,
-        /*.no_alloc   =*/ true,
+        /*.mem_buffer =*/ ਨਿਰਾ,
+        /*.no_alloc   =*/ ਸੱਚ,
     };
     ggml_context_ptr ctx_ptr { ggml_init(params) };
-    GGML_ASSERT(ctx_ptr != nullptr);
+    GGML_ASSERT(ctx_ptr != ਖਾਲੀ_ਸੂਚਕ);
     ggml_context * ctx = ctx_ptr.get();
 
     ggml_tensor * src = deserialize_tensor(ctx, &request.src);
     ggml_tensor * dst = deserialize_tensor(ctx, &request.dst);
-    if (src == nullptr || dst == nullptr || src->buffer == nullptr || dst->buffer == nullptr) {
+    ਜੇ (src == ਖਾਲੀ_ਸੂਚਕ || dst == ਖਾਲੀ_ਸੂਚਕ || src->ਬਫਰ == ਖਾਲੀ_ਸੂਚਕ || dst->ਬਫਰ == ਖਾਲੀ_ਸੂਚਕ) {
         LOG_ERROR("[%s] error deserializing tensors\n", __func__);
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    uint64_t src_size   = (uint64_t) ggml_nbytes(src);
-    uint64_t dst_data   = (uint64_t) dst->data;
-    uint64_t dst_base   = (uint64_t) ggml_backend_buffer_get_base(dst->buffer);
-    uint64_t dst_buf_sz = (uint64_t) ggml_backend_buffer_get_size(dst->buffer);
+    uint64_t src_ਮਾਪ   = (uint64_t) ggml_nbytes(src);
+    uint64_t dst_ਅੰਕੜੇ   = (uint64_t) dst->ਅੰਕੜੇ;
+    uint64_t dst_ਅਧਾਰ   = (uint64_t) ggml_backend_ਬਫਰ_get_ਅਧਾਰ(dst->ਬਫਰ);
+    uint64_t dst_buf_sz = (uint64_t) ggml_backend_ਬਫਰ_get_ਮਾਪ(dst->ਬਫਰ);
 
-    if (dst_data + src_size > dst_base + dst_buf_sz) {
+    ਜੇ (dst_ਅੰਕੜੇ + src_ਮਾਪ > dst_ਅਧਾਰ + dst_buf_sz) {
         LOG_ERROR("[%s] out-of-bounds write in rpc_server::copy_tensor:\n"
                          "    write range : [0x%" PRIx64 ", 0x%" PRIx64 "]\n"
                          "    buffer base: [0x%" PRIx64 ", 0x%" PRIx64 "]\n",
                          __func__,
-                         dst_data,
-                         dst_data + src_size,
-                         dst_base,
-                         dst_base + dst_buf_sz);
-        return false;
+                         dst_ਅੰਕੜੇ,
+                         dst_ਅੰਕੜੇ + src_ਮਾਪ,
+                         dst_ਅਧਾਰ,
+                         dst_ਅਧਾਰ + dst_buf_sz);
+        ਵਾਪਸ ਝੂਠ;
     }
 
     LOG_DBG2("[%s] src: %s -> dst: %s\n", __func__, rpc_log_format_tensor(src).c_str(), rpc_log_format_tensor(dst).c_str());
 
-    response.result = ggml_backend_buffer_copy_tensor(src, dst);
-    return true;
+    response.ਨਤੀਜਾ = ggml_backend_ਬਫਰ_copy_tensor(src, dst);
+    ਵਾਪਸ ਸੱਚ;
 }
 
-ggml_tensor * rpc_server::create_node(uint64_t id,
-                                      struct ggml_context * ctx,
-                                      const std::unordered_map<uint64_t, const rpc_tensor*> & tensor_ptrs,
-                                      std::unordered_map<uint64_t, struct ggml_tensor*> & tensor_map) {
-    if (tensor_map.find(id) != tensor_map.end()) {
-        return tensor_map[id];
+ggml_tensor * rpc_server::create_ਗੰਢ(uint64_t id,
+                                      ਬਣਤਰ ggml_context * ctx,
+                                      ਅਚਲ std::unordered_map<uint64_t, ਅਚਲ rpc_tensor*> & tensor_ptrs,
+                                      std::unordered_map<uint64_t, ਬਣਤਰ ggml_tensor*> & tensor_map) {
+    ਜੇ (tensor_map.find(id) != tensor_map.end()) {
+        ਵਾਪਸ tensor_map[id];
     }
     // Safely find the tensor pointer
-    auto it_ptr = tensor_ptrs.find(id);
-    if (it_ptr == tensor_ptrs.end()) {
-        return nullptr;
+    ਸਵੈਚਾਲਿਤ it_ptr = tensor_ptrs.find(id);
+    ਜੇ (it_ptr == tensor_ptrs.end()) {
+        ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
     }
-    const rpc_tensor * tensor = it_ptr->second;
+    ਅਚਲ rpc_tensor * tensor = it_ptr->second;
 
-    struct ggml_tensor * result = deserialize_tensor(ctx, tensor);
-    if (result == nullptr) {
-        return nullptr;
+    ਬਣਤਰ ggml_tensor * ਨਤੀਜਾ = deserialize_tensor(ctx, tensor);
+    ਜੇ (ਨਤੀਜਾ == ਖਾਲੀ_ਸੂਚਕ) {
+        ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
     }
-    if (result->buffer == nullptr && result->data != nullptr) {
+    ਜੇ (ਨਤੀਜਾ->ਬਫਰ == ਖਾਲੀ_ਸੂਚਕ && ਨਤੀਜਾ->ਅੰਕੜੇ != ਖਾਲੀ_ਸੂਚਕ) {
         LOG_ERROR("[%s] invalid data ptr\n", __func__);
-        return nullptr;
+        ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
     }
-    tensor_map[id] = result;
-    for (int i = 0; i < GGML_MAX_SRC; i++) {
+    tensor_map[id] = ਨਤੀਜਾ;
+    ਲਈ (ਪੂਰਨ i = 0; i < GGML_MAX_SRC; i++) {
         // Check if the source ID is 0 before calling create_node recursively
-        if (tensor->src[i] == 0) {
-            result->src[i] = nullptr;
-        } else {
-            result->src[i] = create_node(tensor->src[i], ctx, tensor_ptrs, tensor_map);
+        ਜੇ (tensor->src[i] == 0) {
+            ਨਤੀਜਾ->src[i] = ਖਾਲੀ_ਸੂਚਕ;
+        } ਨਹੀਂਤਾਂ {
+            ਨਤੀਜਾ->src[i] = create_ਗੰਢ(tensor->src[i], ctx, tensor_ptrs, tensor_map);
             // If the recursive call failed for a non-zero ID, propagate the error
-            if (result->src[i] == nullptr) {
+            ਜੇ (ਨਤੀਜਾ->src[i] == ਖਾਲੀ_ਸੂਚਕ) {
                 LOG_ERROR("[%s] failed to create source node %d (src_id=%" PRIu64 ") for node id %" PRIu64 "\n",
                                __func__, i, tensor->src[i], id);
                 // Must return nullptr to signal failure up the call stack
-                return nullptr;
+                ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
             }
         }
     }
 
     // Handle view_src similarly
-    if (tensor->view_src == 0) {
-        result->view_src = nullptr;
-    } else {
-        result->view_src = create_node(tensor->view_src, ctx, tensor_ptrs, tensor_map);
+    ਜੇ (tensor->view_src == 0) {
+        ਨਤੀਜਾ->view_src = ਖਾਲੀ_ਸੂਚਕ;
+    } ਨਹੀਂਤਾਂ {
+        ਨਤੀਜਾ->view_src = create_ਗੰਢ(tensor->view_src, ctx, tensor_ptrs, tensor_map);
         // If the recursive call failed for a non-zero ID, propagate the error
-        if (result->view_src == nullptr) {
+        ਜੇ (ਨਤੀਜਾ->view_src == ਖਾਲੀ_ਸੂਚਕ) {
             LOG_ERROR("[%s] failed to create view_src node (view_src_id=%" PRIu64 ") for node id %" PRIu64 "\n",
                            __func__, tensor->view_src, id);
             // Must return nullptr to signal failure up the call stack
-            return nullptr;
+            ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
         }
     }
-    result->view_offs = tensor->view_offs;
-    return result;
+    ਨਤੀਜਾ->view_offs = tensor->view_offs;
+    ਵਾਪਸ ਨਤੀਜਾ;
 }
 
-bool rpc_server::graph_compute(const std::vector<uint8_t> & input) {
+ਤਾਰਕਿਕ rpc_server::ਗ੍ਰਾਫ_compute(ਅਚਲ std::vector<uint8_t> & ਨਿਵੇਸ਼) {
     // serialization format:
     // | device (4 bytes) | uid (8 bytes) | n_nodes (4 bytes) | nodes (n_nodes * sizeof(uint64_t) | n_tensors (4 bytes) | tensors (n_tensors * sizeof(rpc_tensor)) |
-    if (input.size() < 2*sizeof(uint32_t) + sizeof(uint64_t)) {
-        return false;
+    ਜੇ (ਨਿਵੇਸ਼.size() < 2*ਆਕਾਰ(uint32_t) + ਆਕਾਰ(uint64_t)) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    const uint8_t * src = input.data();
+    ਅਚਲ uint8_t * src = ਨਿਵੇਸ਼.ਅੰਕੜੇ();
     uint32_t device;
-    memcpy(&device, src, sizeof(device));
-    src += sizeof(device);
-    if (device >= backends.size()) {
-        return false;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&device, src, ਆਕਾਰ(device));
+    src += ਆਕਾਰ(device);
+    ਜੇ (device >= backends.size()) {
+        ਵਾਪਸ ਝੂਠ;
     }
     uint64_t uid;
-    memcpy(&uid, src, sizeof(uid));
-    src += sizeof(uid);
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&uid, src, ਆਕਾਰ(uid));
+    src += ਆਕਾਰ(uid);
     uint32_t n_nodes;
-    memcpy(&n_nodes, src, sizeof(n_nodes));
-    src += sizeof(n_nodes);
-    if (input.size() < 2*sizeof(uint32_t) + sizeof(uint64_t) + n_nodes*sizeof(uint64_t) + sizeof(uint32_t)) {
-        return false;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&n_nodes, src, ਆਕਾਰ(n_nodes));
+    src += ਆਕਾਰ(n_nodes);
+    ਜੇ (ਨਿਵੇਸ਼.size() < 2*ਆਕਾਰ(uint32_t) + ਆਕਾਰ(uint64_t) + n_nodes*ਆਕਾਰ(uint64_t) + ਆਕਾਰ(uint32_t)) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    const uint64_t * nodes = (const uint64_t *)src;
-    src += n_nodes*sizeof(uint64_t);
+    ਅਚਲ uint64_t * nodes = (ਅਚਲ uint64_t *)src;
+    src += n_nodes*ਆਕਾਰ(uint64_t);
     uint32_t n_tensors;
-    memcpy(&n_tensors, src, sizeof(n_tensors));
-    src += sizeof(n_tensors);
-    if (input.size() < 2*sizeof(uint32_t) + sizeof(uint64_t) + n_nodes*sizeof(uint64_t) + sizeof(uint32_t) + n_tensors*sizeof(rpc_tensor)) {
-        return false;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&n_tensors, src, ਆਕਾਰ(n_tensors));
+    src += ਆਕਾਰ(n_tensors);
+    ਜੇ (ਨਿਵੇਸ਼.size() < 2*ਆਕਾਰ(uint32_t) + ਆਕਾਰ(uint64_t) + n_nodes*ਆਕਾਰ(uint64_t) + ਆਕਾਰ(uint32_t) + n_tensors*ਆਕਾਰ(rpc_tensor)) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    const rpc_tensor * tensors = (const rpc_tensor *)src;
+    ਅਚਲ rpc_tensor * tensors = (ਅਚਲ rpc_tensor *)src;
     LOG_DBG("[%s] device: %u, uid: %" PRIu64 ", n_nodes: %u, n_tensors: %u\n", __func__, device, uid, n_nodes, n_tensors);
 
     // graphs with uid == 0 are not cached, see GRAPH_CACHE_MAX for the eviction policy
-    if (uid != 0 && stored_graphs[device].size() >= GRAPH_CACHE_MAX) {
+    ਜੇ (uid != 0 && stored_graphs[device].size() >= ਗ੍ਰਾਫ_CACHE_MAX) {
         LOG_DBG("[%s] clearing graph cache for device %u (%zu entries)\n",
                 __func__, device, stored_graphs[device].size());
         stored_graphs[device].clear();
     }
-    stored_graph sg_tmp;
-    stored_graph & sg = uid != 0 ? stored_graphs[device][uid] : sg_tmp;
+    stored_ਗ੍ਰਾਫ sg_tmp;
+    stored_ਗ੍ਰਾਫ & sg = uid != 0 ? stored_graphs[device][uid] : sg_tmp;
 
-    size_t buf_size = ggml_tensor_overhead()*(n_nodes + n_tensors) + ggml_graph_overhead_custom(n_nodes, false);
-    if (sg.buffer.size() < buf_size) {
-        sg.buffer.resize(buf_size);
+    size_t buf_ਮਾਪ = ggml_tensor_overhead()*(n_nodes + n_tensors) + ggml_ਗ੍ਰਾਫ_overhead_custom(n_nodes, ਝੂਠ);
+    ਜੇ (sg.ਬਫਰ.size() < buf_ਮਾਪ) {
+        sg.ਬਫਰ.resize(buf_ਮਾਪ);
     }
-    struct ggml_init_params params = {
-        /*.mem_size   =*/ buf_size,
-        /*.mem_buffer =*/ sg.buffer.data(),
-        /*.no_alloc   =*/ true,
+    ਬਣਤਰ ggml_init_params params = {
+        /*.mem_size   =*/ buf_ਮਾਪ,
+        /*.mem_buffer =*/ sg.ਬਫਰ.ਅੰਕੜੇ(),
+        /*.no_alloc   =*/ ਸੱਚ,
     };
     ggml_context_ptr ctx_ptr { ggml_init(params) };
-    GGML_ASSERT(ctx_ptr != nullptr);
+    GGML_ASSERT(ctx_ptr != ਖਾਲੀ_ਸੂਚਕ);
     ggml_context * ctx = ctx_ptr.get();
-    struct ggml_cgraph * graph = ggml_new_graph_custom(ctx, n_nodes, false);
+    ਬਣਤਰ ggml_cgraph * graph = ggml_new_ਗ੍ਰਾਫ_custom(ctx, n_nodes, ਝੂਠ);
     graph->n_nodes = n_nodes;
-    std::unordered_map<uint64_t, const rpc_tensor*> tensor_ptrs;
+    std::unordered_map<uint64_t, ਅਚਲ rpc_tensor*> tensor_ptrs;
     tensor_ptrs.reserve(n_tensors);
-    for (uint32_t i = 0; i < n_tensors; i++) {
+    ਲਈ (uint32_t i = 0; i < n_tensors; i++) {
         tensor_ptrs.emplace(tensors[i].id, &tensors[i]);
     }
     std::unordered_map<uint64_t, ggml_tensor*> tensor_map;
     tensor_map.reserve(n_nodes);
     // the compute itself is asynchronous, so building the graph is the only server-side cost
     // observable here - the round trip is timed on the client
-    const auto t_deserialize = std::chrono::steady_clock::now();
-    for (uint32_t i = 0; i < n_nodes; i++) {
+    ਅਚਲ ਸਵੈਚਾਲਿਤ t_deserialize = std::chrono::steady_clock::now();
+    ਲਈ (uint32_t i = 0; i < n_nodes; i++) {
         int64_t id;
-        memcpy(&id, &nodes[i], sizeof(id));
-        graph->nodes[i] = create_node(id, ctx, tensor_ptrs, tensor_map);
+        ਸਮ੍ਰਿਤੀ_ਨਕਲ(&id, &nodes[i], ਆਕਾਰ(id));
+        graph->nodes[i] = create_ਗੰਢ(id, ctx, tensor_ptrs, tensor_map);
         // Check if create_node failed for a *non-zero* ID.
         // If id was 0, create_node returning nullptr is expected.
         // If id was non-zero and create_node returned nullptr, it indicates a deserialization error.
-        if (graph->nodes[i] == nullptr && id != 0) {
+        ਜੇ (graph->nodes[i] == ਖਾਲੀ_ਸੂਚਕ && id != 0) {
             LOG_ERROR("[%s] failed to create graph node %d (id=%" PRId64 ")\n", __func__, i, id);
-            return false;
+            ਵਾਪਸ ਝੂਠ;
         }
-        if (graph->nodes[i] != nullptr) {
+        ਜੇ (graph->nodes[i] != ਖਾਲੀ_ਸੂਚਕ) {
             LOG_DBG3("[%s] node %u: id=%" PRId64 ", %s\n", __func__, i, id, rpc_log_format_tensor(graph->nodes[i]).c_str());
-            const size_t hash_pos = ggml_hash_insert(&graph->visited_hash_set, graph->nodes[i]);
-            graph->use_counts[hash_pos] = tensor_ptrs.at(id)->use_count;
+            ਅਚਲ size_t hash_pos = ggml_hash_ਪਾਓ(&graph->ਦੇਖਿਆ_hash_ਸੈੱਟ, graph->nodes[i]);
+            graph->use_counts[hash_pos] = tensor_ptrs.at(id)->use_ਗਿਣਤੀ;
         }
     }
-    const std::chrono::duration<double, std::milli> deserialize_ms = std::chrono::steady_clock::now() - t_deserialize;
+    ਅਚਲ std::chrono::duration<ਦੁੱਗਣਾ, std::milli> deserialize_ms = std::chrono::steady_clock::now() - t_deserialize;
 
-    ggml_status status = ggml_backend_graph_compute_async(backends[device], graph);
-    GGML_ASSERT(status == GGML_STATUS_SUCCESS && "Unsuccessful graph computations are not supported with RPC");
+    ggml_ਸਥਿਤੀ ਸਥਿਤੀ = ggml_backend_ਗ੍ਰਾਫ_compute_async(backends[device], graph);
+    GGML_ASSERT(ਸਥਿਤੀ == GGML_ਸਥਿਤੀ_SUCCESS && "Unsuccessful graph computations are not supported with RPC");
     sg.graph = graph;
     LOG_DBG3("[%s] device: %u, graph build: %.3f ms\n", __func__, device, deserialize_ms.count());
-    return true;
+    ਵਾਪਸ ਸੱਚ;
 }
 
-bool rpc_server::graph_recompute(const rpc_msg_graph_recompute_req & request) {
+ਤਾਰਕਿਕ rpc_server::ਗ੍ਰਾਫ_recompute(ਅਚਲ rpc_ਸੁਨੇਹਾ_ਗ੍ਰਾਫ_recompute_req & request) {
     uint32_t device = request.device;
-    if (device >= backends.size()) {
-        return false;
+    ਜੇ (device >= backends.size()) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    auto it = stored_graphs[device].find(request.uid);
-    if (it == stored_graphs[device].end() || it->second.graph == nullptr) {
+    ਸਵੈਚਾਲਿਤ it = stored_graphs[device].find(request.uid);
+    ਜੇ (it == stored_graphs[device].end() || it->second.graph == ਖਾਲੀ_ਸੂਚਕ) {
         LOG_ERROR("[%s] device: %u, graph with uid %" PRIu64 " not found\n", __func__, device, request.uid);
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
     ggml_cgraph * graph = it->second.graph;
     LOG_DBG("[%s] device: %u, uid: %" PRIu64 "\n", __func__, device, request.uid);
-    ggml_status status = ggml_backend_graph_compute_async(backends[device], graph);
-    GGML_ASSERT(status == GGML_STATUS_SUCCESS && "Unsuccessful graph computations are not supported with RPC");
-    return true;
+    ggml_ਸਥਿਤੀ ਸਥਿਤੀ = ggml_backend_ਗ੍ਰਾਫ_compute_async(backends[device], graph);
+    GGML_ASSERT(ਸਥਿਤੀ == GGML_ਸਥਿਤੀ_SUCCESS && "Unsuccessful graph computations are not supported with RPC");
+    ਵਾਪਸ ਸੱਚ;
 }
 
 // graph compute is asynchronous; commands that read or write buffer data synchronize first
-void rpc_server::sync_all_backends() {
-    for (ggml_backend_t backend : backends) {
+ਖਾਲੀ rpc_server::sync_all_backends() {
+    ਲਈ (ggml_backend_t backend : backends) {
         ggml_backend_synchronize(backend);
     }
 }
 
 // The comm link between two servers uses the same caps negotiation as the client HELLO,
 // so it gets the same transport upgrades (e.g. RDMA).
-bool rpc_server::comm_init(const rpc_msg_comm_init_req & request, rpc_msg_comm_init_rsp & response) {
+ਤਾਰਕਿਕ rpc_server::comm_init(ਅਚਲ rpc_ਸੁਨੇਹਾ_comm_init_req & request, rpc_ਸੁਨੇਹਾ_comm_init_rsp & response) {
     response.ok = 0;
-    if (request.device >= backends.size() || request.world != 2 || request.rank >= request.world) {
-        return true;
+    ਜੇ (request.device >= backends.size() || request.world != 2 || request.rank >= request.world) {
+        ਵਾਪਸ ਸੱਚ;
     }
-    comm_state & state = comm_states[request.device];
-    if (state.peer != nullptr) {
+    comm_state & state = comm_ਹਾਲਤਾਂ[request.device];
+    ਜੇ (state.peer != ਖਾਲੀ_ਸੂਚਕ) {
         response.ok = 1;
-        return true;
+        ਵਾਪਸ ਸੱਚ;
     }
-    uint8_t local_caps[RPC_CONN_CAPS_SIZE] = {};
-    uint8_t remote_caps[RPC_CONN_CAPS_SIZE] = {};
-    if (request.rank == 0) {
-        socket_ptr srv = socket_t::create_server("0.0.0.0", request.port);
-        if (srv == nullptr) {
-            LOG_ERROR("[%s] failed to listen on comm port %u\n", __func__, request.port);
-            return true;
+    uint8_t local_caps[RPC_CONN_CAPS_ਮਾਪ] = {};
+    uint8_t remote_caps[RPC_CONN_CAPS_ਮਾਪ] = {};
+    ਜੇ (request.rank == 0) {
+        socket_ptr srv = socket_t::create_server("0.0.0.0", request.ਪੋਰਟ);
+        ਜੇ (srv == ਖਾਲੀ_ਸੂਚਕ) {
+            LOG_ERROR("[%s] failed to listen on comm port %u\n", __func__, request.ਪੋਰਟ);
+            ਵਾਪਸ ਸੱਚ;
         }
         state.peer = srv->accept();
-        if (state.peer == nullptr) {
-            return true;
+        ਜੇ (state.peer == ਖਾਲੀ_ਸੂਚਕ) {
+            ਵਾਪਸ ਸੱਚ;
         }
-        if (!state.peer->recv_data(remote_caps, sizeof(remote_caps))) {
-            state.peer = nullptr;
-            return true;
+        ਜੇ (!state.peer->recv_ਅੰਕੜੇ(remote_caps, ਆਕਾਰ(remote_caps))) {
+            state.peer = ਖਾਲੀ_ਸੂਚਕ;
+            ਵਾਪਸ ਸੱਚ;
         }
         state.peer->get_caps(local_caps);
-        if (!state.peer->send_data(local_caps, sizeof(local_caps))) {
-            state.peer = nullptr;
-            return true;
+        ਜੇ (!state.peer->send_ਅੰਕੜੇ(local_caps, ਆਕਾਰ(local_caps))) {
+            state.peer = ਖਾਲੀ_ਸੂਚਕ;
+            ਵਾਪਸ ਸੱਚ;
         }
         state.peer->update_caps(remote_caps);
-    } else {
-        const std::string host(request.host, strnlen(request.host, sizeof(request.host)));
+    } ਨਹੀਂਤਾਂ {
+        ਅਚਲ std::string host(request.host, strnlen(request.host, ਆਕਾਰ(request.host)));
         // rank 0 may not be listening yet, retry for a few seconds
-        for (int i = 0; i < 100 && state.peer == nullptr; i++) {
-            state.peer = socket_t::connect(host.c_str(), request.port);
-            if (state.peer == nullptr) {
+        ਲਈ (ਪੂਰਨ i = 0; i < 100 && state.peer == ਖਾਲੀ_ਸੂਚਕ; i++) {
+            state.peer = socket_t::connect(host.c_str(), request.ਪੋਰਟ);
+            ਜੇ (state.peer == ਖਾਲੀ_ਸੂਚਕ) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(50));
             }
         }
-        if (state.peer == nullptr) {
-            LOG_ERROR("[%s] failed to connect to peer %s:%u\n", __func__, host.c_str(), request.port);
-            return true;
+        ਜੇ (state.peer == ਖਾਲੀ_ਸੂਚਕ) {
+            LOG_ERROR("[%s] failed to connect to peer %s:%u\n", __func__, host.c_str(), request.ਪੋਰਟ);
+            ਵਾਪਸ ਸੱਚ;
         }
         state.peer->get_caps(local_caps);
-        if (!state.peer->send_data(local_caps, sizeof(local_caps)) ||
-            !state.peer->recv_data(remote_caps, sizeof(remote_caps))) {
-            state.peer = nullptr;
-            return true;
+        ਜੇ (!state.peer->send_ਅੰਕੜੇ(local_caps, ਆਕਾਰ(local_caps)) ||
+            !state.peer->recv_ਅੰਕੜੇ(remote_caps, ਆਕਾਰ(remote_caps))) {
+            state.peer = ਖਾਲੀ_ਸੂਚਕ;
+            ਵਾਪਸ ਸੱਚ;
         }
         state.peer->update_caps(remote_caps);
     }
@@ -2278,660 +2278,660 @@ bool rpc_server::comm_init(const rpc_msg_comm_init_req & request, rpc_msg_comm_i
     state.world = request.world;
     LOG_INFO("[%s] device %u joined pairwise comm as rank %u\n", __func__, request.device, request.rank);
     response.ok = 1;
-    return true;
+    ਵਾਪਸ ਸੱਚ;
 }
 
-bool rpc_server::comm_allreduce(const rpc_msg_comm_allreduce_req & request) {
-    if (request.device >= backends.size()) {
-        return false;
+ਤਾਰਕਿਕ rpc_server::comm_allreduce(ਅਚਲ rpc_ਸੁਨੇਹਾ_comm_allreduce_req & request) {
+    ਜੇ (request.device >= backends.size()) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    comm_state & state = comm_states[request.device];
-    if (state.peer == nullptr) {
+    comm_state & state = comm_ਹਾਲਤਾਂ[request.device];
+    ਜੇ (state.peer == ਖਾਲੀ_ਸੂਚਕ) {
         LOG_ERROR("[%s] no communicator for device %u\n", __func__, request.device);
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
     ggml_backend_t backend = backends[request.device];
 
-    size_t ctx_size = 16*ggml_tensor_overhead() + 2*ggml_graph_overhead_custom(8, false);
-    struct ggml_init_params params = {
-        /*.mem_size   =*/ ctx_size,
-        /*.mem_buffer =*/ NULL,
-        /*.no_alloc   =*/ true,
+    size_t ctx_ਮਾਪ = 16*ggml_tensor_overhead() + 2*ggml_ਗ੍ਰਾਫ_overhead_custom(8, ਝੂਠ);
+    ਬਣਤਰ ggml_init_params params = {
+        /*.mem_size   =*/ ctx_ਮਾਪ,
+        /*.mem_buffer =*/ ਨਿਰਾ,
+        /*.no_alloc   =*/ ਸੱਚ,
     };
     ggml_context_ptr ctx_ptr { ggml_init(params) };
-    GGML_ASSERT(ctx_ptr != nullptr);
+    GGML_ASSERT(ctx_ptr != ਖਾਲੀ_ਸੂਚਕ);
     ggml_context * ctx = ctx_ptr.get();
     ggml_tensor * t_dst = deserialize_tensor(ctx, &request.tensor);
-    if (t_dst == nullptr || t_dst->buffer == nullptr) {
+    ਜੇ (t_dst == ਖਾਲੀ_ਸੂਚਕ || t_dst->ਬਫਰ == ਖਾਲੀ_ਸੂਚਕ) {
         LOG_ERROR("[%s] error deserializing tensor\n", __func__);
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
-    const size_t  nbytes = ggml_nbytes(t_dst);
-    const int64_t ne     = ggml_nelements(t_dst);
-    if (nbytes == 0) {
-        return true;
+    ਅਚਲ size_t  nbytes = ggml_nbytes(t_dst);
+    ਅਚਲ int64_t ne     = ggml_nelements(t_dst);
+    ਜੇ (nbytes == 0) {
+        ਵਾਪਸ ਸੱਚ;
     }
     // reduce large partials in bf16 to halve the wire bytes; small (decode-sized) ones
     // stay f32 since the extra casts and sync cost more than the bytes saved
-    const bool   wire_bf16  = t_dst->type == GGML_TYPE_F32 && ne >= 32768;
-    const size_t wire_bytes = wire_bf16 ? (size_t) ne*2 : nbytes;
-    const size_t need       = wire_bf16 ? 2*nbytes : nbytes;
-    if (state.scratch_size < need) {
-        state.scratch.reset(ggml_backend_alloc_buffer(backend, need));
-        state.scratch_size = need;
+    ਅਚਲ ਤਾਰਕਿਕ   wire_bf16  = t_dst->type == GGML_TYPE_F32 && ne >= 32768;
+    ਅਚਲ size_t wire_ਬਾਈਟਾਂ = wire_bf16 ? (size_t) ne*2 : nbytes;
+    ਅਚਲ size_t need       = wire_bf16 ? 2*nbytes : nbytes;
+    ਜੇ (state.scratch_ਮਾਪ < need) {
+        state.scratch.reset(ggml_backend_alloc_ਬਫਰ(backend, need));
+        state.scratch_ਮਾਪ = need;
     }
-    char * scratch_base = (char *) ggml_backend_buffer_get_base(state.scratch.get());
-    state.send_buf.resize(wire_bytes);
-    state.recv_buf.resize(wire_bytes);
+    ਅੱਖਰ * scratch_ਅਧਾਰ = (ਅੱਖਰ *) ggml_backend_ਬਫਰ_get_ਅਧਾਰ(state.scratch.get());
+    state.send_buf.resize(wire_ਬਾਈਟਾਂ);
+    state.recv_buf.resize(wire_ਬਾਈਟਾਂ);
 
-    auto new_scratch_tensor = [&](ggml_type type, size_t offset) {
+    ਸਵੈਚਾਲਿਤ new_scratch_tensor = [&](ggml_type type, size_t ਵਿੱਥ) {
         ggml_tensor * t = ggml_new_tensor_4d(ctx, type, t_dst->ne[0], t_dst->ne[1], t_dst->ne[2], t_dst->ne[3]);
-        t->buffer = state.scratch.get();
-        t->data   = scratch_base + offset;
-        return t;
+        t->ਬਫਰ = state.scratch.get();
+        t->ਅੰਕੜੇ   = scratch_ਅਧਾਰ + ਵਿੱਥ;
+        ਵਾਪਸ t;
     };
-    auto new_cpy_node = [&](ggml_tensor * src, ggml_tensor * dst) {
+    ਸਵੈਚਾਲਿਤ new_cpy_ਗੰਢ = [&](ggml_tensor * src, ggml_tensor * dst) {
         ggml_tensor * t = ggml_new_tensor_4d(ctx, dst->type, dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3]);
         t->op     = GGML_OP_CPY;
         t->src[0] = src;
         t->src[1] = dst;
-        t->buffer = dst->buffer;
-        t->data   = dst->data;
+        t->ਬਫਰ = dst->ਬਫਰ;
+        t->ਅੰਕੜੇ   = dst->ਅੰਕੜੇ;
         t->flags |= GGML_TENSOR_FLAG_COMPUTE;
-        return t;
+        ਵਾਪਸ t;
     };
-    auto compute_nodes = [&](ggml_tensor * n0, ggml_tensor * n1) {
-        ggml_cgraph * graph = ggml_new_graph_custom(ctx, 2, false);
+    ਸਵੈਚਾਲਿਤ compute_nodes = [&](ggml_tensor * n0, ggml_tensor * n1) {
+        ggml_cgraph * graph = ggml_new_ਗ੍ਰਾਫ_custom(ctx, 2, ਝੂਠ);
         graph->nodes[0] = n0;
         graph->nodes[1] = n1;
-        graph->n_nodes  = n1 != nullptr ? 2 : 1;
-        ggml_status status = ggml_backend_graph_compute_async(backend, graph);
-        GGML_ASSERT(status == GGML_STATUS_SUCCESS && "Unsuccessful graph computations are not supported with RPC");
+        graph->n_nodes  = n1 != ਖਾਲੀ_ਸੂਚਕ ? 2 : 1;
+        ggml_ਸਥਿਤੀ ਸਥਿਤੀ = ggml_backend_ਗ੍ਰਾਫ_compute_async(backend, graph);
+        GGML_ASSERT(ਸਥਿਤੀ == GGML_ਸਥਿਤੀ_SUCCESS && "Unsuccessful graph computations are not supported with RPC");
     };
 
     // wait for the pending subgraph that produced this partial
     ggml_backend_synchronize(backend);
 
-    ggml_tensor * t_wire_send = nullptr;
-    ggml_tensor * t_wire_recv = nullptr;
-    if (wire_bf16) {
+    ggml_tensor * t_wire_send = ਖਾਲੀ_ਸੂਚਕ;
+    ggml_tensor * t_wire_recv = ਖਾਲੀ_ਸੂਚਕ;
+    ਜੇ (wire_bf16) {
         t_wire_send = new_scratch_tensor(GGML_TYPE_BF16, 0);
         t_wire_recv = new_scratch_tensor(GGML_TYPE_BF16, ne*2);
-        compute_nodes(new_cpy_node(t_dst, t_wire_send), nullptr);
+        compute_nodes(new_cpy_ਗੰਢ(t_dst, t_wire_send), ਖਾਲੀ_ਸੂਚਕ);
         ggml_backend_synchronize(backend);
-        ggml_backend_tensor_get(t_wire_send, state.send_buf.data(), 0, wire_bytes);
-    } else {
-        ggml_backend_tensor_get(t_dst, state.send_buf.data(), 0, wire_bytes);
+        ggml_backend_tensor_get(t_wire_send, state.send_buf.ਅੰਕੜੇ(), 0, wire_ਬਾਈਟਾਂ);
+    } ਨਹੀਂਤਾਂ {
+        ggml_backend_tensor_get(t_dst, state.send_buf.ਅੰਕੜੇ(), 0, wire_ਬਾਈਟਾਂ);
     }
 
     // rank 0 sends first, rank 1 receives first, so large payloads cannot deadlock
-    if (state.rank == 0) {
-        if (!state.peer->send_data(state.send_buf.data(), wire_bytes) || !state.peer->flush() ||
-            !state.peer->recv_data(state.recv_buf.data(), wire_bytes)) {
-            return false;
+    ਜੇ (state.rank == 0) {
+        ਜੇ (!state.peer->send_ਅੰਕੜੇ(state.send_buf.ਅੰਕੜੇ(), wire_ਬਾਈਟਾਂ) || !state.peer->flush() ||
+            !state.peer->recv_ਅੰਕੜੇ(state.recv_buf.ਅੰਕੜੇ(), wire_ਬਾਈਟਾਂ)) {
+            ਵਾਪਸ ਝੂਠ;
         }
-    } else {
-        if (!state.peer->recv_data(state.recv_buf.data(), wire_bytes) ||
-            !state.peer->send_data(state.send_buf.data(), wire_bytes) || !state.peer->flush()) {
-            return false;
+    } ਨਹੀਂਤਾਂ {
+        ਜੇ (!state.peer->recv_ਅੰਕੜੇ(state.recv_buf.ਅੰਕੜੇ(), wire_ਬਾਈਟਾਂ) ||
+            !state.peer->send_ਅੰਕੜੇ(state.send_buf.ਅੰਕੜੇ(), wire_ਬਾਈਟਾਂ) || !state.peer->flush()) {
+            ਵਾਪਸ ਝੂਠ;
         }
     }
 
     ggml_tensor * t_peer = new_scratch_tensor(t_dst->type, wire_bf16 ? (size_t) ne*4 : 0);
-    ggml_tensor * t_cast = nullptr;
-    if (wire_bf16) {
-        ggml_backend_tensor_set(t_wire_recv, state.recv_buf.data(), 0, wire_bytes);
-        t_cast = new_cpy_node(t_wire_recv, t_peer);
-    } else {
-        ggml_backend_tensor_set(t_peer, state.recv_buf.data(), 0, wire_bytes);
+    ggml_tensor * t_cast = ਖਾਲੀ_ਸੂਚਕ;
+    ਜੇ (wire_bf16) {
+        ggml_backend_tensor_ਸੈੱਟ(t_wire_recv, state.recv_buf.ਅੰਕੜੇ(), 0, wire_ਬਾਈਟਾਂ);
+        t_cast = new_cpy_ਗੰਢ(t_wire_recv, t_peer);
+    } ਨਹੀਂਤਾਂ {
+        ggml_backend_tensor_ਸੈੱਟ(t_peer, state.recv_buf.ਅੰਕੜੇ(), 0, wire_ਬਾਈਟਾਂ);
     }
 
     ggml_tensor * t_red = ggml_new_tensor_4d(ctx, t_dst->type, t_dst->ne[0], t_dst->ne[1], t_dst->ne[2], t_dst->ne[3]);
-    t_red->op     = GGML_OP_ADD;
+    t_red->op     = GGML_OP_ਜੋੜੋ;
     t_red->src[0] = t_dst;
     t_red->src[1] = t_peer;
-    t_red->buffer = t_dst->buffer;
-    t_red->data   = t_dst->data;
+    t_red->ਬਫਰ = t_dst->ਬਫਰ;
+    t_red->ਅੰਕੜੇ   = t_dst->ਅੰਕੜੇ;
     t_red->flags |= GGML_TENSOR_FLAG_COMPUTE;
 
-    if (t_cast != nullptr) {
+    ਜੇ (t_cast != ਖਾਲੀ_ਸੂਚਕ) {
         compute_nodes(t_cast, t_red);
-    } else {
-        compute_nodes(t_red, nullptr);
+    } ਨਹੀਂਤਾਂ {
+        compute_nodes(t_red, ਖਾਲੀ_ਸੂਚਕ);
     }
-    return true;
+    ਵਾਪਸ ਸੱਚ;
 }
 
-bool rpc_server::comm_free(const rpc_msg_comm_free_req & request) {
-    if (request.device >= backends.size()) {
-        return false;
+ਤਾਰਕਿਕ rpc_server::comm_free(ਅਚਲ rpc_ਸੁਨੇਹਾ_comm_free_req & request) {
+    ਜੇ (request.device >= backends.size()) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    comm_states[request.device] = comm_state();
-    return true;
+    comm_ਹਾਲਤਾਂ[request.device] = comm_state();
+    ਵਾਪਸ ਸੱਚ;
 }
 
-bool rpc_server::get_device_memory(const rpc_msg_get_device_memory_req & request, rpc_msg_get_device_memory_rsp & response) {
+ਤਾਰਕਿਕ rpc_server::get_device_ਸਮ੍ਰਿਤੀ(ਅਚਲ rpc_ਸੁਨੇਹਾ_get_device_ਸਮ੍ਰਿਤੀ_req & request, rpc_ਸੁਨੇਹਾ_get_device_ਸਮ੍ਰਿਤੀ_rsp & response) {
     uint32_t dev_id = request.device;
-    if (dev_id >= backends.size()) {
-        return false;
+    ਜੇ (dev_id >= backends.size()) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    size_t free, total;
+    size_t ਮੁਕਤ, ਕੁੱਲ;
     ggml_backend_dev_t dev = ggml_backend_get_device(backends[dev_id]);
-    ggml_backend_dev_memory(dev, &free, &total);
-    response.free_mem = free;
-    response.total_mem = total;
+    ggml_backend_dev_ਸਮ੍ਰਿਤੀ(dev, &ਮੁਕਤ, &ਕੁੱਲ);
+    response.free_mem = ਮੁਕਤ;
+    response.ਕੁੱਲ_mem = ਕੁੱਲ;
     LOG_DBG2("[%s] device: %u, free: %s, total: %s\n", __func__, dev_id,
-             rpc_log_format_size(response.free_mem).c_str(), rpc_log_format_size(response.total_mem).c_str());
-    return true;
+             rpc_log_format_ਮਾਪ(response.free_mem).c_str(), rpc_log_format_ਮਾਪ(response.ਕੁੱਲ_mem).c_str());
+    ਵਾਪਸ ਸੱਚ;
 }
 
 rpc_server::~rpc_server() {
-    for (auto buffer : buffers) {
-        ggml_backend_buffer_free(buffer);
+    ਲਈ (ਸਵੈਚਾਲਿਤ ਬਫਰ : buffers) {
+        ggml_backend_ਬਫਰ_free(ਬਫਰ);
     }
 }
 
-static void rpc_serve_client(const std::vector<ggml_backend_t> & backends, const char * cache_dir,
+ਸਥਿਰ ਖਾਲੀ rpc_serve_client(ਅਚਲ std::vector<ggml_backend_t> & backends, ਅਚਲ ਅੱਖਰ * cache_dir,
                              socket_ptr sock) {
     rpc_server server(backends, cache_dir);
     uint8_t cmd;
-    if (!sock->recv_data(&cmd, 1)) {
-        return;
+    ਜੇ (!sock->recv_ਅੰਕੜੇ(&cmd, 1)) {
+        ਵਾਪਸ;
     }
-    if (cmd != RPC_CMD_HELLO) {
+    ਜੇ (cmd != RPC_CMD_HELLO) {
         LOG_ERROR("Expected HELLO command, update client\n");
-        return;
+        ਵਾਪਸ;
     }
 
     // Read input_size and validate protocol version
-    uint64_t hello_input_size;
-    if (!sock->recv_data(&hello_input_size, sizeof(hello_input_size))) {
-        return;
+    uint64_t hello_ਨਿਵੇਸ਼_ਮਾਪ;
+    ਜੇ (!sock->recv_ਅੰਕੜੇ(&hello_ਨਿਵੇਸ਼_ਮਾਪ, ਆਕਾਰ(hello_ਨਿਵੇਸ਼_ਮਾਪ))) {
+        ਵਾਪਸ;
     }
 
-    if (hello_input_size != sizeof(rpc_msg_hello_req)) {
+    ਜੇ (hello_ਨਿਵੇਸ਼_ਮਾਪ != ਆਕਾਰ(rpc_ਸੁਨੇਹਾ_hello_req)) {
         LOG_ERROR("HELLO request size mismatch (%zu vs %zu) — client needs upgrade to protocol v%d.x\n",
-                       (size_t)hello_input_size, sizeof(rpc_msg_hello_req), RPC_PROTO_MAJOR_VERSION);
-        return;
+                       (size_t)hello_ਨਿਵੇਸ਼_ਮਾਪ, ਆਕਾਰ(rpc_ਸੁਨੇਹਾ_hello_req), RPC_PROTO_MAJOR_ਸੰਸਕਰਣ);
+        ਵਾਪਸ;
     }
 
-    rpc_msg_hello_req req = {};
-    if (!sock->recv_data(&req, sizeof(req))) {
-        return;
+    rpc_ਸੁਨੇਹਾ_hello_req req = {};
+    ਜੇ (!sock->recv_ਅੰਕੜੇ(&req, ਆਕਾਰ(req))) {
+        ਵਾਪਸ;
     }
 
-    rpc_msg_hello_rsp rsp = {};
+    rpc_ਸੁਨੇਹਾ_hello_rsp rsp = {};
     server.hello(rsp);
     // Advertise server transport capabilities based on client's caps
     sock->get_caps(rsp.conn_caps);
-    if (!send_msg(sock, &rsp, sizeof(rsp))) {
-        return;
+    ਜੇ (!send_ਸੁਨੇਹਾ(sock, &rsp, ਆਕਾਰ(rsp))) {
+        ਵਾਪਸ;
     }
 
     // Activate transport upgrade using client's caps
     sock->update_caps(req.conn_caps);
     LOG_DBG("[%s] client connected, transport: %s\n", __func__, sock->transport_name());
-    while (true) {
-        if (!sock->recv_data(&cmd, 1)) {
-            break;
+    ਜਦੋਂ (ਸੱਚ) {
+        ਜੇ (!sock->recv_ਅੰਕੜੇ(&cmd, 1)) {
+            ਰੋਕੋ;
         }
-        if (cmd >= RPC_CMD_COUNT) {
+        ਜੇ (cmd >= RPC_CMD_ਗਿਣਤੀ) {
             // fail fast if the command is invalid
             LOG_ERROR("Unknown command: %d\n", cmd);
-            break;
+            ਰੋਕੋ;
         }
-        LOG_DBG2("[%s] %s\n", __func__, rpc_cmd_name((enum rpc_cmd)cmd));
-        switch (cmd) {
-            case RPC_CMD_HELLO: {
+        LOG_DBG2("[%s] %s\n", __func__, rpc_cmd_name((ਗਿਣਤੀ rpc_cmd)cmd));
+        ਚੋਣ (cmd) {
+            ਹਾਲਤ RPC_CMD_HELLO: {
                 // HELLO command is handled above
-                return;
+                ਵਾਪਸ;
             }
-            case RPC_CMD_DEVICE_COUNT: {
-                if (!recv_msg(sock, nullptr, 0)) {
-                    return;
+            ਹਾਲਤ RPC_CMD_DEVICE_ਗਿਣਤੀ: {
+                ਜੇ (!recv_ਸੁਨੇਹਾ(sock, ਖਾਲੀ_ਸੂਚਕ, 0)) {
+                    ਵਾਪਸ;
                 }
-                rpc_msg_device_count_rsp response;
-                response.device_count = backends.size();
-                if (!send_msg(sock, &response, sizeof(response))) {
-                    return;
+                rpc_ਸੁਨੇਹਾ_device_ਗਿਣਤੀ_rsp response;
+                response.device_ਗਿਣਤੀ = backends.size();
+                ਜੇ (!send_ਸੁਨੇਹਾ(sock, &response, ਆਕਾਰ(response))) {
+                    ਵਾਪਸ;
                 }
-                break;
+                ਰੋਕੋ;
             }
-            case RPC_CMD_ALLOC_BUFFER: {
-                rpc_msg_alloc_buffer_req request;
-                if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+            ਹਾਲਤ RPC_CMD_ALLOC_ਬਫਰ: {
+                rpc_ਸੁਨੇਹਾ_alloc_ਬਫਰ_req request;
+                ਜੇ (!recv_ਸੁਨੇਹਾ(sock, &request, ਆਕਾਰ(request))) {
+                    ਵਾਪਸ;
                 }
-                rpc_msg_alloc_buffer_rsp response;
-                if (!server.alloc_buffer(request, response)) {
-                    return;
+                rpc_ਸੁਨੇਹਾ_alloc_ਬਫਰ_rsp response;
+                ਜੇ (!server.alloc_ਬਫਰ(request, response)) {
+                    ਵਾਪਸ;
                 }
-                if (!send_msg(sock, &response, sizeof(response))) {
-                    return;
+                ਜੇ (!send_ਸੁਨੇਹਾ(sock, &response, ਆਕਾਰ(response))) {
+                    ਵਾਪਸ;
                 }
-                break;
+                ਰੋਕੋ;
             }
-            case RPC_CMD_GET_ALLOC_SIZE: {
-                rpc_msg_get_alloc_size_req request;
-                if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+            ਹਾਲਤ RPC_CMD_GET_ALLOC_ਮਾਪ: {
+                rpc_ਸੁਨੇਹਾ_get_alloc_ਮਾਪ_req request;
+                ਜੇ (!recv_ਸੁਨੇਹਾ(sock, &request, ਆਕਾਰ(request))) {
+                    ਵਾਪਸ;
                 }
-                rpc_msg_get_alloc_size_rsp response;
-                if (!server.get_alloc_size(request, response)) {
-                    return;
+                rpc_ਸੁਨੇਹਾ_get_alloc_ਮਾਪ_rsp response;
+                ਜੇ (!server.get_alloc_ਮਾਪ(request, response)) {
+                    ਵਾਪਸ;
                 }
-                if (!send_msg(sock, &response, sizeof(response))) {
-                    return;
+                ਜੇ (!send_ਸੁਨੇਹਾ(sock, &response, ਆਕਾਰ(response))) {
+                    ਵਾਪਸ;
                 }
-                break;
+                ਰੋਕੋ;
             }
-            case RPC_CMD_GET_ALIGNMENT: {
-                rpc_msg_get_alignment_req request;
-                if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+            ਹਾਲਤ RPC_CMD_GET_ALIGNMENT: {
+                rpc_ਸੁਨੇਹਾ_get_alignment_req request;
+                ਜੇ (!recv_ਸੁਨੇਹਾ(sock, &request, ਆਕਾਰ(request))) {
+                    ਵਾਪਸ;
                 }
-                rpc_msg_get_alignment_rsp response;
-                if (!server.get_alignment(request, response)) {
-                    return;
+                rpc_ਸੁਨੇਹਾ_get_alignment_rsp response;
+                ਜੇ (!server.get_alignment(request, response)) {
+                    ਵਾਪਸ;
                 }
-                if (!send_msg(sock, &response, sizeof(response))) {
-                    return;
+                ਜੇ (!send_ਸੁਨੇਹਾ(sock, &response, ਆਕਾਰ(response))) {
+                    ਵਾਪਸ;
                 }
-                break;
+                ਰੋਕੋ;
             }
-            case RPC_CMD_GET_MAX_SIZE: {
-                rpc_msg_get_max_size_req request;
-                if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+            ਹਾਲਤ RPC_CMD_GET_MAX_ਮਾਪ: {
+                rpc_ਸੁਨੇਹਾ_get_max_ਮਾਪ_req request;
+                ਜੇ (!recv_ਸੁਨੇਹਾ(sock, &request, ਆਕਾਰ(request))) {
+                    ਵਾਪਸ;
                 }
-                rpc_msg_get_max_size_rsp response;
-                if (!server.get_max_size(request, response)) {
-                    return;
+                rpc_ਸੁਨੇਹਾ_get_max_ਮਾਪ_rsp response;
+                ਜੇ (!server.get_max_ਮਾਪ(request, response)) {
+                    ਵਾਪਸ;
                 }
-                if (!send_msg(sock, &response, sizeof(response))) {
-                    return;
+                ਜੇ (!send_ਸੁਨੇਹਾ(sock, &response, ਆਕਾਰ(response))) {
+                    ਵਾਪਸ;
                 }
-                break;
+                ਰੋਕੋ;
             }
-            case RPC_CMD_BUFFER_GET_BASE: {
-                rpc_msg_buffer_get_base_req request;
-                if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+            ਹਾਲਤ RPC_CMD_ਬਫਰ_GET_ਅਧਾਰ: {
+                rpc_ਸੁਨੇਹਾ_ਬਫਰ_get_ਅਧਾਰ_req request;
+                ਜੇ (!recv_ਸੁਨੇਹਾ(sock, &request, ਆਕਾਰ(request))) {
+                    ਵਾਪਸ;
                 }
-                rpc_msg_buffer_get_base_rsp response;
-                if (!server.buffer_get_base(request, response)) {
-                    return;
+                rpc_ਸੁਨੇਹਾ_ਬਫਰ_get_ਅਧਾਰ_rsp response;
+                ਜੇ (!server.ਬਫਰ_get_ਅਧਾਰ(request, response)) {
+                    ਵਾਪਸ;
                 }
-                if (!send_msg(sock, &response, sizeof(response))) {
-                    return;
+                ਜੇ (!send_ਸੁਨੇਹਾ(sock, &response, ਆਕਾਰ(response))) {
+                    ਵਾਪਸ;
                 }
-                break;
+                ਰੋਕੋ;
             }
-            case RPC_CMD_FREE_BUFFER: {
-                rpc_msg_free_buffer_req request;
-                if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+            ਹਾਲਤ RPC_CMD_FREE_ਬਫਰ: {
+                rpc_ਸੁਨੇਹਾ_free_ਬਫਰ_req request;
+                ਜੇ (!recv_ਸੁਨੇਹਾ(sock, &request, ਆਕਾਰ(request))) {
+                    ਵਾਪਸ;
                 }
-                if (!server.free_buffer(request)) {
-                    return;
+                ਜੇ (!server.free_ਬਫਰ(request)) {
+                    ਵਾਪਸ;
                 }
-                break;
+                ਰੋਕੋ;
             }
-            case RPC_CMD_BUFFER_CLEAR: {
-                rpc_msg_buffer_clear_req request;
-                if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+            ਹਾਲਤ RPC_CMD_ਬਫਰ_CLEAR: {
+                rpc_ਸੁਨੇਹਾ_ਬਫਰ_clear_req request;
+                ਜੇ (!recv_ਸੁਨੇਹਾ(sock, &request, ਆਕਾਰ(request))) {
+                    ਵਾਪਸ;
                 }
-                if (!server.buffer_clear(request)) {
-                    return;
+                ਜੇ (!server.ਬਫਰ_clear(request)) {
+                    ਵਾਪਸ;
                 }
-                break;
+                ਰੋਕੋ;
             }
-            case RPC_CMD_MEMSET_TENSOR: {
-                rpc_msg_memset_tensor_req request;
-                if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+            ਹਾਲਤ RPC_CMD_MEMSET_TENSOR: {
+                rpc_ਸੁਨੇਹਾ_memset_tensor_req request;
+                ਜੇ (!recv_ਸੁਨੇਹਾ(sock, &request, ਆਕਾਰ(request))) {
+                    ਵਾਪਸ;
                 }
-                if (!server.memset_tensor(request)) {
-                    return;
+                ਜੇ (!server.memset_tensor(request)) {
+                    ਵਾਪਸ;
                 }
-                break;
+                ਰੋਕੋ;
             }
-            case RPC_CMD_SET_TENSOR: {
-                std::vector<uint8_t> input;
-                if (!recv_msg(sock, input)) {
-                    return;
+            ਹਾਲਤ RPC_CMD_ਸੈੱਟ_TENSOR: {
+                std::vector<uint8_t> ਨਿਵੇਸ਼;
+                ਜੇ (!recv_ਸੁਨੇਹਾ(sock, ਨਿਵੇਸ਼)) {
+                    ਵਾਪਸ;
                 }
-                if (!server.set_tensor(input)) {
-                    return;
+                ਜੇ (!server.ਸੈੱਟ_tensor(ਨਿਵੇਸ਼)) {
+                    ਵਾਪਸ;
                 }
-                break;
+                ਰੋਕੋ;
             }
-            case RPC_CMD_SET_TENSOR_2D: {
-                std::vector<uint8_t> input;
-                if (!recv_msg(sock, input)) {
-                    return;
+            ਹਾਲਤ RPC_CMD_ਸੈੱਟ_TENSOR_2_D: {
+                std::vector<uint8_t> ਨਿਵੇਸ਼;
+                ਜੇ (!recv_ਸੁਨੇਹਾ(sock, ਨਿਵੇਸ਼)) {
+                    ਵਾਪਸ;
                 }
-                if (!server.set_tensor_2d(input)) {
-                    return;
+                ਜੇ (!server.ਸੈੱਟ_tensor_2d(ਨਿਵੇਸ਼)) {
+                    ਵਾਪਸ;
                 }
-                break;
+                ਰੋਕੋ;
             }
-            case RPC_CMD_GET_TENSOR_2D: {
-                rpc_msg_get_tensor_2d_req request;
-                if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+            ਹਾਲਤ RPC_CMD_GET_TENSOR_2D: {
+                rpc_ਸੁਨੇਹਾ_get_tensor_2d_req request;
+                ਜੇ (!recv_ਸੁਨੇਹਾ(sock, &request, ਆਕਾਰ(request))) {
+                    ਵਾਪਸ;
                 }
                 std::vector<uint8_t> response;
-                if (!server.get_tensor_2d(request, response)) {
-                    return;
+                ਜੇ (!server.get_tensor_2d(request, response)) {
+                    ਵਾਪਸ;
                 }
-                if (!send_msg(sock, response.data(), response.size())) {
-                    return;
+                ਜੇ (!send_ਸੁਨੇਹਾ(sock, response.ਅੰਕੜੇ(), response.size())) {
+                    ਵਾਪਸ;
                 }
-                break;
+                ਰੋਕੋ;
             }
-            case RPC_CMD_SET_TENSOR_HASH: {
-                rpc_msg_set_tensor_hash_req request;
-                if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+            ਹਾਲਤ RPC_CMD_ਸੈੱਟ_TENSOR_HASH: {
+                rpc_ਸੁਨੇਹਾ_ਸੈੱਟ_tensor_hash_req request;
+                ਜੇ (!recv_ਸੁਨੇਹਾ(sock, &request, ਆਕਾਰ(request))) {
+                    ਵਾਪਸ;
                 }
-                rpc_msg_set_tensor_hash_rsp response;
-                if (!server.set_tensor_hash(request, response)) {
-                    return;
+                rpc_ਸੁਨੇਹਾ_ਸੈੱਟ_tensor_hash_rsp response;
+                ਜੇ (!server.ਸੈੱਟ_tensor_hash(request, response)) {
+                    ਵਾਪਸ;
                 }
-                if (!send_msg(sock, &response, sizeof(response))) {
-                    return;
+                ਜੇ (!send_ਸੁਨੇਹਾ(sock, &response, ਆਕਾਰ(response))) {
+                    ਵਾਪਸ;
                 }
-                break;
+                ਰੋਕੋ;
             }
-            case RPC_CMD_INIT_TENSOR: {
-                rpc_msg_init_tensor_req request;
-                if (!recv_msg(sock, &request,sizeof(request))) {
-                    return;
+            ਹਾਲਤ RPC_CMD_INIT_TENSOR: {
+                rpc_ਸੁਨੇਹਾ_init_tensor_req request;
+                ਜੇ (!recv_ਸੁਨੇਹਾ(sock, &request,ਆਕਾਰ(request))) {
+                    ਵਾਪਸ;
                 }
-                if (!server.init_tensor(request)) {
-                    return;
+                ਜੇ (!server.init_tensor(request)) {
+                    ਵਾਪਸ;
                 }
-                break;
+                ਰੋਕੋ;
             }
-            case RPC_CMD_GET_TENSOR: {
-                rpc_msg_get_tensor_req request;
-                if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+            ਹਾਲਤ RPC_CMD_GET_TENSOR: {
+                rpc_ਸੁਨੇਹਾ_get_tensor_req request;
+                ਜੇ (!recv_ਸੁਨੇਹਾ(sock, &request, ਆਕਾਰ(request))) {
+                    ਵਾਪਸ;
                 }
                 std::vector<uint8_t> response;
-                if (!server.get_tensor(request, response)) {
-                    return;
+                ਜੇ (!server.get_tensor(request, response)) {
+                    ਵਾਪਸ;
                 }
-                if (!send_msg(sock, response.data(), response.size())) {
-                    return;
+                ਜੇ (!send_ਸੁਨੇਹਾ(sock, response.ਅੰਕੜੇ(), response.size())) {
+                    ਵਾਪਸ;
                 }
-                break;
+                ਰੋਕੋ;
             }
-            case RPC_CMD_COPY_TENSOR: {
-                rpc_msg_copy_tensor_req request;
-                if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+            ਹਾਲਤ RPC_CMD_COPY_TENSOR: {
+                rpc_ਸੁਨੇਹਾ_copy_tensor_req request;
+                ਜੇ (!recv_ਸੁਨੇਹਾ(sock, &request, ਆਕਾਰ(request))) {
+                    ਵਾਪਸ;
                 }
-                rpc_msg_copy_tensor_rsp response;
-                if (!server.copy_tensor(request, response)) {
-                    return;
+                rpc_ਸੁਨੇਹਾ_copy_tensor_rsp response;
+                ਜੇ (!server.copy_tensor(request, response)) {
+                    ਵਾਪਸ;
                 }
-                if (!send_msg(sock, &response, sizeof(response))) {
-                    return;
+                ਜੇ (!send_ਸੁਨੇਹਾ(sock, &response, ਆਕਾਰ(response))) {
+                    ਵਾਪਸ;
                 }
-                break;
+                ਰੋਕੋ;
             }
-            case RPC_CMD_GRAPH_COMPUTE: {
-                std::vector<uint8_t> input;
-                if (!recv_msg(sock, input)) {
-                    return;
+            ਹਾਲਤ RPC_CMD_ਗ੍ਰਾਫ_COMPUTE: {
+                std::vector<uint8_t> ਨਿਵੇਸ਼;
+                ਜੇ (!recv_ਸੁਨੇਹਾ(sock, ਨਿਵੇਸ਼)) {
+                    ਵਾਪਸ;
                 }
-                if (!server.graph_compute(input)) {
-                    return;
+                ਜੇ (!server.ਗ੍ਰਾਫ_compute(ਨਿਵੇਸ਼)) {
+                    ਵਾਪਸ;
                 }
-                break;
+                ਰੋਕੋ;
             }
-            case RPC_CMD_GRAPH_RECOMPUTE: {
-                rpc_msg_graph_recompute_req request;
-                if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+            ਹਾਲਤ RPC_CMD_ਗ੍ਰਾਫ_RECOMPUTE: {
+                rpc_ਸੁਨੇਹਾ_ਗ੍ਰਾਫ_recompute_req request;
+                ਜੇ (!recv_ਸੁਨੇਹਾ(sock, &request, ਆਕਾਰ(request))) {
+                    ਵਾਪਸ;
                 }
-                if (!server.graph_recompute(request)) {
-                    return;
+                ਜੇ (!server.ਗ੍ਰਾਫ_recompute(request)) {
+                    ਵਾਪਸ;
                 }
-                break;
+                ਰੋਕੋ;
             }
-            case RPC_CMD_COMM_INIT: {
-                rpc_msg_comm_init_req request;
-                if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+            ਹਾਲਤ RPC_CMD_COMM_INIT: {
+                rpc_ਸੁਨੇਹਾ_comm_init_req request;
+                ਜੇ (!recv_ਸੁਨੇਹਾ(sock, &request, ਆਕਾਰ(request))) {
+                    ਵਾਪਸ;
                 }
-                rpc_msg_comm_init_rsp response;
-                if (!server.comm_init(request, response)) {
-                    return;
+                rpc_ਸੁਨੇਹਾ_comm_init_rsp response;
+                ਜੇ (!server.comm_init(request, response)) {
+                    ਵਾਪਸ;
                 }
-                if (!send_msg(sock, &response, sizeof(response))) {
-                    return;
+                ਜੇ (!send_ਸੁਨੇਹਾ(sock, &response, ਆਕਾਰ(response))) {
+                    ਵਾਪਸ;
                 }
-                break;
+                ਰੋਕੋ;
             }
-            case RPC_CMD_COMM_ALLREDUCE: {
-                rpc_msg_comm_allreduce_req request;
-                if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+            ਹਾਲਤ RPC_CMD_COMM_ALLREDUCE: {
+                rpc_ਸੁਨੇਹਾ_comm_allreduce_req request;
+                ਜੇ (!recv_ਸੁਨੇਹਾ(sock, &request, ਆਕਾਰ(request))) {
+                    ਵਾਪਸ;
                 }
-                if (!server.comm_allreduce(request)) {
-                    return;
+                ਜੇ (!server.comm_allreduce(request)) {
+                    ਵਾਪਸ;
                 }
-                break;
+                ਰੋਕੋ;
             }
-            case RPC_CMD_COMM_FREE: {
-                rpc_msg_comm_free_req request;
-                if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+            ਹਾਲਤ RPC_CMD_COMM_FREE: {
+                rpc_ਸੁਨੇਹਾ_comm_free_req request;
+                ਜੇ (!recv_ਸੁਨੇਹਾ(sock, &request, ਆਕਾਰ(request))) {
+                    ਵਾਪਸ;
                 }
-                if (!server.comm_free(request)) {
-                    return;
+                ਜੇ (!server.comm_free(request)) {
+                    ਵਾਪਸ;
                 }
-                break;
+                ਰੋਕੋ;
             }
-            case RPC_CMD_GET_DEVICE_MEMORY: {
-                rpc_msg_get_device_memory_req request;
-                if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+            ਹਾਲਤ RPC_CMD_GET_DEVICE_ਸਮ੍ਰਿਤੀ: {
+                rpc_ਸੁਨੇਹਾ_get_device_ਸਮ੍ਰਿਤੀ_req request;
+                ਜੇ (!recv_ਸੁਨੇਹਾ(sock, &request, ਆਕਾਰ(request))) {
+                    ਵਾਪਸ;
                 }
-                rpc_msg_get_device_memory_rsp response;
-                if (!server.get_device_memory(request, response)) {
-                    return;
+                rpc_ਸੁਨੇਹਾ_get_device_ਸਮ੍ਰਿਤੀ_rsp response;
+                ਜੇ (!server.get_device_ਸਮ੍ਰਿਤੀ(request, response)) {
+                    ਵਾਪਸ;
                 }
-                if (!send_msg(sock, &response, sizeof(response))) {
-                    return;
+                ਜੇ (!send_ਸੁਨੇਹਾ(sock, &response, ਆਕਾਰ(response))) {
+                    ਵਾਪਸ;
                 }
-                break;
+                ਰੋਕੋ;
             }
-            default: {
-                LOG_ERROR("Unhandled command: %s\n", rpc_cmd_name((enum rpc_cmd)cmd));
-                return;
+            ਮੂਲ: {
+                LOG_ERROR("Unhandled command: %s\n", rpc_cmd_name((ਗਿਣਤੀ rpc_cmd)cmd));
+                ਵਾਪਸ;
             }
         }
     }
 }
 
-void ggml_backend_rpc_start_server(const char * endpoint, const char * cache_dir,
-                                   size_t n_threads, size_t n_devices, ggml_backend_dev_t * devices) {
-    if (n_devices == 0 || devices == nullptr) {
+ਖਾਲੀ ggml_backend_rpc_ਸ਼ੁਰੂ_server(ਅਚਲ ਅੱਖਰ * endpoint, ਅਚਲ ਅੱਖਰ * cache_dir,
+                                   size_t n_ਧਾਗੇ, size_t n_devices, ggml_backend_dev_t * devices) {
+    ਜੇ (n_devices == 0 || devices == ਖਾਲੀ_ਸੂਚਕ) {
         LOG_ERROR("Invalid arguments to ggml_backend_rpc_start_server\n");
-        return;
+        ਵਾਪਸ;
     }
     std::vector<ggml_backend_t> backends;
     LOG_INFO("Starting RPC server v%d.%d.%d\n",
-        RPC_PROTO_MAJOR_VERSION,
-        RPC_PROTO_MINOR_VERSION,
-        RPC_PROTO_PATCH_VERSION);
+        RPC_PROTO_MAJOR_ਸੰਸਕਰਣ,
+        RPC_PROTO_MINOR_ਸੰਸਕਰਣ,
+        RPC_PROTO_PATCH_ਸੰਸਕਰਣ);
     LOG_INFO("  endpoint       : %s\n", endpoint);
     LOG_INFO("  local cache    : %s\n", cache_dir ? cache_dir : "n/a");
     LOG_INFO("Devices:\n");
-    for (size_t i = 0; i < n_devices; i++) {
-        auto dev = devices[i];
-        size_t free, total;
-        ggml_backend_dev_memory(dev, &free, &total);
+    ਲਈ (size_t i = 0; i < n_devices; i++) {
+        ਸਵੈਚਾਲਿਤ dev = devices[i];
+        size_t ਮੁਕਤ, ਕੁੱਲ;
+        ggml_backend_dev_ਸਮ੍ਰਿਤੀ(dev, &ਮੁਕਤ, &ਕੁੱਲ);
         LOG_INFO("  %s: %s (%zu MiB, %zu MiB free)\n", ggml_backend_dev_name(dev), ggml_backend_dev_description(dev),
-                 total / 1024 / 1024, free / 1024 / 1024);
-        auto backend = ggml_backend_dev_init(dev, nullptr);
-        if (!backend) {
+                 ਕੁੱਲ / 1024 / 1024, ਮੁਕਤ / 1024 / 1024);
+        ਸਵੈਚਾਲਿਤ backend = ggml_backend_dev_init(dev, ਖਾਲੀ_ਸੂਚਕ);
+        ਜੇ (!backend) {
             LOG_ERROR("Failed to create backend for device %s\n", dev->iface.get_name(dev));
-            return;
+            ਵਾਪਸ;
         }
         backends.push_back(backend);
-        ggml_backend_reg_t reg = dev ? ggml_backend_dev_backend_reg(dev) : nullptr;
-        if (reg) {
-            auto ggml_backend_set_n_threads_fn = (ggml_backend_set_n_threads_t) ggml_backend_reg_get_proc_address(reg, "ggml_backend_set_n_threads");
-            if (ggml_backend_set_n_threads_fn) {
-                ggml_backend_set_n_threads_fn(backend, n_threads);
+        ggml_backend_reg_t reg = dev ? ggml_backend_dev_backend_reg(dev) : ਖਾਲੀ_ਸੂਚਕ;
+        ਜੇ (reg) {
+            ਸਵੈਚਾਲਿਤ ggml_backend_ਸੈੱਟ_n_ਧਾਗੇ_fn = (ggml_backend_ਸੈੱਟ_n_ਧਾਗੇ_t) ggml_backend_reg_get_proc_ਪਤਾ(reg, "ggml_backend_set_n_threads");
+            ਜੇ (ggml_backend_ਸੈੱਟ_n_ਧਾਗੇ_fn) {
+                ggml_backend_ਸੈੱਟ_n_ਧਾਗੇ_fn(backend, n_ਧਾਗੇ);
             }
         }
     }
 
     std::string host;
-    int port;
-    if (!parse_endpoint(endpoint, host, port)) {
-        return;
+    ਪੂਰਨ ਪੋਰਟ;
+    ਜੇ (!parse_endpoint(endpoint, host, ਪੋਰਟ)) {
+        ਵਾਪਸ;
     }
 
-#ifdef GGML_RPC_RDMA
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_RPC_RDMA
     LOG_INFO("  transport      : TCP (RDMA auto-negotiate enabled)\n");
-#else
+#ਨਹੀਂਤਾਂ
     LOG_INFO("  transport      : TCP\n");
-#endif // GGML_RPC_RDMA
-    if (!rpc_transport_init()) {
+#ਜੇ_ਅੰਤ // GGML_RPC_RDMA
+    ਜੇ (!rpc_transport_init()) {
         LOG_ERROR("Failed to initialize RPC transport\n");
-        return;
+        ਵਾਪਸ;
     }
-    auto server_socket = socket_t::create_server(host.c_str(), port);
-    if (server_socket == nullptr) {
+    ਸਵੈਚਾਲਿਤ server_socket = socket_t::create_server(host.c_str(), ਪੋਰਟ);
+    ਜੇ (server_socket == ਖਾਲੀ_ਸੂਚਕ) {
         LOG_ERROR("Failed to create server socket\n");
-        return;
+        ਵਾਪਸ;
     }
-    while (true) {
-        auto client_socket = server_socket->accept();
-        if (client_socket == nullptr) {
+    ਜਦੋਂ (ਸੱਚ) {
+        ਸਵੈਚਾਲਿਤ client_socket = server_socket->accept();
+        ਜੇ (client_socket == ਖਾਲੀ_ਸੂਚਕ) {
             LOG_ERROR("Failed to accept client connection\n");
-            return;
+            ਵਾਪਸ;
         }
         LOG_INFO("Accepted client connection\n");
         rpc_serve_client(backends, cache_dir, client_socket);
         LOG_INFO("Client connection closed\n");
     }
     rpc_transport_shutdown();
-    for (auto backend : backends) {
+    ਲਈ (ਸਵੈਚਾਲਿਤ backend : backends) {
         ggml_backend_free(backend);
     }
 }
 
-static const char * ggml_backend_rpc_device_get_name(ggml_backend_dev_t dev) {
+ਸਥਿਰ ਅਚਲ ਅੱਖਰ * ggml_backend_rpc_device_get_name(ggml_backend_dev_t dev) {
     ggml_backend_rpc_device_context * ctx = (ggml_backend_rpc_device_context *)dev->context;
 
-    return ctx->name.c_str();
+    ਵਾਪਸ ctx->name.c_str();
 }
 
-static const char * ggml_backend_rpc_device_get_description(ggml_backend_dev_t dev) {
+ਸਥਿਰ ਅਚਲ ਅੱਖਰ * ggml_backend_rpc_device_get_description(ggml_backend_dev_t dev) {
     ggml_backend_rpc_device_context * ctx = (ggml_backend_rpc_device_context *)dev->context;
 
-    return ctx->description.c_str();
+    ਵਾਪਸ ctx->description.c_str();
 }
 
-static void ggml_backend_rpc_device_get_memory(ggml_backend_dev_t dev, size_t * free, size_t * total) {
+ਸਥਿਰ ਖਾਲੀ ggml_backend_rpc_device_get_ਸਮ੍ਰਿਤੀ(ggml_backend_dev_t dev, size_t * ਮੁਕਤ, size_t * ਕੁੱਲ) {
     ggml_backend_rpc_device_context * ctx = (ggml_backend_rpc_device_context *)dev->context;
 
-    ggml_backend_rpc_get_device_memory(ctx->endpoint.c_str(), ctx->device, free, total);
+    ggml_backend_rpc_get_device_ਸਮ੍ਰਿਤੀ(ctx->endpoint.c_str(), ctx->device, ਮੁਕਤ, ਕੁੱਲ);
 }
 
-static enum ggml_backend_dev_type ggml_backend_rpc_device_get_type(ggml_backend_dev_t dev) {
+ਸਥਿਰ ਗਿਣਤੀ ggml_backend_dev_type ggml_backend_rpc_device_get_type(ggml_backend_dev_t dev) {
     // TODO: obtain value from the server
-    return GGML_BACKEND_DEVICE_TYPE_GPU;
+    ਵਾਪਸ GGML_BACKEND_DEVICE_TYPE_GPU;
 
-    GGML_UNUSED(dev);
+    GGML_ਅਣਵਰਤਿਆ(dev);
 }
 
-static void ggml_backend_rpc_device_get_props(ggml_backend_dev_t dev, struct ggml_backend_dev_props * props) {
+ਸਥਿਰ ਖਾਲੀ ggml_backend_rpc_device_get_props(ggml_backend_dev_t dev, ਬਣਤਰ ggml_backend_dev_props * props) {
     props->name        = ggml_backend_rpc_device_get_name(dev);
     props->description = ggml_backend_rpc_device_get_description(dev);
     props->type        = ggml_backend_rpc_device_get_type(dev);
-    ggml_backend_rpc_device_get_memory(dev, &props->memory_free, &props->memory_total);
+    ggml_backend_rpc_device_get_ਸਮ੍ਰਿਤੀ(dev, &props->ਸਮ੍ਰਿਤੀ_free, &props->ਸਮ੍ਰਿਤੀ_ਕੁੱਲ);
     props->caps = {
-        /* .async                 = */ true,
-        /* .host_buffer           = */ false,
-        /* .buffer_from_host_ptr  = */ false,
-        /* .events                = */ true,
-        /* .mmap_support          = */ true,
+        /* .async                 = */ ਸੱਚ,
+        /* .host_buffer           = */ ਝੂਠ,
+        /* .buffer_from_host_ptr  = */ ਝੂਠ,
+        /* .events                = */ ਸੱਚ,
+        /* .mmap_support          = */ ਸੱਚ,
     };
 }
 
-static ggml_backend_t ggml_backend_rpc_device_init(ggml_backend_dev_t dev, const char * params) {
+ਸਥਿਰ ggml_backend_t ggml_backend_rpc_device_init(ggml_backend_dev_t dev, ਅਚਲ ਅੱਖਰ * params) {
     ggml_backend_rpc_device_context * ctx = (ggml_backend_rpc_device_context *)dev->context;
 
-    return ggml_backend_rpc_init(ctx->endpoint.c_str(), ctx->device);
+    ਵਾਪਸ ggml_backend_rpc_init(ctx->endpoint.c_str(), ctx->device);
 
-    GGML_UNUSED(params);
+    GGML_ਅਣਵਰਤਿਆ(params);
 }
 
-static ggml_backend_buffer_type_t ggml_backend_rpc_device_get_buffer_type(ggml_backend_dev_t dev) {
+ਸਥਿਰ ggml_backend_ਬਫਰ_type_t ggml_backend_rpc_device_get_ਬਫਰ_type(ggml_backend_dev_t dev) {
     ggml_backend_rpc_device_context * ctx = (ggml_backend_rpc_device_context *)dev->context;
 
-    return ggml_backend_rpc_buffer_type(ctx->endpoint.c_str(), ctx->device);
+    ਵਾਪਸ ggml_backend_rpc_ਬਫਰ_type(ctx->endpoint.c_str(), ctx->device);
 
-    GGML_UNUSED(dev);
+    GGML_ਅਣਵਰਤਿਆ(dev);
 }
 
-static bool ggml_backend_rpc_device_supports_op(ggml_backend_dev_t dev, const struct ggml_tensor * op) {
-    GGML_UNUSED(dev);
-    GGML_UNUSED(op);
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_backend_rpc_device_supports_op(ggml_backend_dev_t dev, ਅਚਲ ਬਣਤਰ ggml_tensor * op) {
+    GGML_ਅਣਵਰਤਿਆ(dev);
+    GGML_ਅਣਵਰਤਿਆ(op);
     //TODO: call the remote backend and cache the results
-    return true;
+    ਵਾਪਸ ਸੱਚ;
 }
 
-static bool ggml_backend_rpc_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
-    if (!buft || buft->iface.get_name != ggml_backend_rpc_buffer_type_name) {
-        return false;
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_backend_rpc_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_ਬਫਰ_type_t buft) {
+    ਜੇ (!buft || buft->iface.get_name != ggml_backend_rpc_ਬਫਰ_type_name) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    ggml_backend_rpc_buffer_type_context * buft_ctx = (ggml_backend_rpc_buffer_type_context *)buft->context;
+    ggml_backend_rpc_ਬਫਰ_type_context * buft_ctx = (ggml_backend_rpc_ਬਫਰ_type_context *)buft->context;
     ggml_backend_rpc_device_context * dev_ctx = (ggml_backend_rpc_device_context *)dev->context;
-    return buft_ctx->endpoint == dev_ctx->endpoint && buft_ctx->device == dev_ctx->device;
+    ਵਾਪਸ buft_ctx->endpoint == dev_ctx->endpoint && buft_ctx->device == dev_ctx->device;
 }
 
-static ggml_backend_event_t ggml_backend_rpc_device_event_new(ggml_backend_dev_t dev) {
+ਸਥਿਰ ggml_backend_event_t ggml_backend_rpc_device_event_new(ggml_backend_dev_t dev) {
     ggml_backend_rpc_device_context * ctx = (ggml_backend_rpc_device_context *)dev->context;
-    auto dispatcher = get_dispatcher(ctx->endpoint);
-    return dispatcher->event_new(dev);
+    ਸਵੈਚਾਲਿਤ dispatcher = get_dispatcher(ctx->endpoint);
+    ਵਾਪਸ dispatcher->event_new(dev);
 }
 
-static void ggml_backend_rpc_device_event_free(ggml_backend_dev_t dev, ggml_backend_event_t event) {
+ਸਥਿਰ ਖਾਲੀ ggml_backend_rpc_device_event_free(ggml_backend_dev_t dev, ggml_backend_event_t event) {
     ggml_backend_rpc_device_context * ctx = (ggml_backend_rpc_device_context *)dev->context;
-    auto dispatcher = get_dispatcher(ctx->endpoint);
+    ਸਵੈਚਾਲਿਤ dispatcher = get_dispatcher(ctx->endpoint);
     dispatcher->event_free(event);
 }
 
-static void ggml_backend_rpc_device_event_synchronize(ggml_backend_dev_t dev, ggml_backend_event_t event) {
+ਸਥਿਰ ਖਾਲੀ ggml_backend_rpc_device_event_synchronize(ggml_backend_dev_t dev, ggml_backend_event_t event) {
     ggml_backend_rpc_device_context * ctx = (ggml_backend_rpc_device_context *)dev->context;
-    auto dispatcher = get_dispatcher(ctx->endpoint);
+    ਸਵੈਚਾਲਿਤ dispatcher = get_dispatcher(ctx->endpoint);
     dispatcher->event_synchronize(event);
 }
 
-static const struct ggml_backend_device_i ggml_backend_rpc_device_i = {
+ਸਥਿਰ ਅਚਲ ਬਣਤਰ ggml_backend_device_i ggml_backend_rpc_device_i = {
     /* .get_name             = */ ggml_backend_rpc_device_get_name,
     /* .get_description      = */ ggml_backend_rpc_device_get_description,
-    /* .get_memory           = */ ggml_backend_rpc_device_get_memory,
+    /* .get_memory           = */ ggml_backend_rpc_device_get_ਸਮ੍ਰਿਤੀ,
     /* .get_type             = */ ggml_backend_rpc_device_get_type,
     /* .get_props            = */ ggml_backend_rpc_device_get_props,
     /* .init_backend         = */ ggml_backend_rpc_device_init,
-    /* .get_buffer_type      = */ ggml_backend_rpc_device_get_buffer_type,
-    /* .get_host_buffer_type = */ NULL,
-    /* .buffer_from_host_ptr = */ NULL,
+    /* .get_buffer_type      = */ ggml_backend_rpc_device_get_ਬਫਰ_type,
+    /* .get_host_buffer_type = */ ਨਿਰਾ,
+    /* .buffer_from_host_ptr = */ ਨਿਰਾ,
     /* .supports_op          = */ ggml_backend_rpc_device_supports_op,
     /* .supports_buft        = */ ggml_backend_rpc_device_supports_buft,
-    /* .offload_op           = */ NULL,
+    /* .offload_op           = */ ਨਿਰਾ,
     /* .event_new            = */ ggml_backend_rpc_device_event_new,
     /* .event_free           = */ ggml_backend_rpc_device_event_free,
     /* .event_synchronize    = */ ggml_backend_rpc_device_event_synchronize,
@@ -2939,36 +2939,36 @@ static const struct ggml_backend_device_i ggml_backend_rpc_device_i = {
 
 // backend reg interface
 
-struct ggml_backend_rpc_reg_context {
+ਬਣਤਰ ggml_backend_rpc_reg_context {
     std::string                     name;
     std::vector<ggml_backend_dev_t> devices;
 };
 
-static const char * ggml_backend_rpc_reg_get_name(ggml_backend_reg_t reg) {
+ਸਥਿਰ ਅਚਲ ਅੱਖਰ * ggml_backend_rpc_reg_get_name(ggml_backend_reg_t reg) {
     ggml_backend_rpc_reg_context * ctx = (ggml_backend_rpc_reg_context *)reg->context;
-    return ctx ? ctx->name.c_str() : "RPC";
+    ਵਾਪਸ ctx ? ctx->name.c_str() : "RPC";
 }
 
-static size_t ggml_backend_rpc_reg_get_device_count(ggml_backend_reg_t reg) {
+ਸਥਿਰ size_t ggml_backend_rpc_reg_get_device_ਗਿਣਤੀ(ggml_backend_reg_t reg) {
     ggml_backend_rpc_reg_context * ctx = (ggml_backend_rpc_reg_context *)reg->context;
-    return ctx ? ctx->devices.size() : 0;
+    ਵਾਪਸ ctx ? ctx->devices.size() : 0;
 }
 
-static ggml_backend_dev_t ggml_backend_rpc_reg_get_device(ggml_backend_reg_t reg, size_t index) {
+ਸਥਿਰ ggml_backend_dev_t ggml_backend_rpc_reg_get_device(ggml_backend_reg_t reg, size_t ਸੂਚਕਾਂਕ) {
     ggml_backend_rpc_reg_context * ctx = (ggml_backend_rpc_reg_context *)reg->context;
-    if (ctx == nullptr) {
+    ਜੇ (ctx == ਖਾਲੀ_ਸੂਚਕ) {
         GGML_ABORT("The RPC backend does not have enumerated devices - use ggml_backend_rpc_add_server instead");
-    } else {
-        GGML_ASSERT(index < ctx->devices.size());
-        return ctx->devices[index];
+    } ਨਹੀਂਤਾਂ {
+        GGML_ASSERT(ਸੂਚਕਾਂਕ < ctx->devices.size());
+        ਵਾਪਸ ctx->devices[ਸੂਚਕਾਂਕ];
     }
 }
 
 // Pairwise allreduce between two RPC servers over a direct server-to-server connection.
 // The client only sends fire-and-forget COMM_ALLREDUCE commands; the tensor data is
 // exchanged between the servers and never passes through the client.
-struct ggml_backend_rpc_comm_context {
-    struct rank_info {
+ਬਣਤਰ ggml_backend_rpc_comm_context {
+    ਬਣਤਰ rank_info {
         std::string                     endpoint;
         uint32_t                        device;
         std::shared_ptr<rpc_dispatcher> dispatcher;
@@ -2976,37 +2976,37 @@ struct ggml_backend_rpc_comm_context {
     std::vector<rank_info> ranks;
 };
 
-static void ggml_backend_rpc_comm_free(void * comm_ctx_v) {
+ਸਥਿਰ ਖਾਲੀ ggml_backend_rpc_comm_free(ਖਾਲੀ * comm_ctx_v) {
     ggml_backend_rpc_comm_context * comm_ctx = (ggml_backend_rpc_comm_context *) comm_ctx_v;
-    if (comm_ctx == nullptr) {
-        return;
+    ਜੇ (comm_ctx == ਖਾਲੀ_ਸੂਚਕ) {
+        ਵਾਪਸ;
     }
-    for (const auto & rank : comm_ctx->ranks) {
-        auto request = std::make_shared<rpc_msg_comm_free_req>();
+    ਲਈ (ਅਚਲ ਸਵੈਚਾਲਿਤ & rank : comm_ctx->ranks) {
+        ਸਵੈਚਾਲਿਤ request = std::make_shared<rpc_ਸੁਨੇਹਾ_comm_free_req>();
         request->device = rank.device;
-        rank.dispatcher->send(RPC_CMD_COMM_FREE, request, sizeof(*request));
+        rank.dispatcher->send(RPC_CMD_COMM_FREE, request, ਆਕਾਰ(*request));
         rank.dispatcher->busy_spin_release();
     }
-    delete comm_ctx;
+    ਮਿਟਾਓ comm_ctx;
 }
 
-static void * ggml_backend_rpc_comm_init(ggml_backend_t * backends, size_t n_backends) {
-    if (n_backends != 2 || std::getenv("GGML_RPC_NO_COMM") != nullptr) {
-        return nullptr;
+ਸਥਿਰ ਖਾਲੀ * ggml_backend_rpc_comm_init(ggml_backend_t * backends, size_t n_backends) {
+    ਜੇ (n_backends != 2 || std::getenv("GGML_RPC_NO_COMM") != ਖਾਲੀ_ਸੂਚਕ) {
+        ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
     }
     std::vector<ggml_backend_rpc_comm_context::rank_info> ranks;
     ranks.reserve(n_backends);
-    for (size_t i = 0; i < n_backends; i++) {
-        if (!ggml_backend_is_rpc(backends[i])) {
-            return nullptr;
+    ਲਈ (size_t i = 0; i < n_backends; i++) {
+        ਜੇ (!ggml_backend_is_rpc(backends[i])) {
+            ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
         }
         ggml_backend_rpc_context * rpc_ctx = (ggml_backend_rpc_context *) backends[i]->context;
         // one rank per endpoint: a server processes its socket sequentially, so a second
         // COMM_INIT on the same connection would deadlock behind the first
-        for (const auto & rank : ranks) {
-            if (rank.endpoint == rpc_ctx->endpoint) {
+        ਲਈ (ਅਚਲ ਸਵੈਚਾਲਿਤ & rank : ranks) {
+            ਜੇ (rank.endpoint == rpc_ctx->endpoint) {
                 LOG_WARN("%s: multiple ranks on endpoint %s are not supported\n", __func__, rpc_ctx->endpoint.c_str());
-                return nullptr;
+                ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
             }
         }
         ranks.push_back({rpc_ctx->endpoint, rpc_ctx->device, rpc_ctx->dispatcher});
@@ -3016,164 +3016,164 @@ static void * ggml_backend_rpc_comm_init(ggml_backend_t * backends, size_t n_bac
     // rank 1 connects to rank 0 on its serving host; endpoints must be mutually reachable
     // (e.g. do not bind the servers to 127.0.0.1 when they run on different machines)
     std::string host0;
-    int port0;
-    if (!parse_endpoint(ranks[0].endpoint, host0, port0)) {
-        return nullptr;
+    ਪੂਰਨ port0;
+    ਜੇ (!parse_endpoint(ranks[0].endpoint, host0, port0)) {
+        ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
     }
-    const uint32_t comm_port = (uint32_t) port0 + 1000;
-    if (host0.size() >= 64) {
-        return nullptr;
+    ਅਚਲ uint32_t comm_ਪੋਰਟ = (uint32_t) port0 + 1000;
+    ਜੇ (host0.size() >= 64) {
+        ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
     }
 
-    for (const auto & rank : ranks) {
+    ਲਈ (ਅਚਲ ਸਵੈਚਾਲਿਤ & rank : ranks) {
         rank.dispatcher->busy_spin_acquire();
     }
 
     // Send all init requests before reading any response: rank 0 blocks in accept
     // until rank 1 has connected.
-    std::vector<rpc_msg_comm_init_rsp> responses(n_backends);
-    for (size_t i = 0; i < n_backends; i++) {
-        auto request = std::make_shared<rpc_msg_comm_init_req>();
+    std::vector<rpc_ਸੁਨੇਹਾ_comm_init_rsp> responses(n_backends);
+    ਲਈ (size_t i = 0; i < n_backends; i++) {
+        ਸਵੈਚਾਲਿਤ request = std::make_shared<rpc_ਸੁਨੇਹਾ_comm_init_req>();
         request->device = ranks[i].device;
         request->rank   = (uint32_t) i;
         request->world  = (uint32_t) n_backends;
-        request->port   = comm_port;
-        if (i > 0) {
-            memcpy(request->host, host0.c_str(), host0.size());
+        request->ਪੋਰਟ   = comm_ਪੋਰਟ;
+        ਜੇ (i > 0) {
+            ਸਮ੍ਰਿਤੀ_ਨਕਲ(request->host, host0.c_str(), host0.size());
         }
-        ranks[i].dispatcher->send_async(RPC_CMD_COMM_INIT, request, sizeof(*request), &responses[i], sizeof(responses[i]));
+        ranks[i].dispatcher->send_async(RPC_CMD_COMM_INIT, request, ਆਕਾਰ(*request), &responses[i], ਆਕਾਰ(responses[i]));
     }
-    for (size_t i = 0; i < n_backends; i++) {
+    ਲਈ (size_t i = 0; i < n_backends; i++) {
         ranks[i].dispatcher->synchronize();
     }
-    bool ok = true;
-    for (size_t i = 0; i < n_backends; i++) {
-        if (!responses[i].ok) {
+    ਤਾਰਕਿਕ ok = ਸੱਚ;
+    ਲਈ (size_t i = 0; i < n_backends; i++) {
+        ਜੇ (!responses[i].ok) {
             LOG_WARN("%s: rank %zu (%s) failed to initialize\n", __func__, i, ranks[i].endpoint.c_str());
-            ok = false;
+            ok = ਝੂਠ;
         }
     }
-    if (!ok) {
-        for (const auto & rank : ranks) {
+    ਜੇ (!ok) {
+        ਲਈ (ਅਚਲ ਸਵੈਚਾਲਿਤ & rank : ranks) {
             rank.dispatcher->busy_spin_release();
         }
-        return nullptr;
+        ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
     }
     LOG_INFO("%s: pairwise communicator initialized (%s <-> %s)\n", __func__,
              ranks[0].endpoint.c_str(), ranks[1].endpoint.c_str());
-    return new ggml_backend_rpc_comm_context{std::move(ranks)};
+    ਵਾਪਸ ਨਵਾਂ ggml_backend_rpc_comm_context{std::move(ranks)};
 }
 
-static bool ggml_backend_rpc_comm_allreduce_tensor(void * comm_ctx_v, ggml_tensor ** tensors) {
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_backend_rpc_comm_allreduce_tensor(ਖਾਲੀ * comm_ctx_v, ggml_tensor ** tensors) {
     ggml_backend_rpc_comm_context * comm_ctx = (ggml_backend_rpc_comm_context *) comm_ctx_v;
-    if (comm_ctx == nullptr) {
-        return false;
+    ਜੇ (comm_ctx == ਖਾਲੀ_ਸੂਚਕ) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    const size_t n_ranks = comm_ctx->ranks.size();
-    const int64_t ne = ggml_nelements(tensors[0]);
-    if (ne == 0) {
-        return true;
+    ਅਚਲ size_t n_ranks = comm_ctx->ranks.size();
+    ਅਚਲ int64_t ne = ggml_nelements(tensors[0]);
+    ਜੇ (ne == 0) {
+        ਵਾਪਸ ਸੱਚ;
     }
-    for (size_t i = 0; i < n_ranks; i++) {
-        if (tensors[i] == nullptr || tensors[i]->type != GGML_TYPE_F32 || ggml_nelements(tensors[i]) != ne ||
+    ਲਈ (size_t i = 0; i < n_ranks; i++) {
+        ਜੇ (tensors[i] == ਖਾਲੀ_ਸੂਚਕ || tensors[i]->type != GGML_TYPE_F32 || ggml_nelements(tensors[i]) != ne ||
                 !ggml_is_contiguously_allocated(tensors[i]) ||
-                tensors[i]->buffer == nullptr || !ggml_backend_buffer_is_rpc(tensors[i]->buffer)) {
-            return false;
+                tensors[i]->ਬਫਰ == ਖਾਲੀ_ਸੂਚਕ || !ggml_backend_ਬਫਰ_is_rpc(tensors[i]->ਬਫਰ)) {
+            ਵਾਪਸ ਝੂਠ;
         }
         // a rank with a disabled node has garbage in its partial and must contribute zeros,
         // which only the fallback path handles
-        if ((tensors[i]->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
-            return false;
+        ਜੇ ((tensors[i]->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+            ਵਾਪਸ ਝੂਠ;
         }
     }
-    for (size_t i = 0; i < n_ranks; i++) {
-        auto request = std::make_shared<rpc_msg_comm_allreduce_req>();
+    ਲਈ (size_t i = 0; i < n_ranks; i++) {
+        ਸਵੈਚਾਲਿਤ request = std::make_shared<rpc_ਸੁਨੇਹਾ_comm_allreduce_req>();
         request->device = comm_ctx->ranks[i].device;
         request->tensor = serialize_tensor(tensors[i]);
-        comm_ctx->ranks[i].dispatcher->send_async(RPC_CMD_COMM_ALLREDUCE, request, sizeof(*request));
+        comm_ctx->ranks[i].dispatcher->send_async(RPC_CMD_COMM_ALLREDUCE, request, ਆਕਾਰ(*request));
     }
-    return true;
+    ਵਾਪਸ ਸੱਚ;
 }
 
-static void * ggml_backend_rpc_get_proc_address(ggml_backend_reg_t reg, const char * name) {
-    if (std::strcmp(name, "ggml_backend_rpc_add_server") == 0) {
-        return (void *)ggml_backend_rpc_add_server;
+ਸਥਿਰ ਖਾਲੀ * ggml_backend_rpc_get_proc_ਪਤਾ(ggml_backend_reg_t reg, ਅਚਲ ਅੱਖਰ * name) {
+    ਜੇ (std::strcmp(name, "ggml_backend_rpc_add_server") == 0) {
+        ਵਾਪਸ (ਖਾਲੀ *)ggml_backend_rpc_ਜੋੜੋ_server;
     }
-    if (std::strcmp(name, "ggml_backend_rpc_start_server") == 0) {
-        return (void *)ggml_backend_rpc_start_server;
+    ਜੇ (std::strcmp(name, "ggml_backend_rpc_start_server") == 0) {
+        ਵਾਪਸ (ਖਾਲੀ *)ggml_backend_rpc_ਸ਼ੁਰੂ_server;
     }
-    if (std::strcmp(name, "ggml_backend_comm_init") == 0) {
-        return (void *)ggml_backend_rpc_comm_init;
+    ਜੇ (std::strcmp(name, "ggml_backend_comm_init") == 0) {
+        ਵਾਪਸ (ਖਾਲੀ *)ggml_backend_rpc_comm_init;
     }
-    if (std::strcmp(name, "ggml_backend_comm_free") == 0) {
-        return (void *)ggml_backend_rpc_comm_free;
+    ਜੇ (std::strcmp(name, "ggml_backend_comm_free") == 0) {
+        ਵਾਪਸ (ਖਾਲੀ *)ggml_backend_rpc_comm_free;
     }
-    if (std::strcmp(name, "ggml_backend_comm_allreduce_tensor") == 0) {
-        return (void *)ggml_backend_rpc_comm_allreduce_tensor;
+    ਜੇ (std::strcmp(name, "ggml_backend_comm_allreduce_tensor") == 0) {
+        ਵਾਪਸ (ਖਾਲੀ *)ggml_backend_rpc_comm_allreduce_tensor;
     }
-    return NULL;
+    ਵਾਪਸ ਨਿਰਾ;
 
-    GGML_UNUSED(reg);
+    GGML_ਅਣਵਰਤਿਆ(reg);
 }
 
-static const struct ggml_backend_reg_i ggml_backend_rpc_reg_i = {
+ਸਥਿਰ ਅਚਲ ਬਣਤਰ ggml_backend_reg_i ggml_backend_rpc_reg_i = {
     /* .get_name         = */ ggml_backend_rpc_reg_get_name,
-    /* .get_device_count = */ ggml_backend_rpc_reg_get_device_count,
+    /* .get_device_count = */ ggml_backend_rpc_reg_get_device_ਗਿਣਤੀ,
     /* .get_device       = */ ggml_backend_rpc_reg_get_device,
-    /* .get_proc_address = */ ggml_backend_rpc_get_proc_address,
+    /* .get_proc_address = */ ggml_backend_rpc_get_proc_ਪਤਾ,
 };
 
-ggml_backend_reg_t ggml_backend_rpc_reg(void) {
-    static struct ggml_backend_reg ggml_backend_rpc_reg = {
-        /* .api_version = */ GGML_BACKEND_API_VERSION,
+ggml_backend_reg_t ggml_backend_rpc_reg(ਖਾਲੀ) {
+    ਸਥਿਰ ਬਣਤਰ ggml_backend_reg ggml_backend_rpc_reg = {
+        /* .api_version = */ GGML_BACKEND_API_ਸੰਸਕਰਣ,
         /* .iface       = */ ggml_backend_rpc_reg_i,
-        /* .context     = */ NULL,
+        /* .context     = */ ਨਿਰਾ,
     };
 
-    return &ggml_backend_rpc_reg;
+    ਵਾਪਸ &ggml_backend_rpc_reg;
 }
 
-static uint32_t ggml_backend_rpc_get_device_count(const char * endpoint) {
-    auto dispatcher = get_dispatcher(endpoint);
-    rpc_msg_device_count_rsp response;
-    dispatcher->send(RPC_CMD_DEVICE_COUNT, nullptr, 0, &response, sizeof(response));
-    return response.device_count;
+ਸਥਿਰ uint32_t ggml_backend_rpc_get_device_ਗਿਣਤੀ(ਅਚਲ ਅੱਖਰ * endpoint) {
+    ਸਵੈਚਾਲਿਤ dispatcher = get_dispatcher(endpoint);
+    rpc_ਸੁਨੇਹਾ_device_ਗਿਣਤੀ_rsp response;
+    dispatcher->send(RPC_CMD_DEVICE_ਗਿਣਤੀ, ਖਾਲੀ_ਸੂਚਕ, 0, &response, ਆਕਾਰ(response));
+    ਵਾਪਸ response.device_ਗਿਣਤੀ;
 }
 
-static const ggml_backend_reg_i ggml_backend_rpc_reg_interface = {
+ਸਥਿਰ ਅਚਲ ggml_backend_reg_i ggml_backend_rpc_reg_interface = {
     /* .get_name          = */ ggml_backend_rpc_reg_get_name,
-    /* .get_device_count  = */ ggml_backend_rpc_reg_get_device_count,
+    /* .get_device_count  = */ ggml_backend_rpc_reg_get_device_ਗਿਣਤੀ,
     /* .get_device        = */ ggml_backend_rpc_reg_get_device,
-    /* .get_proc_address  = */ ggml_backend_rpc_get_proc_address,
+    /* .get_proc_address  = */ ggml_backend_rpc_get_proc_ਪਤਾ,
 };
 
-ggml_backend_reg_t ggml_backend_rpc_add_server(const char * endpoint) {
-    static std::unordered_map<std::string, ggml_backend_reg_t> reg_map;
-    static std::mutex mutex;
-    static uint32_t dev_id = 0;
-    std::lock_guard<std::mutex> lock(mutex);
-    if (reg_map.find(endpoint) != reg_map.end()) {
+ggml_backend_reg_t ggml_backend_rpc_ਜੋੜੋ_server(ਅਚਲ ਅੱਖਰ * endpoint) {
+    ਸਥਿਰ std::unordered_map<std::string, ggml_backend_reg_t> reg_map;
+    ਸਥਿਰ std::mutex mutex;
+    ਸਥਿਰ uint32_t dev_id = 0;
+    std::lock_guard<std::mutex> ਤਾਲਾ(mutex);
+    ਜੇ (reg_map.find(endpoint) != reg_map.end()) {
         LOG_DBG3("[%s] endpoint %s already registered\n", __func__, endpoint);
-        return reg_map[endpoint];
+        ਵਾਪਸ reg_map[endpoint];
     }
-    uint32_t dev_count = ggml_backend_rpc_get_device_count(endpoint);
-    LOG_DBG2("[%s] endpoint: %s, device count: %u\n", __func__, endpoint, dev_count);
-    if (dev_count == 0) {
-        return nullptr;
+    uint32_t dev_ਗਿਣਤੀ = ggml_backend_rpc_get_device_ਗਿਣਤੀ(endpoint);
+    LOG_DBG2("[%s] endpoint: %s, device count: %u\n", __func__, endpoint, dev_ਗਿਣਤੀ);
+    ਜੇ (dev_ਗਿਣਤੀ == 0) {
+        ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
     }
-    ggml_backend_rpc_reg_context * ctx = new ggml_backend_rpc_reg_context;
+    ggml_backend_rpc_reg_context * ctx = ਨਵਾਂ ggml_backend_rpc_reg_context;
     ctx->name = "RPC[" + std::string(endpoint) + "]";
-    for (uint32_t ind = 0; ind < dev_count; ind++) {
+    ਲਈ (uint32_t ind = 0; ind < dev_ਗਿਣਤੀ; ind++) {
         std::string dev_name = "RPC" + std::to_string(dev_id);
         std::string dev_desc = std::string(endpoint);
-        ggml_backend_rpc_device_context * dev_ctx = new ggml_backend_rpc_device_context {
+        ggml_backend_rpc_device_context * dev_ctx = ਨਵਾਂ ggml_backend_rpc_device_context {
             /* .endpoint    = */    endpoint,
             /* .device      = */    ind,
             /* .name        = */    dev_name,
             /* .description = */    dev_desc,
         };
 
-        ggml_backend_dev_t dev = new ggml_backend_device {
+        ggml_backend_dev_t dev = ਨਵਾਂ ggml_backend_device {
             /* .iface   = */ ggml_backend_rpc_device_i,
             /* .reg     = */ ggml_backend_rpc_reg(),
             /* .context = */ dev_ctx,
@@ -3181,13 +3181,13 @@ ggml_backend_reg_t ggml_backend_rpc_add_server(const char * endpoint) {
         ctx->devices.push_back(dev);
         dev_id++;
     }
-    ggml_backend_reg_t reg = new ggml_backend_reg {
-        /* .api_version = */ GGML_BACKEND_API_VERSION,
+    ggml_backend_reg_t reg = ਨਵਾਂ ggml_backend_reg {
+        /* .api_version = */ GGML_BACKEND_API_ਸੰਸਕਰਣ,
         /* .iface       = */ ggml_backend_rpc_reg_interface,
         /* .context     = */ ctx
     };
     reg_map[endpoint] = reg;
-    return reg;
+    ਵਾਪਸ reg;
 }
 
 

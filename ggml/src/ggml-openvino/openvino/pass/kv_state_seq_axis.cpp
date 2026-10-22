@@ -1,25 +1,25 @@
-#include "kv_state_seq_axis.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "kv_state_seq_axis.h"
 
-#include <memory>
-#include <openvino/core/graph_util.hpp>
-#include <openvino/op/assign.hpp>
-#include <openvino/op/concat.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/read_value.hpp>
-#include <openvino/op/transpose.hpp>
-#include <vector>
+#ਅਨ੍ਤਰ੍ਭਾਵ <memory>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/core/graph_util.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/assign.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/concat.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/constant.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/read_value.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/transpose.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <vector>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace pass {
+ਨਾਮਾਕਾਸ਼ ov {
+ਨਾਮਾਕਾਸ਼ frontend {
+ਨਾਮਾਕਾਸ਼ ggml {
+ਨਾਮਾਕਾਸ਼ pass {
 
-namespace {
+ਨਾਮਾਕਾਸ਼ {
 
-const std::vector<int64_t> & seq_axis_perm() {
+ਅਚਲ std::vector<int64_t> & seq_axis_perm() {
     // [1, seq, n_heads_kv, head_size] <-> [1, n_heads_kv, seq, head_size]
-    static const std::vector<int64_t> perm{0, 2, 1, 3};
-    return perm;
+    ਸਥਿਰ ਅਚਲ std::vector<int64_t> perm{0, 2, 1, 3};
+    ਵਾਪਸ perm;
 }
 
 // True when the state still has the frontend's stateful KV layout, so the sequence axis
@@ -28,84 +28,84 @@ const std::vector<int64_t> & seq_axis_perm() {
 // ([1, seq, 1, head] and [1, 1, seq, head] are the same memory); with several heads it
 // also drops the reader-side transpose of the whole accumulated state, which is where
 // most of the gain comes from at depth.
-bool can_move_seq_axis(const ov::PartialShape & shape) {
-    return shape.rank().is_static() && shape.rank().get_length() == 4 && shape[0].is_static() &&
+ਤਾਰਕਿਕ can_move_seq_axis(ਅਚਲ ov::PartialShape & shape) {
+    ਵਾਪਸ shape.rank().is_static() && shape.rank().get_ਲੰਮਾਈ() == 4 && shape[0].is_static() &&
            shape[1].is_dynamic() && shape[2].is_static() && shape[3].is_static();
 }
 
-std::shared_ptr<ov::op::v0::Concat> match_kv_append(const std::shared_ptr<ov::op::v6::Assign> & assign) {
-    auto concat = ov::as_type_ptr<ov::op::v0::Concat>(assign->get_input_node_shared_ptr(0));
-    if (!concat || concat->get_input_size() != 2 || concat->get_axis() != 1) {
-        return nullptr;
+std::shared_ptr<ov::op::v0::Concat> ਮੇਲ_kv_append(ਅਚਲ std::shared_ptr<ov::op::v6::ਸੌਂਪੋ_2> & ਸੌਂਪੋ) {
+    ਸਵੈਚਾਲਿਤ concat = ov::as_type_ptr<ov::op::v0::Concat>(ਸੌਂਪੋ->get_ਨਿਵੇਸ਼_ਗੰਢ_shared_ptr(0));
+    ਜੇ (!concat || concat->get_ਨਿਵੇਸ਼_ਮਾਪ() != 2 || concat->get_axis() != 1) {
+        ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
     }
-    auto read_value = ov::as_type_ptr<ov::op::v6::ReadValue>(concat->get_input_node_shared_ptr(0));
-    if (!read_value || read_value->get_variable() != assign->get_variable()) {
-        return nullptr;
+    ਸਵੈਚਾਲਿਤ read_ਮੁੱਲ = ov::as_type_ptr<ov::op::v6::Read_ਮੁੱਲ>(concat->get_ਨਿਵੇਸ਼_ਗੰਢ_shared_ptr(0));
+    ਜੇ (!read_ਮੁੱਲ || read_ਮੁੱਲ->get_variable() != ਸੌਂਪੋ->get_variable()) {
+        ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
     }
-    if (!can_move_seq_axis(read_value->get_output_partial_shape(0))) {
-        return nullptr;
+    ਜੇ (!can_move_seq_axis(read_ਮੁੱਲ->get_output_partial_shape(0))) {
+        ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
     }
-    return concat;
+    ਵਾਪਸ concat;
 }
 
 }  // namespace
 
-bool KVStateSeqAxis::run_on_model(const std::shared_ptr<ov::Model> & model) {
-    std::vector<std::shared_ptr<ov::op::v6::Assign>> assigns;
-    for (const auto & op : model->get_ops()) {
-        if (auto assign = ov::as_type_ptr<ov::op::v6::Assign>(op)) {
-            assigns.push_back(assign);
+ਤਾਰਕਿਕ KVStateSeqAxis::ਲੜੀਵਾਰ_on_model(ਅਚਲ std::shared_ptr<ov::Model> & model) {
+    std::vector<std::shared_ptr<ov::op::v6::ਸੌਂਪੋ_2>> assigns;
+    ਲਈ (ਅਚਲ ਸਵੈਚਾਲਿਤ & op : model->get_ops()) {
+        ਜੇ (ਸਵੈਚਾਲਿਤ ਸੌਂਪੋ = ov::as_type_ptr<ov::op::v6::ਸੌਂਪੋ_2>(op)) {
+            assigns.push_back(ਸੌਂਪੋ);
         }
     }
 
-    bool changed = false;
-    for (const auto & assign : assigns) {
-        auto concat = match_kv_append(assign);
-        if (!concat) {
-            continue;
+    ਤਾਰਕਿਕ ਬਦਲਿਆ = ਝੂਠ;
+    ਲਈ (ਅਚਲ ਸਵੈਚਾਲਿਤ & ਸੌਂਪੋ : assigns) {
+        ਸਵੈਚਾਲਿਤ concat = ਮੇਲ_kv_append(ਸੌਂਪੋ);
+        ਜੇ (!concat) {
+            ਜਾਰੀ;
         }
-        auto read_value = ov::as_type_ptr<ov::op::v6::ReadValue>(concat->get_input_node_shared_ptr(0));
+        ਸਵੈਚਾਲਿਤ read_ਮੁੱਲ = ov::as_type_ptr<ov::op::v6::Read_ਮੁੱਲ>(concat->get_ਨਿਵੇਸ਼_ਗੰਢ_shared_ptr(0));
 
-        auto variable = read_value->get_variable();
-        auto info = variable->get_info();
-        const auto & shape = info.data_shape;
-        info.data_shape = ov::PartialShape{shape[0], shape[2], shape[1], shape[3]};
+        ਸਵੈਚਾਲਿਤ variable = read_ਮੁੱਲ->get_variable();
+        ਸਵੈਚਾਲਿਤ info = variable->get_info();
+        ਅਚਲ ਸਵੈਚਾਲਿਤ & shape = info.ਅੰਕੜੇ_shape;
+        info.ਅੰਕੜੇ_shape = ov::PartialShape{shape[0], shape[2], shape[1], shape[3]};
         variable->update(info);
-        read_value->validate_and_infer_types();
+        read_ਮੁੱਲ->validate_and_infer_types();
 
-        auto readers = concat->output(0).get_target_inputs();
+        ਸਵੈਚਾਲਿਤ readers = concat->output(0).get_ਨਿਸ਼ਾਨਾ_inputs();
 
-        auto new_rows = concat->input_value(1);
-        auto perm_in = ov::op::v0::Constant::create(ov::element::i64, {4}, seq_axis_perm());
-        concat->set_argument(1, std::make_shared<ov::op::v1::Transpose>(new_rows, perm_in));
-        concat->set_axis(2);
+        ਸਵੈਚਾਲਿਤ new_ਪੰਕਤੀਆਂ = concat->ਨਿਵੇਸ਼_ਮੁੱਲ(1);
+        ਸਵੈਚਾਲਿਤ perm_ਵਿੱਚ = ov::op::v0::Constant::create(ov::element::i64, {4}, seq_axis_perm());
+        concat->ਸੈੱਟ_ਦਲੀਲ(1, std::make_shared<ov::op::v1::Transpose>(new_ਪੰਕਤੀਆਂ, perm_ਵਿੱਚ));
+        concat->ਸੈੱਟ_axis(2);
         concat->validate_and_infer_types();
 
         // Readers still expect seq at dim 1. A reader that is itself the inverse
         // Transpose wanted seq at dim 2 all along, so drop it; give anything else the
         // inverse Transpose so its input is unchanged.
-        for (const auto & reader : readers) {
-            auto * node = reader.get_node();
-            if (ov::is_type<ov::op::v6::Assign>(node)) {
-                continue;
+        ਲਈ (ਅਚਲ ਸਵੈਚਾਲਿਤ & reader : readers) {
+            ਸਵੈਚਾਲਿਤ * ਗੰਢ = reader.get_ਗੰਢ();
+            ਜੇ (ov::is_type<ov::op::v6::ਸੌਂਪੋ_2>(ਗੰਢ)) {
+                ਜਾਰੀ;
             }
-            bool dropped = false;
-            if (auto * transpose = ov::as_type<ov::op::v1::Transpose>(node)) {
-                auto order = ov::as_type_ptr<ov::op::v0::Constant>(transpose->get_input_node_shared_ptr(1));
-                if (order && order->cast_vector<int64_t>() == seq_axis_perm()) {
+            ਤਾਰਕਿਕ dropped = ਝੂਠ;
+            ਜੇ (ਸਵੈਚਾਲਿਤ * transpose = ov::as_type<ov::op::v1::Transpose>(ਗੰਢ)) {
+                ਸਵੈਚਾਲਿਤ ਕ੍ਰਮ = ov::as_type_ptr<ov::op::v0::Constant>(transpose->get_ਨਿਵੇਸ਼_ਗੰਢ_shared_ptr(1));
+                ਜੇ (ਕ੍ਰਮ && ਕ੍ਰਮ->cast_ਸਦਿਸ਼<int64_t>() == seq_axis_perm()) {
                     ov::replace_output_update_name(transpose->output(0), concat->output(0));
-                    dropped = true;
+                    dropped = ਸੱਚ;
                 }
             }
-            if (!dropped) {
-                auto perm_out = ov::op::v0::Constant::create(ov::element::i64, {4}, seq_axis_perm());
-                reader.replace_source_output(std::make_shared<ov::op::v1::Transpose>(concat->output(0), perm_out));
+            ਜੇ (!dropped) {
+                ਸਵੈਚਾਲਿਤ perm_ਬਾਹਰਲਾ = ov::op::v0::Constant::create(ov::element::i64, {4}, seq_axis_perm());
+                reader.replace_ਸਰੋਤ_output(std::make_shared<ov::op::v1::Transpose>(concat->output(0), perm_ਬਾਹਰਲਾ));
             }
         }
-        changed = true;
+        ਬਦਲਿਆ = ਸੱਚ;
     }
 
-    return changed;
+    ਵਾਪਸ ਬਦਲਿਆ;
 }
 
 }  // namespace pass

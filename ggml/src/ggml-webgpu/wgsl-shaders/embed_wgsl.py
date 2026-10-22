@@ -1,89 +1,89 @@
-import os
-import re
-import argparse
+ਆਯਾਤ os
+ਆਯਾਤ re
+ਆਯਾਤ argparse
 
 
-def expand_includes(shader, input_dir):
+ਪਰਿਭਾਸ਼ਾ expand_includes(shader, ਨਿਵੇਸ਼_dir):
     """
     Replace #include "file" lines in the text with the contents of that file.
     Searches for files relative to input_dir.
     """
-    include_pattern = re.compile(r'^\s*#include\s+"([^"]+)"\s*$', re.MULTILINE)
+    include_ਨਮੂਨਾ = re.compile(r'^\s*#include\s+"([^"]+)"\s*$', re.MULTILINE)
 
-    def replacer(match):
-        fname = match.group(1)
-        file_path = os.path.join(input_dir, fname)
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f"Included file not found: {file_path}")
-        with open(file_path, "r", encoding="utf-8") as f:
-            included_code = f.read()
+    ਪਰਿਭਾਸ਼ਾ replacer(ਮੇਲ):
+        fname = ਮੇਲ.ਸਮੂਹ(1)
+        file_ਰਸਤਾ = os.ਰਸਤਾ.join(ਨਿਵੇਸ਼_dir, fname)
+        ਜੇ ਨਹੀਂ os.ਰਸਤਾ.exists(file_ਰਸਤਾ):
+            ਉਠਾਓ File_Not_ਮਿਲਿਆ_Error(f"Included file not found: {file_path}")
+        ਨਾਲ open(file_ਰਸਤਾ, "r", encoding="utf-8") ਇਵ f:
+            included_ਕੋਡ = f.ਪਠ()
         # Recursively expand includes inside the included file
-        return expand_includes(included_code, input_dir)
+        ਵਾਪਸ expand_includes(included_ਕੋਡ, ਨਿਵੇਸ਼_dir)
 
-    return include_pattern.sub(replacer, shader)
+    ਵਾਪਸ include_ਨਮੂਨਾ.sub(replacer, shader)
 
 
-def chunk_shader(shader_code, max_chunk_len=60000):
+ਪਰਿਭਾਸ਼ਾ chunk_shader(shader_ਕੋਡ, max_chunk_len=60000):
     """Split shader_code into safe raw-string sized chunks."""
-    return [shader_code[i : i + max_chunk_len] for i in range(0, len(shader_code), max_chunk_len)]
+    ਵਾਪਸ [shader_ਕੋਡ[i : i + max_chunk_len] ਲਈ i ਵਿੱਚ ਸੀਮਾ(0, ਲੰਬਾਈ(shader_ਕੋਡ), max_chunk_len)]
 
 
-def raw_delim(shader_code):
+ਪਰਿਭਾਸ਼ਾ raw_delim(shader_ਕੋਡ):
     """Pick a raw-string delimiter that does not appear in the shader."""
     delim = "wgsl"
-    while f"){delim}\"" in shader_code:
+    ਜਦੋਂ f"){delim}\"" ਵਿੱਚ shader_ਕੋਡ:
         delim += "_x"
-    return delim
+    ਵਾਪਸ delim
 
 
-def write_shader(shader_name, shader_code, output_dir, outfile, input_dir):
-    shader_code = expand_includes(shader_code, input_dir)
+ਪਰਿਭਾਸ਼ਾ write_shader(shader_name, shader_ਕੋਡ, output_dir, outfile, ਨਿਵੇਸ਼_dir):
+    shader_ਕੋਡ = expand_includes(shader_ਕੋਡ, ਨਿਵੇਸ਼_dir)
 
-    if output_dir:
-        wgsl_filename = os.path.join(output_dir, f"{shader_name}.wgsl")
-        with open(wgsl_filename, "w", encoding="utf-8") as f_out:
-            f_out.write(shader_code)
+    ਜੇ output_dir:
+        wgsl_filename = os.ਰਸਤਾ.join(output_dir, f"{shader_name}.wgsl")
+        ਨਾਲ open(wgsl_filename, "w", encoding="utf-8") ਇਵ f_ਬਾਹਰਲਾ:
+            f_ਬਾਹਰਲਾ.ਲਿਖ(shader_ਕੋਡ)
 
-    delim = raw_delim(shader_code)
-    chunks = chunk_shader(shader_code)
+    delim = raw_delim(shader_ਕੋਡ)
+    chunks = chunk_shader(shader_ਕੋਡ)
 
-    if len(chunks) == 1:
-        outfile.write(f'const char* wgsl_{shader_name} = R"{delim}({shader_code}){delim}";\n\n')
-    else:
-        for idx, chunk in enumerate(chunks):
-            outfile.write(f'static const char wgsl_{shader_name}_part{idx}[] = R"{delim}({chunk}){delim}";\n\n')
-        outfile.write(f'static const std::string& wgsl_{shader_name}_str() {{\n')
-        outfile.write('    static const std::string s = []{\n')
-        outfile.write('        std::string tmp;\n')
-        outfile.write(f'        tmp.reserve({len(shader_code)});\n')
-        for idx in range(len(chunks)):
-            outfile.write(f'        tmp.append(wgsl_{shader_name}_part{idx});\n')
-        outfile.write('        return tmp;\n')
-        outfile.write('    }();\n')
-        outfile.write('    return s;\n')
-        outfile.write('}\n')
-        outfile.write(f'const char* wgsl_{shader_name} = wgsl_{shader_name}_str().c_str();\n\n')
+    ਜੇ ਲੰਬਾਈ(chunks) == 1:
+        outfile.ਲਿਖ(f'const char* wgsl_{shader_name} = R"{delim}({shader_code}){delim}";\n\n')
+    ਨਹੀਂਤਾਂ:
+        ਲਈ idx, chunk ਵਿੱਚ enumerate(chunks):
+            outfile.ਲਿਖ(f'static const char wgsl_{shader_name}_part{idx}[] = R"{delim}({chunk}){delim}";\n\n')
+        outfile.ਲਿਖ(f'static const std::string& wgsl_{shader_name}_str() {{\n')
+        outfile.ਲਿਖ('    static const std::string s = []{\n')
+        outfile.ਲਿਖ('        std::string tmp;\n')
+        outfile.ਲਿਖ(f'        tmp.reserve({len(shader_code)});\n')
+        ਲਈ idx ਵਿੱਚ ਸੀਮਾ(ਲੰਬਾਈ(chunks)):
+            outfile.ਲਿਖ(f'        tmp.append(wgsl_{shader_name}_part{idx});\n')
+        outfile.ਲਿਖ('        return tmp;\n')
+        outfile.ਲਿਖ('    }();\n')
+        outfile.ਲਿਖ('    return s;\n')
+        outfile.ਲਿਖ('}\n')
+        outfile.ਲਿਖ(f'const char* wgsl_{shader_name} = wgsl_{shader_name}_str().c_str();\n\n')
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--input_dir", required=True)
-    parser.add_argument("--output_file", required=True)
-    args = parser.parse_args()
+ਪਰਿਭਾਸ਼ਾ ਮੁੱਖ():
+    parser = argparse.ਦਲੀਲ_Parser()
+    parser.ਜੋੜੋ_ਦਲੀਲ("--input_dir", required=ਸੱਚ)
+    parser.ਜੋੜੋ_ਦਲੀਲ("--output_file", required=ਸੱਚ)
+    ਦਲੀਲਾਂ_2 = parser.parse_ਦਲੀਲਾਂ()
 
-    with open(args.output_file, "w", encoding="utf-8") as out:
-        out.write("// Auto-generated shader embedding\n")
-        out.write("#include <string>\n\n")
-        for fname in sorted(os.listdir(args.input_dir)):
-            if fname.endswith(".wgsl"):
-                shader_path = os.path.join(args.input_dir, fname)
+    ਨਾਲ open(ਦਲੀਲਾਂ_2.output_file, "w", encoding="utf-8") ਇਵ ਬਾਹਰਲਾ:
+        ਬਾਹਰਲਾ.ਲਿਖ("// Auto-generated shader embedding\n")
+        ਬਾਹਰਲਾ.ਲਿਖ("#include <string>\n\n")
+        ਲਈ fname ਵਿੱਚ sorted(os.listdir(ਦਲੀਲਾਂ_2.ਨਿਵੇਸ਼_dir)):
+            ਜੇ fname.endswith(".wgsl"):
+                shader_ਰਸਤਾ = os.ਰਸਤਾ.join(ਦਲੀਲਾਂ_2.ਨਿਵੇਸ਼_dir, fname)
                 shader_name = fname.replace(".wgsl", "")
 
-                with open(shader_path, "r", encoding="utf-8") as f:
-                    shader_code = f.read()
+                ਨਾਲ open(shader_ਰਸਤਾ, "r", encoding="utf-8") ਇਵ f:
+                    shader_ਕੋਡ = f.ਪਠ()
 
-                write_shader(shader_name, shader_code, None, out, args.input_dir)
+                write_shader(shader_name, shader_ਕੋਡ, ਕੁਝ_ਨਹੀਂ, ਬਾਹਰਲਾ, ਦਲੀਲਾਂ_2.ਨਿਵੇਸ਼_dir)
 
 
-if __name__ == "__main__":
-    main()
+ਜੇ __name__ == "__main__":
+    ਮੁੱਖ()

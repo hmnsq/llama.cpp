@@ -1,27 +1,27 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "../node_context.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "../op_table.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "../utils.h"
 
-#include <memory>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/range.hpp>
-#include <openvino/op/reduce_sum.hpp>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/shape_of.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <memory>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/constant.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/range.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/reduce_sum.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/reshape.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/shape_of.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+ਨਾਮਾਕਾਸ਼ ov {
+ਨਾਮਾਕਾਸ਼ frontend {
+ਨਾਮਾਕਾਸ਼ ggml {
+ਨਾਮਾਕਾਸ਼ op {
 
-OutputVector translate_sum(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+Output_ਸਦਿਸ਼ translate_ਜੋੜ(ਅਚਲ ਗੰਢ_Context & context) {
+    ਅੰਕ_inputs_check(context, 1, 1);
 
-    auto input = process_view_input_new(context, 0);
-    auto axes = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{4}, {0, 1, 2, 3});
-    auto res = std::make_shared<ov::op::v1::ReduceSum>(input, axes, true);
+    ਸਵੈਚਾਲਿਤ ਨਿਵੇਸ਼ = process_view_ਨਿਵੇਸ਼_new(context, 0);
+    ਸਵੈਚਾਲਿਤ axes = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{4}, {0, 1, 2, 3});
+    ਸਵੈਚਾਲਿਤ res = std::make_shared<ov::op::v1::Reduce_ਜੋੜ>(ਨਿਵੇਸ਼, axes, ਸੱਚ);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ਵਾਪਸ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

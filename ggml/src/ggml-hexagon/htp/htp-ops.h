@@ -1,22 +1,22 @@
-#ifndef HTP_OPS_H
-#define HTP_OPS_H
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ HTP_OPS_H
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_OPS_H
 
-#include <assert.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <assert.h>
 
 // ggml-common.h must be included prio to this header
 
-enum htp_status {
-    HTP_STATUS_OK             = 1,
-    HTP_STATUS_INTERNAL_ERR   = 2,
-    HTP_STATUS_NO_SUPPORT     = 3,
-    HTP_STATUS_INVAL_PARAMS   = 4,
-    HTP_STATUS_VTCM_TOO_SMALL = 5,
+ਗਿਣਤੀ htp_ਸਥਿਤੀ {
+    HTP_ਸਥਿਤੀ_OK             = 1,
+    HTP_ਸਥਿਤੀ_ਅੰਦਰੂਨੀ_ERR   = 2,
+    HTP_ਸਥਿਤੀ_NO_SUPPORT     = 3,
+    HTP_ਸਥਿਤੀ_INVAL_PARAMS   = 4,
+    HTP_ਸਥਿਤੀ_VTCM_TOO_SMALL = 5,
 };
 
 // First set of values must match the ggml_type.
 // Duplicated here because we can't include full ggml.h in the htp build.
 // We have some static_asserts in the cpp code to ensure things are in sync.
-enum htp_data_type {
+ਗਿਣਤੀ htp_ਅੰਕੜੇ_type {
     HTP_TYPE_F32    = 0,
     HTP_TYPE_F16    = 1,
     HTP_TYPE_Q4_0   = 2,
@@ -39,21 +39,21 @@ enum htp_data_type {
 };
 
 // Constants for internal types
-#define QK_Q8_0_TILED  128  // 32x32 Q8_0 tiled layout
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QK_Q8_0_TILED  128  // 32x32 Q8_0 tiled layout
 
 
 
 // Do not reorder first 4 (used as an index)
-enum htp_op_code {
+ਗਿਣਤੀ htp_op_ਕੋਡ {
     HTP_OP_MUL = 0,
-    HTP_OP_ADD = 1,
+    HTP_OP_ਜੋੜੋ = 1,
     HTP_OP_SUB = 2,
     HTP_OP_DIV = 3,
     HTP_OP_MUL_MAT,
     HTP_OP_MUL_MAT_ID,
     HTP_OP_MUL_MAT_NX,
     HTP_OP_MUL_MAT_ID_NX,
-    HTP_OP_MUL_MAT_ADD,
+    HTP_OP_MUL_MAT_ਜੋੜੋ,
     HTP_OP_RMS_NORM,
     HTP_OP_RMS_NORM_MUL,
     HTP_OP_UNARY_SILU,
@@ -66,26 +66,26 @@ enum htp_op_code {
     HTP_OP_UNARY_ABS,
     HTP_OP_UNARY_LOG,
     HTP_OP_UNARY_RELU,
-    HTP_OP_UNARY_STEP,
+    HTP_OP_UNARY_ਕਦਮ,
     HTP_OP_GLU_SWIGLU,
     HTP_OP_GLU_SWIGLU_OAI,
     HTP_OP_GLU_GEGLU,
-    HTP_OP_GLU_GEGLU_QUICK,
+    HTP_OP_GLU_GEGLU_ਤੇਜ਼,
     HTP_OP_SOFTMAX,
-    HTP_OP_ADD_ID,
+    HTP_OP_ਜੋੜੋ_ID,
     HTP_OP_ROPE,
     HTP_OP_FLASH_ATTN_EXT,
-    HTP_OP_SET_ROWS,
-    HTP_OP_GET_ROWS,
+    HTP_OP_ਸੈੱਟ_ਪੰਕਤੀਆਂ,
+    HTP_OP_GET_ਪੰਕਤੀਆਂ,
     HTP_OP_SCALE,
     HTP_OP_CPY,
     HTP_OP_CPY_FENCE,
     HTP_OP_ARGSORT,
-    HTP_OP_TOP_K,
+    HTP_OP_ਸਿਖਰ_K,
     HTP_OP_SQR,
     HTP_OP_SQRT,
-    HTP_OP_SUM,
-    HTP_OP_SUM_ROWS,
+    HTP_OP_ਜੋੜ,
+    HTP_OP_ਜੋੜ_ਪੰਕਤੀਆਂ,
     HTP_OP_SSM_CONV,
     HTP_OP_REPEAT,
     HTP_OP_CUMSUM,
@@ -100,55 +100,55 @@ enum htp_op_code {
     HTP_OP_CONCAT,
     HTP_OP_CLAMP,
     HTP_OP_LEAKY_RELU,
-    HTP_OP_IM2COL,
+    HTP_OP_IM2_ਖਾਨਾ,
     HTP_OP_FENCE,
     HTP_OP_ALLREDUCE,
-    HTP_OP_ALLREDUCE_ADD,
+    HTP_OP_ALLREDUCE_ਜੋੜੋ,
     HTP_OP_GLU_SWIGLU_CLAMP,
-    HTP_OP_MDEV_GROUP,
+    HTP_OP_MDEV_ਸਮੂਹ,
     HTP_OP_ROLL,
     HTP_OP_ARGMAX,
     HTP_OP_UNARY_GELU_ERF,
     HTP_OP_GLU_GEGLU_ERF,
     HTP_OP_POOL_2D,
     HTP_OP_POOL_1D,
-    HTP_OP_UNARY_GELU_QUICK,
-    HTP_OP_IM2COL_3D,
+    HTP_OP_UNARY_GELU_ਤੇਜ਼,
+    HTP_OP_IM2_ਖਾਨਾ_3_D,
     HTP_OP_HADAMARD,
 
     HTP_OP_INVALID
 };
 
-#define HTP_OP_MAX_DIMS    4    // aka GGML_MAX_DIMS
-#define HTP_OP_MAX_INPUTS  10   // aka GGML_MAX_SRCS
-#define HTP_OP_MAX_OUTPUTS 4
-#define HTP_OP_MAX_PARAMS  16   // aka GGML_MAX_OP_PARAMS
-#define HTP_OP_MAX_KERN_PARAMS 32
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_OP_MAX_DIMS    4    // aka GGML_MAX_DIMS
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_OP_MAX_INPUTS  10   // aka GGML_MAX_SRCS
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_OP_MAX_OUTPUTS 4
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_OP_MAX_PARAMS  16   // aka GGML_MAX_OP_PARAMS
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_OP_MAX_KERN_PARAMS 32
 
-#define HTP_OP_MAX_BUFS    16
-#define HTP_OP_MAX_TENSORS 8192 // must stay under 64K (uint16)
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_OP_MAX_BUFS    16
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_OP_MAX_TENSORS 8192 // must stay under 64K (uint16)
 
-#define HTP_FENCE_TIMEOUT  (1000000000ULL)
-#define HTP_FENCE_SLOT_SIZE 128
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_FENCE_TIMEOUT  (1000000000ULL)
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_FENCE_ਥਾਂ_ਮਾਪ 128
 
-#define HTP_OP_MAX_VMEM_DEFAULT (3355443200u)
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_OP_MAX_VMEM_DEFAULT (3355443200u)
 
-#define HTP_MMAP_MAX_VMEM  (2147483648u)
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_MMAP_MAX_VMEM  (2147483648u)
 
-enum htp_tensor_flags {
-    HTP_TENSOR_WEIGHT  = (1U << 0), // Tensor buffer model weight data (not compute)
+ਗਿਣਤੀ htp_tensor_flags {
+    HTP_TENSOR_ਭਾਰ  = (1U << 0), // Tensor buffer model weight data (not compute)
     HTP_TENSOR_TILED   = (1U << 1), // Tensor is in tiled format
     HTP_TENSOR_FENCE   = (1U << 2)  // Tensor is synchronization fence (explicitly managed)
 };
 
-enum htp_buf_flags {
+ਗਿਣਤੀ htp_buf_flags {
     HTP_BUF_EXTENDED = (1U << 0),
 };
 
 // Tensor descriptor
-struct htp_tensor {
-    uint64_t data;                 // Buffer offset in the messages, and data pointer on the NPU
-    uint32_t size;                 // Data size in bytes
+ਬਣਤਰ htp_tensor {
+    uint64_t ਅੰਕੜੇ;                 // Buffer offset in the messages, and data pointer on the NPU
+    uint32_t ਮਾਪ;                 // Data size in bytes
     uint32_t flags;                // Buffer / tensor flags
     uint32_t type;                 // Data type
     uint16_t bi;                   // Buffer index
@@ -158,19 +158,19 @@ struct htp_tensor {
 };
 
 // Buffer descriptor
-struct htp_buf_desc {
-    uint64_t base;     // base address
-    uint64_t size;     // total size
+ਬਣਤਰ htp_buf_desc {
+    uint64_t ਅਧਾਰ;     // base address
+    uint64_t ਮਾਪ;     // total size
     uint32_t flags;    // HTP_BUF_*
     uint32_t fd;       // file descriptor
 };
 
-enum htp_op_flags {
+ਗਿਣਤੀ htp_op_flags {
     HTP_OPFLAGS_STUB  = (1U << 0),
 };
 
 // Op descriptor
-struct htp_op_desc {
+ਬਣਤਰ htp_op_desc {
     uint32_t opcode;                    // GGML/HTP Op
     uint32_t flags;                     // Op flags
     int32_t  params[HTP_OP_MAX_PARAMS]; // Params for the op, e.g. epsilon of RMS norm
@@ -180,13 +180,13 @@ struct htp_op_desc {
     uint16_t pad[2];                    // padding to align to 64 bits
 };
 
-#ifndef HTP_MAX_NTHREADS
-#define HTP_MAX_NTHREADS 10
-#endif
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ HTP_MAX_NTHREADS
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_MAX_NTHREADS 10
+#ਜੇ_ਅੰਤ
 
-#define HTP_TRACE_MAX_EVENTS 256
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_TRACE_MAX_EVENTS 256
 
-enum htp_profiler_mode {
+ਗਿਣਤੀ htp_profiler_ਬਹੁਲਕ {
     HTP_PROF_DISABLED = 0,
     HTP_PROF_BASIC    = 1,
     HTP_PROF_PMU      = 2,
@@ -194,20 +194,20 @@ enum htp_profiler_mode {
 };
 
 // DCVS/HMX power profile requested for the session.
-enum htp_power_mode {
-    HTP_POWER_MODE_LOW_POWER_SAVER            = 0,
-    HTP_POWER_MODE_POWER_SAVER                = 1,
-    HTP_POWER_MODE_HIGH_POWER_SAVER           = 2,
-    HTP_POWER_MODE_LOW_BALANCED               = 3,
-    HTP_POWER_MODE_BALANCED                   = 4,
-    HTP_POWER_MODE_HIGH_PERFORMANCE           = 5,
-    HTP_POWER_MODE_SUSTAINED_HIGH_PERFORMANCE = 6,
-    HTP_POWER_MODE_BURST                      = 7,
+ਗਿਣਤੀ htp_power_ਬਹੁਲਕ {
+    HTP_POWER_ਬਹੁਲਕ_ਨੀਵਾਂ_POWER_SAVER            = 0,
+    HTP_POWER_ਬਹੁਲਕ_POWER_SAVER                = 1,
+    HTP_POWER_ਬਹੁਲਕ_ਉੱਚਾ_POWER_SAVER           = 2,
+    HTP_POWER_ਬਹੁਲਕ_ਨੀਵਾਂ_ਸੰਤੁਲਿਤ               = 3,
+    HTP_POWER_ਬਹੁਲਕ_ਸੰਤੁਲਿਤ                   = 4,
+    HTP_POWER_ਬਹੁਲਕ_ਉੱਚਾ_PERFORMANCE           = 5,
+    HTP_POWER_ਬਹੁਲਕ_SUSTAINED_ਉੱਚਾ_PERFORMANCE = 6,
+    HTP_POWER_ਬਹੁਲਕ_ਮਿਆਦ                      = 7,
 
-    HTP_POWER_MODE_COUNT
+    HTP_POWER_ਬਹੁਲਕ_ਗਿਣਤੀ
 };
 
-enum htp_trace_event_id {
+ਗਿਣਤੀ htp_trace_event_id {
     HTP_TRACE_EVT_DMA                 = 0,
     HTP_TRACE_EVT_L2FLUSH             = 1,
     HTP_TRACE_EVT_INIT                = 2,
@@ -230,31 +230,31 @@ enum htp_trace_event_id {
     HTP_TRACE_EVT_HVX_GDN_SOLVE       = 32,
     HTP_TRACE_EVT_HVX_GDN_V_PREP      = 33,
     HTP_TRACE_EVT_HVX_GDN_D_PREP      = 34,
-    HTP_TRACE_EVT_HVX_GDN_OUT         = 35,
+    HTP_TRACE_EVT_HVX_GDN_ਬਾਹਰਲਾ         = 35,
     HTP_TRACE_EVT_HVX_GDN_STATE       = 36,
     HTP_TRACE_EVT_HVX_GDN_REM         = 37,
 
     HTP_TRACE_EVT_HMX_COMP            = 40,
 };
 
-struct htp_trace_desc {
-    uint32_t cycles;  // lower 32-bits of cycle counter
+ਬਣਤਰ htp_trace_desc {
+    uint32_t ਚੱਕਰਾਂ;  // lower 32-bits of cycle counter
     uint16_t id;      // Event ID
     uint16_t info;    // bit 15: is_stop. bits 14-0: tile/chunk index or other metadata.
 };
 
-#define HTP_PROF_PMU_NCNT 8
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_PROF_PMU_NCNT 8
 
 // Profile descriptor
-struct htp_prof_desc {
+ਬਣਤਰ htp_prof_desc {
     uint32_t opcode;                 // GGML/HTP Op
     uint32_t usecs;                  // Number of usec
-    uint32_t cycles_start;           // Start cycle counter
-    uint32_t cycles_stop;            // Stop cycle counter
+    uint32_t ਚੱਕਰਾਂ_ਸ਼ੁਰੂ;           // Start cycle counter
+    uint32_t ਚੱਕਰਾਂ_stop;            // Stop cycle counter
     uint32_t pmu[HTP_PROF_PMU_NCNT]; // PMU counters
 };
 
-struct htp_opbatch_req {
+ਬਣਤਰ htp_opbatch_req {
     uint64_t seq;         // Sequence number
     uint32_t n_bufs;      // Number of buffers
     uint32_t n_tensors;   // Number of tensors
@@ -265,11 +265,11 @@ struct htp_opbatch_req {
     // struct htp_op_desc   ops[];     -- dspqueue buf 0
 };
 
-struct htp_opbatch_rsp {
+ਬਣਤਰ htp_opbatch_rsp {
     uint64_t seq;            // Sequence number
-    uint64_t cycles_start;   // Start cycle counter
-    uint64_t cycles_stop;    // Stop cycle counter
-    uint32_t status;         // HTP_STATUS_...
+    uint64_t ਚੱਕਰਾਂ_ਸ਼ੁਰੂ;   // Start cycle counter
+    uint64_t ਚੱਕਰਾਂ_stop;    // Stop cycle counter
+    uint32_t ਸਥਿਤੀ;         // HTP_STATUS_...
     uint32_t n_bufs;         // Number of buffers
     uint32_t n_tensors;      // Number of tensors
     uint32_t n_ops;          // Number of op profile descriptors
@@ -278,4 +278,4 @@ struct htp_opbatch_rsp {
     // struct htp_prof_desc profs[];  -- dspqueue buf 0
 };
 
-#endif /* HTP_OPS_H */
+#ਜੇ_ਅੰਤ /* HTP_OPS_H */

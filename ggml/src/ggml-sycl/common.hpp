@@ -10,69 +10,69 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#ifndef GGML_SYCL_COMMON_HPP
-#define GGML_SYCL_COMMON_HPP
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ GGML_SYCL_COMMON_HPP
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_SYCL_COMMON_HPP
 
-#include <cstddef>
-#include <fstream>
-#include <iostream>
-#include <string>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cstddef>
+#ਅਨ੍ਤਰ੍ਭਾਵ <fstream>
+#ਅਨ੍ਤਰ੍ਭਾਵ <iostream>
+#ਅਨ੍ਤਰ੍ਭਾਵ <string>
 
-#include "base.hpp"
-#include "dpct/helper.hpp"
-#include "ggml.h"
-#include "ggml-impl.h"
-#include "ggml-sycl.h"
-#include "presets.hpp"
-#include "type.hpp"
-#include "sycl_hw.hpp"
-#include "memtrace.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "base.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "dpct/helper.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-impl.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-sycl.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "presets.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "type.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "sycl_hw.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "memtrace.hpp"
 
-namespace syclexp = sycl::ext::oneapi::experimental;
+ਨਾਮਾਕਾਸ਼ syclexp = sycl::ext::oneapi::experimental;
 
-#if defined(__INTEL_LLVM_COMPILER) && __has_include(<sycl/ext/oneapi/bfloat16.hpp>)
-    #include <sycl/ext/oneapi/bfloat16.hpp>
-    #ifndef GGML_SYCL_HAS_BF16
-        #define GGML_SYCL_HAS_BF16
-    #endif
-#endif
+#ਜੇ defined(__INTEL_LLVM_COMPILER) && __has_include(<sycl/ext/oneapi/bfloat16.hpp>)
+    #ਅਨ੍ਤਰ੍ਭਾਵ <sycl/ext/oneapi/bfloat16.hpp>
+    #ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ GGML_SYCL_HAS_BF16
+        #ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_SYCL_HAS_BF16
+    #ਜੇ_ਅੰਤ
+#ਜੇ_ਅੰਤ
 
-#if defined(__INTEL_LLVM_COMPILER)
-    #define GGML_SYCL_DMMV_HAS_ESIMD
-#endif
+#ਜੇ defined(__INTEL_LLVM_COMPILER)
+    #ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_SYCL_DMMV_HAS_ESIMD
+#ਜੇ_ਅੰਤ
 
-#if GGML_SYCL_DNNL
-#include "dnnl.hpp"
-#include "dnnl_sycl.hpp"
-#endif
+#ਜੇ GGML_SYCL_DNNL
+#ਅਨ੍ਤਰ੍ਭਾਵ "dnnl.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "dnnl_sycl.hpp"
+#ਜੇ_ਅੰਤ
 
-#define GGML_COMMON_DECL_SYCL
-#define GGML_COMMON_IMPL_SYCL
-#define SYCL_FLASH_ATTN //remove it to disable FLASH_ATTENTION in building.
-#define SYCL_FAST_FP16  //don't change. remove it will break fattn-tile.hpp building
-#define GGML_SYCL_FA_ALL_QUANTS //define it to enable all quantization types in flash attention. undefine it to only support F16, Q4_0 and Q8_0 in flash attention.
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_DECL_SYCL
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_IMPL_SYCL
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ SYCL_FLASH_ATTN //remove it to disable FLASH_ATTENTION in building.
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ SYCL_FAST_FP16  //don't change. remove it will break fattn-tile.hpp building
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_SYCL_FA_ALL_QUANTS //define it to enable all quantization types in flash attention. undefine it to only support F16, Q4_0 and Q8_0 in flash attention.
 
 /* suppress warning spam */
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wnested-anon-types"
-#include "ggml-common.h"
-#pragma clang diagnostic pop
-#include "ggml-impl.h"
+#ਹਦਾਇਤ clang diagnostic ਧੱਕੋ
+#ਹਦਾਇਤ clang diagnostic ignored "-Wnested-anon-types"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-common.h"
+#ਹਦਾਇਤ clang diagnostic ਕੱਢੋ
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-impl.h"
 
-void* ggml_sycl_host_malloc(size_t size);
-void ggml_sycl_host_free(void* ptr);
+ਖਾਲੀ* ggml_sycl_host_malloc(size_t size);
+ਖਾਲੀ ggml_sycl_host_free(ਖਾਲੀ* ptr);
 
 
-extern int g_ggml_sycl_debug;
-extern int g_ggml_sycl_enable_optimize;
-extern int g_ggml_sycl_enable_fusion;
-extern int g_ggml_sycl_enable_esimd;
-extern int g_ggml_sycl_mmvq_wide;
-extern int g_ggml_sycl_prioritize_dmmv;
+ਬਾਹਰੀ ਪੂਰਨ g_ggml_sycl_debug;
+ਬਾਹਰੀ ਪੂਰਨ g_ggml_sycl_enable_optimize;
+ਬਾਹਰੀ ਪੂਰਨ g_ggml_sycl_enable_fusion;
+ਬਾਹਰੀ ਪੂਰਨ g_ggml_sycl_enable_esimd;
+ਬਾਹਰੀ ਪੂਰਨ g_ggml_sycl_mmvq_wide;
+ਬਾਹਰੀ ਪੂਰਨ g_ggml_sycl_prioritize_dmmv;
 
 // Which quantized weight formats may take the XMX dequant-GEMM paths. A bitmask rather than one
 // flag per path, so a format can be enabled or measured on its own and adding a format is one bit.
-enum ggml_sycl_xmx_gather_type {
+ਗਿਣਤੀ ggml_sycl_xmx_gather_type {
     GGML_SYCL_XMX_GATHER_IQ4_NL   = 1 << 0,
     GGML_SYCL_XMX_GATHER_IQ3_S    = 1 << 1,
     GGML_SYCL_XMX_GATHER_IQ4_XS   = 1 << 2,
@@ -87,245 +87,245 @@ enum ggml_sycl_xmx_gather_type {
     GGML_SYCL_XMX_GATHER_Q5_K     = 1 << 11,
     GGML_SYCL_XMX_GATHER_Q6_K     = 1 << 12,
 };
-static constexpr int GGML_SYCL_XMX_GATHER_TYPES_DEFAULT = ~0;
-extern int g_ggml_sycl_xmx_gather_types;
+ਸਥਿਰ constexpr ਪੂਰਨ GGML_SYCL_XMX_GATHER_TYPES_DEFAULT = ~0;
+ਬਾਹਰੀ ਪੂਰਨ g_ggml_sycl_xmx_gather_types;
 // Which joint_matrix combinations the XMX dequant-GEMM paths may use, one bit each (see fused-gemm.cpp).
 // GGML_SYCL_DYNAMIC_PRECISION picks the operand type, this mask the combinations of that type.
-static constexpr int GGML_SYCL_XMX_GATHER_SHAPES_DEFAULT = 0xff;
-extern int g_ggml_sycl_xmx_gather_shapes;
+ਸਥਿਰ constexpr ਪੂਰਨ GGML_SYCL_XMX_GATHER_SHAPES_DEFAULT = 0xff;
+ਬਾਹਰੀ ਪੂਰਨ g_ggml_sycl_xmx_gather_shapes;
 
 // GGML_SYCL_DYNAMIC_PRECISION: operand type of the XMX dequant-GEMM paths. F32 turns them off and
 // keeps the library GEMM in f32. A src1 precision request of an op [TAG_GGML_PREC] is always met.
-enum ggml_sycl_dynamic_precision {
+ਗਿਣਤੀ ggml_sycl_dynamic_precision {
     GGML_SYCL_DYNAMIC_PRECISION_F16,
     GGML_SYCL_DYNAMIC_PRECISION_BF16,
     GGML_SYCL_DYNAMIC_PRECISION_TF32,
     GGML_SYCL_DYNAMIC_PRECISION_F32,
 };
-#ifdef GGML_SYCL_F16
-static constexpr int GGML_SYCL_DYNAMIC_PRECISION_DEFAULT = GGML_SYCL_DYNAMIC_PRECISION_F16;
-#else
-static constexpr int GGML_SYCL_DYNAMIC_PRECISION_DEFAULT = GGML_SYCL_DYNAMIC_PRECISION_F32;
-#endif
-extern int g_ggml_sycl_dynamic_precision;
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_SYCL_F16
+ਸਥਿਰ constexpr ਪੂਰਨ GGML_SYCL_DYNAMIC_PRECISION_DEFAULT = GGML_SYCL_DYNAMIC_PRECISION_F16;
+#ਨਹੀਂਤਾਂ
+ਸਥਿਰ constexpr ਪੂਰਨ GGML_SYCL_DYNAMIC_PRECISION_DEFAULT = GGML_SYCL_DYNAMIC_PRECISION_F32;
+#ਜੇ_ਅੰਤ
+ਬਾਹਰੀ ਪੂਰਨ g_ggml_sycl_dynamic_precision;
 // GGML_SYCL_DYNAMIC_REQUIRED_PRECISION: the XMX type an F32 src1 request may run on instead of f32
 // (TF32, or BF16 which also allows tf32). F32 (default): none. F16: src1 requests are ignored.
-extern int g_ggml_sycl_dynamic_required_precision;
+ਬਾਹਰੀ ਪੂਰਨ g_ggml_sycl_dynamic_required_precision;
 
 // [TAG_GGML_PREC] src1 precision request of the MUL_MAT/MUL_MAT_ID op dst
-static inline int32_t ggml_sycl_src1_prec(const ggml_tensor * dst) {
-    return g_ggml_sycl_dynamic_required_precision == GGML_SYCL_DYNAMIC_PRECISION_F16 ? GGML_PREC_UNDEFINED :
+ਸਥਿਰ ਸਤਰਅੰਦਰ int32_t ggml_sycl_src1_prec(ਅਚਲ ggml_tensor * dst) {
+    ਵਾਪਸ g_ggml_sycl_dynamic_required_precision == GGML_SYCL_DYNAMIC_PRECISION_F16 ? GGML_PREC_UNDEFINED :
                                                                                        dst->op_params[3];
 }
 
 // [TAG_GGML_PREC] the library GEMM and dmmv may convert src1 of the MUL_MAT/MUL_MAT_ID op dst to f16
-static inline bool ggml_sycl_src1_f16_ok(const ggml_tensor * dst) {
-    const int32_t src1_prec = ggml_sycl_src1_prec(dst);
-    return g_ggml_sycl_dynamic_precision != GGML_SYCL_DYNAMIC_PRECISION_F32 &&
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਤਾਰਕਿਕ ggml_sycl_src1_f16_ok(ਅਚਲ ggml_tensor * dst) {
+    ਅਚਲ int32_t src1_prec = ggml_sycl_src1_prec(dst);
+    ਵਾਪਸ g_ggml_sycl_dynamic_precision != GGML_SYCL_DYNAMIC_PRECISION_F32 &&
            (src1_prec == GGML_PREC_UNDEFINED || src1_prec >= GGML_PREC_F16);
 }
-extern int g_ggml_sycl_enable_flash_attention;
-extern int g_ggml_sycl_dev2dev_memcpy;
-extern int g_ggml_sycl_fa_onednn;
-extern int g_ggml_sycl_fa_onednn_max_kv;
-extern int g_ggml_sycl_enable_mkl_fa;
-extern int g_ggml_sycl_memtrace;
-extern int g_ggml_sycl_memtrace_step;
+ਬਾਹਰੀ ਪੂਰਨ g_ggml_sycl_enable_flash_attention;
+ਬਾਹਰੀ ਪੂਰਨ g_ggml_sycl_dev2dev_memcpy;
+ਬਾਹਰੀ ਪੂਰਨ g_ggml_sycl_fa_onednn;
+ਬਾਹਰੀ ਪੂਰਨ g_ggml_sycl_fa_onednn_max_kv;
+ਬਾਹਰੀ ਪੂਰਨ g_ggml_sycl_enable_mkl_fa;
+ਬਾਹਰੀ ਪੂਰਨ g_ggml_sycl_memtrace;
+ਬਾਹਰੀ ਪੂਰਨ g_ggml_sycl_memtrace_ਕਦਮ;
 
 
-#define CHECK_TRY_ERROR(expr)                                            \
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ CHECK_TRY_ERROR(ਵਿਅੰਜਕ)                                            \
   [&]() {                                                                \
-    try {                                                                \
-      expr;                                                              \
-      return dpct::success;                                              \
-    } catch (std::exception const& e) {                                  \
+    ਕੋਸ਼ਿਸ਼ {                                                                \
+      ਵਿਅੰਜਕ;                                                              \
+      ਵਾਪਸ dpct::success;                                              \
+    } ਫੜੋ (std::exception ਅਚਲ& e) {                                  \
       std::cerr << e.what() << "\nException caught at file:" << __FILE__ \
                 << ", line:" << __LINE__ << ", func:" << __func__        \
-                << std::endl;                                            \
-      return dpct::default_error;                                        \
+                << std::ਸਤਰ_ਅੰਤ;                                            \
+      ਵਾਪਸ dpct::default_error;                                        \
     }                                                                    \
   }()
 
 
-#define __SYCL_ARCH__ DPCT_COMPATIBILITY_TEMP
-#define VER_4VEC 610 // todo for hardware optimize.
-#define VER_GEN9 700 // todo for hardware optimize.
-#define VER_GEN12 1000000 // todo for hardware optimize.
-#define VER_GEN13 (VER_GEN12 + 1030) // todo for hardware optimize.
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ __SYCL_ARCH__ DPCT_COMPATIBILITY_ਆਰਜ਼ੀ
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ VER_4VEC 610 // todo for hardware optimize.
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ VER_GEN9 700 // todo for hardware optimize.
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ VER_GEN12 1000000 // todo for hardware optimize.
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ VER_GEN13 (VER_GEN12 + 1030) // todo for hardware optimize.
 
-#define GGML_SYCL_MAX_NODES 8192 // TODO: adapt to hardwares
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_SYCL_MAX_NODES 8192 // TODO: adapt to hardwares
 
 // define for XMX in Intel GPU
 // TODO: currently, it's not used for XMX really.
-#if !defined(GGML_SYCL_FORCE_MMQ)
-    #define SYCL_USE_XMX
-#endif
+#ਜੇ !defined(GGML_SYCL_FORCE_MMQ)
+    #ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ SYCL_USE_XMX
+#ਜੇ_ਅੰਤ
 
 // max batch size to use MMQ kernels when tensor cores are available
-#define MMQ_MAX_BATCH_SIZE 32
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ MMQ_MAX_BATCH_ਮਾਪ 32
 
 // dmmv = dequantize_mul_mat_vec
-#ifndef GGML_SYCL_DMMV_X
-#define GGML_SYCL_DMMV_X 32
-#endif
-#ifndef GGML_SYCL_MMV_Y
-#define GGML_SYCL_MMV_Y 1
-#endif
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ GGML_SYCL_DMMV_X
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_SYCL_DMMV_X 32
+#ਜੇ_ਅੰਤ
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ GGML_SYCL_MMV_Y
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_SYCL_MMV_Y 1
+#ਜੇ_ਅੰਤ
 
-typedef sycl::queue *queue_ptr;
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ sycl::queue *ਕਤਾਰ_ptr;
 
-enum ggml_sycl_backend_gpu_mode {
-  SYCL_UNSET_GPU_MODE = -1,
-  SYCL_SINGLE_GPU_MODE = 0,
-  SYCL_MUL_GPU_MODE
+ਗਿਣਤੀ ggml_sycl_backend_gpu_ਬਹੁਲਕ {
+  SYCL_UNSET_GPU_ਬਹੁਲਕ = -1,
+  SYCL_SINGLE_GPU_ਬਹੁਲਕ = 0,
+  SYCL_MUL_GPU_ਬਹੁਲਕ
 };
 
-enum ggml_sycl_dev2dev_memcpy_mode {
+ਗਿਣਤੀ ggml_sycl_dev2dev_memcpy_ਬਹੁਲਕ {
   DEV2DEV_MEMCPY_SYCL = 0,
   DEV2DEV_MEMCPY_L0 = 1,
   DEV2DEV_MEMCPY_FORWARD = 2
 };
 
-static_assert(sizeof(sycl::half) == sizeof(ggml_fp16_t), "wrong fp16 size");
+static_assert(ਆਕਾਰ(sycl::half) == ਆਕਾਰ(ggml_fp16_t), "wrong fp16 size");
 
-static void crash() {
-  int* ptr = NULL;
+ਸਥਿਰ ਖਾਲੀ crash() {
+  ਪੂਰਨ* ptr = ਨਿਰਾ;
   *ptr = 0;
 }
 
-[[noreturn]] static void ggml_sycl_error(
-    const char* stmt,
-    const char* func,
-    const char* file,
-    const int line,
-    const char* msg) {
-  fprintf(stderr, "SYCL error: %s: %s\n", stmt, msg);
-  fprintf(stderr, "  in function %s at %s:%d\n", func, file, line);
+[[noreturn]] ਸਥਿਰ ਖਾਲੀ ggml_sycl_error(
+    ਅਚਲ ਅੱਖਰ* stmt,
+    ਅਚਲ ਅੱਖਰ* func,
+    ਅਚਲ ਅੱਖਰ* file,
+    ਅਚਲ ਪੂਰਨ ਸਤਰ,
+    ਅਚਲ ਅੱਖਰ* ਸੁਨੇਹਾ_2) {
+  fprintf(stderr, "SYCL error: %s: %s\n", stmt, ਸੁਨੇਹਾ_2);
+  fprintf(stderr, "  in function %s at %s:%d\n", func, file, ਸਤਰ);
   GGML_ABORT("SYCL error");
 }
 
-#define SYCL_CHECK(err)                                                                                    \
-    do {                                                                                                   \
-        auto err_ = (err);                                                                                 \
-        if (err_ != 0)                                                                                     \
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ SYCL_CHECK(err)                                                                                    \
+    ਕਰੋ {                                                                                                   \
+        ਸਵੈਚਾਲਿਤ err_ = (err);                                                                                 \
+        ਜੇ (err_ != 0)                                                                                     \
             ggml_sycl_error(#err, __func__, __FILE__, __LINE__, "Exception caught in this line of code."); \
-    } while (0)
+    } ਜਦੋਂ (0)
 
-#if DPCT_COMPAT_RT_VERSION >= 11100
-#define GGML_SYCL_ASSUME(x) __builtin_assume(x)
-#else
-#define GGML_SYCL_ASSUME(x)
-#endif // DPCT_COMPAT_RT_VERSION >= 11100
+#ਜੇ DPCT_COMPAT_RT_ਸੰਸਕਰਣ >= 11100
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_SYCL_ASSUME(x) __builtin_assume(x)
+#ਨਹੀਂਤਾਂ
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_SYCL_ASSUME(x)
+#ਜੇ_ਅੰਤ // DPCT_COMPAT_RT_VERSION >= 11100
 
-#ifdef GGML_SYCL_F16
-typedef sycl::half dfloat; // dequantize float
-typedef sycl::half2 dfloat2;
-#else
-typedef float dfloat; // dequantize float
-typedef sycl::float2 dfloat2;
-#endif // GGML_SYCL_F16
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_SYCL_F16
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ sycl::half dfloat; // dequantize float
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ sycl::half2 dfloat2;
+#ਨਹੀਂਤਾਂ
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਦਸ਼ਮਲਵ dfloat; // dequantize float
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ sycl::float2 dfloat2;
+#ਜੇ_ਅੰਤ // GGML_SYCL_F16
 
-#define MMVQ_MAX_BATCH_SIZE  8
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ MMVQ_MAX_BATCH_ਮਾਪ  8
 
-static int g_all_sycl_device_count = -1;
-static bool g_ggml_backend_sycl_buffer_type_initialized = false;
+ਸਥਿਰ ਪੂਰਨ g_all_sycl_device_ਗਿਣਤੀ = -1;
+ਸਥਿਰ ਤਾਰਕਿਕ g_ggml_backend_sycl_ਬਫਰ_type_initialized = ਝੂਠ;
 
-static ggml_sycl_backend_gpu_mode g_ggml_sycl_backend_gpu_mode =
-    SYCL_UNSET_GPU_MODE;
+ਸਥਿਰ ggml_sycl_backend_gpu_ਬਹੁਲਕ g_ggml_sycl_backend_gpu_ਬਹੁਲਕ =
+    SYCL_UNSET_GPU_ਬਹੁਲਕ;
 
-static void* g_scratch_buffer = nullptr;
-static size_t g_scratch_size = 0; // disabled by default
-static size_t g_scratch_offset = 0;
+ਸਥਿਰ ਖਾਲੀ* g_scratch_ਬਫਰ = ਖਾਲੀ_ਸੂਚਕ;
+ਸਥਿਰ size_t g_scratch_ਮਾਪ = 0; // disabled by default
+ਸਥਿਰ size_t g_scratch_ਵਿੱਥ = 0;
 
-[[noreturn]] static inline void bad_arch(const sycl::stream& stream_ct1) {
-  stream_ct1 << "ERROR: ggml-sycl was compiled without support for the "
+[[noreturn]] ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ bad_arch(ਅਚਲ sycl::stream& ਧਾਰਾ_ct1) {
+  ਧਾਰਾ_ct1 << "ERROR: ggml-sycl was compiled without support for the "
                 "current GPU architecture.\n";
   // __trap();
-  std::exit(1);
+  std::ਬਾਹਰ_ਨਿਕਲੋ(1);
 
-  (void)bad_arch; // suppress unused function warning
+  (ਖਾਲੀ)bad_arch; // suppress unused function warning
 }
 
-int get_current_device_id();
+ਪੂਰਨ get_current_device_id();
 
-inline int ggml_sycl_get_device() {
-    return get_current_device_id();
+ਸਤਰਅੰਦਰ ਪੂਰਨ ggml_sycl_get_device() {
+    ਵਾਪਸ get_current_device_id();
 }
 
-inline dpct::err0 ggml_sycl_set_device(const int device) try {
-  int current_device_id;
+ਸਤਰਅੰਦਰ dpct::err0 ggml_sycl_ਸੈੱਟ_device(ਅਚਲ ਪੂਰਨ device) ਕੋਸ਼ਿਸ਼ {
+  ਪੂਰਨ current_device_id;
   SYCL_CHECK(CHECK_TRY_ERROR(current_device_id = get_current_device_id()));
 
   // GGML_SYCL_DEBUG("ggml_sycl_set_device device_id=%d,
   // current_device_id=%d\n", device, current_device);
-  if (device == current_device_id) {
-    return 0;
+  ਜੇ (device == current_device_id) {
+    ਵਾਪਸ 0;
   }
 
-  return CHECK_TRY_ERROR(dpct::select_device(device));
-} catch (sycl::exception const& exc) {
+  ਵਾਪਸ CHECK_TRY_ERROR(dpct::select_device(device));
+} ਫੜੋ (sycl::exception ਅਚਲ& exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
+            << ", line:" << __LINE__ << std::ਸਤਰ_ਅੰਤ;
   crash();
-  std::exit(1);
+  std::ਬਾਹਰ_ਨਿਕਲੋ(1);
 }
 
 //////////////////////
-struct optimize_feature {
-    bool reorder=false;
-    bool onednn_optimized_gemm=false;
+ਬਣਤਰ optimize_feature {
+    ਤਾਰਕਿਕ reorder=ਝੂਠ;
+    ਤਾਰਕਿਕ onednn_optimized_gemm=ਝੂਠ;
 };
 
-struct sycl_device_info {
-    int cc;  // compute capability
-    int nsm; // number of streaming multiprocessors (CUDA) maps to the maximum
+ਬਣਤਰ sycl_device_info {
+    ਪੂਰਨ cc;  // compute capability
+    ਪੂਰਨ nsm; // number of streaming multiprocessors (CUDA) maps to the maximum
              // number of compute units on a SYCL device.
     // size_t  smpb;               // max. shared memory per block
     size_t  smpbo;              // max. shared memory per block (with opt-in)
-    int warp_size;     // WARP_SIZE(16)|WARP_32_SIZE(32)|WARP_16_SIZE(16). For Intel GPU, 16 is better in most cases. Some OP support 32 only.
-    int max_wg_per_cu; // max work groups per compute unit - refer to
+    ਪੂਰਨ warp_ਮਾਪ;     // WARP_SIZE(16)|WARP_32_SIZE(32)|WARP_16_SIZE(16). For Intel GPU, 16 is better in most cases. Some OP support 32 only.
+    ਪੂਰਨ max_wg_ਪ੍ਰਤੀ_cu; // max work groups per compute unit - refer to
                        // cudaOccupancyMaxActiveBlocksPerMultiprocessor
-    bool    vmm;                // virtual memory support
-    bool    l0_device_type_valid;
-    bool    l0_discrete_gpu;    // Level Zero backend and not an integrated GPU
+    ਤਾਰਕਿਕ    vmm;                // virtual memory support
+    ਤਾਰਕਿਕ    l0_device_type_valid;
+    ਤਾਰਕਿਕ    l0_discrete_gpu;    // Level Zero backend and not an integrated GPU
     size_t  vmm_granularity;    // granularity of virtual memory
-    size_t  total_vram;
+    size_t  ਕੁੱਲ_vram;
     sycl_hw_info hw_info;
     optimize_feature opt_feature;
-    bool    usm_system_support; // support for USM system allocations
+    ਤਾਰਕਿਕ    usm_system_support; // support for USM system allocations
 };
 
 
-struct ggml_sycl_device_info {
-    int device_count;
+ਬਣਤਰ ggml_sycl_device_info {
+    ਪੂਰਨ device_ਗਿਣਤੀ;
 
     sycl_device_info devices[GGML_SYCL_MAX_DEVICES] = {};
 
-    std::array<float, GGML_SYCL_MAX_DEVICES> default_tensor_split = {};
+    std::array<ਦਸ਼ਮਲਵ, GGML_SYCL_MAX_DEVICES> default_tensor_ਵੰਡੋ = {};
 
-    int max_work_group_sizes[GGML_SYCL_MAX_DEVICES] = {0};
+    ਪੂਰਨ max_work_ਸਮੂਹ_sizes[GGML_SYCL_MAX_DEVICES] = {0};
 
-    bool ext_oneapi_level_zero = true; // sycl::backend::ext_oneapi_level_zero used by all enumerated GPU devices
+    ਤਾਰਕਿਕ ext_oneapi_level_zero = ਸੱਚ; // sycl::backend::ext_oneapi_level_zero used by all enumerated GPU devices
 };
 
-const ggml_sycl_device_info & ggml_sycl_info();
+ਅਚਲ ggml_sycl_device_info & ggml_sycl_info();
 
-static constexpr size_t SYCL_BUFFER_ALIGNMENT = 128;
+ਸਥਿਰ constexpr size_t SYCL_ਬਫਰ_ALIGNMENT = 128;
 
-struct ggml_sycl_pool {
-    virtual ~ggml_sycl_pool() = default;
+ਬਣਤਰ ggml_sycl_pool {
+    ਆਭਾਸੀ ~ggml_sycl_pool() = ਮੂਲ;
 
-    virtual void * alloc(size_t size, size_t * actual_size) = 0;
-    virtual void free(void * ptr, size_t size) = 0;
+    ਆਭਾਸੀ ਖਾਲੀ * alloc(size_t size, size_t * actual_ਮਾਪ) = 0;
+    ਆਭਾਸੀ ਖਾਲੀ ਮੁਕਤ(ਖਾਲੀ * ptr, size_t size) = 0;
 };
 
-template<typename T>
-struct ggml_sycl_pool_alloc {
-    ggml_sycl_pool * pool = nullptr;
-    T * ptr = nullptr;
-    size_t actual_size = 0;
+ਸਾਂਚਾ<ਕਿਸਮ_ਨਾਂ T>
+ਬਣਤਰ ggml_sycl_pool_alloc {
+    ggml_sycl_pool * pool = ਖਾਲੀ_ਸੂਚਕ;
+    T * ptr = ਖਾਲੀ_ਸੂਚਕ;
+    size_t actual_ਮਾਪ = 0;
 
-    explicit ggml_sycl_pool_alloc(ggml_sycl_pool & pool) : pool(&pool) {
+    ਸਪਸ਼ਟ ggml_sycl_pool_alloc(ggml_sycl_pool & pool) : pool(&pool) {
     }
 
     ggml_sycl_pool_alloc(ggml_sycl_pool & pool, size_t size) : pool(&pool) {
@@ -333,742 +333,742 @@ struct ggml_sycl_pool_alloc {
     }
 
     ~ggml_sycl_pool_alloc() {
-        if (ptr != nullptr) {
-            pool->free(ptr, actual_size);
+        ਜੇ (ptr != ਖਾਲੀ_ਸੂਚਕ) {
+            pool->ਮੁਕਤ(ptr, actual_ਮਾਪ);
         }
     }
 
     T * realloc(size_t size) {
-        GGML_ASSERT(pool != nullptr);
-        if (ptr)
-            pool->free(ptr, actual_size);
-        ptr = (T *) pool->alloc(size * sizeof(T), &this->actual_size);
-        return ptr;
+        GGML_ASSERT(pool != ਖਾਲੀ_ਸੂਚਕ);
+        ਜੇ (ptr)
+            pool->ਮੁਕਤ(ptr, actual_ਮਾਪ);
+        ptr = (T *) pool->alloc(size * ਆਕਾਰ(T), &ਇਹ->actual_ਮਾਪ);
+        ਵਾਪਸ ptr;
     }
 
     // size is in number of elements
     T * alloc(size_t size) {
-        GGML_ASSERT(pool != nullptr);
-        GGML_ASSERT(ptr == nullptr);
-        ptr = (T *) pool->alloc(size * sizeof(T), &this->actual_size);
-        return ptr;
+        GGML_ASSERT(pool != ਖਾਲੀ_ਸੂਚਕ);
+        GGML_ASSERT(ptr == ਖਾਲੀ_ਸੂਚਕ);
+        ptr = (T *) pool->alloc(size * ਆਕਾਰ(T), &ਇਹ->actual_ਮਾਪ);
+        ਵਾਪਸ ptr;
     }
 
     T * alloc(ggml_sycl_pool & pool, size_t size) {
-        this->pool = &pool;
-        return alloc(size);
+        ਇਹ->pool = &pool;
+        ਵਾਪਸ alloc(size);
     }
 
     T * get() {
-        return ptr;
+        ਵਾਪਸ ptr;
     }
 
-    ggml_sycl_pool_alloc() = default;
-    ggml_sycl_pool_alloc(const ggml_sycl_pool_alloc &) = delete;
-    ggml_sycl_pool_alloc(ggml_sycl_pool_alloc &&) = delete;
-    ggml_sycl_pool_alloc& operator=(const ggml_sycl_pool_alloc &) = delete;
-    ggml_sycl_pool_alloc& operator=(ggml_sycl_pool_alloc &&) = delete;
+    ggml_sycl_pool_alloc() = ਮੂਲ;
+    ggml_sycl_pool_alloc(ਅਚਲ ggml_sycl_pool_alloc &) = ਮਿਟਾਓ;
+    ggml_sycl_pool_alloc(ggml_sycl_pool_alloc &&) = ਮਿਟਾਓ;
+    ggml_sycl_pool_alloc& ਸੰਚਾਲਕ=(ਅਚਲ ggml_sycl_pool_alloc &) = ਮਿਟਾਓ;
+    ggml_sycl_pool_alloc& ਸੰਚਾਲਕ=(ggml_sycl_pool_alloc &&) = ਮਿਟਾਓ;
 };
 
 // backend interface
 
-struct ggml_tensor_extra_gpu {
-  void* data_device[GGML_SYCL_MAX_DEVICES]; // 1 pointer for each device for split
+ਬਣਤਰ ggml_tensor_extra_gpu {
+  ਖਾਲੀ* ਅੰਕੜੇ_device[GGML_SYCL_MAX_DEVICES]; // 1 pointer for each device for split
                                        // tensors
   dpct::event_ptr events[GGML_SYCL_MAX_DEVICES]
                         [GGML_SYCL_MAX_STREAMS]; // events for synchronizing multiple GPUs
   optimize_feature optimized_feature;
 };
 
-extern int g_ggml_sycl_use_level_zero_api;
-void * ggml_sycl_malloc_device(size_t size, sycl::queue &q,
-                               ggml_sycl_mem_type type = GGML_SYCL_MEM_DIRECT);
-void ggml_sycl_free_device(void *ptr, sycl::queue &q);
+ਬਾਹਰੀ ਪੂਰਨ g_ggml_sycl_use_level_zero_api;
+ਖਾਲੀ * ggml_sycl_malloc_device(size_t size, sycl::queue &q,
+                               ggml_sycl_mem_type type = GGML_SYCL_MEM_ਸਿੱਧਾ);
+ਖਾਲੀ ggml_sycl_free_device(ਖਾਲੀ *ptr, sycl::queue &q);
 
-void release_extra_gpu(ggml_tensor_extra_gpu * extra, std::vector<queue_ptr> streams={});
+ਖਾਲੀ release_extra_gpu(ggml_tensor_extra_gpu * extra, std::vector<ਕਤਾਰ_ptr> streams={});
 
-struct mmid_row_mapping {
+ਬਣਤਰ mmid_ਪੰਕਤੀ_mapping {
     int32_t i1;
     int32_t i2;
 };
 
-struct ggml_sycl_gg_tile {
+ਬਣਤਰ ggml_sycl_gg_tile {
     int32_t expert;
     int32_t n0;
     int32_t n1;
 };
 
-namespace sycl_ex = sycl::ext::oneapi::experimental;
-struct ggml_backend_sycl_context {
-    int device;
+ਨਾਮਾਕਾਸ਼ sycl_ex = sycl::ext::oneapi::experimental;
+ਬਣਤਰ ggml_backend_sycl_context {
+    ਪੂਰਨ device;
     std::string name;
     optimize_feature opt_feature;
 
-    queue_ptr qptrs[GGML_SYCL_MAX_DEVICES][GGML_SYCL_MAX_STREAMS] = { { nullptr } };
+    ਕਤਾਰ_ptr qptrs[GGML_SYCL_MAX_DEVICES][GGML_SYCL_MAX_STREAMS] = { { ਖਾਲੀ_ਸੂਚਕ } };
 
-    explicit ggml_backend_sycl_context(int device) :
+    ਸਪਸ਼ਟ ggml_backend_sycl_context(ਪੂਰਨ device) :
         device(device),
         name(GGML_SYCL_NAME + std::to_string(device)) {
         opt_feature = ggml_sycl_info().devices[device].opt_feature;
     }
 
-    queue_ptr stream(int device, int stream) {
-        if (qptrs[device][stream] == nullptr) {
-            qptrs[device][stream] = &(dpct::get_device(device).default_queue());
+    ਕਤਾਰ_ptr stream(ਪੂਰਨ device, ਪੂਰਨ stream) {
+        ਜੇ (qptrs[device][stream] == ਖਾਲੀ_ਸੂਚਕ) {
+            qptrs[device][stream] = &(dpct::get_device(device).default_ਕਤਾਰ());
         }
-        return qptrs[device][stream];
+        ਵਾਪਸ qptrs[device][stream];
     }
 
-    queue_ptr stream() {
-        return stream(device, 0);
+    ਕਤਾਰ_ptr stream() {
+        ਵਾਪਸ stream(device, 0);
     }
 
-#if GGML_SYCL_DNNL
+#ਜੇ GGML_SYCL_DNNL
     dnnl::engine make_engine(sycl::queue* q) {
         // Get the device associated with the queue
         sycl::device dev = q->get_device();
         // Get the context associated with the queue
         sycl::context ctx = q->get_context();
-        const dnnl::engine eng = dnnl::sycl_interop::make_engine(dev, ctx);
-        return eng;
+        ਅਚਲ dnnl::engine eng = dnnl::sycl_interop::make_engine(dev, ctx);
+        ਵਾਪਸ eng;
     }
 
-    std::unordered_map<sycl::queue*, dnnl::stream> stream_map;
+    std::unordered_map<sycl::queue*, dnnl::stream> ਧਾਰਾ_map;
     std::unordered_map<sycl::queue*, dnnl::engine> engine_map;
-    dnnl::stream stream_dnnl(int device, int _stream) {
-        auto q = stream(device, _stream);
-        return stream_dnnl(q);
+    dnnl::stream ਧਾਰਾ_dnnl(ਪੂਰਨ device, ਪੂਰਨ ਧਾਰਾ_2) {
+        ਸਵੈਚਾਲਿਤ q = stream(device, ਧਾਰਾ_2);
+        ਵਾਪਸ ਧਾਰਾ_dnnl(q);
     }
     dnnl::engine engine_dnnl(sycl::queue* qptr) {
-        auto it = engine_map.find(qptr);
-        if (it == engine_map.end()) {
-            auto eng = make_engine(qptr);
+        ਸਵੈਚਾਲਿਤ it = engine_map.find(qptr);
+        ਜੇ (it == engine_map.end()) {
+            ਸਵੈਚਾਲਿਤ eng = make_engine(qptr);
             engine_map[qptr] = eng;
-            return eng;
+            ਵਾਪਸ eng;
         }
-        else
+        ਨਹੀਂਤਾਂ
         {
-            return it->second;
+            ਵਾਪਸ it->second;
         }
     }
-    dnnl::stream stream_dnnl(sycl::queue* qptr) {
-        auto it = stream_map.find(qptr);
-        if (it == stream_map.end()) {
-            auto eng = engine_dnnl(qptr);
-            auto stream = dnnl::sycl_interop::make_stream(eng, *qptr);
-            stream_map[qptr] = stream;
-            return stream;
+    dnnl::stream ਧਾਰਾ_dnnl(sycl::queue* qptr) {
+        ਸਵੈਚਾਲਿਤ it = ਧਾਰਾ_map.find(qptr);
+        ਜੇ (it == ਧਾਰਾ_map.end()) {
+            ਸਵੈਚਾਲਿਤ eng = engine_dnnl(qptr);
+            ਸਵੈਚਾਲਿਤ stream = dnnl::sycl_interop::make_ਧਾਰਾ(eng, *qptr);
+            ਧਾਰਾ_map[qptr] = stream;
+            ਵਾਪਸ stream;
         }
-        else
+        ਨਹੀਂਤਾਂ
         {
-            return it->second;
+            ਵਾਪਸ it->second;
         }
     }
-    dnnl::stream stream_dnnl() {
-        return stream_dnnl(device, 0);
+    dnnl::stream ਧਾਰਾ_dnnl() {
+        ਵਾਪਸ ਧਾਰਾ_dnnl(device, 0);
     }
-#endif
+#ਜੇ_ਅੰਤ
 
     // pool
     std::unique_ptr<ggml_sycl_pool> pools[GGML_SYCL_MAX_DEVICES];
 
     std::unique_ptr<ggml_sycl_pool> host_pools[GGML_SYCL_MAX_DEVICES];
 
-    std::vector<mmid_row_mapping> mmid_row_mapping_host;
-    std::vector<ggml_sycl_gg_tile> mmid_tile_schedule_host;
+    std::vector<mmid_ਪੰਕਤੀ_mapping> mmid_ਪੰਕਤੀ_mapping_host;
+    std::vector<ggml_sycl_gg_tile> mmid_tile_ਸਮਾਂ_ਸਾਰਣੀ_host;
 
-    static std::unique_ptr<ggml_sycl_pool> new_pool_for_device(queue_ptr qptr, int device);
+    ਸਥਿਰ std::unique_ptr<ggml_sycl_pool> new_pool_for_device(ਕਤਾਰ_ptr qptr, ਪੂਰਨ device);
 
-    static std::unique_ptr<ggml_sycl_pool> new_pool_for_host(queue_ptr qptr, int device);
+    ਸਥਿਰ std::unique_ptr<ggml_sycl_pool> new_pool_for_host(ਕਤਾਰ_ptr qptr, ਪੂਰਨ device);
 
-    ggml_sycl_pool & pool(int device) {
-        if (pools[device] == nullptr) {
+    ggml_sycl_pool & pool(ਪੂਰਨ device) {
+        ਜੇ (pools[device] == ਖਾਲੀ_ਸੂਚਕ) {
             pools[device] = new_pool_for_device(stream(device,0), device);
         }
-        return *pools[device];
+        ਵਾਪਸ *pools[device];
     }
 
     ggml_sycl_pool & pool() {
-        return pool(device);
+        ਵਾਪਸ pool(device);
     }
 
-#ifdef GGML_SYCL_GRAPH
-    std::unique_ptr<sycl_ex::command_graph<sycl_ex::graph_state::executable>> exec_graph = nullptr;
-#endif
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_SYCL_ਗ੍ਰਾਫ
+    std::unique_ptr<sycl_ex::command_ਗ੍ਰਾਫ<sycl_ex::ਗ੍ਰਾਫ_state::executable>> exec_ਗ੍ਰਾਫ = ਖਾਲੀ_ਸੂਚਕ;
+#ਜੇ_ਅੰਤ
 
-    ggml_sycl_pool & host_pool(int device) {
-        if (host_pools[device] == nullptr) {
+    ggml_sycl_pool & host_pool(ਪੂਰਨ device) {
+        ਜੇ (host_pools[device] == ਖਾਲੀ_ਸੂਚਕ) {
             host_pools[device] = new_pool_for_host(stream(device, 0), device);
         }
-        return *host_pools[device];
+        ਵਾਪਸ *host_pools[device];
     }
 
-    ggml_sycl_pool & host_pool() { return host_pool(device); }
+    ggml_sycl_pool & host_pool() { ਵਾਪਸ host_pool(device); }
 };
 
 // common device functions
 
-static __dpct_inline__ float warp_reduce_sum(float x,
-    const sycl::nd_item<3>& item_ct1) {
-#pragma unroll
-    for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
-        x += dpct::permute_sub_group_by_xor(item_ct1.get_sub_group(), x, mask);
+ਸਥਿਰ __dpct_inline__ ਦਸ਼ਮਲਵ warp_reduce_ਜੋੜ(ਦਸ਼ਮਲਵ x,
+    ਅਚਲ sycl::nd_ਵਸਤੂ<3>& ਵਸਤੂ_ct1) {
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ ਨਕਾਬ = WARP_ਮਾਪ / 2; ਨਕਾਬ > 0; ਨਕਾਬ >>= 1) {
+        x += dpct::ਕ੍ਰਮ_ਬਦਲੋ_sub_ਸਮੂਹ_by_xor(ਵਸਤੂ_ct1.get_sub_ਸਮੂਹ(), x, ਨਕਾਬ);
     }
-    return x;
+    ਵਾਪਸ x;
 }
 
-static __dpct_inline__ sycl::float2
-warp_reduce_sum(sycl::float2 a, const sycl::nd_item<3>& item_ct1) {
-#pragma unroll
-    for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
-        a.x() += dpct::permute_sub_group_by_xor(item_ct1.get_sub_group(), a.x(),
-            mask);
-        a.y() += dpct::permute_sub_group_by_xor(item_ct1.get_sub_group(), a.y(),
-            mask);
+ਸਥਿਰ __dpct_inline__ sycl::float2
+warp_reduce_ਜੋੜ(sycl::float2 a, ਅਚਲ sycl::nd_ਵਸਤੂ<3>& ਵਸਤੂ_ct1) {
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ ਨਕਾਬ = WARP_ਮਾਪ / 2; ਨਕਾਬ > 0; ਨਕਾਬ >>= 1) {
+        a.x() += dpct::ਕ੍ਰਮ_ਬਦਲੋ_sub_ਸਮੂਹ_by_xor(ਵਸਤੂ_ct1.get_sub_ਸਮੂਹ(), a.x(),
+            ਨਕਾਬ);
+        a.y() += dpct::ਕ੍ਰਮ_ਬਦਲੋ_sub_ਸਮੂਹ_by_xor(ਵਸਤੂ_ct1.get_sub_ਸਮੂਹ(), a.y(),
+            ਨਕਾਬ);
     }
-    return a;
+    ਵਾਪਸ a;
 }
 
 /* use WARP_SIZE or WARP_32_SIZE*/
-template <int width>
-static __dpct_inline__ int warp_reduce_sum(int x) {
-  return sycl::reduce_over_group(
-      sycl::ext::oneapi::this_work_item::get_sub_group(), x, sycl::plus<>());
+ਸਾਂਚਾ <ਪੂਰਨ ਚੌੜਾਈ>
+ਸਥਿਰ __dpct_inline__ ਪੂਰਨ warp_reduce_ਜੋੜ(ਪੂਰਨ x) {
+  ਵਾਪਸ sycl::reduce_over_ਸਮੂਹ(
+      sycl::ext::oneapi::this_work_ਵਸਤੂ::get_sub_ਸਮੂਹ(), x, sycl::plus<>());
 }
 
 /* use WARP_SIZE or WARP_32_SIZE*/
-template <int width>
-static __dpct_inline__ float warp_reduce_sum(float x) {
-#pragma unroll
-  for (int offset = width / 2; offset > 0; offset >>= 1) {
-    x += dpct::permute_sub_group_by_xor(
-        sycl::ext::oneapi::this_work_item::get_sub_group(), x, offset, width);
+ਸਾਂਚਾ <ਪੂਰਨ ਚੌੜਾਈ>
+ਸਥਿਰ __dpct_inline__ ਦਸ਼ਮਲਵ warp_reduce_ਜੋੜ(ਦਸ਼ਮਲਵ x) {
+#ਹਦਾਇਤ unroll
+  ਲਈ (ਪੂਰਨ ਵਿੱਥ = ਚੌੜਾਈ / 2; ਵਿੱਥ > 0; ਵਿੱਥ >>= 1) {
+    x += dpct::ਕ੍ਰਮ_ਬਦਲੋ_sub_ਸਮੂਹ_by_xor(
+        sycl::ext::oneapi::this_work_ਵਸਤੂ::get_sub_ਸਮੂਹ(), x, ਵਿੱਥ, ਚੌੜਾਈ);
   }
-  return x;
+  ਵਾਪਸ x;
 }
 
 /* use WARP_SIZE or WARP_32_SIZE*/
-template <int width>
-static __dpct_inline__ float warp_reduce_sum(float x, const sycl::nd_item<3>& item_ct1) {
-#pragma unroll
-  for (int offset = width / 2; offset > 0; offset >>= 1) {
-    x += dpct::permute_sub_group_by_xor(
-        item_ct1.get_sub_group(), x, offset);
+ਸਾਂਚਾ <ਪੂਰਨ ਚੌੜਾਈ>
+ਸਥਿਰ __dpct_inline__ ਦਸ਼ਮਲਵ warp_reduce_ਜੋੜ(ਦਸ਼ਮਲਵ x, ਅਚਲ sycl::nd_ਵਸਤੂ<3>& ਵਸਤੂ_ct1) {
+#ਹਦਾਇਤ unroll
+  ਲਈ (ਪੂਰਨ ਵਿੱਥ = ਚੌੜਾਈ / 2; ਵਿੱਥ > 0; ਵਿੱਥ >>= 1) {
+    x += dpct::ਕ੍ਰਮ_ਬਦਲੋ_sub_ਸਮੂਹ_by_xor(
+        ਵਸਤੂ_ct1.get_sub_ਸਮੂਹ(), x, ਵਿੱਥ);
   }
-  return x;
+  ਵਾਪਸ x;
 }
 
 /* use WARP_SIZE or WARP_32_SIZE*/
-template <int width>
-static __dpct_inline__ sycl::float2 warp_reduce_sum(sycl::float2 a) {
-#pragma unroll
-  for (int offset = width / 2; offset > 0; offset >>= 1) {
-    a.x() += dpct::permute_sub_group_by_xor(
-        sycl::ext::oneapi::this_work_item::get_sub_group(), a.x(), offset,
-        width);
-    a.y() += dpct::permute_sub_group_by_xor(
-        sycl::ext::oneapi::this_work_item::get_sub_group(), a.y(), offset,
-        width);
+ਸਾਂਚਾ <ਪੂਰਨ ਚੌੜਾਈ>
+ਸਥਿਰ __dpct_inline__ sycl::float2 warp_reduce_ਜੋੜ(sycl::float2 a) {
+#ਹਦਾਇਤ unroll
+  ਲਈ (ਪੂਰਨ ਵਿੱਥ = ਚੌੜਾਈ / 2; ਵਿੱਥ > 0; ਵਿੱਥ >>= 1) {
+    a.x() += dpct::ਕ੍ਰਮ_ਬਦਲੋ_sub_ਸਮੂਹ_by_xor(
+        sycl::ext::oneapi::this_work_ਵਸਤੂ::get_sub_ਸਮੂਹ(), a.x(), ਵਿੱਥ,
+        ਚੌੜਾਈ);
+    a.y() += dpct::ਕ੍ਰਮ_ਬਦਲੋ_sub_ਸਮੂਹ_by_xor(
+        sycl::ext::oneapi::this_work_ਵਸਤੂ::get_sub_ਸਮੂਹ(), a.y(), ਵਿੱਥ,
+        ਚੌੜਾਈ);
   }
-  return a;
+  ਵਾਪਸ a;
 }
 
 /* use WARP_SIZE or WARP_32_SIZE*/
-template <int width>
-static __dpct_inline__ sycl::half2 warp_reduce_sum(sycl::half2 a) {
-#pragma unroll
-  for (int offset = width / 2; offset > 0; offset >>= 1) {
-    a = a + dpct::permute_sub_group_by_xor(
-                sycl::ext::oneapi::this_work_item::get_sub_group(), a, offset,
-                width);
+ਸਾਂਚਾ <ਪੂਰਨ ਚੌੜਾਈ>
+ਸਥਿਰ __dpct_inline__ sycl::half2 warp_reduce_ਜੋੜ(sycl::half2 a) {
+#ਹਦਾਇਤ unroll
+  ਲਈ (ਪੂਰਨ ਵਿੱਥ = ਚੌੜਾਈ / 2; ਵਿੱਥ > 0; ਵਿੱਥ >>= 1) {
+    a = a + dpct::ਕ੍ਰਮ_ਬਦਲੋ_sub_ਸਮੂਹ_by_xor(
+                sycl::ext::oneapi::this_work_ਵਸਤੂ::get_sub_ਸਮੂਹ(), a, ਵਿੱਥ,
+                ਚੌੜਾਈ);
   }
-  return a;
+  ਵਾਪਸ a;
 }
 
-static constexpr int ggml_sycl_get_physical_warp_size() {
+ਸਥਿਰ constexpr ਪੂਰਨ ggml_sycl_get_physical_warp_ਮਾਪ() {
   // todo: for old iGPU + dGPU case, need to be changed.
-  return WARP_SIZE;
+  ਵਾਪਸ WARP_ਮਾਪ;
 }
 
 /* use WARP_SIZE or WARP_32_SIZE*/
-template <int width>
-static __dpct_inline__ int warp_reduce_all(int x) {
-    if (width == ggml_sycl_get_physical_warp_size()) {
-        return sycl::all_of_group(
-            sycl::ext::oneapi::this_work_item::get_sub_group(),
+ਸਾਂਚਾ <ਪੂਰਨ ਚੌੜਾਈ>
+ਸਥਿਰ __dpct_inline__ ਪੂਰਨ warp_reduce_all(ਪੂਰਨ x) {
+    ਜੇ (ਚੌੜਾਈ == ggml_sycl_get_physical_warp_ਮਾਪ()) {
+        ਵਾਪਸ sycl::all_ਦਾ_ਸਮੂਹ(
+            sycl::ext::oneapi::this_work_ਵਸਤੂ::get_sub_ਸਮੂਹ(),
             (~0xffffffff &
-             (0x1 << sycl::ext::oneapi::this_work_item::get_sub_group()
-                         .get_local_linear_id())) ||
+             (0x1 << sycl::ext::oneapi::this_work_ਵਸਤੂ::get_sub_ਸਮੂਹ()
+                         .get_local_ਰੇਖਿਕ_id())) ||
                 x);
-    } else {
-#pragma unroll
-        for (int offset = width / 2; offset > 0; offset >>= 1) {
-            x = dpct::permute_sub_group_by_xor(
-                    sycl::ext::oneapi::this_work_item::get_sub_group(), x,
-                    offset, width) &&
+    } ਨਹੀਂਤਾਂ {
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ ਵਿੱਥ = ਚੌੜਾਈ / 2; ਵਿੱਥ > 0; ਵਿੱਥ >>= 1) {
+            x = dpct::ਕ੍ਰਮ_ਬਦਲੋ_sub_ਸਮੂਹ_by_xor(
+                    sycl::ext::oneapi::this_work_ਵਸਤੂ::get_sub_ਸਮੂਹ(), x,
+                    ਵਿੱਥ, ਚੌੜਾਈ) &&
                 x;
         }
-        return x;
+        ਵਾਪਸ x;
     }
 }
 
 /* use WARP_SIZE or WARP_32_SIZE*/
-template <int width>
-static __dpct_inline__ int warp_reduce_any(int x) {
-    if (width == ggml_sycl_get_physical_warp_size()) {
-        return sycl::any_of_group(
-            sycl::ext::oneapi::this_work_item::get_sub_group(),
+ਸਾਂਚਾ <ਪੂਰਨ ਚੌੜਾਈ>
+ਸਥਿਰ __dpct_inline__ ਪੂਰਨ warp_reduce_any(ਪੂਰਨ x) {
+    ਜੇ (ਚੌੜਾਈ == ggml_sycl_get_physical_warp_ਮਾਪ()) {
+        ਵਾਪਸ sycl::any_ਦਾ_ਸਮੂਹ(
+            sycl::ext::oneapi::this_work_ਵਸਤੂ::get_sub_ਸਮੂਹ(),
             (0xffffffff &
-             (0x1 << sycl::ext::oneapi::this_work_item::get_sub_group()
-                         .get_local_linear_id())) &&
+             (0x1 << sycl::ext::oneapi::this_work_ਵਸਤੂ::get_sub_ਸਮੂਹ()
+                         .get_local_ਰੇਖਿਕ_id())) &&
                 x);
-    } else {
-#pragma unroll
-        for (int offset = width / 2; offset > 0; offset >>= 1) {
-            x = dpct::permute_sub_group_by_xor(
-                    sycl::ext::oneapi::this_work_item::get_sub_group(), x,
-                    offset, width) ||
+    } ਨਹੀਂਤਾਂ {
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ ਵਿੱਥ = ਚੌੜਾਈ / 2; ਵਿੱਥ > 0; ਵਿੱਥ >>= 1) {
+            x = dpct::ਕ੍ਰਮ_ਬਦਲੋ_sub_ਸਮੂਹ_by_xor(
+                    sycl::ext::oneapi::this_work_ਵਸਤੂ::get_sub_ਸਮੂਹ(), x,
+                    ਵਿੱਥ, ਚੌੜਾਈ) ||
                 x;
         }
-        return x;
+        ਵਾਪਸ x;
     }
 }
 
 /* use WARP_SIZE or WARP_32_SIZE*/
-template <int width>
-static __dpct_inline__ float warp_reduce_max(float x) {
-#pragma unroll
-  for (int offset = width / 2; offset > 0; offset >>= 1) {
-    x = sycl::fmax(x, dpct::permute_sub_group_by_xor(
-                          sycl::ext::oneapi::this_work_item::get_sub_group(), x,
-                          offset, width));
+ਸਾਂਚਾ <ਪੂਰਨ ਚੌੜਾਈ>
+ਸਥਿਰ __dpct_inline__ ਦਸ਼ਮਲਵ warp_reduce_max(ਦਸ਼ਮਲਵ x) {
+#ਹਦਾਇਤ unroll
+  ਲਈ (ਪੂਰਨ ਵਿੱਥ = ਚੌੜਾਈ / 2; ਵਿੱਥ > 0; ਵਿੱਥ >>= 1) {
+    x = sycl::fmax(x, dpct::ਕ੍ਰਮ_ਬਦਲੋ_sub_ਸਮੂਹ_by_xor(
+                          sycl::ext::oneapi::this_work_ਵਸਤੂ::get_sub_ਸਮੂਹ(), x,
+                          ਵਿੱਥ, ਚੌੜਾਈ));
   }
-  return x;
+  ਵਾਪਸ x;
 }
 
-static __dpct_inline__ float warp_reduce_max(float x,
-    const sycl::nd_item<3>& item_ct1) {
-#pragma unroll
-    for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
-        x = sycl::fmax(x, dpct::permute_sub_group_by_xor(
-            item_ct1.get_sub_group(), x, mask));
+ਸਥਿਰ __dpct_inline__ ਦਸ਼ਮਲਵ warp_reduce_max(ਦਸ਼ਮਲਵ x,
+    ਅਚਲ sycl::nd_ਵਸਤੂ<3>& ਵਸਤੂ_ct1) {
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ ਨਕਾਬ = WARP_ਮਾਪ / 2; ਨਕਾਬ > 0; ਨਕਾਬ >>= 1) {
+        x = sycl::fmax(x, dpct::ਕ੍ਰਮ_ਬਦਲੋ_sub_ਸਮੂਹ_by_xor(
+            ਵਸਤੂ_ct1.get_sub_ਸਮੂਹ(), x, ਨਕਾਬ));
     }
-    return x;
+    ਵਾਪਸ x;
 }
 
 /* Helper for Computing the linear offset of a ggml_tensor given
 per-dimension sizes, strides, and indices */
-template<int N>
-__dpct_inline__ size_t calculate_offset(const std::array<int, N> & strides, const std::array<int, N> & indices) {
-    size_t offset = 0;
-#pragma unroll
-    for (int i = 0; i < N; i++) {
-        auto index_i = indices[i];
-        offset += strides[i] * index_i;
+ਸਾਂਚਾ<ਪੂਰਨ N>
+__dpct_inline__ size_t calculate_ਵਿੱਥ(ਅਚਲ std::array<ਪੂਰਨ, N> & strides, ਅਚਲ std::array<ਪੂਰਨ, N> & indices) {
+    size_t ਵਿੱਥ = 0;
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ i = 0; i < N; i++) {
+        ਸਵੈਚਾਲਿਤ ਸੂਚਕਾਂਕ_i = indices[i];
+        ਵਿੱਥ += strides[i] * ਸੂਚਕਾਂਕ_i;
     }
-    return offset;
+    ਵਾਪਸ ਵਿੱਥ;
 }
 
 // Helper for vec loading aligned data
-template <typename Tp, int n>
-inline sycl::vec<Tp, n> vec_aligned_load(const Tp* aligned_ptr) {
-    return *reinterpret_cast<const sycl::vec<Tp, n>*>(aligned_ptr);
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ Tp, ਪੂਰਨ n>
+ਸਤਰਅੰਦਰ sycl::vec<Tp, n> vec_aligned_ਲੱਦੋ(ਅਚਲ Tp* aligned_ptr) {
+    ਵਾਪਸ *reinterpret_cast<ਅਚਲ sycl::vec<Tp, n>*>(aligned_ptr);
 }
 
 // Helper for accessing pointers with no warnings
-template <typename Tp, int dim>
-static __dpct_inline__ Tp* get_pointer(sycl::local_accessor<Tp, dim> acc) {
-    return acc.template get_multi_ptr<sycl::access::decorated::no>().get();
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ Tp, ਪੂਰਨ dim>
+ਸਥਿਰ __dpct_inline__ Tp* get_ਸੂਚਕ(sycl::local_accessor<Tp, dim> acc) {
+    ਵਾਪਸ acc.ਸਾਂਚਾ get_multi_ptr<sycl::access::decorated::no>().get();
 }
 
-int64_t downsample_sycl_global_range(int64_t accumulate_block_num, int64_t block_size);
+int64_t downsample_sycl_global_range(int64_t accumulate_ਖੰਡ_ਅੰਕ, int64_t ਖੰਡ_ਮਾਪ_3);
 
-constexpr size_t ceil_div(const size_t m, const size_t n) {
-    return (m + n - 1) / n;
+constexpr size_t ceil_div(ਅਚਲ size_t m, ਅਚਲ size_t n) {
+    ਵਾਪਸ (m + n - 1) / n;
 }
 
-bool gpu_has_xmx(sycl::device &dev);
+ਤਾਰਕਿਕ gpu_has_xmx(sycl::device &dev);
 
-#if GGML_SYCL_DNNL
+#ਜੇ GGML_SYCL_DNNL
 // oneDNN builds JIT kernels only for some GPU architectures. On the rest it falls back to
 // reference kernels, which are much slower than the SYCL kernels here.
-inline bool ggml_sycl_dnnl_has_optimized_gemm(int device) {
-    return ggml_sycl_info().devices[device].opt_feature.onednn_optimized_gemm;
+ਸਤਰਅੰਦਰ ਤਾਰਕਿਕ ggml_sycl_dnnl_has_optimized_gemm(ਪੂਰਨ device) {
+    ਵਾਪਸ ggml_sycl_info().devices[device].opt_feature.onednn_optimized_gemm;
 }
-#endif
+#ਜੇ_ਅੰਤ
 
-int ggml_sycl_get_env(const char *env_name, int default_val);
+ਪੂਰਨ ggml_sycl_get_env(ਅਚਲ ਅੱਖਰ *env_name, ਪੂਰਨ default_val);
 
-template <int N, class T> std::string debug_get_array_str(const std::string & prefix, const T array[N]) {
-    if (LIKELY(!g_ggml_sycl_debug)) {
-        return "";
+ਸਾਂਚਾ <ਪੂਰਨ N, ਵਰਗ T> std::string debug_get_array_str(ਅਚਲ std::string & prefix, ਅਚਲ T array[N]) {
+    ਜੇ (LIKELY(!g_ggml_sycl_debug)) {
+        ਵਾਪਸ "";
     }
     std::stringstream ss;
     ss << prefix << "=[";
-    for (std::size_t i = 0; i < N - 1; ++i) {
+    ਲਈ (std::size_t i = 0; i < N - 1; ++i) {
         ss << array[i] << ", ";
     }
-    if constexpr (N > 0) {
+    ਜੇ constexpr (N > 0) {
         ss << array[N - 1];
     }
     ss << "]";
-    return ss.str();
+    ਵਾਪਸ ss.str();
 }
 
-inline std::string debug_get_tensor_str(const std::string &prefix,
-        const ggml_tensor *tensor, const std::string &suffix = "") {
+ਸਤਰਅੰਦਰ std::string debug_get_tensor_str(ਅਚਲ std::string &prefix,
+        ਅਚਲ ggml_tensor *tensor, ਅਚਲ std::string &suffix = "") {
     std::stringstream ss;
-    if (LIKELY(!g_ggml_sycl_debug)) { return ss.str(); }
+    ਜੇ (LIKELY(!g_ggml_sycl_debug)) { ਵਾਪਸ ss.str(); }
     ss << prefix.c_str() << "=";
-    if (tensor) {
+    ਜੇ (tensor) {
         ss << "'" << tensor->name << "':type=" << ggml_type_name(tensor->type);
         ss << debug_get_array_str<GGML_MAX_DIMS>(";ne", tensor->ne);
         ss << debug_get_array_str<GGML_MAX_DIMS>(";nb", tensor->nb);
 
-        if (!ggml_is_contiguous(tensor)) { ss << ";strided"; }
-        if (ggml_is_permuted(tensor)) { ss << ";permuted"; }
-    } else {
+        ਜੇ (!ggml_is_contiguous(tensor)) { ss << ";strided"; }
+        ਜੇ (ggml_is_permuted(tensor)) { ss << ";permuted"; }
+    } ਨਹੀਂਤਾਂ {
         ss << "nullptr";
     }
     ss << suffix;
-    return ss.str();
+    ਵਾਪਸ ss.str();
 }
 
 // Use scope_op_debug_print to log operations coming from running a model
-struct scope_op_debug_print {
+ਬਣਤਰ scope_op_debug_print {
     // Use string_views to avoid the cost of creating a string and concatenating them
     // string_views must be alive for as long as the object is alive
     // scope_op_debug_print are used with string literals in practice which are stored in constant space so always accessible
-    scope_op_debug_print(const std::string_view & func, const std::string_view & func_suffix, const ggml_tensor * dst,
-                         std::size_t num_src, const std::string_view & suffix = "") :
+    scope_op_debug_print(ਅਚਲ std::string_view & func, ਅਚਲ std::string_view & func_suffix, ਅਚਲ ggml_tensor * dst,
+                         std::size_t ਅੰਕ_src, ਅਚਲ std::string_view & suffix = "") :
         func(func),
         func_suffix(func_suffix) {
-        if (LIKELY(!g_ggml_sycl_debug)) {
-            return;
+        ਜੇ (LIKELY(!g_ggml_sycl_debug)) {
+            ਵਾਪਸ;
         }
-        GGML_SYCL_DEBUG("[SYCL][OP] call %s%s:", func.data(), func_suffix.data());
+        GGML_SYCL_DEBUG("[SYCL][OP] call %s%s:", func.ਅੰਕੜੇ(), func_suffix.ਅੰਕੜੇ());
         GGML_SYCL_DEBUG("%s", debug_get_tensor_str(" dst", dst).c_str());
-        if (dst) {
-            for (std::size_t i = 0; i < num_src; ++i) {
+        ਜੇ (dst) {
+            ਲਈ (std::size_t i = 0; i < ਅੰਕ_src; ++i) {
                 GGML_SYCL_DEBUG("%s", debug_get_tensor_str("\tsrc" + std::to_string(i), dst->src[i]).c_str());
             }
         }
-        GGML_SYCL_DEBUG("%s\n", suffix.data());
+        GGML_SYCL_DEBUG("%s\n", suffix.ਅੰਕੜੇ());
     }
 
-    scope_op_debug_print(const std::string_view & func, const ggml_tensor * dst, std::size_t num_src,
-                         const std::string_view & suffix = "") :
-        scope_op_debug_print(func, "", dst, num_src, suffix) {}
+    scope_op_debug_print(ਅਚਲ std::string_view & func, ਅਚਲ ggml_tensor * dst, std::size_t ਅੰਕ_src,
+                         ਅਚਲ std::string_view & suffix = "") :
+        scope_op_debug_print(func, "", dst, ਅੰਕ_src, suffix) {}
 
-    ~scope_op_debug_print() { GGML_SYCL_DEBUG("[SYCL][OP] call %s%s done\n", func.data(), func_suffix.data()); }
+    ~scope_op_debug_print() { GGML_SYCL_DEBUG("[SYCL][OP] call %s%s done\n", func.ਅੰਕੜੇ(), func_suffix.ਅੰਕੜੇ()); }
 
-  private:
+  ਨਿਜੀ:
     std::string_view func;
     std::string_view func_suffix;
 };
 
-static __dpct_inline__ float get_alibi_slope(const float    max_bias,
-                                             const uint32_t h,
-                                             const uint32_t n_head_log2,
-                                             const float    m0,
-                                             const float    m1) {
-    if (max_bias <= 0.0f) {
-        return 1.0f;
+ਸਥਿਰ __dpct_inline__ ਦਸ਼ਮਲਵ get_alibi_ਢਲਾਨ(ਅਚਲ ਦਸ਼ਮਲਵ    max_bias,
+                                             ਅਚਲ uint32_t h,
+                                             ਅਚਲ uint32_t n_ਸਿਰ_log2,
+                                             ਅਚਲ ਦਸ਼ਮਲਵ    m0,
+                                             ਅਚਲ ਦਸ਼ਮਲਵ    m1) {
+    ਜੇ (max_bias <= 0.0f) {
+        ਵਾਪਸ 1.0f;
     }
-    const float base = h < n_head_log2 ? m0 : m1;
-    const int   exph = h < n_head_log2 ? h + 1 : 2*(h - n_head_log2) + 1;
+    ਅਚਲ ਦਸ਼ਮਲਵ ਅਧਾਰ = h < n_ਸਿਰ_log2 ? m0 : m1;
+    ਅਚਲ ਪੂਰਨ   exph = h < n_ਸਿਰ_log2 ? h + 1 : 2*(h - n_ਸਿਰ_log2) + 1;
 
-    return dpct::pow(base, exph);
+    ਵਾਪਸ dpct::ਘਾਤ(ਅਧਾਰ, exph);
 }
 
-static const sycl::uint3 init_fastdiv_values(uint32_t d) {
+ਸਥਿਰ ਅਚਲ sycl::uint3 init_fastdiv_ਮੁੱਲਾਂ(uint32_t d) {
     GGML_ASSERT(d != 0);
 
     uint32_t L = 0;
-    while (L < 32 && (uint32_t{ 1 } << L) < d) {
+    ਜਦੋਂ (L < 32 && (uint32_t{ 1 } << L) < d) {
         L++;
     }
 
     uint32_t mp = (uint32_t) ((uint64_t{ 1 } << 32) * ((uint64_t{ 1 } << L) - d) / d + 1);
-    return sycl::uint3(mp, L, d);
+    ਵਾਪਸ sycl::uint3(mp, L, d);
 }
 
 // Maximum number of bytes that can be copied in a single instruction.
 // Set by test result.
-static constexpr int ggml_sycl_get_max_cpy_bytes() {
-    return 16;
+ਸਥਿਰ constexpr ਪੂਰਨ ggml_sycl_get_max_cpy_ਬਾਈਟਾਂ() {
+    ਵਾਪਸ 16;
 }
 
 // Aligned memory transfers of 8/16 bytes can be faster than 2 transfers with 4 bytes.
-template <int nbytes, int alignment = 0>
-static __dpct_inline__ void ggml_sycl_memcpy_1(void * dst, const void * src) {
-    if constexpr (alignment != 0) {
+ਸਾਂਚਾ <ਪੂਰਨ nbytes, ਪੂਰਨ alignment = 0>
+ਸਥਿਰ __dpct_inline__ ਖਾਲੀ ggml_sycl_memcpy_1(ਖਾਲੀ * dst, ਅਚਲ ਖਾਲੀ * src) {
+    ਜੇ constexpr (alignment != 0) {
         static_assert(nbytes % alignment == 0, "bad alignment");
     }
-    constexpr int nb_per_cpy = alignment == 0 ? nbytes : alignment;
+    constexpr ਪੂਰਨ nb_ਪ੍ਰਤੀ_cpy = alignment == 0 ? nbytes : alignment;
 
-#pragma unroll
-    for (int i = 0; i < nbytes/nb_per_cpy; ++i) {
-        if constexpr (nb_per_cpy == 1) {
-            ((char *) dst)[i] = ((const char *) src)[i];
-        } else if constexpr (nb_per_cpy == 2) {
-            ((short *) dst)[i] = ((const short *) src)[i];
-        } else if constexpr (nb_per_cpy == 4) {
-            ((int *) dst)[i] = ((const int *) src)[i];
-        } else if constexpr (nb_per_cpy == 8) {
-            ((sycl::int2 *) dst)[i] = ((const sycl::int2 *) src)[i];
-        } else if constexpr (nb_per_cpy == 16) {
-            ((sycl::int4 *) dst)[i] = ((const sycl::int4 *) src)[i];
-        } else {
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ i = 0; i < nbytes/nb_ਪ੍ਰਤੀ_cpy; ++i) {
+        ਜੇ constexpr (nb_ਪ੍ਰਤੀ_cpy == 1) {
+            ((ਅੱਖਰ *) dst)[i] = ((ਅਚਲ ਅੱਖਰ *) src)[i];
+        } ਨਹੀਂਤਾਂ ਜੇ constexpr (nb_ਪ੍ਰਤੀ_cpy == 2) {
+            ((ਛੋਟਾ *) dst)[i] = ((ਅਚਲ ਛੋਟਾ *) src)[i];
+        } ਨਹੀਂਤਾਂ ਜੇ constexpr (nb_ਪ੍ਰਤੀ_cpy == 4) {
+            ((ਪੂਰਨ *) dst)[i] = ((ਅਚਲ ਪੂਰਨ *) src)[i];
+        } ਨਹੀਂਤਾਂ ਜੇ constexpr (nb_ਪ੍ਰਤੀ_cpy == 8) {
+            ((sycl::int2 *) dst)[i] = ((ਅਚਲ sycl::int2 *) src)[i];
+        } ਨਹੀਂਤਾਂ ਜੇ constexpr (nb_ਪ੍ਰਤੀ_cpy == 16) {
+            ((sycl::int4 *) dst)[i] = ((ਅਚਲ sycl::int4 *) src)[i];
+        } ਨਹੀਂਤਾਂ {
             static_assert(nbytes == 0 && nbytes == -1, "bad nbytes");
         }
     }
 }
-template <typename T>
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T>
 sycl::half2 __dpct_inline__ make_half2( T x, T y) {
     sycl::half2 res(static_cast<sycl::half>(x),static_cast<sycl::half>(y));
-    return res;
+    ਵਾਪਸ res;
 }
 
-static __dpct_inline__ uint32_t fastdiv(uint32_t n, const sycl::uint3 fastdiv_values) {
-    const uint32_t hi = sycl::mul_hi<unsigned>(n, fastdiv_values.x());
-    return (hi + n) >> fastdiv_values.y();
+ਸਥਿਰ __dpct_inline__ uint32_t fastdiv(uint32_t n, ਅਚਲ sycl::uint3 fastdiv_ਮੁੱਲਾਂ) {
+    ਅਚਲ uint32_t hi = sycl::mul_hi<ਬਿਨਾਨਿਸ਼ਾਨੀ>(n, fastdiv_ਮੁੱਲਾਂ.x());
+    ਵਾਪਸ (hi + n) >> fastdiv_ਮੁੱਲਾਂ.y();
 }
 
 
-template <typename T>
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T>
 sycl::float2 __dpct_inline__ make_float2( T x, T y) {
-    sycl::float2 res(static_cast<float>(x),static_cast<float>(y));
-    return res;
+    sycl::float2 res(static_cast<ਦਸ਼ਮਲਵ>(x),static_cast<ਦਸ਼ਮਲਵ>(y));
+    ਵਾਪਸ res;
 }
 
 sycl::float2 __dpct_inline__ __half22float2(sycl::half2 &H) {
-    sycl::float2 float2_value(static_cast<float>(H.x()), static_cast<float>(H.y()));
-    return float2_value;
+    sycl::float2 float2_ਮੁੱਲ(static_cast<ਦਸ਼ਮਲਵ>(H.x()), static_cast<ਦਸ਼ਮਲਵ>(H.y()));
+    ਵਾਪਸ float2_ਮੁੱਲ;
 }
 
-static __dpct_inline__ sycl::uint2 fast_div_modulo(uint32_t n, const sycl::uint3 fastdiv_values) {
-    const uint32_t div_val = fastdiv(n, fastdiv_values);
-    const uint32_t mod_val = n - div_val * fastdiv_values.z();
-    return sycl::uint2(div_val, mod_val);
+ਸਥਿਰ __dpct_inline__ sycl::uint2 fast_div_modulo(uint32_t n, ਅਚਲ sycl::uint3 fastdiv_ਮੁੱਲਾਂ) {
+    ਅਚਲ uint32_t div_val = fastdiv(n, fastdiv_ਮੁੱਲਾਂ);
+    ਅਚਲ uint32_t mod_val = n - div_val * fastdiv_ਮੁੱਲਾਂ.z();
+    ਵਾਪਸ sycl::uint2(div_val, mod_val);
 }
 
-static __dpct_inline__ int ggml_sycl_dp4a(const int a, const int b, int c) {
-    return dpct::dp4a(a, b, c);
+ਸਥਿਰ __dpct_inline__ ਪੂਰਨ ggml_sycl_dp4a(ਅਚਲ ਪੂਰਨ a, ਅਚਲ ਪੂਰਨ b, ਪੂਰਨ c) {
+    ਵਾਪਸ dpct::dp4a(a, b, c);
 }
 
-static __dpct_inline__ float ggml_sycl_e8m0_to_fp32(uint8_t x) {
-    uint32_t bits;
-    if (x == 0) {
-        bits = 0x00400000;
-    } else {
-        bits = (uint32_t) x << 23;
+ਸਥਿਰ __dpct_inline__ ਦਸ਼ਮਲਵ ggml_sycl_e8m0_ਮੰਜ਼ਿਲ_fp32(uint8_t x) {
+    uint32_t ਬਿੱਟ;
+    ਜੇ (x == 0) {
+        ਬਿੱਟ = 0x00400000;
+    } ਨਹੀਂਤਾਂ {
+        ਬਿੱਟ = (uint32_t) x << 23;
     }
 
-    float result;
-    memcpy(&result, &bits, sizeof(float));
-    return result;
+    ਦਸ਼ਮਲਵ ਨਤੀਜਾ;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&ਨਤੀਜਾ, &ਬਿੱਟ, ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+    ਵਾਪਸ ਨਤੀਜਾ;
 }
 
-sycl::float2 __dpct_inline__ __half22float2(const sycl::half2 &H) {
-    sycl::float2 float2_value(static_cast<float>(H.x()), static_cast<float>(H.y()));
-    return float2_value;
+sycl::float2 __dpct_inline__ __half22float2(ਅਚਲ sycl::half2 &H) {
+    sycl::float2 float2_ਮੁੱਲ(static_cast<ਦਸ਼ਮਲਵ>(H.x()), static_cast<ਦਸ਼ਮਲਵ>(H.y()));
+    ਵਾਪਸ float2_ਮੁੱਲ;
 }
 
-float __dpct_inline__ __half2float(sycl::half H) {
-    return static_cast<float>(H);
+ਦਸ਼ਮਲਵ __dpct_inline__ __half2float(sycl::half H) {
+    ਵਾਪਸ static_cast<ਦਸ਼ਮਲਵ>(H);
 }
 
-static __dpct_inline__ void ggml_sycl_mad(float & acc, const float v, const float u) {
+ਸਥਿਰ __dpct_inline__ ਖਾਲੀ ggml_sycl_mad(ਦਸ਼ਮਲਵ & acc, ਅਚਲ ਦਸ਼ਮਲਵ v, ਅਚਲ ਦਸ਼ਮਲਵ u) {
     acc += v*u;
 }
 
-static __dpct_inline__ void ggml_sycl_mad(float & acc, const sycl::float2 v, const sycl::float2 u) {
+ਸਥਿਰ __dpct_inline__ ਖਾਲੀ ggml_sycl_mad(ਦਸ਼ਮਲਵ & acc, ਅਚਲ sycl::float2 v, ਅਚਲ sycl::float2 u) {
     acc += v.x() * u.x();
     acc += v.y() * u.y();
 }
 
-static __dpct_inline__ void ggml_sycl_mad(float & acc, const sycl::half2 v, const sycl::half2 u) {
-#ifdef GGML_SYCL_F16
-    const sycl::float2 tmp = (v * u).template convert<float, sycl::rounding_mode::automatic>();
+ਸਥਿਰ __dpct_inline__ ਖਾਲੀ ggml_sycl_mad(ਦਸ਼ਮਲਵ & acc, ਅਚਲ sycl::half2 v, ਅਚਲ sycl::half2 u) {
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_SYCL_F16
+    ਅਚਲ sycl::float2 tmp = (v * u).ਸਾਂਚਾ convert<ਦਸ਼ਮਲਵ, sycl::rounding_ਬਹੁਲਕ::automatic>();
     acc += tmp.x() + tmp.y();
-#else
-    const sycl::float2 tmpv = __half22float2(v);
-    const sycl::float2 tmpu = __half22float2(u);
+#ਨਹੀਂਤਾਂ
+    ਅਚਲ sycl::float2 tmpv = __half22float2(v);
+    ਅਚਲ sycl::float2 tmpu = __half22float2(u);
     acc += tmpv.x() * tmpu.x();
     acc += tmpv.y() * tmpu.y();
-#endif // GGML_SYCL_F16
+#ਜੇ_ਅੰਤ // GGML_SYCL_F16
 }
 
-static __dpct_inline__ void ggml_sycl_mad(sycl::half2 & acc, const sycl::half2 v, const sycl::half2 u) {
-#ifdef GGML_SYCL_F16
+ਸਥਿਰ __dpct_inline__ ਖਾਲੀ ggml_sycl_mad(sycl::half2 & acc, ਅਚਲ sycl::half2 v, ਅਚਲ sycl::half2 u) {
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_SYCL_F16
     acc += v*u;
-#else
-    const sycl::float2 tmpv = __half22float2(v);
-    const sycl::float2 tmpu = __half22float2(u);
+#ਨਹੀਂਤਾਂ
+    ਅਚਲ sycl::float2 tmpv = __half22float2(v);
+    ਅਚਲ sycl::float2 tmpu = __half22float2(u);
     sycl::float2 tmpacc = __half22float2(acc);
     // tmpacc.x += tmpv.x() * tmpu.x();
     // tmpacc.y += tmpv.y() * tmpu.y();
     sycl::float2 tmp1(tmpacc.x() + tmpv.x() * tmpu.x(), tmpacc.y() + tmpv.y() * tmpu.y());
     acc = make_half2(tmp1.x(), tmp1.y());
-#endif // GGML_SYCL_F16
+#ਜੇ_ਅੰਤ // GGML_SYCL_F16
 }
 
-template <int n>
-struct ggml_sycl_unroll {
-    template <typename Func, typename... Args>
-    void operator()(const Func & f, Args... args) const {
-        f(n - 1, args...);
-        ggml_sycl_unroll<n - 1>{}(f, args...);
+ਸਾਂਚਾ <ਪੂਰਨ n>
+ਬਣਤਰ ggml_sycl_unroll {
+    ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ Func, ਕਿਸਮ_ਨਾਂ... ਦਲੀਲਾਂ>
+    ਖਾਲੀ ਸੰਚਾਲਕ()(ਅਚਲ Func & f, ਦਲੀਲਾਂ... ਦਲੀਲਾਂ_2) ਅਚਲ {
+        f(n - 1, ਦਲੀਲਾਂ_2...);
+        ggml_sycl_unroll<n - 1>{}(f, ਦਲੀਲਾਂ_2...);
     }
 };
 
-template <>
-struct ggml_sycl_unroll<1> {
-    template <typename Func, typename... Args>
-    void operator()(const Func & f, Args... args) const {
-        f(0, args...);
+ਸਾਂਚਾ <>
+ਬਣਤਰ ggml_sycl_unroll<1> {
+    ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ Func, ਕਿਸਮ_ਨਾਂ... ਦਲੀਲਾਂ>
+    ਖਾਲੀ ਸੰਚਾਲਕ()(ਅਚਲ Func & f, ਦਲੀਲਾਂ... ਦਲੀਲਾਂ_2) ਅਚਲ {
+        f(0, ਦਲੀਲਾਂ_2...);
     }
 };
 
-static __dpct_inline__ sycl::half2 ggml_sycl_hmax2(const sycl::half2 a, const sycl::half2 b) {
+ਸਥਿਰ __dpct_inline__ sycl::half2 ggml_sycl_hmax2(ਅਚਲ sycl::half2 a, ਅਚਲ sycl::half2 b) {
     sycl::half2 ret;
     reinterpret_cast<sycl::half &>(ret.x()) =
-        sycl::vec<float, 1>(sycl::fmax(a[0], b[0])).convert<sycl::half, sycl::rounding_mode::automatic>()[0];
+        sycl::vec<ਦਸ਼ਮਲਵ, 1>(sycl::fmax(a[0], b[0])).convert<sycl::half, sycl::rounding_ਬਹੁਲਕ::automatic>()[0];
     reinterpret_cast<sycl::half &>(ret.y()) =
-        sycl::vec<float, 1>(sycl::fmax(a[1], b[1])).convert<sycl::half, sycl::rounding_mode::automatic>()[0];
-    return ret;
+        sycl::vec<ਦਸ਼ਮਲਵ, 1>(sycl::fmax(a[1], b[1])).convert<sycl::half, sycl::rounding_ਬਹੁਲਕ::automatic>()[0];
+    ਵਾਪਸ ret;
 }
 
-static __dpct_inline__ sycl::half ggml_sycl_hmax(const sycl::half a, const sycl::half b) {
-    return sycl::vec<float, 1>(
-               sycl::fmax(sycl::vec<sycl::half, 1>(a).convert<float, sycl::rounding_mode::automatic>()[0],
-                          sycl::vec<sycl::half, 1>(b).convert<float, sycl::rounding_mode::automatic>()[0]))
-        .convert<sycl::half, sycl::rounding_mode::automatic>()[0];
+ਸਥਿਰ __dpct_inline__ sycl::half ggml_sycl_hmax(ਅਚਲ sycl::half a, ਅਚਲ sycl::half b) {
+    ਵਾਪਸ sycl::vec<ਦਸ਼ਮਲਵ, 1>(
+               sycl::fmax(sycl::vec<sycl::half, 1>(a).convert<ਦਸ਼ਮਲਵ, sycl::rounding_ਬਹੁਲਕ::automatic>()[0],
+                          sycl::vec<sycl::half, 1>(b).convert<ਦਸ਼ਮਲਵ, sycl::rounding_ਬਹੁਲਕ::automatic>()[0]))
+        .convert<sycl::half, sycl::rounding_ਬਹੁਲਕ::automatic>()[0];
 }
 
-static __dpct_inline__ uint32_t __hgt2_mask(const sycl::half2 a, const sycl::half2 b) {
-    const uint32_t mask_low  = 0x0000FFFF * (float(a[0]) > float(b[0]));
-    const uint32_t mask_high = 0xFFFF0000 * (float(a[1]) > float(b[1]));
-    return mask_low | mask_high;
+ਸਥਿਰ __dpct_inline__ uint32_t __hgt2_mask(ਅਚਲ sycl::half2 a, ਅਚਲ sycl::half2 b) {
+    ਅਚਲ uint32_t ਨਕਾਬ_ਨੀਵਾਂ  = 0x0000FFFF * (ਦਸ਼ਮਲਵ(a[0]) > ਦਸ਼ਮਲਵ(b[0]));
+    ਅਚਲ uint32_t ਨਕਾਬ_ਉੱਚਾ = 0xFFFF0000 * (ਦਸ਼ਮਲਵ(a[1]) > ਦਸ਼ਮਲਵ(b[1]));
+    ਵਾਪਸ ਨਕਾਬ_ਨੀਵਾਂ | ਨਕਾਬ_ਉੱਚਾ;
 }
 
-static __dpct_inline__ uint32_t fastmodulo(uint32_t n, const sycl::uint3 fastdiv_values) {
+ਸਥਿਰ __dpct_inline__ uint32_t fastmodulo(uint32_t n, ਅਚਲ sycl::uint3 fastdiv_ਮੁੱਲਾਂ) {
     // expects  fastdiv_values to contain <mp, L, divisor> in <x, y, z> (see init_fastdiv_values)
-    return n - fastdiv(n, fastdiv_values) * fastdiv_values.z();
+    ਵਾਪਸ n - fastdiv(n, fastdiv_ਮੁੱਲਾਂ) * fastdiv_ਮੁੱਲਾਂ.z();
 }
 
-static bool fast_fp16_available(const int cc) {
-    GGML_UNUSED(cc);
-    return true;   //Intel GPUs always support FP16.
+ਸਥਿਰ ਤਾਰਕਿਕ fast_fp16_ਉਪਲਬਧ(ਅਚਲ ਪੂਰਨ cc) {
+    GGML_ਅਣਵਰਤਿਆ(cc);
+    ਵਾਪਸ ਸੱਚ;   //Intel GPUs always support FP16.
 }
 
-enum class block_reduce_method {
+ਗਿਣਤੀ ਵਰਗ ਖੰਡ_reduce_ਵਿਧੀ {
     MAX,
-    SUM,
+    ਜੋੜ_3,
 };
 
-template<block_reduce_method method_t, typename T, int warp_size>
-struct block_reduce_policy;
+ਸਾਂਚਾ<ਖੰਡ_reduce_ਵਿਧੀ ਵਿਧੀ_t, ਕਿਸਮ_ਨਾਂ T, ਪੂਰਨ warp_ਮਾਪ>
+ਬਣਤਰ ਖੰਡ_reduce_policy;
 
-template <typename T, typename... Ts>
-inline constexpr bool is_any = (std::is_same_v<T, Ts> || ...);
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T, ਕਿਸਮ_ਨਾਂ... Ts>
+ਸਤਰਅੰਦਰ constexpr ਤਾਰਕਿਕ is_any = (std::is_same_v<T, Ts> || ...);
 
-template<typename...>
-inline constexpr bool ggml_sycl_dependent_false_v = false;
+ਸਾਂਚਾ<ਕਿਸਮ_ਨਾਂ...>
+ਸਤਰਅੰਦਰ constexpr ਤਾਰਕਿਕ ggml_sycl_dependent_false_v = ਝੂਠ;
 
-#define WARP_32_SIZE 32
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ WARP_32_ਮਾਪ 32
 
-template <typename T, int warp_size> struct block_reduce_policy<block_reduce_method::SUM, T, warp_size> {
-    static T reduce(T val) {
-        if constexpr (is_any<T, float, sycl::float2, sycl::half2, int>) {
-            return warp_reduce_sum<warp_size>(val);
-        } else {
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T, ਪੂਰਨ warp_ਮਾਪ> ਬਣਤਰ ਖੰਡ_reduce_policy<ਖੰਡ_reduce_ਵਿਧੀ::ਜੋੜ_3, T, warp_ਮਾਪ> {
+    ਸਥਿਰ T reduce(T val) {
+        ਜੇ constexpr (is_any<T, ਦਸ਼ਮਲਵ, sycl::float2, sycl::half2, ਪੂਰਨ>) {
+            ਵਾਪਸ warp_reduce_ਜੋੜ<warp_ਮਾਪ>(val);
+        } ਨਹੀਂਤਾਂ {
             static_assert(ggml_sycl_dependent_false_v<T>, "Unsupported type for block reduce sum");
         }
     }
 
-    static T sentinel() {
-        if constexpr (std::is_same_v<T, float>) {
-            return 0.0f;
-        } else if constexpr (std::is_same_v<T, sycl::float2>) {
-            return sycl::float2(0.0f, 0.0f);
-        } else if constexpr (std::is_same_v<T, sycl::half2>) {
-            return sycl::half2(0.0f, 0.0f);
-        } else if constexpr (std::is_same_v<T, int>) {
-            return 0;
-        } else {
+    ਸਥਿਰ T sentinel() {
+        ਜੇ constexpr (std::is_same_v<T, ਦਸ਼ਮਲਵ>) {
+            ਵਾਪਸ 0.0f;
+        } ਨਹੀਂਤਾਂ ਜੇ constexpr (std::is_same_v<T, sycl::float2>) {
+            ਵਾਪਸ sycl::float2(0.0f, 0.0f);
+        } ਨਹੀਂਤਾਂ ਜੇ constexpr (std::is_same_v<T, sycl::half2>) {
+            ਵਾਪਸ sycl::half2(0.0f, 0.0f);
+        } ਨਹੀਂਤਾਂ ਜੇ constexpr (std::is_same_v<T, ਪੂਰਨ>) {
+            ਵਾਪਸ 0;
+        } ਨਹੀਂਤਾਂ {
             static_assert(ggml_sycl_dependent_false_v<T>, "Unsupported type for block reduce sum");
         }
     }
 };
 
-template <typename T, int warp_size> struct block_reduce_policy<block_reduce_method::MAX, T, warp_size> {
-    static T reduce(T val) {
-        if constexpr (is_any<T, float, sycl::half2>) {
-            return warp_reduce_max<warp_size>(val);
-        } else {
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T, ਪੂਰਨ warp_ਮਾਪ> ਬਣਤਰ ਖੰਡ_reduce_policy<ਖੰਡ_reduce_ਵਿਧੀ::MAX, T, warp_ਮਾਪ> {
+    ਸਥਿਰ T reduce(T val) {
+        ਜੇ constexpr (is_any<T, ਦਸ਼ਮਲਵ, sycl::half2>) {
+            ਵਾਪਸ warp_reduce_max<warp_ਮਾਪ>(val);
+        } ਨਹੀਂਤਾਂ {
             static_assert(ggml_sycl_dependent_false_v<T>, "Unsupported type for block reduce max");
         }
     }
 
-    static T sentinel() {
-        if constexpr (std::is_same_v<T, float>) {
-            return -INFINITY;
-        } else if constexpr (std::is_same_v<T, sycl::half2>) {
-            return sycl::half2(-INFINITY, -INFINITY);
-        } else {
+    ਸਥਿਰ T sentinel() {
+        ਜੇ constexpr (std::is_same_v<T, ਦਸ਼ਮਲਵ>) {
+            ਵਾਪਸ -INFINITY;
+        } ਨਹੀਂਤਾਂ ਜੇ constexpr (std::is_same_v<T, sycl::half2>) {
+            ਵਾਪਸ sycl::half2(-INFINITY, -INFINITY);
+        } ਨਹੀਂਤਾਂ {
             static_assert(ggml_sycl_dependent_false_v<T>, "Unsupported type for block reduce max");
         }
     }
 };
 
 
-template <block_reduce_method reduce_method_t, int warp_size, typename T>
-static T block_reduce(T val, T * shared_vals, int block_size_template) {
-    auto item_ct1                 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    val                           = block_reduce_policy<reduce_method_t, T,warp_size>::reduce(val);
-    const int block_size = block_size_template == 0 ? item_ct1.get_local_range(2) : block_size_template;
-    const int nthreads = item_ct1.get_local_range(2);
-    const int nwarps = nthreads / WARP_SIZE;
+ਸਾਂਚਾ <ਖੰਡ_reduce_ਵਿਧੀ reduce_ਵਿਧੀ_t, ਪੂਰਨ warp_ਮਾਪ, ਕਿਸਮ_ਨਾਂ T>
+ਸਥਿਰ T ਖੰਡ_reduce(T val, T * shared_vals, ਪੂਰਨ ਖੰਡ_ਮਾਪ_template) {
+    ਸਵੈਚਾਲਿਤ ਵਸਤੂ_ct1                 = sycl::ext::oneapi::this_work_ਵਸਤੂ::get_nd_ਵਸਤੂ<3>();
+    val                           = ਖੰਡ_reduce_policy<reduce_ਵਿਧੀ_t, T,warp_ਮਾਪ>::reduce(val);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਮਾਪ_3 = ਖੰਡ_ਮਾਪ_template == 0 ? ਵਸਤੂ_ct1.get_local_range(2) : ਖੰਡ_ਮਾਪ_template;
+    ਅਚਲ ਪੂਰਨ nthreads = ਵਸਤੂ_ct1.get_local_range(2);
+    ਅਚਲ ਪੂਰਨ nwarps = nthreads / WARP_ਮਾਪ;
 
-    if (block_size > warp_size) {
-        assert((block_size <= 1024) && (block_size % warp_size) == 0);
-        const int warp_id = item_ct1.get_local_id(2) / warp_size;
-        const int lane_id = item_ct1.get_local_id(2) % warp_size;
-        if (lane_id == 0) {
+    ਜੇ (ਖੰਡ_ਮਾਪ_3 > warp_ਮਾਪ) {
+        ਪ੍ਰਤਿਜ੍ਞਾ((ਖੰਡ_ਮਾਪ_3 <= 1024) && (ਖੰਡ_ਮਾਪ_3 % warp_ਮਾਪ) == 0);
+        ਅਚਲ ਪੂਰਨ warp_id = ਵਸਤੂ_ct1.get_local_id(2) / warp_ਮਾਪ;
+        ਅਚਲ ਪੂਰਨ lane_id = ਵਸਤੂ_ct1.get_local_id(2) % warp_ਮਾਪ;
+        ਜੇ (lane_id == 0) {
             shared_vals[warp_id] = val;
         }
-        item_ct1.barrier(sycl::access::fence_space::local_space);
+        ਵਸਤੂ_ct1.barrier(sycl::access::fence_space::local_space);
 
-        size_t nreduce = nwarps / WARP_SIZE;
-        float tmp = 0.f;
-        if (lane_id < (static_cast<int>(block_size) / warp_size)) {
-            for (size_t i = 0; i < nreduce; i += 1)
+        size_t nreduce = nwarps / WARP_ਮਾਪ;
+        ਦਸ਼ਮਲਵ tmp = 0.f;
+        ਜੇ (lane_id < (static_cast<ਪੂਰਨ>(ਖੰਡ_ਮਾਪ_3) / warp_ਮਾਪ)) {
+            ਲਈ (size_t i = 0; i < nreduce; i += 1)
             {
-                tmp += shared_vals[lane_id + i * WARP_SIZE];
+                tmp += shared_vals[lane_id + i * WARP_ਮਾਪ];
             }
         }
-        return block_reduce_policy<reduce_method_t, T, warp_size>::reduce(tmp);
+        ਵਾਪਸ ਖੰਡ_reduce_policy<reduce_ਵਿਧੀ_t, T, warp_ਮਾਪ>::reduce(tmp);
     }
-    return val;
+    ਵਾਪਸ val;
 }
 
-static __dpct_inline__ float ggml_sycl_ue4m3_to_fp32(uint8_t x) {
+ਸਥਿਰ __dpct_inline__ ਦਸ਼ਮਲਵ ggml_sycl_ue4m3_ਮੰਜ਼ਿਲ_fp32(uint8_t x) {
     // UE4M3 is unsigned: 4 exp bits (bias 7), 3 mantissa bits, no sign, no NaN.
     // exp == 0xF is a valid exponent (256-448 range), not NaN.
-    if (x == 0 || x == 0x7F) {
-        return 0.0f;
+    ਜੇ (x == 0 || x == 0x7F) {
+        ਵਾਪਸ 0.0f;
     }
-    const int exp = (x >> 3) & 0xF;
-    const int man = x & 0x7;
-    float raw;
-    if (exp == 0) {
-        raw = man * (1.0f / 8.0f) * sycl::pow(2.0f, -6.0f);
-    } else {
-        raw = (1.0f + man / 8.0f) * sycl::pow(2.0f, (float) exp - 7.0f);
+    ਅਚਲ ਪੂਰਨ ਘਾਤਾਂਕ = (x >> 3) & 0xF;
+    ਅਚਲ ਪੂਰਨ man = x & 0x7;
+    ਦਸ਼ਮਲਵ raw;
+    ਜੇ (ਘਾਤਾਂਕ == 0) {
+        raw = man * (1.0f / 8.0f) * sycl::ਘਾਤ(2.0f, -6.0f);
+    } ਨਹੀਂਤਾਂ {
+        raw = (1.0f + man / 8.0f) * sycl::ਘਾਤ(2.0f, (ਦਸ਼ਮਲਵ) ਘਾਤਾਂਕ - 7.0f);
     }
-    return raw * 0.5f;
+    ਵਾਪਸ raw * 0.5f;
 }
 
-#endif // GGML_SYCL_COMMON_HPP
+#ਜੇ_ਅੰਤ // GGML_SYCL_COMMON_HPP

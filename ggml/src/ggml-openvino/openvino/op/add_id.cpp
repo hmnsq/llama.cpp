@@ -1,73 +1,73 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "../node_context.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "../op_table.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "../utils.h"
 
-#include <memory>
-#include <openvino/core/node.hpp>
-#include <openvino/core/node_output.hpp>
-#include <openvino/op/add.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/gather.hpp>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/shape_of.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <memory>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/core/node.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/core/node_output.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/add.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/constant.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/convert.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/gather.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/reshape.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/shape_of.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+ਨਾਮਾਕਾਸ਼ ov {
+ਨਾਮਾਕਾਸ਼ frontend {
+ਨਾਮਾਕਾਸ਼ ggml {
+ਨਾਮਾਕਾਸ਼ op {
 
-static ov::Output<ov::Node> reshape_add_id_input_to_2d(const ov::Output<ov::Node> & input,
-                                                       const ov::PartialShape & input_shape,
-                                                       const std::vector<int> & dims) {
-    const auto & actual_shape = input.get_partial_shape();
-    if (actual_shape.rank().is_static() && actual_shape.rank().get_length() == 2) {
-        return input;
+ਸਥਿਰ ov::Output<ov::Node> reshape_ਜੋੜੋ_id_ਨਿਵੇਸ਼_ਮੰਜ਼ਿਲ_2d(ਅਚਲ ov::Output<ov::Node> & ਨਿਵੇਸ਼,
+                                                       ਅਚਲ ov::PartialShape & ਨਿਵੇਸ਼_shape,
+                                                       ਅਚਲ std::vector<ਪੂਰਨ> & dims) {
+    ਅਚਲ ਸਵੈਚਾਲਿਤ & actual_shape = ਨਿਵੇਸ਼.get_partial_shape();
+    ਜੇ (actual_shape.rank().is_static() && actual_shape.rank().get_ਲੰਮਾਈ() == 2) {
+        ਵਾਪਸ ਨਿਵੇਸ਼;
     }
 
-    if (input_shape.rank().is_static() && input_shape.rank().get_length() == 2) {
-        return input;
+    ਜੇ (ਨਿਵੇਸ਼_shape.rank().is_static() && ਨਿਵੇਸ਼_shape.rank().get_ਲੰਮਾਈ() == 2) {
+        ਵਾਪਸ ਨਿਵੇਸ਼;
     }
 
-    auto shape = std::make_shared<ov::op::v3::ShapeOf>(input, ov::element::i64);
-    return std::make_shared<ov::op::v1::Reshape>(input, get_dimensions(shape, dims), false);
+    ਸਵੈਚਾਲਿਤ shape = std::make_shared<ov::op::v3::Shape_ਦਾ>(ਨਿਵੇਸ਼, ov::element::i64);
+    ਵਾਪਸ std::make_shared<ov::op::v1::Reshape>(ਨਿਵੇਸ਼, get_dimensions(shape, dims), ਝੂਠ);
 }
 
-OutputVector translate_add_id(const NodeContext & context) {
-    num_inputs_check(context, 3, 3);
+Output_ਸਦਿਸ਼ translate_ਜੋੜੋ_id(ਅਚਲ ਗੰਢ_Context & context) {
+    ਅੰਕ_inputs_check(context, 3, 3);
 
-    auto input = process_view_input_new(context, 0);
-    auto bias = process_view_input_new(context, 1);
-    auto ids = process_view_input_new(context, 2);
+    ਸਵੈਚਾਲਿਤ ਨਿਵੇਸ਼ = process_view_ਨਿਵੇਸ਼_new(context, 0);
+    ਸਵੈਚਾਲਿਤ bias = process_view_ਨਿਵੇਸ਼_new(context, 1);
+    ਸਵੈਚਾਲਿਤ ids = process_view_ਨਿਵੇਸ਼_new(context, 2);
 
     // OpenVINO uses reversed GGML dimensions:
     //   input: [1, n_token, n_used, n_embd]
     //   bias:  [1, 1, n_expert, n_embd]
     //   ids:   [1, 1, n_token, n_used]
     // Model bias constants may already be stored as [n_expert, n_embd].
-    bias = reshape_add_id_input_to_2d(bias, context.get_input_shape(1), {2, 3});
-    ids = reshape_add_id_input_to_2d(ids, context.get_input_shape(2), {2, 3});
+    bias = reshape_ਜੋੜੋ_id_ਨਿਵੇਸ਼_ਮੰਜ਼ਿਲ_2d(bias, context.get_ਨਿਵੇਸ਼_shape(1), {2, 3});
+    ids = reshape_ਜੋੜੋ_id_ਨਿਵੇਸ਼_ਮੰਜ਼ਿਲ_2d(ids, context.get_ਨਿਵੇਸ਼_shape(2), {2, 3});
 
-    if (ids.get_element_type() != ov::element::i32 && ids.get_element_type() != ov::element::i64) {
+    ਜੇ (ids.get_element_type() != ov::element::i32 && ids.get_element_type() != ov::element::i64) {
         ids = std::make_shared<ov::op::v0::Convert>(ids, ov::element::i32);
     }
 
-    auto gather_axis = ov::op::v0::Constant::create(ov::element::i32, ov::Shape{}, {0});
+    ਸਵੈਚਾਲਿਤ gather_axis = ov::op::v0::Constant::create(ov::element::i32, ov::Shape{}, {0});
     ov::Output<ov::Node> selected_bias = std::make_shared<ov::op::v8::Gather>(bias, ids, gather_axis);
     selected_bias = std::make_shared<ov::op::v1::Reshape>(
-        selected_bias, std::make_shared<ov::op::v3::ShapeOf>(input, ov::element::i64), false);
+        selected_bias, std::make_shared<ov::op::v3::Shape_ਦਾ>(ਨਿਵੇਸ਼, ov::element::i64), ਝੂਠ);
 
-    if (selected_bias.get_element_type() != input.get_element_type()) {
-        selected_bias = std::make_shared<ov::op::v0::Convert>(selected_bias, input.get_element_type());
+    ਜੇ (selected_bias.get_element_type() != ਨਿਵੇਸ਼.get_element_type()) {
+        selected_bias = std::make_shared<ov::op::v0::Convert>(selected_bias, ਨਿਵੇਸ਼.get_element_type());
     }
 
-    ov::Output<ov::Node> res = std::make_shared<ov::op::v1::Add>(input, selected_bias);
-    const auto output_type = context.get_output_type();
-    if (res.get_element_type() != output_type) {
+    ov::Output<ov::Node> res = std::make_shared<ov::op::v1::ਜੋੜੋ>(ਨਿਵੇਸ਼, selected_bias);
+    ਅਚਲ ਸਵੈਚਾਲਿਤ output_type = context.get_output_type();
+    ਜੇ (res.get_element_type() != output_type) {
         res = std::make_shared<ov::op::v0::Convert>(res, output_type);
     }
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ਵਾਪਸ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

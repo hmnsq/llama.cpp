@@ -7,84 +7,84 @@
 // dst:  [N, N, ne2, ne3]   (diagonal matrix per batch)
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "platform.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml_tensor.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "platform.h"
 
-#include <stdint.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdint.h>
 
-struct ggml_et_diag_params {
-    struct ggml_tensor src0;  // F32 input vector
-    struct ggml_tensor dst;   // F32 output diagonal matrix
+ਬਣਤਰ ggml_et_diag_params {
+    ਬਣਤਰ ggml_tensor src0;  // F32 input vector
+    ਬਣਤਰ ggml_tensor dst;   // F32 output diagonal matrix
 };
 
-int entry_point(struct ggml_et_diag_params * params, void * env) {
+ਪੂਰਨ ਇੰਦਰਾਜ_ਬਿੰਦੂ(ਬਣਤਰ ggml_et_diag_params * params, ਖਾਲੀ * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    ਜੇ (!kernel_env) {
+        ਵਾਪਸ -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    ਪੂਰਨ thread_id   = get_relative_thread_id(kernel_env->shire_ਨਕਾਬ);
+    ਪੂਰਨ ਅੰਕ_ਧਾਗੇ = get_ਅੰਕ_ਧਾਗੇ(kernel_env->shire_ਨਕਾਬ);
 
-    if (thread_id < 0) {
-        return 0;
+    ਜੇ (thread_id < 0) {
+        ਵਾਪਸ 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    ਜੇ (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        ਵਾਪਸ -1;
     }
 
-    struct ggml_tensor * src0 = &params->src0;
-    struct ggml_tensor * dst  = &params->dst;
+    ਬਣਤਰ ggml_tensor * src0 = &params->src0;
+    ਬਣਤਰ ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+    ਜੇ (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        ਵਾਪਸ -1;
     }
 
-    float * src0_data = (float *) src0->data;
-    float * dst_data  = (float *) dst->data;
+    ਦਸ਼ਮਲਵ * src0_ਅੰਕੜੇ = (ਦਸ਼ਮਲਵ *) src0->ਅੰਕੜੇ;
+    ਦਸ਼ਮਲਵ * dst_ਅੰਕੜੇ  = (ਦਸ਼ਮਲਵ *) dst->ਅੰਕੜੇ;
 
-    if (!src0_data || !dst_data) {
-        return -1;
+    ਜੇ (!src0_ਅੰਕੜੇ || !dst_ਅੰਕੜੇ) {
+        ਵਾਪਸ -1;
     }
 
-    const int64_t ne0 = dst->ne[0];  // N (row width = column count)
-    const int64_t ne1 = dst->ne[1];  // N (number of rows)
-    const int64_t ne2 = dst->ne[2];
-    const int64_t ne3 = dst->ne[3];
+    ਅਚਲ int64_t ne0 = dst->ne[0];  // N (row width = column count)
+    ਅਚਲ int64_t ne1 = dst->ne[1];  // N (number of rows)
+    ਅਚਲ int64_t ne2 = dst->ne[2];
+    ਅਚਲ int64_t ne3 = dst->ne[3];
 
-    const size_t nb1 = dst->nb[1], nb2 = dst->nb[2], nb3 = dst->nb[3];
-    const size_t nb02 = src0->nb[2], nb03 = src0->nb[3];
+    ਅਚਲ size_t nb1 = dst->nb[1], nb2 = dst->nb[2], nb3 = dst->nb[3];
+    ਅਚਲ size_t nb02 = src0->nb[2], nb03 = src0->nb[3];
 
     // Total rows across all batches — parallelize over these
-    const int64_t total_rows = ne1 * ne2 * ne3;
+    ਅਚਲ int64_t ਕੁੱਲ_ਪੰਕਤੀਆਂ = ne1 * ne2 * ne3;
 
     // Prepare zero vector for SIMD zeroing
-    float zero = 0.0f;
-    __asm__ volatile("fbc.ps f10, %[z]\n" : : [z] "m"(zero) : "f10");
+    ਦਸ਼ਮਲਵ zero = 0.0f;
+    __asm__ ਅਸਥਿਰ("fbc.ps f10, %[z]\n" : : [z] "m"(zero) : "f10");
 
-    for (int64_t row = thread_id; row < total_rows; row += num_threads) {
-        int64_t i1 = row % ne1;
-        int64_t i2 = (row / ne1) % ne2;
-        int64_t i3 = row / (ne1 * ne2);
+    ਲਈ (int64_t ਪੰਕਤੀ = thread_id; ਪੰਕਤੀ < ਕੁੱਲ_ਪੰਕਤੀਆਂ; ਪੰਕਤੀ += ਅੰਕ_ਧਾਗੇ) {
+        int64_t i1 = ਪੰਕਤੀ % ne1;
+        int64_t i2 = (ਪੰਕਤੀ / ne1) % ne2;
+        int64_t i3 = ਪੰਕਤੀ / (ne1 * ne2);
 
-        float * dst_row = (float *) ((char *) dst_data + i1 * nb1 + i2 * nb2 + i3 * nb3);
+        ਦਸ਼ਮਲਵ * dst_ਪੰਕਤੀ = (ਦਸ਼ਮਲਵ *) ((ਅੱਖਰ *) dst_ਅੰਕੜੇ + i1 * nb1 + i2 * nb2 + i3 * nb3);
 
         // Zero the entire row with SIMD
         int64_t       i0      = 0;
-        const int64_t vec_end = (ne0 / 8) * 8;
-        for (; i0 < vec_end; i0 += 8) {
-            __asm__ volatile("fsw.ps f10, %[d]\n" : [d] "=m"(*(float (*)[8]) & dst_row[i0])::"f10");
+        ਅਚਲ int64_t vec_ਸਿਰਾ = (ne0 / 8) * 8;
+        ਲਈ (; i0 < vec_ਸਿਰਾ; i0 += 8) {
+            __asm__ ਅਸਥਿਰ("fsw.ps f10, %[d]\n" : [d] "=m"(*(ਦਸ਼ਮਲਵ (*)[8]) & dst_ਪੰਕਤੀ[i0])::"f10");
         }
-        for (; i0 < ne0; i0++) {
-            dst_row[i0] = 0.0f;
+        ਲਈ (; i0 < ne0; i0++) {
+            dst_ਪੰਕਤੀ[i0] = 0.0f;
         }
 
         // Place the diagonal element: dst[i1][i1] = src0[i1]
-        const float * src_ptr = (const float *) ((const char *) src0_data + i2 * nb02 + i3 * nb03);
-        dst_row[i1]           = src_ptr[i1];
+        ਅਚਲ ਦਸ਼ਮਲਵ * src_ptr = (ਅਚਲ ਦਸ਼ਮਲਵ *) ((ਅਚਲ ਅੱਖਰ *) src0_ਅੰਕੜੇ + i2 * nb02 + i3 * nb03);
+        dst_ਪੰਕਤੀ[i1]           = src_ptr[i1];
     }
 
-    return 0;
+    ਵਾਪਸ 0;
 }

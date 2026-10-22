@@ -1,67 +1,67 @@
-#include "opt-step.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "opt-step.hpp"
 
-#define SYCL_OPT_STEP_BLOCK_SIZE 256
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ SYCL_OPT_ਕਦਮ_ਖੰਡ_ਮਾਪ 256
 
-template <typename T>
-static void opt_step_adamw_f32_kernel(
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T>
+ਸਥਿਰ ਖਾਲੀ opt_ਕਦਮ_adamw_f32_kernel(
     T * __restrict__ x,
-    const T * __restrict__ g,
+    ਅਚਲ T * __restrict__ g,
     T * __restrict__ g_m,
     T * __restrict__ g_v,
-    const T * __restrict__ pars,
-    const int64_t k,
-    const sycl::nd_item<1> & item) {
+    ਅਚਲ T * __restrict__ pars,
+    ਅਚਲ int64_t k,
+    ਅਚਲ sycl::nd_ਵਸਤੂ<1> & ਵਸਤੂ) {
 
-    const int64_t i = (int64_t) item.get_global_id(0);
-    if (i >= k) {
-        return;
+    ਅਚਲ int64_t i = (int64_t) ਵਸਤੂ.get_global_id(0);
+    ਜੇ (i >= k) {
+        ਵਾਪਸ;
     }
 
-    const float alpha  = pars[0];
-    const float beta1  = pars[1];
-    const float beta2  = pars[2];
-    const float eps    = pars[3];
-    const float wd     = pars[4];
-    const float beta1h = pars[5];
-    const float beta2h = pars[6];
+    ਅਚਲ ਦਸ਼ਮਲਵ alpha  = pars[0];
+    ਅਚਲ ਦਸ਼ਮਲਵ beta1  = pars[1];
+    ਅਚਲ ਦਸ਼ਮਲਵ beta2  = pars[2];
+    ਅਚਲ ਦਸ਼ਮਲਵ eps    = pars[3];
+    ਅਚਲ ਦਸ਼ਮਲਵ wd     = pars[4];
+    ਅਚਲ ਦਸ਼ਮਲਵ beta1h = pars[5];
+    ਅਚਲ ਦਸ਼ਮਲਵ beta2h = pars[6];
 
-    const float gi  = g[i];
-    const float gmi = g_m[i] * beta1 +      gi * (1.0f - beta1);
-    const float gvi = g_v[i] * beta2 + gi * gi * (1.0f - beta2);
+    ਅਚਲ ਦਸ਼ਮਲਵ gi  = g[i];
+    ਅਚਲ ਦਸ਼ਮਲਵ gmi = g_m[i] * beta1 +      gi * (1.0f - beta1);
+    ਅਚਲ ਦਸ਼ਮਲਵ gvi = g_v[i] * beta2 + gi * gi * (1.0f - beta2);
 
     g_m[i] = gmi;
     g_v[i] = gvi;
 
-    const float mh = gmi * beta1h;
-    const float vh = sycl::sqrt(gvi * beta2h) + eps;
+    ਅਚਲ ਦਸ਼ਮਲਵ mh = gmi * beta1h;
+    ਅਚਲ ਦਸ਼ਮਲਵ vh = sycl::ਵਰਗਮੂਲ(gvi * beta2h) + eps;
 
     x[i] = x[i] * (1.0f - alpha * wd) - alpha * mh / vh;
 }
 
-template <typename T>
-static void opt_step_sgd_f32_kernel(
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T>
+ਸਥਿਰ ਖਾਲੀ opt_ਕਦਮ_sgd_f32_kernel(
     T * __restrict__ x,
-    const T * __restrict__ g,
-    const T * __restrict__ pars,
-    const int64_t k,
-    const sycl::nd_item<1> & item) {
+    ਅਚਲ T * __restrict__ g,
+    ਅਚਲ T * __restrict__ pars,
+    ਅਚਲ int64_t k,
+    ਅਚਲ sycl::nd_ਵਸਤੂ<1> & ਵਸਤੂ) {
 
-    const int64_t i = (int64_t) item.get_global_id(0);
-    if (i >= k) {
-        return;
+    ਅਚਲ int64_t i = (int64_t) ਵਸਤੂ.get_global_id(0);
+    ਜੇ (i >= k) {
+        ਵਾਪਸ;
     }
 
     x[i] = x[i] * (1.0f - pars[0] * pars[1]) - pars[0] * g[i];
 }
 
-void ggml_sycl_opt_step_adamw(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ਖਾਲੀ ggml_sycl_opt_ਕਦਮ_adamw(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/5);
 
-    const ggml_tensor * src0         = dst->src[0];
-    const ggml_tensor * src0_grad    = dst->src[1];
-    const ggml_tensor * src0_grad_m  = dst->src[2];
-    const ggml_tensor * src0_grad_v  = dst->src[3];
-    const ggml_tensor * adamw_params = dst->src[4];
+    ਅਚਲ ggml_tensor * src0         = dst->src[0];
+    ਅਚਲ ggml_tensor * src0_grad    = dst->src[1];
+    ਅਚਲ ggml_tensor * src0_grad_m  = dst->src[2];
+    ਅਚਲ ggml_tensor * src0_grad_v  = dst->src[3];
+    ਅਚਲ ggml_tensor * adamw_params = dst->src[4];
 
     GGML_ASSERT(src0->type         == GGML_TYPE_F32);
     GGML_ASSERT(src0_grad->type    == GGML_TYPE_F32);
@@ -78,31 +78,31 @@ void ggml_sycl_opt_step_adamw(ggml_backend_sycl_context & ctx, ggml_tensor * dst
     GGML_ASSERT(ggml_are_same_shape(src0, src0_grad_v));
     GGML_ASSERT(ggml_nelements(adamw_params) == 7);
 
-    dpct::queue_ptr stream = ctx.stream();
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
+    dpct::ਕਤਾਰ_ptr stream = ctx.stream();
+    SYCL_CHECK(ggml_sycl_ਸੈੱਟ_device(ctx.device));
 
-    float       * src0_d         = (float       *) src0->data;
-    const float * src0_grad_d    = (const float *) src0_grad->data;
-    float       * src0_grad_m_d  = (float       *) src0_grad_m->data;
-    float       * src0_grad_v_d  = (float       *) src0_grad_v->data;
-    const float * adamw_params_d = (const float *) adamw_params->data;
+    ਦਸ਼ਮਲਵ       * src0_d         = (ਦਸ਼ਮਲਵ       *) src0->ਅੰਕੜੇ;
+    ਅਚਲ ਦਸ਼ਮਲਵ * src0_grad_d    = (ਅਚਲ ਦਸ਼ਮਲਵ *) src0_grad->ਅੰਕੜੇ;
+    ਦਸ਼ਮਲਵ       * src0_grad_m_d  = (ਦਸ਼ਮਲਵ       *) src0_grad_m->ਅੰਕੜੇ;
+    ਦਸ਼ਮਲਵ       * src0_grad_v_d  = (ਦਸ਼ਮਲਵ       *) src0_grad_v->ਅੰਕੜੇ;
+    ਅਚਲ ਦਸ਼ਮਲਵ * adamw_params_d = (ਅਚਲ ਦਸ਼ਮਲਵ *) adamw_params->ਅੰਕੜੇ;
 
-    const int64_t ne = ggml_nelements(src0);
-    const int64_t num_blocks = (ne + SYCL_OPT_STEP_BLOCK_SIZE - 1) / SYCL_OPT_STEP_BLOCK_SIZE;
+    ਅਚਲ int64_t ne = ggml_nelements(src0);
+    ਅਚਲ int64_t ਅੰਕ_ਖੰਡਾਂ = (ne + SYCL_OPT_ਕਦਮ_ਖੰਡ_ਮਾਪ - 1) / SYCL_OPT_ਕਦਮ_ਖੰਡ_ਮਾਪ;
 
     stream->parallel_for(
-        sycl::nd_range<1>(num_blocks * SYCL_OPT_STEP_BLOCK_SIZE, SYCL_OPT_STEP_BLOCK_SIZE),
-        [=](sycl::nd_item<1> item) {
-            opt_step_adamw_f32_kernel(src0_d, src0_grad_d, src0_grad_m_d, src0_grad_v_d, adamw_params_d, ne, item);
+        sycl::nd_range<1>(ਅੰਕ_ਖੰਡਾਂ * SYCL_OPT_ਕਦਮ_ਖੰਡ_ਮਾਪ, SYCL_OPT_ਕਦਮ_ਖੰਡ_ਮਾਪ),
+        [=](sycl::nd_ਵਸਤੂ<1> ਵਸਤੂ) {
+            opt_ਕਦਮ_adamw_f32_kernel(src0_d, src0_grad_d, src0_grad_m_d, src0_grad_v_d, adamw_params_d, ne, ਵਸਤੂ);
         });
 }
 
-void ggml_sycl_opt_step_sgd(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ਖਾਲੀ ggml_sycl_opt_ਕਦਮ_sgd(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/3);
 
-    const ggml_tensor * src0       = dst->src[0];
-    const ggml_tensor * src0_grad  = dst->src[1];
-    const ggml_tensor * sgd_params = dst->src[2];
+    ਅਚਲ ggml_tensor * src0       = dst->src[0];
+    ਅਚਲ ggml_tensor * src0_grad  = dst->src[1];
+    ਅਚਲ ggml_tensor * sgd_params = dst->src[2];
 
     GGML_ASSERT(src0->type      == GGML_TYPE_F32);
     GGML_ASSERT(src0_grad->type == GGML_TYPE_F32);
@@ -113,19 +113,19 @@ void ggml_sycl_opt_step_sgd(ggml_backend_sycl_context & ctx, ggml_tensor * dst) 
     GGML_ASSERT(ggml_are_same_shape(src0, src0_grad));
     GGML_ASSERT(ggml_nelements(sgd_params) == 2);
 
-    dpct::queue_ptr stream = ctx.stream();
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
+    dpct::ਕਤਾਰ_ptr stream = ctx.stream();
+    SYCL_CHECK(ggml_sycl_ਸੈੱਟ_device(ctx.device));
 
-    float       * src0_d      = (float       *) src0->data;
-    const float * src0_grad_d = (const float *) src0_grad->data;
-    const float * sgd_params_d = (const float *) sgd_params->data;
+    ਦਸ਼ਮਲਵ       * src0_d      = (ਦਸ਼ਮਲਵ       *) src0->ਅੰਕੜੇ;
+    ਅਚਲ ਦਸ਼ਮਲਵ * src0_grad_d = (ਅਚਲ ਦਸ਼ਮਲਵ *) src0_grad->ਅੰਕੜੇ;
+    ਅਚਲ ਦਸ਼ਮਲਵ * sgd_params_d = (ਅਚਲ ਦਸ਼ਮਲਵ *) sgd_params->ਅੰਕੜੇ;
 
-    const int64_t ne = ggml_nelements(src0);
-    const int64_t num_blocks = (ne + SYCL_OPT_STEP_BLOCK_SIZE - 1) / SYCL_OPT_STEP_BLOCK_SIZE;
+    ਅਚਲ int64_t ne = ggml_nelements(src0);
+    ਅਚਲ int64_t ਅੰਕ_ਖੰਡਾਂ = (ne + SYCL_OPT_ਕਦਮ_ਖੰਡ_ਮਾਪ - 1) / SYCL_OPT_ਕਦਮ_ਖੰਡ_ਮਾਪ;
 
     stream->parallel_for(
-        sycl::nd_range<1>(num_blocks * SYCL_OPT_STEP_BLOCK_SIZE, SYCL_OPT_STEP_BLOCK_SIZE),
-        [=](sycl::nd_item<1> item) {
-            opt_step_sgd_f32_kernel(src0_d, src0_grad_d, sgd_params_d, ne, item);
+        sycl::nd_range<1>(ਅੰਕ_ਖੰਡਾਂ * SYCL_OPT_ਕਦਮ_ਖੰਡ_ਮਾਪ, SYCL_OPT_ਕਦਮ_ਖੰਡ_ਮਾਪ),
+        [=](sycl::nd_ਵਸਤੂ<1> ਵਸਤੂ) {
+            opt_ਕਦਮ_sgd_f32_kernel(src0_d, src0_grad_d, sgd_params_d, ne, ਵਸਤੂ);
         });
 }

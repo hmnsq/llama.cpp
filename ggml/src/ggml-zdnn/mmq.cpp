@@ -1,24 +1,24 @@
-#include "ggml.h"
-#include "mmq.hpp"
-#include "quantize.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "mmq.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "quantize.hpp"
 
-#include <algorithm>
-#include <future>
-#include <vector>
+#ਅਨ੍ਤਰ੍ਭਾਵ <algorithm>
+#ਅਨ੍ਤਰ੍ਭਾਵ <future>
+#ਅਨ੍ਤਰ੍ਭਾਵ <vector>
 
 // the weights are stacked into groups along ne00, and each group of each row of the inputs and weights has its own scale
 // zDNN multiplies the groups in stacked calls, then the partial results of each group are scaled and summed here
-static void ggml_zdnn_mul_mat_q_grouped(ggml_backend_zdnn_context * ctx,
-                                        int32_t                     n_threads,
-                                  const ggml_tensor               * inputs,
-                                  const ggml_backend_zdnn_buffer  * weights_extra,
+ਸਥਿਰ ਖਾਲੀ ggml_zdnn_mul_mat_q_grouped(ggml_backend_zdnn_context * ctx,
+                                        int32_t                     n_ਧਾਗੇ,
+                                  ਅਚਲ ggml_tensor               * inputs,
+                                  ਅਚਲ ggml_backend_zdnn_ਬਫਰ  * weights_extra,
                                         ggml_tensor               * output) {
-    const int64_t ne10 = inputs->ne[0];
-    const int64_t ne11 = inputs->ne[1];
-    const int64_t ne0  = output->ne[0];
+    ਅਚਲ int64_t ne10 = inputs->ne[0];
+    ਅਚਲ int64_t ne11 = inputs->ne[1];
+    ਅਚਲ int64_t ne0  = output->ne[0];
 
-    const int64_t n_groups = weights_extra->pre_tfm_desc.dim3;
-    const int64_t gs       = weights_extra->pre_tfm_desc.dim2;
+    ਅਚਲ int64_t n_groups = weights_extra->pre_tfm_desc.dim3;
+    ਅਚਲ int64_t gs       = weights_extra->pre_tfm_desc.dim2;
 
     // the last group is zero padded when gs does not divide ne10
     GGML_ASSERT(n_groups * gs >= ne10 && (n_groups - 1) * gs < ne10);
@@ -26,9 +26,9 @@ static void ggml_zdnn_mul_mat_q_grouped(ggml_backend_zdnn_context * ctx,
     // the rounding errors of the inputs are stacked after the inputs, see ggml_zdnn_quantize_inputs
     ggml_zdnn_pool_alloc<int8_t> inputs_q_alloc(ctx->pool, 2 * n_groups * gs * ne11);
     int8_t * inputs_q = inputs_q_alloc.get();
-    std::vector<float> inputs_scales(n_groups * ne11);
-    ggml_zdnn_quantize_inputs(n_threads, inputs, gs, weights_extra->channel_scales.data(),
-                            inputs_q, inputs_q + n_groups * gs * ne11, inputs_scales.data());
+    std::vector<ਦਸ਼ਮਲਵ> inputs_scales(n_groups * ne11);
+    ggml_zdnn_quantize_inputs(n_ਧਾਗੇ, inputs, gs, weights_extra->channel_scales.ਅੰਕੜੇ(),
+                            inputs_q, inputs_q + n_groups * gs * ne11, inputs_scales.ਅੰਕੜੇ());
 
     zdnn_tensor_desc              inputs_pre_tfm_desc;
     zdnn_tensor_desc              inputs_tfm_desc;
@@ -38,26 +38,26 @@ static void ggml_zdnn_mul_mat_q_grouped(ggml_backend_zdnn_context * ctx,
     zdnn_init_pre_transformed_desc(ZDNN_3DS, INT8, &inputs_pre_tfm_desc, 2 * n_groups, ne11, gs);
     ZDNN_CHECK(zdnn_generate_quantized_transformed_desc(&inputs_pre_tfm_desc, QUANTIZED_INT8, &inputs_tfm_desc));
     ggml_zdnn_init_scratch_ztensor(ctx, &inputs_pre_tfm_desc, &inputs_tfm_desc, &inputs_ztensor, inputs_ztensor_alloc);
-    ZDNN_CHECK(zdnn_transform_quantized_ztensor(&inputs_ztensor, false, -127, 127, inputs_q));
+    ZDNN_CHECK(zdnn_transform_quantized_ztensor(&inputs_ztensor, ਝੂਠ, -127, 127, inputs_q));
 
     // each group of the partial results is read back as its own 2D ztensor
-    zdnn_tensor_desc group_pre_tfm_desc;
-    zdnn_tensor_desc group_tfm_desc;
+    zdnn_tensor_desc ਸਮੂਹ_pre_tfm_desc;
+    zdnn_tensor_desc ਸਮੂਹ_tfm_desc;
 
-    zdnn_init_pre_transformed_desc(ZDNN_2D, FP32, &group_pre_tfm_desc, ne11, ne0);
-    ZDNN_CHECK(zdnn_generate_transformed_desc(&group_pre_tfm_desc, &group_tfm_desc));
+    zdnn_init_pre_transformed_desc(ZDNN_2D, FP32, &ਸਮੂਹ_pre_tfm_desc, ne11, ne0);
+    ZDNN_CHECK(zdnn_generate_transformed_desc(&ਸਮੂਹ_pre_tfm_desc, &ਸਮੂਹ_tfm_desc));
 
-    const uint64_t group_bytes = zdnn_getsize_ztensor(&group_tfm_desc);
+    ਅਚਲ uint64_t ਸਮੂਹ_ਬਾਈਟਾਂ = zdnn_getsize_ztensor(&ਸਮੂਹ_tfm_desc);
 
     // stacked calls with a large output are much slower per group, so run the groups in chunks
     // 8 MiB per chunk was benchmarked to be the best on Llama-3.2-1B Q8_0
     // always re-measure with different models to see if different sizes need a dispatching logic
-    constexpr int64_t chunk_bytes = 8*1024*1024;
+    constexpr int64_t chunk_ਬਾਈਟਾਂ = 8*1024*1024;
 
-    const int64_t n_chunk = std::clamp<int64_t>(chunk_bytes / (int64_t)group_bytes, 1, n_groups);
+    ਅਚਲ int64_t n_chunk = std::clamp<int64_t>(chunk_ਬਾਈਟਾਂ / (int64_t)ਸਮੂਹ_ਬਾਈਟਾਂ, 1, n_groups);
 
     // all zeros, so it is already the pre-computed bias for every chunk
-    const zdnn_ztensor & bias_ztensor = ggml_zdnn_zero_bias(ctx, n_chunk, ne0);
+    ਅਚਲ zdnn_ztensor & bias_ztensor = ggml_zdnn_zero_bias(ctx, n_chunk, ne0);
 
     // two partial buffers, so the next chunk runs on the NNPA while this one is summed
     // each holds the results of a chunk of inputs, followed by the results of their rounding errors
@@ -68,43 +68,43 @@ static void ggml_zdnn_mul_mat_q_grouped(ggml_backend_zdnn_context * ctx,
 
     zdnn_init_pre_transformed_desc(ZDNN_3DS, FP32, &partial_pre_tfm_desc, 2 * n_chunk, ne11, ne0);
     ZDNN_CHECK(zdnn_generate_quantized_transformed_desc(&partial_pre_tfm_desc, QUANTIZED_DLFLOAT16, &partial_tfm_desc));
-    GGML_ASSERT(zdnn_getsize_ztensor(&partial_tfm_desc) == (uint64_t)(2 * n_chunk) * group_bytes);
-    for (int32_t i = 0; i < 2; i++) {
+    GGML_ASSERT(zdnn_getsize_ztensor(&partial_tfm_desc) == (uint64_t)(2 * n_chunk) * ਸਮੂਹ_ਬਾਈਟਾਂ);
+    ਲਈ (int32_t i = 0; i < 2; i++) {
         ggml_zdnn_init_scratch_ztensor(ctx, &partial_pre_tfm_desc, &partial_tfm_desc, &partial_ztensor[i], partial_ztensor_alloc[i]);
     }
 
-    const float * weights_scales = weights_extra->scales.data();
-    ggml_zdnn_pool_alloc<float> partial_alloc(ctx->pool, 2 * ne11 * ne0);
-    float * partial     = partial_alloc.get();
-    float * partial_res = partial + ne11 * ne0;
+    ਅਚਲ ਦਸ਼ਮਲਵ * weights_scales = weights_extra->scales.ਅੰਕੜੇ();
+    ggml_zdnn_pool_alloc<ਦਸ਼ਮਲਵ> partial_alloc(ctx->pool, 2 * ne11 * ne0);
+    ਦਸ਼ਮਲਵ * partial     = partial_alloc.get();
+    ਦਸ਼ਮਲਵ * partial_res = partial + ne11 * ne0;
 
-    const auto sum_chunk = [&](const zdnn_ztensor & chunk, int64_t g0, int64_t n) {
-        zdnn_ztensor group_ztensor;
-        zdnn_init_ztensor(&group_pre_tfm_desc, &group_tfm_desc, &group_ztensor);
+    ਅਚਲ ਸਵੈਚਾਲਿਤ ਜੋੜ_chunk = [&](ਅਚਲ zdnn_ztensor & chunk, int64_t g0, int64_t n) {
+        zdnn_ztensor ਸਮੂਹ_ztensor;
+        zdnn_init_ztensor(&ਸਮੂਹ_pre_tfm_desc, &ਸਮੂਹ_tfm_desc, &ਸਮੂਹ_ztensor);
 
-        for (int64_t g = g0; g < g0 + n; g++) {
-            group_ztensor.buffer_size    = group_bytes;
-            group_ztensor.is_transformed = true;
+        ਲਈ (int64_t g = g0; g < g0 + n; g++) {
+            ਸਮੂਹ_ztensor.ਬਫਰ_ਮਾਪ    = ਸਮੂਹ_ਬਾਈਟਾਂ;
+            ਸਮੂਹ_ztensor.is_transformed = ਸੱਚ;
 
-            group_ztensor.buffer = (char *)chunk.buffer + (g - g0)*group_bytes;
-            ZDNN_CHECK(zdnn_transform_origtensor(&group_ztensor, partial));
+            ਸਮੂਹ_ztensor.ਬਫਰ = (ਅੱਖਰ *)chunk.ਬਫਰ + (g - g0)*ਸਮੂਹ_ਬਾਈਟਾਂ;
+            ZDNN_CHECK(zdnn_transform_origtensor(&ਸਮੂਹ_ztensor, partial));
 
-            group_ztensor.buffer = (char *)chunk.buffer + (n_chunk + g - g0)*group_bytes;
-            ZDNN_CHECK(zdnn_transform_origtensor(&group_ztensor, partial_res));
+            ਸਮੂਹ_ztensor.ਬਫਰ = (ਅੱਖਰ *)chunk.ਬਫਰ + (n_chunk + g - g0)*ਸਮੂਹ_ਬਾਈਟਾਂ;
+            ZDNN_CHECK(zdnn_transform_origtensor(&ਸਮੂਹ_ztensor, partial_res));
 
-            const float * sw = weights_scales + g*ne0;
-            for (int64_t i1 = 0; i1 < ne11; i1++) {
-                const float   sa = inputs_scales[g*ne11 + i1];
-                const float * p  = partial     + i1*ne0;
-                const float * pr = partial_res + i1*ne0;
-                float       * y  = (float *)output->data + i1*ne0;
+            ਅਚਲ ਦਸ਼ਮਲਵ * sw = weights_scales + g*ne0;
+            ਲਈ (int64_t i1 = 0; i1 < ne11; i1++) {
+                ਅਚਲ ਦਸ਼ਮਲਵ   sa = inputs_scales[g*ne11 + i1];
+                ਅਚਲ ਦਸ਼ਮਲਵ * p  = partial     + i1*ne0;
+                ਅਚਲ ਦਸ਼ਮਲਵ * pr = partial_res + i1*ne0;
+                ਦਸ਼ਮਲਵ       * y  = (ਦਸ਼ਮਲਵ *)output->ਅੰਕੜੇ + i1*ne0;
 
-                if (g == 0) {
-                    for (int64_t i0 = 0; i0 < ne0; i0++) {
+                ਜੇ (g == 0) {
+                    ਲਈ (int64_t i0 = 0; i0 < ne0; i0++) {
                         y[i0] = sa * sw[i0] * (p[i0] + pr[i0] * (1.0f/254.0f));
                     }
-                } else {
-                    for (int64_t i0 = 0; i0 < ne0; i0++) {
+                } ਨਹੀਂਤਾਂ {
+                    ਲਈ (int64_t i0 = 0; i0 < ne0; i0++) {
                         y[i0] += sa * sw[i0] * (p[i0] + pr[i0] * (1.0f/254.0f));
                     }
                 }
@@ -114,56 +114,56 @@ static void ggml_zdnn_mul_mat_q_grouped(ggml_backend_zdnn_context * ctx,
 
     zdnn_tensor_desc view_pre_tfm_desc[6];
     zdnn_tensor_desc view_tfm_desc[6];
-    std::future<void> sum_task;
+    std::future<ਖਾਲੀ> ਜੋੜ_task;
 
-    for (int64_t c = 0, g0 = 0; g0 < n_groups; c++, g0 += n_chunk) {
-        const int64_t n = std::min(n_chunk, n_groups - g0);
+    ਲਈ (int64_t c = 0, g0 = 0; g0 < n_groups; c++, g0 += n_chunk) {
+        ਅਚਲ int64_t n = std::min(n_chunk, n_groups - g0);
 
-        const zdnn_ztensor inputs_view     = ggml_zdnn_stack_view(&view_pre_tfm_desc[0], &view_tfm_desc[0], inputs_ztensor,         2 * n_groups, g0,            n);
-        const zdnn_ztensor inputs_res_view = ggml_zdnn_stack_view(&view_pre_tfm_desc[1], &view_tfm_desc[1], inputs_ztensor,         2 * n_groups, n_groups + g0, n);
-        const zdnn_ztensor weights_view    = ggml_zdnn_stack_view(&view_pre_tfm_desc[2], &view_tfm_desc[2], weights_extra->ztensor, n_groups,     g0,            n);
-        const zdnn_ztensor bias_view       = ggml_zdnn_stack_view(&view_pre_tfm_desc[3], &view_tfm_desc[3], bias_ztensor,           n_chunk,      0,             n);
+        ਅਚਲ zdnn_ztensor inputs_view     = ggml_zdnn_ਢੇਰ_view(&view_pre_tfm_desc[0], &view_tfm_desc[0], inputs_ztensor,         2 * n_groups, g0,            n);
+        ਅਚਲ zdnn_ztensor inputs_res_view = ggml_zdnn_ਢੇਰ_view(&view_pre_tfm_desc[1], &view_tfm_desc[1], inputs_ztensor,         2 * n_groups, n_groups + g0, n);
+        ਅਚਲ zdnn_ztensor weights_view    = ggml_zdnn_ਢੇਰ_view(&view_pre_tfm_desc[2], &view_tfm_desc[2], weights_extra->ztensor, n_groups,     g0,            n);
+        ਅਚਲ zdnn_ztensor bias_view       = ggml_zdnn_ਢੇਰ_view(&view_pre_tfm_desc[3], &view_tfm_desc[3], bias_ztensor,           n_chunk,      0,             n);
 
         // the partial buffer of chunk c - 2 is summed by now, as sum_task is waited on before starting the next sum
         zdnn_ztensor & chunk = partial_ztensor[c % 2];
         chunk.pre_transformed_desc = &partial_pre_tfm_desc;
         chunk.transformed_desc     = &partial_tfm_desc;
-        chunk.is_transformed       = false;
+        chunk.is_transformed       = ਝੂਠ;
 
-        zdnn_ztensor chunk_view     = ggml_zdnn_stack_view(&view_pre_tfm_desc[4], &view_tfm_desc[4], chunk, 2 * n_chunk, 0,       n);
-        zdnn_ztensor chunk_res_view = ggml_zdnn_stack_view(&view_pre_tfm_desc[5], &view_tfm_desc[5], chunk, 2 * n_chunk, n_chunk, n);
+        zdnn_ztensor chunk_view     = ggml_zdnn_ਢੇਰ_view(&view_pre_tfm_desc[4], &view_tfm_desc[4], chunk, 2 * n_chunk, 0,       n);
+        zdnn_ztensor chunk_res_view = ggml_zdnn_ਢੇਰ_view(&view_pre_tfm_desc[5], &view_tfm_desc[5], chunk, 2 * n_chunk, n_chunk, n);
         ZDNN_CHECK(zdnn_quantized_matmul_op(&inputs_view, &weights_view, &bias_view,
-                                            MATMUL_OP_ADDITION, -127, 127, true, false, true,
-                                            nullptr, &chunk_view));
+                                            MATMUL_OP_ADDITION, -127, 127, ਸੱਚ, ਝੂਠ, ਸੱਚ,
+                                            ਖਾਲੀ_ਸੂਚਕ, &chunk_view));
         ZDNN_CHECK(zdnn_quantized_matmul_op(&inputs_res_view, &weights_view, &bias_view,
-                                            MATMUL_OP_ADDITION, -127, 127, true, false, true,
-                                            nullptr, &chunk_res_view));
+                                            MATMUL_OP_ADDITION, -127, 127, ਸੱਚ, ਝੂਠ, ਸੱਚ,
+                                            ਖਾਲੀ_ਸੂਚਕ, &chunk_res_view));
 
-        if (sum_task.valid()) {
-            sum_task.get();
+        ਜੇ (ਜੋੜ_task.valid()) {
+            ਜੋੜ_task.get();
         }
 
-        if (n_threads > 1) {
-            sum_task = std::async(std::launch::async, sum_chunk, chunk, g0, n);
-        } else {
-            sum_chunk(chunk, g0, n);
+        ਜੇ (n_ਧਾਗੇ > 1) {
+            ਜੋੜ_task = std::async(std::launch::async, ਜੋੜ_chunk, chunk, g0, n);
+        } ਨਹੀਂਤਾਂ {
+            ਜੋੜ_chunk(chunk, g0, n);
         }
     }
 
-    if (sum_task.valid()) {
-        sum_task.get();
+    ਜੇ (ਜੋੜ_task.valid()) {
+        ਜੋੜ_task.get();
     }
 
 }
 
-void ggml_zdnn_mul_mat_q(
+ਖਾਲੀ ggml_zdnn_mul_mat_q(
           ggml_backend_zdnn_context * ctx,
-    const               ggml_tensor * src0,
-    const               ggml_tensor * src1,
+    ਅਚਲ               ggml_tensor * src0,
+    ਅਚਲ               ggml_tensor * src1,
                         ggml_tensor * dst) {
-    GGML_TENSOR_BINARY_OP_LOCALS;
+    GGML_TENSOR_ਦੁਆਧਾਰੀ_OP_LOCALS;
 
-    const enum ggml_type type = src0->type;
+    ਅਚਲ ਗਿਣਤੀ ggml_type type = src0->type;
 
     GGML_ASSERT(ne0 == ne01);
     GGML_ASSERT(ne1 == ne11);
@@ -171,38 +171,38 @@ void ggml_zdnn_mul_mat_q(
     GGML_ASSERT(ne3 == ne13);
 
     // we don't support permuted src0 or src1
-    GGML_ASSERT(nb00 == ggml_type_size(type));
-    GGML_ASSERT(nb10 == ggml_type_size(src1->type));
+    GGML_ASSERT(nb00 == ggml_type_ਮਾਪ(type));
+    GGML_ASSERT(nb10 == ggml_type_ਮਾਪ(src1->type));
 
     // dst cannot be transposed or permuted
-    GGML_ASSERT(nb0 == sizeof(float));
+    GGML_ASSERT(nb0 == ਆਕਾਰ(ਦਸ਼ਮਲਵ));
     GGML_ASSERT(nb0 <= nb1);
     GGML_ASSERT(nb1 <= nb2);
     GGML_ASSERT(nb2 <= nb3);
 
-    const ggml_tensor * weights = src0;
-    const ggml_tensor * inputs  = src1;
+    ਅਚਲ ggml_tensor * weights = src0;
+    ਅਚਲ ggml_tensor * inputs  = src1;
           ggml_tensor * output  = dst;
 
     GGML_ASSERT(inputs->type == GGML_TYPE_F32);
 
-    ggml_backend_zdnn_buffer * weights_extra = (ggml_backend_zdnn_buffer *)weights->extra;
-    ggml_backend_zdnn_buffer * output_extra  = (ggml_backend_zdnn_buffer *)output->extra;
+    ggml_backend_zdnn_ਬਫਰ * weights_extra = (ggml_backend_zdnn_ਬਫਰ *)weights->extra;
+    ggml_backend_zdnn_ਬਫਰ * output_extra  = (ggml_backend_zdnn_ਬਫਰ *)output->extra;
 
     // starting threads costs more than it saves for small inputs, e.g. during token generation
-    const int32_t n_threads = ne10*ne11 >= 65536 ? ctx->n_threads : 1;
+    ਅਚਲ int32_t n_ਧਾਗੇ = ne10*ne11 >= 65536 ? ctx->n_ਧਾਗੇ : 1;
 
-    if (weights_extra->pre_tfm_desc.layout == ZDNN_3DS) {
+    ਜੇ (weights_extra->pre_tfm_desc.layout == ZDNN_3DS) {
         GGML_ASSERT(weights_extra->pre_tfm_desc.dim1 == weights->ne[1] && "weights_extra->pre_tfm_desc.dim1 must match weights->ne[1]");
 
-        ggml_zdnn_mul_mat_q_grouped(ctx, n_threads, inputs, weights_extra, output);
+        ggml_zdnn_mul_mat_q_grouped(ctx, n_ਧਾਗੇ, inputs, weights_extra, output);
 
         // the result is written to output->data directly, so the output ztensor is stale
-        output_extra->ztensor.is_transformed = false;
-        return;
+        output_extra->ztensor.is_transformed = ਝੂਠ;
+        ਵਾਪਸ;
     }
 
-    ggml_backend_zdnn_buffer * bias_extra = (ggml_backend_zdnn_buffer *)output_extra->extra;
+    ggml_backend_zdnn_ਬਫਰ * bias_extra = (ggml_backend_zdnn_ਬਫਰ *)output_extra->extra;
 
     GGML_ASSERT(weights_extra->pre_tfm_desc.dim2 == weights->ne[0] && "weights_extra->pre_tfm_desc.dim2 must match weights->ne[0]");
     GGML_ASSERT(weights_extra->pre_tfm_desc.dim1 == weights->ne[1] && "weights_extra->pre_tfm_desc.dim1 must match weights->ne[1]");
@@ -211,9 +211,9 @@ void ggml_zdnn_mul_mat_q(
     // the rounding errors of the inputs are stacked after the inputs, see ggml_zdnn_quantize_inputs
     ggml_zdnn_pool_alloc<int8_t> inputs_q_alloc(ctx->pool, 2 * ne10 * ne11);
     int8_t * inputs_q = inputs_q_alloc.get();
-    std::vector<float> inputs_scales(ne11);
-    ggml_zdnn_quantize_inputs(n_threads, inputs, ne10, weights_extra->channel_scales.data(),
-                            inputs_q, inputs_q + ne10 * ne11, inputs_scales.data());
+    std::vector<ਦਸ਼ਮਲਵ> inputs_scales(ne11);
+    ggml_zdnn_quantize_inputs(n_ਧਾਗੇ, inputs, ne10, weights_extra->channel_scales.ਅੰਕੜੇ(),
+                            inputs_q, inputs_q + ne10 * ne11, inputs_scales.ਅੰਕੜੇ());
 
     zdnn_tensor_desc              inputs_pre_tfm_desc;
     zdnn_tensor_desc              inputs_tfm_desc;
@@ -223,7 +223,7 @@ void ggml_zdnn_mul_mat_q(
     zdnn_init_pre_transformed_desc(ZDNN_3DS, INT8, &inputs_pre_tfm_desc, 2, ne11, ne10);
     ZDNN_CHECK(zdnn_generate_quantized_transformed_desc(&inputs_pre_tfm_desc, QUANTIZED_INT8, &inputs_tfm_desc));
     ggml_zdnn_init_scratch_ztensor(ctx, &inputs_pre_tfm_desc, &inputs_tfm_desc, &inputs_ztensor, inputs_ztensor_alloc);
-    ZDNN_CHECK(zdnn_transform_quantized_ztensor(&inputs_ztensor, false, -127, 127, inputs_q));
+    ZDNN_CHECK(zdnn_transform_quantized_ztensor(&inputs_ztensor, ਝੂਠ, -127, 127, inputs_q));
 
     zdnn_tensor_desc              partial_pre_tfm_desc;
     zdnn_tensor_desc              partial_tfm_desc;
@@ -237,44 +237,44 @@ void ggml_zdnn_mul_mat_q(
     // both stacks are multiplied by the same unstacked weights in one broadcast call
     // the bias is all zeros, so it is already the pre-computed bias
     ZDNN_CHECK(zdnn_quantized_matmul_op(&inputs_ztensor, &weights_extra->ztensor, &bias_extra->ztensor,
-                                        MATMUL_OP_ADDITION, -127, 127, true, false, true,
-                                        nullptr, &partial_ztensor));
+                                        MATMUL_OP_ADDITION, -127, 127, ਸੱਚ, ਝੂਠ, ਸੱਚ,
+                                        ਖਾਲੀ_ਸੂਚਕ, &partial_ztensor));
 
     // each stack of the partial results is read back as its own 2D ztensor
-    zdnn_tensor_desc stack_pre_tfm_desc;
-    zdnn_tensor_desc stack_tfm_desc;
+    zdnn_tensor_desc ਢੇਰ_pre_tfm_desc;
+    zdnn_tensor_desc ਢੇਰ_tfm_desc;
 
-    zdnn_init_pre_transformed_desc(ZDNN_2D, FP32, &stack_pre_tfm_desc, ne11, ne0);
-    ZDNN_CHECK(zdnn_generate_transformed_desc(&stack_pre_tfm_desc, &stack_tfm_desc));
+    zdnn_init_pre_transformed_desc(ZDNN_2D, FP32, &ਢੇਰ_pre_tfm_desc, ne11, ne0);
+    ZDNN_CHECK(zdnn_generate_transformed_desc(&ਢੇਰ_pre_tfm_desc, &ਢੇਰ_tfm_desc));
 
-    const uint64_t stack_bytes = zdnn_getsize_ztensor(&stack_tfm_desc);
-    GGML_ASSERT(partial_ztensor.buffer_size == 2*stack_bytes);
+    ਅਚਲ uint64_t ਢੇਰ_ਬਾਈਟਾਂ = zdnn_getsize_ztensor(&ਢੇਰ_tfm_desc);
+    GGML_ASSERT(partial_ztensor.ਬਫਰ_ਮਾਪ == 2*ਢੇਰ_ਬਾਈਟਾਂ);
 
-    ggml_zdnn_pool_alloc<float> partial_res_alloc(ctx->pool, ne11 * ne0);
-    float * partial[2] = { (float *)output->data, partial_res_alloc.get() };
+    ggml_zdnn_pool_alloc<ਦਸ਼ਮਲਵ> partial_res_alloc(ctx->pool, ne11 * ne0);
+    ਦਸ਼ਮਲਵ * partial[2] = { (ਦਸ਼ਮਲਵ *)output->ਅੰਕੜੇ, partial_res_alloc.get() };
 
-    ggml_zdnn_parallel_for(n_threads, 2, [&](int64_t s_start, int64_t s_end) {
-        zdnn_ztensor stack_ztensor;
-        zdnn_init_ztensor(&stack_pre_tfm_desc, &stack_tfm_desc, &stack_ztensor);
+    ggml_zdnn_parallel_for(n_ਧਾਗੇ, 2, [&](int64_t s_ਸ਼ੁਰੂ, int64_t s_ਸਿਰਾ) {
+        zdnn_ztensor ਢੇਰ_ztensor;
+        zdnn_init_ztensor(&ਢੇਰ_pre_tfm_desc, &ਢੇਰ_tfm_desc, &ਢੇਰ_ztensor);
 
-        for (int64_t s = s_start; s < s_end; s++) {
-            stack_ztensor.buffer         = (char *)partial_ztensor.buffer + s*stack_bytes;
-            stack_ztensor.buffer_size    = stack_bytes;
-            stack_ztensor.is_transformed = true;
-            ZDNN_CHECK(zdnn_transform_origtensor(&stack_ztensor, partial[s]));
+        ਲਈ (int64_t s = s_ਸ਼ੁਰੂ; s < s_ਸਿਰਾ; s++) {
+            ਢੇਰ_ztensor.ਬਫਰ         = (ਅੱਖਰ *)partial_ztensor.ਬਫਰ + s*ਢੇਰ_ਬਾਈਟਾਂ;
+            ਢੇਰ_ztensor.ਬਫਰ_ਮਾਪ    = ਢੇਰ_ਬਾਈਟਾਂ;
+            ਢੇਰ_ztensor.is_transformed = ਸੱਚ;
+            ZDNN_CHECK(zdnn_transform_origtensor(&ਢੇਰ_ztensor, partial[s]));
         }
     });
 
     // the result is written to output->data directly, so the output ztensor is stale
-    output_extra->ztensor.is_transformed = false;
+    output_extra->ztensor.is_transformed = ਝੂਠ;
 
-    const float * weights_scales = weights_extra->scales.data();
-    ggml_zdnn_parallel_for(n_threads, ne1, [&](int64_t i1_start, int64_t i1_end) {
-        for (int64_t i1 = i1_start; i1 < i1_end; i1++) {
-            const float   sa = inputs_scales[i1];
-            const float * pr = partial[1] + i1*ne0;
-            float       * y  = partial[0] + i1*ne0;
-            for (int64_t i0 = 0; i0 < ne0; i0++) {
+    ਅਚਲ ਦਸ਼ਮਲਵ * weights_scales = weights_extra->scales.ਅੰਕੜੇ();
+    ggml_zdnn_parallel_for(n_ਧਾਗੇ, ne1, [&](int64_t i1_ਸ਼ੁਰੂ, int64_t i1_ਸਿਰਾ) {
+        ਲਈ (int64_t i1 = i1_ਸ਼ੁਰੂ; i1 < i1_ਸਿਰਾ; i1++) {
+            ਅਚਲ ਦਸ਼ਮਲਵ   sa = inputs_scales[i1];
+            ਅਚਲ ਦਸ਼ਮਲਵ * pr = partial[1] + i1*ne0;
+            ਦਸ਼ਮਲਵ       * y  = partial[0] + i1*ne0;
+            ਲਈ (int64_t i0 = 0; i0 < ne0; i0++) {
                 y[i0] = sa * weights_scales[i0] * (y[i0] + pr[i0] * (1.0f/254.0f));
             }
         }

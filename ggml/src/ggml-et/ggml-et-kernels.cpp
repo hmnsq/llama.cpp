@@ -1,499 +1,499 @@
-#include "ggml-et-kernels.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-et-kernels.h"
 
-#include "ggml-et-kernels-embed.hpp"
-#include "ggml-et-uberkernel-kernel-map.h"
-#include "ggml-impl.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-et-kernels-embed.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-et-uberkernel-kernel-map.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-impl.h"
 
-#include <cstdlib>
-#include <cstring>
-#include <fstream>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cstdlib>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cstring>
+#ਅਨ੍ਤਰ੍ਭਾਵ <fstream>
 
-#define ET_TRACE_DECODER_IMPL
-#include <et-trace/decoder.h>
-#include <et-trace/layout.h>
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ ET_TRACE_DECODER_IMPL
+#ਅਨ੍ਤਰ੍ਭਾਵ <et-trace/decoder.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <et-trace/layout.h>
 
-static constexpr size_t GGML_ET_UBERKERNEL_PARAM_ALIGN = 64;
+ਸਥਿਰ constexpr size_t GGML_ET_UBERKERNEL_PARAM_ALIGN = 64;
 
-static size_t ggml_et_align_up(size_t value, size_t alignment) {
-    return (value + alignment - 1) & ~(alignment - 1);
+ਸਥਿਰ size_t ggml_et_align_ਉੱਪਰ(size_t value, size_t alignment) {
+    ਵਾਪਸ (value + alignment - 1) & ~(alignment - 1);
 }
 
-static size_t ggml_et_next_capacity(size_t current_capacity, size_t required_capacity) {
-    if (current_capacity == 0) {
-        return required_capacity;
+ਸਥਿਰ size_t ggml_et_ਅਗਲਾ_ਸਮਰੱਥਾ(size_t current_ਸਮਰੱਥਾ, size_t required_ਸਮਰੱਥਾ) {
+    ਜੇ (current_ਸਮਰੱਥਾ == 0) {
+        ਵਾਪਸ required_ਸਮਰੱਥਾ;
     }
 
-    size_t next_capacity = current_capacity;
-    while (next_capacity < required_capacity) {
-        next_capacity *= 2;
+    size_t ਅਗਲਾ_ਸਮਰੱਥਾ = current_ਸਮਰੱਥਾ;
+    ਜਦੋਂ (ਅਗਲਾ_ਸਮਰੱਥਾ < required_ਸਮਰੱਥਾ) {
+        ਅਗਲਾ_ਸਮਰੱਥਾ *= 2;
     }
 
-    return next_capacity;
+    ਵਾਪਸ ਅਗਲਾ_ਸਮਰੱਥਾ;
 }
 
-static ggml_backend_et_uberkernel_slot & ggml_et_uberkernel_current_slot(ggml_backend_et_uberkernel_context * uk_ctx) {
-    return uk_ctx->slots[uk_ctx->current_slot];
+ਸਥਿਰ ggml_backend_et_uberkernel_ਥਾਂ & ggml_et_uberkernel_current_ਥਾਂ(ggml_backend_et_uberkernel_context * uk_ctx) {
+    ਵਾਪਸ uk_ctx->slots[uk_ctx->current_ਥਾਂ];
 }
 
 // Wait for any in-flight launch that previously used this slot to finish,
 // so the host vectors and device buffers are safe to mutate / free.
-static void ggml_et_uberkernel_slot_wait(ggml_backend_et_uberkernel_slot &     slot,
-                                         const std::shared_ptr<rt::IRuntime> & runtime) {
-    if (!slot.has_pending || !runtime) {
-        return;
+ਸਥਿਰ ਖਾਲੀ ggml_et_uberkernel_ਥਾਂ_wait(ggml_backend_et_uberkernel_ਥਾਂ &     ਥਾਂ,
+                                         ਅਚਲ std::shared_ptr<rt::IRuntime> & runtime) {
+    ਜੇ (!ਥਾਂ.has_pending || !runtime) {
+        ਵਾਪਸ;
     }
-    runtime->waitForEvent(slot.pending_event);
-    slot.has_pending = false;
+    runtime->waitForEvent(ਥਾਂ.pending_event);
+    ਥਾਂ.has_pending = ਝੂਠ;
 }
 
-static void ggml_et_uberkernel_reset_segment(ggml_backend_et_uberkernel_context * uk_ctx) {
-    if (!uk_ctx) {
-        return;
+ਸਥਿਰ ਖਾਲੀ ggml_et_uberkernel_reset_segment(ggml_backend_et_uberkernel_context * uk_ctx) {
+    ਜੇ (!uk_ctx) {
+        ਵਾਪਸ;
     }
 
-    uk_ctx->shire_mask = 0;
-    auto & slot        = ggml_et_uberkernel_current_slot(uk_ctx);
+    uk_ctx->shire_ਨਕਾਬ = 0;
+    ਸਵੈਚਾਲਿਤ & ਥਾਂ        = ggml_et_uberkernel_current_ਥਾਂ(uk_ctx);
     // Drain any prior launch on this slot before clearing its host buffers.
     // begin_graph and abort_graph both come through here; in either case we
     // must not yank the source memory out from under an in-flight DMA.
-    ggml_et_uberkernel_slot_wait(slot, ggml_et_runtime());
-    slot.insts.clear();
-    slot.params_blob.clear();
+    ggml_et_uberkernel_ਥਾਂ_wait(ਥਾਂ, ggml_et_runtime());
+    ਥਾਂ.insts.clear();
+    ਥਾਂ.params_blob.clear();
 }
 
-static bool ggml_et_uberkernel_ensure_slot_capacity(ggml_backend_et_uberkernel_slot & slot,
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_et_uberkernel_ensure_ਥਾਂ_ਸਮਰੱਥਾ(ggml_backend_et_uberkernel_ਥਾਂ & ਥਾਂ,
                                                     ggml_backend_et_device_context *  dev_ctx,
-                                                    size_t                            insts_size,
-                                                    size_t                            params_size) {
+                                                    size_t                            insts_ਮਾਪ,
+                                                    size_t                            params_ਮਾਪ) {
     std::shared_ptr<rt::IRuntime> runtime = ggml_et_runtime();
-    if (!dev_ctx || !runtime) {
-        return false;
+    ਜੇ (!dev_ctx || !runtime) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    try {
-        if (slot.device_insts == nullptr || insts_size > slot.device_insts_capacity) {
-            const size_t new_capacity = ggml_et_next_capacity(slot.device_insts_capacity, insts_size);
-            if (slot.device_insts) {
-                runtime->freeDevice(dev_ctx->rtid, slot.device_insts);
+    ਕੋਸ਼ਿਸ਼ {
+        ਜੇ (ਥਾਂ.device_insts == ਖਾਲੀ_ਸੂਚਕ || insts_ਮਾਪ > ਥਾਂ.device_insts_ਸਮਰੱਥਾ) {
+            ਅਚਲ size_t new_ਸਮਰੱਥਾ = ggml_et_ਅਗਲਾ_ਸਮਰੱਥਾ(ਥਾਂ.device_insts_ਸਮਰੱਥਾ, insts_ਮਾਪ);
+            ਜੇ (ਥਾਂ.device_insts) {
+                runtime->freeDevice(dev_ctx->rtid, ਥਾਂ.device_insts);
             }
-            slot.device_insts          = runtime->mallocDevice(dev_ctx->rtid, new_capacity);
-            slot.device_insts_capacity = slot.device_insts ? new_capacity : 0;
+            ਥਾਂ.device_insts          = runtime->mallocDevice(dev_ctx->rtid, new_ਸਮਰੱਥਾ);
+            ਥਾਂ.device_insts_ਸਮਰੱਥਾ = ਥਾਂ.device_insts ? new_ਸਮਰੱਥਾ : 0;
         }
 
-        if (slot.device_params == nullptr || params_size > slot.device_params_capacity) {
-            const size_t new_capacity = ggml_et_next_capacity(slot.device_params_capacity, params_size);
-            if (slot.device_params) {
-                runtime->freeDevice(dev_ctx->rtid, slot.device_params);
+        ਜੇ (ਥਾਂ.device_params == ਖਾਲੀ_ਸੂਚਕ || params_ਮਾਪ > ਥਾਂ.device_params_ਸਮਰੱਥਾ) {
+            ਅਚਲ size_t new_ਸਮਰੱਥਾ = ggml_et_ਅਗਲਾ_ਸਮਰੱਥਾ(ਥਾਂ.device_params_ਸਮਰੱਥਾ, params_ਮਾਪ);
+            ਜੇ (ਥਾਂ.device_params) {
+                runtime->freeDevice(dev_ctx->rtid, ਥਾਂ.device_params);
             }
-            slot.device_params          = runtime->mallocDevice(dev_ctx->rtid, new_capacity);
-            slot.device_params_capacity = slot.device_params ? new_capacity : 0;
+            ਥਾਂ.device_params          = runtime->mallocDevice(dev_ctx->rtid, new_ਸਮਰੱਥਾ);
+            ਥਾਂ.device_params_ਸਮਰੱਥਾ = ਥਾਂ.device_params ? new_ਸਮਰੱਥਾ : 0;
         }
-    } catch (const std::exception & e) {
+    } ਫੜੋ (ਅਚਲ std::exception & e) {
         GGML_LOG_ERROR("ET: Failed to resize uberkernel buffers: %s\n", e.what());
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    return slot.device_insts != nullptr && slot.device_params != nullptr;
+    ਵਾਪਸ ਥਾਂ.device_insts != ਖਾਲੀ_ਸੂਚਕ && ਥਾਂ.device_params != ਖਾਲੀ_ਸੂਚਕ;
 }
 
 // Get embedded kernel data by name
-static std::vector<std::byte> ggml_et_get_embedded_kernel(const std::string & kernel_name) {
-    auto it = ggml_et_embedded_kernels.find(kernel_name);
-    if (it == ggml_et_embedded_kernels.end()) {
+ਸਥਿਰ std::vector<std::byte> ggml_et_get_embedded_kernel(ਅਚਲ std::string & kernel_name) {
+    ਸਵੈਚਾਲਿਤ it = ggml_et_embedded_kernels.find(kernel_name);
+    ਜੇ (it == ggml_et_embedded_kernels.end()) {
         GGML_LOG_ERROR("ET: Unknown embedded kernel: %s\n", kernel_name.c_str());
-        return {};
+        ਵਾਪਸ {};
     }
 
-    const unsigned char * data = it->second.first;
+    ਅਚਲ ਬਿਨਾਨਿਸ਼ਾਨੀ ਅੱਖਰ * ਅੰਕੜੇ = it->second.ਪਹਿਲਾ;
     uint64_t              size = it->second.second;
 
-    std::vector<std::byte> buffer(size);
-    std::memcpy(buffer.data(), data, size);
+    std::vector<std::byte> ਬਫਰ(size);
+    std::ਸਮ੍ਰਿਤੀ_ਨਕਲ(ਬਫਰ.ਅੰਕੜੇ(), ਅੰਕੜੇ, size);
 
-    return buffer;
+    ਵਾਪਸ ਬਫਰ;
 }
 
 // Read kernel from file (for development/override)
-static std::vector<std::byte> ggml_et_read_kernel_file(const std::string & kernel_path) {
-    std::ifstream file(kernel_path, std::ios::binary | std::ios::ate);
-    if (!file) {
-        return {};
+ਸਥਿਰ std::vector<std::byte> ggml_et_read_kernel_file(ਅਚਲ std::string & kernel_ਰਸਤਾ) {
+    std::ifstream file(kernel_ਰਸਤਾ, std::ios::binary | std::ios::ate);
+    ਜੇ (!file) {
+        ਵਾਪਸ {};
     }
 
-    auto size = file.tellg();
+    ਸਵੈਚਾਲਿਤ size = file.tellg();
     file.seekg(0, std::ios::beg);
 
-    std::vector<std::byte> buffer(size);
-    file.read(reinterpret_cast<char *>(buffer.data()), size);
+    std::vector<std::byte> ਬਫਰ(size);
+    file.ਪਠ(reinterpret_cast<ਅੱਖਰ *>(ਬਫਰ.ਅੰਕੜੇ()), size);
 
-    return buffer;
+    ਵਾਪਸ ਬਫਰ;
 }
 
 // Load kernel from file or embedded data
-bool ggml_et_load_kernel(ggml_backend_et_device_context * dev_ctx, const std::string & kernel_name) {
+ਤਾਰਕਿਕ ggml_et_ਲੱਦੋ_kernel(ggml_backend_et_device_context * dev_ctx, ਅਚਲ std::string & kernel_name) {
     std::shared_ptr<rt::IRuntime> runtime = ggml_et_runtime();
-    if (!runtime) {
+    ਜੇ (!runtime) {
         GGML_LOG_ERROR("ET: Runtime not available for kernel loading\n");
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
 
     // Check if kernel already loaded
-    if (dev_ctx->loaded_kernels.find(kernel_name) != dev_ctx->loaded_kernels.end()) {
+    ਜੇ (dev_ctx->loaded_kernels.find(kernel_name) != dev_ctx->loaded_kernels.end()) {
         GGML_LOG_DEBUG("ET: Kernel %s already loaded on device %d\n", kernel_name.c_str(), dev_ctx->devidx);
-        return true;
+        ਵਾਪਸ ਸੱਚ;
     }
 
-    std::vector<std::byte> kernel_data;
-    const char *           kernels_path = getenv("GGML_ET_KERNELS_PATH");
+    std::vector<std::byte> kernel_ਅੰਕੜੇ;
+    ਅਚਲ ਅੱਖਰ *           kernels_ਰਸਤਾ = getenv("GGML_ET_KERNELS_PATH");
 
     // If GGML_ET_KERNELS_PATH is set, try to load from file first
-    if (kernels_path) {
-        std::string kernel_file = std::string(kernels_path) + "/" + kernel_name + ".elf";
-        kernel_data             = ggml_et_read_kernel_file(kernel_file);
+    ਜੇ (kernels_ਰਸਤਾ) {
+        std::string kernel_file = std::string(kernels_ਰਸਤਾ) + "/" + kernel_name + ".elf";
+        kernel_ਅੰਕੜੇ             = ggml_et_read_kernel_file(kernel_file);
 
-        if (!kernel_data.empty()) {
+        ਜੇ (!kernel_ਅੰਕੜੇ.ਖਾਲੀ_ਥਾਵਾਂ()) {
             GGML_LOG_INFO("ET: Loading kernel %s from file: %s\n", kernel_name.c_str(), kernel_file.c_str());
-        } else {
+        } ਨਹੀਂਤਾਂ {
             GGML_LOG_INFO("ET: Kernel file not found: %s, falling back to embedded\n", kernel_file.c_str());
         }
     }
 
     // If no file data, use embedded kernel
-    if (kernel_data.empty()) {
-        kernel_data = ggml_et_get_embedded_kernel(kernel_name);
-        if (kernel_data.empty()) {
+    ਜੇ (kernel_ਅੰਕੜੇ.ਖਾਲੀ_ਥਾਵਾਂ()) {
+        kernel_ਅੰਕੜੇ = ggml_et_get_embedded_kernel(kernel_name);
+        ਜੇ (kernel_ਅੰਕੜੇ.ਖਾਲੀ_ਥਾਵਾਂ()) {
             GGML_LOG_ERROR("ET: Failed to get kernel data for %s\n", kernel_name.c_str());
-            return false;
+            ਵਾਪਸ ਝੂਠ;
         }
     }
 
-    try {
+    ਕੋਸ਼ਿਸ਼ {
         // Load kernel code using device's default stream
-        auto load_result = runtime->loadCode(dev_ctx->default_stream, kernel_data.data(), kernel_data.size());
-        runtime->waitForEvent(load_result.event_);
+        ਸਵੈਚਾਲਿਤ ਲੱਦੋ_ਨਤੀਜਾ = runtime->ਲੱਦੋ_ਕੋਡ(dev_ctx->default_ਧਾਰਾ, kernel_ਅੰਕੜੇ.ਅੰਕੜੇ(), kernel_ਅੰਕੜੇ.size());
+        runtime->waitForEvent(ਲੱਦੋ_ਨਤੀਜਾ.event_);
 
         // Store kernel handle
-        dev_ctx->loaded_kernels[kernel_name] = load_result.kernel_;
-        return true;
+        dev_ctx->loaded_kernels[kernel_name] = ਲੱਦੋ_ਨਤੀਜਾ.kernel_;
+        ਵਾਪਸ ਸੱਚ;
 
-    } catch (const std::exception & e) {
+    } ਫੜੋ (ਅਚਲ std::exception & e) {
         GGML_LOG_ERROR("ET: Failed to load kernel %s: %s\n", kernel_name.c_str(), e.what());
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
 }
 
-static bool ggml_et_launch_kernel_internal(ggml_backend_et_device_context * dev_ctx,
-                                           const std::string &              kernel_name,
-                                           void *                           params,
-                                           size_t                           params_size,
-                                           uint64_t                         shire_mask,
-                                           bool                             enable_print,
-                                           bool                             sync_error_check,
-                                           rt::EventId *                    out_event = nullptr) {
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_et_launch_kernel_ਅੰਦਰੂਨੀ(ggml_backend_et_device_context * dev_ctx,
+                                           ਅਚਲ std::string &              kernel_name,
+                                           ਖਾਲੀ *                           params,
+                                           size_t                           params_ਮਾਪ,
+                                           uint64_t                         shire_ਨਕਾਬ,
+                                           ਤਾਰਕਿਕ                             enable_print,
+                                           ਤਾਰਕਿਕ                             sync_error_check,
+                                           rt::EventId *                    ਬਾਹਰਲਾ_event = ਖਾਲੀ_ਸੂਚਕ) {
     std::shared_ptr<rt::IRuntime> runtime = ggml_et_runtime();
-    if (!runtime) {
+    ਜੇ (!runtime) {
         GGML_LOG_ERROR("ET: Runtime not available for kernel launch\n");
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
 
     // Lazy loading: check if kernel is loaded, load if needed
-    auto kernel_it = dev_ctx->loaded_kernels.find(kernel_name);
-    if (kernel_it == dev_ctx->loaded_kernels.end()) {
+    ਸਵੈਚਾਲਿਤ kernel_it = dev_ctx->loaded_kernels.find(kernel_name);
+    ਜੇ (kernel_it == dev_ctx->loaded_kernels.end()) {
         // Kernel not loaded - load it
-        if (!ggml_et_load_kernel(dev_ctx, kernel_name)) {
+        ਜੇ (!ggml_et_ਲੱਦੋ_kernel(dev_ctx, kernel_name)) {
             GGML_LOG_ERROR("ET: Failed to lazy-load kernel %s\n", kernel_name.c_str());
-            return false;
+            ਵਾਪਸ ਝੂਠ;
         }
 
         // Update iterator after successful load
         kernel_it = dev_ctx->loaded_kernels.find(kernel_name);
-        if (kernel_it == dev_ctx->loaded_kernels.end()) {
+        ਜੇ (kernel_it == dev_ctx->loaded_kernels.end()) {
             GGML_LOG_ERROR("ET: Kernel %s not found after loading\n", kernel_name.c_str());
-            return false;
+            ਵਾਪਸ ਝੂਠ;
         }
     }
 
     rt::KernelId kernel_id = kernel_it->second;
 
-    try {
+    ਕੋਸ਼ਿਸ਼ {
         // Setup kernel launch options
         rt::KernelLaunchOptions k_opts;
-        k_opts.setShireMask(shire_mask);  // Default: all shires (0xFFFFFFFF)
-        k_opts.setBarrier(true);          // Wait for completion
-        k_opts.setFlushL3(false);         // No L3 flush needed
-        if (enable_print) {
-            k_opts.setUserTracing(reinterpret_cast<uint64_t>(dev_ctx->trace_buffer),
-                                  static_cast<uint32_t>(ET_TRACE_BUFFER_SIZE),
-                                  0,                      // threshold
-                                  shire_mask,             // shire mask
+        k_opts.ਸੈੱਟ_Shire_ਨਕਾਬ(shire_ਨਕਾਬ);  // Default: all shires (0xFFFFFFFF)
+        k_opts.ਸੈੱਟ_Barrier(ਸੱਚ);          // Wait for completion
+        k_opts.ਸੈੱਟ_Flush_L3(ਝੂਠ);         // No L3 flush needed
+        ਜੇ (enable_print) {
+            k_opts.ਸੈੱਟ_User_Tracing(reinterpret_cast<uint64_t>(dev_ctx->trace_ਬਫਰ),
+                                  static_cast<uint32_t>(ET_TRACE_ਬਫਰ_ਮਾਪ),
+                                  0,                      //ਹੱਦ
+                                  shire_ਨਕਾਬ,             // shire mask
                                   0xFFFFFFFFFFFFFFFFULL,  // threadMask - all threads
                                   0xFFFFFFFFU,            // eventMask - all events
                                   0xFFFFFFFFU             // filterMask - all levels
             );
         }
 
-        if (sync_error_check) {
-            runtime->waitForStream(dev_ctx->default_stream);
-            auto errors = runtime->retrieveStreamErrors(dev_ctx->default_stream);
-            if (!errors.empty()) {
+        ਜੇ (sync_error_check) {
+            runtime->wait_For_ਧਾਰਾ(dev_ctx->default_ਧਾਰਾ);
+            ਸਵੈਚਾਲਿਤ errors = runtime->retrieve_ਧਾਰਾ_Errors(dev_ctx->default_ਧਾਰਾ);
+            ਜੇ (!errors.ਖਾਲੀ_ਥਾਵਾਂ()) {
                 GGML_LOG_ERROR("ET: Errors detected before kernel \"%s\" launch\n", kernel_name.c_str());
-                for (const auto & error : errors) {
-                    GGML_LOG_ERROR("ET: Error code: %d\n", (int) error.errorCode_);
+                ਲਈ (ਅਚਲ ਸਵੈਚਾਲਿਤ & error : errors) {
+                    GGML_LOG_ERROR("ET: Error code: %d\n", (ਪੂਰਨ) error.error_ਕੋਡ);
                 }
                 abort();
             }
         }
 
-        rt::EventId launch_event = runtime->kernelLaunch(dev_ctx->default_stream, kernel_id,
-                                                         reinterpret_cast<std::byte *>(params), params_size, k_opts);
-        if (out_event) {
-            *out_event = launch_event;
+        rt::EventId launch_event = runtime->kernelLaunch(dev_ctx->default_ਧਾਰਾ, kernel_id,
+                                                         reinterpret_cast<std::byte *>(params), params_ਮਾਪ, k_opts);
+        ਜੇ (ਬਾਹਰਲਾ_event) {
+            *ਬਾਹਰਲਾ_event = launch_event;
         }
 
-        if (enable_print) {
-            std::vector<std::byte> host_trace_buf(ET_TRACE_BUFFER_SIZE);
-            runtime->memcpyDeviceToHost(dev_ctx->default_stream, dev_ctx->trace_buffer, host_trace_buf.data(),
-                                        ET_TRACE_BUFFER_SIZE);
-            runtime->waitForStream(dev_ctx->default_stream);
-            const auto * trace_header = reinterpret_cast<const trace_buffer_std_header_t *>(host_trace_buf.data());
-            const trace_entry_header_t * entry = nullptr;
-            while ((entry = Trace_Decode(trace_header, entry))) {
-                if (entry->type != TRACE_TYPE_STRING) {
-                    continue;
+        ਜੇ (enable_print) {
+            std::vector<std::byte> host_trace_buf(ET_TRACE_ਬਫਰ_ਮਾਪ);
+            runtime->memcpy_Device_ਮੰਜ਼ਿਲ_Host(dev_ctx->default_ਧਾਰਾ, dev_ctx->trace_ਬਫਰ, host_trace_buf.ਅੰਕੜੇ(),
+                                        ET_TRACE_ਬਫਰ_ਮਾਪ);
+            runtime->wait_For_ਧਾਰਾ(dev_ctx->default_ਧਾਰਾ);
+            ਅਚਲ ਸਵੈਚਾਲਿਤ * trace_ਸਿਰਲੇਖ = reinterpret_cast<ਅਚਲ trace_ਬਫਰ_std_ਸਿਰਲੇਖ_t *>(host_trace_buf.ਅੰਕੜੇ());
+            ਅਚਲ trace_ਇੰਦਰਾਜ_ਸਿਰਲੇਖ_t * ਇੰਦਰਾਜ = ਖਾਲੀ_ਸੂਚਕ;
+            ਜਦੋਂ ((ਇੰਦਰਾਜ = Trace_Decode(trace_ਸਿਰਲੇਖ, ਇੰਦਰਾਜ))) {
+                ਜੇ (ਇੰਦਰਾਜ->type != TRACE_TYPE_STRING) {
+                    ਜਾਰੀ;
                 }
-                const auto * str_entry = reinterpret_cast<const trace_string_t *>(entry);
-                printf("[hart %d] %s", entry->hart_id, str_entry->string);
+                ਅਚਲ ਸਵੈਚਾਲਿਤ * str_ਇੰਦਰਾਜ = reinterpret_cast<ਅਚਲ trace_string_t *>(ਇੰਦਰਾਜ);
+                ਲਿਖੋ("[hart %d] %s", ਇੰਦਰਾਜ->hart_id, str_ਇੰਦਰਾਜ->string);
             }
         }
 
-        if (sync_error_check) {
+        ਜੇ (sync_error_check) {
             // Already triggered. No need to retrigger
-            if (!enable_print) {
-                runtime->waitForStream(dev_ctx->default_stream);
+            ਜੇ (!enable_print) {
+                runtime->wait_For_ਧਾਰਾ(dev_ctx->default_ਧਾਰਾ);
             }
-            auto errors = runtime->retrieveStreamErrors(dev_ctx->default_stream);
-            if (!errors.empty()) {
+            ਸਵੈਚਾਲਿਤ errors = runtime->retrieve_ਧਾਰਾ_Errors(dev_ctx->default_ਧਾਰਾ);
+            ਜੇ (!errors.ਖਾਲੀ_ਥਾਵਾਂ()) {
                 GGML_LOG_ERROR("ET: Errors detected during kernel \"%s\" execution\n", kernel_name.c_str());
-                for (const auto & error : errors) {
-                    GGML_LOG_ERROR("ET: Error code: %d\n", (int) error.errorCode_);
+                ਲਈ (ਅਚਲ ਸਵੈਚਾਲਿਤ & error : errors) {
+                    GGML_LOG_ERROR("ET: Error code: %d\n", (ਪੂਰਨ) error.error_ਕੋਡ);
                 }
                 abort();
             }
         }
 
-        return true;
-    } catch (const std::exception & e) {
+        ਵਾਪਸ ਸੱਚ;
+    } ਫੜੋ (ਅਚਲ std::exception & e) {
         GGML_LOG_ERROR("ET: Failed to launch kernel %s: %s\n", kernel_name.c_str(), e.what());
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
 }
 
-void ggml_et_uberkernel_begin_graph(ggml_backend_et_uberkernel_context * uk_ctx) {
-    if (!uk_ctx) {
-        return;
+ਖਾਲੀ ggml_et_uberkernel_begin_ਗ੍ਰਾਫ(ggml_backend_et_uberkernel_context * uk_ctx) {
+    ਜੇ (!uk_ctx) {
+        ਵਾਪਸ;
     }
 
-    uk_ctx->failed = false;
+    uk_ctx->failed = ਝੂਠ;
     ggml_et_uberkernel_reset_segment(uk_ctx);
 }
 
-static bool ggml_et_launch_uberkernel_segment(ggml_backend_et_device_context *     dev_ctx,
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_et_launch_uberkernel_segment(ggml_backend_et_device_context *     dev_ctx,
                                               ggml_backend_et_uberkernel_context * uk_ctx) {
-    if (!uk_ctx || !dev_ctx) {
-        return false;
+    ਜੇ (!uk_ctx || !dev_ctx) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    auto & slot = ggml_et_uberkernel_current_slot(uk_ctx);
-    if (slot.insts.empty()) {
-        return true;
+    ਸਵੈਚਾਲਿਤ & ਥਾਂ = ggml_et_uberkernel_current_ਥਾਂ(uk_ctx);
+    ਜੇ (ਥਾਂ.insts.ਖਾਲੀ_ਥਾਵਾਂ()) {
+        ਵਾਪਸ ਸੱਚ;
     }
 
     std::shared_ptr<rt::IRuntime> runtime = ggml_et_runtime();
-    if (!runtime) {
+    ਜੇ (!runtime) {
         GGML_LOG_ERROR("ET: Runtime not available for uberkernel commit\n");
-        uk_ctx->failed = true;
-        return false;
+        uk_ctx->failed = ਸੱਚ;
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    const size_t   insts_size  = slot.insts.size() * sizeof(ggml_et_uberkernel_inst);
-    const size_t   params_size = slot.params_blob.size();
-    const uint64_t shire_mask  = uk_ctx->shire_mask;
-    bool           ok          = false;
+    ਅਚਲ size_t   insts_ਮਾਪ  = ਥਾਂ.insts.size() * ਆਕਾਰ(ggml_et_uberkernel_inst);
+    ਅਚਲ size_t   params_ਮਾਪ = ਥਾਂ.params_blob.size();
+    ਅਚਲ uint64_t shire_ਨਕਾਬ  = uk_ctx->shire_ਨਕਾਬ;
+    ਤਾਰਕਿਕ           ok          = ਝੂਠ;
 
-    try {
-        if (!ggml_et_uberkernel_ensure_slot_capacity(slot, dev_ctx, insts_size, params_size)) {
+    ਕੋਸ਼ਿਸ਼ {
+        ਜੇ (!ggml_et_uberkernel_ensure_ਥਾਂ_ਸਮਰੱਥਾ(ਥਾਂ, dev_ctx, insts_ਮਾਪ, params_ਮਾਪ)) {
             GGML_LOG_ERROR("ET: Failed to allocate uberkernel device buffers\n");
-            uk_ctx->failed = true;
+            uk_ctx->failed = ਸੱਚ;
             // Drop this segment but keep the slot drained so we don't leak
             // host vectors into the next graph.
-            slot.insts.clear();
-            slot.params_blob.clear();
-            uk_ctx->shire_mask = 0;
-            return false;
+            ਥਾਂ.insts.clear();
+            ਥਾਂ.params_blob.clear();
+            uk_ctx->shire_ਨਕਾਬ = 0;
+            ਵਾਪਸ ਝੂਠ;
         }
 
         // Fire-and-forget H2D + launch on default_stream. In-stream FIFO
         // ordering guarantees the kernel sees fully-uploaded buffers; the
         // host source bytes (slot.insts / slot.params_blob) stay alive
         // because we won't touch this slot again until pending_event fires.
-        runtime->memcpyHostToDevice(dev_ctx->default_stream, reinterpret_cast<const std::byte *>(slot.insts.data()),
-                                    slot.device_insts, insts_size, true);
-        runtime->memcpyHostToDevice(dev_ctx->default_stream, slot.params_blob.data(), slot.device_params, params_size,
-                                    true);
+        runtime->memcpy_Host_ਮੰਜ਼ਿਲ_Device(dev_ctx->default_ਧਾਰਾ, reinterpret_cast<ਅਚਲ std::byte *>(ਥਾਂ.insts.ਅੰਕੜੇ()),
+                                    ਥਾਂ.device_insts, insts_ਮਾਪ, ਸੱਚ);
+        runtime->memcpy_Host_ਮੰਜ਼ਿਲ_Device(dev_ctx->default_ਧਾਰਾ, ਥਾਂ.params_blob.ਅੰਕੜੇ(), ਥਾਂ.device_params, params_ਮਾਪ,
+                                    ਸੱਚ);
 
         ggml_et_uberkernel_params params = {
-            static_cast<uint32_t>(slot.insts.size()),
-            static_cast<uint32_t>(sizeof(ggml_et_uberkernel_inst)),
-            reinterpret_cast<uint64_t>(slot.device_insts),
-            reinterpret_cast<uint64_t>(slot.device_params),
+            static_cast<uint32_t>(ਥਾਂ.insts.size()),
+            static_cast<uint32_t>(ਆਕਾਰ(ggml_et_uberkernel_inst)),
+            reinterpret_cast<uint64_t>(ਥਾਂ.device_insts),
+            reinterpret_cast<uint64_t>(ਥਾਂ.device_params),
         };
 
         rt::EventId launch_event{};
-        ok = ggml_et_launch_kernel_internal(dev_ctx, "uberkernel", &params, sizeof(params), shire_mask, false, false,
+        ok = ggml_et_launch_kernel_ਅੰਦਰੂਨੀ(dev_ctx, "uberkernel", &params, ਆਕਾਰ(params), shire_ਨਕਾਬ, ਝੂਠ, ਝੂਠ,
                                             &launch_event);
-        if (ok) {
+        ਜੇ (ok) {
             // The kernelLaunch above is the last thing on default_stream
             // that touches this slot's device buffers. Recording its event
             // lets the next reuse of this slot wait on that one event
             // instead of the whole stream.
-            slot.pending_event = launch_event;
-            slot.has_pending   = true;
+            ਥਾਂ.pending_event = launch_event;
+            ਥਾਂ.has_pending   = ਸੱਚ;
         }
-    } catch (const std::exception & e) {
+    } ਫੜੋ (ਅਚਲ std::exception & e) {
         GGML_LOG_ERROR("ET: Failed to commit uberkernel segment: %s\n", e.what());
     }
     uk_ctx->failed = !ok;
 
-    if (ok) {
-        uk_ctx->current_slot = (uk_ctx->current_slot + 1) % ggml_backend_et_uberkernel_context::SLOT_COUNT;
-        auto & next          = ggml_et_uberkernel_current_slot(uk_ctx);
-        ggml_et_uberkernel_slot_wait(next, runtime);
-        next.insts.clear();
-        next.params_blob.clear();
-    } else {
-        slot.insts.clear();
-        slot.params_blob.clear();
+    ਜੇ (ok) {
+        uk_ctx->current_ਥਾਂ = (uk_ctx->current_ਥਾਂ + 1) % ggml_backend_et_uberkernel_context::ਥਾਂ_ਗਿਣਤੀ_2;
+        ਸਵੈਚਾਲਿਤ & ਅਗਲਾ          = ggml_et_uberkernel_current_ਥਾਂ(uk_ctx);
+        ggml_et_uberkernel_ਥਾਂ_wait(ਅਗਲਾ, runtime);
+        ਅਗਲਾ.insts.clear();
+        ਅਗਲਾ.params_blob.clear();
+    } ਨਹੀਂਤਾਂ {
+        ਥਾਂ.insts.clear();
+        ਥਾਂ.params_blob.clear();
     }
-    uk_ctx->shire_mask = 0;
-    return ok;
+    uk_ctx->shire_ਨਕਾਬ = 0;
+    ਵਾਪਸ ok;
 }
 
-void ggml_et_uberkernel_abort_graph(ggml_backend_et_uberkernel_context * uk_ctx) {
-    if (!uk_ctx) {
-        return;
+ਖਾਲੀ ggml_et_uberkernel_abort_ਗ੍ਰਾਫ(ggml_backend_et_uberkernel_context * uk_ctx) {
+    ਜੇ (!uk_ctx) {
+        ਵਾਪਸ;
     }
 
-    uk_ctx->failed = false;
+    uk_ctx->failed = ਝੂਠ;
     ggml_et_uberkernel_reset_segment(uk_ctx);
 }
 
-bool ggml_et_uberkernel_failed(const ggml_backend_et_uberkernel_context * uk_ctx) {
-    return uk_ctx && uk_ctx->failed;
+ਤਾਰਕਿਕ ggml_et_uberkernel_failed(ਅਚਲ ggml_backend_et_uberkernel_context * uk_ctx) {
+    ਵਾਪਸ uk_ctx && uk_ctx->failed;
 }
 
-static bool ggml_et_launch_uberkernel(ggml_backend_et_device_context * dev_ctx,
-                                      const std::string &              kernel_name,
-                                      void *                           params,
-                                      size_t                           params_size,
-                                      uint64_t                         shire_mask,
-                                      bool                             enable_print,
-                                      bool                             sync_error_check) {
-    if (!dev_ctx) {
-        return false;
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_et_launch_uberkernel(ggml_backend_et_device_context * dev_ctx,
+                                      ਅਚਲ std::string &              kernel_name,
+                                      ਖਾਲੀ *                           params,
+                                      size_t                           params_ਮਾਪ,
+                                      uint64_t                         shire_ਨਕਾਬ,
+                                      ਤਾਰਕਿਕ                             enable_print,
+                                      ਤਾਰਕਿਕ                             sync_error_check) {
+    ਜੇ (!dev_ctx) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
     ggml_backend_et_uberkernel_context * uk_ctx        = &dev_ctx->uberkernel;
-    const uint16_t                       uberkernel_id = ggml_et_uberkernel_kernel_id_from_name(kernel_name.c_str());
-    if (uberkernel_id == GGML_ET_UBERKERNEL_KERNEL_INVALID) {
-        if (!ggml_et_launch_uberkernel_segment(dev_ctx, uk_ctx)) {
-            return false;
+    ਅਚਲ uint16_t                       uberkernel_id = ggml_et_uberkernel_kernel_id_from_name(kernel_name.c_str());
+    ਜੇ (uberkernel_id == GGML_ET_UBERKERNEL_KERNEL_INVALID) {
+        ਜੇ (!ggml_et_launch_uberkernel_segment(dev_ctx, uk_ctx)) {
+            ਵਾਪਸ ਝੂਠ;
         }
-        return ggml_et_launch_kernel_internal(dev_ctx, kernel_name, params, params_size, shire_mask, enable_print,
+        ਵਾਪਸ ggml_et_launch_kernel_ਅੰਦਰੂਨੀ(dev_ctx, kernel_name, params, params_ਮਾਪ, shire_ਨਕਾਬ, enable_print,
                                               sync_error_check);
     }
 
-    auto &       slot          = ggml_et_uberkernel_current_slot(uk_ctx);
-    const size_t params_offset = ggml_et_align_up(slot.params_blob.size(), GGML_ET_UBERKERNEL_PARAM_ALIGN);
-    if (params_offset > slot.params_blob.size()) {
-        slot.params_blob.resize(params_offset);
+    ਸਵੈਚਾਲਿਤ &       ਥਾਂ          = ggml_et_uberkernel_current_ਥਾਂ(uk_ctx);
+    ਅਚਲ size_t params_ਵਿੱਥ = ggml_et_align_ਉੱਪਰ(ਥਾਂ.params_blob.size(), GGML_ET_UBERKERNEL_PARAM_ALIGN);
+    ਜੇ (params_ਵਿੱਥ > ਥਾਂ.params_blob.size()) {
+        ਥਾਂ.params_blob.resize(params_ਵਿੱਥ);
     }
 
-    const std::byte * params_bytes = reinterpret_cast<const std::byte *>(params);
-    slot.params_blob.insert(slot.params_blob.end(), params_bytes, params_bytes + params_size);
+    ਅਚਲ std::byte * params_ਬਾਈਟਾਂ = reinterpret_cast<ਅਚਲ std::byte *>(params);
+    ਥਾਂ.params_blob.insert(ਥਾਂ.params_blob.end(), params_ਬਾਈਟਾਂ, params_ਬਾਈਟਾਂ + params_ਮਾਪ);
 
     ggml_et_uberkernel_inst inst = {
         uberkernel_id,
         0,
-        static_cast<uint32_t>(params_offset),
-        static_cast<uint32_t>(params_size),
+        static_cast<uint32_t>(params_ਵਿੱਥ),
+        static_cast<uint32_t>(params_ਮਾਪ),
     };
-    slot.insts.push_back(inst);
+    ਥਾਂ.insts.push_back(inst);
 
-    if (slot.insts.size() == 1) {
-        uk_ctx->shire_mask = shire_mask;
+    ਜੇ (ਥਾਂ.insts.size() == 1) {
+        uk_ctx->shire_ਨਕਾਬ = shire_ਨਕਾਬ;
     }
 
-    return true;
+    ਵਾਪਸ ਸੱਚ;
 }
 
-bool ggml_et_uberkernel_end_graph(ggml_backend_et_device_context * dev_ctx) {
-    if (!dev_ctx || !dev_ctx->uberkernel_enabled) {
-        return true;
+ਤਾਰਕਿਕ ggml_et_uberkernel_ਸਿਰਾ_ਗ੍ਰਾਫ(ggml_backend_et_device_context * dev_ctx) {
+    ਜੇ (!dev_ctx || !dev_ctx->uberkernel_enabled) {
+        ਵਾਪਸ ਸੱਚ;
     }
 
-    return ggml_et_launch_uberkernel_segment(dev_ctx, &dev_ctx->uberkernel);
+    ਵਾਪਸ ggml_et_launch_uberkernel_segment(dev_ctx, &dev_ctx->uberkernel);
 }
 
-bool ggml_et_launch_kernel(ggml_backend_et_device_context * dev_ctx,
-                           const std::string &              kernel_name,
-                           void *                           params,
-                           size_t                           params_size,
-                           uint64_t                         shire_mask,
-                           bool                             enable_print,
-                           bool                             sync_error_check) {
-    if (!dev_ctx) {
-        return false;
+ਤਾਰਕਿਕ ggml_et_launch_kernel(ggml_backend_et_device_context * dev_ctx,
+                           ਅਚਲ std::string &              kernel_name,
+                           ਖਾਲੀ *                           params,
+                           size_t                           params_ਮਾਪ,
+                           uint64_t                         shire_ਨਕਾਬ,
+                           ਤਾਰਕਿਕ                             enable_print,
+                           ਤਾਰਕਿਕ                             sync_error_check) {
+    ਜੇ (!dev_ctx) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    if (!dev_ctx->uberkernel_enabled) {
-        return ggml_et_launch_kernel_internal(dev_ctx, kernel_name, params, params_size, shire_mask, enable_print,
+    ਜੇ (!dev_ctx->uberkernel_enabled) {
+        ਵਾਪਸ ggml_et_launch_kernel_ਅੰਦਰੂਨੀ(dev_ctx, kernel_name, params, params_ਮਾਪ, shire_ਨਕਾਬ, enable_print,
                                               sync_error_check);
     }
 
-    return ggml_et_launch_uberkernel(dev_ctx, kernel_name, params, params_size, shire_mask, enable_print,
+    ਵਾਪਸ ggml_et_launch_uberkernel(dev_ctx, kernel_name, params, params_ਮਾਪ, shire_ਨਕਾਬ, enable_print,
                                      sync_error_check);
 }
 
-void ggml_et_unload_kernel(ggml_backend_et_device_context * dev_ctx, const std::string & kernel_name) {
+ਖਾਲੀ ggml_et_unload_kernel(ggml_backend_et_device_context * dev_ctx, ਅਚਲ std::string & kernel_name) {
     std::shared_ptr<rt::IRuntime> runtime = ggml_et_runtime();
-    if (!runtime) {
-        return;
+    ਜੇ (!runtime) {
+        ਵਾਪਸ;
     }
 
-    auto kernel_it = dev_ctx->loaded_kernels.find(kernel_name);
-    if (kernel_it != dev_ctx->loaded_kernels.end()) {
-        try {
-            runtime->unloadCode(kernel_it->second);
+    ਸਵੈਚਾਲਿਤ kernel_it = dev_ctx->loaded_kernels.find(kernel_name);
+    ਜੇ (kernel_it != dev_ctx->loaded_kernels.end()) {
+        ਕੋਸ਼ਿਸ਼ {
+            runtime->unload_ਕੋਡ(kernel_it->second);
             dev_ctx->loaded_kernels.erase(kernel_it);
-        } catch (const std::exception & e) {
+        } ਫੜੋ (ਅਚਲ std::exception & e) {
             GGML_LOG_ERROR("ET: Failed to unload kernel %s: %s\n", kernel_name.c_str(), e.what());
         }
     }
 }
 
-void ggml_et_unload_all_kernels(ggml_backend_et_device_context * dev_ctx) {
-    if (!dev_ctx) {
-        return;
+ਖਾਲੀ ggml_et_unload_all_kernels(ggml_backend_et_device_context * dev_ctx) {
+    ਜੇ (!dev_ctx) {
+        ਵਾਪਸ;
     }
 
     // Make a copy of kernel names since ggml_et_unload_kernel modifies the map
-    std::vector<std::string> kernel_names;
-    kernel_names.reserve(dev_ctx->loaded_kernels.size());
-    for (const auto & kernel_pair : dev_ctx->loaded_kernels) {
-        kernel_names.push_back(kernel_pair.first);
+    std::vector<std::string> kernel_ਨਾਂ;
+    kernel_ਨਾਂ.reserve(dev_ctx->loaded_kernels.size());
+    ਲਈ (ਅਚਲ ਸਵੈਚਾਲਿਤ & kernel_pair : dev_ctx->loaded_kernels) {
+        kernel_ਨਾਂ.push_back(kernel_pair.ਪਹਿਲਾ);
     }
 
-    for (const auto & kernel_name : kernel_names) {
+    ਲਈ (ਅਚਲ ਸਵੈਚਾਲਿਤ & kernel_name : kernel_ਨਾਂ) {
         ggml_et_unload_kernel(dev_ctx, kernel_name);
     }
 }
@@ -501,8 +501,8 @@ void ggml_et_unload_all_kernels(ggml_backend_et_device_context * dev_ctx) {
 std::vector<std::pair<std::string, rt::KernelId>> ggml_et_get_loaded_kernels(ggml_backend_et_device_context * dev_ctx) {
     std::vector<std::pair<std::string, rt::KernelId>> loaded_kernels;
     loaded_kernels.reserve(dev_ctx->loaded_kernels.size());
-    for (const auto & kernel_pair : dev_ctx->loaded_kernels) {
+    ਲਈ (ਅਚਲ ਸਵੈਚਾਲਿਤ & kernel_pair : dev_ctx->loaded_kernels) {
         loaded_kernels.push_back(kernel_pair);
     }
-    return loaded_kernels;
+    ਵਾਪਸ loaded_kernels;
 }

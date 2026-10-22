@@ -1,173 +1,173 @@
-#include "virtgpu-forward-impl.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "virtgpu-forward-impl.h"
 
-void * apir_buffer_get_base(virtgpu * gpu, apir_buffer_context_t * buffer_context) {
+ਖਾਲੀ * apir_ਬਫਰ_get_ਅਧਾਰ(virtgpu * gpu, apir_ਬਫਰ_context_t * ਬਫਰ_context) {
     apir_encoder *        encoder;
     apir_decoder *        decoder;
-    ApirForwardReturnCode ret;
+    Apir_Forward_Return_ਕੋਡ ret;
 
-    REMOTE_CALL_PREPARE(gpu, encoder, APIR_COMMAND_TYPE_BUFFER_GET_BASE);
+    REMOTE_CALL_PREPARE(gpu, encoder, APIR_COMMAND_TYPE_ਬਫਰ_GET_ਅਧਾਰ);
 
-    apir_encode_apir_buffer_host_handle_t(encoder, &buffer_context->host_handle);
+    apir_encode_apir_ਬਫਰ_host_handle_t(encoder, &ਬਫਰ_context->host_handle);
 
     REMOTE_CALL(gpu, encoder, decoder, ret);
 
-    uintptr_t base;
-    apir_decode_uintptr_t(decoder, &base);
+    uintptr_t ਅਧਾਰ;
+    apir_decode_uintptr_t(decoder, &ਅਧਾਰ);
 
-    remote_call_finish(gpu, encoder, decoder);
+    remote_call_ਅੰਤ(gpu, encoder, decoder);
 
-    return (void *) base;
+    ਵਾਪਸ (ਖਾਲੀ *) ਅਧਾਰ;
 }
 
-void apir_buffer_set_tensor(virtgpu *               gpu,
-                            apir_buffer_context_t * buffer_context,
+ਖਾਲੀ apir_ਬਫਰ_ਸੈੱਟ_tensor(virtgpu *               gpu,
+                            apir_ਬਫਰ_context_t * ਬਫਰ_context,
                             ggml_tensor *           tensor,
-                            const void *            data,
-                            size_t                  offset,
+                            ਅਚਲ ਖਾਲੀ *            ਅੰਕੜੇ,
+                            size_t                  ਵਿੱਥ,
                             size_t                  size) {
     apir_encoder *        encoder;
     apir_decoder *        decoder;
-    ApirForwardReturnCode ret;
+    Apir_Forward_Return_ਕੋਡ ret;
 
-    REMOTE_CALL_PREPARE(gpu, encoder, APIR_COMMAND_TYPE_BUFFER_SET_TENSOR);
+    REMOTE_CALL_PREPARE(gpu, encoder, APIR_COMMAND_TYPE_ਬਫਰ_ਸੈੱਟ_TENSOR);
 
-    apir_encode_apir_buffer_host_handle_t(encoder, &buffer_context->host_handle);
+    apir_encode_apir_ਬਫਰ_host_handle_t(encoder, &ਬਫਰ_context->host_handle);
     apir_encode_ggml_tensor(encoder, tensor);
 
-    virtgpu_shmem   temp_shmem;  // Local storage for large buffers
-    virtgpu_shmem * shmem              = &temp_shmem;
-    bool            using_shared_shmem = false;
+    virtgpu_shmem   ਆਰਜ਼ੀ_shmem;  // Local storage for large buffers
+    virtgpu_shmem * shmem              = &ਆਰਜ਼ੀ_shmem;
+    ਤਾਰਕਿਕ            using_shared_shmem = ਝੂਠ;
 
-    if (size <= gpu->data_shmem.mmap_size) {
+    ਜੇ (size <= gpu->ਅੰਕੜੇ_shmem.mmap_ਮਾਪ) {
         // Lock mutex before using shared data_shmem buffer
-        if (mtx_lock(&gpu->data_shmem_mutex) != thrd_success) {
+        ਜੇ (mtx_ਤਾਲਾ(&gpu->ਅੰਕੜੇ_shmem_mutex) != thrd_success) {
             GGML_ABORT(GGML_VIRTGPU "%s: Failed to lock data_shmem mutex", __func__);
         }
-        using_shared_shmem = true;
-        shmem              = &gpu->data_shmem;
+        using_shared_shmem = ਸੱਚ;
+        shmem              = &gpu->ਅੰਕੜੇ_shmem;
 
-    } else if (virtgpu_shmem_create(gpu, size, shmem)) {
+    } ਨਹੀਂਤਾਂ ਜੇ (virtgpu_shmem_create(gpu, size, shmem)) {
         GGML_ABORT(GGML_VIRTGPU "%s: Couldn't allocate the guest-host shared buffer", __func__);
     }
 
-    memcpy(shmem->mmap_ptr, data, size);
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(shmem->mmap_ptr, ਅੰਕੜੇ, size);
     apir_encode_virtgpu_shmem_res_id(encoder, shmem->res_id);
 
-    apir_encode_size_t(encoder, &offset);
-    apir_encode_size_t(encoder, &size);
+    apir_encode_ਮਾਪ_t(encoder, &ਵਿੱਥ);
+    apir_encode_ਮਾਪ_t(encoder, &size);
 
     REMOTE_CALL(gpu, encoder, decoder, ret);
 
-    remote_call_finish(gpu, encoder, decoder);
+    remote_call_ਅੰਤ(gpu, encoder, decoder);
 
     // Unlock mutex before cleanup
-    if (using_shared_shmem) {
-        mtx_unlock(&gpu->data_shmem_mutex);
-    } else {
+    ਜੇ (using_shared_shmem) {
+        mtx_unlock(&gpu->ਅੰਕੜੇ_shmem_mutex);
+    } ਨਹੀਂਤਾਂ {
         virtgpu_shmem_destroy(gpu, shmem);
     }
 
-    return;
+    ਵਾਪਸ;
 }
 
-void apir_buffer_get_tensor(virtgpu *               gpu,
-                            apir_buffer_context_t * buffer_context,
-                            const ggml_tensor *     tensor,
-                            void *                  data,
-                            size_t                  offset,
+ਖਾਲੀ apir_ਬਫਰ_get_tensor(virtgpu *               gpu,
+                            apir_ਬਫਰ_context_t * ਬਫਰ_context,
+                            ਅਚਲ ggml_tensor *     tensor,
+                            ਖਾਲੀ *                  ਅੰਕੜੇ,
+                            size_t                  ਵਿੱਥ,
                             size_t                  size) {
     apir_encoder *        encoder;
     apir_decoder *        decoder;
-    ApirForwardReturnCode ret;
+    Apir_Forward_Return_ਕੋਡ ret;
 
-    REMOTE_CALL_PREPARE(gpu, encoder, APIR_COMMAND_TYPE_BUFFER_GET_TENSOR);
+    REMOTE_CALL_PREPARE(gpu, encoder, APIR_COMMAND_TYPE_ਬਫਰ_GET_TENSOR);
 
-    apir_encode_apir_buffer_host_handle_t(encoder, &buffer_context->host_handle);
+    apir_encode_apir_ਬਫਰ_host_handle_t(encoder, &ਬਫਰ_context->host_handle);
     apir_encode_ggml_tensor(encoder, tensor);
 
-    virtgpu_shmem   temp_shmem;  // Local storage for large buffers
-    virtgpu_shmem * shmem              = &temp_shmem;
-    bool            using_shared_shmem = false;
+    virtgpu_shmem   ਆਰਜ਼ੀ_shmem;  // Local storage for large buffers
+    virtgpu_shmem * shmem              = &ਆਰਜ਼ੀ_shmem;
+    ਤਾਰਕਿਕ            using_shared_shmem = ਝੂਠ;
 
-    if (size <= gpu->data_shmem.mmap_size) {
+    ਜੇ (size <= gpu->ਅੰਕੜੇ_shmem.mmap_ਮਾਪ) {
         // Lock mutex before using shared data_shmem buffer
-        if (mtx_lock(&gpu->data_shmem_mutex) != thrd_success) {
+        ਜੇ (mtx_ਤਾਲਾ(&gpu->ਅੰਕੜੇ_shmem_mutex) != thrd_success) {
             GGML_ABORT(GGML_VIRTGPU "%s: Failed to lock data_shmem mutex", __func__);
         }
-        using_shared_shmem = true;
-        shmem              = &gpu->data_shmem;
+        using_shared_shmem = ਸੱਚ;
+        shmem              = &gpu->ਅੰਕੜੇ_shmem;
 
-    } else if (virtgpu_shmem_create(gpu, size, shmem)) {
+    } ਨਹੀਂਤਾਂ ਜੇ (virtgpu_shmem_create(gpu, size, shmem)) {
         GGML_ABORT(GGML_VIRTGPU "%s: Couldn't allocate the guest-host shared buffer", __func__);
     }
 
     apir_encode_virtgpu_shmem_res_id(encoder, shmem->res_id);
-    apir_encode_size_t(encoder, &offset);
-    apir_encode_size_t(encoder, &size);
+    apir_encode_ਮਾਪ_t(encoder, &ਵਿੱਥ);
+    apir_encode_ਮਾਪ_t(encoder, &size);
 
     REMOTE_CALL(gpu, encoder, decoder, ret);
 
-    memcpy(data, shmem->mmap_ptr, size);
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(ਅੰਕੜੇ, shmem->mmap_ptr, size);
 
-    remote_call_finish(gpu, encoder, decoder);
+    remote_call_ਅੰਤ(gpu, encoder, decoder);
 
     // Unlock mutex before cleanup
-    if (using_shared_shmem) {
-        mtx_unlock(&gpu->data_shmem_mutex);
-    } else {
+    ਜੇ (using_shared_shmem) {
+        mtx_unlock(&gpu->ਅੰਕੜੇ_shmem_mutex);
+    } ਨਹੀਂਤਾਂ {
         virtgpu_shmem_destroy(gpu, shmem);
     }
 }
 
-bool apir_buffer_cpy_tensor(virtgpu *               gpu,
-                            apir_buffer_context_t * buffer_context,
-                            const ggml_tensor *     src,
-                            const ggml_tensor *     dst) {
+ਤਾਰਕਿਕ apir_ਬਫਰ_cpy_tensor(virtgpu *               gpu,
+                            apir_ਬਫਰ_context_t * ਬਫਰ_context,
+                            ਅਚਲ ggml_tensor *     src,
+                            ਅਚਲ ggml_tensor *     dst) {
     apir_encoder *        encoder;
     apir_decoder *        decoder;
-    ApirForwardReturnCode ret;
+    Apir_Forward_Return_ਕੋਡ ret;
 
-    REMOTE_CALL_PREPARE(gpu, encoder, APIR_COMMAND_TYPE_BUFFER_CPY_TENSOR);
+    REMOTE_CALL_PREPARE(gpu, encoder, APIR_COMMAND_TYPE_ਬਫਰ_CPY_TENSOR);
 
-    apir_encode_apir_buffer_host_handle_t(encoder, &buffer_context->host_handle);
+    apir_encode_apir_ਬਫਰ_host_handle_t(encoder, &ਬਫਰ_context->host_handle);
     apir_encode_ggml_tensor(encoder, src);
     apir_encode_ggml_tensor(encoder, dst);
 
     REMOTE_CALL(gpu, encoder, decoder, ret);
 
-    bool ret_val;
+    ਤਾਰਕਿਕ ret_val;
     apir_decode_bool_t(decoder, &ret_val);
 
-    remote_call_finish(gpu, encoder, decoder);
+    remote_call_ਅੰਤ(gpu, encoder, decoder);
 
-    return ret_val;
+    ਵਾਪਸ ret_val;
 }
 
-void apir_buffer_clear(virtgpu * gpu, apir_buffer_context_t * buffer_context, uint8_t value) {
+ਖਾਲੀ apir_ਬਫਰ_clear(virtgpu * gpu, apir_ਬਫਰ_context_t * ਬਫਰ_context, uint8_t value) {
     apir_encoder *        encoder;
     apir_decoder *        decoder;
-    ApirForwardReturnCode ret;
+    Apir_Forward_Return_ਕੋਡ ret;
 
-    REMOTE_CALL_PREPARE(gpu, encoder, APIR_COMMAND_TYPE_BUFFER_CLEAR);
+    REMOTE_CALL_PREPARE(gpu, encoder, APIR_COMMAND_TYPE_ਬਫਰ_CLEAR);
 
-    apir_encode_apir_buffer_host_handle_t(encoder, &buffer_context->host_handle);
+    apir_encode_apir_ਬਫਰ_host_handle_t(encoder, &ਬਫਰ_context->host_handle);
     apir_encode_uint8_t(encoder, &value);
 
     REMOTE_CALL(gpu, encoder, decoder, ret);
 
-    remote_call_finish(gpu, encoder, decoder);
+    remote_call_ਅੰਤ(gpu, encoder, decoder);
 }
 
-void apir_buffer_free_buffer(virtgpu * gpu, apir_buffer_context_t * buffer_context) {
+ਖਾਲੀ apir_ਬਫਰ_free_ਬਫਰ(virtgpu * gpu, apir_ਬਫਰ_context_t * ਬਫਰ_context) {
     apir_encoder *        encoder;
     apir_decoder *        decoder;
-    ApirForwardReturnCode ret;
+    Apir_Forward_Return_ਕੋਡ ret;
 
-    REMOTE_CALL_PREPARE(gpu, encoder, APIR_COMMAND_TYPE_BUFFER_FREE_BUFFER);
+    REMOTE_CALL_PREPARE(gpu, encoder, APIR_COMMAND_TYPE_ਬਫਰ_FREE_ਬਫਰ);
 
-    apir_encode_apir_buffer_host_handle_t(encoder, &buffer_context->host_handle);
+    apir_encode_apir_ਬਫਰ_host_handle_t(encoder, &ਬਫਰ_context->host_handle);
 
     REMOTE_CALL(gpu, encoder, decoder, ret);
 
-    remote_call_finish(gpu, encoder, decoder);
+    remote_call_ਅੰਤ(gpu, encoder, decoder);
 }

@@ -1,50 +1,50 @@
-#ifndef HTP_IM2COL_OPS_H
-#define HTP_IM2COL_OPS_H
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ HTP_IM2_ਖਾਨਾ_OPS_H
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_IM2_ਖਾਨਾ_OPS_H
 
-#include "hex-common.h"
-#include <stdint.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ "hex-common.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdint.h>
 
-enum htp_im2col_kernel_type {
-    HTP_IM2COL_KERNEL_UNSUPPORTED    = 0,
-    HTP_IM2COL_KERNEL_PATCHEMBED_DMA = 1,
-    HTP_IM2COL_KERNEL_BLOCKED_DMA    = 2,
+ਗਿਣਤੀ htp_im2col_kernel_type {
+    HTP_IM2_ਖਾਨਾ_KERNEL_UNSUPPORTED    = 0,
+    HTP_IM2_ਖਾਨਾ_KERNEL_PATCHEMBED_DMA = 1,
+    HTP_IM2_ਖਾਨਾ_KERNEL_BLOCKED_DMA    = 2,
 };
 
-struct htp_im2col_vtcm_layout {
+ਬਣਤਰ htp_im2col_vtcm_layout {
     uint32_t off_src;
     uint32_t off_dst;
-    uint32_t src_bytes_per_thread;
-    uint32_t dst_bytes_per_thread;
-    uint32_t total_bytes;
+    uint32_t src_ਬਾਈਟਾਂ_ਪ੍ਰਤੀ_thread;
+    uint32_t dst_ਬਾਈਟਾਂ_ਪ੍ਰਤੀ_thread;
+    uint32_t ਕੁੱਲ_ਬਾਈਟਾਂ;
 };
 
-static inline void htp_im2col_vtcm_layout_build(
-    struct htp_im2col_vtcm_layout * layout,
-    uint32_t src_row_bytes,
-    uint32_t dst_row_bytes,
-    uint32_t n_threads) {
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ htp_im2col_vtcm_layout_build(
+    ਬਣਤਰ htp_im2col_vtcm_layout * layout,
+    uint32_t src_ਪੰਕਤੀ_ਬਾਈਟਾਂ,
+    uint32_t dst_ਪੰਕਤੀ_ਬਾਈਟਾਂ,
+    uint32_t n_ਧਾਗੇ) {
 
-    layout->src_bytes_per_thread = 2 * src_row_bytes + 256;
-    layout->dst_bytes_per_thread = 2 * dst_row_bytes;
+    layout->src_ਬਾਈਟਾਂ_ਪ੍ਰਤੀ_thread = 2 * src_ਪੰਕਤੀ_ਬਾਈਟਾਂ + 256;
+    layout->dst_ਬਾਈਟਾਂ_ਪ੍ਰਤੀ_thread = 2 * dst_ਪੰਕਤੀ_ਬਾਈਟਾਂ;
 
     layout->off_src     = 0;
-    layout->off_dst     = layout->off_src + layout->src_bytes_per_thread * n_threads;
-    layout->total_bytes = layout->off_dst + layout->dst_bytes_per_thread * n_threads;
+    layout->off_dst     = layout->off_src + layout->src_ਬਾਈਟਾਂ_ਪ੍ਰਤੀ_thread * n_ਧਾਗੇ;
+    layout->ਕੁੱਲ_ਬਾਈਟਾਂ = layout->off_dst + layout->dst_ਬਾਈਟਾਂ_ਪ੍ਰਤੀ_thread * n_ਧਾਗੇ;
 }
 
-struct htp_im2col_kernel_params {
+ਬਣਤਰ htp_im2col_kernel_params {
     uint8_t  kernel_type;
     uint8_t  is_2d;
     uint8_t  is_3d;
-    uint8_t  n_threads;
+    uint8_t  n_ਧਾਗੇ;
 
-    uint32_t vtcm_size;
+    uint32_t vtcm_ਮਾਪ;
     uint32_t off_src;
     uint32_t off_dst;
-    uint32_t src_bytes_per_thread;
-    uint32_t dst_bytes_per_thread;
-    uint32_t src_row_bytes;
-    uint32_t dst_row_bytes;
+    uint32_t src_ਬਾਈਟਾਂ_ਪ੍ਰਤੀ_thread;
+    uint32_t dst_ਬਾਈਟਾਂ_ਪ੍ਰਤੀ_thread;
+    uint32_t src_ਪੰਕਤੀ_ਬਾਈਟਾਂ;
+    uint32_t dst_ਪੰਕਤੀ_ਬਾਈਟਾਂ;
 
     uint32_t owb;
     uint32_t wb;
@@ -56,13 +56,13 @@ struct htp_im2col_kernel_params {
     uint32_t KD, KH, KW;
     uint32_t OD, OH, OW;
     uint32_t patch_stride;
-    uint32_t total_rows;
+    uint32_t ਕੁੱਲ_ਪੰਕਤੀਆਂ;
 };
 
-#if defined(__cplusplus)
-static_assert(sizeof(struct htp_im2col_kernel_params) <= 128, "htp_im2col_kernel_params is too large for kernel_params blob");
-#else
-_Static_assert(sizeof(struct htp_im2col_kernel_params) <= 128, "htp_im2col_kernel_params is too large for kernel_params blob");
-#endif
+#ਜੇ defined(__cplusplus)
+static_assert(ਆਕਾਰ(ਬਣਤਰ htp_im2col_kernel_params) <= 128, "htp_im2col_kernel_params is too large for kernel_params blob");
+#ਨਹੀਂਤਾਂ
+_Static_assert(ਆਕਾਰ(ਬਣਤਰ htp_im2col_kernel_params) <= 128, "htp_im2col_kernel_params is too large for kernel_params blob");
+#ਜੇ_ਅੰਤ
 
-#endif // HTP_IM2COL_OPS_H
+#ਜੇ_ਅੰਤ // HTP_IM2COL_OPS_H

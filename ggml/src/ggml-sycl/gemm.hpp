@@ -10,86 +10,86 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#ifndef GGML_SYCL_GEMM_HPP
-#define GGML_SYCL_GEMM_HPP
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ GGML_SYCL_GEMM_HPP
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_SYCL_GEMM_HPP
 
-#include "ggml-sycl.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-sycl.h"
 
-#if GGML_SYCL_DNNL
+#ਜੇ GGML_SYCL_DNNL
 
-#include "dnnl.hpp"
-#include "dnnl_sycl.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "dnnl.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "dnnl_sycl.hpp"
 
-class DnnlGemmWrapper {
-public:
-    using dt = dnnl::memory::data_type;
-    using tag = dnnl::memory::format_tag;
+ਵਰਗ DnnlGemmWrapper {
+ਜਨਤਕ:
+    ਵਰਤੋਂ dt = dnnl::ਸਮ੍ਰਿਤੀ::ਅੰਕੜੇ_type;
+    ਵਰਤੋਂ ਟੈਗ = dnnl::ਸਮ੍ਰਿਤੀ::format_ਟੈਗ;
 
-    template<typename T>
-    static constexpr dt to_dt() {
-        if constexpr (std::is_same_v<T, float>) return dt::f32;
-        else if constexpr (std::is_same_v<T, sycl::half>) return dt::f16;
-#ifdef GGML_SYCL_HAS_BF16
-        else if constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) return dt::bf16;
-#endif
-        else static_assert(0);
+    ਸਾਂਚਾ<ਕਿਸਮ_ਨਾਂ T>
+    ਸਥਿਰ constexpr dt ਮੰਜ਼ਿਲ_dt() {
+        ਜੇ constexpr (std::is_same_v<T, ਦਸ਼ਮਲਵ>) ਵਾਪਸ dt::f32;
+        ਨਹੀਂਤਾਂ ਜੇ constexpr (std::is_same_v<T, sycl::half>) ਵਾਪਸ dt::f16;
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_SYCL_HAS_BF16
+        ਨਹੀਂਤਾਂ ਜੇ constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) ਵਾਪਸ dt::bf16;
+#ਜੇ_ਅੰਤ
+        ਨਹੀਂਤਾਂ static_assert(0);
     }
 
-    static void gemm(ggml_backend_sycl_context & ctx, int m, int n, int k,
-        const void * a, dt at, dnnl_dim_t stra0, dnnl_dim_t stra1, dnnl_dim_t stra2,
-        const void * b, dt bt, dnnl_dim_t strb0, dnnl_dim_t strb1, dnnl_dim_t strb2,
-        void * c, dt ct, const queue_ptr & q, dnnl_dim_t batches_a, dnnl_dim_t batches_b) {
+    ਸਥਿਰ ਖਾਲੀ gemm(ggml_backend_sycl_context & ctx, ਪੂਰਨ m, ਪੂਰਨ n, ਪੂਰਨ k,
+        ਅਚਲ ਖਾਲੀ * a, dt at, dnnl_dim_t stra0, dnnl_dim_t stra1, dnnl_dim_t stra2,
+        ਅਚਲ ਖਾਲੀ * b, dt bt, dnnl_dim_t strb0, dnnl_dim_t strb1, dnnl_dim_t strb2,
+        ਖਾਲੀ * c, dt ct, ਅਚਲ ਕਤਾਰ_ptr & q, dnnl_dim_t batches_a, dnnl_dim_t batches_b) {
 
-        auto stream = ctx.stream_dnnl(q);
-        auto eng = ctx.engine_dnnl(q);
+        ਸਵੈਚਾਲਿਤ stream = ctx.ਧਾਰਾ_dnnl(q);
+        ਸਵੈਚਾਲਿਤ eng = ctx.engine_dnnl(q);
 
-        dnnl::memory::dims a_dims = {batches_a, m, k };
-        dnnl::memory::dims a_strides = {stra2, stra1, stra0};
-        const auto a_in_md = dnnl::memory::desc(a_dims, at, a_strides);
+        dnnl::ਸਮ੍ਰਿਤੀ::dims a_dims = {batches_a, m, k };
+        dnnl::ਸਮ੍ਰਿਤੀ::dims a_strides = {stra2, stra1, stra0};
+        ਅਚਲ ਸਵੈਚਾਲਿਤ a_ਵਿੱਚ_md = dnnl::ਸਮ੍ਰਿਤੀ::desc(a_dims, at, a_strides);
 
-        dnnl::memory::dims b_dims = {batches_b, k, n };
-        dnnl::memory::dims b_strides = {strb2, strb0, strb1};
-        const auto b_in_md = dnnl::memory::desc(b_dims, bt, b_strides);
+        dnnl::ਸਮ੍ਰਿਤੀ::dims b_dims = {batches_b, k, n };
+        dnnl::ਸਮ੍ਰਿਤੀ::dims b_strides = {strb2, strb0, strb1};
+        ਅਚਲ ਸਵੈਚਾਲਿਤ b_ਵਿੱਚ_md = dnnl::ਸਮ੍ਰਿਤੀ::desc(b_dims, bt, b_strides);
 
-        dnnl::memory::dims c_dims = { std::max(batches_a, batches_b), m, n};
-        dnnl::memory::dims c_strides = {m*n, 1,  m };
-        const auto c_md    = dnnl::memory::desc(c_dims, ct, c_strides);
+        dnnl::ਸਮ੍ਰਿਤੀ::dims c_dims = { std::max(batches_a, batches_b), m, n};
+        dnnl::ਸਮ੍ਰਿਤੀ::dims c_strides = {m*n, 1,  m };
+        ਅਚਲ ਸਵੈਚਾਲਿਤ c_md    = dnnl::ਸਮ੍ਰਿਤੀ::desc(c_dims, ct, c_strides);
         dnnl::primitive_attr primitive_attr;
-        primitive_attr.set_scratchpad_mode(dnnl::scratchpad_mode::user);
+        primitive_attr.ਸੈੱਟ_scratchpad_ਬਹੁਲਕ(dnnl::scratchpad_ਬਹੁਲਕ::user);
 
-#ifdef GGML_SYCL_F16
-        primitive_attr.set_fpmath_mode(dnnl::fpmath_mode::f16);
-#endif
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_SYCL_F16
+        primitive_attr.ਸੈੱਟ_fpmath_ਬਹੁਲਕ(dnnl::fpmath_ਬਹੁਲਕ::f16);
+#ਜੇ_ਅੰਤ
 
-        auto a_mem = dnnl::memory(a_in_md, eng, const_cast<void*>(a));
-        auto b_mem = dnnl::memory(b_in_md, eng, const_cast<void*>(b));
-        auto matmul_pd = dnnl::matmul::primitive_desc(eng, a_in_md, b_in_md, c_md, primitive_attr);
-        auto c_mem = dnnl::memory(matmul_pd.dst_desc(), eng, c);
+        ਸਵੈਚਾਲਿਤ a_mem = dnnl::ਸਮ੍ਰਿਤੀ(a_ਵਿੱਚ_md, eng, const_cast<ਖਾਲੀ*>(a));
+        ਸਵੈਚਾਲਿਤ b_mem = dnnl::ਸਮ੍ਰਿਤੀ(b_ਵਿੱਚ_md, eng, const_cast<ਖਾਲੀ*>(b));
+        ਸਵੈਚਾਲਿਤ matmul_pd = dnnl::matmul::primitive_desc(eng, a_ਵਿੱਚ_md, b_ਵਿੱਚ_md, c_md, primitive_attr);
+        ਸਵੈਚਾਲਿਤ c_mem = dnnl::ਸਮ੍ਰਿਤੀ(matmul_pd.dst_desc(), eng, c);
 
-        const auto scratchpad_md = matmul_pd.scratchpad_desc();
+        ਅਚਲ ਸਵੈਚਾਲਿਤ scratchpad_md = matmul_pd.scratchpad_desc();
         ggml_sycl_pool_alloc<uint8_t> scratchpad(ctx.pool());
-        void * scratchpad_ptr = scratchpad_md.get_size() > 0 ? scratchpad.alloc(scratchpad_md.get_size()) : nullptr;
-        auto scratchpad_mem = dnnl::memory(scratchpad_md, eng, scratchpad_ptr);
+        ਖਾਲੀ * scratchpad_ptr = scratchpad_md.get_ਮਾਪ() > 0 ? scratchpad.alloc(scratchpad_md.get_ਮਾਪ()) : ਖਾਲੀ_ਸੂਚਕ;
+        ਸਵੈਚਾਲਿਤ scratchpad_mem = dnnl::ਸਮ੍ਰਿਤੀ(scratchpad_md, eng, scratchpad_ptr);
 
-        auto matmul_prim = dnnl::matmul(matmul_pd);
+        ਸਵੈਚਾਲਿਤ matmul_prim = dnnl::matmul(matmul_pd);
 
-        std::unordered_map<int, dnnl::memory> matmul_args;
-        matmul_args.insert({ DNNL_ARG_SRC, a_mem });
-        matmul_args.insert({ DNNL_ARG_WEIGHTS, b_mem });
+        std::unordered_map<ਪੂਰਨ, dnnl::ਸਮ੍ਰਿਤੀ> matmul_ਦਲੀਲਾਂ;
+        matmul_ਦਲੀਲਾਂ.insert({ DNNL_ARG_SRC, a_mem });
+        matmul_ਦਲੀਲਾਂ.insert({ DNNL_ARG_WEIGHTS, b_mem });
 
-        matmul_args.insert({ DNNL_ARG_DST, c_mem });
-        matmul_args.insert({ DNNL_ARG_SCRATCHPAD, scratchpad_mem });
+        matmul_ਦਲੀਲਾਂ.insert({ DNNL_ARG_DST, c_mem });
+        matmul_ਦਲੀਲਾਂ.insert({ DNNL_ARG_SCRATCHPAD, scratchpad_mem });
 
-        matmul_prim.execute(stream, matmul_args);
+        matmul_prim.execute(stream, matmul_ਦਲੀਲਾਂ);
     }
 
-    static void row_gemm(ggml_backend_sycl_context & ctx, int m, int n, int k,
-        const void * a, dt at, const void * b, dt bt, void * c, dt ct, const queue_ptr & q) {
+    ਸਥਿਰ ਖਾਲੀ ਪੰਕਤੀ_gemm(ggml_backend_sycl_context & ctx, ਪੂਰਨ m, ਪੂਰਨ n, ਪੂਰਨ k,
+        ਅਚਲ ਖਾਲੀ * a, dt at, ਅਚਲ ਖਾਲੀ * b, dt bt, ਖਾਲੀ * c, dt ct, ਅਚਲ ਕਤਾਰ_ptr & q) {
 
         gemm(ctx, m, n, k, a, at, 1, k, k * m, b, bt, 1, k, n * k, c, ct, q, 1, 1);
     }
 };
 
-#endif
+#ਜੇ_ਅੰਤ
 
-#endif // GGML_SYCL_GEMM_HPP
+#ਜੇ_ਅੰਤ // GGML_SYCL_GEMM_HPP

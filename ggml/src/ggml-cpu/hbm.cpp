@@ -1,57 +1,57 @@
-#ifdef GGML_USE_CPU_HBM
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_USE_CPU_HBM
 
-#include "ggml-backend.h"
-#include "ggml-backend-impl.h"
-#include "ggml-cpu.h"
-#include "ggml-impl.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-backend.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-backend-impl.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-cpu.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-impl.h"
 
-#include "hbm.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hbm.h"
 
 // buffer type HBM
 
-#include <hbwmalloc.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <hbwmalloc.h>
 
-static const char * ggml_backend_cpu_hbm_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
-    return "CPU_HBM";
+ਸਥਿਰ ਅਚਲ ਅੱਖਰ * ggml_backend_cpu_hbm_ਬਫਰ_type_get_name(ggml_backend_ਬਫਰ_type_t buft) {
+    ਵਾਪਸ "CPU_HBM";
 
-    GGML_UNUSED(buft);
+    GGML_ਅਣਵਰਤਿਆ(buft);
 }
 
-static void ggml_backend_cpu_hbm_buffer_free_buffer(ggml_backend_buffer_t buffer) {
-    hbw_free(buffer->context);
+ਸਥਿਰ ਖਾਲੀ ggml_backend_cpu_hbm_ਬਫਰ_free_ਬਫਰ(ggml_backend_ਬਫਰ_t ਬਫਰ) {
+    hbw_free(ਬਫਰ->context);
 }
 
-static ggml_backend_buffer_t ggml_backend_cpu_hbm_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft,
+ਸਥਿਰ ggml_backend_ਬਫਰ_t ggml_backend_cpu_hbm_ਬਫਰ_type_alloc_ਬਫਰ(ggml_backend_ਬਫਰ_type_t buft,
                                                                            size_t                     size) {
-    void * ptr;
-    int    result = hbw_posix_memalign(&ptr, ggml_backend_cpu_buffer_type_get_alignment(buft), size);
-    if (result != 0) {
+    ਖਾਲੀ * ptr;
+    ਪੂਰਨ    ਨਤੀਜਾ = hbw_posix_memalign(&ptr, ggml_backend_cpu_ਬਫਰ_type_get_alignment(buft), size);
+    ਜੇ (ਨਤੀਜਾ != 0) {
         GGML_LOG_ERROR("failed to allocate HBM buffer of size %zu\n", size);
-        return NULL;
+        ਵਾਪਸ ਨਿਰਾ;
     }
 
-    ggml_backend_buffer_t buffer = ggml_backend_cpu_buffer_from_ptr(ptr, size);
-    buffer->buft                 = buft;
-    buffer->iface.free_buffer    = ggml_backend_cpu_hbm_buffer_free_buffer;
+    ggml_backend_ਬਫਰ_t ਬਫਰ = ggml_backend_cpu_ਬਫਰ_from_ptr(ptr, size);
+    ਬਫਰ->buft                 = buft;
+    ਬਫਰ->iface.free_ਬਫਰ    = ggml_backend_cpu_hbm_ਬਫਰ_free_ਬਫਰ;
 
-    return buffer;
+    ਵਾਪਸ ਬਫਰ;
 }
 
-ggml_backend_buffer_type_t ggml_backend_cpu_hbm_buffer_type(void) {
-    static struct ggml_backend_buffer_type ggml_backend_cpu_buffer_type_hbm = {
+ggml_backend_ਬਫਰ_type_t ggml_backend_cpu_hbm_ਬਫਰ_type(ਖਾਲੀ) {
+    ਸਥਿਰ ਬਣਤਰ ggml_backend_ਬਫਰ_type ggml_backend_cpu_ਬਫਰ_type_hbm = {
         /* .iface    = */ {
-                           /* .get_name             = */ ggml_backend_cpu_hbm_buffer_type_get_name,
-                           /* .alloc_buffer         = */ ggml_backend_cpu_hbm_buffer_type_alloc_buffer,
-                           /* .alloc_buffer_n       = */ nullptr,
-                           /* .get_alignment        = */ ggml_backend_cpu_buffer_type_get_alignment,
-                           /* .get_max_size         = */ nullptr,  // defaults to SIZE_MAX
-                           /* .get_alloc_size       = */ nullptr,  // defaults to ggml_nbytes
-                           /* .get_alloc_size_n     = */ NULL,
-                           /* .is_host              = */ ggml_backend_cpu_buffer_type_is_host,
+                           /* .get_name             = */ ggml_backend_cpu_hbm_ਬਫਰ_type_get_name,
+                           /* .alloc_buffer         = */ ggml_backend_cpu_hbm_ਬਫਰ_type_alloc_ਬਫਰ,
+                           /* .alloc_buffer_n       = */ ਖਾਲੀ_ਸੂਚਕ,
+                           /* .get_alignment        = */ ggml_backend_cpu_ਬਫਰ_type_get_alignment,
+                           /* .get_max_size         = */ ਖਾਲੀ_ਸੂਚਕ,  // defaults to SIZE_MAX
+                           /* .get_alloc_size       = */ ਖਾਲੀ_ਸੂਚਕ,  // defaults to ggml_nbytes
+                           /* .get_alloc_size_n     = */ ਨਿਰਾ,
+                           /* .is_host              = */ ggml_backend_cpu_ਬਫਰ_type_is_host,
                            },
-        /* .context  = */ nullptr,
+        /* .context  = */ ਖਾਲੀ_ਸੂਚਕ,
     };
 
-    return &ggml_backend_cpu_buffer_type_hbm;
+    ਵਾਪਸ &ggml_backend_cpu_ਬਫਰ_type_hbm;
 }
-#endif
+#ਜੇ_ਅੰਤ

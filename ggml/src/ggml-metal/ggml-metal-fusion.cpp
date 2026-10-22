@@ -1,62 +1,62 @@
-#include "ggml-metal-fusion.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-metal-fusion.h"
 
-#include "ggml-metal-common.h"
-#include "ggml-metal-device.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-metal-common.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-metal-device.h"
 
-#include "ggml-backend-impl.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-backend-impl.h"
 
-#include <algorithm>
-#include <cstddef>
-#include <cstring>
-#include <set>
-#include <string>
-#include <vector>
+#ਅਨ੍ਤਰ੍ਭਾਵ <algorithm>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cstddef>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cstring>
+#ਅਨ੍ਤਰ੍ਭਾਵ <set>
+#ਅਨ੍ਤਰ੍ਭਾਵ <string>
+#ਅਨ੍ਤਰ੍ਭਾਵ <vector>
 
 // derive the non-empty op sequence from the raw `ops_all` sequence
-static std::vector<ggml_op> ggml_metal_fusion_filter_ops(const std::vector<ggml_op> & ops_all) {
+ਸਥਿਰ std::vector<ggml_op> ggml_metal_fusion_filter_ops(ਅਚਲ std::vector<ggml_op> & ops_all) {
     std::vector<ggml_op> ops;
 
-    for (ggml_op op : ops_all) {
-        if (!ggml_op_is_empty(op)) {
+    ਲਈ (ggml_op op : ops_all) {
+        ਜੇ (!ggml_op_is_ਖਾਲੀ_ਥਾਵਾਂ(op)) {
             ops.push_back(op);
         }
     }
 
-    return ops;
+    ਵਾਪਸ ops;
 }
 
-struct ggml_metal_fusion {
+ਬਣਤਰ ggml_metal_fusion {
     ggml_metal_fusion_id id;
 
     std::vector<ggml_op> ops;     // non-empty op sequence, derived from ops_all
     std::vector<ggml_op> ops_all; // full raw op sequence (may include empty RESHAPE/VIEW nodes)
-    std::vector<int>     outs;    // additional fused output nodes, relative to ops
+    std::vector<ਪੂਰਨ>     outs;    // additional fused output nodes, relative to ops
 
     // if unsafe: the generic chain/shape + ggml_can_fuse_subgraph checks are skipped and the
     // check callback below is the sole validator (used for patterns that are not elision chains,
     // e.g. the gdn + cache-cpy write-through fusion)
-    bool unsafe;
+    ਤਾਰਕਿਕ unsafe;
 
     // extra backend constraints on top of ggml_can_fuse_subgraph
     // nodes[j] is the j-th node of the pattern; node_idxs[idx + j] is its raw graph index
-    bool (*check)(const struct ggml_metal_fusion   * fusion,
-                  const struct ggml_tensor * const * nodes,
-                  const struct ggml_cgraph         * gf,
-                  const int                        * node_idxs,
-                        int                          idx,
-                        ggml_metal_fusion_mode       mode);
+    ਤਾਰਕਿਕ (*check)(ਅਚਲ ਬਣਤਰ ggml_metal_fusion   * fusion,
+                  ਅਚਲ ਬਣਤਰ ggml_tensor * ਅਚਲ * nodes,
+                  ਅਚਲ ਬਣਤਰ ggml_cgraph         * gf,
+                  ਅਚਲ ਪੂਰਨ                        * ਗੰਢ_idxs,
+                        ਪੂਰਨ                          idx,
+                        ggml_metal_fusion_ਬਹੁਲਕ       mode);
 
     ggml_metal_fusion(
             ggml_metal_fusion_id id,
-            const std::vector<ggml_op> & ops_all,
-            const std::vector<int> & outs,
-            bool unsafe,
-            bool (*check)(const struct ggml_metal_fusion   * fusion,
-                          const struct ggml_tensor * const * nodes,
-                          const struct ggml_cgraph         * gf,
-                          const int                        * node_idxs,
-                                int                          idx,
-                                ggml_metal_fusion_mode       mode))
+            ਅਚਲ std::vector<ggml_op> & ops_all,
+            ਅਚਲ std::vector<ਪੂਰਨ> & outs,
+            ਤਾਰਕਿਕ unsafe,
+            ਤਾਰਕਿਕ (*check)(ਅਚਲ ਬਣਤਰ ggml_metal_fusion   * fusion,
+                          ਅਚਲ ਬਣਤਰ ggml_tensor * ਅਚਲ * nodes,
+                          ਅਚਲ ਬਣਤਰ ggml_cgraph         * gf,
+                          ਅਚਲ ਪੂਰਨ                        * ਗੰਢ_idxs,
+                                ਪੂਰਨ                          idx,
+                                ggml_metal_fusion_ਬਹੁਲਕ       mode))
         : id(id),
           ops(ggml_metal_fusion_filter_ops(ops_all)),
           ops_all(ops_all),
@@ -66,40 +66,40 @@ struct ggml_metal_fusion {
     }
 };
 
-ggml_metal_fusion_id ggml_metal_fusion_get_id(const ggml_metal_fusion * fusion) {
-    return fusion->id;
+ggml_metal_fusion_id ggml_metal_fusion_get_id(ਅਚਲ ggml_metal_fusion * fusion) {
+    ਵਾਪਸ fusion->id;
 }
 
 // ---- helpers -------------------------------------------------------------
 
 // true if two tensors live in the same Metal buffer
-static bool ggml_metal_fusion_same_buffer(const ggml_tensor * a, const ggml_tensor * b) {
-    if (!a || !b) {
-        return false;
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_metal_fusion_same_ਬਫਰ(ਅਚਲ ggml_tensor * a, ਅਚਲ ggml_tensor * b) {
+    ਜੇ (!a || !b) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    ggml_backend_buffer_t ba = a->view_src ? a->view_src->buffer : a->buffer;
-    ggml_backend_buffer_t bb = b->view_src ? b->view_src->buffer : b->buffer;
+    ggml_backend_ਬਫਰ_t ba = a->view_src ? a->view_src->ਬਫਰ : a->ਬਫਰ;
+    ggml_backend_ਬਫਰ_t bb = b->view_src ? b->view_src->ਬਫਰ : b->ਬਫਰ;
 
-    ggml_metal_buffer_t ca = (ggml_metal_buffer_t) ba->context;
-    ggml_metal_buffer_t cb = (ggml_metal_buffer_t) bb->context;
+    ggml_metal_ਬਫਰ_t ca = (ggml_metal_ਬਫਰ_t) ba->context;
+    ggml_metal_ਬਫਰ_t cb = (ggml_metal_ਬਫਰ_t) bb->context;
 
-    return ggml_metal_buffer_get_id(ca, a).metal == ggml_metal_buffer_get_id(cb, b).metal;
+    ਵਾਪਸ ggml_metal_ਬਫਰ_get_id(ca, a).metal == ggml_metal_ਬਫਰ_get_id(cb, b).metal;
 }
 
 // true if the memory of two tensors overlaps in the same Metal buffer
-static bool ggml_metal_fusion_overlap(const ggml_tensor * a, const ggml_tensor * b) {
-    ggml_backend_buffer_t ba = a->view_src ? a->view_src->buffer : a->buffer;
-    ggml_backend_buffer_t bb = b->view_src ? b->view_src->buffer : b->buffer;
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_metal_fusion_overlap(ਅਚਲ ggml_tensor * a, ਅਚਲ ggml_tensor * b) {
+    ggml_backend_ਬਫਰ_t ba = a->view_src ? a->view_src->ਬਫਰ : a->ਬਫਰ;
+    ggml_backend_ਬਫਰ_t bb = b->view_src ? b->view_src->ਬਫਰ : b->ਬਫਰ;
 
-    const ggml_metal_buffer_id bid_a = ggml_metal_buffer_get_id((ggml_metal_buffer_t) ba->context, a);
-    const ggml_metal_buffer_id bid_b = ggml_metal_buffer_get_id((ggml_metal_buffer_t) bb->context, b);
+    ਅਚਲ ggml_metal_ਬਫਰ_id bid_a = ggml_metal_ਬਫਰ_get_id((ggml_metal_ਬਫਰ_t) ba->context, a);
+    ਅਚਲ ggml_metal_ਬਫਰ_id bid_b = ggml_metal_ਬਫਰ_get_id((ggml_metal_ਬਫਰ_t) bb->context, b);
 
-    if (bid_a.metal == nullptr || bid_a.metal != bid_b.metal) {
-        return false;
+    ਜੇ (bid_a.metal == ਖਾਲੀ_ਸੂਚਕ || bid_a.metal != bid_b.metal) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    return bid_a.offs <= bid_b.offs
+    ਵਾਪਸ bid_a.offs <= bid_b.offs
         ? bid_b.offs - bid_a.offs < ggml_nbytes(a)
         : bid_a.offs - bid_b.offs < ggml_nbytes(b);
 }
@@ -108,118 +108,118 @@ static bool ggml_metal_fusion_overlap(const ggml_tensor * a, const ggml_tensor *
 
 // NORM/RMS_NORM + MUL + ADD: the weight/bias of each fused step must match the norm input
 // width, be contiguous rows, and the fused outputs must stay F32
-static bool ggml_metal_fusion_check_norm(
-        const ggml_metal_fusion       * fusion,
-        const ggml_tensor * const     * nodes,
-        const ggml_cgraph             * gf,
-        const int                     * node_idxs,
-              int                       idx,
-              ggml_metal_fusion_mode    mode) {
-    GGML_UNUSED(mode);
-    GGML_UNUSED(gf);
-    GGML_UNUSED(node_idxs);
-    GGML_UNUSED(idx);
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_metal_fusion_check_norm(
+        ਅਚਲ ggml_metal_fusion       * fusion,
+        ਅਚਲ ggml_tensor * ਅਚਲ     * nodes,
+        ਅਚਲ ggml_cgraph             * gf,
+        ਅਚਲ ਪੂਰਨ                     * ਗੰਢ_idxs,
+              ਪੂਰਨ                       idx,
+              ggml_metal_fusion_ਬਹੁਲਕ    mode) {
+    GGML_ਅਣਵਰਤਿਆ(mode);
+    GGML_ਅਣਵਰਤਿਆ(gf);
+    GGML_ਅਣਵਰਤਿਆ(ਗੰਢ_idxs);
+    GGML_ਅਣਵਰਤਿਆ(idx);
 
     GGML_ASSERT(fusion->ops.size() >= 2);
 
-    if (fusion->id == GGML_METAL_FUSION_NORM_SCALE) {
+    ਜੇ (fusion->id == GGML_METAL_FUSION_NORM_SCALE) {
         GGML_ASSERT(fusion->ops.size() == 2);
 
-        const ggml_tensor * scale = nodes[1];
-        if (scale->op != GGML_OP_SCALE || scale->src[0] != nodes[0] || scale->src[1] ||
+        ਅਚਲ ggml_tensor * scale = nodes[1];
+        ਜੇ (scale->op != GGML_OP_SCALE || scale->src[0] != nodes[0] || scale->src[1] ||
             scale->type != GGML_TYPE_F32) {
-            return false;
+            ਵਾਪਸ ਝੂਠ;
         }
 
-        return true;
+        ਵਾਪਸ ਸੱਚ;
     }
 
-    for (int j = 1; j < (int) fusion->ops.size(); j++) {
+    ਲਈ (ਪੂਰਨ j = 1; j < (ਪੂਰਨ) fusion->ops.size(); j++) {
         // the fused MUL/ADD must read the previous node as src0
-        if (nodes[j]->src[0] != nodes[j - 1]) {
-            return false;
+        ਜੇ (nodes[j]->src[0] != nodes[j - 1]) {
+            ਵਾਪਸ ਝੂਠ;
         }
 
         // the weight/bias must have the same row width as the norm input
-        if (nodes[j]->src[1]->ne[0] != nodes[0]->ne[0]) {
-            return false;
+        ਜੇ (nodes[j]->src[1]->ne[0] != nodes[0]->ne[0]) {
+            ਵਾਪਸ ਝੂਠ;
         }
 
-        if (!ggml_is_contiguous_rows(nodes[j]->src[1])) {
-            return false;
+        ਜੇ (!ggml_is_contiguous_ਪੰਕਤੀਆਂ(nodes[j]->src[1])) {
+            ਵਾਪਸ ਝੂਠ;
         }
 
-        if (nodes[j]->type != GGML_TYPE_F32) {
-            return false;
+        ਜੇ (nodes[j]->type != GGML_TYPE_F32) {
+            ਵਾਪਸ ਝੂਠ;
         }
     }
 
-    return true;
+    ਵਾਪਸ ਸੱਚ;
 }
 
 // SSM_CONV + UNARY (silu)
-static bool ggml_metal_fusion_check_ssm_conv_silu(
-        const ggml_metal_fusion       * fusion,
-        const ggml_tensor * const     * nodes,
-        const ggml_cgraph             * gf,
-        const int                     * node_idxs,
-              int                       idx,
-              ggml_metal_fusion_mode    mode) {
-    GGML_UNUSED(fusion);
-    GGML_UNUSED(gf);
-    GGML_UNUSED(node_idxs);
-    GGML_UNUSED(idx);
-    GGML_UNUSED(mode);
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_metal_fusion_check_ssm_conv_silu(
+        ਅਚਲ ggml_metal_fusion       * fusion,
+        ਅਚਲ ggml_tensor * ਅਚਲ     * nodes,
+        ਅਚਲ ggml_cgraph             * gf,
+        ਅਚਲ ਪੂਰਨ                     * ਗੰਢ_idxs,
+              ਪੂਰਨ                       idx,
+              ggml_metal_fusion_ਬਹੁਲਕ    mode) {
+    GGML_ਅਣਵਰਤਿਆ(fusion);
+    GGML_ਅਣਵਰਤਿਆ(gf);
+    GGML_ਅਣਵਰਤਿਆ(ਗੰਢ_idxs);
+    GGML_ਅਣਵਰਤਿਆ(idx);
+    GGML_ਅਣਵਰਤਿਆ(mode);
 
-    const ggml_tensor * conv = nodes[0];
-    const ggml_tensor * un   = nodes[1];
+    ਅਚਲ ggml_tensor * conv = nodes[0];
+    ਅਚਲ ggml_tensor * un   = nodes[1];
 
-    if (conv->op != GGML_OP_SSM_CONV || un->op != GGML_OP_UNARY || un->src[0] != conv || un->src[1]) {
-        return false;
+    ਜੇ (conv->op != GGML_OP_SSM_CONV || un->op != GGML_OP_UNARY || un->src[0] != conv || un->src[1]) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    if (ggml_get_unary_op(un) != GGML_UNARY_OP_SILU) {
-        return false;
+    ਜੇ (ggml_get_unary_op(un) != GGML_UNARY_OP_SILU) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    if (conv->type != GGML_TYPE_F32 || un->type != GGML_TYPE_F32 || !ggml_is_contiguous_rows(un)) {
-        return false;
+    ਜੇ (conv->type != GGML_TYPE_F32 || un->type != GGML_TYPE_F32 || !ggml_is_contiguous_ਪੰਕਤੀਆਂ(un)) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    return true;
+    ਵਾਪਸ ਸੱਚ;
 }
 
 // ADD x N: each ADD reads the previous ADD as src0, and all addends must share layout
 // (and, in FULL mode, live in the same Metal buffer)
-static bool ggml_metal_fusion_check_add_chain(
-        const ggml_metal_fusion       * fusion,
-        const ggml_tensor * const     * nodes,
-        const ggml_cgraph             * gf,
-        const int                     * node_idxs,
-              int                       idx,
-              ggml_metal_fusion_mode    mode) {
-    GGML_UNUSED(gf);
-    GGML_UNUSED(node_idxs);
-    GGML_UNUSED(idx);
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_metal_fusion_check_ਜੋੜੋ_chain(
+        ਅਚਲ ggml_metal_fusion       * fusion,
+        ਅਚਲ ggml_tensor * ਅਚਲ     * nodes,
+        ਅਚਲ ggml_cgraph             * gf,
+        ਅਚਲ ਪੂਰਨ                     * ਗੰਢ_idxs,
+              ਪੂਰਨ                       idx,
+              ggml_metal_fusion_ਬਹੁਲਕ    mode) {
+    GGML_ਅਣਵਰਤਿਆ(gf);
+    GGML_ਅਣਵਰਤਿਆ(ਗੰਢ_idxs);
+    GGML_ਅਣਵਰਤਿਆ(idx);
     GGML_ASSERT(fusion->ops.size() >= 2);
 
-    for (int j = 1; j < (int) fusion->ops.size(); j++) {
-        if (nodes[j]->src[0] != nodes[j - 1]) {
-            return false;
+    ਲਈ (ਪੂਰਨ j = 1; j < (ਪੂਰਨ) fusion->ops.size(); j++) {
+        ਜੇ (nodes[j]->src[0] != nodes[j - 1]) {
+            ਵਾਪਸ ਝੂਠ;
         }
 
-        if (!ggml_are_same_layout(nodes[j]->src[1], nodes[j - 1]->src[1])) {
-            return false;
+        ਜੇ (!ggml_are_same_layout(nodes[j]->src[1], nodes[j - 1]->src[1])) {
+            ਵਾਪਸ ਝੂਠ;
         }
 
-        if (mode == GGML_METAL_FUSION_FULL) {
-            if (!ggml_metal_fusion_same_buffer(nodes[j]->src[1], nodes[0]->src[1])) {
-                return false;
+        ਜੇ (mode == GGML_METAL_FUSION_ਭਰਿਆ) {
+            ਜੇ (!ggml_metal_fusion_same_ਬਫਰ(nodes[j]->src[1], nodes[0]->src[1])) {
+                ਵਾਪਸ ਝੂਠ;
             }
         }
     }
 
-    return true;
+    ਵਾਪਸ ਸੱਚ;
 }
 
 // GATED_DELTA_NET + CPY: the trailing cpy scatters the gdn state snapshots into the recurrent
@@ -227,759 +227,759 @@ static bool ggml_metal_fusion_check_add_chain(
 // mirrors ggml_metal_op_can_fuse_gdn_cache (PR #25788). the gdn output has other consumers (the
 // attn scores view), so unlike the other patterns this is not an elision chain: the structural
 // checks live entirely in this callback (unsafe = true).
-static bool ggml_metal_fusion_check_gdn_cache(
-        const ggml_metal_fusion       * fusion,
-        const ggml_tensor * const     * nodes,
-        const ggml_cgraph             * gf,
-        const int                     * node_idxs,
-              int                       idx,
-              ggml_metal_fusion_mode    mode) {
-    GGML_UNUSED(fusion);
-    GGML_UNUSED(gf);
-    GGML_UNUSED(node_idxs);
-    GGML_UNUSED(idx);
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_metal_fusion_check_gdn_cache(
+        ਅਚਲ ggml_metal_fusion       * fusion,
+        ਅਚਲ ggml_tensor * ਅਚਲ     * nodes,
+        ਅਚਲ ggml_cgraph             * gf,
+        ਅਚਲ ਪੂਰਨ                     * ਗੰਢ_idxs,
+              ਪੂਰਨ                       idx,
+              ggml_metal_fusion_ਬਹੁਲਕ    mode) {
+    GGML_ਅਣਵਰਤਿਆ(fusion);
+    GGML_ਅਣਵਰਤਿਆ(gf);
+    GGML_ਅਣਵਰਤਿਆ(ਗੰਢ_idxs);
+    GGML_ਅਣਵਰਤਿਆ(idx);
 
-    const ggml_tensor * gdn = nodes[0];
-    const ggml_tensor * cpy = nodes[1];
+    ਅਚਲ ggml_tensor * gdn = nodes[0];
+    ਅਚਲ ggml_tensor * cpy = nodes[1];
 
     // the kernel skips the snapshot tail, so the gdn output must not be a graph output
-    if (gdn->type != GGML_TYPE_F32 || (gdn->flags & GGML_TENSOR_FLAG_OUTPUT)) {
-        return false;
+    ਜੇ (gdn->type != GGML_TYPE_F32 || (gdn->flags & GGML_TENSOR_FLAG_OUTPUT)) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    if (cpy->op != GGML_OP_CPY || (cpy->flags & GGML_TENSOR_FLAG_OUTPUT)) {
-        return false;
+    ਜੇ (cpy->op != GGML_OP_CPY || (cpy->flags & GGML_TENSOR_FLAG_OUTPUT)) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    const int64_t S_v      = gdn->src[2]->ne[0];
-    const int64_t H        = gdn->src[2]->ne[1];
-    const int64_t n_tokens = gdn->src[2]->ne[2];
-    const int64_t n_seqs   = gdn->src[2]->ne[3];
-    const int64_t K        = ggml_get_op_params_i32(gdn, 0);
-    const size_t  tail_off = ggml_row_size(GGML_TYPE_F32, S_v * H * n_tokens * n_seqs);
+    ਅਚਲ int64_t S_v      = gdn->src[2]->ne[0];
+    ਅਚਲ int64_t H        = gdn->src[2]->ne[1];
+    ਅਚਲ int64_t n_ਟੋਕਨ = gdn->src[2]->ne[2];
+    ਅਚਲ int64_t n_seqs   = gdn->src[2]->ne[3];
+    ਅਚਲ int64_t K        = ggml_get_op_params_i32(gdn, 0);
+    ਅਚਲ size_t  ਪੂਛ_off = ggml_ਪੰਕਤੀ_ਮਾਪ(GGML_TYPE_F32, S_v * H * n_ਟੋਕਨ * n_seqs);
 
-    const int64_t D         = S_v * S_v * H;
-    const int64_t n_written = std::min<int64_t>(n_tokens, K);
+    ਅਚਲ int64_t D         = S_v * S_v * H;
+    ਅਚਲ int64_t n_written = std::min<int64_t>(n_ਟੋਕਨ, K);
 
-    const ggml_tensor * src = cpy->src[0]; // gdn snapshot tail view
-    const ggml_tensor * dst = cpy->src[1]; // cache view
+    ਅਚਲ ggml_tensor * src = cpy->src[0]; // gdn snapshot tail view
+    ਅਚਲ ggml_tensor * dst = cpy->src[1]; // cache view
 
     // src must be this gdn's snapshot tail (contiguous, at the tail offset)
-    if (src->op != GGML_OP_VIEW || src->view_src != gdn ||
-        src->view_offs != tail_off || !ggml_is_contiguous(src)) {
-        return false;
+    ਜੇ (src->op != GGML_OP_VIEW || src->view_src != gdn ||
+        src->view_offs != ਪੂਛ_off || !ggml_is_contiguous(src)) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    const int64_t expected_ne[GGML_MAX_DIMS] = { D, n_seqs, n_written, 1 };
-    if (dst->type != GGML_TYPE_F32 ||
+    ਅਚਲ int64_t expected_ne[GGML_MAX_DIMS] = { D, n_seqs, n_written, 1 };
+    ਜੇ (dst->type != GGML_TYPE_F32 ||
         !std::equal(expected_ne, expected_ne + GGML_MAX_DIMS, dst->ne) ||
-        dst->nb[0] != ggml_type_size(GGML_TYPE_F32) ||
-        dst->nb[1] != ggml_row_size(GGML_TYPE_F32, D)) {
-        return false;
+        dst->nb[0] != ggml_type_ਮਾਪ(GGML_TYPE_F32) ||
+        dst->nb[1] != ggml_ਪੰਕਤੀ_ਮਾਪ(GGML_TYPE_F32, D)) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    if (mode == GGML_METAL_FUSION_FULL) {
+    ਜੇ (mode == GGML_METAL_FUSION_ਭਰਿਆ) {
         // the cache must be allocated so the kernel can write straight to its buffer
-        if (dst->data == nullptr) {
-            return false;
+        ਜੇ (dst->ਅੰਕੜੇ == ਖਾਲੀ_ਸੂਚਕ) {
+            ਵਾਪਸ ਝੂਠ;
         }
     }
 
-    return true;
+    ਵਾਪਸ ਸੱਚ;
 }
 
 // MUL + SIN + SQR + MUL + ADD (snake activation)
-static bool ggml_metal_fusion_check_snake(
-        const ggml_metal_fusion       * fusion,
-        const ggml_tensor * const     * nodes,
-        const ggml_cgraph             * gf,
-        const int                     * node_idxs,
-              int                       idx,
-              ggml_metal_fusion_mode    mode) {
-    GGML_UNUSED(fusion);
-    GGML_UNUSED(mode);
-    GGML_UNUSED(gf);
-    GGML_UNUSED(node_idxs);
-    GGML_UNUSED(idx);
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_metal_fusion_check_snake(
+        ਅਚਲ ggml_metal_fusion       * fusion,
+        ਅਚਲ ggml_tensor * ਅਚਲ     * nodes,
+        ਅਚਲ ggml_cgraph             * gf,
+        ਅਚਲ ਪੂਰਨ                     * ਗੰਢ_idxs,
+              ਪੂਰਨ                       idx,
+              ggml_metal_fusion_ਬਹੁਲਕ    mode) {
+    GGML_ਅਣਵਰਤਿਆ(fusion);
+    GGML_ਅਣਵਰਤਿਆ(mode);
+    GGML_ਅਣਵਰਤਿਆ(gf);
+    GGML_ਅਣਵਰਤਿਆ(ਗੰਢ_idxs);
+    GGML_ਅਣਵਰਤਿਆ(idx);
 
-    const ggml_tensor * mul0     = nodes[0];
-    const ggml_tensor * sin_node = nodes[1];
-    const ggml_tensor * sqr      = nodes[2];
-    const ggml_tensor * mul1     = nodes[3];
-    const ggml_tensor * add      = nodes[4];
+    ਅਚਲ ggml_tensor * mul0     = nodes[0];
+    ਅਚਲ ggml_tensor * sin_ਗੰਢ = nodes[1];
+    ਅਚਲ ggml_tensor * sqr      = nodes[2];
+    ਅਚਲ ggml_tensor * mul1     = nodes[3];
+    ਅਚਲ ggml_tensor * ਜੋੜੋ_2      = nodes[4];
 
     // x carries the full activation shape, a is the broadcast operand
-    const ggml_tensor * x = ggml_are_same_shape(mul0, mul0->src[0]) ? mul0->src[0] : mul0->src[1];
-    const ggml_tensor * a = (x == mul0->src[0]) ? mul0->src[1] : mul0->src[0];
+    ਅਚਲ ggml_tensor * x = ggml_are_same_shape(mul0, mul0->src[0]) ? mul0->src[0] : mul0->src[1];
+    ਅਚਲ ggml_tensor * a = (x == mul0->src[0]) ? mul0->src[1] : mul0->src[0];
 
     // mul1 reads sqr and inv_b in either operand order
-    const ggml_tensor * inv_b = (mul1->src[0] == sqr) ? mul1->src[1] : mul1->src[0];
+    ਅਚਲ ggml_tensor * inv_b = (mul1->src[0] == sqr) ? mul1->src[1] : mul1->src[0];
 
     // closure check: the trailing add reads the same x as the leading mul
-    const ggml_tensor * x_in_add = (add->src[0] == mul1) ? add->src[1] : add->src[0];
+    ਅਚਲ ggml_tensor * x_ਵਿੱਚ_ਜੋੜੋ = (ਜੋੜੋ_2->src[0] == mul1) ? ਜੋੜੋ_2->src[1] : ਜੋੜੋ_2->src[0];
 
     // x is in the supported whitelist and every chain intermediate shares x's type.
     // a and inv_b bind as device const float * in the kernel, so they stay F32.
-    const bool types_ok =
+    ਅਚਲ ਤਾਰਕਿਕ types_ok =
         (x->type == GGML_TYPE_F32 || x->type == GGML_TYPE_F16 || x->type == GGML_TYPE_BF16) &&
         (a->type    == GGML_TYPE_F32) && (inv_b->type    == GGML_TYPE_F32) &&
-        (mul0->type == x->type)       && (sin_node->type == x->type) &&
+        (mul0->type == x->type)       && (sin_ਗੰਢ->type == x->type) &&
         (sqr->type  == x->type)       && (mul1->type     == x->type) &&
-        (add->type  == x->type);
+        (ਜੋੜੋ_2->type  == x->type);
 
     // a / inv_b collapse to [1, C, 1, 1], x and add stay 2D
-    const bool shape_ok = ggml_are_same_shape(a, inv_b) && a->ne[0] == 1 && a->ne[1] == x->ne[1];
-    const bool dim_ok =
+    ਅਚਲ ਤਾਰਕਿਕ shape_ok = ggml_are_same_shape(a, inv_b) && a->ne[0] == 1 && a->ne[1] == x->ne[1];
+    ਅਚਲ ਤਾਰਕਿਕ dim_ok =
         (x->ne[2]     == 1) && (x->ne[3]     == 1) &&
-        (add->ne[2]   == 1) && (add->ne[3]   == 1) &&
+        (ਜੋੜੋ_2->ne[2]   == 1) && (ਜੋੜੋ_2->ne[3]   == 1) &&
         (a->ne[2]     == 1) && (a->ne[3]     == 1) &&
         (inv_b->ne[2] == 1) && (inv_b->ne[3] == 1);
 
     // kernel reads x[idx] and a[c] / inv_b[c] linearly, so every operand is contiguous
-    const bool contig_ok =
-        ggml_is_contiguous(x) && ggml_is_contiguous(add) &&
+    ਅਚਲ ਤਾਰਕਿਕ contig_ok =
+        ggml_is_contiguous(x) && ggml_is_contiguous(ਜੋੜੋ_2) &&
         ggml_is_contiguous(a) && ggml_is_contiguous(inv_b);
 
-    return types_ok && shape_ok && dim_ok && contig_ok && x_in_add == x;
+    ਵਾਪਸ types_ok && shape_ok && dim_ok && contig_ok && x_ਵਿੱਚ_ਜੋੜੋ == x;
 }
 
-#define GGML_METAL_TOPK_MOE_MAX_EXPERTS 1024
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_METAL_TOPK_MOE_MAX_EXPERTS 1024
 
 // SOFT_MAX + ARGSORT + GET_ROWS (plus optional norm/scale) for MoE routing.
 // This is a multi-output elision chain: the fused kernel writes both the selected
 // expert ids and the gathered/normalized routing weights.
-static const std::vector<ggml_op> ops_topk_moe = {
-    GGML_OP_SOFT_MAX, GGML_OP_RESHAPE, GGML_OP_ARGSORT, GGML_OP_VIEW, GGML_OP_GET_ROWS
+ਸਥਿਰ ਅਚਲ std::vector<ggml_op> ops_topk_moe = {
+    GGML_OP_SOFT_MAX, GGML_OP_RESHAPE, GGML_OP_ARGSORT, GGML_OP_VIEW, GGML_OP_GET_ਪੰਕਤੀਆਂ
 };
-static const std::vector<ggml_op> ops_topk_moe_scale = {
-    GGML_OP_SOFT_MAX, GGML_OP_RESHAPE, GGML_OP_ARGSORT, GGML_OP_VIEW, GGML_OP_GET_ROWS, GGML_OP_SCALE
+ਸਥਿਰ ਅਚਲ std::vector<ggml_op> ops_topk_moe_scale = {
+    GGML_OP_SOFT_MAX, GGML_OP_RESHAPE, GGML_OP_ARGSORT, GGML_OP_VIEW, GGML_OP_GET_ਪੰਕਤੀਆਂ, GGML_OP_SCALE
 };
-static const std::vector<ggml_op> ops_topk_moe_norm = {
-    GGML_OP_SOFT_MAX, GGML_OP_RESHAPE, GGML_OP_ARGSORT, GGML_OP_VIEW, GGML_OP_GET_ROWS,
-    GGML_OP_RESHAPE, GGML_OP_SUM_ROWS, GGML_OP_CLAMP, GGML_OP_DIV, GGML_OP_RESHAPE
+ਸਥਿਰ ਅਚਲ std::vector<ggml_op> ops_topk_moe_norm = {
+    GGML_OP_SOFT_MAX, GGML_OP_RESHAPE, GGML_OP_ARGSORT, GGML_OP_VIEW, GGML_OP_GET_ਪੰਕਤੀਆਂ,
+    GGML_OP_RESHAPE, GGML_OP_ਜੋੜ_ਪੰਕਤੀਆਂ, GGML_OP_CLAMP, GGML_OP_DIV, GGML_OP_RESHAPE
 };
-static const std::vector<ggml_op> ops_topk_moe_norm_scale = {
-    GGML_OP_SOFT_MAX, GGML_OP_RESHAPE, GGML_OP_ARGSORT, GGML_OP_VIEW, GGML_OP_GET_ROWS,
-    GGML_OP_RESHAPE, GGML_OP_SUM_ROWS, GGML_OP_CLAMP, GGML_OP_DIV, GGML_OP_RESHAPE, GGML_OP_SCALE
+ਸਥਿਰ ਅਚਲ std::vector<ggml_op> ops_topk_moe_norm_scale = {
+    GGML_OP_SOFT_MAX, GGML_OP_RESHAPE, GGML_OP_ARGSORT, GGML_OP_VIEW, GGML_OP_GET_ਪੰਕਤੀਆਂ,
+    GGML_OP_RESHAPE, GGML_OP_ਜੋੜ_ਪੰਕਤੀਆਂ, GGML_OP_CLAMP, GGML_OP_DIV, GGML_OP_RESHAPE, GGML_OP_SCALE
 };
 
-static bool ggml_metal_fusion_check_topk_moe(
-        const ggml_metal_fusion       * fusion,
-        const ggml_tensor * const     * nodes,
-        const ggml_cgraph             * gf,
-        const int                     * node_idxs,
-              int                       idx,
-              ggml_metal_fusion_mode    mode) {
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_metal_fusion_check_topk_moe(
+        ਅਚਲ ggml_metal_fusion       * fusion,
+        ਅਚਲ ggml_tensor * ਅਚਲ     * nodes,
+        ਅਚਲ ggml_cgraph             * gf,
+        ਅਚਲ ਪੂਰਨ                     * ਗੰਢ_idxs,
+              ਪੂਰਨ                       idx,
+              ggml_metal_fusion_ਬਹੁਲਕ    mode) {
     GGML_ASSERT(fusion->ops.size() >= 3);
-    GGML_UNUSED(nodes);
+    GGML_ਅਣਵਰਤਿਆ(nodes);
 
-    const int n_ops = (int) fusion->ops.size();
+    ਅਚਲ ਪੂਰਨ n_ops = (ਪੂਰਨ) fusion->ops.size();
 
-    const bool with_norm  = n_ops >= 6;
-    const bool with_scale = n_ops == 4 || n_ops == 7;
+    ਅਚਲ ਤਾਰਕਿਕ with_norm  = n_ops >= 6;
+    ਅਚਲ ਤਾਰਕਿਕ with_scale = n_ops == 4 || n_ops == 7;
 
     // the fusion table operates on the non-empty node sequence; the raw graph also
     // contains the RESHAPE/VIEW nodes that the fused kernel elides.
-    const std::vector<ggml_op> & ops_all = fusion->ops_all;
+    ਅਚਲ std::vector<ggml_op> & ops_all = fusion->ops_all;
 
-    const int raw_start = node_idxs[idx];
-    int       raw_end   = node_idxs[idx + n_ops - 1];
+    ਅਚਲ ਪੂਰਨ raw_ਸ਼ੁਰੂ = ਗੰਢ_idxs[idx];
+    ਪੂਰਨ       raw_ਸਿਰਾ   = ਗੰਢ_idxs[idx + n_ops - 1];
 
     // the norm variant ends with a RESHAPE that the non-empty sequence filters out;
     // include it so the output use-count check sees the real final routing tensor
-    if (with_norm && !with_scale) {
-        if (raw_end + 1 >= gf->n_nodes) {
-            return false;
+    ਜੇ (with_norm && !with_scale) {
+        ਜੇ (raw_ਸਿਰਾ + 1 >= gf->n_nodes) {
+            ਵਾਪਸ ਝੂਠ;
         }
-        const ggml_tensor * trailing_reshape = gf->nodes[raw_end + 1];
-        if (trailing_reshape->op != GGML_OP_RESHAPE || trailing_reshape->src[0] != gf->nodes[raw_end]) {
-            return false;
+        ਅਚਲ ggml_tensor * trailing_reshape = gf->nodes[raw_ਸਿਰਾ + 1];
+        ਜੇ (trailing_reshape->op != GGML_OP_RESHAPE || trailing_reshape->src[0] != gf->nodes[raw_ਸਿਰਾ]) {
+            ਵਾਪਸ ਝੂਠ;
         }
-        raw_end++;
+        raw_ਸਿਰਾ++;
     }
 
-    const int raw_count = raw_end - raw_start + 1;
-    if (raw_count != (int) ops_all.size()) {
-        return false;
+    ਅਚਲ ਪੂਰਨ raw_ਗਿਣਤੀ = raw_ਸਿਰਾ - raw_ਸ਼ੁਰੂ + 1;
+    ਜੇ (raw_ਗਿਣਤੀ != (ਪੂਰਨ) ops_all.size()) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    int raw_idxs[GGML_METAL_FUSION_MAX];
-    for (int i = 0; i < raw_count; ++i) {
-        raw_idxs[i] = raw_start + i;
-        if (gf->nodes[raw_start + i]->op != ops_all[i]) {
-            return false;
+    ਪੂਰਨ raw_idxs[GGML_METAL_FUSION_MAX];
+    ਲਈ (ਪੂਰਨ i = 0; i < raw_ਗਿਣਤੀ; ++i) {
+        raw_idxs[i] = raw_ਸ਼ੁਰੂ + i;
+        ਜੇ (gf->nodes[raw_ਸ਼ੁਰੂ + i]->op != ops_all[i]) {
+            ਵਾਪਸ ਝੂਠ;
         }
     }
 
-    const ggml_tensor * softmax        = gf->nodes[raw_start];
-    const ggml_tensor * probs_reshaped = gf->nodes[raw_start + 1];
-    const ggml_tensor * argsort        = gf->nodes[raw_start + 2];
-    const ggml_tensor * ids            = gf->nodes[raw_start + 3];
-    const ggml_tensor * get_rows       = gf->nodes[raw_start + 4];
-    const ggml_tensor * out            = gf->nodes[raw_end];
-    const ggml_tensor * logits         = softmax->src[0];
+    ਅਚਲ ggml_tensor * softmax        = gf->nodes[raw_ਸ਼ੁਰੂ];
+    ਅਚਲ ggml_tensor * probs_reshaped = gf->nodes[raw_ਸ਼ੁਰੂ + 1];
+    ਅਚਲ ggml_tensor * argsort        = gf->nodes[raw_ਸ਼ੁਰੂ + 2];
+    ਅਚਲ ggml_tensor * ids            = gf->nodes[raw_ਸ਼ੁਰੂ + 3];
+    ਅਚਲ ggml_tensor * get_ਪੰਕਤੀਆਂ       = gf->nodes[raw_ਸ਼ੁਰੂ + 4];
+    ਅਚਲ ggml_tensor * ਬਾਹਰਲਾ            = gf->nodes[raw_ਸਿਰਾ];
+    ਅਚਲ ggml_tensor * logits         = softmax->src[0];
 
     // the fused kernel implements plain softmax only
-    float scale   = 1.0f;
-    float max_bias = 0.0f;
-    memcpy(&scale,    ((const int32_t *) softmax->op_params) + 0, sizeof(scale));
-    memcpy(&max_bias, ((const int32_t *) softmax->op_params) + 1, sizeof(max_bias));
-    if (scale != 1.0f || max_bias != 0.0f || softmax->src[1] || softmax->src[2]) {
-        return false;
+    ਦਸ਼ਮਲਵ scale   = 1.0f;
+    ਦਸ਼ਮਲਵ max_bias = 0.0f;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&scale,    ((ਅਚਲ int32_t *) softmax->op_params) + 0, ਆਕਾਰ(scale));
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&max_bias, ((ਅਚਲ int32_t *) softmax->op_params) + 1, ਆਕਾਰ(max_bias));
+    ਜੇ (scale != 1.0f || max_bias != 0.0f || softmax->src[1] || softmax->src[2]) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    if (logits->type != GGML_TYPE_F32 || softmax->type != GGML_TYPE_F32 ||
-        out->type != GGML_TYPE_F32 || ids->type != GGML_TYPE_I32) {
-        return false;
+    ਜੇ (logits->type != GGML_TYPE_F32 || softmax->type != GGML_TYPE_F32 ||
+        ਬਾਹਰਲਾ->type != GGML_TYPE_F32 || ids->type != GGML_TYPE_I32) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    const int64_t n_expert      = logits->ne[0];
-    const int64_t n_tokens      = logits->ne[1];
-    const int64_t n_expert_used = ids->ne[0];
+    ਅਚਲ int64_t n_expert      = logits->ne[0];
+    ਅਚਲ int64_t n_ਟੋਕਨ      = logits->ne[1];
+    ਅਚਲ int64_t n_expert_ਵਰਤਿਆ = ids->ne[0];
 
     // note: n_tokens == 0 (no-output batch) must match so that the packing stays shape-independent
-    if (n_expert <= 0 || n_expert_used <= 0 || n_expert_used > n_expert ||
-        n_expert > GGML_METAL_TOPK_MOE_MAX_EXPERTS || n_expert_used > GGML_METAL_TOPK_MOE_MAX_EXPERTS) {
-        return false;
+    ਜੇ (n_expert <= 0 || n_expert_ਵਰਤਿਆ <= 0 || n_expert_ਵਰਤਿਆ > n_expert ||
+        n_expert > GGML_METAL_TOPK_MOE_MAX_EXPERTS || n_expert_ਵਰਤਿਆ > GGML_METAL_TOPK_MOE_MAX_EXPERTS) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    if (logits->ne[2] != 1 || logits->ne[3] != 1 ||
-        ids->ne[1] != n_tokens || ids->ne[2] != 1 || ids->ne[3] != 1 ||
-        out->ne[0] != 1 || out->ne[1] != n_expert_used || out->ne[2] != n_tokens || out->ne[3] != 1) {
-        return false;
+    ਜੇ (logits->ne[2] != 1 || logits->ne[3] != 1 ||
+        ids->ne[1] != n_ਟੋਕਨ || ids->ne[2] != 1 || ids->ne[3] != 1 ||
+        ਬਾਹਰਲਾ->ne[0] != 1 || ਬਾਹਰਲਾ->ne[1] != n_expert_ਵਰਤਿਆ || ਬਾਹਰਲਾ->ne[2] != n_ਟੋਕਨ || ਬਾਹਰਲਾ->ne[3] != 1) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    if (!ggml_is_contiguous(logits) || !ggml_is_contiguous(out) ||
-        ids->nb[0] != ggml_type_size(GGML_TYPE_I32) ||
-        ids->nb[1] != ggml_type_size(GGML_TYPE_I32) * n_expert) {
-        return false;
+    ਜੇ (!ggml_is_contiguous(logits) || !ggml_is_contiguous(ਬਾਹਰਲਾ) ||
+        ids->nb[0] != ggml_type_ਮਾਪ(GGML_TYPE_I32) ||
+        ids->nb[1] != ggml_type_ਮਾਪ(GGML_TYPE_I32) * n_expert) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    if (probs_reshaped->src[0] != softmax || argsort->src[0] != softmax ||
-        ids->src[0] != argsort || get_rows->src[0] != probs_reshaped || get_rows->src[1] != ids) {
-        return false;
+    ਜੇ (probs_reshaped->src[0] != softmax || argsort->src[0] != softmax ||
+        ids->src[0] != argsort || get_ਪੰਕਤੀਆਂ->src[0] != probs_reshaped || get_ਪੰਕਤੀਆਂ->src[1] != ids) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    if (with_norm) {
-        const ggml_tensor * weights_reshaped = gf->nodes[raw_start + 5];
-        const ggml_tensor * sum_rows         = gf->nodes[raw_start + 6];
-        const ggml_tensor * clamp            = gf->nodes[raw_start + 7];
-        const ggml_tensor * div              = gf->nodes[raw_start + 8];
-        const ggml_tensor * out_reshaped     = gf->nodes[raw_start + 9];
+    ਜੇ (with_norm) {
+        ਅਚਲ ggml_tensor * weights_reshaped = gf->nodes[raw_ਸ਼ੁਰੂ + 5];
+        ਅਚਲ ggml_tensor * ਜੋੜ_ਪੰਕਤੀਆਂ         = gf->nodes[raw_ਸ਼ੁਰੂ + 6];
+        ਅਚਲ ggml_tensor * clamp            = gf->nodes[raw_ਸ਼ੁਰੂ + 7];
+        ਅਚਲ ggml_tensor * div              = gf->nodes[raw_ਸ਼ੁਰੂ + 8];
+        ਅਚਲ ggml_tensor * ਬਾਹਰਲਾ_reshaped     = gf->nodes[raw_ਸ਼ੁਰੂ + 9];
 
-        if (weights_reshaped->src[0] != get_rows || sum_rows->src[0] != weights_reshaped ||
-            clamp->src[0] != sum_rows || div->src[0] != weights_reshaped || div->src[1] != clamp ||
-            out_reshaped->src[0] != div) {
-            return false;
+        ਜੇ (weights_reshaped->src[0] != get_ਪੰਕਤੀਆਂ || ਜੋੜ_ਪੰਕਤੀਆਂ->src[0] != weights_reshaped ||
+            clamp->src[0] != ਜੋੜ_ਪੰਕਤੀਆਂ || div->src[0] != weights_reshaped || div->src[1] != clamp ||
+            ਬਾਹਰਲਾ_reshaped->src[0] != div) {
+            ਵਾਪਸ ਝੂਠ;
         }
 
-        if (with_scale) {
-            const ggml_tensor * scale_node = gf->nodes[raw_start + 10];
-            if (scale_node->src[0] != out_reshaped) {
-                return false;
+        ਜੇ (with_scale) {
+            ਅਚਲ ggml_tensor * scale_ਗੰਢ = gf->nodes[raw_ਸ਼ੁਰੂ + 10];
+            ਜੇ (scale_ਗੰਢ->src[0] != ਬਾਹਰਲਾ_reshaped) {
+                ਵਾਪਸ ਝੂਠ;
             }
         }
-    } else if (with_scale) {
-        const ggml_tensor * scale_node = gf->nodes[raw_start + 5];
-        if (scale_node->src[0] != get_rows) {
-            return false;
+    } ਨਹੀਂਤਾਂ ਜੇ (with_scale) {
+        ਅਚਲ ggml_tensor * scale_ਗੰਢ = gf->nodes[raw_ਸ਼ੁਰੂ + 5];
+        ਜੇ (scale_ਗੰਢ->src[0] != get_ਪੰਕਤੀਆਂ) {
+            ਵਾਪਸ ਝੂਠ;
         }
     }
 
-    const int outputs[2] = { raw_start + 3, raw_end };
-    if (!ggml_can_fuse_subgraph_ext(gf, raw_idxs, raw_count, ops_all.data(), outputs, 2)) {
-        return false;
+    ਅਚਲ ਪੂਰਨ outputs[2] = { raw_ਸ਼ੁਰੂ + 3, raw_ਸਿਰਾ };
+    ਜੇ (!ggml_can_fuse_subgraph_ext(gf, raw_idxs, raw_ਗਿਣਤੀ, ops_all.ਅੰਕੜੇ(), outputs, 2)) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    if (mode == GGML_METAL_FUSION_FULL) {
-        if (!logits->data || !out->data || !ids->data) {
-            return false;
+    ਜੇ (mode == GGML_METAL_FUSION_ਭਰਿਆ) {
+        ਜੇ (!logits->ਅੰਕੜੇ || !ਬਾਹਰਲਾ->ਅੰਕੜੇ || !ids->ਅੰਕੜੇ) {
+            ਵਾਪਸ ਝੂਠ;
         }
     }
 
-    return true;
+    ਵਾਪਸ ਸੱਚ;
 }
 
-#define GGML_METAL_MOE_REDUCE_MAX_EXPERTS 8
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_METAL_MOE_REDUCE_MAX_EXPERTS 8
 
-struct ggml_metal_moe_reduce_match {
-    const ggml_tensor * experts;
-    const ggml_tensor * weights;
-    const ggml_tensor * dst;
-    int node_count;
+ਬਣਤਰ ggml_metal_moe_reduce_ਮੇਲ {
+    ਅਚਲ ggml_tensor * experts;
+    ਅਚਲ ggml_tensor * weights;
+    ਅਚਲ ggml_tensor * dst;
+    ਪੂਰਨ ਗੰਢ_ਗਿਣਤੀ;
 };
 
-static bool ggml_metal_fusion_match_moe_reduce(
-        const ggml_cgraph * gf, int node_idx, const std::vector<ggml_op> & ops_all,
-        ggml_metal_moe_reduce_match * match) {
-    if (match == nullptr || node_idx < 0 || node_idx + (int) ops_all.size() > gf->n_nodes) {
-        return false;
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_metal_fusion_ਮੇਲ_moe_reduce(
+        ਅਚਲ ggml_cgraph * gf, ਪੂਰਨ ਗੰਢ_idx, ਅਚਲ std::vector<ggml_op> & ops_all,
+        ggml_metal_moe_reduce_ਮੇਲ * ਮੇਲ) {
+    ਜੇ (ਮੇਲ == ਖਾਲੀ_ਸੂਚਕ || ਗੰਢ_idx < 0 || ਗੰਢ_idx + (ਪੂਰਨ) ops_all.size() > gf->n_nodes) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    const ggml_tensor * mul = gf->nodes[node_idx];
-    if (mul->op != GGML_OP_MUL || mul->type != GGML_TYPE_F32) {
-        return false;
+    ਅਚਲ ggml_tensor * mul = gf->nodes[ਗੰਢ_idx];
+    ਜੇ (mul->op != GGML_OP_MUL || mul->type != GGML_TYPE_F32) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
     // MUL, then one VIEW per expert, then one ADD per additional expert
-    const int raw_count     = (int) ops_all.size();
-    const int n_expert_used = raw_count / 2;
+    ਅਚਲ ਪੂਰਨ raw_ਗਿਣਤੀ     = (ਪੂਰਨ) ops_all.size();
+    ਅਚਲ ਪੂਰਨ n_expert_ਵਰਤਿਆ = raw_ਗਿਣਤੀ / 2;
 
-    if (n_expert_used < 2 || n_expert_used > GGML_METAL_MOE_REDUCE_MAX_EXPERTS ||
-        raw_count != 2 * n_expert_used) {
-        return false;
+    ਜੇ (n_expert_ਵਰਤਿਆ < 2 || n_expert_ਵਰਤਿਆ > GGML_METAL_MOE_REDUCE_MAX_EXPERTS ||
+        raw_ਗਿਣਤੀ != 2 * n_expert_ਵਰਤਿਆ) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    int n_views = 0;
-    while (node_idx + 1 + n_views < gf->n_nodes &&
-           gf->nodes[node_idx + 1 + n_views]->op == GGML_OP_VIEW) {
+    ਪੂਰਨ n_views = 0;
+    ਜਦੋਂ (ਗੰਢ_idx + 1 + n_views < gf->n_nodes &&
+           gf->nodes[ਗੰਢ_idx + 1 + n_views]->op == GGML_OP_VIEW) {
         n_views++;
     }
 
-    if (n_views != n_expert_used) {
-        return false;
+    ਜੇ (n_views != n_expert_ਵਰਤਿਆ) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    for (int i = n_expert_used + 1; i < raw_count; ++i) {
-        if (gf->nodes[node_idx + i]->op != GGML_OP_ADD) {
-            return false;
+    ਲਈ (ਪੂਰਨ i = n_expert_ਵਰਤਿਆ + 1; i < raw_ਗਿਣਤੀ; ++i) {
+        ਜੇ (gf->nodes[ਗੰਢ_idx + i]->op != GGML_OP_ਜੋੜੋ) {
+            ਵਾਪਸ ਝੂਠ;
         }
     }
 
-    int raw_idxs[GGML_METAL_FUSION_MAX];
-    for (int i = 0; i < raw_count; ++i) {
-        raw_idxs[i] = node_idx + i;
-        if (gf->nodes[node_idx + i]->op != ops_all[i]) {
-            return false;
+    ਪੂਰਨ raw_idxs[GGML_METAL_FUSION_MAX];
+    ਲਈ (ਪੂਰਨ i = 0; i < raw_ਗਿਣਤੀ; ++i) {
+        raw_idxs[i] = ਗੰਢ_idx + i;
+        ਜੇ (gf->nodes[ਗੰਢ_idx + i]->op != ops_all[i]) {
+            ਵਾਪਸ ਝੂਠ;
         }
     }
 
-    const ggml_tensor * experts = mul->src[0];
-    const ggml_tensor * weights = mul->src[1];
-    const ggml_tensor * dst     = gf->nodes[node_idx + raw_count - 1];
+    ਅਚਲ ggml_tensor * experts = mul->src[0];
+    ਅਚਲ ggml_tensor * weights = mul->src[1];
+    ਅਚਲ ggml_tensor * dst     = gf->nodes[ਗੰਢ_idx + raw_ਗਿਣਤੀ - 1];
 
-    if (experts->type != GGML_TYPE_F32 || weights->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return false;
+    ਜੇ (experts->type != GGML_TYPE_F32 || weights->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    const int64_t n_embd   = experts->ne[0];
-    const int64_t n_tokens = experts->ne[2];
+    ਅਚਲ int64_t n_embd   = experts->ne[0];
+    ਅਚਲ int64_t n_ਟੋਕਨ = experts->ne[2];
 
     // note: n_tokens == 0 (no-output batch) must match so that the packing stays shape-independent
-    if (n_embd <= 0 || experts->ne[1] != n_expert_used || experts->ne[3] != 1 ||
-        weights->ne[0] != 1 || weights->ne[1] != n_expert_used || weights->ne[2] != n_tokens || weights->ne[3] != 1 ||
-        dst->ne[0] != n_embd || dst->ne[1] != n_tokens || dst->ne[2] != 1 || dst->ne[3] != 1) {
-        return false;
+    ਜੇ (n_embd <= 0 || experts->ne[1] != n_expert_ਵਰਤਿਆ || experts->ne[3] != 1 ||
+        weights->ne[0] != 1 || weights->ne[1] != n_expert_ਵਰਤਿਆ || weights->ne[2] != n_ਟੋਕਨ || weights->ne[3] != 1 ||
+        dst->ne[0] != n_embd || dst->ne[1] != n_ਟੋਕਨ || dst->ne[2] != 1 || dst->ne[3] != 1) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    if (!ggml_is_contiguous(experts) || !ggml_is_contiguous(weights) || !ggml_is_contiguous(dst)) {
-        return false;
+    ਜੇ (!ggml_is_contiguous(experts) || !ggml_is_contiguous(weights) || !ggml_is_contiguous(dst)) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    for (int i = 1; i <= n_expert_used; ++i) {
-        const ggml_tensor * view = gf->nodes[node_idx + i];
-        if (view->view_src != mul || view->src[0] != mul ||
+    ਲਈ (ਪੂਰਨ i = 1; i <= n_expert_ਵਰਤਿਆ; ++i) {
+        ਅਚਲ ggml_tensor * view = gf->nodes[ਗੰਢ_idx + i];
+        ਜੇ (view->view_src != mul || view->src[0] != mul ||
             view->view_offs != (size_t) (i - 1) * mul->nb[1] ||
-            view->ne[0] != n_embd || view->ne[1] != n_tokens ||
+            view->ne[0] != n_embd || view->ne[1] != n_ਟੋਕਨ ||
             view->nb[1] != mul->nb[2]) {
-            return false;
+            ਵਾਪਸ ਝੂਠ;
         }
     }
 
-    const ggml_tensor * prev_add = nullptr;
-    for (int j = 1; j < n_expert_used; ++j) {
-        const ggml_tensor * add = gf->nodes[node_idx + n_expert_used + j];
-        const ggml_tensor * rhs = gf->nodes[node_idx + j + 1];
-        const ggml_tensor * lhs = j == 1 ? gf->nodes[node_idx + 1] : prev_add;
-        if (add->src[0] != lhs || add->src[1] != rhs) {
-            return false;
+    ਅਚਲ ggml_tensor * prev_ਜੋੜੋ = ਖਾਲੀ_ਸੂਚਕ;
+    ਲਈ (ਪੂਰਨ j = 1; j < n_expert_ਵਰਤਿਆ; ++j) {
+        ਅਚਲ ggml_tensor * ਜੋੜੋ_2 = gf->nodes[ਗੰਢ_idx + n_expert_ਵਰਤਿਆ + j];
+        ਅਚਲ ggml_tensor * rhs = gf->nodes[ਗੰਢ_idx + j + 1];
+        ਅਚਲ ggml_tensor * lhs = j == 1 ? gf->nodes[ਗੰਢ_idx + 1] : prev_ਜੋੜੋ;
+        ਜੇ (ਜੋੜੋ_2->src[0] != lhs || ਜੋੜੋ_2->src[1] != rhs) {
+            ਵਾਪਸ ਝੂਠ;
         }
-        prev_add = add;
+        prev_ਜੋੜੋ = ਜੋੜੋ_2;
     }
 
-    const int outputs[1] = { node_idx + raw_count - 1 };
-    if (!ggml_can_fuse_subgraph_ext(gf, raw_idxs, raw_count, ops_all.data(), outputs, 1)) {
-        return false;
+    ਅਚਲ ਪੂਰਨ outputs[1] = { ਗੰਢ_idx + raw_ਗਿਣਤੀ - 1 };
+    ਜੇ (!ggml_can_fuse_subgraph_ext(gf, raw_idxs, raw_ਗਿਣਤੀ, ops_all.ਅੰਕੜੇ(), outputs, 1)) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    match->experts    = experts;
-    match->weights    = weights;
-    match->dst        = dst;
-    match->node_count = raw_count;
-    return true;
+    ਮੇਲ->experts    = experts;
+    ਮੇਲ->weights    = weights;
+    ਮੇਲ->dst        = dst;
+    ਮੇਲ->ਗੰਢ_ਗਿਣਤੀ = raw_ਗਿਣਤੀ;
+    ਵਾਪਸ ਸੱਚ;
 }
 
-static bool ggml_metal_fusion_check_moe_reduce(
-        const ggml_metal_fusion       * fusion,
-        const ggml_tensor * const     * nodes,
-        const ggml_cgraph             * gf,
-        const int                     * node_idxs,
-              int                       idx,
-              ggml_metal_fusion_mode    mode) {
-    GGML_UNUSED(nodes);
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_metal_fusion_check_moe_reduce(
+        ਅਚਲ ggml_metal_fusion       * fusion,
+        ਅਚਲ ggml_tensor * ਅਚਲ     * nodes,
+        ਅਚਲ ggml_cgraph             * gf,
+        ਅਚਲ ਪੂਰਨ                     * ਗੰਢ_idxs,
+              ਪੂਰਨ                       idx,
+              ggml_metal_fusion_ਬਹੁਲਕ    mode) {
+    GGML_ਅਣਵਰਤਿਆ(nodes);
 
-    ggml_metal_moe_reduce_match match;
-    if (!ggml_metal_fusion_match_moe_reduce(gf, node_idxs[idx], fusion->ops_all, &match)) {
-        return false;
+    ggml_metal_moe_reduce_ਮੇਲ ਮੇਲ;
+    ਜੇ (!ggml_metal_fusion_ਮੇਲ_moe_reduce(gf, ਗੰਢ_idxs[idx], fusion->ops_all, &ਮੇਲ)) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    if ((int) fusion->ops.size() != match.experts->ne[1]) {
-        return false;
+    ਜੇ ((ਪੂਰਨ) fusion->ops.size() != ਮੇਲ.experts->ne[1]) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    const int raw_end = node_idxs[idx] + match.node_count - 1;
-    if (node_idxs[idx + (int) fusion->ops.size() - 1] != raw_end) {
-        return false;
+    ਅਚਲ ਪੂਰਨ raw_ਸਿਰਾ = ਗੰਢ_idxs[idx] + ਮੇਲ.ਗੰਢ_ਗਿਣਤੀ - 1;
+    ਜੇ (ਗੰਢ_idxs[idx + (ਪੂਰਨ) fusion->ops.size() - 1] != raw_ਸਿਰਾ) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    if (mode == GGML_METAL_FUSION_FULL) {
-        if (!match.experts->data || !match.weights->data || !match.dst->data) {
-            return false;
+    ਜੇ (mode == GGML_METAL_FUSION_ਭਰਿਆ) {
+        ਜੇ (!ਮੇਲ.experts->ਅੰਕੜੇ || !ਮੇਲ.weights->ਅੰਕੜੇ || !ਮੇਲ.dst->ਅੰਕੜੇ) {
+            ਵਾਪਸ ਝੂਠ;
         }
 
         // the fused kernel reads experts and weights while writing dst, so dst must not overlap either input
-        if (ggml_metal_fusion_overlap(match.dst, match.experts) || ggml_metal_fusion_overlap(match.dst, match.weights)) {
-            return false;
+        ਜੇ (ggml_metal_fusion_overlap(ਮੇਲ.dst, ਮੇਲ.experts) || ggml_metal_fusion_overlap(ਮੇਲ.dst, ਮੇਲ.weights)) {
+            ਵਾਪਸ ਝੂਠ;
         }
     }
 
-    return true;
+    ਵਾਪਸ ਸੱਚ;
 }
 
 // true if t is or views a tensor in a buffer marked as weights, such as a bias; the model loader marks its buffers before
 // any graph is optimized, and tensors in unmarked or not yet allocated buffers count as non-weights in both phases
-static bool ggml_metal_tensor_is_weight(const struct ggml_tensor * t) {
-    const ggml_tensor * base = t->view_src != NULL ? t->view_src : t;
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_metal_tensor_is_ਭਾਰ(ਅਚਲ ਬਣਤਰ ggml_tensor * t) {
+    ਅਚਲ ggml_tensor * ਅਧਾਰ = t->view_src != ਨਿਰਾ ? t->view_src : t;
 
-    return base->buffer != NULL && ggml_backend_buffer_get_usage(base->buffer) == GGML_BACKEND_BUFFER_USAGE_WEIGHTS;
+    ਵਾਪਸ ਅਧਾਰ->ਬਫਰ != ਨਿਰਾ && ggml_backend_ਬਫਰ_get_usage(ਅਧਾਰ->ਬਫਰ) == GGML_BACKEND_ਬਫਰ_USAGE_WEIGHTS;
 }
 
-static const struct ggml_tensor * ggml_metal_mul_mat_add_operand(const struct ggml_tensor * mm, const struct ggml_tensor * add) {
-    if (add->op != GGML_OP_ADD || (add->src[0] == mm) == (add->src[1] == mm)) {
-        return NULL;
+ਸਥਿਰ ਅਚਲ ਬਣਤਰ ggml_tensor * ggml_metal_mul_mat_ਜੋੜੋ_ਸੰਕਾਰਜ(ਅਚਲ ਬਣਤਰ ggml_tensor * mm, ਅਚਲ ਬਣਤਰ ggml_tensor * ਜੋੜੋ_2) {
+    ਜੇ (ਜੋੜੋ_2->op != GGML_OP_ਜੋੜੋ || (ਜੋੜੋ_2->src[0] == mm) == (ਜੋੜੋ_2->src[1] == mm)) {
+        ਵਾਪਸ ਨਿਰਾ;
     }
 
-    const ggml_tensor * other = add->src[0] == mm ? add->src[1] : add->src[0];
+    ਅਚਲ ggml_tensor * other = ਜੋੜੋ_2->src[0] == mm ? ਜੋੜੋ_2->src[1] : ਜੋੜੋ_2->src[0];
 
-    const bool ok = other->type == GGML_TYPE_F32 && add->type == GGML_TYPE_F32 && !ggml_metal_tensor_is_weight(other);
+    ਅਚਲ ਤਾਰਕਿਕ ok = other->type == GGML_TYPE_F32 && ਜੋੜੋ_2->type == GGML_TYPE_F32 && !ggml_metal_tensor_is_ਭਾਰ(other);
 
-    return ok ? other : NULL;
+    ਵਾਪਸ ok ? other : ਨਿਰਾ;
 }
 
-static const struct ggml_tensor * ggml_metal_mul_mat_add_residual(const struct ggml_tensor * mm, const struct ggml_tensor * add) {
-    const ggml_tensor * res = ggml_metal_mul_mat_add_operand(mm, add);
+ਸਥਿਰ ਅਚਲ ਬਣਤਰ ggml_tensor * ggml_metal_mul_mat_ਜੋੜੋ_residual(ਅਚਲ ਬਣਤਰ ggml_tensor * mm, ਅਚਲ ਬਣਤਰ ggml_tensor * ਜੋੜੋ_2) {
+    ਅਚਲ ggml_tensor * res = ggml_metal_mul_mat_ਜੋੜੋ_ਸੰਕਾਰਜ(mm, ਜੋੜੋ_2);
 
-    const bool ok = res != NULL && ggml_are_same_shape(res, mm) &&
-        ggml_is_contiguous(res) && ggml_is_contiguous(mm) && ggml_is_contiguous(add);
+    ਅਚਲ ਤਾਰਕਿਕ ok = res != ਨਿਰਾ && ggml_are_same_shape(res, mm) &&
+        ggml_is_contiguous(res) && ggml_is_contiguous(mm) && ggml_is_contiguous(ਜੋੜੋ_2);
 
-    return ok ? res : NULL;
+    ਵਾਪਸ ok ? res : ਨਿਰਾ;
 }
 
 // MUL_MAT + ADD of an f32 non-weight: the reorder packs it without reading row counts, so ubatch sizes share one order;
 // the encoder fuses only a same-shape residual in the few-row MMA store, which the sum may overlap only in place
-static bool ggml_metal_fusion_check_mul_mat_add(
-        const ggml_metal_fusion       * fusion,
-        const ggml_tensor * const     * nodes,
-        const ggml_cgraph             * gf,
-        const int                     * node_idxs,
-              int                       idx,
-              ggml_metal_fusion_mode    mode) {
-    GGML_UNUSED(gf);
-    GGML_UNUSED(node_idxs);
-    GGML_UNUSED(idx);
-    GGML_UNUSED(fusion);
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_metal_fusion_check_mul_mat_ਜੋੜੋ(
+        ਅਚਲ ggml_metal_fusion       * fusion,
+        ਅਚਲ ggml_tensor * ਅਚਲ     * nodes,
+        ਅਚਲ ggml_cgraph             * gf,
+        ਅਚਲ ਪੂਰਨ                     * ਗੰਢ_idxs,
+              ਪੂਰਨ                       idx,
+              ggml_metal_fusion_ਬਹੁਲਕ    mode) {
+    GGML_ਅਣਵਰਤਿਆ(gf);
+    GGML_ਅਣਵਰਤਿਆ(ਗੰਢ_idxs);
+    GGML_ਅਣਵਰਤਿਆ(idx);
+    GGML_ਅਣਵਰਤਿਆ(fusion);
 
-    const ggml_tensor * mm  = nodes[0];
-    const ggml_tensor * add = nodes[1];
+    ਅਚਲ ggml_tensor * mm  = nodes[0];
+    ਅਚਲ ggml_tensor * ਜੋੜੋ_2 = nodes[1];
 
-    if (ggml_metal_mul_mat_add_operand(mm, add) == nullptr ||
+    ਜੇ (ggml_metal_mul_mat_ਜੋੜੋ_ਸੰਕਾਰਜ(mm, ਜੋੜੋ_2) == ਖਾਲੀ_ਸੂਚਕ ||
         !ggml_metal_op_mul_mat_may_use_mma(mm)) {
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    if (mode == GGML_METAL_FUSION_STRUCTURAL) {
-        return true;
+    ਜੇ (mode == GGML_METAL_FUSION_STRUCTURAL) {
+        ਵਾਪਸ ਸੱਚ;
     }
 
-    const ggml_tensor * res = ggml_metal_mul_mat_add_residual(mm, add);
+    ਅਚਲ ggml_tensor * res = ggml_metal_mul_mat_ਜੋੜੋ_residual(mm, ਜੋੜੋ_2);
 
-    if (res == nullptr || !ggml_metal_op_mul_mat_use_mma(mm)) {
-        return false;
+    ਜੇ (res == ਖਾਲੀ_ਸੂਚਕ || !ggml_metal_op_mul_mat_use_mma(mm)) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    return !ggml_metal_fusion_overlap(add, mm->src[0]) && !ggml_metal_fusion_overlap(add, mm->src[1]) &&
-        (add->data == res->data || !ggml_metal_fusion_overlap(add, res));
+    ਵਾਪਸ !ggml_metal_fusion_overlap(ਜੋੜੋ_2, mm->src[0]) && !ggml_metal_fusion_overlap(ਜੋੜੋ_2, mm->src[1]) &&
+        (ਜੋੜੋ_2->ਅੰਕੜੇ == res->ਅੰਕੜੇ || !ggml_metal_fusion_overlap(ਜੋੜੋ_2, res));
 }
 
 // ---- patterns ------------------------------------------------------------
 
-static const std::vector<ggml_op> ops_norm_mul         = { GGML_OP_NORM, GGML_OP_MUL };
-static const std::vector<ggml_op> ops_norm_mul_add     = { GGML_OP_NORM, GGML_OP_MUL, GGML_OP_ADD };
-static const std::vector<ggml_op> ops_norm_scale       = { GGML_OP_NORM, GGML_OP_SCALE };
-static const std::vector<ggml_op> ops_rms_norm_mul     = { GGML_OP_RMS_NORM, GGML_OP_MUL };
-static const std::vector<ggml_op> ops_rms_norm_mul_add = { GGML_OP_RMS_NORM, GGML_OP_MUL, GGML_OP_ADD };
-static const std::vector<ggml_op> ops_rms_norm_scale   = { GGML_OP_RMS_NORM, GGML_OP_SCALE };
+ਸਥਿਰ ਅਚਲ std::vector<ggml_op> ops_norm_mul         = { GGML_OP_NORM, GGML_OP_MUL };
+ਸਥਿਰ ਅਚਲ std::vector<ggml_op> ops_norm_mul_ਜੋੜੋ     = { GGML_OP_NORM, GGML_OP_MUL, GGML_OP_ਜੋੜੋ };
+ਸਥਿਰ ਅਚਲ std::vector<ggml_op> ops_norm_scale       = { GGML_OP_NORM, GGML_OP_SCALE };
+ਸਥਿਰ ਅਚਲ std::vector<ggml_op> ops_rms_norm_mul     = { GGML_OP_RMS_NORM, GGML_OP_MUL };
+ਸਥਿਰ ਅਚਲ std::vector<ggml_op> ops_rms_norm_mul_ਜੋੜੋ = { GGML_OP_RMS_NORM, GGML_OP_MUL, GGML_OP_ਜੋੜੋ };
+ਸਥਿਰ ਅਚਲ std::vector<ggml_op> ops_rms_norm_scale   = { GGML_OP_RMS_NORM, GGML_OP_SCALE };
 
-static const std::vector<ggml_op> ops_add_2 = { GGML_OP_ADD, GGML_OP_ADD };
-static const std::vector<ggml_op> ops_add_3 = { GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD };
-static const std::vector<ggml_op> ops_add_4 = { GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD };
-static const std::vector<ggml_op> ops_add_5 = { GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD };
-static const std::vector<ggml_op> ops_add_6 = { GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD };
-static const std::vector<ggml_op> ops_add_7 = { GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD };
-static const std::vector<ggml_op> ops_snake = { GGML_OP_MUL, GGML_OP_SIN, GGML_OP_SQR, GGML_OP_MUL, GGML_OP_ADD };
+ਸਥਿਰ ਅਚਲ std::vector<ggml_op> ops_ਜੋੜੋ_2 = { GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ };
+ਸਥਿਰ ਅਚਲ std::vector<ggml_op> ops_ਜੋੜੋ_3 = { GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ };
+ਸਥਿਰ ਅਚਲ std::vector<ggml_op> ops_ਜੋੜੋ_4 = { GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ };
+ਸਥਿਰ ਅਚਲ std::vector<ggml_op> ops_ਜੋੜੋ_5 = { GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ };
+ਸਥਿਰ ਅਚਲ std::vector<ggml_op> ops_ਜੋੜੋ_6 = { GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ };
+ਸਥਿਰ ਅਚਲ std::vector<ggml_op> ops_ਜੋੜੋ_7 = { GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ };
+ਸਥਿਰ ਅਚਲ std::vector<ggml_op> ops_snake = { GGML_OP_MUL, GGML_OP_SIN, GGML_OP_SQR, GGML_OP_MUL, GGML_OP_ਜੋੜੋ };
 
-static const std::vector<ggml_op> ops_gdn_cache = { GGML_OP_GATED_DELTA_NET, GGML_OP_CPY };
+ਸਥਿਰ ਅਚਲ std::vector<ggml_op> ops_gdn_cache = { GGML_OP_GATED_DELTA_NET, GGML_OP_CPY };
 
-static const std::vector<ggml_op> ops_ssm_conv_silu = { GGML_OP_SSM_CONV, GGML_OP_UNARY };
+ਸਥਿਰ ਅਚਲ std::vector<ggml_op> ops_ssm_conv_silu = { GGML_OP_SSM_CONV, GGML_OP_UNARY };
 
-static const std::vector<ggml_op> ops_moe_reduce_2 = {
-    GGML_OP_MUL, GGML_OP_VIEW, GGML_OP_VIEW, GGML_OP_ADD
+ਸਥਿਰ ਅਚਲ std::vector<ggml_op> ops_moe_reduce_2 = {
+    GGML_OP_MUL, GGML_OP_VIEW, GGML_OP_VIEW, GGML_OP_ਜੋੜੋ
 };
-static const std::vector<ggml_op> ops_moe_reduce_3 = {
-    GGML_OP_MUL, GGML_OP_VIEW, GGML_OP_VIEW, GGML_OP_VIEW, GGML_OP_ADD, GGML_OP_ADD
+ਸਥਿਰ ਅਚਲ std::vector<ggml_op> ops_moe_reduce_3 = {
+    GGML_OP_MUL, GGML_OP_VIEW, GGML_OP_VIEW, GGML_OP_VIEW, GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ
 };
-static const std::vector<ggml_op> ops_moe_reduce_4 = {
+ਸਥਿਰ ਅਚਲ std::vector<ggml_op> ops_moe_reduce_4 = {
     GGML_OP_MUL, GGML_OP_VIEW, GGML_OP_VIEW, GGML_OP_VIEW, GGML_OP_VIEW,
-    GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD
+    GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ
 };
-static const std::vector<ggml_op> ops_moe_reduce_5 = {
+ਸਥਿਰ ਅਚਲ std::vector<ggml_op> ops_moe_reduce_5 = {
     GGML_OP_MUL, GGML_OP_VIEW, GGML_OP_VIEW, GGML_OP_VIEW, GGML_OP_VIEW, GGML_OP_VIEW,
-    GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD
+    GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ
 };
-static const std::vector<ggml_op> ops_moe_reduce_6 = {
+ਸਥਿਰ ਅਚਲ std::vector<ggml_op> ops_moe_reduce_6 = {
     GGML_OP_MUL, GGML_OP_VIEW, GGML_OP_VIEW, GGML_OP_VIEW, GGML_OP_VIEW, GGML_OP_VIEW, GGML_OP_VIEW,
-    GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD
+    GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ
 };
-static const std::vector<ggml_op> ops_moe_reduce_7 = {
+ਸਥਿਰ ਅਚਲ std::vector<ggml_op> ops_moe_reduce_7 = {
     GGML_OP_MUL, GGML_OP_VIEW, GGML_OP_VIEW, GGML_OP_VIEW, GGML_OP_VIEW, GGML_OP_VIEW, GGML_OP_VIEW, GGML_OP_VIEW,
-    GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD
+    GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ
 };
-static const std::vector<ggml_op> ops_moe_reduce_8 = {
+ਸਥਿਰ ਅਚਲ std::vector<ggml_op> ops_moe_reduce_8 = {
     GGML_OP_MUL,
     GGML_OP_VIEW, GGML_OP_VIEW, GGML_OP_VIEW, GGML_OP_VIEW, GGML_OP_VIEW, GGML_OP_VIEW, GGML_OP_VIEW, GGML_OP_VIEW,
-    GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD, GGML_OP_ADD
+    GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ, GGML_OP_ਜੋੜੋ
 };
 
-static const std::vector<ggml_op> ops_mul_mat_add = { GGML_OP_MUL_MAT, GGML_OP_ADD };
+ਸਥਿਰ ਅਚਲ std::vector<ggml_op> ops_mul_mat_ਜੋੜੋ = { GGML_OP_MUL_MAT, GGML_OP_ਜੋੜੋ };
 
-static const std::vector<ggml_metal_fusion> ggml_metal_fusions = {
-    { GGML_METAL_FUSION_NORM_MUL,       ops_norm_mul,               {},     false, ggml_metal_fusion_check_norm },
-    { GGML_METAL_FUSION_NORM_MUL_ADD,   ops_norm_mul_add,           {},     false, ggml_metal_fusion_check_norm },
-    { GGML_METAL_FUSION_NORM_SCALE,     ops_norm_scale,             {},     false, ggml_metal_fusion_check_norm },
-    { GGML_METAL_FUSION_NORM_MUL,       ops_rms_norm_mul,           {},     false, ggml_metal_fusion_check_norm },
-    { GGML_METAL_FUSION_NORM_MUL_ADD,   ops_rms_norm_mul_add,       {},     false, ggml_metal_fusion_check_norm },
-    { GGML_METAL_FUSION_NORM_SCALE,     ops_rms_norm_scale,         {},     false, ggml_metal_fusion_check_norm },
-    { GGML_METAL_FUSION_ADD_CHAIN,      ops_add_2,                  {},     false, ggml_metal_fusion_check_add_chain },
-    { GGML_METAL_FUSION_ADD_CHAIN,      ops_add_3,                  {},     false, ggml_metal_fusion_check_add_chain },
-    { GGML_METAL_FUSION_ADD_CHAIN,      ops_add_4,                  {},     false, ggml_metal_fusion_check_add_chain },
-    { GGML_METAL_FUSION_ADD_CHAIN,      ops_add_5,                  {},     false, ggml_metal_fusion_check_add_chain },
-    { GGML_METAL_FUSION_ADD_CHAIN,      ops_add_6,                  {},     false, ggml_metal_fusion_check_add_chain },
-    { GGML_METAL_FUSION_ADD_CHAIN,      ops_add_7,                  {},     false, ggml_metal_fusion_check_add_chain },
-    { GGML_METAL_FUSION_SNAKE,          ops_snake,                  {},     false, ggml_metal_fusion_check_snake },
-    { GGML_METAL_FUSION_GDN_CACHE,      ops_gdn_cache,              {},     true,  ggml_metal_fusion_check_gdn_cache },
-    { GGML_METAL_FUSION_TOPK_MOE,       ops_topk_moe,               {1},    true,  ggml_metal_fusion_check_topk_moe },
-    { GGML_METAL_FUSION_TOPK_MOE,       ops_topk_moe_scale,         {1},    true,  ggml_metal_fusion_check_topk_moe },
-    { GGML_METAL_FUSION_TOPK_MOE,       ops_topk_moe_norm,          {1},    true,  ggml_metal_fusion_check_topk_moe },
-    { GGML_METAL_FUSION_TOPK_MOE,       ops_topk_moe_norm_scale,    {1},    true,  ggml_metal_fusion_check_topk_moe },
-    { GGML_METAL_FUSION_MOE_REDUCE,     ops_moe_reduce_2,           {},     true,  ggml_metal_fusion_check_moe_reduce },
-    { GGML_METAL_FUSION_MOE_REDUCE,     ops_moe_reduce_3,           {},     true,  ggml_metal_fusion_check_moe_reduce },
-    { GGML_METAL_FUSION_MOE_REDUCE,     ops_moe_reduce_4,           {},     true,  ggml_metal_fusion_check_moe_reduce },
-    { GGML_METAL_FUSION_MOE_REDUCE,     ops_moe_reduce_5,           {},     true,  ggml_metal_fusion_check_moe_reduce },
-    { GGML_METAL_FUSION_MOE_REDUCE,     ops_moe_reduce_6,           {},     true,  ggml_metal_fusion_check_moe_reduce },
-    { GGML_METAL_FUSION_MOE_REDUCE,     ops_moe_reduce_7,           {},     true,  ggml_metal_fusion_check_moe_reduce },
-    { GGML_METAL_FUSION_MOE_REDUCE,     ops_moe_reduce_8,           {},     true,  ggml_metal_fusion_check_moe_reduce },
-    { GGML_METAL_FUSION_SSM_CONV_SILU,  ops_ssm_conv_silu,          {},     false, ggml_metal_fusion_check_ssm_conv_silu },
-    { GGML_METAL_FUSION_MUL_MAT_ADD,    ops_mul_mat_add,            {},     false, ggml_metal_fusion_check_mul_mat_add },
+ਸਥਿਰ ਅਚਲ std::vector<ggml_metal_fusion> ggml_metal_fusions = {
+    { GGML_METAL_FUSION_NORM_MUL,       ops_norm_mul,               {},     ਝੂਠ, ggml_metal_fusion_check_norm },
+    { GGML_METAL_FUSION_NORM_MUL_ਜੋੜੋ,   ops_norm_mul_ਜੋੜੋ,           {},     ਝੂਠ, ggml_metal_fusion_check_norm },
+    { GGML_METAL_FUSION_NORM_SCALE,     ops_norm_scale,             {},     ਝੂਠ, ggml_metal_fusion_check_norm },
+    { GGML_METAL_FUSION_NORM_MUL,       ops_rms_norm_mul,           {},     ਝੂਠ, ggml_metal_fusion_check_norm },
+    { GGML_METAL_FUSION_NORM_MUL_ਜੋੜੋ,   ops_rms_norm_mul_ਜੋੜੋ,       {},     ਝੂਠ, ggml_metal_fusion_check_norm },
+    { GGML_METAL_FUSION_NORM_SCALE,     ops_rms_norm_scale,         {},     ਝੂਠ, ggml_metal_fusion_check_norm },
+    { GGML_METAL_FUSION_ਜੋੜੋ_CHAIN,      ops_ਜੋੜੋ_2,                  {},     ਝੂਠ, ggml_metal_fusion_check_ਜੋੜੋ_chain },
+    { GGML_METAL_FUSION_ਜੋੜੋ_CHAIN,      ops_ਜੋੜੋ_3,                  {},     ਝੂਠ, ggml_metal_fusion_check_ਜੋੜੋ_chain },
+    { GGML_METAL_FUSION_ਜੋੜੋ_CHAIN,      ops_ਜੋੜੋ_4,                  {},     ਝੂਠ, ggml_metal_fusion_check_ਜੋੜੋ_chain },
+    { GGML_METAL_FUSION_ਜੋੜੋ_CHAIN,      ops_ਜੋੜੋ_5,                  {},     ਝੂਠ, ggml_metal_fusion_check_ਜੋੜੋ_chain },
+    { GGML_METAL_FUSION_ਜੋੜੋ_CHAIN,      ops_ਜੋੜੋ_6,                  {},     ਝੂਠ, ggml_metal_fusion_check_ਜੋੜੋ_chain },
+    { GGML_METAL_FUSION_ਜੋੜੋ_CHAIN,      ops_ਜੋੜੋ_7,                  {},     ਝੂਠ, ggml_metal_fusion_check_ਜੋੜੋ_chain },
+    { GGML_METAL_FUSION_SNAKE,          ops_snake,                  {},     ਝੂਠ, ggml_metal_fusion_check_snake },
+    { GGML_METAL_FUSION_GDN_CACHE,      ops_gdn_cache,              {},     ਸੱਚ,  ggml_metal_fusion_check_gdn_cache },
+    { GGML_METAL_FUSION_TOPK_MOE,       ops_topk_moe,               {1},    ਸੱਚ,  ggml_metal_fusion_check_topk_moe },
+    { GGML_METAL_FUSION_TOPK_MOE,       ops_topk_moe_scale,         {1},    ਸੱਚ,  ggml_metal_fusion_check_topk_moe },
+    { GGML_METAL_FUSION_TOPK_MOE,       ops_topk_moe_norm,          {1},    ਸੱਚ,  ggml_metal_fusion_check_topk_moe },
+    { GGML_METAL_FUSION_TOPK_MOE,       ops_topk_moe_norm_scale,    {1},    ਸੱਚ,  ggml_metal_fusion_check_topk_moe },
+    { GGML_METAL_FUSION_MOE_REDUCE,     ops_moe_reduce_2,           {},     ਸੱਚ,  ggml_metal_fusion_check_moe_reduce },
+    { GGML_METAL_FUSION_MOE_REDUCE,     ops_moe_reduce_3,           {},     ਸੱਚ,  ggml_metal_fusion_check_moe_reduce },
+    { GGML_METAL_FUSION_MOE_REDUCE,     ops_moe_reduce_4,           {},     ਸੱਚ,  ggml_metal_fusion_check_moe_reduce },
+    { GGML_METAL_FUSION_MOE_REDUCE,     ops_moe_reduce_5,           {},     ਸੱਚ,  ggml_metal_fusion_check_moe_reduce },
+    { GGML_METAL_FUSION_MOE_REDUCE,     ops_moe_reduce_6,           {},     ਸੱਚ,  ggml_metal_fusion_check_moe_reduce },
+    { GGML_METAL_FUSION_MOE_REDUCE,     ops_moe_reduce_7,           {},     ਸੱਚ,  ggml_metal_fusion_check_moe_reduce },
+    { GGML_METAL_FUSION_MOE_REDUCE,     ops_moe_reduce_8,           {},     ਸੱਚ,  ggml_metal_fusion_check_moe_reduce },
+    { GGML_METAL_FUSION_SSM_CONV_SILU,  ops_ssm_conv_silu,          {},     ਝੂਠ, ggml_metal_fusion_check_ssm_conv_silu },
+    { GGML_METAL_FUSION_MUL_MAT_ਜੋੜੋ,    ops_mul_mat_ਜੋੜੋ,            {},     ਝੂਠ, ggml_metal_fusion_check_mul_mat_ਜੋੜੋ },
 };
 
 // ---- alloc deps -----------------------------------------------------------
 
-static bool ggml_metal_fusion_match_raw_pattern(
-        const ggml_cgraph * gf, int node_idx, const std::vector<ggml_op> & ops) {
-    if (node_idx < 0 || node_idx + (int) ops.size() > gf->n_nodes) {
-        return false;
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_metal_fusion_ਮੇਲ_raw_ਨਮੂਨਾ(
+        ਅਚਲ ggml_cgraph * gf, ਪੂਰਨ ਗੰਢ_idx, ਅਚਲ std::vector<ggml_op> & ops) {
+    ਜੇ (ਗੰਢ_idx < 0 || ਗੰਢ_idx + (ਪੂਰਨ) ops.size() > gf->n_nodes) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    for (int i = 0; i < (int) ops.size(); ++i) {
-        if (gf->nodes[node_idx + i]->op != ops[i]) {
-            return false;
+    ਲਈ (ਪੂਰਨ i = 0; i < (ਪੂਰਨ) ops.size(); ++i) {
+        ਜੇ (gf->nodes[ਗੰਢ_idx + i]->op != ops[i]) {
+            ਵਾਪਸ ਝੂਠ;
         }
     }
 
-    return true;
+    ਵਾਪਸ ਸੱਚ;
 }
 
-static void ggml_metal_fusion_add_pattern_alloc_deps(
-        void * user_data,
-        void (*add_alloc_dep)(void *, ggml_tensor *, ggml_tensor *),
+ਸਥਿਰ ਖਾਲੀ ggml_metal_fusion_ਜੋੜੋ_ਨਮੂਨਾ_alloc_deps(
+        ਖਾਲੀ * user_ਅੰਕੜੇ,
+        ਖਾਲੀ (*ਜੋੜੋ_alloc_dep)(ਖਾਲੀ *, ggml_tensor *, ggml_tensor *),
         ggml_cgraph * gf,
-        const ggml_metal_fusion * fusion,
-        int node_idx) {
-    const int last_node = node_idx + (int) fusion->ops_all.size() - 1;
+        ਅਚਲ ggml_metal_fusion * fusion,
+        ਪੂਰਨ ਗੰਢ_idx) {
+    ਅਚਲ ਪੂਰਨ ਆਖਰੀ_ਗੰਢ = ਗੰਢ_idx + (ਪੂਰਨ) fusion->ops_all.size() - 1;
 
     // keep all external inputs alive until the fused output
-    std::set<ggml_tensor *> seen;
-    for (int j = 0; j < (int) fusion->ops_all.size(); ++j) {
-        ggml_tensor * node = gf->nodes[node_idx + j];
-        for (int s = 0; s < GGML_MAX_SRC; ++s) {
-            ggml_tensor * src = node->src[s];
-            if (src && seen.insert(src).second) {
-                add_alloc_dep(user_data, src, gf->nodes[last_node]);
+    std::set<ggml_tensor *> ਵੇਖਿਆ;
+    ਲਈ (ਪੂਰਨ j = 0; j < (ਪੂਰਨ) fusion->ops_all.size(); ++j) {
+        ggml_tensor * ਗੰਢ = gf->nodes[ਗੰਢ_idx + j];
+        ਲਈ (ਪੂਰਨ s = 0; s < GGML_MAX_SRC; ++s) {
+            ggml_tensor * src = ਗੰਢ->src[s];
+            ਜੇ (src && ਵੇਖਿਆ.insert(src).second) {
+                ਜੋੜੋ_alloc_dep(user_ਅੰਕੜੇ, src, gf->nodes[ਆਖਰੀ_ਗੰਢ]);
             }
         }
-        seen.insert(node);
+        ਵੇਖਿਆ.insert(ਗੰਢ);
     }
 }
 
-void ggml_metal_fusion_add_alloc_deps(
-        void * user_data,
-        void (*add_alloc_dep)(void *, ggml_tensor *, ggml_tensor *),
+ਖਾਲੀ ggml_metal_fusion_ਜੋੜੋ_alloc_deps(
+        ਖਾਲੀ * user_ਅੰਕੜੇ,
+        ਖਾਲੀ (*ਜੋੜੋ_alloc_dep)(ਖਾਲੀ *, ggml_tensor *, ggml_tensor *),
         ggml_cgraph * gf) {
-    for (int i = 0; i < gf->n_nodes; ++i) {
-        const ggml_metal_fusion * best = nullptr;
-        int best_raw = 0;
+    ਲਈ (ਪੂਰਨ i = 0; i < gf->n_nodes; ++i) {
+        ਅਚਲ ggml_metal_fusion * ਉੱਤਮ = ਖਾਲੀ_ਸੂਚਕ;
+        ਪੂਰਨ ਉੱਤਮ_raw = 0;
 
-        for (const ggml_metal_fusion & fusion : ggml_metal_fusions) {
-            if ((int) fusion.ops_all.size() <= best_raw) {
-                continue;
+        ਲਈ (ਅਚਲ ggml_metal_fusion & fusion : ggml_metal_fusions) {
+            ਜੇ ((ਪੂਰਨ) fusion.ops_all.size() <= ਉੱਤਮ_raw) {
+                ਜਾਰੀ;
             }
-            if (ggml_metal_fusion_match_raw_pattern(gf, i, fusion.ops_all)) {
-                best = &fusion;
-                best_raw = (int) fusion.ops_all.size();
+            ਜੇ (ggml_metal_fusion_ਮੇਲ_raw_ਨਮੂਨਾ(gf, i, fusion.ops_all)) {
+                ਉੱਤਮ = &fusion;
+                ਉੱਤਮ_raw = (ਪੂਰਨ) fusion.ops_all.size();
             }
         }
 
-        if (best) {
-            ggml_metal_fusion_add_pattern_alloc_deps(user_data, add_alloc_dep, gf, best, i);
-            i += best_raw - 1;
+        ਜੇ (ਉੱਤਮ) {
+            ggml_metal_fusion_ਜੋੜੋ_ਨਮੂਨਾ_alloc_deps(user_ਅੰਕੜੇ, ਜੋੜੋ_alloc_dep, gf, ਉੱਤਮ, i);
+            i += ਉੱਤਮ_raw - 1;
         }
     }
 }
 
 // ---- shared fusion info ---------------------------------------------------
 
-static std::string ggml_metal_fusion_label(const ggml_metal_fusion * fusion) {
-    GGML_ASSERT(fusion != nullptr);
+ਸਥਿਰ std::string ggml_metal_fusion_label(ਅਚਲ ggml_metal_fusion * fusion) {
+    GGML_ASSERT(fusion != ਖਾਲੀ_ਸੂਚਕ);
 
     std::string label;
-    for (int j = 0; j < (int) fusion->ops.size(); j++) {
-        if (j > 0) {
+    ਲਈ (ਪੂਰਨ j = 0; j < (ਪੂਰਨ) fusion->ops.size(); j++) {
+        ਜੇ (j > 0) {
             label += '+';
         }
         label += ggml_op_name(fusion->ops[j]);
     }
-    return label;
+    ਵਾਪਸ label;
 }
 
-struct ggml_metal_fusion_info {
+ਬਣਤਰ ggml_metal_fusion_info {
     std::vector<std::string> labels;
     std::vector<uint64_t>    counts;
-    bool enabled;
-    bool stats;
-    bool labels_set;
-    int  debug;
+    ਤਾਰਕਿਕ enabled;
+    ਤਾਰਕਿਕ stats;
+    ਤਾਰਕਿਕ labels_ਸੈੱਟ;
+    ਪੂਰਨ  debug;
 };
 
-struct ggml_metal_fusion_info * ggml_metal_fusion_info_init(bool enabled, int debug) {
-    ggml_metal_fusion_info * finfo = new ggml_metal_fusion_info;
+ਬਣਤਰ ggml_metal_fusion_info * ggml_metal_fusion_info_init(ਤਾਰਕਿਕ enabled, ਪੂਰਨ debug) {
+    ggml_metal_fusion_info * finfo = ਨਵਾਂ ggml_metal_fusion_info;
     finfo->enabled    = enabled;
     finfo->stats      = debug > 0;
-    finfo->labels_set = false;
+    finfo->labels_ਸੈੱਟ = ਝੂਠ;
     finfo->debug      = debug;
 
-    if (finfo->stats) {
+    ਜੇ (finfo->stats) {
         ggml_metal_fusion_info_labels_init(finfo);
     }
 
-    return finfo;
+    ਵਾਪਸ finfo;
 }
 
-void ggml_metal_fusion_info_free(ggml_metal_fusion_info * finfo) {
-    delete finfo;
+ਖਾਲੀ ggml_metal_fusion_info_free(ggml_metal_fusion_info * finfo) {
+    ਮਿਟਾਓ finfo;
 }
 
-bool ggml_metal_fusion_info_enabled(const ggml_metal_fusion_info * finfo) {
-    return finfo->enabled;
+ਤਾਰਕਿਕ ggml_metal_fusion_info_enabled(ਅਚਲ ggml_metal_fusion_info * finfo) {
+    ਵਾਪਸ finfo->enabled;
 }
 
-bool ggml_metal_fusion_info_stats(const ggml_metal_fusion_info * finfo) {
-    return finfo->stats;
+ਤਾਰਕਿਕ ggml_metal_fusion_info_stats(ਅਚਲ ggml_metal_fusion_info * finfo) {
+    ਵਾਪਸ finfo->stats;
 }
 
-int ggml_metal_fusion_info_debug(const ggml_metal_fusion_info * finfo) {
-    return finfo->debug;
+ਪੂਰਨ ggml_metal_fusion_info_debug(ਅਚਲ ggml_metal_fusion_info * finfo) {
+    ਵਾਪਸ finfo->debug;
 }
 
-int ggml_metal_fusion_info_n_fusions(const ggml_metal_fusion_info * finfo) {
-    return (int) finfo->labels.size();
+ਪੂਰਨ ggml_metal_fusion_info_n_fusions(ਅਚਲ ggml_metal_fusion_info * finfo) {
+    ਵਾਪਸ (ਪੂਰਨ) finfo->labels.size();
 }
 
-const char * ggml_metal_fusion_info_label(const ggml_metal_fusion_info * finfo, int idx) {
-    GGML_ASSERT(idx >= 0 && idx < (int) finfo->labels.size());
-    return finfo->labels[idx].c_str();
+ਅਚਲ ਅੱਖਰ * ggml_metal_fusion_info_label(ਅਚਲ ggml_metal_fusion_info * finfo, ਪੂਰਨ idx) {
+    GGML_ASSERT(idx >= 0 && idx < (ਪੂਰਨ) finfo->labels.size());
+    ਵਾਪਸ finfo->labels[idx].c_str();
 }
 
-uint64_t ggml_metal_fusion_info_count(const ggml_metal_fusion_info * finfo, int idx) {
-    GGML_ASSERT(idx >= 0 && idx < (int) finfo->counts.size());
-    return finfo->counts[idx];
+uint64_t ggml_metal_fusion_info_ਗਿਣਤੀ(ਅਚਲ ggml_metal_fusion_info * finfo, ਪੂਰਨ idx) {
+    GGML_ASSERT(idx >= 0 && idx < (ਪੂਰਨ) finfo->counts.size());
+    ਵਾਪਸ finfo->counts[idx];
 }
 
-void ggml_metal_fusion_info_count_fusion(ggml_metal_fusion_info * finfo, const ggml_metal_fusion * fusion) {
-    if (!finfo->stats || fusion == nullptr) {
-        return;
+ਖਾਲੀ ggml_metal_fusion_info_ਗਿਣਤੀ_fusion(ggml_metal_fusion_info * finfo, ਅਚਲ ggml_metal_fusion * fusion) {
+    ਜੇ (!finfo->stats || fusion == ਖਾਲੀ_ਸੂਚਕ) {
+        ਵਾਪਸ;
     }
 
-    const ptrdiff_t idx = fusion - ggml_metal_fusions.data();
-    if (idx >= 0 && idx < (ptrdiff_t) finfo->counts.size()) {
+    ਅਚਲ ptrdiff_t idx = fusion - ggml_metal_fusions.ਅੰਕੜੇ();
+    ਜੇ (idx >= 0 && idx < (ptrdiff_t) finfo->counts.size()) {
         finfo->counts[idx]++;
     }
 }
 
-void ggml_metal_fusion_info_set_enabled(ggml_metal_fusion_info * finfo, bool enabled) {
+ਖਾਲੀ ggml_metal_fusion_info_ਸੈੱਟ_enabled(ggml_metal_fusion_info * finfo, ਤਾਰਕਿਕ enabled) {
     finfo->enabled = enabled;
 }
 
-void ggml_metal_fusion_info_labels_init(ggml_metal_fusion_info * finfo) {
-    if (finfo->labels_set) {
-        return;
+ਖਾਲੀ ggml_metal_fusion_info_labels_init(ggml_metal_fusion_info * finfo) {
+    ਜੇ (finfo->labels_ਸੈੱਟ) {
+        ਵਾਪਸ;
     }
 
     finfo->labels.clear();
-    finfo->counts.assign(ggml_metal_fusions.size(), 0);
+    finfo->counts.ਸੌਂਪੋ(ggml_metal_fusions.size(), 0);
     finfo->labels.reserve(ggml_metal_fusions.size());
 
-    for (const ggml_metal_fusion & fusion : ggml_metal_fusions) {
+    ਲਈ (ਅਚਲ ggml_metal_fusion & fusion : ggml_metal_fusions) {
         finfo->labels.emplace_back(ggml_metal_fusion_label(&fusion));
     }
 
-    finfo->labels_set = true;
+    finfo->labels_ਸੈੱਟ = ਸੱਚ;
 }
 
-void ggml_metal_fusion_info_stats_init(ggml_metal_fusion_info * finfo) {
-    finfo->stats = true;
+ਖਾਲੀ ggml_metal_fusion_info_stats_init(ggml_metal_fusion_info * finfo) {
+    finfo->stats = ਸੱਚ;
     ggml_metal_fusion_info_labels_init(finfo);
 }
 
-void ggml_metal_fusion_info_stats_reset(ggml_metal_fusion_info * finfo) {
+ਖਾਲੀ ggml_metal_fusion_info_stats_reset(ggml_metal_fusion_info * finfo) {
     std::fill(finfo->counts.begin(), finfo->counts.end(), 0);
 }
 
-int ggml_metal_fusion_info_stats_get(const ggml_metal_fusion_info * finfo, const char ** labels, uint64_t * counts, int n) {
-    const int n_fusions = (int) finfo->labels.size();
+ਪੂਰਨ ggml_metal_fusion_info_stats_get(ਅਚਲ ggml_metal_fusion_info * finfo, ਅਚਲ ਅੱਖਰ ** labels, uint64_t * counts, ਪੂਰਨ n) {
+    ਅਚਲ ਪੂਰਨ n_fusions = (ਪੂਰਨ) finfo->labels.size();
 
-    if (labels == nullptr) {
-        return n_fusions;
+    ਜੇ (labels == ਖਾਲੀ_ਸੂਚਕ) {
+        ਵਾਪਸ n_fusions;
     }
 
-    const int n_fill = std::min(n, n_fusions);
-    for (int i = 0; i < n_fill; i++) {
+    ਅਚਲ ਪੂਰਨ n_fill = std::min(n, n_fusions);
+    ਲਈ (ਪੂਰਨ i = 0; i < n_fill; i++) {
         labels[i] = finfo->labels[i].c_str();
-        if (counts != nullptr) {
+        ਜੇ (counts != ਖਾਲੀ_ਸੂਚਕ) {
             counts[i] = finfo->counts[i];
         }
     }
 
-    return n_fill;
+    ਵਾਪਸ n_fill;
 }
 
 // ---- memory-range checks -------------------------------------------------
@@ -987,228 +987,228 @@ int ggml_metal_fusion_info_stats_get(const ggml_metal_fusion_info * finfo, const
 // reject fusions where an external source overlaps any fused output. the fused
 // kernels elide intermediate nodes, so only sources that are not part of the
 // fused subgraph can cause read/write races with the output.
-static bool ggml_metal_fusion_check_memory_ranges(
-        const ggml_metal_fusion      * fusion,
-        const ggml_tensor * const    * nodes,
-        int                            node_count) {
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_metal_fusion_check_ਸਮ੍ਰਿਤੀ_ranges(
+        ਅਚਲ ggml_metal_fusion      * fusion,
+        ਅਚਲ ggml_tensor * ਅਚਲ    * nodes,
+        ਪੂਰਨ                            ਗੰਢ_ਗਿਣਤੀ) {
     // some fused kernels write through a tensor that also appears as a source (e.g. the gdn
     // cache cpy), so a source that is the same memory as the output is not an external read
-    // source
-    auto same_memory = [](const ggml_tensor * a, const ggml_tensor * b) {
-        if (a->data && b->data && a->data == b->data) {
-            return true;
+    //ਸਰੋਤ
+    ਸਵੈਚਾਲਿਤ same_ਸਮ੍ਰਿਤੀ = [](ਅਚਲ ggml_tensor * a, ਅਚਲ ggml_tensor * b) {
+        ਜੇ (a->ਅੰਕੜੇ && b->ਅੰਕੜੇ && a->ਅੰਕੜੇ == b->ਅੰਕੜੇ) {
+            ਵਾਪਸ ਸੱਚ;
         }
-        for (const ggml_tensor * v = a; v; v = v->view_src) {
-            if (v == b) {
-                return true;
+        ਲਈ (ਅਚਲ ggml_tensor * v = a; v; v = v->view_src) {
+            ਜੇ (v == b) {
+                ਵਾਪਸ ਸੱਚ;
             }
         }
-        for (const ggml_tensor * v = b; v; v = v->view_src) {
-            if (v == a) {
-                return true;
+        ਲਈ (ਅਚਲ ggml_tensor * v = b; v; v = v->view_src) {
+            ਜੇ (v == a) {
+                ਵਾਪਸ ਸੱਚ;
             }
         }
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     };
 
-    auto nodes_overlap = [](const ggml_tensor * a, const ggml_tensor * b) {
-        if (!a || !b || !a->data || !b->data || !a->buffer || !b->buffer) {
-            return false;
+    ਸਵੈਚਾਲਿਤ nodes_overlap = [](ਅਚਲ ggml_tensor * a, ਅਚਲ ggml_tensor * b) {
+        ਜੇ (!a || !b || !a->ਅੰਕੜੇ || !b->ਅੰਕੜੇ || !a->ਬਫਰ || !b->ਬਫਰ) {
+            ਵਾਪਸ ਝੂਠ;
         }
 
-        if (a->buffer != b->buffer) {
-            return false;
+        ਜੇ (a->ਬਫਰ != b->ਬਫਰ) {
+            ਵਾਪਸ ਝੂਠ;
         }
 
-        const int64_t a_start = (int64_t) a->data;
-        const int64_t a_end   = a_start + ggml_backend_buft_get_alloc_size(a->buffer->buft, a);
-        const int64_t b_start = (int64_t) b->data;
-        const int64_t b_end   = b_start + ggml_backend_buft_get_alloc_size(b->buffer->buft, b);
+        ਅਚਲ int64_t a_ਸ਼ੁਰੂ = (int64_t) a->ਅੰਕੜੇ;
+        ਅਚਲ int64_t a_ਸਿਰਾ   = a_ਸ਼ੁਰੂ + ggml_backend_buft_get_alloc_ਮਾਪ(a->ਬਫਰ->buft, a);
+        ਅਚਲ int64_t b_ਸ਼ੁਰੂ = (int64_t) b->ਅੰਕੜੇ;
+        ਅਚਲ int64_t b_ਸਿਰਾ   = b_ਸ਼ੁਰੂ + ggml_backend_buft_get_alloc_ਮਾਪ(b->ਬਫਰ->buft, b);
 
-        return (b_start <= a_start && a_start < b_end) ||
-               (a_start <= b_start && b_start < a_end);
+        ਵਾਪਸ (b_ਸ਼ੁਰੂ <= a_ਸ਼ੁਰੂ && a_ਸ਼ੁਰੂ < b_ਸਿਰਾ) ||
+               (a_ਸ਼ੁਰੂ <= b_ਸ਼ੁਰੂ && b_ਸ਼ੁਰੂ < a_ਸਿਰਾ);
     };
 
-    auto is_intermediate = [](const ggml_tensor * src, const ggml_tensor * const * nodes, int j) {
-        for (int k = 0; k < j; ++k) {
-            if (src == nodes[k]) {
-                return true;
+    ਸਵੈਚਾਲਿਤ is_intermediate = [](ਅਚਲ ggml_tensor * src, ਅਚਲ ggml_tensor * ਅਚਲ * nodes, ਪੂਰਨ j) {
+        ਲਈ (ਪੂਰਨ k = 0; k < j; ++k) {
+            ਜੇ (src == nodes[k]) {
+                ਵਾਪਸ ਸੱਚ;
             }
-            for (const ggml_tensor * view_src = src->view_src; view_src; view_src = view_src->view_src) {
-                if (view_src == nodes[k]) {
-                    return true;
+            ਲਈ (ਅਚਲ ggml_tensor * view_src = src->view_src; view_src; view_src = view_src->view_src) {
+                ਜੇ (view_src == nodes[k]) {
+                    ਵਾਪਸ ਸੱਚ;
                 }
             }
         }
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     };
 
-    auto check_dst = [&](const ggml_tensor * dst) {
-        for (int j = 0; j < node_count; ++j) {
-            for (int s = 0; s < GGML_MAX_SRC; ++s) {
-                const ggml_tensor * src = nodes[j]->src[s];
-                if (!src || src->op == GGML_OP_NONE || same_memory(src, dst)) {
-                    continue;
+    ਸਵੈਚਾਲਿਤ check_dst = [&](ਅਚਲ ggml_tensor * dst) {
+        ਲਈ (ਪੂਰਨ j = 0; j < ਗੰਢ_ਗਿਣਤੀ; ++j) {
+            ਲਈ (ਪੂਰਨ s = 0; s < GGML_MAX_SRC; ++s) {
+                ਅਚਲ ggml_tensor * src = nodes[j]->src[s];
+                ਜੇ (!src || src->op == GGML_OP_NONE || same_ਸਮ੍ਰਿਤੀ(src, dst)) {
+                    ਜਾਰੀ;
                 }
 
-                if (nodes_overlap(dst, src) && !is_intermediate(src, nodes, j)) {
-                    return false;
+                ਜੇ (nodes_overlap(dst, src) && !is_intermediate(src, nodes, j)) {
+                    ਵਾਪਸ ਝੂਠ;
                 }
             }
         }
-        return true;
+        ਵਾਪਸ ਸੱਚ;
     };
 
-    if (!check_dst(nodes[node_count - 1])) {
-        return false;
+    ਜੇ (!check_dst(nodes[ਗੰਢ_ਗਿਣਤੀ - 1])) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    for (int offset : fusion->outs) {
-        GGML_ASSERT(offset >= 0 && offset < node_count);
-        if (!check_dst(nodes[offset])) {
-            return false;
+    ਲਈ (ਪੂਰਨ ਵਿੱਥ : fusion->outs) {
+        GGML_ASSERT(ਵਿੱਥ >= 0 && ਵਿੱਥ < ਗੰਢ_ਗਿਣਤੀ);
+        ਜੇ (!check_dst(nodes[ਵਿੱਥ])) {
+            ਵਾਪਸ ਝੂਠ;
         }
     }
 
-    return true;
+    ਵਾਪਸ ਸੱਚ;
 }
 
 // ---- queries -------------------------------------------------------------
 
 // find the longest pattern matching the node sequence starting at idx
 // (idx is a position in node_idxs, which maps to graph node indices)
-const ggml_metal_fusion * ggml_metal_fusion_next(
-        const ggml_cgraph * gf,
-        const int * node_idxs,
-        int n_idxs,
-        int idx,
-        ggml_metal_fusion_mode mode,
-        int * n_out) {
-    const ggml_metal_fusion * res = nullptr;
-    int best = 1;
+ਅਚਲ ggml_metal_fusion * ggml_metal_fusion_ਅਗਲਾ(
+        ਅਚਲ ggml_cgraph * gf,
+        ਅਚਲ ਪੂਰਨ * ਗੰਢ_idxs,
+        ਪੂਰਨ n_idxs,
+        ਪੂਰਨ idx,
+        ggml_metal_fusion_ਬਹੁਲਕ mode,
+        ਪੂਰਨ * n_ਬਾਹਰਲਾ) {
+    ਅਚਲ ggml_metal_fusion * res = ਖਾਲੀ_ਸੂਚਕ;
+    ਪੂਰਨ ਉੱਤਮ = 1;
 
-    for (const ggml_metal_fusion & fusion : ggml_metal_fusions) {
-        const int n_ops = (int) fusion.ops.size();
+    ਲਈ (ਅਚਲ ggml_metal_fusion & fusion : ggml_metal_fusions) {
+        ਅਚਲ ਪੂਰਨ n_ops = (ਪੂਰਨ) fusion.ops.size();
 
         // only look for a longer match than the current best
-        if (n_ops <= best) {
-            continue;
+        ਜੇ (n_ops <= ਉੱਤਮ) {
+            ਜਾਰੀ;
         }
-        if (idx + n_ops > n_idxs) {
-            continue;
+        ਜੇ (idx + n_ops > n_idxs) {
+            ਜਾਰੀ;
         }
 
-        const ggml_tensor * nodes[GGML_METAL_FUSION_MAX];
+        ਅਚਲ ggml_tensor * nodes[GGML_METAL_FUSION_MAX];
 
         // the op sequence must match exactly
-        bool ok = true;
-        for (int j = 0; j < n_ops; j++) {
-            nodes[j] = gf->nodes[node_idxs[idx + j]];
-            if (nodes[j]->op != fusion.ops[j]) {
-                ok = false;
-                break;
+        ਤਾਰਕਿਕ ok = ਸੱਚ;
+        ਲਈ (ਪੂਰਨ j = 0; j < n_ops; j++) {
+            nodes[j] = gf->nodes[ਗੰਢ_idxs[idx + j]];
+            ਜੇ (nodes[j]->op != fusion.ops[j]) {
+                ok = ਝੂਠ;
+                ਰੋਕੋ;
             }
         }
-        if (!ok) {
-            continue;
+        ਜੇ (!ok) {
+            ਜਾਰੀ;
         }
 
-        if (!fusion.unsafe) {
+        ਜੇ (!fusion.unsafe) {
             // common element-wise chain constraints: each node reads the previous one,
             // and all nodes have the same shape
-            for (int j = 1; j < n_ops && ok; j++) {
-                if (nodes[j]->src[0] != nodes[j - 1] && nodes[j]->src[1] != nodes[j - 1]) {
-                    ok = false;
-                    break;
+            ਲਈ (ਪੂਰਨ j = 1; j < n_ops && ok; j++) {
+                ਜੇ (nodes[j]->src[0] != nodes[j - 1] && nodes[j]->src[1] != nodes[j - 1]) {
+                    ok = ਝੂਠ;
+                    ਰੋਕੋ;
                 }
-                if (!ggml_are_same_shape(nodes[j], nodes[j - 1])) {
-                    ok = false;
-                    break;
+                ਜੇ (!ggml_are_same_shape(nodes[j], nodes[j - 1])) {
+                    ok = ਝੂਠ;
+                    ਰੋਕੋ;
                 }
             }
-            if (!ok) {
-                continue;
+            ਜੇ (!ok) {
+                ਜਾਰੀ;
             }
 
             // primary output is the last node; additional outputs come from fusion.outs
-            int outputs_buf[GGML_METAL_FUSION_MAX];
-            outputs_buf[0] = node_idxs[idx + n_ops - 1];
-            for (size_t i = 0; i < fusion.outs.size(); ++i) {
-                const int out_offset = fusion.outs[i];
-                GGML_ASSERT(out_offset >= 0 && out_offset < n_ops);
-                outputs_buf[i + 1] = node_idxs[idx + out_offset];
+            ਪੂਰਨ outputs_buf[GGML_METAL_FUSION_MAX];
+            outputs_buf[0] = ਗੰਢ_idxs[idx + n_ops - 1];
+            ਲਈ (size_t i = 0; i < fusion.outs.size(); ++i) {
+                ਅਚਲ ਪੂਰਨ ਬਾਹਰਲਾ_ਵਿੱਥ = fusion.outs[i];
+                GGML_ASSERT(ਬਾਹਰਲਾ_ਵਿੱਥ >= 0 && ਬਾਹਰਲਾ_ਵਿੱਥ < n_ops);
+                outputs_buf[i + 1] = ਗੰਢ_idxs[idx + ਬਾਹਰਲਾ_ਵਿੱਥ];
             }
 
-            const int n_outputs = 1 + (int) fusion.outs.size();
+            ਅਚਲ ਪੂਰਨ n_outputs = 1 + (ਪੂਰਨ) fusion.outs.size();
 
             // structural subgraph checks (op sequence, elidable uses, view containment)
-            if (!ggml_can_fuse_subgraph_ext(gf, node_idxs + idx, n_ops, fusion.ops.data(), outputs_buf, n_outputs)) {
-                continue;
+            ਜੇ (!ggml_can_fuse_subgraph_ext(gf, ਗੰਢ_idxs + idx, n_ops, fusion.ops.ਅੰਕੜੇ(), outputs_buf, n_outputs)) {
+                ਜਾਰੀ;
             }
         }
 
         // pattern-specific checks (the sole validator for unsafe patterns)
-        if (fusion.check && !fusion.check(&fusion, nodes, gf, node_idxs, idx, mode)) {
-            continue;
+        ਜੇ (fusion.check && !fusion.check(&fusion, nodes, gf, ਗੰਢ_idxs, idx, mode)) {
+            ਜਾਰੀ;
         }
 
         // the compute phase has allocated tensors and can detect aliasing between
         // external sources and fused outputs; the optimizer phase cannot do this yet
-        if (mode == GGML_METAL_FUSION_FULL &&
-                !ggml_metal_fusion_check_memory_ranges(&fusion, nodes, n_ops)) {
-            continue;
+        ਜੇ (mode == GGML_METAL_FUSION_ਭਰਿਆ &&
+                !ggml_metal_fusion_check_ਸਮ੍ਰਿਤੀ_ranges(&fusion, nodes, n_ops)) {
+            ਜਾਰੀ;
         }
 
-        best = n_ops;
+        ਉੱਤਮ = n_ops;
         res = &fusion;
     }
 
-    *n_out = best;
+    *n_ਬਾਹਰਲਾ = ਉੱਤਮ;
 
-    return res;
+    ਵਾਪਸ res;
 }
 
 // optimize phase: maximum number of nodes starting at idx (a raw sequential graph index) that
 // could be fused, chaining patterns back-to-back. matching runs on the same filtered (view
 // transparent) node sequence that the compute phase uses, so the returned count is the raw index
 // span from idx to the last matched node (intermediate views are packed along).
-int ggml_metal_fusion_max(const ggml_cgraph * gf, int idx) {
+ਪੂਰਨ ggml_metal_fusion_max(ਅਚਲ ggml_cgraph * gf, ਪੂਰਨ idx) {
     // a view node cannot start a pattern - pack it alone
-    if (ggml_op_is_empty(gf->nodes[idx]->op)) {
-        return 1;
+    ਜੇ (ggml_op_is_ਖਾਲੀ_ਥਾਵਾਂ(gf->nodes[idx]->op)) {
+        ਵਾਪਸ 1;
     }
 
     // collect the non-view node indices starting at idx; 0-element tensors are included so
     // that empty graphs pack like their non-empty counterparts (see ggml_metal_fusion_filter_ops)
-    int idxs[GGML_METAL_FUSION_MAX];
-    int n_idxs = 0;
-    for (int i = idx; i < gf->n_nodes && n_idxs < GGML_METAL_FUSION_MAX; i++) {
-        if (!ggml_op_is_empty(gf->nodes[i]->op)) {
+    ਪੂਰਨ idxs[GGML_METAL_FUSION_MAX];
+    ਪੂਰਨ n_idxs = 0;
+    ਲਈ (ਪੂਰਨ i = idx; i < gf->n_nodes && n_idxs < GGML_METAL_FUSION_MAX; i++) {
+        ਜੇ (!ggml_op_is_ਖਾਲੀ_ਥਾਵਾਂ(gf->nodes[i]->op)) {
             idxs[n_idxs++] = i;
         }
     }
-    if (n_idxs == 0) {
-        return 1;
+    ਜੇ (n_idxs == 0) {
+        ਵਾਪਸ 1;
     }
 
-    int total = 0;
-    int i_f = 0;
+    ਪੂਰਨ ਕੁੱਲ = 0;
+    ਪੂਰਨ i_f = 0;
 
-    while (i_f < n_idxs && total < GGML_METAL_FUSION_MAX) {
-        int len = 1;
-        const ggml_metal_fusion * fusion = ggml_metal_fusion_next(gf, idxs, n_idxs, i_f, GGML_METAL_FUSION_STRUCTURAL, &len);
-        if (!fusion || total + len > GGML_METAL_FUSION_MAX) {
-            break;
+    ਜਦੋਂ (i_f < n_idxs && ਕੁੱਲ < GGML_METAL_FUSION_MAX) {
+        ਪੂਰਨ len = 1;
+        ਅਚਲ ggml_metal_fusion * fusion = ggml_metal_fusion_ਅਗਲਾ(gf, idxs, n_idxs, i_f, GGML_METAL_FUSION_STRUCTURAL, &len);
+        ਜੇ (!fusion || ਕੁੱਲ + len > GGML_METAL_FUSION_MAX) {
+            ਰੋਕੋ;
         }
 
-        total += len;
+        ਕੁੱਲ += len;
         i_f += len;
     }
 
-    if (i_f == 0) {
-        return 1;
+    ਜੇ (i_f == 0) {
+        ਵਾਪਸ 1;
     }
 
     // map the matched non-empty nodes back to the raw index span (views are included)
-    return std::min(GGML_METAL_FUSION_MAX, idxs[i_f - 1] - idx + 1);
+    ਵਾਪਸ std::min(GGML_METAL_FUSION_MAX, idxs[i_f - 1] - idx + 1);
 }

@@ -1,42 +1,42 @@
-#include "mmvq.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "mmvq.hpp"
 
-#include "ggml.h"
-#include "common.hpp"
-#include "element_wise.hpp"
-#include "quants.hpp"
-#include "vecdotq.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "common.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "element_wise.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "quants.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "vecdotq.hpp"
 
 // vec_dot_q_sycl_t adapters for the IQ vec_dots that take their codebook tables as extra
 // arguments: bind the constant tables here (as vec_dot_iq2_s_q8_1 / vec_dot_iq1_m_q8_1 already do
 // internally) so they can be used as template arguments of mul_mat_vec_q_moe.
-static __dpct_inline__ float vec_dot_iq2_xxs_q8_1_moe(const void * __restrict__ vbq,
-                                                      const block_q8_1 * __restrict__ bq8_1,
-                                                      const int & iqs) {
-    return vec_dot_iq2_xxs_q8_1(vbq, bq8_1, iqs, iq2xxs_grid, ksigns_iq2xs, kmask_iq2xs);
+ਸਥਿਰ __dpct_inline__ ਦਸ਼ਮਲਵ vec_dot_iq2_xxs_q8_1_moe(ਅਚਲ ਖਾਲੀ * __restrict__ vbq,
+                                                      ਅਚਲ ਖੰਡ_q8_1 * __restrict__ bq8_1,
+                                                      ਅਚਲ ਪੂਰਨ & iqs) {
+    ਵਾਪਸ vec_dot_iq2_xxs_q8_1(vbq, bq8_1, iqs, iq2xxs_grid, ksigns_iq2xs, kmask_iq2xs);
 }
 
-static __dpct_inline__ float vec_dot_iq2_xs_q8_1_moe(const void * __restrict__ vbq,
-                                                     const block_q8_1 * __restrict__ bq8_1,
-                                                     const int & iqs) {
-    return vec_dot_iq2_xs_q8_1(vbq, bq8_1, iqs, iq2xs_grid);
+ਸਥਿਰ __dpct_inline__ ਦਸ਼ਮਲਵ vec_dot_iq2_xs_q8_1_moe(ਅਚਲ ਖਾਲੀ * __restrict__ vbq,
+                                                     ਅਚਲ ਖੰਡ_q8_1 * __restrict__ bq8_1,
+                                                     ਅਚਲ ਪੂਰਨ & iqs) {
+    ਵਾਪਸ vec_dot_iq2_xs_q8_1(vbq, bq8_1, iqs, iq2xs_grid);
 }
 
-static __dpct_inline__ float vec_dot_iq3_xxs_q8_1_moe(const void * __restrict__ vbq,
-                                                      const block_q8_1 * __restrict__ bq8_1,
-                                                      const int & iqs) {
-    return vec_dot_iq3_xxs_q8_1(vbq, bq8_1, iqs, iq3xxs_grid);
+ਸਥਿਰ __dpct_inline__ ਦਸ਼ਮਲਵ vec_dot_iq3_xxs_q8_1_moe(ਅਚਲ ਖਾਲੀ * __restrict__ vbq,
+                                                      ਅਚਲ ਖੰਡ_q8_1 * __restrict__ bq8_1,
+                                                      ਅਚਲ ਪੂਰਨ & iqs) {
+    ਵਾਪਸ vec_dot_iq3_xxs_q8_1(vbq, bq8_1, iqs, iq3xxs_grid);
 }
 
-static __dpct_inline__ float vec_dot_iq3_s_q8_1_moe(const void * __restrict__ vbq,
-                                                    const block_q8_1 * __restrict__ bq8_1,
-                                                    const int & iqs) {
-    return vec_dot_iq3_s_q8_1(vbq, bq8_1, iqs, iq3s_grid);
+ਸਥਿਰ __dpct_inline__ ਦਸ਼ਮਲਵ vec_dot_iq3_s_q8_1_moe(ਅਚਲ ਖਾਲੀ * __restrict__ vbq,
+                                                    ਅਚਲ ਖੰਡ_q8_1 * __restrict__ bq8_1,
+                                                    ਅਚਲ ਪੂਰਨ & iqs) {
+    ਵਾਪਸ vec_dot_iq3_s_q8_1(vbq, bq8_1, iqs, iq3s_grid);
 }
 
-static __dpct_inline__ float vec_dot_iq1_s_q8_1_moe(const void * __restrict__ vbq,
-                                                    const block_q8_1 * __restrict__ bq8_1,
-                                                    const int & iqs) {
-    return vec_dot_iq1_s_q8_1(vbq, bq8_1, iqs, iq1s_grid_gpu);
+ਸਥਿਰ __dpct_inline__ ਦਸ਼ਮਲਵ vec_dot_iq1_s_q8_1_moe(ਅਚਲ ਖਾਲੀ * __restrict__ vbq,
+                                                    ਅਚਲ ਖੰਡ_q8_1 * __restrict__ bq8_1,
+                                                    ਅਚਲ ਪੂਰਨ & iqs) {
+    ਵਾਪਸ vec_dot_iq1_s_q8_1(vbq, bq8_1, iqs, iq1s_grid_gpu);
 }
 
 // Minimum weight-row count at which the Q4_K multi-column MMVQ kernel handles two output rows per
@@ -55,235 +55,235 @@ static __dpct_inline__ float vec_dot_iq1_s_q8_1_moe(const void * __restrict__ vb
 // narrowed it to (6144, 6176], so 6272 is a conservative gate rather than the exact crossover.
 // ncols_dst >= 3 amortizes the activation loads over more columns and is faster with two rows at
 // every row count, so it does not consult this threshold.
-static constexpr int Q4_K_MMVQ_ROW_PAIR_MIN_NROWS = 6272;
+ਸਥਿਰ constexpr ਪੂਰਨ Q4_K_MMVQ_ਪੰਕਤੀ_PAIR_MIN_NROWS = 6272;
 
-template <typename reorder_vec_dot_q_sycl>
-static void mul_mat_vec_q_reorder(const void * __restrict__ vx, const void * __restrict__ vy, float * __restrict__ dst,
-                                  const int ncols, const int nrows, const sycl::nd_item<3> & nd_item) {
-    using block_type   = ggml_sycl_reordered::block_q_t<reorder_vec_dot_q_sycl::gtype>;
-    using block_traits = typename block_type::traits;
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ reorder_vec_dot_q_sycl>
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q_reorder(ਅਚਲ ਖਾਲੀ * __restrict__ vx, ਅਚਲ ਖਾਲੀ * __restrict__ vy, ਦਸ਼ਮਲਵ * __restrict__ dst,
+                                  ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows, ਅਚਲ sycl::nd_ਵਸਤੂ<3> & nd_ਵਸਤੂ) {
+    ਵਰਤੋਂ ਖੰਡ_type   = ggml_sycl_reordered::ਖੰਡ_q_t<reorder_vec_dot_q_sycl::gtype>;
+    ਵਰਤੋਂ ਖੰਡ_traits = ਕਿਸਮ_ਨਾਂ ਖੰਡ_type::traits;
 
-    const auto sg           = nd_item.get_sub_group();
-    const int  sg_range     = sg.get_group_linear_range();
-    const int  workgroup_id = nd_item.get_group_linear_id();
-    const int  sg_id        = sg.get_group_linear_id();
-    const int  row          = workgroup_id * sg_range + sg_id;
+    ਅਚਲ ਸਵੈਚਾਲਿਤ sg           = nd_ਵਸਤੂ.get_sub_ਸਮੂਹ();
+    ਅਚਲ ਪੂਰਨ  sg_range     = sg.get_ਸਮੂਹ_ਰੇਖਿਕ_range();
+    ਅਚਲ ਪੂਰਨ  workgroup_id = nd_ਵਸਤੂ.get_ਸਮੂਹ_ਰੇਖਿਕ_id();
+    ਅਚਲ ਪੂਰਨ  sg_id        = sg.get_ਸਮੂਹ_ਰੇਖਿਕ_id();
+    ਅਚਲ ਪੂਰਨ  ਪੰਕਤੀ          = workgroup_id * sg_range + sg_id;
 
-    if (row >= nrows) {
-        return;
+    ਜੇ (ਪੰਕਤੀ >= nrows) {
+        ਵਾਪਸ;
     }
 
-    const int     blocks_per_row              = ncols / block_traits::qk;
-    constexpr int blocks_per_subgroup         = ceil_div(block_traits::vdr_mmvq * WARP_SIZE, block_traits::qi);
-    constexpr int block_elements_per_subgroup = block_traits::qi / block_traits::vdr_mmvq;
-    const int     nblocks                     = nrows * (ncols / block_traits::qk);
+    ਅਚਲ ਪੂਰਨ     ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ              = ncols / ਖੰਡ_traits::qk;
+    constexpr ਪੂਰਨ ਖੰਡਾਂ_ਪ੍ਰਤੀ_subgroup         = ceil_div(ਖੰਡ_traits::vdr_mmvq * WARP_ਮਾਪ, ਖੰਡ_traits::qi);
+    constexpr ਪੂਰਨ ਖੰਡ_elements_ਪ੍ਰਤੀ_subgroup = ਖੰਡ_traits::qi / ਖੰਡ_traits::vdr_mmvq;
+    ਅਚਲ ਪੂਰਨ     nblocks                     = nrows * (ncols / ਖੰਡ_traits::qk);
 
-    static_assert(blocks_per_subgroup > 0);
-    static_assert(block_elements_per_subgroup > 0);
+    static_assert(ਖੰਡਾਂ_ਪ੍ਰਤੀ_subgroup > 0);
+    static_assert(ਖੰਡ_elements_ਪ੍ਰਤੀ_subgroup > 0);
 
-    float partial_sum = 0.0f;
-    for (int i = sg.get_local_linear_id() / block_elements_per_subgroup; i < blocks_per_row; i += blocks_per_subgroup) {
-        const int ibx = row * blocks_per_row + i;  // x block index
+    ਦਸ਼ਮਲਵ partial_ਜੋੜ = 0.0f;
+    ਲਈ (ਪੂਰਨ i = sg.get_local_ਰੇਖਿਕ_id() / ਖੰਡ_elements_ਪ੍ਰਤੀ_subgroup; i < ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ; i += ਖੰਡਾਂ_ਪ੍ਰਤੀ_subgroup) {
+        ਅਚਲ ਪੂਰਨ ibx = ਪੰਕਤੀ * ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ + i;  // x block index
 
-        const auto         bx_offset      = block_type::get_block_offset(ibx, nblocks);
-        const auto         d_offset       = block_type::get_d_offset(nrows, ncols, ibx);
+        ਅਚਲ ਸਵੈਚਾਲਿਤ         bx_ਵਿੱਥ      = ਖੰਡ_type::get_ਖੰਡ_ਵਿੱਥ(ibx, nblocks);
+        ਅਚਲ ਸਵੈਚਾਲਿਤ         d_ਵਿੱਥ       = ਖੰਡ_type::get_d_ਵਿੱਥ(nrows, ncols, ibx);
         // Y block index that aligns with ibx
-        const int iby = i * block_type::block_to_q8_1_ratio();
-        const int8_t* q8_1_quant_ptr = (const int8_t*)vy + iby * QK8_1;
-        const sycl::half2* q8_1_ds_ptr = (const sycl::half2*)((const char*)vy + ncols + iby * sizeof(sycl::half2));
+        ਅਚਲ ਪੂਰਨ iby = i * ਖੰਡ_type::ਖੰਡ_ਮੰਜ਼ਿਲ_q8_1_ਅਨੁਪਾਤ();
+        ਅਚਲ int8_t* q8_1_quant_ptr = (ਅਚਲ int8_t*)vy + iby * QK8_1;
+        ਅਚਲ sycl::half2* q8_1_ds_ptr = (ਅਚਲ sycl::half2*)((ਅਚਲ ਅੱਖਰ*)vy + ncols + iby * ਆਕਾਰ(sycl::half2));
 
-#pragma unroll
-        for (int elem = 0; elem < block_elements_per_subgroup; elem += WARP_SIZE) {
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ elem = 0; elem < ਖੰਡ_elements_ਪ੍ਰਤੀ_subgroup; elem += WARP_ਮਾਪ) {
             // x block quant index when casting the quants to int
-            const int iqs = elem + block_traits::vdr_mmvq * (sg.get_local_linear_id() % block_elements_per_subgroup);
+            ਅਚਲ ਪੂਰਨ iqs = elem + ਖੰਡ_traits::vdr_mmvq * (sg.get_local_ਰੇਖਿਕ_id() % ਖੰਡ_elements_ਪ੍ਰਤੀ_subgroup);
 
-            partial_sum += reorder_vec_dot_q_sycl()(vx, bx_offset, d_offset, q8_1_quant_ptr, q8_1_ds_ptr, iqs);
+            partial_ਜੋੜ += reorder_vec_dot_q_sycl()(vx, bx_ਵਿੱਥ, d_ਵਿੱਥ, q8_1_quant_ptr, q8_1_ds_ptr, iqs);
         }
     }
 
-    auto sum = sycl::reduce_over_group(nd_item.get_sub_group(), partial_sum, std::plus<>());
+    ਸਵੈਚਾਲਿਤ ਜੋੜ = sycl::reduce_over_ਸਮੂਹ(nd_ਵਸਤੂ.get_sub_ਸਮੂਹ(), partial_ਜੋੜ, std::plus<>());
 
-    if (sg.leader()) {
-        dst[row] = sum;
+    ਜੇ (sg.leader()) {
+        dst[ਪੰਕਤੀ] = ਜੋੜ;
     }
 }
 
 // With has_fusion, `vgate` is a second weight matrix sharing vx's shape, stride and reorder
 // layout: one pass computes both row dot products and the epilogue writes glu(gate, up).
-template <typename reorder_vec_dot_q_sycl, int ncols_dst, bool has_fusion = false, int rows_per_sg = 1,
-          bool shared_weights = reorder_vec_dot_shared_weights<reorder_vec_dot_q_sycl::gtype>::value>
-static void mul_mat_vec_q_reorder_ncols(const void * __restrict__ vx, const void * __restrict__ vgate,
-                                        const void * __restrict__ vy, float * __restrict__ dst, const int ncols,
-                                        const int nrows, const int stride_col_y_bytes, const int stride_col_dst,
-                                        const ggml_glu_op glu_op, const sycl::nd_item<3> & nd_item) {
-    using block_type   = ggml_sycl_reordered::block_q_t<reorder_vec_dot_q_sycl::gtype>;
-    using block_traits = typename block_type::traits;
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ reorder_vec_dot_q_sycl, ਪੂਰਨ ncols_dst, ਤਾਰਕਿਕ has_fusion = ਝੂਠ, ਪੂਰਨ ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_sg = 1,
+          ਤਾਰਕਿਕ shared_weights = reorder_vec_dot_shared_weights<reorder_vec_dot_q_sycl::gtype>::value>
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q_reorder_ncols(ਅਚਲ ਖਾਲੀ * __restrict__ vx, ਅਚਲ ਖਾਲੀ * __restrict__ vgate,
+                                        ਅਚਲ ਖਾਲੀ * __restrict__ vy, ਦਸ਼ਮਲਵ * __restrict__ dst, ਅਚਲ ਪੂਰਨ ncols,
+                                        ਅਚਲ ਪੂਰਨ nrows, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+                                        ਅਚਲ ggml_glu_op glu_op, ਅਚਲ sycl::nd_ਵਸਤੂ<3> & nd_ਵਸਤੂ) {
+    ਵਰਤੋਂ ਖੰਡ_type   = ggml_sycl_reordered::ਖੰਡ_q_t<reorder_vec_dot_q_sycl::gtype>;
+    ਵਰਤੋਂ ਖੰਡ_traits = ਕਿਸਮ_ਨਾਂ ਖੰਡ_type::traits;
 
-    const auto sg           = nd_item.get_sub_group();
-    const int  sg_range     = sg.get_group_linear_range();
-    const int  workgroup_id = nd_item.get_group_linear_id();
-    const int  sg_id        = sg.get_group_linear_id();
-    const int  row0         = (workgroup_id * sg_range + sg_id) * rows_per_sg;
+    ਅਚਲ ਸਵੈਚਾਲਿਤ sg           = nd_ਵਸਤੂ.get_sub_ਸਮੂਹ();
+    ਅਚਲ ਪੂਰਨ  sg_range     = sg.get_ਸਮੂਹ_ਰੇਖਿਕ_range();
+    ਅਚਲ ਪੂਰਨ  workgroup_id = nd_ਵਸਤੂ.get_ਸਮੂਹ_ਰੇਖਿਕ_id();
+    ਅਚਲ ਪੂਰਨ  sg_id        = sg.get_ਸਮੂਹ_ਰੇਖਿਕ_id();
+    ਅਚਲ ਪੂਰਨ  row0         = (workgroup_id * sg_range + sg_id) * ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_sg;
 
     // row is sub-group uniform, so this retires whole sub-groups and the collectives below
     // stay convergent
-    if (row0 >= nrows) {
-        return;
+    ਜੇ (row0 >= nrows) {
+        ਵਾਪਸ;
     }
 
-    static_assert(rows_per_sg == 1 ||
+    static_assert(ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_sg == 1 ||
                   reorder_vec_dot_shared_activations<reorder_vec_dot_q_sycl::gtype>::value);
 
-    const int     blocks_per_row              = ncols / block_traits::qk;
-    constexpr int blocks_per_subgroup         = ceil_div(block_traits::vdr_mmvq * WARP_SIZE, block_traits::qi);
-    constexpr int block_elements_per_subgroup = block_traits::qi / block_traits::vdr_mmvq;
-    const int     nblocks                     = nrows * (ncols / block_traits::qk);
+    ਅਚਲ ਪੂਰਨ     ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ              = ncols / ਖੰਡ_traits::qk;
+    constexpr ਪੂਰਨ ਖੰਡਾਂ_ਪ੍ਰਤੀ_subgroup         = ceil_div(ਖੰਡ_traits::vdr_mmvq * WARP_ਮਾਪ, ਖੰਡ_traits::qi);
+    constexpr ਪੂਰਨ ਖੰਡ_elements_ਪ੍ਰਤੀ_subgroup = ਖੰਡ_traits::qi / ਖੰਡ_traits::vdr_mmvq;
+    ਅਚਲ ਪੂਰਨ     nblocks                     = nrows * (ncols / ਖੰਡ_traits::qk);
 
-    static_assert(blocks_per_subgroup > 0);
-    static_assert(block_elements_per_subgroup > 0);
+    static_assert(ਖੰਡਾਂ_ਪ੍ਰਤੀ_subgroup > 0);
+    static_assert(ਖੰਡ_elements_ਪ੍ਰਤੀ_subgroup > 0);
 
-    float partial_sum[ncols_dst][rows_per_sg] = {};
+    ਦਸ਼ਮਲਵ partial_ਜੋੜ[ncols_dst][ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_sg] = {};
     // sized 1 rather than 0 when unused: zero-length arrays are not standard C++, and the
     // array is dead and eliminated in that case
-    [[maybe_unused]] float partial_gate[has_fusion ? ncols_dst : 1][has_fusion ? rows_per_sg : 1] = {};
-    for (int i = sg.get_local_linear_id() / block_elements_per_subgroup; i < blocks_per_row; i += blocks_per_subgroup) {
-        const int  iby       = i * block_type::block_to_q8_1_ratio();
+    [[maybe_unused]] ਦਸ਼ਮਲਵ partial_gate[has_fusion ? ncols_dst : 1][has_fusion ? ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_sg : 1] = {};
+    ਲਈ (ਪੂਰਨ i = sg.get_local_ਰੇਖਿਕ_id() / ਖੰਡ_elements_ਪ੍ਰਤੀ_subgroup; i < ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ; i += ਖੰਡਾਂ_ਪ੍ਰਤੀ_subgroup) {
+        ਅਚਲ ਪੂਰਨ  iby       = i * ਖੰਡ_type::ਖੰਡ_ਮੰਜ਼ਿਲ_q8_1_ਅਨੁਪਾਤ();
 
-#pragma unroll
-        for (int elem = 0; elem < block_elements_per_subgroup; elem += WARP_SIZE) {
-            const int iqs = elem + block_traits::vdr_mmvq * (sg.get_local_linear_id() % block_elements_per_subgroup);
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ elem = 0; elem < ਖੰਡ_elements_ਪ੍ਰਤੀ_subgroup; elem += WARP_ਮਾਪ) {
+            ਅਚਲ ਪੂਰਨ iqs = elem + ਖੰਡ_traits::vdr_mmvq * (sg.get_local_ਰੇਖਿਕ_id() % ਖੰਡ_elements_ਪ੍ਰਤੀ_subgroup);
 
-            if constexpr (rows_per_sg > 1) {
-                typename reorder_vec_dot_q_sycl::weights wx[rows_per_sg];
-                [[maybe_unused]] typename reorder_vec_dot_q_sycl::weights wg[rows_per_sg];
-#pragma unroll
-                for (int r = 0; r < rows_per_sg; ++r) {
-                    const int row = sycl::min(row0 + r, nrows - 1);
-                    const int ibx = row * blocks_per_row + i;
-                    const auto bx_offset = block_type::get_block_offset(ibx, nblocks);
-                    const auto d_offset  = block_type::get_d_offset(nrows, ncols, ibx);
-                    wx[r] = reorder_vec_dot_q_sycl::load(vx, bx_offset, d_offset, iqs);
-                    if constexpr (has_fusion) {
-                        wg[r] = reorder_vec_dot_q_sycl::load(vgate, bx_offset, d_offset, iqs);
+            ਜੇ constexpr (ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_sg > 1) {
+                ਕਿਸਮ_ਨਾਂ reorder_vec_dot_q_sycl::weights wx[ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_sg];
+                [[maybe_unused]] ਕਿਸਮ_ਨਾਂ reorder_vec_dot_q_sycl::weights wg[ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_sg];
+#ਹਦਾਇਤ unroll
+                ਲਈ (ਪੂਰਨ r = 0; r < ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_sg; ++r) {
+                    ਅਚਲ ਪੂਰਨ ਪੰਕਤੀ = sycl::min(row0 + r, nrows - 1);
+                    ਅਚਲ ਪੂਰਨ ibx = ਪੰਕਤੀ * ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ + i;
+                    ਅਚਲ ਸਵੈਚਾਲਿਤ bx_ਵਿੱਥ = ਖੰਡ_type::get_ਖੰਡ_ਵਿੱਥ(ibx, nblocks);
+                    ਅਚਲ ਸਵੈਚਾਲਿਤ d_ਵਿੱਥ  = ਖੰਡ_type::get_d_ਵਿੱਥ(nrows, ncols, ibx);
+                    wx[r] = reorder_vec_dot_q_sycl::load(vx, bx_ਵਿੱਥ, d_ਵਿੱਥ, iqs);
+                    ਜੇ constexpr (has_fusion) {
+                        wg[r] = reorder_vec_dot_q_sycl::load(vgate, bx_ਵਿੱਥ, d_ਵਿੱਥ, iqs);
                     }
                 }
-#pragma unroll
-                for (int j = 0; j < ncols_dst; ++j) {
-                    const char        * vy_j           = (const char *) vy + j * stride_col_y_bytes;
-                    const int8_t      * q8_1_quant_ptr = (const int8_t *) vy_j + iby * QK8_1;
-                    const sycl::half2 * q8_1_ds_ptr =
-                        (const sycl::half2 *) (vy_j + ncols + iby * sizeof(sycl::half2));
-                    const auto a = reorder_vec_dot_q_sycl::load_activations(q8_1_quant_ptr, q8_1_ds_ptr, iqs);
-#pragma unroll
-                    for (int r = 0; r < rows_per_sg; ++r) {
-                        partial_sum[j][r] += reorder_vec_dot_q_sycl::apply(wx[r], a);
-                        if constexpr (has_fusion) {
+#ਹਦਾਇਤ unroll
+                ਲਈ (ਪੂਰਨ j = 0; j < ncols_dst; ++j) {
+                    ਅਚਲ ਅੱਖਰ        * vy_j           = (ਅਚਲ ਅੱਖਰ *) vy + j * stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ;
+                    ਅਚਲ int8_t      * q8_1_quant_ptr = (ਅਚਲ int8_t *) vy_j + iby * QK8_1;
+                    ਅਚਲ sycl::half2 * q8_1_ds_ptr =
+                        (ਅਚਲ sycl::half2 *) (vy_j + ncols + iby * ਆਕਾਰ(sycl::half2));
+                    ਅਚਲ ਸਵੈਚਾਲਿਤ a = reorder_vec_dot_q_sycl::ਲੱਦੋ_activations(q8_1_quant_ptr, q8_1_ds_ptr, iqs);
+#ਹਦਾਇਤ unroll
+                    ਲਈ (ਪੂਰਨ r = 0; r < ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_sg; ++r) {
+                        partial_ਜੋੜ[j][r] += reorder_vec_dot_q_sycl::apply(wx[r], a);
+                        ਜੇ constexpr (has_fusion) {
                             partial_gate[j][r] += reorder_vec_dot_q_sycl::apply(wg[r], a);
                         }
                     }
                 }
-            } else if constexpr (shared_weights) {
-                const int ibx = row0 * blocks_per_row + i;
-                const auto bx_offset = block_type::get_block_offset(ibx, nblocks);
-                const auto d_offset  = block_type::get_d_offset(nrows, ncols, ibx);
-                const auto wx = reorder_vec_dot_q_sycl::load(vx, bx_offset, d_offset, iqs);
-                if constexpr (has_fusion) {
-                    const auto wg = reorder_vec_dot_q_sycl::load(vgate, bx_offset, d_offset, iqs);
+            } ਨਹੀਂਤਾਂ ਜੇ constexpr (shared_weights) {
+                ਅਚਲ ਪੂਰਨ ibx = row0 * ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ + i;
+                ਅਚਲ ਸਵੈਚਾਲਿਤ bx_ਵਿੱਥ = ਖੰਡ_type::get_ਖੰਡ_ਵਿੱਥ(ibx, nblocks);
+                ਅਚਲ ਸਵੈਚਾਲਿਤ d_ਵਿੱਥ  = ਖੰਡ_type::get_d_ਵਿੱਥ(nrows, ncols, ibx);
+                ਅਚਲ ਸਵੈਚਾਲਿਤ wx = reorder_vec_dot_q_sycl::load(vx, bx_ਵਿੱਥ, d_ਵਿੱਥ, iqs);
+                ਜੇ constexpr (has_fusion) {
+                    ਅਚਲ ਸਵੈਚਾਲਿਤ wg = reorder_vec_dot_q_sycl::load(vgate, bx_ਵਿੱਥ, d_ਵਿੱਥ, iqs);
 
-#pragma unroll
-                    for (int j = 0; j < ncols_dst; ++j) {
-                        const char        * vy_j           = (const char *) vy + j * stride_col_y_bytes;
-                        const int8_t      * q8_1_quant_ptr = (const int8_t *) vy_j + iby * QK8_1;
-                        const sycl::half2 * q8_1_ds_ptr =
-                            (const sycl::half2 *) (vy_j + ncols + iby * sizeof(sycl::half2));
+#ਹਦਾਇਤ unroll
+                    ਲਈ (ਪੂਰਨ j = 0; j < ncols_dst; ++j) {
+                        ਅਚਲ ਅੱਖਰ        * vy_j           = (ਅਚਲ ਅੱਖਰ *) vy + j * stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ;
+                        ਅਚਲ int8_t      * q8_1_quant_ptr = (ਅਚਲ int8_t *) vy_j + iby * QK8_1;
+                        ਅਚਲ sycl::half2 * q8_1_ds_ptr =
+                            (ਅਚਲ sycl::half2 *) (vy_j + ncols + iby * ਆਕਾਰ(sycl::half2));
 
                         // up and gate share the activation, so load it once and apply it twice
-                        const auto a = reorder_vec_dot_q_sycl::load_activations(q8_1_quant_ptr, q8_1_ds_ptr, iqs);
+                        ਅਚਲ ਸਵੈਚਾਲਿਤ a = reorder_vec_dot_q_sycl::ਲੱਦੋ_activations(q8_1_quant_ptr, q8_1_ds_ptr, iqs);
 
-                        partial_sum[j][0] += reorder_vec_dot_q_sycl::apply(wx, a);
+                        partial_ਜੋੜ[j][0] += reorder_vec_dot_q_sycl::apply(wx, a);
                         partial_gate[j][0] += reorder_vec_dot_q_sycl::apply(wg, a);
                     }
-                } else {
-#pragma unroll
-                    for (int j = 0; j < ncols_dst; ++j) {
-                        const char        * vy_j           = (const char *) vy + j * stride_col_y_bytes;
-                        const int8_t      * q8_1_quant_ptr = (const int8_t *) vy_j + iby * QK8_1;
-                        const sycl::half2 * q8_1_ds_ptr =
-                            (const sycl::half2 *) (vy_j + ncols + iby * sizeof(sycl::half2));
+                } ਨਹੀਂਤਾਂ {
+#ਹਦਾਇਤ unroll
+                    ਲਈ (ਪੂਰਨ j = 0; j < ncols_dst; ++j) {
+                        ਅਚਲ ਅੱਖਰ        * vy_j           = (ਅਚਲ ਅੱਖਰ *) vy + j * stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ;
+                        ਅਚਲ int8_t      * q8_1_quant_ptr = (ਅਚਲ int8_t *) vy_j + iby * QK8_1;
+                        ਅਚਲ sycl::half2 * q8_1_ds_ptr =
+                            (ਅਚਲ sycl::half2 *) (vy_j + ncols + iby * ਆਕਾਰ(sycl::half2));
 
-                        partial_sum[j][0] += reorder_vec_dot_q_sycl::dot(wx, q8_1_quant_ptr, q8_1_ds_ptr, iqs);
+                        partial_ਜੋੜ[j][0] += reorder_vec_dot_q_sycl::dot(wx, q8_1_quant_ptr, q8_1_ds_ptr, iqs);
                     }
                 }
-            } else {
-                const int ibx = row0 * blocks_per_row + i;
-                const auto bx_offset = block_type::get_block_offset(ibx, nblocks);
-                const auto d_offset  = block_type::get_d_offset(nrows, ncols, ibx);
-#pragma unroll
-                for (int j = 0; j < ncols_dst; ++j) {
-                    const char        * vy_j           = (const char *) vy + j * stride_col_y_bytes;
-                    const int8_t      * q8_1_quant_ptr = (const int8_t *) vy_j + iby * QK8_1;
-                    const sycl::half2 * q8_1_ds_ptr =
-                        (const sycl::half2 *) (vy_j + ncols + iby * sizeof(sycl::half2));
+            } ਨਹੀਂਤਾਂ {
+                ਅਚਲ ਪੂਰਨ ibx = row0 * ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ + i;
+                ਅਚਲ ਸਵੈਚਾਲਿਤ bx_ਵਿੱਥ = ਖੰਡ_type::get_ਖੰਡ_ਵਿੱਥ(ibx, nblocks);
+                ਅਚਲ ਸਵੈਚਾਲਿਤ d_ਵਿੱਥ  = ਖੰਡ_type::get_d_ਵਿੱਥ(nrows, ncols, ibx);
+#ਹਦਾਇਤ unroll
+                ਲਈ (ਪੂਰਨ j = 0; j < ncols_dst; ++j) {
+                    ਅਚਲ ਅੱਖਰ        * vy_j           = (ਅਚਲ ਅੱਖਰ *) vy + j * stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ;
+                    ਅਚਲ int8_t      * q8_1_quant_ptr = (ਅਚਲ int8_t *) vy_j + iby * QK8_1;
+                    ਅਚਲ sycl::half2 * q8_1_ds_ptr =
+                        (ਅਚਲ sycl::half2 *) (vy_j + ncols + iby * ਆਕਾਰ(sycl::half2));
 
-                    partial_sum[j][0] +=
-                        reorder_vec_dot_q_sycl()(vx, bx_offset, d_offset, q8_1_quant_ptr, q8_1_ds_ptr, iqs);
+                    partial_ਜੋੜ[j][0] +=
+                        reorder_vec_dot_q_sycl()(vx, bx_ਵਿੱਥ, d_ਵਿੱਥ, q8_1_quant_ptr, q8_1_ds_ptr, iqs);
 
-                    if constexpr (has_fusion) {
+                    ਜੇ constexpr (has_fusion) {
                         partial_gate[j][0] +=
-                            reorder_vec_dot_q_sycl()(vgate, bx_offset, d_offset, q8_1_quant_ptr, q8_1_ds_ptr, iqs);
+                            reorder_vec_dot_q_sycl()(vgate, bx_ਵਿੱਥ, d_ਵਿੱਥ, q8_1_quant_ptr, q8_1_ds_ptr, iqs);
                     }
                 }
             }
         }
     }
 
-#pragma unroll
-    for (int j = 0; j < ncols_dst; ++j) {
-#pragma unroll
-        for (int r = 0; r < rows_per_sg; ++r) {
-            float sum = sycl::reduce_over_group(nd_item.get_sub_group(), partial_sum[j][r], std::plus<>());
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ j = 0; j < ncols_dst; ++j) {
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ r = 0; r < ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_sg; ++r) {
+            ਦਸ਼ਮਲਵ ਜੋੜ = sycl::reduce_over_ਸਮੂਹ(nd_ਵਸਤੂ.get_sub_ਸਮੂਹ(), partial_ਜੋੜ[j][r], std::plus<>());
 
-            if constexpr (has_fusion) {
-                const float gate = sycl::reduce_over_group(nd_item.get_sub_group(), partial_gate[j][r], std::plus<>());
+            ਜੇ constexpr (has_fusion) {
+                ਅਚਲ ਦਸ਼ਮਲਵ gate = sycl::reduce_over_ਸਮੂਹ(nd_ਵਸਤੂ.get_sub_ਸਮੂਹ(), partial_gate[j][r], std::plus<>());
 
                 // uniform across the launch; the launcher only instantiates SWIGLU and GEGLU
-                sum *= glu_op == GGML_GLU_OP_SWIGLU ? op_silu(gate) : op_gelu(gate);
+                ਜੋੜ *= glu_op == GGML_GLU_OP_SWIGLU ? op_silu(gate) : op_gelu(gate);
             }
 
-            if (sg.leader() && row0 + r < nrows) {
-                dst[j * stride_col_dst + row0 + r] = sum;
+            ਜੇ (sg.leader() && row0 + r < nrows) {
+                dst[j * stride_ਖਾਨਾ_dst + row0 + r] = ਜੋੜ;
             }
         }
     }
 }
 
-template <int qk, int qi, typename block_q_t, int vdr, vec_dot_q_sycl_t vec_dot_q_sycl>
-static void mul_mat_vec_q(const void * __restrict__ vx, const void * __restrict__ vy, float * __restrict__ dst,
-                          const int ncols, const int nrows, const sycl::nd_item<3> & item_ct1) {
-    const int row = item_ct1.get_group(2) * item_ct1.get_local_range(1) + item_ct1.get_local_id(1);
+ਸਾਂਚਾ <ਪੂਰਨ qk, ਪੂਰਨ qi, ਕਿਸਮ_ਨਾਂ ਖੰਡ_q_t, ਪੂਰਨ vdr, vec_dot_q_sycl_t vec_dot_q_sycl>
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q(ਅਚਲ ਖਾਲੀ * __restrict__ vx, ਅਚਲ ਖਾਲੀ * __restrict__ vy, ਦਸ਼ਮਲਵ * __restrict__ dst,
+                          ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows, ਅਚਲ sycl::nd_ਵਸਤੂ<3> & ਵਸਤੂ_ct1) {
+    ਅਚਲ ਪੂਰਨ ਪੰਕਤੀ = ਵਸਤੂ_ct1.get_ਸਮੂਹ(2) * ਵਸਤੂ_ct1.get_local_range(1) + ਵਸਤੂ_ct1.get_local_id(1);
 
-    if (row >= nrows) {
-        return;
+    ਜੇ (ਪੰਕਤੀ >= nrows) {
+        ਵਾਪਸ;
     }
 
-    const int     blocks_per_row  = ncols / qk;
-    constexpr int blocks_per_warp = (vdr * WARP_SIZE + qi - 1) / qi;  // Ensuring blocks_per_warp > 0
+    ਅਚਲ ਪੂਰਨ     ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ  = ncols / qk;
+    constexpr ਪੂਰਨ ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp = (vdr * WARP_ਮਾਪ + qi - 1) / qi;  // Ensuring blocks_per_warp > 0
 
-    assert(blocks_per_warp > 0);
+    ਪ੍ਰਤਿਜ੍ਞਾ(ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp > 0);
 
     // partial sum for each thread
-    float tmp = 0.0f;
+    ਦਸ਼ਮਲਵ tmp = 0.0f;
 
-    const block_q_t *  x = (const block_q_t *) vx;
-    const block_q8_1 * y = (const block_q8_1 *) vy;
+    ਅਚਲ ਖੰਡ_q_t *  x = (ਅਚਲ ਖੰਡ_q_t *) vx;
+    ਅਚਲ ਖੰਡ_q8_1 * y = (ਅਚਲ ਖੰਡ_q8_1 *) vy;
 
-    for (int i = item_ct1.get_local_id(2) / (qi / vdr); i < blocks_per_row; i += blocks_per_warp) {
-        const int ibx = row * blocks_per_row + i;  // x block index
+    ਲਈ (ਪੂਰਨ i = ਵਸਤੂ_ct1.get_local_id(2) / (qi / vdr); i < ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ; i += ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp) {
+        ਅਚਲ ਪੂਰਨ ibx = ਪੰਕਤੀ * ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ + i;  // x block index
 
-        const int iby = i * (qk / QK8_1);          // y block index that aligns with ibx
+        ਅਚਲ ਪੂਰਨ iby = i * (qk / QK8_1);          // y block index that aligns with ibx
 
-        for (size_t elem = 0; elem < qi / vdr; elem += WARP_SIZE) {
-            const int iqs = elem + vdr * (item_ct1.get_local_id(2) %
+        ਲਈ (size_t elem = 0; elem < qi / vdr; elem += WARP_ਮਾਪ) {
+            ਅਚਲ ਪੂਰਨ iqs = elem + vdr * (ਵਸਤੂ_ct1.get_local_id(2) %
                                           (qi / vdr));  // x block quant index when casting the quants to int
 
             tmp += vec_dot_q_sycl(&x[ibx], &y[iby], iqs);
@@ -291,3065 +291,3065 @@ static void mul_mat_vec_q(const void * __restrict__ vx, const void * __restrict_
     }
 
     // sum up partial sums and write back result
-#pragma unroll
-    for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
-        tmp += dpct::permute_sub_group_by_xor(item_ct1.get_sub_group(), tmp, mask);
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ ਨਕਾਬ = WARP_ਮਾਪ / 2; ਨਕਾਬ > 0; ਨਕਾਬ >>= 1) {
+        tmp += dpct::ਕ੍ਰਮ_ਬਦਲੋ_sub_ਸਮੂਹ_by_xor(ਵਸਤੂ_ct1.get_sub_ਸਮੂਹ(), tmp, ਨਕਾਬ);
     }
 
-    if (item_ct1.get_local_id(2) == 0) {
-        dst[row] = tmp;
+    ਜੇ (ਵਸਤੂ_ct1.get_local_id(2) == 0) {
+        dst[ਪੰਕਤੀ] = tmp;
     }
 }
 
-template <int qk, int qi, typename block_q_t, int vdr,
-          vec_dot_q_sycl_t vec_dot_q_sycl, int ncols_dst>
-static void mul_mat_vec_q_ncols(
-        const void * __restrict__ vx,
-        const void * __restrict__ vy,
-        float * __restrict__ dst,
-        const int ncols,
-        const int nrows,
-        const int stride_col_y,
-        const int stride_col_dst,
-        const sycl::nd_item<3> & item_ct1) {
+ਸਾਂਚਾ <ਪੂਰਨ qk, ਪੂਰਨ qi, ਕਿਸਮ_ਨਾਂ ਖੰਡ_q_t, ਪੂਰਨ vdr,
+          vec_dot_q_sycl_t vec_dot_q_sycl, ਪੂਰਨ ncols_dst>
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q_ncols(
+        ਅਚਲ ਖਾਲੀ * __restrict__ vx,
+        ਅਚਲ ਖਾਲੀ * __restrict__ vy,
+        ਦਸ਼ਮਲਵ * __restrict__ dst,
+        ਅਚਲ ਪੂਰਨ ncols,
+        ਅਚਲ ਪੂਰਨ nrows,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        ਅਚਲ sycl::nd_ਵਸਤੂ<3> & ਵਸਤੂ_ct1) {
 
-    const int row = item_ct1.get_group(2) * item_ct1.get_local_range(1)
-                  + item_ct1.get_local_id(1);
+    ਅਚਲ ਪੂਰਨ ਪੰਕਤੀ = ਵਸਤੂ_ct1.get_ਸਮੂਹ(2) * ਵਸਤੂ_ct1.get_local_range(1)
+                  + ਵਸਤੂ_ct1.get_local_id(1);
 
-    if (row >= nrows) {
-        return;
+    ਜੇ (ਪੰਕਤੀ >= nrows) {
+        ਵਾਪਸ;
     }
 
-    const int blocks_per_row = ncols / qk;
-    constexpr int blocks_per_warp = (vdr * WARP_SIZE + qi - 1) / qi;
+    ਅਚਲ ਪੂਰਨ ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ = ncols / qk;
+    constexpr ਪੂਰਨ ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp = (vdr * WARP_ਮਾਪ + qi - 1) / qi;
 
     // partial sums: one per output column
-    float tmp[ncols_dst] = {0.0f};
+    ਦਸ਼ਮਲਵ tmp[ncols_dst] = {0.0f};
 
-    const block_q_t  * x = (const block_q_t *) vx;
-    const block_q8_1 * y = (const block_q8_1 *) vy;
+    ਅਚਲ ਖੰਡ_q_t  * x = (ਅਚਲ ਖੰਡ_q_t *) vx;
+    ਅਚਲ ਖੰਡ_q8_1 * y = (ਅਚਲ ਖੰਡ_q8_1 *) vy;
 
-    for (int i = item_ct1.get_local_id(2) / (qi / vdr);
-         i < blocks_per_row;
-         i += blocks_per_warp) {
+    ਲਈ (ਪੂਰਨ i = ਵਸਤੂ_ct1.get_local_id(2) / (qi / vdr);
+         i < ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+         i += ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp) {
 
-        const int ibx = row * blocks_per_row + i;
-        const int iby = i * (qk / QK8_1);
+        ਅਚਲ ਪੂਰਨ ibx = ਪੰਕਤੀ * ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ + i;
+        ਅਚਲ ਪੂਰਨ iby = i * (qk / QK8_1);
 
         // read weight block once, dot against all columns
-        for (size_t elem = 0; elem < qi / vdr; elem += WARP_SIZE) {
-            const int iqs = elem + vdr * (item_ct1.get_local_id(2) % (qi / vdr));
+        ਲਈ (size_t elem = 0; elem < qi / vdr; elem += WARP_ਮਾਪ) {
+            ਅਚਲ ਪੂਰਨ iqs = elem + vdr * (ਵਸਤੂ_ct1.get_local_id(2) % (qi / vdr));
 
-#pragma unroll
-            for (int j = 0; j < ncols_dst; ++j) {
-                tmp[j] += vec_dot_q_sycl(&x[ibx], &y[j * stride_col_y + iby], iqs);
+#ਹਦਾਇਤ unroll
+            ਲਈ (ਪੂਰਨ j = 0; j < ncols_dst; ++j) {
+                tmp[j] += vec_dot_q_sycl(&x[ibx], &y[j * stride_ਖਾਨਾ_y + iby], iqs);
             }
         }
     }
 
     // reduce within subgroup
-#pragma unroll
-    for (int j = 0; j < ncols_dst; ++j) {
-#pragma unroll
-        for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
-            tmp[j] += dpct::permute_sub_group_by_xor(
-                item_ct1.get_sub_group(), tmp[j], mask);
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ j = 0; j < ncols_dst; ++j) {
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ ਨਕਾਬ = WARP_ਮਾਪ / 2; ਨਕਾਬ > 0; ਨਕਾਬ >>= 1) {
+            tmp[j] += dpct::ਕ੍ਰਮ_ਬਦਲੋ_sub_ਸਮੂਹ_by_xor(
+                ਵਸਤੂ_ct1.get_sub_ਸਮੂਹ(), tmp[j], ਨਕਾਬ);
         }
     }
 
-    if (item_ct1.get_local_id(2) == 0) {
-#pragma unroll
-        for (int j = 0; j < ncols_dst; ++j) {
-            dst[j * stride_col_dst + row] = tmp[j];
+    ਜੇ (ਵਸਤੂ_ct1.get_local_id(2) == 0) {
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ j = 0; j < ncols_dst; ++j) {
+            dst[j * stride_ਖਾਨਾ_dst + ਪੰਕਤੀ] = tmp[j];
         }
     }
 }
 
-template <int qk, int qi, typename block_q_t, int vdr>
-static void mul_mat_vec_q_iq2_xxs_q8_1(const void *__restrict__ vx,
-                                       const void *__restrict__ vy,
-                                       float *__restrict__ dst, const int ncols,
-                                       const int nrows,
-                                       const sycl::nd_item<3> &item_ct1) {
-    const int row = item_ct1.get_group(2) * item_ct1.get_local_range(1) +
-                    item_ct1.get_local_id(1);
+ਸਾਂਚਾ <ਪੂਰਨ qk, ਪੂਰਨ qi, ਕਿਸਮ_ਨਾਂ ਖੰਡ_q_t, ਪੂਰਨ vdr>
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q_iq2_xxs_q8_1(ਅਚਲ ਖਾਲੀ *__restrict__ vx,
+                                       ਅਚਲ ਖਾਲੀ *__restrict__ vy,
+                                       ਦਸ਼ਮਲਵ *__restrict__ dst, ਅਚਲ ਪੂਰਨ ncols,
+                                       ਅਚਲ ਪੂਰਨ nrows,
+                                       ਅਚਲ sycl::nd_ਵਸਤੂ<3> &ਵਸਤੂ_ct1) {
+    ਅਚਲ ਪੂਰਨ ਪੰਕਤੀ = ਵਸਤੂ_ct1.get_ਸਮੂਹ(2) * ਵਸਤੂ_ct1.get_local_range(1) +
+                    ਵਸਤੂ_ct1.get_local_id(1);
 
-    if (row >= nrows) {
-        return;
+    ਜੇ (ਪੰਕਤੀ >= nrows) {
+        ਵਾਪਸ;
     }
 
-    const int blocks_per_row = ncols / qk;
-    const int blocks_per_warp = vdr * WARP_SIZE / qi;
-    assert(blocks_per_warp>0);
+    ਅਚਲ ਪੂਰਨ ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ = ncols / qk;
+    ਅਚਲ ਪੂਰਨ ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp = vdr * WARP_ਮਾਪ / qi;
+    ਪ੍ਰਤਿਜ੍ਞਾ(ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp>0);
 
 // partial sum for each thread
-    float tmp = 0.0f;
+    ਦਸ਼ਮਲਵ tmp = 0.0f;
 
-    const block_q_t  * x = (const block_q_t  *) vx;
-    const block_q8_1 * y = (const block_q8_1 *) vy;
+    ਅਚਲ ਖੰਡ_q_t  * x = (ਅਚਲ ਖੰਡ_q_t  *) vx;
+    ਅਚਲ ਖੰਡ_q8_1 * y = (ਅਚਲ ਖੰਡ_q8_1 *) vy;
 
-    for (int i = item_ct1.get_local_id(2) / (qi / vdr); i < blocks_per_row;
-         i += blocks_per_warp) {
-        const int ibx = row*blocks_per_row + i; // x block index
+    ਲਈ (ਪੂਰਨ i = ਵਸਤੂ_ct1.get_local_id(2) / (qi / vdr); i < ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+         i += ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp) {
+        ਅਚਲ ਪੂਰਨ ibx = ਪੰਕਤੀ*ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ + i; // x block index
 
-        const int iby = i * (qk/QK8_1); // y block index that aligns with ibx
+        ਅਚਲ ਪੂਰਨ iby = i * (qk/QK8_1); // y block index that aligns with ibx
 
-        const int iqs =
+        ਅਚਲ ਪੂਰਨ iqs =
             vdr *
-            (item_ct1.get_local_id(2) %
+            (ਵਸਤੂ_ct1.get_local_id(2) %
              (qi / vdr)); // x block quant index when casting the quants to int
 
         tmp += vec_dot_iq2_xxs_q8_1(&x[ibx], &y[iby], iqs, iq2xxs_grid, ksigns_iq2xs, kmask_iq2xs);
     }
 
     // sum up partial sums and write back result
-#pragma unroll
-    for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ ਨਕਾਬ = WARP_ਮਾਪ / 2; ਨਕਾਬ > 0; ਨਕਾਬ >>= 1) {
         tmp +=
-            dpct::permute_sub_group_by_xor(item_ct1.get_sub_group(), tmp, mask);
+            dpct::ਕ੍ਰਮ_ਬਦਲੋ_sub_ਸਮੂਹ_by_xor(ਵਸਤੂ_ct1.get_sub_ਸਮੂਹ(), tmp, ਨਕਾਬ);
     }
 
-    if (item_ct1.get_local_id(2) == 0) {
-        dst[row] = tmp;
+    ਜੇ (ਵਸਤੂ_ct1.get_local_id(2) == 0) {
+        dst[ਪੰਕਤੀ] = tmp;
     }
 }
 
-template <int qk, int qi, typename block_q_t, int vdr>
-static void mul_mat_vec_q_iq2_xs_q8_1(const void *__restrict__ vx,
-                                      const void *__restrict__ vy,
-                                      float *__restrict__ dst, const int ncols,
-                                      const int nrows,
-                                      const sycl::nd_item<3> &item_ct1) {
-    const int row = item_ct1.get_group(2) * item_ct1.get_local_range(1) +
-                    item_ct1.get_local_id(1);
+ਸਾਂਚਾ <ਪੂਰਨ qk, ਪੂਰਨ qi, ਕਿਸਮ_ਨਾਂ ਖੰਡ_q_t, ਪੂਰਨ vdr>
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q_iq2_xs_q8_1(ਅਚਲ ਖਾਲੀ *__restrict__ vx,
+                                      ਅਚਲ ਖਾਲੀ *__restrict__ vy,
+                                      ਦਸ਼ਮਲਵ *__restrict__ dst, ਅਚਲ ਪੂਰਨ ncols,
+                                      ਅਚਲ ਪੂਰਨ nrows,
+                                      ਅਚਲ sycl::nd_ਵਸਤੂ<3> &ਵਸਤੂ_ct1) {
+    ਅਚਲ ਪੂਰਨ ਪੰਕਤੀ = ਵਸਤੂ_ct1.get_ਸਮੂਹ(2) * ਵਸਤੂ_ct1.get_local_range(1) +
+                    ਵਸਤੂ_ct1.get_local_id(1);
 
-    if (row >= nrows) {
-        return;
+    ਜੇ (ਪੰਕਤੀ >= nrows) {
+        ਵਾਪਸ;
     }
 
-    const int blocks_per_row = ncols / qk;
-    const int blocks_per_warp = vdr * WARP_SIZE / qi;
-    assert(blocks_per_warp>0);
+    ਅਚਲ ਪੂਰਨ ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ = ncols / qk;
+    ਅਚਲ ਪੂਰਨ ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp = vdr * WARP_ਮਾਪ / qi;
+    ਪ੍ਰਤਿਜ੍ਞਾ(ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp>0);
 // partial sum for each thread
-    float tmp = 0.0f;
+    ਦਸ਼ਮਲਵ tmp = 0.0f;
 
-    const block_q_t  * x = (const block_q_t  *) vx;
-    const block_q8_1 * y = (const block_q8_1 *) vy;
+    ਅਚਲ ਖੰਡ_q_t  * x = (ਅਚਲ ਖੰਡ_q_t  *) vx;
+    ਅਚਲ ਖੰਡ_q8_1 * y = (ਅਚਲ ਖੰਡ_q8_1 *) vy;
 
-    for (int i = item_ct1.get_local_id(2) / (qi / vdr); i < blocks_per_row;
-         i += blocks_per_warp) {
-        const int ibx = row*blocks_per_row + i; // x block index
+    ਲਈ (ਪੂਰਨ i = ਵਸਤੂ_ct1.get_local_id(2) / (qi / vdr); i < ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+         i += ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp) {
+        ਅਚਲ ਪੂਰਨ ibx = ਪੰਕਤੀ*ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ + i; // x block index
 
-        const int iby = i * (qk/QK8_1); // y block index that aligns with ibx
+        ਅਚਲ ਪੂਰਨ iby = i * (qk/QK8_1); // y block index that aligns with ibx
 
-        const int iqs =
+        ਅਚਲ ਪੂਰਨ iqs =
             vdr *
-            (item_ct1.get_local_id(2) %
+            (ਵਸਤੂ_ct1.get_local_id(2) %
              (qi / vdr)); // x block quant index when casting the quants to int
 
         tmp += vec_dot_iq2_xs_q8_1(&x[ibx], &y[iby], iqs, iq2xs_grid);
     }
 
     // sum up partial sums and write back result
-#pragma unroll
-    for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ ਨਕਾਬ = WARP_ਮਾਪ / 2; ਨਕਾਬ > 0; ਨਕਾਬ >>= 1) {
         tmp +=
-            dpct::permute_sub_group_by_xor(item_ct1.get_sub_group(), tmp, mask);
+            dpct::ਕ੍ਰਮ_ਬਦਲੋ_sub_ਸਮੂਹ_by_xor(ਵਸਤੂ_ct1.get_sub_ਸਮੂਹ(), tmp, ਨਕਾਬ);
     }
 
-    if (item_ct1.get_local_id(2) == 0) {
-        dst[row] = tmp;
+    ਜੇ (ਵਸਤੂ_ct1.get_local_id(2) == 0) {
+        dst[ਪੰਕਤੀ] = tmp;
     }
 }
 
-template <int qk, int qi, typename block_q_t, int vdr>
-static void mul_mat_vec_q_iq2_s_q8_1(const void *__restrict__ vx,
-                                     const void *__restrict__ vy,
-                                     float *__restrict__ dst, const int ncols,
-                                     const int nrows,
-                                     const sycl::nd_item<3> &item_ct1) {
-    const int row = item_ct1.get_group(2) * item_ct1.get_local_range(1) +
-                    item_ct1.get_local_id(1);
+ਸਾਂਚਾ <ਪੂਰਨ qk, ਪੂਰਨ qi, ਕਿਸਮ_ਨਾਂ ਖੰਡ_q_t, ਪੂਰਨ vdr>
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q_iq2_s_q8_1(ਅਚਲ ਖਾਲੀ *__restrict__ vx,
+                                     ਅਚਲ ਖਾਲੀ *__restrict__ vy,
+                                     ਦਸ਼ਮਲਵ *__restrict__ dst, ਅਚਲ ਪੂਰਨ ncols,
+                                     ਅਚਲ ਪੂਰਨ nrows,
+                                     ਅਚਲ sycl::nd_ਵਸਤੂ<3> &ਵਸਤੂ_ct1) {
+    ਅਚਲ ਪੂਰਨ ਪੰਕਤੀ = ਵਸਤੂ_ct1.get_ਸਮੂਹ(2) * ਵਸਤੂ_ct1.get_local_range(1) +
+                    ਵਸਤੂ_ct1.get_local_id(1);
 
-    if (row >= nrows) {
-        return;
+    ਜੇ (ਪੰਕਤੀ >= nrows) {
+        ਵਾਪਸ;
     }
 
-    const int blocks_per_row = ncols / qk;
-    const int blocks_per_warp = vdr * WARP_SIZE / qi;
-    assert(blocks_per_warp>0);
+    ਅਚਲ ਪੂਰਨ ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ = ncols / qk;
+    ਅਚਲ ਪੂਰਨ ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp = vdr * WARP_ਮਾਪ / qi;
+    ਪ੍ਰਤਿਜ੍ਞਾ(ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp>0);
 // partial sum for each thread
-    float tmp = 0.0f;
+    ਦਸ਼ਮਲਵ tmp = 0.0f;
 
-    const block_q_t  * x = (const block_q_t  *) vx;
-    const block_q8_1 * y = (const block_q8_1 *) vy;
+    ਅਚਲ ਖੰਡ_q_t  * x = (ਅਚਲ ਖੰਡ_q_t  *) vx;
+    ਅਚਲ ਖੰਡ_q8_1 * y = (ਅਚਲ ਖੰਡ_q8_1 *) vy;
 
-    for (int i = item_ct1.get_local_id(2) / (qi / vdr); i < blocks_per_row;
-         i += blocks_per_warp) {
-        const int ibx = row*blocks_per_row + i; // x block index
+    ਲਈ (ਪੂਰਨ i = ਵਸਤੂ_ct1.get_local_id(2) / (qi / vdr); i < ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+         i += ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp) {
+        ਅਚਲ ਪੂਰਨ ibx = ਪੰਕਤੀ*ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ + i; // x block index
 
-        const int iby = i * (qk/QK8_1); // y block index that aligns with ibx
+        ਅਚਲ ਪੂਰਨ iby = i * (qk/QK8_1); // y block index that aligns with ibx
 
-        const int iqs =
+        ਅਚਲ ਪੂਰਨ iqs =
             vdr *
-            (item_ct1.get_local_id(2) %
+            (ਵਸਤੂ_ct1.get_local_id(2) %
              (qi / vdr)); // x block quant index when casting the quants to int
 
         tmp += vec_dot_iq2_s_q8_1(&x[ibx], &y[iby], iqs);
     }
 
     // sum up partial sums and write back result
-#pragma unroll
-    for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ ਨਕਾਬ = WARP_ਮਾਪ / 2; ਨਕਾਬ > 0; ਨਕਾਬ >>= 1) {
         tmp +=
-            dpct::permute_sub_group_by_xor(item_ct1.get_sub_group(), tmp, mask);
+            dpct::ਕ੍ਰਮ_ਬਦਲੋ_sub_ਸਮੂਹ_by_xor(ਵਸਤੂ_ct1.get_sub_ਸਮੂਹ(), tmp, ਨਕਾਬ);
     }
 
-    if (item_ct1.get_local_id(2) == 0) {
-        dst[row] = tmp;
+    ਜੇ (ਵਸਤੂ_ct1.get_local_id(2) == 0) {
+        dst[ਪੰਕਤੀ] = tmp;
     }
 }
 
-template <int qk, int qi, typename block_q_t, int vdr>
-static void mul_mat_vec_q_iq3_xxs_q8_1(const void *__restrict__ vx,
-                                       const void *__restrict__ vy,
-                                       float *__restrict__ dst, const int ncols,
-                                       const int nrows,
-                                       const sycl::nd_item<3> &item_ct1) {
-    const int row = item_ct1.get_group(2) * item_ct1.get_local_range(1) +
-                    item_ct1.get_local_id(1);
+ਸਾਂਚਾ <ਪੂਰਨ qk, ਪੂਰਨ qi, ਕਿਸਮ_ਨਾਂ ਖੰਡ_q_t, ਪੂਰਨ vdr>
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q_iq3_xxs_q8_1(ਅਚਲ ਖਾਲੀ *__restrict__ vx,
+                                       ਅਚਲ ਖਾਲੀ *__restrict__ vy,
+                                       ਦਸ਼ਮਲਵ *__restrict__ dst, ਅਚਲ ਪੂਰਨ ncols,
+                                       ਅਚਲ ਪੂਰਨ nrows,
+                                       ਅਚਲ sycl::nd_ਵਸਤੂ<3> &ਵਸਤੂ_ct1) {
+    ਅਚਲ ਪੂਰਨ ਪੰਕਤੀ = ਵਸਤੂ_ct1.get_ਸਮੂਹ(2) * ਵਸਤੂ_ct1.get_local_range(1) +
+                    ਵਸਤੂ_ct1.get_local_id(1);
 
-    if (row >= nrows) {
-        return;
+    ਜੇ (ਪੰਕਤੀ >= nrows) {
+        ਵਾਪਸ;
     }
 
-    const int blocks_per_row = ncols / qk;
-    const int blocks_per_warp = vdr * WARP_SIZE / qi;
-    assert(blocks_per_warp>0);
+    ਅਚਲ ਪੂਰਨ ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ = ncols / qk;
+    ਅਚਲ ਪੂਰਨ ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp = vdr * WARP_ਮਾਪ / qi;
+    ਪ੍ਰਤਿਜ੍ਞਾ(ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp>0);
 // partial sum for each thread
-    float tmp = 0.0f;
+    ਦਸ਼ਮਲਵ tmp = 0.0f;
 
-    const block_q_t  * x = (const block_q_t  *) vx;
-    const block_q8_1 * y = (const block_q8_1 *) vy;
+    ਅਚਲ ਖੰਡ_q_t  * x = (ਅਚਲ ਖੰਡ_q_t  *) vx;
+    ਅਚਲ ਖੰਡ_q8_1 * y = (ਅਚਲ ਖੰਡ_q8_1 *) vy;
 
-    for (int i = item_ct1.get_local_id(2) / (qi / vdr); i < blocks_per_row;
-         i += blocks_per_warp) {
-        const int ibx = row*blocks_per_row + i; // x block index
+    ਲਈ (ਪੂਰਨ i = ਵਸਤੂ_ct1.get_local_id(2) / (qi / vdr); i < ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+         i += ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp) {
+        ਅਚਲ ਪੂਰਨ ibx = ਪੰਕਤੀ*ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ + i; // x block index
 
-        const int iby = i * (qk/QK8_1); // y block index that aligns with ibx
+        ਅਚਲ ਪੂਰਨ iby = i * (qk/QK8_1); // y block index that aligns with ibx
 
-        const int iqs =
+        ਅਚਲ ਪੂਰਨ iqs =
             vdr *
-            (item_ct1.get_local_id(2) %
+            (ਵਸਤੂ_ct1.get_local_id(2) %
              (qi / vdr)); // x block quant index when casting the quants to int
 
         tmp += vec_dot_iq3_xxs_q8_1(&x[ibx], &y[iby], iqs, iq3xxs_grid);
     }
 
     // sum up partial sums and write back result
-#pragma unroll
-    for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ ਨਕਾਬ = WARP_ਮਾਪ / 2; ਨਕਾਬ > 0; ਨਕਾਬ >>= 1) {
         tmp +=
-            dpct::permute_sub_group_by_xor(item_ct1.get_sub_group(), tmp, mask);
+            dpct::ਕ੍ਰਮ_ਬਦਲੋ_sub_ਸਮੂਹ_by_xor(ਵਸਤੂ_ct1.get_sub_ਸਮੂਹ(), tmp, ਨਕਾਬ);
     }
 
-    if (item_ct1.get_local_id(2) == 0) {
-        dst[row] = tmp;
+    ਜੇ (ਵਸਤੂ_ct1.get_local_id(2) == 0) {
+        dst[ਪੰਕਤੀ] = tmp;
     }
 }
 
-static __dpct_inline__ float vec_dot_iq3_s_q8_1_adapter(
-        const void * __restrict__ vbq, const block_q8_1 * __restrict__ bq8_1, const int & iqs) {
-    return vec_dot_iq3_s_q8_1(vbq, bq8_1, iqs, iq3s_grid);
+ਸਥਿਰ __dpct_inline__ ਦਸ਼ਮਲਵ vec_dot_iq3_s_q8_1_adapter(
+        ਅਚਲ ਖਾਲੀ * __restrict__ vbq, ਅਚਲ ਖੰਡ_q8_1 * __restrict__ bq8_1, ਅਚਲ ਪੂਰਨ & iqs) {
+    ਵਾਪਸ vec_dot_iq3_s_q8_1(vbq, bq8_1, iqs, iq3s_grid);
 }
 
-template <int qk, int qi, typename block_q_t, int vdr>
-static void mul_mat_vec_q_iq3_s_q8_1(const void *__restrict__ vx,
-                                     const void *__restrict__ vy,
-                                     float *__restrict__ dst, const int ncols,
-                                     const int nrows,
-                                     const sycl::nd_item<3> &item_ct1) {
-    const int row = item_ct1.get_group(2) * item_ct1.get_local_range(1) +
-                    item_ct1.get_local_id(1);
+ਸਾਂਚਾ <ਪੂਰਨ qk, ਪੂਰਨ qi, ਕਿਸਮ_ਨਾਂ ਖੰਡ_q_t, ਪੂਰਨ vdr>
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q_iq3_s_q8_1(ਅਚਲ ਖਾਲੀ *__restrict__ vx,
+                                     ਅਚਲ ਖਾਲੀ *__restrict__ vy,
+                                     ਦਸ਼ਮਲਵ *__restrict__ dst, ਅਚਲ ਪੂਰਨ ncols,
+                                     ਅਚਲ ਪੂਰਨ nrows,
+                                     ਅਚਲ sycl::nd_ਵਸਤੂ<3> &ਵਸਤੂ_ct1) {
+    ਅਚਲ ਪੂਰਨ ਪੰਕਤੀ = ਵਸਤੂ_ct1.get_ਸਮੂਹ(2) * ਵਸਤੂ_ct1.get_local_range(1) +
+                    ਵਸਤੂ_ct1.get_local_id(1);
 
-    if (row >= nrows) {
-        return;
+    ਜੇ (ਪੰਕਤੀ >= nrows) {
+        ਵਾਪਸ;
     }
 
-    const int blocks_per_row = ncols / qk;
-    const int blocks_per_warp = vdr * WARP_SIZE / qi;
-    assert(blocks_per_warp>0);
+    ਅਚਲ ਪੂਰਨ ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ = ncols / qk;
+    ਅਚਲ ਪੂਰਨ ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp = vdr * WARP_ਮਾਪ / qi;
+    ਪ੍ਰਤਿਜ੍ਞਾ(ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp>0);
 // partial sum for each thread
-    float tmp = 0.0f;
+    ਦਸ਼ਮਲਵ tmp = 0.0f;
 
-    const block_q_t  * x = (const block_q_t  *) vx;
-    const block_q8_1 * y = (const block_q8_1 *) vy;
+    ਅਚਲ ਖੰਡ_q_t  * x = (ਅਚਲ ਖੰਡ_q_t  *) vx;
+    ਅਚਲ ਖੰਡ_q8_1 * y = (ਅਚਲ ਖੰਡ_q8_1 *) vy;
 
-    for (int i = item_ct1.get_local_id(2) / (qi / vdr); i < blocks_per_row;
-         i += blocks_per_warp) {
-        const int ibx = row*blocks_per_row + i; // x block index
+    ਲਈ (ਪੂਰਨ i = ਵਸਤੂ_ct1.get_local_id(2) / (qi / vdr); i < ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+         i += ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp) {
+        ਅਚਲ ਪੂਰਨ ibx = ਪੰਕਤੀ*ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ + i; // x block index
 
-        const int iby = i * (qk/QK8_1); // y block index that aligns with ibx
+        ਅਚਲ ਪੂਰਨ iby = i * (qk/QK8_1); // y block index that aligns with ibx
 
-        const int iqs =
+        ਅਚਲ ਪੂਰਨ iqs =
             vdr *
-            (item_ct1.get_local_id(2) %
+            (ਵਸਤੂ_ct1.get_local_id(2) %
              (qi / vdr)); // x block quant index when casting the quants to int
 
         tmp += vec_dot_iq3_s_q8_1(&x[ibx], &y[iby], iqs, iq3s_grid);
     }
 
     // sum up partial sums and write back result
-#pragma unroll
-    for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ ਨਕਾਬ = WARP_ਮਾਪ / 2; ਨਕਾਬ > 0; ਨਕਾਬ >>= 1) {
         tmp +=
-            dpct::permute_sub_group_by_xor(item_ct1.get_sub_group(), tmp, mask);
+            dpct::ਕ੍ਰਮ_ਬਦਲੋ_sub_ਸਮੂਹ_by_xor(ਵਸਤੂ_ct1.get_sub_ਸਮੂਹ(), tmp, ਨਕਾਬ);
     }
 
-    if (item_ct1.get_local_id(2) == 0) {
-        dst[row] = tmp;
+    ਜੇ (ਵਸਤੂ_ct1.get_local_id(2) == 0) {
+        dst[ਪੰਕਤੀ] = tmp;
     }
 }
 
-template <int qk, int qi, typename block_q_t, int vdr>
-static void mul_mat_vec_q_iq1_s_q8_1(const void *__restrict__ vx,
-                                     const void *__restrict__ vy,
-                                     float *__restrict__ dst, const int ncols,
-                                     const int nrows,
-                                     const sycl::nd_item<3> &item_ct1) {
-    const int row = item_ct1.get_group(2) * item_ct1.get_local_range(1) +
-                    item_ct1.get_local_id(1);
+ਸਾਂਚਾ <ਪੂਰਨ qk, ਪੂਰਨ qi, ਕਿਸਮ_ਨਾਂ ਖੰਡ_q_t, ਪੂਰਨ vdr>
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q_iq1_s_q8_1(ਅਚਲ ਖਾਲੀ *__restrict__ vx,
+                                     ਅਚਲ ਖਾਲੀ *__restrict__ vy,
+                                     ਦਸ਼ਮਲਵ *__restrict__ dst, ਅਚਲ ਪੂਰਨ ncols,
+                                     ਅਚਲ ਪੂਰਨ nrows,
+                                     ਅਚਲ sycl::nd_ਵਸਤੂ<3> &ਵਸਤੂ_ct1) {
+    ਅਚਲ ਪੂਰਨ ਪੰਕਤੀ = ਵਸਤੂ_ct1.get_ਸਮੂਹ(2) * ਵਸਤੂ_ct1.get_local_range(1) +
+                    ਵਸਤੂ_ct1.get_local_id(1);
 
-    if (row >= nrows) {
-        return;
+    ਜੇ (ਪੰਕਤੀ >= nrows) {
+        ਵਾਪਸ;
     }
 
-    const int blocks_per_row = ncols / qk;
-    const int blocks_per_warp = vdr * WARP_SIZE / qi;
-    assert(blocks_per_warp>0);
+    ਅਚਲ ਪੂਰਨ ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ = ncols / qk;
+    ਅਚਲ ਪੂਰਨ ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp = vdr * WARP_ਮਾਪ / qi;
+    ਪ੍ਰਤਿਜ੍ਞਾ(ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp>0);
 // partial sum for each thread
-    float tmp = 0.0f;
+    ਦਸ਼ਮਲਵ tmp = 0.0f;
 
-    const block_q_t  * x = (const block_q_t  *) vx;
-    const block_q8_1 * y = (const block_q8_1 *) vy;
+    ਅਚਲ ਖੰਡ_q_t  * x = (ਅਚਲ ਖੰਡ_q_t  *) vx;
+    ਅਚਲ ਖੰਡ_q8_1 * y = (ਅਚਲ ਖੰਡ_q8_1 *) vy;
 
-    for (int i = item_ct1.get_local_id(2) / (qi / vdr); i < blocks_per_row;
-         i += blocks_per_warp) {
-        const int ibx = row*blocks_per_row + i; // x block index
+    ਲਈ (ਪੂਰਨ i = ਵਸਤੂ_ct1.get_local_id(2) / (qi / vdr); i < ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+         i += ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp) {
+        ਅਚਲ ਪੂਰਨ ibx = ਪੰਕਤੀ*ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ + i; // x block index
 
-        const int iby = i * (qk/QK8_1); // y block index that aligns with ibx
+        ਅਚਲ ਪੂਰਨ iby = i * (qk/QK8_1); // y block index that aligns with ibx
 
-        const int iqs =
+        ਅਚਲ ਪੂਰਨ iqs =
             vdr *
-            (item_ct1.get_local_id(2) %
+            (ਵਸਤੂ_ct1.get_local_id(2) %
              (qi / vdr)); // x block quant index when casting the quants to int
 
         tmp += vec_dot_iq1_s_q8_1(&x[ibx], &y[iby], iqs, iq1s_grid_gpu);
     }
 
     // sum up partial sums and write back result
-#pragma unroll
-    for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ ਨਕਾਬ = WARP_ਮਾਪ / 2; ਨਕਾਬ > 0; ਨਕਾਬ >>= 1) {
         tmp +=
-            dpct::permute_sub_group_by_xor(item_ct1.get_sub_group(), tmp, mask);
+            dpct::ਕ੍ਰਮ_ਬਦਲੋ_sub_ਸਮੂਹ_by_xor(ਵਸਤੂ_ct1.get_sub_ਸਮੂਹ(), tmp, ਨਕਾਬ);
     }
 
-    if (item_ct1.get_local_id(2) == 0) {
-        dst[row] = tmp;
+    ਜੇ (ਵਸਤੂ_ct1.get_local_id(2) == 0) {
+        dst[ਪੰਕਤੀ] = tmp;
     }
 }
 
-template <int qk, int qi, typename block_q_t, int vdr>
-static void mul_mat_vec_q_iq1_m_q8_1(const void *__restrict__ vx,
-                                     const void *__restrict__ vy,
-                                     float *__restrict__ dst, const int ncols,
-                                     const int nrows,
-                                     const sycl::nd_item<3> &item_ct1) {
-    const int row = item_ct1.get_group(2) * item_ct1.get_local_range(1) +
-                    item_ct1.get_local_id(1);
+ਸਾਂਚਾ <ਪੂਰਨ qk, ਪੂਰਨ qi, ਕਿਸਮ_ਨਾਂ ਖੰਡ_q_t, ਪੂਰਨ vdr>
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q_iq1_m_q8_1(ਅਚਲ ਖਾਲੀ *__restrict__ vx,
+                                     ਅਚਲ ਖਾਲੀ *__restrict__ vy,
+                                     ਦਸ਼ਮਲਵ *__restrict__ dst, ਅਚਲ ਪੂਰਨ ncols,
+                                     ਅਚਲ ਪੂਰਨ nrows,
+                                     ਅਚਲ sycl::nd_ਵਸਤੂ<3> &ਵਸਤੂ_ct1) {
+    ਅਚਲ ਪੂਰਨ ਪੰਕਤੀ = ਵਸਤੂ_ct1.get_ਸਮੂਹ(2) * ਵਸਤੂ_ct1.get_local_range(1) +
+                    ਵਸਤੂ_ct1.get_local_id(1);
 
-    if (row >= nrows) {
-        return;
+    ਜੇ (ਪੰਕਤੀ >= nrows) {
+        ਵਾਪਸ;
     }
 
-    const int blocks_per_row = ncols / qk;
-    const int blocks_per_warp = vdr * WARP_SIZE / qi;
-    assert(blocks_per_warp>0);
+    ਅਚਲ ਪੂਰਨ ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ = ncols / qk;
+    ਅਚਲ ਪੂਰਨ ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp = vdr * WARP_ਮਾਪ / qi;
+    ਪ੍ਰਤਿਜ੍ਞਾ(ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp>0);
 // partial sum for each thread
-    float tmp = 0.0f;
+    ਦਸ਼ਮਲਵ tmp = 0.0f;
 
-    const block_q_t  * x = (const block_q_t  *) vx;
-    const block_q8_1 * y = (const block_q8_1 *) vy;
+    ਅਚਲ ਖੰਡ_q_t  * x = (ਅਚਲ ਖੰਡ_q_t  *) vx;
+    ਅਚਲ ਖੰਡ_q8_1 * y = (ਅਚਲ ਖੰਡ_q8_1 *) vy;
 
-    for (int i = item_ct1.get_local_id(2) / (qi / vdr); i < blocks_per_row;
-         i += blocks_per_warp) {
-        const int ibx = row*blocks_per_row + i; // x block index
+    ਲਈ (ਪੂਰਨ i = ਵਸਤੂ_ct1.get_local_id(2) / (qi / vdr); i < ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+         i += ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp) {
+        ਅਚਲ ਪੂਰਨ ibx = ਪੰਕਤੀ*ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ + i; // x block index
 
-        const int iby = i * (qk/QK8_1); // y block index that aligns with ibx
+        ਅਚਲ ਪੂਰਨ iby = i * (qk/QK8_1); // y block index that aligns with ibx
 
-        const int iqs =
+        ਅਚਲ ਪੂਰਨ iqs =
             vdr *
-            (item_ct1.get_local_id(2) %
+            (ਵਸਤੂ_ct1.get_local_id(2) %
              (qi / vdr)); // x block quant index when casting the quants to int
 
         tmp += vec_dot_iq1_m_q8_1(&x[ibx], &y[iby], iqs);
     }
 
     // sum up partial sums and write back result
-#pragma unroll
-    for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ ਨਕਾਬ = WARP_ਮਾਪ / 2; ਨਕਾਬ > 0; ਨਕਾਬ >>= 1) {
         tmp +=
-            dpct::permute_sub_group_by_xor(item_ct1.get_sub_group(), tmp, mask);
+            dpct::ਕ੍ਰਮ_ਬਦਲੋ_sub_ਸਮੂਹ_by_xor(ਵਸਤੂ_ct1.get_sub_ਸਮੂਹ(), tmp, ਨਕਾਬ);
     }
 
-    if (item_ct1.get_local_id(2) == 0) {
-        dst[row] = tmp;
+    ਜੇ (ਵਸਤੂ_ct1.get_local_id(2) == 0) {
+        dst[ਪੰਕਤੀ] = tmp;
     }
 }
 
-template <int qk, int qi, typename block_q_t, int vdr>
-static void mul_mat_vec_q_iq4_nl_q8_1(const void *__restrict__ vx,
-                                      const void *__restrict__ vy,
-                                      float *__restrict__ dst, const int ncols,
-                                      const int nrows,
-                                      const sycl::nd_item<3> &item_ct1) {
-    const int row = item_ct1.get_group(2) * item_ct1.get_local_range(1) +
-                    item_ct1.get_local_id(1);
+ਸਾਂਚਾ <ਪੂਰਨ qk, ਪੂਰਨ qi, ਕਿਸਮ_ਨਾਂ ਖੰਡ_q_t, ਪੂਰਨ vdr>
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q_iq4_nl_q8_1(ਅਚਲ ਖਾਲੀ *__restrict__ vx,
+                                      ਅਚਲ ਖਾਲੀ *__restrict__ vy,
+                                      ਦਸ਼ਮਲਵ *__restrict__ dst, ਅਚਲ ਪੂਰਨ ncols,
+                                      ਅਚਲ ਪੂਰਨ nrows,
+                                      ਅਚਲ sycl::nd_ਵਸਤੂ<3> &ਵਸਤੂ_ct1) {
+    ਅਚਲ ਪੂਰਨ ਪੰਕਤੀ = ਵਸਤੂ_ct1.get_ਸਮੂਹ(2) * ਵਸਤੂ_ct1.get_local_range(1) +
+                    ਵਸਤੂ_ct1.get_local_id(1);
 
-    if (row >= nrows) {
-        return;
+    ਜੇ (ਪੰਕਤੀ >= nrows) {
+        ਵਾਪਸ;
     }
 
-    const int blocks_per_row = ncols / qk;
-    const int blocks_per_warp = vdr * WARP_SIZE / qi;
-    assert(blocks_per_warp>0);
+    ਅਚਲ ਪੂਰਨ ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ = ncols / qk;
+    ਅਚਲ ਪੂਰਨ ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp = vdr * WARP_ਮਾਪ / qi;
+    ਪ੍ਰਤਿਜ੍ਞਾ(ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp>0);
 // partial sum for each thread
-    float tmp = 0.0f;
+    ਦਸ਼ਮਲਵ tmp = 0.0f;
 
-    const block_q_t  * x = (const block_q_t  *) vx;
-    const block_q8_1 * y = (const block_q8_1 *) vy;
+    ਅਚਲ ਖੰਡ_q_t  * x = (ਅਚਲ ਖੰਡ_q_t  *) vx;
+    ਅਚਲ ਖੰਡ_q8_1 * y = (ਅਚਲ ਖੰਡ_q8_1 *) vy;
 
-    for (int i = item_ct1.get_local_id(2) / (qi / vdr); i < blocks_per_row;
-         i += blocks_per_warp) {
-        const int ibx = row*blocks_per_row + i; // x block index
+    ਲਈ (ਪੂਰਨ i = ਵਸਤੂ_ct1.get_local_id(2) / (qi / vdr); i < ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+         i += ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp) {
+        ਅਚਲ ਪੂਰਨ ibx = ਪੰਕਤੀ*ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ + i; // x block index
 
-        const int iby = i * (qk/QK8_1); // y block index that aligns with ibx
+        ਅਚਲ ਪੂਰਨ iby = i * (qk/QK8_1); // y block index that aligns with ibx
 
-        const int iqs =
+        ਅਚਲ ਪੂਰਨ iqs =
             vdr *
-            (item_ct1.get_local_id(2) %
+            (ਵਸਤੂ_ct1.get_local_id(2) %
              (qi / vdr)); // x block quant index when casting the quants to int
 
         tmp += vec_dot_iq4_nl_q8_1(&x[ibx], &y[iby], iqs);
     }
 
     // sum up partial sums and write back result
-#pragma unroll
-    for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ ਨਕਾਬ = WARP_ਮਾਪ / 2; ਨਕਾਬ > 0; ਨਕਾਬ >>= 1) {
         tmp +=
-            dpct::permute_sub_group_by_xor(item_ct1.get_sub_group(), tmp, mask);
+            dpct::ਕ੍ਰਮ_ਬਦਲੋ_sub_ਸਮੂਹ_by_xor(ਵਸਤੂ_ct1.get_sub_ਸਮੂਹ(), tmp, ਨਕਾਬ);
     }
 
-    if (item_ct1.get_local_id(2) == 0) {
-        dst[row] = tmp;
+    ਜੇ (ਵਸਤੂ_ct1.get_local_id(2) == 0) {
+        dst[ਪੰਕਤੀ] = tmp;
     }
 }
 
 
-template <int qk, int qi, typename block_q_t, int vdr>
-static void mul_mat_vec_q_iq4_xs_q8_1(const void *__restrict__ vx,
-                                      const void *__restrict__ vy,
-                                      float *__restrict__ dst, const int ncols,
-                                      const int nrows,
-                                      const sycl::nd_item<3> &item_ct1) {
-    const int row = item_ct1.get_group(2) * item_ct1.get_local_range(1) +
-                    item_ct1.get_local_id(1);
+ਸਾਂਚਾ <ਪੂਰਨ qk, ਪੂਰਨ qi, ਕਿਸਮ_ਨਾਂ ਖੰਡ_q_t, ਪੂਰਨ vdr>
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q_iq4_xs_q8_1(ਅਚਲ ਖਾਲੀ *__restrict__ vx,
+                                      ਅਚਲ ਖਾਲੀ *__restrict__ vy,
+                                      ਦਸ਼ਮਲਵ *__restrict__ dst, ਅਚਲ ਪੂਰਨ ncols,
+                                      ਅਚਲ ਪੂਰਨ nrows,
+                                      ਅਚਲ sycl::nd_ਵਸਤੂ<3> &ਵਸਤੂ_ct1) {
+    ਅਚਲ ਪੂਰਨ ਪੰਕਤੀ = ਵਸਤੂ_ct1.get_ਸਮੂਹ(2) * ਵਸਤੂ_ct1.get_local_range(1) +
+                    ਵਸਤੂ_ct1.get_local_id(1);
 
-    if (row >= nrows) {
-        return;
+    ਜੇ (ਪੰਕਤੀ >= nrows) {
+        ਵਾਪਸ;
     }
 
-    const int blocks_per_row = ncols / qk;
-    const int blocks_per_warp = vdr * WARP_SIZE / qi;
-    assert(blocks_per_warp>0);
+    ਅਚਲ ਪੂਰਨ ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ = ncols / qk;
+    ਅਚਲ ਪੂਰਨ ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp = vdr * WARP_ਮਾਪ / qi;
+    ਪ੍ਰਤਿਜ੍ਞਾ(ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp>0);
 // partial sum for each thread
-    float tmp = 0.0f;
+    ਦਸ਼ਮਲਵ tmp = 0.0f;
 
-    const block_q_t  * x = (const block_q_t  *) vx;
-    const block_q8_1 * y = (const block_q8_1 *) vy;
+    ਅਚਲ ਖੰਡ_q_t  * x = (ਅਚਲ ਖੰਡ_q_t  *) vx;
+    ਅਚਲ ਖੰਡ_q8_1 * y = (ਅਚਲ ਖੰਡ_q8_1 *) vy;
 
-    for (int i = item_ct1.get_local_id(2) / (qi / vdr); i < blocks_per_row;
-         i += blocks_per_warp) {
-        const int ibx = row*blocks_per_row + i; // x block index
+    ਲਈ (ਪੂਰਨ i = ਵਸਤੂ_ct1.get_local_id(2) / (qi / vdr); i < ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+         i += ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp) {
+        ਅਚਲ ਪੂਰਨ ibx = ਪੰਕਤੀ*ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ + i; // x block index
 
-        const int iby = i * (qk/QK8_1); // y block index that aligns with ibx
+        ਅਚਲ ਪੂਰਨ iby = i * (qk/QK8_1); // y block index that aligns with ibx
 
-        const int iqs =
+        ਅਚਲ ਪੂਰਨ iqs =
             vdr *
-            (item_ct1.get_local_id(2) %
+            (ਵਸਤੂ_ct1.get_local_id(2) %
              (qi / vdr)); // x block quant index when casting the quants to int
 
         tmp += vec_dot_iq4_xs_q8_1(&x[ibx], &y[iby], iqs);
     }
 
     // sum up partial sums and write back result
-#pragma unroll
-    for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ ਨਕਾਬ = WARP_ਮਾਪ / 2; ਨਕਾਬ > 0; ਨਕਾਬ >>= 1) {
         tmp +=
-            dpct::permute_sub_group_by_xor(item_ct1.get_sub_group(), tmp, mask);
+            dpct::ਕ੍ਰਮ_ਬਦਲੋ_sub_ਸਮੂਹ_by_xor(ਵਸਤੂ_ct1.get_sub_ਸਮੂਹ(), tmp, ਨਕਾਬ);
     }
 
-    if (item_ct1.get_local_id(2) == 0) {
-        dst[row] = tmp;
+    ਜੇ (ਵਸਤੂ_ct1.get_local_id(2) == 0) {
+        dst[ਪੰਕਤੀ] = tmp;
     }
 }
 
-static void reorder_mul_mat_vec_q4_0_q8_1_sycl(const void * vx, const void * vy, float * dst, const int ncols,
-                                                    const int nrows, dpct::queue_ptr stream) {
+ਸਥਿਰ ਖਾਲੀ reorder_mul_mat_vec_q4_0_q8_1_sycl(ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst, ਅਚਲ ਪੂਰਨ ncols,
+                                                    ਅਚਲ ਪੂਰਨ nrows, dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK4_0 == 0);
     // Round up to a whole number of subgroup-sized workgroups; out-of-range rows are skipped inside the kernel.
-    constexpr size_t num_subgroups = WARP_SIZE;
-    const int block_num_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (int) num_subgroups);
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
+    constexpr size_t ਅੰਕ_subgroups = WARP_ਮਾਪ;
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (ਪੂਰਨ) ਅੰਕ_subgroups);
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, ਅੰਕ_subgroups * WARP_ਮਾਪ);
 
     stream->submit([&](sycl::handler & cgh) {
-        cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                         [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+        cgh.parallel_for(sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                         [=](sycl::nd_ਵਸਤੂ<3> nd_ਵਸਤੂ) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
                              mul_mat_vec_q_reorder<reorder_vec_dot_q_sycl<GGML_TYPE_Q4_0>>(vx, vy, dst, ncols, nrows,
-                                                                                           nd_item);
+                                                                                           nd_ਵਸਤੂ);
                          });
     });
 }
 
-template <int ncols_dst>
-static void reorder_mul_mat_vec_q4_0_q8_1_sycl_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows,
-        const int stride_col_y_bytes, const int stride_col_dst,
-        dpct::queue_ptr stream) {
+ਸਾਂਚਾ <ਪੂਰਨ ncols_dst>
+ਸਥਿਰ ਖਾਲੀ reorder_mul_mat_vec_q4_0_q8_1_sycl_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK4_0 == 0);
-    constexpr size_t num_subgroups = WARP_SIZE;
-    const int block_num_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (int) num_subgroups);
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
+    constexpr size_t ਅੰਕ_subgroups = WARP_ਮਾਪ;
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (ਪੂਰਨ) ਅੰਕ_subgroups);
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, ਅੰਕ_subgroups * WARP_ਮਾਪ);
 
     stream->submit([&](sycl::handler & cgh) {
-        cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                         [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+        cgh.parallel_for(sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                         [=](sycl::nd_ਵਸਤੂ<3> nd_ਵਸਤੂ) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
                              mul_mat_vec_q_reorder_ncols<reorder_vec_dot_q_sycl<GGML_TYPE_Q4_0>, ncols_dst>(
-                                 vx, /*vgate=*/ nullptr, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst,
-                                 /*glu_op=*/ GGML_GLU_OP_SWIGLU, nd_item);
+                                 vx, /*vgate=*/ ਖਾਲੀ_ਸੂਚਕ, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst,
+                                 /*glu_op=*/ GGML_GLU_OP_SWIGLU, nd_ਵਸਤੂ);
                          });
     });
 }
 
-static void reorder_mul_mat_vec_q4_0_q8_1_sycl_switch_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows, const int ncols_dst,
-        const int stride_col_y_bytes, const int stride_col_dst,
-        dpct::queue_ptr stream) {
-    switch (ncols_dst) {
-        case 1: reorder_mul_mat_vec_q4_0_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); break;
-        case 2: reorder_mul_mat_vec_q4_0_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 3: reorder_mul_mat_vec_q4_0_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 4: reorder_mul_mat_vec_q4_0_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 5: reorder_mul_mat_vec_q4_0_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 6: reorder_mul_mat_vec_q4_0_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 7: reorder_mul_mat_vec_q4_0_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 8: reorder_mul_mat_vec_q4_0_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        default: GGML_ABORT("unsupported ncols_dst=%d for Q4_0 reorder multi-col MMVQ", ncols_dst);
+ਸਥਿਰ ਖਾਲੀ reorder_mul_mat_vec_q4_0_q8_1_sycl_switch_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows, ਅਚਲ ਪੂਰਨ ncols_dst,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
+    ਚੋਣ (ncols_dst) {
+        ਹਾਲਤ 1: reorder_mul_mat_vec_q4_0_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); ਰੋਕੋ;
+        ਹਾਲਤ 2: reorder_mul_mat_vec_q4_0_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 3: reorder_mul_mat_vec_q4_0_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 4: reorder_mul_mat_vec_q4_0_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 5: reorder_mul_mat_vec_q4_0_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 6: reorder_mul_mat_vec_q4_0_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 7: reorder_mul_mat_vec_q4_0_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 8: reorder_mul_mat_vec_q4_0_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਮੂਲ: GGML_ABORT("unsupported ncols_dst=%d for Q4_0 reorder multi-col MMVQ", ncols_dst);
     }
 }
 
-static void mul_mat_vec_q4_0_q8_1_sycl(const void * vx, const void * vy, float * dst, const int ncols, const int nrows,
-                                       dpct::queue_ptr stream) {
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q4_0_q8_1_sycl(ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst, ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+                                       dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK4_0 == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
 
     {
         stream->submit([&](sycl::handler & cgh) {
-            cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                             [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                                 mul_mat_vec_q<QK4_0, QI4_0, block_q4_0, VDR_Q4_0_Q8_1_MMVQ, vec_dot_q4_0_q8_1>(
-                                     vx, vy, dst, ncols, nrows, item_ct1);
+            cgh.parallel_for(sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                             [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                                 mul_mat_vec_q<QK4_0, QI4_0, ਖੰਡ_q4_0, VDR_Q4_0_Q8_1_MMVQ, vec_dot_q4_0_q8_1>(
+                                     vx, vy, dst, ncols, nrows, ਵਸਤੂ_ct1);
                              });
         });
     }
 }
 
-template <int ncols_dst>
-static void mul_mat_vec_q4_0_q8_1_sycl_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows,
-        const int stride_col_y, const int stride_col_dst,
-        dpct::queue_ptr stream) {
+ਸਾਂਚਾ <ਪੂਰਨ ncols_dst>
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q4_0_q8_1_sycl_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK4_0 == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
     stream->submit([&](sycl::handler & cgh) {
         cgh.parallel_for(
-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
-            [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                mul_mat_vec_q_ncols<QK4_0, QI4_0, block_q4_0,
+            sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+            [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                mul_mat_vec_q_ncols<QK4_0, QI4_0, ਖੰਡ_q4_0,
                                     VDR_Q4_0_Q8_1_MMVQ, vec_dot_q4_0_q8_1, ncols_dst>(
-                    vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, item_ct1);
+                    vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, ਵਸਤੂ_ct1);
             });
     });
 }
 
-static void mul_mat_vec_q4_0_q8_1_sycl_switch_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows, const int ncols_dst,
-        const int stride_col_y, const int stride_col_dst,
-        dpct::queue_ptr stream) {
-    switch (ncols_dst) {
-        case 1: mul_mat_vec_q4_0_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); break;
-        case 2: mul_mat_vec_q4_0_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 3: mul_mat_vec_q4_0_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 4: mul_mat_vec_q4_0_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 5: mul_mat_vec_q4_0_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 6: mul_mat_vec_q4_0_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 7: mul_mat_vec_q4_0_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 8: mul_mat_vec_q4_0_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        default: GGML_ABORT("unsupported ncols_dst=%d for Q4_0 multi-col MMVQ", ncols_dst);
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q4_0_q8_1_sycl_switch_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows, ਅਚਲ ਪੂਰਨ ncols_dst,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
+    ਚੋਣ (ncols_dst) {
+        ਹਾਲਤ 1: mul_mat_vec_q4_0_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); ਰੋਕੋ;
+        ਹਾਲਤ 2: mul_mat_vec_q4_0_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 3: mul_mat_vec_q4_0_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 4: mul_mat_vec_q4_0_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 5: mul_mat_vec_q4_0_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 6: mul_mat_vec_q4_0_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 7: mul_mat_vec_q4_0_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 8: mul_mat_vec_q4_0_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਮੂਲ: GGML_ABORT("unsupported ncols_dst=%d for Q4_0 multi-col MMVQ", ncols_dst);
     }
 }
 
-static void mul_mat_vec_q4_1_q8_1_sycl(const void *vx, const void *vy,
-                                       float *dst, const int ncols,
-                                       const int nrows,
-                                       dpct::queue_ptr stream) {
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q4_1_q8_1_sycl(ਅਚਲ ਖਾਲੀ *vx, ਅਚਲ ਖਾਲੀ *vy,
+                                       ਦਸ਼ਮਲਵ *dst, ਅਚਲ ਪੂਰਨ ncols,
+                                       ਅਚਲ ਪੂਰਨ nrows,
+                                       dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK4_1 == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
     {
 
         stream->submit([&](sycl::handler &cgh) {
 
             cgh.parallel_for(
-                sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                    [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                        mul_mat_vec_q<QK4_0, QI4_1, block_q4_1,
+                sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                    [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                        mul_mat_vec_q<QK4_0, QI4_1, ਖੰਡ_q4_1,
                                       VDR_Q4_1_Q8_1_MMVQ, vec_dot_q4_1_q8_1>(
-                            vx, vy, dst, ncols, nrows, item_ct1);
+                            vx, vy, dst, ncols, nrows, ਵਸਤੂ_ct1);
                     });
         });
     }
 }
 
-template <int ncols_dst>
-static void mul_mat_vec_q4_1_q8_1_sycl_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows,
-        const int stride_col_y, const int stride_col_dst,
-        dpct::queue_ptr stream) {
+ਸਾਂਚਾ <ਪੂਰਨ ncols_dst>
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q4_1_q8_1_sycl_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK4_1 == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
     stream->submit([&](sycl::handler & cgh) {
         cgh.parallel_for(
-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
-            [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                mul_mat_vec_q_ncols<QK4_0, QI4_1, block_q4_1,
+            sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+            [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                mul_mat_vec_q_ncols<QK4_0, QI4_1, ਖੰਡ_q4_1,
                                     VDR_Q4_1_Q8_1_MMVQ, vec_dot_q4_1_q8_1, ncols_dst>(
-                    vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, item_ct1);
+                    vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, ਵਸਤੂ_ct1);
             });
     });
 }
 
-static void mul_mat_vec_q4_1_q8_1_sycl_switch_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows, const int ncols_dst,
-        const int stride_col_y, const int stride_col_dst,
-        dpct::queue_ptr stream) {
-    switch (ncols_dst) {
-        case 1: mul_mat_vec_q4_1_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); break;
-        case 2: mul_mat_vec_q4_1_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 3: mul_mat_vec_q4_1_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 4: mul_mat_vec_q4_1_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 5: mul_mat_vec_q4_1_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 6: mul_mat_vec_q4_1_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 7: mul_mat_vec_q4_1_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 8: mul_mat_vec_q4_1_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        default: GGML_ABORT("unsupported ncols_dst=%d for Q4_1 multi-col MMVQ", ncols_dst);
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q4_1_q8_1_sycl_switch_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows, ਅਚਲ ਪੂਰਨ ncols_dst,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
+    ਚੋਣ (ncols_dst) {
+        ਹਾਲਤ 1: mul_mat_vec_q4_1_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); ਰੋਕੋ;
+        ਹਾਲਤ 2: mul_mat_vec_q4_1_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 3: mul_mat_vec_q4_1_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 4: mul_mat_vec_q4_1_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 5: mul_mat_vec_q4_1_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 6: mul_mat_vec_q4_1_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 7: mul_mat_vec_q4_1_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 8: mul_mat_vec_q4_1_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਮੂਲ: GGML_ABORT("unsupported ncols_dst=%d for Q4_1 multi-col MMVQ", ncols_dst);
     }
 }
 
-static void mul_mat_vec_mxfp4_q8_1_sycl(const void * vx, const void * vy, float * dst, const int ncols, const int nrows,
-                                        dpct::queue_ptr stream) {
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_mxfp4_q8_1_sycl(ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst, ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+                                        dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_MXFP4 == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
 
     {
         stream->submit([&](sycl::handler & cgh) {
-            cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                             [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                                 mul_mat_vec_q<QK_MXFP4, QI_MXFP4, block_mxfp4, VDR_MXFP4_Q8_1_MMVQ, vec_dot_mxfp4_q8_1>(
-                                     vx, vy, dst, ncols, nrows, item_ct1);
+            cgh.parallel_for(sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                             [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                                 mul_mat_vec_q<QK_MXFP4, QI_MXFP4, ਖੰਡ_mxfp4, VDR_MXFP4_Q8_1_MMVQ, vec_dot_mxfp4_q8_1>(
+                                     vx, vy, dst, ncols, nrows, ਵਸਤੂ_ct1);
                              });
         });
     }
 }
 
-template <int ncols_dst>
-static void mul_mat_vec_mxfp4_q8_1_sycl_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows,
-        const int stride_col_y, const int stride_col_dst,
-        dpct::queue_ptr stream) {
+ਸਾਂਚਾ <ਪੂਰਨ ncols_dst>
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_mxfp4_q8_1_sycl_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_MXFP4 == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
     stream->submit([&](sycl::handler & cgh) {
         cgh.parallel_for(
-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
-            [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                mul_mat_vec_q_ncols<QK_MXFP4, QI_MXFP4, block_mxfp4,
+            sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+            [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                mul_mat_vec_q_ncols<QK_MXFP4, QI_MXFP4, ਖੰਡ_mxfp4,
                                     VDR_MXFP4_Q8_1_MMVQ, vec_dot_mxfp4_q8_1, ncols_dst>(
-                    vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, item_ct1);
+                    vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, ਵਸਤੂ_ct1);
             });
     });
 }
 
-static void mul_mat_vec_mxfp4_q8_1_sycl_switch_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows, const int ncols_dst,
-        const int stride_col_y, const int stride_col_dst,
-        dpct::queue_ptr stream) {
-    switch (ncols_dst) {
-        case 1: mul_mat_vec_mxfp4_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); break;
-        case 2: mul_mat_vec_mxfp4_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 3: mul_mat_vec_mxfp4_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 4: mul_mat_vec_mxfp4_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 5: mul_mat_vec_mxfp4_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 6: mul_mat_vec_mxfp4_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 7: mul_mat_vec_mxfp4_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 8: mul_mat_vec_mxfp4_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        default: GGML_ABORT("unsupported ncols_dst=%d for MXFP4 multi-col MMVQ", ncols_dst);
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_mxfp4_q8_1_sycl_switch_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows, ਅਚਲ ਪੂਰਨ ncols_dst,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
+    ਚੋਣ (ncols_dst) {
+        ਹਾਲਤ 1: mul_mat_vec_mxfp4_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); ਰੋਕੋ;
+        ਹਾਲਤ 2: mul_mat_vec_mxfp4_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 3: mul_mat_vec_mxfp4_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 4: mul_mat_vec_mxfp4_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 5: mul_mat_vec_mxfp4_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 6: mul_mat_vec_mxfp4_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 7: mul_mat_vec_mxfp4_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 8: mul_mat_vec_mxfp4_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਮੂਲ: GGML_ABORT("unsupported ncols_dst=%d for MXFP4 multi-col MMVQ", ncols_dst);
     }
 }
 
-static void mul_mat_vec_nvfp4_q8_1_sycl(const void * vx, const void * vy, float * dst, const int ncols, const int nrows,
-                                        dpct::queue_ptr stream) {
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_nvfp4_q8_1_sycl(ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst, ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+                                        dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_NVFP4 == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
 
     {
         stream->submit([&](sycl::handler & cgh) {
-            cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                             [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                                 mul_mat_vec_q<QK_NVFP4, QI_NVFP4, block_nvfp4, VDR_NVFP4_Q8_1_MMVQ, vec_dot_nvfp4_q8_1>(
-                                     vx, vy, dst, ncols, nrows, item_ct1);
+            cgh.parallel_for(sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                             [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                                 mul_mat_vec_q<QK_NVFP4, QI_NVFP4, ਖੰਡ_nvfp4, VDR_NVFP4_Q8_1_MMVQ, vec_dot_nvfp4_q8_1>(
+                                     vx, vy, dst, ncols, nrows, ਵਸਤੂ_ct1);
                              });
         });
     }
 }
 
-template <int ncols_dst>
-static void mul_mat_vec_nvfp4_q8_1_sycl_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows,
-        const int stride_col_y, const int stride_col_dst,
-        dpct::queue_ptr stream) {
+ਸਾਂਚਾ <ਪੂਰਨ ncols_dst>
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_nvfp4_q8_1_sycl_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_NVFP4 == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
     stream->submit([&](sycl::handler & cgh) {
         cgh.parallel_for(
-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
-            [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                mul_mat_vec_q_ncols<QK_NVFP4, QI_NVFP4, block_nvfp4,
+            sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+            [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                mul_mat_vec_q_ncols<QK_NVFP4, QI_NVFP4, ਖੰਡ_nvfp4,
                                     VDR_NVFP4_Q8_1_MMVQ, vec_dot_nvfp4_q8_1, ncols_dst>(
-                    vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, item_ct1);
+                    vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, ਵਸਤੂ_ct1);
             });
     });
 }
 
-static void mul_mat_vec_nvfp4_q8_1_sycl_switch_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows, const int ncols_dst,
-        const int stride_col_y, const int stride_col_dst,
-        dpct::queue_ptr stream) {
-    switch (ncols_dst) {
-        case 1: mul_mat_vec_nvfp4_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); break;
-        case 2: mul_mat_vec_nvfp4_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 3: mul_mat_vec_nvfp4_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 4: mul_mat_vec_nvfp4_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 5: mul_mat_vec_nvfp4_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 6: mul_mat_vec_nvfp4_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 7: mul_mat_vec_nvfp4_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 8: mul_mat_vec_nvfp4_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        default: GGML_ABORT("unsupported ncols_dst=%d for NVFP4 multi-col MMVQ", ncols_dst);
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_nvfp4_q8_1_sycl_switch_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows, ਅਚਲ ਪੂਰਨ ncols_dst,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
+    ਚੋਣ (ncols_dst) {
+        ਹਾਲਤ 1: mul_mat_vec_nvfp4_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); ਰੋਕੋ;
+        ਹਾਲਤ 2: mul_mat_vec_nvfp4_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 3: mul_mat_vec_nvfp4_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 4: mul_mat_vec_nvfp4_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 5: mul_mat_vec_nvfp4_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 6: mul_mat_vec_nvfp4_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 7: mul_mat_vec_nvfp4_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 8: mul_mat_vec_nvfp4_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਮੂਲ: GGML_ABORT("unsupported ncols_dst=%d for NVFP4 multi-col MMVQ", ncols_dst);
     }
 }
 
-static void mul_mat_vec_q5_0_q8_1_sycl(const void *vx, const void *vy,
-                                       float *dst, const int ncols,
-                                       const int nrows,
-                                       dpct::queue_ptr stream) {
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q5_0_q8_1_sycl(ਅਚਲ ਖਾਲੀ *vx, ਅਚਲ ਖਾਲੀ *vy,
+                                       ਦਸ਼ਮਲਵ *dst, ਅਚਲ ਪੂਰਨ ncols,
+                                       ਅਚਲ ਪੂਰਨ nrows,
+                                       dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK5_0 == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
     {
 
         stream->submit([&](sycl::handler &cgh) {
 
             cgh.parallel_for(
-                sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                    [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                        mul_mat_vec_q<QK5_0, QI5_0, block_q5_0,
+                sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                    [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                        mul_mat_vec_q<QK5_0, QI5_0, ਖੰਡ_q5_0,
                                       VDR_Q5_0_Q8_1_MMVQ, vec_dot_q5_0_q8_1>(
-                            vx, vy, dst, ncols, nrows, item_ct1);
+                            vx, vy, dst, ncols, nrows, ਵਸਤੂ_ct1);
                     });
         });
     }
 }
 
-template <int ncols_dst>
-static void mul_mat_vec_q5_0_q8_1_sycl_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows,
-        const int stride_col_y, const int stride_col_dst,
-        dpct::queue_ptr stream) {
+ਸਾਂਚਾ <ਪੂਰਨ ncols_dst>
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q5_0_q8_1_sycl_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK5_0 == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
     stream->submit([&](sycl::handler & cgh) {
         cgh.parallel_for(
-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
-            [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                mul_mat_vec_q_ncols<QK5_0, QI5_0, block_q5_0,
+            sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+            [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                mul_mat_vec_q_ncols<QK5_0, QI5_0, ਖੰਡ_q5_0,
                                     VDR_Q5_0_Q8_1_MMVQ, vec_dot_q5_0_q8_1, ncols_dst>(
-                    vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, item_ct1);
+                    vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, ਵਸਤੂ_ct1);
             });
     });
 }
 
-static void mul_mat_vec_q5_0_q8_1_sycl_switch_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows, const int ncols_dst,
-        const int stride_col_y, const int stride_col_dst,
-        dpct::queue_ptr stream) {
-    switch (ncols_dst) {
-        case 1: mul_mat_vec_q5_0_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); break;
-        case 2: mul_mat_vec_q5_0_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 3: mul_mat_vec_q5_0_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 4: mul_mat_vec_q5_0_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 5: mul_mat_vec_q5_0_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 6: mul_mat_vec_q5_0_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 7: mul_mat_vec_q5_0_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 8: mul_mat_vec_q5_0_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        default: GGML_ABORT("unsupported ncols_dst=%d for Q5_0 multi-col MMVQ", ncols_dst);
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q5_0_q8_1_sycl_switch_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows, ਅਚਲ ਪੂਰਨ ncols_dst,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
+    ਚੋਣ (ncols_dst) {
+        ਹਾਲਤ 1: mul_mat_vec_q5_0_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); ਰੋਕੋ;
+        ਹਾਲਤ 2: mul_mat_vec_q5_0_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 3: mul_mat_vec_q5_0_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 4: mul_mat_vec_q5_0_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 5: mul_mat_vec_q5_0_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 6: mul_mat_vec_q5_0_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 7: mul_mat_vec_q5_0_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 8: mul_mat_vec_q5_0_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਮੂਲ: GGML_ABORT("unsupported ncols_dst=%d for Q5_0 multi-col MMVQ", ncols_dst);
     }
 }
 
-static void mul_mat_vec_q5_1_q8_1_sycl(const void *vx, const void *vy,
-                                       float *dst, const int ncols,
-                                       const int nrows,
-                                       dpct::queue_ptr stream) {
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q5_1_q8_1_sycl(ਅਚਲ ਖਾਲੀ *vx, ਅਚਲ ਖਾਲੀ *vy,
+                                       ਦਸ਼ਮਲਵ *dst, ਅਚਲ ਪੂਰਨ ncols,
+                                       ਅਚਲ ਪੂਰਨ nrows,
+                                       dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK5_1 == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
     {
 
         stream->submit([&](sycl::handler &cgh) {
 
             cgh.parallel_for(
-                sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                    [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                        mul_mat_vec_q<QK5_1, QI5_1, block_q5_1,
+                sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                    [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                        mul_mat_vec_q<QK5_1, QI5_1, ਖੰਡ_q5_1,
                                       VDR_Q5_1_Q8_1_MMVQ, vec_dot_q5_1_q8_1>(
-                            vx, vy, dst, ncols, nrows, item_ct1);
+                            vx, vy, dst, ncols, nrows, ਵਸਤੂ_ct1);
                     });
         });
     }
 }
 
-template <int ncols_dst>
-static void mul_mat_vec_q5_1_q8_1_sycl_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows,
-        const int stride_col_y, const int stride_col_dst,
-        dpct::queue_ptr stream) {
+ਸਾਂਚਾ <ਪੂਰਨ ncols_dst>
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q5_1_q8_1_sycl_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK5_1 == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
     stream->submit([&](sycl::handler & cgh) {
         cgh.parallel_for(
-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
-            [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                mul_mat_vec_q_ncols<QK5_1, QI5_1, block_q5_1,
+            sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+            [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                mul_mat_vec_q_ncols<QK5_1, QI5_1, ਖੰਡ_q5_1,
                                     VDR_Q5_1_Q8_1_MMVQ, vec_dot_q5_1_q8_1, ncols_dst>(
-                    vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, item_ct1);
+                    vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, ਵਸਤੂ_ct1);
             });
     });
 }
 
-static void mul_mat_vec_q5_1_q8_1_sycl_switch_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows, const int ncols_dst,
-        const int stride_col_y, const int stride_col_dst,
-        dpct::queue_ptr stream) {
-    switch (ncols_dst) {
-        case 1: mul_mat_vec_q5_1_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); break;
-        case 2: mul_mat_vec_q5_1_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 3: mul_mat_vec_q5_1_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 4: mul_mat_vec_q5_1_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 5: mul_mat_vec_q5_1_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 6: mul_mat_vec_q5_1_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 7: mul_mat_vec_q5_1_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 8: mul_mat_vec_q5_1_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        default: GGML_ABORT("unsupported ncols_dst=%d for Q5_1 multi-col MMVQ", ncols_dst);
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q5_1_q8_1_sycl_switch_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows, ਅਚਲ ਪੂਰਨ ncols_dst,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
+    ਚੋਣ (ncols_dst) {
+        ਹਾਲਤ 1: mul_mat_vec_q5_1_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); ਰੋਕੋ;
+        ਹਾਲਤ 2: mul_mat_vec_q5_1_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 3: mul_mat_vec_q5_1_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 4: mul_mat_vec_q5_1_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 5: mul_mat_vec_q5_1_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 6: mul_mat_vec_q5_1_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 7: mul_mat_vec_q5_1_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 8: mul_mat_vec_q5_1_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਮੂਲ: GGML_ABORT("unsupported ncols_dst=%d for Q5_1 multi-col MMVQ", ncols_dst);
     }
 }
 
-static void reorder_mul_mat_vec_q8_0_q8_1_sycl(const void * vx, const void * vy, float * dst, const int ncols,
-                                                    const int nrows, dpct::queue_ptr stream) {
+ਸਥਿਰ ਖਾਲੀ reorder_mul_mat_vec_q8_0_q8_1_sycl(ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst, ਅਚਲ ਪੂਰਨ ncols,
+                                                    ਅਚਲ ਪੂਰਨ nrows, dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK8_0 == 0);
     // Round up to a whole number of subgroup-sized workgroups; out-of-range rows are skipped inside the kernel.
-    constexpr size_t num_subgroups = WARP_SIZE;
-    const int block_num_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (int) num_subgroups);
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
+    constexpr size_t ਅੰਕ_subgroups = WARP_ਮਾਪ;
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (ਪੂਰਨ) ਅੰਕ_subgroups);
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, ਅੰਕ_subgroups * WARP_ਮਾਪ);
 
-    if (g_ggml_sycl_mmvq_wide) {
+    ਜੇ (g_ggml_sycl_mmvq_wide) {
         stream->submit([&](sycl::handler & cgh) {
-            cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                             [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                                 mul_mat_vec_q_reorder<reorder_vec_dot_q8_0_wide>(vx, vy, dst, ncols, nrows, nd_item);
+            cgh.parallel_for(sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                             [=](sycl::nd_ਵਸਤੂ<3> nd_ਵਸਤੂ) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                                 mul_mat_vec_q_reorder<reorder_vec_dot_q8_0_wide>(vx, vy, dst, ncols, nrows, nd_ਵਸਤੂ);
                              });
         });
-        return;
+        ਵਾਪਸ;
     }
 
     stream->submit([&](sycl::handler & cgh) {
-        cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                         [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+        cgh.parallel_for(sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                         [=](sycl::nd_ਵਸਤੂ<3> nd_ਵਸਤੂ) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
                              mul_mat_vec_q_reorder<reorder_vec_dot_q_sycl<GGML_TYPE_Q8_0>>(vx, vy, dst, ncols, nrows,
-                                                                                           nd_item);
+                                                                                           nd_ਵਸਤੂ);
                          });
     });
 }
 
-template <int ncols_dst>
-static void reorder_mul_mat_vec_q8_0_q8_1_sycl_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows,
-        const int stride_col_y_bytes, const int stride_col_dst,
-        dpct::queue_ptr stream) {
+ਸਾਂਚਾ <ਪੂਰਨ ncols_dst>
+ਸਥਿਰ ਖਾਲੀ reorder_mul_mat_vec_q8_0_q8_1_sycl_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK8_0 == 0);
-    constexpr size_t num_subgroups = WARP_SIZE;
-    const int block_num_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (int) num_subgroups);
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
+    constexpr size_t ਅੰਕ_subgroups = WARP_ਮਾਪ;
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (ਪੂਰਨ) ਅੰਕ_subgroups);
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, ਅੰਕ_subgroups * WARP_ਮਾਪ);
 
     stream->submit([&](sycl::handler & cgh) {
-        cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                         [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+        cgh.parallel_for(sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                         [=](sycl::nd_ਵਸਤੂ<3> nd_ਵਸਤੂ) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
                              mul_mat_vec_q_reorder_ncols<reorder_vec_dot_q_sycl<GGML_TYPE_Q8_0>, ncols_dst>(
-                                 vx, /*vgate=*/ nullptr, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst,
-                                 /*glu_op=*/ GGML_GLU_OP_SWIGLU, nd_item);
+                                 vx, /*vgate=*/ ਖਾਲੀ_ਸੂਚਕ, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst,
+                                 /*glu_op=*/ GGML_GLU_OP_SWIGLU, nd_ਵਸਤੂ);
                          });
     });
 }
 
-static void reorder_mul_mat_vec_q8_0_q8_1_sycl_switch_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows, const int ncols_dst,
-        const int stride_col_y_bytes, const int stride_col_dst,
-        dpct::queue_ptr stream) {
-    switch (ncols_dst) {
-        case 1: reorder_mul_mat_vec_q8_0_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); break;
-        case 2: reorder_mul_mat_vec_q8_0_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 3: reorder_mul_mat_vec_q8_0_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 4: reorder_mul_mat_vec_q8_0_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 5: reorder_mul_mat_vec_q8_0_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 6: reorder_mul_mat_vec_q8_0_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 7: reorder_mul_mat_vec_q8_0_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 8: reorder_mul_mat_vec_q8_0_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        default: GGML_ABORT("unsupported ncols_dst=%d for Q8_0 reorder multi-col MMVQ", ncols_dst);
+ਸਥਿਰ ਖਾਲੀ reorder_mul_mat_vec_q8_0_q8_1_sycl_switch_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows, ਅਚਲ ਪੂਰਨ ncols_dst,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
+    ਚੋਣ (ncols_dst) {
+        ਹਾਲਤ 1: reorder_mul_mat_vec_q8_0_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); ਰੋਕੋ;
+        ਹਾਲਤ 2: reorder_mul_mat_vec_q8_0_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 3: reorder_mul_mat_vec_q8_0_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 4: reorder_mul_mat_vec_q8_0_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 5: reorder_mul_mat_vec_q8_0_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 6: reorder_mul_mat_vec_q8_0_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 7: reorder_mul_mat_vec_q8_0_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 8: reorder_mul_mat_vec_q8_0_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਮੂਲ: GGML_ABORT("unsupported ncols_dst=%d for Q8_0 reorder multi-col MMVQ", ncols_dst);
     }
 }
 
 // MXFP4 reorder GEMV. Only MoE expert slices are reordered (opt_for_reorder_id); these dense entry
 // points serve per-expert ggml_sycl_mul_mat calls from multi-token MUL_MAT_ID after that reorder.
-static void reorder_mul_mat_vec_mxfp4_q8_1_sycl(const void * vx, const void * vy, float * dst, const int ncols,
-                                                const int nrows, dpct::queue_ptr stream) {
+ਸਥਿਰ ਖਾਲੀ reorder_mul_mat_vec_mxfp4_q8_1_sycl(ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst, ਅਚਲ ਪੂਰਨ ncols,
+                                                ਅਚਲ ਪੂਰਨ nrows, dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_MXFP4 == 0);
-    constexpr size_t     num_subgroups = WARP_SIZE;
-    const int            block_num_y   = ceil_div(nrows, GGML_SYCL_MMV_Y * (int) num_subgroups);
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
+    constexpr size_t     ਅੰਕ_subgroups = WARP_ਮਾਪ;
+    ਅਚਲ ਪੂਰਨ            ਖੰਡ_ਅੰਕ_y   = ceil_div(nrows, GGML_SYCL_MMV_Y * (ਪੂਰਨ) ਅੰਕ_subgroups);
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, ਅੰਕ_subgroups * WARP_ਮਾਪ);
 
     stream->submit([&](sycl::handler & cgh) {
-        cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                         [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+        cgh.parallel_for(sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                         [=](sycl::nd_ਵਸਤੂ<3> nd_ਵਸਤੂ) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
                              mul_mat_vec_q_reorder<reorder_vec_dot_q_sycl<GGML_TYPE_MXFP4>>(vx, vy, dst, ncols, nrows,
-                                                                                            nd_item);
+                                                                                            nd_ਵਸਤੂ);
                          });
     });
 }
 
-template <int ncols_dst>
-static void reorder_mul_mat_vec_mxfp4_q8_1_sycl_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows,
-        const int stride_col_y_bytes, const int stride_col_dst,
-        dpct::queue_ptr stream) {
+ਸਾਂਚਾ <ਪੂਰਨ ncols_dst>
+ਸਥਿਰ ਖਾਲੀ reorder_mul_mat_vec_mxfp4_q8_1_sycl_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_MXFP4 == 0);
-    constexpr size_t     num_subgroups = WARP_SIZE;
-    const int            block_num_y   = ceil_div(nrows, GGML_SYCL_MMV_Y * (int) num_subgroups);
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
+    constexpr size_t     ਅੰਕ_subgroups = WARP_ਮਾਪ;
+    ਅਚਲ ਪੂਰਨ            ਖੰਡ_ਅੰਕ_y   = ceil_div(nrows, GGML_SYCL_MMV_Y * (ਪੂਰਨ) ਅੰਕ_subgroups);
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, ਅੰਕ_subgroups * WARP_ਮਾਪ);
 
     stream->submit([&](sycl::handler & cgh) {
-        cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                         [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+        cgh.parallel_for(sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                         [=](sycl::nd_ਵਸਤੂ<3> nd_ਵਸਤੂ) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
                              mul_mat_vec_q_reorder_ncols<reorder_vec_dot_q_sycl<GGML_TYPE_MXFP4>, ncols_dst>(
-                                 vx, /*vgate=*/ nullptr, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst,
-                                 /*glu_op=*/ GGML_GLU_OP_SWIGLU, nd_item);
+                                 vx, /*vgate=*/ ਖਾਲੀ_ਸੂਚਕ, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst,
+                                 /*glu_op=*/ GGML_GLU_OP_SWIGLU, nd_ਵਸਤੂ);
                          });
     });
 }
 
-static void reorder_mul_mat_vec_mxfp4_q8_1_sycl_switch_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows, const int ncols_dst,
-        const int stride_col_y_bytes, const int stride_col_dst,
-        dpct::queue_ptr stream) {
-    switch (ncols_dst) {
-        case 1: reorder_mul_mat_vec_mxfp4_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); break;
-        case 2: reorder_mul_mat_vec_mxfp4_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 3: reorder_mul_mat_vec_mxfp4_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 4: reorder_mul_mat_vec_mxfp4_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 5: reorder_mul_mat_vec_mxfp4_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 6: reorder_mul_mat_vec_mxfp4_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 7: reorder_mul_mat_vec_mxfp4_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 8: reorder_mul_mat_vec_mxfp4_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        default: GGML_ABORT("unsupported ncols_dst=%d for MXFP4 reorder multi-col MMVQ", ncols_dst);
+ਸਥਿਰ ਖਾਲੀ reorder_mul_mat_vec_mxfp4_q8_1_sycl_switch_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows, ਅਚਲ ਪੂਰਨ ncols_dst,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
+    ਚੋਣ (ncols_dst) {
+        ਹਾਲਤ 1: reorder_mul_mat_vec_mxfp4_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); ਰੋਕੋ;
+        ਹਾਲਤ 2: reorder_mul_mat_vec_mxfp4_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 3: reorder_mul_mat_vec_mxfp4_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 4: reorder_mul_mat_vec_mxfp4_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 5: reorder_mul_mat_vec_mxfp4_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 6: reorder_mul_mat_vec_mxfp4_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 7: reorder_mul_mat_vec_mxfp4_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 8: reorder_mul_mat_vec_mxfp4_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਮੂਲ: GGML_ABORT("unsupported ncols_dst=%d for MXFP4 reorder multi-col MMVQ", ncols_dst);
     }
 }
 
-static void mul_mat_vec_q8_0_q8_1_sycl(const void *vx, const void *vy,
-                                       float *dst, const int ncols,
-                                       const int nrows,
-                                       dpct::queue_ptr stream) {
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q8_0_q8_1_sycl(ਅਚਲ ਖਾਲੀ *vx, ਅਚਲ ਖਾਲੀ *vy,
+                                       ਦਸ਼ਮਲਵ *dst, ਅਚਲ ਪੂਰਨ ncols,
+                                       ਅਚਲ ਪੂਰਨ nrows,
+                                       dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK8_0 == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
     {
 
         stream->submit([&](sycl::handler &cgh) {
 
             cgh.parallel_for(
-                sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                    [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                        mul_mat_vec_q<QK8_0, QI8_0, block_q8_0,
+                sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                    [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                        mul_mat_vec_q<QK8_0, QI8_0, ਖੰਡ_q8_0,
                                       VDR_Q8_0_Q8_1_MMVQ, vec_dot_q8_0_q8_1>(
-                            vx, vy, dst, ncols, nrows, item_ct1);
+                            vx, vy, dst, ncols, nrows, ਵਸਤੂ_ct1);
                     });
         });
     }
 }
 
-template <int ncols_dst>
-static void mul_mat_vec_q8_0_q8_1_sycl_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows,
-        const int stride_col_y, const int stride_col_dst,
-        dpct::queue_ptr stream) {
+ਸਾਂਚਾ <ਪੂਰਨ ncols_dst>
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q8_0_q8_1_sycl_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK8_0 == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
     stream->submit([&](sycl::handler & cgh) {
         cgh.parallel_for(
-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
-            [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                mul_mat_vec_q_ncols<QK8_0, QI8_0, block_q8_0,
+            sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+            [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                mul_mat_vec_q_ncols<QK8_0, QI8_0, ਖੰਡ_q8_0,
                                     VDR_Q8_0_Q8_1_MMVQ, vec_dot_q8_0_q8_1, ncols_dst>(
-                    vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, item_ct1);
+                    vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, ਵਸਤੂ_ct1);
             });
     });
 }
 
-static void mul_mat_vec_q8_0_q8_1_sycl_switch_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows, const int ncols_dst,
-        const int stride_col_y, const int stride_col_dst,
-        dpct::queue_ptr stream) {
-    switch (ncols_dst) {
-        case 1: mul_mat_vec_q8_0_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); break;
-        case 2: mul_mat_vec_q8_0_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 3: mul_mat_vec_q8_0_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 4: mul_mat_vec_q8_0_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 5: mul_mat_vec_q8_0_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 6: mul_mat_vec_q8_0_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 7: mul_mat_vec_q8_0_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 8: mul_mat_vec_q8_0_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        default: GGML_ABORT("unsupported ncols_dst=%d for Q8_0 multi-col MMVQ", ncols_dst);
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q8_0_q8_1_sycl_switch_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows, ਅਚਲ ਪੂਰਨ ncols_dst,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
+    ਚੋਣ (ncols_dst) {
+        ਹਾਲਤ 1: mul_mat_vec_q8_0_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); ਰੋਕੋ;
+        ਹਾਲਤ 2: mul_mat_vec_q8_0_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 3: mul_mat_vec_q8_0_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 4: mul_mat_vec_q8_0_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 5: mul_mat_vec_q8_0_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 6: mul_mat_vec_q8_0_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 7: mul_mat_vec_q8_0_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 8: mul_mat_vec_q8_0_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਮੂਲ: GGML_ABORT("unsupported ncols_dst=%d for Q8_0 multi-col MMVQ", ncols_dst);
     }
 }
 
-static void mul_mat_vec_q1_0_q8_1_sycl(const void * vx, const void * vy,
-                                       float * dst, const int ncols,
-                                       const int nrows,
-                                       dpct::queue_ptr stream) {
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q1_0_q8_1_sycl(ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy,
+                                       ਦਸ਼ਮਲਵ * dst, ਅਚਲ ਪੂਰਨ ncols,
+                                       ਅਚਲ ਪੂਰਨ nrows,
+                                       dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK1_0 == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
 
     stream->submit([&](sycl::handler & cgh) {
         cgh.parallel_for(
-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
-            [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                mul_mat_vec_q<QK1_0, QI1_0, block_q1_0,
+            sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+            [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                mul_mat_vec_q<QK1_0, QI1_0, ਖੰਡ_q1_0,
                               VDR_Q1_0_Q8_1_MMVQ, vec_dot_q1_0_q8_1>(
-                    vx, vy, dst, ncols, nrows, item_ct1);
+                    vx, vy, dst, ncols, nrows, ਵਸਤੂ_ct1);
             });
     });
 }
 
-template <int ncols_dst>
-static void mul_mat_vec_q1_0_q8_1_sycl_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows,
-        const int stride_col_y, const int stride_col_dst,
-        dpct::queue_ptr stream) {
+ਸਾਂਚਾ <ਪੂਰਨ ncols_dst>
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q1_0_q8_1_sycl_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK1_0 == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
 
     stream->submit([&](sycl::handler & cgh) {
         cgh.parallel_for(
-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
-            [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                mul_mat_vec_q_ncols<QK1_0, QI1_0, block_q1_0,
+            sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+            [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                mul_mat_vec_q_ncols<QK1_0, QI1_0, ਖੰਡ_q1_0,
                                     VDR_Q1_0_Q8_1_MMVQ, vec_dot_q1_0_q8_1, ncols_dst>(
-                    vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, item_ct1);
+                    vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, ਵਸਤੂ_ct1);
             });
     });
 }
 
-static void mul_mat_vec_q1_0_q8_1_sycl_switch_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows, const int ncols_dst,
-        const int stride_col_y, const int stride_col_dst,
-        dpct::queue_ptr stream) {
-    switch (ncols_dst) {
-        case 1: mul_mat_vec_q1_0_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); break;
-        case 2: mul_mat_vec_q1_0_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 3: mul_mat_vec_q1_0_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 4: mul_mat_vec_q1_0_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 5: mul_mat_vec_q1_0_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 6: mul_mat_vec_q1_0_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 7: mul_mat_vec_q1_0_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 8: mul_mat_vec_q1_0_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        default: GGML_ABORT("unsupported ncols_dst=%d for Q1_0 multi-col MMVQ", ncols_dst);
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q1_0_q8_1_sycl_switch_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows, ਅਚਲ ਪੂਰਨ ncols_dst,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
+    ਚੋਣ (ncols_dst) {
+        ਹਾਲਤ 1: mul_mat_vec_q1_0_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); ਰੋਕੋ;
+        ਹਾਲਤ 2: mul_mat_vec_q1_0_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 3: mul_mat_vec_q1_0_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 4: mul_mat_vec_q1_0_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 5: mul_mat_vec_q1_0_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 6: mul_mat_vec_q1_0_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 7: mul_mat_vec_q1_0_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 8: mul_mat_vec_q1_0_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਮੂਲ: GGML_ABORT("unsupported ncols_dst=%d for Q1_0 multi-col MMVQ", ncols_dst);
     }
 }
 
-static void mul_mat_vec_q2_0_q8_1_sycl(const void * vx, const void * vy,
-                                       float * dst, const int ncols,
-                                       const int nrows,
-                                       dpct::queue_ptr stream) {
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q2_0_q8_1_sycl(ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy,
+                                       ਦਸ਼ਮਲਵ * dst, ਅਚਲ ਪੂਰਨ ncols,
+                                       ਅਚਲ ਪੂਰਨ nrows,
+                                       dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK2_0 == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
 
     stream->submit([&](sycl::handler & cgh) {
         cgh.parallel_for(
-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
-            [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                mul_mat_vec_q<QK2_0, QI2_0, block_q2_0,
+            sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+            [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                mul_mat_vec_q<QK2_0, QI2_0, ਖੰਡ_q2_0,
                               VDR_Q2_0_Q8_1_MMVQ, vec_dot_q2_0_q8_1>(
-                    vx, vy, dst, ncols, nrows, item_ct1);
+                    vx, vy, dst, ncols, nrows, ਵਸਤੂ_ct1);
             });
     });
 }
 
-template <int ncols_dst>
-static void mul_mat_vec_q2_0_q8_1_sycl_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows,
-        const int stride_col_y, const int stride_col_dst,
-        dpct::queue_ptr stream) {
+ਸਾਂਚਾ <ਪੂਰਨ ncols_dst>
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q2_0_q8_1_sycl_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK2_0 == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
 
     stream->submit([&](sycl::handler & cgh) {
         cgh.parallel_for(
-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
-            [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                mul_mat_vec_q_ncols<QK2_0, QI2_0, block_q2_0,
+            sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+            [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                mul_mat_vec_q_ncols<QK2_0, QI2_0, ਖੰਡ_q2_0,
                                     VDR_Q2_0_Q8_1_MMVQ, vec_dot_q2_0_q8_1, ncols_dst>(
-                    vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, item_ct1);
+                    vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, ਵਸਤੂ_ct1);
             });
     });
 }
 
-static void mul_mat_vec_q2_0_q8_1_sycl_switch_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows, const int ncols_dst,
-        const int stride_col_y, const int stride_col_dst,
-        dpct::queue_ptr stream) {
-    switch (ncols_dst) {
-        case 1: mul_mat_vec_q2_0_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); break;
-        case 2: mul_mat_vec_q2_0_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 3: mul_mat_vec_q2_0_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 4: mul_mat_vec_q2_0_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 5: mul_mat_vec_q2_0_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 6: mul_mat_vec_q2_0_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 7: mul_mat_vec_q2_0_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 8: mul_mat_vec_q2_0_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        default: GGML_ABORT("unsupported ncols_dst=%d for Q2_0 multi-col MMVQ", ncols_dst);
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q2_0_q8_1_sycl_switch_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows, ਅਚਲ ਪੂਰਨ ncols_dst,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
+    ਚੋਣ (ncols_dst) {
+        ਹਾਲਤ 1: mul_mat_vec_q2_0_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); ਰੋਕੋ;
+        ਹਾਲਤ 2: mul_mat_vec_q2_0_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 3: mul_mat_vec_q2_0_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 4: mul_mat_vec_q2_0_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 5: mul_mat_vec_q2_0_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 6: mul_mat_vec_q2_0_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 7: mul_mat_vec_q2_0_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 8: mul_mat_vec_q2_0_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਮੂਲ: GGML_ABORT("unsupported ncols_dst=%d for Q2_0 multi-col MMVQ", ncols_dst);
     }
 }
 
-static void mul_mat_vec_q2_K_q8_1_sycl(const void *vx, const void *vy,
-                                       float *dst, const int ncols,
-                                       const int nrows,
-                                       dpct::queue_ptr stream) {
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q2_K_q8_1_sycl(ਅਚਲ ਖਾਲੀ *vx, ਅਚਲ ਖਾਲੀ *vy,
+                                       ਦਸ਼ਮਲਵ *dst, ਅਚਲ ਪੂਰਨ ncols,
+                                       ਅਚਲ ਪੂਰਨ nrows,
+                                       dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
     {
 
         stream->submit([&](sycl::handler &cgh) {
 
             cgh.parallel_for(
-                sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                    [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                        mul_mat_vec_q<QK_K, QI2_K, block_q2_K,
+                sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                    [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                        mul_mat_vec_q<QK_K, QI2_K, ਖੰਡ_q2_K,
                                       VDR_Q2_K_Q8_1_MMVQ, vec_dot_q2_K_q8_1>(
-                            vx, vy, dst, ncols, nrows, item_ct1);
+                            vx, vy, dst, ncols, nrows, ਵਸਤੂ_ct1);
                     });
         });
     }
 }
 
-template <int ncols_dst>
-static void mul_mat_vec_q2_K_q8_1_sycl_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows,
-        const int stride_col_y, const int stride_col_dst,
-        dpct::queue_ptr stream) {
+ਸਾਂਚਾ <ਪੂਰਨ ncols_dst>
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q2_K_q8_1_sycl_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
     stream->submit([&](sycl::handler & cgh) {
         cgh.parallel_for(
-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
-            [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                mul_mat_vec_q_ncols<QK_K, QI2_K, block_q2_K,
+            sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+            [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                mul_mat_vec_q_ncols<QK_K, QI2_K, ਖੰਡ_q2_K,
                                     VDR_Q2_K_Q8_1_MMVQ, vec_dot_q2_K_q8_1, ncols_dst>(
-                    vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, item_ct1);
+                    vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, ਵਸਤੂ_ct1);
             });
     });
 }
 
-static void mul_mat_vec_q2_K_q8_1_sycl_switch_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows, const int ncols_dst,
-        const int stride_col_y, const int stride_col_dst,
-        dpct::queue_ptr stream) {
-    switch (ncols_dst) {
-        case 1: mul_mat_vec_q2_K_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); break;
-        case 2: mul_mat_vec_q2_K_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 3: mul_mat_vec_q2_K_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 4: mul_mat_vec_q2_K_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 5: mul_mat_vec_q2_K_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 6: mul_mat_vec_q2_K_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 7: mul_mat_vec_q2_K_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 8: mul_mat_vec_q2_K_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        default: GGML_ABORT("unsupported ncols_dst=%d for Q2_K multi-col MMVQ", ncols_dst);
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q2_K_q8_1_sycl_switch_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows, ਅਚਲ ਪੂਰਨ ncols_dst,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
+    ਚੋਣ (ncols_dst) {
+        ਹਾਲਤ 1: mul_mat_vec_q2_K_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); ਰੋਕੋ;
+        ਹਾਲਤ 2: mul_mat_vec_q2_K_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 3: mul_mat_vec_q2_K_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 4: mul_mat_vec_q2_K_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 5: mul_mat_vec_q2_K_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 6: mul_mat_vec_q2_K_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 7: mul_mat_vec_q2_K_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 8: mul_mat_vec_q2_K_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਮੂਲ: GGML_ABORT("unsupported ncols_dst=%d for Q2_K multi-col MMVQ", ncols_dst);
     }
 }
 
-static void reorder_mul_mat_vec_q2_k_q8_1_sycl(const void * vx, const void * vy, float * dst, const int ncols,
-                                               const int nrows, dpct::queue_ptr stream) {
+ਸਥਿਰ ਖਾਲੀ reorder_mul_mat_vec_q2_k_q8_1_sycl(ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst, ਅਚਲ ਪੂਰਨ ncols,
+                                               ਅਚਲ ਪੂਰਨ nrows, dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
 
     // Round up to a whole number of subgroup-sized workgroups; out-of-range rows are skipped inside the kernel.
-    constexpr size_t num_subgroups = WARP_SIZE;
-    const int block_num_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (int) num_subgroups);
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
+    constexpr size_t ਅੰਕ_subgroups = WARP_ਮਾਪ;
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (ਪੂਰਨ) ਅੰਕ_subgroups);
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, ਅੰਕ_subgroups * WARP_ਮਾਪ);
 
     stream->submit([&](sycl::handler & cgh) {
-        cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                         [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+        cgh.parallel_for(sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                         [=](sycl::nd_ਵਸਤੂ<3> nd_ਵਸਤੂ) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
                              mul_mat_vec_q_reorder<reorder_vec_dot_q_sycl<GGML_TYPE_Q2_K>>(vx, vy, dst, ncols, nrows,
-                                                                                           nd_item);
+                                                                                           nd_ਵਸਤੂ);
                          });
     });
 }
 
-template <int ncols_dst>
-static void reorder_mul_mat_vec_q2_k_q8_1_sycl_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows,
-        const int stride_col_y_bytes, const int stride_col_dst,
-        dpct::queue_ptr stream) {
+ਸਾਂਚਾ <ਪੂਰਨ ncols_dst>
+ਸਥਿਰ ਖਾਲੀ reorder_mul_mat_vec_q2_k_q8_1_sycl_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
-    constexpr size_t num_subgroups = WARP_SIZE;
-    const int block_num_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (int) num_subgroups);
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
+    constexpr size_t ਅੰਕ_subgroups = WARP_ਮਾਪ;
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (ਪੂਰਨ) ਅੰਕ_subgroups);
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, ਅੰਕ_subgroups * WARP_ਮਾਪ);
 
     stream->submit([&](sycl::handler & cgh) {
-        cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                         [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+        cgh.parallel_for(sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                         [=](sycl::nd_ਵਸਤੂ<3> nd_ਵਸਤੂ) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
                              mul_mat_vec_q_reorder_ncols<reorder_vec_dot_q_sycl<GGML_TYPE_Q2_K>, ncols_dst>(
-                                 vx, /*vgate=*/ nullptr, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst,
-                                 /*glu_op=*/ GGML_GLU_OP_SWIGLU, nd_item);
+                                 vx, /*vgate=*/ ਖਾਲੀ_ਸੂਚਕ, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst,
+                                 /*glu_op=*/ GGML_GLU_OP_SWIGLU, nd_ਵਸਤੂ);
                          });
     });
 }
 
-static void reorder_mul_mat_vec_q2_k_q8_1_sycl_switch_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows, const int ncols_dst,
-        const int stride_col_y_bytes, const int stride_col_dst,
-        dpct::queue_ptr stream) {
-    switch (ncols_dst) {
-        case 1: reorder_mul_mat_vec_q2_k_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); break;
-        case 2: reorder_mul_mat_vec_q2_k_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 3: reorder_mul_mat_vec_q2_k_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 4: reorder_mul_mat_vec_q2_k_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 5: reorder_mul_mat_vec_q2_k_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 6: reorder_mul_mat_vec_q2_k_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 7: reorder_mul_mat_vec_q2_k_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 8: reorder_mul_mat_vec_q2_k_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        default: GGML_ABORT("unsupported ncols_dst=%d for Q2_K reorder multi-col MMVQ", ncols_dst);
+ਸਥਿਰ ਖਾਲੀ reorder_mul_mat_vec_q2_k_q8_1_sycl_switch_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows, ਅਚਲ ਪੂਰਨ ncols_dst,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
+    ਚੋਣ (ncols_dst) {
+        ਹਾਲਤ 1: reorder_mul_mat_vec_q2_k_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); ਰੋਕੋ;
+        ਹਾਲਤ 2: reorder_mul_mat_vec_q2_k_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 3: reorder_mul_mat_vec_q2_k_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 4: reorder_mul_mat_vec_q2_k_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 5: reorder_mul_mat_vec_q2_k_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 6: reorder_mul_mat_vec_q2_k_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 7: reorder_mul_mat_vec_q2_k_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 8: reorder_mul_mat_vec_q2_k_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਮੂਲ: GGML_ABORT("unsupported ncols_dst=%d for Q2_K reorder multi-col MMVQ", ncols_dst);
     }
 }
 
-static void mul_mat_vec_q3_K_q8_1_sycl(const void *vx, const void *vy,
-                                       float *dst, const int ncols,
-                                       const int nrows,
-                                       dpct::queue_ptr stream) {
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q3_K_q8_1_sycl(ਅਚਲ ਖਾਲੀ *vx, ਅਚਲ ਖਾਲੀ *vy,
+                                       ਦਸ਼ਮਲਵ *dst, ਅਚਲ ਪੂਰਨ ncols,
+                                       ਅਚਲ ਪੂਰਨ nrows,
+                                       dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
     {
 
         stream->submit([&](sycl::handler &cgh) {
 
             cgh.parallel_for(
-                sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                    [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                        mul_mat_vec_q<QK_K, QI3_K, block_q3_K,
+                sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                    [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                        mul_mat_vec_q<QK_K, QI3_K, ਖੰਡ_q3_K,
                                       VDR_Q3_K_Q8_1_MMVQ, vec_dot_q3_K_q8_1>(
-                            vx, vy, dst, ncols, nrows, item_ct1);
+                            vx, vy, dst, ncols, nrows, ਵਸਤੂ_ct1);
                     });
         });
     }
 }
 
-static void reorder_mul_mat_vec_q3_k_q8_1_sycl(const void * vx, const void * vy, float * dst, const int ncols,
-                                               const int nrows, dpct::queue_ptr stream) {
+ਸਥਿਰ ਖਾਲੀ reorder_mul_mat_vec_q3_k_q8_1_sycl(ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst, ਅਚਲ ਪੂਰਨ ncols,
+                                               ਅਚਲ ਪੂਰਨ nrows, dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
 
     // Round up to a whole number of subgroup-sized workgroups; out-of-range rows are skipped inside the kernel.
-    constexpr size_t num_subgroups = WARP_SIZE;
-    const int block_num_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (int) num_subgroups);
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
+    constexpr size_t ਅੰਕ_subgroups = WARP_ਮਾਪ;
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (ਪੂਰਨ) ਅੰਕ_subgroups);
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, ਅੰਕ_subgroups * WARP_ਮਾਪ);
 
     stream->submit([&](sycl::handler & cgh) {
-        cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                         [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+        cgh.parallel_for(sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                         [=](sycl::nd_ਵਸਤੂ<3> nd_ਵਸਤੂ) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
                              mul_mat_vec_q_reorder<reorder_vec_dot_q_sycl<GGML_TYPE_Q3_K>>(vx, vy, dst, ncols, nrows,
-                                                                                           nd_item);
+                                                                                           nd_ਵਸਤੂ);
                          });
     });
 }
 
-template <int ncols_dst>
-static void reorder_mul_mat_vec_q3_k_q8_1_sycl_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows,
-        const int stride_col_y_bytes, const int stride_col_dst,
-        dpct::queue_ptr stream) {
+ਸਾਂਚਾ <ਪੂਰਨ ncols_dst>
+ਸਥਿਰ ਖਾਲੀ reorder_mul_mat_vec_q3_k_q8_1_sycl_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
-    constexpr size_t num_subgroups = WARP_SIZE;
-    const int block_num_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (int) num_subgroups);
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
+    constexpr size_t ਅੰਕ_subgroups = WARP_ਮਾਪ;
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (ਪੂਰਨ) ਅੰਕ_subgroups);
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, ਅੰਕ_subgroups * WARP_ਮਾਪ);
 
     stream->submit([&](sycl::handler & cgh) {
-        cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                         [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+        cgh.parallel_for(sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                         [=](sycl::nd_ਵਸਤੂ<3> nd_ਵਸਤੂ) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
                              mul_mat_vec_q_reorder_ncols<reorder_vec_dot_q_sycl<GGML_TYPE_Q3_K>, ncols_dst>(
-                                 vx, /*vgate=*/ nullptr, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst,
-                                 /*glu_op=*/ GGML_GLU_OP_SWIGLU, nd_item);
+                                 vx, /*vgate=*/ ਖਾਲੀ_ਸੂਚਕ, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst,
+                                 /*glu_op=*/ GGML_GLU_OP_SWIGLU, nd_ਵਸਤੂ);
                          });
     });
 }
 
-static void reorder_mul_mat_vec_q3_k_q8_1_sycl_switch_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows, const int ncols_dst,
-        const int stride_col_y_bytes, const int stride_col_dst,
-        dpct::queue_ptr stream) {
-    switch (ncols_dst) {
-        case 1: reorder_mul_mat_vec_q3_k_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); break;
-        case 2: reorder_mul_mat_vec_q3_k_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 3: reorder_mul_mat_vec_q3_k_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 4: reorder_mul_mat_vec_q3_k_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 5: reorder_mul_mat_vec_q3_k_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 6: reorder_mul_mat_vec_q3_k_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 7: reorder_mul_mat_vec_q3_k_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 8: reorder_mul_mat_vec_q3_k_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        default: GGML_ABORT("unsupported ncols_dst=%d for Q3_K reorder multi-col MMVQ", ncols_dst);
+ਸਥਿਰ ਖਾਲੀ reorder_mul_mat_vec_q3_k_q8_1_sycl_switch_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows, ਅਚਲ ਪੂਰਨ ncols_dst,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
+    ਚੋਣ (ncols_dst) {
+        ਹਾਲਤ 1: reorder_mul_mat_vec_q3_k_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); ਰੋਕੋ;
+        ਹਾਲਤ 2: reorder_mul_mat_vec_q3_k_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 3: reorder_mul_mat_vec_q3_k_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 4: reorder_mul_mat_vec_q3_k_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 5: reorder_mul_mat_vec_q3_k_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 6: reorder_mul_mat_vec_q3_k_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 7: reorder_mul_mat_vec_q3_k_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 8: reorder_mul_mat_vec_q3_k_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਮੂਲ: GGML_ABORT("unsupported ncols_dst=%d for Q3_K reorder multi-col MMVQ", ncols_dst);
     }
 }
 
-template <int ncols_dst>
-static void mul_mat_vec_q3_K_q8_1_sycl_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows,
-        const int stride_col_y, const int stride_col_dst,
-        dpct::queue_ptr stream) {
+ਸਾਂਚਾ <ਪੂਰਨ ncols_dst>
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q3_K_q8_1_sycl_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
     stream->submit([&](sycl::handler & cgh) {
         cgh.parallel_for(
-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
-            [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                mul_mat_vec_q_ncols<QK_K, QI3_K, block_q3_K,
+            sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+            [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                mul_mat_vec_q_ncols<QK_K, QI3_K, ਖੰਡ_q3_K,
                                     VDR_Q3_K_Q8_1_MMVQ, vec_dot_q3_K_q8_1, ncols_dst>(
-                    vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, item_ct1);
+                    vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, ਵਸਤੂ_ct1);
             });
     });
 }
 
-static void mul_mat_vec_q3_K_q8_1_sycl_switch_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows, const int ncols_dst,
-        const int stride_col_y, const int stride_col_dst,
-        dpct::queue_ptr stream) {
-    switch (ncols_dst) {
-        case 1: mul_mat_vec_q3_K_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); break;
-        case 2: mul_mat_vec_q3_K_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 3: mul_mat_vec_q3_K_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 4: mul_mat_vec_q3_K_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 5: mul_mat_vec_q3_K_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 6: mul_mat_vec_q3_K_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 7: mul_mat_vec_q3_K_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 8: mul_mat_vec_q3_K_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        default: GGML_ABORT("unsupported ncols_dst=%d for Q3_K multi-col MMVQ", ncols_dst);
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q3_K_q8_1_sycl_switch_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows, ਅਚਲ ਪੂਰਨ ncols_dst,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
+    ਚੋਣ (ncols_dst) {
+        ਹਾਲਤ 1: mul_mat_vec_q3_K_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); ਰੋਕੋ;
+        ਹਾਲਤ 2: mul_mat_vec_q3_K_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 3: mul_mat_vec_q3_K_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 4: mul_mat_vec_q3_K_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 5: mul_mat_vec_q3_K_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 6: mul_mat_vec_q3_K_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 7: mul_mat_vec_q3_K_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 8: mul_mat_vec_q3_K_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਮੂਲ: GGML_ABORT("unsupported ncols_dst=%d for Q3_K multi-col MMVQ", ncols_dst);
     }
 }
 
 
-static void mul_mat_vec_q4_K_q8_1_sycl(const void *vx, const void *vy,
-                                       float *dst, const int ncols,
-                                       const int nrows,
-                                       dpct::queue_ptr stream) {
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q4_K_q8_1_sycl(ਅਚਲ ਖਾਲੀ *vx, ਅਚਲ ਖਾਲੀ *vy,
+                                       ਦਸ਼ਮਲਵ *dst, ਅਚਲ ਪੂਰਨ ncols,
+                                       ਅਚਲ ਪੂਰਨ nrows,
+                                       dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
     {
 
         stream->submit([&](sycl::handler &cgh) {
 
             cgh.parallel_for(
-                sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                    [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                        mul_mat_vec_q<QK_K, QI4_K, block_q4_K,
+                sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                    [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                        mul_mat_vec_q<QK_K, QI4_K, ਖੰਡ_q4_K,
                                       VDR_Q4_K_Q8_1_MMVQ, vec_dot_q4_K_q8_1>(
-                            vx, vy, dst, ncols, nrows, item_ct1);
+                            vx, vy, dst, ncols, nrows, ਵਸਤੂ_ct1);
                     });
         });
     }
 }
 
-template <int ncols_dst>
-static void mul_mat_vec_q4_K_q8_1_sycl_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows,
-        const int stride_col_y, const int stride_col_dst,
-        dpct::queue_ptr stream) {
+ਸਾਂਚਾ <ਪੂਰਨ ncols_dst>
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q4_K_q8_1_sycl_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
 
     stream->submit([&](sycl::handler & cgh) {
         cgh.parallel_for(
-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
-            [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    mul_mat_vec_q_ncols<QK_K, QI4_K, block_q4_K,
+            sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+            [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                    mul_mat_vec_q_ncols<QK_K, QI4_K, ਖੰਡ_q4_K,
                                         VDR_Q4_K_Q8_1_MMVQ,
                                         vec_dot_q4_K_q8_1,
                                         ncols_dst>(
                         vx, vy, dst, ncols, nrows,
-                        stride_col_y, stride_col_dst, item_ct1);
+                        stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, ਵਸਤੂ_ct1);
                 });
     });
 }
 
-static void mul_mat_vec_q4_K_q8_1_sycl_switch_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows,
-        const int ncols_dst,
-        const int stride_col_y, const int stride_col_dst,
-        dpct::queue_ptr stream) {
-    switch (ncols_dst) {
-        case 1: mul_mat_vec_q4_K_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); break;
-        case 2: mul_mat_vec_q4_K_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 3: mul_mat_vec_q4_K_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 4: mul_mat_vec_q4_K_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 5: mul_mat_vec_q4_K_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 6: mul_mat_vec_q4_K_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 7: mul_mat_vec_q4_K_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 8: mul_mat_vec_q4_K_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        default: GGML_ABORT("unsupported ncols_dst=%d for Q4_K multi-col MMVQ", ncols_dst);
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q4_K_q8_1_sycl_switch_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+        ਅਚਲ ਪੂਰਨ ncols_dst,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
+    ਚੋਣ (ncols_dst) {
+        ਹਾਲਤ 1: mul_mat_vec_q4_K_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); ਰੋਕੋ;
+        ਹਾਲਤ 2: mul_mat_vec_q4_K_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 3: mul_mat_vec_q4_K_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 4: mul_mat_vec_q4_K_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 5: mul_mat_vec_q4_K_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 6: mul_mat_vec_q4_K_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 7: mul_mat_vec_q4_K_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 8: mul_mat_vec_q4_K_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਮੂਲ: GGML_ABORT("unsupported ncols_dst=%d for Q4_K multi-col MMVQ", ncols_dst);
     }
 }
 
-static void reorder_mul_mat_vec_q4_k_q8_1_sycl(const void * vx, const void * vy, float * dst, const int ncols,
-    const int nrows, dpct::queue_ptr stream) {
+ਸਥਿਰ ਖਾਲੀ reorder_mul_mat_vec_q4_k_q8_1_sycl(ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst, ਅਚਲ ਪੂਰਨ ncols,
+    ਅਚਲ ਪੂਰਨ nrows, dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
 
     // Round up to a whole number of subgroup-sized workgroups; out-of-range rows are skipped inside the kernel.
-    constexpr size_t num_subgroups = WARP_SIZE;
-    const int block_num_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (int) num_subgroups);
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
+    constexpr size_t ਅੰਕ_subgroups = WARP_ਮਾਪ;
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (ਪੂਰਨ) ਅੰਕ_subgroups);
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, ਅੰਕ_subgroups * WARP_ਮਾਪ);
 
     stream->submit([&](sycl::handler & cgh) {
-        cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                            [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+        cgh.parallel_for(sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                            [=](sycl::nd_ਵਸਤੂ<3> nd_ਵਸਤੂ) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
                                 mul_mat_vec_q_reorder<reorder_vec_dot_q_sycl<GGML_TYPE_Q4_K>>(vx, vy, dst, ncols,
-                                                                                            nrows, nd_item);
+                                                                                            nrows, nd_ਵਸਤੂ);
                             });
     });
 }
 
-template <int ncols_dst, int rows_per_sg>
-static void reorder_mul_mat_vec_q4_k_q8_1_sycl_ncols_impl(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows,
-        const int stride_col_y_bytes, const int stride_col_dst,
-        dpct::queue_ptr stream) {
+ਸਾਂਚਾ <ਪੂਰਨ ncols_dst, ਪੂਰਨ ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_sg>
+ਸਥਿਰ ਖਾਲੀ reorder_mul_mat_vec_q4_k_q8_1_sycl_ncols_impl(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
 
-    constexpr size_t num_subgroups = WARP_SIZE;
-    const int block_num_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (int) num_subgroups * rows_per_sg);
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
+    constexpr size_t ਅੰਕ_subgroups = WARP_ਮਾਪ;
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (ਪੂਰਨ) ਅੰਕ_subgroups * ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_sg);
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, ਅੰਕ_subgroups * WARP_ਮਾਪ);
 
     stream->submit([&](sycl::handler & cgh) {
-        cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                         [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+        cgh.parallel_for(sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                         [=](sycl::nd_ਵਸਤੂ<3> nd_ਵਸਤੂ) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
                              mul_mat_vec_q_reorder_ncols<reorder_vec_dot_q_sycl<GGML_TYPE_Q4_K>, ncols_dst,
-                                                        /*has_fusion=*/ false, rows_per_sg>(
-                                 vx, /*vgate=*/ nullptr, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst,
-                                 /*glu_op=*/ GGML_GLU_OP_SWIGLU, nd_item);
+                                                        /*has_fusion=*/ ਝੂਠ, ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_sg>(
+                                 vx, /*vgate=*/ ਖਾਲੀ_ਸੂਚਕ, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst,
+                                 /*glu_op=*/ GGML_GLU_OP_SWIGLU, nd_ਵਸਤੂ);
                          });
     });
 }
 
-template <int ncols_dst>
-static void reorder_mul_mat_vec_q4_k_q8_1_sycl_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows,
-        const int stride_col_y_bytes, const int stride_col_dst,
-        dpct::queue_ptr stream) {
-    constexpr int rows_per_sg = ncols_dst >= 3 && ncols_dst <= 4 ? 2 : 1;
-    reorder_mul_mat_vec_q4_k_q8_1_sycl_ncols_impl<ncols_dst, rows_per_sg>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream);
+ਸਾਂਚਾ <ਪੂਰਨ ncols_dst>
+ਸਥਿਰ ਖਾਲੀ reorder_mul_mat_vec_q4_k_q8_1_sycl_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
+    constexpr ਪੂਰਨ ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_sg = ncols_dst >= 3 && ncols_dst <= 4 ? 2 : 1;
+    reorder_mul_mat_vec_q4_k_q8_1_sycl_ncols_impl<ncols_dst, ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_sg>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream);
 }
 
-static void reorder_mul_mat_vec_q4_k_q8_1_sycl_switch_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows, const int ncols_dst,
-        const int stride_col_y_bytes, const int stride_col_dst,
-        dpct::queue_ptr stream) {
-    switch (ncols_dst) {
-        case 1: reorder_mul_mat_vec_q4_k_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); break;
-        case 2:
-            if (nrows >= Q4_K_MMVQ_ROW_PAIR_MIN_NROWS) {
-                reorder_mul_mat_vec_q4_k_q8_1_sycl_ncols_impl<2, 2>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream);
-            } else {
-                reorder_mul_mat_vec_q4_k_q8_1_sycl_ncols_impl<2, 1>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream);
+ਸਥਿਰ ਖਾਲੀ reorder_mul_mat_vec_q4_k_q8_1_sycl_switch_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows, ਅਚਲ ਪੂਰਨ ncols_dst,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
+    ਚੋਣ (ncols_dst) {
+        ਹਾਲਤ 1: reorder_mul_mat_vec_q4_k_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); ਰੋਕੋ;
+        ਹਾਲਤ 2:
+            ਜੇ (nrows >= Q4_K_MMVQ_ਪੰਕਤੀ_PAIR_MIN_NROWS) {
+                reorder_mul_mat_vec_q4_k_q8_1_sycl_ncols_impl<2, 2>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream);
+            } ਨਹੀਂਤਾਂ {
+                reorder_mul_mat_vec_q4_k_q8_1_sycl_ncols_impl<2, 1>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream);
             }
-            break;
-        case 3: reorder_mul_mat_vec_q4_k_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 4: reorder_mul_mat_vec_q4_k_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 5: reorder_mul_mat_vec_q4_k_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 6: reorder_mul_mat_vec_q4_k_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 7: reorder_mul_mat_vec_q4_k_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 8: reorder_mul_mat_vec_q4_k_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        default: GGML_ABORT("unsupported ncols_dst=%d for Q4_K reorder multi-col MMVQ", ncols_dst);
+            ਰੋਕੋ;
+        ਹਾਲਤ 3: reorder_mul_mat_vec_q4_k_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 4: reorder_mul_mat_vec_q4_k_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 5: reorder_mul_mat_vec_q4_k_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 6: reorder_mul_mat_vec_q4_k_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 7: reorder_mul_mat_vec_q4_k_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 8: reorder_mul_mat_vec_q4_k_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਮੂਲ: GGML_ABORT("unsupported ncols_dst=%d for Q4_K reorder multi-col MMVQ", ncols_dst);
     }
 }
 
-static void mul_mat_vec_q5_K_q8_1_sycl(const void *vx, const void *vy,
-                                       float *dst, const int ncols,
-                                       const int nrows,
-                                       dpct::queue_ptr stream) {
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q5_K_q8_1_sycl(ਅਚਲ ਖਾਲੀ *vx, ਅਚਲ ਖਾਲੀ *vy,
+                                       ਦਸ਼ਮਲਵ *dst, ਅਚਲ ਪੂਰਨ ncols,
+                                       ਅਚਲ ਪੂਰਨ nrows,
+                                       dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
     {
 
         stream->submit([&](sycl::handler &cgh) {
 
             cgh.parallel_for(
-                sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                    [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                        mul_mat_vec_q<QK_K, QI5_K, block_q5_K,
+                sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                    [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                        mul_mat_vec_q<QK_K, QI5_K, ਖੰਡ_q5_K,
                                       VDR_Q5_K_Q8_1_MMVQ, vec_dot_q5_K_q8_1>(
-                            vx, vy, dst, ncols, nrows, item_ct1);
+                            vx, vy, dst, ncols, nrows, ਵਸਤੂ_ct1);
                     });
         });
     }
 }
 
-template <int ncols_dst>
-static void mul_mat_vec_q5_K_q8_1_sycl_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows,
-        const int stride_col_y, const int stride_col_dst,
-        dpct::queue_ptr stream) {
+ਸਾਂਚਾ <ਪੂਰਨ ncols_dst>
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q5_K_q8_1_sycl_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
 
     stream->submit([&](sycl::handler & cgh) {
         cgh.parallel_for(
-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
-            [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    mul_mat_vec_q_ncols<QK_K, QI5_K, block_q5_K,
+            sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+            [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                    mul_mat_vec_q_ncols<QK_K, QI5_K, ਖੰਡ_q5_K,
                                         VDR_Q5_K_Q8_1_MMVQ,
                                         vec_dot_q5_K_q8_1,
                                         ncols_dst>(
                         vx, vy, dst, ncols, nrows,
-                        stride_col_y, stride_col_dst, item_ct1);
+                        stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, ਵਸਤੂ_ct1);
                 });
     });
 }
 
-static void mul_mat_vec_q5_K_q8_1_sycl_switch_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows,
-        const int ncols_dst,
-        const int stride_col_y, const int stride_col_dst,
-        dpct::queue_ptr stream) {
-    switch (ncols_dst) {
-        case 1: mul_mat_vec_q5_K_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); break;
-        case 2: mul_mat_vec_q5_K_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 3: mul_mat_vec_q5_K_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 4: mul_mat_vec_q5_K_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 5: mul_mat_vec_q5_K_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 6: mul_mat_vec_q5_K_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 7: mul_mat_vec_q5_K_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 8: mul_mat_vec_q5_K_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        default: GGML_ABORT("unsupported ncols_dst=%d for Q5_K multi-col MMVQ", ncols_dst);
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q5_K_q8_1_sycl_switch_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+        ਅਚਲ ਪੂਰਨ ncols_dst,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
+    ਚੋਣ (ncols_dst) {
+        ਹਾਲਤ 1: mul_mat_vec_q5_K_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); ਰੋਕੋ;
+        ਹਾਲਤ 2: mul_mat_vec_q5_K_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 3: mul_mat_vec_q5_K_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 4: mul_mat_vec_q5_K_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 5: mul_mat_vec_q5_K_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 6: mul_mat_vec_q5_K_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 7: mul_mat_vec_q5_K_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 8: mul_mat_vec_q5_K_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਮੂਲ: GGML_ABORT("unsupported ncols_dst=%d for Q5_K multi-col MMVQ", ncols_dst);
     }
 }
 
-static void reorder_mul_mat_vec_q5_k_q8_1_sycl(const void * vx, const void * vy, float * dst, const int ncols,
-                                               const int nrows, dpct::queue_ptr stream) {
+ਸਥਿਰ ਖਾਲੀ reorder_mul_mat_vec_q5_k_q8_1_sycl(ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst, ਅਚਲ ਪੂਰਨ ncols,
+                                               ਅਚਲ ਪੂਰਨ nrows, dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
 
-    constexpr size_t num_subgroups = WARP_SIZE;
-    const int block_num_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (int) num_subgroups);
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
+    constexpr size_t ਅੰਕ_subgroups = WARP_ਮਾਪ;
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (ਪੂਰਨ) ਅੰਕ_subgroups);
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, ਅੰਕ_subgroups * WARP_ਮਾਪ);
 
     stream->submit([&](sycl::handler & cgh) {
-        cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                            [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+        cgh.parallel_for(sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                            [=](sycl::nd_ਵਸਤੂ<3> nd_ਵਸਤੂ) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
                                 mul_mat_vec_q_reorder<reorder_vec_dot_q_sycl<GGML_TYPE_Q5_K>>(vx, vy, dst, ncols,
-                                                                                            nrows, nd_item);
+                                                                                            nrows, nd_ਵਸਤੂ);
                             });
     });
 }
 
-template <int ncols_dst, int rows_per_sg, bool shared_weights>
-static void reorder_mul_mat_vec_q5_k_q8_1_sycl_ncols_impl(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows,
-        const int stride_col_y_bytes, const int stride_col_dst,
-        dpct::queue_ptr stream) {
+ਸਾਂਚਾ <ਪੂਰਨ ncols_dst, ਪੂਰਨ ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_sg, ਤਾਰਕਿਕ shared_weights>
+ਸਥਿਰ ਖਾਲੀ reorder_mul_mat_vec_q5_k_q8_1_sycl_ncols_impl(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
 
-    constexpr size_t num_subgroups = WARP_SIZE;
-    const int block_num_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (int) num_subgroups * rows_per_sg);
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
+    constexpr size_t ਅੰਕ_subgroups = WARP_ਮਾਪ;
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (ਪੂਰਨ) ਅੰਕ_subgroups * ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_sg);
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, ਅੰਕ_subgroups * WARP_ਮਾਪ);
 
     stream->submit([&](sycl::handler & cgh) {
-        cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                         [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+        cgh.parallel_for(sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                         [=](sycl::nd_ਵਸਤੂ<3> nd_ਵਸਤੂ) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
                              mul_mat_vec_q_reorder_ncols<reorder_vec_dot_q_sycl<GGML_TYPE_Q5_K>, ncols_dst,
-                                                        /*has_fusion=*/ false, rows_per_sg, shared_weights>(
-                                 vx, /*vgate=*/ nullptr, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst,
-                                 /*glu_op=*/ GGML_GLU_OP_SWIGLU, nd_item);
+                                                        /*has_fusion=*/ ਝੂਠ, ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_sg, shared_weights>(
+                                 vx, /*vgate=*/ ਖਾਲੀ_ਸੂਚਕ, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst,
+                                 /*glu_op=*/ GGML_GLU_OP_SWIGLU, nd_ਵਸਤੂ);
                          });
     });
 }
 
-template <int ncols_dst>
-static void reorder_mul_mat_vec_q5_k_q8_1_sycl_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows,
-        const int stride_col_y_bytes, const int stride_col_dst,
-        dpct::queue_ptr stream) {
-    if (ggml_sycl_q5_k_mmvq_reuse(ggml_sycl_get_device())) {
-        constexpr int rows_per_sg = ncols_dst >= 3 ? 2 : 1;
-        reorder_mul_mat_vec_q5_k_q8_1_sycl_ncols_impl<ncols_dst, rows_per_sg, true>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream);
-    } else {
-        reorder_mul_mat_vec_q5_k_q8_1_sycl_ncols_impl<ncols_dst, 1, false>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream);
+ਸਾਂਚਾ <ਪੂਰਨ ncols_dst>
+ਸਥਿਰ ਖਾਲੀ reorder_mul_mat_vec_q5_k_q8_1_sycl_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
+    ਜੇ (ggml_sycl_q5_k_mmvq_reuse(ggml_sycl_get_device())) {
+        constexpr ਪੂਰਨ ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_sg = ncols_dst >= 3 ? 2 : 1;
+        reorder_mul_mat_vec_q5_k_q8_1_sycl_ncols_impl<ncols_dst, ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_sg, ਸੱਚ>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream);
+    } ਨਹੀਂਤਾਂ {
+        reorder_mul_mat_vec_q5_k_q8_1_sycl_ncols_impl<ncols_dst, 1, ਝੂਠ>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream);
     }
 }
 
-static void reorder_mul_mat_vec_q5_k_q8_1_sycl_switch_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows, const int ncols_dst,
-        const int stride_col_y_bytes, const int stride_col_dst,
-        dpct::queue_ptr stream) {
-    switch (ncols_dst) {
-        case 1: reorder_mul_mat_vec_q5_k_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); break;
-        case 2: reorder_mul_mat_vec_q5_k_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 3: reorder_mul_mat_vec_q5_k_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 4: reorder_mul_mat_vec_q5_k_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 5: reorder_mul_mat_vec_q5_k_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 6: reorder_mul_mat_vec_q5_k_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 7: reorder_mul_mat_vec_q5_k_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 8: reorder_mul_mat_vec_q5_k_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        default: GGML_ABORT("unsupported ncols_dst=%d for Q5_K reorder multi-col MMVQ", ncols_dst);
+ਸਥਿਰ ਖਾਲੀ reorder_mul_mat_vec_q5_k_q8_1_sycl_switch_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows, ਅਚਲ ਪੂਰਨ ncols_dst,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
+    ਚੋਣ (ncols_dst) {
+        ਹਾਲਤ 1: reorder_mul_mat_vec_q5_k_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); ਰੋਕੋ;
+        ਹਾਲਤ 2: reorder_mul_mat_vec_q5_k_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 3: reorder_mul_mat_vec_q5_k_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 4: reorder_mul_mat_vec_q5_k_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 5: reorder_mul_mat_vec_q5_k_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 6: reorder_mul_mat_vec_q5_k_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 7: reorder_mul_mat_vec_q5_k_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 8: reorder_mul_mat_vec_q5_k_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਮੂਲ: GGML_ABORT("unsupported ncols_dst=%d for Q5_K reorder multi-col MMVQ", ncols_dst);
     }
 }
 
-static void reorder_mul_mat_vec_q6_k_q8_1_sycl(const void * vx, const void * vy, float * dst, const int ncols,
-                                               const int nrows, dpct::queue_ptr stream) {
+ਸਥਿਰ ਖਾਲੀ reorder_mul_mat_vec_q6_k_q8_1_sycl(ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst, ਅਚਲ ਪੂਰਨ ncols,
+                                               ਅਚਲ ਪੂਰਨ nrows, dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
     // Round up to a whole number of subgroup-sized workgroups; out-of-range rows are skipped inside the kernel.
-    constexpr size_t num_subgroups = WARP_SIZE;
-    const int block_num_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (int) num_subgroups);
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
+    constexpr size_t ਅੰਕ_subgroups = WARP_ਮਾਪ;
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (ਪੂਰਨ) ਅੰਕ_subgroups);
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, ਅੰਕ_subgroups * WARP_ਮਾਪ);
 
 
     stream->submit([&](sycl::handler & cgh) {
-        cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                         [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+        cgh.parallel_for(sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                         [=](sycl::nd_ਵਸਤੂ<3> nd_ਵਸਤੂ) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
                              mul_mat_vec_q_reorder<reorder_vec_dot_q_sycl<GGML_TYPE_Q6_K>>(vx, vy, dst, ncols, nrows,
-                                                                                           nd_item);
+                                                                                           nd_ਵਸਤੂ);
                          });
     });
 }
 
-template <int ncols_dst>
-static void reorder_mul_mat_vec_q6_k_q8_1_sycl_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows,
-        const int stride_col_y_bytes, const int stride_col_dst,
-        dpct::queue_ptr stream) {
+ਸਾਂਚਾ <ਪੂਰਨ ncols_dst>
+ਸਥਿਰ ਖਾਲੀ reorder_mul_mat_vec_q6_k_q8_1_sycl_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
-    constexpr size_t num_subgroups = WARP_SIZE;
-    const int block_num_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (int) num_subgroups);
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
+    constexpr size_t ਅੰਕ_subgroups = WARP_ਮਾਪ;
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (ਪੂਰਨ) ਅੰਕ_subgroups);
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, ਅੰਕ_subgroups * WARP_ਮਾਪ);
 
     stream->submit([&](sycl::handler & cgh) {
-        cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                         [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+        cgh.parallel_for(sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                         [=](sycl::nd_ਵਸਤੂ<3> nd_ਵਸਤੂ) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
                              mul_mat_vec_q_reorder_ncols<reorder_vec_dot_q_sycl<GGML_TYPE_Q6_K>, ncols_dst>(
-                                 vx, /*vgate=*/ nullptr, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst,
-                                 /*glu_op=*/ GGML_GLU_OP_SWIGLU, nd_item);
+                                 vx, /*vgate=*/ ਖਾਲੀ_ਸੂਚਕ, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst,
+                                 /*glu_op=*/ GGML_GLU_OP_SWIGLU, nd_ਵਸਤੂ);
                          });
     });
 }
 
-static void reorder_mul_mat_vec_q6_k_q8_1_sycl_switch_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows, const int ncols_dst,
-        const int stride_col_y_bytes, const int stride_col_dst,
-        dpct::queue_ptr stream) {
-    switch (ncols_dst) {
-        case 1: reorder_mul_mat_vec_q6_k_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); break;
-        case 2: reorder_mul_mat_vec_q6_k_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 3: reorder_mul_mat_vec_q6_k_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 4: reorder_mul_mat_vec_q6_k_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 5: reorder_mul_mat_vec_q6_k_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 6: reorder_mul_mat_vec_q6_k_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 7: reorder_mul_mat_vec_q6_k_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 8: reorder_mul_mat_vec_q6_k_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        default: GGML_ABORT("unsupported ncols_dst=%d for Q6_K reorder multi-col MMVQ", ncols_dst);
+ਸਥਿਰ ਖਾਲੀ reorder_mul_mat_vec_q6_k_q8_1_sycl_switch_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows, ਅਚਲ ਪੂਰਨ ncols_dst,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
+    ਚੋਣ (ncols_dst) {
+        ਹਾਲਤ 1: reorder_mul_mat_vec_q6_k_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); ਰੋਕੋ;
+        ਹਾਲਤ 2: reorder_mul_mat_vec_q6_k_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 3: reorder_mul_mat_vec_q6_k_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 4: reorder_mul_mat_vec_q6_k_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 5: reorder_mul_mat_vec_q6_k_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 6: reorder_mul_mat_vec_q6_k_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 7: reorder_mul_mat_vec_q6_k_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 8: reorder_mul_mat_vec_q6_k_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਮੂਲ: GGML_ABORT("unsupported ncols_dst=%d for Q6_K reorder multi-col MMVQ", ncols_dst);
     }
 }
 
-static void mul_mat_vec_q6_K_q8_1_sycl(const void *vx, const void *vy,
-                                       float *dst, const int ncols,
-                                       const int nrows,
-                                       dpct::queue_ptr stream) {
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q6_K_q8_1_sycl(ਅਚਲ ਖਾਲੀ *vx, ਅਚਲ ਖਾਲੀ *vy,
+                                       ਦਸ਼ਮਲਵ *dst, ਅਚਲ ਪੂਰਨ ncols,
+                                       ਅਚਲ ਪੂਰਨ nrows,
+                                       dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
     {
 
         stream->submit([&](sycl::handler &cgh) {
 
             cgh.parallel_for(
-                sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                    [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                        mul_mat_vec_q<QK_K, QI6_K, block_q6_K,
+                sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                    [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                        mul_mat_vec_q<QK_K, QI6_K, ਖੰਡ_q6_K,
                                       VDR_Q6_K_Q8_1_MMVQ, vec_dot_q6_K_q8_1>(
-                            vx, vy, dst, ncols, nrows, item_ct1);
+                            vx, vy, dst, ncols, nrows, ਵਸਤੂ_ct1);
                     });
         });
     }
 }
 
-template <int ncols_dst>
-static void mul_mat_vec_q6_K_q8_1_sycl_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows,
-        const int stride_col_y, const int stride_col_dst,
-        dpct::queue_ptr stream) {
+ਸਾਂਚਾ <ਪੂਰਨ ncols_dst>
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q6_K_q8_1_sycl_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
 
     stream->submit([&](sycl::handler & cgh) {
         cgh.parallel_for(
-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
-            [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    mul_mat_vec_q_ncols<QK_K, QI6_K, block_q6_K,
+            sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+            [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                    mul_mat_vec_q_ncols<QK_K, QI6_K, ਖੰਡ_q6_K,
                                         VDR_Q6_K_Q8_1_MMVQ,
                                         vec_dot_q6_K_q8_1,
                                         ncols_dst>(
                         vx, vy, dst, ncols, nrows,
-                        stride_col_y, stride_col_dst, item_ct1);
+                        stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, ਵਸਤੂ_ct1);
                 });
     });
 }
 
-static void mul_mat_vec_q6_K_q8_1_sycl_switch_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows,
-        const int ncols_dst,
-        const int stride_col_y, const int stride_col_dst,
-        dpct::queue_ptr stream) {
-    switch (ncols_dst) {
-        case 1: mul_mat_vec_q6_K_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); break;
-        case 2: mul_mat_vec_q6_K_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 3: mul_mat_vec_q6_K_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 4: mul_mat_vec_q6_K_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 5: mul_mat_vec_q6_K_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 6: mul_mat_vec_q6_K_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 7: mul_mat_vec_q6_K_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 8: mul_mat_vec_q6_K_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        default: GGML_ABORT("unsupported ncols_dst=%d for Q6_K multi-col MMVQ", ncols_dst);
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q6_K_q8_1_sycl_switch_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+        ਅਚਲ ਪੂਰਨ ncols_dst,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
+    ਚੋਣ (ncols_dst) {
+        ਹਾਲਤ 1: mul_mat_vec_q6_K_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); ਰੋਕੋ;
+        ਹਾਲਤ 2: mul_mat_vec_q6_K_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 3: mul_mat_vec_q6_K_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 4: mul_mat_vec_q6_K_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 5: mul_mat_vec_q6_K_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 6: mul_mat_vec_q6_K_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 7: mul_mat_vec_q6_K_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 8: mul_mat_vec_q6_K_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਮੂਲ: GGML_ABORT("unsupported ncols_dst=%d for Q6_K multi-col MMVQ", ncols_dst);
     }
 }
 
 
-static void mul_mat_vec_iq2_xxs_q8_1_sycl(const void *vx, const void *vy,
-                                          float *dst, const int ncols,
-                                          const int nrows,
-                                          dpct::queue_ptr stream) {
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_iq2_xxs_q8_1_sycl(ਅਚਲ ਖਾਲੀ *vx, ਅਚਲ ਖਾਲੀ *vy,
+                                          ਦਸ਼ਮਲਵ *dst, ਅਚਲ ਪੂਰਨ ncols,
+                                          ਅਚਲ ਪੂਰਨ nrows,
+                                          dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
     {
         stream->submit([&](sycl::handler &cgh) {
             cgh.parallel_for(
-                sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                    [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                        mul_mat_vec_q_iq2_xxs_q8_1<QK_K, QI2_XXS/2, block_iq2_xxs, 1>(
-                            vx, vy, dst, ncols, nrows, item_ct1);
+                sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                    [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                        mul_mat_vec_q_iq2_xxs_q8_1<QK_K, QI2_XXS/2, ਖੰਡ_iq2_xxs, 1>(
+                            vx, vy, dst, ncols, nrows, ਵਸਤੂ_ct1);
                     });
         });
     }
 }
 
-static void mul_mat_vec_iq2_xs_q8_1_sycl(const void *vx, const void *vy,
-                                         float *dst, const int ncols,
-                                         const int nrows,
-                                         dpct::queue_ptr stream) {
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_iq2_xs_q8_1_sycl(ਅਚਲ ਖਾਲੀ *vx, ਅਚਲ ਖਾਲੀ *vy,
+                                         ਦਸ਼ਮਲਵ *dst, ਅਚਲ ਪੂਰਨ ncols,
+                                         ਅਚਲ ਪੂਰਨ nrows,
+                                         dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
     {
         stream->submit([&](sycl::handler & cgh) {
             cgh.parallel_for(
-                sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                    [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                        mul_mat_vec_q_iq2_xs_q8_1<QK_K, QI2_XS/2, block_iq2_xs, 1>(
-                            vx, vy, dst, ncols, nrows, item_ct1);
+                sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                    [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                        mul_mat_vec_q_iq2_xs_q8_1<QK_K, QI2_XS/2, ਖੰਡ_iq2_xs, 1>(
+                            vx, vy, dst, ncols, nrows, ਵਸਤੂ_ct1);
                     });
         });
     }
 }
 
-static void mul_mat_vec_iq2_s_q8_1_sycl(const void *vx, const void *vy,
-                                         float *dst, const int ncols,
-                                         const int nrows,
-                                         dpct::queue_ptr stream) {
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_iq2_s_q8_1_sycl(ਅਚਲ ਖਾਲੀ *vx, ਅਚਲ ਖਾਲੀ *vy,
+                                         ਦਸ਼ਮਲਵ *dst, ਅਚਲ ਪੂਰਨ ncols,
+                                         ਅਚਲ ਪੂਰਨ nrows,
+                                         dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
     {
 
         stream->submit([&](sycl::handler &cgh) {
             cgh.parallel_for(
-                sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                    [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                        mul_mat_vec_q_iq2_s_q8_1<QK_K, QI2_S/2, block_iq2_s, 1>(
-                            vx, vy, dst, ncols, nrows, item_ct1);
+                sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                    [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                        mul_mat_vec_q_iq2_s_q8_1<QK_K, QI2_S/2, ਖੰਡ_iq2_s, 1>(
+                            vx, vy, dst, ncols, nrows, ਵਸਤੂ_ct1);
                     });
         });
     }
 }
 
-static void mul_mat_vec_iq3_xxs_q8_1_sycl(const void *vx, const void *vy,
-                                          float *dst, const int ncols,
-                                          const int nrows,
-                                          dpct::queue_ptr stream) {
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_iq3_xxs_q8_1_sycl(ਅਚਲ ਖਾਲੀ *vx, ਅਚਲ ਖਾਲੀ *vy,
+                                          ਦਸ਼ਮਲਵ *dst, ਅਚਲ ਪੂਰਨ ncols,
+                                          ਅਚਲ ਪੂਰਨ nrows,
+                                          dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
     {
 
         stream->submit([&](sycl::handler &cgh) {
             cgh.parallel_for(
-                sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                    [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                        mul_mat_vec_q_iq3_xxs_q8_1<QK_K, QI3_XXS/2, block_iq3_xxs, 1>(
-                            vx, vy, dst, ncols, nrows, item_ct1);
+                sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                    [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                        mul_mat_vec_q_iq3_xxs_q8_1<QK_K, QI3_XXS/2, ਖੰਡ_iq3_xxs, 1>(
+                            vx, vy, dst, ncols, nrows, ਵਸਤੂ_ct1);
                     });
         });
     }
 }
 
-template <ggml_type type>
-static void reorder_mul_mat_vec_iq3_q8_1_sycl(const void * vx, const void * vy, float * dst, const int ncols,
-                                              const int nrows, dpct::queue_ptr stream) {
+ਸਾਂਚਾ <ggml_type type>
+ਸਥਿਰ ਖਾਲੀ reorder_mul_mat_vec_iq3_q8_1_sycl(ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst, ਅਚਲ ਪੂਰਨ ncols,
+                                              ਅਚਲ ਪੂਰਨ nrows, dpct::ਕਤਾਰ_ptr stream) {
     static_assert(type == GGML_TYPE_IQ3_XXS || type == GGML_TYPE_IQ3_S);
     GGML_ASSERT(ncols % QK_K == 0);
-    constexpr size_t num_subgroups = WARP_SIZE;
-    const int block_num_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (int) num_subgroups);
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
+    constexpr size_t ਅੰਕ_subgroups = WARP_ਮਾਪ;
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (ਪੂਰਨ) ਅੰਕ_subgroups);
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, ਅੰਕ_subgroups * WARP_ਮਾਪ);
 
     stream->submit([&](sycl::handler & cgh) {
-        cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                         [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+        cgh.parallel_for(sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                         [=](sycl::nd_ਵਸਤੂ<3> nd_ਵਸਤੂ) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
                              mul_mat_vec_q_reorder<reorder_vec_dot_q_sycl<type>>(
-                                 vx, vy, dst, ncols, nrows, nd_item);
+                                 vx, vy, dst, ncols, nrows, nd_ਵਸਤੂ);
                          });
     });
 }
 
-template <ggml_type type, int ncols_dst>
-static void reorder_mul_mat_vec_iq3_q8_1_sycl_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows,
-        const int stride_col_y_bytes, const int stride_col_dst,
-        dpct::queue_ptr stream) {
+ਸਾਂਚਾ <ggml_type type, ਪੂਰਨ ncols_dst>
+ਸਥਿਰ ਖਾਲੀ reorder_mul_mat_vec_iq3_q8_1_sycl_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
     static_assert(type == GGML_TYPE_IQ3_XXS || type == GGML_TYPE_IQ3_S);
     GGML_ASSERT(ncols % QK_K == 0);
-    constexpr size_t num_subgroups = WARP_SIZE;
-    const int block_num_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (int) num_subgroups);
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
+    constexpr size_t ਅੰਕ_subgroups = WARP_ਮਾਪ;
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (ਪੂਰਨ) ਅੰਕ_subgroups);
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, ਅੰਕ_subgroups * WARP_ਮਾਪ);
 
     stream->submit([&](sycl::handler & cgh) {
-        cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                         [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+        cgh.parallel_for(sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                         [=](sycl::nd_ਵਸਤੂ<3> nd_ਵਸਤੂ) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
                              mul_mat_vec_q_reorder_ncols<reorder_vec_dot_q_sycl<type>, ncols_dst>(
-                                 vx, /*vgate=*/ nullptr, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst,
-                                 /*glu_op=*/ GGML_GLU_OP_SWIGLU, nd_item);
+                                 vx, /*vgate=*/ ਖਾਲੀ_ਸੂਚਕ, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst,
+                                 /*glu_op=*/ GGML_GLU_OP_SWIGLU, nd_ਵਸਤੂ);
                          });
     });
 }
 
-template <ggml_type type>
-static void reorder_mul_mat_vec_iq3_q8_1_sycl_switch_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows, const int ncols_dst,
-        const int stride_col_y_bytes, const int stride_col_dst,
-        dpct::queue_ptr stream) {
-    switch (ncols_dst) {
-        case 1: reorder_mul_mat_vec_iq3_q8_1_sycl<type>(vx, vy, dst, ncols, nrows, stream); break;
-        case 2: reorder_mul_mat_vec_iq3_q8_1_sycl_ncols<type, 2>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 3: reorder_mul_mat_vec_iq3_q8_1_sycl_ncols<type, 3>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 4: reorder_mul_mat_vec_iq3_q8_1_sycl_ncols<type, 4>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 5: reorder_mul_mat_vec_iq3_q8_1_sycl_ncols<type, 5>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 6: reorder_mul_mat_vec_iq3_q8_1_sycl_ncols<type, 6>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 7: reorder_mul_mat_vec_iq3_q8_1_sycl_ncols<type, 7>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        case 8: reorder_mul_mat_vec_iq3_q8_1_sycl_ncols<type, 8>(vx, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, stream); break;
-        default: GGML_ABORT("unsupported ncols_dst=%d for reordered IQ3 multi-col MMVQ", ncols_dst);
+ਸਾਂਚਾ <ggml_type type>
+ਸਥਿਰ ਖਾਲੀ reorder_mul_mat_vec_iq3_q8_1_sycl_switch_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows, ਅਚਲ ਪੂਰਨ ncols_dst,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
+    ਚੋਣ (ncols_dst) {
+        ਹਾਲਤ 1: reorder_mul_mat_vec_iq3_q8_1_sycl<type>(vx, vy, dst, ncols, nrows, stream); ਰੋਕੋ;
+        ਹਾਲਤ 2: reorder_mul_mat_vec_iq3_q8_1_sycl_ncols<type, 2>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 3: reorder_mul_mat_vec_iq3_q8_1_sycl_ncols<type, 3>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 4: reorder_mul_mat_vec_iq3_q8_1_sycl_ncols<type, 4>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 5: reorder_mul_mat_vec_iq3_q8_1_sycl_ncols<type, 5>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 6: reorder_mul_mat_vec_iq3_q8_1_sycl_ncols<type, 6>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 7: reorder_mul_mat_vec_iq3_q8_1_sycl_ncols<type, 7>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 8: reorder_mul_mat_vec_iq3_q8_1_sycl_ncols<type, 8>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਮੂਲ: GGML_ABORT("unsupported ncols_dst=%d for reordered IQ3 multi-col MMVQ", ncols_dst);
     }
 }
 
-static void mul_mat_vec_iq3_s_q8_1_sycl(const void *vx, const void *vy,
-                                          float *dst, const int ncols,
-                                          const int nrows,
-                                          dpct::queue_ptr stream) {
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_iq3_s_q8_1_sycl(ਅਚਲ ਖਾਲੀ *vx, ਅਚਲ ਖਾਲੀ *vy,
+                                          ਦਸ਼ਮਲਵ *dst, ਅਚਲ ਪੂਰਨ ncols,
+                                          ਅਚਲ ਪੂਰਨ nrows,
+                                          dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
     {
 
         stream->submit([&](sycl::handler &cgh) {
             cgh.parallel_for(
-                sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                    [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                        mul_mat_vec_q_iq3_s_q8_1<QK_K, QI3_S/2, block_iq3_s, 1>(
-                            vx, vy, dst, ncols, nrows, item_ct1);
+                sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                    [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                        mul_mat_vec_q_iq3_s_q8_1<QK_K, QI3_S/2, ਖੰਡ_iq3_s, 1>(
+                            vx, vy, dst, ncols, nrows, ਵਸਤੂ_ct1);
                     });
         });
     }
 }
 
-template <int ncols_dst>
-static void mul_mat_vec_iq3_s_q8_1_sycl_ncols(const void *    vx,
-                                              const void *    vy,
-                                              float *         dst,
-                                              const int       ncols,
-                                              const int       nrows,
-                                              const int       stride_col_y,
-                                              const int       stride_col_dst,
-                                              dpct::queue_ptr stream) {
+ਸਾਂਚਾ <ਪੂਰਨ ncols_dst>
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_iq3_s_q8_1_sycl_ncols(ਅਚਲ ਖਾਲੀ *    vx,
+                                              ਅਚਲ ਖਾਲੀ *    vy,
+                                              ਦਸ਼ਮਲਵ *         dst,
+                                              ਅਚਲ ਪੂਰਨ       ncols,
+                                              ਅਚਲ ਪੂਰਨ       nrows,
+                                              ਅਚਲ ਪੂਰਨ       stride_ਖਾਨਾ_y,
+                                              ਅਚਲ ਪੂਰਨ       stride_ਖਾਨਾ_dst,
+                                              dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
-    const int            block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ            ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
     stream->submit([&](sycl::handler & cgh) {
-        cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                         [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                             mul_mat_vec_q_ncols<QK_K, QI3_S / 2, block_iq3_s, 1, vec_dot_iq3_s_q8_1_moe, ncols_dst>(
-                                 vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, item_ct1);
+        cgh.parallel_for(sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                         [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                             mul_mat_vec_q_ncols<QK_K, QI3_S / 2, ਖੰਡ_iq3_s, 1, vec_dot_iq3_s_q8_1_moe, ncols_dst>(
+                                 vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, ਵਸਤੂ_ct1);
                          });
     });
 }
 
-static void mul_mat_vec_iq3_s_q8_1_sycl_switch_ncols(const void *    vx,
-                                                     const void *    vy,
-                                                     float *         dst,
-                                                     const int       ncols,
-                                                     const int       nrows,
-                                                     const int       ncols_dst,
-                                                     const int       stride_col_y,
-                                                     const int       stride_col_dst,
-                                                     dpct::queue_ptr stream) {
-    switch (ncols_dst) {
-        case 1:
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_iq3_s_q8_1_sycl_switch_ncols(ਅਚਲ ਖਾਲੀ *    vx,
+                                                     ਅਚਲ ਖਾਲੀ *    vy,
+                                                     ਦਸ਼ਮਲਵ *         dst,
+                                                     ਅਚਲ ਪੂਰਨ       ncols,
+                                                     ਅਚਲ ਪੂਰਨ       nrows,
+                                                     ਅਚਲ ਪੂਰਨ       ncols_dst,
+                                                     ਅਚਲ ਪੂਰਨ       stride_ਖਾਨਾ_y,
+                                                     ਅਚਲ ਪੂਰਨ       stride_ਖਾਨਾ_dst,
+                                                     dpct::ਕਤਾਰ_ptr stream) {
+    ਚੋਣ (ncols_dst) {
+        ਹਾਲਤ 1:
             mul_mat_vec_iq3_s_q8_1_sycl(vx, vy, dst, ncols, nrows, stream);
-            break;
-        case 2:
-            mul_mat_vec_iq3_s_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream);
-            break;
-        case 3:
-            mul_mat_vec_iq3_s_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream);
-            break;
-        case 4:
-            mul_mat_vec_iq3_s_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream);
-            break;
-        case 5:
-            mul_mat_vec_iq3_s_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream);
-            break;
-        case 6:
-            mul_mat_vec_iq3_s_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream);
-            break;
-        case 7:
-            mul_mat_vec_iq3_s_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream);
-            break;
-        case 8:
-            mul_mat_vec_iq3_s_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream);
-            break;
-        default:
+            ਰੋਕੋ;
+        ਹਾਲਤ 2:
+            mul_mat_vec_iq3_s_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream);
+            ਰੋਕੋ;
+        ਹਾਲਤ 3:
+            mul_mat_vec_iq3_s_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream);
+            ਰੋਕੋ;
+        ਹਾਲਤ 4:
+            mul_mat_vec_iq3_s_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream);
+            ਰੋਕੋ;
+        ਹਾਲਤ 5:
+            mul_mat_vec_iq3_s_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream);
+            ਰੋਕੋ;
+        ਹਾਲਤ 6:
+            mul_mat_vec_iq3_s_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream);
+            ਰੋਕੋ;
+        ਹਾਲਤ 7:
+            mul_mat_vec_iq3_s_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream);
+            ਰੋਕੋ;
+        ਹਾਲਤ 8:
+            mul_mat_vec_iq3_s_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream);
+            ਰੋਕੋ;
+        ਮੂਲ:
             GGML_ABORT("unsupported ncols_dst=%d for IQ3_S multi-col MMVQ", ncols_dst);
     }
 }
 
-static void mul_mat_vec_iq1_s_q8_1_sycl(const void *vx, const void *vy,
-                                          float *dst, const int ncols,
-                                          const int nrows,
-                                          dpct::queue_ptr stream) {
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_iq1_s_q8_1_sycl(ਅਚਲ ਖਾਲੀ *vx, ਅਚਲ ਖਾਲੀ *vy,
+                                          ਦਸ਼ਮਲਵ *dst, ਅਚਲ ਪੂਰਨ ncols,
+                                          ਅਚਲ ਪੂਰਨ nrows,
+                                          dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
     {
 
         stream->submit([&](sycl::handler &cgh) {
             cgh.parallel_for(
-                sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                    [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                        mul_mat_vec_q_iq1_s_q8_1<QK_K, QI1_S, block_iq1_s, 1>(
-                            vx, vy, dst, ncols, nrows, item_ct1);
+                sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                    [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                        mul_mat_vec_q_iq1_s_q8_1<QK_K, QI1_S, ਖੰਡ_iq1_s, 1>(
+                            vx, vy, dst, ncols, nrows, ਵਸਤੂ_ct1);
                     });
         });
     }
 }
 
-static void mul_mat_vec_iq1_m_q8_1_sycl(const void *vx, const void *vy,
-                                          float *dst, const int ncols,
-                                          const int nrows,
-                                          dpct::queue_ptr stream) {
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_iq1_m_q8_1_sycl(ਅਚਲ ਖਾਲੀ *vx, ਅਚਲ ਖਾਲੀ *vy,
+                                          ਦਸ਼ਮਲਵ *dst, ਅਚਲ ਪੂਰਨ ncols,
+                                          ਅਚਲ ਪੂਰਨ nrows,
+                                          dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
     {
         stream->submit([&](sycl::handler &cgh) {
             cgh.parallel_for(
-                sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                    [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                        mul_mat_vec_q_iq1_m_q8_1<QK_K, QI1_S, block_iq1_m, 1>(
-                            vx, vy, dst, ncols, nrows, item_ct1);
+                sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                    [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                        mul_mat_vec_q_iq1_m_q8_1<QK_K, QI1_S, ਖੰਡ_iq1_m, 1>(
+                            vx, vy, dst, ncols, nrows, ਵਸਤੂ_ct1);
                     });
         });
     }
 }
 
-static void mul_mat_vec_iq4_nl_q8_1_sycl(const void *vx, const void *vy,
-                                          float *dst, const int ncols,
-                                          const int nrows,
-                                          dpct::queue_ptr stream) {
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_iq4_nl_q8_1_sycl(ਅਚਲ ਖਾਲੀ *vx, ਅਚਲ ਖਾਲੀ *vy,
+                                          ਦਸ਼ਮਲਵ *dst, ਅਚਲ ਪੂਰਨ ncols,
+                                          ਅਚਲ ਪੂਰਨ nrows,
+                                          dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK4_NL == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
     {
 
         stream->submit([&](sycl::handler &cgh) {
             cgh.parallel_for(
-                sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                    [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                        mul_mat_vec_q_iq4_nl_q8_1<QK4_NL, QI4_NL, block_iq4_nl, 2>(
-                            vx, vy, dst, ncols, nrows, item_ct1);
+                sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                    [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                        mul_mat_vec_q_iq4_nl_q8_1<QK4_NL, QI4_NL, ਖੰਡ_iq4_nl, 2>(
+                            vx, vy, dst, ncols, nrows, ਵਸਤੂ_ct1);
                     });
         });
     }
 }
 
-static void mul_mat_vec_iq4_xs_q8_1_sycl(const void *vx, const void *vy,
-                                          float *dst, const int ncols,
-                                          const int nrows,
-                                          dpct::queue_ptr stream) {
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_iq4_xs_q8_1_sycl(ਅਚਲ ਖਾਲੀ *vx, ਅਚਲ ਖਾਲੀ *vy,
+                                          ਦਸ਼ਮਲਵ *dst, ਅਚਲ ਪੂਰਨ ncols,
+                                          ਅਚਲ ਪੂਰਨ nrows,
+                                          dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
     {
 
         stream->submit([&](sycl::handler &cgh) {
             cgh.parallel_for(
-                sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                    [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                        mul_mat_vec_q_iq4_xs_q8_1<QK_K, QI4_XS/4, block_iq4_xs, 1>(
-                            vx, vy, dst, ncols, nrows, item_ct1);
+                sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                    [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                        mul_mat_vec_q_iq4_xs_q8_1<QK_K, QI4_XS/4, ਖੰਡ_iq4_xs, 1>(
+                            vx, vy, dst, ncols, nrows, ਵਸਤੂ_ct1);
                     });
         });
     }
 }
 
-template <int ncols_dst>
-static void mul_mat_vec_iq4_xs_q8_1_sycl_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows,
-        const int stride_col_y, const int stride_col_dst,
-        dpct::queue_ptr stream) {
+ਸਾਂਚਾ <ਪੂਰਨ ncols_dst>
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_iq4_xs_q8_1_sycl_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
-    const int block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
 
     stream->submit([&](sycl::handler & cgh) {
         cgh.parallel_for(
-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
-            [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    mul_mat_vec_q_ncols<QK_K, QI4_XS/4, block_iq4_xs,
+            sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+            [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                    mul_mat_vec_q_ncols<QK_K, QI4_XS/4, ਖੰਡ_iq4_xs,
                                         1,
                                         vec_dot_iq4_xs_q8_1,
                                         ncols_dst>(
                         vx, vy, dst, ncols, nrows,
-                        stride_col_y, stride_col_dst, item_ct1);
+                        stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, ਵਸਤੂ_ct1);
                 });
     });
 }
 
-static void mul_mat_vec_iq4_xs_q8_1_sycl_switch_ncols(
-        const void * vx, const void * vy, float * dst,
-        const int ncols, const int nrows,
-        const int ncols_dst,
-        const int stride_col_y, const int stride_col_dst,
-        dpct::queue_ptr stream) {
-    switch (ncols_dst) {
-        case 1: mul_mat_vec_iq4_xs_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); break;
-        case 2: mul_mat_vec_iq4_xs_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 3: mul_mat_vec_iq4_xs_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 4: mul_mat_vec_iq4_xs_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 5: mul_mat_vec_iq4_xs_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 6: mul_mat_vec_iq4_xs_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 7: mul_mat_vec_iq4_xs_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        case 8: mul_mat_vec_iq4_xs_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, stream); break;
-        default: GGML_ABORT("unsupported ncols_dst=%d for IQ4_XS multi-col MMVQ", ncols_dst);
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_iq4_xs_q8_1_sycl_switch_ncols(
+        ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+        ਅਚਲ ਪੂਰਨ ncols_dst,
+        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+        dpct::ਕਤਾਰ_ptr stream) {
+    ਚੋਣ (ncols_dst) {
+        ਹਾਲਤ 1: mul_mat_vec_iq4_xs_q8_1_sycl(vx, vy, dst, ncols, nrows, stream); ਰੋਕੋ;
+        ਹਾਲਤ 2: mul_mat_vec_iq4_xs_q8_1_sycl_ncols<2>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 3: mul_mat_vec_iq4_xs_q8_1_sycl_ncols<3>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 4: mul_mat_vec_iq4_xs_q8_1_sycl_ncols<4>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 5: mul_mat_vec_iq4_xs_q8_1_sycl_ncols<5>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 6: mul_mat_vec_iq4_xs_q8_1_sycl_ncols<6>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 7: mul_mat_vec_iq4_xs_q8_1_sycl_ncols<7>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਹਾਲਤ 8: mul_mat_vec_iq4_xs_q8_1_sycl_ncols<8>(vx, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream); ਰੋਕੋ;
+        ਮੂਲ: GGML_ABORT("unsupported ncols_dst=%d for IQ4_XS multi-col MMVQ", ncols_dst);
     }
 }
 
-void ggml_sycl_op_mul_mat_vec_q(ggml_backend_sycl_context & ctx, const ggml_tensor * src0, const ggml_tensor * src1,
-                                ggml_tensor * dst, const char * src0_dd_i, const float * src1_ddf_i,
-                                const char * src1_ddq_i, float * dst_dd_i, const int64_t row_low,
-                                const int64_t row_high, const int64_t src1_ncols, const int64_t src1_padded_col_size,
-                                const dpct::queue_ptr & stream) {
-    const int64_t ne10 = src1->ne[0];
+ਖਾਲੀ ggml_sycl_op_mul_mat_vec_q(ggml_backend_sycl_context & ctx, ਅਚਲ ggml_tensor * src0, ਅਚਲ ggml_tensor * src1,
+                                ggml_tensor * dst, ਅਚਲ ਅੱਖਰ * src0_dd_i, ਅਚਲ ਦਸ਼ਮਲਵ * src1_ddf_i,
+                                ਅਚਲ ਅੱਖਰ * src1_ddq_i, ਦਸ਼ਮਲਵ * dst_dd_i, ਅਚਲ int64_t ਪੰਕਤੀ_ਨੀਵਾਂ,
+                                ਅਚਲ int64_t ਪੰਕਤੀ_ਉੱਚਾ, ਅਚਲ int64_t src1_ncols, ਅਚਲ int64_t src1_padded_ਖਾਨਾ_ਮਾਪ,
+                                ਅਚਲ dpct::ਕਤਾਰ_ptr & stream) {
+    ਅਚਲ int64_t ne10 = src1->ne[0];
     GGML_ASSERT(ne10 % QK8_1 == 0);
 
-    const int64_t ne00     = src0->ne[0];
-    const int64_t row_diff = row_high - row_low;
+    ਅਚਲ int64_t ne00     = src0->ne[0];
+    ਅਚਲ int64_t ਪੰਕਤੀ_diff = ਪੰਕਤੀ_ਉੱਚਾ - ਪੰਕਤੀ_ਨੀਵਾਂ;
 
-    int id;
+    ਪੂਰਨ id;
     SYCL_CHECK(CHECK_TRY_ERROR(id = get_current_device_id()));
-    const size_t q8_1_ts = sizeof(block_q8_1);
-    const size_t q8_1_bs = QK8_1;
+    ਅਚਲ size_t q8_1_ts = ਆਕਾਰ(ਖੰਡ_q8_1);
+    ਅਚਲ size_t q8_1_bs = QK8_1;
     // the main device has a larger memory buffer to hold the results from all GPUs
     // nrows_dst == nrows of the matrix that the kernel writes into
 
-    for (int i = 0; i < src1_ncols; i++) {
-        const size_t src1_ddq_i_offset = i * src1_padded_col_size * q8_1_ts / q8_1_bs;
-        const char * src1_ddq_i_bs     = src1_ddq_i + src1_ddq_i_offset;
-        float *      dst_dd_i_bs       = dst_dd_i + i * dst->ne[0];
-        switch (src0->type) {
-            case GGML_TYPE_Q4_0:
-                if ((ggml_tensor_extra_gpu *) dst->src[0]->extra &&
+    ਲਈ (ਪੂਰਨ i = 0; i < src1_ncols; i++) {
+        ਅਚਲ size_t src1_ddq_i_ਵਿੱਥ = i * src1_padded_ਖਾਨਾ_ਮਾਪ * q8_1_ts / q8_1_bs;
+        ਅਚਲ ਅੱਖਰ * src1_ddq_i_bs     = src1_ddq_i + src1_ddq_i_ਵਿੱਥ;
+        ਦਸ਼ਮਲਵ *      dst_dd_i_bs       = dst_dd_i + i * dst->ne[0];
+        ਚੋਣ (src0->type) {
+            ਹਾਲਤ GGML_TYPE_Q4_0:
+                ਜੇ ((ggml_tensor_extra_gpu *) dst->src[0]->extra &&
                     ((ggml_tensor_extra_gpu *) dst->src[0]->extra)->optimized_feature.reorder) {
-                    if (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
-                        const int stride_col_y_bytes = src1_padded_col_size * q8_1_ts / q8_1_bs;
-                        const int stride_col_dst     = dst->ne[0];
-                        GGML_SYCL_DEBUG("Calling reorder_mul_mat_vec_q4_0_q8_1_sycl_switch_ncols ncols=%d\n", (int)src1_ncols);
+                    ਜੇ (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
+                        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ = src1_padded_ਖਾਨਾ_ਮਾਪ * q8_1_ts / q8_1_bs;
+                        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst     = dst->ne[0];
+                        GGML_SYCL_DEBUG("Calling reorder_mul_mat_vec_q4_0_q8_1_sycl_switch_ncols ncols=%d\n", (ਪੂਰਨ)src1_ncols);
                         reorder_mul_mat_vec_q4_0_q8_1_sycl_switch_ncols(
-                            src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff,
-                            src1_ncols, stride_col_y_bytes, stride_col_dst, stream);
-                        return;
-                    } else {
+                            src0_dd_i, src1_ddq_i, dst_dd_i, ne00, ਪੰਕਤੀ_diff,
+                            src1_ncols, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream);
+                        ਵਾਪਸ;
+                    } ਨਹੀਂਤਾਂ {
                         GGML_SYCL_DEBUG("Calling reorder_mul_mat_vec_q4_0_q8_1_sycl\n");
-                        reorder_mul_mat_vec_q4_0_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, row_diff, stream);
+                        reorder_mul_mat_vec_q4_0_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, ਪੰਕਤੀ_diff, stream);
                     }
-                } else if (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
-                    const int stride_col_y   = src1_padded_col_size / QK8_1;
-                    const int stride_col_dst = dst->ne[0];
-                    GGML_SYCL_DEBUG("Calling mul_mat_vec_q4_0_q8_1_sycl_switch_ncols ncols=%d\n", (int)src1_ncols);
+                } ਨਹੀਂਤਾਂ ਜੇ (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
+                    ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y   = src1_padded_ਖਾਨਾ_ਮਾਪ / QK8_1;
+                    ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst = dst->ne[0];
+                    GGML_SYCL_DEBUG("Calling mul_mat_vec_q4_0_q8_1_sycl_switch_ncols ncols=%d\n", (ਪੂਰਨ)src1_ncols);
                     mul_mat_vec_q4_0_q8_1_sycl_switch_ncols(
-                        src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff,
-                        src1_ncols, stride_col_y, stride_col_dst, stream);
-                    return;
-                } else if (i == 0 || src1_ncols == 1) {
+                        src0_dd_i, src1_ddq_i, dst_dd_i, ne00, ਪੰਕਤੀ_diff,
+                        src1_ncols, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream);
+                    ਵਾਪਸ;
+                } ਨਹੀਂਤਾਂ ਜੇ (i == 0 || src1_ncols == 1) {
                     GGML_SYCL_DEBUG("Calling mul_mat_vec_q4_0_q8_1_sycl\n");
-                    mul_mat_vec_q4_0_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, row_diff, stream);
+                    mul_mat_vec_q4_0_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, ਪੰਕਤੀ_diff, stream);
                 }
-                break;
-            case GGML_TYPE_Q4_1:
-                if (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
-                    const int stride_col_y   = src1_padded_col_size / QK8_1;
-                    const int stride_col_dst = dst->ne[0];
-                    GGML_SYCL_DEBUG("Calling mul_mat_vec_q4_1_q8_1_sycl_switch_ncols ncols=%d\n", (int)src1_ncols);
+                ਰੋਕੋ;
+            ਹਾਲਤ GGML_TYPE_Q4_1:
+                ਜੇ (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
+                    ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y   = src1_padded_ਖਾਨਾ_ਮਾਪ / QK8_1;
+                    ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst = dst->ne[0];
+                    GGML_SYCL_DEBUG("Calling mul_mat_vec_q4_1_q8_1_sycl_switch_ncols ncols=%d\n", (ਪੂਰਨ)src1_ncols);
                     mul_mat_vec_q4_1_q8_1_sycl_switch_ncols(
-                        src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff,
-                        src1_ncols, stride_col_y, stride_col_dst, stream);
-                    return;
-                } else if (i == 0 || src1_ncols == 1) {
-                    mul_mat_vec_q4_1_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, row_diff, stream);
+                        src0_dd_i, src1_ddq_i, dst_dd_i, ne00, ਪੰਕਤੀ_diff,
+                        src1_ncols, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream);
+                    ਵਾਪਸ;
+                } ਨਹੀਂਤਾਂ ਜੇ (i == 0 || src1_ncols == 1) {
+                    mul_mat_vec_q4_1_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, ਪੰਕਤੀ_diff, stream);
                 }
-                break;
-            case GGML_TYPE_Q5_0:
-                if (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
-                    const int stride_col_y   = src1_padded_col_size / QK8_1;
-                    const int stride_col_dst = dst->ne[0];
-                    GGML_SYCL_DEBUG("Calling mul_mat_vec_q5_0_q8_1_sycl_switch_ncols ncols=%d\n", (int)src1_ncols);
+                ਰੋਕੋ;
+            ਹਾਲਤ GGML_TYPE_Q5_0:
+                ਜੇ (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
+                    ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y   = src1_padded_ਖਾਨਾ_ਮਾਪ / QK8_1;
+                    ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst = dst->ne[0];
+                    GGML_SYCL_DEBUG("Calling mul_mat_vec_q5_0_q8_1_sycl_switch_ncols ncols=%d\n", (ਪੂਰਨ)src1_ncols);
                     mul_mat_vec_q5_0_q8_1_sycl_switch_ncols(
-                        src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff,
-                        src1_ncols, stride_col_y, stride_col_dst, stream);
-                    return;
-                } else if (i == 0 || src1_ncols == 1) {
-                    mul_mat_vec_q5_0_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, row_diff, stream);
+                        src0_dd_i, src1_ddq_i, dst_dd_i, ne00, ਪੰਕਤੀ_diff,
+                        src1_ncols, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream);
+                    ਵਾਪਸ;
+                } ਨਹੀਂਤਾਂ ਜੇ (i == 0 || src1_ncols == 1) {
+                    mul_mat_vec_q5_0_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, ਪੰਕਤੀ_diff, stream);
                 }
-                break;
-            case GGML_TYPE_Q5_1:
-                if (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
-                    const int stride_col_y   = src1_padded_col_size / QK8_1;
-                    const int stride_col_dst = dst->ne[0];
-                    GGML_SYCL_DEBUG("Calling mul_mat_vec_q5_1_q8_1_sycl_switch_ncols ncols=%d\n", (int)src1_ncols);
+                ਰੋਕੋ;
+            ਹਾਲਤ GGML_TYPE_Q5_1:
+                ਜੇ (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
+                    ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y   = src1_padded_ਖਾਨਾ_ਮਾਪ / QK8_1;
+                    ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst = dst->ne[0];
+                    GGML_SYCL_DEBUG("Calling mul_mat_vec_q5_1_q8_1_sycl_switch_ncols ncols=%d\n", (ਪੂਰਨ)src1_ncols);
                     mul_mat_vec_q5_1_q8_1_sycl_switch_ncols(
-                        src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff,
-                        src1_ncols, stride_col_y, stride_col_dst, stream);
-                    return;
-                } else if (i == 0 || src1_ncols == 1) {
-                    mul_mat_vec_q5_1_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, row_diff, stream);
+                        src0_dd_i, src1_ddq_i, dst_dd_i, ne00, ਪੰਕਤੀ_diff,
+                        src1_ncols, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream);
+                    ਵਾਪਸ;
+                } ਨਹੀਂਤਾਂ ਜੇ (i == 0 || src1_ncols == 1) {
+                    mul_mat_vec_q5_1_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, ਪੰਕਤੀ_diff, stream);
                 }
-                break;
-            case GGML_TYPE_Q8_0:
-                if ((ggml_tensor_extra_gpu *) dst->src[0]->extra &&
+                ਰੋਕੋ;
+            ਹਾਲਤ GGML_TYPE_Q8_0:
+                ਜੇ ((ggml_tensor_extra_gpu *) dst->src[0]->extra &&
                     ((ggml_tensor_extra_gpu *) dst->src[0]->extra)->optimized_feature.reorder) {
-                    if (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
-                        const int stride_col_y_bytes = src1_padded_col_size * q8_1_ts / q8_1_bs;
-                        const int stride_col_dst     = dst->ne[0];
-                        GGML_SYCL_DEBUG("Calling reorder_mul_mat_vec_q8_0_q8_1_sycl_switch_ncols ncols=%d\n", (int)src1_ncols);
+                    ਜੇ (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
+                        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ = src1_padded_ਖਾਨਾ_ਮਾਪ * q8_1_ts / q8_1_bs;
+                        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst     = dst->ne[0];
+                        GGML_SYCL_DEBUG("Calling reorder_mul_mat_vec_q8_0_q8_1_sycl_switch_ncols ncols=%d\n", (ਪੂਰਨ)src1_ncols);
                         reorder_mul_mat_vec_q8_0_q8_1_sycl_switch_ncols(
-                            src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff,
-                            src1_ncols, stride_col_y_bytes, stride_col_dst, stream);
-                        return;
-                    } else {
+                            src0_dd_i, src1_ddq_i, dst_dd_i, ne00, ਪੰਕਤੀ_diff,
+                            src1_ncols, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream);
+                        ਵਾਪਸ;
+                    } ਨਹੀਂਤਾਂ {
                         GGML_SYCL_DEBUG("Calling reorder_mul_mat_vec_q8_0_q8_1_sycl\n");
-                        reorder_mul_mat_vec_q8_0_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, row_diff, stream);
+                        reorder_mul_mat_vec_q8_0_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, ਪੰਕਤੀ_diff, stream);
                     }
-                } else if (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
-                    const int stride_col_y   = src1_padded_col_size / QK8_1;
-                    const int stride_col_dst = dst->ne[0];
-                    GGML_SYCL_DEBUG("Calling mul_mat_vec_q8_0_q8_1_sycl_switch_ncols ncols=%d\n", (int)src1_ncols);
+                } ਨਹੀਂਤਾਂ ਜੇ (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
+                    ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y   = src1_padded_ਖਾਨਾ_ਮਾਪ / QK8_1;
+                    ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst = dst->ne[0];
+                    GGML_SYCL_DEBUG("Calling mul_mat_vec_q8_0_q8_1_sycl_switch_ncols ncols=%d\n", (ਪੂਰਨ)src1_ncols);
                     mul_mat_vec_q8_0_q8_1_sycl_switch_ncols(
-                        src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff,
-                        src1_ncols, stride_col_y, stride_col_dst, stream);
-                    return;
-                } else if (i == 0 || src1_ncols == 1) {
+                        src0_dd_i, src1_ddq_i, dst_dd_i, ne00, ਪੰਕਤੀ_diff,
+                        src1_ncols, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream);
+                    ਵਾਪਸ;
+                } ਨਹੀਂਤਾਂ ਜੇ (i == 0 || src1_ncols == 1) {
                     GGML_SYCL_DEBUG("Calling mul_mat_vec_q8_0_q8_1_sycl\n");
-                    mul_mat_vec_q8_0_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, row_diff, stream);
+                    mul_mat_vec_q8_0_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, ਪੰਕਤੀ_diff, stream);
                 }
-                break;
-            case GGML_TYPE_Q1_0:
-                if (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
-                    const int stride_col_y   = src1_padded_col_size / QK8_1;
-                    const int stride_col_dst = dst->ne[0];
-                    GGML_SYCL_DEBUG("Calling mul_mat_vec_q1_0_q8_1_sycl_switch_ncols ncols=%d\n", (int)src1_ncols);
+                ਰੋਕੋ;
+            ਹਾਲਤ GGML_TYPE_Q1_0:
+                ਜੇ (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
+                    ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y   = src1_padded_ਖਾਨਾ_ਮਾਪ / QK8_1;
+                    ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst = dst->ne[0];
+                    GGML_SYCL_DEBUG("Calling mul_mat_vec_q1_0_q8_1_sycl_switch_ncols ncols=%d\n", (ਪੂਰਨ)src1_ncols);
                     mul_mat_vec_q1_0_q8_1_sycl_switch_ncols(
-                        src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff,
-                        src1_ncols, stride_col_y, stride_col_dst, stream);
-                    return;
-                } else if (i == 0 || src1_ncols == 1) {
+                        src0_dd_i, src1_ddq_i, dst_dd_i, ne00, ਪੰਕਤੀ_diff,
+                        src1_ncols, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream);
+                    ਵਾਪਸ;
+                } ਨਹੀਂਤਾਂ ਜੇ (i == 0 || src1_ncols == 1) {
                     GGML_SYCL_DEBUG("Calling mul_mat_vec_q1_0_q8_1_sycl\n");
-                    mul_mat_vec_q1_0_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, row_diff, stream);
+                    mul_mat_vec_q1_0_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, ਪੰਕਤੀ_diff, stream);
                 }
-                break;
-            case GGML_TYPE_Q2_0:
-                if (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
-                    const int stride_col_y   = src1_padded_col_size / QK8_1;
-                    const int stride_col_dst = dst->ne[0];
-                    GGML_SYCL_DEBUG("Calling mul_mat_vec_q2_0_q8_1_sycl_switch_ncols ncols=%d\n", (int)src1_ncols);
+                ਰੋਕੋ;
+            ਹਾਲਤ GGML_TYPE_Q2_0:
+                ਜੇ (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
+                    ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y   = src1_padded_ਖਾਨਾ_ਮਾਪ / QK8_1;
+                    ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst = dst->ne[0];
+                    GGML_SYCL_DEBUG("Calling mul_mat_vec_q2_0_q8_1_sycl_switch_ncols ncols=%d\n", (ਪੂਰਨ)src1_ncols);
                     mul_mat_vec_q2_0_q8_1_sycl_switch_ncols(
-                        src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff,
-                        src1_ncols, stride_col_y, stride_col_dst, stream);
-                    return;
-                } else if (i == 0 || src1_ncols == 1) {
+                        src0_dd_i, src1_ddq_i, dst_dd_i, ne00, ਪੰਕਤੀ_diff,
+                        src1_ncols, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream);
+                    ਵਾਪਸ;
+                } ਨਹੀਂਤਾਂ ਜੇ (i == 0 || src1_ncols == 1) {
                     GGML_SYCL_DEBUG("Calling mul_mat_vec_q2_0_q8_1_sycl\n");
-                    mul_mat_vec_q2_0_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, row_diff, stream);
+                    mul_mat_vec_q2_0_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, ਪੰਕਤੀ_diff, stream);
                 }
-                break;
-            case GGML_TYPE_Q2_K:
-                if ((ggml_tensor_extra_gpu *) dst->src[0]->extra &&
+                ਰੋਕੋ;
+            ਹਾਲਤ GGML_TYPE_Q2_K:
+                ਜੇ ((ggml_tensor_extra_gpu *) dst->src[0]->extra &&
                     ((ggml_tensor_extra_gpu *) dst->src[0]->extra)->optimized_feature.reorder) {
-                    if (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
-                        const int stride_col_y_bytes = src1_padded_col_size * q8_1_ts / q8_1_bs;
-                        const int stride_col_dst     = dst->ne[0];
-                        GGML_SYCL_DEBUG("Calling reorder_mul_mat_vec_q2_k_q8_1_sycl_switch_ncols ncols=%d\n", (int)src1_ncols);
+                    ਜੇ (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
+                        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ = src1_padded_ਖਾਨਾ_ਮਾਪ * q8_1_ts / q8_1_bs;
+                        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst     = dst->ne[0];
+                        GGML_SYCL_DEBUG("Calling reorder_mul_mat_vec_q2_k_q8_1_sycl_switch_ncols ncols=%d\n", (ਪੂਰਨ)src1_ncols);
                         reorder_mul_mat_vec_q2_k_q8_1_sycl_switch_ncols(
-                            src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff,
-                            src1_ncols, stride_col_y_bytes, stride_col_dst, stream);
-                        return;
-                    } else {
+                            src0_dd_i, src1_ddq_i, dst_dd_i, ne00, ਪੰਕਤੀ_diff,
+                            src1_ncols, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream);
+                        ਵਾਪਸ;
+                    } ਨਹੀਂਤਾਂ {
                         GGML_SYCL_DEBUG("Calling reorder_mul_mat_vec_q2_k_q8_1_sycl\n");
-                        reorder_mul_mat_vec_q2_k_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, row_diff, stream);
+                        reorder_mul_mat_vec_q2_k_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, ਪੰਕਤੀ_diff, stream);
                     }
-                } else if (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
-                    const int stride_col_y   = src1_padded_col_size / QK8_1;
-                    const int stride_col_dst = dst->ne[0];
-                    GGML_SYCL_DEBUG("Calling mul_mat_vec_q2_K_q8_1_sycl_switch_ncols ncols=%d\n", (int)src1_ncols);
+                } ਨਹੀਂਤਾਂ ਜੇ (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
+                    ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y   = src1_padded_ਖਾਨਾ_ਮਾਪ / QK8_1;
+                    ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst = dst->ne[0];
+                    GGML_SYCL_DEBUG("Calling mul_mat_vec_q2_K_q8_1_sycl_switch_ncols ncols=%d\n", (ਪੂਰਨ)src1_ncols);
                     mul_mat_vec_q2_K_q8_1_sycl_switch_ncols(
-                        src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff,
-                        src1_ncols, stride_col_y, stride_col_dst, stream);
-                    return;
-                } else if (i == 0 || src1_ncols == 1) {
+                        src0_dd_i, src1_ddq_i, dst_dd_i, ne00, ਪੰਕਤੀ_diff,
+                        src1_ncols, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream);
+                    ਵਾਪਸ;
+                } ਨਹੀਂਤਾਂ ਜੇ (i == 0 || src1_ncols == 1) {
                     GGML_SYCL_DEBUG("Calling mul_mat_vec_q2_K_q8_1_sycl\n");
-                    mul_mat_vec_q2_K_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, row_diff, stream);
+                    mul_mat_vec_q2_K_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, ਪੰਕਤੀ_diff, stream);
                 }
-                break;
-            case GGML_TYPE_Q3_K:
-                if ((ggml_tensor_extra_gpu *) dst->src[0]->extra &&
+                ਰੋਕੋ;
+            ਹਾਲਤ GGML_TYPE_Q3_K:
+                ਜੇ ((ggml_tensor_extra_gpu *) dst->src[0]->extra &&
                     ((ggml_tensor_extra_gpu *) dst->src[0]->extra)->optimized_feature.reorder) {
-                    if (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
-                        const int stride_col_y_bytes = src1_padded_col_size * q8_1_ts / q8_1_bs;
-                        const int stride_col_dst     = dst->ne[0];
-                        GGML_SYCL_DEBUG("Calling reorder_mul_mat_vec_q3_k_q8_1_sycl_switch_ncols ncols=%d\n", (int)src1_ncols);
+                    ਜੇ (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
+                        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ = src1_padded_ਖਾਨਾ_ਮਾਪ * q8_1_ts / q8_1_bs;
+                        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst     = dst->ne[0];
+                        GGML_SYCL_DEBUG("Calling reorder_mul_mat_vec_q3_k_q8_1_sycl_switch_ncols ncols=%d\n", (ਪੂਰਨ)src1_ncols);
                         reorder_mul_mat_vec_q3_k_q8_1_sycl_switch_ncols(
-                            src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff,
-                            src1_ncols, stride_col_y_bytes, stride_col_dst, stream);
-                        return;
-                    } else {
+                            src0_dd_i, src1_ddq_i, dst_dd_i, ne00, ਪੰਕਤੀ_diff,
+                            src1_ncols, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream);
+                        ਵਾਪਸ;
+                    } ਨਹੀਂਤਾਂ {
                         GGML_SYCL_DEBUG("Calling reorder_mul_mat_vec_q3_k_q8_1_sycl\n");
-                        reorder_mul_mat_vec_q3_k_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, row_diff, stream);
+                        reorder_mul_mat_vec_q3_k_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, ਪੰਕਤੀ_diff, stream);
                     }
-                } else if (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
-                    const int stride_col_y   = src1_padded_col_size / QK8_1;
-                    const int stride_col_dst = dst->ne[0];
-                    GGML_SYCL_DEBUG("Calling mul_mat_vec_q3_K_q8_1_sycl_switch_ncols ncols=%d\n", (int)src1_ncols);
+                } ਨਹੀਂਤਾਂ ਜੇ (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
+                    ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y   = src1_padded_ਖਾਨਾ_ਮਾਪ / QK8_1;
+                    ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst = dst->ne[0];
+                    GGML_SYCL_DEBUG("Calling mul_mat_vec_q3_K_q8_1_sycl_switch_ncols ncols=%d\n", (ਪੂਰਨ)src1_ncols);
                     mul_mat_vec_q3_K_q8_1_sycl_switch_ncols(
-                        src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff,
-                        src1_ncols, stride_col_y, stride_col_dst, stream);
-                    return;
-                } else if (i == 0 || src1_ncols == 1) {
+                        src0_dd_i, src1_ddq_i, dst_dd_i, ne00, ਪੰਕਤੀ_diff,
+                        src1_ncols, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream);
+                    ਵਾਪਸ;
+                } ਨਹੀਂਤਾਂ ਜੇ (i == 0 || src1_ncols == 1) {
                     GGML_SYCL_DEBUG("Calling mul_mat_vec_q3_K_q8_1_sycl\n");
-                    mul_mat_vec_q3_K_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, row_diff, stream);
+                    mul_mat_vec_q3_K_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, ਪੰਕਤੀ_diff, stream);
                 }
-                break;
-            case GGML_TYPE_Q4_K:
-                if ((ggml_tensor_extra_gpu *) dst->src[0]->extra &&
+                ਰੋਕੋ;
+            ਹਾਲਤ GGML_TYPE_Q4_K:
+                ਜੇ ((ggml_tensor_extra_gpu *) dst->src[0]->extra &&
                     ((ggml_tensor_extra_gpu *) dst->src[0]->extra)->optimized_feature.reorder) {
-                    if (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
-                        const int stride_col_y_bytes = src1_padded_col_size * q8_1_ts / q8_1_bs;
-                        const int stride_col_dst     = dst->ne[0];
-                        GGML_SYCL_DEBUG("Calling reorder_mul_mat_vec_q4_k_q8_1_sycl_switch_ncols ncols=%d\n", (int)src1_ncols);
+                    ਜੇ (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
+                        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ = src1_padded_ਖਾਨਾ_ਮਾਪ * q8_1_ts / q8_1_bs;
+                        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst     = dst->ne[0];
+                        GGML_SYCL_DEBUG("Calling reorder_mul_mat_vec_q4_k_q8_1_sycl_switch_ncols ncols=%d\n", (ਪੂਰਨ)src1_ncols);
                         reorder_mul_mat_vec_q4_k_q8_1_sycl_switch_ncols(
-                            src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff,
-                            src1_ncols, stride_col_y_bytes, stride_col_dst, stream);
-                        return;
-                    } else {
+                            src0_dd_i, src1_ddq_i, dst_dd_i, ne00, ਪੰਕਤੀ_diff,
+                            src1_ncols, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream);
+                        ਵਾਪਸ;
+                    } ਨਹੀਂਤਾਂ {
                         GGML_SYCL_DEBUG("Calling reorder_mul_mat_vec_q4_k_q8_1_sycl\n");
-                        reorder_mul_mat_vec_q4_k_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, row_diff, stream);
+                        reorder_mul_mat_vec_q4_k_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, ਪੰਕਤੀ_diff, stream);
                     }
-                } else if (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
-                    const int stride_col_y   = src1_padded_col_size / QK8_1;
-                    const int stride_col_dst = dst->ne[0];
-                    GGML_SYCL_DEBUG("Calling mul_mat_vec_q4_K_q8_1_sycl_switch_ncols ncols=%d\n", (int)src1_ncols);
+                } ਨਹੀਂਤਾਂ ਜੇ (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
+                    ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y   = src1_padded_ਖਾਨਾ_ਮਾਪ / QK8_1;
+                    ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst = dst->ne[0];
+                    GGML_SYCL_DEBUG("Calling mul_mat_vec_q4_K_q8_1_sycl_switch_ncols ncols=%d\n", (ਪੂਰਨ)src1_ncols);
                     mul_mat_vec_q4_K_q8_1_sycl_switch_ncols(
-                        src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff,
-                        src1_ncols, stride_col_y, stride_col_dst, stream);
-                    return;
-                } else if (i == 0 || src1_ncols == 1) {
+                        src0_dd_i, src1_ddq_i, dst_dd_i, ne00, ਪੰਕਤੀ_diff,
+                        src1_ncols, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream);
+                    ਵਾਪਸ;
+                } ਨਹੀਂਤਾਂ ਜੇ (i == 0 || src1_ncols == 1) {
                     GGML_SYCL_DEBUG("Calling mul_mat_vec_q4_K_q8_1_sycl\n");
-                    mul_mat_vec_q4_K_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, row_diff, stream);
+                    mul_mat_vec_q4_K_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, ਪੰਕਤੀ_diff, stream);
                 }
-                break;
-            case GGML_TYPE_Q5_K:
-                if ((ggml_tensor_extra_gpu *) dst->src[0]->extra &&
+                ਰੋਕੋ;
+            ਹਾਲਤ GGML_TYPE_Q5_K:
+                ਜੇ ((ggml_tensor_extra_gpu *) dst->src[0]->extra &&
                     ((ggml_tensor_extra_gpu *) dst->src[0]->extra)->optimized_feature.reorder) {
-                    if (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
-                        const int stride_col_y_bytes = src1_padded_col_size * q8_1_ts / q8_1_bs;
-                        const int stride_col_dst     = dst->ne[0];
-                        GGML_SYCL_DEBUG("Calling reorder_mul_mat_vec_q5_k_q8_1_sycl_switch_ncols ncols=%d\n", (int)src1_ncols);
+                    ਜੇ (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
+                        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ = src1_padded_ਖਾਨਾ_ਮਾਪ * q8_1_ts / q8_1_bs;
+                        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst     = dst->ne[0];
+                        GGML_SYCL_DEBUG("Calling reorder_mul_mat_vec_q5_k_q8_1_sycl_switch_ncols ncols=%d\n", (ਪੂਰਨ)src1_ncols);
                         reorder_mul_mat_vec_q5_k_q8_1_sycl_switch_ncols(
-                            src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff,
-                            src1_ncols, stride_col_y_bytes, stride_col_dst, stream);
-                        return;
-                    } else {
+                            src0_dd_i, src1_ddq_i, dst_dd_i, ne00, ਪੰਕਤੀ_diff,
+                            src1_ncols, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream);
+                        ਵਾਪਸ;
+                    } ਨਹੀਂਤਾਂ {
                         GGML_SYCL_DEBUG("Calling reorder_mul_mat_vec_q5_k_q8_1_sycl\n");
-                        reorder_mul_mat_vec_q5_k_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, row_diff, stream);
+                        reorder_mul_mat_vec_q5_k_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, ਪੰਕਤੀ_diff, stream);
                     }
-                } else if (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
-                    const int stride_col_y   = src1_padded_col_size / QK8_1;
-                    const int stride_col_dst = dst->ne[0];
-                    GGML_SYCL_DEBUG("Calling mul_mat_vec_q5_K_q8_1_sycl_switch_ncols ncols=%d\n", (int)src1_ncols);
+                } ਨਹੀਂਤਾਂ ਜੇ (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
+                    ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y   = src1_padded_ਖਾਨਾ_ਮਾਪ / QK8_1;
+                    ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst = dst->ne[0];
+                    GGML_SYCL_DEBUG("Calling mul_mat_vec_q5_K_q8_1_sycl_switch_ncols ncols=%d\n", (ਪੂਰਨ)src1_ncols);
                     mul_mat_vec_q5_K_q8_1_sycl_switch_ncols(
-                        src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff,
-                        src1_ncols, stride_col_y, stride_col_dst, stream);
-                    return;
-                } else if (i == 0 || src1_ncols == 1) {
+                        src0_dd_i, src1_ddq_i, dst_dd_i, ne00, ਪੰਕਤੀ_diff,
+                        src1_ncols, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream);
+                    ਵਾਪਸ;
+                } ਨਹੀਂਤਾਂ ਜੇ (i == 0 || src1_ncols == 1) {
                     GGML_SYCL_DEBUG("Calling mul_mat_vec_q5_K_q8_1_sycl\n");
-                    mul_mat_vec_q5_K_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, row_diff, stream);
+                    mul_mat_vec_q5_K_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, ਪੰਕਤੀ_diff, stream);
                 }
-                break;
-            case GGML_TYPE_Q6_K:
-                if ((ggml_tensor_extra_gpu *) dst->src[0]->extra &&
+                ਰੋਕੋ;
+            ਹਾਲਤ GGML_TYPE_Q6_K:
+                ਜੇ ((ggml_tensor_extra_gpu *) dst->src[0]->extra &&
                     ((ggml_tensor_extra_gpu *) dst->src[0]->extra)->optimized_feature.reorder) {
-                    if (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
-                        const int stride_col_y_bytes = src1_padded_col_size * q8_1_ts / q8_1_bs;
-                        const int stride_col_dst     = dst->ne[0];
-                        GGML_SYCL_DEBUG("Calling reorder_mul_mat_vec_q6_k_q8_1_sycl_switch_ncols ncols=%d\n", (int)src1_ncols);
+                    ਜੇ (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
+                        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ = src1_padded_ਖਾਨਾ_ਮਾਪ * q8_1_ts / q8_1_bs;
+                        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst     = dst->ne[0];
+                        GGML_SYCL_DEBUG("Calling reorder_mul_mat_vec_q6_k_q8_1_sycl_switch_ncols ncols=%d\n", (ਪੂਰਨ)src1_ncols);
                         reorder_mul_mat_vec_q6_k_q8_1_sycl_switch_ncols(
-                            src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff,
-                            src1_ncols, stride_col_y_bytes, stride_col_dst, stream);
-                        return;
-                    } else {
+                            src0_dd_i, src1_ddq_i, dst_dd_i, ne00, ਪੰਕਤੀ_diff,
+                            src1_ncols, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream);
+                        ਵਾਪਸ;
+                    } ਨਹੀਂਤਾਂ {
                         GGML_SYCL_DEBUG("Calling reorder_mul_mat_vec_q6_k_q8_1_sycl\n");
-                        reorder_mul_mat_vec_q6_k_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, row_diff, stream);
+                        reorder_mul_mat_vec_q6_k_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, ਪੰਕਤੀ_diff, stream);
                     }
-                } else if (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
-                    const int stride_col_y   = src1_padded_col_size / QK8_1;
-                    const int stride_col_dst = dst->ne[0];
-                    GGML_SYCL_DEBUG("Calling mul_mat_vec_q6_K_q8_1_sycl_switch_ncols ncols=%d\n", (int)src1_ncols);
+                } ਨਹੀਂਤਾਂ ਜੇ (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
+                    ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y   = src1_padded_ਖਾਨਾ_ਮਾਪ / QK8_1;
+                    ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst = dst->ne[0];
+                    GGML_SYCL_DEBUG("Calling mul_mat_vec_q6_K_q8_1_sycl_switch_ncols ncols=%d\n", (ਪੂਰਨ)src1_ncols);
                     mul_mat_vec_q6_K_q8_1_sycl_switch_ncols(
-                        src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff,
-                        src1_ncols, stride_col_y, stride_col_dst, stream);
-                    return;
-                } else if (i == 0 || src1_ncols == 1) {
+                        src0_dd_i, src1_ddq_i, dst_dd_i, ne00, ਪੰਕਤੀ_diff,
+                        src1_ncols, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream);
+                    ਵਾਪਸ;
+                } ਨਹੀਂਤਾਂ ਜੇ (i == 0 || src1_ncols == 1) {
                     GGML_SYCL_DEBUG("Calling mul_mat_vec_q6_k_q8_1_sycl\n");
-                    mul_mat_vec_q6_K_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, row_diff, stream);
+                    mul_mat_vec_q6_K_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, ਪੰਕਤੀ_diff, stream);
                 }
-                break;
-            case GGML_TYPE_IQ1_S:
-                mul_mat_vec_iq1_s_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, row_diff, stream);
-                break;
-            case GGML_TYPE_IQ1_M:
-                mul_mat_vec_iq1_m_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, row_diff, stream);
-                break;
-            case GGML_TYPE_IQ2_XXS:
-                mul_mat_vec_iq2_xxs_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, row_diff, stream);
-                break;
-            case GGML_TYPE_IQ2_XS:
-                mul_mat_vec_iq2_xs_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, row_diff, stream);
-                break;
-            case GGML_TYPE_IQ2_S:
-                mul_mat_vec_iq2_s_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, row_diff, stream);
-                break;
-            case GGML_TYPE_IQ3_XXS:
-                if ((ggml_tensor_extra_gpu *) dst->src[0]->extra &&
+                ਰੋਕੋ;
+            ਹਾਲਤ GGML_TYPE_IQ1_S:
+                mul_mat_vec_iq1_s_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, ਪੰਕਤੀ_diff, stream);
+                ਰੋਕੋ;
+            ਹਾਲਤ GGML_TYPE_IQ1_M:
+                mul_mat_vec_iq1_m_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, ਪੰਕਤੀ_diff, stream);
+                ਰੋਕੋ;
+            ਹਾਲਤ GGML_TYPE_IQ2_XXS:
+                mul_mat_vec_iq2_xxs_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, ਪੰਕਤੀ_diff, stream);
+                ਰੋਕੋ;
+            ਹਾਲਤ GGML_TYPE_IQ2_XS:
+                mul_mat_vec_iq2_xs_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, ਪੰਕਤੀ_diff, stream);
+                ਰੋਕੋ;
+            ਹਾਲਤ GGML_TYPE_IQ2_S:
+                mul_mat_vec_iq2_s_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, ਪੰਕਤੀ_diff, stream);
+                ਰੋਕੋ;
+            ਹਾਲਤ GGML_TYPE_IQ3_XXS:
+                ਜੇ ((ggml_tensor_extra_gpu *) dst->src[0]->extra &&
                     ((ggml_tensor_extra_gpu *) dst->src[0]->extra)->optimized_feature.reorder) {
-                    if (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
-                        const int stride_col_y_bytes = src1_padded_col_size * q8_1_ts / q8_1_bs;
-                        const int stride_col_dst     = dst->ne[0];
-                        GGML_SYCL_DEBUG("Calling reordered IQ3_XXS multi-col MMVQ ncols=%d\n", (int) src1_ncols);
+                    ਜੇ (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
+                        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ = src1_padded_ਖਾਨਾ_ਮਾਪ * q8_1_ts / q8_1_bs;
+                        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst     = dst->ne[0];
+                        GGML_SYCL_DEBUG("Calling reordered IQ3_XXS multi-col MMVQ ncols=%d\n", (ਪੂਰਨ) src1_ncols);
                         reorder_mul_mat_vec_iq3_q8_1_sycl_switch_ncols<GGML_TYPE_IQ3_XXS>(
-                            src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff,
-                            src1_ncols, stride_col_y_bytes, stride_col_dst, stream);
-                        return;
-                    } else {
+                            src0_dd_i, src1_ddq_i, dst_dd_i, ne00, ਪੰਕਤੀ_diff,
+                            src1_ncols, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream);
+                        ਵਾਪਸ;
+                    } ਨਹੀਂਤਾਂ {
                         GGML_SYCL_DEBUG("Calling reordered IQ3_XXS MMVQ\n");
                         reorder_mul_mat_vec_iq3_q8_1_sycl<GGML_TYPE_IQ3_XXS>(
-                            src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, row_diff, stream);
+                            src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, ਪੰਕਤੀ_diff, stream);
                     }
-                } else {
+                } ਨਹੀਂਤਾਂ {
                     mul_mat_vec_iq3_xxs_q8_1_sycl(
-                        src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, row_diff, stream);
+                        src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, ਪੰਕਤੀ_diff, stream);
                 }
-                break;
-            case GGML_TYPE_IQ3_S:
-                if ((ggml_tensor_extra_gpu *) dst->src[0]->extra &&
+                ਰੋਕੋ;
+            ਹਾਲਤ GGML_TYPE_IQ3_S:
+                ਜੇ ((ggml_tensor_extra_gpu *) dst->src[0]->extra &&
                     ((ggml_tensor_extra_gpu *) dst->src[0]->extra)->optimized_feature.reorder) {
-                    if (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
-                        const int stride_col_y_bytes = src1_padded_col_size * q8_1_ts / q8_1_bs;
-                        const int stride_col_dst     = dst->ne[0];
-                        GGML_SYCL_DEBUG("Calling reordered IQ3_S multi-col MMVQ ncols=%d\n", (int) src1_ncols);
+                    ਜੇ (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
+                        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ = src1_padded_ਖਾਨਾ_ਮਾਪ * q8_1_ts / q8_1_bs;
+                        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst     = dst->ne[0];
+                        GGML_SYCL_DEBUG("Calling reordered IQ3_S multi-col MMVQ ncols=%d\n", (ਪੂਰਨ) src1_ncols);
                         reorder_mul_mat_vec_iq3_q8_1_sycl_switch_ncols<GGML_TYPE_IQ3_S>(
-                            src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff,
-                            src1_ncols, stride_col_y_bytes, stride_col_dst, stream);
-                        return;
-                    } else {
+                            src0_dd_i, src1_ddq_i, dst_dd_i, ne00, ਪੰਕਤੀ_diff,
+                            src1_ncols, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream);
+                        ਵਾਪਸ;
+                    } ਨਹੀਂਤਾਂ {
                         GGML_SYCL_DEBUG("Calling reordered IQ3_S MMVQ\n");
                         reorder_mul_mat_vec_iq3_q8_1_sycl<GGML_TYPE_IQ3_S>(
-                            src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, row_diff, stream);
+                            src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, ਪੰਕਤੀ_diff, stream);
                     }
-                } else if (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
-                    const int stride_col_y   = src1_padded_col_size / QK8_1;
-                    const int stride_col_dst = dst->ne[0];
-                    GGML_SYCL_DEBUG("Calling mul_mat_vec_iq3_s_q8_1_sycl_switch_ncols ncols=%d\n", (int) src1_ncols);
+                } ਨਹੀਂਤਾਂ ਜੇ (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
+                    ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y   = src1_padded_ਖਾਨਾ_ਮਾਪ / QK8_1;
+                    ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst = dst->ne[0];
+                    GGML_SYCL_DEBUG("Calling mul_mat_vec_iq3_s_q8_1_sycl_switch_ncols ncols=%d\n", (ਪੂਰਨ) src1_ncols);
                     mul_mat_vec_iq3_s_q8_1_sycl_switch_ncols(
-                        src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff,
-                        src1_ncols, stride_col_y, stride_col_dst, stream);
-                    return;
-                } else if (i == 0 || src1_ncols == 1) {
-                    mul_mat_vec_iq3_s_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, row_diff, stream);
+                        src0_dd_i, src1_ddq_i, dst_dd_i, ne00, ਪੰਕਤੀ_diff,
+                        src1_ncols, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream);
+                    ਵਾਪਸ;
+                } ਨਹੀਂਤਾਂ ਜੇ (i == 0 || src1_ncols == 1) {
+                    mul_mat_vec_iq3_s_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, ਪੰਕਤੀ_diff, stream);
                 }
-                break;
-            case GGML_TYPE_IQ4_NL:
-                mul_mat_vec_iq4_nl_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, row_diff, stream);
-                break;
-            case GGML_TYPE_IQ4_XS:
-                if (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
-                    const int stride_col_y   = src1_padded_col_size / QK8_1;
-                    const int stride_col_dst = dst->ne[0];
-                    GGML_SYCL_DEBUG("Calling mul_mat_vec_iq4_xs_q8_1_sycl_switch_ncols ncols=%d\n", (int)src1_ncols);
+                ਰੋਕੋ;
+            ਹਾਲਤ GGML_TYPE_IQ4_NL:
+                mul_mat_vec_iq4_nl_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, ਪੰਕਤੀ_diff, stream);
+                ਰੋਕੋ;
+            ਹਾਲਤ GGML_TYPE_IQ4_XS:
+                ਜੇ (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
+                    ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y   = src1_padded_ਖਾਨਾ_ਮਾਪ / QK8_1;
+                    ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst = dst->ne[0];
+                    GGML_SYCL_DEBUG("Calling mul_mat_vec_iq4_xs_q8_1_sycl_switch_ncols ncols=%d\n", (ਪੂਰਨ)src1_ncols);
                     mul_mat_vec_iq4_xs_q8_1_sycl_switch_ncols(
-                        src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff,
-                        src1_ncols, stride_col_y, stride_col_dst, stream);
-                    return;
-                } else if (i == 0 || src1_ncols == 1) {
-                    mul_mat_vec_iq4_xs_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, row_diff, stream);
+                        src0_dd_i, src1_ddq_i, dst_dd_i, ne00, ਪੰਕਤੀ_diff,
+                        src1_ncols, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream);
+                    ਵਾਪਸ;
+                } ਨਹੀਂਤਾਂ ਜੇ (i == 0 || src1_ncols == 1) {
+                    mul_mat_vec_iq4_xs_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, ਪੰਕਤੀ_diff, stream);
                 }
-                break;
-            case GGML_TYPE_MXFP4:
-                if ((ggml_tensor_extra_gpu *) dst->src[0]->extra &&
+                ਰੋਕੋ;
+            ਹਾਲਤ GGML_TYPE_MXFP4:
+                ਜੇ ((ggml_tensor_extra_gpu *) dst->src[0]->extra &&
                     ((ggml_tensor_extra_gpu *) dst->src[0]->extra)->optimized_feature.reorder) {
-                    if (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
-                        const int stride_col_y_bytes = src1_padded_col_size * q8_1_ts / q8_1_bs;
-                        const int stride_col_dst     = dst->ne[0];
-                        GGML_SYCL_DEBUG("Calling reorder_mul_mat_vec_mxfp4_q8_1_sycl_switch_ncols ncols=%d\n", (int)src1_ncols);
+                    ਜੇ (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
+                        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ = src1_padded_ਖਾਨਾ_ਮਾਪ * q8_1_ts / q8_1_bs;
+                        ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst     = dst->ne[0];
+                        GGML_SYCL_DEBUG("Calling reorder_mul_mat_vec_mxfp4_q8_1_sycl_switch_ncols ncols=%d\n", (ਪੂਰਨ)src1_ncols);
                         reorder_mul_mat_vec_mxfp4_q8_1_sycl_switch_ncols(
-                            src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff,
-                            src1_ncols, stride_col_y_bytes, stride_col_dst, stream);
-                        return;
-                    } else {
+                            src0_dd_i, src1_ddq_i, dst_dd_i, ne00, ਪੰਕਤੀ_diff,
+                            src1_ncols, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream);
+                        ਵਾਪਸ;
+                    } ਨਹੀਂਤਾਂ {
                         GGML_SYCL_DEBUG("Calling reorder_mul_mat_vec_mxfp4_q8_1_sycl\n");
-                        reorder_mul_mat_vec_mxfp4_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, row_diff, stream);
+                        reorder_mul_mat_vec_mxfp4_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, ਪੰਕਤੀ_diff, stream);
                     }
-                } else if (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
-                    const int stride_col_y   = src1_padded_col_size / QK8_1;
-                    const int stride_col_dst = dst->ne[0];
-                    GGML_SYCL_DEBUG("Calling mul_mat_vec_mxfp4_q8_1_sycl_switch_ncols ncols=%d\n", (int)src1_ncols);
+                } ਨਹੀਂਤਾਂ ਜੇ (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
+                    ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y   = src1_padded_ਖਾਨਾ_ਮਾਪ / QK8_1;
+                    ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst = dst->ne[0];
+                    GGML_SYCL_DEBUG("Calling mul_mat_vec_mxfp4_q8_1_sycl_switch_ncols ncols=%d\n", (ਪੂਰਨ)src1_ncols);
                     mul_mat_vec_mxfp4_q8_1_sycl_switch_ncols(
-                        src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff,
-                        src1_ncols, stride_col_y, stride_col_dst, stream);
-                    return;
-                } else if (i == 0 || src1_ncols == 1) {
-                    mul_mat_vec_mxfp4_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, row_diff, stream);
+                        src0_dd_i, src1_ddq_i, dst_dd_i, ne00, ਪੰਕਤੀ_diff,
+                        src1_ncols, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream);
+                    ਵਾਪਸ;
+                } ਨਹੀਂਤਾਂ ਜੇ (i == 0 || src1_ncols == 1) {
+                    mul_mat_vec_mxfp4_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, ਪੰਕਤੀ_diff, stream);
                 }
-                break;
-            case GGML_TYPE_NVFP4:
-                if (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
-                    const int stride_col_y   = src1_padded_col_size / QK8_1;
-                    const int stride_col_dst = dst->ne[0];
-                    GGML_SYCL_DEBUG("Calling mul_mat_vec_nvfp4_q8_1_sycl_switch_ncols ncols=%d\n", (int)src1_ncols);
+                ਰੋਕੋ;
+            ਹਾਲਤ GGML_TYPE_NVFP4:
+                ਜੇ (i == 0 && src1_ncols > 1 && src1_ncols <= 8) {
+                    ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y   = src1_padded_ਖਾਨਾ_ਮਾਪ / QK8_1;
+                    ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst = dst->ne[0];
+                    GGML_SYCL_DEBUG("Calling mul_mat_vec_nvfp4_q8_1_sycl_switch_ncols ncols=%d\n", (ਪੂਰਨ)src1_ncols);
                     mul_mat_vec_nvfp4_q8_1_sycl_switch_ncols(
-                        src0_dd_i, src1_ddq_i, dst_dd_i, ne00, row_diff,
-                        src1_ncols, stride_col_y, stride_col_dst, stream);
-                    return;
-                } else if (i == 0 || src1_ncols == 1) {
-                    mul_mat_vec_nvfp4_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, row_diff, stream);
+                        src0_dd_i, src1_ddq_i, dst_dd_i, ne00, ਪੰਕਤੀ_diff,
+                        src1_ncols, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, stream);
+                    ਵਾਪਸ;
+                } ਨਹੀਂਤਾਂ ਜੇ (i == 0 || src1_ncols == 1) {
+                    mul_mat_vec_nvfp4_q8_1_sycl(src0_dd_i, src1_ddq_i_bs, dst_dd_i_bs, ne00, ਪੰਕਤੀ_diff, stream);
                 }
-                break;
-            default:
+                ਰੋਕੋ;
+            ਮੂਲ:
                 GGML_ABORT("fatal error: unsupport src0 data type %s\n", ggml_type_name(src0->type));
         }
     }
-    GGML_UNUSED(src1);
-    GGML_UNUSED(dst);
-    GGML_UNUSED(src1_ddf_i);
-    GGML_UNUSED(ctx);
+    GGML_ਅਣਵਰਤਿਆ(src1);
+    GGML_ਅਣਵਰਤਿਆ(dst);
+    GGML_ਅਣਵਰਤਿਆ(src1_ddf_i);
+    GGML_ਅਣਵਰਤਿਆ(ctx);
 }
 
 // src1_row_stride: 0 for shared src1 (gate/up proj), else per-expert stride (down proj).
-template <int qk, int qi, typename block_q_t, int vdr, vec_dot_q_sycl_t vec_dot_q_sycl>
-static void mul_mat_vec_q_moe(
-    const void * __restrict__ vx_base, const void * __restrict__ vy_base,
-    float * __restrict__ dst_base, const int32_t * __restrict__ ids_dev,
-    const int ncols, const int nrows,
-    const size_t expert_weight_stride, const size_t dst_row_stride,
-    const size_t src1_row_stride,
-    const sycl::nd_item<3> & item_ct1) {
+ਸਾਂਚਾ <ਪੂਰਨ qk, ਪੂਰਨ qi, ਕਿਸਮ_ਨਾਂ ਖੰਡ_q_t, ਪੂਰਨ vdr, vec_dot_q_sycl_t vec_dot_q_sycl>
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q_moe(
+    ਅਚਲ ਖਾਲੀ * __restrict__ vx_ਅਧਾਰ, ਅਚਲ ਖਾਲੀ * __restrict__ vy_ਅਧਾਰ,
+    ਦਸ਼ਮਲਵ * __restrict__ dst_ਅਧਾਰ, ਅਚਲ int32_t * __restrict__ ids_dev,
+    ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+    ਅਚਲ size_t expert_ਭਾਰ_stride, ਅਚਲ size_t dst_ਪੰਕਤੀ_stride,
+    ਅਚਲ size_t src1_ਪੰਕਤੀ_stride,
+    ਅਚਲ sycl::nd_ਵਸਤੂ<3> & ਵਸਤੂ_ct1) {
 
-    const int expert_idx = item_ct1.get_group(1);
-    const int i02        = ids_dev[expert_idx];
+    ਅਚਲ ਪੂਰਨ expert_idx = ਵਸਤੂ_ct1.get_ਸਮੂਹ(1);
+    ਅਚਲ ਪੂਰਨ i02        = ids_dev[expert_idx];
 
-    const char * vx = (const char *) vx_base + (size_t) i02 * expert_weight_stride;
-    const char * vy = (const char *) vy_base + (size_t) expert_idx * src1_row_stride;
-    float *      dst = (float *) ((char *) dst_base + (size_t) expert_idx * dst_row_stride);
+    ਅਚਲ ਅੱਖਰ * vx = (ਅਚਲ ਅੱਖਰ *) vx_ਅਧਾਰ + (size_t) i02 * expert_ਭਾਰ_stride;
+    ਅਚਲ ਅੱਖਰ * vy = (ਅਚਲ ਅੱਖਰ *) vy_ਅਧਾਰ + (size_t) expert_idx * src1_ਪੰਕਤੀ_stride;
+    ਦਸ਼ਮਲਵ *      dst = (ਦਸ਼ਮਲਵ *) ((ਅੱਖਰ *) dst_ਅਧਾਰ + (size_t) expert_idx * dst_ਪੰਕਤੀ_stride);
 
-    const int row = item_ct1.get_group(2) * item_ct1.get_local_range(1) + item_ct1.get_local_id(1);
+    ਅਚਲ ਪੂਰਨ ਪੰਕਤੀ = ਵਸਤੂ_ct1.get_ਸਮੂਹ(2) * ਵਸਤੂ_ct1.get_local_range(1) + ਵਸਤੂ_ct1.get_local_id(1);
 
-    if (row >= nrows) {
-        return;
+    ਜੇ (ਪੰਕਤੀ >= nrows) {
+        ਵਾਪਸ;
     }
 
-    const int     blocks_per_row  = ncols / qk;
-    constexpr int blocks_per_warp = (vdr * WARP_SIZE + qi - 1) / qi;
+    ਅਚਲ ਪੂਰਨ     ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ  = ncols / qk;
+    constexpr ਪੂਰਨ ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp = (vdr * WARP_ਮਾਪ + qi - 1) / qi;
 
-    float tmp = 0.0f;
+    ਦਸ਼ਮਲਵ tmp = 0.0f;
 
-    const block_q_t *  x = (const block_q_t *) vx;
-    const block_q8_1 * y = (const block_q8_1 *) vy;
+    ਅਚਲ ਖੰਡ_q_t *  x = (ਅਚਲ ਖੰਡ_q_t *) vx;
+    ਅਚਲ ਖੰਡ_q8_1 * y = (ਅਚਲ ਖੰਡ_q8_1 *) vy;
 
-    for (int i = item_ct1.get_local_id(2) / (qi / vdr); i < blocks_per_row; i += blocks_per_warp) {
-        const int ibx = row * blocks_per_row + i;
-        const int iby = i * (qk / QK8_1);
+    ਲਈ (ਪੂਰਨ i = ਵਸਤੂ_ct1.get_local_id(2) / (qi / vdr); i < ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ; i += ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp) {
+        ਅਚਲ ਪੂਰਨ ibx = ਪੰਕਤੀ * ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ + i;
+        ਅਚਲ ਪੂਰਨ iby = i * (qk / QK8_1);
 
-        for (size_t elem = 0; elem < qi / vdr; elem += WARP_SIZE) {
-            const int iqs = elem + vdr * (item_ct1.get_local_id(2) % (qi / vdr));
+        ਲਈ (size_t elem = 0; elem < qi / vdr; elem += WARP_ਮਾਪ) {
+            ਅਚਲ ਪੂਰਨ iqs = elem + vdr * (ਵਸਤੂ_ct1.get_local_id(2) % (qi / vdr));
             tmp += vec_dot_q_sycl(&x[ibx], &y[iby], iqs);
         }
     }
 
-#pragma unroll
-    for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
-        tmp += dpct::permute_sub_group_by_xor(item_ct1.get_sub_group(), tmp, mask);
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ ਨਕਾਬ = WARP_ਮਾਪ / 2; ਨਕਾਬ > 0; ਨਕਾਬ >>= 1) {
+        tmp += dpct::ਕ੍ਰਮ_ਬਦਲੋ_sub_ਸਮੂਹ_by_xor(ਵਸਤੂ_ct1.get_sub_ਸਮੂਹ(), tmp, ਨਕਾਬ);
     }
 
-    if (item_ct1.get_local_id(2) == 0) {
-        dst[row] = tmp;
+    ਜੇ (ਵਸਤੂ_ct1.get_local_id(2) == 0) {
+        dst[ਪੰਕਤੀ] = tmp;
     }
 }
 
-template <int qk, int qi, typename block_q_t, int vdr, vec_dot_q_sycl_t vec_dot_q_sycl>
-static void launch_mul_mat_vec_q_moe(
-    const void * vx_base, const void * vy, const int32_t * ids_dev,
-    float * dst_base, const int ncols, const int nrows, const int n_experts_used,
-    const size_t expert_weight_stride, const size_t dst_row_stride,
-    const size_t src1_row_stride,
-    dpct::queue_ptr stream) {
-    const int            block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, (unsigned) n_experts_used, (unsigned) block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+ਸਾਂਚਾ <ਪੂਰਨ qk, ਪੂਰਨ qi, ਕਿਸਮ_ਨਾਂ ਖੰਡ_q_t, ਪੂਰਨ vdr, vec_dot_q_sycl_t vec_dot_q_sycl>
+ਸਥਿਰ ਖਾਲੀ launch_mul_mat_vec_q_moe(
+    ਅਚਲ ਖਾਲੀ * vx_ਅਧਾਰ, ਅਚਲ ਖਾਲੀ * vy, ਅਚਲ int32_t * ids_dev,
+    ਦਸ਼ਮਲਵ * dst_ਅਧਾਰ, ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows, ਅਚਲ ਪੂਰਨ n_experts_ਵਰਤਿਆ,
+    ਅਚਲ size_t expert_ਭਾਰ_stride, ਅਚਲ size_t dst_ਪੰਕਤੀ_stride,
+    ਅਚਲ size_t src1_ਪੰਕਤੀ_stride,
+    dpct::ਕਤਾਰ_ptr stream) {
+    ਅਚਲ ਪੂਰਨ            ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, (ਬਿਨਾਨਿਸ਼ਾਨੀ) n_experts_ਵਰਤਿਆ, (ਬਿਨਾਨਿਸ਼ਾਨੀ) ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
     stream->submit([&](sycl::handler & cgh) {
         cgh.parallel_for(
-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
-            [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                mul_mat_vec_q_moe<qk, qi, block_q_t, vdr, vec_dot_q_sycl>(
-                    vx_base, vy, dst_base, ids_dev, ncols, nrows,
-                    expert_weight_stride, dst_row_stride, src1_row_stride, item);
+            sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+            [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                mul_mat_vec_q_moe<qk, qi, ਖੰਡ_q_t, vdr, vec_dot_q_sycl>(
+                    vx_ਅਧਾਰ, vy, dst_ਅਧਾਰ, ids_dev, ncols, nrows,
+                    expert_ਭਾਰ_stride, dst_ਪੰਕਤੀ_stride, src1_ਪੰਕਤੀ_stride, ਵਸਤੂ);
             });
     });
 }
 
-bool ggml_sycl_mul_mat_vec_q_id(
-    enum ggml_type     src0_type,
-    const void *       vx_base,
-    const void *       vy,
-    const int32_t *    ids_dev,
-    float *            dst_base,
-    int                ncols,
-    int                nrows,
-    int                n_experts_used,
-    size_t             expert_weight_stride,
-    size_t             dst_row_stride,
-    size_t             src1_row_stride,
-    dpct::queue_ptr    stream) {
-    switch (src0_type) {
-        case GGML_TYPE_Q4_0:
-            launch_mul_mat_vec_q_moe<QK4_0, QI4_0, block_q4_0, VDR_Q4_0_Q8_1_MMVQ, vec_dot_q4_0_q8_1>(
-                vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
-                expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
-        case GGML_TYPE_Q4_1:
-            launch_mul_mat_vec_q_moe<QK4_1, QI4_1, block_q4_1, VDR_Q4_1_Q8_1_MMVQ, vec_dot_q4_1_q8_1>(
-                vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
-                expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
-        case GGML_TYPE_Q5_0:
-            launch_mul_mat_vec_q_moe<QK5_0, QI5_0, block_q5_0, VDR_Q5_0_Q8_1_MMVQ, vec_dot_q5_0_q8_1>(
-                vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
-                expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
-        case GGML_TYPE_Q5_1:
-            launch_mul_mat_vec_q_moe<QK5_1, QI5_1, block_q5_1, VDR_Q5_1_Q8_1_MMVQ, vec_dot_q5_1_q8_1>(
-                vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
-                expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
-        case GGML_TYPE_Q8_0:
-            launch_mul_mat_vec_q_moe<QK8_0, QI8_0, block_q8_0, VDR_Q8_0_Q8_1_MMVQ, vec_dot_q8_0_q8_1>(
-                vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
-                expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
-        case GGML_TYPE_Q2_0:
-            launch_mul_mat_vec_q_moe<QK2_0, QI2_0, block_q2_0, VDR_Q2_0_Q8_1_MMVQ, vec_dot_q2_0_q8_1>(
-                vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
-                expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
-        case GGML_TYPE_Q2_K:
-            launch_mul_mat_vec_q_moe<QK_K, QI2_K, block_q2_K, VDR_Q2_K_Q8_1_MMVQ, vec_dot_q2_K_q8_1>(
-                vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
-                expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
-        case GGML_TYPE_Q3_K:
-            launch_mul_mat_vec_q_moe<QK_K, QI3_K, block_q3_K, VDR_Q3_K_Q8_1_MMVQ, vec_dot_q3_K_q8_1>(
-                vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
-                expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
-        case GGML_TYPE_Q4_K:
-            launch_mul_mat_vec_q_moe<QK_K, QI4_K, block_q4_K, VDR_Q4_K_Q8_1_MMVQ, vec_dot_q4_K_q8_1>(
-                vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
-                expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
-        case GGML_TYPE_Q5_K:
-            launch_mul_mat_vec_q_moe<QK_K, QI5_K, block_q5_K, VDR_Q5_K_Q8_1_MMVQ, vec_dot_q5_K_q8_1>(
-                vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
-                expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
-        case GGML_TYPE_Q6_K:
-            launch_mul_mat_vec_q_moe<QK_K, QI6_K, block_q6_K, VDR_Q6_K_Q8_1_MMVQ, vec_dot_q6_K_q8_1>(
-                vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
-                expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
-        case GGML_TYPE_MXFP4:
-            launch_mul_mat_vec_q_moe<QK_MXFP4, QI_MXFP4, block_mxfp4, VDR_MXFP4_Q8_1_MMVQ, vec_dot_mxfp4_q8_1>(
-                vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
-                expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
-        case GGML_TYPE_NVFP4:
-            launch_mul_mat_vec_q_moe<QK_NVFP4, QI_NVFP4, block_nvfp4, VDR_NVFP4_Q8_1_MMVQ, vec_dot_nvfp4_q8_1>(
-                vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
-                expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
-        case GGML_TYPE_IQ2_XXS:
-            launch_mul_mat_vec_q_moe<QK_K, QI2_XXS/2, block_iq2_xxs, VDR_IQ2_XXS_Q8_1_MMVQ, vec_dot_iq2_xxs_q8_1_moe>(
-                vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
-                expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
-        case GGML_TYPE_IQ2_XS:
-            launch_mul_mat_vec_q_moe<QK_K, QI2_XS/2, block_iq2_xs, VDR_IQ2_XS_Q8_1_MMVQ, vec_dot_iq2_xs_q8_1_moe>(
-                vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
-                expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
-        case GGML_TYPE_IQ2_S:
-            launch_mul_mat_vec_q_moe<QK_K, QI2_S/2, block_iq2_s, VDR_IQ2_S_Q8_1_MMVQ, vec_dot_iq2_s_q8_1>(
-                vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
-                expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
-        case GGML_TYPE_IQ3_XXS:
-            launch_mul_mat_vec_q_moe<QK_K, QI3_XXS/2, block_iq3_xxs, VDR_IQ3_XXS_Q8_1_MMVQ, vec_dot_iq3_xxs_q8_1_moe>(
-                vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
-                expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
-        case GGML_TYPE_IQ3_S:
-            launch_mul_mat_vec_q_moe<QK_K, QI3_S/2, block_iq3_s, VDR_IQ3_S_Q8_1_MMVQ, vec_dot_iq3_s_q8_1_adapter>(
-                vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
-                expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
-        case GGML_TYPE_IQ1_S:
-            launch_mul_mat_vec_q_moe<QK_K, QI1_S, block_iq1_s, VDR_IQ1_S_Q8_1_MMVQ, vec_dot_iq1_s_q8_1_moe>(
-                vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
-                expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
-        case GGML_TYPE_IQ1_M:
-            launch_mul_mat_vec_q_moe<QK_K, QI1_S, block_iq1_m, VDR_IQ1_M_Q8_1_MMVQ, vec_dot_iq1_m_q8_1>(
-                vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
-                expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
-        case GGML_TYPE_IQ4_NL:
-            launch_mul_mat_vec_q_moe<QK4_NL, QI4_NL, block_iq4_nl, VDR_IQ4_NL_Q8_1_MMVQ, vec_dot_iq4_nl_q8_1>(
-                vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
-                expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
-        case GGML_TYPE_IQ4_XS:
-            launch_mul_mat_vec_q_moe<QK_K, QI4_XS/4, block_iq4_xs, VDR_IQ4_XS_Q8_1_MMVQ, vec_dot_iq4_xs_q8_1>(
-                vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
-                expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
-        default:
-            return false;
+ਤਾਰਕਿਕ ggml_sycl_mul_mat_vec_q_id(
+    ਗਿਣਤੀ ggml_type     src0_type,
+    ਅਚਲ ਖਾਲੀ *       vx_ਅਧਾਰ,
+    ਅਚਲ ਖਾਲੀ *       vy,
+    ਅਚਲ int32_t *    ids_dev,
+    ਦਸ਼ਮਲਵ *            dst_ਅਧਾਰ,
+    ਪੂਰਨ                ncols,
+    ਪੂਰਨ                nrows,
+    ਪੂਰਨ                n_experts_ਵਰਤਿਆ,
+    size_t             expert_ਭਾਰ_stride,
+    size_t             dst_ਪੰਕਤੀ_stride,
+    size_t             src1_ਪੰਕਤੀ_stride,
+    dpct::ਕਤਾਰ_ptr    stream) {
+    ਚੋਣ (src0_type) {
+        ਹਾਲਤ GGML_TYPE_Q4_0:
+            launch_mul_mat_vec_q_moe<QK4_0, QI4_0, ਖੰਡ_q4_0, VDR_Q4_0_Q8_1_MMVQ, vec_dot_q4_0_q8_1>(
+                vx_ਅਧਾਰ, vy, ids_dev, dst_ਅਧਾਰ, ncols, nrows, n_experts_ਵਰਤਿਆ,
+                expert_ਭਾਰ_stride, dst_ਪੰਕਤੀ_stride, src1_ਪੰਕਤੀ_stride, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਹਾਲਤ GGML_TYPE_Q4_1:
+            launch_mul_mat_vec_q_moe<QK4_1, QI4_1, ਖੰਡ_q4_1, VDR_Q4_1_Q8_1_MMVQ, vec_dot_q4_1_q8_1>(
+                vx_ਅਧਾਰ, vy, ids_dev, dst_ਅਧਾਰ, ncols, nrows, n_experts_ਵਰਤਿਆ,
+                expert_ਭਾਰ_stride, dst_ਪੰਕਤੀ_stride, src1_ਪੰਕਤੀ_stride, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਹਾਲਤ GGML_TYPE_Q5_0:
+            launch_mul_mat_vec_q_moe<QK5_0, QI5_0, ਖੰਡ_q5_0, VDR_Q5_0_Q8_1_MMVQ, vec_dot_q5_0_q8_1>(
+                vx_ਅਧਾਰ, vy, ids_dev, dst_ਅਧਾਰ, ncols, nrows, n_experts_ਵਰਤਿਆ,
+                expert_ਭਾਰ_stride, dst_ਪੰਕਤੀ_stride, src1_ਪੰਕਤੀ_stride, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਹਾਲਤ GGML_TYPE_Q5_1:
+            launch_mul_mat_vec_q_moe<QK5_1, QI5_1, ਖੰਡ_q5_1, VDR_Q5_1_Q8_1_MMVQ, vec_dot_q5_1_q8_1>(
+                vx_ਅਧਾਰ, vy, ids_dev, dst_ਅਧਾਰ, ncols, nrows, n_experts_ਵਰਤਿਆ,
+                expert_ਭਾਰ_stride, dst_ਪੰਕਤੀ_stride, src1_ਪੰਕਤੀ_stride, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਹਾਲਤ GGML_TYPE_Q8_0:
+            launch_mul_mat_vec_q_moe<QK8_0, QI8_0, ਖੰਡ_q8_0, VDR_Q8_0_Q8_1_MMVQ, vec_dot_q8_0_q8_1>(
+                vx_ਅਧਾਰ, vy, ids_dev, dst_ਅਧਾਰ, ncols, nrows, n_experts_ਵਰਤਿਆ,
+                expert_ਭਾਰ_stride, dst_ਪੰਕਤੀ_stride, src1_ਪੰਕਤੀ_stride, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਹਾਲਤ GGML_TYPE_Q2_0:
+            launch_mul_mat_vec_q_moe<QK2_0, QI2_0, ਖੰਡ_q2_0, VDR_Q2_0_Q8_1_MMVQ, vec_dot_q2_0_q8_1>(
+                vx_ਅਧਾਰ, vy, ids_dev, dst_ਅਧਾਰ, ncols, nrows, n_experts_ਵਰਤਿਆ,
+                expert_ਭਾਰ_stride, dst_ਪੰਕਤੀ_stride, src1_ਪੰਕਤੀ_stride, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਹਾਲਤ GGML_TYPE_Q2_K:
+            launch_mul_mat_vec_q_moe<QK_K, QI2_K, ਖੰਡ_q2_K, VDR_Q2_K_Q8_1_MMVQ, vec_dot_q2_K_q8_1>(
+                vx_ਅਧਾਰ, vy, ids_dev, dst_ਅਧਾਰ, ncols, nrows, n_experts_ਵਰਤਿਆ,
+                expert_ਭਾਰ_stride, dst_ਪੰਕਤੀ_stride, src1_ਪੰਕਤੀ_stride, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਹਾਲਤ GGML_TYPE_Q3_K:
+            launch_mul_mat_vec_q_moe<QK_K, QI3_K, ਖੰਡ_q3_K, VDR_Q3_K_Q8_1_MMVQ, vec_dot_q3_K_q8_1>(
+                vx_ਅਧਾਰ, vy, ids_dev, dst_ਅਧਾਰ, ncols, nrows, n_experts_ਵਰਤਿਆ,
+                expert_ਭਾਰ_stride, dst_ਪੰਕਤੀ_stride, src1_ਪੰਕਤੀ_stride, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਹਾਲਤ GGML_TYPE_Q4_K:
+            launch_mul_mat_vec_q_moe<QK_K, QI4_K, ਖੰਡ_q4_K, VDR_Q4_K_Q8_1_MMVQ, vec_dot_q4_K_q8_1>(
+                vx_ਅਧਾਰ, vy, ids_dev, dst_ਅਧਾਰ, ncols, nrows, n_experts_ਵਰਤਿਆ,
+                expert_ਭਾਰ_stride, dst_ਪੰਕਤੀ_stride, src1_ਪੰਕਤੀ_stride, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਹਾਲਤ GGML_TYPE_Q5_K:
+            launch_mul_mat_vec_q_moe<QK_K, QI5_K, ਖੰਡ_q5_K, VDR_Q5_K_Q8_1_MMVQ, vec_dot_q5_K_q8_1>(
+                vx_ਅਧਾਰ, vy, ids_dev, dst_ਅਧਾਰ, ncols, nrows, n_experts_ਵਰਤਿਆ,
+                expert_ਭਾਰ_stride, dst_ਪੰਕਤੀ_stride, src1_ਪੰਕਤੀ_stride, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਹਾਲਤ GGML_TYPE_Q6_K:
+            launch_mul_mat_vec_q_moe<QK_K, QI6_K, ਖੰਡ_q6_K, VDR_Q6_K_Q8_1_MMVQ, vec_dot_q6_K_q8_1>(
+                vx_ਅਧਾਰ, vy, ids_dev, dst_ਅਧਾਰ, ncols, nrows, n_experts_ਵਰਤਿਆ,
+                expert_ਭਾਰ_stride, dst_ਪੰਕਤੀ_stride, src1_ਪੰਕਤੀ_stride, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਹਾਲਤ GGML_TYPE_MXFP4:
+            launch_mul_mat_vec_q_moe<QK_MXFP4, QI_MXFP4, ਖੰਡ_mxfp4, VDR_MXFP4_Q8_1_MMVQ, vec_dot_mxfp4_q8_1>(
+                vx_ਅਧਾਰ, vy, ids_dev, dst_ਅਧਾਰ, ncols, nrows, n_experts_ਵਰਤਿਆ,
+                expert_ਭਾਰ_stride, dst_ਪੰਕਤੀ_stride, src1_ਪੰਕਤੀ_stride, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਹਾਲਤ GGML_TYPE_NVFP4:
+            launch_mul_mat_vec_q_moe<QK_NVFP4, QI_NVFP4, ਖੰਡ_nvfp4, VDR_NVFP4_Q8_1_MMVQ, vec_dot_nvfp4_q8_1>(
+                vx_ਅਧਾਰ, vy, ids_dev, dst_ਅਧਾਰ, ncols, nrows, n_experts_ਵਰਤਿਆ,
+                expert_ਭਾਰ_stride, dst_ਪੰਕਤੀ_stride, src1_ਪੰਕਤੀ_stride, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਹਾਲਤ GGML_TYPE_IQ2_XXS:
+            launch_mul_mat_vec_q_moe<QK_K, QI2_XXS/2, ਖੰਡ_iq2_xxs, VDR_IQ2_XXS_Q8_1_MMVQ, vec_dot_iq2_xxs_q8_1_moe>(
+                vx_ਅਧਾਰ, vy, ids_dev, dst_ਅਧਾਰ, ncols, nrows, n_experts_ਵਰਤਿਆ,
+                expert_ਭਾਰ_stride, dst_ਪੰਕਤੀ_stride, src1_ਪੰਕਤੀ_stride, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਹਾਲਤ GGML_TYPE_IQ2_XS:
+            launch_mul_mat_vec_q_moe<QK_K, QI2_XS/2, ਖੰਡ_iq2_xs, VDR_IQ2_XS_Q8_1_MMVQ, vec_dot_iq2_xs_q8_1_moe>(
+                vx_ਅਧਾਰ, vy, ids_dev, dst_ਅਧਾਰ, ncols, nrows, n_experts_ਵਰਤਿਆ,
+                expert_ਭਾਰ_stride, dst_ਪੰਕਤੀ_stride, src1_ਪੰਕਤੀ_stride, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਹਾਲਤ GGML_TYPE_IQ2_S:
+            launch_mul_mat_vec_q_moe<QK_K, QI2_S/2, ਖੰਡ_iq2_s, VDR_IQ2_S_Q8_1_MMVQ, vec_dot_iq2_s_q8_1>(
+                vx_ਅਧਾਰ, vy, ids_dev, dst_ਅਧਾਰ, ncols, nrows, n_experts_ਵਰਤਿਆ,
+                expert_ਭਾਰ_stride, dst_ਪੰਕਤੀ_stride, src1_ਪੰਕਤੀ_stride, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਹਾਲਤ GGML_TYPE_IQ3_XXS:
+            launch_mul_mat_vec_q_moe<QK_K, QI3_XXS/2, ਖੰਡ_iq3_xxs, VDR_IQ3_XXS_Q8_1_MMVQ, vec_dot_iq3_xxs_q8_1_moe>(
+                vx_ਅਧਾਰ, vy, ids_dev, dst_ਅਧਾਰ, ncols, nrows, n_experts_ਵਰਤਿਆ,
+                expert_ਭਾਰ_stride, dst_ਪੰਕਤੀ_stride, src1_ਪੰਕਤੀ_stride, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਹਾਲਤ GGML_TYPE_IQ3_S:
+            launch_mul_mat_vec_q_moe<QK_K, QI3_S/2, ਖੰਡ_iq3_s, VDR_IQ3_S_Q8_1_MMVQ, vec_dot_iq3_s_q8_1_adapter>(
+                vx_ਅਧਾਰ, vy, ids_dev, dst_ਅਧਾਰ, ncols, nrows, n_experts_ਵਰਤਿਆ,
+                expert_ਭਾਰ_stride, dst_ਪੰਕਤੀ_stride, src1_ਪੰਕਤੀ_stride, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਹਾਲਤ GGML_TYPE_IQ1_S:
+            launch_mul_mat_vec_q_moe<QK_K, QI1_S, ਖੰਡ_iq1_s, VDR_IQ1_S_Q8_1_MMVQ, vec_dot_iq1_s_q8_1_moe>(
+                vx_ਅਧਾਰ, vy, ids_dev, dst_ਅਧਾਰ, ncols, nrows, n_experts_ਵਰਤਿਆ,
+                expert_ਭਾਰ_stride, dst_ਪੰਕਤੀ_stride, src1_ਪੰਕਤੀ_stride, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਹਾਲਤ GGML_TYPE_IQ1_M:
+            launch_mul_mat_vec_q_moe<QK_K, QI1_S, ਖੰਡ_iq1_m, VDR_IQ1_M_Q8_1_MMVQ, vec_dot_iq1_m_q8_1>(
+                vx_ਅਧਾਰ, vy, ids_dev, dst_ਅਧਾਰ, ncols, nrows, n_experts_ਵਰਤਿਆ,
+                expert_ਭਾਰ_stride, dst_ਪੰਕਤੀ_stride, src1_ਪੰਕਤੀ_stride, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਹਾਲਤ GGML_TYPE_IQ4_NL:
+            launch_mul_mat_vec_q_moe<QK4_NL, QI4_NL, ਖੰਡ_iq4_nl, VDR_IQ4_NL_Q8_1_MMVQ, vec_dot_iq4_nl_q8_1>(
+                vx_ਅਧਾਰ, vy, ids_dev, dst_ਅਧਾਰ, ncols, nrows, n_experts_ਵਰਤਿਆ,
+                expert_ਭਾਰ_stride, dst_ਪੰਕਤੀ_stride, src1_ਪੰਕਤੀ_stride, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਹਾਲਤ GGML_TYPE_IQ4_XS:
+            launch_mul_mat_vec_q_moe<QK_K, QI4_XS/4, ਖੰਡ_iq4_xs, VDR_IQ4_XS_Q8_1_MMVQ, vec_dot_iq4_xs_q8_1>(
+                vx_ਅਧਾਰ, vy, ids_dev, dst_ਅਧਾਰ, ncols, nrows, n_experts_ਵਰਤਿਆ,
+                expert_ਭਾਰ_stride, dst_ਪੰਕਤੀ_stride, src1_ਪੰਕਤੀ_stride, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਮੂਲ:
+            ਵਾਪਸ ਝੂਠ;
     }
 }
 
 // Reorder (SoA) MoE expert GEMV: MoE expert/row/lane indexing (from mul_mat_vec_q_moe) with the
 // dense-reorder per-block reads (from mul_mat_vec_q_reorder). Each expert slice in vx_base is a
 // self-contained SoA, so nblocks = nrows*(ncols/qk) per expert and the constant expert stride holds.
-template <typename reorder_vec_dot_q_sycl>
-static void mul_mat_vec_q_moe_reorder(
-    const void * __restrict__ vx_base, const void * __restrict__ vy_base,
-    float * __restrict__ dst_base, const int32_t * __restrict__ ids_dev,
-    const int ncols, const int nrows,
-    const size_t expert_weight_stride, const size_t dst_row_stride,
-    const size_t src1_row_stride,
-    const sycl::nd_item<3> & item_ct1) {
-    using block_type   = ggml_sycl_reordered::block_q_t<reorder_vec_dot_q_sycl::gtype>;
-    using block_traits = typename block_type::traits;
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ reorder_vec_dot_q_sycl>
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q_moe_reorder(
+    ਅਚਲ ਖਾਲੀ * __restrict__ vx_ਅਧਾਰ, ਅਚਲ ਖਾਲੀ * __restrict__ vy_ਅਧਾਰ,
+    ਦਸ਼ਮਲਵ * __restrict__ dst_ਅਧਾਰ, ਅਚਲ int32_t * __restrict__ ids_dev,
+    ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+    ਅਚਲ size_t expert_ਭਾਰ_stride, ਅਚਲ size_t dst_ਪੰਕਤੀ_stride,
+    ਅਚਲ size_t src1_ਪੰਕਤੀ_stride,
+    ਅਚਲ sycl::nd_ਵਸਤੂ<3> & ਵਸਤੂ_ct1) {
+    ਵਰਤੋਂ ਖੰਡ_type   = ggml_sycl_reordered::ਖੰਡ_q_t<reorder_vec_dot_q_sycl::gtype>;
+    ਵਰਤੋਂ ਖੰਡ_traits = ਕਿਸਮ_ਨਾਂ ਖੰਡ_type::traits;
 
-    const int expert_idx = item_ct1.get_group(1);
-    const int i02        = ids_dev[expert_idx];
+    ਅਚਲ ਪੂਰਨ expert_idx = ਵਸਤੂ_ct1.get_ਸਮੂਹ(1);
+    ਅਚਲ ਪੂਰਨ i02        = ids_dev[expert_idx];
 
-    const char * vx  = (const char *) vx_base + (size_t) i02 * expert_weight_stride;
-    const char * vy  = (const char *) vy_base + (size_t) expert_idx * src1_row_stride;
-    float *      dst = (float *) ((char *) dst_base + (size_t) expert_idx * dst_row_stride);
+    ਅਚਲ ਅੱਖਰ * vx  = (ਅਚਲ ਅੱਖਰ *) vx_ਅਧਾਰ + (size_t) i02 * expert_ਭਾਰ_stride;
+    ਅਚਲ ਅੱਖਰ * vy  = (ਅਚਲ ਅੱਖਰ *) vy_ਅਧਾਰ + (size_t) expert_idx * src1_ਪੰਕਤੀ_stride;
+    ਦਸ਼ਮਲਵ *      dst = (ਦਸ਼ਮਲਵ *) ((ਅੱਖਰ *) dst_ਅਧਾਰ + (size_t) expert_idx * dst_ਪੰਕਤੀ_stride);
 
-    const int row = item_ct1.get_group(2) * item_ct1.get_local_range(1) + item_ct1.get_local_id(1);
-    if (row >= nrows) {
-        return;
+    ਅਚਲ ਪੂਰਨ ਪੰਕਤੀ = ਵਸਤੂ_ct1.get_ਸਮੂਹ(2) * ਵਸਤੂ_ct1.get_local_range(1) + ਵਸਤੂ_ct1.get_local_id(1);
+    ਜੇ (ਪੰਕਤੀ >= nrows) {
+        ਵਾਪਸ;
     }
 
-    const auto sg = item_ct1.get_sub_group();
+    ਅਚਲ ਸਵੈਚਾਲਿਤ sg = ਵਸਤੂ_ct1.get_sub_ਸਮੂਹ();
 
-    constexpr int vdr_mmvq = reorder_vec_dot_q_sycl::gtype == GGML_TYPE_Q8_0 ?
-                            VDR_Q8_0_Q8_1_MMVQ : block_traits::vdr_mmvq;
-    const int     blocks_per_row              = ncols / block_traits::qk;
-    constexpr int blocks_per_subgroup         = ceil_div(vdr_mmvq * WARP_SIZE, block_traits::qi);
-    constexpr int block_elements_per_subgroup = block_traits::qi / vdr_mmvq;
-    const int     nblocks                     = nrows * (ncols / block_traits::qk);
+    constexpr ਪੂਰਨ vdr_mmvq = reorder_vec_dot_q_sycl::gtype == GGML_TYPE_Q8_0 ?
+                            VDR_Q8_0_Q8_1_MMVQ : ਖੰਡ_traits::vdr_mmvq;
+    ਅਚਲ ਪੂਰਨ     ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ              = ncols / ਖੰਡ_traits::qk;
+    constexpr ਪੂਰਨ ਖੰਡਾਂ_ਪ੍ਰਤੀ_subgroup         = ceil_div(vdr_mmvq * WARP_ਮਾਪ, ਖੰਡ_traits::qi);
+    constexpr ਪੂਰਨ ਖੰਡ_elements_ਪ੍ਰਤੀ_subgroup = ਖੰਡ_traits::qi / vdr_mmvq;
+    ਅਚਲ ਪੂਰਨ     nblocks                     = nrows * (ncols / ਖੰਡ_traits::qk);
 
-    static_assert(blocks_per_subgroup > 0);
-    static_assert(block_elements_per_subgroup > 0);
+    static_assert(ਖੰਡਾਂ_ਪ੍ਰਤੀ_subgroup > 0);
+    static_assert(ਖੰਡ_elements_ਪ੍ਰਤੀ_subgroup > 0);
 
-    float partial_sum = 0.0f;
-    for (int i = sg.get_local_linear_id() / block_elements_per_subgroup; i < blocks_per_row; i += blocks_per_subgroup) {
-        const int ibx = row * blocks_per_row + i;
+    ਦਸ਼ਮਲਵ partial_ਜੋੜ = 0.0f;
+    ਲਈ (ਪੂਰਨ i = sg.get_local_ਰੇਖਿਕ_id() / ਖੰਡ_elements_ਪ੍ਰਤੀ_subgroup; i < ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ; i += ਖੰਡਾਂ_ਪ੍ਰਤੀ_subgroup) {
+        ਅਚਲ ਪੂਰਨ ibx = ਪੰਕਤੀ * ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ + i;
 
-        const auto bx_offset = block_type::get_block_offset(ibx, nblocks);
-        const auto d_offset  = block_type::get_d_offset(nrows, ncols, ibx);
+        ਅਚਲ ਸਵੈਚਾਲਿਤ bx_ਵਿੱਥ = ਖੰਡ_type::get_ਖੰਡ_ਵਿੱਥ(ibx, nblocks);
+        ਅਚਲ ਸਵੈਚਾਲਿਤ d_ਵਿੱਥ  = ਖੰਡ_type::get_d_ਵਿੱਥ(nrows, ncols, ibx);
 
-        const int           iby            = i * block_type::block_to_q8_1_ratio();
-        const int8_t *      q8_1_quant_ptr = (const int8_t *) vy + iby * QK8_1;
-        const sycl::half2 * q8_1_ds_ptr    = (const sycl::half2 *) ((const char *) vy + ncols + iby * sizeof(sycl::half2));
+        ਅਚਲ ਪੂਰਨ           iby            = i * ਖੰਡ_type::ਖੰਡ_ਮੰਜ਼ਿਲ_q8_1_ਅਨੁਪਾਤ();
+        ਅਚਲ int8_t *      q8_1_quant_ptr = (ਅਚਲ int8_t *) vy + iby * QK8_1;
+        ਅਚਲ sycl::half2 * q8_1_ds_ptr    = (ਅਚਲ sycl::half2 *) ((ਅਚਲ ਅੱਖਰ *) vy + ncols + iby * ਆਕਾਰ(sycl::half2));
 
-#pragma unroll
-        for (int elem = 0; elem < block_elements_per_subgroup; elem += WARP_SIZE) {
-            const int iqs = elem + vdr_mmvq * (sg.get_local_linear_id() % block_elements_per_subgroup);
-            if constexpr (reorder_vec_dot_q_sycl::gtype == GGML_TYPE_Q8_0) {
-                partial_sum += reorder_vec_dot_q_sycl()(vx, bx_offset, d_offset, q8_1_quant_ptr, q8_1_ds_ptr, iqs, vdr_mmvq);
-            } else {
-                partial_sum += reorder_vec_dot_q_sycl()(vx, bx_offset, d_offset, q8_1_quant_ptr, q8_1_ds_ptr, iqs);
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ elem = 0; elem < ਖੰਡ_elements_ਪ੍ਰਤੀ_subgroup; elem += WARP_ਮਾਪ) {
+            ਅਚਲ ਪੂਰਨ iqs = elem + vdr_mmvq * (sg.get_local_ਰੇਖਿਕ_id() % ਖੰਡ_elements_ਪ੍ਰਤੀ_subgroup);
+            ਜੇ constexpr (reorder_vec_dot_q_sycl::gtype == GGML_TYPE_Q8_0) {
+                partial_ਜੋੜ += reorder_vec_dot_q_sycl()(vx, bx_ਵਿੱਥ, d_ਵਿੱਥ, q8_1_quant_ptr, q8_1_ds_ptr, iqs, vdr_mmvq);
+            } ਨਹੀਂਤਾਂ {
+                partial_ਜੋੜ += reorder_vec_dot_q_sycl()(vx, bx_ਵਿੱਥ, d_ਵਿੱਥ, q8_1_quant_ptr, q8_1_ds_ptr, iqs);
             }
         }
     }
 
-    float sum = partial_sum;
-    if constexpr (reorder_vec_dot_q_sycl::gtype == GGML_TYPE_Q8_0) {
+    ਦਸ਼ਮਲਵ ਜੋੜ = partial_ਜੋੜ;
+    ਜੇ constexpr (reorder_vec_dot_q_sycl::gtype == GGML_TYPE_Q8_0) {
         // Keep the accumulation order of the non-reordered MoE kernel.
-        for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
-            sum += dpct::permute_sub_group_by_xor(sg, sum, mask);
+        ਲਈ (ਪੂਰਨ ਨਕਾਬ = WARP_ਮਾਪ / 2; ਨਕਾਬ > 0; ਨਕਾਬ >>= 1) {
+            ਜੋੜ += dpct::ਕ੍ਰਮ_ਬਦਲੋ_sub_ਸਮੂਹ_by_xor(sg, ਜੋੜ, ਨਕਾਬ);
         }
-    } else {
-        sum = sycl::reduce_over_group(sg, partial_sum, std::plus<>());
+    } ਨਹੀਂਤਾਂ {
+        ਜੋੜ = sycl::reduce_over_ਸਮੂਹ(sg, partial_ਜੋੜ, std::plus<>());
     }
-    if (sg.leader()) {
-        dst[row] = sum;
+    ਜੇ (sg.leader()) {
+        dst[ਪੰਕਤੀ] = ਜੋੜ;
     }
 }
 
-template <typename reorder_vec_dot_q_sycl>
-static void launch_mul_mat_vec_q_moe_reorder(
-    const void * vx_base, const void * vy, const int32_t * ids_dev,
-    float * dst_base, const int ncols, const int nrows, const int n_experts_used,
-    const size_t expert_weight_stride, const size_t dst_row_stride,
-    const size_t src1_row_stride,
-    dpct::queue_ptr stream) {
-    const int            block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, (unsigned) n_experts_used, (unsigned) block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ reorder_vec_dot_q_sycl>
+ਸਥਿਰ ਖਾਲੀ launch_mul_mat_vec_q_moe_reorder(
+    ਅਚਲ ਖਾਲੀ * vx_ਅਧਾਰ, ਅਚਲ ਖਾਲੀ * vy, ਅਚਲ int32_t * ids_dev,
+    ਦਸ਼ਮਲਵ * dst_ਅਧਾਰ, ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows, ਅਚਲ ਪੂਰਨ n_experts_ਵਰਤਿਆ,
+    ਅਚਲ size_t expert_ਭਾਰ_stride, ਅਚਲ size_t dst_ਪੰਕਤੀ_stride,
+    ਅਚਲ size_t src1_ਪੰਕਤੀ_stride,
+    dpct::ਕਤਾਰ_ptr stream) {
+    ਅਚਲ ਪੂਰਨ            ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, (ਬਿਨਾਨਿਸ਼ਾਨੀ) n_experts_ਵਰਤਿਆ, (ਬਿਨਾਨਿਸ਼ਾਨੀ) ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
     stream->submit([&](sycl::handler & cgh) {
         cgh.parallel_for(
-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
-            [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+            sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+            [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
                 mul_mat_vec_q_moe_reorder<reorder_vec_dot_q_sycl>(
-                    vx_base, vy, dst_base, ids_dev, ncols, nrows,
-                    expert_weight_stride, dst_row_stride, src1_row_stride, item);
+                    vx_ਅਧਾਰ, vy, dst_ਅਧਾਰ, ids_dev, ncols, nrows,
+                    expert_ਭਾਰ_stride, dst_ਪੰਕਤੀ_stride, src1_ਪੰਕਤੀ_stride, ਵਸਤੂ);
             });
     });
 }
 
-bool ggml_sycl_mul_mat_vec_q_id_reorder(
-    enum ggml_type     src0_type,
-    const void *       vx_base,
-    const void *       vy,
-    const int32_t *    ids_dev,
-    float *            dst_base,
-    int                ncols,
-    int                nrows,
-    int                n_experts_used,
-    size_t             expert_weight_stride,
-    size_t             dst_row_stride,
-    size_t             src1_row_stride,
-    dpct::queue_ptr    stream) {
-    switch (src0_type) {
-        case GGML_TYPE_Q8_0:
+ਤਾਰਕਿਕ ggml_sycl_mul_mat_vec_q_id_reorder(
+    ਗਿਣਤੀ ggml_type     src0_type,
+    ਅਚਲ ਖਾਲੀ *       vx_ਅਧਾਰ,
+    ਅਚਲ ਖਾਲੀ *       vy,
+    ਅਚਲ int32_t *    ids_dev,
+    ਦਸ਼ਮਲਵ *            dst_ਅਧਾਰ,
+    ਪੂਰਨ                ncols,
+    ਪੂਰਨ                nrows,
+    ਪੂਰਨ                n_experts_ਵਰਤਿਆ,
+    size_t             expert_ਭਾਰ_stride,
+    size_t             dst_ਪੰਕਤੀ_stride,
+    size_t             src1_ਪੰਕਤੀ_stride,
+    dpct::ਕਤਾਰ_ptr    stream) {
+    ਚੋਣ (src0_type) {
+        ਹਾਲਤ GGML_TYPE_Q8_0:
             launch_mul_mat_vec_q_moe_reorder<reorder_vec_dot_q_sycl<GGML_TYPE_Q8_0>>(
-                vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
-                expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
-        case GGML_TYPE_Q4_K:
+                vx_ਅਧਾਰ, vy, ids_dev, dst_ਅਧਾਰ, ncols, nrows, n_experts_ਵਰਤਿਆ,
+                expert_ਭਾਰ_stride, dst_ਪੰਕਤੀ_stride, src1_ਪੰਕਤੀ_stride, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਹਾਲਤ GGML_TYPE_Q4_K:
             launch_mul_mat_vec_q_moe_reorder<reorder_vec_dot_q_sycl<GGML_TYPE_Q4_K>>(
-                vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
-                expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
-        case GGML_TYPE_Q5_K:
+                vx_ਅਧਾਰ, vy, ids_dev, dst_ਅਧਾਰ, ncols, nrows, n_experts_ਵਰਤਿਆ,
+                expert_ਭਾਰ_stride, dst_ਪੰਕਤੀ_stride, src1_ਪੰਕਤੀ_stride, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਹਾਲਤ GGML_TYPE_Q5_K:
             launch_mul_mat_vec_q_moe_reorder<reorder_vec_dot_q_sycl<GGML_TYPE_Q5_K>>(
-                vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
-                expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
-        case GGML_TYPE_Q6_K:
+                vx_ਅਧਾਰ, vy, ids_dev, dst_ਅਧਾਰ, ncols, nrows, n_experts_ਵਰਤਿਆ,
+                expert_ਭਾਰ_stride, dst_ਪੰਕਤੀ_stride, src1_ਪੰਕਤੀ_stride, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਹਾਲਤ GGML_TYPE_Q6_K:
             launch_mul_mat_vec_q_moe_reorder<reorder_vec_dot_q_sycl<GGML_TYPE_Q6_K>>(
-                vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
-                expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
-        case GGML_TYPE_MXFP4:
+                vx_ਅਧਾਰ, vy, ids_dev, dst_ਅਧਾਰ, ncols, nrows, n_experts_ਵਰਤਿਆ,
+                expert_ਭਾਰ_stride, dst_ਪੰਕਤੀ_stride, src1_ਪੰਕਤੀ_stride, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਹਾਲਤ GGML_TYPE_MXFP4:
             launch_mul_mat_vec_q_moe_reorder<reorder_vec_dot_q_sycl<GGML_TYPE_MXFP4>>(
-                vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
-                expert_weight_stride, dst_row_stride, src1_row_stride, stream);
-            return true;
-        default:
-            return false;
+                vx_ਅਧਾਰ, vy, ids_dev, dst_ਅਧਾਰ, ncols, nrows, n_experts_ਵਰਤਿਆ,
+                expert_ਭਾਰ_stride, dst_ਪੰਕਤੀ_stride, src1_ਪੰਕਤੀ_stride, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਮੂਲ:
+            ਵਾਪਸ ਝੂਠ;
     }
 }
 
-template <typename reorder_vec_dot_q_sycl, int ncols_dst, int rows_per_sg>
-static void launch_mul_mat_vec_q_reorder_glu_impl(const void * vx, const void * vgate, const void * vy, float * dst,
-                                             const int ncols, const int nrows, const int stride_col_y_bytes,
-                                             const int stride_col_dst, const ggml_glu_op glu_op,
-                                             dpct::queue_ptr stream) {
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ reorder_vec_dot_q_sycl, ਪੂਰਨ ncols_dst, ਪੂਰਨ ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_sg>
+ਸਥਿਰ ਖਾਲੀ launch_mul_mat_vec_q_reorder_glu_impl(ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vgate, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+                                             ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ,
+                                             ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst, ਅਚਲ ggml_glu_op glu_op,
+                                             dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
 
-    constexpr size_t num_subgroups = WARP_SIZE;
+    constexpr size_t ਅੰਕ_subgroups = WARP_ਮਾਪ;
 
-    const int            block_num_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (int) num_subgroups * rows_per_sg);
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, num_subgroups * WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ            ਖੰਡ_ਅੰਕ_y = ceil_div(nrows, GGML_SYCL_MMV_Y * (ਪੂਰਨ) ਅੰਕ_subgroups * ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_sg);
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, ਅੰਕ_subgroups * WARP_ਮਾਪ);
 
     stream->submit([&](sycl::handler & cgh) {
-        cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                         [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                             mul_mat_vec_q_reorder_ncols<reorder_vec_dot_q_sycl, ncols_dst, /*has_fusion=*/ true,
-                                                        rows_per_sg>(
-                                 vx, vgate, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, glu_op,
-                                 nd_item);
+        cgh.parallel_for(sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                         [=](sycl::nd_ਵਸਤੂ<3> nd_ਵਸਤੂ) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                             mul_mat_vec_q_reorder_ncols<reorder_vec_dot_q_sycl, ncols_dst, /*has_fusion=*/ ਸੱਚ,
+                                                        ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_sg>(
+                                 vx, vgate, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, glu_op,
+                                 nd_ਵਸਤੂ);
                          });
     });
 }
 
-template <typename reorder_vec_dot_q_sycl, int ncols_dst>
-static void launch_mul_mat_vec_q_reorder_glu(const void * vx, const void * vgate, const void * vy, float * dst,
-                                             const int ncols, const int nrows, const int stride_col_y_bytes,
-                                             const int stride_col_dst, const ggml_glu_op glu_op,
-                                             dpct::queue_ptr stream) {
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ reorder_vec_dot_q_sycl, ਪੂਰਨ ncols_dst>
+ਸਥਿਰ ਖਾਲੀ launch_mul_mat_vec_q_reorder_glu(ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vgate, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+                                             ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ,
+                                             ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst, ਅਚਲ ggml_glu_op glu_op,
+                                             dpct::ਕਤਾਰ_ptr stream) {
     // q4_K pairs rows for 3..4 columns, q5_K for 3..5
-    constexpr int row_pair_max = reorder_vec_dot_q_sycl::gtype == GGML_TYPE_Q5_K ? 5 : 4;
-    constexpr int rows_per_sg =
+    constexpr ਪੂਰਨ ਪੰਕਤੀ_pair_max = reorder_vec_dot_q_sycl::gtype == GGML_TYPE_Q5_K ? 5 : 4;
+    constexpr ਪੂਰਨ ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_sg =
         reorder_vec_dot_shared_activations<reorder_vec_dot_q_sycl::gtype>::value && ncols_dst >= 3 &&
-                ncols_dst <= row_pair_max
+                ncols_dst <= ਪੰਕਤੀ_pair_max
             ? 2
             : 1;
-    launch_mul_mat_vec_q_reorder_glu_impl<reorder_vec_dot_q_sycl, ncols_dst, rows_per_sg>(vx, vgate, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, glu_op, stream);
+    launch_mul_mat_vec_q_reorder_glu_impl<reorder_vec_dot_q_sycl, ncols_dst, ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_sg>(vx, vgate, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, glu_op, stream);
 }
 
 // ---------------------------------------------------------------------------
@@ -3362,84 +3362,84 @@ static void launch_mul_mat_vec_q_reorder_glu(const void * vx, const void * vgate
 // mul_mat_vec_q exactly, so results are bit-identical to running the three
 // nodes separately.
 // ---------------------------------------------------------------------------
-template <int qi_g, typename block_g_t, int vdr_g, vec_dot_q_sycl_t vec_dot_g,
-          int qi_u, typename block_u_t, int vdr_u, vec_dot_q_sycl_t vec_dot_u, int ncols_dst>
-static void mul_mat_vec_q_glu(const void * __restrict__ vxg, const void * __restrict__ vxu,
-                              const void * __restrict__ vy, float * __restrict__ dst, const int ncols,
-                              const int nrows, const int stride_col_y, const int stride_col_dst,
-                              const ggml_glu_op glu_op, const sycl::nd_item<3> & item_ct1) {
+ਸਾਂਚਾ <ਪੂਰਨ qi_g, ਕਿਸਮ_ਨਾਂ ਖੰਡ_g_t, ਪੂਰਨ vdr_g, vec_dot_q_sycl_t vec_dot_g,
+          ਪੂਰਨ qi_u, ਕਿਸਮ_ਨਾਂ ਖੰਡ_u_t, ਪੂਰਨ vdr_u, vec_dot_q_sycl_t vec_dot_u, ਪੂਰਨ ncols_dst>
+ਸਥਿਰ ਖਾਲੀ mul_mat_vec_q_glu(ਅਚਲ ਖਾਲੀ * __restrict__ vxg, ਅਚਲ ਖਾਲੀ * __restrict__ vxu,
+                              ਅਚਲ ਖਾਲੀ * __restrict__ vy, ਦਸ਼ਮਲਵ * __restrict__ dst, ਅਚਲ ਪੂਰਨ ncols,
+                              ਅਚਲ ਪੂਰਨ nrows, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+                              ਅਚਲ ggml_glu_op glu_op, ਅਚਲ sycl::nd_ਵਸਤੂ<3> & ਵਸਤੂ_ct1) {
     static_assert(QK_K % QK8_1 == 0);
-    const int row = item_ct1.get_group(2) * item_ct1.get_local_range(1) + item_ct1.get_local_id(1);
-    if (row >= nrows) {
-        return;
+    ਅਚਲ ਪੂਰਨ ਪੰਕਤੀ = ਵਸਤੂ_ct1.get_ਸਮੂਹ(2) * ਵਸਤੂ_ct1.get_local_range(1) + ਵਸਤੂ_ct1.get_local_id(1);
+    ਜੇ (ਪੰਕਤੀ >= nrows) {
+        ਵਾਪਸ;
     }
-    const int     blocks_per_row  = ncols / QK_K;
-    constexpr int blocks_per_warp_g = (vdr_g * WARP_SIZE + qi_g - 1) / qi_g;
-    constexpr int blocks_per_warp_u = (vdr_u * WARP_SIZE + qi_u - 1) / qi_u;
+    ਅਚਲ ਪੂਰਨ     ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ  = ncols / QK_K;
+    constexpr ਪੂਰਨ ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp_g = (vdr_g * WARP_ਮਾਪ + qi_g - 1) / qi_g;
+    constexpr ਪੂਰਨ ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp_u = (vdr_u * WARP_ਮਾਪ + qi_u - 1) / qi_u;
     // one partial sum per output column, per operand
-    float tmpg[ncols_dst] = {0.0f};
-    float tmpu[ncols_dst] = {0.0f};
-    const block_g_t  * xg = (const block_g_t *) vxg;
-    const block_u_t  * xu = (const block_u_t *) vxu;
-    const block_q8_1 * y  = (const block_q8_1 *) vy;
-    for (int i = item_ct1.get_local_id(2) / (qi_g / vdr_g); i < blocks_per_row; i += blocks_per_warp_g) {
-        const int ibx = row * blocks_per_row + i;
-        const int iby = i * (QK_K / QK8_1);
-        for (size_t elem = 0; elem < qi_g / vdr_g; elem += WARP_SIZE) {
-            const int iqs = elem + vdr_g * (item_ct1.get_local_id(2) % (qi_g / vdr_g));
-#pragma unroll
-            for (int j = 0; j < ncols_dst; ++j) {
-                tmpg[j] += vec_dot_g(&xg[ibx], &y[j * stride_col_y + iby], iqs);
+    ਦਸ਼ਮਲਵ tmpg[ncols_dst] = {0.0f};
+    ਦਸ਼ਮਲਵ tmpu[ncols_dst] = {0.0f};
+    ਅਚਲ ਖੰਡ_g_t  * xg = (ਅਚਲ ਖੰਡ_g_t *) vxg;
+    ਅਚਲ ਖੰਡ_u_t  * xu = (ਅਚਲ ਖੰਡ_u_t *) vxu;
+    ਅਚਲ ਖੰਡ_q8_1 * y  = (ਅਚਲ ਖੰਡ_q8_1 *) vy;
+    ਲਈ (ਪੂਰਨ i = ਵਸਤੂ_ct1.get_local_id(2) / (qi_g / vdr_g); i < ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ; i += ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp_g) {
+        ਅਚਲ ਪੂਰਨ ibx = ਪੰਕਤੀ * ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ + i;
+        ਅਚਲ ਪੂਰਨ iby = i * (QK_K / QK8_1);
+        ਲਈ (size_t elem = 0; elem < qi_g / vdr_g; elem += WARP_ਮਾਪ) {
+            ਅਚਲ ਪੂਰਨ iqs = elem + vdr_g * (ਵਸਤੂ_ct1.get_local_id(2) % (qi_g / vdr_g));
+#ਹਦਾਇਤ unroll
+            ਲਈ (ਪੂਰਨ j = 0; j < ncols_dst; ++j) {
+                tmpg[j] += vec_dot_g(&xg[ibx], &y[j * stride_ਖਾਨਾ_y + iby], iqs);
             }
         }
     }
-    for (int i = item_ct1.get_local_id(2) / (qi_u / vdr_u); i < blocks_per_row; i += blocks_per_warp_u) {
-        const int ibx = row * blocks_per_row + i;
-        const int iby = i * (QK_K / QK8_1);
-        for (size_t elem = 0; elem < qi_u / vdr_u; elem += WARP_SIZE) {
-            const int iqs = elem + vdr_u * (item_ct1.get_local_id(2) % (qi_u / vdr_u));
-#pragma unroll
-            for (int j = 0; j < ncols_dst; ++j) {
-                tmpu[j] += vec_dot_u(&xu[ibx], &y[j * stride_col_y + iby], iqs);
+    ਲਈ (ਪੂਰਨ i = ਵਸਤੂ_ct1.get_local_id(2) / (qi_u / vdr_u); i < ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ; i += ਖੰਡਾਂ_ਪ੍ਰਤੀ_warp_u) {
+        ਅਚਲ ਪੂਰਨ ibx = ਪੰਕਤੀ * ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ + i;
+        ਅਚਲ ਪੂਰਨ iby = i * (QK_K / QK8_1);
+        ਲਈ (size_t elem = 0; elem < qi_u / vdr_u; elem += WARP_ਮਾਪ) {
+            ਅਚਲ ਪੂਰਨ iqs = elem + vdr_u * (ਵਸਤੂ_ct1.get_local_id(2) % (qi_u / vdr_u));
+#ਹਦਾਇਤ unroll
+            ਲਈ (ਪੂਰਨ j = 0; j < ncols_dst; ++j) {
+                tmpu[j] += vec_dot_u(&xu[ibx], &y[j * stride_ਖਾਨਾ_y + iby], iqs);
             }
         }
     }
     // sum up partial sums and write back the activated product
-#pragma unroll
-    for (int j = 0; j < ncols_dst; ++j) {
-#pragma unroll
-        for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
-            tmpg[j] += dpct::permute_sub_group_by_xor(item_ct1.get_sub_group(), tmpg[j], mask);
-            tmpu[j] += dpct::permute_sub_group_by_xor(item_ct1.get_sub_group(), tmpu[j], mask);
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ j = 0; j < ncols_dst; ++j) {
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ ਨਕਾਬ = WARP_ਮਾਪ / 2; ਨਕਾਬ > 0; ਨਕਾਬ >>= 1) {
+            tmpg[j] += dpct::ਕ੍ਰਮ_ਬਦਲੋ_sub_ਸਮੂਹ_by_xor(ਵਸਤੂ_ct1.get_sub_ਸਮੂਹ(), tmpg[j], ਨਕਾਬ);
+            tmpu[j] += dpct::ਕ੍ਰਮ_ਬਦਲੋ_sub_ਸਮੂਹ_by_xor(ਵਸਤੂ_ct1.get_sub_ਸਮੂਹ(), tmpu[j], ਨਕਾਬ);
         }
     }
-    if (item_ct1.get_local_id(2) == 0) {
-#pragma unroll
-        for (int j = 0; j < ncols_dst; ++j) {
+    ਜੇ (ਵਸਤੂ_ct1.get_local_id(2) == 0) {
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ j = 0; j < ncols_dst; ++j) {
             // uniform across the launch; the dispatcher only accepts SWIGLU and GEGLU
-            const float gate = glu_op == GGML_GLU_OP_SWIGLU ? op_silu(tmpg[j]) : op_gelu(tmpg[j]);
-            dst[j * stride_col_dst + row] = gate * tmpu[j];
+            ਅਚਲ ਦਸ਼ਮਲਵ gate = glu_op == GGML_GLU_OP_SWIGLU ? op_silu(tmpg[j]) : op_gelu(tmpg[j]);
+            dst[j * stride_ਖਾਨਾ_dst + ਪੰਕਤੀ] = gate * tmpu[j];
         }
     }
 }
 
-template <int qi_g, typename block_g_t, int vdr_g, vec_dot_q_sycl_t vec_dot_g,
-          int qi_u, typename block_u_t, int vdr_u, vec_dot_q_sycl_t vec_dot_u, int ncols_dst>
-static void launch_mul_mat_vec_q_glu(const void * vxg, const void * vxu, const void * vy, float * dst,
-                                     const int ncols, const int nrows, const int stride_col_y,
-                                     const int stride_col_dst, const ggml_glu_op glu_op,
-                                     dpct::queue_ptr stream) {
+ਸਾਂਚਾ <ਪੂਰਨ qi_g, ਕਿਸਮ_ਨਾਂ ਖੰਡ_g_t, ਪੂਰਨ vdr_g, vec_dot_q_sycl_t vec_dot_g,
+          ਪੂਰਨ qi_u, ਕਿਸਮ_ਨਾਂ ਖੰਡ_u_t, ਪੂਰਨ vdr_u, vec_dot_q_sycl_t vec_dot_u, ਪੂਰਨ ncols_dst>
+ਸਥਿਰ ਖਾਲੀ launch_mul_mat_vec_q_glu(ਅਚਲ ਖਾਲੀ * vxg, ਅਚਲ ਖਾਲੀ * vxu, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst,
+                                     ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y,
+                                     ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst, ਅਚਲ ggml_glu_op glu_op,
+                                     dpct::ਕਤਾਰ_ptr stream) {
     GGML_ASSERT(ncols % QK_K == 0);
-    const int            block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
-    const sycl::range<3> block_nums(1, 1, block_num_y);
-    const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
+    ਅਚਲ ਪੂਰਨ            ਖੰਡ_ਅੰਕ_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+    ਅਚਲ sycl::range<3> ਖੰਡ_nums(1, 1, ਖੰਡ_ਅੰਕ_y);
+    ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, GGML_SYCL_MMV_Y, WARP_ਮਾਪ);
     stream->submit([&](sycl::handler & cgh) {
-        cgh.parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                         [=](sycl::nd_item<3> nd_item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                             mul_mat_vec_q_glu<qi_g, block_g_t, vdr_g, vec_dot_g,
-                                               qi_u, block_u_t, vdr_u, vec_dot_u, ncols_dst>(
-                                 vxg, vxu, vy, dst, ncols, nrows, stride_col_y, stride_col_dst,
-                                 glu_op, nd_item);
+        cgh.parallel_for(sycl::nd_range<3>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                         [=](sycl::nd_ਵਸਤੂ<3> nd_ਵਸਤੂ) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                             mul_mat_vec_q_glu<qi_g, ਖੰਡ_g_t, vdr_g, vec_dot_g,
+                                               qi_u, ਖੰਡ_u_t, vdr_u, vec_dot_u, ncols_dst>(
+                                 vxg, vxu, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst,
+                                 glu_op, nd_ਵਸਤੂ);
                          });
     });
 }
@@ -3447,56 +3447,56 @@ static void launch_mul_mat_vec_q_glu(const void * vxg, const void * vxu, const v
 // Dispatch the plain-layout fused GLU GEMV over the activation batch: ncols_dst
 // selects the kernel's per-column template parameter. Returns false when the
 // batch exceeds the instantiated range; the caller falls back to unfused nodes.
-template <int qi_g, typename block_g_t, int vdr_g, vec_dot_q_sycl_t vec_dot_g,
-          int qi_u, typename block_u_t, int vdr_u, vec_dot_q_sycl_t vec_dot_u>
-static bool dispatch_mul_mat_vec_q_glu_plain(const void * vgate, const void * vup, const void * vy,
-                                             float * dst, const int ncols, const int nrows,
-                                             const int stride_col_y, const int stride_col_dst,
-                                             const ggml_glu_op glu_op, dpct::queue_ptr stream,
-                                             const int ncols_dst) {
-    switch (ncols_dst) {
-        case 1:
-            launch_mul_mat_vec_q_glu<qi_g, block_g_t, vdr_g, vec_dot_g,
-                                     qi_u, block_u_t, vdr_u, vec_dot_u, 1>(
-                vgate, vup, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, glu_op, stream);
-            return true;
-        case 2:
-            launch_mul_mat_vec_q_glu<qi_g, block_g_t, vdr_g, vec_dot_g,
-                                     qi_u, block_u_t, vdr_u, vec_dot_u, 2>(
-                vgate, vup, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, glu_op, stream);
-            return true;
-        case 3:
-            launch_mul_mat_vec_q_glu<qi_g, block_g_t, vdr_g, vec_dot_g,
-                                     qi_u, block_u_t, vdr_u, vec_dot_u, 3>(
-                vgate, vup, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, glu_op, stream);
-            return true;
-        case 4:
-            launch_mul_mat_vec_q_glu<qi_g, block_g_t, vdr_g, vec_dot_g,
-                                     qi_u, block_u_t, vdr_u, vec_dot_u, 4>(
-                vgate, vup, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, glu_op, stream);
-            return true;
-        case 5:
-            launch_mul_mat_vec_q_glu<qi_g, block_g_t, vdr_g, vec_dot_g,
-                                     qi_u, block_u_t, vdr_u, vec_dot_u, 5>(
-                vgate, vup, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, glu_op, stream);
-            return true;
-        case 6:
-            launch_mul_mat_vec_q_glu<qi_g, block_g_t, vdr_g, vec_dot_g,
-                                     qi_u, block_u_t, vdr_u, vec_dot_u, 6>(
-                vgate, vup, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, glu_op, stream);
-            return true;
-        case 7:
-            launch_mul_mat_vec_q_glu<qi_g, block_g_t, vdr_g, vec_dot_g,
-                                     qi_u, block_u_t, vdr_u, vec_dot_u, 7>(
-                vgate, vup, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, glu_op, stream);
-            return true;
-        case 8:
-            launch_mul_mat_vec_q_glu<qi_g, block_g_t, vdr_g, vec_dot_g,
-                                     qi_u, block_u_t, vdr_u, vec_dot_u, 8>(
-                vgate, vup, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, glu_op, stream);
-            return true;
-        default:
-            return false;
+ਸਾਂਚਾ <ਪੂਰਨ qi_g, ਕਿਸਮ_ਨਾਂ ਖੰਡ_g_t, ਪੂਰਨ vdr_g, vec_dot_q_sycl_t vec_dot_g,
+          ਪੂਰਨ qi_u, ਕਿਸਮ_ਨਾਂ ਖੰਡ_u_t, ਪੂਰਨ vdr_u, vec_dot_q_sycl_t vec_dot_u>
+ਸਥਿਰ ਤਾਰਕਿਕ dispatch_mul_mat_vec_q_glu_plain(ਅਚਲ ਖਾਲੀ * vgate, ਅਚਲ ਖਾਲੀ * vup, ਅਚਲ ਖਾਲੀ * vy,
+                                             ਦਸ਼ਮਲਵ * dst, ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+                                             ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_y, ਅਚਲ ਪੂਰਨ stride_ਖਾਨਾ_dst,
+                                             ਅਚਲ ggml_glu_op glu_op, dpct::ਕਤਾਰ_ptr stream,
+                                             ਅਚਲ ਪੂਰਨ ncols_dst) {
+    ਚੋਣ (ncols_dst) {
+        ਹਾਲਤ 1:
+            launch_mul_mat_vec_q_glu<qi_g, ਖੰਡ_g_t, vdr_g, vec_dot_g,
+                                     qi_u, ਖੰਡ_u_t, vdr_u, vec_dot_u, 1>(
+                vgate, vup, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, glu_op, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਹਾਲਤ 2:
+            launch_mul_mat_vec_q_glu<qi_g, ਖੰਡ_g_t, vdr_g, vec_dot_g,
+                                     qi_u, ਖੰਡ_u_t, vdr_u, vec_dot_u, 2>(
+                vgate, vup, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, glu_op, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਹਾਲਤ 3:
+            launch_mul_mat_vec_q_glu<qi_g, ਖੰਡ_g_t, vdr_g, vec_dot_g,
+                                     qi_u, ਖੰਡ_u_t, vdr_u, vec_dot_u, 3>(
+                vgate, vup, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, glu_op, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਹਾਲਤ 4:
+            launch_mul_mat_vec_q_glu<qi_g, ਖੰਡ_g_t, vdr_g, vec_dot_g,
+                                     qi_u, ਖੰਡ_u_t, vdr_u, vec_dot_u, 4>(
+                vgate, vup, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, glu_op, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਹਾਲਤ 5:
+            launch_mul_mat_vec_q_glu<qi_g, ਖੰਡ_g_t, vdr_g, vec_dot_g,
+                                     qi_u, ਖੰਡ_u_t, vdr_u, vec_dot_u, 5>(
+                vgate, vup, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, glu_op, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਹਾਲਤ 6:
+            launch_mul_mat_vec_q_glu<qi_g, ਖੰਡ_g_t, vdr_g, vec_dot_g,
+                                     qi_u, ਖੰਡ_u_t, vdr_u, vec_dot_u, 6>(
+                vgate, vup, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, glu_op, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਹਾਲਤ 7:
+            launch_mul_mat_vec_q_glu<qi_g, ਖੰਡ_g_t, vdr_g, vec_dot_g,
+                                     qi_u, ਖੰਡ_u_t, vdr_u, vec_dot_u, 7>(
+                vgate, vup, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, glu_op, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਹਾਲਤ 8:
+            launch_mul_mat_vec_q_glu<qi_g, ਖੰਡ_g_t, vdr_g, vec_dot_g,
+                                     qi_u, ਖੰਡ_u_t, vdr_u, vec_dot_u, 8>(
+                vgate, vup, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, glu_op, stream);
+            ਵਾਪਸ ਸੱਚ;
+        ਮੂਲ:
+            ਵਾਪਸ ਝੂਠ;
     }
 }
 
@@ -3504,82 +3504,82 @@ static bool dispatch_mul_mat_vec_q_glu_plain(const void * vgate, const void * vu
 // vgate/vup must be in the standard block layout; vy must be quantized with plain
 // quantize_q8_1 (padded rows). stride_col_y is in block_q8_1 units.
 // Returns false if the type pair or batch is unhandled; caller should fall back.
-bool ggml_sycl_mul_mat_vec_q_glu_plain(enum ggml_type gate_type, enum ggml_type up_type,
-                                       enum ggml_glu_op glu_op, const void * vgate, const void * vup,
-                                       const void * vy, float * dst, int ncols, int nrows, int ncols_dst,
-                                       int stride_col_y, int stride_col_dst, dpct::queue_ptr stream) {
-    if (glu_op != GGML_GLU_OP_SWIGLU && glu_op != GGML_GLU_OP_GEGLU) {
-        return false;
+ਤਾਰਕਿਕ ggml_sycl_mul_mat_vec_q_glu_plain(ਗਿਣਤੀ ggml_type gate_type, ਗਿਣਤੀ ggml_type ਉੱਪਰ_type,
+                                       ਗਿਣਤੀ ggml_glu_op glu_op, ਅਚਲ ਖਾਲੀ * vgate, ਅਚਲ ਖਾਲੀ * vup,
+                                       ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst, ਪੂਰਨ ncols, ਪੂਰਨ nrows, ਪੂਰਨ ncols_dst,
+                                       ਪੂਰਨ stride_ਖਾਨਾ_y, ਪੂਰਨ stride_ਖਾਨਾ_dst, dpct::ਕਤਾਰ_ptr stream) {
+    ਜੇ (glu_op != GGML_GLU_OP_SWIGLU && glu_op != GGML_GLU_OP_GEGLU) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    if (ncols % QK_K != 0) {
-        return false;
+    ਜੇ (ncols % QK_K != 0) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    if (gate_type == GGML_TYPE_Q5_K && up_type == GGML_TYPE_Q5_K) {
-        return dispatch_mul_mat_vec_q_glu_plain<QI5_K, block_q5_K, VDR_Q5_K_Q8_1_MMVQ, vec_dot_q5_K_q8_1,
-                                                QI5_K, block_q5_K, VDR_Q5_K_Q8_1_MMVQ, vec_dot_q5_K_q8_1>(
-            vgate, vup, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, glu_op, stream, ncols_dst);
+    ਜੇ (gate_type == GGML_TYPE_Q5_K && ਉੱਪਰ_type == GGML_TYPE_Q5_K) {
+        ਵਾਪਸ dispatch_mul_mat_vec_q_glu_plain<QI5_K, ਖੰਡ_q5_K, VDR_Q5_K_Q8_1_MMVQ, vec_dot_q5_K_q8_1,
+                                                QI5_K, ਖੰਡ_q5_K, VDR_Q5_K_Q8_1_MMVQ, vec_dot_q5_K_q8_1>(
+            vgate, vup, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, glu_op, stream, ncols_dst);
     }
-    if (gate_type == GGML_TYPE_IQ4_XS && up_type == GGML_TYPE_IQ4_XS) {
-        return dispatch_mul_mat_vec_q_glu_plain<QI4_XS / 4, block_iq4_xs, VDR_IQ4_XS_Q8_1_MMVQ, vec_dot_iq4_xs_q8_1,
-                                                QI4_XS / 4, block_iq4_xs, VDR_IQ4_XS_Q8_1_MMVQ, vec_dot_iq4_xs_q8_1>(
-            vgate, vup, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, glu_op, stream, ncols_dst);
+    ਜੇ (gate_type == GGML_TYPE_IQ4_XS && ਉੱਪਰ_type == GGML_TYPE_IQ4_XS) {
+        ਵਾਪਸ dispatch_mul_mat_vec_q_glu_plain<QI4_XS / 4, ਖੰਡ_iq4_xs, VDR_IQ4_XS_Q8_1_MMVQ, vec_dot_iq4_xs_q8_1,
+                                                QI4_XS / 4, ਖੰਡ_iq4_xs, VDR_IQ4_XS_Q8_1_MMVQ, vec_dot_iq4_xs_q8_1>(
+            vgate, vup, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, glu_op, stream, ncols_dst);
     }
-    if (gate_type == GGML_TYPE_IQ4_XS && up_type == GGML_TYPE_Q5_K) {
-        return dispatch_mul_mat_vec_q_glu_plain<QI4_XS / 4, block_iq4_xs, VDR_IQ4_XS_Q8_1_MMVQ, vec_dot_iq4_xs_q8_1,
-                                                QI5_K, block_q5_K, VDR_Q5_K_Q8_1_MMVQ, vec_dot_q5_K_q8_1>(
-            vgate, vup, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, glu_op, stream, ncols_dst);
+    ਜੇ (gate_type == GGML_TYPE_IQ4_XS && ਉੱਪਰ_type == GGML_TYPE_Q5_K) {
+        ਵਾਪਸ dispatch_mul_mat_vec_q_glu_plain<QI4_XS / 4, ਖੰਡ_iq4_xs, VDR_IQ4_XS_Q8_1_MMVQ, vec_dot_iq4_xs_q8_1,
+                                                QI5_K, ਖੰਡ_q5_K, VDR_Q5_K_Q8_1_MMVQ, vec_dot_q5_K_q8_1>(
+            vgate, vup, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, glu_op, stream, ncols_dst);
     }
-    if (gate_type == GGML_TYPE_Q5_K && up_type == GGML_TYPE_IQ4_XS) {
-        return dispatch_mul_mat_vec_q_glu_plain<QI5_K, block_q5_K, VDR_Q5_K_Q8_1_MMVQ, vec_dot_q5_K_q8_1,
-                                                QI4_XS / 4, block_iq4_xs, VDR_IQ4_XS_Q8_1_MMVQ, vec_dot_iq4_xs_q8_1>(
-            vgate, vup, vy, dst, ncols, nrows, stride_col_y, stride_col_dst, glu_op, stream, ncols_dst);
+    ਜੇ (gate_type == GGML_TYPE_Q5_K && ਉੱਪਰ_type == GGML_TYPE_IQ4_XS) {
+        ਵਾਪਸ dispatch_mul_mat_vec_q_glu_plain<QI5_K, ਖੰਡ_q5_K, VDR_Q5_K_Q8_1_MMVQ, vec_dot_q5_K_q8_1,
+                                                QI4_XS / 4, ਖੰਡ_iq4_xs, VDR_IQ4_XS_Q8_1_MMVQ, vec_dot_iq4_xs_q8_1>(
+            vgate, vup, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y, stride_ਖਾਨਾ_dst, glu_op, stream, ncols_dst);
     }
-    return false;
+    ਵਾਪਸ ਝੂਠ;
 }
 
-template <ggml_type type, int... Ns>
-static bool mul_mat_vec_q_glu_reorder_ncols(enum ggml_glu_op glu_op, const void * vx, const void * vgate,
-                                            const void * vy, float * dst, int ncols, int nrows, int ncols_dst,
-                                            int stride_col_y_bytes, int stride_col_dst, dpct::queue_ptr stream) {
-    using vec_dot = reorder_vec_dot_q_sycl<type>;
+ਸਾਂਚਾ <ggml_type type, ਪੂਰਨ... Ns>
+ਸਥਿਰ ਤਾਰਕਿਕ mul_mat_vec_q_glu_reorder_ncols(ਗਿਣਤੀ ggml_glu_op glu_op, ਅਚਲ ਖਾਲੀ * vx, ਅਚਲ ਖਾਲੀ * vgate,
+                                            ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst, ਪੂਰਨ ncols, ਪੂਰਨ nrows, ਪੂਰਨ ncols_dst,
+                                            ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, ਪੂਰਨ stride_ਖਾਨਾ_dst, dpct::ਕਤਾਰ_ptr stream) {
+    ਵਰਤੋਂ vec_dot = reorder_vec_dot_q_sycl<type>;
 
-    auto launch = [&](auto I) -> bool {
-        constexpr int n = decltype(I)::value;
-        if (ncols_dst != n) {
-            return false;
+    ਸਵੈਚਾਲਿਤ launch = [&](ਸਵੈਚਾਲਿਤ I) -> ਤਾਰਕਿਕ {
+        constexpr ਪੂਰਨ n = decltype(I)::value;
+        ਜੇ (ncols_dst != n) {
+            ਵਾਪਸ ਝੂਠ;
         }
-        if constexpr (type == GGML_TYPE_Q4_K && n == 2) {
-            if (nrows >= Q4_K_MMVQ_ROW_PAIR_MIN_NROWS) {
-                launch_mul_mat_vec_q_reorder_glu_impl<vec_dot, 2, 2>(vx, vgate, vy, dst, ncols, nrows, stride_col_y_bytes, stride_col_dst, glu_op, stream);
-                return true;
+        ਜੇ constexpr (type == GGML_TYPE_Q4_K && n == 2) {
+            ਜੇ (nrows >= Q4_K_MMVQ_ਪੰਕਤੀ_PAIR_MIN_NROWS) {
+                launch_mul_mat_vec_q_reorder_glu_impl<vec_dot, 2, 2>(vx, vgate, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, glu_op, stream);
+                ਵਾਪਸ ਸੱਚ;
             }
         }
-        launch_mul_mat_vec_q_reorder_glu<vec_dot, n>(vx, vgate, vy, dst, ncols, nrows, stride_col_y_bytes,
-                                                     stride_col_dst, glu_op, stream);
-        return true;
+        launch_mul_mat_vec_q_reorder_glu<vec_dot, n>(vx, vgate, vy, dst, ncols, nrows, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ,
+                                                     stride_ਖਾਨਾ_dst, glu_op, stream);
+        ਵਾਪਸ ਸੱਚ;
     };
 
     // unary fold over launch
-    return (launch(std::integral_constant<int, Ns>{}) || ...);
+    ਵਾਪਸ (launch(std::integral_constant<ਪੂਰਨ, Ns>{}) || ...);
 }
 
-bool ggml_sycl_mul_mat_vec_q_glu_reorder(enum ggml_type src0_type, enum ggml_glu_op glu_op, const void * vx,
-                                         const void * vgate, const void * vy, float * dst, int ncols, int nrows,
-                                         int ncols_dst, int stride_col_y_bytes, int stride_col_dst,
-                                         dpct::queue_ptr stream) {
-    if (glu_op != GGML_GLU_OP_SWIGLU && glu_op != GGML_GLU_OP_GEGLU) {
-        return false;
+ਤਾਰਕਿਕ ggml_sycl_mul_mat_vec_q_glu_reorder(ਗਿਣਤੀ ggml_type src0_type, ਗਿਣਤੀ ggml_glu_op glu_op, ਅਚਲ ਖਾਲੀ * vx,
+                                         ਅਚਲ ਖਾਲੀ * vgate, ਅਚਲ ਖਾਲੀ * vy, ਦਸ਼ਮਲਵ * dst, ਪੂਰਨ ncols, ਪੂਰਨ nrows,
+                                         ਪੂਰਨ ncols_dst, ਪੂਰਨ stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, ਪੂਰਨ stride_ਖਾਨਾ_dst,
+                                         dpct::ਕਤਾਰ_ptr stream) {
+    ਜੇ (glu_op != GGML_GLU_OP_SWIGLU && glu_op != GGML_GLU_OP_GEGLU) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    switch (src0_type) {
-        case GGML_TYPE_Q4_K:
-            return mul_mat_vec_q_glu_reorder_ncols<GGML_TYPE_Q4_K, 1, 2, 3, 4, 5, 6, 7, 8>(
-                glu_op, vx, vgate, vy, dst, ncols, nrows, ncols_dst, stride_col_y_bytes, stride_col_dst, stream);
-        case GGML_TYPE_Q5_K:
+    ਚੋਣ (src0_type) {
+        ਹਾਲਤ GGML_TYPE_Q4_K:
+            ਵਾਪਸ mul_mat_vec_q_glu_reorder_ncols<GGML_TYPE_Q4_K, 1, 2, 3, 4, 5, 6, 7, 8>(
+                glu_op, vx, vgate, vy, dst, ncols, nrows, ncols_dst, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream);
+        ਹਾਲਤ GGML_TYPE_Q5_K:
             // fusion declines q5_K past 5 columns
-            return mul_mat_vec_q_glu_reorder_ncols<GGML_TYPE_Q5_K, 1, 2, 3, 4, 5>(
-                glu_op, vx, vgate, vy, dst, ncols, nrows, ncols_dst, stride_col_y_bytes, stride_col_dst, stream);
-        default:
-            return false;
+            ਵਾਪਸ mul_mat_vec_q_glu_reorder_ncols<GGML_TYPE_Q5_K, 1, 2, 3, 4, 5>(
+                glu_op, vx, vgate, vy, dst, ncols, nrows, ncols_dst, stride_ਖਾਨਾ_y_ਬਾਈਟਾਂ, stride_ਖਾਨਾ_dst, stream);
+        ਮੂਲ:
+            ਵਾਪਸ ਝੂਠ;
     }
 }

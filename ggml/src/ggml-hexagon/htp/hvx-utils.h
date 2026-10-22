@@ -1,25 +1,25 @@
-#ifndef HVX_UTILS_H
-#define HVX_UTILS_H
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ HVX_UTILS_H
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HVX_UTILS_H
 
-#include "hex-utils.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hex-utils.h"
 
-#include "hvx-types.h"
-#include "hvx-copy.h"
-#include "hvx-repl.h"
-#include "hvx-scale.h"
-#include "hvx-exp.h"
-#include "hvx-erf.h"
-#include "hvx-inverse.h"
-#include "hvx-reduce.h"
-#include "hvx-sigmoid.h"
-#include "hvx-sqrt.h"
-#include "hvx-arith.h"
-#include "hvx-div.h"
-#include "hvx-floor.h"
-#include "hvx-sin-cos.h"
-#include "hvx-base.h"
-#include "hvx-pow.h"
-#include "hvx-log.h"
-#include "hvx-norm.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hvx-types.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hvx-copy.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hvx-repl.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hvx-scale.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hvx-exp.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hvx-erf.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hvx-inverse.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hvx-reduce.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hvx-sigmoid.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hvx-sqrt.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hvx-arith.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hvx-div.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hvx-floor.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hvx-sin-cos.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hvx-base.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hvx-pow.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hvx-log.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hvx-norm.h"
 
-#endif /* HVX_UTILS_H */
+#ਜੇ_ਅੰਤ /* HVX_UTILS_H */

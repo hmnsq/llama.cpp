@@ -1,199 +1,199 @@
-#ifndef HTP_TENSOR_H
-#define HTP_TENSOR_H
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ HTP_TENSOR_H
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_TENSOR_H
 
-#include <stdint.h>
-#include <stdbool.h>
-#include "htp-ops.h"
-#include "hex-bitmap.h"
-#include "hex-common.h"
-#include "hex-fastdiv.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdint.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdbool.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ "htp-ops.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hex-bitmap.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hex-common.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hex-fastdiv.h"
 
-#define HTP_TENSOR_MDEV_LINE_SIZE   128
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_TENSOR_MDEV_ਸਤਰ_ਮਾਪ   128
 
 // Currently HMX requires 32x32 tile formats (do not change)
-#define HTP_TENSOR_TILE_N_COLS      32
-#define HTP_TENSOR_TILE_N_ROWS      32
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_TENSOR_TILE_N_ਖਾਨੇ_ਗਿਣਤੀ      32
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_TENSOR_TILE_N_ਪੰਕਤੀਆਂ      32
 
-#define HTP_TENSOR_TILE_SIZE_F16    2048
-#define HTP_TENSOR_TILE_SIZE_Q4_0   576
-#define HTP_TENSOR_TILE_SIZE_Q4_1   640
-#define HTP_TENSOR_TILE_SIZE_Q8_0   1088
-#define HTP_TENSOR_TILE_SIZE_IQ4_NL 576
-#define HTP_TENSOR_TILE_SIZE_MXFP4  544
-#define HTP_TENSOR_TILE_SIZE_Q4_K   640
-#define HTP_TENSOR_TILE_SIZE_Q5_K   768
-#define HTP_TENSOR_TILE_SIZE_Q6_K   896
-#define HTP_TENSOR_TILE_SIZE_Q3_K   512
-#define HTP_TENSOR_TILE_SIZE_Q2_K   336
-#define HTP_TENSOR_TILE_K_Q1_0      128
-#define HTP_TENSOR_TILE_SIZE_Q1_0   576
-#define HTP_TENSOR_TILE_K_Q2_0      64
-#define HTP_TENSOR_TILE_SIZE_Q2_0   576
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_TENSOR_TILE_ਮਾਪ_F16    2048
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_TENSOR_TILE_ਮਾਪ_Q4_0   576
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_TENSOR_TILE_ਮਾਪ_Q4_1   640
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_TENSOR_TILE_ਮਾਪ_Q8_0   1088
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_TENSOR_TILE_ਮਾਪ_IQ4_NL 576
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_TENSOR_TILE_ਮਾਪ_MXFP4  544
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_TENSOR_TILE_ਮਾਪ_Q4_K   640
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_TENSOR_TILE_ਮਾਪ_Q5_K   768
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_TENSOR_TILE_ਮਾਪ_Q6_K   896
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_TENSOR_TILE_ਮਾਪ_Q3_K   512
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_TENSOR_TILE_ਮਾਪ_Q2_K   336
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_TENSOR_TILE_K_Q1_0      128
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_TENSOR_TILE_ਮਾਪ_Q1_0   576
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_TENSOR_TILE_K_Q2_0      64
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_TENSOR_TILE_ਮਾਪ_Q2_0   576
 
 // Tiled weight tensor layouts (Q4_0, Q8_0, IQ4_NL, MXFP4, Q1_0, Q2_0, K-quants):
 // See docs/backend/snapdragon/developer.md ("Tiled Weight Formats").
 
-struct htp_tensor_mdev_range {
-    uint32_t start;
-    uint32_t count;
+ਬਣਤਰ htp_tensor_mdev_range {
+    uint32_t ਸ਼ੁਰੂ;
+    uint32_t ਗਿਣਤੀ_2;
 };
 
-static inline bool htp_tensor_is_extended(const struct htp_tensor * t) {
-    return t && (t->data >> 32) != 0;
+ਸਥਿਰ ਸਤਰਅੰਦਰ bool htp_tensor_is_extended(ਅਚਲ ਬਣਤਰ htp_tensor * t) {
+    ਵਾਪਸ t && (t->ਅੰਕੜੇ >> 32) != 0;
 }
 
-static inline bool htp_tensor_is_contiguous(const struct htp_tensor * t, uint32_t type_size) {
-    uint32_t next_nb = type_size;
-    if (t->ne[0] != 1 && t->nb[0] != next_nb) {
-        return false;
+ਸਥਿਰ ਸਤਰਅੰਦਰ bool htp_tensor_is_contiguous(ਅਚਲ ਬਣਤਰ htp_tensor * t, uint32_t type_ਮਾਪ) {
+    uint32_t ਅਗਲਾ_nb = type_ਮਾਪ;
+    ਜੇ (t->ne[0] != 1 && t->nb[0] != ਅਗਲਾ_nb) {
+        ਵਾਪਸ false;
     }
-    next_nb *= t->ne[0];
-    for (int i = 1; i < HTP_OP_MAX_DIMS; i++) {
-        if (t->ne[i] != 1 && t->nb[i] != next_nb) {
-            return false;
+    ਅਗਲਾ_nb *= t->ne[0];
+    ਲਈ (ਪੂਰਨ i = 1; i < HTP_OP_MAX_DIMS; i++) {
+        ਜੇ (t->ne[i] != 1 && t->nb[i] != ਅਗਲਾ_nb) {
+            ਵਾਪਸ false;
         }
-        next_nb *= t->ne[i];
+        ਅਗਲਾ_nb *= t->ne[i];
     }
-    return true;
+    ਵਾਪਸ true;
 }
 
-static inline bool htp_tensor_is_permuted(const struct htp_tensor * t) {
-    return t->nb[0] > t->nb[1] || t->nb[1] > t->nb[2] || t->nb[2] > t->nb[3];
+ਸਥਿਰ ਸਤਰਅੰਦਰ bool htp_tensor_is_permuted(ਅਚਲ ਬਣਤਰ htp_tensor * t) {
+    ਵਾਪਸ t->nb[0] > t->nb[1] || t->nb[1] > t->nb[2] || t->nb[2] > t->nb[3];
 }
 
-static inline bool htp_tensor_mdev_data_aligned(const struct htp_tensor * t) {
-    return ((uintptr_t) t->data & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0;
+ਸਥਿਰ ਸਤਰਅੰਦਰ bool htp_tensor_mdev_ਅੰਕੜੇ_aligned(ਅਚਲ ਬਣਤਰ htp_tensor * t) {
+    ਵਾਪਸ ((uintptr_t) t->ਅੰਕੜੇ & (HTP_TENSOR_MDEV_ਸਤਰ_ਮਾਪ - 1)) == 0;
 }
 
-static inline bool htp_tensor_can_row_partition(const struct htp_tensor * t, uint32_t elem_size) {
-    if (!htp_tensor_mdev_data_aligned(t)) {
-        return false;
+ਸਥਿਰ ਸਤਰਅੰਦਰ bool htp_tensor_can_ਪੰਕਤੀ_ਹਿੱਸੇ_ਕਰੋ(ਅਚਲ ਬਣਤਰ htp_tensor * t, uint32_t elem_ਮਾਪ) {
+    ਜੇ (!htp_tensor_mdev_ਅੰਕੜੇ_aligned(t)) {
+        ਵਾਪਸ false;
     }
-    if (t->ne[0] != 1 && t->nb[0] != elem_size) {
-        return false;
+    ਜੇ (t->ne[0] != 1 && t->nb[0] != elem_ਮਾਪ) {
+        ਵਾਪਸ false;
     }
-    if (htp_tensor_is_permuted(t)) {
-        return false;
+    ਜੇ (htp_tensor_is_permuted(t)) {
+        ਵਾਪਸ false;
     }
-    if (t->ne[1] > 1 && (t->nb[1] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) != 0) return false;
-    if (t->ne[2] > 1 && (t->nb[2] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) != 0) return false;
-    if (t->ne[3] > 1 && (t->nb[3] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) != 0) return false;
-    return true;
+    ਜੇ (t->ne[1] > 1 && (t->nb[1] & (HTP_TENSOR_MDEV_ਸਤਰ_ਮਾਪ - 1)) != 0) ਵਾਪਸ false;
+    ਜੇ (t->ne[2] > 1 && (t->nb[2] & (HTP_TENSOR_MDEV_ਸਤਰ_ਮਾਪ - 1)) != 0) ਵਾਪਸ false;
+    ਜੇ (t->ne[3] > 1 && (t->nb[3] & (HTP_TENSOR_MDEV_ਸਤਰ_ਮਾਪ - 1)) != 0) ਵਾਪਸ false;
+    ਵਾਪਸ true;
 }
 
-static inline bool htp_tensor_mdev_rows_per_chunk(const struct htp_tensor * t, uint32_t elem_size, uint32_t row_size, uint32_t * rows_per_chunk) {
-    *rows_per_chunk = 0;
+ਸਥਿਰ ਸਤਰਅੰਦਰ bool htp_tensor_mdev_ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_chunk(ਅਚਲ ਬਣਤਰ htp_tensor * t, uint32_t elem_ਮਾਪ, uint32_t ਪੰਕਤੀ_ਮਾਪ, uint32_t * ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_chunk) {
+    *ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_chunk = 0;
 
-    if (!htp_tensor_mdev_data_aligned(t)) {
-        return false;
+    ਜੇ (!htp_tensor_mdev_ਅੰਕੜੇ_aligned(t)) {
+        ਵਾਪਸ false;
     }
-    if (t->ne[0] != 1 && t->nb[0] != elem_size) {
-        return false;
+    ਜੇ (t->ne[0] != 1 && t->nb[0] != elem_ਮਾਪ) {
+        ਵਾਪਸ false;
     }
-    if (htp_tensor_is_permuted(t)) {
-        return false;
+    ਜੇ (htp_tensor_is_permuted(t)) {
+        ਵਾਪਸ false;
     }
-    if (t->ne[1] > 1 && (t->nb[1] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0 &&
-        (t->ne[2] <= 1 || (t->nb[2] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0) &&
-        (t->ne[3] <= 1 || (t->nb[3] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0)) {
-        *rows_per_chunk = 1;
-        return true;
+    ਜੇ (t->ne[1] > 1 && (t->nb[1] & (HTP_TENSOR_MDEV_ਸਤਰ_ਮਾਪ - 1)) == 0 &&
+        (t->ne[2] <= 1 || (t->nb[2] & (HTP_TENSOR_MDEV_ਸਤਰ_ਮਾਪ - 1)) == 0) &&
+        (t->ne[3] <= 1 || (t->nb[3] & (HTP_TENSOR_MDEV_ਸਤਰ_ਮਾਪ - 1)) == 0)) {
+        *ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_chunk = 1;
+        ਵਾਪਸ true;
     }
-    if (t->nb[1] == row_size &&
+    ਜੇ (t->nb[1] == ਪੰਕਤੀ_ਮਾਪ &&
         (t->ne[2] <= 1 || t->nb[2] == t->nb[1] * t->ne[1]) &&
         (t->ne[3] <= 1 || t->nb[3] == t->nb[2] * t->ne[2])) {
-        *rows_per_chunk = (row_size > 0) ? (HTP_TENSOR_MDEV_LINE_SIZE / hex_gcd_u32(row_size, HTP_TENSOR_MDEV_LINE_SIZE)) : 1;
-        return true;
+        *ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_chunk = (ਪੰਕਤੀ_ਮਾਪ > 0) ? (HTP_TENSOR_MDEV_ਸਤਰ_ਮਾਪ / hex_ਮਹੱਤਮ_ਸਾਂਝਾ_ਭਾਜਕ_u32(ਪੰਕਤੀ_ਮਾਪ, HTP_TENSOR_MDEV_ਸਤਰ_ਮਾਪ)) : 1;
+        ਵਾਪਸ true;
     }
-    return false;
+    ਵਾਪਸ false;
 }
 
-static inline struct htp_tensor_mdev_range htp_tensor_mdev_partition(uint32_t total_units, uint32_t units_per_chunk, uint32_t mdev_idx, uint32_t mdev_count, const struct fastdiv_values * mdev_count_div) {
-    struct htp_tensor_mdev_range range = { 0, total_units };
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਬਣਤਰ htp_tensor_mdev_range htp_tensor_mdev_ਹਿੱਸੇ_ਕਰੋ(uint32_t ਕੁੱਲ_units, uint32_t units_ਪ੍ਰਤੀ_chunk, uint32_t mdev_idx, uint32_t mdev_ਗਿਣਤੀ, ਅਚਲ ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ * mdev_ਗਿਣਤੀ_div) {
+    ਬਣਤਰ htp_tensor_mdev_range range = { 0, ਕੁੱਲ_units };
 
-    if (mdev_count <= 1) {
-        return range;
+    ਜੇ (mdev_ਗਿਣਤੀ <= 1) {
+        ਵਾਪਸ range;
     }
 
-    if (units_per_chunk == 0) {
-        range.start = (mdev_idx == 0) ? 0 : total_units;
-        range.count = (mdev_idx == 0) ? total_units : 0;
-        return range;
+    ਜੇ (units_ਪ੍ਰਤੀ_chunk == 0) {
+        range.ਸ਼ੁਰੂ = (mdev_idx == 0) ? 0 : ਕੁੱਲ_units;
+        range.ਗਿਣਤੀ_2 = (mdev_idx == 0) ? ਕੁੱਲ_units : 0;
+        ਵਾਪਸ range;
     }
 
-    const uint32_t total_chunks = total_units / units_per_chunk;
-    if (total_chunks < mdev_count) {
-        range.start = (mdev_idx == 0) ? 0 : total_units;
-        range.count = (mdev_idx == 0) ? total_units : 0;
-        return range;
+    ਅਚਲ uint32_t ਕੁੱਲ_chunks = ਕੁੱਲ_units / units_ਪ੍ਰਤੀ_chunk;
+    ਜੇ (ਕੁੱਲ_chunks < mdev_ਗਿਣਤੀ) {
+        range.ਸ਼ੁਰੂ = (mdev_idx == 0) ? 0 : ਕੁੱਲ_units;
+        range.ਗਿਣਤੀ_2 = (mdev_idx == 0) ? ਕੁੱਲ_units : 0;
+        ਵਾਪਸ range;
     }
 
-    const uint32_t chunks_per_mdev = fastdiv(total_chunks + mdev_count - 1, mdev_count_div);
-    range.start = MIN(mdev_idx * chunks_per_mdev * units_per_chunk, total_units);
-    if (mdev_idx == mdev_count - 1) {
-        range.count = total_units - range.start;
-    } else {
-        range.count = MIN(chunks_per_mdev * units_per_chunk, total_units - range.start);
+    ਅਚਲ uint32_t chunks_ਪ੍ਰਤੀ_mdev = fastdiv(ਕੁੱਲ_chunks + mdev_ਗਿਣਤੀ - 1, mdev_ਗਿਣਤੀ_div);
+    range.ਸ਼ੁਰੂ = MIN(mdev_idx * chunks_ਪ੍ਰਤੀ_mdev * units_ਪ੍ਰਤੀ_chunk, ਕੁੱਲ_units);
+    ਜੇ (mdev_idx == mdev_ਗਿਣਤੀ - 1) {
+        range.ਗਿਣਤੀ_2 = ਕੁੱਲ_units - range.ਸ਼ੁਰੂ;
+    } ਨਹੀਂਤਾਂ {
+        range.ਗਿਣਤੀ_2 = MIN(chunks_ਪ੍ਰਤੀ_mdev * units_ਪ੍ਰਤੀ_chunk, ਕੁੱਲ_units - range.ਸ਼ੁਰੂ);
     }
-    return range;
+    ਵਾਪਸ range;
 }
 
-static inline uint32_t htp_tensor_get_tile_size(int type) {
-    switch (type) {
-        case HTP_TYPE_Q4_0:   return HTP_TENSOR_TILE_SIZE_Q4_0;
-        case HTP_TYPE_IQ4_NL: return HTP_TENSOR_TILE_SIZE_IQ4_NL;
-        case HTP_TYPE_Q4_1:   return HTP_TENSOR_TILE_SIZE_Q4_1;
-        case HTP_TYPE_Q4_K:   return HTP_TENSOR_TILE_SIZE_Q4_K;
-        case HTP_TYPE_Q8_0:   return HTP_TENSOR_TILE_SIZE_Q8_0;
-        case HTP_TYPE_Q5_K:   return HTP_TENSOR_TILE_SIZE_Q5_K;
-        case HTP_TYPE_Q6_K:   return HTP_TENSOR_TILE_SIZE_Q6_K;
-        case HTP_TYPE_Q3_K:   return HTP_TENSOR_TILE_SIZE_Q3_K;
-        case HTP_TYPE_Q2_K:   return HTP_TENSOR_TILE_SIZE_Q2_K;
-        case HTP_TYPE_Q1_0:   return HTP_TENSOR_TILE_SIZE_Q1_0;
-        case HTP_TYPE_Q2_0:   return HTP_TENSOR_TILE_SIZE_Q2_0;
-        case HTP_TYPE_MXFP4:  return HTP_TENSOR_TILE_SIZE_MXFP4;
-        case HTP_TYPE_F16:    return HTP_TENSOR_TILE_SIZE_F16;
-        default:              return 0;
-    }
-}
-
-static inline uint32_t htp_tensor_get_tile_k(int type) {
-    switch (type) {
-        case HTP_TYPE_Q1_0: return HTP_TENSOR_TILE_K_Q1_0;
-        case HTP_TYPE_Q2_0: return HTP_TENSOR_TILE_K_Q2_0;
-        default:            return 32;
+ਸਥਿਰ ਸਤਰਅੰਦਰ uint32_t htp_tensor_get_tile_ਮਾਪ(ਪੂਰਨ type) {
+    ਚੋਣ (type) {
+        ਹਾਲਤ HTP_TYPE_Q4_0:   ਵਾਪਸ HTP_TENSOR_TILE_ਮਾਪ_Q4_0;
+        ਹਾਲਤ HTP_TYPE_IQ4_NL: ਵਾਪਸ HTP_TENSOR_TILE_ਮਾਪ_IQ4_NL;
+        ਹਾਲਤ HTP_TYPE_Q4_1:   ਵਾਪਸ HTP_TENSOR_TILE_ਮਾਪ_Q4_1;
+        ਹਾਲਤ HTP_TYPE_Q4_K:   ਵਾਪਸ HTP_TENSOR_TILE_ਮਾਪ_Q4_K;
+        ਹਾਲਤ HTP_TYPE_Q8_0:   ਵਾਪਸ HTP_TENSOR_TILE_ਮਾਪ_Q8_0;
+        ਹਾਲਤ HTP_TYPE_Q5_K:   ਵਾਪਸ HTP_TENSOR_TILE_ਮਾਪ_Q5_K;
+        ਹਾਲਤ HTP_TYPE_Q6_K:   ਵਾਪਸ HTP_TENSOR_TILE_ਮਾਪ_Q6_K;
+        ਹਾਲਤ HTP_TYPE_Q3_K:   ਵਾਪਸ HTP_TENSOR_TILE_ਮਾਪ_Q3_K;
+        ਹਾਲਤ HTP_TYPE_Q2_K:   ਵਾਪਸ HTP_TENSOR_TILE_ਮਾਪ_Q2_K;
+        ਹਾਲਤ HTP_TYPE_Q1_0:   ਵਾਪਸ HTP_TENSOR_TILE_ਮਾਪ_Q1_0;
+        ਹਾਲਤ HTP_TYPE_Q2_0:   ਵਾਪਸ HTP_TENSOR_TILE_ਮਾਪ_Q2_0;
+        ਹਾਲਤ HTP_TYPE_MXFP4:  ਵਾਪਸ HTP_TENSOR_TILE_ਮਾਪ_MXFP4;
+        ਹਾਲਤ HTP_TYPE_F16:    ਵਾਪਸ HTP_TENSOR_TILE_ਮਾਪ_F16;
+        ਮੂਲ:              ਵਾਪਸ 0;
     }
 }
 
-static inline uint32_t htp_tensor_get_tile_padded_size(int type) {
-    return (htp_tensor_get_tile_size(type) + 127u) & ~127u;
-}
-
-static inline bool htp_tensor_is_tiled(const struct htp_tensor * t) {
-    return t && (t->flags & HTP_TENSOR_TILED) != 0;
-}
-
-static inline uint32_t htp_tensor_get_row_size(int type, uint32_t ne00) {
-    switch (type) {
-        case HTP_TYPE_F32:    return ne00 * 4;
-        case HTP_TYPE_F16:
-        case HTP_TYPE_BF16:   return ne00 * 2;
-        case HTP_TYPE_Q8_0:   return (ne00 / 32) * 34;
-        case HTP_TYPE_Q4_0:
-        case HTP_TYPE_IQ4_NL: return (ne00 / 32) * 18;
-        case HTP_TYPE_Q4_1:   return (ne00 / 32) * 20;
-        case HTP_TYPE_MXFP4:  return (ne00 / 32) * 17;
-        case HTP_TYPE_Q2_K:   return (ne00 / 256) * 84;
-        case HTP_TYPE_Q2_0:   return (ne00 / 64) * 18;
-        case HTP_TYPE_Q3_K:   return (ne00 / 256) * 110;
-        case HTP_TYPE_Q4_K:   return (ne00 / 256) * 144;
-        case HTP_TYPE_Q5_K:   return (ne00 / 256) * 176;
-        case HTP_TYPE_Q6_K:   return (ne00 / 256) * 210;
-        case HTP_TYPE_Q1_0:   return (ne00 / HTP_TENSOR_TILE_K_Q1_0) * 18;
-        case HTP_TYPE_I32:    return ne00 * 4;
-        case HTP_TYPE_I64:    return ne00 * 8;
-        default:              return 0;
+ਸਥਿਰ ਸਤਰਅੰਦਰ uint32_t htp_tensor_get_tile_k(ਪੂਰਨ type) {
+    ਚੋਣ (type) {
+        ਹਾਲਤ HTP_TYPE_Q1_0: ਵਾਪਸ HTP_TENSOR_TILE_K_Q1_0;
+        ਹਾਲਤ HTP_TYPE_Q2_0: ਵਾਪਸ HTP_TENSOR_TILE_K_Q2_0;
+        ਮੂਲ:            ਵਾਪਸ 32;
     }
 }
 
-#endif // HTP_TENSOR_H
+ਸਥਿਰ ਸਤਰਅੰਦਰ uint32_t htp_tensor_get_tile_padded_ਮਾਪ(ਪੂਰਨ type) {
+    ਵਾਪਸ (htp_tensor_get_tile_ਮਾਪ(type) + 127u) & ~127u;
+}
+
+ਸਥਿਰ ਸਤਰਅੰਦਰ bool htp_tensor_is_tiled(ਅਚਲ ਬਣਤਰ htp_tensor * t) {
+    ਵਾਪਸ t && (t->flags & HTP_TENSOR_TILED) != 0;
+}
+
+ਸਥਿਰ ਸਤਰਅੰਦਰ uint32_t htp_tensor_get_ਪੰਕਤੀ_ਮਾਪ(ਪੂਰਨ type, uint32_t ne00) {
+    ਚੋਣ (type) {
+        ਹਾਲਤ HTP_TYPE_F32:    ਵਾਪਸ ne00 * 4;
+        ਹਾਲਤ HTP_TYPE_F16:
+        ਹਾਲਤ HTP_TYPE_BF16:   ਵਾਪਸ ne00 * 2;
+        ਹਾਲਤ HTP_TYPE_Q8_0:   ਵਾਪਸ (ne00 / 32) * 34;
+        ਹਾਲਤ HTP_TYPE_Q4_0:
+        ਹਾਲਤ HTP_TYPE_IQ4_NL: ਵਾਪਸ (ne00 / 32) * 18;
+        ਹਾਲਤ HTP_TYPE_Q4_1:   ਵਾਪਸ (ne00 / 32) * 20;
+        ਹਾਲਤ HTP_TYPE_MXFP4:  ਵਾਪਸ (ne00 / 32) * 17;
+        ਹਾਲਤ HTP_TYPE_Q2_K:   ਵਾਪਸ (ne00 / 256) * 84;
+        ਹਾਲਤ HTP_TYPE_Q2_0:   ਵਾਪਸ (ne00 / 64) * 18;
+        ਹਾਲਤ HTP_TYPE_Q3_K:   ਵਾਪਸ (ne00 / 256) * 110;
+        ਹਾਲਤ HTP_TYPE_Q4_K:   ਵਾਪਸ (ne00 / 256) * 144;
+        ਹਾਲਤ HTP_TYPE_Q5_K:   ਵਾਪਸ (ne00 / 256) * 176;
+        ਹਾਲਤ HTP_TYPE_Q6_K:   ਵਾਪਸ (ne00 / 256) * 210;
+        ਹਾਲਤ HTP_TYPE_Q1_0:   ਵਾਪਸ (ne00 / HTP_TENSOR_TILE_K_Q1_0) * 18;
+        ਹਾਲਤ HTP_TYPE_I32:    ਵਾਪਸ ne00 * 4;
+        ਹਾਲਤ HTP_TYPE_I64:    ਵਾਪਸ ne00 * 8;
+        ਮੂਲ:              ਵਾਪਸ 0;
+    }
+}
+
+#ਜੇ_ਅੰਤ // HTP_TENSOR_H

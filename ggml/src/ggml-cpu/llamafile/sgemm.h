@@ -1,25 +1,25 @@
-#pragma once
-#include <stdint.h>
-#include <stdbool.h>
+#ਹਦਾਇਤ once
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdint.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdbool.h>
 
-#if defined(__VXE__) || defined(__VXE2__)
-#include <vecintrin.h>
-#endif
+#ਜੇ defined(__VXE__) || defined(__VXE2__)
+#ਅਨ੍ਤਰ੍ਭਾਵ <vecintrin.h>
+#ਜੇ_ਅੰਤ
 
-#ifdef _MSC_VER
-#define NOINLINE __declspec(noinline)
-#else
-#define NOINLINE __attribute__((__noinline__))
-#endif
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ _MSC_VER
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ NOINLINE __declspec(noinline)
+#ਨਹੀਂਤਾਂ
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ NOINLINE __attribute__((__noinline__))
+#ਜੇ_ਅੰਤ
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ __cplusplus
+ਬਾਹਰੀ "C" {
+#ਜੇ_ਅੰਤ
 
-bool llamafile_sgemm(const struct ggml_compute_params * params, int64_t, int64_t, int64_t,
-                     const void *, int64_t, const void *, int64_t, void *, int64_t,
-                     int, int, int);
+bool llamafile_sgemm(ਅਚਲ ਬਣਤਰ ggml_compute_params * params, int64_t, int64_t, int64_t,
+                     ਅਚਲ ਖਾਲੀ *, int64_t, ਅਚਲ ਖਾਲੀ *, int64_t, ਖਾਲੀ *, int64_t,
+                     ਪੂਰਨ, ਪੂਰਨ, ਪੂਰਨ);
 
-#ifdef __cplusplus
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ __cplusplus
 }
-#endif
+#ਜੇ_ਅੰਤ

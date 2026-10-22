@@ -3,802 +3,802 @@
     Note: Use ClangFormat to format this file.
 */
 
-#include "ggml-webgpu.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-webgpu.h"
 
-#include "ggml-backend-impl.h"
-#include "ggml-impl.h"
-#include "ggml-webgpu-shader-lib.hpp"
-#include "ggml.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-backend-impl.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-impl.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-webgpu-shader-lib.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml.h"
 
-#ifdef __EMSCRIPTEN__
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ __EMSCRIPTEN__
 #    include <emscripten/emscripten.h>
-#endif
+#ਜੇ_ਅੰਤ
 
-#include <webgpu/webgpu_cpp.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <webgpu/webgpu_cpp.h>
 
-#include <atomic>
-#include <cstdint>
-#include <cstring>
-#ifdef GGML_WEBGPU_GPU_PROFILE
+#ਅਨ੍ਤਰ੍ਭਾਵ <atomic>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cstdint>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cstring>
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_WEBGPU_GPU_PROFILE
 #    include <iomanip>
-#endif
-#if defined(GGML_WEBGPU_DEBUG) || defined(GGML_WEBGPU_CPU_PROFILE) || defined(GGML_WEBGPU_GPU_PROFILE)
+#ਜੇ_ਅੰਤ
+#ਜੇ defined(GGML_WEBGPU_DEBUG) || defined(GGML_WEBGPU_CPU_PROFILE) || defined(GGML_WEBGPU_GPU_PROFILE)
 #    include <iostream>
-#endif
-#include <memory>
-#include <mutex>
-#include <optional>
-#include <string>
-#include <utility>
-#include <vector>
+#ਜੇ_ਅੰਤ
+#ਅਨ੍ਤਰ੍ਭਾਵ <memory>
+#ਅਨ੍ਤਰ੍ਭਾਵ <mutex>
+#ਅਨ੍ਤਰ੍ਭਾਵ <optional>
+#ਅਨ੍ਤਰ੍ਭਾਵ <string>
+#ਅਨ੍ਤਰ੍ਭਾਵ <utility>
+#ਅਨ੍ਤਰ੍ਭਾਵ <vector>
 
-#define ROUNDUP_POW2(x, pow2) (((x) + ((pow2) - 1)) & ~((pow2) - 1))
-#define CEIL_DIV(M, N)        (((M) + (N) - 1) / (N))
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ ROUNDUP_POW2(x, pow2) (((x) + ((pow2) - 1)) & ~((pow2) - 1))
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ CEIL_DIV(M, N)        (((M) + (N) - 1) / (N))
 
 // Return a rectangular grid of workgroups with minimal over-provisioned workgroups.
 // Assumes that the total number of workgroups does not exceed max_per_dim^2.
-static inline void compute_2d_workgroups(uint32_t total_wg, uint32_t max_per_dim, uint32_t & wg_x, uint32_t & wg_y) {
-    wg_y = std::max(1u, CEIL_DIV(total_wg, max_per_dim));
-    wg_x = CEIL_DIV(total_wg, wg_y);
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ compute_2d_workgroups(uint32_t ਕੁੱਲ_wg, uint32_t max_ਪ੍ਰਤੀ_dim, uint32_t & wg_x, uint32_t & wg_y) {
+    wg_y = std::max(1u, CEIL_DIV(ਕੁੱਲ_wg, max_ਪ੍ਰਤੀ_dim));
+    wg_x = CEIL_DIV(ਕੁੱਲ_wg, wg_y);
 }
 
-static inline uint32_t ggml_webgpu_u32_from_f32(float value) {
-    uint32_t bits;
-    memcpy(&bits, &value, sizeof(bits));
-    return bits;
+ਸਥਿਰ ਸਤਰਅੰਦਰ uint32_t ggml_webgpu_u32_from_f32(ਦਸ਼ਮਲਵ value) {
+    uint32_t ਬਿੱਟ;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&ਬਿੱਟ, &value, ਆਕਾਰ(ਬਿੱਟ));
+    ਵਾਪਸ ਬਿੱਟ;
 }
 
-#ifdef GGML_WEBGPU_DEBUG
-#    define WEBGPU_LOG_DEBUG(msg)  std::cout << msg << std::endl
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_WEBGPU_DEBUG
+#    define WEBGPU_LOG_DEBUG(ਸੁਨੇਹਾ_2)  std::ਬਾਹਰ << ਸੁਨੇਹਾ_2 << std::ਸਤਰ_ਅੰਤ
 #    define WEBGPU_DEBUG_BUF_ELEMS 512
-#else
-#    define WEBGPU_LOG_DEBUG(msg) ((void) 0)
-#endif  // GGML_WEBGPU_DEBUG
+#ਨਹੀਂਤਾਂ
+#    define WEBGPU_LOG_DEBUG(ਸੁਨੇਹਾ_2) ((ਖਾਲੀ) 0)
+#ਜੇ_ਅੰਤ  // GGML_WEBGPU_DEBUG
 
-#ifdef GGML_WEBGPU_CPU_PROFILE
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_WEBGPU_CPU_PROFILE
 // total timing (aggregated)
-#    define WEBGPU_CPU_PROFILE_TOTAL_START(id) auto cpu_total_start_##id = std::chrono::high_resolution_clock::now();
+#    define WEBGPU_CPU_PROFILE_ਕੁੱਲ_ਸ਼ੁਰੂ(id) ਸਵੈਚਾਲਿਤ cpu_ਕੁੱਲ_ਸ਼ੁਰੂ##id = std::chrono::high_resolution_clock::now();
 
-#    define WEBGPU_CPU_PROFILE_TOTAL_END(id, ctx)                                                         \
-        auto   cpu_total_end_##id = std::chrono::high_resolution_clock::now();                            \
-        double cpu_total_time_##id =                                                                      \
-            std::chrono::duration<double, std::milli>(cpu_total_end_##id - cpu_total_start_##id).count(); \
-        (ctx)->cpu_time_ms[#id] += cpu_total_time_##id;
+#    define WEBGPU_CPU_PROFILE_ਕੁੱਲ_ਸਿਰਾ(id, ctx)                                                         \
+        ਸਵੈਚਾਲਿਤ   cpu_ਕੁੱਲ_ਸਿਰਾ##id = std::chrono::high_resolution_clock::now();                            \
+        ਦੁੱਗਣਾ cpu_ਕੁੱਲ_ਸਮਾਂ##id =                                                                      \
+            std::chrono::duration<ਦੁੱਗਣਾ, std::milli>(cpu_ਕੁੱਲ_ਸਿਰਾ##id - cpu_ਕੁੱਲ_ਸ਼ੁਰੂ##id).count(); \
+        (ctx)->cpu_ਸਮਾਂ_ms[#id] += cpu_ਕੁੱਲ_ਸਮਾਂ##id;
 // fine-grained timing (not included in totals)
-#    define WEBGPU_CPU_PROFILE_DETAIL_START(id) auto cpu_detail_start_##id = std::chrono::high_resolution_clock::now();
+#    define WEBGPU_CPU_PROFILE_DETAIL_ਸ਼ੁਰੂ(id) ਸਵੈਚਾਲਿਤ cpu_detail_ਸ਼ੁਰੂ##id = std::chrono::high_resolution_clock::now();
 
-#    define WEBGPU_CPU_PROFILE_DETAIL_END(id, ctx)                                                          \
-        auto   cpu_detail_end_##id = std::chrono::high_resolution_clock::now();                             \
-        double cpu_detail_time_##id =                                                                       \
-            std::chrono::duration<double, std::milli>(cpu_detail_end_##id - cpu_detail_start_##id).count(); \
-        (ctx)->cpu_detail_ms[#id] += cpu_detail_time_##id;
-#else
-#    define WEBGPU_CPU_PROFILE_TOTAL_START(id)
-#    define WEBGPU_CPU_PROFILE_TOTAL_END(id, ctx)
-#    define WEBGPU_CPU_PROFILE_DETAIL_START(id)
-#    define WEBGPU_CPU_PROFILE_DETAIL_END(id, ctx)
-#endif  // GGML_WEBGPU_CPU_PROFILE
+#    define WEBGPU_CPU_PROFILE_DETAIL_ਸਿਰਾ(id, ctx)                                                          \
+        ਸਵੈਚਾਲਿਤ   cpu_detail_ਸਿਰਾ##id = std::chrono::high_resolution_clock::now();                             \
+        ਦੁੱਗਣਾ cpu_detail_ਸਮਾਂ##id =                                                                       \
+            std::chrono::duration<ਦੁੱਗਣਾ, std::milli>(cpu_detail_ਸਿਰਾ##id - cpu_detail_ਸ਼ੁਰੂ##id).count(); \
+        (ctx)->cpu_detail_ms[#id] += cpu_detail_ਸਮਾਂ##id;
+#ਨਹੀਂਤਾਂ
+#    define WEBGPU_CPU_PROFILE_ਕੁੱਲ_ਸ਼ੁਰੂ(id)
+#    define WEBGPU_CPU_PROFILE_ਕੁੱਲ_ਸਿਰਾ(id, ctx)
+#    define WEBGPU_CPU_PROFILE_DETAIL_ਸ਼ੁਰੂ(id)
+#    define WEBGPU_CPU_PROFILE_DETAIL_ਸਿਰਾ(id, ctx)
+#ਜੇ_ਅੰਤ  // GGML_WEBGPU_CPU_PROFILE
 
-#ifdef GGML_WEBGPU_GPU_PROFILE
-#    define WEBGPU_MAX_PROFILE_QUERY_COUNT        4096u
-#    define WEBGPU_TIMESTAMP_QUERY_BUF_SIZE_BYTES (WEBGPU_MAX_PROFILE_QUERY_COUNT * sizeof(uint64_t))
-#endif
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_WEBGPU_GPU_PROFILE
+#    define WEBGPU_MAX_PROFILE_QUERY_ਗਿਣਤੀ        4096u
+#    define WEBGPU_TIMESTAMP_QUERY_BUF_ਮਾਪ_ਬਾਈਟਾਂ (WEBGPU_MAX_PROFILE_QUERY_ਗਿਣਤੀ * ਆਕਾਰ(uint64_t))
+#ਜੇ_ਅੰਤ
 
 /* Constants */
 
-#define WEBGPU_DEFAULT_COMMAND_SUBMIT_BATCH_SIZE 64u
-#define WEBGPU_NUM_PARAM_SLOT_SAFETY_MARGIN      10u
-#define WEBGPU_RUNTIME_WAIT_TIMEOUT_MS           30000u
-#define WEBGPU_RUNTIME_WAIT_TIMEOUT_NS           (WEBGPU_RUNTIME_WAIT_TIMEOUT_MS * 1e6)
-#define WEBGPU_PARAMS_BUF_SIZE_BYTES             128  // enough for 32 parameters
-#define WEBGPU_SET_ROWS_ERROR_BUF_SIZE_BYTES     4
-#define WEBGPU_STORAGE_BUF_BINDING_MULT          4    // a storage buffer binding size must be a multiple of 4
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ WEBGPU_DEFAULT_COMMAND_SUBMIT_BATCH_ਮਾਪ 64u
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ WEBGPU_ਅੰਕ_PARAM_ਥਾਂ_SAFETY_MARGIN      10u
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ WEBGPU_RUNTIME_WAIT_TIMEOUT_MS           30000u
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ WEBGPU_RUNTIME_WAIT_TIMEOUT_NS           (WEBGPU_RUNTIME_WAIT_TIMEOUT_MS * 1e6)
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ WEBGPU_PARAMS_BUF_ਮਾਪ_ਬਾਈਟਾਂ             128  // enough for 32 parameters
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ WEBGPU_ਸੈੱਟ_ਪੰਕਤੀਆਂ_ERROR_BUF_ਮਾਪ_ਬਾਈਟਾਂ     4
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ WEBGPU_STORAGE_BUF_BINDING_MULT          4    // a storage buffer binding size must be a multiple of 4
 
 /* End Constants */
 
 // This is a "fake" base pointer, since WebGPU buffers do not have pointers to
 // their locations.
-static void * const webgpu_ptr_base = (void *) (uintptr_t) 0x1000;  // NOLINT
+ਸਥਿਰ ਖਾਲੀ * ਅਚਲ webgpu_ptr_ਅਧਾਰ = (ਖਾਲੀ *) (uintptr_t) 0x1000;  // NOLINT
 
-static size_t ggml_webgpu_tensor_offset(const ggml_tensor * tensor) {
-    const ggml_tensor * base_tensor = tensor->view_src ? tensor->view_src : tensor;
-    return (size_t) ((uintptr_t) base_tensor->data - (uintptr_t) webgpu_ptr_base) + tensor->view_offs;
+ਸਥਿਰ size_t ggml_webgpu_tensor_ਵਿੱਥ(ਅਚਲ ggml_tensor * tensor) {
+    ਅਚਲ ggml_tensor * ਅਧਾਰ_tensor = tensor->view_src ? tensor->view_src : tensor;
+    ਵਾਪਸ (size_t) ((uintptr_t) ਅਧਾਰ_tensor->ਅੰਕੜੇ - (uintptr_t) webgpu_ptr_ਅਧਾਰ) + tensor->view_offs;
 }
 
 /* Struct definitions */
 
 // Forward reference
-static void ggml_webgpu_create_buffer(wgpu::Device &    device,
-                                      wgpu::Buffer &    buffer,
+ਸਥਿਰ ਖਾਲੀ ggml_webgpu_create_ਬਫਰ(wgpu::Device &    device,
+                                      wgpu::ਬਫਰ_2 &    ਬਫਰ,
                                       size_t            size,
-                                      wgpu::BufferUsage usage,
-                                      const char *      label);
+                                      wgpu::ਬਫਰ_Usage usage,
+                                      ਅਚਲ ਅੱਖਰ *      label);
 
 // Slot-based parameter arena for compute graph encoding. Each encoded kernel
 // gets a unique uniform-buffer slice within the current batch, and the slot
 // cursor is reset immediately after that batch is submitted.
-struct webgpu_param_arena {
-    wgpu::Buffer buffer;
-    size_t       slot_stride = 0;
-    size_t       slot_size   = 0;
-    uint32_t     slot_count  = 0;
-    uint32_t     next_slot   = 0;
+ਬਣਤਰ webgpu_param_arena {
+    wgpu::ਬਫਰ_2 ਬਫਰ;
+    size_t       ਥਾਂ_stride = 0;
+    size_t       ਥਾਂ_ਮਾਪ   = 0;
+    uint32_t     ਥਾਂ_ਗਿਣਤੀ  = 0;
+    uint32_t     ਅਗਲਾ_ਥਾਂ   = 0;
 
-    void init(wgpu::Device device, size_t slot_size, uint32_t slot_count, size_t alignment) {
-        this->slot_stride = ROUNDUP_POW2(slot_size, alignment);
-        this->slot_size   = slot_size;
-        this->slot_count  = slot_count;
-        this->next_slot   = 0;
+    ਖਾਲੀ init(wgpu::Device device, size_t ਥਾਂ_ਮਾਪ, uint32_t ਥਾਂ_ਗਿਣਤੀ, size_t alignment) {
+        ਇਹ->ਥਾਂ_stride = ROUNDUP_POW2(ਥਾਂ_ਮਾਪ, alignment);
+        ਇਹ->ਥਾਂ_ਮਾਪ   = ਥਾਂ_ਮਾਪ;
+        ਇਹ->ਥਾਂ_ਗਿਣਤੀ  = ਥਾਂ_ਗਿਣਤੀ;
+        ਇਹ->ਅਗਲਾ_ਥਾਂ   = 0;
 
-        ggml_webgpu_create_buffer(device, buffer, this->slot_stride * slot_count,
-                                  wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform, "ggml_webgpu_param_arena");
+        ggml_webgpu_create_ਬਫਰ(device, ਬਫਰ, ਇਹ->ਥਾਂ_stride * ਥਾਂ_ਗਿਣਤੀ,
+                                  wgpu::ਬਫਰ_Usage::CopyDst | wgpu::ਬਫਰ_Usage::Uniform, "ggml_webgpu_param_arena");
     }
 
-    size_t alloc_slot(size_t size) {
-        GGML_ASSERT(size <= slot_size);
-        if (next_slot >= slot_count) {
+    size_t alloc_ਥਾਂ(size_t size) {
+        GGML_ASSERT(size <= ਥਾਂ_ਮਾਪ);
+        ਜੇ (ਅਗਲਾ_ਥਾਂ >= ਥਾਂ_ਗਿਣਤੀ) {
             GGML_ABORT("ggml_webgpu: parameter arena exhausted while encoding a batch");
         }
 
-        return slot_stride * next_slot++;
+        ਵਾਪਸ ਥਾਂ_stride * ਅਗਲਾ_ਥਾਂ++;
     }
 
-    void reset() { next_slot = 0; }
+    ਖਾਲੀ reset() { ਅਗਲਾ_ਥਾਂ = 0; }
 
-    void cleanup() {
-        if (buffer) {
-            buffer.Destroy();
-            buffer = nullptr;
+    ਖਾਲੀ cleanup() {
+        ਜੇ (ਬਫਰ) {
+            ਬਫਰ.Destroy();
+            ਬਫਰ = ਖਾਲੀ_ਸੂਚਕ;
         }
     }
 
-    ~webgpu_param_arena() { this->cleanup(); }
+    ~webgpu_param_arena() { ਇਹ->cleanup(); }
 };
 
-struct webgpu_encoded_op {
-    uint32_t num_kernels = 0;
-#ifdef GGML_WEBGPU_GPU_PROFILE
-    std::vector<std::string> pipeline_names;
-#endif
+ਬਣਤਰ webgpu_encoded_op {
+    uint32_t ਅੰਕ_kernels = 0;
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_WEBGPU_GPU_PROFILE
+    std::vector<std::string> pipeline_ਨਾਂ;
+#ਜੇ_ਅੰਤ
 };
 
-struct webgpu_dispatch_desc {
+ਬਣਤਰ webgpu_dispatch_desc {
     webgpu_pipeline                   pipeline;
     std::vector<uint32_t>             params;
-    std::vector<wgpu::BindGroupEntry> bind_group_entries;
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> bind_ਸਮੂਹ_entries;
     std::pair<uint32_t, uint32_t>     workgroups = { 1, 1 };
 };
 
-struct webgpu_capabilities {
+ਬਣਤਰ webgpu_capabilities {
     wgpu::Limits limits;
-    bool         supports_subgroups       = false;
-    bool         supports_subgroup_matrix = false;
-    bool         supports_dot_product     = false;
+    ਤਾਰਕਿਕ         supports_subgroups       = ਝੂਠ;
+    ਤਾਰਕਿਕ         supports_subgroup_ਮੈਟ੍ਰਿਕਸ = ਝੂਠ;
+    ਤਾਰਕਿਕ         supports_dot_ਗੁਣਨਫਲ     = ਝੂਠ;
 
     uint32_t sg_mat_m = 0;
     uint32_t sg_mat_n = 0;
     uint32_t sg_mat_k = 0;
 
-    uint32_t subgroup_size     = 0;
-    uint32_t min_subgroup_size = 0;
-    uint32_t max_subgroup_size = 0;
-    size_t   memset_bytes_per_thread;
+    uint32_t subgroup_ਮਾਪ     = 0;
+    uint32_t min_subgroup_ਮਾਪ = 0;
+    uint32_t max_subgroup_ਮਾਪ = 0;
+    size_t   memset_ਬਾਈਟਾਂ_ਪ੍ਰਤੀ_thread;
 };
 
 // Stores global webgpu members
-struct webgpu_global_context_struct {
+ਬਣਤਰ webgpu_global_context_struct {
     wgpu::Instance instance;
     wgpu::Adapter  adapter;
     wgpu::Device   device;
-    wgpu::Queue    queue;
-    uint32_t       command_submit_batch_size = WEBGPU_DEFAULT_COMMAND_SUBMIT_BATCH_SIZE;
+    wgpu::ਕਤਾਰ_2    queue;
+    uint32_t       command_submit_batch_ਮਾਪ = WEBGPU_DEFAULT_COMMAND_SUBMIT_BATCH_ਮਾਪ;
     uint32_t       max_inflight_batches      = UINT32_MAX;
 
     webgpu_capabilities  capabilities;
     // Shared buffer to move data from device to host
-    wgpu::Buffer         get_tensor_staging_buf;
+    wgpu::ਬਫਰ_2         get_tensor_staging_buf;
     // Global mutex for get_tensor
     std::recursive_mutex mutex;
 
-    wgpu::Buffer    memset_params_buf;
+    wgpu::ਬਫਰ_2    memset_params_buf;
     webgpu_pipeline memset_pipeline;
 
     std::string vendor;
 
     // TODO: We should rework the CPU profiling time handling to make it more useful. ref: https://github.com/ggml-org/llama.cpp/pull/22050
-#ifdef GGML_WEBGPU_CPU_PROFILE
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_WEBGPU_CPU_PROFILE
     // Profiling: labeled CPU time in ms (total)
-    std::unordered_map<std::string, double> cpu_time_ms;
+    std::unordered_map<std::string, ਦੁੱਗਣਾ> cpu_ਸਮਾਂ_ms;
     // Profiling: detailed CPU time in ms
-    std::unordered_map<std::string, double> cpu_detail_ms;
-#endif
+    std::unordered_map<std::string, ਦੁੱਗਣਾ> cpu_detail_ms;
+#ਜੇ_ਅੰਤ
 
-#ifdef GGML_WEBGPU_DEBUG
-    wgpu::Buffer debug_host_buf;
-    wgpu::Buffer debug_dev_buf;
-#endif
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_WEBGPU_DEBUG
+    wgpu::ਬਫਰ_2 debug_host_buf;
+    wgpu::ਬਫਰ_2 debug_dev_buf;
+#ਜੇ_ਅੰਤ
 
     ~webgpu_global_context_struct() {
-        if (this->get_tensor_staging_buf) {
-            this->get_tensor_staging_buf.Destroy();
-            this->get_tensor_staging_buf = nullptr;
+        ਜੇ (ਇਹ->get_tensor_staging_buf) {
+            ਇਹ->get_tensor_staging_buf.Destroy();
+            ਇਹ->get_tensor_staging_buf = ਖਾਲੀ_ਸੂਚਕ;
         }
-        if (this->memset_params_buf) {
-            this->memset_params_buf.Destroy();
-            this->memset_params_buf = nullptr;
+        ਜੇ (ਇਹ->memset_params_buf) {
+            ਇਹ->memset_params_buf.Destroy();
+            ਇਹ->memset_params_buf = ਖਾਲੀ_ਸੂਚਕ;
         }
-#ifdef GGML_WEBGPU_DEBUG
-        if (this->debug_host_buf) {
-            this->debug_host_buf.Destroy();
-            this->debug_host_buf = nullptr;
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_WEBGPU_DEBUG
+        ਜੇ (ਇਹ->debug_host_buf) {
+            ਇਹ->debug_host_buf.Destroy();
+            ਇਹ->debug_host_buf = ਖਾਲੀ_ਸੂਚਕ;
         }
-        if (this->debug_dev_buf) {
-            this->debug_dev_buf.Destroy();
-            this->debug_dev_buf = nullptr;
+        ਜੇ (ਇਹ->debug_dev_buf) {
+            ਇਹ->debug_dev_buf.Destroy();
+            ਇਹ->debug_dev_buf = ਖਾਲੀ_ਸੂਚਕ;
         }
-#endif
+#ਜੇ_ਅੰਤ
     }
 };
 
-typedef std::shared_ptr<webgpu_global_context_struct> webgpu_global_context;
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ std::shared_ptr<webgpu_global_context_struct> webgpu_global_context;
 
 // All the base objects needed to run operations on a WebGPU device
-struct webgpu_context_struct {
+ਬਣਤਰ webgpu_context_struct {
     // Points to global instances owned by ggml_backend_webgpu_reg_context
     webgpu_global_context global_ctx;
 
     std::unique_ptr<ggml_webgpu_shader_lib> shader_lib;
 
     webgpu_param_arena       param_arena;
-    wgpu::Buffer             set_rows_dev_error_buf;
-    wgpu::Buffer             set_rows_host_error_buf;
-    wgpu::CommandEncoder     active_command_encoder;
-    wgpu::ComputePassEncoder active_compute_pass;
-    bool                     batch_compute_passes = true;
+    wgpu::ਬਫਰ_2             ਸੈੱਟ_ਪੰਕਤੀਆਂ_dev_error_buf;
+    wgpu::ਬਫਰ_2             ਸੈੱਟ_ਪੰਕਤੀਆਂ_host_error_buf;
+    wgpu::CommandEncoder     ਸਰਗਰਮ_command_encoder;
+    wgpu::ComputePassEncoder ਸਰਗਰਮ_compute_pass;
+    ਤਾਰਕਿਕ                     batch_compute_passes = ਸੱਚ;
 
-    size_t memset_bytes_per_thread;
+    size_t memset_ਬਾਈਟਾਂ_ਪ੍ਰਤੀ_thread;
 
-#ifdef GGML_WEBGPU_GPU_PROFILE
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_WEBGPU_GPU_PROFILE
     // Profiling: per-shader GPU time in ms
-    std::unordered_map<std::string, double> shader_gpu_time_ms;
-    wgpu::Buffer                            profile_timestamp_dev_buf;
-    wgpu::Buffer                            profile_timestamp_host_buf;
-    wgpu::QuerySet                          profile_timestamp_query_set;
-    uint32_t                                profile_timestamp_query_count = 0;
-#endif
+    std::unordered_map<std::string, ਦੁੱਗਣਾ> shader_gpu_ਸਮਾਂ_ms;
+    wgpu::ਬਫਰ_2                            profile_timestamp_dev_buf;
+    wgpu::ਬਫਰ_2                            profile_timestamp_host_buf;
+    wgpu::Query_ਸੈੱਟ                          profile_timestamp_query_ਸੈੱਟ;
+    uint32_t                                profile_timestamp_query_ਗਿਣਤੀ = 0;
+#ਜੇ_ਅੰਤ
 
     ~webgpu_context_struct() {
-#ifdef GGML_WEBGPU_GPU_PROFILE
-        if (this->profile_timestamp_host_buf) {
-            this->profile_timestamp_host_buf.Destroy();
-            this->profile_timestamp_host_buf = nullptr;
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_WEBGPU_GPU_PROFILE
+        ਜੇ (ਇਹ->profile_timestamp_host_buf) {
+            ਇਹ->profile_timestamp_host_buf.Destroy();
+            ਇਹ->profile_timestamp_host_buf = ਖਾਲੀ_ਸੂਚਕ;
         }
-        if (this->profile_timestamp_dev_buf) {
-            this->profile_timestamp_dev_buf.Destroy();
-            this->profile_timestamp_dev_buf = nullptr;
+        ਜੇ (ਇਹ->profile_timestamp_dev_buf) {
+            ਇਹ->profile_timestamp_dev_buf.Destroy();
+            ਇਹ->profile_timestamp_dev_buf = ਖਾਲੀ_ਸੂਚਕ;
         }
-        if (this->profile_timestamp_query_set) {
-            this->profile_timestamp_query_set.Destroy();
-            this->profile_timestamp_query_set = nullptr;
+        ਜੇ (ਇਹ->profile_timestamp_query_ਸੈੱਟ) {
+            ਇਹ->profile_timestamp_query_ਸੈੱਟ.Destroy();
+            ਇਹ->profile_timestamp_query_ਸੈੱਟ = ਖਾਲੀ_ਸੂਚਕ;
         }
-#endif
-        if (this->set_rows_host_error_buf) {
-            this->set_rows_host_error_buf.Destroy();
-            this->set_rows_host_error_buf = nullptr;
+#ਜੇ_ਅੰਤ
+        ਜੇ (ਇਹ->ਸੈੱਟ_ਪੰਕਤੀਆਂ_host_error_buf) {
+            ਇਹ->ਸੈੱਟ_ਪੰਕਤੀਆਂ_host_error_buf.Destroy();
+            ਇਹ->ਸੈੱਟ_ਪੰਕਤੀਆਂ_host_error_buf = ਖਾਲੀ_ਸੂਚਕ;
         }
-        if (this->set_rows_dev_error_buf) {
-            this->set_rows_dev_error_buf.Destroy();
-            this->set_rows_dev_error_buf = nullptr;
+        ਜੇ (ਇਹ->ਸੈੱਟ_ਪੰਕਤੀਆਂ_dev_error_buf) {
+            ਇਹ->ਸੈੱਟ_ਪੰਕਤੀਆਂ_dev_error_buf.Destroy();
+            ਇਹ->ਸੈੱਟ_ਪੰਕਤੀਆਂ_dev_error_buf = ਖਾਲੀ_ਸੂਚਕ;
         }
     }
 };
 
-typedef std::shared_ptr<webgpu_context_struct> webgpu_context;
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ std::shared_ptr<webgpu_context_struct> webgpu_context;
 
 // Metadata required for the ggml backend registration/discovery interface
-struct ggml_backend_webgpu_reg_context {
+ਬਣਤਰ ggml_backend_webgpu_reg_context {
     // Since the Instance is a global entrypoint into the WebGPU API, it lives here
     webgpu_global_context webgpu_global_ctx;
-    size_t                device_count;
-    const char *          name;
+    size_t                device_ਗਿਣਤੀ;
+    ਅਚਲ ਅੱਖਰ *          name;
 };
 
 // Per-device struct for the global logical device interface
-struct ggml_backend_webgpu_device_context {
+ਬਣਤਰ ggml_backend_webgpu_device_context {
     webgpu_global_context webgpu_global_ctx;
     std::string           device_name;
     std::string           device_desc;
 };
 
 // Per-thread data required to actually run WebGPU operations in a backend instance
-struct ggml_backend_webgpu_context {
+ਬਣਤਰ ggml_backend_webgpu_context {
     webgpu_context webgpu_ctx;
     std::string    name;
 };
 
 // Per-thread data related to buffers
-struct ggml_backend_webgpu_buffer_context {
-    wgpu::Buffer          buffer;
+ਬਣਤਰ ggml_backend_webgpu_ਬਫਰ_context {
+    wgpu::ਬਫਰ_2          ਬਫਰ;
     std::string           label;
     webgpu_global_context global_ctx;
 
-    ggml_backend_webgpu_buffer_context(wgpu::Buffer buf, std::string lbl, webgpu_global_context global_ctx_) :
-        buffer(std::move(buf)),
+    ggml_backend_webgpu_ਬਫਰ_context(wgpu::ਬਫਰ_2 buf, std::string lbl, webgpu_global_context global_ctx_) :
+        ਬਫਰ(std::move(buf)),
         label(std::move(lbl)),
         global_ctx(std::move(global_ctx_)) {}
 };
 
 /* WebGPU object initializations */
 
-static webgpu_pipeline ggml_webgpu_create_pipeline(wgpu::Device &                           device,
-                                                   const char *                             shader_code,
-                                                   const char *                             label,
-                                                   const std::vector<wgpu::ConstantEntry> & constants = {}) {
-    wgpu::ShaderSourceWGSL shader_source;
-    shader_source.code = shader_code;
+ਸਥਿਰ webgpu_pipeline ggml_webgpu_create_pipeline(wgpu::Device &                           device,
+                                                   ਅਚਲ ਅੱਖਰ *                             shader_ਕੋਡ,
+                                                   ਅਚਲ ਅੱਖਰ *                             label,
+                                                   ਅਚਲ std::vector<wgpu::Constant_ਇੰਦਰਾਜ> & constants = {}) {
+    wgpu::Shader_ਸਰੋਤ_WGSL shader_ਸਰੋਤ;
+    shader_ਸਰੋਤ.code = shader_ਕੋਡ;
 
     wgpu::ShaderModuleDescriptor shader_desc;
-    shader_desc.nextInChain = &shader_source;
+    shader_desc.ਅਗਲਾ_ਵਿੱਚ_Chain = &shader_ਸਰੋਤ;
 
     wgpu::ShaderModule shader_module = device.CreateShaderModule(&shader_desc);
 
     wgpu::ComputePipelineDescriptor pipeline_desc;
     pipeline_desc.label              = label;
     pipeline_desc.compute.module     = shader_module;
-    pipeline_desc.compute.entryPoint = "main";   // Entry point in the WGSL code
-    pipeline_desc.layout             = nullptr;  // nullptr means auto layout
-    if (constants.size() > 0) {
-        pipeline_desc.compute.constants     = constants.data();
-        pipeline_desc.compute.constantCount = constants.size();
+    pipeline_desc.compute.ਇੰਦਰਾਜ_ਬਿੰਦੂ_2 = "main";   // Entry point in the WGSL code
+    pipeline_desc.layout             = ਖਾਲੀ_ਸੂਚਕ;  // nullptr means auto layout
+    ਜੇ (constants.size() > 0) {
+        pipeline_desc.compute.constants     = constants.ਅੰਕੜੇ();
+        pipeline_desc.compute.constant_ਗਿਣਤੀ = constants.size();
     }
-    return { device.CreateComputePipeline(&pipeline_desc), label };
+    ਵਾਪਸ { device.CreateComputePipeline(&pipeline_desc), label };
 }
 
-static void ggml_webgpu_create_buffer(wgpu::Device &    device,
-                                      wgpu::Buffer &    buffer,
+ਸਥਿਰ ਖਾਲੀ ggml_webgpu_create_ਬਫਰ(wgpu::Device &    device,
+                                      wgpu::ਬਫਰ_2 &    ਬਫਰ,
                                       size_t            size,
-                                      wgpu::BufferUsage usage,
-                                      const char *      label) {
-    wgpu::BufferDescriptor buffer_desc;
-    buffer_desc.size             = size;
-    buffer_desc.usage            = usage;
-    buffer_desc.label            = label;
-    buffer_desc.mappedAtCreation = false;
+                                      wgpu::ਬਫਰ_Usage usage,
+                                      ਅਚਲ ਅੱਖਰ *      label) {
+    wgpu::ਬਫਰ_Descriptor ਬਫਰ_desc;
+    ਬਫਰ_desc.size             = size;
+    ਬਫਰ_desc.usage            = usage;
+    ਬਫਰ_desc.label            = label;
+    ਬਫਰ_desc.mappedAtCreation = ਝੂਠ;
 
     // TODO: error handling
-    buffer = device.CreateBuffer(&buffer_desc);
+    ਬਫਰ = device.Create_ਬਫਰ(&ਬਫਰ_desc);
 }
 
-static wgpu::Buffer ggml_webgpu_tensor_buf(const ggml_tensor * tensor) {
-    ggml_backend_webgpu_buffer_context * ctx = (ggml_backend_webgpu_buffer_context *) tensor->buffer->context;
-    return ctx->buffer;
+ਸਥਿਰ wgpu::ਬਫਰ_2 ggml_webgpu_tensor_buf(ਅਚਲ ggml_tensor * tensor) {
+    ggml_backend_webgpu_ਬਫਰ_context * ctx = (ggml_backend_webgpu_ਬਫਰ_context *) tensor->ਬਫਰ->context;
+    ਵਾਪਸ ctx->ਬਫਰ;
 }
 
 // Binding offset for a tensor: the largest aligned offset at or before the tensor whose
 // distance to the tensor is a whole number of type blocks, so shaders can index the
 // misalignment in elements even for block quantized types.
-static size_t ggml_webgpu_tensor_align_offset(const ggml_tensor * t, size_t alignment) {
-    const size_t offset    = ggml_webgpu_tensor_offset(t);
-    const size_t type_size = ggml_type_size(t->type);
-    size_t       aligned   = offset & ~(alignment - 1);
-    while ((offset - aligned) % type_size != 0) {
+ਸਥਿਰ size_t ggml_webgpu_tensor_align_ਵਿੱਥ(ਅਚਲ ggml_tensor * t, size_t alignment) {
+    ਅਚਲ size_t ਵਿੱਥ    = ggml_webgpu_tensor_ਵਿੱਥ(t);
+    ਅਚਲ size_t type_ਮਾਪ = ggml_type_ਮਾਪ(t->type);
+    size_t       aligned   = ਵਿੱਥ & ~(alignment - 1);
+    ਜਦੋਂ ((ਵਿੱਥ - aligned) % type_ਮਾਪ != 0) {
         GGML_ASSERT(aligned >= alignment);
         aligned -= alignment;
     }
-    return aligned;
+    ਵਾਪਸ aligned;
 }
 
-static size_t ggml_webgpu_tensor_misalignment(const ggml_tensor * t, size_t alignment) {
-    return ggml_webgpu_tensor_offset(t) - ggml_webgpu_tensor_align_offset(t, alignment);
+ਸਥਿਰ size_t ggml_webgpu_tensor_misalignment(ਅਚਲ ggml_tensor * t, size_t alignment) {
+    ਵਾਪਸ ggml_webgpu_tensor_ਵਿੱਥ(t) - ggml_webgpu_tensor_align_ਵਿੱਥ(t, alignment);
 }
 
-static size_t ggml_webgpu_tensor_misalignment(webgpu_context & ctx, const ggml_tensor * t) {
-    return ggml_webgpu_tensor_misalignment(t, ctx->global_ctx->capabilities.limits.minStorageBufferOffsetAlignment);
+ਸਥਿਰ size_t ggml_webgpu_tensor_misalignment(webgpu_context & ctx, ਅਚਲ ggml_tensor * t) {
+    ਵਾਪਸ ggml_webgpu_tensor_misalignment(t, ctx->global_ctx->capabilities.limits.min_Storage_ਬਫਰ_ਵਿੱਥ_Alignment);
 }
 
-static size_t ggml_webgpu_tensor_align_offset(webgpu_context & ctx, const ggml_tensor * t) {
-    return ggml_webgpu_tensor_align_offset(t, ctx->global_ctx->capabilities.limits.minStorageBufferOffsetAlignment);
+ਸਥਿਰ size_t ggml_webgpu_tensor_align_ਵਿੱਥ(webgpu_context & ctx, ਅਚਲ ggml_tensor * t) {
+    ਵਾਪਸ ggml_webgpu_tensor_align_ਵਿੱਥ(t, ctx->global_ctx->capabilities.limits.min_Storage_ਬਫਰ_ਵਿੱਥ_Alignment);
 }
 
-static size_t ggml_webgpu_tensor_binding_size(const ggml_tensor * t, size_t alignment) {
-    return ROUNDUP_POW2(ggml_nbytes(t) + ggml_webgpu_tensor_misalignment(t, alignment),
+ਸਥਿਰ size_t ggml_webgpu_tensor_binding_ਮਾਪ(ਅਚਲ ggml_tensor * t, size_t alignment) {
+    ਵਾਪਸ ROUNDUP_POW2(ggml_nbytes(t) + ggml_webgpu_tensor_misalignment(t, alignment),
                         WEBGPU_STORAGE_BUF_BINDING_MULT);
 }
 
-static size_t ggml_webgpu_tensor_binding_size(webgpu_context & ctx, const ggml_tensor * t) {
-    return ggml_webgpu_tensor_binding_size(t, ctx->global_ctx->capabilities.limits.minStorageBufferOffsetAlignment);
+ਸਥਿਰ size_t ggml_webgpu_tensor_binding_ਮਾਪ(webgpu_context & ctx, ਅਚਲ ggml_tensor * t) {
+    ਵਾਪਸ ggml_webgpu_tensor_binding_ਮਾਪ(t, ctx->global_ctx->capabilities.limits.min_Storage_ਬਫਰ_ਵਿੱਥ_Alignment);
 }
 
-static bool ggml_webgpu_tensor_binding_overlap(const webgpu_global_context & global_ctx,
-                                               const ggml_tensor *           a,
-                                               const ggml_tensor *           b) {
-    if (a->buffer != b->buffer) {
-        return false;
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_webgpu_tensor_binding_overlap(ਅਚਲ webgpu_global_context & global_ctx,
+                                               ਅਚਲ ggml_tensor *           a,
+                                               ਅਚਲ ggml_tensor *           b) {
+    ਜੇ (a->ਬਫਰ != b->ਬਫਰ) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    const size_t alignment = global_ctx->capabilities.limits.minStorageBufferOffsetAlignment;
-    const size_t a_offset  = ggml_webgpu_tensor_align_offset(a, alignment);
-    const size_t b_offset  = ggml_webgpu_tensor_align_offset(b, alignment);
-    return a_offset < b_offset + ggml_webgpu_tensor_binding_size(b, alignment) &&
-           b_offset < a_offset + ggml_webgpu_tensor_binding_size(a, alignment);
+    ਅਚਲ size_t alignment = global_ctx->capabilities.limits.min_Storage_ਬਫਰ_ਵਿੱਥ_Alignment;
+    ਅਚਲ size_t a_ਵਿੱਥ  = ggml_webgpu_tensor_align_ਵਿੱਥ(a, alignment);
+    ਅਚਲ size_t b_ਵਿੱਥ  = ggml_webgpu_tensor_align_ਵਿੱਥ(b, alignment);
+    ਵਾਪਸ a_ਵਿੱਥ < b_ਵਿੱਥ + ggml_webgpu_tensor_binding_ਮਾਪ(b, alignment) &&
+           b_ਵਿੱਥ < a_ਵਿੱਥ + ggml_webgpu_tensor_binding_ਮਾਪ(a, alignment);
 }
 
-static bool ggml_webgpu_tensor_binding_overlap_range(const webgpu_global_context & global_ctx,
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_webgpu_tensor_binding_overlap_range(ਅਚਲ webgpu_global_context & global_ctx,
                                                      ggml_tensor *                 tensor,
-                                                     ggml_backend_buffer_t         buffer,
-                                                     size_t                        offset,
+                                                     ggml_backend_ਬਫਰ_t         ਬਫਰ,
+                                                     size_t                        ਵਿੱਥ,
                                                      size_t                        size) {
-    if (tensor->buffer != buffer) {
-        return false;
+    ਜੇ (tensor->ਬਫਰ != ਬਫਰ) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    const size_t alignment     = global_ctx->capabilities.limits.minStorageBufferOffsetAlignment;
-    const size_t tensor_offset = ggml_webgpu_tensor_align_offset(tensor, alignment);
-    return tensor_offset < offset + size && offset < tensor_offset + ggml_webgpu_tensor_binding_size(tensor, alignment);
+    ਅਚਲ size_t alignment     = global_ctx->capabilities.limits.min_Storage_ਬਫਰ_ਵਿੱਥ_Alignment;
+    ਅਚਲ size_t tensor_ਵਿੱਥ = ggml_webgpu_tensor_align_ਵਿੱਥ(tensor, alignment);
+    ਵਾਪਸ tensor_ਵਿੱਥ < ਵਿੱਥ + size && ਵਿੱਥ < tensor_ਵਿੱਥ + ggml_webgpu_tensor_binding_ਮਾਪ(tensor, alignment);
 }
 
-struct ggml_webgpu_merged_binding_range {
-    size_t offset;
+ਬਣਤਰ ggml_webgpu_merged_binding_range {
+    size_t ਵਿੱਥ;
     size_t size;
 };
 
-static ggml_webgpu_merged_binding_range ggml_webgpu_tensor_merged_binding_range(
+ਸਥਿਰ ggml_webgpu_merged_binding_range ggml_webgpu_tensor_merged_binding_range(
     webgpu_context &                     ctx,
     std::initializer_list<ggml_tensor *> tensors) {
-    size_t merged_offset = SIZE_MAX;
-    size_t merged_end    = 0;
+    size_t merged_ਵਿੱਥ = SIZE_MAX;
+    size_t merged_ਸਿਰਾ    = 0;
 
-    for (ggml_tensor * tensor : tensors) {
-        const size_t bind_offset = ggml_webgpu_tensor_align_offset(ctx, tensor);
-        const size_t bind_end    = bind_offset + ggml_webgpu_tensor_binding_size(ctx, tensor);
+    ਲਈ (ggml_tensor * tensor : tensors) {
+        ਅਚਲ size_t bind_ਵਿੱਥ = ggml_webgpu_tensor_align_ਵਿੱਥ(ctx, tensor);
+        ਅਚਲ size_t bind_ਸਿਰਾ    = bind_ਵਿੱਥ + ggml_webgpu_tensor_binding_ਮਾਪ(ctx, tensor);
 
-        merged_offset = std::min(merged_offset, bind_offset);
-        merged_end    = std::max(merged_end, bind_end);
+        merged_ਵਿੱਥ = std::min(merged_ਵਿੱਥ, bind_ਵਿੱਥ);
+        merged_ਸਿਰਾ    = std::max(merged_ਸਿਰਾ, bind_ਸਿਰਾ);
     }
 
-    return { merged_offset, merged_end - merged_offset };
+    ਵਾਪਸ { merged_ਵਿੱਥ, merged_ਸਿਰਾ - merged_ਵਿੱਥ };
 }
 
-static uint32_t ggml_webgpu_tensor_merged_element_offset(const ggml_tensor *                      tensor,
-                                                         const ggml_webgpu_merged_binding_range & merged_range) {
-    return (uint32_t) ((ggml_webgpu_tensor_offset(tensor) - merged_range.offset) / ggml_type_size(tensor->type));
+ਸਥਿਰ uint32_t ggml_webgpu_tensor_merged_element_ਵਿੱਥ(ਅਚਲ ggml_tensor *                      tensor,
+                                                         ਅਚਲ ggml_webgpu_merged_binding_range & merged_range) {
+    ਵਾਪਸ (uint32_t) ((ggml_webgpu_tensor_ਵਿੱਥ(tensor) - merged_range.ਵਿੱਥ) / ggml_type_ਮਾਪ(tensor->type));
 }
 
-static wgpu::BindGroupEntry ggml_webgpu_make_bind_group_entry(uint32_t     binding,
-                                                              wgpu::Buffer buffer,
-                                                              uint64_t     offset,
+ਸਥਿਰ wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(uint32_t     binding,
+                                                              wgpu::ਬਫਰ_2 ਬਫਰ,
+                                                              uint64_t     ਵਿੱਥ,
                                                               uint64_t     size) {
-    wgpu::BindGroupEntry entry = {};
-    entry.binding              = binding;
-    entry.buffer               = std::move(buffer);
-    entry.offset               = offset;
-    entry.size                 = size;
-    return entry;
+    wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ ਇੰਦਰਾਜ = {};
+    ਇੰਦਰਾਜ.binding              = binding;
+    ਇੰਦਰਾਜ.ਬਫਰ               = std::move(ਬਫਰ);
+    ਇੰਦਰਾਜ.ਵਿੱਥ               = ਵਿੱਥ;
+    ਇੰਦਰਾਜ.size                 = size;
+    ਵਾਪਸ ਇੰਦਰਾਜ;
 }
 
-static wgpu::BindGroupEntry ggml_webgpu_make_tensor_bind_group_entry(webgpu_context & ctx,
+ਸਥਿਰ wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(webgpu_context & ctx,
                                                                      uint32_t         binding,
                                                                      ggml_tensor *    tensor) {
-    return ggml_webgpu_make_bind_group_entry(binding, ggml_webgpu_tensor_buf(tensor),
-                                             ggml_webgpu_tensor_align_offset(ctx, tensor),
-                                             ggml_webgpu_tensor_binding_size(ctx, tensor));
+    ਵਾਪਸ ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(binding, ggml_webgpu_tensor_buf(tensor),
+                                             ggml_webgpu_tensor_align_ਵਿੱਥ(ctx, tensor),
+                                             ggml_webgpu_tensor_binding_ਮਾਪ(ctx, tensor));
 }
 
 /** End WebGPU object initializations */
 
 /** WebGPU Actions */
 
-template <typename T>
-static void ggml_backend_webgpu_check_wait_status(wgpu::WaitStatus wait_status,
-                                                  T                callback_status,
-                                                  T                success_status,
-                                                  const char *     wait_name,
-                                                  const char *     failure_name,
-                                                  const char *     callback_message) {
-    if (wait_status == wgpu::WaitStatus::TimedOut) {
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T>
+ਸਥਿਰ ਖਾਲੀ ggml_backend_webgpu_check_wait_ਸਥਿਤੀ(wgpu::Wait_ਸਥਿਤੀ wait_ਸਥਿਤੀ,
+                                                  T                callback_ਸਥਿਤੀ,
+                                                  T                success_ਸਥਿਤੀ,
+                                                  ਅਚਲ ਅੱਖਰ *     wait_name,
+                                                  ਅਚਲ ਅੱਖਰ *     failure_name,
+                                                  ਅਚਲ ਅੱਖਰ *     callback_ਸੁਨੇਹਾ) {
+    ਜੇ (wait_ਸਥਿਤੀ == wgpu::Wait_ਸਥਿਤੀ::Timed_ਬਾਹਰਲਾ) {
         GGML_ABORT("ggml_webgpu: %s timed out after %u ms\n", wait_name, WEBGPU_RUNTIME_WAIT_TIMEOUT_MS);
     }
-    if (wait_status == wgpu::WaitStatus::Error) {
+    ਜੇ (wait_ਸਥਿਤੀ == wgpu::Wait_ਸਥਿਤੀ::Error) {
         GGML_ABORT("ggml_webgpu: %s failed\n", wait_name);
     }
-    if (callback_status != success_status) {
-        GGML_ABORT("ggml_webgpu: %s failed with status %d: %s\n", failure_name, static_cast<int>(callback_status),
-                   callback_message);
+    ਜੇ (callback_ਸਥਿਤੀ != success_ਸਥਿਤੀ) {
+        GGML_ABORT("ggml_webgpu: %s failed with status %d: %s\n", failure_name, static_cast<ਪੂਰਨ>(callback_ਸਥਿਤੀ),
+                   callback_ਸੁਨੇਹਾ);
     }
 }
 
 // TODO: these next two functions may want tuning across different platforms and workloads,
-static uint32_t ggml_backend_webgpu_get_max_inflight_batches() {
-    return UINT32_MAX;
+ਸਥਿਰ uint32_t ggml_backend_webgpu_get_max_inflight_batches() {
+    ਵਾਪਸ UINT32_MAX;
 }
 
-static uint32_t ggml_backend_webgpu_get_command_submit_batch_size() {
-    return WEBGPU_DEFAULT_COMMAND_SUBMIT_BATCH_SIZE;
+ਸਥਿਰ uint32_t ggml_backend_webgpu_get_command_submit_batch_ਮਾਪ() {
+    ਵਾਪਸ WEBGPU_DEFAULT_COMMAND_SUBMIT_BATCH_ਮਾਪ;
 }
 
-static void ggml_backend_webgpu_wait_queue(webgpu_global_context & ctx) {
-    wgpu::QueueWorkDoneStatus callback_status = wgpu::QueueWorkDoneStatus::Error;
-    std::string               callback_message;
+ਸਥਿਰ ਖਾਲੀ ggml_backend_webgpu_wait_ਕਤਾਰ(webgpu_global_context & ctx) {
+    wgpu::ਕਤਾਰ_Work_ਪੂਰਾ_ਸਥਿਤੀ callback_ਸਥਿਤੀ = wgpu::ਕਤਾਰ_Work_ਪੂਰਾ_ਸਥਿਤੀ::Error;
+    std::string               callback_ਸੁਨੇਹਾ;
 
-    const wgpu::WaitStatus wait_status = ctx->instance.WaitAny(
-        ctx->queue.OnSubmittedWorkDone(
-            wgpu::CallbackMode::AllowSpontaneous,
-            [&callback_status, &callback_message](wgpu::QueueWorkDoneStatus status, wgpu::StringView message) {
-                callback_status  = status;
-                callback_message = std::string(message);
+    ਅਚਲ wgpu::Wait_ਸਥਿਤੀ wait_ਸਥਿਤੀ = ctx->instance.WaitAny(
+        ctx->queue.On_Submitted_Work_ਪੂਰਾ(
+            wgpu::Callback_ਬਹੁਲਕ::AllowSpontaneous,
+            [&callback_ਸਥਿਤੀ, &callback_ਸੁਨੇਹਾ](wgpu::ਕਤਾਰ_Work_ਪੂਰਾ_ਸਥਿਤੀ ਸਥਿਤੀ, wgpu::StringView ਸੁਨੇਹਾ) {
+                callback_ਸਥਿਤੀ  = ਸਥਿਤੀ;
+                callback_ਸੁਨੇਹਾ = std::string(ਸੁਨੇਹਾ);
             }),
         WEBGPU_RUNTIME_WAIT_TIMEOUT_NS);
 
-    ggml_backend_webgpu_check_wait_status(wait_status, callback_status, wgpu::QueueWorkDoneStatus::Success,
-                                          "Queue wait", "Queue work", callback_message.c_str());
+    ggml_backend_webgpu_check_wait_ਸਥਿਤੀ(wait_ਸਥਿਤੀ, callback_ਸਥਿਤੀ, wgpu::ਕਤਾਰ_Work_ਪੂਰਾ_ਸਥਿਤੀ::Success,
+                                          "Queue wait", "Queue work", callback_ਸੁਨੇਹਾ.c_str());
 }
 
-static void ggml_backend_webgpu_map_buffer(webgpu_global_context & ctx,
-                                           wgpu::Buffer &          buffer,
-                                           wgpu::MapMode           mode,
-                                           size_t                  offset,
+ਸਥਿਰ ਖਾਲੀ ggml_backend_webgpu_map_ਬਫਰ(webgpu_global_context & ctx,
+                                           wgpu::ਬਫਰ_2 &          ਬਫਰ,
+                                           wgpu::Map_ਬਹੁਲਕ           mode,
+                                           size_t                  ਵਿੱਥ,
                                            size_t                  size) {
-    wgpu::MapAsyncStatus callback_status = wgpu::MapAsyncStatus::Error;
-    std::string          callback_message;
+    wgpu::Map_Async_ਸਥਿਤੀ callback_ਸਥਿਤੀ = wgpu::Map_Async_ਸਥਿਤੀ::Error;
+    std::string          callback_ਸੁਨੇਹਾ;
 
-    const wgpu::WaitStatus wait_status = ctx->instance.WaitAny(
-        buffer.MapAsync(mode, offset, size, wgpu::CallbackMode::AllowSpontaneous,
-                        [&callback_status, &callback_message](wgpu::MapAsyncStatus status, wgpu::StringView message) {
-                            callback_status  = status;
-                            callback_message = std::string(message);
+    ਅਚਲ wgpu::Wait_ਸਥਿਤੀ wait_ਸਥਿਤੀ = ctx->instance.WaitAny(
+        ਬਫਰ.MapAsync(mode, ਵਿੱਥ, size, wgpu::Callback_ਬਹੁਲਕ::AllowSpontaneous,
+                        [&callback_ਸਥਿਤੀ, &callback_ਸੁਨੇਹਾ](wgpu::Map_Async_ਸਥਿਤੀ ਸਥਿਤੀ, wgpu::StringView ਸੁਨੇਹਾ) {
+                            callback_ਸਥਿਤੀ  = ਸਥਿਤੀ;
+                            callback_ਸੁਨੇਹਾ = std::string(ਸੁਨੇਹਾ);
                         }),
         WEBGPU_RUNTIME_WAIT_TIMEOUT_NS);
 
-    ggml_backend_webgpu_check_wait_status(wait_status, callback_status, wgpu::MapAsyncStatus::Success,
-                                          "Buffer map wait", "Buffer map", callback_message.c_str());
+    ggml_backend_webgpu_check_wait_ਸਥਿਤੀ(wait_ਸਥਿਤੀ, callback_ਸਥਿਤੀ, wgpu::Map_Async_ਸਥਿਤੀ::Success,
+                                          "Buffer map wait", "Buffer map", callback_ਸੁਨੇਹਾ.c_str());
 }
 
-static void ggml_backend_webgpu_submit_commands(webgpu_context &          ctx,
-                                                const wgpu::CommandBuffer commands,
-                                                uint32_t &                num_inflight_batches) {
-    if (num_inflight_batches >= ctx->global_ctx->max_inflight_batches) {
-        ggml_backend_webgpu_wait_queue(ctx->global_ctx);
-        num_inflight_batches = 0;
+ਸਥਿਰ ਖਾਲੀ ggml_backend_webgpu_submit_commands(webgpu_context &          ctx,
+                                                ਅਚਲ wgpu::Command_ਬਫਰ commands,
+                                                uint32_t &                ਅੰਕ_inflight_batches) {
+    ਜੇ (ਅੰਕ_inflight_batches >= ctx->global_ctx->max_inflight_batches) {
+        ggml_backend_webgpu_wait_ਕਤਾਰ(ctx->global_ctx);
+        ਅੰਕ_inflight_batches = 0;
     }
 
     ctx->global_ctx->queue.Submit(1, &commands);
-    num_inflight_batches++;
+    ਅੰਕ_inflight_batches++;
 }
 
-#ifdef GGML_WEBGPU_DEBUG
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_WEBGPU_DEBUG
 // This function adds debugging information to shaders, as WebGPU does not support printing directly.
 // To use, add a bind group entry to the setup for the shader you are debugging, add the buffer and
 // debug statements in the shader, and then call this function after encoding the commands and submitting them.
-static void ggml_backend_webgpu_debug(webgpu_global_context & ctx) {
+ਸਥਿਰ ਖਾਲੀ ggml_backend_webgpu_debug(webgpu_global_context & ctx) {
     wgpu::CommandEncoder encoder = ctx->device.CreateCommandEncoder();
-    encoder.CopyBufferToBuffer(ctx->debug_dev_buf, 0, ctx->debug_host_buf, 0, ctx->debug_host_buf.GetSize());
-    wgpu::CommandBuffer commands = encoder.Finish();
+    encoder.Copy_ਬਫਰ_ਮੰਜ਼ਿਲ_ਬਫਰ(ctx->debug_dev_buf, 0, ctx->debug_host_buf, 0, ctx->debug_host_buf.Get_ਮਾਪ());
+    wgpu::Command_ਬਫਰ commands = encoder.ਅੰਤ_2();
     ctx->queue.Submit(1, &commands);
-    ggml_backend_webgpu_map_buffer(ctx, ctx->debug_host_buf, wgpu::MapMode::Read, 0, ctx->debug_host_buf.GetSize());
-    const float * debug_data = (const float *) ctx->debug_host_buf.GetConstMappedRange();
-    std::cout << "debug[0]: " << debug_data[0] << "\n";
+    ggml_backend_webgpu_map_ਬਫਰ(ctx, ctx->debug_host_buf, wgpu::Map_ਬਹੁਲਕ::Read, 0, ctx->debug_host_buf.Get_ਮਾਪ());
+    ਅਚਲ ਦਸ਼ਮਲਵ * debug_ਅੰਕੜੇ = (ਅਚਲ ਦਸ਼ਮਲਵ *) ctx->debug_host_buf.GetConstMappedRange();
+    std::ਬਾਹਰ << "debug[0]: " << debug_ਅੰਕੜੇ[0] << "\n";
     ctx->debug_host_buf.Unmap();
 }
-#endif
+#ਜੇ_ਅੰਤ
 
-static webgpu_encoded_op ggml_backend_webgpu_build_multi(webgpu_context &                          ctx,
-                                                         const std::vector<webgpu_dispatch_desc> & dispatches) {
-    webgpu_encoded_op            result = {};
-    std::vector<wgpu::BindGroup> bind_groups;
+ਸਥਿਰ webgpu_encoded_op ggml_backend_webgpu_build_multi(webgpu_context &                          ctx,
+                                                         ਅਚਲ std::vector<webgpu_dispatch_desc> & dispatches) {
+    webgpu_encoded_op            ਨਤੀਜਾ = {};
+    std::vector<wgpu::Bind_ਸਮੂਹ> bind_groups;
     std::vector<size_t>          param_offsets;
-    result.num_kernels = dispatches.size();
+    ਨਤੀਜਾ.ਅੰਕ_kernels = dispatches.size();
 
-    for (size_t i = 0; i < dispatches.size(); i++) {
-        const webgpu_dispatch_desc & dispatch     = dispatches[i];
-        const size_t                 param_size   = dispatch.params.size() * sizeof(uint32_t);
-        const size_t                 param_offset = ctx->param_arena.alloc_slot(param_size);
+    ਲਈ (size_t i = 0; i < dispatches.size(); i++) {
+        ਅਚਲ webgpu_dispatch_desc & dispatch     = dispatches[i];
+        ਅਚਲ size_t                 param_ਮਾਪ   = dispatch.params.size() * ਆਕਾਰ(uint32_t);
+        ਅਚਲ size_t                 param_ਵਿੱਥ = ctx->param_arena.alloc_ਥਾਂ(param_ਮਾਪ);
 
-        std::vector<wgpu::BindGroupEntry> entries            = dispatch.bind_group_entries;
-        uint32_t                          params_binding_num = entries.size();
-        entries.push_back(ggml_webgpu_make_bind_group_entry(params_binding_num, ctx->param_arena.buffer, param_offset,
-                                                            ctx->param_arena.slot_size));
+        std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> entries            = dispatch.bind_ਸਮੂਹ_entries;
+        uint32_t                          params_binding_ਅੰਕ = entries.size();
+        entries.push_back(ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(params_binding_ਅੰਕ, ctx->param_arena.ਬਫਰ, param_ਵਿੱਥ,
+                                                            ctx->param_arena.ਥਾਂ_ਮਾਪ));
 
-        wgpu::BindGroupDescriptor bind_group_desc;
-        bind_group_desc.layout     = dispatch.pipeline.pipeline.GetBindGroupLayout(0);
-        bind_group_desc.entryCount = entries.size();
-        bind_group_desc.entries    = entries.data();
-        bind_group_desc.label      = dispatch.pipeline.name.c_str();
-        bind_groups.push_back(ctx->global_ctx->device.CreateBindGroup(&bind_group_desc));
-        param_offsets.push_back(param_offset);
+        wgpu::Bind_ਸਮੂਹ_Descriptor bind_ਸਮੂਹ_desc;
+        bind_ਸਮੂਹ_desc.layout     = dispatch.pipeline.pipeline.Get_Bind_ਸਮੂਹ_Layout(0);
+        bind_ਸਮੂਹ_desc.ਇੰਦਰਾਜ_ਗਿਣਤੀ = entries.size();
+        bind_ਸਮੂਹ_desc.entries    = entries.ਅੰਕੜੇ();
+        bind_ਸਮੂਹ_desc.label      = dispatch.pipeline.name.c_str();
+        bind_groups.push_back(ctx->global_ctx->device.Create_Bind_ਸਮੂਹ(&bind_ਸਮੂਹ_desc));
+        param_offsets.push_back(param_ਵਿੱਥ);
     }
 
-    for (size_t i = 0; i < param_offsets.size(); i++) {
-        ctx->global_ctx->queue.WriteBuffer(ctx->param_arena.buffer, param_offsets[i], dispatches[i].params.data(),
-                                           dispatches[i].params.size() * sizeof(uint32_t));
+    ਲਈ (size_t i = 0; i < param_offsets.size(); i++) {
+        ctx->global_ctx->queue.Write_ਬਫਰ(ctx->param_arena.ਬਫਰ, param_offsets[i], dispatches[i].params.ਅੰਕੜੇ(),
+                                           dispatches[i].params.size() * ਆਕਾਰ(uint32_t));
     }
 
-#ifdef GGML_WEBGPU_GPU_PROFILE
-    for (size_t i = 0; i < dispatches.size(); i++) {
-        GGML_ASSERT(ctx->profile_timestamp_query_count + 2 <= WEBGPU_MAX_PROFILE_QUERY_COUNT);
-        const uint32_t query_begin = ctx->profile_timestamp_query_count++;
-        const uint32_t query_end   = ctx->profile_timestamp_query_count++;
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_WEBGPU_GPU_PROFILE
+    ਲਈ (size_t i = 0; i < dispatches.size(); i++) {
+        GGML_ASSERT(ctx->profile_timestamp_query_ਗਿਣਤੀ + 2 <= WEBGPU_MAX_PROFILE_QUERY_ਗਿਣਤੀ);
+        ਅਚਲ uint32_t query_begin = ctx->profile_timestamp_query_ਗਿਣਤੀ++;
+        ਅਚਲ uint32_t query_ਸਿਰਾ   = ctx->profile_timestamp_query_ਗਿਣਤੀ++;
 
         wgpu::PassTimestampWrites ts_writes   = {};
-        ts_writes.querySet                    = ctx->profile_timestamp_query_set;
-        ts_writes.beginningOfPassWriteIndex   = query_begin;
-        ts_writes.endOfPassWriteIndex         = query_end;
+        ts_writes.query_ਸੈੱਟ                    = ctx->profile_timestamp_query_ਸੈੱਟ;
+        ts_writes.beginning_ਦਾ_Pass_Write_ਸੂਚਕਾਂਕ   = query_begin;
+        ts_writes.ਸਿਰਾ_ਦਾ_Pass_Write_ਸੂਚਕਾਂਕ         = query_ਸਿਰਾ;
         wgpu::ComputePassDescriptor pass_desc = {};
         pass_desc.timestampWrites             = &ts_writes;
 
-        wgpu::ComputePassEncoder pass = ctx->active_command_encoder.BeginComputePass(&pass_desc);
+        wgpu::ComputePassEncoder pass = ctx->ਸਰਗਰਮ_command_encoder.BeginComputePass(&pass_desc);
 
-        pass.SetPipeline(dispatches[i].pipeline.pipeline);
-        pass.SetBindGroup(0, bind_groups[i]);
-        pass.DispatchWorkgroups(dispatches[i].workgroups.first, dispatches[i].workgroups.second, 1);
-        pass.End();
-        result.pipeline_names.push_back(dispatches[i].pipeline.name);
+        pass.ਸੈੱਟ_Pipeline(dispatches[i].pipeline.pipeline);
+        pass.ਸੈੱਟ_Bind_ਸਮੂਹ(0, bind_groups[i]);
+        pass.DispatchWorkgroups(dispatches[i].workgroups.ਪਹਿਲਾ, dispatches[i].workgroups.second, 1);
+        pass.ਸਿਰਾ_2();
+        ਨਤੀਜਾ.pipeline_ਨਾਂ.push_back(dispatches[i].pipeline.name);
     }
-#else
-    for (size_t i = 0; i < dispatches.size(); i++) {
-        if (ctx->batch_compute_passes) {
-            ctx->active_compute_pass.SetPipeline(dispatches[i].pipeline.pipeline);
-            ctx->active_compute_pass.SetBindGroup(0, bind_groups[i]);
-            ctx->active_compute_pass.DispatchWorkgroups(dispatches[i].workgroups.first, dispatches[i].workgroups.second,
+#ਨਹੀਂਤਾਂ
+    ਲਈ (size_t i = 0; i < dispatches.size(); i++) {
+        ਜੇ (ctx->batch_compute_passes) {
+            ctx->ਸਰਗਰਮ_compute_pass.ਸੈੱਟ_Pipeline(dispatches[i].pipeline.pipeline);
+            ctx->ਸਰਗਰਮ_compute_pass.ਸੈੱਟ_Bind_ਸਮੂਹ(0, bind_groups[i]);
+            ctx->ਸਰਗਰਮ_compute_pass.DispatchWorkgroups(dispatches[i].workgroups.ਪਹਿਲਾ, dispatches[i].workgroups.second,
                                                         1);
-        } else {
-            wgpu::ComputePassEncoder pass = ctx->active_command_encoder.BeginComputePass();
-            pass.SetPipeline(dispatches[i].pipeline.pipeline);
-            pass.SetBindGroup(0, bind_groups[i]);
-            pass.DispatchWorkgroups(dispatches[i].workgroups.first, dispatches[i].workgroups.second, 1);
-            pass.End();
+        } ਨਹੀਂਤਾਂ {
+            wgpu::ComputePassEncoder pass = ctx->ਸਰਗਰਮ_command_encoder.BeginComputePass();
+            pass.ਸੈੱਟ_Pipeline(dispatches[i].pipeline.pipeline);
+            pass.ਸੈੱਟ_Bind_ਸਮੂਹ(0, bind_groups[i]);
+            pass.DispatchWorkgroups(dispatches[i].workgroups.ਪਹਿਲਾ, dispatches[i].workgroups.second, 1);
+            pass.ਸਿਰਾ_2();
         }
     }
-#endif
+#ਜੇ_ਅੰਤ
 
-    return result;
+    ਵਾਪਸ ਨਤੀਜਾ;
 }
 
-static webgpu_encoded_op ggml_backend_webgpu_build(webgpu_context &                  ctx,
+ਸਥਿਰ webgpu_encoded_op ggml_backend_webgpu_build(webgpu_context &                  ctx,
                                                    webgpu_pipeline &                 pipeline,
                                                    std::vector<uint32_t>             params,
-                                                   std::vector<wgpu::BindGroupEntry> bind_group_entries,
+                                                   std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> bind_ਸਮੂਹ_entries,
                                                    uint32_t                          wg_x,
                                                    uint32_t                          wg_y = 1) {
-    return ggml_backend_webgpu_build_multi(
+    ਵਾਪਸ ggml_backend_webgpu_build_multi(
         ctx, {
-                 { pipeline, std::move(params), std::move(bind_group_entries), { wg_x, wg_y } },
+                 { pipeline, std::move(params), std::move(bind_ਸਮੂਹ_entries), { wg_x, wg_y } },
     });
 }
 
-static void ggml_backend_webgpu_buffer_memset(webgpu_global_context & ctx,
-                                              wgpu::Buffer &          buf,
+ਸਥਿਰ ਖਾਲੀ ggml_backend_webgpu_ਬਫਰ_memset(webgpu_global_context & ctx,
+                                              wgpu::ਬਫਰ_2 &          buf,
                                               uint32_t                value,
-                                              size_t                  offset,
+                                              size_t                  ਵਿੱਥ,
                                               size_t                  size) {
-    std::vector<uint32_t>             params  = { (uint32_t) offset, (uint32_t) size, value };
-    std::vector<wgpu::BindGroupEntry> entries = { ggml_webgpu_make_bind_group_entry(0, buf, 0, buf.GetSize()) };
-    size_t                            bytes_per_wg =
-        ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup * ctx->capabilities.memset_bytes_per_thread;
-    uint32_t wg_x = CEIL_DIV(size + 3, bytes_per_wg);
+    std::vector<uint32_t>             params  = { (uint32_t) ਵਿੱਥ, (uint32_t) size, value };
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> entries = { ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(0, buf, 0, buf.Get_ਮਾਪ()) };
+    size_t                            ਬਾਈਟਾਂ_ਪ੍ਰਤੀ_wg =
+        ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup * ctx->capabilities.memset_ਬਾਈਟਾਂ_ਪ੍ਰਤੀ_thread;
+    uint32_t wg_x = CEIL_DIV(size + 3, ਬਾਈਟਾਂ_ਪ੍ਰਤੀ_wg);
 
-    ctx->queue.WriteBuffer(ctx->memset_params_buf, 0, params.data(), params.size() * sizeof(uint32_t));
+    ctx->queue.Write_ਬਫਰ(ctx->memset_params_buf, 0, params.ਅੰਕੜੇ(), params.size() * ਆਕਾਰ(uint32_t));
 
-    wgpu::BindGroupEntry params_entry = {};
-    params_entry.binding              = 1;
-    params_entry.buffer               = ctx->memset_params_buf;
-    params_entry.offset               = 0;
-    params_entry.size                 = WEBGPU_PARAMS_BUF_SIZE_BYTES;
-    entries.push_back(params_entry);
+    wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ params_ਇੰਦਰਾਜ = {};
+    params_ਇੰਦਰਾਜ.binding              = 1;
+    params_ਇੰਦਰਾਜ.ਬਫਰ               = ctx->memset_params_buf;
+    params_ਇੰਦਰਾਜ.ਵਿੱਥ               = 0;
+    params_ਇੰਦਰਾਜ.size                 = WEBGPU_PARAMS_BUF_ਮਾਪ_ਬਾਈਟਾਂ;
+    entries.push_back(params_ਇੰਦਰਾਜ);
 
-    wgpu::BindGroupDescriptor bind_group_desc;
-    bind_group_desc.layout     = ctx->memset_pipeline.pipeline.GetBindGroupLayout(0);
-    bind_group_desc.entryCount = entries.size();
-    bind_group_desc.entries    = entries.data();
-    bind_group_desc.label      = ctx->memset_pipeline.name.c_str();
-    wgpu::BindGroup bind_group = ctx->device.CreateBindGroup(&bind_group_desc);
+    wgpu::Bind_ਸਮੂਹ_Descriptor bind_ਸਮੂਹ_desc;
+    bind_ਸਮੂਹ_desc.layout     = ctx->memset_pipeline.pipeline.Get_Bind_ਸਮੂਹ_Layout(0);
+    bind_ਸਮੂਹ_desc.ਇੰਦਰਾਜ_ਗਿਣਤੀ = entries.size();
+    bind_ਸਮੂਹ_desc.entries    = entries.ਅੰਕੜੇ();
+    bind_ਸਮੂਹ_desc.label      = ctx->memset_pipeline.name.c_str();
+    wgpu::Bind_ਸਮੂਹ bind_ਸਮੂਹ = ctx->device.Create_Bind_ਸਮੂਹ(&bind_ਸਮੂਹ_desc);
 
     wgpu::CommandEncoder     encoder = ctx->device.CreateCommandEncoder();
     wgpu::ComputePassEncoder pass    = encoder.BeginComputePass();
-    pass.SetPipeline(ctx->memset_pipeline.pipeline);
-    pass.SetBindGroup(0, bind_group);
+    pass.ਸੈੱਟ_Pipeline(ctx->memset_pipeline.pipeline);
+    pass.ਸੈੱਟ_Bind_ਸਮੂਹ(0, bind_ਸਮੂਹ);
     pass.DispatchWorkgroups(wg_x, 1, 1);
-    pass.End();
+    pass.ਸਿਰਾ_2();
 
-    wgpu::CommandBuffer              command  = encoder.Finish();
-    std::vector<wgpu::CommandBuffer> commands = { command };
-    ctx->queue.Submit(commands.size(), commands.data());
+    wgpu::Command_ਬਫਰ              command  = encoder.ਅੰਤ_2();
+    std::vector<wgpu::Command_ਬਫਰ> commands = { command };
+    ctx->queue.Submit(commands.size(), commands.ਅੰਕੜੇ());
 }
 
 /** End WebGPU Actions */
 
 /** GGML Backend Interface */
 
-static const char * ggml_backend_webgpu_name(ggml_backend_t backend) {
+ਸਥਿਰ ਅਚਲ ਅੱਖਰ * ggml_backend_webgpu_name(ggml_backend_t backend) {
     ggml_backend_webgpu_context * ctx = (ggml_backend_webgpu_context *) backend->context;
-    return ctx->name.c_str();
+    ਵਾਪਸ ctx->name.c_str();
 }
 
-static void ggml_backend_webgpu_free(ggml_backend_t backend) {
+ਸਥਿਰ ਖਾਲੀ ggml_backend_webgpu_free(ggml_backend_t backend) {
     ggml_backend_webgpu_context * ctx = (ggml_backend_webgpu_context *) backend->context;
     WEBGPU_LOG_DEBUG("ggml_backend_webgpu_free(" << ctx->name << ")");
 
-#ifdef GGML_WEBGPU_CPU_PROFILE
-    std::cout << "\n[ggml_webgpu cpu profiling summary]\n";
-    double total_cpu = 0.0;
-    for (const auto & kv : ctx->webgpu_ctx->global_ctx->cpu_time_ms) {
-        total_cpu += kv.second;
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_WEBGPU_CPU_PROFILE
+    std::ਬਾਹਰ << "\n[ggml_webgpu cpu profiling summary]\n";
+    ਦੁੱਗਣਾ ਕੁੱਲ_cpu = 0.0;
+    ਲਈ (ਅਚਲ ਸਵੈਚਾਲਿਤ & kv : ctx->webgpu_ctx->global_ctx->cpu_ਸਮਾਂ_ms) {
+        ਕੁੱਲ_cpu += kv.second;
     }
-    std::cout << "ggml_webgpu: total cpu time: " << total_cpu << " ms\n";
-    std::cout << "ggml_webgpu: cpu breakdown:\n";
-    for (const auto & kv : ctx->webgpu_ctx->global_ctx->cpu_time_ms) {
-        double pct = (total_cpu > 0.0) ? (kv.second / total_cpu * 100.0) : 0.0;
-        std::cout << "ggml_webgpu:  " << kv.first << ": " << kv.second << " ms (" << pct << "%)\n";
+    std::ਬਾਹਰ << "ggml_webgpu: total cpu time: " << ਕੁੱਲ_cpu << " ms\n";
+    std::ਬਾਹਰ << "ggml_webgpu: cpu breakdown:\n";
+    ਲਈ (ਅਚਲ ਸਵੈਚਾਲਿਤ & kv : ctx->webgpu_ctx->global_ctx->cpu_ਸਮਾਂ_ms) {
+        ਦੁੱਗਣਾ pct = (ਕੁੱਲ_cpu > 0.0) ? (kv.second / ਕੁੱਲ_cpu * 100.0) : 0.0;
+        std::ਬਾਹਰ << "ggml_webgpu:  " << kv.ਪਹਿਲਾ << ": " << kv.second << " ms (" << pct << "%)\n";
     }
-    if (ctx->webgpu_ctx->global_ctx->cpu_detail_ms.size() > 0) {
-        std::cout << "ggml_webgpu: cpu detailed breakdown:\n";
+    ਜੇ (ctx->webgpu_ctx->global_ctx->cpu_detail_ms.size() > 0) {
+        std::ਬਾਹਰ << "ggml_webgpu: cpu detailed breakdown:\n";
     }
-    for (const auto & kv : ctx->webgpu_ctx->global_ctx->cpu_detail_ms) {
-        double pct = (total_cpu > 0.0) ? (kv.second / total_cpu * 100.0) : 0.0;
-        std::cout << "ggml_webgpu:  " << kv.first << ": " << kv.second << " ms (" << pct << "%)\n";
+    ਲਈ (ਅਚਲ ਸਵੈਚਾਲਿਤ & kv : ctx->webgpu_ctx->global_ctx->cpu_detail_ms) {
+        ਦੁੱਗਣਾ pct = (ਕੁੱਲ_cpu > 0.0) ? (kv.second / ਕੁੱਲ_cpu * 100.0) : 0.0;
+        std::ਬਾਹਰ << "ggml_webgpu:  " << kv.ਪਹਿਲਾ << ": " << kv.second << " ms (" << pct << "%)\n";
     }
-#endif
+#ਜੇ_ਅੰਤ
 
-#ifdef GGML_WEBGPU_GPU_PROFILE
-    std::cout << "\n[ggml_webgpu gpu profiling summary]\n";
-    double total_gpu = 0.0;
-    for (const auto & kv : ctx->webgpu_ctx->shader_gpu_time_ms) {
-        total_gpu += kv.second;
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_WEBGPU_GPU_PROFILE
+    std::ਬਾਹਰ << "\n[ggml_webgpu gpu profiling summary]\n";
+    ਦੁੱਗਣਾ ਕੁੱਲ_gpu = 0.0;
+    ਲਈ (ਅਚਲ ਸਵੈਚਾਲਿਤ & kv : ctx->webgpu_ctx->shader_gpu_ਸਮਾਂ_ms) {
+        ਕੁੱਲ_gpu += kv.second;
     }
-    std::cout << "ggml_webgpu: total gpu time (all shaders): " << total_gpu << " ms\n";
-    std::cout << "\nggml_webgpu: gpu breakdown:\n";
-    for (const auto & kv : ctx->webgpu_ctx->shader_gpu_time_ms) {
-        double pct = (total_gpu > 0.0) ? (kv.second / total_gpu * 100.0) : 0.0;
-        std::cout << "ggml_webgpu:  " << kv.first << ": " << kv.second << " ms (" << std::fixed << std::setprecision(2)
+    std::ਬਾਹਰ << "ggml_webgpu: total gpu time (all shaders): " << ਕੁੱਲ_gpu << " ms\n";
+    std::ਬਾਹਰ << "\nggml_webgpu: gpu breakdown:\n";
+    ਲਈ (ਅਚਲ ਸਵੈਚਾਲਿਤ & kv : ctx->webgpu_ctx->shader_gpu_ਸਮਾਂ_ms) {
+        ਦੁੱਗਣਾ pct = (ਕੁੱਲ_gpu > 0.0) ? (kv.second / ਕੁੱਲ_gpu * 100.0) : 0.0;
+        std::ਬਾਹਰ << "ggml_webgpu:  " << kv.ਪਹਿਲਾ << ": " << kv.second << " ms (" << std::fixed << std::setprecision(2)
                   << pct << "%)\n";
     }
-#endif
+#ਜੇ_ਅੰਤ
 
-#if defined(GGML_WEBGPU_CPU_PROFILE) && defined(GGML_WEBGPU_GPU_PROFILE)
-    std::cout << "ggml_webgpu: gpu/cpu ratio: " << (total_cpu > 0.0 ? total_gpu / total_cpu : 0.0) << "\n";
-#endif
+#ਜੇ defined(GGML_WEBGPU_CPU_PROFILE) && defined(GGML_WEBGPU_GPU_PROFILE)
+    std::ਬਾਹਰ << "ggml_webgpu: gpu/cpu ratio: " << (ਕੁੱਲ_cpu > 0.0 ? ਕੁੱਲ_gpu / ਕੁੱਲ_cpu : 0.0) << "\n";
+#ਜੇ_ਅੰਤ
 
-    delete ctx;
-    delete backend;
+    ਮਿਟਾਓ ctx;
+    ਮਿਟਾਓ backend;
 }
 
-static webgpu_encoded_op ggml_webgpu_cpy(webgpu_context & ctx, ggml_tensor * src, ggml_tensor * dst) {
+ਸਥਿਰ webgpu_encoded_op ggml_webgpu_cpy(webgpu_context & ctx, ggml_tensor * src, ggml_tensor * dst) {
     ggml_webgpu_shader_lib_context shader_lib_ctx = {};
     shader_lib_ctx.src0                           = src;
     shader_lib_ctx.dst                            = dst;
-    shader_lib_ctx.max_wg_size = ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
+    shader_lib_ctx.max_wg_ਮਾਪ = ctx->global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
 
     webgpu_pipeline pipeline = ctx->shader_lib->get_cpy_pipeline(shader_lib_ctx);
 
-    auto * decisions = static_cast<ggml_webgpu_generic_shader_decisions *>(pipeline.context.get());
+    ਸਵੈਚਾਲਿਤ * decisions = static_cast<ggml_webgpu_generic_shader_decisions *>(pipeline.context.get());
 
     uint32_t ne = (uint32_t) ggml_nelements(dst);
 
     std::vector<uint32_t> params = {
-        ne, (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src) / ggml_type_size(src->type)),
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_size(dst->type)),
+        ne, (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src) / ggml_type_ਮਾਪ(src->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_ਮਾਪ(dst->type)),
         // Convert byte-strides to element-strides
-        (uint32_t) (src->nb[0] / ggml_type_size(src->type)), (uint32_t) (src->nb[1] / ggml_type_size(src->type)),
-        (uint32_t) (src->nb[2] / ggml_type_size(src->type)), (uint32_t) (src->nb[3] / ggml_type_size(src->type)),
-        (uint32_t) (dst->nb[0] / ggml_type_size(dst->type)), (uint32_t) (dst->nb[1] / ggml_type_size(dst->type)),
-        (uint32_t) (dst->nb[2] / ggml_type_size(dst->type)), (uint32_t) (dst->nb[3] / ggml_type_size(dst->type)),
+        (uint32_t) (src->nb[0] / ggml_type_ਮਾਪ(src->type)), (uint32_t) (src->nb[1] / ggml_type_ਮਾਪ(src->type)),
+        (uint32_t) (src->nb[2] / ggml_type_ਮਾਪ(src->type)), (uint32_t) (src->nb[3] / ggml_type_ਮਾਪ(src->type)),
+        (uint32_t) (dst->nb[0] / ggml_type_ਮਾਪ(dst->type)), (uint32_t) (dst->nb[1] / ggml_type_ਮਾਪ(dst->type)),
+        (uint32_t) (dst->nb[2] / ggml_type_ਮਾਪ(dst->type)), (uint32_t) (dst->nb[3] / ggml_type_ਮਾਪ(dst->type)),
         // Logical shapes
         (uint32_t) src->ne[0], (uint32_t) src->ne[1], (uint32_t) src->ne[2], (uint32_t) dst->ne[0],
         (uint32_t) dst->ne[1], (uint32_t) dst->ne[2]
     };
 
-    std::vector<wgpu::BindGroupEntry> entries = {
-        ggml_webgpu_make_tensor_bind_group_entry(ctx, 0, src),
-        ggml_webgpu_make_tensor_bind_group_entry(ctx, 1, dst),
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> entries = {
+        ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 0, src),
+        ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 1, dst),
     };
 
     uint32_t wg_x;
     uint32_t wg_y;
-    uint32_t total_wg = CEIL_DIV(ne, decisions->wg_size);
-    compute_2d_workgroups(total_wg, ctx->global_ctx->capabilities.limits.maxComputeWorkgroupsPerDimension, wg_x, wg_y);
-    return ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
+    uint32_t ਕੁੱਲ_wg = CEIL_DIV(ne, decisions->wg_ਮਾਪ);
+    compute_2d_workgroups(ਕੁੱਲ_wg, ctx->global_ctx->capabilities.limits.max_Compute_Workgroups_ਪ੍ਰਤੀ_Dimension, wg_x, wg_y);
+    ਵਾਪਸ ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
 }
 
-static webgpu_encoded_op ggml_webgpu_set(webgpu_context & ctx,
+ਸਥਿਰ webgpu_encoded_op ggml_webgpu_ਸੈੱਟ(webgpu_context & ctx,
                                          ggml_tensor *    src0,
                                          ggml_tensor *    src1,
                                          ggml_tensor *    dst) {
@@ -806,31 +806,31 @@ static webgpu_encoded_op ggml_webgpu_set(webgpu_context & ctx,
     shader_lib_ctx.src0                           = src0;
     shader_lib_ctx.src1                           = src1;
     shader_lib_ctx.dst                            = dst;
-    shader_lib_ctx.max_wg_size = ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
+    shader_lib_ctx.max_wg_ਮਾਪ = ctx->global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
 
-    webgpu_pipeline pipeline = ctx->shader_lib->get_set_pipeline(shader_lib_ctx);
+    webgpu_pipeline pipeline = ctx->shader_lib->get_ਸੈੱਟ_pipeline(shader_lib_ctx);
 
-    auto *     decisions = static_cast<ggml_webgpu_generic_shader_decisions *>(pipeline.context.get());
-    const bool inplace   = decisions->inplace;
+    ਸਵੈਚਾਲਿਤ *     decisions = static_cast<ggml_webgpu_generic_shader_decisions *>(pipeline.context.get());
+    ਅਚਲ ਤਾਰਕਿਕ inplace   = decisions->inplace;
 
-    const uint32_t ne            = inplace ? (uint32_t) ggml_nelements(src1) : (uint32_t) ggml_nelements(dst);
-    const uint32_t dst_type_size = (uint32_t) ggml_type_size(dst->type);
+    ਅਚਲ uint32_t ne            = inplace ? (uint32_t) ggml_nelements(src1) : (uint32_t) ggml_nelements(dst);
+    ਅਚਲ uint32_t dst_type_ਮਾਪ = (uint32_t) ggml_type_ਮਾਪ(dst->type);
 
     std::vector<uint32_t> params = {
         ne,
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src0) / ggml_type_size(src0->type)),
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_size(src1->type)),
-        (uint32_t) (((const int32_t *) dst->op_params)[3] / dst_type_size),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src0) / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_ਮਾਪ(src1->type)),
+        (uint32_t) (((ਅਚਲ int32_t *) dst->op_params)[3] / dst_type_ਮਾਪ),
 
-        (uint32_t) (src1->nb[0] / ggml_type_size(src1->type)),
-        (uint32_t) (src1->nb[1] / ggml_type_size(src1->type)),
-        (uint32_t) (src1->nb[2] / ggml_type_size(src1->type)),
-        (uint32_t) (src1->nb[3] / ggml_type_size(src1->type)),
+        (uint32_t) (src1->nb[0] / ggml_type_ਮਾਪ(src1->type)),
+        (uint32_t) (src1->nb[1] / ggml_type_ਮਾਪ(src1->type)),
+        (uint32_t) (src1->nb[2] / ggml_type_ਮਾਪ(src1->type)),
+        (uint32_t) (src1->nb[3] / ggml_type_ਮਾਪ(src1->type)),
 
         1u,
-        (uint32_t) (((const int32_t *) dst->op_params)[0] / dst_type_size),
-        (uint32_t) (((const int32_t *) dst->op_params)[1] / dst_type_size),
-        (uint32_t) (((const int32_t *) dst->op_params)[2] / dst_type_size),
+        (uint32_t) (((ਅਚਲ int32_t *) dst->op_params)[0] / dst_type_ਮਾਪ),
+        (uint32_t) (((ਅਚਲ int32_t *) dst->op_params)[1] / dst_type_ਮਾਪ),
+        (uint32_t) (((ਅਚਲ int32_t *) dst->op_params)[2] / dst_type_ਮਾਪ),
 
         (uint32_t) src1->ne[0],
         (uint32_t) src1->ne[1],
@@ -838,43 +838,43 @@ static webgpu_encoded_op ggml_webgpu_set(webgpu_context & ctx,
         (uint32_t) src1->ne[3],
     };
 
-    std::vector<wgpu::BindGroupEntry> entries;
-    uint32_t                          binding_index = 0;
-    if (!inplace) {
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 0, src0));
-        binding_index++;
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> entries;
+    uint32_t                          binding_ਸੂਚਕਾਂਕ = 0;
+    ਜੇ (!inplace) {
+        entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 0, src0));
+        binding_ਸੂਚਕਾਂਕ++;
     }
-    entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_index, src1));
-    entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_index + 1, dst));
+    entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, binding_ਸੂਚਕਾਂਕ, src1));
+    entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, binding_ਸੂਚਕਾਂਕ + 1, dst));
 
     uint32_t wg_x;
     uint32_t wg_y;
-    uint32_t total_wg = CEIL_DIV(ne, decisions->wg_size);
-    compute_2d_workgroups(total_wg, ctx->global_ctx->capabilities.limits.maxComputeWorkgroupsPerDimension, wg_x, wg_y);
-    return ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
+    uint32_t ਕੁੱਲ_wg = CEIL_DIV(ne, decisions->wg_ਮਾਪ);
+    compute_2d_workgroups(ਕੁੱਲ_wg, ctx->global_ctx->capabilities.limits.max_Compute_Workgroups_ਪ੍ਰਤੀ_Dimension, wg_x, wg_y);
+    ਵਾਪਸ ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
 }
 
-static webgpu_encoded_op ggml_webgpu_pad(webgpu_context & ctx, ggml_tensor * src, ggml_tensor * dst) {
+ਸਥਿਰ webgpu_encoded_op ggml_webgpu_pad(webgpu_context & ctx, ggml_tensor * src, ggml_tensor * dst) {
     ggml_webgpu_shader_lib_context shader_lib_ctx = {};
     shader_lib_ctx.src0                           = src;
     shader_lib_ctx.dst                            = dst;
-    shader_lib_ctx.max_wg_size = ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
+    shader_lib_ctx.max_wg_ਮਾਪ = ctx->global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
 
     webgpu_pipeline pipeline = ctx->shader_lib->get_pad_pipeline(shader_lib_ctx);
 
-    auto * decisions = static_cast<ggml_webgpu_generic_shader_decisions *>(pipeline.context.get());
+    ਸਵੈਚਾਲਿਤ * decisions = static_cast<ggml_webgpu_generic_shader_decisions *>(pipeline.context.get());
 
-    const uint32_t ne = (uint32_t) ggml_nelements(dst);
+    ਅਚਲ uint32_t ne = (uint32_t) ggml_nelements(dst);
 
     std::vector<uint32_t> params = {
         ne,
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src) / ggml_type_size(src->type)),
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_size(dst->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src) / ggml_type_ਮਾਪ(src->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_ਮਾਪ(dst->type)),
         // Strides (in elements)
-        (uint32_t) (src->nb[0] / ggml_type_size(src->type)),
-        (uint32_t) (src->nb[1] / ggml_type_size(src->type)),
-        (uint32_t) (src->nb[2] / ggml_type_size(src->type)),
-        (uint32_t) (src->nb[3] / ggml_type_size(src->type)),
+        (uint32_t) (src->nb[0] / ggml_type_ਮਾਪ(src->type)),
+        (uint32_t) (src->nb[1] / ggml_type_ਮਾਪ(src->type)),
+        (uint32_t) (src->nb[2] / ggml_type_ਮਾਪ(src->type)),
+        (uint32_t) (src->nb[3] / ggml_type_ਮਾਪ(src->type)),
         // Shapes
         (uint32_t) src->ne[0],
         (uint32_t) src->ne[1],
@@ -895,19 +895,19 @@ static webgpu_encoded_op ggml_webgpu_pad(webgpu_context & ctx, ggml_tensor * src
         (uint32_t) ggml_get_op_params_i32(dst, 7),
     };
 
-    std::vector<wgpu::BindGroupEntry> entries = {
-        ggml_webgpu_make_tensor_bind_group_entry(ctx, 0, src),
-        ggml_webgpu_make_tensor_bind_group_entry(ctx, 1, dst),
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> entries = {
+        ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 0, src),
+        ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 1, dst),
     };
 
     uint32_t wg_x;
     uint32_t wg_y;
-    uint32_t total_wg = CEIL_DIV(ne, decisions->wg_size);
-    compute_2d_workgroups(total_wg, ctx->global_ctx->capabilities.limits.maxComputeWorkgroupsPerDimension, wg_x, wg_y);
-    return ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
+    uint32_t ਕੁੱਲ_wg = CEIL_DIV(ne, decisions->wg_ਮਾਪ);
+    compute_2d_workgroups(ਕੁੱਲ_wg, ctx->global_ctx->capabilities.limits.max_Compute_Workgroups_ਪ੍ਰਤੀ_Dimension, wg_x, wg_y);
+    ਵਾਪਸ ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
 }
 
-static webgpu_encoded_op ggml_webgpu_solve_tri(webgpu_context & ctx,
+ਸਥਿਰ webgpu_encoded_op ggml_webgpu_solve_tri(webgpu_context & ctx,
                                                ggml_tensor *    src0,
                                                ggml_tensor *    src1,
                                                ggml_tensor *    dst) {
@@ -915,78 +915,78 @@ static webgpu_encoded_op ggml_webgpu_solve_tri(webgpu_context & ctx,
     shader_lib_ctx.src0                           = src0;
     shader_lib_ctx.src1                           = src1;
     shader_lib_ctx.dst                            = dst;
-    shader_lib_ctx.max_wg_size        = ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
-    shader_lib_ctx.wg_mem_limit_bytes = ctx->global_ctx->capabilities.limits.maxComputeWorkgroupStorageSize;
+    shader_lib_ctx.max_wg_ਮਾਪ        = ctx->global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
+    shader_lib_ctx.wg_mem_ਹੱਦਬੰਦੀ_ਬਾਈਟਾਂ = ctx->global_ctx->capabilities.limits.max_Compute_Workgroup_Storage_ਮਾਪ;
 
     webgpu_pipeline pipeline = ctx->shader_lib->get_solve_tri_pipeline(shader_lib_ctx);
 
-    auto * decisions = static_cast<ggml_webgpu_generic_shader_decisions *>(pipeline.context.get());
+    ਸਵੈਚਾਲਿਤ * decisions = static_cast<ggml_webgpu_generic_shader_decisions *>(pipeline.context.get());
 
     std::vector<uint32_t> params = {
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src0) / ggml_type_size(src0->type)),
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_size(src1->type)),
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_size(dst->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src0) / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_ਮਾਪ(src1->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_ਮਾਪ(dst->type)),
 
-        (uint32_t) (src0->nb[0] / ggml_type_size(src0->type)),
-        (uint32_t) (src0->nb[1] / ggml_type_size(src0->type)),
-        (uint32_t) (src0->nb[2] / ggml_type_size(src0->type)),
-        (uint32_t) (src0->nb[3] / ggml_type_size(src0->type)),
+        (uint32_t) (src0->nb[0] / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (src0->nb[1] / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (src0->nb[2] / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (src0->nb[3] / ggml_type_ਮਾਪ(src0->type)),
 
-        (uint32_t) (src1->nb[0] / ggml_type_size(src1->type)),
-        (uint32_t) (src1->nb[1] / ggml_type_size(src1->type)),
-        (uint32_t) (src1->nb[2] / ggml_type_size(src1->type)),
-        (uint32_t) (src1->nb[3] / ggml_type_size(src1->type)),
+        (uint32_t) (src1->nb[0] / ggml_type_ਮਾਪ(src1->type)),
+        (uint32_t) (src1->nb[1] / ggml_type_ਮਾਪ(src1->type)),
+        (uint32_t) (src1->nb[2] / ggml_type_ਮਾਪ(src1->type)),
+        (uint32_t) (src1->nb[3] / ggml_type_ਮਾਪ(src1->type)),
 
-        (uint32_t) (dst->nb[0] / ggml_type_size(dst->type)),
-        (uint32_t) (dst->nb[1] / ggml_type_size(dst->type)),
-        (uint32_t) (dst->nb[2] / ggml_type_size(dst->type)),
-        (uint32_t) (dst->nb[3] / ggml_type_size(dst->type)),
+        (uint32_t) (dst->nb[0] / ggml_type_ਮਾਪ(dst->type)),
+        (uint32_t) (dst->nb[1] / ggml_type_ਮਾਪ(dst->type)),
+        (uint32_t) (dst->nb[2] / ggml_type_ਮਾਪ(dst->type)),
+        (uint32_t) (dst->nb[3] / ggml_type_ਮਾਪ(dst->type)),
 
         (uint32_t) src1->ne[0],
         (uint32_t) dst->ne[2],
     };
 
-    std::vector<wgpu::BindGroupEntry> entries = {
-        ggml_webgpu_make_tensor_bind_group_entry(ctx, 0, src0),
-        ggml_webgpu_make_tensor_bind_group_entry(ctx, 1, src1),
-        ggml_webgpu_make_tensor_bind_group_entry(ctx, 2, dst),
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> entries = {
+        ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 0, src0),
+        ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 1, src1),
+        ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 2, dst),
     };
 
-    const uint32_t wg_x = CEIL_DIV((uint32_t) src1->ne[0], decisions->wg_size);
-    const uint32_t wg_y = (uint32_t) (dst->ne[2] * dst->ne[3]);
-    return ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
+    ਅਚਲ uint32_t wg_x = CEIL_DIV((uint32_t) src1->ne[0], decisions->wg_ਮਾਪ);
+    ਅਚਲ uint32_t wg_y = (uint32_t) (dst->ne[2] * dst->ne[3]);
+    ਵਾਪਸ ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
 }
 
-static webgpu_encoded_op ggml_webgpu_conv_2d(webgpu_context & ctx,
+ਸਥਿਰ webgpu_encoded_op ggml_webgpu_conv_2d(webgpu_context & ctx,
                                              ggml_tensor *    src0,
                                              ggml_tensor *    src1,
                                              ggml_tensor *    dst) {
-    const int32_t s0 = ggml_get_op_params_i32(dst, 0);
-    const int32_t s1 = ggml_get_op_params_i32(dst, 1);
-    const int32_t p0 = ggml_get_op_params_i32(dst, 2);
-    const int32_t p1 = ggml_get_op_params_i32(dst, 3);
-    const int32_t d0 = ggml_get_op_params_i32(dst, 4);
-    const int32_t d1 = ggml_get_op_params_i32(dst, 5);
+    ਅਚਲ int32_t s0 = ggml_get_op_params_i32(dst, 0);
+    ਅਚਲ int32_t s1 = ggml_get_op_params_i32(dst, 1);
+    ਅਚਲ int32_t p0 = ggml_get_op_params_i32(dst, 2);
+    ਅਚਲ int32_t p1 = ggml_get_op_params_i32(dst, 3);
+    ਅਚਲ int32_t d0 = ggml_get_op_params_i32(dst, 4);
+    ਅਚਲ int32_t d1 = ggml_get_op_params_i32(dst, 5);
 
     std::vector<uint32_t> params = {
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src0) / ggml_type_size(src0->type)),
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_size(src1->type)),
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_size(dst->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src0) / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_ਮਾਪ(src1->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_ਮਾਪ(dst->type)),
 
-        (uint32_t) (src0->nb[0] / ggml_type_size(src0->type)),
-        (uint32_t) (src0->nb[1] / ggml_type_size(src0->type)),
-        (uint32_t) (src0->nb[2] / ggml_type_size(src0->type)),
-        (uint32_t) (src0->nb[3] / ggml_type_size(src0->type)),
+        (uint32_t) (src0->nb[0] / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (src0->nb[1] / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (src0->nb[2] / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (src0->nb[3] / ggml_type_ਮਾਪ(src0->type)),
 
-        (uint32_t) (src1->nb[0] / ggml_type_size(src1->type)),
-        (uint32_t) (src1->nb[1] / ggml_type_size(src1->type)),
-        (uint32_t) (src1->nb[2] / ggml_type_size(src1->type)),
-        (uint32_t) (src1->nb[3] / ggml_type_size(src1->type)),
+        (uint32_t) (src1->nb[0] / ggml_type_ਮਾਪ(src1->type)),
+        (uint32_t) (src1->nb[1] / ggml_type_ਮਾਪ(src1->type)),
+        (uint32_t) (src1->nb[2] / ggml_type_ਮਾਪ(src1->type)),
+        (uint32_t) (src1->nb[3] / ggml_type_ਮਾਪ(src1->type)),
 
-        (uint32_t) (dst->nb[0] / ggml_type_size(dst->type)),
-        (uint32_t) (dst->nb[1] / ggml_type_size(dst->type)),
-        (uint32_t) (dst->nb[2] / ggml_type_size(dst->type)),
-        (uint32_t) (dst->nb[3] / ggml_type_size(dst->type)),
+        (uint32_t) (dst->nb[0] / ggml_type_ਮਾਪ(dst->type)),
+        (uint32_t) (dst->nb[1] / ggml_type_ਮਾਪ(dst->type)),
+        (uint32_t) (dst->nb[2] / ggml_type_ਮਾਪ(dst->type)),
+        (uint32_t) (dst->nb[3] / ggml_type_ਮਾਪ(dst->type)),
 
         (uint32_t) src0->ne[0],
         (uint32_t) src0->ne[1],
@@ -1008,47 +1008,47 @@ static webgpu_encoded_op ggml_webgpu_conv_2d(webgpu_context & ctx,
         (uint32_t) d1,
     };
 
-    std::vector<wgpu::BindGroupEntry> entries = {
-        ggml_webgpu_make_tensor_bind_group_entry(ctx, 0, src0),
-        ggml_webgpu_make_tensor_bind_group_entry(ctx, 1, src1),
-        ggml_webgpu_make_tensor_bind_group_entry(ctx, 2, dst),
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> entries = {
+        ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 0, src0),
+        ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 1, src1),
+        ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 2, dst),
     };
 
     ggml_webgpu_shader_lib_context shader_lib_ctx = {};
     shader_lib_ctx.src0                           = src0;
     shader_lib_ctx.src1                           = src1;
     shader_lib_ctx.dst                            = dst;
-    shader_lib_ctx.max_wg_size = ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
+    shader_lib_ctx.max_wg_ਮਾਪ = ctx->global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
 
     webgpu_pipeline pipeline = ctx->shader_lib->get_conv2d_pipeline(shader_lib_ctx);
 
-    auto * decisions = static_cast<ggml_webgpu_generic_shader_decisions *>(pipeline.context.get());
+    ਸਵੈਚਾਲਿਤ * decisions = static_cast<ggml_webgpu_generic_shader_decisions *>(pipeline.context.get());
 
     uint32_t wg_x;
     uint32_t wg_y;
-    uint32_t total_wg = CEIL_DIV((uint32_t) ggml_nelements(dst), decisions->wg_size);
-    compute_2d_workgroups(total_wg, ctx->global_ctx->capabilities.limits.maxComputeWorkgroupsPerDimension, wg_x, wg_y);
+    uint32_t ਕੁੱਲ_wg = CEIL_DIV((uint32_t) ggml_nelements(dst), decisions->wg_ਮਾਪ);
+    compute_2d_workgroups(ਕੁੱਲ_wg, ctx->global_ctx->capabilities.limits.max_Compute_Workgroups_ਪ੍ਰਤੀ_Dimension, wg_x, wg_y);
 
-    return ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
+    ਵਾਪਸ ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
 }
 
 // Same param/binding layout as conv_2d; the shader differs
-static webgpu_encoded_op ggml_webgpu_conv_2d_dw(webgpu_context & ctx,
+ਸਥਿਰ webgpu_encoded_op ggml_webgpu_conv_2d_dw(webgpu_context & ctx,
                                                 ggml_tensor *    src0,
                                                 ggml_tensor *    src1,
                                                 ggml_tensor *    dst) {
-    const int32_t s0 = ggml_get_op_params_i32(dst, 0);
-    const int32_t s1 = ggml_get_op_params_i32(dst, 1);
-    const int32_t p0 = ggml_get_op_params_i32(dst, 2);
-    const int32_t p1 = ggml_get_op_params_i32(dst, 3);
-    const int32_t d0 = ggml_get_op_params_i32(dst, 4);
-    const int32_t d1 = ggml_get_op_params_i32(dst, 5);
+    ਅਚਲ int32_t s0 = ggml_get_op_params_i32(dst, 0);
+    ਅਚਲ int32_t s1 = ggml_get_op_params_i32(dst, 1);
+    ਅਚਲ int32_t p0 = ggml_get_op_params_i32(dst, 2);
+    ਅਚਲ int32_t p1 = ggml_get_op_params_i32(dst, 3);
+    ਅਚਲ int32_t d0 = ggml_get_op_params_i32(dst, 4);
+    ਅਚਲ int32_t d1 = ggml_get_op_params_i32(dst, 5);
 
     // Scalar params matching conv2d_dw.wgsl (weight src0 [KW,KH,1,C], input src1, output dst).
     std::vector<uint32_t> params = {
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src0) / ggml_type_size(src0->type)),
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_size(src1->type)),
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_size(dst->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src0) / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_ਮਾਪ(src1->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_ਮਾਪ(dst->type)),
 
         (uint32_t) ggml_nelements(dst),
         (uint32_t) dst->ne[2],
@@ -1067,70 +1067,70 @@ static webgpu_encoded_op ggml_webgpu_conv_2d_dw(webgpu_context & ctx,
         (uint32_t) d1,
     };
 
-    std::vector<wgpu::BindGroupEntry> entries = {
-        ggml_webgpu_make_tensor_bind_group_entry(ctx, 0, src0),
-        ggml_webgpu_make_tensor_bind_group_entry(ctx, 1, src1),
-        ggml_webgpu_make_tensor_bind_group_entry(ctx, 2, dst),
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> entries = {
+        ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 0, src0),
+        ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 1, src1),
+        ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 2, dst),
     };
 
     ggml_webgpu_shader_lib_context shader_lib_ctx = {};
     shader_lib_ctx.src0                           = src0;
     shader_lib_ctx.src1                           = src1;
     shader_lib_ctx.dst                            = dst;
-    shader_lib_ctx.max_wg_size = ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
+    shader_lib_ctx.max_wg_ਮਾਪ = ctx->global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
 
     // Input layout: contiguous -> WHCN, contiguous-channels -> CWHN
-    const bool      whcn      = ggml_is_contiguous(src1);
+    ਅਚਲ ਤਾਰਕਿਕ      whcn      = ggml_is_contiguous(src1);
     webgpu_pipeline pipeline  = ctx->shader_lib->get_conv2d_dw_pipeline(shader_lib_ctx, whcn);
-    auto *          decisions = static_cast<ggml_webgpu_generic_shader_decisions *>(pipeline.context.get());
+    ਸਵੈਚਾਲਿਤ *          decisions = static_cast<ggml_webgpu_generic_shader_decisions *>(pipeline.context.get());
 
     uint32_t wg_x;
     uint32_t wg_y;
-    uint32_t total_wg = CEIL_DIV((uint32_t) ggml_nelements(dst), decisions->wg_size);
-    compute_2d_workgroups(total_wg, ctx->global_ctx->capabilities.limits.maxComputeWorkgroupsPerDimension, wg_x, wg_y);
+    uint32_t ਕੁੱਲ_wg = CEIL_DIV((uint32_t) ggml_nelements(dst), decisions->wg_ਮਾਪ);
+    compute_2d_workgroups(ਕੁੱਲ_wg, ctx->global_ctx->capabilities.limits.max_Compute_Workgroups_ਪ੍ਰਤੀ_Dimension, wg_x, wg_y);
 
-    return ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
+    ਵਾਪਸ ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
 }
 
-static webgpu_encoded_op ggml_webgpu_im2col(webgpu_context & ctx,
+ਸਥਿਰ webgpu_encoded_op ggml_webgpu_im2col(webgpu_context & ctx,
                                             ggml_tensor *    src0,
                                             ggml_tensor *    src1,
                                             ggml_tensor *    dst) {
-    const int32_t s0    = ggml_get_op_params_i32(dst, 0);
-    const int32_t s1    = ggml_get_op_params_i32(dst, 1);
-    const int32_t p0    = ggml_get_op_params_i32(dst, 2);
-    const int32_t p1    = ggml_get_op_params_i32(dst, 3);
-    const int32_t d0    = ggml_get_op_params_i32(dst, 4);
-    const int32_t d1    = ggml_get_op_params_i32(dst, 5);
-    const bool    is_2D = ggml_get_op_params_i32(dst, 6) == 1;
+    ਅਚਲ int32_t s0    = ggml_get_op_params_i32(dst, 0);
+    ਅਚਲ int32_t s1    = ggml_get_op_params_i32(dst, 1);
+    ਅਚਲ int32_t p0    = ggml_get_op_params_i32(dst, 2);
+    ਅਚਲ int32_t p1    = ggml_get_op_params_i32(dst, 3);
+    ਅਚਲ int32_t d0    = ggml_get_op_params_i32(dst, 4);
+    ਅਚਲ int32_t d1    = ggml_get_op_params_i32(dst, 5);
+    ਅਚਲ ਤਾਰਕਿਕ    is_2D = ggml_get_op_params_i32(dst, 6) == 1;
 
-    const uint32_t KW = src0->ne[0];
-    const uint32_t KH = is_2D ? src0->ne[1] : 1;
-    const uint32_t IC = is_2D ? src0->ne[2] : src0->ne[1];
+    ਅਚਲ uint32_t KW = src0->ne[0];
+    ਅਚਲ uint32_t KH = is_2D ? src0->ne[1] : 1;
+    ਅਚਲ uint32_t IC = is_2D ? src0->ne[2] : src0->ne[1];
 
-    const uint32_t IW = src1->ne[0];
-    const uint32_t IH = is_2D ? src1->ne[1] : 1;
-    const uint32_t N  = is_2D ? src1->ne[3] : src1->ne[2];
+    ਅਚਲ uint32_t IW = src1->ne[0];
+    ਅਚਲ uint32_t IH = is_2D ? src1->ne[1] : 1;
+    ਅਚਲ uint32_t N  = is_2D ? src1->ne[3] : src1->ne[2];
 
-    const uint32_t OW = dst->ne[1];
-    const uint32_t OH = is_2D ? dst->ne[2] : 1;
+    ਅਚਲ uint32_t OW = dst->ne[1];
+    ਅਚਲ uint32_t OH = is_2D ? dst->ne[2] : 1;
 
-    const uint32_t si0 = (uint32_t) (src1->nb[0] / ggml_type_size(src1->type));
-    const uint32_t si1 = is_2D ? (uint32_t) (src1->nb[1] / ggml_type_size(src1->type)) : 0;
-    const uint32_t si2 = is_2D ? (uint32_t) (src1->nb[2] / ggml_type_size(src1->type)) :
-                                 (uint32_t) (src1->nb[1] / ggml_type_size(src1->type));
-    const uint32_t si3 = is_2D ? (uint32_t) (src1->nb[3] / ggml_type_size(src1->type)) :
-                                 (uint32_t) (src1->nb[2] / ggml_type_size(src1->type));
+    ਅਚਲ uint32_t si0 = (uint32_t) (src1->nb[0] / ggml_type_ਮਾਪ(src1->type));
+    ਅਚਲ uint32_t si1 = is_2D ? (uint32_t) (src1->nb[1] / ggml_type_ਮਾਪ(src1->type)) : 0;
+    ਅਚਲ uint32_t si2 = is_2D ? (uint32_t) (src1->nb[2] / ggml_type_ਮਾਪ(src1->type)) :
+                                 (uint32_t) (src1->nb[1] / ggml_type_ਮਾਪ(src1->type));
+    ਅਚਲ uint32_t si3 = is_2D ? (uint32_t) (src1->nb[3] / ggml_type_ਮਾਪ(src1->type)) :
+                                 (uint32_t) (src1->nb[2] / ggml_type_ਮਾਪ(src1->type));
 
-    const uint32_t so0 = (uint32_t) (dst->nb[0] / ggml_type_size(dst->type));
-    const uint32_t so1 = (uint32_t) (dst->nb[1] / ggml_type_size(dst->type));
-    const uint32_t so2 = is_2D ? (uint32_t) (dst->nb[2] / ggml_type_size(dst->type)) : 0;
-    const uint32_t so3 = is_2D ? (uint32_t) (dst->nb[3] / ggml_type_size(dst->type)) :
-                                 (uint32_t) (dst->nb[2] / ggml_type_size(dst->type));
+    ਅਚਲ uint32_t so0 = (uint32_t) (dst->nb[0] / ggml_type_ਮਾਪ(dst->type));
+    ਅਚਲ uint32_t so1 = (uint32_t) (dst->nb[1] / ggml_type_ਮਾਪ(dst->type));
+    ਅਚਲ uint32_t so2 = is_2D ? (uint32_t) (dst->nb[2] / ggml_type_ਮਾਪ(dst->type)) : 0;
+    ਅਚਲ uint32_t so3 = is_2D ? (uint32_t) (dst->nb[3] / ggml_type_ਮਾਪ(dst->type)) :
+                                 (uint32_t) (dst->nb[2] / ggml_type_ਮਾਪ(dst->type));
 
     std::vector<uint32_t> params = {
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_size(src1->type)),
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_size(dst->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_ਮਾਪ(src1->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_ਮਾਪ(dst->type)),
 
         si0,
         si1,
@@ -1160,30 +1160,30 @@ static webgpu_encoded_op ggml_webgpu_im2col(webgpu_context & ctx,
         (uint32_t) d1,
     };
 
-    std::vector<wgpu::BindGroupEntry> entries = {
-        ggml_webgpu_make_tensor_bind_group_entry(ctx, 0, src1),
-        ggml_webgpu_make_tensor_bind_group_entry(ctx, 1, dst),
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> entries = {
+        ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 0, src1),
+        ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 1, dst),
     };
 
     ggml_webgpu_shader_lib_context shader_lib_ctx = {};
     shader_lib_ctx.src0                           = src0;
     shader_lib_ctx.src1                           = src1;
     shader_lib_ctx.dst                            = dst;
-    shader_lib_ctx.max_wg_size = ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
+    shader_lib_ctx.max_wg_ਮਾਪ = ctx->global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
 
     webgpu_pipeline pipeline = ctx->shader_lib->get_im2col_pipeline(shader_lib_ctx);
 
-    auto * decisions = static_cast<ggml_webgpu_generic_shader_decisions *>(pipeline.context.get());
+    ਸਵੈਚਾਲਿਤ * decisions = static_cast<ggml_webgpu_generic_shader_decisions *>(pipeline.context.get());
 
     uint32_t wg_x;
     uint32_t wg_y;
-    uint32_t total_wg = CEIL_DIV((uint32_t) ggml_nelements(dst), decisions->wg_size);
-    compute_2d_workgroups(total_wg, ctx->global_ctx->capabilities.limits.maxComputeWorkgroupsPerDimension, wg_x, wg_y);
+    uint32_t ਕੁੱਲ_wg = CEIL_DIV((uint32_t) ggml_nelements(dst), decisions->wg_ਮਾਪ);
+    compute_2d_workgroups(ਕੁੱਲ_wg, ctx->global_ctx->capabilities.limits.max_Compute_Workgroups_ਪ੍ਰਤੀ_Dimension, wg_x, wg_y);
 
-    return ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
+    ਵਾਪਸ ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
 }
 
-static webgpu_encoded_op ggml_webgpu_ssm_conv(webgpu_context & ctx,
+ਸਥਿਰ webgpu_encoded_op ggml_webgpu_ssm_conv(webgpu_context & ctx,
                                               ggml_tensor *    src0,
                                               ggml_tensor *    src1,
                                               ggml_tensor *    dst) {
@@ -1191,25 +1191,25 @@ static webgpu_encoded_op ggml_webgpu_ssm_conv(webgpu_context & ctx,
     shader_lib_ctx.src0                           = src0;
     shader_lib_ctx.src1                           = src1;
     shader_lib_ctx.dst                            = dst;
-    shader_lib_ctx.max_wg_size = ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
+    shader_lib_ctx.max_wg_ਮਾਪ = ctx->global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
 
     webgpu_pipeline pipeline  = ctx->shader_lib->get_ssm_conv_pipeline(shader_lib_ctx);
-    auto *          decisions = static_cast<ggml_webgpu_ssm_conv_shader_decisions *>(pipeline.context.get());
+    ਸਵੈਚਾਲਿਤ *          decisions = static_cast<ggml_webgpu_ssm_conv_shader_decisions *>(pipeline.context.get());
 
-    const uint32_t token_tiles = CEIL_DIV((uint32_t) dst->ne[1], decisions->tokens_per_wg);
+    ਅਚਲ uint32_t token_tiles = CEIL_DIV((uint32_t) dst->ne[1], decisions->ਟੋਕਨ_ਪ੍ਰਤੀ_wg);
 
     std::vector<uint32_t> params = {
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src0) / ggml_type_size(src0->type)),
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_size(src1->type)),
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_size(dst->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src0) / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_ਮਾਪ(src1->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_ਮਾਪ(dst->type)),
 
-        (uint32_t) (src0->nb[1] / ggml_type_size(src0->type)),
-        (uint32_t) (src0->nb[2] / ggml_type_size(src0->type)),
-        (uint32_t) (src1->nb[1] / ggml_type_size(src1->type)),
+        (uint32_t) (src0->nb[1] / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (src0->nb[2] / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (src1->nb[1] / ggml_type_ਮਾਪ(src1->type)),
 
-        (uint32_t) (dst->nb[0] / ggml_type_size(dst->type)),
-        (uint32_t) (dst->nb[1] / ggml_type_size(dst->type)),
-        (uint32_t) (dst->nb[2] / ggml_type_size(dst->type)),
+        (uint32_t) (dst->nb[0] / ggml_type_ਮਾਪ(dst->type)),
+        (uint32_t) (dst->nb[1] / ggml_type_ਮਾਪ(dst->type)),
+        (uint32_t) (dst->nb[2] / ggml_type_ਮਾਪ(dst->type)),
 
         (uint32_t) src1->ne[0],
         (uint32_t) src0->ne[1],
@@ -1218,18 +1218,18 @@ static webgpu_encoded_op ggml_webgpu_ssm_conv(webgpu_context & ctx,
         token_tiles,
     };
 
-    std::vector<wgpu::BindGroupEntry> entries = {
-        ggml_webgpu_make_tensor_bind_group_entry(ctx, 0, src0),
-        ggml_webgpu_make_tensor_bind_group_entry(ctx, 1, src1),
-        ggml_webgpu_make_tensor_bind_group_entry(ctx, 2, dst),
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> entries = {
+        ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 0, src0),
+        ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 1, src1),
+        ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 2, dst),
     };
 
-    const uint32_t wg_x = CEIL_DIV((uint32_t) src0->ne[1], decisions->block_size);
-    const uint32_t wg_y = token_tiles * (uint32_t) dst->ne[2];
-    return ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
+    ਅਚਲ uint32_t wg_x = CEIL_DIV((uint32_t) src0->ne[1], decisions->ਖੰਡ_ਮਾਪ_3);
+    ਅਚਲ uint32_t wg_y = token_tiles * (uint32_t) dst->ne[2];
+    ਵਾਪਸ ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
 }
 
-static webgpu_encoded_op ggml_webgpu_ssm_scan(webgpu_context & ctx,
+ਸਥਿਰ webgpu_encoded_op ggml_webgpu_ssm_ਜਾਂਚ(webgpu_context & ctx,
                                               ggml_tensor *    src0,
                                               ggml_tensor *    src1,
                                               ggml_tensor *    src2,
@@ -1246,88 +1246,88 @@ static webgpu_encoded_op ggml_webgpu_ssm_scan(webgpu_context & ctx,
     shader_lib_ctx.src4                           = src4;
     shader_lib_ctx.src5                           = src5;
     shader_lib_ctx.dst                            = dst;
-    shader_lib_ctx.max_wg_size        = ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
+    shader_lib_ctx.max_wg_ਮਾਪ        = ctx->global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
     shader_lib_ctx.supports_subgroups = ctx->global_ctx->capabilities.supports_subgroups;
 
     uint8_t xbc_overlap = 0;
-    if (ggml_webgpu_tensor_binding_overlap(ctx->global_ctx, src1, src4)) {
+    ਜੇ (ggml_webgpu_tensor_binding_overlap(ctx->global_ctx, src1, src4)) {
         xbc_overlap |= 0b110;  // x/B
     }
-    if (ggml_webgpu_tensor_binding_overlap(ctx->global_ctx, src1, src5)) {
+    ਜੇ (ggml_webgpu_tensor_binding_overlap(ctx->global_ctx, src1, src5)) {
         xbc_overlap |= 0b101;  // x/C
     }
-    if (ggml_webgpu_tensor_binding_overlap(ctx->global_ctx, src4, src5)) {
+    ਜੇ (ggml_webgpu_tensor_binding_overlap(ctx->global_ctx, src4, src5)) {
         xbc_overlap |= 0b011;  // B/C
     }
 
-    webgpu_pipeline pipeline  = ctx->shader_lib->get_ssm_scan_pipeline(shader_lib_ctx, xbc_overlap);
-    auto *          decisions = static_cast<ggml_webgpu_ssm_scan_shader_decisions *>(pipeline.context.get());
+    webgpu_pipeline pipeline  = ctx->shader_lib->get_ssm_ਜਾਂਚ_pipeline(shader_lib_ctx, xbc_overlap);
+    ਸਵੈਚਾਲਿਤ *          decisions = static_cast<ggml_webgpu_ssm_ਜਾਂਚ_shader_decisions *>(pipeline.context.get());
     xbc_overlap               = decisions->xbc_overlap;
 
-    uint32_t offset_x   = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_size(src1->type));
-    uint32_t offset_dt  = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src2) / ggml_type_size(src2->type));
-    uint32_t offset_A   = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src3) / ggml_type_size(src3->type));
-    uint32_t offset_B   = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src4) / ggml_type_size(src4->type));
-    uint32_t offset_C   = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src5) / ggml_type_size(src5->type));
-    uint32_t offset_ids = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src6) / ggml_type_size(src6->type));
+    uint32_t ਵਿੱਥ_x   = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_ਮਾਪ(src1->type));
+    uint32_t ਵਿੱਥ_dt  = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src2) / ggml_type_ਮਾਪ(src2->type));
+    uint32_t ਵਿੱਥ_A   = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src3) / ggml_type_ਮਾਪ(src3->type));
+    uint32_t ਵਿੱਥ_B   = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src4) / ggml_type_ਮਾਪ(src4->type));
+    uint32_t ਵਿੱਥ_C   = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src5) / ggml_type_ਮਾਪ(src5->type));
+    uint32_t ਵਿੱਥ_ids = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src6) / ggml_type_ਮਾਪ(src6->type));
 
     ggml_webgpu_merged_binding_range xbc_merged_range = {};
 
-    if (xbc_overlap == 0b110) {  // x/B
+    ਜੇ (xbc_overlap == 0b110) {  // x/B
         xbc_merged_range = ggml_webgpu_tensor_merged_binding_range(ctx, { src1, src4 });
-        offset_x         = ggml_webgpu_tensor_merged_element_offset(src1, xbc_merged_range);
-        offset_B         = ggml_webgpu_tensor_merged_element_offset(src4, xbc_merged_range);
-    } else if (xbc_overlap == 0b011) {  // B/C
+        ਵਿੱਥ_x         = ggml_webgpu_tensor_merged_element_ਵਿੱਥ(src1, xbc_merged_range);
+        ਵਿੱਥ_B         = ggml_webgpu_tensor_merged_element_ਵਿੱਥ(src4, xbc_merged_range);
+    } ਨਹੀਂਤਾਂ ਜੇ (xbc_overlap == 0b011) {  // B/C
         xbc_merged_range = ggml_webgpu_tensor_merged_binding_range(ctx, { src4, src5 });
-        offset_B         = ggml_webgpu_tensor_merged_element_offset(src4, xbc_merged_range);
-        offset_C         = ggml_webgpu_tensor_merged_element_offset(src5, xbc_merged_range);
-    } else if (xbc_overlap == 0b111) {  // x/B/C
+        ਵਿੱਥ_B         = ggml_webgpu_tensor_merged_element_ਵਿੱਥ(src4, xbc_merged_range);
+        ਵਿੱਥ_C         = ggml_webgpu_tensor_merged_element_ਵਿੱਥ(src5, xbc_merged_range);
+    } ਨਹੀਂਤਾਂ ਜੇ (xbc_overlap == 0b111) {  // x/B/C
         xbc_merged_range = ggml_webgpu_tensor_merged_binding_range(ctx, { src1, src4, src5 });
-        offset_x         = ggml_webgpu_tensor_merged_element_offset(src1, xbc_merged_range);
-        offset_B         = ggml_webgpu_tensor_merged_element_offset(src4, xbc_merged_range);
-        offset_C         = ggml_webgpu_tensor_merged_element_offset(src5, xbc_merged_range);
+        ਵਿੱਥ_x         = ggml_webgpu_tensor_merged_element_ਵਿੱਥ(src1, xbc_merged_range);
+        ਵਿੱਥ_B         = ggml_webgpu_tensor_merged_element_ਵਿੱਥ(src4, xbc_merged_range);
+        ਵਿੱਥ_C         = ggml_webgpu_tensor_merged_element_ਵਿੱਥ(src5, xbc_merged_range);
     }
 
     GGML_ASSERT(xbc_overlap == 0 || xbc_overlap == 0b110 || xbc_overlap == 0b011 || xbc_overlap == 0b111);
 
-    size_t xbc_bind_offset = 0;
-    size_t xbc_bind_size   = 0;
-    if (xbc_overlap > 0) {
-        xbc_bind_offset = xbc_merged_range.offset;
-        xbc_bind_size   = xbc_merged_range.size;
+    size_t xbc_bind_ਵਿੱਥ = 0;
+    size_t xbc_bind_ਮਾਪ   = 0;
+    ਜੇ (xbc_overlap > 0) {
+        xbc_bind_ਵਿੱਥ = xbc_merged_range.ਵਿੱਥ;
+        xbc_bind_ਮਾਪ   = xbc_merged_range.size;
     }
 
     std::vector<uint32_t> params = {
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src0) / ggml_type_size(src0->type)),
-        offset_x,
-        offset_dt,
-        offset_A,
-        offset_B,
-        offset_C,
-        offset_ids,
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_size(dst->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src0) / ggml_type_ਮਾਪ(src0->type)),
+        ਵਿੱਥ_x,
+        ਵਿੱਥ_dt,
+        ਵਿੱਥ_A,
+        ਵਿੱਥ_B,
+        ਵਿੱਥ_C,
+        ਵਿੱਥ_ids,
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_ਮਾਪ(dst->type)),
 
-        (uint32_t) (src0->nb[1] / ggml_type_size(src0->type)),
-        (uint32_t) (src0->nb[2] / ggml_type_size(src0->type)),
-        (uint32_t) (src0->nb[3] / ggml_type_size(src0->type)),
+        (uint32_t) (src0->nb[1] / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (src0->nb[2] / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (src0->nb[3] / ggml_type_ਮਾਪ(src0->type)),
 
-        (uint32_t) (src1->nb[1] / ggml_type_size(src1->type)),
-        (uint32_t) (src1->nb[2] / ggml_type_size(src1->type)),
-        (uint32_t) (src1->nb[3] / ggml_type_size(src1->type)),
+        (uint32_t) (src1->nb[1] / ggml_type_ਮਾਪ(src1->type)),
+        (uint32_t) (src1->nb[2] / ggml_type_ਮਾਪ(src1->type)),
+        (uint32_t) (src1->nb[3] / ggml_type_ਮਾਪ(src1->type)),
 
-        (uint32_t) (src2->nb[1] / ggml_type_size(src2->type)),
-        (uint32_t) (src2->nb[2] / ggml_type_size(src2->type)),
+        (uint32_t) (src2->nb[1] / ggml_type_ਮਾਪ(src2->type)),
+        (uint32_t) (src2->nb[2] / ggml_type_ਮਾਪ(src2->type)),
 
         (uint32_t) src3->ne[0],
-        (uint32_t) (src3->nb[1] / ggml_type_size(src3->type)),
+        (uint32_t) (src3->nb[1] / ggml_type_ਮਾਪ(src3->type)),
 
-        (uint32_t) (src4->nb[1] / ggml_type_size(src4->type)),
-        (uint32_t) (src4->nb[2] / ggml_type_size(src4->type)),
-        (uint32_t) (src4->nb[3] / ggml_type_size(src4->type)),
+        (uint32_t) (src4->nb[1] / ggml_type_ਮਾਪ(src4->type)),
+        (uint32_t) (src4->nb[2] / ggml_type_ਮਾਪ(src4->type)),
+        (uint32_t) (src4->nb[3] / ggml_type_ਮਾਪ(src4->type)),
 
-        (uint32_t) (src5->nb[1] / ggml_type_size(src5->type)),
-        (uint32_t) (src5->nb[2] / ggml_type_size(src5->type)),
-        (uint32_t) (src5->nb[3] / ggml_type_size(src5->type)),
+        (uint32_t) (src5->nb[1] / ggml_type_ਮਾਪ(src5->type)),
+        (uint32_t) (src5->nb[2] / ggml_type_ਮਾਪ(src5->type)),
+        (uint32_t) (src5->nb[3] / ggml_type_ਮਾਪ(src5->type)),
 
         (uint32_t) src0->ne[0],
         (uint32_t) src0->ne[1],
@@ -1338,44 +1338,44 @@ static webgpu_encoded_op ggml_webgpu_ssm_scan(webgpu_context & ctx,
         (uint32_t) ggml_get_op_params_i32(dst, 0),
     };
 
-    uint32_t binding_num = 0;
+    uint32_t binding_ਅੰਕ = 0;
 
-    std::vector<wgpu::BindGroupEntry> entries = {
-        ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_num++, src0),
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> entries = {
+        ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, binding_ਅੰਕ++, src0),
     };
     // xbc_merged binding
-    if (xbc_overlap > 0) {
-        entries.push_back(ggml_webgpu_make_bind_group_entry(binding_num++, ggml_webgpu_tensor_buf(src1),
-                                                            xbc_bind_offset, xbc_bind_size));
+    ਜੇ (xbc_overlap > 0) {
+        entries.push_back(ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(binding_ਅੰਕ++, ggml_webgpu_tensor_buf(src1),
+                                                            xbc_bind_ਵਿੱਥ, xbc_bind_ਮਾਪ));
     }
     // x
-    if (!(xbc_overlap & 0b100)) {
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_num++, src1));
+    ਜੇ (!(xbc_overlap & 0b100)) {
+        entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, binding_ਅੰਕ++, src1));
     }
     // B
-    if (!(xbc_overlap & 0b010)) {
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_num++, src4));
+    ਜੇ (!(xbc_overlap & 0b010)) {
+        entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, binding_ਅੰਕ++, src4));
     }
     // C
-    if (!(xbc_overlap & 0b001)) {
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_num++, src5));
+    ਜੇ (!(xbc_overlap & 0b001)) {
+        entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, binding_ਅੰਕ++, src5));
     }
 
-    entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_num++, src2));
-    entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_num++, src3));
-    entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_num++, src6));
-    entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_num++, dst));
+    entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, binding_ਅੰਕ++, src2));
+    entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, binding_ਅੰਕ++, src3));
+    entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, binding_ਅੰਕ++, src6));
+    entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, binding_ਅੰਕ++, dst));
 
-    const uint32_t total_wg       = (uint32_t) (src0->ne[1] * src0->ne[2] * src1->ne[3]);
-    const uint32_t max_wg_per_dim = ctx->global_ctx->capabilities.limits.maxComputeWorkgroupsPerDimension;
+    ਅਚਲ uint32_t ਕੁੱਲ_wg       = (uint32_t) (src0->ne[1] * src0->ne[2] * src1->ne[3]);
+    ਅਚਲ uint32_t max_wg_ਪ੍ਰਤੀ_dim = ctx->global_ctx->capabilities.limits.max_Compute_Workgroups_ਪ੍ਰਤੀ_Dimension;
     uint32_t       wg_x;
     uint32_t       wg_y;
-    compute_2d_workgroups(total_wg, max_wg_per_dim, wg_x, wg_y);
+    compute_2d_workgroups(ਕੁੱਲ_wg, max_wg_ਪ੍ਰਤੀ_dim, wg_x, wg_y);
 
-    return ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
+    ਵਾਪਸ ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
 }
 
-static webgpu_encoded_op ggml_webgpu_gated_delta_net(webgpu_context & ctx,
+ਸਥਿਰ webgpu_encoded_op ggml_webgpu_gated_delta_net(webgpu_context & ctx,
                                                      ggml_tensor *    src0,
                                                      ggml_tensor *    src1,
                                                      ggml_tensor *    src2,
@@ -1392,166 +1392,166 @@ static webgpu_encoded_op ggml_webgpu_gated_delta_net(webgpu_context & ctx,
     shader_lib_ctx.src4                           = src4;
     shader_lib_ctx.dst                            = dst;
     shader_lib_ctx.dst_fuse                       = dst_fuse;
-    shader_lib_ctx.max_wg_size = ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
+    shader_lib_ctx.max_wg_ਮਾਪ = ctx->global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
 
     webgpu_pipeline pipeline = ctx->shader_lib->get_gated_delta_net_pipeline(shader_lib_ctx);
 
-    const uint32_t s_v      = (uint32_t) src2->ne[0];
-    const uint32_t h        = (uint32_t) src2->ne[1];
-    const uint32_t n_tokens = (uint32_t) src2->ne[2];
-    const uint32_t n_seqs   = (uint32_t) src2->ne[3];
-    const uint32_t K        = (uint32_t) ggml_get_op_params_i32(dst, 0);
-    const float    scale    = 1.0f / sqrtf((float) s_v);
+    ਅਚਲ uint32_t s_v      = (uint32_t) src2->ne[0];
+    ਅਚਲ uint32_t h        = (uint32_t) src2->ne[1];
+    ਅਚਲ uint32_t n_ਟੋਕਨ = (uint32_t) src2->ne[2];
+    ਅਚਲ uint32_t n_seqs   = (uint32_t) src2->ne[3];
+    ਅਚਲ uint32_t K        = (uint32_t) ggml_get_op_params_i32(dst, 0);
+    ਅਚਲ ਦਸ਼ਮਲਵ    scale    = 1.0f / sqrtf((ਦਸ਼ਮਲਵ) s_v);
     uint32_t       scale_u32;
-    memcpy(&scale_u32, &scale, sizeof(scale_u32));
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&scale_u32, &scale, ਆਕਾਰ(scale_u32));
 
     std::vector<uint32_t> params = {
         h,
-        n_tokens,
+        n_ਟੋਕਨ,
         n_seqs,
-        s_v * h * n_tokens * n_seqs,
+        s_v * h * n_ਟੋਕਨ * n_seqs,
 
-        (uint32_t) (src0->nb[1] / ggml_type_size(src0->type)),
-        (uint32_t) (src0->nb[2] / ggml_type_size(src0->type)),
-        (uint32_t) (src0->nb[3] / ggml_type_size(src0->type)),
+        (uint32_t) (src0->nb[1] / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (src0->nb[2] / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (src0->nb[3] / ggml_type_ਮਾਪ(src0->type)),
 
-        (uint32_t) (src2->nb[1] / ggml_type_size(src2->type)),
-        (uint32_t) (src2->nb[2] / ggml_type_size(src2->type)),
-        (uint32_t) (src2->nb[3] / ggml_type_size(src2->type)),
+        (uint32_t) (src2->nb[1] / ggml_type_ਮਾਪ(src2->type)),
+        (uint32_t) (src2->nb[2] / ggml_type_ਮਾਪ(src2->type)),
+        (uint32_t) (src2->nb[3] / ggml_type_ਮਾਪ(src2->type)),
 
-        (uint32_t) (src4->nb[1] / ggml_type_size(src4->type)),
-        (uint32_t) (src4->nb[2] / ggml_type_size(src4->type)),
-        (uint32_t) (src4->nb[3] / ggml_type_size(src4->type)),
+        (uint32_t) (src4->nb[1] / ggml_type_ਮਾਪ(src4->type)),
+        (uint32_t) (src4->nb[2] / ggml_type_ਮਾਪ(src4->type)),
+        (uint32_t) (src4->nb[3] / ggml_type_ਮਾਪ(src4->type)),
 
         (uint32_t) src0->ne[1],
         (uint32_t) (src2->ne[3] / src0->ne[3]),
         K,
         scale_u32,
-        dst_fuse ? (uint32_t) (dst_fuse->nb[2] / ggml_type_size(dst_fuse->type)) : 0,
-        dst_fuse ? (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst_fuse) / ggml_type_size(dst_fuse->type)) : 0,
+        dst_fuse ? (uint32_t) (dst_fuse->nb[2] / ggml_type_ਮਾਪ(dst_fuse->type)) : 0,
+        dst_fuse ? (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst_fuse) / ggml_type_ਮਾਪ(dst_fuse->type)) : 0,
     };
 
-    std::vector<wgpu::BindGroupEntry> entries = {
-        ggml_webgpu_make_tensor_bind_group_entry(ctx, 0, src0), ggml_webgpu_make_tensor_bind_group_entry(ctx, 1, src1),
-        ggml_webgpu_make_tensor_bind_group_entry(ctx, 2, src2), ggml_webgpu_make_tensor_bind_group_entry(ctx, 3, src3),
-        ggml_webgpu_make_tensor_bind_group_entry(ctx, 4, src4), ggml_webgpu_make_tensor_bind_group_entry(ctx, 5, src5),
-        ggml_webgpu_make_tensor_bind_group_entry(ctx, 6, dst),
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> entries = {
+        ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 0, src0), ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 1, src1),
+        ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 2, src2), ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 3, src3),
+        ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 4, src4), ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 5, src5),
+        ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 6, dst),
     };
 
-    if (dst_fuse) {
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 7, dst_fuse));
+    ਜੇ (dst_fuse) {
+        entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 7, dst_fuse));
     }
 
-    return ggml_backend_webgpu_build(ctx, pipeline, params, entries, h, n_seqs);
+    ਵਾਪਸ ggml_backend_webgpu_build(ctx, pipeline, params, entries, h, n_seqs);
 }
 
-static std::optional<webgpu_encoded_op> ggml_webgpu_set_rows(webgpu_context & ctx,
+ਸਥਿਰ std::optional<webgpu_encoded_op> ggml_webgpu_ਸੈੱਟ_ਪੰਕਤੀਆਂ(webgpu_context & ctx,
                                                              ggml_tensor *    src,
                                                              ggml_tensor *    idx,
                                                              ggml_tensor *    dst) {
     // For set rows specifically, we need to check if src and idx are empty
     // tensors.
-    if (ggml_is_empty(src) || ggml_is_empty(idx)) {
-        return std::nullopt;
+    ਜੇ (ggml_is_ਖਾਲੀ_ਥਾਵਾਂ(src) || ggml_is_ਖਾਲੀ_ਥਾਵਾਂ(idx)) {
+        ਵਾਪਸ std::nullopt;
     }
 
     ggml_webgpu_shader_lib_context shader_lib_ctx = {};
     shader_lib_ctx.src0                           = src;
     shader_lib_ctx.src1                           = idx;
     shader_lib_ctx.dst                            = dst;
-    shader_lib_ctx.max_wg_size = ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
+    shader_lib_ctx.max_wg_ਮਾਪ = ctx->global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
 
-    webgpu_pipeline pipeline = ctx->shader_lib->get_set_rows_pipeline(shader_lib_ctx);
+    webgpu_pipeline pipeline = ctx->shader_lib->get_ਸੈੱਟ_ਪੰਕਤੀਆਂ_pipeline(shader_lib_ctx);
 
-    auto * decisions = static_cast<ggml_webgpu_set_rows_shader_decisions *>(pipeline.context.get());
+    ਸਵੈਚਾਲਿਤ * decisions = static_cast<ggml_webgpu_ਸੈੱਟ_ਪੰਕਤੀਆਂ_shader_decisions *>(pipeline.context.get());
 
     std::vector<uint32_t> params = {
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src) / ggml_type_size(src->type)),
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, idx) / ggml_type_size(idx->type)),
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_size(dst->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src) / ggml_type_ਮਾਪ(src->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, idx) / ggml_type_ਮਾਪ(idx->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_ਮਾਪ(dst->type)),
         // Convert byte-strides to element-strides
-        (uint32_t) (src->nb[1] / ggml_type_size(src->type)), (uint32_t) (src->nb[2] / ggml_type_size(src->type)),
-        (uint32_t) (src->nb[3] / ggml_type_size(src->type)), (uint32_t) (idx->nb[0] / ggml_type_size(idx->type)),
-        (uint32_t) (idx->nb[1] / ggml_type_size(idx->type)), (uint32_t) (idx->nb[2] / ggml_type_size(idx->type)),
-        (uint32_t) (dst->nb[1] / ggml_type_size(dst->type)), (uint32_t) (dst->nb[2] / ggml_type_size(dst->type)),
-        (uint32_t) (dst->nb[3] / ggml_type_size(dst->type)),
+        (uint32_t) (src->nb[1] / ggml_type_ਮਾਪ(src->type)), (uint32_t) (src->nb[2] / ggml_type_ਮਾਪ(src->type)),
+        (uint32_t) (src->nb[3] / ggml_type_ਮਾਪ(src->type)), (uint32_t) (idx->nb[0] / ggml_type_ਮਾਪ(idx->type)),
+        (uint32_t) (idx->nb[1] / ggml_type_ਮਾਪ(idx->type)), (uint32_t) (idx->nb[2] / ggml_type_ਮਾਪ(idx->type)),
+        (uint32_t) (dst->nb[1] / ggml_type_ਮਾਪ(dst->type)), (uint32_t) (dst->nb[2] / ggml_type_ਮਾਪ(dst->type)),
+        (uint32_t) (dst->nb[3] / ggml_type_ਮਾਪ(dst->type)),
         // Shape of src
         (uint32_t) src->ne[0], (uint32_t) src->ne[1], (uint32_t) src->ne[2], (uint32_t) src->ne[3],
         // Shape of idx
         (uint32_t) (idx->ne[1]), (uint32_t) (idx->ne[2])
     };
 
-    std::vector<wgpu::BindGroupEntry> entries;
-    entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 0, src));
-    entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 1, idx));
-    entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 2, dst));
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> entries;
+    entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 0, src));
+    entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 1, idx));
+    entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 2, dst));
 
-    if (decisions->i64_idx) {
-        entries.push_back(ggml_webgpu_make_bind_group_entry(3, ctx->set_rows_dev_error_buf, 0,
-                                                            ctx->set_rows_dev_error_buf.GetSize()));
+    ਜੇ (decisions->i64_idx) {
+        entries.push_back(ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(3, ctx->ਸੈੱਟ_ਪੰਕਤੀਆਂ_dev_error_buf, 0,
+                                                            ctx->ਸੈੱਟ_ਪੰਕਤੀਆਂ_dev_error_buf.Get_ਮਾਪ()));
     }
 
-    uint32_t threads;
-    if (ggml_is_quantized(dst->type)) {
-        const uint32_t blocks_per_row = src->ne[0] / ggml_blck_size(dst->type);
-        threads =
-            (src->ne[1] * src->ne[2] * src->ne[3]) * (decisions->pair_blocks ? (blocks_per_row / 2) : blocks_per_row);
-    } else if (decisions->vec4) {
-        threads = (src->ne[1] * src->ne[2] * src->ne[3]) * (src->ne[0] / 4);
-    } else {
-        threads = src->ne[0] * src->ne[1] * src->ne[2] * src->ne[3];
+    uint32_t ਧਾਗੇ;
+    ਜੇ (ggml_is_quantized(dst->type)) {
+        ਅਚਲ uint32_t ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ = src->ne[0] / ggml_blck_ਮਾਪ(dst->type);
+        ਧਾਗੇ =
+            (src->ne[1] * src->ne[2] * src->ne[3]) * (decisions->pair_ਖੰਡਾਂ ? (ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ / 2) : ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
+    } ਨਹੀਂਤਾਂ ਜੇ (decisions->vec4) {
+        ਧਾਗੇ = (src->ne[1] * src->ne[2] * src->ne[3]) * (src->ne[0] / 4);
+    } ਨਹੀਂਤਾਂ {
+        ਧਾਗੇ = src->ne[0] * src->ne[1] * src->ne[2] * src->ne[3];
     }
     uint32_t wg_x;
     uint32_t wg_y;
-    uint32_t total_wg = CEIL_DIV(threads, decisions->wg_size);
-    compute_2d_workgroups(total_wg, ctx->global_ctx->capabilities.limits.maxComputeWorkgroupsPerDimension, wg_x, wg_y);
-    return ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
+    uint32_t ਕੁੱਲ_wg = CEIL_DIV(ਧਾਗੇ, decisions->wg_ਮਾਪ);
+    compute_2d_workgroups(ਕੁੱਲ_wg, ctx->global_ctx->capabilities.limits.max_Compute_Workgroups_ਪ੍ਰਤੀ_Dimension, wg_x, wg_y);
+    ਵਾਪਸ ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
 }
 
 // Workgroup size is a common constant
-static std::vector<wgpu::ConstantEntry> ggml_webgpu_wg_size_entry(uint32_t wg_size) {
-    std::vector<wgpu::ConstantEntry> constants(1);
-    constants[0].key   = "wg_size";
-    constants[0].value = wg_size;
-    return constants;
+ਸਥਿਰ std::vector<wgpu::Constant_ਇੰਦਰਾਜ> ggml_webgpu_wg_ਮਾਪ_ਇੰਦਰਾਜ(uint32_t wg_ਮਾਪ) {
+    std::vector<wgpu::Constant_ਇੰਦਰਾਜ> constants(1);
+    constants[0].ਕੁੰਜੀ   = "wg_size";
+    constants[0].value = wg_ਮਾਪ;
+    ਵਾਪਸ constants;
 }
 
-static webgpu_encoded_op ggml_webgpu_get_rows(webgpu_context & ctx,
+ਸਥਿਰ webgpu_encoded_op ggml_webgpu_get_ਪੰਕਤੀਆਂ(webgpu_context & ctx,
                                               ggml_tensor *    src,
                                               ggml_tensor *    idx,
                                               ggml_tensor *    dst) {
-    const bool float_parallel = src->type == GGML_TYPE_F32 || src->type == GGML_TYPE_F16 || src->type == GGML_TYPE_I32;
+    ਅਚਲ ਤਾਰਕਿਕ float_parallel = src->type == GGML_TYPE_F32 || src->type == GGML_TYPE_F16 || src->type == GGML_TYPE_I32;
 
     ggml_webgpu_shader_lib_context shader_lib_ctx = {};
     shader_lib_ctx.src0                           = src;
-    shader_lib_ctx.src1                           = nullptr;
+    shader_lib_ctx.src1                           = ਖਾਲੀ_ਸੂਚਕ;
     shader_lib_ctx.dst                            = dst;
-    shader_lib_ctx.max_wg_size = ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
+    shader_lib_ctx.max_wg_ਮਾਪ = ctx->global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
 
-    const uint32_t offset_src  = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src) / ggml_type_size(src->type));
-    const uint32_t offset_dst  = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_size(dst->type));
-    const uint32_t stride_src1 = (uint32_t) (src->nb[1] / ggml_type_size(src->type));
-    const uint32_t stride_src2 = (uint32_t) (src->nb[2] / ggml_type_size(src->type));
-    const uint32_t stride_src3 = (uint32_t) (src->nb[3] / ggml_type_size(src->type));
+    ਅਚਲ uint32_t ਵਿੱਥ_src  = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src) / ggml_type_ਮਾਪ(src->type));
+    ਅਚਲ uint32_t ਵਿੱਥ_dst  = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_ਮਾਪ(dst->type));
+    ਅਚਲ uint32_t stride_src1 = (uint32_t) (src->nb[1] / ggml_type_ਮਾਪ(src->type));
+    ਅਚਲ uint32_t stride_src2 = (uint32_t) (src->nb[2] / ggml_type_ਮਾਪ(src->type));
+    ਅਚਲ uint32_t stride_src3 = (uint32_t) (src->nb[3] / ggml_type_ਮਾਪ(src->type));
 
-    const bool vec4_aligned = offset_src % 4 == 0 && offset_dst % 4 == 0 && stride_src1 % 4 == 0 &&
+    ਅਚਲ ਤਾਰਕਿਕ vec4_aligned = ਵਿੱਥ_src % 4 == 0 && ਵਿੱਥ_dst % 4 == 0 && stride_src1 % 4 == 0 &&
                               stride_src2 % 4 == 0 && stride_src3 % 4 == 0;
 
-    webgpu_pipeline pipeline  = ctx->shader_lib->get_get_rows_pipeline(shader_lib_ctx, vec4_aligned);
-    auto *          decisions = static_cast<ggml_webgpu_get_rows_shader_decisions *>(pipeline.context.get());
+    webgpu_pipeline pipeline  = ctx->shader_lib->get_get_ਪੰਕਤੀਆਂ_pipeline(shader_lib_ctx, vec4_aligned);
+    ਸਵੈਚਾਲਿਤ *          decisions = static_cast<ggml_webgpu_get_ਪੰਕਤੀਆਂ_shader_decisions *>(pipeline.context.get());
 
-    std::vector<uint32_t> params = { offset_src,
-                                     (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, idx) / ggml_type_size(idx->type)),
-                                     offset_dst,
+    std::vector<uint32_t> params = { ਵਿੱਥ_src,
+                                     (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, idx) / ggml_type_ਮਾਪ(idx->type)),
+                                     ਵਿੱਥ_dst,
                                      stride_src1,
                                      stride_src2,
                                      stride_src3,
-                                     (uint32_t) (idx->nb[0] / ggml_type_size(idx->type)),
-                                     (uint32_t) (idx->nb[1] / ggml_type_size(idx->type)),
-                                     (uint32_t) (idx->nb[2] / ggml_type_size(idx->type)),
-                                     (uint32_t) (dst->nb[1] / ggml_type_size(dst->type)),
-                                     (uint32_t) (dst->nb[2] / ggml_type_size(dst->type)),
-                                     (uint32_t) (dst->nb[3] / ggml_type_size(dst->type)),
+                                     (uint32_t) (idx->nb[0] / ggml_type_ਮਾਪ(idx->type)),
+                                     (uint32_t) (idx->nb[1] / ggml_type_ਮਾਪ(idx->type)),
+                                     (uint32_t) (idx->nb[2] / ggml_type_ਮਾਪ(idx->type)),
+                                     (uint32_t) (dst->nb[1] / ggml_type_ਮਾਪ(dst->type)),
+                                     (uint32_t) (dst->nb[2] / ggml_type_ਮਾਪ(dst->type)),
+                                     (uint32_t) (dst->nb[3] / ggml_type_ਮਾਪ(dst->type)),
                                      (uint32_t) dst->ne[0],
                                      (uint32_t) dst->ne[1],
                                      (uint32_t) dst->ne[2],
@@ -1559,21 +1559,21 @@ static webgpu_encoded_op ggml_webgpu_get_rows(webgpu_context & ctx,
                                      (uint32_t) (idx->ne[1]),
                                      (uint32_t) (idx->ne[2]) };
 
-    std::vector<wgpu::BindGroupEntry> entries = { ggml_webgpu_make_tensor_bind_group_entry(ctx, 0, src),
-                                                  ggml_webgpu_make_tensor_bind_group_entry(ctx, 1, idx),
-                                                  ggml_webgpu_make_tensor_bind_group_entry(ctx, 2, dst) };
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> entries = { ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 0, src),
+                                                  ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 1, idx),
+                                                  ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 2, dst) };
 
-    uint32_t blocks_per_row = (uint32_t) (dst->ne[0] / (decisions->vectorized ? 4 : 1));
-    uint32_t total_rows     = (uint32_t) (dst->ne[1] * dst->ne[2] * dst->ne[3]);
-    uint32_t total_threads  = float_parallel ? blocks_per_row * total_rows : total_rows;
+    uint32_t ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ = (uint32_t) (dst->ne[0] / (decisions->vectorized ? 4 : 1));
+    uint32_t ਕੁੱਲ_ਪੰਕਤੀਆਂ     = (uint32_t) (dst->ne[1] * dst->ne[2] * dst->ne[3]);
+    uint32_t ਕੁੱਲ_ਧਾਗੇ  = float_parallel ? ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ * ਕੁੱਲ_ਪੰਕਤੀਆਂ : ਕੁੱਲ_ਪੰਕਤੀਆਂ;
     uint32_t wg_x;
     uint32_t wg_y;
-    uint32_t total_wg = CEIL_DIV(total_threads, decisions->wg_size);
-    compute_2d_workgroups(total_wg, ctx->global_ctx->capabilities.limits.maxComputeWorkgroupsPerDimension, wg_x, wg_y);
-    return ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
+    uint32_t ਕੁੱਲ_wg = CEIL_DIV(ਕੁੱਲ_ਧਾਗੇ, decisions->wg_ਮਾਪ);
+    compute_2d_workgroups(ਕੁੱਲ_wg, ctx->global_ctx->capabilities.limits.max_Compute_Workgroups_ਪ੍ਰਤੀ_Dimension, wg_x, wg_y);
+    ਵਾਪਸ ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
 }
 
-static void ggml_webgpu_quantize_q8_dispatch(webgpu_context &                    ctx,
+ਸਥਿਰ ਖਾਲੀ ggml_webgpu_quantize_q8_dispatch(webgpu_context &                    ctx,
                                              ggml_tensor *                       src0,
                                              ggml_tensor *                       src1,
                                              ggml_tensor *                       dst,
@@ -1583,59 +1583,59 @@ static void ggml_webgpu_quantize_q8_dispatch(webgpu_context &                   
     shader_lib_ctx.src0               = src0;
     shader_lib_ctx.src1               = src1;
     shader_lib_ctx.dst                = dst;
-    shader_lib_ctx.max_wg_size        = ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
+    shader_lib_ctx.max_wg_ਮਾਪ        = ctx->global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
     shader_lib_ctx.supports_subgroups = ctx->global_ctx->capabilities.supports_subgroups;
 
     webgpu_pipeline qq8_pipeline = ctx->shader_lib->get_quantize_q8_pipeline(shader_lib_ctx);
 
     // quantize_q8 pipeline
-    const size_t dst_offset           = ggml_webgpu_tensor_offset(dst);
-    const size_t q8_src1_align_offset = ROUNDUP_POW2(
-        dst_offset + ggml_nbytes(dst), ctx->global_ctx->capabilities.limits.minStorageBufferOffsetAlignment);
-    const size_t q8_src1_binding_size = ROUNDUP_POW2(
+    ਅਚਲ size_t dst_ਵਿੱਥ           = ggml_webgpu_tensor_ਵਿੱਥ(dst);
+    ਅਚਲ size_t q8_src1_align_ਵਿੱਥ = ROUNDUP_POW2(
+        dst_ਵਿੱਥ + ggml_nbytes(dst), ctx->global_ctx->capabilities.limits.min_Storage_ਬਫਰ_ਵਿੱਥ_Alignment);
+    ਅਚਲ size_t q8_src1_binding_ਮਾਪ = ROUNDUP_POW2(
         src1->ne[3] * src1->ne[2] * src1->ne[1] * (36 /* sizeof(q8_1) */ * (src1->ne[0] / /* block_size */ 32)),
         WEBGPU_STORAGE_BUF_BINDING_MULT);
 
     std::vector<uint32_t> q8_params = {
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_size(src1->type)),
-        (uint32_t) (src1->nb[1] / ggml_type_size(src1->type)),
-        (uint32_t) (src1->nb[2] / ggml_type_size(src1->type)),
-        (uint32_t) (src1->nb[3] / ggml_type_size(src1->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_ਮਾਪ(src1->type)),
+        (uint32_t) (src1->nb[1] / ggml_type_ਮਾਪ(src1->type)),
+        (uint32_t) (src1->nb[2] / ggml_type_ਮਾਪ(src1->type)),
+        (uint32_t) (src1->nb[3] / ggml_type_ਮਾਪ(src1->type)),
         (uint32_t) src1->ne[0],
         (uint32_t) src1->ne[1],
         (uint32_t) src1->ne[2],
         (uint32_t) src1->ne[3],
     };
 
-    std::vector<wgpu::BindGroupEntry> q8_entries = {
-        ggml_webgpu_make_tensor_bind_group_entry(ctx, 0, src1),
-        ggml_webgpu_make_bind_group_entry(1, ggml_webgpu_tensor_buf(dst), q8_src1_align_offset, q8_src1_binding_size)
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> q8_entries = {
+        ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 0, src1),
+        ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(1, ggml_webgpu_tensor_buf(dst), q8_src1_align_ਵਿੱਥ, q8_src1_binding_ਮਾਪ)
     };
 
-    auto q8_decisions = static_cast<ggml_webgpu_generic_shader_decisions *>(qq8_pipeline.context.get());
+    ਸਵੈਚਾਲਿਤ q8_decisions = static_cast<ggml_webgpu_generic_shader_decisions *>(qq8_pipeline.context.get());
 
-    uint32_t       q8_wg_size     = q8_decisions->wg_size;
+    uint32_t       q8_wg_ਮਾਪ     = q8_decisions->wg_ਮਾਪ;
     uint32_t       q8_wg_x        = 1;
     uint32_t       q8_wg_y        = 1;
-    const uint32_t wg_per_vec     = (src0->ne[0] / 4 + (q8_wg_size - 1)) / q8_wg_size;
-    const uint32_t q8_total_wg    = src1->ne[1] * src1->ne[2] * src1->ne[3] * wg_per_vec;
-    const uint32_t max_wg_per_dim = ctx->global_ctx->capabilities.limits.maxComputeWorkgroupsPerDimension;
-    compute_2d_workgroups(q8_total_wg, max_wg_per_dim, q8_wg_x, q8_wg_y);
+    ਅਚਲ uint32_t wg_ਪ੍ਰਤੀ_vec     = (src0->ne[0] / 4 + (q8_wg_ਮਾਪ - 1)) / q8_wg_ਮਾਪ;
+    ਅਚਲ uint32_t q8_ਕੁੱਲ_wg    = src1->ne[1] * src1->ne[2] * src1->ne[3] * wg_ਪ੍ਰਤੀ_vec;
+    ਅਚਲ uint32_t max_wg_ਪ੍ਰਤੀ_dim = ctx->global_ctx->capabilities.limits.max_Compute_Workgroups_ਪ੍ਰਤੀ_Dimension;
+    compute_2d_workgroups(q8_ਕੁੱਲ_wg, max_wg_ਪ੍ਰਤੀ_dim, q8_wg_x, q8_wg_y);
 
     dispatches.push_back({
         qq8_pipeline, std::move(q8_params), std::move(q8_entries), { q8_wg_x, q8_wg_y }
     });
 }
 
-static webgpu_encoded_op ggml_webgpu_mul_mat(webgpu_context & ctx,
+ਸਥਿਰ webgpu_encoded_op ggml_webgpu_mul_mat(webgpu_context & ctx,
                                              ggml_tensor *    src0,
                                              ggml_tensor *    src1,
                                              ggml_tensor *    dst) {
     // Determine if this is a mat-vec operation
-    bool use_mat_vec = (dst->ne[1] <= 4);
+    ਤਾਰਕਿਕ use_mat_vec = (dst->ne[1] <= 4);
 
     // use MMVQ path for mat-vec
-    bool use_mmvq = ggml_webgpu_can_use_mmvq(src0, src1, ctx->global_ctx->capabilities.supports_dot_product,
+    ਤਾਰਕਿਕ use_mmvq = ggml_webgpu_can_use_mmvq(src0, src1, ctx->global_ctx->capabilities.supports_dot_ਗੁਣਨਫਲ,
                                              ctx->global_ctx->vendor);
 
     ggml_webgpu_shader_lib_context shader_lib_ctx = {};
@@ -1643,129 +1643,129 @@ static webgpu_encoded_op ggml_webgpu_mul_mat(webgpu_context & ctx,
     shader_lib_ctx.src0                     = src0;
     shader_lib_ctx.src1                     = src1;
     shader_lib_ctx.dst                      = dst;
-    shader_lib_ctx.max_wg_size              = ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
+    shader_lib_ctx.max_wg_ਮਾਪ              = ctx->global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
     shader_lib_ctx.supports_subgroups       = ctx->global_ctx->capabilities.supports_subgroups;
-    shader_lib_ctx.supports_subgroup_matrix = ctx->global_ctx->capabilities.supports_subgroup_matrix;
+    shader_lib_ctx.supports_subgroup_ਮੈਟ੍ਰਿਕਸ = ctx->global_ctx->capabilities.supports_subgroup_ਮੈਟ੍ਰਿਕਸ;
     shader_lib_ctx.sg_mat_m                 = ctx->global_ctx->capabilities.sg_mat_m;
     shader_lib_ctx.sg_mat_n                 = ctx->global_ctx->capabilities.sg_mat_n;
     shader_lib_ctx.sg_mat_k                 = ctx->global_ctx->capabilities.sg_mat_k;
-    shader_lib_ctx.min_subgroup_size        = ctx->global_ctx->capabilities.min_subgroup_size;
-    shader_lib_ctx.max_subgroup_size        = ctx->global_ctx->capabilities.max_subgroup_size;
-    shader_lib_ctx.supports_dot_product     = ctx->global_ctx->capabilities.supports_dot_product;
+    shader_lib_ctx.min_subgroup_ਮਾਪ        = ctx->global_ctx->capabilities.min_subgroup_ਮਾਪ;
+    shader_lib_ctx.max_subgroup_ਮਾਪ        = ctx->global_ctx->capabilities.max_subgroup_ਮਾਪ;
+    shader_lib_ctx.supports_dot_ਗੁਣਨਫਲ     = ctx->global_ctx->capabilities.supports_dot_ਗੁਣਨਫਲ;
     shader_lib_ctx.vendor                   = ctx->global_ctx->vendor;
 
     // Get or create pipeline
     webgpu_pipeline                   pipeline;
     std::vector<webgpu_dispatch_desc> dispatches;
-    const bool src_overlap = ggml_webgpu_tensor_binding_overlap(ctx->global_ctx, src0, src1) && !use_mmvq;
+    ਅਚਲ ਤਾਰਕਿਕ src_overlap = ggml_webgpu_tensor_binding_overlap(ctx->global_ctx, src0, src1) && !use_mmvq;
 
-    if (use_mat_vec) {
-        if (use_mmvq) {
+    ਜੇ (use_mat_vec) {
+        ਜੇ (use_mmvq) {
             ggml_webgpu_quantize_q8_dispatch(ctx, src0, src1, dst, dispatches);
         }
         pipeline = ctx->shader_lib->get_mul_mat_vec_pipeline(shader_lib_ctx, src_overlap);
-    } else {
+    } ਨਹੀਂਤਾਂ {
         pipeline = ctx->shader_lib->get_mul_mat_fast_pipeline(shader_lib_ctx, src_overlap);
     }
 
-    uint32_t offset_src0   = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src0) / ggml_type_size(src0->type));
-    uint32_t offset_src1   = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_size(src1->type));
-    size_t   merged_offset = 0;
-    size_t   merged_size   = 0;
-    if (src_overlap) {
-        const ggml_webgpu_merged_binding_range merged_range =
+    uint32_t ਵਿੱਥ_src0   = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src0) / ggml_type_ਮਾਪ(src0->type));
+    uint32_t ਵਿੱਥ_src1   = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_ਮਾਪ(src1->type));
+    size_t   merged_ਵਿੱਥ = 0;
+    size_t   merged_ਮਾਪ   = 0;
+    ਜੇ (src_overlap) {
+        ਅਚਲ ggml_webgpu_merged_binding_range merged_range =
             ggml_webgpu_tensor_merged_binding_range(ctx, { src0, src1 });
-        merged_offset = merged_range.offset;
-        merged_size   = merged_range.size;
-        offset_src0   = ggml_webgpu_tensor_merged_element_offset(src0, merged_range);
-        offset_src1   = ggml_webgpu_tensor_merged_element_offset(src1, merged_range);
+        merged_ਵਿੱਥ = merged_range.ਵਿੱਥ;
+        merged_ਮਾਪ   = merged_range.size;
+        ਵਿੱਥ_src0   = ggml_webgpu_tensor_merged_element_ਵਿੱਥ(src0, merged_range);
+        ਵਿੱਥ_src1   = ggml_webgpu_tensor_merged_element_ਵਿੱਥ(src1, merged_range);
     }
 
     // Build params
-    std::vector<uint32_t> params = { offset_src0,
-                                     offset_src1,
-                                     (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_size(dst->type)),
+    std::vector<uint32_t> params = { ਵਿੱਥ_src0,
+                                     ਵਿੱਥ_src1,
+                                     (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_ਮਾਪ(dst->type)),
                                      (uint32_t) dst->ne[0],
                                      (uint32_t) dst->ne[1],
                                      (uint32_t) src0->ne[0],
-                                     (uint32_t) (src0->nb[1] / ggml_type_size(src0->type)),
-                                     (uint32_t) (src1->nb[1] / ggml_type_size(src1->type)),
-                                     (uint32_t) (src0->nb[2] / ggml_type_size(src0->type)),
-                                     (uint32_t) (src1->nb[2] / ggml_type_size(src1->type)),
-                                     (uint32_t) (src0->nb[3] / ggml_type_size(src0->type)),
-                                     (uint32_t) (src1->nb[3] / ggml_type_size(src1->type)),
+                                     (uint32_t) (src0->nb[1] / ggml_type_ਮਾਪ(src0->type)),
+                                     (uint32_t) (src1->nb[1] / ggml_type_ਮਾਪ(src1->type)),
+                                     (uint32_t) (src0->nb[2] / ggml_type_ਮਾਪ(src0->type)),
+                                     (uint32_t) (src1->nb[2] / ggml_type_ਮਾਪ(src1->type)),
+                                     (uint32_t) (src0->nb[3] / ggml_type_ਮਾਪ(src0->type)),
+                                     (uint32_t) (src1->nb[3] / ggml_type_ਮਾਪ(src1->type)),
                                      (uint32_t) src0->ne[2],
                                      (uint32_t) src0->ne[3],
                                      (uint32_t) (src1->ne[2] / src0->ne[2]),
                                      (uint32_t) (src1->ne[3] / src0->ne[3]) };
 
     // Build bind group entries
-    std::vector<wgpu::BindGroupEntry> entries = {};
-    if (use_mmvq) {
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 0, src0));
-        auto & mmvq_qq8_entry = dispatches[0].bind_group_entries[1];
-        entries.push_back(ggml_webgpu_make_bind_group_entry(1, ggml_webgpu_tensor_buf(dst), mmvq_qq8_entry.offset,
-                                                            mmvq_qq8_entry.size));
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 2, dst));
-    } else if (src_overlap) {
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> entries = {};
+    ਜੇ (use_mmvq) {
+        entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 0, src0));
+        ਸਵੈਚਾਲਿਤ & mmvq_qq8_ਇੰਦਰਾਜ = dispatches[0].bind_ਸਮੂਹ_entries[1];
+        entries.push_back(ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(1, ggml_webgpu_tensor_buf(dst), mmvq_qq8_ਇੰਦਰਾਜ.ਵਿੱਥ,
+                                                            mmvq_qq8_ਇੰਦਰਾਜ.size));
+        entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 2, dst));
+    } ਨਹੀਂਤਾਂ ਜੇ (src_overlap) {
         entries.push_back(
-            ggml_webgpu_make_bind_group_entry(0, ggml_webgpu_tensor_buf(src0), merged_offset, merged_size));
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 1, dst));
-    } else {
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 0, src0));
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 1, src1));
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 2, dst));
+            ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(0, ggml_webgpu_tensor_buf(src0), merged_ਵਿੱਥ, merged_ਮਾਪ));
+        entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 1, dst));
+    } ਨਹੀਂਤਾਂ {
+        entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 0, src0));
+        entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 1, src1));
+        entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 2, dst));
     }
 
     // Calculate workgroup dimensions
     uint32_t       wg_x           = 1;
     uint32_t       wg_y           = 1;
-    const uint32_t max_wg_per_dim = ctx->global_ctx->capabilities.limits.maxComputeWorkgroupsPerDimension;
+    ਅਚਲ uint32_t max_wg_ਪ੍ਰਤੀ_dim = ctx->global_ctx->capabilities.limits.max_Compute_Workgroups_ਪ੍ਰਤੀ_Dimension;
 
-    if (use_mat_vec) {
-        auto * decisions = static_cast<ggml_webgpu_mul_mat_vec_shader_decisions *>(pipeline.context.get());
+    ਜੇ (use_mat_vec) {
+        ਸਵੈਚਾਲਿਤ * decisions = static_cast<ggml_webgpu_mul_mat_vec_shader_decisions *>(pipeline.context.get());
 
         uint32_t batches       = dst->ne[2] * dst->ne[3];
-        uint32_t output_groups = CEIL_DIV(dst->ne[0], decisions->outputs_per_wg);
-        uint32_t total_wg      = output_groups * batches;
-        compute_2d_workgroups(total_wg, max_wg_per_dim, wg_x, wg_y);
-    } else {
-        auto * decisions = static_cast<ggml_webgpu_mul_mat_shader_decisions *>(pipeline.context.get());
+        uint32_t output_groups = CEIL_DIV(dst->ne[0], decisions->outputs_ਪ੍ਰਤੀ_wg);
+        uint32_t ਕੁੱਲ_wg      = output_groups * batches;
+        compute_2d_workgroups(ਕੁੱਲ_wg, max_wg_ਪ੍ਰਤੀ_dim, wg_x, wg_y);
+    } ਨਹੀਂਤਾਂ {
+        ਸਵੈਚਾਲਿਤ * decisions = static_cast<ggml_webgpu_mul_mat_shader_decisions *>(pipeline.context.get());
 
         // Fast-path tiled/subgroup calculations
         uint32_t wg_m;
         uint32_t wg_n;
-        if (decisions->use_subgroup_matrix) {
+        ਜੇ (decisions->use_subgroup_ਮੈਟ੍ਰਿਕਸ) {
             uint32_t wg_m_sg_tile =
-                decisions->subgroup_m * decisions->subgroup_matrix_m * ctx->global_ctx->capabilities.sg_mat_m;
+                decisions->subgroup_m * decisions->subgroup_ਮੈਟ੍ਰਿਕਸ_m * ctx->global_ctx->capabilities.sg_mat_m;
             wg_m = CEIL_DIV(dst->ne[0], wg_m_sg_tile);
             uint32_t wg_n_sg_tile =
-                decisions->subgroup_n * decisions->subgroup_matrix_n * ctx->global_ctx->capabilities.sg_mat_n;
+                decisions->subgroup_n * decisions->subgroup_ਮੈਟ੍ਰਿਕਸ_n * ctx->global_ctx->capabilities.sg_mat_n;
             wg_n = CEIL_DIV(dst->ne[1], wg_n_sg_tile);
-        } else {
-            uint32_t tile_m_s = decisions->tile_m * decisions->wg_size_m;
-            uint32_t tile_n_s = decisions->tile_n * decisions->wg_size_n;
+        } ਨਹੀਂਤਾਂ {
+            uint32_t tile_m_s = decisions->tile_m * decisions->wg_ਮਾਪ_m;
+            uint32_t tile_n_s = decisions->tile_n * decisions->wg_ਮਾਪ_n;
             wg_m              = CEIL_DIV(dst->ne[0], tile_m_s);
             wg_n              = CEIL_DIV(dst->ne[1], tile_n_s);
         }
-        uint32_t total_wg = wg_m * wg_n * dst->ne[2] * dst->ne[3];
-        compute_2d_workgroups(total_wg, max_wg_per_dim, wg_x, wg_y);
+        uint32_t ਕੁੱਲ_wg = wg_m * wg_n * dst->ne[2] * dst->ne[3];
+        compute_2d_workgroups(ਕੁੱਲ_wg, max_wg_ਪ੍ਰਤੀ_dim, wg_x, wg_y);
     }
 
     dispatches.push_back({
         pipeline, std::move(params), std::move(entries), { wg_x, wg_y }
     });
 
-    return ggml_backend_webgpu_build_multi(ctx, dispatches);
+    ਵਾਪਸ ggml_backend_webgpu_build_multi(ctx, dispatches);
 }
 
-static webgpu_encoded_op ggml_webgpu_mul_mat_id_vec(webgpu_context & ctx,
+ਸਥਿਰ webgpu_encoded_op ggml_webgpu_mul_mat_id_vec(webgpu_context & ctx,
                                                     ggml_tensor *    src0,
                                                     ggml_tensor *    src1,
                                                     ggml_tensor *    src2,
                                                     ggml_tensor *    dst) {
-    const uint32_t param_n_expert      = (uint32_t) src0->ne[2];
-    const uint32_t param_n_expert_used = (uint32_t) dst->ne[1];
+    ਅਚਲ uint32_t param_n_expert      = (uint32_t) src0->ne[2];
+    ਅਚਲ uint32_t param_n_expert_ਵਰਤਿਆ = (uint32_t) dst->ne[1];
 
     ggml_webgpu_shader_lib_context shader_lib_ctx = {};
     shader_lib_ctx.src0                           = src0;
@@ -1773,71 +1773,71 @@ static webgpu_encoded_op ggml_webgpu_mul_mat_id_vec(webgpu_context & ctx,
     shader_lib_ctx.src2                           = src2;
     shader_lib_ctx.dst                            = dst;
     shader_lib_ctx.supports_subgroups             = ctx->global_ctx->capabilities.supports_subgroups;
-    shader_lib_ctx.max_wg_size = ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
+    shader_lib_ctx.max_wg_ਮਾਪ = ctx->global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
 
     webgpu_pipeline pipeline = ctx->shader_lib->get_mul_mat_id_vec_pipeline(shader_lib_ctx);
 
     std::vector<uint32_t> params = {
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src0) / ggml_type_size(src0->type)),
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_size(src1->type)),
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src2) / ggml_type_size(src2->type)),
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_size(dst->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src0) / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_ਮਾਪ(src1->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src2) / ggml_type_ਮਾਪ(src2->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_ਮਾਪ(dst->type)),
         (uint32_t) src0->ne[0],
         (uint32_t) src0->ne[1],
         param_n_expert,
-        param_n_expert_used,
+        param_n_expert_ਵਰਤਿਆ,
         (uint32_t) src1->ne[1],
-        (uint32_t) (src0->nb[1] / ggml_type_size(src0->type)),
-        (uint32_t) (src1->nb[1] / ggml_type_size(src1->type)),
-        (uint32_t) (src0->nb[2] / ggml_type_size(src0->type)),
-        (uint32_t) (src1->nb[2] / ggml_type_size(src1->type)),
+        (uint32_t) (src0->nb[1] / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (src1->nb[1] / ggml_type_ਮਾਪ(src1->type)),
+        (uint32_t) (src0->nb[2] / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (src1->nb[2] / ggml_type_ਮਾਪ(src1->type)),
     };
 
-    std::vector<wgpu::BindGroupEntry> entries = {
-        ggml_webgpu_make_bind_group_entry(0, ggml_webgpu_tensor_buf(src0), ggml_webgpu_tensor_align_offset(ctx, src0),
-                                          ggml_webgpu_tensor_binding_size(ctx, src0)),
-        ggml_webgpu_make_bind_group_entry(1, ggml_webgpu_tensor_buf(src1), ggml_webgpu_tensor_align_offset(ctx, src1),
-                                          ggml_webgpu_tensor_binding_size(ctx, src1)),
-        ggml_webgpu_make_bind_group_entry(2, ggml_webgpu_tensor_buf(src2), ggml_webgpu_tensor_align_offset(ctx, src2),
-                                          ggml_webgpu_tensor_binding_size(ctx, src2)),
-        ggml_webgpu_make_bind_group_entry(3, ggml_webgpu_tensor_buf(dst), ggml_webgpu_tensor_align_offset(ctx, dst),
-                                          ggml_webgpu_tensor_binding_size(ctx, dst)),
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> entries = {
+        ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(0, ggml_webgpu_tensor_buf(src0), ggml_webgpu_tensor_align_ਵਿੱਥ(ctx, src0),
+                                          ggml_webgpu_tensor_binding_ਮਾਪ(ctx, src0)),
+        ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(1, ggml_webgpu_tensor_buf(src1), ggml_webgpu_tensor_align_ਵਿੱਥ(ctx, src1),
+                                          ggml_webgpu_tensor_binding_ਮਾਪ(ctx, src1)),
+        ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(2, ggml_webgpu_tensor_buf(src2), ggml_webgpu_tensor_align_ਵਿੱਥ(ctx, src2),
+                                          ggml_webgpu_tensor_binding_ਮਾਪ(ctx, src2)),
+        ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(3, ggml_webgpu_tensor_buf(dst), ggml_webgpu_tensor_align_ਵਿੱਥ(ctx, dst),
+                                          ggml_webgpu_tensor_binding_ਮਾਪ(ctx, dst)),
     };
 
     uint32_t wg_x = 1;
     uint32_t wg_y = 1;
 
-    auto * decisions = static_cast<ggml_webgpu_mul_mat_vec_shader_decisions *>(pipeline.context.get());
+    ਸਵੈਚਾਲਿਤ * decisions = static_cast<ggml_webgpu_mul_mat_vec_shader_decisions *>(pipeline.context.get());
 
-    const uint32_t max_wg_per_dim = ctx->global_ctx->capabilities.limits.maxComputeWorkgroupsPerDimension;
-    uint32_t       output_groups  = CEIL_DIV(dst->ne[0], decisions->outputs_per_wg);
-    uint32_t       total_wg       = output_groups * param_n_expert_used;
-    compute_2d_workgroups(total_wg, max_wg_per_dim, wg_x, wg_y);
+    ਅਚਲ uint32_t max_wg_ਪ੍ਰਤੀ_dim = ctx->global_ctx->capabilities.limits.max_Compute_Workgroups_ਪ੍ਰਤੀ_Dimension;
+    uint32_t       output_groups  = CEIL_DIV(dst->ne[0], decisions->outputs_ਪ੍ਰਤੀ_wg);
+    uint32_t       ਕੁੱਲ_wg       = output_groups * param_n_expert_ਵਰਤਿਆ;
+    compute_2d_workgroups(ਕੁੱਲ_wg, max_wg_ਪ੍ਰਤੀ_dim, wg_x, wg_y);
 
-    return ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
+    ਵਾਪਸ ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
 }
 
 // upper bound on the number of slot tiles emitted by mul_mat_id_gather.wgsl
-static uint32_t ggml_webgpu_mul_mat_id_max_tiles(const ggml_tensor * dst) {
-    const uint32_t n_expert = (uint32_t) dst->src[0]->ne[2];
-    const uint32_t n_slots  = (uint32_t) (dst->ne[1] * dst->ne[2]);  // n_expert_used * n_tokens
+ਸਥਿਰ uint32_t ggml_webgpu_mul_mat_id_max_tiles(ਅਚਲ ggml_tensor * dst) {
+    ਅਚਲ uint32_t n_expert = (uint32_t) dst->src[0]->ne[2];
+    ਅਚਲ uint32_t n_slots  = (uint32_t) (dst->ne[1] * dst->ne[2]);  // n_expert_used * n_tokens
 
-    return CEIL_DIV(n_slots, WEBGPU_MUL_MAT_TILE_N * WEBGPU_MUL_MAT_WG_SIZE_N) + std::min(n_expert, n_slots);
+    ਵਾਪਸ CEIL_DIV(n_slots, WEBGPU_MUL_MAT_TILE_N * WEBGPU_MUL_MAT_WG_ਮਾਪ_N) + std::min(n_expert, n_slots);
 }
 
 // tile count followed by (expert, first slot, n slots) per tile
-static size_t ggml_webgpu_mul_mat_id_tiles_nbytes(const ggml_tensor * dst) {
-    return (1 + 3 * (size_t) ggml_webgpu_mul_mat_id_max_tiles(dst)) * sizeof(uint32_t);
+ਸਥਿਰ size_t ggml_webgpu_mul_mat_id_tiles_nbytes(ਅਚਲ ggml_tensor * dst) {
+    ਵਾਪਸ (1 + 3 * (size_t) ggml_webgpu_mul_mat_id_max_tiles(dst)) * ਆਕਾਰ(uint32_t);
 }
 
-static webgpu_encoded_op ggml_webgpu_mul_mat_id(webgpu_context & ctx,
+ਸਥਿਰ webgpu_encoded_op ggml_webgpu_mul_mat_id(webgpu_context & ctx,
                                                 ggml_tensor *    src0,
                                                 ggml_tensor *    src1,
                                                 ggml_tensor *    src2,
                                                 ggml_tensor *    dst) {
     // we can use mat-vec fast path
-    if (dst->ne[2] == 1) {
-        return ggml_webgpu_mul_mat_id_vec(ctx, src0, src1, src2, dst);
+    ਜੇ (dst->ne[2] == 1) {
+        ਵਾਪਸ ggml_webgpu_mul_mat_id_vec(ctx, src0, src1, src2, dst);
     }
 
     ggml_webgpu_shader_lib_context shader_lib_ctx = {};
@@ -1845,7 +1845,7 @@ static webgpu_encoded_op ggml_webgpu_mul_mat_id(webgpu_context & ctx,
     shader_lib_ctx.src1                           = src1;
     shader_lib_ctx.src2                           = src2;
     shader_lib_ctx.dst                            = dst;
-    shader_lib_ctx.max_wg_size = ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
+    shader_lib_ctx.max_wg_ਮਾਪ = ctx->global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
 
     // Get or create pipeline
     webgpu_pipeline gather_pipeline;
@@ -1856,38 +1856,38 @@ static webgpu_encoded_op ggml_webgpu_mul_mat_id(webgpu_context & ctx,
     gather_pipeline = ctx->shader_lib->get_mul_mat_id_gather_pipeline(shader_lib_ctx);
     main_pipeline   = ctx->shader_lib->get_mul_mat_id_pipeline(shader_lib_ctx);
 
-    const uint32_t param_n_expert      = (uint32_t) src0->ne[2];
-    const uint32_t param_n_expert_used = (uint32_t) dst->ne[1];
-    const uint32_t param_n_tokens      = (uint32_t) dst->ne[2];
+    ਅਚਲ uint32_t param_n_expert      = (uint32_t) src0->ne[2];
+    ਅਚਲ uint32_t param_n_expert_ਵਰਤਿਆ = (uint32_t) dst->ne[1];
+    ਅਚਲ uint32_t param_n_ਟੋਕਨ      = (uint32_t) dst->ne[2];
 
     // params for mul_mat_id_gather.wgsl
     std::vector<uint32_t> gather_params = {
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src2) / ggml_type_size(src2->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src2) / ggml_type_ਮਾਪ(src2->type)),
         param_n_expert,
-        param_n_expert_used,
-        param_n_tokens,
-        (uint32_t) (src2->nb[1] / ggml_type_size(src2->type)),
+        param_n_expert_ਵਰਤਿਆ,
+        param_n_ਟੋਕਨ,
+        (uint32_t) (src2->nb[1] / ggml_type_ਮਾਪ(src2->type)),
     };
 
-    const size_t dst_offset       = ggml_webgpu_tensor_offset(dst);
-    const size_t ids_cache_nbytes = src2->ne[0] * src1->ne[2] * sizeof(uint32_t);
-    const size_t ids_tiles_nbytes = ggml_webgpu_mul_mat_id_tiles_nbytes(dst);
+    ਅਚਲ size_t dst_ਵਿੱਥ       = ggml_webgpu_tensor_ਵਿੱਥ(dst);
+    ਅਚਲ size_t ids_cache_nbytes = src2->ne[0] * src1->ne[2] * ਆਕਾਰ(uint32_t);
+    ਅਚਲ size_t ids_tiles_nbytes = ggml_webgpu_mul_mat_id_tiles_nbytes(dst);
 
-    const size_t ids_cache_align_offset = ROUNDUP_POW2(
-        dst_offset + ggml_nbytes(dst), ctx->global_ctx->capabilities.limits.minStorageBufferOffsetAlignment);
-    const size_t ids_tiles_align_offset =
-        ROUNDUP_POW2(ids_cache_align_offset + ids_cache_nbytes,
-                     ctx->global_ctx->capabilities.limits.minStorageBufferOffsetAlignment);
+    ਅਚਲ size_t ids_cache_align_ਵਿੱਥ = ROUNDUP_POW2(
+        dst_ਵਿੱਥ + ggml_nbytes(dst), ctx->global_ctx->capabilities.limits.min_Storage_ਬਫਰ_ਵਿੱਥ_Alignment);
+    ਅਚਲ size_t ids_tiles_align_ਵਿੱਥ =
+        ROUNDUP_POW2(ids_cache_align_ਵਿੱਥ + ids_cache_nbytes,
+                     ctx->global_ctx->capabilities.limits.min_Storage_ਬਫਰ_ਵਿੱਥ_Alignment);
 
-    const size_t ids_cache_bind_size = ROUNDUP_POW2(ids_cache_nbytes, WEBGPU_STORAGE_BUF_BINDING_MULT);
-    const size_t ids_tiles_bind_size = ROUNDUP_POW2(ids_tiles_nbytes, WEBGPU_STORAGE_BUF_BINDING_MULT);
+    ਅਚਲ size_t ids_cache_bind_ਮਾਪ = ROUNDUP_POW2(ids_cache_nbytes, WEBGPU_STORAGE_BUF_BINDING_MULT);
+    ਅਚਲ size_t ids_tiles_bind_ਮਾਪ = ROUNDUP_POW2(ids_tiles_nbytes, WEBGPU_STORAGE_BUF_BINDING_MULT);
 
     // bind group entries for mul_mat_id_gather.wgsl
-    std::vector<wgpu::BindGroupEntry> gather_entries = {
-        ggml_webgpu_make_bind_group_entry(0, ggml_webgpu_tensor_buf(src2), ggml_webgpu_tensor_align_offset(ctx, src2),
-                                          ggml_webgpu_tensor_binding_size(ctx, src2)),
-        ggml_webgpu_make_bind_group_entry(1, ggml_webgpu_tensor_buf(dst), ids_cache_align_offset, ids_cache_bind_size),
-        ggml_webgpu_make_bind_group_entry(2, ggml_webgpu_tensor_buf(dst), ids_tiles_align_offset, ids_tiles_bind_size),
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> gather_entries = {
+        ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(0, ggml_webgpu_tensor_buf(src2), ggml_webgpu_tensor_align_ਵਿੱਥ(ctx, src2),
+                                          ggml_webgpu_tensor_binding_ਮਾਪ(ctx, src2)),
+        ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(1, ggml_webgpu_tensor_buf(dst), ids_cache_align_ਵਿੱਥ, ids_cache_bind_ਮਾਪ),
+        ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(2, ggml_webgpu_tensor_buf(dst), ids_tiles_align_ਵਿੱਥ, ids_tiles_bind_ਮਾਪ),
     };
 
     dispatches.push_back({
@@ -1896,270 +1896,270 @@ static webgpu_encoded_op ggml_webgpu_mul_mat_id(webgpu_context & ctx,
 
     // params for mul_mat_id.wgsl
     std::vector<uint32_t> main_params = {
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src0) / ggml_type_size(src0->type)),
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_size(src1->type)),
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_size(dst->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src0) / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_ਮਾਪ(src1->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_ਮਾਪ(dst->type)),
         (uint32_t) src0->ne[0],
         (uint32_t) src0->ne[1],
         param_n_expert,
-        param_n_expert_used,
-        param_n_tokens,
+        param_n_expert_ਵਰਤਿਆ,
+        param_n_ਟੋਕਨ,
         (uint32_t) src1->ne[1],
-        (uint32_t) (src0->nb[1] / ggml_type_size(src0->type)),
-        (uint32_t) (src1->nb[1] / ggml_type_size(src1->type)),
-        (uint32_t) (src0->nb[2] / ggml_type_size(src0->type)),
-        (uint32_t) (src1->nb[2] / ggml_type_size(src1->type)),
+        (uint32_t) (src0->nb[1] / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (src1->nb[1] / ggml_type_ਮਾਪ(src1->type)),
+        (uint32_t) (src0->nb[2] / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (src1->nb[2] / ggml_type_ਮਾਪ(src1->type)),
     };
 
     // bind group entries for mul_mat_id.wgsl
-    std::vector<wgpu::BindGroupEntry> main_entries = {
-        ggml_webgpu_make_bind_group_entry(0, ggml_webgpu_tensor_buf(src0), ggml_webgpu_tensor_align_offset(ctx, src0),
-                                          ggml_webgpu_tensor_binding_size(ctx, src0)),
-        ggml_webgpu_make_bind_group_entry(1, ggml_webgpu_tensor_buf(src1), ggml_webgpu_tensor_align_offset(ctx, src1),
-                                          ggml_webgpu_tensor_binding_size(ctx, src1)),
-        ggml_webgpu_make_bind_group_entry(2, ggml_webgpu_tensor_buf(dst), ggml_webgpu_tensor_align_offset(ctx, dst),
-                                          ggml_webgpu_tensor_binding_size(ctx, dst)),
-        ggml_webgpu_make_bind_group_entry(3, ggml_webgpu_tensor_buf(dst), ids_cache_align_offset, ids_cache_bind_size),
-        ggml_webgpu_make_bind_group_entry(4, ggml_webgpu_tensor_buf(dst), ids_tiles_align_offset, ids_tiles_bind_size),
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> main_entries = {
+        ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(0, ggml_webgpu_tensor_buf(src0), ggml_webgpu_tensor_align_ਵਿੱਥ(ctx, src0),
+                                          ggml_webgpu_tensor_binding_ਮਾਪ(ctx, src0)),
+        ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(1, ggml_webgpu_tensor_buf(src1), ggml_webgpu_tensor_align_ਵਿੱਥ(ctx, src1),
+                                          ggml_webgpu_tensor_binding_ਮਾਪ(ctx, src1)),
+        ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(2, ggml_webgpu_tensor_buf(dst), ggml_webgpu_tensor_align_ਵਿੱਥ(ctx, dst),
+                                          ggml_webgpu_tensor_binding_ਮਾਪ(ctx, dst)),
+        ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(3, ggml_webgpu_tensor_buf(dst), ids_cache_align_ਵਿੱਥ, ids_cache_bind_ਮਾਪ),
+        ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(4, ggml_webgpu_tensor_buf(dst), ids_tiles_align_ਵਿੱਥ, ids_tiles_bind_ਮਾਪ),
     };
 
     // Calculate workgroup dimensions
     uint32_t wg_x = 1;
     uint32_t wg_y = 1;
 
-    auto * main_decisions = static_cast<ggml_webgpu_mul_mat_shader_decisions *>(main_pipeline.context.get());
+    ਸਵੈਚਾਲਿਤ * main_decisions = static_cast<ggml_webgpu_mul_mat_shader_decisions *>(main_pipeline.context.get());
 
     // must match `TILE_N_SLOTS` of mul_mat_id_gather.wgsl
-    GGML_ASSERT(main_decisions->tile_n * main_decisions->wg_size_n == WEBGPU_MUL_MAT_TILE_N * WEBGPU_MUL_MAT_WG_SIZE_N);
+    GGML_ASSERT(main_decisions->tile_n * main_decisions->wg_ਮਾਪ_n == WEBGPU_MUL_MAT_TILE_N * WEBGPU_MUL_MAT_WG_ਮਾਪ_N);
 
-    const uint32_t tile_m_s = main_decisions->tile_m * main_decisions->wg_size_m;
-    const uint32_t wg_m     = CEIL_DIV(dst->ne[0], tile_m_s);
-    const uint32_t total_wg = wg_m * ggml_webgpu_mul_mat_id_max_tiles(dst);
+    ਅਚਲ uint32_t tile_m_s = main_decisions->tile_m * main_decisions->wg_ਮਾਪ_m;
+    ਅਚਲ uint32_t wg_m     = CEIL_DIV(dst->ne[0], tile_m_s);
+    ਅਚਲ uint32_t ਕੁੱਲ_wg = wg_m * ggml_webgpu_mul_mat_id_max_tiles(dst);
 
-    compute_2d_workgroups(total_wg, ctx->global_ctx->capabilities.limits.maxComputeWorkgroupsPerDimension, wg_x, wg_y);
+    compute_2d_workgroups(ਕੁੱਲ_wg, ctx->global_ctx->capabilities.limits.max_Compute_Workgroups_ਪ੍ਰਤੀ_Dimension, wg_x, wg_y);
 
     dispatches.push_back({
         main_pipeline, std::move(main_params), std::move(main_entries), { wg_x, wg_y }
     });
 
-    return ggml_backend_webgpu_build_multi(ctx, dispatches);
+    ਵਾਪਸ ggml_backend_webgpu_build_multi(ctx, dispatches);
 }
 
-struct ggml_webgpu_flash_attn_op {
+ਬਣਤਰ ggml_webgpu_flash_attn_op {
     ggml_webgpu_shader_lib_context    shader_lib_ctx = {};
     std::vector<uint32_t>             params;
-    std::vector<wgpu::BindGroupEntry> entries;
-    size_t                            kv_bind_offset = 0;
-    size_t                            kv_bind_size   = 0;
-    bool                              has_mask       = false;
-    bool                              has_sinks      = false;
-    bool                              kv_overlap     = false;
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> entries;
+    size_t                            kv_bind_ਵਿੱਥ = 0;
+    size_t                            kv_bind_ਮਾਪ   = 0;
+    ਤਾਰਕਿਕ                              has_ਨਕਾਬ       = ਝੂਠ;
+    ਤਾਰਕਿਕ                              has_sinks      = ਝੂਠ;
+    ਤਾਰਕਿਕ                              kv_overlap     = ਝੂਠ;
 };
 
-static bool ggml_webgpu_flash_attn_use_vec_path(const webgpu_global_context & global_ctx,
-                                                const ggml_tensor *           Q,
-                                                const ggml_tensor *           K,
-                                                const ggml_tensor *           V) {
-    const size_t storage_offset_alignment = global_ctx->capabilities.limits.minStorageBufferOffsetAlignment;
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_webgpu_flash_attn_use_vec_ਰਸਤਾ(ਅਚਲ webgpu_global_context & global_ctx,
+                                                ਅਚਲ ggml_tensor *           Q,
+                                                ਅਚਲ ggml_tensor *           K,
+                                                ਅਚਲ ggml_tensor *           V) {
+    ਅਚਲ size_t storage_ਵਿੱਥ_alignment = global_ctx->capabilities.limits.min_Storage_ਬਫਰ_ਵਿੱਥ_Alignment;
 
-    const bool k_float_vec4_aligned = (K->type != GGML_TYPE_F16 && K->type != GGML_TYPE_F32) ||
-                                      ggml_webgpu_flash_attn_float_vec4_aligned(K, storage_offset_alignment);
-    const bool v_float_vec4_aligned = (V->type != GGML_TYPE_F16 && V->type != GGML_TYPE_F32) ||
-                                      ggml_webgpu_flash_attn_float_vec4_aligned(V, storage_offset_alignment);
+    ਅਚਲ ਤਾਰਕਿਕ k_float_vec4_aligned = (K->type != GGML_TYPE_F16 && K->type != GGML_TYPE_F32) ||
+                                      ggml_webgpu_flash_attn_float_vec4_aligned(K, storage_ਵਿੱਥ_alignment);
+    ਅਚਲ ਤਾਰਕਿਕ v_float_vec4_aligned = (V->type != GGML_TYPE_F16 && V->type != GGML_TYPE_F32) ||
+                                      ggml_webgpu_flash_attn_float_vec4_aligned(V, storage_ਵਿੱਥ_alignment);
 
-    const uint32_t k_vec_head_align =
-        ggml_is_quantized(K->type) ? ggml_blck_size(K->type) : GGML_WEBGPU_FLASH_ATTN_TILE_KV_VEC_WIDTH;
-    const uint32_t v_vec_head_align =
-        ggml_is_quantized(V->type) ? ggml_blck_size(V->type) : GGML_WEBGPU_FLASH_ATTN_TILE_KV_VEC_WIDTH;
-    const bool kv_vec_head_dims_aligned = Q->ne[0] % k_vec_head_align == 0 && V->ne[0] % v_vec_head_align == 0;
+    ਅਚਲ uint32_t k_vec_ਸਿਰ_align =
+        ggml_is_quantized(K->type) ? ggml_blck_ਮਾਪ(K->type) : GGML_WEBGPU_FLASH_ATTN_TILE_KV_VEC_ਚੌੜਾਈ;
+    ਅਚਲ uint32_t v_vec_ਸਿਰ_align =
+        ggml_is_quantized(V->type) ? ggml_blck_ਮਾਪ(V->type) : GGML_WEBGPU_FLASH_ATTN_TILE_KV_VEC_ਚੌੜਾਈ;
+    ਅਚਲ ਤਾਰਕਿਕ kv_vec_ਸਿਰ_dims_aligned = Q->ne[0] % k_vec_ਸਿਰ_align == 0 && V->ne[0] % v_vec_ਸਿਰ_align == 0;
 
-    return global_ctx->capabilities.supports_subgroups && (Q->ne[1] < GGML_WEBGPU_FLASH_ATTN_VEC_MAX_SEQ_LEN) &&
-           kv_vec_head_dims_aligned && k_float_vec4_aligned && v_float_vec4_aligned;
+    ਵਾਪਸ global_ctx->capabilities.supports_subgroups && (Q->ne[1] < GGML_WEBGPU_FLASH_ATTN_VEC_MAX_SEQ_LEN) &&
+           kv_vec_ਸਿਰ_dims_aligned && k_float_vec4_aligned && v_float_vec4_aligned;
 }
 
-static ggml_webgpu_flash_attn_op ggml_webgpu_flash_attn_prepare(webgpu_context & ctx,
+ਸਥਿਰ ggml_webgpu_flash_attn_op ggml_webgpu_flash_attn_prepare(webgpu_context & ctx,
                                                                 ggml_tensor *    Q,
                                                                 ggml_tensor *    K,
                                                                 ggml_tensor *    V,
-                                                                ggml_tensor *    mask,
+                                                                ggml_tensor *    ਨਕਾਬ,
                                                                 ggml_tensor *    sinks,
                                                                 ggml_tensor *    dst) {
-    float scale         = ggml_get_op_params_f32(dst, 0);
-    float max_bias      = ggml_get_op_params_f32(dst, 1);
-    float logit_softcap = ggml_get_op_params_f32(dst, 2);
-    if (logit_softcap != 0.0f) {
+    ਦਸ਼ਮਲਵ scale         = ggml_get_op_params_f32(dst, 0);
+    ਦਸ਼ਮਲਵ max_bias      = ggml_get_op_params_f32(dst, 1);
+    ਦਸ਼ਮਲਵ logit_softcap = ggml_get_op_params_f32(dst, 2);
+    ਜੇ (logit_softcap != 0.0f) {
         scale /= logit_softcap;
     }
-    float n_head_log2 = float(1u << (uint32_t) floor(log2(Q->ne[2])));
-    float m0          = powf(2.0f, -(max_bias) / n_head_log2);
-    float m1          = powf(2.0f, -(max_bias / 2.0f) / n_head_log2);
+    ਦਸ਼ਮਲਵ n_ਸਿਰ_log2 = ਦਸ਼ਮਲਵ(1u << (uint32_t) floor(log2(Q->ne[2])));
+    ਦਸ਼ਮਲਵ m0          = powf(2.0f, -(max_bias) / n_ਸਿਰ_log2);
+    ਦਸ਼ਮਲਵ m1          = powf(2.0f, -(max_bias / 2.0f) / n_ਸਿਰ_log2);
 
     ggml_webgpu_flash_attn_op op               = {};
     op.shader_lib_ctx.src0                     = Q;
     op.shader_lib_ctx.src1                     = K;
     op.shader_lib_ctx.src2                     = V;
-    op.shader_lib_ctx.src3                     = mask;
+    op.shader_lib_ctx.src3                     = ਨਕਾਬ;
     op.shader_lib_ctx.src4                     = sinks;
     op.shader_lib_ctx.dst                      = dst;
     op.shader_lib_ctx.supports_subgroups       = ctx->global_ctx->capabilities.supports_subgroups;
-    op.shader_lib_ctx.supports_subgroup_matrix = ctx->global_ctx->capabilities.supports_subgroup_matrix;
-    op.shader_lib_ctx.max_wg_size              = ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
-    op.shader_lib_ctx.wg_mem_limit_bytes       = ctx->global_ctx->capabilities.limits.maxComputeWorkgroupStorageSize;
+    op.shader_lib_ctx.supports_subgroup_ਮੈਟ੍ਰਿਕਸ = ctx->global_ctx->capabilities.supports_subgroup_ਮੈਟ੍ਰਿਕਸ;
+    op.shader_lib_ctx.max_wg_ਮਾਪ              = ctx->global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
+    op.shader_lib_ctx.wg_mem_ਹੱਦਬੰਦੀ_ਬਾਈਟਾਂ       = ctx->global_ctx->capabilities.limits.max_Compute_Workgroup_Storage_ਮਾਪ;
     op.shader_lib_ctx.sg_mat_m                 = ctx->global_ctx->capabilities.sg_mat_m;
     op.shader_lib_ctx.sg_mat_n                 = ctx->global_ctx->capabilities.sg_mat_n;
     op.shader_lib_ctx.sg_mat_k                 = ctx->global_ctx->capabilities.sg_mat_k;
-    op.shader_lib_ctx.min_subgroup_size        = ctx->global_ctx->capabilities.min_subgroup_size;
-    op.shader_lib_ctx.max_subgroup_size        = ctx->global_ctx->capabilities.max_subgroup_size;
+    op.shader_lib_ctx.min_subgroup_ਮਾਪ        = ctx->global_ctx->capabilities.min_subgroup_ਮਾਪ;
+    op.shader_lib_ctx.max_subgroup_ਮਾਪ        = ctx->global_ctx->capabilities.max_subgroup_ਮਾਪ;
 
-    op.has_mask   = mask != nullptr;
-    op.has_sinks  = sinks != nullptr;
+    op.has_ਨਕਾਬ   = ਨਕਾਬ != ਖਾਲੀ_ਸੂਚਕ;
+    op.has_sinks  = sinks != ਖਾਲੀ_ਸੂਚਕ;
     op.kv_overlap = ggml_webgpu_tensor_binding_overlap(ctx->global_ctx, K, V);
 
-    uint32_t offset_k = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, K) / ggml_type_size(K->type));
-    uint32_t offset_v = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, V) / ggml_type_size(V->type));
-    if (op.kv_overlap) {
-        const ggml_webgpu_merged_binding_range merged_range = ggml_webgpu_tensor_merged_binding_range(ctx, { K, V });
-        op.kv_bind_offset                                   = merged_range.offset;
-        op.kv_bind_size                                     = merged_range.size;
-        offset_k                                            = ggml_webgpu_tensor_merged_element_offset(K, merged_range);
-        offset_v                                            = ggml_webgpu_tensor_merged_element_offset(V, merged_range);
+    uint32_t ਵਿੱਥ_k = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, K) / ggml_type_ਮਾਪ(K->type));
+    uint32_t ਵਿੱਥ_v = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, V) / ggml_type_ਮਾਪ(V->type));
+    ਜੇ (op.kv_overlap) {
+        ਅਚਲ ggml_webgpu_merged_binding_range merged_range = ggml_webgpu_tensor_merged_binding_range(ctx, { K, V });
+        op.kv_bind_ਵਿੱਥ                                   = merged_range.ਵਿੱਥ;
+        op.kv_bind_ਮਾਪ                                     = merged_range.size;
+        ਵਿੱਥ_k                                            = ggml_webgpu_tensor_merged_element_ਵਿੱਥ(K, merged_range);
+        ਵਿੱਥ_v                                            = ggml_webgpu_tensor_merged_element_ਵਿੱਥ(V, merged_range);
     }
 
     op.params = {
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, Q) / ggml_type_size(Q->type)),
-        offset_k,
-        offset_v,
-        op.has_mask ? (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, mask) / ggml_type_size(mask->type)) : 0,
-        op.has_sinks ? (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, sinks) / ggml_type_size(sinks->type)) : 0,
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_size(dst->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, Q) / ggml_type_ਮਾਪ(Q->type)),
+        ਵਿੱਥ_k,
+        ਵਿੱਥ_v,
+        op.has_ਨਕਾਬ ? (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, ਨਕਾਬ) / ggml_type_ਮਾਪ(ਨਕਾਬ->type)) : 0,
+        op.has_sinks ? (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, sinks) / ggml_type_ਮਾਪ(sinks->type)) : 0,
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_ਮਾਪ(dst->type)),
         (uint32_t) Q->ne[2],                              // number of heads
         (uint32_t) Q->ne[1],                              // sequence length (Q)
         (uint32_t) K->ne[1],                              // sequence length (K/V)
-        (uint32_t) (Q->nb[1] / ggml_type_size(Q->type)),  // stride (elements/blocks) of Q in dimension 1
-        (uint32_t) (Q->nb[2] / ggml_type_size(Q->type)),  // stride (elements/blocks) of Q in dimension 2
-        (uint32_t) (Q->nb[3] / ggml_type_size(Q->type)),  // stride (elements/blocks) of Q in dimension 3
-        (uint32_t) (K->nb[1] / ggml_type_size(K->type)),  // stride (elements/blocks) of K in dimension 1
-        (uint32_t) (K->nb[2] / ggml_type_size(K->type)),  // stride (elements/blocks) of K in dimension 2
-        (uint32_t) (K->nb[3] / ggml_type_size(K->type)),  // stride (elements/blocks) of K in dimension 3
-        (uint32_t) (V->nb[1] / ggml_type_size(V->type)),  // stride (elements/blocks) of V in dimension 1
-        (uint32_t) (V->nb[2] / ggml_type_size(V->type)),  // stride (elements/blocks) of V in dimension 2
-        (uint32_t) (V->nb[3] / ggml_type_size(V->type)),  // stride (elements/blocks) of V in dimension 3
-        op.has_mask ? (uint32_t) (mask->nb[3] / ggml_type_size(mask->type)) : 0,  // stride of mask dim 3
+        (uint32_t) (Q->nb[1] / ggml_type_ਮਾਪ(Q->type)),  // stride (elements/blocks) of Q in dimension 1
+        (uint32_t) (Q->nb[2] / ggml_type_ਮਾਪ(Q->type)),  // stride (elements/blocks) of Q in dimension 2
+        (uint32_t) (Q->nb[3] / ggml_type_ਮਾਪ(Q->type)),  // stride (elements/blocks) of Q in dimension 3
+        (uint32_t) (K->nb[1] / ggml_type_ਮਾਪ(K->type)),  // stride (elements/blocks) of K in dimension 1
+        (uint32_t) (K->nb[2] / ggml_type_ਮਾਪ(K->type)),  // stride (elements/blocks) of K in dimension 2
+        (uint32_t) (K->nb[3] / ggml_type_ਮਾਪ(K->type)),  // stride (elements/blocks) of K in dimension 3
+        (uint32_t) (V->nb[1] / ggml_type_ਮਾਪ(V->type)),  // stride (elements/blocks) of V in dimension 1
+        (uint32_t) (V->nb[2] / ggml_type_ਮਾਪ(V->type)),  // stride (elements/blocks) of V in dimension 2
+        (uint32_t) (V->nb[3] / ggml_type_ਮਾਪ(V->type)),  // stride (elements/blocks) of V in dimension 3
+        op.has_ਨਕਾਬ ? (uint32_t) (ਨਕਾਬ->nb[3] / ggml_type_ਮਾਪ(ਨਕਾਬ->type)) : 0,  // stride of mask dim 3
         (uint32_t) (Q->ne[2] / K->ne[2]),  // repeat factor for K/V in dim 2 (MHA/MQA/GQA)
         ggml_webgpu_u32_from_f32(scale),   // scale (possibly adjusted for logit softcap)
         ggml_webgpu_u32_from_f32(max_bias),
         ggml_webgpu_u32_from_f32(logit_softcap),
-        ggml_webgpu_u32_from_f32(n_head_log2),
+        ggml_webgpu_u32_from_f32(n_ਸਿਰ_log2),
         ggml_webgpu_u32_from_f32(m0),
         ggml_webgpu_u32_from_f32(m1)
     };
     op.entries = {
-        ggml_webgpu_make_tensor_bind_group_entry(ctx, 0, Q),
+        ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 0, Q),
     };
-    if (op.kv_overlap) {
+    ਜੇ (op.kv_overlap) {
         op.entries.push_back(
-            ggml_webgpu_make_bind_group_entry(1, ggml_webgpu_tensor_buf(K), op.kv_bind_offset, op.kv_bind_size));
-    } else {
-        op.entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 1, K));
-        op.entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 2, V));
+            ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(1, ggml_webgpu_tensor_buf(K), op.kv_bind_ਵਿੱਥ, op.kv_bind_ਮਾਪ));
+    } ਨਹੀਂਤਾਂ {
+        op.entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 1, K));
+        op.entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 2, V));
     }
-    uint32_t binding_index = op.kv_overlap ? 2u : 3u;
-    if (op.has_mask) {
-        op.entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_index++, mask));
+    uint32_t binding_ਸੂਚਕਾਂਕ = op.kv_overlap ? 2u : 3u;
+    ਜੇ (op.has_ਨਕਾਬ) {
+        op.entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, binding_ਸੂਚਕਾਂਕ++, ਨਕਾਬ));
     }
-    if (op.has_sinks) {
-        op.entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_index++, sinks));
+    ਜੇ (op.has_sinks) {
+        op.entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, binding_ਸੂਚਕਾਂਕ++, sinks));
     }
-    op.entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_index++, dst));
+    op.entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, binding_ਸੂਚਕਾਂਕ++, dst));
 
-    return op;
+    ਵਾਪਸ op;
 }
 
-static uint32_t ggml_webgpu_flash_attn_vec_nwg(uint32_t vec_nwg_cap, uint32_t kv_tile, uint32_t seq_len_kv) {
+ਸਥਿਰ uint32_t ggml_webgpu_flash_attn_vec_nwg(uint32_t vec_nwg_cap, uint32_t kv_tile, uint32_t seq_len_kv) {
     uint32_t       nwg     = 1u;
-    const uint64_t kv_span = (uint64_t) kv_tile;
-    while ((2u * nwg * kv_span) < (uint64_t) seq_len_kv && nwg < vec_nwg_cap) {
+    ਅਚਲ uint64_t kv_ਵਿਸਤਾਰ = (uint64_t) kv_tile;
+    ਜਦੋਂ ((2u * nwg * kv_ਵਿਸਤਾਰ) < (uint64_t) seq_len_kv && nwg < vec_nwg_cap) {
         nwg <<= 1;
     }
-    return std::min(nwg, vec_nwg_cap);
+    ਵਾਪਸ std::min(nwg, vec_nwg_cap);
 }
 
-static webgpu_encoded_op ggml_webgpu_flash_attn_direct(webgpu_context & ctx, const ggml_webgpu_flash_attn_op & op) {
+ਸਥਿਰ webgpu_encoded_op ggml_webgpu_flash_attn_ਸਿੱਧਾ(webgpu_context & ctx, ਅਚਲ ggml_webgpu_flash_attn_op & op) {
     webgpu_pipeline pipeline    = ctx->shader_lib->get_flash_attn_pipeline(op.shader_lib_ctx, op.kv_overlap);
-    auto *          decisions   = static_cast<ggml_webgpu_flash_attn_decisions *>(pipeline.context.get());
-    uint32_t        wg_per_head = CEIL_DIV(op.shader_lib_ctx.src0->ne[1], decisions->q_tile);
-    uint32_t        wg_x        = wg_per_head * op.shader_lib_ctx.src0->ne[2] * op.shader_lib_ctx.src0->ne[3];
-    return ggml_backend_webgpu_build(ctx, pipeline, op.params, op.entries, wg_x);
+    ਸਵੈਚਾਲਿਤ *          decisions   = static_cast<ggml_webgpu_flash_attn_decisions *>(pipeline.context.get());
+    uint32_t        wg_ਪ੍ਰਤੀ_ਸਿਰ = CEIL_DIV(op.shader_lib_ctx.src0->ne[1], decisions->q_tile);
+    uint32_t        wg_x        = wg_ਪ੍ਰਤੀ_ਸਿਰ * op.shader_lib_ctx.src0->ne[2] * op.shader_lib_ctx.src0->ne[3];
+    ਵਾਪਸ ggml_backend_webgpu_build(ctx, pipeline, op.params, op.entries, wg_x);
 }
 
-static webgpu_encoded_op ggml_webgpu_flash_attn_vec(webgpu_context &          ctx,
+ਸਥਿਰ webgpu_encoded_op ggml_webgpu_flash_attn_vec(webgpu_context &          ctx,
                                                     ggml_tensor *             Q,
                                                     ggml_tensor *             K,
                                                     ggml_tensor *             V,
-                                                    ggml_tensor *             mask,
+                                                    ggml_tensor *             ਨਕਾਬ,
                                                     ggml_tensor *             sinks,
                                                     ggml_tensor *             dst,
                                                     ggml_webgpu_flash_attn_op op) {
     webgpu_pipeline pipeline  = ctx->shader_lib->get_flash_attn_vec_pipeline(op.shader_lib_ctx, op.kv_overlap);
-    auto *          decisions = static_cast<ggml_webgpu_flash_attn_vec_decisions *>(pipeline.context.get());
+    ਸਵੈਚਾਲਿਤ *          decisions = static_cast<ggml_webgpu_flash_attn_vec_decisions *>(pipeline.context.get());
 
-    wgpu::Buffer blk_buf         = {};
-    uint64_t     blk_size_bytes  = 0;
+    wgpu::ਬਫਰ_2 blk_buf         = {};
+    uint64_t     blk_ਮਾਪ_ਬਾਈਟਾਂ  = 0;
     uint32_t     blk_nblk0       = 0;
     uint32_t     blk_nblk1       = 0;
-    uint32_t     blk_batch_count = 0;
+    uint32_t     blk_batch_ਗਿਣਤੀ = 0;
 
-    const uint32_t vec_nwg_cap = ctx->global_ctx->capabilities.min_subgroup_size;
+    ਅਚਲ uint32_t vec_nwg_cap = ctx->global_ctx->capabilities.min_subgroup_ਮਾਪ;
     uint32_t       nwg         = ggml_webgpu_flash_attn_vec_nwg(vec_nwg_cap, decisions->kv_tile, (uint32_t) K->ne[1]);
-    const uint64_t nrows       = (uint64_t) Q->ne[1] * Q->ne[2] * Q->ne[3];
-    const bool     use_vec_reduce = nwg > 1u;
+    ਅਚਲ uint64_t nrows       = (uint64_t) Q->ne[1] * Q->ne[2] * Q->ne[3];
+    ਅਚਲ ਤਾਰਕਿਕ     use_vec_reduce = nwg > 1u;
     GGML_ASSERT(nrows <= UINT32_MAX);
 
-    uint64_t     tmp_stats_base  = 0;
-    uint64_t     tmp_size_bytes  = 0;
-    wgpu::Buffer tmp_buf         = {};
-    uint64_t     tmp_bind_offset = 0;
-    uint64_t     tmp_bind_size   = 0;
-    const size_t align_bytes     = ctx->global_ctx->capabilities.limits.minStorageBufferOffsetAlignment;
-    const size_t dst_offset      = ggml_webgpu_tensor_offset(dst);
-    size_t       scratch_offset  = ROUNDUP_POW2(dst_offset + ggml_nbytes(dst), align_bytes);
+    uint64_t     tmp_stats_ਅਧਾਰ  = 0;
+    uint64_t     tmp_ਮਾਪ_ਬਾਈਟਾਂ  = 0;
+    wgpu::ਬਫਰ_2 tmp_buf         = {};
+    uint64_t     tmp_bind_ਵਿੱਥ = 0;
+    uint64_t     tmp_bind_ਮਾਪ   = 0;
+    ਅਚਲ size_t align_ਬਾਈਟਾਂ     = ctx->global_ctx->capabilities.limits.min_Storage_ਬਫਰ_ਵਿੱਥ_Alignment;
+    ਅਚਲ size_t dst_ਵਿੱਥ      = ggml_webgpu_tensor_ਵਿੱਥ(dst);
+    size_t       scratch_ਵਿੱਥ  = ROUNDUP_POW2(dst_ਵਿੱਥ + ggml_nbytes(dst), align_ਬਾਈਟਾਂ);
 
-    if (use_vec_reduce) {
-        const uint64_t tmp_data_elems  = nrows * (uint64_t) V->ne[0] * nwg;
-        const uint64_t tmp_stats_elems = nrows * 2u * nwg;
-        tmp_stats_base                 = tmp_data_elems;
-        tmp_size_bytes =
-            ROUNDUP_POW2((tmp_data_elems + tmp_stats_elems) * sizeof(float), WEBGPU_STORAGE_BUF_BINDING_MULT);
-        GGML_ASSERT(tmp_stats_base <= UINT32_MAX);
+    ਜੇ (use_vec_reduce) {
+        ਅਚਲ uint64_t tmp_ਅੰਕੜੇ_elems  = nrows * (uint64_t) V->ne[0] * nwg;
+        ਅਚਲ uint64_t tmp_stats_elems = nrows * 2u * nwg;
+        tmp_stats_ਅਧਾਰ                 = tmp_ਅੰਕੜੇ_elems;
+        tmp_ਮਾਪ_ਬਾਈਟਾਂ =
+            ROUNDUP_POW2((tmp_ਅੰਕੜੇ_elems + tmp_stats_elems) * ਆਕਾਰ(ਦਸ਼ਮਲਵ), WEBGPU_STORAGE_BUF_BINDING_MULT);
+        GGML_ASSERT(tmp_stats_ਅਧਾਰ <= UINT32_MAX);
         tmp_buf         = ggml_webgpu_tensor_buf(dst);
-        tmp_bind_offset = scratch_offset;
-        tmp_bind_size   = tmp_size_bytes;
-        scratch_offset  = ROUNDUP_POW2(scratch_offset + tmp_size_bytes, align_bytes);
-    } else {
+        tmp_bind_ਵਿੱਥ = scratch_ਵਿੱਥ;
+        tmp_bind_ਮਾਪ   = tmp_ਮਾਪ_ਬਾਈਟਾਂ;
+        scratch_ਵਿੱਥ  = ROUNDUP_POW2(scratch_ਵਿੱਥ + tmp_ਮਾਪ_ਬਾਈਟਾਂ, align_ਬਾਈਟਾਂ);
+    } ਨਹੀਂਤਾਂ {
         // nwg==1 writes final dst directly in vec-split; bind tmp to a tiny non-overlapping scratch region.
-        tmp_size_bytes  = WEBGPU_STORAGE_BUF_BINDING_MULT;
+        tmp_ਮਾਪ_ਬਾਈਟਾਂ  = WEBGPU_STORAGE_BUF_BINDING_MULT;
         tmp_buf         = ggml_webgpu_tensor_buf(dst);
-        tmp_bind_offset = scratch_offset;
-        tmp_bind_size   = tmp_size_bytes;
-        scratch_offset  = ROUNDUP_POW2(scratch_offset + tmp_size_bytes, align_bytes);
+        tmp_bind_ਵਿੱਥ = scratch_ਵਿੱਥ;
+        tmp_bind_ਮਾਪ   = tmp_ਮਾਪ_ਬਾਈਟਾਂ;
+        scratch_ਵਿੱਥ  = ROUNDUP_POW2(scratch_ਵਿੱਥ + tmp_ਮਾਪ_ਬਾਈਟਾਂ, align_ਬਾਈਟਾਂ);
     }
 
     webgpu_pipeline                   blk_pipeline;
     std::vector<uint32_t>             blk_params;
-    std::vector<wgpu::BindGroupEntry> blk_entries;
-    if (op.has_mask) {
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> blk_entries;
+    ਜੇ (op.has_ਨਕਾਬ) {
         blk_nblk0                   = CEIL_DIV((uint32_t) K->ne[1], decisions->kv_tile);
         blk_nblk1                   = (uint32_t) Q->ne[1];
         blk_buf                     = ggml_webgpu_tensor_buf(dst);
-        const uint32_t stride_mask3 = (uint32_t) (mask->nb[3] / ggml_type_size(mask->type));
-        blk_batch_count             = stride_mask3 > 0 ? (uint32_t) Q->ne[3] : 1u;
-        const uint64_t blk_elems    = (uint64_t) blk_nblk0 * blk_nblk1 * blk_batch_count;
-        blk_size_bytes              = ROUNDUP_POW2(blk_elems * sizeof(uint32_t), WEBGPU_STORAGE_BUF_BINDING_MULT);
-        const ggml_webgpu_shader_lib_context blk_shader_ctx = op.shader_lib_ctx;
+        ਅਚਲ uint32_t stride_mask3 = (uint32_t) (ਨਕਾਬ->nb[3] / ggml_type_ਮਾਪ(ਨਕਾਬ->type));
+        blk_batch_ਗਿਣਤੀ             = stride_mask3 > 0 ? (uint32_t) Q->ne[3] : 1u;
+        ਅਚਲ uint64_t blk_elems    = (uint64_t) blk_nblk0 * blk_nblk1 * blk_batch_ਗਿਣਤੀ;
+        blk_ਮਾਪ_ਬਾਈਟਾਂ              = ROUNDUP_POW2(blk_elems * ਆਕਾਰ(uint32_t), WEBGPU_STORAGE_BUF_BINDING_MULT);
+        ਅਚਲ ggml_webgpu_shader_lib_context blk_shader_ctx = op.shader_lib_ctx;
         blk_pipeline = ctx->shader_lib->get_flash_attn_blk_pipeline(blk_shader_ctx, decisions->kv_tile);
 
         blk_params = {
-            (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, mask) / ggml_type_size(mask->type)),  // offset_mask
+            (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, ਨਕਾਬ) / ggml_type_ਮਾਪ(ਨਕਾਬ->type)),  // offset_mask
             (uint32_t) Q->ne[1],                                                                   // seq_len_q
             (uint32_t) K->ne[1],                                                                   // seq_len_kv
             stride_mask3,                                                                          // stride_mask3
@@ -2167,201 +2167,201 @@ static webgpu_encoded_op ggml_webgpu_flash_attn_vec(webgpu_context &          ct
             blk_nblk1,                                                                             // nblk1
         };
         blk_entries = {
-            ggml_webgpu_make_bind_group_entry(0, ggml_webgpu_tensor_buf(mask),
-                                              ggml_webgpu_tensor_align_offset(ctx, mask),
-                                              ggml_webgpu_tensor_binding_size(ctx, mask)),
-            ggml_webgpu_make_bind_group_entry(1, blk_buf, scratch_offset, blk_size_bytes),
+            ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(0, ggml_webgpu_tensor_buf(ਨਕਾਬ),
+                                              ggml_webgpu_tensor_align_ਵਿੱਥ(ctx, ਨਕਾਬ),
+                                              ggml_webgpu_tensor_binding_ਮਾਪ(ctx, ਨਕਾਬ)),
+            ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(1, blk_buf, scratch_ਵਿੱਥ, blk_ਮਾਪ_ਬਾਈਟਾਂ),
         };
-        scratch_offset = ROUNDUP_POW2(scratch_offset + blk_size_bytes, align_bytes);
+        scratch_ਵਿੱਥ = ROUNDUP_POW2(scratch_ਵਿੱਥ + blk_ਮਾਪ_ਬਾਈਟਾਂ, align_ਬਾਈਟਾਂ);
     }
 
-    std::vector<uint32_t> split_params = op.params;
-    if (op.has_mask) {
-        split_params.push_back(0u);                     // blk_base
-        split_params.push_back(blk_nblk0);              // blk_nblk0
-        split_params.push_back(blk_nblk1);              // blk_nblk1
+    std::vector<uint32_t> ਵੰਡੋ_params = op.params;
+    ਜੇ (op.has_ਨਕਾਬ) {
+        ਵੰਡੋ_params.push_back(0u);                     // blk_base
+        ਵੰਡੋ_params.push_back(blk_nblk0);              // blk_nblk0
+        ਵੰਡੋ_params.push_back(blk_nblk1);              // blk_nblk1
     }
-    split_params.push_back(0u);                         // tmp_data_base
-    split_params.push_back((uint32_t) tmp_stats_base);  // tmp_stats_base
-    split_params.push_back(nwg);                        // nwg
+    ਵੰਡੋ_params.push_back(0u);                         // tmp_data_base
+    ਵੰਡੋ_params.push_back((uint32_t) tmp_stats_ਅਧਾਰ);  // tmp_stats_base
+    ਵੰਡੋ_params.push_back(nwg);                        // nwg
 
-    std::vector<wgpu::BindGroupEntry> split_entries = {
-        ggml_webgpu_make_bind_group_entry(0, ggml_webgpu_tensor_buf(Q), ggml_webgpu_tensor_align_offset(ctx, Q),
-                                          ggml_webgpu_tensor_binding_size(ctx, Q)),
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> ਵੰਡੋ_entries = {
+        ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(0, ggml_webgpu_tensor_buf(Q), ggml_webgpu_tensor_align_ਵਿੱਥ(ctx, Q),
+                                          ggml_webgpu_tensor_binding_ਮਾਪ(ctx, Q)),
     };
-    if (op.kv_overlap) {
-        split_entries.push_back(
-            ggml_webgpu_make_bind_group_entry(1, ggml_webgpu_tensor_buf(K), op.kv_bind_offset, op.kv_bind_size));
-    } else {
-        split_entries.push_back(ggml_webgpu_make_bind_group_entry(1, ggml_webgpu_tensor_buf(K),
-                                                                  ggml_webgpu_tensor_align_offset(ctx, K),
-                                                                  ggml_webgpu_tensor_binding_size(ctx, K)));
-        split_entries.push_back(ggml_webgpu_make_bind_group_entry(2, ggml_webgpu_tensor_buf(V),
-                                                                  ggml_webgpu_tensor_align_offset(ctx, V),
-                                                                  ggml_webgpu_tensor_binding_size(ctx, V)));
+    ਜੇ (op.kv_overlap) {
+        ਵੰਡੋ_entries.push_back(
+            ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(1, ggml_webgpu_tensor_buf(K), op.kv_bind_ਵਿੱਥ, op.kv_bind_ਮਾਪ));
+    } ਨਹੀਂਤਾਂ {
+        ਵੰਡੋ_entries.push_back(ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(1, ggml_webgpu_tensor_buf(K),
+                                                                  ggml_webgpu_tensor_align_ਵਿੱਥ(ctx, K),
+                                                                  ggml_webgpu_tensor_binding_ਮਾਪ(ctx, K)));
+        ਵੰਡੋ_entries.push_back(ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(2, ggml_webgpu_tensor_buf(V),
+                                                                  ggml_webgpu_tensor_align_ਵਿੱਥ(ctx, V),
+                                                                  ggml_webgpu_tensor_binding_ਮਾਪ(ctx, V)));
     }
-    uint32_t split_binding_index = op.kv_overlap ? 2u : 3u;
-    if (op.has_mask) {
-        split_entries.push_back(ggml_webgpu_make_bind_group_entry(split_binding_index++, ggml_webgpu_tensor_buf(mask),
-                                                                  ggml_webgpu_tensor_align_offset(ctx, mask),
-                                                                  ggml_webgpu_tensor_binding_size(ctx, mask)));
+    uint32_t ਵੰਡੋ_binding_ਸੂਚਕਾਂਕ = op.kv_overlap ? 2u : 3u;
+    ਜੇ (op.has_ਨਕਾਬ) {
+        ਵੰਡੋ_entries.push_back(ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ਵੰਡੋ_binding_ਸੂਚਕਾਂਕ++, ggml_webgpu_tensor_buf(ਨਕਾਬ),
+                                                                  ggml_webgpu_tensor_align_ਵਿੱਥ(ctx, ਨਕਾਬ),
+                                                                  ggml_webgpu_tensor_binding_ਮਾਪ(ctx, ਨਕਾਬ)));
     }
-    if (op.has_sinks) {
-        split_entries.push_back(ggml_webgpu_make_bind_group_entry(split_binding_index++, ggml_webgpu_tensor_buf(sinks),
-                                                                  ggml_webgpu_tensor_align_offset(ctx, sinks),
-                                                                  ggml_webgpu_tensor_binding_size(ctx, sinks)));
+    ਜੇ (op.has_sinks) {
+        ਵੰਡੋ_entries.push_back(ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ਵੰਡੋ_binding_ਸੂਚਕਾਂਕ++, ggml_webgpu_tensor_buf(sinks),
+                                                                  ggml_webgpu_tensor_align_ਵਿੱਥ(ctx, sinks),
+                                                                  ggml_webgpu_tensor_binding_ਮਾਪ(ctx, sinks)));
     }
-    if (op.has_mask) {
-        split_entries.push_back(
-            ggml_webgpu_make_bind_group_entry(split_binding_index++, blk_buf, blk_entries[1].offset, blk_size_bytes));
+    ਜੇ (op.has_ਨਕਾਬ) {
+        ਵੰਡੋ_entries.push_back(
+            ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ਵੰਡੋ_binding_ਸੂਚਕਾਂਕ++, blk_buf, blk_entries[1].ਵਿੱਥ, blk_ਮਾਪ_ਬਾਈਟਾਂ));
     }
-    split_entries.push_back(
-        ggml_webgpu_make_bind_group_entry(split_binding_index++, tmp_buf, tmp_bind_offset, tmp_bind_size));
-    split_entries.push_back(ggml_webgpu_make_bind_group_entry(split_binding_index++, ggml_webgpu_tensor_buf(dst),
-                                                              ggml_webgpu_tensor_align_offset(ctx, dst),
-                                                              ggml_webgpu_tensor_binding_size(ctx, dst)));
+    ਵੰਡੋ_entries.push_back(
+        ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ਵੰਡੋ_binding_ਸੂਚਕਾਂਕ++, tmp_buf, tmp_bind_ਵਿੱਥ, tmp_bind_ਮਾਪ));
+    ਵੰਡੋ_entries.push_back(ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ਵੰਡੋ_binding_ਸੂਚਕਾਂਕ++, ggml_webgpu_tensor_buf(dst),
+                                                              ggml_webgpu_tensor_align_ਵਿੱਥ(ctx, dst),
+                                                              ggml_webgpu_tensor_binding_ਮਾਪ(ctx, dst)));
 
     webgpu_pipeline                   reduce_pipeline;
     std::vector<uint32_t>             reduce_params;
-    std::vector<wgpu::BindGroupEntry> reduce_entries;
-    if (use_vec_reduce) {
-        const uint32_t reduce_sg_size = ctx->global_ctx->capabilities.max_subgroup_size;
-        const uint32_t reduce_wg_size = std::max(
-            reduce_sg_size,
-            (uint32_t) std::min<uint64_t>((uint64_t) nwg * reduce_sg_size,
-                                          ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup));
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> reduce_entries;
+    ਜੇ (use_vec_reduce) {
+        ਅਚਲ uint32_t reduce_sg_ਮਾਪ = ctx->global_ctx->capabilities.max_subgroup_ਮਾਪ;
+        ਅਚਲ uint32_t reduce_wg_ਮਾਪ = std::max(
+            reduce_sg_ਮਾਪ,
+            (uint32_t) std::min<uint64_t>((uint64_t) nwg * reduce_sg_ਮਾਪ,
+                                          ctx->global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup));
         ggml_webgpu_shader_lib_context reduce_shader_ctx = op.shader_lib_ctx;
-        reduce_shader_ctx.max_wg_size                    = reduce_wg_size;
+        reduce_shader_ctx.max_wg_ਮਾਪ                    = reduce_wg_ਮਾਪ;
         reduce_pipeline = ctx->shader_lib->get_flash_attn_vec_reduce_pipeline(reduce_shader_ctx);
 
         reduce_params = {
             (uint32_t) nrows,                                                                    // nrows
             (uint32_t) Q->ne[1],                                                                 // seq_len_q
             (uint32_t) Q->ne[2],                                                                 // n_heads
-            (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_size(dst->type)),  // offset_dst
+            (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_ਮਾਪ(dst->type)),  // offset_dst
             nwg,                                                                                 // nwg
             0u,                                                                                  // tmp_data_base
-            (uint32_t) tmp_stats_base,                                                           // tmp_stats_base
+            (uint32_t) tmp_stats_ਅਧਾਰ,                                                           // tmp_stats_base
         };
 
         reduce_entries = {
-            ggml_webgpu_make_bind_group_entry(0, tmp_buf, tmp_bind_offset, tmp_size_bytes),
-            ggml_webgpu_make_bind_group_entry(1, ggml_webgpu_tensor_buf(dst), ggml_webgpu_tensor_align_offset(ctx, dst),
-                                              ggml_webgpu_tensor_binding_size(ctx, dst)),
+            ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(0, tmp_buf, tmp_bind_ਵਿੱਥ, tmp_ਮਾਪ_ਬਾਈਟਾਂ),
+            ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(1, ggml_webgpu_tensor_buf(dst), ggml_webgpu_tensor_align_ਵਿੱਥ(ctx, dst),
+                                              ggml_webgpu_tensor_binding_ਮਾਪ(ctx, dst)),
         };
     }
 
     uint32_t       wg_x           = Q->ne[1] * Q->ne[2] * Q->ne[3];
-    const uint64_t split_wg_total = (uint64_t) wg_x * nwg;
-    GGML_ASSERT(split_wg_total <= UINT32_MAX);
+    ਅਚਲ uint64_t ਵੰਡੋ_wg_ਕੁੱਲ = (uint64_t) wg_x * nwg;
+    GGML_ASSERT(ਵੰਡੋ_wg_ਕੁੱਲ <= UINT32_MAX);
 
     std::vector<webgpu_dispatch_desc> dispatches;
 
-    if (op.has_mask) {
+    ਜੇ (op.has_ਨਕਾਬ) {
         dispatches.push_back({
-            blk_pipeline, std::move(blk_params), std::move(blk_entries), { blk_nblk0, blk_nblk1 * blk_batch_count }
+            blk_pipeline, std::move(blk_params), std::move(blk_entries), { blk_nblk0, blk_nblk1 * blk_batch_ਗਿਣਤੀ }
         });
     }
     dispatches.push_back({
-        pipeline, std::move(split_params), std::move(split_entries), { (uint32_t) split_wg_total, 1u }
+        pipeline, std::move(ਵੰਡੋ_params), std::move(ਵੰਡੋ_entries), { (uint32_t) ਵੰਡੋ_wg_ਕੁੱਲ, 1u }
     });
-    if (use_vec_reduce) {
+    ਜੇ (use_vec_reduce) {
         dispatches.push_back({
             reduce_pipeline, std::move(reduce_params), std::move(reduce_entries), { (uint32_t) nrows, 1u }
         });
     }
 
-    return ggml_backend_webgpu_build_multi(ctx, dispatches);
+    ਵਾਪਸ ggml_backend_webgpu_build_multi(ctx, dispatches);
 }
 
-static webgpu_encoded_op ggml_webgpu_flash_attn(webgpu_context & ctx,
+ਸਥਿਰ webgpu_encoded_op ggml_webgpu_flash_attn(webgpu_context & ctx,
                                                 ggml_tensor *    Q,
                                                 ggml_tensor *    K,
                                                 ggml_tensor *    V,
-                                                ggml_tensor *    mask,
+                                                ggml_tensor *    ਨਕਾਬ,
                                                 ggml_tensor *    sinks,
                                                 ggml_tensor *    dst) {
-    ggml_webgpu_flash_attn_op op = ggml_webgpu_flash_attn_prepare(ctx, Q, K, V, mask, sinks, dst);
-    if (ggml_webgpu_flash_attn_use_vec_path(ctx->global_ctx, Q, K, V)) {
-        return ggml_webgpu_flash_attn_vec(ctx, Q, K, V, mask, sinks, dst, std::move(op));
+    ggml_webgpu_flash_attn_op op = ggml_webgpu_flash_attn_prepare(ctx, Q, K, V, ਨਕਾਬ, sinks, dst);
+    ਜੇ (ggml_webgpu_flash_attn_use_vec_ਰਸਤਾ(ctx->global_ctx, Q, K, V)) {
+        ਵਾਪਸ ggml_webgpu_flash_attn_vec(ctx, Q, K, V, ਨਕਾਬ, sinks, dst, std::move(op));
     }
-    return ggml_webgpu_flash_attn_direct(ctx, op);
+    ਵਾਪਸ ggml_webgpu_flash_attn_ਸਿੱਧਾ(ctx, op);
 }
 
-static webgpu_encoded_op ggml_webgpu_unary_op(webgpu_context & ctx, ggml_tensor * src, ggml_tensor * dst) {
-    bool is_unary = dst->op == GGML_OP_UNARY;
+ਸਥਿਰ webgpu_encoded_op ggml_webgpu_unary_op(webgpu_context & ctx, ggml_tensor * src, ggml_tensor * dst) {
+    ਤਾਰਕਿਕ is_unary = dst->op == GGML_OP_UNARY;
 
     ggml_webgpu_shader_lib_context shader_lib_ctx = {};
     shader_lib_ctx.src0                           = src;
-    shader_lib_ctx.src1                           = nullptr;
+    shader_lib_ctx.src1                           = ਖਾਲੀ_ਸੂਚਕ;
     shader_lib_ctx.dst                            = dst;
-    shader_lib_ctx.max_wg_size = ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
+    shader_lib_ctx.max_wg_ਮਾਪ = ctx->global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
 
     webgpu_pipeline pipeline = ctx->shader_lib->get_unary_pipeline(shader_lib_ctx);
 
-    auto *     decisions = static_cast<ggml_webgpu_generic_shader_decisions *>(pipeline.context.get());
-    const bool inplace   = decisions->inplace;
+    ਸਵੈਚਾਲਿਤ *     decisions = static_cast<ggml_webgpu_generic_shader_decisions *>(pipeline.context.get());
+    ਅਚਲ ਤਾਰਕਿਕ inplace   = decisions->inplace;
 
     uint32_t ne = (uint32_t) ggml_nelements(dst);
 
     std::vector<uint32_t> params = { ne,
-                                     (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src) / ggml_type_size(src->type)),
-                                     (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_size(dst->type)),
-                                     (uint32_t) (src->nb[0] / ggml_type_size(src->type)),
-                                     (uint32_t) (src->nb[1] / ggml_type_size(src->type)),
-                                     (uint32_t) (src->nb[2] / ggml_type_size(src->type)),
-                                     (uint32_t) (src->nb[3] / ggml_type_size(src->type)),
+                                     (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src) / ggml_type_ਮਾਪ(src->type)),
+                                     (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_ਮਾਪ(dst->type)),
+                                     (uint32_t) (src->nb[0] / ggml_type_ਮਾਪ(src->type)),
+                                     (uint32_t) (src->nb[1] / ggml_type_ਮਾਪ(src->type)),
+                                     (uint32_t) (src->nb[2] / ggml_type_ਮਾਪ(src->type)),
+                                     (uint32_t) (src->nb[3] / ggml_type_ਮਾਪ(src->type)),
                                      (uint32_t) src->ne[0],
                                      (uint32_t) src->ne[1],
                                      (uint32_t) src->ne[2] };
 
     ggml_tensor * effective_src = src;
-    if (is_unary) {
+    ਜੇ (is_unary) {
         ggml_unary_op unary_op = ggml_get_unary_op(dst);
-        switch (unary_op) {
-            case GGML_UNARY_OP_XIELU:
+        ਚੋਣ (unary_op) {
+            ਹਾਲਤ GGML_UNARY_OP_XIELU:
                 {
                     // Get float parameters and reinterpret their bit patterns as uint32_t
                     // for passing through the params buffer
-                    float alpha_n = ggml_get_op_params_f32(dst, 1);
-                    float alpha_p = ggml_get_op_params_f32(dst, 2);
-                    float beta    = ggml_get_op_params_f32(dst, 3);
-                    float eps     = ggml_get_op_params_f32(dst, 4);
+                    ਦਸ਼ਮਲਵ alpha_n = ggml_get_op_params_f32(dst, 1);
+                    ਦਸ਼ਮਲਵ alpha_p = ggml_get_op_params_f32(dst, 2);
+                    ਦਸ਼ਮਲਵ beta    = ggml_get_op_params_f32(dst, 3);
+                    ਦਸ਼ਮਲਵ eps     = ggml_get_op_params_f32(dst, 4);
                     params.push_back(ggml_webgpu_u32_from_f32(alpha_n));
                     params.push_back(ggml_webgpu_u32_from_f32(alpha_p));
                     params.push_back(ggml_webgpu_u32_from_f32(beta));
                     params.push_back(ggml_webgpu_u32_from_f32(eps));
-                    break;
+                    ਰੋਕੋ;
                 }
-            default:
-                break;
+            ਮੂਲ:
+                ਰੋਕੋ;
         }
-    } else if (dst->op == GGML_OP_CLAMP) {
-        float clamp_min = ggml_get_op_params_f32(dst, 0);
-        float clamp_max = ggml_get_op_params_f32(dst, 1);
+    } ਨਹੀਂਤਾਂ ਜੇ (dst->op == GGML_OP_CLAMP) {
+        ਦਸ਼ਮਲਵ clamp_min = ggml_get_op_params_f32(dst, 0);
+        ਦਸ਼ਮਲਵ clamp_max = ggml_get_op_params_f32(dst, 1);
         params.push_back(ggml_webgpu_u32_from_f32(clamp_min));
         params.push_back(ggml_webgpu_u32_from_f32(clamp_max));
-    } else if (dst->op == GGML_OP_FILL) {
-        float fill_val = ggml_get_op_params_f32(dst, 0);
+    } ਨਹੀਂਤਾਂ ਜੇ (dst->op == GGML_OP_FILL) {
+        ਦਸ਼ਮਲਵ fill_val = ggml_get_op_params_f32(dst, 0);
         params.push_back(ggml_webgpu_u32_from_f32(fill_val));
         effective_src = dst;  // fill simply fills dst
     }
 
-    std::vector<wgpu::BindGroupEntry> entries = {
-        ggml_webgpu_make_tensor_bind_group_entry(ctx, 0, effective_src),
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> entries = {
+        ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 0, effective_src),
     };
-    if (!inplace) {
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 1, dst));
+    ਜੇ (!inplace) {
+        entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 1, dst));
     }
 
     uint32_t wg_x;
     uint32_t wg_y;
-    uint32_t total_wg = CEIL_DIV(ggml_nelements(dst), decisions->wg_size);
-    compute_2d_workgroups(total_wg, ctx->global_ctx->capabilities.limits.maxComputeWorkgroupsPerDimension, wg_x, wg_y);
-    return ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
+    uint32_t ਕੁੱਲ_wg = CEIL_DIV(ggml_nelements(dst), decisions->wg_ਮਾਪ);
+    compute_2d_workgroups(ਕੁੱਲ_wg, ctx->global_ctx->capabilities.limits.max_Compute_Workgroups_ਪ੍ਰਤੀ_Dimension, wg_x, wg_y);
+    ਵਾਪਸ ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
 }
 
-static webgpu_encoded_op ggml_webgpu_binary_op(webgpu_context & ctx,
+ਸਥਿਰ webgpu_encoded_op ggml_webgpu_ਦੁਆਧਾਰੀ_op(webgpu_context & ctx,
                                                ggml_tensor *    src0,
                                                ggml_tensor *    src1,
                                                ggml_tensor *    dst) {
@@ -2369,43 +2369,43 @@ static webgpu_encoded_op ggml_webgpu_binary_op(webgpu_context & ctx,
     shader_lib_ctx.src0                           = src0;
     shader_lib_ctx.src1                           = src1;
     shader_lib_ctx.dst                            = dst;
-    shader_lib_ctx.max_wg_size = ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
+    shader_lib_ctx.max_wg_ਮਾਪ = ctx->global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
 
-    const bool      src_overlap = ggml_webgpu_tensor_binding_overlap(ctx->global_ctx, src0, src1);
-    webgpu_pipeline pipeline    = ctx->shader_lib->get_binary_pipeline(shader_lib_ctx, src_overlap);
-    auto *          decisions   = static_cast<ggml_webgpu_binary_shader_decisions *>(pipeline.context.get());
+    ਅਚਲ ਤਾਰਕਿਕ      src_overlap = ggml_webgpu_tensor_binding_overlap(ctx->global_ctx, src0, src1);
+    webgpu_pipeline pipeline    = ctx->shader_lib->get_ਦੁਆਧਾਰੀ_pipeline(shader_lib_ctx, src_overlap);
+    ਸਵੈਚਾਲਿਤ *          decisions   = static_cast<ggml_webgpu_ਦੁਆਧਾਰੀ_shader_decisions *>(pipeline.context.get());
 
     uint32_t ne = (uint32_t) ggml_nelements(dst);
 
-    size_t src0_webgpu_tensor_align_offset = ggml_webgpu_tensor_align_offset(ctx, src0);
-    size_t src1_webgpu_tensor_align_offset = ggml_webgpu_tensor_align_offset(ctx, src1);
+    size_t src0_webgpu_tensor_align_ਵਿੱਥ = ggml_webgpu_tensor_align_ਵਿੱਥ(ctx, src0);
+    size_t src1_webgpu_tensor_align_ਵਿੱਥ = ggml_webgpu_tensor_align_ਵਿੱਥ(ctx, src1);
 
-    uint32_t offset_src0   = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src0) / ggml_type_size(src0->type));
-    uint32_t offset_src1   = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_size(src1->type));
-    size_t   merged_offset = 0;
-    size_t   merged_size   = 0;
-    if (decisions->src_overlap) {
-        const ggml_webgpu_merged_binding_range merged_range =
+    uint32_t ਵਿੱਥ_src0   = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src0) / ggml_type_ਮਾਪ(src0->type));
+    uint32_t ਵਿੱਥ_src1   = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_ਮਾਪ(src1->type));
+    size_t   merged_ਵਿੱਥ = 0;
+    size_t   merged_ਮਾਪ   = 0;
+    ਜੇ (decisions->src_overlap) {
+        ਅਚਲ ggml_webgpu_merged_binding_range merged_range =
             ggml_webgpu_tensor_merged_binding_range(ctx, { src0, src1 });
-        merged_offset = merged_range.offset;
-        merged_size   = merged_range.size;
-        offset_src0   = ggml_webgpu_tensor_merged_element_offset(src0, merged_range);
-        offset_src1   = ggml_webgpu_tensor_merged_element_offset(src1, merged_range);
+        merged_ਵਿੱਥ = merged_range.ਵਿੱਥ;
+        merged_ਮਾਪ   = merged_range.size;
+        ਵਿੱਥ_src0   = ggml_webgpu_tensor_merged_element_ਵਿੱਥ(src0, merged_range);
+        ਵਿੱਥ_src1   = ggml_webgpu_tensor_merged_element_ਵਿੱਥ(src1, merged_range);
     }
 
     std::vector<uint32_t> params = {
         ne,
-        offset_src0,
-        offset_src1,
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_size(dst->type)),
-        (uint32_t) (src0->nb[0] / ggml_type_size(src0->type)),
-        (uint32_t) (src0->nb[1] / ggml_type_size(src0->type)),
-        (uint32_t) (src0->nb[2] / ggml_type_size(src0->type)),
-        (uint32_t) (src0->nb[3] / ggml_type_size(src0->type)),
-        (uint32_t) (src1->nb[0] / ggml_type_size(src1->type)),
-        (uint32_t) (src1->nb[1] / ggml_type_size(src1->type)),
-        (uint32_t) (src1->nb[2] / ggml_type_size(src1->type)),
-        (uint32_t) (src1->nb[3] / ggml_type_size(src1->type)),
+        ਵਿੱਥ_src0,
+        ਵਿੱਥ_src1,
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_ਮਾਪ(dst->type)),
+        (uint32_t) (src0->nb[0] / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (src0->nb[1] / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (src0->nb[2] / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (src0->nb[3] / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (src1->nb[0] / ggml_type_ਮਾਪ(src1->type)),
+        (uint32_t) (src1->nb[1] / ggml_type_ਮਾਪ(src1->type)),
+        (uint32_t) (src1->nb[2] / ggml_type_ਮਾਪ(src1->type)),
+        (uint32_t) (src1->nb[3] / ggml_type_ਮਾਪ(src1->type)),
         (uint32_t) src0->ne[0],
         (uint32_t) src0->ne[1],
         (uint32_t) src0->ne[2],
@@ -2415,32 +2415,32 @@ static webgpu_encoded_op ggml_webgpu_binary_op(webgpu_context & ctx,
         (uint32_t) src1->ne[3],
     };
 
-    std::vector<wgpu::BindGroupEntry> entries;
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> entries;
 
-    if (decisions->src_overlap) {
+    ਜੇ (decisions->src_overlap) {
         entries.push_back(
-            ggml_webgpu_make_bind_group_entry(0, ggml_webgpu_tensor_buf(src0), merged_offset, merged_size));
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 1, dst));
-    } else {
-        entries.push_back(ggml_webgpu_make_bind_group_entry(0, ggml_webgpu_tensor_buf(src0),
-                                                            src0_webgpu_tensor_align_offset,
-                                                            ggml_webgpu_tensor_binding_size(ctx, src0)));
-        entries.push_back(ggml_webgpu_make_bind_group_entry(1, ggml_webgpu_tensor_buf(src1),
-                                                            src1_webgpu_tensor_align_offset,
-                                                            ggml_webgpu_tensor_binding_size(ctx, src1)));
-        if (!decisions->inplace && !decisions->overlap) {
-            entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 2, dst));
+            ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(0, ggml_webgpu_tensor_buf(src0), merged_ਵਿੱਥ, merged_ਮਾਪ));
+        entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 1, dst));
+    } ਨਹੀਂਤਾਂ {
+        entries.push_back(ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(0, ggml_webgpu_tensor_buf(src0),
+                                                            src0_webgpu_tensor_align_ਵਿੱਥ,
+                                                            ggml_webgpu_tensor_binding_ਮਾਪ(ctx, src0)));
+        entries.push_back(ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(1, ggml_webgpu_tensor_buf(src1),
+                                                            src1_webgpu_tensor_align_ਵਿੱਥ,
+                                                            ggml_webgpu_tensor_binding_ਮਾਪ(ctx, src1)));
+        ਜੇ (!decisions->inplace && !decisions->overlap) {
+            entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 2, dst));
         }
     }
 
     uint32_t wg_x;
     uint32_t wg_y;
-    uint32_t total_wg = CEIL_DIV(ggml_nelements(dst), decisions->wg_size);
-    compute_2d_workgroups(total_wg, ctx->global_ctx->capabilities.limits.maxComputeWorkgroupsPerDimension, wg_x, wg_y);
-    return ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
+    uint32_t ਕੁੱਲ_wg = CEIL_DIV(ggml_nelements(dst), decisions->wg_ਮਾਪ);
+    compute_2d_workgroups(ਕੁੱਲ_wg, ctx->global_ctx->capabilities.limits.max_Compute_Workgroups_ਪ੍ਰਤੀ_Dimension, wg_x, wg_y);
+    ਵਾਪਸ ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
 }
 
-static webgpu_encoded_op ggml_webgpu_add_id(webgpu_context & ctx,
+ਸਥਿਰ webgpu_encoded_op ggml_webgpu_ਜੋੜੋ_id(webgpu_context & ctx,
                                             ggml_tensor *    src0,
                                             ggml_tensor *    src1,
                                             ggml_tensor *    src2,
@@ -2450,139 +2450,139 @@ static webgpu_encoded_op ggml_webgpu_add_id(webgpu_context & ctx,
     shader_lib_ctx.src1                           = src1;
     shader_lib_ctx.src2                           = src2;
     shader_lib_ctx.dst                            = dst;
-    shader_lib_ctx.max_wg_size = ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
+    shader_lib_ctx.max_wg_ਮਾਪ = ctx->global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
 
-    webgpu_pipeline pipeline = ctx->shader_lib->get_add_id_pipeline(shader_lib_ctx);
+    webgpu_pipeline pipeline = ctx->shader_lib->get_ਜੋੜੋ_id_pipeline(shader_lib_ctx);
 
-    auto * decisions = static_cast<ggml_webgpu_generic_shader_decisions *>(pipeline.context.get());
+    ਸਵੈਚਾਲਿਤ * decisions = static_cast<ggml_webgpu_generic_shader_decisions *>(pipeline.context.get());
 
     std::vector<uint32_t> params = {
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src0) / ggml_type_size(src0->type)),
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_size(src1->type)),
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src2) / ggml_type_size(src2->type)),
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_size(dst->type)),
-        (uint32_t) (src0->nb[1] / ggml_type_size(src0->type)),
-        (uint32_t) (src0->nb[2] / ggml_type_size(src0->type)),
-        (uint32_t) (src1->nb[1] / ggml_type_size(src1->type)),
-        (uint32_t) (src2->nb[0] / ggml_type_size(src2->type)),
-        (uint32_t) (src2->nb[1] / ggml_type_size(src2->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src0) / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_ਮਾਪ(src1->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src2) / ggml_type_ਮਾਪ(src2->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_ਮਾਪ(dst->type)),
+        (uint32_t) (src0->nb[1] / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (src0->nb[2] / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (src1->nb[1] / ggml_type_ਮਾਪ(src1->type)),
+        (uint32_t) (src2->nb[0] / ggml_type_ਮਾਪ(src2->type)),
+        (uint32_t) (src2->nb[1] / ggml_type_ਮਾਪ(src2->type)),
         (uint32_t) dst->ne[0],
         (uint32_t) dst->ne[1],
         (uint32_t) dst->ne[2],
     };
 
-    std::vector<wgpu::BindGroupEntry> entries;
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> entries;
 
-    entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 0, src0));
-    entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 1, src1));
-    entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 2, src2));
+    entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 0, src0));
+    entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 1, src1));
+    entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 2, src2));
 
-    if (!decisions->inplace) {
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 3, dst));
+    ਜੇ (!decisions->inplace) {
+        entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 3, dst));
     }
 
     uint32_t       wg_x           = 1;
     uint32_t       wg_y           = 1;
-    uint32_t       total_wg       = ggml_nrows(dst);
-    const uint32_t max_wg_per_dim = ctx->global_ctx->capabilities.limits.maxComputeWorkgroupsPerDimension;
-    compute_2d_workgroups(total_wg, max_wg_per_dim, wg_x, wg_y);
+    uint32_t       ਕੁੱਲ_wg       = ggml_nrows(dst);
+    ਅਚਲ uint32_t max_wg_ਪ੍ਰਤੀ_dim = ctx->global_ctx->capabilities.limits.max_Compute_Workgroups_ਪ੍ਰਤੀ_Dimension;
+    compute_2d_workgroups(ਕੁੱਲ_wg, max_wg_ਪ੍ਰਤੀ_dim, wg_x, wg_y);
 
-    return ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
+    ਵਾਪਸ ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
 }
 
-static webgpu_encoded_op ggml_webgpu_concat(webgpu_context & ctx,
+ਸਥਿਰ webgpu_encoded_op ggml_webgpu_concat(webgpu_context & ctx,
                                             ggml_tensor *    src0,
                                             ggml_tensor *    src1,
                                             ggml_tensor *    dst) {
     uint32_t ne  = (uint32_t) ggml_nelements(dst);
     uint32_t dim = (uint32_t) dst->op_params[0];
-    if (ggml_nbytes(src0) == 0 && ggml_nbytes(src1) == 0) {
-        return {};
+    ਜੇ (ggml_nbytes(src0) == 0 && ggml_nbytes(src1) == 0) {
+        ਵਾਪਸ {};
     }
 
     ggml_webgpu_shader_lib_context shader_lib_ctx = {};
     shader_lib_ctx.src0                           = src0;
     shader_lib_ctx.src1                           = src1;
     shader_lib_ctx.dst                            = dst;
-    shader_lib_ctx.max_wg_size = ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
+    shader_lib_ctx.max_wg_ਮਾਪ = ctx->global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
 
-    const bool      src_overlap = ggml_webgpu_tensor_binding_overlap(ctx->global_ctx, src0, src1) ||
+    ਅਚਲ ਤਾਰਕਿਕ      src_overlap = ggml_webgpu_tensor_binding_overlap(ctx->global_ctx, src0, src1) ||
                                   ggml_nbytes(src0) == 0 || ggml_nbytes(src1) == 0;
     webgpu_pipeline pipeline    = ctx->shader_lib->get_concat_pipeline(shader_lib_ctx, src_overlap);
-    auto *          decisions   = static_cast<ggml_webgpu_binary_shader_decisions *>(pipeline.context.get());
+    ਸਵੈਚਾਲਿਤ *          decisions   = static_cast<ggml_webgpu_ਦੁਆਧਾਰੀ_shader_decisions *>(pipeline.context.get());
 
-    uint32_t offset_src0   = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src0) / ggml_type_size(src0->type));
-    uint32_t offset_src1   = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_size(src1->type));
-    size_t   merged_offset = 0;
-    size_t   merged_size   = 0;
-    if (decisions->src_overlap) {
-        if (ggml_nbytes(src0) == 0) {
-            merged_offset = ggml_webgpu_tensor_align_offset(ctx, src1);
-            merged_size   = ggml_webgpu_tensor_binding_size(ctx, src1);
-            offset_src0   = 0;
-            offset_src1   = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_size(src1->type));
-        } else if (ggml_nbytes(src1) == 0) {
-            merged_offset = ggml_webgpu_tensor_align_offset(ctx, src0);
-            merged_size   = ggml_webgpu_tensor_binding_size(ctx, src0);
-            offset_src0   = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src0) / ggml_type_size(src0->type));
-            offset_src1   = 0;
-        } else {
-            const ggml_webgpu_merged_binding_range merged_range =
+    uint32_t ਵਿੱਥ_src0   = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src0) / ggml_type_ਮਾਪ(src0->type));
+    uint32_t ਵਿੱਥ_src1   = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_ਮਾਪ(src1->type));
+    size_t   merged_ਵਿੱਥ = 0;
+    size_t   merged_ਮਾਪ   = 0;
+    ਜੇ (decisions->src_overlap) {
+        ਜੇ (ggml_nbytes(src0) == 0) {
+            merged_ਵਿੱਥ = ggml_webgpu_tensor_align_ਵਿੱਥ(ctx, src1);
+            merged_ਮਾਪ   = ggml_webgpu_tensor_binding_ਮਾਪ(ctx, src1);
+            ਵਿੱਥ_src0   = 0;
+            ਵਿੱਥ_src1   = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_ਮਾਪ(src1->type));
+        } ਨਹੀਂਤਾਂ ਜੇ (ggml_nbytes(src1) == 0) {
+            merged_ਵਿੱਥ = ggml_webgpu_tensor_align_ਵਿੱਥ(ctx, src0);
+            merged_ਮਾਪ   = ggml_webgpu_tensor_binding_ਮਾਪ(ctx, src0);
+            ਵਿੱਥ_src0   = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src0) / ggml_type_ਮਾਪ(src0->type));
+            ਵਿੱਥ_src1   = 0;
+        } ਨਹੀਂਤਾਂ {
+            ਅਚਲ ggml_webgpu_merged_binding_range merged_range =
                 ggml_webgpu_tensor_merged_binding_range(ctx, { src0, src1 });
-            merged_offset = merged_range.offset;
-            merged_size   = merged_range.size;
-            offset_src0   = ggml_webgpu_tensor_merged_element_offset(src0, merged_range);
-            offset_src1   = ggml_webgpu_tensor_merged_element_offset(src1, merged_range);
+            merged_ਵਿੱਥ = merged_range.ਵਿੱਥ;
+            merged_ਮਾਪ   = merged_range.size;
+            ਵਿੱਥ_src0   = ggml_webgpu_tensor_merged_element_ਵਿੱਥ(src0, merged_range);
+            ਵਿੱਥ_src1   = ggml_webgpu_tensor_merged_element_ਵਿੱਥ(src1, merged_range);
         }
     }
 
     std::vector<uint32_t> params = { ne,
-                                     offset_src0,
-                                     offset_src1,
-                                     (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_size(dst->type)),
-                                     (uint32_t) (src0->nb[0] / ggml_type_size(src0->type)),
-                                     (uint32_t) (src0->nb[1] / ggml_type_size(src0->type)),
-                                     (uint32_t) (src0->nb[2] / ggml_type_size(src0->type)),
-                                     (uint32_t) (src0->nb[3] / ggml_type_size(src0->type)),
-                                     (uint32_t) (src1->nb[0] / ggml_type_size(src1->type)),
-                                     (uint32_t) (src1->nb[1] / ggml_type_size(src1->type)),
-                                     (uint32_t) (src1->nb[2] / ggml_type_size(src1->type)),
-                                     (uint32_t) (src1->nb[3] / ggml_type_size(src1->type)),
+                                     ਵਿੱਥ_src0,
+                                     ਵਿੱਥ_src1,
+                                     (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_ਮਾਪ(dst->type)),
+                                     (uint32_t) (src0->nb[0] / ggml_type_ਮਾਪ(src0->type)),
+                                     (uint32_t) (src0->nb[1] / ggml_type_ਮਾਪ(src0->type)),
+                                     (uint32_t) (src0->nb[2] / ggml_type_ਮਾਪ(src0->type)),
+                                     (uint32_t) (src0->nb[3] / ggml_type_ਮਾਪ(src0->type)),
+                                     (uint32_t) (src1->nb[0] / ggml_type_ਮਾਪ(src1->type)),
+                                     (uint32_t) (src1->nb[1] / ggml_type_ਮਾਪ(src1->type)),
+                                     (uint32_t) (src1->nb[2] / ggml_type_ਮਾਪ(src1->type)),
+                                     (uint32_t) (src1->nb[3] / ggml_type_ਮਾਪ(src1->type)),
                                      (uint32_t) dst->ne[0],
                                      (uint32_t) dst->ne[1],
                                      (uint32_t) dst->ne[2],
                                      dim,
                                      (uint32_t) src0->ne[dim] };
 
-    std::vector<wgpu::BindGroupEntry> entries = {};
-    if (decisions->src_overlap) {
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> entries = {};
+    ਜੇ (decisions->src_overlap) {
         entries.push_back(
-            ggml_webgpu_make_bind_group_entry(0, ggml_webgpu_tensor_buf(src0), merged_offset, merged_size));
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 1, dst));
-    } else {
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 0, src0));
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 1, src1));
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 2, dst));
+            ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(0, ggml_webgpu_tensor_buf(src0), merged_ਵਿੱਥ, merged_ਮਾਪ));
+        entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 1, dst));
+    } ਨਹੀਂਤਾਂ {
+        entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 0, src0));
+        entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 1, src1));
+        entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 2, dst));
     }
 
     uint32_t wg_x;
     uint32_t wg_y;
-    uint32_t total_wg = CEIL_DIV(ne, decisions->wg_size);
-    compute_2d_workgroups(total_wg, ctx->global_ctx->capabilities.limits.maxComputeWorkgroupsPerDimension, wg_x, wg_y);
-    return ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
+    uint32_t ਕੁੱਲ_wg = CEIL_DIV(ne, decisions->wg_ਮਾਪ);
+    compute_2d_workgroups(ਕੁੱਲ_wg, ctx->global_ctx->capabilities.limits.max_Compute_Workgroups_ਪ੍ਰਤੀ_Dimension, wg_x, wg_y);
+    ਵਾਪਸ ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
 }
 
-static webgpu_encoded_op ggml_webgpu_repeat(webgpu_context & ctx, ggml_tensor * src0, ggml_tensor * dst) {
+ਸਥਿਰ webgpu_encoded_op ggml_webgpu_repeat(webgpu_context & ctx, ggml_tensor * src0, ggml_tensor * dst) {
     uint32_t ne = (uint32_t) ggml_nelements(dst);
 
     std::vector<uint32_t> params = { ne,
                                      (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src0) /
-                                                 ggml_type_size(src0->type)),
-                                     (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_size(dst->type)),
-                                     (uint32_t) (src0->nb[0] / ggml_type_size(src0->type)),
-                                     (uint32_t) (src0->nb[1] / ggml_type_size(src0->type)),
-                                     (uint32_t) (src0->nb[2] / ggml_type_size(src0->type)),
-                                     (uint32_t) (src0->nb[3] / ggml_type_size(src0->type)),
+                                                 ggml_type_ਮਾਪ(src0->type)),
+                                     (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_ਮਾਪ(dst->type)),
+                                     (uint32_t) (src0->nb[0] / ggml_type_ਮਾਪ(src0->type)),
+                                     (uint32_t) (src0->nb[1] / ggml_type_ਮਾਪ(src0->type)),
+                                     (uint32_t) (src0->nb[2] / ggml_type_ਮਾਪ(src0->type)),
+                                     (uint32_t) (src0->nb[3] / ggml_type_ਮਾਪ(src0->type)),
                                      (uint32_t) (src0->ne[0]),
                                      (uint32_t) (src0->ne[1]),
                                      (uint32_t) (src0->ne[2]),
@@ -2591,27 +2591,27 @@ static webgpu_encoded_op ggml_webgpu_repeat(webgpu_context & ctx, ggml_tensor * 
                                      (uint32_t) (dst->ne[1]),
                                      (uint32_t) (dst->ne[2]) };
 
-    std::vector<wgpu::BindGroupEntry> entries = {
-        ggml_webgpu_make_tensor_bind_group_entry(ctx, 0, src0),
-        ggml_webgpu_make_tensor_bind_group_entry(ctx, 1, dst),
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> entries = {
+        ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 0, src0),
+        ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 1, dst),
     };
 
     ggml_webgpu_shader_lib_context shader_lib_ctx = {};
     shader_lib_ctx.src0                           = src0;
     shader_lib_ctx.dst                            = dst;
-    shader_lib_ctx.max_wg_size = ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
+    shader_lib_ctx.max_wg_ਮਾਪ = ctx->global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
 
     webgpu_pipeline pipeline  = ctx->shader_lib->get_repeat_pipeline(shader_lib_ctx);
-    auto *          decisions = static_cast<ggml_webgpu_generic_shader_decisions *>(pipeline.context.get());
+    ਸਵੈਚਾਲਿਤ *          decisions = static_cast<ggml_webgpu_generic_shader_decisions *>(pipeline.context.get());
 
     uint32_t wg_x;
     uint32_t wg_y;
-    uint32_t total_wg = CEIL_DIV(ne, decisions->wg_size);
-    compute_2d_workgroups(total_wg, ctx->global_ctx->capabilities.limits.maxComputeWorkgroupsPerDimension, wg_x, wg_y);
-    return ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
+    uint32_t ਕੁੱਲ_wg = CEIL_DIV(ne, decisions->wg_ਮਾਪ);
+    compute_2d_workgroups(ਕੁੱਲ_wg, ctx->global_ctx->capabilities.limits.max_Compute_Workgroups_ਪ੍ਰਤੀ_Dimension, wg_x, wg_y);
+    ਵਾਪਸ ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
 }
 
-static std::optional<webgpu_encoded_op> ggml_webgpu_rms_norm_mul(webgpu_context & ctx,
+ਸਥਿਰ std::optional<webgpu_encoded_op> ggml_webgpu_rms_norm_mul(webgpu_context & ctx,
                                                                  ggml_tensor *    rn_src,
                                                                  ggml_tensor *    rn_dst,
                                                                  ggml_tensor *    mul_src0,
@@ -2619,33 +2619,33 @@ static std::optional<webgpu_encoded_op> ggml_webgpu_rms_norm_mul(webgpu_context 
                                                                  ggml_tensor *    dst) {
     ggml_tensor * mul_src;
 
-    if (ggml_webgpu_tensor_equal(rn_dst, mul_src0)) {
+    ਜੇ (ggml_webgpu_tensor_equal(rn_dst, mul_src0)) {
         mul_src = mul_src1;
-    } else if (ggml_webgpu_tensor_equal(rn_dst, mul_src1)) {
+    } ਨਹੀਂਤਾਂ ਜੇ (ggml_webgpu_tensor_equal(rn_dst, mul_src1)) {
         mul_src = mul_src0;
-    } else {
+    } ਨਹੀਂਤਾਂ {
         GGML_ABORT("rms_norm must be equal to the one of mul_src0 and mul_src1");
     }
 
-    uint32_t offset_rn_src = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, rn_src) / ggml_type_size(rn_src->type));
-    uint32_t offset_mul_src =
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, mul_src) / ggml_type_size(mul_src->type));
-    size_t merged_offset = 0;
-    size_t merged_size   = 0;
+    uint32_t ਵਿੱਥ_rn_src = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, rn_src) / ggml_type_ਮਾਪ(rn_src->type));
+    uint32_t ਵਿੱਥ_mul_src =
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, mul_src) / ggml_type_ਮਾਪ(mul_src->type));
+    size_t merged_ਵਿੱਥ = 0;
+    size_t merged_ਮਾਪ   = 0;
 
     std::vector<uint32_t> params = {
-        offset_rn_src,
-        offset_mul_src,
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_size(dst->type)),
-        (uint32_t) (rn_src->nb[1] / ggml_type_size(rn_src->type)),
-        (uint32_t) (rn_src->nb[2] / ggml_type_size(rn_src->type)),
-        (uint32_t) (rn_src->nb[3] / ggml_type_size(rn_src->type)),
-        (uint32_t) (mul_src->nb[1] / ggml_type_size(mul_src->type)),
-        (uint32_t) (mul_src->nb[2] / ggml_type_size(mul_src->type)),
-        (uint32_t) (mul_src->nb[3] / ggml_type_size(mul_src->type)),
-        (uint32_t) (dst->nb[1] / ggml_type_size(dst->type)),
-        (uint32_t) (dst->nb[2] / ggml_type_size(dst->type)),
-        (uint32_t) (dst->nb[3] / ggml_type_size(dst->type)),
+        ਵਿੱਥ_rn_src,
+        ਵਿੱਥ_mul_src,
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_ਮਾਪ(dst->type)),
+        (uint32_t) (rn_src->nb[1] / ggml_type_ਮਾਪ(rn_src->type)),
+        (uint32_t) (rn_src->nb[2] / ggml_type_ਮਾਪ(rn_src->type)),
+        (uint32_t) (rn_src->nb[3] / ggml_type_ਮਾਪ(rn_src->type)),
+        (uint32_t) (mul_src->nb[1] / ggml_type_ਮਾਪ(mul_src->type)),
+        (uint32_t) (mul_src->nb[2] / ggml_type_ਮਾਪ(mul_src->type)),
+        (uint32_t) (mul_src->nb[3] / ggml_type_ਮਾਪ(mul_src->type)),
+        (uint32_t) (dst->nb[1] / ggml_type_ਮਾਪ(dst->type)),
+        (uint32_t) (dst->nb[2] / ggml_type_ਮਾਪ(dst->type)),
+        (uint32_t) (dst->nb[3] / ggml_type_ਮਾਪ(dst->type)),
         (uint32_t) mul_src->ne[0],
         (uint32_t) mul_src->ne[1],
         (uint32_t) mul_src->ne[2],
@@ -2657,59 +2657,59 @@ static std::optional<webgpu_encoded_op> ggml_webgpu_rms_norm_mul(webgpu_context 
         ggml_webgpu_u32_from_f32(ggml_get_op_params_f32(rn_dst, 0))  // epsilon, treated as f32 in the shader
     };
 
-    std::vector<wgpu::BindGroupEntry> entries;
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> entries;
 
     ggml_webgpu_shader_lib_context shader_lib_ctx = {};
     shader_lib_ctx.src0                           = rn_src;
     shader_lib_ctx.src1                           = mul_src;
     shader_lib_ctx.dst                            = dst;
-    shader_lib_ctx.max_wg_size = ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
+    shader_lib_ctx.max_wg_ਮਾਪ = ctx->global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
 
-    const bool      src_overlap = ggml_webgpu_tensor_binding_overlap(ctx->global_ctx, rn_src, mul_src);
+    ਅਚਲ ਤਾਰਕਿਕ      src_overlap = ggml_webgpu_tensor_binding_overlap(ctx->global_ctx, rn_src, mul_src);
     webgpu_pipeline pipeline    = ctx->shader_lib->get_rms_norm_mul_pipeline(shader_lib_ctx, src_overlap);
-    auto *          decisions   = static_cast<ggml_webgpu_rms_norm_mul_shader_decisions *>(pipeline.context.get());
+    ਸਵੈਚਾਲਿਤ *          decisions   = static_cast<ggml_webgpu_rms_norm_mul_shader_decisions *>(pipeline.context.get());
 
-    if (decisions->src_overlap) {
-        const ggml_webgpu_merged_binding_range merged_range =
+    ਜੇ (decisions->src_overlap) {
+        ਅਚਲ ggml_webgpu_merged_binding_range merged_range =
             ggml_webgpu_tensor_merged_binding_range(ctx, { rn_src, mul_src });
-        merged_offset  = merged_range.offset;
-        merged_size    = merged_range.size;
-        offset_rn_src  = ggml_webgpu_tensor_merged_element_offset(rn_src, merged_range);
-        offset_mul_src = ggml_webgpu_tensor_merged_element_offset(mul_src, merged_range);
-        params[0]      = offset_rn_src;
-        params[1]      = offset_mul_src;
+        merged_ਵਿੱਥ  = merged_range.ਵਿੱਥ;
+        merged_ਮਾਪ    = merged_range.size;
+        ਵਿੱਥ_rn_src  = ggml_webgpu_tensor_merged_element_ਵਿੱਥ(rn_src, merged_range);
+        ਵਿੱਥ_mul_src = ggml_webgpu_tensor_merged_element_ਵਿੱਥ(mul_src, merged_range);
+        params[0]      = ਵਿੱਥ_rn_src;
+        params[1]      = ਵਿੱਥ_mul_src;
     }
 
-    if (decisions->inplace || decisions->overlap) {
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 0, rn_src));
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 1, mul_src));
-    } else if (decisions->src_overlap) {
+    ਜੇ (decisions->inplace || decisions->overlap) {
+        entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 0, rn_src));
+        entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 1, mul_src));
+    } ਨਹੀਂਤਾਂ ਜੇ (decisions->src_overlap) {
         entries.push_back(
-            ggml_webgpu_make_bind_group_entry(0, ggml_webgpu_tensor_buf(rn_src), merged_offset, merged_size));
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 1, dst));
-    } else {
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 0, rn_src));
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 1, mul_src));
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 2, dst));
+            ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(0, ggml_webgpu_tensor_buf(rn_src), merged_ਵਿੱਥ, merged_ਮਾਪ));
+        entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 1, dst));
+    } ਨਹੀਂਤਾਂ {
+        entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 0, rn_src));
+        entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 1, mul_src));
+        entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 2, dst));
     }
 
     uint32_t wg_x;
     uint32_t wg_y;
-    compute_2d_workgroups(ggml_nrows(dst), ctx->global_ctx->capabilities.limits.maxComputeWorkgroupsPerDimension, wg_x,
+    compute_2d_workgroups(ggml_nrows(dst), ctx->global_ctx->capabilities.limits.max_Compute_Workgroups_ਪ੍ਰਤੀ_Dimension, wg_x,
                           wg_y);
-    return ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
+    ਵਾਪਸ ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
 }
 
-static webgpu_encoded_op ggml_webgpu_row_norm(webgpu_context & ctx, ggml_tensor * src, ggml_tensor * dst) {
+ਸਥਿਰ webgpu_encoded_op ggml_webgpu_ਪੰਕਤੀ_norm(webgpu_context & ctx, ggml_tensor * src, ggml_tensor * dst) {
     std::vector<uint32_t> params = {
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src) / ggml_type_size(src->type)),
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_size(dst->type)),
-        (uint32_t) (src->nb[1] / ggml_type_size(src->type)),
-        (uint32_t) (src->nb[2] / ggml_type_size(src->type)),
-        (uint32_t) (src->nb[3] / ggml_type_size(src->type)),
-        (uint32_t) (dst->nb[1] / ggml_type_size(dst->type)),
-        (uint32_t) (dst->nb[2] / ggml_type_size(dst->type)),
-        (uint32_t) (dst->nb[3] / ggml_type_size(dst->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src) / ggml_type_ਮਾਪ(src->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_ਮਾਪ(dst->type)),
+        (uint32_t) (src->nb[1] / ggml_type_ਮਾਪ(src->type)),
+        (uint32_t) (src->nb[2] / ggml_type_ਮਾਪ(src->type)),
+        (uint32_t) (src->nb[3] / ggml_type_ਮਾਪ(src->type)),
+        (uint32_t) (dst->nb[1] / ggml_type_ਮਾਪ(dst->type)),
+        (uint32_t) (dst->nb[2] / ggml_type_ਮਾਪ(dst->type)),
+        (uint32_t) (dst->nb[3] / ggml_type_ਮਾਪ(dst->type)),
         (uint32_t) src->ne[0],
         (uint32_t) src->ne[1],
         (uint32_t) src->ne[2],
@@ -2720,24 +2720,24 @@ static webgpu_encoded_op ggml_webgpu_row_norm(webgpu_context & ctx, ggml_tensor 
     ggml_webgpu_shader_lib_context shader_lib_ctx = {};
     shader_lib_ctx.src0                           = src;
     shader_lib_ctx.dst                            = dst;
-    shader_lib_ctx.max_wg_size = ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
+    shader_lib_ctx.max_wg_ਮਾਪ = ctx->global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
 
-    webgpu_pipeline pipeline  = ctx->shader_lib->get_row_norm_pipeline(shader_lib_ctx);
-    auto *          decisions = static_cast<ggml_webgpu_generic_shader_decisions *>(pipeline.context.get());
+    webgpu_pipeline pipeline  = ctx->shader_lib->get_ਪੰਕਤੀ_norm_pipeline(shader_lib_ctx);
+    ਸਵੈਚਾਲਿਤ *          decisions = static_cast<ggml_webgpu_generic_shader_decisions *>(pipeline.context.get());
 
-    std::vector<wgpu::BindGroupEntry> entries = { ggml_webgpu_make_tensor_bind_group_entry(ctx, 0, src) };
-    if (!decisions->inplace) {
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 1, dst));
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> entries = { ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 0, src) };
+    ਜੇ (!decisions->inplace) {
+        entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 1, dst));
     }
 
     uint32_t wg_x;
     uint32_t wg_y;
-    compute_2d_workgroups(ggml_nrows(src), ctx->global_ctx->capabilities.limits.maxComputeWorkgroupsPerDimension, wg_x,
+    compute_2d_workgroups(ggml_nrows(src), ctx->global_ctx->capabilities.limits.max_Compute_Workgroups_ਪ੍ਰਤੀ_Dimension, wg_x,
                           wg_y);
-    return ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
+    ਵਾਪਸ ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
 }
 
-static webgpu_encoded_op ggml_webgpu_rope(webgpu_context & ctx,
+ਸਥਿਰ webgpu_encoded_op ggml_webgpu_rope(webgpu_context & ctx,
                                           ggml_tensor *    src0,
                                           ggml_tensor *    src1,
                                           ggml_tensor *    src2,
@@ -2747,52 +2747,52 @@ static webgpu_encoded_op ggml_webgpu_rope(webgpu_context & ctx,
     shader_lib_ctx.src1                           = src1;
     shader_lib_ctx.src2                           = src2;
     shader_lib_ctx.dst                            = dst;
-    shader_lib_ctx.max_wg_size = ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
+    shader_lib_ctx.max_wg_ਮਾਪ = ctx->global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
 
     webgpu_pipeline pipeline = ctx->shader_lib->get_rope_pipeline(shader_lib_ctx);
 
-    auto * decisions = static_cast<ggml_webgpu_generic_shader_decisions *>(pipeline.context.get());
+    ਸਵੈਚਾਲਿਤ * decisions = static_cast<ggml_webgpu_generic_shader_decisions *>(pipeline.context.get());
 
-    const bool inplace         = decisions->inplace;
-    const int  has_freq_factor = (src2 != nullptr);
+    ਅਚਲ ਤਾਰਕਿਕ inplace         = decisions->inplace;
+    ਅਚਲ ਪੂਰਨ  has_freq_ਗੁਣਕ = (src2 != ਖਾਲੀ_ਸੂਚਕ);
 
-    const int n_dims     = ((int32_t *) dst->op_params)[1];
-    const int mode       = ((int32_t *) dst->op_params)[2];
-    const int n_ctx_orig = ((int32_t *) dst->op_params)[4];
-    const int n_offs     = ((int32_t *) dst->op_params)[15];
+    ਅਚਲ ਪੂਰਨ n_dims     = ((int32_t *) dst->op_params)[1];
+    ਅਚਲ ਪੂਰਨ mode       = ((int32_t *) dst->op_params)[2];
+    ਅਚਲ ਪੂਰਨ n_ctx_orig = ((int32_t *) dst->op_params)[4];
+    ਅਚਲ ਪੂਰਨ n_offs     = ((int32_t *) dst->op_params)[15];
 
-    float freq_base;
-    float freq_scale;
-    float ext_factor;
-    float attn_factor;
-    float beta_fast;
-    float beta_slow;
-    memcpy(&freq_base, (int32_t *) dst->op_params + 5, sizeof(float));
-    memcpy(&freq_scale, (int32_t *) dst->op_params + 6, sizeof(float));
-    memcpy(&ext_factor, (int32_t *) dst->op_params + 7, sizeof(float));
-    memcpy(&attn_factor, (int32_t *) dst->op_params + 8, sizeof(float));
-    memcpy(&beta_fast, (int32_t *) dst->op_params + 9, sizeof(float));
-    memcpy(&beta_slow, (int32_t *) dst->op_params + 10, sizeof(float));
+    ਦਸ਼ਮਲਵ freq_ਅਧਾਰ;
+    ਦਸ਼ਮਲਵ freq_scale;
+    ਦਸ਼ਮਲਵ ext_ਗੁਣਕ;
+    ਦਸ਼ਮਲਵ attn_ਗੁਣਕ;
+    ਦਸ਼ਮਲਵ beta_fast;
+    ਦਸ਼ਮਲਵ beta_slow;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&freq_ਅਧਾਰ, (int32_t *) dst->op_params + 5, ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&freq_scale, (int32_t *) dst->op_params + 6, ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&ext_ਗੁਣਕ, (int32_t *) dst->op_params + 7, ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&attn_ਗੁਣਕ, (int32_t *) dst->op_params + 8, ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&beta_fast, (int32_t *) dst->op_params + 9, ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&beta_slow, (int32_t *) dst->op_params + 10, ਆਕਾਰ(ਦਸ਼ਮਲਵ));
 
-    int sections[4];
-    memcpy(sections, (int32_t *) dst->op_params + 11, 4 * sizeof(int));
+    ਪੂਰਨ sections[4];
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(sections, (int32_t *) dst->op_params + 11, 4 * ਆਕਾਰ(ਪੂਰਨ));
 
-    float theta_scale = powf(freq_base, -2.0f / n_dims);
+    ਦਸ਼ਮਲਵ theta_scale = powf(freq_ਅਧਾਰ, -2.0f / n_dims);
 
-    float corr_dims[2];
-    ggml_rope_yarn_corr_dims(n_dims, n_ctx_orig, freq_base, beta_fast, beta_slow, corr_dims);
+    ਦਸ਼ਮਲਵ corr_dims[2];
+    ggml_rope_yarn_corr_dims(n_dims, n_ctx_orig, freq_ਅਧਾਰ, beta_fast, beta_slow, corr_dims);
 
     std::vector<uint32_t> params = {
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src0) / ggml_type_size(src0->type)),
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_size(src1->type)),
-        src2 != nullptr ? (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src2) / ggml_type_size(src2->type)) : 0,
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_size(dst->type)),
-        (uint32_t) (src0->nb[1] / ggml_type_size(src0->type)),
-        (uint32_t) (src0->nb[2] / ggml_type_size(src0->type)),
-        (uint32_t) (src0->nb[3] / ggml_type_size(src0->type)),
-        (uint32_t) (dst->nb[1] / ggml_type_size(dst->type)),
-        (uint32_t) (dst->nb[2] / ggml_type_size(dst->type)),
-        (uint32_t) (dst->nb[3] / ggml_type_size(dst->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src0) / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_ਮਾਪ(src1->type)),
+        src2 != ਖਾਲੀ_ਸੂਚਕ ? (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src2) / ggml_type_ਮਾਪ(src2->type)) : 0,
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_ਮਾਪ(dst->type)),
+        (uint32_t) (src0->nb[1] / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (src0->nb[2] / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (src0->nb[3] / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (dst->nb[1] / ggml_type_ਮਾਪ(dst->type)),
+        (uint32_t) (dst->nb[2] / ggml_type_ਮਾਪ(dst->type)),
+        (uint32_t) (dst->nb[3] / ggml_type_ਮਾਪ(dst->type)),
         (uint32_t) ggml_nelements(src0) / 2,
         (uint32_t) src0->ne[0],
         (uint32_t) src0->ne[1],
@@ -2800,9 +2800,9 @@ static webgpu_encoded_op ggml_webgpu_rope(webgpu_context & ctx,
         (uint32_t) n_dims,
         (uint32_t) mode,
         ggml_webgpu_u32_from_f32(theta_scale),
-        ggml_webgpu_u32_from_f32(attn_factor),
+        ggml_webgpu_u32_from_f32(attn_ਗੁਣਕ),
         ggml_webgpu_u32_from_f32(freq_scale),
-        ggml_webgpu_u32_from_f32(ext_factor),
+        ggml_webgpu_u32_from_f32(ext_ਗੁਣਕ),
         ggml_webgpu_u32_from_f32(corr_dims[0]),
         ggml_webgpu_u32_from_f32(corr_dims[1]),
         (uint32_t) sections[0],
@@ -2812,25 +2812,25 @@ static webgpu_encoded_op ggml_webgpu_rope(webgpu_context & ctx,
         (uint32_t) n_offs
     };
 
-    std::vector<wgpu::BindGroupEntry> entries     = { ggml_webgpu_make_tensor_bind_group_entry(ctx, 0, src0),
-                                                      ggml_webgpu_make_tensor_bind_group_entry(ctx, 1, src1) };
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> entries     = { ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 0, src0),
+                                                      ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 1, src1) };
     uint32_t                          dst_binding = 2;
-    if (has_freq_factor) {
+    ਜੇ (has_freq_ਗੁਣਕ) {
         dst_binding = 3;
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 2, src2));
+        entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 2, src2));
     }
-    if (!inplace) {
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, dst_binding, dst));
+    ਜੇ (!inplace) {
+        entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, dst_binding, dst));
     }
 
     uint32_t wg_x;
     uint32_t wg_y;
-    uint32_t total_wg = CEIL_DIV(ggml_nelements(dst), decisions->wg_size);
-    compute_2d_workgroups(total_wg, ctx->global_ctx->capabilities.limits.maxComputeWorkgroupsPerDimension, wg_x, wg_y);
-    return ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
+    uint32_t ਕੁੱਲ_wg = CEIL_DIV(ggml_nelements(dst), decisions->wg_ਮਾਪ);
+    compute_2d_workgroups(ਕੁੱਲ_wg, ctx->global_ctx->capabilities.limits.max_Compute_Workgroups_ਪ੍ਰਤੀ_Dimension, wg_x, wg_y);
+    ਵਾਪਸ ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
 }
 
-static webgpu_encoded_op ggml_webgpu_glu(webgpu_context & ctx,
+ਸਥਿਰ webgpu_encoded_op ggml_webgpu_glu(webgpu_context & ctx,
                                          ggml_tensor *    src0,
                                          ggml_tensor *    src1,
                                          ggml_tensor *    dst) {
@@ -2838,95 +2838,95 @@ static webgpu_encoded_op ggml_webgpu_glu(webgpu_context & ctx,
     shader_lib_ctx.src0                           = src0;
     shader_lib_ctx.src1                           = src1;
     shader_lib_ctx.dst                            = dst;
-    shader_lib_ctx.max_wg_size = ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
+    shader_lib_ctx.max_wg_ਮਾਪ = ctx->global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
 
-    const bool      src_overlap = src1 != nullptr && ggml_webgpu_tensor_binding_overlap(ctx->global_ctx, src0, src1);
+    ਅਚਲ ਤਾਰਕਿਕ      src_overlap = src1 != ਖਾਲੀ_ਸੂਚਕ && ggml_webgpu_tensor_binding_overlap(ctx->global_ctx, src0, src1);
     webgpu_pipeline pipeline    = ctx->shader_lib->get_glu_pipeline(shader_lib_ctx, src_overlap);
 
-    auto * decisions = static_cast<ggml_webgpu_glu_shader_decisions *>(pipeline.context.get());
+    ਸਵੈਚਾਲਿਤ * decisions = static_cast<ggml_webgpu_glu_shader_decisions *>(pipeline.context.get());
 
-    const int split = (src1 != nullptr);
+    ਅਚਲ ਪੂਰਨ ਵੰਡੋ = (src1 != ਖਾਲੀ_ਸੂਚਕ);
 
-    uint32_t offset_src0 = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src0) / ggml_type_size(src0->type));
-    uint32_t offset_src1 =
-        src1 != nullptr ? (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_size(src1->type)) : 0;
-    size_t merged_offset = 0;
-    size_t merged_size   = 0;
-    if (decisions->src_overlap) {
-        const ggml_webgpu_merged_binding_range merged_range =
+    uint32_t ਵਿੱਥ_src0 = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src0) / ggml_type_ਮਾਪ(src0->type));
+    uint32_t ਵਿੱਥ_src1 =
+        src1 != ਖਾਲੀ_ਸੂਚਕ ? (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_ਮਾਪ(src1->type)) : 0;
+    size_t merged_ਵਿੱਥ = 0;
+    size_t merged_ਮਾਪ   = 0;
+    ਜੇ (decisions->src_overlap) {
+        ਅਚਲ ggml_webgpu_merged_binding_range merged_range =
             ggml_webgpu_tensor_merged_binding_range(ctx, { src0, src1 });
-        merged_offset = merged_range.offset;
-        merged_size   = merged_range.size;
-        offset_src0   = ggml_webgpu_tensor_merged_element_offset(src0, merged_range);
-        offset_src1   = ggml_webgpu_tensor_merged_element_offset(src1, merged_range);
+        merged_ਵਿੱਥ = merged_range.ਵਿੱਥ;
+        merged_ਮਾਪ   = merged_range.size;
+        ਵਿੱਥ_src0   = ggml_webgpu_tensor_merged_element_ਵਿੱਥ(src0, merged_range);
+        ਵਿੱਥ_src1   = ggml_webgpu_tensor_merged_element_ਵਿੱਥ(src1, merged_range);
     }
 
     std::vector<uint32_t> params = {
-        offset_src0,
-        offset_src1,
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_size(dst->type)),
-        (uint32_t) (src0->nb[1] / ggml_type_size(src0->type)),
-        (uint32_t) (src0->nb[2] / ggml_type_size(src0->type)),
-        (uint32_t) (src0->nb[3] / ggml_type_size(src0->type)),
-        src1 != nullptr ? (uint32_t) (src1->nb[1] / ggml_type_size(src1->type)) :
-                          (uint32_t) (src0->nb[1] / ggml_type_size(src0->type)),
-        src1 != nullptr ? (uint32_t) (src1->nb[2] / ggml_type_size(src1->type)) :
-                          (uint32_t) (src0->nb[2] / ggml_type_size(src0->type)),
-        src1 != nullptr ? (uint32_t) (src1->nb[3] / ggml_type_size(src1->type)) :
-                          (uint32_t) (src0->nb[3] / ggml_type_size(src0->type)),
-        (uint32_t) (dst->nb[1] / ggml_type_size(dst->type)),
-        (uint32_t) (dst->nb[2] / ggml_type_size(dst->type)),
-        (uint32_t) (dst->nb[3] / ggml_type_size(dst->type)),
+        ਵਿੱਥ_src0,
+        ਵਿੱਥ_src1,
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_ਮਾਪ(dst->type)),
+        (uint32_t) (src0->nb[1] / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (src0->nb[2] / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (src0->nb[3] / ggml_type_ਮਾਪ(src0->type)),
+        src1 != ਖਾਲੀ_ਸੂਚਕ ? (uint32_t) (src1->nb[1] / ggml_type_ਮਾਪ(src1->type)) :
+                          (uint32_t) (src0->nb[1] / ggml_type_ਮਾਪ(src0->type)),
+        src1 != ਖਾਲੀ_ਸੂਚਕ ? (uint32_t) (src1->nb[2] / ggml_type_ਮਾਪ(src1->type)) :
+                          (uint32_t) (src0->nb[2] / ggml_type_ਮਾਪ(src0->type)),
+        src1 != ਖਾਲੀ_ਸੂਚਕ ? (uint32_t) (src1->nb[3] / ggml_type_ਮਾਪ(src1->type)) :
+                          (uint32_t) (src0->nb[3] / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (dst->nb[1] / ggml_type_ਮਾਪ(dst->type)),
+        (uint32_t) (dst->nb[2] / ggml_type_ਮਾਪ(dst->type)),
+        (uint32_t) (dst->nb[3] / ggml_type_ਮਾਪ(dst->type)),
         (uint32_t) ggml_nelements(dst),
         (uint32_t) dst->ne[0],
         (uint32_t) dst->ne[1],
         (uint32_t) dst->ne[2],
         (uint32_t) ((int32_t *) dst->op_params)[1],                // swapped
         ggml_webgpu_u32_from_f32(ggml_get_op_params_f32(dst, 2)),  // alpha, for swiglu_oai
-        ggml_webgpu_u32_from_f32(ggml_get_op_params_f32(dst, 3)),  // limit
+        ggml_webgpu_u32_from_f32(ggml_get_op_params_f32(dst, 3)),  //ਹੱਦਬੰਦੀ
     };
 
-    std::vector<wgpu::BindGroupEntry> entries;
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> entries;
     uint32_t                          dst_binding = 1;
-    if (decisions->src_overlap) {
+    ਜੇ (decisions->src_overlap) {
         entries.push_back(
-            ggml_webgpu_make_bind_group_entry(0, ggml_webgpu_tensor_buf(src0), merged_offset, merged_size));
-    } else {
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 0, src0));
+            ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(0, ggml_webgpu_tensor_buf(src0), merged_ਵਿੱਥ, merged_ਮਾਪ));
+    } ਨਹੀਂਤਾਂ {
+        entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 0, src0));
     }
-    if (split && !decisions->src_overlap) {
+    ਜੇ (ਵੰਡੋ && !decisions->src_overlap) {
         dst_binding = 2;
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 1, src1));
+        entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 1, src1));
     }
-    entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, dst_binding, dst));
+    entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, dst_binding, dst));
 
     uint32_t wg_x;
     uint32_t wg_y;
-    uint32_t total_wg = CEIL_DIV(ggml_nelements(dst), decisions->wg_size);
-    compute_2d_workgroups(total_wg, ctx->global_ctx->capabilities.limits.maxComputeWorkgroupsPerDimension, wg_x, wg_y);
-    return ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
+    uint32_t ਕੁੱਲ_wg = CEIL_DIV(ggml_nelements(dst), decisions->wg_ਮਾਪ);
+    compute_2d_workgroups(ਕੁੱਲ_wg, ctx->global_ctx->capabilities.limits.max_Compute_Workgroups_ਪ੍ਰਤੀ_Dimension, wg_x, wg_y);
+    ਵਾਪਸ ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
 }
 
-static webgpu_encoded_op ggml_webgpu_scale(webgpu_context & ctx, ggml_tensor * src, ggml_tensor * dst) {
+ਸਥਿਰ webgpu_encoded_op ggml_webgpu_scale(webgpu_context & ctx, ggml_tensor * src, ggml_tensor * dst) {
     ggml_webgpu_shader_lib_context shader_lib_ctx = {};
     shader_lib_ctx.src0                           = src;
-    shader_lib_ctx.src1                           = nullptr;
+    shader_lib_ctx.src1                           = ਖਾਲੀ_ਸੂਚਕ;
     shader_lib_ctx.dst                            = dst;
-    shader_lib_ctx.max_wg_size = ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
+    shader_lib_ctx.max_wg_ਮਾਪ = ctx->global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
 
     webgpu_pipeline pipeline  = ctx->shader_lib->get_scale_pipeline(shader_lib_ctx);
-    auto *          decisions = static_cast<ggml_webgpu_generic_shader_decisions *>(pipeline.context.get());
+    ਸਵੈਚਾਲਿਤ *          decisions = static_cast<ggml_webgpu_generic_shader_decisions *>(pipeline.context.get());
 
     // params unchanged
     std::vector<uint32_t> params = {
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src) / ggml_type_size(src->type)),
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_size(dst->type)),
-        (uint32_t) (src->nb[1] / ggml_type_size(src->type)),
-        (uint32_t) (src->nb[2] / ggml_type_size(src->type)),
-        (uint32_t) (src->nb[3] / ggml_type_size(src->type)),
-        (uint32_t) (dst->nb[1] / ggml_type_size(dst->type)),
-        (uint32_t) (dst->nb[2] / ggml_type_size(dst->type)),
-        (uint32_t) (dst->nb[3] / ggml_type_size(dst->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src) / ggml_type_ਮਾਪ(src->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_ਮਾਪ(dst->type)),
+        (uint32_t) (src->nb[1] / ggml_type_ਮਾਪ(src->type)),
+        (uint32_t) (src->nb[2] / ggml_type_ਮਾਪ(src->type)),
+        (uint32_t) (src->nb[3] / ggml_type_ਮਾਪ(src->type)),
+        (uint32_t) (dst->nb[1] / ggml_type_ਮਾਪ(dst->type)),
+        (uint32_t) (dst->nb[2] / ggml_type_ਮਾਪ(dst->type)),
+        (uint32_t) (dst->nb[3] / ggml_type_ਮਾਪ(dst->type)),
         (uint32_t) ggml_nelements(dst),
         (uint32_t) src->ne[0],
         (uint32_t) src->ne[1],
@@ -2936,20 +2936,20 @@ static webgpu_encoded_op ggml_webgpu_scale(webgpu_context & ctx, ggml_tensor * s
     };
 
     // bindgroups unchanged
-    std::vector<wgpu::BindGroupEntry> entries = { ggml_webgpu_make_tensor_bind_group_entry(ctx, 0, src) };
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> entries = { ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 0, src) };
 
-    if (!decisions->inplace) {
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, 1, dst));
+    ਜੇ (!decisions->inplace) {
+        entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 1, dst));
     }
 
     uint32_t wg_x;
     uint32_t wg_y;
-    uint32_t total_wg = CEIL_DIV(ggml_nelements(dst), decisions->wg_size);
-    compute_2d_workgroups(total_wg, ctx->global_ctx->capabilities.limits.maxComputeWorkgroupsPerDimension, wg_x, wg_y);
-    return ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
+    uint32_t ਕੁੱਲ_wg = CEIL_DIV(ggml_nelements(dst), decisions->wg_ਮਾਪ);
+    compute_2d_workgroups(ਕੁੱਲ_wg, ctx->global_ctx->capabilities.limits.max_Compute_Workgroups_ਪ੍ਰਤੀ_Dimension, wg_x, wg_y);
+    ਵਾਪਸ ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
 }
 
-static webgpu_encoded_op ggml_webgpu_soft_max(webgpu_context & ctx,
+ਸਥਿਰ webgpu_encoded_op ggml_webgpu_soft_max(webgpu_context & ctx,
                                               ggml_tensor *    src0,
                                               ggml_tensor *    src1,
                                               ggml_tensor *    src2,
@@ -2959,196 +2959,196 @@ static webgpu_encoded_op ggml_webgpu_soft_max(webgpu_context & ctx,
     shader_lib_ctx.src1                           = src1;
     shader_lib_ctx.src2                           = src2;
     shader_lib_ctx.dst                            = dst;
-    shader_lib_ctx.max_wg_size = ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
+    shader_lib_ctx.max_wg_ਮਾਪ = ctx->global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
 
     webgpu_pipeline pipeline  = ctx->shader_lib->get_soft_max_pipeline(shader_lib_ctx);
-    auto *          decisions = static_cast<ggml_webgpu_generic_shader_decisions *>(pipeline.context.get());
+    ਸਵੈਚਾਲਿਤ *          decisions = static_cast<ggml_webgpu_generic_shader_decisions *>(pipeline.context.get());
 
-    const bool inplace     = decisions->inplace;
-    const int  has_mask    = (src1 != nullptr);
-    const int  has_sink    = (src2 != nullptr);
-    float      max_bias    = ggml_get_op_params_f32(dst, 1);
-    float      n_head_log2 = float(1u << (uint32_t) floor(log2(src0->ne[2])));
-    float      m0          = powf(2.0f, -(max_bias) / n_head_log2);
-    float      m1          = powf(2.0f, -(max_bias / 2.0f) / n_head_log2);
+    ਅਚਲ ਤਾਰਕਿਕ inplace     = decisions->inplace;
+    ਅਚਲ ਪੂਰਨ  has_ਨਕਾਬ    = (src1 != ਖਾਲੀ_ਸੂਚਕ);
+    ਅਚਲ ਪੂਰਨ  has_sink    = (src2 != ਖਾਲੀ_ਸੂਚਕ);
+    ਦਸ਼ਮਲਵ      max_bias    = ggml_get_op_params_f32(dst, 1);
+    ਦਸ਼ਮਲਵ      n_ਸਿਰ_log2 = ਦਸ਼ਮਲਵ(1u << (uint32_t) floor(log2(src0->ne[2])));
+    ਦਸ਼ਮਲਵ      m0          = powf(2.0f, -(max_bias) / n_ਸਿਰ_log2);
+    ਦਸ਼ਮਲਵ      m1          = powf(2.0f, -(max_bias / 2.0f) / n_ਸਿਰ_log2);
 
     std::vector<uint32_t> params = {
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src0) / ggml_type_size(src0->type)),
-        has_mask ? (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_size(src1->type)) : 0,
-        has_sink ? (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src2) / ggml_type_size(src2->type)) : 0,
-        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_size(dst->type)),
-        (uint32_t) (src0->nb[1] / ggml_type_size(src0->type)),
-        (uint32_t) (src0->nb[2] / ggml_type_size(src0->type)),
-        (uint32_t) (src0->nb[3] / ggml_type_size(src0->type)),
-        has_mask ? (uint32_t) (src1->nb[1] / ggml_type_size(src1->type)) : 0,
-        has_mask ? (uint32_t) (src1->nb[2] / ggml_type_size(src1->type)) : 0,
-        has_mask ? (uint32_t) (src1->nb[3] / ggml_type_size(src1->type)) : 0,
-        (uint32_t) (dst->nb[1] / ggml_type_size(dst->type)),
-        (uint32_t) (dst->nb[2] / ggml_type_size(dst->type)),
-        (uint32_t) (dst->nb[3] / ggml_type_size(dst->type)),
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src0) / ggml_type_ਮਾਪ(src0->type)),
+        has_ਨਕਾਬ ? (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src1) / ggml_type_ਮਾਪ(src1->type)) : 0,
+        has_sink ? (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src2) / ggml_type_ਮਾਪ(src2->type)) : 0,
+        (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_ਮਾਪ(dst->type)),
+        (uint32_t) (src0->nb[1] / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (src0->nb[2] / ggml_type_ਮਾਪ(src0->type)),
+        (uint32_t) (src0->nb[3] / ggml_type_ਮਾਪ(src0->type)),
+        has_ਨਕਾਬ ? (uint32_t) (src1->nb[1] / ggml_type_ਮਾਪ(src1->type)) : 0,
+        has_ਨਕਾਬ ? (uint32_t) (src1->nb[2] / ggml_type_ਮਾਪ(src1->type)) : 0,
+        has_ਨਕਾਬ ? (uint32_t) (src1->nb[3] / ggml_type_ਮਾਪ(src1->type)) : 0,
+        (uint32_t) (dst->nb[1] / ggml_type_ਮਾਪ(dst->type)),
+        (uint32_t) (dst->nb[2] / ggml_type_ਮਾਪ(dst->type)),
+        (uint32_t) (dst->nb[3] / ggml_type_ਮਾਪ(dst->type)),
         (uint32_t) src0->ne[0],
         (uint32_t) src0->ne[1],
         (uint32_t) src0->ne[2],
-        has_mask ? (uint32_t) src1->ne[2] : 0,
-        has_mask ? (uint32_t) src1->ne[3] : 0,
+        has_ਨਕਾਬ ? (uint32_t) src1->ne[2] : 0,
+        has_ਨਕਾਬ ? (uint32_t) src1->ne[3] : 0,
         ggml_webgpu_u32_from_f32(ggml_get_op_params_f32(dst, 0)),  // scale
         ggml_webgpu_u32_from_f32(max_bias),
-        ggml_webgpu_u32_from_f32(n_head_log2),
+        ggml_webgpu_u32_from_f32(n_ਸਿਰ_log2),
         ggml_webgpu_u32_from_f32(m0),
         ggml_webgpu_u32_from_f32(m1)
     };
 
-    std::vector<wgpu::BindGroupEntry> entries     = { ggml_webgpu_make_bind_group_entry(
-        0, ggml_webgpu_tensor_buf(src0), ggml_webgpu_tensor_align_offset(ctx, src0),
-        ggml_webgpu_tensor_binding_size(ctx, src0)) };
-    uint32_t                          binding_num = 1;
-    if (has_mask) {
-        entries.push_back(ggml_webgpu_make_bind_group_entry(binding_num, ggml_webgpu_tensor_buf(src1),
-                                                            ggml_webgpu_tensor_align_offset(ctx, src1),
-                                                            ggml_webgpu_tensor_binding_size(ctx, src1)));
-        binding_num++;
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> entries     = { ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(
+        0, ggml_webgpu_tensor_buf(src0), ggml_webgpu_tensor_align_ਵਿੱਥ(ctx, src0),
+        ggml_webgpu_tensor_binding_ਮਾਪ(ctx, src0)) };
+    uint32_t                          binding_ਅੰਕ = 1;
+    ਜੇ (has_ਨਕਾਬ) {
+        entries.push_back(ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(binding_ਅੰਕ, ggml_webgpu_tensor_buf(src1),
+                                                            ggml_webgpu_tensor_align_ਵਿੱਥ(ctx, src1),
+                                                            ggml_webgpu_tensor_binding_ਮਾਪ(ctx, src1)));
+        binding_ਅੰਕ++;
     }
-    if (has_sink) {
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_num, src2));
-        binding_num++;
+    ਜੇ (has_sink) {
+        entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, binding_ਅੰਕ, src2));
+        binding_ਅੰਕ++;
     }
-    if (!inplace) {
-        entries.push_back(ggml_webgpu_make_tensor_bind_group_entry(ctx, binding_num, dst));
+    ਜੇ (!inplace) {
+        entries.push_back(ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, binding_ਅੰਕ, dst));
     }
 
     uint32_t wg_x;
     uint32_t wg_y;
-    uint32_t total_wg = ggml_nrows(dst);
-    compute_2d_workgroups(total_wg, ctx->global_ctx->capabilities.limits.maxComputeWorkgroupsPerDimension, wg_x, wg_y);
-    return ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
+    uint32_t ਕੁੱਲ_wg = ggml_nrows(dst);
+    compute_2d_workgroups(ਕੁੱਲ_wg, ctx->global_ctx->capabilities.limits.max_Compute_Workgroups_ਪ੍ਰਤੀ_Dimension, wg_x, wg_y);
+    ਵਾਪਸ ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
 }
 
-static webgpu_encoded_op ggml_webgpu_argmax(webgpu_context & ctx, ggml_tensor * src, ggml_tensor * dst) {
-    std::vector<uint32_t> params = { (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src) / ggml_type_size(src->type)),
-                                     (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_size(dst->type)),
+ਸਥਿਰ webgpu_encoded_op ggml_webgpu_argmax(webgpu_context & ctx, ggml_tensor * src, ggml_tensor * dst) {
+    std::vector<uint32_t> params = { (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src) / ggml_type_ਮਾਪ(src->type)),
+                                     (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_ਮਾਪ(dst->type)),
                                      (uint32_t) src->ne[0] };
 
-    std::vector<wgpu::BindGroupEntry> entries = { ggml_webgpu_make_tensor_bind_group_entry(ctx, 0, src),
-                                                  ggml_webgpu_make_tensor_bind_group_entry(ctx, 1, dst) };
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> entries = { ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 0, src),
+                                                  ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 1, dst) };
 
     ggml_webgpu_shader_lib_context shader_lib_ctx = {};
     shader_lib_ctx.src0                           = src;
     shader_lib_ctx.dst                            = dst;
-    shader_lib_ctx.max_wg_size = ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
+    shader_lib_ctx.max_wg_ਮਾਪ = ctx->global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
 
     webgpu_pipeline pipeline = ctx->shader_lib->get_argmax_pipeline(shader_lib_ctx);
     uint32_t        wg_x     = ggml_nelements(dst);
-    return ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x);
+    ਵਾਪਸ ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x);
 }
 
-static webgpu_encoded_op ggml_webgpu_argsort(webgpu_context & ctx, ggml_tensor * src, ggml_tensor * dst) {
-    bool is_top_k = dst->op == GGML_OP_TOP_K;
+ਸਥਿਰ webgpu_encoded_op ggml_webgpu_argsort(webgpu_context & ctx, ggml_tensor * src, ggml_tensor * dst) {
+    ਤਾਰਕਿਕ is_ਸਿਖਰ_k = dst->op == GGML_OP_ਸਿਖਰ_K;
 
     ggml_webgpu_shader_lib_context shader_lib_ctx = {};
     shader_lib_ctx.src0                           = src;
-    shader_lib_ctx.src1                           = nullptr;
+    shader_lib_ctx.src1                           = ਖਾਲੀ_ਸੂਚਕ;
     shader_lib_ctx.dst                            = dst;
-    shader_lib_ctx.max_wg_size        = ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
-    shader_lib_ctx.wg_mem_limit_bytes = ctx->global_ctx->capabilities.limits.maxComputeWorkgroupStorageSize;
+    shader_lib_ctx.max_wg_ਮਾਪ        = ctx->global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
+    shader_lib_ctx.wg_mem_ਹੱਦਬੰਦੀ_ਬਾਈਟਾਂ = ctx->global_ctx->capabilities.limits.max_Compute_Workgroup_Storage_ਮਾਪ;
 
     webgpu_pipeline argsort_pipeline = ctx->shader_lib->get_argsort_pipeline(shader_lib_ctx);
-    auto * argsort_decisions = static_cast<ggml_webgpu_generic_shader_decisions *>(argsort_pipeline.context.get());
+    ਸਵੈਚਾਲਿਤ * argsort_decisions = static_cast<ggml_webgpu_generic_shader_decisions *>(argsort_pipeline.context.get());
 
-    webgpu_pipeline argsort_merge_pipeline = ctx->shader_lib->get_argsort_merge_pipeline(shader_lib_ctx);
+    webgpu_pipeline argsort_ਮਿਲਾਓ_pipeline = ctx->shader_lib->get_argsort_ਮਿਲਾਓ_pipeline(shader_lib_ctx);
 
-    const uint32_t src_ne0 = (uint32_t) src->ne[0];
-    const uint32_t nrows   = (uint32_t) ggml_nrows(src);
-    const uint32_t npr     = CEIL_DIV(src_ne0, argsort_decisions->wg_size);
-    const uint32_t block_size =
-        is_top_k ? std::min(argsort_decisions->wg_size, (uint32_t) dst->ne[0]) : argsort_decisions->wg_size;
-    uint32_t out_ne0 = src_ne0;
-    if (is_top_k) {
-        if (npr > 1) {
-            const uint32_t last_tile = src_ne0 - (npr - 1) * argsort_decisions->wg_size;
-            out_ne0                  = (npr - 1) * block_size + std::min(last_tile, block_size);
-        } else {
-            out_ne0 = block_size;
+    ਅਚਲ uint32_t src_ne0 = (uint32_t) src->ne[0];
+    ਅਚਲ uint32_t nrows   = (uint32_t) ggml_nrows(src);
+    ਅਚਲ uint32_t npr     = CEIL_DIV(src_ne0, argsort_decisions->wg_ਮਾਪ);
+    ਅਚਲ uint32_t ਖੰਡ_ਮਾਪ_3 =
+        is_ਸਿਖਰ_k ? std::min(argsort_decisions->wg_ਮਾਪ, (uint32_t) dst->ne[0]) : argsort_decisions->wg_ਮਾਪ;
+    uint32_t ਬਾਹਰਲਾ_ne0 = src_ne0;
+    ਜੇ (is_ਸਿਖਰ_k) {
+        ਜੇ (npr > 1) {
+            ਅਚਲ uint32_t ਆਖਰੀ_tile = src_ne0 - (npr - 1) * argsort_decisions->wg_ਮਾਪ;
+            ਬਾਹਰਲਾ_ne0                  = (npr - 1) * ਖੰਡ_ਮਾਪ_3 + std::min(ਆਖਰੀ_tile, ਖੰਡ_ਮਾਪ_3);
+        } ਨਹੀਂਤਾਂ {
+            ਬਾਹਰਲਾ_ne0 = ਖੰਡ_ਮਾਪ_3;
         }
     }
 
-    uint32_t merge_len    = block_size;
-    uint32_t merge_passes = 0;
-    while (merge_len < out_ne0) {
-        merge_len <<= 1;
-        merge_passes++;
+    uint32_t ਮਿਲਾਓ_len    = ਖੰਡ_ਮਾਪ_3;
+    uint32_t ਮਿਲਾਓ_passes = 0;
+    ਜਦੋਂ (ਮਿਲਾਓ_len < ਬਾਹਰਲਾ_ne0) {
+        ਮਿਲਾਓ_len <<= 1;
+        ਮਿਲਾਓ_passes++;
     }
 
-    const bool start_in_tmp = (merge_passes % 2) == 1;
+    ਅਚਲ ਤਾਰਕਿਕ ਸ਼ੁਰੂ_ਵਿੱਚ_tmp = (ਮਿਲਾਓ_passes % 2) == 1;
 
-    const size_t dst_offset = ggml_webgpu_tensor_offset(dst);
-    const size_t idx_nbytes = out_ne0 * ggml_nrows(dst) * sizeof(int32_t);
-    const size_t tmp_offset =
-        ROUNDUP_POW2(dst_offset + idx_nbytes, ctx->global_ctx->capabilities.limits.minStorageBufferOffsetAlignment);
-    const size_t tmp_binding_size = ROUNDUP_POW2(idx_nbytes, WEBGPU_STORAGE_BUF_BINDING_MULT);
-    const size_t dst_binding_size =
+    ਅਚਲ size_t dst_ਵਿੱਥ = ggml_webgpu_tensor_ਵਿੱਥ(dst);
+    ਅਚਲ size_t idx_nbytes = ਬਾਹਰਲਾ_ne0 * ggml_nrows(dst) * ਆਕਾਰ(int32_t);
+    ਅਚਲ size_t tmp_ਵਿੱਥ =
+        ROUNDUP_POW2(dst_ਵਿੱਥ + idx_nbytes, ctx->global_ctx->capabilities.limits.min_Storage_ਬਫਰ_ਵਿੱਥ_Alignment);
+    ਅਚਲ size_t tmp_binding_ਮਾਪ = ROUNDUP_POW2(idx_nbytes, WEBGPU_STORAGE_BUF_BINDING_MULT);
+    ਅਚਲ size_t dst_binding_ਮਾਪ =
         ROUNDUP_POW2(idx_nbytes + ggml_webgpu_tensor_misalignment(ctx, dst), WEBGPU_STORAGE_BUF_BINDING_MULT);
 
-    const uint32_t offset_src  = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src) / ggml_type_size(src->type));
-    const uint32_t offset_dst  = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_size(dst->type));
-    const uint32_t offset_tmp  = 0;
-    const uint32_t stride_src1 = (uint32_t) (src->nb[1] / ggml_type_size(src->type));
-    const uint32_t stride_src2 = (uint32_t) (src->nb[2] / ggml_type_size(src->type));
-    const uint32_t stride_src3 = (uint32_t) (src->nb[3] / ggml_type_size(src->type));
-    const uint32_t stride_idx1 = out_ne0;
-    const uint32_t stride_idx2 = out_ne0 * (uint32_t) dst->ne[1];
-    const uint32_t stride_idx3 = stride_idx2 * (uint32_t) dst->ne[2];
+    ਅਚਲ uint32_t ਵਿੱਥ_src  = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src) / ggml_type_ਮਾਪ(src->type));
+    ਅਚਲ uint32_t ਵਿੱਥ_dst  = (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_ਮਾਪ(dst->type));
+    ਅਚਲ uint32_t ਵਿੱਥ_tmp  = 0;
+    ਅਚਲ uint32_t stride_src1 = (uint32_t) (src->nb[1] / ggml_type_ਮਾਪ(src->type));
+    ਅਚਲ uint32_t stride_src2 = (uint32_t) (src->nb[2] / ggml_type_ਮਾਪ(src->type));
+    ਅਚਲ uint32_t stride_src3 = (uint32_t) (src->nb[3] / ggml_type_ਮਾਪ(src->type));
+    ਅਚਲ uint32_t stride_idx1 = ਬਾਹਰਲਾ_ne0;
+    ਅਚਲ uint32_t stride_idx2 = ਬਾਹਰਲਾ_ne0 * (uint32_t) dst->ne[1];
+    ਅਚਲ uint32_t stride_idx3 = stride_idx2 * (uint32_t) dst->ne[2];
 
     std::vector<webgpu_dispatch_desc> dispatches;
 
-    const uint32_t init_offset       = start_in_tmp ? offset_tmp : offset_dst;
-    const size_t   init_align_offset = start_in_tmp ? tmp_offset : ggml_webgpu_tensor_align_offset(ctx, dst);
-    const size_t   init_binding_size = start_in_tmp ? tmp_binding_size : dst_binding_size;
+    ਅਚਲ uint32_t init_ਵਿੱਥ       = ਸ਼ੁਰੂ_ਵਿੱਚ_tmp ? ਵਿੱਥ_tmp : ਵਿੱਥ_dst;
+    ਅਚਲ size_t   init_align_ਵਿੱਥ = ਸ਼ੁਰੂ_ਵਿੱਚ_tmp ? tmp_ਵਿੱਥ : ggml_webgpu_tensor_align_ਵਿੱਥ(ctx, dst);
+    ਅਚਲ size_t   init_binding_ਮਾਪ = ਸ਼ੁਰੂ_ਵਿੱਚ_tmp ? tmp_binding_ਮਾਪ : dst_binding_ਮਾਪ;
 
     std::vector<uint32_t> init_params = {
-        offset_src,  init_offset, stride_src1, stride_src2,           stride_src3,           stride_idx1,
-        stride_idx2, stride_idx3, src_ne0,     (uint32_t) src->ne[1], (uint32_t) src->ne[2], out_ne0,
-        block_size,  npr,         nrows
+        ਵਿੱਥ_src,  init_ਵਿੱਥ, stride_src1, stride_src2,           stride_src3,           stride_idx1,
+        stride_idx2, stride_idx3, src_ne0,     (uint32_t) src->ne[1], (uint32_t) src->ne[2], ਬਾਹਰਲਾ_ne0,
+        ਖੰਡ_ਮਾਪ_3,  npr,         nrows
     };
 
     uint32_t       wg_x_init;
     uint32_t       wg_y_init;
-    const uint32_t total_wg_init  = npr * nrows;
-    const uint32_t max_wg_per_dim = ctx->global_ctx->capabilities.limits.maxComputeWorkgroupsPerDimension;
-    compute_2d_workgroups(total_wg_init, max_wg_per_dim, wg_x_init, wg_y_init);
+    ਅਚਲ uint32_t ਕੁੱਲ_wg_init  = npr * nrows;
+    ਅਚਲ uint32_t max_wg_ਪ੍ਰਤੀ_dim = ctx->global_ctx->capabilities.limits.max_Compute_Workgroups_ਪ੍ਰਤੀ_Dimension;
+    compute_2d_workgroups(ਕੁੱਲ_wg_init, max_wg_ਪ੍ਰਤੀ_dim, wg_x_init, wg_y_init);
 
-    std::vector<wgpu::BindGroupEntry> init_entries = {
-        ggml_webgpu_make_tensor_bind_group_entry(ctx, 0, src),
-        ggml_webgpu_make_bind_group_entry(1, ggml_webgpu_tensor_buf(dst), init_align_offset, init_binding_size)
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> init_entries = {
+        ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 0, src),
+        ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(1, ggml_webgpu_tensor_buf(dst), init_align_ਵਿੱਥ, init_binding_ਮਾਪ)
     };
 
     dispatches.push_back({
         argsort_pipeline, std::move(init_params), std::move(init_entries), { wg_x_init, wg_y_init }
     });
 
-    if (merge_passes == 0) {
-        return ggml_backend_webgpu_build_multi(ctx, dispatches);
+    ਜੇ (ਮਿਲਾਓ_passes == 0) {
+        ਵਾਪਸ ggml_backend_webgpu_build_multi(ctx, dispatches);
     }
 
-    bool     in_is_tmp = start_in_tmp;
-    uint32_t len       = block_size;
-    while (len < out_ne0) {
-        const uint32_t nm = CEIL_DIV(out_ne0, 2 * len);
+    ਤਾਰਕਿਕ     ਵਿੱਚ_is_tmp = ਸ਼ੁਰੂ_ਵਿੱਚ_tmp;
+    uint32_t len       = ਖੰਡ_ਮਾਪ_3;
+    ਜਦੋਂ (len < ਬਾਹਰਲਾ_ne0) {
+        ਅਚਲ uint32_t nm = CEIL_DIV(ਬਾਹਰਲਾ_ne0, 2 * len);
 
-        const bool     out_is_tmp  = !in_is_tmp;
-        const uint32_t offset_in   = in_is_tmp ? offset_tmp : offset_dst;
-        const uint32_t offset_out  = out_is_tmp ? offset_tmp : offset_dst;
-        const size_t   align_in    = in_is_tmp ? tmp_offset : ggml_webgpu_tensor_align_offset(ctx, dst);
-        const size_t   align_out   = out_is_tmp ? tmp_offset : ggml_webgpu_tensor_align_offset(ctx, dst);
-        const size_t   size_in     = in_is_tmp ? tmp_binding_size : dst_binding_size;
-        const size_t   size_out    = out_is_tmp ? tmp_binding_size : dst_binding_size;
-        const uint32_t top_k_out   = (is_top_k && nm == 1) ? (uint32_t) dst->ne[0] : out_ne0;
-        const uint32_t stride_out1 = top_k_out;
-        const uint32_t stride_out2 = top_k_out * (uint32_t) dst->ne[1];
-        const uint32_t stride_out3 = stride_out2 * (uint32_t) dst->ne[2];
+        ਅਚਲ ਤਾਰਕਿਕ     ਬਾਹਰਲਾ_is_tmp  = !ਵਿੱਚ_is_tmp;
+        ਅਚਲ uint32_t ਵਿੱਥ_ਵਿੱਚ   = ਵਿੱਚ_is_tmp ? ਵਿੱਥ_tmp : ਵਿੱਥ_dst;
+        ਅਚਲ uint32_t ਵਿੱਥ_ਬਾਹਰਲਾ  = ਬਾਹਰਲਾ_is_tmp ? ਵਿੱਥ_tmp : ਵਿੱਥ_dst;
+        ਅਚਲ size_t   align_ਵਿੱਚ    = ਵਿੱਚ_is_tmp ? tmp_ਵਿੱਥ : ggml_webgpu_tensor_align_ਵਿੱਥ(ctx, dst);
+        ਅਚਲ size_t   align_ਬਾਹਰਲਾ   = ਬਾਹਰਲਾ_is_tmp ? tmp_ਵਿੱਥ : ggml_webgpu_tensor_align_ਵਿੱਥ(ctx, dst);
+        ਅਚਲ size_t   ਮਾਪ_ਵਿੱਚ     = ਵਿੱਚ_is_tmp ? tmp_binding_ਮਾਪ : dst_binding_ਮਾਪ;
+        ਅਚਲ size_t   ਮਾਪ_ਬਾਹਰਲਾ    = ਬਾਹਰਲਾ_is_tmp ? tmp_binding_ਮਾਪ : dst_binding_ਮਾਪ;
+        ਅਚਲ uint32_t ਸਿਖਰ_k_ਬਾਹਰਲਾ   = (is_ਸਿਖਰ_k && nm == 1) ? (uint32_t) dst->ne[0] : ਬਾਹਰਲਾ_ne0;
+        ਅਚਲ uint32_t stride_out1 = ਸਿਖਰ_k_ਬਾਹਰਲਾ;
+        ਅਚਲ uint32_t stride_out2 = ਸਿਖਰ_k_ਬਾਹਰਲਾ * (uint32_t) dst->ne[1];
+        ਅਚਲ uint32_t stride_out3 = stride_out2 * (uint32_t) dst->ne[2];
 
-        std::vector<uint32_t> merge_params = { offset_src,
-                                               offset_in,
-                                               offset_out,
+        std::vector<uint32_t> ਮਿਲਾਓ_params = { ਵਿੱਥ_src,
+                                               ਵਿੱਥ_ਵਿੱਚ,
+                                               ਵਿੱਥ_ਬਾਹਰਲਾ,
                                                stride_src1,
                                                stride_src2,
                                                stride_src3,
@@ -3158,188 +3158,188 @@ static webgpu_encoded_op ggml_webgpu_argsort(webgpu_context & ctx, ggml_tensor *
                                                stride_out1,
                                                stride_out2,
                                                stride_out3,
-                                               out_ne0,
+                                               ਬਾਹਰਲਾ_ne0,
                                                (uint32_t) src->ne[1],
                                                (uint32_t) src->ne[2],
-                                               top_k_out,
+                                               ਸਿਖਰ_k_ਬਾਹਰਲਾ,
                                                len,
                                                nm,
                                                nrows };
 
-        std::vector<wgpu::BindGroupEntry> merge_entries = {
-            ggml_webgpu_make_tensor_bind_group_entry(ctx, 0, src),
-            ggml_webgpu_make_bind_group_entry(1, ggml_webgpu_tensor_buf(dst), align_in, size_in),
-            ggml_webgpu_make_bind_group_entry(2, ggml_webgpu_tensor_buf(dst), align_out, size_out)
+        std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> ਮਿਲਾਓ_entries = {
+            ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 0, src),
+            ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(1, ggml_webgpu_tensor_buf(dst), align_ਵਿੱਚ, ਮਾਪ_ਵਿੱਚ),
+            ggml_webgpu_make_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(2, ggml_webgpu_tensor_buf(dst), align_ਬਾਹਰਲਾ, ਮਾਪ_ਬਾਹਰਲਾ)
         };
 
-        uint32_t       wg_x_merge;
-        uint32_t       wg_y_merge;
-        const uint32_t total_wg_merge = nm * nrows;
-        compute_2d_workgroups(total_wg_merge, max_wg_per_dim, wg_x_merge, wg_y_merge);
+        uint32_t       wg_x_ਮਿਲਾਓ;
+        uint32_t       wg_y_ਮਿਲਾਓ;
+        ਅਚਲ uint32_t ਕੁੱਲ_wg_ਮਿਲਾਓ = nm * nrows;
+        compute_2d_workgroups(ਕੁੱਲ_wg_ਮਿਲਾਓ, max_wg_ਪ੍ਰਤੀ_dim, wg_x_ਮਿਲਾਓ, wg_y_ਮਿਲਾਓ);
 
         dispatches.push_back({
-            argsort_merge_pipeline, std::move(merge_params), std::move(merge_entries), { wg_x_merge, wg_y_merge }
+            argsort_ਮਿਲਾਓ_pipeline, std::move(ਮਿਲਾਓ_params), std::move(ਮਿਲਾਓ_entries), { wg_x_ਮਿਲਾਓ, wg_y_ਮਿਲਾਓ }
         });
 
         len <<= 1;
-        in_is_tmp = !in_is_tmp;
+        ਵਿੱਚ_is_tmp = !ਵਿੱਚ_is_tmp;
     }
 
-    return ggml_backend_webgpu_build_multi(ctx, dispatches);
+    ਵਾਪਸ ggml_backend_webgpu_build_multi(ctx, dispatches);
 }
 
-static webgpu_encoded_op ggml_webgpu_cumsum(webgpu_context & ctx, ggml_tensor * src, ggml_tensor * dst) {
-    std::vector<uint32_t> params = { (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src) / ggml_type_size(src->type)),
-                                     (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_size(dst->type)),
+ਸਥਿਰ webgpu_encoded_op ggml_webgpu_cumsum(webgpu_context & ctx, ggml_tensor * src, ggml_tensor * dst) {
+    std::vector<uint32_t> params = { (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src) / ggml_type_ਮਾਪ(src->type)),
+                                     (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_ਮਾਪ(dst->type)),
                                      (uint32_t) src->ne[0] };
 
-    std::vector<wgpu::BindGroupEntry> entries = { ggml_webgpu_make_tensor_bind_group_entry(ctx, 0, src),
-                                                  ggml_webgpu_make_tensor_bind_group_entry(ctx, 1, dst) };
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> entries = { ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 0, src),
+                                                  ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 1, dst) };
 
     ggml_webgpu_shader_lib_context shader_lib_ctx = {};
     shader_lib_ctx.src0                           = src;
-    shader_lib_ctx.src1                           = nullptr;
+    shader_lib_ctx.src1                           = ਖਾਲੀ_ਸੂਚਕ;
     shader_lib_ctx.dst                            = dst;
-    shader_lib_ctx.max_wg_size = ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
+    shader_lib_ctx.max_wg_ਮਾਪ = ctx->global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
 
     webgpu_pipeline pipeline = ctx->shader_lib->get_cumsum_pipeline(shader_lib_ctx);
     uint32_t        wg_x;
     uint32_t        wg_y;
-    uint32_t        total_wg = ggml_nrows(dst);
-    compute_2d_workgroups(total_wg, ctx->global_ctx->capabilities.limits.maxComputeWorkgroupsPerDimension, wg_x, wg_y);
-    return ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
+    uint32_t        ਕੁੱਲ_wg = ggml_nrows(dst);
+    compute_2d_workgroups(ਕੁੱਲ_wg, ctx->global_ctx->capabilities.limits.max_Compute_Workgroups_ਪ੍ਰਤੀ_Dimension, wg_x, wg_y);
+    ਵਾਪਸ ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
 }
 
-static webgpu_encoded_op ggml_webgpu_sum_rows(webgpu_context & ctx, ggml_tensor * src, ggml_tensor * dst) {
-    bool                  total_sum = dst->op == GGML_OP_SUM;
-    std::vector<uint32_t> params = { (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src) / ggml_type_size(src->type)),
-                                     (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_size(dst->type)),
-                                     total_sum ? 0 : (uint32_t) (src->nb[1] / ggml_type_size(src->type)),
-                                     total_sum ? 0 : (uint32_t) (src->nb[2] / ggml_type_size(src->type)),
-                                     total_sum ? 0 : (uint32_t) (src->nb[3] / ggml_type_size(src->type)),
-                                     total_sum ? static_cast<uint32_t>(ggml_nelements(src)) : (uint32_t) src->ne[0],
-                                     total_sum ? 1 : (uint32_t) src->ne[1],
-                                     total_sum ? 1 : (uint32_t) src->ne[2] };
+ਸਥਿਰ webgpu_encoded_op ggml_webgpu_ਜੋੜ_ਪੰਕਤੀਆਂ(webgpu_context & ctx, ggml_tensor * src, ggml_tensor * dst) {
+    ਤਾਰਕਿਕ                  ਕੁੱਲ_ਜੋੜ = dst->op == GGML_OP_ਜੋੜ;
+    std::vector<uint32_t> params = { (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src) / ggml_type_ਮਾਪ(src->type)),
+                                     (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_ਮਾਪ(dst->type)),
+                                     ਕੁੱਲ_ਜੋੜ ? 0 : (uint32_t) (src->nb[1] / ggml_type_ਮਾਪ(src->type)),
+                                     ਕੁੱਲ_ਜੋੜ ? 0 : (uint32_t) (src->nb[2] / ggml_type_ਮਾਪ(src->type)),
+                                     ਕੁੱਲ_ਜੋੜ ? 0 : (uint32_t) (src->nb[3] / ggml_type_ਮਾਪ(src->type)),
+                                     ਕੁੱਲ_ਜੋੜ ? static_cast<uint32_t>(ggml_nelements(src)) : (uint32_t) src->ne[0],
+                                     ਕੁੱਲ_ਜੋੜ ? 1 : (uint32_t) src->ne[1],
+                                     ਕੁੱਲ_ਜੋੜ ? 1 : (uint32_t) src->ne[2] };
 
-    std::vector<wgpu::BindGroupEntry> entries = { ggml_webgpu_make_tensor_bind_group_entry(ctx, 0, src),
-                                                  ggml_webgpu_make_tensor_bind_group_entry(ctx, 1, dst) };
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> entries = { ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 0, src),
+                                                  ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 1, dst) };
 
     ggml_webgpu_shader_lib_context shader_lib_ctx = {};
     shader_lib_ctx.src0                           = src;
     shader_lib_ctx.dst                            = dst;
-    shader_lib_ctx.max_wg_size = ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
+    shader_lib_ctx.max_wg_ਮਾਪ = ctx->global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
 
-    webgpu_pipeline pipeline = ctx->shader_lib->get_sum_rows_pipeline(shader_lib_ctx);
+    webgpu_pipeline pipeline = ctx->shader_lib->get_ਜੋੜ_ਪੰਕਤੀਆਂ_pipeline(shader_lib_ctx);
 
     uint32_t wg_x;
     uint32_t wg_y;
-    uint32_t total_wg = total_sum ? 1 : ggml_nrows(dst);
-    compute_2d_workgroups(total_wg, ctx->global_ctx->capabilities.limits.maxComputeWorkgroupsPerDimension, wg_x, wg_y);
-    return ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
+    uint32_t ਕੁੱਲ_wg = ਕੁੱਲ_ਜੋੜ ? 1 : ggml_nrows(dst);
+    compute_2d_workgroups(ਕੁੱਲ_wg, ctx->global_ctx->capabilities.limits.max_Compute_Workgroups_ਪ੍ਰਤੀ_Dimension, wg_x, wg_y);
+    ਵਾਪਸ ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
 }
 
-static bool ggml_webgpu_can_fuse_rms_norm_mul(const struct ggml_cgraph * cgraph, int node_idx) {
-    if (!ggml_can_fuse(cgraph, node_idx, { GGML_OP_RMS_NORM, GGML_OP_MUL })) {
-        return false;
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_webgpu_can_fuse_rms_norm_mul(ਅਚਲ ਬਣਤਰ ggml_cgraph * cgraph, ਪੂਰਨ ਗੰਢ_idx) {
+    ਜੇ (!ggml_can_fuse(cgraph, ਗੰਢ_idx, { GGML_OP_RMS_NORM, GGML_OP_MUL })) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
     // additional constraints specific to this fusion
-    const ggml_tensor * rms_norm = cgraph->nodes[node_idx];
-    const ggml_tensor * mul      = cgraph->nodes[node_idx + 1];
+    ਅਚਲ ggml_tensor * rms_norm = cgraph->nodes[ਗੰਢ_idx];
+    ਅਚਲ ggml_tensor * mul      = cgraph->nodes[ਗੰਢ_idx + 1];
 
     GGML_ASSERT(rms_norm->src[0]->type == GGML_TYPE_F32);
     GGML_ASSERT(rms_norm->type == GGML_TYPE_F32);
     // rms_norm only supports f32
-    if (mul->src[0]->type != GGML_TYPE_F32 || mul->src[1]->type != GGML_TYPE_F32 || mul->type != GGML_TYPE_F32) {
-        return false;
+    ਜੇ (mul->src[0]->type != GGML_TYPE_F32 || mul->src[1]->type != GGML_TYPE_F32 || mul->type != GGML_TYPE_F32) {
+        ਵਾਪਸ ਝੂਠ;
     }
     // if rms_norm is the B operand, then we don't handle broadcast
-    if (rms_norm == mul->src[1] && !ggml_are_same_shape(mul->src[0], rms_norm)) {
-        return false;
+    ਜੇ (rms_norm == mul->src[1] && !ggml_are_same_shape(mul->src[0], rms_norm)) {
+        ਵਾਪਸ ਝੂਠ;
     }
     // rms_norm shader assumes contiguous rows
-    if (!ggml_is_contiguous_rows(mul->src[0]) || !ggml_is_contiguous_rows(mul->src[1])) {
-        return false;
+    ਜੇ (!ggml_is_contiguous_ਪੰਕਤੀਆਂ(mul->src[0]) || !ggml_is_contiguous_ਪੰਕਤੀਆਂ(mul->src[1])) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    return true;
+    ਵਾਪਸ ਸੱਚ;
 }
 
-static bool ggml_webgpu_can_fuse_gdn_cache(const struct ggml_cgraph * cgraph, int node_idx, int & num_encoded_ops) {
-    const ggml_tensor * gdn = cgraph->nodes[node_idx];
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_webgpu_can_fuse_gdn_cache(ਅਚਲ ਬਣਤਰ ggml_cgraph * cgraph, ਪੂਰਨ ਗੰਢ_idx, ਪੂਰਨ & ਅੰਕ_encoded_ops) {
+    ਅਚਲ ggml_tensor * gdn = cgraph->nodes[ਗੰਢ_idx];
 
     // the kernel skips the snapshot tail, so the gdn output must not be a graph output
-    if (gdn->op != GGML_OP_GATED_DELTA_NET || gdn->type != GGML_TYPE_F32 || (gdn->flags & GGML_TENSOR_FLAG_OUTPUT)) {
-        return false;
+    ਜੇ (gdn->op != GGML_OP_GATED_DELTA_NET || gdn->type != GGML_TYPE_F32 || (gdn->flags & GGML_TENSOR_FLAG_OUTPUT)) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    const ggml_tensor * src_v     = gdn->src[2];
-    const int64_t       S_v       = src_v->ne[0];
-    const int64_t       H         = src_v->ne[1];
-    const int64_t       n_tokens  = src_v->ne[2];
-    const int64_t       n_seqs    = src_v->ne[3];
-    const int64_t       D         = S_v * S_v * H;
-    const int64_t       K         = ggml_get_op_params_i32(gdn, 0);  // snapshot slot count
-    const int64_t       n_written = std::min<int64_t>(n_tokens, K);  // newest n_written slots are written
+    ਅਚਲ ggml_tensor * src_v     = gdn->src[2];
+    ਅਚਲ int64_t       S_v       = src_v->ne[0];
+    ਅਚਲ int64_t       H         = src_v->ne[1];
+    ਅਚਲ int64_t       n_ਟੋਕਨ  = src_v->ne[2];
+    ਅਚਲ int64_t       n_seqs    = src_v->ne[3];
+    ਅਚਲ int64_t       D         = S_v * S_v * H;
+    ਅਚਲ int64_t       K         = ggml_get_op_params_i32(gdn, 0);  // snapshot slot count
+    ਅਚਲ int64_t       n_written = std::min<int64_t>(n_ਟੋਕਨ, K);  // newest n_written slots are written
 
     // snapshot tail starts right after the attention scores
-    const size_t tail_off = ggml_row_size(GGML_TYPE_F32, S_v * H * n_tokens * n_seqs);
+    ਅਚਲ size_t ਪੂਛ_off = ggml_ਪੰਕਤੀ_ਮਾਪ(GGML_TYPE_F32, S_v * H * n_ਟੋਕਨ * n_seqs);
 
     // snapshot cpy is the first real node after the gdn (skip views/no-ops)
-    const ggml_tensor * cpy     = nullptr;
-    int                 cpy_idx = 0;
-    for (int j = node_idx + 1; j < cgraph->n_nodes && cpy == nullptr; ++j) {
-        const ggml_tensor * n = cgraph->nodes[j];
-        if (ggml_op_is_empty(n->op) || ggml_is_empty(n)) {
-            continue;
+    ਅਚਲ ggml_tensor * cpy     = ਖਾਲੀ_ਸੂਚਕ;
+    ਪੂਰਨ                 cpy_idx = 0;
+    ਲਈ (ਪੂਰਨ j = ਗੰਢ_idx + 1; j < cgraph->n_nodes && cpy == ਖਾਲੀ_ਸੂਚਕ; ++j) {
+        ਅਚਲ ggml_tensor * n = cgraph->nodes[j];
+        ਜੇ (ggml_op_is_ਖਾਲੀ_ਥਾਵਾਂ(n->op) || ggml_is_ਖਾਲੀ_ਥਾਵਾਂ(n)) {
+            ਜਾਰੀ;
         }
-        if (n->op != GGML_OP_CPY || (n->flags & GGML_TENSOR_FLAG_OUTPUT)) {
-            return false;
+        ਜੇ (n->op != GGML_OP_CPY || (n->flags & GGML_TENSOR_FLAG_OUTPUT)) {
+            ਵਾਪਸ ਝੂਠ;
         }
         cpy     = n;
         cpy_idx = j;
     }
-    if (cpy == nullptr) {
-        return false;
+    ਜੇ (cpy == ਖਾਲੀ_ਸੂਚਕ) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    const ggml_tensor * cpy_src = cpy->src[0];  // view of the gdn snapshot tail
-    const ggml_tensor * cpy_dst = cpy->src[1];  // cache view the kernel writes to
+    ਅਚਲ ggml_tensor * cpy_src = cpy->src[0];  // view of the gdn snapshot tail
+    ਅਚਲ ggml_tensor * cpy_dst = cpy->src[1];  // cache view the kernel writes to
 
     // src must be this gdn's snapshot tail (contiguous, at the tail offset)
-    if (cpy_src->op != GGML_OP_VIEW || cpy_src->view_src != gdn || cpy_src->view_offs != tail_off ||
+    ਜੇ (cpy_src->op != GGML_OP_VIEW || cpy_src->view_src != gdn || cpy_src->view_offs != ਪੂਛ_off ||
         !ggml_is_contiguous(cpy_src)) {
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
 
     // dst is the [D, n_seqs, n_written] cache view; require nb[1] == D (the per-seq stride the kernel
     // assumes). ggml_cpy pins src to the same element count.
-    const std::array<int64_t, GGML_MAX_DIMS> expected_ne = { D, n_seqs, n_written, 1 };
-    if (cpy_dst->op != GGML_OP_VIEW || cpy_dst->type != GGML_TYPE_F32 || cpy_dst->data == nullptr ||
+    ਅਚਲ std::array<int64_t, GGML_MAX_DIMS> expected_ne = { D, n_seqs, n_written, 1 };
+    ਜੇ (cpy_dst->op != GGML_OP_VIEW || cpy_dst->type != GGML_TYPE_F32 || cpy_dst->ਅੰਕੜੇ == ਖਾਲੀ_ਸੂਚਕ ||
         !std::equal(expected_ne.begin(), expected_ne.end(), cpy_dst->ne) ||
-        cpy_dst->nb[0] != ggml_type_size(GGML_TYPE_F32) || cpy_dst->nb[1] != (size_t) ggml_row_size(GGML_TYPE_F32, D)) {
-        return false;
+        cpy_dst->nb[0] != ggml_type_ਮਾਪ(GGML_TYPE_F32) || cpy_dst->nb[1] != (size_t) ggml_ਪੰਕਤੀ_ਮਾਪ(GGML_TYPE_F32, D)) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    num_encoded_ops = cpy_idx - node_idx + 1;
+    ਅੰਕ_encoded_ops = cpy_idx - ਗੰਢ_idx + 1;
 
-    return true;
+    ਵਾਪਸ ਸੱਚ;
 }
 
-static webgpu_encoded_op ggml_webgpu_upscale(webgpu_context ctx, ggml_tensor * src, ggml_tensor * dst) {
-    const uint32_t        mode_flags = (uint32_t) ggml_get_op_params_i32(dst, 0);
-    std::vector<uint32_t> params = { (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src) / ggml_type_size(src->type)),
-                                     (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_size(dst->type)),
+ਸਥਿਰ webgpu_encoded_op ggml_webgpu_upscale(webgpu_context ctx, ggml_tensor * src, ggml_tensor * dst) {
+    ਅਚਲ uint32_t        ਬਹੁਲਕ_flags = (uint32_t) ggml_get_op_params_i32(dst, 0);
+    std::vector<uint32_t> params = { (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, src) / ggml_type_ਮਾਪ(src->type)),
+                                     (uint32_t) (ggml_webgpu_tensor_misalignment(ctx, dst) / ggml_type_ਮਾਪ(dst->type)),
 
-                                     (uint32_t) (src->nb[0] / ggml_type_size(src->type)),
-                                     (uint32_t) (src->nb[1] / ggml_type_size(src->type)),
-                                     (uint32_t) (src->nb[2] / ggml_type_size(src->type)),
-                                     (uint32_t) (src->nb[3] / ggml_type_size(src->type)),
+                                     (uint32_t) (src->nb[0] / ggml_type_ਮਾਪ(src->type)),
+                                     (uint32_t) (src->nb[1] / ggml_type_ਮਾਪ(src->type)),
+                                     (uint32_t) (src->nb[2] / ggml_type_ਮਾਪ(src->type)),
+                                     (uint32_t) (src->nb[3] / ggml_type_ਮਾਪ(src->type)),
 
-                                     (uint32_t) (dst->nb[0] / ggml_type_size(dst->type)),
-                                     (uint32_t) (dst->nb[1] / ggml_type_size(dst->type)),
-                                     (uint32_t) (dst->nb[2] / ggml_type_size(dst->type)),
-                                     (uint32_t) (dst->nb[3] / ggml_type_size(dst->type)),
+                                     (uint32_t) (dst->nb[0] / ggml_type_ਮਾਪ(dst->type)),
+                                     (uint32_t) (dst->nb[1] / ggml_type_ਮਾਪ(dst->type)),
+                                     (uint32_t) (dst->nb[2] / ggml_type_ਮਾਪ(dst->type)),
+                                     (uint32_t) (dst->nb[3] / ggml_type_ਮਾਪ(dst->type)),
 
                                      (uint32_t) src->ne[0],
                                      (uint32_t) src->ne[1],
@@ -3351,587 +3351,587 @@ static webgpu_encoded_op ggml_webgpu_upscale(webgpu_context ctx, ggml_tensor * s
                                      (uint32_t) dst->ne[2],
                                      (uint32_t) dst->ne[3],
 
-                                     mode_flags };
+                                     ਬਹੁਲਕ_flags };
 
-    std::vector<wgpu::BindGroupEntry> entries = { ggml_webgpu_make_tensor_bind_group_entry(ctx, 0, src),
-                                                  ggml_webgpu_make_tensor_bind_group_entry(ctx, 1, dst) };
+    std::vector<wgpu::Bind_ਸਮੂਹ_ਇੰਦਰਾਜ> entries = { ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 0, src),
+                                                  ggml_webgpu_make_tensor_bind_ਸਮੂਹ_ਇੰਦਰਾਜ(ctx, 1, dst) };
 
     ggml_webgpu_shader_lib_context shader_lib_ctx = {};
     shader_lib_ctx.src0                           = src;
     shader_lib_ctx.dst                            = dst;
-    shader_lib_ctx.max_wg_size = ctx->global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
+    shader_lib_ctx.max_wg_ਮਾਪ = ctx->global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
 
     webgpu_pipeline pipeline  = ctx->shader_lib->get_upscale_pipeline(shader_lib_ctx);
-    auto *          decisions = static_cast<ggml_webgpu_generic_shader_decisions *>(pipeline.context.get());
+    ਸਵੈਚਾਲਿਤ *          decisions = static_cast<ggml_webgpu_generic_shader_decisions *>(pipeline.context.get());
 
     uint32_t wg_x;
     uint32_t wg_y;
-    uint32_t total_wg = CEIL_DIV((uint32_t) ggml_nelements(dst), decisions->wg_size);
-    compute_2d_workgroups(total_wg, ctx->global_ctx->capabilities.limits.maxComputeWorkgroupsPerDimension, wg_x, wg_y);
+    uint32_t ਕੁੱਲ_wg = CEIL_DIV((uint32_t) ggml_nelements(dst), decisions->wg_ਮਾਪ);
+    compute_2d_workgroups(ਕੁੱਲ_wg, ctx->global_ctx->capabilities.limits.max_Compute_Workgroups_ਪ੍ਰਤੀ_Dimension, wg_x, wg_y);
 
-    return ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
+    ਵਾਪਸ ggml_backend_webgpu_build(ctx, pipeline, params, entries, wg_x, wg_y);
 }
 
 // Returns the encoded command, or std::nullopt if the operation is a no-op
-static std::optional<webgpu_encoded_op> ggml_webgpu_encode(webgpu_context ctx,
+ਸਥਿਰ std::optional<webgpu_encoded_op> ggml_webgpu_encode(webgpu_context ctx,
                                                            ggml_cgraph *  cgraph,
-                                                           int            node_idx,
-                                                           int &          num_encoded_ops) {
+                                                           ਪੂਰਨ            ਗੰਢ_idx,
+                                                           ਪੂਰਨ &          ਅੰਕ_encoded_ops) {
     ggml_tensor ** nodes = cgraph->nodes;
-    ggml_tensor *  node  = nodes[node_idx];
+    ggml_tensor *  ਗੰਢ  = nodes[ਗੰਢ_idx];
 
-    if (ggml_is_empty(node)) {
-        return std::nullopt;
+    ਜੇ (ggml_is_ਖਾਲੀ_ਥਾਵਾਂ(ਗੰਢ)) {
+        ਵਾਪਸ std::nullopt;
     }
-    if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
-        return std::nullopt;
+    ਜੇ ((ਗੰਢ->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+        ਵਾਪਸ std::nullopt;
     }
-    WEBGPU_LOG_DEBUG("ggml_webgpu_encode(" << node << ", " << ggml_op_name(node->op) << ")");
+    WEBGPU_LOG_DEBUG("ggml_webgpu_encode(" << ਗੰਢ << ", " << ggml_op_name(ਗੰਢ->op) << ")");
 
-    ggml_tensor * src0 = node->src[0];
-    ggml_tensor * src1 = node->src[1];
-    ggml_tensor * src2 = node->src[2];
+    ggml_tensor * src0 = ਗੰਢ->src[0];
+    ggml_tensor * src1 = ਗੰਢ->src[1];
+    ggml_tensor * src2 = ਗੰਢ->src[2];
 
-    switch (node->op) {
+    ਚੋਣ (ਗੰਢ->op) {
             // no-ops
-        case GGML_OP_NONE:
-        case GGML_OP_VIEW:
-        case GGML_OP_PERMUTE:
-        case GGML_OP_TRANSPOSE:
-        case GGML_OP_RESHAPE:
-            return std::nullopt;
-        case GGML_OP_DUP:
-        case GGML_OP_CPY:
-        case GGML_OP_CONT:
-            return ggml_webgpu_cpy(ctx, src0, node);
-        case GGML_OP_SET:
-            return ggml_webgpu_set(ctx, src0, src1, node);
-        case GGML_OP_SET_ROWS:
-            return ggml_webgpu_set_rows(ctx, src0, src1, node);
-        case GGML_OP_GET_ROWS:
-            return ggml_webgpu_get_rows(ctx, src0, src1, node);
-        case GGML_OP_MUL_MAT:
-            return ggml_webgpu_mul_mat(ctx, src0, src1, node);
-        case GGML_OP_MUL_MAT_ID:
-            return ggml_webgpu_mul_mat_id(ctx, src0, src1, src2, node);
-        case GGML_OP_FLASH_ATTN_EXT:
-            return ggml_webgpu_flash_attn(ctx, src0, src1, src2, node->src[3], node->src[4], node);
-        case GGML_OP_ADD:
-        case GGML_OP_SUB:
-        case GGML_OP_MUL:
-        case GGML_OP_DIV:
-            return ggml_webgpu_binary_op(ctx, src0, src1, node);
-        case GGML_OP_ADD_ID:
-            return ggml_webgpu_add_id(ctx, src0, src1, src2, node);
-        case GGML_OP_CONCAT:
-            return ggml_webgpu_concat(ctx, src0, src1, node);
-        case GGML_OP_REPEAT:
-            return ggml_webgpu_repeat(ctx, src0, node);
-        case GGML_OP_RMS_NORM:
-            if (ggml_webgpu_can_fuse_rms_norm_mul(cgraph, node_idx)) {
-                num_encoded_ops        = 2;
-                ggml_tensor * mul_node = nodes[node_idx + 1];
-                return ggml_webgpu_rms_norm_mul(ctx, src0, node, mul_node->src[0], mul_node->src[1], mul_node);
-            } else {
-                return ggml_webgpu_row_norm(ctx, src0, node);
+        ਹਾਲਤ GGML_OP_NONE:
+        ਹਾਲਤ GGML_OP_VIEW:
+        ਹਾਲਤ GGML_OP_ਕ੍ਰਮ_ਬਦਲੋ:
+        ਹਾਲਤ GGML_OP_TRANSPOSE:
+        ਹਾਲਤ GGML_OP_RESHAPE:
+            ਵਾਪਸ std::nullopt;
+        ਹਾਲਤ GGML_OP_DUP:
+        ਹਾਲਤ GGML_OP_CPY:
+        ਹਾਲਤ GGML_OP_CONT:
+            ਵਾਪਸ ggml_webgpu_cpy(ctx, src0, ਗੰਢ);
+        ਹਾਲਤ GGML_OP_ਸੈੱਟ:
+            ਵਾਪਸ ggml_webgpu_ਸੈੱਟ(ctx, src0, src1, ਗੰਢ);
+        ਹਾਲਤ GGML_OP_ਸੈੱਟ_ਪੰਕਤੀਆਂ:
+            ਵਾਪਸ ggml_webgpu_ਸੈੱਟ_ਪੰਕਤੀਆਂ(ctx, src0, src1, ਗੰਢ);
+        ਹਾਲਤ GGML_OP_GET_ਪੰਕਤੀਆਂ:
+            ਵਾਪਸ ggml_webgpu_get_ਪੰਕਤੀਆਂ(ctx, src0, src1, ਗੰਢ);
+        ਹਾਲਤ GGML_OP_MUL_MAT:
+            ਵਾਪਸ ggml_webgpu_mul_mat(ctx, src0, src1, ਗੰਢ);
+        ਹਾਲਤ GGML_OP_MUL_MAT_ID:
+            ਵਾਪਸ ggml_webgpu_mul_mat_id(ctx, src0, src1, src2, ਗੰਢ);
+        ਹਾਲਤ GGML_OP_FLASH_ATTN_EXT:
+            ਵਾਪਸ ggml_webgpu_flash_attn(ctx, src0, src1, src2, ਗੰਢ->src[3], ਗੰਢ->src[4], ਗੰਢ);
+        ਹਾਲਤ GGML_OP_ਜੋੜੋ:
+        ਹਾਲਤ GGML_OP_SUB:
+        ਹਾਲਤ GGML_OP_MUL:
+        ਹਾਲਤ GGML_OP_DIV:
+            ਵਾਪਸ ggml_webgpu_ਦੁਆਧਾਰੀ_op(ctx, src0, src1, ਗੰਢ);
+        ਹਾਲਤ GGML_OP_ਜੋੜੋ_ID:
+            ਵਾਪਸ ggml_webgpu_ਜੋੜੋ_id(ctx, src0, src1, src2, ਗੰਢ);
+        ਹਾਲਤ GGML_OP_CONCAT:
+            ਵਾਪਸ ggml_webgpu_concat(ctx, src0, src1, ਗੰਢ);
+        ਹਾਲਤ GGML_OP_REPEAT:
+            ਵਾਪਸ ggml_webgpu_repeat(ctx, src0, ਗੰਢ);
+        ਹਾਲਤ GGML_OP_RMS_NORM:
+            ਜੇ (ggml_webgpu_can_fuse_rms_norm_mul(cgraph, ਗੰਢ_idx)) {
+                ਅੰਕ_encoded_ops        = 2;
+                ggml_tensor * mul_ਗੰਢ = nodes[ਗੰਢ_idx + 1];
+                ਵਾਪਸ ggml_webgpu_rms_norm_mul(ctx, src0, ਗੰਢ, mul_ਗੰਢ->src[0], mul_ਗੰਢ->src[1], mul_ਗੰਢ);
+            } ਨਹੀਂਤਾਂ {
+                ਵਾਪਸ ggml_webgpu_ਪੰਕਤੀ_norm(ctx, src0, ਗੰਢ);
             }
-        case GGML_OP_NORM:
-        case GGML_OP_L2_NORM:
-            return ggml_webgpu_row_norm(ctx, src0, node);
-        case GGML_OP_ROPE:
-            return ggml_webgpu_rope(ctx, src0, src1, src2, node);
-        case GGML_OP_GLU:
-            return ggml_webgpu_glu(ctx, src0, src1, node);
-        case GGML_OP_SCALE:
-            return ggml_webgpu_scale(ctx, src0, node);
-        case GGML_OP_SOFT_MAX:
-            return ggml_webgpu_soft_max(ctx, src0, src1, src2, node);
-        case GGML_OP_UNARY:
-        case GGML_OP_CLAMP:
-        case GGML_OP_FILL:
-        case GGML_OP_LOG:
-        case GGML_OP_SQR:
-        case GGML_OP_SQRT:
-        case GGML_OP_SIN:
-        case GGML_OP_COS:
-        case GGML_OP_DIAG:
-        case GGML_OP_TRI:
-            return ggml_webgpu_unary_op(ctx, src0, node);
-        case GGML_OP_SOLVE_TRI:
-            return ggml_webgpu_solve_tri(ctx, src0, src1, node);
-        case GGML_OP_SSM_CONV:
-            return ggml_webgpu_ssm_conv(ctx, src0, src1, node);
-        case GGML_OP_SSM_SCAN:
-            return ggml_webgpu_ssm_scan(ctx, src0, src1, src2, node->src[3], node->src[4], node->src[5], node->src[6],
-                                        node);
-        case GGML_OP_GATED_DELTA_NET:
-            if (ggml_webgpu_can_fuse_gdn_cache(cgraph, node_idx, num_encoded_ops)) {
-                ggml_tensor * dst_fuse = cgraph->nodes[node_idx + num_encoded_ops - 1]->src[1];
-                return ggml_webgpu_gated_delta_net(ctx, src0, src1, src2, node->src[3], node->src[4], node->src[5],
-                                                   node, dst_fuse);
-            } else {
-                return ggml_webgpu_gated_delta_net(ctx, src0, src1, src2, node->src[3], node->src[4], node->src[5],
-                                                   node, nullptr);
+        ਹਾਲਤ GGML_OP_NORM:
+        ਹਾਲਤ GGML_OP_L2_NORM:
+            ਵਾਪਸ ggml_webgpu_ਪੰਕਤੀ_norm(ctx, src0, ਗੰਢ);
+        ਹਾਲਤ GGML_OP_ROPE:
+            ਵਾਪਸ ggml_webgpu_rope(ctx, src0, src1, src2, ਗੰਢ);
+        ਹਾਲਤ GGML_OP_GLU:
+            ਵਾਪਸ ggml_webgpu_glu(ctx, src0, src1, ਗੰਢ);
+        ਹਾਲਤ GGML_OP_SCALE:
+            ਵਾਪਸ ggml_webgpu_scale(ctx, src0, ਗੰਢ);
+        ਹਾਲਤ GGML_OP_SOFT_MAX:
+            ਵਾਪਸ ggml_webgpu_soft_max(ctx, src0, src1, src2, ਗੰਢ);
+        ਹਾਲਤ GGML_OP_UNARY:
+        ਹਾਲਤ GGML_OP_CLAMP:
+        ਹਾਲਤ GGML_OP_FILL:
+        ਹਾਲਤ GGML_OP_LOG:
+        ਹਾਲਤ GGML_OP_SQR:
+        ਹਾਲਤ GGML_OP_SQRT:
+        ਹਾਲਤ GGML_OP_SIN:
+        ਹਾਲਤ GGML_OP_COS:
+        ਹਾਲਤ GGML_OP_DIAG:
+        ਹਾਲਤ GGML_OP_TRI:
+            ਵਾਪਸ ggml_webgpu_unary_op(ctx, src0, ਗੰਢ);
+        ਹਾਲਤ GGML_OP_SOLVE_TRI:
+            ਵਾਪਸ ggml_webgpu_solve_tri(ctx, src0, src1, ਗੰਢ);
+        ਹਾਲਤ GGML_OP_SSM_CONV:
+            ਵਾਪਸ ggml_webgpu_ssm_conv(ctx, src0, src1, ਗੰਢ);
+        ਹਾਲਤ GGML_OP_SSM_ਜਾਂਚ:
+            ਵਾਪਸ ggml_webgpu_ssm_ਜਾਂਚ(ctx, src0, src1, src2, ਗੰਢ->src[3], ਗੰਢ->src[4], ਗੰਢ->src[5], ਗੰਢ->src[6],
+                                        ਗੰਢ);
+        ਹਾਲਤ GGML_OP_GATED_DELTA_NET:
+            ਜੇ (ggml_webgpu_can_fuse_gdn_cache(cgraph, ਗੰਢ_idx, ਅੰਕ_encoded_ops)) {
+                ggml_tensor * dst_fuse = cgraph->nodes[ਗੰਢ_idx + ਅੰਕ_encoded_ops - 1]->src[1];
+                ਵਾਪਸ ggml_webgpu_gated_delta_net(ctx, src0, src1, src2, ਗੰਢ->src[3], ਗੰਢ->src[4], ਗੰਢ->src[5],
+                                                   ਗੰਢ, dst_fuse);
+            } ਨਹੀਂਤਾਂ {
+                ਵਾਪਸ ggml_webgpu_gated_delta_net(ctx, src0, src1, src2, ਗੰਢ->src[3], ਗੰਢ->src[4], ਗੰਢ->src[5],
+                                                   ਗੰਢ, ਖਾਲੀ_ਸੂਚਕ);
             }
-        case GGML_OP_PAD:
-            return ggml_webgpu_pad(ctx, src0, node);
-        case GGML_OP_ARGMAX:
-            return ggml_webgpu_argmax(ctx, src0, node);
-        case GGML_OP_ARGSORT:
-        case GGML_OP_TOP_K:
+        ਹਾਲਤ GGML_OP_PAD:
+            ਵਾਪਸ ggml_webgpu_pad(ctx, src0, ਗੰਢ);
+        ਹਾਲਤ GGML_OP_ARGMAX:
+            ਵਾਪਸ ggml_webgpu_argmax(ctx, src0, ਗੰਢ);
+        ਹਾਲਤ GGML_OP_ARGSORT:
+        ਹਾਲਤ GGML_OP_ਸਿਖਰ_K:
             // we reuse the same argsort implementation for top_k
-            return ggml_webgpu_argsort(ctx, src0, node);
-        case GGML_OP_CUMSUM:
-            return ggml_webgpu_cumsum(ctx, src0, node);
-        case GGML_OP_SUM:
-        case GGML_OP_SUM_ROWS:
-            return ggml_webgpu_sum_rows(ctx, src0, node);
-        case GGML_OP_CONV_2D:
-            return ggml_webgpu_conv_2d(ctx, src0, src1, node);
-        case GGML_OP_CONV_2D_DW:
-            return ggml_webgpu_conv_2d_dw(ctx, src0, src1, node);
-        case GGML_OP_IM2COL:
-            return ggml_webgpu_im2col(ctx, src0, src1, node);
-        case GGML_OP_UPSCALE:
-            return ggml_webgpu_upscale(ctx, src0, node);
-        default:
-            return std::nullopt;
+            ਵਾਪਸ ggml_webgpu_argsort(ctx, src0, ਗੰਢ);
+        ਹਾਲਤ GGML_OP_CUMSUM:
+            ਵਾਪਸ ggml_webgpu_cumsum(ctx, src0, ਗੰਢ);
+        ਹਾਲਤ GGML_OP_ਜੋੜ:
+        ਹਾਲਤ GGML_OP_ਜੋੜ_ਪੰਕਤੀਆਂ:
+            ਵਾਪਸ ggml_webgpu_ਜੋੜ_ਪੰਕਤੀਆਂ(ctx, src0, ਗੰਢ);
+        ਹਾਲਤ GGML_OP_CONV_2D:
+            ਵਾਪਸ ggml_webgpu_conv_2d(ctx, src0, src1, ਗੰਢ);
+        ਹਾਲਤ GGML_OP_CONV_2D_DW:
+            ਵਾਪਸ ggml_webgpu_conv_2d_dw(ctx, src0, src1, ਗੰਢ);
+        ਹਾਲਤ GGML_OP_IM2_ਖਾਨਾ:
+            ਵਾਪਸ ggml_webgpu_im2col(ctx, src0, src1, ਗੰਢ);
+        ਹਾਲਤ GGML_OP_UPSCALE:
+            ਵਾਪਸ ggml_webgpu_upscale(ctx, src0, ਗੰਢ);
+        ਮੂਲ:
+            ਵਾਪਸ std::nullopt;
     }
 }
 
-#ifdef GGML_WEBGPU_GPU_PROFILE
-static void ggml_backend_webgpu_collect_profile_results(webgpu_context &                 ctx,
-                                                        const std::vector<std::string> & pipeline_names,
-                                                        uint32_t &                       num_inflight_batches) {
-    if (pipeline_names.empty()) {
-        return;
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_WEBGPU_GPU_PROFILE
+ਸਥਿਰ ਖਾਲੀ ggml_backend_webgpu_collect_profile_results(webgpu_context &                 ctx,
+                                                        ਅਚਲ std::vector<std::string> & pipeline_ਨਾਂ,
+                                                        uint32_t &                       ਅੰਕ_inflight_batches) {
+    ਜੇ (pipeline_ਨਾਂ.ਖਾਲੀ_ਥਾਵਾਂ()) {
+        ਵਾਪਸ;
     }
 
     wgpu::CommandEncoder encoder = ctx->global_ctx->device.CreateCommandEncoder();
-    encoder.ResolveQuerySet(ctx->profile_timestamp_query_set, 0, ctx->profile_timestamp_query_count,
+    encoder.Resolve_Query_ਸੈੱਟ(ctx->profile_timestamp_query_ਸੈੱਟ, 0, ctx->profile_timestamp_query_ਗਿਣਤੀ,
                             ctx->profile_timestamp_dev_buf, 0);
-    encoder.CopyBufferToBuffer(ctx->profile_timestamp_dev_buf, 0, ctx->profile_timestamp_host_buf, 0,
-                               ctx->profile_timestamp_query_count * sizeof(uint64_t));
+    encoder.Copy_ਬਫਰ_ਮੰਜ਼ਿਲ_ਬਫਰ(ctx->profile_timestamp_dev_buf, 0, ctx->profile_timestamp_host_buf, 0,
+                               ctx->profile_timestamp_query_ਗਿਣਤੀ * ਆਕਾਰ(uint64_t));
 
-    wgpu::CommandBuffer profile_commands = encoder.Finish();
-    ggml_backend_webgpu_submit_commands(ctx, profile_commands, num_inflight_batches);
+    wgpu::Command_ਬਫਰ profile_commands = encoder.ਅੰਤ_2();
+    ggml_backend_webgpu_submit_commands(ctx, profile_commands, ਅੰਕ_inflight_batches);
 
-    const size_t mapped_size = ctx->profile_timestamp_query_count * sizeof(uint64_t);
-    GGML_ASSERT(ctx->profile_timestamp_query_count == 2 * pipeline_names.size());
+    ਅਚਲ size_t mapped_ਮਾਪ = ctx->profile_timestamp_query_ਗਿਣਤੀ * ਆਕਾਰ(uint64_t);
+    GGML_ASSERT(ctx->profile_timestamp_query_ਗਿਣਤੀ == 2 * pipeline_ਨਾਂ.size());
 
-    ggml_backend_webgpu_map_buffer(ctx->global_ctx, ctx->profile_timestamp_host_buf, wgpu::MapMode::Read, 0,
-                                   mapped_size);
-    const uint64_t * ts_data = (const uint64_t *) ctx->profile_timestamp_host_buf.GetConstMappedRange(0, mapped_size);
+    ggml_backend_webgpu_map_ਬਫਰ(ctx->global_ctx, ctx->profile_timestamp_host_buf, wgpu::Map_ਬਹੁਲਕ::Read, 0,
+                                   mapped_ਮਾਪ);
+    ਅਚਲ uint64_t * ts_ਅੰਕੜੇ = (ਅਚਲ uint64_t *) ctx->profile_timestamp_host_buf.GetConstMappedRange(0, mapped_ਮਾਪ);
 
-    for (size_t i = 0; i < pipeline_names.size(); ++i) {
+    ਲਈ (size_t i = 0; i < pipeline_ਨਾਂ.size(); ++i) {
         // WebGPU timestamps are in ns; convert to ms.
-        const double elapsed_ms = double(ts_data[2 * i + 1] - ts_data[2 * i]) * 1e-6;
-        ctx->shader_gpu_time_ms[pipeline_names[i]] += elapsed_ms;
+        ਅਚਲ ਦੁੱਗਣਾ elapsed_ms = ਦੁੱਗਣਾ(ts_ਅੰਕੜੇ[2 * i + 1] - ts_ਅੰਕੜੇ[2 * i]) * 1e-6;
+        ctx->shader_gpu_ਸਮਾਂ_ms[pipeline_ਨਾਂ[i]] += elapsed_ms;
     }
 
     ctx->profile_timestamp_host_buf.Unmap();
 }
-#endif
+#ਜੇ_ਅੰਤ
 
 // Don't bother checking set_rows index overflow for now, since practically the WebGPU doesn't need to support
 // models that would require it right now.
-static void ggml_backend_webgpu_check_set_rows(webgpu_context & ctx, uint32_t & num_inflight_batches) {
-#ifdef GGML_WEBGPU_CHECK_SET_ROWS
+ਸਥਿਰ ਖਾਲੀ ggml_backend_webgpu_check_ਸੈੱਟ_ਪੰਕਤੀਆਂ(webgpu_context & ctx, uint32_t & ਅੰਕ_inflight_batches) {
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_WEBGPU_CHECK_ਸੈੱਟ_ਪੰਕਤੀਆਂ
     wgpu::CommandEncoder encoder = ctx->global_ctx->device.CreateCommandEncoder();
-    encoder.CopyBufferToBuffer(ctx->set_rows_dev_error_buf, 0, ctx->set_rows_host_error_buf, 0,
-                               ctx->set_rows_host_error_buf.GetSize());
-    wgpu::CommandBuffer commands = encoder.Finish();
-    ggml_backend_webgpu_submit_commands(ctx, commands, num_inflight_batches);
-    ggml_backend_webgpu_map_buffer(ctx->global_ctx, ctx->set_rows_host_error_buf, wgpu::MapMode::Read, 0,
-                                   ctx->set_rows_host_error_buf.GetSize());
-    const uint32_t * error_data = (const uint32_t *) ctx->set_rows_host_error_buf.GetConstMappedRange();
-    if (*error_data) {
+    encoder.Copy_ਬਫਰ_ਮੰਜ਼ਿਲ_ਬਫਰ(ctx->ਸੈੱਟ_ਪੰਕਤੀਆਂ_dev_error_buf, 0, ctx->ਸੈੱਟ_ਪੰਕਤੀਆਂ_host_error_buf, 0,
+                               ctx->ਸੈੱਟ_ਪੰਕਤੀਆਂ_host_error_buf.Get_ਮਾਪ());
+    wgpu::Command_ਬਫਰ commands = encoder.ਅੰਤ_2();
+    ggml_backend_webgpu_submit_commands(ctx, commands, ਅੰਕ_inflight_batches);
+    ggml_backend_webgpu_map_ਬਫਰ(ctx->global_ctx, ctx->ਸੈੱਟ_ਪੰਕਤੀਆਂ_host_error_buf, wgpu::Map_ਬਹੁਲਕ::Read, 0,
+                                   ctx->ਸੈੱਟ_ਪੰਕਤੀਆਂ_host_error_buf.Get_ਮਾਪ());
+    ਅਚਲ uint32_t * error_ਅੰਕੜੇ = (ਅਚਲ uint32_t *) ctx->ਸੈੱਟ_ਪੰਕਤੀਆਂ_host_error_buf.GetConstMappedRange();
+    ਜੇ (*error_ਅੰਕੜੇ) {
         GGML_ABORT("ggml_webgpu: SET_ROWS index > 2^32, unsupported.");
     }
-    ctx->set_rows_host_error_buf.Unmap();
-#else
-    GGML_UNUSED(ctx);
-    GGML_UNUSED(num_inflight_batches);
-#endif
+    ctx->ਸੈੱਟ_ਪੰਕਤੀਆਂ_host_error_buf.Unmap();
+#ਨਹੀਂਤਾਂ
+    GGML_ਅਣਵਰਤਿਆ(ctx);
+    GGML_ਅਣਵਰਤਿਆ(ਅੰਕ_inflight_batches);
+#ਜੇ_ਅੰਤ
 }
 
-static ggml_status ggml_backend_webgpu_graph_compute(ggml_backend_t backend, struct ggml_cgraph * cgraph) {
+ਸਥਿਰ ggml_ਸਥਿਤੀ ggml_backend_webgpu_ਗ੍ਰਾਫ_compute(ggml_backend_t backend, ਬਣਤਰ ggml_cgraph * cgraph) {
     WEBGPU_LOG_DEBUG("ggml_backend_webgpu_graph_compute(" << cgraph->n_nodes << " nodes)");
 
     ggml_backend_webgpu_context * backend_ctx = (ggml_backend_webgpu_context *) backend->context;
     webgpu_context                ctx         = backend_ctx->webgpu_ctx;
 
-    WEBGPU_CPU_PROFILE_TOTAL_START(graph_compute);
+    WEBGPU_CPU_PROFILE_ਕੁੱਲ_ਸ਼ੁਰੂ(ਗ੍ਰਾਫ_compute);
 
     std::vector<webgpu_encoded_op> commands;
 
-    uint32_t num_batched_kernels  = 0;
-    uint32_t num_inflight_batches = 0;
-    bool     contains_set_rows    = false;
-    int      num_encoded_ops      = 1;
-    int      node_idx             = 0;
+    uint32_t ਅੰਕ_batched_kernels  = 0;
+    uint32_t ਅੰਕ_inflight_batches = 0;
+    ਤਾਰਕਿਕ     ਸ਼ਾਮਲ_ਹੈ_ਸੈੱਟ_ਪੰਕਤੀਆਂ    = ਝੂਠ;
+    ਪੂਰਨ      ਅੰਕ_encoded_ops      = 1;
+    ਪੂਰਨ      ਗੰਢ_idx             = 0;
 
-#ifdef GGML_WEBGPU_GPU_PROFILE
-    ctx->profile_timestamp_query_count = 0;
-    std::vector<std::string> profile_pipeline_names;
-#endif
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_WEBGPU_GPU_PROFILE
+    ctx->profile_timestamp_query_ਗਿਣਤੀ = 0;
+    std::vector<std::string> profile_pipeline_ਨਾਂ;
+#ਜੇ_ਅੰਤ
 
-    ctx->active_command_encoder = ctx->global_ctx->device.CreateCommandEncoder();
-    if (ctx->batch_compute_passes) {
-        ctx->active_compute_pass = ctx->active_command_encoder.BeginComputePass();
+    ctx->ਸਰਗਰਮ_command_encoder = ctx->global_ctx->device.CreateCommandEncoder();
+    ਜੇ (ctx->batch_compute_passes) {
+        ctx->ਸਰਗਰਮ_compute_pass = ctx->ਸਰਗਰਮ_command_encoder.BeginComputePass();
     }
 
-    while (node_idx < cgraph->n_nodes) {
-        if (cgraph->nodes[node_idx]->op == GGML_OP_SET_ROWS) {
-            contains_set_rows = true;
+    ਜਦੋਂ (ਗੰਢ_idx < cgraph->n_nodes) {
+        ਜੇ (cgraph->nodes[ਗੰਢ_idx]->op == GGML_OP_ਸੈੱਟ_ਪੰਕਤੀਆਂ) {
+            ਸ਼ਾਮਲ_ਹੈ_ਸੈੱਟ_ਪੰਕਤੀਆਂ = ਸੱਚ;
         }
-        if (auto cmd = ggml_webgpu_encode(ctx, cgraph, node_idx, num_encoded_ops)) {
+        ਜੇ (ਸਵੈਚਾਲਿਤ cmd = ggml_webgpu_encode(ctx, cgraph, ਗੰਢ_idx, ਅੰਕ_encoded_ops)) {
             commands.push_back(*cmd);
-            num_batched_kernels += cmd.value().num_kernels;
-#ifdef GGML_WEBGPU_GPU_PROFILE
-            profile_pipeline_names.insert(profile_pipeline_names.end(), cmd->pipeline_names.begin(),
-                                          cmd->pipeline_names.end());
-#endif
+            ਅੰਕ_batched_kernels += cmd.value().ਅੰਕ_kernels;
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_WEBGPU_GPU_PROFILE
+            profile_pipeline_ਨਾਂ.insert(profile_pipeline_ਨਾਂ.end(), cmd->pipeline_ਨਾਂ.begin(),
+                                          cmd->pipeline_ਨਾਂ.end());
+#ਜੇ_ਅੰਤ
         }
 
-        if (num_batched_kernels >= ctx->global_ctx->command_submit_batch_size) {
-            if (ctx->active_compute_pass) {
-                ctx->active_compute_pass.End();
+        ਜੇ (ਅੰਕ_batched_kernels >= ctx->global_ctx->command_submit_batch_ਮਾਪ) {
+            ਜੇ (ctx->ਸਰਗਰਮ_compute_pass) {
+                ctx->ਸਰਗਰਮ_compute_pass.ਸਿਰਾ_2();
             }
-            num_batched_kernels                = 0;
-            wgpu::CommandBuffer batch_commands = ctx->active_command_encoder.Finish();
-            ggml_backend_webgpu_submit_commands(ctx, batch_commands, num_inflight_batches);
+            ਅੰਕ_batched_kernels                = 0;
+            wgpu::Command_ਬਫਰ batch_commands = ctx->ਸਰਗਰਮ_command_encoder.ਅੰਤ_2();
+            ggml_backend_webgpu_submit_commands(ctx, batch_commands, ਅੰਕ_inflight_batches);
 
             // reset state for next batch
-            ctx->active_command_encoder = ctx->global_ctx->device.CreateCommandEncoder();
-            if (ctx->batch_compute_passes) {
-                ctx->active_compute_pass = ctx->active_command_encoder.BeginComputePass();
+            ctx->ਸਰਗਰਮ_command_encoder = ctx->global_ctx->device.CreateCommandEncoder();
+            ਜੇ (ctx->batch_compute_passes) {
+                ctx->ਸਰਗਰਮ_compute_pass = ctx->ਸਰਗਰਮ_command_encoder.BeginComputePass();
             }
             ctx->param_arena.reset();
             commands.clear();
-#ifdef GGML_WEBGPU_GPU_PROFILE
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_WEBGPU_GPU_PROFILE
             // flush before the next batch can overflow the QuerySet
-            if (ctx->profile_timestamp_query_count + 2 * ctx->global_ctx->command_submit_batch_size >=
-                WEBGPU_MAX_PROFILE_QUERY_COUNT) {
-                ggml_backend_webgpu_collect_profile_results(ctx, profile_pipeline_names, num_inflight_batches);
+            ਜੇ (ctx->profile_timestamp_query_ਗਿਣਤੀ + 2 * ctx->global_ctx->command_submit_batch_ਮਾਪ >=
+                WEBGPU_MAX_PROFILE_QUERY_ਗਿਣਤੀ) {
+                ggml_backend_webgpu_collect_profile_results(ctx, profile_pipeline_ਨਾਂ, ਅੰਕ_inflight_batches);
                 // reset profile timestamp state
-                ctx->profile_timestamp_query_count = 0;
-                profile_pipeline_names.clear();
+                ctx->profile_timestamp_query_ਗਿਣਤੀ = 0;
+                profile_pipeline_ਨਾਂ.clear();
             }
-#endif
+#ਜੇ_ਅੰਤ
         }
 
-        node_idx += num_encoded_ops;
-        num_encoded_ops = 1;
+        ਗੰਢ_idx += ਅੰਕ_encoded_ops;
+        ਅੰਕ_encoded_ops = 1;
     }
 
-    if (ctx->active_compute_pass) {
-        ctx->active_compute_pass.End();
-        ctx->active_compute_pass = nullptr;
+    ਜੇ (ctx->ਸਰਗਰਮ_compute_pass) {
+        ctx->ਸਰਗਰਮ_compute_pass.ਸਿਰਾ_2();
+        ctx->ਸਰਗਰਮ_compute_pass = ਖਾਲੀ_ਸੂਚਕ;
     }
 
-    if (num_batched_kernels > 0) {
-        wgpu::CommandBuffer batch_commands = ctx->active_command_encoder.Finish();
-        ggml_backend_webgpu_submit_commands(ctx, batch_commands, num_inflight_batches);
+    ਜੇ (ਅੰਕ_batched_kernels > 0) {
+        wgpu::Command_ਬਫਰ batch_commands = ctx->ਸਰਗਰਮ_command_encoder.ਅੰਤ_2();
+        ggml_backend_webgpu_submit_commands(ctx, batch_commands, ਅੰਕ_inflight_batches);
         ctx->param_arena.reset();
         commands.clear();
     }
-    ctx->active_command_encoder = nullptr;
+    ctx->ਸਰਗਰਮ_command_encoder = ਖਾਲੀ_ਸੂਚਕ;
 
-#ifdef GGML_WEBGPU_GPU_PROFILE
-    ggml_backend_webgpu_collect_profile_results(ctx, profile_pipeline_names, num_inflight_batches);
-#endif
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_WEBGPU_GPU_PROFILE
+    ggml_backend_webgpu_collect_profile_results(ctx, profile_pipeline_ਨਾਂ, ਅੰਕ_inflight_batches);
+#ਜੇ_ਅੰਤ
 
-    if (contains_set_rows) {
-        ggml_backend_webgpu_check_set_rows(ctx, num_inflight_batches);
+    ਜੇ (ਸ਼ਾਮਲ_ਹੈ_ਸੈੱਟ_ਪੰਕਤੀਆਂ) {
+        ggml_backend_webgpu_check_ਸੈੱਟ_ਪੰਕਤੀਆਂ(ctx, ਅੰਕ_inflight_batches);
     }
 
-    WEBGPU_CPU_PROFILE_TOTAL_END(graph_compute, ctx->global_ctx);
-    return GGML_STATUS_SUCCESS;
+    WEBGPU_CPU_PROFILE_ਕੁੱਲ_ਸਿਰਾ(ਗ੍ਰਾਫ_compute, ctx->global_ctx);
+    ਵਾਪਸ GGML_ਸਥਿਤੀ_SUCCESS;
 }
 
-struct ggml_backend_webgpu_event_context {
+ਬਣਤਰ ggml_backend_webgpu_event_context {
     webgpu_global_context global_ctx;
     wgpu::Future          future;
-    bool                  recorded = false;
+    ਤਾਰਕਿਕ                  recorded = ਝੂਠ;
 };
 
-static ggml_backend_event_t ggml_backend_webgpu_device_event_new(ggml_backend_dev_t device) {
+ਸਥਿਰ ggml_backend_event_t ggml_backend_webgpu_device_event_new(ggml_backend_dev_t device) {
     ggml_backend_webgpu_device_context * dev_ctx = (ggml_backend_webgpu_device_context *) device->context;
 
-    auto * event_ctx      = new ggml_backend_webgpu_event_context();
+    ਸਵੈਚਾਲਿਤ * event_ctx      = ਨਵਾਂ ggml_backend_webgpu_event_context();
     event_ctx->global_ctx = dev_ctx->webgpu_global_ctx;
 
-    auto * event   = new ggml_backend_event;
+    ਸਵੈਚਾਲਿਤ * event   = ਨਵਾਂ ggml_backend_event;
     event->device  = device;
     event->context = event_ctx;
-    return event;
+    ਵਾਪਸ event;
 }
 
-static void ggml_backend_webgpu_device_event_free(ggml_backend_dev_t dev, ggml_backend_event_t event) {
-    GGML_UNUSED(dev);
-    delete static_cast<ggml_backend_webgpu_event_context *>(event->context);
-    delete event;
+ਸਥਿਰ ਖਾਲੀ ggml_backend_webgpu_device_event_free(ggml_backend_dev_t dev, ggml_backend_event_t event) {
+    GGML_ਅਣਵਰਤਿਆ(dev);
+    ਮਿਟਾਓ static_cast<ggml_backend_webgpu_event_context *>(event->context);
+    ਮਿਟਾਓ event;
 }
 
-static void ggml_backend_webgpu_device_event_synchronize(ggml_backend_dev_t dev, ggml_backend_event_t event) {
-    GGML_UNUSED(dev);
+ਸਥਿਰ ਖਾਲੀ ggml_backend_webgpu_device_event_synchronize(ggml_backend_dev_t dev, ggml_backend_event_t event) {
+    GGML_ਅਣਵਰਤਿਆ(dev);
     ggml_backend_webgpu_event_context * event_ctx = (ggml_backend_webgpu_event_context *) event->context;
-    if (!event_ctx->recorded) {
-        return;
+    ਜੇ (!event_ctx->recorded) {
+        ਵਾਪਸ;
     }
-    wgpu::WaitStatus status =
+    wgpu::Wait_ਸਥਿਤੀ ਸਥਿਤੀ =
         event_ctx->global_ctx->instance.WaitAny(event_ctx->future, WEBGPU_RUNTIME_WAIT_TIMEOUT_NS);
-    if (status == wgpu::WaitStatus::TimedOut) {
+    ਜੇ (ਸਥਿਤੀ == wgpu::Wait_ਸਥਿਤੀ::Timed_ਬਾਹਰਲਾ) {
         GGML_ABORT("ggml_webgpu: event_synchronize timed out after %u ms\n", WEBGPU_RUNTIME_WAIT_TIMEOUT_MS);
     }
-    event_ctx->recorded = false;
+    event_ctx->recorded = ਝੂਠ;
 }
 
-static void ggml_backend_webgpu_event_record(ggml_backend_t backend, ggml_backend_event_t event) {
+ਸਥਿਰ ਖਾਲੀ ggml_backend_webgpu_event_ਰਿਕਾਰਡ(ggml_backend_t backend, ggml_backend_event_t event) {
     ggml_backend_webgpu_context *       backend_ctx = (ggml_backend_webgpu_context *) backend->context;
     ggml_backend_webgpu_event_context * event_ctx   = (ggml_backend_webgpu_event_context *) event->context;
 
-    event_ctx->future = backend_ctx->webgpu_ctx->global_ctx->queue.OnSubmittedWorkDone(
-        wgpu::CallbackMode::AllowSpontaneous, [](wgpu::QueueWorkDoneStatus, wgpu::StringView) {});
-    event_ctx->recorded = true;
+    event_ctx->future = backend_ctx->webgpu_ctx->global_ctx->queue.On_Submitted_Work_ਪੂਰਾ(
+        wgpu::Callback_ਬਹੁਲਕ::AllowSpontaneous, [](wgpu::ਕਤਾਰ_Work_ਪੂਰਾ_ਸਥਿਤੀ, wgpu::StringView) {});
+    event_ctx->recorded = ਸੱਚ;
 }
 
-static void ggml_backend_webgpu_event_wait(ggml_backend_t backend, ggml_backend_event_t event) {
-    GGML_UNUSED(backend);
-    ggml_backend_webgpu_device_event_synchronize(nullptr, event);
+ਸਥਿਰ ਖਾਲੀ ggml_backend_webgpu_event_wait(ggml_backend_t backend, ggml_backend_event_t event) {
+    GGML_ਅਣਵਰਤਿਆ(backend);
+    ggml_backend_webgpu_device_event_synchronize(ਖਾਲੀ_ਸੂਚਕ, event);
 }
 
-static void ggml_backend_webgpu_set_tensor_async(ggml_backend_t backend,
+ਸਥਿਰ ਖਾਲੀ ggml_backend_webgpu_ਸੈੱਟ_tensor_async(ggml_backend_t backend,
                                                  ggml_tensor *  tensor,
-                                                 const void *   data,
-                                                 size_t         offset,
+                                                 ਅਚਲ ਖਾਲੀ *   ਅੰਕੜੇ,
+                                                 size_t         ਵਿੱਥ,
                                                  size_t         size) {
-    GGML_UNUSED(backend);
-    auto * buf_ctx      = (ggml_backend_webgpu_buffer_context *) tensor->buffer->context;
-    size_t total_offset = ggml_webgpu_tensor_offset(tensor) + offset;
+    GGML_ਅਣਵਰਤਿਆ(backend);
+    ਸਵੈਚਾਲਿਤ * buf_ctx      = (ggml_backend_webgpu_ਬਫਰ_context *) tensor->ਬਫਰ->context;
+    size_t ਕੁੱਲ_ਵਿੱਥ = ggml_webgpu_tensor_ਵਿੱਥ(tensor) + ਵਿੱਥ;
 
     // Write aligned portion
-    buf_ctx->global_ctx->queue.WriteBuffer(buf_ctx->buffer, total_offset, data, (size / 4) * 4);
+    buf_ctx->global_ctx->queue.Write_ਬਫਰ(buf_ctx->ਬਫਰ, ਕੁੱਲ_ਵਿੱਥ, ਅੰਕੜੇ, (size / 4) * 4);
 
-    if (size % 4 != 0) {
+    ਜੇ (size % 4 != 0) {
         // If size is not a multiple of 4, we need to memset the remaining bytes
-        size_t remaining_size = size % 4;
+        size_t ਬਚਿਆ_ਮਾਪ = size % 4;
 
         // pack the remaining bytes into a uint32_t
         uint32_t val32 = 0;
 
-        for (size_t i = 0; i < remaining_size; i++) {
-            ((uint8_t *) &val32)[i] = ((const uint8_t *) data)[size - remaining_size + i];
+        ਲਈ (size_t i = 0; i < ਬਚਿਆ_ਮਾਪ; i++) {
+            ((uint8_t *) &val32)[i] = ((ਅਚਲ uint8_t *) ਅੰਕੜੇ)[size - ਬਚਿਆ_ਮਾਪ + i];
         }
         // memset the remaining bytes
-        ggml_backend_webgpu_buffer_memset(buf_ctx->global_ctx, buf_ctx->buffer, val32,
-                                          total_offset + (size - remaining_size), remaining_size);
+        ggml_backend_webgpu_ਬਫਰ_memset(buf_ctx->global_ctx, buf_ctx->ਬਫਰ, val32,
+                                          ਕੁੱਲ_ਵਿੱਥ + (size - ਬਚਿਆ_ਮਾਪ), ਬਚਿਆ_ਮਾਪ);
     }
 }
 
-static void ggml_backend_webgpu_synchronize(ggml_backend_t backend) {
+ਸਥਿਰ ਖਾਲੀ ggml_backend_webgpu_synchronize(ggml_backend_t backend) {
     ggml_backend_webgpu_context * backend_ctx = (ggml_backend_webgpu_context *) backend->context;
-    ggml_backend_webgpu_wait_queue(backend_ctx->webgpu_ctx->global_ctx);
+    ggml_backend_webgpu_wait_ਕਤਾਰ(backend_ctx->webgpu_ctx->global_ctx);
 }
 
-static ggml_backend_i ggml_backend_webgpu_i = {
+ਸਥਿਰ ggml_backend_i ggml_backend_webgpu_i = {
     /* .get_name                = */ ggml_backend_webgpu_name,
     /* .free                    = */ ggml_backend_webgpu_free,
-    /* .set_tensor_async        = */ ggml_backend_webgpu_set_tensor_async,
-    /* .get_tensor_async        = */ NULL,
-    /* .set_tensor_2d_async     = */ NULL,
-    /* .get_tensor_2d_async     = */ NULL,
-    /* .cpy_tensor_async        = */ NULL,
+    /* .set_tensor_async        = */ ggml_backend_webgpu_ਸੈੱਟ_tensor_async,
+    /* .get_tensor_async        = */ ਨਿਰਾ,
+    /* .set_tensor_2d_async     = */ ਨਿਰਾ,
+    /* .get_tensor_2d_async     = */ ਨਿਰਾ,
+    /* .cpy_tensor_async        = */ ਨਿਰਾ,
     /* .synchronize             = */ ggml_backend_webgpu_synchronize,
-    /* .graph_plan_create       = */ NULL,
-    /* .graph_plan_free         = */ NULL,
-    /* .graph_plan_update       = */ NULL,
-    /* .graph_plan_compute      = */ NULL,
-    /* .graph_compute           = */ ggml_backend_webgpu_graph_compute,
-    /* .event_record            = */ ggml_backend_webgpu_event_record,
+    /* .graph_plan_create       = */ ਨਿਰਾ,
+    /* .graph_plan_free         = */ ਨਿਰਾ,
+    /* .graph_plan_update       = */ ਨਿਰਾ,
+    /* .graph_plan_compute      = */ ਨਿਰਾ,
+    /* .graph_compute           = */ ggml_backend_webgpu_ਗ੍ਰਾਫ_compute,
+    /* .event_record            = */ ggml_backend_webgpu_event_ਰਿਕਾਰਡ,
     /* .event_wait              = */ ggml_backend_webgpu_event_wait,
-    /* .graph_optimize          = */ NULL,
+    /* .graph_optimize          = */ ਨਿਰਾ,
 };
 
 /* End GGML Backend Interface */
 
 /* GGML Backend Buffer Interface */
 
-static void ggml_backend_webgpu_buffer_free_buffer(ggml_backend_buffer_t buffer) {
-    ggml_backend_webgpu_buffer_context * ctx = static_cast<ggml_backend_webgpu_buffer_context *>(buffer->context);
-    if (ctx != nullptr && ctx->buffer != nullptr) {
-        ctx->buffer.Destroy();
-        delete ctx;
+ਸਥਿਰ ਖਾਲੀ ggml_backend_webgpu_ਬਫਰ_free_ਬਫਰ(ggml_backend_ਬਫਰ_t ਬਫਰ) {
+    ggml_backend_webgpu_ਬਫਰ_context * ctx = static_cast<ggml_backend_webgpu_ਬਫਰ_context *>(ਬਫਰ->context);
+    ਜੇ (ctx != ਖਾਲੀ_ਸੂਚਕ && ctx->ਬਫਰ != ਖਾਲੀ_ਸੂਚਕ) {
+        ctx->ਬਫਰ.Destroy();
+        ਮਿਟਾਓ ctx;
     }
 }
 
 // Returns the "fake" base pointer.
-static void * ggml_backend_webgpu_buffer_get_base(ggml_backend_buffer_t buffer) {
-    GGML_UNUSED(buffer);
-    return webgpu_ptr_base;
+ਸਥਿਰ ਖਾਲੀ * ggml_backend_webgpu_ਬਫਰ_get_ਅਧਾਰ(ggml_backend_ਬਫਰ_t ਬਫਰ) {
+    GGML_ਅਣਵਰਤਿਆ(ਬਫਰ);
+    ਵਾਪਸ webgpu_ptr_ਅਧਾਰ;
 }
 
-static void ggml_backend_webgpu_buffer_memset_tensor(ggml_backend_buffer_t buffer,
+ਸਥਿਰ ਖਾਲੀ ggml_backend_webgpu_ਬਫਰ_memset_tensor(ggml_backend_ਬਫਰ_t ਬਫਰ,
                                                      ggml_tensor *         tensor,
                                                      uint8_t               value,
-                                                     size_t                offset,
+                                                     size_t                ਵਿੱਥ,
                                                      size_t                size) {
-    if (size == 0) {
+    ਜੇ (size == 0) {
         WEBGPU_LOG_DEBUG(
             "ggml_backend_webgpu_buffer_memset_tensor: size is zero, "
             "nothing to do.");
-        return;
+        ਵਾਪਸ;
     }
 
-    WEBGPU_CPU_PROFILE_TOTAL_START(memset_tensor);
+    WEBGPU_CPU_PROFILE_ਕੁੱਲ_ਸ਼ੁਰੂ(memset_tensor);
 
-    ggml_backend_webgpu_buffer_context * buf_ctx = (ggml_backend_webgpu_buffer_context *) buffer->context;
+    ggml_backend_webgpu_ਬਫਰ_context * buf_ctx = (ggml_backend_webgpu_ਬਫਰ_context *) ਬਫਰ->context;
 
     WEBGPU_LOG_DEBUG("ggml_backend_webgpu_buffer_memset_tensor(" << buf_ctx->label << ", " << tensor << ", " << value
-                                                                 << ", " << offset << ", " << size << ")");
+                                                                 << ", " << ਵਿੱਥ << ", " << size << ")");
 
-    size_t total_offset = ggml_webgpu_tensor_offset(tensor) + offset;
+    size_t ਕੁੱਲ_ਵਿੱਥ = ggml_webgpu_tensor_ਵਿੱਥ(tensor) + ਵਿੱਥ;
 
     // This is a trick to set all bytes of a u32 to the same 1 byte value.
     uint32_t val32 = (uint32_t) value * 0x01010101;
-    ggml_backend_webgpu_buffer_memset(buf_ctx->global_ctx, buf_ctx->buffer, val32, total_offset, size);
-    WEBGPU_CPU_PROFILE_TOTAL_END(memset_tensor, buf_ctx->global_ctx);
+    ggml_backend_webgpu_ਬਫਰ_memset(buf_ctx->global_ctx, buf_ctx->ਬਫਰ, val32, ਕੁੱਲ_ਵਿੱਥ, size);
+    WEBGPU_CPU_PROFILE_ਕੁੱਲ_ਸਿਰਾ(memset_tensor, buf_ctx->global_ctx);
 }
 
-static void ggml_backend_webgpu_buffer_set_tensor(ggml_backend_buffer_t buffer,
+ਸਥਿਰ ਖਾਲੀ ggml_backend_webgpu_ਬਫਰ_ਸੈੱਟ_tensor(ggml_backend_ਬਫਰ_t ਬਫਰ,
                                                   ggml_tensor *         tensor,
-                                                  const void *          data,
-                                                  size_t                offset,
+                                                  ਅਚਲ ਖਾਲੀ *          ਅੰਕੜੇ,
+                                                  size_t                ਵਿੱਥ,
                                                   size_t                size) {
-    WEBGPU_CPU_PROFILE_TOTAL_START(set_tensor);
-    ggml_backend_webgpu_buffer_context * buf_ctx = (ggml_backend_webgpu_buffer_context *) buffer->context;
+    WEBGPU_CPU_PROFILE_ਕੁੱਲ_ਸ਼ੁਰੂ(ਸੈੱਟ_tensor);
+    ggml_backend_webgpu_ਬਫਰ_context * buf_ctx = (ggml_backend_webgpu_ਬਫਰ_context *) ਬਫਰ->context;
 
-    WEBGPU_LOG_DEBUG("ggml_backend_webgpu_buffer_set_tensor(" << buf_ctx->label << ", " << tensor << ", " << data
-                                                              << ", " << offset << ", " << size << ")");
+    WEBGPU_LOG_DEBUG("ggml_backend_webgpu_buffer_set_tensor(" << buf_ctx->label << ", " << tensor << ", " << ਅੰਕੜੇ
+                                                              << ", " << ਵਿੱਥ << ", " << size << ")");
 
-    size_t total_offset = ggml_webgpu_tensor_offset(tensor) + offset;
+    size_t ਕੁੱਲ_ਵਿੱਥ = ggml_webgpu_tensor_ਵਿੱਥ(tensor) + ਵਿੱਥ;
 
     // WriteBuffer needs the offset and the size to be multiples of 4.
     // Write the misaligned head bytes using compute memset, then increment total_offset
     // and data pointer so that they are 4-aligned.
-    if (total_offset % 4 != 0) {
-        size_t lane = total_offset % 4;  // in-word lane the head starts at (the tail below always starts at 0)
-        size_t head = std::min<size_t>(4 - lane, size);
+    ਜੇ (ਕੁੱਲ_ਵਿੱਥ % 4 != 0) {
+        size_t lane = ਕੁੱਲ_ਵਿੱਥ % 4;  // in-word lane the head starts at (the tail below always starts at 0)
+        size_t ਸਿਰ = std::min<size_t>(4 - lane, size);
 
         // Pack head bytes into a uint32_t
-        uint32_t head_val = 0;
-        for (size_t i = 0; i < head; i++) {
-            ((uint8_t *) &head_val)[lane + i] = ((const uint8_t *) data)[i];
+        uint32_t ਸਿਰ_val = 0;
+        ਲਈ (size_t i = 0; i < ਸਿਰ; i++) {
+            ((uint8_t *) &ਸਿਰ_val)[lane + i] = ((ਅਚਲ uint8_t *) ਅੰਕੜੇ)[i];
         }
-        ggml_backend_webgpu_buffer_memset(buf_ctx->global_ctx, buf_ctx->buffer, head_val, total_offset, head);
+        ggml_backend_webgpu_ਬਫਰ_memset(buf_ctx->global_ctx, buf_ctx->ਬਫਰ, ਸਿਰ_val, ਕੁੱਲ_ਵਿੱਥ, ਸਿਰ);
 
-        total_offset += head;
-        size -= head;
-        data = (const uint8_t *) data + head;
+        ਕੁੱਲ_ਵਿੱਥ += ਸਿਰ;
+        size -= ਸਿਰ;
+        ਅੰਕੜੇ = (ਅਚਲ uint8_t *) ਅੰਕੜੇ + ਸਿਰ;
     }
 
-    if (size > 0) {
-        buf_ctx->global_ctx->queue.WriteBuffer(buf_ctx->buffer, total_offset, data, (size / 4) * 4);
+    ਜੇ (size > 0) {
+        buf_ctx->global_ctx->queue.Write_ਬਫਰ(buf_ctx->ਬਫਰ, ਕੁੱਲ_ਵਿੱਥ, ਅੰਕੜੇ, (size / 4) * 4);
     }
 
-    if (size % 4 != 0) {
+    ਜੇ (size % 4 != 0) {
         // If size is not a multiple of 4, we need to memset the remaining bytes
-        size_t remaining_size = size % 4;
+        size_t ਬਚਿਆ_ਮਾਪ = size % 4;
 
         // pack the remaining bytes into a uint32_t
         uint32_t val32 = 0;
 
-        for (size_t i = 0; i < remaining_size; i++) {
-            ((uint8_t *) &val32)[i] = ((const uint8_t *) data)[size - remaining_size + i];
+        ਲਈ (size_t i = 0; i < ਬਚਿਆ_ਮਾਪ; i++) {
+            ((uint8_t *) &val32)[i] = ((ਅਚਲ uint8_t *) ਅੰਕੜੇ)[size - ਬਚਿਆ_ਮਾਪ + i];
         }
         // memset the remaining bytes
-        ggml_backend_webgpu_buffer_memset(buf_ctx->global_ctx, buf_ctx->buffer, val32,
-                                          total_offset + (size - remaining_size), remaining_size);
+        ggml_backend_webgpu_ਬਫਰ_memset(buf_ctx->global_ctx, buf_ctx->ਬਫਰ, val32,
+                                          ਕੁੱਲ_ਵਿੱਥ + (size - ਬਚਿਆ_ਮਾਪ), ਬਚਿਆ_ਮਾਪ);
     }
-    WEBGPU_CPU_PROFILE_TOTAL_END(set_tensor, buf_ctx->global_ctx);
+    WEBGPU_CPU_PROFILE_ਕੁੱਲ_ਸਿਰਾ(ਸੈੱਟ_tensor, buf_ctx->global_ctx);
 }
 
-static void ggml_backend_webgpu_buffer_get_tensor(ggml_backend_buffer_t buffer,
-                                                  const ggml_tensor *   tensor,
-                                                  void *                data,
-                                                  size_t                offset,
+ਸਥਿਰ ਖਾਲੀ ggml_backend_webgpu_ਬਫਰ_get_tensor(ggml_backend_ਬਫਰ_t ਬਫਰ,
+                                                  ਅਚਲ ggml_tensor *   tensor,
+                                                  ਖਾਲੀ *                ਅੰਕੜੇ,
+                                                  size_t                ਵਿੱਥ,
                                                   size_t                size) {
-    WEBGPU_CPU_PROFILE_TOTAL_START(get_tensor);
-    ggml_backend_webgpu_buffer_context * buf_ctx = (ggml_backend_webgpu_buffer_context *) buffer->context;
-    WEBGPU_LOG_DEBUG("ggml_backend_webgpu_buffer_get_tensor(" << buf_ctx->label << ", " << tensor << ", " << data
-                                                              << ", " << offset << ", " << size << ")");
+    WEBGPU_CPU_PROFILE_ਕੁੱਲ_ਸ਼ੁਰੂ(get_tensor);
+    ggml_backend_webgpu_ਬਫਰ_context * buf_ctx = (ggml_backend_webgpu_ਬਫਰ_context *) ਬਫਰ->context;
+    WEBGPU_LOG_DEBUG("ggml_backend_webgpu_buffer_get_tensor(" << buf_ctx->label << ", " << tensor << ", " << ਅੰਕੜੇ
+                                                              << ", " << ਵਿੱਥ << ", " << size << ")");
     wgpu::Device device = buf_ctx->global_ctx->device;
 
-    size_t total_offset = ggml_webgpu_tensor_offset(tensor) + offset;
+    size_t ਕੁੱਲ_ਵਿੱਥ = ggml_webgpu_tensor_ਵਿੱਥ(tensor) + ਵਿੱਥ;
 
-    size_t local_offset = total_offset % 4;
-    if (local_offset != 0) {
+    size_t local_ਵਿੱਥ = ਕੁੱਲ_ਵਿੱਥ % 4;
+    ਜੇ (local_ਵਿੱਥ != 0) {
         // If offset is not a multiple of 4, we need to round it down to the previous
         // multiple of 4
-        total_offset -= local_offset;
+        ਕੁੱਲ_ਵਿੱਥ -= local_ਵਿੱਥ;
     }
 
-    size_t final_size = size + local_offset;
-    if (final_size % 4 != 0) {
+    size_t final_ਮਾਪ = size + local_ਵਿੱਥ;
+    ਜੇ (final_ਮਾਪ % 4 != 0) {
         // If size is not a multiple of 4, we need to round it up to the next
         // multiple of 4
-        final_size += 4 - (final_size % 4);
+        final_ਮਾਪ += 4 - (final_ਮਾਪ % 4);
     }
 
-    std::lock_guard<std::recursive_mutex> lock(buf_ctx->global_ctx->mutex);
+    std::lock_guard<std::recursive_mutex> ਤਾਲਾ(buf_ctx->global_ctx->mutex);
 
-    if (buf_ctx->global_ctx->get_tensor_staging_buf == nullptr ||
-        buf_ctx->global_ctx->get_tensor_staging_buf.GetSize() < final_size) {
+    ਜੇ (buf_ctx->global_ctx->get_tensor_staging_buf == ਖਾਲੀ_ਸੂਚਕ ||
+        buf_ctx->global_ctx->get_tensor_staging_buf.Get_ਮਾਪ() < final_ਮਾਪ) {
         // Create a new staging buffer if it doesn't exist or is too small
-        if (buf_ctx->global_ctx->get_tensor_staging_buf) {
+        ਜੇ (buf_ctx->global_ctx->get_tensor_staging_buf) {
             buf_ctx->global_ctx->get_tensor_staging_buf.Destroy();
         }
-        ggml_webgpu_create_buffer(device, buf_ctx->global_ctx->get_tensor_staging_buf, final_size,
-                                  wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::MapRead, "get_tensor_staging_buf");
+        ggml_webgpu_create_ਬਫਰ(device, buf_ctx->global_ctx->get_tensor_staging_buf, final_ਮਾਪ,
+                                  wgpu::ਬਫਰ_Usage::CopyDst | wgpu::ਬਫਰ_Usage::MapRead, "get_tensor_staging_buf");
     }
 
     // Copy the data from the buffer to the staging buffer
     wgpu::CommandEncoder encoder = device.CreateCommandEncoder();
-    encoder.CopyBufferToBuffer(buf_ctx->buffer, total_offset, buf_ctx->global_ctx->get_tensor_staging_buf, 0,
-                               final_size);
-    wgpu::CommandBuffer commands = encoder.Finish();
+    encoder.Copy_ਬਫਰ_ਮੰਜ਼ਿਲ_ਬਫਰ(buf_ctx->ਬਫਰ, ਕੁੱਲ_ਵਿੱਥ, buf_ctx->global_ctx->get_tensor_staging_buf, 0,
+                               final_ਮਾਪ);
+    wgpu::Command_ਬਫਰ commands = encoder.ਅੰਤ_2();
 
     // Submit the command buffer to the queue
     buf_ctx->global_ctx->queue.Submit(1, &commands);
 
     // Map the staging buffer to read the data
-    ggml_backend_webgpu_map_buffer(buf_ctx->global_ctx, buf_ctx->global_ctx->get_tensor_staging_buf,
-                                   wgpu::MapMode::Read, 0, final_size);
+    ggml_backend_webgpu_map_ਬਫਰ(buf_ctx->global_ctx, buf_ctx->global_ctx->get_tensor_staging_buf,
+                                   wgpu::Map_ਬਹੁਲਕ::Read, 0, final_ਮਾਪ);
     // Must specify size here since the staging buffer might be larger than the tensor size
-    const void * mapped_range = buf_ctx->global_ctx->get_tensor_staging_buf.GetConstMappedRange(0, final_size);
+    ਅਚਲ ਖਾਲੀ * mapped_range = buf_ctx->global_ctx->get_tensor_staging_buf.GetConstMappedRange(0, final_ਮਾਪ);
 
     // Copy the data from the mapped range to the output buffer
-    std::memcpy(data, (const void *) ((const char *) mapped_range + local_offset), size);
+    std::ਸਮ੍ਰਿਤੀ_ਨਕਲ(ਅੰਕੜੇ, (ਅਚਲ ਖਾਲੀ *) ((ਅਚਲ ਅੱਖਰ *) mapped_range + local_ਵਿੱਥ), size);
     buf_ctx->global_ctx->get_tensor_staging_buf.Unmap();
-    WEBGPU_CPU_PROFILE_TOTAL_END(get_tensor, buf_ctx->global_ctx);
+    WEBGPU_CPU_PROFILE_ਕੁੱਲ_ਸਿਰਾ(get_tensor, buf_ctx->global_ctx);
 }
 
-static void ggml_backend_webgpu_buffer_clear(ggml_backend_buffer_t buffer, uint8_t value) {
-    WEBGPU_LOG_DEBUG("ggml_backend_webgpu_buffer_clear(" << buffer << ", " << (uint32_t) value << ")");
-    WEBGPU_CPU_PROFILE_TOTAL_START(clear);
-    ggml_backend_webgpu_buffer_context * buf_ctx = (ggml_backend_webgpu_buffer_context *) buffer->context;
-    ggml_backend_webgpu_buffer_memset(buf_ctx->global_ctx, buf_ctx->buffer, value, 0, buffer->size);
-    WEBGPU_CPU_PROFILE_TOTAL_END(clear, buf_ctx->global_ctx);
+ਸਥਿਰ ਖਾਲੀ ggml_backend_webgpu_ਬਫਰ_clear(ggml_backend_ਬਫਰ_t ਬਫਰ, uint8_t value) {
+    WEBGPU_LOG_DEBUG("ggml_backend_webgpu_buffer_clear(" << ਬਫਰ << ", " << (uint32_t) value << ")");
+    WEBGPU_CPU_PROFILE_ਕੁੱਲ_ਸ਼ੁਰੂ(clear);
+    ggml_backend_webgpu_ਬਫਰ_context * buf_ctx = (ggml_backend_webgpu_ਬਫਰ_context *) ਬਫਰ->context;
+    ggml_backend_webgpu_ਬਫਰ_memset(buf_ctx->global_ctx, buf_ctx->ਬਫਰ, value, 0, ਬਫਰ->size);
+    WEBGPU_CPU_PROFILE_ਕੁੱਲ_ਸਿਰਾ(clear, buf_ctx->global_ctx);
 }
 
-static ggml_backend_buffer_i ggml_backend_webgpu_buffer_interface = {
-    /* .free_buffer     = */ ggml_backend_webgpu_buffer_free_buffer,
-    /* .get_base        = */ ggml_backend_webgpu_buffer_get_base,
-    /* .init_tensor     = */ NULL,  // TODO: optional, needed?
-    /* .memset_tensor   = */ ggml_backend_webgpu_buffer_memset_tensor,
-    /* .set_tensor      = */ ggml_backend_webgpu_buffer_set_tensor,
-    /* .get_tensor      = */ ggml_backend_webgpu_buffer_get_tensor,
-    /* .set_tensor_2d   = */ NULL,
-    /* .get_tensor_2d   = */ NULL,
-    /* .cpy_tensor      = */ NULL,  // TODO: optional, implement this
-    /* .clear           = */ ggml_backend_webgpu_buffer_clear,
-    /* .reset           = */ NULL,  // TODO: optional, think it coordinates with
+ਸਥਿਰ ggml_backend_ਬਫਰ_i ggml_backend_webgpu_ਬਫਰ_interface = {
+    /* .free_buffer     = */ ggml_backend_webgpu_ਬਫਰ_free_ਬਫਰ,
+    /* .get_base        = */ ggml_backend_webgpu_ਬਫਰ_get_ਅਧਾਰ,
+    /* .init_tensor     = */ ਨਿਰਾ,  // TODO: optional, needed?
+    /* .memset_tensor   = */ ggml_backend_webgpu_ਬਫਰ_memset_tensor,
+    /* .set_tensor      = */ ggml_backend_webgpu_ਬਫਰ_ਸੈੱਟ_tensor,
+    /* .get_tensor      = */ ggml_backend_webgpu_ਬਫਰ_get_tensor,
+    /* .set_tensor_2d   = */ ਨਿਰਾ,
+    /* .get_tensor_2d   = */ ਨਿਰਾ,
+    /* .cpy_tensor      = */ ਨਿਰਾ,  // TODO: optional, implement this
+    /* .clear           = */ ggml_backend_webgpu_ਬਫਰ_clear,
+    /* .reset           = */ ਨਿਰਾ,  // TODO: optional, think it coordinates with
                                     // .init_tensor
 };
 
@@ -3939,360 +3939,360 @@ static ggml_backend_buffer_i ggml_backend_webgpu_buffer_interface = {
 
 /* GGML Backend Buffer Type Interface */
 
-static const char * ggml_backend_webgpu_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
+ਸਥਿਰ ਅਚਲ ਅੱਖਰ * ggml_backend_webgpu_ਬਫਰ_type_get_name(ggml_backend_ਬਫਰ_type_t buft) {
     ggml_backend_webgpu_device_context * ctx = static_cast<ggml_backend_webgpu_device_context *>(buft->device->context);
-    return ctx->device_name.c_str();
+    ਵਾਪਸ ctx->device_name.c_str();
 }
 
-static ggml_backend_buffer_t ggml_backend_webgpu_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft,
+ਸਥਿਰ ggml_backend_ਬਫਰ_t ggml_backend_webgpu_ਬਫਰ_type_alloc_ਬਫਰ(ggml_backend_ਬਫਰ_type_t buft,
                                                                           size_t                     size) {
-    static std::atomic<int> buffer_count;
-    int                     buffer_id = buffer_count++;
-    std::string             buf_name  = "tensor_buf" + std::to_string(buffer_id);
-    WEBGPU_LOG_DEBUG("ggml_backend_webgpu_buffer_type_alloc_buffer_" << buffer_id << ": " << size << " bytes");
+    ਸਥਿਰ std::atomic<ਪੂਰਨ> ਬਫਰ_ਗਿਣਤੀ;
+    ਪੂਰਨ                     ਬਫਰ_id = ਬਫਰ_ਗਿਣਤੀ++;
+    std::string             buf_name  = "tensor_buf" + std::to_string(ਬਫਰ_id);
+    WEBGPU_LOG_DEBUG("ggml_backend_webgpu_buffer_type_alloc_buffer_" << ਬਫਰ_id << ": " << size << " bytes");
 
     ggml_backend_webgpu_device_context * ctx = static_cast<ggml_backend_webgpu_device_context *>(buft->device->context);
-    wgpu::Buffer                         buf;
-    ggml_webgpu_create_buffer(ctx->webgpu_global_ctx->device, buf, ROUNDUP_POW2(size, WEBGPU_STORAGE_BUF_BINDING_MULT),
-                              wgpu::BufferUsage::Storage | wgpu::BufferUsage::CopySrc | wgpu::BufferUsage::CopyDst,
+    wgpu::ਬਫਰ_2                         buf;
+    ggml_webgpu_create_ਬਫਰ(ctx->webgpu_global_ctx->device, buf, ROUNDUP_POW2(size, WEBGPU_STORAGE_BUF_BINDING_MULT),
+                              wgpu::ਬਫਰ_Usage::Storage | wgpu::ਬਫਰ_Usage::CopySrc | wgpu::ਬਫਰ_Usage::CopyDst,
                               buf_name.c_str());
 
-    ggml_backend_webgpu_buffer_context * buf_ctx =
-        new ggml_backend_webgpu_buffer_context(buf, buf_name, ctx->webgpu_global_ctx);
+    ggml_backend_webgpu_ਬਫਰ_context * buf_ctx =
+        ਨਵਾਂ ggml_backend_webgpu_ਬਫਰ_context(buf, buf_name, ctx->webgpu_global_ctx);
 
-    return ggml_backend_buffer_init(buft, ggml_backend_webgpu_buffer_interface, buf_ctx, size);
+    ਵਾਪਸ ggml_backend_ਬਫਰ_init(buft, ggml_backend_webgpu_ਬਫਰ_interface, buf_ctx, size);
 }
 
-static size_t ggml_backend_webgpu_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
+ਸਥਿਰ size_t ggml_backend_webgpu_ਬਫਰ_type_get_alignment(ggml_backend_ਬਫਰ_type_t buft) {
     ggml_backend_webgpu_device_context * dev_ctx =
         static_cast<ggml_backend_webgpu_device_context *>(buft->device->context);
-    return dev_ctx->webgpu_global_ctx->capabilities.limits.minStorageBufferOffsetAlignment;
+    ਵਾਪਸ dev_ctx->webgpu_global_ctx->capabilities.limits.min_Storage_ਬਫਰ_ਵਿੱਥ_Alignment;
 }
 
 // maxBufferSize might be larger, but you can't bind more than
 // maxStorageBufferBindingSize to a single binding.
-static size_t ggml_backend_webgpu_buffer_type_get_max_size(ggml_backend_buffer_type_t buft) {
+ਸਥਿਰ size_t ggml_backend_webgpu_ਬਫਰ_type_get_max_ਮਾਪ(ggml_backend_ਬਫਰ_type_t buft) {
     ggml_backend_webgpu_device_context * dev_ctx =
         static_cast<ggml_backend_webgpu_device_context *>(buft->device->context);
-    return dev_ctx->webgpu_global_ctx->capabilities.limits.maxStorageBufferBindingSize;
+    ਵਾਪਸ dev_ctx->webgpu_global_ctx->capabilities.limits.max_Storage_ਬਫਰ_Binding_ਮਾਪ;
 }
 
-static size_t ggml_backend_webgpu_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft,
-                                                             const ggml_tensor *        tensor) {
+ਸਥਿਰ size_t ggml_backend_webgpu_ਬਫਰ_type_get_alloc_ਮਾਪ(ggml_backend_ਬਫਰ_type_t buft,
+                                                             ਅਚਲ ggml_tensor *        tensor) {
     ggml_backend_webgpu_device_context * ctx = static_cast<ggml_backend_webgpu_device_context *>(buft->device->context);
     size_t                               res = ggml_nbytes(tensor);
-    switch (tensor->op) {
-        case GGML_OP_ARGSORT:
-            res = ROUNDUP_POW2(res * 2 + ctx->webgpu_global_ctx->capabilities.limits.minStorageBufferOffsetAlignment,
+    ਚੋਣ (tensor->op) {
+        ਹਾਲਤ GGML_OP_ARGSORT:
+            res = ROUNDUP_POW2(res * 2 + ctx->webgpu_global_ctx->capabilities.limits.min_Storage_ਬਫਰ_ਵਿੱਥ_Alignment,
                                WEBGPU_STORAGE_BUF_BINDING_MULT);
-            break;
-        case GGML_OP_TOP_K:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_ਸਿਖਰ_K:
             {
-                const ggml_tensor * src0 = tensor->src[0];
-                if (src0) {
-                    const size_t full = sizeof(int32_t) * ggml_nelements(src0);
+                ਅਚਲ ggml_tensor * src0 = tensor->src[0];
+                ਜੇ (src0) {
+                    ਅਚਲ size_t ਭਰਿਆ = ਆਕਾਰ(int32_t) * ggml_nelements(src0);
                     res               = ROUNDUP_POW2(
-                        full * 2 + ctx->webgpu_global_ctx->capabilities.limits.minStorageBufferOffsetAlignment,
+                        ਭਰਿਆ * 2 + ctx->webgpu_global_ctx->capabilities.limits.min_Storage_ਬਫਰ_ਵਿੱਥ_Alignment,
                         WEBGPU_STORAGE_BUF_BINDING_MULT);
                 }
             }
-            break;
-        case GGML_OP_FLASH_ATTN_EXT:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_FLASH_ATTN_EXT:
             {
-                const ggml_tensor * Q            = tensor->src[0];
-                const ggml_tensor * K            = tensor->src[1];
-                const ggml_tensor * V            = tensor->src[2];
-                const ggml_tensor * mask         = tensor->src[3];
-                const auto &        capabilities = ctx->webgpu_global_ctx->capabilities;
-                if (ggml_webgpu_flash_attn_use_vec_path(ctx->webgpu_global_ctx, Q, K, V)) {
-                    const bool kv_direct =
-                        ggml_webgpu_flash_attn_k_direct(Q, K, GGML_WEBGPU_FLASH_ATTN_TILE_KV_VEC_WIDTH) ||
-                        ggml_webgpu_flash_attn_v_direct(Q, V, GGML_WEBGPU_FLASH_ATTN_TILE_KV_VEC_WIDTH);
-                    const uint32_t kv_tile = ggml_webgpu_flash_attn_get_vec_kv_tile(
-                        capabilities.limits.maxComputeWorkgroupStorageSize, (uint32_t) Q->ne[0], (uint32_t) V->ne[0],
-                        mask != nullptr, kv_direct);
+                ਅਚਲ ggml_tensor * Q            = tensor->src[0];
+                ਅਚਲ ggml_tensor * K            = tensor->src[1];
+                ਅਚਲ ggml_tensor * V            = tensor->src[2];
+                ਅਚਲ ggml_tensor * ਨਕਾਬ         = tensor->src[3];
+                ਅਚਲ ਸਵੈਚਾਲਿਤ &        capabilities = ctx->webgpu_global_ctx->capabilities;
+                ਜੇ (ggml_webgpu_flash_attn_use_vec_ਰਸਤਾ(ctx->webgpu_global_ctx, Q, K, V)) {
+                    ਅਚਲ ਤਾਰਕਿਕ kv_ਸਿੱਧਾ =
+                        ggml_webgpu_flash_attn_k_ਸਿੱਧਾ(Q, K, GGML_WEBGPU_FLASH_ATTN_TILE_KV_VEC_ਚੌੜਾਈ) ||
+                        ggml_webgpu_flash_attn_v_ਸਿੱਧਾ(Q, V, GGML_WEBGPU_FLASH_ATTN_TILE_KV_VEC_ਚੌੜਾਈ);
+                    ਅਚਲ uint32_t kv_tile = ggml_webgpu_flash_attn_get_vec_kv_tile(
+                        capabilities.limits.max_Compute_Workgroup_Storage_ਮਾਪ, (uint32_t) Q->ne[0], (uint32_t) V->ne[0],
+                        ਨਕਾਬ != ਖਾਲੀ_ਸੂਚਕ, kv_ਸਿੱਧਾ);
 
-                    const uint32_t vec_nwg_cap = capabilities.min_subgroup_size;
+                    ਅਚਲ uint32_t vec_nwg_cap = capabilities.min_subgroup_ਮਾਪ;
                     uint32_t       nwg = ggml_webgpu_flash_attn_vec_nwg(vec_nwg_cap, kv_tile, (uint32_t) K->ne[1]);
 
-                    const size_t   align = capabilities.limits.minStorageBufferOffsetAlignment;
-                    const uint64_t nrows = (uint64_t) Q->ne[1] * Q->ne[2] * Q->ne[3];
-                    if (nwg > 1u) {
-                        const uint64_t tmp_data_elems  = nrows * (uint64_t) V->ne[0] * nwg;
-                        const uint64_t tmp_stats_elems = nrows * 2u * nwg;
-                        const size_t   tmp_size_bytes = ROUNDUP_POW2((tmp_data_elems + tmp_stats_elems) * sizeof(float),
+                    ਅਚਲ size_t   align = capabilities.limits.min_Storage_ਬਫਰ_ਵਿੱਥ_Alignment;
+                    ਅਚਲ uint64_t nrows = (uint64_t) Q->ne[1] * Q->ne[2] * Q->ne[3];
+                    ਜੇ (nwg > 1u) {
+                        ਅਚਲ uint64_t tmp_ਅੰਕੜੇ_elems  = nrows * (uint64_t) V->ne[0] * nwg;
+                        ਅਚਲ uint64_t tmp_stats_elems = nrows * 2u * nwg;
+                        ਅਚਲ size_t   tmp_ਮਾਪ_ਬਾਈਟਾਂ = ROUNDUP_POW2((tmp_ਅੰਕੜੇ_elems + tmp_stats_elems) * ਆਕਾਰ(ਦਸ਼ਮਲਵ),
                                                                      WEBGPU_STORAGE_BUF_BINDING_MULT);
-                        res += tmp_size_bytes + align;
-                    } else {
+                        res += tmp_ਮਾਪ_ਬਾਈਟਾਂ + align;
+                    } ਨਹੀਂਤਾਂ {
                         res += WEBGPU_STORAGE_BUF_BINDING_MULT + align;
                     }
-                    if (mask != nullptr) {
-                        const uint32_t blk_nblk0       = CEIL_DIV((uint32_t) K->ne[1], kv_tile);
-                        const uint32_t blk_nblk1       = CEIL_DIV((uint32_t) Q->ne[1], 1u);
-                        const uint32_t stride_mask3    = (uint32_t) (mask->nb[3] / ggml_type_size(mask->type));
-                        const uint32_t blk_batch_count = stride_mask3 > 0 ? (uint32_t) Q->ne[3] : 1u;
-                        const uint64_t blk_elems       = (uint64_t) blk_nblk0 * blk_nblk1 * blk_batch_count;
-                        const size_t   blk_size_bytes =
-                            ROUNDUP_POW2(blk_elems * sizeof(uint32_t), WEBGPU_STORAGE_BUF_BINDING_MULT);
-                        res += blk_size_bytes + align;
+                    ਜੇ (ਨਕਾਬ != ਖਾਲੀ_ਸੂਚਕ) {
+                        ਅਚਲ uint32_t blk_nblk0       = CEIL_DIV((uint32_t) K->ne[1], kv_tile);
+                        ਅਚਲ uint32_t blk_nblk1       = CEIL_DIV((uint32_t) Q->ne[1], 1u);
+                        ਅਚਲ uint32_t stride_mask3    = (uint32_t) (ਨਕਾਬ->nb[3] / ggml_type_ਮਾਪ(ਨਕਾਬ->type));
+                        ਅਚਲ uint32_t blk_batch_ਗਿਣਤੀ = stride_mask3 > 0 ? (uint32_t) Q->ne[3] : 1u;
+                        ਅਚਲ uint64_t blk_elems       = (uint64_t) blk_nblk0 * blk_nblk1 * blk_batch_ਗਿਣਤੀ;
+                        ਅਚਲ size_t   blk_ਮਾਪ_ਬਾਈਟਾਂ =
+                            ROUNDUP_POW2(blk_elems * ਆਕਾਰ(uint32_t), WEBGPU_STORAGE_BUF_BINDING_MULT);
+                        res += blk_ਮਾਪ_ਬਾਈਟਾਂ + align;
                     }
                     res = ROUNDUP_POW2(res, WEBGPU_STORAGE_BUF_BINDING_MULT);
                 }
             }
-            break;
-        case GGML_OP_MUL_MAT:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_MUL_MAT:
             {
-                const ggml_tensor * src0 = tensor->src[0];
-                const ggml_tensor * src1 = tensor->src[1];
-                bool                use_mmvq =
-                    ggml_webgpu_can_use_mmvq(src0, src1, ctx->webgpu_global_ctx->capabilities.supports_dot_product,
+                ਅਚਲ ggml_tensor * src0 = tensor->src[0];
+                ਅਚਲ ggml_tensor * src1 = tensor->src[1];
+                ਤਾਰਕਿਕ                use_mmvq =
+                    ggml_webgpu_can_use_mmvq(src0, src1, ctx->webgpu_global_ctx->capabilities.supports_dot_ਗੁਣਨਫਲ,
                                              ctx->webgpu_global_ctx->vendor);
-                if (use_mmvq) {
-                    const size_t q8_src1_size = src1->ne[3] * src1->ne[2] * src1->ne[1] *
+                ਜੇ (use_mmvq) {
+                    ਅਚਲ size_t q8_src1_ਮਾਪ = src1->ne[3] * src1->ne[2] * src1->ne[1] *
                                                 (36 /* sizeof(q8_1) */ * (src1->ne[0] / /* block_size */ 32));
-                    res = ROUNDUP_POW2(res + q8_src1_size +
-                                           ctx->webgpu_global_ctx->capabilities.limits.minStorageBufferOffsetAlignment,
+                    res = ROUNDUP_POW2(res + q8_src1_ਮਾਪ +
+                                           ctx->webgpu_global_ctx->capabilities.limits.min_Storage_ਬਫਰ_ਵਿੱਥ_Alignment,
                                        WEBGPU_STORAGE_BUF_BINDING_MULT);
                 }
             }
-            break;
-        case GGML_OP_MUL_MAT_ID:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_MUL_MAT_ID:
             {
-                const ggml_tensor * src0 = tensor->src[0];
-                const ggml_tensor * src1 = tensor->src[1];
-                if (src0 && src1) {
-                    const size_t ids_cache_size = sizeof(uint32_t) * tensor->ne[1] * tensor->ne[2];
-                    const size_t ids_tiles_size = ggml_webgpu_mul_mat_id_tiles_nbytes(tensor);
+                ਅਚਲ ggml_tensor * src0 = tensor->src[0];
+                ਅਚਲ ggml_tensor * src1 = tensor->src[1];
+                ਜੇ (src0 && src1) {
+                    ਅਚਲ size_t ids_cache_ਮਾਪ = ਆਕਾਰ(uint32_t) * tensor->ne[1] * tensor->ne[2];
+                    ਅਚਲ size_t ids_tiles_ਮਾਪ = ggml_webgpu_mul_mat_id_tiles_nbytes(tensor);
                     res                         = ROUNDUP_POW2(
-                        res + ids_cache_size + ids_tiles_size +
-                            ctx->webgpu_global_ctx->capabilities.limits.minStorageBufferOffsetAlignment * 2,
+                        res + ids_cache_ਮਾਪ + ids_tiles_ਮਾਪ +
+                            ctx->webgpu_global_ctx->capabilities.limits.min_Storage_ਬਫਰ_ਵਿੱਥ_Alignment * 2,
                         WEBGPU_STORAGE_BUF_BINDING_MULT);
                 }
             }
-            break;
-        default:
-            break;
+            ਰੋਕੋ;
+        ਮੂਲ:
+            ਰੋਕੋ;
     }
-    return res;
+    ਵਾਪਸ res;
 }
 
 /* End GGML Backend Buffer Type Interface */
 
 /* GGML Backend Device Interface */
 
-static const char * ggml_backend_webgpu_device_get_name(ggml_backend_dev_t dev) {
+ਸਥਿਰ ਅਚਲ ਅੱਖਰ * ggml_backend_webgpu_device_get_name(ggml_backend_dev_t dev) {
     ggml_backend_webgpu_device_context * ctx = static_cast<ggml_backend_webgpu_device_context *>(dev->context);
-    return ctx->device_name.c_str();
+    ਵਾਪਸ ctx->device_name.c_str();
 }
 
-static const char * ggml_backend_webgpu_device_get_description(ggml_backend_dev_t dev) {
+ਸਥਿਰ ਅਚਲ ਅੱਖਰ * ggml_backend_webgpu_device_get_description(ggml_backend_dev_t dev) {
     ggml_backend_webgpu_device_context * ctx = static_cast<ggml_backend_webgpu_device_context *>(dev->context);
-    return ctx->device_desc.c_str();
+    ਵਾਪਸ ctx->device_desc.c_str();
 }
 
-static void ggml_backend_webgpu_device_get_memory(ggml_backend_dev_t dev, size_t * free, size_t * total) {
+ਸਥਿਰ ਖਾਲੀ ggml_backend_webgpu_device_get_ਸਮ੍ਰਿਤੀ(ggml_backend_dev_t dev, size_t * ਮੁਕਤ, size_t * ਕੁੱਲ) {
     ggml_backend_webgpu_device_context * ctx = static_cast<ggml_backend_webgpu_device_context *>(dev->context);
     // TODO: for now, return maxBufferSize as both free and total memory
     // Track https://github.com/gpuweb/gpuweb/issues/5505 for updates.
-    uint64_t                             max_buffer_size = ctx->webgpu_global_ctx->capabilities.limits.maxBufferSize;
+    uint64_t                             max_ਬਫਰ_ਮਾਪ = ctx->webgpu_global_ctx->capabilities.limits.max_ਬਫਰ_ਮਾਪ_2;
     // If we're on a 32-bit system, clamp to UINTPTR_MAX
-#if UINTPTR_MAX < UINT64_MAX
-    uint64_t max_ptr_size = static_cast<uint64_t>(UINTPTR_MAX);
-    if (max_buffer_size > max_ptr_size) {
-        max_buffer_size = max_ptr_size;
+#ਜੇ UINTPTR_MAX < UINT64_MAX
+    uint64_t max_ptr_ਮਾਪ = static_cast<uint64_t>(UINTPTR_MAX);
+    ਜੇ (max_ਬਫਰ_ਮਾਪ > max_ptr_ਮਾਪ) {
+        max_ਬਫਰ_ਮਾਪ = max_ptr_ਮਾਪ;
     }
-#endif
-    *free  = static_cast<size_t>(max_buffer_size);
-    *total = static_cast<size_t>(max_buffer_size);
+#ਜੇ_ਅੰਤ
+    *ਮੁਕਤ  = static_cast<size_t>(max_ਬਫਰ_ਮਾਪ);
+    *ਕੁੱਲ = static_cast<size_t>(max_ਬਫਰ_ਮਾਪ);
 }
 
-static enum ggml_backend_dev_type ggml_backend_webgpu_device_get_type(ggml_backend_dev_t dev) {
-    GGML_UNUSED(dev);
-    return GGML_BACKEND_DEVICE_TYPE_GPU;
+ਸਥਿਰ ਗਿਣਤੀ ggml_backend_dev_type ggml_backend_webgpu_device_get_type(ggml_backend_dev_t dev) {
+    GGML_ਅਣਵਰਤਿਆ(dev);
+    ਵਾਪਸ GGML_BACKEND_DEVICE_TYPE_GPU;
 }
 
-static void ggml_backend_webgpu_device_get_props(ggml_backend_dev_t dev, struct ggml_backend_dev_props * props) {
+ਸਥਿਰ ਖਾਲੀ ggml_backend_webgpu_device_get_props(ggml_backend_dev_t dev, ਬਣਤਰ ggml_backend_dev_props * props) {
     props->name        = ggml_backend_webgpu_device_get_name(dev);
     props->description = ggml_backend_webgpu_device_get_description(dev);
     props->type        = ggml_backend_webgpu_device_get_type(dev);
-    ggml_backend_webgpu_device_get_memory(dev, &props->memory_free, &props->memory_total);
+    ggml_backend_webgpu_device_get_ਸਮ੍ਰਿਤੀ(dev, &props->ਸਮ੍ਰਿਤੀ_free, &props->ਸਮ੍ਰਿਤੀ_ਕੁੱਲ);
     props->caps = {
-        /* .async                 = */ false,
-        /* .host_buffer           = */ false,
-        /* .buffer_from_host_ptr  = */ false,
-        /* .events                = */ false,
-        /* .mmap_support          = */ true,
+        /* .async                 = */ ਝੂਠ,
+        /* .host_buffer           = */ ਝੂਠ,
+        /* .buffer_from_host_ptr  = */ ਝੂਠ,
+        /* .events                = */ ਝੂਠ,
+        /* .mmap_support          = */ ਸੱਚ,
     };
 }
 
-static ggml_guid_t ggml_backend_webgpu_guid(void) {
-    static ggml_guid guid = { 0x67, 0xc7, 0xa4, 0xb1, 0x78, 0x74, 0x4f, 0x51,
+ਸਥਿਰ ggml_guid_t ggml_backend_webgpu_guid(ਖਾਲੀ) {
+    ਸਥਿਰ ggml_guid guid = { 0x67, 0xc7, 0xa4, 0xb1, 0x78, 0x74, 0x4f, 0x51,
                               0x9d, 0x65, 0x44, 0x6d, 0xe4, 0x1b, 0x82, 0x9a };
-    return &guid;
+    ਵਾਪਸ &guid;
 }
 
-static void ggml_webgpu_init_memset_pipeline(webgpu_global_context & ctx) {
+ਸਥਿਰ ਖਾਲੀ ggml_webgpu_init_memset_pipeline(webgpu_global_context & ctx) {
     // we use the maximum workgroup size for the memset pipeline
-    size_t max_threads = ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup *
-                         ctx->capabilities.limits.maxComputeWorkgroupsPerDimension;
+    size_t max_ਧਾਗੇ = ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup *
+                         ctx->capabilities.limits.max_Compute_Workgroups_ਪ੍ਰਤੀ_Dimension;
     // Size the bytes_per_thread so that the largest buffer size can be handled
-    ctx->capabilities.memset_bytes_per_thread =
-        CEIL_DIV(ctx->capabilities.limits.maxStorageBufferBindingSize, max_threads);
-    std::vector<wgpu::ConstantEntry> constants(2);
-    constants[0].key     = "wg_size";
-    constants[0].value   = ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
-    constants[1].key     = "bytes_per_thread";
-    constants[1].value   = ctx->capabilities.memset_bytes_per_thread;
+    ctx->capabilities.memset_ਬਾਈਟਾਂ_ਪ੍ਰਤੀ_thread =
+        CEIL_DIV(ctx->capabilities.limits.max_Storage_ਬਫਰ_Binding_ਮਾਪ, max_ਧਾਗੇ);
+    std::vector<wgpu::Constant_ਇੰਦਰਾਜ> constants(2);
+    constants[0].ਕੁੰਜੀ     = "wg_size";
+    constants[0].value   = ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
+    constants[1].ਕੁੰਜੀ     = "bytes_per_thread";
+    constants[1].value   = ctx->capabilities.memset_ਬਾਈਟਾਂ_ਪ੍ਰਤੀ_thread;
     ctx->memset_pipeline = ggml_webgpu_create_pipeline(ctx->device, wgsl_memset, "memset", constants);
 }
 
-static void ggml_backend_webgpu_request_adapter(wgpu::Instance & instance, wgpu::Adapter & adapter) {
+ਸਥਿਰ ਖਾਲੀ ggml_backend_webgpu_request_adapter(wgpu::Instance & instance, wgpu::Adapter & adapter) {
     wgpu::RequestAdapterOptions options = {};
 
-#if !defined(__EMSCRIPTEN__) && !defined(__wasi__)
+#ਜੇ !defined(__EMSCRIPTEN__) && !defined(__wasi__)
     // TODO: track need for these toggles: https://issues.chromium.org/issues/42251215
-    const char * const          adapterEnabledToggles[] = { "vulkan_enable_f16_on_nvidia", "use_vulkan_memory_model" };
+    ਅਚਲ ਅੱਖਰ * ਅਚਲ          adapterEnabledToggles[] = { "vulkan_enable_f16_on_nvidia", "use_vulkan_memory_model" };
     wgpu::DawnTogglesDescriptor adapterTogglesDesc;
     adapterTogglesDesc.enabledToggles     = adapterEnabledToggles;
-    adapterTogglesDesc.enabledToggleCount = 2;
-    options.nextInChain                   = &adapterTogglesDesc;
-#endif
+    adapterTogglesDesc.enabled_Toggle_ਗਿਣਤੀ = 2;
+    options.ਅਗਲਾ_ਵਿੱਚ_Chain                   = &adapterTogglesDesc;
+#ਜੇ_ਅੰਤ
 
     instance.WaitAny(
         instance.RequestAdapter(
-            &options, wgpu::CallbackMode::AllowSpontaneous,
-            [&adapter](wgpu::RequestAdapterStatus status, wgpu::Adapter _adapter, wgpu::StringView message) {
-                if (status != wgpu::RequestAdapterStatus::Success) {
-                    GGML_LOG_ERROR("ggml_webgpu: Failed to get an adapter: %s\n", std::string(message).c_str());
-                    return;
+            &options, wgpu::Callback_ਬਹੁਲਕ::AllowSpontaneous,
+            [&adapter](wgpu::Request_Adapter_ਸਥਿਤੀ ਸਥਿਤੀ, wgpu::Adapter _adapter, wgpu::StringView ਸੁਨੇਹਾ) {
+                ਜੇ (ਸਥਿਤੀ != wgpu::Request_Adapter_ਸਥਿਤੀ::Success) {
+                    GGML_LOG_ERROR("ggml_webgpu: Failed to get an adapter: %s\n", std::string(ਸੁਨੇਹਾ).c_str());
+                    ਵਾਪਸ;
                 }
                 adapter = std::move(_adapter);
             }),
         UINT64_MAX);
 }
 
-static void create_webgpu_device(ggml_backend_webgpu_reg_context * ctx) {
+ਸਥਿਰ ਖਾਲੀ create_webgpu_device(ggml_backend_webgpu_reg_context * ctx) {
     ggml_backend_webgpu_request_adapter(ctx->webgpu_global_ctx->instance, ctx->webgpu_global_ctx->adapter);
-    GGML_ASSERT(ctx->webgpu_global_ctx->adapter != nullptr);
+    GGML_ASSERT(ctx->webgpu_global_ctx->adapter != ਖਾਲੀ_ਸੂਚਕ);
 
     ctx->webgpu_global_ctx->adapter.GetLimits(&ctx->webgpu_global_ctx->capabilities.limits);
 
     wgpu::AdapterInfo info{};
-#if !defined(__EMSCRIPTEN__) && !defined(__wasi__)
-    wgpu::AdapterPropertiesSubgroupMatrixConfigs subgroup_matrix_configs{};
-    if (ctx->webgpu_global_ctx->adapter.HasFeature(wgpu::FeatureName::ChromiumExperimentalSubgroupMatrix)) {
-        info.nextInChain = &subgroup_matrix_configs;
+#ਜੇ !defined(__EMSCRIPTEN__) && !defined(__wasi__)
+    wgpu::Adapter_Properties_Subgroup_ਮੈਟ੍ਰਿਕਸ_Configs subgroup_ਮੈਟ੍ਰਿਕਸ_configs{};
+    ਜੇ (ctx->webgpu_global_ctx->adapter.HasFeature(wgpu::FeatureName::Chromium_Experimental_Subgroup_ਮੈਟ੍ਰਿਕਸ)) {
+        info.ਅਗਲਾ_ਵਿੱਚ_Chain = &subgroup_ਮੈਟ੍ਰਿਕਸ_configs;
     }
-#endif
+#ਜੇ_ਅੰਤ
     ctx->webgpu_global_ctx->adapter.GetInfo(&info);
-    ctx->webgpu_global_ctx->command_submit_batch_size = ggml_backend_webgpu_get_command_submit_batch_size();
+    ctx->webgpu_global_ctx->command_submit_batch_ਮਾਪ = ggml_backend_webgpu_get_command_submit_batch_ਮਾਪ();
     ctx->webgpu_global_ctx->max_inflight_batches      = ggml_backend_webgpu_get_max_inflight_batches();
     ctx->webgpu_global_ctx->vendor                    = info.vendor;
     ctx->webgpu_global_ctx->capabilities.supports_subgroups =
         ctx->webgpu_global_ctx->adapter.HasFeature(wgpu::FeatureName::Subgroups);
     // for dot4I8packed
-    ctx->webgpu_global_ctx->capabilities.supports_dot_product = ctx->webgpu_global_ctx->instance.HasWGSLLanguageFeature(
-        wgpu::WGSLLanguageFeatureName::Packed4x8IntegerDotProduct);
+    ctx->webgpu_global_ctx->capabilities.supports_dot_ਗੁਣਨਫਲ = ctx->webgpu_global_ctx->instance.HasWGSLLanguageFeature(
+        wgpu::WGSLLanguageFeatureName::Packed4x8_Integer_Dot_ਗੁਣਨਫਲ);
 
-    bool valid_subgroup_matrix_config = false;
-#if !defined(__EMSCRIPTEN__) && !defined(__wasi__)
+    ਤਾਰਕਿਕ valid_subgroup_ਮੈਟ੍ਰਿਕਸ_config = ਝੂਠ;
+#ਜੇ !defined(__EMSCRIPTEN__) && !defined(__wasi__)
     // Accept f16 subgroup matrix configurations (square or non-square).
     // NVIDIA GPUs typically report square configs (e.g. 16x16x16),
     // while Intel Xe2 GPUs report non-square configs (e.g. 8x16x16).
     // The shaders are already parameterized to handle any M/N/K dimensions.
-    if (ctx->webgpu_global_ctx->adapter.HasFeature(wgpu::FeatureName::ChromiumExperimentalSubgroupMatrix)) {
-        for (size_t i = 0; i < subgroup_matrix_configs.configCount; i++) {
-            const wgpu::SubgroupMatrixConfig config = subgroup_matrix_configs.configs[i];
-            if (config.componentType == wgpu::SubgroupMatrixComponentType::F16 &&
-                config.resultComponentType == wgpu::SubgroupMatrixComponentType::F16) {
+    ਜੇ (ctx->webgpu_global_ctx->adapter.HasFeature(wgpu::FeatureName::Chromium_Experimental_Subgroup_ਮੈਟ੍ਰਿਕਸ)) {
+        ਲਈ (size_t i = 0; i < subgroup_ਮੈਟ੍ਰਿਕਸ_configs.config_ਗਿਣਤੀ; i++) {
+            ਅਚਲ wgpu::Subgroup_ਮੈਟ੍ਰਿਕਸ_Config config = subgroup_ਮੈਟ੍ਰਿਕਸ_configs.configs[i];
+            ਜੇ (config.componentType == wgpu::Subgroup_ਮੈਟ੍ਰਿਕਸ_Component_Type::F16 &&
+                config.ਨਤੀਜਾ_Component_Type == wgpu::Subgroup_ਮੈਟ੍ਰਿਕਸ_Component_Type::F16) {
                 ctx->webgpu_global_ctx->capabilities.sg_mat_m = config.M;
                 ctx->webgpu_global_ctx->capabilities.sg_mat_n = config.N;
                 ctx->webgpu_global_ctx->capabilities.sg_mat_k = config.K;
-                valid_subgroup_matrix_config                  = true;
-                break;
+                valid_subgroup_ਮੈਟ੍ਰਿਕਸ_config                  = ਸੱਚ;
+                ਰੋਕੋ;
             }
         }
     }
-#endif
-    ctx->webgpu_global_ctx->capabilities.supports_subgroup_matrix = valid_subgroup_matrix_config;
+#ਜੇ_ਅੰਤ
+    ctx->webgpu_global_ctx->capabilities.supports_subgroup_ਮੈਟ੍ਰਿਕਸ = valid_subgroup_ਮੈਟ੍ਰਿਕਸ_config;
 
     // Runtime subgroup size can be any supported size in this range. Shaders
     // that allocate per-lane register arrays must size them for the minimum.
-    ctx->webgpu_global_ctx->capabilities.min_subgroup_size = info.subgroupMinSize;
-    ctx->webgpu_global_ctx->capabilities.max_subgroup_size = info.subgroupMaxSize;
+    ctx->webgpu_global_ctx->capabilities.min_subgroup_ਮਾਪ = info.subgroup_Min_ਮਾਪ;
+    ctx->webgpu_global_ctx->capabilities.max_subgroup_ਮਾਪ = info.subgroup_Max_ਮਾਪ;
     // Initialize device
     std::vector<wgpu::FeatureName> required_features       = { wgpu::FeatureName::ShaderF16 };
 
-#if !defined(__EMSCRIPTEN__) && !defined(__wasi__)
+#ਜੇ !defined(__EMSCRIPTEN__) && !defined(__wasi__)
     required_features.push_back(wgpu::FeatureName::ImplicitDeviceSynchronization);
-    if (ctx->webgpu_global_ctx->capabilities.supports_subgroup_matrix) {
-        required_features.push_back(wgpu::FeatureName::ChromiumExperimentalSubgroupMatrix);
+    ਜੇ (ctx->webgpu_global_ctx->capabilities.supports_subgroup_ਮੈਟ੍ਰਿਕਸ) {
+        required_features.push_back(wgpu::FeatureName::Chromium_Experimental_Subgroup_ਮੈਟ੍ਰਿਕਸ);
     }
-#endif
+#ਜੇ_ਅੰਤ
 
-    if (ctx->webgpu_global_ctx->capabilities.supports_subgroups) {
+    ਜੇ (ctx->webgpu_global_ctx->capabilities.supports_subgroups) {
         required_features.push_back(wgpu::FeatureName::Subgroups);
     }
 
-#ifdef GGML_WEBGPU_GPU_PROFILE
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_WEBGPU_GPU_PROFILE
     required_features.push_back(wgpu::FeatureName::TimestampQuery);
-#endif
+#ਜੇ_ਅੰਤ
 
     wgpu::DeviceDescriptor dev_desc;
     dev_desc.requiredLimits       = &ctx->webgpu_global_ctx->capabilities.limits;
-    dev_desc.requiredFeatures     = required_features.data();
-    dev_desc.requiredFeatureCount = required_features.size();
-    dev_desc.SetDeviceLostCallback(
-        wgpu::CallbackMode::AllowSpontaneous,
-        [](const wgpu::Device & device, wgpu::DeviceLostReason reason, wgpu::StringView message) {
-            if (reason == wgpu::DeviceLostReason::Destroyed) {
-                return;
+    dev_desc.requiredFeatures     = required_features.ਅੰਕੜੇ();
+    dev_desc.required_Feature_ਗਿਣਤੀ = required_features.size();
+    dev_desc.ਸੈੱਟ_Device_ਗੁਆਚਾ_Callback(
+        wgpu::Callback_ਬਹੁਲਕ::AllowSpontaneous,
+        [](ਅਚਲ wgpu::Device & device, wgpu::Device_ਗੁਆਚਾ_Reason reason, wgpu::StringView ਸੁਨੇਹਾ) {
+            ਜੇ (reason == wgpu::Device_ਗੁਆਚਾ_Reason::Destroyed) {
+                ਵਾਪਸ;
             }
-            GGML_UNUSED(device);
-            GGML_LOG_ERROR("ggml_webgpu: Device lost! Reason: %d, Message: %s\n", static_cast<int>(reason),
-                           std::string(message).c_str());
+            GGML_ਅਣਵਰਤਿਆ(device);
+            GGML_LOG_ERROR("ggml_webgpu: Device lost! Reason: %d, Message: %s\n", static_cast<ਪੂਰਨ>(reason),
+                           std::string(ਸੁਨੇਹਾ).c_str());
         });
-    dev_desc.SetUncapturedErrorCallback(
-        [](const wgpu::Device & device, wgpu::ErrorType reason, wgpu::StringView message) {
-            GGML_UNUSED(device);
-            GGML_ABORT("ggml_webgpu: Device error! Reason: %d, Message: %s\n", static_cast<int>(reason),
-                       std::string(message).c_str());
+    dev_desc.ਸੈੱਟ_Uncaptured_Error_Callback(
+        [](ਅਚਲ wgpu::Device & device, wgpu::ErrorType reason, wgpu::StringView ਸੁਨੇਹਾ) {
+            GGML_ਅਣਵਰਤਿਆ(device);
+            GGML_ABORT("ggml_webgpu: Device error! Reason: %d, Message: %s\n", static_cast<ਪੂਰਨ>(reason),
+                       std::string(ਸੁਨੇਹਾ).c_str());
         });
 
-#if !defined(__EMSCRIPTEN__) && !defined(__wasi__)
+#ਜੇ !defined(__EMSCRIPTEN__) && !defined(__wasi__)
     // Enable Dawn-specific toggles to increase native performance
     // TODO: Maybe WebGPU needs a "fast" mode where you can request compilers skip adding checks like these,
     //       only for native performance?
-    const char * const          deviceEnabledToggles[]  = { "disable_robustness", "disable_workgroup_init",
+    ਅਚਲ ਅੱਖਰ * ਅਚਲ          deviceEnabledToggles[]  = { "disable_robustness", "disable_workgroup_init",
                                                             "disable_polyfills_on_integer_div_and_mod" };
-    const char * const          deviceDisabledToggles[] = { "timestamp_quantization" };
+    ਅਚਲ ਅੱਖਰ * ਅਚਲ          deviceDisabledToggles[] = { "timestamp_quantization" };
     wgpu::DawnTogglesDescriptor deviceTogglesDesc;
     deviceTogglesDesc.enabledToggles      = deviceEnabledToggles;
-    deviceTogglesDesc.enabledToggleCount  = 3;
+    deviceTogglesDesc.enabled_Toggle_ਗਿਣਤੀ  = 3;
     deviceTogglesDesc.disabledToggles     = deviceDisabledToggles;
-    deviceTogglesDesc.disabledToggleCount = 1;
+    deviceTogglesDesc.disabled_Toggle_ਗਿਣਤੀ = 1;
 
-    dev_desc.nextInChain = &deviceTogglesDesc;
-#endif
+    dev_desc.ਅਗਲਾ_ਵਿੱਚ_Chain = &deviceTogglesDesc;
+#ਜੇ_ਅੰਤ
 
     ctx->webgpu_global_ctx->instance.WaitAny(
         ctx->webgpu_global_ctx->adapter.RequestDevice(
-            &dev_desc, wgpu::CallbackMode::AllowSpontaneous,
-            [ctx](wgpu::RequestDeviceStatus status, wgpu::Device device, wgpu::StringView message) {
-                if (status != wgpu::RequestDeviceStatus::Success) {
-                    GGML_LOG_ERROR("ggml_webgpu: Failed to get a device: %s\n", std::string(message).c_str());
-                    return;
+            &dev_desc, wgpu::Callback_ਬਹੁਲਕ::AllowSpontaneous,
+            [ctx](wgpu::Request_Device_ਸਥਿਤੀ ਸਥਿਤੀ, wgpu::Device device, wgpu::StringView ਸੁਨੇਹਾ) {
+                ਜੇ (ਸਥਿਤੀ != wgpu::Request_Device_ਸਥਿਤੀ::Success) {
+                    GGML_LOG_ERROR("ggml_webgpu: Failed to get a device: %s\n", std::string(ਸੁਨੇਹਾ).c_str());
+                    ਵਾਪਸ;
                 }
                 ctx->webgpu_global_ctx->device = std::move(device);
             }),
         UINT64_MAX);
-    GGML_ASSERT(ctx->webgpu_global_ctx->device != nullptr);
+    GGML_ASSERT(ctx->webgpu_global_ctx->device != ਖਾਲੀ_ਸੂਚਕ);
 
     ggml_webgpu_init_memset_pipeline(ctx->webgpu_global_ctx);
-    ggml_webgpu_create_buffer(ctx->webgpu_global_ctx->device, ctx->webgpu_global_ctx->memset_params_buf,
-                              WEBGPU_PARAMS_BUF_SIZE_BYTES, wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform,
+    ggml_webgpu_create_ਬਫਰ(ctx->webgpu_global_ctx->device, ctx->webgpu_global_ctx->memset_params_buf,
+                              WEBGPU_PARAMS_BUF_ਮਾਪ_ਬਾਈਟਾਂ, wgpu::ਬਫਰ_Usage::CopyDst | wgpu::ਬਫਰ_Usage::Uniform,
                               "memset_params_buf");
-    ctx->webgpu_global_ctx->queue = ctx->webgpu_global_ctx->device.GetQueue();
+    ctx->webgpu_global_ctx->queue = ctx->webgpu_global_ctx->device.Get_ਕਤਾਰ();
 
     GGML_LOG_INFO(
         "ggml_webgpu: adapter_info: vendor_id: %u | vendor: %s | architecture: %s | device_id: %u | name: %s | "
@@ -4301,129 +4301,129 @@ static void create_webgpu_device(ggml_backend_webgpu_reg_context * ctx) {
         std::string(info.device).c_str(), std::string(info.description).c_str());
 }
 
-static webgpu_context initialize_webgpu_context(ggml_backend_dev_t dev) {
+ਸਥਿਰ webgpu_context initialize_webgpu_context(ggml_backend_dev_t dev) {
     ggml_backend_webgpu_device_context * dev_ctx    = (ggml_backend_webgpu_device_context *) dev->context;
     webgpu_context                       webgpu_ctx = std::make_shared<webgpu_context_struct>();
     webgpu_ctx->global_ctx                          = dev_ctx->webgpu_global_ctx;
     webgpu_ctx->shader_lib = std::make_unique<ggml_webgpu_shader_lib>(dev_ctx->webgpu_global_ctx->device);
     webgpu_ctx->param_arena.init(
-        webgpu_ctx->global_ctx->device, WEBGPU_PARAMS_BUF_SIZE_BYTES,
-        webgpu_ctx->global_ctx->command_submit_batch_size + WEBGPU_NUM_PARAM_SLOT_SAFETY_MARGIN,
-        webgpu_ctx->global_ctx->capabilities.limits.minUniformBufferOffsetAlignment);
-    ggml_webgpu_create_buffer(webgpu_ctx->global_ctx->device, webgpu_ctx->set_rows_dev_error_buf,
-                              WEBGPU_SET_ROWS_ERROR_BUF_SIZE_BYTES,
-                              wgpu::BufferUsage::Storage | wgpu::BufferUsage::CopySrc, "set_rows_dev_error_buf");
-    ggml_webgpu_create_buffer(webgpu_ctx->global_ctx->device, webgpu_ctx->set_rows_host_error_buf,
-                              WEBGPU_SET_ROWS_ERROR_BUF_SIZE_BYTES,
-                              wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::MapRead, "set_rows_host_error_buf");
+        webgpu_ctx->global_ctx->device, WEBGPU_PARAMS_BUF_ਮਾਪ_ਬਾਈਟਾਂ,
+        webgpu_ctx->global_ctx->command_submit_batch_ਮਾਪ + WEBGPU_ਅੰਕ_PARAM_ਥਾਂ_SAFETY_MARGIN,
+        webgpu_ctx->global_ctx->capabilities.limits.min_ਇਕਸਾਰ_ਬਫਰ_ਵਿੱਥ_Alignment);
+    ggml_webgpu_create_ਬਫਰ(webgpu_ctx->global_ctx->device, webgpu_ctx->ਸੈੱਟ_ਪੰਕਤੀਆਂ_dev_error_buf,
+                              WEBGPU_ਸੈੱਟ_ਪੰਕਤੀਆਂ_ERROR_BUF_ਮਾਪ_ਬਾਈਟਾਂ,
+                              wgpu::ਬਫਰ_Usage::Storage | wgpu::ਬਫਰ_Usage::CopySrc, "set_rows_dev_error_buf");
+    ggml_webgpu_create_ਬਫਰ(webgpu_ctx->global_ctx->device, webgpu_ctx->ਸੈੱਟ_ਪੰਕਤੀਆਂ_host_error_buf,
+                              WEBGPU_ਸੈੱਟ_ਪੰਕਤੀਆਂ_ERROR_BUF_ਮਾਪ_ਬਾਈਟਾਂ,
+                              wgpu::ਬਫਰ_Usage::CopyDst | wgpu::ਬਫਰ_Usage::MapRead, "set_rows_host_error_buf");
 
-#ifdef GGML_WEBGPU_GPU_PROFILE
-    webgpu_ctx->batch_compute_passes = false;
-    ggml_webgpu_create_buffer(
-        webgpu_ctx->global_ctx->device, webgpu_ctx->profile_timestamp_dev_buf, WEBGPU_TIMESTAMP_QUERY_BUF_SIZE_BYTES,
-        wgpu::BufferUsage::QueryResolve | wgpu::BufferUsage::CopySrc, "profile_timestamp_dev_buf");
-    ggml_webgpu_create_buffer(webgpu_ctx->global_ctx->device, webgpu_ctx->profile_timestamp_host_buf,
-                              WEBGPU_TIMESTAMP_QUERY_BUF_SIZE_BYTES,
-                              wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::MapRead, "profile_timestamp_host_buf");
-    wgpu::QuerySetDescriptor query_set_desc = {};
-    query_set_desc.type                     = wgpu::QueryType::Timestamp;
-    query_set_desc.count                    = WEBGPU_MAX_PROFILE_QUERY_COUNT;
-    webgpu_ctx->profile_timestamp_query_set = webgpu_ctx->global_ctx->device.CreateQuerySet(&query_set_desc);
-#endif
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_WEBGPU_GPU_PROFILE
+    webgpu_ctx->batch_compute_passes = ਝੂਠ;
+    ggml_webgpu_create_ਬਫਰ(
+        webgpu_ctx->global_ctx->device, webgpu_ctx->profile_timestamp_dev_buf, WEBGPU_TIMESTAMP_QUERY_BUF_ਮਾਪ_ਬਾਈਟਾਂ,
+        wgpu::ਬਫਰ_Usage::QueryResolve | wgpu::ਬਫਰ_Usage::CopySrc, "profile_timestamp_dev_buf");
+    ggml_webgpu_create_ਬਫਰ(webgpu_ctx->global_ctx->device, webgpu_ctx->profile_timestamp_host_buf,
+                              WEBGPU_TIMESTAMP_QUERY_BUF_ਮਾਪ_ਬਾਈਟਾਂ,
+                              wgpu::ਬਫਰ_Usage::CopyDst | wgpu::ਬਫਰ_Usage::MapRead, "profile_timestamp_host_buf");
+    wgpu::Query_ਸੈੱਟ_Descriptor query_ਸੈੱਟ_desc = {};
+    query_ਸੈੱਟ_desc.type                     = wgpu::QueryType::Timestamp;
+    query_ਸੈੱਟ_desc.count                    = WEBGPU_MAX_PROFILE_QUERY_ਗਿਣਤੀ;
+    webgpu_ctx->profile_timestamp_query_ਸੈੱਟ = webgpu_ctx->global_ctx->device.Create_Query_ਸੈੱਟ(&query_ਸੈੱਟ_desc);
+#ਜੇ_ਅੰਤ
 
-#ifdef GGML_WEBGPU_DEBUG
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_WEBGPU_DEBUG
     // Initialize debug buffers
-    ggml_webgpu_create_buffer(webgpu_ctx->global_ctx->device, webgpu_ctx->global_ctx->debug_host_buf,
-                              WEBGPU_DEBUG_BUF_ELEMS * sizeof(uint32_t),
-                              wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::MapRead, "debug_host_buf");
-    ggml_webgpu_create_buffer(webgpu_ctx->global_ctx->device, webgpu_ctx->global_ctx->debug_dev_buf,
-                              WEBGPU_DEBUG_BUF_ELEMS * sizeof(uint32_t),
-                              wgpu::BufferUsage::Storage | wgpu::BufferUsage::CopySrc, "debug_dev_buf");
-#endif
-    return webgpu_ctx;
+    ggml_webgpu_create_ਬਫਰ(webgpu_ctx->global_ctx->device, webgpu_ctx->global_ctx->debug_host_buf,
+                              WEBGPU_DEBUG_BUF_ELEMS * ਆਕਾਰ(uint32_t),
+                              wgpu::ਬਫਰ_Usage::CopyDst | wgpu::ਬਫਰ_Usage::MapRead, "debug_host_buf");
+    ggml_webgpu_create_ਬਫਰ(webgpu_ctx->global_ctx->device, webgpu_ctx->global_ctx->debug_dev_buf,
+                              WEBGPU_DEBUG_BUF_ELEMS * ਆਕਾਰ(uint32_t),
+                              wgpu::ਬਫਰ_Usage::Storage | wgpu::ਬਫਰ_Usage::CopySrc, "debug_dev_buf");
+#ਜੇ_ਅੰਤ
+    ਵਾਪਸ webgpu_ctx;
 }
 
-static ggml_backend_t ggml_backend_webgpu_backend_init(ggml_backend_dev_t dev, const char * params) {
-    GGML_UNUSED(params);
+ਸਥਿਰ ggml_backend_t ggml_backend_webgpu_backend_init(ggml_backend_dev_t dev, ਅਚਲ ਅੱਖਰ * params) {
+    GGML_ਅਣਵਰਤਿਆ(params);
 
     WEBGPU_LOG_DEBUG("ggml_backend_webgpu_backend_init()");
 
     ggml_backend_webgpu_device_context * dev_ctx = static_cast<ggml_backend_webgpu_device_context *>(dev->context);
 
-    auto * backend_ctx      = new ggml_backend_webgpu_context();
+    ਸਵੈਚਾਲਿਤ * backend_ctx      = ਨਵਾਂ ggml_backend_webgpu_context();
     backend_ctx->name       = GGML_WEBGPU_NAME + std::string(": ") + dev_ctx->device_name;
     backend_ctx->webgpu_ctx = initialize_webgpu_context(dev);
 
     // See GGML Backend Interface section
-    auto * backend = new ggml_backend();
+    ਸਵੈਚਾਲਿਤ * backend = ਨਵਾਂ ggml_backend();
     *backend       = {
         /* .guid      = */ ggml_backend_webgpu_guid(),
         /* .interface = */ ggml_backend_webgpu_i,
         /* .device    = */ dev,
         /* .context   = */ backend_ctx,
     };
-    return backend;
+    ਵਾਪਸ backend;
 }
 
-static ggml_backend_buffer_type_t ggml_backend_webgpu_device_get_buffer_type(ggml_backend_dev_t dev) {
+ਸਥਿਰ ggml_backend_ਬਫਰ_type_t ggml_backend_webgpu_device_get_ਬਫਰ_type(ggml_backend_dev_t dev) {
     // See GGML Backend Buffer Type Interface section
 
-    static struct ggml_backend_buffer_type ggml_backend_webgpu_buffer_type = {
+    ਸਥਿਰ ਬਣਤਰ ggml_backend_ਬਫਰ_type ggml_backend_webgpu_ਬਫਰ_type = {
         /* .iface = */ {
-                        /* .get_name            = */ ggml_backend_webgpu_buffer_type_get_name,
-                        /* .alloc_buffer        = */ ggml_backend_webgpu_buffer_type_alloc_buffer,
-                        /* .alloc_buffer_n      = */ NULL,
-                        /* .get_alignment       = */ ggml_backend_webgpu_buffer_type_get_alignment,
-                        /* .get_max_size        = */ ggml_backend_webgpu_buffer_type_get_max_size,
-                        /* .get_alloc_size      = */ ggml_backend_webgpu_buffer_type_get_alloc_size,
-                        /* .get_alloc_size_n    = */ NULL,
-                        /* .is_host             = */ NULL,  // defaults to false
+                        /* .get_name            = */ ggml_backend_webgpu_ਬਫਰ_type_get_name,
+                        /* .alloc_buffer        = */ ggml_backend_webgpu_ਬਫਰ_type_alloc_ਬਫਰ,
+                        /* .alloc_buffer_n      = */ ਨਿਰਾ,
+                        /* .get_alignment       = */ ggml_backend_webgpu_ਬਫਰ_type_get_alignment,
+                        /* .get_max_size        = */ ggml_backend_webgpu_ਬਫਰ_type_get_max_ਮਾਪ,
+                        /* .get_alloc_size      = */ ggml_backend_webgpu_ਬਫਰ_type_get_alloc_ਮਾਪ,
+                        /* .get_alloc_size_n    = */ ਨਿਰਾ,
+                        /* .is_host             = */ ਨਿਰਾ,  // defaults to false
         },
         /* .device  = */
         dev,
-        /* .context = */ NULL
+        /* .context = */ ਨਿਰਾ
     };
 
-    return &ggml_backend_webgpu_buffer_type;
+    ਵਾਪਸ &ggml_backend_webgpu_ਬਫਰ_type;
 }
 
-static bool ggml_backend_webgpu_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
-    GGML_UNUSED(dev);
-    return buft->iface.get_name == ggml_backend_webgpu_buffer_type_get_name;
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_backend_webgpu_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_ਬਫਰ_type_t buft) {
+    GGML_ਅਣਵਰਤਿਆ(dev);
+    ਵਾਪਸ buft->iface.get_name == ggml_backend_webgpu_ਬਫਰ_type_get_name;
 }
 
-static bool ggml_webgpu_supported_qtype(ggml_type type) {
-    switch (type) {
-        case GGML_TYPE_Q1_0:
-        case GGML_TYPE_Q2_0:
-        case GGML_TYPE_Q4_0:
-        case GGML_TYPE_Q4_1:
-        case GGML_TYPE_Q5_0:
-        case GGML_TYPE_Q5_1:
-        case GGML_TYPE_Q8_0:
-        case GGML_TYPE_Q2_K:
-        case GGML_TYPE_Q3_K:
-        case GGML_TYPE_Q4_K:
-        case GGML_TYPE_Q5_K:
-        case GGML_TYPE_Q6_K:
-        case GGML_TYPE_IQ2_XXS:
-        case GGML_TYPE_IQ2_XS:
-        case GGML_TYPE_IQ2_S:
-        case GGML_TYPE_IQ3_XXS:
-        case GGML_TYPE_IQ3_S:
-        case GGML_TYPE_IQ1_S:
-        case GGML_TYPE_IQ1_M:
-        case GGML_TYPE_IQ4_NL:
-        case GGML_TYPE_IQ4_XS:
-        case GGML_TYPE_MXFP4:
-        case GGML_TYPE_NVFP4:
-            return true;
-        default:
-            return false;
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_webgpu_supported_qtype(ggml_type type) {
+    ਚੋਣ (type) {
+        ਹਾਲਤ GGML_TYPE_Q1_0:
+        ਹਾਲਤ GGML_TYPE_Q2_0:
+        ਹਾਲਤ GGML_TYPE_Q4_0:
+        ਹਾਲਤ GGML_TYPE_Q4_1:
+        ਹਾਲਤ GGML_TYPE_Q5_0:
+        ਹਾਲਤ GGML_TYPE_Q5_1:
+        ਹਾਲਤ GGML_TYPE_Q8_0:
+        ਹਾਲਤ GGML_TYPE_Q2_K:
+        ਹਾਲਤ GGML_TYPE_Q3_K:
+        ਹਾਲਤ GGML_TYPE_Q4_K:
+        ਹਾਲਤ GGML_TYPE_Q5_K:
+        ਹਾਲਤ GGML_TYPE_Q6_K:
+        ਹਾਲਤ GGML_TYPE_IQ2_XXS:
+        ਹਾਲਤ GGML_TYPE_IQ2_XS:
+        ਹਾਲਤ GGML_TYPE_IQ2_S:
+        ਹਾਲਤ GGML_TYPE_IQ3_XXS:
+        ਹਾਲਤ GGML_TYPE_IQ3_S:
+        ਹਾਲਤ GGML_TYPE_IQ1_S:
+        ਹਾਲਤ GGML_TYPE_IQ1_M:
+        ਹਾਲਤ GGML_TYPE_IQ4_NL:
+        ਹਾਲਤ GGML_TYPE_IQ4_XS:
+        ਹਾਲਤ GGML_TYPE_MXFP4:
+        ਹਾਲਤ GGML_TYPE_NVFP4:
+            ਵਾਪਸ ਸੱਚ;
+        ਮੂਲ:
+            ਵਾਪਸ ਝੂਠ;
     }
 }
 
-static bool ggml_backend_webgpu_device_supports_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_backend_webgpu_device_supports_op(ggml_backend_dev_t dev, ਅਚਲ ggml_tensor * op) {
     ggml_backend_webgpu_device_context * ctx = static_cast<ggml_backend_webgpu_device_context *>(dev->context);
 
     ggml_tensor * src0 = op->src[0];
@@ -4431,154 +4431,154 @@ static bool ggml_backend_webgpu_device_supports_op(ggml_backend_dev_t dev, const
     ggml_tensor * src2 = op->src[2];
 
     // on smaller devices (or CI), tensors may be larger than the max storage buffer size
-    if (ggml_nbytes(op) > ctx->webgpu_global_ctx->capabilities.limits.maxStorageBufferBindingSize ||
-        (src0 != nullptr &&
-         ggml_nbytes(src0) > ctx->webgpu_global_ctx->capabilities.limits.maxStorageBufferBindingSize) ||
-        (src1 != nullptr &&
-         ggml_nbytes(src1) > ctx->webgpu_global_ctx->capabilities.limits.maxStorageBufferBindingSize)) {
-        return false;
+    ਜੇ (ggml_nbytes(op) > ctx->webgpu_global_ctx->capabilities.limits.max_Storage_ਬਫਰ_Binding_ਮਾਪ ||
+        (src0 != ਖਾਲੀ_ਸੂਚਕ &&
+         ggml_nbytes(src0) > ctx->webgpu_global_ctx->capabilities.limits.max_Storage_ਬਫਰ_Binding_ਮਾਪ) ||
+        (src1 != ਖਾਲੀ_ਸੂਚਕ &&
+         ggml_nbytes(src1) > ctx->webgpu_global_ctx->capabilities.limits.max_Storage_ਬਫਰ_Binding_ਮਾਪ)) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    bool supports_op = false;
-    switch (op->op) {
-        case GGML_OP_NONE:
-        case GGML_OP_VIEW:
-        case GGML_OP_PERMUTE:
-        case GGML_OP_TRANSPOSE:
-        case GGML_OP_RESHAPE:
-            supports_op = true;
-            break;
-        case GGML_OP_ADD:
-        case GGML_OP_SUB:
-        case GGML_OP_MUL:
-        case GGML_OP_DIV:
+    ਤਾਰਕਿਕ supports_op = ਝੂਠ;
+    ਚੋਣ (op->op) {
+        ਹਾਲਤ GGML_OP_NONE:
+        ਹਾਲਤ GGML_OP_VIEW:
+        ਹਾਲਤ GGML_OP_ਕ੍ਰਮ_ਬਦਲੋ:
+        ਹਾਲਤ GGML_OP_TRANSPOSE:
+        ਹਾਲਤ GGML_OP_RESHAPE:
+            supports_op = ਸੱਚ;
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_ਜੋੜੋ:
+        ਹਾਲਤ GGML_OP_SUB:
+        ਹਾਲਤ GGML_OP_MUL:
+        ਹਾਲਤ GGML_OP_DIV:
             supports_op = (op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16) && (src0->type == op->type) &&
                           (src1->type == op->type);
-            break;
-        case GGML_OP_ADD_ID:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_ਜੋੜੋ_ID:
             supports_op = src0->type == GGML_TYPE_F32;
-            break;
-        case GGML_OP_CONCAT:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_CONCAT:
             supports_op = (src0->type == GGML_TYPE_F32 || src0->type == GGML_TYPE_I32);
-            break;
-        case GGML_OP_REPEAT:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_REPEAT:
             supports_op = (src0->type == GGML_TYPE_F32 || src0->type == GGML_TYPE_F16 || src0->type == GGML_TYPE_I32 ||
                            src0->type == GGML_TYPE_I16);
-            break;
-        case GGML_OP_DUP:
-        case GGML_OP_CPY:
-        case GGML_OP_CONT:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_DUP:
+        ਹਾਲਤ GGML_OP_CPY:
+        ਹਾਲਤ GGML_OP_CONT:
             supports_op = (op->type == GGML_TYPE_F16 || op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_I32) &&
                           (src0->type == GGML_TYPE_F16 || src0->type == GGML_TYPE_F32 || src0->type == GGML_TYPE_I32);
-            break;
-        case GGML_OP_SET:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_ਸੈੱਟ:
             supports_op = src0->type == src1->type && src0->type == op->type &&
                           (op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_I32);
-            break;
-        case GGML_OP_SET_ROWS:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_ਸੈੱਟ_ਪੰਕਤੀਆਂ:
             supports_op = ((op->type == GGML_TYPE_F16 || op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_Q8_0 ||
                             op->type == GGML_TYPE_Q4_0) &&
                            (src0->type == GGML_TYPE_F32 || src0->type == GGML_TYPE_F16) &&
                            (src1->type == GGML_TYPE_I64 || src1->type == GGML_TYPE_I32));
-            break;
-        case GGML_OP_GET_ROWS:
-            if (src0->type == GGML_TYPE_F32 || src0->type == GGML_TYPE_F16 || src0->type == GGML_TYPE_BF16 ||
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_GET_ਪੰਕਤੀਆਂ:
+            ਜੇ (src0->type == GGML_TYPE_F32 || src0->type == GGML_TYPE_F16 || src0->type == GGML_TYPE_BF16 ||
                 ggml_webgpu_supported_qtype(src0->type)) {
                 supports_op = (op->type == GGML_TYPE_F32);
-            } else if (src0->type == GGML_TYPE_I32) {
+            } ਨਹੀਂਤਾਂ ਜੇ (src0->type == GGML_TYPE_I32) {
                 supports_op = op->type == GGML_TYPE_I32;
             }
-            break;
-        case GGML_OP_MUL_MAT:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_MUL_MAT:
             {
-                switch (src1->type) {
-                    case GGML_TYPE_F16:
+                ਚੋਣ (src1->type) {
+                    ਹਾਲਤ GGML_TYPE_F16:
                         supports_op |= (src0->type == GGML_TYPE_F16);
-                        break;
-                    case GGML_TYPE_F32:
-                        switch (src0->type) {
-                            case GGML_TYPE_F32:
-                            case GGML_TYPE_F16:
-                            case GGML_TYPE_BF16:
-                            case GGML_TYPE_Q1_0:
-                            case GGML_TYPE_Q2_0:
-                            case GGML_TYPE_Q4_0:
-                            case GGML_TYPE_Q4_1:
-                            case GGML_TYPE_Q5_0:
-                            case GGML_TYPE_Q5_1:
-                            case GGML_TYPE_Q8_0:
-                            case GGML_TYPE_Q2_K:
-                            case GGML_TYPE_Q3_K:
-                            case GGML_TYPE_Q4_K:
-                            case GGML_TYPE_Q5_K:
-                            case GGML_TYPE_Q6_K:
-                            case GGML_TYPE_IQ2_XXS:
-                            case GGML_TYPE_IQ2_XS:
-                            case GGML_TYPE_IQ2_S:
-                            case GGML_TYPE_IQ3_XXS:
-                            case GGML_TYPE_IQ3_S:
-                            case GGML_TYPE_IQ1_S:
-                            case GGML_TYPE_IQ1_M:
-                            case GGML_TYPE_IQ4_NL:
-                            case GGML_TYPE_IQ4_XS:
-                            case GGML_TYPE_MXFP4:
-                            case GGML_TYPE_NVFP4:
-                                supports_op = true;
-                                break;
-                            default:
-                                break;
+                        ਰੋਕੋ;
+                    ਹਾਲਤ GGML_TYPE_F32:
+                        ਚੋਣ (src0->type) {
+                            ਹਾਲਤ GGML_TYPE_F32:
+                            ਹਾਲਤ GGML_TYPE_F16:
+                            ਹਾਲਤ GGML_TYPE_BF16:
+                            ਹਾਲਤ GGML_TYPE_Q1_0:
+                            ਹਾਲਤ GGML_TYPE_Q2_0:
+                            ਹਾਲਤ GGML_TYPE_Q4_0:
+                            ਹਾਲਤ GGML_TYPE_Q4_1:
+                            ਹਾਲਤ GGML_TYPE_Q5_0:
+                            ਹਾਲਤ GGML_TYPE_Q5_1:
+                            ਹਾਲਤ GGML_TYPE_Q8_0:
+                            ਹਾਲਤ GGML_TYPE_Q2_K:
+                            ਹਾਲਤ GGML_TYPE_Q3_K:
+                            ਹਾਲਤ GGML_TYPE_Q4_K:
+                            ਹਾਲਤ GGML_TYPE_Q5_K:
+                            ਹਾਲਤ GGML_TYPE_Q6_K:
+                            ਹਾਲਤ GGML_TYPE_IQ2_XXS:
+                            ਹਾਲਤ GGML_TYPE_IQ2_XS:
+                            ਹਾਲਤ GGML_TYPE_IQ2_S:
+                            ਹਾਲਤ GGML_TYPE_IQ3_XXS:
+                            ਹਾਲਤ GGML_TYPE_IQ3_S:
+                            ਹਾਲਤ GGML_TYPE_IQ1_S:
+                            ਹਾਲਤ GGML_TYPE_IQ1_M:
+                            ਹਾਲਤ GGML_TYPE_IQ4_NL:
+                            ਹਾਲਤ GGML_TYPE_IQ4_XS:
+                            ਹਾਲਤ GGML_TYPE_MXFP4:
+                            ਹਾਲਤ GGML_TYPE_NVFP4:
+                                supports_op = ਸੱਚ;
+                                ਰੋਕੋ;
+                            ਮੂਲ:
+                                ਰੋਕੋ;
                         }
-                    default:
-                        break;
+                    ਮੂਲ:
+                        ਰੋਕੋ;
                 }
-                break;
+                ਰੋਕੋ;
             }
-        case GGML_OP_MUL_MAT_ID:
-            switch (src1->type) {
-                case GGML_TYPE_F16:
+        ਹਾਲਤ GGML_OP_MUL_MAT_ID:
+            ਚੋਣ (src1->type) {
+                ਹਾਲਤ GGML_TYPE_F16:
                     supports_op |= (src0->type == GGML_TYPE_F16);
-                    break;
-                case GGML_TYPE_F32:
-                    switch (src0->type) {
-                        case GGML_TYPE_F32:
-                        case GGML_TYPE_F16:
-                        case GGML_TYPE_BF16:
-                        case GGML_TYPE_Q1_0:
-                        case GGML_TYPE_Q4_0:
-                        case GGML_TYPE_Q4_1:
-                        case GGML_TYPE_Q5_0:
-                        case GGML_TYPE_Q5_1:
-                        case GGML_TYPE_Q8_0:
-                        case GGML_TYPE_Q2_K:
-                        case GGML_TYPE_Q3_K:
-                        case GGML_TYPE_Q4_K:
-                        case GGML_TYPE_Q5_K:
-                        case GGML_TYPE_Q6_K:
-                        case GGML_TYPE_IQ1_S:
-                        case GGML_TYPE_IQ1_M:
-                        case GGML_TYPE_IQ2_XXS:
-                        case GGML_TYPE_IQ2_XS:
-                        case GGML_TYPE_IQ2_S:
-                        case GGML_TYPE_IQ3_XXS:
-                        case GGML_TYPE_IQ3_S:
-                        case GGML_TYPE_IQ4_NL:
-                        case GGML_TYPE_IQ4_XS:
-                        case GGML_TYPE_MXFP4:
-                        case GGML_TYPE_NVFP4:
-                            supports_op = true;
-                            break;
-                        default:
-                            break;
+                    ਰੋਕੋ;
+                ਹਾਲਤ GGML_TYPE_F32:
+                    ਚੋਣ (src0->type) {
+                        ਹਾਲਤ GGML_TYPE_F32:
+                        ਹਾਲਤ GGML_TYPE_F16:
+                        ਹਾਲਤ GGML_TYPE_BF16:
+                        ਹਾਲਤ GGML_TYPE_Q1_0:
+                        ਹਾਲਤ GGML_TYPE_Q4_0:
+                        ਹਾਲਤ GGML_TYPE_Q4_1:
+                        ਹਾਲਤ GGML_TYPE_Q5_0:
+                        ਹਾਲਤ GGML_TYPE_Q5_1:
+                        ਹਾਲਤ GGML_TYPE_Q8_0:
+                        ਹਾਲਤ GGML_TYPE_Q2_K:
+                        ਹਾਲਤ GGML_TYPE_Q3_K:
+                        ਹਾਲਤ GGML_TYPE_Q4_K:
+                        ਹਾਲਤ GGML_TYPE_Q5_K:
+                        ਹਾਲਤ GGML_TYPE_Q6_K:
+                        ਹਾਲਤ GGML_TYPE_IQ1_S:
+                        ਹਾਲਤ GGML_TYPE_IQ1_M:
+                        ਹਾਲਤ GGML_TYPE_IQ2_XXS:
+                        ਹਾਲਤ GGML_TYPE_IQ2_XS:
+                        ਹਾਲਤ GGML_TYPE_IQ2_S:
+                        ਹਾਲਤ GGML_TYPE_IQ3_XXS:
+                        ਹਾਲਤ GGML_TYPE_IQ3_S:
+                        ਹਾਲਤ GGML_TYPE_IQ4_NL:
+                        ਹਾਲਤ GGML_TYPE_IQ4_XS:
+                        ਹਾਲਤ GGML_TYPE_MXFP4:
+                        ਹਾਲਤ GGML_TYPE_NVFP4:
+                            supports_op = ਸੱਚ;
+                            ਰੋਕੋ;
+                        ਮੂਲ:
+                            ਰੋਕੋ;
                     }
-                    break;
-                default:
-                    break;
+                    ਰੋਕੋ;
+                ਮੂਲ:
+                    ਰੋਕੋ;
             }
-            if (ggml_get_op_params_i32(op, 3) == GGML_PREC_F32) {
-                supports_op = false;
+            ਜੇ (ggml_get_op_params_i32(op, 3) == GGML_PREC_F32) {
+                supports_op = ਝੂਠ;
             }
-            break;
-        case GGML_OP_FLASH_ATTN_EXT:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_FLASH_ATTN_EXT:
             {
                 // conservative support checks for whether the more resource-intensive shader paths
                 // can be used, to avoid cases where flash_attn is assigned to the CPU later on
@@ -4588,251 +4588,251 @@ static bool ggml_backend_webgpu_device_supports_op(ggml_backend_dev_t dev, const
                               (src2->type == GGML_TYPE_F32 || src2->type == GGML_TYPE_F16 ||
                                src2->type == GGML_TYPE_Q4_0 || src2->type == GGML_TYPE_Q8_0) &&
                               op->type == GGML_TYPE_F32;
-                if (!supports_op) {
-                    break;
+                ਜੇ (!supports_op) {
+                    ਰੋਕੋ;
                 }
-                if (ggml_webgpu_tensor_binding_overlap(ctx->webgpu_global_ctx, src1, src2) &&
+                ਜੇ (ggml_webgpu_tensor_binding_overlap(ctx->webgpu_global_ctx, src1, src2) &&
                     src1->type != src2->type && !(ggml_is_quantized(src1->type) && ggml_is_quantized(src2->type))) {
-                    supports_op = false;
-                    break;
+                    supports_op = ਝੂਠ;
+                    ਰੋਕੋ;
                 }
-                const auto & capabilities             = ctx->webgpu_global_ctx->capabilities;
-                const size_t storage_offset_alignment = capabilities.limits.minStorageBufferOffsetAlignment;
+                ਅਚਲ ਸਵੈਚਾਲਿਤ & capabilities             = ctx->webgpu_global_ctx->capabilities;
+                ਅਚਲ size_t storage_ਵਿੱਥ_alignment = capabilities.limits.min_Storage_ਬਫਰ_ਵਿੱਥ_Alignment;
 
                 // subgroup matrix path requirements
-                const bool use_subgroup_matrix = ggml_webgpu_flash_attn_can_use_subgroup_matrix_path(
-                    capabilities.supports_subgroup_matrix, capabilities.sg_mat_k, capabilities.sg_mat_n, src0, src2);
+                ਅਚਲ ਤਾਰਕਿਕ use_subgroup_ਮੈਟ੍ਰਿਕਸ = ggml_webgpu_flash_attn_can_use_subgroup_ਮੈਟ੍ਰਿਕਸ_ਰਸਤਾ(
+                    capabilities.supports_subgroup_ਮੈਟ੍ਰਿਕਸ, capabilities.sg_mat_k, capabilities.sg_mat_n, src0, src2);
 
                 // tile path requirements
-                const bool float_vec4_aligned =
+                ਅਚਲ ਤਾਰਕਿਕ float_vec4_aligned =
                     ((src1->type != GGML_TYPE_F16 && src1->type != GGML_TYPE_F32) ||
-                     ggml_webgpu_flash_attn_float_vec4_aligned(src1, storage_offset_alignment)) &&
+                     ggml_webgpu_flash_attn_float_vec4_aligned(src1, storage_ਵਿੱਥ_alignment)) &&
                     ((src2->type != GGML_TYPE_F16 && src2->type != GGML_TYPE_F32) ||
-                     ggml_webgpu_flash_attn_float_vec4_aligned(src2, storage_offset_alignment));
-                const uint32_t k_tile_head_align = (src1->type == GGML_TYPE_F32 || src1->type == GGML_TYPE_F16) ?
-                                                       GGML_WEBGPU_FLASH_ATTN_TILE_KV_VEC_WIDTH :
-                                                       (uint32_t) ggml_blck_size(src1->type);
-                const uint32_t v_tile_head_align = (src2->type == GGML_TYPE_F32 || src2->type == GGML_TYPE_F16) ?
-                                                       GGML_WEBGPU_FLASH_ATTN_TILE_KV_VEC_WIDTH :
-                                                       (uint32_t) ggml_blck_size(src2->type);
-                const bool     tile_kv_head_dims_aligned =
-                    src0->ne[0] % k_tile_head_align == 0 && src2->ne[0] % v_tile_head_align == 0;
-                const bool tile_can_dispatch_all_q_rows =
-                    capabilities.limits.maxComputeInvocationsPerWorkgroup >=
-                    GGML_WEBGPU_FLASH_ATTN_TILE_Q_TILE * capabilities.max_subgroup_size;
-                const bool use_tile = !use_subgroup_matrix && capabilities.supports_subgroups && float_vec4_aligned &&
-                                      tile_kv_head_dims_aligned && tile_can_dispatch_all_q_rows;
+                     ggml_webgpu_flash_attn_float_vec4_aligned(src2, storage_ਵਿੱਥ_alignment));
+                ਅਚਲ uint32_t k_tile_ਸਿਰ_align = (src1->type == GGML_TYPE_F32 || src1->type == GGML_TYPE_F16) ?
+                                                       GGML_WEBGPU_FLASH_ATTN_TILE_KV_VEC_ਚੌੜਾਈ :
+                                                       (uint32_t) ggml_blck_ਮਾਪ(src1->type);
+                ਅਚਲ uint32_t v_tile_ਸਿਰ_align = (src2->type == GGML_TYPE_F32 || src2->type == GGML_TYPE_F16) ?
+                                                       GGML_WEBGPU_FLASH_ATTN_TILE_KV_VEC_ਚੌੜਾਈ :
+                                                       (uint32_t) ggml_blck_ਮਾਪ(src2->type);
+                ਅਚਲ ਤਾਰਕਿਕ     tile_kv_ਸਿਰ_dims_aligned =
+                    src0->ne[0] % k_tile_ਸਿਰ_align == 0 && src2->ne[0] % v_tile_ਸਿਰ_align == 0;
+                ਅਚਲ ਤਾਰਕਿਕ tile_can_dispatch_all_q_ਪੰਕਤੀਆਂ =
+                    capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup >=
+                    GGML_WEBGPU_FLASH_ATTN_TILE_Q_TILE * capabilities.max_subgroup_ਮਾਪ;
+                ਅਚਲ ਤਾਰਕਿਕ use_tile = !use_subgroup_ਮੈਟ੍ਰਿਕਸ && capabilities.supports_subgroups && float_vec4_aligned &&
+                                      tile_kv_ਸਿਰ_dims_aligned && tile_can_dispatch_all_q_ਪੰਕਤੀਆਂ;
 
-                if (!use_subgroup_matrix && !use_tile) {
-                    supports_op = false;
-                    break;
+                ਜੇ (!use_subgroup_ਮੈਟ੍ਰਿਕਸ && !use_tile) {
+                    supports_op = ਝੂਠ;
+                    ਰੋਕੋ;
                 }
-                const uint32_t q_tile =
-                    use_subgroup_matrix ? capabilities.sg_mat_m : GGML_WEBGPU_FLASH_ATTN_TILE_Q_TILE;
-                const uint32_t kv_granularity = use_subgroup_matrix ? capabilities.sg_mat_n : 1u;
-                const bool     kv_direct = use_subgroup_matrix ?
-                                               ggml_webgpu_flash_attn_k_direct(src0, src1, capabilities.sg_mat_k) ||
-                                                   ggml_webgpu_flash_attn_v_direct(src0, src2, capabilities.sg_mat_k) :
-                                               false;
-                const uint32_t max_kv_tile = ggml_webgpu_flash_attn_max_kv_tile(
-                    capabilities.limits.maxComputeWorkgroupStorageSize, q_tile, kv_granularity, (uint32_t) src0->ne[0],
-                    (uint32_t) src2->ne[0], op->src[3] != nullptr, kv_direct);
+                ਅਚਲ uint32_t q_tile =
+                    use_subgroup_ਮੈਟ੍ਰਿਕਸ ? capabilities.sg_mat_m : GGML_WEBGPU_FLASH_ATTN_TILE_Q_TILE;
+                ਅਚਲ uint32_t kv_granularity = use_subgroup_ਮੈਟ੍ਰਿਕਸ ? capabilities.sg_mat_n : 1u;
+                ਅਚਲ ਤਾਰਕਿਕ     kv_ਸਿੱਧਾ = use_subgroup_ਮੈਟ੍ਰਿਕਸ ?
+                                               ggml_webgpu_flash_attn_k_ਸਿੱਧਾ(src0, src1, capabilities.sg_mat_k) ||
+                                                   ggml_webgpu_flash_attn_v_ਸਿੱਧਾ(src0, src2, capabilities.sg_mat_k) :
+                                               ਝੂਠ;
+                ਅਚਲ uint32_t max_kv_tile = ggml_webgpu_flash_attn_max_kv_tile(
+                    capabilities.limits.max_Compute_Workgroup_Storage_ਮਾਪ, q_tile, kv_granularity, (uint32_t) src0->ne[0],
+                    (uint32_t) src2->ne[0], op->src[3] != ਖਾਲੀ_ਸੂਚਕ, kv_ਸਿੱਧਾ);
                 supports_op = max_kv_tile > 0;
-                break;
+                ਰੋਕੋ;
             }
-        case GGML_OP_RMS_NORM:
-        case GGML_OP_NORM:
-        case GGML_OP_L2_NORM:
-            supports_op = (op->type == GGML_TYPE_F32 && src0->type == GGML_TYPE_F32) && ggml_is_contiguous_rows(src0);
-            break;
-        case GGML_OP_ROPE:
+        ਹਾਲਤ GGML_OP_RMS_NORM:
+        ਹਾਲਤ GGML_OP_NORM:
+        ਹਾਲਤ GGML_OP_L2_NORM:
+            supports_op = (op->type == GGML_TYPE_F32 && src0->type == GGML_TYPE_F32) && ggml_is_contiguous_ਪੰਕਤੀਆਂ(src0);
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_ROPE:
             supports_op = op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16;
-            break;
-        case GGML_OP_GLU:
-            switch (ggml_get_glu_op(op)) {
-                case GGML_GLU_OP_REGLU:
-                case GGML_GLU_OP_GEGLU:
-                case GGML_GLU_OP_SWIGLU:
-                case GGML_GLU_OP_GEGLU_ERF:
-                case GGML_GLU_OP_GEGLU_QUICK:
-                case GGML_GLU_OP_SWIGLU_CLAMP:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_GLU:
+            ਚੋਣ (ggml_get_glu_op(op)) {
+                ਹਾਲਤ GGML_GLU_OP_REGLU:
+                ਹਾਲਤ GGML_GLU_OP_GEGLU:
+                ਹਾਲਤ GGML_GLU_OP_SWIGLU:
+                ਹਾਲਤ GGML_GLU_OP_GEGLU_ERF:
+                ਹਾਲਤ GGML_GLU_OP_GEGLU_ਤੇਜ਼:
+                ਹਾਲਤ GGML_GLU_OP_SWIGLU_CLAMP:
                     supports_op = op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16;
-                    break;
-                case GGML_GLU_OP_SWIGLU_OAI:
+                    ਰੋਕੋ;
+                ਹਾਲਤ GGML_GLU_OP_SWIGLU_OAI:
                     supports_op = op->type == GGML_TYPE_F32;
-                    break;
-                default:
-                    break;
+                    ਰੋਕੋ;
+                ਮੂਲ:
+                    ਰੋਕੋ;
             }
-            break;
-        case GGML_OP_SCALE:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_SCALE:
             supports_op = op->type == GGML_TYPE_F32;
-            break;
-        case GGML_OP_SOFT_MAX:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_SOFT_MAX:
             supports_op = op->type == GGML_TYPE_F32;
-            break;
-        case GGML_OP_UNARY:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_UNARY:
             {
-                const ggml_unary_op UNARY_OP = ggml_get_unary_op(op);
+                ਅਚਲ ggml_unary_op UNARY_OP = ggml_get_unary_op(op);
 
-                switch (UNARY_OP) {
-                    case GGML_UNARY_OP_ABS:
-                    case GGML_UNARY_OP_SGN:
-                    case GGML_UNARY_OP_NEG:
-                    case GGML_UNARY_OP_STEP:
-                    case GGML_UNARY_OP_TANH:
-                    case GGML_UNARY_OP_ELU:
-                    case GGML_UNARY_OP_RELU:
-                    case GGML_UNARY_OP_SIGMOID:
-                    case GGML_UNARY_OP_GELU:
-                    case GGML_UNARY_OP_GELU_QUICK:
-                    case GGML_UNARY_OP_SILU:
-                    case GGML_UNARY_OP_HARDSWISH:
-                    case GGML_UNARY_OP_HARDSIGMOID:
-                    case GGML_UNARY_OP_EXP:
-                    case GGML_UNARY_OP_GELU_ERF:
-                    case GGML_UNARY_OP_SOFTPLUS:
-                    case GGML_UNARY_OP_EXPM1:
-                    case GGML_UNARY_OP_FLOOR:
-                    case GGML_UNARY_OP_CEIL:
-                    case GGML_UNARY_OP_ROUND:
-                    case GGML_UNARY_OP_TRUNC:
-                    case GGML_UNARY_OP_XIELU:
+                ਚੋਣ (UNARY_OP) {
+                    ਹਾਲਤ GGML_UNARY_OP_ABS:
+                    ਹਾਲਤ GGML_UNARY_OP_SGN:
+                    ਹਾਲਤ GGML_UNARY_OP_NEG:
+                    ਹਾਲਤ GGML_UNARY_OP_ਕਦਮ:
+                    ਹਾਲਤ GGML_UNARY_OP_TANH:
+                    ਹਾਲਤ GGML_UNARY_OP_ELU:
+                    ਹਾਲਤ GGML_UNARY_OP_RELU:
+                    ਹਾਲਤ GGML_UNARY_OP_SIGMOID:
+                    ਹਾਲਤ GGML_UNARY_OP_GELU:
+                    ਹਾਲਤ GGML_UNARY_OP_GELU_ਤੇਜ਼:
+                    ਹਾਲਤ GGML_UNARY_OP_SILU:
+                    ਹਾਲਤ GGML_UNARY_OP_HARDSWISH:
+                    ਹਾਲਤ GGML_UNARY_OP_HARDSIGMOID:
+                    ਹਾਲਤ GGML_UNARY_OP_EXP:
+                    ਹਾਲਤ GGML_UNARY_OP_GELU_ERF:
+                    ਹਾਲਤ GGML_UNARY_OP_SOFTPLUS:
+                    ਹਾਲਤ GGML_UNARY_OP_EXPM1:
+                    ਹਾਲਤ GGML_UNARY_OP_FLOOR:
+                    ਹਾਲਤ GGML_UNARY_OP_CEIL:
+                    ਹਾਲਤ GGML_UNARY_OP_ਗੇੜਾ:
+                    ਹਾਲਤ GGML_UNARY_OP_TRUNC:
+                    ਹਾਲਤ GGML_UNARY_OP_XIELU:
                         supports_op =
                             (op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16) && (src0->type == op->type);
-                        break;
-                    default:
-                        break;
+                        ਰੋਕੋ;
+                    ਮੂਲ:
+                        ਰੋਕੋ;
                 }
             }
-            break;
-        case GGML_OP_TRI:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_TRI:
             supports_op = op->type == GGML_TYPE_F32 && src0->type == GGML_TYPE_F32;
-            break;
-        case GGML_OP_DIAG:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_DIAG:
             supports_op = op->type == GGML_TYPE_F32 && src0->type == GGML_TYPE_F32;
-            break;
-        case GGML_OP_SOLVE_TRI:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_SOLVE_TRI:
             supports_op = op->type == GGML_TYPE_F32 && src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_F32;
-            break;
-        case GGML_OP_CONV_2D:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_CONV_2D:
             supports_op = (op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16) &&
                           (src0->type == GGML_TYPE_F32 || src0->type == GGML_TYPE_F16) &&
                           (src1->type == GGML_TYPE_F32 || src1->type == GGML_TYPE_F16);
-            break;
-        case GGML_OP_CONV_2D_DW:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_CONV_2D_DW:
             supports_op = (op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16) &&
                           (src0->type == GGML_TYPE_F32 || src0->type == GGML_TYPE_F16) &&
                           (src1->type == GGML_TYPE_F32 || src1->type == GGML_TYPE_F16) &&
                           (ggml_is_contiguous(src1) || ggml_is_contiguous_channels(src1));
-            break;
-        case GGML_OP_IM2COL:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_IM2_ਖਾਨਾ:
             supports_op = (op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16) &&
                           (src0->type == GGML_TYPE_F32 || src0->type == GGML_TYPE_F16);
-            break;
-        case GGML_OP_SSM_CONV:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_SSM_CONV:
             supports_op = op->type == GGML_TYPE_F32;
-            break;
-        case GGML_OP_SSM_SCAN:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_SSM_ਜਾਂਚ:
             supports_op = op->type == GGML_TYPE_F32 &&
-                          src0->ne[0] <= ctx->webgpu_global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
-            break;
-        case GGML_OP_GATED_DELTA_NET:
+                          src0->ne[0] <= ctx->webgpu_global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_GATED_DELTA_NET:
             {
-                const uint32_t s_v = (uint32_t) src2->ne[0];
+                ਅਚਲ uint32_t s_v = (uint32_t) src2->ne[0];
                 supports_op = op->type == GGML_TYPE_F32 && src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_F32 &&
                               src2->type == GGML_TYPE_F32 && op->src[3]->type == GGML_TYPE_F32 &&
                               op->src[4]->type == GGML_TYPE_F32 && op->src[5]->type == GGML_TYPE_F32 &&
-                              s_v <= ctx->webgpu_global_ctx->capabilities.limits.maxComputeInvocationsPerWorkgroup;
+                              s_v <= ctx->webgpu_global_ctx->capabilities.limits.max_Compute_Invocations_ਪ੍ਰਤੀ_Workgroup;
             }
-            break;
-        case GGML_OP_CLAMP:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_CLAMP:
             supports_op = (op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16) && (src0->type == op->type);
-            break;
-        case GGML_OP_FILL:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_FILL:
             supports_op = (op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16) && (src0->type == op->type);
-            break;
-        case GGML_OP_LOG:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_LOG:
             supports_op = (op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16) && (src0->type == op->type);
-            break;
-        case GGML_OP_SQR:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_SQR:
             supports_op = (op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16) && (src0->type == op->type);
-            break;
-        case GGML_OP_SQRT:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_SQRT:
             supports_op = (op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16) && (src0->type == op->type);
-            break;
-        case GGML_OP_SIN:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_SIN:
             supports_op = (op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16) && (src0->type == op->type);
-            break;
-        case GGML_OP_COS:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_COS:
             supports_op = (op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16) && (src0->type == op->type);
-            break;
-        case GGML_OP_PAD:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_PAD:
             supports_op = op->type == GGML_TYPE_F32 && src0->type == GGML_TYPE_F32;
-            break;
-        case GGML_OP_ARGMAX:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_ARGMAX:
             supports_op = op->type == GGML_TYPE_I32 && src0->type == GGML_TYPE_F32;
-            break;
-        case GGML_OP_ARGSORT:
-            supports_op = op->type == GGML_TYPE_I32 && src0->type == GGML_TYPE_F32 && ggml_is_contiguous_rows(src0);
-            break;
-        case GGML_OP_TOP_K:
-            supports_op = op->type == GGML_TYPE_I32 && src0->type == GGML_TYPE_F32 && ggml_is_contiguous_rows(src0);
-            break;
-        case GGML_OP_CUMSUM:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_ARGSORT:
+            supports_op = op->type == GGML_TYPE_I32 && src0->type == GGML_TYPE_F32 && ggml_is_contiguous_ਪੰਕਤੀਆਂ(src0);
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_ਸਿਖਰ_K:
+            supports_op = op->type == GGML_TYPE_I32 && src0->type == GGML_TYPE_F32 && ggml_is_contiguous_ਪੰਕਤੀਆਂ(src0);
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_CUMSUM:
             supports_op = op->type == GGML_TYPE_F32 && src0->type == op->type;
-            break;
-        case GGML_OP_SUM:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_ਜੋੜ:
             supports_op = op->type == GGML_TYPE_F32 && src0->type == op->type && ggml_is_contiguously_allocated(src0);
-            break;
-        case GGML_OP_SUM_ROWS:
-            supports_op = op->type == GGML_TYPE_F32 && src0->type == op->type && ggml_is_contiguous_rows(src0);
-            break;
-        case GGML_OP_UPSCALE:
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_ਜੋੜ_ਪੰਕਤੀਆਂ:
+            supports_op = op->type == GGML_TYPE_F32 && src0->type == op->type && ggml_is_contiguous_ਪੰਕਤੀਆਂ(src0);
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_OP_UPSCALE:
             supports_op = (op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16) &&
                           (src0->type == GGML_TYPE_F32 || src0->type == GGML_TYPE_F16);
-            break;
-        default:
-            break;
+            ਰੋਕੋ;
+        ਮੂਲ:
+            ਰੋਕੋ;
     }
-    if (ggml_nbytes(op) > ctx->webgpu_global_ctx->capabilities.limits.maxStorageBufferBindingSize ||
-        (src0 != nullptr &&
-         ggml_nbytes(src0) > ctx->webgpu_global_ctx->capabilities.limits.maxStorageBufferBindingSize) ||
-        (src1 != nullptr &&
-         ggml_nbytes(src1) > ctx->webgpu_global_ctx->capabilities.limits.maxStorageBufferBindingSize) ||
-        (src2 != nullptr &&
-         ggml_nbytes(src2) > ctx->webgpu_global_ctx->capabilities.limits.maxStorageBufferBindingSize)) {
-        supports_op = false;
+    ਜੇ (ggml_nbytes(op) > ctx->webgpu_global_ctx->capabilities.limits.max_Storage_ਬਫਰ_Binding_ਮਾਪ ||
+        (src0 != ਖਾਲੀ_ਸੂਚਕ &&
+         ggml_nbytes(src0) > ctx->webgpu_global_ctx->capabilities.limits.max_Storage_ਬਫਰ_Binding_ਮਾਪ) ||
+        (src1 != ਖਾਲੀ_ਸੂਚਕ &&
+         ggml_nbytes(src1) > ctx->webgpu_global_ctx->capabilities.limits.max_Storage_ਬਫਰ_Binding_ਮਾਪ) ||
+        (src2 != ਖਾਲੀ_ਸੂਚਕ &&
+         ggml_nbytes(src2) > ctx->webgpu_global_ctx->capabilities.limits.max_Storage_ਬਫਰ_Binding_ਮਾਪ)) {
+        supports_op = ਝੂਠ;
         WEBGPU_LOG_DEBUG("ggml_webgpu op not supported due to size: ");
     }
 
-    if (!supports_op) {
+    ਜੇ (!supports_op) {
         WEBGPU_LOG_DEBUG("ggml_webgpu op not supported: "
                          << ggml_op_name(op->op) << " with types dst: " << ggml_type_name(op->type)
                          << ", src0: " << (op->src[0] ? ggml_type_name(op->src[0]->type) : "null")
                          << ", src1: " << (op->src[1] ? ggml_type_name(op->src[1]->type) : "null"));
-    } else {
+    } ਨਹੀਂਤਾਂ {
         WEBGPU_LOG_DEBUG("ggml_webgpu op supported: "
                          << ggml_op_name(op->op) << " with types dst: " << ggml_type_name(op->type)
                          << ", src0: " << (op->src[0] ? ggml_type_name(op->src[0]->type) : "null")
                          << ", src1: " << (op->src[1] ? ggml_type_name(op->src[1]->type) : "null"));
     }
-    return supports_op;
+    ਵਾਪਸ supports_op;
 }
 
-static struct ggml_backend_device_i ggml_backend_webgpu_device_i = {
+ਸਥਿਰ ਬਣਤਰ ggml_backend_device_i ggml_backend_webgpu_device_i = {
     /* .get_name             = */ ggml_backend_webgpu_device_get_name,
     /* .get_description      = */ ggml_backend_webgpu_device_get_description,
-    /* .get_memory           = */ ggml_backend_webgpu_device_get_memory,
+    /* .get_memory           = */ ggml_backend_webgpu_device_get_ਸਮ੍ਰਿਤੀ,
     /* .get_type             = */ ggml_backend_webgpu_device_get_type,
     /* .get_props            = */ ggml_backend_webgpu_device_get_props,
     /* .init_backend         = */ ggml_backend_webgpu_backend_init,
-    /* .get_buffer_type      = */ ggml_backend_webgpu_device_get_buffer_type,
-    /* .get_host_buffer_type = */ NULL,
-    /* .buffer_from_host_ptr = */ NULL,
+    /* .get_buffer_type      = */ ggml_backend_webgpu_device_get_ਬਫਰ_type,
+    /* .get_host_buffer_type = */ ਨਿਰਾ,
+    /* .buffer_from_host_ptr = */ ਨਿਰਾ,
     /* .supports_op          = */ ggml_backend_webgpu_device_supports_op,
     /* .supports_buft        = */ ggml_backend_webgpu_device_supports_buft,
-    /* .offload_op           = */ NULL,
+    /* .offload_op           = */ ਨਿਰਾ,
     /* .event_new            = */ ggml_backend_webgpu_device_event_new,
     /* .event_free           = */ ggml_backend_webgpu_device_event_free,
     /* .event_synchronize    = */ ggml_backend_webgpu_device_event_synchronize,
@@ -4842,47 +4842,47 @@ static struct ggml_backend_device_i ggml_backend_webgpu_device_i = {
 
 /* GGML Backend Registration Interface */
 
-static const char * ggml_backend_webgpu_reg_get_name(ggml_backend_reg_t reg) {
+ਸਥਿਰ ਅਚਲ ਅੱਖਰ * ggml_backend_webgpu_reg_get_name(ggml_backend_reg_t reg) {
     ggml_backend_webgpu_reg_context * ctx = static_cast<ggml_backend_webgpu_reg_context *>(reg->context);
-    return ctx->name;
+    ਵਾਪਸ ctx->name;
 }
 
-static size_t ggml_backend_webgpu_reg_get_device_count(ggml_backend_reg_t reg) {
+ਸਥਿਰ size_t ggml_backend_webgpu_reg_get_device_ਗਿਣਤੀ(ggml_backend_reg_t reg) {
     ggml_backend_webgpu_reg_context * ctx = static_cast<ggml_backend_webgpu_reg_context *>(reg->context);
-    return ctx->device_count;
+    ਵਾਪਸ ctx->device_ਗਿਣਤੀ;
 }
 
 // Only one device is supported for now
-static ggml_backend_dev_t ggml_backend_webgpu_reg_get_device(ggml_backend_reg_t reg, size_t index) {
-    GGML_ASSERT(index == 0);
+ਸਥਿਰ ggml_backend_dev_t ggml_backend_webgpu_reg_get_device(ggml_backend_reg_t reg, size_t ਸੂਚਕਾਂਕ) {
+    GGML_ASSERT(ਸੂਚਕਾਂਕ == 0);
     WEBGPU_LOG_DEBUG("ggml_backend_reg_get_device()");
 
-    WEBGPU_CPU_PROFILE_TOTAL_START(reg_get_device);
+    WEBGPU_CPU_PROFILE_ਕੁੱਲ_ਸ਼ੁਰੂ(reg_get_device);
 
     ggml_backend_webgpu_reg_context * reg_ctx = static_cast<ggml_backend_webgpu_reg_context *>(reg->context);
 
     create_webgpu_device(reg_ctx);
 
-    static ggml_backend_webgpu_device_context device_ctx;
+    ਸਥਿਰ ggml_backend_webgpu_device_context device_ctx;
     device_ctx.device_name            = GGML_WEBGPU_NAME;
     device_ctx.device_desc            = GGML_WEBGPU_NAME;
     device_ctx.webgpu_global_ctx      = reg_ctx->webgpu_global_ctx;
     // See GGML Backend Device Interface section
-    static ggml_backend_device device = {
+    ਸਥਿਰ ggml_backend_device device = {
         /* .iface   = */ ggml_backend_webgpu_device_i,
         /* .reg     = */ reg,
         /* .context = */ &device_ctx,
     };
 
-    WEBGPU_CPU_PROFILE_TOTAL_END(reg_get_device, reg_ctx->webgpu_global_ctx);
-    return &device;
+    WEBGPU_CPU_PROFILE_ਕੁੱਲ_ਸਿਰਾ(reg_get_device, reg_ctx->webgpu_global_ctx);
+    ਵਾਪਸ &device;
 }
 
-static const struct ggml_backend_reg_i ggml_backend_webgpu_reg_i = {
+ਸਥਿਰ ਅਚਲ ਬਣਤਰ ggml_backend_reg_i ggml_backend_webgpu_reg_i = {
     /* .get_name         = */ ggml_backend_webgpu_reg_get_name,
-    /* .get_device_count = */ ggml_backend_webgpu_reg_get_device_count,
+    /* .get_device_count = */ ggml_backend_webgpu_reg_get_device_ਗਿਣਤੀ,
     /* .get_device       = */ ggml_backend_webgpu_reg_get_device,
-    /* .get_proc_address = */ NULL,
+    /* .get_proc_address = */ ਨਿਰਾ,
 };
 
 /* End GGML Backend Registration Interface */
@@ -4892,66 +4892,66 @@ ggml_backend_reg_t ggml_backend_webgpu_reg() {
 
     // Intentionally leak the global registry context to avoid crashing inside
     // Dawn/Vulkan static teardown during process exit.
-    static ggml_backend_webgpu_reg_context * ctx = new ggml_backend_webgpu_reg_context();
+    ਸਥਿਰ ggml_backend_webgpu_reg_context * ctx = ਨਵਾਂ ggml_backend_webgpu_reg_context();
 
-    static ggml_backend_reg reg = {
-        /* .api_version = */ GGML_BACKEND_API_VERSION,
+    ਸਥਿਰ ggml_backend_reg reg = {
+        /* .api_version = */ GGML_BACKEND_API_ਸੰਸਕਰਣ,
         /* .iface       = */ ggml_backend_webgpu_reg_i,
         /* .context     = */ ctx,
     };
 
     ctx->name         = GGML_WEBGPU_NAME;
-    ctx->device_count = 0;
+    ctx->device_ਗਿਣਤੀ = 0;
 
     // Keep one Dawn/WebGPU instance alive for the lifetime of the static backend
     // registry. Recreating it on repeated registry lookups can invalidate
     // adapter/device references that are still held by the backend/device layer.
-    if (ctx->webgpu_global_ctx != nullptr && ctx->webgpu_global_ctx->instance != nullptr) {
-        return &reg;
+    ਜੇ (ctx->webgpu_global_ctx != ਖਾਲੀ_ਸੂਚਕ && ctx->webgpu_global_ctx->instance != ਖਾਲੀ_ਸੂਚਕ) {
+        ਵਾਪਸ &reg;
     }
 
     wgpu::InstanceDescriptor               instance_descriptor{};
     std::vector<wgpu::InstanceFeatureName> instance_features = { wgpu::InstanceFeatureName::TimedWaitAny };
-    instance_descriptor.requiredFeatures                     = instance_features.data();
-    instance_descriptor.requiredFeatureCount                 = instance_features.size();
+    instance_descriptor.requiredFeatures                     = instance_features.ਅੰਕੜੇ();
+    instance_descriptor.required_Feature_ਗਿਣਤੀ                 = instance_features.size();
 
-#if !defined(__EMSCRIPTEN__) && !defined(__wasi__)
-    const char * const          instanceEnabledToggles[] = { "allow_unsafe_apis" };
+#ਜੇ !defined(__EMSCRIPTEN__) && !defined(__wasi__)
+    ਅਚਲ ਅੱਖਰ * ਅਚਲ          instanceEnabledToggles[] = { "allow_unsafe_apis" };
     wgpu::DawnTogglesDescriptor instanceTogglesDesc;
     instanceTogglesDesc.enabledToggles     = instanceEnabledToggles;
-    instanceTogglesDesc.enabledToggleCount = 1;
-    instance_descriptor.nextInChain        = &instanceTogglesDesc;
-#endif
+    instanceTogglesDesc.enabled_Toggle_ਗਿਣਤੀ = 1;
+    instance_descriptor.ਅਗਲਾ_ਵਿੱਚ_Chain        = &instanceTogglesDesc;
+#ਜੇ_ਅੰਤ
 
     wgpu::Instance inst              = wgpu::CreateInstance(&instance_descriptor);
-    ctx->webgpu_global_ctx           = webgpu_global_context(new webgpu_global_context_struct());
+    ctx->webgpu_global_ctx           = webgpu_global_context(ਨਵਾਂ webgpu_global_context_struct());
     ctx->webgpu_global_ctx->instance = std::move(inst);
 
     // Probe for adapter support
     wgpu::Adapter adapter;
-    if (ctx->webgpu_global_ctx->instance != nullptr) {
+    ਜੇ (ctx->webgpu_global_ctx->instance != ਖਾਲੀ_ਸੂਚਕ) {
         ggml_backend_webgpu_request_adapter(ctx->webgpu_global_ctx->instance, adapter);
     }
 
     // WebGPU backend requires f16 support and, on native, implicit device synchronization.
-    if (adapter != nullptr && adapter.HasFeature(wgpu::FeatureName::ShaderF16)
-#if !defined(__EMSCRIPTEN__) && !defined(__wasi__)
+    ਜੇ (adapter != ਖਾਲੀ_ਸੂਚਕ && adapter.HasFeature(wgpu::FeatureName::ShaderF16)
+#ਜੇ !defined(__EMSCRIPTEN__) && !defined(__wasi__)
         && adapter.HasFeature(wgpu::FeatureName::ImplicitDeviceSynchronization)
-#endif
+#ਜੇ_ਅੰਤ
     ) {
-        ctx->device_count = 1;
+        ctx->device_ਗਿਣਤੀ = 1;
     }
 
-    return &reg;
+    ਵਾਪਸ &reg;
 }
 
-ggml_backend_t ggml_backend_webgpu_init(void) {
+ggml_backend_t ggml_backend_webgpu_init(ਖਾਲੀ) {
     ggml_backend_reg_t reg = ggml_backend_webgpu_reg();
-    if (ggml_backend_reg_dev_count(reg) == 0) {
-        return nullptr;
+    ਜੇ (ggml_backend_reg_dev_ਗਿਣਤੀ(reg) == 0) {
+        ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
     }
     ggml_backend_dev_t dev = ggml_backend_reg_dev_get(reg, 0);
-    return ggml_backend_webgpu_backend_init(dev, nullptr);
+    ਵਾਪਸ ggml_backend_webgpu_backend_init(dev, ਖਾਲੀ_ਸੂਚਕ);
 }
 
 GGML_BACKEND_DL_IMPL(ggml_backend_webgpu_reg)

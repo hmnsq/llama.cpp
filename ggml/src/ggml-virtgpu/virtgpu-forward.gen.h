@@ -1,54 +1,54 @@
-#pragma once
+#ਹਦਾਇਤ once
 
 /* device */
-void                           apir_device_get_device_count(struct virtgpu * gpu);
-int                            apir_device_get_count(struct virtgpu * gpu);
-char *                         apir_device_get_name(struct virtgpu * gpu);
-char *                         apir_device_get_description(struct virtgpu * gpu);
-uint32_t                       apir_device_get_type(struct virtgpu * gpu);
-void                           apir_device_get_memory(struct virtgpu * gpu, size_t * free, size_t * total);
-bool                           apir_device_supports_op(struct virtgpu * gpu, const ggml_tensor * op);
-apir_buffer_type_host_handle_t apir_device_get_buffer_type(struct virtgpu * gpu);
-void                           apir_device_get_props(struct virtgpu * gpu,
+ਖਾਲੀ                           apir_device_get_device_ਗਿਣਤੀ(ਬਣਤਰ virtgpu * gpu);
+ਪੂਰਨ                            apir_device_get_ਗਿਣਤੀ(ਬਣਤਰ virtgpu * gpu);
+ਅੱਖਰ *                         apir_device_get_name(ਬਣਤਰ virtgpu * gpu);
+ਅੱਖਰ *                         apir_device_get_description(ਬਣਤਰ virtgpu * gpu);
+uint32_t                       apir_device_get_type(ਬਣਤਰ virtgpu * gpu);
+ਖਾਲੀ                           apir_device_get_ਸਮ੍ਰਿਤੀ(ਬਣਤਰ virtgpu * gpu, size_t * ਮੁਕਤ, size_t * ਕੁੱਲ);
+bool                           apir_device_supports_op(ਬਣਤਰ virtgpu * gpu, ਅਚਲ ggml_tensor * op);
+apir_ਬਫਰ_type_host_handle_t apir_device_get_ਬਫਰ_type(ਬਣਤਰ virtgpu * gpu);
+ਖਾਲੀ                           apir_device_get_props(ਬਣਤਰ virtgpu * gpu,
                                                      bool *           async,
-                                                     bool *           host_buffer,
-                                                     bool *           buffer_from_host_ptr,
+                                                     bool *           host_ਬਫਰ,
+                                                     bool *           ਬਫਰ_from_host_ptr,
                                                      bool *           events,
                                                      bool *           mmap_support);
-apir_buffer_context_t          apir_device_buffer_from_ptr(struct virtgpu * gpu, size_t size, size_t max_tensor_size);
+apir_ਬਫਰ_context_t          apir_device_ਬਫਰ_from_ptr(ਬਣਤਰ virtgpu * gpu, size_t ਮਾਪ, size_t max_tensor_ਮਾਪ);
 
 /* buffer-type */
-char *                apir_buffer_type_get_name(struct virtgpu * gpu, apir_buffer_type_host_handle_t host_handle);
-size_t                apir_buffer_type_get_alignment(struct virtgpu * gpu, apir_buffer_type_host_handle_t host_handle);
-size_t                apir_buffer_type_get_max_size(struct virtgpu * gpu, apir_buffer_type_host_handle_t host_handle);
+ਅੱਖਰ *                apir_ਬਫਰ_type_get_name(ਬਣਤਰ virtgpu * gpu, apir_ਬਫਰ_type_host_handle_t host_handle);
+size_t                apir_ਬਫਰ_type_get_alignment(ਬਣਤਰ virtgpu * gpu, apir_ਬਫਰ_type_host_handle_t host_handle);
+size_t                apir_ਬਫਰ_type_get_max_ਮਾਪ(ਬਣਤਰ virtgpu * gpu, apir_ਬਫਰ_type_host_handle_t host_handle);
 /* apir_buffer_type_is_host is deprecated. */
-apir_buffer_context_t apir_buffer_type_alloc_buffer(struct virtgpu *               gpu,
-                                                    apir_buffer_type_host_handle_t host_handle,
-                                                    size_t                         size);
-size_t                apir_buffer_type_get_alloc_size(struct virtgpu *               gpu,
-                                                      apir_buffer_type_host_handle_t host_handle,
-                                                      const ggml_tensor *            op);
+apir_ਬਫਰ_context_t apir_ਬਫਰ_type_alloc_ਬਫਰ(ਬਣਤਰ virtgpu *               gpu,
+                                                    apir_ਬਫਰ_type_host_handle_t host_handle,
+                                                    size_t                         ਮਾਪ);
+size_t                apir_ਬਫਰ_type_get_alloc_ਮਾਪ(ਬਣਤਰ virtgpu *               gpu,
+                                                      apir_ਬਫਰ_type_host_handle_t host_handle,
+                                                      ਅਚਲ ggml_tensor *            op);
 
-/* buffer */
-void * apir_buffer_get_base(struct virtgpu * gpu, apir_buffer_context_t * buffer_context);
-void   apir_buffer_set_tensor(struct virtgpu *        gpu,
-                              apir_buffer_context_t * buffer_context,
+/*ਬਫਰ*/
+ਖਾਲੀ * apir_ਬਫਰ_get_ਅਧਾਰ(ਬਣਤਰ virtgpu * gpu, apir_ਬਫਰ_context_t * ਬਫਰ_context);
+ਖਾਲੀ   apir_ਬਫਰ_ਸੈੱਟ_tensor(ਬਣਤਰ virtgpu *        gpu,
+                              apir_ਬਫਰ_context_t * ਬਫਰ_context,
                               ggml_tensor *           tensor,
-                              const void *            data,
-                              size_t                  offset,
-                              size_t                  size);
-void   apir_buffer_get_tensor(struct virtgpu *        gpu,
-                              apir_buffer_context_t * buffer_context,
-                              const ggml_tensor *     tensor,
-                              void *                  data,
-                              size_t                  offset,
-                              size_t                  size);
-bool   apir_buffer_cpy_tensor(struct virtgpu *        gpu,
-                              apir_buffer_context_t * buffer_context,
-                              const ggml_tensor *     src,
-                              const ggml_tensor *     dst);
-void   apir_buffer_clear(struct virtgpu * gpu, apir_buffer_context_t * buffer_context, uint8_t value);
-void   apir_buffer_free_buffer(struct virtgpu * gpu, apir_buffer_context_t * buffer_context);
+                              ਅਚਲ ਖਾਲੀ *            ਅੰਕੜੇ,
+                              size_t                  ਵਿੱਥ,
+                              size_t                  ਮਾਪ);
+ਖਾਲੀ   apir_ਬਫਰ_get_tensor(ਬਣਤਰ virtgpu *        gpu,
+                              apir_ਬਫਰ_context_t * ਬਫਰ_context,
+                              ਅਚਲ ggml_tensor *     tensor,
+                              ਖਾਲੀ *                  ਅੰਕੜੇ,
+                              size_t                  ਵਿੱਥ,
+                              size_t                  ਮਾਪ);
+bool   apir_ਬਫਰ_cpy_tensor(ਬਣਤਰ virtgpu *        gpu,
+                              apir_ਬਫਰ_context_t * ਬਫਰ_context,
+                              ਅਚਲ ggml_tensor *     src,
+                              ਅਚਲ ggml_tensor *     dst);
+ਖਾਲੀ   apir_ਬਫਰ_clear(ਬਣਤਰ virtgpu * gpu, apir_ਬਫਰ_context_t * ਬਫਰ_context, uint8_t ਮੁੱਲ);
+ਖਾਲੀ   apir_ਬਫਰ_free_ਬਫਰ(ਬਣਤਰ virtgpu * gpu, apir_ਬਫਰ_context_t * ਬਫਰ_context);
 
 /* backend */
-ggml_status apir_backend_graph_compute(struct virtgpu * gpu, ggml_cgraph * cgraph);
+ggml_ਸਥਿਤੀ apir_backend_ਗ੍ਰਾਫ_compute(ਬਣਤਰ virtgpu * gpu, ggml_cgraph * cgraph);

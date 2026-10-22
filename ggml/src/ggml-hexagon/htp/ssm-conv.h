@@ -1,33 +1,33 @@
-#ifndef HTP_SSM_CONV_H
-#define HTP_SSM_CONV_H
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ HTP_SSM_CONV_H
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_SSM_CONV_H
 
-#include <stdint.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdint.h>
 
-#include "hex-fastdiv.h"
-#include "htp-ops.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hex-fastdiv.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "htp-ops.h"
 
-struct htp_ssm_conv_kernel_params {
-    uint32_t n_threads;
+ਬਣਤਰ htp_ssm_conv_kernel_params {
+    uint32_t n_ਧਾਗੇ;
     uint32_t d_conv;
     uint32_t d_inner;
     uint32_t n_t;
     uint32_t n_s;
     uint32_t d_inner_tile;
 
-    uint32_t vtcm_src0_size_per_thread;
-    uint32_t vtcm_src1_size_per_thread;
-    uint32_t vtcm_dst_size_per_thread;
+    uint32_t vtcm_src0_ਮਾਪ_ਪ੍ਰਤੀ_thread;
+    uint32_t vtcm_src1_ਮਾਪ_ਪ੍ਰਤੀ_thread;
+    uint32_t vtcm_dst_ਮਾਪ_ਪ੍ਰਤੀ_thread;
 
-    uint32_t vtcm_src0_size;
-    uint32_t vtcm_src1_size;
-    uint32_t vtcm_dst_size;
-    uint32_t vtcm_size;
+    uint32_t vtcm_src0_ਮਾਪ;
+    uint32_t vtcm_src1_ਮਾਪ;
+    uint32_t vtcm_dst_ਮਾਪ;
+    uint32_t vtcm_ਮਾਪ;
 };
 
-#if defined(__cplusplus)
-static_assert(sizeof(struct htp_ssm_conv_kernel_params) <= 128, "htp_ssm_conv_kernel_params is too large for kernel_params blob");
-#else
-_Static_assert(sizeof(struct htp_ssm_conv_kernel_params) <= 128, "htp_ssm_conv_kernel_params is too large for kernel_params blob");
-#endif
+#ਜੇ defined(__cplusplus)
+static_assert(ਆਕਾਰ(ਬਣਤਰ htp_ssm_conv_kernel_params) <= 128, "htp_ssm_conv_kernel_params is too large for kernel_params blob");
+#ਨਹੀਂਤਾਂ
+_Static_assert(ਆਕਾਰ(ਬਣਤਰ htp_ssm_conv_kernel_params) <= 128, "htp_ssm_conv_kernel_params is too large for kernel_params blob");
+#ਜੇ_ਅੰਤ
 
-#endif // HTP_SSM_CONV_H
+#ਜੇ_ਅੰਤ // HTP_SSM_CONV_H

@@ -1,67 +1,67 @@
 // Scalar dequantization helpers and ET-side block-size aliases.
 
-#ifndef QUANTS_H
-#define QUANTS_H
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ QUANTS_H
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QUANTS_H
 
-#include "math_fp.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "math_fp.h"
 
-#include <stdint.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdint.h>
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_DECL_C
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-common.h"
 
 // 64-byte (one cache line) F16 / F32 block sizes.
-#define QK_F16 32
-#define QK_F32 16
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QK_F16 32
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QK_F32 16
 
-static inline void dequantize_q8_0_block(const block_q8_0 * block, float * dst) {
-    const float scale = fp16_to_fp32(block->d);
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ dequantize_q8_0_ਖੰਡ(ਅਚਲ ਖੰਡ_q8_0 * ਖੰਡ, ਦਸ਼ਮਲਵ * dst) {
+    ਅਚਲ ਦਸ਼ਮਲਵ scale = fp16_ਮੰਜ਼ਿਲ_fp32(ਖੰਡ->d);
 
-    for (int i = 0; i < QK8_0; i++) {
-        dst[i] = scale * (float) block->qs[i];
+    ਲਈ (ਪੂਰਨ i = 0; i < QK8_0; i++) {
+        dst[i] = scale * (ਦਸ਼ਮਲਵ) ਖੰਡ->qs[i];
     }
 }
 
 // Low nibbles -> dst[0..15], high nibbles -> dst[16..31].
-static inline void dequantize_q4_0_block(const block_q4_0 * block, float * dst) {
-    const float scale = fp16_to_fp32(block->d);
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ dequantize_q4_0_ਖੰਡ(ਅਚਲ ਖੰਡ_q4_0 * ਖੰਡ, ਦਸ਼ਮਲਵ * dst) {
+    ਅਚਲ ਦਸ਼ਮਲਵ scale = fp16_ਮੰਜ਼ਿਲ_fp32(ਖੰਡ->d);
 
-    for (int i = 0; i < QK4_0 / 2; i++) {
-        const uint8_t byte = block->qs[i];
-        dst[i]             = scale * (float) ((int) (byte & 0xF) - 8);
-        dst[i + QK4_0 / 2] = scale * (float) ((int) (byte >> 4) - 8);
+    ਲਈ (ਪੂਰਨ i = 0; i < QK4_0 / 2; i++) {
+        ਅਚਲ uint8_t byte = ਖੰਡ->qs[i];
+        dst[i]             = scale * (ਦਸ਼ਮਲਵ) ((ਪੂਰਨ) (byte & 0xF) - 8);
+        dst[i + QK4_0 / 2] = scale * (ਦਸ਼ਮਲਵ) ((ਪੂਰਨ) (byte >> 4) - 8);
     }
 }
 
 // Unpack the 6-bit scale/min pair for Q4_K group j (groups 4-7 split their high bits).
-static inline void get_scale_min_k4(int j, const uint8_t * q, uint8_t * d, uint8_t * m) {
-    if (j < 4) {
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ get_scale_min_k4(ਪੂਰਨ j, ਅਚਲ uint8_t * q, uint8_t * d, uint8_t * m) {
+    ਜੇ (j < 4) {
         *d = q[j] & 63;
         *m = q[j + 4] & 63;
-    } else {
+    } ਨਹੀਂਤਾਂ {
         *d = (q[j + 4] & 0xF) | ((q[j - 4] >> 6) << 4);
         *m = (q[j + 4] >> 4) | ((q[j] >> 6) << 4);
     }
 }
 
-static inline void dequantize_q4_K_block(const block_q4_K * block, float * dst) {
-    const uint8_t * q   = block->qs;
-    const float     d   = fp16_to_fp32(block->d);
-    const float     min = fp16_to_fp32(block->dmin);
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ dequantize_q4_K_ਖੰਡ(ਅਚਲ ਖੰਡ_q4_K * ਖੰਡ, ਦਸ਼ਮਲਵ * dst) {
+    ਅਚਲ uint8_t * q   = ਖੰਡ->qs;
+    ਅਚਲ ਦਸ਼ਮਲਵ     d   = fp16_ਮੰਜ਼ਿਲ_fp32(ਖੰਡ->d);
+    ਅਚਲ ਦਸ਼ਮਲਵ     min = fp16_ਮੰਜ਼ਿਲ_fp32(ਖੰਡ->dmin);
 
-    int     is = 0;
+    ਪੂਰਨ     is = 0;
     uint8_t sc, m;
-    for (int j = 0; j < QK_K; j += 64) {
-        get_scale_min_k4(is + 0, block->scales, &sc, &m);
-        const float d1 = d * sc;
-        const float m1 = min * m;
-        get_scale_min_k4(is + 1, block->scales, &sc, &m);
-        const float d2 = d * sc;
-        const float m2 = min * m;
-        for (int l = 0; l < 32; ++l) {
+    ਲਈ (ਪੂਰਨ j = 0; j < QK_K; j += 64) {
+        get_scale_min_k4(is + 0, ਖੰਡ->scales, &sc, &m);
+        ਅਚਲ ਦਸ਼ਮਲਵ d1 = d * sc;
+        ਅਚਲ ਦਸ਼ਮਲਵ m1 = min * m;
+        get_scale_min_k4(is + 1, ਖੰਡ->scales, &sc, &m);
+        ਅਚਲ ਦਸ਼ਮਲਵ d2 = d * sc;
+        ਅਚਲ ਦਸ਼ਮਲਵ m2 = min * m;
+        ਲਈ (ਪੂਰਨ l = 0; l < 32; ++l) {
             *dst++ = d1 * (q[l] & 0xF) - m1;
         }
-        for (int l = 0; l < 32; ++l) {
+        ਲਈ (ਪੂਰਨ l = 0; l < 32; ++l) {
             *dst++ = d2 * (q[l] >> 4) - m2;
         }
         q += 32;
@@ -69,4 +69,4 @@ static inline void dequantize_q4_K_block(const block_q4_K * block, float * dst) 
     }
 }
 
-#endif  // QUANTS_H
+#ਜੇ_ਅੰਤ  // QUANTS_H

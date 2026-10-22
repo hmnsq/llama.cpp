@@ -1,49 +1,49 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "../node_context.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "../op_table.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "../utils.h"
 
-#include <openvino/op/transpose.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/transpose.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+ਨਾਮਾਕਾਸ਼ ov {
+ਨਾਮਾਕਾਸ਼ frontend {
+ਨਾਮਾਕਾਸ਼ ggml {
+ਨਾਮਾਕਾਸ਼ op {
 
-OutputVector translate_transpose(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+Output_ਸਦਿਸ਼ translate_transpose(ਅਚਲ ਗੰਢ_Context & context) {
+    ਅੰਕ_inputs_check(context, 1, 1);
 
     // Compute permute order from input/output shape and stride information
     // so it adapts to different input and output layouts.
-    auto input_stride = context.get_input_stride(0);
-    auto output_stride = context.get_output_stride();
+    ਸਵੈਚਾਲਿਤ ਨਿਵੇਸ਼_stride = context.get_ਨਿਵੇਸ਼_stride(0);
+    ਸਵੈਚਾਲਿਤ output_stride = context.get_output_stride();
 
     // Compute permute order by matching output and input stride rankings.
     // Build <stride, dim_index> pairs.
-    std::vector<std::pair<size_t, int>> output_stride_dims;
-    std::vector<std::pair<size_t, int>> input_stride_dims;
+    std::vector<std::pair<size_t, ਪੂਰਨ>> output_stride_dims;
+    std::vector<std::pair<size_t, ਪੂਰਨ>> ਨਿਵੇਸ਼_stride_dims;
 
-    for (int i = 0; i < 4; ++i) {
+    ਲਈ (ਪੂਰਨ i = 0; i < 4; ++i) {
         output_stride_dims.push_back({output_stride[i], i});
-        input_stride_dims.push_back({input_stride[i], i});
+        ਨਿਵੇਸ਼_stride_dims.push_back({ਨਿਵੇਸ਼_stride[i], i});
     }
 
     // Sort by stride in descending order.
     std::sort(output_stride_dims.rbegin(), output_stride_dims.rend());
-    std::sort(input_stride_dims.rbegin(), input_stride_dims.rend());
+    std::sort(ਨਿਵੇਸ਼_stride_dims.rbegin(), ਨਿਵੇਸ਼_stride_dims.rend());
 
     // Build permute order.
-    std::vector<int64_t> permute_order(4);
-    for (int i = 0; i < 4; ++i) {
-        int output_dim = output_stride_dims[i].second;
-        int input_dim = input_stride_dims[i].second;
-        permute_order[output_dim] = input_dim;
+    std::vector<int64_t> ਕ੍ਰਮ_ਬਦਲੋ_ਕ੍ਰਮ(4);
+    ਲਈ (ਪੂਰਨ i = 0; i < 4; ++i) {
+        ਪੂਰਨ output_dim = output_stride_dims[i].second;
+        ਪੂਰਨ ਨਿਵੇਸ਼_dim = ਨਿਵੇਸ਼_stride_dims[i].second;
+        ਕ੍ਰਮ_ਬਦਲੋ_ਕ੍ਰਮ[output_dim] = ਨਿਵੇਸ਼_dim;
     }
 
-    auto input = process_view_input_new(context, 0);
+    ਸਵੈਚਾਲਿਤ ਨਿਵੇਸ਼ = process_view_ਨਿਵੇਸ਼_new(context, 0);
 
-    auto res = std::make_shared<ov::op::v1::Transpose>(
-        input, ov::op::v0::Constant::create(ov::element::i64, {4}, permute_order));
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ਸਵੈਚਾਲਿਤ res = std::make_shared<ov::op::v1::Transpose>(
+        ਨਿਵੇਸ਼, ov::op::v0::Constant::create(ov::element::i64, {4}, ਕ੍ਰਮ_ਬਦਲੋ_ਕ੍ਰਮ));
+    ਵਾਪਸ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

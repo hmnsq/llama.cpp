@@ -1,10 +1,10 @@
-#ifndef GGML_SYCL_CONV2D_HPP
-#define GGML_SYCL_CONV2D_HPP
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ GGML_SYCL_CONV2D_HPP
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_SYCL_CONV2D_HPP
 
-#include "common.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "common.hpp"
 
-#define SYCL_CONV2D_BLOCK_SIZE 256
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ SYCL_CONV2_D_ਖੰਡ_ਮਾਪ 256
 
-void ggml_sycl_op_conv2d(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+ਖਾਲੀ ggml_sycl_op_conv2d(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-#endif // GGML_SYCL_CONV2D_HPP
+#ਜੇ_ਅੰਤ // GGML_SYCL_CONV2D_HPP

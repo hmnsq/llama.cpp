@@ -1,299 +1,299 @@
-#pragma clang diagnostic ignored "-Wunused-but-set-variable"
+#ਹਦਾਇਤ clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <string.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <HAP_farf.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <string.h>
 
-#include "hex-common.h"
-#include "hex-profile.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hex-common.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hex-profile.h"
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "htp-tensor.h"
-#include "hvx-types.h"
-#include "hvx-utils.h"
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_DECL_C
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-common.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "htp-ctx.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "htp-ops.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "htp-tensor.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hvx-types.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hvx-utils.h"
 
-struct htp_solve_tri_context {
-    struct htp_ops_context * octx;
-    uint32_t                 jobs_per_thread;
-    uint32_t                 total_jobs;
-    uint32_t                 job_start;
+ਬਣਤਰ htp_solve_tri_context {
+    ਬਣਤਰ htp_ops_context * octx;
+    uint32_t                 jobs_ਪ੍ਰਤੀ_thread;
+    uint32_t                 ਕੁੱਲ_jobs;
+    uint32_t                 ਕੰਮ_ਸ਼ੁਰੂ;
     uint32_t                 k_chunks;
-    uint32_t                 col_block;
+    uint32_t                 ਖਾਨਾ_ਖੰਡ;
 };
 
-static inline void solve_tri_row_scalar(const float * A_row,
-                                        const float * B_row,
-                                        float *       X,
-                                        uint32_t      row,
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ solve_tri_ਪੰਕਤੀ_scalar(ਅਚਲ ਦਸ਼ਮਲਵ * A_ਪੰਕਤੀ,
+                                        ਅਚਲ ਦਸ਼ਮਲਵ * B_ਪੰਕਤੀ,
+                                        ਦਸ਼ਮਲਵ *       X,
+                                        uint32_t      ਪੰਕਤੀ,
                                         uint32_t      k,
                                         uint32_t      col0,
                                         uint32_t      coln,
-                                        float         inv_diag) {
-    for (uint32_t col = col0; col < col0 + coln; ++col) {
-        float sum = 0.0f;
-        for (uint32_t t = 0; t < row; ++t) {
-            sum += A_row[t] * X[t * k + col];
+                                        ਦਸ਼ਮਲਵ         inv_diag) {
+    ਲਈ (uint32_t ਖਾਨਾ = col0; ਖਾਨਾ < col0 + coln; ++ਖਾਨਾ) {
+        ਦਸ਼ਮਲਵ ਜੋੜ = 0.0f;
+        ਲਈ (uint32_t t = 0; t < ਪੰਕਤੀ; ++t) {
+            ਜੋੜ += A_ਪੰਕਤੀ[t] * X[t * k + ਖਾਨਾ];
         }
-        X[row * k + col] = (B_row[col] - sum) * inv_diag;
+        X[ਪੰਕਤੀ * k + ਖਾਨਾ] = (B_ਪੰਕਤੀ[ਖਾਨਾ] - ਜੋੜ) * inv_diag;
     }
 }
 
-static inline HVX_Vector hvx_load_partial_f32(const float * src, uint32_t n) {
-    HVX_Vector v = *((const HVX_UVector *) src);
-    HVX_VectorPred mask = Q6_Q_vsetq2_R(n * sizeof(float));
-    return Q6_V_vmux_QVV(mask, v, Q6_V_vzero());
+ਸਥਿਰ ਸਤਰਅੰਦਰ HVX_ਸਦਿਸ਼ hvx_ਲੱਦੋ_partial_f32(ਅਚਲ ਦਸ਼ਮਲਵ * src, uint32_t n) {
+    HVX_ਸਦਿਸ਼ v = *((ਅਚਲ HVX_UVector *) src);
+    HVX_ਸਦਿਸ਼_Pred ਨਕਾਬ = Q6_Q_vsetq2_R(n * ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+    ਵਾਪਸ Q6_V_vmux_QVV(ਨਕਾਬ, v, Q6_V_vzero());
 }
 
-static inline void solve_tri_row_hvx(const float * A_row,
-                                     const float * B_row,
-                                     float *       X,
-                                     uint32_t      row,
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ solve_tri_ਪੰਕਤੀ_hvx(ਅਚਲ ਦਸ਼ਮਲਵ * A_ਪੰਕਤੀ,
+                                     ਅਚਲ ਦਸ਼ਮਲਵ * B_ਪੰਕਤੀ,
+                                     ਦਸ਼ਮਲਵ *       X,
+                                     uint32_t      ਪੰਕਤੀ,
                                      uint32_t      k,
                                      uint32_t      col0,
                                      uint32_t      coln,
-                                     float         inv_diag) {
-    const bool full = (coln == VLEN_FP32);
+                                     ਦਸ਼ਮਲਵ         inv_diag) {
+    ਅਚਲ bool ਭਰਿਆ = (coln == VLEN_FP32);
 
-    HVX_Vector sum_v = Q6_V_vzero();
-    for (uint32_t t = 0; t < row; ++t) {
-        const float   a         = A_row[t];
-        const float * x_row_col = X + t * k + col0;
+    HVX_ਸਦਿਸ਼ ਜੋੜ_v = Q6_V_vzero();
+    ਲਈ (uint32_t t = 0; t < ਪੰਕਤੀ; ++t) {
+        ਅਚਲ ਦਸ਼ਮਲਵ   a         = A_ਪੰਕਤੀ[t];
+        ਅਚਲ ਦਸ਼ਮਲਵ * x_ਪੰਕਤੀ_ਖਾਨਾ = X + t * k + col0;
 
-        HVX_Vector x_v = full ? *((const HVX_UVector *) x_row_col) : hvx_load_partial_f32(x_row_col, coln);
-        HVX_Vector a_v = hvx_vec_splat_f32(a);
-        sum_v          = hvx_vec_add_f32_f32(sum_v, hvx_vec_mul_f32_f32(x_v, a_v));
+        HVX_ਸਦਿਸ਼ x_v = ਭਰਿਆ ? *((ਅਚਲ HVX_UVector *) x_ਪੰਕਤੀ_ਖਾਨਾ) : hvx_ਲੱਦੋ_partial_f32(x_ਪੰਕਤੀ_ਖਾਨਾ, coln);
+        HVX_ਸਦਿਸ਼ a_v = hvx_vec_splat_f32(a);
+        ਜੋੜ_v          = hvx_vec_ਜੋੜੋ_f32_f32(ਜੋੜ_v, hvx_vec_mul_f32_f32(x_v, a_v));
     }
 
-    const float * b_row_col = B_row + col0;
-    float *       x_out_col = X + row * k + col0;
+    ਅਚਲ ਦਸ਼ਮਲਵ * b_ਪੰਕਤੀ_ਖਾਨਾ = B_ਪੰਕਤੀ + col0;
+    ਦਸ਼ਮਲਵ *       x_ਬਾਹਰਲਾ_ਖਾਨਾ = X + ਪੰਕਤੀ * k + col0;
 
-    HVX_Vector b_v        = full ? *((const HVX_UVector *) b_row_col) : hvx_load_partial_f32(b_row_col, coln);
-    HVX_Vector inv_diag_v = hvx_vec_splat_f32(inv_diag);
+    HVX_ਸਦਿਸ਼ b_v        = ਭਰਿਆ ? *((ਅਚਲ HVX_UVector *) b_ਪੰਕਤੀ_ਖਾਨਾ) : hvx_ਲੱਦੋ_partial_f32(b_ਪੰਕਤੀ_ਖਾਨਾ, coln);
+    HVX_ਸਦਿਸ਼ inv_diag_v = hvx_vec_splat_f32(inv_diag);
 
-    HVX_Vector out_v = hvx_vec_mul_f32_f32(hvx_vec_sub_f32_f32(b_v, sum_v), inv_diag_v);
-    hvx_vec_store_u((void *) x_out_col, coln * sizeof(float), out_v);
+    HVX_ਸਦਿਸ਼ ਬਾਹਰਲਾ_v = hvx_vec_mul_f32_f32(hvx_vec_sub_f32_f32(b_v, ਜੋੜ_v), inv_diag_v);
+    hvx_vec_store_u((ਖਾਲੀ *) x_ਬਾਹਰਲਾ_ਖਾਨਾ, coln * ਆਕਾਰ(ਦਸ਼ਮਲਵ), ਬਾਹਰਲਾ_v);
 }
 
 // Batch-level thread: each job is one full batch.
-static void solve_tri_batch_thread_f32(unsigned int nth, unsigned int ith, void * data) {
-    struct htp_solve_tri_context * sctx = (struct htp_solve_tri_context *) data;
-    struct htp_ops_context *       octx = sctx->octx;
+ਸਥਿਰ ਖਾਲੀ solve_tri_batch_thread_f32(ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ nth, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ ith, ਖਾਲੀ * ਅੰਕੜੇ) {
+    ਬਣਤਰ htp_solve_tri_context * sctx = (ਬਣਤਰ htp_solve_tri_context *) ਅੰਕੜੇ;
+    ਬਣਤਰ htp_ops_context *       octx = sctx->octx;
 
-    const struct htp_tensor * src0 = octx->src[0];  // A
-    const struct htp_tensor * src1 = octx->src[1];  // B
-    const struct htp_tensor * dst  = octx->dst;     // X
+    ਅਚਲ ਬਣਤਰ htp_tensor * src0 = octx->src[0];  // A
+    ਅਚਲ ਬਣਤਰ htp_tensor * src1 = octx->src[1];  // B
+    ਅਚਲ ਬਣਤਰ htp_tensor * dst  = octx->dst;     // X
 
-    const uint32_t n = src0->ne[0];
-    const uint32_t k = src1->ne[0];
+    ਅਚਲ uint32_t n = src0->ne[0];
+    ਅਚਲ uint32_t k = src1->ne[0];
 
-    const uint32_t ne02 = src0->ne[2];
+    ਅਚਲ uint32_t ne02 = src0->ne[2];
 
-    const uint32_t col_block = VLEN_FP32;
-    const uint32_t k_full    = (k / col_block) * col_block;
+    ਅਚਲ uint32_t ਖਾਨਾ_ਖੰਡ = VLEN_FP32;
+    ਅਚਲ uint32_t k_ਭਰਿਆ    = (k / ਖਾਨਾ_ਖੰਡ) * ਖਾਨਾ_ਖੰਡ;
 
-    const uint32_t start_batch = sctx->job_start + sctx->jobs_per_thread * ith;
-    const uint32_t end_batch   = MIN(start_batch + sctx->jobs_per_thread, sctx->job_start + sctx->total_jobs);
+    ਅਚਲ uint32_t ਸ਼ੁਰੂ_batch = sctx->ਕੰਮ_ਸ਼ੁਰੂ + sctx->jobs_ਪ੍ਰਤੀ_thread * ith;
+    ਅਚਲ uint32_t ਸਿਰਾ_batch   = MIN(ਸ਼ੁਰੂ_batch + sctx->jobs_ਪ੍ਰਤੀ_thread, sctx->ਕੰਮ_ਸ਼ੁਰੂ + sctx->ਕੁੱਲ_jobs);
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
-    htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) start_batch);
+    ਬਣਤਰ htp_thread_trace * tr = &octx->ctx->trace[ith];
+    htp_trace_event_ਸ਼ੁਰੂ(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ਸ਼ੁਰੂ_batch);
 
-    for (uint32_t batch = start_batch; batch < end_batch; ++batch) {
-        const uint32_t i03 = batch / ne02;
-        const uint32_t i02 = batch - i03 * ne02;
+    ਲਈ (uint32_t batch = ਸ਼ੁਰੂ_batch; batch < ਸਿਰਾ_batch; ++batch) {
+        ਅਚਲ uint32_t i03 = batch / ne02;
+        ਅਚਲ uint32_t i02 = batch - i03 * ne02;
 
-        const float * A_batch =
-            (const float *) ((const uint8_t *) (uintptr_t) src0->data + i02 * src0->nb[2] + i03 * src0->nb[3]);
-        const float * B_batch =
-            (const float *) ((const uint8_t *) (uintptr_t) src1->data + i02 * src1->nb[2] + i03 * src1->nb[3]);
-        float * X_batch = (float *) ((uint8_t *) (uintptr_t) dst->data + i02 * dst->nb[2] + i03 * dst->nb[3]);
+        ਅਚਲ ਦਸ਼ਮਲਵ * A_batch =
+            (ਅਚਲ ਦਸ਼ਮਲਵ *) ((ਅਚਲ uint8_t *) (uintptr_t) src0->ਅੰਕੜੇ + i02 * src0->nb[2] + i03 * src0->nb[3]);
+        ਅਚਲ ਦਸ਼ਮਲਵ * B_batch =
+            (ਅਚਲ ਦਸ਼ਮਲਵ *) ((ਅਚਲ uint8_t *) (uintptr_t) src1->ਅੰਕੜੇ + i02 * src1->nb[2] + i03 * src1->nb[3]);
+        ਦਸ਼ਮਲਵ * X_batch = (ਦਸ਼ਮਲਵ *) ((uint8_t *) (uintptr_t) dst->ਅੰਕੜੇ + i02 * dst->nb[2] + i03 * dst->nb[3]);
 
-        for (uint32_t row = 0; row < n; ++row) {
-            const float   diag     = A_batch[row * n + row];
-            const float   inv_diag = 1.0f / diag;
-            const float * A_row    = A_batch + row * n;
-            const float * B_row    = B_batch + row * k;
+        ਲਈ (uint32_t ਪੰਕਤੀ = 0; ਪੰਕਤੀ < n; ++ਪੰਕਤੀ) {
+            ਅਚਲ ਦਸ਼ਮਲਵ   diag     = A_batch[ਪੰਕਤੀ * n + ਪੰਕਤੀ];
+            ਅਚਲ ਦਸ਼ਮਲਵ   inv_diag = 1.0f / diag;
+            ਅਚਲ ਦਸ਼ਮਲਵ * A_ਪੰਕਤੀ    = A_batch + ਪੰਕਤੀ * n;
+            ਅਚਲ ਦਸ਼ਮਲਵ * B_ਪੰਕਤੀ    = B_batch + ਪੰਕਤੀ * k;
 
             uint32_t col0 = 0;
-            for (; col0 < k_full; col0 += col_block) {
-                solve_tri_row_hvx(A_row, B_row, X_batch, row, k, col0, col_block, inv_diag);
+            ਲਈ (; col0 < k_ਭਰਿਆ; col0 += ਖਾਨਾ_ਖੰਡ) {
+                solve_tri_ਪੰਕਤੀ_hvx(A_ਪੰਕਤੀ, B_ਪੰਕਤੀ, X_batch, ਪੰਕਤੀ, k, col0, ਖਾਨਾ_ਖੰਡ, inv_diag);
             }
 
-            if (col0 < k) {
-                const uint32_t coln = k - col0;
-                if (coln >= 8) {
-                    solve_tri_row_hvx(A_row, B_row, X_batch, row, k, col0, coln, inv_diag);
-                } else {
-                    solve_tri_row_scalar(A_row, B_row, X_batch, row, k, col0, coln, inv_diag);
+            ਜੇ (col0 < k) {
+                ਅਚਲ uint32_t coln = k - col0;
+                ਜੇ (coln >= 8) {
+                    solve_tri_ਪੰਕਤੀ_hvx(A_ਪੰਕਤੀ, B_ਪੰਕਤੀ, X_batch, ਪੰਕਤੀ, k, col0, coln, inv_diag);
+                } ਨਹੀਂਤਾਂ {
+                    solve_tri_ਪੰਕਤੀ_scalar(A_ਪੰਕਤੀ, B_ਪੰਕਤੀ, X_batch, ਪੰਕਤੀ, k, col0, coln, inv_diag);
                 }
             }
         }
     }
 
-    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) end_batch);
+    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ਸਿਰਾ_batch);
 
-    FARF(HIGH, "solve-tri-batch %d/%d: A=(%ux%u) B=(%ux%u) batch %u:%u\n",
-         ith, nth, n, n, k, n, start_batch, end_batch);
+    FARF(ਉੱਚਾ_2, "solve-tri-batch %d/%d: A=(%ux%u) B=(%ux%u) batch %u:%u\n",
+         ith, nth, n, n, k, n, ਸ਼ੁਰੂ_batch, ਸਿਰਾ_batch);
 }
 
 // Chunk-level thread: each job is one (batch, col_chunk) pair.
-static void solve_tri_chunk_thread_f32(unsigned int nth, unsigned int ith, void * data) {
-    struct htp_solve_tri_context * sctx = (struct htp_solve_tri_context *) data;
-    struct htp_ops_context *       octx = sctx->octx;
+ਸਥਿਰ ਖਾਲੀ solve_tri_chunk_thread_f32(ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ nth, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ ith, ਖਾਲੀ * ਅੰਕੜੇ) {
+    ਬਣਤਰ htp_solve_tri_context * sctx = (ਬਣਤਰ htp_solve_tri_context *) ਅੰਕੜੇ;
+    ਬਣਤਰ htp_ops_context *       octx = sctx->octx;
 
-    const struct htp_tensor * src0 = octx->src[0];  // A
-    const struct htp_tensor * src1 = octx->src[1];  // B
-    const struct htp_tensor * dst  = octx->dst;     // X
+    ਅਚਲ ਬਣਤਰ htp_tensor * src0 = octx->src[0];  // A
+    ਅਚਲ ਬਣਤਰ htp_tensor * src1 = octx->src[1];  // B
+    ਅਚਲ ਬਣਤਰ htp_tensor * dst  = octx->dst;     // X
 
-    const uint32_t n = src0->ne[0];
-    const uint32_t k = src1->ne[0];
+    ਅਚਲ uint32_t n = src0->ne[0];
+    ਅਚਲ uint32_t k = src1->ne[0];
 
-    const uint32_t ne02 = src0->ne[2];
+    ਅਚਲ uint32_t ne02 = src0->ne[2];
 
-    const uint32_t start_job = sctx->job_start + sctx->jobs_per_thread * ith;
-    const uint32_t end_job   = MIN(start_job + sctx->jobs_per_thread, sctx->job_start + sctx->total_jobs);
+    ਅਚਲ uint32_t ਸ਼ੁਰੂ_ਕੰਮ = sctx->ਕੰਮ_ਸ਼ੁਰੂ + sctx->jobs_ਪ੍ਰਤੀ_thread * ith;
+    ਅਚਲ uint32_t ਸਿਰਾ_ਕੰਮ   = MIN(ਸ਼ੁਰੂ_ਕੰਮ + sctx->jobs_ਪ੍ਰਤੀ_thread, sctx->ਕੰਮ_ਸ਼ੁਰੂ + sctx->ਕੁੱਲ_jobs);
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
-    htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) start_job);
+    ਬਣਤਰ htp_thread_trace * tr = &octx->ctx->trace[ith];
+    htp_trace_event_ਸ਼ੁਰੂ(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ਸ਼ੁਰੂ_ਕੰਮ);
 
-    for (uint32_t job = start_job; job < end_job; ++job) {
-        const uint32_t batch = job / sctx->k_chunks;
-        const uint32_t chunk = job - batch * sctx->k_chunks;
+    ਲਈ (uint32_t ਕੰਮ = ਸ਼ੁਰੂ_ਕੰਮ; ਕੰਮ < ਸਿਰਾ_ਕੰਮ; ++ਕੰਮ) {
+        ਅਚਲ uint32_t batch = ਕੰਮ / sctx->k_chunks;
+        ਅਚਲ uint32_t chunk = ਕੰਮ - batch * sctx->k_chunks;
 
-        const uint32_t i03 = batch / ne02;
-        const uint32_t i02 = batch - i03 * ne02;
+        ਅਚਲ uint32_t i03 = batch / ne02;
+        ਅਚਲ uint32_t i02 = batch - i03 * ne02;
 
-        const float * A_batch =
-            (const float *) ((const uint8_t *) (uintptr_t) src0->data + i02 * src0->nb[2] + i03 * src0->nb[3]);
-        const float * B_batch =
-            (const float *) ((const uint8_t *) (uintptr_t) src1->data + i02 * src1->nb[2] + i03 * src1->nb[3]);
-        float * X_batch = (float *) ((uint8_t *) (uintptr_t) dst->data + i02 * dst->nb[2] + i03 * dst->nb[3]);
+        ਅਚਲ ਦਸ਼ਮਲਵ * A_batch =
+            (ਅਚਲ ਦਸ਼ਮਲਵ *) ((ਅਚਲ uint8_t *) (uintptr_t) src0->ਅੰਕੜੇ + i02 * src0->nb[2] + i03 * src0->nb[3]);
+        ਅਚਲ ਦਸ਼ਮਲਵ * B_batch =
+            (ਅਚਲ ਦਸ਼ਮਲਵ *) ((ਅਚਲ uint8_t *) (uintptr_t) src1->ਅੰਕੜੇ + i02 * src1->nb[2] + i03 * src1->nb[3]);
+        ਦਸ਼ਮਲਵ * X_batch = (ਦਸ਼ਮਲਵ *) ((uint8_t *) (uintptr_t) dst->ਅੰਕੜੇ + i02 * dst->nb[2] + i03 * dst->nb[3]);
 
-        const uint32_t col0 = chunk * sctx->col_block;
-        const uint32_t coln = MIN(sctx->col_block, k - col0);
+        ਅਚਲ uint32_t col0 = chunk * sctx->ਖਾਨਾ_ਖੰਡ;
+        ਅਚਲ uint32_t coln = MIN(sctx->ਖਾਨਾ_ਖੰਡ, k - col0);
 
-        for (uint32_t row = 0; row < n; ++row) {
-            const float diag     = A_batch[row * n + row];
-            const float inv_diag = 1.0f / diag;
+        ਲਈ (uint32_t ਪੰਕਤੀ = 0; ਪੰਕਤੀ < n; ++ਪੰਕਤੀ) {
+            ਅਚਲ ਦਸ਼ਮਲਵ diag     = A_batch[ਪੰਕਤੀ * n + ਪੰਕਤੀ];
+            ਅਚਲ ਦਸ਼ਮਲਵ inv_diag = 1.0f / diag;
 
-            const float * A_row = A_batch + row * n;
-            const float * B_row = B_batch + row * k;
+            ਅਚਲ ਦਸ਼ਮਲਵ * A_ਪੰਕਤੀ = A_batch + ਪੰਕਤੀ * n;
+            ਅਚਲ ਦਸ਼ਮਲਵ * B_ਪੰਕਤੀ = B_batch + ਪੰਕਤੀ * k;
 
-            if (coln >= 8) {
-                solve_tri_row_hvx(A_row, B_row, X_batch, row, k, col0, coln, inv_diag);
-            } else {
-                solve_tri_row_scalar(A_row, B_row, X_batch, row, k, col0, coln, inv_diag);
+            ਜੇ (coln >= 8) {
+                solve_tri_ਪੰਕਤੀ_hvx(A_ਪੰਕਤੀ, B_ਪੰਕਤੀ, X_batch, ਪੰਕਤੀ, k, col0, coln, inv_diag);
+            } ਨਹੀਂਤਾਂ {
+                solve_tri_ਪੰਕਤੀ_scalar(A_ਪੰਕਤੀ, B_ਪੰਕਤੀ, X_batch, ਪੰਕਤੀ, k, col0, coln, inv_diag);
             }
         }
     }
 
-    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) end_job);
+    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ਸਿਰਾ_ਕੰਮ);
 
-    FARF(HIGH, "solve-tri-chunk %d/%d: A=(%ux%u) B=(%ux%u) jobs %u:%u\n",
-         ith, nth, n, n, k, n, start_job, end_job);
+    FARF(ਉੱਚਾ_2, "solve-tri-chunk %d/%d: A=(%ux%u) B=(%ux%u) jobs %u:%u\n",
+         ith, nth, n, n, k, n, ਸ਼ੁਰੂ_ਕੰਮ, ਸਿਰਾ_ਕੰਮ);
 }
 
-int op_solve_tri(struct htp_ops_context * octx) {
-    const struct htp_tensor * src0 = octx->src[0];  // A
-    const struct htp_tensor * src1 = octx->src[1];  // B
-    const struct htp_tensor * dst  = octx->dst;     // X
+ਪੂਰਨ op_solve_tri(ਬਣਤਰ htp_ops_context * octx) {
+    ਅਚਲ ਬਣਤਰ htp_tensor * src0 = octx->src[0];  // A
+    ਅਚਲ ਬਣਤਰ htp_tensor * src1 = octx->src[1];  // B
+    ਅਚਲ ਬਣਤਰ htp_tensor * dst  = octx->dst;     // X
 
-    if (src0->type != HTP_TYPE_F32 || src1->type != HTP_TYPE_F32 || dst->type != HTP_TYPE_F32) {
-        return HTP_STATUS_NO_SUPPORT;
+    ਜੇ (src0->type != HTP_TYPE_F32 || src1->type != HTP_TYPE_F32 || dst->type != HTP_TYPE_F32) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_NO_SUPPORT;
     }
 
     // left=true, lower=true, uni=false only
-    if (src0->ne[0] != src0->ne[1]) {
-        return HTP_STATUS_INVAL_PARAMS;
+    ਜੇ (src0->ne[0] != src0->ne[1]) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_INVAL_PARAMS;
     }
-    if (src0->ne[1] != src1->ne[1]) {
-        return HTP_STATUS_INVAL_PARAMS;
+    ਜੇ (src0->ne[1] != src1->ne[1]) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_INVAL_PARAMS;
     }
-    if (src0->ne[2] != src1->ne[2] || src0->ne[3] != src1->ne[3]) {
-        return HTP_STATUS_INVAL_PARAMS;
+    ਜੇ (src0->ne[2] != src1->ne[2] || src0->ne[3] != src1->ne[3]) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_INVAL_PARAMS;
     }
-    if (dst->ne[0] != src1->ne[0] || dst->ne[1] != src1->ne[1] || dst->ne[2] != src1->ne[2] ||
+    ਜੇ (dst->ne[0] != src1->ne[0] || dst->ne[1] != src1->ne[1] || dst->ne[2] != src1->ne[2] ||
         dst->ne[3] != src1->ne[3]) {
-        return HTP_STATUS_INVAL_PARAMS;
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_INVAL_PARAMS;
     }
 
-    if (htp_tensor_is_extended(src0) || htp_tensor_is_extended(src1) || htp_tensor_is_extended(dst)) {
-        return HTP_STATUS_NO_SUPPORT;
+    ਜੇ (htp_tensor_is_extended(src0) || htp_tensor_is_extended(src1) || htp_tensor_is_extended(dst)) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_NO_SUPPORT;
     }
 
-    const uint32_t k = src1->ne[0];
+    ਅਚਲ uint32_t k = src1->ne[0];
 
-    const uint32_t col_block     = VLEN_FP32;
-    const uint32_t k_chunks      = (k + col_block - 1) / col_block;
-    const uint32_t total_batches = src0->ne[2] * src0->ne[3];
-    const bool     batched       = total_batches >= (uint32_t) octx->n_threads;
+    ਅਚਲ uint32_t ਖਾਨਾ_ਖੰਡ     = VLEN_FP32;
+    ਅਚਲ uint32_t k_chunks      = (k + ਖਾਨਾ_ਖੰਡ - 1) / ਖਾਨਾ_ਖੰਡ;
+    ਅਚਲ uint32_t ਕੁੱਲ_batches = src0->ne[2] * src0->ne[3];
+    ਅਚਲ bool     batched       = ਕੁੱਲ_batches >= (uint32_t) octx->n_ਧਾਗੇ;
 
-    FARF(HIGH, "solve-tri: (%ux%ux%ux%u) x (%ux%ux%ux%u) -> (%ux%ux%ux%u) : batched %d\n",
+    FARF(ਉੱਚਾ_2, "solve-tri: (%ux%ux%ux%u) x (%ux%ux%ux%u) -> (%ux%ux%ux%u) : batched %d\n",
          src0->ne[0], src0->ne[1], src0->ne[2], src0->ne[3],
          src1->ne[0], src1->ne[1], src1->ne[2], src1->ne[3],
          dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3], batched);
 
-    if (batched) {
-        uint32_t job_start = 0;
-        uint32_t njobs     = total_batches;
+    ਜੇ (batched) {
+        uint32_t ਕੰਮ_ਸ਼ੁਰੂ = 0;
+        uint32_t njobs     = ਕੁੱਲ_batches;
 
-        if (octx->ctx->mdev.count > 1) {
-            const uint32_t batch_size = dst->nb[2];
-            const uint32_t batches_per_chunk = (batch_size > 0) ? (HEX_L2_LINE_SIZE / hex_gcd_u32(batch_size, HEX_L2_LINE_SIZE)) : 1;
-            const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_batches, htp_tensor_mdev_data_aligned(dst) ? batches_per_chunk : 0, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
-            job_start = range.start;
-            njobs     = range.count;
+        ਜੇ (octx->ctx->mdev.ਗਿਣਤੀ_2 > 1) {
+            ਅਚਲ uint32_t batch_ਮਾਪ = dst->nb[2];
+            ਅਚਲ uint32_t batches_ਪ੍ਰਤੀ_chunk = (batch_ਮਾਪ > 0) ? (HEX_L2_ਸਤਰ_ਮਾਪ / hex_ਮਹੱਤਮ_ਸਾਂਝਾ_ਭਾਜਕ_u32(batch_ਮਾਪ, HEX_L2_ਸਤਰ_ਮਾਪ)) : 1;
+            ਅਚਲ ਬਣਤਰ htp_tensor_mdev_range range = htp_tensor_mdev_ਹਿੱਸੇ_ਕਰੋ(ਕੁੱਲ_batches, htp_tensor_mdev_ਅੰਕੜੇ_aligned(dst) ? batches_ਪ੍ਰਤੀ_chunk : 0, octx->ctx->mdev.idx, octx->ctx->mdev.ਗਿਣਤੀ_2, &octx->ctx->mdev.ਗਿਣਤੀ_div);
+            ਕੰਮ_ਸ਼ੁਰੂ = range.ਸ਼ੁਰੂ;
+            njobs     = range.ਗਿਣਤੀ_2;
         }
 
-        if (njobs == 0) {
-            return HTP_STATUS_OK;
+        ਜੇ (njobs == 0) {
+            ਵਾਪਸ HTP_ਸਥਿਤੀ_OK;
         }
 
         // Batch-level parallelism
-        const uint32_t n_threads = octx->n_threads;
+        ਅਚਲ uint32_t n_ਧਾਗੇ = octx->n_ਧਾਗੇ;
 
-        struct htp_solve_tri_context sctx = {
+        ਬਣਤਰ htp_solve_tri_context sctx = {
             .octx            = octx,
-            .jobs_per_thread = fastdiv(njobs + n_threads - 1, &octx->n_threads_div),
-            .total_jobs      = njobs,
-            .job_start       = job_start,
+            .jobs_ਪ੍ਰਤੀ_thread = fastdiv(njobs + n_ਧਾਗੇ - 1, &octx->n_ਧਾਗੇ_div),
+            .ਕੁੱਲ_jobs      = njobs,
+            .ਕੰਮ_ਸ਼ੁਰੂ       = ਕੰਮ_ਸ਼ੁਰੂ,
             .k_chunks        = k_chunks,
-            .col_block       = col_block,
+            .ਖਾਨਾ_ਖੰਡ       = ਖਾਨਾ_ਖੰਡ,
         };
 
-        work_queue_run(octx->ctx->work_queue, solve_tri_batch_thread_f32, &sctx, n_threads);
-    } else {
+        work_ਕਤਾਰ_ਲੜੀਵਾਰ(octx->ctx->work_ਕਤਾਰ, solve_tri_batch_thread_f32, &sctx, n_ਧਾਗੇ);
+    } ਨਹੀਂਤਾਂ {
         // Chunk-level parallelism
-        const uint32_t total_jobs = total_batches * k_chunks;
+        ਅਚਲ uint32_t ਕੁੱਲ_jobs = ਕੁੱਲ_batches * k_chunks;
 
-        uint32_t job_start = 0;
-        uint32_t njobs     = total_jobs;
+        uint32_t ਕੰਮ_ਸ਼ੁਰੂ = 0;
+        uint32_t njobs     = ਕੁੱਲ_jobs;
 
-        if (octx->ctx->mdev.count > 1) {
-            const bool can_split = htp_tensor_mdev_data_aligned(dst) && ((dst->nb[1] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0);
-            const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_jobs, can_split ? 1 : 0, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
-            job_start = range.start;
-            njobs     = range.count;
+        ਜੇ (octx->ctx->mdev.ਗਿਣਤੀ_2 > 1) {
+            ਅਚਲ bool can_ਵੰਡੋ = htp_tensor_mdev_ਅੰਕੜੇ_aligned(dst) && ((dst->nb[1] & (HTP_TENSOR_MDEV_ਸਤਰ_ਮਾਪ - 1)) == 0);
+            ਅਚਲ ਬਣਤਰ htp_tensor_mdev_range range = htp_tensor_mdev_ਹਿੱਸੇ_ਕਰੋ(ਕੁੱਲ_jobs, can_ਵੰਡੋ ? 1 : 0, octx->ctx->mdev.idx, octx->ctx->mdev.ਗਿਣਤੀ_2, &octx->ctx->mdev.ਗਿਣਤੀ_div);
+            ਕੰਮ_ਸ਼ੁਰੂ = range.ਸ਼ੁਰੂ;
+            njobs     = range.ਗਿਣਤੀ_2;
         }
 
-        if (njobs == 0) {
-            return HTP_STATUS_OK;
+        ਜੇ (njobs == 0) {
+            ਵਾਪਸ HTP_ਸਥਿਤੀ_OK;
         }
 
-        const uint32_t n_threads = octx->n_threads;
+        ਅਚਲ uint32_t n_ਧਾਗੇ = octx->n_ਧਾਗੇ;
 
-        struct htp_solve_tri_context sctx = {
+        ਬਣਤਰ htp_solve_tri_context sctx = {
             .octx            = octx,
-            .jobs_per_thread = fastdiv(njobs + n_threads - 1, &octx->n_threads_div),
-            .total_jobs      = njobs,
-            .job_start       = job_start,
+            .jobs_ਪ੍ਰਤੀ_thread = fastdiv(njobs + n_ਧਾਗੇ - 1, &octx->n_ਧਾਗੇ_div),
+            .ਕੁੱਲ_jobs      = njobs,
+            .ਕੰਮ_ਸ਼ੁਰੂ       = ਕੰਮ_ਸ਼ੁਰੂ,
             .k_chunks        = k_chunks,
-            .col_block       = col_block,
+            .ਖਾਨਾ_ਖੰਡ       = ਖਾਨਾ_ਖੰਡ,
         };
 
-        work_queue_run(octx->ctx->work_queue, solve_tri_chunk_thread_f32, &sctx, n_threads);
+        work_ਕਤਾਰ_ਲੜੀਵਾਰ(octx->ctx->work_ਕਤਾਰ, solve_tri_chunk_thread_f32, &sctx, n_ਧਾਗੇ);
     }
 
-    return HTP_STATUS_OK;
+    ਵਾਪਸ HTP_ਸਥਿਤੀ_OK;
 }

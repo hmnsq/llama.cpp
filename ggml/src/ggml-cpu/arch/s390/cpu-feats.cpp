@@ -1,20 +1,20 @@
-#include "ggml-backend-impl.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-backend-impl.h"
 
-#if defined(__s390x__)
-#include <sys/auxv.h>
+#ਜੇ defined(__s390x__)
+#ਅਨ੍ਤਰ੍ਭਾਵ <sys/auxv.h>
 
 // find hwcap bits in asm/elf.h
-#ifndef HWCAP_VXRS_EXT2
-#define HWCAP_VXRS_EXT2 (1 << 15)
-#endif
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ HWCAP_VXRS_EXT2
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HWCAP_VXRS_EXT2 (1 << 15)
+#ਜੇ_ਅੰਤ
 
-#ifndef HWCAP_NNPA
-#define HWCAP_NNPA (1 << 20)
-#endif
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ HWCAP_NNPA
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HWCAP_NNPA (1 << 20)
+#ਜੇ_ਅੰਤ
 
-struct s390x_features {
-    bool has_vxe2 = false;
-    bool has_nnpa = false;
+ਬਣਤਰ s390x_features {
+    ਤਾਰਕਿਕ has_vxe2 = ਝੂਠ;
+    ਤਾਰਕਿਕ has_nnpa = ਝੂਠ;
 
     s390x_features() {
         uint32_t hwcap = getauxval(AT_HWCAP);
@@ -26,25 +26,25 @@ struct s390x_features {
     }
 };
 
-static int ggml_backend_cpu_s390x_score() {
-    int score = 1;
+ਸਥਿਰ ਪੂਰਨ ggml_backend_cpu_s390x_score() {
+    ਪੂਰਨ score = 1;
     s390x_features sf;
 
 // IBM z15 / LinuxONE 3
-#ifdef GGML_USE_VXE2
-    if (!sf.has_vxe2) { return 0; }
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_USE_VXE2
+    ਜੇ (!sf.has_vxe2) { ਵਾਪਸ 0; }
     score += 1 << 1;
-#endif
+#ਜੇ_ਅੰਤ
 
 // IBM z16 / LinuxONE 4 and z17 / LinuxONE 5
-#ifdef GGML_USE_NNPA
-    if (!sf.has_nnpa) { return 0; }
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_USE_NNPA
+    ਜੇ (!sf.has_nnpa) { ਵਾਪਸ 0; }
     score += 1 << 2;
-#endif
+#ਜੇ_ਅੰਤ
 
-    return score;
+    ਵਾਪਸ score;
 }
 
 GGML_BACKEND_DL_SCORE_IMPL(ggml_backend_cpu_s390x_score)
 
-#endif  // __s390x__
+#ਜੇ_ਅੰਤ  // __s390x__

@@ -1,475 +1,475 @@
-#pragma clang diagnostic ignored "-Wunused-variable"
-#pragma clang diagnostic ignored "-Wunused-function"
-#pragma clang diagnostic ignored "-Wunused-but-set-variable"
+#ਹਦਾਇਤ clang diagnostic ignored "-Wunused-variable"
+#ਹਦਾਇਤ clang diagnostic ignored "-Wunused-function"
+#ਹਦਾਇਤ clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <HAP_perf.h>
-#include <stdatomic.h>
-#include <math.h>
-#include <string.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <HAP_farf.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <HAP_perf.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdatomic.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <math.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <string.h>
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "hvx-utils.h"
-#include "htp-tensor.h"
-#include "dma-queue.h"
-#include "hex-profile.h"
-#include "allreduce-ops.h"
-#include "htp-fence.h"
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_DECL_C
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-common.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "htp-ctx.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "htp-ops.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hvx-utils.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "htp-tensor.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "dma-queue.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hex-profile.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "allreduce-ops.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "htp-fence.h"
 
-struct htp_allreduce_context {
-    struct htp_ops_context * octx;
+ਬਣਤਰ htp_allreduce_context {
+    ਬਣਤਰ htp_ops_context * octx;
     uint32_t n_ranks;
     uint32_t n_dsts;
     uint32_t nelem;
     uint32_t ne0;
     uint32_t ne1;
-    uint32_t row_size_aligned;
-    uint32_t rank_elem_start;
+    uint32_t ਪੰਕਤੀ_ਮਾਪ_aligned;
+    uint32_t rank_elem_ਸ਼ੁਰੂ;
     uint32_t rank_nelem;
-    uint32_t elems_per_thread;
-    uint32_t block_elems;
-    uint32_t vtcm_size_per_thread;
-    bool     is_row_bcast;
-    uint8_t * src_spad_base[HTP_ALLREDUCE_MAX_RANKS];
-    uint8_t * dst_spad_base;
-    uint8_t * res_spad_base;
+    uint32_t elems_ਪ੍ਰਤੀ_thread;
+    uint32_t ਖੰਡ_elems;
+    uint32_t vtcm_ਮਾਪ_ਪ੍ਰਤੀ_thread;
+    bool     is_ਪੰਕਤੀ_bcast;
+    uint8_t * src_spad_ਅਧਾਰ[HTP_ALLREDUCE_MAX_RANKS];
+    uint8_t * dst_spad_ਅਧਾਰ;
+    uint8_t * res_spad_ਅਧਾਰ;
 };
 
-#define DEFINE_ALLREDUCE_THREAD_DMA_1D(SUFFIX, TYPE, HVX_ADD_FN, HAS_ADD)                                         \
-static void allreduce_thread_dma_1d_##SUFFIX(unsigned int nth, unsigned int ith, void * data) {                   \
-    struct htp_allreduce_context * actx = (struct htp_allreduce_context *) data;                                  \
-    struct htp_ops_context * octx = actx->octx;                                                                   \
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ DEFINE_ALLREDUCE_THREAD_DMA_1D(SUFFIX, TYPE, HVX_ਜੋੜੋ_FN, HAS_ਜੋੜੋ)                                         \
+ਸਥਿਰ ਖਾਲੀ allreduce_thread_dma_1d_##SUFFIX(ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ nth, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ ith, ਖਾਲੀ * ਅੰਕੜੇ) {                   \
+    ਬਣਤਰ htp_allreduce_context * actx = (ਬਣਤਰ htp_allreduce_context *) ਅੰਕੜੇ;                                  \
+    ਬਣਤਰ htp_ops_context * octx = actx->octx;                                                                   \
                                                                                                                   \
-    const uint32_t n_ranks     = actx->n_ranks;                                                                   \
-    const uint32_t n_dsts      = actx->n_dsts;                                                                    \
-    const uint32_t block_elems = actx->block_elems;                                                               \
+    ਅਚਲ uint32_t n_ranks     = actx->n_ranks;                                                                   \
+    ਅਚਲ uint32_t n_dsts      = actx->n_dsts;                                                                    \
+    ਅਚਲ uint32_t ਖੰਡ_elems = actx->ਖੰਡ_elems;                                                               \
                                                                                                                   \
-    const uint32_t dr  = actx->elems_per_thread;                                                                  \
-    const uint32_t ir0 = actx->rank_elem_start + dr * ith;                                                        \
-    const uint32_t ir1 = MIN(ir0 + dr, actx->rank_elem_start + actx->rank_nelem);                                 \
-    if (ir0 >= ir1) return;                                                                                       \
+    ਅਚਲ uint32_t dr  = actx->elems_ਪ੍ਰਤੀ_thread;                                                                  \
+    ਅਚਲ uint32_t ir0 = actx->rank_elem_ਸ਼ੁਰੂ + dr * ith;                                                        \
+    ਅਚਲ uint32_t ir1 = MIN(ir0 + dr, actx->rank_elem_ਸ਼ੁਰੂ + actx->rank_nelem);                                 \
+    ਜੇ (ir0 >= ir1) ਵਾਪਸ;                                                                                       \
                                                                                                                   \
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];                                                        \
-    dma_queue * dma_q = octx->ctx->dma[ith];                                                                      \
+    ਬਣਤਰ htp_thread_trace * tr = &octx->ctx->trace[ith];                                                        \
+    dma_ਕਤਾਰ * dma_q = octx->ctx->dma[ith];                                                                      \
                                                                                                                   \
-    const size_t vtcm_thread_offset = ith * actx->vtcm_size_per_thread;                                           \
-    uint8_t * dst_spad_base = actx->dst_spad_base + vtcm_thread_offset;                                           \
-    uint8_t * res_spad_base = HAS_ADD ? (actx->res_spad_base + vtcm_thread_offset) : NULL;                        \
+    ਅਚਲ size_t vtcm_thread_ਵਿੱਥ = ith * actx->vtcm_ਮਾਪ_ਪ੍ਰਤੀ_thread;                                           \
+    uint8_t * dst_spad_ਅਧਾਰ = actx->dst_spad_ਅਧਾਰ + vtcm_thread_ਵਿੱਥ;                                           \
+    uint8_t * res_spad_ਅਧਾਰ = HAS_ਜੋੜੋ ? (actx->res_spad_ਅਧਾਰ + vtcm_thread_ਵਿੱਥ) : ਨਿਰਾ;                        \
                                                                                                                   \
-    const size_t spad_half = actx->vtcm_size_per_thread / 2;                                                      \
+    ਅਚਲ size_t spad_half = actx->vtcm_ਮਾਪ_ਪ੍ਰਤੀ_thread / 2;                                                      \
     uint32_t ir_prefetch = ir0;                                                                                   \
-    int spad_idx = 0;                                                                                             \
+    ਪੂਰਨ spad_idx = 0;                                                                                             \
                                                                                                                   \
-    for (int k = 0; k < 2 && ir_prefetch < ir1; k++) {                                                            \
-        uint32_t cur_elems = MIN(block_elems, ir1 - ir_prefetch);                                                 \
-        size_t   cur_bytes = cur_elems * sizeof(TYPE);                                                            \
-        uint8_t * d_spad = dst_spad_base + spad_idx * spad_half;                                                  \
-        for (uint32_t d = 0; d < n_dsts; d++) {                                                                   \
-            dma_addr_t d_ddr = octx->dsts[d]->data + ir_prefetch * sizeof(TYPE);                                  \
-            dma_queue_push(dma_q, dma_make_data(d_ddr, d_spad), cur_bytes, cur_bytes, cur_bytes, 0);              \
+    ਲਈ (ਪੂਰਨ k = 0; k < 2 && ir_prefetch < ir1; k++) {                                                            \
+        uint32_t cur_elems = MIN(ਖੰਡ_elems, ir1 - ir_prefetch);                                                 \
+        size_t   cur_ਬਾਈਟਾਂ = cur_elems * ਆਕਾਰ(TYPE);                                                            \
+        uint8_t * d_spad = dst_spad_ਅਧਾਰ + spad_idx * spad_half;                                                  \
+        ਲਈ (uint32_t d = 0; d < n_dsts; d++) {                                                                   \
+            dma_addr_t d_ddr = octx->dsts[d]->ਅੰਕੜੇ + ir_prefetch * ਆਕਾਰ(TYPE);                                  \
+            dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(d_ddr, d_spad), cur_ਬਾਈਟਾਂ, cur_ਬਾਈਟਾਂ, cur_ਬਾਈਟਾਂ, 0);              \
         }                                                                                                         \
-        for (uint32_t s = 0; s < n_ranks; s++) {                                                                  \
-            uint8_t * s_spad = actx->src_spad_base[s] + vtcm_thread_offset + spad_idx * spad_half;                \
-            const dma_addr_t s_ddr = octx->src[s]->data + ir_prefetch * sizeof(TYPE);                             \
-            dma_queue_push(dma_q, dma_make_data(s_spad, s_ddr), cur_bytes, cur_bytes, cur_bytes, 1);              \
+        ਲਈ (uint32_t s = 0; s < n_ranks; s++) {                                                                  \
+            uint8_t * s_spad = actx->src_spad_ਅਧਾਰ[s] + vtcm_thread_ਵਿੱਥ + spad_idx * spad_half;                \
+            ਅਚਲ dma_addr_t s_ddr = octx->src[s]->ਅੰਕੜੇ + ir_prefetch * ਆਕਾਰ(TYPE);                             \
+            dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(s_spad, s_ddr), cur_ਬਾਈਟਾਂ, cur_ਬਾਈਟਾਂ, cur_ਬਾਈਟਾਂ, 1);              \
         }                                                                                                         \
-        if (HAS_ADD) {                                                                                            \
-            uint8_t * r_spad = res_spad_base + spad_idx * spad_half;                                              \
-            const dma_addr_t r_ddr = octx->src[2 * n_ranks]->data + ir_prefetch * sizeof(TYPE);                   \
-            dma_queue_push(dma_q, dma_make_data(r_spad, r_ddr), cur_bytes, cur_bytes, cur_bytes, 1);              \
+        ਜੇ (HAS_ਜੋੜੋ) {                                                                                            \
+            uint8_t * r_spad = res_spad_ਅਧਾਰ + spad_idx * spad_half;                                              \
+            ਅਚਲ dma_addr_t r_ddr = octx->src[2 * n_ranks]->ਅੰਕੜੇ + ir_prefetch * ਆਕਾਰ(TYPE);                   \
+            dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(r_spad, r_ddr), cur_ਬਾਈਟਾਂ, cur_ਬਾਈਟਾਂ, cur_ਬਾਈਟਾਂ, 1);              \
         }                                                                                                         \
         ir_prefetch += cur_elems;                                                                                 \
         spad_idx ^= 1;                                                                                            \
     }                                                                                                             \
                                                                                                                   \
-    int comp_spad_idx = 0;                                                                                        \
-    for (uint32_t ir = ir0; ir < ir1; ) {                                                                         \
-        uint32_t cur_elems = MIN(block_elems, ir1 - ir);                                                          \
-        size_t   cur_bytes = cur_elems * sizeof(TYPE);                                                            \
-        for (uint32_t d = 0; d < n_dsts; d++) {                                                                   \
-            dma_queue_pop(dma_q);                                                                                 \
+    ਪੂਰਨ comp_spad_idx = 0;                                                                                        \
+    ਲਈ (uint32_t ir = ir0; ir < ir1; ) {                                                                         \
+        uint32_t cur_elems = MIN(ਖੰਡ_elems, ir1 - ir);                                                          \
+        size_t   cur_ਬਾਈਟਾਂ = cur_elems * ਆਕਾਰ(TYPE);                                                            \
+        ਲਈ (uint32_t d = 0; d < n_dsts; d++) {                                                                   \
+            dma_ਕਤਾਰ_ਕੱਢੋ(dma_q);                                                                                 \
         }                                                                                                         \
-        for (uint32_t s = 0; s < n_ranks; s++) {                                                                  \
-            dma_queue_pop(dma_q);                                                                                 \
+        ਲਈ (uint32_t s = 0; s < n_ranks; s++) {                                                                  \
+            dma_ਕਤਾਰ_ਕੱਢੋ(dma_q);                                                                                 \
         }                                                                                                         \
-        if (HAS_ADD) {                                                                                            \
-            dma_queue_pop(dma_q);                                                                                 \
+        ਜੇ (HAS_ਜੋੜੋ) {                                                                                            \
+            dma_ਕਤਾਰ_ਕੱਢੋ(dma_q);                                                                                 \
         }                                                                                                         \
-        uint8_t * d_spad  = dst_spad_base + comp_spad_idx * spad_half;                                            \
-        uint8_t * s0_spad = actx->src_spad_base[0] + vtcm_thread_offset + comp_spad_idx * spad_half;              \
-        uint8_t * s1_spad = actx->src_spad_base[1] + vtcm_thread_offset + comp_spad_idx * spad_half;              \
-        uint8_t * r_spad  = HAS_ADD ? (res_spad_base + comp_spad_idx * spad_half) : NULL;                         \
-        htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);                                         \
-        HVX_ADD_FN(d_spad, s0_spad, s1_spad, cur_elems);                                                          \
-        for (uint32_t s = 2; s < n_ranks; s++) {                                                                  \
-            uint8_t * ss_spad = actx->src_spad_base[s] + vtcm_thread_offset + comp_spad_idx * spad_half;          \
-            HVX_ADD_FN(d_spad, d_spad, ss_spad, cur_elems);                                                       \
+        uint8_t * d_spad  = dst_spad_ਅਧਾਰ + comp_spad_idx * spad_half;                                            \
+        uint8_t * s0_spad = actx->src_spad_ਅਧਾਰ[0] + vtcm_thread_ਵਿੱਥ + comp_spad_idx * spad_half;              \
+        uint8_t * s1_spad = actx->src_spad_ਅਧਾਰ[1] + vtcm_thread_ਵਿੱਥ + comp_spad_idx * spad_half;              \
+        uint8_t * r_spad  = HAS_ਜੋੜੋ ? (res_spad_ਅਧਾਰ + comp_spad_idx * spad_half) : ਨਿਰਾ;                         \
+        htp_trace_event_ਸ਼ੁਰੂ(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);                                         \
+        HVX_ਜੋੜੋ_FN(d_spad, s0_spad, s1_spad, cur_elems);                                                          \
+        ਲਈ (uint32_t s = 2; s < n_ranks; s++) {                                                                  \
+            uint8_t * ss_spad = actx->src_spad_ਅਧਾਰ[s] + vtcm_thread_ਵਿੱਥ + comp_spad_idx * spad_half;          \
+            HVX_ਜੋੜੋ_FN(d_spad, d_spad, ss_spad, cur_elems);                                                       \
         }                                                                                                         \
-        if (HAS_ADD) {                                                                                            \
-            HVX_ADD_FN(d_spad, d_spad, r_spad, cur_elems);                                                        \
+        ਜੇ (HAS_ਜੋੜੋ) {                                                                                            \
+            HVX_ਜੋੜੋ_FN(d_spad, d_spad, r_spad, cur_elems);                                                        \
         }                                                                                                         \
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);                                          \
-        for (uint32_t d = 0; d < n_dsts; d++) {                                                                   \
-            dma_addr_t d_ddr = octx->dsts[d]->data + ir * sizeof(TYPE);                                           \
-            dma_queue_push(dma_q, dma_make_data(d_ddr, d_spad), cur_bytes, cur_bytes, cur_bytes, 1);              \
+        ਲਈ (uint32_t d = 0; d < n_dsts; d++) {                                                                   \
+            dma_addr_t d_ddr = octx->dsts[d]->ਅੰਕੜੇ + ir * ਆਕਾਰ(TYPE);                                           \
+            dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(d_ddr, d_spad), cur_ਬਾਈਟਾਂ, cur_ਬਾਈਟਾਂ, cur_ਬਾਈਟਾਂ, 1);              \
         }                                                                                                         \
-        if (ir_prefetch < ir1) {                                                                                  \
-            uint32_t next_elems = MIN(block_elems, ir1 - ir_prefetch);                                            \
-            size_t   next_bytes = next_elems * sizeof(TYPE);                                                      \
-            for (uint32_t s = 0; s < n_ranks; s++) {                                                              \
-                uint8_t * s_spad = actx->src_spad_base[s] + vtcm_thread_offset + comp_spad_idx * spad_half;       \
-                const dma_addr_t s_next = octx->src[s]->data + ir_prefetch * sizeof(TYPE);                        \
-                dma_queue_push(dma_q, dma_make_data(s_spad, s_next), next_bytes, next_bytes, next_bytes, 1);      \
+        ਜੇ (ir_prefetch < ir1) {                                                                                  \
+            uint32_t ਅਗਲਾ_elems = MIN(ਖੰਡ_elems, ir1 - ir_prefetch);                                            \
+            size_t   ਅਗਲਾ_ਬਾਈਟਾਂ = ਅਗਲਾ_elems * ਆਕਾਰ(TYPE);                                                      \
+            ਲਈ (uint32_t s = 0; s < n_ranks; s++) {                                                              \
+                uint8_t * s_spad = actx->src_spad_ਅਧਾਰ[s] + vtcm_thread_ਵਿੱਥ + comp_spad_idx * spad_half;       \
+                ਅਚਲ dma_addr_t s_ਅਗਲਾ = octx->src[s]->ਅੰਕੜੇ + ir_prefetch * ਆਕਾਰ(TYPE);                        \
+                dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(s_spad, s_ਅਗਲਾ), ਅਗਲਾ_ਬਾਈਟਾਂ, ਅਗਲਾ_ਬਾਈਟਾਂ, ਅਗਲਾ_ਬਾਈਟਾਂ, 1);      \
             }                                                                                                     \
-            if (HAS_ADD) {                                                                                        \
-                uint8_t * r_spad_next = res_spad_base + comp_spad_idx * spad_half;                                \
-                const dma_addr_t r_next = octx->src[2 * n_ranks]->data + ir_prefetch * sizeof(TYPE);              \
-                dma_queue_push(dma_q, dma_make_data(r_spad_next, r_next), next_bytes, next_bytes, next_bytes, 1); \
+            ਜੇ (HAS_ਜੋੜੋ) {                                                                                        \
+                uint8_t * r_spad_ਅਗਲਾ = res_spad_ਅਧਾਰ + comp_spad_idx * spad_half;                                \
+                ਅਚਲ dma_addr_t r_ਅਗਲਾ = octx->src[2 * n_ranks]->ਅੰਕੜੇ + ir_prefetch * ਆਕਾਰ(TYPE);              \
+                dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(r_spad_ਅਗਲਾ, r_ਅਗਲਾ), ਅਗਲਾ_ਬਾਈਟਾਂ, ਅਗਲਾ_ਬਾਈਟਾਂ, ਅਗਲਾ_ਬਾਈਟਾਂ, 1); \
             }                                                                                                     \
-            ir_prefetch += next_elems;                                                                            \
+            ir_prefetch += ਅਗਲਾ_elems;                                                                            \
         }                                                                                                         \
         comp_spad_idx ^= 1;                                                                                       \
         ir += cur_elems;                                                                                          \
     }                                                                                                             \
-    dma_queue_flush(dma_q);                                                                                       \
+    dma_ਕਤਾਰ_flush(dma_q);                                                                                       \
 }
 
-DEFINE_ALLREDUCE_THREAD_DMA_1D(f16,     __fp16, hvx_add_f16_aaa, 0)
-DEFINE_ALLREDUCE_THREAD_DMA_1D(f32,     float,  hvx_add_f32_aaa, 0)
-DEFINE_ALLREDUCE_THREAD_DMA_1D(add_f16, __fp16, hvx_add_f16_aaa, 1)
-DEFINE_ALLREDUCE_THREAD_DMA_1D(add_f32, float,  hvx_add_f32_aaa, 1)
+DEFINE_ALLREDUCE_THREAD_DMA_1D(f16,     __fp16, hvx_ਜੋੜੋ_f16_aaa, 0)
+DEFINE_ALLREDUCE_THREAD_DMA_1D(f32,     ਦਸ਼ਮਲਵ,  hvx_ਜੋੜੋ_f32_aaa, 0)
+DEFINE_ALLREDUCE_THREAD_DMA_1D(ਜੋੜੋ_f16, __fp16, hvx_ਜੋੜੋ_f16_aaa, 1)
+DEFINE_ALLREDUCE_THREAD_DMA_1D(ਜੋੜੋ_f32, ਦਸ਼ਮਲਵ,  hvx_ਜੋੜੋ_f32_aaa, 1)
 
-#define DEFINE_ALLREDUCE_THREAD_DMA_2D(SUFFIX, TYPE, HVX_ADD_FN, HAS_ADD, IS_ROW_BCAST)                                                           \
-static void allreduce_thread_dma_2d_##SUFFIX(unsigned int nth, unsigned int ith, void * data) {                                                   \
-    struct htp_allreduce_context * actx = (struct htp_allreduce_context *) data;                                                                  \
-    struct htp_ops_context * octx = actx->octx;                                                                                                   \
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ DEFINE_ALLREDUCE_THREAD_DMA_2D(SUFFIX, TYPE, HVX_ਜੋੜੋ_FN, HAS_ਜੋੜੋ, IS_ਪੰਕਤੀ_BCAST)                                                           \
+ਸਥਿਰ ਖਾਲੀ allreduce_thread_dma_2d_##SUFFIX(ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ nth, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ ith, ਖਾਲੀ * ਅੰਕੜੇ) {                                                   \
+    ਬਣਤਰ htp_allreduce_context * actx = (ਬਣਤਰ htp_allreduce_context *) ਅੰਕੜੇ;                                                                  \
+    ਬਣਤਰ htp_ops_context * octx = actx->octx;                                                                                                   \
                                                                                                                                                   \
-    const uint32_t n_ranks          = actx->n_ranks;                                                                                              \
-    const uint32_t n_dsts           = actx->n_dsts;                                                                                               \
-    const uint32_t ne0              = actx->ne0;                                                                                                  \
-    const uint32_t block_rows       = actx->block_elems;                                                                                          \
-    const uint32_t row_size_aligned = actx->row_size_aligned;                                                                                     \
-    const uint32_t row_bytes        = ne0 * sizeof(TYPE);                                                                                         \
+    ਅਚਲ uint32_t n_ranks          = actx->n_ranks;                                                                                              \
+    ਅਚਲ uint32_t n_dsts           = actx->n_dsts;                                                                                               \
+    ਅਚਲ uint32_t ne0              = actx->ne0;                                                                                                  \
+    ਅਚਲ uint32_t ਖੰਡ_ਪੰਕਤੀਆਂ       = actx->ਖੰਡ_elems;                                                                                          \
+    ਅਚਲ uint32_t ਪੰਕਤੀ_ਮਾਪ_aligned = actx->ਪੰਕਤੀ_ਮਾਪ_aligned;                                                                                     \
+    ਅਚਲ uint32_t ਪੰਕਤੀ_ਬਾਈਟਾਂ        = ne0 * ਆਕਾਰ(TYPE);                                                                                         \
                                                                                                                                                   \
-    const uint32_t dr  = actx->elems_per_thread;                                                                                                  \
-    const uint32_t r0  = actx->rank_elem_start + dr * ith;                                                                                        \
-    const uint32_t r1  = MIN(r0 + dr, actx->rank_elem_start + actx->rank_nelem);                                                                  \
-    if (r0 >= r1) return;                                                                                                                         \
+    ਅਚਲ uint32_t dr  = actx->elems_ਪ੍ਰਤੀ_thread;                                                                                                  \
+    ਅਚਲ uint32_t r0  = actx->rank_elem_ਸ਼ੁਰੂ + dr * ith;                                                                                        \
+    ਅਚਲ uint32_t r1  = MIN(r0 + dr, actx->rank_elem_ਸ਼ੁਰੂ + actx->rank_nelem);                                                                  \
+    ਜੇ (r0 >= r1) ਵਾਪਸ;                                                                                                                         \
                                                                                                                                                   \
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];                                                                                        \
-    dma_queue * dma_q = octx->ctx->dma[ith];                                                                                                      \
+    ਬਣਤਰ htp_thread_trace * tr = &octx->ctx->trace[ith];                                                                                        \
+    dma_ਕਤਾਰ * dma_q = octx->ctx->dma[ith];                                                                                                      \
                                                                                                                                                   \
-    const size_t vtcm_thread_offset = ith * actx->vtcm_size_per_thread;                                                                           \
-    uint8_t * dst_spad_base = actx->dst_spad_base + vtcm_thread_offset;                                                                           \
-    uint8_t * res_spad_base = HAS_ADD ? (IS_ROW_BCAST ? actx->res_spad_base : (actx->res_spad_base + vtcm_thread_offset)) : NULL;                 \
+    ਅਚਲ size_t vtcm_thread_ਵਿੱਥ = ith * actx->vtcm_ਮਾਪ_ਪ੍ਰਤੀ_thread;                                                                           \
+    uint8_t * dst_spad_ਅਧਾਰ = actx->dst_spad_ਅਧਾਰ + vtcm_thread_ਵਿੱਥ;                                                                           \
+    uint8_t * res_spad_ਅਧਾਰ = HAS_ਜੋੜੋ ? (IS_ਪੰਕਤੀ_BCAST ? actx->res_spad_ਅਧਾਰ : (actx->res_spad_ਅਧਾਰ + vtcm_thread_ਵਿੱਥ)) : ਨਿਰਾ;                 \
                                                                                                                                                   \
-    const size_t spad_half = actx->vtcm_size_per_thread / 2;                                                                                      \
+    ਅਚਲ size_t spad_half = actx->vtcm_ਮਾਪ_ਪ੍ਰਤੀ_thread / 2;                                                                                      \
     uint32_t r_prefetch = r0;                                                                                                                     \
-    int spad_idx = 0;                                                                                                                             \
+    ਪੂਰਨ spad_idx = 0;                                                                                                                             \
                                                                                                                                                   \
-    for (int k = 0; k < 2 && r_prefetch < r1; k++) {                                                                                              \
-        uint32_t cur_rows = MIN(block_rows, r1 - r_prefetch);                                                                                     \
-        uint8_t * d_spad = dst_spad_base + spad_idx * spad_half;                                                                                  \
-        for (uint32_t d = 0; d < n_dsts; d++) {                                                                                                   \
-            dma_addr_t d_ddr = octx->dsts[d]->data + r_prefetch * octx->dsts[d]->nb[1];                                                           \
-            dma_queue_push(dma_q, dma_make_data(d_ddr, d_spad), octx->dsts[d]->nb[1], row_size_aligned, row_bytes, 0);                            \
+    ਲਈ (ਪੂਰਨ k = 0; k < 2 && r_prefetch < r1; k++) {                                                                                              \
+        uint32_t cur_ਪੰਕਤੀਆਂ = MIN(ਖੰਡ_ਪੰਕਤੀਆਂ, r1 - r_prefetch);                                                                                     \
+        uint8_t * d_spad = dst_spad_ਅਧਾਰ + spad_idx * spad_half;                                                                                  \
+        ਲਈ (uint32_t d = 0; d < n_dsts; d++) {                                                                                                   \
+            dma_addr_t d_ddr = octx->dsts[d]->ਅੰਕੜੇ + r_prefetch * octx->dsts[d]->nb[1];                                                           \
+            dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(d_ddr, d_spad), octx->dsts[d]->nb[1], ਪੰਕਤੀ_ਮਾਪ_aligned, ਪੰਕਤੀ_ਬਾਈਟਾਂ, 0);                            \
         }                                                                                                                                         \
-        for (uint32_t s = 0; s < n_ranks; s++) {                                                                                                  \
-            uint8_t * s_spad = actx->src_spad_base[s] + vtcm_thread_offset + spad_idx * spad_half;                                                \
-            const dma_addr_t s_ddr = octx->src[s]->data + r_prefetch * octx->src[s]->nb[1];                                                       \
-            dma_queue_push(dma_q, dma_make_data(s_spad, s_ddr), row_size_aligned, octx->src[s]->nb[1], row_bytes, cur_rows);                      \
+        ਲਈ (uint32_t s = 0; s < n_ranks; s++) {                                                                                                  \
+            uint8_t * s_spad = actx->src_spad_ਅਧਾਰ[s] + vtcm_thread_ਵਿੱਥ + spad_idx * spad_half;                                                \
+            ਅਚਲ dma_addr_t s_ddr = octx->src[s]->ਅੰਕੜੇ + r_prefetch * octx->src[s]->nb[1];                                                       \
+            dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(s_spad, s_ddr), ਪੰਕਤੀ_ਮਾਪ_aligned, octx->src[s]->nb[1], ਪੰਕਤੀ_ਬਾਈਟਾਂ, cur_ਪੰਕਤੀਆਂ);                      \
         }                                                                                                                                         \
-        if (HAS_ADD && !IS_ROW_BCAST) {                                                                                                           \
-            uint8_t * r_spad = res_spad_base + spad_idx * spad_half;                                                                              \
-            const dma_addr_t r_ddr = octx->src[2 * n_ranks]->data + r_prefetch * octx->src[2 * n_ranks]->nb[1];                                   \
-            dma_queue_push(dma_q, dma_make_data(r_spad, r_ddr), row_size_aligned, octx->src[2 * n_ranks]->nb[1], row_bytes, cur_rows);            \
+        ਜੇ (HAS_ਜੋੜੋ && !IS_ਪੰਕਤੀ_BCAST) {                                                                                                           \
+            uint8_t * r_spad = res_spad_ਅਧਾਰ + spad_idx * spad_half;                                                                              \
+            ਅਚਲ dma_addr_t r_ddr = octx->src[2 * n_ranks]->ਅੰਕੜੇ + r_prefetch * octx->src[2 * n_ranks]->nb[1];                                   \
+            dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(r_spad, r_ddr), ਪੰਕਤੀ_ਮਾਪ_aligned, octx->src[2 * n_ranks]->nb[1], ਪੰਕਤੀ_ਬਾਈਟਾਂ, cur_ਪੰਕਤੀਆਂ);            \
         }                                                                                                                                         \
-        r_prefetch += cur_rows;                                                                                                                   \
+        r_prefetch += cur_ਪੰਕਤੀਆਂ;                                                                                                                   \
         spad_idx ^= 1;                                                                                                                            \
     }                                                                                                                                             \
                                                                                                                                                   \
-    int comp_spad_idx = 0;                                                                                                                        \
-    for (uint32_t r = r0; r < r1; ) {                                                                                                             \
-        uint32_t cur_rows = MIN(block_rows, r1 - r);                                                                                              \
-        for (uint32_t d = 0; d < n_dsts; d++) {                                                                                                   \
-            dma_queue_pop(dma_q);                                                                                                                 \
+    ਪੂਰਨ comp_spad_idx = 0;                                                                                                                        \
+    ਲਈ (uint32_t r = r0; r < r1; ) {                                                                                                             \
+        uint32_t cur_ਪੰਕਤੀਆਂ = MIN(ਖੰਡ_ਪੰਕਤੀਆਂ, r1 - r);                                                                                              \
+        ਲਈ (uint32_t d = 0; d < n_dsts; d++) {                                                                                                   \
+            dma_ਕਤਾਰ_ਕੱਢੋ(dma_q);                                                                                                                 \
         }                                                                                                                                         \
-        for (uint32_t s = 0; s < n_ranks; s++) {                                                                                                  \
-            dma_queue_pop(dma_q);                                                                                                                 \
+        ਲਈ (uint32_t s = 0; s < n_ranks; s++) {                                                                                                  \
+            dma_ਕਤਾਰ_ਕੱਢੋ(dma_q);                                                                                                                 \
         }                                                                                                                                         \
-        if (HAS_ADD && !IS_ROW_BCAST) {                                                                                                           \
-            dma_queue_pop(dma_q);                                                                                                                 \
+        ਜੇ (HAS_ਜੋੜੋ && !IS_ਪੰਕਤੀ_BCAST) {                                                                                                           \
+            dma_ਕਤਾਰ_ਕੱਢੋ(dma_q);                                                                                                                 \
         }                                                                                                                                         \
-        uint8_t * d_spad  = dst_spad_base + comp_spad_idx * spad_half;                                                                            \
-        uint8_t * s0_spad = actx->src_spad_base[0] + vtcm_thread_offset + comp_spad_idx * spad_half;                                              \
-        uint8_t * s1_spad = actx->src_spad_base[1] + vtcm_thread_offset + comp_spad_idx * spad_half;                                              \
-        uint8_t * r_spad  = (HAS_ADD && !IS_ROW_BCAST) ? (res_spad_base + comp_spad_idx * spad_half) : NULL;                                      \
-        htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) r);                                                                          \
-        for (uint32_t row = 0; row < cur_rows; row++) {                                                                                           \
-            uint8_t * d_row = d_spad + row * row_size_aligned;                                                                                    \
-            const uint8_t * s0_row = s0_spad + row * row_size_aligned;                                                                            \
-            const uint8_t * s1_row = s1_spad + row * row_size_aligned;                                                                            \
-            HVX_ADD_FN(d_row, s0_row, s1_row, ne0);                                                                                               \
-            for (uint32_t s = 2; s < n_ranks; s++) {                                                                                              \
-                const uint8_t * ss_row = actx->src_spad_base[s] + vtcm_thread_offset + comp_spad_idx * spad_half + row * row_size_aligned;        \
-                HVX_ADD_FN(d_row, d_row, ss_row, ne0);                                                                                            \
+        uint8_t * d_spad  = dst_spad_ਅਧਾਰ + comp_spad_idx * spad_half;                                                                            \
+        uint8_t * s0_spad = actx->src_spad_ਅਧਾਰ[0] + vtcm_thread_ਵਿੱਥ + comp_spad_idx * spad_half;                                              \
+        uint8_t * s1_spad = actx->src_spad_ਅਧਾਰ[1] + vtcm_thread_ਵਿੱਥ + comp_spad_idx * spad_half;                                              \
+        uint8_t * r_spad  = (HAS_ਜੋੜੋ && !IS_ਪੰਕਤੀ_BCAST) ? (res_spad_ਅਧਾਰ + comp_spad_idx * spad_half) : ਨਿਰਾ;                                      \
+        htp_trace_event_ਸ਼ੁਰੂ(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) r);                                                                          \
+        ਲਈ (uint32_t ਪੰਕਤੀ = 0; ਪੰਕਤੀ < cur_ਪੰਕਤੀਆਂ; ਪੰਕਤੀ++) {                                                                                           \
+            uint8_t * d_ਪੰਕਤੀ = d_spad + ਪੰਕਤੀ * ਪੰਕਤੀ_ਮਾਪ_aligned;                                                                                    \
+            ਅਚਲ uint8_t * s0_ਪੰਕਤੀ = s0_spad + ਪੰਕਤੀ * ਪੰਕਤੀ_ਮਾਪ_aligned;                                                                            \
+            ਅਚਲ uint8_t * s1_ਪੰਕਤੀ = s1_spad + ਪੰਕਤੀ * ਪੰਕਤੀ_ਮਾਪ_aligned;                                                                            \
+            HVX_ਜੋੜੋ_FN(d_ਪੰਕਤੀ, s0_ਪੰਕਤੀ, s1_ਪੰਕਤੀ, ne0);                                                                                               \
+            ਲਈ (uint32_t s = 2; s < n_ranks; s++) {                                                                                              \
+                ਅਚਲ uint8_t * ss_ਪੰਕਤੀ = actx->src_spad_ਅਧਾਰ[s] + vtcm_thread_ਵਿੱਥ + comp_spad_idx * spad_half + ਪੰਕਤੀ * ਪੰਕਤੀ_ਮਾਪ_aligned;        \
+                HVX_ਜੋੜੋ_FN(d_ਪੰਕਤੀ, d_ਪੰਕਤੀ, ss_ਪੰਕਤੀ, ne0);                                                                                            \
             }                                                                                                                                     \
-            if (HAS_ADD) {                                                                                                                        \
-                const uint8_t * res_row = IS_ROW_BCAST ? res_spad_base : (r_spad + row * row_size_aligned);                                       \
-                HVX_ADD_FN(d_row, d_row, res_row, ne0);                                                                                           \
+            ਜੇ (HAS_ਜੋੜੋ) {                                                                                                                        \
+                ਅਚਲ uint8_t * res_ਪੰਕਤੀ = IS_ਪੰਕਤੀ_BCAST ? res_spad_ਅਧਾਰ : (r_spad + ਪੰਕਤੀ * ਪੰਕਤੀ_ਮਾਪ_aligned);                                       \
+                HVX_ਜੋੜੋ_FN(d_ਪੰਕਤੀ, d_ਪੰਕਤੀ, res_ਪੰਕਤੀ, ne0);                                                                                           \
             }                                                                                                                                     \
         }                                                                                                                                         \
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) r);                                                                           \
-        for (uint32_t d = 0; d < n_dsts; d++) {                                                                                                   \
-            dma_addr_t d_ddr = octx->dsts[d]->data + r * octx->dsts[d]->nb[1];                                                                    \
-            dma_queue_push(dma_q, dma_make_data(d_ddr, d_spad), octx->dsts[d]->nb[1], row_size_aligned, row_bytes, cur_rows);                     \
+        ਲਈ (uint32_t d = 0; d < n_dsts; d++) {                                                                                                   \
+            dma_addr_t d_ddr = octx->dsts[d]->ਅੰਕੜੇ + r * octx->dsts[d]->nb[1];                                                                    \
+            dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(d_ddr, d_spad), octx->dsts[d]->nb[1], ਪੰਕਤੀ_ਮਾਪ_aligned, ਪੰਕਤੀ_ਬਾਈਟਾਂ, cur_ਪੰਕਤੀਆਂ);                     \
         }                                                                                                                                         \
-        if (r_prefetch < r1) {                                                                                                                    \
-            uint32_t next_rows = MIN(block_rows, r1 - r_prefetch);                                                                                \
-            for (uint32_t s = 0; s < n_ranks; s++) {                                                                                              \
-                uint8_t * s_spad = actx->src_spad_base[s] + vtcm_thread_offset + comp_spad_idx * spad_half;                                       \
-                const dma_addr_t s_next = octx->src[s]->data + r_prefetch * octx->src[s]->nb[1];                                                  \
-                dma_queue_push(dma_q, dma_make_data(s_spad, s_next), row_size_aligned, octx->src[s]->nb[1], row_bytes, next_rows);                \
+        ਜੇ (r_prefetch < r1) {                                                                                                                    \
+            uint32_t ਅਗਲਾ_ਪੰਕਤੀਆਂ = MIN(ਖੰਡ_ਪੰਕਤੀਆਂ, r1 - r_prefetch);                                                                                \
+            ਲਈ (uint32_t s = 0; s < n_ranks; s++) {                                                                                              \
+                uint8_t * s_spad = actx->src_spad_ਅਧਾਰ[s] + vtcm_thread_ਵਿੱਥ + comp_spad_idx * spad_half;                                       \
+                ਅਚਲ dma_addr_t s_ਅਗਲਾ = octx->src[s]->ਅੰਕੜੇ + r_prefetch * octx->src[s]->nb[1];                                                  \
+                dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(s_spad, s_ਅਗਲਾ), ਪੰਕਤੀ_ਮਾਪ_aligned, octx->src[s]->nb[1], ਪੰਕਤੀ_ਬਾਈਟਾਂ, ਅਗਲਾ_ਪੰਕਤੀਆਂ);                \
             }                                                                                                                                     \
-            if (HAS_ADD && !IS_ROW_BCAST) {                                                                                                       \
-                uint8_t * r_spad_next = res_spad_base + comp_spad_idx * spad_half;                                                                \
-                const dma_addr_t r_next = octx->src[2 * n_ranks]->data + r_prefetch * octx->src[2 * n_ranks]->nb[1];                              \
-                dma_queue_push(dma_q, dma_make_data(r_spad_next, r_next), row_size_aligned, octx->src[2 * n_ranks]->nb[1], row_bytes, next_rows); \
+            ਜੇ (HAS_ਜੋੜੋ && !IS_ਪੰਕਤੀ_BCAST) {                                                                                                       \
+                uint8_t * r_spad_ਅਗਲਾ = res_spad_ਅਧਾਰ + comp_spad_idx * spad_half;                                                                \
+                ਅਚਲ dma_addr_t r_ਅਗਲਾ = octx->src[2 * n_ranks]->ਅੰਕੜੇ + r_prefetch * octx->src[2 * n_ranks]->nb[1];                              \
+                dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(r_spad_ਅਗਲਾ, r_ਅਗਲਾ), ਪੰਕਤੀ_ਮਾਪ_aligned, octx->src[2 * n_ranks]->nb[1], ਪੰਕਤੀ_ਬਾਈਟਾਂ, ਅਗਲਾ_ਪੰਕਤੀਆਂ); \
             }                                                                                                                                     \
-            r_prefetch += next_rows;                                                                                                              \
+            r_prefetch += ਅਗਲਾ_ਪੰਕਤੀਆਂ;                                                                                                              \
         }                                                                                                                                         \
         comp_spad_idx ^= 1;                                                                                                                       \
-        r += cur_rows;                                                                                                                            \
+        r += cur_ਪੰਕਤੀਆਂ;                                                                                                                            \
     }                                                                                                                                             \
-    dma_queue_flush(dma_q);                                                                                                                       \
+    dma_ਕਤਾਰ_flush(dma_q);                                                                                                                       \
 }
 
-DEFINE_ALLREDUCE_THREAD_DMA_2D(f16,           __fp16, hvx_add_f16_aaa, 0, 0)
-DEFINE_ALLREDUCE_THREAD_DMA_2D(f32,           float,  hvx_add_f32_aaa, 0, 0)
-DEFINE_ALLREDUCE_THREAD_DMA_2D(add_f16,       __fp16, hvx_add_f16_aaa, 1, 0)
-DEFINE_ALLREDUCE_THREAD_DMA_2D(add_f32,       float,  hvx_add_f32_aaa, 1, 0)
-DEFINE_ALLREDUCE_THREAD_DMA_2D(add_bcast_f16, __fp16, hvx_add_f16_aaa, 1, 1)
-DEFINE_ALLREDUCE_THREAD_DMA_2D(add_bcast_f32, float,  hvx_add_f32_aaa, 1, 1)
+DEFINE_ALLREDUCE_THREAD_DMA_2D(f16,           __fp16, hvx_ਜੋੜੋ_f16_aaa, 0, 0)
+DEFINE_ALLREDUCE_THREAD_DMA_2D(f32,           ਦਸ਼ਮਲਵ,  hvx_ਜੋੜੋ_f32_aaa, 0, 0)
+DEFINE_ALLREDUCE_THREAD_DMA_2D(ਜੋੜੋ_f16,       __fp16, hvx_ਜੋੜੋ_f16_aaa, 1, 0)
+DEFINE_ALLREDUCE_THREAD_DMA_2D(ਜੋੜੋ_f32,       ਦਸ਼ਮਲਵ,  hvx_ਜੋੜੋ_f32_aaa, 1, 0)
+DEFINE_ALLREDUCE_THREAD_DMA_2D(ਜੋੜੋ_bcast_f16, __fp16, hvx_ਜੋੜੋ_f16_aaa, 1, 1)
+DEFINE_ALLREDUCE_THREAD_DMA_2D(ਜੋੜੋ_bcast_f32, ਦਸ਼ਮਲਵ,  hvx_ਜੋੜੋ_f32_aaa, 1, 1)
 
-static int validate_allreduce(
-    struct htp_ops_context * octx,
-    const struct htp_allreduce_kernel_params * kparams,
+ਸਥਿਰ ਪੂਰਨ validate_allreduce(
+    ਬਣਤਰ htp_ops_context * octx,
+    ਅਚਲ ਬਣਤਰ htp_allreduce_kernel_params * kparams,
     uint32_t n_ranks
 ) {
-    if (kparams->n_threads == 0 || (uint32_t) kparams->n_threads > octx->ctx->n_threads) {
-        return HTP_STATUS_INVAL_PARAMS;
+    ਜੇ (kparams->n_ਧਾਗੇ == 0 || (uint32_t) kparams->n_ਧਾਗੇ > octx->ctx->n_ਧਾਗੇ) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_INVAL_PARAMS;
     }
-    octx->n_threads = (uint32_t) kparams->n_threads;
+    octx->n_ਧਾਗੇ = (uint32_t) kparams->n_ਧਾਗੇ;
 
-    if (kparams->vtcm_size_per_thread <= 0 || kparams->vtcm_size <= 0) {
-        return HTP_STATUS_INVAL_PARAMS;
-    }
-
-    const bool has_add = (octx->op == HTP_OP_ALLREDUCE_ADD);
-    const size_t n_vtcm_buffers = htp_allreduce_vtcm_buffer_count(
-        n_ranks, octx->n_threads, has_add, kparams->is_row_bcast != 0);
-    const size_t vtcm_size = n_vtcm_buffers * (size_t) kparams->vtcm_size_per_thread;
-    if (vtcm_size != (size_t) kparams->vtcm_size) {
-        return HTP_STATUS_INVAL_PARAMS;
-    }
-    if (vtcm_size > octx->ctx->vtcm_size) {
-        return HTP_STATUS_VTCM_TOO_SMALL;
+    ਜੇ (kparams->vtcm_ਮਾਪ_ਪ੍ਰਤੀ_thread <= 0 || kparams->vtcm_ਮਾਪ <= 0) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_INVAL_PARAMS;
     }
 
-    if (octx->dst->type != HTP_TYPE_F16 && octx->dst->type != HTP_TYPE_F32) {
-        return HTP_STATUS_NO_SUPPORT;
+    ਅਚਲ bool has_ਜੋੜੋ = (octx->op == HTP_OP_ALLREDUCE_ਜੋੜੋ);
+    ਅਚਲ size_t n_vtcm_buffers = htp_allreduce_vtcm_ਬਫਰ_ਗਿਣਤੀ(
+        n_ranks, octx->n_ਧਾਗੇ, has_ਜੋੜੋ, kparams->is_ਪੰਕਤੀ_bcast != 0);
+    ਅਚਲ size_t vtcm_ਮਾਪ = n_vtcm_buffers * (size_t) kparams->vtcm_ਮਾਪ_ਪ੍ਰਤੀ_thread;
+    ਜੇ (vtcm_ਮਾਪ != (size_t) kparams->vtcm_ਮਾਪ) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_INVAL_PARAMS;
+    }
+    ਜੇ (vtcm_ਮਾਪ > octx->ctx->vtcm_ਮਾਪ) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_VTCM_TOO_SMALL;
     }
 
-    return HTP_STATUS_OK;
+    ਜੇ (octx->dst->type != HTP_TYPE_F16 && octx->dst->type != HTP_TYPE_F32) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_NO_SUPPORT;
+    }
+
+    ਵਾਪਸ HTP_ਸਥਿਤੀ_OK;
 }
 
-int op_allreduce(struct htp_ops_context * octx) {
-    if (octx->ctx->mdev.count > 1 && octx->ctx->mdev.idx > 0) {
-        return HTP_STATUS_OK;
+ਪੂਰਨ op_allreduce(ਬਣਤਰ htp_ops_context * octx) {
+    ਜੇ (octx->ctx->mdev.ਗਿਣਤੀ_2 > 1 && octx->ctx->mdev.idx > 0) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_OK;
     }
 
-    const struct htp_allreduce_kernel_params * kparams = (const struct htp_allreduce_kernel_params *) octx->kernel_params;
-    const struct htp_tensor * dst = octx->dst;
+    ਅਚਲ ਬਣਤਰ htp_allreduce_kernel_params * kparams = (ਅਚਲ ਬਣਤਰ htp_allreduce_kernel_params *) octx->kernel_params;
+    ਅਚਲ ਬਣਤਰ htp_tensor * dst = octx->dst;
 
-    const uint32_t rank    = (uint32_t) kparams->rank;
-    const uint32_t n_ranks = (uint32_t) kparams->n_ranks;
+    ਅਚਲ uint32_t rank    = (uint32_t) kparams->rank;
+    ਅਚਲ uint32_t n_ranks = (uint32_t) kparams->n_ranks;
 
-    if (n_ranks < 2 || n_ranks > HTP_ALLREDUCE_MAX_RANKS || rank >= n_ranks) {
-        return HTP_STATUS_INVAL_PARAMS;
+    ਜੇ (n_ranks < 2 || n_ranks > HTP_ALLREDUCE_MAX_RANKS || rank >= n_ranks) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_INVAL_PARAMS;
     }
 
-    const uint32_t fence_seq_entry = (uint32_t) octx->op_params[0];
-    const uint32_t fence_seq_exit  = (uint32_t) octx->op_params[1];
+    ਅਚਲ uint32_t fence_seq_ਇੰਦਰਾਜ = (uint32_t) octx->op_params[0];
+    ਅਚਲ uint32_t fence_seq_exit  = (uint32_t) octx->op_params[1];
 
-    const struct htp_tensor * my_sync = octx->src[n_ranks + rank];
-    atomic_uint * my_fence = (atomic_uint *) (uintptr_t) my_sync->data;
+    ਅਚਲ ਬਣਤਰ htp_tensor * my_sync = octx->src[n_ranks + rank];
+    atomic_uint * my_fence = (atomic_uint *) (uintptr_t) my_sync->ਅੰਕੜੇ;
 
-    const int status = validate_allreduce(octx, kparams, n_ranks);
-    if (status != HTP_STATUS_OK) {
-        if (status == HTP_STATUS_NO_SUPPORT) {
+    ਅਚਲ ਪੂਰਨ ਸਥਿਤੀ = validate_allreduce(octx, kparams, n_ranks);
+    ਜੇ (ਸਥਿਤੀ != HTP_ਸਥਿਤੀ_OK) {
+        ਜੇ (ਸਥਿਤੀ == HTP_ਸਥਿਤੀ_NO_SUPPORT) {
             FARF(ERROR, "ggml-hex: allreduce unsupported type %d : rank %u\n", dst->type, rank);
         }
-        htp_fence_write(my_fence, fence_seq_exit, status);
-        return status;
+        htp_fence_write(my_fence, fence_seq_exit, ਸਥਿਤੀ);
+        ਵਾਪਸ ਸਥਿਤੀ;
     }
 
-    const bool has_add = (octx->op == HTP_OP_ALLREDUCE_ADD);
-    const uint32_t nelem = dst->ne[0] * dst->ne[1] * dst->ne[2] * dst->ne[3];
-    const int32_t  mode  = kparams->mode;
+    ਅਚਲ bool has_ਜੋੜੋ = (octx->op == HTP_OP_ALLREDUCE_ਜੋੜੋ);
+    ਅਚਲ uint32_t nelem = dst->ne[0] * dst->ne[1] * dst->ne[2] * dst->ne[3];
+    ਅਚਲ int32_t  ਬਹੁਲਕ  = kparams->ਬਹੁਲਕ;
 
     // 1. Entry Barrier: Synchronize all ranks before reading
-    struct htp_thread_trace * tr0 = &octx->ctx->trace[0];
-    htp_trace_event_start(tr0, HTP_TRACE_EVT_FENCE, (uint16_t) fence_seq_entry);
+    ਬਣਤਰ htp_thread_trace * tr0 = &octx->ctx->trace[0];
+    htp_trace_event_ਸ਼ੁਰੂ(tr0, HTP_TRACE_EVT_FENCE, (uint16_t) fence_seq_ਇੰਦਰਾਜ);
 
-    htp_fence_write(my_fence, fence_seq_entry, octx->status);
+    htp_fence_write(my_fence, fence_seq_ਇੰਦਰਾਜ, octx->ਸਥਿਤੀ);
 
-    for (uint32_t j = 0; j < n_ranks; j++) {
-        if (j == rank) continue;
-        const struct htp_tensor * peer_sync = octx->src[n_ranks + j];
-        atomic_uint * peer_fence = (atomic_uint *) (uintptr_t) peer_sync->data;
+    ਲਈ (uint32_t j = 0; j < n_ranks; j++) {
+        ਜੇ (j == rank) ਜਾਰੀ;
+        ਅਚਲ ਬਣਤਰ htp_tensor * peer_sync = octx->src[n_ranks + j];
+        atomic_uint * peer_fence = (atomic_uint *) (uintptr_t) peer_sync->ਅੰਕੜੇ;
         uint64_t spins = 0;
-        while (1) {
+        ਜਦੋਂ (1) {
             uint32_t peer_seq;
-            uint32_t peer_status;
-            htp_fence_read(peer_fence, &peer_seq, &peer_status);
-            if ((int32_t)(peer_seq - fence_seq_entry) >= 0) {
-                if (peer_status > HTP_STATUS_OK) {
-                    FARF(ERROR, "ggml-hex: allreduce entry peer %u failed with status %u\n", j, peer_status);
-                    htp_fence_write(my_fence, fence_seq_exit, peer_status);
-                    htp_trace_event_stop(tr0, HTP_TRACE_EVT_FENCE, (uint16_t) fence_seq_entry);
-                    return peer_status;
+            uint32_t peer_ਸਥਿਤੀ;
+            htp_fence_read(peer_fence, &peer_seq, &peer_ਸਥਿਤੀ);
+            ਜੇ ((int32_t)(peer_seq - fence_seq_ਇੰਦਰਾਜ) >= 0) {
+                ਜੇ (peer_ਸਥਿਤੀ > HTP_ਸਥਿਤੀ_OK) {
+                    FARF(ERROR, "ggml-hex: allreduce entry peer %u failed with status %u\n", j, peer_ਸਥਿਤੀ);
+                    htp_fence_write(my_fence, fence_seq_exit, peer_ਸਥਿਤੀ);
+                    htp_trace_event_stop(tr0, HTP_TRACE_EVT_FENCE, (uint16_t) fence_seq_ਇੰਦਰਾਜ);
+                    ਵਾਪਸ peer_ਸਥਿਤੀ;
                 }
-                break;
+                ਰੋਕੋ;
             }
-            if (++spins > HTP_FENCE_TIMEOUT) {
+            ਜੇ (++spins > HTP_FENCE_TIMEOUT) {
                 FARF(ERROR, "ggml-hex: allreduce entry fence-wait TIMEOUT : rank %u waiting on %u fence %p seq 0x%x peer-seq 0x%x\n",
-                     rank, j, peer_fence, fence_seq_entry, peer_seq);
-                htp_fence_write(my_fence, fence_seq_exit, HTP_STATUS_INTERNAL_ERR);
-                htp_trace_event_stop(tr0, HTP_TRACE_EVT_FENCE, (uint16_t) fence_seq_entry);
-                return HTP_STATUS_INTERNAL_ERR;
+                     rank, j, peer_fence, fence_seq_ਇੰਦਰਾਜ, peer_seq);
+                htp_fence_write(my_fence, fence_seq_exit, HTP_ਸਥਿਤੀ_ਅੰਦਰੂਨੀ_ERR);
+                htp_trace_event_stop(tr0, HTP_TRACE_EVT_FENCE, (uint16_t) fence_seq_ਇੰਦਰਾਜ);
+                ਵਾਪਸ HTP_ਸਥਿਤੀ_ਅੰਦਰੂਨੀ_ERR;
             }
             hex_pause();
         }
     }
-    asm volatile ("syncht" : : : "memory");
+    asm ਅਸਥਿਰ ("syncht" : : : "memory");
 
-    htp_trace_event_stop(tr0, HTP_TRACE_EVT_FENCE, (uint16_t) fence_seq_entry);
+    htp_trace_event_stop(tr0, HTP_TRACE_EVT_FENCE, (uint16_t) fence_seq_ਇੰਦਰਾਜ);
 
     // 2. Multi-threaded Reduction across assigned rank chunk
-    if (nelem > 0) {
-        const uint32_t n_threads            = (uint32_t) kparams->n_threads;
-        const uint32_t block_elems          = (uint32_t) kparams->block_elems;
-        const uint32_t elems_per_thread     = (uint32_t) kparams->elems_per_thread;
-        const uint32_t vtcm_size_per_thread = (uint32_t) kparams->vtcm_size_per_thread;
+    ਜੇ (nelem > 0) {
+        ਅਚਲ uint32_t n_ਧਾਗੇ            = (uint32_t) kparams->n_ਧਾਗੇ;
+        ਅਚਲ uint32_t ਖੰਡ_elems          = (uint32_t) kparams->ਖੰਡ_elems;
+        ਅਚਲ uint32_t elems_ਪ੍ਰਤੀ_thread     = (uint32_t) kparams->elems_ਪ੍ਰਤੀ_thread;
+        ਅਚਲ uint32_t vtcm_ਮਾਪ_ਪ੍ਰਤੀ_thread = (uint32_t) kparams->vtcm_ਮਾਪ_ਪ੍ਰਤੀ_thread;
 
-        struct htp_allreduce_context actx;
+        ਬਣਤਰ htp_allreduce_context actx;
         actx.octx                 = octx;
         actx.n_ranks              = n_ranks;
         actx.n_dsts               = (uint32_t) kparams->n_dsts ? (uint32_t) kparams->n_dsts : n_ranks;
         actx.nelem                = nelem;
         actx.ne0                  = (uint32_t) kparams->ne0;
         actx.ne1                  = (uint32_t) kparams->ne1;
-        actx.row_size_aligned     = (uint32_t) kparams->row_size_aligned;
-        actx.rank_elem_start      = (uint32_t) kparams->rank_elem_start;
+        actx.ਪੰਕਤੀ_ਮਾਪ_aligned     = (uint32_t) kparams->ਪੰਕਤੀ_ਮਾਪ_aligned;
+        actx.rank_elem_ਸ਼ੁਰੂ      = (uint32_t) kparams->rank_elem_ਸ਼ੁਰੂ;
         actx.rank_nelem           = (uint32_t) kparams->rank_nelem;
-        actx.elems_per_thread     = elems_per_thread;
-        actx.block_elems          = block_elems;
-        actx.vtcm_size_per_thread = vtcm_size_per_thread;
-        actx.is_row_bcast         = (kparams->is_row_bcast != 0);
+        actx.elems_ਪ੍ਰਤੀ_thread     = elems_ਪ੍ਰਤੀ_thread;
+        actx.ਖੰਡ_elems          = ਖੰਡ_elems;
+        actx.vtcm_ਮਾਪ_ਪ੍ਰਤੀ_thread = vtcm_ਮਾਪ_ਪ੍ਰਤੀ_thread;
+        actx.is_ਪੰਕਤੀ_bcast         = (kparams->is_ਪੰਕਤੀ_bcast != 0);
 
-        work_queue_func_t reduce_fun = NULL;
-        switch (kparams->kernel_type) {
-            case HTP_ALLREDUCE_KERNEL_DMA_1D:
-                if (has_add) {
-                    reduce_fun = (dst->type == HTP_TYPE_F16) ? allreduce_thread_dma_1d_add_f16 : allreduce_thread_dma_1d_add_f32;
-                } else {
+        work_ਕਤਾਰ_func_t reduce_fun = ਨਿਰਾ;
+        ਚੋਣ (kparams->kernel_type) {
+            ਹਾਲਤ HTP_ALLREDUCE_KERNEL_DMA_1D:
+                ਜੇ (has_ਜੋੜੋ) {
+                    reduce_fun = (dst->type == HTP_TYPE_F16) ? allreduce_thread_dma_1d_ਜੋੜੋ_f16 : allreduce_thread_dma_1d_ਜੋੜੋ_f32;
+                } ਨਹੀਂਤਾਂ {
                     reduce_fun = (dst->type == HTP_TYPE_F16) ? allreduce_thread_dma_1d_f16 : allreduce_thread_dma_1d_f32;
                 }
-                break;
-            case HTP_ALLREDUCE_KERNEL_DMA_2D:
-                if (has_add) {
-                    if (kparams->is_row_bcast) {
-                        reduce_fun = (dst->type == HTP_TYPE_F16) ? allreduce_thread_dma_2d_add_bcast_f16 : allreduce_thread_dma_2d_add_bcast_f32;
-                    } else {
-                        reduce_fun = (dst->type == HTP_TYPE_F16) ? allreduce_thread_dma_2d_add_f16 : allreduce_thread_dma_2d_add_f32;
+                ਰੋਕੋ;
+            ਹਾਲਤ HTP_ALLREDUCE_KERNEL_DMA_2D:
+                ਜੇ (has_ਜੋੜੋ) {
+                    ਜੇ (kparams->is_ਪੰਕਤੀ_bcast) {
+                        reduce_fun = (dst->type == HTP_TYPE_F16) ? allreduce_thread_dma_2d_ਜੋੜੋ_bcast_f16 : allreduce_thread_dma_2d_ਜੋੜੋ_bcast_f32;
+                    } ਨਹੀਂਤਾਂ {
+                        reduce_fun = (dst->type == HTP_TYPE_F16) ? allreduce_thread_dma_2d_ਜੋੜੋ_f16 : allreduce_thread_dma_2d_ਜੋੜੋ_f32;
                     }
-                } else {
+                } ਨਹੀਂਤਾਂ {
                     reduce_fun = (dst->type == HTP_TYPE_F16) ? allreduce_thread_dma_2d_f16 : allreduce_thread_dma_2d_f32;
                 }
-                break;
-            default:
+                ਰੋਕੋ;
+            ਮੂਲ:
                 FARF(ERROR, "ggml-hex: allreduce unsupported kernel %d : rank %u\n", kparams->kernel_type, rank);
-                htp_fence_write(my_fence, fence_seq_exit, HTP_STATUS_NO_SUPPORT);
-                return HTP_STATUS_NO_SUPPORT;
+                htp_fence_write(my_fence, fence_seq_exit, HTP_ਸਥਿਤੀ_NO_SUPPORT);
+                ਵਾਪਸ HTP_ਸਥਿਤੀ_NO_SUPPORT;
         }
 
-        uint8_t * vtcm_ptr = (uint8_t *) octx->ctx->vtcm_base;
-        for (uint32_t s = 0; s < n_ranks; s++) {
-            actx.src_spad_base[s] = vtcm_ptr;
-            vtcm_ptr += n_threads * vtcm_size_per_thread;
+        uint8_t * vtcm_ptr = (uint8_t *) octx->ctx->vtcm_ਅਧਾਰ;
+        ਲਈ (uint32_t s = 0; s < n_ranks; s++) {
+            actx.src_spad_ਅਧਾਰ[s] = vtcm_ptr;
+            vtcm_ptr += n_ਧਾਗੇ * vtcm_ਮਾਪ_ਪ੍ਰਤੀ_thread;
         }
-        actx.dst_spad_base = vtcm_ptr;
-        vtcm_ptr += n_threads * vtcm_size_per_thread;
-        if (has_add) {
-            actx.res_spad_base = vtcm_ptr;
-            vtcm_ptr += (actx.is_row_bcast ? 1 : n_threads) * vtcm_size_per_thread;
-        }
-
-        if (has_add && actx.is_row_bcast) {
-            const dma_addr_t r_ddr = octx->src[2 * n_ranks]->data;
-            const uint32_t row_bytes = actx.ne0 * (dst->type == HTP_TYPE_F16 ? sizeof(__fp16) : sizeof(float));
-            dma_queue * dma_q = octx->ctx->dma[0];
-            dma_queue_push(dma_q, dma_make_data(actx.res_spad_base, r_ddr), actx.row_size_aligned, 0, row_bytes, 1);
-            dma_queue_pop(dma_q);
+        actx.dst_spad_ਅਧਾਰ = vtcm_ptr;
+        vtcm_ptr += n_ਧਾਗੇ * vtcm_ਮਾਪ_ਪ੍ਰਤੀ_thread;
+        ਜੇ (has_ਜੋੜੋ) {
+            actx.res_spad_ਅਧਾਰ = vtcm_ptr;
+            vtcm_ptr += (actx.is_ਪੰਕਤੀ_bcast ? 1 : n_ਧਾਗੇ) * vtcm_ਮਾਪ_ਪ੍ਰਤੀ_thread;
         }
 
-        work_queue_run(octx->ctx->work_queue, reduce_fun, &actx, n_threads);
+        ਜੇ (has_ਜੋੜੋ && actx.is_ਪੰਕਤੀ_bcast) {
+            ਅਚਲ dma_addr_t r_ddr = octx->src[2 * n_ranks]->ਅੰਕੜੇ;
+            ਅਚਲ uint32_t ਪੰਕਤੀ_ਬਾਈਟਾਂ = actx.ne0 * (dst->type == HTP_TYPE_F16 ? ਆਕਾਰ(__fp16) : ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+            dma_ਕਤਾਰ * dma_q = octx->ctx->dma[0];
+            dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(actx.res_spad_ਅਧਾਰ, r_ddr), actx.ਪੰਕਤੀ_ਮਾਪ_aligned, 0, ਪੰਕਤੀ_ਬਾਈਟਾਂ, 1);
+            dma_ਕਤਾਰ_ਕੱਢੋ(dma_q);
+        }
+
+        work_ਕਤਾਰ_ਲੜੀਵਾਰ(octx->ctx->work_ਕਤਾਰ, reduce_fun, &actx, n_ਧਾਗੇ);
     }
 
     // 4. Exit Barrier: Synchronize all ranks after writing
-    htp_trace_event_start(tr0, HTP_TRACE_EVT_FENCE, (uint16_t) fence_seq_exit);
+    htp_trace_event_ਸ਼ੁਰੂ(tr0, HTP_TRACE_EVT_FENCE, (uint16_t) fence_seq_exit);
 
     // drain fan-out DMA writes before exit barrier
-    if (mode == HTP_ALLREDUCE_SHARDED_FANOUT) {
-        asm volatile ("syncht" : : : "memory");
+    ਜੇ (ਬਹੁਲਕ == HTP_ALLREDUCE_SHARDED_FANOUT) {
+        asm ਅਸਥਿਰ ("syncht" : : : "memory");
     }
 
-    htp_fence_write(my_fence, fence_seq_exit, octx->status);
+    htp_fence_write(my_fence, fence_seq_exit, octx->ਸਥਿਤੀ);
 
-    for (uint32_t j = 0; j < n_ranks; j++) {
-        if (j == rank) continue;
-        const struct htp_tensor * peer_sync = octx->src[n_ranks + j];
-        atomic_uint * peer_fence = (atomic_uint *) (uintptr_t) peer_sync->data;
+    ਲਈ (uint32_t j = 0; j < n_ranks; j++) {
+        ਜੇ (j == rank) ਜਾਰੀ;
+        ਅਚਲ ਬਣਤਰ htp_tensor * peer_sync = octx->src[n_ranks + j];
+        atomic_uint * peer_fence = (atomic_uint *) (uintptr_t) peer_sync->ਅੰਕੜੇ;
         uint64_t spins = 0;
-        while (1) {
+        ਜਦੋਂ (1) {
             uint32_t peer_seq;
-            uint32_t peer_status;
-            htp_fence_read(peer_fence, &peer_seq, &peer_status);
-            if ((int32_t)(peer_seq - fence_seq_exit) >= 0) {
-                if (peer_status > HTP_STATUS_OK) {
-                    FARF(ERROR, "ggml-hex: allreduce exit peer %u failed with status %u\n", j, peer_status);
-                    htp_fence_write(my_fence, fence_seq_exit, peer_status);
+            uint32_t peer_ਸਥਿਤੀ;
+            htp_fence_read(peer_fence, &peer_seq, &peer_ਸਥਿਤੀ);
+            ਜੇ ((int32_t)(peer_seq - fence_seq_exit) >= 0) {
+                ਜੇ (peer_ਸਥਿਤੀ > HTP_ਸਥਿਤੀ_OK) {
+                    FARF(ERROR, "ggml-hex: allreduce exit peer %u failed with status %u\n", j, peer_ਸਥਿਤੀ);
+                    htp_fence_write(my_fence, fence_seq_exit, peer_ਸਥਿਤੀ);
                     htp_trace_event_stop(tr0, HTP_TRACE_EVT_FENCE, (uint16_t) fence_seq_exit);
-                    return peer_status;
+                    ਵਾਪਸ peer_ਸਥਿਤੀ;
                 }
-                break;
+                ਰੋਕੋ;
             }
-            if (++spins > HTP_FENCE_TIMEOUT) {
+            ਜੇ (++spins > HTP_FENCE_TIMEOUT) {
                 FARF(ERROR, "ggml-hex: allreduce exit fence-wait TIMEOUT : rank %u waiting on %u fence %p seq 0x%x peer-seq 0x%x\n",
                      rank, j, peer_fence, fence_seq_exit, peer_seq);
-                htp_fence_write(my_fence, fence_seq_exit, HTP_STATUS_INTERNAL_ERR);
+                htp_fence_write(my_fence, fence_seq_exit, HTP_ਸਥਿਤੀ_ਅੰਦਰੂਨੀ_ERR);
                 htp_trace_event_stop(tr0, HTP_TRACE_EVT_FENCE, (uint16_t) fence_seq_exit);
-                return HTP_STATUS_INTERNAL_ERR;
+                ਵਾਪਸ HTP_ਸਥਿਤੀ_ਅੰਦਰੂਨੀ_ERR;
             }
             hex_pause();
         }
     }
-    asm volatile ("syncht" : : : "memory");
+    asm ਅਸਥਿਰ ("syncht" : : : "memory");
 
     htp_trace_event_stop(tr0, HTP_TRACE_EVT_FENCE, (uint16_t) fence_seq_exit);
 
-    return octx->status;
+    ਵਾਪਸ octx->ਸਥਿਤੀ;
 }

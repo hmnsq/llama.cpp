@@ -1,20 +1,20 @@
-#pragma once
+#ਹਦਾਇਤ once
 
-#include <cstddef>
-#include <cstdint>
-#include <memory>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cstddef>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cstdint>
+#ਅਨ੍ਤਰ੍ਭਾਵ <memory>
 
-struct socket_t;
-typedef std::shared_ptr<socket_t> socket_ptr;
+ਬਣਤਰ socket_t;
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ std::shared_ptr<socket_t> socket_ptr;
 
-static constexpr size_t MAX_CHUNK_SIZE = 1024ull * 1024ull * 1024ull; // 1 GiB
-static constexpr size_t RPC_CONN_CAPS_SIZE = 24;
+ਸਥਿਰ constexpr size_t MAX_CHUNK_ਮਾਪ = 1024ull * 1024ull * 1024ull; // 1 GiB
+ਸਥਿਰ constexpr size_t RPC_CONN_CAPS_ਮਾਪ = 24;
 
-struct socket_t {
+ਬਣਤਰ socket_t {
     ~socket_t();
 
-    bool send_data(const void * data, size_t size);
-    bool recv_data(void * data, size_t size);
+    bool send_ਅੰਕੜੇ(ਅਚਲ ਖਾਲੀ * ਅੰਕੜੇ, size_t ਮਾਪ);
+    bool recv_ਅੰਕੜੇ(ਖਾਲੀ * ਅੰਕੜੇ, size_t ਮਾਪ);
     // Must be called at every message boundary: the RDMA transport coalesces
     // writes into fixed-size frames and posts the trailing partial frame only
     // here. No-op on TCP.
@@ -22,18 +22,18 @@ struct socket_t {
 
     socket_ptr accept();
 
-    void get_caps(uint8_t * local_caps);
-    void update_caps(const uint8_t * remote_caps);
-    const char * transport_name() const;
+    ਖਾਲੀ get_caps(uint8_t * local_caps);
+    ਖਾਲੀ update_caps(ਅਚਲ uint8_t * remote_caps);
+    ਅਚਲ ਅੱਖਰ * transport_name() ਅਚਲ;
 
-    static socket_ptr create_server(const char * host, int port);
-    static socket_ptr connect(const char * host, int port);
+    ਸਥਿਰ socket_ptr create_server(ਅਚਲ ਅੱਖਰ * host, ਪੂਰਨ ਪੋਰਟ);
+    ਸਥਿਰ socket_ptr connect(ਅਚਲ ਅੱਖਰ * host, ਪੂਰਨ ਪੋਰਟ);
 
-private:
-    struct impl;
+ਨਿਜੀ:
+    ਬਣਤਰ impl;
     explicit socket_t(std::unique_ptr<impl> p);
     std::unique_ptr<impl> pimpl;
 };
 
 bool rpc_transport_init();
-void rpc_transport_shutdown();
+ਖਾਲੀ rpc_transport_shutdown();

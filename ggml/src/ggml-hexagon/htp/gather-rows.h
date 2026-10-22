@@ -1,15 +1,15 @@
-#ifndef HTP_GATHER_ROWS_H
-#define HTP_GATHER_ROWS_H
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ HTP_GATHER_ਪੰਕਤੀਆਂ_H
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_GATHER_ਪੰਕਤੀਆਂ_H
 
-#include "hex-common.h"
-#include <stdint.h>
-#include <stdbool.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ "hex-common.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdint.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdbool.h>
 
-#ifndef GGML_MAX_DIMS
-#define GGML_MAX_DIMS 4
-#endif
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ GGML_MAX_DIMS
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_MAX_DIMS 4
+#ਜੇ_ਅੰਤ
 
-struct htp_gather_rows_params {
+ਬਣਤਰ htp_gather_ਪੰਕਤੀਆਂ_params {
     uint32_t na;
     uint32_t nb;
     uint32_t ne;
@@ -18,98 +18,98 @@ struct htp_gather_rows_params {
     uint32_t nr_max;
     uint32_t v1;
     uint32_t span1;
-    uint32_t region_size;
-    uint32_t out_off;
+    uint32_t region_ਮਾਪ;
+    uint32_t ਬਾਹਰਲਾ_off;
     uint32_t buf_stride;
-    uint32_t slice;
-    uint32_t total_rows;
-    uint32_t rows_per_thread;
+    uint32_t ਟੁਕੜਾ_2;
+    uint32_t ਕੁੱਲ_ਪੰਕਤੀਆਂ;
+    uint32_t ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_thread;
     uint8_t  b_dense;
     uint8_t  pad[3];
 };
 
-static inline bool htp_gather_rows_solve_layout(
-    struct htp_gather_rows_params * kparams,
+ਸਥਿਰ ਸਤਰਅੰਦਰ bool htp_gather_ਪੰਕਤੀਆਂ_solve_layout(
+    ਬਣਤਰ htp_gather_ਪੰਕਤੀਆਂ_params * kparams,
     uint32_t na, uint32_t a_nb1,
     uint32_t nb, uint32_t b_nb1, bool b_dense,
-    uint32_t elem_size,
-    uint32_t total_rows,
-    uint32_t n_threads,
-    uint32_t mdev_count,
-    uint32_t vtcm_size) {
+    uint32_t elem_ਮਾਪ,
+    uint32_t ਕੁੱਲ_ਪੰਕਤੀਆਂ,
+    uint32_t n_ਧਾਗੇ,
+    uint32_t mdev_ਗਿਣਤੀ,
+    uint32_t vtcm_ਮਾਪ) {
 
-    const uint32_t max_ne0 = 128 / elem_size;
-    const uint32_t ne = na + nb;
-    if (ne == 0 || ne > max_ne0) {
-        return false;
+    ਅਚਲ uint32_t max_ne0 = 128 / elem_ਮਾਪ;
+    ਅਚਲ uint32_t ne = na + nb;
+    ਜੇ (ne == 0 || ne > max_ne0) {
+        ਵਾਪਸ false;
     }
 
-    if (elem_size != 4 && elem_size != 2) {
-        return false;
+    ਜੇ (elem_ਮਾਪ != 4 && elem_ਮਾਪ != 2) {
+        ਵਾਪਸ false;
     }
 
-    const uint32_t v_lanes = 128 / elem_size;
-    const uint32_t g       = hex_gcd_u32(ne, v_lanes);
-    const uint32_t rg      = v_lanes / g;
-    const uint32_t vg      = ne / g;
+    ਅਚਲ uint32_t v_lanes = 128 / elem_ਮਾਪ;
+    ਅਚਲ uint32_t g       = hex_ਮਹੱਤਮ_ਸਾਂਝਾ_ਭਾਜਕ_u32(ne, v_lanes);
+    ਅਚਲ uint32_t rg      = v_lanes / g;
+    ਅਚਲ uint32_t vg      = ne / g;
 
-    const uint32_t slice = (vtcm_size / n_threads) & ~127u;
-    const uint32_t total_chunks = total_rows / rg;
-    const uint32_t chunks_per_dev = (total_chunks + mdev_count - 1) / mdev_count;
-    const uint32_t max_rows_per_dev = (mdev_count > 1 && total_chunks >= mdev_count)
-        ? (chunks_per_dev * rg + (total_rows % rg))
-        : total_rows;
-    const uint32_t rows_per_thread = hex_round_up((max_rows_per_dev + n_threads - 1) / n_threads, rg);
+    ਅਚਲ uint32_t ਟੁਕੜਾ_2 = (vtcm_ਮਾਪ / n_ਧਾਗੇ) & ~127u;
+    ਅਚਲ uint32_t ਕੁੱਲ_chunks = ਕੁੱਲ_ਪੰਕਤੀਆਂ / rg;
+    ਅਚਲ uint32_t chunks_ਪ੍ਰਤੀ_dev = (ਕੁੱਲ_chunks + mdev_ਗਿਣਤੀ - 1) / mdev_ਗਿਣਤੀ;
+    ਅਚਲ uint32_t max_ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_dev = (mdev_ਗਿਣਤੀ > 1 && ਕੁੱਲ_chunks >= mdev_ਗਿਣਤੀ)
+        ? (chunks_ਪ੍ਰਤੀ_dev * rg + (ਕੁੱਲ_ਪੰਕਤੀਆਂ % rg))
+        : ਕੁੱਲ_ਪੰਕਤੀਆਂ;
+    ਅਚਲ uint32_t ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_thread = hex_ਗੇੜਾ_ਉੱਪਰ((max_ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_dev + n_ਧਾਗੇ - 1) / n_ਧਾਗੇ, rg);
 
-    const uint32_t fixed = 3 * vg * 128;
-    const uint32_t per_row = a_nb1 + (nb > 0 ? (b_dense ? b_nb1 : nb * b_nb1) : 0) + ne * elem_size;
-    if (slice <= fixed + 2 * per_row * rg) {
-        return false;
+    ਅਚਲ uint32_t fixed = 3 * vg * 128;
+    ਅਚਲ uint32_t ਪ੍ਰਤੀ_ਪੰਕਤੀ = a_nb1 + (nb > 0 ? (b_dense ? b_nb1 : nb * b_nb1) : 0) + ne * elem_ਮਾਪ;
+    ਜੇ (ਟੁਕੜਾ_2 <= fixed + 2 * ਪ੍ਰਤੀ_ਪੰਕਤੀ * rg) {
+        ਵਾਪਸ false;
     }
 
-    const uint32_t avail_per_buf = (slice - fixed) / 2;
-    uint32_t nr_max = MIN(avail_per_buf / per_row, rows_per_thread);
-    if (elem_size == 2) {
-        const uint32_t per_row_region = a_nb1 + (nb > 0 ? (b_dense ? b_nb1 : nb * b_nb1) : 0);
-        if (per_row_region > 0) {
-            nr_max = MIN(nr_max, (32768u - 256u) / per_row_region);
+    ਅਚਲ uint32_t avail_ਪ੍ਰਤੀ_buf = (ਟੁਕੜਾ_2 - fixed) / 2;
+    uint32_t nr_max = MIN(avail_ਪ੍ਰਤੀ_buf / ਪ੍ਰਤੀ_ਪੰਕਤੀ, ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_thread);
+    ਜੇ (elem_ਮਾਪ == 2) {
+        ਅਚਲ uint32_t ਪ੍ਰਤੀ_ਪੰਕਤੀ_region = a_nb1 + (nb > 0 ? (b_dense ? b_nb1 : nb * b_nb1) : 0);
+        ਜੇ (ਪ੍ਰਤੀ_ਪੰਕਤੀ_region > 0) {
+            nr_max = MIN(nr_max, (32768u - 256u) / ਪ੍ਰਤੀ_ਪੰਕਤੀ_region);
         }
     }
     nr_max = (nr_max / rg) * rg;
 
     uint32_t v1          = 0;
     uint32_t span1       = 0;
-    uint32_t region_size = 0;
-    uint32_t out_off     = 0;
+    uint32_t region_ਮਾਪ = 0;
+    uint32_t ਬਾਹਰਲਾ_off     = 0;
     uint32_t buf_stride  = 0;
 
-    while (nr_max > 0) {
-        v1 = hex_round_up((nr_max - 1) * a_nb1 + na * elem_size, 128);
-        if (nb > 0) {
-            if (b_dense) {
-                span1       = elem_size;
-                region_size = v1 + (nr_max - 1) * b_nb1 + nb * elem_size;
-            } else {
-                span1       = (nr_max - 1) * b_nb1 + elem_size;
-                region_size = v1 + nb * span1;
+    ਜਦੋਂ (nr_max > 0) {
+        v1 = hex_ਗੇੜਾ_ਉੱਪਰ((nr_max - 1) * a_nb1 + na * elem_ਮਾਪ, 128);
+        ਜੇ (nb > 0) {
+            ਜੇ (b_dense) {
+                span1       = elem_ਮਾਪ;
+                region_ਮਾਪ = v1 + (nr_max - 1) * b_nb1 + nb * elem_ਮਾਪ;
+            } ਨਹੀਂਤਾਂ {
+                span1       = (nr_max - 1) * b_nb1 + elem_ਮਾਪ;
+                region_ਮਾਪ = v1 + nb * span1;
             }
-        } else {
+        } ਨਹੀਂਤਾਂ {
             span1       = 0;
-            region_size = v1;
+            region_ਮਾਪ = v1;
         }
 
-        out_off    = hex_round_up(region_size, 128);
-        buf_stride = hex_round_up(out_off + nr_max * ne * elem_size, 128);
+        ਬਾਹਰਲਾ_off    = hex_ਗੇੜਾ_ਉੱਪਰ(region_ਮਾਪ, 128);
+        buf_stride = hex_ਗੇੜਾ_ਉੱਪਰ(ਬਾਹਰਲਾ_off + nr_max * ne * elem_ਮਾਪ, 128);
 
-        if ((elem_size != 2 || region_size <= 32768) && fixed + 2 * buf_stride <= slice) {
-            break;
+        ਜੇ ((elem_ਮਾਪ != 2 || region_ਮਾਪ <= 32768) && fixed + 2 * buf_stride <= ਟੁਕੜਾ_2) {
+            ਰੋਕੋ;
         }
 
         nr_max -= rg;
     }
 
-    if (nr_max == 0) {
-        return false;
+    ਜੇ (nr_max == 0) {
+        ਵਾਪਸ false;
     }
 
     kparams->na              = na;
@@ -120,41 +120,41 @@ static inline bool htp_gather_rows_solve_layout(
     kparams->nr_max          = nr_max;
     kparams->v1              = v1;
     kparams->span1           = span1;
-    kparams->region_size     = region_size;
-    kparams->out_off         = out_off;
+    kparams->region_ਮਾਪ     = region_ਮਾਪ;
+    kparams->ਬਾਹਰਲਾ_off         = ਬਾਹਰਲਾ_off;
     kparams->buf_stride      = buf_stride;
-    kparams->slice           = slice;
-    kparams->total_rows      = total_rows;
-    kparams->rows_per_thread = rows_per_thread;
+    kparams->ਟੁਕੜਾ_2           = ਟੁਕੜਾ_2;
+    kparams->ਕੁੱਲ_ਪੰਕਤੀਆਂ      = ਕੁੱਲ_ਪੰਕਤੀਆਂ;
+    kparams->ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_thread = ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_thread;
     kparams->b_dense         = b_dense ? 1 : 0;
     kparams->pad[0]          = 0;
     kparams->pad[1]          = 0;
     kparams->pad[2]          = 0;
-    return true;
+    ਵਾਪਸ true;
 }
 
-#ifdef __cplusplus
-struct ggml_tensor;
-static inline bool htp_gather_rows_tensor_outer_contiguous(const struct ggml_tensor * t) {
-    size_t next_nb = ((const size_t *) t->nb)[1] * ((const int64_t *) t->ne)[1];
-    for (int i = 2; i < GGML_MAX_DIMS; i++) {
-        if (((const int64_t *) t->ne)[i] != 1 && ((const size_t *) t->nb)[i] != next_nb) {
-            return false;
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ __cplusplus
+ਬਣਤਰ ggml_tensor;
+ਸਥਿਰ ਸਤਰਅੰਦਰ bool htp_gather_ਪੰਕਤੀਆਂ_tensor_outer_contiguous(ਅਚਲ ਬਣਤਰ ggml_tensor * t) {
+    size_t ਅਗਲਾ_nb = ((ਅਚਲ size_t *) t->nb)[1] * ((ਅਚਲ int64_t *) t->ne)[1];
+    ਲਈ (ਪੂਰਨ i = 2; i < GGML_MAX_DIMS; i++) {
+        ਜੇ (((ਅਚਲ int64_t *) t->ne)[i] != 1 && ((ਅਚਲ size_t *) t->nb)[i] != ਅਗਲਾ_nb) {
+            ਵਾਪਸ false;
         }
-        next_nb *= ((const int64_t *) t->ne)[i];
+        ਅਗਲਾ_nb *= ((ਅਚਲ int64_t *) t->ne)[i];
     }
-    return true;
+    ਵਾਪਸ true;
 }
-#else
-struct htp_ops_context;
-struct htp_tensor;
+#ਨਹੀਂਤਾਂ
+ਬਣਤਰ htp_ops_context;
+ਬਣਤਰ htp_tensor;
 
-int htp_gather_rows(
-    struct htp_ops_context * octx,
-    const struct htp_tensor * a,
-    const struct htp_tensor * b,
-    const struct htp_gather_rows_params * kparams,
-    uint32_t n_threads);
-#endif
+ਪੂਰਨ htp_gather_ਪੰਕਤੀਆਂ(
+    ਬਣਤਰ htp_ops_context * octx,
+    ਅਚਲ ਬਣਤਰ htp_tensor * a,
+    ਅਚਲ ਬਣਤਰ htp_tensor * b,
+    ਅਚਲ ਬਣਤਰ htp_gather_ਪੰਕਤੀਆਂ_params * kparams,
+    uint32_t n_ਧਾਗੇ);
+#ਜੇ_ਅੰਤ
 
-#endif // HTP_GATHER_ROWS_H
+#ਜੇ_ਅੰਤ // HTP_GATHER_ROWS_H

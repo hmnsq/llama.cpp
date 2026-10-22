@@ -1,102 +1,102 @@
-#include "col2im-1d.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "col2im-1d.hpp"
 
-template <typename T>
-static void col2im_1d_sycl(
-        const T * col,
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T>
+ਸਥਿਰ ਖਾਲੀ col2im_1d_sycl(
+        ਅਚਲ T * ਖਾਨਾ,
         T * dst,
-        const int T_in,
-        const sycl::uint3 T_out_fd,
-        const int K,
-        const int K_OC,
-        const int32_t s0,
-        const int32_t p0,
-        const int total,
-        dpct::queue_ptr stream) {
+        ਅਚਲ ਪੂਰਨ T_ਵਿੱਚ,
+        ਅਚਲ sycl::uint3 T_ਬਾਹਰਲਾ_fd,
+        ਅਚਲ ਪੂਰਨ K,
+        ਅਚਲ ਪੂਰਨ K_OC,
+        ਅਚਲ int32_t s0,
+        ਅਚਲ int32_t p0,
+        ਅਚਲ ਪੂਰਨ ਕੁੱਲ,
+        dpct::ਕਤਾਰ_ptr stream) {
 
-    const uint32_t block_size = SYCL_COL2IM_1D_BLOCK_SIZE;
-    const uint32_t num_blocks = (uint32_t) ((total + block_size - 1) / block_size);
+    ਅਚਲ uint32_t ਖੰਡ_ਮਾਪ_3 = SYCL_COL2_IM_1_D_ਖੰਡ_ਮਾਪ;
+    ਅਚਲ uint32_t ਅੰਕ_ਖੰਡਾਂ = (uint32_t) ((ਕੁੱਲ + ਖੰਡ_ਮਾਪ_3 - 1) / ਖੰਡ_ਮਾਪ_3);
 
     stream->parallel_for(
         sycl::nd_range<3>(
-            sycl::range<3>(1, 1, num_blocks * block_size),
-            sycl::range<3>(1, 1, block_size)),
-        [=](sycl::nd_item<3> item_ct1) {
-            const int idx = (int) item_ct1.get_global_id(2);
-            if (idx >= total) {
-                return;
+            sycl::range<3>(1, 1, ਅੰਕ_ਖੰਡਾਂ * ਖੰਡ_ਮਾਪ_3),
+            sycl::range<3>(1, 1, ਖੰਡ_ਮਾਪ_3)),
+        [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1) {
+            ਅਚਲ ਪੂਰਨ idx = (ਪੂਰਨ) ਵਸਤੂ_ct1.get_global_id(2);
+            ਜੇ (idx >= ਕੁੱਲ) {
+                ਵਾਪਸ;
             }
 
-            const sycl::uint2 qr = fast_div_modulo((uint32_t) idx, T_out_fd);
-            const int oc    = (int) qr.x();
-            const int t_out = (int) qr.y();
-            const int t_abs = t_out + p0;
+            ਅਚਲ sycl::uint2 qr = fast_div_modulo((uint32_t) idx, T_ਬਾਹਰਲਾ_fd);
+            ਅਚਲ ਪੂਰਨ oc    = (ਪੂਰਨ) qr.x();
+            ਅਚਲ ਪੂਰਨ t_ਬਾਹਰਲਾ = (ਪੂਰਨ) qr.y();
+            ਅਚਲ ਪੂਰਨ t_abs = t_ਬਾਹਰਲਾ + p0;
 
-            int t_in_min = (t_abs - K + s0) / s0;
-            if (t_in_min < 0) {
-                t_in_min = 0;
+            ਪੂਰਨ t_ਵਿੱਚ_min = (t_abs - K + s0) / s0;
+            ਜੇ (t_ਵਿੱਚ_min < 0) {
+                t_ਵਿੱਚ_min = 0;
             }
-            int t_in_max = t_abs / s0;
-            if (t_in_max >= T_in) {
-                t_in_max = T_in - 1;
-            }
-
-            float sum = 0.0f;
-            for (int t_in = t_in_min; t_in <= t_in_max; ++t_in) {
-                const int k = t_abs - t_in * s0;
-                sum += static_cast<float>(col[(oc * K + k) + t_in * K_OC]);
+            ਪੂਰਨ t_ਵਿੱਚ_max = t_abs / s0;
+            ਜੇ (t_ਵਿੱਚ_max >= T_ਵਿੱਚ) {
+                t_ਵਿੱਚ_max = T_ਵਿੱਚ - 1;
             }
 
-            dst[idx] = static_cast<T>(sum);
+            ਦਸ਼ਮਲਵ ਜੋੜ = 0.0f;
+            ਲਈ (ਪੂਰਨ t_ਵਿੱਚ = t_ਵਿੱਚ_min; t_ਵਿੱਚ <= t_ਵਿੱਚ_max; ++t_ਵਿੱਚ) {
+                ਅਚਲ ਪੂਰਨ k = t_abs - t_ਵਿੱਚ * s0;
+                ਜੋੜ += static_cast<ਦਸ਼ਮਲਵ>(ਖਾਨਾ[(oc * K + k) + t_ਵਿੱਚ * K_OC]);
+            }
+
+            dst[idx] = static_cast<T>(ਜੋੜ);
         });
 }
 
-void ggml_sycl_op_col2im_1d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    const ggml_tensor * src0 = dst->src[0];
+ਖਾਲੀ ggml_sycl_op_col2im_1d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ਅਚਲ ggml_tensor * src0 = dst->src[0];
 
-    GGML_ASSERT(src0 != nullptr);
+    GGML_ASSERT(src0 != ਖਾਲੀ_ਸੂਚਕ);
     GGML_ASSERT(ggml_is_contiguous(src0));
     GGML_ASSERT(src0->type == dst->type);
 
-    const int32_t s0 = ((const int32_t *) dst->op_params)[0];
-    const int32_t OC = ((const int32_t *) dst->op_params)[1];
-    const int32_t p0 = ((const int32_t *) dst->op_params)[2];
+    ਅਚਲ int32_t s0 = ((ਅਚਲ int32_t *) dst->op_params)[0];
+    ਅਚਲ int32_t OC = ((ਅਚਲ int32_t *) dst->op_params)[1];
+    ਅਚਲ int32_t p0 = ((ਅਚਲ int32_t *) dst->op_params)[2];
 
-    const int K_OC  = (int) src0->ne[0];
-    const int T_in  = (int) src0->ne[1];
-    const int K     = K_OC / OC;
-    const int T_out = (int) dst->ne[0];
+    ਅਚਲ ਪੂਰਨ K_OC  = (ਪੂਰਨ) src0->ne[0];
+    ਅਚਲ ਪੂਰਨ T_ਵਿੱਚ  = (ਪੂਰਨ) src0->ne[1];
+    ਅਚਲ ਪੂਰਨ K     = K_OC / OC;
+    ਅਚਲ ਪੂਰਨ T_ਬਾਹਰਲਾ = (ਪੂਰਨ) dst->ne[0];
 
     GGML_ASSERT(OC > 0);
     GGML_ASSERT(K_OC % OC == 0);
 
-    const sycl::uint3 T_out_fd = init_fastdiv_values((uint32_t) T_out);
+    ਅਚਲ sycl::uint3 T_ਬਾਹਰਲਾ_fd = init_fastdiv_ਮੁੱਲਾਂ((uint32_t) T_ਬਾਹਰਲਾ);
 
-    const int total = T_out * OC;
+    ਅਚਲ ਪੂਰਨ ਕੁੱਲ = T_ਬਾਹਰਲਾ * OC;
 
-    dpct::queue_ptr stream = ctx.stream();
+    dpct::ਕਤਾਰ_ptr stream = ctx.stream();
 
-    switch (src0->type) {
-        case GGML_TYPE_F32:
-            col2im_1d_sycl<float>(
-                (const float *) src0->data,
-                (float *) dst->data,
-                T_in, T_out_fd, K, K_OC, s0, p0, total, stream);
-            break;
-        case GGML_TYPE_F16:
+    ਚੋਣ (src0->type) {
+        ਹਾਲਤ GGML_TYPE_F32:
+            col2im_1d_sycl<ਦਸ਼ਮਲਵ>(
+                (ਅਚਲ ਦਸ਼ਮਲਵ *) src0->ਅੰਕੜੇ,
+                (ਦਸ਼ਮਲਵ *) dst->ਅੰਕੜੇ,
+                T_ਵਿੱਚ, T_ਬਾਹਰਲਾ_fd, K, K_OC, s0, p0, ਕੁੱਲ, stream);
+            ਰੋਕੋ;
+        ਹਾਲਤ GGML_TYPE_F16:
             col2im_1d_sycl<sycl::half>(
-                (const sycl::half *) src0->data,
-                (sycl::half *) dst->data,
-                T_in, T_out_fd, K, K_OC, s0, p0, total, stream);
-            break;
-#ifdef GGML_SYCL_HAS_BF16
-        case GGML_TYPE_BF16:
+                (ਅਚਲ sycl::half *) src0->ਅੰਕੜੇ,
+                (sycl::half *) dst->ਅੰਕੜੇ,
+                T_ਵਿੱਚ, T_ਬਾਹਰਲਾ_fd, K, K_OC, s0, p0, ਕੁੱਲ, stream);
+            ਰੋਕੋ;
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_SYCL_HAS_BF16
+        ਹਾਲਤ GGML_TYPE_BF16:
             col2im_1d_sycl<sycl::ext::oneapi::bfloat16>(
-                (const sycl::ext::oneapi::bfloat16 *) src0->data,
-                (sycl::ext::oneapi::bfloat16 *) dst->data,
-                T_in, T_out_fd, K, K_OC, s0, p0, total, stream);
-            break;
-#endif
-        default:
+                (ਅਚਲ sycl::ext::oneapi::bfloat16 *) src0->ਅੰਕੜੇ,
+                (sycl::ext::oneapi::bfloat16 *) dst->ਅੰਕੜੇ,
+                T_ਵਿੱਚ, T_ਬਾਹਰਲਾ_fd, K, K_OC, s0, p0, ਕੁੱਲ, stream);
+            ਰੋਕੋ;
+#ਜੇ_ਅੰਤ
+        ਮੂਲ:
             GGML_ABORT("col2im_1d: unsupported type %d", src0->type);
     }
 }

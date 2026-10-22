@@ -1,31 +1,31 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "../node_context.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "../op_table.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "../utils.h"
 
-#include <openvino/op/broadcast.hpp>
-#include <openvino/op/constant.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/broadcast.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/constant.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+ਨਾਮਾਕਾਸ਼ ov {
+ਨਾਮਾਕਾਸ਼ frontend {
+ਨਾਮਾਕਾਸ਼ ggml {
+ਨਾਮਾਕਾਸ਼ op {
 
 // GGML FILL sets all elements of a tensor to a constant value.
 // The constant is stored as a float in op_params[0].
-OutputVector translate_fill(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+Output_ਸਦਿਸ਼ translate_fill(ਅਚਲ ਗੰਢ_Context & context) {
+    ਅੰਕ_inputs_check(context, 1, 1);
 
-    float c;
-    memcpy(&c, context.get_output_op_params(), sizeof(float));
+    ਦਸ਼ਮਲਵ c;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&c, context.get_output_op_params(), ਆਕਾਰ(ਦਸ਼ਮਲਵ));
 
-    auto shape = context.get_input_shape(0).to_shape();
+    ਸਵੈਚਾਲਿਤ shape = context.get_ਨਿਵੇਸ਼_shape(0).ਮੰਜ਼ਿਲ_shape();
 
-    auto val = ov::op::v0::Constant::create(context.get_output_type(), {}, {c});
-    auto target_shape = ov::op::v0::Constant::create(ov::element::i64, {shape.size()},
+    ਸਵੈਚਾਲਿਤ val = ov::op::v0::Constant::create(context.get_output_type(), {}, {c});
+    ਸਵੈਚਾਲਿਤ ਨਿਸ਼ਾਨਾ_shape = ov::op::v0::Constant::create(ov::element::i64, {shape.size()},
         std::vector<int64_t>(shape.begin(), shape.end()));
-    auto res = std::make_shared<ov::op::v3::Broadcast>(val, target_shape);
+    ਸਵੈਚਾਲਿਤ res = std::make_shared<ov::op::v3::ਪ੍ਰਸਾਰਣ>(val, ਨਿਸ਼ਾਨਾ_shape);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ਵਾਪਸ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

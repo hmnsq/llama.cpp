@@ -1,17 +1,17 @@
-#pragma once
+#ਹਦਾਇਤ once
 
-#include "openvino/op/op.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "openvino/op/op.hpp"
 
-namespace ov::op::internal {
+ਨਾਮਾਕਾਸ਼ ov::op::internal {
 /// \note GatedDeltaNet op class is under development and subject to change
 ///
 /// \brief Operator performing Gated Delta Net computation
 /// \ingroup ov_ops_cpp_api
-class OPENVINO_API GatedDeltaNet : public ov::op::Op {
-public:
+ਵਰਗ OPENVINO_API GatedDeltaNet : ਜਨਤਕ ov::op::Op {
+ਜਨਤਕ:
     OPENVINO_OP("GatedDeltaNet")
 
-    GatedDeltaNet() = default;
+    GatedDeltaNet() = ਮੂਲ;
     /// \brief Constructs a GatedDeltaNet operation.
     ///
     /// \param query Query tensor input.
@@ -23,15 +23,15 @@ public:
     /// \param fuse_qk_l2norm Enables fusing q/k L2-normalization into this op.
     /// \param q_l2_norm_eps Epsilon used for query L2-normalization when fusion is enabled.
     /// \param k_l2_norm_eps Epsilon used for key L2-normalization when fusion is enabled.
-    GatedDeltaNet(const Output<Node>& query,
-                  const Output<Node>& key,
-                  const Output<Node>& value,
-                  const Output<Node>& recurrent_state,
-                  const Output<Node>& gate,
-                  const Output<Node>& beta,
-                  const bool fuse_qk_l2norm = false,
-                  const float q_l2_norm_eps = 1e-6F,
-                  const float k_l2_norm_eps = 1e-6F);
+    GatedDeltaNet(ਅਚਲ Output<Node>& query,
+                  ਅਚਲ Output<Node>& ਕੁੰਜੀ,
+                  ਅਚਲ Output<Node>& value,
+                  ਅਚਲ Output<Node>& recurrent_state,
+                  ਅਚਲ Output<Node>& gate,
+                  ਅਚਲ Output<Node>& beta,
+                  ਅਚਲ ਤਾਰਕਿਕ fuse_qk_l2norm = ਝੂਠ,
+                  ਅਚਲ ਦਸ਼ਮਲਵ q_l2_norm_eps = 1e-6F,
+                  ਅਚਲ ਦਸ਼ਮਲਵ k_l2_norm_eps = 1e-6F);
 
     /// \brief Constructs a GatedDeltaNet operation from input vector.
     ///
@@ -39,27 +39,27 @@ public:
     /// \param fuse_qk_l2norm Enables fusing q/k L2-normalization into this op.
     /// \param q_l2_norm_eps Epsilon used for query L2-normalization when fusion is enabled.
     /// \param k_l2_norm_eps Epsilon used for key L2-normalization when fusion is enabled.
-    GatedDeltaNet(const ov::OutputVector& args,
-                  const bool fuse_qk_l2norm = false,
-                  const float q_l2_norm_eps = 1e-6F,
-                  const float k_l2_norm_eps = 1e-6F);
-    void validate_and_infer_types() override;
-    bool visit_attributes(AttributeVisitor& visitor) override;
-    std::shared_ptr<ov::Node> clone_with_new_inputs(const ov::OutputVector& new_args) const override;
-    bool get_fuse_qk_l2norm() const {
-        return m_fuse_qk_l2norm;
+    GatedDeltaNet(ਅਚਲ ov::Output_ਸਦਿਸ਼& ਦਲੀਲਾਂ_2,
+                  ਅਚਲ ਤਾਰਕਿਕ fuse_qk_l2norm = ਝੂਠ,
+                  ਅਚਲ ਦਸ਼ਮਲਵ q_l2_norm_eps = 1e-6F,
+                  ਅਚਲ ਦਸ਼ਮਲਵ k_l2_norm_eps = 1e-6F);
+    ਖਾਲੀ validate_and_infer_types() override;
+    ਤਾਰਕਿਕ ਦੇਖੋ_ਗੁਣ(AttributeVisitor& visitor) override;
+    std::shared_ptr<ov::Node> clone_with_new_inputs(ਅਚਲ ov::Output_ਸਦਿਸ਼& new_ਦਲੀਲਾਂ) ਅਚਲ override;
+    ਤਾਰਕਿਕ get_fuse_qk_l2norm() ਅਚਲ {
+        ਵਾਪਸ m_fuse_qk_l2norm;
     }
-    float get_q_l2_norm_eps() const {
-        return m_q_l2_norm_eps;
+    ਦਸ਼ਮਲਵ get_q_l2_norm_eps() ਅਚਲ {
+        ਵਾਪਸ m_q_l2_norm_eps;
     }
-    float get_k_l2_norm_eps() const {
-        return m_k_l2_norm_eps;
+    ਦਸ਼ਮਲਵ get_k_l2_norm_eps() ਅਚਲ {
+        ਵਾਪਸ m_k_l2_norm_eps;
     }
 
-private:
-    bool m_fuse_qk_l2norm = false;
-    float m_q_l2_norm_eps = 1e-6F;
-    float m_k_l2_norm_eps = 1e-6F;
+ਨਿਜੀ:
+    ਤਾਰਕਿਕ m_fuse_qk_l2norm = ਝੂਠ;
+    ਦਸ਼ਮਲਵ m_q_l2_norm_eps = 1e-6F;
+    ਦਸ਼ਮਲਵ m_k_l2_norm_eps = 1e-6F;
 };
 
 }  // namespace ov::op::internal

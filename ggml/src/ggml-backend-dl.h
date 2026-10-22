@@ -1,45 +1,45 @@
-#pragma once
+#ਹਦਾਇਤ once
 
-#ifdef _WIN32
-#   define WIN32_LEAN_AND_MEAN
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ _WIN32
+#   define WIN32_LEAN_AND_ਔਸਤ
 #   ifndef NOMINMAX
 #       define NOMINMAX
 #   endif
 #   include <windows.h>
 #   include <winevt.h>
-#else
+#ਨਹੀਂਤਾਂ
 #    include <dlfcn.h>
 #    include <unistd.h>
-#endif
-#include <filesystem>
+#ਜੇ_ਅੰਤ
+#ਅਨ੍ਤਰ੍ਭਾਵ <filesystem>
 
 namespace fs = std::filesystem;
 
-#ifdef _WIN32
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ _WIN32
 
-using dl_handle = std::remove_pointer_t<HMODULE>;
+using dl_handle = std::remove_ਸੂਚਕ_t<HMODULE>;
 
-struct dl_handle_deleter {
-    void operator()(HMODULE handle) {
+ਬਣਤਰ dl_handle_deleter {
+    ਖਾਲੀ ਸੰਚਾਲਕ()(HMODULE handle) {
         FreeLibrary(handle);
     }
 };
 
-#else
+#ਨਹੀਂਤਾਂ
 
-using dl_handle = void;
+using dl_handle = ਖਾਲੀ;
 
-struct dl_handle_deleter {
-    void operator()(void * handle) {
+ਬਣਤਰ dl_handle_deleter {
+    ਖਾਲੀ ਸੰਚਾਲਕ()(ਖਾਲੀ * handle) {
         dlclose(handle);
     }
 };
 
-#endif
+#ਜੇ_ਅੰਤ
 
 using dl_handle_ptr = std::unique_ptr<dl_handle, dl_handle_deleter>;
 
-dl_handle * dl_load_library(const fs::path & path);
-void * dl_get_sym(dl_handle * handle, const char * name);
-const char * dl_error();
+dl_handle * dl_ਲੱਦੋ_library(ਅਚਲ fs::ਰਸਤਾ & ਰਸਤਾ);
+ਖਾਲੀ * dl_get_sym(dl_handle * handle, ਅਚਲ ਅੱਖਰ * name);
+ਅਚਲ ਅੱਖਰ * dl_error();
 

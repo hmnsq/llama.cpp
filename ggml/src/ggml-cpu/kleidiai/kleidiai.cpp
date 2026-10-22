@@ -1,134 +1,134 @@
 // SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 // SPDX-License-Identifier: MIT
 //
-#include <arm_neon.h>
-#include <cassert>
-#include <cstdio>
-#include <cstdlib>
-#include <atomic>
-#include <cfloat>
-#include <cctype>
-#include <algorithm>
-#include <cmath>
-#include <stdexcept>
-#include <stdint.h>
-#include <string.h>
-#include <string>
-#include <vector>
-#include <array>
-#include <cstddef>
-#include <cstdint>
-#include <fstream>
-#include <map>
-#include <iostream>
-#include <climits>
-#include <charconv>
-#include <system_error>
-#if defined(__linux__)
-#include <asm/hwcap.h>
-#include <dirent.h>
-#include <sys/auxv.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#elif defined(__APPLE__)
-#include <sys/sysctl.h>
-#include <sys/types.h>
-#endif
+#ਅਨ੍ਤਰ੍ਭਾਵ <arm_neon.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cassert>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cstdio>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cstdlib>
+#ਅਨ੍ਤਰ੍ਭਾਵ <atomic>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cfloat>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cctype>
+#ਅਨ੍ਤਰ੍ਭਾਵ <algorithm>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cmath>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdexcept>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdint.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <string.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <string>
+#ਅਨ੍ਤਰ੍ਭਾਵ <vector>
+#ਅਨ੍ਤਰ੍ਭਾਵ <array>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cstddef>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cstdint>
+#ਅਨ੍ਤਰ੍ਭਾਵ <fstream>
+#ਅਨ੍ਤਰ੍ਭਾਵ <map>
+#ਅਨ੍ਤਰ੍ਭਾਵ <iostream>
+#ਅਨ੍ਤਰ੍ਭਾਵ <climits>
+#ਅਨ੍ਤਰ੍ਭਾਵ <charconv>
+#ਅਨ੍ਤਰ੍ਭਾਵ <system_error>
+#ਜੇ defined(__linux__)
+#ਅਨ੍ਤਰ੍ਭਾਵ <asm/hwcap.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <dirent.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <sys/auxv.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <sys/types.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <sys/stat.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <unistd.h>
+#ਜਾਂਜੇ defined(__APPLE__)
+#ਅਨ੍ਤਰ੍ਭਾਵ <sys/sysctl.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <sys/types.h>
+#ਜੇ_ਅੰਤ
 
-#include "kleidiai.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "kleidiai.h"
 
-#include "ggml-cpu.h"
-#include "ggml-cpu-impl.h"
-#include "ggml-impl.h"
-#include "ggml-feats.h"
-#include "ggml-backend-impl.h"
-#include "ggml-quants.h"
-#include "ggml-threading.h"
-#include "traits.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-cpu.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-cpu-impl.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-impl.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-feats.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-backend-impl.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-quants.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-threading.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "traits.h"
 
-#include "kernels.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "kernels.h"
 
-#include "kai/kai_common.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "kai/kai_common.h"
 
-#define GGML_COMMON_DECL_CPP
-#include "ggml-common.h"
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_DECL_CPP
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-common.h"
 
-static constexpr int      GGML_KLEIDIAI_MAX_KERNEL_SLOTS = 2;
-static constexpr uint32_t GGML_KLEIDIAI_PACK_MAGIC       = 0x4b4c4149; // "KLAI"
-static constexpr uint16_t GGML_KLEIDIAI_PACK_VERSION     = 1;
-static constexpr size_t   GGML_KLEIDIAI_PACK_ALIGN       = 64;
-static constexpr size_t   GGML_KLEIDIAI_Q4_K_BL          = QK_K / 8;
+ਸਥਿਰ constexpr ਪੂਰਨ      GGML_KLEIDIAI_MAX_KERNEL_SLOTS = 2;
+ਸਥਿਰ constexpr uint32_t GGML_KLEIDIAI_PACK_MAGIC       = 0x4b4c4149; // "KLAI"
+ਸਥਿਰ constexpr uint16_t GGML_KLEIDIAI_PACK_ਸੰਸਕਰਣ     = 1;
+ਸਥਿਰ constexpr size_t   GGML_KLEIDIAI_PACK_ALIGN       = 64;
+ਸਥਿਰ constexpr size_t   GGML_KLEIDIAI_Q4_K_BL          = QK_K / 8;
 
 static_assert(QK_K == 256, "KleidiAI Q4_K kernels require 256-value super-blocks");
 
-struct ggml_kleidiai_context {
+ਬਣਤਰ ggml_kleidiai_context {
     cpu_feature features;
     ggml_kleidiai_kernels * kernels_q4;
     ggml_kleidiai_kernels * kernels_q4k;
     ggml_kleidiai_kernels * kernels_q8;
     ggml_kleidiai_kernels * kernels_f32;
-    int sme_thread_cap; // <= 0 means "SME disabled/unknown"
-    int thread_hint;    // <= 0 means "no hint"
-    int chunk_multiplier;
-} static ctx = { CPU_FEATURE_NONE, nullptr, nullptr, nullptr, nullptr, 0, -1, 4 };
+    ਪੂਰਨ sme_thread_cap; // <= 0 means "SME disabled/unknown"
+    ਪੂਰਨ thread_hint;    // <= 0 means "no hint"
+    ਪੂਰਨ chunk_multiplier;
+} ਸਥਿਰ ctx = { CPU_FEATURE_NONE, ਖਾਲੀ_ਸੂਚਕ, ਖਾਲੀ_ਸੂਚਕ, ਖਾਲੀ_ਸੂਚਕ, ਖਾਲੀ_ਸੂਚਕ, 0, -1, 4 };
 
-static inline bool is_sme_family(cpu_feature f) {
-    return (f & (CPU_FEATURE_SME | CPU_FEATURE_SME2)) != CPU_FEATURE_NONE;
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਤਾਰਕਿਕ is_sme_family(cpu_feature f) {
+    ਵਾਪਸ (f & (CPU_FEATURE_SME | CPU_FEATURE_SME2)) != CPU_FEATURE_NONE;
 }
 
-static const char* cpu_feature_to_string(cpu_feature f) {
-    if (f == CPU_FEATURE_NONE) {
-        return "NONE";
-    } else if ((f & CPU_FEATURE_SME2) == CPU_FEATURE_SME2) {
-        return "SME2";
-    } else if ((f & CPU_FEATURE_SME) == CPU_FEATURE_SME) {
-        return "SME";
-    } else if ((f & CPU_FEATURE_SVE) == CPU_FEATURE_SVE) {
-        return "SVE";
+ਸਥਿਰ ਅਚਲ ਅੱਖਰ* cpu_feature_ਮੰਜ਼ਿਲ_string(cpu_feature f) {
+    ਜੇ (f == CPU_FEATURE_NONE) {
+        ਵਾਪਸ "NONE";
+    } ਨਹੀਂਤਾਂ ਜੇ ((f & CPU_FEATURE_SME2) == CPU_FEATURE_SME2) {
+        ਵਾਪਸ "SME2";
+    } ਨਹੀਂਤਾਂ ਜੇ ((f & CPU_FEATURE_SME) == CPU_FEATURE_SME) {
+        ਵਾਪਸ "SME";
+    } ਨਹੀਂਤਾਂ ਜੇ ((f & CPU_FEATURE_SVE) == CPU_FEATURE_SVE) {
+        ਵਾਪਸ "SVE";
     }
-    else if ((f & CPU_FEATURE_I8MM) == CPU_FEATURE_I8MM) {
-        return "I8MM";
-    } else if ((f & CPU_FEATURE_DOTPROD) == CPU_FEATURE_DOTPROD) {
-        return "DOTPROD";
+    ਨਹੀਂਤਾਂ ਜੇ ((f & CPU_FEATURE_I8MM) == CPU_FEATURE_I8MM) {
+        ਵਾਪਸ "I8MM";
+    } ਨਹੀਂਤਾਂ ਜੇ ((f & CPU_FEATURE_DOTPROD) == CPU_FEATURE_DOTPROD) {
+        ਵਾਪਸ "DOTPROD";
     }
-    else {
-        return "UNKNOWN";
+    ਨਹੀਂਤਾਂ {
+        ਵਾਪਸ "UNKNOWN";
     }
 }
 
-#if defined(__linux__) && defined(__aarch64__)
-static bool parse_cpu_dir_name(const char* name, size_t* cpu) {
-    if (strncmp(name, "cpu", 3) != 0 ||
+#ਜੇ defined(__linux__) && defined(__aarch64__)
+ਸਥਿਰ ਤਾਰਕਿਕ parse_cpu_dir_name(ਅਚਲ ਅੱਖਰ* name, size_t* cpu) {
+    ਜੇ (ਲੜੀ_ਤੁਲਨਾ(name, "cpu", 3) != 0 ||
         name[3] < '0' || name[3] > '9') {
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    const char* first = name + 3;
-    const char* last = name + strlen(name);
+    ਅਚਲ ਅੱਖਰ* ਪਹਿਲਾ = name + 3;
+    ਅਚਲ ਅੱਖਰ* ਆਖਰੀ = name + ਲੜੀ_ਲੰਬਾਈ(name);
 
     size_t value = 0;
-    const auto [end, ec] = std::from_chars(first, last, value, 10);
+    ਅਚਲ ਸਵੈਚਾਲਿਤ [end, ec] = std::from_chars(ਪਹਿਲਾ, ਆਖਰੀ, value, 10);
 
-    if (ec != std::errc{} || end != last) {
-        return false;
+    ਜੇ (ec != std::errc{} || end != ਆਖਰੀ) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
     *cpu = value;
-    return true;
+    ਵਾਪਸ ਸੱਚ;
 }
 
-static std::vector<size_t> detect_cpu_ids() {
+ਸਥਿਰ std::vector<size_t> detect_cpu_ids() {
     std::vector<size_t> cpus;
 
     DIR * dir = opendir("/sys/devices/system/cpu");
-    if (dir == nullptr) {
-        return cpus;
+    ਜੇ (dir == ਖਾਲੀ_ਸੂਚਕ) {
+        ਵਾਪਸ cpus;
     }
 
-    while (dirent * entry = readdir(dir)) {
+    ਜਦੋਂ (dirent * ਇੰਦਰਾਜ = readdir(dir)) {
         size_t cpu = 0;
-        if (parse_cpu_dir_name(entry->d_name, &cpu)) {
+        ਜੇ (parse_cpu_dir_name(ਇੰਦਰਾਜ->d_name, &cpu)) {
             cpus.push_back(cpu);
         }
     }
@@ -136,186 +136,186 @@ static std::vector<size_t> detect_cpu_ids() {
 
     std::sort(cpus.begin(), cpus.end());
     cpus.erase(std::unique(cpus.begin(), cpus.end()), cpus.end());
-    return cpus;
+    ਵਾਪਸ cpus;
 }
-#endif
+#ਜੇ_ਅੰਤ
 
-#if defined(__APPLE__) && defined(__aarch64__)
-static bool apple_sme_counted_perf_level(std::string name) {
-    for (std::string::size_type i = 0; i < name.size(); ++i) {
-        name[i] = (char) std::tolower((unsigned char) name[i]);
+#ਜੇ defined(__APPLE__) && defined(__aarch64__)
+ਸਥਿਰ ਤਾਰਕਿਕ apple_sme_counted_perf_level(std::string name) {
+    ਲਈ (std::string::size_type i = 0; i < name.size(); ++i) {
+        name[i] = (ਅੱਖਰ) std::tolower((ਬਿਨਾਨਿਸ਼ਾਨੀ ਅੱਖਰ) name[i]);
     }
 
     // Conservative ceiling: only count perf-level names observed to provide full SME throughput.
     // Future names should be calibrated here before they raise the automatic SME thread cap.
-    return name.find("super") != std::string::npos ||
+    ਵਾਪਸ name.find("super") != std::string::npos ||
            name.find("performance") != std::string::npos;
 }
-#endif
+#ਜੇ_ਅੰਤ
 
-static void add_smcus_from_smidr(uint64_t smidr, size_t & num_private, std::map<uint32_t, size_t> & shared_counts) {
+ਸਥਿਰ ਖਾਲੀ ਜੋੜੋ_smcus_from_smidr(uint64_t smidr, size_t & ਅੰਕ_ਨਿੱਜੀ, std::map<uint32_t, size_t> & shared_counts) {
     // Arm ARM: SMIDR_EL1. SH==0 is implementation-defined; keep the existing
     // conservative policy and only treat zero affinity as private.
-    const uint32_t sh = (uint32_t)((smidr >> 13) & 0x3);
-    const uint32_t nsmc = (uint32_t)((smidr >> 56) & 0xF);
-    const size_t shared_count = nsmc == 0xF ? 1 : (size_t)nsmc + 1;
-    const uint32_t affinity = (uint32_t)(smidr & 0xFFFu);
-    const uint32_t affinity2 = (uint32_t)((smidr >> 32) & 0xFFFFFu);
-    const uint32_t id = (affinity2 << 12) | affinity;
+    ਅਚਲ uint32_t sh = (uint32_t)((smidr >> 13) & 0x3);
+    ਅਚਲ uint32_t nsmc = (uint32_t)((smidr >> 56) & 0xF);
+    ਅਚਲ size_t shared_ਗਿਣਤੀ = nsmc == 0xF ? 1 : (size_t)nsmc + 1;
+    ਅਚਲ uint32_t affinity = (uint32_t)(smidr & 0xFFFu);
+    ਅਚਲ uint32_t affinity2 = (uint32_t)((smidr >> 32) & 0xFFFFFu);
+    ਅਚਲ uint32_t id = (affinity2 << 12) | affinity;
 
-    if (nsmc == 0xF) {
+    ਜੇ (nsmc == 0xF) {
         GGML_LOG_WARN("kleidiai: NSMC detected as 0xF indicating reseved value, setting min safe shared SMCU count to 1");
     }
 
-    switch (sh) {
-        case 2: // private SMCU
-            ++num_private;
-            break;
-        case 3: // shared SMCU
-            if (shared_counts[id] < shared_count) {
-                shared_counts[id] = shared_count;
+    ਚੋਣ (sh) {
+        ਹਾਲਤ 2: // private SMCU
+            ++ਅੰਕ_ਨਿੱਜੀ;
+            ਰੋਕੋ;
+        ਹਾਲਤ 3: // shared SMCU
+            ਜੇ (shared_counts[id] < shared_ਗਿਣਤੀ) {
+                shared_counts[id] = shared_ਗਿਣਤੀ;
             }
-            break;
-        case 0:
-            if (id == 0) {
-                ++num_private;
-            } else if (shared_counts[id] < shared_count) {
-                shared_counts[id] = shared_count;
+            ਰੋਕੋ;
+        ਹਾਲਤ 0:
+            ਜੇ (id == 0) {
+                ++ਅੰਕ_ਨਿੱਜੀ;
+            } ਨਹੀਂਤਾਂ ਜੇ (shared_counts[id] < shared_ਗਿਣਤੀ) {
+                shared_counts[id] = shared_ਗਿਣਤੀ;
             }
-            break;
-        default:
-            break;
+            ਰੋਕੋ;
+        ਮੂਲ:
+            ਰੋਕੋ;
     }
 }
 
-static size_t detect_num_smcus() {
-    const auto runtime_feat = ggml_feats_get_arch64_runtime();
-    if (!runtime_feat.has_sme) {
-        return 0;
+ਸਥਿਰ size_t detect_ਅੰਕ_smcus() {
+    ਅਚਲ ਸਵੈਚਾਲਿਤ runtime_feat = ggml_feats_get_arch64_runtime();
+    ਜੇ (!runtime_feat.has_sme) {
+        ਵਾਪਸ 0;
     }
 
-#if defined(__linux__) && defined(__aarch64__)
+#ਜੇ defined(__linux__) && defined(__aarch64__)
     // Linux/aarch64: Best-effort count of Streaming Mode Compute Units (SMCUs) via SMIDR_EL1 sysfs.
-    size_t num_private = 0;
+    size_t ਅੰਕ_ਨਿੱਜੀ = 0;
     std::map<uint32_t, size_t> shared_counts;
 
-    const std::vector<size_t> cpus = detect_cpu_ids();
-    for (const size_t cpu : cpus) {
-        const std::string path =
+    ਅਚਲ std::vector<size_t> cpus = detect_cpu_ids();
+    ਲਈ (ਅਚਲ size_t cpu : cpus) {
+        ਅਚਲ std::string path =
             "/sys/devices/system/cpu/cpu" + std::to_string(cpu) +
             "/regs/identification/smidr_el1";
 
         std::ifstream file(path);
-        if (!file.is_open()) {
-            continue;
+        ਜੇ (!file.is_open()) {
+            ਜਾਰੀ;
         }
 
         uint64_t smidr = 0;
-        if (!(file >> std::hex >> smidr)) {
-            continue;
+        ਜੇ (!(file >> std::hex >> smidr)) {
+            ਜਾਰੀ;
         }
 
-        add_smcus_from_smidr(smidr, num_private, shared_counts);
+        ਜੋੜੋ_smcus_from_smidr(smidr, ਅੰਕ_ਨਿੱਜੀ, shared_counts);
     }
 
-    size_t total = num_private;
-    for (const auto & entry : shared_counts) {
-        total += entry.second;
+    size_t ਕੁੱਲ = ਅੰਕ_ਨਿੱਜੀ;
+    ਲਈ (ਅਚਲ ਸਵੈਚਾਲਿਤ & ਇੰਦਰਾਜ : shared_counts) {
+        ਕੁੱਲ += ਇੰਦਰਾਜ.second;
     }
-    return total;
+    ਵਾਪਸ ਕੁੱਲ;
 
-#elif defined(__APPLE__) && defined(__aarch64__)
-    int perf_levels = 0;
-    size_t size = sizeof(perf_levels);
-    if (sysctlbyname("hw.nperflevels", &perf_levels, &size, nullptr, 0) != 0 ||
-        size != sizeof(perf_levels) || perf_levels <= 0) {
-        return 0;
+#ਜਾਂਜੇ defined(__APPLE__) && defined(__aarch64__)
+    ਪੂਰਨ perf_ਪੱਧਰ = 0;
+    size_t size = ਆਕਾਰ(perf_ਪੱਧਰ);
+    ਜੇ (sysctlbyname("hw.nperflevels", &perf_ਪੱਧਰ, &size, ਖਾਲੀ_ਸੂਚਕ, 0) != 0 ||
+        size != ਆਕਾਰ(perf_ਪੱਧਰ) || perf_ਪੱਧਰ <= 0) {
+        ਵਾਪਸ 0;
     }
 
     size_t units = 0;
-    for (int i = 0; i < perf_levels; ++i) {
-        char key[64] = {};
-        int physical_cpus = 0;
-        int cpus_per_l2 = 0;
+    ਲਈ (ਪੂਰਨ i = 0; i < perf_ਪੱਧਰ; ++i) {
+        ਅੱਖਰ ਕੁੰਜੀ[64] = {};
+        ਪੂਰਨ physical_cpus = 0;
+        ਪੂਰਨ cpus_ਪ੍ਰਤੀ_l2 = 0;
 
-        snprintf(key, sizeof(key), "hw.perflevel%d.physicalcpu", i);
-        size = sizeof(physical_cpus);
-        if (sysctlbyname(key, &physical_cpus, &size, nullptr, 0) != 0 ||
-            size != sizeof(physical_cpus) || physical_cpus <= 0) {
-            continue;
+        snprintf(ਕੁੰਜੀ, ਆਕਾਰ(ਕੁੰਜੀ), "hw.perflevel%d.physicalcpu", i);
+        size = ਆਕਾਰ(physical_cpus);
+        ਜੇ (sysctlbyname(ਕੁੰਜੀ, &physical_cpus, &size, ਖਾਲੀ_ਸੂਚਕ, 0) != 0 ||
+            size != ਆਕਾਰ(physical_cpus) || physical_cpus <= 0) {
+            ਜਾਰੀ;
         }
 
-        snprintf(key, sizeof(key), "hw.perflevel%d.cpusperl2", i);
-        size = sizeof(cpus_per_l2);
-        if (sysctlbyname(key, &cpus_per_l2, &size, nullptr, 0) != 0 ||
-            size != sizeof(cpus_per_l2) || cpus_per_l2 <= 0) {
-            continue;
+        snprintf(ਕੁੰਜੀ, ਆਕਾਰ(ਕੁੰਜੀ), "hw.perflevel%d.cpusperl2", i);
+        size = ਆਕਾਰ(cpus_ਪ੍ਰਤੀ_l2);
+        ਜੇ (sysctlbyname(ਕੁੰਜੀ, &cpus_ਪ੍ਰਤੀ_l2, &size, ਖਾਲੀ_ਸੂਚਕ, 0) != 0 ||
+            size != ਆਕਾਰ(cpus_ਪ੍ਰਤੀ_l2) || cpus_ਪ੍ਰਤੀ_l2 <= 0) {
+            ਜਾਰੀ;
         }
 
-        snprintf(key, sizeof(key), "hw.perflevel%d.name", i);
+        snprintf(ਕੁੰਜੀ, ਆਕਾਰ(ਕੁੰਜੀ), "hw.perflevel%d.name", i);
         size = 0;
-        if (sysctlbyname(key, nullptr, &size, nullptr, 0) != 0 || size == 0) {
-            continue;
+        ਜੇ (sysctlbyname(ਕੁੰਜੀ, ਖਾਲੀ_ਸੂਚਕ, &size, ਖਾਲੀ_ਸੂਚਕ, 0) != 0 || size == 0) {
+            ਜਾਰੀ;
         }
 
         std::string name(size, '\0');
-        if (sysctlbyname(key, &name[0], &size, nullptr, 0) != 0) {
-            continue;
+        ਜੇ (sysctlbyname(ਕੁੰਜੀ, &name[0], &size, ਖਾਲੀ_ਸੂਚਕ, 0) != 0) {
+            ਜਾਰੀ;
         }
         name.resize(size);
-        while (!name.empty() && name.back() == '\0') {
+        ਜਦੋਂ (!name.ਖਾਲੀ_ਥਾਵਾਂ() && name.back() == '\0') {
             name.pop_back();
         }
 
-        if (apple_sme_counted_perf_level(name)) {
-            units += (size_t) ((physical_cpus + cpus_per_l2 - 1) / cpus_per_l2);
+        ਜੇ (apple_sme_counted_perf_level(name)) {
+            units += (size_t) ((physical_cpus + cpus_ਪ੍ਰਤੀ_l2 - 1) / cpus_ਪ੍ਰਤੀ_l2);
         }
     }
 
-    return units;
+    ਵਾਪਸ units;
 
-#elif defined(_WIN32) && (defined(_M_ARM64) || defined(__aarch64__))
+#ਜਾਂਜੇ defined(_WIN32) && (defined(_M_ARM64) || defined(__aarch64__))
     // No verified Windows arm64 SMCU detection path yet. Return unknown and use
     // GGML_KLEIDIAI_SME=N as a diagnostics/debug override for SME thread cap
     // calibration until a detection mechanism is verified on real hardware.
-    return 0;
+    ਵਾਪਸ 0;
 
-#else
-    return 0;
-#endif
+#ਨਹੀਂਤਾਂ
+    ਵਾਪਸ 0;
+#ਜੇ_ਅੰਤ
 }
 
-static int parse_uint_env(const char *s, const char *name, bool *ok) {
-    if (!s) { *ok = false; return 0; }
-    char *end = nullptr;
-    long v = strtol(s, &end, 10);
-    if (end == s || *end != '\0') {
+ਸਥਿਰ ਪੂਰਨ parse_uint_env(ਅਚਲ ਅੱਖਰ *s, ਅਚਲ ਅੱਖਰ *name, ਤਾਰਕਿਕ *ok) {
+    ਜੇ (!s) { *ok = ਝੂਠ; ਵਾਪਸ 0; }
+    ਅੱਖਰ *end = ਖਾਲੀ_ਸੂਚਕ;
+    ਲੰਮਾ v = strtol(s, &end, 10);
+    ਜੇ (end == s || *end != '\0') {
         GGML_LOG_WARN("kleidiai: invalid %s='%s' (expected integer)\n", name, s);
-        *ok = false;
-        return 0;
+        *ok = ਝੂਠ;
+        ਵਾਪਸ 0;
     }
-    if (v < 0 || v > INT_MAX) {
+    ਜੇ (v < 0 || v > ਵੱਧ_ਤੋਂ_ਵੱਧ_ਅੰਕ) {
         GGML_LOG_WARN("kleidiai: out-of-range %s='%s'\n", name, s);
-        *ok = false;
-        return 0;
+        *ok = ਝੂਠ;
+        ਵਾਪਸ 0;
     }
-    *ok = true;
-    return (int)v;
+    *ok = ਸੱਚ;
+    ਵਾਪਸ (ਪੂਰਨ)v;
 }
 
-static void init_kleidiai_context(void) {
-    ggml_critical_section_start();
-    static bool initialized = false;
+ਸਥਿਰ ਖਾਲੀ init_kleidiai_context(ਖਾਲੀ) {
+    ggml_critical_section_ਸ਼ੁਰੂ();
+    ਸਥਿਰ ਤਾਰਕਿਕ initialized = ਝੂਠ;
 
-    if (!initialized) {
-        initialized = true;
+    ਜੇ (!initialized) {
+        initialized = ਸੱਚ;
 
         // Optional diagnostics/debug overrides; production defaults come from runtime detection.
-        const char *env_sme         = getenv("GGML_KLEIDIAI_SME");
-        const char *env_threads     = getenv("GGML_TOTAL_THREADS");
-        const char *env_chunk_mult  = getenv("GGML_KLEIDIAI_CHUNK_MULTIPLIER");
+        ਅਚਲ ਅੱਖਰ *env_sme         = getenv("GGML_KLEIDIAI_SME");
+        ਅਚਲ ਅੱਖਰ *env_ਧਾਗੇ     = getenv("GGML_TOTAL_THREADS");
+        ਅਚਲ ਅੱਖਰ *env_chunk_mult  = getenv("GGML_KLEIDIAI_CHUNK_MULTIPLIER");
 
-        const auto runtime_feat = ggml_feats_get_arch64_runtime();
+        ਅਚਲ ਸਵੈਚਾਲਿਤ runtime_feat = ggml_feats_get_arch64_runtime();
 
         size_t detected_smcus = 0;
 
@@ -326,37 +326,37 @@ static void init_kleidiai_context(void) {
                         (runtime_feat.has_fp16     ? CPU_FEATURE_FP16    : CPU_FEATURE_NONE) |
                         (runtime_feat.sve_cnt == QK8_0 ? CPU_FEATURE_SVE : CPU_FEATURE_NONE);
 
-        if (env_threads) {
-            bool ok = false;
-            int hint = parse_uint_env(env_threads, "GGML_TOTAL_THREADS", &ok);
-            if (ok && hint > 0) {
+        ਜੇ (env_ਧਾਗੇ) {
+            ਤਾਰਕਿਕ ok = ਝੂਠ;
+            ਪੂਰਨ hint = parse_uint_env(env_ਧਾਗੇ, "GGML_TOTAL_THREADS", &ok);
+            ਜੇ (ok && hint > 0) {
                 ctx.thread_hint = hint;
             }
         }
 
-        if (env_chunk_mult) {
-            bool ok = false;
-            int multiplier = parse_uint_env(env_chunk_mult, "GGML_KLEIDIAI_CHUNK_MULTIPLIER", &ok);
-            if (ok && multiplier > 0) {
+        ਜੇ (env_chunk_mult) {
+            ਤਾਰਕਿਕ ok = ਝੂਠ;
+            ਪੂਰਨ multiplier = parse_uint_env(env_chunk_mult, "GGML_KLEIDIAI_CHUNK_MULTIPLIER", &ok);
+            ਜੇ (ok && multiplier > 0) {
                 ctx.chunk_multiplier = multiplier;
             }
         }
 
-        int sme_cores = 0;
-        bool sme_env_ok = false;
-        bool sme_env_set = (env_sme != nullptr);
+        ਪੂਰਨ sme_cores = 0;
+        ਤਾਰਕਿਕ sme_env_ok = ਝੂਠ;
+        ਤਾਰਕਿਕ sme_env_ਸੈੱਟ = (env_sme != ਖਾਲੀ_ਸੂਚਕ);
 
-        const bool has_supported_sme_family = runtime_feat.has_sme;
-        bool sme_cap_detected = false;
+        ਅਚਲ ਤਾਰਕਿਕ has_supported_sme_family = runtime_feat.has_sme;
+        ਤਾਰਕਿਕ sme_cap_detected = ਝੂਠ;
 
-        if (has_supported_sme_family) {
-            detected_smcus = detect_num_smcus();
+        ਜੇ (has_supported_sme_family) {
+            detected_smcus = detect_ਅੰਕ_smcus();
             sme_cap_detected = detected_smcus > 0;
             // Some platforms expose SME without exposing a calibrated SMCU count.
             // Use one SME thread as the conservative default; add platform SMCU detection to raise it.
-            sme_cores = sme_cap_detected ? (int)detected_smcus : 1;
+            sme_cores = sme_cap_detected ? (ਪੂਰਨ)detected_smcus : 1;
 
-            if (!sme_env_set && !sme_cap_detected) {
+            ਜੇ (!sme_env_ਸੈੱਟ && !sme_cap_detected) {
                 GGML_LOG_INFO("kleidiai: SME detected; SMCU count unavailable, using conservative SME thread cap=1\n");
             }
         }
@@ -366,28 +366,28 @@ static void init_kleidiai_context(void) {
         //   - unset: use runtime detection.
         //   - 0:     disable SME-family kernels.
         //   - N > 0: use N as the SME thread cap, if an SME-family kernel is selectable.
-        if (sme_env_set) {
-            bool ok = false;
-            int v = parse_uint_env(env_sme, "GGML_KLEIDIAI_SME", &ok);
+        ਜੇ (sme_env_ਸੈੱਟ) {
+            ਤਾਰਕਿਕ ok = ਝੂਠ;
+            ਪੂਰਨ v = parse_uint_env(env_sme, "GGML_KLEIDIAI_SME", &ok);
             sme_env_ok = ok;
 
-            if (ok) {
-                if (has_supported_sme_family) {
+            ਜੇ (ok) {
+                ਜੇ (has_supported_sme_family) {
                     sme_cores = v;
-                } else {
-                    if (v > 0) {
+                } ਨਹੀਂਤਾਂ {
+                    ਜੇ (v > 0) {
                         GGML_LOG_WARN("kleidiai: GGML_KLEIDIAI_SME=%d but SME is not supported on this CPU; disabling SME-family kernels\n", v);
                     }
                     sme_cores = 0;
                 }
-            } else {
+            } ਨਹੀਂਤਾਂ {
                 GGML_LOG_WARN("kleidiai: GGML_KLEIDIAI_SME set but parsing failed; using automatic SME thread cap\n");
             }
         }
 
-        if (sme_cores > 0 && has_supported_sme_family) {
+        ਜੇ (sme_cores > 0 && has_supported_sme_family) {
             ctx.features |= CPU_FEATURE_SME;
-            if (runtime_feat.has_sme2) {
+            ਜੇ (runtime_feat.has_sme2) {
                 ctx.features |= CPU_FEATURE_SME2;
             }
         }
@@ -398,778 +398,778 @@ static void init_kleidiai_context(void) {
         ctx.kernels_q8  = ggml_kleidiai_select_kernels_q8_0(ctx.features);
         ctx.kernels_f32 = ggml_kleidiai_select_kernels_f32(ctx.features);
 
-        if (!ctx.kernels_q4) {
-            GGML_LOG_INFO("kleidiai: no compatible q4 kernels found for CPU features mask %d\n", (int)ctx.features);
-        } else {
-            GGML_LOG_INFO("kleidiai: primary q4 kernel feature %s\n", cpu_feature_to_string(ctx.kernels_q4->required_cpu));
+        ਜੇ (!ctx.kernels_q4) {
+            GGML_LOG_INFO("kleidiai: no compatible q4 kernels found for CPU features mask %d\n", (ਪੂਰਨ)ctx.features);
+        } ਨਹੀਂਤਾਂ {
+            GGML_LOG_INFO("kleidiai: primary q4 kernel feature %s\n", cpu_feature_ਮੰਜ਼ਿਲ_string(ctx.kernels_q4->required_cpu));
         }
 
-        if (!ctx.kernels_q8) {
-            GGML_LOG_INFO("kleidiai: no compatible q8 kernels found for CPU features mask %d\n", (int)ctx.features);
-        } else {
-            GGML_LOG_INFO("kleidiai: primary q8 kernel feature %s\n", cpu_feature_to_string(ctx.kernels_q8->required_cpu));
+        ਜੇ (!ctx.kernels_q8) {
+            GGML_LOG_INFO("kleidiai: no compatible q8 kernels found for CPU features mask %d\n", (ਪੂਰਨ)ctx.features);
+        } ਨਹੀਂਤਾਂ {
+            GGML_LOG_INFO("kleidiai: primary q8 kernel feature %s\n", cpu_feature_ਮੰਜ਼ਿਲ_string(ctx.kernels_q8->required_cpu));
         }
 
-        if (!ctx.kernels_q4k) {
-            GGML_LOG_INFO("kleidiai: no compatible q4_k kernels found for CPU features mask %d\n", (int) ctx.features);
-        } else {
-            GGML_LOG_INFO("kleidiai: primary q4_k kernel feature %s\n", cpu_feature_to_string(ctx.kernels_q4k->required_cpu));
+        ਜੇ (!ctx.kernels_q4k) {
+            GGML_LOG_INFO("kleidiai: no compatible q4_k kernels found for CPU features mask %d\n", (ਪੂਰਨ) ctx.features);
+        } ਨਹੀਂਤਾਂ {
+            GGML_LOG_INFO("kleidiai: primary q4_k kernel feature %s\n", cpu_feature_ਮੰਜ਼ਿਲ_string(ctx.kernels_q4k->required_cpu));
         }
 
-        if (!ctx.kernels_f32) {
-            GGML_LOG_INFO("kleidiai: no compatible f32 kernels found for CPU features mask %d\n", (int)ctx.features);
-        } else {
-            GGML_LOG_INFO("kleidiai: primary f32 kernel feature %s\n", cpu_feature_to_string(ctx.kernels_f32->required_cpu));
+        ਜੇ (!ctx.kernels_f32) {
+            GGML_LOG_INFO("kleidiai: no compatible f32 kernels found for CPU features mask %d\n", (ਪੂਰਨ)ctx.features);
+        } ਨਹੀਂਤਾਂ {
+            GGML_LOG_INFO("kleidiai: primary f32 kernel feature %s\n", cpu_feature_ਮੰਜ਼ਿਲ_string(ctx.kernels_f32->required_cpu));
         }
 
-        const bool has_selected_sme_family_kernel =
+        ਅਚਲ ਤਾਰਕਿਕ has_selected_sme_family_kernel =
             (ctx.kernels_q4  && is_sme_family(ctx.kernels_q4->required_cpu)) ||
             (ctx.kernels_q4k && is_sme_family(ctx.kernels_q4k->required_cpu)) ||
             (ctx.kernels_q8  && is_sme_family(ctx.kernels_q8->required_cpu)) ||
             (ctx.kernels_f32 && is_sme_family(ctx.kernels_f32->required_cpu));
         ctx.sme_thread_cap = has_selected_sme_family_kernel ? sme_cores : 0;
 
-        if (has_selected_sme_family_kernel) {
-            if (sme_env_set && sme_env_ok && sme_cores > 0) {
+        ਜੇ (has_selected_sme_family_kernel) {
+            ਜੇ (sme_env_ਸੈੱਟ && sme_env_ok && sme_cores > 0) {
                 GGML_LOG_INFO("kleidiai: SME enabled (GGML_KLEIDIAI_SME=%d debug override)\n", sme_cores);
-            } else if (sme_cap_detected) {
+            } ਨਹੀਂਤਾਂ ਜੇ (sme_cap_detected) {
                 GGML_LOG_INFO("kleidiai: SME enabled (runtime-detected SME thread cap=%d)\n", sme_cores);
-            } else {
+            } ਨਹੀਂਤਾਂ {
                 GGML_LOG_INFO("kleidiai: SME enabled (runtime SME detected, conservative thread cap=%d)\n", sme_cores);
             }
-        } else {
+        } ਨਹੀਂਤਾਂ {
             GGML_LOG_INFO("kleidiai: SME disabled\n");
         }
     }
 
-    ggml_critical_section_end();
+    ggml_critical_section_ਸਿਰਾ();
 }
 
-static inline int kleidiai_sme_thread_cap() {
-    return ctx.sme_thread_cap;
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਪੂਰਨ kleidiai_sme_thread_cap() {
+    ਵਾਪਸ ctx.sme_thread_cap;
 }
 
-static inline size_t align_up(size_t value, size_t alignment) {
-    if (alignment == 0) {
-        return value;
+ਸਥਿਰ ਸਤਰਅੰਦਰ size_t align_ਉੱਪਰ(size_t value, size_t alignment) {
+    ਜੇ (alignment == 0) {
+        ਵਾਪਸ value;
     }
-    const size_t remainder = value % alignment;
-    return remainder == 0 ? value : value + (alignment - remainder);
+    ਅਚਲ size_t remainder = value % alignment;
+    ਵਾਪਸ remainder == 0 ? value : value + (alignment - remainder);
 }
 
-static inline size_t gcd_size(size_t a, size_t b) {
-    while (b != 0) {
-        const size_t t = a % b;
+ਸਥਿਰ ਸਤਰਅੰਦਰ size_t ਮਹੱਤਮ_ਸਾਂਝਾ_ਭਾਜਕ_ਮਾਪ(size_t a, size_t b) {
+    ਜਦੋਂ (b != 0) {
+        ਅਚਲ size_t t = a % b;
         a = b;
         b = t;
     }
-    return a;
+    ਵਾਪਸ a;
 }
 
-static inline bool lcm_size(size_t a, size_t b, size_t & result) {
-    if (a == 0 || b == 0) {
-        result = 0;
-        return false;
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਤਾਰਕਿਕ lcm_ਮਾਪ(size_t a, size_t b, size_t & ਨਤੀਜਾ) {
+    ਜੇ (a == 0 || b == 0) {
+        ਨਤੀਜਾ = 0;
+        ਵਾਪਸ ਝੂਠ;
     }
-    const size_t g = gcd_size(a, b);
-    const size_t q = a / g;
-    if (q > SIZE_MAX / b) {
-        return false;
+    ਅਚਲ size_t g = ਮਹੱਤਮ_ਸਾਂਝਾ_ਭਾਜਕ_ਮਾਪ(a, b);
+    ਅਚਲ size_t q = a / g;
+    ਜੇ (q > SIZE_MAX / b) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    result = q * b;
-    return true;
+    ਨਤੀਜਾ = q * b;
+    ਵਾਪਸ ਸੱਚ;
 }
 
-static inline size_t ceil_div_size(size_t a, size_t b) {
-    return b == 0 ? 0 : (a + b - 1) / b;
+ਸਥਿਰ ਸਤਰਅੰਦਰ size_t ceil_div_ਮਾਪ(size_t a, size_t b) {
+    ਵਾਪਸ b == 0 ? 0 : (a + b - 1) / b;
 }
 
-static inline size_t kleidiai_chunk_cols(size_t n, int nth_total, bool disable_chunking, size_t n_step) {
-    const size_t multiplier = (nth_total == 1 || disable_chunking) ? 1 : std::max<size_t>(1, (size_t) ctx.chunk_multiplier);
-    const size_t divisor = std::max<size_t>(1, (size_t) nth_total * multiplier);
-    const size_t chunk_cols = align_up(std::max<size_t>(1, ceil_div_size(n, divisor)), n_step);
-    return chunk_cols ? chunk_cols : n_step;
+ਸਥਿਰ ਸਤਰਅੰਦਰ size_t kleidiai_chunk_ਖਾਨੇ_ਗਿਣਤੀ(size_t n, ਪੂਰਨ nth_ਕੁੱਲ, ਤਾਰਕਿਕ disable_chunking, size_t n_ਕਦਮ) {
+    ਅਚਲ size_t multiplier = (nth_ਕੁੱਲ == 1 || disable_chunking) ? 1 : std::max<size_t>(1, (size_t) ctx.chunk_multiplier);
+    ਅਚਲ size_t ਭਾਜਕ = std::max<size_t>(1, (size_t) nth_ਕੁੱਲ * multiplier);
+    ਅਚਲ size_t chunk_ਖਾਨੇ_ਗਿਣਤੀ = align_ਉੱਪਰ(std::max<size_t>(1, ceil_div_ਮਾਪ(n, ਭਾਜਕ)), n_ਕਦਮ);
+    ਵਾਪਸ chunk_ਖਾਨੇ_ਗਿਣਤੀ ? chunk_ਖਾਨੇ_ਗਿਣਤੀ : n_ਕਦਮ;
 }
 
-struct kleidiai_block_args {
+ਬਣਤਰ kleidiai_ਖੰਡ_ਦਲੀਲਾਂ {
     size_t lhs_bl;
     size_t rhs_bl;
     size_t pack_bl;
 };
 
-static inline kleidiai_block_args kleidiai_get_block_args(ggml_type rhs_type) {
-    switch (rhs_type) {
-        case GGML_TYPE_Q4_0:
-            return { QK4_0, QK4_0, QK4_0 };
-        case GGML_TYPE_Q4_K:
-            return { GGML_KLEIDIAI_Q4_K_BL, GGML_KLEIDIAI_Q4_K_BL, GGML_KLEIDIAI_Q4_K_BL };
-        case GGML_TYPE_Q8_0:
-            return { 0, 0, QK8_0 };
-        default:
-            return { 0, 0, 0 };
+ਸਥਿਰ ਸਤਰਅੰਦਰ kleidiai_ਖੰਡ_ਦਲੀਲਾਂ kleidiai_get_ਖੰਡ_ਦਲੀਲਾਂ(ggml_type rhs_type) {
+    ਚੋਣ (rhs_type) {
+        ਹਾਲਤ GGML_TYPE_Q4_0:
+            ਵਾਪਸ { QK4_0, QK4_0, QK4_0 };
+        ਹਾਲਤ GGML_TYPE_Q4_K:
+            ਵਾਪਸ { GGML_KLEIDIAI_Q4_K_BL, GGML_KLEIDIAI_Q4_K_BL, GGML_KLEIDIAI_Q4_K_BL };
+        ਹਾਲਤ GGML_TYPE_Q8_0:
+            ਵਾਪਸ { 0, 0, QK8_0 };
+        ਮੂਲ:
+            ਵਾਪਸ { 0, 0, 0 };
     }
 }
 
-static inline bool kleidiai_pack_fallback_allowed() {
-    if (ctx.sme_thread_cap <= 0) {
-        return false;
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਤਾਰਕਿਕ kleidiai_pack_fallback_allowed() {
+    ਜੇ (ctx.sme_thread_cap <= 0) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    if (ctx.thread_hint <= 0) {
-        return true;
+    ਜੇ (ctx.thread_hint <= 0) {
+        ਵਾਪਸ ਸੱਚ;
     }
-    return ctx.thread_hint > ctx.sme_thread_cap;
+    ਵਾਪਸ ctx.thread_hint > ctx.sme_thread_cap;
 }
 
-struct kleidiai_weight_header {
+ਬਣਤਰ kleidiai_ਭਾਰ_ਸਿਰਲੇਖ {
     uint32_t magic;
-    uint16_t version;
-    uint16_t slot_count;
+    uint16_t ਸੰਸਕਰਣ_2;
+    uint16_t ਥਾਂ_ਗਿਣਤੀ;
     uint64_t offsets[GGML_KLEIDIAI_MAX_KERNEL_SLOTS];
     uint64_t sizes[GGML_KLEIDIAI_MAX_KERNEL_SLOTS];
 };
 
-static inline kleidiai_weight_header * kleidiai_weight_header_from_ptr(void * data) {
-    return reinterpret_cast<kleidiai_weight_header *>(data);
+ਸਥਿਰ ਸਤਰਅੰਦਰ kleidiai_ਭਾਰ_ਸਿਰਲੇਖ * kleidiai_ਭਾਰ_ਸਿਰਲੇਖ_from_ptr(ਖਾਲੀ * ਅੰਕੜੇ) {
+    ਵਾਪਸ reinterpret_cast<kleidiai_ਭਾਰ_ਸਿਰਲੇਖ *>(ਅੰਕੜੇ);
 }
 
-static inline const kleidiai_weight_header * kleidiai_weight_header_from_ptr(const void * data) {
-    return reinterpret_cast<const kleidiai_weight_header *>(data);
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਅਚਲ kleidiai_ਭਾਰ_ਸਿਰਲੇਖ * kleidiai_ਭਾਰ_ਸਿਰਲੇਖ_from_ptr(ਅਚਲ ਖਾਲੀ * ਅੰਕੜੇ) {
+    ਵਾਪਸ reinterpret_cast<ਅਚਲ kleidiai_ਭਾਰ_ਸਿਰਲੇਖ *>(ਅੰਕੜੇ);
 }
 
-static inline bool kleidiai_is_weight_header_valid(const kleidiai_weight_header * header) {
-    if (!header) {
-        return false;
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਤਾਰਕਿਕ kleidiai_is_ਭਾਰ_ਸਿਰਲੇਖ_valid(ਅਚਲ kleidiai_ਭਾਰ_ਸਿਰਲੇਖ * ਸਿਰਲੇਖ) {
+    ਜੇ (!ਸਿਰਲੇਖ) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    if (header->magic != GGML_KLEIDIAI_PACK_MAGIC || header->version != GGML_KLEIDIAI_PACK_VERSION) {
-        return false;
+    ਜੇ (ਸਿਰਲੇਖ->magic != GGML_KLEIDIAI_PACK_MAGIC || ਸਿਰਲੇਖ->ਸੰਸਕਰਣ_2 != GGML_KLEIDIAI_PACK_ਸੰਸਕਰਣ) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    if (header->slot_count == 0 || header->slot_count > GGML_KLEIDIAI_MAX_KERNEL_SLOTS) {
-        return false;
+    ਜੇ (ਸਿਰਲੇਖ->ਥਾਂ_ਗਿਣਤੀ == 0 || ਸਿਰਲੇਖ->ਥਾਂ_ਗਿਣਤੀ > GGML_KLEIDIAI_MAX_KERNEL_SLOTS) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    return true;
+    ਵਾਪਸ ਸੱਚ;
 }
 
-static inline uint8_t * kleidiai_weight_slot_ptr(kleidiai_weight_header * header, int slot) {
-    if (!kleidiai_is_weight_header_valid(header)) {
-        return nullptr;
+ਸਥਿਰ ਸਤਰਅੰਦਰ uint8_t * kleidiai_ਭਾਰ_ਥਾਂ_ptr(kleidiai_ਭਾਰ_ਸਿਰਲੇਖ * ਸਿਰਲੇਖ, ਪੂਰਨ ਥਾਂ) {
+    ਜੇ (!kleidiai_is_ਭਾਰ_ਸਿਰਲੇਖ_valid(ਸਿਰਲੇਖ)) {
+        ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
     }
-    if (slot < 0 || slot >= header->slot_count) {
-        return nullptr;
+    ਜੇ (ਥਾਂ < 0 || ਥਾਂ >= ਸਿਰਲੇਖ->ਥਾਂ_ਗਿਣਤੀ) {
+        ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
     }
-    return reinterpret_cast<uint8_t *>(header) + header->offsets[slot];
+    ਵਾਪਸ reinterpret_cast<uint8_t *>(ਸਿਰਲੇਖ) + ਸਿਰਲੇਖ->offsets[ਥਾਂ];
 }
 
-static inline const uint8_t * kleidiai_weight_slot_ptr(const kleidiai_weight_header * header, int slot) {
-    if (!kleidiai_is_weight_header_valid(header)) {
-        return nullptr;
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਅਚਲ uint8_t * kleidiai_ਭਾਰ_ਥਾਂ_ptr(ਅਚਲ kleidiai_ਭਾਰ_ਸਿਰਲੇਖ * ਸਿਰਲੇਖ, ਪੂਰਨ ਥਾਂ) {
+    ਜੇ (!kleidiai_is_ਭਾਰ_ਸਿਰਲੇਖ_valid(ਸਿਰਲੇਖ)) {
+        ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
     }
-    if (slot < 0 || slot >= header->slot_count) {
-        return nullptr;
+    ਜੇ (ਥਾਂ < 0 || ਥਾਂ >= ਸਿਰਲੇਖ->ਥਾਂ_ਗਿਣਤੀ) {
+        ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
     }
-    return reinterpret_cast<const uint8_t *>(header) + header->offsets[slot];
+    ਵਾਪਸ reinterpret_cast<ਅਚਲ uint8_t *>(ਸਿਰਲੇਖ) + ਸਿਰਲੇਖ->offsets[ਥਾਂ];
 }
 
-static inline ggml_kleidiai_kernels * kleidiai_primary_kernel_q4() {
-    return ctx.kernels_q4;
+ਸਥਿਰ ਸਤਰਅੰਦਰ ggml_kleidiai_kernels * kleidiai_primary_kernel_q4() {
+    ਵਾਪਸ ctx.kernels_q4;
 }
 
-static inline ggml_kleidiai_kernels * kleidiai_primary_kernel_q4k() {
-    return ctx.kernels_q4k;
+ਸਥਿਰ ਸਤਰਅੰਦਰ ggml_kleidiai_kernels * kleidiai_primary_kernel_q4k() {
+    ਵਾਪਸ ctx.kernels_q4k;
 }
 
-static inline ggml_kleidiai_kernels * kleidiai_primary_kernel_q8() {
-    return ctx.kernels_q8;
+ਸਥਿਰ ਸਤਰਅੰਦਰ ggml_kleidiai_kernels * kleidiai_primary_kernel_q8() {
+    ਵਾਪਸ ctx.kernels_q8;
 }
 
-static inline ggml_kleidiai_kernels * kleidiai_primary_kernel_f32() {
-    return ctx.kernels_f32;
+ਸਥਿਰ ਸਤਰਅੰਦਰ ggml_kleidiai_kernels * kleidiai_primary_kernel_f32() {
+    ਵਾਪਸ ctx.kernels_f32;
 }
 
-template <typename SelectFallback>
-static int kleidiai_collect_kernel_chain_common(
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ SelectFallback>
+ਸਥਿਰ ਪੂਰਨ kleidiai_collect_kernel_chain_common(
         ggml_kleidiai_kernels * primary,
         cpu_feature features,
-        std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & out,
+        std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & ਬਾਹਰਲਾ,
         SelectFallback select_fallback) {
-    int count = 0;
-    if (!primary) {
-        return 0;
+    ਪੂਰਨ count = 0;
+    ਜੇ (!primary) {
+        ਵਾਪਸ 0;
     }
-    out[count++] = primary;
+    ਬਾਹਰਲਾ[count++] = primary;
 
-    if (primary->rhs_info.repack_mode == RHS_REPACK_SINGLE_ONLY) {
-        return count;
+    ਜੇ (primary->rhs_info.repack_ਬਹੁਲਕ == RHS_REPACK_SINGLE_ONLY) {
+        ਵਾਪਸ count;
     }
 
-    if (is_sme_family(primary->required_cpu)) {
-        const cpu_feature fallback_mask = static_cast<cpu_feature>(features & ~(CPU_FEATURE_SME | CPU_FEATURE_SME2));
-        if (fallback_mask != CPU_FEATURE_NONE) {
-            ggml_kleidiai_kernels * fallback = select_fallback(fallback_mask);
-            if (fallback && fallback != primary &&
-                fallback->rhs_info.repack_mode != RHS_REPACK_SINGLE_ONLY &&
+    ਜੇ (is_sme_family(primary->required_cpu)) {
+        ਅਚਲ cpu_feature fallback_ਨਕਾਬ = static_cast<cpu_feature>(features & ~(CPU_FEATURE_SME | CPU_FEATURE_SME2));
+        ਜੇ (fallback_ਨਕਾਬ != CPU_FEATURE_NONE) {
+            ggml_kleidiai_kernels * fallback = select_fallback(fallback_ਨਕਾਬ);
+            ਜੇ (fallback && fallback != primary &&
+                fallback->rhs_info.repack_ਬਹੁਲਕ != RHS_REPACK_SINGLE_ONLY &&
                 fallback->lhs_type == primary->lhs_type &&
                 fallback->rhs_type == primary->rhs_type &&
                 fallback->op_type  == primary->op_type) {
-                out[count++] = fallback;
+                ਬਾਹਰਲਾ[count++] = fallback;
             }
         }
     }
 
-    return count;
+    ਵਾਪਸ count;
 }
 
-static int kleidiai_collect_kernel_chain(const struct ggml_tensor * op,
-        std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & out) {
+ਸਥਿਰ ਪੂਰਨ kleidiai_collect_kernel_chain(ਅਚਲ ਬਣਤਰ ggml_tensor * op,
+        std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & ਬਾਹਰਲਾ) {
     ggml_kleidiai_kernels * primary = ggml_kleidiai_select_kernels(ctx.features, op);
-    return kleidiai_collect_kernel_chain_common(primary, ctx.features, out,
-        [&](cpu_feature mask) { return ggml_kleidiai_select_kernels(mask, op); });
+    ਵਾਪਸ kleidiai_collect_kernel_chain_common(primary, ctx.features, ਬਾਹਰਲਾ,
+        [&](cpu_feature ਨਕਾਬ) { ਵਾਪਸ ggml_kleidiai_select_kernels(ਨਕਾਬ, op); });
 }
 
-static int kleidiai_collect_q4_chain(std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & out) {
+ਸਥਿਰ ਪੂਰਨ kleidiai_collect_q4_chain(std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & ਬਾਹਰਲਾ) {
     ggml_kleidiai_kernels * primary = kleidiai_primary_kernel_q4();
-    return kleidiai_collect_kernel_chain_common(primary, ctx.features, out,
-        [&](cpu_feature mask) { return ggml_kleidiai_select_kernels_q4_0(mask); });
+    ਵਾਪਸ kleidiai_collect_kernel_chain_common(primary, ctx.features, ਬਾਹਰਲਾ,
+        [&](cpu_feature ਨਕਾਬ) { ਵਾਪਸ ggml_kleidiai_select_kernels_q4_0(ਨਕਾਬ); });
 }
 
-static int kleidiai_collect_q4k_chain(std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & out) {
+ਸਥਿਰ ਪੂਰਨ kleidiai_collect_q4k_chain(std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & ਬਾਹਰਲਾ) {
     ggml_kleidiai_kernels * primary = kleidiai_primary_kernel_q4k();
-    return kleidiai_collect_kernel_chain_common(primary, ctx.features, out,
-        [&](cpu_feature mask) { return ggml_kleidiai_select_kernels_q4_k(mask); });
+    ਵਾਪਸ kleidiai_collect_kernel_chain_common(primary, ctx.features, ਬਾਹਰਲਾ,
+        [&](cpu_feature ਨਕਾਬ) { ਵਾਪਸ ggml_kleidiai_select_kernels_q4_k(ਨਕਾਬ); });
 }
 
-static int kleidiai_collect_q8_chain(std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & out) {
+ਸਥਿਰ ਪੂਰਨ kleidiai_collect_q8_chain(std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & ਬਾਹਰਲਾ) {
     ggml_kleidiai_kernels * primary = kleidiai_primary_kernel_q8();
-    return kleidiai_collect_kernel_chain_common(primary, ctx.features, out,
-        [&](cpu_feature mask) { return ggml_kleidiai_select_kernels_q8_0(mask); });
+    ਵਾਪਸ kleidiai_collect_kernel_chain_common(primary, ctx.features, ਬਾਹਰਲਾ,
+        [&](cpu_feature ਨਕਾਬ) { ਵਾਪਸ ggml_kleidiai_select_kernels_q8_0(ਨਕਾਬ); });
 }
 
-static int kleidiai_collect_f32_chain(std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & out) {
+ਸਥਿਰ ਪੂਰਨ kleidiai_collect_f32_chain(std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & ਬਾਹਰਲਾ) {
     ggml_kleidiai_kernels * primary = kleidiai_primary_kernel_f32();
-    return kleidiai_collect_kernel_chain_common(primary, ctx.features, out,
-        [&](cpu_feature mask) { return ggml_kleidiai_select_kernels_f32(mask); });
+    ਵਾਪਸ kleidiai_collect_kernel_chain_common(primary, ctx.features, ਬਾਹਰਲਾ,
+        [&](cpu_feature ਨਕਾਬ) { ਵਾਪਸ ggml_kleidiai_select_kernels_f32(ਨਕਾਬ); });
 }
 
-static inline int64_t ggml_ne(const ggml_tensor * tensor, int dim) {
+ਸਥਿਰ ਸਤਰਅੰਦਰ int64_t ggml_ne(ਅਚਲ ggml_tensor * tensor, ਪੂਰਨ dim) {
     GGML_ASSERT(dim >= 0 && dim < GGML_MAX_DIMS);
-    return tensor->ne[dim];
+    ਵਾਪਸ tensor->ne[dim];
 }
 
-namespace ggml::cpu::kleidiai {
+ਨਾਮਾਕਾਸ਼ ggml::cpu::kleidiai {
 
-static size_t round_down(size_t x, size_t y) {
-    return y == 0 ? x : x - (x % y);
+ਸਥਿਰ size_t ਗੇੜਾ_ਥੱਲੇ(size_t x, size_t y) {
+    ਵਾਪਸ y == 0 ? x : x - (x % y);
 }
 
-static void transpose_f32kxn_f16nxk(size_t n, size_t k, float * dst, const uint16_t * src, size_t rhs_stride) {
-    size_t src_stride = rhs_stride / sizeof(uint16_t);
+ਸਥਿਰ ਖਾਲੀ transpose_f32kxn_f16nxk(size_t n, size_t k, ਦਸ਼ਮਲਵ * dst, ਅਚਲ uint16_t * src, size_t rhs_stride) {
+    size_t src_stride = rhs_stride / ਆਕਾਰ(uint16_t);
     size_t dst_stride = n;
 
-    for (size_t k_idx = 0; k_idx < k; ++k_idx) {
-        for (size_t n_idx = 0; n_idx < n; ++n_idx) {
+    ਲਈ (size_t k_idx = 0; k_idx < k; ++k_idx) {
+        ਲਈ (size_t n_idx = 0; n_idx < n; ++n_idx) {
             uint16_t v = *(src + k_idx + n_idx * src_stride);
             *(dst + n_idx + k_idx * dst_stride) = kai_cast_f32_f16(v);
         }
     }
 }
 
-class tensor_traits : public ggml::cpu::tensor_traits {
-    bool work_size(int /* n_threads */, const struct ggml_tensor * op, size_t & size) override {
-        if (op->op != GGML_OP_MUL_MAT) {
-            return false;
+ਵਰਗ tensor_traits : ਜਨਤਕ ggml::cpu::tensor_traits {
+    ਤਾਰਕਿਕ work_ਮਾਪ(ਪੂਰਨ /* n_threads */, ਅਚਲ ਬਣਤਰ ggml_tensor * op, size_t & size) override {
+        ਜੇ (op->op != GGML_OP_MUL_MAT) {
+            ਵਾਪਸ ਝੂਠ;
         }
 
         std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> kernel_chain;
-        const int slot_count = kleidiai_collect_kernel_chain(op, kernel_chain);
-        if (slot_count == 0) {
-            return false;
+        ਅਚਲ ਪੂਰਨ ਥਾਂ_ਗਿਣਤੀ = kleidiai_collect_kernel_chain(op, kernel_chain);
+        ਜੇ (ਥਾਂ_ਗਿਣਤੀ == 0) {
+            ਵਾਪਸ ਝੂਠ;
         }
 
-        const bool is_gemv = op->src[1]->ne[1] == 1;
-        const size_t k = op->src[0]->ne[0];
-        const size_t n = op->src[0]->ne[1];
-        const size_t m = op->src[1]->ne[1];
+        ਅਚਲ ਤਾਰਕਿਕ is_gemv = op->src[1]->ne[1] == 1;
+        ਅਚਲ size_t k = op->src[0]->ne[0];
+        ਅਚਲ size_t n = op->src[0]->ne[1];
+        ਅਚਲ size_t m = op->src[1]->ne[1];
 
-        if (op->src[0]->type == GGML_TYPE_Q4_0 || op->src[0]->type == GGML_TYPE_Q4_K ||
+        ਜੇ (op->src[0]->type == GGML_TYPE_Q4_0 || op->src[0]->type == GGML_TYPE_Q4_K ||
             op->src[0]->type == GGML_TYPE_Q8_0 || op->src[0]->type == GGML_TYPE_Q6_K) {
-            const kleidiai_block_args block_args = kleidiai_get_block_args(kernel_chain[0]->rhs_type);
-            const size_t qk = block_args.pack_bl;
+            ਅਚਲ kleidiai_ਖੰਡ_ਦਲੀਲਾਂ ਖੰਡ_ਦਲੀਲਾਂ = kleidiai_get_ਖੰਡ_ਦਲੀਲਾਂ(kernel_chain[0]->rhs_type);
+            ਅਚਲ size_t qk = ਖੰਡ_ਦਲੀਲਾਂ.pack_bl;
 
             size_t cursor = 0;
-            bool any_slot = false;
+            ਤਾਰਕਿਕ any_ਥਾਂ = ਝੂਠ;
 
-            for (int slot = 0; slot < slot_count; ++slot) {
-                ggml_kleidiai_kernels * kernels = kernel_chain[slot];
+            ਲਈ (ਪੂਰਨ ਥਾਂ = 0; ਥਾਂ < ਥਾਂ_ਗਿਣਤੀ; ++ਥਾਂ) {
+                ggml_kleidiai_kernels * kernels = kernel_chain[ਥਾਂ];
                 lhs_packing_info * lhs_info = is_gemv ? &kernels->gemv_lhs_info : &kernels->gemm_lhs_info;
                 kernel_info * kernel        = is_gemv ? &kernels->gemv : &kernels->gemm;
 
-                if (!lhs_info || !lhs_info->packed_size_ex || !kernel) {
-                    return false;
+                ਜੇ (!lhs_info || !lhs_info->packed_ਮਾਪ_ex || !kernel) {
+                    ਵਾਪਸ ਝੂਠ;
                 }
 
-                const size_t mr = kernel->get_mr();
-                const size_t kr = kernel->get_kr();
-                const size_t sr = kernel->get_sr();
+                ਅਚਲ size_t mr = kernel->get_mr();
+                ਅਚਲ size_t kr = kernel->get_kr();
+                ਅਚਲ size_t sr = kernel->get_sr();
 
-                const size_t packed = lhs_info->packed_size_ex(m, k, qk, mr, kr, sr);
+                ਅਚਲ size_t packed = lhs_info->packed_ਮਾਪ_ex(m, k, qk, mr, kr, sr);
 
-                cursor = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
+                cursor = align_ਉੱਪਰ(cursor, GGML_KLEIDIAI_PACK_ALIGN);
                 cursor += packed;
-                any_slot = true;
+                any_ਥਾਂ = ਸੱਚ;
             }
 
-            if (!any_slot) {
-                return false;
+            ਜੇ (!any_ਥਾਂ) {
+                ਵਾਪਸ ਝੂਠ;
             }
 
             size = cursor;
-            return true;
+            ਵਾਪਸ ਸੱਚ;
         }
 
-        if (op->src[0]->type == GGML_TYPE_F32) {
+        ਜੇ (op->src[0]->type == GGML_TYPE_F32) {
             ggml_kleidiai_kernels * primary     = kernel_chain[0];
-            kernel_info *           gemv_kernel = primary ? &primary->gemv : nullptr;
-            if (is_gemv && op->src[1]->nb[0] == (int64_t) sizeof(float) && gemv_kernel &&
-                gemv_kernel->get_lhs_offset_ex && gemv_kernel->get_rhs_packed_offset_ex &&
-                gemv_kernel->run_kernel_ex && gemv_kernel->get_dst_offset) {
+            kernel_info *           gemv_kernel = primary ? &primary->gemv : ਖਾਲੀ_ਸੂਚਕ;
+            ਜੇ (is_gemv && op->src[1]->nb[0] == (int64_t) ਆਕਾਰ(ਦਸ਼ਮਲਵ) && gemv_kernel &&
+                gemv_kernel->get_lhs_ਵਿੱਥ_ex && gemv_kernel->get_rhs_packed_ਵਿੱਥ_ex &&
+                gemv_kernel->ਲੜੀਵਾਰ_kernel_ex && gemv_kernel->get_dst_ਵਿੱਥ) {
                 size = 0;
-                return true;
+                ਵਾਪਸ ਸੱਚ;
             }
 
             size_t cursor = 0;
-            bool any_slot = false;
+            ਤਾਰਕਿਕ any_ਥਾਂ = ਝੂਠ;
 
-            for (int slot = 0; slot < slot_count; ++slot) {
-                ggml_kleidiai_kernels * kernels = kernel_chain[slot];
+            ਲਈ (ਪੂਰਨ ਥਾਂ = 0; ਥਾਂ < ਥਾਂ_ਗਿਣਤੀ; ++ਥਾਂ) {
+                ggml_kleidiai_kernels * kernels = kernel_chain[ਥਾਂ];
                 lhs_packing_info * lhs_info = &kernels->gemm_lhs_info;
                 kernel_info * kernel        = &kernels->gemm;
 
-                if (!lhs_info || !lhs_info->packed_size_ex || !kernel) {
-                    return false;
+                ਜੇ (!lhs_info || !lhs_info->packed_ਮਾਪ_ex || !kernel) {
+                    ਵਾਪਸ ਝੂਠ;
                 }
 
-                const size_t mr = kernel->get_mr();
-                const size_t kr = kernel->get_kr();
-                const size_t sr = kernel->get_sr();
+                ਅਚਲ size_t mr = kernel->get_mr();
+                ਅਚਲ size_t kr = kernel->get_kr();
+                ਅਚਲ size_t sr = kernel->get_sr();
 
-                cursor  = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
-                cursor += lhs_info->packed_size_ex(m, k, 0, mr, kr, sr);
-                any_slot = true;
+                cursor  = align_ਉੱਪਰ(cursor, GGML_KLEIDIAI_PACK_ALIGN);
+                cursor += lhs_info->packed_ਮਾਪ_ex(m, k, 0, mr, kr, sr);
+                any_ਥਾਂ = ਸੱਚ;
             }
 
-            if (!any_slot) {
-                return false;
+            ਜੇ (!any_ਥਾਂ) {
+                ਵਾਪਸ ਝੂਠ;
             }
 
             size = cursor;
-            return true;
+            ਵਾਪਸ ਸੱਚ;
         }
 
-        if (op->src[0]->type == GGML_TYPE_F16) {
-            const int64_t lhs_batch_size0 = op->src[1]->ne[2];
-            const int64_t rhs_batch_size0 = op->src[0]->ne[2];
+        ਜੇ (op->src[0]->type == GGML_TYPE_F16) {
+            ਅਚਲ int64_t lhs_batch_size0 = op->src[1]->ne[2];
+            ਅਚਲ int64_t rhs_batch_size0 = op->src[0]->ne[2];
             GGML_ASSERT(rhs_batch_size0 > 0);
-            const int64_t r = lhs_batch_size0 / rhs_batch_size0;
+            ਅਚਲ int64_t r = lhs_batch_size0 / rhs_batch_size0;
 
             size_t cursor = 0;
-            bool any_slot = false;
+            ਤਾਰਕਿਕ any_ਥਾਂ = ਝੂਠ;
 
-            for (int slot = 0; slot < slot_count; ++slot) {
-                ggml_kleidiai_kernels * kernels = kernel_chain[slot];
+            ਲਈ (ਪੂਰਨ ਥਾਂ = 0; ਥਾਂ < ਥਾਂ_ਗਿਣਤੀ; ++ਥਾਂ) {
+                ggml_kleidiai_kernels * kernels = kernel_chain[ਥਾਂ];
                 lhs_packing_info * lhs_info = is_gemv ? &kernels->gemv_lhs_info : &kernels->gemm_lhs_info;
                 kernel_info * kernel        = is_gemv ? &kernels->gemv : &kernels->gemm;
-                if (!lhs_info || !lhs_info->packed_size_ex || !kernels->rhs_info.packed_size_ex || !kernel) {
-                    return false;
+                ਜੇ (!lhs_info || !lhs_info->packed_ਮਾਪ_ex || !kernels->rhs_info.packed_ਮਾਪ_ex || !kernel) {
+                    ਵਾਪਸ ਝੂਠ;
                 }
 
-                const size_t mr = kernel->get_mr();
-                const size_t kr = kernel->get_kr();
-                const size_t sr = kernel->get_sr();
+                ਅਚਲ size_t mr = kernel->get_mr();
+                ਅਚਲ size_t kr = kernel->get_kr();
+                ਅਚਲ size_t sr = kernel->get_sr();
 
-                cursor  = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
-                cursor += lhs_info->packed_size_ex(m * r, k, 0, mr, kr, sr);
-                any_slot = true;
+                cursor  = align_ਉੱਪਰ(cursor, GGML_KLEIDIAI_PACK_ALIGN);
+                cursor += lhs_info->packed_ਮਾਪ_ex(m * r, k, 0, mr, kr, sr);
+                any_ਥਾਂ = ਸੱਚ;
             }
 
-            for (int slot = 0; slot < slot_count; ++slot) {
-                ggml_kleidiai_kernels * kernels = kernel_chain[slot];
+            ਲਈ (ਪੂਰਨ ਥਾਂ = 0; ਥਾਂ < ਥਾਂ_ਗਿਣਤੀ; ++ਥਾਂ) {
+                ggml_kleidiai_kernels * kernels = kernel_chain[ਥਾਂ];
                 kernel_info * kernel = is_gemv ? &kernels->gemv : &kernels->gemm;
-                if (!kernel || !kernels->rhs_info.packed_size_ex) {
-                    return false;
+                ਜੇ (!kernel || !kernels->rhs_info.packed_ਮਾਪ_ex) {
+                    ਵਾਪਸ ਝੂਠ;
                 }
-                cursor  = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
-                cursor += kernels->rhs_info.packed_size_ex(n, k, kernel->get_nr(), kernel->get_kr(), 0);
+                cursor  = align_ਉੱਪਰ(cursor, GGML_KLEIDIAI_PACK_ALIGN);
+                cursor += kernels->rhs_info.packed_ਮਾਪ_ex(n, k, kernel->get_nr(), kernel->get_kr(), 0);
             }
 
-            cursor  = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
-            cursor += k * n * sizeof(float);
-            cursor  = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
-            cursor += n * sizeof(float);
+            cursor  = align_ਉੱਪਰ(cursor, GGML_KLEIDIAI_PACK_ALIGN);
+            cursor += k * n * ਆਕਾਰ(ਦਸ਼ਮਲਵ);
+            cursor  = align_ਉੱਪਰ(cursor, GGML_KLEIDIAI_PACK_ALIGN);
+            cursor += n * ਆਕਾਰ(ਦਸ਼ਮਲਵ);
 
-            if (!any_slot) {
-                return false;
+            ਜੇ (!any_ਥਾਂ) {
+                ਵਾਪਸ ਝੂਠ;
             }
 
             size = cursor;
-            return true;
+            ਵਾਪਸ ਸੱਚ;
         }
 
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    bool compute_forward(struct ggml_compute_params * params, struct ggml_tensor * dst) override {
-        if (dst->op == GGML_OP_MUL_MAT) {
-            if (dst->src[0]->type == GGML_TYPE_Q4_0 || dst->src[0]->type == GGML_TYPE_Q4_K ||
+    ਤਾਰਕਿਕ compute_forward(ਬਣਤਰ ggml_compute_params * params, ਬਣਤਰ ggml_tensor * dst) override {
+        ਜੇ (dst->op == GGML_OP_MUL_MAT) {
+            ਜੇ (dst->src[0]->type == GGML_TYPE_Q4_0 || dst->src[0]->type == GGML_TYPE_Q4_K ||
                 dst->src[0]->type == GGML_TYPE_Q8_0 || dst->src[0]->type == GGML_TYPE_Q6_K) {
-                return compute_forward_qx(params, dst);
-            } else if (dst->src[0]->type == GGML_TYPE_F32) {
-                return compute_forward_f32(params, dst);
-            } else if (dst->src[0]->type == GGML_TYPE_F16) {
-                return compute_forward_fp16(params, dst);
+                ਵਾਪਸ compute_forward_qx(params, dst);
+            } ਨਹੀਂਤਾਂ ਜੇ (dst->src[0]->type == GGML_TYPE_F32) {
+                ਵਾਪਸ compute_forward_f32(params, dst);
+            } ਨਹੀਂਤਾਂ ਜੇ (dst->src[0]->type == GGML_TYPE_F16) {
+                ਵਾਪਸ compute_forward_fp16(params, dst);
             }
         }
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    bool compute_forward_f32(ggml_compute_params * params, struct ggml_tensor * dst) {
+    ਤਾਰਕਿਕ compute_forward_f32(ggml_compute_params * params, ਬਣਤਰ ggml_tensor * dst) {
         GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32);
 
-        const ggml_tensor * src0 = dst->src[0];
-        const ggml_tensor * src1 = dst->src[1];
+        ਅਚਲ ggml_tensor * src0 = dst->src[0];
+        ਅਚਲ ggml_tensor * src1 = dst->src[1];
 
-        GGML_TENSOR_BINARY_OP_LOCALS
+        GGML_TENSOR_ਦੁਆਧਾਰੀ_OP_LOCALS
 
-        if (src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-            return false;
+        ਜੇ (src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+            ਵਾਪਸ ਝੂਠ;
         }
 
         ggml_kleidiai_kernels * kernels = kleidiai_primary_kernel_f32();
-        if (!kernels) {
-            return false;
+        ਜੇ (!kernels) {
+            ਵਾਪਸ ਝੂਠ;
         }
 
-        const size_t k = ne00;
-        const size_t m = ne11;
-        const size_t n = ne01;
-        const bool use_gemv = m == 1 && src1->nb[0] == (int64_t) sizeof(float) &&
-                              kernels->gemv.get_lhs_offset_ex &&
-                              kernels->gemv.get_rhs_packed_offset_ex &&
-                              kernels->gemv.run_kernel_ex &&
-                              kernels->gemv.get_dst_offset;
+        ਅਚਲ size_t k = ne00;
+        ਅਚਲ size_t m = ne11;
+        ਅਚਲ size_t n = ne01;
+        ਅਚਲ ਤਾਰਕਿਕ use_gemv = m == 1 && src1->nb[0] == (int64_t) ਆਕਾਰ(ਦਸ਼ਮਲਵ) &&
+                              kernels->gemv.get_lhs_ਵਿੱਥ_ex &&
+                              kernels->gemv.get_rhs_packed_ਵਿੱਥ_ex &&
+                              kernels->gemv.ਲੜੀਵਾਰ_kernel_ex &&
+                              kernels->gemv.get_dst_ਵਿੱਥ;
 
         kernel_info * kernel        = use_gemv ? &kernels->gemv : &kernels->gemm;
         lhs_packing_info * lhs_info = &kernels->gemm_lhs_info;
 
-        if (!kernel || !kernel->get_lhs_offset_ex ||
-            !kernel->get_rhs_packed_offset_ex || !kernel->run_kernel_ex || !kernel->get_dst_offset) {
-            return false;
+        ਜੇ (!kernel || !kernel->get_lhs_ਵਿੱਥ_ex ||
+            !kernel->get_rhs_packed_ਵਿੱਥ_ex || !kernel->ਲੜੀਵਾਰ_kernel_ex || !kernel->get_dst_ਵਿੱਥ) {
+            ਵਾਪਸ ਝੂਠ;
         }
 
-        if (!use_gemv && (!lhs_info || !lhs_info->get_offset || !lhs_info->get_packed_offset_ex ||
-                          !lhs_info->packed_size_ex || !lhs_info->pack_func_ex)) {
-            return false;
+        ਜੇ (!use_gemv && (!lhs_info || !lhs_info->get_ਵਿੱਥ || !lhs_info->get_packed_ਵਿੱਥ_ex ||
+                          !lhs_info->packed_ਮਾਪ_ex || !lhs_info->pack_func_ex)) {
+            ਵਾਪਸ ਝੂਠ;
         }
 
-        const kleidiai_weight_header * header = kleidiai_weight_header_from_ptr(src0->data);
-        const bool has_header = kleidiai_is_weight_header_valid(header);
+        ਅਚਲ kleidiai_ਭਾਰ_ਸਿਰਲੇਖ * ਸਿਰਲੇਖ = kleidiai_ਭਾਰ_ਸਿਰਲੇਖ_from_ptr(src0->ਅੰਕੜੇ);
+        ਅਚਲ ਤਾਰਕਿਕ has_ਸਿਰਲੇਖ = kleidiai_is_ਭਾਰ_ਸਿਰਲੇਖ_valid(ਸਿਰਲੇਖ);
 
-        const uint8_t * rhs_base = has_header ? kleidiai_weight_slot_ptr(header, 0)
-                                              : static_cast<const uint8_t *>(src0->data);
-        if (!rhs_base) {
-            return false;
+        ਅਚਲ uint8_t * rhs_ਅਧਾਰ = has_ਸਿਰਲੇਖ ? kleidiai_ਭਾਰ_ਥਾਂ_ptr(ਸਿਰਲੇਖ, 0)
+                                              : static_cast<ਅਚਲ uint8_t *>(src0->ਅੰਕੜੇ);
+        ਜੇ (!rhs_ਅਧਾਰ) {
+            ਵਾਪਸ ਝੂਠ;
         }
 
-        const int nth = params->nth > 0 ? params->nth : 1;
-        const int ith = params->ith;
+        ਅਚਲ ਪੂਰਨ nth = params->nth > 0 ? params->nth : 1;
+        ਅਚਲ ਪੂਰਨ ith = params->ith;
 
-        const size_t mr = kernel->get_mr();
-        const size_t kr = kernel->get_kr();
-        const size_t sr = kernel->get_sr();
+        ਅਚਲ size_t mr = kernel->get_mr();
+        ਅਚਲ size_t kr = kernel->get_kr();
+        ਅਚਲ size_t sr = kernel->get_sr();
 
-        const size_t lhs_packed_size = use_gemv ? 0 : lhs_info->packed_size_ex(m, k, 0, mr, kr, sr);
-        if (!use_gemv) {
-            GGML_ASSERT(lhs_packed_size <= params->wsize);
+        ਅਚਲ size_t lhs_packed_ਮਾਪ = use_gemv ? 0 : lhs_info->packed_ਮਾਪ_ex(m, k, 0, mr, kr, sr);
+        ਜੇ (!use_gemv) {
+            GGML_ASSERT(lhs_packed_ਮਾਪ <= params->wsize);
         }
 
         uint8_t * lhs_packed   = static_cast<uint8_t *>(params->wdata);
-        const size_t dst_stride = dst->nb[1];
-        const size_t n_step = kernel->get_n_step() ? kernel->get_n_step() : 1;
-        const bool disable_chunking = ggml_is_numa();
-        GGML_ASSERT(n <= (size_t) INT_MAX);
+        ਅਚਲ size_t dst_stride = dst->nb[1];
+        ਅਚਲ size_t n_ਕਦਮ = kernel->get_n_ਕਦਮ() ? kernel->get_n_ਕਦਮ() : 1;
+        ਅਚਲ ਤਾਰਕਿਕ disable_chunking = ggml_is_numa();
+        GGML_ASSERT(n <= (size_t) ਵੱਧ_ਤੋਂ_ਵੱਧ_ਅੰਕ);
 
-        const int64_t batch_size = ne12 * ne13;
-        for (int64_t batch_idx = 0; batch_idx < batch_size; ++batch_idx) {
-            const int64_t i12 = batch_idx % ne12;
-            const int64_t i13 = batch_idx / ne12;
-            const uint8_t * lhs_batch_base = static_cast<const uint8_t *>(src1->data) + i12 * src1->nb[2] + i13 * src1->nb[3];
-            uint8_t * dst_batch_base = static_cast<uint8_t *>(dst->data) + i12 * dst->nb[2] + i13 * dst->nb[3];
+        ਅਚਲ int64_t batch_ਮਾਪ = ne12 * ne13;
+        ਲਈ (int64_t batch_idx = 0; batch_idx < batch_ਮਾਪ; ++batch_idx) {
+            ਅਚਲ int64_t i12 = batch_idx % ne12;
+            ਅਚਲ int64_t i13 = batch_idx / ne12;
+            ਅਚਲ uint8_t * lhs_batch_ਅਧਾਰ = static_cast<ਅਚਲ uint8_t *>(src1->ਅੰਕੜੇ) + i12 * src1->nb[2] + i13 * src1->nb[3];
+            uint8_t * dst_batch_ਅਧਾਰ = static_cast<uint8_t *>(dst->ਅੰਕੜੇ) + i12 * dst->nb[2] + i13 * dst->nb[3];
 
-            if (!use_gemv) {
-                const int64_t m_roundup_mr = kai_roundup((int64_t)m, (int64_t)mr);
-                int64_t max_threads = mr ? (m_roundup_mr / (int64_t)mr) : nth;
-                max_threads = std::max<int64_t>(1, max_threads);
-                const int64_t use_threads = std::min<int64_t>(nth, max_threads);
+            ਜੇ (!use_gemv) {
+                ਅਚਲ int64_t m_roundup_mr = kai_roundup((int64_t)m, (int64_t)mr);
+                int64_t max_ਧਾਗੇ = mr ? (m_roundup_mr / (int64_t)mr) : nth;
+                max_ਧਾਗੇ = std::max<int64_t>(1, max_ਧਾਗੇ);
+                ਅਚਲ int64_t use_ਧਾਗੇ = std::min<int64_t>(nth, max_ਧਾਗੇ);
 
-                if (ith < use_threads) {
-                    const int64_t num_m_per_thread0   = round_down((size_t)(m_roundup_mr / use_threads), mr);
-                    const int64_t num_m_per_threadN_1 = (int64_t)m - (use_threads - 1) * num_m_per_thread0;
+                ਜੇ (ith < use_ਧਾਗੇ) {
+                    ਅਚਲ int64_t ਅੰਕ_m_ਪ੍ਰਤੀ_thread0   = ਗੇੜਾ_ਥੱਲੇ((size_t)(m_roundup_mr / use_ਧਾਗੇ), mr);
+                    ਅਚਲ int64_t ਅੰਕ_m_ਪ੍ਰਤੀ_thread_N_1 = (int64_t)m - (use_ਧਾਗੇ - 1) * ਅੰਕ_m_ਪ੍ਰਤੀ_thread0;
 
-                    const int64_t m_start = (int64_t)ith * num_m_per_thread0;
-                    const int64_t m_count = (ith == use_threads - 1) ? num_m_per_threadN_1 : num_m_per_thread0;
+                    ਅਚਲ int64_t m_ਸ਼ੁਰੂ = (int64_t)ith * ਅੰਕ_m_ਪ੍ਰਤੀ_thread0;
+                    ਅਚਲ int64_t m_ਗਿਣਤੀ = (ith == use_ਧਾਗੇ - 1) ? ਅੰਕ_m_ਪ੍ਰਤੀ_thread_N_1 : ਅੰਕ_m_ਪ੍ਰਤੀ_thread0;
 
-                    const size_t base_packed_off  = lhs_info->get_packed_offset_ex(m_start, k, 0, mr, kr, sr);
-                    const size_t next_block_off   = lhs_info->get_packed_offset_ex(m_start + mr, k, 0, mr, kr, sr);
-                    const size_t row_stride_bytes = mr ? (next_block_off - base_packed_off) / mr : 0;
+                    ਅਚਲ size_t ਅਧਾਰ_packed_off  = lhs_info->get_packed_ਵਿੱਥ_ex(m_ਸ਼ੁਰੂ, k, 0, mr, kr, sr);
+                    ਅਚਲ size_t ਅਗਲਾ_ਖੰਡ_off   = lhs_info->get_packed_ਵਿੱਥ_ex(m_ਸ਼ੁਰੂ + mr, k, 0, mr, kr, sr);
+                    ਅਚਲ size_t ਪੰਕਤੀ_stride_ਬਾਈਟਾਂ = mr ? (ਅਗਲਾ_ਖੰਡ_off - ਅਧਾਰ_packed_off) / mr : 0;
 
-                    int64_t remaining = m_count;
-                    int64_t cur       = m_start;
+                    int64_t ਬਚਿਆ = m_ਗਿਣਤੀ;
+                    int64_t cur       = m_ਸ਼ੁਰੂ;
 
-                    while (remaining > 0) {
-                        const int64_t take = std::min<int64_t>((int64_t)m - cur, remaining);
-                        const size_t src_off = lhs_info->get_offset(cur, src1->nb[1]);
-                        const void * src_ptr = lhs_batch_base + src_off;
-                        const size_t dst_off = base_packed_off + (size_t)(cur - m_start) * row_stride_bytes;
-                        void * dst_ptr       = lhs_packed + dst_off;
+                    ਜਦੋਂ (ਬਚਿਆ > 0) {
+                        ਅਚਲ int64_t take = std::min<int64_t>((int64_t)m - cur, ਬਚਿਆ);
+                        ਅਚਲ size_t src_off = lhs_info->get_ਵਿੱਥ(cur, src1->nb[1]);
+                        ਅਚਲ ਖਾਲੀ * src_ptr = lhs_batch_ਅਧਾਰ + src_off;
+                        ਅਚਲ size_t dst_off = ਅਧਾਰ_packed_off + (size_t)(cur - m_ਸ਼ੁਰੂ) * ਪੰਕਤੀ_stride_ਬਾਈਟਾਂ;
+                        ਖਾਲੀ * dst_ptr       = lhs_packed + dst_off;
 
                         lhs_info->pack_func_ex(take, k, 0, mr, kr, sr, 0, src_ptr, src1->nb[1], dst_ptr);
 
                         cur       += take;
-                        remaining -= take;
+                        ਬਚਿਆ -= take;
                     }
                 }
             }
 
-            if (ith == 0) {
-                ggml_threadpool_chunk_set(params->threadpool, 0);
+            ਜੇ (ith == 0) {
+                ggml_threadpool_chunk_ਸੈੱਟ(params->threadpool, 0);
             }
 
             ggml_barrier(params->threadpool);
 
-            const size_t chunk_cols = kleidiai_chunk_cols(n, nth, disable_chunking, n_step);
-            GGML_ASSERT(chunk_cols <= (size_t) INT_MAX);
+            ਅਚਲ size_t chunk_ਖਾਨੇ_ਗਿਣਤੀ = kleidiai_chunk_ਖਾਨੇ_ਗਿਣਤੀ(n, nth, disable_chunking, n_ਕਦਮ);
+            GGML_ASSERT(chunk_ਖਾਨੇ_ਗਿਣਤੀ <= (size_t) ਵੱਧ_ਤੋਂ_ਵੱਧ_ਅੰਕ);
 
-            int current_col = ggml_threadpool_chunk_add(params->threadpool, (int) chunk_cols);
-            while ((size_t) current_col < n) {
-                const size_t n_start = (size_t) current_col;
-                const size_t n_to_process = std::min(chunk_cols, n - n_start);
+            ਪੂਰਨ current_ਖਾਨਾ = ggml_threadpool_chunk_ਜੋੜੋ(params->threadpool, (ਪੂਰਨ) chunk_ਖਾਨੇ_ਗਿਣਤੀ);
+            ਜਦੋਂ ((size_t) current_ਖਾਨਾ < n) {
+                ਅਚਲ size_t n_ਸ਼ੁਰੂ = (size_t) current_ਖਾਨਾ;
+                ਅਚਲ size_t n_ਮੰਜ਼ਿਲ_process = std::min(chunk_ਖਾਨੇ_ਗਿਣਤੀ, n - n_ਸ਼ੁਰੂ);
 
-                if (n_to_process > 0) {
-                    const size_t lhs_offset = use_gemv ? kernel->get_lhs_offset_ex(0, k, 0)
-                                                       : lhs_info->get_packed_offset_ex(0, k, 0, mr, kr, sr);
-                    const size_t rhs_packed_offset = kernel->get_rhs_packed_offset_ex(n_start, k, 0);
-                    const size_t dst_offset        = kernel->get_dst_offset(0, n_start, dst_stride);
+                ਜੇ (n_ਮੰਜ਼ਿਲ_process > 0) {
+                    ਅਚਲ size_t lhs_ਵਿੱਥ = use_gemv ? kernel->get_lhs_ਵਿੱਥ_ex(0, k, 0)
+                                                       : lhs_info->get_packed_ਵਿੱਥ_ex(0, k, 0, mr, kr, sr);
+                    ਅਚਲ size_t rhs_packed_ਵਿੱਥ = kernel->get_rhs_packed_ਵਿੱਥ_ex(n_ਸ਼ੁਰੂ, k, 0);
+                    ਅਚਲ size_t dst_ਵਿੱਥ        = kernel->get_dst_ਵਿੱਥ(0, n_ਸ਼ੁਰੂ, dst_stride);
 
-                    const void * lhs_ptr = use_gemv ? lhs_batch_base + lhs_offset
-                                                    : lhs_packed + lhs_offset;
-                    const void * rhs_ptr = rhs_base + rhs_packed_offset;
-                    float * dst_ptr      = reinterpret_cast<float *>(dst_batch_base + dst_offset);
+                    ਅਚਲ ਖਾਲੀ * lhs_ptr = use_gemv ? lhs_batch_ਅਧਾਰ + lhs_ਵਿੱਥ
+                                                    : lhs_packed + lhs_ਵਿੱਥ;
+                    ਅਚਲ ਖਾਲੀ * rhs_ptr = rhs_ਅਧਾਰ + rhs_packed_ਵਿੱਥ;
+                    ਦਸ਼ਮਲਵ * dst_ptr      = reinterpret_cast<ਦਸ਼ਮਲਵ *>(dst_batch_ਅਧਾਰ + dst_ਵਿੱਥ);
 
-                    kernel->run_kernel_ex(m, n_to_process, k, use_gemv ? src1->nb[1] : 0,
+                    kernel->ਲੜੀਵਾਰ_kernel_ex(m, n_ਮੰਜ਼ਿਲ_process, k, use_gemv ? src1->nb[1] : 0,
                                           lhs_ptr,
                                           rhs_ptr,
                                           dst_ptr,
                                           dst_stride,
-                                          sizeof(float),
+                                          ਆਕਾਰ(ਦਸ਼ਮਲਵ),
                                           -FLT_MAX,
                                           FLT_MAX);
                 }
 
-                current_col = ggml_threadpool_chunk_add(params->threadpool, (int) chunk_cols);
+                current_ਖਾਨਾ = ggml_threadpool_chunk_ਜੋੜੋ(params->threadpool, (ਪੂਰਨ) chunk_ਖਾਨੇ_ਗਿਣਤੀ);
             }
 
-            if (batch_idx != batch_size - 1) {
+            ਜੇ (batch_idx != batch_ਮਾਪ - 1) {
                 ggml_barrier(params->threadpool);
             }
         }
 
-        return true;
+        ਵਾਪਸ ਸੱਚ;
     }
 
-    bool compute_forward_fp16(ggml_compute_params * params, struct ggml_tensor * dst) {
-        const ggml_tensor * src0 = dst->src[0];
-        const ggml_tensor * src1 = dst->src[1];
+    ਤਾਰਕਿਕ compute_forward_fp16(ggml_compute_params * params, ਬਣਤਰ ggml_tensor * dst) {
+        ਅਚਲ ggml_tensor * src0 = dst->src[0];
+        ਅਚਲ ggml_tensor * src1 = dst->src[1];
 
-        GGML_TENSOR_BINARY_OP_LOCALS
+        GGML_TENSOR_ਦੁਆਧਾਰੀ_OP_LOCALS
 
         ggml_kleidiai_kernels *kernels = ggml_kleidiai_select_kernels(ctx.features, dst);
-        if (!kernels) {
-            return false;
+        ਜੇ (!kernels) {
+            ਵਾਪਸ ਝੂਠ;
         }
 
-        const bool is_gemv = src1->ne[1] == 1;
+        ਅਚਲ ਤਾਰਕਿਕ is_gemv = src1->ne[1] == 1;
         kernel_info * kernel = is_gemv ? &kernels->gemv : &kernels->gemm;
         lhs_packing_info * lhs_info = is_gemv ? &kernels->gemv_lhs_info : &kernels->gemm_lhs_info;
         GGML_ASSERT(kernel);
-        if (!kernels->rhs_info.pack_func_ex ||
-            !kernel->get_lhs_offset_ex || !kernel->get_rhs_packed_offset_ex || !kernel->run_kernel_ex) {
-            return false;
+        ਜੇ (!kernels->rhs_info.pack_func_ex ||
+            !kernel->get_lhs_ਵਿੱਥ_ex || !kernel->get_rhs_packed_ਵਿੱਥ_ex || !kernel->ਲੜੀਵਾਰ_kernel_ex) {
+            ਵਾਪਸ ਝੂਠ;
         }
 
-        const int nth = params->nth;
-        const int ith = params->ith;
+        ਅਚਲ ਪੂਰਨ nth = params->nth;
+        ਅਚਲ ਪੂਰਨ ith = params->ith;
 
-        const int64_t lhs_batch_size0 = ne12;
-        const int64_t rhs_batch_size0 = ne02;
-        const int64_t batch_size      = lhs_batch_size0;
+        ਅਚਲ int64_t lhs_batch_size0 = ne12;
+        ਅਚਲ int64_t rhs_batch_size0 = ne02;
+        ਅਚਲ int64_t batch_ਮਾਪ      = lhs_batch_size0;
 
         GGML_ASSERT(rhs_batch_size0 > 0);
         GGML_ASSERT(lhs_batch_size0 % rhs_batch_size0 == 0);
-        const int64_t r = lhs_batch_size0 / rhs_batch_size0;
+        ਅਚਲ int64_t r = lhs_batch_size0 / rhs_batch_size0;
 
-        const int64_t m_group = ne11;
-        const int64_t m       = m_group;
-        const int64_t n       = ne01;
-        const int64_t k       = ne00;
+        ਅਚਲ int64_t m_ਸਮੂਹ = ne11;
+        ਅਚਲ int64_t m       = m_ਸਮੂਹ;
+        ਅਚਲ int64_t n       = ne01;
+        ਅਚਲ int64_t k       = ne00;
 
-        const size_t lhs_stride = src1->nb[1];
-        const size_t rhs_stride = src0->nb[1];
-        const size_t dst_stride = dst->nb[1];
+        ਅਚਲ size_t lhs_stride = src1->nb[1];
+        ਅਚਲ size_t rhs_stride = src0->nb[1];
+        ਅਚਲ size_t dst_stride = dst->nb[1];
 
-        const int64_t mr = (int64_t) kernel->get_mr();
-        const int64_t nr = (int64_t) kernel->get_nr();
-        const int64_t kr = (int64_t) kernel->get_kr();
-        const int64_t sr = (int64_t) kernel->get_sr();
+        ਅਚਲ int64_t mr = (int64_t) kernel->get_mr();
+        ਅਚਲ int64_t nr = (int64_t) kernel->get_nr();
+        ਅਚਲ int64_t kr = (int64_t) kernel->get_kr();
+        ਅਚਲ int64_t sr = (int64_t) kernel->get_sr();
 
-        const size_t lhs_packed_size = lhs_info->packed_size_ex(m, k, 0, mr, kr, sr);
-        const size_t rhs_packed_size = kernels->rhs_info.packed_size_ex(n, k, nr, kr, 0);
-        const size_t kxn_size        = k * n * sizeof(float);
-        const size_t bias_size       = n * sizeof(float);
+        ਅਚਲ size_t lhs_packed_ਮਾਪ = lhs_info->packed_ਮਾਪ_ex(m, k, 0, mr, kr, sr);
+        ਅਚਲ size_t rhs_packed_ਮਾਪ = kernels->rhs_info.packed_ਮਾਪ_ex(n, k, nr, kr, 0);
+        ਅਚਲ size_t kxn_ਮਾਪ        = k * n * ਆਕਾਰ(ਦਸ਼ਮਲਵ);
+        ਅਚਲ size_t bias_ਮਾਪ       = n * ਆਕਾਰ(ਦਸ਼ਮਲਵ);
 
-        const size_t wsize_required = lhs_packed_size + rhs_packed_size + kxn_size + bias_size;
+        ਅਚਲ size_t wsize_required = lhs_packed_ਮਾਪ + rhs_packed_ਮਾਪ + kxn_ਮਾਪ + bias_ਮਾਪ;
         GGML_ASSERT(wsize_required <= params->wsize);
 
         uint8_t * lhs_packed = static_cast<uint8_t *>(params->wdata);
-        uint8_t * rhs_packed = lhs_packed + lhs_packed_size;
-        uint8_t * rhs_kxn    = rhs_packed + rhs_packed_size;
-        uint8_t * bias       = rhs_kxn + kxn_size;
+        uint8_t * rhs_packed = lhs_packed + lhs_packed_ਮਾਪ;
+        uint8_t * rhs_kxn    = rhs_packed + rhs_packed_ਮਾਪ;
+        uint8_t * bias       = rhs_kxn + kxn_ਮਾਪ;
 
-        for (int64_t batch_idx = 0; batch_idx < batch_size; ++batch_idx) {
-            const int64_t rhs_batch_idx = batch_idx / r;
-            const uint8_t * rhs_batch_base = static_cast<const uint8_t *>(src0->data) + rhs_batch_idx * src0->nb[2];
-            uint8_t * dst_batch_base = static_cast<uint8_t *>(dst->data) + batch_idx * dst->nb[2];
+        ਲਈ (int64_t batch_idx = 0; batch_idx < batch_ਮਾਪ; ++batch_idx) {
+            ਅਚਲ int64_t rhs_batch_idx = batch_idx / r;
+            ਅਚਲ uint8_t * rhs_batch_ਅਧਾਰ = static_cast<ਅਚਲ uint8_t *>(src0->ਅੰਕੜੇ) + rhs_batch_idx * src0->nb[2];
+            uint8_t * dst_batch_ਅਧਾਰ = static_cast<uint8_t *>(dst->ਅੰਕੜੇ) + batch_idx * dst->nb[2];
 
             // LHS packing (threaded over m, honoring mr alignment and KV groups)
             {
-                const int64_t m_roundup_mr = kai_roundup(m, mr);
-                const int64_t num_threads  = KAI_MIN(m_roundup_mr / mr, nth);
+                ਅਚਲ int64_t m_roundup_mr = kai_roundup(m, mr);
+                ਅਚਲ int64_t ਅੰਕ_ਧਾਗੇ  = KAI_MIN(m_roundup_mr / mr, nth);
 
-                if (ith < num_threads) {
-                    const int64_t num_m_per_thread0   = round_down((size_t)(m_roundup_mr / num_threads), (size_t)mr);
-                    const int64_t num_m_per_threadN_1 = m - (num_threads - 1) * num_m_per_thread0;
+                ਜੇ (ith < ਅੰਕ_ਧਾਗੇ) {
+                    ਅਚਲ int64_t ਅੰਕ_m_ਪ੍ਰਤੀ_thread0   = ਗੇੜਾ_ਥੱਲੇ((size_t)(m_roundup_mr / ਅੰਕ_ਧਾਗੇ), (size_t)mr);
+                    ਅਚਲ int64_t ਅੰਕ_m_ਪ੍ਰਤੀ_thread_N_1 = m - (ਅੰਕ_ਧਾਗੇ - 1) * ਅੰਕ_m_ਪ੍ਰਤੀ_thread0;
 
-                    const int64_t m_start = ith * num_m_per_thread0;
-                    const int64_t m_count = (ith == num_threads - 1) ? num_m_per_threadN_1 : num_m_per_thread0;
+                    ਅਚਲ int64_t m_ਸ਼ੁਰੂ = ith * ਅੰਕ_m_ਪ੍ਰਤੀ_thread0;
+                    ਅਚਲ int64_t m_ਗਿਣਤੀ = (ith == ਅੰਕ_ਧਾਗੇ - 1) ? ਅੰਕ_m_ਪ੍ਰਤੀ_thread_N_1 : ਅੰਕ_m_ਪ੍ਰਤੀ_thread0;
 
                     // Base packed offset (aligned) and per-row stride in bytes
-                    const size_t base_packed_off  = lhs_info->get_packed_offset_ex(m_start, k, 0, mr, kr, sr);
-                    const size_t next_block_off   = lhs_info->get_packed_offset_ex(m_start + mr, k, 0, mr, kr, sr);
-                    const size_t row_stride_bytes = (next_block_off - base_packed_off) / (size_t)mr;
+                    ਅਚਲ size_t ਅਧਾਰ_packed_off  = lhs_info->get_packed_ਵਿੱਥ_ex(m_ਸ਼ੁਰੂ, k, 0, mr, kr, sr);
+                    ਅਚਲ size_t ਅਗਲਾ_ਖੰਡ_off   = lhs_info->get_packed_ਵਿੱਥ_ex(m_ਸ਼ੁਰੂ + mr, k, 0, mr, kr, sr);
+                    ਅਚਲ size_t ਪੰਕਤੀ_stride_ਬਾਈਟਾਂ = (ਅਗਲਾ_ਖੰਡ_off - ਅਧਾਰ_packed_off) / (size_t)mr;
 
-                    int64_t remaining = m_count;
-                    int64_t cur       = m_start;
+                    int64_t ਬਚਿਆ = m_ਗਿਣਤੀ;
+                    int64_t cur       = m_ਸ਼ੁਰੂ;
 
-                    while (remaining > 0) {
-                        const int64_t row_in_group = cur;
-                        const int64_t avail        = m_group - row_in_group;
-                        const int64_t take         = std::min(avail, remaining);
+                    ਜਦੋਂ (ਬਚਿਆ > 0) {
+                        ਅਚਲ int64_t ਪੰਕਤੀ_ਵਿੱਚ_ਸਮੂਹ = cur;
+                        ਅਚਲ int64_t avail        = m_ਸਮੂਹ - ਪੰਕਤੀ_ਵਿੱਚ_ਸਮੂਹ;
+                        ਅਚਲ int64_t take         = std::min(avail, ਬਚਿਆ);
 
-                        const uint8_t * lhs_batch_base = static_cast<const uint8_t *>(src1->data) + batch_idx * src1->nb[2];
-                        const void * src_ptr = lhs_batch_base + (size_t)row_in_group * lhs_stride;
-                        const size_t dst_off = base_packed_off + (size_t)(cur - m_start) * row_stride_bytes;
-                        void * dst_ptr       = lhs_packed + dst_off;
+                        ਅਚਲ uint8_t * lhs_batch_ਅਧਾਰ = static_cast<ਅਚਲ uint8_t *>(src1->ਅੰਕੜੇ) + batch_idx * src1->nb[2];
+                        ਅਚਲ ਖਾਲੀ * src_ptr = lhs_batch_ਅਧਾਰ + (size_t)ਪੰਕਤੀ_ਵਿੱਚ_ਸਮੂਹ * lhs_stride;
+                        ਅਚਲ size_t dst_off = ਅਧਾਰ_packed_off + (size_t)(cur - m_ਸ਼ੁਰੂ) * ਪੰਕਤੀ_stride_ਬਾਈਟਾਂ;
+                        ਖਾਲੀ * dst_ptr       = lhs_packed + dst_off;
 
                         lhs_info->pack_func_ex(take, k, 0, mr, kr, sr, 0, src_ptr, lhs_stride, dst_ptr);
 
                         cur       += take;
-                        remaining -= take;
+                        ਬਚਿਆ -= take;
                     }
                 }
             }
 
             // RHS packing (single thread), then synchronize
-            if (ith == 0) {
-                memset(bias, 0, (size_t)n * sizeof(float));
+            ਜੇ (ith == 0) {
+                memset(bias, 0, (size_t)n * ਆਕਾਰ(ਦਸ਼ਮਲਵ));
                 transpose_f32kxn_f16nxk((size_t)n, (size_t)k,
-                                        reinterpret_cast<float *>(rhs_kxn),
-                                        reinterpret_cast<const uint16_t *>(rhs_batch_base),
+                                        reinterpret_cast<ਦਸ਼ਮਲਵ *>(rhs_kxn),
+                                        reinterpret_cast<ਅਚਲ uint16_t *>(rhs_batch_ਅਧਾਰ),
                                         rhs_stride);
 
-                kernels->rhs_info.pack_func_ex(1, n, k, nr, kr, sr, 0, n * sizeof(float),
-                             rhs_kxn, bias, nullptr, rhs_packed, 0, nullptr);
+                kernels->rhs_info.pack_func_ex(1, n, k, nr, kr, sr, 0, n * ਆਕਾਰ(ਦਸ਼ਮਲਵ),
+                             rhs_kxn, bias, ਖਾਲੀ_ਸੂਚਕ, rhs_packed, 0, ਖਾਲੀ_ਸੂਚਕ);
             }
 
             ggml_barrier(params->threadpool);
 
             // Matmul (threaded over n)
             {
-                const int64_t n_step  = (int64_t) kernel->get_n_step();
-                int64_t num_threads_n = KAI_MIN(n / n_step, nth);
-                if (num_threads_n <= 0) {
-                    num_threads_n = 1;
+                ਅਚਲ int64_t n_ਕਦਮ  = (int64_t) kernel->get_n_ਕਦਮ();
+                int64_t ਅੰਕ_ਧਾਗੇ_n = KAI_MIN(n / n_ਕਦਮ, nth);
+                ਜੇ (ਅੰਕ_ਧਾਗੇ_n <= 0) {
+                    ਅੰਕ_ਧਾਗੇ_n = 1;
                 }
 
-                if (ith < num_threads_n) {
-                    const int64_t num_n_per_thread0   = round_down((size_t)(n / num_threads_n), (size_t)n_step);
-                    const int64_t num_n_per_threadN_1 = n - (num_threads_n - 1) * num_n_per_thread0;
+                ਜੇ (ith < ਅੰਕ_ਧਾਗੇ_n) {
+                    ਅਚਲ int64_t ਅੰਕ_n_ਪ੍ਰਤੀ_thread0   = ਗੇੜਾ_ਥੱਲੇ((size_t)(n / ਅੰਕ_ਧਾਗੇ_n), (size_t)n_ਕਦਮ);
+                    ਅਚਲ int64_t ਅੰਕ_n_ਪ੍ਰਤੀ_thread_N_1 = n - (ਅੰਕ_ਧਾਗੇ_n - 1) * ਅੰਕ_n_ਪ੍ਰਤੀ_thread0;
 
-                    const int64_t n_start      = ith * num_n_per_thread0;
-                    const int64_t n_to_process = (ith == num_threads_n - 1) ? num_n_per_threadN_1 : num_n_per_thread0;
+                    ਅਚਲ int64_t n_ਸ਼ੁਰੂ      = ith * ਅੰਕ_n_ਪ੍ਰਤੀ_thread0;
+                    ਅਚਲ int64_t n_ਮੰਜ਼ਿਲ_process = (ith == ਅੰਕ_ਧਾਗੇ_n - 1) ? ਅੰਕ_n_ਪ੍ਰਤੀ_thread_N_1 : ਅੰਕ_n_ਪ੍ਰਤੀ_thread0;
 
                     // LHS packed base at row 0 (consistent with packing above)
-                    const size_t lhs_packed_offset0 = lhs_info->get_packed_offset_ex(0, k, 0, mr, kr, sr);
-                    const size_t rhs_packed_offset  = kernel->get_rhs_packed_offset_ex(n_start, k, 0);
-                    const size_t dst_offset         = kernel->get_dst_offset((size_t)0, (size_t)n_start, dst_stride);
+                    ਅਚਲ size_t lhs_packed_offset0 = lhs_info->get_packed_ਵਿੱਥ_ex(0, k, 0, mr, kr, sr);
+                    ਅਚਲ size_t rhs_packed_ਵਿੱਥ  = kernel->get_rhs_packed_ਵਿੱਥ_ex(n_ਸ਼ੁਰੂ, k, 0);
+                    ਅਚਲ size_t dst_ਵਿੱਥ         = kernel->get_dst_ਵਿੱਥ((size_t)0, (size_t)n_ਸ਼ੁਰੂ, dst_stride);
 
-                    const void * lhs_ptr = lhs_packed + lhs_packed_offset0;
-                    const void * rhs_ptr = rhs_packed + rhs_packed_offset;
-                    float * dst_ptr      = reinterpret_cast<float *>(dst_batch_base + dst_offset);
+                    ਅਚਲ ਖਾਲੀ * lhs_ptr = lhs_packed + lhs_packed_offset0;
+                    ਅਚਲ ਖਾਲੀ * rhs_ptr = rhs_packed + rhs_packed_ਵਿੱਥ;
+                    ਦਸ਼ਮਲਵ * dst_ptr      = reinterpret_cast<ਦਸ਼ਮਲਵ *>(dst_batch_ਅਧਾਰ + dst_ਵਿੱਥ);
 
-                    kernel->run_kernel_ex(m, n_to_process, k, 0, lhs_ptr, rhs_ptr, dst_ptr, dst_stride, sizeof(float), -FLT_MAX, FLT_MAX);
+                    kernel->ਲੜੀਵਾਰ_kernel_ex(m, n_ਮੰਜ਼ਿਲ_process, k, 0, lhs_ptr, rhs_ptr, dst_ptr, dst_stride, ਆਕਾਰ(ਦਸ਼ਮਲਵ), -FLT_MAX, FLT_MAX);
                 }
             }
 
-            if (batch_idx != batch_size - 1) {
+            ਜੇ (batch_idx != batch_ਮਾਪ - 1) {
                 ggml_barrier(params->threadpool);
             }
         }
 
-        return true;
+        ਵਾਪਸ ਸੱਚ;
     }
 
-    bool compute_forward_qx(struct ggml_compute_params * params, struct ggml_tensor * dst) {
+    ਤਾਰਕਿਕ compute_forward_qx(ਬਣਤਰ ggml_compute_params * params, ਬਣਤਰ ggml_tensor * dst) {
         GGML_ASSERT(dst->src[0]->type == GGML_TYPE_Q4_0 || dst->src[0]->type == GGML_TYPE_Q4_K ||
                     dst->src[0]->type == GGML_TYPE_Q8_0 || dst->src[0]->type == GGML_TYPE_Q6_K);
 
-        const ggml_tensor * src0 = dst->src[0];
-        const ggml_tensor * src1 = dst->src[1];
+        ਅਚਲ ggml_tensor * src0 = dst->src[0];
+        ਅਚਲ ggml_tensor * src1 = dst->src[1];
 
-        GGML_TENSOR_BINARY_OP_LOCALS
+        GGML_TENSOR_ਦੁਆਧਾਰੀ_OP_LOCALS
 
-        const kleidiai_weight_header * header = kleidiai_weight_header_from_ptr(src0->data);
-        const bool has_header = kleidiai_is_weight_header_valid(header);
-        const bool is_gemv = src1->ne[1] == 1;
+        ਅਚਲ kleidiai_ਭਾਰ_ਸਿਰਲੇਖ * ਸਿਰਲੇਖ = kleidiai_ਭਾਰ_ਸਿਰਲੇਖ_from_ptr(src0->ਅੰਕੜੇ);
+        ਅਚਲ ਤਾਰਕਿਕ has_ਸਿਰਲੇਖ = kleidiai_is_ਭਾਰ_ਸਿਰਲੇਖ_valid(ਸਿਰਲੇਖ);
+        ਅਚਲ ਤਾਰਕਿਕ is_gemv = src1->ne[1] == 1;
         std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> kernel_chain;
-        const int slot_total = kleidiai_collect_kernel_chain(dst, kernel_chain);
+        ਅਚਲ ਪੂਰਨ ਥਾਂ_ਕੁੱਲ = kleidiai_collect_kernel_chain(dst, kernel_chain);
 
-        auto weight_for_slot = [&](int slot_index, size_t & size_out) -> const uint8_t * {
-            if (slot_index < 0 || slot_index >= slot_total) {
-                return nullptr;
+        ਸਵੈਚਾਲਿਤ ਭਾਰ_for_ਥਾਂ = [&](ਪੂਰਨ ਥਾਂ_ਸੂਚਕਾਂਕ, size_t & ਮਾਪ_ਬਾਹਰਲਾ) -> ਅਚਲ uint8_t * {
+            ਜੇ (ਥਾਂ_ਸੂਚਕਾਂਕ < 0 || ਥਾਂ_ਸੂਚਕਾਂਕ >= ਥਾਂ_ਕੁੱਲ) {
+                ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
             }
-            if (has_header) {
-                if (slot_index < header->slot_count) {
-                    size_out = static_cast<size_t>(header->sizes[slot_index]);
-                    return kleidiai_weight_slot_ptr(header, slot_index);
+            ਜੇ (has_ਸਿਰਲੇਖ) {
+                ਜੇ (ਥਾਂ_ਸੂਚਕਾਂਕ < ਸਿਰਲੇਖ->ਥਾਂ_ਗਿਣਤੀ) {
+                    ਮਾਪ_ਬਾਹਰਲਾ = static_cast<size_t>(ਸਿਰਲੇਖ->sizes[ਥਾਂ_ਸੂਚਕਾਂਕ]);
+                    ਵਾਪਸ kleidiai_ਭਾਰ_ਥਾਂ_ptr(ਸਿਰਲੇਖ, ਥਾਂ_ਸੂਚਕਾਂਕ);
                 }
-                return nullptr;
+                ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
             }
-            if (slot_index == 0) {
-                size_out = ggml_nbytes(src0);
-                return static_cast<const uint8_t *>(src0->data);
+            ਜੇ (ਥਾਂ_ਸੂਚਕਾਂਕ == 0) {
+                ਮਾਪ_ਬਾਹਰਲਾ = ggml_nbytes(src0);
+                ਵਾਪਸ static_cast<ਅਚਲ uint8_t *>(src0->ਅੰਕੜੇ);
             }
-            return nullptr;
+            ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
         };
 
-        struct runtime_slot {
-            int slot_index;
+        ਬਣਤਰ runtime_ਥਾਂ {
+            ਪੂਰਨ ਥਾਂ_ਸੂਚਕਾਂਕ;
             ggml_kleidiai_kernels * kernels;
             kernel_info * kernel;
             lhs_packing_info * lhs_info;
@@ -1177,41 +1177,41 @@ class tensor_traits : public ggml::cpu::tensor_traits {
             size_t nr;
             size_t kr;
             size_t sr;
-            size_t n_step;
-            size_t lhs_packed_size;
-            size_t lhs_offset;
+            size_t n_ਕਦਮ;
+            size_t lhs_packed_ਮਾਪ;
+            size_t lhs_ਵਿੱਥ;
             size_t lhs_bl;
             size_t rhs_bl;
             size_t pack_bl;
             size_t lhs_packed_offset0;
-            int assigned_threads;
-            int thread_begin;
-            int thread_end;
-            const uint8_t * rhs_base;
+            ਪੂਰਨ assigned_ਧਾਗੇ;
+            ਪੂਰਨ thread_begin;
+            ਪੂਰਨ thread_ਸਿਰਾ;
+            ਅਚਲ uint8_t * rhs_ਅਧਾਰ;
         };
 
-        std::array<runtime_slot, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> runtime{};
-        int runtime_count = 0;
+        std::array<runtime_ਥਾਂ, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> runtime{};
+        ਪੂਰਨ runtime_ਗਿਣਤੀ = 0;
 
-        for (int slot = 0; slot < slot_total && runtime_count < GGML_KLEIDIAI_MAX_KERNEL_SLOTS; ++slot) {
-            ggml_kleidiai_kernels * kernels = kernel_chain[slot];
+        ਲਈ (ਪੂਰਨ ਥਾਂ = 0; ਥਾਂ < ਥਾਂ_ਕੁੱਲ && runtime_ਗਿਣਤੀ < GGML_KLEIDIAI_MAX_KERNEL_SLOTS; ++ਥਾਂ) {
+            ggml_kleidiai_kernels * kernels = kernel_chain[ਥਾਂ];
             kernel_info * kinfo      = is_gemv ? &kernels->gemv : &kernels->gemm;
             lhs_packing_info * linfo = is_gemv ? &kernels->gemv_lhs_info : &kernels->gemm_lhs_info;
-            if (!kinfo || !linfo || !linfo->packed_size_ex || !linfo->pack_func_ex || !linfo->get_offset ||
-                !kinfo->get_rhs_packed_offset_ex || !kinfo->run_kernel_ex || !kinfo->get_dst_offset) {
-                continue;
+            ਜੇ (!kinfo || !linfo || !linfo->packed_ਮਾਪ_ex || !linfo->pack_func_ex || !linfo->get_ਵਿੱਥ ||
+                !kinfo->get_rhs_packed_ਵਿੱਥ_ex || !kinfo->ਲੜੀਵਾਰ_kernel_ex || !kinfo->get_dst_ਵਿੱਥ) {
+                ਜਾਰੀ;
             }
 
-            size_t rhs_size = 0;
-            const uint8_t * rhs_ptr = weight_for_slot(slot, rhs_size);
-            if (!rhs_ptr || rhs_size == 0) {
-                continue;
+            size_t rhs_ਮਾਪ = 0;
+            ਅਚਲ uint8_t * rhs_ptr = ਭਾਰ_for_ਥਾਂ(ਥਾਂ, rhs_ਮਾਪ);
+            ਜੇ (!rhs_ptr || rhs_ਮਾਪ == 0) {
+                ਜਾਰੀ;
             }
 
-            const kleidiai_block_args block_args = kleidiai_get_block_args(kernels->rhs_type);
+            ਅਚਲ kleidiai_ਖੰਡ_ਦਲੀਲਾਂ ਖੰਡ_ਦਲੀਲਾਂ = kleidiai_get_ਖੰਡ_ਦਲੀਲਾਂ(kernels->rhs_type);
 
-            runtime[runtime_count] = {
-                slot,
+            runtime[runtime_ਗਿਣਤੀ] = {
+                ਥਾਂ,
                 kernels,
                 kinfo,
                 linfo,
@@ -1219,693 +1219,693 @@ class tensor_traits : public ggml::cpu::tensor_traits {
                 kinfo->get_nr(),
                 kinfo->get_kr(),
                 kinfo->get_sr(),
-                kinfo->get_n_step(),
+                kinfo->get_n_ਕਦਮ(),
                 0,
                 0,
-                block_args.lhs_bl,
-                block_args.rhs_bl,
-                block_args.pack_bl,
+                ਖੰਡ_ਦਲੀਲਾਂ.lhs_bl,
+                ਖੰਡ_ਦਲੀਲਾਂ.rhs_bl,
+                ਖੰਡ_ਦਲੀਲਾਂ.pack_bl,
                 0,
                 0,
                 0,
                 0,
                 rhs_ptr
             };
-            ++runtime_count;
+            ++runtime_ਗਿਣਤੀ;
         }
 
-        if (runtime_count == 0) {
+        ਜੇ (runtime_ਗਿਣਤੀ == 0) {
             GGML_LOG_WARN("kleidiai: no runtime kernel slot available for supported op %s\n", dst->name);
-            return false;
+            ਵਾਪਸ ਝੂਠ;
         }
 
-        const int nth_total = params->nth > 0 ? params->nth : 1;
-        const int ith_total = params->ith;
+        ਅਚਲ ਪੂਰਨ nth_ਕੁੱਲ = params->nth > 0 ? params->nth : 1;
+        ਅਚਲ ਪੂਰਨ ith_ਕੁੱਲ = params->ith;
 
-        int sme_slot = -1;
-        int non_sme_slot = -1;
-        for (int i = 0; i < runtime_count; ++i) {
-            if (is_sme_family(runtime[i].kernels->required_cpu)) {
-                sme_slot = i;
-                break;
+        ਪੂਰਨ sme_ਥਾਂ = -1;
+        ਪੂਰਨ non_sme_ਥਾਂ = -1;
+        ਲਈ (ਪੂਰਨ i = 0; i < runtime_ਗਿਣਤੀ; ++i) {
+            ਜੇ (is_sme_family(runtime[i].kernels->required_cpu)) {
+                sme_ਥਾਂ = i;
+                ਰੋਕੋ;
             }
         }
 
-        for (int i = 0; i < runtime_count; ++i) {
-            if (!is_sme_family(runtime[i].kernels->required_cpu)) {
-                non_sme_slot = i;
-                break;
+        ਲਈ (ਪੂਰਨ i = 0; i < runtime_ਗਿਣਤੀ; ++i) {
+            ਜੇ (!is_sme_family(runtime[i].kernels->required_cpu)) {
+                non_sme_ਥਾਂ = i;
+                ਰੋਕੋ;
             }
         }
 
-        const int sme_cap_limit = ctx.sme_thread_cap;
-        const bool use_hybrid = sme_cap_limit > 0 &&
-                                 runtime_count > 1 &&
-                                 nth_total > sme_cap_limit;
+        ਅਚਲ ਪੂਰਨ sme_cap_ਹੱਦਬੰਦੀ = ctx.sme_thread_cap;
+        ਅਚਲ ਤਾਰਕਿਕ use_hybrid = sme_cap_ਹੱਦਬੰਦੀ > 0 &&
+                                 runtime_ਗਿਣਤੀ > 1 &&
+                                 nth_ਕੁੱਲ > sme_cap_ਹੱਦਬੰਦੀ;
         // Heuristic: disable hybrid for very small workloads where per-slot overhead dominates.
         // If rows are small or average columns per thread are small, keep single-slot.
-        size_t min_cols_per_thread = 0;
-        if (runtime_count > 0 && nth_total > 0) {
-            min_cols_per_thread = (size_t) std::max<int64_t>(1, (int64_t)ne01 / (int64_t)nth_total);
+        size_t min_ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_thread = 0;
+        ਜੇ (runtime_ਗਿਣਤੀ > 0 && nth_ਕੁੱਲ > 0) {
+            min_ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_thread = (size_t) std::max<int64_t>(1, (int64_t)ne01 / (int64_t)nth_ਕੁੱਲ);
         }
-        const bool too_small_for_hybrid = (min_cols_per_thread < 2) || (ne11 < 128);
+        ਅਚਲ ਤਾਰਕਿਕ too_small_for_hybrid = (min_ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_thread < 2) || (ne11 < 128);
 
-        const bool hybrid_enabled = use_hybrid && !too_small_for_hybrid;
+        ਅਚਲ ਤਾਰਕਿਕ hybrid_enabled = use_hybrid && !too_small_for_hybrid;
 
-        if (!hybrid_enabled) {
-            int chosen_slot = 0;
-            if (too_small_for_hybrid && sme_slot != -1) {
-                chosen_slot = nth_total > sme_cap_limit && non_sme_slot != -1 ? non_sme_slot : sme_slot;
-            } else if (runtime_count > 1 && ctx.sme_thread_cap > 0 && nth_total > ctx.sme_thread_cap) {
-                chosen_slot = 1;
+        ਜੇ (!hybrid_enabled) {
+            ਪੂਰਨ chosen_ਥਾਂ = 0;
+            ਜੇ (too_small_for_hybrid && sme_ਥਾਂ != -1) {
+                chosen_ਥਾਂ = nth_ਕੁੱਲ > sme_cap_ਹੱਦਬੰਦੀ && non_sme_ਥਾਂ != -1 ? non_sme_ਥਾਂ : sme_ਥਾਂ;
+            } ਨਹੀਂਤਾਂ ਜੇ (runtime_ਗਿਣਤੀ > 1 && ctx.sme_thread_cap > 0 && nth_ਕੁੱਲ > ctx.sme_thread_cap) {
+                chosen_ਥਾਂ = 1;
             }
-            if (chosen_slot != 0 && chosen_slot < runtime_count) {
-                runtime[0] = runtime[chosen_slot];
-                runtime[0].assigned_threads = 0;
+            ਜੇ (chosen_ਥਾਂ != 0 && chosen_ਥਾਂ < runtime_ਗਿਣਤੀ) {
+                runtime[0] = runtime[chosen_ਥਾਂ];
+                runtime[0].assigned_ਧਾਗੇ = 0;
                 runtime[0].thread_begin = 0;
-                runtime[0].thread_end = 0;
+                runtime[0].thread_ਸਿਰਾ = 0;
             }
-            runtime_count = runtime_count > 0 ? 1 : 0;
+            runtime_ਗਿਣਤੀ = runtime_ਗਿਣਤੀ > 0 ? 1 : 0;
 
             // Recompute SME slot based on the collapsed runtime[0]
-            sme_slot = -1;
-            if (runtime_count > 0 &&
+            sme_ਥਾਂ = -1;
+            ਜੇ (runtime_ਗਿਣਤੀ > 0 &&
                 is_sme_family(runtime[0].kernels->required_cpu)) {
-                sme_slot = 0;
+                sme_ਥਾਂ = 0;
             }
         }
 
-        const bool sme_single_only = sme_slot != -1 &&
-                                     runtime[sme_slot].kernels->rhs_info.repack_mode == RHS_REPACK_SINGLE_ONLY;
-        int sme_cap = sme_single_only ? nth_total : kleidiai_sme_thread_cap();
-        if (sme_cap < 0) {
-            sme_cap = nth_total;
+        ਅਚਲ ਤਾਰਕਿਕ sme_single_only = sme_ਥਾਂ != -1 &&
+                                     runtime[sme_ਥਾਂ].kernels->rhs_info.repack_ਬਹੁਲਕ == RHS_REPACK_SINGLE_ONLY;
+        ਪੂਰਨ sme_cap = sme_single_only ? nth_ਕੁੱਲ : kleidiai_sme_thread_cap();
+        ਜੇ (sme_cap < 0) {
+            sme_cap = nth_ਕੁੱਲ;
         }
-        sme_cap = std::min(sme_cap, nth_total);
+        sme_cap = std::min(sme_cap, nth_ਕੁੱਲ);
 
-        int threads_remaining = nth_total;
-        if (sme_slot != -1) {
-            int sme_threads = std::min(std::max(sme_cap, 0), threads_remaining);
-            runtime[sme_slot].assigned_threads = sme_threads;
-            threads_remaining -= sme_threads;
+        ਪੂਰਨ ਧਾਗੇ_ਬਚਿਆ = nth_ਕੁੱਲ;
+        ਜੇ (sme_ਥਾਂ != -1) {
+            ਪੂਰਨ sme_ਧਾਗੇ = std::min(std::max(sme_cap, 0), ਧਾਗੇ_ਬਚਿਆ);
+            runtime[sme_ਥਾਂ].assigned_ਧਾਗੇ = sme_ਧਾਗੇ;
+            ਧਾਗੇ_ਬਚਿਆ -= sme_ਧਾਗੇ;
         }
 
-        int fallback_indices[GGML_KLEIDIAI_MAX_KERNEL_SLOTS];
-        int fallback_count = 0;
+        ਪੂਰਨ fallback_indices[GGML_KLEIDIAI_MAX_KERNEL_SLOTS];
+        ਪੂਰਨ fallback_ਗਿਣਤੀ = 0;
         // The current hybrid chain is bounded to SME + one non-SME fallback slot.
         GGML_ASSERT(GGML_KLEIDIAI_MAX_KERNEL_SLOTS == 2);
-        for (int i = 0; i < runtime_count; ++i) {
-            if (i == sme_slot) {
-                continue;
+        ਲਈ (ਪੂਰਨ i = 0; i < runtime_ਗਿਣਤੀ; ++i) {
+            ਜੇ (i == sme_ਥਾਂ) {
+                ਜਾਰੀ;
             }
-            fallback_indices[fallback_count++] = i;
+            fallback_indices[fallback_ਗਿਣਤੀ++] = i;
         }
 
-        for (int fi = 0; fi < fallback_count; ++fi) {
-            if (threads_remaining <= 0) {
-                break;
+        ਲਈ (ਪੂਰਨ fi = 0; fi < fallback_ਗਿਣਤੀ; ++fi) {
+            ਜੇ (ਧਾਗੇ_ਬਚਿਆ <= 0) {
+                ਰੋਕੋ;
             }
-            const int slot_index = fallback_indices[fi];
-            const int slots_left = fallback_count - fi;
-            int share = (threads_remaining + slots_left - 1) / slots_left;
-            share     = std::min(share, threads_remaining);
-            runtime[slot_index].assigned_threads = share;
-            threads_remaining -= share;
+            ਅਚਲ ਪੂਰਨ ਥਾਂ_ਸੂਚਕਾਂਕ = fallback_indices[fi];
+            ਅਚਲ ਪੂਰਨ slots_ਖੱਬਾ = fallback_ਗਿਣਤੀ - fi;
+            ਪੂਰਨ share = (ਧਾਗੇ_ਬਚਿਆ + slots_ਖੱਬਾ - 1) / slots_ਖੱਬਾ;
+            share     = std::min(share, ਧਾਗੇ_ਬਚਿਆ);
+            runtime[ਥਾਂ_ਸੂਚਕਾਂਕ].assigned_ਧਾਗੇ = share;
+            ਧਾਗੇ_ਬਚਿਆ -= share;
         }
 
-        int thread_cursor = 0;
-        for (int i = 0; i < runtime_count; ++i) {
+        ਪੂਰਨ thread_cursor = 0;
+        ਲਈ (ਪੂਰਨ i = 0; i < runtime_ਗਿਣਤੀ; ++i) {
             runtime[i].thread_begin = thread_cursor;
-            thread_cursor += runtime[i].assigned_threads;
-            runtime[i].thread_end = thread_cursor;
+            thread_cursor += runtime[i].assigned_ਧਾਗੇ;
+            runtime[i].thread_ਸਿਰਾ = thread_cursor;
         }
         GGML_ASSERT(thread_cursor > 0);
-        const int active_threads = thread_cursor;
+        ਅਚਲ ਪੂਰਨ ਸਰਗਰਮ_ਧਾਗੇ = thread_cursor;
 
-        int local_slot = -1;
-        int local_ith  = 0;
-        for (int i = 0; i < runtime_count; ++i) {
-            if (ith_total >= runtime[i].thread_begin && ith_total < runtime[i].thread_end) {
-                local_slot = i;
-                local_ith  = ith_total - runtime[i].thread_begin;
-                break;
+        ਪੂਰਨ local_ਥਾਂ = -1;
+        ਪੂਰਨ local_ith  = 0;
+        ਲਈ (ਪੂਰਨ i = 0; i < runtime_ਗਿਣਤੀ; ++i) {
+            ਜੇ (ith_ਕੁੱਲ >= runtime[i].thread_begin && ith_ਕੁੱਲ < runtime[i].thread_ਸਿਰਾ) {
+                local_ਥਾਂ = i;
+                local_ith  = ith_ਕੁੱਲ - runtime[i].thread_begin;
+                ਰੋਕੋ;
             }
         }
-        const size_t k = ne00;
-        const size_t m = ne11;
-        const size_t n = ne01;
+        ਅਚਲ size_t k = ne00;
+        ਅਚਲ size_t m = ne11;
+        ਅਚਲ size_t n = ne01;
 
         size_t cursor = 0;
-        for (int i = 0; i < runtime_count; ++i) {
-            runtime[i].lhs_packed_size = runtime[i].lhs_info->packed_size_ex(m, k, runtime[i].pack_bl, runtime[i].mr, runtime[i].kr, runtime[i].sr);
-            cursor = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
-            runtime[i].lhs_offset = cursor;
-            runtime[i].lhs_packed_offset0 = runtime[i].lhs_info->get_packed_offset_ex(0, k, runtime[i].lhs_bl, runtime[i].mr, runtime[i].kr, runtime[i].sr);
-            cursor += runtime[i].lhs_packed_size;
+        ਲਈ (ਪੂਰਨ i = 0; i < runtime_ਗਿਣਤੀ; ++i) {
+            runtime[i].lhs_packed_ਮਾਪ = runtime[i].lhs_info->packed_ਮਾਪ_ex(m, k, runtime[i].pack_bl, runtime[i].mr, runtime[i].kr, runtime[i].sr);
+            cursor = align_ਉੱਪਰ(cursor, GGML_KLEIDIAI_PACK_ALIGN);
+            runtime[i].lhs_ਵਿੱਥ = cursor;
+            runtime[i].lhs_packed_offset0 = runtime[i].lhs_info->get_packed_ਵਿੱਥ_ex(0, k, runtime[i].lhs_bl, runtime[i].mr, runtime[i].kr, runtime[i].sr);
+            cursor += runtime[i].lhs_packed_ਮਾਪ;
         }
 
         GGML_ASSERT(cursor <= params->wsize);
         uint8_t * scratch = static_cast<uint8_t *>(params->wdata);
 
-        size_t common_step = 1;
-        for (int i = 0; i < runtime_count; ++i) {
-            if (runtime[i].assigned_threads == 0) {
-                continue;
+        size_t common_ਕਦਮ = 1;
+        ਲਈ (ਪੂਰਨ i = 0; i < runtime_ਗਿਣਤੀ; ++i) {
+            ਜੇ (runtime[i].assigned_ਧਾਗੇ == 0) {
+                ਜਾਰੀ;
             }
-            size_t next_step = 0;
-            if (!lcm_size(common_step, runtime[i].n_step ? runtime[i].n_step : 1, next_step)) {
-                return false;
+            size_t ਅਗਲਾ_ਕਦਮ = 0;
+            ਜੇ (!lcm_ਮਾਪ(common_ਕਦਮ, runtime[i].n_ਕਦਮ ? runtime[i].n_ਕਦਮ : 1, ਅਗਲਾ_ਕਦਮ)) {
+                ਵਾਪਸ ਝੂਠ;
             }
-            common_step = next_step;
+            common_ਕਦਮ = ਅਗਲਾ_ਕਦਮ;
         }
-        GGML_ASSERT(common_step > 0);
+        GGML_ASSERT(common_ਕਦਮ > 0);
 
-        const bool disable_chunking = ggml_is_numa();
-        const size_t chunk_multiplier = std::max(1, ctx.chunk_multiplier);
-        const size_t chunk_divisor = (active_threads == 1 || disable_chunking) ? (size_t) active_threads : (size_t) active_threads * chunk_multiplier;
-        size_t chunk_cols = align_up(std::max<size_t>(1, ceil_div_size(n, chunk_divisor)), common_step);
-        if (chunk_cols == 0) {
-            chunk_cols = common_step;
+        ਅਚਲ ਤਾਰਕਿਕ disable_chunking = ggml_is_numa();
+        ਅਚਲ size_t chunk_multiplier = std::max(1, ctx.chunk_multiplier);
+        ਅਚਲ size_t chunk_ਭਾਜਕ = (ਸਰਗਰਮ_ਧਾਗੇ == 1 || disable_chunking) ? (size_t) ਸਰਗਰਮ_ਧਾਗੇ : (size_t) ਸਰਗਰਮ_ਧਾਗੇ * chunk_multiplier;
+        size_t chunk_ਖਾਨੇ_ਗਿਣਤੀ = align_ਉੱਪਰ(std::max<size_t>(1, ceil_div_ਮਾਪ(n, chunk_ਭਾਜਕ)), common_ਕਦਮ);
+        ਜੇ (chunk_ਖਾਨੇ_ਗਿਣਤੀ == 0) {
+            chunk_ਖਾਨੇ_ਗਿਣਤੀ = common_ਕਦਮ;
         }
         // If common_step is larger than n, the loop below runs one valid tail chunk
         // with cols == n.
-        const size_t nchunk_size = std::max<size_t>(1, ceil_div_size(n, chunk_cols));
-        GGML_ASSERT(nchunk_size <= (size_t)INT_MAX);
-        const int nchunk = (int)nchunk_size;
-        const size_t dst_stride = dst->nb[1];
+        ਅਚਲ size_t nchunk_ਮਾਪ = std::max<size_t>(1, ceil_div_ਮਾਪ(n, chunk_ਖਾਨੇ_ਗਿਣਤੀ));
+        GGML_ASSERT(nchunk_ਮਾਪ <= (size_t)ਵੱਧ_ਤੋਂ_ਵੱਧ_ਅੰਕ);
+        ਅਚਲ ਪੂਰਨ nchunk = (ਪੂਰਨ)nchunk_ਮਾਪ;
+        ਅਚਲ size_t dst_stride = dst->nb[1];
 
-        auto run_chunk = [&](runtime_slot & slot, size_t global_start, size_t cols, uint8_t * dst_batch_base) {
-            const size_t rhs_packed_offset = slot.kernel->get_rhs_packed_offset_ex(global_start, k, slot.rhs_bl);
-            const size_t dst_offset        = slot.kernel->get_dst_offset(0, global_start, dst_stride);
+        ਸਵੈਚਾਲਿਤ ਲੜੀਵਾਰ_chunk = [&](runtime_ਥਾਂ & ਥਾਂ, size_t global_ਸ਼ੁਰੂ, size_t ਖਾਨੇ_ਗਿਣਤੀ_2, uint8_t * dst_batch_ਅਧਾਰ) {
+            ਅਚਲ size_t rhs_packed_ਵਿੱਥ = ਥਾਂ.kernel->get_rhs_packed_ਵਿੱਥ_ex(global_ਸ਼ੁਰੂ, k, ਥਾਂ.rhs_bl);
+            ਅਚਲ size_t dst_ਵਿੱਥ        = ਥਾਂ.kernel->get_dst_ਵਿੱਥ(0, global_ਸ਼ੁਰੂ, dst_stride);
 
-            const uint8_t * lhs_ptr = scratch + slot.lhs_offset + slot.lhs_packed_offset0;
-            const uint8_t * rhs_ptr = slot.rhs_base + rhs_packed_offset;
-            float * dst_ptr         = reinterpret_cast<float *>(dst_batch_base + dst_offset);
+            ਅਚਲ uint8_t * lhs_ptr = scratch + ਥਾਂ.lhs_ਵਿੱਥ + ਥਾਂ.lhs_packed_offset0;
+            ਅਚਲ uint8_t * rhs_ptr = ਥਾਂ.rhs_ਅਧਾਰ + rhs_packed_ਵਿੱਥ;
+            ਦਸ਼ਮਲਵ * dst_ptr         = reinterpret_cast<ਦਸ਼ਮਲਵ *>(dst_batch_ਅਧਾਰ + dst_ਵਿੱਥ);
 
-            slot.kernel->run_kernel_ex(m, cols, k, slot.rhs_bl,
+            ਥਾਂ.kernel->ਲੜੀਵਾਰ_kernel_ex(m, ਖਾਨੇ_ਗਿਣਤੀ_2, k, ਥਾਂ.rhs_bl,
                                        lhs_ptr,
                                        rhs_ptr,
                                        dst_ptr,
                                        dst_stride,
-                                       sizeof(float),
+                                       ਆਕਾਰ(ਦਸ਼ਮਲਵ),
                                        -FLT_MAX,
                                        FLT_MAX);
         };
 
-        for (int64_t batch_idx = 0; batch_idx < ne12; ++batch_idx) {
-            const uint8_t * lhs_batch_base = static_cast<const uint8_t *>(src1->data) + batch_idx * src1->nb[2];
-            uint8_t * dst_batch_base = static_cast<uint8_t *>(dst->data) + batch_idx * dst->nb[2];
+        ਲਈ (int64_t batch_idx = 0; batch_idx < ne12; ++batch_idx) {
+            ਅਚਲ uint8_t * lhs_batch_ਅਧਾਰ = static_cast<ਅਚਲ uint8_t *>(src1->ਅੰਕੜੇ) + batch_idx * src1->nb[2];
+            uint8_t * dst_batch_ਅਧਾਰ = static_cast<uint8_t *>(dst->ਅੰਕੜੇ) + batch_idx * dst->nb[2];
 
-            if (local_slot != -1) {
-                runtime_slot & slot = runtime[local_slot];
-                const int64_t m_roundup_mr = kai_roundup((int64_t)m, (int64_t)slot.mr);
-                int64_t max_threads = slot.mr ? (m_roundup_mr / (int64_t)slot.mr) : slot.assigned_threads;
-                max_threads = std::max<int64_t>(1, max_threads);
-                const int64_t use_threads = std::min<int64_t>(slot.assigned_threads, max_threads);
+            ਜੇ (local_ਥਾਂ != -1) {
+                runtime_ਥਾਂ & ਥਾਂ = runtime[local_ਥਾਂ];
+                ਅਚਲ int64_t m_roundup_mr = kai_roundup((int64_t)m, (int64_t)ਥਾਂ.mr);
+                int64_t max_ਧਾਗੇ = ਥਾਂ.mr ? (m_roundup_mr / (int64_t)ਥਾਂ.mr) : ਥਾਂ.assigned_ਧਾਗੇ;
+                max_ਧਾਗੇ = std::max<int64_t>(1, max_ਧਾਗੇ);
+                ਅਚਲ int64_t use_ਧਾਗੇ = std::min<int64_t>(ਥਾਂ.assigned_ਧਾਗੇ, max_ਧਾਗੇ);
 
-                if (local_ith < use_threads) {
-                    const int64_t num_m_per_thread0   = round_down((size_t)(m_roundup_mr / use_threads), slot.mr);
-                    const int64_t num_m_per_threadN_1 = (int64_t)m - (use_threads - 1) * num_m_per_thread0;
+                ਜੇ (local_ith < use_ਧਾਗੇ) {
+                    ਅਚਲ int64_t ਅੰਕ_m_ਪ੍ਰਤੀ_thread0   = ਗੇੜਾ_ਥੱਲੇ((size_t)(m_roundup_mr / use_ਧਾਗੇ), ਥਾਂ.mr);
+                    ਅਚਲ int64_t ਅੰਕ_m_ਪ੍ਰਤੀ_thread_N_1 = (int64_t)m - (use_ਧਾਗੇ - 1) * ਅੰਕ_m_ਪ੍ਰਤੀ_thread0;
 
-                    const int64_t m_start = (int64_t)local_ith * num_m_per_thread0;
-                    const int64_t m_count = (local_ith == use_threads - 1) ? num_m_per_threadN_1 : num_m_per_thread0;
+                    ਅਚਲ int64_t m_ਸ਼ੁਰੂ = (int64_t)local_ith * ਅੰਕ_m_ਪ੍ਰਤੀ_thread0;
+                    ਅਚਲ int64_t m_ਗਿਣਤੀ = (local_ith == use_ਧਾਗੇ - 1) ? ਅੰਕ_m_ਪ੍ਰਤੀ_thread_N_1 : ਅੰਕ_m_ਪ੍ਰਤੀ_thread0;
 
-                    const size_t base_packed_off  = slot.lhs_info->get_packed_offset_ex(m_start, k, slot.lhs_bl, slot.mr, slot.kr, slot.sr);
-                    const size_t next_block_off   = slot.lhs_info->get_packed_offset_ex(m_start + slot.mr, k, slot.lhs_bl, slot.mr, slot.kr, slot.sr);
-                    const size_t row_stride_bytes = slot.mr ? (next_block_off - base_packed_off) / slot.mr : 0;
+                    ਅਚਲ size_t ਅਧਾਰ_packed_off  = ਥਾਂ.lhs_info->get_packed_ਵਿੱਥ_ex(m_ਸ਼ੁਰੂ, k, ਥਾਂ.lhs_bl, ਥਾਂ.mr, ਥਾਂ.kr, ਥਾਂ.sr);
+                    ਅਚਲ size_t ਅਗਲਾ_ਖੰਡ_off   = ਥਾਂ.lhs_info->get_packed_ਵਿੱਥ_ex(m_ਸ਼ੁਰੂ + ਥਾਂ.mr, k, ਥਾਂ.lhs_bl, ਥਾਂ.mr, ਥਾਂ.kr, ਥਾਂ.sr);
+                    ਅਚਲ size_t ਪੰਕਤੀ_stride_ਬਾਈਟਾਂ = ਥਾਂ.mr ? (ਅਗਲਾ_ਖੰਡ_off - ਅਧਾਰ_packed_off) / ਥਾਂ.mr : 0;
 
-                    int64_t remaining = m_count;
-                    int64_t cur       = m_start;
+                    int64_t ਬਚਿਆ = m_ਗਿਣਤੀ;
+                    int64_t cur       = m_ਸ਼ੁਰੂ;
 
-                    uint8_t * lhs_packed = scratch + slot.lhs_offset;
-                    while (remaining > 0) {
-                        const int64_t row_in_group = cur;
-                        const int64_t avail        = (int64_t)m - row_in_group;
-                        const int64_t take         = std::min(avail, remaining);
+                    uint8_t * lhs_packed = scratch + ਥਾਂ.lhs_ਵਿੱਥ;
+                    ਜਦੋਂ (ਬਚਿਆ > 0) {
+                        ਅਚਲ int64_t ਪੰਕਤੀ_ਵਿੱਚ_ਸਮੂਹ = cur;
+                        ਅਚਲ int64_t avail        = (int64_t)m - ਪੰਕਤੀ_ਵਿੱਚ_ਸਮੂਹ;
+                        ਅਚਲ int64_t take         = std::min(avail, ਬਚਿਆ);
 
-                        const size_t src_off = slot.lhs_info->get_offset(row_in_group, src1->nb[1]);
-                        const void * src_ptr = lhs_batch_base + src_off;
-                        const size_t dst_off = base_packed_off + (size_t)(cur - m_start) * row_stride_bytes;
-                        void * dst_ptr       = lhs_packed + dst_off;
+                        ਅਚਲ size_t src_off = ਥਾਂ.lhs_info->get_ਵਿੱਥ(ਪੰਕਤੀ_ਵਿੱਚ_ਸਮੂਹ, src1->nb[1]);
+                        ਅਚਲ ਖਾਲੀ * src_ptr = lhs_batch_ਅਧਾਰ + src_off;
+                        ਅਚਲ size_t dst_off = ਅਧਾਰ_packed_off + (size_t)(cur - m_ਸ਼ੁਰੂ) * ਪੰਕਤੀ_stride_ਬਾਈਟਾਂ;
+                        ਖਾਲੀ * dst_ptr       = lhs_packed + dst_off;
 
-                        slot.lhs_info->pack_func_ex(take, k, slot.lhs_bl, slot.mr, slot.kr, slot.sr, 0, src_ptr, src1->nb[1], dst_ptr);
+                        ਥਾਂ.lhs_info->pack_func_ex(take, k, ਥਾਂ.lhs_bl, ਥਾਂ.mr, ਥਾਂ.kr, ਥਾਂ.sr, 0, src_ptr, src1->nb[1], dst_ptr);
 
                         cur       += take;
-                        remaining -= take;
+                        ਬਚਿਆ -= take;
                     }
                 }
             }
 
-            if (ith_total == 0) {
-                ggml_threadpool_chunk_set(params->threadpool, active_threads);
+            ਜੇ (ith_ਕੁੱਲ == 0) {
+                ggml_threadpool_chunk_ਸੈੱਟ(params->threadpool, ਸਰਗਰਮ_ਧਾਗੇ);
             }
 
             // Publishes both LHS packing and the initialized dynamic chunk queue.
             ggml_barrier(params->threadpool);
 
-            if (local_slot != -1) {
-                runtime_slot & slot = runtime[local_slot];
-                int current_chunk = ith_total;
-                while (current_chunk < nchunk) {
-                    const size_t global_start = (size_t)current_chunk * chunk_cols;
-                    if (global_start >= n) {
-                        break;
+            ਜੇ (local_ਥਾਂ != -1) {
+                runtime_ਥਾਂ & ਥਾਂ = runtime[local_ਥਾਂ];
+                ਪੂਰਨ current_chunk = ith_ਕੁੱਲ;
+                ਜਦੋਂ (current_chunk < nchunk) {
+                    ਅਚਲ size_t global_ਸ਼ੁਰੂ = (size_t)current_chunk * chunk_ਖਾਨੇ_ਗਿਣਤੀ;
+                    ਜੇ (global_ਸ਼ੁਰੂ >= n) {
+                        ਰੋਕੋ;
                     }
 
-                    const size_t cols = std::min(chunk_cols, n - global_start);
-                    if (cols > 0) {
+                    ਅਚਲ size_t ਖਾਨੇ_ਗਿਣਤੀ_2 = std::min(chunk_ਖਾਨੇ_ਗਿਣਤੀ, n - global_ਸ਼ੁਰੂ);
+                    ਜੇ (ਖਾਨੇ_ਗਿਣਤੀ_2 > 0) {
                         // KleidiAI GEMM/GEMV kernels accept arbitrary final tail widths;
                         // only non-tail chunks are guaranteed to be n_step-aligned.
-                        run_chunk(slot, global_start, cols, dst_batch_base);
+                        ਲੜੀਵਾਰ_chunk(ਥਾਂ, global_ਸ਼ੁਰੂ, ਖਾਨੇ_ਗਿਣਤੀ_2, dst_batch_ਅਧਾਰ);
                     }
 
-                    current_chunk = ggml_threadpool_chunk_add(params->threadpool, 1);
+                    current_chunk = ggml_threadpool_chunk_ਜੋੜੋ(params->threadpool, 1);
                 }
             }
 
-            if (batch_idx != ne12 - 1) {
+            ਜੇ (batch_idx != ne12 - 1) {
                 ggml_barrier(params->threadpool);
             }
         }
 
-        return true;
+        ਵਾਪਸ ਸੱਚ;
     }
 
-public:
-    int repack(struct ggml_tensor * tensor, const void * data, size_t data_size) {
+ਜਨਤਕ:
+    ਪੂਰਨ repack(ਬਣਤਰ ggml_tensor * tensor, ਅਚਲ ਖਾਲੀ * ਅੰਕੜੇ, size_t ਅੰਕੜੇ_ਮਾਪ) {
         GGML_ASSERT(tensor->type == GGML_TYPE_Q4_0 || tensor->type == GGML_TYPE_Q4_K ||
                     tensor->type == GGML_TYPE_Q8_0 || tensor->type == GGML_TYPE_Q6_K ||
                     tensor->type == GGML_TYPE_F32);
-        const size_t n = tensor->ne[1];
-        const size_t k = tensor->ne[0];
+        ਅਚਲ size_t n = tensor->ne[1];
+        ਅਚਲ size_t k = tensor->ne[0];
 
-        kleidiai_weight_header * header = kleidiai_weight_header_from_ptr(tensor->data);
-        if (!header) {
-            return -1;
+        kleidiai_ਭਾਰ_ਸਿਰਲੇਖ * ਸਿਰਲੇਖ = kleidiai_ਭਾਰ_ਸਿਰਲੇਖ_from_ptr(tensor->ਅੰਕੜੇ);
+        ਜੇ (!ਸਿਰਲੇਖ) {
+            ਵਾਪਸ -1;
         }
 
-        header->magic      = GGML_KLEIDIAI_PACK_MAGIC;
-        header->version    = GGML_KLEIDIAI_PACK_VERSION;
-        header->slot_count = 0;
+        ਸਿਰਲੇਖ->magic      = GGML_KLEIDIAI_PACK_MAGIC;
+        ਸਿਰਲੇਖ->ਸੰਸਕਰਣ_2    = GGML_KLEIDIAI_PACK_ਸੰਸਕਰਣ;
+        ਸਿਰਲੇਖ->ਥਾਂ_ਗਿਣਤੀ = 0;
 
-        uint8_t * base_ptr = static_cast<uint8_t *>(tensor->data);
-        size_t cursor = sizeof(kleidiai_weight_header);
-        cursor = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
+        uint8_t * ਅਧਾਰ_ptr = static_cast<uint8_t *>(tensor->ਅੰਕੜੇ);
+        size_t cursor = ਆਕਾਰ(kleidiai_ਭਾਰ_ਸਿਰਲੇਖ);
+        cursor = align_ਉੱਪਰ(cursor, GGML_KLEIDIAI_PACK_ALIGN);
 
         std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> kernel_chain;
-        const bool want_q4k = tensor->type == GGML_TYPE_Q4_K;
-        const bool want_q8 = tensor->type == GGML_TYPE_Q8_0 || tensor->type == GGML_TYPE_Q6_K;
-        const bool want_f32 = tensor->type == GGML_TYPE_F32;
-        const int slot_total = want_f32 ? kleidiai_collect_f32_chain(kernel_chain)
+        ਅਚਲ ਤਾਰਕਿਕ want_q4k = tensor->type == GGML_TYPE_Q4_K;
+        ਅਚਲ ਤਾਰਕਿਕ want_q8 = tensor->type == GGML_TYPE_Q8_0 || tensor->type == GGML_TYPE_Q6_K;
+        ਅਚਲ ਤਾਰਕਿਕ want_f32 = tensor->type == GGML_TYPE_F32;
+        ਅਚਲ ਪੂਰਨ ਥਾਂ_ਕੁੱਲ = want_f32 ? kleidiai_collect_f32_chain(kernel_chain)
                                         : want_q8 ? kleidiai_collect_q8_chain(kernel_chain)
                                         : want_q4k ? kleidiai_collect_q4k_chain(kernel_chain)
                                                    : kleidiai_collect_q4_chain(kernel_chain);
-        const bool allow_fallback = kleidiai_pack_fallback_allowed();
+        ਅਚਲ ਤਾਰਕਿਕ allow_fallback = kleidiai_pack_fallback_allowed();
 
         std::vector<int8_t> qdata;
-        std::vector<float>  scales;
-        std::vector<float>  bias;
-        std::vector<float> row_f32;
+        std::vector<ਦਸ਼ਮਲਵ>  scales;
+        std::vector<ਦਸ਼ਮਲਵ>  bias;
+        std::vector<ਦਸ਼ਮਲਵ> ਪੰਕਤੀ_f32;
 
-        if (want_q8 && slot_total > 0) {
+        ਜੇ (want_q8 && ਥਾਂ_ਕੁੱਲ > 0) {
             qdata.resize(n * k, 0);
             scales.resize(n, 0.0f);
 
-            const size_t row_stride = tensor->nb[1];
-            const size_t k_blocks   = (k + QK8_0 - 1) / QK8_0;
+            ਅਚਲ size_t ਪੰਕਤੀ_stride = tensor->nb[1];
+            ਅਚਲ size_t k_ਖੰਡਾਂ   = (k + QK8_0 - 1) / QK8_0;
 
-            if (tensor->type == GGML_TYPE_Q6_K) {
-                if (k % QK_K != 0 || k % QK8_0 != 0) {
-                    return -1;
+            ਜੇ (tensor->type == GGML_TYPE_Q6_K) {
+                ਜੇ (k % QK_K != 0 || k % QK8_0 != 0) {
+                    ਵਾਪਸ -1;
                 }
-                row_f32.resize(k);
+                ਪੰਕਤੀ_f32.resize(k);
             }
 
-            for (size_t row = 0; row < n; ++row) {
-                const uint8_t * row_data = static_cast<const uint8_t *>(data) + row * row_stride;
+            ਲਈ (size_t ਪੰਕਤੀ = 0; ਪੰਕਤੀ < n; ++ਪੰਕਤੀ) {
+                ਅਚਲ uint8_t * ਪੰਕਤੀ_ਅੰਕੜੇ = static_cast<ਅਚਲ uint8_t *>(ਅੰਕੜੇ) + ਪੰਕਤੀ * ਪੰਕਤੀ_stride;
 
-                if (tensor->type == GGML_TYPE_Q6_K) {
-                    dequantize_row_q6_K(reinterpret_cast<const block_q6_K *>(row_data), row_f32.data(), k);
+                ਜੇ (tensor->type == GGML_TYPE_Q6_K) {
+                    dequantize_ਪੰਕਤੀ_q6_K(reinterpret_cast<ਅਚਲ ਖੰਡ_q6_K *>(ਪੰਕਤੀ_ਅੰਕੜੇ), ਪੰਕਤੀ_f32.ਅੰਕੜੇ(), k);
                 }
 
-                float max_abs = 0.0f;
-                if (tensor->type == GGML_TYPE_Q6_K) {
-                    for (size_t linear_idx = 0; linear_idx < k; ++linear_idx) {
-                        max_abs = std::max(max_abs, std::fabs(row_f32[linear_idx]));
+                ਦਸ਼ਮਲਵ max_abs = 0.0f;
+                ਜੇ (tensor->type == GGML_TYPE_Q6_K) {
+                    ਲਈ (size_t ਰੇਖਿਕ_idx = 0; ਰੇਖਿਕ_idx < k; ++ਰੇਖਿਕ_idx) {
+                        max_abs = std::max(max_abs, std::fabs(ਪੰਕਤੀ_f32[ਰੇਖਿਕ_idx]));
                     }
-                } else {
-                    const block_q8_0 * row_blocks = reinterpret_cast<const block_q8_0 *>(row_data);
-                    for (size_t block = 0; block < k_blocks; ++block) {
-                        const block_q8_0 & blk = row_blocks[block];
-                        const float d = GGML_FP16_TO_FP32(blk.d);
-                        for (size_t l = 0; l < QK8_0; ++l) {
-                            const size_t linear_idx = block * QK8_0 + l;
-                            if (linear_idx >= k) {
-                                break;
+                } ਨਹੀਂਤਾਂ {
+                    ਅਚਲ ਖੰਡ_q8_0 * ਪੰਕਤੀ_ਖੰਡਾਂ = reinterpret_cast<ਅਚਲ ਖੰਡ_q8_0 *>(ਪੰਕਤੀ_ਅੰਕੜੇ);
+                    ਲਈ (size_t ਖੰਡ = 0; ਖੰਡ < k_ਖੰਡਾਂ; ++ਖੰਡ) {
+                        ਅਚਲ ਖੰਡ_q8_0 & blk = ਪੰਕਤੀ_ਖੰਡਾਂ[ਖੰਡ];
+                        ਅਚਲ ਦਸ਼ਮਲਵ d = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(blk.d);
+                        ਲਈ (size_t l = 0; l < QK8_0; ++l) {
+                            ਅਚਲ size_t ਰੇਖਿਕ_idx = ਖੰਡ * QK8_0 + l;
+                            ਜੇ (ਰੇਖਿਕ_idx >= k) {
+                                ਰੋਕੋ;
                             }
-                            const float value = d * static_cast<float>(blk.qs[l]);
+                            ਅਚਲ ਦਸ਼ਮਲਵ value = d * static_cast<ਦਸ਼ਮਲਵ>(blk.qs[l]);
                             max_abs = std::max(max_abs, std::fabs(value));
                         }
                     }
                 }
 
-                float scale = max_abs > 0.0f ? max_abs / 127.0f : 0.0f;
-                scales[row] = scale;
-                const float inv_scale = scale > 0.0f ? 1.0f / scale : 0.0f;
+                ਦਸ਼ਮਲਵ scale = max_abs > 0.0f ? max_abs / 127.0f : 0.0f;
+                scales[ਪੰਕਤੀ] = scale;
+                ਅਚਲ ਦਸ਼ਮਲਵ inv_scale = scale > 0.0f ? 1.0f / scale : 0.0f;
 
-                if (tensor->type == GGML_TYPE_Q6_K) {
-                    for (size_t linear_idx = 0; linear_idx < k; ++linear_idx) {
-                        int32_t q = scale > 0.0f ? static_cast<int32_t>(std::lround(row_f32[linear_idx] * inv_scale)) : 0;
+                ਜੇ (tensor->type == GGML_TYPE_Q6_K) {
+                    ਲਈ (size_t ਰੇਖਿਕ_idx = 0; ਰੇਖਿਕ_idx < k; ++ਰੇਖਿਕ_idx) {
+                        int32_t q = scale > 0.0f ? static_cast<int32_t>(std::lround(ਪੰਕਤੀ_f32[ਰੇਖਿਕ_idx] * inv_scale)) : 0;
                         q = std::clamp(q, -127, 127);
-                        qdata[row * k + linear_idx] = static_cast<int8_t>(q);
+                        qdata[ਪੰਕਤੀ * k + ਰੇਖਿਕ_idx] = static_cast<int8_t>(q);
                     }
-                } else {
-                    const block_q8_0 * row_blocks = reinterpret_cast<const block_q8_0 *>(row_data);
-                    for (size_t block = 0; block < k_blocks; ++block) {
-                        const block_q8_0 & blk = row_blocks[block];
-                        const float d = GGML_FP16_TO_FP32(blk.d);
-                        for (size_t l = 0; l < QK8_0; ++l) {
-                            const size_t linear_idx = block * QK8_0 + l;
-                            if (linear_idx >= k) {
-                                break;
+                } ਨਹੀਂਤਾਂ {
+                    ਅਚਲ ਖੰਡ_q8_0 * ਪੰਕਤੀ_ਖੰਡਾਂ = reinterpret_cast<ਅਚਲ ਖੰਡ_q8_0 *>(ਪੰਕਤੀ_ਅੰਕੜੇ);
+                    ਲਈ (size_t ਖੰਡ = 0; ਖੰਡ < k_ਖੰਡਾਂ; ++ਖੰਡ) {
+                        ਅਚਲ ਖੰਡ_q8_0 & blk = ਪੰਕਤੀ_ਖੰਡਾਂ[ਖੰਡ];
+                        ਅਚਲ ਦਸ਼ਮਲਵ d = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(blk.d);
+                        ਲਈ (size_t l = 0; l < QK8_0; ++l) {
+                            ਅਚਲ size_t ਰੇਖਿਕ_idx = ਖੰਡ * QK8_0 + l;
+                            ਜੇ (ਰੇਖਿਕ_idx >= k) {
+                                ਰੋਕੋ;
                             }
-                            const float value = d * static_cast<float>(blk.qs[l]);
+                            ਅਚਲ ਦਸ਼ਮਲਵ value = d * static_cast<ਦਸ਼ਮਲਵ>(blk.qs[l]);
                             int32_t q = scale > 0.0f ? static_cast<int32_t>(std::lround(value * inv_scale)) : 0;
                             q = std::clamp(q, -127, 127);
-                            qdata[row * k + linear_idx] = static_cast<int8_t>(q);
+                            qdata[ਪੰਕਤੀ * k + ਰੇਖਿਕ_idx] = static_cast<int8_t>(q);
                         }
                     }
                 }
             }
         }
 
-        if (want_f32 && slot_total > 0) {
+        ਜੇ (want_f32 && ਥਾਂ_ਕੁੱਲ > 0) {
             bias.resize(n, 0.0f);
         }
 
-        for (int slot = 0; slot < slot_total && slot < GGML_KLEIDIAI_MAX_KERNEL_SLOTS; ++slot) {
-            if (!allow_fallback && slot > 0) {
-                break;
+        ਲਈ (ਪੂਰਨ ਥਾਂ = 0; ਥਾਂ < ਥਾਂ_ਕੁੱਲ && ਥਾਂ < GGML_KLEIDIAI_MAX_KERNEL_SLOTS; ++ਥਾਂ) {
+            ਜੇ (!allow_fallback && ਥਾਂ > 0) {
+                ਰੋਕੋ;
             }
-            ggml_kleidiai_kernels * kernels = kernel_chain[slot];
+            ggml_kleidiai_kernels * kernels = kernel_chain[ਥਾਂ];
             kernel_info * kernel = &kernels->gemm;
             rhs_packing_info * rhs_info = &kernels->rhs_info;
-            if (!rhs_info || !rhs_info->pack_func_ex || !rhs_info->packed_size_ex || !kernel) {
-                continue;
+            ਜੇ (!rhs_info || !rhs_info->pack_func_ex || !rhs_info->packed_ਮਾਪ_ex || !kernel) {
+                ਜਾਰੀ;
             }
 
-            const size_t nr = kernel->get_nr();
-            const size_t kr = kernel->get_kr();
-            const size_t sr = kernel->get_sr();
-            const ggml_type rhs_type = kernels->rhs_type;
-            if (rhs_type == GGML_TYPE_Q8_0 && (kernels->required_cpu & CPU_FEATURE_SVE)) {
+            ਅਚਲ size_t nr = kernel->get_nr();
+            ਅਚਲ size_t kr = kernel->get_kr();
+            ਅਚਲ size_t sr = kernel->get_sr();
+            ਅਚਲ ggml_type rhs_type = kernels->rhs_type;
+            ਜੇ (rhs_type == GGML_TYPE_Q8_0 && (kernels->required_cpu & CPU_FEATURE_SVE)) {
                 GGML_ASSERT(nr == kernels->gemv.get_nr());
                 GGML_ASSERT(kr == kernels->gemv.get_kr());
                 GGML_ASSERT(sr == kernels->gemv.get_sr());
             }
-            const size_t block_len = rhs_type == GGML_TYPE_Q8_0 ? QK8_0 :
+            ਅਚਲ size_t ਖੰਡ_len = rhs_type == GGML_TYPE_Q8_0 ? QK8_0 :
                                      rhs_type == GGML_TYPE_Q4_0 ? QK4_0 :
                                      rhs_type == GGML_TYPE_Q4_K ? GGML_KLEIDIAI_Q4_K_BL :
                                      rhs_type == GGML_TYPE_F32 ? 0 : SIZE_MAX;
-            if (block_len == SIZE_MAX) {
-                continue;
+            ਜੇ (ਖੰਡ_len == SIZE_MAX) {
+                ਜਾਰੀ;
             }
 
-            const size_t packed_size = rhs_info->packed_size_ex(n, k, nr, kr, block_len);
-            const size_t aligned_cursor = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
+            ਅਚਲ size_t packed_ਮਾਪ = rhs_info->packed_ਮਾਪ_ex(n, k, nr, kr, ਖੰਡ_len);
+            ਅਚਲ size_t aligned_cursor = align_ਉੱਪਰ(cursor, GGML_KLEIDIAI_PACK_ALIGN);
 
-            uint8_t * dst_ptr = base_ptr + aligned_cursor;
+            uint8_t * dst_ptr = ਅਧਾਰ_ptr + aligned_cursor;
 
-            if (rhs_type == GGML_TYPE_Q4_0) {
-                struct kai_rhs_pack_qs4cxs1s0_param params;
-                params.lhs_zero_point = 1;
-                params.rhs_zero_point = 8;
+            ਜੇ (rhs_type == GGML_TYPE_Q4_0) {
+                ਬਣਤਰ kai_rhs_pack_qs4cxs1s0_param params;
+                params.lhs_zero_ਬਿੰਦੂ = 1;
+                params.rhs_zero_ਬਿੰਦੂ = 8;
                 rhs_info->pack_func_ex(1, n, k, nr, kr, sr, QK4_0, 0,
-                                       static_cast<const uint8_t *>(data), nullptr, nullptr,
+                                       static_cast<ਅਚਲ uint8_t *>(ਅੰਕੜੇ), ਖਾਲੀ_ਸੂਚਕ, ਖਾਲੀ_ਸੂਚਕ,
                                        dst_ptr, 0, &params);
-            } else if (rhs_type == GGML_TYPE_Q4_K) {
+            } ਨਹੀਂਤਾਂ ਜੇ (rhs_type == GGML_TYPE_Q4_K) {
                 rhs_info->pack_func_ex(1, n, k, nr, kr, sr, GGML_KLEIDIAI_Q4_K_BL, tensor->nb[1],
-                                       data, nullptr, nullptr, dst_ptr, 0, nullptr);
-            } else if (rhs_type == GGML_TYPE_Q8_0) {
-                struct kai_rhs_pack_qsi8cx_params params;
-                params.lhs_zero_point = 1;
+                                       ਅੰਕੜੇ, ਖਾਲੀ_ਸੂਚਕ, ਖਾਲੀ_ਸੂਚਕ, dst_ptr, 0, ਖਾਲੀ_ਸੂਚਕ);
+            } ਨਹੀਂਤਾਂ ਜੇ (rhs_type == GGML_TYPE_Q8_0) {
+                ਬਣਤਰ kai_rhs_pack_qsi8cx_params params;
+                params.lhs_zero_ਬਿੰਦੂ = 1;
                 params.scale_multiplier = 1.0f;
                 rhs_info->pack_func_ex(1, n, k, nr, kr, sr, 0, 0,
-                                       qdata.data(), nullptr, scales.data(),
+                                       qdata.ਅੰਕੜੇ(), ਖਾਲੀ_ਸੂਚਕ, scales.ਅੰਕੜੇ(),
                                        dst_ptr, 0, &params);
-            } else if (rhs_type == GGML_TYPE_F32) {
+            } ਨਹੀਂਤਾਂ ਜੇ (rhs_type == GGML_TYPE_F32) {
                 rhs_info->pack_func_ex(1, n, k, nr, kr, sr, 0, tensor->nb[1],
-                                       data, bias.data(), nullptr,
-                                       dst_ptr, 0, nullptr);
-            } else {
-                continue;
+                                       ਅੰਕੜੇ, bias.ਅੰਕੜੇ(), ਖਾਲੀ_ਸੂਚਕ,
+                                       dst_ptr, 0, ਖਾਲੀ_ਸੂਚਕ);
+            } ਨਹੀਂਤਾਂ {
+                ਜਾਰੀ;
             }
 
-            header->offsets[header->slot_count] = aligned_cursor;
-            header->sizes[header->slot_count]   = packed_size;
-            ++header->slot_count;
+            ਸਿਰਲੇਖ->offsets[ਸਿਰਲੇਖ->ਥਾਂ_ਗਿਣਤੀ] = aligned_cursor;
+            ਸਿਰਲੇਖ->sizes[ਸਿਰਲੇਖ->ਥਾਂ_ਗਿਣਤੀ]   = packed_ਮਾਪ;
+            ++ਸਿਰਲੇਖ->ਥਾਂ_ਗਿਣਤੀ;
 
-            cursor = aligned_cursor + packed_size;
+            cursor = aligned_cursor + packed_ਮਾਪ;
         }
 
-        if (header->slot_count == 0) {
-            header->magic   = 0;
-            header->version = 0;
-            memcpy(tensor->data, data, data_size);
+        ਜੇ (ਸਿਰਲੇਖ->ਥਾਂ_ਗਿਣਤੀ == 0) {
+            ਸਿਰਲੇਖ->magic   = 0;
+            ਸਿਰਲੇਖ->ਸੰਸਕਰਣ_2 = 0;
+            ਸਮ੍ਰਿਤੀ_ਨਕਲ(tensor->ਅੰਕੜੇ, ਅੰਕੜੇ, ਅੰਕੜੇ_ਮਾਪ);
         }
 
-        return 0;
+        ਵਾਪਸ 0;
     }
 };
 
-static ggml::cpu::tensor_traits * get_tensor_traits(ggml_backend_buffer_t, struct ggml_tensor *) {
-    static tensor_traits traits;
-    return &traits;
+ਸਥਿਰ ggml::cpu::tensor_traits * get_tensor_traits(ggml_backend_ਬਫਰ_t, ਬਣਤਰ ggml_tensor *) {
+    ਸਥਿਰ tensor_traits traits;
+    ਵਾਪਸ &traits;
 }
 }  // namespace ggml::cpu::kleidiai
 
-static enum ggml_status ggml_backend_cpu_kleidiai_buffer_init_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor) {
-    tensor->extra = (void *) ggml::cpu::kleidiai::get_tensor_traits(buffer, tensor);
+ਸਥਿਰ ਗਿਣਤੀ ggml_ਸਥਿਤੀ ggml_backend_cpu_kleidiai_ਬਫਰ_init_tensor(ggml_backend_ਬਫਰ_t ਬਫਰ, ਬਣਤਰ ggml_tensor * tensor) {
+    tensor->extra = (ਖਾਲੀ *) ggml::cpu::kleidiai::get_tensor_traits(ਬਫਰ, tensor);
 
-    return GGML_STATUS_SUCCESS;
+    ਵਾਪਸ GGML_ਸਥਿਤੀ_SUCCESS;
 }
 
-static void ggml_backend_cpu_kleidiai_buffer_set_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor,
-                                                       const void * data, size_t offset, size_t size) {
-    GGML_ASSERT(offset == 0);
+ਸਥਿਰ ਖਾਲੀ ggml_backend_cpu_kleidiai_ਬਫਰ_ਸੈੱਟ_tensor(ggml_backend_ਬਫਰ_t ਬਫਰ, ਬਣਤਰ ggml_tensor * tensor,
+                                                       ਅਚਲ ਖਾਲੀ * ਅੰਕੜੇ, size_t ਵਿੱਥ, size_t size) {
+    GGML_ASSERT(ਵਿੱਥ == 0);
     GGML_ASSERT(size == ggml_nbytes(tensor));
 
-    auto tensor_traits = (ggml::cpu::kleidiai::tensor_traits *) tensor->extra;
-    auto OK            = tensor_traits->repack(tensor, data, size);
+    ਸਵੈਚਾਲਿਤ tensor_traits = (ggml::cpu::kleidiai::tensor_traits *) tensor->extra;
+    ਸਵੈਚਾਲਿਤ OK            = tensor_traits->repack(tensor, ਅੰਕੜੇ, size);
 
     GGML_ASSERT(OK == 0);
-    GGML_UNUSED(buffer);
+    GGML_ਅਣਵਰਤਿਆ(ਬਫਰ);
 }
 
-static const char * ggml_backend_cpu_kleidiai_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
-    GGML_UNUSED(buft);
-    return "CPU_KLEIDIAI";
+ਸਥਿਰ ਅਚਲ ਅੱਖਰ * ggml_backend_cpu_kleidiai_ਬਫਰ_type_get_name(ggml_backend_ਬਫਰ_type_t buft) {
+    GGML_ਅਣਵਰਤਿਆ(buft);
+    ਵਾਪਸ "CPU_KLEIDIAI";
 }
 
-static ggml_backend_buffer_t ggml_backend_cpu_kleidiai_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
-    ggml_backend_buffer_t buffer = ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(), size);
+ਸਥਿਰ ggml_backend_ਬਫਰ_t ggml_backend_cpu_kleidiai_ਬਫਰ_type_alloc_ਬਫਰ(ggml_backend_ਬਫਰ_type_t buft, size_t size) {
+    ggml_backend_ਬਫਰ_t ਬਫਰ = ggml_backend_buft_alloc_ਬਫਰ(ggml_backend_cpu_ਬਫਰ_type(), size);
 
-    if (buffer == nullptr) {
-        return nullptr;
+    ਜੇ (ਬਫਰ == ਖਾਲੀ_ਸੂਚਕ) {
+        ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
     }
 
-    buffer->buft              = buft;
-    buffer->iface.init_tensor = ggml_backend_cpu_kleidiai_buffer_init_tensor;
-    buffer->iface.set_tensor  = ggml_backend_cpu_kleidiai_buffer_set_tensor;
-    buffer->iface.get_tensor  = nullptr;
-    buffer->iface.cpy_tensor  = nullptr;
-    return buffer;
+    ਬਫਰ->buft              = buft;
+    ਬਫਰ->iface.init_tensor = ggml_backend_cpu_kleidiai_ਬਫਰ_init_tensor;
+    ਬਫਰ->iface.ਸੈੱਟ_tensor  = ggml_backend_cpu_kleidiai_ਬਫਰ_ਸੈੱਟ_tensor;
+    ਬਫਰ->iface.get_tensor  = ਖਾਲੀ_ਸੂਚਕ;
+    ਬਫਰ->iface.cpy_tensor  = ਖਾਲੀ_ਸੂਚਕ;
+    ਵਾਪਸ ਬਫਰ;
 }
 
-static size_t ggml_backend_cpu_kleidiai_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
-    GGML_UNUSED(buft);
-    return TENSOR_ALIGNMENT;
+ਸਥਿਰ size_t ggml_backend_cpu_kleidiai_ਬਫਰ_type_get_alignment(ggml_backend_ਬਫਰ_type_t buft) {
+    GGML_ਅਣਵਰਤਿਆ(buft);
+    ਵਾਪਸ TENSOR_ALIGNMENT;
 }
 
-static size_t ggml_backend_cpu_kleidiai_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft, const struct ggml_tensor * tensor) {
-    GGML_UNUSED(buft);
+ਸਥਿਰ size_t ggml_backend_cpu_kleidiai_ਬਫਰ_type_get_alloc_ਮਾਪ(ggml_backend_ਬਫਰ_type_t buft, ਅਚਲ ਬਣਤਰ ggml_tensor * tensor) {
+    GGML_ਅਣਵਰਤਿਆ(buft);
 
-    if (tensor->type != GGML_TYPE_Q4_0 && tensor->type != GGML_TYPE_Q4_K &&
+    ਜੇ (tensor->type != GGML_TYPE_Q4_0 && tensor->type != GGML_TYPE_Q4_K &&
         tensor->type != GGML_TYPE_Q8_0 && tensor->type != GGML_TYPE_Q6_K &&
         tensor->type != GGML_TYPE_F32) {
-        return ggml_nbytes(tensor);
+        ਵਾਪਸ ggml_nbytes(tensor);
     }
 
-    const size_t n = tensor->ne[1];
-    const size_t k = tensor->ne[0];
+    ਅਚਲ size_t n = tensor->ne[1];
+    ਅਚਲ size_t k = tensor->ne[0];
 
-    size_t cursor = sizeof(kleidiai_weight_header);
-    cursor = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
+    size_t cursor = ਆਕਾਰ(kleidiai_ਭਾਰ_ਸਿਰਲੇਖ);
+    cursor = align_ਉੱਪਰ(cursor, GGML_KLEIDIAI_PACK_ALIGN);
 
     std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> kernel_chain;
-    const bool want_q4k = tensor->type == GGML_TYPE_Q4_K;
-    const bool want_q8 = tensor->type == GGML_TYPE_Q8_0 || tensor->type == GGML_TYPE_Q6_K;
-    const bool want_f32 = tensor->type == GGML_TYPE_F32;
-    const int slot_total = want_f32 ? kleidiai_collect_f32_chain(kernel_chain)
+    ਅਚਲ ਤਾਰਕਿਕ want_q4k = tensor->type == GGML_TYPE_Q4_K;
+    ਅਚਲ ਤਾਰਕਿਕ want_q8 = tensor->type == GGML_TYPE_Q8_0 || tensor->type == GGML_TYPE_Q6_K;
+    ਅਚਲ ਤਾਰਕਿਕ want_f32 = tensor->type == GGML_TYPE_F32;
+    ਅਚਲ ਪੂਰਨ ਥਾਂ_ਕੁੱਲ = want_f32 ? kleidiai_collect_f32_chain(kernel_chain)
                                     : want_q8 ? kleidiai_collect_q8_chain(kernel_chain)
                                     : want_q4k ? kleidiai_collect_q4k_chain(kernel_chain)
                                                : kleidiai_collect_q4_chain(kernel_chain);
-    const bool allow_fallback = kleidiai_pack_fallback_allowed();
+    ਅਚਲ ਤਾਰਕਿਕ allow_fallback = kleidiai_pack_fallback_allowed();
 
-    size_t slot_count = 0;
-    for (int slot = 0; slot < slot_total; ++slot) {
-        if (!allow_fallback && slot > 0) {
-            break;
+    size_t ਥਾਂ_ਗਿਣਤੀ = 0;
+    ਲਈ (ਪੂਰਨ ਥਾਂ = 0; ਥਾਂ < ਥਾਂ_ਕੁੱਲ; ++ਥਾਂ) {
+        ਜੇ (!allow_fallback && ਥਾਂ > 0) {
+            ਰੋਕੋ;
         }
-        ggml_kleidiai_kernels * kernels = kernel_chain[slot];
-        if (!kernels) {
-            continue;
+        ggml_kleidiai_kernels * kernels = kernel_chain[ਥਾਂ];
+        ਜੇ (!kernels) {
+            ਜਾਰੀ;
         }
         kernel_info * kernel = &kernels->gemm;
         rhs_packing_info * rhs_info = &kernels->rhs_info;
-        if (!kernel || !rhs_info || !rhs_info->packed_size_ex) {
-            continue;
+        ਜੇ (!kernel || !rhs_info || !rhs_info->packed_ਮਾਪ_ex) {
+            ਜਾਰੀ;
         }
 
-        const ggml_type rhs_type = kernels->rhs_type;
-        const size_t block_len = rhs_type == GGML_TYPE_Q4_0 ? QK4_0 :
+        ਅਚਲ ggml_type rhs_type = kernels->rhs_type;
+        ਅਚਲ size_t ਖੰਡ_len = rhs_type == GGML_TYPE_Q4_0 ? QK4_0 :
                                  rhs_type == GGML_TYPE_Q4_K ? GGML_KLEIDIAI_Q4_K_BL :
                                  rhs_type == GGML_TYPE_Q8_0 ? QK8_0 :
                                  rhs_type == GGML_TYPE_F32 ? 0 : SIZE_MAX;
-        if (block_len == SIZE_MAX) {
-            continue;
+        ਜੇ (ਖੰਡ_len == SIZE_MAX) {
+            ਜਾਰੀ;
         }
 
-        cursor = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
-        cursor += rhs_info->packed_size_ex(n, k, kernel->get_nr(), kernel->get_kr(), block_len);
-        ++slot_count;
+        cursor = align_ਉੱਪਰ(cursor, GGML_KLEIDIAI_PACK_ALIGN);
+        cursor += rhs_info->packed_ਮਾਪ_ex(n, k, kernel->get_nr(), kernel->get_kr(), ਖੰਡ_len);
+        ++ਥਾਂ_ਗਿਣਤੀ;
     }
 
-    if (slot_count == 0) {
-        return ggml_nbytes(tensor);
+    ਜੇ (ਥਾਂ_ਗਿਣਤੀ == 0) {
+        ਵਾਪਸ ggml_nbytes(tensor);
     }
 
-    return std::max(cursor, ggml_nbytes(tensor));
+    ਵਾਪਸ std::max(cursor, ggml_nbytes(tensor));
 }
 
-namespace ggml::cpu::kleidiai {
-class extra_buffer_type : ggml::cpu::extra_buffer_type {
-    bool supports_op(ggml_backend_dev_t, const struct ggml_tensor * op) override {
+ਨਾਮਾਕਾਸ਼ ggml::cpu::kleidiai {
+ਵਰਗ extra_ਬਫਰ_type : ggml::cpu::extra_ਬਫਰ_type {
+    ਤਾਰਕਿਕ supports_op(ggml_backend_dev_t, ਅਚਲ ਬਣਤਰ ggml_tensor * op) override {
         // GET_ROWS needs the original weights in a native buffer.
-        if (op->op != GGML_OP_MUL_MAT) {
-            return false;
+        ਜੇ (op->op != GGML_OP_MUL_MAT) {
+            ਵਾਪਸ ਝੂਠ;
         }
 
         std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> kernel_chain;
-        const int slot_total = kleidiai_collect_kernel_chain(op, kernel_chain);
-        const bool src0_is_kleidiai =
-            op->src[0]->buffer &&
+        ਅਚਲ ਪੂਰਨ ਥਾਂ_ਕੁੱਲ = kleidiai_collect_kernel_chain(op, kernel_chain);
+        ਅਚਲ ਤਾਰਕਿਕ src0_is_kleidiai =
+            op->src[0]->ਬਫਰ &&
             (ggml_n_dims(op->src[0]) == 2) &&
-            op->src[0]->buffer->buft->context == this &&
-            slot_total > 0;
+            op->src[0]->ਬਫਰ->buft->context == ਇਹ &&
+            ਥਾਂ_ਕੁੱਲ > 0;
 
-        if ((op->src[0]->type == GGML_TYPE_Q4_0 || op->src[0]->type == GGML_TYPE_Q4_K ||
+        ਜੇ ((op->src[0]->type == GGML_TYPE_Q4_0 || op->src[0]->type == GGML_TYPE_Q4_K ||
              op->src[0]->type == GGML_TYPE_Q8_0 || op->src[0]->type == GGML_TYPE_Q6_K ||
              op->src[0]->type == GGML_TYPE_F32) &&
             src0_is_kleidiai) {
-            if (op->src[0]->type == GGML_TYPE_Q4_0 && ctx.kernels_q4 == nullptr) {
-                return false;
+            ਜੇ (op->src[0]->type == GGML_TYPE_Q4_0 && ctx.kernels_q4 == ਖਾਲੀ_ਸੂਚਕ) {
+                ਵਾਪਸ ਝੂਠ;
             }
-            if (op->src[0]->type == GGML_TYPE_Q8_0 && ctx.kernels_q8 == nullptr) {
-                return false;
+            ਜੇ (op->src[0]->type == GGML_TYPE_Q8_0 && ctx.kernels_q8 == ਖਾਲੀ_ਸੂਚਕ) {
+                ਵਾਪਸ ਝੂਠ;
             }
-            if (op->src[0]->type == GGML_TYPE_Q6_K && ctx.kernels_q8 == nullptr) {
-                return false;
+            ਜੇ (op->src[0]->type == GGML_TYPE_Q6_K && ctx.kernels_q8 == ਖਾਲੀ_ਸੂਚਕ) {
+                ਵਾਪਸ ਝੂਠ;
             }
-            if (op->src[0]->type == GGML_TYPE_Q4_K && ctx.kernels_q4k == nullptr) {
-                return false;
+            ਜੇ (op->src[0]->type == GGML_TYPE_Q4_K && ctx.kernels_q4k == ਖਾਲੀ_ਸੂਚਕ) {
+                ਵਾਪਸ ਝੂਠ;
             }
-            if (op->src[0]->type == GGML_TYPE_F32 && ctx.kernels_f32 == nullptr) {
-                return false;
+            ਜੇ (op->src[0]->type == GGML_TYPE_F32 && ctx.kernels_f32 == ਖਾਲੀ_ਸੂਚਕ) {
+                ਵਾਪਸ ਝੂਠ;
             }
-            if (op->src[1]->buffer && !ggml_backend_buft_is_host(op->src[1]->buffer->buft)) {
-                return false;
+            ਜੇ (op->src[1]->ਬਫਰ && !ggml_backend_buft_is_host(op->src[1]->ਬਫਰ->buft)) {
+                ਵਾਪਸ ਝੂਠ;
             }
 
-            if (op->src[0]->type == GGML_TYPE_Q4_K) {
-                if (op->op != GGML_OP_MUL_MAT || op->src[1]->type != GGML_TYPE_F32 || op->type != GGML_TYPE_F32) {
-                    return false;
+            ਜੇ (op->src[0]->type == GGML_TYPE_Q4_K) {
+                ਜੇ (op->op != GGML_OP_MUL_MAT || op->src[1]->type != GGML_TYPE_F32 || op->type != GGML_TYPE_F32) {
+                    ਵਾਪਸ ਝੂਠ;
                 }
-                return ggml_ne(op->src[1], 2) == 1 && ggml_ne(op->src[1], 3) == 1 &&
-                       op->src[1]->nb[0] == sizeof(float) &&
-                       (op->src[1]->ne[1] == 1 || op->src[1]->nb[1] == op->src[1]->ne[0] * sizeof(float));
+                ਵਾਪਸ ggml_ne(op->src[1], 2) == 1 && ggml_ne(op->src[1], 3) == 1 &&
+                       op->src[1]->nb[0] == ਆਕਾਰ(ਦਸ਼ਮਲਵ) &&
+                       (op->src[1]->ne[1] == 1 || op->src[1]->nb[1] == op->src[1]->ne[0] * ਆਕਾਰ(ਦਸ਼ਮਲਵ));
             }
 
-            if (op->src[0]->type == GGML_TYPE_Q4_0 || op->src[0]->type == GGML_TYPE_Q8_0 ||
+            ਜੇ (op->src[0]->type == GGML_TYPE_Q4_0 || op->src[0]->type == GGML_TYPE_Q8_0 ||
                 op->src[0]->type == GGML_TYPE_Q6_K) {
-                if (op->src[1]->type == GGML_TYPE_F32 &&
+                ਜੇ (op->src[1]->type == GGML_TYPE_F32 &&
                     ggml_ne(op->src[1], 3) == 1) {
-                    return true;
+                    ਵਾਪਸ ਸੱਚ;
                 }
-                return false;
+                ਵਾਪਸ ਝੂਠ;
             }
 
-            if (op->op != GGML_OP_MUL_MAT || op->src[1]->type != GGML_TYPE_F32 || op->type != GGML_TYPE_F32) {
-                return false;
+            ਜੇ (op->op != GGML_OP_MUL_MAT || op->src[1]->type != GGML_TYPE_F32 || op->type != GGML_TYPE_F32) {
+                ਵਾਪਸ ਝੂਠ;
             }
 
-            return true;
+            ਵਾਪਸ ਸੱਚ;
         }
 
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    ggml::cpu::tensor_traits * get_tensor_traits(const struct ggml_tensor * op) override {
-        if (op->op == GGML_OP_MUL_MAT) {
-            if (op->src[0]->buffer && op->src[0]->buffer->buft->context == this) {
-                return (ggml::cpu::tensor_traits *) op->src[0]->extra;
-            } else {
+    ggml::cpu::tensor_traits * get_tensor_traits(ਅਚਲ ਬਣਤਰ ggml_tensor * op) override {
+        ਜੇ (op->op == GGML_OP_MUL_MAT) {
+            ਜੇ (op->src[0]->ਬਫਰ && op->src[0]->ਬਫਰ->buft->context == ਇਹ) {
+                ਵਾਪਸ (ggml::cpu::tensor_traits *) op->src[0]->extra;
+            } ਨਹੀਂਤਾਂ {
                 // KleidiAI only has kernels for Q4_0, Q4_K, Q8_0 and Q6_K. For a quantized weight of any
                 // other type (K-quants, IQ) it declines the op and returns nullptr below, so
                 // KleidiAI does not accelerate it. Another CPU backend may still take the op,
                 // and this can run during graph planning, so the message says what KleidiAI
                 // did rather than what ends up executing. Warn once per process.
-                if (ggml_is_quantized(op->src[0]->type) &&
+                ਜੇ (ggml_is_quantized(op->src[0]->type) &&
                     op->src[0]->type != GGML_TYPE_Q4_0 && op->src[0]->type != GGML_TYPE_Q4_K &&
                     op->src[0]->type != GGML_TYPE_Q8_0 && op->src[0]->type != GGML_TYPE_Q6_K) {
-                    static std::atomic<bool> warned(false);
-                    if (!warned.exchange(true)) {
+                    ਸਥਿਰ std::atomic<ਤਾਰਕਿਕ> warned(ਝੂਠ);
+                    ਜੇ (!warned.exchange(ਸੱਚ)) {
                         GGML_LOG_WARN("kleidiai: no kernel for tensor type %s, not accelerated by KleidiAI "
                                       "(kernels available for Q4_0, Q4_K, Q8_0 and Q6_K)\n",
                                       ggml_type_name(op->src[0]->type));
                     }
                 }
-                if (op->src[0]->type != GGML_TYPE_F16) {
-                    return nullptr;
+                ਜੇ (op->src[0]->type != GGML_TYPE_F16) {
+                    ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
                 }
                 std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> kernel_chain;
-                const int slot_total = kleidiai_collect_kernel_chain(op, kernel_chain);
-                if (slot_total > 0 && op->src[1]->ne[1] > 1) {
-                    if ((op->src[0]->nb[1] * op->src[0]->ne[1] != op->src[0]->nb[2]) ||
+                ਅਚਲ ਪੂਰਨ ਥਾਂ_ਕੁੱਲ = kleidiai_collect_kernel_chain(op, kernel_chain);
+                ਜੇ (ਥਾਂ_ਕੁੱਲ > 0 && op->src[1]->ne[1] > 1) {
+                    ਜੇ ((op->src[0]->nb[1] * op->src[0]->ne[1] != op->src[0]->nb[2]) ||
                         (op->src[1]->nb[1] * op->src[1]->ne[1] != op->src[1]->nb[2])) {
-                        return nullptr;
+                        ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
                     }
-                    return ggml::cpu::kleidiai::get_tensor_traits(NULL, NULL);
+                    ਵਾਪਸ ggml::cpu::kleidiai::get_tensor_traits(ਨਿਰਾ, ਨਿਰਾ);
                 }
             }
         }
-        return nullptr;
+        ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
     }
 };
 }  // namespace ggml::cpu::kleidiai
 
-ggml_backend_buffer_type_t ggml_backend_cpu_kleidiai_buffer_type(void) {
-    static ggml::cpu::kleidiai::extra_buffer_type ctx;
-    static struct ggml_backend_buffer_type ggml_backend_cpu_buffer_type_kleidiai = {
+ggml_backend_ਬਫਰ_type_t ggml_backend_cpu_kleidiai_ਬਫਰ_type(ਖਾਲੀ) {
+    ਸਥਿਰ ggml::cpu::kleidiai::extra_ਬਫਰ_type ctx;
+    ਸਥਿਰ ਬਣਤਰ ggml_backend_ਬਫਰ_type ggml_backend_cpu_ਬਫਰ_type_kleidiai = {
         /* .iface    = */ {
-                           /* .get_name             = */ ggml_backend_cpu_kleidiai_buffer_type_get_name,
-                           /* .alloc_buffer         = */ ggml_backend_cpu_kleidiai_buffer_type_alloc_buffer,
-                           /* .alloc_buffer_n       = */ nullptr,
-                           /* .get_alignment        = */ ggml_backend_cpu_kleidiai_buffer_type_get_alignment,
-                           /* .get_max_size         = */ nullptr,  // defaults to SIZE_MAX
-                           /* .get_alloc_size       = */ ggml_backend_cpu_kleidiai_buffer_type_get_alloc_size,
-                           /* .get_alloc_size_n     = */ NULL,
-                           /* .is_host              = */ nullptr,
+                           /* .get_name             = */ ggml_backend_cpu_kleidiai_ਬਫਰ_type_get_name,
+                           /* .alloc_buffer         = */ ggml_backend_cpu_kleidiai_ਬਫਰ_type_alloc_ਬਫਰ,
+                           /* .alloc_buffer_n       = */ ਖਾਲੀ_ਸੂਚਕ,
+                           /* .get_alignment        = */ ggml_backend_cpu_kleidiai_ਬਫਰ_type_get_alignment,
+                           /* .get_max_size         = */ ਖਾਲੀ_ਸੂਚਕ,  // defaults to SIZE_MAX
+                           /* .get_alloc_size       = */ ggml_backend_cpu_kleidiai_ਬਫਰ_type_get_alloc_ਮਾਪ,
+                           /* .get_alloc_size_n     = */ ਨਿਰਾ,
+                           /* .is_host              = */ ਖਾਲੀ_ਸੂਚਕ,
                            },
         /* .device  = */ ggml_backend_reg_dev_get(ggml_backend_cpu_reg(), 0),
         /* .context = */ &ctx,
@@ -1913,5 +1913,5 @@ ggml_backend_buffer_type_t ggml_backend_cpu_kleidiai_buffer_type(void) {
 
     init_kleidiai_context();
 
-    return &ggml_backend_cpu_buffer_type_kleidiai;
+    ਵਾਪਸ &ggml_backend_cpu_ਬਫਰ_type_kleidiai;
 }

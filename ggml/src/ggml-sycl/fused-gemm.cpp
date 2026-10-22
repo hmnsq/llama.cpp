@@ -1,23 +1,23 @@
-#include "fused-gemm.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "fused-gemm.hpp"
 
-#include <sycl/ext/oneapi/matrix/matrix.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <sycl/ext/oneapi/matrix/matrix.hpp>
 
-#include <algorithm>
-#include <string>
-#include <tuple>
-#include <mutex>
-#include <set>
-#include <unordered_map>
+#ਅਨ੍ਤਰ੍ਭਾਵ <algorithm>
+#ਅਨ੍ਤਰ੍ਭਾਵ <string>
+#ਅਨ੍ਤਰ੍ਭਾਵ <tuple>
+#ਅਨ੍ਤਰ੍ਭਾਵ <mutex>
+#ਅਨ੍ਤਰ੍ਭਾਵ <set>
+#ਅਨ੍ਤਰ੍ਭਾਵ <unordered_map>
 
-namespace mx = sycl::ext::oneapi::experimental::matrix;
+ਨਾਮਾਕਾਸ਼ mx = sycl::ext::oneapi::experimental::ਮੈਟ੍ਰਿਕਸ;
 
 // FG_ / fg_ is short for fused GEMM: the weights are dequantized inside the GEMM, into the XMX tiles.
 
 // A k step is one 32-value weight sub-block; iq3_s and the other superblock formats split their
 // superblock into steps of this width. The sub-groups of a work-group each walk their own K range
 // and are summed at the end.
-static constexpr int FG_BK     = QK4_NL;
-static constexpr int FG_KSPLIT = 4;
+ਸਥਿਰ constexpr ਪੂਰਨ FG_BK     = QK4_NL;
+ਸਥਿਰ constexpr ਪੂਰਨ FG_KSPLIT = 4;
 
 // Element traits of one joint_matrix operand type. The A stage and the B pack compute in f32 and
 // convert once, in registers, when they write the element, so any type costs the same one pass.
@@ -27,124 +27,124 @@ static constexpr int FG_KSPLIT = 4;
 //   src:   ggml type that needs no conversion into this type (GGML_TYPE_COUNT: none)
 //   slow:  XMX throughput class, 0 is fastest. f16 and bf16 share the DPAS rate; tf32 does half the
 //          K per instruction. B60, Qwen3-30B-A3B pp512: f16 1108, bf16 1000, tf32 751 t/s
-template <typename T> struct fg_elem;
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T> ਬਣਤਰ fg_elem;
 
-template <> struct fg_elem<sycl::half> {
-    using store = sycl::half;
-    using pair  = sycl::half2;
-    static constexpr mx::matrix_type mtype = mx::matrix_type::fp16;
-    static constexpr int             mode  = GGML_SYCL_DYNAMIC_PRECISION_F16;
-    static constexpr ggml_type       src   = GGML_TYPE_F16;
-    static constexpr int             mant  = 10;
-    static constexpr int             slow  = 0;
-    static store cvt(float x) { return (store) x; }
-    static pair make(float x, float y) { return pair((store) x, (store) y); }
+ਸਾਂਚਾ <> ਬਣਤਰ fg_elem<sycl::half> {
+    ਵਰਤੋਂ store = sycl::half;
+    ਵਰਤੋਂ pair  = sycl::half2;
+    ਸਥਿਰ constexpr mx::ਮੈਟ੍ਰਿਕਸ_type mtype = mx::ਮੈਟ੍ਰਿਕਸ_type::fp16;
+    ਸਥਿਰ constexpr ਪੂਰਨ             mode  = GGML_SYCL_DYNAMIC_PRECISION_F16;
+    ਸਥਿਰ constexpr ggml_type       src   = GGML_TYPE_F16;
+    ਸਥਿਰ constexpr ਪੂਰਨ             mant  = 10;
+    ਸਥਿਰ constexpr ਪੂਰਨ             slow  = 0;
+    ਸਥਿਰ store cvt(ਦਸ਼ਮਲਵ x) { ਵਾਪਸ (store) x; }
+    ਸਥਿਰ pair make(ਦਸ਼ਮਲਵ x, ਦਸ਼ਮਲਵ y) { ਵਾਪਸ pair((store) x, (store) y); }
 };
 
 // tf32 rounds to nearest even with plain bit ops: round_to_tf32 needs a SPIR-V extension that the
 // DG2 AOT target rejects
-static inline uint32_t fg_round_bits(float x, int drop) {
-    const uint32_t u = sycl::bit_cast<uint32_t>(x);
-    if ((u & 0x7f800000u) == 0x7f800000u) {
-        return (u & 0x7fffffu) ? u | (1u << drop) : u; // nan stays nan
+ਸਥਿਰ ਸਤਰਅੰਦਰ uint32_t fg_ਗੇੜਾ_ਬਿੱਟ(ਦਸ਼ਮਲਵ x, ਪੂਰਨ drop) {
+    ਅਚਲ uint32_t u = sycl::ਦੋਆਧਾਰੀ_ਅੰਕ_cast<uint32_t>(x);
+    ਜੇ ((u & 0x7f800000u) == 0x7f800000u) {
+        ਵਾਪਸ (u & 0x7fffffu) ? u | (1u << drop) : u; // nan stays nan
     }
-    return u + ((1u << (drop - 1)) - 1) + ((u >> drop) & 1);
+    ਵਾਪਸ u + ((1u << (drop - 1)) - 1) + ((u >> drop) & 1);
 }
 
-struct alignas(4) fg_bf16x2 {
+ਬਣਤਰ alignas(4) fg_bf16x2 {
     sycl::ext::oneapi::bfloat16 x, y;
 };
 
-template <> struct fg_elem<sycl::ext::oneapi::bfloat16> {
-    using store = sycl::ext::oneapi::bfloat16;
-    using pair  = fg_bf16x2;
-    static constexpr mx::matrix_type mtype = mx::matrix_type::bf16;
-    static constexpr int             mode  = GGML_SYCL_DYNAMIC_PRECISION_BF16;
-    static constexpr ggml_type       src   = GGML_TYPE_BF16;
-    static constexpr int             mant  = 7;
-    static constexpr int             slow  = 0;
-    static store cvt(float x) { return store(x); }
-    static pair make(float x, float y) { return { cvt(x), cvt(y) }; }
+ਸਾਂਚਾ <> ਬਣਤਰ fg_elem<sycl::ext::oneapi::bfloat16> {
+    ਵਰਤੋਂ store = sycl::ext::oneapi::bfloat16;
+    ਵਰਤੋਂ pair  = fg_bf16x2;
+    ਸਥਿਰ constexpr mx::ਮੈਟ੍ਰਿਕਸ_type mtype = mx::ਮੈਟ੍ਰਿਕਸ_type::bf16;
+    ਸਥਿਰ constexpr ਪੂਰਨ             mode  = GGML_SYCL_DYNAMIC_PRECISION_BF16;
+    ਸਥਿਰ constexpr ggml_type       src   = GGML_TYPE_BF16;
+    ਸਥਿਰ constexpr ਪੂਰਨ             mant  = 7;
+    ਸਥਿਰ constexpr ਪੂਰਨ             slow  = 0;
+    ਸਥਿਰ store cvt(ਦਸ਼ਮਲਵ x) { ਵਾਪਸ store(x); }
+    ਸਥਿਰ pair make(ਦਸ਼ਮਲਵ x, ਦਸ਼ਮਲਵ y) { ਵਾਪਸ { cvt(x), cvt(y) }; }
 };
 
 // tf32 keeps f32 range and f16 mantissa, in f32 storage
-template <> struct fg_elem<mx::precision::tf32> {
-    using store = float;
-    using pair  = sycl::float2;
-    static constexpr mx::matrix_type mtype = mx::matrix_type::tf32;
-    static constexpr int             mode  = GGML_SYCL_DYNAMIC_PRECISION_TF32;
-    static constexpr ggml_type       src   = GGML_TYPE_COUNT;
-    static constexpr int             mant  = 10;
-    static constexpr int             slow  = 1;
-    static store cvt(float x) { return sycl::bit_cast<float>(fg_round_bits(x, 13) & ~0x1fffu); }
-    static pair make(float x, float y) { return pair(cvt(x), cvt(y)); }
+ਸਾਂਚਾ <> ਬਣਤਰ fg_elem<mx::precision::tf32> {
+    ਵਰਤੋਂ store = ਦਸ਼ਮਲਵ;
+    ਵਰਤੋਂ pair  = sycl::float2;
+    ਸਥਿਰ constexpr mx::ਮੈਟ੍ਰਿਕਸ_type mtype = mx::ਮੈਟ੍ਰਿਕਸ_type::tf32;
+    ਸਥਿਰ constexpr ਪੂਰਨ             mode  = GGML_SYCL_DYNAMIC_PRECISION_TF32;
+    ਸਥਿਰ constexpr ggml_type       src   = GGML_TYPE_ਗਿਣਤੀ;
+    ਸਥਿਰ constexpr ਪੂਰਨ             mant  = 10;
+    ਸਥਿਰ constexpr ਪੂਰਨ             slow  = 1;
+    ਸਥਿਰ store cvt(ਦਸ਼ਮਲਵ x) { ਵਾਪਸ sycl::ਦੋਆਧਾਰੀ_ਅੰਕ_cast<ਦਸ਼ਮਲਵ>(fg_ਗੇੜਾ_ਬਿੱਟ(x, 13) & ~0x1fffu); }
+    ਸਥਿਰ pair make(ਦਸ਼ਮਲਵ x, ਦਸ਼ਮਲਵ y) { ਵਾਪਸ pair(cvt(x), cvt(y)); }
 };
 
 // One joint_matrix combination (A type, B type, TM x TN x TK, sub-group size; C and D are f32) and
 // the tiling built on it. A sub-group owns SG_ROWS rows of A (at least 16) and BN (at least 32)
 // columns of B. A and B may differ: the device lists the pairs it supports.
-template <typename TA, typename TB, int TM_, int TN_, int TK_, int SG_> struct fg_combo {
-    using ta  = TA;
-    using tb  = TB;
-    using EA  = fg_elem<TA>;
-    using EB  = fg_elem<TB>;
-    using tsa = typename EA::store;
-    using tsb = typename EB::store;
-    static constexpr int TM = TM_;
-    static constexpr int TN = TN_;
-    static constexpr int TK = TK_;
-    static constexpr int SG = SG_;
-    static constexpr int VNNI    = 4 / sizeof(tsb);  // K rows of B packed in one 32-bit word
-    static constexpr int SG_ROWS = TM > 16 ? TM : 16;
-    static constexpr int RPL     = SG_ROWS / SG;     // A rows one lane decodes per k step
-    static constexpr int MT      = SG_ROWS / TM;
-    static constexpr int BN      = TN > 32 ? TN : 32;
-    static constexpr int NT      = BN / TN;
-    static constexpr int WG_SIZE = FG_KSPLIT * SG;
-    static constexpr mx::layout b_layout = VNNI == 1 ? mx::layout::row_major : mx::layout::ext_intel_packed;
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ TA, ਕਿਸਮ_ਨਾਂ TB, ਪੂਰਨ TM_, ਪੂਰਨ TN_, ਪੂਰਨ TK_, ਪੂਰਨ SG_> ਬਣਤਰ fg_combo {
+    ਵਰਤੋਂ ta  = TA;
+    ਵਰਤੋਂ tb  = TB;
+    ਵਰਤੋਂ EA  = fg_elem<TA>;
+    ਵਰਤੋਂ EB  = fg_elem<TB>;
+    ਵਰਤੋਂ tsa = ਕਿਸਮ_ਨਾਂ EA::store;
+    ਵਰਤੋਂ tsb = ਕਿਸਮ_ਨਾਂ EB::store;
+    ਸਥਿਰ constexpr ਪੂਰਨ TM = TM_;
+    ਸਥਿਰ constexpr ਪੂਰਨ TN = TN_;
+    ਸਥਿਰ constexpr ਪੂਰਨ TK = TK_;
+    ਸਥਿਰ constexpr ਪੂਰਨ SG = SG_;
+    ਸਥਿਰ constexpr ਪੂਰਨ VNNI    = 4 / ਆਕਾਰ(tsb);  // K rows of B packed in one 32-bit word
+    ਸਥਿਰ constexpr ਪੂਰਨ SG_ਪੰਕਤੀਆਂ = TM > 16 ? TM : 16;
+    ਸਥਿਰ constexpr ਪੂਰਨ RPL     = SG_ਪੰਕਤੀਆਂ / SG;     // A rows one lane decodes per k step
+    ਸਥਿਰ constexpr ਪੂਰਨ MT      = SG_ਪੰਕਤੀਆਂ / TM;
+    ਸਥਿਰ constexpr ਪੂਰਨ BN      = TN > 32 ? TN : 32;
+    ਸਥਿਰ constexpr ਪੂਰਨ NT      = BN / TN;
+    ਸਥਿਰ constexpr ਪੂਰਨ WG_ਮਾਪ = FG_KSPLIT * SG;
+    ਸਥਿਰ constexpr mx::layout b_layout = VNNI == 1 ? mx::layout::ਪੰਕਤੀ_major : mx::layout::ext_intel_packed;
     // a 64-wide N is mostly padding here and a 32x64 f32 accumulator needs 128 registers per lane,
     // so it spills: 13x slower on B60
-    static constexpr bool efficient = TN <= 32;
-    static_assert(SG_ROWS % SG == 0 && SG_ROWS % TM == 0 && BN % TN == 0 && FG_BK % TK == 0, "bad tile");
+    ਸਥਿਰ constexpr ਤਾਰਕਿਕ efficient = TN <= 32;
+    static_assert(SG_ਪੰਕਤੀਆਂ % SG == 0 && SG_ਪੰਕਤੀਆਂ % TM == 0 && BN % TN == 0 && FG_BK % TK == 0, "bad tile");
     static_assert(BN <= GGML_SYCL_FG_MAX_N, "header gate must cover the tile width");
 };
 
-using fg_half = sycl::half;
-using fg_bf16 = sycl::ext::oneapi::bfloat16;
-using fg_tf32 = mx::precision::tf32;
+ਵਰਤੋਂ fg_half = sycl::half;
+ਵਰਤੋਂ fg_bf16 = sycl::ext::oneapi::bfloat16;
+ਵਰਤੋਂ fg_tf32 = mx::precision::tf32;
 
 // One bit of GGML_SYCL_XMX_GATHER_SHAPES per combination. Only combinations some device lists in
 // matrix_combinations are built (appendix of sycl_ext_oneapi_matrix and the runtime's own list).
-template <typename F> static void fg_visit_combo(int idx, F && f);
-static constexpr int FG_N_COMBOS = 8;
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ F> ਸਥਿਰ ਖਾਲੀ fg_ਦੇਖੋ_combo(ਪੂਰਨ idx, F && f);
+ਸਥਿਰ constexpr ਪੂਰਨ FG_N_COMBOS = 8;
 
 // A spir64_gen AOT build (GGML_SYCL_XMX_AOT_SG) drops the combinations of the other sub-group size
 // entirely: ocloc rejects even an empty kernel that asks for a sub-group size it lacks.
-template <int SG> static constexpr bool fg_listed() {
-#if defined(GGML_SYCL_XMX_AOT_SG)
-    return SG == GGML_SYCL_XMX_AOT_SG;
-#else
-    return true;
-#endif
+ਸਾਂਚਾ <ਪੂਰਨ SG> ਸਥਿਰ constexpr ਤਾਰਕਿਕ fg_listed() {
+#ਜੇ defined(GGML_SYCL_XMX_AOT_SG)
+    ਵਾਪਸ SG == GGML_SYCL_XMX_AOT_SG;
+#ਨਹੀਂਤਾਂ
+    ਵਾਪਸ ਸੱਚ;
+#ਜੇ_ਅੰਤ
 }
 
-template <typename S, typename F> static void fg_call_combo(F && f) {
-    if constexpr (fg_listed<S::SG>()) {
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ S, ਕਿਸਮ_ਨਾਂ F> ਸਥਿਰ ਖਾਲੀ fg_call_combo(F && f) {
+    ਜੇ constexpr (fg_listed<S::SG>()) {
         f(S{});
     }
 }
 
-template <typename F> static void fg_visit_combo(int idx, F && f) {
-    switch (idx) {
-        case 0: fg_call_combo<fg_combo<fg_half, fg_half, 8, 16, 16, 16>>(f);  break; // Xe2, Xe3, Xe-HPC
-        case 1: fg_call_combo<fg_combo<fg_half, fg_half, 16, 16, 16, 16>>(f); break; // Xe2, Xe3, Xe-HPC
-        case 2: fg_call_combo<fg_combo<fg_half, fg_half, 32, 64, 16, 16>>(f); break; // Xe2, Xe3, Xe-HPC
-        case 3: fg_call_combo<fg_combo<fg_half, fg_half, 32, 64, 32, 16>>(f); break; // Xe2, Xe3, Xe-HPC
-        case 4: fg_call_combo<fg_combo<fg_half, fg_half, 8, 8, 16, 8>>(f);    break; // Xe-HPG (Arc A), ARL-H
-        case 5: fg_call_combo<fg_combo<fg_tf32, fg_tf32, 8, 16, 8, 16>>(f);   break; // Xe2, Xe3, Xe-HPC
-        case 6: fg_call_combo<fg_combo<fg_bf16, fg_bf16, 8, 16, 16, 16>>(f);  break; // Xe2, Xe3, Xe-HPC
-        case 7: fg_call_combo<fg_combo<fg_bf16, fg_bf16, 8, 8, 16, 8>>(f);    break; // Xe-HPG (Arc A), ARL-H
-        default: GGML_ABORT("bad XMX combination %d", idx);
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ F> ਸਥਿਰ ਖਾਲੀ fg_ਦੇਖੋ_combo(ਪੂਰਨ idx, F && f) {
+    ਚੋਣ (idx) {
+        ਹਾਲਤ 0: fg_call_combo<fg_combo<fg_half, fg_half, 8, 16, 16, 16>>(f);  ਰੋਕੋ; // Xe2, Xe3, Xe-HPC
+        ਹਾਲਤ 1: fg_call_combo<fg_combo<fg_half, fg_half, 16, 16, 16, 16>>(f); ਰੋਕੋ; // Xe2, Xe3, Xe-HPC
+        ਹਾਲਤ 2: fg_call_combo<fg_combo<fg_half, fg_half, 32, 64, 16, 16>>(f); ਰੋਕੋ; // Xe2, Xe3, Xe-HPC
+        ਹਾਲਤ 3: fg_call_combo<fg_combo<fg_half, fg_half, 32, 64, 32, 16>>(f); ਰੋਕੋ; // Xe2, Xe3, Xe-HPC
+        ਹਾਲਤ 4: fg_call_combo<fg_combo<fg_half, fg_half, 8, 8, 16, 8>>(f);    ਰੋਕੋ; // Xe-HPG (Arc A), ARL-H
+        ਹਾਲਤ 5: fg_call_combo<fg_combo<fg_tf32, fg_tf32, 8, 16, 8, 16>>(f);   ਰੋਕੋ; // Xe2, Xe3, Xe-HPC
+        ਹਾਲਤ 6: fg_call_combo<fg_combo<fg_bf16, fg_bf16, 8, 16, 16, 16>>(f);  ਰੋਕੋ; // Xe2, Xe3, Xe-HPC
+        ਹਾਲਤ 7: fg_call_combo<fg_combo<fg_bf16, fg_bf16, 8, 8, 16, 8>>(f);    ਰੋਕੋ; // Xe-HPG (Arc A), ARL-H
+        ਮੂਲ: GGML_ABORT("bad XMX combination %d", idx);
     }
 }
 
@@ -152,8 +152,8 @@ template <typename F> static void fg_visit_combo(int idx, F && f) {
 // size, since IGC fails on the other ones. A JIT build keeps them all, but each combination lands in
 // its own device image (joint_matrix is an optional kernel feature) and only a combination the
 // device reports is launched, so the runtime never asks IGC for the others.
-#if defined(__SYCL_DEVICE_ONLY__)
-#    if __SYCL_TARGET_INTEL_GPU_ACM_G10__ || __SYCL_TARGET_INTEL_GPU_ACM_G11__ || __SYCL_TARGET_INTEL_GPU_ACM_G12__ || \
+#ਜੇ defined(__SYCL_DEVICE_ONLY__)
+#    ਜੇ __SYCL_TARGET_INTEL_GPU_ACM_G10__ || __SYCL_TARGET_INTEL_GPU_ACM_G11__ || __SYCL_TARGET_INTEL_GPU_ACM_G12__ || \
         __SYCL_TARGET_INTEL_GPU_ARL_H__
 #        define FG_AOT_SG 8
 #    elif __SYCL_TARGET_INTEL_GPU_PVC__ || __SYCL_TARGET_INTEL_GPU_PVC_VG__ || __SYCL_TARGET_INTEL_GPU_BMG_G21__ || \
@@ -166,85 +166,85 @@ template <typename F> static void fg_visit_combo(int idx, F && f) {
         __SYCL_TARGET_INTEL_GPU_MTL_U__ || __SYCL_TARGET_INTEL_GPU_MTL_H__
 #        define FG_AOT_SG 0 // no XMX
 #    endif
-#endif
+#ਜੇ_ਅੰਤ
 
-template <int SG> static constexpr bool fg_built() {
-#if defined(FG_AOT_SG)
-    return SG == FG_AOT_SG;
-#else
-    return true;
-#endif
+ਸਾਂਚਾ <ਪੂਰਨ SG> ਸਥਿਰ constexpr ਤਾਰਕਿਕ fg_built() {
+#ਜੇ defined(FG_AOT_SG)
+    ਵਾਪਸ SG == FG_AOT_SG;
+#ਨਹੀਂਤਾਂ
+    ਵਾਪਸ ਸੱਚ;
+#ਜੇ_ਅੰਤ
 }
 
 // Upper bound on the tile count when total_rows rows are routed to n_as experts: the worst case gives
 // each expert one row and fills whole tiles with the rest. The bound depends only on the shape, not
 // on the routing, so the pool reuses one buffer every ubatch instead of keeping one per size seen.
-static constexpr int64_t grouped_gemm_max_tiles(int64_t total_rows, int64_t n_as, int64_t BN) {
-    return total_rows <= n_as ? total_rows : n_as + (total_rows - n_as) / BN;
+ਸਥਿਰ constexpr int64_t grouped_gemm_max_tiles(int64_t ਕੁੱਲ_ਪੰਕਤੀਆਂ, int64_t n_as, int64_t BN) {
+    ਵਾਪਸ ਕੁੱਲ_ਪੰਕਤੀਆਂ <= n_as ? ਕੁੱਲ_ਪੰਕਤੀਆਂ : n_as + (ਕੁੱਲ_ਪੰਕਤੀਆਂ - n_as) / BN;
 }
 // Tiles do not cross experts, so the bound is not ceil(total_rows / BN): 34 rows over 2 experts with
 // BN = 16 split 17 + 17 need 2 + 2 tiles, where the ceil gives 3.
 static_assert(grouped_gemm_max_tiles(34, 2, 16) == 4);
 
 // the device lists S with an f32 accumulator and output
-template <typename S> static bool fg_device_has_combo(const std::vector<mx::combination> & combinations) {
-    for (const auto & c : combinations) {
-        if (c.atype == S::EA::mtype && c.btype == S::EB::mtype && c.ctype == mx::matrix_type::fp32 &&
-            c.dtype == mx::matrix_type::fp32 &&
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ S> ਸਥਿਰ ਤਾਰਕਿਕ fg_device_has_combo(ਅਚਲ std::vector<mx::combination> & combinations) {
+    ਲਈ (ਅਚਲ ਸਵੈਚਾਲਿਤ & c : combinations) {
+        ਜੇ (c.atype == S::EA::mtype && c.btype == S::EB::mtype && c.ctype == mx::ਮੈਟ੍ਰਿਕਸ_type::fp32 &&
+            c.dtype == mx::ਮੈਟ੍ਰਿਕਸ_type::fp32 &&
             (c.max_msize >= (size_t) S::TM || c.msize == (size_t) S::TM) &&
             (c.max_nsize >= (size_t) S::TN || c.nsize == (size_t) S::TN) &&
             (c.max_ksize >= (size_t) S::TK || c.ksize == (size_t) S::TK)) {
-            return true;
+            ਵਾਪਸ ਸੱਚ;
         }
     }
-    return false;
+    ਵਾਪਸ ਝੂਠ;
 }
 
-template <typename T> static const char * fg_type_name() {
-    return std::is_same_v<T, fg_half> ? "f16" : std::is_same_v<T, fg_bf16> ? "bf16" : "tf32";
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T> ਸਥਿਰ ਅਚਲ ਅੱਖਰ * fg_type_name() {
+    ਵਾਪਸ std::is_same_v<T, fg_half> ? "f16" : std::is_same_v<T, fg_bf16> ? "bf16" : "tf32";
 }
 
-static std::string fg_combo_name(int idx) {
+ਸਥਿਰ std::string fg_combo_name(ਪੂਰਨ idx) {
     std::string name;
-    fg_visit_combo(idx, [&](auto s) {
-        using S = decltype(s);
-        name = std::string(fg_type_name<typename S::ta>()) + "x" + fg_type_name<typename S::tb>() + " " +
+    fg_ਦੇਖੋ_combo(idx, [&](ਸਵੈਚਾਲਿਤ s) {
+        ਵਰਤੋਂ S = decltype(s);
+        name = std::string(fg_type_name<ਕਿਸਮ_ਨਾਂ S::ta>()) + "x" + fg_type_name<ਕਿਸਮ_ਨਾਂ S::tb>() + " " +
                std::to_string(S::TM) + "x" + std::to_string(S::TN) + "x" + std::to_string(S::TK) + " sg" +
                std::to_string(S::SG);
     });
-    return name;
+    ਵਾਪਸ name;
 }
 
 // Combinations this build has kernels for and the device lists, one bit each. Cached per device:
 // on a mixed box the first caller's verdict is not the others'.
-static int fg_device_combos(const sycl::device & dev) {
-    static std::mutex                            mtx;
-    static std::unordered_map<sycl::device, int> known;
-    std::lock_guard<std::mutex>                  lock(mtx);
-    const auto                                   it = known.find(dev);
-    if (it != known.end()) {
-        return it->second;
+ਸਥਿਰ ਪੂਰਨ fg_device_combos(ਅਚਲ sycl::device & dev) {
+    ਸਥਿਰ std::mutex                            mtx;
+    ਸਥਿਰ std::unordered_map<sycl::device, ਪੂਰਨ> ਗਿਆਤ;
+    std::lock_guard<std::mutex>                  ਤਾਲਾ(mtx);
+    ਅਚਲ ਸਵੈਚਾਲਿਤ                                   it = ਗਿਆਤ.find(dev);
+    ਜੇ (it != ਗਿਆਤ.end()) {
+        ਵਾਪਸ it->second;
     }
-    int available = 0;
-    try {
-        const auto combinations = dev.get_info<sycl::ext::oneapi::experimental::info::device::matrix_combinations>();
-        const auto sg_sizes     = dev.get_info<sycl::info::device::sub_group_sizes>();
-        for (int idx = 0; idx < FG_N_COMBOS; ++idx) {
-            fg_visit_combo(idx, [&](auto s) {
-                using S = decltype(s);
-                const bool sg_ok = std::find(sg_sizes.begin(), sg_sizes.end(), (size_t) S::SG) != sg_sizes.end();
-                if (sg_ok && fg_device_has_combo<S>(combinations)) {
-                    available |= 1 << idx;
+    ਪੂਰਨ ਉਪਲਬਧ = 0;
+    ਕੋਸ਼ਿਸ਼ {
+        ਅਚਲ ਸਵੈਚਾਲਿਤ combinations = dev.get_info<sycl::ext::oneapi::experimental::info::device::ਮੈਟ੍ਰਿਕਸ_combinations>();
+        ਅਚਲ ਸਵੈਚਾਲਿਤ sg_sizes     = dev.get_info<sycl::info::device::sub_ਸਮੂਹ_sizes>();
+        ਲਈ (ਪੂਰਨ idx = 0; idx < FG_N_COMBOS; ++idx) {
+            fg_ਦੇਖੋ_combo(idx, [&](ਸਵੈਚਾਲਿਤ s) {
+                ਵਰਤੋਂ S = decltype(s);
+                ਅਚਲ ਤਾਰਕਿਕ sg_ok = std::find(sg_sizes.begin(), sg_sizes.end(), (size_t) S::SG) != sg_sizes.end();
+                ਜੇ (sg_ok && fg_device_has_combo<S>(combinations)) {
+                    ਉਪਲਬਧ |= 1 << idx;
                 }
             });
         }
-    } catch (const sycl::exception &) {
-        available = 0;
+    } ਫੜੋ (ਅਚਲ sycl::exception &) {
+        ਉਪਲਬਧ = 0;
     }
     GGML_LOG_INFO("%s: %s: XMX dequant-GEMM combinations available 0x%x, allowed 0x%x\n", __func__,
-                  dev.get_info<sycl::info::device::name>().c_str(), available, g_ggml_sycl_xmx_gather_shapes);
-    known.emplace(dev, available);
-    return available;
+                  dev.get_info<sycl::info::device::name>().c_str(), ਉਪਲਬਧ, g_ggml_sycl_xmx_gather_shapes);
+    ਗਿਆਤ.emplace(dev, ਉਪਲਬਧ);
+    ਵਾਪਸ ਉਪਲਬਧ;
 }
 
 // Rank of combination S for a src1 of type src1_type, lower is better. Order:
@@ -253,116 +253,116 @@ static int fg_device_combos(const sycl::device & dev) {
 //  3. B at least as precise as f16
 //  4. the device's native DPAS tile (8 x SG x 32 bytes of K), then the largest M x K
 // A costs nothing to convert: the A stage emits any type at the same cost.
-template <typename S> static int64_t fg_rank(ggml_type src1_type) {
-    const int64_t spills  = !S::efficient;
-    const int64_t slow    = std::max(S::EA::slow, S::EB::slow);
-    const int64_t convert = S::EB::src != src1_type;
-    const int64_t lossy   = S::EB::mant < 10;
-    const int64_t foreign = !(S::TM == 8 && S::TN == S::SG);
-    const int64_t mk      = 1024 - S::TM * S::TK;
-    return ((((spills * 2 + slow) * 2 + convert) * 2 + lossy) * 2 + foreign) * 2048 + mk;
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ S> ਸਥਿਰ int64_t fg_rank(ggml_type src1_type) {
+    ਅਚਲ int64_t spills  = !S::efficient;
+    ਅਚਲ int64_t slow    = std::max(S::EA::slow, S::EB::slow);
+    ਅਚਲ int64_t convert = S::EB::src != src1_type;
+    ਅਚਲ int64_t lossy   = S::EB::mant < 10;
+    ਅਚਲ int64_t foreign = !(S::TM == 8 && S::TN == S::SG);
+    ਅਚਲ int64_t mk      = 1024 - S::TM * S::TK;
+    ਵਾਪਸ ((((spills * 2 + slow) * 2 + convert) * 2 + lossy) * 2 + foreign) * 2048 + mk;
 }
 
 // whether XMX operands of type mode (a GGML_SYCL_DYNAMIC_PRECISION value) meet the src1 request
 // [TAG_GGML_PREC]. f16 lacks the f32 range that BF16 and F32 ask for; an F32 request goes only as far
 // down as GGML_SYCL_DYNAMIC_REQUIRED_PRECISION allows.
-static bool fg_mode_meets(int mode, int32_t src1_prec) {
-    if (src1_prec == GGML_PREC_UNDEFINED || src1_prec >= GGML_PREC_F16) {
-        return true;
+ਸਥਿਰ ਤਾਰਕਿਕ fg_ਬਹੁਲਕ_meets(ਪੂਰਨ mode, int32_t src1_prec) {
+    ਜੇ (src1_prec == GGML_PREC_UNDEFINED || src1_prec >= GGML_PREC_F16) {
+        ਵਾਪਸ ਸੱਚ;
     }
-    if (src1_prec >= GGML_PREC_BF16) {
-        return mode != GGML_SYCL_DYNAMIC_PRECISION_F16;
+    ਜੇ (src1_prec >= GGML_PREC_BF16) {
+        ਵਾਪਸ mode != GGML_SYCL_DYNAMIC_PRECISION_F16;
     }
-    switch (g_ggml_sycl_dynamic_required_precision) {
-        case GGML_SYCL_DYNAMIC_PRECISION_TF32: return mode == GGML_SYCL_DYNAMIC_PRECISION_TF32;
-        case GGML_SYCL_DYNAMIC_PRECISION_BF16: return mode != GGML_SYCL_DYNAMIC_PRECISION_F16;
-        default:                               return false;
+    ਚੋਣ (g_ggml_sycl_dynamic_required_precision) {
+        ਹਾਲਤ GGML_SYCL_DYNAMIC_PRECISION_TF32: ਵਾਪਸ mode == GGML_SYCL_DYNAMIC_PRECISION_TF32;
+        ਹਾਲਤ GGML_SYCL_DYNAMIC_PRECISION_BF16: ਵਾਪਸ mode != GGML_SYCL_DYNAMIC_PRECISION_F16;
+        ਮੂਲ:                               ਵਾਪਸ ਝੂਠ;
     }
 }
 
 // Best allowed combination for this call, or -1 if none. The type is GGML_SYCL_DYNAMIC_PRECISION if it
 // meets the src1 request; if not, bf16 then tf32 for a BF16 request (fastest first) and tf32 then bf16
 // for an F32 request (most mantissa first).
-static int fg_pick_combo(dpct::queue_ptr stream, ggml_type src1_type, int32_t src1_prec) {
-    const sycl::device dev     = stream->get_device();
-    const int          allowed = fg_device_combos(dev) & g_ggml_sycl_xmx_gather_shapes;
-    const bool         f32_req = src1_prec != GGML_PREC_UNDEFINED && src1_prec < GGML_PREC_BF16;
-    const int          modes[] = {
+ਸਥਿਰ ਪੂਰਨ fg_pick_combo(dpct::ਕਤਾਰ_ptr stream, ggml_type src1_type, int32_t src1_prec) {
+    ਅਚਲ sycl::device dev     = stream->get_device();
+    ਅਚਲ ਪੂਰਨ          allowed = fg_device_combos(dev) & g_ggml_sycl_xmx_gather_shapes;
+    ਅਚਲ ਤਾਰਕਿਕ         f32_req = src1_prec != GGML_PREC_UNDEFINED && src1_prec < GGML_PREC_BF16;
+    ਅਚਲ ਪੂਰਨ          modes[] = {
         g_ggml_sycl_dynamic_precision,
         f32_req ? GGML_SYCL_DYNAMIC_PRECISION_TF32 : GGML_SYCL_DYNAMIC_PRECISION_BF16,
         f32_req ? GGML_SYCL_DYNAMIC_PRECISION_BF16 : GGML_SYCL_DYNAMIC_PRECISION_TF32,
     };
-    int     best      = -1;
-    int64_t best_rank = 0;
-    for (int i = 0; i < 3 && best < 0; ++i) {
-        const int mode = modes[i];
-        if (!fg_mode_meets(mode, src1_prec)) {
-            continue;
+    ਪੂਰਨ     ਉੱਤਮ      = -1;
+    int64_t ਉੱਤਮ_rank = 0;
+    ਲਈ (ਪੂਰਨ i = 0; i < 3 && ਉੱਤਮ < 0; ++i) {
+        ਅਚਲ ਪੂਰਨ mode = modes[i];
+        ਜੇ (!fg_ਬਹੁਲਕ_meets(mode, src1_prec)) {
+            ਜਾਰੀ;
         }
-        for (int idx = 0; idx < FG_N_COMBOS; ++idx) {
-            if (!(allowed & (1 << idx))) {
-                continue;
+        ਲਈ (ਪੂਰਨ idx = 0; idx < FG_N_COMBOS; ++idx) {
+            ਜੇ (!(allowed & (1 << idx))) {
+                ਜਾਰੀ;
             }
-            fg_visit_combo(idx, [&](auto s) {
-                using S = decltype(s);
-                if (S::EA::mode != mode || S::EB::mode != mode) {
-                    return;
+            fg_ਦੇਖੋ_combo(idx, [&](ਸਵੈਚਾਲਿਤ s) {
+                ਵਰਤੋਂ S = decltype(s);
+                ਜੇ (S::EA::mode != mode || S::EB::mode != mode) {
+                    ਵਾਪਸ;
                 }
-                const int64_t rank = fg_rank<S>(src1_type);
-                if (best < 0 || rank < best_rank) {
-                    best      = idx;
-                    best_rank = rank;
+                ਅਚਲ int64_t rank = fg_rank<S>(src1_type);
+                ਜੇ (ਉੱਤਮ < 0 || rank < ਉੱਤਮ_rank) {
+                    ਉੱਤਮ      = idx;
+                    ਉੱਤਮ_rank = rank;
                 }
             });
         }
     }
     // log each distinct decision once
-    static std::mutex                                      mtx;
-    static std::set<std::tuple<size_t, int, int32_t, int>> seen;
-    std::lock_guard<std::mutex>                            lock(mtx);
-    if (seen.emplace(std::hash<sycl::device>{}(dev), (int) src1_type, src1_prec, best).second) {
+    ਸਥਿਰ std::mutex                                      mtx;
+    ਸਥਿਰ std::set<std::tuple<size_t, ਪੂਰਨ, int32_t, ਪੂਰਨ>> ਵੇਖਿਆ;
+    std::lock_guard<std::mutex>                            ਤਾਲਾ(mtx);
+    ਜੇ (ਵੇਖਿਆ.emplace(std::hash<sycl::device>{}(dev), (ਪੂਰਨ) src1_type, src1_prec, ਉੱਤਮ).second) {
         GGML_LOG_INFO("%s: src1 %s, src1 prec %d -> %s\n", __func__, ggml_type_name(src1_type), src1_prec,
-                      best >= 0 ? fg_combo_name(best).c_str() : "none (library GEMM)");
+                      ਉੱਤਮ >= 0 ? fg_combo_name(ਉੱਤਮ).c_str() : "none (library GEMM)");
     }
-    return best;
+    ਵਾਪਸ ਉੱਤਮ;
 }
 
 // src1 [N][K] -> packed [K/V][Npad][V] so B tiles load straight from global memory
-template <typename E, typename T_src>
-static void fused_gemm_pack_b(const T_src * y, typename E::store * packed, int N, int Npad, int K,
-                              dpct::queue_ptr stream) {
-    constexpr int V   = 4 / sizeof(typename E::store);
-    const int     kqs = K / V;
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ E, ਕਿਸਮ_ਨਾਂ T_src>
+ਸਥਿਰ ਖਾਲੀ fused_gemm_pack_b(ਅਚਲ T_src * y, ਕਿਸਮ_ਨਾਂ E::store * packed, ਪੂਰਨ N, ਪੂਰਨ Npad, ਪੂਰਨ K,
+                              dpct::ਕਤਾਰ_ptr stream) {
+    constexpr ਪੂਰਨ V   = 4 / ਆਕਾਰ(ਕਿਸਮ_ਨਾਂ E::store);
+    ਅਚਲ ਪੂਰਨ     kqs = K / V;
     stream->parallel_for(sycl::range<1>((size_t) Npad * kqs), [=](sycl::id<1> id) {
-        const int idx = id[0];
-        const int n   = idx / kqs;
-        const int kq  = idx - n * kqs;
-        typename E::store vals[V] = {};
-        if (n < N) {
-            const T_src * src = y + (size_t) n * K + V * kq;
-#pragma unroll
-            for (int v = 0; v < V; ++v) {
-                vals[v] = E::cvt((float) src[v]);
+        ਅਚਲ ਪੂਰਨ idx = id[0];
+        ਅਚਲ ਪੂਰਨ n   = idx / kqs;
+        ਅਚਲ ਪੂਰਨ kq  = idx - n * kqs;
+        ਕਿਸਮ_ਨਾਂ E::store vals[V] = {};
+        ਜੇ (n < N) {
+            ਅਚਲ T_src * src = y + (size_t) n * K + V * kq;
+#ਹਦਾਇਤ unroll
+            ਲਈ (ਪੂਰਨ v = 0; v < V; ++v) {
+                vals[v] = E::cvt((ਦਸ਼ਮਲਵ) src[v]);
             }
         }
-        typename E::store * out = packed + ((size_t) kq * Npad + n) * V;
-#pragma unroll
-        for (int v = 0; v < V; ++v) {
-            out[v] = vals[v];
+        ਕਿਸਮ_ਨਾਂ E::store * ਬਾਹਰਲਾ = packed + ((size_t) kq * Npad + n) * V;
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ v = 0; v < V; ++v) {
+            ਬਾਹਰਲਾ[v] = vals[v];
         }
     });
 }
 
 // A stage: one lane owns one row and decodes FG_BK values of it per k step, with every scale
 // folded into the value so the mad below sees plain A elements. One overload per weight format.
-template <typename E>
-static __dpct_inline__ void fg_stage_a(const block_iq4_nl * __restrict__ xrow, const int kb, typename E::pair * a) {
-    const block_iq4_nl blk = xrow[kb];
-    const float        d   = (float) blk.d;
-#pragma unroll
-    for (int j = 0; j < QK4_NL / 2; j += 2) {
-        const uint8_t q0 = blk.qs[j];
-        const uint8_t q1 = blk.qs[j + 1];
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ E>
+ਸਥਿਰ __dpct_inline__ ਖਾਲੀ fg_stage_a(ਅਚਲ ਖੰਡ_iq4_nl * __restrict__ xrow, ਅਚਲ ਪੂਰਨ kb, ਕਿਸਮ_ਨਾਂ E::pair * a) {
+    ਅਚਲ ਖੰਡ_iq4_nl blk = xrow[kb];
+    ਅਚਲ ਦਸ਼ਮਲਵ        d   = (ਦਸ਼ਮਲਵ) blk.d;
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ j = 0; j < QK4_NL / 2; j += 2) {
+        ਅਚਲ uint8_t q0 = blk.qs[j];
+        ਅਚਲ uint8_t q1 = blk.qs[j + 1];
         a[j / 2]     = E::make(d * kvalues_iq4nl[q0 & 0xf], d * kvalues_iq4nl[q1 & 0xf]);
         a[j / 2 + 8] = E::make(d * kvalues_iq4nl[q0 >> 4], d * kvalues_iq4nl[q1 >> 4]);
     }
@@ -371,26 +371,26 @@ static __dpct_inline__ void fg_stage_a(const block_iq4_nl * __restrict__ xrow, c
 // iq3_s: k step kb is sub-block kb % 8 of superblock kb / 8. The superblock is 110 bytes, so read
 // only the fields of that sub-block instead of copying the block. Same decode as
 // dequantize_block_iq3_s: grid entries are taken as dwords and the sign bit is a plain shift.
-template <typename E>
-static __dpct_inline__ void fg_stage_a(const block_iq3_s * __restrict__ xrow, const int kb, typename E::pair * a) {
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ E>
+ਸਥਿਰ __dpct_inline__ ਖਾਲੀ fg_stage_a(ਅਚਲ ਖੰਡ_iq3_s * __restrict__ xrow, ਅਚਲ ਪੂਰਨ kb, ਕਿਸਮ_ਨਾਂ E::pair * a) {
     static_assert(QK_K == 256, "the iq3_s A stage assumes 8 sub-blocks per superblock");
-    const block_iq3_s * blk = xrow + kb / (QK_K / 32);
-    const int           ib8 = kb % (QK_K / 32);
-    const uint8_t *     qs  = blk->qs + 8 * ib8;
-    const int           qh  = blk->qh[ib8];
-    const float         d   = (float) blk->d * (1 + 2 * ((blk->scales[ib8 / 2] >> (4 * (ib8 % 2))) & 0xf));
-#pragma unroll
-    for (int il = 0; il < 4; ++il) {
-        const uint32_t grid1 = iq3s_grid[qs[2 * il + 0] | ((qh << (8 - 2 * il)) & 256)];
-        const uint32_t grid2 = iq3s_grid[qs[2 * il + 1] | ((qh << (7 - 2 * il)) & 256)];
-        const int      signs = blk->signs[4 * ib8 + il];
-#pragma unroll
-        for (int j = 0; j < 2; ++j) {
-            const float g1a = (float) ((grid1 >> (16 * j + 0)) & 0xff);
-            const float g1b = (float) ((grid1 >> (16 * j + 8)) & 0xff);
-            const float g2a = (float) ((grid2 >> (16 * j + 0)) & 0xff);
-            const float g2b = (float) ((grid2 >> (16 * j + 8)) & 0xff);
-            const int   s   = 2 * j;
+    ਅਚਲ ਖੰਡ_iq3_s * blk = xrow + kb / (QK_K / 32);
+    ਅਚਲ ਪੂਰਨ           ib8 = kb % (QK_K / 32);
+    ਅਚਲ uint8_t *     qs  = blk->qs + 8 * ib8;
+    ਅਚਲ ਪੂਰਨ           qh  = blk->qh[ib8];
+    ਅਚਲ ਦਸ਼ਮਲਵ         d   = (ਦਸ਼ਮਲਵ) blk->d * (1 + 2 * ((blk->scales[ib8 / 2] >> (4 * (ib8 % 2))) & 0xf));
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ il = 0; il < 4; ++il) {
+        ਅਚਲ uint32_t grid1 = iq3s_grid[qs[2 * il + 0] | ((qh << (8 - 2 * il)) & 256)];
+        ਅਚਲ uint32_t grid2 = iq3s_grid[qs[2 * il + 1] | ((qh << (7 - 2 * il)) & 256)];
+        ਅਚਲ ਪੂਰਨ      signs = blk->signs[4 * ib8 + il];
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ j = 0; j < 2; ++j) {
+            ਅਚਲ ਦਸ਼ਮਲਵ g1a = (ਦਸ਼ਮਲਵ) ((grid1 >> (16 * j + 0)) & 0xff);
+            ਅਚਲ ਦਸ਼ਮਲਵ g1b = (ਦਸ਼ਮਲਵ) ((grid1 >> (16 * j + 8)) & 0xff);
+            ਅਚਲ ਦਸ਼ਮਲਵ g2a = (ਦਸ਼ਮਲਵ) ((grid2 >> (16 * j + 0)) & 0xff);
+            ਅਚਲ ਦਸ਼ਮਲਵ g2b = (ਦਸ਼ਮਲਵ) ((grid2 >> (16 * j + 8)) & 0xff);
+            ਅਚਲ ਪੂਰਨ   s   = 2 * j;
             a[4 * il + j]     = E::make(d * ((signs & (1 << (s + 0))) ? -g1a : g1a),
                                         d * ((signs & (1 << (s + 1))) ? -g1b : g1b));
             a[4 * il + j + 2] = E::make(d * ((signs & (1 << (s + 4))) ? -g2a : g2a),
@@ -400,68 +400,68 @@ static __dpct_inline__ void fg_stage_a(const block_iq3_s * __restrict__ xrow, co
 }
 
 // values per stored block, so a row of K values is K/qk blocks
-template <typename block_q_t> struct fg_block_traits;
-template <> struct fg_block_traits<block_iq4_nl> { static constexpr int qk = QK4_NL; };
-template <> struct fg_block_traits<block_iq3_s>  { static constexpr int qk = QK_K; };
-template <> struct fg_block_traits<block_iq3_xxs> { static constexpr int qk = QK_K; };
-template <> struct fg_block_traits<block_iq4_xs>  { static constexpr int qk = QK_K; };
-template <> struct fg_block_traits<block_iq2_xxs> { static constexpr int qk = QK_K; };
-template <> struct fg_block_traits<block_iq2_xs>  { static constexpr int qk = QK_K; };
-template <> struct fg_block_traits<block_iq2_s>   { static constexpr int qk = QK_K; };
-template <> struct fg_block_traits<block_iq1_s>   { static constexpr int qk = QK_K; };
-template <> struct fg_block_traits<block_iq1_m>   { static constexpr int qk = QK_K; };
-template <> struct fg_block_traits<block_q8_0>    { static constexpr int qk = QK8_0; };
-template <> struct fg_block_traits<block_q4_K>    { static constexpr int qk = QK_K; };
-template <> struct fg_block_traits<block_q5_K>    { static constexpr int qk = QK_K; };
-template <> struct fg_block_traits<block_q6_K>    { static constexpr int qk = QK_K; };
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ ਖੰਡ_q_t> ਬਣਤਰ fg_ਖੰਡ_traits;
+ਸਾਂਚਾ <> ਬਣਤਰ fg_ਖੰਡ_traits<ਖੰਡ_iq4_nl> { ਸਥਿਰ constexpr ਪੂਰਨ qk = QK4_NL; };
+ਸਾਂਚਾ <> ਬਣਤਰ fg_ਖੰਡ_traits<ਖੰਡ_iq3_s>  { ਸਥਿਰ constexpr ਪੂਰਨ qk = QK_K; };
+ਸਾਂਚਾ <> ਬਣਤਰ fg_ਖੰਡ_traits<ਖੰਡ_iq3_xxs> { ਸਥਿਰ constexpr ਪੂਰਨ qk = QK_K; };
+ਸਾਂਚਾ <> ਬਣਤਰ fg_ਖੰਡ_traits<ਖੰਡ_iq4_xs>  { ਸਥਿਰ constexpr ਪੂਰਨ qk = QK_K; };
+ਸਾਂਚਾ <> ਬਣਤਰ fg_ਖੰਡ_traits<ਖੰਡ_iq2_xxs> { ਸਥਿਰ constexpr ਪੂਰਨ qk = QK_K; };
+ਸਾਂਚਾ <> ਬਣਤਰ fg_ਖੰਡ_traits<ਖੰਡ_iq2_xs>  { ਸਥਿਰ constexpr ਪੂਰਨ qk = QK_K; };
+ਸਾਂਚਾ <> ਬਣਤਰ fg_ਖੰਡ_traits<ਖੰਡ_iq2_s>   { ਸਥਿਰ constexpr ਪੂਰਨ qk = QK_K; };
+ਸਾਂਚਾ <> ਬਣਤਰ fg_ਖੰਡ_traits<ਖੰਡ_iq1_s>   { ਸਥਿਰ constexpr ਪੂਰਨ qk = QK_K; };
+ਸਾਂਚਾ <> ਬਣਤਰ fg_ਖੰਡ_traits<ਖੰਡ_iq1_m>   { ਸਥਿਰ constexpr ਪੂਰਨ qk = QK_K; };
+ਸਾਂਚਾ <> ਬਣਤਰ fg_ਖੰਡ_traits<ਖੰਡ_q8_0>    { ਸਥਿਰ constexpr ਪੂਰਨ qk = QK8_0; };
+ਸਾਂਚਾ <> ਬਣਤਰ fg_ਖੰਡ_traits<ਖੰਡ_q4_K>    { ਸਥਿਰ constexpr ਪੂਰਨ qk = QK_K; };
+ਸਾਂਚਾ <> ਬਣਤਰ fg_ਖੰਡ_traits<ਖੰਡ_q5_K>    { ਸਥਿਰ constexpr ਪੂਰਨ qk = QK_K; };
+ਸਾਂਚਾ <> ਬਣਤਰ fg_ਖੰਡ_traits<ਖੰਡ_q6_K>    { ਸਥਿਰ constexpr ਪੂਰਨ qk = QK_K; };
 
 // The A stages below are the dequantize_block_iq* kernels rewritten for one k step. There a
 // work-item handled one quarter (il) of one 32-wide sub-block (ib); here one lane produces the
 // whole step, so il becomes a loop and ib is kb inside the superblock. Each quarter yields 8
 // consecutive values, i.e. 4 pairs at a[4*il], so nothing larger than 8 floats is ever live.
-#define FG_SUPERBLOCK(T)                                                         \
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ FG_SUPERBLOCK(T)                                                         \
     static_assert(QK_K == 256, "the " #T " A stage assumes 8 sub-blocks per superblock"); \
-    const T * blk = xrow + kb / (QK_K / 32);                                     \
-    const int ib  = kb % (QK_K / 32)
+    ਅਚਲ T * blk = xrow + kb / (QK_K / 32);                                     \
+    ਅਚਲ ਪੂਰਨ ib  = kb % (QK_K / 32)
 
-template <typename E>
-static __dpct_inline__ void fg_pack_quarter(const float * __restrict__ t, typename E::pair * a, int il) {
-#pragma unroll
-    for (int j = 0; j < 4; ++j) {
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ E>
+ਸਥਿਰ __dpct_inline__ ਖਾਲੀ fg_pack_quarter(ਅਚਲ ਦਸ਼ਮਲਵ * __restrict__ t, ਕਿਸਮ_ਨਾਂ E::pair * a, ਪੂਰਨ il) {
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ j = 0; j < 4; ++j) {
         a[4 * il + j] = E::make(t[2 * j], t[2 * j + 1]);
     }
 }
 
-template <typename E>
-static __dpct_inline__ void fg_stage_a(const block_iq4_xs * __restrict__ xrow, const int kb, typename E::pair * a) {
-    FG_SUPERBLOCK(block_iq4_xs);
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ E>
+ਸਥਿਰ __dpct_inline__ ਖਾਲੀ fg_stage_a(ਅਚਲ ਖੰਡ_iq4_xs * __restrict__ xrow, ਅਚਲ ਪੂਰਨ kb, ਕਿਸਮ_ਨਾਂ E::pair * a) {
+    FG_SUPERBLOCK(ਖੰਡ_iq4_xs);
     // low nibbles fill the first half of the step, high nibbles the second, so the two halves
     // land at a[0..7] and a[8..15] and no quarter loop is needed
-    const float d = (float) blk->d *
+    ਅਚਲ ਦਸ਼ਮਲਵ d = (ਦਸ਼ਮਲਵ) blk->d *
         ((((blk->scales_l[ib / 2] >> (4 * (ib % 2))) & 0xf) | (((blk->scales_h >> (2 * ib)) & 3) << 4)) - 32);
-    const uint8_t * q4 = blk->qs + 16 * ib;
-#pragma unroll
-    for (int j = 0; j < 8; ++j) {
+    ਅਚਲ uint8_t * q4 = blk->qs + 16 * ib;
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ j = 0; j < 8; ++j) {
         a[j]     = E::make(d * kvalues_iq4nl[q4[2 * j] & 0xf], d * kvalues_iq4nl[q4[2 * j + 1] & 0xf]);
         a[8 + j] = E::make(d * kvalues_iq4nl[q4[2 * j] >> 4],  d * kvalues_iq4nl[q4[2 * j + 1] >> 4]);
     }
 }
 
-template <typename E>
-static __dpct_inline__ void fg_stage_a(const block_iq3_xxs * __restrict__ xrow, const int kb, typename E::pair * a) {
-    FG_SUPERBLOCK(block_iq3_xxs);
-    const uint8_t *  q3    = blk->qs + 8 * ib;
-    const uint16_t * gas   = (const uint16_t *) (blk->qs + QK_K / 4) + 2 * ib;
-    const uint32_t   aux32 = gas[0] | (gas[1] << 16);
-    const float      d     = (float) blk->d * (0.5f + (aux32 >> 28)) * 0.5f;
-#pragma unroll
-    for (int il = 0; il < 4; ++il) {
-        const uint8_t * grid1 = (const uint8_t *) (iq3xxs_grid + q3[2 * il + 0]);
-        const uint8_t * grid2 = (const uint8_t *) (iq3xxs_grid + q3[2 * il + 1]);
-        const uint8_t   signs = ksigns_iq2xs[(aux32 >> (7 * il)) & 127];
-        float t[8];
-#pragma unroll
-        for (int j = 0; j < 4; ++j) {
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ E>
+ਸਥਿਰ __dpct_inline__ ਖਾਲੀ fg_stage_a(ਅਚਲ ਖੰਡ_iq3_xxs * __restrict__ xrow, ਅਚਲ ਪੂਰਨ kb, ਕਿਸਮ_ਨਾਂ E::pair * a) {
+    FG_SUPERBLOCK(ਖੰਡ_iq3_xxs);
+    ਅਚਲ uint8_t *  q3    = blk->qs + 8 * ib;
+    ਅਚਲ uint16_t * gas   = (ਅਚਲ uint16_t *) (blk->qs + QK_K / 4) + 2 * ib;
+    ਅਚਲ uint32_t   aux32 = gas[0] | (gas[1] << 16);
+    ਅਚਲ ਦਸ਼ਮਲਵ      d     = (ਦਸ਼ਮਲਵ) blk->d * (0.5f + (aux32 >> 28)) * 0.5f;
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ il = 0; il < 4; ++il) {
+        ਅਚਲ uint8_t * grid1 = (ਅਚਲ uint8_t *) (iq3xxs_grid + q3[2 * il + 0]);
+        ਅਚਲ uint8_t * grid2 = (ਅਚਲ uint8_t *) (iq3xxs_grid + q3[2 * il + 1]);
+        ਅਚਲ uint8_t   signs = ksigns_iq2xs[(aux32 >> (7 * il)) & 127];
+        ਦਸ਼ਮਲਵ t[8];
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ j = 0; j < 4; ++j) {
             t[j + 0] = d * grid1[j] * (signs & kmask_iq2xs[j + 0] ? -1.f : 1.f);
             t[j + 4] = d * grid2[j] * (signs & kmask_iq2xs[j + 4] ? -1.f : 1.f);
         }
@@ -469,103 +469,103 @@ static __dpct_inline__ void fg_stage_a(const block_iq3_xxs * __restrict__ xrow, 
     }
 }
 
-template <typename E>
-static __dpct_inline__ void fg_stage_a(const block_iq2_xxs * __restrict__ xrow, const int kb, typename E::pair * a) {
-    FG_SUPERBLOCK(block_iq2_xxs);
-    const uint16_t * q2    = blk->qs + 4 * ib;
-    const uint8_t *  aux8  = (const uint8_t *) q2;
-    const uint32_t   aux32 = q2[2] | (q2[3] << 16);
-    const float      d     = (float) blk->d * (0.5f + (aux32 >> 28)) * 0.25f;
-#pragma unroll
-    for (int il = 0; il < 4; ++il) {
-        const uint8_t * grid  = (const uint8_t *) (iq2xxs_grid + aux8[il]);
-        const uint8_t   signs = ksigns_iq2xs[(aux32 >> (7 * il)) & 127];
-        float t[8];
-#pragma unroll
-        for (int j = 0; j < 8; ++j) {
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ E>
+ਸਥਿਰ __dpct_inline__ ਖਾਲੀ fg_stage_a(ਅਚਲ ਖੰਡ_iq2_xxs * __restrict__ xrow, ਅਚਲ ਪੂਰਨ kb, ਕਿਸਮ_ਨਾਂ E::pair * a) {
+    FG_SUPERBLOCK(ਖੰਡ_iq2_xxs);
+    ਅਚਲ uint16_t * q2    = blk->qs + 4 * ib;
+    ਅਚਲ uint8_t *  aux8  = (ਅਚਲ uint8_t *) q2;
+    ਅਚਲ uint32_t   aux32 = q2[2] | (q2[3] << 16);
+    ਅਚਲ ਦਸ਼ਮਲਵ      d     = (ਦਸ਼ਮਲਵ) blk->d * (0.5f + (aux32 >> 28)) * 0.25f;
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ il = 0; il < 4; ++il) {
+        ਅਚਲ uint8_t * grid  = (ਅਚਲ uint8_t *) (iq2xxs_grid + aux8[il]);
+        ਅਚਲ uint8_t   signs = ksigns_iq2xs[(aux32 >> (7 * il)) & 127];
+        ਦਸ਼ਮਲਵ t[8];
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ j = 0; j < 8; ++j) {
             t[j] = d * grid[j] * (signs & kmask_iq2xs[j] ? -1.f : 1.f);
         }
         fg_pack_quarter<E>(t, a, il);
     }
 }
 
-template <typename E>
-static __dpct_inline__ void fg_stage_a(const block_iq2_xs * __restrict__ xrow, const int kb, typename E::pair * a) {
-    FG_SUPERBLOCK(block_iq2_xs);
-    const uint16_t * q2 = blk->qs + 4 * ib;
-#pragma unroll
-    for (int il = 0; il < 4; ++il) {
-        const uint8_t * grid  = (const uint8_t *) (iq2xs_grid + (q2[il] & 511));
-        const float     d     = (float) blk->d * (0.5f + ((blk->scales[ib] >> (4 * (il / 2))) & 0xf)) * 0.25f;
-        const uint8_t   signs = ksigns_iq2xs[q2[il] >> 9];
-        float t[8];
-#pragma unroll
-        for (int j = 0; j < 8; ++j) {
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ E>
+ਸਥਿਰ __dpct_inline__ ਖਾਲੀ fg_stage_a(ਅਚਲ ਖੰਡ_iq2_xs * __restrict__ xrow, ਅਚਲ ਪੂਰਨ kb, ਕਿਸਮ_ਨਾਂ E::pair * a) {
+    FG_SUPERBLOCK(ਖੰਡ_iq2_xs);
+    ਅਚਲ uint16_t * q2 = blk->qs + 4 * ib;
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ il = 0; il < 4; ++il) {
+        ਅਚਲ uint8_t * grid  = (ਅਚਲ uint8_t *) (iq2xs_grid + (q2[il] & 511));
+        ਅਚਲ ਦਸ਼ਮਲਵ     d     = (ਦਸ਼ਮਲਵ) blk->d * (0.5f + ((blk->scales[ib] >> (4 * (il / 2))) & 0xf)) * 0.25f;
+        ਅਚਲ uint8_t   signs = ksigns_iq2xs[q2[il] >> 9];
+        ਦਸ਼ਮਲਵ t[8];
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ j = 0; j < 8; ++j) {
             t[j] = d * grid[j] * (signs & kmask_iq2xs[j] ? -1.f : 1.f);
         }
         fg_pack_quarter<E>(t, a, il);
     }
 }
 
-template <typename E>
-static __dpct_inline__ void fg_stage_a(const block_iq2_s * __restrict__ xrow, const int kb, typename E::pair * a) {
-    FG_SUPERBLOCK(block_iq2_s);
-#pragma unroll
-    for (int il = 0; il < 4; ++il) {
-        const uint8_t * grid =
-            (const uint8_t *) (iq2s_grid + (blk->qs[4 * ib + il] | ((blk->qh[ib] << (8 - 2 * il)) & 0x300)));
-        const float   d     = (float) blk->d * (0.5f + ((blk->scales[ib] >> (4 * (il / 2))) & 0xf)) * 0.25f;
-        const uint8_t signs = blk->qs[QK_K / 8 + 4 * ib + il];
-        float t[8];
-#pragma unroll
-        for (int j = 0; j < 8; ++j) {
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ E>
+ਸਥਿਰ __dpct_inline__ ਖਾਲੀ fg_stage_a(ਅਚਲ ਖੰਡ_iq2_s * __restrict__ xrow, ਅਚਲ ਪੂਰਨ kb, ਕਿਸਮ_ਨਾਂ E::pair * a) {
+    FG_SUPERBLOCK(ਖੰਡ_iq2_s);
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ il = 0; il < 4; ++il) {
+        ਅਚਲ uint8_t * grid =
+            (ਅਚਲ uint8_t *) (iq2s_grid + (blk->qs[4 * ib + il] | ((blk->qh[ib] << (8 - 2 * il)) & 0x300)));
+        ਅਚਲ ਦਸ਼ਮਲਵ   d     = (ਦਸ਼ਮਲਵ) blk->d * (0.5f + ((blk->scales[ib] >> (4 * (il / 2))) & 0xf)) * 0.25f;
+        ਅਚਲ uint8_t signs = blk->qs[QK_K / 8 + 4 * ib + il];
+        ਦਸ਼ਮਲਵ t[8];
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ j = 0; j < 8; ++j) {
             t[j] = d * grid[j] * (signs & kmask_iq2xs[j] ? -1.f : 1.f);
         }
         fg_pack_quarter<E>(t, a, il);
     }
 }
 
-template <typename E>
-static __dpct_inline__ void fg_stage_a(const block_iq1_s * __restrict__ xrow, const int kb, typename E::pair * a) {
-    FG_SUPERBLOCK(block_iq1_s);
-    const float delta = blk->qh[ib] & 0x8000 ? -1 - IQ1S_DELTA : -1 + IQ1S_DELTA;
-    const float d     = (float) blk->d * (2 * ((blk->qh[ib] >> 12) & 7) + 1);
-#pragma unroll
-    for (int il = 0; il < 4; ++il) {
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ E>
+ਸਥਿਰ __dpct_inline__ ਖਾਲੀ fg_stage_a(ਅਚਲ ਖੰਡ_iq1_s * __restrict__ xrow, ਅਚਲ ਪੂਰਨ kb, ਕਿਸਮ_ਨਾਂ E::pair * a) {
+    FG_SUPERBLOCK(ਖੰਡ_iq1_s);
+    ਅਚਲ ਦਸ਼ਮਲਵ delta = blk->qh[ib] & 0x8000 ? -1 - IQ1S_DELTA : -1 + IQ1S_DELTA;
+    ਅਚਲ ਦਸ਼ਮਲਵ d     = (ਦਸ਼ਮਲਵ) blk->d * (2 * ((blk->qh[ib] >> 12) & 7) + 1);
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ il = 0; il < 4; ++il) {
         uint32_t       grid32[2];
-        const int8_t * q = (const int8_t *) grid32;
+        ਅਚਲ int8_t * q = (ਅਚਲ int8_t *) grid32;
         grid32[0] = iq1s_grid_gpu[blk->qs[4 * ib + il] | (((blk->qh[ib] >> (3 * il)) & 7) << 8)];
         grid32[1] = (grid32[0] >> 4) & 0x0f0f0f0f;
         grid32[0] &= 0x0f0f0f0f;
-        float t[8];
-#pragma unroll
-        for (int j = 0; j < 8; ++j) {
+        ਦਸ਼ਮਲਵ t[8];
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ j = 0; j < 8; ++j) {
             t[j] = d * (q[j] + delta);
         }
         fg_pack_quarter<E>(t, a, il);
     }
 }
 
-template <typename E>
-static __dpct_inline__ void fg_stage_a(const block_iq1_m * __restrict__ xrow, const int kb, typename E::pair * a) {
-    FG_SUPERBLOCK(block_iq1_m);
-    const uint16_t * sc = (const uint16_t *) blk->scales;
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ E>
+ਸਥਿਰ __dpct_inline__ ਖਾਲੀ fg_stage_a(ਅਚਲ ਖੰਡ_iq1_m * __restrict__ xrow, ਅਚਲ ਪੂਰਨ kb, ਕਿਸਮ_ਨਾਂ E::pair * a) {
+    FG_SUPERBLOCK(ਖੰਡ_iq1_m);
+    ਅਚਲ uint16_t * sc = (ਅਚਲ uint16_t *) blk->scales;
     iq1m_scale_t     scale;
     scale.u16 = (sc[0] >> 12) | ((sc[1] >> 8) & 0x00f0) | ((sc[2] >> 4) & 0x0f00) | (sc[3] & 0xf000);
-#pragma unroll
-    for (int il = 0; il < 4; ++il) {
-        const int   ib16  = 2 * ib + il / 2;
-        const float d     = (float) scale.f16 * (2 * ((sc[ib16 / 4] >> (3 * (ib16 % 4))) & 0x7) + 1);
-        const float delta = blk->qh[2 * ib + il / 2] & (0x08 << (4 * (il % 2))) ? -1 - IQ1M_DELTA : -1 + IQ1M_DELTA;
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ il = 0; il < 4; ++il) {
+        ਅਚਲ ਪੂਰਨ   ib16  = 2 * ib + il / 2;
+        ਅਚਲ ਦਸ਼ਮਲਵ d     = (ਦਸ਼ਮਲਵ) scale.f16 * (2 * ((sc[ib16 / 4] >> (3 * (ib16 % 4))) & 0x7) + 1);
+        ਅਚਲ ਦਸ਼ਮਲਵ delta = blk->qh[2 * ib + il / 2] & (0x08 << (4 * (il % 2))) ? -1 - IQ1M_DELTA : -1 + IQ1M_DELTA;
         uint32_t       grid32[2];
-        const int8_t * q = (const int8_t *) grid32;
+        ਅਚਲ int8_t * q = (ਅਚਲ int8_t *) grid32;
         grid32[0] = iq1s_grid_gpu[blk->qs[4 * ib + il] |
                                   (((blk->qh[2 * ib + il / 2] >> (4 * (il % 2))) & 7) << 8)];
         grid32[1] = (grid32[0] >> 4) & 0x0f0f0f0f;
         grid32[0] &= 0x0f0f0f0f;
-        float t[8];
-#pragma unroll
-        for (int j = 0; j < 8; ++j) {
+        ਦਸ਼ਮਲਵ t[8];
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ j = 0; j < 8; ++j) {
             t[j] = d * (q[j] + delta);
         }
         fg_pack_quarter<E>(t, a, il);
@@ -576,20 +576,20 @@ static __dpct_inline__ void fg_stage_a(const block_iq1_m * __restrict__ xrow, co
 // q8_0 and the k-quants. Each decode takes the fields of one 32-value sub-block, so the canonical
 // layout and the reorder (SoA) layout of reorder_qw() share it and differ only in where the fields
 // live, as in dequantize.hpp.
-template <typename E>
-static __dpct_inline__ void fg_decode_q8_0(const int8_t * __restrict__ qs, const float d, typename E::pair * a) {
-#pragma unroll
-    for (int j = 0; j < QK8_0 / 2; ++j) {
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ E>
+ਸਥਿਰ __dpct_inline__ ਖਾਲੀ fg_decode_q8_0(ਅਚਲ int8_t * __restrict__ qs, ਅਚਲ ਦਸ਼ਮਲਵ d, ਕਿਸਮ_ਨਾਂ E::pair * a) {
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ j = 0; j < QK8_0 / 2; ++j) {
         a[j] = E::make(d * qs[2 * j], d * qs[2 * j + 1]);
     }
 }
 
 // same unpack as get_scale_min_k4() in dequantize.hpp
-static __dpct_inline__ void fg_scale_min_k4(const int j, const uint8_t * __restrict__ q, uint8_t & d, uint8_t & m) {
-    if (j < 4) {
+ਸਥਿਰ __dpct_inline__ ਖਾਲੀ fg_scale_min_k4(ਅਚਲ ਪੂਰਨ j, ਅਚਲ uint8_t * __restrict__ q, uint8_t & d, uint8_t & m) {
+    ਜੇ (j < 4) {
         d = q[j] & 63;
         m = q[j + 4] & 63;
-    } else {
+    } ਨਹੀਂਤਾਂ {
         d = (q[j + 4] & 0xF) | ((q[j - 4] >> 6) << 4);
         m = (q[j + 4] >> 4) | ((q[j - 0] >> 6) << 4);
     }
@@ -597,138 +597,138 @@ static __dpct_inline__ void fg_scale_min_k4(const int j, const uint8_t * __restr
 
 // q4_K sub-block ib (0..7) uses scale/min pair ib and the low (even ib) or high (odd ib) nibbles of
 // qs[32 * (ib / 2) ...], as in dequantize_row_q4_K
-template <typename E>
-static __dpct_inline__ void fg_decode_q4_K(const uint8_t * __restrict__ qs, const uint8_t * __restrict__ scales,
-                                           const sycl::half2 dm, const int ib, typename E::pair * a) {
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ E>
+ਸਥਿਰ __dpct_inline__ ਖਾਲੀ fg_decode_q4_K(ਅਚਲ uint8_t * __restrict__ qs, ਅਚਲ uint8_t * __restrict__ scales,
+                                           ਅਚਲ sycl::half2 dm, ਅਚਲ ਪੂਰਨ ib, ਕਿਸਮ_ਨਾਂ E::pair * a) {
     uint8_t sc, mb;
     fg_scale_min_k4(ib, scales, sc, mb);
-    const float     d     = (float) dm[0] * sc;
-    const float     m     = (float) dm[1] * mb;
-    const uint8_t * q     = qs + 32 * (ib / 2);
-    const int       shift = 4 * (ib % 2);
-#pragma unroll
-    for (int j = 0; j < 16; ++j) {
-        a[j] = E::make(d * ((q[2 * j] >> shift) & 0xF) - m, d * ((q[2 * j + 1] >> shift) & 0xF) - m);
+    ਅਚਲ ਦਸ਼ਮਲਵ     d     = (ਦਸ਼ਮਲਵ) dm[0] * sc;
+    ਅਚਲ ਦਸ਼ਮਲਵ     m     = (ਦਸ਼ਮਲਵ) dm[1] * mb;
+    ਅਚਲ uint8_t * q     = qs + 32 * (ib / 2);
+    ਅਚਲ ਪੂਰਨ       ਖਿਸਕਾਓ = 4 * (ib % 2);
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ j = 0; j < 16; ++j) {
+        a[j] = E::make(d * ((q[2 * j] >> ਖਿਸਕਾਓ) & 0xF) - m, d * ((q[2 * j + 1] >> ਖਿਸਕਾਓ) & 0xF) - m);
     }
 }
 
 // q5_K: q4_K plus one high bit per value, bit ib of qh[l]
-template <typename E>
-static __dpct_inline__ void fg_decode_q5_K(const uint8_t * __restrict__ qs, const uint8_t * __restrict__ qh,
-                                           const uint8_t * __restrict__ scales, const sycl::half2 dm, const int ib,
-                                           typename E::pair * a) {
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ E>
+ਸਥਿਰ __dpct_inline__ ਖਾਲੀ fg_decode_q5_K(ਅਚਲ uint8_t * __restrict__ qs, ਅਚਲ uint8_t * __restrict__ qh,
+                                           ਅਚਲ uint8_t * __restrict__ scales, ਅਚਲ sycl::half2 dm, ਅਚਲ ਪੂਰਨ ib,
+                                           ਕਿਸਮ_ਨਾਂ E::pair * a) {
     uint8_t sc, mb;
     fg_scale_min_k4(ib, scales, sc, mb);
-    const float     d     = (float) dm[0] * sc;
-    const float     m     = (float) dm[1] * mb;
-    const uint8_t * q     = qs + 32 * (ib / 2);
-    const int       shift = 4 * (ib % 2);
-#pragma unroll
-    for (int j = 0; j < 16; ++j) {
-        const int l = 2 * j;
-        a[j] = E::make(d * (((q[l] >> shift) & 0xF) | (((qh[l] >> ib) & 1) << 4)) - m,
-                       d * (((q[l + 1] >> shift) & 0xF) | (((qh[l + 1] >> ib) & 1) << 4)) - m);
+    ਅਚਲ ਦਸ਼ਮਲਵ     d     = (ਦਸ਼ਮਲਵ) dm[0] * sc;
+    ਅਚਲ ਦਸ਼ਮਲਵ     m     = (ਦਸ਼ਮਲਵ) dm[1] * mb;
+    ਅਚਲ uint8_t * q     = qs + 32 * (ib / 2);
+    ਅਚਲ ਪੂਰਨ       ਖਿਸਕਾਓ = 4 * (ib % 2);
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ j = 0; j < 16; ++j) {
+        ਅਚਲ ਪੂਰਨ l = 2 * j;
+        a[j] = E::make(d * (((q[l] >> ਖਿਸਕਾਓ) & 0xF) | (((qh[l] >> ib) & 1) << 4)) - m,
+                       d * (((q[l + 1] >> ਖਿਸਕਾਓ) & 0xF) | (((qh[l + 1] >> ib) & 1) << 4)) - m);
     }
 }
 
 // q6_K: sub-block ib is quarter r = ib % 4 of half h = ib / 4. The half selects ql + 64h, qh + 32h
 // and scales + 8h; the quarter selects ql + 32(r & 1), the ql nibble r / 2, the qh bit pair r and
 // scales + 2r, as in dequantize_row_q6_K. The scale changes at value 16 of the sub-block.
-template <typename E>
-static __dpct_inline__ void fg_decode_q6_K(const uint8_t * __restrict__ ql, const uint8_t * __restrict__ qh,
-                                           const int8_t * __restrict__ scales, const float d, const int ib,
-                                           typename E::pair * a) {
-    const int       h  = ib / 4;
-    const int       r  = ib % 4;
-    const uint8_t * q  = ql + 64 * h + 32 * (r & 1);
-    const uint8_t * hb = qh + 32 * h;
-    const int8_t *  sc = scales + 8 * h + 2 * r;
-#pragma unroll
-    for (int j = 0; j < 16; ++j) {
-        const int   l  = 2 * j;
-        const float dl = d * sc[j / 8];
-        const int   q0 = (((q[l] >> (4 * (r / 2))) & 0xF) | (((hb[l] >> (2 * r)) & 3) << 4)) - 32;
-        const int   q1 = (((q[l + 1] >> (4 * (r / 2))) & 0xF) | (((hb[l + 1] >> (2 * r)) & 3) << 4)) - 32;
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ E>
+ਸਥਿਰ __dpct_inline__ ਖਾਲੀ fg_decode_q6_K(ਅਚਲ uint8_t * __restrict__ ql, ਅਚਲ uint8_t * __restrict__ qh,
+                                           ਅਚਲ int8_t * __restrict__ scales, ਅਚਲ ਦਸ਼ਮਲਵ d, ਅਚਲ ਪੂਰਨ ib,
+                                           ਕਿਸਮ_ਨਾਂ E::pair * a) {
+    ਅਚਲ ਪੂਰਨ       h  = ib / 4;
+    ਅਚਲ ਪੂਰਨ       r  = ib % 4;
+    ਅਚਲ uint8_t * q  = ql + 64 * h + 32 * (r & 1);
+    ਅਚਲ uint8_t * hb = qh + 32 * h;
+    ਅਚਲ int8_t *  sc = scales + 8 * h + 2 * r;
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ j = 0; j < 16; ++j) {
+        ਅਚਲ ਪੂਰਨ   l  = 2 * j;
+        ਅਚਲ ਦਸ਼ਮਲਵ dl = d * sc[j / 8];
+        ਅਚਲ ਪੂਰਨ   q0 = (((q[l] >> (4 * (r / 2))) & 0xF) | (((hb[l] >> (2 * r)) & 3) << 4)) - 32;
+        ਅਚਲ ਪੂਰਨ   q1 = (((q[l + 1] >> (4 * (r / 2))) & 0xF) | (((hb[l + 1] >> (2 * r)) & 3) << 4)) - 32;
         a[j] = E::make(dl * q0, dl * q1);
     }
 }
 
-template <typename E>
-static __dpct_inline__ void fg_stage_a(const block_q8_0 * __restrict__ xrow, const int kb, typename E::pair * a) {
-    fg_decode_q8_0<E>(xrow[kb].qs, (float) xrow[kb].d, a);
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ E>
+ਸਥਿਰ __dpct_inline__ ਖਾਲੀ fg_stage_a(ਅਚਲ ਖੰਡ_q8_0 * __restrict__ xrow, ਅਚਲ ਪੂਰਨ kb, ਕਿਸਮ_ਨਾਂ E::pair * a) {
+    fg_decode_q8_0<E>(xrow[kb].qs, (ਦਸ਼ਮਲਵ) xrow[kb].d, a);
 }
 
-template <typename E>
-static __dpct_inline__ void fg_stage_a(const block_q4_K * __restrict__ xrow, const int kb, typename E::pair * a) {
-    FG_SUPERBLOCK(block_q4_K);
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ E>
+ਸਥਿਰ __dpct_inline__ ਖਾਲੀ fg_stage_a(ਅਚਲ ਖੰਡ_q4_K * __restrict__ xrow, ਅਚਲ ਪੂਰਨ kb, ਕਿਸਮ_ਨਾਂ E::pair * a) {
+    FG_SUPERBLOCK(ਖੰਡ_q4_K);
     fg_decode_q4_K<E>(blk->qs, blk->scales, blk->dm, ib, a);
 }
 
-template <typename E>
-static __dpct_inline__ void fg_stage_a(const block_q5_K * __restrict__ xrow, const int kb, typename E::pair * a) {
-    FG_SUPERBLOCK(block_q5_K);
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ E>
+ਸਥਿਰ __dpct_inline__ ਖਾਲੀ fg_stage_a(ਅਚਲ ਖੰਡ_q5_K * __restrict__ xrow, ਅਚਲ ਪੂਰਨ kb, ਕਿਸਮ_ਨਾਂ E::pair * a) {
+    FG_SUPERBLOCK(ਖੰਡ_q5_K);
     fg_decode_q5_K<E>(blk->qs, blk->qh, blk->scales, blk->dm, ib, a);
 }
 
-template <typename E>
-static __dpct_inline__ void fg_stage_a(const block_q6_K * __restrict__ xrow, const int kb, typename E::pair * a) {
-    FG_SUPERBLOCK(block_q6_K);
-    fg_decode_q6_K<E>(blk->ql, blk->qh, blk->scales, (float) blk->d, ib, a);
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ E>
+ਸਥਿਰ __dpct_inline__ ਖਾਲੀ fg_stage_a(ਅਚਲ ਖੰਡ_q6_K * __restrict__ xrow, ਅਚਲ ਪੂਰਨ kb, ਕਿਸਮ_ਨਾਂ E::pair * a) {
+    FG_SUPERBLOCK(ਖੰਡ_q6_K);
+    fg_decode_q6_K<E>(blk->ql, blk->qh, blk->scales, (ਦਸ਼ਮਲਵ) blk->d, ib, a);
 }
 
 // Reorder (SoA) layout: each block field is one stream over the nblocks of the matrix (of the expert
 // slice for MUL_MAT_ID), in the order reorder_qw() writes them. Block ib holds k step kb.
-template <typename block_q_t> struct fg_soa {
-    static constexpr bool supported = false;
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ ਖੰਡ_q_t> ਬਣਤਰ fg_soa {
+    ਸਥਿਰ constexpr ਤਾਰਕਿਕ supported = ਝੂਠ;
 };
 
-template <> struct fg_soa<block_q8_0> {
-    static constexpr bool supported = true;
+ਸਾਂਚਾ <> ਬਣਤਰ fg_soa<ਖੰਡ_q8_0> {
+    ਸਥਿਰ constexpr ਤਾਰਕਿਕ supported = ਸੱਚ;
     // [qs][d]
-    template <typename E>
-    static __dpct_inline__ void stage(const uint8_t * x, const size_t nblocks, const size_t ib, const int,
-                                      typename E::pair * a) {
-        const float d = (float) ((const sycl::half *) (x + nblocks * QK8_0))[ib];
-        fg_decode_q8_0<E>((const int8_t *) x + ib * QK8_0, d, a);
+    ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ E>
+    ਸਥਿਰ __dpct_inline__ ਖਾਲੀ stage(ਅਚਲ uint8_t * x, ਅਚਲ size_t nblocks, ਅਚਲ size_t ib, ਅਚਲ ਪੂਰਨ,
+                                      ਕਿਸਮ_ਨਾਂ E::pair * a) {
+        ਅਚਲ ਦਸ਼ਮਲਵ d = (ਦਸ਼ਮਲਵ) ((ਅਚਲ sycl::half *) (x + nblocks * QK8_0))[ib];
+        fg_decode_q8_0<E>((ਅਚਲ int8_t *) x + ib * QK8_0, d, a);
     }
 };
 
-template <> struct fg_soa<block_q4_K> {
-    static constexpr bool supported = true;
+ਸਾਂਚਾ <> ਬਣਤਰ fg_soa<ਖੰਡ_q4_K> {
+    ਸਥਿਰ constexpr ਤਾਰਕਿਕ supported = ਸੱਚ;
     // [qs][scales][dm]
-    template <typename E>
-    static __dpct_inline__ void stage(const uint8_t * x, const size_t nblocks, const size_t ib, const int kb,
-                                      typename E::pair * a) {
-        const uint8_t *   scales = x + nblocks * (QK_K / 2);
-        const sycl::half2 dm     = ((const sycl::half2 *) (scales + nblocks * K_SCALE_SIZE))[ib];
-        fg_decode_q4_K<E>(x + ib * (QK_K / 2), scales + ib * K_SCALE_SIZE, dm, kb % (QK_K / 32), a);
+    ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ E>
+    ਸਥਿਰ __dpct_inline__ ਖਾਲੀ stage(ਅਚਲ uint8_t * x, ਅਚਲ size_t nblocks, ਅਚਲ size_t ib, ਅਚਲ ਪੂਰਨ kb,
+                                      ਕਿਸਮ_ਨਾਂ E::pair * a) {
+        ਅਚਲ uint8_t *   scales = x + nblocks * (QK_K / 2);
+        ਅਚਲ sycl::half2 dm     = ((ਅਚਲ sycl::half2 *) (scales + nblocks * K_SCALE_ਮਾਪ))[ib];
+        fg_decode_q4_K<E>(x + ib * (QK_K / 2), scales + ib * K_SCALE_ਮਾਪ, dm, kb % (QK_K / 32), a);
     }
 };
 
-template <> struct fg_soa<block_q5_K> {
-    static constexpr bool supported = true;
+ਸਾਂਚਾ <> ਬਣਤਰ fg_soa<ਖੰਡ_q5_K> {
+    ਸਥਿਰ constexpr ਤਾਰਕਿਕ supported = ਸੱਚ;
     // [qs][qh][scales][dm]
-    template <typename E>
-    static __dpct_inline__ void stage(const uint8_t * x, const size_t nblocks, const size_t ib, const int kb,
-                                      typename E::pair * a) {
-        const uint8_t *   qh     = x + nblocks * (QK_K / 2);
-        const uint8_t *   scales = qh + nblocks * (QK_K / 8);
-        const sycl::half2 dm     = ((const sycl::half2 *) (scales + nblocks * K_SCALE_SIZE))[ib];
-        fg_decode_q5_K<E>(x + ib * (QK_K / 2), qh + ib * (QK_K / 8), scales + ib * K_SCALE_SIZE, dm,
+    ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ E>
+    ਸਥਿਰ __dpct_inline__ ਖਾਲੀ stage(ਅਚਲ uint8_t * x, ਅਚਲ size_t nblocks, ਅਚਲ size_t ib, ਅਚਲ ਪੂਰਨ kb,
+                                      ਕਿਸਮ_ਨਾਂ E::pair * a) {
+        ਅਚਲ uint8_t *   qh     = x + nblocks * (QK_K / 2);
+        ਅਚਲ uint8_t *   scales = qh + nblocks * (QK_K / 8);
+        ਅਚਲ sycl::half2 dm     = ((ਅਚਲ sycl::half2 *) (scales + nblocks * K_SCALE_ਮਾਪ))[ib];
+        fg_decode_q5_K<E>(x + ib * (QK_K / 2), qh + ib * (QK_K / 8), scales + ib * K_SCALE_ਮਾਪ, dm,
                           kb % (QK_K / 32), a);
     }
 };
 
-template <> struct fg_soa<block_q6_K> {
-    static constexpr bool supported = true;
+ਸਾਂਚਾ <> ਬਣਤਰ fg_soa<ਖੰਡ_q6_K> {
+    ਸਥਿਰ constexpr ਤਾਰਕਿਕ supported = ਸੱਚ;
     // [ql][qh][scales][d]
-    template <typename E>
-    static __dpct_inline__ void stage(const uint8_t * x, const size_t nblocks, const size_t ib, const int kb,
-                                      typename E::pair * a) {
-        const uint8_t * qh     = x + nblocks * (QK_K / 2);
-        const uint8_t * scales = qh + nblocks * (QK_K / 4);
-        const float     d      = (float) ((const sycl::half *) (scales + nblocks * (QK_K / 16)))[ib];
-        fg_decode_q6_K<E>(x + ib * (QK_K / 2), qh + ib * (QK_K / 4), (const int8_t *) scales + ib * (QK_K / 16), d,
+    ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ E>
+    ਸਥਿਰ __dpct_inline__ ਖਾਲੀ stage(ਅਚਲ uint8_t * x, ਅਚਲ size_t nblocks, ਅਚਲ size_t ib, ਅਚਲ ਪੂਰਨ kb,
+                                      ਕਿਸਮ_ਨਾਂ E::pair * a) {
+        ਅਚਲ uint8_t * qh     = x + nblocks * (QK_K / 2);
+        ਅਚਲ uint8_t * scales = qh + nblocks * (QK_K / 4);
+        ਅਚਲ ਦਸ਼ਮਲਵ     d      = (ਦਸ਼ਮਲਵ) ((ਅਚਲ sycl::half *) (scales + nblocks * (QK_K / 16)))[ib];
+        fg_decode_q6_K<E>(x + ib * (QK_K / 2), qh + ib * (QK_K / 4), (ਅਚਲ int8_t *) scales + ib * (QK_K / 16), d,
                           kb % (QK_K / 32), a);
     }
 };
@@ -736,364 +736,364 @@ template <> struct fg_soa<block_q6_K> {
 
 // one SG_ROWS x BN output tile: B columns [b0, b0 + BN) of packed_b go to dst columns [n0, n1),
 // n1 - n0 <= BN
-template <typename S, typename block_q_t, bool reordered>
-static void fused_dequant_gemm_tile(
-    const block_q_t * __restrict__ x,
-    const typename S::tsb * __restrict__ packed_b,
-    float * __restrict__ dst,
-    const int M, const int Npad, const int K, const int ldd,
-    const int b0, const int n0, const int n1,
-    sycl::local_accessor<typename S::tsa, 1> tile_a,
-    sycl::local_accessor<float, 1> tile_c,
-    const sycl::nd_item<2> & item) {
-    if constexpr (fg_built<S::SG>()) {
-        using EA = typename S::EA;
-        using TA = typename S::ta;
-        using TB = typename S::tb;
-        const auto sg     = item.get_sub_group();
-        const int  sg_id  = sg.get_group_id()[0];
-        const int  lane   = sg.get_local_id()[0];
-        const int  m0     = item.get_group(1) * S::SG_ROWS;
-        const int  nstep  = K / FG_BK;
-        const int  a_base = sg_id * S::SG_ROWS * FG_BK;
-        const int  c_base = sg_id * S::SG_ROWS * S::BN;
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ S, ਕਿਸਮ_ਨਾਂ ਖੰਡ_q_t, ਤਾਰਕਿਕ reordered>
+ਸਥਿਰ ਖਾਲੀ fused_dequant_gemm_tile(
+    ਅਚਲ ਖੰਡ_q_t * __restrict__ x,
+    ਅਚਲ ਕਿਸਮ_ਨਾਂ S::tsb * __restrict__ packed_b,
+    ਦਸ਼ਮਲਵ * __restrict__ dst,
+    ਅਚਲ ਪੂਰਨ M, ਅਚਲ ਪੂਰਨ Npad, ਅਚਲ ਪੂਰਨ K, ਅਚਲ ਪੂਰਨ ldd,
+    ਅਚਲ ਪੂਰਨ b0, ਅਚਲ ਪੂਰਨ n0, ਅਚਲ ਪੂਰਨ n1,
+    sycl::local_accessor<ਕਿਸਮ_ਨਾਂ S::tsa, 1> tile_a,
+    sycl::local_accessor<ਦਸ਼ਮਲਵ, 1> tile_c,
+    ਅਚਲ sycl::nd_ਵਸਤੂ<2> & ਵਸਤੂ) {
+    ਜੇ constexpr (fg_built<S::SG>()) {
+        ਵਰਤੋਂ EA = ਕਿਸਮ_ਨਾਂ S::EA;
+        ਵਰਤੋਂ TA = ਕਿਸਮ_ਨਾਂ S::ta;
+        ਵਰਤੋਂ TB = ਕਿਸਮ_ਨਾਂ S::tb;
+        ਅਚਲ ਸਵੈਚਾਲਿਤ sg     = ਵਸਤੂ.get_sub_ਸਮੂਹ();
+        ਅਚਲ ਪੂਰਨ  sg_id  = sg.get_ਸਮੂਹ_id()[0];
+        ਅਚਲ ਪੂਰਨ  lane   = sg.get_local_id()[0];
+        ਅਚਲ ਪੂਰਨ  m0     = ਵਸਤੂ.get_ਸਮੂਹ(1) * S::SG_ਪੰਕਤੀਆਂ;
+        ਅਚਲ ਪੂਰਨ  nstep  = K / FG_BK;
+        ਅਚਲ ਪੂਰਨ  a_ਅਧਾਰ = sg_id * S::SG_ਪੰਕਤੀਆਂ * FG_BK;
+        ਅਚਲ ਪੂਰਨ  c_ਅਧਾਰ = sg_id * S::SG_ਪੰਕਤੀਆਂ * S::BN;
 
-        mx::joint_matrix<sycl::sub_group, float, mx::use::accumulator, S::TM, S::TN> acc[S::MT][S::NT];
-#pragma unroll
-        for (int mt = 0; mt < S::MT; ++mt) {
-#pragma unroll
-            for (int nt = 0; nt < S::NT; ++nt) {
-                mx::joint_matrix_fill(sg, acc[mt][nt], 0.0f);
+        mx::joint_ਮੈਟ੍ਰਿਕਸ<sycl::sub_ਸਮੂਹ, ਦਸ਼ਮਲਵ, mx::use::ਸੰਚਾਇਕ, S::TM, S::TN> acc[S::MT][S::NT];
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ mt = 0; mt < S::MT; ++mt) {
+#ਹਦਾਇਤ unroll
+            ਲਈ (ਪੂਰਨ nt = 0; nt < S::NT; ++nt) {
+                mx::joint_ਮੈਟ੍ਰਿਕਸ_fill(sg, acc[mt][nt], 0.0f);
             }
         }
 
         // lane decodes rows lane, lane + SG, ... of the sub-group's SG_ROWS
-        constexpr int         KPB     = fg_block_traits<block_q_t>::qk / FG_BK; // k steps per block
-        const size_t          bpr     = K / fg_block_traits<block_q_t>::qk;
-        const size_t          nblocks = (size_t) M * bpr;
-        size_t                row_blk[S::RPL];
-        bool                  row_ok[S::RPL];
-        typename EA::pair *   a[S::RPL];
-#pragma unroll
-        for (int r = 0; r < S::RPL; ++r) {
-            const int row = m0 + r * S::SG + lane;
-            row_ok[r]  = row < M;
-            row_blk[r] = (size_t) (row_ok[r] ? row : 0) * bpr;
-            a[r]       = (typename EA::pair *) &tile_a[a_base + (r * S::SG + lane) * FG_BK];
+        constexpr ਪੂਰਨ         KPB     = fg_ਖੰਡ_traits<ਖੰਡ_q_t>::qk / FG_BK; // k steps per block
+        ਅਚਲ size_t          bpr     = K / fg_ਖੰਡ_traits<ਖੰਡ_q_t>::qk;
+        ਅਚਲ size_t          nblocks = (size_t) M * bpr;
+        size_t                ਪੰਕਤੀ_blk[S::RPL];
+        ਤਾਰਕਿਕ                  ਪੰਕਤੀ_ok[S::RPL];
+        ਕਿਸਮ_ਨਾਂ EA::pair *   a[S::RPL];
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ r = 0; r < S::RPL; ++r) {
+            ਅਚਲ ਪੂਰਨ ਪੰਕਤੀ = m0 + r * S::SG + lane;
+            ਪੰਕਤੀ_ok[r]  = ਪੰਕਤੀ < M;
+            ਪੰਕਤੀ_blk[r] = (size_t) (ਪੰਕਤੀ_ok[r] ? ਪੰਕਤੀ : 0) * bpr;
+            a[r]       = (ਕਿਸਮ_ਨਾਂ EA::pair *) &tile_a[a_ਅਧਾਰ + (r * S::SG + lane) * FG_BK];
         }
 
-        const auto b_ptr = sycl::address_space_cast<sycl::access::address_space::global_space,
+        ਅਚਲ ਸਵੈਚਾਲਿਤ b_ptr = sycl::ਪਤਾ_space_cast<sycl::access::ਪਤਾ_space::global_space,
                                                     sycl::access::decorated::no>(packed_b);
-        const int b_stride = Npad * S::VNNI;
+        ਅਚਲ ਪੂਰਨ b_stride = Npad * S::VNNI;
 
-        const int kb_begin = (sg_id * nstep) / FG_KSPLIT;
-        const int kb_end   = ((sg_id + 1) * nstep) / FG_KSPLIT;
-        for (int kb = kb_begin; kb < kb_end; ++kb) {
-#pragma unroll
-            for (int r = 0; r < S::RPL; ++r) {
-                if (row_ok[r]) {
-                    if constexpr (reordered) {
-                        fg_soa<block_q_t>::template stage<EA>((const uint8_t *) x, nblocks, row_blk[r] + kb / KPB, kb,
+        ਅਚਲ ਪੂਰਨ kb_begin = (sg_id * nstep) / FG_KSPLIT;
+        ਅਚਲ ਪੂਰਨ kb_ਸਿਰਾ   = ((sg_id + 1) * nstep) / FG_KSPLIT;
+        ਲਈ (ਪੂਰਨ kb = kb_begin; kb < kb_ਸਿਰਾ; ++kb) {
+#ਹਦਾਇਤ unroll
+            ਲਈ (ਪੂਰਨ r = 0; r < S::RPL; ++r) {
+                ਜੇ (ਪੰਕਤੀ_ok[r]) {
+                    ਜੇ constexpr (reordered) {
+                        fg_soa<ਖੰਡ_q_t>::ਸਾਂਚਾ stage<EA>((ਅਚਲ uint8_t *) x, nblocks, ਪੰਕਤੀ_blk[r] + kb / KPB, kb,
                                                               a[r]);
-                    } else {
-                        fg_stage_a<EA>(x + row_blk[r], kb, a[r]);
+                    } ਨਹੀਂਤਾਂ {
+                        fg_stage_a<EA>(x + ਪੰਕਤੀ_blk[r], kb, a[r]);
                     }
-                } else {
-#pragma unroll
-                    for (int j = 0; j < FG_BK / 2; ++j) {
+                } ਨਹੀਂਤਾਂ {
+#ਹਦਾਇਤ unroll
+                    ਲਈ (ਪੂਰਨ j = 0; j < FG_BK / 2; ++j) {
                         a[r][j] = EA::make(0.0f, 0.0f);
                     }
                 }
             }
-            sycl::group_barrier(sg);
+            sycl::ਸਮੂਹ_barrier(sg);
 
-#pragma unroll
-            for (int kt = 0; kt < FG_BK / S::TK; ++kt) {
-                const int kq0 = (kb * FG_BK + kt * S::TK) / S::VNNI;
-                mx::joint_matrix<sycl::sub_group, TB, mx::use::b, S::TK, S::TN, S::b_layout> sub_b[S::NT];
-#pragma unroll
-                for (int nt = 0; nt < S::NT; ++nt) {
-                    mx::joint_matrix_load(sg, sub_b[nt], b_ptr + (size_t) kq0 * b_stride + (b0 + nt * S::TN) * S::VNNI, b_stride);
+#ਹਦਾਇਤ unroll
+            ਲਈ (ਪੂਰਨ kt = 0; kt < FG_BK / S::TK; ++kt) {
+                ਅਚਲ ਪੂਰਨ kq0 = (kb * FG_BK + kt * S::TK) / S::VNNI;
+                mx::joint_ਮੈਟ੍ਰਿਕਸ<sycl::sub_ਸਮੂਹ, TB, mx::use::b, S::TK, S::TN, S::b_layout> sub_b[S::NT];
+#ਹਦਾਇਤ unroll
+                ਲਈ (ਪੂਰਨ nt = 0; nt < S::NT; ++nt) {
+                    mx::joint_ਮੈਟ੍ਰਿਕਸ_ਲੱਦੋ(sg, sub_b[nt], b_ptr + (size_t) kq0 * b_stride + (b0 + nt * S::TN) * S::VNNI, b_stride);
                 }
-#pragma unroll
-                for (int mt = 0; mt < S::MT; ++mt) {
-                    mx::joint_matrix<sycl::sub_group, TA, mx::use::a, S::TM, S::TK, mx::layout::row_major> sub_a;
-                    mx::joint_matrix_load(sg, sub_a,
-                        tile_a.template get_multi_ptr<sycl::access::decorated::no>() + a_base + (mt * S::TM) * FG_BK + kt * S::TK,
+#ਹਦਾਇਤ unroll
+                ਲਈ (ਪੂਰਨ mt = 0; mt < S::MT; ++mt) {
+                    mx::joint_ਮੈਟ੍ਰਿਕਸ<sycl::sub_ਸਮੂਹ, TA, mx::use::a, S::TM, S::TK, mx::layout::ਪੰਕਤੀ_major> sub_a;
+                    mx::joint_ਮੈਟ੍ਰਿਕਸ_ਲੱਦੋ(sg, sub_a,
+                        tile_a.ਸਾਂਚਾ get_multi_ptr<sycl::access::decorated::no>() + a_ਅਧਾਰ + (mt * S::TM) * FG_BK + kt * S::TK,
                         FG_BK);
-#pragma unroll
-                    for (int nt = 0; nt < S::NT; ++nt) {
-                        mx::joint_matrix_mad(sg, acc[mt][nt], sub_a, sub_b[nt], acc[mt][nt]);
+#ਹਦਾਇਤ unroll
+                    ਲਈ (ਪੂਰਨ nt = 0; nt < S::NT; ++nt) {
+                        mx::joint_ਮੈਟ੍ਰਿਕਸ_mad(sg, acc[mt][nt], sub_a, sub_b[nt], acc[mt][nt]);
                     }
                 }
             }
             // the next step overwrites tile_a
-            sycl::group_barrier(sg);
+            sycl::ਸਮੂਹ_barrier(sg);
         }
 
-#pragma unroll
-        for (int mt = 0; mt < S::MT; ++mt) {
-#pragma unroll
-            for (int nt = 0; nt < S::NT; ++nt) {
-                mx::joint_matrix_store(sg, acc[mt][nt],
-                    tile_c.template get_multi_ptr<sycl::access::decorated::no>() + c_base + (mt * S::TM) * S::BN + nt * S::TN,
-                    S::BN, mx::layout::row_major);
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ mt = 0; mt < S::MT; ++mt) {
+#ਹਦਾਇਤ unroll
+            ਲਈ (ਪੂਰਨ nt = 0; nt < S::NT; ++nt) {
+                mx::joint_ਮੈਟ੍ਰਿਕਸ_store(sg, acc[mt][nt],
+                    tile_c.ਸਾਂਚਾ get_multi_ptr<sycl::access::decorated::no>() + c_ਅਧਾਰ + (mt * S::TM) * S::BN + nt * S::TN,
+                    S::BN, mx::layout::ਪੰਕਤੀ_major);
             }
         }
-        sycl::group_barrier(item.get_group());
+        sycl::ਸਮੂਹ_barrier(ਵਸਤੂ.get_ਸਮੂਹ());
 
         // sum the K splits; consecutive lanes write consecutive rows of one dst column
-        for (int idx = item.get_local_linear_id(); idx < S::SG_ROWS * S::BN; idx += S::WG_SIZE) {
-            const int r = idx % S::SG_ROWS;
-            const int c = idx / S::SG_ROWS;
-            const int m = m0 + r;
-            const int n = n0 + c;
-            if (m < M && n < n1) {
-                float sum = 0.0f;
-#pragma unroll
-                for (int s = 0; s < FG_KSPLIT; ++s) {
-                    sum += tile_c[s * S::SG_ROWS * S::BN + r * S::BN + c];
+        ਲਈ (ਪੂਰਨ idx = ਵਸਤੂ.get_local_ਰੇਖਿਕ_id(); idx < S::SG_ਪੰਕਤੀਆਂ * S::BN; idx += S::WG_ਮਾਪ) {
+            ਅਚਲ ਪੂਰਨ r = idx % S::SG_ਪੰਕਤੀਆਂ;
+            ਅਚਲ ਪੂਰਨ c = idx / S::SG_ਪੰਕਤੀਆਂ;
+            ਅਚਲ ਪੂਰਨ m = m0 + r;
+            ਅਚਲ ਪੂਰਨ n = n0 + c;
+            ਜੇ (m < M && n < n1) {
+                ਦਸ਼ਮਲਵ ਜੋੜ = 0.0f;
+#ਹਦਾਇਤ unroll
+                ਲਈ (ਪੂਰਨ s = 0; s < FG_KSPLIT; ++s) {
+                    ਜੋੜ += tile_c[s * S::SG_ਪੰਕਤੀਆਂ * S::BN + r * S::BN + c];
                 }
-                dst[(size_t) n * ldd + m] = sum;
+                dst[(size_t) n * ldd + m] = ਜੋੜ;
             }
         }
     }
 }
 
-template <typename S, typename block_q_t, bool reordered = false>
-static void fused_dequant_gemm_launch(const void * src0, const typename S::tsb * packed, float * dst, const int M,
-                                      const int N, const int Npad, const int K, const int ldd,
-                                      const int64_t groups_n, const int64_t groups_m, dpct::queue_ptr stream) {
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ S, ਕਿਸਮ_ਨਾਂ ਖੰਡ_q_t, ਤਾਰਕਿਕ reordered = ਝੂਠ>
+ਸਥਿਰ ਖਾਲੀ fused_dequant_gemm_launch(ਅਚਲ ਖਾਲੀ * src0, ਅਚਲ ਕਿਸਮ_ਨਾਂ S::tsb * packed, ਦਸ਼ਮਲਵ * dst, ਅਚਲ ਪੂਰਨ M,
+                                      ਅਚਲ ਪੂਰਨ N, ਅਚਲ ਪੂਰਨ Npad, ਅਚਲ ਪੂਰਨ K, ਅਚਲ ਪੂਰਨ ldd,
+                                      ਅਚਲ int64_t groups_n, ਅਚਲ int64_t groups_m, dpct::ਕਤਾਰ_ptr stream) {
     stream->submit([&](sycl::handler & cgh) {
-        sycl::local_accessor<typename S::tsa, 1> tile_a(FG_KSPLIT * S::SG_ROWS * FG_BK, cgh);
-        sycl::local_accessor<float, 1>          tile_c(FG_KSPLIT * S::SG_ROWS * S::BN, cgh);
+        sycl::local_accessor<ਕਿਸਮ_ਨਾਂ S::tsa, 1> tile_a(FG_KSPLIT * S::SG_ਪੰਕਤੀਆਂ * FG_BK, cgh);
+        sycl::local_accessor<ਦਸ਼ਮਲਵ, 1>          tile_c(FG_KSPLIT * S::SG_ਪੰਕਤੀਆਂ * S::BN, cgh);
         cgh.parallel_for(
-            sycl::nd_range<2>(sycl::range<2>(groups_n, groups_m * S::WG_SIZE), sycl::range<2>(1, S::WG_SIZE)),
-            [=](sycl::nd_item<2> item) [[sycl::reqd_sub_group_size(S::SG)]] {
-                const int n0 = item.get_group(0) * S::BN;
-                fused_dequant_gemm_tile<S, block_q_t, reordered>((const block_q_t *) src0, packed, dst, M, Npad, K,
-                                                      ldd, n0, n0, N, tile_a, tile_c, item);
+            sycl::nd_range<2>(sycl::range<2>(groups_n, groups_m * S::WG_ਮਾਪ), sycl::range<2>(1, S::WG_ਮਾਪ)),
+            [=](sycl::nd_ਵਸਤੂ<2> ਵਸਤੂ) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(S::SG)]] {
+                ਅਚਲ ਪੂਰਨ n0 = ਵਸਤੂ.get_ਸਮੂਹ(0) * S::BN;
+                fused_dequant_gemm_tile<S, ਖੰਡ_q_t, reordered>((ਅਚਲ ਖੰਡ_q_t *) src0, packed, dst, M, Npad, K,
+                                                      ldd, n0, n0, N, tile_a, tile_c, ਵਸਤੂ);
             });
     });
 }
 
 // grouped: work-group (t, mt) is tile t of the schedule; its B columns sit at t * BN
-template <typename S, typename block_q_t, bool reordered>
-static void grouped_dequant_gemm_launch(const char * src0_dd, const size_t expert_stride,
-                                        const ggml_sycl_gg_tile * tiles_ptr, const typename S::tsb * packed, float * dst,
-                                        const int M, const int Npad, const int K, const int64_t n_tiles,
-                                        const int64_t groups_m, dpct::queue_ptr stream) {
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ S, ਕਿਸਮ_ਨਾਂ ਖੰਡ_q_t, ਤਾਰਕਿਕ reordered>
+ਸਥਿਰ ਖਾਲੀ grouped_dequant_gemm_launch(ਅਚਲ ਅੱਖਰ * src0_dd, ਅਚਲ size_t expert_stride,
+                                        ਅਚਲ ggml_sycl_gg_tile * tiles_ptr, ਅਚਲ ਕਿਸਮ_ਨਾਂ S::tsb * packed, ਦਸ਼ਮਲਵ * dst,
+                                        ਅਚਲ ਪੂਰਨ M, ਅਚਲ ਪੂਰਨ Npad, ਅਚਲ ਪੂਰਨ K, ਅਚਲ int64_t n_tiles,
+                                        ਅਚਲ int64_t groups_m, dpct::ਕਤਾਰ_ptr stream) {
     stream->submit([&](sycl::handler & cgh) {
-        sycl::local_accessor<typename S::tsa, 1> tile_a(FG_KSPLIT * S::SG_ROWS * FG_BK, cgh);
-        sycl::local_accessor<float, 1>          tile_c(FG_KSPLIT * S::SG_ROWS * S::BN, cgh);
+        sycl::local_accessor<ਕਿਸਮ_ਨਾਂ S::tsa, 1> tile_a(FG_KSPLIT * S::SG_ਪੰਕਤੀਆਂ * FG_BK, cgh);
+        sycl::local_accessor<ਦਸ਼ਮਲਵ, 1>          tile_c(FG_KSPLIT * S::SG_ਪੰਕਤੀਆਂ * S::BN, cgh);
         cgh.parallel_for(
-            sycl::nd_range<2>(sycl::range<2>(n_tiles, groups_m * S::WG_SIZE), sycl::range<2>(1, S::WG_SIZE)),
-            [=](sycl::nd_item<2> item) [[sycl::reqd_sub_group_size(S::SG)]] {
-                const int               t    = item.get_group(0);
-                const ggml_sycl_gg_tile tile = tiles_ptr[t];
-                const block_q_t *       x    = (const block_q_t *) (src0_dd + (size_t) tile.expert * expert_stride);
-                fused_dequant_gemm_tile<S, block_q_t, reordered>(x, packed, dst, M, Npad, K, M, t * S::BN, tile.n0,
-                                                                 tile.n1, tile_a, tile_c, item);
+            sycl::nd_range<2>(sycl::range<2>(n_tiles, groups_m * S::WG_ਮਾਪ), sycl::range<2>(1, S::WG_ਮਾਪ)),
+            [=](sycl::nd_ਵਸਤੂ<2> ਵਸਤੂ) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(S::SG)]] {
+                ਅਚਲ ਪੂਰਨ               t    = ਵਸਤੂ.get_ਸਮੂਹ(0);
+                ਅਚਲ ggml_sycl_gg_tile tile = tiles_ptr[t];
+                ਅਚਲ ਖੰਡ_q_t *       x    = (ਅਚਲ ਖੰਡ_q_t *) (src0_dd + (size_t) tile.expert * expert_stride);
+                fused_dequant_gemm_tile<S, ਖੰਡ_q_t, reordered>(x, packed, dst, M, Npad, K, M, t * S::BN, tile.n0,
+                                                                 tile.n1, tile_a, tile_c, ਵਸਤੂ);
             });
     });
 }
 
 // src1 f32 rows -> packed [K/V][n_tiles*BN][V], tile t holds its rows [n0, n1) at columns t*BN..,
 // zero past n1. The column runs fastest so a sub-group writes one contiguous run.
-template <typename S>
-static void grouped_gemm_pack_b(const float * y, typename S::tsb * packed, const ggml_sycl_gg_tile * tiles, int Npad,
-                                int K, dpct::queue_ptr stream) {
-    using E        = typename S::EB;
-    constexpr int V = S::VNNI;
-    const int kqs   = K / V;
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ S>
+ਸਥਿਰ ਖਾਲੀ grouped_gemm_pack_b(ਅਚਲ ਦਸ਼ਮਲਵ * y, ਕਿਸਮ_ਨਾਂ S::tsb * packed, ਅਚਲ ggml_sycl_gg_tile * tiles, ਪੂਰਨ Npad,
+                                ਪੂਰਨ K, dpct::ਕਤਾਰ_ptr stream) {
+    ਵਰਤੋਂ E        = ਕਿਸਮ_ਨਾਂ S::EB;
+    constexpr ਪੂਰਨ V = S::VNNI;
+    ਅਚਲ ਪੂਰਨ kqs   = K / V;
     stream->parallel_for(sycl::range<1>((size_t) Npad * kqs), [=](sycl::id<1> id) {
-        const size_t idx = id[0];
-        const int    kq  = idx / Npad;
-        const int    n   = idx - (size_t) kq * Npad;
-        const ggml_sycl_gg_tile tile = tiles[n / S::BN];
-        const int    row = tile.n0 + n % S::BN;
+        ਅਚਲ size_t idx = id[0];
+        ਅਚਲ ਪੂਰਨ    kq  = idx / Npad;
+        ਅਚਲ ਪੂਰਨ    n   = idx - (size_t) kq * Npad;
+        ਅਚਲ ggml_sycl_gg_tile tile = tiles[n / S::BN];
+        ਅਚਲ ਪੂਰਨ    ਪੰਕਤੀ = tile.n0 + n % S::BN;
         // one guarded load run per work-item, as a per-element select costs ~1.5% prefill
-        typename S::tsb vals[V] = {};
-        if (row < tile.n1) {
-            const float * src = y + (size_t) row * K + V * kq;
-#pragma unroll
-            for (int v = 0; v < V; ++v) {
+        ਕਿਸਮ_ਨਾਂ S::tsb vals[V] = {};
+        ਜੇ (ਪੰਕਤੀ < tile.n1) {
+            ਅਚਲ ਦਸ਼ਮਲਵ * src = y + (size_t) ਪੰਕਤੀ * K + V * kq;
+#ਹਦਾਇਤ unroll
+            ਲਈ (ਪੂਰਨ v = 0; v < V; ++v) {
                 vals[v] = E::cvt(src[v]);
             }
         }
-        typename S::tsb * out = packed + ((size_t) kq * Npad + n) * V;
-#pragma unroll
-        for (int v = 0; v < V; ++v) {
-            out[v] = vals[v];
+        ਕਿਸਮ_ਨਾਂ S::tsb * ਬਾਹਰਲਾ = packed + ((size_t) kq * Npad + n) * V;
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ v = 0; v < V; ++v) {
+            ਬਾਹਰਲਾ[v] = vals[v];
         }
     });
 }
 
 // q8_0 and the k-quants take only the grouped path. The plain kernel decodes A again for every BN columns
 // of a dense batch, and for these formats that costs more than the one dequantization of the library GEMM.
-template <typename T> static constexpr bool fg_plain_ok() {
-    return !std::is_same_v<T, block_q8_0> && !std::is_same_v<T, block_q4_K> && !std::is_same_v<T, block_q5_K> &&
-           !std::is_same_v<T, block_q6_K>;
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T> ਸਥਿਰ constexpr ਤਾਰਕਿਕ fg_plain_ok() {
+    ਵਾਪਸ !std::is_same_v<T, ਖੰਡ_q8_0> && !std::is_same_v<T, ਖੰਡ_q4_K> && !std::is_same_v<T, ਖੰਡ_q5_K> &&
+           !std::is_same_v<T, ਖੰਡ_q6_K>;
 }
 
-template <typename T, bool R> struct fg_tag {
-    using type                     = T;
-    static constexpr bool reordered = R;
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T, ਤਾਰਕਿਕ R> ਬਣਤਰ fg_ਟੈਗ {
+    ਵਰਤੋਂ type                     = T;
+    ਸਥਿਰ constexpr ਤਾਰਕਿਕ reordered = R;
 };
 
 // calls f(fg_tag<block_q_t, reordered>{}) for the weight format and layout; false if it has no A stage
-template <typename T, typename F> static bool fg_visit_layout(bool reordered, F && f) {
-    if (!reordered) {
-        f(fg_tag<T, false>{});
-        return true;
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T, ਕਿਸਮ_ਨਾਂ F> ਸਥਿਰ ਤਾਰਕਿਕ fg_ਦੇਖੋ_layout(ਤਾਰਕਿਕ reordered, F && f) {
+    ਜੇ (!reordered) {
+        f(fg_ਟੈਗ<T, ਝੂਠ>{});
+        ਵਾਪਸ ਸੱਚ;
     }
-    if constexpr (fg_soa<T>::supported) {
-        f(fg_tag<T, true>{});
-        return true;
+    ਜੇ constexpr (fg_soa<T>::supported) {
+        f(fg_ਟੈਗ<T, ਸੱਚ>{});
+        ਵਾਪਸ ਸੱਚ;
     }
-    return false;
+    ਵਾਪਸ ਝੂਠ;
 }
 
-template <typename F> static bool fg_visit_type(ggml_type type, bool reordered, F && f) {
-    switch (type) {
-        case GGML_TYPE_IQ4_NL:  return fg_visit_layout<block_iq4_nl>(reordered, f);
-        case GGML_TYPE_IQ3_S:   return fg_visit_layout<block_iq3_s>(reordered, f);
-        case GGML_TYPE_IQ4_XS:  return fg_visit_layout<block_iq4_xs>(reordered, f);
-        case GGML_TYPE_IQ3_XXS: return fg_visit_layout<block_iq3_xxs>(reordered, f);
-        case GGML_TYPE_IQ2_XXS: return fg_visit_layout<block_iq2_xxs>(reordered, f);
-        case GGML_TYPE_IQ2_XS:  return fg_visit_layout<block_iq2_xs>(reordered, f);
-        case GGML_TYPE_IQ2_S:   return fg_visit_layout<block_iq2_s>(reordered, f);
-        case GGML_TYPE_IQ1_S:   return fg_visit_layout<block_iq1_s>(reordered, f);
-        case GGML_TYPE_IQ1_M:   return fg_visit_layout<block_iq1_m>(reordered, f);
-        case GGML_TYPE_Q8_0:    return fg_visit_layout<block_q8_0>(reordered, f);
-        case GGML_TYPE_Q4_K:    return fg_visit_layout<block_q4_K>(reordered, f);
-        case GGML_TYPE_Q5_K:    return fg_visit_layout<block_q5_K>(reordered, f);
-        case GGML_TYPE_Q6_K:    return fg_visit_layout<block_q6_K>(reordered, f);
-        default:                return false;
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ F> ਸਥਿਰ ਤਾਰਕਿਕ fg_ਦੇਖੋ_type(ggml_type type, ਤਾਰਕਿਕ reordered, F && f) {
+    ਚੋਣ (type) {
+        ਹਾਲਤ GGML_TYPE_IQ4_NL:  ਵਾਪਸ fg_ਦੇਖੋ_layout<ਖੰਡ_iq4_nl>(reordered, f);
+        ਹਾਲਤ GGML_TYPE_IQ3_S:   ਵਾਪਸ fg_ਦੇਖੋ_layout<ਖੰਡ_iq3_s>(reordered, f);
+        ਹਾਲਤ GGML_TYPE_IQ4_XS:  ਵਾਪਸ fg_ਦੇਖੋ_layout<ਖੰਡ_iq4_xs>(reordered, f);
+        ਹਾਲਤ GGML_TYPE_IQ3_XXS: ਵਾਪਸ fg_ਦੇਖੋ_layout<ਖੰਡ_iq3_xxs>(reordered, f);
+        ਹਾਲਤ GGML_TYPE_IQ2_XXS: ਵਾਪਸ fg_ਦੇਖੋ_layout<ਖੰਡ_iq2_xxs>(reordered, f);
+        ਹਾਲਤ GGML_TYPE_IQ2_XS:  ਵਾਪਸ fg_ਦੇਖੋ_layout<ਖੰਡ_iq2_xs>(reordered, f);
+        ਹਾਲਤ GGML_TYPE_IQ2_S:   ਵਾਪਸ fg_ਦੇਖੋ_layout<ਖੰਡ_iq2_s>(reordered, f);
+        ਹਾਲਤ GGML_TYPE_IQ1_S:   ਵਾਪਸ fg_ਦੇਖੋ_layout<ਖੰਡ_iq1_s>(reordered, f);
+        ਹਾਲਤ GGML_TYPE_IQ1_M:   ਵਾਪਸ fg_ਦੇਖੋ_layout<ਖੰਡ_iq1_m>(reordered, f);
+        ਹਾਲਤ GGML_TYPE_Q8_0:    ਵਾਪਸ fg_ਦੇਖੋ_layout<ਖੰਡ_q8_0>(reordered, f);
+        ਹਾਲਤ GGML_TYPE_Q4_K:    ਵਾਪਸ fg_ਦੇਖੋ_layout<ਖੰਡ_q4_K>(reordered, f);
+        ਹਾਲਤ GGML_TYPE_Q5_K:    ਵਾਪਸ fg_ਦੇਖੋ_layout<ਖੰਡ_q5_K>(reordered, f);
+        ਹਾਲਤ GGML_TYPE_Q6_K:    ਵਾਪਸ fg_ਦੇਖੋ_layout<ਖੰਡ_q6_K>(reordered, f);
+        ਮੂਲ:                ਵਾਪਸ ਝੂਠ;
     }
 }
 
-template <typename S>
-static bool fg_fused_run(ggml_type src0_type, bool src0_reordered, const void * src0, const void * src1, ggml_type src1_type,
-                         float * dst, int64_t M, int64_t N, int64_t K, int64_t ldd, ggml_sycl_pool & pool,
-                         dpct::queue_ptr stream) {
-    const int64_t groups_n = (N + S::BN - 1) / S::BN;
-    const int64_t groups_m = (M + S::SG_ROWS - 1) / S::SG_ROWS;
-    const int     Npad     = (int) (groups_n * S::BN);
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ S>
+ਸਥਿਰ ਤਾਰਕਿਕ fg_fused_ਲੜੀਵਾਰ(ggml_type src0_type, ਤਾਰਕਿਕ src0_reordered, ਅਚਲ ਖਾਲੀ * src0, ਅਚਲ ਖਾਲੀ * src1, ggml_type src1_type,
+                         ਦਸ਼ਮਲਵ * dst, int64_t M, int64_t N, int64_t K, int64_t ldd, ggml_sycl_pool & pool,
+                         dpct::ਕਤਾਰ_ptr stream) {
+    ਅਚਲ int64_t groups_n = (N + S::BN - 1) / S::BN;
+    ਅਚਲ int64_t groups_m = (M + S::SG_ਪੰਕਤੀਆਂ - 1) / S::SG_ਪੰਕਤੀਆਂ;
+    ਅਚਲ ਪੂਰਨ     Npad     = (ਪੂਰਨ) (groups_n * S::BN);
 
     // src1 is read in its own type: one pass, converted in registers only if B differs
-    ggml_sycl_pool_alloc<typename S::tsb> packed_b(pool, (size_t) K * Npad);
-    if (src1_type == GGML_TYPE_F16) {
-        fused_gemm_pack_b<typename S::EB>((const sycl::half *) src1, packed_b.get(), (int) N, Npad, (int) K, stream);
-    } else if (src1_type == GGML_TYPE_BF16) {
-        fused_gemm_pack_b<typename S::EB>((const fg_bf16 *) src1, packed_b.get(), (int) N, Npad, (int) K, stream);
-    } else {
-        fused_gemm_pack_b<typename S::EB>((const float *) src1, packed_b.get(), (int) N, Npad, (int) K, stream);
+    ggml_sycl_pool_alloc<ਕਿਸਮ_ਨਾਂ S::tsb> packed_b(pool, (size_t) K * Npad);
+    ਜੇ (src1_type == GGML_TYPE_F16) {
+        fused_gemm_pack_b<ਕਿਸਮ_ਨਾਂ S::EB>((ਅਚਲ sycl::half *) src1, packed_b.get(), (ਪੂਰਨ) N, Npad, (ਪੂਰਨ) K, stream);
+    } ਨਹੀਂਤਾਂ ਜੇ (src1_type == GGML_TYPE_BF16) {
+        fused_gemm_pack_b<ਕਿਸਮ_ਨਾਂ S::EB>((ਅਚਲ fg_bf16 *) src1, packed_b.get(), (ਪੂਰਨ) N, Npad, (ਪੂਰਨ) K, stream);
+    } ਨਹੀਂਤਾਂ {
+        fused_gemm_pack_b<ਕਿਸਮ_ਨਾਂ S::EB>((ਅਚਲ ਦਸ਼ਮਲਵ *) src1, packed_b.get(), (ਪੂਰਨ) N, Npad, (ਪੂਰਨ) K, stream);
     }
 
-    const typename S::tsb * packed = packed_b.get();
-    return fg_visit_type(src0_type, src0_reordered, [&](auto tag) {
-        using block_q_t = typename decltype(tag)::type;
-        if constexpr (fg_plain_ok<block_q_t>()) {
-            fused_dequant_gemm_launch<S, block_q_t, decltype(tag)::reordered>(src0, packed, dst, (int) M, (int) N,
-                                                                              Npad, (int) K, (int) ldd, groups_n,
+    ਅਚਲ ਕਿਸਮ_ਨਾਂ S::tsb * packed = packed_b.get();
+    ਵਾਪਸ fg_ਦੇਖੋ_type(src0_type, src0_reordered, [&](ਸਵੈਚਾਲਿਤ ਟੈਗ) {
+        ਵਰਤੋਂ ਖੰਡ_q_t = ਕਿਸਮ_ਨਾਂ decltype(ਟੈਗ)::type;
+        ਜੇ constexpr (fg_plain_ok<ਖੰਡ_q_t>()) {
+            fused_dequant_gemm_launch<S, ਖੰਡ_q_t, decltype(ਟੈਗ)::reordered>(src0, packed, dst, (ਪੂਰਨ) M, (ਪੂਰਨ) N,
+                                                                              Npad, (ਪੂਰਨ) K, (ਪੂਰਨ) ldd, groups_n,
                                                                               groups_m, stream);
         }
     });
 }
 
-bool ggml_sycl_fused_dequant_gemm(ggml_type src0_type, bool src0_reordered, const void * src0, const void * src1, ggml_type src1_type,
-                                  int32_t src1_prec, float * dst, int64_t M, int64_t N, int64_t K, int64_t ldd,
-                                  ggml_sycl_pool & pool, dpct::queue_ptr stream) {
+ਤਾਰਕਿਕ ggml_sycl_fused_dequant_gemm(ggml_type src0_type, ਤਾਰਕਿਕ src0_reordered, ਅਚਲ ਖਾਲੀ * src0, ਅਚਲ ਖਾਲੀ * src1, ggml_type src1_type,
+                                  int32_t src1_prec, ਦਸ਼ਮਲਵ * dst, int64_t M, int64_t N, int64_t K, int64_t ldd,
+                                  ggml_sycl_pool & pool, dpct::ਕਤਾਰ_ptr stream) {
     // every BN columns dequantize A again, so wide N is left to the library GEMM.
     // src0_reordered: the persistent weight reorder may have been installed on this
     // tensor by an earlier small-batch mul_mat; the A stage then has to decode the
     // SoA layout. Types without an SoA stage (fg_soa<T>::supported == false)
     // decline via fg_visit_layout and the caller falls through to the
     // reorder-aware conversion route.
-    bool plain_ok = false;
-    fg_visit_type(src0_type, src0_reordered, [&](auto tag) { plain_ok = fg_plain_ok<typename decltype(tag)::type>(); });
-    if (g_ggml_sycl_dynamic_precision == GGML_SYCL_DYNAMIC_PRECISION_F32 ||
+    ਤਾਰਕਿਕ plain_ok = ਝੂਠ;
+    fg_ਦੇਖੋ_type(src0_type, src0_reordered, [&](ਸਵੈਚਾਲਿਤ ਟੈਗ) { plain_ok = fg_plain_ok<ਕਿਸਮ_ਨਾਂ decltype(ਟੈਗ)::type>(); });
+    ਜੇ (g_ggml_sycl_dynamic_precision == GGML_SYCL_DYNAMIC_PRECISION_F32 ||
         !ggml_sycl_xmx_gather_type_enabled(src0_type) || !plain_ok) {
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
-    if (src1_type != GGML_TYPE_F32 && src1_type != GGML_TYPE_F16 && src1_type != GGML_TYPE_BF16) {
-        return false;
+    ਜੇ (src1_type != GGML_TYPE_F32 && src1_type != GGML_TYPE_F16 && src1_type != GGML_TYPE_BF16) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    if (!ggml_sycl_fused_dequant_gemm_shape_ok(src0_type, M, N, K, ldd)) {
-        return false;
+    ਜੇ (!ggml_sycl_fused_dequant_gemm_shape_ok(src0_type, M, N, K, ldd)) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    const int combo = fg_pick_combo(stream, src1_type, src1_prec);
-    if (combo < 0) {
-        return false;
+    ਅਚਲ ਪੂਰਨ combo = fg_pick_combo(stream, src1_type, src1_prec);
+    ਜੇ (combo < 0) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    bool launched = false;
-    fg_visit_combo(combo, [&](auto s) {
-        launched = fg_fused_run<decltype(s)>(src0_type, src0_reordered, src0, src1, src1_type, dst, M, N, K, ldd, pool, stream);
+    ਤਾਰਕਿਕ launched = ਝੂਠ;
+    fg_ਦੇਖੋ_combo(combo, [&](ਸਵੈਚਾਲਿਤ s) {
+        launched = fg_fused_ਲੜੀਵਾਰ<decltype(s)>(src0_type, src0_reordered, src0, src1, src1_type, dst, M, N, K, ldd, pool, stream);
     });
-    return launched;
+    ਵਾਪਸ launched;
 }
 
-template <typename S>
-static bool fg_grouped_run(ggml_type src0_type, bool reordered, const void * src0_base, size_t expert_stride,
-                           const float * src1, float * dst, const int64_t * expert_row_offsets, int64_t n_as, int64_t M,
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ S>
+ਸਥਿਰ ਤਾਰਕਿਕ fg_grouped_ਲੜੀਵਾਰ(ggml_type src0_type, ਤਾਰਕਿਕ reordered, ਅਚਲ ਖਾਲੀ * src0_ਅਧਾਰ, size_t expert_stride,
+                           ਅਚਲ ਦਸ਼ਮਲਵ * src1, ਦਸ਼ਮਲਵ * dst, ਅਚਲ int64_t * expert_ਪੰਕਤੀ_offsets, int64_t n_as, int64_t M,
                            int64_t K, std::vector<ggml_sycl_gg_tile> & tiles, ggml_sycl_pool & pool,
-                           dpct::queue_ptr stream) {
+                           dpct::ਕਤਾਰ_ptr stream) {
     // the host knows every slice, so it lays out the work-groups: no search on the device
     tiles.clear();
-    for (int64_t e = 0; e < n_as; ++e) {
-        const int64_t end = expert_row_offsets[e + 1];
-        for (int64_t n0 = expert_row_offsets[e]; n0 < end; n0 += S::BN) {
+    ਲਈ (int64_t e = 0; e < n_as; ++e) {
+        ਅਚਲ int64_t end = expert_ਪੰਕਤੀ_offsets[e + 1];
+        ਲਈ (int64_t n0 = expert_ਪੰਕਤੀ_offsets[e]; n0 < end; n0 += S::BN) {
             tiles.push_back({ (int32_t) e, (int32_t) n0, (int32_t) std::min<int64_t>(n0 + S::BN, end) });
         }
     }
-    const int64_t n_tiles  = tiles.size();
-    const int64_t groups_m = (M + S::SG_ROWS - 1) / S::SG_ROWS;
-    const int     Npad     = (int) (n_tiles * S::BN);
+    ਅਚਲ int64_t n_tiles  = tiles.size();
+    ਅਚਲ int64_t groups_m = (M + S::SG_ਪੰਕਤੀਆਂ - 1) / S::SG_ਪੰਕਤੀਆਂ;
+    ਅਚਲ ਪੂਰਨ     Npad     = (ਪੂਰਨ) (n_tiles * S::BN);
 
-    const int64_t max_tiles = grouped_gemm_max_tiles(expert_row_offsets[n_as], n_as, S::BN);
+    ਅਚਲ int64_t max_tiles = grouped_gemm_max_tiles(expert_ਪੰਕਤੀ_offsets[n_as], n_as, S::BN);
     GGML_ASSERT(n_tiles <= max_tiles);
     ggml_sycl_pool_alloc<ggml_sycl_gg_tile> tiles_dev(pool, max_tiles);
-    SYCL_CHECK(CHECK_TRY_ERROR(stream->memcpy(tiles_dev.get(), tiles.data(), n_tiles * sizeof(ggml_sycl_gg_tile))));
+    SYCL_CHECK(CHECK_TRY_ERROR(stream->ਸਮ੍ਰਿਤੀ_ਨਕਲ(tiles_dev.get(), tiles.ਅੰਕੜੇ(), n_tiles * ਆਕਾਰ(ggml_sycl_gg_tile))));
 
-    ggml_sycl_pool_alloc<typename S::tsb> packed_b(pool, (size_t) K * max_tiles * S::BN);
-    grouped_gemm_pack_b<S>(src1, packed_b.get(), tiles_dev.get(), Npad, (int) K, stream);
+    ggml_sycl_pool_alloc<ਕਿਸਮ_ਨਾਂ S::tsb> packed_b(pool, (size_t) K * max_tiles * S::BN);
+    grouped_gemm_pack_b<S>(src1, packed_b.get(), tiles_dev.get(), Npad, (ਪੂਰਨ) K, stream);
 
-    const typename S::tsb *   packed    = packed_b.get();
-    const ggml_sycl_gg_tile * tiles_ptr = tiles_dev.get();
-    const char *              src0_dd   = (const char *) src0_base;
-    return fg_visit_type(src0_type, reordered, [&](auto tag) {
-        using T = decltype(tag);
-        grouped_dequant_gemm_launch<S, typename T::type, T::reordered>(src0_dd, expert_stride, tiles_ptr, packed, dst,
-                                                                       (int) M, Npad, (int) K, n_tiles, groups_m,
+    ਅਚਲ ਕਿਸਮ_ਨਾਂ S::tsb *   packed    = packed_b.get();
+    ਅਚਲ ggml_sycl_gg_tile * tiles_ptr = tiles_dev.get();
+    ਅਚਲ ਅੱਖਰ *              src0_dd   = (ਅਚਲ ਅੱਖਰ *) src0_ਅਧਾਰ;
+    ਵਾਪਸ fg_ਦੇਖੋ_type(src0_type, reordered, [&](ਸਵੈਚਾਲਿਤ ਟੈਗ) {
+        ਵਰਤੋਂ T = decltype(ਟੈਗ);
+        grouped_dequant_gemm_launch<S, ਕਿਸਮ_ਨਾਂ T::type, T::reordered>(src0_dd, expert_stride, tiles_ptr, packed, dst,
+                                                                       (ਪੂਰਨ) M, Npad, (ਪੂਰਨ) K, n_tiles, groups_m,
                                                                        stream);
     });
 }
 
-bool ggml_sycl_grouped_dequant_gemm(ggml_type src0_type, bool reordered, const void * src0_base, size_t expert_stride,
-                                    const float * src1, int32_t src1_prec, float * dst,
-                                    const int64_t * expert_row_offsets, int64_t n_as, int64_t M, int64_t K,
-                                    int64_t total_rows, std::vector<ggml_sycl_gg_tile> & tiles,
-                                    ggml_sycl_pool & pool, dpct::queue_ptr stream) {
-    int64_t n_active = 0;
-    for (int64_t e = 0; e < n_as; ++e) {
-        n_active += expert_row_offsets[e + 1] > expert_row_offsets[e];
+ਤਾਰਕਿਕ ggml_sycl_grouped_dequant_gemm(ggml_type src0_type, ਤਾਰਕਿਕ reordered, ਅਚਲ ਖਾਲੀ * src0_ਅਧਾਰ, size_t expert_stride,
+                                    ਅਚਲ ਦਸ਼ਮਲਵ * src1, int32_t src1_prec, ਦਸ਼ਮਲਵ * dst,
+                                    ਅਚਲ int64_t * expert_ਪੰਕਤੀ_offsets, int64_t n_as, int64_t M, int64_t K,
+                                    int64_t ਕੁੱਲ_ਪੰਕਤੀਆਂ, std::vector<ggml_sycl_gg_tile> & tiles,
+                                    ggml_sycl_pool & pool, dpct::ਕਤਾਰ_ptr stream) {
+    int64_t n_ਸਰਗਰਮ = 0;
+    ਲਈ (int64_t e = 0; e < n_as; ++e) {
+        n_ਸਰਗਰਮ += expert_ਪੰਕਤੀ_offsets[e + 1] > expert_ਪੰਕਤੀ_offsets[e];
     }
-    if (g_ggml_sycl_dynamic_precision == GGML_SYCL_DYNAMIC_PRECISION_F32 ||
-        !ggml_sycl_xmx_gather_type_enabled(src0_type) || !fg_visit_type(src0_type, reordered, [](auto) {})) {
-        return false;
+    ਜੇ (g_ggml_sycl_dynamic_precision == GGML_SYCL_DYNAMIC_PRECISION_F32 ||
+        !ggml_sycl_xmx_gather_type_enabled(src0_type) || !fg_ਦੇਖੋ_type(src0_type, reordered, [](ਸਵੈਚਾਲਿਤ) {})) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    if (!ggml_sycl_grouped_dequant_gemm_shape_ok(src0_type, M, K, total_rows, n_active)) {
-        return false;
+    ਜੇ (!ggml_sycl_grouped_dequant_gemm_shape_ok(src0_type, M, K, ਕੁੱਲ_ਪੰਕਤੀਆਂ, n_ਸਰਗਰਮ)) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    const int combo = fg_pick_combo(stream, GGML_TYPE_F32, src1_prec);
-    if (combo < 0) {
-        return false;
+    ਅਚਲ ਪੂਰਨ combo = fg_pick_combo(stream, GGML_TYPE_F32, src1_prec);
+    ਜੇ (combo < 0) {
+        ਵਾਪਸ ਝੂਠ;
     }
-    bool launched = false;
-    fg_visit_combo(combo, [&](auto s) {
-        launched = fg_grouped_run<decltype(s)>(src0_type, reordered, src0_base, expert_stride, src1, dst,
-                                               expert_row_offsets, n_as, M, K, tiles, pool, stream);
+    ਤਾਰਕਿਕ launched = ਝੂਠ;
+    fg_ਦੇਖੋ_combo(combo, [&](ਸਵੈਚਾਲਿਤ s) {
+        launched = fg_grouped_ਲੜੀਵਾਰ<decltype(s)>(src0_type, reordered, src0_ਅਧਾਰ, expert_stride, src1, dst,
+                                               expert_ਪੰਕਤੀ_offsets, n_as, M, K, tiles, pool, stream);
     });
-    return launched;
+    ਵਾਪਸ launched;
 }

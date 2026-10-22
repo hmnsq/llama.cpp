@@ -1,39 +1,39 @@
-#include "ggml-backend-impl.h"
-#include "ggml-feats.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-backend-impl.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-feats.h"
 
-#if defined(__aarch64__) || defined(_M_ARM64)
+#ਜੇ defined(__aarch64__) || defined(_M_ARM64)
 
-static int ggml_backend_cpu_aarch64_score() {
-    int score = 1;
-    const ggml_feats_arch64_runtime_t af = ggml_feats_get_arch64_runtime();
-    GGML_UNUSED(af);
+ਸਥਿਰ ਪੂਰਨ ggml_backend_cpu_aarch64_score() {
+    ਪੂਰਨ score = 1;
+    ਅਚਲ ggml_feats_arch64_runtime_t af = ggml_feats_get_arch64_runtime();
+    GGML_ਅਣਵਰਤਿਆ(af);
 
-#ifdef GGML_USE_DOTPROD
-    if (!af.has_dotprod) { return 0; }
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_USE_DOTPROD
+    ਜੇ (!af.has_dotprod) { ਵਾਪਸ 0; }
     score += 1<<1;
-#endif
-#ifdef GGML_USE_FP16_VECTOR_ARITHMETIC
-    if (!af.has_fp16) { return 0; }
+#ਜੇ_ਅੰਤ
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_USE_FP16_ਸਦਿਸ਼_ARITHMETIC
+    ਜੇ (!af.has_fp16) { ਵਾਪਸ 0; }
     score += 1<<2;
-#endif
-#ifdef GGML_USE_SVE
-    if (!af.has_sve) { return 0; }
+#ਜੇ_ਅੰਤ
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_USE_SVE
+    ਜੇ (!af.has_sve) { ਵਾਪਸ 0; }
     score += 1<<3;
-#endif
-#ifdef GGML_USE_MATMUL_INT8
-    if (!af.has_i8mm) { return 0; }
+#ਜੇ_ਅੰਤ
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_USE_MATMUL_INT8
+    ਜੇ (!af.has_i8mm) { ਵਾਪਸ 0; }
     score += 1<<4;
-#endif
-#ifdef GGML_USE_SVE2
-    if (!af.has_sve2) { return 0; }
+#ਜੇ_ਅੰਤ
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_USE_SVE2
+    ਜੇ (!af.has_sve2) { ਵਾਪਸ 0; }
     score += 1<<5;
-#endif
-#ifdef GGML_USE_SME
-    if (!af.has_sme) { return 0; }
+#ਜੇ_ਅੰਤ
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_USE_SME
+    ਜੇ (!af.has_sme) { ਵਾਪਸ 0; }
     score += 1<<6;
-#endif
+#ਜੇ_ਅੰਤ
 
-    return score;
+    ਵਾਪਸ score;
 }
 
 GGML_BACKEND_DL_SCORE_IMPL(ggml_backend_cpu_aarch64_score)

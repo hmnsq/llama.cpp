@@ -1,5 +1,5 @@
-#pragma once
+#ਹਦਾਇਤ once
 
-#include "common.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "common.hpp"
 
-void ggml_sycl_ssm_scan(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+ਖਾਲੀ ggml_sycl_ssm_ਜਾਂਚ(ggml_backend_sycl_context & ctx, ggml_tensor * dst);

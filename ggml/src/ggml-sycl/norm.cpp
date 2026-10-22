@@ -1,88 +1,88 @@
-#include "norm.hpp"
-#include "ggml-sycl/common.hpp"
-#include "ggml-sycl/presets.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "norm.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-sycl/common.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-sycl/presets.hpp"
 
-static void norm_f32(const float* x, float* dst, const int ncols,
-    const int64_t src_stride_col, const int64_t src_stride_row, const int64_t src_stride_channel, const int64_t src_stride_sample,
-    const int64_t dst_stride_col, const int64_t dst_stride_row, const int64_t dst_stride_channel, const int64_t dst_stride_sample,
-    const float eps, const sycl::nd_item<3>& item_ct1, sycl::float2* s_sum, int block_size) {
+ਸਥਿਰ ਖਾਲੀ norm_f32(ਅਚਲ ਦਸ਼ਮਲਵ* x, ਦਸ਼ਮਲਵ* dst, ਅਚਲ ਪੂਰਨ ncols,
+    ਅਚਲ int64_t src_stride_ਖਾਨਾ, ਅਚਲ int64_t src_stride_ਪੰਕਤੀ, ਅਚਲ int64_t src_stride_channel, ਅਚਲ int64_t src_stride_sample,
+    ਅਚਲ int64_t dst_stride_ਖਾਨਾ, ਅਚਲ int64_t dst_stride_ਪੰਕਤੀ, ਅਚਲ int64_t dst_stride_channel, ਅਚਲ int64_t dst_stride_sample,
+    ਅਚਲ ਦਸ਼ਮਲਵ eps, ਅਚਲ sycl::nd_ਵਸਤੂ<3>& ਵਸਤੂ_ct1, sycl::float2* s_ਜੋੜ, ਪੂਰਨ ਖੰਡ_ਮਾਪ_3) {
 
-    const int nthreads = item_ct1.get_local_range(2);
-    const int sample  = item_ct1.get_group(0);
-    const int channel = item_ct1.get_group(1);
-    const int row     = item_ct1.get_group(2);
+    ਅਚਲ ਪੂਰਨ nthreads = ਵਸਤੂ_ct1.get_local_range(2);
+    ਅਚਲ ਪੂਰਨ sample  = ਵਸਤੂ_ct1.get_ਸਮੂਹ(0);
+    ਅਚਲ ਪੂਰਨ channel = ਵਸਤੂ_ct1.get_ਸਮੂਹ(1);
+    ਅਚਲ ਪੂਰਨ ਪੰਕਤੀ     = ਵਸਤੂ_ct1.get_ਸਮੂਹ(2);
 
-    const int tid = item_ct1.get_local_id(2);
-    const int nwarps = nthreads / WARP_SIZE;
+    ਅਚਲ ਪੂਰਨ tid = ਵਸਤੂ_ct1.get_local_id(2);
+    ਅਚਲ ਪੂਰਨ nwarps = nthreads / WARP_ਮਾਪ;
 
-    const auto src_offset = calculate_offset<3>({src_stride_sample, src_stride_channel, src_stride_row}, {sample, channel, row});
-    const auto dst_offset = calculate_offset<3>({dst_stride_sample, dst_stride_channel, dst_stride_row}, {sample, channel, row});
+    ਅਚਲ ਸਵੈਚਾਲਿਤ src_ਵਿੱਥ = calculate_ਵਿੱਥ<3>({src_stride_sample, src_stride_channel, src_stride_ਪੰਕਤੀ}, {sample, channel, ਪੰਕਤੀ});
+    ਅਚਲ ਸਵੈਚਾਲਿਤ dst_ਵਿੱਥ = calculate_ਵਿੱਥ<3>({dst_stride_sample, dst_stride_channel, dst_stride_ਪੰਕਤੀ}, {sample, channel, ਪੰਕਤੀ});
 
-    x += src_offset;
-    dst += dst_offset;
+    x += src_ਵਿੱਥ;
+    dst += dst_ਵਿੱਥ;
 
-    sycl::float2 mean_var = sycl::float2(0.f, 0.f);
+    sycl::float2 ਔਸਤ_var = sycl::float2(0.f, 0.f);
 
-    for (int col = tid; col < ncols; col += block_size) {
-        const float xi = x[col * src_stride_col];
-        mean_var.x() += xi;
-        mean_var.y() += xi * xi;
+    ਲਈ (ਪੂਰਨ ਖਾਨਾ = tid; ਖਾਨਾ < ncols; ਖਾਨਾ += ਖੰਡ_ਮਾਪ_3) {
+        ਅਚਲ ਦਸ਼ਮਲਵ xi = x[ਖਾਨਾ * src_stride_ਖਾਨਾ];
+        ਔਸਤ_var.x() += xi;
+        ਔਸਤ_var.y() += xi * xi;
     }
 
     // sum up partial sums
-    mean_var = warp_reduce_sum(mean_var, item_ct1);
-    if  (block_size > WARP_SIZE) {
-        const auto sub_group = item_ct1.get_sub_group();
-        const auto sg_id = sub_group.get_group_linear_id();
-        const auto wi_in_sg = sub_group.get_local_linear_id();
-        if (wi_in_sg == 0) {
-            s_sum[sg_id] = mean_var;
+    ਔਸਤ_var = warp_reduce_ਜੋੜ(ਔਸਤ_var, ਵਸਤੂ_ct1);
+    ਜੇ  (ਖੰਡ_ਮਾਪ_3 > WARP_ਮਾਪ) {
+        ਅਚਲ ਸਵੈਚਾਲਿਤ sub_ਸਮੂਹ = ਵਸਤੂ_ct1.get_sub_ਸਮੂਹ();
+        ਅਚਲ ਸਵੈਚਾਲਿਤ sg_id = sub_ਸਮੂਹ.get_ਸਮੂਹ_ਰੇਖਿਕ_id();
+        ਅਚਲ ਸਵੈਚਾਲਿਤ wi_ਵਿੱਚ_sg = sub_ਸਮੂਹ.get_local_ਰੇਖਿਕ_id();
+        ਜੇ (wi_ਵਿੱਚ_sg == 0) {
+            s_ਜੋੜ[sg_id] = ਔਸਤ_var;
         }
-        item_ct1.barrier(sycl::access::fence_space::local_space);
-        mean_var = 0.f;
-        const size_t nreduce = ceil_div(nwarps, WARP_SIZE);
-        for (size_t i = 0; i < nreduce; i += 1)
+        ਵਸਤੂ_ct1.barrier(sycl::access::fence_space::local_space);
+        ਔਸਤ_var = 0.f;
+        ਅਚਲ size_t nreduce = ceil_div(nwarps, WARP_ਮਾਪ);
+        ਲਈ (size_t i = 0; i < nreduce; i += 1)
         {
-            mean_var += s_sum[wi_in_sg + i * WARP_SIZE];
+            ਔਸਤ_var += s_ਜੋੜ[wi_ਵਿੱਚ_sg + i * WARP_ਮਾਪ];
         }
-        mean_var = warp_reduce_sum(mean_var, item_ct1);
+        ਔਸਤ_var = warp_reduce_ਜੋੜ(ਔਸਤ_var, ਵਸਤੂ_ct1);
     }
 
-    const float mean = mean_var.x() / ncols;
-    const float var = mean_var.y() / ncols - mean * mean;
-    const float inv_std = sycl::rsqrt(var + eps);
+    ਅਚਲ ਦਸ਼ਮਲਵ ਔਸਤ_2 = ਔਸਤ_var.x() / ncols;
+    ਅਚਲ ਦਸ਼ਮਲਵ var = ਔਸਤ_var.y() / ncols - ਔਸਤ_2 * ਔਸਤ_2;
+    ਅਚਲ ਦਸ਼ਮਲਵ inv_std = sycl::rsqrt(var + eps);
 
-    for (int col = tid; col < ncols; col += block_size) {
-        dst[col * dst_stride_col] = (x[col * src_stride_col] - mean) * inv_std;
+    ਲਈ (ਪੂਰਨ ਖਾਨਾ = tid; ਖਾਨਾ < ncols; ਖਾਨਾ += ਖੰਡ_ਮਾਪ_3) {
+        dst[ਖਾਨਾ * dst_stride_ਖਾਨਾ] = (x[ਖਾਨਾ * src_stride_ਖਾਨਾ] - ਔਸਤ_2) * inv_std;
     }
 }
 
-static void group_norm_f32(const float* x, float* dst, const int group_size, const int ne_elements, const float eps,
-    const sycl::nd_item<3>& item_ct1, float* s_sum, int block_size) {
-    int start = item_ct1.get_group(2) * group_size;
-    int end = start + group_size;
-    const int nthreads = item_ct1.get_local_range(2);
-    const int nwarps = nthreads / WARP_SIZE;
-    start += item_ct1.get_local_id(2);
-    size_t nreduce = nwarps / WARP_SIZE;
+ਸਥਿਰ ਖਾਲੀ ਸਮੂਹ_norm_f32(ਅਚਲ ਦਸ਼ਮਲਵ* x, ਦਸ਼ਮਲਵ* dst, ਅਚਲ ਪੂਰਨ ਸਮੂਹ_ਮਾਪ, ਅਚਲ ਪੂਰਨ ne_elements, ਅਚਲ ਦਸ਼ਮਲਵ eps,
+    ਅਚਲ sycl::nd_ਵਸਤੂ<3>& ਵਸਤੂ_ct1, ਦਸ਼ਮਲਵ* s_ਜੋੜ, ਪੂਰਨ ਖੰਡ_ਮਾਪ_3) {
+    ਪੂਰਨ start = ਵਸਤੂ_ct1.get_ਸਮੂਹ(2) * ਸਮੂਹ_ਮਾਪ;
+    ਪੂਰਨ end = start + ਸਮੂਹ_ਮਾਪ;
+    ਅਚਲ ਪੂਰਨ nthreads = ਵਸਤੂ_ct1.get_local_range(2);
+    ਅਚਲ ਪੂਰਨ nwarps = nthreads / WARP_ਮਾਪ;
+    start += ਵਸਤੂ_ct1.get_local_id(2);
+    size_t nreduce = nwarps / WARP_ਮਾਪ;
 
-    if (end >= ne_elements) {
+    ਜੇ (end >= ne_elements) {
         end = ne_elements;
     }
 
-    float tmp = 0.0f; // partial sum for thread in warp
+    ਦਸ਼ਮਲਵ tmp = 0.0f; // partial sum for thread in warp
 
-    for (int j = start; j < end; j += block_size) {
+    ਲਈ (ਪੂਰਨ j = start; j < end; j += ਖੰਡ_ਮਾਪ_3) {
         tmp += x[j];
     }
 
-    tmp = warp_reduce_sum(tmp, item_ct1);
-    if (block_size > WARP_SIZE) {
+    tmp = warp_reduce_ਜੋੜ(tmp, ਵਸਤੂ_ct1);
+    ਜੇ (ਖੰਡ_ਮਾਪ_3 > WARP_ਮਾਪ) {
 
-        int warp_id = item_ct1.get_local_id(2) / WARP_SIZE;
-        int lane_id = item_ct1.get_local_id(2) % WARP_SIZE;
-        if (lane_id == 0) {
-            s_sum[warp_id] = tmp;
+        ਪੂਰਨ warp_id = ਵਸਤੂ_ct1.get_local_id(2) / WARP_ਮਾਪ;
+        ਪੂਰਨ lane_id = ਵਸਤੂ_ct1.get_local_id(2) % WARP_ਮਾਪ;
+        ਜੇ (lane_id == 0) {
+            s_ਜੋੜ[warp_id] = tmp;
         }
         /*
         DPCT1118:1: SYCL group functions and algorithms must be encountered in
@@ -93,31 +93,31 @@ static void group_norm_f32(const float* x, float* dst, const int group_size, con
         sycl::nd_item::barrier(sycl::access::fence_space::local_space) for
         better performance if there is no access to global memory.
         */
-        item_ct1.barrier();
+        ਵਸਤੂ_ct1.barrier();
         tmp = 0.f;
-        for (size_t i = 0; i < nreduce; i += 1)
+        ਲਈ (size_t i = 0; i < nreduce; i += 1)
         {
-            tmp += s_sum[lane_id + i * WARP_SIZE];
+            tmp += s_ਜੋੜ[lane_id + i * WARP_ਮਾਪ];
         }
-        tmp = warp_reduce_sum(tmp, item_ct1);
+        tmp = warp_reduce_ਜੋੜ(tmp, ਵਸਤੂ_ct1);
     }
 
-    float mean = tmp / group_size;
+    ਦਸ਼ਮਲਵ ਔਸਤ_2 = tmp / ਸਮੂਹ_ਮਾਪ;
     tmp = 0.0f;
 
-    for (int j = start; j < end; j += block_size) {
-        float xi = x[j] - mean;
+    ਲਈ (ਪੂਰਨ j = start; j < end; j += ਖੰਡ_ਮਾਪ_3) {
+        ਦਸ਼ਮਲਵ xi = x[j] - ਔਸਤ_2;
         dst[j] = xi;
         tmp += xi * xi;
     }
 
-    tmp = warp_reduce_sum(tmp, item_ct1);
-    if (block_size > WARP_SIZE) {
+    tmp = warp_reduce_ਜੋੜ(tmp, ਵਸਤੂ_ct1);
+    ਜੇ (ਖੰਡ_ਮਾਪ_3 > WARP_ਮਾਪ) {
 
-        int warp_id = item_ct1.get_local_id(2) / WARP_SIZE;
-        int lane_id = item_ct1.get_local_id(2) % WARP_SIZE;
-        if (lane_id == 0) {
-            s_sum[warp_id] = tmp;
+        ਪੂਰਨ warp_id = ਵਸਤੂ_ct1.get_local_id(2) / WARP_ਮਾਪ;
+        ਪੂਰਨ lane_id = ਵਸਤੂ_ct1.get_local_id(2) % WARP_ਮਾਪ;
+        ਜੇ (lane_id == 0) {
+            s_ਜੋੜ[warp_id] = tmp;
         }
         /*
         DPCT1118:2: SYCL group functions and algorithms must be encountered in
@@ -128,206 +128,206 @@ static void group_norm_f32(const float* x, float* dst, const int group_size, con
         sycl::nd_item::barrier(sycl::access::fence_space::local_space) for
         better performance if there is no access to global memory.
         */
-        item_ct1.barrier();
+        ਵਸਤੂ_ct1.barrier();
         tmp = 0.f;
-        for (size_t i = 0; i < nreduce; i += 1)
+        ਲਈ (size_t i = 0; i < nreduce; i += 1)
         {
-            tmp += s_sum[lane_id + i * WARP_SIZE];
+            tmp += s_ਜੋੜ[lane_id + i * WARP_ਮਾਪ];
         }
-        tmp = warp_reduce_sum(tmp, item_ct1);
+        tmp = warp_reduce_ਜੋੜ(tmp, ਵਸਤੂ_ct1);
     }
 
-    float variance = tmp / group_size;
-    float scale = sycl::rsqrt(variance + eps);
-    for (int j = start; j < end; j += block_size) {
+    ਦਸ਼ਮਲਵ variance = tmp / ਸਮੂਹ_ਮਾਪ;
+    ਦਸ਼ਮਲਵ scale = sycl::rsqrt(variance + eps);
+    ਲਈ (ਪੂਰਨ j = start; j < end; j += ਖੰਡ_ਮਾਪ_3) {
         dst[j] *= scale;
     }
 }
 
-template <bool do_multiply = false, bool do_add = false>
-static void rms_norm_f32(const float* x, float* dst, const int ncols,
-    const int64_t src_stride_col, const int64_t src_stride_row, const int64_t src_stride_channel, const int64_t src_stride_sample,
-    const int64_t dst_stride_col, const int64_t dst_stride_row, const int64_t dst_stride_channel, const int64_t dst_stride_sample,
-    const float eps, const sycl::nd_item<3>& item_ct1, float* s_sum, int block_size,
-    const float* mul = nullptr, const int64_t mul_stride_row = 0, const int64_t mul_stride_channel = 0,
-    const int64_t mul_stride_sample = 0, const int mul_nrows = 0, const int mul_nchannels = 0, const int mul_nsamples = 0,
-    const float* add = nullptr, const int64_t add_stride_row = 0, const int64_t add_stride_channel = 0,
-    const int64_t add_stride_sample = 0, const int add_nrows = 0, const int add_nchannels = 0, const int add_nsamples = 0,
-    const float scale_mul = 1.0f) {
+ਸਾਂਚਾ <ਤਾਰਕਿਕ do_multiply = ਝੂਠ, ਤਾਰਕਿਕ do_ਜੋੜੋ = ਝੂਠ>
+ਸਥਿਰ ਖਾਲੀ rms_norm_f32(ਅਚਲ ਦਸ਼ਮਲਵ* x, ਦਸ਼ਮਲਵ* dst, ਅਚਲ ਪੂਰਨ ncols,
+    ਅਚਲ int64_t src_stride_ਖਾਨਾ, ਅਚਲ int64_t src_stride_ਪੰਕਤੀ, ਅਚਲ int64_t src_stride_channel, ਅਚਲ int64_t src_stride_sample,
+    ਅਚਲ int64_t dst_stride_ਖਾਨਾ, ਅਚਲ int64_t dst_stride_ਪੰਕਤੀ, ਅਚਲ int64_t dst_stride_channel, ਅਚਲ int64_t dst_stride_sample,
+    ਅਚਲ ਦਸ਼ਮਲਵ eps, ਅਚਲ sycl::nd_ਵਸਤੂ<3>& ਵਸਤੂ_ct1, ਦਸ਼ਮਲਵ* s_ਜੋੜ, ਪੂਰਨ ਖੰਡ_ਮਾਪ_3,
+    ਅਚਲ ਦਸ਼ਮਲਵ* mul = ਖਾਲੀ_ਸੂਚਕ, ਅਚਲ int64_t mul_stride_ਪੰਕਤੀ = 0, ਅਚਲ int64_t mul_stride_channel = 0,
+    ਅਚਲ int64_t mul_stride_sample = 0, ਅਚਲ ਪੂਰਨ mul_nrows = 0, ਅਚਲ ਪੂਰਨ mul_nchannels = 0, ਅਚਲ ਪੂਰਨ mul_nsamples = 0,
+    ਅਚਲ ਦਸ਼ਮਲਵ* ਜੋੜੋ_2 = ਖਾਲੀ_ਸੂਚਕ, ਅਚਲ int64_t ਜੋੜੋ_stride_ਪੰਕਤੀ = 0, ਅਚਲ int64_t ਜੋੜੋ_stride_channel = 0,
+    ਅਚਲ int64_t ਜੋੜੋ_stride_sample = 0, ਅਚਲ ਪੂਰਨ ਜੋੜੋ_nrows = 0, ਅਚਲ ਪੂਰਨ ਜੋੜੋ_nchannels = 0, ਅਚਲ ਪੂਰਨ ਜੋੜੋ_nsamples = 0,
+    ਅਚਲ ਦਸ਼ਮਲਵ scale_mul = 1.0f) {
 
-    static_assert(!do_add || do_multiply, "fusing add is not supported without multiplying");
+    static_assert(!do_ਜੋੜੋ || do_multiply, "fusing add is not supported without multiplying");
 
-    const int sample  = item_ct1.get_group(0);
-    const int channel = item_ct1.get_group(1);
-    const int row     = item_ct1.get_group(2);
+    ਅਚਲ ਪੂਰਨ sample  = ਵਸਤੂ_ct1.get_ਸਮੂਹ(0);
+    ਅਚਲ ਪੂਰਨ channel = ਵਸਤੂ_ct1.get_ਸਮੂਹ(1);
+    ਅਚਲ ਪੂਰਨ ਪੰਕਤੀ     = ਵਸਤੂ_ct1.get_ਸਮੂਹ(2);
 
-    const int nthreads = item_ct1.get_local_range(2);
+    ਅਚਲ ਪੂਰਨ nthreads = ਵਸਤੂ_ct1.get_local_range(2);
 
-    const int tid = item_ct1.get_local_id(2);
-    const int nwarps = nthreads / WARP_SIZE;
+    ਅਚਲ ਪੂਰਨ tid = ਵਸਤੂ_ct1.get_local_id(2);
+    ਅਚਲ ਪੂਰਨ nwarps = nthreads / WARP_ਮਾਪ;
 
-    const auto src_offset = calculate_offset<3>({src_stride_sample, src_stride_channel, src_stride_row}, {sample, channel, row});
-    const auto dst_offset = calculate_offset<3>({dst_stride_sample, dst_stride_channel, dst_stride_row}, {sample, channel, row});
+    ਅਚਲ ਸਵੈਚਾਲਿਤ src_ਵਿੱਥ = calculate_ਵਿੱਥ<3>({src_stride_sample, src_stride_channel, src_stride_ਪੰਕਤੀ}, {sample, channel, ਪੰਕਤੀ});
+    ਅਚਲ ਸਵੈਚਾਲਿਤ dst_ਵਿੱਥ = calculate_ਵਿੱਥ<3>({dst_stride_sample, dst_stride_channel, dst_stride_ਪੰਕਤੀ}, {sample, channel, ਪੰਕਤੀ});
 
-    x   += src_offset;
-    dst += dst_offset;
+    x   += src_ਵਿੱਥ;
+    dst += dst_ਵਿੱਥ;
 
-    if constexpr (do_multiply) {
-        const int mul_row     = row     % mul_nrows;
-        const int mul_channel = channel % mul_nchannels;
-        const int mul_sample  = sample  % mul_nsamples;
-        mul += mul_sample * mul_stride_sample + mul_channel * mul_stride_channel + mul_row * mul_stride_row;
+    ਜੇ constexpr (do_multiply) {
+        ਅਚਲ ਪੂਰਨ mul_ਪੰਕਤੀ     = ਪੰਕਤੀ     % mul_nrows;
+        ਅਚਲ ਪੂਰਨ mul_channel = channel % mul_nchannels;
+        ਅਚਲ ਪੂਰਨ mul_sample  = sample  % mul_nsamples;
+        mul += mul_sample * mul_stride_sample + mul_channel * mul_stride_channel + mul_ਪੰਕਤੀ * mul_stride_ਪੰਕਤੀ;
     }
 
-    if constexpr (do_add) {
-        const int add_row     = row     % add_nrows;
-        const int add_channel = channel % add_nchannels;
-        const int add_sample  = sample  % add_nsamples;
-        add += add_sample * add_stride_sample + add_channel * add_stride_channel + add_row * add_stride_row;
+    ਜੇ constexpr (do_ਜੋੜੋ) {
+        ਅਚਲ ਪੂਰਨ ਜੋੜੋ_ਪੰਕਤੀ     = ਪੰਕਤੀ     % ਜੋੜੋ_nrows;
+        ਅਚਲ ਪੂਰਨ ਜੋੜੋ_channel = channel % ਜੋੜੋ_nchannels;
+        ਅਚਲ ਪੂਰਨ ਜੋੜੋ_sample  = sample  % ਜੋੜੋ_nsamples;
+        ਜੋੜੋ_2 += ਜੋੜੋ_sample * ਜੋੜੋ_stride_sample + ਜੋੜੋ_channel * ਜੋੜੋ_stride_channel + ਜੋੜੋ_ਪੰਕਤੀ * ਜੋੜੋ_stride_ਪੰਕਤੀ;
     }
 
-    float tmp = 0.0f; // partial sum for thread in warp
+    ਦਸ਼ਮਲਵ tmp = 0.0f; // partial sum for thread in warp
 
-    for (int col = tid; col < ncols; col += block_size) {
-        const float xi = x[col * src_stride_col];
+    ਲਈ (ਪੂਰਨ ਖਾਨਾ = tid; ਖਾਨਾ < ncols; ਖਾਨਾ += ਖੰਡ_ਮਾਪ_3) {
+        ਅਚਲ ਦਸ਼ਮਲਵ xi = x[ਖਾਨਾ * src_stride_ਖਾਨਾ];
         tmp += xi * xi;
     }
 
     // sum up partial sums
-    tmp = warp_reduce_sum(tmp, item_ct1);
-    if (block_size > WARP_SIZE) {
-        const auto sub_group = item_ct1.get_sub_group();
-        const auto sg_id = sub_group.get_group_linear_id();
-        const auto wi_in_sg = sub_group.get_local_linear_id();
-        if (wi_in_sg == 0) {
-            s_sum[sg_id] = tmp;
+    tmp = warp_reduce_ਜੋੜ(tmp, ਵਸਤੂ_ct1);
+    ਜੇ (ਖੰਡ_ਮਾਪ_3 > WARP_ਮਾਪ) {
+        ਅਚਲ ਸਵੈਚਾਲਿਤ sub_ਸਮੂਹ = ਵਸਤੂ_ct1.get_sub_ਸਮੂਹ();
+        ਅਚਲ ਸਵੈਚਾਲਿਤ sg_id = sub_ਸਮੂਹ.get_ਸਮੂਹ_ਰੇਖਿਕ_id();
+        ਅਚਲ ਸਵੈਚਾਲਿਤ wi_ਵਿੱਚ_sg = sub_ਸਮੂਹ.get_local_ਰੇਖਿਕ_id();
+        ਜੇ (wi_ਵਿੱਚ_sg == 0) {
+            s_ਜੋੜ[sg_id] = tmp;
         }
 
-        item_ct1.barrier(sycl::access::fence_space::local_space);
-        const size_t nreduce = ceil_div(nwarps, WARP_SIZE);
+        ਵਸਤੂ_ct1.barrier(sycl::access::fence_space::local_space);
+        ਅਚਲ size_t nreduce = ceil_div(nwarps, WARP_ਮਾਪ);
         tmp = 0.f;
-        for (size_t i = 0; i < nreduce; i += 1)
+        ਲਈ (size_t i = 0; i < nreduce; i += 1)
         {
-            tmp += s_sum[wi_in_sg + i * WARP_SIZE];
+            tmp += s_ਜੋੜ[wi_ਵਿੱਚ_sg + i * WARP_ਮਾਪ];
         }
-        tmp = warp_reduce_sum(tmp, item_ct1);
+        tmp = warp_reduce_ਜੋੜ(tmp, ਵਸਤੂ_ct1);
     }
 
-    const float mean = tmp / ncols;
-    const float scale = sycl::rsqrt(mean + eps);
+    ਅਚਲ ਦਸ਼ਮਲਵ ਔਸਤ_2 = tmp / ncols;
+    ਅਚਲ ਦਸ਼ਮਲਵ scale = sycl::rsqrt(ਔਸਤ_2 + eps);
 
-    for (int col = tid; col < ncols; col += block_size) {
-        if constexpr (do_multiply && do_add) {
-            dst[col * dst_stride_col] = scale * x[col * src_stride_col] * mul[col] + add[col];
-        } else if constexpr (do_multiply) {
-            dst[col * dst_stride_col] = scale * x[col * src_stride_col] * mul[col];
-        } else {
+    ਲਈ (ਪੂਰਨ ਖਾਨਾ = tid; ਖਾਨਾ < ncols; ਖਾਨਾ += ਖੰਡ_ਮਾਪ_3) {
+        ਜੇ constexpr (do_multiply && do_ਜੋੜੋ) {
+            dst[ਖਾਨਾ * dst_stride_ਖਾਨਾ] = scale * x[ਖਾਨਾ * src_stride_ਖਾਨਾ] * mul[ਖਾਨਾ] + ਜੋੜੋ_2[ਖਾਨਾ];
+        } ਨਹੀਂਤਾਂ ਜੇ constexpr (do_multiply) {
+            dst[ਖਾਨਾ * dst_stride_ਖਾਨਾ] = scale * x[ਖਾਨਾ * src_stride_ਖਾਨਾ] * mul[ਖਾਨਾ];
+        } ਨਹੀਂਤਾਂ {
             // folded epilogue of a fused GGML_OP_SCALE consumer (qwen35 GDN l2 norms);
             // the explicit temporary keeps the float evaluation order identical to
             // running rms_norm and scale as two separate kernels
-            const float v = scale * x[col * src_stride_col];
-            dst[col * dst_stride_col] = v * scale_mul;
+            ਅਚਲ ਦਸ਼ਮਲਵ v = scale * x[ਖਾਨਾ * src_stride_ਖਾਨਾ];
+            dst[ਖਾਨਾ * dst_stride_ਖਾਨਾ] = v * scale_mul;
         }
     }
 }
 
-template<int warp_size>
-static void l2_norm_f32(const float * x, float * dst, const int ncols,
-    const int64_t src_stride_col, const int64_t src_stride_row, const int64_t src_stride_channel,
-    const int64_t src_stride_sample, const int64_t dst_stride_col, const int64_t dst_stride_row,
-    const int64_t dst_stride_channel, const int64_t dst_stride_sample, const float eps,
-    const sycl::nd_item<3>& item_ct1, float* s_sum, const int block_size) {
+ਸਾਂਚਾ<ਪੂਰਨ warp_ਮਾਪ>
+ਸਥਿਰ ਖਾਲੀ l2_norm_f32(ਅਚਲ ਦਸ਼ਮਲਵ * x, ਦਸ਼ਮਲਵ * dst, ਅਚਲ ਪੂਰਨ ncols,
+    ਅਚਲ int64_t src_stride_ਖਾਨਾ, ਅਚਲ int64_t src_stride_ਪੰਕਤੀ, ਅਚਲ int64_t src_stride_channel,
+    ਅਚਲ int64_t src_stride_sample, ਅਚਲ int64_t dst_stride_ਖਾਨਾ, ਅਚਲ int64_t dst_stride_ਪੰਕਤੀ,
+    ਅਚਲ int64_t dst_stride_channel, ਅਚਲ int64_t dst_stride_sample, ਅਚਲ ਦਸ਼ਮਲਵ eps,
+    ਅਚਲ sycl::nd_ਵਸਤੂ<3>& ਵਸਤੂ_ct1, ਦਸ਼ਮਲਵ* s_ਜੋੜ, ਅਚਲ ਪੂਰਨ ਖੰਡ_ਮਾਪ_3) {
 
-    const int row     = item_ct1.get_group(2);
-    const int channel = item_ct1.get_group(1);
-    const int sample  = item_ct1.get_group(0);
-    const int tid     = item_ct1.get_local_id(2);
+    ਅਚਲ ਪੂਰਨ ਪੰਕਤੀ     = ਵਸਤੂ_ct1.get_ਸਮੂਹ(2);
+    ਅਚਲ ਪੂਰਨ channel = ਵਸਤੂ_ct1.get_ਸਮੂਹ(1);
+    ਅਚਲ ਪੂਰਨ sample  = ਵਸਤੂ_ct1.get_ਸਮੂਹ(0);
+    ਅਚਲ ਪੂਰਨ tid     = ਵਸਤੂ_ct1.get_local_id(2);
 
-    x   += sample*src_stride_sample + channel*src_stride_channel + row*src_stride_row;
-    dst += sample*dst_stride_sample + channel*dst_stride_channel + row*dst_stride_row;
+    x   += sample*src_stride_sample + channel*src_stride_channel + ਪੰਕਤੀ*src_stride_ਪੰਕਤੀ;
+    dst += sample*dst_stride_sample + channel*dst_stride_channel + ਪੰਕਤੀ*dst_stride_ਪੰਕਤੀ;
 
-    float tmp = 0.0f; // partial sum for thread in warp
+    ਦਸ਼ਮਲਵ tmp = 0.0f; // partial sum for thread in warp
 
-    for (int col = tid; col < ncols; col += block_size) {
-        const float xi = x[col * src_stride_col];
+    ਲਈ (ਪੂਰਨ ਖਾਨਾ = tid; ਖਾਨਾ < ncols; ਖਾਨਾ += ਖੰਡ_ਮਾਪ_3) {
+        ਅਚਲ ਦਸ਼ਮਲਵ xi = x[ਖਾਨਾ * src_stride_ਖਾਨਾ];
         tmp += xi * xi;
     }
 
-    tmp = block_reduce<block_reduce_method::SUM, warp_size>(tmp, s_sum, block_size);
-    const float scale = sycl::rsqrt(sycl::fmax(tmp, eps * eps));
+    tmp = ਖੰਡ_reduce<ਖੰਡ_reduce_ਵਿਧੀ::ਜੋੜ_3, warp_ਮਾਪ>(tmp, s_ਜੋੜ, ਖੰਡ_ਮਾਪ_3);
+    ਅਚਲ ਦਸ਼ਮਲਵ scale = sycl::rsqrt(sycl::fmax(tmp, eps * eps));
 
-    for (int col = tid; col < ncols; col += block_size) {
-        dst[col * dst_stride_col] = scale * x[col * src_stride_col];
+    ਲਈ (ਪੂਰਨ ਖਾਨਾ = tid; ਖਾਨਾ < ncols; ਖਾਨਾ += ਖੰਡ_ਮਾਪ_3) {
+        dst[ਖਾਨਾ * dst_stride_ਖਾਨਾ] = scale * x[ਖਾਨਾ * src_stride_ਖਾਨਾ];
     }
 }
 
-static void norm_f32_sycl(const float * x, float * dst, const int ncols, const int nrows, const int nchannels, const int nsamples,
-    const int64_t src_stride_col, const int64_t src_stride_row, const int64_t src_stride_channel, const int64_t src_stride_sample,
-    const int64_t dst_stride_col, const int64_t dst_stride_row, const int64_t dst_stride_channel, const int64_t dst_stride_sample,
-        const float eps, queue_ptr stream, int device) {
+ਸਥਿਰ ਖਾਲੀ norm_f32_sycl(ਅਚਲ ਦਸ਼ਮਲਵ * x, ਦਸ਼ਮਲਵ * dst, ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows, ਅਚਲ ਪੂਰਨ nchannels, ਅਚਲ ਪੂਰਨ nsamples,
+    ਅਚਲ int64_t src_stride_ਖਾਨਾ, ਅਚਲ int64_t src_stride_ਪੰਕਤੀ, ਅਚਲ int64_t src_stride_channel, ਅਚਲ int64_t src_stride_sample,
+    ਅਚਲ int64_t dst_stride_ਖਾਨਾ, ਅਚਲ int64_t dst_stride_ਪੰਕਤੀ, ਅਚਲ int64_t dst_stride_channel, ਅਚਲ int64_t dst_stride_sample,
+        ਅਚਲ ਦਸ਼ਮਲਵ eps, ਕਤਾਰ_ptr stream, ਪੂਰਨ device) {
 
-    const sycl::range<3> global_dims(nsamples, nchannels, nrows);
-    if (ncols < 1024) {
-        const sycl::range<3> block_dims(1, 1, WARP_SIZE);
+    ਅਚਲ sycl::range<3> global_dims(nsamples, nchannels, nrows);
+    ਜੇ (ncols < 1024) {
+        ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, 1, WARP_ਮਾਪ);
         stream->submit([&](sycl::handler& cgh) {
             cgh.parallel_for(
-                sycl::nd_range<3>(global_dims * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+                sycl::nd_range<3>(global_dims * ਖੰਡ_dims, ਖੰਡ_dims),
+                [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
                     norm_f32(x, dst, ncols,
-                        src_stride_col, src_stride_row, src_stride_channel, src_stride_sample,
-                        dst_stride_col, dst_stride_row, dst_stride_channel, dst_stride_sample,
-                        eps, item_ct1, nullptr, WARP_SIZE);
+                        src_stride_ਖਾਨਾ, src_stride_ਪੰਕਤੀ, src_stride_channel, src_stride_sample,
+                        dst_stride_ਖਾਨਾ, dst_stride_ਪੰਕਤੀ, dst_stride_channel, dst_stride_sample,
+                        eps, ਵਸਤੂ_ct1, ਖਾਲੀ_ਸੂਚਕ, WARP_ਮਾਪ);
                 });
             });
     }
-    else {
-        const int work_group_size = ggml_sycl_info().max_work_group_sizes[device];
-        assert(work_group_size % (WARP_SIZE * WARP_SIZE) == 0);
-        const sycl::range<3> block_dims(1, 1, work_group_size);
+    ਨਹੀਂਤਾਂ {
+        ਅਚਲ ਪੂਰਨ work_ਸਮੂਹ_ਮਾਪ = ggml_sycl_info().max_work_ਸਮੂਹ_sizes[device];
+        ਪ੍ਰਤਿਜ੍ਞਾ(work_ਸਮੂਹ_ਮਾਪ % (WARP_ਮਾਪ * WARP_ਮਾਪ) == 0);
+        ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, 1, work_ਸਮੂਹ_ਮਾਪ);
         /*
         DPCT1049:17: The work-group size passed to the SYCL kernel may exceed
         the limit. To get the device limit, query
         info::device::max_work_group_size. Adjust the work-group size if needed.
         */
         stream->submit([&](sycl::handler& cgh) {
-            sycl::local_accessor<sycl::float2, 1> s_sum_acc_ct1(
-                            sycl::range<1>(work_group_size / WARP_SIZE), cgh);
+            sycl::local_accessor<sycl::float2, 1> s_ਜੋੜ_acc_ct1(
+                            sycl::range<1>(work_ਸਮੂਹ_ਮਾਪ / WARP_ਮਾਪ), cgh);
             cgh.parallel_for(
-                sycl::nd_range<3>(global_dims * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+                sycl::nd_range<3>(global_dims * ਖੰਡ_dims, ਖੰਡ_dims),
+                [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
                     norm_f32(x, dst, ncols,
-                        src_stride_col, src_stride_row, src_stride_channel, src_stride_sample,
-                        dst_stride_col, dst_stride_row, dst_stride_channel, dst_stride_sample,
-                        eps, item_ct1, get_pointer(s_sum_acc_ct1), work_group_size);
+                        src_stride_ਖਾਨਾ, src_stride_ਪੰਕਤੀ, src_stride_channel, src_stride_sample,
+                        dst_stride_ਖਾਨਾ, dst_stride_ਪੰਕਤੀ, dst_stride_channel, dst_stride_sample,
+                        eps, ਵਸਤੂ_ct1, get_ਸੂਚਕ(s_ਜੋੜ_acc_ct1), work_ਸਮੂਹ_ਮਾਪ);
                 });
             });
     }
 }
 
-static void group_norm_f32_sycl(const float* x, float* dst,
-    const int num_groups, const float eps, const int group_size,
-    const int ne_elements, queue_ptr stream, int device) {
-    if (group_size < 1024) {
-        const sycl::range<3> block_dims(1, 1, WARP_SIZE);
+ਸਥਿਰ ਖਾਲੀ ਸਮੂਹ_norm_f32_sycl(ਅਚਲ ਦਸ਼ਮਲਵ* x, ਦਸ਼ਮਲਵ* dst,
+    ਅਚਲ ਪੂਰਨ ਅੰਕ_groups, ਅਚਲ ਦਸ਼ਮਲਵ eps, ਅਚਲ ਪੂਰਨ ਸਮੂਹ_ਮਾਪ,
+    ਅਚਲ ਪੂਰਨ ne_elements, ਕਤਾਰ_ptr stream, ਪੂਰਨ device) {
+    ਜੇ (ਸਮੂਹ_ਮਾਪ < 1024) {
+        ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, 1, WARP_ਮਾਪ);
         stream->submit([&](sycl::handler& cgh) {
-            const float eps_ct4 = eps;
+            ਅਚਲ ਦਸ਼ਮਲਵ eps_ct4 = eps;
             cgh.parallel_for(
-                sycl::nd_range<3>(sycl::range<3>(1, 1, num_groups) * block_dims,
-                    block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    group_norm_f32(
-                        x, dst, group_size, ne_elements, eps_ct4, item_ct1,
-                        nullptr, WARP_SIZE);
+                sycl::nd_range<3>(sycl::range<3>(1, 1, ਅੰਕ_groups) * ਖੰਡ_dims,
+                    ਖੰਡ_dims),
+                [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                    ਸਮੂਹ_norm_f32(
+                        x, dst, ਸਮੂਹ_ਮਾਪ, ne_elements, eps_ct4, ਵਸਤੂ_ct1,
+                        ਖਾਲੀ_ਸੂਚਕ, WARP_ਮਾਪ);
                 });
             });
     }
-    else {
-        const int work_group_size = ggml_sycl_info().max_work_group_sizes[device];
-        assert(work_group_size % (WARP_SIZE * WARP_SIZE) == 0);
-        const sycl::range<3> block_dims(1, 1, work_group_size);
+    ਨਹੀਂਤਾਂ {
+        ਅਚਲ ਪੂਰਨ work_ਸਮੂਹ_ਮਾਪ = ggml_sycl_info().max_work_ਸਮੂਹ_sizes[device];
+        ਪ੍ਰਤਿਜ੍ਞਾ(work_ਸਮੂਹ_ਮਾਪ % (WARP_ਮਾਪ * WARP_ਮਾਪ) == 0);
+        ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, 1, work_ਸਮੂਹ_ਮਾਪ);
         /*
         DPCT1049:18: The work-group size passed to the SYCL kernel may exceed
         the limit. To get the device limit, query
@@ -335,260 +335,260 @@ static void group_norm_f32_sycl(const float* x, float* dst,
         */
 
         stream->submit([&](sycl::handler& cgh) {
-            sycl::local_accessor<float, 1> s_sum_acc_ct1(sycl::range<1>(work_group_size / WARP_SIZE),
+            sycl::local_accessor<ਦਸ਼ਮਲਵ, 1> s_ਜੋੜ_acc_ct1(sycl::range<1>(work_ਸਮੂਹ_ਮਾਪ / WARP_ਮਾਪ),
                 cgh);
 
-            const float eps_ct4 = eps;
+            ਅਚਲ ਦਸ਼ਮਲਵ eps_ct4 = eps;
 
             cgh.parallel_for(
-                sycl::nd_range<3>(sycl::range<3>(1, 1, num_groups) * block_dims,
-                    block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    group_norm_f32(x, dst, group_size, ne_elements,
-                        eps_ct4, item_ct1,
-                        get_pointer(s_sum_acc_ct1), work_group_size);
+                sycl::nd_range<3>(sycl::range<3>(1, 1, ਅੰਕ_groups) * ਖੰਡ_dims,
+                    ਖੰਡ_dims),
+                [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                    ਸਮੂਹ_norm_f32(x, dst, ਸਮੂਹ_ਮਾਪ, ne_elements,
+                        eps_ct4, ਵਸਤੂ_ct1,
+                        get_ਸੂਚਕ(s_ਜੋੜ_acc_ct1), work_ਸਮੂਹ_ਮਾਪ);
                 });
             });
     }
 }
 
-static void rms_norm_f32_sycl(const float* x, float* dst, const int ncols, const int nrows, const int nchannels, const int nsamples,
-    const int64_t src_stride_col, const int64_t src_stride_row, const int64_t src_stride_channel, const int64_t src_stride_sample,
-    const int64_t dst_stride_col, const int64_t dst_stride_row, const int64_t dst_stride_channel, const int64_t dst_stride_sample,
-    const float eps, queue_ptr stream, int device) {
+ਸਥਿਰ ਖਾਲੀ rms_norm_f32_sycl(ਅਚਲ ਦਸ਼ਮਲਵ* x, ਦਸ਼ਮਲਵ* dst, ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows, ਅਚਲ ਪੂਰਨ nchannels, ਅਚਲ ਪੂਰਨ nsamples,
+    ਅਚਲ int64_t src_stride_ਖਾਨਾ, ਅਚਲ int64_t src_stride_ਪੰਕਤੀ, ਅਚਲ int64_t src_stride_channel, ਅਚਲ int64_t src_stride_sample,
+    ਅਚਲ int64_t dst_stride_ਖਾਨਾ, ਅਚਲ int64_t dst_stride_ਪੰਕਤੀ, ਅਚਲ int64_t dst_stride_channel, ਅਚਲ int64_t dst_stride_sample,
+    ਅਚਲ ਦਸ਼ਮਲਵ eps, ਕਤਾਰ_ptr stream, ਪੂਰਨ device) {
     // printf("%s ncols=%d, nrows=%d, WARP_SIZE=%d\n", __func__, ncols, nrows, WARP_SIZE);
 
-    const sycl::range<3> global_dims(nsamples, nchannels, nrows);
-    if (ncols < 1024) {
-        const sycl::range<3> block_dims(1, 1, WARP_SIZE);
+    ਅਚਲ sycl::range<3> global_dims(nsamples, nchannels, nrows);
+    ਜੇ (ncols < 1024) {
+        ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, 1, WARP_ਮਾਪ);
         stream->submit([&](sycl::handler& cgh) {
             cgh.parallel_for(
-                sycl::nd_range<3>(global_dims * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+                sycl::nd_range<3>(global_dims * ਖੰਡ_dims, ਖੰਡ_dims),
+                [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
                     rms_norm_f32(x, dst, ncols,
-                        src_stride_col, src_stride_row, src_stride_channel, src_stride_sample,
-                        dst_stride_col, dst_stride_row, dst_stride_channel, dst_stride_sample,
-                        eps, item_ct1, nullptr, WARP_SIZE);
+                        src_stride_ਖਾਨਾ, src_stride_ਪੰਕਤੀ, src_stride_channel, src_stride_sample,
+                        dst_stride_ਖਾਨਾ, dst_stride_ਪੰਕਤੀ, dst_stride_channel, dst_stride_sample,
+                        eps, ਵਸਤੂ_ct1, ਖਾਲੀ_ਸੂਚਕ, WARP_ਮਾਪ);
                 });
             });
     }
-    else {
-        const int work_group_size = ggml_sycl_info().max_work_group_sizes[device];
-        assert(work_group_size % (WARP_SIZE * WARP_SIZE) == 0);
-        const sycl::range<3> block_dims(1, 1, work_group_size);
+    ਨਹੀਂਤਾਂ {
+        ਅਚਲ ਪੂਰਨ work_ਸਮੂਹ_ਮਾਪ = ggml_sycl_info().max_work_ਸਮੂਹ_sizes[device];
+        ਪ੍ਰਤਿਜ੍ਞਾ(work_ਸਮੂਹ_ਮਾਪ % (WARP_ਮਾਪ * WARP_ਮਾਪ) == 0);
+        ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, 1, work_ਸਮੂਹ_ਮਾਪ);
         /*
         DPCT1049:19: The work-group size passed to the SYCL kernel may exceed
         the limit. To get the device limit, query
         info::device::max_work_group_size. Adjust the work-group size if needed.
         */
         stream->submit([&](sycl::handler& cgh) {
-            sycl::local_accessor<float, 1> s_sum_acc_ct1(sycl::range<1>(work_group_size / WARP_SIZE),
+            sycl::local_accessor<ਦਸ਼ਮਲਵ, 1> s_ਜੋੜ_acc_ct1(sycl::range<1>(work_ਸਮੂਹ_ਮਾਪ / WARP_ਮਾਪ),
                 cgh);
             cgh.parallel_for(
-                sycl::nd_range<3>(global_dims * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+                sycl::nd_range<3>(global_dims * ਖੰਡ_dims, ਖੰਡ_dims),
+                [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
                     rms_norm_f32(x, dst, ncols,
-                        src_stride_col, src_stride_row, src_stride_channel, src_stride_sample,
-                        dst_stride_col, dst_stride_row, dst_stride_channel, dst_stride_sample,
-                        eps, item_ct1, get_pointer(s_sum_acc_ct1), work_group_size);
+                        src_stride_ਖਾਨਾ, src_stride_ਪੰਕਤੀ, src_stride_channel, src_stride_sample,
+                        dst_stride_ਖਾਨਾ, dst_stride_ਪੰਕਤੀ, dst_stride_channel, dst_stride_sample,
+                        eps, ਵਸਤੂ_ct1, get_ਸੂਚਕ(s_ਜੋੜ_acc_ct1), work_ਸਮੂਹ_ਮਾਪ);
                 });
             });
     }
 }
 
-static void rms_norm_scale_f32_sycl(const float* x, float* dst, const int ncols, const int nrows,
-    const int nchannels, const int nsamples,
-    const int64_t src_stride_col, const int64_t src_stride_row, const int64_t src_stride_channel, const int64_t src_stride_sample,
-    const int64_t dst_stride_col, const int64_t dst_stride_row, const int64_t dst_stride_channel, const int64_t dst_stride_sample,
-    const float eps, const float scale_mul, queue_ptr stream, int device) {
-    const sycl::range<3> global_dims(nsamples, nchannels, nrows);
-    if (ncols < 1024) {
-        const sycl::range<3> block_dims(1, 1, WARP_SIZE);
+ਸਥਿਰ ਖਾਲੀ rms_norm_scale_f32_sycl(ਅਚਲ ਦਸ਼ਮਲਵ* x, ਦਸ਼ਮਲਵ* dst, ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+    ਅਚਲ ਪੂਰਨ nchannels, ਅਚਲ ਪੂਰਨ nsamples,
+    ਅਚਲ int64_t src_stride_ਖਾਨਾ, ਅਚਲ int64_t src_stride_ਪੰਕਤੀ, ਅਚਲ int64_t src_stride_channel, ਅਚਲ int64_t src_stride_sample,
+    ਅਚਲ int64_t dst_stride_ਖਾਨਾ, ਅਚਲ int64_t dst_stride_ਪੰਕਤੀ, ਅਚਲ int64_t dst_stride_channel, ਅਚਲ int64_t dst_stride_sample,
+    ਅਚਲ ਦਸ਼ਮਲਵ eps, ਅਚਲ ਦਸ਼ਮਲਵ scale_mul, ਕਤਾਰ_ptr stream, ਪੂਰਨ device) {
+    ਅਚਲ sycl::range<3> global_dims(nsamples, nchannels, nrows);
+    ਜੇ (ncols < 1024) {
+        ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, 1, WARP_ਮਾਪ);
         stream->submit([&](sycl::handler& cgh) {
             cgh.parallel_for(
-                sycl::nd_range<3>(global_dims * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+                sycl::nd_range<3>(global_dims * ਖੰਡ_dims, ਖੰਡ_dims),
+                [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
                     rms_norm_f32(x, dst, ncols,
-                        src_stride_col, src_stride_row, src_stride_channel, src_stride_sample,
-                        dst_stride_col, dst_stride_row, dst_stride_channel, dst_stride_sample,
-                        eps, item_ct1, nullptr, WARP_SIZE,
-                        nullptr, 0, 0, 0, 0, 0, 0,
-                        nullptr, 0, 0, 0, 0, 0, 0,
+                        src_stride_ਖਾਨਾ, src_stride_ਪੰਕਤੀ, src_stride_channel, src_stride_sample,
+                        dst_stride_ਖਾਨਾ, dst_stride_ਪੰਕਤੀ, dst_stride_channel, dst_stride_sample,
+                        eps, ਵਸਤੂ_ct1, ਖਾਲੀ_ਸੂਚਕ, WARP_ਮਾਪ,
+                        ਖਾਲੀ_ਸੂਚਕ, 0, 0, 0, 0, 0, 0,
+                        ਖਾਲੀ_ਸੂਚਕ, 0, 0, 0, 0, 0, 0,
                         scale_mul);
                 });
             });
     }
-    else {
-        const int work_group_size = ggml_sycl_info().max_work_group_sizes[device];
-        assert(work_group_size % (WARP_SIZE * WARP_SIZE) == 0);
-        const sycl::range<3> block_dims(1, 1, work_group_size);
+    ਨਹੀਂਤਾਂ {
+        ਅਚਲ ਪੂਰਨ work_ਸਮੂਹ_ਮਾਪ = ggml_sycl_info().max_work_ਸਮੂਹ_sizes[device];
+        ਪ੍ਰਤਿਜ੍ਞਾ(work_ਸਮੂਹ_ਮਾਪ % (WARP_ਮਾਪ * WARP_ਮਾਪ) == 0);
+        ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, 1, work_ਸਮੂਹ_ਮਾਪ);
         stream->submit([&](sycl::handler& cgh) {
-            sycl::local_accessor<float, 1> s_sum_acc_ct1(sycl::range<1>(work_group_size / WARP_SIZE),
+            sycl::local_accessor<ਦਸ਼ਮਲਵ, 1> s_ਜੋੜ_acc_ct1(sycl::range<1>(work_ਸਮੂਹ_ਮਾਪ / WARP_ਮਾਪ),
                 cgh);
             cgh.parallel_for(
-                sycl::nd_range<3>(global_dims * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+                sycl::nd_range<3>(global_dims * ਖੰਡ_dims, ਖੰਡ_dims),
+                [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
                     rms_norm_f32(x, dst, ncols,
-                        src_stride_col, src_stride_row, src_stride_channel, src_stride_sample,
-                        dst_stride_col, dst_stride_row, dst_stride_channel, dst_stride_sample,
-                        eps, item_ct1, get_pointer(s_sum_acc_ct1), work_group_size,
-                        nullptr, 0, 0, 0, 0, 0, 0,
-                        nullptr, 0, 0, 0, 0, 0, 0,
+                        src_stride_ਖਾਨਾ, src_stride_ਪੰਕਤੀ, src_stride_channel, src_stride_sample,
+                        dst_stride_ਖਾਨਾ, dst_stride_ਪੰਕਤੀ, dst_stride_channel, dst_stride_sample,
+                        eps, ਵਸਤੂ_ct1, get_ਸੂਚਕ(s_ਜੋੜ_acc_ct1), work_ਸਮੂਹ_ਮਾਪ,
+                        ਖਾਲੀ_ਸੂਚਕ, 0, 0, 0, 0, 0, 0,
+                        ਖਾਲੀ_ਸੂਚਕ, 0, 0, 0, 0, 0, 0,
                         scale_mul);
                 });
             });
     }
 }
 
-static void rms_norm_mul_f32_sycl(const float* x, const float* mul, float* dst, const int ncols, const int nrows,
-        const int nchannels, const int nsamples,
-        const int64_t src_stride_col, const int64_t src_stride_row, const int64_t src_stride_channel, const int64_t src_stride_sample,
-        const int64_t dst_stride_col, const int64_t dst_stride_row, const int64_t dst_stride_channel, const int64_t dst_stride_sample,
-        const int64_t mul_stride_row, const int64_t mul_stride_channel, const int64_t mul_stride_sample,
-        const int mul_nrows, const int mul_nchannels, const int mul_nsamples,
-        const float eps, queue_ptr stream, int device) {
-    const sycl::range<3> global_dims(nsamples, nchannels, nrows);
-    if (ncols < 1024) {
-        const sycl::range<3> block_dims(1, 1, WARP_SIZE);
+ਸਥਿਰ ਖਾਲੀ rms_norm_mul_f32_sycl(ਅਚਲ ਦਸ਼ਮਲਵ* x, ਅਚਲ ਦਸ਼ਮਲਵ* mul, ਦਸ਼ਮਲਵ* dst, ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows,
+        ਅਚਲ ਪੂਰਨ nchannels, ਅਚਲ ਪੂਰਨ nsamples,
+        ਅਚਲ int64_t src_stride_ਖਾਨਾ, ਅਚਲ int64_t src_stride_ਪੰਕਤੀ, ਅਚਲ int64_t src_stride_channel, ਅਚਲ int64_t src_stride_sample,
+        ਅਚਲ int64_t dst_stride_ਖਾਨਾ, ਅਚਲ int64_t dst_stride_ਪੰਕਤੀ, ਅਚਲ int64_t dst_stride_channel, ਅਚਲ int64_t dst_stride_sample,
+        ਅਚਲ int64_t mul_stride_ਪੰਕਤੀ, ਅਚਲ int64_t mul_stride_channel, ਅਚਲ int64_t mul_stride_sample,
+        ਅਚਲ ਪੂਰਨ mul_nrows, ਅਚਲ ਪੂਰਨ mul_nchannels, ਅਚਲ ਪੂਰਨ mul_nsamples,
+        ਅਚਲ ਦਸ਼ਮਲਵ eps, ਕਤਾਰ_ptr stream, ਪੂਰਨ device) {
+    ਅਚਲ sycl::range<3> global_dims(nsamples, nchannels, nrows);
+    ਜੇ (ncols < 1024) {
+        ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, 1, WARP_ਮਾਪ);
         stream->submit([&](sycl::handler& cgh) {
             cgh.parallel_for(
-                sycl::nd_range<3>(global_dims * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    rms_norm_f32<true>(x, dst, ncols,
-                        src_stride_col, src_stride_row, src_stride_channel, src_stride_sample,
-                        dst_stride_col, dst_stride_row, dst_stride_channel, dst_stride_sample,
-                        eps, item_ct1, nullptr, WARP_SIZE,
-                        mul, mul_stride_row, mul_stride_channel, mul_stride_sample, mul_nrows, mul_nchannels, mul_nsamples);
+                sycl::nd_range<3>(global_dims * ਖੰਡ_dims, ਖੰਡ_dims),
+                [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                    rms_norm_f32<ਸੱਚ>(x, dst, ncols,
+                        src_stride_ਖਾਨਾ, src_stride_ਪੰਕਤੀ, src_stride_channel, src_stride_sample,
+                        dst_stride_ਖਾਨਾ, dst_stride_ਪੰਕਤੀ, dst_stride_channel, dst_stride_sample,
+                        eps, ਵਸਤੂ_ct1, ਖਾਲੀ_ਸੂਚਕ, WARP_ਮਾਪ,
+                        mul, mul_stride_ਪੰਕਤੀ, mul_stride_channel, mul_stride_sample, mul_nrows, mul_nchannels, mul_nsamples);
                 });
             });
     }
-    else {
-        const int work_group_size = ggml_sycl_info().max_work_group_sizes[device];
-        assert(work_group_size % (WARP_SIZE * WARP_SIZE) == 0);
-        const sycl::range<3> block_dims(1, 1, work_group_size);
+    ਨਹੀਂਤਾਂ {
+        ਅਚਲ ਪੂਰਨ work_ਸਮੂਹ_ਮਾਪ = ggml_sycl_info().max_work_ਸਮੂਹ_sizes[device];
+        ਪ੍ਰਤਿਜ੍ਞਾ(work_ਸਮੂਹ_ਮਾਪ % (WARP_ਮਾਪ * WARP_ਮਾਪ) == 0);
+        ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, 1, work_ਸਮੂਹ_ਮਾਪ);
         stream->submit([&](sycl::handler& cgh) {
-            sycl::local_accessor<float, 1> s_sum_acc_ct1(sycl::range<1>(work_group_size / WARP_SIZE), cgh);
+            sycl::local_accessor<ਦਸ਼ਮਲਵ, 1> s_ਜੋੜ_acc_ct1(sycl::range<1>(work_ਸਮੂਹ_ਮਾਪ / WARP_ਮਾਪ), cgh);
             cgh.parallel_for(
-                sycl::nd_range<3>(global_dims * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    rms_norm_f32<true>(x, dst, ncols,
-                        src_stride_col, src_stride_row, src_stride_channel, src_stride_sample,
-                        dst_stride_col, dst_stride_row, dst_stride_channel, dst_stride_sample,
-                        eps, item_ct1, get_pointer(s_sum_acc_ct1), work_group_size,
-                        mul, mul_stride_row, mul_stride_channel, mul_stride_sample, mul_nrows, mul_nchannels, mul_nsamples);
-                });
-            });
-    }
-}
-
-static void rms_norm_mul_add_f32_sycl(const float* x, const float* mul, const float* add, float* dst,
-        const int ncols, const int nrows, const int nchannels, const int nsamples,
-        const int64_t src_stride_col, const int64_t src_stride_row, const int64_t src_stride_channel, const int64_t src_stride_sample,
-        const int64_t dst_stride_col, const int64_t dst_stride_row, const int64_t dst_stride_channel, const int64_t dst_stride_sample,
-        const int64_t mul_stride_row, const int64_t mul_stride_channel, const int64_t mul_stride_sample,
-        const int mul_nrows, const int mul_nchannels, const int mul_nsamples,
-        const int64_t add_stride_row, const int64_t add_stride_channel, const int64_t add_stride_sample,
-        const int add_nrows, const int add_nchannels, const int add_nsamples,
-        const float eps, queue_ptr stream, int device) {
-    const sycl::range<3> global_dims(nsamples, nchannels, nrows);
-    if (ncols < 1024) {
-        const sycl::range<3> block_dims(1, 1, WARP_SIZE);
-        stream->submit([&](sycl::handler& cgh) {
-            cgh.parallel_for(
-                sycl::nd_range<3>(global_dims * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    rms_norm_f32<true, true>(x, dst, ncols,
-                        src_stride_col, src_stride_row, src_stride_channel, src_stride_sample,
-                        dst_stride_col, dst_stride_row, dst_stride_channel, dst_stride_sample,
-                        eps, item_ct1, nullptr, WARP_SIZE,
-                        mul, mul_stride_row, mul_stride_channel, mul_stride_sample, mul_nrows, mul_nchannels, mul_nsamples,
-                        add, add_stride_row, add_stride_channel, add_stride_sample, add_nrows, add_nchannels, add_nsamples);
-                });
-            });
-    }
-    else {
-        const int work_group_size = ggml_sycl_info().max_work_group_sizes[device];
-        assert(work_group_size % (WARP_SIZE * WARP_SIZE) == 0);
-        const sycl::range<3> block_dims(1, 1, work_group_size);
-        stream->submit([&](sycl::handler& cgh) {
-            sycl::local_accessor<float, 1> s_sum_acc_ct1(sycl::range<1>(work_group_size / WARP_SIZE), cgh);
-            cgh.parallel_for(
-                sycl::nd_range<3>(global_dims * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    rms_norm_f32<true, true>(x, dst, ncols,
-                        src_stride_col, src_stride_row, src_stride_channel, src_stride_sample,
-                        dst_stride_col, dst_stride_row, dst_stride_channel, dst_stride_sample,
-                        eps, item_ct1, get_pointer(s_sum_acc_ct1), work_group_size,
-                        mul, mul_stride_row, mul_stride_channel, mul_stride_sample, mul_nrows, mul_nchannels, mul_nsamples,
-                        add, add_stride_row, add_stride_channel, add_stride_sample, add_nrows, add_nchannels, add_nsamples);
+                sycl::nd_range<3>(global_dims * ਖੰਡ_dims, ਖੰਡ_dims),
+                [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                    rms_norm_f32<ਸੱਚ>(x, dst, ncols,
+                        src_stride_ਖਾਨਾ, src_stride_ਪੰਕਤੀ, src_stride_channel, src_stride_sample,
+                        dst_stride_ਖਾਨਾ, dst_stride_ਪੰਕਤੀ, dst_stride_channel, dst_stride_sample,
+                        eps, ਵਸਤੂ_ct1, get_ਸੂਚਕ(s_ਜੋੜ_acc_ct1), work_ਸਮੂਹ_ਮਾਪ,
+                        mul, mul_stride_ਪੰਕਤੀ, mul_stride_channel, mul_stride_sample, mul_nrows, mul_nchannels, mul_nsamples);
                 });
             });
     }
 }
 
-template<int warp_size>
-static void l2_norm_f32_sycl(const float *   x,
-                             float *         dst,
-                             const int       ncols,
-                             const int       nrows,
-                             const int       nchannels,
-                             const int       nsamples,
-                             const int64_t   src_stride_col,
-                             const int64_t   src_stride_row,
-                             const int64_t   src_stride_channel,
-                             const int64_t   src_stride_sample,
-                             const int64_t   dst_stride_col,
-                             const int64_t   dst_stride_row,
-                             const int64_t   dst_stride_channel,
-                             const int64_t   dst_stride_sample,
-                             const float     eps,
-                             queue_ptr       stream,
-                             int             device) {
-    const dpct::dim3 blocks_num(nrows, nchannels, nsamples);
-
-    if (ncols < 1024) {
-        const dpct::dim3 block_dims(warp_size, 1, 1);
+ਸਥਿਰ ਖਾਲੀ rms_norm_mul_ਜੋੜੋ_f32_sycl(ਅਚਲ ਦਸ਼ਮਲਵ* x, ਅਚਲ ਦਸ਼ਮਲਵ* mul, ਅਚਲ ਦਸ਼ਮਲਵ* ਜੋੜੋ_2, ਦਸ਼ਮਲਵ* dst,
+        ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows, ਅਚਲ ਪੂਰਨ nchannels, ਅਚਲ ਪੂਰਨ nsamples,
+        ਅਚਲ int64_t src_stride_ਖਾਨਾ, ਅਚਲ int64_t src_stride_ਪੰਕਤੀ, ਅਚਲ int64_t src_stride_channel, ਅਚਲ int64_t src_stride_sample,
+        ਅਚਲ int64_t dst_stride_ਖਾਨਾ, ਅਚਲ int64_t dst_stride_ਪੰਕਤੀ, ਅਚਲ int64_t dst_stride_channel, ਅਚਲ int64_t dst_stride_sample,
+        ਅਚਲ int64_t mul_stride_ਪੰਕਤੀ, ਅਚਲ int64_t mul_stride_channel, ਅਚਲ int64_t mul_stride_sample,
+        ਅਚਲ ਪੂਰਨ mul_nrows, ਅਚਲ ਪੂਰਨ mul_nchannels, ਅਚਲ ਪੂਰਨ mul_nsamples,
+        ਅਚਲ int64_t ਜੋੜੋ_stride_ਪੰਕਤੀ, ਅਚਲ int64_t ਜੋੜੋ_stride_channel, ਅਚਲ int64_t ਜੋੜੋ_stride_sample,
+        ਅਚਲ ਪੂਰਨ ਜੋੜੋ_nrows, ਅਚਲ ਪੂਰਨ ਜੋੜੋ_nchannels, ਅਚਲ ਪੂਰਨ ਜੋੜੋ_nsamples,
+        ਅਚਲ ਦਸ਼ਮਲਵ eps, ਕਤਾਰ_ptr stream, ਪੂਰਨ device) {
+    ਅਚਲ sycl::range<3> global_dims(nsamples, nchannels, nrows);
+    ਜੇ (ncols < 1024) {
+        ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, 1, WARP_ਮਾਪ);
         stream->submit([&](sycl::handler& cgh) {
             cgh.parallel_for(
-                sycl::nd_range<3>(blocks_num * block_dims,
-                    block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(warp_size)]] {
-                    l2_norm_f32<warp_size>(x, dst, ncols,
-                        src_stride_col, src_stride_row, src_stride_channel, src_stride_sample,
-                        dst_stride_col, dst_stride_row, dst_stride_channel, dst_stride_sample,
-                        eps, item_ct1,
-                        nullptr, warp_size);
+                sycl::nd_range<3>(global_dims * ਖੰਡ_dims, ਖੰਡ_dims),
+                [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                    rms_norm_f32<ਸੱਚ, ਸੱਚ>(x, dst, ncols,
+                        src_stride_ਖਾਨਾ, src_stride_ਪੰਕਤੀ, src_stride_channel, src_stride_sample,
+                        dst_stride_ਖਾਨਾ, dst_stride_ਪੰਕਤੀ, dst_stride_channel, dst_stride_sample,
+                        eps, ਵਸਤੂ_ct1, ਖਾਲੀ_ਸੂਚਕ, WARP_ਮਾਪ,
+                        mul, mul_stride_ਪੰਕਤੀ, mul_stride_channel, mul_stride_sample, mul_nrows, mul_nchannels, mul_nsamples,
+                        ਜੋੜੋ_2, ਜੋੜੋ_stride_ਪੰਕਤੀ, ਜੋੜੋ_stride_channel, ਜੋੜੋ_stride_sample, ਜੋੜੋ_nrows, ਜੋੜੋ_nchannels, ਜੋੜੋ_nsamples);
                 });
             });
     }
-    else {
-        const int work_group_size = ggml_sycl_info().max_work_group_sizes[device];
-        assert(work_group_size % (warp_size * warp_size) == 0);
-        const sycl::range<3> block_dims(1, 1, work_group_size);
-        int lsm_size =  block_dims[2] > warp_size ? work_group_size / warp_size * sizeof(float): 0;
+    ਨਹੀਂਤਾਂ {
+        ਅਚਲ ਪੂਰਨ work_ਸਮੂਹ_ਮਾਪ = ggml_sycl_info().max_work_ਸਮੂਹ_sizes[device];
+        ਪ੍ਰਤਿਜ੍ਞਾ(work_ਸਮੂਹ_ਮਾਪ % (WARP_ਮਾਪ * WARP_ਮਾਪ) == 0);
+        ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, 1, work_ਸਮੂਹ_ਮਾਪ);
         stream->submit([&](sycl::handler& cgh) {
-            sycl::local_accessor<float, 1> s_sum_acc_ct1(sycl::range<1>(lsm_size),
+            sycl::local_accessor<ਦਸ਼ਮਲਵ, 1> s_ਜੋੜ_acc_ct1(sycl::range<1>(work_ਸਮੂਹ_ਮਾਪ / WARP_ਮਾਪ), cgh);
+            cgh.parallel_for(
+                sycl::nd_range<3>(global_dims * ਖੰਡ_dims, ਖੰਡ_dims),
+                [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                    rms_norm_f32<ਸੱਚ, ਸੱਚ>(x, dst, ncols,
+                        src_stride_ਖਾਨਾ, src_stride_ਪੰਕਤੀ, src_stride_channel, src_stride_sample,
+                        dst_stride_ਖਾਨਾ, dst_stride_ਪੰਕਤੀ, dst_stride_channel, dst_stride_sample,
+                        eps, ਵਸਤੂ_ct1, get_ਸੂਚਕ(s_ਜੋੜ_acc_ct1), work_ਸਮੂਹ_ਮਾਪ,
+                        mul, mul_stride_ਪੰਕਤੀ, mul_stride_channel, mul_stride_sample, mul_nrows, mul_nchannels, mul_nsamples,
+                        ਜੋੜੋ_2, ਜੋੜੋ_stride_ਪੰਕਤੀ, ਜੋੜੋ_stride_channel, ਜੋੜੋ_stride_sample, ਜੋੜੋ_nrows, ਜੋੜੋ_nchannels, ਜੋੜੋ_nsamples);
+                });
+            });
+    }
+}
+
+ਸਾਂਚਾ<ਪੂਰਨ warp_ਮਾਪ>
+ਸਥਿਰ ਖਾਲੀ l2_norm_f32_sycl(ਅਚਲ ਦਸ਼ਮਲਵ *   x,
+                             ਦਸ਼ਮਲਵ *         dst,
+                             ਅਚਲ ਪੂਰਨ       ncols,
+                             ਅਚਲ ਪੂਰਨ       nrows,
+                             ਅਚਲ ਪੂਰਨ       nchannels,
+                             ਅਚਲ ਪੂਰਨ       nsamples,
+                             ਅਚਲ int64_t   src_stride_ਖਾਨਾ,
+                             ਅਚਲ int64_t   src_stride_ਪੰਕਤੀ,
+                             ਅਚਲ int64_t   src_stride_channel,
+                             ਅਚਲ int64_t   src_stride_sample,
+                             ਅਚਲ int64_t   dst_stride_ਖਾਨਾ,
+                             ਅਚਲ int64_t   dst_stride_ਪੰਕਤੀ,
+                             ਅਚਲ int64_t   dst_stride_channel,
+                             ਅਚਲ int64_t   dst_stride_sample,
+                             ਅਚਲ ਦਸ਼ਮਲਵ     eps,
+                             ਕਤਾਰ_ptr       stream,
+                             ਪੂਰਨ             device) {
+    ਅਚਲ dpct::dim3 ਖੰਡਾਂ_ਅੰਕ(nrows, nchannels, nsamples);
+
+    ਜੇ (ncols < 1024) {
+        ਅਚਲ dpct::dim3 ਖੰਡ_dims(warp_ਮਾਪ, 1, 1);
+        stream->submit([&](sycl::handler& cgh) {
+            cgh.parallel_for(
+                sycl::nd_range<3>(ਖੰਡਾਂ_ਅੰਕ * ਖੰਡ_dims,
+                    ਖੰਡ_dims),
+                [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(warp_ਮਾਪ)]] {
+                    l2_norm_f32<warp_ਮਾਪ>(x, dst, ncols,
+                        src_stride_ਖਾਨਾ, src_stride_ਪੰਕਤੀ, src_stride_channel, src_stride_sample,
+                        dst_stride_ਖਾਨਾ, dst_stride_ਪੰਕਤੀ, dst_stride_channel, dst_stride_sample,
+                        eps, ਵਸਤੂ_ct1,
+                        ਖਾਲੀ_ਸੂਚਕ, warp_ਮਾਪ);
+                });
+            });
+    }
+    ਨਹੀਂਤਾਂ {
+        ਅਚਲ ਪੂਰਨ work_ਸਮੂਹ_ਮਾਪ = ggml_sycl_info().max_work_ਸਮੂਹ_sizes[device];
+        ਪ੍ਰਤਿਜ੍ਞਾ(work_ਸਮੂਹ_ਮਾਪ % (warp_ਮਾਪ * warp_ਮਾਪ) == 0);
+        ਅਚਲ sycl::range<3> ਖੰਡ_dims(1, 1, work_ਸਮੂਹ_ਮਾਪ);
+        ਪੂਰਨ lsm_ਮਾਪ =  ਖੰਡ_dims[2] > warp_ਮਾਪ ? work_ਸਮੂਹ_ਮਾਪ / warp_ਮਾਪ * ਆਕਾਰ(ਦਸ਼ਮਲਵ): 0;
+        stream->submit([&](sycl::handler& cgh) {
+            sycl::local_accessor<ਦਸ਼ਮਲਵ, 1> s_ਜੋੜ_acc_ct1(sycl::range<1>(lsm_ਮਾਪ),
                 cgh);
 
             cgh.parallel_for(
-                sycl::nd_range<3>(blocks_num * block_dims,
-                    block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(warp_size)]] {
-                    l2_norm_f32<warp_size>(x, dst, ncols,
-                        src_stride_col, src_stride_row, src_stride_channel, src_stride_sample,
-                        dst_stride_col, dst_stride_row, dst_stride_channel, dst_stride_sample,
-                        eps, item_ct1, get_pointer(s_sum_acc_ct1), work_group_size);
+                sycl::nd_range<3>(ਖੰਡਾਂ_ਅੰਕ * ਖੰਡ_dims,
+                    ਖੰਡ_dims),
+                [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1)
+                [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(warp_ਮਾਪ)]] {
+                    l2_norm_f32<warp_ਮਾਪ>(x, dst, ncols,
+                        src_stride_ਖਾਨਾ, src_stride_ਪੰਕਤੀ, src_stride_channel, src_stride_sample,
+                        dst_stride_ਖਾਨਾ, dst_stride_ਪੰਕਤੀ, dst_stride_channel, dst_stride_sample,
+                        eps, ਵਸਤੂ_ct1, get_ਸੂਚਕ(s_ਜੋੜ_acc_ct1), work_ਸਮੂਹ_ਮਾਪ);
                 });
             });
     }
@@ -597,541 +597,541 @@ static void l2_norm_f32_sycl(const float *   x,
 // Batched L2 norm: N independent same-shape F32 tensors in one launch; the tensor
 // index is folded into grid dim0 and each row's reduction is identical to the
 // single-tensor kernel, so the result is bit-exact.
-struct l2_batch_ptrs {
-    const float * src[GGML_SYCL_L2_BATCH_MAX];
-    float *       dst[GGML_SYCL_L2_BATCH_MAX];
+ਬਣਤਰ l2_batch_ptrs {
+    ਅਚਲ ਦਸ਼ਮਲਵ * src[GGML_SYCL_L2_BATCH_MAX];
+    ਦਸ਼ਮਲਵ *       dst[GGML_SYCL_L2_BATCH_MAX];
 };
 
 // One stride set shared by the whole batch: the caller only groups tensors whose nb[]
 // all match, so per-tensor state stays two pointers.
-struct l2_batch_strides {
-    int     ne1, ne2;
+ਬਣਤਰ l2_batch_strides {
+    ਪੂਰਨ     ne1, ne2;
     int64_t ss0, ss1, ss2, ss3;
     int64_t ds0, ds1, ds2, ds3;
 };
 
-template <int warp_size>
-static void l2_norm_f32_batch(l2_batch_ptrs p, l2_batch_strides st, const int ncols, const float eps,
-                              const sycl::nd_item<3> & item_ct1) {
-    const int t   = item_ct1.get_group(0);  // tensor index
-    const int r   = item_ct1.get_group(2);  // flattened row over ne1*ne2*ne3
-    const int tid = item_ct1.get_local_id(2);
+ਸਾਂਚਾ <ਪੂਰਨ warp_ਮਾਪ>
+ਸਥਿਰ ਖਾਲੀ l2_norm_f32_batch(l2_batch_ptrs p, l2_batch_strides st, ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਦਸ਼ਮਲਵ eps,
+                              ਅਚਲ sycl::nd_ਵਸਤੂ<3> & ਵਸਤੂ_ct1) {
+    ਅਚਲ ਪੂਰਨ t   = ਵਸਤੂ_ct1.get_ਸਮੂਹ(0);  // tensor index
+    ਅਚਲ ਪੂਰਨ r   = ਵਸਤੂ_ct1.get_ਸਮੂਹ(2);  // flattened row over ne1*ne2*ne3
+    ਅਚਲ ਪੂਰਨ tid = ਵਸਤੂ_ct1.get_local_id(2);
 
-    const int i1 = r % st.ne1;
-    const int i2 = (r / st.ne1) % st.ne2;
-    const int i3 = r / (st.ne1 * st.ne2);
+    ਅਚਲ ਪੂਰਨ i1 = r % st.ne1;
+    ਅਚਲ ਪੂਰਨ i2 = (r / st.ne1) % st.ne2;
+    ਅਚਲ ਪੂਰਨ i3 = r / (st.ne1 * st.ne2);
 
-    const float * x   = p.src[t] + i3 * st.ss3 + i2 * st.ss2 + i1 * st.ss1;
-    float *       dst = p.dst[t] + i3 * st.ds3 + i2 * st.ds2 + i1 * st.ds1;
+    ਅਚਲ ਦਸ਼ਮਲਵ * x   = p.src[t] + i3 * st.ss3 + i2 * st.ss2 + i1 * st.ss1;
+    ਦਸ਼ਮਲਵ *       dst = p.dst[t] + i3 * st.ds3 + i2 * st.ds2 + i1 * st.ds1;
 
-    float tmp = 0.0f;
-    for (int col = tid; col < ncols; col += warp_size) {
-        const float xi = x[col * st.ss0];
+    ਦਸ਼ਮਲਵ tmp = 0.0f;
+    ਲਈ (ਪੂਰਨ ਖਾਨਾ = tid; ਖਾਨਾ < ncols; ਖਾਨਾ += warp_ਮਾਪ) {
+        ਅਚਲ ਦਸ਼ਮਲਵ xi = x[ਖਾਨਾ * st.ss0];
         tmp += xi * xi;
     }
-    tmp = block_reduce<block_reduce_method::SUM, warp_size>(tmp, (float *) nullptr, warp_size);
-    const float scale = sycl::rsqrt(sycl::fmax(tmp, eps * eps));
-    for (int col = tid; col < ncols; col += warp_size) {
-        dst[col * st.ds0] = scale * x[col * st.ss0];
+    tmp = ਖੰਡ_reduce<ਖੰਡ_reduce_ਵਿਧੀ::ਜੋੜ_3, warp_ਮਾਪ>(tmp, (ਦਸ਼ਮਲਵ *) ਖਾਲੀ_ਸੂਚਕ, warp_ਮਾਪ);
+    ਅਚਲ ਦਸ਼ਮਲਵ scale = sycl::rsqrt(sycl::fmax(tmp, eps * eps));
+    ਲਈ (ਪੂਰਨ ਖਾਨਾ = tid; ਖਾਨਾ < ncols; ਖਾਨਾ += warp_ਮਾਪ) {
+        dst[ਖਾਨਾ * st.ds0] = scale * x[ਖਾਨਾ * st.ss0];
     }
 }
 
-template <int warp_size>
-static void l2_norm_f32_batch_sycl(l2_batch_ptrs p, l2_batch_strides st, const int n_tensors,
-                                   const int ncols, const int nrows_total, const float eps,
-                                   queue_ptr stream) {
-    const dpct::dim3 blocks_num(nrows_total, 1, n_tensors);
-    const dpct::dim3 block_dims(warp_size, 1, 1);
+ਸਾਂਚਾ <ਪੂਰਨ warp_ਮਾਪ>
+ਸਥਿਰ ਖਾਲੀ l2_norm_f32_batch_sycl(l2_batch_ptrs p, l2_batch_strides st, ਅਚਲ ਪੂਰਨ n_tensors,
+                                   ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ nrows_ਕੁੱਲ, ਅਚਲ ਦਸ਼ਮਲਵ eps,
+                                   ਕਤਾਰ_ptr stream) {
+    ਅਚਲ dpct::dim3 ਖੰਡਾਂ_ਅੰਕ(nrows_ਕੁੱਲ, 1, n_tensors);
+    ਅਚਲ dpct::dim3 ਖੰਡ_dims(warp_ਮਾਪ, 1, 1);
     stream->submit([&](sycl::handler & cgh) {
-        cgh.parallel_for(sycl::nd_range<3>(blocks_num * block_dims, block_dims),
-            [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(warp_size)]] {
-                l2_norm_f32_batch<warp_size>(p, st, ncols, eps, item_ct1);
+        cgh.parallel_for(sycl::nd_range<3>(ਖੰਡਾਂ_ਅੰਕ * ਖੰਡ_dims, ਖੰਡ_dims),
+            [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(warp_ਮਾਪ)]] {
+                l2_norm_f32_batch<warp_ਮਾਪ>(p, st, ncols, eps, ਵਸਤੂ_ct1);
             });
     });
 }
 
-void ggml_sycl_op_norm(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
-    const ggml_tensor * src0 = dst->src[0];
+ਖਾਲੀ ggml_sycl_op_norm(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
+    ਅਚਲ ggml_tensor * src0 = dst->src[0];
 
     GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32);
     GGML_ASSERT(dst->type == GGML_TYPE_F32);
 
     GGML_TENSOR_UNARY_OP_LOCALS
-    dpct::queue_ptr main_stream = ctx.stream();
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
-    const float * src0_dd = static_cast<const float *>(dst->src[0]->data);
-    float *       dst_dd  = static_cast<float *>(dst->data);
+    dpct::ਕਤਾਰ_ptr main_ਧਾਰਾ = ctx.stream();
+    SYCL_CHECK(ggml_sycl_ਸੈੱਟ_device(ctx.device));
+    ਅਚਲ ਦਸ਼ਮਲਵ * src0_dd = static_cast<ਅਚਲ ਦਸ਼ਮਲਵ *>(dst->src[0]->ਅੰਕੜੇ);
+    ਦਸ਼ਮਲਵ *       dst_dd  = static_cast<ਦਸ਼ਮਲਵ *>(dst->ਅੰਕੜੇ);
 
-    float eps;
-    memcpy(&eps, dst->op_params, sizeof(float));
+    ਦਸ਼ਮਲਵ eps;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&eps, dst->op_params, ਆਕਾਰ(ਦਸ਼ਮਲਵ));
     GGML_ASSERT(eps >= 0.0f);
-    const size_t ts0 = ggml_type_size(src0->type);
-    const size_t tdst = ggml_type_size(dst->type);
+    ਅਚਲ size_t ts0 = ggml_type_ਮਾਪ(src0->type);
+    ਅਚਲ size_t tdst = ggml_type_ਮਾਪ(dst->type);
     GGML_ASSERT(nb00 % ts0 == 0 && nb01 % ts0 == 0 && nb02 % ts0 == 0 && nb03 % ts0 == 0);
     GGML_ASSERT(nb0 % tdst == 0 && nb1 % tdst == 0 && nb2 % tdst == 0 && nb3 % tdst == 0);
-    const int64_t ss0 = nb00 / ts0;
-    const int64_t ss1 = nb01 / ts0;
-    const int64_t ss2 = nb02 / ts0;
-    const int64_t ss3 = nb03 / ts0;
-    const int64_t ds0 = nb0 / tdst;
-    const int64_t ds1 = nb1 / tdst;
-    const int64_t ds2 = nb2 / tdst;
-    const int64_t ds3 = nb3 / tdst;
+    ਅਚਲ int64_t ss0 = nb00 / ts0;
+    ਅਚਲ int64_t ss1 = nb01 / ts0;
+    ਅਚਲ int64_t ss2 = nb02 / ts0;
+    ਅਚਲ int64_t ss3 = nb03 / ts0;
+    ਅਚਲ int64_t ds0 = nb0 / tdst;
+    ਅਚਲ int64_t ds1 = nb1 / tdst;
+    ਅਚਲ int64_t ds2 = nb2 / tdst;
+    ਅਚਲ int64_t ds3 = nb3 / tdst;
 
     norm_f32_sycl(src0_dd, dst_dd, ne00, ne01, ne02, ne03,
-        ss0, ss1, ss2, ss3, ds0, ds1, ds2, ds3, eps, main_stream, ctx.device);
+        ss0, ss1, ss2, ss3, ds0, ds1, ds2, ds3, eps, main_ਧਾਰਾ, ctx.device);
 }
 
-void ggml_sycl_op_group_norm(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
+ਖਾਲੀ ggml_sycl_op_ਸਮੂਹ_norm(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
 
     GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32);
     GGML_ASSERT(dst->type == GGML_TYPE_F32);
 
-    int num_groups = dst->op_params[0];
-    dpct::queue_ptr main_stream = ctx.stream();
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
+    ਪੂਰਨ ਅੰਕ_groups = dst->op_params[0];
+    dpct::ਕਤਾਰ_ptr main_ਧਾਰਾ = ctx.stream();
+    SYCL_CHECK(ggml_sycl_ਸੈੱਟ_device(ctx.device));
 
-    const float * src0_dd = static_cast<const float *>(dst->src[0]->data);
-    float *       dst_dd  = static_cast<float *>(dst->data);
+    ਅਚਲ ਦਸ਼ਮਲਵ * src0_dd = static_cast<ਅਚਲ ਦਸ਼ਮਲਵ *>(dst->src[0]->ਅੰਕੜੇ);
+    ਦਸ਼ਮਲਵ *       dst_dd  = static_cast<ਦਸ਼ਮਲਵ *>(dst->ਅੰਕੜੇ);
 
-    float eps;
-    memcpy(&eps, dst->op_params + 1, sizeof(float));
+    ਦਸ਼ਮਲਵ eps;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&eps, dst->op_params + 1, ਆਕਾਰ(ਦਸ਼ਮਲਵ));
 
-    int group_size = dst->src[0]->ne[0] * dst->src[0]->ne[1] * ((dst->src[0]->ne[2] + num_groups - 1) / num_groups);
-    group_norm_f32_sycl(src0_dd, dst_dd, num_groups, eps, group_size, dst->src[0]->ne[0] * dst->src[0]->ne[1] * dst->src[0]->ne[2], main_stream, ctx.device);
+    ਪੂਰਨ ਸਮੂਹ_ਮਾਪ = dst->src[0]->ne[0] * dst->src[0]->ne[1] * ((dst->src[0]->ne[2] + ਅੰਕ_groups - 1) / ਅੰਕ_groups);
+    ਸਮੂਹ_norm_f32_sycl(src0_dd, dst_dd, ਅੰਕ_groups, eps, ਸਮੂਹ_ਮਾਪ, dst->src[0]->ne[0] * dst->src[0]->ne[1] * dst->src[0]->ne[2], main_ਧਾਰਾ, ctx.device);
 }
 
-void ggml_sycl_op_rms_norm(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ਖਾਲੀ ggml_sycl_op_rms_norm(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
 
-    const ggml_tensor * src0 = dst->src[0];
+    ਅਚਲ ggml_tensor * src0 = dst->src[0];
     GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32);
     GGML_ASSERT(dst->type == GGML_TYPE_F32);
 
-    dpct::queue_ptr main_stream = ctx.stream();
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
+    dpct::ਕਤਾਰ_ptr main_ਧਾਰਾ = ctx.stream();
+    SYCL_CHECK(ggml_sycl_ਸੈੱਟ_device(ctx.device));
 
-    const float * src0_dd = static_cast<const float *>(dst->src[0]->data);
-    float *       dst_dd  = static_cast<float *>(dst->data);
+    ਅਚਲ ਦਸ਼ਮਲਵ * src0_dd = static_cast<ਅਚਲ ਦਸ਼ਮਲਵ *>(dst->src[0]->ਅੰਕੜੇ);
+    ਦਸ਼ਮਲਵ *       dst_dd  = static_cast<ਦਸ਼ਮਲਵ *>(dst->ਅੰਕੜੇ);
 
-    float eps;
-    memcpy(&eps, dst->op_params, sizeof(float));
+    ਦਸ਼ਮਲਵ eps;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&eps, dst->op_params, ਆਕਾਰ(ਦਸ਼ਮਲਵ));
 
     GGML_TENSOR_UNARY_OP_LOCALS
-    const size_t ts0 = ggml_type_size(src0->type);
-    const size_t tdst = ggml_type_size(dst->type);
+    ਅਚਲ size_t ts0 = ggml_type_ਮਾਪ(src0->type);
+    ਅਚਲ size_t tdst = ggml_type_ਮਾਪ(dst->type);
     GGML_ASSERT(nb00 % ts0 == 0 && nb01 % ts0 == 0 && nb02 % ts0 == 0 && nb03 % ts0 == 0);
     GGML_ASSERT(nb0 % tdst == 0 && nb1 % tdst == 0 && nb2 % tdst == 0 && nb3 % tdst == 0);
-    const int64_t ss0 = nb00 / ts0;
-    const int64_t ss1 = nb01 / ts0;
-    const int64_t ss2 = nb02 / ts0;
-    const int64_t ss3 = nb03 / ts0;
-    const int64_t ds0 = nb0 / tdst;
-    const int64_t ds1 = nb1 / tdst;
-    const int64_t ds2 = nb2 / tdst;
-    const int64_t ds3 = nb3 / tdst;
+    ਅਚਲ int64_t ss0 = nb00 / ts0;
+    ਅਚਲ int64_t ss1 = nb01 / ts0;
+    ਅਚਲ int64_t ss2 = nb02 / ts0;
+    ਅਚਲ int64_t ss3 = nb03 / ts0;
+    ਅਚਲ int64_t ds0 = nb0 / tdst;
+    ਅਚਲ int64_t ds1 = nb1 / tdst;
+    ਅਚਲ int64_t ds2 = nb2 / tdst;
+    ਅਚਲ int64_t ds3 = nb3 / tdst;
     rms_norm_f32_sycl(src0_dd, dst_dd, ne00, ne01, ne02, ne03,
-        ss0, ss1, ss2, ss3, ds0, ds1, ds2, ds3, eps, main_stream, ctx.device);
+        ss0, ss1, ss2, ss3, ds0, ds1, ds2, ds3, eps, main_ਧਾਰਾ, ctx.device);
 }
 
 // Fused rms_norm + scale (the qwen35 GDN l2-norm pair build_gdn_l2_norm emits):
 // the scale factor is a host scalar in the GGML_OP_SCALE node's op_params, so
 // unlike the mul variants there is no second device tensor to wire up.
-void ggml_sycl_op_rms_norm_scale_fused(ggml_backend_sycl_context & ctx, ggml_tensor * dst,
+ਖਾਲੀ ggml_sycl_op_rms_norm_scale_fused(ggml_backend_sycl_context & ctx, ggml_tensor * dst,
                                        ggml_tensor * scale_tensor) {
-    const ggml_tensor * src0 = dst->src[0];
+    ਅਚਲ ggml_tensor * src0 = dst->src[0];
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
     GGML_ASSERT(dst->type == GGML_TYPE_F32);
     GGML_ASSERT(scale_tensor->type == GGML_TYPE_F32);
 
-    dpct::queue_ptr main_stream = ctx.stream();
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
+    dpct::ਕਤਾਰ_ptr main_ਧਾਰਾ = ctx.stream();
+    SYCL_CHECK(ggml_sycl_ਸੈੱਟ_device(ctx.device));
 
-    const float * src0_dd = static_cast<const float *>(src0->data);
-    float *       dst_dd  = static_cast<float *>(scale_tensor->data);
+    ਅਚਲ ਦਸ਼ਮਲਵ * src0_dd = static_cast<ਅਚਲ ਦਸ਼ਮਲਵ *>(src0->ਅੰਕੜੇ);
+    ਦਸ਼ਮਲਵ *       dst_dd  = static_cast<ਦਸ਼ਮਲਵ *>(scale_tensor->ਅੰਕੜੇ);
 
-    float eps;
-    memcpy(&eps, dst->op_params, sizeof(float));
-    float scale_mul;
-    memcpy(&scale_mul, scale_tensor->op_params, sizeof(float));
+    ਦਸ਼ਮਲਵ eps;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&eps, dst->op_params, ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+    ਦਸ਼ਮਲਵ scale_mul;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&scale_mul, scale_tensor->op_params, ਆਕਾਰ(ਦਸ਼ਮਲਵ));
     GGML_ASSERT(scale_mul >= 0.0f);
 
     GGML_TENSOR_UNARY_OP_LOCALS
-    const size_t ts0 = ggml_type_size(src0->type);
-    const size_t tdst = ggml_type_size(scale_tensor->type);
+    ਅਚਲ size_t ts0 = ggml_type_ਮਾਪ(src0->type);
+    ਅਚਲ size_t tdst = ggml_type_ਮਾਪ(scale_tensor->type);
     GGML_ASSERT(nb00 % ts0 == 0 && nb01 % ts0 == 0 && nb02 % ts0 == 0 && nb03 % ts0 == 0);
     GGML_ASSERT(scale_tensor->nb[0] % tdst == 0 && scale_tensor->nb[1] % tdst == 0 &&
                 scale_tensor->nb[2] % tdst == 0 && scale_tensor->nb[3] % tdst == 0);
-    const int64_t ss0 = nb00 / ts0;
-    const int64_t ss1 = nb01 / ts0;
-    const int64_t ss2 = nb02 / ts0;
-    const int64_t ss3 = nb03 / ts0;
-    const int64_t ds0 = scale_tensor->nb[0] / tdst;
-    const int64_t ds1 = scale_tensor->nb[1] / tdst;
-    const int64_t ds2 = scale_tensor->nb[2] / tdst;
-    const int64_t ds3 = scale_tensor->nb[3] / tdst;
+    ਅਚਲ int64_t ss0 = nb00 / ts0;
+    ਅਚਲ int64_t ss1 = nb01 / ts0;
+    ਅਚਲ int64_t ss2 = nb02 / ts0;
+    ਅਚਲ int64_t ss3 = nb03 / ts0;
+    ਅਚਲ int64_t ds0 = scale_tensor->nb[0] / tdst;
+    ਅਚਲ int64_t ds1 = scale_tensor->nb[1] / tdst;
+    ਅਚਲ int64_t ds2 = scale_tensor->nb[2] / tdst;
+    ਅਚਲ int64_t ds3 = scale_tensor->nb[3] / tdst;
     rms_norm_scale_f32_sycl(src0_dd, dst_dd, ne00, ne01, ne02, ne03,
-        ss0, ss1, ss2, ss3, ds0, ds1, ds2, ds3, eps, scale_mul, main_stream, ctx.device);
+        ss0, ss1, ss2, ss3, ds0, ds1, ds2, ds3, eps, scale_mul, main_ਧਾਰਾ, ctx.device);
 }
 
-void ggml_sycl_op_rms_norm_fused(ggml_backend_sycl_context & ctx, ggml_tensor * dst, ggml_tensor * mul_tensor) {
-    const ggml_tensor * rms_norm_src = dst->src[0];
-    float eps = 0.0f;
-    memcpy(&eps, dst->op_params, sizeof(float));
+ਖਾਲੀ ggml_sycl_op_rms_norm_fused(ggml_backend_sycl_context & ctx, ggml_tensor * dst, ggml_tensor * mul_tensor) {
+    ਅਚਲ ggml_tensor * rms_norm_src = dst->src[0];
+    ਦਸ਼ਮਲਵ eps = 0.0f;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&eps, dst->op_params, ਆਕਾਰ(ਦਸ਼ਮਲਵ));
 
-    const float *       src0_dd = static_cast<const float *>(rms_norm_src->data);
-    const float *       mul_dd  = nullptr;
-    const ggml_tensor * mul_src = nullptr;
-    if (mul_tensor->src[0] == dst) {
-        mul_dd  = static_cast<const float *>(mul_tensor->src[1]->data);
+    ਅਚਲ ਦਸ਼ਮਲਵ *       src0_dd = static_cast<ਅਚਲ ਦਸ਼ਮਲਵ *>(rms_norm_src->ਅੰਕੜੇ);
+    ਅਚਲ ਦਸ਼ਮਲਵ *       mul_dd  = ਖਾਲੀ_ਸੂਚਕ;
+    ਅਚਲ ggml_tensor * mul_src = ਖਾਲੀ_ਸੂਚਕ;
+    ਜੇ (mul_tensor->src[0] == dst) {
+        mul_dd  = static_cast<ਅਚਲ ਦਸ਼ਮਲਵ *>(mul_tensor->src[1]->ਅੰਕੜੇ);
         mul_src = mul_tensor->src[1];
-    } else if (mul_tensor->src[1] == dst) {
-        mul_dd  = static_cast<const float *>(mul_tensor->src[0]->data);
+    } ਨਹੀਂਤਾਂ ਜੇ (mul_tensor->src[1] == dst) {
+        mul_dd  = static_cast<ਅਚਲ ਦਸ਼ਮਲਵ *>(mul_tensor->src[0]->ਅੰਕੜੇ);
         mul_src = mul_tensor->src[0];
-    } else {
-        GGML_ASSERT(false);
+    } ਨਹੀਂਤਾਂ {
+        GGML_ASSERT(ਝੂਠ);
     }
-    float * dst_dd = static_cast<float *>(mul_tensor->data);
+    ਦਸ਼ਮਲਵ * dst_dd = static_cast<ਦਸ਼ਮਲਵ *>(mul_tensor->ਅੰਕੜੇ);
 
-    dpct::queue_ptr main_stream = ctx.stream();
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
+    dpct::ਕਤਾਰ_ptr main_ਧਾਰਾ = ctx.stream();
+    SYCL_CHECK(ggml_sycl_ਸੈੱਟ_device(ctx.device));
 
     GGML_ASSERT(rms_norm_src->type == GGML_TYPE_F32);
     GGML_ASSERT(dst->type == GGML_TYPE_F32);
     GGML_ASSERT(mul_tensor->type == GGML_TYPE_F32);
     GGML_ASSERT(eps >= 0.0f);
 
-    const int64_t ne00 = rms_norm_src->ne[0];
-    const int64_t ne01 = rms_norm_src->ne[1];
-    const int64_t ne02 = rms_norm_src->ne[2];
-    const int64_t ne03 = rms_norm_src->ne[3];
+    ਅਚਲ int64_t ne00 = rms_norm_src->ne[0];
+    ਅਚਲ int64_t ne01 = rms_norm_src->ne[1];
+    ਅਚਲ int64_t ne02 = rms_norm_src->ne[2];
+    ਅਚਲ int64_t ne03 = rms_norm_src->ne[3];
 
-    const size_t ts0 = ggml_type_size(rms_norm_src->type);
+    ਅਚਲ size_t ts0 = ggml_type_ਮਾਪ(rms_norm_src->type);
     GGML_ASSERT(rms_norm_src->nb[0] == ts0);
-    const int64_t s00 = rms_norm_src->nb[0] / ts0;
-    const int64_t s01 = rms_norm_src->nb[1] / ts0;
-    const int64_t s02 = rms_norm_src->nb[2] / ts0;
-    const int64_t s03 = rms_norm_src->nb[3] / ts0;
+    ਅਚਲ int64_t s00 = rms_norm_src->nb[0] / ts0;
+    ਅਚਲ int64_t s01 = rms_norm_src->nb[1] / ts0;
+    ਅਚਲ int64_t s02 = rms_norm_src->nb[2] / ts0;
+    ਅਚਲ int64_t s03 = rms_norm_src->nb[3] / ts0;
 
-    const size_t tdst = ggml_type_size(mul_tensor->type);
+    ਅਚਲ size_t tdst = ggml_type_ਮਾਪ(mul_tensor->type);
     GGML_ASSERT(mul_tensor->nb[0] == tdst);
-    const int64_t d00 = mul_tensor->nb[0] / tdst;
-    const int64_t d01 = mul_tensor->nb[1] / tdst;
-    const int64_t d02 = mul_tensor->nb[2] / tdst;
-    const int64_t d03 = mul_tensor->nb[3] / tdst;
+    ਅਚਲ int64_t d00 = mul_tensor->nb[0] / tdst;
+    ਅਚਲ int64_t d01 = mul_tensor->nb[1] / tdst;
+    ਅਚਲ int64_t d02 = mul_tensor->nb[2] / tdst;
+    ਅਚਲ int64_t d03 = mul_tensor->nb[3] / tdst;
 
-    const size_t ts_mul = ggml_type_size(mul_src->type);
+    ਅਚਲ size_t ts_mul = ggml_type_ਮਾਪ(mul_src->type);
     GGML_ASSERT(mul_src->nb[0] == ts_mul);
-    const int64_t mul_s01 = mul_src->nb[1] / ts_mul;
-    const int64_t mul_s02 = mul_src->nb[2] / ts_mul;
-    const int64_t mul_s03 = mul_src->nb[3] / ts_mul;
-    const int mul_nrows     = mul_src->ne[1];
-    const int mul_nchannels = mul_src->ne[2];
-    const int mul_nsamples  = mul_src->ne[3];
+    ਅਚਲ int64_t mul_s01 = mul_src->nb[1] / ts_mul;
+    ਅਚਲ int64_t mul_s02 = mul_src->nb[2] / ts_mul;
+    ਅਚਲ int64_t mul_s03 = mul_src->nb[3] / ts_mul;
+    ਅਚਲ ਪੂਰਨ mul_nrows     = mul_src->ne[1];
+    ਅਚਲ ਪੂਰਨ mul_nchannels = mul_src->ne[2];
+    ਅਚਲ ਪੂਰਨ mul_nsamples  = mul_src->ne[3];
 
     rms_norm_mul_f32_sycl(src0_dd, mul_dd, dst_dd, ne00, ne01, ne02, ne03,
         s00, s01, s02, s03, d00, d01, d02, d03,
-        mul_s01, mul_s02, mul_s03, mul_nrows, mul_nchannels, mul_nsamples, eps, main_stream, ctx.device);
+        mul_s01, mul_s02, mul_s03, mul_nrows, mul_nchannels, mul_nsamples, eps, main_ਧਾਰਾ, ctx.device);
 }
 
-void ggml_sycl_op_rms_norm_fused_add(ggml_backend_sycl_context & ctx, ggml_tensor * dst,
-                                     ggml_tensor * mul_tensor, ggml_tensor * add_tensor) {
-    const ggml_tensor * rms_norm_src = dst->src[0];
-    float eps = 0.0f;
-    memcpy(&eps, dst->op_params, sizeof(float));
+ਖਾਲੀ ggml_sycl_op_rms_norm_fused_ਜੋੜੋ(ggml_backend_sycl_context & ctx, ggml_tensor * dst,
+                                     ggml_tensor * mul_tensor, ggml_tensor * ਜੋੜੋ_tensor) {
+    ਅਚਲ ggml_tensor * rms_norm_src = dst->src[0];
+    ਦਸ਼ਮਲਵ eps = 0.0f;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&eps, dst->op_params, ਆਕਾਰ(ਦਸ਼ਮਲਵ));
 
-    const float *       src0_dd = static_cast<const float *>(rms_norm_src->data);
-    const float *       mul_dd  = nullptr;
-    const ggml_tensor * mul_src = nullptr;
-    if (mul_tensor->src[0] == dst) {
-        mul_dd  = static_cast<const float *>(mul_tensor->src[1]->data);
+    ਅਚਲ ਦਸ਼ਮਲਵ *       src0_dd = static_cast<ਅਚਲ ਦਸ਼ਮਲਵ *>(rms_norm_src->ਅੰਕੜੇ);
+    ਅਚਲ ਦਸ਼ਮਲਵ *       mul_dd  = ਖਾਲੀ_ਸੂਚਕ;
+    ਅਚਲ ggml_tensor * mul_src = ਖਾਲੀ_ਸੂਚਕ;
+    ਜੇ (mul_tensor->src[0] == dst) {
+        mul_dd  = static_cast<ਅਚਲ ਦਸ਼ਮਲਵ *>(mul_tensor->src[1]->ਅੰਕੜੇ);
         mul_src = mul_tensor->src[1];
-    } else if (mul_tensor->src[1] == dst) {
-        mul_dd  = static_cast<const float *>(mul_tensor->src[0]->data);
+    } ਨਹੀਂਤਾਂ ਜੇ (mul_tensor->src[1] == dst) {
+        mul_dd  = static_cast<ਅਚਲ ਦਸ਼ਮਲਵ *>(mul_tensor->src[0]->ਅੰਕੜੇ);
         mul_src = mul_tensor->src[0];
-    } else {
-        GGML_ASSERT(false);
+    } ਨਹੀਂਤਾਂ {
+        GGML_ASSERT(ਝੂਠ);
     }
 
-    const float *       add_dd  = nullptr;
-    const ggml_tensor * add_src = nullptr;
-    if (add_tensor->src[0] == mul_tensor) {
-        add_dd  = static_cast<const float *>(add_tensor->src[1]->data);
-        add_src = add_tensor->src[1];
-    } else if (add_tensor->src[1] == mul_tensor) {
-        add_dd  = static_cast<const float *>(add_tensor->src[0]->data);
-        add_src = add_tensor->src[0];
-    } else {
-        GGML_ASSERT(false);
+    ਅਚਲ ਦਸ਼ਮਲਵ *       ਜੋੜੋ_dd  = ਖਾਲੀ_ਸੂਚਕ;
+    ਅਚਲ ggml_tensor * ਜੋੜੋ_src = ਖਾਲੀ_ਸੂਚਕ;
+    ਜੇ (ਜੋੜੋ_tensor->src[0] == mul_tensor) {
+        ਜੋੜੋ_dd  = static_cast<ਅਚਲ ਦਸ਼ਮਲਵ *>(ਜੋੜੋ_tensor->src[1]->ਅੰਕੜੇ);
+        ਜੋੜੋ_src = ਜੋੜੋ_tensor->src[1];
+    } ਨਹੀਂਤਾਂ ਜੇ (ਜੋੜੋ_tensor->src[1] == mul_tensor) {
+        ਜੋੜੋ_dd  = static_cast<ਅਚਲ ਦਸ਼ਮਲਵ *>(ਜੋੜੋ_tensor->src[0]->ਅੰਕੜੇ);
+        ਜੋੜੋ_src = ਜੋੜੋ_tensor->src[0];
+    } ਨਹੀਂਤਾਂ {
+        GGML_ASSERT(ਝੂਠ);
     }
 
-    float * dst_dd = static_cast<float *>(add_tensor->data);
+    ਦਸ਼ਮਲਵ * dst_dd = static_cast<ਦਸ਼ਮਲਵ *>(ਜੋੜੋ_tensor->ਅੰਕੜੇ);
 
-    dpct::queue_ptr main_stream = ctx.stream();
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
+    dpct::ਕਤਾਰ_ptr main_ਧਾਰਾ = ctx.stream();
+    SYCL_CHECK(ggml_sycl_ਸੈੱਟ_device(ctx.device));
 
     GGML_ASSERT(rms_norm_src->type == GGML_TYPE_F32);
     GGML_ASSERT(dst->type == GGML_TYPE_F32);
     GGML_ASSERT(mul_tensor->type == GGML_TYPE_F32);
-    GGML_ASSERT(add_tensor->type == GGML_TYPE_F32);
+    GGML_ASSERT(ਜੋੜੋ_tensor->type == GGML_TYPE_F32);
     GGML_ASSERT(eps >= 0.0f);
 
-    const int64_t ne00 = rms_norm_src->ne[0];
-    const int64_t ne01 = rms_norm_src->ne[1];
-    const int64_t ne02 = rms_norm_src->ne[2];
-    const int64_t ne03 = rms_norm_src->ne[3];
+    ਅਚਲ int64_t ne00 = rms_norm_src->ne[0];
+    ਅਚਲ int64_t ne01 = rms_norm_src->ne[1];
+    ਅਚਲ int64_t ne02 = rms_norm_src->ne[2];
+    ਅਚਲ int64_t ne03 = rms_norm_src->ne[3];
 
-    const size_t ts0 = ggml_type_size(rms_norm_src->type);
+    ਅਚਲ size_t ts0 = ggml_type_ਮਾਪ(rms_norm_src->type);
     GGML_ASSERT(rms_norm_src->nb[0] == ts0);
-    const int64_t s00 = rms_norm_src->nb[0] / ts0;
-    const int64_t s01 = rms_norm_src->nb[1] / ts0;
-    const int64_t s02 = rms_norm_src->nb[2] / ts0;
-    const int64_t s03 = rms_norm_src->nb[3] / ts0;
+    ਅਚਲ int64_t s00 = rms_norm_src->nb[0] / ts0;
+    ਅਚਲ int64_t s01 = rms_norm_src->nb[1] / ts0;
+    ਅਚਲ int64_t s02 = rms_norm_src->nb[2] / ts0;
+    ਅਚਲ int64_t s03 = rms_norm_src->nb[3] / ts0;
 
-    const size_t tdst = ggml_type_size(add_tensor->type);
-    GGML_ASSERT(add_tensor->nb[0] == tdst);
-    const int64_t d00 = add_tensor->nb[0] / tdst;
-    const int64_t d01 = add_tensor->nb[1] / tdst;
-    const int64_t d02 = add_tensor->nb[2] / tdst;
-    const int64_t d03 = add_tensor->nb[3] / tdst;
+    ਅਚਲ size_t tdst = ggml_type_ਮਾਪ(ਜੋੜੋ_tensor->type);
+    GGML_ASSERT(ਜੋੜੋ_tensor->nb[0] == tdst);
+    ਅਚਲ int64_t d00 = ਜੋੜੋ_tensor->nb[0] / tdst;
+    ਅਚਲ int64_t d01 = ਜੋੜੋ_tensor->nb[1] / tdst;
+    ਅਚਲ int64_t d02 = ਜੋੜੋ_tensor->nb[2] / tdst;
+    ਅਚਲ int64_t d03 = ਜੋੜੋ_tensor->nb[3] / tdst;
 
-    const size_t ts_mul = ggml_type_size(mul_src->type);
+    ਅਚਲ size_t ts_mul = ggml_type_ਮਾਪ(mul_src->type);
     GGML_ASSERT(mul_src->nb[0] == ts_mul);
-    const int64_t mul_s01 = mul_src->nb[1] / ts_mul;
-    const int64_t mul_s02 = mul_src->nb[2] / ts_mul;
-    const int64_t mul_s03 = mul_src->nb[3] / ts_mul;
-    const int mul_nrows     = mul_src->ne[1];
-    const int mul_nchannels = mul_src->ne[2];
-    const int mul_nsamples  = mul_src->ne[3];
+    ਅਚਲ int64_t mul_s01 = mul_src->nb[1] / ts_mul;
+    ਅਚਲ int64_t mul_s02 = mul_src->nb[2] / ts_mul;
+    ਅਚਲ int64_t mul_s03 = mul_src->nb[3] / ts_mul;
+    ਅਚਲ ਪੂਰਨ mul_nrows     = mul_src->ne[1];
+    ਅਚਲ ਪੂਰਨ mul_nchannels = mul_src->ne[2];
+    ਅਚਲ ਪੂਰਨ mul_nsamples  = mul_src->ne[3];
 
-    const size_t ts_add = ggml_type_size(add_src->type);
-    GGML_ASSERT(add_src->nb[0] == ts_add);
-    const int64_t add_s01 = add_src->nb[1] / ts_add;
-    const int64_t add_s02 = add_src->nb[2] / ts_add;
-    const int64_t add_s03 = add_src->nb[3] / ts_add;
-    const int add_nrows     = add_src->ne[1];
-    const int add_nchannels = add_src->ne[2];
-    const int add_nsamples  = add_src->ne[3];
+    ਅਚਲ size_t ts_ਜੋੜੋ = ggml_type_ਮਾਪ(ਜੋੜੋ_src->type);
+    GGML_ASSERT(ਜੋੜੋ_src->nb[0] == ts_ਜੋੜੋ);
+    ਅਚਲ int64_t ਜੋੜੋ_s01 = ਜੋੜੋ_src->nb[1] / ts_ਜੋੜੋ;
+    ਅਚਲ int64_t ਜੋੜੋ_s02 = ਜੋੜੋ_src->nb[2] / ts_ਜੋੜੋ;
+    ਅਚਲ int64_t ਜੋੜੋ_s03 = ਜੋੜੋ_src->nb[3] / ts_ਜੋੜੋ;
+    ਅਚਲ ਪੂਰਨ ਜੋੜੋ_nrows     = ਜੋੜੋ_src->ne[1];
+    ਅਚਲ ਪੂਰਨ ਜੋੜੋ_nchannels = ਜੋੜੋ_src->ne[2];
+    ਅਚਲ ਪੂਰਨ ਜੋੜੋ_nsamples  = ਜੋੜੋ_src->ne[3];
 
-    rms_norm_mul_add_f32_sycl(src0_dd, mul_dd, add_dd, dst_dd, ne00, ne01, ne02, ne03,
+    rms_norm_mul_ਜੋੜੋ_f32_sycl(src0_dd, mul_dd, ਜੋੜੋ_dd, dst_dd, ne00, ne01, ne02, ne03,
         s00, s01, s02, s03, d00, d01, d02, d03,
         mul_s01, mul_s02, mul_s03, mul_nrows, mul_nchannels, mul_nsamples,
-        add_s01, add_s02, add_s03, add_nrows, add_nchannels, add_nsamples, eps, main_stream, ctx.device);
+        ਜੋੜੋ_s01, ਜੋੜੋ_s02, ਜੋੜੋ_s03, ਜੋੜੋ_nrows, ਜੋੜੋ_nchannels, ਜੋੜੋ_nsamples, eps, main_ਧਾਰਾ, ctx.device);
 }
 
-void ggml_sycl_op_rms_norm_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ਖਾਲੀ ggml_sycl_op_rms_norm_ਪਿੱਠ(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
 
     GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32); // dz
     GGML_ASSERT(dst->src[1]->type == GGML_TYPE_F32); // x
     GGML_ASSERT(dst->type         == GGML_TYPE_F32);
 
-    float eps = 1e-5f;
-    std::memcpy(&eps, dst->op_params, sizeof(float));
-    if (!(eps > 0.0f) || !std::isfinite(eps)) eps = 1e-5f;
+    ਦਸ਼ਮਲਵ eps = 1e-5f;
+    std::ਸਮ੍ਰਿਤੀ_ਨਕਲ(&eps, dst->op_params, ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+    ਜੇ (!(eps > 0.0f) || !std::isfinite(eps)) eps = 1e-5f;
 
-    const float * g_base  = static_cast<const float *>(dst->src[0]->data); // dz
-    const float * x_base  = static_cast<const float *>(dst->src[1]->data); // x
-          float * dx_base = static_cast<      float *>(dst->data);
+    ਅਚਲ ਦਸ਼ਮਲਵ * g_ਅਧਾਰ  = static_cast<ਅਚਲ ਦਸ਼ਮਲਵ *>(dst->src[0]->ਅੰਕੜੇ); // dz
+    ਅਚਲ ਦਸ਼ਮਲਵ * x_ਅਧਾਰ  = static_cast<ਅਚਲ ਦਸ਼ਮਲਵ *>(dst->src[1]->ਅੰਕੜੇ); // x
+          ਦਸ਼ਮਲਵ * dx_ਅਧਾਰ = static_cast<      ਦਸ਼ਮਲਵ *>(dst->ਅੰਕੜੇ);
 
-    const int64_t D  = dst->ne[0];
-    const int64_t n1 = dst->ne[1], n2 = dst->ne[2], n3 = dst->ne[3]; (void) n3;
-    const int64_t N  = ggml_nrows(dst);
-    if (D == 0 || N == 0) return;
+    ਅਚਲ int64_t D  = dst->ne[0];
+    ਅਚਲ int64_t n1 = dst->ne[1], n2 = dst->ne[2], n3 = dst->ne[3]; (ਖਾਲੀ) n3;
+    ਅਚਲ int64_t N  = ggml_nrows(dst);
+    ਜੇ (D == 0 || N == 0) ਵਾਪਸ;
 
-    const ggml_tensor *G = dst->src[0];
-    const ggml_tensor *X = dst->src[1];
-    const int ts = (int) ggml_type_size(X->type);
+    ਅਚਲ ggml_tensor *G = dst->src[0];
+    ਅਚਲ ggml_tensor *X = dst->src[1];
+    ਅਚਲ ਪੂਰਨ ts = (ਪੂਰਨ) ggml_type_ਮਾਪ(X->type);
     GGML_ASSERT((size_t) X->nb[0]   == (size_t) ts);
     GGML_ASSERT((size_t) G->nb[0]   == (size_t) ts);
     GGML_ASSERT((size_t) dst->nb[0] == (size_t) ts);
 
-    const int64_t xs1 = X->nb[1] / ts, xs2 = X->nb[2] / ts, xs3 = X->nb[3] / ts;
-    const int64_t gs1 = G->nb[1] / ts, gs2 = G->nb[2] / ts, gs3 = G->nb[3] / ts;
-    const int64_t ds1 = dst->nb[1] / ts, ds2 = dst->nb[2] / ts, ds3 = dst->nb[3] / ts;
+    ਅਚਲ int64_t xs1 = X->nb[1] / ts, xs2 = X->nb[2] / ts, xs3 = X->nb[3] / ts;
+    ਅਚਲ int64_t gs1 = G->nb[1] / ts, gs2 = G->nb[2] / ts, gs3 = G->nb[3] / ts;
+    ਅਚਲ int64_t ds1 = dst->nb[1] / ts, ds2 = dst->nb[2] / ts, ds3 = dst->nb[3] / ts;
 
-    dpct::queue_ptr q = ctx.stream();
+    dpct::ਕਤਾਰ_ptr q = ctx.stream();
 
     // work-group size: multiple of WARP_SIZE, capped by device and 256, and not larger than D
-    const int device_max_wg = ggml_sycl_info().max_work_group_sizes[ctx.device];
-    auto roundup = [](int v, int m) { return ((v + m - 1) / m) * m; };
-    int wg_cap = 256;
-    if (device_max_wg > 0) wg_cap = std::min(wg_cap, device_max_wg);
-    int WG = std::max(WARP_SIZE, std::min(roundup((int)std::min<int64_t>(D, wg_cap), WARP_SIZE), wg_cap));
+    ਅਚਲ ਪੂਰਨ device_max_wg = ggml_sycl_info().max_work_ਸਮੂਹ_sizes[ctx.device];
+    ਸਵੈਚਾਲਿਤ roundup = [](ਪੂਰਨ v, ਪੂਰਨ m) { ਵਾਪਸ ((v + m - 1) / m) * m; };
+    ਪੂਰਨ wg_cap = 256;
+    ਜੇ (device_max_wg > 0) wg_cap = std::min(wg_cap, device_max_wg);
+    ਪੂਰਨ WG = std::max(WARP_ਮਾਪ, std::min(roundup((ਪੂਰਨ)std::min<int64_t>(D, wg_cap), WARP_ਮਾਪ), wg_cap));
 
     // FP32 path: per-thread compensated accumulation + hierarchical reduction
     q->submit([&](sycl::handler &cgh) {
-        const int nwarps_loc = std::max(1, WG / WARP_SIZE);
+        ਅਚਲ ਪੂਰਨ nwarps_loc = std::max(1, WG / WARP_ਮਾਪ);
         // store one partial value per warp (xx and xg) for cross-warp reduction
-        auto l_xx   = sycl::local_accessor<sycl::float2, 1>(sycl::range<1>(nwarps_loc), cgh);
-        auto l_xg   = sycl::local_accessor<sycl::float2, 1>(sycl::range<1>(nwarps_loc), cgh);
+        ਸਵੈਚਾਲਿਤ l_xx   = sycl::local_accessor<sycl::float2, 1>(sycl::range<1>(nwarps_loc), cgh);
+        ਸਵੈਚਾਲਿਤ l_xg   = sycl::local_accessor<sycl::float2, 1>(sycl::range<1>(nwarps_loc), cgh);
 
         cgh.parallel_for(
             sycl::nd_range<3>(sycl::range<3>(1, 1, N) * sycl::range<3>(1, 1, WG),
                               sycl::range<3>(1, 1, WG)),
-            [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                const int row = item_ct1.get_group(2);
-                const int tid = item_ct1.get_local_id(2);
+            [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                ਅਚਲ ਪੂਰਨ ਪੰਕਤੀ = ਵਸਤੂ_ct1.get_ਸਮੂਹ(2);
+                ਅਚਲ ਪੂਰਨ tid = ਵਸਤੂ_ct1.get_local_id(2);
 
-                const int64_t i1 = row % n1;
-                const int64_t i2 = (row / n1) % n2;
-                const int64_t i3 = row / (n1 * n2);
+                ਅਚਲ int64_t i1 = ਪੰਕਤੀ % n1;
+                ਅਚਲ int64_t i2 = (ਪੰਕਤੀ / n1) % n2;
+                ਅਚਲ int64_t i3 = ਪੰਕਤੀ / (n1 * n2);
 
-                const float *__restrict x_row = x_base + i3 * xs3 + i2 * xs2 + i1 * xs1;
-                const float *__restrict g_row = g_base + i3 * gs3 + i2 * gs2 + i1 * gs1;
-                float *__restrict d_row       = dx_base + i3 * ds3 + i2 * ds2 + i1 * ds1;
+                ਅਚਲ ਦਸ਼ਮਲਵ *__restrict x_ਪੰਕਤੀ = x_ਅਧਾਰ + i3 * xs3 + i2 * xs2 + i1 * xs1;
+                ਅਚਲ ਦਸ਼ਮਲਵ *__restrict g_ਪੰਕਤੀ = g_ਅਧਾਰ + i3 * gs3 + i2 * gs2 + i1 * gs1;
+                ਦਸ਼ਮਲਵ *__restrict d_ਪੰਕਤੀ       = dx_ਅਧਾਰ + i3 * ds3 + i2 * ds2 + i1 * ds1;
 
                 // per-thread accumulation (compensated by default)
-                float sum_xx = 0.f, sum_xg = 0.f;
-#ifndef GGML_SYCL_RMS_BACK_FAST
-                float c_xx = 0.f, c_xg = 0.f;
-#endif
-                for (int64_t col = tid; col < D; col += WG) {
-                    const float xv = x_row[col];
-                    const float gv = g_row[col];
-#ifdef GGML_SYCL_RMS_BACK_FAST
-                    sum_xx += xv * xv;
-                    sum_xg += xv * gv;
-#else
-                    float y1 = xv * xv - c_xx;
-                    float t1 = sum_xx + y1;
-                    c_xx = (t1 - sum_xx) - y1;
-                    sum_xx = t1;
+                ਦਸ਼ਮਲਵ ਜੋੜ_xx = 0.f, ਜੋੜ_xg = 0.f;
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ GGML_SYCL_RMS_ਪਿੱਠ_FAST
+                ਦਸ਼ਮਲਵ c_xx = 0.f, c_xg = 0.f;
+#ਜੇ_ਅੰਤ
+                ਲਈ (int64_t ਖਾਨਾ = tid; ਖਾਨਾ < D; ਖਾਨਾ += WG) {
+                    ਅਚਲ ਦਸ਼ਮਲਵ xv = x_ਪੰਕਤੀ[ਖਾਨਾ];
+                    ਅਚਲ ਦਸ਼ਮਲਵ gv = g_ਪੰਕਤੀ[ਖਾਨਾ];
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_SYCL_RMS_ਪਿੱਠ_FAST
+                    ਜੋੜ_xx += xv * xv;
+                    ਜੋੜ_xg += xv * gv;
+#ਨਹੀਂਤਾਂ
+                    ਦਸ਼ਮਲਵ y1 = xv * xv - c_xx;
+                    ਦਸ਼ਮਲਵ t1 = ਜੋੜ_xx + y1;
+                    c_xx = (t1 - ਜੋੜ_xx) - y1;
+                    ਜੋੜ_xx = t1;
 
-                    float y2 = xv * gv - c_xg;
-                    float t2 = sum_xg + y2;
-                    c_xg = (t2 - sum_xg) - y2;
-                    sum_xg = t2;
-#endif
+                    ਦਸ਼ਮਲਵ y2 = xv * gv - c_xg;
+                    ਦਸ਼ਮਲਵ t2 = ਜੋੜ_xg + y2;
+                    c_xg = (t2 - ਜੋੜ_xg) - y2;
+                    ਜੋੜ_xg = t2;
+#ਜੇ_ਅੰਤ
                 }
 
                 // warp-level reduction
-                sycl::float2 xx = sycl::float2(sum_xx,
-#ifndef GGML_SYCL_RMS_BACK_FAST
+                sycl::float2 xx = sycl::float2(ਜੋੜ_xx,
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ GGML_SYCL_RMS_ਪਿੱਠ_FAST
                     c_xx
-#else
+#ਨਹੀਂਤਾਂ
                     0.f
-#endif
+#ਜੇ_ਅੰਤ
                 );
-                sycl::float2 xg = sycl::float2(sum_xg,
-#ifndef GGML_SYCL_RMS_BACK_FAST
+                sycl::float2 xg = sycl::float2(ਜੋੜ_xg,
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ GGML_SYCL_RMS_ਪਿੱਠ_FAST
                     c_xg
-#else
+#ਨਹੀਂਤਾਂ
                     0.f
-#endif
+#ਜੇ_ਅੰਤ
                 );
-                xx = warp_reduce_sum(xx, item_ct1);
-                xg = warp_reduce_sum(xg, item_ct1);
+                xx = warp_reduce_ਜੋੜ(xx, ਵਸਤੂ_ct1);
+                xg = warp_reduce_ਜੋੜ(xg, ਵਸਤੂ_ct1);
 
                 // cross-warp reduction using local memory (single barrier)
-                const auto sub_group = item_ct1.get_sub_group();
-                const auto sg_id     = sub_group.get_group_linear_id();
-                const auto wi_in_sg  = sub_group.get_local_linear_id();
-                const int nthreads   = item_ct1.get_local_range(2);
-                const int nwarps     = nthreads / WARP_SIZE;
+                ਅਚਲ ਸਵੈਚਾਲਿਤ sub_ਸਮੂਹ = ਵਸਤੂ_ct1.get_sub_ਸਮੂਹ();
+                ਅਚਲ ਸਵੈਚਾਲਿਤ sg_id     = sub_ਸਮੂਹ.get_ਸਮੂਹ_ਰੇਖਿਕ_id();
+                ਅਚਲ ਸਵੈਚਾਲਿਤ wi_ਵਿੱਚ_sg  = sub_ਸਮੂਹ.get_local_ਰੇਖਿਕ_id();
+                ਅਚਲ ਪੂਰਨ nthreads   = ਵਸਤੂ_ct1.get_local_range(2);
+                ਅਚਲ ਪੂਰਨ nwarps     = nthreads / WARP_ਮਾਪ;
 
-                sycl::float2 xx_total = xx;
-                sycl::float2 xg_total = xg;
-                if (nwarps > 1) {
-                    if (wi_in_sg == 0) {
+                sycl::float2 xx_ਕੁੱਲ = xx;
+                sycl::float2 xg_ਕੁੱਲ = xg;
+                ਜੇ (nwarps > 1) {
+                    ਜੇ (wi_ਵਿੱਚ_sg == 0) {
                         l_xx[sg_id] = xx;
                         l_xg[sg_id] = xg;
                     }
-                    item_ct1.barrier(sycl::access::fence_space::local_space);
+                    ਵਸਤੂ_ct1.barrier(sycl::access::fence_space::local_space);
 
-                    if (sg_id == 0) {
-                        const unsigned wi_u = wi_in_sg;
-                        sycl::float2 xx_first = (wi_u < static_cast<unsigned>(nwarps)) ? l_xx[wi_u] : sycl::float2(0.f, 0.f);
-                        sycl::float2 xg_first = (wi_u < static_cast<unsigned>(nwarps)) ? l_xg[wi_u] : sycl::float2(0.f, 0.f);
-                        xx_total = warp_reduce_sum(xx_first, item_ct1);
-                        xg_total = warp_reduce_sum(xg_first, item_ct1);
-                    } else {
+                    ਜੇ (sg_id == 0) {
+                        ਅਚਲ ਬਿਨਾਨਿਸ਼ਾਨੀ wi_u = wi_ਵਿੱਚ_sg;
+                        sycl::float2 xx_ਪਹਿਲਾ = (wi_u < static_cast<ਬਿਨਾਨਿਸ਼ਾਨੀ>(nwarps)) ? l_xx[wi_u] : sycl::float2(0.f, 0.f);
+                        sycl::float2 xg_ਪਹਿਲਾ = (wi_u < static_cast<ਬਿਨਾਨਿਸ਼ਾਨੀ>(nwarps)) ? l_xg[wi_u] : sycl::float2(0.f, 0.f);
+                        xx_ਕੁੱਲ = warp_reduce_ਜੋੜ(xx_ਪਹਿਲਾ, ਵਸਤੂ_ct1);
+                        xg_ਕੁੱਲ = warp_reduce_ਜੋੜ(xg_ਪਹਿਲਾ, ਵਸਤੂ_ct1);
+                    } ਨਹੀਂਤਾਂ {
                         // other subgroups keep their local totals; they'll be ignored
-                        xx_total = xx;
-                        xg_total = xg;
+                        xx_ਕੁੱਲ = xx;
+                        xg_ਕੁੱਲ = xg;
                     }
                     // ensure all threads see the first-subgroup result via broadcast below
                 }
 
                 // compute inv_r and coeff once per row and broadcast to the whole work-group
-                float inv_r = 0.f;
-                float coeff = 0.f;
-                if (tid == 0) {
-                    const float sum_xx_f  = xx_total.x() + xx_total.y();
-                    const float sum_xdz_f = xg_total.x() + xg_total.y();
-                    const float mean_eps  = sum_xx_f / (float) D + eps;
-                    const float sum_eps   = sum_xx_f + eps * (float) D;
-                    inv_r = sycl::rsqrt(mean_eps);
-                    coeff = -sum_xdz_f / sum_eps;
+                ਦਸ਼ਮਲਵ inv_r = 0.f;
+                ਦਸ਼ਮਲਵ coeff = 0.f;
+                ਜੇ (tid == 0) {
+                    ਅਚਲ ਦਸ਼ਮਲਵ ਜੋੜ_xx_f  = xx_ਕੁੱਲ.x() + xx_ਕੁੱਲ.y();
+                    ਅਚਲ ਦਸ਼ਮਲਵ ਜੋੜ_xdz_f = xg_ਕੁੱਲ.x() + xg_ਕੁੱਲ.y();
+                    ਅਚਲ ਦਸ਼ਮਲਵ ਔਸਤ_eps  = ਜੋੜ_xx_f / (ਦਸ਼ਮਲਵ) D + eps;
+                    ਅਚਲ ਦਸ਼ਮਲਵ ਜੋੜ_eps   = ਜੋੜ_xx_f + eps * (ਦਸ਼ਮਲਵ) D;
+                    inv_r = sycl::rsqrt(ਔਸਤ_eps);
+                    coeff = -ਜੋੜ_xdz_f / ਜੋੜ_eps;
                 }
-                inv_r = sycl::group_broadcast(item_ct1.get_group(), inv_r);
-                coeff = sycl::group_broadcast(item_ct1.get_group(), coeff);
+                inv_r = sycl::ਸਮੂਹ_ਪ੍ਰਸਾਰਣ(ਵਸਤੂ_ct1.get_ਸਮੂਹ(), inv_r);
+                coeff = sycl::ਸਮੂਹ_ਪ੍ਰਸਾਰਣ(ਵਸਤੂ_ct1.get_ਸਮੂਹ(), coeff);
 
-                for (int64_t col = tid; col < D; col += WG) {
-                    d_row[col] = (g_row[col] + coeff * x_row[col]) * inv_r;
+                ਲਈ (int64_t ਖਾਨਾ = tid; ਖਾਨਾ < D; ਖਾਨਾ += WG) {
+                    d_ਪੰਕਤੀ[ਖਾਨਾ] = (g_ਪੰਕਤੀ[ਖਾਨਾ] + coeff * x_ਪੰਕਤੀ[ਖਾਨਾ]) * inv_r;
                 }
             });
     });
 
 }
 
-void ggml_sycl_op_l2_norm(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
-    const ggml_tensor * src0 = dst->src[0];
-    const float * src0_d = (const float *) src0->data;
-    float * dst_d = (float *) dst->data;
-    dpct::queue_ptr     stream = ctx.stream();
+ਖਾਲੀ ggml_sycl_op_l2_norm(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
+    ਅਚਲ ggml_tensor * src0 = dst->src[0];
+    ਅਚਲ ਦਸ਼ਮਲਵ * src0_d = (ਅਚਲ ਦਸ਼ਮਲਵ *) src0->ਅੰਕੜੇ;
+    ਦਸ਼ਮਲਵ * dst_d = (ਦਸ਼ਮਲਵ *) dst->ਅੰਕੜੇ;
+    dpct::ਕਤਾਰ_ptr     stream = ctx.stream();
 
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
 
     GGML_TENSOR_UNARY_OP_LOCALS;
 
-    float eps;
-    memcpy(&eps, dst->op_params, sizeof(float));
+    ਦਸ਼ਮਲਵ eps;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&eps, dst->op_params, ਆਕਾਰ(ਦਸ਼ਮਲਵ));
     GGML_ASSERT(eps >= 0.0f);
 
-    const size_t ts0 = ggml_type_size(src0->type);
-    const size_t tdst = ggml_type_size(dst->type);
+    ਅਚਲ size_t ts0 = ggml_type_ਮਾਪ(src0->type);
+    ਅਚਲ size_t tdst = ggml_type_ਮਾਪ(dst->type);
     GGML_ASSERT(nb00 % ts0 == 0 && nb01 % ts0 == 0 && nb02 % ts0 == 0 && nb03 % ts0 == 0);
     GGML_ASSERT(nb0 % tdst == 0 && nb1 % tdst == 0 && nb2 % tdst == 0 && nb3 % tdst == 0);
-    const int64_t ss0 = nb00 / ts0;
-    const int64_t ss1 = nb01 / ts0;
-    const int64_t ss2 = nb02 / ts0;
-    const int64_t ss3 = nb03 / ts0;
-    const int64_t ds0 = nb0 / tdst;
-    const int64_t ds1 = nb1 / tdst;
-    const int64_t ds2 = nb2 / tdst;
-    const int64_t ds3 = nb3 / tdst;
+    ਅਚਲ int64_t ss0 = nb00 / ts0;
+    ਅਚਲ int64_t ss1 = nb01 / ts0;
+    ਅਚਲ int64_t ss2 = nb02 / ts0;
+    ਅਚਲ int64_t ss3 = nb03 / ts0;
+    ਅਚਲ int64_t ds0 = nb0 / tdst;
+    ਅਚਲ int64_t ds1 = nb1 / tdst;
+    ਅਚਲ int64_t ds2 = nb2 / tdst;
+    ਅਚਲ int64_t ds3 = nb3 / tdst;
 
     /*support both WARP_SIZE or WARP_32_SIZE in code
       choose by hardware for better performance
     */
-    l2_norm_f32_sycl<WARP_SIZE>(src0_d, dst_d, ne00, ne01, ne02, ne03,
+    l2_norm_f32_sycl<WARP_ਮਾਪ>(src0_d, dst_d, ne00, ne01, ne02, ne03,
             ss0, ss1, ss2, ss3, ds0, ds1, ds2, ds3, eps, stream, ctx.device);
 }
 
 // nodes[0..count) are independent, same-shape, same-eps, same-nb L2_NORM ops validated
 // by the caller; requires ncols < 1024 (the warp reduction path).
-void ggml_sycl_l2_norm_batch(ggml_backend_sycl_context & ctx, ggml_tensor ** nodes, int count) {
-    const ggml_tensor * s0 = nodes[0]->src[0];
-    const int ncols       = (int) s0->ne[0];
-    const int nrows_total = (int) ggml_nrows(s0);
-    float eps;
-    memcpy(&eps, nodes[0]->op_params, sizeof(float));
+ਖਾਲੀ ggml_sycl_l2_norm_batch(ggml_backend_sycl_context & ctx, ggml_tensor ** nodes, ਪੂਰਨ count) {
+    ਅਚਲ ggml_tensor * s0 = nodes[0]->src[0];
+    ਅਚਲ ਪੂਰਨ ncols       = (ਪੂਰਨ) s0->ne[0];
+    ਅਚਲ ਪੂਰਨ nrows_ਕੁੱਲ = (ਪੂਰਨ) ggml_nrows(s0);
+    ਦਸ਼ਮਲਵ eps;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&eps, nodes[0]->op_params, ਆਕਾਰ(ਦਸ਼ਮਲਵ));
     GGML_ASSERT(eps >= 0.0f);
 
     l2_batch_ptrs p{};
-    for (int t = 0; t < count; ++t) {
-        p.src[t] = (const float *) nodes[t]->src[0]->data;
-        p.dst[t] = (float *) nodes[t]->data;
+    ਲਈ (ਪੂਰਨ t = 0; t < count; ++t) {
+        p.src[t] = (ਅਚਲ ਦਸ਼ਮਲਵ *) nodes[t]->src[0]->ਅੰਕੜੇ;
+        p.dst[t] = (ਦਸ਼ਮਲਵ *) nodes[t]->ਅੰਕੜੇ;
     }
 
-    const ggml_tensor * d0 = nodes[0];
-    const size_t        ts = ggml_type_size(GGML_TYPE_F32);
+    ਅਚਲ ggml_tensor * d0 = nodes[0];
+    ਅਚਲ size_t        ts = ggml_type_ਮਾਪ(GGML_TYPE_F32);
     l2_batch_strides    st{};
-    st.ne1 = (int) s0->ne[1];
-    st.ne2 = (int) s0->ne[2];
+    st.ne1 = (ਪੂਰਨ) s0->ne[1];
+    st.ne2 = (ਪੂਰਨ) s0->ne[2];
     st.ss0 = s0->nb[0] / ts; st.ss1 = s0->nb[1] / ts; st.ss2 = s0->nb[2] / ts; st.ss3 = s0->nb[3] / ts;
     st.ds0 = d0->nb[0] / ts; st.ds1 = d0->nb[1] / ts; st.ds2 = d0->nb[2] / ts; st.ds3 = d0->nb[3] / ts;
 
-    l2_norm_f32_batch_sycl<WARP_SIZE>(p, st, count, ncols, nrows_total, eps, ctx.stream());
+    l2_norm_f32_batch_sycl<WARP_ਮਾਪ>(p, st, count, ncols, nrows_ਕੁੱਲ, eps, ctx.stream());
 }

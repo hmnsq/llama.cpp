@@ -1,58 +1,58 @@
-#ifndef HEX_UTILS_H
-#define HEX_UTILS_H
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ HEX_UTILS_H
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HEX_UTILS_H
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <qurt_memory.h>
-#include <qurt.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdbool.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdint.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <qurt_memory.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <qurt.h>
 
-#include "hexagon_types.h"
-#include "hexagon_protos.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hexagon_types.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hexagon_protos.h"
 
-#include "hex-fastdiv.h"
-#include "hex-dump.h"
-#include "hex-common.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hex-fastdiv.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hex-dump.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hex-common.h"
 
-static inline uint64_t hex_get_cycles() {
-    uint64_t cycles = 0;
-    asm volatile(" %0 = c15:14\n" : "=r"(cycles));
-    return cycles;
+ਸਥਿਰ ਸਤਰਅੰਦਰ uint64_t hex_get_ਚੱਕਰਾਂ() {
+    uint64_t ਚੱਕਰਾਂ = 0;
+    asm ਅਸਥਿਰ(" %0 = c15:14\n" : "=r"(ਚੱਕਰਾਂ));
+    ਵਾਪਸ ਚੱਕਰਾਂ;
 }
 
-static inline uint64_t hex_get_pktcnt() {
+ਸਥਿਰ ਸਤਰਅੰਦਰ uint64_t hex_get_pktcnt() {
     uint64_t pktcnt;
-    asm volatile(" %0 = c19:18\n" : "=r"(pktcnt));
-    return pktcnt;
+    asm ਅਸਥਿਰ(" %0 = c19:18\n" : "=r"(pktcnt));
+    ਵਾਪਸ pktcnt;
 }
 
-static inline void hex_l2fetch(const void * p, uint32_t width, uint32_t stride, uint32_t height) {
-    const uint64_t control = Q6_P_combine_RR(stride, Q6_R_combine_RlRl(width, height));
-    Q6_l2fetch_AP((void *) p, control);
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ hex_l2fetch(ਅਚਲ ਖਾਲੀ * p, uint32_t ਚੌੜਾਈ, uint32_t stride, uint32_t ਉਚਾਈ) {
+    ਅਚਲ uint64_t control = Q6_P_combine_RR(stride, Q6_R_combine_RlRl(ਚੌੜਾਈ, ਉਚਾਈ));
+    Q6_l2fetch_AP((ਖਾਲੀ *) p, control);
 }
 
-static inline void hex_l2fetch_block(const void * addr, size_t size) {
-    if (size == 0) return;
-    const uint32_t width = 16384; // 16KB rows
-    const uint32_t height = (size + width - 1) / width;
-    hex_l2fetch(addr, width, width, height);
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ hex_l2fetch_ਖੰਡ(ਅਚਲ ਖਾਲੀ * addr, size_t ਮਾਪ) {
+    ਜੇ (ਮਾਪ == 0) ਵਾਪਸ;
+    ਅਚਲ uint32_t ਚੌੜਾਈ = 16384; // 16KB rows
+    ਅਚਲ uint32_t ਉਚਾਈ = (ਮਾਪ + ਚੌੜਾਈ - 1) / ਚੌੜਾਈ;
+    hex_l2fetch(addr, ਚੌੜਾਈ, ਚੌੜਾਈ, ਉਚਾਈ);
 }
 
-#define HEX_L2_LINE_SIZE           128
-#define HEX_L2_BLOCK_SIZE          (HEX_L2_LINE_SIZE * 4) // flush granularity (chunks per thread)
-#define HEX_L2_FLUSH_WQ_THRESHOLD  (4 * 1024)
-#define HEX_L2_FLUSH_ALL_THRESHOLD (4 * 1024 * 1024)
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HEX_L2_ਸਤਰ_ਮਾਪ           128
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HEX_L2_ਖੰਡ_ਮਾਪ          (HEX_L2_ਸਤਰ_ਮਾਪ * 4) // flush granularity (chunks per thread)
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HEX_L2_FLUSH_WQ_ਹੱਦ  (4 * 1024)
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HEX_L2_FLUSH_ALL_ਹੱਦ (4 * 1024 * 1024)
 
-static inline void hex_l2flush(void * addr, size_t size) {
-    if (size == 0) return;
-    const uint32_t s = ((uint32_t) addr) & ~(HEX_L2_LINE_SIZE - 1);
-    const uint32_t e = (((uint32_t) addr) + size + HEX_L2_LINE_SIZE - 1) & ~(HEX_L2_LINE_SIZE - 1);
-    for (uint32_t i = s; i < e; i += HEX_L2_LINE_SIZE) {
-        Q6_dccleaninva_A((void *) i);
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ hex_l2flush(ਖਾਲੀ * addr, size_t ਮਾਪ) {
+    ਜੇ (ਮਾਪ == 0) ਵਾਪਸ;
+    ਅਚਲ uint32_t s = ((uint32_t) addr) & ~(HEX_L2_ਸਤਰ_ਮਾਪ - 1);
+    ਅਚਲ uint32_t e = (((uint32_t) addr) + ਮਾਪ + HEX_L2_ਸਤਰ_ਮਾਪ - 1) & ~(HEX_L2_ਸਤਰ_ਮਾਪ - 1);
+    ਲਈ (uint32_t i = s; i < e; i += HEX_L2_ਸਤਰ_ਮਾਪ) {
+        Q6_dccleaninva_A((ਖਾਲੀ *) i);
     }
 }
 
-static inline void hex_pause() {
-    asm volatile(" pause(#255)\n");
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ hex_pause() {
+    asm ਅਸਥਿਰ(" pause(#255)\n");
 }
 
-#endif /* HEX_UTILS_H */
+#ਜੇ_ਅੰਤ /* HEX_UTILS_H */

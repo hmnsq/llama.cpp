@@ -1,14 +1,14 @@
-#pragma once
+#ਹਦਾਇਤ once
 
-#include "ggml.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ __cplusplus
+ਬਾਹਰੀ "C" {
+#ਜੇ_ਅੰਤ
 
-GGML_API void ggml_critical_section_start(void);
-GGML_API void ggml_critical_section_end(void);
+GGML_API ਖਾਲੀ ggml_critical_section_ਸ਼ੁਰੂ(ਖਾਲੀ);
+GGML_API ਖਾਲੀ ggml_critical_section_ਸਿਰਾ(ਖਾਲੀ);
 
-#ifdef __cplusplus
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ __cplusplus
 }
-#endif
+#ਜੇ_ਅੰਤ

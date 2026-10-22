@@ -1,34 +1,34 @@
-#pragma once
+#ਹਦਾਇਤ once
 
-#include <atomic>
-#include <cstdint>
+#ਅਨ੍ਤਰ੍ਭਾਵ <atomic>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cstdint>
 
-#define SPINE_CACHE_LINE  64
-#define SPINE_CACHE_ALIGN __attribute__((aligned(SPINE_CACHE_LINE)))
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ SPINE_CACHE_ਸਤਰ  64
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ SPINE_CACHE_ALIGN __attribute__((aligned(SPINE_CACHE_ਸਤਰ)))
 
-struct spine_barrier_t {
+ਬਣਤਰ spine_barrier_t {
     SPINE_CACHE_ALIGN std::atomic<int64_t> pending_;
-    SPINE_CACHE_ALIGN std::atomic<int64_t> rounds_;
-    SPINE_CACHE_ALIGN int64_t              total_;
+    SPINE_CACHE_ALIGN std::atomic<int64_t> ਗੇੜ;
+    SPINE_CACHE_ALIGN int64_t              ਕੁੱਲ_2;
 };
 
-inline void spine_barrier_wait(spine_barrier_t * b) {
-    auto cur_round = b->rounds_.load(std::memory_order_acquire);
-    auto cnt       = --b->pending_;
-    if (cnt == 0) {
-        b->pending_.store(b->total_);
-        b->rounds_.store(cur_round + 1);
-    } else {
-        while (cur_round == b->rounds_.load(std::memory_order_relaxed)) {
-            __asm__ volatile("pause " ::: "memory");
+ਸਤਰਅੰਦਰ ਖਾਲੀ spine_barrier_wait(spine_barrier_t * b) {
+    ਸਵੈਚਾਲਿਤ cur_ਗੇੜਾ = b->ਗੇੜ.ਲੱਦੋ(std::memory_order_acquire);
+    ਸਵੈਚਾਲਿਤ cnt       = --b->pending_;
+    ਜੇ (cnt == 0) {
+        b->pending_.store(b->ਕੁੱਲ_2);
+        b->ਗੇੜ.store(cur_ਗੇੜਾ + 1);
+    } ਨਹੀਂਤਾਂ {
+        ਜਦੋਂ (cur_ਗੇੜਾ == b->ਗੇੜ.ਲੱਦੋ(std::memory_order_relaxed)) {
+            __asm__ ਅਸਥਿਰ("pause " ::: "memory");
         }
     }
 }
 
-inline void spine_barrier_init(spine_barrier_t * b, int num_barriers, uint64_t thread_count) {
-    for (int i = 0; i < num_barriers; i++) {
-        b[i].total_ = thread_count;
-        b[i].pending_.store(thread_count);
-        b[i].rounds_.store(0);
+ਸਤਰਅੰਦਰ ਖਾਲੀ spine_barrier_init(spine_barrier_t * b, ਪੂਰਨ ਅੰਕ_barriers, uint64_t thread_ਗਿਣਤੀ) {
+    ਲਈ (ਪੂਰਨ i = 0; i < ਅੰਕ_barriers; i++) {
+        b[i].ਕੁੱਲ_2 = thread_ਗਿਣਤੀ;
+        b[i].pending_.store(thread_ਗਿਣਤੀ);
+        b[i].ਗੇੜ.store(0);
     }
 }

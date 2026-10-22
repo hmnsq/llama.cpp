@@ -1,38 +1,38 @@
-#ifndef HTP_WORK_QUEUE_H
-#define HTP_WORK_QUEUE_H
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ HTP_WORK_ਕਤਾਰ_H
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HTP_WORK_ਕਤਾਰ_H
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <stddef.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdbool.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdint.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stddef.h>
 
-typedef void (*work_queue_func_t)(unsigned int n, unsigned int i, void *);
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਖਾਲੀ (*work_ਕਤਾਰ_func_t)(ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ n, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ i, ਖਾਲੀ *);
 
-struct work_queue_s;
-typedef struct work_queue_s * work_queue_t;
+ਬਣਤਰ work_ਕਤਾਰ_s;
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ work_ਕਤਾਰ_s * work_ਕਤਾਰ_t;
 
-#define WORK_QUEUE_MAX_N_THREADS      10
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ WORK_ਕਤਾਰ_MAX_N_ਧਾਗੇ      10
 
-size_t       work_queue_sizeof(uint32_t n_threads, uint32_t capacity, uint32_t stack_size);
-size_t       work_queue_alignof(void);
-work_queue_t work_queue_init(void * ptr, uint32_t n_threads, uint32_t capacity, uint32_t stack_size);
-void         work_queue_free(work_queue_t q);
+size_t       work_ਕਤਾਰ_sizeof(uint32_t n_ਧਾਗੇ, uint32_t ਸਮਰੱਥਾ, uint32_t ਢੇਰ_ਮਾਪ);
+size_t       work_ਕਤਾਰ_alignof(ਖਾਲੀ);
+work_ਕਤਾਰ_t work_ਕਤਾਰ_init(ਖਾਲੀ * ptr, uint32_t n_ਧਾਗੇ, uint32_t ਸਮਰੱਥਾ, uint32_t ਢੇਰ_ਮਾਪ);
+ਖਾਲੀ         work_ਕਤਾਰ_free(work_ਕਤਾਰ_t q);
 
-void work_queue_wakeup(work_queue_t q);
-void work_queue_suspend(work_queue_t q);
+ਖਾਲੀ work_ਕਤਾਰ_wakeup(work_ਕਤਾਰ_t q);
+ਖਾਲੀ work_ਕਤਾਰ_suspend(work_ਕਤਾਰ_t q);
 
-bool work_queue_run_async(work_queue_t q, work_queue_func_t func, void * data, unsigned int n);
+bool work_ਕਤਾਰ_ਲੜੀਵਾਰ_async(work_ਕਤਾਰ_t q, work_ਕਤਾਰ_func_t func, ਖਾਲੀ * ਅੰਕੜੇ, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ n);
 
-static inline bool work_queue_run(work_queue_t q, work_queue_func_t func, void * data, unsigned int n) {
-    if (n <= 1) {
-        func(n, 0, data);
-        return true;
+ਸਥਿਰ ਸਤਰਅੰਦਰ bool work_ਕਤਾਰ_ਲੜੀਵਾਰ(work_ਕਤਾਰ_t q, work_ਕਤਾਰ_func_t func, ਖਾਲੀ * ਅੰਕੜੇ, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ n) {
+    ਜੇ (n <= 1) {
+        func(n, 0, ਅੰਕੜੇ);
+        ਵਾਪਸ true;
     }
-    return work_queue_run_async(q, func, data, n);
+    ਵਾਪਸ work_ਕਤਾਰ_ਲੜੀਵਾਰ_async(q, func, ਅੰਕੜੇ, n);
 }
 
 // Legacy compatibility
-typedef work_queue_func_t     worker_callback_t;
-#define worker_pool_run_func  work_queue_run
-#define worker_pool           work_queue
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ work_ਕਤਾਰ_func_t     ਕਾਮਾ_callback_t;
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ ਕਾਮਾ_pool_ਲੜੀਵਾਰ_func  work_ਕਤਾਰ_ਲੜੀਵਾਰ
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ ਕਾਮਾ_pool           work_ਕਤਾਰ
 
-#endif  // #ifndef HTP_WORK_QUEUE_H
+#ਜੇ_ਅੰਤ  // #ifndef HTP_WORK_QUEUE_H

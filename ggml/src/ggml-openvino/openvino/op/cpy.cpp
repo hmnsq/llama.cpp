@@ -1,311 +1,311 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "../node_context.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "../op_table.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "../utils.h"
 
-#include <climits>
-#include <cstdint>
-#include <cstdio>
-#include <memory>
-#include <numeric>
-#include <openvino/frontend/exception.hpp>
-#include <openvino/op/add.hpp>
-#include <openvino/op/concat.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/gather.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/negative.hpp>
-#include <openvino/op/range.hpp>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/scatter_update.hpp>
-#include <openvino/op/shape_of.hpp>
-#include <openvino/op/slice.hpp>
-#include <openvino/op/squeeze.hpp>
-#include <openvino/op/subtract.hpp>
-#include <vector>
+#ਅਨ੍ਤਰ੍ਭਾਵ <climits>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cstdint>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cstdio>
+#ਅਨ੍ਤਰ੍ਭਾਵ <memory>
+#ਅਨ੍ਤਰ੍ਭਾਵ <numeric>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/frontend/exception.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/add.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/concat.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/constant.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/convert.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/gather.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/multiply.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/negative.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/range.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/reshape.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/scatter_update.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/shape_of.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/slice.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/squeeze.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/subtract.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <vector>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+ਨਾਮਾਕਾਸ਼ ov {
+ਨਾਮਾਕਾਸ਼ frontend {
+ਨਾਮਾਕਾਸ਼ ggml {
+ਨਾਮਾਕਾਸ਼ op {
 
-OutputVector translate_cpy(const NodeContext & context) {
-    auto op_case = context.get_op_case();
-    auto input_shape = context.get_input_shape(0);
-    auto output_shape = context.get_input_shape(1);
+Output_ਸਦਿਸ਼ translate_cpy(ਅਚਲ ਗੰਢ_Context & context) {
+    ਸਵੈਚਾਲਿਤ op_case = context.get_op_case();
+    ਸਵੈਚਾਲਿਤ ਨਿਵੇਸ਼_shape = context.get_ਨਿਵੇਸ਼_shape(0);
+    ਸਵੈਚਾਲਿਤ output_shape = context.get_ਨਿਵੇਸ਼_shape(1);
 
-    if (op_case == 4) {
-        auto src = process_view_input_new(context, 0);
-        auto base = context.get_input(1);
+    ਜੇ (op_case == 4) {
+        ਸਵੈਚਾਲਿਤ src = process_view_ਨਿਵੇਸ਼_new(context, 0);
+        ਸਵੈਚਾਲਿਤ ਅਧਾਰ = context.get_ਨਿਵੇਸ਼(1);
 
         int64_t n_elems = 1;
-        for (const auto & dim : context.get_output_shape().to_shape()) {
+        ਲਈ (ਅਚਲ ਸਵੈਚਾਲਿਤ & dim : context.get_output_shape().ਮੰਜ਼ਿਲ_shape()) {
             n_elems *= static_cast<int64_t>(dim);
         }
 
-        const auto output_stride = context.get_output_stride();
-        const size_t elem_size = output_stride.empty() ? context.get_output_type().size() : output_stride.back();
-        FRONT_END_OP_CONVERSION_CHECK(elem_size > 0, "CPY conv state view update has invalid element size");
+        ਅਚਲ ਸਵੈਚਾਲਿਤ output_stride = context.get_output_stride();
+        ਅਚਲ size_t elem_ਮਾਪ = output_stride.ਖਾਲੀ_ਥਾਵਾਂ() ? context.get_output_type().size() : output_stride.back();
+        FRONT_ਸਿਰਾ_OP_CONVERSION_CHECK(elem_ਮਾਪ > 0, "CPY conv state view update has invalid element size");
 
-        const int64_t begin_val = static_cast<int64_t>(context.get_output_op_offset() / elem_size);
-        const int64_t end_val = begin_val + n_elems;
+        ਅਚਲ int64_t begin_val = static_cast<int64_t>(context.get_output_op_ਵਿੱਥ() / elem_ਮਾਪ);
+        ਅਚਲ int64_t ਸਿਰਾ_val = begin_val + n_elems;
 
-        auto flat_shape = ov::op::v0::Constant::create(ov::element::i64, {4}, std::vector<int64_t>{1, 1, 1, -1});
-        src = std::make_shared<ov::op::v1::Reshape>(src, flat_shape, false);
-        if (src.get_element_type() != context.get_output_type()) {
+        ਸਵੈਚਾਲਿਤ flat_shape = ov::op::v0::Constant::create(ov::element::i64, {4}, std::vector<int64_t>{1, 1, 1, -1});
+        src = std::make_shared<ov::op::v1::Reshape>(src, flat_shape, ਝੂਠ);
+        ਜੇ (src.get_element_type() != context.get_output_type()) {
             src = std::make_shared<ov::op::v0::Convert>(src, context.get_output_type());
         }
 
-        auto zero = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
-        auto begin = ov::op::v0::Constant::create(ov::element::i64, {1}, {begin_val});
-        auto end = ov::op::v0::Constant::create(ov::element::i64, {1}, {end_val});
-        auto int_max = ov::op::v0::Constant::create(ov::element::i64, {1}, {INT_MAX});
-        auto one = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
-        auto axis = ov::op::v0::Constant::create(ov::element::i64, {1}, {3});
+        ਸਵੈਚਾਲਿਤ zero = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
+        ਸਵੈਚਾਲਿਤ begin = ov::op::v0::Constant::create(ov::element::i64, {1}, {begin_val});
+        ਸਵੈਚਾਲਿਤ end = ov::op::v0::Constant::create(ov::element::i64, {1}, {ਸਿਰਾ_val});
+        ਸਵੈਚਾਲਿਤ int_max = ov::op::v0::Constant::create(ov::element::i64, {1}, {ਵੱਧ_ਤੋਂ_ਵੱਧ_ਅੰਕ});
+        ਸਵੈਚਾਲਿਤ one = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
+        ਸਵੈਚਾਲਿਤ axis = ov::op::v0::Constant::create(ov::element::i64, {1}, {3});
 
-        auto head_part = std::make_shared<ov::op::v8::Slice>(base, zero, begin, one, axis);
-        auto tail_part = std::make_shared<ov::op::v8::Slice>(base, end, int_max, one, axis);
-        auto res = std::make_shared<ov::op::v0::Concat>(ov::OutputVector{head_part, src, tail_part}, 3);
-        return rename_outputs_with_suffix({res}, context.get_name());
+        ਸਵੈਚਾਲਿਤ ਸਿਰ_part = std::make_shared<ov::op::v8::ਟੁਕੜਾ>(ਅਧਾਰ, zero, begin, one, axis);
+        ਸਵੈਚਾਲਿਤ ਪੂਛ_part = std::make_shared<ov::op::v8::ਟੁਕੜਾ>(ਅਧਾਰ, end, int_max, one, axis);
+        ਸਵੈਚਾਲਿਤ res = std::make_shared<ov::op::v0::Concat>(ov::Output_ਸਦਿਸ਼{ਸਿਰ_part, src, ਪੂਛ_part}, 3);
+        ਵਾਪਸ rename_outputs_with_suffix({res}, context.get_name());
     }
 
     // Recurrent state cache writeback into a slot block of the cache. Where the block starts is a
     // runtime input, so the cached model works for any kv head and active sequence count. The
     // result is the full updated cache.
     // op_case 1: gated-delta-net state, op_case 2: conv state, op_case 3: defrag remainder.
-    if (op_case == 3) {
+    ਜੇ (op_case == 3) {
         // With -np 1 (and generally whenever there is no defrag remainder) this GET_ROWS gathers
         // zero rows: nothing to write back, and the cache is unchanged. NPU rejects zero-size
         // tensors, so short-circuit instead of building a degenerate Slice/Concat chain.
-        bool is_empty = false;
-        if (input_shape.rank().is_static()) {
-            for (const auto & d : input_shape) {
-                if (d.is_static() && d.get_length() == 0) {
-                    is_empty = true;
-                    break;
+        ਤਾਰਕਿਕ is_ਖਾਲੀ_ਥਾਵਾਂ = ਝੂਠ;
+        ਜੇ (ਨਿਵੇਸ਼_shape.rank().is_static()) {
+            ਲਈ (ਅਚਲ ਸਵੈਚਾਲਿਤ & d : ਨਿਵੇਸ਼_shape) {
+                ਜੇ (d.is_static() && d.get_ਲੰਮਾਈ() == 0) {
+                    is_ਖਾਲੀ_ਥਾਵਾਂ = ਸੱਚ;
+                    ਰੋਕੋ;
                 }
             }
         }
-        if (is_empty) {
-            return {context.get_input(1)};
+        ਜੇ (is_ਖਾਲੀ_ਥਾਵਾਂ) {
+            ਵਾਪਸ {context.get_ਨਿਵੇਸ਼(1)};
         }
     }
     // op_case 7/8/9 are the single-slot variants; op_case 10 writes native GDN state into a
     // multi-slot cache without rollback snapshots.
-    const bool single_slot_assign = op_case >= 7 && op_case <= 9;
-    const bool direct_gdn_state = op_case == 7 || op_case == 10;
-    int writeback_case = op_case;
-    if (op_case == 10) {
+    ਅਚਲ ਤਾਰਕਿਕ single_ਥਾਂ_ਸੌਂਪੋ = op_case >= 7 && op_case <= 9;
+    ਅਚਲ ਤਾਰਕਿਕ ਸਿੱਧਾ_gdn_state = op_case == 7 || op_case == 10;
+    ਪੂਰਨ writeback_case = op_case;
+    ਜੇ (op_case == 10) {
         writeback_case = 1;
-    } else if (single_slot_assign) {
+    } ਨਹੀਂਤਾਂ ਜੇ (single_ਥਾਂ_ਸੌਂਪੋ) {
         writeback_case = op_case - 6;
     }
-    const std::string slot_begin_name = "rs_slot_begin_" + context.get_name();
-    const bool slice_assign = writeback_case >= 1 && writeback_case <= 3 &&
-                              (single_slot_assign || context.has_input(slot_begin_name));
-    if (slice_assign) {
-        if (single_slot_assign && writeback_case == 3) {
-            return {context.get_input(1)};
+    ਅਚਲ std::string ਥਾਂ_begin_name = "rs_slot_begin_" + context.get_name();
+    ਅਚਲ ਤਾਰਕਿਕ ਟੁਕੜਾ_ਸੌਂਪੋ = writeback_case >= 1 && writeback_case <= 3 &&
+                              (single_ਥਾਂ_ਸੌਂਪੋ || context.has_ਨਿਵੇਸ਼(ਥਾਂ_begin_name));
+    ਜੇ (ਟੁਕੜਾ_ਸੌਂਪੋ) {
+        ਜੇ (single_ਥਾਂ_ਸੌਂਪੋ && writeback_case == 3) {
+            ਵਾਪਸ {context.get_ਨਿਵੇਸ਼(1)};
         }
 
-        const int64_t slot_axis = 2;
-        auto zero = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
-        auto one = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
-        auto int_max = ov::op::v0::Constant::create(ov::element::i64, {1}, {INT_MAX});
-        auto axis = ov::op::v0::Constant::create(ov::element::i64, {1}, {slot_axis});
-        auto feature = ov::op::v0::Constant::create(ov::element::i64, {4},
-                                                    std::vector<int64_t>{1, 1, -1, output_shape[3].get_length()});
+        ਅਚਲ int64_t ਥਾਂ_axis = 2;
+        ਸਵੈਚਾਲਿਤ zero = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
+        ਸਵੈਚਾਲਿਤ one = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
+        ਸਵੈਚਾਲਿਤ int_max = ov::op::v0::Constant::create(ov::element::i64, {1}, {ਵੱਧ_ਤੋਂ_ਵੱਧ_ਅੰਕ});
+        ਸਵੈਚਾਲਿਤ axis = ov::op::v0::Constant::create(ov::element::i64, {1}, {ਥਾਂ_axis});
+        ਸਵੈਚਾਲਿਤ feature = ov::op::v0::Constant::create(ov::element::i64, {4},
+                                                    std::vector<int64_t>{1, 1, -1, output_shape[3].get_ਲੰਮਾਈ()});
 
         ov::Output<ov::Node> src;
         ov::Output<ov::Node> begin;
-        if (!single_slot_assign) {
-            begin = context.get_input(slot_begin_name);
+        ਜੇ (!single_ਥਾਂ_ਸੌਂਪੋ) {
+            begin = context.get_ਨਿਵੇਸ਼(ਥਾਂ_begin_name);
         }
-        auto base = context.get_input(1);
-        if (writeback_case == 1) {
-            if (direct_gdn_state) {
+        ਸਵੈਚਾਲਿਤ ਅਧਾਰ = context.get_ਨਿਵੇਸ਼(1);
+        ਜੇ (writeback_case == 1) {
+            ਜੇ (ਸਿੱਧਾ_gdn_state) {
                 // Non-rollback GDN publishes state directly as [active_slots, heads, value_dim,
                 // key_dim]. Flatten each active slot before replacing or updating the cache.
-                src = std::make_shared<ov::op::v1::Reshape>(context.get_input(0), feature, false);
-            } else {
+                src = std::make_shared<ov::op::v1::Reshape>(context.get_ਨਿਵੇਸ਼(0), feature, ਝੂਠ);
+            } ਨਹੀਂਤਾਂ {
                 // Multi-slot rollback still consumes GGML's packed [attention | state snapshots]
                 // layout. Slice the state block using the runtime source offset.
-                auto src_begin = context.get_input("rs_src_begin_" + context.get_name());
-                auto state_part =
-                    std::make_shared<ov::op::v8::Slice>(context.get_input(0), src_begin, int_max, one, axis);
-                src = std::make_shared<ov::op::v1::Reshape>(state_part, feature, false);
+                ਸਵੈਚਾਲਿਤ src_begin = context.get_ਨਿਵੇਸ਼("rs_src_begin_" + context.get_name());
+                ਸਵੈਚਾਲਿਤ state_part =
+                    std::make_shared<ov::op::v8::ਟੁਕੜਾ>(context.get_ਨਿਵੇਸ਼(0), src_begin, int_max, one, axis);
+                src = std::make_shared<ov::op::v1::Reshape>(state_part, feature, ਝੂਠ);
             }
-        } else if (writeback_case == 2) {
+        } ਨਹੀਂਤਾਂ ਜੇ (writeback_case == 2) {
             // conv_input is [previous conv state | new tokens]; the snapshot is the conv_kernel_size - 1
             // columns ending at the last *valid* token. Gather (rather than Slice) keeps the output
             // shape static even though the window start is a runtime value.
-            auto window_size = (int64_t) input_shape[3].get_length();
-            ov::Output<ov::Node> window;
-            auto col_axis = ov::op::v0::Constant::create(ov::element::i64, {1}, {3});
-            const std::string src_begin_name = "rs_src_begin_" + context.get_name();
-            if (context.has_input(src_begin_name)) {
-                auto src_begin = context.get_input(src_begin_name);
-                auto src_end = std::make_shared<ov::op::v1::Add>(
-                    src_begin, ov::op::v0::Constant::create(ov::element::i64, {1}, {window_size}));
-                window = std::make_shared<ov::op::v8::Slice>(context.get_input(0), src_begin, src_end, one, col_axis);
-            } else if (context.has_input("chunk_valid_len")) {
-                std::vector<int64_t> offsets(window_size);
+            ਸਵੈਚਾਲਿਤ ਖਿੜਕੀ_ਮਾਪ = (int64_t) ਨਿਵੇਸ਼_shape[3].get_ਲੰਮਾਈ();
+            ov::Output<ov::Node> ਖਿੜਕੀ;
+            ਸਵੈਚਾਲਿਤ ਖਾਨਾ_axis = ov::op::v0::Constant::create(ov::element::i64, {1}, {3});
+            ਅਚਲ std::string src_begin_name = "rs_src_begin_" + context.get_name();
+            ਜੇ (context.has_ਨਿਵੇਸ਼(src_begin_name)) {
+                ਸਵੈਚਾਲਿਤ src_begin = context.get_ਨਿਵੇਸ਼(src_begin_name);
+                ਸਵੈਚਾਲਿਤ src_ਸਿਰਾ = std::make_shared<ov::op::v1::ਜੋੜੋ>(
+                    src_begin, ov::op::v0::Constant::create(ov::element::i64, {1}, {ਖਿੜਕੀ_ਮਾਪ}));
+                ਖਿੜਕੀ = std::make_shared<ov::op::v8::ਟੁਕੜਾ>(context.get_ਨਿਵੇਸ਼(0), src_begin, src_ਸਿਰਾ, one, ਖਾਨਾ_axis);
+            } ਨਹੀਂਤਾਂ ਜੇ (context.has_ਨਿਵੇਸ਼("chunk_valid_len")) {
+                std::vector<int64_t> offsets(ਖਿੜਕੀ_ਮਾਪ);
                 std::iota(offsets.begin(), offsets.end(), 0);
-                auto indices = std::make_shared<ov::op::v1::Add>(
-                    ov::op::v0::Constant::create(ov::element::i64, {(size_t) window_size}, offsets),
-                    context.get_input("chunk_valid_len"));
-                window = std::make_shared<ov::op::v8::Gather>(context.get_input(0), indices, col_axis);
-            } else {
-                auto window_begin = ov::op::v0::Constant::create(ov::element::i64, {1}, {-window_size});
-                window =
-                    std::make_shared<ov::op::v8::Slice>(context.get_input(0), window_begin, int_max, one, col_axis);
+                ਸਵੈਚਾਲਿਤ indices = std::make_shared<ov::op::v1::ਜੋੜੋ>(
+                    ov::op::v0::Constant::create(ov::element::i64, {(size_t) ਖਿੜਕੀ_ਮਾਪ}, offsets),
+                    context.get_ਨਿਵੇਸ਼("chunk_valid_len"));
+                ਖਿੜਕੀ = std::make_shared<ov::op::v8::Gather>(context.get_ਨਿਵੇਸ਼(0), indices, ਖਾਨਾ_axis);
+            } ਨਹੀਂਤਾਂ {
+                ਸਵੈਚਾਲਿਤ ਖਿੜਕੀ_begin = ov::op::v0::Constant::create(ov::element::i64, {1}, {-ਖਿੜਕੀ_ਮਾਪ});
+                ਖਿੜਕੀ =
+                    std::make_shared<ov::op::v8::ਟੁਕੜਾ>(context.get_ਨਿਵੇਸ਼(0), ਖਿੜਕੀ_begin, int_max, one, ਖਾਨਾ_axis);
             }
-            const auto base_shape = base.get_partial_shape();
-            FRONT_END_OP_CONVERSION_CHECK(base_shape.rank().is_static() && base_shape.rank().get_length() == 4,
+            ਅਚਲ ਸਵੈਚਾਲਿਤ ਅਧਾਰ_shape = ਅਧਾਰ.get_partial_shape();
+            FRONT_ਸਿਰਾ_OP_CONVERSION_CHECK(ਅਧਾਰ_shape.rank().is_static() && ਅਧਾਰ_shape.rank().get_ਲੰਮਾਈ() == 4,
                                           "CPY conv state cache update requires rank-4 base cache");
-            FRONT_END_OP_CONVERSION_CHECK(base_shape[3].is_static(),
+            FRONT_ਸਿਰਾ_OP_CONVERSION_CHECK(ਅਧਾਰ_shape[3].is_static(),
                                           "CPY conv state cache update requires static feature size");
-            FRONT_END_OP_CONVERSION_CHECK(input_shape.rank().is_static() && input_shape.rank().get_length() == 4 &&
-                                              input_shape[2].is_static() && input_shape[3].is_static(),
+            FRONT_ਸਿਰਾ_OP_CONVERSION_CHECK(ਨਿਵੇਸ਼_shape.rank().is_static() && ਨਿਵੇਸ਼_shape.rank().get_ਲੰਮਾਈ() == 4 &&
+                                              ਨਿਵੇਸ਼_shape[2].is_static() && ਨਿਵੇਸ਼_shape[3].is_static(),
                                           "CPY conv state cache update requires static source feature view");
 
-            const int64_t full_feature_size = base_shape[3].get_length();
-            const int64_t update_feature_size = input_shape[2].get_length() * input_shape[3].get_length();
-            const auto output_stride = context.get_output_stride();
-            const size_t elem_size = output_stride.empty() ? context.get_output_type().size() : output_stride.back();
-            FRONT_END_OP_CONVERSION_CHECK(elem_size > 0,
+            ਅਚਲ int64_t ਭਰਿਆ_feature_ਮਾਪ = ਅਧਾਰ_shape[3].get_ਲੰਮਾਈ();
+            ਅਚਲ int64_t update_feature_ਮਾਪ = ਨਿਵੇਸ਼_shape[2].get_ਲੰਮਾਈ() * ਨਿਵੇਸ਼_shape[3].get_ਲੰਮਾਈ();
+            ਅਚਲ ਸਵੈਚਾਲਿਤ output_stride = context.get_output_stride();
+            ਅਚਲ size_t elem_ਮਾਪ = output_stride.ਖਾਲੀ_ਥਾਵਾਂ() ? context.get_output_type().size() : output_stride.back();
+            FRONT_ਸਿਰਾ_OP_CONVERSION_CHECK(elem_ਮਾਪ > 0,
                                           "CPY conv state cache update has invalid element size");
-            const int64_t feature_begin = static_cast<int64_t>(context.get_output_op_offset() / elem_size) %
-                                          full_feature_size;
-            const int64_t feature_end = feature_begin + update_feature_size;
-            FRONT_END_OP_CONVERSION_CHECK(feature_begin >= 0 && feature_end <= full_feature_size,
+            ਅਚਲ int64_t feature_begin = static_cast<int64_t>(context.get_output_op_ਵਿੱਥ() / elem_ਮਾਪ) %
+                                          ਭਰਿਆ_feature_ਮਾਪ;
+            ਅਚਲ int64_t feature_ਸਿਰਾ = feature_begin + update_feature_ਮਾਪ;
+            FRONT_ਸਿਰਾ_OP_CONVERSION_CHECK(feature_begin >= 0 && feature_ਸਿਰਾ <= ਭਰਿਆ_feature_ਮਾਪ,
                                           "CPY conv state cache update feature range is out of bounds");
 
-            auto partial_feature = ov::op::v0::Constant::create(
-                ov::element::i64, {4}, std::vector<int64_t>{1, 1, -1, update_feature_size});
-            src = std::make_shared<ov::op::v1::Reshape>(window, partial_feature, false);
-            if (src.get_element_type() != context.get_output_type()) {
+            ਸਵੈਚਾਲਿਤ partial_feature = ov::op::v0::Constant::create(
+                ov::element::i64, {4}, std::vector<int64_t>{1, 1, -1, update_feature_ਮਾਪ});
+            src = std::make_shared<ov::op::v1::Reshape>(ਖਿੜਕੀ, partial_feature, ਝੂਠ);
+            ਜੇ (src.get_element_type() != context.get_output_type()) {
                 src = std::make_shared<ov::op::v0::Convert>(src, context.get_output_type());
             }
 
-            if (single_slot_assign) {
-                return rename_outputs_with_suffix({src}, context.get_name());
+            ਜੇ (single_ਥਾਂ_ਸੌਂਪੋ) {
+                ਵਾਪਸ rename_outputs_with_suffix({src}, context.get_name());
             }
 
-            auto src_len = std::make_shared<ov::op::v8::Gather>(
-                std::make_shared<ov::op::v3::ShapeOf>(src, ov::element::i64), axis,
+            ਸਵੈਚਾਲਿਤ src_len = std::make_shared<ov::op::v8::Gather>(
+                std::make_shared<ov::op::v3::Shape_ਦਾ>(src, ov::element::i64), axis,
                 ov::op::v0::Constant::create(ov::element::i64, {}, {0}));
-            auto slot_end = std::make_shared<ov::op::v1::Add>(begin, src_len);
-            auto active_slots = std::make_shared<ov::op::v8::Slice>(base, begin, slot_end, one, axis);
+            ਸਵੈਚਾਲਿਤ ਥਾਂ_ਸਿਰਾ = std::make_shared<ov::op::v1::ਜੋੜੋ>(begin, src_len);
+            ਸਵੈਚਾਲਿਤ ਸਰਗਰਮ_slots = std::make_shared<ov::op::v8::ਟੁਕੜਾ>(ਅਧਾਰ, begin, ਥਾਂ_ਸਿਰਾ, one, axis);
 
-            auto feature_axis = ov::op::v0::Constant::create(ov::element::i64, {1}, {3});
-            auto feature_begin_node = ov::op::v0::Constant::create(ov::element::i64, {1}, {feature_begin});
-            auto feature_end_node = ov::op::v0::Constant::create(ov::element::i64, {1}, {feature_end});
-            auto feature_head = std::make_shared<ov::op::v8::Slice>(active_slots, zero, feature_begin_node, one,
+            ਸਵੈਚਾਲਿਤ feature_axis = ov::op::v0::Constant::create(ov::element::i64, {1}, {3});
+            ਸਵੈਚਾਲਿਤ feature_begin_ਗੰਢ = ov::op::v0::Constant::create(ov::element::i64, {1}, {feature_begin});
+            ਸਵੈਚਾਲਿਤ feature_ਸਿਰਾ_ਗੰਢ = ov::op::v0::Constant::create(ov::element::i64, {1}, {feature_ਸਿਰਾ});
+            ਸਵੈਚਾਲਿਤ feature_ਸਿਰ = std::make_shared<ov::op::v8::ਟੁਕੜਾ>(ਸਰਗਰਮ_slots, zero, feature_begin_ਗੰਢ, one,
                                                                     feature_axis);
-            auto feature_tail = std::make_shared<ov::op::v8::Slice>(active_slots, feature_end_node, int_max, one,
+            ਸਵੈਚਾਲਿਤ feature_ਪੂਛ = std::make_shared<ov::op::v8::ਟੁਕੜਾ>(ਸਰਗਰਮ_slots, feature_ਸਿਰਾ_ਗੰਢ, int_max, one,
                                                                     feature_axis);
-            src = std::make_shared<ov::op::v0::Concat>(ov::OutputVector{feature_head, src, feature_tail}, 3);
-        } else {
+            src = std::make_shared<ov::op::v0::Concat>(ov::Output_ਸਦਿਸ਼{feature_ਸਿਰ, src, feature_ਪੂਛ}, 3);
+        } ਨਹੀਂਤਾਂ {
             // op_case 3: gathered remainder rows already have the cache slot layout [1, 1, extra, feature]
-            src = context.get_input(0);
+            src = context.get_ਨਿਵੇਸ਼(0);
         }
 
-        if (src.get_element_type() != context.get_output_type()) {
+        ਜੇ (src.get_element_type() != context.get_output_type()) {
             src = std::make_shared<ov::op::v0::Convert>(src, context.get_output_type());
         }
 
-        if (single_slot_assign) {
-            return rename_outputs_with_suffix({src}, context.get_name());
+        ਜੇ (single_ਥਾਂ_ਸੌਂਪੋ) {
+            ਵਾਪਸ rename_outputs_with_suffix({src}, context.get_name());
         }
 
-        auto src_len =
-            std::make_shared<ov::op::v8::Gather>(std::make_shared<ov::op::v3::ShapeOf>(src, ov::element::i64), axis,
+        ਸਵੈਚਾਲਿਤ src_len =
+            std::make_shared<ov::op::v8::Gather>(std::make_shared<ov::op::v3::Shape_ਦਾ>(src, ov::element::i64), axis,
                                                  ov::op::v0::Constant::create(ov::element::i64, {}, {0}));
-        auto end = std::make_shared<ov::op::v1::Add>(begin, src_len);
-        auto head_part = std::make_shared<ov::op::v8::Slice>(base, zero, begin, one, axis);
-        auto tail_part = std::make_shared<ov::op::v8::Slice>(base, end, int_max, one, axis);
-        auto res = std::make_shared<ov::op::v0::Concat>(ov::OutputVector{head_part, src, tail_part}, slot_axis);
-        return rename_outputs_with_suffix({res}, context.get_name());
+        ਸਵੈਚਾਲਿਤ end = std::make_shared<ov::op::v1::ਜੋੜੋ>(begin, src_len);
+        ਸਵੈਚਾਲਿਤ ਸਿਰ_part = std::make_shared<ov::op::v8::ਟੁਕੜਾ>(ਅਧਾਰ, zero, begin, one, axis);
+        ਸਵੈਚਾਲਿਤ ਪੂਛ_part = std::make_shared<ov::op::v8::ਟੁਕੜਾ>(ਅਧਾਰ, end, int_max, one, axis);
+        ਸਵੈਚਾਲਿਤ res = std::make_shared<ov::op::v0::Concat>(ov::Output_ਸਦਿਸ਼{ਸਿਰ_part, src, ਪੂਛ_part}, ਥਾਂ_axis);
+        ਵਾਪਸ rename_outputs_with_suffix({res}, context.get_name());
     }
 
-    auto input = process_view_input_new(context, 0);
+    ਸਵੈਚਾਲਿਤ ਨਿਵੇਸ਼ = process_view_ਨਿਵੇਸ਼_new(context, 0);
 
-    if (op_case == 5 || op_case == 6) {
-        auto input_shape = context.get_input_shape(0);
-        auto output_shape = context.get_output_shape();
-        auto dst_ggml_shape = context.get_view_input_ggml_shape(1, 0);
-        auto dst_stride = context.get_view_input_stride(1, 0);
-        size_t offset_bytes = context.get_view_input_offset(1, 0);
-        auto n_state = (int64_t) context.get_input_shape(0)[3].get_length();
-        auto n_state_c = ov::op::v0::Constant::create(ov::element::i64, {1}, {n_state});
-        auto kv_buf = context.get_input(1);  // shape {1,1,1,N}
+    ਜੇ (op_case == 5 || op_case == 6) {
+        ਸਵੈਚਾਲਿਤ ਨਿਵੇਸ਼_shape = context.get_ਨਿਵੇਸ਼_shape(0);
+        ਸਵੈਚਾਲਿਤ output_shape = context.get_output_shape();
+        ਸਵੈਚਾਲਿਤ dst_ggml_shape = context.get_view_ਨਿਵੇਸ਼_ggml_shape(1, 0);
+        ਸਵੈਚਾਲਿਤ dst_stride = context.get_view_ਨਿਵੇਸ਼_stride(1, 0);
+        size_t ਵਿੱਥ_ਬਾਈਟਾਂ = context.get_view_ਨਿਵੇਸ਼_ਵਿੱਥ(1, 0);
+        ਸਵੈਚਾਲਿਤ n_state = (int64_t) context.get_ਨਿਵੇਸ਼_shape(0)[3].get_ਲੰਮਾਈ();
+        ਸਵੈਚਾਲਿਤ n_state_c = ov::op::v0::Constant::create(ov::element::i64, {1}, {n_state});
+        ਸਵੈਚਾਲਿਤ kv_buf = context.get_ਨਿਵੇਸ਼(1);  // shape {1,1,1,N}
 
-        Output<Node> token_len_per_seq;
+        Output<Node> token_len_ਪ੍ਰਤੀ_seq;
         Output<Node> n_write_dyn;
-        if (context.has_input("token_len_per_seq")) {
-            token_len_per_seq = context.get_input("token_len_per_seq");
-            n_write_dyn = std::make_shared<ov::op::v1::Multiply>(token_len_per_seq, n_state_c);
-        } else {
+        ਜੇ (context.has_ਨਿਵੇਸ਼("token_len_per_seq")) {
+            token_len_ਪ੍ਰਤੀ_seq = context.get_ਨਿਵੇਸ਼("token_len_per_seq");
+            n_write_dyn = std::make_shared<ov::op::v1::Multiply>(token_len_ਪ੍ਰਤੀ_seq, n_state_c);
+        } ਨਹੀਂਤਾਂ {
             n_write_dyn = ov::op::v0::Constant::create(ov::element::i64, {1}, {(int64_t) dst_ggml_shape[3]});
         }
-        size_t elem_size = dst_stride[3];
-        FRONT_END_OP_CONVERSION_CHECK(elem_size > 0, "CPY KV cache view update has invalid element size");
-        int64_t start_elem = (int64_t) (offset_bytes / elem_size);
+        size_t elem_ਮਾਪ = dst_stride[3];
+        FRONT_ਸਿਰਾ_OP_CONVERSION_CHECK(elem_ਮਾਪ > 0, "CPY KV cache view update has invalid element size");
+        int64_t ਸ਼ੁਰੂ_elem = (int64_t) (ਵਿੱਥ_ਬਾਈਟਾਂ / elem_ਮਾਪ);
         // op_case 5: decoder self-attention – write offset advances each step.
         // op_case 6: encoder self-attn or cross-attn – offset fixed at compile time.
-        const bool is_decoder_self_attn = (op_case == 5);
-        auto ones_c = ov::op::v0::Constant::create(ov::element::i64, {3}, std::vector<int64_t>{1, 1, 1});
-        auto new_shape = std::make_shared<ov::op::v0::Concat>(ov::OutputVector{ones_c, n_write_dyn}, 0);
+        ਅਚਲ ਤਾਰਕਿਕ is_decoder_self_attn = (op_case == 5);
+        ਸਵੈਚਾਲਿਤ ones_c = ov::op::v0::Constant::create(ov::element::i64, {3}, std::vector<int64_t>{1, 1, 1});
+        ਸਵੈਚਾਲਿਤ new_shape = std::make_shared<ov::op::v0::Concat>(ov::Output_ਸਦਿਸ਼{ones_c, n_write_dyn}, 0);
 
-        auto reshaped = std::make_shared<ov::op::v1::Reshape>(input, new_shape, false);
-        auto data = std::make_shared<ov::op::v0::Convert>(reshaped, context.get_output_type());
+        ਸਵੈਚਾਲਿਤ reshaped = std::make_shared<ov::op::v1::Reshape>(ਨਿਵੇਸ਼, new_shape, ਝੂਠ);
+        ਸਵੈਚਾਲਿਤ ਅੰਕੜੇ = std::make_shared<ov::op::v0::Convert>(reshaped, context.get_output_type());
         // Indices [start_elem .. start_elem + n_write) on axis 3 of {1,1,1,N}
         // For decoder self-attention the write offset advances each step, so compute it
         // dynamically from the model inputs: start = (attention_size - token_len_per_seq) * n_state.
         // For encoder self-attn and cross-attn the offset is fixed at graph-compile time.
         ov::Output<ov::Node> start;
-        if (is_decoder_self_attn && context.has_input("attention_size") && context.has_input("token_len_per_seq")) {
-            auto attention_size_in = context.get_input("attention_size");
-            auto token_len_in = context.get_input("token_len_per_seq");
-            auto past_tokens = std::make_shared<ov::op::v1::Subtract>(attention_size_in, token_len_in);
-            auto new_start = std::make_shared<ov::op::v1::Multiply>(past_tokens, n_state_c);
-            start = std::make_shared<ov::op::v1::Add>(
-                new_start, ov::op::v0::Constant::create(ov::element::i64, {1}, {start_elem}));
-        } else {
-            start = ov::op::v0::Constant::create(ov::element::i64, {1}, {start_elem});
+        ਜੇ (is_decoder_self_attn && context.has_ਨਿਵੇਸ਼("attention_size") && context.has_ਨਿਵੇਸ਼("token_len_per_seq")) {
+            ਸਵੈਚਾਲਿਤ attention_ਮਾਪ_ਵਿੱਚ = context.get_ਨਿਵੇਸ਼("attention_size");
+            ਸਵੈਚਾਲਿਤ token_len_ਵਿੱਚ = context.get_ਨਿਵੇਸ਼("token_len_per_seq");
+            ਸਵੈਚਾਲਿਤ past_ਟੋਕਨ = std::make_shared<ov::op::v1::ਘਟਾਓ>(attention_ਮਾਪ_ਵਿੱਚ, token_len_ਵਿੱਚ);
+            ਸਵੈਚਾਲਿਤ new_ਸ਼ੁਰੂ = std::make_shared<ov::op::v1::Multiply>(past_ਟੋਕਨ, n_state_c);
+            start = std::make_shared<ov::op::v1::ਜੋੜੋ>(
+                new_ਸ਼ੁਰੂ, ov::op::v0::Constant::create(ov::element::i64, {1}, {ਸ਼ੁਰੂ_elem}));
+        } ਨਹੀਂਤਾਂ {
+            start = ov::op::v0::Constant::create(ov::element::i64, {1}, {ਸ਼ੁਰੂ_elem});
         }
-        auto start_squeezed = std::make_shared<ov::op::v0::Squeeze>(start);
-        auto end = std::make_shared<ov::op::v1::Add>(start_squeezed, n_write_dyn);
-        auto end_squeezed = std::make_shared<ov::op::v0::Squeeze>(end);
-        auto step = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
-        auto step_squeezed = std::make_shared<ov::op::v0::Squeeze>(step);
-        auto indices =
-            std::make_shared<ov::op::v4::Range>(start_squeezed, end_squeezed, step_squeezed, ov::element::i64);
-        auto axis = ov::op::v0::Constant::create(ov::element::i64, {1}, {3});
+        ਸਵੈਚਾਲਿਤ ਸ਼ੁਰੂ_squeezed = std::make_shared<ov::op::v0::Squeeze>(start);
+        ਸਵੈਚਾਲਿਤ end = std::make_shared<ov::op::v1::ਜੋੜੋ>(ਸ਼ੁਰੂ_squeezed, n_write_dyn);
+        ਸਵੈਚਾਲਿਤ ਸਿਰਾ_squeezed = std::make_shared<ov::op::v0::Squeeze>(end);
+        ਸਵੈਚਾਲਿਤ ਕਦਮ = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
+        ਸਵੈਚਾਲਿਤ ਕਦਮ_squeezed = std::make_shared<ov::op::v0::Squeeze>(ਕਦਮ);
+        ਸਵੈਚਾਲਿਤ indices =
+            std::make_shared<ov::op::v4::Range>(ਸ਼ੁਰੂ_squeezed, ਸਿਰਾ_squeezed, ਕਦਮ_squeezed, ov::element::i64);
+        ਸਵੈਚਾਲਿਤ axis = ov::op::v0::Constant::create(ov::element::i64, {1}, {3});
 
-        auto kv_updated = std::make_shared<ov::op::v3::ScatterUpdate>(kv_buf, indices, data, axis);
-        return rename_outputs_with_suffix({kv_updated}, context.get_name());
+        ਸਵੈਚਾਲਿਤ kv_updated = std::make_shared<ov::op::v3::ScatterUpdate>(kv_buf, indices, ਅੰਕੜੇ, axis);
+        ਵਾਪਸ rename_outputs_with_suffix({kv_updated}, context.get_name());
     }
 
-    if (input_shape != output_shape) {
-        auto new_shape = ov::op::v0::Constant::create(
-            ov::element::i64, {static_cast<size_t>(output_shape.rank().get_length())}, output_shape.to_shape());
-        input = std::make_shared<ov::op::v1::Reshape>(input, new_shape, false);
+    ਜੇ (ਨਿਵੇਸ਼_shape != output_shape) {
+        ਸਵੈਚਾਲਿਤ new_shape = ov::op::v0::Constant::create(
+            ov::element::i64, {static_cast<size_t>(output_shape.rank().get_ਲੰਮਾਈ())}, output_shape.ਮੰਜ਼ਿਲ_shape());
+        ਨਿਵੇਸ਼ = std::make_shared<ov::op::v1::Reshape>(ਨਿਵੇਸ਼, new_shape, ਝੂਠ);
     }
 
     ov::Output<Node> res;
-    if (context.get_input_type(0) != context.get_output_type()) {
-        res = std::make_shared<ov::op::v0::Convert>(input, context.get_output_type());
-    } else {
-        res = input;
+    ਜੇ (context.get_ਨਿਵੇਸ਼_type(0) != context.get_output_type()) {
+        res = std::make_shared<ov::op::v0::Convert>(ਨਿਵੇਸ਼, context.get_output_type());
+    } ਨਹੀਂਤਾਂ {
+        res = ਨਿਵੇਸ਼;
     }
 
-    if (res.get_node_shared_ptr() == context.get_input(0).get_node_shared_ptr()) {
-        return {res};
+    ਜੇ (res.get_ਗੰਢ_shared_ptr() == context.get_ਨਿਵੇਸ਼(0).get_ਗੰਢ_shared_ptr()) {
+        ਵਾਪਸ {res};
     }
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ਵਾਪਸ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

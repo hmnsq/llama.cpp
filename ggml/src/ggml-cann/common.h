@@ -20,32 +20,32 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef CANN_COMMON_H
-#define CANN_COMMON_H
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ CANN_COMMON_H
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ CANN_COMMON_H
 
-#include "../ggml-impl.h"
-#include "../include/ggml-cann.h"
-#include "../include/ggml.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "../ggml-impl.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "../include/ggml-cann.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "../include/ggml.h"
 
-#include <acl/acl.h>
-#include <unistd.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <acl/acl.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <unistd.h>
 
-#include <atomic>
-#include <condition_variable>
-#include <cstdio>
-#include <functional>
-#include <iostream>
-#include <list>
-#include <map>
-#include <memory>
-#include <mutex>
-#include <optional>
-#include <string>
-#include <thread>
-#include <vector>
+#ਅਨ੍ਤਰ੍ਭਾਵ <atomic>
+#ਅਨ੍ਤਰ੍ਭਾਵ <condition_variable>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cstdio>
+#ਅਨ੍ਤਰ੍ਭਾਵ <functional>
+#ਅਨ੍ਤਰ੍ਭਾਵ <iostream>
+#ਅਨ੍ਤਰ੍ਭਾਵ <list>
+#ਅਨ੍ਤਰ੍ਭਾਵ <map>
+#ਅਨ੍ਤਰ੍ਭਾਵ <memory>
+#ਅਨ੍ਤਰ੍ਭਾਵ <mutex>
+#ਅਨ੍ਤਰ੍ਭਾਵ <optional>
+#ਅਨ੍ਤਰ੍ਭਾਵ <string>
+#ਅਨ੍ਤਰ੍ਭਾਵ <thread>
+#ਅਨ੍ਤਰ੍ਭਾਵ <vector>
 
-#define MATRIX_ROW_PADDING    512
-#define GGML_CANN_MAX_STREAMS 8
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ ਮੈਟ੍ਰਿਕਸ_ਪੰਕਤੀ_PADDING    512
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_CANN_MAX_STREAMS 8
 
 /**
  * @brief Handles CANN-related errors by printing an error message and
@@ -56,7 +56,7 @@
  * @param line The line number at which the error occurred.
  * @param msg The error message.
  */
-[[noreturn]] void ggml_cann_error(const char * stmt, const char * func, const char * file, int line, const char * msg);
+[[noreturn]] ਖਾਲੀ ggml_cann_error(ਅਚਲ ਅੱਖਰ * stmt, ਅਚਲ ਅੱਖਰ * func, ਅਚਲ ਅੱਖਰ * file, ਪੂਰਨ ਸਤਰ, ਅਚਲ ਅੱਖਰ * ਸੁਨੇਹਾ_2);
 
 /**
  * @brief Checks the result of a CANN function call and invokes the error
@@ -65,55 +65,55 @@
  * @param success The success code that indicates the call was successful.
  * @param error_fn The function to call to retrieve the error message.
  */
-#define ACL_CHECK_GEN(stmt, success, error_fn)                                \
-    do {                                                                      \
-        int err_code = (stmt);                                                \
-        if (err_code != (success)) {                                          \
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ ACL_CHECK_GEN(stmt, success, error_fn)                                \
+    ਕਰੋ {                                                                      \
+        ਪੂਰਨ err_ਕੋਡ = (stmt);                                                \
+        ਜੇ (err_ਕੋਡ != (success)) {                                          \
             ggml_cann_error(#stmt, __func__, __FILE__, __LINE__, error_fn()); \
         }                                                                     \
-    } while (0);
+    } ਜਦੋਂ (0);
 
-#define ACL_CHECK(stmt) ACL_CHECK_GEN(stmt, 0, aclGetRecentErrMsg)
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ ACL_CHECK(stmt) ACL_CHECK_GEN(stmt, 0, acl_Get_Recent_Err_ਸੁਨੇਹਾ)
 
 /**
  * @brief Contains information about CANN devices.
  */
-struct ggml_cann_device_info {
+ਬਣਤਰ ggml_cann_device_info {
     /**
      * @brief Number of CANN devices available.
      */
-    int32_t device_count;
+    int32_t device_ਗਿਣਤੀ;
 
     /**
      * @brief Information about a single CANN device.
      */
-    struct cann_device_info {
-        int    cc;              /**< Compute capability.                   */
+    ਬਣਤਰ cann_device_info {
+        ਪੂਰਨ    cc;              /**< Compute capability.                   */
         size_t smpb;            /**< Maximum shared memory per block.      */
         bool   vmm;             /**< Virtual memory support.               */
         size_t vmm_granularity; /**< Granularity of virtual memory.        */
-        size_t total_vram;      /**< Total video RAM available on the device. */
+        size_t ਕੁੱਲ_vram;      /**< Total video RAM available on the device. */
     };
 
     cann_device_info devices[GGML_CANN_MAX_DEVICES] = {}; /**< Array of CANN device information. */
 };
 
-const ggml_cann_device_info & ggml_cann_info();
+ਅਚਲ ggml_cann_device_info & ggml_cann_info();
 
-void    ggml_cann_set_device(int32_t device);
+ਖਾਲੀ    ggml_cann_ਸੈੱਟ_device(int32_t device);
 
-std::optional<std::string> get_env_as_lowercase(const std::string & name);
-bool                       parse_bool(const std::string & value);
-int                        parse_integer(const std::string & value);
+std::optional<std::string> get_env_as_lowercase(ਅਚਲ std::string & name);
+bool                       parse_bool(ਅਚਲ std::string & ਮੁੱਲ);
+ਪੂਰਨ                        parse_integer(ਅਚਲ std::string & ਮੁੱਲ);
 
 /**
  * @brief Abstract base class for memory pools used by CANN.
  */
-struct ggml_cann_pool {
+ਬਣਤਰ ggml_cann_pool {
     /**
      * @brief Virtual destructor for the memory pool.
      */
-    virtual ~ggml_cann_pool() = default;
+    ਆਭਾਸੀ ~ggml_cann_pool() = ਮੂਲ;
 
     /**
      * @brief Allocates memory from the pool.
@@ -123,7 +123,7 @@ struct ggml_cann_pool {
      *                     will be stored.
      * @return             Pointer to the allocated memory block.
      */
-    virtual void * alloc(size_t size, size_t * actual_size) = 0;
+    ਆਭਾਸੀ ਖਾਲੀ * alloc(size_t ਮਾਪ, size_t * actual_ਮਾਪ) = 0;
 
     /**
      * @brief Frees a previously allocated memory block.
@@ -133,21 +133,21 @@ struct ggml_cann_pool {
      * @note Note that all CANN opertors are running async. Make sure memory is
      *       still avaiable before this operator finished.
      */
-    virtual void free(void * ptr, size_t size) = 0;
+    ਆਭਾਸੀ ਖਾਲੀ ਮੁਕਤ(ਖਾਲੀ * ptr, size_t ਮਾਪ) = 0;
 };
 
 /**
  * @brief RAII wrapper for managing memory allocations from a CANN memory pool.
  */
-struct ggml_cann_pool_alloc {
+ਬਣਤਰ ggml_cann_pool_alloc {
     ggml_cann_pool * pool        = nullptr; /**< Pointer to the memory pool. */
-    void *           ptr         = nullptr; /**< Pointer to the allocated memory block. */
-    size_t           actual_size = 0;       /**< Actual size of the allocated memory block. */
+    ਖਾਲੀ *           ptr         = nullptr; /**< Pointer to the allocated memory block. */
+    size_t           actual_ਮਾਪ = 0;       /**< Actual size of the allocated memory block. */
 
     /**
      * @brief Default constructor.
      */
-    ggml_cann_pool_alloc() = default;
+    ggml_cann_pool_alloc() = ਮੂਲ;
 
     /**
      * @brief Constructor that initializes the memory pool.
@@ -160,14 +160,14 @@ struct ggml_cann_pool_alloc {
      * @param pool Reference to the memory pool.
      * @param size Size of the memory block to allocate.
      */
-    ggml_cann_pool_alloc(ggml_cann_pool & pool, size_t size) : pool(&pool) { alloc(size); }
+    ggml_cann_pool_alloc(ggml_cann_pool & pool, size_t ਮਾਪ) : pool(&pool) { alloc(ਮਾਪ); }
 
     /**
      * @brief Destructor that frees the allocated memory block.
      */
     ~ggml_cann_pool_alloc() {
-        if (ptr != nullptr) {
-            pool->free(ptr, actual_size);
+        ਜੇ (ptr != nullptr) {
+            pool->ਮੁਕਤ(ptr, actual_ਮਾਪ);
         }
     }
 
@@ -176,11 +176,11 @@ struct ggml_cann_pool_alloc {
      * @param size Size of the memory block to allocate.
      * @return Pointer to the allocated memory block.
      */
-    void * alloc(size_t size) {
+    ਖਾਲੀ * alloc(size_t ਮਾਪ) {
         GGML_ASSERT(pool != nullptr);
         GGML_ASSERT(ptr == nullptr);
-        ptr = pool->alloc(size, &this->actual_size);
-        return ptr;
+        ptr = pool->alloc(ਮਾਪ, &this->actual_ਮਾਪ);
+        ਵਾਪਸ ptr;
     }
 
     /**
@@ -189,47 +189,47 @@ struct ggml_cann_pool_alloc {
      * @param size Size of the memory block to allocate.
      * @return Pointer to the allocated memory block.
      */
-    void * alloc(ggml_cann_pool & pool, size_t size) {
+    ਖਾਲੀ * alloc(ggml_cann_pool & pool, size_t ਮਾਪ) {
         this->pool = &pool;
-        return alloc(size);
+        ਵਾਪਸ alloc(ਮਾਪ);
     }
 
     /**
      * @brief Gets the pointer to the allocated memory block.
      * @return Pointer to the allocated memory block.
      */
-    void * get() { return ptr; }
+    ਖਾਲੀ * get() { ਵਾਪਸ ptr; }
 
     // Deleted copy constructor
-    ggml_cann_pool_alloc(const ggml_cann_pool_alloc &) = delete;
+    ggml_cann_pool_alloc(ਅਚਲ ggml_cann_pool_alloc &) = delete;
 
     // Deleted move constructor
     ggml_cann_pool_alloc(ggml_cann_pool_alloc &&) = delete;
 
     // Deleted copy assignment operator
-    ggml_cann_pool_alloc & operator=(const ggml_cann_pool_alloc &) = delete;
+    ggml_cann_pool_alloc & ਸੰਚਾਲਕ=(ਅਚਲ ggml_cann_pool_alloc &) = delete;
 
     // Deleted move assignment operator
-    ggml_cann_pool_alloc & operator=(ggml_cann_pool_alloc &&) = delete;
+    ggml_cann_pool_alloc & ਸੰਚਾਲਕ=(ggml_cann_pool_alloc &&) = delete;
 };
 
-#ifdef USE_ACL_GRAPH
-struct ggml_graph_node_properties {
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ USE_ACL_ਗ੍ਰਾਫ
+ਬਣਤਰ ggml_ਗ੍ਰਾਫ_ਗੰਢ_properties {
     // dst tensor
-    void *    node_address;
-    ggml_type node_type;
+    ਖਾਲੀ *    ਗੰਢ_ਪਤਾ;
+    ggml_type ਗੰਢ_type;
     int64_t   ne[GGML_MAX_DIMS];
     size_t    nb[GGML_MAX_DIMS];
 
     // src tensor
-    void *    src_address[GGML_MAX_SRC];
+    ਖਾਲੀ *    src_ਪਤਾ[GGML_MAX_SRC];
     ggml_type src_type[GGML_MAX_SRC];
     int64_t   src_ne[GGML_MAX_SRC][GGML_MAX_DIMS];
     size_t    src_nb[GGML_MAX_SRC][GGML_MAX_DIMS];
 
     // op
-    ggml_op node_op;
-    int32_t op_params[GGML_MAX_OP_PARAMS / sizeof(int32_t)];
+    ggml_op ਗੰਢ_op;
+    int32_t op_params[GGML_MAX_OP_PARAMS / ਆਕਾਰ(int32_t)];
 
     /**
      * @brief Check if a ggml tensor node matches this property set.
@@ -240,67 +240,67 @@ struct ggml_graph_node_properties {
      * @param node The current ggml tensor node.
      * @return true if all fields match (excluding GGML_OP_VIEW); false otherwise.
      */
-    bool has_matching_properties(ggml_tensor * node) {
-        if (node->data != this->node_address && node->op != GGML_OP_VIEW) {
-            return false;
+    bool has_matching_properties(ggml_tensor * ਗੰਢ) {
+        ਜੇ (ਗੰਢ->ਅੰਕੜੇ != this->ਗੰਢ_ਪਤਾ && ਗੰਢ->op != GGML_OP_VIEW) {
+            ਵਾਪਸ false;
         }
 
-        if (node->op != this->node_op) {
-            return false;
+        ਜੇ (ਗੰਢ->op != this->ਗੰਢ_op) {
+            ਵਾਪਸ false;
         }
 
-        if (node->type != this->node_type) {
-            return false;
+        ਜੇ (ਗੰਢ->type != this->ਗੰਢ_type) {
+            ਵਾਪਸ false;
         }
 
-        for (int i = 0; i < GGML_MAX_DIMS; i++) {
-            if (node->ne[i] != this->ne[i]) {
-                return false;
+        ਲਈ (ਪੂਰਨ i = 0; i < GGML_MAX_DIMS; i++) {
+            ਜੇ (ਗੰਢ->ne[i] != this->ne[i]) {
+                ਵਾਪਸ false;
             }
-            if (node->nb[i] != this->nb[i]) {
-                return false;
+            ਜੇ (ਗੰਢ->nb[i] != this->nb[i]) {
+                ਵਾਪਸ false;
             }
         }
 
-        for (int i = 0; i < GGML_MAX_SRC; i++) {
-            if (node->src[i]) {
-                if (node->src[i]->data != this->src_address[i] && node->op != GGML_OP_VIEW) {
-                    return false;
+        ਲਈ (ਪੂਰਨ i = 0; i < GGML_MAX_SRC; i++) {
+            ਜੇ (ਗੰਢ->src[i]) {
+                ਜੇ (ਗੰਢ->src[i]->ਅੰਕੜੇ != this->src_ਪਤਾ[i] && ਗੰਢ->op != GGML_OP_VIEW) {
+                    ਵਾਪਸ false;
                 }
 
-                if (node->src[i]->type != this->src_type[i]) {
-                    return false;
+                ਜੇ (ਗੰਢ->src[i]->type != this->src_type[i]) {
+                    ਵਾਪਸ false;
                 }
 
-                for (int d = 0; d < GGML_MAX_DIMS; d++) {
-                    if (node->src[i]->ne[d] != this->src_ne[i][d]) {
-                        return false;
+                ਲਈ (ਪੂਰਨ d = 0; d < GGML_MAX_DIMS; d++) {
+                    ਜੇ (ਗੰਢ->src[i]->ne[d] != this->src_ne[i][d]) {
+                        ਵਾਪਸ false;
                     }
-                    if (node->src[i]->nb[d] != this->src_nb[i][d]) {
-                        return false;
+                    ਜੇ (ਗੰਢ->src[i]->nb[d] != this->src_nb[i][d]) {
+                        ਵਾਪਸ false;
                     }
                 }
-            } else {
-                if (this->src_address[i] != nullptr) {
-                    return false;
+            } ਨਹੀਂਤਾਂ {
+                ਜੇ (this->src_ਪਤਾ[i] != nullptr) {
+                    ਵਾਪਸ false;
                 }
             }
         }
 
-        return memcmp(this->op_params, node->op_params, GGML_MAX_OP_PARAMS) == 0;
+        ਵਾਪਸ memcmp(this->op_params, ਗੰਢ->op_params, GGML_MAX_OP_PARAMS) == 0;
     }
 };
 
-struct ggml_cann_graph {
-    ~ggml_cann_graph() {
-        if (graph != nullptr) {
-            ACL_CHECK(aclmdlRIDestroy(graph));
+ਬਣਤਰ ggml_cann_ਗ੍ਰਾਫ {
+    ~ggml_cann_ਗ੍ਰਾਫ() {
+        ਜੇ (ਗ੍ਰਾਫ != nullptr) {
+            ACL_CHECK(aclmdlRIDestroy(ਗ੍ਰਾਫ));
         }
     }
 
-    aclmdlRI graph = nullptr;
+    aclmdlRI ਗ੍ਰਾਫ = nullptr;
 
-    std::vector<ggml_graph_node_properties> ggml_graph_properties;
+    std::ਸਦਿਸ਼<ggml_ਗ੍ਰਾਫ_ਗੰਢ_properties> ggml_ਗ੍ਰਾਫ_properties;
 
     /**
      * @brief Create a new CANN graph from a ggml computation graph.
@@ -319,39 +319,39 @@ struct ggml_cann_graph {
      * @param cgraph The current ggml computation graph.
      * @return Pointer to the newly created ggml_cann_graph object.
      */
-    static ggml_cann_graph * create_from_cgraph(ggml_cgraph * cgraph) {
-        ggml_cann_graph * new_graph = new ggml_cann_graph();
-        new_graph->ggml_graph_properties.resize(cgraph->n_nodes);
+    ਸਥਿਰ ggml_cann_ਗ੍ਰਾਫ * create_from_cgraph(ggml_cgraph * cgraph) {
+        ggml_cann_ਗ੍ਰਾਫ * new_ਗ੍ਰਾਫ = new ggml_cann_ਗ੍ਰਾਫ();
+        new_ਗ੍ਰਾਫ->ggml_ਗ੍ਰਾਫ_properties.resize(cgraph->n_nodes);
 
-        for (int node_idx = 0; node_idx < cgraph->n_nodes; ++node_idx) {
-            ggml_tensor * node = cgraph->nodes[node_idx];
-            auto &        prop = new_graph->ggml_graph_properties[node_idx];
+        ਲਈ (ਪੂਰਨ ਗੰਢ_idx = 0; ਗੰਢ_idx < cgraph->n_nodes; ++ਗੰਢ_idx) {
+            ggml_tensor * ਗੰਢ = cgraph->nodes[ਗੰਢ_idx];
+            ਸਵੈਚਾਲਿਤ &        prop = new_ਗ੍ਰਾਫ->ggml_ਗ੍ਰਾਫ_properties[ਗੰਢ_idx];
 
-            prop.node_address = node->data;
-            prop.node_op      = node->op;
-            prop.node_type    = node->type;
+            prop.ਗੰਢ_ਪਤਾ = ਗੰਢ->ਅੰਕੜੇ;
+            prop.ਗੰਢ_op      = ਗੰਢ->op;
+            prop.ਗੰਢ_type    = ਗੰਢ->type;
 
-            std::copy_n(node->ne, GGML_MAX_DIMS, prop.ne);
-            std::copy_n(node->nb, GGML_MAX_DIMS, prop.nb);
+            std::copy_n(ਗੰਢ->ne, GGML_MAX_DIMS, prop.ne);
+            std::copy_n(ਗੰਢ->nb, GGML_MAX_DIMS, prop.nb);
 
-            for (int src = 0; src < GGML_MAX_SRC; ++src) {
-                if (node->src[src]) {
-                    prop.src_address[src] = node->src[src]->data;
-                    prop.src_type[src]    = node->src[src]->type;
-                    std::copy_n(node->src[src]->ne, GGML_MAX_DIMS, prop.src_ne[src]);
-                    std::copy_n(node->src[src]->nb, GGML_MAX_DIMS, prop.src_nb[src]);
-                } else {
-                    prop.src_address[src] = nullptr;
-                    prop.src_type[src]    = GGML_TYPE_COUNT;
+            ਲਈ (ਪੂਰਨ src = 0; src < GGML_MAX_SRC; ++src) {
+                ਜੇ (ਗੰਢ->src[src]) {
+                    prop.src_ਪਤਾ[src] = ਗੰਢ->src[src]->ਅੰਕੜੇ;
+                    prop.src_type[src]    = ਗੰਢ->src[src]->type;
+                    std::copy_n(ਗੰਢ->src[src]->ne, GGML_MAX_DIMS, prop.src_ne[src]);
+                    std::copy_n(ਗੰਢ->src[src]->nb, GGML_MAX_DIMS, prop.src_nb[src]);
+                } ਨਹੀਂਤਾਂ {
+                    prop.src_ਪਤਾ[src] = nullptr;
+                    prop.src_type[src]    = GGML_TYPE_ਗਿਣਤੀ;
                     std::fill_n(prop.src_ne[src], GGML_MAX_DIMS, 0);
                     std::fill_n(prop.src_nb[src], GGML_MAX_DIMS, 0);
                 }
             }
 
-            memcpy(prop.op_params, node->op_params, GGML_MAX_OP_PARAMS);
+            ਸਮ੍ਰਿਤੀ_ਨਕਲ(prop.op_params, ਗੰਢ->op_params, GGML_MAX_OP_PARAMS);
         }
 
-        return new_graph;
+        ਵਾਪਸ new_ਗ੍ਰਾਫ;
     }
 
     /**
@@ -365,17 +365,17 @@ struct ggml_cann_graph {
      * @return true if this CANN graph matches the ggml graph; false otherwise.
      */
     bool matches_cgraph(ggml_cgraph * cgraph) {
-        if (this->ggml_graph_properties.size() != static_cast<size_t>(cgraph->n_nodes)) {
-            return false;
+        ਜੇ (this->ggml_ਗ੍ਰਾਫ_properties.ਮਾਪ() != static_cast<size_t>(cgraph->n_nodes)) {
+            ਵਾਪਸ false;
         }
 
-        for (int i = 0; i < cgraph->n_nodes; ++i) {
-            if (!this->ggml_graph_properties[i].has_matching_properties(cgraph->nodes[i])) {
-                return false;
+        ਲਈ (ਪੂਰਨ i = 0; i < cgraph->n_nodes; ++i) {
+            ਜੇ (!this->ggml_ਗ੍ਰਾਫ_properties[i].has_matching_properties(cgraph->nodes[i])) {
+                ਵਾਪਸ false;
             }
         }
 
-        return true;
+        ਵਾਪਸ true;
     }
 };
 
@@ -386,12 +386,12 @@ struct ggml_cann_graph {
  * and enforces a maximum capacity. It provides methods to push new graphs,
  * move existing graphs to the front (most recently used), and clear the cache.
  */
-struct ggml_cann_graph_lru_cache {
-    size_t capacity;                         /**< Maximum number of graphs in the cache. */
+ਬਣਤਰ ggml_cann_ਗ੍ਰਾਫ_lru_cache {
+    size_t ਸਮਰੱਥਾ;                         /**< Maximum number of graphs in the cache. */
 
-    std::list<ggml_cann_graph *> cache_list; /**< List storing cached graphs as raw pointers. */
+    std::list<ggml_cann_ਗ੍ਰਾਫ *> cache_list; /**< List storing cached graphs as raw pointers. */
 
-    ggml_cann_graph_lru_cache() { capacity = parse_integer(get_env_as_lowercase("GGML_CANN_GRAPH_CACHE_CAPACITY").value_or("12")); }
+    ggml_cann_ਗ੍ਰਾਫ_lru_cache() { ਸਮਰੱਥਾ = parse_integer(get_env_as_lowercase("GGML_CANN_GRAPH_CACHE_CAPACITY").ਮੁੱਲ_or("12")); }
 
     /**
      * @brief Push a new graph to the front of the cache.
@@ -399,20 +399,20 @@ struct ggml_cann_graph_lru_cache {
      * @param new_node Pointer to the new ggml_cann_graph to cache.
      *        Ownership is transferred to the cache (cache will delete it).
      */
-    void push(ggml_cann_graph * new_node) {
-        if (cache_list.size() >= capacity) {
-            ggml_cann_graph * old = cache_list.back();
-            cache_list.pop_back();
+    ਖਾਲੀ ਧੱਕੋ(ggml_cann_ਗ੍ਰਾਫ * new_ਗੰਢ) {
+        ਜੇ (cache_list.ਮਾਪ() >= ਸਮਰੱਥਾ) {
+            ggml_cann_ਗ੍ਰਾਫ * old = cache_list.ਪਿੱਠ();
+            cache_list.ਕੱਢੋ_ਪਿੱਠ();
             delete old;  // free the old graph
         }
-        cache_list.push_front(new_node);
+        cache_list.ਧੱਕੋ_front(new_ਗੰਢ);
     }
 
     /**
      * @brief Clear all graphs from the cache (also frees memory).
      */
-    void clear() {
-        for (auto ptr : cache_list) {
+    ਖਾਲੀ clear() {
+        ਲਈ (ਸਵੈਚਾਲਿਤ ptr : cache_list) {
             delete ptr;
         }
         cache_list.clear();
@@ -421,7 +421,7 @@ struct ggml_cann_graph_lru_cache {
     /**
      * @brief Destructor that clears the cache and frees all cached graphs.
      */
-    ~ggml_cann_graph_lru_cache() { clear(); }
+    ~ggml_cann_ਗ੍ਰਾਫ_lru_cache() { clear(); }
 
     /**
      * @brief Find a cached CANN graph that matches the given ggml graph and move it to front.
@@ -434,82 +434,82 @@ struct ggml_cann_graph_lru_cache {
      * @param cgraph The current ggml computation graph.
      * @return true if found; false otherwise.
      */
-    bool find_and_move_to_front(ggml_cgraph * cgraph) {
-        for (auto & graph_ptr : this->cache_list) {
-            if (graph_ptr->matches_cgraph(cgraph)) {
-                cache_list.remove(graph_ptr);
-                cache_list.push_front(graph_ptr);
-                return true;
+    bool ਲੱਭੋ_and_move_ਮੰਜ਼ਿਲ_front(ggml_cgraph * cgraph) {
+        ਲਈ (ਸਵੈਚਾਲਿਤ & ਗ੍ਰਾਫ_ptr : this->cache_list) {
+            ਜੇ (ਗ੍ਰਾਫ_ptr->matches_cgraph(cgraph)) {
+                cache_list.remove(ਗ੍ਰਾਫ_ptr);
+                cache_list.ਧੱਕੋ_front(ਗ੍ਰਾਫ_ptr);
+                ਵਾਪਸ true;
             }
         }
-        return false;
+        ਵਾਪਸ false;
     }
 };
-#endif  // USE_ACL_GRAPH
+#ਜੇ_ਅੰਤ  // USE_ACL_GRAPH
 
-struct ggml_cann_rope_cache {
+ਬਣਤਰ ggml_cann_rope_cache {
     ~ggml_cann_rope_cache() {
-        if (theta_scale_cache) {
+        ਜੇ (theta_scale_cache) {
             ACL_CHECK(aclrtFree(theta_scale_cache));
         }
-        if (sin_cache) {
+        ਜੇ (sin_cache) {
             ACL_CHECK(aclrtFree(sin_cache));
         }
-        if (cos_cache) {
+        ਜੇ (cos_cache) {
             ACL_CHECK(aclrtFree(cos_cache));
         }
-        if (position_select_index) {
-            ACL_CHECK(aclrtFree(position_select_index));
+        ਜੇ (position_select_ਸੂਚਕਾਂਕ) {
+            ACL_CHECK(aclrtFree(position_select_ਸੂਚਕਾਂਕ));
         }
-        if (theta_scale_exp_host) {
-            free(theta_scale_exp_host);
+        ਜੇ (theta_scale_exp_host) {
+            ਮੁਕਤ(theta_scale_exp_host);
         }
-        if (position_select_index_host) {
-            free(position_select_index_host);
+        ਜੇ (position_select_ਸੂਚਕਾਂਕ_host) {
+            ਮੁਕਤ(position_select_ਸੂਚਕਾਂਕ_host);
         }
-        if (yarn_ramp_cache) {
+        ਜੇ (yarn_ramp_cache) {
             ACL_CHECK(aclrtFree(yarn_ramp_cache));
         }
     }
 
-    bool equal(int64_t theta_scale_length,
-               int64_t position_length,
-               float   ext_factor,
-               float   theta_scale,
-               float   freq_scale,
-               float   attn_factor,
+    bool equal(int64_t theta_scale_ਲੰਮਾਈ,
+               int64_t position_ਲੰਮਾਈ,
+               ਦਸ਼ਮਲਵ   ext_ਗੁਣਕ,
+               ਦਸ਼ਮਲਵ   theta_scale,
+               ਦਸ਼ਮਲਵ   freq_scale,
+               ਦਸ਼ਮਲਵ   attn_ਗੁਣਕ,
                bool    is_neox,
                bool    indep_sects,
-               bool    mrope_used,
+               bool    mrope_ਵਰਤਿਆ,
                bool    is_imrope,
-               int     sections[4]) {
-        return this->theta_scale_length == theta_scale_length && this->position_length == position_length &&
-               this->ext_factor == ext_factor && this->theta_scale == theta_scale && this->freq_scale == freq_scale &&
-               this->attn_factor == attn_factor && this->is_neox == is_neox && this->indep_sects == indep_sects &&
-               this->mrope_used == mrope_used && this->is_imrope == is_imrope && this->sections[0] == sections[0] &&
+               ਪੂਰਨ     sections[4]) {
+        ਵਾਪਸ this->theta_scale_ਲੰਮਾਈ == theta_scale_ਲੰਮਾਈ && this->position_ਲੰਮਾਈ == position_ਲੰਮਾਈ &&
+               this->ext_ਗੁਣਕ == ext_ਗੁਣਕ && this->theta_scale == theta_scale && this->freq_scale == freq_scale &&
+               this->attn_ਗੁਣਕ == attn_ਗੁਣਕ && this->is_neox == is_neox && this->indep_sects == indep_sects &&
+               this->mrope_ਵਰਤਿਆ == mrope_ਵਰਤਿਆ && this->is_imrope == is_imrope && this->sections[0] == sections[0] &&
                this->sections[1] == sections[1] && this->sections[2] == sections[2] && this->sections[3] == sections[3];
     }
 
-    void set(int64_t theta_scale_length,
-             int64_t position_length,
-             float   ext_factor,
-             float   theta_scale,
-             float   freq_scale,
-             float   attn_factor,
+    ਖਾਲੀ ਸੈੱਟ(int64_t theta_scale_ਲੰਮਾਈ,
+             int64_t position_ਲੰਮਾਈ,
+             ਦਸ਼ਮਲਵ   ext_ਗੁਣਕ,
+             ਦਸ਼ਮਲਵ   theta_scale,
+             ਦਸ਼ਮਲਵ   freq_scale,
+             ਦਸ਼ਮਲਵ   attn_ਗੁਣਕ,
              bool    is_neox,
              bool    indep_sects,
-             bool    mrope_used,
+             bool    mrope_ਵਰਤਿਆ,
              bool    is_imrope,
-             int     sections[4]) {
-        this->theta_scale_length = theta_scale_length;
-        this->position_length    = position_length;
-        this->ext_factor         = ext_factor;
+             ਪੂਰਨ     sections[4]) {
+        this->theta_scale_ਲੰਮਾਈ = theta_scale_ਲੰਮਾਈ;
+        this->position_ਲੰਮਾਈ    = position_ਲੰਮਾਈ;
+        this->ext_ਗੁਣਕ         = ext_ਗੁਣਕ;
         this->theta_scale        = theta_scale;
         this->freq_scale         = freq_scale;
-        this->attn_factor        = attn_factor;
+        this->attn_ਗੁਣਕ        = attn_ਗੁਣਕ;
         this->is_neox            = is_neox;
         this->indep_sects        = indep_sects;
-        this->mrope_used         = mrope_used;
+        this->mrope_ਵਰਤਿਆ         = mrope_ਵਰਤਿਆ;
         this->is_imrope          = is_imrope;
         this->sections[0]        = sections[0];
         this->sections[1]        = sections[1];
@@ -518,88 +518,88 @@ struct ggml_cann_rope_cache {
     }
 
     // memory cache, prepare before inferencing.
-    void *  theta_scale_cache          = nullptr;
-    float * theta_scale_exp_host       = nullptr;
-    int *   position_select_index_host = nullptr;
-    void *  position_select_index      = nullptr;
-    void *  yarn_ramp_cache            = nullptr;
+    ਖਾਲੀ *  theta_scale_cache          = nullptr;
+    ਦਸ਼ਮਲਵ * theta_scale_exp_host       = nullptr;
+    ਪੂਰਨ *   position_select_ਸੂਚਕਾਂਕ_host = nullptr;
+    ਖਾਲੀ *  position_select_ਸੂਚਕਾਂਕ      = nullptr;
+    ਖਾਲੀ *  yarn_ramp_cache            = nullptr;
     // sin/cos cache, used only to accelerate first layer on each device
-    void *  sin_cache                  = nullptr;
-    void *  cos_cache                  = nullptr;
+    ਖਾਲੀ *  sin_cache                  = nullptr;
+    ਖਾਲੀ *  cos_cache                  = nullptr;
     // Properties to check before reusing the sincos cache
-    int64_t theta_scale_length         = 0;
-    int64_t position_length            = 0;
+    int64_t theta_scale_ਲੰਮਾਈ         = 0;
+    int64_t position_ਲੰਮਾਈ            = 0;
     bool    cached                     = false;
-    float   ext_factor                 = 0.0f;
-    float   theta_scale                = 0.0f;
-    float   freq_scale                 = 0.0f;
-    float   attn_factor                = 0.0f;
+    ਦਸ਼ਮਲਵ   ext_ਗੁਣਕ                 = 0.0f;
+    ਦਸ਼ਮਲਵ   theta_scale                = 0.0f;
+    ਦਸ਼ਮਲਵ   freq_scale                 = 0.0f;
+    ਦਸ਼ਮਲਵ   attn_ਗੁਣਕ                = 0.0f;
     bool    is_neox                    = false;
     bool    indep_sects                = false;
-    bool    mrope_used                 = false;
-    int     sections[4]                = { 0, 0, 0, 0 };
+    bool    mrope_ਵਰਤਿਆ                 = false;
+    ਪੂਰਨ     sections[4]                = { 0, 0, 0, 0 };
     bool    is_imrope                  = false;
 };
 
-struct ggml_cann_tensor_cache {
+ਬਣਤਰ ggml_cann_tensor_cache {
     ~ggml_cann_tensor_cache() {
-        if (cache != nullptr) {
+        ਜੇ (cache != nullptr) {
             ACL_CHECK(aclrtFree(cache));
         }
     }
 
-    void *  cache = nullptr;
-    int64_t size  = 0;
+    ਖਾਲੀ *  cache = nullptr;
+    int64_t ਮਾਪ  = 0;
 };
 
 /**
  * @brief Context for managing CANN backend operations.
  */
-struct ggml_backend_cann_context {
+ਬਣਤਰ ggml_backend_cann_context {
     int32_t     device;               /**< Device ID. */
     std::string name;                 /**< Name of the device. */
     std::string description;          /**< Description of the device. */
     aclrtEvent  copy_event = nullptr; /**< Event for managing copy operations. */
-#ifdef USE_ACL_GRAPH
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ USE_ACL_ਗ੍ਰਾਫ
     /// Cached CANN ACL graph used for executing the current ggml computation graph.
-    ggml_cann_graph_lru_cache graph_lru_cache;
-    bool                      acl_graph_mode = true;
-#endif
-    bool                   async_mode;
+    ggml_cann_ਗ੍ਰਾਫ_lru_cache ਗ੍ਰਾਫ_lru_cache;
+    bool                      acl_ਗ੍ਰਾਫ_ਬਹੁਲਕ = true;
+#ਜੇ_ਅੰਤ
+    bool                   async_ਬਹੁਲਕ;
     // Rope Cache
     ggml_cann_rope_cache   rope_cache;
     // Constant Pool
     ggml_cann_tensor_cache rms_norm_one_tensor_cache;
     ggml_cann_tensor_cache rms_norm_zero_tensor_cache;
 
-    aclrtStream streams[GGML_CANN_MAX_STREAMS] = { nullptr }; /**< Array of streams for the device. */
+    aclrt_ਧਾਰਾ streams[GGML_CANN_MAX_STREAMS] = { nullptr }; /**< Array of streams for the device. */
 
     /**
      * @brief Constructor for initializing the context with a given device.
      * @param device Device ID.
      */
-    explicit ggml_backend_cann_context(int device) : device(device), name("CANN" + std::to_string(device)) {
-        ggml_cann_set_device(device);
+    explicit ggml_backend_cann_context(ਪੂਰਨ device) : device(device), name("CANN" + std::ਮੰਜ਼ਿਲ_string(device)) {
+        ggml_cann_ਸੈੱਟ_device(device);
         description = aclrtGetSocName();
 
-#ifdef USE_ACL_GRAPH
-        acl_graph_mode = parse_bool(get_env_as_lowercase("GGML_CANN_ACL_GRAPH").value_or("on"));
-        GGML_LOG_INFO("%s: device %d execution mode is %s (%s)\n", __func__, device, acl_graph_mode ? "GRAPH" : "EAGER",
-                      acl_graph_mode ? "acl graph enabled" : "acl graph disabled");
-#endif
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ USE_ACL_ਗ੍ਰਾਫ
+        acl_ਗ੍ਰਾਫ_ਬਹੁਲਕ = parse_bool(get_env_as_lowercase("GGML_CANN_ACL_GRAPH").ਮੁੱਲ_or("on"));
+        GGML_LOG_INFO("%s: device %d execution mode is %s (%s)\n", __func__, device, acl_ਗ੍ਰਾਫ_ਬਹੁਲਕ ? "GRAPH" : "EAGER",
+                      acl_ਗ੍ਰਾਫ_ਬਹੁਲਕ ? "acl graph enabled" : "acl graph disabled");
+#ਜੇ_ਅੰਤ
     }
 
     /**
      * @brief Destructor for cleaning up resources.
      */
     ~ggml_backend_cann_context() {
-        ggml_cann_set_device(device);
-        if (copy_event != nullptr) {
+        ggml_cann_ਸੈੱਟ_device(device);
+        ਜੇ (copy_event != nullptr) {
             ACL_CHECK(aclrtDestroyEvent(copy_event));
         }
-        for (int i = 0; i < GGML_CANN_MAX_STREAMS; ++i) {
-            if (streams[i] != nullptr) {
-                ACL_CHECK(aclrtDestroyStream(streams[i]));
+        ਲਈ (ਪੂਰਨ i = 0; i < GGML_CANN_MAX_STREAMS; ++i) {
+            ਜੇ (streams[i] != nullptr) {
+                ACL_CHECK(aclrt_Destroy_ਧਾਰਾ(streams[i]));
             }
         }
     }
@@ -609,22 +609,22 @@ struct ggml_backend_cann_context {
      * @param stream Index of the stream.
      * @return The stream corresponding to the given index.
      */
-    aclrtStream stream(int stream) {
-        if (streams[stream] == nullptr) {
+    aclrt_ਧਾਰਾ ਧਾਰਾ(ਪੂਰਨ ਧਾਰਾ) {
+        ਜੇ (streams[ਧਾਰਾ] == nullptr) {
             // If the device is not set here, destroying the stream later may cause a mismatch
             // between the thread contexts where the stream was created and destroyed.
             // However, I printed the device_id, thread_id, and stream, and they are all consistent.
-            ACL_CHECK(aclrtSetDevice(device));
-            ACL_CHECK(aclrtCreateStream(&streams[stream]));
+            ACL_CHECK(aclrt_ਸੈੱਟ_Device(device));
+            ACL_CHECK(aclrt_Create_ਧਾਰਾ(&streams[ਧਾਰਾ]));
         }
-        return streams[stream];
+        ਵਾਪਸ streams[ਧਾਰਾ];
     }
 
     /**
      * @brief Get or create the default stream (index 0).
      * @return The default stream.
      */
-    aclrtStream stream() { return stream(0); }
+    aclrt_ਧਾਰਾ ਧਾਰਾ() { ਵਾਪਸ ਧਾਰਾ(0); }
 
     // TODO: each stream should have a memory pool.
     std::unique_ptr<ggml_cann_pool> mem_pool; /**< Memory pool for the device. */
@@ -634,18 +634,18 @@ struct ggml_backend_cann_context {
      * @param device Device ID.
      * @return A unique pointer to the new memory pool.
      */
-    static std::unique_ptr<ggml_cann_pool> new_pool_for_device(int device);
+    ਸਥਿਰ std::unique_ptr<ggml_cann_pool> new_pool_for_device(ਪੂਰਨ device);
 
     /**
      * @brief Get or create the memory pool for the context.
      * @return Reference to the memory pool.
      */
     ggml_cann_pool & pool() {
-        if (mem_pool == nullptr) {
+        ਜੇ (mem_pool == nullptr) {
             mem_pool = new_pool_for_device(device);
         }
-        return *mem_pool;
+        ਵਾਪਸ *mem_pool;
     }
 };
 
-#endif  // CANN_COMMON_H
+#ਜੇ_ਅੰਤ  // CANN_COMMON_H

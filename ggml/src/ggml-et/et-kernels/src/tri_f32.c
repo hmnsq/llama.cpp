@@ -14,231 +14,231 @@
 // when ne0 is not a multiple of 16.
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "platform.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml_tensor.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "platform.h"
 
-#include <stdint.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdint.h>
 
-#define TRI_TYPE_UPPER_DIAG 0
-#define TRI_TYPE_UPPER      1
-#define TRI_TYPE_LOWER_DIAG 2
-#define TRI_TYPE_LOWER      3
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ TRI_TYPE_ਉੱਤਲਾ_DIAG 0
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ TRI_TYPE_ਉੱਤਲਾ      1
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ TRI_TYPE_ਹੇਠਲਾ_DIAG 2
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ TRI_TYPE_ਹੇਠਲਾ      3
 
-struct ggml_et_tri_params {
-    struct ggml_tensor src0;
-    struct ggml_tensor dst;
+ਬਣਤਰ ggml_et_tri_params {
+    ਬਣਤਰ ggml_tensor src0;
+    ਬਣਤਰ ggml_tensor dst;
     int32_t            tri_type;
 };
 
-static inline int keep_element(int32_t tri_type, int64_t i0, int64_t i1) {
-    switch (tri_type) {
-        case TRI_TYPE_LOWER:
-            return i0 < i1;
-        case TRI_TYPE_LOWER_DIAG:
-            return i0 <= i1;
-        case TRI_TYPE_UPPER:
-            return i0 > i1;
-        case TRI_TYPE_UPPER_DIAG:
-            return i0 >= i1;
-        default:
-            return 0;
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਪੂਰਨ keep_element(int32_t tri_type, int64_t i0, int64_t i1) {
+    ਚੋਣ (tri_type) {
+        ਹਾਲਤ TRI_TYPE_ਹੇਠਲਾ:
+            ਵਾਪਸ i0 < i1;
+        ਹਾਲਤ TRI_TYPE_ਹੇਠਲਾ_DIAG:
+            ਵਾਪਸ i0 <= i1;
+        ਹਾਲਤ TRI_TYPE_ਉੱਤਲਾ:
+            ਵਾਪਸ i0 > i1;
+        ਹਾਲਤ TRI_TYPE_ਉੱਤਲਾ_DIAG:
+            ਵਾਪਸ i0 >= i1;
+        ਮੂਲ:
+            ਵਾਪਸ 0;
     }
 }
 
-int entry_point(struct ggml_et_tri_params * params, void * env) {
+ਪੂਰਨ ਇੰਦਰਾਜ_ਬਿੰਦੂ(ਬਣਤਰ ggml_et_tri_params * params, ਖਾਲੀ * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    ਜੇ (!kernel_env) {
+        ਵਾਪਸ -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    ਪੂਰਨ thread_id   = get_relative_thread_id(kernel_env->shire_ਨਕਾਬ);
+    ਪੂਰਨ ਅੰਕ_ਧਾਗੇ = get_ਅੰਕ_ਧਾਗੇ(kernel_env->shire_ਨਕਾਬ);
 
-    if (thread_id < 0) {
-        return 0;
+    ਜੇ (thread_id < 0) {
+        ਵਾਪਸ 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    ਜੇ (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        ਵਾਪਸ -1;
     }
 
-    struct ggml_tensor * src0     = &params->src0;
-    struct ggml_tensor * dst      = &params->dst;
+    ਬਣਤਰ ggml_tensor * src0     = &params->src0;
+    ਬਣਤਰ ggml_tensor * dst      = &params->dst;
     int32_t              tri_type = params->tri_type;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+    ਜੇ (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        ਵਾਪਸ -1;
     }
 
-    float * src0_data = (float *) src0->data;
-    float * dst_data  = (float *) dst->data;
+    ਦਸ਼ਮਲਵ * src0_ਅੰਕੜੇ = (ਦਸ਼ਮਲਵ *) src0->ਅੰਕੜੇ;
+    ਦਸ਼ਮਲਵ * dst_ਅੰਕੜੇ  = (ਦਸ਼ਮਲਵ *) dst->ਅੰਕੜੇ;
 
-    if (!src0_data || !dst_data) {
-        return -1;
+    ਜੇ (!src0_ਅੰਕੜੇ || !dst_ਅੰਕੜੇ) {
+        ਵਾਪਸ -1;
     }
 
-    const int64_t ne0 = dst->ne[0];
-    const int64_t ne1 = dst->ne[1];
-    const int64_t ne2 = dst->ne[2];
-    const int64_t ne3 = dst->ne[3];
+    ਅਚਲ int64_t ne0 = dst->ne[0];
+    ਅਚਲ int64_t ne1 = dst->ne[1];
+    ਅਚਲ int64_t ne2 = dst->ne[2];
+    ਅਚਲ int64_t ne3 = dst->ne[3];
 
-    const size_t nb01 = src0->nb[1], nb02 = src0->nb[2], nb03 = src0->nb[3];
-    const size_t nb1 = dst->nb[1], nb2 = dst->nb[2], nb3 = dst->nb[3];
+    ਅਚਲ size_t nb01 = src0->nb[1], nb02 = src0->nb[2], nb03 = src0->nb[3];
+    ਅਚਲ size_t nb1 = dst->nb[1], nb2 = dst->nb[2], nb3 = dst->nb[3];
 
-    const int64_t total_rows = ne1 * ne2 * ne3;
+    ਅਚਲ int64_t ਕੁੱਲ_ਪੰਕਤੀਆਂ = ne1 * ne2 * ne3;
 
     //==========================================================================
     // Fast path: ne0 % 16 == 0 — rows are cache-line aligned, distribute rows
     //==========================================================================
-    if (ne0 % 16 == 0) {
-        float zero = 0.0f;
-        __asm__ volatile("fbc.ps f10, %[z]\n" : : [z] "m"(zero) : "f10");
+    ਜੇ (ne0 % 16 == 0) {
+        ਦਸ਼ਮਲਵ zero = 0.0f;
+        __asm__ ਅਸਥਿਰ("fbc.ps f10, %[z]\n" : : [z] "m"(zero) : "f10");
 
-        for (int64_t row = thread_id; row < total_rows; row += num_threads) {
-            const int64_t i1 = row % ne1;
-            const int64_t i2 = (row / ne1) % ne2;
-            const int64_t i3 = row / (ne1 * ne2);
+        ਲਈ (int64_t ਪੰਕਤੀ = thread_id; ਪੰਕਤੀ < ਕੁੱਲ_ਪੰਕਤੀਆਂ; ਪੰਕਤੀ += ਅੰਕ_ਧਾਗੇ) {
+            ਅਚਲ int64_t i1 = ਪੰਕਤੀ % ne1;
+            ਅਚਲ int64_t i2 = (ਪੰਕਤੀ / ne1) % ne2;
+            ਅਚਲ int64_t i3 = ਪੰਕਤੀ / (ne1 * ne2);
 
-            const float * src_row = (const float *) ((const char *) src0_data + i1 * nb01 + i2 * nb02 + i3 * nb03);
-            float *       dst_row = (float *) ((char *) dst_data + i1 * nb1 + i2 * nb2 + i3 * nb3);
+            ਅਚਲ ਦਸ਼ਮਲਵ * src_ਪੰਕਤੀ = (ਅਚਲ ਦਸ਼ਮਲਵ *) ((ਅਚਲ ਅੱਖਰ *) src0_ਅੰਕੜੇ + i1 * nb01 + i2 * nb02 + i3 * nb03);
+            ਦਸ਼ਮਲਵ *       dst_ਪੰਕਤੀ = (ਦਸ਼ਮਲਵ *) ((ਅੱਖਰ *) dst_ਅੰਕੜੇ + i1 * nb1 + i2 * nb2 + i3 * nb3);
 
-            int64_t keep_start, keep_end;
-            switch (tri_type) {
-                case TRI_TYPE_LOWER:
-                    keep_start = 0;
-                    keep_end   = i1;
-                    break;
-                case TRI_TYPE_LOWER_DIAG:
-                    keep_start = 0;
-                    keep_end   = i1 + 1;
-                    break;
-                case TRI_TYPE_UPPER:
-                    keep_start = i1 + 1;
-                    keep_end   = ne0;
-                    break;
-                case TRI_TYPE_UPPER_DIAG:
-                    keep_start = i1;
-                    keep_end   = ne0;
-                    break;
-                default:
-                    return -1;
+            int64_t keep_ਸ਼ੁਰੂ, keep_ਸਿਰਾ;
+            ਚੋਣ (tri_type) {
+                ਹਾਲਤ TRI_TYPE_ਹੇਠਲਾ:
+                    keep_ਸ਼ੁਰੂ = 0;
+                    keep_ਸਿਰਾ   = i1;
+                    ਰੋਕੋ;
+                ਹਾਲਤ TRI_TYPE_ਹੇਠਲਾ_DIAG:
+                    keep_ਸ਼ੁਰੂ = 0;
+                    keep_ਸਿਰਾ   = i1 + 1;
+                    ਰੋਕੋ;
+                ਹਾਲਤ TRI_TYPE_ਉੱਤਲਾ:
+                    keep_ਸ਼ੁਰੂ = i1 + 1;
+                    keep_ਸਿਰਾ   = ne0;
+                    ਰੋਕੋ;
+                ਹਾਲਤ TRI_TYPE_ਉੱਤਲਾ_DIAG:
+                    keep_ਸ਼ੁਰੂ = i1;
+                    keep_ਸਿਰਾ   = ne0;
+                    ਰੋਕੋ;
+                ਮੂਲ:
+                    ਵਾਪਸ -1;
             }
-            if (keep_end > ne0) {
-                keep_end = ne0;
+            ਜੇ (keep_ਸਿਰਾ > ne0) {
+                keep_ਸਿਰਾ = ne0;
             }
 
             // Zero prefix [0, keep_start) — SIMD for aligned blocks, scalar tail
             int64_t i0 = 0;
-            for (; i0 + 8 <= keep_start; i0 += 8) {
-                __asm__ volatile("fsw.ps f10, %[d]\n" : [d] "=m"(*(float (*)[8]) & dst_row[i0])::"f10");
+            ਲਈ (; i0 + 8 <= keep_ਸ਼ੁਰੂ; i0 += 8) {
+                __asm__ ਅਸਥਿਰ("fsw.ps f10, %[d]\n" : [d] "=m"(*(ਦਸ਼ਮਲਵ (*)[8]) & dst_ਪੰਕਤੀ[i0])::"f10");
             }
-            for (; i0 < keep_start; i0++) {
-                dst_row[i0] = 0.0f;
+            ਲਈ (; i0 < keep_ਸ਼ੁਰੂ; i0++) {
+                dst_ਪੰਕਤੀ[i0] = 0.0f;
             }
 
             // Copy kept region [keep_start, keep_end) — SIMD + scalar tail
-            for (; i0 + 8 <= keep_end; i0 += 8) {
-                __asm__ volatile(
+            ਲਈ (; i0 + 8 <= keep_ਸਿਰਾ; i0 += 8) {
+                __asm__ ਅਸਥਿਰ(
                     "flw.ps f11, %[s]\n"
                     "fsw.ps f11, %[d]\n"
-                    : [d] "=m"(*(float (*)[8]) & dst_row[i0])
-                    : [s] "m"(*(const float (*)[8]) & src_row[i0])
+                    : [d] "=m"(*(ਦਸ਼ਮਲਵ (*)[8]) & dst_ਪੰਕਤੀ[i0])
+                    : [s] "m"(*(ਅਚਲ ਦਸ਼ਮਲਵ (*)[8]) & src_ਪੰਕਤੀ[i0])
                     : "f11");
             }
-            for (; i0 < keep_end; i0++) {
-                dst_row[i0] = src_row[i0];
+            ਲਈ (; i0 < keep_ਸਿਰਾ; i0++) {
+                dst_ਪੰਕਤੀ[i0] = src_ਪੰਕਤੀ[i0];
             }
 
             // Zero suffix [keep_end, ne0) — SIMD + scalar tail
-            for (; i0 + 8 <= ne0; i0 += 8) {
-                __asm__ volatile("fsw.ps f10, %[d]\n" : [d] "=m"(*(float (*)[8]) & dst_row[i0])::"f10");
+            ਲਈ (; i0 + 8 <= ne0; i0 += 8) {
+                __asm__ ਅਸਥਿਰ("fsw.ps f10, %[d]\n" : [d] "=m"(*(ਦਸ਼ਮਲਵ (*)[8]) & dst_ਪੰਕਤੀ[i0])::"f10");
             }
-            for (; i0 < ne0; i0++) {
-                dst_row[i0] = 0.0f;
+            ਲਈ (; i0 < ne0; i0++) {
+                dst_ਪੰਕਤੀ[i0] = 0.0f;
             }
         }
-        return 0;
+        ਵਾਪਸ 0;
     }
 
     //==========================================================================
     // Unaligned fallback: distribute by cache lines, scalar per element
     //==========================================================================
     {
-        const int64_t total_elements = ne0 * ne1 * ne2 * ne3;
-        const int64_t elems_per_cl   = 16;
-        const int64_t total_cl       = (total_elements + elems_per_cl - 1) / elems_per_cl;
+        ਅਚਲ int64_t ਕੁੱਲ_elements = ne0 * ne1 * ne2 * ne3;
+        ਅਚਲ int64_t elems_ਪ੍ਰਤੀ_cl   = 16;
+        ਅਚਲ int64_t ਕੁੱਲ_cl       = (ਕੁੱਲ_elements + elems_ਪ੍ਰਤੀ_cl - 1) / elems_ਪ੍ਰਤੀ_cl;
 
-        const int64_t cl_per_thread = (total_cl + num_threads - 1) / num_threads;
-        const int64_t cl_start      = thread_id * cl_per_thread;
-        int64_t       cl_end        = cl_start + cl_per_thread;
-        if (cl_end > total_cl) {
-            cl_end = total_cl;
+        ਅਚਲ int64_t cl_ਪ੍ਰਤੀ_thread = (ਕੁੱਲ_cl + ਅੰਕ_ਧਾਗੇ - 1) / ਅੰਕ_ਧਾਗੇ;
+        ਅਚਲ int64_t cl_ਸ਼ੁਰੂ      = thread_id * cl_ਪ੍ਰਤੀ_thread;
+        int64_t       cl_ਸਿਰਾ        = cl_ਸ਼ੁਰੂ + cl_ਪ੍ਰਤੀ_thread;
+        ਜੇ (cl_ਸਿਰਾ > ਕੁੱਲ_cl) {
+            cl_ਸਿਰਾ = ਕੁੱਲ_cl;
         }
-        if (cl_start >= total_cl) {
-            return 0;
-        }
-
-        const int64_t es = cl_start * elems_per_cl;
-        int64_t       ee = cl_end * elems_per_cl;
-        if (ee > total_elements) {
-            ee = total_elements;
+        ਜੇ (cl_ਸ਼ੁਰੂ >= ਕੁੱਲ_cl) {
+            ਵਾਪਸ 0;
         }
 
-        int64_t row_idx = es / ne0;
-        int64_t col     = es % ne0;
+        ਅਚਲ int64_t es = cl_ਸ਼ੁਰੂ * elems_ਪ੍ਰਤੀ_cl;
+        int64_t       ee = cl_ਸਿਰਾ * elems_ਪ੍ਰਤੀ_cl;
+        ਜੇ (ee > ਕੁੱਲ_elements) {
+            ee = ਕੁੱਲ_elements;
+        }
+
+        int64_t ਪੰਕਤੀ_idx = es / ne0;
+        int64_t ਖਾਨਾ     = es % ne0;
 
         int64_t pos = es;
-        while (pos < ee) {
-            const int64_t i1 = row_idx % ne1;
-            const int64_t i2 = (row_idx / ne1) % ne2;
-            const int64_t i3 = row_idx / (ne1 * ne2);
+        ਜਦੋਂ (pos < ee) {
+            ਅਚਲ int64_t i1 = ਪੰਕਤੀ_idx % ne1;
+            ਅਚਲ int64_t i2 = (ਪੰਕਤੀ_idx / ne1) % ne2;
+            ਅਚਲ int64_t i3 = ਪੰਕਤੀ_idx / (ne1 * ne2);
 
-            const float * src_row = (const float *) ((const char *) src0_data + i1 * nb01 + i2 * nb02 + i3 * nb03);
+            ਅਚਲ ਦਸ਼ਮਲਵ * src_ਪੰਕਤੀ = (ਅਚਲ ਦਸ਼ਮਲਵ *) ((ਅਚਲ ਅੱਖਰ *) src0_ਅੰਕੜੇ + i1 * nb01 + i2 * nb02 + i3 * nb03);
 
-            int64_t row_remaining   = ne0 - col;
-            int64_t chunk_remaining = ee - pos;
-            int64_t n               = row_remaining < chunk_remaining ? row_remaining : chunk_remaining;
+            int64_t ਪੰਕਤੀ_ਬਚਿਆ   = ne0 - ਖਾਨਾ;
+            int64_t chunk_ਬਚਿਆ = ee - pos;
+            int64_t n               = ਪੰਕਤੀ_ਬਚਿਆ < chunk_ਬਚਿਆ ? ਪੰਕਤੀ_ਬਚਿਆ : chunk_ਬਚਿਆ;
 
-            int64_t keep_start, keep_end;
-            switch (tri_type) {
-                case TRI_TYPE_LOWER:
-                    keep_start = 0;
-                    keep_end   = i1;
-                    break;
-                case TRI_TYPE_LOWER_DIAG:
-                    keep_start = 0;
-                    keep_end   = i1 + 1;
-                    break;
-                case TRI_TYPE_UPPER:
-                    keep_start = i1 + 1;
-                    keep_end   = ne0;
-                    break;
-                case TRI_TYPE_UPPER_DIAG:
-                    keep_start = i1;
-                    keep_end   = ne0;
-                    break;
-                default:
-                    return -1;
+            int64_t keep_ਸ਼ੁਰੂ, keep_ਸਿਰਾ;
+            ਚੋਣ (tri_type) {
+                ਹਾਲਤ TRI_TYPE_ਹੇਠਲਾ:
+                    keep_ਸ਼ੁਰੂ = 0;
+                    keep_ਸਿਰਾ   = i1;
+                    ਰੋਕੋ;
+                ਹਾਲਤ TRI_TYPE_ਹੇਠਲਾ_DIAG:
+                    keep_ਸ਼ੁਰੂ = 0;
+                    keep_ਸਿਰਾ   = i1 + 1;
+                    ਰੋਕੋ;
+                ਹਾਲਤ TRI_TYPE_ਉੱਤਲਾ:
+                    keep_ਸ਼ੁਰੂ = i1 + 1;
+                    keep_ਸਿਰਾ   = ne0;
+                    ਰੋਕੋ;
+                ਹਾਲਤ TRI_TYPE_ਉੱਤਲਾ_DIAG:
+                    keep_ਸ਼ੁਰੂ = i1;
+                    keep_ਸਿਰਾ   = ne0;
+                    ਰੋਕੋ;
+                ਮੂਲ:
+                    ਵਾਪਸ -1;
             }
-            if (keep_end > ne0) {
-                keep_end = ne0;
+            ਜੇ (keep_ਸਿਰਾ > ne0) {
+                keep_ਸਿਰਾ = ne0;
             }
 
-            int64_t end_col = col + n;
-            for (int64_t i0 = col; i0 < end_col; i0++) {
-                if (i0 >= keep_start && i0 < keep_end) {
-                    dst_data[pos + (i0 - col)] = src_row[i0];
-                } else {
-                    dst_data[pos + (i0 - col)] = 0.0f;
+            int64_t ਸਿਰਾ_ਖਾਨਾ = ਖਾਨਾ + n;
+            ਲਈ (int64_t i0 = ਖਾਨਾ; i0 < ਸਿਰਾ_ਖਾਨਾ; i0++) {
+                ਜੇ (i0 >= keep_ਸ਼ੁਰੂ && i0 < keep_ਸਿਰਾ) {
+                    dst_ਅੰਕੜੇ[pos + (i0 - ਖਾਨਾ)] = src_ਪੰਕਤੀ[i0];
+                } ਨਹੀਂਤਾਂ {
+                    dst_ਅੰਕੜੇ[pos + (i0 - ਖਾਨਾ)] = 0.0f;
                 }
             }
 
             pos += n;
-            col = 0;
-            row_idx++;
+            ਖਾਨਾ = 0;
+            ਪੰਕਤੀ_idx++;
         }
     }
 
-    return 0;
+    ਵਾਪਸ 0;
 }

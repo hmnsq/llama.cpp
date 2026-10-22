@@ -1,13 +1,13 @@
-#include "shared/apir_backend.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "shared/apir_backend.h"
 
-#define BUFFER_TO_HOST_HANDLE(name) ggml_buffer_to_apir_handle(name)
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ ਬਫਰ_ਮੰਜ਼ਿਲ_HOST_HANDLE(name) ggml_ਬਫਰ_ਮੰਜ਼ਿਲ_apir_handle(name)
 
-static inline apir_buffer_host_handle_t ggml_buffer_to_apir_handle(ggml_backend_buffer_t buffer) {
+ਸਥਿਰ ਸਤਰਅੰਦਰ apir_ਬਫਰ_host_handle_t ggml_ਬਫਰ_ਮੰਜ਼ਿਲ_apir_handle(ggml_backend_ਬਫਰ_t ਬਫਰ) {
     // in the backend, the buffer handle is the buffer pointer
-    return (apir_buffer_host_handle_t) buffer;
+    ਵਾਪਸ (apir_ਬਫਰ_host_handle_t) ਬਫਰ;
 }
 
-static inline apir_buffer_type_host_handle_t ggml_buffer_type_to_apir_handle(ggml_backend_buffer_type_t buft) {
+ਸਥਿਰ ਸਤਰਅੰਦਰ apir_ਬਫਰ_type_host_handle_t ggml_ਬਫਰ_type_ਮੰਜ਼ਿਲ_apir_handle(ggml_backend_ਬਫਰ_type_t buft) {
     // in the backend, the buffer handle is the buffer pointer
-    return (apir_buffer_type_host_handle_t) buft;
+    ਵਾਪਸ (apir_ਬਫਰ_type_host_handle_t) buft;
 }

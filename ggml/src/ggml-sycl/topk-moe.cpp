@@ -1,78 +1,78 @@
-#include <cfloat>
-#include <initializer_list>
-#include <vector>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cfloat>
+#ਅਨ੍ਤਰ੍ਭਾਵ <initializer_list>
+#ਅਨ੍ਤਰ੍ਭਾਵ <vector>
 
-#include "ggml.h"
-#include "ggml-impl.h"
-#include "ggml-backend-impl.h"
-#include "topk-moe.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-impl.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-backend-impl.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "topk-moe.hpp"
 
 // SYCL port of ggml-cuda/topk-moe.cu. The kernel is a translation of the CUDA no-bias, no-PDL
 // path of topk_moe_cuda; the fusion-detection helpers below are ported near-verbatim from
 // ggml-cuda.cu (pure graph / pointer inspection, backend-agnostic). Bias is not implemented here:
 // if a routing bias is detected, the fusion is declined and the eager path runs unchanged.
 
-struct ggml_sycl_topk_moe_args {
-    bool sigmoid{};
-    bool softmax{};
-    bool delayed_softmax{};
-    bool prob_bias{};
-    bool norm{};
-    bool scale{};
+ਬਣਤਰ ggml_sycl_topk_moe_ਦਲੀਲਾਂ {
+    ਤਾਰਕਿਕ sigmoid{};
+    ਤਾਰਕਿਕ softmax{};
+    ਤਾਰਕਿਕ delayed_softmax{};
+    ਤਾਰਕਿਕ prob_bias{};
+    ਤਾਰਕਿਕ norm{};
+    ਤਾਰਕਿਕ scale{};
 };
 
-struct topk_moe_config {
-    bool use_sigmoid;
-    bool with_norm;
-    bool delayed_softmax;
+ਬਣਤਰ topk_moe_config {
+    ਤਾਰਕਿਕ use_sigmoid;
+    ਤਾਰਕਿਕ with_norm;
+    ਤਾਰਕਿਕ delayed_softmax;
 };
 
 // warp-local softmax used for both the pre-top-k logits and the post-top-k delayed path
-template <int experts_per_thread, bool use_limit>
-static inline void softmax_warp_inplace(float (&vals)[experts_per_thread], const int limit, const int lane) {
-    float max_val = -INFINITY;
-#pragma unroll
-    for (int i = 0; i < experts_per_thread; i++) {
-        const int  idx    = lane + i * WARP_SIZE;
-        const bool active = !use_limit || (idx < limit);
-        if (active) {
+ਸਾਂਚਾ <ਪੂਰਨ experts_ਪ੍ਰਤੀ_thread, ਤਾਰਕਿਕ use_ਹੱਦਬੰਦੀ>
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ softmax_warp_inplace(ਦਸ਼ਮਲਵ (&vals)[experts_ਪ੍ਰਤੀ_thread], ਅਚਲ ਪੂਰਨ ਹੱਦਬੰਦੀ, ਅਚਲ ਪੂਰਨ lane) {
+    ਦਸ਼ਮਲਵ max_val = -INFINITY;
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ i = 0; i < experts_ਪ੍ਰਤੀ_thread; i++) {
+        ਅਚਲ ਪੂਰਨ  idx    = lane + i * WARP_ਮਾਪ;
+        ਅਚਲ ਤਾਰਕਿਕ ਸਰਗਰਮ = !use_ਹੱਦਬੰਦੀ || (idx < ਹੱਦਬੰਦੀ);
+        ਜੇ (ਸਰਗਰਮ) {
             max_val = sycl::fmax(max_val, vals[i]);
         }
     }
-    max_val = warp_reduce_max<WARP_SIZE>(max_val);
+    max_val = warp_reduce_max<WARP_ਮਾਪ>(max_val);
 
-    float sum = 0.f;
-#pragma unroll
-    for (int i = 0; i < experts_per_thread; i++) {
-        const int  idx    = lane + i * WARP_SIZE;
-        const bool active = !use_limit || (idx < limit);
-        if (active) {
-            const float val = sycl::exp(vals[i] - max_val);
+    ਦਸ਼ਮਲਵ ਜੋੜ = 0.f;
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ i = 0; i < experts_ਪ੍ਰਤੀ_thread; i++) {
+        ਅਚਲ ਪੂਰਨ  idx    = lane + i * WARP_ਮਾਪ;
+        ਅਚਲ ਤਾਰਕਿਕ ਸਰਗਰਮ = !use_ਹੱਦਬੰਦੀ || (idx < ਹੱਦਬੰਦੀ);
+        ਜੇ (ਸਰਗਰਮ) {
+            ਅਚਲ ਦਸ਼ਮਲਵ val = sycl::ਘਾਤਾਂਕ(vals[i] - max_val);
             vals[i]         = val;
-            sum += val;
-        } else {
+            ਜੋੜ += val;
+        } ਨਹੀਂਤਾਂ {
             vals[i] = 0.f;
         }
     }
-    sum = warp_reduce_sum<WARP_SIZE>(sum);
+    ਜੋੜ = warp_reduce_ਜੋੜ<WARP_ਮਾਪ>(ਜੋੜ);
 
-    const float inv_sum = 1.0f / sum;
-#pragma unroll
-    for (int i = 0; i < experts_per_thread; i++) {
-        const int idx = lane + i * WARP_SIZE;
-        if (!use_limit || idx < limit) {
-            vals[i] *= inv_sum;
+    ਅਚਲ ਦਸ਼ਮਲਵ inv_ਜੋੜ = 1.0f / ਜੋੜ;
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ i = 0; i < experts_ਪ੍ਰਤੀ_thread; i++) {
+        ਅਚਲ ਪੂਰਨ idx = lane + i * WARP_ਮਾਪ;
+        ਜੇ (!use_ਹੱਦਬੰਦੀ || idx < ਹੱਦਬੰਦੀ) {
+            vals[i] *= inv_ਜੋੜ;
         }
     }
 }
 
-template <int experts_per_thread, bool use_limit>
-static inline void sigmoid_warp_inplace(float (&vals)[experts_per_thread], const int limit, const int lane) {
-#pragma unroll
-    for (int i = 0; i < experts_per_thread; i++) {
-        const int  idx    = lane + i * WARP_SIZE;
-        const bool active = !use_limit || (idx < limit);
-        vals[i]           = active ? 1.f / (1.f + sycl::exp(-vals[i])) : -INFINITY;
+ਸਾਂਚਾ <ਪੂਰਨ experts_ਪ੍ਰਤੀ_thread, ਤਾਰਕਿਕ use_ਹੱਦਬੰਦੀ>
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ sigmoid_warp_inplace(ਦਸ਼ਮਲਵ (&vals)[experts_ਪ੍ਰਤੀ_thread], ਅਚਲ ਪੂਰਨ ਹੱਦਬੰਦੀ, ਅਚਲ ਪੂਰਨ lane) {
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ i = 0; i < experts_ਪ੍ਰਤੀ_thread; i++) {
+        ਅਚਲ ਪੂਰਨ  idx    = lane + i * WARP_ਮਾਪ;
+        ਅਚਲ ਤਾਰਕਿਕ ਸਰਗਰਮ = !use_ਹੱਦਬੰਦੀ || (idx < ਹੱਦਬੰਦੀ);
+        vals[i]           = ਸਰਗਰਮ ? 1.f / (1.f + sycl::ਘਾਤਾਂਕ(-vals[i])) : -INFINITY;
     }
 }
 
@@ -86,52 +86,52 @@ static inline void sigmoid_warp_inplace(float (&vals)[experts_per_thread], const
     It is intended as a fusion of the softmax->top-k->get_rows pipeline for MoE models.
     One sub-group handles one row/token, mirroring topk_moe_cuda's one-warp-per-row layout.
 */
-template <int n_experts>
-static void topk_moe_kernel(const float * __restrict__ logits,
-                            float * __restrict__       weights,
+ਸਾਂਚਾ <ਪੂਰਨ n_experts>
+ਸਥਿਰ ਖਾਲੀ topk_moe_kernel(ਅਚਲ ਦਸ਼ਮਲਵ * __restrict__ logits,
+                            ਦਸ਼ਮਲਵ * __restrict__       weights,
                             int32_t * __restrict__     ids,
-                            const int                  n_rows,
-                            const int                  n_expert_used,
-                            const float                clamp_val,
-                            const float                scale_val,
-                            const topk_moe_config       config) {
-    auto      item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<1>();
-    const int row       = item_ct1.get_group(0);
-    if (row >= n_rows) {
-        return;
+                            ਅਚਲ ਪੂਰਨ                  n_ਪੰਕਤੀਆਂ,
+                            ਅਚਲ ਪੂਰਨ                  n_expert_ਵਰਤਿਆ,
+                            ਅਚਲ ਦਸ਼ਮਲਵ                clamp_val,
+                            ਅਚਲ ਦਸ਼ਮਲਵ                scale_val,
+                            ਅਚਲ topk_moe_config       config) {
+    ਸਵੈਚਾਲਿਤ      ਵਸਤੂ_ct1 = sycl::ext::oneapi::this_work_ਵਸਤੂ::get_nd_ਵਸਤੂ<1>();
+    ਅਚਲ ਪੂਰਨ ਪੰਕਤੀ       = ਵਸਤੂ_ct1.get_ਸਮੂਹ(0);
+    ਜੇ (ਪੰਕਤੀ >= n_ਪੰਕਤੀਆਂ) {
+        ਵਾਪਸ;
     }
-    const int lane = item_ct1.get_local_id(0);
+    ਅਚਲ ਪੂਰਨ lane = ਵਸਤੂ_ct1.get_local_id(0);
 
-    logits  += (size_t) n_experts * row;
-    weights += (size_t) n_expert_used * row;
-    ids     += (size_t) n_experts * row;  // ids row stride is n_experts (matches the argsort tensor)
+    logits  += (size_t) n_experts * ਪੰਕਤੀ;
+    weights += (size_t) n_expert_ਵਰਤਿਆ * ਪੰਕਤੀ;
+    ids     += (size_t) n_experts * ਪੰਕਤੀ;  // ids row stride is n_experts (matches the argsort tensor)
 
-    constexpr int experts_per_thread = (n_experts > WARP_SIZE) ? n_experts / WARP_SIZE : 1;
+    constexpr ਪੂਰਨ experts_ਪ੍ਰਤੀ_thread = (n_experts > WARP_ਮਾਪ) ? n_experts / WARP_ਮਾਪ : 1;
 
-    float wt[experts_per_thread];
-#pragma unroll
-    for (int i = 0; i < experts_per_thread; i++) {
+    ਦਸ਼ਮਲਵ wt[experts_ਪ੍ਰਤੀ_thread];
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ i = 0; i < experts_ਪ੍ਰਤੀ_thread; i++) {
         wt[i] = -INFINITY;
     }
-#pragma unroll
-    for (int i = 0; i < n_experts; i += WARP_SIZE) {
-        const int expert  = i + lane;
-        wt[i / WARP_SIZE] = (n_experts % WARP_SIZE == 0 || expert < n_experts) ? logits[expert] : -INFINITY;
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ i = 0; i < n_experts; i += WARP_ਮਾਪ) {
+        ਅਚਲ ਪੂਰਨ expert  = i + lane;
+        wt[i / WARP_ਮਾਪ] = (n_experts % WARP_ਮਾਪ == 0 || expert < n_experts) ? logits[expert] : -INFINITY;
     }
 
-    if (!config.delayed_softmax) {
-        if (config.use_sigmoid) {
-            sigmoid_warp_inplace<experts_per_thread, false>(wt, n_experts, lane);
-        } else {
-            softmax_warp_inplace<experts_per_thread, false>(wt, n_experts, lane);
+    ਜੇ (!config.delayed_softmax) {
+        ਜੇ (config.use_sigmoid) {
+            sigmoid_warp_inplace<experts_ਪ੍ਰਤੀ_thread, ਝੂਠ>(wt, n_experts, lane);
+        } ਨਹੀਂਤਾਂ {
+            softmax_warp_inplace<experts_ਪ੍ਰਤੀ_thread, ਝੂਠ>(wt, n_experts, lane);
         }
     }
 
     // Sanitize NaN to -FLT_MAX so the iterative argmax produces unique expert IDs. NaN comparisons
     // always return false, which would cause the same expert to be selected repeatedly.
-#pragma unroll
-    for (int i = 0; i < experts_per_thread; i++) {
-        if (sycl::isnan(wt[i])) {
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ i = 0; i < experts_ਪ੍ਰਤੀ_thread; i++) {
+        ਜੇ (sycl::isnan(wt[i])) {
             wt[i] = -FLT_MAX;
         }
     }
@@ -140,480 +140,480 @@ static void topk_moe_kernel(const float * __restrict__ logits,
     // argmax reduce over n_expert_used, each time marking the selected expert as -inf to exclude it
     // from the next iteration.
 
-    float wt_sum = 0.f;
-    float output_weights[experts_per_thread];
-#pragma unroll
-    for (int i = 0; i < experts_per_thread; i++) {
+    ਦਸ਼ਮਲਵ wt_ਜੋੜ = 0.f;
+    ਦਸ਼ਮਲਵ output_weights[experts_ਪ੍ਰਤੀ_thread];
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ i = 0; i < experts_ਪ੍ਰਤੀ_thread; i++) {
         output_weights[i] = 0.f;
     }
 
-    const sycl::sub_group sg = item_ct1.get_sub_group();
+    ਅਚਲ sycl::sub_ਸਮੂਹ sg = ਵਸਤੂ_ct1.get_sub_ਸਮੂਹ();
 
-    for (int k = 0; k < n_expert_used; k++) {
-        float max_val    = wt[0];
-        int   max_expert = lane;
-#pragma unroll
-        for (int i = 1; i < experts_per_thread; i++) {
-            const int expert = lane + i * WARP_SIZE;
-            if ((n_experts % WARP_SIZE == 0 || expert < n_experts) && wt[i] > max_val) {
+    ਲਈ (ਪੂਰਨ k = 0; k < n_expert_ਵਰਤਿਆ; k++) {
+        ਦਸ਼ਮਲਵ max_val    = wt[0];
+        ਪੂਰਨ   max_expert = lane;
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ i = 1; i < experts_ਪ੍ਰਤੀ_thread; i++) {
+            ਅਚਲ ਪੂਰਨ expert = lane + i * WARP_ਮਾਪ;
+            ਜੇ ((n_experts % WARP_ਮਾਪ == 0 || expert < n_experts) && wt[i] > max_val) {
                 max_val    = wt[i];
                 max_expert = expert;
             }
         }
-#pragma unroll
-        for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
-            const float val    = dpct::permute_sub_group_by_xor(sg, max_val, mask);
-            const int   expert = dpct::permute_sub_group_by_xor(sg, max_expert, mask);
-            if (val > max_val || (val == max_val && expert < max_expert)) {
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ ਨਕਾਬ = WARP_ਮਾਪ / 2; ਨਕਾਬ > 0; ਨਕਾਬ >>= 1) {
+            ਅਚਲ ਦਸ਼ਮਲਵ val    = dpct::ਕ੍ਰਮ_ਬਦਲੋ_sub_ਸਮੂਹ_by_xor(sg, max_val, ਨਕਾਬ);
+            ਅਚਲ ਪੂਰਨ   expert = dpct::ਕ੍ਰਮ_ਬਦਲੋ_sub_ਸਮੂਹ_by_xor(sg, max_expert, ਨਕਾਬ);
+            ਜੇ (val > max_val || (val == max_val && expert < max_expert)) {
                 max_val    = val;
                 max_expert = expert;
             }
         }
 
-        if ((max_expert & (WARP_SIZE - 1)) == lane) {
-            wt[max_expert / WARP_SIZE] = -INFINITY;
+        ਜੇ ((max_expert & (WARP_ਮਾਪ - 1)) == lane) {
+            wt[max_expert / WARP_ਮਾਪ] = -INFINITY;
         }
-        if ((k & (WARP_SIZE - 1)) == lane) {
-            output_weights[k / WARP_SIZE] = max_val;
+        ਜੇ ((k & (WARP_ਮਾਪ - 1)) == lane) {
+            output_weights[k / WARP_ਮਾਪ] = max_val;
         }
-        if ((max_expert & (WARP_SIZE - 1)) == lane) {
+        ਜੇ ((max_expert & (WARP_ਮਾਪ - 1)) == lane) {
             ids[k] = max_expert;
-            if (config.with_norm) {
-                wt_sum += max_val;
+            ਜੇ (config.with_norm) {
+                wt_ਜੋੜ += max_val;
             }
         }
     }
 
-    if (config.with_norm) {
-        wt_sum          = warp_reduce_sum<WARP_SIZE>(wt_sum);
-        wt_sum          = sycl::fmax(wt_sum, clamp_val);
-        const float inv = 1.0f / wt_sum;
-#pragma unroll
-        for (int i = 0; i < experts_per_thread; i++) {
+    ਜੇ (config.with_norm) {
+        wt_ਜੋੜ          = warp_reduce_ਜੋੜ<WARP_ਮਾਪ>(wt_ਜੋੜ);
+        wt_ਜੋੜ          = sycl::fmax(wt_ਜੋੜ, clamp_val);
+        ਅਚਲ ਦਸ਼ਮਲਵ inv = 1.0f / wt_ਜੋੜ;
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ i = 0; i < experts_ਪ੍ਰਤੀ_thread; i++) {
             output_weights[i] *= inv;
         }
     }
 
-    if (config.delayed_softmax) {
-        softmax_warp_inplace<experts_per_thread, true>(output_weights, n_expert_used, lane);
+    ਜੇ (config.delayed_softmax) {
+        softmax_warp_inplace<experts_ਪ੍ਰਤੀ_thread, ਸੱਚ>(output_weights, n_expert_ਵਰਤਿਆ, lane);
     }
 
-#pragma unroll
-    for (int i = 0; i < experts_per_thread; i++) {
-        const int idx = i * WARP_SIZE + lane;
-        if (idx < n_expert_used) {
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ i = 0; i < experts_ਪ੍ਰਤੀ_thread; i++) {
+        ਅਚਲ ਪੂਰਨ idx = i * WARP_ਮਾਪ + lane;
+        ਜੇ (idx < n_expert_ਵਰਤਿਆ) {
             weights[idx] = output_weights[i] * scale_val;
         }
     }
 }
 
-template <int n_experts>
-static void launch_topk_moe(queue_ptr stream, const float * logits, float * weights, int32_t * ids, int n_rows,
-                            int n_expert_used, float clamp_val, float scale_val, const topk_moe_config & config) {
-    const sycl::range<1> block_dims(WARP_SIZE);
-    const sycl::range<1> block_nums(n_rows);
-    stream->parallel_for(sycl::nd_range<1>(block_nums * block_dims, block_dims),
-                         [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                             topk_moe_kernel<n_experts>(logits, weights, ids, n_rows, n_expert_used, clamp_val,
+ਸਾਂਚਾ <ਪੂਰਨ n_experts>
+ਸਥਿਰ ਖਾਲੀ launch_topk_moe(ਕਤਾਰ_ptr stream, ਅਚਲ ਦਸ਼ਮਲਵ * logits, ਦਸ਼ਮਲਵ * weights, int32_t * ids, ਪੂਰਨ n_ਪੰਕਤੀਆਂ,
+                            ਪੂਰਨ n_expert_ਵਰਤਿਆ, ਦਸ਼ਮਲਵ clamp_val, ਦਸ਼ਮਲਵ scale_val, ਅਚਲ topk_moe_config & config) {
+    ਅਚਲ sycl::range<1> ਖੰਡ_dims(WARP_ਮਾਪ);
+    ਅਚਲ sycl::range<1> ਖੰਡ_nums(n_ਪੰਕਤੀਆਂ);
+    stream->parallel_for(sycl::nd_range<1>(ਖੰਡ_nums * ਖੰਡ_dims, ਖੰਡ_dims),
+                         [=](sycl::nd_ਵਸਤੂ<1> ਵਸਤੂ_ct1) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                             topk_moe_kernel<n_experts>(logits, weights, ids, n_ਪੰਕਤੀਆਂ, n_expert_ਵਰਤਿਆ, clamp_val,
                                                         scale_val, config);
-                             GGML_UNUSED(item_ct1);
+                             GGML_ਅਣਵਰਤਿਆ(ਵਸਤੂ_ct1);
                          });
 }
 
-static void ggml_sycl_op_topk_moe(ggml_backend_sycl_context &     ctx,
-                                  const ggml_tensor *             logits,
+ਸਥਿਰ ਖਾਲੀ ggml_sycl_op_topk_moe(ggml_backend_sycl_context &     ctx,
+                                  ਅਚਲ ggml_tensor *             logits,
                                   ggml_tensor *                   weights,
                                   ggml_tensor *                   ids,
-                                  const ggml_tensor *             clamp,
-                                  const ggml_tensor *             scale,
-                                  const ggml_sycl_topk_moe_args & args) {
+                                  ਅਚਲ ggml_tensor *             clamp,
+                                  ਅਚਲ ggml_tensor *             scale,
+                                  ਅਚਲ ggml_sycl_topk_moe_ਦਲੀਲਾਂ & ਦਲੀਲਾਂ_2) {
     GGML_ASSERT(logits->type  == GGML_TYPE_F32);
     GGML_ASSERT(weights->type == GGML_TYPE_F32);
     GGML_ASSERT(ids->type     == GGML_TYPE_I32);
 
-    const int n_experts     = logits->ne[0];
-    const int n_rows        = logits->ne[1];
-    const int n_expert_used = weights->ne[1];
+    ਅਚਲ ਪੂਰਨ n_experts     = logits->ne[0];
+    ਅਚਲ ਪੂਰਨ n_ਪੰਕਤੀਆਂ        = logits->ne[1];
+    ਅਚਲ ਪੂਰਨ n_expert_ਵਰਤਿਆ = weights->ne[1];
 
-    GGML_ASSERT(ids->nb[1] / ggml_type_size(ids->type) == (size_t) n_experts);
+    GGML_ASSERT(ids->nb[1] / ggml_type_ਮਾਪ(ids->type) == (size_t) n_experts);
 
-    const float * logits_d  = (const float *) logits->data;
-    float *       weights_d = (float *) weights->data;
-    int32_t *     ids_d     = (int32_t *) ids->data;
+    ਅਚਲ ਦਸ਼ਮਲਵ * logits_d  = (ਅਚਲ ਦਸ਼ਮਲਵ *) logits->ਅੰਕੜੇ;
+    ਦਸ਼ਮਲਵ *       weights_d = (ਦਸ਼ਮਲਵ *) weights->ਅੰਕੜੇ;
+    int32_t *     ids_d     = (int32_t *) ids->ਅੰਕੜੇ;
 
-    const bool  with_norm = clamp != nullptr;
-    const float clamp_val = clamp ? ggml_get_op_params_f32(clamp, 0) : -INFINITY;
-    const float scale_val = scale ? ggml_get_op_params_f32(scale, 0) : 1.0f;
+    ਅਚਲ ਤਾਰਕਿਕ  with_norm = clamp != ਖਾਲੀ_ਸੂਚਕ;
+    ਅਚਲ ਦਸ਼ਮਲਵ clamp_val = clamp ? ggml_get_op_params_f32(clamp, 0) : -INFINITY;
+    ਅਚਲ ਦਸ਼ਮਲਵ scale_val = scale ? ggml_get_op_params_f32(scale, 0) : 1.0f;
 
     topk_moe_config config;
-    config.use_sigmoid     = args.sigmoid;
+    config.use_sigmoid     = ਦਲੀਲਾਂ_2.sigmoid;
     config.with_norm       = with_norm;
-    config.delayed_softmax = args.delayed_softmax;
+    config.delayed_softmax = ਦਲੀਲਾਂ_2.delayed_softmax;
 
-    queue_ptr stream = ctx.stream();
-    ggml_sycl_set_device(ctx.device);
+    ਕਤਾਰ_ptr stream = ctx.stream();
+    ggml_sycl_ਸੈੱਟ_device(ctx.device);
 
-    switch (n_experts) {
-        case 1:
-            launch_topk_moe<1>(stream, logits_d, weights_d, ids_d, n_rows, n_expert_used, clamp_val, scale_val,
+    ਚੋਣ (n_experts) {
+        ਹਾਲਤ 1:
+            launch_topk_moe<1>(stream, logits_d, weights_d, ids_d, n_ਪੰਕਤੀਆਂ, n_expert_ਵਰਤਿਆ, clamp_val, scale_val,
                                config);
-            break;
-        case 2:
-            launch_topk_moe<2>(stream, logits_d, weights_d, ids_d, n_rows, n_expert_used, clamp_val, scale_val,
+            ਰੋਕੋ;
+        ਹਾਲਤ 2:
+            launch_topk_moe<2>(stream, logits_d, weights_d, ids_d, n_ਪੰਕਤੀਆਂ, n_expert_ਵਰਤਿਆ, clamp_val, scale_val,
                                config);
-            break;
-        case 4:
-            launch_topk_moe<4>(stream, logits_d, weights_d, ids_d, n_rows, n_expert_used, clamp_val, scale_val,
+            ਰੋਕੋ;
+        ਹਾਲਤ 4:
+            launch_topk_moe<4>(stream, logits_d, weights_d, ids_d, n_ਪੰਕਤੀਆਂ, n_expert_ਵਰਤਿਆ, clamp_val, scale_val,
                                config);
-            break;
-        case 8:
-            launch_topk_moe<8>(stream, logits_d, weights_d, ids_d, n_rows, n_expert_used, clamp_val, scale_val,
+            ਰੋਕੋ;
+        ਹਾਲਤ 8:
+            launch_topk_moe<8>(stream, logits_d, weights_d, ids_d, n_ਪੰਕਤੀਆਂ, n_expert_ਵਰਤਿਆ, clamp_val, scale_val,
                                config);
-            break;
-        case 16:
-            launch_topk_moe<16>(stream, logits_d, weights_d, ids_d, n_rows, n_expert_used, clamp_val, scale_val,
+            ਰੋਕੋ;
+        ਹਾਲਤ 16:
+            launch_topk_moe<16>(stream, logits_d, weights_d, ids_d, n_ਪੰਕਤੀਆਂ, n_expert_ਵਰਤਿਆ, clamp_val, scale_val,
                                 config);
-            break;
-        case 32:
-            launch_topk_moe<32>(stream, logits_d, weights_d, ids_d, n_rows, n_expert_used, clamp_val, scale_val,
+            ਰੋਕੋ;
+        ਹਾਲਤ 32:
+            launch_topk_moe<32>(stream, logits_d, weights_d, ids_d, n_ਪੰਕਤੀਆਂ, n_expert_ਵਰਤਿਆ, clamp_val, scale_val,
                                 config);
-            break;
-        case 64:
-            launch_topk_moe<64>(stream, logits_d, weights_d, ids_d, n_rows, n_expert_used, clamp_val, scale_val,
+            ਰੋਕੋ;
+        ਹਾਲਤ 64:
+            launch_topk_moe<64>(stream, logits_d, weights_d, ids_d, n_ਪੰਕਤੀਆਂ, n_expert_ਵਰਤਿਆ, clamp_val, scale_val,
                                 config);
-            break;
-        case 128:
-            launch_topk_moe<128>(stream, logits_d, weights_d, ids_d, n_rows, n_expert_used, clamp_val, scale_val,
+            ਰੋਕੋ;
+        ਹਾਲਤ 128:
+            launch_topk_moe<128>(stream, logits_d, weights_d, ids_d, n_ਪੰਕਤੀਆਂ, n_expert_ਵਰਤਿਆ, clamp_val, scale_val,
                                  config);
-            break;
-        case 256:
-            launch_topk_moe<256>(stream, logits_d, weights_d, ids_d, n_rows, n_expert_used, clamp_val, scale_val,
+            ਰੋਕੋ;
+        ਹਾਲਤ 256:
+            launch_topk_moe<256>(stream, logits_d, weights_d, ids_d, n_ਪੰਕਤੀਆਂ, n_expert_ਵਰਤਿਆ, clamp_val, scale_val,
                                  config);
-            break;
-        case 512:
-            launch_topk_moe<512>(stream, logits_d, weights_d, ids_d, n_rows, n_expert_used, clamp_val, scale_val,
+            ਰੋਕੋ;
+        ਹਾਲਤ 512:
+            launch_topk_moe<512>(stream, logits_d, weights_d, ids_d, n_ਪੰਕਤੀਆਂ, n_expert_ਵਰਤਿਆ, clamp_val, scale_val,
                                  config);
-            break;
-        default:
-            GGML_ASSERT(false && "fatal error");
+            ਰੋਕੋ;
+        ਮੂਲ:
+            GGML_ASSERT(ਝੂਠ && "fatal error");
     }
 }
 
-static bool ggml_sycl_should_use_topk_moe(const ggml_tensor * gating_op, const ggml_tensor * weights,
-                                          const ggml_tensor * logits, const ggml_tensor * ids) {
-    const int n_expert = ids->nb[1] / ids->nb[0];
-    if ((n_expert & (n_expert - 1)) != 0 || n_expert > 512) {
-        return false;
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_sycl_should_use_topk_moe(ਅਚਲ ggml_tensor * gating_op, ਅਚਲ ggml_tensor * weights,
+                                          ਅਚਲ ggml_tensor * logits, ਅਚਲ ggml_tensor * ids) {
+    ਅਚਲ ਪੂਰਨ n_expert = ids->nb[1] / ids->nb[0];
+    ਜੇ ((n_expert & (n_expert - 1)) != 0 || n_expert > 512) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    if (!ggml_is_contiguous(weights) || !ggml_is_contiguous(logits)) {
-        return false;
+    ਜੇ (!ggml_is_contiguous(weights) || !ggml_is_contiguous(logits)) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    if (gating_op->op == GGML_OP_SOFT_MAX) {
-        float scale    = 1.0f;
-        float max_bias = 0.0f;
+    ਜੇ (gating_op->op == GGML_OP_SOFT_MAX) {
+        ਦਸ਼ਮਲਵ scale    = 1.0f;
+        ਦਸ਼ਮਲਵ max_bias = 0.0f;
 
-        memcpy(&scale, (const float *) gating_op->op_params + 0, sizeof(float));
-        memcpy(&max_bias, (const float *) gating_op->op_params + 1, sizeof(float));
+        ਸਮ੍ਰਿਤੀ_ਨਕਲ(&scale, (ਅਚਲ ਦਸ਼ਮਲਵ *) gating_op->op_params + 0, ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+        ਸਮ੍ਰਿਤੀ_ਨਕਲ(&max_bias, (ਅਚਲ ਦਸ਼ਮਲਵ *) gating_op->op_params + 1, ਆਕਾਰ(ਦਸ਼ਮਲਵ));
 
-        if (!ggml_is_contiguous(gating_op->src[0])) {
-            return false;
+        ਜੇ (!ggml_is_contiguous(gating_op->src[0])) {
+            ਵਾਪਸ ਝੂਠ;
         }
-        if (scale != 1.0f || max_bias != 0.0f) {
-            return false;
+        ਜੇ (scale != 1.0f || max_bias != 0.0f) {
+            ਵਾਪਸ ਝੂਠ;
         }
         // don't fuse when masks or sinks are present
-        if (gating_op->src[1] || gating_op->src[2]) {
-            return false;
+        ਜੇ (gating_op->src[1] || gating_op->src[2]) {
+            ਵਾਪਸ ਝੂਠ;
         }
-    } else if (gating_op->op == GGML_OP_UNARY) {
-        if (ggml_get_unary_op(gating_op) != GGML_UNARY_OP_SIGMOID) {
-            return false;
+    } ਨਹੀਂਤਾਂ ਜੇ (gating_op->op == GGML_OP_UNARY) {
+        ਜੇ (ggml_get_unary_op(gating_op) != GGML_UNARY_OP_SIGMOID) {
+            ਵਾਪਸ ਝੂਠ;
         }
     }
 
-    return true;
+    ਵਾਪਸ ਸੱਚ;
 }
 
 // ported from ggml_cuda_topk_moe_fusion - pure graph inspection, backend-agnostic
-static bool ggml_sycl_topk_moe_fusion(const ggml_cgraph * cgraph, int node_idx, ggml_sycl_topk_moe_args & args) {
-    args = ggml_sycl_topk_moe_args{};
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_sycl_topk_moe_fusion(ਅਚਲ ggml_cgraph * cgraph, ਪੂਰਨ ਗੰਢ_idx, ggml_sycl_topk_moe_ਦਲੀਲਾਂ & ਦਲੀਲਾਂ_2) {
+    ਦਲੀਲਾਂ_2 = ggml_sycl_topk_moe_ਦਲੀਲਾਂ{};
 
-    const int      n_nodes = cgraph->n_nodes;
+    ਅਚਲ ਪੂਰਨ      n_nodes = cgraph->n_nodes;
     ggml_tensor ** nodes   = cgraph->nodes;
 
-    if (nodes[node_idx]->op == GGML_OP_SOFT_MAX) {
-        args.softmax = true;
+    ਜੇ (nodes[ਗੰਢ_idx]->op == GGML_OP_SOFT_MAX) {
+        ਦਲੀਲਾਂ_2.softmax = ਸੱਚ;
     }
 
-    if (nodes[node_idx]->op == GGML_OP_UNARY) {
-        if (ggml_get_unary_op(nodes[node_idx]) != GGML_UNARY_OP_SIGMOID) {
-            return false;
+    ਜੇ (nodes[ਗੰਢ_idx]->op == GGML_OP_UNARY) {
+        ਜੇ (ggml_get_unary_op(nodes[ਗੰਢ_idx]) != GGML_UNARY_OP_SIGMOID) {
+            ਵਾਪਸ ਝੂਠ;
         }
-        args.sigmoid = true;
+        ਦਲੀਲਾਂ_2.sigmoid = ਸੱਚ;
     }
 
-    if (nodes[node_idx]->op == GGML_OP_ARGSORT) {
-        args.delayed_softmax = true;
+    ਜੇ (nodes[ਗੰਢ_idx]->op == GGML_OP_ARGSORT) {
+        ਦਲੀਲਾਂ_2.delayed_softmax = ਸੱਚ;
     }
 
-    node_idx++;
+    ਗੰਢ_idx++;
 
-    if (args.sigmoid || args.softmax) {
+    ਜੇ (ਦਲੀਲਾਂ_2.sigmoid || ਦਲੀਲਾਂ_2.softmax) {
         // SOFTMAX -> RESHAPE
-        if (node_idx >= n_nodes || nodes[node_idx]->op != GGML_OP_RESHAPE ||
-            nodes[node_idx]->src[0] != nodes[node_idx - 1]) {
-            return false;
+        ਜੇ (ਗੰਢ_idx >= n_nodes || nodes[ਗੰਢ_idx]->op != GGML_OP_RESHAPE ||
+            nodes[ਗੰਢ_idx]->src[0] != nodes[ਗੰਢ_idx - 1]) {
+            ਵਾਪਸ ਝੂਠ;
         }
-        ggml_tensor * probs_reshaped = nodes[node_idx];
-        node_idx++;
+        ggml_tensor * probs_reshaped = nodes[ਗੰਢ_idx];
+        ਗੰਢ_idx++;
 
-        if (node_idx >= n_nodes) {
-            return false;
+        ਜੇ (ਗੰਢ_idx >= n_nodes) {
+            ਵਾਪਸ ਝੂਠ;
         }
 
         // src of bias add is the unreshaped probs (-2 instead of -1)
-        if (nodes[node_idx]->op == GGML_OP_ADD && nodes[node_idx]->src[0] == nodes[node_idx - 2]) {
-            args.prob_bias = true;
-            node_idx++;
+        ਜੇ (nodes[ਗੰਢ_idx]->op == GGML_OP_ਜੋੜੋ && nodes[ਗੰਢ_idx]->src[0] == nodes[ਗੰਢ_idx - 2]) {
+            ਦਲੀਲਾਂ_2.prob_bias = ਸੱਚ;
+            ਗੰਢ_idx++;
         }
         // RESHAPE/ADD -> ARGSORT
-        if (node_idx >= n_nodes || nodes[node_idx]->op != GGML_OP_ARGSORT) {
-            return false;
+        ਜੇ (ਗੰਢ_idx >= n_nodes || nodes[ਗੰਢ_idx]->op != GGML_OP_ARGSORT) {
+            ਵਾਪਸ ਝੂਠ;
         }
 
-        if (args.prob_bias && nodes[node_idx]->src[0] != nodes[node_idx - 1]) {
-            return false;
-        } else if (!args.prob_bias && nodes[node_idx]->src[0] != nodes[node_idx - 2]) {
-            return false;
+        ਜੇ (ਦਲੀਲਾਂ_2.prob_bias && nodes[ਗੰਢ_idx]->src[0] != nodes[ਗੰਢ_idx - 1]) {
+            ਵਾਪਸ ਝੂਠ;
+        } ਨਹੀਂਤਾਂ ਜੇ (!ਦਲੀਲਾਂ_2.prob_bias && nodes[ਗੰਢ_idx]->src[0] != nodes[ਗੰਢ_idx - 2]) {
+            ਵਾਪਸ ਝੂਠ;
         }
 
-        node_idx++;
+        ਗੰਢ_idx++;
 
         // ARGSORT -> VIEW
-        if (node_idx >= n_nodes || nodes[node_idx]->op != GGML_OP_VIEW ||
-            nodes[node_idx]->src[0] != nodes[node_idx - 1]) {
-            return false;
+        ਜੇ (ਗੰਢ_idx >= n_nodes || nodes[ਗੰਢ_idx]->op != GGML_OP_VIEW ||
+            nodes[ਗੰਢ_idx]->src[0] != nodes[ਗੰਢ_idx - 1]) {
+            ਵਾਪਸ ਝੂਠ;
         }
-        node_idx++;
+        ਗੰਢ_idx++;
 
-        if (node_idx >= n_nodes || nodes[node_idx]->op != GGML_OP_GET_ROWS) {
-            return false;
+        ਜੇ (ਗੰਢ_idx >= n_nodes || nodes[ਗੰਢ_idx]->op != GGML_OP_GET_ਪੰਕਤੀਆਂ) {
+            ਵਾਪਸ ਝੂਠ;
         }
 
         // GET_ROWS
-        if (nodes[node_idx]->src[0] != probs_reshaped || nodes[node_idx]->src[1] != nodes[node_idx - 1]) {
-            return false;
+        ਜੇ (nodes[ਗੰਢ_idx]->src[0] != probs_reshaped || nodes[ਗੰਢ_idx]->src[1] != nodes[ਗੰਢ_idx - 1]) {
+            ਵਾਪਸ ਝੂਠ;
         }
-        node_idx++;
-    } else if (args.delayed_softmax) {
-        if (node_idx - 2 < 0) {
-            return false;
+        ਗੰਢ_idx++;
+    } ਨਹੀਂਤਾਂ ਜੇ (ਦਲੀਲਾਂ_2.delayed_softmax) {
+        ਜੇ (ਗੰਢ_idx - 2 < 0) {
+            ਵਾਪਸ ਝੂਠ;
         }
-        ggml_tensor * probs_reshaped = nodes[node_idx - 2];
+        ggml_tensor * probs_reshaped = nodes[ਗੰਢ_idx - 2];
 
         // VIEW -> ARGSORT
-        if (node_idx >= n_nodes || nodes[node_idx]->op != GGML_OP_VIEW ||
-            nodes[node_idx]->src[0] != nodes[node_idx - 1]) {
-            return false;
+        ਜੇ (ਗੰਢ_idx >= n_nodes || nodes[ਗੰਢ_idx]->op != GGML_OP_VIEW ||
+            nodes[ਗੰਢ_idx]->src[0] != nodes[ਗੰਢ_idx - 1]) {
+            ਵਾਪਸ ਝੂਠ;
         }
-        node_idx++;
+        ਗੰਢ_idx++;
 
         // GET_ROWS
-        if (node_idx >= n_nodes || nodes[node_idx]->src[1] != nodes[node_idx - 1] ||
-            nodes[node_idx]->src[0] != probs_reshaped) {
-            return false;
+        ਜੇ (ਗੰਢ_idx >= n_nodes || nodes[ਗੰਢ_idx]->src[1] != nodes[ਗੰਢ_idx - 1] ||
+            nodes[ਗੰਢ_idx]->src[0] != probs_reshaped) {
+            ਵਾਪਸ ਝੂਠ;
         }
-        node_idx++;
+        ਗੰਢ_idx++;
 
-        static const std::vector<ggml_op> remaining_ops = { GGML_OP_RESHAPE, GGML_OP_SOFT_MAX, GGML_OP_RESHAPE };
+        ਸਥਿਰ ਅਚਲ std::vector<ggml_op> ਬਚਿਆ_ops = { GGML_OP_RESHAPE, GGML_OP_SOFT_MAX, GGML_OP_RESHAPE };
 
-        for (const ggml_op op : remaining_ops) {
-            if (node_idx >= n_nodes || nodes[node_idx]->op != op || nodes[node_idx]->src[0] != nodes[node_idx - 1]) {
-                return false;
+        ਲਈ (ਅਚਲ ggml_op op : ਬਚਿਆ_ops) {
+            ਜੇ (ਗੰਢ_idx >= n_nodes || nodes[ਗੰਢ_idx]->op != op || nodes[ਗੰਢ_idx]->src[0] != nodes[ਗੰਢ_idx - 1]) {
+                ਵਾਪਸ ਝੂਠ;
             }
-            node_idx++;
+            ਗੰਢ_idx++;
         }
     }
 
     // at this point we can check for norm + scale; everything is now at least valid up to the norm
-    if (node_idx >= n_nodes) {
-        return true;
+    ਜੇ (ਗੰਢ_idx >= n_nodes) {
+        ਵਾਪਸ ਸੱਚ;
     }
 
-    if (nodes[node_idx]->op == GGML_OP_RESHAPE) {
+    ਜੇ (nodes[ਗੰਢ_idx]->op == GGML_OP_RESHAPE) {
         // check RESHAPE -> SUM_ROWS -> CLAMP -> DIV -> RESHAPE
-        static const std::vector<ggml_op> norm_ops = { GGML_OP_RESHAPE, GGML_OP_SUM_ROWS, GGML_OP_CLAMP };
+        ਸਥਿਰ ਅਚਲ std::vector<ggml_op> norm_ops = { GGML_OP_RESHAPE, GGML_OP_ਜੋੜ_ਪੰਕਤੀਆਂ, GGML_OP_CLAMP };
 
-        args.norm = true;
-        for (const ggml_op op : norm_ops) {
-            if (nodes[node_idx]->op == op && nodes[node_idx]->src[0] == nodes[node_idx - 1]) {
-                node_idx++;
-            } else {
-                args.norm = false;
-                return true;
+        ਦਲੀਲਾਂ_2.norm = ਸੱਚ;
+        ਲਈ (ਅਚਲ ggml_op op : norm_ops) {
+            ਜੇ (nodes[ਗੰਢ_idx]->op == op && nodes[ਗੰਢ_idx]->src[0] == nodes[ਗੰਢ_idx - 1]) {
+                ਗੰਢ_idx++;
+            } ਨਹੀਂਤਾਂ {
+                ਦਲੀਲਾਂ_2.norm = ਝੂਠ;
+                ਵਾਪਸ ਸੱਚ;
             }
         }
 
         // DIV <- CLAMP, RESHAPE
-        if (nodes[node_idx]->op != GGML_OP_DIV || nodes[node_idx]->src[1] != nodes[node_idx - 1] ||
-            nodes[node_idx]->src[0] != nodes[node_idx - 3]) {
-            args.norm = false;
-            return true;
+        ਜੇ (nodes[ਗੰਢ_idx]->op != GGML_OP_DIV || nodes[ਗੰਢ_idx]->src[1] != nodes[ਗੰਢ_idx - 1] ||
+            nodes[ਗੰਢ_idx]->src[0] != nodes[ਗੰਢ_idx - 3]) {
+            ਦਲੀਲਾਂ_2.norm = ਝੂਠ;
+            ਵਾਪਸ ਸੱਚ;
         }
-        node_idx++;
+        ਗੰਢ_idx++;
 
-        if (nodes[node_idx]->op != GGML_OP_RESHAPE || nodes[node_idx]->src[0] != nodes[node_idx - 1]) {
-            args.norm = false;
-            return true;
+        ਜੇ (nodes[ਗੰਢ_idx]->op != GGML_OP_RESHAPE || nodes[ਗੰਢ_idx]->src[0] != nodes[ਗੰਢ_idx - 1]) {
+            ਦਲੀਲਾਂ_2.norm = ਝੂਠ;
+            ਵਾਪਸ ਸੱਚ;
         }
-        node_idx++;
+        ਗੰਢ_idx++;
     }
 
-    if (nodes[node_idx]->op == GGML_OP_SCALE && nodes[node_idx]->src[0] == nodes[node_idx - 1]) {
-        args.scale = true;
+    ਜੇ (nodes[ਗੰਢ_idx]->op == GGML_OP_SCALE && nodes[ਗੰਢ_idx]->src[0] == nodes[ਗੰਢ_idx - 1]) {
+        ਦਲੀਲਾਂ_2.scale = ਸੱਚ;
     }
 
-    return true;
+    ਵਾਪਸ ਸੱਚ;
 }
 
 // returns whether the write (out) nodes overwrite the read nodes in operation
 // ported from ggml_cuda_check_fusion_memory_ranges - pure pointer/range inspection
-static bool ggml_sycl_check_fusion_memory_ranges(const ggml_cgraph * cgraph, const int node_idx,
-                                                 const int node_count, const int * out_nodes, const int out_count,
-                                                 const bool is_topk_moe = false) {
-    auto nodes_overlap = [&](const ggml_tensor * a, const ggml_tensor * b) {
-        const int64_t a_start = (int64_t) a->data;
-        const int64_t a_end   = a_start + ggml_backend_buft_get_alloc_size(a->buffer->buft, a);
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_sycl_check_fusion_ਸਮ੍ਰਿਤੀ_ranges(ਅਚਲ ggml_cgraph * cgraph, ਅਚਲ ਪੂਰਨ ਗੰਢ_idx,
+                                                 ਅਚਲ ਪੂਰਨ ਗੰਢ_ਗਿਣਤੀ, ਅਚਲ ਪੂਰਨ * ਬਾਹਰਲਾ_nodes, ਅਚਲ ਪੂਰਨ ਬਾਹਰਲਾ_ਗਿਣਤੀ,
+                                                 ਅਚਲ ਤਾਰਕਿਕ is_topk_moe = ਝੂਠ) {
+    ਸਵੈਚਾਲਿਤ nodes_overlap = [&](ਅਚਲ ggml_tensor * a, ਅਚਲ ggml_tensor * b) {
+        ਅਚਲ int64_t a_ਸ਼ੁਰੂ = (int64_t) a->ਅੰਕੜੇ;
+        ਅਚਲ int64_t a_ਸਿਰਾ   = a_ਸ਼ੁਰੂ + ggml_backend_buft_get_alloc_ਮਾਪ(a->ਬਫਰ->buft, a);
 
-        const int64_t b_start = (int64_t) b->data;
-        const int64_t b_end   = b_start + ggml_backend_buft_get_alloc_size(b->buffer->buft, b);
+        ਅਚਲ int64_t b_ਸ਼ੁਰੂ = (int64_t) b->ਅੰਕੜੇ;
+        ਅਚਲ int64_t b_ਸਿਰਾ   = b_ਸ਼ੁਰੂ + ggml_backend_buft_get_alloc_ਮਾਪ(b->ਬਫਰ->buft, b);
 
-        if ((b_start <= a_start && a_start < b_end) || (a_start <= b_start && b_start < a_end)) {
-            return true;
+        ਜੇ ((b_ਸ਼ੁਰੂ <= a_ਸ਼ੁਰੂ && a_ਸ਼ੁਰੂ < b_ਸਿਰਾ) || (a_ਸ਼ੁਰੂ <= b_ਸ਼ੁਰੂ && b_ਸ਼ੁਰੂ < a_ਸਿਰਾ)) {
+            ਵਾਪਸ ਸੱਚ;
         }
 
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     };
 
-    bool is_ok = true;
+    ਤਾਰਕਿਕ is_ok = ਸੱਚ;
     // exception for topk-moe, as each row is read entirely before writing
-    if (ggml_nrows(cgraph->nodes[node_idx]) == 1 && is_topk_moe) {
-        return true;
+    ਜੇ (ggml_nrows(cgraph->nodes[ਗੰਢ_idx]) == 1 && is_topk_moe) {
+        ਵਾਪਸ ਸੱਚ;
     }
 
-    for (int i = 0; i < out_count; ++i) {
-        const ggml_tensor * dst = cgraph->nodes[out_nodes[i]];
+    ਲਈ (ਪੂਰਨ i = 0; i < ਬਾਹਰਲਾ_ਗਿਣਤੀ; ++i) {
+        ਅਚਲ ggml_tensor * dst = cgraph->nodes[ਬਾਹਰਲਾ_nodes[i]];
 
-        for (int j = node_idx; j < node_idx + node_count; ++j) {
+        ਲਈ (ਪੂਰਨ j = ਗੰਢ_idx; j < ਗੰਢ_idx + ਗੰਢ_ਗਿਣਤੀ; ++j) {
             // loop over all srcs of all nodes in the fusion. If the src overlaps the destination and
             // the src is not an intermediate node that's being elided, then disable fusion.
-            for (int src_idx = 0; src_idx < GGML_MAX_SRC; ++src_idx) {
-                const ggml_tensor * src = cgraph->nodes[j]->src[src_idx];
+            ਲਈ (ਪੂਰਨ src_idx = 0; src_idx < GGML_MAX_SRC; ++src_idx) {
+                ਅਚਲ ggml_tensor * src = cgraph->nodes[j]->src[src_idx];
 
-                if (!src || src->op == GGML_OP_NONE) {
-                    continue;
+                ਜੇ (!src || src->op == GGML_OP_NONE) {
+                    ਜਾਰੀ;
                 }
 
-                if (nodes_overlap(dst, src)) {
-                    bool found = false;
+                ਜੇ (nodes_overlap(dst, src)) {
+                    ਤਾਰਕਿਕ ਮਿਲਿਆ = ਝੂਠ;
 
-                    for (int k = node_idx; k < j; ++k) {
-                        if (cgraph->nodes[k] == src) {
-                            found = true;
-                            break;
+                    ਲਈ (ਪੂਰਨ k = ਗੰਢ_idx; k < j; ++k) {
+                        ਜੇ (cgraph->nodes[k] == src) {
+                            ਮਿਲਿਆ = ਸੱਚ;
+                            ਰੋਕੋ;
                         }
                     }
 
-                    if (!found) {
-                        is_ok = false;
-                        break;
+                    ਜੇ (!ਮਿਲਿਆ) {
+                        is_ok = ਝੂਠ;
+                        ਰੋਕੋ;
                     }
                 }
             }
         }
     }
 
-    return is_ok;
+    ਵਾਪਸ is_ok;
 }
 
-int ggml_sycl_fuse(ggml_backend_sycl_context & ctx, ggml_cgraph * cgraph, int i) {
-    if (!g_ggml_sycl_enable_fusion) {
-        return 0;
+ਪੂਰਨ ggml_sycl_fuse(ggml_backend_sycl_context & ctx, ggml_cgraph * cgraph, ਪੂਰਨ i) {
+    ਜੇ (!g_ggml_sycl_enable_fusion) {
+        ਵਾਪਸ 0;
     }
 
-    return ggml_sycl_fuse_topk_moe(ctx, cgraph, i);
+    ਵਾਪਸ ggml_sycl_fuse_topk_moe(ctx, cgraph, i);
 }
 
-int ggml_sycl_fuse_topk_moe(ggml_backend_sycl_context & ctx, ggml_cgraph * cgraph, int i) {
-    ggml_tensor * node = cgraph->nodes[i];
+ਪੂਰਨ ggml_sycl_fuse_topk_moe(ggml_backend_sycl_context & ctx, ggml_cgraph * cgraph, ਪੂਰਨ i) {
+    ggml_tensor * ਗੰਢ = cgraph->nodes[i];
 
-    if (node->op != GGML_OP_UNARY && node->op != GGML_OP_SOFT_MAX && node->op != GGML_OP_ARGSORT) {
-        return 0;
+    ਜੇ (ਗੰਢ->op != GGML_OP_UNARY && ਗੰਢ->op != GGML_OP_SOFT_MAX && ਗੰਢ->op != GGML_OP_ARGSORT) {
+        ਵਾਪਸ 0;
     }
 
-    ggml_sycl_topk_moe_args args;
-    if (!ggml_sycl_topk_moe_fusion(cgraph, i, args)) {
-        return 0;
+    ggml_sycl_topk_moe_ਦਲੀਲਾਂ ਦਲੀਲਾਂ_2;
+    ਜੇ (!ggml_sycl_topk_moe_fusion(cgraph, i, ਦਲੀਲਾਂ_2)) {
+        ਵਾਪਸ 0;
     }
 
     // this kernel implements the no-bias path only; decline anything with a routing bias
-    if (args.prob_bias) {
-        return 0;
+    ਜੇ (ਦਲੀਲਾਂ_2.prob_bias) {
+        ਵਾਪਸ 0;
     }
 
-    const ggml_tensor * logits  = node->src[0];
-    ggml_tensor *       weights = nullptr;
-    ggml_tensor *       ids     = nullptr;
-    const ggml_tensor * clamp   = nullptr;
-    const ggml_tensor * scale   = nullptr;
+    ਅਚਲ ggml_tensor * logits  = ਗੰਢ->src[0];
+    ggml_tensor *       weights = ਖਾਲੀ_ਸੂਚਕ;
+    ggml_tensor *       ids     = ਖਾਲੀ_ਸੂਚਕ;
+    ਅਚਲ ggml_tensor * clamp   = ਖਾਲੀ_ਸੂਚਕ;
+    ਅਚਲ ggml_tensor * scale   = ਖਾਲੀ_ਸੂਚਕ;
 
     std::vector<ggml_op> ops;
-    int                  out_nodes[2];
+    ਪੂਰਨ                  ਬਾਹਰਲਾ_nodes[2];
 
-    if (!args.delayed_softmax) {
-        const ggml_op gating_op = args.sigmoid ? GGML_OP_UNARY : GGML_OP_SOFT_MAX;
-        ops.insert(ops.end(), { gating_op, GGML_OP_RESHAPE, GGML_OP_ARGSORT, GGML_OP_VIEW, GGML_OP_GET_ROWS });
-        out_nodes[0] = i + 3;
+    ਜੇ (!ਦਲੀਲਾਂ_2.delayed_softmax) {
+        ਅਚਲ ggml_op gating_op = ਦਲੀਲਾਂ_2.sigmoid ? GGML_OP_UNARY : GGML_OP_SOFT_MAX;
+        ops.insert(ops.end(), { gating_op, GGML_OP_RESHAPE, GGML_OP_ARGSORT, GGML_OP_VIEW, GGML_OP_GET_ਪੰਕਤੀਆਂ });
+        ਬਾਹਰਲਾ_nodes[0] = i + 3;
         ids          = cgraph->nodes[i + 3];
 
-        if (args.norm) {
-            ops.insert(ops.end(), { GGML_OP_RESHAPE, GGML_OP_SUM_ROWS, GGML_OP_CLAMP, GGML_OP_DIV, GGML_OP_RESHAPE });
-            clamp = cgraph->nodes[i + (int) ops.size() - 3];
+        ਜੇ (ਦਲੀਲਾਂ_2.norm) {
+            ops.insert(ops.end(), { GGML_OP_RESHAPE, GGML_OP_ਜੋੜ_ਪੰਕਤੀਆਂ, GGML_OP_CLAMP, GGML_OP_DIV, GGML_OP_RESHAPE });
+            clamp = cgraph->nodes[i + (ਪੂਰਨ) ops.size() - 3];
         }
-        if (args.scale) {
+        ਜੇ (ਦਲੀਲਾਂ_2.scale) {
             ops.insert(ops.end(), { GGML_OP_SCALE });
-            scale = cgraph->nodes[i + (int) ops.size() - 1];
+            scale = cgraph->nodes[i + (ਪੂਰਨ) ops.size() - 1];
         }
 
-        weights      = cgraph->nodes[i + (int) ops.size() - 1];
-        out_nodes[1] = i + (int) ops.size() - 1;
+        weights      = cgraph->nodes[i + (ਪੂਰਨ) ops.size() - 1];
+        ਬਾਹਰਲਾ_nodes[1] = i + (ਪੂਰਨ) ops.size() - 1;
 
-        if (ggml_can_fuse_subgraph(cgraph, i, ops.size(), ops.data(), out_nodes, 2) &&
-            ggml_sycl_should_use_topk_moe(node, weights, logits, ids) &&
-            ggml_sycl_check_fusion_memory_ranges(cgraph, i, (int) ops.size(), out_nodes, 2, /*is_topk_moe=*/true)) {
-            ggml_sycl_op_topk_moe(ctx, logits, weights, ids, clamp, scale, args);
-            return (int) ops.size() - 1;
+        ਜੇ (ggml_can_fuse_subgraph(cgraph, i, ops.size(), ops.ਅੰਕੜੇ(), ਬਾਹਰਲਾ_nodes, 2) &&
+            ggml_sycl_should_use_topk_moe(ਗੰਢ, weights, logits, ids) &&
+            ggml_sycl_check_fusion_ਸਮ੍ਰਿਤੀ_ranges(cgraph, i, (ਪੂਰਨ) ops.size(), ਬਾਹਰਲਾ_nodes, 2, /*is_topk_moe=*/ਸੱਚ)) {
+            ggml_sycl_op_topk_moe(ctx, logits, weights, ids, clamp, scale, ਦਲੀਲਾਂ_2);
+            ਵਾਪਸ (ਪੂਰਨ) ops.size() - 1;
         }
-    } else if (!args.norm && !args.prob_bias) {
+    } ਨਹੀਂਤਾਂ ਜੇ (!ਦਲੀਲਾਂ_2.norm && !ਦਲੀਲਾਂ_2.prob_bias) {
         // gpt-oss style: argsort -> view -> get_rows -> reshape -> softmax -> reshape, no norm/bias
         ops.insert(ops.end(),
-                   { GGML_OP_ARGSORT, GGML_OP_VIEW, GGML_OP_GET_ROWS, GGML_OP_RESHAPE, GGML_OP_SOFT_MAX,
+                   { GGML_OP_ARGSORT, GGML_OP_VIEW, GGML_OP_GET_ਪੰਕਤੀਆਂ, GGML_OP_RESHAPE, GGML_OP_SOFT_MAX,
                      GGML_OP_RESHAPE });
         weights                     = cgraph->nodes[i + 5];
         ids                         = cgraph->nodes[i + 1];
-        const ggml_tensor * softmax = cgraph->nodes[i + 4];
-        out_nodes[0]                = i + 1;
-        out_nodes[1]                = i + 5;
+        ਅਚਲ ggml_tensor * softmax = cgraph->nodes[i + 4];
+        ਬਾਹਰਲਾ_nodes[0]                = i + 1;
+        ਬਾਹਰਲਾ_nodes[1]                = i + 5;
 
-        if (ggml_can_fuse_subgraph(cgraph, i, ops.size(), ops.data(), out_nodes, 2) &&
+        ਜੇ (ggml_can_fuse_subgraph(cgraph, i, ops.size(), ops.ਅੰਕੜੇ(), ਬਾਹਰਲਾ_nodes, 2) &&
             ggml_sycl_should_use_topk_moe(softmax, weights, logits, ids) &&
-            ggml_sycl_check_fusion_memory_ranges(cgraph, i, (int) ops.size(), out_nodes, 2, /*is_topk_moe=*/true)) {
-            ggml_sycl_op_topk_moe(ctx, logits, weights, ids, clamp, scale, args);
-            return (int) ops.size() - 1;
+            ggml_sycl_check_fusion_ਸਮ੍ਰਿਤੀ_ranges(cgraph, i, (ਪੂਰਨ) ops.size(), ਬਾਹਰਲਾ_nodes, 2, /*is_topk_moe=*/ਸੱਚ)) {
+            ggml_sycl_op_topk_moe(ctx, logits, weights, ids, clamp, scale, ਦਲੀਲਾਂ_2);
+            ਵਾਪਸ (ਪੂਰਨ) ops.size() - 1;
         }
     }
 
-    return 0;
+    ਵਾਪਸ 0;
 }

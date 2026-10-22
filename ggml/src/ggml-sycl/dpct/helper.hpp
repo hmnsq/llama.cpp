@@ -10,137 +10,137 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#ifndef GGML_SYCL_DPCT_HELPER_HPP
-#define GGML_SYCL_DPCT_HELPER_HPP
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ GGML_SYCL_DPCT_HELPER_HPP
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_SYCL_DPCT_HELPER_HPP
 
-#include <cstdlib>
-#include <iostream>
-#include <map>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cstdlib>
+#ਅਨ੍ਤਰ੍ਭਾਵ <iostream>
+#ਅਨ੍ਤਰ੍ਭਾਵ <map>
 
-#include <sycl/sycl.hpp>
-#include <sycl/half_type.hpp>
-#include <oneapi/mkl.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <sycl/sycl.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <sycl/half_type.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <oneapi/mkl.hpp>
 
-#if defined(__linux__)
-#include <sys/mman.h>
-#elif defined(_WIN64)
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-#include <windows.h>
-#else
-#error "Only support Windows and Linux."
-#endif
+#ਜੇ defined(__linux__)
+#ਅਨ੍ਤਰ੍ਭਾਵ <sys/mman.h>
+#ਜਾਂਜੇ defined(_WIN64)
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ NOMINMAX
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ NOMINMAX
+#ਜੇ_ਅੰਤ
+#ਅਨ੍ਤਰ੍ਭਾਵ <windows.h>
+#ਨਹੀਂਤਾਂ
+#ਗਲਤੀ "Only support Windows and Linux."
+#ਜੇ_ਅੰਤ
 
-#if defined(__linux__)
-#include <unistd.h>
-#include <sys/syscall.h>
-#endif
-#if defined(_WIN64)
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-#include <windows.h>
-#endif
+#ਜੇ defined(__linux__)
+#ਅਨ੍ਤਰ੍ਭਾਵ <unistd.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <sys/syscall.h>
+#ਜੇ_ਅੰਤ
+#ਜੇ defined(_WIN64)
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ NOMINMAX
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ NOMINMAX
+#ਜੇ_ਅੰਤ
+#ਅਨ੍ਤਰ੍ਭਾਵ <windows.h>
+#ਜੇ_ਅੰਤ
 
 
-#define DPCT_COMPATIBILITY_TEMP (900)
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ DPCT_COMPATIBILITY_ਆਰਜ਼ੀ (900)
 
-#if defined(_MSC_VER)
-#define __dpct_align__(n) __declspec(align(n))
-#define __dpct_inline__ __forceinline
-#else
-#define __dpct_align__(n) __attribute__((aligned(n)))
-#define __dpct_inline__ __inline__ __attribute__((always_inline))
-#endif
+#ਜੇ defined(_MSC_VER)
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ __dpct_align__(n) __declspec(align(n))
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ __dpct_inline__ __forceinline
+#ਨਹੀਂਤਾਂ
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ __dpct_align__(n) __attribute__((aligned(n)))
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ __dpct_inline__ __inline__ __attribute__((always_inline))
+#ਜੇ_ਅੰਤ
 
-#if defined(_MSC_VER)
-#define __dpct_noinline__ __declspec(noinline)
-#else
-#define __dpct_noinline__ __attribute__((noinline))
-#endif
+#ਜੇ defined(_MSC_VER)
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ __dpct_noinline__ __declspec(noinline)
+#ਨਹੀਂਤਾਂ
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ __dpct_noinline__ __attribute__((noinline))
+#ਜੇ_ਅੰਤ
 
-#define DPCT_UNUSED(x) (void)(x)
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ DPCT_ਅਣਵਰਤਿਆ(x) (ਖਾਲੀ)(x)
 
-[[noreturn]] inline void _abort(const char * str) {
-    std::cerr << str << std::endl;
+[[noreturn]] ਸਤਰਅੰਦਰ ਖਾਲੀ _abort(ਅਚਲ ਅੱਖਰ * str) {
+    std::cerr << str << std::ਸਤਰ_ਅੰਤ;
     std::abort();
 }
 
-inline std::string get_device_type_name(const sycl::device &Device) {
-    auto DeviceType = Device.get_info<sycl::info::device::device_type>();
-    switch (DeviceType) {
-    case sycl::info::device_type::cpu:
-        return "cpu";
-    case sycl::info::device_type::gpu:
-        return "gpu";
-    case sycl::info::device_type::host:
-        return "host";
-    case sycl::info::device_type::accelerator:
-        return "acc";
-    default:
-        return "unknown";
+ਸਤਰਅੰਦਰ std::string get_device_type_name(ਅਚਲ sycl::device &Device) {
+    ਸਵੈਚਾਲਿਤ DeviceType = Device.get_info<sycl::info::device::device_type>();
+    ਚੋਣ (DeviceType) {
+    ਹਾਲਤ sycl::info::device_type::cpu:
+        ਵਾਪਸ "cpu";
+    ਹਾਲਤ sycl::info::device_type::gpu:
+        ਵਾਪਸ "gpu";
+    ਹਾਲਤ sycl::info::device_type::host:
+        ਵਾਪਸ "host";
+    ਹਾਲਤ sycl::info::device_type::accelerator:
+        ਵਾਪਸ "acc";
+    ਮੂਲ:
+        ਵਾਪਸ "unknown";
     }
 }
 
-inline std::string get_device_backend_and_type(const sycl::device &device) {
+ਸਤਰਅੰਦਰ std::string get_device_backend_and_type(ਅਚਲ sycl::device &device) {
     std::stringstream device_type;
     sycl::backend backend = device.get_backend();
     device_type <<  backend << ":" << get_device_type_name(device);
-    return device_type.str();
+    ਵਾਪਸ device_type.str();
 }
 
-template <typename Ts> struct matrix_info_t {
+ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ Ts> ਬਣਤਰ ਮੈਟ੍ਰਿਕਸ_info_t {
     oneapi::mkl::transpose transpose_info[2];
-    Ts                     value_info[2];
-    std::int64_t           size_info[3];
+    Ts                     ਮੁੱਲ_info[2];
+    std::int64_t           ਮਾਪ_info[3];
     std::int64_t           ld_info[3];
     std::int64_t           groupsize_info;
 };
 
-namespace dpct
+ਨਾਮਾਕਾਸ਼ dpct
 {
-    typedef sycl::queue *queue_ptr;
-    typedef sycl::event *event_ptr;
-    typedef char *device_ptr;
-    typedef uint8_t byte_t;
-    typedef sycl::buffer<byte_t> buffer_t;
+    ਕਿਸਮਪਰਿਭਾਸ਼ਾ sycl::queue *ਕਤਾਰ_ptr;
+    ਕਿਸਮਪਰਿਭਾਸ਼ਾ sycl::event *event_ptr;
+    ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਅੱਖਰ *device_ptr;
+    ਕਿਸਮਪਰਿਭਾਸ਼ਾ uint8_t byte_t;
+    ਕਿਸਮਪਰਿਭਾਸ਼ਾ sycl::ਬਫਰ<byte_t> ਬਫਰ_t;
 
     /// SYCL default exception handler
-    inline auto exception_handler = [](sycl::exception_list exceptions)
+    ਸਤਰਅੰਦਰ ਸਵੈਚਾਲਿਤ exception_handler = [](sycl::exception_list exceptions)
     {
-        for (std::exception_ptr const &e : exceptions)
+        ਲਈ (std::exception_ptr ਅਚਲ &e : exceptions)
         {
-            try
+            ਕੋਸ਼ਿਸ਼
             {
                 std::rethrow_exception(e);
             }
-            catch (sycl::exception const &e)
+            ਫੜੋ (sycl::exception ਅਚਲ &e)
             {
-                std::cerr << "Caught asynchronous SYCL exception:" << std::endl
-                          << e.what() << std::endl
+                std::cerr << "Caught asynchronous SYCL exception:" << std::ਸਤਰ_ਅੰਤ
+                          << e.what() << std::ਸਤਰ_ਅੰਤ
                           << "Exception caught at file:" << __FILE__
-                          << ", line:" << __LINE__ << std::endl;
+                          << ", line:" << __LINE__ << std::ਸਤਰ_ਅੰਤ;
             }
         }
     };
 
-    enum error_code
+    ਗਿਣਤੀ error_code
     {
         success = 0,
         default_error = 999
     };
 
-    enum memcpy_direction
+    ਗਿਣਤੀ memcpy_direction
     {
-        host_to_host,
-        host_to_device,
-        device_to_host,
-        device_to_device,
+        host_ਮੰਜ਼ਿਲ_host,
+        host_ਮੰਜ਼ਿਲ_device,
+        device_ਮੰਜ਼ਿਲ_host,
+        device_ਮੰਜ਼ਿਲ_device,
         automatic
     };
 
-    enum memory_region
+    ਗਿਣਤੀ ਸਮ੍ਰਿਤੀ_region
     {
         global = 0, // device global memory
         constant,   // device constant memory
@@ -148,7 +148,7 @@ namespace dpct
         shared,     // memory which can be accessed by host and device
     };
 
-    enum class library_data_t : unsigned char
+    ਗਿਣਤੀ ਵਰਗ library_ਅੰਕੜੇ_t : ਬਿਨਾਨਿਸ਼ਾਨੀ ਅੱਖਰ
     {
         real_float = 0,
         complex_float,
@@ -181,77 +181,77 @@ namespace dpct
         real_int8_4,
         real_int8_32,
         real_uint8_4,
-        library_data_t_size
+        library_ਅੰਕੜੇ_t_ਮਾਪ
     };
 
-    template <typename T>
-    struct DataType
+    ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T>
+    ਬਣਤਰ ਅੰਕੜੇ_Type_2
     {
-        using T2 = T;
+        ਵਰਤੋਂ T2 = T;
     };
-    template <typename T>
-    struct DataType<sycl::vec<T, 2>>
+    ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T>
+    ਬਣਤਰ ਅੰਕੜੇ_Type_2<sycl::vec<T, 2>>
     {
-        using T2 = std::complex<T>;
+        ਵਰਤੋਂ T2 = std::complex<T>;
     };
 
-    static void destroy_event(event_ptr event)
+    ਸਥਿਰ ਖਾਲੀ destroy_event(event_ptr event)
     {
-        delete event;
+        ਮਿਟਾਓ event;
     }
 
-    static inline unsigned int get_tid()
+    ਸਥਿਰ ਸਤਰਅੰਦਰ ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ get_tid()
     {
-#if defined(__linux__)
-        return syscall(SYS_gettid);
-#elif defined(_WIN64)
-        return GetCurrentThreadId();
-#else
-#error "Only support Windows and Linux."
-#endif
+#ਜੇ defined(__linux__)
+        ਵਾਪਸ syscall(SYS_gettid);
+#ਜਾਂਜੇ defined(_WIN64)
+        ਵਾਪਸ GetCurrentThreadId();
+#ਨਹੀਂਤਾਂ
+#ਗਲਤੀ "Only support Windows and Linux."
+#ਜੇ_ਅੰਤ
     }
 
-    namespace detail
+    ਨਾਮਾਕਾਸ਼ detail
     {
-        static void get_version(const sycl::device &dev, int &major, int &minor)
+        ਸਥਿਰ ਖਾਲੀ get_ਸੰਸਕਰਣ(ਅਚਲ sycl::device &dev, ਪੂਰਨ &major, ਪੂਰਨ &minor)
         {
             // Version string has the following format:
             // a. OpenCL<space><major.minor><space><vendor-specific-information>
             // b. <major.minor>
             // c. <AmdGcnArchName> e.g gfx1030
             std::string ver;
-            ver = dev.get_info<sycl::info::device::version>();
+            ver = dev.get_info<sycl::info::device::ਸੰਸਕਰਣ_2>();
             std::string::size_type i = 0;
-            while (i < ver.size()) {
-              if (isdigit(ver[i]))
-                break;
+            ਜਦੋਂ (i < ver.size()) {
+              ਜੇ (ਅੰਕ_ਹੈ(ver[i]))
+                ਰੋਕੋ;
               i++;
             }
             major = std::stoi(&(ver[i]));
-            while (i < ver.size()) {
-              if (ver[i] == '.')
-                break;
+            ਜਦੋਂ (i < ver.size()) {
+              ਜੇ (ver[i] == '.')
+                ਰੋਕੋ;
               i++;
             }
-            if (i < ver.size()) {
+            ਜੇ (i < ver.size()) {
               // a. and b.
               i++;
               minor = std::stoi(&(ver[i]));
-            } else {
+            } ਨਹੀਂਤਾਂ {
               // c.
               minor = 0;
             }
         }
 
-        template <typename tag, typename T>
-        class generic_error_type
+        ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ ਟੈਗ, ਕਿਸਮ_ਨਾਂ T>
+        ਵਰਗ generic_error_type
         {
-        public:
-            generic_error_type() = default;
+        ਜਨਤਕ:
+            generic_error_type() = ਮੂਲ;
             generic_error_type(T value) : value{value} {}
-            operator T() const { return value; }
+            ਸੰਚਾਲਕ T() ਅਚਲ { ਵਾਪਸ value; }
 
-        private:
+        ਨਿਜੀ:
             T value;
         };
 
@@ -259,776 +259,776 @@ namespace dpct
 
     // COPY from DPCT head files
     /// dim3 is used to store 3 component dimensions.
-    class dim3 {
-        public:
-        unsigned x, y, z;
+    ਵਰਗ dim3 {
+        ਜਨਤਕ:
+        ਬਿਨਾਨਿਸ਼ਾਨੀ x, y, z;
 
-        constexpr dim3(unsigned x = 1, unsigned y = 1, unsigned z = 1)
+        constexpr dim3(ਬਿਨਾਨਿਸ਼ਾਨੀ x = 1, ਬਿਨਾਨਿਸ਼ਾਨੀ y = 1, ਬਿਨਾਨਿਸ਼ਾਨੀ z = 1)
             : x(x), y(y), z(z) {}
 
-        dim3(const sycl::id<3> &r) : dim3(r[2], r[1], r[0]) {}
+        dim3(ਅਚਲ sycl::id<3> &r) : dim3(r[2], r[1], r[0]) {}
 
-        operator sycl::range<3>() const { return sycl::range<3>(z, y, x); }
+        ਸੰਚਾਲਕ sycl::range<3>() ਅਚਲ { ਵਾਪਸ sycl::range<3>(z, y, x); }
     }; // namespace dim3
 
-    inline dim3 operator*(const dim3 &a, const dim3 &b) {
-    return dim3{a.x * b.x, a.y * b.y, a.z * b.z};
+    ਸਤਰਅੰਦਰ dim3 ਸੰਚਾਲਕ*(ਅਚਲ dim3 &a, ਅਚਲ dim3 &b) {
+    ਵਾਪਸ dim3{a.x * b.x, a.y * b.y, a.z * b.z};
     }
     // COPY from DPCT head files
 
 
     /// Pitched 2D/3D memory data.
-    class pitched_data
+    ਵਰਗ pitched_ਅੰਕੜੇ
     {
-    public:
-        pitched_data() : pitched_data(nullptr, 0, 0, 0) {}
-        pitched_data(void *data, size_t pitch, size_t x, size_t y)
-            : _data(data), _pitch(pitch), _x(x), _y(y) {}
+    ਜਨਤਕ:
+        pitched_ਅੰਕੜੇ() : pitched_ਅੰਕੜੇ(ਖਾਲੀ_ਸੂਚਕ, 0, 0, 0) {}
+        pitched_ਅੰਕੜੇ(ਖਾਲੀ *ਅੰਕੜੇ, size_t pitch, size_t x, size_t y)
+            : ਅੰਕੜੇ_2(ਅੰਕੜੇ), _pitch(pitch), _x(x), _y(y) {}
 
-        void *get_data_ptr() { return _data; }
-        void set_data_ptr(void *data) { _data = data; }
+        ਖਾਲੀ *get_ਅੰਕੜੇ_ptr() { ਵਾਪਸ ਅੰਕੜੇ_2; }
+        ਖਾਲੀ ਸੈੱਟ_ਅੰਕੜੇ_ptr(ਖਾਲੀ *ਅੰਕੜੇ) { ਅੰਕੜੇ_2 = ਅੰਕੜੇ; }
 
-        size_t get_pitch() { return _pitch; }
-        void set_pitch(size_t pitch) { _pitch = pitch; }
+        size_t get_pitch() { ਵਾਪਸ _pitch; }
+        ਖਾਲੀ ਸੈੱਟ_pitch(size_t pitch) { _pitch = pitch; }
 
-        size_t get_x() { return _x; }
-        void set_x(size_t x) { _x = x; }
+        size_t get_x() { ਵਾਪਸ _x; }
+        ਖਾਲੀ ਸੈੱਟ_x(size_t x) { _x = x; }
 
-        size_t get_y() { return _y; }
-        void set_y(size_t y) { _y = y; }
+        size_t get_y() { ਵਾਪਸ _y; }
+        ਖਾਲੀ ਸੈੱਟ_y(size_t y) { _y = y; }
 
-    private:
-        void *_data;
+    ਨਿਜੀ:
+        ਖਾਲੀ *ਅੰਕੜੇ_2;
         size_t _pitch, _x, _y;
     };
 
-    class device_info
+    ਵਰਗ device_info
     {
-    public:
+    ਜਨਤਕ:
         // get interface
-        const char *get_name() const { return _name; }
-        char *get_name() { return _name; }
-        template <typename WorkItemSizesTy = sycl::range<3>,
-                  std::enable_if_t<std::is_same_v<WorkItemSizesTy, sycl::range<3>> ||
-                                       std::is_same_v<WorkItemSizesTy, int *>,
-                                   int> = 0>
-        auto get_max_work_item_sizes() const
+        ਅਚਲ ਅੱਖਰ *get_name() ਅਚਲ { ਵਾਪਸ _name; }
+        ਅੱਖਰ *get_name() { ਵਾਪਸ _name; }
+        ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ Work_ਵਸਤੂ_Sizes_Ty = sycl::range<3>,
+                  std::enable_if_t<std::is_same_v<Work_ਵਸਤੂ_Sizes_Ty, sycl::range<3>> ||
+                                       std::is_same_v<Work_ਵਸਤੂ_Sizes_Ty, ਪੂਰਨ *>,
+                                   ਪੂਰਨ> = 0>
+        ਸਵੈਚਾਲਿਤ get_max_work_ਵਸਤੂ_sizes() ਅਚਲ
         {
-            if constexpr (std::is_same_v<WorkItemSizesTy, sycl::range<3>>)
-                return sycl::range<3>(_max_work_item_sizes_i[0],
-                                      _max_work_item_sizes_i[1],
-                                      _max_work_item_sizes_i[2]);
-            else
+            ਜੇ constexpr (std::is_same_v<Work_ਵਸਤੂ_Sizes_Ty, sycl::range<3>>)
+                ਵਾਪਸ sycl::range<3>(max_work_ਵਸਤੂ_sizes_i[0],
+                                      max_work_ਵਸਤੂ_sizes_i[1],
+                                      max_work_ਵਸਤੂ_sizes_i[2]);
+            ਨਹੀਂਤਾਂ
             {
-                return _max_work_item_sizes_i;
+                ਵਾਪਸ max_work_ਵਸਤੂ_sizes_i;
             }
         }
-        template <typename WorkItemSizesTy = sycl::range<3>,
-                  std::enable_if_t<std::is_same_v<WorkItemSizesTy, sycl::range<3>> ||
-                                       std::is_same_v<WorkItemSizesTy, int *>,
-                                   int> = 0>
-        auto get_max_work_item_sizes()
+        ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ Work_ਵਸਤੂ_Sizes_Ty = sycl::range<3>,
+                  std::enable_if_t<std::is_same_v<Work_ਵਸਤੂ_Sizes_Ty, sycl::range<3>> ||
+                                       std::is_same_v<Work_ਵਸਤੂ_Sizes_Ty, ਪੂਰਨ *>,
+                                   ਪੂਰਨ> = 0>
+        ਸਵੈਚਾਲਿਤ get_max_work_ਵਸਤੂ_sizes()
         {
-            if constexpr (std::is_same_v<WorkItemSizesTy, sycl::range<3>>)
-                return sycl::range<3>(_max_work_item_sizes_i[0],
-                                      _max_work_item_sizes_i[1],
-                                      _max_work_item_sizes_i[2]);
-            else
+            ਜੇ constexpr (std::is_same_v<Work_ਵਸਤੂ_Sizes_Ty, sycl::range<3>>)
+                ਵਾਪਸ sycl::range<3>(max_work_ਵਸਤੂ_sizes_i[0],
+                                      max_work_ਵਸਤੂ_sizes_i[1],
+                                      max_work_ਵਸਤੂ_sizes_i[2]);
+            ਨਹੀਂਤਾਂ
             {
-                return _max_work_item_sizes_i;
+                ਵਾਪਸ max_work_ਵਸਤੂ_sizes_i;
             }
         }
-        bool get_host_unified_memory() const { return _host_unified_memory; }
-        int get_major_version() const { return _major; }
-        int get_minor_version() const { return _minor; }
-        int get_integrated() const { return _integrated; }
-        int get_max_clock_frequency() const { return _frequency; }
-        int get_max_compute_units() const { return _max_compute_units; }
-        int get_max_work_group_size() const { return _max_work_group_size; }
-        int get_max_sub_group_size() const { return _max_sub_group_size; }
-        int get_max_work_items_per_compute_unit() const
+        ਤਾਰਕਿਕ get_host_unified_ਸਮ੍ਰਿਤੀ() ਅਚਲ { ਵਾਪਸ host_unified_ਸਮ੍ਰਿਤੀ; }
+        ਪੂਰਨ get_major_ਸੰਸਕਰਣ() ਅਚਲ { ਵਾਪਸ _major; }
+        ਪੂਰਨ get_minor_ਸੰਸਕਰਣ() ਅਚਲ { ਵਾਪਸ _minor; }
+        ਪੂਰਨ get_integrated() ਅਚਲ { ਵਾਪਸ _integrated; }
+        ਪੂਰਨ get_max_clock_frequency() ਅਚਲ { ਵਾਪਸ _frequency; }
+        ਪੂਰਨ get_max_compute_units() ਅਚਲ { ਵਾਪਸ _max_compute_units; }
+        ਪੂਰਨ get_max_work_ਸਮੂਹ_ਮਾਪ() ਅਚਲ { ਵਾਪਸ max_work_ਸਮੂਹ_ਮਾਪ_2; }
+        ਪੂਰਨ get_max_sub_ਸਮੂਹ_ਮਾਪ() ਅਚਲ { ਵਾਪਸ max_sub_ਸਮੂਹ_ਮਾਪ; }
+        ਪੂਰਨ get_max_work_ਚੀਜ਼ਾਂ_ਪ੍ਰਤੀ_compute_unit() ਅਚਲ
         {
-            return _max_work_items_per_compute_unit;
+            ਵਾਪਸ max_work_ਚੀਜ਼ਾਂ_ਪ੍ਰਤੀ_compute_unit;
         }
-        int get_max_register_size_per_work_group() const
+        ਪੂਰਨ get_max_ਰਜਿਸਟਰ_ਮਾਪ_ਪ੍ਰਤੀ_work_ਸਮੂਹ() ਅਚਲ
         {
-            return _max_register_size_per_work_group;
+            ਵਾਪਸ max_ਰਜਿਸਟਰ_ਮਾਪ_ਪ੍ਰਤੀ_work_ਸਮੂਹ;
         }
-        template <typename NDRangeSizeTy = size_t *,
-                  std::enable_if_t<std::is_same_v<NDRangeSizeTy, size_t *> ||
-                                       std::is_same_v<NDRangeSizeTy, int *>,
-                                   int> = 0>
-        auto get_max_nd_range_size() const
+        ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ NDRange_ਮਾਪ_Ty = size_t *,
+                  std::enable_if_t<std::is_same_v<NDRange_ਮਾਪ_Ty, size_t *> ||
+                                       std::is_same_v<NDRange_ਮਾਪ_Ty, ਪੂਰਨ *>,
+                                   ਪੂਰਨ> = 0>
+        ਸਵੈਚਾਲਿਤ get_max_nd_range_ਮਾਪ() ਅਚਲ
         {
-            if constexpr (std::is_same_v<NDRangeSizeTy, size_t *>)
-                return _max_nd_range_size;
-            else
-                return _max_nd_range_size_i;
+            ਜੇ constexpr (std::is_same_v<NDRange_ਮਾਪ_Ty, size_t *>)
+                ਵਾਪਸ max_nd_range_ਮਾਪ;
+            ਨਹੀਂਤਾਂ
+                ਵਾਪਸ max_nd_range_ਮਾਪ_i;
         }
-        template <typename NDRangeSizeTy = size_t *,
-                  std::enable_if_t<std::is_same_v<NDRangeSizeTy, size_t *> ||
-                                       std::is_same_v<NDRangeSizeTy, int *>,
-                                   int> = 0>
-        auto get_max_nd_range_size()
+        ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ NDRange_ਮਾਪ_Ty = size_t *,
+                  std::enable_if_t<std::is_same_v<NDRange_ਮਾਪ_Ty, size_t *> ||
+                                       std::is_same_v<NDRange_ਮਾਪ_Ty, ਪੂਰਨ *>,
+                                   ਪੂਰਨ> = 0>
+        ਸਵੈਚਾਲਿਤ get_max_nd_range_ਮਾਪ()
         {
-            if constexpr (std::is_same_v<NDRangeSizeTy, size_t *>)
-                return _max_nd_range_size;
-            else
-                return _max_nd_range_size_i;
+            ਜੇ constexpr (std::is_same_v<NDRange_ਮਾਪ_Ty, size_t *>)
+                ਵਾਪਸ max_nd_range_ਮਾਪ;
+            ਨਹੀਂਤਾਂ
+                ਵਾਪਸ max_nd_range_ਮਾਪ_i;
         }
-        size_t get_global_mem_size() const { return _global_mem_size; }
-        size_t get_local_mem_size() const { return _local_mem_size; }
-        size_t get_max_mem_alloc_size() const { return _max_mem_alloc_size; }
+        size_t get_global_mem_ਮਾਪ() ਅਚਲ { ਵਾਪਸ global_mem_ਮਾਪ_2; }
+        size_t get_local_mem_ਮਾਪ() ਅਚਲ { ਵਾਪਸ local_mem_ਮਾਪ; }
+        size_t get_max_mem_alloc_ਮਾਪ() ਅਚਲ { ਵਾਪਸ max_mem_alloc_ਮਾਪ; }
         /// Returns the maximum clock rate of device's global memory in kHz. If
         /// compiler does not support this API then returns default value 3200000 kHz.
-        unsigned int get_memory_clock_rate() const { return _memory_clock_rate; }
+        ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ get_ਸਮ੍ਰਿਤੀ_clock_ਦਰ() ਅਚਲ { ਵਾਪਸ ਸਮ੍ਰਿਤੀ_clock_ਦਰ; }
         /// Returns the maximum bus width between device and memory in bits. If
         /// compiler does not support this API then returns default value 64 bits.
-        unsigned int get_memory_bus_width() const { return _memory_bus_width; }
-        uint32_t get_device_id() const { return _device_id; }
-        std::array<unsigned char, 16> get_uuid() const { return _uuid; }
+        ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ get_ਸਮ੍ਰਿਤੀ_bus_ਚੌੜਾਈ() ਅਚਲ { ਵਾਪਸ ਸਮ੍ਰਿਤੀ_bus_ਚੌੜਾਈ; }
+        uint32_t get_device_id() ਅਚਲ { ਵਾਪਸ _device_id; }
+        std::array<ਬਿਨਾਨਿਸ਼ਾਨੀ ਅੱਖਰ, 16> get_uuid() ਅਚਲ { ਵਾਪਸ _uuid; }
         /// Returns global memory cache size in bytes.
-        unsigned int get_global_mem_cache_size() const
+        ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ get_global_mem_cache_ਮਾਪ() ਅਚਲ
         {
-            return _global_mem_cache_size;
+            ਵਾਪਸ global_mem_cache_ਮਾਪ;
         }
 
         // set interface
-        void set_name(const char *name)
+        ਖਾਲੀ ਸੈੱਟ_name(ਅਚਲ ਅੱਖਰ *name)
         {
-            size_t length = strlen(name);
-            if (length < 256)
+            size_t ਲੰਮਾਈ = ਲੜੀ_ਲੰਬਾਈ(name);
+            ਜੇ (ਲੰਮਾਈ < 256)
             {
-                std::memcpy(_name, name, length + 1);
+                std::ਸਮ੍ਰਿਤੀ_ਨਕਲ(_name, name, ਲੰਮਾਈ + 1);
             }
-            else
+            ਨਹੀਂਤਾਂ
             {
-                std::memcpy(_name, name, 255);
+                std::ਸਮ੍ਰਿਤੀ_ਨਕਲ(_name, name, 255);
                 _name[255] = '\0';
             }
         }
-        void set_max_work_item_sizes(const sycl::range<3> max_work_item_sizes)
+        ਖਾਲੀ ਸੈੱਟ_max_work_ਵਸਤੂ_sizes(ਅਚਲ sycl::range<3> max_work_ਵਸਤੂ_sizes)
         {
-            for (int i = 0; i < 3; ++i)
-                _max_work_item_sizes_i[i] = max_work_item_sizes[i];
+            ਲਈ (ਪੂਰਨ i = 0; i < 3; ++i)
+                max_work_ਵਸਤੂ_sizes_i[i] = max_work_ਵਸਤੂ_sizes[i];
         }
-        [[deprecated]] void
-        set_max_work_item_sizes(const sycl::id<3> max_work_item_sizes)
+        [[deprecated]] ਖਾਲੀ
+        ਸੈੱਟ_max_work_ਵਸਤੂ_sizes(ਅਚਲ sycl::id<3> max_work_ਵਸਤੂ_sizes)
         {
-            for (int i = 0; i < 3; ++i)
+            ਲਈ (ਪੂਰਨ i = 0; i < 3; ++i)
             {
-                _max_work_item_sizes_i[i] = max_work_item_sizes[i];
+                max_work_ਵਸਤੂ_sizes_i[i] = max_work_ਵਸਤੂ_sizes[i];
             }
         }
-        void set_host_unified_memory(bool host_unified_memory)
+        ਖਾਲੀ ਸੈੱਟ_host_unified_ਸਮ੍ਰਿਤੀ(ਤਾਰਕਿਕ host_unified_ਸਮ੍ਰਿਤੀ_2)
         {
-            _host_unified_memory = host_unified_memory;
+            host_unified_ਸਮ੍ਰਿਤੀ = host_unified_ਸਮ੍ਰਿਤੀ_2;
         }
-        void set_major_version(int major) { _major = major; }
-        void set_minor_version(int minor) { _minor = minor; }
-        void set_integrated(int integrated) { _integrated = integrated; }
-        void set_max_clock_frequency(int frequency) { _frequency = frequency; }
-        void set_max_compute_units(int max_compute_units)
+        ਖਾਲੀ ਸੈੱਟ_major_ਸੰਸਕਰਣ(ਪੂਰਨ major) { _major = major; }
+        ਖਾਲੀ ਸੈੱਟ_minor_ਸੰਸਕਰਣ(ਪੂਰਨ minor) { _minor = minor; }
+        ਖਾਲੀ ਸੈੱਟ_integrated(ਪੂਰਨ integrated) { _integrated = integrated; }
+        ਖਾਲੀ ਸੈੱਟ_max_clock_frequency(ਪੂਰਨ frequency) { _frequency = frequency; }
+        ਖਾਲੀ ਸੈੱਟ_max_compute_units(ਪੂਰਨ max_compute_units)
         {
             _max_compute_units = max_compute_units;
         }
-        void set_global_mem_size(size_t global_mem_size)
+        ਖਾਲੀ ਸੈੱਟ_global_mem_ਮਾਪ(size_t global_mem_ਮਾਪ)
         {
-            _global_mem_size = global_mem_size;
+            global_mem_ਮਾਪ_2 = global_mem_ਮਾਪ;
         }
-        void set_local_mem_size(size_t local_mem_size)
+        ਖਾਲੀ ਸੈੱਟ_local_mem_ਮਾਪ(size_t local_mem_ਮਾਪ_2)
         {
-            _local_mem_size = local_mem_size;
+            local_mem_ਮਾਪ = local_mem_ਮਾਪ_2;
         }
-        void set_max_mem_alloc_size(size_t max_mem_alloc_size)
+        ਖਾਲੀ ਸੈੱਟ_max_mem_alloc_ਮਾਪ(size_t max_mem_alloc_ਮਾਪ_2)
         {
-            _max_mem_alloc_size = max_mem_alloc_size;
+            max_mem_alloc_ਮਾਪ = max_mem_alloc_ਮਾਪ_2;
         }
-        void set_max_work_group_size(int max_work_group_size)
+        ਖਾਲੀ ਸੈੱਟ_max_work_ਸਮੂਹ_ਮਾਪ(ਪੂਰਨ max_work_ਸਮੂਹ_ਮਾਪ)
         {
-            _max_work_group_size = max_work_group_size;
+            max_work_ਸਮੂਹ_ਮਾਪ_2 = max_work_ਸਮੂਹ_ਮਾਪ;
         }
-        void set_max_sub_group_size(int max_sub_group_size)
+        ਖਾਲੀ ਸੈੱਟ_max_sub_ਸਮੂਹ_ਮਾਪ(ਪੂਰਨ max_sub_ਸਮੂਹ_ਮਾਪ_2)
         {
-            _max_sub_group_size = max_sub_group_size;
+            max_sub_ਸਮੂਹ_ਮਾਪ = max_sub_ਸਮੂਹ_ਮਾਪ_2;
         }
-        void
-        set_max_work_items_per_compute_unit(int max_work_items_per_compute_unit)
+        ਖਾਲੀ
+        ਸੈੱਟ_max_work_ਚੀਜ਼ਾਂ_ਪ੍ਰਤੀ_compute_unit(ਪੂਰਨ max_work_ਚੀਜ਼ਾਂ_ਪ੍ਰਤੀ_compute_unit_2)
         {
-            _max_work_items_per_compute_unit = max_work_items_per_compute_unit;
+            max_work_ਚੀਜ਼ਾਂ_ਪ੍ਰਤੀ_compute_unit = max_work_ਚੀਜ਼ਾਂ_ਪ੍ਰਤੀ_compute_unit_2;
         }
-        void set_max_nd_range_size(int max_nd_range_size[])
+        ਖਾਲੀ ਸੈੱਟ_max_nd_range_ਮਾਪ(ਪੂਰਨ max_nd_range_ਮਾਪ_2[])
         {
-            for (int i = 0; i < 3; i++)
+            ਲਈ (ਪੂਰਨ i = 0; i < 3; i++)
             {
-                _max_nd_range_size[i] = max_nd_range_size[i];
-                _max_nd_range_size_i[i] = max_nd_range_size[i];
+                max_nd_range_ਮਾਪ[i] = max_nd_range_ਮਾਪ_2[i];
+                max_nd_range_ਮਾਪ_i[i] = max_nd_range_ਮਾਪ_2[i];
             }
         }
-        void set_memory_clock_rate(unsigned int memory_clock_rate)
+        ਖਾਲੀ ਸੈੱਟ_ਸਮ੍ਰਿਤੀ_clock_ਦਰ(ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ ਸਮ੍ਰਿਤੀ_clock_ਦਰ_2)
         {
-            _memory_clock_rate = memory_clock_rate;
+            ਸਮ੍ਰਿਤੀ_clock_ਦਰ = ਸਮ੍ਰਿਤੀ_clock_ਦਰ_2;
         }
-        void set_memory_bus_width(unsigned int memory_bus_width)
+        ਖਾਲੀ ਸੈੱਟ_ਸਮ੍ਰਿਤੀ_bus_ਚੌੜਾਈ(ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ ਸਮ੍ਰਿਤੀ_bus_ਚੌੜਾਈ_2)
         {
-            _memory_bus_width = memory_bus_width;
+            ਸਮ੍ਰਿਤੀ_bus_ਚੌੜਾਈ = ਸਮ੍ਰਿਤੀ_bus_ਚੌੜਾਈ_2;
         }
-        void
-        set_max_register_size_per_work_group(int max_register_size_per_work_group)
+        ਖਾਲੀ
+        ਸੈੱਟ_max_ਰਜਿਸਟਰ_ਮਾਪ_ਪ੍ਰਤੀ_work_ਸਮੂਹ(ਪੂਰਨ max_ਰਜਿਸਟਰ_ਮਾਪ_ਪ੍ਰਤੀ_work_ਸਮੂਹ_2)
         {
-            _max_register_size_per_work_group = max_register_size_per_work_group;
+            max_ਰਜਿਸਟਰ_ਮਾਪ_ਪ੍ਰਤੀ_work_ਸਮੂਹ = max_ਰਜਿਸਟਰ_ਮਾਪ_ਪ੍ਰਤੀ_work_ਸਮੂਹ_2;
         }
-        void set_device_id(uint32_t device_id)
+        ਖਾਲੀ ਸੈੱਟ_device_id(uint32_t device_id)
         {
             _device_id = device_id;
         }
-        void set_uuid(std::array<unsigned char, 16> uuid)
+        ਖਾਲੀ ਸੈੱਟ_uuid(std::array<ਬਿਨਾਨਿਸ਼ਾਨੀ ਅੱਖਰ, 16> uuid)
         {
             _uuid = std::move(uuid);
         }
-        void set_global_mem_cache_size(unsigned int global_mem_cache_size)
+        ਖਾਲੀ ਸੈੱਟ_global_mem_cache_ਮਾਪ(ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ global_mem_cache_ਮਾਪ_2)
         {
-            _global_mem_cache_size = global_mem_cache_size;
+            global_mem_cache_ਮਾਪ = global_mem_cache_ਮਾਪ_2;
         }
 
-    private:
-        char _name[256];
-        int _max_work_item_sizes_i[3];
-        bool _host_unified_memory = false;
-        int _major;
-        int _minor;
-        int _integrated = 0;
-        int _frequency;
+    ਨਿਜੀ:
+        ਅੱਖਰ _name[256];
+        ਪੂਰਨ max_work_ਵਸਤੂ_sizes_i[3];
+        ਤਾਰਕਿਕ host_unified_ਸਮ੍ਰਿਤੀ = ਝੂਠ;
+        ਪੂਰਨ _major;
+        ਪੂਰਨ _minor;
+        ਪੂਰਨ _integrated = 0;
+        ਪੂਰਨ _frequency;
         // Set estimated value 3200000 kHz as default value.
-        unsigned int _memory_clock_rate = 3200000;
+        ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ ਸਮ੍ਰਿਤੀ_clock_ਦਰ = 3200000;
         // Set estimated value 64 bits as default value.
-        unsigned int _memory_bus_width = 64;
-        unsigned int _global_mem_cache_size;
-        int _max_compute_units;
-        int _max_work_group_size;
-        int _max_sub_group_size;
-        int _max_work_items_per_compute_unit;
-        int _max_register_size_per_work_group;
-        size_t _global_mem_size;
-        size_t _local_mem_size;
-        size_t _max_mem_alloc_size;
-        size_t _max_nd_range_size[3];
-        int _max_nd_range_size_i[3];
+        ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ ਸਮ੍ਰਿਤੀ_bus_ਚੌੜਾਈ = 64;
+        ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ global_mem_cache_ਮਾਪ;
+        ਪੂਰਨ _max_compute_units;
+        ਪੂਰਨ max_work_ਸਮੂਹ_ਮਾਪ_2;
+        ਪੂਰਨ max_sub_ਸਮੂਹ_ਮਾਪ;
+        ਪੂਰਨ max_work_ਚੀਜ਼ਾਂ_ਪ੍ਰਤੀ_compute_unit;
+        ਪੂਰਨ max_ਰਜਿਸਟਰ_ਮਾਪ_ਪ੍ਰਤੀ_work_ਸਮੂਹ;
+        size_t global_mem_ਮਾਪ_2;
+        size_t local_mem_ਮਾਪ;
+        size_t max_mem_alloc_ਮਾਪ;
+        size_t max_nd_range_ਮਾਪ[3];
+        ਪੂਰਨ max_nd_range_ਮਾਪ_i[3];
         uint32_t _device_id;
-        std::array<unsigned char, 16> _uuid;
+        std::array<ਬਿਨਾਨਿਸ਼ਾਨੀ ਅੱਖਰ, 16> _uuid;
     };
 
-    static int get_major_version(const sycl::device &dev)
+    ਸਥਿਰ ਪੂਰਨ get_major_ਸੰਸਕਰਣ(ਅਚਲ sycl::device &dev)
     {
-        int major, minor;
-        detail::get_version(dev, major, minor);
-        return major;
+        ਪੂਰਨ major, minor;
+        detail::get_ਸੰਸਕਰਣ(dev, major, minor);
+        ਵਾਪਸ major;
     }
 
-    static int get_minor_version(const sycl::device &dev)
+    ਸਥਿਰ ਪੂਰਨ get_minor_ਸੰਸਕਰਣ(ਅਚਲ sycl::device &dev)
     {
-        int major, minor;
-        detail::get_version(dev, major, minor);
-        return minor;
+        ਪੂਰਨ major, minor;
+        detail::get_ਸੰਸਕਰਣ(dev, major, minor);
+        ਵਾਪਸ minor;
     }
 
-    static void get_device_info(device_info &out, const sycl::device &dev)
+    ਸਥਿਰ ਖਾਲੀ get_device_info(device_info &ਬਾਹਰਲਾ, ਅਚਲ sycl::device &dev)
     {
         device_info prop;
-        prop.set_name(dev.get_info<sycl::info::device::name>().c_str());
+        prop.ਸੈੱਟ_name(dev.get_info<sycl::info::device::name>().c_str());
 
-        int major, minor;
-        detail::get_version(dev, major, minor);
-        prop.set_major_version(major);
-        prop.set_minor_version(minor);
+        ਪੂਰਨ major, minor;
+        detail::get_ਸੰਸਕਰਣ(dev, major, minor);
+        prop.ਸੈੱਟ_major_ਸੰਸਕਰਣ(major);
+        prop.ਸੈੱਟ_minor_ਸੰਸਕਰਣ(minor);
 
-        prop.set_max_work_item_sizes(
-#if (__SYCL_COMPILER_VERSION && __SYCL_COMPILER_VERSION < 20220902)
+        prop.ਸੈੱਟ_max_work_ਵਸਤੂ_sizes(
+#ਜੇ (__SYCL_COMPILER_VERSION && __SYCL_COMPILER_VERSION < 20220902)
             // oneAPI DPC++ compiler older than 2022/09/02, where max_work_item_sizes
             // is an enum class element
-            dev.get_info<sycl::info::device::max_work_item_sizes>());
-#else
+            dev.get_info<sycl::info::device::max_work_ਵਸਤੂ_sizes>());
+#ਨਹੀਂਤਾਂ
             // SYCL 2020-conformant code, max_work_item_sizes is a struct templated by
             // an int
-            dev.get_info<sycl::info::device::max_work_item_sizes<3>>());
-#endif
-        prop.set_host_unified_memory(dev.has(sycl::aspect::usm_host_allocations));
+            dev.get_info<sycl::info::device::max_work_ਵਸਤੂ_sizes<3>>());
+#ਜੇ_ਅੰਤ
+        prop.ਸੈੱਟ_host_unified_ਸਮ੍ਰਿਤੀ(dev.has(sycl::aspect::usm_host_allocations));
 
-        prop.set_max_clock_frequency(
+        prop.ਸੈੱਟ_max_clock_frequency(
             dev.get_info<sycl::info::device::max_clock_frequency>() * 1000);
 
-        prop.set_max_compute_units(
+        prop.ਸੈੱਟ_max_compute_units(
             dev.get_info<sycl::info::device::max_compute_units>());
-        prop.set_max_work_group_size(
-            dev.get_info<sycl::info::device::max_work_group_size>());
-        prop.set_global_mem_size(dev.get_info<sycl::info::device::global_mem_size>());
-        prop.set_local_mem_size(dev.get_info<sycl::info::device::local_mem_size>());
-        prop.set_max_mem_alloc_size(dev.get_info<sycl::info::device::max_mem_alloc_size>());
+        prop.ਸੈੱਟ_max_work_ਸਮੂਹ_ਮਾਪ(
+            dev.get_info<sycl::info::device::max_work_ਸਮੂਹ_ਮਾਪ>());
+        prop.ਸੈੱਟ_global_mem_ਮਾਪ(dev.get_info<sycl::info::device::global_mem_ਮਾਪ>());
+        prop.ਸੈੱਟ_local_mem_ਮਾਪ(dev.get_info<sycl::info::device::local_mem_ਮਾਪ_2>());
+        prop.ਸੈੱਟ_max_mem_alloc_ਮਾਪ(dev.get_info<sycl::info::device::max_mem_alloc_ਮਾਪ_2>());
 
-#if (defined(SYCL_EXT_INTEL_DEVICE_INFO) && SYCL_EXT_INTEL_DEVICE_INFO >= 6)
-        if (dev.has(sycl::aspect::ext_intel_memory_clock_rate))
+#ਜੇ (defined(SYCL_EXT_INTEL_DEVICE_INFO) && SYCL_EXT_INTEL_DEVICE_INFO >= 6)
+        ਜੇ (dev.has(sycl::aspect::ext_intel_ਸਮ੍ਰਿਤੀ_clock_ਦਰ))
         {
-            unsigned int tmp =
-                dev.get_info<sycl::ext::intel::info::device::memory_clock_rate>();
-            if (tmp != 0)
-                prop.set_memory_clock_rate(1000 * tmp);
+            ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ tmp =
+                dev.get_info<sycl::ext::intel::info::device::ਸਮ੍ਰਿਤੀ_clock_ਦਰ_2>();
+            ਜੇ (tmp != 0)
+                prop.ਸੈੱਟ_ਸਮ੍ਰਿਤੀ_clock_ਦਰ(1000 * tmp);
         }
-        if (dev.has(sycl::aspect::ext_intel_memory_bus_width))
+        ਜੇ (dev.has(sycl::aspect::ext_intel_ਸਮ੍ਰਿਤੀ_bus_ਚੌੜਾਈ))
         {
-            prop.set_memory_bus_width(
-                dev.get_info<sycl::ext::intel::info::device::memory_bus_width>());
+            prop.ਸੈੱਟ_ਸਮ੍ਰਿਤੀ_bus_ਚੌੜਾਈ(
+                dev.get_info<sycl::ext::intel::info::device::ਸਮ੍ਰਿਤੀ_bus_ਚੌੜਾਈ_2>());
         }
-        if (dev.has(sycl::aspect::ext_intel_device_id))
+        ਜੇ (dev.has(sycl::aspect::ext_intel_device_id))
         {
-            prop.set_device_id(
+            prop.ਸੈੱਟ_device_id(
                 dev.get_info<sycl::ext::intel::info::device::device_id>());
         }
-        if (dev.has(sycl::aspect::ext_intel_device_info_uuid))
+        ਜੇ (dev.has(sycl::aspect::ext_intel_device_info_uuid))
         {
-            prop.set_uuid(dev.get_info<sycl::ext::intel::info::device::uuid>());
+            prop.ਸੈੱਟ_uuid(dev.get_info<sycl::ext::intel::info::device::uuid>());
         }
-#elif defined(_MSC_VER) && !defined(__clang__)
-#pragma message("get_device_info: querying memory_clock_rate and \
-        memory_bus_width are not supported by the compiler used. \
-        Use 3200000 kHz as memory_clock_rate default value. \
-        Use 64 bits as memory_bus_width default value.")
-#else
-#warning "get_device_info: querying memory_clock_rate and \
-        memory_bus_width are not supported by the compiler used. \
-        Use 3200000 kHz as memory_clock_rate default value. \
-        Use 64 bits as memory_bus_width default value."
-#endif
+#ਜਾਂਜੇ defined(_MSC_VER) && !defined(__clang__)
+#ਹਦਾਇਤ ਸੁਨੇਹਾ("get_device_info: querying ਸਮ੍ਰਿਤੀ_clock_ਦਰ_2 and \
+        ਸਮ੍ਰਿਤੀ_bus_ਚੌੜਾਈ_2 are not supported by the compiler ਵਰਤਿਆ. \
+        Use 3200000 kHz as ਸਮ੍ਰਿਤੀ_clock_ਦਰ_2 ਮੂਲ value. \
+        Use 64 ਬਿੱਟ as ਸਮ੍ਰਿਤੀ_bus_ਚੌੜਾਈ_2 ਮੂਲ value.")
+#ਨਹੀਂਤਾਂ
+#warning "get_device_info: querying ਸਮ੍ਰਿਤੀ_clock_ਦਰ_2 and \
+        ਸਮ੍ਰਿਤੀ_bus_ਚੌੜਾਈ_2 are not supported by the compiler ਵਰਤਿਆ. \
+        Use 3200000 kHz as ਸਮ੍ਰਿਤੀ_clock_ਦਰ_2 ਮੂਲ value. \
+        Use 64 ਬਿੱਟ as ਸਮ੍ਰਿਤੀ_bus_ਚੌੜਾਈ_2 ਮੂਲ value."
+#ਜੇ_ਅੰਤ
 
-        size_t max_sub_group_size = 1;
-        std::vector<size_t> sub_group_sizes =
-            dev.get_info<sycl::info::device::sub_group_sizes>();
+        size_t max_sub_ਸਮੂਹ_ਮਾਪ_2 = 1;
+        std::vector<size_t> sub_ਸਮੂਹ_sizes =
+            dev.get_info<sycl::info::device::sub_ਸਮੂਹ_sizes>();
 
-        for (const auto &sub_group_size : sub_group_sizes)
+        ਲਈ (ਅਚਲ ਸਵੈਚਾਲਿਤ &sub_ਸਮੂਹ_ਮਾਪ : sub_ਸਮੂਹ_sizes)
         {
-            if (max_sub_group_size < sub_group_size)
-                max_sub_group_size = sub_group_size;
+            ਜੇ (max_sub_ਸਮੂਹ_ਮਾਪ_2 < sub_ਸਮੂਹ_ਮਾਪ)
+                max_sub_ਸਮੂਹ_ਮਾਪ_2 = sub_ਸਮੂਹ_ਮਾਪ;
         }
 
-        prop.set_max_sub_group_size(max_sub_group_size);
+        prop.ਸੈੱਟ_max_sub_ਸਮੂਹ_ਮਾਪ(max_sub_ਸਮੂਹ_ਮਾਪ_2);
 
-        prop.set_max_work_items_per_compute_unit(
-            dev.get_info<sycl::info::device::max_work_group_size>());
-        int max_nd_range_size[] = {0x7FFFFFFF, 0x7FFFFFFF, 0x7FFFFFFF};
-        prop.set_max_nd_range_size(max_nd_range_size);
+        prop.ਸੈੱਟ_max_work_ਚੀਜ਼ਾਂ_ਪ੍ਰਤੀ_compute_unit(
+            dev.get_info<sycl::info::device::max_work_ਸਮੂਹ_ਮਾਪ>());
+        ਪੂਰਨ max_nd_range_ਮਾਪ_2[] = {0x7FFFFFFF, 0x7FFFFFFF, 0x7FFFFFFF};
+        prop.ਸੈੱਟ_max_nd_range_ਮਾਪ(max_nd_range_ਮਾਪ_2);
 
         // Estimates max register size per work group, feel free to update the value
         // according to device properties.
-        prop.set_max_register_size_per_work_group(65536);
+        prop.ਸੈੱਟ_max_ਰਜਿਸਟਰ_ਮਾਪ_ਪ੍ਰਤੀ_work_ਸਮੂਹ(65536);
 
-        prop.set_global_mem_cache_size(
-            dev.get_info<sycl::info::device::global_mem_cache_size>());
-        out = prop;
+        prop.ਸੈੱਟ_global_mem_cache_ਮਾਪ(
+            dev.get_info<sycl::info::device::global_mem_cache_ਮਾਪ_2>());
+        ਬਾਹਰਲਾ = prop;
     }
 
     /// dpct device extension
-    class device_ext : public sycl::device {
-      typedef std::mutex mutex_type;
+    ਵਰਗ device_ext : ਜਨਤਕ sycl::device {
+      ਕਿਸਮਪਰਿਭਾਸ਼ਾ std::mutex mutex_type;
 
-     public:
+     ਜਨਤਕ:
       device_ext() : sycl::device() {}
       ~device_ext() {
-        std::lock_guard<mutex_type> lock(m_mutex);
+        std::lock_guard<mutex_type> ਤਾਲਾ(m_mutex);
         clear_queues();
       }
-      device_ext(const sycl::device &base) : sycl::device(base) {
-        std::lock_guard<mutex_type> lock(m_mutex);
+      device_ext(ਅਚਲ sycl::device &ਅਧਾਰ) : sycl::device(ਅਧਾਰ) {
+        std::lock_guard<mutex_type> ਤਾਲਾ(m_mutex);
         init_queues();
       }
 
-      int is_native_atomic_supported() { return 0; }
-      int get_major_version() const { return dpct::get_major_version(*this); }
+      ਪੂਰਨ is_native_atomic_supported() { ਵਾਪਸ 0; }
+      ਪੂਰਨ get_major_ਸੰਸਕਰਣ() ਅਚਲ { ਵਾਪਸ dpct::get_major_ਸੰਸਕਰਣ(*ਇਹ); }
 
-      int get_minor_version() const { return dpct::get_minor_version(*this); }
+      ਪੂਰਨ get_minor_ਸੰਸਕਰਣ() ਅਚਲ { ਵਾਪਸ dpct::get_minor_ਸੰਸਕਰਣ(*ਇਹ); }
 
-      int get_max_compute_units() const {
-        return get_device_info().get_max_compute_units();
+      ਪੂਰਨ get_max_compute_units() ਅਚਲ {
+        ਵਾਪਸ get_device_info().get_max_compute_units();
       }
 
       /// Return the maximum clock frequency of this device in KHz.
-      int get_max_clock_frequency() const {
-        return get_device_info().get_max_clock_frequency();
+      ਪੂਰਨ get_max_clock_frequency() ਅਚਲ {
+        ਵਾਪਸ get_device_info().get_max_clock_frequency();
       }
 
-      int get_integrated() const { return get_device_info().get_integrated(); }
+      ਪੂਰਨ get_integrated() ਅਚਲ { ਵਾਪਸ get_device_info().get_integrated(); }
 
-      int get_max_sub_group_size() const {
-        return get_device_info().get_max_sub_group_size();
+      ਪੂਰਨ get_max_sub_ਸਮੂਹ_ਮਾਪ() ਅਚਲ {
+        ਵਾਪਸ get_device_info().get_max_sub_ਸਮੂਹ_ਮਾਪ();
       }
 
-      int get_max_register_size_per_work_group() const {
-        return get_device_info().get_max_register_size_per_work_group();
+      ਪੂਰਨ get_max_ਰਜਿਸਟਰ_ਮਾਪ_ਪ੍ਰਤੀ_work_ਸਮੂਹ() ਅਚਲ {
+        ਵਾਪਸ get_device_info().get_max_ਰਜਿਸਟਰ_ਮਾਪ_ਪ੍ਰਤੀ_work_ਸਮੂਹ();
       }
 
-      int get_max_work_group_size() const {
-        return get_device_info().get_max_work_group_size();
+      ਪੂਰਨ get_max_work_ਸਮੂਹ_ਮਾਪ() ਅਚਲ {
+        ਵਾਪਸ get_device_info().get_max_work_ਸਮੂਹ_ਮਾਪ();
       }
 
-      int get_mem_base_addr_align() const {
-        return get_info<sycl::info::device::mem_base_addr_align>();
+      ਪੂਰਨ get_mem_ਅਧਾਰ_addr_align() ਅਚਲ {
+        ਵਾਪਸ get_info<sycl::info::device::mem_ਅਧਾਰ_addr_align>();
       }
 
-      size_t get_global_mem_size() const {
-        return get_device_info().get_global_mem_size();
+      size_t get_global_mem_ਮਾਪ() ਅਚਲ {
+        ਵਾਪਸ get_device_info().get_global_mem_ਮਾਪ();
       }
 
-      size_t get_max_mem_alloc_size() const {
-        return get_device_info().get_max_mem_alloc_size();
+      size_t get_max_mem_alloc_ਮਾਪ() ਅਚਲ {
+        ਵਾਪਸ get_device_info().get_max_mem_alloc_ਮਾਪ();
       }
 
       /// Get the number of bytes of free and total memory on the SYCL device.
       /// \param [out] free_memory The number of bytes of free memory on the
       /// SYCL device. \param [out] total_memory The number of bytes of total
       /// memory on the SYCL device.
-      void get_memory_info(size_t &free_memory, size_t &total_memory) {
-        total_memory = get_device_info().get_global_mem_size();
-        const char *warning_info =
+      ਖਾਲੀ get_ਸਮ੍ਰਿਤੀ_info(size_t &free_ਸਮ੍ਰਿਤੀ, size_t &ਕੁੱਲ_ਸਮ੍ਰਿਤੀ) {
+        ਕੁੱਲ_ਸਮ੍ਰਿਤੀ = get_device_info().get_global_mem_ਮਾਪ();
+        ਅਚਲ ਅੱਖਰ *warning_info =
             "get_memory_info: [warning] ext_intel_free_memory is not "
             "supported (export/set ZES_ENABLE_SYSMAN=1 to support), "
             "use total memory as free memory";
-#if (defined(__SYCL_COMPILER_VERSION) && __SYCL_COMPILER_VERSION >= 20221105)
-        if (!has(sycl::aspect::ext_intel_free_memory)) {
-          std::cerr << warning_info << std::endl;
-          free_memory = total_memory;
-        } else {
-          free_memory = get_info<sycl::ext::intel::info::device::free_memory>();
+#ਜੇ (defined(__SYCL_COMPILER_VERSION) && __SYCL_COMPILER_VERSION >= 20221105)
+        ਜੇ (!has(sycl::aspect::ext_intel_free_ਸਮ੍ਰਿਤੀ)) {
+          std::cerr << warning_info << std::ਸਤਰ_ਅੰਤ;
+          free_ਸਮ੍ਰਿਤੀ = ਕੁੱਲ_ਸਮ੍ਰਿਤੀ;
+        } ਨਹੀਂਤਾਂ {
+          free_ਸਮ੍ਰਿਤੀ = get_info<sycl::ext::intel::info::device::free_ਸਮ੍ਰਿਤੀ>();
         }
-#else
-        std::cerr << warning_info << std::endl;
-        free_memory = total_memory;
-#if defined(_MSC_VER) && !defined(__clang__)
-#pragma message("Querying the number of bytes of free memory is not supported")
-#else
+#ਨਹੀਂਤਾਂ
+        std::cerr << warning_info << std::ਸਤਰ_ਅੰਤ;
+        free_ਸਮ੍ਰਿਤੀ = ਕੁੱਲ_ਸਮ੍ਰਿਤੀ;
+#ਜੇ defined(_MSC_VER) && !defined(__clang__)
+#ਹਦਾਇਤ ਸੁਨੇਹਾ("Querying the number of bytes of free memory is not supported")
+#ਨਹੀਂਤਾਂ
 #warning "Querying the number of bytes of free memory is not supported"
-#endif
-#endif
+#ਜੇ_ਅੰਤ
+#ਜੇ_ਅੰਤ
       }
 
-      void get_device_info(device_info &out) const {
-        dpct::get_device_info(out, *this);
+      ਖਾਲੀ get_device_info(device_info &ਬਾਹਰਲਾ) ਅਚਲ {
+        dpct::get_device_info(ਬਾਹਰਲਾ, *ਇਹ);
       }
 
-      device_info get_device_info() const {
+      device_info get_device_info() ਅਚਲ {
         device_info prop;
-        dpct::get_device_info(prop, *this);
-        return prop;
+        dpct::get_device_info(prop, *ਇਹ);
+        ਵਾਪਸ prop;
       }
 
-      void reset() {
-        std::lock_guard<mutex_type> lock(m_mutex);
+      ਖਾਲੀ reset() {
+        std::lock_guard<mutex_type> ਤਾਲਾ(m_mutex);
         clear_queues();
         init_queues();
       }
 
-      sycl::queue &in_order_queue() { return _q_in_order; }
+      sycl::queue &ਵਿੱਚ_ਕ੍ਰਮ_ਕਤਾਰ() { ਵਾਪਸ q_ਵਿੱਚ_ਕ੍ਰਮ; }
 
-      sycl::queue &out_of_order_queue() { return _q_out_of_order; }
+      sycl::queue &ਬਾਹਰਲਾ_ਦਾ_ਕ੍ਰਮ_ਕਤਾਰ() { ਵਾਪਸ q_ਬਾਹਰਲਾ_ਦਾ_ਕ੍ਰਮ; }
 
-      sycl::queue &default_queue() { return in_order_queue(); }
+      sycl::queue &default_ਕਤਾਰ() { ਵਾਪਸ ਵਿੱਚ_ਕ੍ਰਮ_ਕਤਾਰ(); }
 
-      void queues_wait_and_throw() {
-        std::unique_lock<mutex_type> lock(m_mutex);
-        lock.unlock();
-        for (auto &q : _queues) {
+      ਖਾਲੀ queues_wait_and_throw() {
+        std::unique_lock<mutex_type> ਤਾਲਾ(m_mutex);
+        ਤਾਲਾ.unlock();
+        ਲਈ (ਸਵੈਚਾਲਿਤ &q : _queues) {
             q.wait_and_throw();
         }
         // Guard the destruct of current_queues to make sure the ref count is
         // safe.
-        lock.lock();
+        ਤਾਲਾ.ਤਾਲਾ();
       }
 
-      sycl::queue create_queue(bool enable_exception_handler = false) {
-        return create_in_order_queue(enable_exception_handler);
+      sycl::queue create_ਕਤਾਰ(ਤਾਰਕਿਕ enable_exception_handler = ਝੂਠ) {
+        ਵਾਪਸ create_ਵਿੱਚ_ਕ੍ਰਮ_ਕਤਾਰ(enable_exception_handler);
       }
 
-      sycl::queue create_queue(sycl::device device,
-                               bool enable_exception_handler = false) {
-        return create_in_order_queue(device, enable_exception_handler);
+      sycl::queue create_ਕਤਾਰ(sycl::device device,
+                               ਤਾਰਕਿਕ enable_exception_handler = ਝੂਠ) {
+        ਵਾਪਸ create_ਵਿੱਚ_ਕ੍ਰਮ_ਕਤਾਰ(device, enable_exception_handler);
       }
 
-      sycl::queue create_in_order_queue(bool enable_exception_handler = false) {
-        std::lock_guard<mutex_type> lock(m_mutex);
-        return create_queue_impl(enable_exception_handler,
-                                 sycl::property::queue::in_order());
+      sycl::queue create_ਵਿੱਚ_ਕ੍ਰਮ_ਕਤਾਰ(ਤਾਰਕਿਕ enable_exception_handler = ਝੂਠ) {
+        std::lock_guard<mutex_type> ਤਾਲਾ(m_mutex);
+        ਵਾਪਸ create_ਕਤਾਰ_impl(enable_exception_handler,
+                                 sycl::property::queue::ਵਿੱਚ_ਕ੍ਰਮ());
       }
 
-      sycl::queue create_in_order_queue(sycl::device device,
-                                        bool enable_exception_handler = false) {
-        std::lock_guard<mutex_type> lock(m_mutex);
-        return create_queue_impl(device, enable_exception_handler,
-                                 sycl::property::queue::in_order());
+      sycl::queue create_ਵਿੱਚ_ਕ੍ਰਮ_ਕਤਾਰ(sycl::device device,
+                                        ਤਾਰਕਿਕ enable_exception_handler = ਝੂਠ) {
+        std::lock_guard<mutex_type> ਤਾਲਾ(m_mutex);
+        ਵਾਪਸ create_ਕਤਾਰ_impl(device, enable_exception_handler,
+                                 sycl::property::queue::ਵਿੱਚ_ਕ੍ਰਮ());
       }
 
-      sycl::queue create_out_of_order_queue(
-          bool enable_exception_handler = false) {
-        std::lock_guard<mutex_type> lock(m_mutex);
-        return create_queue_impl(enable_exception_handler);
+      sycl::queue create_ਬਾਹਰਲਾ_ਦਾ_ਕ੍ਰਮ_ਕਤਾਰ(
+          ਤਾਰਕਿਕ enable_exception_handler = ਝੂਠ) {
+        std::lock_guard<mutex_type> ਤਾਲਾ(m_mutex);
+        ਵਾਪਸ create_ਕਤਾਰ_impl(enable_exception_handler);
       }
 
-      void destroy_queue(sycl::queue queue) {
-        std::lock_guard<mutex_type> lock(m_mutex);
+      ਖਾਲੀ destroy_ਕਤਾਰ(sycl::queue queue) {
+        std::lock_guard<mutex_type> ਤਾਲਾ(m_mutex);
         _queues.erase(std::remove_if(_queues.begin(), _queues.end(),
-                                    [=](const sycl::queue &q) -> bool
+                                    [=](ਅਚਲ sycl::queue &q) -> ਤਾਰਕਿਕ
                                     {
-                                        return q == queue;
+                                        ਵਾਪਸ q == queue;
                                     }),
                     _queues.end());
       }
-      void set_saved_queue(sycl::queue q) {
-        std::lock_guard<mutex_type> lock(m_mutex);
-        _saved_queue = q;
+      ਖਾਲੀ ਸੈੱਟ_saved_ਕਤਾਰ(sycl::queue q) {
+        std::lock_guard<mutex_type> ਤਾਲਾ(m_mutex);
+        saved_ਕਤਾਰ = q;
       }
-      sycl::queue get_saved_queue() const {
-        std::lock_guard<mutex_type> lock(m_mutex);
-        return _saved_queue;
+      sycl::queue get_saved_ਕਤਾਰ() ਅਚਲ {
+        std::lock_guard<mutex_type> ਤਾਲਾ(m_mutex);
+        ਵਾਪਸ saved_ਕਤਾਰ;
       }
 
-     private:
-      void clear_queues() { _queues.clear(); }
+     ਨਿਜੀ:
+      ਖਾਲੀ clear_queues() { _queues.clear(); }
 
-      void init_queues() {
-        _q_in_order =
-            create_queue_impl(true, sycl::property::queue::in_order());
-        _q_out_of_order = create_queue_impl(true);
-        _saved_queue = default_queue();
+      ਖਾਲੀ init_queues() {
+        q_ਵਿੱਚ_ਕ੍ਰਮ =
+            create_ਕਤਾਰ_impl(ਸੱਚ, sycl::property::queue::ਵਿੱਚ_ਕ੍ਰਮ());
+        q_ਬਾਹਰਲਾ_ਦਾ_ਕ੍ਰਮ = create_ਕਤਾਰ_impl(ਸੱਚ);
+        saved_ਕਤਾਰ = default_ਕਤਾਰ();
       }
 
       /// Caller should acquire resource \p m_mutex before calling this
       /// function.
-      template <class... Properties>
-      sycl::queue create_queue_impl(bool enable_exception_handler,
+      ਸਾਂਚਾ <ਵਰਗ... Properties>
+      sycl::queue create_ਕਤਾਰ_impl(ਤਾਰਕਿਕ enable_exception_handler,
                                     Properties... properties) {
         sycl::async_handler eh = {};
-        if (enable_exception_handler) {
+        ਜੇ (enable_exception_handler) {
           eh = exception_handler;
         }
         _queues.push_back(sycl::queue(
-            *this, eh,
+            *ਇਹ, eh,
             sycl::property_list(
-#ifdef DPCT_PROFILING_ENABLED
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ DPCT_PROFILING_ENABLED
                 sycl::property::queue::enable_profiling(),
-#endif
+#ਜੇ_ਅੰਤ
                 properties...)));
 
-        return _queues.back();
+        ਵਾਪਸ _queues.back();
       }
 
-      template <class... Properties>
-      sycl::queue create_queue_impl(sycl::device device,
-                                    bool enable_exception_handler,
+      ਸਾਂਚਾ <ਵਰਗ... Properties>
+      sycl::queue create_ਕਤਾਰ_impl(sycl::device device,
+                                    ਤਾਰਕਿਕ enable_exception_handler,
                                     Properties... properties) {
         sycl::async_handler eh = {};
-        if (enable_exception_handler) {
+        ਜੇ (enable_exception_handler) {
           eh = exception_handler;
         }
         _queues.push_back(sycl::queue(
             device, eh,
                         sycl::property_list(
-#ifdef DPCT_PROFILING_ENABLED
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ DPCT_PROFILING_ENABLED
                             sycl::property::queue::enable_profiling(),
-#endif
+#ਜੇ_ਅੰਤ
                             properties...)));
 
-        return _queues.back();
+        ਵਾਪਸ _queues.back();
       }
 
-      void get_version(int &major, int &minor) const {
-        detail::get_version(*this, major, minor);
+      ਖਾਲੀ get_ਸੰਸਕਰਣ(ਪੂਰਨ &major, ਪੂਰਨ &minor) ਅਚਲ {
+        detail::get_ਸੰਸਕਰਣ(*ਇਹ, major, minor);
       }
-      sycl::queue _q_in_order, _q_out_of_order;
-      sycl::queue _saved_queue;
+      sycl::queue q_ਵਿੱਚ_ਕ੍ਰਮ, q_ਬਾਹਰਲਾ_ਦਾ_ਕ੍ਰਮ;
+      sycl::queue saved_ਕਤਾਰ;
       std::vector<sycl::queue> _queues;
-      mutable mutex_type m_mutex;
+      ਬਦਲਣਯੋਗ mutex_type m_mutex;
     };
 
 
     /// device manager
-    class dev_mgr
+    ਵਰਗ dev_mgr
     {
-    public:
+    ਜਨਤਕ:
         device_ext &current_device()
         {
-            unsigned int dev_id = current_device_id();
+            ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ dev_id = current_device_id();
             check_id(dev_id);
-            return *_devs[dev_id];
+            ਵਾਪਸ *_devs[dev_id];
         }
-        device_ext &cpu_device() const
+        device_ext &cpu_device() ਅਚਲ
         {
-            std::lock_guard<std::recursive_mutex> lock(m_mutex);
-            if (_cpu_device == -1)
+            std::lock_guard<std::recursive_mutex> ਤਾਲਾ(m_mutex);
+            ਜੇ (_cpu_device == -1)
             {
-                throw std::runtime_error("no valid cpu device");
+                ਸੁੱਟੋ std::runtime_error("no valid cpu device");
             }
-            else
+            ਨਹੀਂਤਾਂ
             {
-                return *_devs[_cpu_device];
+                ਵਾਪਸ *_devs[_cpu_device];
             }
         }
-        device_ext &get_device(unsigned int id) const
+        device_ext &get_device(ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ id) ਅਚਲ
         {
-            std::lock_guard<std::recursive_mutex> lock(m_mutex);
+            std::lock_guard<std::recursive_mutex> ਤਾਲਾ(m_mutex);
             check_id(id);
-            return *_devs[id];
+            ਵਾਪਸ *_devs[id];
         }
-        unsigned int current_device_id() const
+        ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ current_device_id() ਅਚਲ
         {
-            std::lock_guard<std::recursive_mutex> lock(m_mutex);
-            auto it = _thread2dev_map.find(get_tid());
-            if (it != _thread2dev_map.end())
-                return it->second;
-            return DEFAULT_DEVICE_ID;
+            std::lock_guard<std::recursive_mutex> ਤਾਲਾ(m_mutex);
+            ਸਵੈਚਾਲਿਤ it = _thread2dev_map.find(get_tid());
+            ਜੇ (it != _thread2dev_map.end())
+                ਵਾਪਸ it->second;
+            ਵਾਪਸ DEFAULT_DEVICE_ID;
         }
 
         /// Select device with a device ID.
         /// \param [in] id The id of the device which can
         /// be obtained through get_device_id(const sycl::device).
-        void select_device(unsigned int id)
+        ਖਾਲੀ select_device(ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ id)
         {
-            std::lock_guard<std::recursive_mutex> lock(m_mutex);
+            std::lock_guard<std::recursive_mutex> ਤਾਲਾ(m_mutex);
             check_id(id);
             _thread2dev_map[get_tid()] = id;
         }
-        unsigned int device_count() { return _devs.size(); }
+        ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ device_ਗਿਣਤੀ() { ਵਾਪਸ _devs.size(); }
 
-        unsigned int get_device_id(const sycl::device &dev)
+        ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ get_device_id(ਅਚਲ sycl::device &dev)
         {
-            unsigned int id = 0;
-            for (auto &dev_item : _devs)
+            ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ id = 0;
+            ਲਈ (ਸਵੈਚਾਲਿਤ &dev_ਵਸਤੂ : _devs)
             {
-                if (*dev_item == dev)
+                ਜੇ (*dev_ਵਸਤੂ == dev)
                 {
-                    return id;
+                    ਵਾਪਸ id;
                 }
                 id++;
             }
-            return -1;
+            ਵਾਪਸ -1;
         }
 
-        inline std::string get_preferred_gpu_platform_name() {
-            std::string result;
+        ਸਤਰਅੰਦਰ std::string get_preferred_gpu_platform_name() {
+            std::string ਨਤੀਜਾ;
 
             std::string filter = "";
-            char* env = getenv("ONEAPI_DEVICE_SELECTOR");
-            if (env) {
-                if (std::strstr(env, "level_zero")) {
+            ਅੱਖਰ* env = getenv("ONEAPI_DEVICE_SELECTOR");
+            ਜੇ (env) {
+                ਜੇ (std::ਲੜੀ_ਖੋਜ(env, "level_zero")) {
                     filter = "level-zero";
                 }
-                else if (std::strstr(env, "opencl")) {
+                ਨਹੀਂਤਾਂ ਜੇ (std::ਲੜੀ_ਖੋਜ(env, "opencl")) {
                     filter = "opencl";
                 }
-                else if (std::strstr(env, "cuda")) {
+                ਨਹੀਂਤਾਂ ਜੇ (std::ਲੜੀ_ਖੋਜ(env, "cuda")) {
                     filter = "cuda";
                 }
-                else if (std::strstr(env, "hip")) {
+                ਨਹੀਂਤਾਂ ਜੇ (std::ਲੜੀ_ਖੋਜ(env, "hip")) {
                     filter = "hip";
                 }
-                else {
-                    throw std::runtime_error("invalid device filter: " + std::string(env));
+                ਨਹੀਂਤਾਂ {
+                    ਸੁੱਟੋ std::runtime_error("invalid device filter: " + std::string(env));
                 }
-            } else {
-                auto default_device = sycl::device(sycl::default_selector_v);
-                auto default_platform_name = default_device.get_platform().get_info<sycl::info::platform::name>();
+            } ਨਹੀਂਤਾਂ {
+                ਸਵੈਚਾਲਿਤ default_device = sycl::device(sycl::default_selector_v);
+                ਸਵੈਚਾਲਿਤ default_platform_name = default_device.get_platform().get_info<sycl::info::platform::name>();
 
-                if (std::strstr(default_platform_name.c_str(), "Level-Zero") || default_device.is_cpu()) {
+                ਜੇ (std::ਲੜੀ_ਖੋਜ(default_platform_name.c_str(), "Level-Zero") || default_device.is_cpu()) {
                     filter = "level-zero";
                 }
-                else if (std::strstr(default_platform_name.c_str(), "CUDA")) {
+                ਨਹੀਂਤਾਂ ਜੇ (std::ਲੜੀ_ਖੋਜ(default_platform_name.c_str(), "CUDA")) {
                     filter = "cuda";
                 }
-                else if (std::strstr(default_platform_name.c_str(), "HIP")) {
+                ਨਹੀਂਤਾਂ ਜੇ (std::ਲੜੀ_ਖੋਜ(default_platform_name.c_str(), "HIP")) {
                     filter = "hip";
                 }
             }
 
-            auto platform_list = sycl::platform::get_platforms();
+            ਸਵੈਚਾਲਿਤ platform_list = sycl::platform::get_platforms();
 
-            for (const auto& platform : platform_list) {
-                auto devices = platform.get_devices();
-                auto gpu_dev = std::find_if(devices.begin(), devices.end(), [](const sycl::device& d) {
-                    return d.is_gpu();
+            ਲਈ (ਅਚਲ ਸਵੈਚਾਲਿਤ& platform : platform_list) {
+                ਸਵੈਚਾਲਿਤ devices = platform.get_devices();
+                ਸਵੈਚਾਲਿਤ gpu_dev = std::find_if(devices.begin(), devices.end(), [](ਅਚਲ sycl::device& d) {
+                    ਵਾਪਸ d.is_gpu();
                 });
 
-                if (gpu_dev == devices.end()) {
+                ਜੇ (gpu_dev == devices.end()) {
                     // cout << "platform [" << platform_name
                     //      << "] does not contain GPU devices, skipping\n";
-                    continue;
+                    ਜਾਰੀ;
                 }
 
-                auto platform_name = platform.get_info<sycl::info::platform::name>();
-                std::string platform_name_low_case;
-                platform_name_low_case.resize(platform_name.size());
+                ਸਵੈਚਾਲਿਤ platform_name = platform.get_info<sycl::info::platform::name>();
+                std::string platform_name_ਨੀਵਾਂ_case;
+                platform_name_ਨੀਵਾਂ_case.resize(platform_name.size());
 
                 std::transform(
-                    platform_name.begin(), platform_name.end(), platform_name_low_case.begin(), ::tolower);
+                    platform_name.begin(), platform_name.end(), platform_name_ਨੀਵਾਂ_case.begin(), ::tolower);
 
-                if (platform_name_low_case.find(filter) == std::string::npos) {
+                ਜੇ (platform_name_ਨੀਵਾਂ_case.find(filter) == std::string::npos) {
                     // cout << "platform [" << platform_name
                     //      << "] does not match with requested "
                     //      << filter << ", skipping\n";
-                    continue;
+                    ਜਾਰੀ;
                 }
 
-                result = platform_name;
+                ਨਤੀਜਾ = platform_name;
             }
 
-            if (result.empty())
-                throw std::runtime_error("can not find preferred GPU platform");
+            ਜੇ (ਨਤੀਜਾ.ਖਾਲੀ_ਥਾਵਾਂ())
+                ਸੁੱਟੋ std::runtime_error("can not find preferred GPU platform");
 
-            return result;
+            ਵਾਪਸ ਨਤੀਜਾ;
         }
 
-        template <class DeviceSelector>
+        ਸਾਂਚਾ <ਵਰਗ DeviceSelector>
         std::enable_if_t<
-            std::is_invocable_r_v<int, DeviceSelector, const sycl::device &>>
-        select_device(const DeviceSelector &selector = sycl::gpu_selector_v)
+            std::is_invocable_r_v<ਪੂਰਨ, DeviceSelector, ਅਚਲ sycl::device &>>
+        select_device(ਅਚਲ DeviceSelector &selector = sycl::gpu_selector_v)
         {
             sycl::device selected_device = sycl::device(selector);
-            unsigned int selected_device_id = get_device_id(selected_device);
+            ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ selected_device_id = get_device_id(selected_device);
             select_device(selected_device_id);
         }
 
         /// Returns the instance of device manager singleton.
-        static dev_mgr &instance()
+        ਸਥਿਰ dev_mgr &instance()
         {
-            static dev_mgr d_m;
-            return d_m;
+            ਸਥਿਰ dev_mgr d_m;
+            ਵਾਪਸ d_m;
         }
-        dev_mgr(const dev_mgr &) = delete;
-        dev_mgr &operator=(const dev_mgr &) = delete;
-        dev_mgr(dev_mgr &&) = delete;
-        dev_mgr &operator=(dev_mgr &&) = delete;
+        dev_mgr(ਅਚਲ dev_mgr &) = ਮਿਟਾਓ;
+        dev_mgr &ਸੰਚਾਲਕ=(ਅਚਲ dev_mgr &) = ਮਿਟਾਓ;
+        dev_mgr(dev_mgr &&) = ਮਿਟਾਓ;
+        dev_mgr &ਸੰਚਾਲਕ=(dev_mgr &&) = ਮਿਟਾਓ;
 
-    private:
-        mutable std::recursive_mutex m_mutex;
-        static bool compare_dev(sycl::device &device1, sycl::device &device2)
+    ਨਿਜੀ:
+        ਬਦਲਣਯੋਗ std::recursive_mutex m_mutex;
+        ਸਥਿਰ ਤਾਰਕਿਕ compare_dev(sycl::device &device1, sycl::device &device2)
         {
             sycl::backend backend1 = device1.get_backend();
             sycl::backend backend2 = device2.get_backend();
             // levelzero backends always come first
-            if(backend1 == sycl::backend::ext_oneapi_level_zero && backend2 != sycl::backend::ext_oneapi_level_zero) return true;
-            if(backend1 != sycl::backend::ext_oneapi_level_zero && backend2 == sycl::backend::ext_oneapi_level_zero) return false;
+            ਜੇ(backend1 == sycl::backend::ext_oneapi_level_zero && backend2 != sycl::backend::ext_oneapi_level_zero) ਵਾਪਸ ਸੱਚ;
+            ਜੇ(backend1 != sycl::backend::ext_oneapi_level_zero && backend2 == sycl::backend::ext_oneapi_level_zero) ਵਾਪਸ ਝੂਠ;
             dpct::device_info prop1;
             dpct::get_device_info(prop1, device1);
             dpct::device_info prop2;
             dpct::get_device_info(prop2, device2);
-            return prop1.get_max_compute_units() > prop2.get_max_compute_units();
+            ਵਾਪਸ prop1.get_max_compute_units() > prop2.get_max_compute_units();
         }
-        static int convert_backend_index(std::string & backend) {
-            if (backend == "ext_oneapi_level_zero:gpu") return 0;
-            if (backend == "opencl:gpu") return 1;
-            if (backend == "ext_oneapi_cuda:gpu") return 2;
-            if (backend == "ext_oneapi_hip:gpu") return 3;
-            if (backend == "opencl:cpu") return 4;
-            if (backend == "opencl:acc") return 5;
-            printf("convert_backend_index: can't handle backend=%s\n", backend.c_str());
+        ਸਥਿਰ ਪੂਰਨ convert_backend_ਸੂਚਕਾਂਕ(std::string & backend) {
+            ਜੇ (backend == "ext_oneapi_level_zero:gpu") ਵਾਪਸ 0;
+            ਜੇ (backend == "opencl:gpu") ਵਾਪਸ 1;
+            ਜੇ (backend == "ext_oneapi_cuda:gpu") ਵਾਪਸ 2;
+            ਜੇ (backend == "ext_oneapi_hip:gpu") ਵਾਪਸ 3;
+            ਜੇ (backend == "opencl:cpu") ਵਾਪਸ 4;
+            ਜੇ (backend == "opencl:acc") ਵਾਪਸ 5;
+            ਲਿਖੋ("convert_backend_index: can't handle backend=%s\n", backend.c_str());
             _abort("fatal error");
         }
-        static bool compare_backend(std::string &backend1, std::string &backend2) {
-            return convert_backend_index(backend1) < convert_backend_index(backend2);
+        ਸਥਿਰ ਤਾਰਕਿਕ compare_backend(std::string &backend1, std::string &backend2) {
+            ਵਾਪਸ convert_backend_ਸੂਚਕਾਂਕ(backend1) < convert_backend_ਸੂਚਕਾਂਕ(backend2);
         }
         dev_mgr()
         {
@@ -1038,81 +1038,81 @@ namespace dpct
 
             std::vector<sycl::device> sycl_all_devs;
             // Collect other devices except for the default device.
-            if (default_device.is_cpu())
+            ਜੇ (default_device.is_cpu())
                 _cpu_device = 0;
 
-            auto Platforms = sycl::platform::get_platforms();
+            ਸਵੈਚਾਲਿਤ Platforms = sycl::platform::get_platforms();
             // Keep track of the number of devices per backend
             std::map<sycl::backend, size_t> DeviceNums;
             std::map<std::string, std::vector<sycl::device>> backend_devices;
-            auto preferred_platform_name = get_preferred_gpu_platform_name();
+            ਸਵੈਚਾਲਿਤ preferred_platform_name = get_preferred_gpu_platform_name();
 
-            while (!Platforms.empty()) {
-                auto Platform = Platforms.back();
+            ਜਦੋਂ (!Platforms.ਖਾਲੀ_ਥਾਵਾਂ()) {
+                ਸਵੈਚਾਲਿਤ Platform = Platforms.back();
                 Platforms.pop_back();
-                auto platform_name = Platform.get_info<sycl::info::platform::name>();
-                if (platform_name.compare(preferred_platform_name) != 0) {
-                    continue;
+                ਸਵੈਚਾਲਿਤ platform_name = Platform.get_info<sycl::info::platform::name>();
+                ਜੇ (platform_name.compare(preferred_platform_name) != 0) {
+                    ਜਾਰੀ;
                 }
-                auto devices = Platform.get_devices();
+                ਸਵੈਚਾਲਿਤ devices = Platform.get_devices();
                 std::string backend_type = get_device_backend_and_type(devices[0]);
-                for (const auto &device : devices) {
+                ਲਈ (ਅਚਲ ਸਵੈਚਾਲਿਤ &device : devices) {
                     backend_devices[backend_type].push_back(device);
                 }
             }
 
-            std::vector<std::string> keys;
-            for(auto it = backend_devices.begin(); it != backend_devices.end(); ++it) {
-                keys.push_back(it->first);
+            std::vector<std::string> ਕੁੰਜੀਆਂ;
+            ਲਈ(ਸਵੈਚਾਲਿਤ it = backend_devices.begin(); it != backend_devices.end(); ++it) {
+                ਕੁੰਜੀਆਂ.push_back(it->ਪਹਿਲਾ);
             }
-            std::sort(keys.begin(), keys.end(), compare_backend);
+            std::sort(ਕੁੰਜੀਆਂ.begin(), ਕੁੰਜੀਆਂ.end(), compare_backend);
 
-            for (auto &key : keys) {
-                std::vector<sycl::device> devs = backend_devices[key];
+            ਲਈ (ਸਵੈਚਾਲਿਤ &ਕੁੰਜੀ : ਕੁੰਜੀਆਂ) {
+                std::vector<sycl::device> devs = backend_devices[ਕੁੰਜੀ];
                 std::sort(devs.begin(), devs.end(), compare_dev);
-                for (const auto &dev : devs) {
+                ਲਈ (ਅਚਲ ਸਵੈਚਾਲਿਤ &dev : devs) {
                     sycl_all_devs.push_back(dev);
                 }
             }
 
-            for (auto &dev : sycl_all_devs)
+            ਲਈ (ਸਵੈਚਾਲਿਤ &dev : sycl_all_devs)
             {
-                if (dev == default_device)
+                ਜੇ (dev == default_device)
                 {
-                    continue;
+                    ਜਾਰੀ;
                 }
                 _devs.push_back(std::make_shared<device_ext>(dev));
-                if (_cpu_device == -1 && dev.is_cpu())
+                ਜੇ (_cpu_device == -1 && dev.is_cpu())
                 {
                     _cpu_device = _devs.size() - 1;
                 }
             }
         }
-        void check_id(unsigned int id) const
+        ਖਾਲੀ check_id(ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ id) ਅਚਲ
         {
-            if (id >= _devs.size())
+            ਜੇ (id >= _devs.size())
             {
-                throw std::runtime_error("invalid device id");
+                ਸੁੱਟੋ std::runtime_error("invalid device id");
             }
         }
         std::vector<std::shared_ptr<device_ext>> _devs;
         /// DEFAULT_DEVICE_ID is used, if current_device_id() can not find current
         /// thread id in _thread2dev_map, which means default device should be used
         /// for the current thread.
-        const unsigned int DEFAULT_DEVICE_ID = 0;
+        ਅਚਲ ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ DEFAULT_DEVICE_ID = 0;
         /// thread-id to device-id map.
-        std::map<unsigned int, unsigned int> _thread2dev_map;
-        int _cpu_device = -1;
+        std::map<ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ> _thread2dev_map;
+        ਪੂਰਨ _cpu_device = -1;
     };
 
-    static inline sycl::queue &get_default_queue()
+    ਸਥਿਰ ਸਤਰਅੰਦਰ sycl::queue &get_default_ਕਤਾਰ()
     {
-        return dev_mgr::instance().current_device().default_queue();
+        ਵਾਪਸ dev_mgr::instance().current_device().default_ਕਤਾਰ();
     }
 
-    namespace detail
+    ਨਾਮਾਕਾਸ਼ detail
     {
-        enum class pointer_access_attribute
+        ਗਿਣਤੀ ਵਰਗ ਸੂਚਕ_access_attribute
         {
             host_only = 0,
             device_only,
@@ -1120,210 +1120,210 @@ namespace dpct
             end
         };
 
-        static pointer_access_attribute get_pointer_attribute(sycl::queue &q,
-                                                              const void *ptr)
+        ਸਥਿਰ ਸੂਚਕ_access_attribute get_ਸੂਚਕ_attribute(sycl::queue &q,
+                                                              ਅਚਲ ਖਾਲੀ *ptr)
         {
-            switch (sycl::get_pointer_type(ptr, q.get_context()))
+            ਚੋਣ (sycl::get_ਸੂਚਕ_type(ptr, q.get_context()))
             {
-            case sycl::usm::alloc::unknown:
-                return pointer_access_attribute::host_only;
-            case sycl::usm::alloc::device:
-                return pointer_access_attribute::device_only;
-            case sycl::usm::alloc::shared:
-            case sycl::usm::alloc::host:
-                return pointer_access_attribute::host_device;
+            ਹਾਲਤ sycl::usm::alloc::unknown:
+                ਵਾਪਸ ਸੂਚਕ_access_attribute::host_only;
+            ਹਾਲਤ sycl::usm::alloc::device:
+                ਵਾਪਸ ਸੂਚਕ_access_attribute::device_only;
+            ਹਾਲਤ sycl::usm::alloc::shared:
+            ਹਾਲਤ sycl::usm::alloc::host:
+                ਵਾਪਸ ਸੂਚਕ_access_attribute::host_device;
             }
         }
 
-        template <typename ArgT>
-        inline constexpr std::uint64_t get_type_combination_id(ArgT Val)
+        ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ ArgT>
+        ਸਤਰਅੰਦਰ constexpr std::uint64_t get_type_combination_id(ArgT Val)
         {
-            static_assert((unsigned char)library_data_t::library_data_t_size <=
-                              std::numeric_limits<unsigned char>::max() &&
+            static_assert((ਬਿਨਾਨਿਸ਼ਾਨੀ ਅੱਖਰ)library_ਅੰਕੜੇ_t::library_ਅੰਕੜੇ_t_ਮਾਪ <=
+                              std::numeric_limits<ਬਿਨਾਨਿਸ਼ਾਨੀ ਅੱਖਰ>::max() &&
                           "library_data_t size exceeds limit.");
-            static_assert(std::is_same_v<ArgT, library_data_t>, "Unsupported ArgT");
-            return (std::uint64_t)Val;
+            static_assert(std::is_same_v<ArgT, library_ਅੰਕੜੇ_t>, "Unsupported ArgT");
+            ਵਾਪਸ (std::uint64_t)Val;
         }
 
-        template <typename FirstT, typename... RestT>
-        inline constexpr std::uint64_t get_type_combination_id(FirstT FirstVal,
+        ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ ਪਹਿਲਾ_T, ਕਿਸਮ_ਨਾਂ... RestT>
+        ਸਤਰਅੰਦਰ constexpr std::uint64_t get_type_combination_id(ਪਹਿਲਾ_T ਪਹਿਲਾ_Val,
                                                                RestT... RestVal)
         {
-            static_assert((std::uint8_t)library_data_t::library_data_t_size <=
-                              std::numeric_limits<unsigned char>::max() &&
+            static_assert((std::uint8_t)library_ਅੰਕੜੇ_t::library_ਅੰਕੜੇ_t_ਮਾਪ <=
+                              std::numeric_limits<ਬਿਨਾਨਿਸ਼ਾਨੀ ਅੱਖਰ>::max() &&
                           "library_data_t size exceeds limit.");
-            static_assert(sizeof...(RestT) <= 8 && "Too many parameters");
-            static_assert(std::is_same_v<FirstT, library_data_t>, "Unsupported FirstT");
-            return get_type_combination_id(RestVal...) << 8 | ((std::uint64_t)FirstVal);
+            static_assert(ਆਕਾਰ...(RestT) <= 8 && "Too many parameters");
+            static_assert(std::is_same_v<ਪਹਿਲਾ_T, library_ਅੰਕੜੇ_t>, "Unsupported FirstT");
+            ਵਾਪਸ get_type_combination_id(RestVal...) << 8 | ((std::uint64_t)ਪਹਿਲਾ_Val);
         }
 
-        class mem_mgr
+        ਵਰਗ mem_mgr
         {
             mem_mgr()
             {
                 // Reserved address space, no real memory allocation happens here.
-#if defined(__linux__)
-                mapped_address_space =
-                    (byte_t *)mmap(nullptr, mapped_region_size, PROT_NONE,
+#ਜੇ defined(__linux__)
+                mapped_ਪਤਾ_space =
+                    (byte_t *)mmap(ਖਾਲੀ_ਸੂਚਕ, mapped_region_ਮਾਪ, PROT_NONE,
                                    MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-#elif defined(_WIN64)
-                mapped_address_space = (byte_t *)VirtualAlloc(
-                    NULL,               // NULL specified as the base address parameter
-                    mapped_region_size, // Size of allocation
+#ਜਾਂਜੇ defined(_WIN64)
+                mapped_ਪਤਾ_space = (byte_t *)VirtualAlloc(
+                    ਨਿਰਾ,               // NULL specified as the base address parameter
+                    mapped_region_ਮਾਪ, // Size of allocation
                     MEM_RESERVE,        // Allocate reserved pages
-                    PAGE_NOACCESS);     // Protection = no access
-#else
-#error "Only support Windows and Linux."
-#endif
-                next_free = mapped_address_space;
+                    ਪੰਨਾ_NOACCESS);     // Protection = no access
+#ਨਹੀਂਤਾਂ
+#ਗਲਤੀ "Only support Windows and Linux."
+#ਜੇ_ਅੰਤ
+                ਅਗਲਾ_free = mapped_ਪਤਾ_space;
             }
 
-        public:
-            using buffer_id_t = int;
+        ਜਨਤਕ:
+            ਵਰਤੋਂ ਬਫਰ_id_t = ਪੂਰਨ;
 
-            struct allocation
+            ਬਣਤਰ ਵੰਡ
             {
-                buffer_t buffer;
+                ਬਫਰ_t ਬਫਰ;
                 byte_t *alloc_ptr;
                 size_t size;
             };
 
             ~mem_mgr()
             {
-#if defined(__linux__)
-                munmap(mapped_address_space, mapped_region_size);
-#elif defined(_WIN64)
-                VirtualFree(mapped_address_space, 0, MEM_RELEASE);
-#else
-#error "Only support Windows and Linux."
-#endif
+#ਜੇ defined(__linux__)
+                munmap(mapped_ਪਤਾ_space, mapped_region_ਮਾਪ);
+#ਜਾਂਜੇ defined(_WIN64)
+                VirtualFree(mapped_ਪਤਾ_space, 0, MEM_RELEASE);
+#ਨਹੀਂਤਾਂ
+#ਗਲਤੀ "Only support Windows and Linux."
+#ਜੇ_ਅੰਤ
             }
 
-            mem_mgr(const mem_mgr &) = delete;
-            mem_mgr &operator=(const mem_mgr &) = delete;
-            mem_mgr(mem_mgr &&) = delete;
-            mem_mgr &operator=(mem_mgr &&) = delete;
+            mem_mgr(ਅਚਲ mem_mgr &) = ਮਿਟਾਓ;
+            mem_mgr &ਸੰਚਾਲਕ=(ਅਚਲ mem_mgr &) = ਮਿਟਾਓ;
+            mem_mgr(mem_mgr &&) = ਮਿਟਾਓ;
+            mem_mgr &ਸੰਚਾਲਕ=(mem_mgr &&) = ਮਿਟਾਓ;
 
             /// Allocate
-            void *mem_alloc(size_t size)
+            ਖਾਲੀ *mem_alloc(size_t size)
             {
-                if (!size)
-                    return nullptr;
-                std::lock_guard<std::mutex> lock(m_mutex);
-                if (next_free + size > mapped_address_space + mapped_region_size)
+                ਜੇ (!size)
+                    ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
+                std::lock_guard<std::mutex> ਤਾਲਾ(m_mutex);
+                ਜੇ (ਅਗਲਾ_free + size > mapped_ਪਤਾ_space + mapped_region_ਮਾਪ)
                 {
-                    throw std::runtime_error("dpct_malloc: out of memory for virtual memory pool");
+                    ਸੁੱਟੋ std::runtime_error("dpct_malloc: out of memory for virtual memory pool");
                 }
-                // Allocation
+                //ਵੰਡ
                 sycl::range<1> r(size);
-                buffer_t buf(r);
-                allocation A{buf, next_free, size};
+                ਬਫਰ_t buf(r);
+                ਵੰਡ A{buf, ਅਗਲਾ_free, size};
                 // Map allocation to device pointer
-                void *result = next_free;
-                m_map.emplace(next_free + size, A);
+                ਖਾਲੀ *ਨਤੀਜਾ = ਅਗਲਾ_free;
+                m_map.emplace(ਅਗਲਾ_free + size, A);
                 // Update pointer to the next free space.
-                next_free += (size + extra_padding + alignment - 1) & ~(alignment - 1);
+                ਅਗਲਾ_free += (size + extra_padding + alignment - 1) & ~(alignment - 1);
 
-                return result;
+                ਵਾਪਸ ਨਤੀਜਾ;
             }
 
             /// Deallocate
-            void mem_free(const void *ptr)
+            ਖਾਲੀ mem_free(ਅਚਲ ਖਾਲੀ *ptr)
             {
-                if (!ptr)
-                    return;
-                std::lock_guard<std::mutex> lock(m_mutex);
-                auto it = get_map_iterator(ptr);
+                ਜੇ (!ptr)
+                    ਵਾਪਸ;
+                std::lock_guard<std::mutex> ਤਾਲਾ(m_mutex);
+                ਸਵੈਚਾਲਿਤ it = get_map_iterator(ptr);
                 m_map.erase(it);
             }
 
             /// map: device pointer -> allocation(buffer, alloc_ptr, size)
-            allocation translate_ptr(const void *ptr)
+            ਵੰਡ translate_ptr(ਅਚਲ ਖਾਲੀ *ptr)
             {
-                std::lock_guard<std::mutex> lock(m_mutex);
-                auto it = get_map_iterator(ptr);
-                return it->second;
+                std::lock_guard<std::mutex> ਤਾਲਾ(m_mutex);
+                ਸਵੈਚਾਲਿਤ it = get_map_iterator(ptr);
+                ਵਾਪਸ it->second;
             }
 
             /// Check if the pointer represents device pointer or not.
-            bool is_device_ptr(const void *ptr) const
+            ਤਾਰਕਿਕ is_device_ptr(ਅਚਲ ਖਾਲੀ *ptr) ਅਚਲ
             {
-                std::lock_guard<std::mutex> lock(m_mutex);
-                return (mapped_address_space <= ptr) &&
-                       (ptr < mapped_address_space + mapped_region_size);
+                std::lock_guard<std::mutex> ਤਾਲਾ(m_mutex);
+                ਵਾਪਸ (mapped_ਪਤਾ_space <= ptr) &&
+                       (ptr < mapped_ਪਤਾ_space + mapped_region_ਮਾਪ);
             }
 
             /// Returns the instance of memory manager singleton.
-            static mem_mgr &instance()
+            ਸਥਿਰ mem_mgr &instance()
             {
-                static mem_mgr m;
-                return m;
+                ਸਥਿਰ mem_mgr m;
+                ਵਾਪਸ m;
             }
 
-        private:
-            std::map<byte_t *, allocation> m_map;
-            mutable std::mutex m_mutex;
-            byte_t *mapped_address_space;
-            byte_t *next_free;
-            const size_t mapped_region_size = 128ull * 1024 * 1024 * 1024;
-            const size_t alignment = 256;
+        ਨਿਜੀ:
+            std::map<byte_t *, ਵੰਡ> m_map;
+            ਬਦਲਣਯੋਗ std::mutex m_mutex;
+            byte_t *mapped_ਪਤਾ_space;
+            byte_t *ਅਗਲਾ_free;
+            ਅਚਲ size_t mapped_region_ਮਾਪ = 128ull * 1024 * 1024 * 1024;
+            ਅਚਲ size_t alignment = 256;
             /// This padding may be defined to some positive value to debug
             /// out of bound accesses.
-            const size_t extra_padding = 0;
+            ਅਚਲ size_t extra_padding = 0;
 
-            std::map<byte_t *, allocation>::iterator get_map_iterator(const void *ptr)
+            std::map<byte_t *, ਵੰਡ>::iterator get_map_iterator(ਅਚਲ ਖਾਲੀ *ptr)
             {
-                auto it = m_map.upper_bound(const_cast<byte_t *>(reinterpret_cast<const byte_t *>(ptr)));
-                if (it == m_map.end())
+                ਸਵੈਚਾਲਿਤ it = m_map.upper_bound(const_cast<byte_t *>(reinterpret_cast<ਅਚਲ byte_t *>(ptr)));
+                ਜੇ (it == m_map.end())
                 {
                     // Not a virtual pointer.
-                    throw std::runtime_error("can not get buffer from non-virtual pointer");
+                    ਸੁੱਟੋ std::runtime_error("can not get buffer from non-virtual pointer");
                 }
-                const allocation &alloc = it->second;
-                if (ptr < alloc.alloc_ptr)
+                ਅਚਲ ਵੰਡ &alloc = it->second;
+                ਜੇ (ptr < alloc.alloc_ptr)
                 {
                     // Out of bound.
                     // This may happen if there's a gap between allocations due to alignment
                     // or extra padding and pointer points to this gap.
-                    throw std::runtime_error("invalid virtual pointer");
+                    ਸੁੱਟੋ std::runtime_error("invalid virtual pointer");
                 }
-                return it;
+                ਵਾਪਸ it;
             }
         };
 
-        template <class T, memory_region Memory, size_t Dimension>
-        class accessor;
-        template <memory_region Memory, class T = byte_t>
-        class memory_traits
+        ਸਾਂਚਾ <ਵਰਗ T, ਸਮ੍ਰਿਤੀ_region ਸਮ੍ਰਿਤੀ_2, size_t Dimension>
+        ਵਰਗ accessor;
+        ਸਾਂਚਾ <ਸਮ੍ਰਿਤੀ_region ਸਮ੍ਰਿਤੀ_2, ਵਰਗ T = byte_t>
+        ਵਰਗ ਸਮ੍ਰਿਤੀ_traits
         {
-        public:
-            static constexpr sycl::access::target target =
-                sycl::access::target::device;
-            static constexpr sycl::access_mode mode =
-                (Memory == constant) ? sycl::access_mode::read
-                                     : sycl::access_mode::read_write;
-            static constexpr size_t type_size = sizeof(T);
-            using element_t =
-                typename std::conditional<Memory == constant, const T, T>::type;
-            using value_t = typename std::remove_cv<T>::type;
-            template <size_t Dimension = 1>
-            using accessor_t = typename std::conditional<
-                Memory == local, sycl::local_accessor<value_t, Dimension>,
-                sycl::accessor<T, Dimension, mode, target>>::type;
-            using pointer_t = T *;
+        ਜਨਤਕ:
+            ਸਥਿਰ constexpr sycl::access::ਨਿਸ਼ਾਨਾ ਨਿਸ਼ਾਨਾ =
+                sycl::access::ਨਿਸ਼ਾਨਾ::device;
+            ਸਥਿਰ constexpr sycl::access_ਬਹੁਲਕ mode =
+                (ਸਮ੍ਰਿਤੀ_2 == constant) ? sycl::access_ਬਹੁਲਕ::ਪਠ
+                                     : sycl::access_ਬਹੁਲਕ::read_write;
+            ਸਥਿਰ constexpr size_t type_ਮਾਪ = ਆਕਾਰ(T);
+            ਵਰਤੋਂ element_t =
+                ਕਿਸਮ_ਨਾਂ std::conditional<ਸਮ੍ਰਿਤੀ_2 == constant, ਅਚਲ T, T>::type;
+            ਵਰਤੋਂ ਮੁੱਲ_t = ਕਿਸਮ_ਨਾਂ std::remove_cv<T>::type;
+            ਸਾਂਚਾ <size_t Dimension = 1>
+            ਵਰਤੋਂ accessor_t = ਕਿਸਮ_ਨਾਂ std::conditional<
+                ਸਮ੍ਰਿਤੀ_2 == local, sycl::local_accessor<ਮੁੱਲ_t, Dimension>,
+                sycl::accessor<T, Dimension, mode, ਨਿਸ਼ਾਨਾ>>::type;
+            ਵਰਤੋਂ ਸੂਚਕ_t = T *;
         };
 
-        static inline void *dpct_malloc(size_t size, sycl::queue &q)
+        ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ *dpct_malloc(size_t size, sycl::queue &q)
         {
-            return sycl::malloc_device(size, q.get_device(), q.get_context());
+            ਵਾਪਸ sycl::malloc_device(size, q.get_device(), q.get_context());
         }
 
-#define PITCH_DEFAULT_ALIGN(x) (((x) + 31) & ~(0x1F))
-        static inline void *dpct_malloc(size_t &pitch, size_t x, size_t y, size_t z,
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ PITCH_DEFAULT_ALIGN(x) (((x) + 31) & ~(0x1F))
+        ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ *dpct_malloc(size_t &pitch, size_t x, size_t y, size_t z,
                                         sycl::queue &q)
         {
             pitch = PITCH_DEFAULT_ALIGN(x);
-            return dpct_malloc(pitch * y * z, q);
+            ਵਾਪਸ dpct_malloc(pitch * y * z, q);
         }
 
         /**
@@ -1335,11 +1335,11 @@ namespace dpct
          * @param [in] size Number of elements to be set to the value.
          * @return An event representing the memset operation.
          */
-        template <typename valueT>
-        static inline sycl::event dpct_memset(sycl::queue &q, void *dev_ptr,
-                                              valueT value, size_t size)
+        ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ ਮੁੱਲ_T>
+        ਸਥਿਰ ਸਤਰਅੰਦਰ sycl::event dpct_memset(sycl::queue &q, ਖਾਲੀ *dev_ptr,
+                                              ਮੁੱਲ_T value, size_t size)
         {
-            return q.fill(dev_ptr, value, size);
+            ਵਾਪਸ q.fill(dev_ptr, value, size);
         }
 
         /**
@@ -1351,25 +1351,25 @@ namespace dpct
          * @param [in] size 3D memory region by number of elements.
          * @return An event list representing the memset operations.
          */
-        template <typename valueT>
-        static inline std::vector<sycl::event>
-        dpct_memset(sycl::queue &q, pitched_data data, valueT value,
+        ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ ਮੁੱਲ_T>
+        ਸਥਿਰ ਸਤਰਅੰਦਰ std::vector<sycl::event>
+        dpct_memset(sycl::queue &q, pitched_ਅੰਕੜੇ ਅੰਕੜੇ, ਮੁੱਲ_T value,
                     sycl::range<3> size)
         {
             std::vector<sycl::event> event_list;
-            size_t slice = data.get_pitch() * data.get_y();
-            unsigned char *data_surface = (unsigned char *)data.get_data_ptr();
-            for (size_t z = 0; z < size.get(2); ++z)
+            size_t ਟੁਕੜਾ_2 = ਅੰਕੜੇ.get_pitch() * ਅੰਕੜੇ.get_y();
+            ਬਿਨਾਨਿਸ਼ਾਨੀ ਅੱਖਰ *ਅੰਕੜੇ_surface = (ਬਿਨਾਨਿਸ਼ਾਨੀ ਅੱਖਰ *)ਅੰਕੜੇ.get_ਅੰਕੜੇ_ptr();
+            ਲਈ (size_t z = 0; z < size.get(2); ++z)
             {
-                unsigned char *data_ptr = data_surface;
-                for (size_t y = 0; y < size.get(1); ++y)
+                ਬਿਨਾਨਿਸ਼ਾਨੀ ਅੱਖਰ *ਅੰਕੜੇ_ptr = ਅੰਕੜੇ_surface;
+                ਲਈ (size_t y = 0; y < size.get(1); ++y)
                 {
-                    event_list.push_back(dpct_memset(q, data_ptr, value, size.get(0)));
-                    data_ptr += data.get_pitch();
+                    event_list.push_back(dpct_memset(q, ਅੰਕੜੇ_ptr, value, size.get(0)));
+                    ਅੰਕੜੇ_ptr += ਅੰਕੜੇ.get_pitch();
                 }
-                data_surface += slice;
+                ਅੰਕੜੇ_surface += ਟੁਕੜਾ_2;
             }
-            return event_list;
+            ਵਾਪਸ event_list;
         }
 
         /**
@@ -1383,1028 +1383,1028 @@ namespace dpct
          * @param [in] y The height of memory region by number of elements.
          * @return An event list representing the memset operations.
          */
-        template <typename valueT>
-        static inline std::vector<sycl::event>
-        dpct_memset(sycl::queue &q, void *ptr, size_t pitch, valueT val, size_t x,
+        ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ ਮੁੱਲ_T>
+        ਸਥਿਰ ਸਤਰਅੰਦਰ std::vector<sycl::event>
+        dpct_memset(sycl::queue &q, ਖਾਲੀ *ptr, size_t pitch, ਮੁੱਲ_T val, size_t x,
                     size_t y)
         {
-            return dpct_memset(q, pitched_data(ptr, pitch, x, 1), val,
+            ਵਾਪਸ dpct_memset(q, pitched_ਅੰਕੜੇ(ptr, pitch, x, 1), val,
                                sycl::range<3>(x, y, 1));
         }
 
-        static memcpy_direction deduce_memcpy_direction(sycl::queue &q, void *to_ptr,
-                                                        const void *from_ptr,
+        ਸਥਿਰ memcpy_direction deduce_memcpy_direction(sycl::queue &q, ਖਾਲੀ *ਮੰਜ਼ਿਲ_ptr,
+                                                        ਅਚਲ ਖਾਲੀ *from_ptr,
                                                         memcpy_direction dir)
         {
-            switch (dir)
+            ਚੋਣ (dir)
             {
-            case memcpy_direction::host_to_host:
-            case memcpy_direction::host_to_device:
-            case memcpy_direction::device_to_host:
-            case memcpy_direction::device_to_device:
-                return dir;
-            case memcpy_direction::automatic:
+            ਹਾਲਤ memcpy_direction::host_ਮੰਜ਼ਿਲ_host:
+            ਹਾਲਤ memcpy_direction::host_ਮੰਜ਼ਿਲ_device:
+            ਹਾਲਤ memcpy_direction::device_ਮੰਜ਼ਿਲ_host:
+            ਹਾਲਤ memcpy_direction::device_ਮੰਜ਼ਿਲ_device:
+                ਵਾਪਸ dir;
+            ਹਾਲਤ memcpy_direction::automatic:
             {
                 // table[to_attribute][from_attribute]
-                static const memcpy_direction
-                    direction_table[static_cast<unsigned>(pointer_access_attribute::end)]
-                                   [static_cast<unsigned>(pointer_access_attribute::end)] =
-                                       {{memcpy_direction::host_to_host,
-                                         memcpy_direction::device_to_host,
-                                         memcpy_direction::host_to_host},
-                                        {memcpy_direction::host_to_device,
-                                         memcpy_direction::device_to_device,
-                                         memcpy_direction::device_to_device},
-                                        {memcpy_direction::host_to_host,
-                                         memcpy_direction::device_to_device,
-                                         memcpy_direction::device_to_device}};
-                return direction_table[static_cast<unsigned>(get_pointer_attribute(
-                    q, to_ptr))][static_cast<unsigned>(get_pointer_attribute(q, from_ptr))];
+                ਸਥਿਰ ਅਚਲ memcpy_direction
+                    direction_ਸਾਰਣੀ[static_cast<ਬਿਨਾਨਿਸ਼ਾਨੀ>(ਸੂਚਕ_access_attribute::end)]
+                                   [static_cast<ਬਿਨਾਨਿਸ਼ਾਨੀ>(ਸੂਚਕ_access_attribute::end)] =
+                                       {{memcpy_direction::host_ਮੰਜ਼ਿਲ_host,
+                                         memcpy_direction::device_ਮੰਜ਼ਿਲ_host,
+                                         memcpy_direction::host_ਮੰਜ਼ਿਲ_host},
+                                        {memcpy_direction::host_ਮੰਜ਼ਿਲ_device,
+                                         memcpy_direction::device_ਮੰਜ਼ਿਲ_device,
+                                         memcpy_direction::device_ਮੰਜ਼ਿਲ_device},
+                                        {memcpy_direction::host_ਮੰਜ਼ਿਲ_host,
+                                         memcpy_direction::device_ਮੰਜ਼ਿਲ_device,
+                                         memcpy_direction::device_ਮੰਜ਼ਿਲ_device}};
+                ਵਾਪਸ direction_ਸਾਰਣੀ[static_cast<ਬਿਨਾਨਿਸ਼ਾਨੀ>(get_ਸੂਚਕ_attribute(
+                    q, ਮੰਜ਼ਿਲ_ptr))][static_cast<ਬਿਨਾਨਿਸ਼ਾਨੀ>(get_ਸੂਚਕ_attribute(q, from_ptr))];
             }
-            default:
-                throw std::runtime_error("dpct_memcpy: invalid direction value");
+            ਮੂਲ:
+                ਸੁੱਟੋ std::runtime_error("dpct_memcpy: invalid direction value");
             }
         }
 
-        static sycl::event
-        dpct_memcpy(sycl::queue &q, void *to_ptr, const void *from_ptr, size_t size,
+        ਸਥਿਰ sycl::event
+        dpct_memcpy(sycl::queue &q, ਖਾਲੀ *ਮੰਜ਼ਿਲ_ptr, ਅਚਲ ਖਾਲੀ *from_ptr, size_t size,
                     memcpy_direction direction,
-                    const std::vector<sycl::event> &dep_events = {})
+                    ਅਚਲ std::vector<sycl::event> &dep_events = {})
         {
-            if (!size)
-                return sycl::event{};
-            return q.memcpy(to_ptr, from_ptr, size, dep_events);
-            DPCT_UNUSED(direction);
+            ਜੇ (!size)
+                ਵਾਪਸ sycl::event{};
+            ਵਾਪਸ q.ਸਮ੍ਰਿਤੀ_ਨਕਲ(ਮੰਜ਼ਿਲ_ptr, from_ptr, size, dep_events);
+            DPCT_ਅਣਵਰਤਿਆ(direction);
         }
 
         // Get actual copy range and make sure it will not exceed range.
-        static inline size_t get_copy_range(sycl::range<3> size, size_t slice,
+        ਸਥਿਰ ਸਤਰਅੰਦਰ size_t get_copy_range(sycl::range<3> size, size_t ਟੁਕੜਾ_2,
                                             size_t pitch)
         {
-            return slice * (size.get(2) - 1) + pitch * (size.get(1) - 1) + size.get(0);
+            ਵਾਪਸ ਟੁਕੜਾ_2 * (size.get(2) - 1) + pitch * (size.get(1) - 1) + size.get(0);
         }
 
-        static inline size_t get_offset(sycl::id<3> id, size_t slice,
+        ਸਥਿਰ ਸਤਰਅੰਦਰ size_t get_ਵਿੱਥ(sycl::id<3> id, size_t ਟੁਕੜਾ_2,
                                         size_t pitch)
         {
-            return slice * id.get(2) + pitch * id.get(1) + id.get(0);
+            ਵਾਪਸ ਟੁਕੜਾ_2 * id.get(2) + pitch * id.get(1) + id.get(0);
         }
 
         /// copy 3D matrix specified by \p size from 3D matrix specified by \p from_ptr
         /// and \p from_range to another specified by \p to_ptr and \p to_range.
-        static inline std::vector<sycl::event>
-        dpct_memcpy(sycl::queue &q, void *to_ptr, const void *from_ptr,
-                    sycl::range<3> to_range, sycl::range<3> from_range,
-                    sycl::id<3> to_id, sycl::id<3> from_id,
+        ਸਥਿਰ ਸਤਰਅੰਦਰ std::vector<sycl::event>
+        dpct_memcpy(sycl::queue &q, ਖਾਲੀ *ਮੰਜ਼ਿਲ_ptr, ਅਚਲ ਖਾਲੀ *from_ptr,
+                    sycl::range<3> ਮੰਜ਼ਿਲ_range, sycl::range<3> from_range,
+                    sycl::id<3> ਮੰਜ਼ਿਲ_id, sycl::id<3> from_id,
                     sycl::range<3> size, memcpy_direction direction,
-                    const std::vector<sycl::event> &dep_events = {})
+                    ਅਚਲ std::vector<sycl::event> &dep_events = {})
         {
             // RAII for host pointer
-            class host_buffer
+            ਵਰਗ host_ਬਫਰ
             {
-                void *_buf;
-                size_t _size;
+                ਖਾਲੀ *_buf;
+                size_t ਮਾਪ_2;
                 sycl::queue &_q;
-                const std::vector<sycl::event> &_deps; // free operation depends
+                ਅਚਲ std::vector<sycl::event> &_deps; // free operation depends
 
-            public:
-                host_buffer(size_t size, sycl::queue &q,
-                            const std::vector<sycl::event> &deps)
-                    : _buf(std::malloc(size)), _size(size), _q(q), _deps(deps) {}
-                void *get_ptr() const { return _buf; }
-                size_t get_size() const { return _size; }
-                ~host_buffer()
+            ਜਨਤਕ:
+                host_ਬਫਰ(size_t size, sycl::queue &q,
+                            ਅਚਲ std::vector<sycl::event> &deps)
+                    : _buf(std::ਸਮ੍ਰਿਤੀ_ਦਿਓ(size)), ਮਾਪ_2(size), _q(q), _deps(deps) {}
+                ਖਾਲੀ *get_ptr() ਅਚਲ { ਵਾਪਸ _buf; }
+                size_t get_ਮਾਪ() ਅਚਲ { ਵਾਪਸ ਮਾਪ_2; }
+                ~host_ਬਫਰ()
                 {
-                    if (_buf)
+                    ਜੇ (_buf)
                     {
                         _q.submit([&](sycl::handler &cgh)
                                   {
         cgh.depends_on(_deps);
-        cgh.host_task([buf = _buf] { std::free(buf); }); });
+        cgh.host_task([buf = _buf] { std::ਮੁਕਤ(buf); }); });
                     }
                 }
             };
             std::vector<sycl::event> event_list;
 
-            size_t to_slice = to_range.get(1) * to_range.get(0),
-                   from_slice = from_range.get(1) * from_range.get(0);
-            unsigned char *to_surface =
-                (unsigned char *)to_ptr + get_offset(to_id, to_slice, to_range.get(0));
-            const unsigned char *from_surface =
-                (const unsigned char *)from_ptr +
-                get_offset(from_id, from_slice, from_range.get(0));
+            size_t ਮੰਜ਼ਿਲ_ਟੁਕੜਾ = ਮੰਜ਼ਿਲ_range.get(1) * ਮੰਜ਼ਿਲ_range.get(0),
+                   from_ਟੁਕੜਾ = from_range.get(1) * from_range.get(0);
+            ਬਿਨਾਨਿਸ਼ਾਨੀ ਅੱਖਰ *ਮੰਜ਼ਿਲ_surface =
+                (ਬਿਨਾਨਿਸ਼ਾਨੀ ਅੱਖਰ *)ਮੰਜ਼ਿਲ_ptr + get_ਵਿੱਥ(ਮੰਜ਼ਿਲ_id, ਮੰਜ਼ਿਲ_ਟੁਕੜਾ, ਮੰਜ਼ਿਲ_range.get(0));
+            ਅਚਲ ਬਿਨਾਨਿਸ਼ਾਨੀ ਅੱਖਰ *from_surface =
+                (ਅਚਲ ਬਿਨਾਨਿਸ਼ਾਨੀ ਅੱਖਰ *)from_ptr +
+                get_ਵਿੱਥ(from_id, from_ਟੁਕੜਾ, from_range.get(0));
 
-            if (to_slice == from_slice && to_slice == size.get(1) * size.get(0))
+            ਜੇ (ਮੰਜ਼ਿਲ_ਟੁਕੜਾ == from_ਟੁਕੜਾ && ਮੰਜ਼ਿਲ_ਟੁਕੜਾ == size.get(1) * size.get(0))
             {
-                return {dpct_memcpy(q, to_surface, from_surface, to_slice * size.get(2),
+                ਵਾਪਸ {dpct_memcpy(q, ਮੰਜ਼ਿਲ_surface, from_surface, ਮੰਜ਼ਿਲ_ਟੁਕੜਾ * size.get(2),
                                     direction, dep_events)};
             }
-            direction = deduce_memcpy_direction(q, to_ptr, from_ptr, direction);
-            size_t size_slice = size.get(1) * size.get(0);
-            switch (direction)
+            direction = deduce_memcpy_direction(q, ਮੰਜ਼ਿਲ_ptr, from_ptr, direction);
+            size_t ਮਾਪ_ਟੁਕੜਾ = size.get(1) * size.get(0);
+            ਚੋਣ (direction)
             {
-            case host_to_host:
-                for (size_t z = 0; z < size.get(2); ++z)
+            ਹਾਲਤ host_ਮੰਜ਼ਿਲ_host:
+                ਲਈ (size_t z = 0; z < size.get(2); ++z)
                 {
-                    unsigned char *to_ptr = to_surface;
-                    const unsigned char *from_ptr = from_surface;
-                    if (to_range.get(0) == from_range.get(0) &&
-                        to_range.get(0) == size.get(0))
+                    ਬਿਨਾਨਿਸ਼ਾਨੀ ਅੱਖਰ *ਮੰਜ਼ਿਲ_ptr = ਮੰਜ਼ਿਲ_surface;
+                    ਅਚਲ ਬਿਨਾਨਿਸ਼ਾਨੀ ਅੱਖਰ *from_ptr = from_surface;
+                    ਜੇ (ਮੰਜ਼ਿਲ_range.get(0) == from_range.get(0) &&
+                        ਮੰਜ਼ਿਲ_range.get(0) == size.get(0))
                     {
-                        event_list.push_back(dpct_memcpy(q, to_ptr, from_ptr, size_slice,
+                        event_list.push_back(dpct_memcpy(q, ਮੰਜ਼ਿਲ_ptr, from_ptr, ਮਾਪ_ਟੁਕੜਾ,
                                                          direction, dep_events));
                     }
-                    else
+                    ਨਹੀਂਤਾਂ
                     {
-                        for (size_t y = 0; y < size.get(1); ++y)
+                        ਲਈ (size_t y = 0; y < size.get(1); ++y)
                         {
-                            event_list.push_back(dpct_memcpy(q, to_ptr, from_ptr, size.get(0),
+                            event_list.push_back(dpct_memcpy(q, ਮੰਜ਼ਿਲ_ptr, from_ptr, size.get(0),
                                                              direction, dep_events));
-                            to_ptr += to_range.get(0);
+                            ਮੰਜ਼ਿਲ_ptr += ਮੰਜ਼ਿਲ_range.get(0);
                             from_ptr += from_range.get(0);
                         }
                     }
-                    to_surface += to_slice;
-                    from_surface += from_slice;
+                    ਮੰਜ਼ਿਲ_surface += ਮੰਜ਼ਿਲ_ਟੁਕੜਾ;
+                    from_surface += from_ਟੁਕੜਾ;
                 }
-                break;
-            case host_to_device:
+                ਰੋਕੋ;
+            ਹਾਲਤ host_ਮੰਜ਼ਿਲ_device:
             {
-                host_buffer buf(get_copy_range(size, to_slice, to_range.get(0)), q,
+                host_ਬਫਰ buf(get_copy_range(size, ਮੰਜ਼ਿਲ_ਟੁਕੜਾ, ਮੰਜ਼ਿਲ_range.get(0)), q,
                                 event_list);
                 std::vector<sycl::event> host_events;
-                if (to_slice == size_slice)
+                ਜੇ (ਮੰਜ਼ਿਲ_ਟੁਕੜਾ == ਮਾਪ_ਟੁਕੜਾ)
                 {
                     // Copy host data to a temp host buffer with the shape of target.
                     host_events =
-                        dpct_memcpy(q, buf.get_ptr(), from_surface, to_range, from_range,
+                        dpct_memcpy(q, buf.get_ptr(), from_surface, ਮੰਜ਼ਿਲ_range, from_range,
                                     sycl::id<3>(0, 0, 0), sycl::id<3>(0, 0, 0), size,
-                                    host_to_host, dep_events);
+                                    host_ਮੰਜ਼ਿਲ_host, dep_events);
                 }
-                else
+                ਨਹੀਂਤਾਂ
                 {
                     // Copy host data to a temp host buffer with the shape of target.
                     host_events = dpct_memcpy(
-                        q, buf.get_ptr(), from_surface, to_range, from_range,
-                        sycl::id<3>(0, 0, 0), sycl::id<3>(0, 0, 0), size, host_to_host,
+                        q, buf.get_ptr(), from_surface, ਮੰਜ਼ਿਲ_range, from_range,
+                        sycl::id<3>(0, 0, 0), sycl::id<3>(0, 0, 0), size, host_ਮੰਜ਼ਿਲ_host,
                         // If has padding data, not sure whether it is useless. So fill temp
                         // buffer with it.
                         std::vector<sycl::event>{
-                            dpct_memcpy(q, buf.get_ptr(), to_surface, buf.get_size(),
-                                        device_to_host, dep_events)});
+                            dpct_memcpy(q, buf.get_ptr(), ਮੰਜ਼ਿਲ_surface, buf.get_ਮਾਪ(),
+                                        device_ਮੰਜ਼ਿਲ_host, dep_events)});
                 }
                 // Copy from temp host buffer to device with only one submit.
-                event_list.push_back(dpct_memcpy(q, to_surface, buf.get_ptr(),
-                                                 buf.get_size(), host_to_device,
+                event_list.push_back(dpct_memcpy(q, ਮੰਜ਼ਿਲ_surface, buf.get_ptr(),
+                                                 buf.get_ਮਾਪ(), host_ਮੰਜ਼ਿਲ_device,
                                                  host_events));
-                break;
+                ਰੋਕੋ;
             }
-            case device_to_host:
+            ਹਾਲਤ device_ਮੰਜ਼ਿਲ_host:
             {
-                host_buffer buf(get_copy_range(size, from_slice, from_range.get(0)), q,
+                host_ਬਫਰ buf(get_copy_range(size, from_ਟੁਕੜਾ, from_range.get(0)), q,
                                 event_list);
                 // Copy from host temp buffer to host target with reshaping.
                 event_list = dpct_memcpy(
-                    q, to_surface, buf.get_ptr(), to_range, from_range, sycl::id<3>(0, 0, 0),
-                    sycl::id<3>(0, 0, 0), size, host_to_host,
+                    q, ਮੰਜ਼ਿਲ_surface, buf.get_ptr(), ਮੰਜ਼ਿਲ_range, from_range, sycl::id<3>(0, 0, 0),
+                    sycl::id<3>(0, 0, 0), size, host_ਮੰਜ਼ਿਲ_host,
                     // Copy from device to temp host buffer with only one submit.
                     std::vector<sycl::event>{dpct_memcpy(q, buf.get_ptr(), from_surface,
-                                                         buf.get_size(),
-                                                         device_to_host, dep_events)});
-                break;
+                                                         buf.get_ਮਾਪ(),
+                                                         device_ਮੰਜ਼ਿਲ_host, dep_events)});
+                ਰੋਕੋ;
             }
-            case device_to_device:
+            ਹਾਲਤ device_ਮੰਜ਼ਿਲ_device:
                 event_list.push_back(q.submit([&](sycl::handler &cgh){
                 cgh.depends_on(dep_events);
-                cgh.parallel_for<class dpct_memcpy_3d_detail>(
+                cgh.parallel_for<ਵਰਗ dpct_memcpy_3d_detail>(
                     size,
                     [=](sycl::id<3> id) {
-                        to_surface[get_offset(id, to_slice, to_range.get(0))] =
-                            from_surface[get_offset(id, from_slice, from_range.get(0))];
+                        ਮੰਜ਼ਿਲ_surface[get_ਵਿੱਥ(id, ਮੰਜ਼ਿਲ_ਟੁਕੜਾ, ਮੰਜ਼ਿਲ_range.get(0))] =
+                            from_surface[get_ਵਿੱਥ(id, from_ਟੁਕੜਾ, from_range.get(0))];
                     }); }));
-                break;
-            default:
-                throw std::runtime_error("dpct_memcpy: invalid direction value");
+                ਰੋਕੋ;
+            ਮੂਲ:
+                ਸੁੱਟੋ std::runtime_error("dpct_memcpy: invalid direction value");
             }
-            return event_list;
+            ਵਾਪਸ event_list;
         }
 
         /// memcpy 2D/3D matrix specified by pitched_data.
-        static inline std::vector<sycl::event>
-        dpct_memcpy(sycl::queue &q, pitched_data to, sycl::id<3> to_id,
-                    pitched_data from, sycl::id<3> from_id, sycl::range<3> size,
+        ਸਥਿਰ ਸਤਰਅੰਦਰ std::vector<sycl::event>
+        dpct_memcpy(sycl::queue &q, pitched_ਅੰਕੜੇ ਮੰਜ਼ਿਲ, sycl::id<3> ਮੰਜ਼ਿਲ_id,
+                    pitched_ਅੰਕੜੇ from, sycl::id<3> from_id, sycl::range<3> size,
                     memcpy_direction direction = automatic)
         {
-            return dpct_memcpy(q, to.get_data_ptr(), from.get_data_ptr(),
-                               sycl::range<3>(to.get_pitch(), to.get_y(), 1),
-                               sycl::range<3>(from.get_pitch(), from.get_y(), 1), to_id, from_id,
+            ਵਾਪਸ dpct_memcpy(q, ਮੰਜ਼ਿਲ.get_ਅੰਕੜੇ_ptr(), from.get_ਅੰਕੜੇ_ptr(),
+                               sycl::range<3>(ਮੰਜ਼ਿਲ.get_pitch(), ਮੰਜ਼ਿਲ.get_y(), 1),
+                               sycl::range<3>(from.get_pitch(), from.get_y(), 1), ਮੰਜ਼ਿਲ_id, from_id,
                                size, direction);
         }
 
         /// memcpy 2D matrix with pitch.
-        static inline std::vector<sycl::event>
-        dpct_memcpy(sycl::queue &q, void *to_ptr, const void *from_ptr,
-                    size_t to_pitch, size_t from_pitch, size_t x, size_t y,
+        ਸਥਿਰ ਸਤਰਅੰਦਰ std::vector<sycl::event>
+        dpct_memcpy(sycl::queue &q, ਖਾਲੀ *ਮੰਜ਼ਿਲ_ptr, ਅਚਲ ਖਾਲੀ *from_ptr,
+                    size_t ਮੰਜ਼ਿਲ_pitch, size_t from_pitch, size_t x, size_t y,
                     memcpy_direction direction = automatic)
         {
-            return dpct_memcpy(q, to_ptr, from_ptr, sycl::range<3>(to_pitch, y, 1),
+            ਵਾਪਸ dpct_memcpy(q, ਮੰਜ਼ਿਲ_ptr, from_ptr, sycl::range<3>(ਮੰਜ਼ਿਲ_pitch, y, 1),
                                sycl::range<3>(from_pitch, y, 1),
                                sycl::id<3>(0, 0, 0), sycl::id<3>(0, 0, 0),
                                sycl::range<3>(x, y, 1), direction);
         }
 
-        namespace deprecated
+        ਨਾਮਾਕਾਸ਼ deprecated
         {
 
-            template <typename T, sycl::usm::alloc AllocKind>
-            class usm_allocator
+            ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T, sycl::usm::alloc Alloc_ਕਿਸਮ>
+            ਵਰਗ usm_allocator
             {
-            private:
-                using Alloc = sycl::usm_allocator<T, AllocKind>;
+            ਨਿਜੀ:
+                ਵਰਤੋਂ Alloc = sycl::usm_allocator<T, Alloc_ਕਿਸਮ>;
                 Alloc _impl;
 
-            public:
-                using value_type = typename std::allocator_traits<Alloc>::value_type;
-                using pointer = typename std::allocator_traits<Alloc>::pointer;
-                using const_pointer = typename std::allocator_traits<Alloc>::const_pointer;
-                using void_pointer = typename std::allocator_traits<Alloc>::void_pointer;
-                using const_void_pointer =
-                    typename std::allocator_traits<Alloc>::const_void_pointer;
-                using reference = typename std::allocator_traits<Alloc>::value_type &;
-                using const_reference =
-                    const typename std::allocator_traits<Alloc>::value_type &;
-                using difference_type =
-                    typename std::allocator_traits<Alloc>::difference_type;
-                using size_type = typename std::allocator_traits<Alloc>::size_type;
-                using propagate_on_container_copy_assignment = typename std::allocator_traits<
+            ਜਨਤਕ:
+                ਵਰਤੋਂ value_type = ਕਿਸਮ_ਨਾਂ std::allocator_traits<Alloc>::value_type;
+                ਵਰਤੋਂ pointer = ਕਿਸਮ_ਨਾਂ std::allocator_traits<Alloc>::pointer;
+                ਵਰਤੋਂ const_pointer = ਕਿਸਮ_ਨਾਂ std::allocator_traits<Alloc>::const_pointer;
+                ਵਰਤੋਂ void_pointer = ਕਿਸਮ_ਨਾਂ std::allocator_traits<Alloc>::void_pointer;
+                ਵਰਤੋਂ const_void_pointer =
+                    ਕਿਸਮ_ਨਾਂ std::allocator_traits<Alloc>::const_void_pointer;
+                ਵਰਤੋਂ reference = ਕਿਸਮ_ਨਾਂ std::allocator_traits<Alloc>::value_type &;
+                ਵਰਤੋਂ const_reference =
+                    ਅਚਲ ਕਿਸਮ_ਨਾਂ std::allocator_traits<Alloc>::value_type &;
+                ਵਰਤੋਂ difference_type =
+                    ਕਿਸਮ_ਨਾਂ std::allocator_traits<Alloc>::difference_type;
+                ਵਰਤੋਂ size_type = ਕਿਸਮ_ਨਾਂ std::allocator_traits<Alloc>::size_type;
+                ਵਰਤੋਂ propagate_on_container_copy_assignment = ਕਿਸਮ_ਨਾਂ std::allocator_traits<
                     Alloc>::propagate_on_container_copy_assignment;
-                using propagate_on_container_move_assignment = typename std::allocator_traits<
+                ਵਰਤੋਂ propagate_on_container_move_assignment = ਕਿਸਮ_ਨਾਂ std::allocator_traits<
                     Alloc>::propagate_on_container_move_assignment;
-                using propagate_on_container_swap =
-                    typename std::allocator_traits<Alloc>::propagate_on_container_swap;
-                using is_always_equal =
-                    typename std::allocator_traits<Alloc>::is_always_equal;
+                ਵਰਤੋਂ propagate_on_container_swap =
+                    ਕਿਸਮ_ਨਾਂ std::allocator_traits<Alloc>::propagate_on_container_swap;
+                ਵਰਤੋਂ is_always_equal =
+                    ਕਿਸਮ_ਨਾਂ std::allocator_traits<Alloc>::is_always_equal;
 
-                template <typename U>
-                struct rebind
+                ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ U>
+                ਬਣਤਰ rebind
                 {
-                    typedef usm_allocator<U, AllocKind> other;
+                    ਕਿਸਮਪਰਿਭਾਸ਼ਾ usm_allocator<U, Alloc_ਕਿਸਮ> other;
                 };
 
-                usm_allocator() : _impl(dpct::get_default_queue()) {}
+                usm_allocator() : _impl(dpct::get_default_ਕਤਾਰ()) {}
                 ~usm_allocator() {}
-                usm_allocator(const usm_allocator &other) : _impl(other._impl) {}
+                usm_allocator(ਅਚਲ usm_allocator &other) : _impl(other._impl) {}
                 usm_allocator(usm_allocator &&other) : _impl(std::move(other._impl)) {}
-                pointer address(reference r) { return &r; }
-                const_pointer address(const_reference r) { return &r; }
-                pointer allocate(size_type cnt, const_void_pointer hint = nullptr)
+                pointer address(reference r) { ਵਾਪਸ &r; }
+                const_pointer address(const_reference r) { ਵਾਪਸ &r; }
+                pointer allocate(size_type cnt, const_void_pointer hint = ਖਾਲੀ_ਸੂਚਕ)
                 {
-                    return std::allocator_traits<Alloc>::allocate(_impl, cnt, hint);
+                    ਵਾਪਸ std::allocator_traits<Alloc>::allocate(_impl, cnt, hint);
                 }
-                void deallocate(pointer p, size_type cnt)
+                ਖਾਲੀ deallocate(pointer p, size_type cnt)
                 {
                     std::allocator_traits<Alloc>::deallocate(_impl, p, cnt);
                 }
-                size_type max_size() const
+                size_type max_size() ਅਚਲ
                 {
-                    return std::allocator_traits<Alloc>::max_size(_impl);
+                    ਵਾਪਸ std::allocator_traits<Alloc>::max_size(_impl);
                 }
-                bool operator==(const usm_allocator &other) const { return _impl == other._impl; }
-                bool operator!=(const usm_allocator &other) const { return _impl != other._impl; }
+                ਤਾਰਕਿਕ ਸੰਚਾਲਕ==(ਅਚਲ usm_allocator &other) ਅਚਲ { ਵਾਪਸ _impl == other._impl; }
+                ਤਾਰਕਿਕ ਸੰਚਾਲਕ!=(ਅਚਲ usm_allocator &other) ਅਚਲ { ਵਾਪਸ _impl != other._impl; }
             };
 
         } // namespace deprecated
 
-        inline void dpct_free(void *ptr,
-                              const sycl::queue &q)
+        ਸਤਰਅੰਦਰ ਖਾਲੀ dpct_free(ਖਾਲੀ *ptr,
+                              ਅਚਲ sycl::queue &q)
         {
-            if (ptr)
+            ਜੇ (ptr)
             {
-                sycl::free(ptr, q.get_context());
+                sycl::ਮੁਕਤ(ptr, q.get_context());
             }
         }
 
-        template <typename T>
-        inline auto get_memory(const void *x)
+        ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T>
+        ਸਤਰਅੰਦਰ ਸਵੈਚਾਲਿਤ get_ਸਮ੍ਰਿਤੀ(ਅਚਲ ਖਾਲੀ *x)
         {
-            T *new_x = reinterpret_cast<T *>(const_cast<void *>(x));
-            return new_x;
+            T *new_x = reinterpret_cast<T *>(const_cast<ਖਾਲੀ *>(x));
+            ਵਾਪਸ new_x;
         }
 
-        template <typename T>
-        inline typename DataType<T>::T2 get_value(const T *s, sycl::queue &q)
+        ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T>
+        ਸਤਰਅੰਦਰ ਕਿਸਮ_ਨਾਂ ਅੰਕੜੇ_Type_2<T>::T2 get_ਮੁੱਲ(ਅਚਲ T *s, sycl::queue &q)
         {
-            using Ty = typename DataType<T>::T2;
+            ਵਰਤੋਂ Ty = ਕਿਸਮ_ਨਾਂ ਅੰਕੜੇ_Type_2<T>::T2;
             Ty s_h;
-            if (get_pointer_attribute(q, s) == pointer_access_attribute::device_only)
-                detail::dpct_memcpy(q, (void *)&s_h, (const void *)s, sizeof(T), device_to_host)
+            ਜੇ (get_ਸੂਚਕ_attribute(q, s) == ਸੂਚਕ_access_attribute::device_only)
+                detail::dpct_memcpy(q, (ਖਾਲੀ *)&s_h, (ਅਚਲ ਖਾਲੀ *)s, ਆਕਾਰ(T), device_ਮੰਜ਼ਿਲ_host)
                     .wait();
-            else
-                s_h = *reinterpret_cast<const Ty *>(s);
-            return s_h;
+            ਨਹੀਂਤਾਂ
+                s_h = *reinterpret_cast<ਅਚਲ Ty *>(s);
+            ਵਾਪਸ s_h;
         }
 
     } // namespace detail
 
-    template <typename T>
-    inline auto get_value(const T *s, sycl::queue &q)
+    ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T>
+    ਸਤਰਅੰਦਰ ਸਵੈਚਾਲਿਤ get_ਮੁੱਲ(ਅਚਲ T *s, sycl::queue &q)
     {
-        return detail::get_value(s, q);
+        ਵਾਪਸ detail::get_ਮੁੱਲ(s, q);
     }
 
-    namespace detail
+    ਨਾਮਾਕਾਸ਼ detail
     {
-    template <class Ta, class Tb, class Tc, class Ts>
-    inline void gemm_impl(sycl::queue & q, oneapi::mkl::transpose a_trans, oneapi::mkl::transpose b_trans, int m,
-                          int n, int k, const void * alpha, const void * a, int lda, const void * b, int ldb,
-                          const void * beta, void * c, int ldc) {
-        Ts   alpha_value = dpct::get_value(reinterpret_cast<const Ts *>(alpha), q);
-        Ts   beta_value  = dpct::get_value(reinterpret_cast<const Ts *>(beta), q);
-        auto data_a      = get_memory<const Ta>(a);
-        auto data_b      = get_memory<const Tb>(b);
-        auto data_c      = get_memory<Tc>(c);
-        oneapi::mkl::blas::column_major::gemm(q, a_trans, b_trans, m, n, k, alpha_value, data_a,
-                                               lda, data_b, ldb, beta_value, data_c, ldc);
+    ਸਾਂਚਾ <ਵਰਗ Ta, ਵਰਗ Tb, ਵਰਗ Tc, ਵਰਗ Ts>
+    ਸਤਰਅੰਦਰ ਖਾਲੀ gemm_impl(sycl::queue & q, oneapi::mkl::transpose a_trans, oneapi::mkl::transpose b_trans, ਪੂਰਨ m,
+                          ਪੂਰਨ n, ਪੂਰਨ k, ਅਚਲ ਖਾਲੀ * alpha, ਅਚਲ ਖਾਲੀ * a, ਪੂਰਨ lda, ਅਚਲ ਖਾਲੀ * b, ਪੂਰਨ ldb,
+                          ਅਚਲ ਖਾਲੀ * beta, ਖਾਲੀ * c, ਪੂਰਨ ldc) {
+        Ts   alpha_ਮੁੱਲ_2 = dpct::get_ਮੁੱਲ(reinterpret_cast<ਅਚਲ Ts *>(alpha), q);
+        Ts   beta_ਮੁੱਲ  = dpct::get_ਮੁੱਲ(reinterpret_cast<ਅਚਲ Ts *>(beta), q);
+        ਸਵੈਚਾਲਿਤ ਅੰਕੜੇ_a      = get_ਸਮ੍ਰਿਤੀ<ਅਚਲ Ta>(a);
+        ਸਵੈਚਾਲਿਤ ਅੰਕੜੇ_b      = get_ਸਮ੍ਰਿਤੀ<ਅਚਲ Tb>(b);
+        ਸਵੈਚਾਲਿਤ ਅੰਕੜੇ_c      = get_ਸਮ੍ਰਿਤੀ<Tc>(c);
+        oneapi::mkl::blas::ਕਾਲਮ_major::gemm(q, a_trans, b_trans, m, n, k, alpha_ਮੁੱਲ_2, ਅੰਕੜੇ_a,
+                                               lda, ਅੰਕੜੇ_b, ldb, beta_ਮੁੱਲ, ਅੰਕੜੇ_c, ldc);
     }
 
-        template <typename VecT, class BinaryOperation, class = void>
-        class vectorized_binary
+        ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ VecT, ਵਰਗ ਦੁਆਧਾਰੀ_Operation, ਵਰਗ = ਖਾਲੀ>
+        ਵਰਗ vectorized_ਦੁਆਧਾਰੀ
         {
-        public:
-            inline VecT operator()(VecT a, VecT b, const BinaryOperation binary_op)
+        ਜਨਤਕ:
+            ਸਤਰਅੰਦਰ VecT ਸੰਚਾਲਕ()(VecT a, VecT b, ਅਚਲ ਦੁਆਧਾਰੀ_Operation ਦੁਆਧਾਰੀ_op)
             {
                 VecT v4;
-                for (size_t i = 0; i < v4.size(); ++i)
+                ਲਈ (size_t i = 0; i < v4.size(); ++i)
                 {
-                    v4[i] = binary_op(a[i], b[i]);
+                    v4[i] = ਦੁਆਧਾਰੀ_op(a[i], b[i]);
                 }
-                return v4;
+                ਵਾਪਸ v4;
             }
         };
 
-        template <typename VecT, class BinaryOperation>
-        class vectorized_binary<
-            VecT, BinaryOperation,
-            std::void_t<std::invoke_result_t<BinaryOperation, VecT, VecT>>>
+        ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ VecT, ਵਰਗ ਦੁਆਧਾਰੀ_Operation>
+        ਵਰਗ vectorized_ਦੁਆਧਾਰੀ<
+            VecT, ਦੁਆਧਾਰੀ_Operation,
+            std::void_t<std::invoke_result_t<ਦੁਆਧਾਰੀ_Operation, VecT, VecT>>>
         {
-        public:
-            inline VecT operator()(VecT a, VecT b, const BinaryOperation binary_op)
+        ਜਨਤਕ:
+            ਸਤਰਅੰਦਰ VecT ਸੰਚਾਲਕ()(VecT a, VecT b, ਅਚਲ ਦੁਆਧਾਰੀ_Operation ਦੁਆਧਾਰੀ_op)
             {
-                return binary_op(a, b).template as<VecT>();
+                ਵਾਪਸ ਦੁਆਧਾਰੀ_op(a, b).ਸਾਂਚਾ as<VecT>();
             }
         };
 
-        template <class Ta, class Tb, class Tc, class Ts>
-        inline void gemm_batch_impl(sycl::queue & q, oneapi::mkl::transpose a_trans, oneapi::mkl::transpose b_trans,
-                                    int m, int n, int k, const void * alpha, const void ** a, int lda, const void ** b,
-                                    int ldb, const void * beta, void ** c, int ldc, int batch_size,
-                                    matrix_info_t<float> * matrix_info) {
-            Ts alpha_value = dpct::get_value(reinterpret_cast<const Ts *>(alpha), q);
-            Ts beta_value = dpct::get_value(reinterpret_cast<const Ts *>(beta), q);
+        ਸਾਂਚਾ <ਵਰਗ Ta, ਵਰਗ Tb, ਵਰਗ Tc, ਵਰਗ Ts>
+        ਸਤਰਅੰਦਰ ਖਾਲੀ gemm_batch_impl(sycl::queue & q, oneapi::mkl::transpose a_trans, oneapi::mkl::transpose b_trans,
+                                    ਪੂਰਨ m, ਪੂਰਨ n, ਪੂਰਨ k, ਅਚਲ ਖਾਲੀ * alpha, ਅਚਲ ਖਾਲੀ ** a, ਪੂਰਨ lda, ਅਚਲ ਖਾਲੀ ** b,
+                                    ਪੂਰਨ ldb, ਅਚਲ ਖਾਲੀ * beta, ਖਾਲੀ ** c, ਪੂਰਨ ldc, ਪੂਰਨ batch_ਮਾਪ,
+                                    ਮੈਟ੍ਰਿਕਸ_info_t<ਦਸ਼ਮਲਵ> * ਮੈਟ੍ਰਿਕਸ_info) {
+            Ts alpha_ਮੁੱਲ_2 = dpct::get_ਮੁੱਲ(reinterpret_cast<ਅਚਲ Ts *>(alpha), q);
+            Ts beta_ਮੁੱਲ = dpct::get_ਮੁੱਲ(reinterpret_cast<ਅਚਲ Ts *>(beta), q);
 
-            matrix_info->transpose_info[0] = a_trans;
-            matrix_info->transpose_info[1] = b_trans;
-            matrix_info->value_info[0] = alpha_value;
-            matrix_info->value_info[1] = beta_value;
-            matrix_info->size_info[0] = m;
-            matrix_info->size_info[1] = n;
-            matrix_info->size_info[2] = k;
-            matrix_info->ld_info[0] = lda;
-            matrix_info->ld_info[1] = ldb;
-            matrix_info->ld_info[2] = ldc;
-            matrix_info->groupsize_info = batch_size;
+            ਮੈਟ੍ਰਿਕਸ_info->transpose_info[0] = a_trans;
+            ਮੈਟ੍ਰਿਕਸ_info->transpose_info[1] = b_trans;
+            ਮੈਟ੍ਰਿਕਸ_info->ਮੁੱਲ_info[0] = alpha_ਮੁੱਲ_2;
+            ਮੈਟ੍ਰਿਕਸ_info->ਮੁੱਲ_info[1] = beta_ਮੁੱਲ;
+            ਮੈਟ੍ਰਿਕਸ_info->ਮਾਪ_info[0] = m;
+            ਮੈਟ੍ਰਿਕਸ_info->ਮਾਪ_info[1] = n;
+            ਮੈਟ੍ਰਿਕਸ_info->ਮਾਪ_info[2] = k;
+            ਮੈਟ੍ਰਿਕਸ_info->ld_info[0] = lda;
+            ਮੈਟ੍ਰਿਕਸ_info->ld_info[1] = ldb;
+            ਮੈਟ੍ਰਿਕਸ_info->ld_info[2] = ldc;
+            ਮੈਟ੍ਰਿਕਸ_info->groupsize_info = batch_ਮਾਪ;
 
-            sycl::event e = oneapi::mkl::blas::column_major::gemm_batch(
-                q, matrix_info->transpose_info, matrix_info->transpose_info + 1,
-                matrix_info->size_info, matrix_info->size_info + 1, matrix_info->size_info + 2,
-                reinterpret_cast<Ts *>(matrix_info->value_info), reinterpret_cast<const Ta **>(a), matrix_info->ld_info,
-                reinterpret_cast<const Tb **>(b), matrix_info->ld_info + 1,
-                reinterpret_cast<Ts *>(matrix_info->value_info + 1), reinterpret_cast<Tc **>(c),
-                matrix_info->ld_info + 2, 1, &(matrix_info->groupsize_info));
+            sycl::event e = oneapi::mkl::blas::ਕਾਲਮ_major::gemm_batch(
+                q, ਮੈਟ੍ਰਿਕਸ_info->transpose_info, ਮੈਟ੍ਰਿਕਸ_info->transpose_info + 1,
+                ਮੈਟ੍ਰਿਕਸ_info->ਮਾਪ_info, ਮੈਟ੍ਰਿਕਸ_info->ਮਾਪ_info + 1, ਮੈਟ੍ਰਿਕਸ_info->ਮਾਪ_info + 2,
+                reinterpret_cast<Ts *>(ਮੈਟ੍ਰਿਕਸ_info->ਮੁੱਲ_info), reinterpret_cast<ਅਚਲ Ta **>(a), ਮੈਟ੍ਰਿਕਸ_info->ld_info,
+                reinterpret_cast<ਅਚਲ Tb **>(b), ਮੈਟ੍ਰਿਕਸ_info->ld_info + 1,
+                reinterpret_cast<Ts *>(ਮੈਟ੍ਰਿਕਸ_info->ਮੁੱਲ_info + 1), reinterpret_cast<Tc **>(c),
+                ਮੈਟ੍ਰਿਕਸ_info->ld_info + 2, 1, &(ਮੈਟ੍ਰਿਕਸ_info->groupsize_info));
         }
 
-        template <class Ta, class Tb, class Tc, class Ts>
-        inline void gemm_batch_impl(sycl::queue & q, oneapi::mkl::transpose a_trans, oneapi::mkl::transpose b_trans,
-                                    int m, int n, int k, const void * alpha, const void * a, int lda,
-                                    long long int stride_a, const void * b, int ldb, long long int stride_b,
-                                    const void * beta, void * c, int ldc, long long int stride_c, int batch_size) {
-            Ts alpha_value = dpct::get_value(reinterpret_cast<const Ts *>(alpha), q);
-            Ts beta_value = dpct::get_value(reinterpret_cast<const Ts *>(beta), q);
-            auto data_a = get_memory<const Ta>(a);
-            auto data_b = get_memory<const Tb>(b);
-            auto data_c = get_memory<Tc>(c);
-            oneapi::mkl::blas::column_major::gemm_batch(q, a_trans, b_trans, m, n, k, alpha_value,
-                                                         data_a, lda, stride_a, data_b, ldb, stride_b, beta_value,
-                                                         data_c, ldc, stride_c, batch_size);
+        ਸਾਂਚਾ <ਵਰਗ Ta, ਵਰਗ Tb, ਵਰਗ Tc, ਵਰਗ Ts>
+        ਸਤਰਅੰਦਰ ਖਾਲੀ gemm_batch_impl(sycl::queue & q, oneapi::mkl::transpose a_trans, oneapi::mkl::transpose b_trans,
+                                    ਪੂਰਨ m, ਪੂਰਨ n, ਪੂਰਨ k, ਅਚਲ ਖਾਲੀ * alpha, ਅਚਲ ਖਾਲੀ * a, ਪੂਰਨ lda,
+                                    ਲੰਮਾ ਲੰਮਾ ਪੂਰਨ stride_a, ਅਚਲ ਖਾਲੀ * b, ਪੂਰਨ ldb, ਲੰਮਾ ਲੰਮਾ ਪੂਰਨ stride_b,
+                                    ਅਚਲ ਖਾਲੀ * beta, ਖਾਲੀ * c, ਪੂਰਨ ldc, ਲੰਮਾ ਲੰਮਾ ਪੂਰਨ stride_c, ਪੂਰਨ batch_ਮਾਪ) {
+            Ts alpha_ਮੁੱਲ_2 = dpct::get_ਮੁੱਲ(reinterpret_cast<ਅਚਲ Ts *>(alpha), q);
+            Ts beta_ਮੁੱਲ = dpct::get_ਮੁੱਲ(reinterpret_cast<ਅਚਲ Ts *>(beta), q);
+            ਸਵੈਚਾਲਿਤ ਅੰਕੜੇ_a = get_ਸਮ੍ਰਿਤੀ<ਅਚਲ Ta>(a);
+            ਸਵੈਚਾਲਿਤ ਅੰਕੜੇ_b = get_ਸਮ੍ਰਿਤੀ<ਅਚਲ Tb>(b);
+            ਸਵੈਚਾਲਿਤ ਅੰਕੜੇ_c = get_ਸਮ੍ਰਿਤੀ<Tc>(c);
+            oneapi::mkl::blas::ਕਾਲਮ_major::gemm_batch(q, a_trans, b_trans, m, n, k, alpha_ਮੁੱਲ_2,
+                                                         ਅੰਕੜੇ_a, lda, stride_a, ਅੰਕੜੇ_b, ldb, stride_b, beta_ਮੁੱਲ,
+                                                         ਅੰਕੜੇ_c, ldc, stride_c, batch_ਮਾਪ);
         }
 
     } // namespace detail
 
-    template <typename VecT, class BinaryOperation>
-    inline unsigned vectorized_binary(unsigned a, unsigned b,
-                                      const BinaryOperation binary_op)
+    ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ VecT, ਵਰਗ ਦੁਆਧਾਰੀ_Operation>
+    ਸਤਰਅੰਦਰ ਬਿਨਾਨਿਸ਼ਾਨੀ vectorized_ਦੁਆਧਾਰੀ(ਬਿਨਾਨਿਸ਼ਾਨੀ a, ਬਿਨਾਨਿਸ਼ਾਨੀ b,
+                                      ਅਚਲ ਦੁਆਧਾਰੀ_Operation ਦੁਆਧਾਰੀ_op)
     {
-        sycl::vec<unsigned, 1> v0{a}, v1{b};
-        auto v2 = v0.as<VecT>();
-        auto v3 = v1.as<VecT>();
-        auto v4 =
-            detail::vectorized_binary<VecT, BinaryOperation>()(v2, v3, binary_op);
-        v0 = v4.template as<sycl::vec<unsigned, 1>>();
-        return v0;
+        sycl::vec<ਬਿਨਾਨਿਸ਼ਾਨੀ, 1> v0{a}, v1{b};
+        ਸਵੈਚਾਲਿਤ v2 = v0.as<VecT>();
+        ਸਵੈਚਾਲਿਤ v3 = v1.as<VecT>();
+        ਸਵੈਚਾਲਿਤ v4 =
+            detail::vectorized_ਦੁਆਧਾਰੀ<VecT, ਦੁਆਧਾਰੀ_Operation>()(v2, v3, ਦੁਆਧਾਰੀ_op);
+        v0 = v4.ਸਾਂਚਾ as<sycl::vec<ਬਿਨਾਨਿਸ਼ਾਨੀ, 1>>();
+        ਵਾਪਸ v0;
     }
 
-    static void async_dpct_memcpy(void *to_ptr, const void *from_ptr, size_t size,
+    ਸਥਿਰ ਖਾਲੀ async_dpct_memcpy(ਖਾਲੀ *ਮੰਜ਼ਿਲ_ptr, ਅਚਲ ਖਾਲੀ *from_ptr, size_t size,
                                   memcpy_direction direction = automatic,
-                                  sycl::queue &q = dpct::get_default_queue())
+                                  sycl::queue &q = dpct::get_default_ਕਤਾਰ())
     {
-        detail::dpct_memcpy(q, to_ptr, from_ptr, size, direction);
+        detail::dpct_memcpy(q, ਮੰਜ਼ਿਲ_ptr, from_ptr, size, direction);
     }
 
-    static inline unsigned int select_device(unsigned int id)
+    ਸਥਿਰ ਸਤਰਅੰਦਰ ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ select_device(ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ id)
     {
         dev_mgr::instance().select_device(id);
-        return id;
+        ਵਾਪਸ id;
     }
 
-    template <typename T>
-    T permute_sub_group_by_xor(sycl::sub_group g, T x, unsigned int mask,
-                               unsigned int logical_sub_group_size = 32)
+    ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T>
+    T ਕ੍ਰਮ_ਬਦਲੋ_sub_ਸਮੂਹ_by_xor(sycl::sub_ਸਮੂਹ g, T x, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ ਨਕਾਬ,
+                               ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ logical_sub_ਸਮੂਹ_ਮਾਪ = 32)
     {
-        unsigned int id = g.get_local_linear_id();
-        unsigned int start_index =
-            id / logical_sub_group_size * logical_sub_group_size;
-        unsigned int target_offset = (id % logical_sub_group_size) ^ mask;
-        return sycl::select_from_group(g, x,
-                                       target_offset < logical_sub_group_size
-                                           ? start_index + target_offset
+        ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ id = g.get_local_ਰੇਖਿਕ_id();
+        ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ ਸ਼ੁਰੂ_ਸੂਚਕਾਂਕ =
+            id / logical_sub_ਸਮੂਹ_ਮਾਪ * logical_sub_ਸਮੂਹ_ਮਾਪ;
+        ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ ਨਿਸ਼ਾਨਾ_ਵਿੱਥ = (id % logical_sub_ਸਮੂਹ_ਮਾਪ) ^ ਨਕਾਬ;
+        ਵਾਪਸ sycl::select_from_ਸਮੂਹ(g, x,
+                                       ਨਿਸ਼ਾਨਾ_ਵਿੱਥ < logical_sub_ਸਮੂਹ_ਮਾਪ
+                                           ? ਸ਼ੁਰੂ_ਸੂਚਕਾਂਕ + ਨਿਸ਼ਾਨਾ_ਵਿੱਥ
                                            : id);
     }
 
-    template <typename T1, typename T2>
-    using dot_product_acc_t = std::conditional_t<
+    ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T1, ਕਿਸਮ_ਨਾਂ T2>
+    ਵਰਤੋਂ dot_ਗੁਣਨਫਲ_acc_t = std::conditional_t<
         std::is_unsigned_v<T1> && std::is_unsigned_v<T2>,
         uint32_t,
         int32_t>;
 
-    template <typename T>
-    sycl::vec<T, 4> extract_and_sign_or_zero_extend4(T val) {
-      return sycl::vec<T, 1>(val)
-          .template as<sycl::vec<
+    ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T>
+    sycl::vec<T, 4> ਕੱਢੋ_and_sign_or_zero_extend4(T val) {
+      ਵਾਪਸ sycl::vec<T, 1>(val)
+          .ਸਾਂਚਾ as<sycl::vec<
               std::conditional_t<std::is_signed_v<T>, int8_t, uint8_t>,
               4>>()
-          .template convert<T>();
+          .ਸਾਂਚਾ convert<T>();
     }
 
-    template <typename T1, typename T2, typename T3>
-    inline auto dp4a(T1 a, T2 b, T3 c) {
-      dot_product_acc_t<T1, T2> res = c;
-      auto va = extract_and_sign_or_zero_extend4(a);
-      auto vb = extract_and_sign_or_zero_extend4(b);
+    ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T1, ਕਿਸਮ_ਨਾਂ T2, ਕਿਸਮ_ਨਾਂ T3>
+    ਸਤਰਅੰਦਰ ਸਵੈਚਾਲਿਤ dp4a(T1 a, T2 b, T3 c) {
+      dot_ਗੁਣਨਫਲ_acc_t<T1, T2> res = c;
+      ਸਵੈਚਾਲਿਤ va = ਕੱਢੋ_and_sign_or_zero_extend4(a);
+      ਸਵੈਚਾਲਿਤ vb = ਕੱਢੋ_and_sign_or_zero_extend4(b);
       res += va[0] * vb[0];
       res += va[1] * vb[1];
       res += va[2] * vb[2];
       res += va[3] * vb[3];
-      return res;
+      ਵਾਪਸ res;
     }
 
-    struct sub_sat
+    ਬਣਤਰ sub_sat
     {
-        template <typename T>
-        auto operator()(const T x, const T y) const
+        ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T>
+        ਸਵੈਚਾਲਿਤ ਸੰਚਾਲਕ()(ਅਚਲ T x, ਅਚਲ T y) ਅਚਲ
         {
-            return sycl::sub_sat(x, y);
+            ਵਾਪਸ sycl::sub_sat(x, y);
         }
     };
 
-    template <typename S, typename T>
-    inline T vectorized_min(T a, T b)
+    ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ S, ਕਿਸਮ_ਨਾਂ T>
+    ਸਤਰਅੰਦਰ T vectorized_min(T a, T b)
     {
         sycl::vec<T, 1> v0{a}, v1{b};
-        auto v2 = v0.template as<S>();
-        auto v3 = v1.template as<S>();
-        auto v4 = sycl::min(v2, v3);
-        v0 = v4.template as<sycl::vec<T, 1>>();
-        return v0;
+        ਸਵੈਚਾਲਿਤ v2 = v0.ਸਾਂਚਾ as<S>();
+        ਸਵੈਚਾਲਿਤ v3 = v1.ਸਾਂਚਾ as<S>();
+        ਸਵੈਚਾਲਿਤ v4 = sycl::min(v2, v3);
+        v0 = v4.ਸਾਂਚਾ as<sycl::vec<T, 1>>();
+        ਵਾਪਸ v0;
     }
 
-    inline float pow(const float a, const int b) { return sycl::pown(a, b); }
-    inline double pow(const double a, const int b) { return sycl::pown(a, b); }
-    inline float pow(const float a, const float b) { return sycl::pow(a, b); }
-    inline double pow(const double a, const double b) { return sycl::pow(a, b); }
-    template <typename T, typename U>
-    inline typename std::enable_if_t<std::is_floating_point_v<T>, T>
-    pow(const T a, const U b)
+    ਸਤਰਅੰਦਰ ਦਸ਼ਮਲਵ ਘਾਤ(ਅਚਲ ਦਸ਼ਮਲਵ a, ਅਚਲ ਪੂਰਨ b) { ਵਾਪਸ sycl::pown(a, b); }
+    ਸਤਰਅੰਦਰ ਦੁੱਗਣਾ ਘਾਤ(ਅਚਲ ਦੁੱਗਣਾ a, ਅਚਲ ਪੂਰਨ b) { ਵਾਪਸ sycl::pown(a, b); }
+    ਸਤਰਅੰਦਰ ਦਸ਼ਮਲਵ ਘਾਤ(ਅਚਲ ਦਸ਼ਮਲਵ a, ਅਚਲ ਦਸ਼ਮਲਵ b) { ਵਾਪਸ sycl::ਘਾਤ(a, b); }
+    ਸਤਰਅੰਦਰ ਦੁੱਗਣਾ ਘਾਤ(ਅਚਲ ਦੁੱਗਣਾ a, ਅਚਲ ਦੁੱਗਣਾ b) { ਵਾਪਸ sycl::ਘਾਤ(a, b); }
+    ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T, ਕਿਸਮ_ਨਾਂ U>
+    ਸਤਰਅੰਦਰ ਕਿਸਮ_ਨਾਂ std::enable_if_t<std::is_floating_point_v<T>, T>
+    ਘਾਤ(ਅਚਲ T a, ਅਚਲ U b)
     {
-        return sycl::pow(a, static_cast<T>(b));
+        ਵਾਪਸ sycl::ਘਾਤ(a, static_cast<T>(b));
     }
-    template <typename T, typename U>
-    inline typename std::enable_if_t<!std::is_floating_point_v<T>, double>
-    pow(const T a, const U b)
+    ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T, ਕਿਸਮ_ਨਾਂ U>
+    ਸਤਰਅੰਦਰ ਕਿਸਮ_ਨਾਂ std::enable_if_t<!std::is_floating_point_v<T>, ਦੁੱਗਣਾ>
+    ਘਾਤ(ਅਚਲ T a, ਅਚਲ U b)
     {
-        return sycl::pow(static_cast<double>(a), static_cast<double>(b));
+        ਵਾਪਸ sycl::ਘਾਤ(static_cast<ਦੁੱਗਣਾ>(a), static_cast<ਦੁੱਗਣਾ>(b));
     }
 
-    inline double min(const double a, const float b)
+    ਸਤਰਅੰਦਰ ਦੁੱਗਣਾ min(ਅਚਲ ਦੁੱਗਣਾ a, ਅਚਲ ਦਸ਼ਮਲਵ b)
     {
-        return sycl::fmin(a, static_cast<double>(b));
+        ਵਾਪਸ sycl::fmin(a, static_cast<ਦੁੱਗਣਾ>(b));
     }
-    inline double min(const float a, const double b)
+    ਸਤਰਅੰਦਰ ਦੁੱਗਣਾ min(ਅਚਲ ਦਸ਼ਮਲਵ a, ਅਚਲ ਦੁੱਗਣਾ b)
     {
-        return sycl::fmin(static_cast<double>(a), b);
+        ਵਾਪਸ sycl::fmin(static_cast<ਦੁੱਗਣਾ>(a), b);
     }
-    inline float min(const float a, const float b) { return sycl::fmin(a, b); }
-    inline double min(const double a, const double b) { return sycl::fmin(a, b); }
-    inline std::uint32_t min(const std::uint32_t a, const std::int32_t b)
+    ਸਤਰਅੰਦਰ ਦਸ਼ਮਲਵ min(ਅਚਲ ਦਸ਼ਮਲਵ a, ਅਚਲ ਦਸ਼ਮਲਵ b) { ਵਾਪਸ sycl::fmin(a, b); }
+    ਸਤਰਅੰਦਰ ਦੁੱਗਣਾ min(ਅਚਲ ਦੁੱਗਣਾ a, ਅਚਲ ਦੁੱਗਣਾ b) { ਵਾਪਸ sycl::fmin(a, b); }
+    ਸਤਰਅੰਦਰ std::uint32_t min(ਅਚਲ std::uint32_t a, ਅਚਲ std::int32_t b)
     {
-        return sycl::min(a, static_cast<std::uint32_t>(b));
+        ਵਾਪਸ sycl::min(a, static_cast<std::uint32_t>(b));
     }
-    inline std::uint32_t min(const std::int32_t a, const std::uint32_t b)
+    ਸਤਰਅੰਦਰ std::uint32_t min(ਅਚਲ std::int32_t a, ਅਚਲ std::uint32_t b)
     {
-        return sycl::min(static_cast<std::uint32_t>(a), b);
+        ਵਾਪਸ sycl::min(static_cast<std::uint32_t>(a), b);
     }
-    inline std::int32_t min(const std::int32_t a, const std::int32_t b)
+    ਸਤਰਅੰਦਰ std::int32_t min(ਅਚਲ std::int32_t a, ਅਚਲ std::int32_t b)
     {
-        return sycl::min(a, b);
+        ਵਾਪਸ sycl::min(a, b);
     }
-    inline std::uint32_t min(const std::uint32_t a, const std::uint32_t b)
+    ਸਤਰਅੰਦਰ std::uint32_t min(ਅਚਲ std::uint32_t a, ਅਚਲ std::uint32_t b)
     {
-        return sycl::min(a, b);
+        ਵਾਪਸ sycl::min(a, b);
     }
-    inline std::uint64_t min(const std::uint64_t a, const std::int64_t b)
+    ਸਤਰਅੰਦਰ std::uint64_t min(ਅਚਲ std::uint64_t a, ਅਚਲ std::int64_t b)
     {
-        return sycl::min(a, static_cast<std::uint64_t>(b));
+        ਵਾਪਸ sycl::min(a, static_cast<std::uint64_t>(b));
     }
-    inline std::uint64_t min(const std::int64_t a, const std::uint64_t b)
+    ਸਤਰਅੰਦਰ std::uint64_t min(ਅਚਲ std::int64_t a, ਅਚਲ std::uint64_t b)
     {
-        return sycl::min(static_cast<std::uint64_t>(a), b);
+        ਵਾਪਸ sycl::min(static_cast<std::uint64_t>(a), b);
     }
-    inline std::int64_t min(const std::int64_t a, const std::int64_t b)
+    ਸਤਰਅੰਦਰ std::int64_t min(ਅਚਲ std::int64_t a, ਅਚਲ std::int64_t b)
     {
-        return sycl::min(a, b);
+        ਵਾਪਸ sycl::min(a, b);
     }
-    inline std::uint64_t min(const std::uint64_t a, const std::uint64_t b)
+    ਸਤਰਅੰਦਰ std::uint64_t min(ਅਚਲ std::uint64_t a, ਅਚਲ std::uint64_t b)
     {
-        return sycl::min(a, b);
+        ਵਾਪਸ sycl::min(a, b);
     }
-    inline std::uint64_t min(const std::uint64_t a, const std::int32_t b)
+    ਸਤਰਅੰਦਰ std::uint64_t min(ਅਚਲ std::uint64_t a, ਅਚਲ std::int32_t b)
     {
-        return sycl::min(a, static_cast<std::uint64_t>(b));
+        ਵਾਪਸ sycl::min(a, static_cast<std::uint64_t>(b));
     }
-    inline std::uint64_t min(const std::int32_t a, const std::uint64_t b)
+    ਸਤਰਅੰਦਰ std::uint64_t min(ਅਚਲ std::int32_t a, ਅਚਲ std::uint64_t b)
     {
-        return sycl::min(static_cast<std::uint64_t>(a), b);
+        ਵਾਪਸ sycl::min(static_cast<std::uint64_t>(a), b);
     }
-    inline std::uint64_t min(const std::uint64_t a, const std::uint32_t b)
+    ਸਤਰਅੰਦਰ std::uint64_t min(ਅਚਲ std::uint64_t a, ਅਚਲ std::uint32_t b)
     {
-        return sycl::min(a, static_cast<std::uint64_t>(b));
+        ਵਾਪਸ sycl::min(a, static_cast<std::uint64_t>(b));
     }
-    inline std::uint64_t min(const std::uint32_t a, const std::uint64_t b)
+    ਸਤਰਅੰਦਰ std::uint64_t min(ਅਚਲ std::uint32_t a, ਅਚਲ std::uint64_t b)
     {
-        return sycl::min(static_cast<std::uint64_t>(a), b);
+        ਵਾਪਸ sycl::min(static_cast<std::uint64_t>(a), b);
     }
     // max function overloads.
     // For floating-point types, `float` or `double` arguments are acceptable.
     // For integer types, `std::uint32_t`, `std::int32_t`, `std::uint64_t` or
     // `std::int64_t` type arguments are acceptable.
-    inline double max(const double a, const float b)
+    ਸਤਰਅੰਦਰ ਦੁੱਗਣਾ max(ਅਚਲ ਦੁੱਗਣਾ a, ਅਚਲ ਦਸ਼ਮਲਵ b)
     {
-        return sycl::fmax(a, static_cast<double>(b));
+        ਵਾਪਸ sycl::fmax(a, static_cast<ਦੁੱਗਣਾ>(b));
     }
-    inline double max(const float a, const double b)
+    ਸਤਰਅੰਦਰ ਦੁੱਗਣਾ max(ਅਚਲ ਦਸ਼ਮਲਵ a, ਅਚਲ ਦੁੱਗਣਾ b)
     {
-        return sycl::fmax(static_cast<double>(a), b);
+        ਵਾਪਸ sycl::fmax(static_cast<ਦੁੱਗਣਾ>(a), b);
     }
-    inline float max(const float a, const float b) { return sycl::fmax(a, b); }
-    inline double max(const double a, const double b) { return sycl::fmax(a, b); }
-    inline std::uint32_t max(const std::uint32_t a, const std::int32_t b)
+    ਸਤਰਅੰਦਰ ਦਸ਼ਮਲਵ max(ਅਚਲ ਦਸ਼ਮਲਵ a, ਅਚਲ ਦਸ਼ਮਲਵ b) { ਵਾਪਸ sycl::fmax(a, b); }
+    ਸਤਰਅੰਦਰ ਦੁੱਗਣਾ max(ਅਚਲ ਦੁੱਗਣਾ a, ਅਚਲ ਦੁੱਗਣਾ b) { ਵਾਪਸ sycl::fmax(a, b); }
+    ਸਤਰਅੰਦਰ std::uint32_t max(ਅਚਲ std::uint32_t a, ਅਚਲ std::int32_t b)
     {
-        return sycl::max(a, static_cast<std::uint32_t>(b));
+        ਵਾਪਸ sycl::max(a, static_cast<std::uint32_t>(b));
     }
-    inline std::uint32_t max(const std::int32_t a, const std::uint32_t b)
+    ਸਤਰਅੰਦਰ std::uint32_t max(ਅਚਲ std::int32_t a, ਅਚਲ std::uint32_t b)
     {
-        return sycl::max(static_cast<std::uint32_t>(a), b);
+        ਵਾਪਸ sycl::max(static_cast<std::uint32_t>(a), b);
     }
-    inline std::int32_t max(const std::int32_t a, const std::int32_t b)
+    ਸਤਰਅੰਦਰ std::int32_t max(ਅਚਲ std::int32_t a, ਅਚਲ std::int32_t b)
     {
-        return sycl::max(a, b);
+        ਵਾਪਸ sycl::max(a, b);
     }
-    inline std::uint32_t max(const std::uint32_t a, const std::uint32_t b)
+    ਸਤਰਅੰਦਰ std::uint32_t max(ਅਚਲ std::uint32_t a, ਅਚਲ std::uint32_t b)
     {
-        return sycl::max(a, b);
+        ਵਾਪਸ sycl::max(a, b);
     }
-    inline std::uint64_t max(const std::uint64_t a, const std::int64_t b)
+    ਸਤਰਅੰਦਰ std::uint64_t max(ਅਚਲ std::uint64_t a, ਅਚਲ std::int64_t b)
     {
-        return sycl::max(a, static_cast<std::uint64_t>(b));
+        ਵਾਪਸ sycl::max(a, static_cast<std::uint64_t>(b));
     }
-    inline std::uint64_t max(const std::int64_t a, const std::uint64_t b)
+    ਸਤਰਅੰਦਰ std::uint64_t max(ਅਚਲ std::int64_t a, ਅਚਲ std::uint64_t b)
     {
-        return sycl::max(static_cast<std::uint64_t>(a), b);
+        ਵਾਪਸ sycl::max(static_cast<std::uint64_t>(a), b);
     }
-    inline std::int64_t max(const std::int64_t a, const std::int64_t b)
+    ਸਤਰਅੰਦਰ std::int64_t max(ਅਚਲ std::int64_t a, ਅਚਲ std::int64_t b)
     {
-        return sycl::max(a, b);
+        ਵਾਪਸ sycl::max(a, b);
     }
-    inline std::uint64_t max(const std::uint64_t a, const std::uint64_t b)
+    ਸਤਰਅੰਦਰ std::uint64_t max(ਅਚਲ std::uint64_t a, ਅਚਲ std::uint64_t b)
     {
-        return sycl::max(a, b);
+        ਵਾਪਸ sycl::max(a, b);
     }
-    inline std::uint64_t max(const std::uint64_t a, const std::int32_t b)
+    ਸਤਰਅੰਦਰ std::uint64_t max(ਅਚਲ std::uint64_t a, ਅਚਲ std::int32_t b)
     {
-        return sycl::max(a, static_cast<std::uint64_t>(b));
+        ਵਾਪਸ sycl::max(a, static_cast<std::uint64_t>(b));
     }
-    inline std::uint64_t max(const std::int32_t a, const std::uint64_t b)
+    ਸਤਰਅੰਦਰ std::uint64_t max(ਅਚਲ std::int32_t a, ਅਚਲ std::uint64_t b)
     {
-        return sycl::max(static_cast<std::uint64_t>(a), b);
+        ਵਾਪਸ sycl::max(static_cast<std::uint64_t>(a), b);
     }
-    inline std::uint64_t max(const std::uint64_t a, const std::uint32_t b)
+    ਸਤਰਅੰਦਰ std::uint64_t max(ਅਚਲ std::uint64_t a, ਅਚਲ std::uint32_t b)
     {
-        return sycl::max(a, static_cast<std::uint64_t>(b));
+        ਵਾਪਸ sycl::max(a, static_cast<std::uint64_t>(b));
     }
-    inline std::uint64_t max(const std::uint32_t a, const std::uint64_t b)
+    ਸਤਰਅੰਦਰ std::uint64_t max(ਅਚਲ std::uint32_t a, ਅਚਲ std::uint64_t b)
     {
-        return sycl::max(static_cast<std::uint64_t>(a), b);
+        ਵਾਪਸ sycl::max(static_cast<std::uint64_t>(a), b);
     }
 
-    inline void
-    has_capability_or_fail(const sycl::device &dev,
-                           const std::initializer_list<sycl::aspect> &props)
+    ਸਤਰਅੰਦਰ ਖਾਲੀ
+    has_capability_or_fail(ਅਚਲ sycl::device &dev,
+                           ਅਚਲ std::initializer_list<sycl::aspect> &props)
     {
-        for (const auto &it : props)
+        ਲਈ (ਅਚਲ ਸਵੈਚਾਲਿਤ &it : props)
         {
-            if (dev.has(it))
-                continue;
-            switch (it)
+            ਜੇ (dev.has(it))
+                ਜਾਰੀ;
+            ਚੋਣ (it)
             {
-            case sycl::aspect::fp64:
-                throw std::runtime_error("'double' is not supported in '" +
+            ਹਾਲਤ sycl::aspect::fp64:
+                ਸੁੱਟੋ std::runtime_error("'double' is not supported in '" +
                                          dev.get_info<sycl::info::device::name>() +
                                          "' device");
-                break;
-            case sycl::aspect::fp16:
-                throw std::runtime_error("'half' is not supported in '" +
+                ਰੋਕੋ;
+            ਹਾਲਤ sycl::aspect::fp16:
+                ਸੁੱਟੋ std::runtime_error("'half' is not supported in '" +
                                          dev.get_info<sycl::info::device::name>() +
                                          "' device");
-                break;
-            default:
-#define __SYCL_ASPECT(ASPECT, ID) \
-    case sycl::aspect::ASPECT:    \
-        return #ASPECT;
-#define __SYCL_ASPECT_DEPRECATED(ASPECT, ID, MESSAGE) __SYCL_ASPECT(ASPECT, ID)
-#define __SYCL_ASPECT_DEPRECATED_ALIAS(ASPECT, ID, MESSAGE)
-                auto getAspectNameStr = [](sycl::aspect AspectNum) -> std::string
+                ਰੋਕੋ;
+            ਮੂਲ:
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ __SYCL_ASPECT(ASPECT, ID) \
+    ਹਾਲਤ sycl::aspect::ASPECT:    \
+        ਵਾਪਸ #ASPECT;
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ __SYCL_ASPECT_DEPRECATED(ASPECT, ID, ਸੁਨੇਹਾ_3) __SYCL_ASPECT(ASPECT, ID)
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ __SYCL_ASPECT_DEPRECATED_ALIAS(ASPECT, ID, ਸੁਨੇਹਾ_3)
+                ਸਵੈਚਾਲਿਤ getAspectNameStr = [](sycl::aspect Aspect_ਅੰਕ) -> std::string
                 {
-                    switch (AspectNum)
+                    ਚੋਣ (Aspect_ਅੰਕ)
                     {
-#include <sycl/info/aspects.def>
-#include <sycl/info/aspects_deprecated.def>
-                    default:
-                        return "unknown aspect";
+#ਅਨ੍ਤਰ੍ਭਾਵ <sycl/info/aspects.def>
+#ਅਨ੍ਤਰ੍ਭਾਵ <sycl/info/aspects_deprecated.def>
+                    ਮੂਲ:
+                        ਵਾਪਸ "unknown aspect";
                     }
                 };
-#undef __SYCL_ASPECT_DEPRECATED_ALIAS
-#undef __SYCL_ASPECT_DEPRECATED
-#undef __SYCL_ASPECT
-                throw std::runtime_error(
+#ਪਰਿਭਾਸ਼ਾ_ਰੱਦ __SYCL_ASPECT_DEPRECATED_ALIAS
+#ਪਰਿਭਾਸ਼ਾ_ਰੱਦ __SYCL_ASPECT_DEPRECATED
+#ਪਰਿਭਾਸ਼ਾ_ਰੱਦ __SYCL_ASPECT
+                ਸੁੱਟੋ std::runtime_error(
                     "'" + getAspectNameStr(it) + "' is not supported in '" +
                     dev.get_info<sycl::info::device::name>() + "' device");
             }
-            break;
+            ਰੋਕੋ;
         }
     }
 
-    static inline unsigned int get_current_device_id()
+    ਸਥਿਰ ਸਤਰਅੰਦਰ ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ get_current_device_id()
     {
-        return dev_mgr::instance().current_device_id();
+        ਵਾਪਸ dev_mgr::instance().current_device_id();
     }
 
-    static inline device_ext &get_current_device()
+    ਸਥਿਰ ਸਤਰਅੰਦਰ device_ext &get_current_device()
     {
-        return dev_mgr::instance().current_device();
+        ਵਾਪਸ dev_mgr::instance().current_device();
     }
 
-    static inline device_ext &get_device(unsigned int id)
+    ਸਥਿਰ ਸਤਰਅੰਦਰ device_ext &get_device(ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ id)
     {
-        return dev_mgr::instance().get_device(id);
+        ਵਾਪਸ dev_mgr::instance().get_device(id);
     }
 
-    static inline sycl::queue &get_in_order_queue()
+    ਸਥਿਰ ਸਤਰਅੰਦਰ sycl::queue &get_ਵਿੱਚ_ਕ੍ਰਮ_ਕਤਾਰ()
     {
-        return dev_mgr::instance().current_device().in_order_queue();
+        ਵਾਪਸ dev_mgr::instance().current_device().ਵਿੱਚ_ਕ੍ਰਮ_ਕਤਾਰ();
     }
 
-    static sycl::event
-    dpct_memcpy(sycl::queue &q, void *to_ptr, const void *from_ptr, size_t size,
+    ਸਥਿਰ sycl::event
+    dpct_memcpy(sycl::queue &q, ਖਾਲੀ *ਮੰਜ਼ਿਲ_ptr, ਅਚਲ ਖਾਲੀ *from_ptr, size_t size,
                 memcpy_direction direction,
-                const std::vector<sycl::event> &dep_events = {})
+                ਅਚਲ std::vector<sycl::event> &dep_events = {})
     {
-        if (!size)
-            return sycl::event{};
-        return q.memcpy(to_ptr, from_ptr, size, dep_events);
-        DPCT_UNUSED(direction);
+        ਜੇ (!size)
+            ਵਾਪਸ sycl::event{};
+        ਵਾਪਸ q.ਸਮ੍ਰਿਤੀ_ਨਕਲ(ਮੰਜ਼ਿਲ_ptr, from_ptr, size, dep_events);
+        DPCT_ਅਣਵਰਤਿਆ(direction);
     }
 
     // Get actual copy range and make sure it will not exceed range.
-    static inline size_t get_copy_range(sycl::range<3> size, size_t slice,
+    ਸਥਿਰ ਸਤਰਅੰਦਰ size_t get_copy_range(sycl::range<3> size, size_t ਟੁਕੜਾ_2,
                                         size_t pitch)
     {
-        return slice * (size.get(2) - 1) + pitch * (size.get(1) - 1) + size.get(0);
+        ਵਾਪਸ ਟੁਕੜਾ_2 * (size.get(2) - 1) + pitch * (size.get(1) - 1) + size.get(0);
     }
 
-    static inline size_t get_offset(sycl::id<3> id, size_t slice,
+    ਸਥਿਰ ਸਤਰਅੰਦਰ size_t get_ਵਿੱਥ(sycl::id<3> id, size_t ਟੁਕੜਾ_2,
                                     size_t pitch)
     {
-        return slice * id.get(2) + pitch * id.get(1) + id.get(0);
+        ਵਾਪਸ ਟੁਕੜਾ_2 * id.get(2) + pitch * id.get(1) + id.get(0);
     }
 
     /// copy 3D matrix specified by \p size from 3D matrix specified by \p from_ptr
     /// and \p from_range to another specified by \p to_ptr and \p to_range.
-    static inline std::vector<sycl::event>
-    dpct_memcpy(sycl::queue &q, void *to_ptr, const void *from_ptr,
-                sycl::range<3> to_range, sycl::range<3> from_range,
-                sycl::id<3> to_id, sycl::id<3> from_id,
+    ਸਥਿਰ ਸਤਰਅੰਦਰ std::vector<sycl::event>
+    dpct_memcpy(sycl::queue &q, ਖਾਲੀ *ਮੰਜ਼ਿਲ_ptr, ਅਚਲ ਖਾਲੀ *from_ptr,
+                sycl::range<3> ਮੰਜ਼ਿਲ_range, sycl::range<3> from_range,
+                sycl::id<3> ਮੰਜ਼ਿਲ_id, sycl::id<3> from_id,
                 sycl::range<3> size, memcpy_direction direction,
-                const std::vector<sycl::event> &dep_events = {})
+                ਅਚਲ std::vector<sycl::event> &dep_events = {})
     {
         // RAII for host pointer
-        class host_buffer
+        ਵਰਗ host_ਬਫਰ
         {
-            void *_buf;
-            size_t _size;
+            ਖਾਲੀ *_buf;
+            size_t ਮਾਪ_2;
             sycl::queue &_q;
-            const std::vector<sycl::event> &_deps; // free operation depends
+            ਅਚਲ std::vector<sycl::event> &_deps; // free operation depends
 
-        public:
-            host_buffer(size_t size, sycl::queue &q,
-                        const std::vector<sycl::event> &deps)
-                : _buf(std::malloc(size)), _size(size), _q(q), _deps(deps) {}
-            void *get_ptr() const { return _buf; }
-            size_t get_size() const { return _size; }
-            ~host_buffer()
+        ਜਨਤਕ:
+            host_ਬਫਰ(size_t size, sycl::queue &q,
+                        ਅਚਲ std::vector<sycl::event> &deps)
+                : _buf(std::ਸਮ੍ਰਿਤੀ_ਦਿਓ(size)), ਮਾਪ_2(size), _q(q), _deps(deps) {}
+            ਖਾਲੀ *get_ptr() ਅਚਲ { ਵਾਪਸ _buf; }
+            size_t get_ਮਾਪ() ਅਚਲ { ਵਾਪਸ ਮਾਪ_2; }
+            ~host_ਬਫਰ()
             {
-                if (_buf)
+                ਜੇ (_buf)
                 {
                     _q.submit([&](sycl::handler &cgh)
                               {
             cgh.depends_on(_deps);
-            cgh.host_task([buf = _buf] { std::free(buf); }); });
+            cgh.host_task([buf = _buf] { std::ਮੁਕਤ(buf); }); });
                 }
             }
         };
         std::vector<sycl::event> event_list;
 
-        size_t to_slice = to_range.get(1) * to_range.get(0),
-               from_slice = from_range.get(1) * from_range.get(0);
-        unsigned char *to_surface =
-            (unsigned char *)to_ptr + get_offset(to_id, to_slice, to_range.get(0));
-        const unsigned char *from_surface =
-            (const unsigned char *)from_ptr +
-            get_offset(from_id, from_slice, from_range.get(0));
+        size_t ਮੰਜ਼ਿਲ_ਟੁਕੜਾ = ਮੰਜ਼ਿਲ_range.get(1) * ਮੰਜ਼ਿਲ_range.get(0),
+               from_ਟੁਕੜਾ = from_range.get(1) * from_range.get(0);
+        ਬਿਨਾਨਿਸ਼ਾਨੀ ਅੱਖਰ *ਮੰਜ਼ਿਲ_surface =
+            (ਬਿਨਾਨਿਸ਼ਾਨੀ ਅੱਖਰ *)ਮੰਜ਼ਿਲ_ptr + get_ਵਿੱਥ(ਮੰਜ਼ਿਲ_id, ਮੰਜ਼ਿਲ_ਟੁਕੜਾ, ਮੰਜ਼ਿਲ_range.get(0));
+        ਅਚਲ ਬਿਨਾਨਿਸ਼ਾਨੀ ਅੱਖਰ *from_surface =
+            (ਅਚਲ ਬਿਨਾਨਿਸ਼ਾਨੀ ਅੱਖਰ *)from_ptr +
+            get_ਵਿੱਥ(from_id, from_ਟੁਕੜਾ, from_range.get(0));
 
-        if (to_slice == from_slice && to_slice == size.get(1) * size.get(0))
+        ਜੇ (ਮੰਜ਼ਿਲ_ਟੁਕੜਾ == from_ਟੁਕੜਾ && ਮੰਜ਼ਿਲ_ਟੁਕੜਾ == size.get(1) * size.get(0))
         {
-            return {dpct_memcpy(q, to_surface, from_surface, to_slice * size.get(2),
+            ਵਾਪਸ {dpct_memcpy(q, ਮੰਜ਼ਿਲ_surface, from_surface, ਮੰਜ਼ਿਲ_ਟੁਕੜਾ * size.get(2),
                                 direction, dep_events)};
         }
-        direction = detail::deduce_memcpy_direction(q, to_ptr, from_ptr, direction);
-        size_t size_slice = size.get(1) * size.get(0);
-        switch (direction)
+        direction = detail::deduce_memcpy_direction(q, ਮੰਜ਼ਿਲ_ptr, from_ptr, direction);
+        size_t ਮਾਪ_ਟੁਕੜਾ = size.get(1) * size.get(0);
+        ਚੋਣ (direction)
         {
-        case host_to_host:
-            for (size_t z = 0; z < size.get(2); ++z)
+        ਹਾਲਤ host_ਮੰਜ਼ਿਲ_host:
+            ਲਈ (size_t z = 0; z < size.get(2); ++z)
             {
-                unsigned char *to_ptr = to_surface;
-                const unsigned char *from_ptr = from_surface;
-                if (to_range.get(0) == from_range.get(0) &&
-                    to_range.get(0) == size.get(0))
+                ਬਿਨਾਨਿਸ਼ਾਨੀ ਅੱਖਰ *ਮੰਜ਼ਿਲ_ptr = ਮੰਜ਼ਿਲ_surface;
+                ਅਚਲ ਬਿਨਾਨਿਸ਼ਾਨੀ ਅੱਖਰ *from_ptr = from_surface;
+                ਜੇ (ਮੰਜ਼ਿਲ_range.get(0) == from_range.get(0) &&
+                    ਮੰਜ਼ਿਲ_range.get(0) == size.get(0))
                 {
-                    event_list.push_back(dpct_memcpy(q, to_ptr, from_ptr, size_slice,
+                    event_list.push_back(dpct_memcpy(q, ਮੰਜ਼ਿਲ_ptr, from_ptr, ਮਾਪ_ਟੁਕੜਾ,
                                                      direction, dep_events));
                 }
-                else
+                ਨਹੀਂਤਾਂ
                 {
-                    for (size_t y = 0; y < size.get(1); ++y)
+                    ਲਈ (size_t y = 0; y < size.get(1); ++y)
                     {
-                        event_list.push_back(dpct_memcpy(q, to_ptr, from_ptr, size.get(0),
+                        event_list.push_back(dpct_memcpy(q, ਮੰਜ਼ਿਲ_ptr, from_ptr, size.get(0),
                                                          direction, dep_events));
-                        to_ptr += to_range.get(0);
+                        ਮੰਜ਼ਿਲ_ptr += ਮੰਜ਼ਿਲ_range.get(0);
                         from_ptr += from_range.get(0);
                     }
                 }
-                to_surface += to_slice;
-                from_surface += from_slice;
+                ਮੰਜ਼ਿਲ_surface += ਮੰਜ਼ਿਲ_ਟੁਕੜਾ;
+                from_surface += from_ਟੁਕੜਾ;
             }
-            break;
-        case host_to_device:
+            ਰੋਕੋ;
+        ਹਾਲਤ host_ਮੰਜ਼ਿਲ_device:
         {
-            host_buffer buf(get_copy_range(size, to_slice, to_range.get(0)), q,
+            host_ਬਫਰ buf(get_copy_range(size, ਮੰਜ਼ਿਲ_ਟੁਕੜਾ, ਮੰਜ਼ਿਲ_range.get(0)), q,
                             event_list);
             std::vector<sycl::event> host_events;
-            if (to_slice == size_slice)
+            ਜੇ (ਮੰਜ਼ਿਲ_ਟੁਕੜਾ == ਮਾਪ_ਟੁਕੜਾ)
             {
                 // Copy host data to a temp host buffer with the shape of target.
                 host_events =
-                    dpct_memcpy(q, buf.get_ptr(), from_surface, to_range, from_range,
+                    dpct_memcpy(q, buf.get_ptr(), from_surface, ਮੰਜ਼ਿਲ_range, from_range,
                                 sycl::id<3>(0, 0, 0), sycl::id<3>(0, 0, 0), size,
-                                host_to_host, dep_events);
+                                host_ਮੰਜ਼ਿਲ_host, dep_events);
             }
-            else
+            ਨਹੀਂਤਾਂ
             {
                 // Copy host data to a temp host buffer with the shape of target.
                 host_events = dpct_memcpy(
-                    q, buf.get_ptr(), from_surface, to_range, from_range,
-                    sycl::id<3>(0, 0, 0), sycl::id<3>(0, 0, 0), size, host_to_host,
+                    q, buf.get_ptr(), from_surface, ਮੰਜ਼ਿਲ_range, from_range,
+                    sycl::id<3>(0, 0, 0), sycl::id<3>(0, 0, 0), size, host_ਮੰਜ਼ਿਲ_host,
                     // If has padding data, not sure whether it is useless. So fill temp
                     // buffer with it.
                     std::vector<sycl::event>{
-                        dpct_memcpy(q, buf.get_ptr(), to_surface, buf.get_size(),
-                                    device_to_host, dep_events)});
+                        dpct_memcpy(q, buf.get_ptr(), ਮੰਜ਼ਿਲ_surface, buf.get_ਮਾਪ(),
+                                    device_ਮੰਜ਼ਿਲ_host, dep_events)});
             }
             // Copy from temp host buffer to device with only one submit.
-            event_list.push_back(dpct_memcpy(q, to_surface, buf.get_ptr(),
-                                             buf.get_size(), host_to_device,
+            event_list.push_back(dpct_memcpy(q, ਮੰਜ਼ਿਲ_surface, buf.get_ptr(),
+                                             buf.get_ਮਾਪ(), host_ਮੰਜ਼ਿਲ_device,
                                              host_events));
-            break;
+            ਰੋਕੋ;
         }
-        case device_to_host:
+        ਹਾਲਤ device_ਮੰਜ਼ਿਲ_host:
         {
-            host_buffer buf(get_copy_range(size, from_slice, from_range.get(0)), q,
+            host_ਬਫਰ buf(get_copy_range(size, from_ਟੁਕੜਾ, from_range.get(0)), q,
                             event_list);
             // Copy from host temp buffer to host target with reshaping.
             event_list = dpct_memcpy(
-                q, to_surface, buf.get_ptr(), to_range, from_range, sycl::id<3>(0, 0, 0),
-                sycl::id<3>(0, 0, 0), size, host_to_host,
+                q, ਮੰਜ਼ਿਲ_surface, buf.get_ptr(), ਮੰਜ਼ਿਲ_range, from_range, sycl::id<3>(0, 0, 0),
+                sycl::id<3>(0, 0, 0), size, host_ਮੰਜ਼ਿਲ_host,
                 // Copy from device to temp host buffer with only one submit.
                 std::vector<sycl::event>{dpct_memcpy(q, buf.get_ptr(), from_surface,
-                                                     buf.get_size(),
-                                                     device_to_host, dep_events)});
-            break;
+                                                     buf.get_ਮਾਪ(),
+                                                     device_ਮੰਜ਼ਿਲ_host, dep_events)});
+            ਰੋਕੋ;
         }
-        case device_to_device:
+        ਹਾਲਤ device_ਮੰਜ਼ਿਲ_device:
             event_list.push_back(q.submit([&](sycl::handler &cgh)
                                           {
         cgh.depends_on(dep_events);
-        cgh.parallel_for<class dpct_memcpy_3d_detail>(
+        cgh.parallel_for<ਵਰਗ dpct_memcpy_3d_detail>(
             size,
             [=](sycl::id<3> id) {
-                to_surface[get_offset(id, to_slice, to_range.get(0))] =
-                    from_surface[get_offset(id, from_slice, from_range.get(0))];
+                ਮੰਜ਼ਿਲ_surface[get_ਵਿੱਥ(id, ਮੰਜ਼ਿਲ_ਟੁਕੜਾ, ਮੰਜ਼ਿਲ_range.get(0))] =
+                    from_surface[get_ਵਿੱਥ(id, from_ਟੁਕੜਾ, from_range.get(0))];
             }); }));
-        break;
-        default:
-            throw std::runtime_error("dpct_memcpy: invalid direction value");
+        ਰੋਕੋ;
+        ਮੂਲ:
+            ਸੁੱਟੋ std::runtime_error("dpct_memcpy: invalid direction value");
         }
-        return event_list;
+        ਵਾਪਸ event_list;
     }
 
     /// memcpy 2D/3D matrix specified by pitched_data.
-    static inline std::vector<sycl::event>
-    dpct_memcpy(sycl::queue &q, pitched_data to, sycl::id<3> to_id,
-                pitched_data from, sycl::id<3> from_id, sycl::range<3> size,
+    ਸਥਿਰ ਸਤਰਅੰਦਰ std::vector<sycl::event>
+    dpct_memcpy(sycl::queue &q, pitched_ਅੰਕੜੇ ਮੰਜ਼ਿਲ, sycl::id<3> ਮੰਜ਼ਿਲ_id,
+                pitched_ਅੰਕੜੇ from, sycl::id<3> from_id, sycl::range<3> size,
                 memcpy_direction direction = automatic)
     {
-        return dpct_memcpy(q, to.get_data_ptr(), from.get_data_ptr(),
-                           sycl::range<3>(to.get_pitch(), to.get_y(), 1),
-                           sycl::range<3>(from.get_pitch(), from.get_y(), 1), to_id, from_id,
+        ਵਾਪਸ dpct_memcpy(q, ਮੰਜ਼ਿਲ.get_ਅੰਕੜੇ_ptr(), from.get_ਅੰਕੜੇ_ptr(),
+                           sycl::range<3>(ਮੰਜ਼ਿਲ.get_pitch(), ਮੰਜ਼ਿਲ.get_y(), 1),
+                           sycl::range<3>(from.get_pitch(), from.get_y(), 1), ਮੰਜ਼ਿਲ_id, from_id,
                            size, direction);
     }
 
     /// memcpy 2D matrix with pitch.
-    static inline std::vector<sycl::event>
-    dpct_memcpy(sycl::queue &q, void *to_ptr, const void *from_ptr,
-                size_t to_pitch, size_t from_pitch, size_t x, size_t y,
+    ਸਥਿਰ ਸਤਰਅੰਦਰ std::vector<sycl::event>
+    dpct_memcpy(sycl::queue &q, ਖਾਲੀ *ਮੰਜ਼ਿਲ_ptr, ਅਚਲ ਖਾਲੀ *from_ptr,
+                size_t ਮੰਜ਼ਿਲ_pitch, size_t from_pitch, size_t x, size_t y,
                 memcpy_direction direction = automatic)
     {
-        return dpct_memcpy(q, to_ptr, from_ptr, sycl::range<3>(to_pitch, y, 1),
+        ਵਾਪਸ dpct_memcpy(q, ਮੰਜ਼ਿਲ_ptr, from_ptr, sycl::range<3>(ਮੰਜ਼ਿਲ_pitch, y, 1),
                            sycl::range<3>(from_pitch, y, 1),
                            sycl::id<3>(0, 0, 0), sycl::id<3>(0, 0, 0),
                            sycl::range<3>(x, y, 1), direction);
     }
 
-    inline void gemm(sycl::queue & q, oneapi::mkl::transpose a_trans, oneapi::mkl::transpose b_trans, int m, int n,
-                     int k, const void * alpha, const void * a, library_data_t a_type, int lda, const void * b,
-                     library_data_t b_type, int ldb, const void * beta, void * c, library_data_t c_type, int ldc,
-                     library_data_t scaling_type) {
-        if (scaling_type == library_data_t::real_float &&
-            c_type == library_data_t::complex_float)
+    ਸਤਰਅੰਦਰ ਖਾਲੀ gemm(sycl::queue & q, oneapi::mkl::transpose a_trans, oneapi::mkl::transpose b_trans, ਪੂਰਨ m, ਪੂਰਨ n,
+                     ਪੂਰਨ k, ਅਚਲ ਖਾਲੀ * alpha, ਅਚਲ ਖਾਲੀ * a, library_ਅੰਕੜੇ_t a_type, ਪੂਰਨ lda, ਅਚਲ ਖਾਲੀ * b,
+                     library_ਅੰਕੜੇ_t b_type, ਪੂਰਨ ldb, ਅਚਲ ਖਾਲੀ * beta, ਖਾਲੀ * c, library_ਅੰਕੜੇ_t c_type, ਪੂਰਨ ldc,
+                     library_ਅੰਕੜੇ_t scaling_type) {
+        ਜੇ (scaling_type == library_ਅੰਕੜੇ_t::real_float &&
+            c_type == library_ਅੰਕੜੇ_t::complex_float)
         {
-            scaling_type = library_data_t::complex_float;
+            scaling_type = library_ਅੰਕੜੇ_t::complex_float;
         }
-        else if (scaling_type == library_data_t::real_double &&
-                 c_type == library_data_t::complex_double)
+        ਨਹੀਂਤਾਂ ਜੇ (scaling_type == library_ਅੰਕੜੇ_t::real_double &&
+                 c_type == library_ਅੰਕੜੇ_t::complex_double)
         {
-            scaling_type = library_data_t::complex_double;
+            scaling_type = library_ਅੰਕੜੇ_t::complex_double;
         }
 
-        std::uint64_t key =
+        std::uint64_t ਕੁੰਜੀ =
             detail::get_type_combination_id(a_type, b_type, c_type, scaling_type);
-        switch (key)
+        ਚੋਣ (ਕੁੰਜੀ)
         {
-        case detail::get_type_combination_id(
-            library_data_t::real_float, library_data_t::real_float,
-            library_data_t::real_float, library_data_t::real_float):
+        ਹਾਲਤ detail::get_type_combination_id(
+            library_ਅੰਕੜੇ_t::real_float, library_ਅੰਕੜੇ_t::real_float,
+            library_ਅੰਕੜੇ_t::real_float, library_ਅੰਕੜੇ_t::real_float):
         {
-            detail::gemm_impl<float, float, float, float>(
+            detail::gemm_impl<ਦਸ਼ਮਲਵ, ਦਸ਼ਮਲਵ, ਦਸ਼ਮਲਵ, ਦਸ਼ਮਲਵ>(
                 q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
-            break;
+            ਰੋਕੋ;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_double, library_data_t::real_double,
-            library_data_t::real_double, library_data_t::real_double):
+        ਹਾਲਤ detail::get_type_combination_id(
+            library_ਅੰਕੜੇ_t::real_double, library_ਅੰਕੜੇ_t::real_double,
+            library_ਅੰਕੜੇ_t::real_double, library_ਅੰਕੜੇ_t::real_double):
         {
-            detail::gemm_impl<double, double, double, double>(
+            detail::gemm_impl<ਦੁੱਗਣਾ, ਦੁੱਗਣਾ, ਦੁੱਗਣਾ, ਦੁੱਗਣਾ>(
                 q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
-            break;
+            ਰੋਕੋ;
         }
-        case detail::get_type_combination_id(
-            library_data_t::complex_float, library_data_t::complex_float,
-            library_data_t::complex_float, library_data_t::complex_float):
+        ਹਾਲਤ detail::get_type_combination_id(
+            library_ਅੰਕੜੇ_t::complex_float, library_ਅੰਕੜੇ_t::complex_float,
+            library_ਅੰਕੜੇ_t::complex_float, library_ਅੰਕੜੇ_t::complex_float):
         {
-            detail::gemm_impl<std::complex<float>, std::complex<float>,
-                              std::complex<float>, std::complex<float>>(
+            detail::gemm_impl<std::complex<ਦਸ਼ਮਲਵ>, std::complex<ਦਸ਼ਮਲਵ>,
+                              std::complex<ਦਸ਼ਮਲਵ>, std::complex<ਦਸ਼ਮਲਵ>>(
                 q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
-            break;
+            ਰੋਕੋ;
         }
-        case detail::get_type_combination_id(
-            library_data_t::complex_double, library_data_t::complex_double,
-            library_data_t::complex_double, library_data_t::complex_double):
+        ਹਾਲਤ detail::get_type_combination_id(
+            library_ਅੰਕੜੇ_t::complex_double, library_ਅੰਕੜੇ_t::complex_double,
+            library_ਅੰਕੜੇ_t::complex_double, library_ਅੰਕੜੇ_t::complex_double):
         {
-            detail::gemm_impl<std::complex<double>, std::complex<double>,
-                              std::complex<double>, std::complex<double>>(
+            detail::gemm_impl<std::complex<ਦੁੱਗਣਾ>, std::complex<ਦੁੱਗਣਾ>,
+                              std::complex<ਦੁੱਗਣਾ>, std::complex<ਦੁੱਗਣਾ>>(
                 q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
-            break;
+            ਰੋਕੋ;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_half, library_data_t::real_half,
-            library_data_t::real_half, library_data_t::real_half):
+        ਹਾਲਤ detail::get_type_combination_id(
+            library_ਅੰਕੜੇ_t::real_half, library_ਅੰਕੜੇ_t::real_half,
+            library_ਅੰਕੜੇ_t::real_half, library_ਅੰਕੜੇ_t::real_half):
         {
             detail::gemm_impl<sycl::half, sycl::half, sycl::half,
                               sycl::half>(q, a_trans, b_trans, m, n, k, alpha, a,
                                           lda, b, ldb, beta, c, ldc);
-            break;
+            ਰੋਕੋ;
         }
-#ifdef __INTEL_MKL__
-        case detail::get_type_combination_id(
-            library_data_t::real_bfloat16, library_data_t::real_bfloat16,
-            library_data_t::real_float, library_data_t::real_float):
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ __INTEL_MKL__
+        ਹਾਲਤ detail::get_type_combination_id(
+            library_ਅੰਕੜੇ_t::real_bfloat16, library_ਅੰਕੜੇ_t::real_bfloat16,
+            library_ਅੰਕੜੇ_t::real_float, library_ਅੰਕੜੇ_t::real_float):
         {
-            detail::gemm_impl<oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, float, float>(
+            detail::gemm_impl<oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, ਦਸ਼ਮਲਵ, ਦਸ਼ਮਲਵ>(
                 q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
-            break;
+            ਰੋਕੋ;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_half, library_data_t::real_half,
-            library_data_t::real_float, library_data_t::real_float):
+        ਹਾਲਤ detail::get_type_combination_id(
+            library_ਅੰਕੜੇ_t::real_half, library_ਅੰਕੜੇ_t::real_half,
+            library_ਅੰਕੜੇ_t::real_float, library_ਅੰਕੜੇ_t::real_float):
         {
-            detail::gemm_impl<sycl::half, sycl::half, float, float>(
+            detail::gemm_impl<sycl::half, sycl::half, ਦਸ਼ਮਲਵ, ਦਸ਼ਮਲਵ>(
                 q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
-            break;
+            ਰੋਕੋ;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_half, library_data_t::real_half,
-            library_data_t::real_half, library_data_t::real_float):
+        ਹਾਲਤ detail::get_type_combination_id(
+            library_ਅੰਕੜੇ_t::real_half, library_ਅੰਕੜੇ_t::real_half,
+            library_ਅੰਕੜੇ_t::real_half, library_ਅੰਕੜੇ_t::real_float):
         {
-            float alpha_value =
-                dpct::get_value(reinterpret_cast<const float *>(alpha), q);
-            float beta_value =
-                dpct::get_value(reinterpret_cast<const float *>(beta), q);
-            sycl::half alpha_half(alpha_value);
-            sycl::half beta_half(beta_value);
+            ਦਸ਼ਮਲਵ alpha_ਮੁੱਲ_2 =
+                dpct::get_ਮੁੱਲ(reinterpret_cast<ਅਚਲ ਦਸ਼ਮਲਵ *>(alpha), q);
+            ਦਸ਼ਮਲਵ beta_ਮੁੱਲ =
+                dpct::get_ਮੁੱਲ(reinterpret_cast<ਅਚਲ ਦਸ਼ਮਲਵ *>(beta), q);
+            sycl::half alpha_half(alpha_ਮੁੱਲ_2);
+            sycl::half beta_half(beta_ਮੁੱਲ);
             detail::gemm_impl<sycl::half, sycl::half, sycl::half,
                               sycl::half>(q, a_trans, b_trans, m, n, k, &alpha_half,
                                           a, lda, b, ldb, &beta_half, c, ldc);
-            break;
+            ਰੋਕੋ;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_int8, library_data_t::real_int8,
-            library_data_t::real_float, library_data_t::real_float):
+        ਹਾਲਤ detail::get_type_combination_id(
+            library_ਅੰਕੜੇ_t::real_int8, library_ਅੰਕੜੇ_t::real_int8,
+            library_ਅੰਕੜੇ_t::real_float, library_ਅੰਕੜੇ_t::real_float):
         {
-            detail::gemm_impl<std::int8_t, std::int8_t, float, float>(
+            detail::gemm_impl<std::int8_t, std::int8_t, ਦਸ਼ਮਲਵ, ਦਸ਼ਮਲਵ>(
                 q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
-            break;
+            ਰੋਕੋ;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_bfloat16, library_data_t::real_bfloat16,
-            library_data_t::real_bfloat16, library_data_t::real_float):
+        ਹਾਲਤ detail::get_type_combination_id(
+            library_ਅੰਕੜੇ_t::real_bfloat16, library_ਅੰਕੜੇ_t::real_bfloat16,
+            library_ਅੰਕੜੇ_t::real_bfloat16, library_ਅੰਕੜੇ_t::real_float):
         {
-            detail::gemm_impl<oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, float>(
+            detail::gemm_impl<oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, ਦਸ਼ਮਲਵ>(
                 q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
-            break;
+            ਰੋਕੋ;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_int8, library_data_t::real_int8,
-            library_data_t::real_int32, library_data_t::real_int32):
+        ਹਾਲਤ detail::get_type_combination_id(
+            library_ਅੰਕੜੇ_t::real_int8, library_ਅੰਕੜੇ_t::real_int8,
+            library_ਅੰਕੜੇ_t::real_int32, library_ਅੰਕੜੇ_t::real_int32):
         {
-            float alpha_float =
-                dpct::get_value(reinterpret_cast<const std::int32_t *>(alpha), q);
-            float beta_float =
-                dpct::get_value(reinterpret_cast<const std::int32_t *>(beta), q);
-            detail::gemm_impl<std::int8_t, std::int8_t, std::int32_t, float>(
+            ਦਸ਼ਮਲਵ alpha_float =
+                dpct::get_ਮੁੱਲ(reinterpret_cast<ਅਚਲ std::int32_t *>(alpha), q);
+            ਦਸ਼ਮਲਵ beta_float =
+                dpct::get_ਮੁੱਲ(reinterpret_cast<ਅਚਲ std::int32_t *>(beta), q);
+            detail::gemm_impl<std::int8_t, std::int8_t, std::int32_t, ਦਸ਼ਮਲਵ>(
                 q, a_trans, b_trans, m, n, k, &alpha_float, a, lda, b, ldb, &beta_float, c, ldc);
-            break;
+            ਰੋਕੋ;
         }
-#endif // __INTEL_MKL__
-        default:
-            throw std::runtime_error("the combination of data type is unsupported");
+#ਜੇ_ਅੰਤ // __INTEL_MKL__
+        ਮੂਲ:
+            ਸੁੱਟੋ std::runtime_error("the combination of data type is unsupported");
         }
     }  // gemm()
 
@@ -2428,102 +2428,102 @@ namespace dpct
     /// \param [in] ldc Leading dimension of C.
     /// \param [in] batch_size Specifies the number of matrix multiply operations to perform.
     /// \param [in] scaling_type Data type of the scaling factors.
-    inline void gemm_batch(sycl::queue & q, oneapi::mkl::transpose a_trans, oneapi::mkl::transpose b_trans, int m,
-                           int n, int k, const void * alpha, const void * a[], library_data_t a_type, int lda,
-                           const void * b[], library_data_t b_type, int ldb, const void * beta, void * c[],
-                           library_data_t c_type, int ldc, int batch_size, library_data_t scaling_type,
-                           matrix_info_t<float> * matrix_info) {
-        std::uint64_t key =
+    ਸਤਰਅੰਦਰ ਖਾਲੀ gemm_batch(sycl::queue & q, oneapi::mkl::transpose a_trans, oneapi::mkl::transpose b_trans, ਪੂਰਨ m,
+                           ਪੂਰਨ n, ਪੂਰਨ k, ਅਚਲ ਖਾਲੀ * alpha, ਅਚਲ ਖਾਲੀ * a[], library_ਅੰਕੜੇ_t a_type, ਪੂਰਨ lda,
+                           ਅਚਲ ਖਾਲੀ * b[], library_ਅੰਕੜੇ_t b_type, ਪੂਰਨ ldb, ਅਚਲ ਖਾਲੀ * beta, ਖਾਲੀ * c[],
+                           library_ਅੰਕੜੇ_t c_type, ਪੂਰਨ ldc, ਪੂਰਨ batch_ਮਾਪ, library_ਅੰਕੜੇ_t scaling_type,
+                           ਮੈਟ੍ਰਿਕਸ_info_t<ਦਸ਼ਮਲਵ> * ਮੈਟ੍ਰਿਕਸ_info) {
+        std::uint64_t ਕੁੰਜੀ =
             detail::get_type_combination_id(a_type, b_type, c_type, scaling_type);
-        switch (key)
+        ਚੋਣ (ਕੁੰਜੀ)
         {
-        case detail::get_type_combination_id(
-            library_data_t::real_float, library_data_t::real_float,
-            library_data_t::real_float, library_data_t::real_float):
+        ਹਾਲਤ detail::get_type_combination_id(
+            library_ਅੰਕੜੇ_t::real_float, library_ਅੰਕੜੇ_t::real_float,
+            library_ਅੰਕੜੇ_t::real_float, library_ਅੰਕੜੇ_t::real_float):
         {
-            detail::gemm_batch_impl<float, float, float, float>(q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb,
-                                                                beta, c, ldc, batch_size, matrix_info);
-            break;
+            detail::gemm_batch_impl<ਦਸ਼ਮਲਵ, ਦਸ਼ਮਲਵ, ਦਸ਼ਮਲਵ, ਦਸ਼ਮਲਵ>(q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb,
+                                                                beta, c, ldc, batch_ਮਾਪ, ਮੈਟ੍ਰਿਕਸ_info);
+            ਰੋਕੋ;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_double, library_data_t::real_double,
-            library_data_t::real_double, library_data_t::real_double):
+        ਹਾਲਤ detail::get_type_combination_id(
+            library_ਅੰਕੜੇ_t::real_double, library_ਅੰਕੜੇ_t::real_double,
+            library_ਅੰਕੜੇ_t::real_double, library_ਅੰਕੜੇ_t::real_double):
         {
-            detail::gemm_batch_impl<double, double, double, double>(q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb,
-                                                                    beta, c, ldc, batch_size, matrix_info);
-            break;
+            detail::gemm_batch_impl<ਦੁੱਗਣਾ, ਦੁੱਗਣਾ, ਦੁੱਗਣਾ, ਦੁੱਗਣਾ>(q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb,
+                                                                    beta, c, ldc, batch_ਮਾਪ, ਮੈਟ੍ਰਿਕਸ_info);
+            ਰੋਕੋ;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_half, library_data_t::real_half,
-            library_data_t::real_half, library_data_t::real_half):
+        ਹਾਲਤ detail::get_type_combination_id(
+            library_ਅੰਕੜੇ_t::real_half, library_ਅੰਕੜੇ_t::real_half,
+            library_ਅੰਕੜੇ_t::real_half, library_ਅੰਕੜੇ_t::real_half):
         {
             detail::gemm_batch_impl<sycl::half, sycl::half, sycl::half, sycl::half>(
-                q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, batch_size, matrix_info);
-            break;
+                q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, batch_ਮਾਪ, ਮੈਟ੍ਰਿਕਸ_info);
+            ਰੋਕੋ;
         }
-#ifdef __INTEL_MKL__
-        case detail::get_type_combination_id(
-            library_data_t::real_bfloat16, library_data_t::real_bfloat16,
-            library_data_t::real_bfloat16, library_data_t::real_float):
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ __INTEL_MKL__
+        ਹਾਲਤ detail::get_type_combination_id(
+            library_ਅੰਕੜੇ_t::real_bfloat16, library_ਅੰਕੜੇ_t::real_bfloat16,
+            library_ਅੰਕੜੇ_t::real_bfloat16, library_ਅੰਕੜੇ_t::real_float):
         {
-            detail::gemm_batch_impl<oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, float>(
-                q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, batch_size, matrix_info);
-            break;
+            detail::gemm_batch_impl<oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, ਦਸ਼ਮਲਵ>(
+                q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, batch_ਮਾਪ, ਮੈਟ੍ਰਿਕਸ_info);
+            ਰੋਕੋ;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_bfloat16, library_data_t::real_bfloat16,
-            library_data_t::real_float, library_data_t::real_float):
+        ਹਾਲਤ detail::get_type_combination_id(
+            library_ਅੰਕੜੇ_t::real_bfloat16, library_ਅੰਕੜੇ_t::real_bfloat16,
+            library_ਅੰਕੜੇ_t::real_float, library_ਅੰਕੜੇ_t::real_float):
         {
-            detail::gemm_batch_impl<oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, float, float>(
-                q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, batch_size, matrix_info);
-            break;
+            detail::gemm_batch_impl<oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, ਦਸ਼ਮਲਵ, ਦਸ਼ਮਲਵ>(
+                q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, batch_ਮਾਪ, ਮੈਟ੍ਰਿਕਸ_info);
+            ਰੋਕੋ;
         }
-#endif
-        case detail::get_type_combination_id(
-            library_data_t::real_int8, library_data_t::real_int8,
-            library_data_t::real_int32, library_data_t::real_int32):
+#ਜੇ_ਅੰਤ
+        ਹਾਲਤ detail::get_type_combination_id(
+            library_ਅੰਕੜੇ_t::real_int8, library_ਅੰਕੜੇ_t::real_int8,
+            library_ਅੰਕੜੇ_t::real_int32, library_ਅੰਕੜੇ_t::real_int32):
         {
-            float alpha_float =
-                dpct::get_value(reinterpret_cast<const std::int32_t *>(alpha), q);
-            float beta_float =
-                dpct::get_value(reinterpret_cast<const std::int32_t *>(beta), q);
-            detail::gemm_batch_impl<std::int8_t, std::int8_t, std::int32_t, float>(
-                q, a_trans, b_trans, m, n, k, &alpha_float, a, lda, b, ldb, &beta_float, c, ldc, batch_size,
-                matrix_info);
-            break;
+            ਦਸ਼ਮਲਵ alpha_float =
+                dpct::get_ਮੁੱਲ(reinterpret_cast<ਅਚਲ std::int32_t *>(alpha), q);
+            ਦਸ਼ਮਲਵ beta_float =
+                dpct::get_ਮੁੱਲ(reinterpret_cast<ਅਚਲ std::int32_t *>(beta), q);
+            detail::gemm_batch_impl<std::int8_t, std::int8_t, std::int32_t, ਦਸ਼ਮਲਵ>(
+                q, a_trans, b_trans, m, n, k, &alpha_float, a, lda, b, ldb, &beta_float, c, ldc, batch_ਮਾਪ,
+                ਮੈਟ੍ਰਿਕਸ_info);
+            ਰੋਕੋ;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_int8, library_data_t::real_int8,
-            library_data_t::real_float, library_data_t::real_float):
+        ਹਾਲਤ detail::get_type_combination_id(
+            library_ਅੰਕੜੇ_t::real_int8, library_ਅੰਕੜੇ_t::real_int8,
+            library_ਅੰਕੜੇ_t::real_float, library_ਅੰਕੜੇ_t::real_float):
         {
-            detail::gemm_batch_impl<std::int8_t, std::int8_t, float, float>(
-                q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, batch_size, matrix_info);
-            break;
+            detail::gemm_batch_impl<std::int8_t, std::int8_t, ਦਸ਼ਮਲਵ, ਦਸ਼ਮਲਵ>(
+                q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, batch_ਮਾਪ, ਮੈਟ੍ਰਿਕਸ_info);
+            ਰੋਕੋ;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_half, library_data_t::real_half,
-            library_data_t::real_float, library_data_t::real_float):
+        ਹਾਲਤ detail::get_type_combination_id(
+            library_ਅੰਕੜੇ_t::real_half, library_ਅੰਕੜੇ_t::real_half,
+            library_ਅੰਕੜੇ_t::real_float, library_ਅੰਕੜੇ_t::real_float):
         {
-            detail::gemm_batch_impl<sycl::half, sycl::half, float, float>(
-                q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, batch_size, matrix_info);
-            break;
+            detail::gemm_batch_impl<sycl::half, sycl::half, ਦਸ਼ਮਲਵ, ਦਸ਼ਮਲਵ>(
+                q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, batch_ਮਾਪ, ਮੈਟ੍ਰਿਕਸ_info);
+            ਰੋਕੋ;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_half, library_data_t::real_half,
-            library_data_t::real_half, library_data_t::real_float):
+        ਹਾਲਤ detail::get_type_combination_id(
+            library_ਅੰਕੜੇ_t::real_half, library_ਅੰਕੜੇ_t::real_half,
+            library_ਅੰਕੜੇ_t::real_half, library_ਅੰਕੜੇ_t::real_float):
         {
-            float alpha_value =
-                dpct::get_value(reinterpret_cast<const float *>(alpha), q);
-            float beta_value =
-                dpct::get_value(reinterpret_cast<const float *>(beta), q);
-            sycl::half alpha_half(alpha_value);
-            sycl::half beta_half(beta_value);
+            ਦਸ਼ਮਲਵ alpha_ਮੁੱਲ_2 =
+                dpct::get_ਮੁੱਲ(reinterpret_cast<ਅਚਲ ਦਸ਼ਮਲਵ *>(alpha), q);
+            ਦਸ਼ਮਲਵ beta_ਮੁੱਲ =
+                dpct::get_ਮੁੱਲ(reinterpret_cast<ਅਚਲ ਦਸ਼ਮਲਵ *>(beta), q);
+            sycl::half alpha_half(alpha_ਮੁੱਲ_2);
+            sycl::half beta_half(beta_ਮੁੱਲ);
             detail::gemm_batch_impl<sycl::half, sycl::half, sycl::half, sycl::half>(
-                q, a_trans, b_trans, m, n, k, &alpha_half, a, lda, b, ldb, &beta_half, c, ldc, batch_size, matrix_info);
-            break;
+                q, a_trans, b_trans, m, n, k, &alpha_half, a, lda, b, ldb, &beta_half, c, ldc, batch_ਮਾਪ, ਮੈਟ੍ਰਿਕਸ_info);
+            ਰੋਕੋ;
         }
-        default:
-            throw std::runtime_error("the combination of data type is unsupported");
+        ਮੂਲ:
+            ਸੁੱਟੋ std::runtime_error("the combination of data type is unsupported");
         }
     }
 
@@ -2550,256 +2550,256 @@ namespace dpct
     /// \param [in] stride_c Stride between the different C matrices.
     /// \param [in] batch_size Specifies the number of matrix multiply operations to perform.
     /// \param [in] scaling_type Data type of the scaling factors.
-    inline void gemm_batch(sycl::queue & q, oneapi::mkl::transpose a_trans, oneapi::mkl::transpose b_trans, int m,
-                           int n, int k, const void * alpha, const void * a, library_data_t a_type, int lda,
-                           long long int stride_a, const void * b, library_data_t b_type, int ldb,
-                           long long int stride_b, const void * beta, void * c, library_data_t c_type, int ldc,
-                           long long int stride_c, int batch_size, library_data_t scaling_type) {
-        if (scaling_type == library_data_t::real_float &&
-            c_type == library_data_t::complex_float)
+    ਸਤਰਅੰਦਰ ਖਾਲੀ gemm_batch(sycl::queue & q, oneapi::mkl::transpose a_trans, oneapi::mkl::transpose b_trans, ਪੂਰਨ m,
+                           ਪੂਰਨ n, ਪੂਰਨ k, ਅਚਲ ਖਾਲੀ * alpha, ਅਚਲ ਖਾਲੀ * a, library_ਅੰਕੜੇ_t a_type, ਪੂਰਨ lda,
+                           ਲੰਮਾ ਲੰਮਾ ਪੂਰਨ stride_a, ਅਚਲ ਖਾਲੀ * b, library_ਅੰਕੜੇ_t b_type, ਪੂਰਨ ldb,
+                           ਲੰਮਾ ਲੰਮਾ ਪੂਰਨ stride_b, ਅਚਲ ਖਾਲੀ * beta, ਖਾਲੀ * c, library_ਅੰਕੜੇ_t c_type, ਪੂਰਨ ldc,
+                           ਲੰਮਾ ਲੰਮਾ ਪੂਰਨ stride_c, ਪੂਰਨ batch_ਮਾਪ, library_ਅੰਕੜੇ_t scaling_type) {
+        ਜੇ (scaling_type == library_ਅੰਕੜੇ_t::real_float &&
+            c_type == library_ਅੰਕੜੇ_t::complex_float)
         {
-            scaling_type = library_data_t::complex_float;
+            scaling_type = library_ਅੰਕੜੇ_t::complex_float;
         }
-        else if (scaling_type == library_data_t::real_double &&
-                 c_type == library_data_t::complex_double)
+        ਨਹੀਂਤਾਂ ਜੇ (scaling_type == library_ਅੰਕੜੇ_t::real_double &&
+                 c_type == library_ਅੰਕੜੇ_t::complex_double)
         {
-            scaling_type = library_data_t::complex_double;
+            scaling_type = library_ਅੰਕੜੇ_t::complex_double;
         }
 
-        std::uint64_t key =
+        std::uint64_t ਕੁੰਜੀ =
             detail::get_type_combination_id(a_type, b_type, c_type, scaling_type);
-        switch (key)
+        ਚੋਣ (ਕੁੰਜੀ)
         {
-        case detail::get_type_combination_id(
-            library_data_t::real_float, library_data_t::real_float,
-            library_data_t::real_float, library_data_t::real_float):
+        ਹਾਲਤ detail::get_type_combination_id(
+            library_ਅੰਕੜੇ_t::real_float, library_ਅੰਕੜੇ_t::real_float,
+            library_ਅੰਕੜੇ_t::real_float, library_ਅੰਕੜੇ_t::real_float):
         {
-            detail::gemm_batch_impl<float, float, float, float>(
+            detail::gemm_batch_impl<ਦਸ਼ਮਲਵ, ਦਸ਼ਮਲਵ, ਦਸ਼ਮਲਵ, ਦਸ਼ਮਲਵ>(
                 q, a_trans, b_trans, m, n, k, alpha, a, lda, stride_a, b, ldb, stride_b,
-                beta, c, ldc, stride_c, batch_size);
-            break;
+                beta, c, ldc, stride_c, batch_ਮਾਪ);
+            ਰੋਕੋ;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_double, library_data_t::real_double,
-            library_data_t::real_double, library_data_t::real_double):
+        ਹਾਲਤ detail::get_type_combination_id(
+            library_ਅੰਕੜੇ_t::real_double, library_ਅੰਕੜੇ_t::real_double,
+            library_ਅੰਕੜੇ_t::real_double, library_ਅੰਕੜੇ_t::real_double):
         {
-            detail::gemm_batch_impl<double, double, double, double>(
+            detail::gemm_batch_impl<ਦੁੱਗਣਾ, ਦੁੱਗਣਾ, ਦੁੱਗਣਾ, ਦੁੱਗਣਾ>(
                 q, a_trans, b_trans, m, n, k, alpha, a, lda, stride_a, b, ldb, stride_b,
-                beta, c, ldc, stride_c, batch_size);
-            break;
+                beta, c, ldc, stride_c, batch_ਮਾਪ);
+            ਰੋਕੋ;
         }
-        case detail::get_type_combination_id(
-            library_data_t::complex_float, library_data_t::complex_float,
-            library_data_t::complex_float, library_data_t::complex_float):
+        ਹਾਲਤ detail::get_type_combination_id(
+            library_ਅੰਕੜੇ_t::complex_float, library_ਅੰਕੜੇ_t::complex_float,
+            library_ਅੰਕੜੇ_t::complex_float, library_ਅੰਕੜੇ_t::complex_float):
         {
-            detail::gemm_batch_impl<std::complex<float>, std::complex<float>,
-                                    std::complex<float>, std::complex<float>>(
+            detail::gemm_batch_impl<std::complex<ਦਸ਼ਮਲਵ>, std::complex<ਦਸ਼ਮਲਵ>,
+                                    std::complex<ਦਸ਼ਮਲਵ>, std::complex<ਦਸ਼ਮਲਵ>>(
                 q, a_trans, b_trans, m, n, k, alpha, a, lda, stride_a, b, ldb, stride_b,
-                beta, c, ldc, stride_c, batch_size);
-            break;
+                beta, c, ldc, stride_c, batch_ਮਾਪ);
+            ਰੋਕੋ;
         }
-        case detail::get_type_combination_id(
-            library_data_t::complex_double, library_data_t::complex_double,
-            library_data_t::complex_double, library_data_t::complex_double):
+        ਹਾਲਤ detail::get_type_combination_id(
+            library_ਅੰਕੜੇ_t::complex_double, library_ਅੰਕੜੇ_t::complex_double,
+            library_ਅੰਕੜੇ_t::complex_double, library_ਅੰਕੜੇ_t::complex_double):
         {
-            detail::gemm_batch_impl<std::complex<double>, std::complex<double>,
-                                    std::complex<double>, std::complex<double>>(
+            detail::gemm_batch_impl<std::complex<ਦੁੱਗਣਾ>, std::complex<ਦੁੱਗਣਾ>,
+                                    std::complex<ਦੁੱਗਣਾ>, std::complex<ਦੁੱਗਣਾ>>(
                 q, a_trans, b_trans, m, n, k, alpha, a, lda, stride_a, b, ldb, stride_b,
-                beta, c, ldc, stride_c, batch_size);
-            break;
+                beta, c, ldc, stride_c, batch_ਮਾਪ);
+            ਰੋਕੋ;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_half, library_data_t::real_half,
-            library_data_t::real_half, library_data_t::real_half):
+        ਹਾਲਤ detail::get_type_combination_id(
+            library_ਅੰਕੜੇ_t::real_half, library_ਅੰਕੜੇ_t::real_half,
+            library_ਅੰਕੜੇ_t::real_half, library_ਅੰਕੜੇ_t::real_half):
         {
             detail::gemm_batch_impl<sycl::half, sycl::half, sycl::half,
                                     sycl::half>(q, a_trans, b_trans, m, n, k, alpha,
                                                 a, lda, stride_a, b, ldb, stride_b,
-                                                beta, c, ldc, stride_c, batch_size);
-            break;
+                                                beta, c, ldc, stride_c, batch_ਮਾਪ);
+            ਰੋਕੋ;
         }
-#ifdef __INTEL_MKL__
-        case detail::get_type_combination_id(
-            library_data_t::real_bfloat16, library_data_t::real_bfloat16,
-            library_data_t::real_bfloat16, library_data_t::real_float):
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ __INTEL_MKL__
+        ਹਾਲਤ detail::get_type_combination_id(
+            library_ਅੰਕੜੇ_t::real_bfloat16, library_ਅੰਕੜੇ_t::real_bfloat16,
+            library_ਅੰਕੜੇ_t::real_bfloat16, library_ਅੰਕੜੇ_t::real_float):
         {
-            detail::gemm_batch_impl<oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, float>(
+            detail::gemm_batch_impl<oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, ਦਸ਼ਮਲਵ>(
                 q, a_trans, b_trans, m, n, k, alpha, a, lda, stride_a, b, ldb, stride_b, beta, c, ldc, stride_c,
-                batch_size);
-            break;
+                batch_ਮਾਪ);
+            ਰੋਕੋ;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_bfloat16, library_data_t::real_bfloat16,
-            library_data_t::real_float, library_data_t::real_float):
+        ਹਾਲਤ detail::get_type_combination_id(
+            library_ਅੰਕੜੇ_t::real_bfloat16, library_ਅੰਕੜੇ_t::real_bfloat16,
+            library_ਅੰਕੜੇ_t::real_float, library_ਅੰਕੜੇ_t::real_float):
         {
-            detail::gemm_batch_impl<oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, float, float>(
+            detail::gemm_batch_impl<oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, ਦਸ਼ਮਲਵ, ਦਸ਼ਮਲਵ>(
                 q, a_trans, b_trans, m, n, k, alpha, a, lda, stride_a, b, ldb, stride_b, beta, c, ldc, stride_c,
-                batch_size);
-            break;
+                batch_ਮਾਪ);
+            ਰੋਕੋ;
         }
-#endif
-        case detail::get_type_combination_id(
-            library_data_t::real_int8, library_data_t::real_int8,
-            library_data_t::real_int32, library_data_t::real_int32):
+#ਜੇ_ਅੰਤ
+        ਹਾਲਤ detail::get_type_combination_id(
+            library_ਅੰਕੜੇ_t::real_int8, library_ਅੰਕੜੇ_t::real_int8,
+            library_ਅੰਕੜੇ_t::real_int32, library_ਅੰਕੜੇ_t::real_int32):
         {
             detail::gemm_batch_impl<std::int8_t, std::int8_t, std::int32_t,
                                     std::int32_t>(q, a_trans, b_trans, m, n, k, alpha,
                                                   a, lda, stride_a, b, ldb, stride_b,
-                                                  beta, c, ldc, stride_c, batch_size);
-            break;
+                                                  beta, c, ldc, stride_c, batch_ਮਾਪ);
+            ਰੋਕੋ;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_int8, library_data_t::real_int8,
-            library_data_t::real_float, library_data_t::real_float):
+        ਹਾਲਤ detail::get_type_combination_id(
+            library_ਅੰਕੜੇ_t::real_int8, library_ਅੰਕੜੇ_t::real_int8,
+            library_ਅੰਕੜੇ_t::real_float, library_ਅੰਕੜੇ_t::real_float):
         {
-            detail::gemm_batch_impl<std::int8_t, std::int8_t, float, float>(
+            detail::gemm_batch_impl<std::int8_t, std::int8_t, ਦਸ਼ਮਲਵ, ਦਸ਼ਮਲਵ>(
                 q, a_trans, b_trans, m, n, k, alpha, a, lda, stride_a, b, ldb, stride_b,
-                beta, c, ldc, stride_c, batch_size);
-            break;
+                beta, c, ldc, stride_c, batch_ਮਾਪ);
+            ਰੋਕੋ;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_half, library_data_t::real_half,
-            library_data_t::real_float, library_data_t::real_float):
+        ਹਾਲਤ detail::get_type_combination_id(
+            library_ਅੰਕੜੇ_t::real_half, library_ਅੰਕੜੇ_t::real_half,
+            library_ਅੰਕੜੇ_t::real_float, library_ਅੰਕੜੇ_t::real_float):
         {
-            detail::gemm_batch_impl<sycl::half, sycl::half, float, float>(
+            detail::gemm_batch_impl<sycl::half, sycl::half, ਦਸ਼ਮਲਵ, ਦਸ਼ਮਲਵ>(
                 q, a_trans, b_trans, m, n, k, alpha, a, lda, stride_a, b, ldb, stride_b,
-                beta, c, ldc, stride_c, batch_size);
-            break;
+                beta, c, ldc, stride_c, batch_ਮਾਪ);
+            ਰੋਕੋ;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_half, library_data_t::real_half,
-            library_data_t::real_half, library_data_t::real_float):
+        ਹਾਲਤ detail::get_type_combination_id(
+            library_ਅੰਕੜੇ_t::real_half, library_ਅੰਕੜੇ_t::real_half,
+            library_ਅੰਕੜੇ_t::real_half, library_ਅੰਕੜੇ_t::real_float):
         {
-            float alpha_value =
-                dpct::get_value(reinterpret_cast<const float *>(alpha), q);
-            float beta_value =
-                dpct::get_value(reinterpret_cast<const float *>(beta), q);
-            sycl::half alpha_half(alpha_value);
-            sycl::half beta_half(beta_value);
+            ਦਸ਼ਮਲਵ alpha_ਮੁੱਲ_2 =
+                dpct::get_ਮੁੱਲ(reinterpret_cast<ਅਚਲ ਦਸ਼ਮਲਵ *>(alpha), q);
+            ਦਸ਼ਮਲਵ beta_ਮੁੱਲ =
+                dpct::get_ਮੁੱਲ(reinterpret_cast<ਅਚਲ ਦਸ਼ਮਲਵ *>(beta), q);
+            sycl::half alpha_half(alpha_ਮੁੱਲ_2);
+            sycl::half beta_half(beta_ਮੁੱਲ);
             detail::gemm_batch_impl<sycl::half, sycl::half, sycl::half, sycl::half>(
                 q, a_trans, b_trans, m, n, k, &alpha_half, a, lda, stride_a, b, ldb, stride_b,
-                &beta_half, c, ldc, stride_c, batch_size);
-            break;
+                &beta_half, c, ldc, stride_c, batch_ਮਾਪ);
+            ਰੋਕੋ;
         }
-        default:
-            throw std::runtime_error("the combination of data type is unsupported");
+        ਮੂਲ:
+            ਸੁੱਟੋ std::runtime_error("the combination of data type is unsupported");
         }
     }
 
-    static inline void
-    async_dpct_memcpy(void *to_ptr, size_t to_pitch, const void *from_ptr,
+    ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ
+    async_dpct_memcpy(ਖਾਲੀ *ਮੰਜ਼ਿਲ_ptr, size_t ਮੰਜ਼ਿਲ_pitch, ਅਚਲ ਖਾਲੀ *from_ptr,
                       size_t from_pitch, size_t x, size_t y,
                       memcpy_direction direction = automatic,
-                      sycl::queue &q = get_default_queue())
+                      sycl::queue &q = get_default_ਕਤਾਰ())
     {
-        detail::dpct_memcpy(q, to_ptr, from_ptr, to_pitch, from_pitch, x, y,
+        detail::dpct_memcpy(q, ਮੰਜ਼ਿਲ_ptr, from_ptr, ਮੰਜ਼ਿਲ_pitch, from_pitch, x, y,
                             direction);
     }
 
-    using err0 = detail::generic_error_type<struct err0_tag, int>;
-    using err1 = detail::generic_error_type<struct err1_tag, int>;
+    ਵਰਤੋਂ err0 = detail::generic_error_type<ਬਣਤਰ err0_ਟੈਗ, ਪੂਰਨ>;
+    ਵਰਤੋਂ err1 = detail::generic_error_type<ਬਣਤਰ err1_ਟੈਗ, ਪੂਰਨ>;
 
-    static inline void dpct_free(void *ptr, sycl::queue &q = get_default_queue()) {
+    ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ dpct_free(ਖਾਲੀ *ptr, sycl::queue &q = get_default_ਕਤਾਰ()) {
         detail::dpct_free(ptr, q);
     }
 
     /// dpct accessor used as device function parameter.
-    template <class T, memory_region Memory, size_t Dimension> class accessor;
-    template <class T, memory_region Memory> class accessor<T, Memory, 3> {
-    public:
-        using memory_t = detail::memory_traits<Memory, T>;
-        using element_t = typename memory_t::element_t;
-        using pointer_t = typename memory_t::pointer_t;
-        using accessor_t = typename memory_t::template accessor_t<3>;
-        accessor(pointer_t data, const sycl::range<3> &in_range)
-            : _data(data), _range(in_range) {}
-        template <memory_region M = Memory>
-        accessor(typename std::enable_if<M != local, const accessor_t>::type &acc)
+    ਸਾਂਚਾ <ਵਰਗ T, ਸਮ੍ਰਿਤੀ_region ਸਮ੍ਰਿਤੀ_2, size_t Dimension> ਵਰਗ accessor;
+    ਸਾਂਚਾ <ਵਰਗ T, ਸਮ੍ਰਿਤੀ_region ਸਮ੍ਰਿਤੀ_2> ਵਰਗ accessor<T, ਸਮ੍ਰਿਤੀ_2, 3> {
+    ਜਨਤਕ:
+        ਵਰਤੋਂ ਸਮ੍ਰਿਤੀ_t = detail::ਸਮ੍ਰਿਤੀ_traits<ਸਮ੍ਰਿਤੀ_2, T>;
+        ਵਰਤੋਂ element_t = ਕਿਸਮ_ਨਾਂ ਸਮ੍ਰਿਤੀ_t::element_t;
+        ਵਰਤੋਂ ਸੂਚਕ_t = ਕਿਸਮ_ਨਾਂ ਸਮ੍ਰਿਤੀ_t::ਸੂਚਕ_t;
+        ਵਰਤੋਂ accessor_t = ਕਿਸਮ_ਨਾਂ ਸਮ੍ਰਿਤੀ_t::ਸਾਂਚਾ accessor_t<3>;
+        accessor(ਸੂਚਕ_t ਅੰਕੜੇ, ਅਚਲ sycl::range<3> &ਵਿੱਚ_range)
+            : ਅੰਕੜੇ_2(ਅੰਕੜੇ), _range(ਵਿੱਚ_range) {}
+        ਸਾਂਚਾ <ਸਮ੍ਰਿਤੀ_region M = ਸਮ੍ਰਿਤੀ_2>
+        accessor(ਕਿਸਮ_ਨਾਂ std::enable_if<M != local, ਅਚਲ accessor_t>::type &acc)
             : accessor(acc, acc.get_range()) {}
-        accessor(const accessor_t &acc, const sycl::range<3> &in_range)
-            : accessor(acc.get_pointer(), in_range) {}
-        accessor<T, Memory, 2> operator[](size_t index) const {
+        accessor(ਅਚਲ accessor_t &acc, ਅਚਲ sycl::range<3> &ਵਿੱਚ_range)
+            : accessor(acc.get_ਸੂਚਕ(), ਵਿੱਚ_range) {}
+        accessor<T, ਸਮ੍ਰਿਤੀ_2, 2> ਸੰਚਾਲਕ[](size_t ਸੂਚਕਾਂਕ) ਅਚਲ {
             sycl::range<2> sub(_range.get(1), _range.get(2));
-            return accessor<T, Memory, 2>(_data + index * sub.size(), sub);
+            ਵਾਪਸ accessor<T, ਸਮ੍ਰਿਤੀ_2, 2>(ਅੰਕੜੇ_2 + ਸੂਚਕਾਂਕ * sub.size(), sub);
         }
 
-        pointer_t get_ptr() const { return _data; }
+        ਸੂਚਕ_t get_ptr() ਅਚਲ { ਵਾਪਸ ਅੰਕੜੇ_2; }
 
-    private:
-        pointer_t _data;
+    ਨਿਜੀ:
+        ਸੂਚਕ_t ਅੰਕੜੇ_2;
         sycl::range<3> _range;
     };
-    template <class T, memory_region Memory> class accessor<T, Memory, 2> {
-    public:
-        using memory_t = detail::memory_traits<Memory, T>;
-        using element_t = typename memory_t::element_t;
-        using pointer_t = typename memory_t::pointer_t;
-        using accessor_t = typename memory_t::template accessor_t<2>;
-        accessor(pointer_t data, const sycl::range<2> &in_range)
-            : _data(data), _range(in_range) {}
-        template <memory_region M = Memory>
-        accessor(typename std::enable_if<M != local, const accessor_t>::type &acc)
+    ਸਾਂਚਾ <ਵਰਗ T, ਸਮ੍ਰਿਤੀ_region ਸਮ੍ਰਿਤੀ_2> ਵਰਗ accessor<T, ਸਮ੍ਰਿਤੀ_2, 2> {
+    ਜਨਤਕ:
+        ਵਰਤੋਂ ਸਮ੍ਰਿਤੀ_t = detail::ਸਮ੍ਰਿਤੀ_traits<ਸਮ੍ਰਿਤੀ_2, T>;
+        ਵਰਤੋਂ element_t = ਕਿਸਮ_ਨਾਂ ਸਮ੍ਰਿਤੀ_t::element_t;
+        ਵਰਤੋਂ ਸੂਚਕ_t = ਕਿਸਮ_ਨਾਂ ਸਮ੍ਰਿਤੀ_t::ਸੂਚਕ_t;
+        ਵਰਤੋਂ accessor_t = ਕਿਸਮ_ਨਾਂ ਸਮ੍ਰਿਤੀ_t::ਸਾਂਚਾ accessor_t<2>;
+        accessor(ਸੂਚਕ_t ਅੰਕੜੇ, ਅਚਲ sycl::range<2> &ਵਿੱਚ_range)
+            : ਅੰਕੜੇ_2(ਅੰਕੜੇ), _range(ਵਿੱਚ_range) {}
+        ਸਾਂਚਾ <ਸਮ੍ਰਿਤੀ_region M = ਸਮ੍ਰਿਤੀ_2>
+        accessor(ਕਿਸਮ_ਨਾਂ std::enable_if<M != local, ਅਚਲ accessor_t>::type &acc)
             : accessor(acc, acc.get_range()) {}
-        accessor(const accessor_t &acc, const sycl::range<2> &in_range)
-            : accessor(acc.get_pointer(), in_range) {}
+        accessor(ਅਚਲ accessor_t &acc, ਅਚਲ sycl::range<2> &ਵਿੱਚ_range)
+            : accessor(acc.get_ਸੂਚਕ(), ਵਿੱਚ_range) {}
 
-        pointer_t operator[](size_t index) const {
-            return _data + _range.get(1) * index;
+        ਸੂਚਕ_t ਸੰਚਾਲਕ[](size_t ਸੂਚਕਾਂਕ) ਅਚਲ {
+            ਵਾਪਸ ਅੰਕੜੇ_2 + _range.get(1) * ਸੂਚਕਾਂਕ;
         }
 
-        pointer_t get_ptr() const { return _data; }
+        ਸੂਚਕ_t get_ptr() ਅਚਲ { ਵਾਪਸ ਅੰਕੜੇ_2; }
 
-    private:
-        pointer_t _data;
+    ਨਿਜੀ:
+        ਸੂਚਕ_t ਅੰਕੜੇ_2;
         sycl::range<2> _range;
     };
 
-    namespace detail {
+    ਨਾਮਾਕਾਸ਼ detail {
         /// Device variable with address space of shared, global or constant.
-        template <class T, memory_region Memory, size_t Dimension> class device_memory {
-        public:
-            using accessor_t =
-                typename detail::memory_traits<Memory,
-                                            T>::template accessor_t<Dimension>;
-            using value_t = typename detail::memory_traits<Memory, T>::value_t;
-            using dpct_accessor_t = dpct::accessor<T, Memory, Dimension>;
+        ਸਾਂਚਾ <ਵਰਗ T, ਸਮ੍ਰਿਤੀ_region ਸਮ੍ਰਿਤੀ_2, size_t Dimension> ਵਰਗ device_ਸਮ੍ਰਿਤੀ {
+        ਜਨਤਕ:
+            ਵਰਤੋਂ accessor_t =
+                ਕਿਸਮ_ਨਾਂ detail::ਸਮ੍ਰਿਤੀ_traits<ਸਮ੍ਰਿਤੀ_2,
+                                            T>::ਸਾਂਚਾ accessor_t<Dimension>;
+            ਵਰਤੋਂ ਮੁੱਲ_t = ਕਿਸਮ_ਨਾਂ detail::ਸਮ੍ਰਿਤੀ_traits<ਸਮ੍ਰਿਤੀ_2, T>::ਮੁੱਲ_t;
+            ਵਰਤੋਂ dpct_accessor_t = dpct::accessor<T, ਸਮ੍ਰਿਤੀ_2, Dimension>;
 
-            device_memory() : device_memory(sycl::range<Dimension>(1)) {}
+            device_ਸਮ੍ਰਿਤੀ() : device_ਸਮ੍ਰਿਤੀ(sycl::range<Dimension>(1)) {}
 
             /// Constructor of 1-D array with initializer list
-            device_memory(const sycl::range<Dimension> &in_range,
-                        std::initializer_list<value_t> &&init_list)
-                : device_memory(in_range) {
-                assert(init_list.size() <= in_range.size());
-                _host_ptr = (value_t *)std::malloc(_size);
-                std::memset(_host_ptr, 0, _size);
-                std::memcpy(_host_ptr, init_list.begin(), init_list.size() * sizeof(T));
+            device_ਸਮ੍ਰਿਤੀ(ਅਚਲ sycl::range<Dimension> &ਵਿੱਚ_range,
+                        std::initializer_list<ਮੁੱਲ_t> &&init_list)
+                : device_ਸਮ੍ਰਿਤੀ(ਵਿੱਚ_range) {
+                ਪ੍ਰਤਿਜ੍ਞਾ(init_list.size() <= ਵਿੱਚ_range.size());
+                _host_ptr = (ਮੁੱਲ_t *)std::ਸਮ੍ਰਿਤੀ_ਦਿਓ(ਮਾਪ_2);
+                std::memset(_host_ptr, 0, ਮਾਪ_2);
+                std::ਸਮ੍ਰਿਤੀ_ਨਕਲ(_host_ptr, init_list.begin(), init_list.size() * ਆਕਾਰ(T));
             }
 
             /// Constructor of 2-D array with initializer list
-            template <size_t D = Dimension>
-            device_memory(
-                const typename std::enable_if<D == 2, sycl::range<2>>::type &in_range,
-                std::initializer_list<std::initializer_list<value_t>> &&init_list)
-                : device_memory(in_range) {
-                assert(init_list.size() <= in_range[0]);
-                _host_ptr = (value_t *)std::malloc(_size);
-                std::memset(_host_ptr, 0, _size);
-                auto tmp_data = _host_ptr;
-                for (auto sub_list : init_list) {
-                    assert(sub_list.size() <= in_range[1]);
-                    std::memcpy(tmp_data, sub_list.begin(),
-                                sub_list.size() * sizeof(T));
-                    tmp_data += in_range[1];
+            ਸਾਂਚਾ <size_t D = Dimension>
+            device_ਸਮ੍ਰਿਤੀ(
+                ਅਚਲ ਕਿਸਮ_ਨਾਂ std::enable_if<D == 2, sycl::range<2>>::type &ਵਿੱਚ_range,
+                std::initializer_list<std::initializer_list<ਮੁੱਲ_t>> &&init_list)
+                : device_ਸਮ੍ਰਿਤੀ(ਵਿੱਚ_range) {
+                ਪ੍ਰਤਿਜ੍ਞਾ(init_list.size() <= ਵਿੱਚ_range[0]);
+                _host_ptr = (ਮੁੱਲ_t *)std::ਸਮ੍ਰਿਤੀ_ਦਿਓ(ਮਾਪ_2);
+                std::memset(_host_ptr, 0, ਮਾਪ_2);
+                ਸਵੈਚਾਲਿਤ tmp_ਅੰਕੜੇ = _host_ptr;
+                ਲਈ (ਸਵੈਚਾਲਿਤ sub_list : init_list) {
+                    ਪ੍ਰਤਿਜ੍ਞਾ(sub_list.size() <= ਵਿੱਚ_range[1]);
+                    std::ਸਮ੍ਰਿਤੀ_ਨਕਲ(tmp_ਅੰਕੜੇ, sub_list.begin(),
+                                sub_list.size() * ਆਕਾਰ(T));
+                    tmp_ਅੰਕੜੇ += ਵਿੱਚ_range[1];
                 }
             }
 
             /// Constructor with range
-            device_memory(const sycl::range<Dimension> &range_in)
-                : _size(range_in.size() * sizeof(T)), _range(range_in),
-                _reference(false), _host_ptr(nullptr), _device_ptr(nullptr) {
+            device_ਸਮ੍ਰਿਤੀ(ਅਚਲ sycl::range<Dimension> &range_ਵਿੱਚ)
+                : ਮਾਪ_2(range_ਵਿੱਚ.size() * ਆਕਾਰ(T)), _range(range_ਵਿੱਚ),
+                _reference(ਝੂਠ), _host_ptr(ਖਾਲੀ_ਸੂਚਕ), _device_ptr(ਖਾਲੀ_ਸੂਚਕ) {
                 static_assert(
-                    (Memory == global) || (Memory == constant) || (Memory == shared),
+                    (ਸਮ੍ਰਿਤੀ_2 == global) || (ਸਮ੍ਰਿਤੀ_2 == constant) || (ਸਮ੍ਰਿਤੀ_2 == shared),
                     "device memory region should be global, constant or shared");
                 // Make sure that singleton class mem_mgr and dev_mgr will destruct
                 // later than this.
@@ -2808,174 +2808,174 @@ namespace dpct
             }
 
             /// Constructor with range
-            template <class... Args>
-            device_memory(Args... Arguments)
-                : device_memory(sycl::range<Dimension>(Arguments...)) {}
+            ਸਾਂਚਾ <ਵਰਗ... ਦਲੀਲਾਂ>
+            device_ਸਮ੍ਰਿਤੀ(ਦਲੀਲਾਂ... Arguments)
+                : device_ਸਮ੍ਰਿਤੀ(sycl::range<Dimension>(Arguments...)) {}
 
-            ~device_memory() {
-                if (_device_ptr && !_reference)
+            ~device_ਸਮ੍ਰਿਤੀ() {
+                ਜੇ (_device_ptr && !_reference)
                     dpct::dpct_free(_device_ptr);
-                if (_host_ptr)
-                    std::free(_host_ptr);
+                ਜੇ (_host_ptr)
+                    std::ਮੁਕਤ(_host_ptr);
             }
 
             /// Allocate memory with default queue, and init memory if has initial
             /// value.
-            void init() { init(dpct::get_default_queue()); }
+            ਖਾਲੀ init() { init(dpct::get_default_ਕਤਾਰ()); }
             /// Allocate memory with specified queue, and init memory if has initial
             /// value.
-            void init(sycl::queue &q) {
-                if (_device_ptr)
-                    return;
-                if (!_size)
-                    return;
+            ਖਾਲੀ init(sycl::queue &q) {
+                ਜੇ (_device_ptr)
+                    ਵਾਪਸ;
+                ਜੇ (!ਮਾਪ_2)
+                    ਵਾਪਸ;
                 allocate_device(q);
-                if (_host_ptr)
-                    detail::dpct_memcpy(q, _device_ptr, _host_ptr, _size,
-                                        host_to_device);
+                ਜੇ (_host_ptr)
+                    detail::dpct_memcpy(q, _device_ptr, _host_ptr, ਮਾਪ_2,
+                                        host_ਮੰਜ਼ਿਲ_device);
             }
 
             /// The variable is assigned to a device pointer.
-            void assign(value_t *src, size_t size) {
-                this->~device_memory();
-                new (this) device_memory(src, size);
+            ਖਾਲੀ ਸੌਂਪੋ(ਮੁੱਲ_t *src, size_t size) {
+                ਇਹ->~device_ਸਮ੍ਰਿਤੀ();
+                ਨਵਾਂ (ਇਹ) device_ਸਮ੍ਰਿਤੀ(src, size);
             }
 
             /// Get memory pointer of the memory object, which is virtual pointer when
             /// usm is not used, and device pointer when usm is used.
-            value_t *get_ptr() { return get_ptr(get_default_queue()); }
+            ਮੁੱਲ_t *get_ptr() { ਵਾਪਸ get_ptr(get_default_ਕਤਾਰ()); }
             /// Get memory pointer of the memory object, which is virtual pointer when
             /// usm is not used, and device pointer when usm is used.
-            value_t *get_ptr(sycl::queue &q) {
+            ਮੁੱਲ_t *get_ptr(sycl::queue &q) {
                 init(q);
-                return _device_ptr;
+                ਵਾਪਸ _device_ptr;
             }
 
             /// Get the device memory object size in bytes.
-            size_t get_size() { return _size; }
+            size_t get_ਮਾਪ() { ਵਾਪਸ ਮਾਪ_2; }
 
-            template <size_t D = Dimension>
-            typename std::enable_if<D == 1, T>::type &operator[](size_t index) {
+            ਸਾਂਚਾ <size_t D = Dimension>
+            ਕਿਸਮ_ਨਾਂ std::enable_if<D == 1, T>::type &ਸੰਚਾਲਕ[](size_t ਸੂਚਕਾਂਕ) {
                 init();
-                return _device_ptr[index];
+                ਵਾਪਸ _device_ptr[ਸੂਚਕਾਂਕ];
             }
 
             /// Get dpct::accessor with dimension info for the device memory object
             /// when usm is used and dimension is greater than 1.
-            template <size_t D = Dimension>
-            typename std::enable_if<D != 1, dpct_accessor_t>::type
+            ਸਾਂਚਾ <size_t D = Dimension>
+            ਕਿਸਮ_ਨਾਂ std::enable_if<D != 1, dpct_accessor_t>::type
             get_access([[maybe_unused]] sycl::handler &cgh) {
-                return dpct_accessor_t((T *)_device_ptr, _range);
+                ਵਾਪਸ dpct_accessor_t((T *)_device_ptr, _range);
             }
 
-        private:
-            device_memory(value_t *memory_ptr, size_t size)
-                : _size(size), _range(size / sizeof(T)), _reference(true),
-                _device_ptr(memory_ptr) {}
+        ਨਿਜੀ:
+            device_ਸਮ੍ਰਿਤੀ(ਮੁੱਲ_t *ਸਮ੍ਰਿਤੀ_ptr, size_t size)
+                : ਮਾਪ_2(size), _range(size / ਆਕਾਰ(T)), _reference(ਸੱਚ),
+                _device_ptr(ਸਮ੍ਰਿਤੀ_ptr) {}
 
-            void allocate_device(sycl::queue &q) {
-        #ifndef DPCT_USM_LEVEL_NONE
-                if (Memory == shared) {
-                    _device_ptr = (value_t *)sycl::malloc_shared(_size, q.get_device(),
+            ਖਾਲੀ allocate_device(sycl::queue &q) {
+        #ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ DPCT_USM_LEVEL_NONE
+                ਜੇ (ਸਮ੍ਰਿਤੀ_2 == shared) {
+                    _device_ptr = (ਮੁੱਲ_t *)sycl::malloc_shared(ਮਾਪ_2, q.get_device(),
                                                                 q.get_context());
-                    return;
+                    ਵਾਪਸ;
                 }
-        #ifdef SYCL_EXT_ONEAPI_USM_DEVICE_READ_ONLY
-                if (Memory == constant) {
-                    _device_ptr = (value_t *)sycl::malloc_device(
-                        _size, q.get_device(), q.get_context(),
+        #ਜੇ_ਪਰਿਭਾਸ਼ਿਤ SYCL_EXT_ONEAPI_USM_DEVICE_READ_ONLY
+                ਜੇ (ਸਮ੍ਰਿਤੀ_2 == constant) {
+                    _device_ptr = (ਮੁੱਲ_t *)sycl::malloc_device(
+                        ਮਾਪ_2, q.get_device(), q.get_context(),
                         sycl::ext::oneapi::property::usm::device_read_only());
-                    return;
+                    ਵਾਪਸ;
                 }
-        #endif
-        #endif
-                _device_ptr = (value_t *)detail::dpct_malloc(_size, q);
+        #ਜੇ_ਅੰਤ
+        #ਜੇ_ਅੰਤ
+                _device_ptr = (ਮੁੱਲ_t *)detail::dpct_malloc(ਮਾਪ_2, q);
             }
 
-            size_t _size;
+            size_t ਮਾਪ_2;
             sycl::range<Dimension> _range;
-            bool _reference;
-            value_t *_host_ptr;
-            value_t *_device_ptr;
+            ਤਾਰਕਿਕ _reference;
+            ਮੁੱਲ_t *_host_ptr;
+            ਮੁੱਲ_t *_device_ptr;
         };
-        template <class T, memory_region Memory>
-        class device_memory<T, Memory, 0> : public device_memory<T, Memory, 1> {
-        public:
-            using base = device_memory<T, Memory, 1>;
-            using value_t = typename base::value_t;
-            using accessor_t =
-                typename detail::memory_traits<Memory, T>::template accessor_t<0>;
+        ਸਾਂਚਾ <ਵਰਗ T, ਸਮ੍ਰਿਤੀ_region ਸਮ੍ਰਿਤੀ_2>
+        ਵਰਗ device_ਸਮ੍ਰਿਤੀ<T, ਸਮ੍ਰਿਤੀ_2, 0> : ਜਨਤਕ device_ਸਮ੍ਰਿਤੀ<T, ਸਮ੍ਰਿਤੀ_2, 1> {
+        ਜਨਤਕ:
+            ਵਰਤੋਂ ਅਧਾਰ = device_ਸਮ੍ਰਿਤੀ<T, ਸਮ੍ਰਿਤੀ_2, 1>;
+            ਵਰਤੋਂ ਮੁੱਲ_t = ਕਿਸਮ_ਨਾਂ ਅਧਾਰ::ਮੁੱਲ_t;
+            ਵਰਤੋਂ accessor_t =
+                ਕਿਸਮ_ਨਾਂ detail::ਸਮ੍ਰਿਤੀ_traits<ਸਮ੍ਰਿਤੀ_2, T>::ਸਾਂਚਾ accessor_t<0>;
 
             /// Constructor with initial value.
-            device_memory(const value_t &val) : base(sycl::range<1>(1), {val}) {}
+            device_ਸਮ੍ਰਿਤੀ(ਅਚਲ ਮੁੱਲ_t &val) : ਅਧਾਰ(sycl::range<1>(1), {val}) {}
 
             /// Default constructor
-            device_memory() : base(1) {}
+            device_ਸਮ੍ਰਿਤੀ() : ਅਧਾਰ(1) {}
         };
         } // namespace detail
 
-    template <class T, size_t Dimension>
-    using global_memory = detail::device_memory<T, global, Dimension>;
-    template <class T, size_t Dimension>
-    using constant_memory = detail::device_memory<T, constant, Dimension>;
-    template <class T, size_t Dimension>
-    using shared_memory = detail::device_memory<T, shared, Dimension>;
+    ਸਾਂਚਾ <ਵਰਗ T, size_t Dimension>
+    ਵਰਤੋਂ global_ਸਮ੍ਰਿਤੀ = detail::device_ਸਮ੍ਰਿਤੀ<T, global, Dimension>;
+    ਸਾਂਚਾ <ਵਰਗ T, size_t Dimension>
+    ਵਰਤੋਂ constant_ਸਮ੍ਰਿਤੀ = detail::device_ਸਮ੍ਰਿਤੀ<T, constant, Dimension>;
+    ਸਾਂਚਾ <ਵਰਗ T, size_t Dimension>
+    ਵਰਤੋਂ shared_ਸਮ੍ਰਿਤੀ = detail::device_ਸਮ੍ਰਿਤੀ<T, shared, Dimension>;
 
 
-    template <typename T,
-            sycl::access::address_space addressSpace =
-                sycl::access::address_space::global_space,
-            sycl::memory_order memoryOrder = sycl::memory_order::relaxed,
-            sycl::memory_scope memoryScope = sycl::memory_scope::device>
-    inline T atomic_fetch_add(T *addr, T operand) {
-    auto atm =
-        sycl::atomic_ref<T, memoryOrder, memoryScope, addressSpace>(addr[0]);
-    return atm.fetch_add(operand);
+    ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T,
+            sycl::access::ਪਤਾ_space ਪਤਾ_Space =
+                sycl::access::ਪਤਾ_space::global_space,
+            sycl::memory_order ਸਮ੍ਰਿਤੀ_ਕ੍ਰਮ = sycl::memory_order::relaxed,
+            sycl::ਸਮ੍ਰਿਤੀ_scope ਸਮ੍ਰਿਤੀ_Scope = sycl::ਸਮ੍ਰਿਤੀ_scope::device>
+    ਸਤਰਅੰਦਰ T atomic_fetch_add(T *addr, T ਸੰਕਾਰਜ) {
+    ਸਵੈਚਾਲਿਤ atm =
+        sycl::atomic_ref<T, ਸਮ੍ਰਿਤੀ_ਕ੍ਰਮ, ਸਮ੍ਰਿਤੀ_Scope, ਪਤਾ_Space>(addr[0]);
+    ਵਾਪਸ atm.fetch_add(ਸੰਕਾਰਜ);
     }
 
-    template <sycl::access::address_space addressSpace =
-                sycl::access::address_space::global_space,
-            sycl::memory_order memoryOrder = sycl::memory_order::relaxed,
-            sycl::memory_scope memoryScope = sycl::memory_scope::device,
-            typename T1, typename T2>
-    inline T1 atomic_fetch_add(T1 *addr, T2 operand) {
-    auto atm =
-        sycl::atomic_ref<T1, memoryOrder, memoryScope, addressSpace>(addr[0]);
-    return atm.fetch_add(operand);
+    ਸਾਂਚਾ <sycl::access::ਪਤਾ_space ਪਤਾ_Space =
+                sycl::access::ਪਤਾ_space::global_space,
+            sycl::memory_order ਸਮ੍ਰਿਤੀ_ਕ੍ਰਮ = sycl::memory_order::relaxed,
+            sycl::ਸਮ੍ਰਿਤੀ_scope ਸਮ੍ਰਿਤੀ_Scope = sycl::ਸਮ੍ਰਿਤੀ_scope::device,
+            ਕਿਸਮ_ਨਾਂ T1, ਕਿਸਮ_ਨਾਂ T2>
+    ਸਤਰਅੰਦਰ T1 atomic_fetch_add(T1 *addr, T2 ਸੰਕਾਰਜ) {
+    ਸਵੈਚਾਲਿਤ atm =
+        sycl::atomic_ref<T1, ਸਮ੍ਰਿਤੀ_ਕ੍ਰਮ, ਸਮ੍ਰਿਤੀ_Scope, ਪਤਾ_Space>(addr[0]);
+    ਵਾਪਸ atm.fetch_add(ਸੰਕਾਰਜ);
     }
 
-    template <typename T, sycl::access::address_space addressSpace =
-                            sycl::access::address_space::global_space>
-    inline T atomic_fetch_add(T *addr, T operand,
-                            sycl::memory_order memoryOrder) {
-    switch (memoryOrder) {
-        case sycl::memory_order::relaxed:
-            return atomic_fetch_add<T, addressSpace, sycl::memory_order::relaxed,
-                                    sycl::memory_scope::device>(addr, operand);
-        case sycl::memory_order::acq_rel:
-            return atomic_fetch_add<T, addressSpace, sycl::memory_order::acq_rel,
-                                    sycl::memory_scope::device>(addr, operand);
-        case sycl::memory_order::seq_cst:
-            return atomic_fetch_add<T, addressSpace, sycl::memory_order::seq_cst,
-                                    sycl::memory_scope::device>(addr, operand);
-        default:
-            assert(false && "Invalid memory_order for atomics. Valid memory_order for "
+    ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T, sycl::access::ਪਤਾ_space ਪਤਾ_Space =
+                            sycl::access::ਪਤਾ_space::global_space>
+    ਸਤਰਅੰਦਰ T atomic_fetch_add(T *addr, T ਸੰਕਾਰਜ,
+                            sycl::memory_order ਸਮ੍ਰਿਤੀ_ਕ੍ਰਮ) {
+    ਚੋਣ (ਸਮ੍ਰਿਤੀ_ਕ੍ਰਮ) {
+        ਹਾਲਤ sycl::memory_order::relaxed:
+            ਵਾਪਸ atomic_fetch_add<T, ਪਤਾ_Space, sycl::memory_order::relaxed,
+                                    sycl::ਸਮ੍ਰਿਤੀ_scope::device>(addr, ਸੰਕਾਰਜ);
+        ਹਾਲਤ sycl::memory_order::acq_rel:
+            ਵਾਪਸ atomic_fetch_add<T, ਪਤਾ_Space, sycl::memory_order::acq_rel,
+                                    sycl::ਸਮ੍ਰਿਤੀ_scope::device>(addr, ਸੰਕਾਰਜ);
+        ਹਾਲਤ sycl::memory_order::seq_cst:
+            ਵਾਪਸ atomic_fetch_add<T, ਪਤਾ_Space, sycl::memory_order::seq_cst,
+                                    sycl::ਸਮ੍ਰਿਤੀ_scope::device>(addr, ਸੰਕਾਰਜ);
+        ਮੂਲ:
+            ਪ੍ਰਤਿਜ੍ਞਾ(ਝੂਠ && "Invalid memory_order for atomics. Valid memory_order for "
                             "atomics are: sycl::memory_order::relaxed, "
                             "sycl::memory_order::acq_rel, sycl::memory_order::seq_cst!");
         }
     }
 
-    template <sycl::access::address_space addressSpace =
-                sycl::access::address_space::global_space,
-            typename T1, typename T2>
-    inline T1 atomic_fetch_add(T1 *addr, T2 operand,
-                            sycl::memory_order memoryOrder) {
-    atomic_fetch_add<T1, addressSpace>(addr, operand, memoryOrder);
+    ਸਾਂਚਾ <sycl::access::ਪਤਾ_space ਪਤਾ_Space =
+                sycl::access::ਪਤਾ_space::global_space,
+            ਕਿਸਮ_ਨਾਂ T1, ਕਿਸਮ_ਨਾਂ T2>
+    ਸਤਰਅੰਦਰ T1 atomic_fetch_add(T1 *addr, T2 ਸੰਕਾਰਜ,
+                            sycl::memory_order ਸਮ੍ਰਿਤੀ_ਕ੍ਰਮ) {
+    atomic_fetch_add<T1, ਪਤਾ_Space>(addr, ਸੰਕਾਰਜ, ਸਮ੍ਰਿਤੀ_ਕ੍ਰਮ);
     }
 
-    inline unsigned int byte_level_permute(
-        unsigned int a, unsigned int b, unsigned int s) {
-      unsigned int ret;
+    ਸਤਰਅੰਦਰ ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ byte_level_ਕ੍ਰਮ_ਬਦਲੋ(
+        ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ a, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ b, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ s) {
+      ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ ret;
       ret = ((((std::uint64_t)b << 32 | a) >> (s & 0x7) * 8) & 0xff) |
             (((((std::uint64_t)b << 32 | a) >> ((s >> 4) & 0x7) * 8) & 0xff)
              << 8) |
@@ -2983,11 +2983,11 @@ namespace dpct
              << 16) |
             (((((std::uint64_t)b << 32 | a) >> ((s >> 12) & 0x7) * 8) & 0xff)
              << 24);
-      return ret;
+      ਵਾਪਸ ret;
     }
 
-    inline uint32_t byte_level_permute_custom(
-        uint32_t low32, uint32_t high32, uint32_t sel, int mode = 0) {
+    ਸਤਰਅੰਦਰ uint32_t byte_level_ਕ੍ਰਮ_ਬਦਲੋ_custom(
+        uint32_t low32, uint32_t high32, uint32_t sel, ਪੂਰਨ mode = 0) {
       constexpr uint16_t lookup[6][4] = {
           {0x3210, 0x4321, 0x5432, 0x6543},  // Forward 4-byte extract
           {0x5670, 0x6701, 0x7012, 0x0123},  // Backward 4-byte extract
@@ -2997,16 +2997,16 @@ namespace dpct
           {0x1010, 0x3232, 0x1010, 0x3232}   // Replicate 16-bit values
       };
 
-      if (mode >= 1 && mode <= 6) {
-        return byte_level_permute(low32, high32, lookup[mode - 1][sel & 0x3]);
-      } else if (!mode) {
-        return byte_level_permute(low32, high32, sel);
+      ਜੇ (mode >= 1 && mode <= 6) {
+        ਵਾਪਸ byte_level_ਕ੍ਰਮ_ਬਦਲੋ(low32, high32, lookup[mode - 1][sel & 0x3]);
+      } ਨਹੀਂਤਾਂ ਜੇ (!mode) {
+        ਵਾਪਸ byte_level_ਕ੍ਰਮ_ਬਦਲੋ(low32, high32, sel);
       }
-      return 0;
+      ਵਾਪਸ 0;
     }
 
-    template <int n_nondefault_params, int n_default_params, typename T>
-    class args_selector;
+    ਸਾਂਚਾ <ਪੂਰਨ n_nondefault_params, ਪੂਰਨ n_default_params, ਕਿਸਮ_ਨਾਂ T>
+    ਵਰਗ ਦਲੀਲਾਂ_selector;
 
     /// args_selector is a helper class for extracting arguments from an
     /// array of pointers to arguments or buffer of arguments to pass to a
@@ -3027,88 +3027,88 @@ namespace dpct
     ///   selector.get<0>() returns a reference to sycl::float*,
     ///   selector.get<1>() returns a reference to int,
     ///   selector.get<2>() returns a reference to float
-    template <int n_nondefault_params, int n_default_params, typename R,
-              typename... Ts>
-    class args_selector<n_nondefault_params, n_default_params, R(Ts...)> {
-      private:
-        void **kernel_params;
-        char *args_buffer;
+    ਸਾਂਚਾ <ਪੂਰਨ n_nondefault_params, ਪੂਰਨ n_default_params, ਕਿਸਮ_ਨਾਂ R,
+              ਕਿਸਮ_ਨਾਂ... Ts>
+    ਵਰਗ ਦਲੀਲਾਂ_selector<n_nondefault_params, n_default_params, R(Ts...)> {
+      ਨਿਜੀ:
+        ਖਾਲੀ **kernel_params;
+        ਅੱਖਰ *ਦਲੀਲਾਂ_ਬਫਰ;
 
-        template <int i> static constexpr int account_for_default_params() {
-            constexpr int n_total_params = sizeof...(Ts);
-            if constexpr (i >= n_nondefault_params) {
-                return n_total_params - n_default_params +
+        ਸਾਂਚਾ <ਪੂਰਨ i> ਸਥਿਰ constexpr ਪੂਰਨ account_for_default_params() {
+            constexpr ਪੂਰਨ n_ਕੁੱਲ_params = ਆਕਾਰ...(Ts);
+            ਜੇ constexpr (i >= n_nondefault_params) {
+                ਵਾਪਸ n_ਕੁੱਲ_params - n_default_params +
                        (i - n_nondefault_params);
-            } else {
-                return i;
+            } ਨਹੀਂਤਾਂ {
+                ਵਾਪਸ i;
             }
         }
 
-      public:
+      ਜਨਤਕ:
         /// Get the type of the ith argument of R(Ts...)
         /// \param [in] i Index of parameter to get
         /// \returns Type of ith parameter
-        template <int i>
-        using arg_type = std::tuple_element_t<account_for_default_params<i>(),
+        ਸਾਂਚਾ <ਪੂਰਨ i>
+        ਵਰਤੋਂ arg_type = std::tuple_element_t<account_for_default_params<i>(),
                                               std::tuple<Ts...>>;
-        static constexpr int params_num = sizeof...(Ts);
+        ਸਥਿਰ constexpr ਪੂਰਨ params_ਅੰਕ = ਆਕਾਰ...(Ts);
 
-      private:
-        template <int i> static constexpr int get_offset() {
-            if constexpr (i == 0) {
+      ਨਿਜੀ:
+        ਸਾਂਚਾ <ਪੂਰਨ i> ਸਥਿਰ constexpr ਪੂਰਨ get_ਵਿੱਥ() {
+            ਜੇ constexpr (i == 0) {
                 // we can assume args_buffer is properly aligned to the
                 // first argument
-                return 0;
-            } else {
-                constexpr int prev_off = get_offset<i - 1>();
-                constexpr int prev_past_end =
-                    prev_off + sizeof(arg_type<i - 1>);
-                using T = arg_type<i>;
+                ਵਾਪਸ 0;
+            } ਨਹੀਂਤਾਂ {
+                constexpr ਪੂਰਨ prev_off = get_ਵਿੱਥ<i - 1>();
+                constexpr ਪੂਰਨ prev_past_ਸਿਰਾ =
+                    prev_off + ਆਕਾਰ(arg_type<i - 1>);
+                ਵਰਤੋਂ T = arg_type<i>;
                 // is the past-the-end of the i-1st element properly aligned
                 // with the ith element's alignment?
-                if constexpr (prev_past_end % alignof(T) == 0) {
-                    return prev_past_end;
+                ਜੇ constexpr (prev_past_ਸਿਰਾ % alignof(T) == 0) {
+                    ਵਾਪਸ prev_past_ਸਿਰਾ;
                 }
                 // otherwise bump prev_past_end to match alignment
-                else {
-                    return prev_past_end +
-                           (alignof(T) - (prev_past_end % alignof(T)));
+                ਨਹੀਂਤਾਂ {
+                    ਵਾਪਸ prev_past_ਸਿਰਾ +
+                           (alignof(T) - (prev_past_ਸਿਰਾ % alignof(T)));
                 }
             }
         }
 
-        static char *get_args_buffer(void **extra) {
-            if (!extra)
-                return nullptr;
-            for (; (std::size_t)*extra != 0; ++extra) {
-                if ((std::size_t)*extra == 1) {
-                    return static_cast<char *>(*(extra + 1));
+        ਸਥਿਰ ਅੱਖਰ *get_ਦਲੀਲਾਂ_ਬਫਰ(ਖਾਲੀ **extra) {
+            ਜੇ (!extra)
+                ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
+            ਲਈ (; (std::size_t)*extra != 0; ++extra) {
+                ਜੇ ((std::size_t)*extra == 1) {
+                    ਵਾਪਸ static_cast<ਅੱਖਰ *>(*(extra + 1));
                 }
             }
-            return nullptr;
+            ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
         }
 
-      public:
+      ਜਨਤਕ:
         /// If kernel_params is nonnull, then args_selector will
         /// extract arguments from kernel_params. Otherwise, it
         /// will extract them from extra.
         /// \param [in] kernel_params Array of pointers to arguments
         /// a or null pointer.
         /// \param [in] extra Array containing pointer to argument buffer.
-        args_selector(void **kernel_params, void **extra)
+        ਦਲੀਲਾਂ_selector(ਖਾਲੀ **kernel_params, ਖਾਲੀ **extra)
             : kernel_params(kernel_params),
-              args_buffer(get_args_buffer(extra)) {}
+              ਦਲੀਲਾਂ_ਬਫਰ(get_ਦਲੀਲਾਂ_ਬਫਰ(extra)) {}
 
         /// Get a reference to the ith argument extracted from kernel_params
         /// or extra.
         /// \param [in] i Index of argument to get
         /// \returns Reference to the ith argument
-        template <int i> arg_type<i> &get() {
-            if (kernel_params) {
-                return *static_cast<arg_type<i> *>(kernel_params[i]);
-            } else {
-                return *reinterpret_cast<arg_type<i> *>(args_buffer +
-                                                        get_offset<i>());
+        ਸਾਂਚਾ <ਪੂਰਨ i> arg_type<i> &get() {
+            ਜੇ (kernel_params) {
+                ਵਾਪਸ *static_cast<arg_type<i> *>(kernel_params[i]);
+            } ਨਹੀਂਤਾਂ {
+                ਵਾਪਸ *reinterpret_cast<arg_type<i> *>(ਦਲੀਲਾਂ_ਬਫਰ +
+                                                        get_ਵਿੱਥ<i>());
             }
         }
     }; // COPY from DPCT head file
@@ -3139,49 +3139,49 @@ namespace dpct
     ///   void *fp = (void *)wrapper_register(&kernel_func_wrapper).get();
     ///   dpct::kernel_launcher::launch(fp, dpct::dim3(1), dpct::dim3(1), args,
     ///   0, 0);
-    class kernel_launcher {
-        template <typename FuncT, typename ArgSelector, std::size_t... Index>
-        static void launch_helper(FuncT &&func, ArgSelector &selector,
-                                  std::index_sequence<Index...>) {
-            func(selector.template get<Index>()...);
+    ਵਰਗ kernel_launcher {
+        ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ FuncT, ਕਿਸਮ_ਨਾਂ ArgSelector, std::size_t... ਸੂਚਕਾਂਕ_2>
+        ਸਥਿਰ ਖਾਲੀ launch_helper(FuncT &&func, ArgSelector &selector,
+                                  std::index_sequence<ਸੂਚਕਾਂਕ_2...>) {
+            func(selector.ਸਾਂਚਾ get<ਸੂਚਕਾਂਕ_2>()...);
         }
-        static void set_execution_config(dim3 group_range, dim3 local_range,
-                                         unsigned int local_mem_size,
-                                         queue_ptr que) {
-            if (que) {
+        ਸਥਿਰ ਖਾਲੀ ਸੈੱਟ_execution_config(dim3 ਸਮੂਹ_range, dim3 local_range,
+                                         ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ local_mem_ਮਾਪ_2,
+                                         ਕਤਾਰ_ptr que) {
+            ਜੇ (que) {
                 _que = que;
-            } else {
-                _que = &get_default_queue();
+            } ਨਹੀਂਤਾਂ {
+                _que = &get_default_ਕਤਾਰ();
             }
             _nr = sycl::nd_range<3>(
-                static_cast<sycl::range<3>>(group_range * local_range),
+                static_cast<sycl::range<3>>(ਸਮੂਹ_range * local_range),
                 static_cast<sycl::range<3>>(local_range));
-            _local_mem_size = local_mem_size;
+            local_mem_ਮਾਪ = local_mem_ਮਾਪ_2;
 
 
         }
-        static inline std::mutex kernel_function_ptr_map_mutex;
+        ਸਥਿਰ ਸਤਰਅੰਦਰ std::mutex kernel_function_ptr_map_mutex;
 
-      public:
+      ਜਨਤਕ:
         /// Variables for storing execution configuration.
-        static inline thread_local sycl::queue *_que = nullptr;
-        static inline thread_local sycl::nd_range<3> _nr = sycl::nd_range<3>();
-        static inline thread_local unsigned int _local_mem_size = 0;
+        ਸਥਿਰ ਸਤਰਅੰਦਰ thread_local sycl::queue *_que = ਖਾਲੀ_ਸੂਚਕ;
+        ਸਥਿਰ ਸਤਰਅੰਦਰ thread_local sycl::nd_range<3> _nr = sycl::nd_range<3>();
+        ਸਥਿਰ ਸਤਰਅੰਦਰ thread_local ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ local_mem_ਮਾਪ = 0;
         /// Map for retrieving launchable functor from a raw pointer.
-        static inline std::map<
-            const void *,
-            std::function<void(dim3, dim3, void **, unsigned int, queue_ptr)>>
+        ਸਥਿਰ ਸਤਰਅੰਦਰ std::map<
+            ਅਚਲ ਖਾਲੀ *,
+            std::function<ਖਾਲੀ(dim3, dim3, ਖਾਲੀ **, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ, ਕਤਾਰ_ptr)>>
             kernel_function_ptr_map = {};
 
         /// Registers a kernel function pointer with a corresponding launchable
         /// functor.
         /// \param [in] func Pointer to the kernel function.
         /// \param [in] launcher Functor to handle kernel invocation.
-        static void register_kernel_ptr(
-            const void *func,
-            std::function<void(dim3, dim3, void **, unsigned int, queue_ptr)>
+        ਸਥਿਰ ਖਾਲੀ ਰਜਿਸਟਰ_kernel_ptr(
+            ਅਚਲ ਖਾਲੀ *func,
+            std::function<ਖਾਲੀ(dim3, dim3, ਖਾਲੀ **, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ, ਕਤਾਰ_ptr)>
                 launcher) {
-            std::lock_guard<std::mutex> lock(kernel_function_ptr_map_mutex);
+            std::lock_guard<std::mutex> ਤਾਲਾ(kernel_function_ptr_map_mutex);
             kernel_function_ptr_map[func] = std::move(launcher);
         }
         /// Launches a kernel function with arguments provided directly through
@@ -3194,12 +3194,12 @@ namespace dpct
         /// \param [in] local_mem_size The size of local memory required by the
         /// kernel function. \param [in] que SYCL queue used to execute kernel.
         /// \param [in] args Kernel arguments.
-        template <typename FuncT, typename... ArgsT>
-        static std::enable_if_t<std::is_invocable_v<FuncT *, ArgsT...>, void>
-        launch(FuncT *func, dim3 group_range, dim3 local_range,
-               unsigned int local_mem_size, queue_ptr que, ArgsT... args) {
-            set_execution_config(group_range, local_range, local_mem_size, que);
-            func(args...);
+        ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ FuncT, ਕਿਸਮ_ਨਾਂ... ਦਲੀਲਾਂ_T>
+        ਸਥਿਰ std::enable_if_t<std::is_invocable_v<FuncT *, ਦਲੀਲਾਂ_T...>, ਖਾਲੀ>
+        launch(FuncT *func, dim3 ਸਮੂਹ_range, dim3 local_range,
+               ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ local_mem_ਮਾਪ_2, ਕਤਾਰ_ptr que, ਦਲੀਲਾਂ_T... ਦਲੀਲਾਂ_2) {
+            ਸੈੱਟ_execution_config(ਸਮੂਹ_range, local_range, local_mem_ਮਾਪ_2, que);
+            func(ਦਲੀਲਾਂ_2...);
         }
         /// Launches a kernel function through registered kernel function
         /// wrapper. \param [in] func Pointer to the registered kernel function
@@ -3208,16 +3208,16 @@ namespace dpct
         /// kernel arguments. \param [in] local_mem_size The size of local
         /// memory required by the kernel function. \param [in] que SYCL queue
         /// used to execute kernel.
-        static void launch(const void *func, dim3 group_range, dim3 local_range,
-                           void **args, unsigned int local_mem_size,
-                           queue_ptr que) {
-            std::lock_guard<std::mutex> lock(kernel_function_ptr_map_mutex);
-            auto Iter = kernel_function_ptr_map.find(func);
-            if (Iter == kernel_function_ptr_map.end()) {
-                throw std::runtime_error("dpct::launch() : no registered "
+        ਸਥਿਰ ਖਾਲੀ launch(ਅਚਲ ਖਾਲੀ *func, dim3 ਸਮੂਹ_range, dim3 local_range,
+                           ਖਾਲੀ **ਦਲੀਲਾਂ_2, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ local_mem_ਮਾਪ_2,
+                           ਕਤਾਰ_ptr que) {
+            std::lock_guard<std::mutex> ਤਾਲਾ(kernel_function_ptr_map_mutex);
+            ਸਵੈਚਾਲਿਤ Iter = kernel_function_ptr_map.find(func);
+            ਜੇ (Iter == kernel_function_ptr_map.end()) {
+                ਸੁੱਟੋ std::runtime_error("dpct::launch() : no registered "
                                          "kernel function wrapper found.");
             }
-            (Iter->second)(group_range, local_range, args, local_mem_size, que);
+            (Iter->second)(ਸਮੂਹ_range, local_range, ਦਲੀਲਾਂ_2, local_mem_ਮਾਪ_2, que);
         }
         /// Launches a kernel function with packed arguments through kernel
         /// function wrapper.
@@ -3228,74 +3228,74 @@ namespace dpct
         /// \param [in] args Array of pointers to kernel arguments.
         /// \param [in] local_mem_size The size of local memory required by the
         /// kernel function. \param [in] que SYCL queue used to execute kernel.
-        template <typename FuncT>
-        static std::enable_if_t<std::is_function_v<FuncT>, void>
-        launch(FuncT *func, dim3 group_range, dim3 local_range, void **args,
-               unsigned int local_mem_size, queue_ptr que) {
-            constexpr size_t p_num = args_selector<0, 0, FuncT>::params_num;
-            set_execution_config(group_range, local_range, local_mem_size, que);
-            args_selector<p_num, p_num, FuncT> selector(args, nullptr);
-            launch_helper(func, selector, std::make_index_sequence<p_num>{});
+        ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ FuncT>
+        ਸਥਿਰ std::enable_if_t<std::is_function_v<FuncT>, ਖਾਲੀ>
+        launch(FuncT *func, dim3 ਸਮੂਹ_range, dim3 local_range, ਖਾਲੀ **ਦਲੀਲਾਂ_2,
+               ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ local_mem_ਮਾਪ_2, ਕਤਾਰ_ptr que) {
+            constexpr size_t p_ਅੰਕ = ਦਲੀਲਾਂ_selector<0, 0, FuncT>::params_ਅੰਕ;
+            ਸੈੱਟ_execution_config(ਸਮੂਹ_range, local_range, local_mem_ਮਾਪ_2, que);
+            ਦਲੀਲਾਂ_selector<p_ਅੰਕ, p_ਅੰਕ, FuncT> selector(ਦਲੀਲਾਂ_2, ਖਾਲੀ_ਸੂਚਕ);
+            launch_helper(func, selector, std::make_index_sequence<p_ਅੰਕ>{});
         }
     }; // COPY from DPCT head file
        // /opt/intel/oneapi/dpcpp-ct/latest/include/dpct/kernel.hpp
 
     // /opt/intel/oneapi/dpcpp-ct/latest/include/dpct/util.hpp
-    template <typename T>
-    T select_from_sub_group(
-        sycl::sub_group g,
+    ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T>
+    T select_from_sub_ਸਮੂਹ(
+        sycl::sub_ਸਮੂਹ g,
         T x,
-        int remote_local_id,
-        int logical_sub_group_size = 32) {
-      unsigned int start_index = g.get_local_linear_id() /
-                                 logical_sub_group_size *
-                                 logical_sub_group_size;
-      return sycl::select_from_group(
-          g, x, start_index + remote_local_id % logical_sub_group_size);
+        ਪੂਰਨ remote_local_id,
+        ਪੂਰਨ logical_sub_ਸਮੂਹ_ਮਾਪ = 32) {
+      ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ ਸ਼ੁਰੂ_ਸੂਚਕਾਂਕ = g.get_local_ਰੇਖਿਕ_id() /
+                                 logical_sub_ਸਮੂਹ_ਮਾਪ *
+                                 logical_sub_ਸਮੂਹ_ਮਾਪ;
+      ਵਾਪਸ sycl::select_from_ਸਮੂਹ(
+          g, x, ਸ਼ੁਰੂ_ਸੂਚਕਾਂਕ + remote_local_id % logical_sub_ਸਮੂਹ_ਮਾਪ);
     }
 
     // /opt/intel/oneapi/dpcpp-ct/latest/include/dpct/math.hpp
-    template <typename T>
-    void ldmatrix(uintptr_t addr, T* m, bool trans = false, unsigned mat = 0) {
-      auto sg = sycl::ext::oneapi::this_work_item::get_sub_group();
-      int lane = sg.get_local_linear_id();
+    ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T>
+    ਖਾਲੀ ldmatrix(uintptr_t addr, T* m, ਤਾਰਕਿਕ trans = ਝੂਠ, ਬਿਨਾਨਿਸ਼ਾਨੀ mat = 0) {
+      ਸਵੈਚਾਲਿਤ sg = sycl::ext::oneapi::this_work_ਵਸਤੂ::get_sub_ਸਮੂਹ();
+      ਪੂਰਨ lane = sg.get_local_ਰੇਖਿਕ_id();
 
-      int lane_group8_row = lane / 8;
-      int lane_group8_col = lane % 8;
+      ਪੂਰਨ lane_group8_ਪੰਕਤੀ = lane / 8;
+      ਪੂਰਨ lane_group8_ਖਾਨਾ = lane % 8;
 
-      if (!trans) {
+      ਜੇ (!trans) {
         // calculate the source lane
-        int src_lane = 2 * lane_group8_row;
-        if (lane_group8_col >= 4)
+        ਪੂਰਨ src_lane = 2 * lane_group8_ਪੰਕਤੀ;
+        ਜੇ (lane_group8_ਖਾਨਾ >= 4)
           src_lane += 1;
 
         // Broadcast the address from the source lane
-        auto recv_addr_uintp =
-            dpct::select_from_sub_group(sg, addr, mat * 8 + src_lane);
+        ਸਵੈਚਾਲਿਤ recv_addr_uintp =
+            dpct::select_from_sub_ਸਮੂਹ(sg, addr, mat * 8 + src_lane);
 
         // Cast the received address from uintptr_t to the type of 'm'
-        auto recv_addr = reinterpret_cast<T*>(recv_addr_uintp);
+        ਸਵੈਚਾਲਿਤ recv_addr = reinterpret_cast<T*>(recv_addr_uintp);
 
         // Non-transposed load
-        *m = recv_addr[lane_group8_col % 4];
-      } else {
+        *m = recv_addr[lane_group8_ਖਾਨਾ % 4];
+      } ਨਹੀਂਤਾਂ {
         // calculate the source lane
-        int src_lane = (lane % 4) * 2;
+        ਪੂਰਨ src_lane = (lane % 4) * 2;
 
         // Broadcast the address from the source lane
-        auto recv_addr_uintp_1 =
-            dpct::select_from_sub_group(sg, addr, mat * 8 + src_lane);
-        auto recv_addr_uintp_2 =
-            dpct::select_from_sub_group(sg, addr, mat * 8 + src_lane + 1);
+        ਸਵੈਚਾਲਿਤ recv_addr_uintp_1 =
+            dpct::select_from_sub_ਸਮੂਹ(sg, addr, mat * 8 + src_lane);
+        ਸਵੈਚਾਲਿਤ recv_addr_uintp_2 =
+            dpct::select_from_sub_ਸਮੂਹ(sg, addr, mat * 8 + src_lane + 1);
 
         // Cast the received address from uintptr_t to 'half *'
-        auto recv_addr_1 = reinterpret_cast<sycl::half*>(recv_addr_uintp_1);
-        auto recv_addr_2 = reinterpret_cast<sycl::half*>(recv_addr_uintp_2);
+        ਸਵੈਚਾਲਿਤ recv_addr_1 = reinterpret_cast<sycl::half*>(recv_addr_uintp_1);
+        ਸਵੈਚਾਲਿਤ recv_addr_2 = reinterpret_cast<sycl::half*>(recv_addr_uintp_2);
 
         // Transposed load
-        int index = lane / 4;
-        sycl::half val0 = recv_addr_1[index];
-        sycl::half val1 = recv_addr_2[index];
+        ਪੂਰਨ ਸੂਚਕਾਂਕ = lane / 4;
+        sycl::half val0 = recv_addr_1[ਸੂਚਕਾਂਕ];
+        sycl::half val1 = recv_addr_2[ਸੂਚਕਾਂਕ];
 
         // Combine the two 16-bits into one 32-bit value
         sycl::half2 val = sycl::half2(val0, val1);
@@ -3303,17 +3303,17 @@ namespace dpct
       }
     }
 
-    template <typename T>
-    void ldmatrix(uintptr_t addr, T* m1, T* m2, bool trans = false) {
+    ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T>
+    ਖਾਲੀ ldmatrix(uintptr_t addr, T* m1, T* m2, ਤਾਰਕਿਕ trans = ਝੂਠ) {
       // Load 1st matrix
       ldmatrix(addr, m1, trans, 0);
       // Load 2nd matrix
       ldmatrix(addr, m2, trans, 1);
     }
 
-    template <typename T>
-    void ldmatrix(
-        uintptr_t addr, T* m1, T* m2, T* m3, T* m4, bool trans = false) {
+    ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T>
+    ਖਾਲੀ ldmatrix(
+        uintptr_t addr, T* m1, T* m2, T* m3, T* m4, ਤਾਰਕਿਕ trans = ਝੂਠ) {
       // Load 1st matrix
       ldmatrix(addr, m1, trans, 0);
       // Load 2nd matrix
@@ -3332,9 +3332,9 @@ namespace dpct
     /// The MMAType struct is specialized for different types of input matrices.
     /// Currently, the specialization for f16, bf16 and s8 types is defined
     /// below. \tparam [in] T The type of the input matrix fragments
-    template <typename T>
-    struct MMAType {
-      using PackType = uint32_t;
+    ਸਾਂਚਾ <ਕਿਸਮ_ਨਾਂ T>
+    ਬਣਤਰ MMAType {
+      ਵਰਤੋਂ PackType = uint32_t;
     };
 
     /// Each work item of a sub-group (limited to size 32) calling this function
@@ -3360,21 +3360,21 @@ namespace dpct
     /// the input matrix B to be multiplied with A matrix fragment \param [in]
     /// c_mat_frag The fragment of the input matrix C to be added with the
     /// result of A * B fragments
-    template <int M, int N, int K, typename ABType, typename CDType>
-    void mma(
-        volatile void** d_mat_frag,
-        void* a_mat_frag,
-        void* b_mat_frag,
-        void* c_mat_frag) {
-      auto d = reinterpret_cast<volatile CDType**>(d_mat_frag);
-      auto a =
-          reinterpret_cast<typename MMAType<ABType>::PackType*>(a_mat_frag);
-      auto b =
-          reinterpret_cast<typename MMAType<ABType>::PackType*>(b_mat_frag);
-      auto c = reinterpret_cast<CDType*>(c_mat_frag);
+    ਸਾਂਚਾ <ਪੂਰਨ M, ਪੂਰਨ N, ਪੂਰਨ K, ਕਿਸਮ_ਨਾਂ ABType, ਕਿਸਮ_ਨਾਂ CDType>
+    ਖਾਲੀ mma(
+        ਅਸਥਿਰ ਖਾਲੀ** d_mat_frag,
+        ਖਾਲੀ* a_mat_frag,
+        ਖਾਲੀ* b_mat_frag,
+        ਖਾਲੀ* c_mat_frag) {
+      ਸਵੈਚਾਲਿਤ d = reinterpret_cast<ਅਸਥਿਰ CDType**>(d_mat_frag);
+      ਸਵੈਚਾਲਿਤ a =
+          reinterpret_cast<ਕਿਸਮ_ਨਾਂ MMAType<ABType>::PackType*>(a_mat_frag);
+      ਸਵੈਚਾਲਿਤ b =
+          reinterpret_cast<ਕਿਸਮ_ਨਾਂ MMAType<ABType>::PackType*>(b_mat_frag);
+      ਸਵੈਚਾਲਿਤ c = reinterpret_cast<CDType*>(c_mat_frag);
 
-      auto sg = sycl::ext::oneapi::this_work_item::get_sub_group();
-      int lane = sg.get_local_linear_id();
+      ਸਵੈਚਾਲਿਤ sg = sycl::ext::oneapi::this_work_ਵਸਤੂ::get_sub_ਸਮੂਹ();
+      ਪੂਰਨ lane = sg.get_local_ਰੇਖਿਕ_id();
 
       static_assert(
           (M == 8 && N == 8 && K == 4) || (M == 8 && N == 8 && K == 16) ||
@@ -3382,12 +3382,12 @@ namespace dpct
               (M == 16 && N == 8 && K == 32),
           "Unsupported MMA shape!");
 
-      short row_load_offset = 4 * (lane >> 2);
-      short col_load_offset = 8 * (lane % 4);
+      ਛੋਟਾ ਪੰਕਤੀ_ਲੱਦੋ_ਵਿੱਥ = 4 * (lane >> 2);
+      ਛੋਟਾ ਖਾਨਾ_ਲੱਦੋ_ਵਿੱਥ = 8 * (lane % 4);
 
-      if constexpr (M == 8 && N == 8 && K == 4) {
-        if constexpr (std::is_floating_point_v<CDType>) {
-          col_load_offset = row_load_offset % 16;
+      ਜੇ constexpr (M == 8 && N == 8 && K == 4) {
+        ਜੇ constexpr (std::is_floating_point_v<CDType>) {
+          ਖਾਨਾ_ਲੱਦੋ_ਵਿੱਥ = ਪੰਕਤੀ_ਲੱਦੋ_ਵਿੱਥ % 16;
 
           // Init D matrix with fragments of C matrix
           *d[0] = c[0];
@@ -3401,8 +3401,8 @@ namespace dpct
 
           // Calculate the row and col offset indices to iterate through the row
           // & col fragments of A & B matrices
-          int r_ind = (lane % 2) ? 1 : 0;
-          int c_ind = ((lane % 4) / 2) ? 2 : 0;
+          ਪੂਰਨ r_ind = (lane % 2) ? 1 : 0;
+          ਪੂਰਨ c_ind = ((lane % 4) / 2) ? 2 : 0;
 
           // Each sub-group is responsible for computing a fragment size of 8*8
           // elements of matrix D for each of 4 MMA computations.
@@ -3414,25 +3414,25 @@ namespace dpct
           // As each row & col fragment of A & B matrices is distributed across
           // 4 work items, each iteration of below loop loads a partial fragment
           // of matrix A (row) and matrix B (col) using the row & col offsets.
-          typename MMAType<ABType>::PackType recv_a[2], recv_b[2];
+          ਕਿਸਮ_ਨਾਂ MMAType<ABType>::PackType recv_a[2], recv_b[2];
 
-          for (int i = 0; i < 4; i++) {
+          ਲਈ (ਪੂਰਨ i = 0; i < 4; i++) {
             // Load partial fragment from col0 of matrix A ({a0, a1})
             recv_a[0] =
-                dpct::select_from_sub_group(sg, a[0], row_load_offset + i);
+                dpct::select_from_sub_ਸਮੂਹ(sg, a[0], ਪੰਕਤੀ_ਲੱਦੋ_ਵਿੱਥ + i);
             // Load partial fragment from col0 of matrix A ({a2, a3})
             recv_a[1] =
-                dpct::select_from_sub_group(sg, a[1], row_load_offset + i);
+                dpct::select_from_sub_ਸਮੂਹ(sg, a[1], ਪੰਕਤੀ_ਲੱਦੋ_ਵਿੱਥ + i);
 
             // Load partial fragment from row0 of matrix B ({b0, b1})
             recv_b[0] =
-                dpct::select_from_sub_group(sg, b[0], col_load_offset + i);
+                dpct::select_from_sub_ਸਮੂਹ(sg, b[0], ਖਾਨਾ_ਲੱਦੋ_ਵਿੱਥ + i);
             // Load partial fragment from row0 of matrix B ({b2, b3})
             recv_b[1] =
-                dpct::select_from_sub_group(sg, b[1], col_load_offset + i);
+                dpct::select_from_sub_ਸਮੂਹ(sg, b[1], ਖਾਨਾ_ਲੱਦੋ_ਵਿੱਥ + i);
 
-            auto ra = reinterpret_cast<ABType*>(recv_a);
-            auto rb = reinterpret_cast<ABType*>(recv_b);
+            ਸਵੈਚਾਲਿਤ ra = reinterpret_cast<ABType*>(recv_a);
+            ਸਵੈਚਾਲਿਤ rb = reinterpret_cast<ABType*>(recv_b);
 
             // Each work item calculates a partial product of A & B matrix
             // fragments and adds it to the corresponding D matrix fragment (for
@@ -3442,20 +3442,20 @@ namespace dpct
             // b2 } d1 += col0{ a1 } * row0{ b3 } d2 += col1{ a3 } * row0{ b2 }
             // d3 += col1{ a3 } * row0{ b3 }
             *d[0] +=
-                static_cast<float>(ra[r_ind]) * static_cast<float>(rb[c_ind]);
-            *d[1] += static_cast<float>(ra[r_ind]) *
-                     static_cast<float>(rb[c_ind + 1]);
-            *d[2] += static_cast<float>(ra[r_ind + 2]) *
-                     static_cast<float>(rb[c_ind]);
-            *d[3] += static_cast<float>(ra[r_ind + 2]) *
-                     static_cast<float>(rb[c_ind + 1]);
+                static_cast<ਦਸ਼ਮਲਵ>(ra[r_ind]) * static_cast<ਦਸ਼ਮਲਵ>(rb[c_ind]);
+            *d[1] += static_cast<ਦਸ਼ਮਲਵ>(ra[r_ind]) *
+                     static_cast<ਦਸ਼ਮਲਵ>(rb[c_ind + 1]);
+            *d[2] += static_cast<ਦਸ਼ਮਲਵ>(ra[r_ind + 2]) *
+                     static_cast<ਦਸ਼ਮਲਵ>(rb[c_ind]);
+            *d[3] += static_cast<ਦਸ਼ਮਲਵ>(ra[r_ind + 2]) *
+                     static_cast<ਦਸ਼ਮਲਵ>(rb[c_ind + 1]);
 
             // Load partial fragment from row1 of matrix B ({b0, b1})
             recv_b[0] =
-                dpct::select_from_sub_group(sg, b[0], col_load_offset + i + 16);
+                dpct::select_from_sub_ਸਮੂਹ(sg, b[0], ਖਾਨਾ_ਲੱਦੋ_ਵਿੱਥ + i + 16);
             // Load partial fragment from row1 of matrix B ({b2, b3})
             recv_b[1] =
-                dpct::select_from_sub_group(sg, b[1], col_load_offset + i + 16);
+                dpct::select_from_sub_ਸਮੂਹ(sg, b[1], ਖਾਨਾ_ਲੱਦੋ_ਵਿੱਥ + i + 16);
 
             // (for even work item indices)
             // d0 += col0{ a0 } * row1{ b0 }
@@ -3468,17 +3468,17 @@ namespace dpct
             // d2 += col1{ a3 } * row1{ b2 }
             // d3 += col1{ a3 } * row1{ b3 }
             *d[4] +=
-                static_cast<float>(ra[r_ind]) * static_cast<float>(rb[c_ind]);
-            *d[5] += static_cast<float>(ra[r_ind]) *
-                     static_cast<float>(rb[c_ind + 1]);
-            *d[6] += static_cast<float>(ra[r_ind + 2]) *
-                     static_cast<float>(rb[c_ind]);
-            *d[7] += static_cast<float>(ra[r_ind + 2]) *
-                     static_cast<float>(rb[c_ind + 1]);
+                static_cast<ਦਸ਼ਮਲਵ>(ra[r_ind]) * static_cast<ਦਸ਼ਮਲਵ>(rb[c_ind]);
+            *d[5] += static_cast<ਦਸ਼ਮਲਵ>(ra[r_ind]) *
+                     static_cast<ਦਸ਼ਮਲਵ>(rb[c_ind + 1]);
+            *d[6] += static_cast<ਦਸ਼ਮਲਵ>(ra[r_ind + 2]) *
+                     static_cast<ਦਸ਼ਮਲਵ>(rb[c_ind]);
+            *d[7] += static_cast<ਦਸ਼ਮਲਵ>(ra[r_ind + 2]) *
+                     static_cast<ਦਸ਼ਮਲਵ>(rb[c_ind + 1]);
           }
         }
-      } else if constexpr (M == 8 && N == 8 && K == 16) {
-        if constexpr (std::is_integral_v<ABType>) {
+      } ਨਹੀਂਤਾਂ ਜੇ constexpr (M == 8 && N == 8 && K == 16) {
+        ਜੇ constexpr (std::is_integral_v<ABType>) {
           // Init D matrix with fragments of C matrix
           *d[0] = c[0];
           *d[1] = c[1];
@@ -3493,20 +3493,20 @@ namespace dpct
           // As each row & col fragment of A & B matrices is distributed across
           // 4 work items, each iteration of below loop loads a partial fragment
           // of matrix A (row) and matrix B (col) using the row & col offsets.
-          for (int i = 0; i < 4; i++) {
-            typename MMAType<ABType>::PackType recv_a, recv_b[2];
+          ਲਈ (ਪੂਰਨ i = 0; i < 4; i++) {
+            ਕਿਸਮ_ਨਾਂ MMAType<ABType>::PackType recv_a, recv_b[2];
 
             // Load partial fragment from row0 of matrix A ({a0, a1, a2, a3})
-            recv_a = dpct::select_from_sub_group(sg, a[0], row_load_offset + i);
+            recv_a = dpct::select_from_sub_ਸਮੂਹ(sg, a[0], ਪੰਕਤੀ_ਲੱਦੋ_ਵਿੱਥ + i);
             // Load partial fragment from col0 of matrix B ({b0, b1, b2, b3})
             recv_b[0] =
-                dpct::select_from_sub_group(sg, b[0], col_load_offset + i);
+                dpct::select_from_sub_ਸਮੂਹ(sg, b[0], ਖਾਨਾ_ਲੱਦੋ_ਵਿੱਥ + i);
             // Load partial fragment from col1 of matrix B ({b0, b1, b2, b3})
             recv_b[1] =
-                dpct::select_from_sub_group(sg, b[0], col_load_offset + i + 4);
+                dpct::select_from_sub_ਸਮੂਹ(sg, b[0], ਖਾਨਾ_ਲੱਦੋ_ਵਿੱਥ + i + 4);
 
-            auto a = reinterpret_cast<ABType*>(&recv_a);
-            auto b = reinterpret_cast<ABType*>(recv_b);
+            ਸਵੈਚਾਲਿਤ a = reinterpret_cast<ABType*>(&recv_a);
+            ਸਵੈਚਾਲਿਤ b = reinterpret_cast<ABType*>(recv_b);
 
             // Each work item calculates a partial product of A & B matrix
             // fragments and adds it to the corresponding D matrix fragment d0
@@ -3514,14 +3514,14 @@ namespace dpct
             // a0, a1, a2, a3 } * col1{ b0, b1, b2, b3 } d2 += row0{ a0, a1, a2,
             // a3 } * col0{ b0, b1, b2, b3 } d3 += row0{ a0, a1, a2, a3 } *
             // col1{ b0, b1, b2, b3 }
-            for (int j = 0; j < 4; j++) {
+            ਲਈ (ਪੂਰਨ j = 0; j < 4; j++) {
               *d[0] += a[j] * b[j];
               *d[1] += a[j] * b[j + 4];
             }
           }
         }
-      } else if constexpr (M == 16 && N == 8 && K == 8) {
-        if constexpr (std::is_floating_point_v<CDType>) {
+      } ਨਹੀਂਤਾਂ ਜੇ constexpr (M == 16 && N == 8 && K == 8) {
+        ਜੇ constexpr (std::is_floating_point_v<CDType>) {
           // Init D matrix fragment with C matrix fragment
           *d[0] = c[0];
           *d[1] = c[1];
@@ -3538,43 +3538,43 @@ namespace dpct
           // As each row & col fragment of A & B matrices is distributed across
           // 4 work items, each iteration of below loop loads a partial fragment
           // of matrix A (row) and matrix B (col) using the row & col offsets.
-          for (int i = 0; i < 4; i++) {
-            typename MMAType<ABType>::PackType recv_a[2], recv_b[2];
+          ਲਈ (ਪੂਰਨ i = 0; i < 4; i++) {
+            ਕਿਸਮ_ਨਾਂ MMAType<ABType>::PackType recv_a[2], recv_b[2];
 
             // Load partial fragment from row0 of matrix A ({a0, a1})
             recv_a[0] =
-                dpct::select_from_sub_group(sg, a[0], row_load_offset + i);
+                dpct::select_from_sub_ਸਮੂਹ(sg, a[0], ਪੰਕਤੀ_ਲੱਦੋ_ਵਿੱਥ + i);
             // Load partial fragment from row1 of matrix A ({a2, a3})
             recv_a[1] =
-                dpct::select_from_sub_group(sg, a[1], row_load_offset + i);
+                dpct::select_from_sub_ਸਮੂਹ(sg, a[1], ਪੰਕਤੀ_ਲੱਦੋ_ਵਿੱਥ + i);
             // Load partial fragment from col0 of matrix B ({b0, b1})
             recv_b[0] =
-                dpct::select_from_sub_group(sg, b[0], col_load_offset + i);
+                dpct::select_from_sub_ਸਮੂਹ(sg, b[0], ਖਾਨਾ_ਲੱਦੋ_ਵਿੱਥ + i);
             // Load partial fragment from col1 of matrix B ({b0, b1})
             recv_b[1] =
-                dpct::select_from_sub_group(sg, b[0], col_load_offset + i + 4);
+                dpct::select_from_sub_ਸਮੂਹ(sg, b[0], ਖਾਨਾ_ਲੱਦੋ_ਵਿੱਥ + i + 4);
 
-            auto ra = reinterpret_cast<ABType*>(recv_a);
-            auto rb = reinterpret_cast<ABType*>(recv_b);
+            ਸਵੈਚਾਲਿਤ ra = reinterpret_cast<ABType*>(recv_a);
+            ਸਵੈਚਾਲਿਤ rb = reinterpret_cast<ABType*>(recv_b);
 
             // Each work item calculates a partial product of A & B matrix
             // fragments and adds it to the corresponding D matrix fragment d0
             // += row0{ a0, a1 } * col0{ b0, b1 } d1 += row0{ a0, a1 } * col1{
             // b0, b1 } d2 += row1{ a2, a3 } * col0{ b0, b1 } d3 += row1{ a2, a3
             // } * col1{ b0, b1 }
-            for (int j = 0; j < 2; j++) {
-              *d[0] += static_cast<float>(ra[j]) * static_cast<float>(rb[j]);
+            ਲਈ (ਪੂਰਨ j = 0; j < 2; j++) {
+              *d[0] += static_cast<ਦਸ਼ਮਲਵ>(ra[j]) * static_cast<ਦਸ਼ਮਲਵ>(rb[j]);
               *d[1] +=
-                  static_cast<float>(ra[j]) * static_cast<float>(rb[j + 2]);
+                  static_cast<ਦਸ਼ਮਲਵ>(ra[j]) * static_cast<ਦਸ਼ਮਲਵ>(rb[j + 2]);
               *d[2] +=
-                  static_cast<float>(ra[j + 2]) * static_cast<float>(rb[j]);
+                  static_cast<ਦਸ਼ਮਲਵ>(ra[j + 2]) * static_cast<ਦਸ਼ਮਲਵ>(rb[j]);
               *d[3] +=
-                  static_cast<float>(ra[j + 2]) * static_cast<float>(rb[j + 2]);
+                  static_cast<ਦਸ਼ਮਲਵ>(ra[j + 2]) * static_cast<ਦਸ਼ਮਲਵ>(rb[j + 2]);
             }
           }
         }
-      } else if constexpr (M == 16 && N == 8 && K == 16) {
-        if constexpr (std::is_floating_point_v<CDType>) {
+      } ਨਹੀਂਤਾਂ ਜੇ constexpr (M == 16 && N == 8 && K == 16) {
+        ਜੇ constexpr (std::is_floating_point_v<CDType>) {
           // Init D matrix fragment with C matrix fragment
           *d[0] = c[0];
           *d[1] = c[1];
@@ -3591,37 +3591,37 @@ namespace dpct
           // As each row & col fragment of A & B matrices is distributed across
           // 4 work items, each iteration of below loop loads a partial fragment
           // of matrix A (row) and matrix B (col) using the row & col offsets.
-          for (int i = 0; i < 4; i++) {
-            typename MMAType<ABType>::PackType recv_a[4], recv_b[4];
+          ਲਈ (ਪੂਰਨ i = 0; i < 4; i++) {
+            ਕਿਸਮ_ਨਾਂ MMAType<ABType>::PackType recv_a[4], recv_b[4];
 
             // Load partial fragment from row0 of matrix A ({a0, a1})
             recv_a[0] =
-                dpct::select_from_sub_group(sg, a[0], row_load_offset + i);
+                dpct::select_from_sub_ਸਮੂਹ(sg, a[0], ਪੰਕਤੀ_ਲੱਦੋ_ਵਿੱਥ + i);
             // Load partial fragment from row0 of matrix A ({a2, a3})
             recv_a[1] =
-                dpct::select_from_sub_group(sg, a[2], row_load_offset + i);
+                dpct::select_from_sub_ਸਮੂਹ(sg, a[2], ਪੰਕਤੀ_ਲੱਦੋ_ਵਿੱਥ + i);
             // Load partial fragment from row1 of matrix A ({a0, a1})
             recv_a[2] =
-                dpct::select_from_sub_group(sg, a[1], row_load_offset + i);
+                dpct::select_from_sub_ਸਮੂਹ(sg, a[1], ਪੰਕਤੀ_ਲੱਦੋ_ਵਿੱਥ + i);
             // Load partial fragment from row1 of matrix A ({a2, a3})
             recv_a[3] =
-                dpct::select_from_sub_group(sg, a[3], row_load_offset + i);
+                dpct::select_from_sub_ਸਮੂਹ(sg, a[3], ਪੰਕਤੀ_ਲੱਦੋ_ਵਿੱਥ + i);
 
             // Load partial fragment from col0 of matrix B ({b0, b1})
             recv_b[0] =
-                dpct::select_from_sub_group(sg, b[0], col_load_offset + i);
+                dpct::select_from_sub_ਸਮੂਹ(sg, b[0], ਖਾਨਾ_ਲੱਦੋ_ਵਿੱਥ + i);
             // Load partial fragment from col0 of matrix B ({b2, b3})
             recv_b[1] =
-                dpct::select_from_sub_group(sg, b[1], col_load_offset + i);
+                dpct::select_from_sub_ਸਮੂਹ(sg, b[1], ਖਾਨਾ_ਲੱਦੋ_ਵਿੱਥ + i);
             // Load partial fragment from col1 of matrix B ({b0, b1})
             recv_b[2] =
-                dpct::select_from_sub_group(sg, b[0], col_load_offset + 4 + i);
+                dpct::select_from_sub_ਸਮੂਹ(sg, b[0], ਖਾਨਾ_ਲੱਦੋ_ਵਿੱਥ + 4 + i);
             // Load partial fragment from col1 of matrix B ({b2, b3})
             recv_b[3] =
-                dpct::select_from_sub_group(sg, b[1], col_load_offset + 4 + i);
+                dpct::select_from_sub_ਸਮੂਹ(sg, b[1], ਖਾਨਾ_ਲੱਦੋ_ਵਿੱਥ + 4 + i);
 
-            auto ra = reinterpret_cast<ABType*>(recv_a);
-            auto rb = reinterpret_cast<ABType*>(recv_b);
+            ਸਵੈਚਾਲਿਤ ra = reinterpret_cast<ABType*>(recv_a);
+            ਸਵੈਚਾਲਿਤ rb = reinterpret_cast<ABType*>(recv_b);
 
             // Each work item calculates a partial product of A & B matrix
             // fragments and adds it to the corresponding D matrix fragment d0
@@ -3629,7 +3629,7 @@ namespace dpct
             // a0, a1, a2, a3 } * col1{ b0, b1, b2, b3 } d2 += row1{ a0, a1, a2,
             // a3 } * col0{ b0, b1, b2, b3 } d3 += row1{ a0, a1, a2, a3 } *
             // col1{ b0, b1, b2, b3 }
-            for (int j = 0; j < 4; j++) {
+            ਲਈ (ਪੂਰਨ j = 0; j < 4; j++) {
               *d[0] += static_cast<CDType>(ra[j]) * static_cast<CDType>(rb[j]);
               *d[1] +=
                   static_cast<CDType>(ra[j]) * static_cast<CDType>(rb[j + 4]);
@@ -3639,7 +3639,7 @@ namespace dpct
                        static_cast<CDType>(rb[j + 4]);
             }
           }
-        } else if constexpr (std::is_integral_v<ABType>) {
+        } ਨਹੀਂਤਾਂ ਜੇ constexpr (std::is_integral_v<ABType>) {
           // Init D matrix with fragments of C matrix
           *d[0] = c[0];
           *d[1] = c[1];
@@ -3656,24 +3656,24 @@ namespace dpct
           // As each row & col fragment of A & B matrices is distributed across
           // 4 work items, each iteration of below loop loads a partial fragment
           // of matrix A (row) and matrix B (col) using the row & col offsets.
-          for (int i = 0; i < 4; i++) {
-            typename MMAType<ABType>::PackType recv_a[2], recv_b[2];
+          ਲਈ (ਪੂਰਨ i = 0; i < 4; i++) {
+            ਕਿਸਮ_ਨਾਂ MMAType<ABType>::PackType recv_a[2], recv_b[2];
 
             // Load partial fragment from row0 of matrix A ({a0, a1, a2, a3})
             recv_a[0] =
-                dpct::select_from_sub_group(sg, a[0], row_load_offset + i);
+                dpct::select_from_sub_ਸਮੂਹ(sg, a[0], ਪੰਕਤੀ_ਲੱਦੋ_ਵਿੱਥ + i);
             // Load partial fragment from row1 of matrix A ({a4, a5, a6, a7})
             recv_a[1] =
-                dpct::select_from_sub_group(sg, a[1], row_load_offset + i);
+                dpct::select_from_sub_ਸਮੂਹ(sg, a[1], ਪੰਕਤੀ_ਲੱਦੋ_ਵਿੱਥ + i);
             // Load partial fragment from col0 of matrix B ({b0, b1, b2, b3})
             recv_b[0] =
-                dpct::select_from_sub_group(sg, b[0], col_load_offset + i);
+                dpct::select_from_sub_ਸਮੂਹ(sg, b[0], ਖਾਨਾ_ਲੱਦੋ_ਵਿੱਥ + i);
             // Load partial fragment from col1 of matrix B ({b4, b5, b6, b7})
             recv_b[1] =
-                dpct::select_from_sub_group(sg, b[0], col_load_offset + i + 4);
+                dpct::select_from_sub_ਸਮੂਹ(sg, b[0], ਖਾਨਾ_ਲੱਦੋ_ਵਿੱਥ + i + 4);
 
-            auto ra = reinterpret_cast<ABType*>(recv_a);
-            auto rb = reinterpret_cast<ABType*>(recv_b);
+            ਸਵੈਚਾਲਿਤ ra = reinterpret_cast<ABType*>(recv_a);
+            ਸਵੈਚਾਲਿਤ rb = reinterpret_cast<ABType*>(recv_b);
 
             // Each work item calculates a partial product of A & B matrix
             // fragments and adds it to the corresponding D matrix fragment d0
@@ -3681,7 +3681,7 @@ namespace dpct
             // a0, a1, a2, a3 } * col1{ b4, b5, b6, b7 } d2 += row1{ a4, a5, a6,
             // a7 } * col0{ b0, b1, b2, b3 } d3 += row1{ a4, a5, a6, a7 } *
             // col1{ b4, b5, b6, b7 }
-            for (int i = 0; i < 4; i++) {
+            ਲਈ (ਪੂਰਨ i = 0; i < 4; i++) {
               *d[0] += ra[i] * rb[i];
               *d[1] += ra[i] * rb[i + 4];
               *d[2] += ra[i + 4] * rb[i];
@@ -3689,8 +3689,8 @@ namespace dpct
             }
           }
         }
-      } else if constexpr (M == 16 && N == 8 && K == 32) {
-        if constexpr (std::is_integral_v<ABType>) {
+      } ਨਹੀਂਤਾਂ ਜੇ constexpr (M == 16 && N == 8 && K == 32) {
+        ਜੇ constexpr (std::is_integral_v<ABType>) {
           // Init D matrix with fragments of C matrix
           *d[0] = c[0];
           *d[1] = c[1];
@@ -3708,24 +3708,24 @@ namespace dpct
           // across 4 work items, each iteration of below loop loads a partial
           // fragment of matrix A (row) and matrix B (col) using the row & col
           // offsets.
-          for (int i = 0; i < 4; i++) {
-            typename MMAType<ABType>::PackType recv_a[2], recv_b[2];
+          ਲਈ (ਪੂਰਨ i = 0; i < 4; i++) {
+            ਕਿਸਮ_ਨਾਂ MMAType<ABType>::PackType recv_a[2], recv_b[2];
 
             // Load partial fragment from row0 of matrix A ({a0, a1, a2, a3})
             recv_a[0] =
-                dpct::select_from_sub_group(sg, a[0], row_load_offset + i);
+                dpct::select_from_sub_ਸਮੂਹ(sg, a[0], ਪੰਕਤੀ_ਲੱਦੋ_ਵਿੱਥ + i);
             // Load partial fragment from row1 of matrix A ({a4, a5, a6, a7})
             recv_a[1] =
-                dpct::select_from_sub_group(sg, a[1], row_load_offset + i);
+                dpct::select_from_sub_ਸਮੂਹ(sg, a[1], ਪੰਕਤੀ_ਲੱਦੋ_ਵਿੱਥ + i);
             // Load partial fragment from col0 of matrix B ({b0, b1, b2, b3})
             recv_b[0] =
-                dpct::select_from_sub_group(sg, b[0], col_load_offset + i);
+                dpct::select_from_sub_ਸਮੂਹ(sg, b[0], ਖਾਨਾ_ਲੱਦੋ_ਵਿੱਥ + i);
             // Load partial fragment from col1 of matrix B ({b0, b1, b2, b3})
             recv_b[1] =
-                dpct::select_from_sub_group(sg, b[0], col_load_offset + i + 4);
+                dpct::select_from_sub_ਸਮੂਹ(sg, b[0], ਖਾਨਾ_ਲੱਦੋ_ਵਿੱਥ + i + 4);
 
-            auto a = reinterpret_cast<ABType*>(recv_a);
-            auto b = reinterpret_cast<ABType*>(recv_b);
+            ਸਵੈਚਾਲਿਤ a = reinterpret_cast<ABType*>(recv_a);
+            ਸਵੈਚਾਲਿਤ b = reinterpret_cast<ABType*>(recv_b);
 
             // Each work item calculates a partial product of A & B matrix
             // fragments and adds it to the corresponding D matrix fragment d0
@@ -3733,7 +3733,7 @@ namespace dpct
             // a0, a1, a2, a3 } * col1{ b0, b1, b2, b3 } d2 += row1{ a4, a5, a6,
             // a7 } * col0{ b0, b1, b2, b3 } d3 += row1{ a4, a5, a6, a7 } *
             // col1{ b0, b1, b2, b3 }
-            for (int j = 0; j < 4; j++) {
+            ਲਈ (ਪੂਰਨ j = 0; j < 4; j++) {
               *d[0] += a[j] * b[j];
               *d[1] += a[j] * b[j + 4];
               *d[2] += a[j + 4] * b[j];
@@ -3741,25 +3741,25 @@ namespace dpct
             }
           }
 
-          for (int i = 0; i < 4; i++) {
-            typename MMAType<ABType>::PackType recv_a[2], recv_b[2];
+          ਲਈ (ਪੂਰਨ i = 0; i < 4; i++) {
+            ਕਿਸਮ_ਨਾਂ MMAType<ABType>::PackType recv_a[2], recv_b[2];
 
             // Load partial fragment from row0 of matrix A ({a8, a9, a10, a11})
             recv_a[0] =
-                dpct::select_from_sub_group(sg, a[2], row_load_offset + i);
+                dpct::select_from_sub_ਸਮੂਹ(sg, a[2], ਪੰਕਤੀ_ਲੱਦੋ_ਵਿੱਥ + i);
             // Load partial fragment from row1 of matrix A ({a12, a13, a14,
             // a15})
             recv_a[1] =
-                dpct::select_from_sub_group(sg, a[3], row_load_offset + i);
+                dpct::select_from_sub_ਸਮੂਹ(sg, a[3], ਪੰਕਤੀ_ਲੱਦੋ_ਵਿੱਥ + i);
             // Load partial fragment from col0 of matrix B ({b4, b5, b6, b7})
             recv_b[0] =
-                dpct::select_from_sub_group(sg, b[1], col_load_offset + i);
+                dpct::select_from_sub_ਸਮੂਹ(sg, b[1], ਖਾਨਾ_ਲੱਦੋ_ਵਿੱਥ + i);
             // Load partial fragment from col1 of matrix B ({b4, b5, b6, b7})
             recv_b[1] =
-                dpct::select_from_sub_group(sg, b[1], col_load_offset + i + 4);
+                dpct::select_from_sub_ਸਮੂਹ(sg, b[1], ਖਾਨਾ_ਲੱਦੋ_ਵਿੱਥ + i + 4);
 
-            auto a = reinterpret_cast<ABType*>(recv_a);
-            auto b = reinterpret_cast<ABType*>(recv_b);
+            ਸਵੈਚਾਲਿਤ a = reinterpret_cast<ABType*>(recv_a);
+            ਸਵੈਚਾਲਿਤ b = reinterpret_cast<ABType*>(recv_b);
 
             // Each work item calculates a partial product of A & B matrix
             // fragments and adds it to the corresponding D matrix fragment d0
@@ -3767,7 +3767,7 @@ namespace dpct
             // a8, a9, a10, a11 } * col1{ b4, b5, b6, b7 } d2 += row1{ a12, a13,
             // a14, a15 } * col0{ b4, b5, b6, b7 } d3 += row1{ a12, a13, a14,
             // a15 } * col1{ b4, b5, b6, b7 }
-            for (int j = 0; j < 4; j++) {
+            ਲਈ (ਪੂਰਨ j = 0; j < 4; j++) {
               *d[0] += a[j] * b[j];
               *d[1] += a[j] * b[j + 4];
               *d[2] += a[j + 4] * b[j];
@@ -3779,4 +3779,4 @@ namespace dpct
     }
 } // COPY from DPCT head files
 
-#endif // GGML_SYCL_DPCT_HELPER_HPP
+#ਜੇ_ਅੰਤ // GGML_SYCL_DPCT_HELPER_HPP

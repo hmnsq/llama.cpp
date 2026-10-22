@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: MIT
 //
 
-#pragma once
+#ਹਦਾਇਤ once
 
-#include "ggml.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml.h"
 
-enum cpu_feature {
+ਗਿਣਤੀ cpu_feature {
     CPU_FEATURE_NONE    = 0,
     CPU_FEATURE_DOTPROD = 1,
     CPU_FEATURE_I8MM    = 2,
@@ -17,61 +17,61 @@ enum cpu_feature {
     CPU_FEATURE_SVEI8MM = 64
 };
 
-inline cpu_feature& operator|=(cpu_feature& lhs, cpu_feature rhs) {
+ਸਤਰਅੰਦਰ cpu_feature& ਸੰਚਾਲਕ|=(cpu_feature& lhs, cpu_feature rhs) {
     lhs = static_cast<cpu_feature>(lhs | rhs);
-    return lhs;
+    ਵਾਪਸ lhs;
 }
-inline cpu_feature operator|(cpu_feature lhs, cpu_feature rhs) {
-    return static_cast<cpu_feature>(static_cast<int>(lhs) | static_cast<int>(rhs));
+ਸਤਰਅੰਦਰ cpu_feature ਸੰਚਾਲਕ|(cpu_feature lhs, cpu_feature rhs) {
+    ਵਾਪਸ static_cast<cpu_feature>(static_cast<ਪੂਰਨ>(lhs) | static_cast<ਪੂਰਨ>(rhs));
 }
 
-struct kernel_info {
-    size_t (*get_m_step)(void);
-    size_t (*get_n_step)(void);
-    size_t (*get_mr)(void);
-    size_t (*get_nr)(void);
-    size_t (*get_kr)(void);
-    size_t (*get_sr)(void);
+ਬਣਤਰ kernel_info {
+    size_t (*get_m_ਕਦਮ)(ਖਾਲੀ);
+    size_t (*get_n_ਕਦਮ)(ਖਾਲੀ);
+    size_t (*get_mr)(ਖਾਲੀ);
+    size_t (*get_nr)(ਖਾਲੀ);
+    size_t (*get_kr)(ਖਾਲੀ);
+    size_t (*get_sr)(ਖਾਲੀ);
 
-    size_t (*get_dst_offset)(size_t m_idx, size_t n_idx, size_t stride);
+    size_t (*get_dst_ਵਿੱਥ)(size_t m_idx, size_t n_idx, size_t stride);
 
-    size_t (*get_lhs_offset_ex)(size_t m_idx, size_t k, size_t bl);
+    size_t (*get_lhs_ਵਿੱਥ_ex)(size_t m_idx, size_t k, size_t bl);
 
-    size_t (*get_rhs_packed_offset_ex)(size_t n_idx, size_t k, size_t bl);
+    size_t (*get_rhs_packed_ਵਿੱਥ_ex)(size_t n_idx, size_t k, size_t bl);
 
-    void (*run_kernel_ex)(
+    ਖਾਲੀ (*ਲੜੀਵਾਰ_kernel_ex)(
         size_t m, size_t n, size_t k, size_t bl,
-        const void* lhs_packed, const void* rhs_packed,
-        void* dst, size_t dst_stride_row, size_t dst_stride_col,
-        float clamp_min, float clamp_max);
+        ਅਚਲ ਖਾਲੀ* lhs_packed, ਅਚਲ ਖਾਲੀ* rhs_packed,
+        ਖਾਲੀ* dst, size_t dst_stride_ਪੰਕਤੀ, size_t dst_stride_ਖਾਨਾ,
+        ਦਸ਼ਮਲਵ clamp_min, ਦਸ਼ਮਲਵ clamp_max);
 };
 
-struct lhs_packing_info {
-    size_t (*get_offset)(size_t m_idx, size_t lhs_stride);
+ਬਣਤਰ lhs_packing_info {
+    size_t (*get_ਵਿੱਥ)(size_t m_idx, size_t lhs_stride);
 
-    size_t (*get_packed_offset_ex)(size_t m_idx, size_t k, size_t bl, size_t mr, size_t kr, size_t sr);
+    size_t (*get_packed_ਵਿੱਥ_ex)(size_t m_idx, size_t k, size_t bl, size_t mr, size_t kr, size_t sr);
 
-    size_t (*packed_size_ex)(size_t m, size_t k, size_t bl, size_t mr, size_t kr, size_t sr);
+    size_t (*packed_ਮਾਪ_ex)(size_t m, size_t k, size_t bl, size_t mr, size_t kr, size_t sr);
 
-    void (*pack_func_ex)(size_t m, size_t k, size_t bl, size_t mr, size_t kr, size_t sr,
-        size_t m_idx_start, const void * lhs, size_t lhs_stride, void * lhs_packed);
+    ਖਾਲੀ (*pack_func_ex)(size_t m, size_t k, size_t bl, size_t mr, size_t kr, size_t sr,
+        size_t m_idx_ਸ਼ੁਰੂ, ਅਚਲ ਖਾਲੀ * lhs, size_t lhs_stride, ਖਾਲੀ * lhs_packed);
 };
 
-enum rhs_repack_mode {
-    RHS_REPACK_PER_KERNEL,
+ਗਿਣਤੀ rhs_repack_ਬਹੁਲਕ {
+    RHS_REPACK_ਪ੍ਰਤੀ_KERNEL,
     RHS_REPACK_SINGLE_ONLY,
 };
 
-struct rhs_packing_info {
-    size_t (*packed_size_ex)(size_t n, size_t k, size_t nr, size_t kr, size_t bl);
+ਬਣਤਰ rhs_packing_info {
+    size_t (*packed_ਮਾਪ_ex)(size_t n, size_t k, size_t nr, size_t kr, size_t bl);
 
-    void (*pack_func_ex)(size_t num_groups, size_t n, size_t k, size_t nr, size_t kr, size_t sr, size_t bl,
-        size_t rhs_stride, const void * rhs, const void * bias, const void * scale, void * rhs_packed, size_t extra_bytes, const void * params);
+    ਖਾਲੀ (*pack_func_ex)(size_t ਅੰਕ_groups, size_t n, size_t k, size_t nr, size_t kr, size_t sr, size_t bl,
+        size_t rhs_stride, ਅਚਲ ਖਾਲੀ * rhs, ਅਚਲ ਖਾਲੀ * bias, ਅਚਲ ਖਾਲੀ * scale, ਖਾਲੀ * rhs_packed, size_t extra_ਬਾਈਟਾਂ, ਅਚਲ ਖਾਲੀ * params);
 
-    rhs_repack_mode repack_mode = RHS_REPACK_PER_KERNEL;
+    rhs_repack_ਬਹੁਲਕ repack_ਬਹੁਲਕ = RHS_REPACK_ਪ੍ਰਤੀ_KERNEL;
 };
 
-struct ggml_kleidiai_kernels {
+ਬਣਤਰ ggml_kleidiai_kernels {
     kernel_info      gemm;
     lhs_packing_info gemm_lhs_info;
 
@@ -86,7 +86,7 @@ struct ggml_kleidiai_kernels {
     ggml_type op_type;
 };
 
-ggml_kleidiai_kernels * ggml_kleidiai_select_kernels(cpu_feature cpu_features, const ggml_tensor * tensor);
+ggml_kleidiai_kernels * ggml_kleidiai_select_kernels(cpu_feature cpu_features, ਅਚਲ ggml_tensor * tensor);
 ggml_kleidiai_kernels * ggml_kleidiai_select_kernels_q4_0(cpu_feature features);
 ggml_kleidiai_kernels * ggml_kleidiai_select_kernels_q4_k(cpu_feature features);
 ggml_kleidiai_kernels * ggml_kleidiai_select_kernels_q8_0(cpu_feature features);

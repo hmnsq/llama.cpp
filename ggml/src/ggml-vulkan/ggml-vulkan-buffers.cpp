@@ -1,458 +1,458 @@
-#include "ggml-vulkan-common.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-vulkan-common.h"
 
-#include <cstdint>
-#include <cstdlib>
-#include <mutex>
-#include <shared_mutex>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cstdint>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cstdlib>
+#ਅਨ੍ਤਰ੍ਭਾਵ <mutex>
+#ਅਨ੍ਤਰ੍ਭਾਵ <shared_mutex>
 
-static void * portable_aligned_malloc(size_t align, size_t size) {
-#ifdef _WIN32
-    return _aligned_malloc(size, align);
-#else
-    void * ptr = nullptr;
-    if (posix_memalign(&ptr, align, size) != 0) {
-        return nullptr;
+ਸਥਿਰ ਖਾਲੀ * portable_aligned_malloc(size_t align, size_t size) {
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ _WIN32
+    ਵਾਪਸ _aligned_malloc(size, align);
+#ਨਹੀਂਤਾਂ
+    ਖਾਲੀ * ptr = ਖਾਲੀ_ਸੂਚਕ;
+    ਜੇ (posix_memalign(&ptr, align, size) != 0) {
+        ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
     }
-    return ptr;
-#endif
+    ਵਾਪਸ ptr;
+#ਜੇ_ਅੰਤ
 }
 
-static void portable_aligned_free(void * ptr) {
-#ifdef _WIN32
+ਸਥਿਰ ਖਾਲੀ portable_aligned_free(ਖਾਲੀ * ptr) {
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ _WIN32
     _aligned_free(ptr);
-#else
-    std::free(ptr);
-#endif
+#ਨਹੀਂਤਾਂ
+    std::ਮੁਕਤ(ptr);
+#ਜੇ_ਅੰਤ
 }
 
-ggml_backend_buffer_type_i ggml_backend_vk_buffer_type_interface = {
-    /* .get_name            = */ ggml_backend_vk_buffer_type_name,
-    /* .alloc_buffer        = */ ggml_backend_vk_buffer_type_alloc_buffer,
-    /* .alloc_buffer_n      = */ NULL,
-    /* .get_alignment       = */ ggml_backend_vk_buffer_type_get_alignment,
-    /* .get_max_size        = */ ggml_backend_vk_buffer_type_get_max_size,
-    /* .get_alloc_size      = */ ggml_backend_vk_buffer_type_get_alloc_size,
-    /* .get_alloc_size_n    = */ NULL,
-    /* .is_host             = */ NULL,
+ggml_backend_ਬਫਰ_type_i ggml_backend_vk_ਬਫਰ_type_interface = {
+    /* .get_name            = */ ggml_backend_vk_ਬਫਰ_type_name,
+    /* .alloc_buffer        = */ ggml_backend_vk_ਬਫਰ_type_alloc_ਬਫਰ,
+    /* .alloc_buffer_n      = */ ਨਿਰਾ,
+    /* .get_alignment       = */ ggml_backend_vk_ਬਫਰ_type_get_alignment,
+    /* .get_max_size        = */ ggml_backend_vk_ਬਫਰ_type_get_max_ਮਾਪ,
+    /* .get_alloc_size      = */ ggml_backend_vk_ਬਫਰ_type_get_alloc_ਮਾਪ,
+    /* .get_alloc_size_n    = */ ਨਿਰਾ,
+    /* .is_host             = */ ਨਿਰਾ,
 };
 
-static std::vector<uint32_t> ggml_vk_find_memory_properties(const vk::PhysicalDeviceMemoryProperties* mem_props, vk::MemoryRequirements* mem_req, vk::MemoryPropertyFlags flags) {
+ਸਥਿਰ std::vector<uint32_t> ggml_vk_ਲੱਭੋ_ਸਮ੍ਰਿਤੀ_properties(ਅਚਲ vk::Physical_Device_ਸਮ੍ਰਿਤੀ_Properties* mem_props, vk::ਸਮ੍ਰਿਤੀ_Requirements* mem_req, vk::ਸਮ੍ਰਿਤੀ_Property_Flags flags) {
     std::vector<uint32_t> indices;
 
-    for (uint32_t i = 0; i < mem_props->memoryTypeCount; ++i) {
-        vk::MemoryType memory_type = mem_props->memoryTypes[i];
-        if ((mem_req->memoryTypeBits & ((uint64_t)1 << i)) &&
-            (flags & memory_type.propertyFlags) == flags &&
-            mem_props->memoryHeaps[memory_type.heapIndex].size >= mem_req->size) {
+    ਲਈ (uint32_t i = 0; i < mem_props->ਸਮ੍ਰਿਤੀ_Type_ਗਿਣਤੀ; ++i) {
+        vk::ਸਮ੍ਰਿਤੀ_Type ਸਮ੍ਰਿਤੀ_type = mem_props->ਸਮ੍ਰਿਤੀ_Types[i];
+        ਜੇ ((mem_req->ਸਮ੍ਰਿਤੀ_Type_ਬਿੱਟ & ((uint64_t)1 << i)) &&
+            (flags & ਸਮ੍ਰਿਤੀ_type.propertyFlags) == flags &&
+            mem_props->ਸਮ੍ਰਿਤੀ_Heaps[ਸਮ੍ਰਿਤੀ_type.ਢੇਰ_ਸੂਚਕਾਂਕ].size >= mem_req->size) {
             indices.push_back(i);
         }
     }
-    return indices;
+    ਵਾਪਸ indices;
 }
 
-static vk_buffer ggml_vk_create_buffer(vk_device& device, size_t size, const std::initializer_list<vk::MemoryPropertyFlags> & req_flags_list,
-                                       void *import_ptr = nullptr) {
+ਸਥਿਰ vk_ਬਫਰ ggml_vk_create_ਬਫਰ(vk_device& device, size_t size, ਅਚਲ std::initializer_list<vk::ਸਮ੍ਰਿਤੀ_Property_Flags> & req_flags_list,
+                                       ਖਾਲੀ *import_ptr = ਖਾਲੀ_ਸੂਚਕ) {
     VK_LOG_DEBUG("ggml_vk_create_buffer(" << device->name << ", " << size << ", " << to_string(req_flags_list.begin()[0]) << ", " << to_string(req_flags_list.begin()[req_flags_list.size()-1]) << ")");
-    if (size > device->max_buffer_size) {
-        throw vk::OutOfDeviceMemoryError("Requested buffer size exceeds device buffer size limit");
+    ਜੇ (size > device->max_ਬਫਰ_ਮਾਪ) {
+        ਸੁੱਟੋ vk::ਬਾਹਰਲਾ_ਦਾ_Device_ਸਮ੍ਰਿਤੀ_Error("Requested buffer size exceeds device buffer size limit");
     }
 
-    vk_buffer buf = std::make_shared<vk_buffer_struct>();
+    vk_ਬਫਰ buf = std::make_shared<vk_ਬਫਰ_struct>();
 
-    if (size == 0) {
+    ਜੇ (size == 0) {
         buf->size = 0;
-        return buf;
+        ਵਾਪਸ buf;
     }
 
-    vk::BufferUsageFlags usage_flags = vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferSrc | vk::BufferUsageFlagBits::eTransferDst;
-    vk::MemoryAllocateFlags mem_flags {};
-    if (device->buffer_device_address) {
-        usage_flags |= vk::BufferUsageFlagBits::eShaderDeviceAddress;
-        mem_flags |= vk::MemoryAllocateFlagBits::eDeviceAddress;
+    vk::ਬਫਰ_Usage_Flags usage_flags = vk::ਬਫਰ_Usage_Flag_ਬਿੱਟ::e_Storage_ਬਫਰ | vk::ਬਫਰ_Usage_Flag_ਬਿੱਟ::eTransferSrc | vk::ਬਫਰ_Usage_Flag_ਬਿੱਟ::eTransferDst;
+    vk::ਸਮ੍ਰਿਤੀ_Allocate_Flags mem_flags {};
+    ਜੇ (device->ਬਫਰ_device_ਪਤਾ) {
+        usage_flags |= vk::ਬਫਰ_Usage_Flag_ਬਿੱਟ::e_Shader_Device_ਪਤਾ;
+        mem_flags |= vk::ਸਮ੍ਰਿਤੀ_Allocate_Flag_ਬਿੱਟ::e_Device_ਪਤਾ;
     }
 
-    vk::BufferCreateInfo buffer_create_info{
-        vk::BufferCreateFlags(),
+    vk::ਬਫਰ_Create_Info ਬਫਰ_create_info{
+        vk::ਬਫਰ_Create_Flags(),
         size,
         usage_flags,
-        vk::SharingMode::eExclusive,
+        vk::Sharing_ਬਹੁਲਕ::eExclusive,
         0,
-        nullptr,
+        ਖਾਲੀ_ਸੂਚਕ,
     };
 
-    vk::ExternalMemoryBufferCreateInfo external_memory_bci;
-    if (import_ptr) {
-        external_memory_bci.handleTypes = vk::ExternalMemoryHandleTypeFlagBits::eHostAllocationEXT;
-        buffer_create_info.setPNext(&external_memory_bci);
+    vk::External_ਸਮ੍ਰਿਤੀ_ਬਫਰ_Create_Info external_ਸਮ੍ਰਿਤੀ_bci;
+    ਜੇ (import_ptr) {
+        external_ਸਮ੍ਰਿਤੀ_bci.handleTypes = vk::External_ਸਮ੍ਰਿਤੀ_Handle_Type_Flag_ਬਿੱਟ::e_Host_ਵੰਡ_EXT;
+        ਬਫਰ_create_info.ਸੈੱਟ_PNext(&external_ਸਮ੍ਰਿਤੀ_bci);
     }
 
-    buf->buffer = device->device.createBuffer(buffer_create_info);
+    buf->ਬਫਰ = device->device.create_ਬਫਰ(ਬਫਰ_create_info);
 
-    vk::MemoryRequirements mem_req = device->device.getBufferMemoryRequirements(buf->buffer);
+    vk::ਸਮ੍ਰਿਤੀ_Requirements mem_req = device->device.get_ਬਫਰ_ਸਮ੍ਰਿਤੀ_Requirements(buf->ਬਫਰ);
 
-    vk::PhysicalDeviceMemoryProperties mem_props = device->physical_device.getMemoryProperties();
+    vk::Physical_Device_ਸਮ੍ਰਿਤੀ_Properties mem_props = device->physical_device.get_ਸਮ੍ਰਿਤੀ_Properties();
 
-    const vk::MemoryPriorityAllocateInfoEXT mem_priority_info { 1.0f };
+    ਅਚਲ vk::ਸਮ੍ਰਿਤੀ_ਤਰਜੀਹ_Allocate_Info_EXT mem_ਤਰਜੀਹ_info { 1.0f };
 
-    vk::MemoryAllocateFlagsInfo mem_flags_info { mem_flags };
+    vk::ਸਮ੍ਰਿਤੀ_Allocate_Flags_Info mem_flags_info { mem_flags };
 
-    if (device->memory_priority) {
-        mem_flags_info.setPNext(&mem_priority_info);
+    ਜੇ (device->ਸਮ੍ਰਿਤੀ_ਤਰਜੀਹ) {
+        mem_flags_info.ਸੈੱਟ_PNext(&mem_ਤਰਜੀਹ_info);
     }
 
-    if (import_ptr) {
-        vk::MemoryHostPointerPropertiesEXT host_pointer_props;
-        try {
-            host_pointer_props = device->device.getMemoryHostPointerPropertiesEXT(vk::ExternalMemoryHandleTypeFlagBits::eHostAllocationEXT, import_ptr);
-        } catch (vk::SystemError& e) {
+    ਜੇ (import_ptr) {
+        vk::ਸਮ੍ਰਿਤੀ_Host_ਸੂਚਕ_Properties_EXT host_ਸੂਚਕ_props;
+        ਕੋਸ਼ਿਸ਼ {
+            host_ਸੂਚਕ_props = device->device.get_ਸਮ੍ਰਿਤੀ_Host_ਸੂਚਕ_Properties_EXT(vk::External_ਸਮ੍ਰਿਤੀ_Handle_Type_Flag_ਬਿੱਟ::e_Host_ਵੰਡ_EXT, import_ptr);
+        } ਫੜੋ (vk::SystemError& e) {
             GGML_LOG_WARN("ggml_vulkan: Failed getMemoryHostPointerPropertiesEXT (%s)\n", e.what());
-            device->device.destroyBuffer(buf->buffer);
-            return {};
+            device->device.destroy_ਬਫਰ(buf->ਬਫਰ);
+            ਵਾਪਸ {};
         }
-        vk::PhysicalDeviceMemoryProperties mem_props = device->physical_device.getMemoryProperties();
+        vk::Physical_Device_ਸਮ੍ਰਿਤੀ_Properties mem_props = device->physical_device.get_ਸਮ੍ਰਿਤੀ_Properties();
 
-        uint32_t memory_type_idx;
-        vk::MemoryPropertyFlags property_flags = *req_flags_list.begin();
-        for (memory_type_idx = 0; memory_type_idx < 32; ++memory_type_idx) {
-            if (!(host_pointer_props.memoryTypeBits & (1u << memory_type_idx))) {
-                continue;
+        uint32_t ਸਮ੍ਰਿਤੀ_type_idx;
+        vk::ਸਮ੍ਰਿਤੀ_Property_Flags property_flags = *req_flags_list.begin();
+        ਲਈ (ਸਮ੍ਰਿਤੀ_type_idx = 0; ਸਮ੍ਰਿਤੀ_type_idx < 32; ++ਸਮ੍ਰਿਤੀ_type_idx) {
+            ਜੇ (!(host_ਸੂਚਕ_props.ਸਮ੍ਰਿਤੀ_Type_ਬਿੱਟ & (1u << ਸਮ੍ਰਿਤੀ_type_idx))) {
+                ਜਾਰੀ;
             }
-            if (!(mem_req.memoryTypeBits & (1u << memory_type_idx))) {
-                continue;
+            ਜੇ (!(mem_req.ਸਮ੍ਰਿਤੀ_Type_ਬਿੱਟ & (1u << ਸਮ੍ਰਿਤੀ_type_idx))) {
+                ਜਾਰੀ;
             }
 
-            vk::MemoryType memory_type = mem_props.memoryTypes[memory_type_idx];
+            vk::ਸਮ੍ਰਿਤੀ_Type ਸਮ੍ਰਿਤੀ_type = mem_props.ਸਮ੍ਰਿਤੀ_Types[ਸਮ੍ਰਿਤੀ_type_idx];
             // check for visible+coherent+cached. Other flags (e.g. devicelocal) are allowed
-            if ((memory_type.propertyFlags & property_flags) == property_flags) {
-                property_flags = memory_type.propertyFlags;
-                break;
+            ਜੇ ((ਸਮ੍ਰਿਤੀ_type.propertyFlags & property_flags) == property_flags) {
+                property_flags = ਸਮ੍ਰਿਤੀ_type.propertyFlags;
+                ਰੋਕੋ;
             }
         }
-        if (memory_type_idx == 32) {
+        ਜੇ (ਸਮ੍ਰਿਤੀ_type_idx == 32) {
             GGML_LOG_WARN("ggml_vulkan: Memory type for host allocation not found\n");
-            device->device.destroyBuffer(buf->buffer);
-            return {};
+            device->device.destroy_ਬਫਰ(buf->ਬਫਰ);
+            ਵਾਪਸ {};
         }
 
-        buf->memory_property_flags = mem_props.memoryTypes[memory_type_idx].propertyFlags;
-        try {
-            vk::ImportMemoryHostPointerInfoEXT import_info;
-            import_info.handleType = vk::ExternalMemoryHandleTypeFlagBits::eHostAllocationEXT;
-            import_info.pHostPointer = import_ptr;
-            import_info.setPNext(&mem_flags_info);
-            buf->device_memory = device->device.allocateMemory({ size, memory_type_idx, &import_info });
-        } catch (const vk::SystemError& e) {
+        buf->ਸਮ੍ਰਿਤੀ_property_flags = mem_props.ਸਮ੍ਰਿਤੀ_Types[ਸਮ੍ਰਿਤੀ_type_idx].propertyFlags;
+        ਕੋਸ਼ਿਸ਼ {
+            vk::Import_ਸਮ੍ਰਿਤੀ_Host_ਸੂਚਕ_Info_EXT import_info;
+            import_info.handleType = vk::External_ਸਮ੍ਰਿਤੀ_Handle_Type_Flag_ਬਿੱਟ::e_Host_ਵੰਡ_EXT;
+            import_info.p_Host_ਸੂਚਕ = import_ptr;
+            import_info.ਸੈੱਟ_PNext(&mem_flags_info);
+            buf->device_ਸਮ੍ਰਿਤੀ = device->device.allocate_ਸਮ੍ਰਿਤੀ({ size, ਸਮ੍ਰਿਤੀ_type_idx, &import_info });
+        } ਫੜੋ (ਅਚਲ vk::SystemError& e) {
         }
-    } else {
-        for (auto it = req_flags_list.begin(); it != req_flags_list.end(); it++) {
-            const auto & req_flags = *it;
+    } ਨਹੀਂਤਾਂ {
+        ਲਈ (ਸਵੈਚਾਲਿਤ it = req_flags_list.begin(); it != req_flags_list.end(); it++) {
+            ਅਚਲ ਸਵੈਚਾਲਿਤ & req_flags = *it;
 
-            const std::vector<uint32_t> memory_type_indices = ggml_vk_find_memory_properties(&mem_props, &mem_req, req_flags);
+            ਅਚਲ std::vector<uint32_t> ਸਮ੍ਰਿਤੀ_type_indices = ggml_vk_ਲੱਭੋ_ਸਮ੍ਰਿਤੀ_properties(&mem_props, &mem_req, req_flags);
 
-            if (memory_type_indices.empty()) {
-                continue;
+            ਜੇ (ਸਮ੍ਰਿਤੀ_type_indices.ਖਾਲੀ_ਥਾਵਾਂ()) {
+                ਜਾਰੀ;
             }
 
-            bool done = false;
+            ਤਾਰਕਿਕ ਪੂਰਾ = ਝੂਠ;
 
-            for (auto mtype_it = memory_type_indices.begin(); mtype_it != memory_type_indices.end(); mtype_it++) {
-                try {
-                    buf->device_memory = device->device.allocateMemory({ mem_req.size, *mtype_it, &mem_flags_info });
-                    buf->memory_property_flags = mem_props.memoryTypes[*mtype_it].propertyFlags;
-                    done = true;
-                    break;
-                } catch (const vk::SystemError& e) {
+            ਲਈ (ਸਵੈਚਾਲਿਤ mtype_it = ਸਮ੍ਰਿਤੀ_type_indices.begin(); mtype_it != ਸਮ੍ਰਿਤੀ_type_indices.end(); mtype_it++) {
+                ਕੋਸ਼ਿਸ਼ {
+                    buf->device_ਸਮ੍ਰਿਤੀ = device->device.allocate_ਸਮ੍ਰਿਤੀ({ mem_req.size, *mtype_it, &mem_flags_info });
+                    buf->ਸਮ੍ਰਿਤੀ_property_flags = mem_props.ਸਮ੍ਰਿਤੀ_Types[*mtype_it].propertyFlags;
+                    ਪੂਰਾ = ਸੱਚ;
+                    ਰੋਕੋ;
+                } ਫੜੋ (ਅਚਲ vk::SystemError& e) {
                     // loop and retry
                     // during last attempt throw the exception
-                    if (it + 1 == req_flags_list.end() && mtype_it + 1 == memory_type_indices.end()) {
-                        device->device.destroyBuffer(buf->buffer);
-                        throw e;
+                    ਜੇ (it + 1 == req_flags_list.end() && mtype_it + 1 == ਸਮ੍ਰਿਤੀ_type_indices.end()) {
+                        device->device.destroy_ਬਫਰ(buf->ਬਫਰ);
+                        ਸੁੱਟੋ e;
                     }
                 }
             }
 
-            if (done) {
-                break;
+            ਜੇ (ਪੂਰਾ) {
+                ਰੋਕੋ;
             }
         }
     }
 
-    if (!buf->device_memory) {
-        device->device.destroyBuffer(buf->buffer);
-        throw vk::OutOfDeviceMemoryError("No suitable memory type found");
+    ਜੇ (!buf->device_ਸਮ੍ਰਿਤੀ) {
+        device->device.destroy_ਬਫਰ(buf->ਬਫਰ);
+        ਸੁੱਟੋ vk::ਬਾਹਰਲਾ_ਦਾ_Device_ਸਮ੍ਰਿਤੀ_Error("No suitable memory type found");
     }
 
-    buf->ptr = nullptr;
+    buf->ptr = ਖਾਲੀ_ਸੂਚਕ;
 
-    if (import_ptr) {
+    ਜੇ (import_ptr) {
         buf->ptr = import_ptr;
-    } else {
-        if (buf->memory_property_flags & vk::MemoryPropertyFlagBits::eHostVisible) {
-            buf->ptr = device->device.mapMemory(buf->device_memory, 0, VK_WHOLE_SIZE);
+    } ਨਹੀਂਤਾਂ {
+        ਜੇ (buf->ਸਮ੍ਰਿਤੀ_property_flags & vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostVisible) {
+            buf->ptr = device->device.map_ਸਮ੍ਰਿਤੀ(buf->device_ਸਮ੍ਰਿਤੀ, 0, VK_ਸਾਰਾ_ਮਾਪ);
         }
     }
 
-    device->device.bindBufferMemory(buf->buffer, buf->device_memory, 0);
+    device->device.bind_ਬਫਰ_ਸਮ੍ਰਿਤੀ(buf->ਬਫਰ, buf->device_ਸਮ੍ਰਿਤੀ, 0);
 
     buf->device = device;
     buf->size = size;
 
-    if (device->buffer_device_address) {
-        const vk::BufferDeviceAddressInfo addressInfo(buf->buffer);
-        buf->bda_addr = device->device.getBufferAddress(addressInfo);
+    ਜੇ (device->ਬਫਰ_device_ਪਤਾ) {
+        ਅਚਲ vk::ਬਫਰ_Device_ਪਤਾ_Info ਪਤਾ_Info(buf->ਬਫਰ);
+        buf->bda_addr = device->device.get_ਬਫਰ_ਪਤਾ(ਪਤਾ_Info);
     }
 
-    device->memory_logger->log_allocation(buf, size);
+    device->ਸਮ੍ਰਿਤੀ_logger->log_ਵੰਡ(buf, size);
 
-    return buf;
+    ਵਾਪਸ buf;
 }
 
-vk_buffer ggml_vk_create_buffer_check(vk_device& device, size_t size, vk::MemoryPropertyFlags req_flags, vk::MemoryPropertyFlags fallback_flags) {
-    try {
-        return ggml_vk_create_buffer(device, size, {req_flags, fallback_flags});
-    } catch (const vk::SystemError& e) {
-        std::cerr << "ggml_vulkan: Memory allocation of size " << size << " failed." << std::endl;
-        std::cerr << "ggml_vulkan: " << e.what() << std::endl;
-        throw e;
+vk_ਬਫਰ ggml_vk_create_ਬਫਰ_check(vk_device& device, size_t size, vk::ਸਮ੍ਰਿਤੀ_Property_Flags req_flags, vk::ਸਮ੍ਰਿਤੀ_Property_Flags fallback_flags) {
+    ਕੋਸ਼ਿਸ਼ {
+        ਵਾਪਸ ggml_vk_create_ਬਫਰ(device, size, {req_flags, fallback_flags});
+    } ਫੜੋ (ਅਚਲ vk::SystemError& e) {
+        std::cerr << "ggml_vulkan: Memory allocation of size " << size << " failed." << std::ਸਤਰ_ਅੰਤ;
+        std::cerr << "ggml_vulkan: " << e.what() << std::ਸਤਰ_ਅੰਤ;
+        ਸੁੱਟੋ e;
     }
 }
 
-vk_buffer ggml_vk_create_buffer_device(vk_device& device, size_t size) {
-    vk_buffer buf;
-    try {
-        if (device->prefer_host_memory) {
-            buf = ggml_vk_create_buffer(device, size, {vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
-                                                       vk::MemoryPropertyFlagBits::eDeviceLocal});
-        } else if (device->uma) {
+vk_ਬਫਰ ggml_vk_create_ਬਫਰ_device(vk_device& device, size_t size) {
+    vk_ਬਫਰ buf;
+    ਕੋਸ਼ਿਸ਼ {
+        ਜੇ (device->prefer_host_ਸਮ੍ਰਿਤੀ) {
+            buf = ggml_vk_create_ਬਫਰ(device, size, {vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostVisible | vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostCoherent,
+                                                       vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eDeviceLocal});
+        } ਨਹੀਂਤਾਂ ਜੇ (device->uma) {
             // On UMA, prefer host-visible memory so direct tensor borrowing works.
             // If unavailable, fall back to device-local memory.
-            buf = ggml_vk_create_buffer(device, size, {vk::MemoryPropertyFlagBits::eDeviceLocal | vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
-                                                       vk::MemoryPropertyFlagBits::eDeviceLocal,
-                                                       vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent});
-        } else if (device->disable_host_visible_vidmem) {
-            if (device->allow_sysmem_fallback) {
-                buf = ggml_vk_create_buffer(device, size, {vk::MemoryPropertyFlagBits::eDeviceLocal,
-                                                           vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent});
-            } else {
-                buf = ggml_vk_create_buffer(device, size, {vk::MemoryPropertyFlagBits::eDeviceLocal});
+            buf = ggml_vk_create_ਬਫਰ(device, size, {vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eDeviceLocal | vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostVisible | vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostCoherent,
+                                                       vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eDeviceLocal,
+                                                       vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostVisible | vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostCoherent});
+        } ਨਹੀਂਤਾਂ ਜੇ (device->disable_host_visible_vidmem) {
+            ਜੇ (device->allow_sysmem_fallback) {
+                buf = ggml_vk_create_ਬਫਰ(device, size, {vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eDeviceLocal,
+                                                           vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostVisible | vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostCoherent});
+            } ਨਹੀਂਤਾਂ {
+                buf = ggml_vk_create_ਬਫਰ(device, size, {vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eDeviceLocal});
             }
-        } else {
+        } ਨਹੀਂਤਾਂ {
             // use rebar if available, otherwise fallback to device only visible memory
-            if (device->allow_sysmem_fallback) {
-                buf = ggml_vk_create_buffer(device, size, {vk::MemoryPropertyFlagBits::eDeviceLocal | vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
-                                                           vk::MemoryPropertyFlagBits::eDeviceLocal,
-                                                           vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent});
-            } else {
-                buf = ggml_vk_create_buffer(device, size, {vk::MemoryPropertyFlagBits::eDeviceLocal | vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
-                                                           vk::MemoryPropertyFlagBits::eDeviceLocal});
+            ਜੇ (device->allow_sysmem_fallback) {
+                buf = ggml_vk_create_ਬਫਰ(device, size, {vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eDeviceLocal | vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostVisible | vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostCoherent,
+                                                           vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eDeviceLocal,
+                                                           vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostVisible | vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostCoherent});
+            } ਨਹੀਂਤਾਂ {
+                buf = ggml_vk_create_ਬਫਰ(device, size, {vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eDeviceLocal | vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostVisible | vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostCoherent,
+                                                           vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eDeviceLocal});
             }
         }
-    } catch (const vk::SystemError& e) {
-        std::cerr << "ggml_vulkan: Device memory allocation of size " << size << " failed." << std::endl;
-        std::cerr << "ggml_vulkan: " << e.what() << std::endl;
-        throw e;
+    } ਫੜੋ (ਅਚਲ vk::SystemError& e) {
+        std::cerr << "ggml_vulkan: Device memory allocation of size " << size << " failed." << std::ਸਤਰ_ਅੰਤ;
+        std::cerr << "ggml_vulkan: " << e.what() << std::ਸਤਰ_ਅੰਤ;
+        ਸੁੱਟੋ e;
     }
 
-    return buf;
+    ਵਾਪਸ buf;
 }
 
-void ggml_vk_destroy_buffer(vk_buffer& buf) {
-    if (buf == nullptr) {
-        return;
+ਖਾਲੀ ggml_vk_destroy_ਬਫਰ(vk_ਬਫਰ& buf) {
+    ਜੇ (buf == ਖਾਲੀ_ਸੂਚਕ) {
+        ਵਾਪਸ;
     }
 
-    if (buf->device != nullptr) {
-        buf->device->memory_logger->log_deallocation(buf);
+    ਜੇ (buf->device != ਖਾਲੀ_ਸੂਚਕ) {
+        buf->device->ਸਮ੍ਰਿਤੀ_logger->log_deallocation(buf);
     }
 
     buf.reset();
 }
 
 // caller must hold host_allocations_mutex
-static size_t ggml_vk_host_allocation_find(const void * ptr) {
-    for (size_t i = 0; i < vk_instance.host_allocations.size(); i++) {
-        const uint8_t * base = (const uint8_t *) vk_instance.host_allocations[i].base;
-        if (ptr >= base && ptr < base + vk_instance.host_allocations[i].size) {
-            return i;
+ਸਥਿਰ size_t ggml_vk_host_ਵੰਡ_ਲੱਭੋ(ਅਚਲ ਖਾਲੀ * ptr) {
+    ਲਈ (size_t i = 0; i < vk_instance.host_allocations.size(); i++) {
+        ਅਚਲ uint8_t * ਅਧਾਰ = (ਅਚਲ uint8_t *) vk_instance.host_allocations[i].ਅਧਾਰ;
+        ਜੇ (ptr >= ਅਧਾਰ && ptr < ਅਧਾਰ + vk_instance.host_allocations[i].size) {
+            ਵਾਪਸ i;
         }
     }
-    return SIZE_MAX;
+    ਵਾਪਸ SIZE_MAX;
 }
 
-void * ggml_vk_host_malloc(size_t size) {
-    VK_LOG_MEMORY("ggml_vk_host_malloc(" << size << ")");
+ਖਾਲੀ * ggml_vk_host_malloc(size_t size) {
+    VK_LOG_ਸਮ੍ਰਿਤੀ("ggml_vk_host_malloc(" << size << ")");
 
     ggml_vk_instance_init();
 
-    if (vk_instance.multi_device) {
-        const size_t align      = std::max<size_t>(vk_instance.host_import_alignment, TENSOR_ALIGNMENT);
-        const size_t alloc_size = (size + align - 1) / align * align;
+    ਜੇ (vk_instance.multi_device) {
+        ਅਚਲ size_t align      = std::max<size_t>(vk_instance.host_import_alignment, TENSOR_ALIGNMENT);
+        ਅਚਲ size_t alloc_ਮਾਪ = (size + align - 1) / align * align;
 
-        void * ptr = portable_aligned_malloc(align, alloc_size);
-        if (ptr == nullptr) {
-            return nullptr;
+        ਖਾਲੀ * ptr = portable_aligned_malloc(align, alloc_ਮਾਪ);
+        ਜੇ (ptr == ਖਾਲੀ_ਸੂਚਕ) {
+            ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
         }
-        vk_host_allocation entry;
-        entry.base = ptr;
-        entry.size = alloc_size;
+        vk_host_ਵੰਡ ਇੰਦਰਾਜ;
+        ਇੰਦਰਾਜ.ਅਧਾਰ = ptr;
+        ਇੰਦਰਾਜ.size = alloc_ਮਾਪ;
 
         std::unique_lock<std::shared_mutex> guard(vk_instance.host_allocations_mutex);
-        vk_instance.host_allocations.push_back(std::move(entry));
-        return ptr;
+        vk_instance.host_allocations.push_back(std::move(ਇੰਦਰਾਜ));
+        ਵਾਪਸ ptr;
     }
 
     vk_device dev0 = ggml_vk_get_device(0);
-    vk_buffer buf;
-    try {
-        buf = ggml_vk_create_buffer(dev0, size,
-            {vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostCached,
-             vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent});
-    } catch (vk::SystemError&) {
-        return nullptr;
+    vk_ਬਫਰ buf;
+    ਕੋਸ਼ਿਸ਼ {
+        buf = ggml_vk_create_ਬਫਰ(dev0, size,
+            {vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostVisible | vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostCoherent | vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostCached,
+             vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostVisible | vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostCoherent});
+    } ਫੜੋ (vk::SystemError&) {
+        ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
     }
 
-    if (!(buf->memory_property_flags & vk::MemoryPropertyFlagBits::eHostVisible)) {
+    ਜੇ (!(buf->ਸਮ੍ਰਿਤੀ_property_flags & vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostVisible)) {
         fprintf(stderr, "WARNING: failed to allocate %.2f MB of pinned memory\n", size / 1024.0 / 1024.0);
-        ggml_vk_destroy_buffer(buf);
-        return nullptr;
+        ggml_vk_destroy_ਬਫਰ(buf);
+        ਵਾਪਸ ਖਾਲੀ_ਸੂਚਕ;
     }
 
-    vk_host_allocation entry;
-    entry.base             = buf->ptr;
-    entry.size             = size;
-    entry.views[dev0->idx] = buf;
+    vk_host_ਵੰਡ ਇੰਦਰਾਜ;
+    ਇੰਦਰਾਜ.ਅਧਾਰ             = buf->ptr;
+    ਇੰਦਰਾਜ.size             = size;
+    ਇੰਦਰਾਜ.views[dev0->idx] = buf;
 
     std::unique_lock<std::shared_mutex> guard(vk_instance.host_allocations_mutex);
-    vk_instance.host_allocations.push_back(std::move(entry));
-    return buf->ptr;
+    vk_instance.host_allocations.push_back(std::move(ਇੰਦਰਾਜ));
+    ਵਾਪਸ buf->ptr;
 }
 
-void ggml_vk_host_free(void * ptr) {
-    if (ptr == nullptr) {
-        return;
+ਖਾਲੀ ggml_vk_host_free(ਖਾਲੀ * ptr) {
+    ਜੇ (ptr == ਖਾਲੀ_ਸੂਚਕ) {
+        ਵਾਪਸ;
     }
-    VK_LOG_MEMORY("ggml_vk_host_free(" << ptr << ")");
+    VK_LOG_ਸਮ੍ਰਿਤੀ("ggml_vk_host_free(" << ptr << ")");
 
-    vk_host_allocation entry;
+    vk_host_ਵੰਡ ਇੰਦਰਾਜ;
     {
         std::unique_lock<std::shared_mutex> guard(vk_instance.host_allocations_mutex);
-        const size_t index = ggml_vk_host_allocation_find(ptr);
-        if (index == SIZE_MAX) {
+        ਅਚਲ size_t ਸੂਚਕਾਂਕ = ggml_vk_host_ਵੰਡ_ਲੱਭੋ(ptr);
+        ਜੇ (ਸੂਚਕਾਂਕ == SIZE_MAX) {
             fprintf(stderr, "WARNING: failed to free pinned memory: memory not in map\n");
-            return;
+            ਵਾਪਸ;
         }
-        entry = std::move(vk_instance.host_allocations[index]);
-        vk_instance.host_allocations.erase(vk_instance.host_allocations.begin() + index);
+        ਇੰਦਰਾਜ = std::move(vk_instance.host_allocations[ਸੂਚਕਾਂਕ]);
+        vk_instance.host_allocations.erase(vk_instance.host_allocations.begin() + ਸੂਚਕਾਂਕ);
     }
 
-    for (auto & view : entry.views) {
-        ggml_vk_destroy_buffer(view);
+    ਲਈ (ਸਵੈਚਾਲਿਤ & view : ਇੰਦਰਾਜ.views) {
+        ggml_vk_destroy_ਬਫਰ(view);
     }
-    if (vk_instance.multi_device) {
-        portable_aligned_free(entry.base);
+    ਜੇ (vk_instance.multi_device) {
+        portable_aligned_free(ਇੰਦਰਾਜ.ਅਧਾਰ);
     }
 }
 
-void ggml_vk_host_get(const vk_device& device, const void * ptr, vk_buffer& buf, size_t& buf_offset) {
-    buf = nullptr;
-    buf_offset = 0;
+ਖਾਲੀ ggml_vk_host_get(ਅਚਲ vk_device& device, ਅਚਲ ਖਾਲੀ * ptr, vk_ਬਫਰ& buf, size_t& buf_ਵਿੱਥ) {
+    buf = ਖਾਲੀ_ਸੂਚਕ;
+    buf_ਵਿੱਥ = 0;
 
     std::unique_lock<std::shared_mutex> guard(vk_instance.host_allocations_mutex);
 
-    const size_t index = ggml_vk_host_allocation_find(ptr);
-    if (index == SIZE_MAX) {
-        return;
+    ਅਚਲ size_t ਸੂਚਕਾਂਕ = ggml_vk_host_ਵੰਡ_ਲੱਭੋ(ptr);
+    ਜੇ (ਸੂਚਕਾਂਕ == SIZE_MAX) {
+        ਵਾਪਸ;
     }
-    vk_host_allocation & entry = vk_instance.host_allocations[index];
+    vk_host_ਵੰਡ & ਇੰਦਰਾਜ = vk_instance.host_allocations[ਸੂਚਕਾਂਕ];
 
-    if (entry.views[device->idx] == nullptr) {
-        const uint32_t bit = 1u << device->idx;
-        if (!vk_instance.multi_device || !vk_instance.device_host_buffer_import[device->idx] || (vk_instance.host_import_failed & bit)) {
-            return;
+    ਜੇ (ਇੰਦਰਾਜ.views[device->idx] == ਖਾਲੀ_ਸੂਚਕ) {
+        ਅਚਲ uint32_t ਦੋਆਧਾਰੀ_ਅੰਕ = 1u << device->idx;
+        ਜੇ (!vk_instance.multi_device || !vk_instance.device_host_ਬਫਰ_import[device->idx] || (vk_instance.host_import_failed & ਦੋਆਧਾਰੀ_ਅੰਕ)) {
+            ਵਾਪਸ;
         }
-        GGML_ASSERT(device->external_memory_host);
+        GGML_ASSERT(device->external_ਸਮ੍ਰਿਤੀ_host);
         // const only propagates from the const context; the pointee is mutable
-        entry.views[device->idx] = ggml_vk_buffer_from_host_ptr(const_cast<vk_device&>(device), entry.base, entry.size);
-        if (entry.views[device->idx] == nullptr) {
-            vk_instance.host_import_failed |= bit;
+        ਇੰਦਰਾਜ.views[device->idx] = ggml_vk_ਬਫਰ_from_host_ptr(const_cast<vk_device&>(device), ਇੰਦਰਾਜ.ਅਧਾਰ, ਇੰਦਰਾਜ.size);
+        ਜੇ (ਇੰਦਰਾਜ.views[device->idx] == ਖਾਲੀ_ਸੂਚਕ) {
+            vk_instance.host_import_failed |= ਦੋਆਧਾਰੀ_ਅੰਕ;
             GGML_LOG_WARN("ggml_vulkan: %s: host memory import failed, using staging\n", device->name.c_str());
-            return;
+            ਵਾਪਸ;
         }
     }
 
-    buf = entry.views[device->idx];
-    buf_offset = (const uint8_t *) ptr - (const uint8_t *) entry.base;
+    buf = ਇੰਦਰਾਜ.views[device->idx];
+    buf_ਵਿੱਥ = (ਅਚਲ uint8_t *) ptr - (ਅਚਲ uint8_t *) ਇੰਦਰਾਜ.ਅਧਾਰ;
 }
 
-void ggml_vk_ensure_sync_staging_buffer(vk_device& device, size_t size) {
-    if (device->sync_staging == nullptr || device->sync_staging->size < size) {
-        VK_LOG_MEMORY("ggml_vk_ensure_sync_staging_buffer(" << size << ")");
-        ggml_vk_destroy_buffer(device->sync_staging);
-        device->sync_staging = ggml_vk_create_buffer_check(device, size,
-            vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostCached,
-            vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+ਖਾਲੀ ggml_vk_ensure_sync_staging_ਬਫਰ(vk_device& device, size_t size) {
+    ਜੇ (device->sync_staging == ਖਾਲੀ_ਸੂਚਕ || device->sync_staging->size < size) {
+        VK_LOG_ਸਮ੍ਰਿਤੀ("ggml_vk_ensure_sync_staging_buffer(" << size << ")");
+        ggml_vk_destroy_ਬਫਰ(device->sync_staging);
+        device->sync_staging = ggml_vk_create_ਬਫਰ_check(device, size,
+            vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostVisible | vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostCoherent | vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostCached,
+            vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostVisible | vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostCoherent);
     }
 }
 
-void ggml_vk_ensure_sync_staging_buffer(ggml_backend_vk_context * ctx, size_t size) {
-    if (ctx->sync_staging == nullptr || ctx->sync_staging->size < size) {
-        VK_LOG_MEMORY("ggml_vk_ensure_sync_staging_buffer(" << size << ")");
-        ggml_vk_destroy_buffer(ctx->sync_staging);
-        ctx->sync_staging = ggml_vk_create_buffer_check(ctx->device, size,
-            vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostCached,
-            vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+ਖਾਲੀ ggml_vk_ensure_sync_staging_ਬਫਰ(ggml_backend_vk_context * ctx, size_t size) {
+    ਜੇ (ctx->sync_staging == ਖਾਲੀ_ਸੂਚਕ || ctx->sync_staging->size < size) {
+        VK_LOG_ਸਮ੍ਰਿਤੀ("ggml_vk_ensure_sync_staging_buffer(" << size << ")");
+        ggml_vk_destroy_ਬਫਰ(ctx->sync_staging);
+        ctx->sync_staging = ggml_vk_create_ਬਫਰ_check(ctx->device, size,
+            vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostVisible | vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostCoherent | vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostCached,
+            vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostVisible | vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostCoherent);
     }
 }
 
-static void ggml_vk_buffer_write_nc_async(ggml_backend_vk_context * ctx, vk_context& subctx, vk_buffer& dst, size_t offset, const ggml_tensor * tensor, bool sync_staging = false) {
+ਸਥਿਰ ਖਾਲੀ ggml_vk_ਬਫਰ_write_nc_async(ggml_backend_vk_context * ctx, vk_context& subctx, vk_ਬਫਰ& dst, size_t ਵਿੱਥ, ਅਚਲ ggml_tensor * tensor, ਤਾਰਕਿਕ sync_staging = ਝੂਠ) {
     VK_LOG_DEBUG("ggml_vk_buffer_write_nc_async(" << tensor << ")");
     GGML_ASSERT(!ggml_is_contiguous(tensor));
     // Buffer is already mapped
-    if(dst->memory_property_flags & vk::MemoryPropertyFlagBits::eHostVisible) {
-        std::cerr << "ggml_vulkan: buffer_write_nc_async dst buffer is host_visible. Use synchronous write." << std::endl;
+    ਜੇ(dst->ਸਮ੍ਰਿਤੀ_property_flags & vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostVisible) {
+        std::cerr << "ggml_vulkan: buffer_write_nc_async dst buffer is host_visible. Use synchronous write." << std::ਸਤਰ_ਅੰਤ;
         GGML_ABORT("fatal error");
     }
     // Check if src is pinned memory
-    vk_buffer buf = nullptr;
-    size_t buf_offset = 0;
-    ggml_vk_host_get(ctx->device, tensor->data, buf, buf_offset);
+    vk_ਬਫਰ buf = ਖਾਲੀ_ਸੂਚਕ;
+    size_t buf_ਵਿੱਥ = 0;
+    ggml_vk_host_get(ctx->device, tensor->ਅੰਕੜੇ, buf, buf_ਵਿੱਥ);
 
-    const uint64_t ne0 = tensor->ne[0];
-    const uint64_t ne1 = tensor->ne[1];
-    const uint64_t ne2 = tensor->ne[2];
-    const uint64_t ne3 = tensor->ne[3];
-    const uint64_t nb0 = tensor->nb[0];
-    const uint64_t nb1 = tensor->nb[1];
-    const uint64_t nb2 = tensor->nb[2];
-    const uint64_t nb3 = tensor->nb[3];
-    const ggml_type type = tensor->type;
-    const uint64_t ts = ggml_type_size(type);
-    const uint64_t bs = ggml_blck_size(type);
+    ਅਚਲ uint64_t ne0 = tensor->ne[0];
+    ਅਚਲ uint64_t ne1 = tensor->ne[1];
+    ਅਚਲ uint64_t ne2 = tensor->ne[2];
+    ਅਚਲ uint64_t ne3 = tensor->ne[3];
+    ਅਚਲ uint64_t nb0 = tensor->nb[0];
+    ਅਚਲ uint64_t nb1 = tensor->nb[1];
+    ਅਚਲ uint64_t nb2 = tensor->nb[2];
+    ਅਚਲ uint64_t nb3 = tensor->nb[3];
+    ਅਚਲ ggml_type type = tensor->type;
+    ਅਚਲ uint64_t ts = ggml_type_ਮਾਪ(type);
+    ਅਚਲ uint64_t bs = ggml_blck_ਮਾਪ(type);
 
-    const uint64_t dstnb0 = ts;
-    const uint64_t dstnb1 = dstnb0*(ne0/bs);
-    const uint64_t dstnb2 = dstnb1*ne1;
-    const uint64_t dstnb3 = dstnb2*ne2;
+    ਅਚਲ uint64_t dstnb0 = ts;
+    ਅਚਲ uint64_t dstnb1 = dstnb0*(ne0/bs);
+    ਅਚਲ uint64_t dstnb2 = dstnb1*ne1;
+    ਅਚਲ uint64_t dstnb3 = dstnb2*ne2;
 
-    const uint64_t ne = ggml_nelements(tensor);
+    ਅਚਲ uint64_t ne = ggml_nelements(tensor);
 
-    if (buf != nullptr) {
+    ਜੇ (buf != ਖਾਲੀ_ਸੂਚਕ) {
         // Memory is pinned, use as staging buffer
-        std::vector<vk::BufferCopy> slices;
+        std::vector<vk::ਬਫਰ_Copy> slices;
 
-        for (uint64_t i3 = 0; i3 < ne3; i3++) {
-            for (uint64_t i2 = 0; i2 < ne2; i2++) {
+        ਲਈ (uint64_t i3 = 0; i3 < ne3; i3++) {
+            ਲਈ (uint64_t i2 = 0; i2 < ne2; i2++) {
                 // Find longest contiguous slice
-                if (ne1*nb1 == dstnb2) {
-                    slices.push_back({ buf_offset + i3*nb3 + i2*nb2, offset + i3*dstnb3 + i2*dstnb2, dstnb2 });
-                } else {
-                    for (uint64_t i1 = 0; i1 < ne1; i1++) {
-                        if (ne0*nb0/bs == dstnb1) {
-                            slices.push_back({ buf_offset + i3*nb3 + i2*nb2 + i1*nb1, offset + i3*dstnb3 + i2*dstnb2 + i1*dstnb1, dstnb1 });
-                        } else {
-                            const uint64_t s_off = buf_offset + i3*nb3 + i2*nb2 + i1*nb1;
-                            const uint64_t d_off = offset + i3*dstnb3 + i2*dstnb2 + i1*dstnb1;
-                            for (uint64_t i0 = 0; i0 < ne0; i0++) {
+                ਜੇ (ne1*nb1 == dstnb2) {
+                    slices.push_back({ buf_ਵਿੱਥ + i3*nb3 + i2*nb2, ਵਿੱਥ + i3*dstnb3 + i2*dstnb2, dstnb2 });
+                } ਨਹੀਂਤਾਂ {
+                    ਲਈ (uint64_t i1 = 0; i1 < ne1; i1++) {
+                        ਜੇ (ne0*nb0/bs == dstnb1) {
+                            slices.push_back({ buf_ਵਿੱਥ + i3*nb3 + i2*nb2 + i1*nb1, ਵਿੱਥ + i3*dstnb3 + i2*dstnb2 + i1*dstnb1, dstnb1 });
+                        } ਨਹੀਂਤਾਂ {
+                            ਅਚਲ uint64_t s_off = buf_ਵਿੱਥ + i3*nb3 + i2*nb2 + i1*nb1;
+                            ਅਚਲ uint64_t d_off = ਵਿੱਥ + i3*dstnb3 + i2*dstnb2 + i1*dstnb1;
+                            ਲਈ (uint64_t i0 = 0; i0 < ne0; i0++) {
                                 slices.push_back({ s_off + i0*nb0, d_off + i0*dstnb0, dstnb0 });
                             }
                         }
@@ -462,37 +462,37 @@ static void ggml_vk_buffer_write_nc_async(ggml_backend_vk_context * ctx, vk_cont
         }
 
         ggml_vk_sync_buffers(ctx, subctx);
-        subctx->s->buffer->buf.copyBuffer(buf->buffer, dst->buffer, slices);
-        return;
+        subctx->s->ਬਫਰ->buf.copy_ਬਫਰ(buf->ਬਫਰ, dst->ਬਫਰ, slices);
+        ਵਾਪਸ;
     }
 
-    if (!sync_staging) {
+    ਜੇ (!sync_staging) {
         GGML_ABORT("Asynchronous write to non-pinned memory not supported");
     }
 
     // Staging buffer required
-    vk_buffer& staging = ctx->device->sync_staging;
-    const uint64_t copy_size = ts*ne/bs;
-    ggml_vk_ensure_sync_staging_buffer(ctx->device, copy_size);
-    VkBufferCopy buf_copy{ 0, offset, copy_size };
+    vk_ਬਫਰ& staging = ctx->device->sync_staging;
+    ਅਚਲ uint64_t copy_ਮਾਪ = ts*ne/bs;
+    ggml_vk_ensure_sync_staging_ਬਫਰ(ctx->device, copy_ਮਾਪ);
+    Vk_ਬਫਰ_Copy buf_copy{ 0, ਵਿੱਥ, copy_ਮਾਪ };
 
     ggml_vk_sync_buffers(ctx, subctx);
-    vkCmdCopyBuffer(subctx->s->buffer->buf, (VkBuffer)staging->buffer, (VkBuffer)dst->buffer, 1, &buf_copy);
+    vk_Cmd_Copy_ਬਫਰ(subctx->s->ਬਫਰ->buf, (Vk_ਬਫਰ)staging->ਬਫਰ, (Vk_ਬਫਰ)dst->ਬਫਰ, 1, &buf_copy);
 
-    for (uint64_t i3 = 0; i3 < ne3; i3++) {
-        for (uint64_t i2 = 0; i2 < ne2; i2++) {
+    ਲਈ (uint64_t i3 = 0; i3 < ne3; i3++) {
+        ਲਈ (uint64_t i2 = 0; i2 < ne2; i2++) {
             // Find longest contiguous slice
-            if (ne1*nb1 == dstnb2) {
-                deferred_memcpy((uint8_t *)staging->ptr + i3*dstnb3 + i2*dstnb2, (const uint8_t *) tensor->data + buf_offset + i3*nb3 + i2*nb2, dstnb2, &subctx->in_memcpys);
-            } else {
-                for (uint64_t i1 = 0; i1 < ne1; i1++) {
-                    if (ne0*nb0/bs == dstnb1) {
-                        deferred_memcpy((uint8_t *)staging->ptr + i3*dstnb3 + i2*dstnb2 + i1*dstnb1, (const uint8_t *) tensor->data + buf_offset + i3*nb3 + i2*nb2 + i1*nb1, dstnb1, &subctx->in_memcpys);
-                    } else {
-                        const uint64_t s_off = buf_offset + i3*nb3 + i2*nb2 + i1*nb1;
-                        const uint64_t d_off = i3*dstnb3 + i2*dstnb2 + i1*dstnb1;
-                        for (uint64_t i0 = 0; i0 < ne0; i0++) {
-                            deferred_memcpy((uint8_t *)staging->ptr + d_off + i0*dstnb0, (const uint8_t *) tensor->data + s_off + i0*nb0, dstnb0, &subctx->in_memcpys);
+            ਜੇ (ne1*nb1 == dstnb2) {
+                deferred_memcpy((uint8_t *)staging->ptr + i3*dstnb3 + i2*dstnb2, (ਅਚਲ uint8_t *) tensor->ਅੰਕੜੇ + buf_ਵਿੱਥ + i3*nb3 + i2*nb2, dstnb2, &subctx->ਵਿੱਚ_memcpys);
+            } ਨਹੀਂਤਾਂ {
+                ਲਈ (uint64_t i1 = 0; i1 < ne1; i1++) {
+                    ਜੇ (ne0*nb0/bs == dstnb1) {
+                        deferred_memcpy((uint8_t *)staging->ptr + i3*dstnb3 + i2*dstnb2 + i1*dstnb1, (ਅਚਲ uint8_t *) tensor->ਅੰਕੜੇ + buf_ਵਿੱਥ + i3*nb3 + i2*nb2 + i1*nb1, dstnb1, &subctx->ਵਿੱਚ_memcpys);
+                    } ਨਹੀਂਤਾਂ {
+                        ਅਚਲ uint64_t s_off = buf_ਵਿੱਥ + i3*nb3 + i2*nb2 + i1*nb1;
+                        ਅਚਲ uint64_t d_off = i3*dstnb3 + i2*dstnb2 + i1*dstnb1;
+                        ਲਈ (uint64_t i0 = 0; i0 < ne0; i0++) {
+                            deferred_memcpy((uint8_t *)staging->ptr + d_off + i0*dstnb0, (ਅਚਲ uint8_t *) tensor->ਅੰਕੜੇ + s_off + i0*nb0, dstnb0, &subctx->ਵਿੱਚ_memcpys);
                         }
                     }
                 }
@@ -501,366 +501,366 @@ static void ggml_vk_buffer_write_nc_async(ggml_backend_vk_context * ctx, vk_cont
     }
 }
 
-bool ggml_vk_buffer_write_2d_async(vk_context subctx, vk_buffer& dst, size_t offset, const void * src, size_t spitch, size_t dpitch, size_t width, size_t height, bool sync_staging) {
-    VK_LOG_DEBUG("ggml_vk_buffer_write_2d_async(" << width << ", " << height << ")");
+ਤਾਰਕਿਕ ggml_vk_ਬਫਰ_write_2d_async(vk_context subctx, vk_ਬਫਰ& dst, size_t ਵਿੱਥ, ਅਚਲ ਖਾਲੀ * src, size_t spitch, size_t dpitch, size_t ਚੌੜਾਈ, size_t ਉਚਾਈ, ਤਾਰਕਿਕ sync_staging) {
+    VK_LOG_DEBUG("ggml_vk_buffer_write_2d_async(" << ਚੌੜਾਈ << ", " << ਉਚਾਈ << ")");
     // Check if src is pinned memory
-    vk_buffer buf = nullptr;
-    size_t buf_offset = 0;
-    ggml_vk_host_get(dst->device, src, buf, buf_offset);
+    vk_ਬਫਰ buf = ਖਾਲੀ_ਸੂਚਕ;
+    size_t buf_ਵਿੱਥ = 0;
+    ggml_vk_host_get(dst->device, src, buf, buf_ਵਿੱਥ);
 
-    if (buf != nullptr) {
+    ਜੇ (buf != ਖਾਲੀ_ਸੂਚਕ) {
         // Memory is pinned, use as staging buffer
-        std::vector<vk::BufferCopy> slices(1);
-        if (width == spitch && width == dpitch) {
+        std::vector<vk::ਬਫਰ_Copy> slices(1);
+        ਜੇ (ਚੌੜਾਈ == spitch && ਚੌੜਾਈ == dpitch) {
             // Only do single write if stride is equal
-            slices[0].srcOffset = buf_offset;
-            slices[0].dstOffset = offset;
-            slices[0].size = width * height;
-        } else {
-            slices.resize(height);
-            for (size_t i = 0; i < height; i++) {
-                slices[i].srcOffset = buf_offset + i * spitch;
-                slices[i].dstOffset = offset + i * dpitch;
-                slices[i].size = width;
+            slices[0].src_ਵਿੱਥ_2 = buf_ਵਿੱਥ;
+            slices[0].dst_ਵਿੱਥ_2 = ਵਿੱਥ;
+            slices[0].size = ਚੌੜਾਈ * ਉਚਾਈ;
+        } ਨਹੀਂਤਾਂ {
+            slices.resize(ਉਚਾਈ);
+            ਲਈ (size_t i = 0; i < ਉਚਾਈ; i++) {
+                slices[i].src_ਵਿੱਥ_2 = buf_ਵਿੱਥ + i * spitch;
+                slices[i].dst_ਵਿੱਥ_2 = ਵਿੱਥ + i * dpitch;
+                slices[i].size = ਚੌੜਾਈ;
             }
         }
 
-        ggml_vk_sync_buffers(nullptr, subctx);
-        subctx->s->buffer->buf.copyBuffer(buf->buffer, dst->buffer, slices);
-        return true;
+        ggml_vk_sync_buffers(ਖਾਲੀ_ਸੂਚਕ, subctx);
+        subctx->s->ਬਫਰ->buf.copy_ਬਫਰ(buf->ਬਫਰ, dst->ਬਫਰ, slices);
+        ਵਾਪਸ ਸੱਚ;
     }
     VK_LOG_DEBUG("STAGING");
 
-    if (!sync_staging) {
+    ਜੇ (!sync_staging) {
         // copy was not handled caller needs to fall back
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
 
     // Staging buffer required
-    const size_t staging_size = width * height;
-    ggml_vk_ensure_sync_staging_buffer(dst->device, staging_size);
+    ਅਚਲ size_t staging_ਮਾਪ = ਚੌੜਾਈ * ਉਚਾਈ;
+    ggml_vk_ensure_sync_staging_ਬਫਰ(dst->device, staging_ਮਾਪ);
 
-    vk_buffer& staging_buffer = dst->device->sync_staging;
+    vk_ਬਫਰ& staging_ਬਫਰ = dst->device->sync_staging;
 
-    std::vector<vk::BufferCopy> slices(1);
-    if (width == dpitch) {
-        slices[0].srcOffset = 0;
-        slices[0].dstOffset = offset;
-        slices[0].size = staging_size;
-    } else {
-        slices.resize(height);
-        for (size_t i = 0; i < height; i++) {
-            slices[i].srcOffset = i * width;
-            slices[i].dstOffset = offset + i * dpitch;
-            slices[i].size = width;
+    std::vector<vk::ਬਫਰ_Copy> slices(1);
+    ਜੇ (ਚੌੜਾਈ == dpitch) {
+        slices[0].src_ਵਿੱਥ_2 = 0;
+        slices[0].dst_ਵਿੱਥ_2 = ਵਿੱਥ;
+        slices[0].size = staging_ਮਾਪ;
+    } ਨਹੀਂਤਾਂ {
+        slices.resize(ਉਚਾਈ);
+        ਲਈ (size_t i = 0; i < ਉਚਾਈ; i++) {
+            slices[i].src_ਵਿੱਥ_2 = i * ਚੌੜਾਈ;
+            slices[i].dst_ਵਿੱਥ_2 = ਵਿੱਥ + i * dpitch;
+            slices[i].size = ਚੌੜਾਈ;
         }
     }
 
-    ggml_vk_sync_buffers(nullptr, subctx);
-    subctx->s->buffer->buf.copyBuffer(staging_buffer->buffer, dst->buffer, slices);
+    ggml_vk_sync_buffers(ਖਾਲੀ_ਸੂਚਕ, subctx);
+    subctx->s->ਬਫਰ->buf.copy_ਬਫਰ(staging_ਬਫਰ->ਬਫਰ, dst->ਬਫਰ, slices);
 
-    if (width == spitch) {
-        deferred_memcpy((uint8_t *)staging_buffer->ptr, src, staging_size, &subctx->in_memcpys);
-    } else {
-        for (size_t i = 0; i < height; i++) {
-            deferred_memcpy((uint8_t *)staging_buffer->ptr + i * width, (const uint8_t *) src + i * spitch, width, &subctx->in_memcpys);
+    ਜੇ (ਚੌੜਾਈ == spitch) {
+        deferred_memcpy((uint8_t *)staging_ਬਫਰ->ptr, src, staging_ਮਾਪ, &subctx->ਵਿੱਚ_memcpys);
+    } ਨਹੀਂਤਾਂ {
+        ਲਈ (size_t i = 0; i < ਉਚਾਈ; i++) {
+            deferred_memcpy((uint8_t *)staging_ਬਫਰ->ptr + i * ਚੌੜਾਈ, (ਅਚਲ uint8_t *) src + i * spitch, ਚੌੜਾਈ, &subctx->ਵਿੱਚ_memcpys);
         }
     }
-    return true;
+    ਵਾਪਸ ਸੱਚ;
 }
 
-bool ggml_vk_buffer_write_async(vk_context subctx, vk_buffer& dst, size_t offset, const void * src, size_t size, bool sync_staging) {
+ਤਾਰਕਿਕ ggml_vk_ਬਫਰ_write_async(vk_context subctx, vk_ਬਫਰ& dst, size_t ਵਿੱਥ, ਅਚਲ ਖਾਲੀ * src, size_t size, ਤਾਰਕਿਕ sync_staging) {
     VK_LOG_DEBUG("ggml_vk_buffer_write_async(" << size << ")");
-    return ggml_vk_buffer_write_2d_async(subctx, dst, offset, src, size, size, size, 1, sync_staging);
+    ਵਾਪਸ ggml_vk_ਬਫਰ_write_2d_async(subctx, dst, ਵਿੱਥ, src, size, size, size, 1, sync_staging);
 }
 
-void ggml_vk_buffer_write_2d(vk_buffer& dst, size_t offset, const void * src, size_t spitch, size_t dpitch, size_t width, size_t height) {
-    VK_LOG_DEBUG("ggml_vk_buffer_write_2d(" << width << ", " << height << ")");
+ਖਾਲੀ ggml_vk_ਬਫਰ_write_2d(vk_ਬਫਰ& dst, size_t ਵਿੱਥ, ਅਚਲ ਖਾਲੀ * src, size_t spitch, size_t dpitch, size_t ਚੌੜਾਈ, size_t ਉਚਾਈ) {
+    VK_LOG_DEBUG("ggml_vk_buffer_write_2d(" << ਚੌੜਾਈ << ", " << ਉਚਾਈ << ")");
     // Buffer is already mapped
-    if(dst->memory_property_flags & vk::MemoryPropertyFlagBits::eHostVisible) {
-        GGML_ASSERT(dst->memory_property_flags & vk::MemoryPropertyFlagBits::eHostCoherent);
+    ਜੇ(dst->ਸਮ੍ਰਿਤੀ_property_flags & vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostVisible) {
+        GGML_ASSERT(dst->ਸਮ੍ਰਿਤੀ_property_flags & vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostCoherent);
 
-        if (width == spitch && width == dpitch) {
-            memcpy((uint8_t *)dst->ptr + offset, src, width * height);
-        } else {
-            for (size_t i = 0; i < height; i++) {
-                memcpy((uint8_t *)dst->ptr + offset + i * dpitch, (const uint8_t *) src + i * spitch, width);
+        ਜੇ (ਚੌੜਾਈ == spitch && ਚੌੜਾਈ == dpitch) {
+            ਸਮ੍ਰਿਤੀ_ਨਕਲ((uint8_t *)dst->ptr + ਵਿੱਥ, src, ਚੌੜਾਈ * ਉਚਾਈ);
+        } ਨਹੀਂਤਾਂ {
+            ਲਈ (size_t i = 0; i < ਉਚਾਈ; i++) {
+                ਸਮ੍ਰਿਤੀ_ਨਕਲ((uint8_t *)dst->ptr + ਵਿੱਥ + i * dpitch, (ਅਚਲ uint8_t *) src + i * spitch, ਚੌੜਾਈ);
             }
         }
-    } else {
+    } ਨਹੀਂਤਾਂ {
         std::lock_guard<std::recursive_mutex> guard(dst->device->mutex);
 
-        vk_context subctx = ggml_vk_create_temporary_context(dst->device->transfer_queue->cmd_pool);
+        vk_context subctx = ggml_vk_create_temporary_context(dst->device->transfer_ਕਤਾਰ->cmd_pool);
         ggml_vk_ctx_begin(dst->device, subctx);
-        bool ret = ggml_vk_buffer_write_2d_async(subctx, dst, offset, src, spitch, dpitch, width, height, true);
+        ਤਾਰਕਿਕ ret = ggml_vk_ਬਫਰ_write_2d_async(subctx, dst, ਵਿੱਥ, src, spitch, dpitch, ਚੌੜਾਈ, ਉਚਾਈ, ਸੱਚ);
         GGML_ASSERT(ret);
-        ggml_vk_ctx_end(subctx);
+        ggml_vk_ctx_ਸਿਰਾ(subctx);
 
-        for (auto& cpy : subctx->in_memcpys) {
-            memcpy(cpy.dst, cpy.src, cpy.n);
+        ਲਈ (ਸਵੈਚਾਲਿਤ& cpy : subctx->ਵਿੱਚ_memcpys) {
+            ਸਮ੍ਰਿਤੀ_ਨਕਲ(cpy.dst, cpy.src, cpy.n);
         }
 
-        for (auto& mset : subctx->memsets) {
+        ਲਈ (ਸਵੈਚਾਲਿਤ& mset : subctx->memsets) {
             memset(mset.dst, mset.val, mset.n);
         }
 
         ggml_vk_submit(subctx, dst->device->fence);
-        VK_CHECK(dst->device->device.waitForFences({ dst->device->fence }, true, UINT64_MAX), "vk_buffer_write_2d waitForFences", dst->device);
+        VK_CHECK(dst->device->device.waitForFences({ dst->device->fence }, ਸੱਚ, UINT64_MAX), "vk_buffer_write_2d waitForFences", dst->device);
         dst->device->device.resetFences({ dst->device->fence });
-        ggml_vk_queue_command_pools_cleanup(dst->device);
+        ggml_vk_ਕਤਾਰ_command_pools_cleanup(dst->device);
     }
 }
 
-void ggml_vk_buffer_write(vk_buffer& dst, size_t offset, const void * src, size_t size) {
+ਖਾਲੀ ggml_vk_ਬਫਰ_write(vk_ਬਫਰ& dst, size_t ਵਿੱਥ, ਅਚਲ ਖਾਲੀ * src, size_t size) {
     VK_LOG_DEBUG("ggml_vk_buffer_write(" << size << ")");
-    ggml_vk_buffer_write_2d(dst, offset, src, size, size, size, 1);
+    ggml_vk_ਬਫਰ_write_2d(dst, ਵਿੱਥ, src, size, size, size, 1);
 }
 
-bool ggml_vk_buffer_read_2d_async(vk_context subctx, vk_buffer& src, size_t offset, void * dst, size_t spitch, size_t dpitch, size_t width, size_t height, bool sync_staging) {
-    VK_LOG_DEBUG("ggml_vk_buffer_read_2d_async(offset=" << offset << ", width=" << width << ", height=" << height << ")");
-    GGML_ASSERT(width > 0);
-    GGML_ASSERT(height > 0);
-    GGML_ASSERT(src != nullptr);
+ਤਾਰਕਿਕ ggml_vk_ਬਫਰ_read_2d_async(vk_context subctx, vk_ਬਫਰ& src, size_t ਵਿੱਥ, ਖਾਲੀ * dst, size_t spitch, size_t dpitch, size_t ਚੌੜਾਈ, size_t ਉਚਾਈ, ਤਾਰਕਿਕ sync_staging) {
+    VK_LOG_DEBUG("ggml_vk_buffer_read_2d_async(offset=" << ਵਿੱਥ << ", width=" << ਚੌੜਾਈ << ", height=" << ਉਚਾਈ << ")");
+    GGML_ASSERT(ਚੌੜਾਈ > 0);
+    GGML_ASSERT(ਉਚਾਈ > 0);
+    GGML_ASSERT(src != ਖਾਲੀ_ਸੂਚਕ);
 
     // TODO: staging_offset is not used
 
     // Check if dst is pinned memory
-    vk_buffer buf = nullptr;
-    size_t buf_offset = 0;
-    ggml_vk_host_get(src->device, dst, buf, buf_offset);
+    vk_ਬਫਰ buf = ਖਾਲੀ_ਸੂਚਕ;
+    size_t buf_ਵਿੱਥ = 0;
+    ggml_vk_host_get(src->device, dst, buf, buf_ਵਿੱਥ);
 
-    std::vector<vk::BufferCopy> slices(1);
-    if (width == spitch && width == dpitch) {
+    std::vector<vk::ਬਫਰ_Copy> slices(1);
+    ਜੇ (ਚੌੜਾਈ == spitch && ਚੌੜਾਈ == dpitch) {
         // Only do single write if stride is equal
-        slices[0].srcOffset = offset;
-        slices[0].dstOffset = buf_offset;
-        slices[0].size = width * height;
-    } else {
-        slices.resize(height);
-        for (size_t i = 0; i < height; i++) {
-            slices[i].srcOffset = offset + i * spitch;
-            slices[i].dstOffset = buf_offset + i * dpitch;
-            slices[i].size = width;
+        slices[0].src_ਵਿੱਥ_2 = ਵਿੱਥ;
+        slices[0].dst_ਵਿੱਥ_2 = buf_ਵਿੱਥ;
+        slices[0].size = ਚੌੜਾਈ * ਉਚਾਈ;
+    } ਨਹੀਂਤਾਂ {
+        slices.resize(ਉਚਾਈ);
+        ਲਈ (size_t i = 0; i < ਉਚਾਈ; i++) {
+            slices[i].src_ਵਿੱਥ_2 = ਵਿੱਥ + i * spitch;
+            slices[i].dst_ਵਿੱਥ_2 = buf_ਵਿੱਥ + i * dpitch;
+            slices[i].size = ਚੌੜਾਈ;
         }
     }
 
-    if (buf != nullptr) {
+    ਜੇ (buf != ਖਾਲੀ_ਸੂਚਕ) {
         // Memory is pinned, use as staging buffer
-        ggml_vk_sync_buffers(nullptr, subctx);
-        subctx->s->buffer->buf.copyBuffer(src->buffer, buf->buffer, slices);
+        ggml_vk_sync_buffers(ਖਾਲੀ_ਸੂਚਕ, subctx);
+        subctx->s->ਬਫਰ->buf.copy_ਬਫਰ(src->ਬਫਰ, buf->ਬਫਰ, slices);
 
-        return true;
+        ਵਾਪਸ ਸੱਚ;
     }
     VK_LOG_DEBUG("STAGING");
 
-    if (!sync_staging) {
+    ਜੇ (!sync_staging) {
         // copy was not handled caller needs to fall back
-        return false;
+        ਵਾਪਸ ਝੂਠ;
     }
 
     // Fall back to staging buffer
-    const size_t staging_size = width * height;
-    ggml_vk_ensure_sync_staging_buffer(src->device, staging_size);
+    ਅਚਲ size_t staging_ਮਾਪ = ਚੌੜਾਈ * ਉਚਾਈ;
+    ggml_vk_ensure_sync_staging_ਬਫਰ(src->device, staging_ਮਾਪ);
 
-    vk_buffer& staging_buffer = src->device->sync_staging;
+    vk_ਬਫਰ& staging_ਬਫਰ = src->device->sync_staging;
 
-    std::vector<vk::BufferCopy> staging_slices(1);
-    if (width == spitch) {
-        staging_slices[0].srcOffset = offset;
-        staging_slices[0].dstOffset = 0;
-        staging_slices[0].size = staging_size;
-    } else {
-        staging_slices.resize(height);
-        for (size_t i = 0; i < height; i++) {
-            staging_slices[i].srcOffset = offset + i * spitch;
-            staging_slices[i].dstOffset = i * width;
-            staging_slices[i].size = width;
+    std::vector<vk::ਬਫਰ_Copy> staging_slices(1);
+    ਜੇ (ਚੌੜਾਈ == spitch) {
+        staging_slices[0].src_ਵਿੱਥ_2 = ਵਿੱਥ;
+        staging_slices[0].dst_ਵਿੱਥ_2 = 0;
+        staging_slices[0].size = staging_ਮਾਪ;
+    } ਨਹੀਂਤਾਂ {
+        staging_slices.resize(ਉਚਾਈ);
+        ਲਈ (size_t i = 0; i < ਉਚਾਈ; i++) {
+            staging_slices[i].src_ਵਿੱਥ_2 = ਵਿੱਥ + i * spitch;
+            staging_slices[i].dst_ਵਿੱਥ_2 = i * ਚੌੜਾਈ;
+            staging_slices[i].size = ਚੌੜਾਈ;
         }
     }
 
-    ggml_vk_sync_buffers(nullptr, subctx);
-    subctx->s->buffer->buf.copyBuffer(src->buffer, staging_buffer->buffer, staging_slices);
+    ggml_vk_sync_buffers(ਖਾਲੀ_ਸੂਚਕ, subctx);
+    subctx->s->ਬਫਰ->buf.copy_ਬਫਰ(src->ਬਫਰ, staging_ਬਫਰ->ਬਫਰ, staging_slices);
 
-    if (width == dpitch) {
-        deferred_memcpy(dst, staging_buffer->ptr, staging_size, &subctx->out_memcpys);
-    } else {
-        for (size_t i = 0; i < height; i++) {
-            deferred_memcpy((uint8_t *) dst + i * dpitch, (const uint8_t *) staging_buffer->ptr + i * width, width, &subctx->out_memcpys);
+    ਜੇ (ਚੌੜਾਈ == dpitch) {
+        deferred_memcpy(dst, staging_ਬਫਰ->ptr, staging_ਮਾਪ, &subctx->ਬਾਹਰਲਾ_memcpys);
+    } ਨਹੀਂਤਾਂ {
+        ਲਈ (size_t i = 0; i < ਉਚਾਈ; i++) {
+            deferred_memcpy((uint8_t *) dst + i * dpitch, (ਅਚਲ uint8_t *) staging_ਬਫਰ->ptr + i * ਚੌੜਾਈ, ਚੌੜਾਈ, &subctx->ਬਾਹਰਲਾ_memcpys);
         }
     }
-    return true;
+    ਵਾਪਸ ਸੱਚ;
 }
 
-static bool ggml_vk_buffer_read_async(vk_context subctx, vk_buffer& src, size_t offset, void * dst, size_t size, bool sync_staging = false) {
-    return ggml_vk_buffer_read_2d_async(subctx, src, offset, dst, size, size, size, 1, sync_staging);
+ਸਥਿਰ ਤਾਰਕਿਕ ggml_vk_ਬਫਰ_read_async(vk_context subctx, vk_ਬਫਰ& src, size_t ਵਿੱਥ, ਖਾਲੀ * dst, size_t size, ਤਾਰਕਿਕ sync_staging = ਝੂਠ) {
+    ਵਾਪਸ ggml_vk_ਬਫਰ_read_2d_async(subctx, src, ਵਿੱਥ, dst, size, size, size, 1, sync_staging);
 }
 
-void ggml_vk_buffer_read_2d(vk_buffer& src, size_t offset, void * dst, size_t spitch, size_t dpitch, size_t width, size_t height) {
-    VK_LOG_DEBUG("ggml_vk_buffer_read_2d(" << src->buffer << ", " << offset << ", " << width << ", " << height << ")");
+ਖਾਲੀ ggml_vk_ਬਫਰ_read_2d(vk_ਬਫਰ& src, size_t ਵਿੱਥ, ਖਾਲੀ * dst, size_t spitch, size_t dpitch, size_t ਚੌੜਾਈ, size_t ਉਚਾਈ) {
+    VK_LOG_DEBUG("ggml_vk_buffer_read_2d(" << src->ਬਫਰ << ", " << ਵਿੱਥ << ", " << ਚੌੜਾਈ << ", " << ਉਚਾਈ << ")");
 
     // If the device is not an UMA device the memory is host-accessible through rebar. While writing
     // through PCIe is sufficient fast reading back data from PCIe is slower than going through
     // the HW device to host copy path.
     // AMD UMA: uncached host-visible memory is write-combined, CPU reads are slow
-    const bool slow_host_read = src->device->vendor_id == VK_VENDOR_ID_AMD &&
-                                !(src->memory_property_flags & vk::MemoryPropertyFlagBits::eHostCached);
-    if(src->memory_property_flags & vk::MemoryPropertyFlagBits::eHostVisible && src->device->uma && !slow_host_read) {
-        GGML_ASSERT(src->memory_property_flags & vk::MemoryPropertyFlagBits::eHostCoherent);
+    ਅਚਲ ਤਾਰਕਿਕ slow_host_read = src->device->vendor_id == VK_VENDOR_ID_AMD &&
+                                !(src->ਸਮ੍ਰਿਤੀ_property_flags & vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostCached);
+    ਜੇ(src->ਸਮ੍ਰਿਤੀ_property_flags & vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostVisible && src->device->uma && !slow_host_read) {
+        GGML_ASSERT(src->ਸਮ੍ਰਿਤੀ_property_flags & vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostCoherent);
 
         std::lock_guard<std::recursive_mutex> guard(src->device->mutex);
-        vk_context subctx = ggml_vk_create_temporary_context(src->device->compute_queue->cmd_pool);
+        vk_context subctx = ggml_vk_create_temporary_context(src->device->compute_ਕਤਾਰ->cmd_pool);
         ggml_vk_ctx_begin(src->device, subctx);
-        subctx->s->buffer->buf.pipelineBarrier(
-            vk::PipelineStageFlagBits::eComputeShader | vk::PipelineStageFlagBits::eTransfer,
-            vk::PipelineStageFlagBits::eHost,
+        subctx->s->ਬਫਰ->buf.pipelineBarrier(
+            vk::Pipeline_Stage_Flag_ਬਿੱਟ::eComputeShader | vk::Pipeline_Stage_Flag_ਬਿੱਟ::eTransfer,
+            vk::Pipeline_Stage_Flag_ਬਿੱਟ::eHost,
             {},
-            { { vk::AccessFlagBits::eShaderWrite | vk::AccessFlagBits::eTransferWrite,
-                vk::AccessFlagBits::eHostRead } },
+            { { vk::Access_Flag_ਬਿੱਟ::eShaderWrite | vk::Access_Flag_ਬਿੱਟ::eTransferWrite,
+                vk::Access_Flag_ਬਿੱਟ::eHostRead } },
             {}, {});
-        ggml_vk_ctx_end(subctx);
+        ggml_vk_ctx_ਸਿਰਾ(subctx);
         ggml_vk_submit(subctx, src->device->fence);
-        VK_CHECK(src->device->device.waitForFences({ src->device->fence }, true, UINT64_MAX),
+        VK_CHECK(src->device->device.waitForFences({ src->device->fence }, ਸੱਚ, UINT64_MAX),
                  "vk_buffer_read_2d uma waitForFences", src->device);
         src->device->device.resetFences({ src->device->fence });
-        ggml_vk_queue_command_pools_cleanup(src->device);
+        ggml_vk_ਕਤਾਰ_command_pools_cleanup(src->device);
 
-        if (width == spitch && width == dpitch) {
-            memcpy(dst, (const uint8_t *) src->ptr + offset, width * height);
-        } else {
-            for (size_t i = 0; i < height; i++) {
-                memcpy((uint8_t *) dst + i * dpitch, (const uint8_t *) src->ptr + offset + i * spitch, width);
+        ਜੇ (ਚੌੜਾਈ == spitch && ਚੌੜਾਈ == dpitch) {
+            ਸਮ੍ਰਿਤੀ_ਨਕਲ(dst, (ਅਚਲ uint8_t *) src->ptr + ਵਿੱਥ, ਚੌੜਾਈ * ਉਚਾਈ);
+        } ਨਹੀਂਤਾਂ {
+            ਲਈ (size_t i = 0; i < ਉਚਾਈ; i++) {
+                ਸਮ੍ਰਿਤੀ_ਨਕਲ((uint8_t *) dst + i * dpitch, (ਅਚਲ uint8_t *) src->ptr + ਵਿੱਥ + i * spitch, ਚੌੜਾਈ);
             }
         }
-    } else {
+    } ਨਹੀਂਤਾਂ {
         std::lock_guard<std::recursive_mutex> guard(src->device->mutex);
 
-        vk_context subctx = ggml_vk_create_temporary_context(src->device->transfer_queue->cmd_pool);
+        vk_context subctx = ggml_vk_create_temporary_context(src->device->transfer_ਕਤਾਰ->cmd_pool);
         ggml_vk_ctx_begin(src->device, subctx);
-        bool ret = ggml_vk_buffer_read_2d_async(subctx, src, offset, dst, spitch, dpitch, width, height, true);
+        ਤਾਰਕਿਕ ret = ggml_vk_ਬਫਰ_read_2d_async(subctx, src, ਵਿੱਥ, dst, spitch, dpitch, ਚੌੜਾਈ, ਉਚਾਈ, ਸੱਚ);
         GGML_ASSERT(ret);
-        ggml_vk_ctx_end(subctx);
+        ggml_vk_ctx_ਸਿਰਾ(subctx);
 
         ggml_vk_submit(subctx, src->device->fence);
-        VK_CHECK(src->device->device.waitForFences({ src->device->fence }, true, UINT64_MAX), "vk_buffer_read_2d waitForFences", src->device);
+        VK_CHECK(src->device->device.waitForFences({ src->device->fence }, ਸੱਚ, UINT64_MAX), "vk_buffer_read_2d waitForFences", src->device);
         src->device->device.resetFences({ src->device->fence });
-        ggml_vk_queue_command_pools_cleanup(src->device);
+        ggml_vk_ਕਤਾਰ_command_pools_cleanup(src->device);
 
-        for (auto& cpy : subctx->out_memcpys) {
-            memcpy(cpy.dst, cpy.src, cpy.n);
+        ਲਈ (ਸਵੈਚਾਲਿਤ& cpy : subctx->ਬਾਹਰਲਾ_memcpys) {
+            ਸਮ੍ਰਿਤੀ_ਨਕਲ(cpy.dst, cpy.src, cpy.n);
         }
     }
 }
 
-void ggml_vk_buffer_read(vk_buffer& src, size_t offset, void * dst, size_t size) {
-    VK_LOG_DEBUG("ggml_vk_buffer_read(" << src->buffer << ", " << offset << ", " << size << ")");
-    ggml_vk_buffer_read_2d(src, offset, dst, size, size, size, 1);
+ਖਾਲੀ ggml_vk_ਬਫਰ_read(vk_ਬਫਰ& src, size_t ਵਿੱਥ, ਖਾਲੀ * dst, size_t size) {
+    VK_LOG_DEBUG("ggml_vk_buffer_read(" << src->ਬਫਰ << ", " << ਵਿੱਥ << ", " << size << ")");
+    ggml_vk_ਬਫਰ_read_2d(src, ਵਿੱਥ, dst, size, size, size, 1);
 }
 
-void ggml_vk_buffer_copy_async(vk_context& ctx, vk_buffer& dst, size_t dst_offset, vk_buffer& src, size_t src_offset, size_t size) {
+ਖਾਲੀ ggml_vk_ਬਫਰ_copy_async(vk_context& ctx, vk_ਬਫਰ& dst, size_t dst_ਵਿੱਥ, vk_ਬਫਰ& src, size_t src_ਵਿੱਥ, size_t size) {
     VK_LOG_DEBUG("ggml_vk_buffer_copy_async(" << size << ")");
     // Make sure both buffers are on same device
     GGML_ASSERT(src->device == dst->device);
 
-    VkBufferCopy bc{ src_offset, dst_offset, size };
+    Vk_ਬਫਰ_Copy bc{ src_ਵਿੱਥ, dst_ਵਿੱਥ, size };
 
-    vkCmdCopyBuffer(ctx->s->buffer->buf, (VkBuffer)src->buffer, (VkBuffer)dst->buffer, 1, &bc);
+    vk_Cmd_Copy_ਬਫਰ(ctx->s->ਬਫਰ->buf, (Vk_ਬਫਰ)src->ਬਫਰ, (Vk_ਬਫਰ)dst->ਬਫਰ, 1, &bc);
 }
 
-void ggml_vk_buffer_copy(vk_buffer& dst, size_t dst_offset, vk_buffer& src, size_t src_offset, size_t size) {
-    if (src->device == dst->device) {
+ਖਾਲੀ ggml_vk_ਬਫਰ_copy(vk_ਬਫਰ& dst, size_t dst_ਵਿੱਥ, vk_ਬਫਰ& src, size_t src_ਵਿੱਥ, size_t size) {
+    ਜੇ (src->device == dst->device) {
         std::lock_guard<std::recursive_mutex> guard(src->device->mutex);
         VK_LOG_DEBUG("ggml_vk_buffer_copy(SINGLE_DEVICE, " << size << ")");
         // Copy within the device
-        vk_context subctx = ggml_vk_create_temporary_context(src->device->transfer_queue->cmd_pool);
+        vk_context subctx = ggml_vk_create_temporary_context(src->device->transfer_ਕਤਾਰ->cmd_pool);
         ggml_vk_ctx_begin(src->device, subctx);
-        ggml_vk_buffer_copy_async(subctx, dst, dst_offset, src, src_offset, size);
-        ggml_vk_ctx_end(subctx);
+        ggml_vk_ਬਫਰ_copy_async(subctx, dst, dst_ਵਿੱਥ, src, src_ਵਿੱਥ, size);
+        ggml_vk_ctx_ਸਿਰਾ(subctx);
         ggml_vk_submit(subctx, src->device->fence);
-        VK_CHECK(src->device->device.waitForFences({ src->device->fence }, true, UINT64_MAX), "vk_buffer_copy waitForFences", src->device);
+        VK_CHECK(src->device->device.waitForFences({ src->device->fence }, ਸੱਚ, UINT64_MAX), "vk_buffer_copy waitForFences", src->device);
         src->device->device.resetFences({ src->device->fence });
-        ggml_vk_queue_command_pools_cleanup(src->device);
-    } else {
+        ggml_vk_ਕਤਾਰ_command_pools_cleanup(src->device);
+    } ਨਹੀਂਤਾਂ {
         VK_LOG_DEBUG("ggml_vk_buffer_copy(MULTI_DEVICE, " << size << ")");
         // Copy device to device
-        ggml_vk_ensure_sync_staging_buffer(src->device, size);
+        ggml_vk_ensure_sync_staging_ਬਫਰ(src->device, size);
 
         // Copy to src staging buffer
-        ggml_vk_buffer_copy(src->device->sync_staging, 0, src, src_offset, size);
+        ggml_vk_ਬਫਰ_copy(src->device->sync_staging, 0, src, src_ਵਿੱਥ, size);
         // Copy to dst buffer
-        ggml_vk_buffer_write(dst, dst_offset, src->device->sync_staging->ptr, size);
+        ggml_vk_ਬਫਰ_write(dst, dst_ਵਿੱਥ, src->device->sync_staging->ptr, size);
     }
 }
 
-void ggml_vk_buffer_memset_async(vk_context& ctx, vk_buffer& dst, size_t offset, uint32_t c, size_t size) {
-    VK_LOG_DEBUG("ggml_vk_buffer_memset_async(" << offset << ", " << c << ", " << size << ")");
+ਖਾਲੀ ggml_vk_ਬਫਰ_memset_async(vk_context& ctx, vk_ਬਫਰ& dst, size_t ਵਿੱਥ, uint32_t c, size_t size) {
+    VK_LOG_DEBUG("ggml_vk_buffer_memset_async(" << ਵਿੱਥ << ", " << c << ", " << size << ")");
 
-    if (dst->memory_property_flags & vk::MemoryPropertyFlagBits::eHostVisible &&
+    ਜੇ (dst->ਸਮ੍ਰਿਤੀ_property_flags & vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostVisible &&
         dst->device->uma) {
-        deferred_memset((uint8_t*)dst->ptr + offset, c, size, &ctx->memsets);
-        return;
+        deferred_memset((uint8_t*)dst->ptr + ਵਿੱਥ, c, size, &ctx->memsets);
+        ਵਾਪਸ;
     }
 
     // Fall back to GPU fillBuffer for non-UMA or non-host-visible buffers
-    ctx->s->buffer->buf.fillBuffer(dst->buffer, offset, size, c);
+    ctx->s->ਬਫਰ->buf.fill_ਬਫਰ(dst->ਬਫਰ, ਵਿੱਥ, size, c);
 }
 
-void ggml_vk_buffer_memset(vk_buffer& dst, size_t offset, uint32_t c, size_t size) {
-    VK_LOG_DEBUG("ggml_vk_buffer_memset(" << offset << ", " << c << ", " << size << ")");
+ਖਾਲੀ ggml_vk_ਬਫਰ_memset(vk_ਬਫਰ& dst, size_t ਵਿੱਥ, uint32_t c, size_t size) {
+    VK_LOG_DEBUG("ggml_vk_buffer_memset(" << ਵਿੱਥ << ", " << c << ", " << size << ")");
 
-    if (dst->memory_property_flags & vk::MemoryPropertyFlagBits::eHostVisible &&
+    ਜੇ (dst->ਸਮ੍ਰਿਤੀ_property_flags & vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostVisible &&
         dst->device->uma) {
-        memset((uint8_t*)dst->ptr + offset, c, size);
-        return;
+        memset((uint8_t*)dst->ptr + ਵਿੱਥ, c, size);
+        ਵਾਪਸ;
     }
 
     std::lock_guard<std::recursive_mutex> guard(dst->device->mutex);
-    vk_context subctx = ggml_vk_create_temporary_context(dst->device->transfer_queue->cmd_pool);
+    vk_context subctx = ggml_vk_create_temporary_context(dst->device->transfer_ਕਤਾਰ->cmd_pool);
     ggml_vk_ctx_begin(dst->device, subctx);
-    subctx->s->buffer->buf.fillBuffer(dst->buffer, offset, size, c);
-    ggml_vk_ctx_end(subctx);
+    subctx->s->ਬਫਰ->buf.fill_ਬਫਰ(dst->ਬਫਰ, ਵਿੱਥ, size, c);
+    ggml_vk_ctx_ਸਿਰਾ(subctx);
 
     ggml_vk_submit(subctx, dst->device->fence);
-    VK_CHECK(dst->device->device.waitForFences({ dst->device->fence }, true, UINT64_MAX), "vk_memset waitForFences", dst->device);
+    VK_CHECK(dst->device->device.waitForFences({ dst->device->fence }, ਸੱਚ, UINT64_MAX), "vk_memset waitForFences", dst->device);
     dst->device->device.resetFences({ dst->device->fence });
-    ggml_vk_queue_command_pools_cleanup(dst->device);
+    ggml_vk_ਕਤਾਰ_command_pools_cleanup(dst->device);
 }
 
-ggml_backend_buffer_i ggml_backend_vk_buffer_interface = {
-    /* .free_buffer     = */ ggml_backend_vk_buffer_free_buffer,
-    /* .get_base        = */ ggml_backend_vk_buffer_get_base,
-    /* .init_tensor     = */ ggml_backend_vk_buffer_init_tensor,
-    /* .memset_tensor   = */ ggml_backend_vk_buffer_memset_tensor,
-    /* .set_tensor      = */ ggml_backend_vk_buffer_set_tensor,
-    /* .get_tensor      = */ ggml_backend_vk_buffer_get_tensor,
-    /* .set_tensor_2d   = */ ggml_backend_vk_buffer_set_tensor_2d,
-    /* .get_tensor_2d   = */ ggml_backend_vk_buffer_get_tensor_2d,
-    /* .cpy_tensor      = */ ggml_backend_vk_buffer_cpy_tensor,
-    /* .clear           = */ ggml_backend_vk_buffer_clear,
-    /* .reset           = */ NULL,
+ggml_backend_ਬਫਰ_i ggml_backend_vk_ਬਫਰ_interface = {
+    /* .free_buffer     = */ ggml_backend_vk_ਬਫਰ_free_ਬਫਰ,
+    /* .get_base        = */ ggml_backend_vk_ਬਫਰ_get_ਅਧਾਰ,
+    /* .init_tensor     = */ ggml_backend_vk_ਬਫਰ_init_tensor,
+    /* .memset_tensor   = */ ggml_backend_vk_ਬਫਰ_memset_tensor,
+    /* .set_tensor      = */ ggml_backend_vk_ਬਫਰ_ਸੈੱਟ_tensor,
+    /* .get_tensor      = */ ggml_backend_vk_ਬਫਰ_get_tensor,
+    /* .set_tensor_2d   = */ ggml_backend_vk_ਬਫਰ_ਸੈੱਟ_tensor_2d,
+    /* .get_tensor_2d   = */ ggml_backend_vk_ਬਫਰ_get_tensor_2d,
+    /* .cpy_tensor      = */ ggml_backend_vk_ਬਫਰ_cpy_tensor,
+    /* .clear           = */ ggml_backend_vk_ਬਫਰ_clear,
+    /* .reset           = */ ਨਿਰਾ,
 };
 
-vk_buffer ggml_vk_buffer_from_host_ptr(vk_device & device, void * ptr, size_t size) {
-    if (!device->external_memory_host) {
-        return {};
+vk_ਬਫਰ ggml_vk_ਬਫਰ_from_host_ptr(vk_device & device, ਖਾਲੀ * ptr, size_t size) {
+    ਜੇ (!device->external_ਸਮ੍ਰਿਤੀ_host) {
+        ਵਾਪਸ {};
     }
 
     uintptr_t uptr = reinterpret_cast<uintptr_t>(ptr);
-    if (uptr & (device->min_imported_host_pointer_alignment - 1)) {
-        return {};
+    ਜੇ (uptr & (device->min_imported_host_ਸੂਚਕ_alignment - 1)) {
+        ਵਾਪਸ {};
     }
-    if (size & (device->min_imported_host_pointer_alignment - 1)) {
-        return {};
+    ਜੇ (size & (device->min_imported_host_ਸੂਚਕ_alignment - 1)) {
+        ਵਾਪਸ {};
     }
 
-    const vk::MemoryPropertyFlags property_flags = vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostCached;
+    ਅਚਲ vk::ਸਮ੍ਰਿਤੀ_Property_Flags property_flags = vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostVisible | vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostCoherent | vk::ਸਮ੍ਰਿਤੀ_Property_Flag_ਬਿੱਟ::eHostCached;
 
-    vk_buffer buf {};
-    try {
-        buf = ggml_vk_create_buffer(device, size, { property_flags }, ptr);
-    } catch (vk::SystemError& e) {
+    vk_ਬਫਰ buf {};
+    ਕੋਸ਼ਿਸ਼ {
+        buf = ggml_vk_create_ਬਫਰ(device, size, { property_flags }, ptr);
+    } ਫੜੋ (vk::SystemError& e) {
         GGML_LOG_WARN("ggml_vulkan: Failed ggml_vk_create_buffer (%s)\n", e.what());
     }
 
-    return buf;
+    ਵਾਪਸ buf;
 }
 

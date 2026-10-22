@@ -3,118 +3,118 @@
 // Element-wise: dst[i] = min(max(src0[i], min_val), max_val)
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "platform.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml_tensor.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "platform.h"
 
-#include <stdint.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdint.h>
 
-struct ggml_et_clamp_params {
-    struct ggml_tensor src0;  // F32 input  (contiguous)
-    struct ggml_tensor dst;   // F32 output (contiguous; may alias src0.data)
-    float              min_val;
-    float              max_val;
+ਬਣਤਰ ggml_et_clamp_params {
+    ਬਣਤਰ ggml_tensor src0;  // F32 input  (contiguous)
+    ਬਣਤਰ ggml_tensor dst;   // F32 output (contiguous; may alias src0.data)
+    ਦਸ਼ਮਲਵ              min_val;
+    ਦਸ਼ਮਲਵ              max_val;
 };
 
 // Vectorized fmax/fmin clamp with scalar tail. n may be any non-negative int.
-static inline void clamp_block_f32(float * dst, const float * src, float min_val, float max_val, int32_t n) {
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ clamp_ਖੰਡ_f32(ਦਸ਼ਮਲਵ * dst, ਅਚਲ ਦਸ਼ਮਲਵ * src, ਦਸ਼ਮਲਵ min_val, ਦਸ਼ਮਲਵ max_val, int32_t n) {
     int32_t       i       = 0;
-    const int32_t vec_end = (n / 8) * 8;
+    ਅਚਲ int32_t vec_ਸਿਰਾ = (n / 8) * 8;
 
-    if (vec_end > 0) {
-        unsigned long temp_mask;
-        __asm__ volatile("mova.x.m %0" : "=r"(temp_mask));
-        __asm__ volatile("mov.m.x m0, x0, 0xFF");
+    ਜੇ (vec_ਸਿਰਾ > 0) {
+        ਬਿਨਾਨਿਸ਼ਾਨੀ ਲੰਮਾ ਆਰਜ਼ੀ_ਨਕਾਬ;
+        __asm__ ਅਸਥਿਰ("mova.x.m %0" : "=r"(ਆਰਜ਼ੀ_ਨਕਾਬ));
+        __asm__ ਅਸਥਿਰ("mov.m.x m0, x0, 0xFF");
 
-        for (; i < vec_end; i += 8) {
-            __asm__ volatile(
+        ਲਈ (; i < vec_ਸਿਰਾ; i += 8) {
+            __asm__ ਅਸਥਿਰ(
                 "flw.ps  f10, %[s]\n"
                 "fbc.ps  f11, %[mn]\n"
                 "fbc.ps  f12, %[mx]\n"
                 "fmax.ps f13, f10, f11\n"
                 "fmin.ps f13, f13, f12\n"
                 "fsw.ps  f13, %[d]\n"
-                : [d] "=m"(*(float (*)[8]) & dst[i])
-                : [s] "m"(*(const float (*)[8]) & src[i]), [mn] "m"(min_val), [mx] "m"(max_val)
+                : [d] "=m"(*(ਦਸ਼ਮਲਵ (*)[8]) & dst[i])
+                : [s] "m"(*(ਅਚਲ ਦਸ਼ਮਲਵ (*)[8]) & src[i]), [mn] "m"(min_val), [mx] "m"(max_val)
                 : "f10", "f11", "f12", "f13");
         }
 
-        __asm__ volatile("mova.m.x %0" ::"r"(temp_mask));
+        __asm__ ਅਸਥਿਰ("mova.m.x %0" ::"r"(ਆਰਜ਼ੀ_ਨਕਾਬ));
     }
 
-    for (; i < n; i++) {
-        float v = src[i];
-        if (v < min_val) {
+    ਲਈ (; i < n; i++) {
+        ਦਸ਼ਮਲਵ v = src[i];
+        ਜੇ (v < min_val) {
             v = min_val;
         }
-        if (v > max_val) {
+        ਜੇ (v > max_val) {
             v = max_val;
         }
         dst[i] = v;
     }
 }
 
-int entry_point(struct ggml_et_clamp_params * params, void * env) {
+ਪੂਰਨ ਇੰਦਰਾਜ_ਬਿੰਦੂ(ਬਣਤਰ ggml_et_clamp_params * params, ਖਾਲੀ * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    ਜੇ (!kernel_env) {
+        ਵਾਪਸ -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    ਪੂਰਨ thread_id   = get_relative_thread_id(kernel_env->shire_ਨਕਾਬ);
+    ਪੂਰਨ ਅੰਕ_ਧਾਗੇ = get_ਅੰਕ_ਧਾਗੇ(kernel_env->shire_ਨਕਾਬ);
 
-    if (thread_id < 0) {
-        return 0;
+    ਜੇ (thread_id < 0) {
+        ਵਾਪਸ 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    ਜੇ (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        ਵਾਪਸ -1;
     }
 
-    struct ggml_tensor * src0 = &params->src0;
-    struct ggml_tensor * dst  = &params->dst;
+    ਬਣਤਰ ggml_tensor * src0 = &params->src0;
+    ਬਣਤਰ ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+    ਜੇ (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        ਵਾਪਸ -1;
     }
 
-    float * src0_data = (float *) src0->data;
-    float * dst_data  = (float *) dst->data;
+    ਦਸ਼ਮਲਵ * src0_ਅੰਕੜੇ = (ਦਸ਼ਮਲਵ *) src0->ਅੰਕੜੇ;
+    ਦਸ਼ਮਲਵ * dst_ਅੰਕੜੇ  = (ਦਸ਼ਮਲਵ *) dst->ਅੰਕੜੇ;
 
-    if (!src0_data || !dst_data) {
-        return -1;
+    ਜੇ (!src0_ਅੰਕੜੇ || !dst_ਅੰਕੜੇ) {
+        ਵਾਪਸ -1;
     }
 
-    const int64_t total_elements = src0->ne[0] * src0->ne[1] * src0->ne[2] * src0->ne[3];
-    if (total_elements <= 0) {
-        return 0;
+    ਅਚਲ int64_t ਕੁੱਲ_elements = src0->ne[0] * src0->ne[1] * src0->ne[2] * src0->ne[3];
+    ਜੇ (ਕੁੱਲ_elements <= 0) {
+        ਵਾਪਸ 0;
     }
 
-    const float min_val = params->min_val;
-    const float max_val = params->max_val;
+    ਅਚਲ ਦਸ਼ਮਲਵ min_val = params->min_val;
+    ਅਚਲ ਦਸ਼ਮਲਵ max_val = params->max_val;
 
     // Distribute by cache lines (16 F32 elements). Each thread owns disjoint
     // cache lines, so a partial trailing line is written by exactly one
     // thread — safe under non-coherent caches.
-    const int64_t elems_per_cl = 16;
-    const int64_t total_cl     = (total_elements + elems_per_cl - 1) / elems_per_cl;
+    ਅਚਲ int64_t elems_ਪ੍ਰਤੀ_cl = 16;
+    ਅਚਲ int64_t ਕੁੱਲ_cl     = (ਕੁੱਲ_elements + elems_ਪ੍ਰਤੀ_cl - 1) / elems_ਪ੍ਰਤੀ_cl;
 
-    const int64_t cl_per_thread = (total_cl + num_threads - 1) / num_threads;
-    const int64_t cl_start      = (int64_t) thread_id * cl_per_thread;
-    int64_t       cl_end        = cl_start + cl_per_thread;
-    if (cl_end > total_cl) {
-        cl_end = total_cl;
+    ਅਚਲ int64_t cl_ਪ੍ਰਤੀ_thread = (ਕੁੱਲ_cl + ਅੰਕ_ਧਾਗੇ - 1) / ਅੰਕ_ਧਾਗੇ;
+    ਅਚਲ int64_t cl_ਸ਼ੁਰੂ      = (int64_t) thread_id * cl_ਪ੍ਰਤੀ_thread;
+    int64_t       cl_ਸਿਰਾ        = cl_ਸ਼ੁਰੂ + cl_ਪ੍ਰਤੀ_thread;
+    ਜੇ (cl_ਸਿਰਾ > ਕੁੱਲ_cl) {
+        cl_ਸਿਰਾ = ਕੁੱਲ_cl;
     }
-    if (cl_start >= total_cl) {
-        return 0;
-    }
-
-    const int64_t es = cl_start * elems_per_cl;
-    int64_t       ee = cl_end * elems_per_cl;
-    if (ee > total_elements) {
-        ee = total_elements;
+    ਜੇ (cl_ਸ਼ੁਰੂ >= ਕੁੱਲ_cl) {
+        ਵਾਪਸ 0;
     }
 
-    clamp_block_f32(dst_data + es, src0_data + es, min_val, max_val, (int32_t) (ee - es));
-    return 0;
+    ਅਚਲ int64_t es = cl_ਸ਼ੁਰੂ * elems_ਪ੍ਰਤੀ_cl;
+    int64_t       ee = cl_ਸਿਰਾ * elems_ਪ੍ਰਤੀ_cl;
+    ਜੇ (ee > ਕੁੱਲ_elements) {
+        ee = ਕੁੱਲ_elements;
+    }
+
+    clamp_ਖੰਡ_f32(dst_ਅੰਕੜੇ + es, src0_ਅੰਕੜੇ + es, min_val, max_val, (int32_t) (ee - es));
+    ਵਾਪਸ 0;
 }

@@ -11,79 +11,79 @@
 //
 // \note MOE op classes are under development and subject to change.
 
-#pragma once
+#ਹਦਾਇਤ once
 
-#include <optional>
+#ਅਨ੍ਤਰ੍ਭਾਵ <optional>
 
-#include "openvino/core/type/element_type.hpp"
-#include "openvino/op/op.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "openvino/core/type/element_type.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "openvino/op/op.hpp"
 
-namespace ov::op::internal {
+ਨਾਮਾਕਾਸ਼ ov::op::internal {
 
-class OPENVINO_API MOE : public ov::op::Op {
-public:
+ਵਰਗ OPENVINO_API MOE : ਜਨਤਕ ov::op::Op {
+ਜਨਤਕ:
     OPENVINO_OP("MOE")
 
-    MOE() = default;
+    MOE() = ਮੂਲ;
 
-    MOE(const OutputVector & args) : Op(args) {}
+    MOE(ਅਚਲ Output_ਸਦਿਸ਼ & ਦਲੀਲਾਂ_2) : Op(ਦਲੀਲਾਂ_2) {}
 
-    enum class Expert_type { GEMM2_BIAS_SWIGLU_CLAMP, GEMM3_SWIGLU };
+    ਗਿਣਤੀ ਵਰਗ Expert_type { GEMM2_BIAS_SWIGLU_CLAMP, GEMM3_SWIGLU };
 
-    enum class Activation_type { SWIGLU, GEGLU_TANH, GEGLU_ERF };
+    ਗਿਣਤੀ ਵਰਗ Activation_type { SWIGLU, GEGLU_TANH, GEGLU_ERF };
 
-    struct Config {
+    ਬਣਤਰ Config {
         Expert_type expert_type{ Expert_type::GEMM2_BIAS_SWIGLU_CLAMP };
-        float expert_alpha{ 0.0f };
-        float expert_beta{ 1.0f };
+        ਦਸ਼ਮਲਵ expert_alpha{ 0.0f };
+        ਦਸ਼ਮਲਵ expert_beta{ 1.0f };
         size_t gate_idx{ 0 };
         Activation_type activation_type{ Activation_type::SWIGLU };
     };
 
-    MOE(const OutputVector & args, const Config & config);
+    MOE(ਅਚਲ Output_ਸਦਿਸ਼ & ਦਲੀਲਾਂ_2, ਅਚਲ Config & config);
 
-    const Config & get_config() const;
-    void set_config(const Config & config);
+    ਅਚਲ Config & get_config() ਅਚਲ;
+    ਖਾਲੀ ਸੈੱਟ_config(ਅਚਲ Config & config);
 
-    bool visit_attributes(AttributeVisitor & visitor) override;
-    void validate_and_infer_types() override;
-    std::shared_ptr<Node> clone_with_new_inputs(const OutputVector & new_args) const override;
+    ਤਾਰਕਿਕ ਦੇਖੋ_ਗੁਣ(AttributeVisitor & visitor) override;
+    ਖਾਲੀ validate_and_infer_types() override;
+    std::shared_ptr<Node> clone_with_new_inputs(ਅਚਲ Output_ਸਦਿਸ਼ & new_ਦਲੀਲਾਂ) ਅਚਲ override;
 
-private:
+ਨਿਜੀ:
     Config m_config;
 };
 
-class OPENVINO_API MOECompressed : public MOE {
-public:
+ਵਰਗ OPENVINO_API MOECompressed : ਜਨਤਕ MOE {
+ਜਨਤਕ:
     OPENVINO_OP("MOECompressed", "", ov::op::internal::MOE)
 
-    MOECompressed() = default;
+    MOECompressed() = ਮੂਲ;
 
-    struct Config : public MOE::Config {
-        size_t hidden_size = 0;
-        size_t inter_size = 0;
-        size_t num_expert = 0;
-        size_t num_shared_expert = 0;
-        size_t top_k = 0;
+    ਬਣਤਰ Config : ਜਨਤਕ MOE::Config {
+        size_t hidden_ਮਾਪ = 0;
+        size_t inter_ਮਾਪ = 0;
+        size_t ਅੰਕ_expert = 0;
+        size_t ਅੰਕ_shared_expert = 0;
+        size_t ਸਿਖਰ_k = 0;
         // numeric_limits<size_t>::max() means per_channel compression (single group)
-        size_t group_size = 0;
-        bool has_batch_dim = false;
-        bool has_zp = false;
-        ov::element::Type out_type = ov::element::dynamic;
-        std::optional<float> scale_factor;
+        size_t ਸਮੂਹ_ਮਾਪ = 0;
+        ਤਾਰਕਿਕ has_batch_dim = ਝੂਠ;
+        ਤਾਰਕਿਕ has_zp = ਝੂਠ;
+        ov::element::Type ਬਾਹਰਲਾ_type = ov::element::dynamic;
+        std::optional<ਦਸ਼ਮਲਵ> scale_ਗੁਣਕ;
     };
 
-    MOECompressed(const OutputVector & args, const Config & config);
+    MOECompressed(ਅਚਲ Output_ਸਦਿਸ਼ & ਦਲੀਲਾਂ_2, ਅਚਲ Config & config);
 
-    const Config & get_config() const { return m_config; }
+    ਅਚਲ Config & get_config() ਅਚਲ { ਵਾਪਸ m_config; }
 
-    void set_scale_factor(float scale_factor) { m_config.scale_factor = scale_factor; }
+    ਖਾਲੀ ਸੈੱਟ_scale_ਗੁਣਕ(ਦਸ਼ਮਲਵ scale_ਗੁਣਕ) { m_config.scale_ਗੁਣਕ = scale_ਗੁਣਕ; }
 
-    bool visit_attributes(AttributeVisitor & visitor) override;
-    void validate_and_infer_types() override;
-    std::shared_ptr<Node> clone_with_new_inputs(const OutputVector & new_args) const override;
+    ਤਾਰਕਿਕ ਦੇਖੋ_ਗੁਣ(AttributeVisitor & visitor) override;
+    ਖਾਲੀ validate_and_infer_types() override;
+    std::shared_ptr<Node> clone_with_new_inputs(ਅਚਲ Output_ਸਦਿਸ਼ & new_ਦਲੀਲਾਂ) ਅਚਲ override;
 
-protected:
+ਸੁਰੱਖਿਅਤ:
     Config m_config;
 };
 

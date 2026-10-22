@@ -1,24 +1,24 @@
-#ifndef HEX_BITMAP_H
-#define HEX_BITMAP_H
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ HEX_BITMAP_H
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HEX_BITMAP_H
 
-#include <stdint.h>
-#include <stdbool.h>
-#include <string.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdint.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdbool.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <string.h>
 
-static inline void bitmap_set(uint32_t * bitmap, uint32_t idx) {
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ bitmap_ਸੈੱਟ(uint32_t * bitmap, uint32_t idx) {
     bitmap[idx / 32] |= (1U << (idx % 32));
 }
 
-static inline void bitmap_clear(uint32_t * bitmap, uint32_t idx) {
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ bitmap_clear(uint32_t * bitmap, uint32_t idx) {
     bitmap[idx / 32] &= ~(1U << (idx % 32));
 }
 
-static inline bool bitmap_test(const uint32_t * bitmap, uint32_t idx) {
-    return (bitmap[idx / 32] & (1U << (idx % 32))) != 0;
+ਸਥਿਰ ਸਤਰਅੰਦਰ bool bitmap_test(ਅਚਲ uint32_t * bitmap, uint32_t idx) {
+    ਵਾਪਸ (bitmap[idx / 32] & (1U << (idx % 32))) != 0;
 }
 
-static inline void bitmap_reset(uint32_t * bitmap, size_t size_in_bits) {
-    memset(bitmap, 0, ((size_in_bits + 31) / 32) * sizeof(uint32_t));
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ bitmap_reset(uint32_t * bitmap, size_t ਮਾਪ_ਵਿੱਚ_ਬਿੱਟ) {
+    memset(bitmap, 0, ((ਮਾਪ_ਵਿੱਚ_ਬਿੱਟ + 31) / 32) * ਆਕਾਰ(uint32_t));
 }
 
-#endif // HEX_BITMAP_H
+#ਜੇ_ਅੰਤ // HEX_BITMAP_H

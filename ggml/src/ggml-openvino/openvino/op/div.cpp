@@ -1,135 +1,135 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
-#include "ggml.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "../node_context.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "../op_table.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "../utils.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml.h"
 
-#include <memory>
-#include <openvino/core/type.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/divide.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/shape_of.hpp>
-#include <openvino/op/sigmoid.hpp>
-#include <openvino/op/swish.hpp>
-#include <openvino/op/tile.hpp>
-#include <openvino/op/util/precision_sensitive_attribute.hpp>
-#include <vector>
+#ਅਨ੍ਤਰ੍ਭਾਵ <memory>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/core/type.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/constant.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/convert.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/divide.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/multiply.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/shape_of.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/sigmoid.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/swish.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/tile.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/util/precision_sensitive_attribute.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <vector>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+ਨਾਮਾਕਾਸ਼ ov {
+ਨਾਮਾਕਾਸ਼ frontend {
+ਨਾਮਾਕਾਸ਼ ggml {
+ਨਾਮਾਕਾਸ਼ op {
 
-namespace {
+ਨਾਮਾਕਾਸ਼ {
 
-bool is_silu_div_pattern(const ov::Output<ov::Node> & numerator,
-                         const ov::Output<ov::Node> & denominator,
-                         const NodeContext & context) {
-    if (context.get_input_size() != 2) {
-        return false;
+ਤਾਰਕਿਕ is_silu_div_ਨਮੂਨਾ(ਅਚਲ ov::Output<ov::Node> & numerator,
+                         ਅਚਲ ov::Output<ov::Node> & denominator,
+                         ਅਚਲ ਗੰਢ_Context & context) {
+    ਜੇ (context.get_ਨਿਵੇਸ਼_ਮਾਪ() != 2) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    const auto * unary_op = reinterpret_cast<const ggml_unary_op *>(context.get_input_op_params(0));
-    if (unary_op == nullptr || *unary_op != GGML_UNARY_OP_SILU) {
-        return false;
+    ਅਚਲ ਸਵੈਚਾਲਿਤ * unary_op = reinterpret_cast<ਅਚਲ ggml_unary_op *>(context.get_ਨਿਵੇਸ਼_op_params(0));
+    ਜੇ (unary_op == ਖਾਲੀ_ਸੂਚਕ || *unary_op != GGML_UNARY_OP_SILU) {
+        ਵਾਪਸ ਝੂਠ;
     }
 
-    const auto denom_node = denominator.get_node_shared_ptr();
+    ਅਚਲ ਸਵੈਚਾਲਿਤ denom_ਗੰਢ = denominator.get_ਗੰਢ_shared_ptr();
 
-    if (auto swish = ov::as_type_ptr<ov::op::v4::Swish>(numerator.get_node_shared_ptr())) {
-        return swish->input_value(0).get_node_shared_ptr() == denom_node;
+    ਜੇ (ਸਵੈਚਾਲਿਤ swish = ov::as_type_ptr<ov::op::v4::Swish>(numerator.get_ਗੰਢ_shared_ptr())) {
+        ਵਾਪਸ swish->ਨਿਵੇਸ਼_ਮੁੱਲ(0).get_ਗੰਢ_shared_ptr() == denom_ਗੰਢ;
     }
-    return false;
+    ਵਾਪਸ ਝੂਠ;
 }
 
-ov::Output<ov::Node> repeat_input_to_match(const NodeContext & context,
-                                           const ov::Output<ov::Node> & input,
-                                           const ov::Output<ov::Node> & target,
-                                           size_t input_index) {
-    const auto input_shape = context.get_input_shape(input_index);
-    const auto target_shape = context.get_input_shape(0);
+ov::Output<ov::Node> repeat_ਨਿਵੇਸ਼_ਮੰਜ਼ਿਲ_ਮੇਲ(ਅਚਲ ਗੰਢ_Context & context,
+                                           ਅਚਲ ov::Output<ov::Node> & ਨਿਵੇਸ਼,
+                                           ਅਚਲ ov::Output<ov::Node> & ਨਿਸ਼ਾਨਾ,
+                                           size_t ਨਿਵੇਸ਼_ਸੂਚਕਾਂਕ) {
+    ਅਚਲ ਸਵੈਚਾਲਿਤ ਨਿਵੇਸ਼_shape = context.get_ਨਿਵੇਸ਼_shape(ਨਿਵੇਸ਼_ਸੂਚਕਾਂਕ);
+    ਅਚਲ ਸਵੈਚਾਲਿਤ ਨਿਸ਼ਾਨਾ_shape = context.get_ਨਿਵੇਸ਼_shape(0);
 
-    if (input_shape == target_shape) {
-        return input;
+    ਜੇ (ਨਿਵੇਸ਼_shape == ਨਿਸ਼ਾਨਾ_shape) {
+        ਵਾਪਸ ਨਿਵੇਸ਼;
     }
 
-    if (input_shape.rank().is_static() && target_shape.rank().is_static()) {
-        const auto rank = static_cast<size_t>(input_shape.rank().get_length());
+    ਜੇ (ਨਿਵੇਸ਼_shape.rank().is_static() && ਨਿਸ਼ਾਨਾ_shape.rank().is_static()) {
+        ਅਚਲ ਸਵੈਚਾਲਿਤ rank = static_cast<size_t>(ਨਿਵੇਸ਼_shape.rank().get_ਲੰਮਾਈ());
         std::vector<int64_t> repeats(rank, 1);
-        bool needs_repeat = false;
+        ਤਾਰਕਿਕ needs_repeat = ਝੂਠ;
 
-        for (size_t axis = 0; axis < rank; ++axis) {
-            FRONT_END_OP_CONVERSION_CHECK(input_shape[axis].is_static() && target_shape[axis].is_static(),
+        ਲਈ (size_t axis = 0; axis < rank; ++axis) {
+            FRONT_ਸਿਰਾ_OP_CONVERSION_CHECK(ਨਿਵੇਸ਼_shape[axis].is_static() && ਨਿਸ਼ਾਨਾ_shape[axis].is_static(),
                                           "DIV repeat requires static dimensions on both inputs");
 
-            const int64_t input_dim = input_shape[axis].get_length();
-            const int64_t target_dim = target_shape[axis].get_length();
+            ਅਚਲ int64_t ਨਿਵੇਸ਼_dim = ਨਿਵੇਸ਼_shape[axis].get_ਲੰਮਾਈ();
+            ਅਚਲ int64_t ਨਿਸ਼ਾਨਾ_dim = ਨਿਸ਼ਾਨਾ_shape[axis].get_ਲੰਮਾਈ();
 
-            FRONT_END_OP_CONVERSION_CHECK(input_dim > 0 && target_dim > 0 && target_dim % input_dim == 0,
-                                          "DIV input shape ", input_shape, " cannot repeat to match ", target_shape);
+            FRONT_ਸਿਰਾ_OP_CONVERSION_CHECK(ਨਿਵੇਸ਼_dim > 0 && ਨਿਸ਼ਾਨਾ_dim > 0 && ਨਿਸ਼ਾਨਾ_dim % ਨਿਵੇਸ਼_dim == 0,
+                                          "DIV input shape ", ਨਿਵੇਸ਼_shape, " cannot repeat to match ", ਨਿਸ਼ਾਨਾ_shape);
 
-            repeats[axis] = target_dim / input_dim;
+            repeats[axis] = ਨਿਸ਼ਾਨਾ_dim / ਨਿਵੇਸ਼_dim;
             needs_repeat = needs_repeat || repeats[axis] != 1;
         }
 
-        if (!needs_repeat) {
-            return input;
+        ਜੇ (!needs_repeat) {
+            ਵਾਪਸ ਨਿਵੇਸ਼;
         }
 
-        auto repeats_node = ov::op::v0::Constant::create(ov::element::i64, {repeats.size()}, repeats);
-        return std::make_shared<ov::op::v0::Tile>(input, repeats_node);
+        ਸਵੈਚਾਲਿਤ repeats_ਗੰਢ = ov::op::v0::Constant::create(ov::element::i64, {repeats.size()}, repeats);
+        ਵਾਪਸ std::make_shared<ov::op::v0::Tile>(ਨਿਵੇਸ਼, repeats_ਗੰਢ);
     }
 
-    auto input_shape_node = std::make_shared<ov::op::v3::ShapeOf>(input, ov::element::i64);
-    auto target_shape_node = std::make_shared<ov::op::v3::ShapeOf>(target, ov::element::i64);
-    auto repeats_node = std::make_shared<ov::op::v1::Divide>(target_shape_node, input_shape_node);
-    return std::make_shared<ov::op::v0::Tile>(input, repeats_node);
+    ਸਵੈਚਾਲਿਤ ਨਿਵੇਸ਼_shape_ਗੰਢ = std::make_shared<ov::op::v3::Shape_ਦਾ>(ਨਿਵੇਸ਼, ov::element::i64);
+    ਸਵੈਚਾਲਿਤ ਨਿਸ਼ਾਨਾ_shape_ਗੰਢ = std::make_shared<ov::op::v3::Shape_ਦਾ>(ਨਿਸ਼ਾਨਾ, ov::element::i64);
+    ਸਵੈਚਾਲਿਤ repeats_ਗੰਢ = std::make_shared<ov::op::v1::Divide>(ਨਿਸ਼ਾਨਾ_shape_ਗੰਢ, ਨਿਵੇਸ਼_shape_ਗੰਢ);
+    ਵਾਪਸ std::make_shared<ov::op::v0::Tile>(ਨਿਵੇਸ਼, repeats_ਗੰਢ);
 }
 
 }  // namespace
 
-OutputVector translate_div(const NodeContext & context) {
-    num_inputs_check(context, 2, 2);
+Output_ਸਦਿਸ਼ translate_div(ਅਚਲ ਗੰਢ_Context & context) {
+    ਅੰਕ_inputs_check(context, 2, 2);
 
-    auto input_0 = process_view_input_new(context, 0);
-    auto input_1 = process_view_input_new(context, 1);
+    ਸਵੈਚਾਲਿਤ ਨਿਵੇਸ਼_0 = process_view_ਨਿਵੇਸ਼_new(context, 0);
+    ਸਵੈਚਾਲਿਤ ਨਿਵੇਸ਼_1 = process_view_ਨਿਵੇਸ਼_new(context, 1);
 
-    if (is_silu_div_pattern(input_0, input_1, context)) {
-        ov::Output<ov::Node> res = std::make_shared<ov::op::v0::Sigmoid>(input_1);
-        if (res.get_element_type() != context.get_output_type()) {
+    ਜੇ (is_silu_div_ਨਮੂਨਾ(ਨਿਵੇਸ਼_0, ਨਿਵੇਸ਼_1, context)) {
+        ov::Output<ov::Node> res = std::make_shared<ov::op::v0::Sigmoid>(ਨਿਵੇਸ਼_1);
+        ਜੇ (res.get_element_type() != context.get_output_type()) {
             res = std::make_shared<ov::op::v0::Convert>(res, context.get_output_type());
         }
-        return rename_outputs_with_suffix({res}, context.get_name());
+        ਵਾਪਸ rename_outputs_with_suffix({res}, context.get_name());
     }
 
-    input_1 = repeat_input_to_match(context, input_1, input_0, 1);
+    ਨਿਵੇਸ਼_1 = repeat_ਨਿਵੇਸ਼_ਮੰਜ਼ਿਲ_ਮੇਲ(context, ਨਿਵੇਸ਼_1, ਨਿਵੇਸ਼_0, 1);
 
-    const auto output_type = context.get_output_type();
-    const bool use_f32_compute = input_0.get_element_type() != ov::element::f32 ||
-                                 input_1.get_element_type() != ov::element::f32 || output_type != ov::element::f32;
+    ਅਚਲ ਸਵੈਚਾਲਿਤ output_type = context.get_output_type();
+    ਅਚਲ ਤਾਰਕਿਕ use_f32_compute = ਨਿਵੇਸ਼_0.get_element_type() != ov::element::f32 ||
+                                 ਨਿਵੇਸ਼_1.get_element_type() != ov::element::f32 || output_type != ov::element::f32;
 
-    if (use_f32_compute) {
-        input_0 = std::make_shared<ov::op::v0::Convert>(input_0, ov::element::f32);
-        input_1 = std::make_shared<ov::op::v0::Convert>(input_1, ov::element::f32);
+    ਜੇ (use_f32_compute) {
+        ਨਿਵੇਸ਼_0 = std::make_shared<ov::op::v0::Convert>(ਨਿਵੇਸ਼_0, ov::element::f32);
+        ਨਿਵੇਸ਼_1 = std::make_shared<ov::op::v0::Convert>(ਨਿਵੇਸ਼_1, ov::element::f32);
     }
 
-    ov::Output<ov::Node> res = std::make_shared<ov::op::v1::Divide>(input_0, input_1);
-    if (use_f32_compute) {
+    ov::Output<ov::Node> res = std::make_shared<ov::op::v1::Divide>(ਨਿਵੇਸ਼_0, ਨਿਵੇਸ਼_1);
+    ਜੇ (use_f32_compute) {
         // Keep the reciprocal/divide path in FP32. Without this hint, the GPU
         // plugin can still compress the subgraph back to FP16 and overflow on
         // small shexp gate values (e.g. silu(x) / x in qwen2moe).
-        ov::mark_as_precision_sensitive(res.get_node_shared_ptr()->input(0));
-        ov::mark_as_precision_sensitive(res.get_node_shared_ptr()->input(1));
+        ov::mark_as_precision_sensitive(res.get_ਗੰਢ_shared_ptr()->ਨਿਵੇਸ਼(0));
+        ov::mark_as_precision_sensitive(res.get_ਗੰਢ_shared_ptr()->ਨਿਵੇਸ਼(1));
     }
-    if (res.get_element_type() != output_type) {
-        auto output_convert = std::make_shared<ov::op::v0::Convert>(res, output_type);
-        if (use_f32_compute) {
-            ov::mark_as_precision_sensitive(output_convert->input(0));
+    ਜੇ (res.get_element_type() != output_type) {
+        ਸਵੈਚਾਲਿਤ output_convert = std::make_shared<ov::op::v0::Convert>(res, output_type);
+        ਜੇ (use_f32_compute) {
+            ov::mark_as_precision_sensitive(output_convert->ਨਿਵੇਸ਼(0));
         }
         res = output_convert;
     }
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ਵਾਪਸ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

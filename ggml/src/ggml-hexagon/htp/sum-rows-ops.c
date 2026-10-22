@@ -1,310 +1,310 @@
-#pragma clang diagnostic ignored "-Wunused-variable"
-#pragma clang diagnostic ignored "-Wunused-function"
-#pragma clang diagnostic ignored "-Wunused-but-set-variable"
+#ਹਦਾਇਤ clang diagnostic ignored "-Wunused-variable"
+#ਹਦਾਇਤ clang diagnostic ignored "-Wunused-function"
+#ਹਦਾਇਤ clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <HAP_perf.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <HAP_farf.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <HAP_perf.h>
 
-#include <string.h>
-#include <math.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <string.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <math.h>
 
-#include "dma-queue.h"
-#include "hvx-utils.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "dma-queue.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hvx-utils.h"
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "hex-common.h"
-#include "hex-profile.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "htp-tensor.h"
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_DECL_C
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-common.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hex-common.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hex-profile.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "htp-ctx.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "htp-ops.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "htp-tensor.h"
 
-#define sum_rows_preamble                         \
-    const struct htp_tensor *src0 = octx->src[0]; \
-    const struct htp_tensor *dst  = octx->dst;    \
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ ਜੋੜ_ਪੰਕਤੀਆਂ_preamble                         \
+    ਅਚਲ ਬਣਤਰ htp_tensor *src0 = octx->src[0]; \
+    ਅਚਲ ਬਣਤਰ htp_tensor *dst  = octx->dst;    \
                                                   \
-    const uint32_t ne00 = src0->ne[0];            \
-    const uint32_t ne01 = src0->ne[1];            \
-    const uint32_t ne02 = src0->ne[2];            \
-    const uint32_t ne03 = src0->ne[3];            \
+    ਅਚਲ uint32_t ne00 = src0->ne[0];            \
+    ਅਚਲ uint32_t ne01 = src0->ne[1];            \
+    ਅਚਲ uint32_t ne02 = src0->ne[2];            \
+    ਅਚਲ uint32_t ne03 = src0->ne[3];            \
                                                   \
-    const uint32_t nb00 = src0->nb[0];            \
-    const uint32_t nb01 = src0->nb[1];            \
-    const uint32_t nb02 = src0->nb[2];            \
-    const uint32_t nb03 = src0->nb[3];            \
+    ਅਚਲ uint32_t nb00 = src0->nb[0];            \
+    ਅਚਲ uint32_t nb01 = src0->nb[1];            \
+    ਅਚਲ uint32_t nb02 = src0->nb[2];            \
+    ਅਚਲ uint32_t nb03 = src0->nb[3];            \
                                                   \
-    const uint32_t  ne0 = dst->ne[0];             \
-    const uint32_t  ne1 = dst->ne[1];             \
-    const uint32_t  ne2 = dst->ne[2];             \
-    const uint32_t  ne3 = dst->ne[3];             \
+    ਅਚਲ uint32_t  ne0 = dst->ne[0];             \
+    ਅਚਲ uint32_t  ne1 = dst->ne[1];             \
+    ਅਚਲ uint32_t  ne2 = dst->ne[2];             \
+    ਅਚਲ uint32_t  ne3 = dst->ne[3];             \
                                                   \
-    const uint32_t  nb0 = dst->nb[0];             \
-    const uint32_t  nb1 = dst->nb[1];             \
-    const uint32_t  nb2 = dst->nb[2];             \
-    const uint32_t  nb3 = dst->nb[3];             \
+    ਅਚਲ uint32_t  nb0 = dst->nb[0];             \
+    ਅਚਲ uint32_t  nb1 = dst->nb[1];             \
+    ਅਚਲ uint32_t  nb2 = dst->nb[2];             \
+    ਅਚਲ uint32_t  nb3 = dst->nb[3];             \
 
-struct sum_rows_context {
-    struct htp_ops_context * octx;
-    const uint8_t * src_data;
-    uint8_t       * dst_data;
+ਬਣਤਰ ਜੋੜ_ਪੰਕਤੀਆਂ_context {
+    ਬਣਤਰ htp_ops_context * octx;
+    ਅਚਲ uint8_t * src_ਅੰਕੜੇ;
+    uint8_t       * dst_ਅੰਕੜੇ;
     uint32_t        ne00;
     size_t          src_stride;
     size_t          dst_stride;
-    uint32_t        rows_per_thread;
-    uint32_t        total_rows;
-    bool            opt_path;
+    uint32_t        ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_thread;
+    uint32_t        ਕੁੱਲ_ਪੰਕਤੀਆਂ;
+    bool            opt_ਰਸਤਾ;
 };
 
-static void sum_rows_thread_f32(unsigned int nth, unsigned int ith, void *data) {
-    const struct sum_rows_context * smctx = (const struct sum_rows_context *) data;
+ਸਥਿਰ ਖਾਲੀ ਜੋੜ_ਪੰਕਤੀਆਂ_thread_f32(ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ nth, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ ith, ਖਾਲੀ *ਅੰਕੜੇ) {
+    ਅਚਲ ਬਣਤਰ ਜੋੜ_ਪੰਕਤੀਆਂ_context * smctx = (ਅਚਲ ਬਣਤਰ ਜੋੜ_ਪੰਕਤੀਆਂ_context *) ਅੰਕੜੇ;
 
-    const uint32_t rows_per_thread = smctx->rows_per_thread;
-    const uint32_t total_rows      = smctx->total_rows;
+    ਅਚਲ uint32_t ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_thread = smctx->ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_thread;
+    ਅਚਲ uint32_t ਕੁੱਲ_ਪੰਕਤੀਆਂ      = smctx->ਕੁੱਲ_ਪੰਕਤੀਆਂ;
 
-    const uint32_t start_row = rows_per_thread * ith;
-    const uint32_t end_row   = MIN(start_row + rows_per_thread, total_rows);
+    ਅਚਲ uint32_t ਸ਼ੁਰੂ_ਪੰਕਤੀ = ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_thread * ith;
+    ਅਚਲ uint32_t ਸਿਰਾ_ਪੰਕਤੀ   = MIN(ਸ਼ੁਰੂ_ਪੰਕਤੀ + ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_thread, ਕੁੱਲ_ਪੰਕਤੀਆਂ);
 
-    if (start_row >= end_row) {
-        return;
+    ਜੇ (ਸ਼ੁਰੂ_ਪੰਕਤੀ >= ਸਿਰਾ_ਪੰਕਤੀ) {
+        ਵਾਪਸ;
     }
 
-    const size_t   src_stride = smctx->src_stride;
-    const size_t   dst_stride = smctx->dst_stride;
-    const uint32_t ne00       = smctx->ne00;
-    const bool     opt_path   = smctx->opt_path;
+    ਅਚਲ size_t   src_stride = smctx->src_stride;
+    ਅਚਲ size_t   dst_stride = smctx->dst_stride;
+    ਅਚਲ uint32_t ne00       = smctx->ne00;
+    ਅਚਲ bool     opt_ਰਸਤਾ   = smctx->opt_ਰਸਤਾ;
 
-    const float * restrict src_th = (const float *) (smctx->src_data + (start_row * src_stride));
-    float       * restrict dst_th = (float *)       (smctx->dst_data + (start_row * dst_stride));
+    ਅਚਲ ਦਸ਼ਮਲਵ * ਸੀਮਿਤ src_th = (ਅਚਲ ਦਸ਼ਮਲਵ *) (smctx->src_ਅੰਕੜੇ + (ਸ਼ੁਰੂ_ਪੰਕਤੀ * src_stride));
+    ਦਸ਼ਮਲਵ       * ਸੀਮਿਤ dst_th = (ਦਸ਼ਮਲਵ *)       (smctx->dst_ਅੰਕੜੇ + (ਸ਼ੁਰੂ_ਪੰਕਤੀ * dst_stride));
 
     // Calculate actual number of rows for this thread
-    const uint32_t n_rows = end_row - start_row;
+    ਅਚਲ uint32_t n_ਪੰਕਤੀਆਂ = ਸਿਰਾ_ਪੰਕਤੀ - ਸ਼ੁਰੂ_ਪੰਕਤੀ;
 
-    struct htp_thread_trace * tr = &smctx->octx->ctx->trace[ith];
-    htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) start_row);
+    ਬਣਤਰ htp_thread_trace * tr = &smctx->octx->ctx->trace[ith];
+    htp_trace_event_ਸ਼ੁਰੂ(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ਸ਼ੁਰੂ_ਪੰਕਤੀ);
 
-    for (uint32_t ir = 0; ir < n_rows; ir++) {
-        const float * restrict src_local = (const float *) ((const uint8_t *) src_th + ir * src_stride);
-        float       * restrict dst_local = (float *)       ((uint8_t *)       dst_th + ir * dst_stride);
+    ਲਈ (uint32_t ir = 0; ir < n_ਪੰਕਤੀਆਂ; ir++) {
+        ਅਚਲ ਦਸ਼ਮਲਵ * ਸੀਮਿਤ src_local = (ਅਚਲ ਦਸ਼ਮਲਵ *) ((ਅਚਲ uint8_t *) src_th + ir * src_stride);
+        ਦਸ਼ਮਲਵ       * ਸੀਮਿਤ dst_local = (ਦਸ਼ਮਲਵ *)       ((uint8_t *)       dst_th + ir * dst_stride);
 
-        if (ir + 1 < n_rows) {
-            hex_l2fetch((const uint8_t *) src_local + src_stride, src_stride, src_stride, 1);
+        ਜੇ (ir + 1 < n_ਪੰਕਤੀਆਂ) {
+            hex_l2fetch((ਅਚਲ uint8_t *) src_local + src_stride, src_stride, src_stride, 1);
         }
 
-        if (opt_path) {
-            *dst_local = hvx_reduce_sum_f32_a((const uint8_t *) src_local, ne00);
-        } else {
-            *dst_local = hvx_reduce_sum_f32((const uint8_t *) src_local, ne00);
+        ਜੇ (opt_ਰਸਤਾ) {
+            *dst_local = hvx_reduce_ਜੋੜ_f32_a((ਅਚਲ uint8_t *) src_local, ne00);
+        } ਨਹੀਂਤਾਂ {
+            *dst_local = hvx_reduce_ਜੋੜ_f32((ਅਚਲ uint8_t *) src_local, ne00);
         }
     }
 
-    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) start_row);
+    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ਸ਼ੁਰੂ_ਪੰਕਤੀ);
 }
 
-int op_sum_rows(struct htp_ops_context * octx) {
-    sum_rows_preamble;
+ਪੂਰਨ op_ਜੋੜ_ਪੰਕਤੀਆਂ(ਬਣਤਰ htp_ops_context * octx) {
+    ਜੋੜ_ਪੰਕਤੀਆਂ_preamble;
 
-    if (octx->src[0]->type != HTP_TYPE_F32) {
-        return HTP_STATUS_NO_SUPPORT;
+    ਜੇ (octx->src[0]->type != HTP_TYPE_F32) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_NO_SUPPORT;
     }
 
-    if (htp_tensor_is_extended(src0) || htp_tensor_is_extended(dst)) {
-        return HTP_STATUS_NO_SUPPORT;
+    ਜੇ (htp_tensor_is_extended(src0) || htp_tensor_is_extended(dst)) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_NO_SUPPORT;
     }
 
-    const uint32_t src0_nrows      = ne01 * ne02 * ne03;
-    const size_t dst_data_row_size = dst->ne[0] * sizeof(float);
+    ਅਚਲ uint32_t src0_nrows      = ne01 * ne02 * ne03;
+    ਅਚਲ size_t dst_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ = dst->ne[0] * ਆਕਾਰ(ਦਸ਼ਮਲਵ);
 
-    uint32_t row_start = 0;
+    uint32_t ਪੰਕਤੀ_ਸ਼ੁਰੂ = 0;
     uint32_t nrows     = src0_nrows;
 
-    if (octx->ctx->mdev.count > 1) {
-        uint32_t rows_per_chunk = 0;
-        htp_tensor_mdev_rows_per_chunk(dst, sizeof(float), (uint32_t) dst_data_row_size, &rows_per_chunk);
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(src0_nrows, rows_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
-        row_start = range.start;
-        nrows     = range.count;
+    ਜੇ (octx->ctx->mdev.ਗਿਣਤੀ_2 > 1) {
+        uint32_t ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_chunk = 0;
+        htp_tensor_mdev_ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_chunk(dst, ਆਕਾਰ(ਦਸ਼ਮਲਵ), (uint32_t) dst_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ, &ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_chunk);
+        ਅਚਲ ਬਣਤਰ htp_tensor_mdev_range range = htp_tensor_mdev_ਹਿੱਸੇ_ਕਰੋ(src0_nrows, ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.ਗਿਣਤੀ_2, &octx->ctx->mdev.ਗਿਣਤੀ_div);
+        ਪੰਕਤੀ_ਸ਼ੁਰੂ = range.ਸ਼ੁਰੂ;
+        nrows     = range.ਗਿਣਤੀ_2;
     }
 
-    if (nrows == 0) {
-        return HTP_STATUS_OK;
+    ਜੇ (nrows == 0) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_OK;
     }
 
-    const uint32_t n_threads = octx->n_threads;
-    const uint32_t rows_per_thread = fastdiv(nrows + n_threads - 1, &octx->n_threads_div);
+    ਅਚਲ uint32_t n_ਧਾਗੇ = octx->n_ਧਾਗੇ;
+    ਅਚਲ uint32_t ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_thread = fastdiv(nrows + n_ਧਾਗੇ - 1, &octx->n_ਧਾਗੇ_div);
 
-    bool opt_path = false;
-    if ((0 == hex_is_aligned((void *) src0->data, VLEN)) && !(nb01 & (VLEN - 1))) {
-        opt_path = true;
+    bool opt_ਰਸਤਾ = false;
+    ਜੇ ((0 == hex_is_aligned((ਖਾਲੀ *) src0->ਅੰਕੜੇ, VLEN)) && !(nb01 & (VLEN - 1))) {
+        opt_ਰਸਤਾ = true;
     }
 
-    struct sum_rows_context smctx = {
+    ਬਣਤਰ ਜੋੜ_ਪੰਕਤੀਆਂ_context smctx = {
         .octx            = octx,
-        .src_data        = (const uint8_t *) src0->data + row_start * nb01,
-        .dst_data        = (uint8_t *) dst->data + row_start * nb1,
+        .src_ਅੰਕੜੇ        = (ਅਚਲ uint8_t *) src0->ਅੰਕੜੇ + ਪੰਕਤੀ_ਸ਼ੁਰੂ * nb01,
+        .dst_ਅੰਕੜੇ        = (uint8_t *) dst->ਅੰਕੜੇ + ਪੰਕਤੀ_ਸ਼ੁਰੂ * nb1,
         .ne00            = ne00,
         .src_stride      = nb01,
         .dst_stride      = nb1,
-        .rows_per_thread = rows_per_thread,
-        .total_rows      = nrows,
-        .opt_path        = opt_path,
+        .ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_thread = ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_thread,
+        .ਕੁੱਲ_ਪੰਕਤੀਆਂ      = nrows,
+        .opt_ਰਸਤਾ        = opt_ਰਸਤਾ,
     };
 
-    work_queue_run(octx->ctx->work_queue, sum_rows_thread_f32, &smctx, n_threads);
+    work_ਕਤਾਰ_ਲੜੀਵਾਰ(octx->ctx->work_ਕਤਾਰ, ਜੋੜ_ਪੰਕਤੀਆਂ_thread_f32, &smctx, n_ਧਾਗੇ);
 
-    return HTP_STATUS_OK;
+    ਵਾਪਸ HTP_ਸਥਿਤੀ_OK;
 }
 
-struct sum_context {
-    struct htp_ops_context * octx;
-    const float            * src_data;
-    float                    partial_sums[HTP_MAX_NTHREADS];
-    uint32_t                 total_elems;
-    uint32_t                 elems_per_thread;
+ਬਣਤਰ ਜੋੜ_context {
+    ਬਣਤਰ htp_ops_context * octx;
+    ਅਚਲ ਦਸ਼ਮਲਵ            * src_ਅੰਕੜੇ;
+    ਦਸ਼ਮਲਵ                    partial_sums[HTP_MAX_NTHREADS];
+    uint32_t                 ਕੁੱਲ_elems;
+    uint32_t                 elems_ਪ੍ਰਤੀ_thread;
 };
 
-static void sum_thread_f32(unsigned int nth, unsigned int ith, void * data) {
-    struct sum_context * sctx = (struct sum_context *) data;
-    const uint32_t start = sctx->elems_per_thread * ith;
-    const uint32_t end   = MIN(start + sctx->elems_per_thread, sctx->total_elems);
+ਸਥਿਰ ਖਾਲੀ ਜੋੜ_thread_f32(ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ nth, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ ith, ਖਾਲੀ * ਅੰਕੜੇ) {
+    ਬਣਤਰ ਜੋੜ_context * sctx = (ਬਣਤਰ ਜੋੜ_context *) ਅੰਕੜੇ;
+    ਅਚਲ uint32_t ਸ਼ੁਰੂ = sctx->elems_ਪ੍ਰਤੀ_thread * ith;
+    ਅਚਲ uint32_t ਸਿਰਾ   = MIN(ਸ਼ੁਰੂ + sctx->elems_ਪ੍ਰਤੀ_thread, sctx->ਕੁੱਲ_elems);
 
-    if (start >= end) {
+    ਜੇ (ਸ਼ੁਰੂ >= ਸਿਰਾ) {
         sctx->partial_sums[ith] = 0.0f;
-        return;
+        ਵਾਪਸ;
     }
 
-    const uint32_t n = end - start;
-    const float * src = sctx->src_data + start;
+    ਅਚਲ uint32_t n = ਸਿਰਾ - ਸ਼ੁਰੂ;
+    ਅਚਲ ਦਸ਼ਮਲਵ * src = sctx->src_ਅੰਕੜੇ + ਸ਼ੁਰੂ;
 
-    struct htp_thread_trace * tr = &sctx->octx->ctx->trace[ith];
-    htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) start);
+    ਬਣਤਰ htp_thread_trace * tr = &sctx->octx->ctx->trace[ith];
+    htp_trace_event_ਸ਼ੁਰੂ(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ਸ਼ੁਰੂ);
 
-    hex_l2fetch_block((const void *) src, n * sizeof(float));
+    hex_l2fetch_ਖੰਡ((ਅਚਲ ਖਾਲੀ *) src, n * ਆਕਾਰ(ਦਸ਼ਮਲਵ));
 
-    sctx->partial_sums[ith] = hvx_reduce_sum_f32((const uint8_t *) src, n);
+    sctx->partial_sums[ith] = hvx_reduce_ਜੋੜ_f32((ਅਚਲ uint8_t *) src, n);
 
-    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) start);
+    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ਸ਼ੁਰੂ);
 }
 
-int op_sum(struct htp_ops_context * octx) {
-    const struct htp_tensor * src0 = octx->src[0];
-    const struct htp_tensor * dst  = octx->dst;
+ਪੂਰਨ op_ਜੋੜ(ਬਣਤਰ htp_ops_context * octx) {
+    ਅਚਲ ਬਣਤਰ htp_tensor * src0 = octx->src[0];
+    ਅਚਲ ਬਣਤਰ htp_tensor * dst  = octx->dst;
 
-    if (src0->type != HTP_TYPE_F32) {
-        return HTP_STATUS_NO_SUPPORT;
+    ਜੇ (src0->type != HTP_TYPE_F32) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_NO_SUPPORT;
     }
 
-    if (htp_tensor_is_extended(src0) || htp_tensor_is_extended(dst)) {
-        return HTP_STATUS_NO_SUPPORT;
+    ਜੇ (htp_tensor_is_extended(src0) || htp_tensor_is_extended(dst)) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_NO_SUPPORT;
     }
 
-    if (octx->ctx->mdev.count > 1 && octx->ctx->mdev.idx > 0) {
-        return HTP_STATUS_OK;
+    ਜੇ (octx->ctx->mdev.ਗਿਣਤੀ_2 > 1 && octx->ctx->mdev.idx > 0) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_OK;
     }
 
-    const uint32_t total_elems = (uint32_t) (src0->ne[0] * src0->ne[1] * src0->ne[2] * src0->ne[3]);
-    if (total_elems == 0) {
-        ((float *) dst->data)[0] = 0.0f;
-        return HTP_STATUS_OK;
+    ਅਚਲ uint32_t ਕੁੱਲ_elems = (uint32_t) (src0->ne[0] * src0->ne[1] * src0->ne[2] * src0->ne[3]);
+    ਜੇ (ਕੁੱਲ_elems == 0) {
+        ((ਦਸ਼ਮਲਵ *) dst->ਅੰਕੜੇ)[0] = 0.0f;
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_OK;
     }
 
-    const uint32_t n_threads = (total_elems >= 1024) ? MIN(octx->n_threads, HTP_MAX_NTHREADS) : 1;
-    const uint32_t raw_chunk = (total_elems + n_threads - 1) / n_threads;
-    const uint32_t elems_per_thread = hex_round_up(raw_chunk, 32);
+    ਅਚਲ uint32_t n_ਧਾਗੇ = (ਕੁੱਲ_elems >= 1024) ? MIN(octx->n_ਧਾਗੇ, HTP_MAX_NTHREADS) : 1;
+    ਅਚਲ uint32_t raw_chunk = (ਕੁੱਲ_elems + n_ਧਾਗੇ - 1) / n_ਧਾਗੇ;
+    ਅਚਲ uint32_t elems_ਪ੍ਰਤੀ_thread = hex_ਗੇੜਾ_ਉੱਪਰ(raw_chunk, 32);
 
-    struct sum_context sctx = {
+    ਬਣਤਰ ਜੋੜ_context sctx = {
         .octx             = octx,
-        .src_data         = (const float *) src0->data,
-        .total_elems      = total_elems,
-        .elems_per_thread = elems_per_thread,
+        .src_ਅੰਕੜੇ         = (ਅਚਲ ਦਸ਼ਮਲਵ *) src0->ਅੰਕੜੇ,
+        .ਕੁੱਲ_elems      = ਕੁੱਲ_elems,
+        .elems_ਪ੍ਰਤੀ_thread = elems_ਪ੍ਰਤੀ_thread,
     };
 
-    work_queue_run(octx->ctx->work_queue, sum_thread_f32, &sctx, n_threads);
+    work_ਕਤਾਰ_ਲੜੀਵਾਰ(octx->ctx->work_ਕਤਾਰ, ਜੋੜ_thread_f32, &sctx, n_ਧਾਗੇ);
 
-    float sum = 0.0f;
-    for (uint32_t i = 0; i < n_threads; i++) {
-        sum += sctx.partial_sums[i];
+    ਦਸ਼ਮਲਵ ਜੋੜ = 0.0f;
+    ਲਈ (uint32_t i = 0; i < n_ਧਾਗੇ; i++) {
+        ਜੋੜ += sctx.partial_sums[i];
     }
-    ((float *) dst->data)[0] = sum;
+    ((ਦਸ਼ਮਲਵ *) dst->ਅੰਕੜੇ)[0] = ਜੋੜ;
 
-    return HTP_STATUS_OK;
+    ਵਾਪਸ HTP_ਸਥਿਤੀ_OK;
 }
 
-static inline void argmax_slice_f32(
-    const float * restrict src,
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ argmax_ਟੁਕੜਾ_f32(
+    ਅਚਲ ਦਸ਼ਮਲਵ * ਸੀਮਿਤ src,
     uint32_t n,
-    uint32_t offset,
-    float * out_val,
-    int32_t * out_idx
+    uint32_t ਵਿੱਥ,
+    ਦਸ਼ਮਲਵ * ਬਾਹਰਲਾ_val,
+    int32_t * ਬਾਹਰਲਾ_idx
 ) {
-    hvx_argmax_f32(src, n, offset, out_val, out_idx);
+    hvx_argmax_f32(src, n, ਵਿੱਥ, ਬਾਹਰਲਾ_val, ਬਾਹਰਲਾ_idx);
 }
 
-struct argmax_context {
-    struct htp_ops_context * octx;
-    const float            * src_data;
-    int32_t                * dst_data;
+ਬਣਤਰ argmax_context {
+    ਬਣਤਰ htp_ops_context * octx;
+    ਅਚਲ ਦਸ਼ਮਲਵ            * src_ਅੰਕੜੇ;
+    int32_t                * dst_ਅੰਕੜੇ;
     uint32_t                 ne00;
     uint32_t                 src_stride;
     uint32_t                 dst_stride;
-    uint32_t                 row_start;
+    uint32_t                 ਪੰਕਤੀ_ਸ਼ੁਰੂ;
     uint32_t                 nrows;
-    uint32_t                 rows_per_thread;
-    uint32_t                 elems_per_thread;
+    uint32_t                 ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_thread;
+    uint32_t                 elems_ਪ੍ਰਤੀ_thread;
 
-    float                    partial_max[HTP_MAX_NTHREADS];
+    ਦਸ਼ਮਲਵ                    partial_max[HTP_MAX_NTHREADS];
     int32_t                  partial_idx[HTP_MAX_NTHREADS];
 };
 
-static void argmax_thread_single_row(unsigned int nth, unsigned int ith, void * data) {
-    struct argmax_context * actx = (struct argmax_context *) data;
-    const uint32_t start = actx->elems_per_thread * ith;
-    const uint32_t end   = MIN(start + actx->elems_per_thread, actx->ne00);
+ਸਥਿਰ ਖਾਲੀ argmax_thread_single_ਪੰਕਤੀ(ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ nth, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ ith, ਖਾਲੀ * ਅੰਕੜੇ) {
+    ਬਣਤਰ argmax_context * actx = (ਬਣਤਰ argmax_context *) ਅੰਕੜੇ;
+    ਅਚਲ uint32_t ਸ਼ੁਰੂ = actx->elems_ਪ੍ਰਤੀ_thread * ith;
+    ਅਚਲ uint32_t ਸਿਰਾ   = MIN(ਸ਼ੁਰੂ + actx->elems_ਪ੍ਰਤੀ_thread, actx->ne00);
 
-    if (start >= end) {
+    ਜੇ (ਸ਼ੁਰੂ >= ਸਿਰਾ) {
         actx->partial_max[ith] = -INFINITY;
         actx->partial_idx[ith] = 0;
-        return;
+        ਵਾਪਸ;
     }
 
-    const uint32_t n = end - start;
-    const float * src = actx->src_data + start;
+    ਅਚਲ uint32_t n = ਸਿਰਾ - ਸ਼ੁਰੂ;
+    ਅਚਲ ਦਸ਼ਮਲਵ * src = actx->src_ਅੰਕੜੇ + ਸ਼ੁਰੂ;
 
-    struct htp_thread_trace * tr = &actx->octx->ctx->trace[ith];
-    htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) start);
+    ਬਣਤਰ htp_thread_trace * tr = &actx->octx->ctx->trace[ith];
+    htp_trace_event_ਸ਼ੁਰੂ(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ਸ਼ੁਰੂ);
 
-    hex_l2fetch_block((const void *) src, n * sizeof(float));
+    hex_l2fetch_ਖੰਡ((ਅਚਲ ਖਾਲੀ *) src, n * ਆਕਾਰ(ਦਸ਼ਮਲਵ));
 
-    float max_val;
+    ਦਸ਼ਮਲਵ max_val;
     int32_t max_idx;
-    argmax_slice_f32(src, n, start, &max_val, &max_idx);
+    argmax_ਟੁਕੜਾ_f32(src, n, ਸ਼ੁਰੂ, &max_val, &max_idx);
 
     actx->partial_max[ith] = max_val;
     actx->partial_idx[ith] = max_idx;
 
-    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) start);
+    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ਸ਼ੁਰੂ);
 }
 
-static void argmax_thread_multi_row(unsigned int nth, unsigned int ith, void * data) {
-    struct argmax_context * actx = (struct argmax_context *) data;
-    const uint32_t r0 = actx->row_start + actx->rows_per_thread * ith;
-    const uint32_t r1 = MIN(r0 + actx->rows_per_thread, actx->row_start + actx->nrows);
+ਸਥਿਰ ਖਾਲੀ argmax_thread_multi_ਪੰਕਤੀ(ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ nth, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ ith, ਖਾਲੀ * ਅੰਕੜੇ) {
+    ਬਣਤਰ argmax_context * actx = (ਬਣਤਰ argmax_context *) ਅੰਕੜੇ;
+    ਅਚਲ uint32_t r0 = actx->ਪੰਕਤੀ_ਸ਼ੁਰੂ + actx->ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_thread * ith;
+    ਅਚਲ uint32_t r1 = MIN(r0 + actx->ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_thread, actx->ਪੰਕਤੀ_ਸ਼ੁਰੂ + actx->nrows);
 
-    if (r0 >= r1) {
-        return;
+    ਜੇ (r0 >= r1) {
+        ਵਾਪਸ;
     }
 
-    struct htp_thread_trace * tr = &actx->octx->ctx->trace[ith];
-    htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) r0);
+    ਬਣਤਰ htp_thread_trace * tr = &actx->octx->ctx->trace[ith];
+    htp_trace_event_ਸ਼ੁਰੂ(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) r0);
 
-    for (uint32_t r = r0; r < r1; r++) {
-        const float * src_row = (const float *) ((const uint8_t *) actx->src_data + r * actx->src_stride);
-        int32_t * dst_val     = (int32_t *) ((uint8_t *) actx->dst_data + r * actx->dst_stride);
+    ਲਈ (uint32_t r = r0; r < r1; r++) {
+        ਅਚਲ ਦਸ਼ਮਲਵ * src_ਪੰਕਤੀ = (ਅਚਲ ਦਸ਼ਮਲਵ *) ((ਅਚਲ uint8_t *) actx->src_ਅੰਕੜੇ + r * actx->src_stride);
+        int32_t * dst_val     = (int32_t *) ((uint8_t *) actx->dst_ਅੰਕੜੇ + r * actx->dst_stride);
 
-        hex_l2fetch_block((const void *) src_row, actx->ne00 * sizeof(float));
+        hex_l2fetch_ਖੰਡ((ਅਚਲ ਖਾਲੀ *) src_ਪੰਕਤੀ, actx->ne00 * ਆਕਾਰ(ਦਸ਼ਮਲਵ));
 
-        float max_val;
+        ਦਸ਼ਮਲਵ max_val;
         int32_t max_idx;
-        argmax_slice_f32(src_row, actx->ne00, 0, &max_val, &max_idx);
+        argmax_ਟੁਕੜਾ_f32(src_ਪੰਕਤੀ, actx->ne00, 0, &max_val, &max_idx);
 
         *dst_val = max_idx;
     }
@@ -312,99 +312,99 @@ static void argmax_thread_multi_row(unsigned int nth, unsigned int ith, void * d
     htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) r0);
 }
 
-int op_argmax(struct htp_ops_context * octx) {
-    const struct htp_tensor * src0 = octx->src[0];
-    const struct htp_tensor * dst  = octx->dst;
+ਪੂਰਨ op_argmax(ਬਣਤਰ htp_ops_context * octx) {
+    ਅਚਲ ਬਣਤਰ htp_tensor * src0 = octx->src[0];
+    ਅਚਲ ਬਣਤਰ htp_tensor * dst  = octx->dst;
 
-    if (src0->type != HTP_TYPE_F32 || dst->type != HTP_TYPE_I32) {
-        return HTP_STATUS_NO_SUPPORT;
+    ਜੇ (src0->type != HTP_TYPE_F32 || dst->type != HTP_TYPE_I32) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_NO_SUPPORT;
     }
 
-    if (htp_tensor_is_extended(src0) || htp_tensor_is_extended(dst)) {
-        return HTP_STATUS_NO_SUPPORT;
+    ਜੇ (htp_tensor_is_extended(src0) || htp_tensor_is_extended(dst)) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_NO_SUPPORT;
     }
 
-    const uint32_t ne00 = src0->ne[0];
-    const uint32_t src0_nrows = src0->ne[1] * src0->ne[2] * src0->ne[3];
+    ਅਚਲ uint32_t ne00 = src0->ne[0];
+    ਅਚਲ uint32_t src0_nrows = src0->ne[1] * src0->ne[2] * src0->ne[3];
 
-    if (ne00 == 0 || src0_nrows == 0) {
-        return HTP_STATUS_OK;
+    ਜੇ (ne00 == 0 || src0_nrows == 0) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_OK;
     }
 
-    if (src0_nrows == 1) {
-        if (octx->ctx->mdev.count > 1 && octx->ctx->mdev.idx > 0) {
-            return HTP_STATUS_OK;
+    ਜੇ (src0_nrows == 1) {
+        ਜੇ (octx->ctx->mdev.ਗਿਣਤੀ_2 > 1 && octx->ctx->mdev.idx > 0) {
+            ਵਾਪਸ HTP_ਸਥਿਤੀ_OK;
         }
 
-        if (ne00 == 1) {
-            ((int32_t *) dst->data)[0] = 0;
-            return HTP_STATUS_OK;
+        ਜੇ (ne00 == 1) {
+            ((int32_t *) dst->ਅੰਕੜੇ)[0] = 0;
+            ਵਾਪਸ HTP_ਸਥਿਤੀ_OK;
         }
 
-        const uint32_t n_threads = (ne00 >= 1024) ? MIN(octx->n_threads, HTP_MAX_NTHREADS) : 1;
-        const uint32_t raw_chunk = (ne00 + n_threads - 1) / n_threads;
-        const uint32_t elems_per_thread = hex_round_up(raw_chunk, 32);
+        ਅਚਲ uint32_t n_ਧਾਗੇ = (ne00 >= 1024) ? MIN(octx->n_ਧਾਗੇ, HTP_MAX_NTHREADS) : 1;
+        ਅਚਲ uint32_t raw_chunk = (ne00 + n_ਧਾਗੇ - 1) / n_ਧਾਗੇ;
+        ਅਚਲ uint32_t elems_ਪ੍ਰਤੀ_thread = hex_ਗੇੜਾ_ਉੱਪਰ(raw_chunk, 32);
 
-        struct argmax_context actx = {
+        ਬਣਤਰ argmax_context actx = {
             .octx             = octx,
-            .src_data         = (const float *) src0->data,
-            .dst_data         = (int32_t *) dst->data,
+            .src_ਅੰਕੜੇ         = (ਅਚਲ ਦਸ਼ਮਲਵ *) src0->ਅੰਕੜੇ,
+            .dst_ਅੰਕੜੇ         = (int32_t *) dst->ਅੰਕੜੇ,
             .ne00             = ne00,
-            .src_stride       = src0->nb[1] > 0 ? (uint32_t) src0->nb[1] : (uint32_t) (ne00 * sizeof(float)),
-            .dst_stride       = dst->nb[0] > 0 ? (uint32_t) dst->nb[0] : (uint32_t) sizeof(int32_t),
-            .row_start        = 0,
+            .src_stride       = src0->nb[1] > 0 ? (uint32_t) src0->nb[1] : (uint32_t) (ne00 * ਆਕਾਰ(ਦਸ਼ਮਲਵ)),
+            .dst_stride       = dst->nb[0] > 0 ? (uint32_t) dst->nb[0] : (uint32_t) ਆਕਾਰ(int32_t),
+            .ਪੰਕਤੀ_ਸ਼ੁਰੂ        = 0,
             .nrows            = 1,
-            .rows_per_thread  = 1,
-            .elems_per_thread = elems_per_thread,
+            .ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_thread  = 1,
+            .elems_ਪ੍ਰਤੀ_thread = elems_ਪ੍ਰਤੀ_thread,
         };
 
-        work_queue_run(octx->ctx->work_queue, argmax_thread_single_row, &actx, n_threads);
+        work_ਕਤਾਰ_ਲੜੀਵਾਰ(octx->ctx->work_ਕਤਾਰ, argmax_thread_single_ਪੰਕਤੀ, &actx, n_ਧਾਗੇ);
 
-        float best_val = actx.partial_max[0];
-        int32_t best_idx = actx.partial_idx[0];
-        for (uint32_t i = 1; i < n_threads; i++) {
-            if (actx.partial_max[i] > best_val) {
-                best_val = actx.partial_max[i];
-                best_idx = actx.partial_idx[i];
+        ਦਸ਼ਮਲਵ ਉੱਤਮ_val = actx.partial_max[0];
+        int32_t ਉੱਤਮ_idx = actx.partial_idx[0];
+        ਲਈ (uint32_t i = 1; i < n_ਧਾਗੇ; i++) {
+            ਜੇ (actx.partial_max[i] > ਉੱਤਮ_val) {
+                ਉੱਤਮ_val = actx.partial_max[i];
+                ਉੱਤਮ_idx = actx.partial_idx[i];
             }
         }
-        ((int32_t *) dst->data)[0] = best_idx;
-        return HTP_STATUS_OK;
+        ((int32_t *) dst->ਅੰਕੜੇ)[0] = ਉੱਤਮ_idx;
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_OK;
     }
 
-    uint32_t row_start = 0;
+    uint32_t ਪੰਕਤੀ_ਸ਼ੁਰੂ = 0;
     uint32_t nrows     = src0_nrows;
 
-    if (octx->ctx->mdev.count > 1) {
-        const bool can_split = htp_tensor_mdev_data_aligned(dst) &&
-                               htp_tensor_is_contiguous(dst, sizeof(int32_t));
-        const uint32_t elems_per_chunk = can_split ? 32 : 0;
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(
-            src0_nrows, elems_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
-        row_start = range.start;
-        nrows     = range.count;
+    ਜੇ (octx->ctx->mdev.ਗਿਣਤੀ_2 > 1) {
+        ਅਚਲ bool can_ਵੰਡੋ = htp_tensor_mdev_ਅੰਕੜੇ_aligned(dst) &&
+                               htp_tensor_is_contiguous(dst, ਆਕਾਰ(int32_t));
+        ਅਚਲ uint32_t elems_ਪ੍ਰਤੀ_chunk = can_ਵੰਡੋ ? 32 : 0;
+        ਅਚਲ ਬਣਤਰ htp_tensor_mdev_range range = htp_tensor_mdev_ਹਿੱਸੇ_ਕਰੋ(
+            src0_nrows, elems_ਪ੍ਰਤੀ_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.ਗਿਣਤੀ_2, &octx->ctx->mdev.ਗਿਣਤੀ_div);
+        ਪੰਕਤੀ_ਸ਼ੁਰੂ = range.ਸ਼ੁਰੂ;
+        nrows     = range.ਗਿਣਤੀ_2;
     }
 
-    if (nrows == 0) {
-        return HTP_STATUS_OK;
+    ਜੇ (nrows == 0) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_OK;
     }
 
-    const uint32_t n_threads = MIN(octx->n_threads, nrows);
-    const uint32_t rows_per_thread = (nrows + n_threads - 1) / n_threads;
+    ਅਚਲ uint32_t n_ਧਾਗੇ = MIN(octx->n_ਧਾਗੇ, nrows);
+    ਅਚਲ uint32_t ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_thread = (nrows + n_ਧਾਗੇ - 1) / n_ਧਾਗੇ;
 
-    struct argmax_context actx = {
+    ਬਣਤਰ argmax_context actx = {
         .octx             = octx,
-        .src_data         = (const float *) src0->data,
-        .dst_data         = (int32_t *) dst->data,
+        .src_ਅੰਕੜੇ         = (ਅਚਲ ਦਸ਼ਮਲਵ *) src0->ਅੰਕੜੇ,
+        .dst_ਅੰਕੜੇ         = (int32_t *) dst->ਅੰਕੜੇ,
         .ne00             = ne00,
-        .src_stride       = src0->nb[1] > 0 ? (uint32_t) src0->nb[1] : (uint32_t) (ne00 * sizeof(float)),
-        .dst_stride       = dst->nb[0] > 0 ? (uint32_t) dst->nb[0] : (uint32_t) sizeof(int32_t),
-        .row_start        = row_start,
+        .src_stride       = src0->nb[1] > 0 ? (uint32_t) src0->nb[1] : (uint32_t) (ne00 * ਆਕਾਰ(ਦਸ਼ਮਲਵ)),
+        .dst_stride       = dst->nb[0] > 0 ? (uint32_t) dst->nb[0] : (uint32_t) ਆਕਾਰ(int32_t),
+        .ਪੰਕਤੀ_ਸ਼ੁਰੂ        = ਪੰਕਤੀ_ਸ਼ੁਰੂ,
         .nrows            = nrows,
-        .rows_per_thread  = rows_per_thread,
-        .elems_per_thread = 0,
+        .ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_thread  = ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_thread,
+        .elems_ਪ੍ਰਤੀ_thread = 0,
     };
 
-    work_queue_run(octx->ctx->work_queue, argmax_thread_multi_row, &actx, n_threads);
-    return HTP_STATUS_OK;
+    work_ਕਤਾਰ_ਲੜੀਵਾਰ(octx->ctx->work_ਕਤਾਰ, argmax_thread_multi_ਪੰਕਤੀ, &actx, n_ਧਾਗੇ);
+    ਵਾਪਸ HTP_ਸਥਿਤੀ_OK;
 }

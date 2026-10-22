@@ -26,36 +26,36 @@
 // - Sequential source reads, scattered destination writes
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "math_fp.h"
-#include "platform.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml_tensor.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "math_fp.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "platform.h"
 
-#include <assert.h>
-#include <stdbool.h>
-#include <stdint.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <assert.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdbool.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdint.h>
 
-#define CACHE_LINE_SIZE_BYTES 64
-#define CACHE_LINE_F32_ELEMS  16  // 64 / 4
-#define CACHE_LINE_F16_ELEMS  32  // 64 / 2
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ CACHE_ਸਤਰ_ਮਾਪ_ਬਾਈਟਾਂ 64
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ CACHE_ਸਤਰ_F32_ELEMS  16  // 64 / 4
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ CACHE_ਸਤਰ_F16_ELEMS  32  // 64 / 2
 
-static int64_t gcd64(int64_t a, int64_t b) {
-    while (b) {
+ਸਥਿਰ int64_t gcd64(int64_t a, int64_t b) {
+    ਜਦੋਂ (b) {
         int64_t t = b;
         b         = a % b;
         a         = t;
     }
-    return a;
+    ਵਾਪਸ a;
 }
 
-struct ggml_et_set_rows_params {
-    struct ggml_tensor src0;  // F32 source data tensor
-    struct ggml_tensor src1;  // I64 row indices tensor
-    struct ggml_tensor dst;   // F32/F16 destination tensor
+ਬਣਤਰ ggml_et_ਸੈੱਟ_ਪੰਕਤੀਆਂ_params {
+    ਬਣਤਰ ggml_tensor src0;  // F32 source data tensor
+    ਬਣਤਰ ggml_tensor src1;  // I64 row indices tensor
+    ਬਣਤਰ ggml_tensor dst;   // F32/F16 destination tensor
 };
 
 // Copy exactly one cache line (64 bytes = 16 F32 elements) using wide loads/stores
-static void copy_cache_aligned_f32(float * dst, const float * src) {
-    __asm__ volatile(
+ਸਥਿਰ ਖਾਲੀ copy_cache_aligned_f32(ਦਸ਼ਮਲਵ * dst, ਅਚਲ ਦਸ਼ਮਲਵ * src) {
+    __asm__ ਅਸਥਿਰ(
         "flq2 f0, 0(%[src]) \n\t"   // Load 32 bytes
         "flq2 f1, 32(%[src]) \n\t"  // Load next 32 bytes
         "fsq2 f0, 0(%[dst]) \n\t"   // Store 32 bytes
@@ -66,27 +66,27 @@ static void copy_cache_aligned_f32(float * dst, const float * src) {
 }
 
 // Convert and copy one dst cache line worth of F32->F16 (32 elements src -> 64 bytes dst)
-static void copy_cache_aligned_f16(uint16_t * dst, const float * src) {
-    unsigned long mask_temp;
+ਸਥਿਰ ਖਾਲੀ copy_cache_aligned_f16(uint16_t * dst, ਅਚਲ ਦਸ਼ਮਲਵ * src) {
+    ਬਿਨਾਨਿਸ਼ਾਨੀ ਲੰਮਾ ਨਕਾਬ_ਆਰਜ਼ੀ;
 
     // Build offset vector for consecutive 16-bit stores: [0, 2, 4, 6, 8, 10, 12, 14]
-    float      offset_vec_storage[8];
-    uint32_t * offsets = (uint32_t *) offset_vec_storage;
-    for (int j = 0; j < 8; j++) {
+    ਦਸ਼ਮਲਵ      ਵਿੱਥ_vec_storage[8];
+    uint32_t * offsets = (uint32_t *) ਵਿੱਥ_vec_storage;
+    ਲਈ (ਪੂਰਨ j = 0; j < 8; j++) {
         offsets[j] = j * 2;
     }
 
-    __asm__ volatile(
+    __asm__ ਅਸਥਿਰ(
         "mova.x.m  %[mask_temp]         \n\t"
         "mov.m.x   m0, x0, 0xFF         \n\t"
         "flw.ps    f1, 0(%[offsets])    \n\t"
-        : [mask_temp] "=&r"(mask_temp)
-        : [offsets] "r"(offset_vec_storage)
+        : [ਨਕਾਬ_ਆਰਜ਼ੀ] "=&r"(ਨਕਾਬ_ਆਰਜ਼ੀ)
+        : [offsets] "r"(ਵਿੱਥ_vec_storage)
         : "f1");
 
     // 4 iterations of 8 elements = 32 F16 elements = 64 bytes = 1 cache line
-    for (int i = 0; i < 32; i += 8) {
-        __asm__ volatile(
+    ਲਈ (ਪੂਰਨ i = 0; i < 32; i += 8) {
+        __asm__ ਅਸਥਿਰ(
             "flw.ps    f2, 0(%[src_ptr])    \n\t"
             "fcvt.f16.ps f3, f2             \n\t"
             "fsch.ps   f3, f1(%[dst_ptr])   \n\t"
@@ -95,300 +95,300 @@ static void copy_cache_aligned_f16(uint16_t * dst, const float * src) {
             : "f2", "f3", "memory");
     }
 
-    __asm__ volatile("mova.m.x  %[mask_temp]         \n\t" : : [mask_temp] "r"(mask_temp));
+    __asm__ ਅਸਥਿਰ("mova.m.x  %[mask_temp]         \n\t" : : [ਨਕਾਬ_ਆਰਜ਼ੀ] "r"(ਨਕਾਬ_ਆਰਜ਼ੀ));
 }
 
-static inline size_t tensor_bytes(const struct ggml_tensor * t) {
-    return (size_t) t->ne[0] * t->ne[1] * t->ne[2] * t->ne[3] * t->nb[0];
+ਸਥਿਰ ਸਤਰਅੰਦਰ size_t tensor_ਬਾਈਟਾਂ(ਅਚਲ ਬਣਤਰ ggml_tensor * t) {
+    ਵਾਪਸ (size_t) t->ne[0] * t->ne[1] * t->ne[2] * t->ne[3] * t->nb[0];
 }
 
-int entry_point(struct ggml_et_set_rows_params * params, void * env) {
+ਪੂਰਨ ਇੰਦਰਾਜ_ਬਿੰਦੂ(ਬਣਤਰ ggml_et_ਸੈੱਟ_ਪੰਕਤੀਆਂ_params * params, ਖਾਲੀ * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    ਜੇ (!kernel_env) {
+        ਵਾਪਸ -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    ਪੂਰਨ thread_id   = get_relative_thread_id(kernel_env->shire_ਨਕਾਬ);
+    ਪੂਰਨ ਅੰਕ_ਧਾਗੇ = get_ਅੰਕ_ਧਾਗੇ(kernel_env->shire_ਨਕਾਬ);
 
-    if (thread_id < 0) {
-        return 0;
+    ਜੇ (thread_id < 0) {
+        ਵਾਪਸ 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;  // Invalid pointer
+    ਜੇ (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        ਵਾਪਸ -1;  // Invalid pointer
     }
 
-    struct ggml_tensor * src0 = &params->src0;  // Source data tensor (F32)
-    struct ggml_tensor * src1 = &params->src1;  // Row indices tensor (I64)
-    struct ggml_tensor * dst  = &params->dst;   // Destination tensor (F32/F16)
+    ਬਣਤਰ ggml_tensor * src0 = &params->src0;  // Source data tensor (F32)
+    ਬਣਤਰ ggml_tensor * src1 = &params->src1;  // Row indices tensor (I64)
+    ਬਣਤਰ ggml_tensor * dst  = &params->dst;   // Destination tensor (F32/F16)
 
-    if (src0->type != GGML_TYPE_F32 || src1->type != GGML_TYPE_I64) {
-        return -1;  // Invalid source types
+    ਜੇ (src0->type != GGML_TYPE_F32 || src1->type != GGML_TYPE_I64) {
+        ਵਾਪਸ -1;  // Invalid source types
     }
 
-    if (dst->type != GGML_TYPE_F32 && dst->type != GGML_TYPE_F16) {
-        return -1;  // Unsupported destination type
+    ਜੇ (dst->type != GGML_TYPE_F32 && dst->type != GGML_TYPE_F16) {
+        ਵਾਪਸ -1;  // Unsupported destination type
     }
 
-    float *   src0_data = (float *) src0->data;
-    int64_t * src1_data = (int64_t *) src1->data;
-    void *    dst_data  = dst->data;
+    ਦਸ਼ਮਲਵ *   src0_ਅੰਕੜੇ = (ਦਸ਼ਮਲਵ *) src0->ਅੰਕੜੇ;
+    int64_t * src1_ਅੰਕੜੇ = (int64_t *) src1->ਅੰਕੜੇ;
+    ਖਾਲੀ *    dst_ਅੰਕੜੇ  = dst->ਅੰਕੜੇ;
 
-    if (!src0_data || !src1_data || !dst_data) {
-        return -1;  // Null data pointer
+    ਜੇ (!src0_ਅੰਕੜੇ || !src1_ਅੰਕੜੇ || !dst_ਅੰਕੜੇ) {
+        ਵਾਪਸ -1;  // Null data pointer
     }
 
-    const int64_t ne00 = src0->ne[0];  // Source columns (row width)
-    const int64_t ne01 = src0->ne[1];  // Source rows (number of rows to write)
-    const int64_t ne02 = src0->ne[2];  // Source batch dimension
-    const int64_t ne03 = src0->ne[3];  // Source outer batch dimension
+    ਅਚਲ int64_t ne00 = src0->ne[0];  // Source columns (row width)
+    ਅਚਲ int64_t ne01 = src0->ne[1];  // Source rows (number of rows to write)
+    ਅਚਲ int64_t ne02 = src0->ne[2];  // Source batch dimension
+    ਅਚਲ int64_t ne03 = src0->ne[3];  // Source outer batch dimension
 
-    const int64_t nb01 = src0->nb[1];
-    const int64_t nb02 = src0->nb[2];
-    const int64_t nb03 = src0->nb[3];
+    ਅਚਲ int64_t nb01 = src0->nb[1];
+    ਅਚਲ int64_t nb02 = src0->nb[2];
+    ਅਚਲ int64_t nb03 = src0->nb[3];
 
-    const int64_t ne10 = src1->ne[0];  // Number of indices in dimension 0
-    const int64_t ne11 = src1->ne[1];  // Number of indices in dimension 1
-    const int64_t ne12 = src1->ne[2];  // Batch dimension for indices
+    ਅਚਲ int64_t ne10 = src1->ne[0];  // Number of indices in dimension 0
+    ਅਚਲ int64_t ne11 = src1->ne[1];  // Number of indices in dimension 1
+    ਅਚਲ int64_t ne12 = src1->ne[2];  // Batch dimension for indices
 
-    const int64_t nb10 = src1->nb[0];
-    const int64_t nb11 = src1->nb[1];
-    const int64_t nb12 = src1->nb[2];
+    ਅਚਲ int64_t nb10 = src1->nb[0];
+    ਅਚਲ int64_t nb11 = src1->nb[1];
+    ਅਚਲ int64_t nb12 = src1->nb[2];
 
-    const int64_t ne_dst1 = dst->ne[1];  // Number of rows in destination (for bounds checking)
+    ਅਚਲ int64_t ne_dst1 = dst->ne[1];  // Number of rows in destination (for bounds checking)
 
-    const int64_t nb1 = dst->nb[1];
-    const int64_t nb2 = dst->nb[2];
-    const int64_t nb3 = dst->nb[3];
+    ਅਚਲ int64_t nb1 = dst->nb[1];
+    ਅਚਲ int64_t nb2 = dst->nb[2];
+    ਅਚਲ int64_t nb3 = dst->nb[3];
 
     // Validate that number of indices matches number of source rows
-    if (ne10 != ne01) {
-        return -1;  // Number of indices must match number of source rows
+    ਜੇ (ne10 != ne01) {
+        ਵਾਪਸ -1;  // Number of indices must match number of source rows
     }
-#ifdef ET_UBERKERNEL
-    evict_region_past_l2(params->src0.data, tensor_bytes(&params->src0));
-    evict_region_past_l2(params->src1.data, tensor_bytes(&params->src1));
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ ET_UBERKERNEL
+    evict_region_past_l2(params->src0.ਅੰਕੜੇ, tensor_ਬਾਈਟਾਂ(&params->src0));
+    evict_region_past_l2(params->src1.ਅੰਕੜੇ, tensor_ਬਾਈਟਾਂ(&params->src1));
     FENCE;
     et_barrier(ET_BARRIER_GLOBAL);
-#endif
-    const int64_t total_rows = ne01 * ne02 * ne03;
+#ਜੇ_ਅੰਤ
+    ਅਚਲ int64_t ਕੁੱਲ_ਪੰਕਤੀਆਂ = ne01 * ne02 * ne03;
 
     // Determine cache-line element count based on destination type
-    const int64_t dst_cl_elems = (dst->type == GGML_TYPE_F16) ? CACHE_LINE_F16_ELEMS : CACHE_LINE_F32_ELEMS;
+    ਅਚਲ int64_t dst_cl_elems = (dst->type == GGML_TYPE_F16) ? CACHE_ਸਤਰ_F16_ELEMS : CACHE_ਸਤਰ_F32_ELEMS;
 
     // Check if rows are cache-line aligned in the destination
-    const bool row_cache_aligned = (ne00 >= dst_cl_elems) && (ne00 % dst_cl_elems == 0);
+    ਅਚਲ bool ਪੰਕਤੀ_cache_aligned = (ne00 >= dst_cl_elems) && (ne00 % dst_cl_elems == 0);
 
-    if (row_cache_aligned) {
+    ਜੇ (ਪੰਕਤੀ_cache_aligned) {
         // Cache-aligned path: distribute dst cache lines across threads
         // Each thread owns complete cache lines -> no coherence conflicts
-        const int64_t cls_per_row    = ne00 / dst_cl_elems;
-        const int64_t total_cls      = total_rows * cls_per_row;
-        const int64_t cls_per_thread = (total_cls + num_threads - 1) / num_threads;
-        const int64_t my_start       = thread_id * cls_per_thread;
-        int64_t       my_end         = my_start + cls_per_thread;
-        if (my_end > total_cls) {
-            my_end = total_cls;
+        ਅਚਲ int64_t cls_ਪ੍ਰਤੀ_ਪੰਕਤੀ    = ne00 / dst_cl_elems;
+        ਅਚਲ int64_t ਕੁੱਲ_cls      = ਕੁੱਲ_ਪੰਕਤੀਆਂ * cls_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+        ਅਚਲ int64_t cls_ਪ੍ਰਤੀ_thread = (ਕੁੱਲ_cls + ਅੰਕ_ਧਾਗੇ - 1) / ਅੰਕ_ਧਾਗੇ;
+        ਅਚਲ int64_t my_ਸ਼ੁਰੂ       = thread_id * cls_ਪ੍ਰਤੀ_thread;
+        int64_t       my_ਸਿਰਾ         = my_ਸ਼ੁਰੂ + cls_ਪ੍ਰਤੀ_thread;
+        ਜੇ (my_ਸਿਰਾ > ਕੁੱਲ_cls) {
+            my_ਸਿਰਾ = ਕੁੱਲ_cls;
         }
-        if (my_start >= total_cls) {
-            return 0;
+        ਜੇ (my_ਸ਼ੁਰੂ >= ਕੁੱਲ_cls) {
+            ਵਾਪਸ 0;
         }
 
-        for (int64_t cl = my_start; cl < my_end; cl++) {
+        ਲਈ (int64_t cl = my_ਸ਼ੁਰੂ; cl < my_ਸਿਰਾ; cl++) {
             // Map flat cache-line index -> (row, offset within row)
-            const int64_t row_flat  = cl / cls_per_row;
-            const int64_t cl_in_row = cl % cls_per_row;
+            ਅਚਲ int64_t ਪੰਕਤੀ_flat  = cl / cls_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+            ਅਚਲ int64_t cl_ਵਿੱਚ_ਪੰਕਤੀ = cl % cls_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
 
             // Decompose flat row -> (i03, i02, i01)
-            const int64_t i01 = row_flat % ne01;
-            const int64_t tmp = row_flat / ne01;
-            const int64_t i02 = tmp % ne02;
-            const int64_t i03 = tmp / ne02;
+            ਅਚਲ int64_t i01 = ਪੰਕਤੀ_flat % ne01;
+            ਅਚਲ int64_t tmp = ਪੰਕਤੀ_flat / ne01;
+            ਅਚਲ int64_t i02 = tmp % ne02;
+            ਅਚਲ int64_t i03 = tmp / ne02;
 
             // Look up destination row index
-            const int64_t i12               = i03 % ne12;
-            const int64_t i11               = i02 % ne11;
-            const int64_t i10               = i01;
-            const int64_t index_byte_offset = i10 * nb10 + i11 * nb11 + i12 * nb12;
-            const int64_t dst_row_index     = *(int64_t *) ((char *) src1_data + index_byte_offset);
+            ਅਚਲ int64_t i12               = i03 % ne12;
+            ਅਚਲ int64_t i11               = i02 % ne11;
+            ਅਚਲ int64_t i10               = i01;
+            ਅਚਲ int64_t ਸੂਚਕਾਂਕ_byte_ਵਿੱਥ = i10 * nb10 + i11 * nb11 + i12 * nb12;
+            ਅਚਲ int64_t dst_ਪੰਕਤੀ_ਸੂਚਕਾਂਕ     = *(int64_t *) ((ਅੱਖਰ *) src1_ਅੰਕੜੇ + ਸੂਚਕਾਂਕ_byte_ਵਿੱਥ);
 
-            if (dst_row_index < 0 || dst_row_index >= ne_dst1) {
-                return -1;
+            ਜੇ (dst_ਪੰਕਤੀ_ਸੂਚਕਾਂਕ < 0 || dst_ਪੰਕਤੀ_ਸੂਚਕਾਂਕ >= ne_dst1) {
+                ਵਾਪਸ -1;
             }
 
             // Source pointer: row base + cache-line offset (always F32 source)
-            const int64_t elem_offset = cl_in_row * dst_cl_elems;
-            const float * src_ptr =
-                (const float *) ((char *) src0_data + i01 * nb01 + i02 * nb02 + i03 * nb03) + elem_offset;
+            ਅਚਲ int64_t elem_ਵਿੱਥ = cl_ਵਿੱਚ_ਪੰਕਤੀ * dst_cl_elems;
+            ਅਚਲ ਦਸ਼ਮਲਵ * src_ptr =
+                (ਅਚਲ ਦਸ਼ਮਲਵ *) ((ਅੱਖਰ *) src0_ਅੰਕੜੇ + i01 * nb01 + i02 * nb02 + i03 * nb03) + elem_ਵਿੱਥ;
 
             // Destination pointer: scattered row base + cache-line offset
-            char * dst_row_base = (char *) dst_data + dst_row_index * nb1 + i02 * nb2 + i03 * nb3;
+            ਅੱਖਰ * dst_ਪੰਕਤੀ_ਅਧਾਰ = (ਅੱਖਰ *) dst_ਅੰਕੜੇ + dst_ਪੰਕਤੀ_ਸੂਚਕਾਂਕ * nb1 + i02 * nb2 + i03 * nb3;
 
-            if (dst->type == GGML_TYPE_F32) {
-                float * dst_ptr = (float *) dst_row_base + elem_offset;
+            ਜੇ (dst->type == GGML_TYPE_F32) {
+                ਦਸ਼ਮਲਵ * dst_ptr = (ਦਸ਼ਮਲਵ *) dst_ਪੰਕਤੀ_ਅਧਾਰ + elem_ਵਿੱਥ;
                 copy_cache_aligned_f32(dst_ptr, src_ptr);
-            } else {
-                uint16_t * dst_ptr = (uint16_t *) dst_row_base + elem_offset;
+            } ਨਹੀਂਤਾਂ {
+                uint16_t * dst_ptr = (uint16_t *) dst_ਪੰਕਤੀ_ਅਧਾਰ + elem_ਵਿੱਥ;
                 copy_cache_aligned_f16(dst_ptr, src_ptr);
             }
         }
-    } else if (nb1 % CACHE_LINE_SIZE_BYTES == 0) {
+    } ਨਹੀਂਤਾਂ ਜੇ (nb1 % CACHE_ਸਤਰ_ਮਾਪ_ਬਾਈਟਾਂ == 0) {
         // LCM-aligned path: destination row stride is cache-line-aligned, so
         // scattered rows never share a cache line even though ne00 doesn't
         // fill complete cache lines.  Group rows via lcm(ne00, dst_cl_elems)
         // and distribute cache lines across threads — each thread exclusively
         // owns its cache lines, so normal stores are safe (no atomics needed).
-        const int64_t g              = gcd64(ne00, dst_cl_elems);
-        const int64_t rows_per_group = dst_cl_elems / g;  // lcm / ne00
-        const int64_t cls_per_group  = ne00 / g;          // lcm / dst_cl_elems
+        ਅਚਲ int64_t g              = gcd64(ne00, dst_cl_elems);
+        ਅਚਲ int64_t ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_ਸਮੂਹ = dst_cl_elems / g;  // lcm / ne00
+        ਅਚਲ int64_t cls_ਪ੍ਰਤੀ_ਸਮੂਹ  = ne00 / g;          // lcm / dst_cl_elems
 
-        const int64_t total_groups   = (total_rows + rows_per_group - 1) / rows_per_group;
-        const int64_t total_cls      = total_groups * cls_per_group;
-        const int64_t cls_per_thread = (total_cls + num_threads - 1) / num_threads;
-        const int64_t my_start       = thread_id * cls_per_thread;
-        int64_t       my_end         = my_start + cls_per_thread;
-        if (my_end > total_cls) {
-            my_end = total_cls;
+        ਅਚਲ int64_t ਕੁੱਲ_groups   = (ਕੁੱਲ_ਪੰਕਤੀਆਂ + ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_ਸਮੂਹ - 1) / ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_ਸਮੂਹ;
+        ਅਚਲ int64_t ਕੁੱਲ_cls      = ਕੁੱਲ_groups * cls_ਪ੍ਰਤੀ_ਸਮੂਹ;
+        ਅਚਲ int64_t cls_ਪ੍ਰਤੀ_thread = (ਕੁੱਲ_cls + ਅੰਕ_ਧਾਗੇ - 1) / ਅੰਕ_ਧਾਗੇ;
+        ਅਚਲ int64_t my_ਸ਼ੁਰੂ       = thread_id * cls_ਪ੍ਰਤੀ_thread;
+        int64_t       my_ਸਿਰਾ         = my_ਸ਼ੁਰੂ + cls_ਪ੍ਰਤੀ_thread;
+        ਜੇ (my_ਸਿਰਾ > ਕੁੱਲ_cls) {
+            my_ਸਿਰਾ = ਕੁੱਲ_cls;
         }
-        if (my_start >= total_cls) {
-            return 0;
+        ਜੇ (my_ਸ਼ੁਰੂ >= ਕੁੱਲ_cls) {
+            ਵਾਪਸ 0;
         }
 
-#ifdef BUILD_FOR_UBERKERNEL
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ BUILD_FOR_UBERKERNEL
     et_barrier(ET_BARRIER_GLOBAL);
     // evict_region_past_l2(src0_data, tensor_bytes(src0));
     // evict_region_past_l2(src1_data, tensor_bytes(src1));
     // // et_barrier(ET_BARRIER_GLOBAL);
     // FENCE;
-#endif
+#ਜੇ_ਅੰਤ
 
 
-        for (int64_t cl = my_start; cl < my_end; cl++) {
-            const int64_t group_idx   = cl / cls_per_group;
-            const int64_t cl_in_group = cl % cls_per_group;
+        ਲਈ (int64_t cl = my_ਸ਼ੁਰੂ; cl < my_ਸਿਰਾ; cl++) {
+            ਅਚਲ int64_t ਸਮੂਹ_idx   = cl / cls_ਪ੍ਰਤੀ_ਸਮੂਹ;
+            ਅਚਲ int64_t cl_ਵਿੱਚ_ਸਮੂਹ = cl % cls_ਪ੍ਰਤੀ_ਸਮੂਹ;
 
             // Element range [elem_start, elem_end) within the flattened group
-            const int64_t elem_start = cl_in_group * dst_cl_elems;
-            const int64_t elem_end   = elem_start + dst_cl_elems;
+            ਅਚਲ int64_t elem_ਸ਼ੁਰੂ = cl_ਵਿੱਚ_ਸਮੂਹ * dst_cl_elems;
+            ਅਚਲ int64_t elem_ਸਿਰਾ   = elem_ਸ਼ੁਰੂ + dst_cl_elems;
 
             // Which row(s) inside this group does the cache line touch?
-            const int64_t r_first = elem_start / ne00;
-            const int64_t r_last  = (elem_end - 1) / ne00;
+            ਅਚਲ int64_t r_ਪਹਿਲਾ = elem_ਸ਼ੁਰੂ / ne00;
+            ਅਚਲ int64_t r_ਆਖਰੀ  = (elem_ਸਿਰਾ - 1) / ne00;
 
-            for (int64_t r = r_first; r <= r_last; r++) {
-                const int64_t row_flat = group_idx * rows_per_group + r;
-                if (row_flat >= total_rows) {
-                    break;
+            ਲਈ (int64_t r = r_ਪਹਿਲਾ; r <= r_ਆਖਰੀ; r++) {
+                ਅਚਲ int64_t ਪੰਕਤੀ_flat = ਸਮੂਹ_idx * ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_ਸਮੂਹ + r;
+                ਜੇ (ਪੰਕਤੀ_flat >= ਕੁੱਲ_ਪੰਕਤੀਆਂ) {
+                    ਰੋਕੋ;
                 }
 
                 // Column range within this row
-                int64_t col_begin = (r == r_first) ? (elem_start - r * ne00) : 0;
-                int64_t col_end   = (r == r_last) ? (elem_end - r * ne00) : ne00;
-                if (col_end > ne00) {
-                    col_end = ne00;
+                int64_t ਖਾਨਾ_begin = (r == r_ਪਹਿਲਾ) ? (elem_ਸ਼ੁਰੂ - r * ne00) : 0;
+                int64_t ਖਾਨਾ_ਸਿਰਾ   = (r == r_ਆਖਰੀ) ? (elem_ਸਿਰਾ - r * ne00) : ne00;
+                ਜੇ (ਖਾਨਾ_ਸਿਰਾ > ne00) {
+                    ਖਾਨਾ_ਸਿਰਾ = ne00;
                 }
 
                 // Decompose flat row -> (i03, i02, i01)
-                const int64_t i01 = row_flat % ne01;
-                const int64_t tmp = row_flat / ne01;
-                const int64_t i02 = tmp % ne02;
-                const int64_t i03 = tmp / ne02;
+                ਅਚਲ int64_t i01 = ਪੰਕਤੀ_flat % ne01;
+                ਅਚਲ int64_t tmp = ਪੰਕਤੀ_flat / ne01;
+                ਅਚਲ int64_t i02 = tmp % ne02;
+                ਅਚਲ int64_t i03 = tmp / ne02;
 
                 // Look up destination row index
-                const int64_t i12               = i03 % ne12;
-                const int64_t i11               = i02 % ne11;
-                const int64_t i10               = i01;
-                const int64_t index_byte_offset = i10 * nb10 + i11 * nb11 + i12 * nb12;
-                const int64_t dst_row_index     = *(int64_t *) ((char *) src1_data + index_byte_offset);
+                ਅਚਲ int64_t i12               = i03 % ne12;
+                ਅਚਲ int64_t i11               = i02 % ne11;
+                ਅਚਲ int64_t i10               = i01;
+                ਅਚਲ int64_t ਸੂਚਕਾਂਕ_byte_ਵਿੱਥ = i10 * nb10 + i11 * nb11 + i12 * nb12;
+                ਅਚਲ int64_t dst_ਪੰਕਤੀ_ਸੂਚਕਾਂਕ     = *(int64_t *) ((ਅੱਖਰ *) src1_ਅੰਕੜੇ + ਸੂਚਕਾਂਕ_byte_ਵਿੱਥ);
 
-                if (dst_row_index < 0 || dst_row_index >= ne_dst1) {
-                    return -1;
+                ਜੇ (dst_ਪੰਕਤੀ_ਸੂਚਕਾਂਕ < 0 || dst_ਪੰਕਤੀ_ਸੂਚਕਾਂਕ >= ne_dst1) {
+                    ਵਾਪਸ -1;
                 }
 
-                const float * src_row = (const float *) ((char *) src0_data + i01 * nb01 + i02 * nb02 + i03 * nb03);
-                char *        dst_row_base = (char *) dst_data + dst_row_index * nb1 + i02 * nb2 + i03 * nb3;
+                ਅਚਲ ਦਸ਼ਮਲਵ * src_ਪੰਕਤੀ = (ਅਚਲ ਦਸ਼ਮਲਵ *) ((ਅੱਖਰ *) src0_ਅੰਕੜੇ + i01 * nb01 + i02 * nb02 + i03 * nb03);
+                ਅੱਖਰ *        dst_ਪੰਕਤੀ_ਅਧਾਰ = (ਅੱਖਰ *) dst_ਅੰਕੜੇ + dst_ਪੰਕਤੀ_ਸੂਚਕਾਂਕ * nb1 + i02 * nb2 + i03 * nb3;
 
                 // nb1 is cache-line-aligned, so dst_row_base is too.
                 // Use aligned copy when the column range fills a complete
                 // cache line at a cache-line-aligned offset within the row.
-                const bool full_cl = (col_begin % dst_cl_elems == 0) && (col_end - col_begin == dst_cl_elems);
+                ਅਚਲ bool ਭਰਿਆ_cl = (ਖਾਨਾ_begin % dst_cl_elems == 0) && (ਖਾਨਾ_ਸਿਰਾ - ਖਾਨਾ_begin == dst_cl_elems);
 
-                if (dst->type == GGML_TYPE_F32) {
-                    float * dp = (float *) dst_row_base;
-                    if (full_cl) {
-                        copy_cache_aligned_f32(dp + col_begin, src_row + col_begin);
-                    } else {
-                        for (int64_t i = col_begin; i < col_end; i++) {
-                            dp[i] = src_row[i];
+                ਜੇ (dst->type == GGML_TYPE_F32) {
+                    ਦਸ਼ਮਲਵ * dp = (ਦਸ਼ਮਲਵ *) dst_ਪੰਕਤੀ_ਅਧਾਰ;
+                    ਜੇ (ਭਰਿਆ_cl) {
+                        copy_cache_aligned_f32(dp + ਖਾਨਾ_begin, src_ਪੰਕਤੀ + ਖਾਨਾ_begin);
+                    } ਨਹੀਂਤਾਂ {
+                        ਲਈ (int64_t i = ਖਾਨਾ_begin; i < ਖਾਨਾ_ਸਿਰਾ; i++) {
+                            dp[i] = src_ਪੰਕਤੀ[i];
                         }
                     }
-                } else {
-                    uint16_t * dp = (uint16_t *) dst_row_base;
-                    if (full_cl) {
-                        copy_cache_aligned_f16(dp + col_begin, src_row + col_begin);
-                    } else {
-                        for (int64_t i = col_begin; i < col_end; i++) {
-                            dp[i] = fp32_to_fp16(src_row[i]);
+                } ਨਹੀਂਤਾਂ {
+                    uint16_t * dp = (uint16_t *) dst_ਪੰਕਤੀ_ਅਧਾਰ;
+                    ਜੇ (ਭਰਿਆ_cl) {
+                        copy_cache_aligned_f16(dp + ਖਾਨਾ_begin, src_ਪੰਕਤੀ + ਖਾਨਾ_begin);
+                    } ਨਹੀਂਤਾਂ {
+                        ਲਈ (int64_t i = ਖਾਨਾ_begin; i < ਖਾਨਾ_ਸਿਰਾ; i++) {
+                            dp[i] = fp32_ਮੰਜ਼ਿਲ_fp16(src_ਪੰਕਤੀ[i]);
                         }
                     }
                 }
             }
         }
 
-#ifdef BUILD_FOR_UBERKERNEL
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ BUILD_FOR_UBERKERNEL
     et_barrier(ET_BARRIER_GLOBAL);
     // evict_region_past_l2(src0_data, tensor_bytes(src0));
     // evict_region_past_l2(src1_data, tensor_bytes(src1));
     // // et_barrier(ET_BARRIER_GLOBAL);
     // FENCE;
-#endif
+#ਜੇ_ਅੰਤ
 
 
-    } else {
+    } ਨਹੀਂਤਾਂ {
         // Fallback: nb1 not cache-line-aligned, so scattered destination rows
         // may share a cache line.  Use atomic global stores to bypass L1D.
-        for (int64_t row_flat = thread_id; row_flat < total_rows; row_flat += num_threads) {
-            const int64_t i01 = row_flat % ne01;
-            const int64_t tmp = row_flat / ne01;
-            const int64_t i02 = tmp % ne02;
-            const int64_t i03 = tmp / ne02;
+        ਲਈ (int64_t ਪੰਕਤੀ_flat = thread_id; ਪੰਕਤੀ_flat < ਕੁੱਲ_ਪੰਕਤੀਆਂ; ਪੰਕਤੀ_flat += ਅੰਕ_ਧਾਗੇ) {
+            ਅਚਲ int64_t i01 = ਪੰਕਤੀ_flat % ne01;
+            ਅਚਲ int64_t tmp = ਪੰਕਤੀ_flat / ne01;
+            ਅਚਲ int64_t i02 = tmp % ne02;
+            ਅਚਲ int64_t i03 = tmp / ne02;
 
             // Look up destination row index
-            const int64_t i12               = i03 % ne12;
-            const int64_t i11               = i02 % ne11;
-            const int64_t i10               = i01;
-            const int64_t index_byte_offset = i10 * nb10 + i11 * nb11 + i12 * nb12;
-            const int64_t dst_row_index     = *(int64_t *) ((char *) src1_data + index_byte_offset);
+            ਅਚਲ int64_t i12               = i03 % ne12;
+            ਅਚਲ int64_t i11               = i02 % ne11;
+            ਅਚਲ int64_t i10               = i01;
+            ਅਚਲ int64_t ਸੂਚਕਾਂਕ_byte_ਵਿੱਥ = i10 * nb10 + i11 * nb11 + i12 * nb12;
+            ਅਚਲ int64_t dst_ਪੰਕਤੀ_ਸੂਚਕਾਂਕ     = *(int64_t *) ((ਅੱਖਰ *) src1_ਅੰਕੜੇ + ਸੂਚਕਾਂਕ_byte_ਵਿੱਥ);
 
-            if (dst_row_index < 0 || dst_row_index >= ne_dst1) {
-                return -1;
+            ਜੇ (dst_ਪੰਕਤੀ_ਸੂਚਕਾਂਕ < 0 || dst_ਪੰਕਤੀ_ਸੂਚਕਾਂਕ >= ne_dst1) {
+                ਵਾਪਸ -1;
             }
 
-            const float * src_row      = (const float *) ((char *) src0_data + i01 * nb01 + i02 * nb02 + i03 * nb03);
-            char *        dst_row_base = (char *) dst_data + dst_row_index * nb1 + i02 * nb2 + i03 * nb3;
+            ਅਚਲ ਦਸ਼ਮਲਵ * src_ਪੰਕਤੀ      = (ਅਚਲ ਦਸ਼ਮਲਵ *) ((ਅੱਖਰ *) src0_ਅੰਕੜੇ + i01 * nb01 + i02 * nb02 + i03 * nb03);
+            ਅੱਖਰ *        dst_ਪੰਕਤੀ_ਅਧਾਰ = (ਅੱਖਰ *) dst_ਅੰਕੜੇ + dst_ਪੰਕਤੀ_ਸੂਚਕਾਂਕ * nb1 + i02 * nb2 + i03 * nb3;
 
-            if (dst->type == GGML_TYPE_F32) {
-                volatile float * dst_row = (volatile float *) dst_row_base;
-                for (int64_t i = 0; i < ne00; i++) {
-                    atomic_store_f32(dst_row + i, src_row[i]);
+            ਜੇ (dst->type == GGML_TYPE_F32) {
+                ਅਸਥਿਰ ਦਸ਼ਮਲਵ * dst_ਪੰਕਤੀ = (ਅਸਥਿਰ ਦਸ਼ਮਲਵ *) dst_ਪੰਕਤੀ_ਅਧਾਰ;
+                ਲਈ (int64_t i = 0; i < ne00; i++) {
+                    atomic_store_f32(dst_ਪੰਕਤੀ + i, src_ਪੰਕਤੀ[i]);
                 }
-            } else {
-                volatile uint16_t * dst_row = (volatile uint16_t *) dst_row_base;
-                for (int64_t i = 0; i < ne00; i++) {
-                    atomic_store_f16(dst_row + i, fp32_to_fp16(src_row[i]));
+            } ਨਹੀਂਤਾਂ {
+                ਅਸਥਿਰ uint16_t * dst_ਪੰਕਤੀ = (ਅਸਥਿਰ uint16_t *) dst_ਪੰਕਤੀ_ਅਧਾਰ;
+                ਲਈ (int64_t i = 0; i < ne00; i++) {
+                    atomic_store_f16(dst_ਪੰਕਤੀ + i, fp32_ਮੰਜ਼ਿਲ_fp16(src_ਪੰਕਤੀ[i]));
                 }
             }
         }
     }
 
-#ifdef BUILD_FOR_UBERKERNEL
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ BUILD_FOR_UBERKERNEL
     et_barrier(ET_BARRIER_GLOBAL);
     // evict_region_past_l2(src0_data, tensor_bytes(src0));
     // evict_region_past_l2(src1_data, tensor_bytes(src1));
     // // et_barrier(ET_BARRIER_GLOBAL);
     // FENCE;
-#endif
-    return 0;
+#ਜੇ_ਅੰਤ
+    ਵਾਪਸ 0;
 }

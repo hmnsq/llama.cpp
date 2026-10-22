@@ -1,496 +1,496 @@
-#pragma clang diagnostic ignored "-Wunused-variable"
-#pragma clang diagnostic ignored "-Wunused-function"
-#pragma clang diagnostic ignored "-Wunused-but-set-variable"
+#ਹਦਾਇਤ clang diagnostic ignored "-Wunused-variable"
+#ਹਦਾਇਤ clang diagnostic ignored "-Wunused-function"
+#ਹਦਾਇਤ clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <HAP_perf.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <HAP_farf.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <HAP_perf.h>
 
-#include <math.h>
-#include <string.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <math.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <string.h>
 
-#include "dma-queue.h"
-#include "hex-fastdiv.h"
-#include "hvx-exp.h"
-#include "hvx-sigmoid.h"
-#include "hvx-utils.h"
-#include "unary-ops.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "dma-queue.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hex-fastdiv.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hvx-exp.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hvx-sigmoid.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hvx-utils.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "unary-ops.h"
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "htp-tensor.h"
-#include "htp-vtcm.h"
-#include "hex-profile.h"
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_DECL_C
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-common.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "htp-ctx.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "htp-ops.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "htp-tensor.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "htp-vtcm.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hex-profile.h"
 
-struct htp_unary_context;
+ਬਣਤਰ htp_unary_context;
 
-typedef void (*unary_compute_fn_t)(const void * restrict src,
-                                   void * restrict dst,
-                                   uint32_t num_rows,
-                                   const struct htp_unary_context * uctx);
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਖਾਲੀ (*unary_compute_fn_t)(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                                   ਖਾਲੀ * ਸੀਮਿਤ dst,
+                                   uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                                   ਅਚਲ ਬਣਤਰ htp_unary_context * uctx);
 
-typedef void (*unary_rms_norm_mul_compute_fn_t)(const void * restrict src,
-                                                const void * restrict weight,
-                                                void * restrict dst,
-                                                uint32_t num_rows,
-                                                const struct htp_unary_context * uctx);
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਖਾਲੀ (*unary_rms_norm_mul_compute_fn_t)(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                                                ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ ਭਾਰ,
+                                                ਖਾਲੀ * ਸੀਮਿਤ dst,
+                                                uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                                                ਅਚਲ ਬਣਤਰ htp_unary_context * uctx);
 
-typedef void (*unary_tri_compute_fn_t)(const void * restrict src,
-                                       void * restrict dst,
-                                       uint32_t num_rows,
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਖਾਲੀ (*unary_tri_compute_fn_t)(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                                       ਖਾਲੀ * ਸੀਮਿਤ dst,
+                                       uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
                                        uint32_t ir,
-                                       const struct htp_unary_context * uctx);
+                                       ਅਚਲ ਬਣਤਰ htp_unary_context * uctx);
 
-typedef void (*unary_tile_compute_fn_t)(void * restrict dst,
-                                        const void * restrict src,
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਖਾਲੀ (*unary_tile_compute_fn_t)(ਖਾਲੀ * ਸੀਮਿਤ dst,
+                                        ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
                                         uint32_t tw,
-                                        const struct htp_unary_context * uctx);
+                                        ਅਚਲ ਬਣਤਰ htp_unary_context * uctx);
 
-typedef void (*unary_tiled_tri_compute_fn_t)(const void * restrict src,
-                                             void * restrict dst,
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਖਾਲੀ (*unary_tiled_tri_compute_fn_t)(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                                             ਖਾਲੀ * ਸੀਮਿਤ dst,
                                              uint32_t tile_elems,
-                                             uint32_t col_start,
+                                             uint32_t ਖਾਨਾ_ਸ਼ੁਰੂ,
                                              uint32_t i01,
                                              uint32_t ne0,
                                              int32_t ttype);
 
-struct htp_unary_context {
-    struct htp_ops_context * octx;
-    const struct htp_unary_kernel_params * kparams;
+ਬਣਤਰ htp_unary_context {
+    ਬਣਤਰ htp_ops_context * octx;
+    ਅਚਲ ਬਣਤਰ htp_unary_kernel_params * kparams;
 
-    void *                    compute;
+    ਖਾਲੀ *                    compute;
 
-    dma_addr_t                data_src0;
-    dma_addr_t                data_src1;            // weight/scale tensor for RMS_NORM_MUL
-    dma_addr_t                data_dst;
+    dma_addr_t                ਅੰਕੜੇ_src0;
+    dma_addr_t                ਅੰਕੜੇ_src1;            // weight/scale tensor for RMS_NORM_MUL
+    dma_addr_t                ਅੰਕੜੇ_dst;
 
-    size_t                    src0_data_row_size;   // actual data bytes per row
-    size_t                    src1_data_row_size;
-    size_t                    dst_data_row_size;    // actual data bytes per row
+    size_t                    src0_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ;   // actual data bytes per row
+    size_t                    src1_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ;
+    size_t                    dst_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ;    // actual data bytes per row
 
-    size_t                    src0_row_size_aligned;
-    size_t                    src1_row_size_aligned;
-    size_t                    dst_row_size_aligned;
+    size_t                    src0_ਪੰਕਤੀ_ਮਾਪ_aligned;
+    size_t                    src1_ਪੰਕਤੀ_ਮਾਪ_aligned;
+    size_t                    dst_ਪੰਕਤੀ_ਮਾਪ_aligned;
 
-    size_t                    src0_vtcm_half_size;
-    size_t                    src1_vtcm_half_size;
-    size_t                    dst_vtcm_half_size;
+    size_t                    src0_vtcm_half_ਮਾਪ;
+    size_t                    src1_vtcm_half_ਮਾਪ;
+    size_t                    dst_vtcm_half_ਮਾਪ;
 
-    uint32_t                  block;
+    uint32_t                  ਖੰਡ;
     uint32_t                  src0_nrows;
-    uint32_t                  src0_nrows_per_thread;
-    uint32_t                  row_start;
+    uint32_t                  src0_nrows_ਪ੍ਰਤੀ_thread;
+    uint32_t                  ਪੰਕਤੀ_ਸ਼ੁਰੂ;
     uint32_t                  nc;
-    uint32_t                  col_tile;             // tiled mode
-    bool                      broadcast_weight;
+    uint32_t                  ਖਾਨਾ_tile;             // tiled mode
+    bool                      ਪ੍ਰਸਾਰਣ_ਭਾਰ;
 
     uint8_t *                 vtcm_src0;
     uint8_t *                 vtcm_src1;
     uint8_t *                 vtcm_dst;
 
-    size_t                    vtcm_src0_size_per_thread;
-    size_t                    vtcm_src1_size_per_thread;
-    size_t                    vtcm_dst_size_per_thread;
+    size_t                    vtcm_src0_ਮਾਪ_ਪ੍ਰਤੀ_thread;
+    size_t                    vtcm_src1_ਮਾਪ_ਪ੍ਰਤੀ_thread;
+    size_t                    vtcm_dst_ਮਾਪ_ਪ੍ਰਤੀ_thread;
 };
 
 // Convert flat row index to DDR byte offset using the tensor's actual strides.
 // ir = i1 + ne1*(i2 + ne2*i3)  =>  offset = i1*nb1 + i2*nb2 + i3*nb3
-static inline size_t unary_row_offset(uint32_t ir,
+ਸਥਿਰ ਸਤਰਅੰਦਰ size_t unary_ਪੰਕਤੀ_ਵਿੱਥ(uint32_t ir,
                                       uint32_t ne1, uint32_t ne2,
-                                      const struct fastdiv_values * div_ne1,
-                                      const struct fastdiv_values * div_ne2,
-                                      const struct fastdiv_values * div_ne12,
+                                      ਅਚਲ ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ * div_ne1,
+                                      ਅਚਲ ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ * div_ne2,
+                                      ਅਚਲ ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ * div_ne12,
                                       size_t nb1, size_t nb2, size_t nb3) {
-    const uint32_t i1 = fastmodulo(ir, ne1, div_ne1);
-    const uint32_t ir_div_ne1 = fastdiv(ir, div_ne1);
-    const uint32_t i2 = fastmodulo(ir_div_ne1, ne2, div_ne2);
-    const uint32_t i3 = fastdiv(ir, div_ne12);
-    return i1 * nb1 + i2 * nb2 + i3 * nb3;
+    ਅਚਲ uint32_t i1 = fastmodulo(ir, ne1, div_ne1);
+    ਅਚਲ uint32_t ir_div_ne1 = fastdiv(ir, div_ne1);
+    ਅਚਲ uint32_t i2 = fastmodulo(ir_div_ne1, ne2, div_ne2);
+    ਅਚਲ uint32_t i3 = fastdiv(ir, div_ne12);
+    ਵਾਪਸ i1 * nb1 + i2 * nb2 + i3 * nb3;
 }
 
 // Safe DMA block size from row `ir`: clamp to the tighter dim-1 slice
 // boundary of src and dst so the nb1 stride stays valid for all rows.
-static inline uint32_t unary_block_size(uint32_t ir,
-                                        uint32_t end_row,
-                                        uint32_t block,
+ਸਥਿਰ ਸਤਰਅੰਦਰ uint32_t unary_ਖੰਡ_ਮਾਪ(uint32_t ir,
+                                        uint32_t ਸਿਰਾ_ਪੰਕਤੀ,
+                                        uint32_t ਖੰਡ,
                                         bool src_contig,
                                         bool dst_contig,
                                         uint32_t ne1,
-                                        const struct fastdiv_values * div_ne1) {
-    uint32_t limit = MIN(block, end_row - ir);
+                                        ਅਚਲ ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ * div_ne1) {
+    uint32_t ਹੱਦਬੰਦੀ = MIN(ਖੰਡ, ਸਿਰਾ_ਪੰਕਤੀ - ir);
 
-    if (!src_contig || !dst_contig) {
-        const uint32_t slice_end = (fastdiv(ir, div_ne1) + 1) * ne1;
-        limit = MIN(limit, slice_end - ir);
+    ਜੇ (!src_contig || !dst_contig) {
+        ਅਚਲ uint32_t ਟੁਕੜਾ_ਸਿਰਾ = (fastdiv(ir, div_ne1) + 1) * ne1;
+        ਹੱਦਬੰਦੀ = MIN(ਹੱਦਬੰਦੀ, ਟੁਕੜਾ_ਸਿਰਾ - ir);
     }
 
-    return limit;
+    ਵਾਪਸ ਹੱਦਬੰਦੀ;
 }
 
-#define htp_unary_preamble            \
-    const uint32_t ne00 = src->ne[0]; \
-    const uint32_t ne01 = src->ne[1]; \
-    const uint32_t ne02 = src->ne[2]; \
-    const uint32_t ne03 = src->ne[3]; \
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ htp_unary_preamble            \
+    ਅਚਲ uint32_t ne00 = src->ne[0]; \
+    ਅਚਲ uint32_t ne01 = src->ne[1]; \
+    ਅਚਲ uint32_t ne02 = src->ne[2]; \
+    ਅਚਲ uint32_t ne03 = src->ne[3]; \
                                       \
-    const uint32_t ne0 = dst->ne[0];  \
-    const uint32_t ne1 = dst->ne[1];  \
-    const uint32_t ne2 = dst->ne[2];  \
-    const uint32_t ne3 = dst->ne[3];  \
+    ਅਚਲ uint32_t ne0 = dst->ne[0];  \
+    ਅਚਲ uint32_t ne1 = dst->ne[1];  \
+    ਅਚਲ uint32_t ne2 = dst->ne[2];  \
+    ਅਚਲ uint32_t ne3 = dst->ne[3];  \
                                       \
-    const uint32_t nb00 = src->nb[0]; \
-    const uint32_t nb01 = src->nb[1]; \
-    const uint32_t nb02 = src->nb[2]; \
-    const uint32_t nb03 = src->nb[3]; \
+    ਅਚਲ uint32_t nb00 = src->nb[0]; \
+    ਅਚਲ uint32_t nb01 = src->nb[1]; \
+    ਅਚਲ uint32_t nb02 = src->nb[2]; \
+    ਅਚਲ uint32_t nb03 = src->nb[3]; \
                                       \
-    const uint32_t nb0 = dst->nb[0];  \
-    const uint32_t nb1 = dst->nb[1];  \
-    const uint32_t nb2 = dst->nb[2];  \
-    const uint32_t nb3 = dst->nb[3];
+    ਅਚਲ uint32_t nb0 = dst->nb[0];  \
+    ਅਚਲ uint32_t nb1 = dst->nb[1];  \
+    ਅਚਲ uint32_t nb2 = dst->nb[2];  \
+    ਅਚਲ uint32_t nb3 = dst->nb[3];
 
-#define htp_unary_op_preamble                                         \
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ htp_unary_op_preamble                                         \
     int32_t * op_params = uctx->octx->op_params;                      \
-    const uint32_t ne0 = uctx->nc;                                    \
-    const size_t src0_row_size_aligned = uctx->src0_row_size_aligned; \
-    const size_t dst_row_size_aligned = uctx->dst_row_size_aligned;
+    ਅਚਲ uint32_t ne0 = uctx->nc;                                    \
+    ਅਚਲ size_t src0_ਪੰਕਤੀ_ਮਾਪ_aligned = uctx->src0_ਪੰਕਤੀ_ਮਾਪ_aligned; \
+    ਅਚਲ size_t dst_ਪੰਕਤੀ_ਮਾਪ_aligned = uctx->dst_ਪੰਕਤੀ_ਮਾਪ_aligned;
 
-static void scale_f32(const void * restrict src,
-                      void * restrict dst,
-                      const uint32_t num_rows,
-                      const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ scale_f32(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                      ਖਾਲੀ * ਸੀਮਿਤ dst,
+                      ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                      ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
-    float scale = 0.f;
-    float bias  = 0.f;
-    memcpy(&scale, &op_params[0], sizeof(float));
-    memcpy(&bias,  &op_params[1], sizeof(float));
+    ਦਸ਼ਮਲਵ scale = 0.f;
+    ਦਸ਼ਮਲਵ bias  = 0.f;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&scale, &op_params[0], ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&bias,  &op_params[1], ਆਕਾਰ(ਦਸ਼ਮਲਵ));
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
-        const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
-        uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
+    ਲਈ (uint32_t ir = 0; ir < ਅੰਕ_ਪੰਕਤੀਆਂ_2; ir++) {
+        ਅਚਲ uint8_t * ਸੀਮਿਤ src_local = (ਅਚਲ uint8_t *)src + (ir * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        uint8_t * ਸੀਮਿਤ dst_local       = (uint8_t *)dst + (ir * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
-        hvx_scale_offset_f32_aa((uint8_t *) dst_local, (const uint8_t *) src_local, ne0, scale, bias);
+        hvx_scale_ਵਿੱਥ_f32_aa((uint8_t *) dst_local, (ਅਚਲ uint8_t *) src_local, ne0, scale, bias);
     }
 }
 
-static void clamp_f32(const void * restrict src,
-                      void * restrict dst,
-                      const uint32_t num_rows,
-                      const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ clamp_f32(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                      ਖਾਲੀ * ਸੀਮਿਤ dst,
+                      ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                      ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
-    float min = 0.f;
-    float max = 0.f;
-    memcpy(&min, &op_params[0], sizeof(float));
-    memcpy(&max, &op_params[1], sizeof(float));
+    ਦਸ਼ਮਲਵ min = 0.f;
+    ਦਸ਼ਮਲਵ max = 0.f;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&min, &op_params[0], ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&max, &op_params[1], ਆਕਾਰ(ਦਸ਼ਮਲਵ));
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
-        const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
-        uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
+    ਲਈ (uint32_t ir = 0; ir < ਅੰਕ_ਪੰਕਤੀਆਂ_2; ir++) {
+        ਅਚਲ uint8_t * ਸੀਮਿਤ src_local = (ਅਚਲ uint8_t *)src + (ir * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        uint8_t * ਸੀਮਿਤ dst_local       = (uint8_t *)dst + (ir * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
         hvx_clamp_scalar_f32(dst_local, src_local, min, max, ne0);
     }
 }
 
-static void leaky_relu_f32(const void * restrict src,
-                           void * restrict dst,
-                           const uint32_t num_rows,
-                           const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ leaky_relu_f32(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                           ਖਾਲੀ * ਸੀਮਿਤ dst,
+                           ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                           ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
-    float negative_slope = 0.f;
-    memcpy(&negative_slope, &op_params[0], sizeof(float));
+    ਦਸ਼ਮਲਵ negative_ਢਲਾਨ = 0.f;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&negative_ਢਲਾਨ, &op_params[0], ਆਕਾਰ(ਦਸ਼ਮਲਵ));
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
-        const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
-        uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
+    ਲਈ (uint32_t ir = 0; ir < ਅੰਕ_ਪੰਕਤੀਆਂ_2; ir++) {
+        ਅਚਲ uint8_t * ਸੀਮਿਤ src_local = (ਅਚਲ uint8_t *)src + (ir * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        uint8_t * ਸੀਮਿਤ dst_local       = (uint8_t *)dst + (ir * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
-        hvx_leaky_relu_scalar_f32(dst_local, src_local, negative_slope, ne0);
+        hvx_leaky_relu_scalar_f32(dst_local, src_local, negative_ਢਲਾਨ, ne0);
     }
 }
 
-static void rms_norm_f32(const void * restrict src,
-                         void * restrict dst,
-                         const uint32_t num_rows,
-                         const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ rms_norm_f32(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                         ਖਾਲੀ * ਸੀਮਿਤ dst,
+                         ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                         ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
-    float epsilon = 0.f;
-    memcpy(&epsilon, op_params, sizeof(float));
+    ਦਸ਼ਮਲਵ epsilon = 0.f;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&epsilon, op_params, ਆਕਾਰ(ਦਸ਼ਮਲਵ));
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
-        const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
-        uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
+    ਲਈ (uint32_t ir = 0; ir < ਅੰਕ_ਪੰਕਤੀਆਂ_2; ir++) {
+        ਅਚਲ uint8_t * ਸੀਮਿਤ src_local = (ਅਚਲ uint8_t *)src + (ir * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        uint8_t * ਸੀਮਿਤ dst_local       = (uint8_t *)dst + (ir * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
-        hvx_fast_rms_norm_f32((const uint8_t *) src_local, (uint8_t *) dst_local, ne0, epsilon);
+        hvx_fast_rms_norm_f32((ਅਚਲ uint8_t *) src_local, (uint8_t *) dst_local, ne0, epsilon);
     }
 }
 
-static void rms_norm_mul_f32(const void * restrict src,
-                             const void * restrict weight,
-                             void * restrict dst,
-                             const uint32_t num_rows,
-                             const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ rms_norm_mul_f32(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                             ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ ਭਾਰ,
+                             ਖਾਲੀ * ਸੀਮਿਤ dst,
+                             ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                             ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
-    float epsilon = 0.f;
-    memcpy(&epsilon, op_params, sizeof(float));
+    ਦਸ਼ਮਲਵ epsilon = 0.f;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&epsilon, op_params, ਆਕਾਰ(ਦਸ਼ਮਲਵ));
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
-        const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
-        const uint8_t * restrict w_local   = (const uint8_t *)weight + (uctx->broadcast_weight ? 0 : ir * uctx->src1_row_size_aligned);
-        uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
+    ਲਈ (uint32_t ir = 0; ir < ਅੰਕ_ਪੰਕਤੀਆਂ_2; ir++) {
+        ਅਚਲ uint8_t * ਸੀਮਿਤ src_local = (ਅਚਲ uint8_t *)src + (ir * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        ਅਚਲ uint8_t * ਸੀਮਿਤ w_local   = (ਅਚਲ uint8_t *)ਭਾਰ + (uctx->ਪ੍ਰਸਾਰਣ_ਭਾਰ ? 0 : ir * uctx->src1_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        uint8_t * ਸੀਮਿਤ dst_local       = (uint8_t *)dst + (ir * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
         hvx_fast_rms_norm_mul_f32(src_local, w_local, dst_local, ne0, epsilon);
     }
 }
 
-static void norm_f32(const void * restrict src,
-                     void * restrict dst,
-                     const uint32_t num_rows,
-                     const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ norm_f32(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                     ਖਾਲੀ * ਸੀਮਿਤ dst,
+                     ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                     ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
-    float epsilon = 0.f;
-    memcpy(&epsilon, op_params, sizeof(float));
+    ਦਸ਼ਮਲਵ epsilon = 0.f;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&epsilon, op_params, ਆਕਾਰ(ਦਸ਼ਮਲਵ));
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
-        const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
-        uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
+    ਲਈ (uint32_t ir = 0; ir < ਅੰਕ_ਪੰਕਤੀਆਂ_2; ir++) {
+        ਅਚਲ uint8_t * ਸੀਮਿਤ src_local = (ਅਚਲ uint8_t *)src + (ir * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        uint8_t * ਸੀਮਿਤ dst_local       = (uint8_t *)dst + (ir * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
-        hvx_fast_norm_f32((const uint8_t *) src_local, (uint8_t *) dst_local, ne0, epsilon);
+        hvx_fast_norm_f32((ਅਚਲ uint8_t *) src_local, (uint8_t *) dst_local, ne0, epsilon);
     }
 }
 
-static void sqr_f32(const void * restrict src,
-                    void * restrict dst,
-                    const uint32_t num_rows,
-                    const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ sqr_f32(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                    ਖਾਲੀ * ਸੀਮਿਤ dst,
+                    ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                    ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
-        const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
-        uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
+    ਲਈ (uint32_t ir = 0; ir < ਅੰਕ_ਪੰਕਤੀਆਂ_2; ir++) {
+        ਅਚਲ uint8_t * ਸੀਮਿਤ src_local = (ਅਚਲ uint8_t *)src + (ir * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        uint8_t * ਸੀਮਿਤ dst_local       = (uint8_t *)dst + (ir * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
-        hvx_sqr_f32_aa((uint8_t *) dst_local, (const uint8_t *) src_local, ne0);
+        hvx_sqr_f32_aa((uint8_t *) dst_local, (ਅਚਲ uint8_t *) src_local, ne0);
     }
 }
 
-static void sqrt_f32(const void * restrict src,
-                     void * restrict dst,
-                     const uint32_t num_rows,
-                     const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ sqrt_f32(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                     ਖਾਲੀ * ਸੀਮਿਤ dst,
+                     ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                     ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
-        const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
-        uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
+    ਲਈ (uint32_t ir = 0; ir < ਅੰਕ_ਪੰਕਤੀਆਂ_2; ir++) {
+        ਅਚਲ uint8_t * ਸੀਮਿਤ src_local = (ਅਚਲ uint8_t *)src + (ir * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        uint8_t * ਸੀਮਿਤ dst_local       = (uint8_t *)dst + (ir * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
-        hvx_sqrt_f32_aa((uint8_t *) dst_local, (const uint8_t *) src_local, ne0);
+        hvx_sqrt_f32_aa((uint8_t *) dst_local, (ਅਚਲ uint8_t *) src_local, ne0);
     }
 }
 
-static void scale_f16(const void * restrict src,
-                      void * restrict dst,
-                      const uint32_t num_rows,
-                      const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ scale_f16(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                      ਖਾਲੀ * ਸੀਮਿਤ dst,
+                      ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                      ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
-    float scale = 0.f;
-    float bias  = 0.f;
-    memcpy(&scale, &op_params[0], sizeof(float));
-    memcpy(&bias,  &op_params[1], sizeof(float));
+    ਦਸ਼ਮਲਵ scale = 0.f;
+    ਦਸ਼ਮਲਵ bias  = 0.f;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&scale, &op_params[0], ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&bias,  &op_params[1], ਆਕਾਰ(ਦਸ਼ਮਲਵ));
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
-        const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
-        uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
+    ਲਈ (uint32_t ir = 0; ir < ਅੰਕ_ਪੰਕਤੀਆਂ_2; ir++) {
+        ਅਚਲ uint8_t * ਸੀਮਿਤ src_local = (ਅਚਲ uint8_t *)src + (ir * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        uint8_t * ਸੀਮਿਤ dst_local       = (uint8_t *)dst + (ir * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
-        hvx_scale_offset_f16_aa((uint8_t *) dst_local, (const uint8_t *) src_local, ne0, scale, bias);
+        hvx_scale_ਵਿੱਥ_f16_aa((uint8_t *) dst_local, (ਅਚਲ uint8_t *) src_local, ne0, scale, bias);
     }
 }
 
-static void clamp_f16(const void * restrict src,
-                      void * restrict dst,
-                      const uint32_t num_rows,
-                      const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ clamp_f16(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                      ਖਾਲੀ * ਸੀਮਿਤ dst,
+                      ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                      ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
-    float min = 0.f;
-    float max = 0.f;
-    memcpy(&min, &op_params[0], sizeof(float));
-    memcpy(&max, &op_params[1], sizeof(float));
+    ਦਸ਼ਮਲਵ min = 0.f;
+    ਦਸ਼ਮਲਵ max = 0.f;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&min, &op_params[0], ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&max, &op_params[1], ਆਕਾਰ(ਦਸ਼ਮਲਵ));
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
-        const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
-        uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
+    ਲਈ (uint32_t ir = 0; ir < ਅੰਕ_ਪੰਕਤੀਆਂ_2; ir++) {
+        ਅਚਲ uint8_t * ਸੀਮਿਤ src_local = (ਅਚਲ uint8_t *)src + (ir * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        uint8_t * ਸੀਮਿਤ dst_local       = (uint8_t *)dst + (ir * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
         hvx_clamp_scalar_f16(dst_local, src_local, (_Float16) min, (_Float16) max, ne0);
     }
 }
 
-static void rms_norm_f16(const void * restrict src,
-                         void * restrict dst,
-                         const uint32_t num_rows,
-                         const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ rms_norm_f16(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                         ਖਾਲੀ * ਸੀਮਿਤ dst,
+                         ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                         ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
-    float epsilon = 0.f;
-    memcpy(&epsilon, op_params, sizeof(float));
+    ਦਸ਼ਮਲਵ epsilon = 0.f;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&epsilon, op_params, ਆਕਾਰ(ਦਸ਼ਮਲਵ));
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
-        const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
-        uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
+    ਲਈ (uint32_t ir = 0; ir < ਅੰਕ_ਪੰਕਤੀਆਂ_2; ir++) {
+        ਅਚਲ uint8_t * ਸੀਮਿਤ src_local = (ਅਚਲ uint8_t *)src + (ir * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        uint8_t * ਸੀਮਿਤ dst_local       = (uint8_t *)dst + (ir * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
-        hvx_fast_rms_norm_f16((const uint8_t *) src_local, (uint8_t *) dst_local, ne0, epsilon);
+        hvx_fast_rms_norm_f16((ਅਚਲ uint8_t *) src_local, (uint8_t *) dst_local, ne0, epsilon);
     }
 }
 
-static void norm_f16(const void * restrict src,
-                     void * restrict dst,
-                     const uint32_t num_rows,
-                     const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ norm_f16(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                     ਖਾਲੀ * ਸੀਮਿਤ dst,
+                     ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                     ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
-    float epsilon = 0.f;
-    memcpy(&epsilon, op_params, sizeof(float));
+    ਦਸ਼ਮਲਵ epsilon = 0.f;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&epsilon, op_params, ਆਕਾਰ(ਦਸ਼ਮਲਵ));
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
-        const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
-        uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
+    ਲਈ (uint32_t ir = 0; ir < ਅੰਕ_ਪੰਕਤੀਆਂ_2; ir++) {
+        ਅਚਲ uint8_t * ਸੀਮਿਤ src_local = (ਅਚਲ uint8_t *)src + (ir * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        uint8_t * ਸੀਮਿਤ dst_local       = (uint8_t *)dst + (ir * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
-        hvx_fast_norm_f16((const uint8_t *) src_local, (uint8_t *) dst_local, ne0, epsilon);
+        hvx_fast_norm_f16((ਅਚਲ uint8_t *) src_local, (uint8_t *) dst_local, ne0, epsilon);
     }
 }
 
-static void sqr_f16(const void * restrict src,
-                    void * restrict dst,
-                    const uint32_t num_rows,
-                    const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ sqr_f16(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                    ਖਾਲੀ * ਸੀਮਿਤ dst,
+                    ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                    ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
-        const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
-        uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
+    ਲਈ (uint32_t ir = 0; ir < ਅੰਕ_ਪੰਕਤੀਆਂ_2; ir++) {
+        ਅਚਲ uint8_t * ਸੀਮਿਤ src_local = (ਅਚਲ uint8_t *)src + (ir * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        uint8_t * ਸੀਮਿਤ dst_local       = (uint8_t *)dst + (ir * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
-        hvx_sqr_f16_aa((uint8_t *) dst_local, (const uint8_t *) src_local, ne0);
+        hvx_sqr_f16_aa((uint8_t *) dst_local, (ਅਚਲ uint8_t *) src_local, ne0);
     }
 }
 
-static void sqrt_f16(const void * restrict src,
-                     void * restrict dst,
-                     const uint32_t num_rows,
-                     const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ sqrt_f16(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                     ਖਾਲੀ * ਸੀਮਿਤ dst,
+                     ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                     ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
-        const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
-        uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
+    ਲਈ (uint32_t ir = 0; ir < ਅੰਕ_ਪੰਕਤੀਆਂ_2; ir++) {
+        ਅਚਲ uint8_t * ਸੀਮਿਤ src_local = (ਅਚਲ uint8_t *)src + (ir * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        uint8_t * ਸੀਮਿਤ dst_local       = (uint8_t *)dst + (ir * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
-        hvx_sqrt_f16_aa((uint8_t *) dst_local, (const uint8_t *) src_local, ne0);
+        hvx_sqrt_f16_aa((uint8_t *) dst_local, (ਅਚਲ uint8_t *) src_local, ne0);
     }
 }
 
-static void abs_f16(const void * restrict src,
-                    void * restrict dst,
-                    const uint32_t num_rows,
-                    const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ abs_f16(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                    ਖਾਲੀ * ਸੀਮਿਤ dst,
+                    ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                    ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
-        const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
-        uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
+    ਲਈ (uint32_t ir = 0; ir < ਅੰਕ_ਪੰਕਤੀਆਂ_2; ir++) {
+        ਅਚਲ uint8_t * ਸੀਮਿਤ src_local = (ਅਚਲ uint8_t *)src + (ir * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        uint8_t * ਸੀਮਿਤ dst_local       = (uint8_t *)dst + (ir * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
-        hvx_abs_f16_aa((uint8_t *) dst_local, (const uint8_t *) src_local, ne0);
+        hvx_abs_f16_aa((uint8_t *) dst_local, (ਅਚਲ uint8_t *) src_local, ne0);
     }
 }
 
-static void log_f16(const void * restrict src,
-                    void * restrict dst,
-                    const uint32_t num_rows,
-                    const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ log_f16(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                    ਖਾਲੀ * ਸੀਮਿਤ dst,
+                    ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                    ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
-        const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
-        uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
+    ਲਈ (uint32_t ir = 0; ir < ਅੰਕ_ਪੰਕਤੀਆਂ_2; ir++) {
+        ਅਚਲ uint8_t * ਸੀਮਿਤ src_local = (ਅਚਲ uint8_t *)src + (ir * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        uint8_t * ਸੀਮਿਤ dst_local       = (uint8_t *)dst + (ir * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
-        hvx_log_f16_aa((uint8_t *) dst_local, (const uint8_t *) src_local, ne0);
+        hvx_log_f16_aa((uint8_t *) dst_local, (ਅਚਲ uint8_t *) src_local, ne0);
     }
 }
 
-static void step_f16(const void * restrict src,
-                     void * restrict dst,
-                     const uint32_t num_rows,
-                     const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ ਕਦਮ_f16(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                     ਖਾਲੀ * ਸੀਮਿਤ dst,
+                     ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                     ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
-        const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
-        uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
+    ਲਈ (uint32_t ir = 0; ir < ਅੰਕ_ਪੰਕਤੀਆਂ_2; ir++) {
+        ਅਚਲ uint8_t * ਸੀਮਿਤ src_local = (ਅਚਲ uint8_t *)src + (ir * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        uint8_t * ਸੀਮਿਤ dst_local       = (uint8_t *)dst + (ir * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
-        hvx_step_f16_aa((uint8_t *) dst_local, (const uint8_t *) src_local, ne0);
+        hvx_ਕਦਮ_f16_aa((uint8_t *) dst_local, (ਅਚਲ uint8_t *) src_local, ne0);
     }
 }
 
-static void l2_norm_f16(const void * restrict src,
-                        void * restrict dst,
-                        const uint32_t num_rows,
-                        const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ l2_norm_f16(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                        ਖਾਲੀ * ਸੀਮਿਤ dst,
+                        ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                        ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
-    float epsilon = 0.f;
-    memcpy(&epsilon, op_params, sizeof(float));
+    ਦਸ਼ਮਲਵ epsilon = 0.f;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&epsilon, op_params, ਆਕਾਰ(ਦਸ਼ਮਲਵ));
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
-        const uint8_t * restrict src_f = (const uint8_t *)src + (ir * src0_row_size_aligned);
-        uint8_t * restrict dst_f       = (uint8_t *)dst + (ir * dst_row_size_aligned);
+    ਲਈ (uint32_t ir = 0; ir < ਅੰਕ_ਪੰਕਤੀਆਂ_2; ir++) {
+        ਅਚਲ uint8_t * ਸੀਮਿਤ src_f = (ਅਚਲ uint8_t *)src + (ir * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        uint8_t * ਸੀਮਿਤ dst_f       = (uint8_t *)dst + (ir * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
-        hvx_fast_l2_norm_f16((const uint8_t *)src_f, (uint8_t *)dst_f, ne0, epsilon);
+        hvx_fast_l2_norm_f16((ਅਚਲ uint8_t *)src_f, (uint8_t *)dst_f, ne0, epsilon);
     }
 }
 
-static void neg_f32(const void * restrict src,
-                    void * restrict dst,
-                    const uint32_t num_rows,
-                    const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ neg_f32(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                    ਖਾਲੀ * ਸੀਮਿਤ dst,
+                    ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                    ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
-        const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
-        uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
+    ਲਈ (uint32_t ir = 0; ir < ਅੰਕ_ਪੰਕਤੀਆਂ_2; ir++) {
+        ਅਚਲ uint8_t * ਸੀਮਿਤ src_local = (ਅਚਲ uint8_t *)src + (ir * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        uint8_t * ਸੀਮਿਤ dst_local       = (uint8_t *)dst + (ir * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
         hvx_scale_f32_aa(dst_local, src_local, ne0, -1.0f);
     }
 }
 
-static void exp_f32(const void * restrict src,
-                    void * restrict dst,
-                    const uint32_t num_rows,
-                    const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ exp_f32(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                    ਖਾਲੀ * ਸੀਮਿਤ dst,
+                    ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                    ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
-        const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
-        uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
+    ਲਈ (uint32_t ir = 0; ir < ਅੰਕ_ਪੰਕਤੀਆਂ_2; ir++) {
+        ਅਚਲ uint8_t * ਸੀਮਿਤ src_local = (ਅਚਲ uint8_t *)src + (ir * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        uint8_t * ਸੀਮਿਤ dst_local       = (uint8_t *)dst + (ir * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
         hvx_exp_f32(dst_local, src_local, ne0, false);
     }
 }
 
-static void sigmoid_f32(const void * restrict src,
-                        void * restrict dst,
-                        const uint32_t num_rows,
-                        const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ sigmoid_f32(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                        ਖਾਲੀ * ਸੀਮਿਤ dst,
+                        ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                        ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
-        const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
-        uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
+    ਲਈ (uint32_t ir = 0; ir < ਅੰਕ_ਪੰਕਤੀਆਂ_2; ir++) {
+        ਅਚਲ uint8_t * ਸੀਮਿਤ src_local = (ਅਚਲ uint8_t *)src + (ir * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        uint8_t * ਸੀਮਿਤ dst_local       = (uint8_t *)dst + (ir * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
         hvx_sigmoid_f32_aa(dst_local, src_local, ne0);
     }
 }
 
 // silu(x) = x * sigmoid(x)
-static void silu_f32(const void * restrict src,
-                     void * restrict dst,
-                     const uint32_t num_rows,
-                     const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ silu_f32(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                     ਖਾਲੀ * ਸੀਮਿਤ dst,
+                     ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                     ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
-        const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
-        uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
+    ਲਈ (uint32_t ir = 0; ir < ਅੰਕ_ਪੰਕਤੀਆਂ_2; ir++) {
+        ਅਚਲ uint8_t * ਸੀਮਿਤ src_local = (ਅਚਲ uint8_t *)src + (ir * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        uint8_t * ਸੀਮਿਤ dst_local       = (uint8_t *)dst + (ir * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
         hvx_sigmoid_f32_aa(dst_local, src_local, ne0);
         hvx_mul_f32_aaa(dst_local, src_local, dst_local, ne0);
@@ -498,304 +498,304 @@ static void silu_f32(const void * restrict src,
 }
 
 // GELU uses the tanh approximation.
-static __attribute__((noinline)) HVX_Vector hvx_vec_gelu_f32(HVX_Vector x) {
-    const HVX_Vector half = hvx_vec_splat_f32(0.5f);
-    const HVX_Vector one  = hvx_vec_splat_f32(1.0f);
+ਸਥਿਰ __attribute__((noinline)) HVX_ਸਦਿਸ਼ hvx_vec_gelu_f32(HVX_ਸਦਿਸ਼ x) {
+    ਅਚਲ HVX_ਸਦਿਸ਼ half = hvx_vec_splat_f32(0.5f);
+    ਅਚਲ HVX_ਸਦਿਸ਼ one  = hvx_vec_splat_f32(1.0f);
 
-    HVX_Vector inner = hvx_vec_mul_f32_f32(x, x);
+    HVX_ਸਦਿਸ਼ inner = hvx_vec_mul_f32_f32(x, x);
     inner = hvx_vec_mul_f32_f32(inner, hvx_vec_splat_f32(0.044715f));
-    inner = hvx_vec_add_f32_f32(inner, one);
+    inner = hvx_vec_ਜੋੜੋ_f32_f32(inner, one);
     inner = hvx_vec_mul_f32_f32(inner, x);
     inner = hvx_vec_mul_f32_f32(inner, hvx_vec_splat_f32(0.7978845608028654f));
 
-    return hvx_vec_mul_f32_f32(hvx_vec_mul_f32_f32(half, x),
-                               hvx_vec_add_f32_f32(one, hvx_vec_tanh_f32(inner)));
+    ਵਾਪਸ hvx_vec_mul_f32_f32(hvx_vec_mul_f32_f32(half, x),
+                               hvx_vec_ਜੋੜੋ_f32_f32(one, hvx_vec_tanh_f32(inner)));
 }
 
-static inline void hvx_gelu_f32_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
-    assert((unsigned long) dst % 128 == 0);
-    assert((unsigned long) src % 128 == 0);
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ hvx_gelu_f32_aa(uint8_t * ਸੀਮਿਤ dst, ਅਚਲ uint8_t * ਸੀਮਿਤ src, uint32_t n) {
+    ਪ੍ਰਤਿਜ੍ਞਾ((ਬਿਨਾਨਿਸ਼ਾਨੀ ਲੰਮਾ) dst % 128 == 0);
+    ਪ੍ਰਤਿਜ੍ਞਾ((ਬਿਨਾਨਿਸ਼ਾਨੀ ਲੰਮਾ) src % 128 == 0);
 
-    HVX_Vector * restrict vdst = (HVX_Vector *) dst;
-    HVX_Vector * restrict vsrc = (HVX_Vector *) src;
+    HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ vdst = (HVX_ਸਦਿਸ਼ *) dst;
+    HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ vsrc = (HVX_ਸਦਿਸ਼ *) src;
 
-    const uint32_t nvec = n / VLEN_FP32;
-    const uint32_t nloe = n % VLEN_FP32;
+    ਅਚਲ uint32_t nvec = n / VLEN_FP32;
+    ਅਚਲ uint32_t nloe = n % VLEN_FP32;
 
     uint32_t i = 0;
     _Pragma("unroll(4)")
-    for (; i < nvec; i++) {
+    ਲਈ (; i < nvec; i++) {
         vdst[i] = hvx_vec_gelu_f32(vsrc[i]);
     }
-    if (nloe) {
-        hvx_vec_store_a(&vdst[i], nloe * sizeof(float), hvx_vec_gelu_f32(vsrc[i]));
+    ਜੇ (nloe) {
+        hvx_vec_store_a(&vdst[i], nloe * ਆਕਾਰ(ਦਸ਼ਮਲਵ), hvx_vec_gelu_f32(vsrc[i]));
     }
 }
 
 // GELU_QUICK uses x * sigmoid(1.702 * x).
-static __attribute__((noinline)) HVX_Vector hvx_vec_gelu_quick_f32(HVX_Vector x) {
-    const HVX_Vector one     = hvx_vec_splat_f32(1.0f);
-    const HVX_Vector max_exp = hvx_vec_splat_f32(87.0f);
-    const HVX_Vector min_exp = hvx_vec_splat_f32(-87.0f);
-    const HVX_Vector scaled  = hvx_vec_mul_f32_f32(x, hvx_vec_splat_f32(1.702f));
-    const HVX_Vector sigmoid = hvx_vec_fast_sigmoid_f32_guard(scaled, one, max_exp, min_exp);
+ਸਥਿਰ __attribute__((noinline)) HVX_ਸਦਿਸ਼ hvx_vec_gelu_ਤੇਜ਼_f32(HVX_ਸਦਿਸ਼ x) {
+    ਅਚਲ HVX_ਸਦਿਸ਼ one     = hvx_vec_splat_f32(1.0f);
+    ਅਚਲ HVX_ਸਦਿਸ਼ max_exp = hvx_vec_splat_f32(87.0f);
+    ਅਚਲ HVX_ਸਦਿਸ਼ min_exp = hvx_vec_splat_f32(-87.0f);
+    ਅਚਲ HVX_ਸਦਿਸ਼ scaled  = hvx_vec_mul_f32_f32(x, hvx_vec_splat_f32(1.702f));
+    ਅਚਲ HVX_ਸਦਿਸ਼ sigmoid = hvx_vec_fast_sigmoid_f32_guard(scaled, one, max_exp, min_exp);
 
-    return hvx_vec_mul_f32_f32(x, sigmoid);
+    ਵਾਪਸ hvx_vec_mul_f32_f32(x, sigmoid);
 }
 
-static inline void hvx_gelu_quick_f32_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
-    assert((unsigned long) dst % 128 == 0);
-    assert((unsigned long) src % 128 == 0);
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ hvx_gelu_ਤੇਜ਼_f32_aa(uint8_t * ਸੀਮਿਤ dst, ਅਚਲ uint8_t * ਸੀਮਿਤ src, uint32_t n) {
+    ਪ੍ਰਤਿਜ੍ਞਾ((ਬਿਨਾਨਿਸ਼ਾਨੀ ਲੰਮਾ) dst % 128 == 0);
+    ਪ੍ਰਤਿਜ੍ਞਾ((ਬਿਨਾਨਿਸ਼ਾਨੀ ਲੰਮਾ) src % 128 == 0);
 
-    HVX_Vector * restrict vdst = (HVX_Vector *) dst;
-    HVX_Vector * restrict vsrc = (HVX_Vector *) src;
+    HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ vdst = (HVX_ਸਦਿਸ਼ *) dst;
+    HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ vsrc = (HVX_ਸਦਿਸ਼ *) src;
 
-    const uint32_t nvec = n / VLEN_FP32;
-    const uint32_t nloe = n % VLEN_FP32;
+    ਅਚਲ uint32_t nvec = n / VLEN_FP32;
+    ਅਚਲ uint32_t nloe = n % VLEN_FP32;
 
     uint32_t i = 0;
     _Pragma("unroll(4)")
-    for (; i < nvec; i++) {
-        vdst[i] = hvx_vec_gelu_quick_f32(vsrc[i]);
+    ਲਈ (; i < nvec; i++) {
+        vdst[i] = hvx_vec_gelu_ਤੇਜ਼_f32(vsrc[i]);
     }
-    if (nloe) {
-        hvx_vec_store_a(&vdst[i], nloe * sizeof(float), hvx_vec_gelu_quick_f32(vsrc[i]));
+    ਜੇ (nloe) {
+        hvx_vec_store_a(&vdst[i], nloe * ਆਕਾਰ(ਦਸ਼ਮਲਵ), hvx_vec_gelu_ਤੇਜ਼_f32(vsrc[i]));
     }
 }
 
-static void gelu_f32(const void * restrict src,
-                     void * restrict dst,
-                     const uint32_t num_rows,
-                     const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ gelu_f32(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                     ਖਾਲੀ * ਸੀਮਿਤ dst,
+                     ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                     ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
-        const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
-        uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
+    ਲਈ (uint32_t ir = 0; ir < ਅੰਕ_ਪੰਕਤੀਆਂ_2; ir++) {
+        ਅਚਲ uint8_t * ਸੀਮਿਤ src_local = (ਅਚਲ uint8_t *)src + (ir * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        uint8_t * ਸੀਮਿਤ dst_local       = (uint8_t *)dst + (ir * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
         hvx_gelu_f32_aa(dst_local, src_local, ne0);
     }
 }
 
-static void gelu_quick_f32(const void * restrict src,
-                           void * restrict dst,
-                           const uint32_t num_rows,
-                           const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ gelu_ਤੇਜ਼_f32(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                           ਖਾਲੀ * ਸੀਮਿਤ dst,
+                           ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                           ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
-        const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
-        uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
+    ਲਈ (uint32_t ir = 0; ir < ਅੰਕ_ਪੰਕਤੀਆਂ_2; ir++) {
+        ਅਚਲ uint8_t * ਸੀਮਿਤ src_local = (ਅਚਲ uint8_t *)src + (ir * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        uint8_t * ਸੀਮਿਤ dst_local       = (uint8_t *)dst + (ir * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
-        hvx_gelu_quick_f32_aa(dst_local, src_local, ne0);
+        hvx_gelu_ਤੇਜ਼_f32_aa(dst_local, src_local, ne0);
     }
 }
 
-static void gelu_erf_f32(const void * restrict src,
-                         void * restrict dst,
-                         const uint32_t num_rows,
-                         const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ gelu_erf_f32(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                         ਖਾਲੀ * ਸੀਮਿਤ dst,
+                         ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                         ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
-        const uint8_t * restrict src_local = (const uint8_t *) src + (ir * src0_row_size_aligned);
-        uint8_t * restrict dst_local       = (uint8_t *) dst + (ir * dst_row_size_aligned);
+    ਲਈ (uint32_t ir = 0; ir < ਅੰਕ_ਪੰਕਤੀਆਂ_2; ir++) {
+        ਅਚਲ uint8_t * ਸੀਮਿਤ src_local = (ਅਚਲ uint8_t *) src + (ir * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        uint8_t * ਸੀਮਿਤ dst_local       = (uint8_t *) dst + (ir * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
         hvx_gelu_erf_f32_aa(dst_local, src_local, ne0);
     }
 }
 
-static void tri_f32(const void * restrict src,
-                    void * restrict dst,
-                    const uint32_t num_rows,
-                    const uint32_t ir,
-                    const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ tri_f32(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                    ਖਾਲੀ * ਸੀਮਿਤ dst,
+                    ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                    ਅਚਲ uint32_t ir,
+                    ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
-    const int32_t ttype = op_params[0];
-    const HVX_Vector zero = hvx_vec_splat_f32(0.0f);
-    const uint32_t nvec  = ne0 / VLEN_FP32;
-    const uint32_t nloe  = ne0 % VLEN_FP32;
+    ਅਚਲ int32_t ttype = op_params[0];
+    ਅਚਲ HVX_ਸਦਿਸ਼ zero = hvx_vec_splat_f32(0.0f);
+    ਅਚਲ uint32_t nvec  = ne0 / VLEN_FP32;
+    ਅਚਲ uint32_t nloe  = ne0 % VLEN_FP32;
 
-    const uint32_t ne01 = uctx->octx->src[0]->ne[1];
+    ਅਚਲ uint32_t ne01 = uctx->octx->src[0]->ne[1];
 
-    for (uint32_t b = 0; b < num_rows; b++) {
-        const uint32_t abs_row = ir + b;
-        const uint32_t i01     = abs_row % ne01;
+    ਲਈ (uint32_t b = 0; b < ਅੰਕ_ਪੰਕਤੀਆਂ_2; b++) {
+        ਅਚਲ uint32_t abs_ਪੰਕਤੀ = ir + b;
+        ਅਚਲ uint32_t i01     = abs_ਪੰਕਤੀ % ne01;
 
-        const HVX_Vector * restrict v_src = (const HVX_Vector *) ((const uint8_t *) src + b * src0_row_size_aligned);
-        HVX_Vector * restrict v_dst       = (HVX_Vector *) ((uint8_t *) dst + b * dst_row_size_aligned);
+        ਅਚਲ HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ v_src = (ਅਚਲ HVX_ਸਦਿਸ਼ *) ((ਅਚਲ uint8_t *) src + b * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ v_dst       = (HVX_ਸਦਿਸ਼ *) ((uint8_t *) dst + b * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
         uint32_t boundary;
-        int      keep_left;
-        switch (ttype) {
-            case 0: boundary = i01;     keep_left = 0; break;  // keep col >= row
-            case 1: boundary = i01 + 1; keep_left = 0; break;  // keep col > row
-            case 2: boundary = i01 + 1; keep_left = 1; break;  // keep col <= row
-            case 3: boundary = i01;     keep_left = 1; break;  // keep col < row
-            default: boundary = 0; keep_left = 0; break;
+        ਪੂਰਨ      keep_ਖੱਬਾ;
+        ਚੋਣ (ttype) {
+            ਹਾਲਤ 0: boundary = i01;     keep_ਖੱਬਾ = 0; ਰੋਕੋ;  // keep col >= row
+            ਹਾਲਤ 1: boundary = i01 + 1; keep_ਖੱਬਾ = 0; ਰੋਕੋ;  // keep col > row
+            ਹਾਲਤ 2: boundary = i01 + 1; keep_ਖੱਬਾ = 1; ਰੋਕੋ;  // keep col <= row
+            ਹਾਲਤ 3: boundary = i01;     keep_ਖੱਬਾ = 1; ਰੋਕੋ;  // keep col < row
+            ਮੂਲ: boundary = 0; keep_ਖੱਬਾ = 0; ਰੋਕੋ;
         }
-        if (boundary > ne0) boundary = ne0;
+        ਜੇ (boundary > ne0) boundary = ne0;
 
         // Full HVX vectors - each starts at a 128-byte aligned offset
-        for (uint32_t i = 0; i < nvec; i++) {
-            const uint32_t vec_start = i * VLEN_FP32;
-            const uint32_t vec_end   = vec_start + VLEN_FP32;
-            if (keep_left) {
-                if (vec_end <= boundary) {
+        ਲਈ (uint32_t i = 0; i < nvec; i++) {
+            ਅਚਲ uint32_t vec_ਸ਼ੁਰੂ = i * VLEN_FP32;
+            ਅਚਲ uint32_t vec_ਸਿਰਾ   = vec_ਸ਼ੁਰੂ + VLEN_FP32;
+            ਜੇ (keep_ਖੱਬਾ) {
+                ਜੇ (vec_ਸਿਰਾ <= boundary) {
                     v_dst[i] = v_src[i];
-                } else if (vec_start >= boundary) {
+                } ਨਹੀਂਤਾਂ ਜੇ (vec_ਸ਼ੁਰੂ >= boundary) {
                     v_dst[i] = zero;
-                } else {
-                    HVX_VectorPred mask = Q6_Q_vsetq_R((boundary - vec_start) * sizeof(float));
-                    v_dst[i]            = Q6_V_vmux_QVV(mask, v_src[i], zero);
+                } ਨਹੀਂਤਾਂ {
+                    HVX_ਸਦਿਸ਼_Pred ਨਕਾਬ = Q6_Q_vsetq_R((boundary - vec_ਸ਼ੁਰੂ) * ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+                    v_dst[i]            = Q6_V_vmux_QVV(ਨਕਾਬ, v_src[i], zero);
                 }
-            } else {
-                if (vec_end <= boundary) {
+            } ਨਹੀਂਤਾਂ {
+                ਜੇ (vec_ਸਿਰਾ <= boundary) {
                     v_dst[i] = zero;
-                } else if (vec_start >= boundary) {
+                } ਨਹੀਂਤਾਂ ਜੇ (vec_ਸ਼ੁਰੂ >= boundary) {
                     v_dst[i] = v_src[i];
-                } else {
-                    HVX_VectorPred mask = Q6_Q_vsetq_R((boundary - vec_start) * sizeof(float));
-                    v_dst[i]            = Q6_V_vmux_QVV(mask, zero, v_src[i]);
+                } ਨਹੀਂਤਾਂ {
+                    HVX_ਸਦਿਸ਼_Pred ਨਕਾਬ = Q6_Q_vsetq_R((boundary - vec_ਸ਼ੁਰੂ) * ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+                    v_dst[i]            = Q6_V_vmux_QVV(ਨਕਾਬ, zero, v_src[i]);
                 }
             }
         }
 
         // Tail elements (row_elems not a multiple of VLEN_FP32)
-        if (nloe > 0) {
-            const uint32_t abs_start = nvec * VLEN_FP32;
-            const uint32_t abs_end   = abs_start + nloe;
-            HVX_Vector     tail_val;
-            if (keep_left) {
-                if (abs_end <= boundary) {
-                    tail_val = v_src[nvec];
-                } else if (abs_start >= boundary) {
-                    tail_val = zero;
-                } else {
-                    HVX_VectorPred mask = Q6_Q_vsetq_R((boundary - abs_start) * sizeof(float));
-                    tail_val            = Q6_V_vmux_QVV(mask, v_src[nvec], zero);
+        ਜੇ (nloe > 0) {
+            ਅਚਲ uint32_t abs_ਸ਼ੁਰੂ = nvec * VLEN_FP32;
+            ਅਚਲ uint32_t abs_ਸਿਰਾ   = abs_ਸ਼ੁਰੂ + nloe;
+            HVX_ਸਦਿਸ਼     ਪੂਛ_val;
+            ਜੇ (keep_ਖੱਬਾ) {
+                ਜੇ (abs_ਸਿਰਾ <= boundary) {
+                    ਪੂਛ_val = v_src[nvec];
+                } ਨਹੀਂਤਾਂ ਜੇ (abs_ਸ਼ੁਰੂ >= boundary) {
+                    ਪੂਛ_val = zero;
+                } ਨਹੀਂਤਾਂ {
+                    HVX_ਸਦਿਸ਼_Pred ਨਕਾਬ = Q6_Q_vsetq_R((boundary - abs_ਸ਼ੁਰੂ) * ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+                    ਪੂਛ_val            = Q6_V_vmux_QVV(ਨਕਾਬ, v_src[nvec], zero);
                 }
-            } else {
-                if (abs_end <= boundary) {
-                    tail_val = zero;
-                } else if (abs_start >= boundary) {
-                    tail_val = v_src[nvec];
-                } else {
-                    HVX_VectorPred mask = Q6_Q_vsetq_R((boundary - abs_start) * sizeof(float));
-                    tail_val            = Q6_V_vmux_QVV(mask, zero, v_src[nvec]);
+            } ਨਹੀਂਤਾਂ {
+                ਜੇ (abs_ਸਿਰਾ <= boundary) {
+                    ਪੂਛ_val = zero;
+                } ਨਹੀਂਤਾਂ ਜੇ (abs_ਸ਼ੁਰੂ >= boundary) {
+                    ਪੂਛ_val = v_src[nvec];
+                } ਨਹੀਂਤਾਂ {
+                    HVX_ਸਦਿਸ਼_Pred ਨਕਾਬ = Q6_Q_vsetq_R((boundary - abs_ਸ਼ੁਰੂ) * ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+                    ਪੂਛ_val            = Q6_V_vmux_QVV(ਨਕਾਬ, zero, v_src[nvec]);
                 }
             }
-            hvx_vec_store_a(&v_dst[nvec], nloe * sizeof(float), tail_val);
+            hvx_vec_store_a(&v_dst[nvec], nloe * ਆਕਾਰ(ਦਸ਼ਮਲਵ), ਪੂਛ_val);
         }
     }
 }
 
 // softplus(x) = log(1 + exp(x))
 // Match CPU reference: return x for x > 20 to avoid overflow.
-static inline void hvx_softplus_f32_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
-    const HVX_Vector * restrict v_src = (const HVX_Vector *) src;
-    HVX_Vector * restrict v_dst       = (HVX_Vector *) dst;
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ hvx_softplus_f32_aa(uint8_t * ਸੀਮਿਤ dst, ਅਚਲ uint8_t * ਸੀਮਿਤ src, uint32_t n) {
+    ਅਚਲ HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ v_src = (ਅਚਲ HVX_ਸਦਿਸ਼ *) src;
+    HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ v_dst       = (HVX_ਸਦਿਸ਼ *) dst;
 
-    const HVX_Vector twenty = hvx_vec_splat_f32(20.0f);
-    const HVX_Vector one    = hvx_vec_splat_f32(1.0f);
+    ਅਚਲ HVX_ਸਦਿਸ਼ twenty = hvx_vec_splat_f32(20.0f);
+    ਅਚਲ HVX_ਸਦਿਸ਼ one    = hvx_vec_splat_f32(1.0f);
 
-    const uint32_t nvec = n / VLEN_FP32;
-    const uint32_t nloe = n % VLEN_FP32;
+    ਅਚਲ uint32_t nvec = n / VLEN_FP32;
+    ਅਚਲ uint32_t nloe = n % VLEN_FP32;
 
-    #pragma unroll(4)
-    for (uint32_t i = 0; i < nvec; i++) {
-        HVX_Vector x              = v_src[i];
-        HVX_VectorPred pred_gt20  = Q6_Q_vcmp_gt_VsfVsf(x, twenty);
-        HVX_Vector expx           = hvx_vec_exp_f32(x);
-        HVX_Vector logv           = hvx_vec_log_f32(hvx_vec_add_f32_f32(one, expx));
+    #ਹਦਾਇਤ unroll(4)
+    ਲਈ (uint32_t i = 0; i < nvec; i++) {
+        HVX_ਸਦਿਸ਼ x              = v_src[i];
+        HVX_ਸਦਿਸ਼_Pred pred_gt20  = Q6_Q_vcmp_gt_VsfVsf(x, twenty);
+        HVX_ਸਦਿਸ਼ expx           = hvx_vec_exp_f32(x);
+        HVX_ਸਦਿਸ਼ logv           = hvx_vec_log_f32(hvx_vec_ਜੋੜੋ_f32_f32(one, expx));
         v_dst[i]                  = Q6_V_vmux_QVV(pred_gt20, x, logv);
     }
 
-    if (nloe > 0) {
-        HVX_Vector x             = v_src[nvec];
-        HVX_VectorPred pred_gt20 = Q6_Q_vcmp_gt_VsfVsf(x, twenty);
-        HVX_Vector expx          = hvx_vec_exp_f32(x);
-        HVX_Vector logv          = hvx_vec_log_f32(hvx_vec_add_f32_f32(one, expx));
-        HVX_Vector sp            = Q6_V_vmux_QVV(pred_gt20, x, logv);
-        hvx_vec_store_a((void *) &v_dst[nvec], nloe * sizeof(float), sp);
+    ਜੇ (nloe > 0) {
+        HVX_ਸਦਿਸ਼ x             = v_src[nvec];
+        HVX_ਸਦਿਸ਼_Pred pred_gt20 = Q6_Q_vcmp_gt_VsfVsf(x, twenty);
+        HVX_ਸਦਿਸ਼ expx          = hvx_vec_exp_f32(x);
+        HVX_ਸਦਿਸ਼ logv          = hvx_vec_log_f32(hvx_vec_ਜੋੜੋ_f32_f32(one, expx));
+        HVX_ਸਦਿਸ਼ sp            = Q6_V_vmux_QVV(pred_gt20, x, logv);
+        hvx_vec_store_a((ਖਾਲੀ *) &v_dst[nvec], nloe * ਆਕਾਰ(ਦਸ਼ਮਲਵ), sp);
     }
 }
 
-static void softplus_f32(const void * restrict src,
-                         void * restrict dst,
-                         const uint32_t num_rows,
-                         const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ softplus_f32(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                         ਖਾਲੀ * ਸੀਮਿਤ dst,
+                         ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                         ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
-        const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
-        uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
+    ਲਈ (uint32_t ir = 0; ir < ਅੰਕ_ਪੰਕਤੀਆਂ_2; ir++) {
+        ਅਚਲ uint8_t * ਸੀਮਿਤ src_local = (ਅਚਲ uint8_t *)src + (ir * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        uint8_t * ਸੀਮਿਤ dst_local       = (uint8_t *)dst + (ir * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
         hvx_softplus_f32_aa(dst_local, src_local, ne0);
     }
 }
 
-static void l2_norm_f32(const void * restrict src,
-                        void * restrict dst,
-                        const uint32_t num_rows,
-                        const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ l2_norm_f32(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                        ਖਾਲੀ * ਸੀਮਿਤ dst,
+                        ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                        ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
-    float epsilon = 0.f;
-    memcpy(&epsilon, op_params, sizeof(float));
+    ਦਸ਼ਮਲਵ epsilon = 0.f;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&epsilon, op_params, ਆਕਾਰ(ਦਸ਼ਮਲਵ));
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
-        const uint8_t * restrict src_f = (const uint8_t *)src + (ir * src0_row_size_aligned);
-        uint8_t * restrict dst_f       = (uint8_t *)dst + (ir * dst_row_size_aligned);
+    ਲਈ (uint32_t ir = 0; ir < ਅੰਕ_ਪੰਕਤੀਆਂ_2; ir++) {
+        ਅਚਲ uint8_t * ਸੀਮਿਤ src_f = (ਅਚਲ uint8_t *)src + (ir * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        uint8_t * ਸੀਮਿਤ dst_f       = (uint8_t *)dst + (ir * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
-        hvx_fast_l2_norm_f32((const uint8_t *)src_f, (uint8_t *)dst_f, ne0, epsilon);
+        hvx_fast_l2_norm_f32((ਅਚਲ uint8_t *)src_f, (uint8_t *)dst_f, ne0, epsilon);
     }
 }
 
-static inline HVX_VectorPair hvx_fwht_stage_pair(HVX_Vector v0, HVX_Vector v1, int32_t b) {
-    HVX_VectorPair p = Q6_W_vshuff_VVR(v1, v0, b);
-    HVX_Vector s = Q6_Vqf32_vadd_Vqf32Vqf32(Q6_V_lo_W(p), Q6_V_hi_W(p));
-    HVX_Vector d = Q6_Vqf32_vsub_Vqf32Vqf32(Q6_V_lo_W(p), Q6_V_hi_W(p));
-    return Q6_W_vshuff_VVR(d, s, b);
+ਸਥਿਰ ਸਤਰਅੰਦਰ HVX_ਸਦਿਸ਼_Pair hvx_fwht_stage_pair(HVX_ਸਦਿਸ਼ v0, HVX_ਸਦਿਸ਼ v1, int32_t b) {
+    HVX_ਸਦਿਸ਼_Pair p = Q6_W_vshuff_VVR(v1, v0, b);
+    HVX_ਸਦਿਸ਼ s = Q6_Vqf32_vadd_Vqf32Vqf32(Q6_V_lo_W(p), Q6_V_hi_W(p));
+    HVX_ਸਦਿਸ਼ d = Q6_Vqf32_vsub_Vqf32Vqf32(Q6_V_lo_W(p), Q6_V_hi_W(p));
+    ਵਾਪਸ Q6_W_vshuff_VVR(d, s, b);
 }
 
-static inline HVX_VectorPair hvx_fwht32_pair(HVX_Vector v0_sf, HVX_Vector v1_sf, HVX_Vector v_scale) {
-    HVX_Vector v0 = Q6_Vqf32_vmpy_VsfVsf(v0_sf, v_scale);
-    HVX_Vector v1 = Q6_Vqf32_vmpy_VsfVsf(v1_sf, v_scale);
-    HVX_VectorPair p;
+ਸਥਿਰ ਸਤਰਅੰਦਰ HVX_ਸਦਿਸ਼_Pair hvx_fwht32_pair(HVX_ਸਦਿਸ਼ v0_sf, HVX_ਸਦਿਸ਼ v1_sf, HVX_ਸਦਿਸ਼ v_scale) {
+    HVX_ਸਦਿਸ਼ v0 = Q6_Vqf32_vmpy_VsfVsf(v0_sf, v_scale);
+    HVX_ਸਦਿਸ਼ v1 = Q6_Vqf32_vmpy_VsfVsf(v1_sf, v_scale);
+    HVX_ਸਦਿਸ਼_Pair p;
     p = hvx_fwht_stage_pair(v0, v1, 4);
     p = hvx_fwht_stage_pair(Q6_V_lo_W(p), Q6_V_hi_W(p), 8);
     p = hvx_fwht_stage_pair(Q6_V_lo_W(p), Q6_V_hi_W(p), 16);
     p = hvx_fwht_stage_pair(Q6_V_lo_W(p), Q6_V_hi_W(p), 32);
     p = hvx_fwht_stage_pair(Q6_V_lo_W(p), Q6_V_hi_W(p), 64);
-    return p;
+    ਵਾਪਸ p;
 }
 
-static inline void hvx_fwht_store32(HVX_Vector * restrict v_dst, HVX_VectorPair p) {
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ hvx_fwht_store32(HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ v_dst, HVX_ਸਦਿਸ਼_Pair p) {
     v_dst[0] = Q6_Vsf_equals_Vqf32(Q6_V_lo_W(p));
 }
 
-static inline void hvx_fwht_store64(HVX_Vector * restrict v_dst, HVX_VectorPair p) {
-    HVX_Vector u = Q6_V_lo_W(p);
-    HVX_Vector v = Q6_V_hi_W(p);
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ hvx_fwht_store64(HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ v_dst, HVX_ਸਦਿਸ਼_Pair p) {
+    HVX_ਸਦਿਸ਼ u = Q6_V_lo_W(p);
+    HVX_ਸਦਿਸ਼ v = Q6_V_hi_W(p);
     v_dst[0] = Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_Vqf32Vqf32(u, v));
     v_dst[1] = Q6_Vsf_equals_Vqf32(Q6_Vqf32_vsub_Vqf32Vqf32(u, v));
 }
 
-static inline void hvx_fwht_tail_f32(HVX_Vector * restrict v_dst, uint32_t nvec) {
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ hvx_fwht_ਪੂਛ_f32(HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ v_dst, uint32_t nvec) {
     uint32_t len_vec = 2;
-    for (; len_vec * 2 < nvec; len_vec <<= 2) {
-        const uint32_t step = len_vec * 4;
-        for (uint32_t i = 0; i < nvec; i += step) {
-            for (uint32_t j = 0; j < len_vec; j++) {
-                HVX_Vector a0 = v_dst[i + j];
-                HVX_Vector a1 = v_dst[i + j + len_vec];
-                HVX_Vector a2 = v_dst[i + j + 2 * len_vec];
-                HVX_Vector a3 = v_dst[i + j + 3 * len_vec];
+    ਲਈ (; len_vec * 2 < nvec; len_vec <<= 2) {
+        ਅਚਲ uint32_t ਕਦਮ = len_vec * 4;
+        ਲਈ (uint32_t i = 0; i < nvec; i += ਕਦਮ) {
+            ਲਈ (uint32_t j = 0; j < len_vec; j++) {
+                HVX_ਸਦਿਸ਼ a0 = v_dst[i + j];
+                HVX_ਸਦਿਸ਼ a1 = v_dst[i + j + len_vec];
+                HVX_ਸਦਿਸ਼ a2 = v_dst[i + j + 2 * len_vec];
+                HVX_ਸਦਿਸ਼ a3 = v_dst[i + j + 3 * len_vec];
 
-                HVX_Vector t0 = Q6_Vqf32_vadd_VsfVsf(a0, a1);
-                HVX_Vector t1 = Q6_Vqf32_vsub_VsfVsf(a0, a1);
-                HVX_Vector t2 = Q6_Vqf32_vadd_VsfVsf(a2, a3);
-                HVX_Vector t3 = Q6_Vqf32_vsub_VsfVsf(a2, a3);
+                HVX_ਸਦਿਸ਼ t0 = Q6_Vqf32_vadd_VsfVsf(a0, a1);
+                HVX_ਸਦਿਸ਼ t1 = Q6_Vqf32_vsub_VsfVsf(a0, a1);
+                HVX_ਸਦਿਸ਼ t2 = Q6_Vqf32_vadd_VsfVsf(a2, a3);
+                HVX_ਸਦਿਸ਼ t3 = Q6_Vqf32_vsub_VsfVsf(a2, a3);
 
                 v_dst[i + j]               = Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_Vqf32Vqf32(t0, t2));
                 v_dst[i + j + len_vec]     = Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_Vqf32Vqf32(t1, t3));
@@ -805,1212 +805,1212 @@ static inline void hvx_fwht_tail_f32(HVX_Vector * restrict v_dst, uint32_t nvec)
         }
     }
 
-    if (len_vec < nvec) {
-        for (uint32_t i = 0; i < nvec; i += 2 * len_vec) {
-            for (uint32_t j = 0; j < len_vec; j++) {
-                HVX_Vector u = v_dst[i + j];
-                HVX_Vector v = v_dst[i + len_vec + j];
-                v_dst[i + j]           = hvx_vec_add_f32_f32(u, v);
+    ਜੇ (len_vec < nvec) {
+        ਲਈ (uint32_t i = 0; i < nvec; i += 2 * len_vec) {
+            ਲਈ (uint32_t j = 0; j < len_vec; j++) {
+                HVX_ਸਦਿਸ਼ u = v_dst[i + j];
+                HVX_ਸਦਿਸ਼ v = v_dst[i + len_vec + j];
+                v_dst[i + j]           = hvx_vec_ਜੋੜੋ_f32_f32(u, v);
                 v_dst[i + len_vec + j] = hvx_vec_sub_f32_f32(u, v);
             }
         }
     }
 }
 
-static inline void hvx_fwht_row_f32(const uint8_t * restrict src, uint8_t * restrict dst, uint32_t n, HVX_Vector v_scale) {
-    const HVX_Vector * restrict v_src = (const HVX_Vector *) src;
-    HVX_Vector * restrict v_dst       = (HVX_Vector *) dst;
-    const uint32_t nvec               = n / VLEN_FP32;
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ hvx_fwht_ਪੰਕਤੀ_f32(ਅਚਲ uint8_t * ਸੀਮਿਤ src, uint8_t * ਸੀਮਿਤ dst, uint32_t n, HVX_ਸਦਿਸ਼ v_scale) {
+    ਅਚਲ HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ v_src = (ਅਚਲ HVX_ਸਦਿਸ਼ *) src;
+    HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ v_dst       = (HVX_ਸਦਿਸ਼ *) dst;
+    ਅਚਲ uint32_t nvec               = n / VLEN_FP32;
 
-    if (nvec == 1) {
-        HVX_VectorPair p = hvx_fwht32_pair(v_src[0], v_src[0], v_scale);
+    ਜੇ (nvec == 1) {
+        HVX_ਸਦਿਸ਼_Pair p = hvx_fwht32_pair(v_src[0], v_src[0], v_scale);
         hvx_fwht_store32(v_dst, p);
-        return;
+        ਵਾਪਸ;
     }
 
-    for (uint32_t i = 0; i < nvec; i += 2) {
-        HVX_VectorPair p = hvx_fwht32_pair(v_src[i], v_src[i + 1], v_scale);
+    ਲਈ (uint32_t i = 0; i < nvec; i += 2) {
+        HVX_ਸਦਿਸ਼_Pair p = hvx_fwht32_pair(v_src[i], v_src[i + 1], v_scale);
         hvx_fwht_store64(&v_dst[i], p);
     }
 
-    hvx_fwht_tail_f32(v_dst, nvec);
+    hvx_fwht_ਪੂਛ_f32(v_dst, nvec);
 }
 
-static inline void hvx_fwht_row_f16(const uint8_t * restrict src, uint8_t * restrict dst, uint32_t n, HVX_Vector v_scale) {
-    const HVX_Vector * restrict v_src = (const HVX_Vector *) src;
-    HVX_Vector * restrict v_dst       = (HVX_Vector *) dst;
-    const uint32_t nvec               = n / VLEN_FP32;
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ hvx_fwht_ਪੰਕਤੀ_f16(ਅਚਲ uint8_t * ਸੀਮਿਤ src, uint8_t * ਸੀਮਿਤ dst, uint32_t n, HVX_ਸਦਿਸ਼ v_scale) {
+    ਅਚਲ HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ v_src = (ਅਚਲ HVX_ਸਦਿਸ਼ *) src;
+    HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ v_dst       = (HVX_ਸਦਿਸ਼ *) dst;
+    ਅਚਲ uint32_t nvec               = n / VLEN_FP32;
 
-    if (nvec == 1) {
-        HVX_Vector v0 = Q6_V_lo_W(hvx_vec_f16_to_f32(v_src[0]));
-        HVX_VectorPair p = hvx_fwht32_pair(v0, v0, v_scale);
+    ਜੇ (nvec == 1) {
+        HVX_ਸਦਿਸ਼ v0 = Q6_V_lo_W(hvx_vec_f16_ਮੰਜ਼ਿਲ_f32(v_src[0]));
+        HVX_ਸਦਿਸ਼_Pair p = hvx_fwht32_pair(v0, v0, v_scale);
         hvx_fwht_store32(v_dst, p);
-        return;
+        ਵਾਪਸ;
     }
 
-    const uint32_t nvec_f16 = n / VLEN_FP16;
-    for (uint32_t i = 0; i < nvec_f16; i++) {
-        HVX_VectorPair f32p = hvx_vec_f16_to_f32(v_src[i]);
-        HVX_VectorPair p    = hvx_fwht32_pair(Q6_V_lo_W(f32p), Q6_V_hi_W(f32p), v_scale);
+    ਅਚਲ uint32_t nvec_f16 = n / VLEN_FP16;
+    ਲਈ (uint32_t i = 0; i < nvec_f16; i++) {
+        HVX_ਸਦਿਸ਼_Pair f32p = hvx_vec_f16_ਮੰਜ਼ਿਲ_f32(v_src[i]);
+        HVX_ਸਦਿਸ਼_Pair p    = hvx_fwht32_pair(Q6_V_lo_W(f32p), Q6_V_hi_W(f32p), v_scale);
         hvx_fwht_store64(&v_dst[2 * i], p);
     }
 
-    hvx_fwht_tail_f32(v_dst, nvec);
+    hvx_fwht_ਪੂਛ_f32(v_dst, nvec);
 }
 
-static void hadamard_f32(const void * restrict src,
-                         void * restrict dst,
-                         const uint32_t num_rows,
-                         const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ hadamard_f32(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                         ਖਾਲੀ * ਸੀਮਿਤ dst,
+                         ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                         ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
-    const HVX_Vector v_scale = hvx_vec_splat_f32(1.0f / sqrtf((float) ne0));
+    ਅਚਲ HVX_ਸਦਿਸ਼ v_scale = hvx_vec_splat_f32(1.0f / sqrtf((ਦਸ਼ਮਲਵ) ne0));
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
-        const uint8_t * restrict src_row = (const uint8_t *) src + (ir * src0_row_size_aligned);
-        uint8_t * restrict dst_row       = (uint8_t *) dst + (ir * dst_row_size_aligned);
+    ਲਈ (uint32_t ir = 0; ir < ਅੰਕ_ਪੰਕਤੀਆਂ_2; ir++) {
+        ਅਚਲ uint8_t * ਸੀਮਿਤ src_ਪੰਕਤੀ = (ਅਚਲ uint8_t *) src + (ir * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        uint8_t * ਸੀਮਿਤ dst_ਪੰਕਤੀ       = (uint8_t *) dst + (ir * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
-        hvx_fwht_row_f32(src_row, dst_row, ne0, v_scale);
+        hvx_fwht_ਪੰਕਤੀ_f32(src_ਪੰਕਤੀ, dst_ਪੰਕਤੀ, ne0, v_scale);
     }
 }
 
-static void hadamard_f16(const void * restrict src,
-                         void * restrict dst,
-                         const uint32_t num_rows,
-                         const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ hadamard_f16(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                         ਖਾਲੀ * ਸੀਮਿਤ dst,
+                         ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                         ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
-    const HVX_Vector v_scale = hvx_vec_splat_f32(1.0f / sqrtf((float) ne0));
+    ਅਚਲ HVX_ਸਦਿਸ਼ v_scale = hvx_vec_splat_f32(1.0f / sqrtf((ਦਸ਼ਮਲਵ) ne0));
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
-        const uint8_t * restrict src_row = (const uint8_t *) src + (ir * src0_row_size_aligned);
-        uint8_t * restrict dst_row       = (uint8_t *) dst + (ir * dst_row_size_aligned);
+    ਲਈ (uint32_t ir = 0; ir < ਅੰਕ_ਪੰਕਤੀਆਂ_2; ir++) {
+        ਅਚਲ uint8_t * ਸੀਮਿਤ src_ਪੰਕਤੀ = (ਅਚਲ uint8_t *) src + (ir * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        uint8_t * ਸੀਮਿਤ dst_ਪੰਕਤੀ       = (uint8_t *) dst + (ir * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
-        hvx_fwht_row_f16(src_row, dst_row, ne0, v_scale);
+        hvx_fwht_ਪੰਕਤੀ_f16(src_ਪੰਕਤੀ, dst_ਪੰਕਤੀ, ne0, v_scale);
     }
 }
 
-static void tanh_f32(const void * restrict src,
-                     void * restrict dst,
-                     const uint32_t num_rows,
-                     const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ tanh_f32(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                     ਖਾਲੀ * ਸੀਮਿਤ dst,
+                     ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                     ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
-        const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
-        uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
+    ਲਈ (uint32_t ir = 0; ir < ਅੰਕ_ਪੰਕਤੀਆਂ_2; ir++) {
+        ਅਚਲ uint8_t * ਸੀਮਿਤ src_local = (ਅਚਲ uint8_t *)src + (ir * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        uint8_t * ਸੀਮਿਤ dst_local       = (uint8_t *)dst + (ir * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
         hvx_tanh_f32_aa(dst_local, src_local, ne0);
     }
 }
 
-static void abs_f32(const void * restrict src,
-                    void * restrict dst,
-                    const uint32_t num_rows,
-                    const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ abs_f32(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                    ਖਾਲੀ * ਸੀਮਿਤ dst,
+                    ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                    ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
-        const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
-        uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
+    ਲਈ (uint32_t ir = 0; ir < ਅੰਕ_ਪੰਕਤੀਆਂ_2; ir++) {
+        ਅਚਲ uint8_t * ਸੀਮਿਤ src_local = (ਅਚਲ uint8_t *)src + (ir * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        uint8_t * ਸੀਮਿਤ dst_local       = (uint8_t *)dst + (ir * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
         hvx_abs_f32_aa(dst_local, src_local, ne0);
     }
 }
 
-static void relu_f32(const void * restrict src,
-                     void * restrict dst,
-                     const uint32_t num_rows,
-                     const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ relu_f32(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                     ਖਾਲੀ * ਸੀਮਿਤ dst,
+                     ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                     ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
-        const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
-        uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
+    ਲਈ (uint32_t ir = 0; ir < ਅੰਕ_ਪੰਕਤੀਆਂ_2; ir++) {
+        ਅਚਲ uint8_t * ਸੀਮਿਤ src_local = (ਅਚਲ uint8_t *)src + (ir * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        uint8_t * ਸੀਮਿਤ dst_local       = (uint8_t *)dst + (ir * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
         hvx_max_scalar_f32(dst_local, src_local, 0.0f, ne0);
     }
 }
 
-static void step_f32(const void * restrict src,
-                     void * restrict dst,
-                     const uint32_t num_rows,
-                     const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ ਕਦਮ_f32(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                     ਖਾਲੀ * ਸੀਮਿਤ dst,
+                     ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                     ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
-        const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
-        uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
+    ਲਈ (uint32_t ir = 0; ir < ਅੰਕ_ਪੰਕਤੀਆਂ_2; ir++) {
+        ਅਚਲ uint8_t * ਸੀਮਿਤ src_local = (ਅਚਲ uint8_t *)src + (ir * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        uint8_t * ਸੀਮਿਤ dst_local       = (uint8_t *)dst + (ir * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
-        hvx_step_f32_aa(dst_local, src_local, ne0);
+        hvx_ਕਦਮ_f32_aa(dst_local, src_local, ne0);
     }
 }
 
-static void log_f32(const void * restrict src,
-                    void * restrict dst,
-                    const uint32_t num_rows,
-                    const struct htp_unary_context * uctx) {
+ਸਥਿਰ ਖਾਲੀ log_f32(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src,
+                    ਖਾਲੀ * ਸੀਮਿਤ dst,
+                    ਅਚਲ uint32_t ਅੰਕ_ਪੰਕਤੀਆਂ_2,
+                    ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
-        const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
-        uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
+    ਲਈ (uint32_t ir = 0; ir < ਅੰਕ_ਪੰਕਤੀਆਂ_2; ir++) {
+        ਅਚਲ uint8_t * ਸੀਮਿਤ src_local = (ਅਚਲ uint8_t *)src + (ir * src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        uint8_t * ਸੀਮਿਤ dst_local       = (uint8_t *)dst + (ir * dst_ਪੰਕਤੀ_ਮਾਪ_aligned);
 
         hvx_log_f32_aa(dst_local, src_local, ne0);
     }
 }
 
 #// Pointwise unary ops on one column tile in VTCM.
-static void tile_scale_f32(void * restrict dst, const void * restrict src, uint32_t tw, const struct htp_unary_context * uctx) {
-    float scale = 0.f;
-    float bias  = 0.f;
-    memcpy(&scale, &uctx->octx->op_params[0], sizeof(float));
-    memcpy(&bias,  &uctx->octx->op_params[1], sizeof(float));
-    hvx_scale_offset_f32_aa((uint8_t *) dst, (const uint8_t *) src, tw, scale, bias);
+ਸਥਿਰ ਖਾਲੀ tile_scale_f32(ਖਾਲੀ * ਸੀਮਿਤ dst, ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src, uint32_t tw, ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
+    ਦਸ਼ਮਲਵ scale = 0.f;
+    ਦਸ਼ਮਲਵ bias  = 0.f;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&scale, &uctx->octx->op_params[0], ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&bias,  &uctx->octx->op_params[1], ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+    hvx_scale_ਵਿੱਥ_f32_aa((uint8_t *) dst, (ਅਚਲ uint8_t *) src, tw, scale, bias);
 }
 
-static void tile_clamp_f32(void * restrict dst, const void * restrict src, uint32_t tw, const struct htp_unary_context * uctx) {
-    float min = 0.f;
-    float max = 0.f;
-    memcpy(&min, &uctx->octx->op_params[0], sizeof(float));
-    memcpy(&max, &uctx->octx->op_params[1], sizeof(float));
-    hvx_clamp_scalar_f32((uint8_t *) dst, (const uint8_t *) src, min, max, tw);
+ਸਥਿਰ ਖਾਲੀ tile_clamp_f32(ਖਾਲੀ * ਸੀਮਿਤ dst, ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src, uint32_t tw, ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
+    ਦਸ਼ਮਲਵ min = 0.f;
+    ਦਸ਼ਮਲਵ max = 0.f;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&min, &uctx->octx->op_params[0], ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&max, &uctx->octx->op_params[1], ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+    hvx_clamp_scalar_f32((uint8_t *) dst, (ਅਚਲ uint8_t *) src, min, max, tw);
 }
 
-static void tile_leaky_relu_f32(void * restrict dst, const void * restrict src, uint32_t tw, const struct htp_unary_context * uctx) {
-    float negative_slope = 0.f;
-    memcpy(&negative_slope, &uctx->octx->op_params[0], sizeof(float));
-    hvx_leaky_relu_scalar_f32((uint8_t *) dst, (const uint8_t *) src, negative_slope, tw);
+ਸਥਿਰ ਖਾਲੀ tile_leaky_relu_f32(ਖਾਲੀ * ਸੀਮਿਤ dst, ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src, uint32_t tw, ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
+    ਦਸ਼ਮਲਵ negative_ਢਲਾਨ = 0.f;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&negative_ਢਲਾਨ, &uctx->octx->op_params[0], ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+    hvx_leaky_relu_scalar_f32((uint8_t *) dst, (ਅਚਲ uint8_t *) src, negative_ਢਲਾਨ, tw);
 }
 
-static void tile_sqr_f32(void * restrict dst, const void * restrict src, uint32_t tw, const struct htp_unary_context * uctx) {
-    (void) uctx;
-    hvx_sqr_f32_aa((uint8_t *) dst, (const uint8_t *) src, tw);
+ਸਥਿਰ ਖਾਲੀ tile_sqr_f32(ਖਾਲੀ * ਸੀਮਿਤ dst, ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src, uint32_t tw, ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
+    (ਖਾਲੀ) uctx;
+    hvx_sqr_f32_aa((uint8_t *) dst, (ਅਚਲ uint8_t *) src, tw);
 }
 
-static void tile_sqrt_f32(void * restrict dst, const void * restrict src, uint32_t tw, const struct htp_unary_context * uctx) {
-    (void) uctx;
-    hvx_sqrt_f32_aa((uint8_t *) dst, (const uint8_t *) src, tw);
+ਸਥਿਰ ਖਾਲੀ tile_sqrt_f32(ਖਾਲੀ * ਸੀਮਿਤ dst, ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src, uint32_t tw, ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
+    (ਖਾਲੀ) uctx;
+    hvx_sqrt_f32_aa((uint8_t *) dst, (ਅਚਲ uint8_t *) src, tw);
 }
 
-static void tile_neg_f32(void * restrict dst, const void * restrict src, uint32_t tw, const struct htp_unary_context * uctx) {
-    (void) uctx;
-    hvx_scale_f32_aa((uint8_t *) dst, (const uint8_t *) src, tw, -1.0f);
+ਸਥਿਰ ਖਾਲੀ tile_neg_f32(ਖਾਲੀ * ਸੀਮਿਤ dst, ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src, uint32_t tw, ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
+    (ਖਾਲੀ) uctx;
+    hvx_scale_f32_aa((uint8_t *) dst, (ਅਚਲ uint8_t *) src, tw, -1.0f);
 }
 
-static void tile_exp_f32(void * restrict dst, const void * restrict src, uint32_t tw, const struct htp_unary_context * uctx) {
-    (void) uctx;
-    hvx_exp_f32((uint8_t *) dst, (const uint8_t *) src, tw, false);
+ਸਥਿਰ ਖਾਲੀ tile_exp_f32(ਖਾਲੀ * ਸੀਮਿਤ dst, ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src, uint32_t tw, ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
+    (ਖਾਲੀ) uctx;
+    hvx_exp_f32((uint8_t *) dst, (ਅਚਲ uint8_t *) src, tw, false);
 }
 
-static void tile_sigmoid_f32(void * restrict dst, const void * restrict src, uint32_t tw, const struct htp_unary_context * uctx) {
-    (void) uctx;
-    hvx_sigmoid_f32_aa((uint8_t *) dst, (const uint8_t *) src, tw);
+ਸਥਿਰ ਖਾਲੀ tile_sigmoid_f32(ਖਾਲੀ * ਸੀਮਿਤ dst, ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src, uint32_t tw, ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
+    (ਖਾਲੀ) uctx;
+    hvx_sigmoid_f32_aa((uint8_t *) dst, (ਅਚਲ uint8_t *) src, tw);
 }
 
-static void tile_silu_f32(void * restrict dst, const void * restrict src, uint32_t tw, const struct htp_unary_context * uctx) {
-    (void) uctx;
-    hvx_sigmoid_f32_aa((uint8_t *) dst, (const uint8_t *) src, tw);
-    hvx_mul_f32_aaa((uint8_t *) dst, (const uint8_t *) src, (uint8_t *) dst, tw);
+ਸਥਿਰ ਖਾਲੀ tile_silu_f32(ਖਾਲੀ * ਸੀਮਿਤ dst, ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src, uint32_t tw, ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
+    (ਖਾਲੀ) uctx;
+    hvx_sigmoid_f32_aa((uint8_t *) dst, (ਅਚਲ uint8_t *) src, tw);
+    hvx_mul_f32_aaa((uint8_t *) dst, (ਅਚਲ uint8_t *) src, (uint8_t *) dst, tw);
 }
 
-static void tile_gelu_f32(void * restrict dst, const void * restrict src, uint32_t tw, const struct htp_unary_context * uctx) {
-    (void) uctx;
-    hvx_gelu_f32_aa((uint8_t *) dst, (const uint8_t *) src, tw);
+ਸਥਿਰ ਖਾਲੀ tile_gelu_f32(ਖਾਲੀ * ਸੀਮਿਤ dst, ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src, uint32_t tw, ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
+    (ਖਾਲੀ) uctx;
+    hvx_gelu_f32_aa((uint8_t *) dst, (ਅਚਲ uint8_t *) src, tw);
 }
 
-static void tile_gelu_quick_f32(void * restrict dst, const void * restrict src, uint32_t tw, const struct htp_unary_context * uctx) {
-    (void) uctx;
-    hvx_gelu_quick_f32_aa((uint8_t *) dst, (const uint8_t *) src, tw);
+ਸਥਿਰ ਖਾਲੀ tile_gelu_ਤੇਜ਼_f32(ਖਾਲੀ * ਸੀਮਿਤ dst, ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src, uint32_t tw, ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
+    (ਖਾਲੀ) uctx;
+    hvx_gelu_ਤੇਜ਼_f32_aa((uint8_t *) dst, (ਅਚਲ uint8_t *) src, tw);
 }
 
-static void tile_gelu_erf_f32(void * restrict dst, const void * restrict src, uint32_t tw, const struct htp_unary_context * uctx) {
-    (void) uctx;
-    hvx_gelu_erf_f32_aa((uint8_t *) dst, (const uint8_t *) src, tw);
+ਸਥਿਰ ਖਾਲੀ tile_gelu_erf_f32(ਖਾਲੀ * ਸੀਮਿਤ dst, ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src, uint32_t tw, ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
+    (ਖਾਲੀ) uctx;
+    hvx_gelu_erf_f32_aa((uint8_t *) dst, (ਅਚਲ uint8_t *) src, tw);
 }
 
-static void tile_softplus_f32(void * restrict dst, const void * restrict src, uint32_t tw, const struct htp_unary_context * uctx) {
-    (void) uctx;
-    hvx_softplus_f32_aa((uint8_t *) dst, (const uint8_t *) src, tw);
+ਸਥਿਰ ਖਾਲੀ tile_softplus_f32(ਖਾਲੀ * ਸੀਮਿਤ dst, ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src, uint32_t tw, ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
+    (ਖਾਲੀ) uctx;
+    hvx_softplus_f32_aa((uint8_t *) dst, (ਅਚਲ uint8_t *) src, tw);
 }
 
-static void tile_tanh_f32(void * restrict dst, const void * restrict src, uint32_t tw, const struct htp_unary_context * uctx) {
-    (void) uctx;
-    hvx_tanh_f32_aa((uint8_t *) dst, (const uint8_t *) src, tw);
+ਸਥਿਰ ਖਾਲੀ tile_tanh_f32(ਖਾਲੀ * ਸੀਮਿਤ dst, ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src, uint32_t tw, ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
+    (ਖਾਲੀ) uctx;
+    hvx_tanh_f32_aa((uint8_t *) dst, (ਅਚਲ uint8_t *) src, tw);
 }
 
-static void tile_abs_f32(void * restrict dst, const void * restrict src, uint32_t tw, const struct htp_unary_context * uctx) {
-    (void) uctx;
-    hvx_abs_f32_aa((uint8_t *) dst, (const uint8_t *) src, tw);
+ਸਥਿਰ ਖਾਲੀ tile_abs_f32(ਖਾਲੀ * ਸੀਮਿਤ dst, ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src, uint32_t tw, ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
+    (ਖਾਲੀ) uctx;
+    hvx_abs_f32_aa((uint8_t *) dst, (ਅਚਲ uint8_t *) src, tw);
 }
 
-static void tile_log_f32(void * restrict dst, const void * restrict src, uint32_t tw, const struct htp_unary_context * uctx) {
-    (void) uctx;
-    hvx_log_f32_aa((uint8_t *) dst, (const uint8_t *) src, tw);
+ਸਥਿਰ ਖਾਲੀ tile_log_f32(ਖਾਲੀ * ਸੀਮਿਤ dst, ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src, uint32_t tw, ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
+    (ਖਾਲੀ) uctx;
+    hvx_log_f32_aa((uint8_t *) dst, (ਅਚਲ uint8_t *) src, tw);
 }
 
-static void tile_relu_f32(void * restrict dst, const void * restrict src, uint32_t tw, const struct htp_unary_context * uctx) {
-    (void) uctx;
-    hvx_max_scalar_f32((uint8_t *) dst, (const uint8_t *) src, 0.0f, tw);
+ਸਥਿਰ ਖਾਲੀ tile_relu_f32(ਖਾਲੀ * ਸੀਮਿਤ dst, ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src, uint32_t tw, ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
+    (ਖਾਲੀ) uctx;
+    hvx_max_scalar_f32((uint8_t *) dst, (ਅਚਲ uint8_t *) src, 0.0f, tw);
 }
 
-static void tile_step_f32(void * restrict dst, const void * restrict src, uint32_t tw, const struct htp_unary_context * uctx) {
-    (void) uctx;
-    hvx_step_f32_aa((uint8_t *) dst, (const uint8_t *) src, tw);
+ਸਥਿਰ ਖਾਲੀ tile_ਕਦਮ_f32(ਖਾਲੀ * ਸੀਮਿਤ dst, ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src, uint32_t tw, ਅਚਲ ਬਣਤਰ htp_unary_context * uctx) {
+    (ਖਾਲੀ) uctx;
+    hvx_ਕਦਮ_f32_aa((uint8_t *) dst, (ਅਚਲ uint8_t *) src, tw);
 }
 
-static void tri_apply_tile_f32(const void * restrict src, void * restrict dst,
-                               uint32_t tile_elems, uint32_t col_start, uint32_t i01,
+ਸਥਿਰ ਖਾਲੀ tri_apply_tile_f32(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ src, ਖਾਲੀ * ਸੀਮਿਤ dst,
+                               uint32_t tile_elems, uint32_t ਖਾਨਾ_ਸ਼ੁਰੂ, uint32_t i01,
                                uint32_t ne0, int32_t ttype) {
-    const HVX_Vector * restrict v_src = (const HVX_Vector *) src;
-    HVX_Vector * restrict v_dst       = (HVX_Vector *) dst;
-    const HVX_Vector zero = hvx_vec_splat_f32(0.0f);
+    ਅਚਲ HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ v_src = (ਅਚਲ HVX_ਸਦਿਸ਼ *) src;
+    HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ v_dst       = (HVX_ਸਦਿਸ਼ *) dst;
+    ਅਚਲ HVX_ਸਦਿਸ਼ zero = hvx_vec_splat_f32(0.0f);
 
     uint32_t boundary;
-    int      keep_left;
-    switch (ttype) {
-        case 0: boundary = i01;     keep_left = 0; break;
-        case 1: boundary = i01 + 1; keep_left = 0; break;
-        case 2: boundary = i01 + 1; keep_left = 1; break;
-        case 3: boundary = i01;     keep_left = 1; break;
-        default: boundary = 0; keep_left = 0; break;
+    ਪੂਰਨ      keep_ਖੱਬਾ;
+    ਚੋਣ (ttype) {
+        ਹਾਲਤ 0: boundary = i01;     keep_ਖੱਬਾ = 0; ਰੋਕੋ;
+        ਹਾਲਤ 1: boundary = i01 + 1; keep_ਖੱਬਾ = 0; ਰੋਕੋ;
+        ਹਾਲਤ 2: boundary = i01 + 1; keep_ਖੱਬਾ = 1; ਰੋਕੋ;
+        ਹਾਲਤ 3: boundary = i01;     keep_ਖੱਬਾ = 1; ਰੋਕੋ;
+        ਮੂਲ: boundary = 0; keep_ਖੱਬਾ = 0; ਰੋਕੋ;
     }
-    if (boundary > ne0) boundary = ne0;
+    ਜੇ (boundary > ne0) boundary = ne0;
 
-    const uint32_t nvec = tile_elems / VLEN_FP32;
-    const uint32_t nloe = tile_elems % VLEN_FP32;
+    ਅਚਲ uint32_t nvec = tile_elems / VLEN_FP32;
+    ਅਚਲ uint32_t nloe = tile_elems % VLEN_FP32;
 
-    for (uint32_t i = 0; i < nvec; i++) {
-        const uint32_t abs_start = col_start + i * VLEN_FP32;
-        const uint32_t abs_end   = abs_start + VLEN_FP32;
-        if (keep_left) {
-            if (abs_end <= boundary) {
+    ਲਈ (uint32_t i = 0; i < nvec; i++) {
+        ਅਚਲ uint32_t abs_ਸ਼ੁਰੂ = ਖਾਨਾ_ਸ਼ੁਰੂ + i * VLEN_FP32;
+        ਅਚਲ uint32_t abs_ਸਿਰਾ   = abs_ਸ਼ੁਰੂ + VLEN_FP32;
+        ਜੇ (keep_ਖੱਬਾ) {
+            ਜੇ (abs_ਸਿਰਾ <= boundary) {
                 v_dst[i] = v_src[i];
-            } else if (abs_start >= boundary) {
+            } ਨਹੀਂਤਾਂ ਜੇ (abs_ਸ਼ੁਰੂ >= boundary) {
                 v_dst[i] = zero;
-            } else {
-                HVX_VectorPred mask = Q6_Q_vsetq_R((boundary - abs_start) * sizeof(float));
-                v_dst[i]            = Q6_V_vmux_QVV(mask, v_src[i], zero);
+            } ਨਹੀਂਤਾਂ {
+                HVX_ਸਦਿਸ਼_Pred ਨਕਾਬ = Q6_Q_vsetq_R((boundary - abs_ਸ਼ੁਰੂ) * ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+                v_dst[i]            = Q6_V_vmux_QVV(ਨਕਾਬ, v_src[i], zero);
             }
-        } else {
-            if (abs_end <= boundary) {
+        } ਨਹੀਂਤਾਂ {
+            ਜੇ (abs_ਸਿਰਾ <= boundary) {
                 v_dst[i] = zero;
-            } else if (abs_start >= boundary) {
+            } ਨਹੀਂਤਾਂ ਜੇ (abs_ਸ਼ੁਰੂ >= boundary) {
                 v_dst[i] = v_src[i];
-            } else {
-                HVX_VectorPred mask = Q6_Q_vsetq_R((boundary - abs_start) * sizeof(float));
-                v_dst[i]            = Q6_V_vmux_QVV(mask, zero, v_src[i]);
+            } ਨਹੀਂਤਾਂ {
+                HVX_ਸਦਿਸ਼_Pred ਨਕਾਬ = Q6_Q_vsetq_R((boundary - abs_ਸ਼ੁਰੂ) * ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+                v_dst[i]            = Q6_V_vmux_QVV(ਨਕਾਬ, zero, v_src[i]);
             }
         }
     }
 
-    if (nloe > 0) {
-        const uint32_t abs_start = col_start + nvec * VLEN_FP32;
-        const uint32_t abs_end   = abs_start + nloe;
-        HVX_Vector     tail_val;
-        if (keep_left) {
-            if (abs_end <= boundary) {
-                tail_val = v_src[nvec];
-            } else if (abs_start >= boundary) {
-                tail_val = zero;
-            } else {
-                HVX_VectorPred mask = Q6_Q_vsetq_R((boundary - abs_start) * sizeof(float));
-                tail_val            = Q6_V_vmux_QVV(mask, v_src[nvec], zero);
+    ਜੇ (nloe > 0) {
+        ਅਚਲ uint32_t abs_ਸ਼ੁਰੂ = ਖਾਨਾ_ਸ਼ੁਰੂ + nvec * VLEN_FP32;
+        ਅਚਲ uint32_t abs_ਸਿਰਾ   = abs_ਸ਼ੁਰੂ + nloe;
+        HVX_ਸਦਿਸ਼     ਪੂਛ_val;
+        ਜੇ (keep_ਖੱਬਾ) {
+            ਜੇ (abs_ਸਿਰਾ <= boundary) {
+                ਪੂਛ_val = v_src[nvec];
+            } ਨਹੀਂਤਾਂ ਜੇ (abs_ਸ਼ੁਰੂ >= boundary) {
+                ਪੂਛ_val = zero;
+            } ਨਹੀਂਤਾਂ {
+                HVX_ਸਦਿਸ਼_Pred ਨਕਾਬ = Q6_Q_vsetq_R((boundary - abs_ਸ਼ੁਰੂ) * ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+                ਪੂਛ_val            = Q6_V_vmux_QVV(ਨਕਾਬ, v_src[nvec], zero);
             }
-        } else {
-            if (abs_end <= boundary) {
-                tail_val = zero;
-            } else if (abs_start >= boundary) {
-                tail_val = v_src[nvec];
-            } else {
-                HVX_VectorPred mask = Q6_Q_vsetq_R((boundary - abs_start) * sizeof(float));
-                tail_val            = Q6_V_vmux_QVV(mask, zero, v_src[nvec]);
+        } ਨਹੀਂਤਾਂ {
+            ਜੇ (abs_ਸਿਰਾ <= boundary) {
+                ਪੂਛ_val = zero;
+            } ਨਹੀਂਤਾਂ ਜੇ (abs_ਸ਼ੁਰੂ >= boundary) {
+                ਪੂਛ_val = v_src[nvec];
+            } ਨਹੀਂਤਾਂ {
+                HVX_ਸਦਿਸ਼_Pred ਨਕਾਬ = Q6_Q_vsetq_R((boundary - abs_ਸ਼ੁਰੂ) * ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+                ਪੂਛ_val            = Q6_V_vmux_QVV(ਨਕਾਬ, zero, v_src[nvec]);
             }
         }
-        hvx_vec_store_a(&v_dst[nvec], nloe * sizeof(float), tail_val);
+        hvx_vec_store_a(&v_dst[nvec], nloe * ਆਕਾਰ(ਦਸ਼ਮਲਵ), ਪੂਛ_val);
     }
 }
 
 // 1. Standard row-block unary task (F32 and F16).
-static void unary_thread_row_block(unsigned int nth, unsigned int ith, void * data) {
-    (void) nth;
-    const struct htp_unary_context * uctx = (const struct htp_unary_context *) data;
-    struct htp_ops_context * octx = uctx->octx;
-    const struct htp_tensor * src = octx->src[0];
-    const struct htp_tensor * dst = octx->dst;
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
+ਸਥਿਰ ਖਾਲੀ unary_thread_ਪੰਕਤੀ_ਖੰਡ(ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ nth, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ ith, ਖਾਲੀ * ਅੰਕੜੇ) {
+    (ਖਾਲੀ) nth;
+    ਅਚਲ ਬਣਤਰ htp_unary_context * uctx = (ਅਚਲ ਬਣਤਰ htp_unary_context *) ਅੰਕੜੇ;
+    ਬਣਤਰ htp_ops_context * octx = uctx->octx;
+    ਅਚਲ ਬਣਤਰ htp_tensor * src = octx->src[0];
+    ਅਚਲ ਬਣਤਰ htp_tensor * dst = octx->dst;
+    ਬਣਤਰ htp_thread_trace * tr = &octx->ctx->trace[ith];
 
     htp_unary_preamble;
 
-    const uint32_t src0_nrows_per_thread = uctx->src0_nrows_per_thread;
-    const size_t src0_data_row_size = uctx->src0_data_row_size;
-    const size_t dst_data_row_size  = uctx->dst_data_row_size;
-    const size_t src0_row_size_aligned = uctx->src0_row_size_aligned;
-    const size_t dst_row_size_aligned  = uctx->dst_row_size_aligned;
+    ਅਚਲ uint32_t src0_nrows_ਪ੍ਰਤੀ_thread = uctx->src0_nrows_ਪ੍ਰਤੀ_thread;
+    ਅਚਲ size_t src0_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ = uctx->src0_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ;
+    ਅਚਲ size_t dst_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ  = uctx->dst_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ;
+    ਅਚਲ size_t src0_ਪੰਕਤੀ_ਮਾਪ_aligned = uctx->src0_ਪੰਕਤੀ_ਮਾਪ_aligned;
+    ਅਚਲ size_t dst_ਪੰਕਤੀ_ਮਾਪ_aligned  = uctx->dst_ਪੰਕਤੀ_ਮਾਪ_aligned;
 
-    const uint32_t src0_nrows = uctx->src0_nrows;
-    const uint32_t src0_start_row = uctx->row_start + src0_nrows_per_thread * ith;
-    const uint32_t src0_end_row   = MIN(src0_start_row + src0_nrows_per_thread, uctx->row_start + src0_nrows);
+    ਅਚਲ uint32_t src0_nrows = uctx->src0_nrows;
+    ਅਚਲ uint32_t src0_ਸ਼ੁਰੂ_ਪੰਕਤੀ = uctx->ਪੰਕਤੀ_ਸ਼ੁਰੂ + src0_nrows_ਪ੍ਰਤੀ_thread * ith;
+    ਅਚਲ uint32_t src0_ਸਿਰਾ_ਪੰਕਤੀ   = MIN(src0_ਸ਼ੁਰੂ_ਪੰਕਤੀ + src0_nrows_ਪ੍ਰਤੀ_thread, uctx->ਪੰਕਤੀ_ਸ਼ੁਰੂ + src0_nrows);
 
-    if (src0_start_row >= src0_end_row) {
-        return;
+    ਜੇ (src0_ਸ਼ੁਰੂ_ਪੰਕਤੀ >= src0_ਸਿਰਾ_ਪੰਕਤੀ) {
+        ਵਾਪਸ;
     }
 
-    const dma_addr_t data_src = uctx->data_src0;
-    const dma_addr_t data_dst = uctx->data_dst;
+    ਅਚਲ dma_addr_t ਅੰਕੜੇ_src = uctx->ਅੰਕੜੇ_src0;
+    ਅਚਲ dma_addr_t ਅੰਕੜੇ_dst = uctx->ਅੰਕੜੇ_dst;
 
-    uint8_t * src0_vtcm_data = uctx->vtcm_src0 + (ith * uctx->vtcm_src0_size_per_thread);
-    uint8_t * dst_vtcm_data  = uctx->vtcm_dst + (ith * uctx->vtcm_dst_size_per_thread);
+    uint8_t * src0_vtcm_ਅੰਕੜੇ = uctx->vtcm_src0 + (ith * uctx->vtcm_src0_ਮਾਪ_ਪ੍ਰਤੀ_thread);
+    uint8_t * dst_vtcm_ਅੰਕੜੇ  = uctx->vtcm_dst + (ith * uctx->vtcm_dst_ਮਾਪ_ਪ੍ਰਤੀ_thread);
 
-    const size_t src0_vtcm_half_size = uctx->src0_vtcm_half_size;
-    const size_t dst_vtcm_half_size  = uctx->dst_vtcm_half_size;
+    ਅਚਲ size_t src0_vtcm_half_ਮਾਪ = uctx->src0_vtcm_half_ਮਾਪ;
+    ਅਚਲ size_t dst_vtcm_half_ਮਾਪ  = uctx->dst_vtcm_half_ਮਾਪ;
 
-    const bool src0_contig = (nb02 == (size_t)ne01 * nb01) &&
+    ਅਚਲ bool src0_contig = (nb02 == (size_t)ne01 * nb01) &&
                              (nb03 == (size_t)ne02 * nb02);
-    const bool dst_contig  = (nb2  == (size_t)ne1  * nb1)  &&
+    ਅਚਲ bool dst_contig  = (nb2  == (size_t)ne1  * nb1)  &&
                              (nb3  == (size_t)ne2  * nb2);
 
-    const struct fastdiv_values * div_ne01  = &uctx->kparams->div_ne01;
-    const struct fastdiv_values * div_ne02  = &uctx->kparams->div_ne02;
-    const struct fastdiv_values * div_ne012 = &uctx->kparams->div_ne012;
+    ਅਚਲ ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ * div_ne01  = &uctx->kparams->div_ne01;
+    ਅਚਲ ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ * div_ne02  = &uctx->kparams->div_ne02;
+    ਅਚਲ ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ * div_ne012 = &uctx->kparams->div_ne012;
 
-    const uint32_t src0_max_block = src0_contig ? uctx->block : MIN((uint32_t)uctx->block, ne01);
-    const uint32_t dst_max_block  = dst_contig  ? uctx->block : MIN((uint32_t)uctx->block, ne1);
-    const uint32_t BLOCK = MIN(src0_max_block, dst_max_block);
-    if (BLOCK == 0) {
+    ਅਚਲ uint32_t src0_max_ਖੰਡ = src0_contig ? uctx->ਖੰਡ : MIN((uint32_t)uctx->ਖੰਡ, ne01);
+    ਅਚਲ uint32_t dst_max_ਖੰਡ  = dst_contig  ? uctx->ਖੰਡ : MIN((uint32_t)uctx->ਖੰਡ, ne1);
+    ਅਚਲ uint32_t ਖੰਡ_2 = MIN(src0_max_ਖੰਡ, dst_max_ਖੰਡ);
+    ਜੇ (ਖੰਡ_2 == 0) {
         FARF(ERROR, "unary-row-block : current VTCM reservation %zu is too small, needed at least %zu\n",
-             uctx->vtcm_src0_size_per_thread, src0_row_size_aligned);
-        return;
+             uctx->vtcm_src0_ਮਾਪ_ਪ੍ਰਤੀ_thread, src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        ਵਾਪਸ;
     }
 
-    dma_queue * dma_q = octx->ctx->dma[ith];
+    dma_ਕਤਾਰ * dma_q = octx->ctx->dma[ith];
 
-    for (uint32_t ir = src0_start_row, vtcm_idx = 0; ir < src0_end_row && vtcm_idx < 2; vtcm_idx++) {
-        const uint32_t block_size = unary_block_size(ir, src0_end_row, BLOCK, src0_contig, dst_contig,
+    ਲਈ (uint32_t ir = src0_ਸ਼ੁਰੂ_ਪੰਕਤੀ, vtcm_idx = 0; ir < src0_ਸਿਰਾ_ਪੰਕਤੀ && vtcm_idx < 2; vtcm_idx++) {
+        ਅਚਲ uint32_t ਖੰਡ_ਮਾਪ_3 = unary_ਖੰਡ_ਮਾਪ(ir, src0_ਸਿਰਾ_ਪੰਕਤੀ, ਖੰਡ_2, src0_contig, dst_contig,
                                                      ne01, div_ne01);
 
-        dma_queue_push(dma_q,
-            dma_make_data(data_dst, dst_vtcm_data + (vtcm_idx * dst_vtcm_half_size)),
-            nb1, dst_row_size_aligned, dst_data_row_size, 0);
+        dma_ਕਤਾਰ_ਧੱਕੋ(dma_q,
+            dma_make_ਅੰਕੜੇ(ਅੰਕੜੇ_dst, dst_vtcm_ਅੰਕੜੇ + (vtcm_idx * dst_vtcm_half_ਮਾਪ)),
+            nb1, dst_ਪੰਕਤੀ_ਮਾਪ_aligned, dst_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ, 0);
 
-        const size_t src0_off = src0_contig ? (ir * nb01) :
-            unary_row_offset(ir, ne01, ne02, div_ne01, div_ne02, div_ne012, nb01, nb02, nb03);
-        dma_queue_push(dma_q,
-            dma_make_data(src0_vtcm_data + (vtcm_idx * src0_vtcm_half_size), data_src + src0_off),
-            src0_row_size_aligned, nb01, src0_data_row_size, block_size);
+        ਅਚਲ size_t src0_off = src0_contig ? (ir * nb01) :
+            unary_ਪੰਕਤੀ_ਵਿੱਥ(ir, ne01, ne02, div_ne01, div_ne02, div_ne012, nb01, nb02, nb03);
+        dma_ਕਤਾਰ_ਧੱਕੋ(dma_q,
+            dma_make_ਅੰਕੜੇ(src0_vtcm_ਅੰਕੜੇ + (vtcm_idx * src0_vtcm_half_ਮਾਪ), ਅੰਕੜੇ_src + src0_off),
+            src0_ਪੰਕਤੀ_ਮਾਪ_aligned, nb01, src0_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ, ਖੰਡ_ਮਾਪ_3);
 
-        ir += block_size;
+        ir += ਖੰਡ_ਮਾਪ_3;
     }
 
     unary_compute_fn_t compute = (unary_compute_fn_t) uctx->compute;
 
-    for (uint32_t ir = src0_start_row; ir < src0_end_row; ) {
-        const uint32_t block_size = unary_block_size(ir, src0_end_row, BLOCK, src0_contig, dst_contig,
+    ਲਈ (uint32_t ir = src0_ਸ਼ੁਰੂ_ਪੰਕਤੀ; ir < src0_ਸਿਰਾ_ਪੰਕਤੀ; ) {
+        ਅਚਲ uint32_t ਖੰਡ_ਮਾਪ_3 = unary_ਖੰਡ_ਮਾਪ(ir, src0_ਸਿਰਾ_ਪੰਕਤੀ, ਖੰਡ_2, src0_contig, dst_contig,
                                                      ne01, div_ne01);
 
-        void * dst_vtcm  = (void *) (uintptr_t) dma_queue_pop(dma_q).src;
-        void * src0_vtcm = (void *) (uintptr_t) dma_queue_pop(dma_q).dst;
+        ਖਾਲੀ * dst_vtcm  = (ਖਾਲੀ *) (uintptr_t) dma_ਕਤਾਰ_ਕੱਢੋ(dma_q).src;
+        ਖਾਲੀ * src0_vtcm = (ਖਾਲੀ *) (uintptr_t) dma_ਕਤਾਰ_ਕੱਢੋ(dma_q).dst;
 
-        htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, ir);
-        compute(src0_vtcm, dst_vtcm, block_size, uctx);
+        htp_trace_event_ਸ਼ੁਰੂ(tr, HTP_TRACE_EVT_HVX_COMP, ir);
+        compute(src0_vtcm, dst_vtcm, ਖੰਡ_ਮਾਪ_3, uctx);
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, ir);
 
-        const size_t dst_off = dst_contig ? (ir * nb1) :
-            unary_row_offset(ir, ne1, ne2, div_ne01, div_ne02, div_ne012, nb1, nb2, nb3);
-        dma_queue_push(dma_q,
-            dma_make_data(data_dst + dst_off, dst_vtcm),
-            nb1, dst_row_size_aligned, dst_data_row_size, block_size);
+        ਅਚਲ size_t dst_off = dst_contig ? (ir * nb1) :
+            unary_ਪੰਕਤੀ_ਵਿੱਥ(ir, ne1, ne2, div_ne01, div_ne02, div_ne012, nb1, nb2, nb3);
+        dma_ਕਤਾਰ_ਧੱਕੋ(dma_q,
+            dma_make_ਅੰਕੜੇ(ਅੰਕੜੇ_dst + dst_off, dst_vtcm),
+            nb1, dst_ਪੰਕਤੀ_ਮਾਪ_aligned, dst_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ, ਖੰਡ_ਮਾਪ_3);
 
-        const uint32_t next_ir = ir + block_size;
-        if (next_ir < src0_end_row) {
-            const uint32_t next_block_size = unary_block_size(next_ir, src0_end_row, BLOCK, src0_contig,
+        ਅਚਲ uint32_t ਅਗਲਾ_ir = ir + ਖੰਡ_ਮਾਪ_3;
+        ਜੇ (ਅਗਲਾ_ir < src0_ਸਿਰਾ_ਪੰਕਤੀ) {
+            ਅਚਲ uint32_t ਅਗਲਾ_ਖੰਡ_ਮਾਪ = unary_ਖੰਡ_ਮਾਪ(ਅਗਲਾ_ir, src0_ਸਿਰਾ_ਪੰਕਤੀ, ਖੰਡ_2, src0_contig,
                                                               dst_contig, ne01, div_ne01);
-            const uint32_t pref_ir = next_ir + next_block_size;
-            if (pref_ir < src0_end_row) {
-                const uint32_t pref_block_size = unary_block_size(pref_ir, src0_end_row, BLOCK, src0_contig,
+            ਅਚਲ uint32_t pref_ir = ਅਗਲਾ_ir + ਅਗਲਾ_ਖੰਡ_ਮਾਪ;
+            ਜੇ (pref_ir < src0_ਸਿਰਾ_ਪੰਕਤੀ) {
+                ਅਚਲ uint32_t pref_ਖੰਡ_ਮਾਪ = unary_ਖੰਡ_ਮਾਪ(pref_ir, src0_ਸਿਰਾ_ਪੰਕਤੀ, ਖੰਡ_2, src0_contig,
                                                                   dst_contig, ne01, div_ne01);
-                const size_t src0_pref_off = src0_contig ? (pref_ir * nb01) :
-                    unary_row_offset(pref_ir, ne01, ne02, div_ne01, div_ne02, div_ne012, nb01, nb02, nb03);
-                dma_queue_push(dma_q,
-                    dma_make_data(src0_vtcm, data_src + src0_pref_off),
-                    src0_row_size_aligned, nb01, src0_data_row_size, pref_block_size);
+                ਅਚਲ size_t src0_pref_off = src0_contig ? (pref_ir * nb01) :
+                    unary_ਪੰਕਤੀ_ਵਿੱਥ(pref_ir, ne01, ne02, div_ne01, div_ne02, div_ne012, nb01, nb02, nb03);
+                dma_ਕਤਾਰ_ਧੱਕੋ(dma_q,
+                    dma_make_ਅੰਕੜੇ(src0_vtcm, ਅੰਕੜੇ_src + src0_pref_off),
+                    src0_ਪੰਕਤੀ_ਮਾਪ_aligned, nb01, src0_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ, pref_ਖੰਡ_ਮਾਪ);
             }
         }
-        ir += block_size;
+        ir += ਖੰਡ_ਮਾਪ_3;
     }
 
-    dma_queue_flush(dma_q);
+    dma_ਕਤਾਰ_flush(dma_q);
 }
 
 // 2. RMS_NORM_MUL row-block task with weight buffer.
-static void unary_thread_rms_norm_mul_f32(unsigned int nth, unsigned int ith, void * data) {
-    (void) nth;
-    const struct htp_unary_context * uctx = (const struct htp_unary_context *) data;
-    struct htp_ops_context * octx = uctx->octx;
-    const struct htp_tensor * src = octx->src[0];
-    const struct htp_tensor * dst = octx->dst;
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
+ਸਥਿਰ ਖਾਲੀ unary_thread_rms_norm_mul_f32(ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ nth, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ ith, ਖਾਲੀ * ਅੰਕੜੇ) {
+    (ਖਾਲੀ) nth;
+    ਅਚਲ ਬਣਤਰ htp_unary_context * uctx = (ਅਚਲ ਬਣਤਰ htp_unary_context *) ਅੰਕੜੇ;
+    ਬਣਤਰ htp_ops_context * octx = uctx->octx;
+    ਅਚਲ ਬਣਤਰ htp_tensor * src = octx->src[0];
+    ਅਚਲ ਬਣਤਰ htp_tensor * dst = octx->dst;
+    ਬਣਤਰ htp_thread_trace * tr = &octx->ctx->trace[ith];
 
     htp_unary_preamble;
 
-    const uint32_t src0_nrows_per_thread = uctx->src0_nrows_per_thread;
-    const size_t src0_data_row_size = uctx->src0_data_row_size;
-    const size_t dst_data_row_size  = uctx->dst_data_row_size;
-    const size_t src0_row_size_aligned = uctx->src0_row_size_aligned;
-    const size_t dst_row_size_aligned  = uctx->dst_row_size_aligned;
+    ਅਚਲ uint32_t src0_nrows_ਪ੍ਰਤੀ_thread = uctx->src0_nrows_ਪ੍ਰਤੀ_thread;
+    ਅਚਲ size_t src0_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ = uctx->src0_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ;
+    ਅਚਲ size_t dst_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ  = uctx->dst_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ;
+    ਅਚਲ size_t src0_ਪੰਕਤੀ_ਮਾਪ_aligned = uctx->src0_ਪੰਕਤੀ_ਮਾਪ_aligned;
+    ਅਚਲ size_t dst_ਪੰਕਤੀ_ਮਾਪ_aligned  = uctx->dst_ਪੰਕਤੀ_ਮਾਪ_aligned;
 
-    const uint32_t src0_nrows = uctx->src0_nrows;
-    const uint32_t src0_start_row = uctx->row_start + src0_nrows_per_thread * ith;
-    const uint32_t src0_end_row   = MIN(src0_start_row + src0_nrows_per_thread, uctx->row_start + src0_nrows);
+    ਅਚਲ uint32_t src0_nrows = uctx->src0_nrows;
+    ਅਚਲ uint32_t src0_ਸ਼ੁਰੂ_ਪੰਕਤੀ = uctx->ਪੰਕਤੀ_ਸ਼ੁਰੂ + src0_nrows_ਪ੍ਰਤੀ_thread * ith;
+    ਅਚਲ uint32_t src0_ਸਿਰਾ_ਪੰਕਤੀ   = MIN(src0_ਸ਼ੁਰੂ_ਪੰਕਤੀ + src0_nrows_ਪ੍ਰਤੀ_thread, uctx->ਪੰਕਤੀ_ਸ਼ੁਰੂ + src0_nrows);
 
-    if (src0_start_row >= src0_end_row) {
-        return;
+    ਜੇ (src0_ਸ਼ੁਰੂ_ਪੰਕਤੀ >= src0_ਸਿਰਾ_ਪੰਕਤੀ) {
+        ਵਾਪਸ;
     }
 
-    const dma_addr_t data_src  = uctx->data_src0;
-    const dma_addr_t data_src1 = uctx->data_src1;
-    const dma_addr_t data_dst  = uctx->data_dst;
+    ਅਚਲ dma_addr_t ਅੰਕੜੇ_src  = uctx->ਅੰਕੜੇ_src0;
+    ਅਚਲ dma_addr_t ਅੰਕੜੇ_src1 = uctx->ਅੰਕੜੇ_src1;
+    ਅਚਲ dma_addr_t ਅੰਕੜੇ_dst  = uctx->ਅੰਕੜੇ_dst;
 
-    const struct htp_tensor * src1 = octx->src[1];
-    const uint32_t nb11 = src1->nb[1];
-    const uint32_t nb12 = src1->nb[2];
-    const uint32_t nb13 = src1->nb[3];
-    const uint32_t nb11_bc = (src1->ne[1] > 1) ? nb11 : 0;
-    const uint32_t nb12_bc = (src1->ne[2] > 1) ? nb12 : 0;
-    const uint32_t nb13_bc = (src1->ne[3] > 1) ? nb13 : 0;
-    const bool src1_contig = ((nb12 == (size_t)ne01 * nb11) && (nb13 == (size_t)ne02 * nb12));
+    ਅਚਲ ਬਣਤਰ htp_tensor * src1 = octx->src[1];
+    ਅਚਲ uint32_t nb11 = src1->nb[1];
+    ਅਚਲ uint32_t nb12 = src1->nb[2];
+    ਅਚਲ uint32_t nb13 = src1->nb[3];
+    ਅਚਲ uint32_t nb11_bc = (src1->ne[1] > 1) ? nb11 : 0;
+    ਅਚਲ uint32_t nb12_bc = (src1->ne[2] > 1) ? nb12 : 0;
+    ਅਚਲ uint32_t nb13_bc = (src1->ne[3] > 1) ? nb13 : 0;
+    ਅਚਲ bool src1_contig = ((nb12 == (size_t)ne01 * nb11) && (nb13 == (size_t)ne02 * nb12));
 
-    uint8_t * src0_vtcm_data = uctx->vtcm_src0 + (ith * uctx->vtcm_src0_size_per_thread);
-    uint8_t * src1_vtcm_data = uctx->vtcm_src1 ? (uctx->vtcm_src1 + (ith * uctx->vtcm_src1_size_per_thread)) : NULL;
-    uint8_t * dst_vtcm_data  = uctx->vtcm_dst + (ith * uctx->vtcm_dst_size_per_thread);
+    uint8_t * src0_vtcm_ਅੰਕੜੇ = uctx->vtcm_src0 + (ith * uctx->vtcm_src0_ਮਾਪ_ਪ੍ਰਤੀ_thread);
+    uint8_t * src1_vtcm_ਅੰਕੜੇ = uctx->vtcm_src1 ? (uctx->vtcm_src1 + (ith * uctx->vtcm_src1_ਮਾਪ_ਪ੍ਰਤੀ_thread)) : ਨਿਰਾ;
+    uint8_t * dst_vtcm_ਅੰਕੜੇ  = uctx->vtcm_dst + (ith * uctx->vtcm_dst_ਮਾਪ_ਪ੍ਰਤੀ_thread);
 
-    const size_t src0_vtcm_half_size = uctx->src0_vtcm_half_size;
-    const size_t src1_vtcm_half_size = uctx->src1_vtcm_half_size;
-    const size_t dst_vtcm_half_size  = uctx->dst_vtcm_half_size;
+    ਅਚਲ size_t src0_vtcm_half_ਮਾਪ = uctx->src0_vtcm_half_ਮਾਪ;
+    ਅਚਲ size_t src1_vtcm_half_ਮਾਪ = uctx->src1_vtcm_half_ਮਾਪ;
+    ਅਚਲ size_t dst_vtcm_half_ਮਾਪ  = uctx->dst_vtcm_half_ਮਾਪ;
 
-    const bool src0_contig = (nb02 == (size_t)ne01 * nb01) &&
+    ਅਚਲ bool src0_contig = (nb02 == (size_t)ne01 * nb01) &&
                              (nb03 == (size_t)ne02 * nb02);
-    const bool dst_contig  = (nb2  == (size_t)ne1  * nb1)  &&
+    ਅਚਲ bool dst_contig  = (nb2  == (size_t)ne1  * nb1)  &&
                              (nb3  == (size_t)ne2  * nb2);
 
-    const struct fastdiv_values * div_ne01  = &uctx->kparams->div_ne01;
-    const struct fastdiv_values * div_ne02  = &uctx->kparams->div_ne02;
-    const struct fastdiv_values * div_ne012 = &uctx->kparams->div_ne012;
+    ਅਚਲ ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ * div_ne01  = &uctx->kparams->div_ne01;
+    ਅਚਲ ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ * div_ne02  = &uctx->kparams->div_ne02;
+    ਅਚਲ ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ * div_ne012 = &uctx->kparams->div_ne012;
 
-    const bool src1_needs_row_clip = !uctx->broadcast_weight && !src1_contig;
-    const bool block_src0_contig = src0_contig && !src1_needs_row_clip;
-    const bool block_dst_contig  = dst_contig  && !src1_needs_row_clip;
+    ਅਚਲ bool src1_needs_ਪੰਕਤੀ_clip = !uctx->ਪ੍ਰਸਾਰਣ_ਭਾਰ && !src1_contig;
+    ਅਚਲ bool ਖੰਡ_src0_contig = src0_contig && !src1_needs_ਪੰਕਤੀ_clip;
+    ਅਚਲ bool ਖੰਡ_dst_contig  = dst_contig  && !src1_needs_ਪੰਕਤੀ_clip;
 
-    const uint32_t src0_max_block = block_src0_contig ? uctx->block : MIN((uint32_t)uctx->block, ne01);
-    const uint32_t dst_max_block  = block_dst_contig  ? uctx->block : MIN((uint32_t)uctx->block, ne1);
-    const uint32_t BLOCK = MIN(src0_max_block, dst_max_block);
-    if (BLOCK == 0) {
+    ਅਚਲ uint32_t src0_max_ਖੰਡ = ਖੰਡ_src0_contig ? uctx->ਖੰਡ : MIN((uint32_t)uctx->ਖੰਡ, ne01);
+    ਅਚਲ uint32_t dst_max_ਖੰਡ  = ਖੰਡ_dst_contig  ? uctx->ਖੰਡ : MIN((uint32_t)uctx->ਖੰਡ, ne1);
+    ਅਚਲ uint32_t ਖੰਡ_2 = MIN(src0_max_ਖੰਡ, dst_max_ਖੰਡ);
+    ਜੇ (ਖੰਡ_2 == 0) {
         FARF(ERROR, "unary-rms-norm-mul : current VTCM reservation %zu is too small, needed at least %zu\n",
-             uctx->vtcm_src0_size_per_thread, src0_row_size_aligned);
-        return;
+             uctx->vtcm_src0_ਮਾਪ_ਪ੍ਰਤੀ_thread, src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        ਵਾਪਸ;
     }
 
-    dma_queue * dma_q = octx->ctx->dma[ith];
+    dma_ਕਤਾਰ * dma_q = octx->ctx->dma[ith];
 
-    if (uctx->broadcast_weight) {
-        dma_queue_push(dma_q, dma_make_data(src1_vtcm_data, data_src1),
-                       uctx->src1_row_size_aligned, 0, uctx->src1_data_row_size, 1);
-        dma_queue_flush(dma_q);
+    ਜੇ (uctx->ਪ੍ਰਸਾਰਣ_ਭਾਰ) {
+        dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(src1_vtcm_ਅੰਕੜੇ, ਅੰਕੜੇ_src1),
+                       uctx->src1_ਪੰਕਤੀ_ਮਾਪ_aligned, 0, uctx->src1_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ, 1);
+        dma_ਕਤਾਰ_flush(dma_q);
     }
 
-    for (uint32_t ir = src0_start_row, vtcm_idx = 0; ir < src0_end_row && vtcm_idx < 2; vtcm_idx++) {
-        const uint32_t block_size = unary_block_size(ir, src0_end_row, BLOCK, block_src0_contig, block_dst_contig,
+    ਲਈ (uint32_t ir = src0_ਸ਼ੁਰੂ_ਪੰਕਤੀ, vtcm_idx = 0; ir < src0_ਸਿਰਾ_ਪੰਕਤੀ && vtcm_idx < 2; vtcm_idx++) {
+        ਅਚਲ uint32_t ਖੰਡ_ਮਾਪ_3 = unary_ਖੰਡ_ਮਾਪ(ir, src0_ਸਿਰਾ_ਪੰਕਤੀ, ਖੰਡ_2, ਖੰਡ_src0_contig, ਖੰਡ_dst_contig,
                                                      ne01, div_ne01);
 
-        dma_queue_push(dma_q,
-            dma_make_data(data_dst, dst_vtcm_data + (vtcm_idx * dst_vtcm_half_size)),
-            nb1, dst_row_size_aligned, dst_data_row_size, 0);
+        dma_ਕਤਾਰ_ਧੱਕੋ(dma_q,
+            dma_make_ਅੰਕੜੇ(ਅੰਕੜੇ_dst, dst_vtcm_ਅੰਕੜੇ + (vtcm_idx * dst_vtcm_half_ਮਾਪ)),
+            nb1, dst_ਪੰਕਤੀ_ਮਾਪ_aligned, dst_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ, 0);
 
-        const size_t src0_off = src0_contig ? (ir * nb01) :
-            unary_row_offset(ir, ne01, ne02, div_ne01, div_ne02, div_ne012, nb01, nb02, nb03);
-        dma_queue_push(dma_q,
-            dma_make_data(src0_vtcm_data + (vtcm_idx * src0_vtcm_half_size), data_src + src0_off),
-            src0_row_size_aligned, nb01, src0_data_row_size, block_size);
+        ਅਚਲ size_t src0_off = src0_contig ? (ir * nb01) :
+            unary_ਪੰਕਤੀ_ਵਿੱਥ(ir, ne01, ne02, div_ne01, div_ne02, div_ne012, nb01, nb02, nb03);
+        dma_ਕਤਾਰ_ਧੱਕੋ(dma_q,
+            dma_make_ਅੰਕੜੇ(src0_vtcm_ਅੰਕੜੇ + (vtcm_idx * src0_vtcm_half_ਮਾਪ), ਅੰਕੜੇ_src + src0_off),
+            src0_ਪੰਕਤੀ_ਮਾਪ_aligned, nb01, src0_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ, ਖੰਡ_ਮਾਪ_3);
 
-        if (!uctx->broadcast_weight) {
-            const size_t src1_off = src1_contig ? (ir * nb11) :
-                unary_row_offset(ir, ne01, ne02, div_ne01, div_ne02, div_ne012, nb11_bc, nb12_bc, nb13_bc);
-            dma_queue_push(dma_q,
-                dma_make_data(src1_vtcm_data + (vtcm_idx * src1_vtcm_half_size), data_src1 + src1_off),
-                uctx->src1_row_size_aligned, nb11, uctx->src1_data_row_size, block_size);
+        ਜੇ (!uctx->ਪ੍ਰਸਾਰਣ_ਭਾਰ) {
+            ਅਚਲ size_t src1_off = src1_contig ? (ir * nb11) :
+                unary_ਪੰਕਤੀ_ਵਿੱਥ(ir, ne01, ne02, div_ne01, div_ne02, div_ne012, nb11_bc, nb12_bc, nb13_bc);
+            dma_ਕਤਾਰ_ਧੱਕੋ(dma_q,
+                dma_make_ਅੰਕੜੇ(src1_vtcm_ਅੰਕੜੇ + (vtcm_idx * src1_vtcm_half_ਮਾਪ), ਅੰਕੜੇ_src1 + src1_off),
+                uctx->src1_ਪੰਕਤੀ_ਮਾਪ_aligned, nb11, uctx->src1_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ, ਖੰਡ_ਮਾਪ_3);
         }
 
-        ir += block_size;
+        ir += ਖੰਡ_ਮਾਪ_3;
     }
 
     unary_rms_norm_mul_compute_fn_t compute = (unary_rms_norm_mul_compute_fn_t) uctx->compute;
 
-    for (uint32_t ir = src0_start_row; ir < src0_end_row; ) {
-        const uint32_t block_size = unary_block_size(ir, src0_end_row, BLOCK, block_src0_contig, block_dst_contig,
+    ਲਈ (uint32_t ir = src0_ਸ਼ੁਰੂ_ਪੰਕਤੀ; ir < src0_ਸਿਰਾ_ਪੰਕਤੀ; ) {
+        ਅਚਲ uint32_t ਖੰਡ_ਮਾਪ_3 = unary_ਖੰਡ_ਮਾਪ(ir, src0_ਸਿਰਾ_ਪੰਕਤੀ, ਖੰਡ_2, ਖੰਡ_src0_contig, ਖੰਡ_dst_contig,
                                                      ne01, div_ne01);
 
-        void * dst_vtcm  = (void *) (uintptr_t) dma_queue_pop(dma_q).src;
-        void * src0_vtcm = (void *) (uintptr_t) dma_queue_pop(dma_q).dst;
-        void * src1_vtcm = NULL;
-        if (!uctx->broadcast_weight) {
-            src1_vtcm = (void *) (uintptr_t) dma_queue_pop(dma_q).dst;
+        ਖਾਲੀ * dst_vtcm  = (ਖਾਲੀ *) (uintptr_t) dma_ਕਤਾਰ_ਕੱਢੋ(dma_q).src;
+        ਖਾਲੀ * src0_vtcm = (ਖਾਲੀ *) (uintptr_t) dma_ਕਤਾਰ_ਕੱਢੋ(dma_q).dst;
+        ਖਾਲੀ * src1_vtcm = ਨਿਰਾ;
+        ਜੇ (!uctx->ਪ੍ਰਸਾਰਣ_ਭਾਰ) {
+            src1_vtcm = (ਖਾਲੀ *) (uintptr_t) dma_ਕਤਾਰ_ਕੱਢੋ(dma_q).dst;
         }
 
-        htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, ir);
-        const void * w = uctx->broadcast_weight ? (const void *) src1_vtcm_data : src1_vtcm;
-        compute(src0_vtcm, w, dst_vtcm, block_size, uctx);
+        htp_trace_event_ਸ਼ੁਰੂ(tr, HTP_TRACE_EVT_HVX_COMP, ir);
+        ਅਚਲ ਖਾਲੀ * w = uctx->ਪ੍ਰਸਾਰਣ_ਭਾਰ ? (ਅਚਲ ਖਾਲੀ *) src1_vtcm_ਅੰਕੜੇ : src1_vtcm;
+        compute(src0_vtcm, w, dst_vtcm, ਖੰਡ_ਮਾਪ_3, uctx);
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, ir);
 
-        const size_t dst_off = dst_contig ? (ir * nb1) :
-            unary_row_offset(ir, ne1, ne2, div_ne01, div_ne02, div_ne012, nb1, nb2, nb3);
-        dma_queue_push(dma_q,
-            dma_make_data(data_dst + dst_off, dst_vtcm),
-            nb1, dst_row_size_aligned, dst_data_row_size, block_size);
+        ਅਚਲ size_t dst_off = dst_contig ? (ir * nb1) :
+            unary_ਪੰਕਤੀ_ਵਿੱਥ(ir, ne1, ne2, div_ne01, div_ne02, div_ne012, nb1, nb2, nb3);
+        dma_ਕਤਾਰ_ਧੱਕੋ(dma_q,
+            dma_make_ਅੰਕੜੇ(ਅੰਕੜੇ_dst + dst_off, dst_vtcm),
+            nb1, dst_ਪੰਕਤੀ_ਮਾਪ_aligned, dst_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ, ਖੰਡ_ਮਾਪ_3);
 
-        const uint32_t next_ir = ir + block_size;
-        if (next_ir < src0_end_row) {
-            const uint32_t next_block_size = unary_block_size(next_ir, src0_end_row, BLOCK, block_src0_contig,
-                                                              block_dst_contig, ne01, div_ne01);
-            const uint32_t pref_ir = next_ir + next_block_size;
-            if (pref_ir < src0_end_row) {
-                const uint32_t pref_block_size = unary_block_size(pref_ir, src0_end_row, BLOCK, block_src0_contig,
-                                                                  block_dst_contig, ne01, div_ne01);
-                const size_t src0_pref_off = src0_contig ? (pref_ir * nb01) :
-                    unary_row_offset(pref_ir, ne01, ne02, div_ne01, div_ne02, div_ne012, nb01, nb02, nb03);
-                dma_queue_push(dma_q,
-                    dma_make_data(src0_vtcm, data_src + src0_pref_off),
-                    src0_row_size_aligned, nb01, src0_data_row_size, pref_block_size);
+        ਅਚਲ uint32_t ਅਗਲਾ_ir = ir + ਖੰਡ_ਮਾਪ_3;
+        ਜੇ (ਅਗਲਾ_ir < src0_ਸਿਰਾ_ਪੰਕਤੀ) {
+            ਅਚਲ uint32_t ਅਗਲਾ_ਖੰਡ_ਮਾਪ = unary_ਖੰਡ_ਮਾਪ(ਅਗਲਾ_ir, src0_ਸਿਰਾ_ਪੰਕਤੀ, ਖੰਡ_2, ਖੰਡ_src0_contig,
+                                                              ਖੰਡ_dst_contig, ne01, div_ne01);
+            ਅਚਲ uint32_t pref_ir = ਅਗਲਾ_ir + ਅਗਲਾ_ਖੰਡ_ਮਾਪ;
+            ਜੇ (pref_ir < src0_ਸਿਰਾ_ਪੰਕਤੀ) {
+                ਅਚਲ uint32_t pref_ਖੰਡ_ਮਾਪ = unary_ਖੰਡ_ਮਾਪ(pref_ir, src0_ਸਿਰਾ_ਪੰਕਤੀ, ਖੰਡ_2, ਖੰਡ_src0_contig,
+                                                                  ਖੰਡ_dst_contig, ne01, div_ne01);
+                ਅਚਲ size_t src0_pref_off = src0_contig ? (pref_ir * nb01) :
+                    unary_ਪੰਕਤੀ_ਵਿੱਥ(pref_ir, ne01, ne02, div_ne01, div_ne02, div_ne012, nb01, nb02, nb03);
+                dma_ਕਤਾਰ_ਧੱਕੋ(dma_q,
+                    dma_make_ਅੰਕੜੇ(src0_vtcm, ਅੰਕੜੇ_src + src0_pref_off),
+                    src0_ਪੰਕਤੀ_ਮਾਪ_aligned, nb01, src0_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ, pref_ਖੰਡ_ਮਾਪ);
 
-                if (!uctx->broadcast_weight) {
-                    const size_t src1_pref_off = src1_contig ? (pref_ir * nb11) :
-                        unary_row_offset(pref_ir, ne01, ne02, div_ne01, div_ne02, div_ne012, nb11_bc, nb12_bc,
+                ਜੇ (!uctx->ਪ੍ਰਸਾਰਣ_ਭਾਰ) {
+                    ਅਚਲ size_t src1_pref_off = src1_contig ? (pref_ir * nb11) :
+                        unary_ਪੰਕਤੀ_ਵਿੱਥ(pref_ir, ne01, ne02, div_ne01, div_ne02, div_ne012, nb11_bc, nb12_bc,
                                           nb13_bc);
-                    dma_queue_push(dma_q,
-                        dma_make_data(src1_vtcm, data_src1 + src1_pref_off),
-                        uctx->src1_row_size_aligned, nb11, uctx->src1_data_row_size, pref_block_size);
+                    dma_ਕਤਾਰ_ਧੱਕੋ(dma_q,
+                        dma_make_ਅੰਕੜੇ(src1_vtcm, ਅੰਕੜੇ_src1 + src1_pref_off),
+                        uctx->src1_ਪੰਕਤੀ_ਮਾਪ_aligned, nb11, uctx->src1_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ, pref_ਖੰਡ_ਮਾਪ);
                 }
             }
         }
-        ir += block_size;
+        ir += ਖੰਡ_ਮਾਪ_3;
     }
 
-    dma_queue_flush(dma_q);
+    dma_ਕਤਾਰ_flush(dma_q);
 }
 
 // 3. TRI row-block task with row index ir.
-static void unary_thread_tri_f32(unsigned int nth, unsigned int ith, void * data) {
-    (void) nth;
-    const struct htp_unary_context * uctx = (const struct htp_unary_context *) data;
-    struct htp_ops_context * octx = uctx->octx;
-    const struct htp_tensor * src = octx->src[0];
-    const struct htp_tensor * dst = octx->dst;
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
+ਸਥਿਰ ਖਾਲੀ unary_thread_tri_f32(ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ nth, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ ith, ਖਾਲੀ * ਅੰਕੜੇ) {
+    (ਖਾਲੀ) nth;
+    ਅਚਲ ਬਣਤਰ htp_unary_context * uctx = (ਅਚਲ ਬਣਤਰ htp_unary_context *) ਅੰਕੜੇ;
+    ਬਣਤਰ htp_ops_context * octx = uctx->octx;
+    ਅਚਲ ਬਣਤਰ htp_tensor * src = octx->src[0];
+    ਅਚਲ ਬਣਤਰ htp_tensor * dst = octx->dst;
+    ਬਣਤਰ htp_thread_trace * tr = &octx->ctx->trace[ith];
 
     htp_unary_preamble;
 
-    const uint32_t src0_nrows_per_thread = uctx->src0_nrows_per_thread;
-    const size_t src0_data_row_size = uctx->src0_data_row_size;
-    const size_t dst_data_row_size  = uctx->dst_data_row_size;
-    const size_t src0_row_size_aligned = uctx->src0_row_size_aligned;
-    const size_t dst_row_size_aligned  = uctx->dst_row_size_aligned;
+    ਅਚਲ uint32_t src0_nrows_ਪ੍ਰਤੀ_thread = uctx->src0_nrows_ਪ੍ਰਤੀ_thread;
+    ਅਚਲ size_t src0_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ = uctx->src0_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ;
+    ਅਚਲ size_t dst_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ  = uctx->dst_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ;
+    ਅਚਲ size_t src0_ਪੰਕਤੀ_ਮਾਪ_aligned = uctx->src0_ਪੰਕਤੀ_ਮਾਪ_aligned;
+    ਅਚਲ size_t dst_ਪੰਕਤੀ_ਮਾਪ_aligned  = uctx->dst_ਪੰਕਤੀ_ਮਾਪ_aligned;
 
-    const uint32_t src0_nrows = uctx->src0_nrows;
-    const uint32_t src0_start_row = uctx->row_start + src0_nrows_per_thread * ith;
-    const uint32_t src0_end_row   = MIN(src0_start_row + src0_nrows_per_thread, uctx->row_start + src0_nrows);
+    ਅਚਲ uint32_t src0_nrows = uctx->src0_nrows;
+    ਅਚਲ uint32_t src0_ਸ਼ੁਰੂ_ਪੰਕਤੀ = uctx->ਪੰਕਤੀ_ਸ਼ੁਰੂ + src0_nrows_ਪ੍ਰਤੀ_thread * ith;
+    ਅਚਲ uint32_t src0_ਸਿਰਾ_ਪੰਕਤੀ   = MIN(src0_ਸ਼ੁਰੂ_ਪੰਕਤੀ + src0_nrows_ਪ੍ਰਤੀ_thread, uctx->ਪੰਕਤੀ_ਸ਼ੁਰੂ + src0_nrows);
 
-    if (src0_start_row >= src0_end_row) {
-        return;
+    ਜੇ (src0_ਸ਼ੁਰੂ_ਪੰਕਤੀ >= src0_ਸਿਰਾ_ਪੰਕਤੀ) {
+        ਵਾਪਸ;
     }
 
-    const dma_addr_t data_src = uctx->data_src0;
-    const dma_addr_t data_dst = uctx->data_dst;
+    ਅਚਲ dma_addr_t ਅੰਕੜੇ_src = uctx->ਅੰਕੜੇ_src0;
+    ਅਚਲ dma_addr_t ਅੰਕੜੇ_dst = uctx->ਅੰਕੜੇ_dst;
 
-    uint8_t * src0_vtcm_data = uctx->vtcm_src0 + (ith * uctx->vtcm_src0_size_per_thread);
-    uint8_t * dst_vtcm_data  = uctx->vtcm_dst + (ith * uctx->vtcm_dst_size_per_thread);
+    uint8_t * src0_vtcm_ਅੰਕੜੇ = uctx->vtcm_src0 + (ith * uctx->vtcm_src0_ਮਾਪ_ਪ੍ਰਤੀ_thread);
+    uint8_t * dst_vtcm_ਅੰਕੜੇ  = uctx->vtcm_dst + (ith * uctx->vtcm_dst_ਮਾਪ_ਪ੍ਰਤੀ_thread);
 
-    const size_t src0_vtcm_half_size = uctx->src0_vtcm_half_size;
-    const size_t dst_vtcm_half_size  = uctx->dst_vtcm_half_size;
+    ਅਚਲ size_t src0_vtcm_half_ਮਾਪ = uctx->src0_vtcm_half_ਮਾਪ;
+    ਅਚਲ size_t dst_vtcm_half_ਮਾਪ  = uctx->dst_vtcm_half_ਮਾਪ;
 
-    const bool src0_contig = (nb02 == (size_t)ne01 * nb01) &&
+    ਅਚਲ bool src0_contig = (nb02 == (size_t)ne01 * nb01) &&
                              (nb03 == (size_t)ne02 * nb02);
-    const bool dst_contig  = (nb2  == (size_t)ne1  * nb1)  &&
+    ਅਚਲ bool dst_contig  = (nb2  == (size_t)ne1  * nb1)  &&
                              (nb3  == (size_t)ne2  * nb2);
 
-    const struct fastdiv_values * div_ne01  = &uctx->kparams->div_ne01;
-    const struct fastdiv_values * div_ne02  = &uctx->kparams->div_ne02;
-    const struct fastdiv_values * div_ne012 = &uctx->kparams->div_ne012;
+    ਅਚਲ ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ * div_ne01  = &uctx->kparams->div_ne01;
+    ਅਚਲ ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ * div_ne02  = &uctx->kparams->div_ne02;
+    ਅਚਲ ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ * div_ne012 = &uctx->kparams->div_ne012;
 
-    const uint32_t src0_max_block = src0_contig ? uctx->block : MIN((uint32_t)uctx->block, ne01);
-    const uint32_t dst_max_block  = dst_contig  ? uctx->block : MIN((uint32_t)uctx->block, ne1);
-    const uint32_t BLOCK = MIN(src0_max_block, dst_max_block);
-    if (BLOCK == 0) {
+    ਅਚਲ uint32_t src0_max_ਖੰਡ = src0_contig ? uctx->ਖੰਡ : MIN((uint32_t)uctx->ਖੰਡ, ne01);
+    ਅਚਲ uint32_t dst_max_ਖੰਡ  = dst_contig  ? uctx->ਖੰਡ : MIN((uint32_t)uctx->ਖੰਡ, ne1);
+    ਅਚਲ uint32_t ਖੰਡ_2 = MIN(src0_max_ਖੰਡ, dst_max_ਖੰਡ);
+    ਜੇ (ਖੰਡ_2 == 0) {
         FARF(ERROR, "unary-tri : current VTCM reservation %zu is too small, needed at least %zu\n",
-             uctx->vtcm_src0_size_per_thread, src0_row_size_aligned);
-        return;
+             uctx->vtcm_src0_ਮਾਪ_ਪ੍ਰਤੀ_thread, src0_ਪੰਕਤੀ_ਮਾਪ_aligned);
+        ਵਾਪਸ;
     }
 
-    dma_queue * dma_q = octx->ctx->dma[ith];
+    dma_ਕਤਾਰ * dma_q = octx->ctx->dma[ith];
 
-    for (uint32_t ir = src0_start_row, vtcm_idx = 0; ir < src0_end_row && vtcm_idx < 2; vtcm_idx++) {
-        const uint32_t block_size = unary_block_size(ir, src0_end_row, BLOCK, src0_contig, dst_contig,
+    ਲਈ (uint32_t ir = src0_ਸ਼ੁਰੂ_ਪੰਕਤੀ, vtcm_idx = 0; ir < src0_ਸਿਰਾ_ਪੰਕਤੀ && vtcm_idx < 2; vtcm_idx++) {
+        ਅਚਲ uint32_t ਖੰਡ_ਮਾਪ_3 = unary_ਖੰਡ_ਮਾਪ(ir, src0_ਸਿਰਾ_ਪੰਕਤੀ, ਖੰਡ_2, src0_contig, dst_contig,
                                                      ne01, div_ne01);
 
-        dma_queue_push(dma_q,
-            dma_make_data(data_dst, dst_vtcm_data + (vtcm_idx * dst_vtcm_half_size)),
-            nb1, dst_row_size_aligned, dst_data_row_size, 0);
+        dma_ਕਤਾਰ_ਧੱਕੋ(dma_q,
+            dma_make_ਅੰਕੜੇ(ਅੰਕੜੇ_dst, dst_vtcm_ਅੰਕੜੇ + (vtcm_idx * dst_vtcm_half_ਮਾਪ)),
+            nb1, dst_ਪੰਕਤੀ_ਮਾਪ_aligned, dst_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ, 0);
 
-        const size_t src0_off = src0_contig ? (ir * nb01) :
-            unary_row_offset(ir, ne01, ne02, div_ne01, div_ne02, div_ne012, nb01, nb02, nb03);
-        dma_queue_push(dma_q,
-            dma_make_data(src0_vtcm_data + (vtcm_idx * src0_vtcm_half_size), data_src + src0_off),
-            src0_row_size_aligned, nb01, src0_data_row_size, block_size);
+        ਅਚਲ size_t src0_off = src0_contig ? (ir * nb01) :
+            unary_ਪੰਕਤੀ_ਵਿੱਥ(ir, ne01, ne02, div_ne01, div_ne02, div_ne012, nb01, nb02, nb03);
+        dma_ਕਤਾਰ_ਧੱਕੋ(dma_q,
+            dma_make_ਅੰਕੜੇ(src0_vtcm_ਅੰਕੜੇ + (vtcm_idx * src0_vtcm_half_ਮਾਪ), ਅੰਕੜੇ_src + src0_off),
+            src0_ਪੰਕਤੀ_ਮਾਪ_aligned, nb01, src0_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ, ਖੰਡ_ਮਾਪ_3);
 
-        ir += block_size;
+        ir += ਖੰਡ_ਮਾਪ_3;
     }
 
     unary_tri_compute_fn_t compute = (unary_tri_compute_fn_t) uctx->compute;
 
-    for (uint32_t ir = src0_start_row; ir < src0_end_row; ) {
-        const uint32_t block_size = unary_block_size(ir, src0_end_row, BLOCK, src0_contig, dst_contig,
+    ਲਈ (uint32_t ir = src0_ਸ਼ੁਰੂ_ਪੰਕਤੀ; ir < src0_ਸਿਰਾ_ਪੰਕਤੀ; ) {
+        ਅਚਲ uint32_t ਖੰਡ_ਮਾਪ_3 = unary_ਖੰਡ_ਮਾਪ(ir, src0_ਸਿਰਾ_ਪੰਕਤੀ, ਖੰਡ_2, src0_contig, dst_contig,
                                                      ne01, div_ne01);
 
-        void * dst_vtcm  = (void *) (uintptr_t) dma_queue_pop(dma_q).src;
-        void * src0_vtcm = (void *) (uintptr_t) dma_queue_pop(dma_q).dst;
+        ਖਾਲੀ * dst_vtcm  = (ਖਾਲੀ *) (uintptr_t) dma_ਕਤਾਰ_ਕੱਢੋ(dma_q).src;
+        ਖਾਲੀ * src0_vtcm = (ਖਾਲੀ *) (uintptr_t) dma_ਕਤਾਰ_ਕੱਢੋ(dma_q).dst;
 
-        htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, ir);
-        compute(src0_vtcm, dst_vtcm, block_size, ir, uctx);
+        htp_trace_event_ਸ਼ੁਰੂ(tr, HTP_TRACE_EVT_HVX_COMP, ir);
+        compute(src0_vtcm, dst_vtcm, ਖੰਡ_ਮਾਪ_3, ir, uctx);
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, ir);
 
-        const size_t dst_off = dst_contig ? (ir * nb1) :
-            unary_row_offset(ir, ne1, ne2, div_ne01, div_ne02, div_ne012, nb1, nb2, nb3);
-        dma_queue_push(dma_q,
-            dma_make_data(data_dst + dst_off, dst_vtcm),
-            nb1, dst_row_size_aligned, dst_data_row_size, block_size);
+        ਅਚਲ size_t dst_off = dst_contig ? (ir * nb1) :
+            unary_ਪੰਕਤੀ_ਵਿੱਥ(ir, ne1, ne2, div_ne01, div_ne02, div_ne012, nb1, nb2, nb3);
+        dma_ਕਤਾਰ_ਧੱਕੋ(dma_q,
+            dma_make_ਅੰਕੜੇ(ਅੰਕੜੇ_dst + dst_off, dst_vtcm),
+            nb1, dst_ਪੰਕਤੀ_ਮਾਪ_aligned, dst_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ, ਖੰਡ_ਮਾਪ_3);
 
-        const uint32_t next_ir = ir + block_size;
-        if (next_ir < src0_end_row) {
-            const uint32_t next_block_size = unary_block_size(next_ir, src0_end_row, BLOCK, src0_contig,
+        ਅਚਲ uint32_t ਅਗਲਾ_ir = ir + ਖੰਡ_ਮਾਪ_3;
+        ਜੇ (ਅਗਲਾ_ir < src0_ਸਿਰਾ_ਪੰਕਤੀ) {
+            ਅਚਲ uint32_t ਅਗਲਾ_ਖੰਡ_ਮਾਪ = unary_ਖੰਡ_ਮਾਪ(ਅਗਲਾ_ir, src0_ਸਿਰਾ_ਪੰਕਤੀ, ਖੰਡ_2, src0_contig,
                                                               dst_contig, ne01, div_ne01);
-            const uint32_t pref_ir = next_ir + next_block_size;
-            if (pref_ir < src0_end_row) {
-                const uint32_t pref_block_size = unary_block_size(pref_ir, src0_end_row, BLOCK, src0_contig,
+            ਅਚਲ uint32_t pref_ir = ਅਗਲਾ_ir + ਅਗਲਾ_ਖੰਡ_ਮਾਪ;
+            ਜੇ (pref_ir < src0_ਸਿਰਾ_ਪੰਕਤੀ) {
+                ਅਚਲ uint32_t pref_ਖੰਡ_ਮਾਪ = unary_ਖੰਡ_ਮਾਪ(pref_ir, src0_ਸਿਰਾ_ਪੰਕਤੀ, ਖੰਡ_2, src0_contig,
                                                                   dst_contig, ne01, div_ne01);
-                const size_t src0_pref_off = src0_contig ? (pref_ir * nb01) :
-                    unary_row_offset(pref_ir, ne01, ne02, div_ne01, div_ne02, div_ne012, nb01, nb02, nb03);
-                dma_queue_push(dma_q,
-                    dma_make_data(src0_vtcm, data_src + src0_pref_off),
-                    src0_row_size_aligned, nb01, src0_data_row_size, pref_block_size);
+                ਅਚਲ size_t src0_pref_off = src0_contig ? (pref_ir * nb01) :
+                    unary_ਪੰਕਤੀ_ਵਿੱਥ(pref_ir, ne01, ne02, div_ne01, div_ne02, div_ne012, nb01, nb02, nb03);
+                dma_ਕਤਾਰ_ਧੱਕੋ(dma_q,
+                    dma_make_ਅੰਕੜੇ(src0_vtcm, ਅੰਕੜੇ_src + src0_pref_off),
+                    src0_ਪੰਕਤੀ_ਮਾਪ_aligned, nb01, src0_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ, pref_ਖੰਡ_ਮਾਪ);
             }
         }
-        ir += block_size;
+        ir += ਖੰਡ_ਮਾਪ_3;
     }
 
-    dma_queue_flush(dma_q);
+    dma_ਕਤਾਰ_flush(dma_q);
 }
 
 // 4. Pointwise tiled unary task.
-static void unary_thread_tiled(unsigned int nth, unsigned int ith, void * data) {
-    (void) nth;
-    const struct htp_unary_context * uctx = (const struct htp_unary_context *) data;
-    struct htp_ops_context * octx = uctx->octx;
-    const struct htp_tensor * src = octx->src[0];
-    const struct htp_tensor * dst = octx->dst;
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
+ਸਥਿਰ ਖਾਲੀ unary_thread_tiled(ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ nth, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ ith, ਖਾਲੀ * ਅੰਕੜੇ) {
+    (ਖਾਲੀ) nth;
+    ਅਚਲ ਬਣਤਰ htp_unary_context * uctx = (ਅਚਲ ਬਣਤਰ htp_unary_context *) ਅੰਕੜੇ;
+    ਬਣਤਰ htp_ops_context * octx = uctx->octx;
+    ਅਚਲ ਬਣਤਰ htp_tensor * src = octx->src[0];
+    ਅਚਲ ਬਣਤਰ htp_tensor * dst = octx->dst;
+    ਬਣਤਰ htp_thread_trace * tr = &octx->ctx->trace[ith];
 
     htp_unary_preamble;
 
-    const uint32_t src0_nrows_per_thread = uctx->src0_nrows_per_thread;
-    const uint32_t col_tile              = uctx->col_tile;
+    ਅਚਲ uint32_t src0_nrows_ਪ੍ਰਤੀ_thread = uctx->src0_nrows_ਪ੍ਰਤੀ_thread;
+    ਅਚਲ uint32_t ਖਾਨਾ_tile              = uctx->ਖਾਨਾ_tile;
 
-    const uint32_t src0_nrows     = uctx->src0_nrows;
-    const uint32_t src0_start_row = uctx->row_start + src0_nrows_per_thread * ith;
-    const uint32_t src0_end_row   = MIN(src0_start_row + src0_nrows_per_thread, uctx->row_start + src0_nrows);
+    ਅਚਲ uint32_t src0_nrows     = uctx->src0_nrows;
+    ਅਚਲ uint32_t src0_ਸ਼ੁਰੂ_ਪੰਕਤੀ = uctx->ਪੰਕਤੀ_ਸ਼ੁਰੂ + src0_nrows_ਪ੍ਰਤੀ_thread * ith;
+    ਅਚਲ uint32_t src0_ਸਿਰਾ_ਪੰਕਤੀ   = MIN(src0_ਸ਼ੁਰੂ_ਪੰਕਤੀ + src0_nrows_ਪ੍ਰਤੀ_thread, uctx->ਪੰਕਤੀ_ਸ਼ੁਰੂ + src0_nrows);
 
-    if (src0_start_row >= src0_end_row) {
-        return;
+    ਜੇ (src0_ਸ਼ੁਰੂ_ਪੰਕਤੀ >= src0_ਸਿਰਾ_ਪੰਕਤੀ) {
+        ਵਾਪਸ;
     }
 
-    const dma_addr_t data_src = uctx->data_src0;
-    const dma_addr_t data_dst = uctx->data_dst;
+    ਅਚਲ dma_addr_t ਅੰਕੜੇ_src = uctx->ਅੰਕੜੇ_src0;
+    ਅਚਲ dma_addr_t ਅੰਕੜੇ_dst = uctx->ਅੰਕੜੇ_dst;
 
-    uint8_t * src0_vtcm_data = uctx->vtcm_src0 + (ith * uctx->vtcm_src0_size_per_thread);
-    uint8_t * dst_vtcm_data  = uctx->vtcm_dst + (ith * uctx->vtcm_dst_size_per_thread);
+    uint8_t * src0_vtcm_ਅੰਕੜੇ = uctx->vtcm_src0 + (ith * uctx->vtcm_src0_ਮਾਪ_ਪ੍ਰਤੀ_thread);
+    uint8_t * dst_vtcm_ਅੰਕੜੇ  = uctx->vtcm_dst + (ith * uctx->vtcm_dst_ਮਾਪ_ਪ੍ਰਤੀ_thread);
 
-    const size_t src0_half = uctx->src0_vtcm_half_size;
-    const size_t dst_half  = uctx->dst_vtcm_half_size;
+    ਅਚਲ size_t src0_half = uctx->src0_vtcm_half_ਮਾਪ;
+    ਅਚਲ size_t dst_half  = uctx->dst_vtcm_half_ਮਾਪ;
 
-    dma_queue * dma_q = octx->ctx->dma[ith];
+    dma_ਕਤਾਰ * dma_q = octx->ctx->dma[ith];
 
-    const struct fastdiv_values * div_ne01  = &uctx->kparams->div_ne01;
-    const struct fastdiv_values * div_ne02  = &uctx->kparams->div_ne02;
-    const struct fastdiv_values * div_ne012 = &uctx->kparams->div_ne012;
-    const struct fastdiv_values * div_tpr   = &uctx->kparams->div_tpr;
+    ਅਚਲ ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ * div_ne01  = &uctx->kparams->div_ne01;
+    ਅਚਲ ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ * div_ne02  = &uctx->kparams->div_ne02;
+    ਅਚਲ ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ * div_ne012 = &uctx->kparams->div_ne012;
+    ਅਚਲ ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ * div_tpr   = &uctx->kparams->div_tpr;
 
-    const uint32_t tiles_per_row = (ne0 + col_tile - 1) / col_tile;
+    ਅਚਲ uint32_t tiles_ਪ੍ਰਤੀ_ਪੰਕਤੀ = (ne0 + ਖਾਨਾ_tile - 1) / ਖਾਨਾ_tile;
 
-    const bool src0_contig = (nb02 == (size_t)ne01 * nb01) &&
+    ਅਚਲ bool src0_contig = (nb02 == (size_t)ne01 * nb01) &&
                              (nb03 == (size_t)ne02 * nb02);
-    const bool dst_contig  = (nb2  == (size_t)ne1  * nb1)  &&
+    ਅਚਲ bool dst_contig  = (nb2  == (size_t)ne1  * nb1)  &&
                              (nb3  == (size_t)ne2  * nb2);
 
-    const uint32_t total_tiles = (src0_end_row - src0_start_row) * tiles_per_row;
+    ਅਚਲ uint32_t ਕੁੱਲ_tiles = (src0_ਸਿਰਾ_ਪੰਕਤੀ - src0_ਸ਼ੁਰੂ_ਪੰਕਤੀ) * tiles_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
 
-    for (uint32_t t = 0, vtcm_idx = 0; t < total_tiles && vtcm_idx < 2; t++, vtcm_idx++) {
-        const uint32_t row  = src0_start_row + t / tiles_per_row;
-        const uint32_t col  = (t % tiles_per_row) * col_tile;
-        const uint32_t tw   = MIN(col_tile, ne0 - col);
-        const size_t   tb   = (size_t) tw * sizeof(float);
-        const size_t   soff = (src0_contig ? (row * nb01) :
-                               unary_row_offset(row, ne01, ne02, div_ne01, div_ne02, div_ne012, nb01, nb02, nb03)) +
-                               (size_t) col * sizeof(float);
+    ਲਈ (uint32_t t = 0, vtcm_idx = 0; t < ਕੁੱਲ_tiles && vtcm_idx < 2; t++, vtcm_idx++) {
+        ਅਚਲ uint32_t ਪੰਕਤੀ  = src0_ਸ਼ੁਰੂ_ਪੰਕਤੀ + t / tiles_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+        ਅਚਲ uint32_t ਖਾਨਾ  = (t % tiles_ਪ੍ਰਤੀ_ਪੰਕਤੀ) * ਖਾਨਾ_tile;
+        ਅਚਲ uint32_t tw   = MIN(ਖਾਨਾ_tile, ne0 - ਖਾਨਾ);
+        ਅਚਲ size_t   tb   = (size_t) tw * ਆਕਾਰ(ਦਸ਼ਮਲਵ);
+        ਅਚਲ size_t   soff = (src0_contig ? (ਪੰਕਤੀ * nb01) :
+                               unary_ਪੰਕਤੀ_ਵਿੱਥ(ਪੰਕਤੀ, ne01, ne02, div_ne01, div_ne02, div_ne012, nb01, nb02, nb03)) +
+                               (size_t) ਖਾਨਾ * ਆਕਾਰ(ਦਸ਼ਮਲਵ);
 
-        dma_queue_push(dma_q, dma_make_data(data_dst, dst_vtcm_data + (vtcm_idx * dst_half)), 0, 0, 0, 0);
-        dma_queue_push(dma_q, dma_make_data(src0_vtcm_data + (vtcm_idx * src0_half), data_src + soff), tb, tb, tb, 1);
+        dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(ਅੰਕੜੇ_dst, dst_vtcm_ਅੰਕੜੇ + (vtcm_idx * dst_half)), 0, 0, 0, 0);
+        dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(src0_vtcm_ਅੰਕੜੇ + (vtcm_idx * src0_half), ਅੰਕੜੇ_src + soff), tb, tb, tb, 1);
     }
 
     unary_tile_compute_fn_t compute = (unary_tile_compute_fn_t) uctx->compute;
 
-    uint32_t row = src0_start_row;
-    uint32_t col = 0;
-    uint32_t tile_in_row = 0;
+    uint32_t ਪੰਕਤੀ = src0_ਸ਼ੁਰੂ_ਪੰਕਤੀ;
+    uint32_t ਖਾਨਾ = 0;
+    uint32_t tile_ਵਿੱਚ_ਪੰਕਤੀ = 0;
 
-    uint32_t prow = src0_start_row + fastdiv(2, div_tpr);
-    uint32_t pcol = fastmodulo(2, tiles_per_row, div_tpr) * col_tile;
-    uint32_t ptile_in_row = fastmodulo(2, tiles_per_row, div_tpr);
+    uint32_t prow = src0_ਸ਼ੁਰੂ_ਪੰਕਤੀ + fastdiv(2, div_tpr);
+    uint32_t pcol = fastmodulo(2, tiles_ਪ੍ਰਤੀ_ਪੰਕਤੀ, div_tpr) * ਖਾਨਾ_tile;
+    uint32_t ptile_ਵਿੱਚ_ਪੰਕਤੀ = fastmodulo(2, tiles_ਪ੍ਰਤੀ_ਪੰਕਤੀ, div_tpr);
 
-    for (uint32_t t = 0; t < total_tiles; t++) {
-        void * dst_vtcm = (void *) (uintptr_t) dma_queue_pop(dma_q).src;
-        void * src_vtcm = (void *) (uintptr_t) dma_queue_pop(dma_q).dst;
+    ਲਈ (uint32_t t = 0; t < ਕੁੱਲ_tiles; t++) {
+        ਖਾਲੀ * dst_vtcm = (ਖਾਲੀ *) (uintptr_t) dma_ਕਤਾਰ_ਕੱਢੋ(dma_q).src;
+        ਖਾਲੀ * src_vtcm = (ਖਾਲੀ *) (uintptr_t) dma_ਕਤਾਰ_ਕੱਢੋ(dma_q).dst;
 
-        const uint32_t tw = MIN(col_tile, ne0 - col);
+        ਅਚਲ uint32_t tw = MIN(ਖਾਨਾ_tile, ne0 - ਖਾਨਾ);
 
-        htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, t);
+        htp_trace_event_ਸ਼ੁਰੂ(tr, HTP_TRACE_EVT_HVX_COMP, t);
         compute(dst_vtcm, src_vtcm, tw, uctx);
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, t);
 
-        const size_t doff = (dst_contig ? (row * nb1) :
-                             unary_row_offset(row, ne1, ne2, div_ne01, div_ne02, div_ne012, nb1, nb2, nb3)) +
-                             (size_t) col * sizeof(float);
-        const size_t tb   = (size_t) tw * sizeof(float);
-        dma_queue_push(dma_q, dma_make_data(data_dst + doff, dst_vtcm), tb, tb, tb, 1);
+        ਅਚਲ size_t doff = (dst_contig ? (ਪੰਕਤੀ * nb1) :
+                             unary_ਪੰਕਤੀ_ਵਿੱਥ(ਪੰਕਤੀ, ne1, ne2, div_ne01, div_ne02, div_ne012, nb1, nb2, nb3)) +
+                             (size_t) ਖਾਨਾ * ਆਕਾਰ(ਦਸ਼ਮਲਵ);
+        ਅਚਲ size_t tb   = (size_t) tw * ਆਕਾਰ(ਦਸ਼ਮਲਵ);
+        dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(ਅੰਕੜੇ_dst + doff, dst_vtcm), tb, tb, tb, 1);
 
-        const uint32_t pt = t + 2;
-        if (pt < total_tiles) {
-            const uint32_t ptw  = MIN(col_tile, ne0 - pcol);
-            const size_t   ptb  = (size_t) ptw * sizeof(float);
-            const size_t   psoff = (src0_contig ? (prow * nb01) :
-                                    unary_row_offset(prow, ne01, ne02, div_ne01, div_ne02, div_ne012, nb01, nb02,
+        ਅਚਲ uint32_t pt = t + 2;
+        ਜੇ (pt < ਕੁੱਲ_tiles) {
+            ਅਚਲ uint32_t ptw  = MIN(ਖਾਨਾ_tile, ne0 - pcol);
+            ਅਚਲ size_t   ptb  = (size_t) ptw * ਆਕਾਰ(ਦਸ਼ਮਲਵ);
+            ਅਚਲ size_t   psoff = (src0_contig ? (prow * nb01) :
+                                    unary_ਪੰਕਤੀ_ਵਿੱਥ(prow, ne01, ne02, div_ne01, div_ne02, div_ne012, nb01, nb02,
                                                      nb03)) +
-                                   (size_t) pcol * sizeof(float);
-            dma_queue_push(dma_q, dma_make_data(src_vtcm, data_src + psoff), ptb, ptb, ptb, 1);
+                                   (size_t) pcol * ਆਕਾਰ(ਦਸ਼ਮਲਵ);
+            dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(src_vtcm, ਅੰਕੜੇ_src + psoff), ptb, ptb, ptb, 1);
         }
 
-        tile_in_row++;
-        col += col_tile;
-        if (tile_in_row == tiles_per_row) {
-            tile_in_row = 0;
-            col = 0;
-            row++;
+        tile_ਵਿੱਚ_ਪੰਕਤੀ++;
+        ਖਾਨਾ += ਖਾਨਾ_tile;
+        ਜੇ (tile_ਵਿੱਚ_ਪੰਕਤੀ == tiles_ਪ੍ਰਤੀ_ਪੰਕਤੀ) {
+            tile_ਵਿੱਚ_ਪੰਕਤੀ = 0;
+            ਖਾਨਾ = 0;
+            ਪੰਕਤੀ++;
         }
 
-        ptile_in_row++;
-        pcol += col_tile;
-        if (ptile_in_row == tiles_per_row) {
-            ptile_in_row = 0;
+        ptile_ਵਿੱਚ_ਪੰਕਤੀ++;
+        pcol += ਖਾਨਾ_tile;
+        ਜੇ (ptile_ਵਿੱਚ_ਪੰਕਤੀ == tiles_ਪ੍ਰਤੀ_ਪੰਕਤੀ) {
+            ptile_ਵਿੱਚ_ਪੰਕਤੀ = 0;
             pcol = 0;
             prow++;
         }
     }
 
-    dma_queue_flush(dma_q);
+    dma_ਕਤਾਰ_flush(dma_q);
 }
 
 // 5. TRI tiled task.
-static void unary_thread_tiled_tri_f32(unsigned int nth, unsigned int ith, void * data) {
-    (void) nth;
-    const struct htp_unary_context * uctx = (const struct htp_unary_context *) data;
-    struct htp_ops_context * octx = uctx->octx;
-    const struct htp_tensor * src = octx->src[0];
-    const struct htp_tensor * dst = octx->dst;
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
+ਸਥਿਰ ਖਾਲੀ unary_thread_tiled_tri_f32(ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ nth, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ ith, ਖਾਲੀ * ਅੰਕੜੇ) {
+    (ਖਾਲੀ) nth;
+    ਅਚਲ ਬਣਤਰ htp_unary_context * uctx = (ਅਚਲ ਬਣਤਰ htp_unary_context *) ਅੰਕੜੇ;
+    ਬਣਤਰ htp_ops_context * octx = uctx->octx;
+    ਅਚਲ ਬਣਤਰ htp_tensor * src = octx->src[0];
+    ਅਚਲ ਬਣਤਰ htp_tensor * dst = octx->dst;
+    ਬਣਤਰ htp_thread_trace * tr = &octx->ctx->trace[ith];
 
     htp_unary_preamble;
 
-    const uint32_t src0_nrows_per_thread = uctx->src0_nrows_per_thread;
-    const int32_t * op_params            = octx->op_params;
-    const uint32_t col_tile              = uctx->col_tile;
+    ਅਚਲ uint32_t src0_nrows_ਪ੍ਰਤੀ_thread = uctx->src0_nrows_ਪ੍ਰਤੀ_thread;
+    ਅਚਲ int32_t * op_params            = octx->op_params;
+    ਅਚਲ uint32_t ਖਾਨਾ_tile              = uctx->ਖਾਨਾ_tile;
 
-    const uint32_t src0_nrows     = uctx->src0_nrows;
-    const uint32_t src0_start_row = uctx->row_start + src0_nrows_per_thread * ith;
-    const uint32_t src0_end_row   = MIN(src0_start_row + src0_nrows_per_thread, uctx->row_start + src0_nrows);
+    ਅਚਲ uint32_t src0_nrows     = uctx->src0_nrows;
+    ਅਚਲ uint32_t src0_ਸ਼ੁਰੂ_ਪੰਕਤੀ = uctx->ਪੰਕਤੀ_ਸ਼ੁਰੂ + src0_nrows_ਪ੍ਰਤੀ_thread * ith;
+    ਅਚਲ uint32_t src0_ਸਿਰਾ_ਪੰਕਤੀ   = MIN(src0_ਸ਼ੁਰੂ_ਪੰਕਤੀ + src0_nrows_ਪ੍ਰਤੀ_thread, uctx->ਪੰਕਤੀ_ਸ਼ੁਰੂ + src0_nrows);
 
-    if (src0_start_row >= src0_end_row) {
-        return;
+    ਜੇ (src0_ਸ਼ੁਰੂ_ਪੰਕਤੀ >= src0_ਸਿਰਾ_ਪੰਕਤੀ) {
+        ਵਾਪਸ;
     }
 
-    const dma_addr_t data_src = uctx->data_src0;
-    const dma_addr_t data_dst = uctx->data_dst;
+    ਅਚਲ dma_addr_t ਅੰਕੜੇ_src = uctx->ਅੰਕੜੇ_src0;
+    ਅਚਲ dma_addr_t ਅੰਕੜੇ_dst = uctx->ਅੰਕੜੇ_dst;
 
-    uint8_t * src0_vtcm_data = uctx->vtcm_src0 + (ith * uctx->vtcm_src0_size_per_thread);
-    uint8_t * dst_vtcm_data  = uctx->vtcm_dst + (ith * uctx->vtcm_dst_size_per_thread);
+    uint8_t * src0_vtcm_ਅੰਕੜੇ = uctx->vtcm_src0 + (ith * uctx->vtcm_src0_ਮਾਪ_ਪ੍ਰਤੀ_thread);
+    uint8_t * dst_vtcm_ਅੰਕੜੇ  = uctx->vtcm_dst + (ith * uctx->vtcm_dst_ਮਾਪ_ਪ੍ਰਤੀ_thread);
 
-    const size_t src0_half = uctx->src0_vtcm_half_size;
-    const size_t dst_half  = uctx->dst_vtcm_half_size;
+    ਅਚਲ size_t src0_half = uctx->src0_vtcm_half_ਮਾਪ;
+    ਅਚਲ size_t dst_half  = uctx->dst_vtcm_half_ਮਾਪ;
 
-    dma_queue * dma_q = octx->ctx->dma[ith];
+    dma_ਕਤਾਰ * dma_q = octx->ctx->dma[ith];
 
-    const struct fastdiv_values * div_ne01  = &uctx->kparams->div_ne01;
-    const struct fastdiv_values * div_ne02  = &uctx->kparams->div_ne02;
-    const struct fastdiv_values * div_ne012 = &uctx->kparams->div_ne012;
-    const struct fastdiv_values * div_tpr   = &uctx->kparams->div_tpr;
+    ਅਚਲ ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ * div_ne01  = &uctx->kparams->div_ne01;
+    ਅਚਲ ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ * div_ne02  = &uctx->kparams->div_ne02;
+    ਅਚਲ ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ * div_ne012 = &uctx->kparams->div_ne012;
+    ਅਚਲ ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ * div_tpr   = &uctx->kparams->div_tpr;
 
-    const uint32_t tiles_per_row = (ne0 + col_tile - 1) / col_tile;
-    const int32_t  tri_ttype     = op_params[0];
+    ਅਚਲ uint32_t tiles_ਪ੍ਰਤੀ_ਪੰਕਤੀ = (ne0 + ਖਾਨਾ_tile - 1) / ਖਾਨਾ_tile;
+    ਅਚਲ int32_t  tri_ttype     = op_params[0];
 
-    const bool src0_contig = (nb02 == (size_t)ne01 * nb01) &&
+    ਅਚਲ bool src0_contig = (nb02 == (size_t)ne01 * nb01) &&
                              (nb03 == (size_t)ne02 * nb02);
-    const bool dst_contig  = (nb2  == (size_t)ne1  * nb1)  &&
+    ਅਚਲ bool dst_contig  = (nb2  == (size_t)ne1  * nb1)  &&
                              (nb3  == (size_t)ne2  * nb2);
 
-    const uint32_t total_tiles = (src0_end_row - src0_start_row) * tiles_per_row;
+    ਅਚਲ uint32_t ਕੁੱਲ_tiles = (src0_ਸਿਰਾ_ਪੰਕਤੀ - src0_ਸ਼ੁਰੂ_ਪੰਕਤੀ) * tiles_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
 
-    for (uint32_t t = 0, vtcm_idx = 0; t < total_tiles && vtcm_idx < 2; t++, vtcm_idx++) {
-        const uint32_t row  = src0_start_row + t / tiles_per_row;
-        const uint32_t col  = (t % tiles_per_row) * col_tile;
-        const uint32_t tw   = MIN(col_tile, ne0 - col);
-        const size_t   tb   = (size_t) tw * sizeof(float);
-        const size_t   soff = (src0_contig ? (row * nb01) :
-                               unary_row_offset(row, ne01, ne02, div_ne01, div_ne02, div_ne012, nb01, nb02, nb03)) +
-                               (size_t) col * sizeof(float);
+    ਲਈ (uint32_t t = 0, vtcm_idx = 0; t < ਕੁੱਲ_tiles && vtcm_idx < 2; t++, vtcm_idx++) {
+        ਅਚਲ uint32_t ਪੰਕਤੀ  = src0_ਸ਼ੁਰੂ_ਪੰਕਤੀ + t / tiles_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+        ਅਚਲ uint32_t ਖਾਨਾ  = (t % tiles_ਪ੍ਰਤੀ_ਪੰਕਤੀ) * ਖਾਨਾ_tile;
+        ਅਚਲ uint32_t tw   = MIN(ਖਾਨਾ_tile, ne0 - ਖਾਨਾ);
+        ਅਚਲ size_t   tb   = (size_t) tw * ਆਕਾਰ(ਦਸ਼ਮਲਵ);
+        ਅਚਲ size_t   soff = (src0_contig ? (ਪੰਕਤੀ * nb01) :
+                               unary_ਪੰਕਤੀ_ਵਿੱਥ(ਪੰਕਤੀ, ne01, ne02, div_ne01, div_ne02, div_ne012, nb01, nb02, nb03)) +
+                               (size_t) ਖਾਨਾ * ਆਕਾਰ(ਦਸ਼ਮਲਵ);
 
-        dma_queue_push(dma_q, dma_make_data(data_dst, dst_vtcm_data + (vtcm_idx * dst_half)), 0, 0, 0, 0);
-        dma_queue_push(dma_q, dma_make_data(src0_vtcm_data + (vtcm_idx * src0_half), data_src + soff), tb, tb, tb, 1);
+        dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(ਅੰਕੜੇ_dst, dst_vtcm_ਅੰਕੜੇ + (vtcm_idx * dst_half)), 0, 0, 0, 0);
+        dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(src0_vtcm_ਅੰਕੜੇ + (vtcm_idx * src0_half), ਅੰਕੜੇ_src + soff), tb, tb, tb, 1);
     }
 
     unary_tiled_tri_compute_fn_t compute = (unary_tiled_tri_compute_fn_t) uctx->compute;
 
-    uint32_t row = src0_start_row;
-    uint32_t col = 0;
-    uint32_t tile_in_row = 0;
-    uint32_t i01 = fastmodulo(row, ne01, div_ne01);
+    uint32_t ਪੰਕਤੀ = src0_ਸ਼ੁਰੂ_ਪੰਕਤੀ;
+    uint32_t ਖਾਨਾ = 0;
+    uint32_t tile_ਵਿੱਚ_ਪੰਕਤੀ = 0;
+    uint32_t i01 = fastmodulo(ਪੰਕਤੀ, ne01, div_ne01);
 
-    uint32_t prow = src0_start_row + fastdiv(2, div_tpr);
-    uint32_t pcol = fastmodulo(2, tiles_per_row, div_tpr) * col_tile;
-    uint32_t ptile_in_row = fastmodulo(2, tiles_per_row, div_tpr);
+    uint32_t prow = src0_ਸ਼ੁਰੂ_ਪੰਕਤੀ + fastdiv(2, div_tpr);
+    uint32_t pcol = fastmodulo(2, tiles_ਪ੍ਰਤੀ_ਪੰਕਤੀ, div_tpr) * ਖਾਨਾ_tile;
+    uint32_t ptile_ਵਿੱਚ_ਪੰਕਤੀ = fastmodulo(2, tiles_ਪ੍ਰਤੀ_ਪੰਕਤੀ, div_tpr);
 
-    for (uint32_t t = 0; t < total_tiles; t++) {
-        void * dst_vtcm = (void *) (uintptr_t) dma_queue_pop(dma_q).src;
-        void * src_vtcm = (void *) (uintptr_t) dma_queue_pop(dma_q).dst;
+    ਲਈ (uint32_t t = 0; t < ਕੁੱਲ_tiles; t++) {
+        ਖਾਲੀ * dst_vtcm = (ਖਾਲੀ *) (uintptr_t) dma_ਕਤਾਰ_ਕੱਢੋ(dma_q).src;
+        ਖਾਲੀ * src_vtcm = (ਖਾਲੀ *) (uintptr_t) dma_ਕਤਾਰ_ਕੱਢੋ(dma_q).dst;
 
-        const uint32_t tw = MIN(col_tile, ne0 - col);
+        ਅਚਲ uint32_t tw = MIN(ਖਾਨਾ_tile, ne0 - ਖਾਨਾ);
 
-        htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, t);
-        compute(src_vtcm, dst_vtcm, tw, col, i01, ne0, tri_ttype);
+        htp_trace_event_ਸ਼ੁਰੂ(tr, HTP_TRACE_EVT_HVX_COMP, t);
+        compute(src_vtcm, dst_vtcm, tw, ਖਾਨਾ, i01, ne0, tri_ttype);
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, t);
 
-        const size_t doff = (dst_contig ? (row * nb1) :
-                             unary_row_offset(row, ne1, ne2, div_ne01, div_ne02, div_ne012, nb1, nb2, nb3)) +
-                             (size_t) col * sizeof(float);
-        const size_t tb   = (size_t) tw * sizeof(float);
-        dma_queue_push(dma_q, dma_make_data(data_dst + doff, dst_vtcm), tb, tb, tb, 1);
+        ਅਚਲ size_t doff = (dst_contig ? (ਪੰਕਤੀ * nb1) :
+                             unary_ਪੰਕਤੀ_ਵਿੱਥ(ਪੰਕਤੀ, ne1, ne2, div_ne01, div_ne02, div_ne012, nb1, nb2, nb3)) +
+                             (size_t) ਖਾਨਾ * ਆਕਾਰ(ਦਸ਼ਮਲਵ);
+        ਅਚਲ size_t tb   = (size_t) tw * ਆਕਾਰ(ਦਸ਼ਮਲਵ);
+        dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(ਅੰਕੜੇ_dst + doff, dst_vtcm), tb, tb, tb, 1);
 
-        const uint32_t pt = t + 2;
-        if (pt < total_tiles) {
-            const uint32_t ptw  = MIN(col_tile, ne0 - pcol);
-            const size_t   ptb  = (size_t) ptw * sizeof(float);
-            const size_t   psoff = (src0_contig ? (prow * nb01) :
-                                    unary_row_offset(prow, ne01, ne02, div_ne01, div_ne02, div_ne012, nb01, nb02,
+        ਅਚਲ uint32_t pt = t + 2;
+        ਜੇ (pt < ਕੁੱਲ_tiles) {
+            ਅਚਲ uint32_t ptw  = MIN(ਖਾਨਾ_tile, ne0 - pcol);
+            ਅਚਲ size_t   ptb  = (size_t) ptw * ਆਕਾਰ(ਦਸ਼ਮਲਵ);
+            ਅਚਲ size_t   psoff = (src0_contig ? (prow * nb01) :
+                                    unary_ਪੰਕਤੀ_ਵਿੱਥ(prow, ne01, ne02, div_ne01, div_ne02, div_ne012, nb01, nb02,
                                                      nb03)) +
-                                   (size_t) pcol * sizeof(float);
-            dma_queue_push(dma_q, dma_make_data(src_vtcm, data_src + psoff), ptb, ptb, ptb, 1);
+                                   (size_t) pcol * ਆਕਾਰ(ਦਸ਼ਮਲਵ);
+            dma_ਕਤਾਰ_ਧੱਕੋ(dma_q, dma_make_ਅੰਕੜੇ(src_vtcm, ਅੰਕੜੇ_src + psoff), ptb, ptb, ptb, 1);
         }
 
-        tile_in_row++;
-        col += col_tile;
-        if (tile_in_row == tiles_per_row) {
-            tile_in_row = 0;
-            col = 0;
-            row++;
+        tile_ਵਿੱਚ_ਪੰਕਤੀ++;
+        ਖਾਨਾ += ਖਾਨਾ_tile;
+        ਜੇ (tile_ਵਿੱਚ_ਪੰਕਤੀ == tiles_ਪ੍ਰਤੀ_ਪੰਕਤੀ) {
+            tile_ਵਿੱਚ_ਪੰਕਤੀ = 0;
+            ਖਾਨਾ = 0;
+            ਪੰਕਤੀ++;
             i01++;
-            if (i01 == ne01) {
+            ਜੇ (i01 == ne01) {
                 i01 = 0;
             }
         }
 
-        ptile_in_row++;
-        pcol += col_tile;
-        if (ptile_in_row == tiles_per_row) {
-            ptile_in_row = 0;
+        ptile_ਵਿੱਚ_ਪੰਕਤੀ++;
+        pcol += ਖਾਨਾ_tile;
+        ਜੇ (ptile_ਵਿੱਚ_ਪੰਕਤੀ == tiles_ਪ੍ਰਤੀ_ਪੰਕਤੀ) {
+            ptile_ਵਿੱਚ_ਪੰਕਤੀ = 0;
             pcol = 0;
             prow++;
         }
     }
 
-    dma_queue_flush(dma_q);
+    dma_ਕਤਾਰ_flush(dma_q);
 }
 
-static int execute_op_unary(struct htp_ops_context * octx) {
-    int err = HTP_STATUS_OK;
+ਸਥਿਰ ਪੂਰਨ execute_op_unary(ਬਣਤਰ htp_ops_context * octx) {
+    ਪੂਰਨ err = HTP_ਸਥਿਤੀ_OK;
 
-    const struct htp_tensor * src0 = octx->src[0];
-    const struct htp_tensor * dst  = octx->dst;
+    ਅਚਲ ਬਣਤਰ htp_tensor * src0 = octx->src[0];
+    ਅਚਲ ਬਣਤਰ htp_tensor * dst  = octx->dst;
 
-    const bool is_f16 = (src0->type == HTP_TYPE_F16);
+    ਅਚਲ bool is_f16 = (src0->type == HTP_TYPE_F16);
 
-    const char * op_type = NULL;
+    ਅਚਲ ਅੱਖਰ * op_type = ਨਿਰਾ;
 
-    switch (octx->op) {
-        case HTP_OP_NORM:            op_type = is_f16 ? "norm-f16"     : "norm-f32";         break;
-        case HTP_OP_RMS_NORM:        op_type = is_f16 ? "rmsnorm-f16"  : "rmsnorm-f32";      break;
-        case HTP_OP_RMS_NORM_MUL:    op_type = "rmsnorm-mul-f32";                            break;
-        case HTP_OP_SCALE:           op_type = is_f16 ? "scale-f16"    : "scale-f32";        break;
-        case HTP_OP_CLAMP:           op_type = is_f16 ? "clamp-f16"    : "clamp-f32";        break;
-        case HTP_OP_LEAKY_RELU:      op_type = "leaky-relu-f32";                             break;
-        case HTP_OP_SQR:             op_type = is_f16 ? "sqr-f16"      : "sqr-f32";          break;
-        case HTP_OP_SQRT:            op_type = is_f16 ? "sqrt-f16"     : "sqrt-f32";         break;
-        case HTP_OP_UNARY_NEG:       op_type = "neg-f32";                                    break;
-        case HTP_OP_UNARY_EXP:       op_type = "exp-f32";                                    break;
-        case HTP_OP_UNARY_SIGMOID:   op_type = "sigmoid-f32";                                break;
-        case HTP_OP_UNARY_SILU:      op_type = "silu-f32";                                   break;
-        case HTP_OP_UNARY_GELU:      op_type = "gelu-f32";                                   break;
-        case HTP_OP_UNARY_GELU_QUICK: op_type = "gelu-quick-f32";                             break;
-        case HTP_OP_UNARY_GELU_ERF:  op_type = "gelu-erf-f32";                               break;
-        case HTP_OP_UNARY_SOFTPLUS:  op_type = "softplus-f32";                               break;
-        case HTP_OP_UNARY_TANH:      op_type = "tanh-f32";                                   break;
-        case HTP_OP_UNARY_ABS:       op_type = is_f16 ? "abs-f16"      : "abs-f32";          break;
-        case HTP_OP_UNARY_LOG:       op_type = is_f16 ? "log-f16"      : "log-f32";          break;
-        case HTP_OP_UNARY_RELU:      op_type = "relu-f32";                                   break;
-        case HTP_OP_UNARY_STEP:      op_type = is_f16 ? "step-f16"     : "step-f32";         break;
-        case HTP_OP_L2_NORM:         op_type = is_f16 ? "l2norm-f16"   : "l2norm-f32";       break;
-        case HTP_OP_TRI:             op_type = "tri-f32";                                    break;
-        case HTP_OP_HADAMARD:        op_type = is_f16 ? "hadamard-f16" : "hadamard-f32";     break;
-        default:
+    ਚੋਣ (octx->op) {
+        ਹਾਲਤ HTP_OP_NORM:            op_type = is_f16 ? "norm-f16"     : "norm-f32";         ਰੋਕੋ;
+        ਹਾਲਤ HTP_OP_RMS_NORM:        op_type = is_f16 ? "rmsnorm-f16"  : "rmsnorm-f32";      ਰੋਕੋ;
+        ਹਾਲਤ HTP_OP_RMS_NORM_MUL:    op_type = "rmsnorm-mul-f32";                            ਰੋਕੋ;
+        ਹਾਲਤ HTP_OP_SCALE:           op_type = is_f16 ? "scale-f16"    : "scale-f32";        ਰੋਕੋ;
+        ਹਾਲਤ HTP_OP_CLAMP:           op_type = is_f16 ? "clamp-f16"    : "clamp-f32";        ਰੋਕੋ;
+        ਹਾਲਤ HTP_OP_LEAKY_RELU:      op_type = "leaky-relu-f32";                             ਰੋਕੋ;
+        ਹਾਲਤ HTP_OP_SQR:             op_type = is_f16 ? "sqr-f16"      : "sqr-f32";          ਰੋਕੋ;
+        ਹਾਲਤ HTP_OP_SQRT:            op_type = is_f16 ? "sqrt-f16"     : "sqrt-f32";         ਰੋਕੋ;
+        ਹਾਲਤ HTP_OP_UNARY_NEG:       op_type = "neg-f32";                                    ਰੋਕੋ;
+        ਹਾਲਤ HTP_OP_UNARY_EXP:       op_type = "exp-f32";                                    ਰੋਕੋ;
+        ਹਾਲਤ HTP_OP_UNARY_SIGMOID:   op_type = "sigmoid-f32";                                ਰੋਕੋ;
+        ਹਾਲਤ HTP_OP_UNARY_SILU:      op_type = "silu-f32";                                   ਰੋਕੋ;
+        ਹਾਲਤ HTP_OP_UNARY_GELU:      op_type = "gelu-f32";                                   ਰੋਕੋ;
+        ਹਾਲਤ HTP_OP_UNARY_GELU_ਤੇਜ਼: op_type = "gelu-quick-f32";                             ਰੋਕੋ;
+        ਹਾਲਤ HTP_OP_UNARY_GELU_ERF:  op_type = "gelu-erf-f32";                               ਰੋਕੋ;
+        ਹਾਲਤ HTP_OP_UNARY_SOFTPLUS:  op_type = "softplus-f32";                               ਰੋਕੋ;
+        ਹਾਲਤ HTP_OP_UNARY_TANH:      op_type = "tanh-f32";                                   ਰੋਕੋ;
+        ਹਾਲਤ HTP_OP_UNARY_ABS:       op_type = is_f16 ? "abs-f16"      : "abs-f32";          ਰੋਕੋ;
+        ਹਾਲਤ HTP_OP_UNARY_LOG:       op_type = is_f16 ? "log-f16"      : "log-f32";          ਰੋਕੋ;
+        ਹਾਲਤ HTP_OP_UNARY_RELU:      op_type = "relu-f32";                                   ਰੋਕੋ;
+        ਹਾਲਤ HTP_OP_UNARY_ਕਦਮ:      op_type = is_f16 ? "step-f16"     : "step-f32";         ਰੋਕੋ;
+        ਹਾਲਤ HTP_OP_L2_NORM:         op_type = is_f16 ? "l2norm-f16"   : "l2norm-f32";       ਰੋਕੋ;
+        ਹਾਲਤ HTP_OP_TRI:             op_type = "tri-f32";                                    ਰੋਕੋ;
+        ਹਾਲਤ HTP_OP_HADAMARD:        op_type = is_f16 ? "hadamard-f16" : "hadamard-f32";     ਰੋਕੋ;
+        ਮੂਲ:
             FARF(ERROR, "Unsupported unary Op %u\n", octx->op);
-            return HTP_STATUS_NO_SUPPORT;
+            ਵਾਪਸ HTP_ਸਥਿਤੀ_NO_SUPPORT;
     }
 
     // F16 only has row-block kernels for this subset of ops (see the dispatch switch
     // below) - reject everything else up front, before touching kparams/VTCM.
-    if (is_f16) {
-        switch (octx->op) {
-            case HTP_OP_NORM:
-            case HTP_OP_RMS_NORM:
-            case HTP_OP_SCALE:
-            case HTP_OP_CLAMP:
-            case HTP_OP_SQR:
-            case HTP_OP_SQRT:
-            case HTP_OP_L2_NORM:
-            case HTP_OP_UNARY_ABS:
-            case HTP_OP_UNARY_LOG:
-            case HTP_OP_UNARY_STEP:
-            case HTP_OP_HADAMARD:
-                break;
-            default:
+    ਜੇ (is_f16) {
+        ਚੋਣ (octx->op) {
+            ਹਾਲਤ HTP_OP_NORM:
+            ਹਾਲਤ HTP_OP_RMS_NORM:
+            ਹਾਲਤ HTP_OP_SCALE:
+            ਹਾਲਤ HTP_OP_CLAMP:
+            ਹਾਲਤ HTP_OP_SQR:
+            ਹਾਲਤ HTP_OP_SQRT:
+            ਹਾਲਤ HTP_OP_L2_NORM:
+            ਹਾਲਤ HTP_OP_UNARY_ABS:
+            ਹਾਲਤ HTP_OP_UNARY_LOG:
+            ਹਾਲਤ HTP_OP_UNARY_ਕਦਮ:
+            ਹਾਲਤ HTP_OP_HADAMARD:
+                ਰੋਕੋ;
+            ਮੂਲ:
                 FARF(ERROR, "unary-%s: not supported for F16\n", op_type);
-                return HTP_STATUS_NO_SUPPORT;
+                ਵਾਪਸ HTP_ਸਥਿਤੀ_NO_SUPPORT;
         }
     }
 
-    const struct htp_unary_kernel_params * kparams = (const struct htp_unary_kernel_params *) octx->kernel_params;
+    ਅਚਲ ਬਣਤਰ htp_unary_kernel_params * kparams = (ਅਚਲ ਬਣਤਰ htp_unary_kernel_params *) octx->kernel_params;
 
-    if (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
-        return HTP_STATUS_INVAL_PARAMS;
+    ਜੇ (!htp_ops_context_ਸੈੱਟ_n_ਧਾਗੇ(octx, kparams->n_ਧਾਗੇ)) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_INVAL_PARAMS;
     }
 
-    const uint32_t src0_nrows = src0->ne[1] * src0->ne[2] * src0->ne[3];
-    const size_t src0_elem_size = is_f16 ? sizeof(_Float16) : sizeof(float);
-    const size_t dst_elem_size  = (dst->type == HTP_TYPE_F16) ? sizeof(_Float16) : sizeof(float);
-    const size_t src0_data_row_size = src0->ne[0] * src0_elem_size;
-    const size_t dst_data_row_size  = dst->ne[0]  * dst_elem_size;
+    ਅਚਲ uint32_t src0_nrows = src0->ne[1] * src0->ne[2] * src0->ne[3];
+    ਅਚਲ size_t src0_elem_ਮਾਪ = is_f16 ? ਆਕਾਰ(_Float16) : ਆਕਾਰ(ਦਸ਼ਮਲਵ);
+    ਅਚਲ size_t dst_elem_ਮਾਪ  = (dst->type == HTP_TYPE_F16) ? ਆਕਾਰ(_Float16) : ਆਕਾਰ(ਦਸ਼ਮਲਵ);
+    ਅਚਲ size_t src0_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ = src0->ne[0] * src0_elem_ਮਾਪ;
+    ਅਚਲ size_t dst_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ  = dst->ne[0]  * dst_elem_ਮਾਪ;
 
-    uint32_t row_start = 0;
+    uint32_t ਪੰਕਤੀ_ਸ਼ੁਰੂ = 0;
     uint32_t nrows     = src0_nrows;
 
-    if (octx->ctx->mdev.count > 1) {
-        uint32_t rows_per_chunk = 0;
-        htp_tensor_mdev_rows_per_chunk(dst, (uint32_t) dst_elem_size, (uint32_t) dst_data_row_size, &rows_per_chunk);
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(src0_nrows, rows_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
-        row_start = range.start;
-        nrows     = range.count;
+    ਜੇ (octx->ctx->mdev.ਗਿਣਤੀ_2 > 1) {
+        uint32_t ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_chunk = 0;
+        htp_tensor_mdev_ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_chunk(dst, (uint32_t) dst_elem_ਮਾਪ, (uint32_t) dst_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ, &ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_chunk);
+        ਅਚਲ ਬਣਤਰ htp_tensor_mdev_range range = htp_tensor_mdev_ਹਿੱਸੇ_ਕਰੋ(src0_nrows, ਪੰਕਤੀਆਂ_ਪ੍ਰਤੀ_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.ਗਿਣਤੀ_2, &octx->ctx->mdev.ਗਿਣਤੀ_div);
+        ਪੰਕਤੀ_ਸ਼ੁਰੂ = range.ਸ਼ੁਰੂ;
+        nrows     = range.ਗਿਣਤੀ_2;
     }
 
-    if (nrows == 0) {
-        return HTP_STATUS_OK;
+    ਜੇ (nrows == 0) {
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_OK;
     }
 
-    const uint32_t n_threads = octx->n_threads;
+    ਅਚਲ uint32_t n_ਧਾਗੇ = octx->n_ਧਾਗੇ;
 
-    const size_t src0_row_size_aligned = kparams->src0_row_size_aligned;
-    const size_t dst_row_size_aligned  = kparams->dst_row_size_aligned;
+    ਅਚਲ size_t src0_ਪੰਕਤੀ_ਮਾਪ_aligned = kparams->src0_ਪੰਕਤੀ_ਮਾਪ_aligned;
+    ਅਚਲ size_t dst_ਪੰਕਤੀ_ਮਾਪ_aligned  = kparams->dst_ਪੰਕਤੀ_ਮਾਪ_aligned;
 
     // Always 0 for F16 - htp_unary_vtcm_layout_build() keeps F16 on the row-block path,
     // since only F32 has unary_task_f32_tiled_* kernels.
-    const uint32_t col_tile = kparams->col_tile;
+    ਅਚਲ uint32_t ਖਾਨਾ_tile = kparams->ਖਾਨਾ_tile;
 
-    size_t src1_data_row_size = 0;
-    size_t src1_row_size_aligned = kparams->src1_row_size_aligned;
-    bool broadcast_weight = kparams->broadcast_weight;
-    const struct htp_tensor * src1 = NULL;
+    size_t src1_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ = 0;
+    size_t src1_ਪੰਕਤੀ_ਮਾਪ_aligned = kparams->src1_ਪੰਕਤੀ_ਮਾਪ_aligned;
+    bool ਪ੍ਰਸਾਰਣ_ਭਾਰ = kparams->ਪ੍ਰਸਾਰਣ_ਭਾਰ;
+    ਅਚਲ ਬਣਤਰ htp_tensor * src1 = ਨਿਰਾ;
 
     // RMS_NORM_MUL fusion is F32-only (its weight tensor is always F32; see
     // try_fuse_node()'s type guard), so this never triggers when is_f16 is true.
-    if (octx->op == HTP_OP_RMS_NORM_MUL) {
+    ਜੇ (octx->op == HTP_OP_RMS_NORM_MUL) {
         src1 = octx->src[1];
-        src1_data_row_size = src1->ne[0] * sizeof(float);
+        src1_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ = src1->ne[0] * ਆਕਾਰ(ਦਸ਼ਮਲਵ);
     }
 
-    if (octx->ctx->vtcm_size < (size_t)kparams->vtcm_size) {
-        FARF(ERROR, "unary-%s : current VTCM reservation %zu is too small, needed %zu\n", op_type, octx->ctx->vtcm_size, (size_t)kparams->vtcm_size);
-        return HTP_STATUS_VTCM_TOO_SMALL;
+    ਜੇ (octx->ctx->vtcm_ਮਾਪ < (size_t)kparams->vtcm_ਮਾਪ) {
+        FARF(ERROR, "unary-%s : current VTCM reservation %zu is too small, needed %zu\n", op_type, octx->ctx->vtcm_ਮਾਪ, (size_t)kparams->vtcm_ਮਾਪ);
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_VTCM_TOO_SMALL;
     }
 
-    octx->src0_spad.src = NULL;
-    octx->src1_spad.src = NULL;
-    octx->dst_spad.src  = NULL;
+    octx->src0_spad.src = ਨਿਰਾ;
+    octx->src1_spad.src = ਨਿਰਾ;
+    octx->dst_spad.src  = ਨਿਰਾ;
 
-    FARF(HIGH, "%s: (%ux%ux%ux%u) -> (%ux%ux%ux%u) : src0-vtcm-size %u src1-vtcm-size %u dst-vtcm-size %u\n", op_type,
+    FARF(ਉੱਚਾ_2, "%s: (%ux%ux%ux%u) -> (%ux%ux%ux%u) : src0-vtcm-size %u src1-vtcm-size %u dst-vtcm-size %u\n", op_type,
          src0->ne[0], src0->ne[1], src0->ne[2], src0->ne[3], dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3],
-         kparams->vtcm_src0_size, kparams->vtcm_src1_size, kparams->vtcm_dst_size);
+         kparams->vtcm_src0_ਮਾਪ, kparams->vtcm_src1_ਮਾਪ, kparams->vtcm_dst_ਮਾਪ);
 
-    uint8_t * const base = (uint8_t *) octx->ctx->vtcm_base;
-    struct htp_unary_context uctx = {
+    uint8_t * ਅਚਲ ਅਧਾਰ = (uint8_t *) octx->ctx->vtcm_ਅਧਾਰ;
+    ਬਣਤਰ htp_unary_context uctx = {
         .octx                  = octx,
         .kparams               = kparams,
-        .src0_nrows_per_thread = fastdiv(nrows + n_threads - 1, &octx->n_threads_div),
+        .src0_nrows_ਪ੍ਰਤੀ_thread = fastdiv(nrows + n_ਧਾਗੇ - 1, &octx->n_ਧਾਗੇ_div),
         .src0_nrows            = nrows,
-        .row_start             = row_start,
+        .ਪੰਕਤੀ_ਸ਼ੁਰੂ             = ਪੰਕਤੀ_ਸ਼ੁਰੂ,
 
-        .data_src0             = src0->data,
-        .data_src1             = (octx->op == HTP_OP_RMS_NORM_MUL) ? src1->data : 0,
-        .data_dst              = dst->data,
+        .ਅੰਕੜੇ_src0             = src0->ਅੰਕੜੇ,
+        .ਅੰਕੜੇ_src1             = (octx->op == HTP_OP_RMS_NORM_MUL) ? src1->ਅੰਕੜੇ : 0,
+        .ਅੰਕੜੇ_dst              = dst->ਅੰਕੜੇ,
 
-        .src0_data_row_size    = src0_data_row_size,
-        .src1_data_row_size    = src1_data_row_size,
-        .dst_data_row_size     = dst_data_row_size,
+        .src0_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ    = src0_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ,
+        .src1_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ    = src1_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ,
+        .dst_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ     = dst_ਅੰਕੜੇ_ਪੰਕਤੀ_ਮਾਪ,
 
-        .src0_row_size_aligned = src0_row_size_aligned,
-        .src1_row_size_aligned = src1_row_size_aligned,
-        .dst_row_size_aligned  = dst_row_size_aligned,
+        .src0_ਪੰਕਤੀ_ਮਾਪ_aligned = src0_ਪੰਕਤੀ_ਮਾਪ_aligned,
+        .src1_ਪੰਕਤੀ_ਮਾਪ_aligned = src1_ਪੰਕਤੀ_ਮਾਪ_aligned,
+        .dst_ਪੰਕਤੀ_ਮਾਪ_aligned  = dst_ਪੰਕਤੀ_ਮਾਪ_aligned,
 
-        .src0_vtcm_half_size   = kparams->vtcm_src0_size_per_thread / 2,
-        .src1_vtcm_half_size   = (octx->op == HTP_OP_RMS_NORM_MUL) ? (kparams->vtcm_src1_size_per_thread / (broadcast_weight ? 1 : 2)) : 0,
-        .dst_vtcm_half_size    = kparams->vtcm_dst_size_per_thread / 2,
+        .src0_vtcm_half_ਮਾਪ   = kparams->vtcm_src0_ਮਾਪ_ਪ੍ਰਤੀ_thread / 2,
+        .src1_vtcm_half_ਮਾਪ   = (octx->op == HTP_OP_RMS_NORM_MUL) ? (kparams->vtcm_src1_ਮਾਪ_ਪ੍ਰਤੀ_thread / (ਪ੍ਰਸਾਰਣ_ਭਾਰ ? 1 : 2)) : 0,
+        .dst_vtcm_half_ਮਾਪ    = kparams->vtcm_dst_ਮਾਪ_ਪ੍ਰਤੀ_thread / 2,
 
-        .block                 = kparams->block,
+        .ਖੰਡ                 = kparams->ਖੰਡ,
         .nc                    = src0->ne[0],
-        .col_tile              = col_tile,
-        .broadcast_weight      = broadcast_weight,
+        .ਖਾਨਾ_tile              = ਖਾਨਾ_tile,
+        .ਪ੍ਰਸਾਰਣ_ਭਾਰ      = ਪ੍ਰਸਾਰਣ_ਭਾਰ,
 
-        .vtcm_src0             = VTCM_LAYOUT_PTR(uint8_t, base, 0),
-        .vtcm_src1             = VTCM_LAYOUT_PTR_OPTIONAL(uint8_t, base, kparams->vtcm_src0_size, kparams->vtcm_src1_size > 0),
-        .vtcm_dst              = VTCM_LAYOUT_PTR(uint8_t, base, kparams->vtcm_src0_size + kparams->vtcm_src1_size),
+        .vtcm_src0             = VTCM_LAYOUT_PTR(uint8_t, ਅਧਾਰ, 0),
+        .vtcm_src1             = VTCM_LAYOUT_PTR_OPTIONAL(uint8_t, ਅਧਾਰ, kparams->vtcm_src0_ਮਾਪ, kparams->vtcm_src1_ਮਾਪ > 0),
+        .vtcm_dst              = VTCM_LAYOUT_PTR(uint8_t, ਅਧਾਰ, kparams->vtcm_src0_ਮਾਪ + kparams->vtcm_src1_ਮਾਪ),
 
-        .vtcm_src0_size_per_thread = kparams->vtcm_src0_size_per_thread,
-        .vtcm_src1_size_per_thread = kparams->vtcm_src1_size_per_thread,
-        .vtcm_dst_size_per_thread  = kparams->vtcm_dst_size_per_thread,
+        .vtcm_src0_ਮਾਪ_ਪ੍ਰਤੀ_thread = kparams->vtcm_src0_ਮਾਪ_ਪ੍ਰਤੀ_thread,
+        .vtcm_src1_ਮਾਪ_ਪ੍ਰਤੀ_thread = kparams->vtcm_src1_ਮਾਪ_ਪ੍ਰਤੀ_thread,
+        .vtcm_dst_ਮਾਪ_ਪ੍ਰਤੀ_thread  = kparams->vtcm_dst_ਮਾਪ_ਪ੍ਰਤੀ_thread,
     };
 
-    FARF(HIGH, "%s: %s mode (col_tile %u)\n", op_type, col_tile ? "tiled" : "row-block", col_tile);
+    FARF(ਉੱਚਾ_2, "%s: %s mode (col_tile %u)\n", op_type, ਖਾਨਾ_tile ? "tiled" : "row-block", ਖਾਨਾ_tile);
 
-    worker_callback_t task_func = NULL;
-    void * compute_func = NULL;
+    ਕਾਮਾ_callback_t task_func = ਨਿਰਾ;
+    ਖਾਲੀ * compute_func = ਨਿਰਾ;
 
-    if (col_tile) {
+    ਜੇ (ਖਾਨਾ_tile) {
         task_func = unary_thread_tiled;
-        switch (octx->op) {
-            case HTP_OP_SCALE:           compute_func = (void *) tile_scale_f32;          break;
-            case HTP_OP_CLAMP:           compute_func = (void *) tile_clamp_f32;          break;
-            case HTP_OP_LEAKY_RELU:      compute_func = (void *) tile_leaky_relu_f32;     break;
-            case HTP_OP_SQR:             compute_func = (void *) tile_sqr_f32;            break;
-            case HTP_OP_SQRT:            compute_func = (void *) tile_sqrt_f32;           break;
-            case HTP_OP_UNARY_NEG:       compute_func = (void *) tile_neg_f32;            break;
-            case HTP_OP_UNARY_EXP:       compute_func = (void *) tile_exp_f32;            break;
-            case HTP_OP_UNARY_SIGMOID:   compute_func = (void *) tile_sigmoid_f32;        break;
-            case HTP_OP_UNARY_SILU:      compute_func = (void *) tile_silu_f32;           break;
-            case HTP_OP_UNARY_GELU:      compute_func = (void *) tile_gelu_f32;           break;
-            case HTP_OP_UNARY_GELU_QUICK: compute_func = (void *) tile_gelu_quick_f32;     break;
-            case HTP_OP_UNARY_GELU_ERF:  compute_func = (void *) tile_gelu_erf_f32;       break;
-            case HTP_OP_UNARY_SOFTPLUS:  compute_func = (void *) tile_softplus_f32;       break;
-            case HTP_OP_UNARY_TANH:      compute_func = (void *) tile_tanh_f32;           break;
-            case HTP_OP_UNARY_ABS:       compute_func = (void *) tile_abs_f32;            break;
-            case HTP_OP_UNARY_LOG:       compute_func = (void *) tile_log_f32;            break;
-            case HTP_OP_UNARY_RELU:      compute_func = (void *) tile_relu_f32;           break;
-            case HTP_OP_UNARY_STEP:      compute_func = (void *) tile_step_f32;           break;
-            case HTP_OP_TRI:
+        ਚੋਣ (octx->op) {
+            ਹਾਲਤ HTP_OP_SCALE:           compute_func = (ਖਾਲੀ *) tile_scale_f32;          ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_CLAMP:           compute_func = (ਖਾਲੀ *) tile_clamp_f32;          ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_LEAKY_RELU:      compute_func = (ਖਾਲੀ *) tile_leaky_relu_f32;     ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_SQR:             compute_func = (ਖਾਲੀ *) tile_sqr_f32;            ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_SQRT:            compute_func = (ਖਾਲੀ *) tile_sqrt_f32;           ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_UNARY_NEG:       compute_func = (ਖਾਲੀ *) tile_neg_f32;            ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_UNARY_EXP:       compute_func = (ਖਾਲੀ *) tile_exp_f32;            ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_UNARY_SIGMOID:   compute_func = (ਖਾਲੀ *) tile_sigmoid_f32;        ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_UNARY_SILU:      compute_func = (ਖਾਲੀ *) tile_silu_f32;           ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_UNARY_GELU:      compute_func = (ਖਾਲੀ *) tile_gelu_f32;           ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_UNARY_GELU_ਤੇਜ਼: compute_func = (ਖਾਲੀ *) tile_gelu_ਤੇਜ਼_f32;     ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_UNARY_GELU_ERF:  compute_func = (ਖਾਲੀ *) tile_gelu_erf_f32;       ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_UNARY_SOFTPLUS:  compute_func = (ਖਾਲੀ *) tile_softplus_f32;       ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_UNARY_TANH:      compute_func = (ਖਾਲੀ *) tile_tanh_f32;           ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_UNARY_ABS:       compute_func = (ਖਾਲੀ *) tile_abs_f32;            ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_UNARY_LOG:       compute_func = (ਖਾਲੀ *) tile_log_f32;            ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_UNARY_RELU:      compute_func = (ਖਾਲੀ *) tile_relu_f32;           ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_UNARY_ਕਦਮ:      compute_func = (ਖਾਲੀ *) tile_ਕਦਮ_f32;           ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_TRI:
                 task_func    = unary_thread_tiled_tri_f32;
-                compute_func = (void *) tri_apply_tile_f32;
-                break;
-            default:                     break;
+                compute_func = (ਖਾਲੀ *) tri_apply_tile_f32;
+                ਰੋਕੋ;
+            ਮੂਲ:                     ਰੋਕੋ;
         }
-    } else if (is_f16) {
-        task_func = unary_thread_row_block;
-        switch (octx->op) {
-            case HTP_OP_NORM:            compute_func = (void *) norm_f16;                break;
-            case HTP_OP_RMS_NORM:        compute_func = (void *) rms_norm_f16;            break;
-            case HTP_OP_SCALE:           compute_func = (void *) scale_f16;               break;
-            case HTP_OP_CLAMP:           compute_func = (void *) clamp_f16;               break;
-            case HTP_OP_SQR:             compute_func = (void *) sqr_f16;                 break;
-            case HTP_OP_SQRT:            compute_func = (void *) sqrt_f16;                break;
-            case HTP_OP_L2_NORM:         compute_func = (void *) l2_norm_f16;             break;
-            case HTP_OP_UNARY_ABS:       compute_func = (void *) abs_f16;                 break;
-            case HTP_OP_UNARY_LOG:       compute_func = (void *) log_f16;                 break;
-            case HTP_OP_UNARY_STEP:      compute_func = (void *) step_f16;                break;
-            case HTP_OP_HADAMARD:        compute_func = (void *) hadamard_f16;            break;
-            default:                     break;
+    } ਨਹੀਂਤਾਂ ਜੇ (is_f16) {
+        task_func = unary_thread_ਪੰਕਤੀ_ਖੰਡ;
+        ਚੋਣ (octx->op) {
+            ਹਾਲਤ HTP_OP_NORM:            compute_func = (ਖਾਲੀ *) norm_f16;                ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_RMS_NORM:        compute_func = (ਖਾਲੀ *) rms_norm_f16;            ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_SCALE:           compute_func = (ਖਾਲੀ *) scale_f16;               ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_CLAMP:           compute_func = (ਖਾਲੀ *) clamp_f16;               ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_SQR:             compute_func = (ਖਾਲੀ *) sqr_f16;                 ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_SQRT:            compute_func = (ਖਾਲੀ *) sqrt_f16;                ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_L2_NORM:         compute_func = (ਖਾਲੀ *) l2_norm_f16;             ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_UNARY_ABS:       compute_func = (ਖਾਲੀ *) abs_f16;                 ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_UNARY_LOG:       compute_func = (ਖਾਲੀ *) log_f16;                 ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_UNARY_ਕਦਮ:      compute_func = (ਖਾਲੀ *) ਕਦਮ_f16;                ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_HADAMARD:        compute_func = (ਖਾਲੀ *) hadamard_f16;            ਰੋਕੋ;
+            ਮੂਲ:                     ਰੋਕੋ;
         }
-    } else {
-        task_func = unary_thread_row_block;
-        switch (octx->op) {
-            case HTP_OP_NORM:            compute_func = (void *) norm_f32;                break;
-            case HTP_OP_RMS_NORM:        compute_func = (void *) rms_norm_f32;            break;
-            case HTP_OP_RMS_NORM_MUL:
+    } ਨਹੀਂਤਾਂ {
+        task_func = unary_thread_ਪੰਕਤੀ_ਖੰਡ;
+        ਚੋਣ (octx->op) {
+            ਹਾਲਤ HTP_OP_NORM:            compute_func = (ਖਾਲੀ *) norm_f32;                ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_RMS_NORM:        compute_func = (ਖਾਲੀ *) rms_norm_f32;            ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_RMS_NORM_MUL:
                 task_func    = unary_thread_rms_norm_mul_f32;
-                compute_func = (void *) rms_norm_mul_f32;
-                break;
-            case HTP_OP_SCALE:           compute_func = (void *) scale_f32;               break;
-            case HTP_OP_CLAMP:           compute_func = (void *) clamp_f32;               break;
-            case HTP_OP_LEAKY_RELU:      compute_func = (void *) leaky_relu_f32;          break;
-            case HTP_OP_SQR:             compute_func = (void *) sqr_f32;                 break;
-            case HTP_OP_SQRT:            compute_func = (void *) sqrt_f32;                break;
-            case HTP_OP_UNARY_NEG:       compute_func = (void *) neg_f32;                 break;
-            case HTP_OP_UNARY_EXP:       compute_func = (void *) exp_f32;                 break;
-            case HTP_OP_UNARY_SIGMOID:   compute_func = (void *) sigmoid_f32;             break;
-            case HTP_OP_UNARY_SILU:      compute_func = (void *) silu_f32;                break;
-            case HTP_OP_UNARY_GELU:      compute_func = (void *) gelu_f32;                break;
-            case HTP_OP_UNARY_GELU_QUICK: compute_func = (void *) gelu_quick_f32;          break;
-            case HTP_OP_UNARY_GELU_ERF:  compute_func = (void *) gelu_erf_f32;            break;
-            case HTP_OP_UNARY_SOFTPLUS:  compute_func = (void *) softplus_f32;            break;
-            case HTP_OP_UNARY_TANH:      compute_func = (void *) tanh_f32;                break;
-            case HTP_OP_UNARY_ABS:       compute_func = (void *) abs_f32;                 break;
-            case HTP_OP_UNARY_LOG:       compute_func = (void *) log_f32;                 break;
-            case HTP_OP_UNARY_RELU:      compute_func = (void *) relu_f32;                break;
-            case HTP_OP_UNARY_STEP:      compute_func = (void *) step_f32;                break;
-            case HTP_OP_L2_NORM:         compute_func = (void *) l2_norm_f32;             break;
-            case HTP_OP_HADAMARD:        compute_func = (void *) hadamard_f32;            break;
-            case HTP_OP_TRI:
+                compute_func = (ਖਾਲੀ *) rms_norm_mul_f32;
+                ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_SCALE:           compute_func = (ਖਾਲੀ *) scale_f32;               ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_CLAMP:           compute_func = (ਖਾਲੀ *) clamp_f32;               ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_LEAKY_RELU:      compute_func = (ਖਾਲੀ *) leaky_relu_f32;          ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_SQR:             compute_func = (ਖਾਲੀ *) sqr_f32;                 ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_SQRT:            compute_func = (ਖਾਲੀ *) sqrt_f32;                ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_UNARY_NEG:       compute_func = (ਖਾਲੀ *) neg_f32;                 ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_UNARY_EXP:       compute_func = (ਖਾਲੀ *) exp_f32;                 ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_UNARY_SIGMOID:   compute_func = (ਖਾਲੀ *) sigmoid_f32;             ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_UNARY_SILU:      compute_func = (ਖਾਲੀ *) silu_f32;                ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_UNARY_GELU:      compute_func = (ਖਾਲੀ *) gelu_f32;                ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_UNARY_GELU_ਤੇਜ਼: compute_func = (ਖਾਲੀ *) gelu_ਤੇਜ਼_f32;          ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_UNARY_GELU_ERF:  compute_func = (ਖਾਲੀ *) gelu_erf_f32;            ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_UNARY_SOFTPLUS:  compute_func = (ਖਾਲੀ *) softplus_f32;            ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_UNARY_TANH:      compute_func = (ਖਾਲੀ *) tanh_f32;                ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_UNARY_ABS:       compute_func = (ਖਾਲੀ *) abs_f32;                 ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_UNARY_LOG:       compute_func = (ਖਾਲੀ *) log_f32;                 ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_UNARY_RELU:      compute_func = (ਖਾਲੀ *) relu_f32;                ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_UNARY_ਕਦਮ:      compute_func = (ਖਾਲੀ *) ਕਦਮ_f32;                ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_L2_NORM:         compute_func = (ਖਾਲੀ *) l2_norm_f32;             ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_HADAMARD:        compute_func = (ਖਾਲੀ *) hadamard_f32;            ਰੋਕੋ;
+            ਹਾਲਤ HTP_OP_TRI:
                 task_func    = unary_thread_tri_f32;
-                compute_func = (void *) tri_f32;
-                break;
-            default:                     break;
+                compute_func = (ਖਾਲੀ *) tri_f32;
+                ਰੋਕੋ;
+            ਮੂਲ:                     ਰੋਕੋ;
         }
     }
 
-    if (!task_func || !compute_func) {
+    ਜੇ (!task_func || !compute_func) {
         FARF(ERROR, "execute_op_unary: task function is NULL for op %d\n", octx->op);
-        return HTP_STATUS_NO_SUPPORT;
+        ਵਾਪਸ HTP_ਸਥਿਤੀ_NO_SUPPORT;
     }
 
     uctx.compute = compute_func;
-    work_queue_run(octx->ctx->work_queue, task_func, &uctx, n_threads);
+    work_ਕਤਾਰ_ਲੜੀਵਾਰ(octx->ctx->work_ਕਤਾਰ, task_func, &uctx, n_ਧਾਗੇ);
 
-    return err;
+    ਵਾਪਸ err;
 }
 
-int op_unary(struct htp_ops_context * octx) {
-    switch (octx->src[0]->type) {
-        case HTP_TYPE_F32:
-        case HTP_TYPE_F16:
-            return execute_op_unary(octx);
+ਪੂਰਨ op_unary(ਬਣਤਰ htp_ops_context * octx) {
+    ਚੋਣ (octx->src[0]->type) {
+        ਹਾਲਤ HTP_TYPE_F32:
+        ਹਾਲਤ HTP_TYPE_F16:
+            ਵਾਪਸ execute_op_unary(octx);
 
-        default:
-            return HTP_STATUS_NO_SUPPORT;
+        ਮੂਲ:
+            ਵਾਪਸ HTP_ਸਥਿਤੀ_NO_SUPPORT;
     }
 }

@@ -1,91 +1,91 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "../node_context.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "../op_table.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "../utils.h"
 
-#include <cstdint>
-#include <memory>
-#include <openvino/core/node.hpp>
-#include <openvino/core/node_output.hpp>
-#include <openvino/op/add.hpp>
-#include <openvino/op/broadcast.hpp>
-#include <openvino/op/concat.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/slice.hpp>
-#include <openvino/op/split.hpp>
-#include <openvino/op/subtract.hpp>
-#include <openvino/op/unsqueeze.hpp>
-#include <openvino/op/variadic_split.hpp>
-#include <vector>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cstdint>
+#ਅਨ੍ਤਰ੍ਭਾਵ <memory>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/core/node.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/core/node_output.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/add.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/broadcast.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/concat.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/constant.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/convert.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/multiply.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/reshape.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/slice.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/split.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/subtract.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/unsqueeze.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/variadic_split.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <vector>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+ਨਾਮਾਕਾਸ਼ ov {
+ਨਾਮਾਕਾਸ਼ frontend {
+ਨਾਮਾਕਾਸ਼ ggml {
+ਨਾਮਾਕਾਸ਼ op {
 
-OutputVector translate_rope(const NodeContext & context) {
-    num_inputs_check(context, 2, 3);
+Output_ਸਦਿਸ਼ translate_rope(ਅਚਲ ਗੰਢ_Context & context) {
+    ਅੰਕ_inputs_check(context, 2, 3);
 
-    int op_case = context.get_op_case();
+    ਪੂਰਨ op_case = context.get_op_case();
 
     ov::Output<Node> res;
 
-    auto data_node = process_view_input_new(context, 0).get_node_shared_ptr();
-    auto output_shape = context.get_output_shape().to_shape();
+    ਸਵੈਚਾਲਿਤ ਅੰਕੜੇ_ਗੰਢ = process_view_ਨਿਵੇਸ਼_new(context, 0).get_ਗੰਢ_shared_ptr();
+    ਸਵੈਚਾਲਿਤ output_shape = context.get_output_shape().ਮੰਜ਼ਿਲ_shape();
     int32_t * op_params = context.get_output_op_params();
-    const int mode = op_case;
-    const int64_t head_dim = static_cast<int64_t>(output_shape[3]);
-    const int64_t configured_n_dims = static_cast<int64_t>(op_params[1]);
-    const int64_t n_dims = configured_n_dims == 0 ? head_dim : configured_n_dims;
-    const int64_t n_offs = static_cast<int64_t>(op_params[15]);
+    ਅਚਲ ਪੂਰਨ mode = op_case;
+    ਅਚਲ int64_t ਸਿਰ_dim = static_cast<int64_t>(output_shape[3]);
+    ਅਚਲ int64_t configured_n_dims = static_cast<int64_t>(op_params[1]);
+    ਅਚਲ int64_t n_dims = configured_n_dims == 0 ? ਸਿਰ_dim : configured_n_dims;
+    ਅਚਲ int64_t n_offs = static_cast<int64_t>(op_params[15]);
 
-    constexpr int TYPE_NORMAL = 0;
-    constexpr int TYPE_NEOX = 1;
-    constexpr int TYPE_IMROPE = 2;
-    constexpr int TYPE_VISION = 3;
-    constexpr int TYPE_MROPE = 4;
+    constexpr ਪੂਰਨ TYPE_ਸਾਧਾਰਨ = 0;
+    constexpr ਪੂਰਨ TYPE_NEOX = 1;
+    constexpr ਪੂਰਨ TYPE_IMROPE = 2;
+    constexpr ਪੂਰਨ TYPE_VISION = 3;
+    constexpr ਪੂਰਨ TYPE_MROPE = 4;
 
-    Output<Node> cos_theta_node;
-    Output<Node> sin_theta_node;
-    if (context.has_input("rope_cos")) {
-        cos_theta_node = context.get_input("rope_cos");
-        sin_theta_node = context.get_input("rope_sin");
-    } else {
-        std::string cache_key = "rope_sin_cos";
-        for (int i = 0; i < 15; i++) {
-            cache_key += "_" + std::to_string(op_params[i]);
+    Output<Node> cos_theta_ਗੰਢ;
+    Output<Node> sin_theta_ਗੰਢ;
+    ਜੇ (context.has_ਨਿਵੇਸ਼("rope_cos")) {
+        cos_theta_ਗੰਢ = context.get_ਨਿਵੇਸ਼("rope_cos");
+        sin_theta_ਗੰਢ = context.get_ਨਿਵੇਸ਼("rope_sin");
+    } ਨਹੀਂਤਾਂ {
+        std::string cache_ਕੁੰਜੀ = "rope_sin_cos";
+        ਲਈ (ਪੂਰਨ i = 0; i < 15; i++) {
+            cache_ਕੁੰਜੀ += "_" + std::to_string(op_params[i]);
         }
-        if (context.get_input_size() == 3) {
-            cache_key += "_ff_" + context.get_input_names()[2];
+        ਜੇ (context.get_ਨਿਵੇਸ਼_ਮਾਪ() == 3) {
+            cache_ਕੁੰਜੀ += "_ff_" + context.get_ਨਿਵੇਸ਼_ਨਾਂ()[2];
         }
-        if (context.has_input(cache_key + "_cos")) {
-            cos_theta_node = context.get_input(cache_key + "_cos");
-            sin_theta_node = context.get_input(cache_key + "_sin");
-        } else {
-            auto inp_pos = context.get_input(1).get_node_shared_ptr();
-            std::shared_ptr<ov::Node> rope_freqs_weight;
-            if (context.get_input_size() == 3) {
-                rope_freqs_weight = context.get_input(2).get_node_shared_ptr();
+        ਜੇ (context.has_ਨਿਵੇਸ਼(cache_ਕੁੰਜੀ + "_cos")) {
+            cos_theta_ਗੰਢ = context.get_ਨਿਵੇਸ਼(cache_ਕੁੰਜੀ + "_cos");
+            sin_theta_ਗੰਢ = context.get_ਨਿਵੇਸ਼(cache_ਕੁੰਜੀ + "_sin");
+        } ਨਹੀਂਤਾਂ {
+            ਸਵੈਚਾਲਿਤ inp_pos = context.get_ਨਿਵੇਸ਼(1).get_ਗੰਢ_shared_ptr();
+            std::shared_ptr<ov::Node> rope_freqs_ਭਾਰ;
+            ਜੇ (context.get_ਨਿਵੇਸ਼_ਮਾਪ() == 3) {
+                rope_freqs_ਭਾਰ = context.get_ਨਿਵੇਸ਼(2).get_ਗੰਢ_shared_ptr();
             }
-            auto sin_cos = make_sin_cos(op_params, inp_pos, rope_freqs_weight, mode, false, head_dim);
-            sin_theta_node = sin_cos.first;
-            cos_theta_node = sin_cos.second;
-            context.put_shared(cache_key + "_cos", cos_theta_node);
-            context.put_shared(cache_key + "_sin", sin_theta_node);
+            ਸਵੈਚਾਲਿਤ sin_cos = make_sin_cos(op_params, inp_pos, rope_freqs_ਭਾਰ, mode, ਝੂਠ, ਸਿਰ_dim);
+            sin_theta_ਗੰਢ = sin_cos.ਪਹਿਲਾ;
+            cos_theta_ਗੰਢ = sin_cos.second;
+            context.put_shared(cache_ਕੁੰਜੀ + "_cos", cos_theta_ਗੰਢ);
+            context.put_shared(cache_ਕੁੰਜੀ + "_sin", sin_theta_ਗੰਢ);
         }
     }
 
-    auto output_type = context.get_output_type();
-    if (data_node->get_element_type() != ov::element::f32) {
-        data_node = std::make_shared<ov::op::v0::Convert>(data_node, ov::element::f32);
+    ਸਵੈਚਾਲਿਤ output_type = context.get_output_type();
+    ਜੇ (ਅੰਕੜੇ_ਗੰਢ->get_element_type() != ov::element::f32) {
+        ਅੰਕੜੇ_ਗੰਢ = std::make_shared<ov::op::v0::Convert>(ਅੰਕੜੇ_ਗੰਢ, ov::element::f32);
     }
 
-    const int64_t total_rope_dims = (mode == TYPE_VISION) ? (2 * n_dims) : n_dims;
-    FRONT_END_OP_CONVERSION_CHECK(n_offs >= 0 && (n_offs % 2 == 0),
+    ਅਚਲ int64_t ਕੁੱਲ_rope_dims = (mode == TYPE_VISION) ? (2 * n_dims) : n_dims;
+    FRONT_ਸਿਰਾ_OP_CONVERSION_CHECK(n_offs >= 0 && (n_offs % 2 == 0),
                                   "ROPE expects non-negative even n_offs");
-    FRONT_END_OP_CONVERSION_CHECK(n_dims > 0 && total_rope_dims + n_offs <= head_dim && (n_dims % 2 == 0),
+    FRONT_ਸਿਰਾ_OP_CONVERSION_CHECK(n_dims > 0 && ਕੁੱਲ_rope_dims + n_offs <= ਸਿਰ_dim && (n_dims % 2 == 0),
                                   "ROPE expects even n_dims with total_rope_dims + n_offs <= head_dim");
 
     // RoPEFusionFlux requires rank_equals(4) on x, t_cos and t_sin. The cos/sin
@@ -93,150 +93,150 @@ OutputVector translate_rope(const NodeContext & context) {
     // stateful mode the data arrives rank-3 ([S, n_heads, head_size]), so lift it
     // to rank-4 ([1, S, n_heads, head_size]) here. Stateful RoPE already produced
     // rank-4 output, so downstream attention is unaffected.
-    if (context.is_stateful()) {
-        const int64_t batch = static_cast<int64_t>(output_shape[0]);
-        auto r4_shape = ov::op::v0::Constant::create(
+    ਜੇ (context.is_stateful()) {
+        ਅਚਲ int64_t batch = static_cast<int64_t>(output_shape[0]);
+        ਸਵੈਚਾਲਿਤ r4_shape = ov::op::v0::Constant::create(
             ov::element::i64, {4},
             std::vector<int64_t>{batch, -1, (int64_t) output_shape[2], (int64_t) output_shape[3]});
-        data_node = std::make_shared<ov::op::v1::Reshape>(data_node, r4_shape, false);
+        ਅੰਕੜੇ_ਗੰਢ = std::make_shared<ov::op::v1::Reshape>(ਅੰਕੜੇ_ਗੰਢ, r4_shape, ਝੂਠ);
     }
     // For TYPE_NORMAL rope (both stateful and stateless) we emit the Flux-style
     // interleaved pattern below so the GPU plugin's RoPEFusionFlux matcher folds it
     // into ov::op::internal::RoPE.
-    if (mode == TYPE_NORMAL) {
-        auto axis_last = ov::op::v0::Constant::create(ov::element::i64, {1}, {-1});
-        auto step_one = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
+    ਜੇ (mode == TYPE_ਸਾਧਾਰਨ) {
+        ਸਵੈਚਾਲਿਤ axis_ਆਖਰੀ = ov::op::v0::Constant::create(ov::element::i64, {1}, {-1});
+        ਸਵੈਚਾਲਿਤ ਕਦਮ_one = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
 
-        const int64_t batch = static_cast<int64_t>(output_shape[0]);
-        const int64_t n_heads = static_cast<int64_t>(output_shape[2]);
-        const int64_t half = n_dims / 2;
-        auto rot_start = ov::op::v0::Constant::create(ov::element::i64, {1}, {n_offs});
-        auto rot_end = ov::op::v0::Constant::create(ov::element::i64, {1}, {n_offs + n_dims});
-        auto rot_data = std::make_shared<ov::op::v8::Slice>(data_node, rot_start, rot_end, step_one, axis_last);
+        ਅਚਲ int64_t batch = static_cast<int64_t>(output_shape[0]);
+        ਅਚਲ int64_t n_heads = static_cast<int64_t>(output_shape[2]);
+        ਅਚਲ int64_t half = n_dims / 2;
+        ਸਵੈਚਾਲਿਤ rot_ਸ਼ੁਰੂ = ov::op::v0::Constant::create(ov::element::i64, {1}, {n_offs});
+        ਸਵੈਚਾਲਿਤ rot_ਸਿਰਾ = ov::op::v0::Constant::create(ov::element::i64, {1}, {n_offs + n_dims});
+        ਸਵੈਚਾਲਿਤ rot_ਅੰਕੜੇ = std::make_shared<ov::op::v8::ਟੁਕੜਾ>(ਅੰਕੜੇ_ਗੰਢ, rot_ਸ਼ੁਰੂ, rot_ਸਿਰਾ, ਕਦਮ_one, axis_ਆਖਰੀ);
 
-        auto neg_one_f = ov::op::v0::Constant::create(data_node->get_element_type(), ov::Shape{}, {-1.0f});
+        ਸਵੈਚਾਲਿਤ neg_one_f = ov::op::v0::Constant::create(ਅੰਕੜੇ_ਗੰਢ->get_element_type(), ov::Shape{}, {-1.0f});
 
-        auto paired_shape = ov::op::v0::Constant::create(
+        ਸਵੈਚਾਲਿਤ paired_shape = ov::op::v0::Constant::create(
             ov::element::i64, {5}, std::vector<int64_t>{batch, -1, n_heads, half, 2});
-        auto x_paired = std::make_shared<ov::op::v1::Reshape>(rot_data, paired_shape, false);
+        ਸਵੈਚਾਲਿਤ x_paired = std::make_shared<ov::op::v1::Reshape>(rot_ਅੰਕੜੇ, paired_shape, ਝੂਠ);
 
-        auto split_axis = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{}, {-1});
-        auto data_split = std::make_shared<ov::op::v1::Split>(x_paired, split_axis, 2);
-        Output<Node> x0 = data_split->outputs()[0];
-        Output<Node> x1 = data_split->outputs()[1];
+        ਸਵੈਚਾਲਿਤ ਵੰਡੋ_axis = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{}, {-1});
+        ਸਵੈਚਾਲਿਤ ਅੰਕੜੇ_ਵੰਡੋ = std::make_shared<ov::op::v1::ਵੰਡੋ_2>(x_paired, ਵੰਡੋ_axis, 2);
+        Output<Node> x0 = ਅੰਕੜੇ_ਵੰਡੋ->outputs()[0];
+        Output<Node> x1 = ਅੰਕੜੇ_ਵੰਡੋ->outputs()[1];
 
-        auto x1_neg = std::make_shared<ov::op::v1::Multiply>(x1, neg_one_f);
-        auto x_rotated_paired = std::make_shared<ov::op::v0::Concat>(ov::OutputVector{x1_neg, x0}, -1);
+        ਸਵੈਚਾਲਿਤ x1_neg = std::make_shared<ov::op::v1::Multiply>(x1, neg_one_f);
+        ਸਵੈਚਾਲਿਤ x_rotated_paired = std::make_shared<ov::op::v0::Concat>(ov::Output_ਸਦਿਸ਼{x1_neg, x0}, -1);
 
-        auto flat_shape =
+        ਸਵੈਚਾਲਿਤ flat_shape =
             ov::op::v0::Constant::create(ov::element::i64, {4}, std::vector<int64_t>{batch, -1, n_heads, n_dims});
-        auto x_rotated =
-            std::make_shared<ov::op::v1::Reshape>(x_rotated_paired, flat_shape, false);
+        ਸਵੈਚਾਲਿਤ x_rotated =
+            std::make_shared<ov::op::v1::Reshape>(x_rotated_paired, flat_shape, ਝੂਠ);
 
         // Expand cos/sin from [..., n_dims/2] to [..., n_dims] by repeating each
         // entry twice. Use special_zero on the final Reshape so the seq dim passes
         // through dynamically. Final rank is 4 to satisfy the matcher's predicate.
-        auto expand_cos_sin = [&](const Output<Node>& cs) {
-            auto cs_unsq = std::make_shared<ov::op::v0::Unsqueeze>(
+        ਸਵੈਚਾਲਿਤ expand_cos_sin = [&](ਅਚਲ Output<Node>& cs) {
+            ਸਵੈਚਾਲਿਤ cs_unsq = std::make_shared<ov::op::v0::Unsqueeze>(
                 cs, ov::op::v0::Constant::create(ov::element::i64, {1}, {-1}));
-            auto bcast_target = ov::op::v0::Constant::create(
+            ਸਵੈਚਾਲਿਤ bcast_ਨਿਸ਼ਾਨਾ = ov::op::v0::Constant::create(
                 ov::element::i64, {5}, std::vector<int64_t>{1, 1, 1, half, 2});
-            auto bcast = std::make_shared<ov::op::v3::Broadcast>(
-                cs_unsq, bcast_target, ov::op::BroadcastType::BIDIRECTIONAL);
-            auto flat = ov::op::v0::Constant::create(ov::element::i64, {4}, std::vector<int64_t>{0, 0, 0, n_dims});
-            return std::make_shared<ov::op::v1::Reshape>(bcast, flat, true);
+            ਸਵੈਚਾਲਿਤ bcast = std::make_shared<ov::op::v3::ਪ੍ਰਸਾਰਣ>(
+                cs_unsq, bcast_ਨਿਸ਼ਾਨਾ, ov::op::ਪ੍ਰਸਾਰਣ_Type::BIDIRECTIONAL);
+            ਸਵੈਚਾਲਿਤ flat = ov::op::v0::Constant::create(ov::element::i64, {4}, std::vector<int64_t>{0, 0, 0, n_dims});
+            ਵਾਪਸ std::make_shared<ov::op::v1::Reshape>(bcast, flat, ਸੱਚ);
         };
-        Output<Node> cos_full = expand_cos_sin(cos_theta_node);
-        Output<Node> sin_full = expand_cos_sin(sin_theta_node);
+        Output<Node> cos_ਭਰਿਆ = expand_cos_sin(cos_theta_ਗੰਢ);
+        Output<Node> sin_ਭਰਿਆ = expand_cos_sin(sin_theta_ਗੰਢ);
 
-        auto y1 = std::make_shared<ov::op::v1::Multiply>(rot_data, cos_full);
-        auto y2 = std::make_shared<ov::op::v1::Multiply>(x_rotated, sin_full);
-        auto rotated = std::make_shared<ov::op::v1::Add>(y1, y2);
+        ਸਵੈਚਾਲਿਤ y1 = std::make_shared<ov::op::v1::Multiply>(rot_ਅੰਕੜੇ, cos_ਭਰਿਆ);
+        ਸਵੈਚਾਲਿਤ y2 = std::make_shared<ov::op::v1::Multiply>(x_rotated, sin_ਭਰਿਆ);
+        ਸਵੈਚਾਲਿਤ rotated = std::make_shared<ov::op::v1::ਜੋੜੋ>(y1, y2);
 
-        ov::OutputVector concat_parts;
-        if (n_offs > 0) {
-            auto head_start = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
-            auto head_end = ov::op::v0::Constant::create(ov::element::i64, {1}, {n_offs});
-            auto head = std::make_shared<ov::op::v8::Slice>(data_node, head_start, head_end, step_one, axis_last);
-            concat_parts.push_back(head);
+        ov::Output_ਸਦਿਸ਼ concat_parts;
+        ਜੇ (n_offs > 0) {
+            ਸਵੈਚਾਲਿਤ ਸਿਰ_ਸ਼ੁਰੂ = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
+            ਸਵੈਚਾਲਿਤ ਸਿਰ_ਸਿਰਾ = ov::op::v0::Constant::create(ov::element::i64, {1}, {n_offs});
+            ਸਵੈਚਾਲਿਤ ਸਿਰ = std::make_shared<ov::op::v8::ਟੁਕੜਾ>(ਅੰਕੜੇ_ਗੰਢ, ਸਿਰ_ਸ਼ੁਰੂ, ਸਿਰ_ਸਿਰਾ, ਕਦਮ_one, axis_ਆਖਰੀ);
+            concat_parts.push_back(ਸਿਰ);
         }
         concat_parts.push_back(rotated);
-        if (n_offs + n_dims < head_dim) {
-            auto tail_start = ov::op::v0::Constant::create(ov::element::i64, {1}, {n_offs + n_dims});
-            auto tail_end = ov::op::v0::Constant::create(ov::element::i64, {1}, {head_dim});
-            auto tail = std::make_shared<ov::op::v8::Slice>(data_node, tail_start, tail_end, step_one, axis_last);
-            concat_parts.push_back(tail);
+        ਜੇ (n_offs + n_dims < ਸਿਰ_dim) {
+            ਸਵੈਚਾਲਿਤ ਪੂਛ_ਸ਼ੁਰੂ = ov::op::v0::Constant::create(ov::element::i64, {1}, {n_offs + n_dims});
+            ਸਵੈਚਾਲਿਤ ਪੂਛ_ਸਿਰਾ = ov::op::v0::Constant::create(ov::element::i64, {1}, {ਸਿਰ_dim});
+            ਸਵੈਚਾਲਿਤ ਪੂਛ = std::make_shared<ov::op::v8::ਟੁਕੜਾ>(ਅੰਕੜੇ_ਗੰਢ, ਪੂਛ_ਸ਼ੁਰੂ, ਪੂਛ_ਸਿਰਾ, ਕਦਮ_one, axis_ਆਖਰੀ);
+            concat_parts.push_back(ਪੂਛ);
         }
-        if (concat_parts.size() == 1) {
+        ਜੇ (concat_parts.size() == 1) {
             res = rotated;
-        } else {
+        } ਨਹੀਂਤਾਂ {
             res = std::make_shared<ov::op::v0::Concat>(concat_parts, -1);
         }
-    } else if (mode == TYPE_NEOX || mode == TYPE_IMROPE || mode == TYPE_MROPE || mode == TYPE_VISION) {
-        const int64_t half = (mode == TYPE_VISION) ? n_dims : (n_dims / 2);
-        const int64_t rot_dims = 2 * half;
+    } ਨਹੀਂਤਾਂ ਜੇ (mode == TYPE_NEOX || mode == TYPE_IMROPE || mode == TYPE_MROPE || mode == TYPE_VISION) {
+        ਅਚਲ int64_t half = (mode == TYPE_VISION) ? n_dims : (n_dims / 2);
+        ਅਚਲ int64_t rot_dims = 2 * half;
 
-        if (mode != TYPE_NEOX) {
-            auto cos_sin_shape = std::make_shared<ov::op::v0::Constant>(ov::element::i64, ov::Shape{4},
+        ਜੇ (mode != TYPE_NEOX) {
+            ਸਵੈਚਾਲਿਤ cos_sin_shape = std::make_shared<ov::op::v0::Constant>(ov::element::i64, ov::Shape{4},
                                                                         std::vector<int64_t>{1, -1, 1, half});
-            cos_theta_node = std::make_shared<ov::op::v1::Reshape>(cos_theta_node, cos_sin_shape, true);
-            sin_theta_node = std::make_shared<ov::op::v1::Reshape>(sin_theta_node, cos_sin_shape, true);
+            cos_theta_ਗੰਢ = std::make_shared<ov::op::v1::Reshape>(cos_theta_ਗੰਢ, cos_sin_shape, ਸੱਚ);
+            sin_theta_ਗੰਢ = std::make_shared<ov::op::v1::Reshape>(sin_theta_ਗੰਢ, cos_sin_shape, ਸੱਚ);
         }
 
-        auto axis_last = ov::op::v0::Constant::create(ov::element::i64, {1}, {-1});
-        auto step_one = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
+        ਸਵੈਚਾਲਿਤ axis_ਆਖਰੀ = ov::op::v0::Constant::create(ov::element::i64, {1}, {-1});
+        ਸਵੈਚਾਲਿਤ ਕਦਮ_one = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
 
-        Output<Node> rot_data = data_node;
-        if (n_offs > 0 || n_offs + rot_dims < head_dim) {
-            auto rot_start = ov::op::v0::Constant::create(ov::element::i64, {1}, {n_offs});
-            auto rot_end = ov::op::v0::Constant::create(ov::element::i64, {1}, {n_offs + rot_dims});
-            rot_data = std::make_shared<ov::op::v8::Slice>(data_node, rot_start, rot_end, step_one, axis_last);
+        Output<Node> rot_ਅੰਕੜੇ = ਅੰਕੜੇ_ਗੰਢ;
+        ਜੇ (n_offs > 0 || n_offs + rot_dims < ਸਿਰ_dim) {
+            ਸਵੈਚਾਲਿਤ rot_ਸ਼ੁਰੂ = ov::op::v0::Constant::create(ov::element::i64, {1}, {n_offs});
+            ਸਵੈਚਾਲਿਤ rot_ਸਿਰਾ = ov::op::v0::Constant::create(ov::element::i64, {1}, {n_offs + rot_dims});
+            rot_ਅੰਕੜੇ = std::make_shared<ov::op::v8::ਟੁਕੜਾ>(ਅੰਕੜੇ_ਗੰਢ, rot_ਸ਼ੁਰੂ, rot_ਸਿਰਾ, ਕਦਮ_one, axis_ਆਖਰੀ);
         }
 
-        auto neg_one_f = ov::op::v0::Constant::create(data_node->get_element_type(), ov::Shape{}, {-1.0f});
+        ਸਵੈਚਾਲਿਤ neg_one_f = ov::op::v0::Constant::create(ਅੰਕੜੇ_ਗੰਢ->get_element_type(), ov::Shape{}, {-1.0f});
 
-        auto split_axis = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{}, {3});
-        auto split_lengths = ov::op::v0::Constant::create(ov::element::i64, {2}, {half, half});
-        auto data_split = std::make_shared<ov::op::v1::VariadicSplit>(rot_data, split_axis, split_lengths);
-        Output<Node> x1 = data_split->outputs()[0];
-        Output<Node> x2 = data_split->outputs()[1];
+        ਸਵੈਚਾਲਿਤ ਵੰਡੋ_axis = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{}, {3});
+        ਸਵੈਚਾਲਿਤ ਵੰਡੋ_lengths = ov::op::v0::Constant::create(ov::element::i64, {2}, {half, half});
+        ਸਵੈਚਾਲਿਤ ਅੰਕੜੇ_ਵੰਡੋ = std::make_shared<ov::op::v1::Variadic_ਵੰਡੋ>(rot_ਅੰਕੜੇ, ਵੰਡੋ_axis, ਵੰਡੋ_lengths);
+        Output<Node> x1 = ਅੰਕੜੇ_ਵੰਡੋ->outputs()[0];
+        Output<Node> x2 = ਅੰਕੜੇ_ਵੰਡੋ->outputs()[1];
 
-        auto x2_neg = std::make_shared<ov::op::v1::Multiply>(x2, neg_one_f);
-        auto x_rotate_half = std::make_shared<ov::op::v0::Concat>(ov::OutputVector{x2_neg, x1}, -1);
+        ਸਵੈਚਾਲਿਤ x2_neg = std::make_shared<ov::op::v1::Multiply>(x2, neg_one_f);
+        ਸਵੈਚਾਲਿਤ x_rotate_half = std::make_shared<ov::op::v0::Concat>(ov::Output_ਸਦਿਸ਼{x2_neg, x1}, -1);
 
-        auto cos_full = std::make_shared<ov::op::v0::Concat>(ov::OutputVector{cos_theta_node, cos_theta_node}, -1);
-        auto sin_full = std::make_shared<ov::op::v0::Concat>(ov::OutputVector{sin_theta_node, sin_theta_node}, -1);
+        ਸਵੈਚਾਲਿਤ cos_ਭਰਿਆ = std::make_shared<ov::op::v0::Concat>(ov::Output_ਸਦਿਸ਼{cos_theta_ਗੰਢ, cos_theta_ਗੰਢ}, -1);
+        ਸਵੈਚਾਲਿਤ sin_ਭਰਿਆ = std::make_shared<ov::op::v0::Concat>(ov::Output_ਸਦਿਸ਼{sin_theta_ਗੰਢ, sin_theta_ਗੰਢ}, -1);
 
-        auto y1 = std::make_shared<ov::op::v1::Multiply>(rot_data, cos_full);
-        auto y2 = std::make_shared<ov::op::v1::Multiply>(x_rotate_half, sin_full);
-        auto rotated = std::make_shared<ov::op::v1::Add>(y1, y2);
+        ਸਵੈਚਾਲਿਤ y1 = std::make_shared<ov::op::v1::Multiply>(rot_ਅੰਕੜੇ, cos_ਭਰਿਆ);
+        ਸਵੈਚਾਲਿਤ y2 = std::make_shared<ov::op::v1::Multiply>(x_rotate_half, sin_ਭਰਿਆ);
+        ਸਵੈਚਾਲਿਤ rotated = std::make_shared<ov::op::v1::ਜੋੜੋ>(y1, y2);
 
-        ov::OutputVector concat_parts;
-        if (n_offs > 0) {
-            auto head_start = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
-            auto head_end = ov::op::v0::Constant::create(ov::element::i64, {1}, {n_offs});
-            auto head = std::make_shared<ov::op::v8::Slice>(data_node, head_start, head_end, step_one, axis_last);
-            concat_parts.push_back(head);
+        ov::Output_ਸਦਿਸ਼ concat_parts;
+        ਜੇ (n_offs > 0) {
+            ਸਵੈਚਾਲਿਤ ਸਿਰ_ਸ਼ੁਰੂ = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
+            ਸਵੈਚਾਲਿਤ ਸਿਰ_ਸਿਰਾ = ov::op::v0::Constant::create(ov::element::i64, {1}, {n_offs});
+            ਸਵੈਚਾਲਿਤ ਸਿਰ = std::make_shared<ov::op::v8::ਟੁਕੜਾ>(ਅੰਕੜੇ_ਗੰਢ, ਸਿਰ_ਸ਼ੁਰੂ, ਸਿਰ_ਸਿਰਾ, ਕਦਮ_one, axis_ਆਖਰੀ);
+            concat_parts.push_back(ਸਿਰ);
         }
         concat_parts.push_back(rotated);
-        if (n_offs + rot_dims < head_dim) {
-            auto tail_start = ov::op::v0::Constant::create(ov::element::i64, {1}, {n_offs + rot_dims});
-            auto tail_end = ov::op::v0::Constant::create(ov::element::i64, {1}, {head_dim});
-            auto tail = std::make_shared<ov::op::v8::Slice>(data_node, tail_start, tail_end, step_one, axis_last);
-            concat_parts.push_back(tail);
+        ਜੇ (n_offs + rot_dims < ਸਿਰ_dim) {
+            ਸਵੈਚਾਲਿਤ ਪੂਛ_ਸ਼ੁਰੂ = ov::op::v0::Constant::create(ov::element::i64, {1}, {n_offs + rot_dims});
+            ਸਵੈਚਾਲਿਤ ਪੂਛ_ਸਿਰਾ = ov::op::v0::Constant::create(ov::element::i64, {1}, {ਸਿਰ_dim});
+            ਸਵੈਚਾਲਿਤ ਪੂਛ = std::make_shared<ov::op::v8::ਟੁਕੜਾ>(ਅੰਕੜੇ_ਗੰਢ, ਪੂਛ_ਸ਼ੁਰੂ, ਪੂਛ_ਸਿਰਾ, ਕਦਮ_one, axis_ਆਖਰੀ);
+            concat_parts.push_back(ਪੂਛ);
         }
-        if (concat_parts.size() == 1) {
+        ਜੇ (concat_parts.size() == 1) {
             res = rotated;
-        } else {
+        } ਨਹੀਂਤਾਂ {
             res = std::make_shared<ov::op::v0::Concat>(concat_parts, -1);
         }
     }
 
-    if (res.get_element_type() != output_type) {
+    ਜੇ (res.get_element_type() != output_type) {
         res = std::make_shared<ov::op::v0::Convert>(res, output_type);
     }
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ਵਾਪਸ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

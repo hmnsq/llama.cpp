@@ -1,109 +1,109 @@
-#pragma once
+#ਹਦਾਇਤ once
 
 // ggml-backend internal header
 
-#include "ggml-backend.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-backend.h"
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ  __cplusplus
+ਬਾਹਰੀ "C" {
+#ਜੇ_ਅੰਤ
 
-    #define GGML_BACKEND_API_VERSION 3
+    #ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_BACKEND_API_ਸੰਸਕਰਣ 3
 
     //
     // Backend buffer type
     //
 
-    struct ggml_backend_buffer_type_i {
-        const char *          (*get_name)        (ggml_backend_buffer_type_t buft);
+    ਬਣਤਰ ggml_backend_ਬਫਰ_type_i {
+        ਅਚਲ ਅੱਖਰ *          (*get_name)        (ggml_backend_ਬਫਰ_type_t buft);
         // allocate a buffer of this type
-        ggml_backend_buffer_t (*alloc_buffer)    (ggml_backend_buffer_type_t buft, size_t size);
+        ggml_backend_ਬਫਰ_t (*alloc_ਬਫਰ)    (ggml_backend_ਬਫਰ_type_t buft, size_t ਮਾਪ);
         // (optional) allocate tensors from a list into a buffer of this type (defaults to alloc_buffer + linear allocator)
-        ggml_backend_buffer_t (*alloc_buffer_n)  (ggml_backend_buffer_type_t buft, struct ggml_tensor ** tensors, int n_tensors);
+        ggml_backend_ਬਫਰ_t (*alloc_ਬਫਰ_n)  (ggml_backend_ਬਫਰ_type_t buft, ਬਣਤਰ ggml_tensor ** tensors, ਪੂਰਨ n_tensors);
         // tensor alignment
-        size_t                (*get_alignment)   (ggml_backend_buffer_type_t buft);
+        size_t                (*get_alignment)   (ggml_backend_ਬਫਰ_type_t buft);
         // (optional) max buffer size that can be allocated (defaults to SIZE_MAX)
-        size_t                (*get_max_size)    (ggml_backend_buffer_type_t buft);
+        size_t                (*get_max_ਮਾਪ)    (ggml_backend_ਬਫਰ_type_t buft);
         // (optional) data size needed to allocate the tensor, including padding (defaults to ggml_nbytes)
-        size_t                (*get_alloc_size)  (ggml_backend_buffer_type_t buft, const struct ggml_tensor * tensor);
+        size_t                (*get_alloc_ਮਾਪ)  (ggml_backend_ਬਫਰ_type_t buft, ਅਚਲ ਬਣਤਰ ggml_tensor * tensor);
         // (optional) total data size needed to allocate the given tensors, including padding and splitting (defaults to per-tensor get_alloc_size)
-        size_t                (*get_alloc_size_n)(ggml_backend_buffer_type_t buft, struct ggml_tensor ** tensors, int n_tensors);
+        size_t                (*get_alloc_ਮਾਪ_n)(ggml_backend_ਬਫਰ_type_t buft, ਬਣਤਰ ggml_tensor ** tensors, ਪੂਰਨ n_tensors);
         // (optional) check if tensor data is in host memory and uses standard ggml tensor layout (defaults to false)
-        bool                  (*is_host)         (ggml_backend_buffer_type_t buft);
+        bool                  (*is_host)         (ggml_backend_ਬਫਰ_type_t buft);
     };
 
-    struct ggml_backend_buffer_type {
-        struct ggml_backend_buffer_type_i  iface;
+    ਬਣਤਰ ggml_backend_ਬਫਰ_type {
+        ਬਣਤਰ ggml_backend_ਬਫਰ_type_i  iface;
         ggml_backend_dev_t device;
-        void * context;
+        ਖਾਲੀ * context;
     };
 
     // [TAG_ALLOC_SIZE_EXPAND]
     // returns true for ops that may require additional memory for fleeting data on some backends,
     // i.e. the backend buffer type's get_alloc_size may return more than ggml_nbytes for the output tensor
-    GGML_API bool ggml_op_alloc_size_may_expand(enum ggml_op op);
+    GGML_API bool ggml_op_alloc_ਮਾਪ_may_expand(ਗਿਣਤੀ ggml_op op);
 
     //
     // Backend buffer
     //
 
-    struct ggml_backend_buffer_i {
+    ਬਣਤਰ ggml_backend_ਬਫਰ_i {
         // (optional) free the buffer
-        void         (*free_buffer)  (ggml_backend_buffer_t buffer);
+        ਖਾਲੀ         (*free_ਬਫਰ)  (ggml_backend_ਬਫਰ_t ਬਫਰ);
         // base address of the buffer
-        void *       (*get_base)     (ggml_backend_buffer_t buffer);
+        ਖਾਲੀ *       (*get_ਅਧਾਰ)     (ggml_backend_ਬਫਰ_t ਬਫਰ);
         // (optional) initialize a tensor in the buffer (eg. add tensor extras)
-        enum ggml_status (*init_tensor)(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor);
+        ਗਿਣਤੀ ggml_ਸਥਿਤੀ (*init_tensor)(ggml_backend_ਬਫਰ_t ਬਫਰ, ਬਣਤਰ ggml_tensor * tensor);
         // tensor data access
-        void         (*memset_tensor)(ggml_backend_buffer_t buffer,       struct ggml_tensor * tensor,     uint8_t value, size_t offset, size_t size);
-        void         (*set_tensor)   (ggml_backend_buffer_t buffer,       struct ggml_tensor * tensor, const void * data, size_t offset, size_t size);
-        void         (*get_tensor)   (ggml_backend_buffer_t buffer, const struct ggml_tensor * tensor,       void * data, size_t offset, size_t size);
+        ਖਾਲੀ         (*memset_tensor)(ggml_backend_ਬਫਰ_t ਬਫਰ,       ਬਣਤਰ ggml_tensor * tensor,     uint8_t ਮੁੱਲ, size_t ਵਿੱਥ, size_t ਮਾਪ);
+        ਖਾਲੀ         (*ਸੈੱਟ_tensor)   (ggml_backend_ਬਫਰ_t ਬਫਰ,       ਬਣਤਰ ggml_tensor * tensor, ਅਚਲ ਖਾਲੀ * ਅੰਕੜੇ, size_t ਵਿੱਥ, size_t ਮਾਪ);
+        ਖਾਲੀ         (*get_tensor)   (ggml_backend_ਬਫਰ_t ਬਫਰ, ਅਚਲ ਬਣਤਰ ggml_tensor * tensor,       ਖਾਲੀ * ਅੰਕੜੇ, size_t ਵਿੱਥ, size_t ਮਾਪ);
         // (optional) 2d data copies
-        void         (*set_tensor_2d)(ggml_backend_buffer_t buffer,       struct ggml_tensor * tensor, const void * data, size_t offset, size_t size, size_t n_copies, size_t stride_tensor, size_t stride_data);
-        void         (*get_tensor_2d)(ggml_backend_buffer_t buffer, const struct ggml_tensor * tensor,       void * data, size_t offset, size_t size, size_t n_copies, size_t stride_tensor, size_t stride_data);
+        ਖਾਲੀ         (*ਸੈੱਟ_tensor_2d)(ggml_backend_ਬਫਰ_t ਬਫਰ,       ਬਣਤਰ ggml_tensor * tensor, ਅਚਲ ਖਾਲੀ * ਅੰਕੜੇ, size_t ਵਿੱਥ, size_t ਮਾਪ, size_t n_copies, size_t stride_tensor, size_t stride_ਅੰਕੜੇ);
+        ਖਾਲੀ         (*get_tensor_2d)(ggml_backend_ਬਫਰ_t ਬਫਰ, ਅਚਲ ਬਣਤਰ ggml_tensor * tensor,       ਖਾਲੀ * ਅੰਕੜੇ, size_t ਵਿੱਥ, size_t ਮਾਪ, size_t n_copies, size_t stride_tensor, size_t stride_ਅੰਕੜੇ);
 
         // (optional) tensor copy: dst is in the buffer, src may be in any buffer, including buffers from a different backend (return false if not supported)
-        bool         (*cpy_tensor)   (ggml_backend_buffer_t buffer, const struct ggml_tensor * src, struct ggml_tensor * dst);
+        bool         (*cpy_tensor)   (ggml_backend_ਬਫਰ_t ਬਫਰ, ਅਚਲ ਬਣਤਰ ggml_tensor * src, ਬਣਤਰ ggml_tensor * dst);
         // clear the entire buffer
-        void         (*clear)        (ggml_backend_buffer_t buffer, uint8_t value);
+        ਖਾਲੀ         (*clear)        (ggml_backend_ਬਫਰ_t ਬਫਰ, uint8_t ਮੁੱਲ);
         // (optional) reset any internal state due to tensor initialization, such as tensor extras
-        void         (*reset)        (ggml_backend_buffer_t buffer);
+        ਖਾਲੀ         (*reset)        (ggml_backend_ਬਫਰ_t ਬਫਰ);
     };
 
-    struct ggml_backend_buffer {
-        struct ggml_backend_buffer_i  iface;
-        ggml_backend_buffer_type_t    buft;
-        void * context;
-        size_t size;
-        enum ggml_backend_buffer_usage usage;
+    ਬਣਤਰ ggml_backend_ਬਫਰ {
+        ਬਣਤਰ ggml_backend_ਬਫਰ_i  iface;
+        ggml_backend_ਬਫਰ_type_t    buft;
+        ਖਾਲੀ * context;
+        size_t ਮਾਪ;
+        ਗਿਣਤੀ ggml_backend_ਬਫਰ_usage usage;
     };
 
-    GGML_API ggml_backend_buffer_t ggml_backend_buffer_init(
-                   ggml_backend_buffer_type_t buft,
-            struct ggml_backend_buffer_i      iface,
-                   void *                     context,
-                   size_t                     size);
+    GGML_API ggml_backend_ਬਫਰ_t ggml_backend_ਬਫਰ_init(
+                   ggml_backend_ਬਫਰ_type_t buft,
+            ਬਣਤਰ ggml_backend_ਬਫਰ_i      iface,
+                   ਖਾਲੀ *                     context,
+                   size_t                     ਮਾਪ);
 
     // do not use directly, use ggml_backend_tensor_copy instead
-    GGML_API bool ggml_backend_buffer_copy_tensor(const struct ggml_tensor * src, struct ggml_tensor * dst);
+    GGML_API bool ggml_backend_ਬਫਰ_copy_tensor(ਅਚਲ ਬਣਤਰ ggml_tensor * src, ਬਣਤਰ ggml_tensor * dst);
 
     // multi-buffer
     // buffer that contains a collection of buffers
-    GGML_API ggml_backend_buffer_t ggml_backend_multi_buffer_alloc_buffer(ggml_backend_buffer_t * buffers, size_t n_buffers);
-    GGML_API bool                  ggml_backend_buffer_is_multi_buffer(ggml_backend_buffer_t buffer);
-    GGML_API void                  ggml_backend_multi_buffer_set_usage(ggml_backend_buffer_t buffer, enum ggml_backend_buffer_usage usage);
-    GGML_API void                  ggml_backend_meta_buffer_set_usage (ggml_backend_buffer_t buffer, enum ggml_backend_buffer_usage usage);
+    GGML_API ggml_backend_ਬਫਰ_t ggml_backend_multi_ਬਫਰ_alloc_ਬਫਰ(ggml_backend_ਬਫਰ_t * buffers, size_t n_buffers);
+    GGML_API bool                  ggml_backend_ਬਫਰ_is_multi_ਬਫਰ(ggml_backend_ਬਫਰ_t ਬਫਰ);
+    GGML_API ਖਾਲੀ                  ggml_backend_multi_ਬਫਰ_ਸੈੱਟ_usage(ggml_backend_ਬਫਰ_t ਬਫਰ, ਗਿਣਤੀ ggml_backend_ਬਫਰ_usage usage);
+    GGML_API ਖਾਲੀ                  ggml_backend_meta_ਬਫਰ_ਸੈੱਟ_usage (ggml_backend_ਬਫਰ_t ਬਫਰ, ਗਿਣਤੀ ggml_backend_ਬਫਰ_usage usage);
 
     //
     // Backend (meta)
     //
 
     GGML_API bool ggml_backend_is_meta       (ggml_backend_t backend);
-    GGML_API bool ggml_backend_buffer_is_meta(ggml_backend_buffer_t buf);
-    GGML_API bool ggml_backend_buft_is_meta  (ggml_backend_buffer_type_t buft);
+    GGML_API bool ggml_backend_ਬਫਰ_is_meta(ggml_backend_ਬਫਰ_t buf);
+    GGML_API bool ggml_backend_buft_is_meta  (ggml_backend_ਬਫਰ_type_t buft);
 
     GGML_API size_t         ggml_backend_meta_n_backends    (ggml_backend_t meta_backend);
-    GGML_API ggml_backend_t ggml_backend_meta_simple_backend(ggml_backend_t meta_backend, size_t index);
+    GGML_API ggml_backend_t ggml_backend_meta_simple_backend(ggml_backend_t meta_backend, size_t ਸੂਚਕਾਂਕ);
 
     //
     // Backend (stream)
@@ -112,60 +112,60 @@ extern "C" {
     // passed to graph_optimize so the backend can add allocation dependencies:
     // if the backend executes parts of the graph out of order (e.g. on concurrent streams),
     // it must keep the affected tensors allocated until a node where execution is known to have joined
-    struct ggml_backend_graph_optimize_params {
+    ਬਣਤਰ ggml_backend_ਗ੍ਰਾਫ_optimize_params {
         // keep `tensor` allocated at least until `until` (a node of the same graph) has been computed
         // can be called multiple times for the same tensor: the longest lifetime applies
-        void (*add_alloc_dep)(void * user_data, struct ggml_tensor * tensor, struct ggml_tensor * until);
-        void * user_data;
+        ਖਾਲੀ (*ਜੋੜੋ_alloc_dep)(ਖਾਲੀ * user_ਅੰਕੜੇ, ਬਣਤਰ ggml_tensor * tensor, ਬਣਤਰ ggml_tensor * until);
+        ਖਾਲੀ * user_ਅੰਕੜੇ;
     };
 
-    struct ggml_backend_i {
-        const char * (*get_name)(ggml_backend_t backend);
+    ਬਣਤਰ ggml_backend_i {
+        ਅਚਲ ਅੱਖਰ * (*get_name)(ggml_backend_t backend);
 
-        void (*free)(ggml_backend_t backend);
+        ਖਾਲੀ (*ਮੁਕਤ)(ggml_backend_t backend);
 
         // (optional) asynchronous tensor data access
-        void (*set_tensor_async)   (ggml_backend_t backend,       struct ggml_tensor * tensor, const void * data, size_t offset, size_t size);
-        void (*get_tensor_async)   (ggml_backend_t backend, const struct ggml_tensor * tensor,       void * data, size_t offset, size_t size);
-        void (*set_tensor_2d_async)(ggml_backend_t backend,       struct ggml_tensor * tensor, const void * data, size_t offset, size_t size, size_t n_copies, size_t stride_tensor, size_t stride_data);
-        void (*get_tensor_2d_async)(ggml_backend_t backend, const struct ggml_tensor * tensor,       void * data, size_t offset, size_t size, size_t n_copies, size_t stride_tensor, size_t stride_data);
-        bool (*cpy_tensor_async)(ggml_backend_t backend_src, ggml_backend_t backend_dst, const struct ggml_tensor * src, struct ggml_tensor * dst);
+        ਖਾਲੀ (*ਸੈੱਟ_tensor_async)   (ggml_backend_t backend,       ਬਣਤਰ ggml_tensor * tensor, ਅਚਲ ਖਾਲੀ * ਅੰਕੜੇ, size_t ਵਿੱਥ, size_t ਮਾਪ);
+        ਖਾਲੀ (*get_tensor_async)   (ggml_backend_t backend, ਅਚਲ ਬਣਤਰ ggml_tensor * tensor,       ਖਾਲੀ * ਅੰਕੜੇ, size_t ਵਿੱਥ, size_t ਮਾਪ);
+        ਖਾਲੀ (*ਸੈੱਟ_tensor_2d_async)(ggml_backend_t backend,       ਬਣਤਰ ggml_tensor * tensor, ਅਚਲ ਖਾਲੀ * ਅੰਕੜੇ, size_t ਵਿੱਥ, size_t ਮਾਪ, size_t n_copies, size_t stride_tensor, size_t stride_ਅੰਕੜੇ);
+        ਖਾਲੀ (*get_tensor_2d_async)(ggml_backend_t backend, ਅਚਲ ਬਣਤਰ ggml_tensor * tensor,       ਖਾਲੀ * ਅੰਕੜੇ, size_t ਵਿੱਥ, size_t ਮਾਪ, size_t n_copies, size_t stride_tensor, size_t stride_ਅੰਕੜੇ);
+        bool (*cpy_tensor_async)(ggml_backend_t backend_src, ggml_backend_t backend_dst, ਅਚਲ ਬਣਤਰ ggml_tensor * src, ਬਣਤਰ ggml_tensor * dst);
 
         // (optional) complete all pending operations (required if the backend supports async operations)
-        void (*synchronize)(ggml_backend_t backend);
+        ਖਾਲੀ (*synchronize)(ggml_backend_t backend);
 
         // (optional) graph plans (not used currently)
         // compute graph with a plan
-        ggml_backend_graph_plan_t (*graph_plan_create) (ggml_backend_t backend, const struct ggml_cgraph * cgraph);
-        void                      (*graph_plan_free)   (ggml_backend_t backend, ggml_backend_graph_plan_t plan);
+        ggml_backend_ਗ੍ਰਾਫ_plan_t (*ਗ੍ਰਾਫ_plan_create) (ggml_backend_t backend, ਅਚਲ ਬਣਤਰ ggml_cgraph * cgraph);
+        ਖਾਲੀ                      (*ਗ੍ਰਾਫ_plan_free)   (ggml_backend_t backend, ggml_backend_ਗ੍ਰਾਫ_plan_t plan);
         // update the plan with a new graph - this should be faster than creating a new plan when the graph has the same topology
-        void                      (*graph_plan_update) (ggml_backend_t backend, ggml_backend_graph_plan_t plan, const struct ggml_cgraph * cgraph);
+        ਖਾਲੀ                      (*ਗ੍ਰਾਫ_plan_update) (ggml_backend_t backend, ggml_backend_ਗ੍ਰਾਫ_plan_t plan, ਅਚਲ ਬਣਤਰ ggml_cgraph * cgraph);
         // compute the graph with the plan
-        enum ggml_status          (*graph_plan_compute)(ggml_backend_t backend, ggml_backend_graph_plan_t plan);
+        ਗਿਣਤੀ ggml_ਸਥਿਤੀ          (*ਗ੍ਰਾਫ_plan_compute)(ggml_backend_t backend, ggml_backend_ਗ੍ਰਾਫ_plan_t plan);
 
         // compute graph (always async if supported by the backend)
-        enum ggml_status          (*graph_compute)     (ggml_backend_t backend, struct ggml_cgraph * cgraph);
+        ਗਿਣਤੀ ggml_ਸਥਿਤੀ          (*ਗ੍ਰਾਫ_compute)     (ggml_backend_t backend, ਬਣਤਰ ggml_cgraph * cgraph);
 
         // (optional) event synchronization
         // record an event on this stream
-        void (*event_record)(ggml_backend_t backend, ggml_backend_event_t event);
+        ਖਾਲੀ (*event_ਰਿਕਾਰਡ)(ggml_backend_t backend, ggml_backend_event_t event);
         // wait for an event on on a different stream
-        void (*event_wait)  (ggml_backend_t backend, ggml_backend_event_t event);
+        ਖਾਲੀ (*event_wait)  (ggml_backend_t backend, ggml_backend_event_t event);
 
         // (optional) sort/optimize the nodes in the graph
-        void                      (*graph_optimize)    (ggml_backend_t backend, struct ggml_cgraph * cgraph, struct ggml_backend_graph_optimize_params * params);
+        ਖਾਲੀ                      (*ਗ੍ਰਾਫ_optimize)    (ggml_backend_t backend, ਬਣਤਰ ggml_cgraph * cgraph, ਬਣਤਰ ggml_backend_ਗ੍ਰਾਫ_optimize_params * params);
     };
 
-    struct ggml_backend {
+    ਬਣਤਰ ggml_backend {
         ggml_guid_t guid;
-        struct ggml_backend_i iface;
+        ਬਣਤਰ ggml_backend_i iface;
         ggml_backend_dev_t device;
-        void * context;
+        ਖਾਲੀ * context;
     };
 
-    struct ggml_backend_event {
-        struct ggml_backend_device * device;
-        void * context;
+    ਬਣਤਰ ggml_backend_event {
+        ਬਣਤਰ ggml_backend_device * device;
+        ਖਾਲੀ * context;
     };
 
     //
@@ -174,119 +174,119 @@ extern "C" {
 
     // Note: if additional properties are needed, we should add a struct with all of them
     //       the current functions to obtain the properties can remain, since they are more convenient for often used properties
-    struct ggml_backend_device_i {
+    ਬਣਤਰ ggml_backend_device_i {
         // device name: short identifier for this device, such as "CPU" or "CUDA0"
-        const char * (*get_name)(ggml_backend_dev_t dev);
+        ਅਚਲ ਅੱਖਰ * (*get_name)(ggml_backend_dev_t dev);
 
         // device description: short informative description of the device, could be the model name
-        const char * (*get_description)(ggml_backend_dev_t dev);
+        ਅਚਲ ਅੱਖਰ * (*get_description)(ggml_backend_dev_t dev);
 
         // device memory in bytes: 0 bytes to indicate no memory to report
-        void         (*get_memory)(ggml_backend_dev_t dev, size_t * free, size_t * total);
+        ਖਾਲੀ         (*get_ਸਮ੍ਰਿਤੀ)(ggml_backend_dev_t dev, size_t * ਮੁਕਤ, size_t * ਕੁੱਲ);
 
         // device type
-        enum ggml_backend_dev_type (*get_type)(ggml_backend_dev_t dev);
+        ਗਿਣਤੀ ggml_backend_dev_type (*get_type)(ggml_backend_dev_t dev);
 
         // device properties
-        void (*get_props)(ggml_backend_dev_t dev, struct ggml_backend_dev_props * props);
+        ਖਾਲੀ (*get_props)(ggml_backend_dev_t dev, ਬਣਤਰ ggml_backend_dev_props * props);
 
         // backend (stream) initialization
-        ggml_backend_t (*init_backend)(ggml_backend_dev_t dev, const char * params);
+        ggml_backend_t (*init_backend)(ggml_backend_dev_t dev, ਅਚਲ ਅੱਖਰ * params);
 
         // preferred buffer type
-        ggml_backend_buffer_type_t (*get_buffer_type)(ggml_backend_dev_t dev);
+        ggml_backend_ਬਫਰ_type_t (*get_ਬਫਰ_type)(ggml_backend_dev_t dev);
 
         // (optional) host buffer type (in system memory, typically this is a pinned memory buffer for faster transfers between host and device)
-        ggml_backend_buffer_type_t (*get_host_buffer_type)(ggml_backend_dev_t dev);
+        ggml_backend_ਬਫਰ_type_t (*get_host_ਬਫਰ_type)(ggml_backend_dev_t dev);
 
         // (optional) buffer from pointer: create a buffer from a host pointer (useful for memory mapped models and importing data from other libraries)
-        ggml_backend_buffer_t (*buffer_from_host_ptr)(ggml_backend_dev_t dev, void * ptr, size_t size, size_t max_tensor_size);
+        ggml_backend_ਬਫਰ_t (*ਬਫਰ_from_host_ptr)(ggml_backend_dev_t dev, ਖਾਲੀ * ptr, size_t ਮਾਪ, size_t max_tensor_ਮਾਪ);
 
         // check if the backend can compute an operation
-        bool (*supports_op)(ggml_backend_dev_t dev, const struct ggml_tensor * op);
+        bool (*supports_op)(ggml_backend_dev_t dev, ਅਚਲ ਬਣਤਰ ggml_tensor * op);
 
         // check if the backend can use tensors allocated in a buffer type
-        bool (*supports_buft)(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft);
+        bool (*supports_buft)(ggml_backend_dev_t dev, ggml_backend_ਬਫਰ_type_t buft);
 
         // (optional) check if the backend wants to run an operation, even if the weights are allocated in an incompatible buffer
         // these should be expensive operations that may benefit from running on this backend instead of the CPU backend
-        bool (*offload_op)(ggml_backend_dev_t dev, const struct ggml_tensor * op);
+        bool (*offload_op)(ggml_backend_dev_t dev, ਅਚਲ ਬਣਤਰ ggml_tensor * op);
 
         // (optional) event synchronization
         ggml_backend_event_t (*event_new)         (ggml_backend_dev_t dev);
-        void                 (*event_free)        (ggml_backend_dev_t dev, ggml_backend_event_t event);
-        void                 (*event_synchronize) (ggml_backend_dev_t dev, ggml_backend_event_t event);
+        ਖਾਲੀ                 (*event_free)        (ggml_backend_dev_t dev, ggml_backend_event_t event);
+        ਖਾਲੀ                 (*event_synchronize) (ggml_backend_dev_t dev, ggml_backend_event_t event);
     };
 
-    struct ggml_backend_device {
-        struct ggml_backend_device_i iface;
+    ਬਣਤਰ ggml_backend_device {
+        ਬਣਤਰ ggml_backend_device_i iface;
         ggml_backend_reg_t reg;
-        void * context;
+        ਖਾਲੀ * context;
     };
 
     //
     // Backend (reg)
     //
 
-    struct ggml_backend_reg_i {
-        const char * (*get_name)(ggml_backend_reg_t reg);
+    ਬਣਤਰ ggml_backend_reg_i {
+        ਅਚਲ ਅੱਖਰ * (*get_name)(ggml_backend_reg_t reg);
 
         // enumerate available devices
-        size_t             (*get_device_count)(ggml_backend_reg_t reg);
-        ggml_backend_dev_t (*get_device)(ggml_backend_reg_t reg, size_t index);
+        size_t             (*get_device_ਗਿਣਤੀ)(ggml_backend_reg_t reg);
+        ggml_backend_dev_t (*get_device)(ggml_backend_reg_t reg, size_t ਸੂਚਕਾਂਕ);
 
         // (optional) get a pointer to a function in the backend
         // backends can add custom functions that are not part of the standard ggml-backend interface
-        void * (*get_proc_address)(ggml_backend_reg_t reg, const char * name);
+        ਖਾਲੀ * (*get_proc_ਪਤਾ)(ggml_backend_reg_t reg, ਅਚਲ ਅੱਖਰ * name);
     };
 
-    struct ggml_backend_reg {
-        int api_version; // initialize to GGML_BACKEND_API_VERSION
-        struct ggml_backend_reg_i iface;
-        void * context;
+    ਬਣਤਰ ggml_backend_reg {
+        ਪੂਰਨ api_ਸੰਸਕਰਣ; // initialize to GGML_BACKEND_API_VERSION
+        ਬਣਤਰ ggml_backend_reg_i iface;
+        ਖਾਲੀ * context;
     };
 
     // Add backend dynamic loading support to the backend
 
     // Initialize the backend
-    typedef ggml_backend_reg_t (*ggml_backend_init_t)(void);
+    ਕਿਸਮਪਰਿਭਾਸ਼ਾ ggml_backend_reg_t (*ggml_backend_init_t)(ਖਾਲੀ);
     // Optional: obtain a score for the backend based on the system configuration
     // Higher scores are preferred, 0 means the backend is not supported in the current system
-    typedef int                (*ggml_backend_score_t)(void);
+    ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਪੂਰਨ                (*ggml_backend_score_t)(ਖਾਲੀ);
 
-#ifdef GGML_BACKEND_DL
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_BACKEND_DL
 #    ifdef __cplusplus
 #        define GGML_BACKEND_DL_IMPL(reg_fn)                             \
-            extern "C" {                                                 \
-            GGML_BACKEND_API ggml_backend_reg_t ggml_backend_init(void); \
+            ਬਾਹਰੀ "C" {                                                 \
+            GGML_BACKEND_API ggml_backend_reg_t ggml_backend_init(ਖਾਲੀ); \
             }                                                            \
-            ggml_backend_reg_t ggml_backend_init(void) {                 \
-                return reg_fn();                                         \
+            ggml_backend_reg_t ggml_backend_init(ਖਾਲੀ) {                 \
+                ਵਾਪਸ reg_fn();                                         \
             }
 #        define GGML_BACKEND_DL_SCORE_IMPL(score_fn)       \
-            extern "C" {                                   \
-            GGML_BACKEND_API int ggml_backend_score(void); \
+            ਬਾਹਰੀ "C" {                                   \
+            GGML_BACKEND_API ਪੂਰਨ ggml_backend_score(ਖਾਲੀ); \
             }                                              \
-            int ggml_backend_score(void) {                 \
-                return score_fn();                         \
+            ਪੂਰਨ ggml_backend_score(ਖਾਲੀ) {                 \
+                ਵਾਪਸ score_fn();                         \
             }
-#    else
+#    ਨਹੀਂਤਾਂ
 #        define GGML_BACKEND_DL_IMPL(reg_fn)                              \
-            GGML_BACKEND_API ggml_backend_reg_t ggml_backend_init(void);  \
-            ggml_backend_reg_t                  ggml_backend_init(void) { \
-                return reg_fn();                                          \
+            GGML_BACKEND_API ggml_backend_reg_t ggml_backend_init(ਖਾਲੀ);  \
+            ggml_backend_reg_t                  ggml_backend_init(ਖਾਲੀ) { \
+                ਵਾਪਸ reg_fn();                                          \
             }
 #        define GGML_BACKEND_DL_SCORE_IMPL(score_fn)        \
-            GGML_BACKEND_API int ggml_backend_score(void);  \
-            int                  ggml_backend_score(void) { \
-                return score_fn();                          \
+            GGML_BACKEND_API ਪੂਰਨ ggml_backend_score(ਖਾਲੀ);  \
+            ਪੂਰਨ                  ggml_backend_score(ਖਾਲੀ) { \
+                ਵਾਪਸ score_fn();                          \
             }
 #    endif
-#else
+#ਨਹੀਂਤਾਂ
 #    define GGML_BACKEND_DL_IMPL(reg_fn)
 #    define GGML_BACKEND_DL_SCORE_IMPL(score_fn)
-#endif
+#ਜੇ_ਅੰਤ
 
-#ifdef  __cplusplus
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ  __cplusplus
 }
-#endif
+#ਜੇ_ਅੰਤ

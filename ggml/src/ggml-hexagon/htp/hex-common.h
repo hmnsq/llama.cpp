@@ -1,89 +1,89 @@
-#ifndef HEX_COMMON_H
-#define HEX_COMMON_H
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ HEX_COMMON_H
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HEX_COMMON_H
 
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdint.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stddef.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdbool.h>
 
-#ifndef SIZE_MAX
-#define SIZE_MAX ((size_t)-1)
-#endif
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ SIZE_MAX
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ SIZE_MAX ((size_t)-1)
+#ਜੇ_ਅੰਤ
 
-#ifndef MAX
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#endif
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ MAX
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ MAX(a, b) ((a) > (b) ? (a) : (b))
+#ਜੇ_ਅੰਤ
 
-#ifndef MIN
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#endif
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ MIN
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ MIN(a, b) ((a) < (b) ? (a) : (b))
+#ਜੇ_ਅੰਤ
 
-static inline uint32_t hex_ceil_pow2(uint32_t x) {
-    if (x <= 1) { return 1; }
-    int p = 2;
+ਸਥਿਰ ਸਤਰਅੰਦਰ uint32_t hex_ceil_pow2(uint32_t x) {
+    ਜੇ (x <= 1) { ਵਾਪਸ 1; }
+    ਪੂਰਨ p = 2;
     x--;
-    while (x >>= 1) { p <<= 1; }
-    return p;
+    ਜਦੋਂ (x >>= 1) { p <<= 1; }
+    ਵਾਪਸ p;
 }
 
-static inline size_t hmx_ceil_div(size_t num, size_t den) {
-    return (num + den - 1) / den;
+ਸਥਿਰ ਸਤਰਅੰਦਰ size_t hmx_ceil_div(size_t ਅੰਕ, size_t den) {
+    ਵਾਪਸ (ਅੰਕ + den - 1) / den;
 }
 
-static inline int32_t hex_is_aligned(const void * addr, uint32_t align) {
-    return ((size_t) addr & (align - 1)) == 0;
+ਸਥਿਰ ਸਤਰਅੰਦਰ int32_t hex_is_aligned(ਅਚਲ ਖਾਲੀ * addr, uint32_t align) {
+    ਵਾਪਸ ((size_t) addr & (align - 1)) == 0;
 }
 
-static inline size_t hex_align_up(size_t v, size_t align) {
-    return hmx_ceil_div(v, align) * align;
+ਸਥਿਰ ਸਤਰਅੰਦਰ size_t hex_align_ਉੱਪਰ(size_t v, size_t align) {
+    ਵਾਪਸ hmx_ceil_div(v, align) * align;
 }
 
-static inline size_t hex_align_down(size_t v, size_t align) {
-    return (v / align) * align;
+ਸਥਿਰ ਸਤਰਅੰਦਰ size_t hex_align_ਥੱਲੇ(size_t v, size_t align) {
+    ਵਾਪਸ (v / align) * align;
 }
 
-static inline int32_t hex_is_one_chunk(void * addr, uint32_t n, uint32_t chunk_size) {
-    uint32_t left_off  = (size_t) addr & (chunk_size - 1);
-    uint32_t right_off = left_off + n;
-    return right_off <= chunk_size;
+ਸਥਿਰ ਸਤਰਅੰਦਰ int32_t hex_is_one_chunk(ਖਾਲੀ * addr, uint32_t n, uint32_t chunk_ਮਾਪ) {
+    uint32_t ਖੱਬਾ_off  = (size_t) addr & (chunk_ਮਾਪ - 1);
+    uint32_t ਸੱਜਾ_off = ਖੱਬਾ_off + n;
+    ਵਾਪਸ ਸੱਜਾ_off <= chunk_ਮਾਪ;
 }
 
-static inline uint32_t hex_round_up(uint32_t n, uint32_t m) {
-    return m * ((n + m - 1) / m);
+ਸਥਿਰ ਸਤਰਅੰਦਰ uint32_t hex_ਗੇੜਾ_ਉੱਪਰ(uint32_t n, uint32_t m) {
+    ਵਾਪਸ m * ((n + m - 1) / m);
 }
 
-static inline size_t hex_smin(size_t a, size_t b) {
-    return a < b ? a : b;
+ਸਥਿਰ ਸਤਰਅੰਦਰ size_t hex_smin(size_t a, size_t b) {
+    ਵਾਪਸ a < b ? a : b;
 }
 
-static inline size_t hex_smax(size_t a, size_t b) {
-    return a > b ? a : b;
+ਸਥਿਰ ਸਤਰਅੰਦਰ size_t hex_smax(size_t a, size_t b) {
+    ਵਾਪਸ a > b ? a : b;
 }
 
-static inline void hex_swap_ptr(void ** p1, void ** p2) {
-    void * t = *p1;
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ hex_ਅਦਲਾ_ਬਦਲੀ_ptr(ਖਾਲੀ ** p1, ਖਾਲੀ ** p2) {
+    ਖਾਲੀ * t = *p1;
     *p1      = *p2;
     *p2      = t;
 }
 
-static inline bool hex_mul_overflow(size_t a, size_t b, size_t *out) {
-    if (a != 0 && b > SIZE_MAX / a) return true;
-    *out = a * b;
-    return false;
+ਸਥਿਰ ਸਤਰਅੰਦਰ bool hex_mul_ਉਛਾਲ(size_t a, size_t b, size_t *ਬਾਹਰਲਾ) {
+    ਜੇ (a != 0 && b > SIZE_MAX / a) ਵਾਪਸ true;
+    *ਬਾਹਰਲਾ = a * b;
+    ਵਾਪਸ false;
 }
 
-static inline bool hex_add_overflow(size_t a, size_t b, size_t *out) {
-    if (a > SIZE_MAX - b) return true;
-    *out = a + b;
-    return false;
+ਸਥਿਰ ਸਤਰਅੰਦਰ bool hex_ਜੋੜੋ_ਉਛਾਲ(size_t a, size_t b, size_t *ਬਾਹਰਲਾ) {
+    ਜੇ (a > SIZE_MAX - b) ਵਾਪਸ true;
+    *ਬਾਹਰਲਾ = a + b;
+    ਵਾਪਸ false;
 }
 
-static inline uint32_t hex_gcd_u32(uint32_t a, uint32_t b) {
-    while (b != 0) {
+ਸਥਿਰ ਸਤਰਅੰਦਰ uint32_t hex_ਮਹੱਤਮ_ਸਾਂਝਾ_ਭਾਜਕ_u32(uint32_t a, uint32_t b) {
+    ਜਦੋਂ (b != 0) {
         uint32_t t = b;
         b = a % b;
         a = t;
     }
-    return a;
+    ਵਾਪਸ a;
 }
 
-#endif // HEX_COMMON_H
+#ਜੇ_ਅੰਤ // HEX_COMMON_H

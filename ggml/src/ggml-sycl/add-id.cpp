@@ -1,43 +1,43 @@
-#include <sycl/sycl.hpp>
-#include "common.hpp"
-#include "add-id.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ <sycl/sycl.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ "common.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "add-id.hpp"
 
-static void add_id_kernel(
-    const float* src0,
-    const float* src1,
-    const int32_t* src2,
-    float* dst,
+ਸਥਿਰ ਖਾਲੀ ਜੋੜੋ_id_kernel(
+    ਅਚਲ ਦਸ਼ਮਲਵ* src0,
+    ਅਚਲ ਦਸ਼ਮਲਵ* src1,
+    ਅਚਲ int32_t* src2,
+    ਦਸ਼ਮਲਵ* dst,
     int64_t ne0,
     int64_t ne1,
     size_t nb01,
     size_t nb02,
     size_t nb11,
     size_t nb21,
-    sycl::nd_item<3> item_ct1) {
-  const int64_t i1 = item_ct1.get_group(2);
-  const int64_t i2 = item_ct1.get_group(1);
+    sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1) {
+  ਅਚਲ int64_t i1 = ਵਸਤੂ_ct1.get_ਸਮੂਹ(2);
+  ਅਚਲ int64_t i2 = ਵਸਤੂ_ct1.get_ਸਮੂਹ(1);
 
-  const int i11 =
-      *(const int32_t*)((const char*)src2 + i1 * sizeof(int32_t) + i2 * nb21);
+  ਅਚਲ ਪੂਰਨ i11 =
+      *(ਅਚਲ int32_t*)((ਅਚਲ ਅੱਖਰ*)src2 + i1 * ਆਕਾਰ(int32_t) + i2 * nb21);
 
-  const size_t nb1 = ne0 * sizeof(float);
-  const size_t nb2 = ne1 * nb1;
+  ਅਚਲ size_t nb1 = ne0 * ਆਕਾਰ(ਦਸ਼ਮਲਵ);
+  ਅਚਲ size_t nb2 = ne1 * nb1;
 
-  float* dst_row = (float*)((char*)dst + i1 * nb1 + i2 * nb2);
-  const float* src0_row =
-      (const float*)((const char*)src0 + i1 * nb01 + i2 * nb02);
-  const float* src1_row = (const float*)((const char*)src1 + i11 * nb11);
+  ਦਸ਼ਮਲਵ* dst_ਪੰਕਤੀ = (ਦਸ਼ਮਲਵ*)((ਅੱਖਰ*)dst + i1 * nb1 + i2 * nb2);
+  ਅਚਲ ਦਸ਼ਮਲਵ* src0_ਪੰਕਤੀ =
+      (ਅਚਲ ਦਸ਼ਮਲਵ*)((ਅਚਲ ਅੱਖਰ*)src0 + i1 * nb01 + i2 * nb02);
+  ਅਚਲ ਦਸ਼ਮਲਵ* src1_ਪੰਕਤੀ = (ਅਚਲ ਦਸ਼ਮਲਵ*)((ਅਚਲ ਅੱਖਰ*)src1 + i11 * nb11);
 
-  for (int64_t i0 = item_ct1.get_local_id(2); i0 < ne0;
-       i0 += item_ct1.get_local_range(2)) {
-    dst_row[i0] = src0_row[i0] + src1_row[i0];
+  ਲਈ (int64_t i0 = ਵਸਤੂ_ct1.get_local_id(2); i0 < ne0;
+       i0 += ਵਸਤੂ_ct1.get_local_range(2)) {
+    dst_ਪੰਕਤੀ[i0] = src0_ਪੰਕਤੀ[i0] + src1_ਪੰਕਤੀ[i0];
   }
 }
 
-void ggml_sycl_add_id(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
-  const ggml_tensor* src0 = dst->src[0];
-  const ggml_tensor* src1 = dst->src[1];
-  const ggml_tensor* src2 = dst->src[2];
+ਖਾਲੀ ggml_sycl_ਜੋੜੋ_id(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
+  ਅਚਲ ggml_tensor* src0 = dst->src[0];
+  ਅਚਲ ggml_tensor* src1 = dst->src[1];
+  ਅਚਲ ggml_tensor* src2 = dst->src[2];
 
   GGML_TENSOR_TERNARY_OP_LOCALS
 
@@ -46,26 +46,26 @@ void ggml_sycl_add_id(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
   GGML_ASSERT(src1->type == GGML_TYPE_F32);
   GGML_ASSERT(src2->type == GGML_TYPE_I32);
 
-  GGML_ASSERT(nb00 == sizeof(float));
-  GGML_ASSERT(nb10 == sizeof(float));
-  GGML_ASSERT(nb20 == sizeof(int32_t));
+  GGML_ASSERT(nb00 == ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+  GGML_ASSERT(nb10 == ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+  GGML_ASSERT(nb20 == ਆਕਾਰ(int32_t));
 
-  const float* src0_d = (const float*)src0->data;
-  const float* src1_d = (const float*)src1->data;
-  const int32_t* src2_d = (const int32_t*)src2->data;
-  float* dst_d = (float*)dst->data;
+  ਅਚਲ ਦਸ਼ਮਲਵ* src0_d = (ਅਚਲ ਦਸ਼ਮਲਵ*)src0->ਅੰਕੜੇ;
+  ਅਚਲ ਦਸ਼ਮਲਵ* src1_d = (ਅਚਲ ਦਸ਼ਮਲਵ*)src1->ਅੰਕੜੇ;
+  ਅਚਲ int32_t* src2_d = (ਅਚਲ int32_t*)src2->ਅੰਕੜੇ;
+  ਦਸ਼ਮਲਵ* dst_d = (ਦਸ਼ਮਲਵ*)dst->ਅੰਕੜੇ;
 
-  const unsigned int max_work_group_size = ggml_sycl_info().max_work_group_sizes[ctx.device];
-  GGML_ASSERT(max_work_group_size % (WARP_SIZE * WARP_SIZE) == 0);
+  ਅਚਲ ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ max_work_ਸਮੂਹ_ਮਾਪ = ggml_sycl_info().max_work_ਸਮੂਹ_sizes[ctx.device];
+  GGML_ASSERT(max_work_ਸਮੂਹ_ਮਾਪ % (WARP_ਮਾਪ * WARP_ਮਾਪ) == 0);
 
-  int threads = std::min((unsigned int)ne00, max_work_group_size);  // cols
+  ਪੂਰਨ ਧਾਗੇ = std::min((ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ)ne00, max_work_ਸਮੂਹ_ਮਾਪ);  //ਖਾਨੇ_ਗਿਣਤੀ
 
   ctx.stream()->parallel_for(
       sycl::nd_range<3>(
-          sycl::range<3>(1, ne02, ne01) * sycl::range<3>(1, 1, threads),
-          sycl::range<3>(1, 1, threads)),
-      [=](sycl::nd_item<3> item_ct1) {
-        add_id_kernel(
+          sycl::range<3>(1, ne02, ne01) * sycl::range<3>(1, 1, ਧਾਗੇ),
+          sycl::range<3>(1, 1, ਧਾਗੇ)),
+      [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ_ct1) {
+        ਜੋੜੋ_id_kernel(
             src0_d,
             src1_d,
             src2_d,
@@ -76,6 +76,6 @@ void ggml_sycl_add_id(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
             nb02,
             nb11,
             nb21,
-            item_ct1);
+            ਵਸਤੂ_ct1);
       });
 }

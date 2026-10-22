@@ -2,16 +2,16 @@
 // SPDX-License-Identifier: MIT
 //
 
-#pragma once
+#ਹਦਾਇਤ once
 
-#include "ggml-alloc.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-alloc.h"
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ  __cplusplus
+ਬਾਹਰੀ "C" {
+#ਜੇ_ਅੰਤ
 
-ggml_backend_buffer_type_t ggml_backend_cpu_kleidiai_buffer_type(void);
+ggml_backend_ਬਫਰ_type_t ggml_backend_cpu_kleidiai_ਬਫਰ_type(ਖਾਲੀ);
 
-#ifdef  __cplusplus
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ  __cplusplus
 }
-#endif
+#ਜੇ_ਅੰਤ

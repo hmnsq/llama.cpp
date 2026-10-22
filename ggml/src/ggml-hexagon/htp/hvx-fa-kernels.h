@@ -1,83 +1,83 @@
-#ifndef HVX_FA_KERNELS_H
-#define HVX_FA_KERNELS_H
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ HVX_FA_KERNELS_H
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HVX_FA_KERNELS_H
 
-#include <assert.h>
-#include <math.h>
-#include "hvx-utils.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ <assert.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <math.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ "hvx-utils.h"
 
 // Little inner kernels for HVX
 
-#if __HVX_ARCH__ < 79
-#define HVX_OP_ADD_F32(a, b) Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(a, b))
-#define HVX_OP_SUB_F32(a, b) Q6_Vsf_equals_Vqf32(Q6_Vqf32_vsub_VsfVsf(a, b))
-#define HVX_OP_MUL_F32(a, b) Q6_Vsf_equals_Vqf32(Q6_Vqf32_vmpy_VsfVsf(a, b))
-#else
-#define HVX_OP_ADD_F32(a, b) Q6_Vsf_vadd_VsfVsf(a, b)
-#define HVX_OP_SUB_F32(a, b) Q6_Vsf_vsub_VsfVsf(a, b)
-#define HVX_OP_MUL_F32(a, b) Q6_Vsf_vmpy_VsfVsf(a, b)
-#endif
+#ਜੇ __HVX_ARCH__ < 79
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HVX_OP_ਜੋੜੋ_F32(a, b) Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(a, b))
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HVX_OP_SUB_F32(a, b) Q6_Vsf_equals_Vqf32(Q6_Vqf32_vsub_VsfVsf(a, b))
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HVX_OP_MUL_F32(a, b) Q6_Vsf_equals_Vqf32(Q6_Vqf32_vmpy_VsfVsf(a, b))
+#ਨਹੀਂਤਾਂ
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HVX_OP_ਜੋੜੋ_F32(a, b) Q6_Vsf_vadd_VsfVsf(a, b)
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HVX_OP_SUB_F32(a, b) Q6_Vsf_vsub_VsfVsf(a, b)
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HVX_OP_MUL_F32(a, b) Q6_Vsf_vmpy_VsfVsf(a, b)
+#ਜੇ_ਅੰਤ
 
 // This is a bit of a hack because the compiler is struggling to properly inline
 // the default hvx_vec_f32_to_f16 with output into the local array.
-static __attribute__((unused)) __attribute__((noinline)) void hvx_vec_f32_to_f16_a(void *ptr, HVX_Vector v0, HVX_Vector v1)
+ਸਥਿਰ __attribute__((ਅਣਵਰਤਿਆ_2)) __attribute__((noinline)) ਖਾਲੀ hvx_vec_f32_ਮੰਜ਼ਿਲ_f16_a(ਖਾਲੀ *ptr, HVX_ਸਦਿਸ਼ v0, HVX_ਸਦਿਸ਼ v1)
 {
-    *(HVX_Vector *) ptr = hvx_vec_f32_to_f16(v0, v1);
+    *(HVX_ਸਦਿਸ਼ *) ptr = hvx_vec_f32_ਮੰਜ਼ਿਲ_f16(v0, v1);
 }
 
 // Dot product of two F16 vectors, accumulating to float
-static inline void hvx_dot_f16_f16_aa(float * restrict r, const void * restrict x, const void * restrict y, unsigned int n, float s) {
-    const HVX_Vector * restrict vx = (const HVX_Vector * restrict) x; // fp16
-    const HVX_Vector * restrict vy = (const HVX_Vector * restrict) y; // fp16
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ hvx_dot_f16_f16_aa(ਦਸ਼ਮਲਵ * ਸੀਮਿਤ r, ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ x, ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ y, ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ n, ਦਸ਼ਮਲਵ s) {
+    ਅਚਲ HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ vx = (ਅਚਲ HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ) x; // fp16
+    ਅਚਲ HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ vy = (ਅਚਲ HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ) y; // fp16
 
     uint32_t nvec = n / VLEN_FP16; // num full fp16 hvx vectors
     uint32_t nloe = n % VLEN_FP16; // leftover elements
 
-    HVX_VectorPair rsum_p = Q6_W_vcombine_VV(Q6_V_vsplat_R(0), Q6_V_vsplat_R(0));
+    HVX_ਸਦਿਸ਼_Pair rsum_p = Q6_W_vcombine_VV(Q6_V_vsplat_R(0), Q6_V_vsplat_R(0));
 
     uint32_t i = 0;
 
-    #pragma unroll(4)
-    for (i = 0; i < nvec; i++) {
+    #ਹਦਾਇਤ unroll(4)
+    ਲਈ (i = 0; i < nvec; i++) {
         rsum_p = hvx_vec_mpyacc_f32_f16(rsum_p, vx[i], vy[i]);
     }
 
-    if (nloe) {
-        HVX_VectorPred bmask = Q6_Q_vsetq_R(nloe * 2);
-        HVX_Vector y_hf = Q6_V_vand_QV(bmask, vy[i]);
-        HVX_Vector x_hf = Q6_V_vand_QV(bmask, vx[i]);
+    ਜੇ (nloe) {
+        HVX_ਸਦਿਸ਼_Pred bmask = Q6_Q_vsetq_R(nloe * 2);
+        HVX_ਸਦਿਸ਼ y_hf = Q6_V_vand_QV(bmask, vy[i]);
+        HVX_ਸਦਿਸ਼ x_hf = Q6_V_vand_QV(bmask, vx[i]);
 
         rsum_p = hvx_vec_mpyacc_f32_f16(rsum_p, x_hf, y_hf);
     }
 
-    HVX_Vector rsum = HVX_OP_ADD_F32(Q6_V_lo_W(rsum_p), Q6_V_hi_W(rsum_p));
-    rsum = HVX_OP_MUL_F32(hvx_vec_splat_f32(s), hvx_vec_reduce_sum_f32(rsum));
+    HVX_ਸਦਿਸ਼ rsum = HVX_OP_ਜੋੜੋ_F32(Q6_V_lo_W(rsum_p), Q6_V_hi_W(rsum_p));
+    rsum = HVX_OP_MUL_F32(hvx_vec_splat_f32(s), hvx_vec_reduce_ਜੋੜ_f32(rsum));
     hvx_vec_store_u(r, 4, rsum);
 }
 
-static inline HVX_Vector hvx_dot_f16_f16_aa_rx4(const void * restrict y,
-                                                const uint8_t * restrict x,
-                                                const size_t stride_x,
-                                                const size_t nvec,
-                                                const size_t nloe) {
-    const HVX_Vector * restrict vx0 = (const HVX_Vector * restrict) x;                   // fp16
-    const HVX_Vector * restrict vx1 = (const HVX_Vector * restrict) (x + stride_x);      // fp16
-    const HVX_Vector * restrict vx2 = (const HVX_Vector * restrict) (x + stride_x * 2);  // fp16
-    const HVX_Vector * restrict vx3 = (const HVX_Vector * restrict) (x + stride_x * 3);  // fp16
-    const HVX_Vector * restrict vy  = (const HVX_Vector * restrict) y;                   // fp16
+ਸਥਿਰ ਸਤਰਅੰਦਰ HVX_ਸਦਿਸ਼ hvx_dot_f16_f16_aa_rx4(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ y,
+                                                ਅਚਲ uint8_t * ਸੀਮਿਤ x,
+                                                ਅਚਲ size_t stride_x,
+                                                ਅਚਲ size_t nvec,
+                                                ਅਚਲ size_t nloe) {
+    ਅਚਲ HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ vx0 = (ਅਚਲ HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ) x;                   // fp16
+    ਅਚਲ HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ vx1 = (ਅਚਲ HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ) (x + stride_x);      // fp16
+    ਅਚਲ HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ vx2 = (ਅਚਲ HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ) (x + stride_x * 2);  // fp16
+    ਅਚਲ HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ vx3 = (ਅਚਲ HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ) (x + stride_x * 3);  // fp16
+    ਅਚਲ HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ vy  = (ਅਚਲ HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ) y;                   // fp16
 
-    HVX_VectorPair rsum0_p = Q6_W_vcombine_VV(Q6_V_vsplat_R(0), Q6_V_vsplat_R(0));
-    HVX_VectorPair rsum1_p = Q6_W_vcombine_VV(Q6_V_vsplat_R(0), Q6_V_vsplat_R(0));
-    HVX_VectorPair rsum2_p = Q6_W_vcombine_VV(Q6_V_vsplat_R(0), Q6_V_vsplat_R(0));
-    HVX_VectorPair rsum3_p = Q6_W_vcombine_VV(Q6_V_vsplat_R(0), Q6_V_vsplat_R(0));
+    HVX_ਸਦਿਸ਼_Pair rsum0_p = Q6_W_vcombine_VV(Q6_V_vsplat_R(0), Q6_V_vsplat_R(0));
+    HVX_ਸਦਿਸ਼_Pair rsum1_p = Q6_W_vcombine_VV(Q6_V_vsplat_R(0), Q6_V_vsplat_R(0));
+    HVX_ਸਦਿਸ਼_Pair rsum2_p = Q6_W_vcombine_VV(Q6_V_vsplat_R(0), Q6_V_vsplat_R(0));
+    HVX_ਸਦਿਸ਼_Pair rsum3_p = Q6_W_vcombine_VV(Q6_V_vsplat_R(0), Q6_V_vsplat_R(0));
 
     uint32_t i = 0;
 
-    for (i = 0; i < nvec; i++) {
-        HVX_Vector y_hf  = vy[i];
-        HVX_Vector x0_hf = vx0[i];
-        HVX_Vector x1_hf = vx1[i];
-        HVX_Vector x2_hf = vx2[i];
-        HVX_Vector x3_hf = vx3[i];
+    ਲਈ (i = 0; i < nvec; i++) {
+        HVX_ਸਦਿਸ਼ y_hf  = vy[i];
+        HVX_ਸਦਿਸ਼ x0_hf = vx0[i];
+        HVX_ਸਦਿਸ਼ x1_hf = vx1[i];
+        HVX_ਸਦਿਸ਼ x2_hf = vx2[i];
+        HVX_ਸਦਿਸ਼ x3_hf = vx3[i];
 
         rsum0_p = hvx_vec_mpyacc_f32_f16(rsum0_p, x0_hf, y_hf);
         rsum1_p = hvx_vec_mpyacc_f32_f16(rsum1_p, x1_hf, y_hf);
@@ -85,14 +85,14 @@ static inline HVX_Vector hvx_dot_f16_f16_aa_rx4(const void * restrict y,
         rsum3_p = hvx_vec_mpyacc_f32_f16(rsum3_p, x3_hf, y_hf);
     }
 
-    if (nloe) {
+    ਜੇ (nloe) {
         // Load x (fp16) and zero-out unused elements
-        HVX_VectorPred bmask = Q6_Q_vsetq_R(nloe * 2);
-        HVX_Vector     y_hf  = Q6_V_vand_QV(bmask, vy[i]);
-        HVX_Vector     x0_hf = Q6_V_vand_QV(bmask, vx0[i]);
-        HVX_Vector     x1_hf = Q6_V_vand_QV(bmask, vx1[i]);
-        HVX_Vector     x2_hf = Q6_V_vand_QV(bmask, vx2[i]);
-        HVX_Vector     x3_hf = Q6_V_vand_QV(bmask, vx3[i]);
+        HVX_ਸਦਿਸ਼_Pred bmask = Q6_Q_vsetq_R(nloe * 2);
+        HVX_ਸਦਿਸ਼     y_hf  = Q6_V_vand_QV(bmask, vy[i]);
+        HVX_ਸਦਿਸ਼     x0_hf = Q6_V_vand_QV(bmask, vx0[i]);
+        HVX_ਸਦਿਸ਼     x1_hf = Q6_V_vand_QV(bmask, vx1[i]);
+        HVX_ਸਦਿਸ਼     x2_hf = Q6_V_vand_QV(bmask, vx2[i]);
+        HVX_ਸਦਿਸ਼     x3_hf = Q6_V_vand_QV(bmask, vx3[i]);
 
         rsum0_p = hvx_vec_mpyacc_f32_f16(rsum0_p, x0_hf, y_hf);
         rsum1_p = hvx_vec_mpyacc_f32_f16(rsum1_p, x1_hf, y_hf);
@@ -100,204 +100,204 @@ static inline HVX_Vector hvx_dot_f16_f16_aa_rx4(const void * restrict y,
         rsum3_p = hvx_vec_mpyacc_f32_f16(rsum3_p, x3_hf, y_hf);
     }
 
-    HVX_Vector rsum0 = HVX_OP_ADD_F32(Q6_V_lo_W(rsum0_p), Q6_V_hi_W(rsum0_p));
-    HVX_Vector rsum1 = HVX_OP_ADD_F32(Q6_V_lo_W(rsum1_p), Q6_V_hi_W(rsum1_p));
-    HVX_Vector rsum2 = HVX_OP_ADD_F32(Q6_V_lo_W(rsum2_p), Q6_V_hi_W(rsum2_p));
-    HVX_Vector rsum3 = HVX_OP_ADD_F32(Q6_V_lo_W(rsum3_p), Q6_V_hi_W(rsum3_p));
+    HVX_ਸਦਿਸ਼ rsum0 = HVX_OP_ਜੋੜੋ_F32(Q6_V_lo_W(rsum0_p), Q6_V_hi_W(rsum0_p));
+    HVX_ਸਦਿਸ਼ rsum1 = HVX_OP_ਜੋੜੋ_F32(Q6_V_lo_W(rsum1_p), Q6_V_hi_W(rsum1_p));
+    HVX_ਸਦਿਸ਼ rsum2 = HVX_OP_ਜੋੜੋ_F32(Q6_V_lo_W(rsum2_p), Q6_V_hi_W(rsum2_p));
+    HVX_ਸਦਿਸ਼ rsum3 = HVX_OP_ਜੋੜੋ_F32(Q6_V_lo_W(rsum3_p), Q6_V_hi_W(rsum3_p));
 
-    HVX_Vector_x4 rsum0123 = { .v = { rsum0, rsum1, rsum2, rsum3 } };
-    return hvx_vec_reduce_sum_f32x4(rsum0123);
+    HVX_ਸਦਿਸ਼_x4 rsum0123 = { .v = { rsum0, rsum1, rsum2, rsum3 } };
+    ਵਾਪਸ hvx_vec_reduce_ਜੋੜ_f32x4(rsum0123);
 }
 
-static inline HVX_Vector hvx_dot_f16_f16_aa_rx32(const void * restrict y,
-                                                 const uint8_t * restrict x,
-                                                 const size_t stride_x,
-                                                 const size_t n,
-                                                 float        s) {
+ਸਥਿਰ ਸਤਰਅੰਦਰ HVX_ਸਦਿਸ਼ hvx_dot_f16_f16_aa_rx32(ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ y,
+                                                 ਅਚਲ uint8_t * ਸੀਮਿਤ x,
+                                                 ਅਚਲ size_t stride_x,
+                                                 ਅਚਲ size_t n,
+                                                 ਦਸ਼ਮਲਵ        s) {
 
-    const size_t nvec = n / VLEN_FP16; // num full fp16 hvx vectors
-    const size_t nloe = n % VLEN_FP16; // leftover elements
+    ਅਚਲ size_t nvec = n / VLEN_FP16; // num full fp16 hvx vectors
+    ਅਚਲ size_t nloe = n % VLEN_FP16; // leftover elements
 
-    HVX_Vector   sums = Q6_V_vzero();
-    const size_t stride_x_4 = stride_x * 4;
-    for (uint32_t j = 0; j < VLEN_FP32; j += 4) {
-        HVX_Vector     sums_x4 = hvx_dot_f16_f16_aa_rx4(y, x, stride_x, nvec, nloe);
-        HVX_VectorPred pred    = Q6_Q_vsetq_R(j * SIZEOF_FP32);
+    HVX_ਸਦਿਸ਼   sums = Q6_V_vzero();
+    ਅਚਲ size_t stride_x_4 = stride_x * 4;
+    ਲਈ (uint32_t j = 0; j < VLEN_FP32; j += 4) {
+        HVX_ਸਦਿਸ਼     sums_x4 = hvx_dot_f16_f16_aa_rx4(y, x, stride_x, nvec, nloe);
+        HVX_ਸਦਿਸ਼_Pred pred    = Q6_Q_vsetq_R(j * SIZEOF_FP32);
         sums                   = Q6_V_vmux_QVV(pred, sums, sums_x4);
         x += stride_x_4;
     }
 
-    return HVX_OP_MUL_F32(hvx_vec_splat_f32(s), sums);
+    ਵਾਪਸ HVX_OP_MUL_F32(hvx_vec_splat_f32(s), sums);
 }
 
 // MAD: y (F32) += x (F16) * s (F16)
-static inline void hvx_mad_f32_f16_aa(float * restrict y, const void * restrict x, const __fp16 * restrict s, uint32_t n) {
-    const HVX_Vector * restrict vx0 = (const HVX_Vector *) x;
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ hvx_mad_f32_f16_aa(ਦਸ਼ਮਲਵ * ਸੀਮਿਤ y, ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ x, ਅਚਲ __fp16 * ਸੀਮਿਤ s, uint32_t n) {
+    ਅਚਲ HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ vx0 = (ਅਚਲ HVX_ਸਦਿਸ਼ *) x;
 
-    HVX_VectorPair * restrict vy_p = (HVX_VectorPair *) y;
-    HVX_Vector * restrict vy = (HVX_Vector *) y;
+    HVX_ਸਦਿਸ਼_Pair * ਸੀਮਿਤ vy_p = (HVX_ਸਦਿਸ਼_Pair *) y;
+    HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ vy = (HVX_ਸਦਿਸ਼ *) y;
 
     uint32_t nvec = n / VLEN_FP16; // num full fp16 hvx vectors
     uint32_t nloe = n % VLEN_FP16; // leftover elements
 
-    HVX_Vector S0 = hvx_vec_splat_f16(*s);
+    HVX_ਸਦਿਸ਼ S0 = hvx_vec_splat_f16(*s);
 
     uint32_t i = 0;
 
-    #pragma unroll(2)
-    for (i = 0; i < nvec; ++i) {
+    #ਹਦਾਇਤ unroll(2)
+    ਲਈ (i = 0; i < nvec; ++i) {
         vy_p[i] = hvx_vec_mpyacc_f32_f16(vy_p[i], Q6_Vh_vshuff_Vh(vx0[i]), S0);
     }
 
-    if (nloe) {
-        HVX_VectorPair xy_p = vy_p[i];
+    ਜੇ (nloe) {
+        HVX_ਸਦਿਸ਼_Pair xy_p = vy_p[i];
         xy_p = hvx_vec_mpyacc_f32_f16(xy_p, Q6_Vh_vshuff_Vh(vx0[i]), S0);
 
-        HVX_Vector xy = Q6_V_lo_W(xy_p);
+        HVX_ਸਦਿਸ਼ xy = Q6_V_lo_W(xy_p);
         i = 2 * i;  // index for vy
 
-        if (nloe >= VLEN_FP32) {
+        ਜੇ (nloe >= VLEN_FP32) {
             vy[i] = xy;
             nloe -= VLEN_FP32; ++i; xy = Q6_V_hi_W(xy_p);
         }
 
-        if (nloe) {
+        ਜੇ (nloe) {
             hvx_vec_store_a(&vy[i], nloe * 4, xy);
         }
     }
 }
 
 // MAD: y (F32) += x0 (F16) * s0 (F16) + x1 (F16) * s1 (F16)
-static inline void hvx_mad_f32_f16_aa_rx2(float * restrict y, const void * restrict x0, const void * restrict x1,
-                                          const __fp16 * restrict s0, const __fp16 * restrict s1, uint32_t n) {
-    const HVX_Vector * restrict vx0 = (const HVX_Vector *) x0;
-    const HVX_Vector * restrict vx1 = (const HVX_Vector *) x1;
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ hvx_mad_f32_f16_aa_rx2(ਦਸ਼ਮਲਵ * ਸੀਮਿਤ y, ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ x0, ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ x1,
+                                          ਅਚਲ __fp16 * ਸੀਮਿਤ s0, ਅਚਲ __fp16 * ਸੀਮਿਤ s1, uint32_t n) {
+    ਅਚਲ HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ vx0 = (ਅਚਲ HVX_ਸਦਿਸ਼ *) x0;
+    ਅਚਲ HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ vx1 = (ਅਚਲ HVX_ਸਦਿਸ਼ *) x1;
 
-    HVX_VectorPair * restrict vy_p  = (HVX_VectorPair *) y;
-    HVX_Vector * restrict vy        = (HVX_Vector *) y;
+    HVX_ਸਦਿਸ਼_Pair * ਸੀਮਿਤ vy_p  = (HVX_ਸਦਿਸ਼_Pair *) y;
+    HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ vy        = (HVX_ਸਦਿਸ਼ *) y;
 
     uint32_t nvec = n / VLEN_FP16;  // num full fp16 hvx vectors
     uint32_t nloe = n % VLEN_FP16;  // leftover elements
 
-    HVX_Vector S0 = hvx_vec_splat_f16(*s0);
-    HVX_Vector S1 = hvx_vec_splat_f16(*s1);
+    HVX_ਸਦਿਸ਼ S0 = hvx_vec_splat_f16(*s0);
+    HVX_ਸਦਿਸ਼ S1 = hvx_vec_splat_f16(*s1);
 
     uint32_t i = 0;
 
-    #pragma unroll(2)
-    for (i = 0; i < nvec; ++i) {
+    #ਹਦਾਇਤ unroll(2)
+    ਲਈ (i = 0; i < nvec; ++i) {
         vy_p[i] = hvx_vec_mpyacc_f32_f16(vy_p[i], Q6_Vh_vshuff_Vh(vx0[i]), S0);
         vy_p[i] = hvx_vec_mpyacc_f32_f16(vy_p[i], Q6_Vh_vshuff_Vh(vx1[i]), S1);
     }
 
-    if (nloe) {
-        HVX_VectorPair xy_p = vy_p[i];
+    ਜੇ (nloe) {
+        HVX_ਸਦਿਸ਼_Pair xy_p = vy_p[i];
         xy_p = hvx_vec_mpyacc_f32_f16(xy_p, Q6_Vh_vshuff_Vh(vx0[i]), S0);
         xy_p = hvx_vec_mpyacc_f32_f16(xy_p, Q6_Vh_vshuff_Vh(vx1[i]), S1);
 
-        HVX_Vector xy = Q6_V_lo_W(xy_p);
+        HVX_ਸਦਿਸ਼ xy = Q6_V_lo_W(xy_p);
         i = 2 * i;  // index for vy
 
-        if (nloe >= VLEN_FP32) {
+        ਜੇ (nloe >= VLEN_FP32) {
             vy[i] = xy;
             nloe -= VLEN_FP32; ++i; xy = Q6_V_hi_W(xy_p);
         }
 
-        if (nloe) {
+        ਜੇ (nloe) {
             hvx_vec_store_a(&vy[i], nloe * 4, xy);
         }
     }
 }
-static inline void hvx_mad_f32_f16_aa_vec(float * restrict y, const void * restrict x, HVX_Vector S0, uint32_t n) {
-    const HVX_Vector * restrict vx0 = (const HVX_Vector *) x;
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ hvx_mad_f32_f16_aa_vec(ਦਸ਼ਮਲਵ * ਸੀਮਿਤ y, ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ x, HVX_ਸਦਿਸ਼ S0, uint32_t n) {
+    ਅਚਲ HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ vx0 = (ਅਚਲ HVX_ਸਦਿਸ਼ *) x;
 
-    HVX_VectorPair * restrict vy_p = (HVX_VectorPair *) y;
-    HVX_Vector * restrict vy = (HVX_Vector *) y;
+    HVX_ਸਦਿਸ਼_Pair * ਸੀਮਿਤ vy_p = (HVX_ਸਦਿਸ਼_Pair *) y;
+    HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ vy = (HVX_ਸਦਿਸ਼ *) y;
 
     uint32_t nvec = n / VLEN_FP16; // num full fp16 hvx vectors
     uint32_t nloe = n % VLEN_FP16; // leftover elements
 
     uint32_t i = 0;
 
-    #pragma unroll(2)
-    for (i = 0; i < nvec; ++i) {
+    #ਹਦਾਇਤ unroll(2)
+    ਲਈ (i = 0; i < nvec; ++i) {
         vy_p[i] = hvx_vec_mpyacc_f32_f16(vy_p[i], Q6_Vh_vshuff_Vh(vx0[i]), S0);
     }
 
-    if (nloe) {
-        HVX_VectorPair xy_p = vy_p[i];
+    ਜੇ (nloe) {
+        HVX_ਸਦਿਸ਼_Pair xy_p = vy_p[i];
         xy_p = hvx_vec_mpyacc_f32_f16(xy_p, Q6_Vh_vshuff_Vh(vx0[i]), S0);
 
-        HVX_Vector xy = Q6_V_lo_W(xy_p);
+        HVX_ਸਦਿਸ਼ xy = Q6_V_lo_W(xy_p);
         i = 2 * i;  // index for vy
 
-        if (nloe >= VLEN_FP32) {
+        ਜੇ (nloe >= VLEN_FP32) {
             vy[i] = xy;
             nloe -= VLEN_FP32; ++i; xy = Q6_V_hi_W(xy_p);
         }
 
-        if (nloe) {
+        ਜੇ (nloe) {
             hvx_vec_store_a(&vy[i], nloe * 4, xy);
         }
     }
 }
 
-static inline void hvx_mad_f32_f16_aa_rx2_vec(float * restrict y, const void * restrict x0, const void * restrict x1,
-                                          HVX_Vector S0, HVX_Vector S1, uint32_t n) {
-    const HVX_Vector * restrict vx0 = (const HVX_Vector *) x0;
-    const HVX_Vector * restrict vx1 = (const HVX_Vector *) x1;
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ hvx_mad_f32_f16_aa_rx2_vec(ਦਸ਼ਮਲਵ * ਸੀਮਿਤ y, ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ x0, ਅਚਲ ਖਾਲੀ * ਸੀਮਿਤ x1,
+                                          HVX_ਸਦਿਸ਼ S0, HVX_ਸਦਿਸ਼ S1, uint32_t n) {
+    ਅਚਲ HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ vx0 = (ਅਚਲ HVX_ਸਦਿਸ਼ *) x0;
+    ਅਚਲ HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ vx1 = (ਅਚਲ HVX_ਸਦਿਸ਼ *) x1;
 
-    HVX_VectorPair * restrict vy_p  = (HVX_VectorPair *) y;
-    HVX_Vector * restrict vy        = (HVX_Vector *) y;
+    HVX_ਸਦਿਸ਼_Pair * ਸੀਮਿਤ vy_p  = (HVX_ਸਦਿਸ਼_Pair *) y;
+    HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ vy        = (HVX_ਸਦਿਸ਼ *) y;
 
     uint32_t nvec = n / VLEN_FP16;  // num full fp16 hvx vectors
     uint32_t nloe = n % VLEN_FP16;  // leftover elements
 
     uint32_t i = 0;
 
-    #pragma unroll(2)
-    for (i = 0; i < nvec; ++i) {
+    #ਹਦਾਇਤ unroll(2)
+    ਲਈ (i = 0; i < nvec; ++i) {
         vy_p[i] = hvx_vec_mpyacc_f32_f16(vy_p[i], Q6_Vh_vshuff_Vh(vx0[i]), S0);
         vy_p[i] = hvx_vec_mpyacc_f32_f16(vy_p[i], Q6_Vh_vshuff_Vh(vx1[i]), S1);
     }
 
-    if (nloe) {
-        HVX_VectorPair xy_p = vy_p[i];
+    ਜੇ (nloe) {
+        HVX_ਸਦਿਸ਼_Pair xy_p = vy_p[i];
         xy_p = hvx_vec_mpyacc_f32_f16(xy_p, Q6_Vh_vshuff_Vh(vx0[i]), S0);
         xy_p = hvx_vec_mpyacc_f32_f16(xy_p, Q6_Vh_vshuff_Vh(vx1[i]), S1);
 
-        HVX_Vector xy = Q6_V_lo_W(xy_p);
+        HVX_ਸਦਿਸ਼ xy = Q6_V_lo_W(xy_p);
         i = 2 * i;  // index for vy
 
-        if (nloe >= VLEN_FP32) {
+        ਜੇ (nloe >= VLEN_FP32) {
             vy[i] = xy;
             nloe -= VLEN_FP32; ++i; xy = Q6_V_hi_W(xy_p);
         }
 
-        if (nloe) {
+        ਜੇ (nloe) {
             hvx_vec_store_a(&vy[i], nloe * 4, xy);
         }
     }
 }
 
-static inline void hvx_scale_vec_f32_aa(uint8_t * restrict dst, const uint8_t * restrict src, const uint32_t n, HVX_Vector vs) {
-    assert((size_t) dst % 128 == 0);
-    assert((size_t) src % 128 == 0);
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ hvx_scale_vec_f32_aa(uint8_t * ਸੀਮਿਤ dst, ਅਚਲ uint8_t * ਸੀਮਿਤ src, ਅਚਲ uint32_t n, HVX_ਸਦਿਸ਼ vs) {
+    ਪ੍ਰਤਿਜ੍ਞਾ((size_t) dst % 128 == 0);
+    ਪ੍ਰਤਿਜ੍ਞਾ((size_t) src % 128 == 0);
 
-    const HVX_Vector * restrict vsrc = (const HVX_Vector * restrict) src;
-    HVX_Vector * restrict vdst       = (HVX_Vector * restrict) dst;
+    ਅਚਲ HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ vsrc = (ਅਚਲ HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ) src;
+    HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ vdst       = (HVX_ਸਦਿਸ਼ * ਸੀਮਿਤ) dst;
 
-    const uint32_t nvec = n / VLEN_FP32;
-    const uint32_t nloe = n % VLEN_FP32;
+    ਅਚਲ uint32_t nvec = n / VLEN_FP32;
+    ਅਚਲ uint32_t nloe = n % VLEN_FP32;
 
     uint32_t i = 0;
-    #pragma unroll(4)
-    for (; i < nvec; ++i) {
+    #ਹਦਾਇਤ unroll(4)
+    ਲਈ (; i < nvec; ++i) {
         vdst[i] = HVX_OP_MUL_F32(vsrc[i], vs);
     }
-    if (nloe) {
-        hvx_vec_store_a(&vdst[i], nloe * sizeof(float), HVX_OP_MUL_F32(vsrc[i], vs));
+    ਜੇ (nloe) {
+        hvx_vec_store_a(&vdst[i], nloe * ਆਕਾਰ(ਦਸ਼ਮਲਵ), HVX_OP_MUL_F32(vsrc[i], vs));
     }
 }
 
-#endif /* HVX_FA_KERNELS_H */
+#ਜੇ_ਅੰਤ /* HVX_FA_KERNELS_H */

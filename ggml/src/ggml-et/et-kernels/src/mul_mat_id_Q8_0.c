@@ -10,151 +10,151 @@
 // Strategy mirrors mul_mat_id_Q4_0.c.
 //******************************************************************************
 
-#include "block_ops.h"
-#include "ggml_tensor.h"
-#include "math_fp.h"
-#include "platform.h"
-#include "quants.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "block_ops.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml_tensor.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "math_fp.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "platform.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "quants.h"
 
-#include <stdint.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdint.h>
 
-int entry_point(struct ggml_et_mul_mat_id_params * params, void * env) {
+ਪੂਰਨ ਇੰਦਰਾਜ_ਬਿੰਦੂ(ਬਣਤਰ ggml_et_mul_mat_id_params * params, ਖਾਲੀ * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
-    if (!kernel_env || !params) {
-        return -1;
+    ਜੇ (!kernel_env || !params) {
+        ਵਾਪਸ -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
-    if (thread_id < 0) {
-        return 0;
+    ਪੂਰਨ thread_id   = get_relative_thread_id(kernel_env->shire_ਨਕਾਬ);
+    ਪੂਰਨ ਅੰਕ_ਧਾਗੇ = get_ਅੰਕ_ਧਾਗੇ(kernel_env->shire_ਨਕਾਬ);
+    ਜੇ (thread_id < 0) {
+        ਵਾਪਸ 0;
     }
 
-    struct ggml_tensor * src0 = &params->src0;
-    struct ggml_tensor * src1 = &params->src1;
-    struct ggml_tensor * src2 = &params->src2;
-    struct ggml_tensor * dst  = &params->dst;
+    ਬਣਤਰ ggml_tensor * src0 = &params->src0;
+    ਬਣਤਰ ggml_tensor * src1 = &params->src1;
+    ਬਣਤਰ ggml_tensor * src2 = &params->src2;
+    ਬਣਤਰ ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_Q8_0 || src1->type != GGML_TYPE_F32 || src2->type != GGML_TYPE_I32 ||
+    ਜੇ (src0->type != GGML_TYPE_Q8_0 || src1->type != GGML_TYPE_F32 || src2->type != GGML_TYPE_I32 ||
         dst->type != GGML_TYPE_F32) {
-        return -1;
+        ਵਾਪਸ -1;
     }
 
-    const void *    src0_data = src0->data;
-    const float *   src1_data = (const float *) src1->data;
-    const int32_t * src2_data = (const int32_t *) src2->data;
-    float *         dst_data  = (float *) dst->data;
-    if (!src0_data || !src1_data || !src2_data || !dst_data) {
-        return -1;
+    ਅਚਲ ਖਾਲੀ *    src0_ਅੰਕੜੇ = src0->ਅੰਕੜੇ;
+    ਅਚਲ ਦਸ਼ਮਲਵ *   src1_ਅੰਕੜੇ = (ਅਚਲ ਦਸ਼ਮਲਵ *) src1->ਅੰਕੜੇ;
+    ਅਚਲ int32_t * src2_ਅੰਕੜੇ = (ਅਚਲ int32_t *) src2->ਅੰਕੜੇ;
+    ਦਸ਼ਮਲਵ *         dst_ਅੰਕੜੇ  = (ਦਸ਼ਮਲਵ *) dst->ਅੰਕੜੇ;
+    ਜੇ (!src0_ਅੰਕੜੇ || !src1_ਅੰਕੜੇ || !src2_ਅੰਕੜੇ || !dst_ਅੰਕੜੇ) {
+        ਵਾਪਸ -1;
     }
 
-    const int64_t K             = src0->ne[0];
-    const int64_t M             = src0->ne[1];
-    const int64_t n_expert      = src0->ne[2];
-    const int64_t n_expert_used = src2->ne[0];
-    const int64_t batch         = src2->ne[1];
-    const int64_t ne11          = src1->ne[1];
+    ਅਚਲ int64_t K             = src0->ne[0];
+    ਅਚਲ int64_t M             = src0->ne[1];
+    ਅਚਲ int64_t n_expert      = src0->ne[2];
+    ਅਚਲ int64_t n_expert_ਵਰਤਿਆ = src2->ne[0];
+    ਅਚਲ int64_t batch         = src2->ne[1];
+    ਅਚਲ int64_t ne11          = src1->ne[1];
 
-    if (K % QK8_0 != 0) {
-        return -1;
+    ਜੇ (K % QK8_0 != 0) {
+        ਵਾਪਸ -1;
     }
 
-    const size_t nb01 = src0->nb[1];
-    const size_t nb02 = src0->nb[2];
-    const size_t nb11 = src1->nb[1];
-    const size_t nb12 = src1->nb[2];
-    const size_t nb20 = src2->nb[0];
-    const size_t nb21 = src2->nb[1];
-    const size_t nbd0 = dst->nb[0];
-    const size_t nbd1 = dst->nb[1];
-    const size_t nbd2 = dst->nb[2];
+    ਅਚਲ size_t nb01 = src0->nb[1];
+    ਅਚਲ size_t nb02 = src0->nb[2];
+    ਅਚਲ size_t nb11 = src1->nb[1];
+    ਅਚਲ size_t nb12 = src1->nb[2];
+    ਅਚਲ size_t nb20 = src2->nb[0];
+    ਅਚਲ size_t nb21 = src2->nb[1];
+    ਅਚਲ size_t nbd0 = dst->nb[0];
+    ਅਚਲ size_t nbd1 = dst->nb[1];
+    ਅਚਲ size_t nbd2 = dst->nb[2];
 
-    if (src0->nb[0] != sizeof(block_q8_0) || src1->nb[0] != sizeof(float) || src2->nb[0] != sizeof(int32_t) ||
-        nbd0 != sizeof(float)) {
-        return -1;
+    ਜੇ (src0->nb[0] != ਆਕਾਰ(ਖੰਡ_q8_0) || src1->nb[0] != ਆਕਾਰ(ਦਸ਼ਮਲਵ) || src2->nb[0] != ਆਕਾਰ(int32_t) ||
+        nbd0 != ਆਕਾਰ(ਦਸ਼ਮਲਵ)) {
+        ਵਾਪਸ -1;
     }
 
-    const int64_t K_blocks = K / QK8_0;
-    const int     use_x2   = ((nb01 & 31) == 0);
+    ਅਚਲ int64_t K_ਖੰਡਾਂ = K / QK8_0;
+    ਅਚਲ ਪੂਰਨ     use_x2   = ((nb01 & 31) == 0);
 
-    const uint64_t total_outputs = (uint64_t) M * (uint64_t) n_expert_used * (uint64_t) batch;
-    if (total_outputs == 0) {
-        return 0;
+    ਅਚਲ uint64_t ਕੁੱਲ_outputs = (uint64_t) M * (uint64_t) n_expert_ਵਰਤਿਆ * (uint64_t) batch;
+    ਜੇ (ਕੁੱਲ_outputs == 0) {
+        ਵਾਪਸ 0;
     }
 
-    const uint64_t chunk    = (total_outputs + (uint64_t) num_threads - 1) / (uint64_t) num_threads;
-    const uint64_t my_start = (uint64_t) thread_id * chunk;
-    if (my_start >= total_outputs) {
-        return 0;
+    ਅਚਲ uint64_t chunk    = (ਕੁੱਲ_outputs + (uint64_t) ਅੰਕ_ਧਾਗੇ - 1) / (uint64_t) ਅੰਕ_ਧਾਗੇ;
+    ਅਚਲ uint64_t my_ਸ਼ੁਰੂ = (uint64_t) thread_id * chunk;
+    ਜੇ (my_ਸ਼ੁਰੂ >= ਕੁੱਲ_outputs) {
+        ਵਾਪਸ 0;
     }
-    uint64_t my_end = my_start + chunk;
-    if (my_end > total_outputs) {
-        my_end = total_outputs;
+    uint64_t my_ਸਿਰਾ = my_ਸ਼ੁਰੂ + chunk;
+    ਜੇ (my_ਸਿਰਾ > ਕੁੱਲ_outputs) {
+        my_ਸਿਰਾ = ਕੁੱਲ_outputs;
     }
 
     q8_dot_state q8_state;
     q8_dot_begin(&q8_state);
 
-    const uint64_t per_batch = (uint64_t) M * (uint64_t) n_expert_used;
+    ਅਚਲ uint64_t ਪ੍ਰਤੀ_batch = (uint64_t) M * (uint64_t) n_expert_ਵਰਤਿਆ;
 
-    uint64_t idx = my_start;
-    while (idx < my_end) {
-        const int64_t  batch_idx = (int64_t) (idx / per_batch);
-        const uint64_t rem       = idx - (uint64_t) batch_idx * per_batch;
-        const int64_t  slot_idx  = (int64_t) (rem / (uint64_t) M);
-        const int64_t  m0        = (int64_t) (rem - (uint64_t) slot_idx * (uint64_t) M);
+    uint64_t idx = my_ਸ਼ੁਰੂ;
+    ਜਦੋਂ (idx < my_ਸਿਰਾ) {
+        ਅਚਲ int64_t  batch_idx = (int64_t) (idx / ਪ੍ਰਤੀ_batch);
+        ਅਚਲ uint64_t rem       = idx - (uint64_t) batch_idx * ਪ੍ਰਤੀ_batch;
+        ਅਚਲ int64_t  ਥਾਂ_idx  = (int64_t) (rem / (uint64_t) M);
+        ਅਚਲ int64_t  m0        = (int64_t) (rem - (uint64_t) ਥਾਂ_idx * (uint64_t) M);
 
-        const uint64_t run_end_global =
-            (uint64_t) batch_idx * per_batch + (uint64_t) slot_idx * (uint64_t) M + (uint64_t) M;
-        const uint64_t end_in_my = (run_end_global < my_end) ? run_end_global : my_end;
-        int64_t        run_len   = (int64_t) (end_in_my - idx);
+        ਅਚਲ uint64_t ਲੜੀਵਾਰ_ਸਿਰਾ_global =
+            (uint64_t) batch_idx * ਪ੍ਰਤੀ_batch + (uint64_t) ਥਾਂ_idx * (uint64_t) M + (uint64_t) M;
+        ਅਚਲ uint64_t ਸਿਰਾ_ਵਿੱਚ_my = (ਲੜੀਵਾਰ_ਸਿਰਾ_global < my_ਸਿਰਾ) ? ਲੜੀਵਾਰ_ਸਿਰਾ_global : my_ਸਿਰਾ;
+        int64_t        ਲੜੀਵਾਰ_len   = (int64_t) (ਸਿਰਾ_ਵਿੱਚ_my - idx);
 
-        const int32_t expert_id =
-            *(const int32_t *) ((const char *) src2_data + slot_idx * (int64_t) nb20 + batch_idx * (int64_t) nb21);
+        ਅਚਲ int32_t expert_id =
+            *(ਅਚਲ int32_t *) ((ਅਚਲ ਅੱਖਰ *) src2_ਅੰਕੜੇ + ਥਾਂ_idx * (int64_t) nb20 + batch_idx * (int64_t) nb21);
 
-        char * dst_slot = (char *) dst_data + slot_idx * (int64_t) nbd1 + batch_idx * (int64_t) nbd2;
+        ਅੱਖਰ * dst_ਥਾਂ = (ਅੱਖਰ *) dst_ਅੰਕੜੇ + ਥਾਂ_idx * (int64_t) nbd1 + batch_idx * (int64_t) nbd2;
 
-        if (expert_id < 0 || expert_id >= n_expert) {
+        ਜੇ (expert_id < 0 || expert_id >= n_expert) {
             int64_t m = m0;
-            for (int64_t i = 0; i < run_len; i++, m++) {
-                atomic_store_f32((volatile float *) (dst_slot + m * (int64_t) nbd0), 0.0f);
+            ਲਈ (int64_t i = 0; i < ਲੜੀਵਾਰ_len; i++, m++) {
+                atomic_store_f32((ਅਸਥਿਰ ਦਸ਼ਮਲਵ *) (dst_ਥਾਂ + m * (int64_t) nbd0), 0.0f);
             }
-            idx += (uint64_t) run_len;
-            continue;
+            idx += (uint64_t) ਲੜੀਵਾਰ_len;
+            ਜਾਰੀ;
         }
 
-        const int64_t col_idx = slot_idx % ne11;
-        const float * b_col_base =
-            (const float *) ((const char *) src1_data + col_idx * (int64_t) nb11 + batch_idx * (int64_t) nb12);
-        const char * expert_base = (const char *) src0_data + expert_id * (int64_t) nb02;
+        ਅਚਲ int64_t ਖਾਨਾ_idx = ਥਾਂ_idx % ne11;
+        ਅਚਲ ਦਸ਼ਮਲਵ * b_ਖਾਨਾ_ਅਧਾਰ =
+            (ਅਚਲ ਦਸ਼ਮਲਵ *) ((ਅਚਲ ਅੱਖਰ *) src1_ਅੰਕੜੇ + ਖਾਨਾ_idx * (int64_t) nb11 + batch_idx * (int64_t) nb12);
+        ਅਚਲ ਅੱਖਰ * expert_ਅਧਾਰ = (ਅਚਲ ਅੱਖਰ *) src0_ਅੰਕੜੇ + expert_id * (int64_t) nb02;
 
         int64_t m    = m0;
-        int64_t left = run_len;
+        int64_t ਖੱਬਾ = ਲੜੀਵਾਰ_len;
 
-        if (use_x2) {
-            while (left >= 2) {
-                const block_q8_0 * row0 = (const block_q8_0 *) (expert_base + m * (int64_t) nb01);
-                const block_q8_0 * row1 = (const block_q8_0 *) (expert_base + (m + 1) * (int64_t) nb01);
-                float              s0, s1;
-                q8_dot_compute_x2_aligned(row0, row1, b_col_base, K_blocks, &s0, &s1);
-                atomic_store_f32((volatile float *) (dst_slot + m * (int64_t) nbd0), s0);
-                atomic_store_f32((volatile float *) (dst_slot + (m + 1) * (int64_t) nbd0), s1);
+        ਜੇ (use_x2) {
+            ਜਦੋਂ (ਖੱਬਾ >= 2) {
+                ਅਚਲ ਖੰਡ_q8_0 * row0 = (ਅਚਲ ਖੰਡ_q8_0 *) (expert_ਅਧਾਰ + m * (int64_t) nb01);
+                ਅਚਲ ਖੰਡ_q8_0 * row1 = (ਅਚਲ ਖੰਡ_q8_0 *) (expert_ਅਧਾਰ + (m + 1) * (int64_t) nb01);
+                ਦਸ਼ਮਲਵ              s0, s1;
+                q8_dot_compute_x2_aligned(row0, row1, b_ਖਾਨਾ_ਅਧਾਰ, K_ਖੰਡਾਂ, &s0, &s1);
+                atomic_store_f32((ਅਸਥਿਰ ਦਸ਼ਮਲਵ *) (dst_ਥਾਂ + m * (int64_t) nbd0), s0);
+                atomic_store_f32((ਅਸਥਿਰ ਦਸ਼ਮਲਵ *) (dst_ਥਾਂ + (m + 1) * (int64_t) nbd0), s1);
                 m += 2;
-                left -= 2;
+                ਖੱਬਾ -= 2;
             }
         }
 
-        while (left > 0) {
-            const block_q8_0 * row = (const block_q8_0 *) (expert_base + m * (int64_t) nb01);
-            float              s   = q8_dot_compute(row, b_col_base, K_blocks);
-            atomic_store_f32((volatile float *) (dst_slot + m * (int64_t) nbd0), s);
+        ਜਦੋਂ (ਖੱਬਾ > 0) {
+            ਅਚਲ ਖੰਡ_q8_0 * ਪੰਕਤੀ = (ਅਚਲ ਖੰਡ_q8_0 *) (expert_ਅਧਾਰ + m * (int64_t) nb01);
+            ਦਸ਼ਮਲਵ              s   = q8_dot_compute(ਪੰਕਤੀ, b_ਖਾਨਾ_ਅਧਾਰ, K_ਖੰਡਾਂ);
+            atomic_store_f32((ਅਸਥਿਰ ਦਸ਼ਮਲਵ *) (dst_ਥਾਂ + m * (int64_t) nbd0), s);
             m++;
-            left--;
+            ਖੱਬਾ--;
         }
 
-        idx += (uint64_t) run_len;
+        idx += (uint64_t) ਲੜੀਵਾਰ_len;
     }
 
-    q8_dot_end(&q8_state);
-    return 0;
+    q8_dot_ਸਿਰਾ(&q8_state);
+    ਵਾਪਸ 0;
 }

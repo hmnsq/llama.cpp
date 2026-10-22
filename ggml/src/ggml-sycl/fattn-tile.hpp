@@ -1,24 +1,24 @@
-#include <sycl/sycl.hpp>
-#include <sycl/ext/oneapi/work_group_static.hpp>
-#include "dpct/helper.hpp"
-#include "common.hpp"
-#include "fattn-common.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ <sycl/sycl.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <sycl/ext/oneapi/work_group_static.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ "dpct/helper.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "common.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "fattn-common.hpp"
 
-#include <cmath>
-#include <float.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <cmath>
+#ਅਨ੍ਤਰ੍ਭਾਵ <float.h>
 
-namespace syclex = sycl::ext::oneapi::experimental;
+ਨਾਮਾਕਾਸ਼ syclex = sycl::ext::oneapi::experimental;
 
-#define GGML_SYCL_FATTN_TILE_CONFIG_CASE(DKQ_, DV_, ncols_, nthreads, occupancy, nbatch_fa, nbatch_K) \
-    if (DKQ == (DKQ_) && DV == (DV_) && ncols == (ncols_)) {                                          \
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_SYCL_FATTN_TILE_CONFIG_CASE(DKQ_, DV_, ncols_, nthreads, occupancy, nbatch_fa, nbatch_K) \
+    ਜੇ (DKQ == (DKQ_) && DV == (DV_) && ncols == (ncols_)) {                                          \
         static_assert((nthreads)          <= 512, "bad nthreads");                                    \
         static_assert((occupancy)         <=   8, "bad occupancy");                                   \
         static_assert((nbatch_fa)         <= 256, "bad nbatch_fa");                                   \
         static_assert((nbatch_K)          <= 256, "bad nbatch_K");                                    \
-        return ((nthreads) << 0) | ((occupancy) << 10) | ((nbatch_fa) << 14) | ((nbatch_K) << 23);    \
+        ਵਾਪਸ ((nthreads) << 0) | ((occupancy) << 10) | ((nbatch_fa) << 14) | ((nbatch_K) << 23);    \
     }                                                                                                 \
 
-static constexpr uint32_t ggml_sycl_fattn_tile_get_config_fp16(const int DKQ, const int DV, const int ncols) {
+ਸਥਿਰ constexpr uint32_t ggml_sycl_fattn_tile_get_config_fp16(ਅਚਲ ਪੂਰਨ DKQ, ਅਚਲ ਪੂਰਨ DV, ਅਚਲ ਪੂਰਨ ncols) {
     GGML_SYCL_FATTN_TILE_CONFIG_CASE( 40,  40,  2,  64, 2,  64,  40)
     GGML_SYCL_FATTN_TILE_CONFIG_CASE( 40,  40,  4, 128, 2,  64,  40)
     GGML_SYCL_FATTN_TILE_CONFIG_CASE( 40,  40,  8, 256, 2,  64,  40)
@@ -78,10 +78,10 @@ static constexpr uint32_t ggml_sycl_fattn_tile_get_config_fp16(const int DKQ, co
     GGML_SYCL_FATTN_TILE_CONFIG_CASE(576, 512, 16, 256, 2,  64,  64)
     GGML_SYCL_FATTN_TILE_CONFIG_CASE(576, 512, 32, 256, 2,  64,  64)
 
-    return 0;
+    ਵਾਪਸ 0;
 }
 
-static constexpr uint32_t ggml_sycl_fattn_tile_get_config_fp32(const int DKQ, const int DV, const int ncols) {
+ਸਥਿਰ constexpr uint32_t ggml_sycl_fattn_tile_get_config_fp32(ਅਚਲ ਪੂਰਨ DKQ, ਅਚਲ ਪੂਰਨ DV, ਅਚਲ ਪੂਰਨ ncols) {
     GGML_SYCL_FATTN_TILE_CONFIG_CASE( 40,  40,  2,  64, 2,  32,  40)
     GGML_SYCL_FATTN_TILE_CONFIG_CASE( 40,  40,  4, 128, 2,  32,  40)
     GGML_SYCL_FATTN_TILE_CONFIG_CASE( 40,  40,  8, 256, 2,  32,  40)
@@ -140,93 +140,93 @@ static constexpr uint32_t ggml_sycl_fattn_tile_get_config_fp32(const int DKQ, co
     GGML_SYCL_FATTN_TILE_CONFIG_CASE(576, 512,  8, 256, 2,  32,  64)
     GGML_SYCL_FATTN_TILE_CONFIG_CASE(576, 512, 16, 256, 2,  32,  64)
 
-    return 0;
+    ਵਾਪਸ 0;
 }
 
-static constexpr uint32_t ggml_sycl_fattn_tile_get_config(const int DKQ, const int DV, const int ncols, const int cc) {
-    if(fast_fp16_available(cc))
-        return ggml_sycl_fattn_tile_get_config_fp16(DKQ, DV, ncols);
-    else
-        return ggml_sycl_fattn_tile_get_config_fp32(DKQ, DV, ncols);
+ਸਥਿਰ constexpr uint32_t ggml_sycl_fattn_tile_get_config(ਅਚਲ ਪੂਰਨ DKQ, ਅਚਲ ਪੂਰਨ DV, ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ cc) {
+    ਜੇ(fast_fp16_ਉਪਲਬਧ(cc))
+        ਵਾਪਸ ggml_sycl_fattn_tile_get_config_fp16(DKQ, DV, ncols);
+    ਨਹੀਂਤਾਂ
+        ਵਾਪਸ ggml_sycl_fattn_tile_get_config_fp32(DKQ, DV, ncols);
 }
 
-static constexpr uint32_t ggml_sycl_fattn_tile_get_config(const int DKQ, const int DV, const int ncols) {
-#ifdef SYCL_FAST_FP16
-    return ggml_sycl_fattn_tile_get_config_fp16(DKQ, DV, ncols);
-#else
-    return ggml_sycl_fattn_tile_get_config_fp32(DKQ, DV, ncols);
-#endif // SYCL_FAST_FP16
+ਸਥਿਰ constexpr uint32_t ggml_sycl_fattn_tile_get_config(ਅਚਲ ਪੂਰਨ DKQ, ਅਚਲ ਪੂਰਨ DV, ਅਚਲ ਪੂਰਨ ncols) {
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ SYCL_FAST_FP16
+    ਵਾਪਸ ggml_sycl_fattn_tile_get_config_fp16(DKQ, DV, ncols);
+#ਨਹੀਂਤਾਂ
+    ਵਾਪਸ ggml_sycl_fattn_tile_get_config_fp32(DKQ, DV, ncols);
+#ਜੇ_ਅੰਤ // SYCL_FAST_FP16
 }
 
-static int ggml_sycl_fattn_tile_get_nthreads(const int DKQ, const int DV, const int ncols, const int cc) {
-    return (ggml_sycl_fattn_tile_get_config(DKQ, DV, ncols, cc) >> 0) & ((1 << 10) - 1);
+ਸਥਿਰ ਪੂਰਨ ggml_sycl_fattn_tile_get_nthreads(ਅਚਲ ਪੂਰਨ DKQ, ਅਚਲ ਪੂਰਨ DV, ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ cc) {
+    ਵਾਪਸ (ggml_sycl_fattn_tile_get_config(DKQ, DV, ncols, cc) >> 0) & ((1 << 10) - 1);
 }
 
-static constexpr int ggml_sycl_fattn_tile_get_nthreads(const int DKQ, const int DV, const int ncols) {
-    return (ggml_sycl_fattn_tile_get_config(DKQ, DV, ncols) >> 0) & ((1 << 10) - 1);
+ਸਥਿਰ constexpr ਪੂਰਨ ggml_sycl_fattn_tile_get_nthreads(ਅਚਲ ਪੂਰਨ DKQ, ਅਚਲ ਪੂਰਨ DV, ਅਚਲ ਪੂਰਨ ncols) {
+    ਵਾਪਸ (ggml_sycl_fattn_tile_get_config(DKQ, DV, ncols) >> 0) & ((1 << 10) - 1);
 }
 
-static int ggml_sycl_fattn_tile_get_occupancy(const int DKQ, const int DV, const int ncols, const int cc) {
-    return (ggml_sycl_fattn_tile_get_config(DKQ, DV, ncols, cc) >> 10) & ((1 << 4) - 1);
+ਸਥਿਰ ਪੂਰਨ ggml_sycl_fattn_tile_get_occupancy(ਅਚਲ ਪੂਰਨ DKQ, ਅਚਲ ਪੂਰਨ DV, ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ cc) {
+    ਵਾਪਸ (ggml_sycl_fattn_tile_get_config(DKQ, DV, ncols, cc) >> 10) & ((1 << 4) - 1);
 }
 
-static constexpr int ggml_sycl_fattn_tile_get_occupancy(const int DKQ, const int DV, const int ncols) {
-    return (ggml_sycl_fattn_tile_get_config(DKQ, DV, ncols) >> 10) & ((1 << 4) - 1);
+ਸਥਿਰ constexpr ਪੂਰਨ ggml_sycl_fattn_tile_get_occupancy(ਅਚਲ ਪੂਰਨ DKQ, ਅਚਲ ਪੂਰਨ DV, ਅਚਲ ਪੂਰਨ ncols) {
+    ਵਾਪਸ (ggml_sycl_fattn_tile_get_config(DKQ, DV, ncols) >> 10) & ((1 << 4) - 1);
 }
 
-static int ggml_sycl_fattn_tile_get_nbatch_fa(const int DKQ, const int DV, const int ncols, const int cc) {
-    return (ggml_sycl_fattn_tile_get_config(DKQ, DV, ncols, cc) >> 14) & ((1 << 9) - 1);
+ਸਥਿਰ ਪੂਰਨ ggml_sycl_fattn_tile_get_nbatch_fa(ਅਚਲ ਪੂਰਨ DKQ, ਅਚਲ ਪੂਰਨ DV, ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ cc) {
+    ਵਾਪਸ (ggml_sycl_fattn_tile_get_config(DKQ, DV, ncols, cc) >> 14) & ((1 << 9) - 1);
 }
 
-static constexpr int ggml_sycl_fattn_tile_get_nbatch_fa(const int DKQ, const int DV, const int ncols) {
-    return (ggml_sycl_fattn_tile_get_config(DKQ, DV, ncols) >> 14) & ((1 << 9) - 1);
+ਸਥਿਰ constexpr ਪੂਰਨ ggml_sycl_fattn_tile_get_nbatch_fa(ਅਚਲ ਪੂਰਨ DKQ, ਅਚਲ ਪੂਰਨ DV, ਅਚਲ ਪੂਰਨ ncols) {
+    ਵਾਪਸ (ggml_sycl_fattn_tile_get_config(DKQ, DV, ncols) >> 14) & ((1 << 9) - 1);
 }
 
-static int ggml_sycl_fattn_tile_get_nbatch_K(const int DKQ, const int DV, const int ncols, const int cc) {
-    return (ggml_sycl_fattn_tile_get_config(DKQ, DV, ncols, cc) >> 23) & ((1 << 9) - 1);
+ਸਥਿਰ ਪੂਰਨ ggml_sycl_fattn_tile_get_nbatch_K(ਅਚਲ ਪੂਰਨ DKQ, ਅਚਲ ਪੂਰਨ DV, ਅਚਲ ਪੂਰਨ ncols, ਅਚਲ ਪੂਰਨ cc) {
+    ਵਾਪਸ (ggml_sycl_fattn_tile_get_config(DKQ, DV, ncols, cc) >> 23) & ((1 << 9) - 1);
 }
 
-static constexpr int ggml_sycl_fattn_tile_get_nbatch_K(const int DKQ, const int DV, const int ncols) {
-    return (ggml_sycl_fattn_tile_get_config(DKQ, DV, ncols) >> 23) & ((1 << 9) - 1);
+ਸਥਿਰ constexpr ਪੂਰਨ ggml_sycl_fattn_tile_get_nbatch_K(ਅਚਲ ਪੂਰਨ DKQ, ਅਚਲ ਪੂਰਨ DV, ਅਚਲ ਪੂਰਨ ncols) {
+    ਵਾਪਸ (ggml_sycl_fattn_tile_get_config(DKQ, DV, ncols) >> 23) & ((1 << 9) - 1);
 }
 
-template <int warp_size, int nwarps, int I, int J, int J_padding, bool oob_check>
-static __dpct_inline__ void flash_attn_tile_load_tile(const sycl::half2 * const __restrict__ KV,
-                                                      sycl::half2 * const __restrict__ tile_KV,
-                                                      const int stride_KV,
-                                                      const int i_sup) {
-    auto      item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    constexpr int cpy_nb = ggml_sycl_get_max_cpy_bytes();
-    constexpr int cpy_ne = cpy_nb / 4;
+ਸਾਂਚਾ <ਪੂਰਨ warp_ਮਾਪ, ਪੂਰਨ nwarps, ਪੂਰਨ I, ਪੂਰਨ J, ਪੂਰਨ J_padding, ਤਾਰਕਿਕ oob_check>
+ਸਥਿਰ __dpct_inline__ ਖਾਲੀ flash_attn_tile_ਲੱਦੋ_tile(ਅਚਲ sycl::half2 * ਅਚਲ __restrict__ KV,
+                                                      sycl::half2 * ਅਚਲ __restrict__ tile_KV,
+                                                      ਅਚਲ ਪੂਰਨ stride_KV,
+                                                      ਅਚਲ ਪੂਰਨ i_sup) {
+    ਸਵੈਚਾਲਿਤ      ਵਸਤੂ_ct1 = sycl::ext::oneapi::this_work_ਵਸਤੂ::get_nd_ਵਸਤੂ<3>();
+    constexpr ਪੂਰਨ cpy_nb = ggml_sycl_get_max_cpy_ਬਾਈਟਾਂ();
+    constexpr ਪੂਰਨ cpy_ne = cpy_nb / 4;
 
-    auto load = [&] (const int n) {
-        const int stride_j = warp_size >> n;
+    ਸਵੈਚਾਲਿਤ load = [&] (ਅਚਲ ਪੂਰਨ n) {
+        ਅਚਲ ਪੂਰਨ stride_j = warp_ਮਾਪ >> n;
 
-        if (stride_j == 0) {
-            return;
+        ਜੇ (stride_j == 0) {
+            ਵਾਪਸ;
         }
 
-        const int j0_start = stride_j == warp_size ? 0 : ((J/2)/cpy_ne) - ((J/2)/cpy_ne) % (2*stride_j);
-        const int j0_stop  =                             ((J/2)/cpy_ne) - ((J/2)/cpy_ne) % (1*stride_j);
-        const int stride_i = warp_size / stride_j;
+        ਅਚਲ ਪੂਰਨ j0_ਸ਼ੁਰੂ = stride_j == warp_ਮਾਪ ? 0 : ((J/2)/cpy_ne) - ((J/2)/cpy_ne) % (2*stride_j);
+        ਅਚਲ ਪੂਰਨ j0_stop  =                             ((J/2)/cpy_ne) - ((J/2)/cpy_ne) % (1*stride_j);
+        ਅਚਲ ਪੂਰਨ stride_i = warp_ਮਾਪ / stride_j;
 
-        if (j0_start == j0_stop) {
-            return;
+        ਜੇ (j0_ਸ਼ੁਰੂ == j0_stop) {
+            ਵਾਪਸ;
         }
 
-#pragma unroll
-        for (int i0 = 0; i0 < I; i0 += nwarps*stride_i) {
-            const int i = i0 + item_ct1.get_local_id(1) * stride_i +
-                          (stride_j == warp_size ? 0 : item_ct1.get_local_id(2) / stride_j);
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ i0 = 0; i0 < I; i0 += nwarps*stride_i) {
+            ਅਚਲ ਪੂਰਨ i = i0 + ਵਸਤੂ_ct1.get_local_id(1) * stride_i +
+                          (stride_j == warp_ਮਾਪ ? 0 : ਵਸਤੂ_ct1.get_local_id(2) / stride_j);
 
-            if (i0 + nwarps*stride_i <= I || i < I) {
-#pragma unroll
-                for (int j0 = j0_start; j0 < j0_stop; j0 += stride_j) {
-                    const int j = j0 * cpy_ne + (stride_j == warp_size ? item_ct1.get_local_id(2) :
-                                                                         item_ct1.get_local_id(2) % stride_j) *
+            ਜੇ (i0 + nwarps*stride_i <= I || i < I) {
+#ਹਦਾਇਤ unroll
+                ਲਈ (ਪੂਰਨ j0 = j0_ਸ਼ੁਰੂ; j0 < j0_stop; j0 += stride_j) {
+                    ਅਚਲ ਪੂਰਨ j = j0 * cpy_ne + (stride_j == warp_ਮਾਪ ? ਵਸਤੂ_ct1.get_local_id(2) :
+                                                                         ਵਸਤੂ_ct1.get_local_id(2) % stride_j) *
                                                     cpy_ne;
 
-                    const __dpct_align__(16) sycl::half2 zero[cpy_ne] = {
+                    ਅਚਲ __dpct_align__(16) sycl::half2 zero[cpy_ne] = {
                         { 0.0f, 0.0f }
                     };
                     ggml_sycl_memcpy_1<cpy_nb>(
@@ -248,55 +248,55 @@ static __dpct_inline__ void flash_attn_tile_load_tile(const sycl::half2 * const 
     ggml_sycl_unroll<7>{}(load);
 }
 
-template <int warp_size, int nwarps, int I, int J, int J_padding, bool oob_check>
-static __dpct_inline__ void flash_attn_tile_load_tile(const sycl::half2 * const __restrict__ KV,
-                                                      float * const __restrict__ tile_KV,
-                                                      const int stride_KV,
-                                                      const int i_sup) {
-    constexpr int cpy_nb = ggml_sycl_get_max_cpy_bytes();
-    constexpr int cpy_ne = cpy_nb / 4;
+ਸਾਂਚਾ <ਪੂਰਨ warp_ਮਾਪ, ਪੂਰਨ nwarps, ਪੂਰਨ I, ਪੂਰਨ J, ਪੂਰਨ J_padding, ਤਾਰਕਿਕ oob_check>
+ਸਥਿਰ __dpct_inline__ ਖਾਲੀ flash_attn_tile_ਲੱਦੋ_tile(ਅਚਲ sycl::half2 * ਅਚਲ __restrict__ KV,
+                                                      ਦਸ਼ਮਲਵ * ਅਚਲ __restrict__ tile_KV,
+                                                      ਅਚਲ ਪੂਰਨ stride_KV,
+                                                      ਅਚਲ ਪੂਰਨ i_sup) {
+    constexpr ਪੂਰਨ cpy_nb = ggml_sycl_get_max_cpy_ਬਾਈਟਾਂ();
+    constexpr ਪੂਰਨ cpy_ne = cpy_nb / 4;
 
-    auto load = [&] (const int n) {
-        auto      item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-        const int stride_j = warp_size >> n;
+    ਸਵੈਚਾਲਿਤ load = [&] (ਅਚਲ ਪੂਰਨ n) {
+        ਸਵੈਚਾਲਿਤ      ਵਸਤੂ_ct1 = sycl::ext::oneapi::this_work_ਵਸਤੂ::get_nd_ਵਸਤੂ<3>();
+        ਅਚਲ ਪੂਰਨ stride_j = warp_ਮਾਪ >> n;
 
-        if (stride_j == 0) {
-            return;
+        ਜੇ (stride_j == 0) {
+            ਵਾਪਸ;
         }
 
-        const int j0_start = stride_j == warp_size ? 0 : (J/cpy_ne) - (J/cpy_ne) % (2*stride_j);
-        const int j0_stop  =                             (J/cpy_ne) - (J/cpy_ne) % (1*stride_j);
-        const int stride_i = warp_size / stride_j;
+        ਅਚਲ ਪੂਰਨ j0_ਸ਼ੁਰੂ = stride_j == warp_ਮਾਪ ? 0 : (J/cpy_ne) - (J/cpy_ne) % (2*stride_j);
+        ਅਚਲ ਪੂਰਨ j0_stop  =                             (J/cpy_ne) - (J/cpy_ne) % (1*stride_j);
+        ਅਚਲ ਪੂਰਨ stride_i = warp_ਮਾਪ / stride_j;
 
-        if (j0_start == j0_stop) {
-            return;
+        ਜੇ (j0_ਸ਼ੁਰੂ == j0_stop) {
+            ਵਾਪਸ;
         }
 
-#pragma unroll
-        for (int i0 = 0; i0 < I; i0 += nwarps*stride_i) {
-            const int i = i0 + item_ct1.get_local_id(1) * stride_i +
-                          (stride_j == warp_size ? 0 : item_ct1.get_local_id(2) / stride_j);
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ i0 = 0; i0 < I; i0 += nwarps*stride_i) {
+            ਅਚਲ ਪੂਰਨ i = i0 + ਵਸਤੂ_ct1.get_local_id(1) * stride_i +
+                          (stride_j == warp_ਮਾਪ ? 0 : ਵਸਤੂ_ct1.get_local_id(2) / stride_j);
 
-            if (i0 + nwarps*stride_i <= I || i < I) {
-#pragma unroll
-                for (int j0 = j0_start; j0 < j0_stop; j0 += stride_j) {
-                    const int j = j0 * (cpy_ne / 2) + (stride_j == warp_size ? item_ct1.get_local_id(2) :
-                                                                               item_ct1.get_local_id(2) % stride_j) *
+            ਜੇ (i0 + nwarps*stride_i <= I || i < I) {
+#ਹਦਾਇਤ unroll
+                ਲਈ (ਪੂਰਨ j0 = j0_ਸ਼ੁਰੂ; j0 < j0_stop; j0 += stride_j) {
+                    ਅਚਲ ਪੂਰਨ j = j0 * (cpy_ne / 2) + (stride_j == warp_ਮਾਪ ? ਵਸਤੂ_ct1.get_local_id(2) :
+                                                                               ਵਸਤੂ_ct1.get_local_id(2) % stride_j) *
                                                           (cpy_ne / 2);
 
-                    const sycl::half2 zero[cpy_ne / 2] = {
+                    ਅਚਲ sycl::half2 zero[cpy_ne / 2] = {
                         { 0.0f, 0.0f }
                     };
                     __dpct_align__(16) sycl::half2 tmp_h2[cpy_ne / 2];
-                    ggml_sycl_memcpy_1<sizeof(tmp_h2)>(
+                    ggml_sycl_memcpy_1<ਆਕਾਰ(tmp_h2)>(
                         tmp_h2, !oob_check || i < i_sup ? KV + i*stride_KV + j : zero);
 
                     __dpct_align__(16) sycl::float2 tmp_f2[cpy_ne / 2];
-#pragma unroll
-                    for (int l = 0; l < cpy_ne/2; ++l) {
-                        tmp_f2[l] = tmp_h2[l].template convert<float, sycl::rounding_mode::automatic>();
+#ਹਦਾਇਤ unroll
+                    ਲਈ (ਪੂਰਨ l = 0; l < cpy_ne/2; ++l) {
+                        tmp_f2[l] = tmp_h2[l].ਸਾਂਚਾ convert<ਦਸ਼ਮਲਵ, sycl::rounding_ਬਹੁਲਕ::automatic>();
                     }
-                    ggml_sycl_memcpy_1<sizeof(tmp_f2)>(tile_KV + i*(J + J_padding) + 2*j, tmp_f2);
+                    ggml_sycl_memcpy_1<ਆਕਾਰ(tmp_f2)>(tile_KV + i*(J + J_padding) + 2*j, tmp_f2);
                 }
             }
         }
@@ -312,395 +312,395 @@ static __dpct_inline__ void flash_attn_tile_load_tile(const sycl::half2 * const 
 }
 
 // Function that performs a single iteration in for the KQ matrix multiplication:
-template <int  warp_size,
-          int  nwarps,
-          int  ncols1,
-          int  ncols2,
-          int  DKQ,
-          int  nbatch_fa,
-          int  nbatch_K,
-          bool use_logit_softcap,
-          bool oob_check,
-          typename T_vec_dot>
-static __dpct_inline__ void flash_attn_tile_iter_KQ(T_vec_dot * const Q_tmp,
-                                                    const sycl::half2 * const __restrict__ K_h2,
-                                                    T_vec_dot * const KV_tmp,
-                                                    const int         stride_K2,
-                                                    const int         k_VKQ_0,
-                                                    const int         k_VKQ_sup,
-                                                    const int         k_KQ_0,
-                                                    float *           KQ_acc) {
-    auto          item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    constexpr int cpy_nb   = ggml_sycl_get_max_cpy_bytes();
-    constexpr int cpy_ne = cpy_nb / 4;
+ਸਾਂਚਾ <ਪੂਰਨ  warp_ਮਾਪ,
+          ਪੂਰਨ  nwarps,
+          ਪੂਰਨ  ncols1,
+          ਪੂਰਨ  ncols2,
+          ਪੂਰਨ  DKQ,
+          ਪੂਰਨ  nbatch_fa,
+          ਪੂਰਨ  nbatch_K,
+          ਤਾਰਕਿਕ use_logit_softcap,
+          ਤਾਰਕਿਕ oob_check,
+          ਕਿਸਮ_ਨਾਂ T_vec_dot>
+ਸਥਿਰ __dpct_inline__ ਖਾਲੀ flash_attn_tile_iter_KQ(T_vec_dot * ਅਚਲ Q_tmp,
+                                                    ਅਚਲ sycl::half2 * ਅਚਲ __restrict__ K_h2,
+                                                    T_vec_dot * ਅਚਲ KV_tmp,
+                                                    ਅਚਲ ਪੂਰਨ         stride_K2,
+                                                    ਅਚਲ ਪੂਰਨ         k_VKQ_0,
+                                                    ਅਚਲ ਪੂਰਨ         k_VKQ_sup,
+                                                    ਅਚਲ ਪੂਰਨ         k_KQ_0,
+                                                    ਦਸ਼ਮਲਵ *           KQ_acc) {
+    ਸਵੈਚਾਲਿਤ          ਵਸਤੂ_ct1 = sycl::ext::oneapi::this_work_ਵਸਤੂ::get_nd_ਵਸਤੂ<3>();
+    constexpr ਪੂਰਨ cpy_nb   = ggml_sycl_get_max_cpy_ਬਾਈਟਾਂ();
+    constexpr ਪੂਰਨ cpy_ne = cpy_nb / 4;
 
-    constexpr int ncols = ncols1*ncols2;
-    constexpr int cpw   = ncols > nwarps ? ncols/nwarps : 1; // Q columns per warp
-    constexpr int np    = nwarps > ncols ? nwarps/ncols : 1; // number of parallel warps per Q column
+    constexpr ਪੂਰਨ ncols = ncols1*ncols2;
+    constexpr ਪੂਰਨ cpw   = ncols > nwarps ? ncols/nwarps : 1; // Q columns per warp
+    constexpr ਪੂਰਨ np    = nwarps > ncols ? nwarps/ncols : 1; // number of parallel warps per Q column
 
-    flash_attn_tile_load_tile<warp_size, nwarps, nbatch_fa, nbatch_K, cpy_ne, oob_check>
+    flash_attn_tile_ਲੱਦੋ_tile<warp_ਮਾਪ, nwarps, nbatch_fa, nbatch_K, cpy_ne, oob_check>
         (K_h2 + int64_t(k_VKQ_0)*stride_K2 + k_KQ_0/2, KV_tmp, stride_K2, k_VKQ_sup);
-    item_ct1.barrier(sycl::access::fence_space::local_space);
+    ਵਸਤੂ_ct1.barrier(sycl::access::fence_space::local_space);
 
-#ifdef SYCL_FAST_FP16
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ SYCL_FAST_FP16
     static_assert((nbatch_K/2) % cpy_ne == 0, "bad nbatch_K");
-#pragma unroll
-    for (int k_KQ_1 = 0; k_KQ_1 < nbatch_K/2; k_KQ_1 += cpy_ne) {
-        __dpct_align__(16) sycl::half2 K_k[nbatch_fa / (np * warp_size)][cpy_ne];
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ k_KQ_1 = 0; k_KQ_1 < nbatch_K/2; k_KQ_1 += cpy_ne) {
+        __dpct_align__(16) sycl::half2 K_k[nbatch_fa / (np * warp_ਮਾਪ)][cpy_ne];
         __dpct_align__(16) sycl::half2 Q_k[cpw][cpy_ne];
-#else
+#ਨਹੀਂਤਾਂ
     static_assert(nbatch_K % cpy_ne == 0, "bad nbatch_K");
-#pragma unroll
-    for (int k_KQ_1 = 0; k_KQ_1 < nbatch_K; k_KQ_1 += cpy_ne) {
-        __dpct_align__(16) float K_k[nbatch_fa/(np*warp_size)][cpy_ne];
-        __dpct_align__(16) float Q_k[cpw][cpy_ne];
-#endif // SYCL_FAST_FP16
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ k_KQ_1 = 0; k_KQ_1 < nbatch_K; k_KQ_1 += cpy_ne) {
+        __dpct_align__(16) ਦਸ਼ਮਲਵ K_k[nbatch_fa/(np*warp_ਮਾਪ)][cpy_ne];
+        __dpct_align__(16) ਦਸ਼ਮਲਵ Q_k[cpw][cpy_ne];
+#ਜੇ_ਅੰਤ // SYCL_FAST_FP16
 
-#pragma unroll
-        for (int i_KQ_0 = 0; i_KQ_0 < nbatch_fa; i_KQ_0 += np*warp_size) {
-            const int i_KQ = i_KQ_0 + (item_ct1.get_local_id(1) % np) * warp_size + item_ct1.get_local_id(2);
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ i_KQ_0 = 0; i_KQ_0 < nbatch_fa; i_KQ_0 += np*warp_ਮਾਪ) {
+            ਅਚਲ ਪੂਰਨ i_KQ = i_KQ_0 + (ਵਸਤੂ_ct1.get_local_id(1) % np) * warp_ਮਾਪ + ਵਸਤੂ_ct1.get_local_id(2);
 
-#ifdef SYCL_FAST_FP16
-            ggml_sycl_memcpy_1<cpy_nb>(&K_k[i_KQ_0/(np*warp_size)], &KV_tmp[i_KQ*(nbatch_K/2 + cpy_ne) + k_KQ_1]);
-#else
-            ggml_sycl_memcpy_1<cpy_nb>(&K_k[i_KQ_0/(np*warp_size)], &KV_tmp[i_KQ*(nbatch_K   + cpy_ne) + k_KQ_1]);
-#endif // SYCL_FAST_FP16
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ SYCL_FAST_FP16
+            ggml_sycl_memcpy_1<cpy_nb>(&K_k[i_KQ_0/(np*warp_ਮਾਪ)], &KV_tmp[i_KQ*(nbatch_K/2 + cpy_ne) + k_KQ_1]);
+#ਨਹੀਂਤਾਂ
+            ggml_sycl_memcpy_1<cpy_nb>(&K_k[i_KQ_0/(np*warp_ਮਾਪ)], &KV_tmp[i_KQ*(nbatch_K   + cpy_ne) + k_KQ_1]);
+#ਜੇ_ਅੰਤ // SYCL_FAST_FP16
         }
-#pragma unroll
-        for (int jc0 = 0; jc0 < cpw; ++jc0) {
-            const int jc = jc0 + (item_ct1.get_local_id(1) / np) * cpw;
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ jc0 = 0; jc0 < cpw; ++jc0) {
+            ਅਚਲ ਪੂਰਨ jc = jc0 + (ਵਸਤੂ_ct1.get_local_id(1) / np) * cpw;
 
-#ifdef SYCL_FAST_FP16
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ SYCL_FAST_FP16
             ggml_sycl_memcpy_1<cpy_nb>(&Q_k[jc0], &Q_tmp[jc*(DKQ/2) + k_KQ_0/2 + k_KQ_1]);
-#else
+#ਨਹੀਂਤਾਂ
             ggml_sycl_memcpy_1<cpy_nb>(&Q_k[jc0], &Q_tmp[jc* DKQ    + k_KQ_0   + k_KQ_1]);
-#endif // SYCL_FAST_FP16
+#ਜੇ_ਅੰਤ // SYCL_FAST_FP16
         }
 
-#pragma unroll
-        for (int i_KQ_0 = 0; i_KQ_0 < nbatch_fa; i_KQ_0 += np*warp_size) {
-#pragma unroll
-            for (int jc0 = 0; jc0 < cpw; ++jc0) {
-#pragma unroll
-                for (int k = 0; k < cpy_ne; ++k) {
-                    ggml_sycl_mad(KQ_acc[i_KQ_0/(np*warp_size)*cpw + jc0], K_k[i_KQ_0/(np*warp_size)][k], Q_k[jc0][k]);
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ i_KQ_0 = 0; i_KQ_0 < nbatch_fa; i_KQ_0 += np*warp_ਮਾਪ) {
+#ਹਦਾਇਤ unroll
+            ਲਈ (ਪੂਰਨ jc0 = 0; jc0 < cpw; ++jc0) {
+#ਹਦਾਇਤ unroll
+                ਲਈ (ਪੂਰਨ k = 0; k < cpy_ne; ++k) {
+                    ggml_sycl_mad(KQ_acc[i_KQ_0/(np*warp_ਮਾਪ)*cpw + jc0], K_k[i_KQ_0/(np*warp_ਮਾਪ)][k], Q_k[jc0][k]);
                 }
             }
         }
     }
 
-    if (k_KQ_0 + nbatch_K < DKQ) {
-        item_ct1.barrier(sycl::access::fence_space::local_space);  // Sync not needed on last iteration.
+    ਜੇ (k_KQ_0 + nbatch_K < DKQ) {
+        ਵਸਤੂ_ct1.barrier(sycl::access::fence_space::local_space);  // Sync not needed on last iteration.
     }
 }
 
 // Function that performs a single iteration of the main loop over up to nbatch_fa tokens.
-template <int  warp_size,
-          int  nwarps,
-          int  ncols1,
-          int  ncols2,
-          int  DKQ,
-          int  DV,
-          int  nbatch_fa,
-          int  nbatch_K,
-          bool use_logit_softcap,
-          bool oob_check,
-          typename T_vec_dot,
-          typename T_KQ,
-          typename T_acc>
+ਸਾਂਚਾ <ਪੂਰਨ  warp_ਮਾਪ,
+          ਪੂਰਨ  nwarps,
+          ਪੂਰਨ  ncols1,
+          ਪੂਰਨ  ncols2,
+          ਪੂਰਨ  DKQ,
+          ਪੂਰਨ  DV,
+          ਪੂਰਨ  nbatch_fa,
+          ਪੂਰਨ  nbatch_K,
+          ਤਾਰਕਿਕ use_logit_softcap,
+          ਤਾਰਕਿਕ oob_check,
+          ਕਿਸਮ_ਨਾਂ T_vec_dot,
+          ਕਿਸਮ_ਨਾਂ T_KQ,
+          ਕਿਸਮ_ਨਾਂ T_acc>
 /*
 The total declared local variable size in device function flash_attn_tile_iter exceeds 128 bytes and may cause high register pressure. Consult with your hardware vendor to find the total register size available and adjust the code, or use smaller sub-group size to avoid high register pressure.
 */
-static __dpct_inline__ void flash_attn_tile_iter(T_vec_dot * const Q_tmp,
-                                                 const sycl::half2 * const __restrict__ K_h2,
-                                                 const sycl::half2 * const __restrict__ V_h2,
-                                                 const sycl::half * const __restrict__ mask,
-                                                 const sycl::uint3 ne01,
-                                                 const float       logit_softcap,
-                                                 const float       slope,
-                                                 T_KQ * const      KQ,
-                                                 T_vec_dot * const KV_tmp,
-                                                 const int         stride_K2,
-                                                 const int         stride_V2,
-                                                 const int         stride_mask,
-                                                 float * const     KQ_max,
-                                                 float * const     KQ_sum,
-                                                 T_acc * const     VKQ,
-                                                 const int         k_VKQ_0,
-                                                 const int         k_VKQ_max,
-                                                 const int         col_Q_0,
-                                                 float *           KQ_max_new_shared) {
-    auto item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    constexpr int cpy_nb   = ggml_sycl_get_max_cpy_bytes();
-    constexpr int cpy_ne = cpy_nb / 4;
+ਸਥਿਰ __dpct_inline__ ਖਾਲੀ flash_attn_tile_iter(T_vec_dot * ਅਚਲ Q_tmp,
+                                                 ਅਚਲ sycl::half2 * ਅਚਲ __restrict__ K_h2,
+                                                 ਅਚਲ sycl::half2 * ਅਚਲ __restrict__ V_h2,
+                                                 ਅਚਲ sycl::half * ਅਚਲ __restrict__ ਨਕਾਬ,
+                                                 ਅਚਲ sycl::uint3 ne01,
+                                                 ਅਚਲ ਦਸ਼ਮਲਵ       logit_softcap,
+                                                 ਅਚਲ ਦਸ਼ਮਲਵ       ਢਲਾਨ,
+                                                 T_KQ * ਅਚਲ      KQ,
+                                                 T_vec_dot * ਅਚਲ KV_tmp,
+                                                 ਅਚਲ ਪੂਰਨ         stride_K2,
+                                                 ਅਚਲ ਪੂਰਨ         stride_V2,
+                                                 ਅਚਲ ਪੂਰਨ         stride_ਨਕਾਬ,
+                                                 ਦਸ਼ਮਲਵ * ਅਚਲ     KQ_max,
+                                                 ਦਸ਼ਮਲਵ * ਅਚਲ     KQ_ਜੋੜ,
+                                                 T_acc * ਅਚਲ     VKQ,
+                                                 ਅਚਲ ਪੂਰਨ         k_VKQ_0,
+                                                 ਅਚਲ ਪੂਰਨ         k_VKQ_max,
+                                                 ਅਚਲ ਪੂਰਨ         ਖਾਨਾ_Q_0,
+                                                 ਦਸ਼ਮਲਵ *           KQ_max_new_shared) {
+    ਸਵੈਚਾਲਿਤ ਵਸਤੂ_ct1 = sycl::ext::oneapi::this_work_ਵਸਤੂ::get_nd_ਵਸਤੂ<3>();
+    constexpr ਪੂਰਨ cpy_nb   = ggml_sycl_get_max_cpy_ਬਾਈਟਾਂ();
+    constexpr ਪੂਰਨ cpy_ne = cpy_nb / 4;
 
-    constexpr int ncols = ncols1*ncols2;
-    constexpr int cpw   = ncols > nwarps ? ncols/nwarps : 1; // Q columns per warp
-    constexpr int np    = nwarps > ncols ? nwarps/ncols : 1; // number of parallel warps per Q column
+    constexpr ਪੂਰਨ ncols = ncols1*ncols2;
+    constexpr ਪੂਰਨ cpw   = ncols > nwarps ? ncols/nwarps : 1; // Q columns per warp
+    constexpr ਪੂਰਨ np    = nwarps > ncols ? nwarps/ncols : 1; // number of parallel warps per Q column
 
-    constexpr int DVp = (DV + 2*warp_size - 1) & ~(2*warp_size - 1); // DV padded to multiple of 2*warp_size.
+    constexpr ਪੂਰਨ DVp = (DV + 2*warp_ਮਾਪ - 1) & ~(2*warp_ਮਾਪ - 1); // DV padded to multiple of 2*warp_size.
 
-#ifdef SYCL_FAST_FP16
-    constexpr int KQ_cs = cpw < 2*cpy_ne ? cpw : 2*cpy_ne;
-#else
-    constexpr int KQ_cs = cpw < 1*cpy_ne ? cpw : 1*cpy_ne;
-#endif // SYCL_FAST_FP16
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ SYCL_FAST_FP16
+    constexpr ਪੂਰਨ KQ_cs = cpw < 2*cpy_ne ? cpw : 2*cpy_ne;
+#ਨਹੀਂਤਾਂ
+    constexpr ਪੂਰਨ KQ_cs = cpw < 1*cpy_ne ? cpw : 1*cpy_ne;
+#ਜੇ_ਅੰਤ // SYCL_FAST_FP16
     static_assert(cpw % KQ_cs == 0, "bad KQ_cs");
-    const int k_VKQ_sup = k_VKQ_max - k_VKQ_0; // k supremum, only smaller k values have valid KV data
+    ਅਚਲ ਪੂਰਨ k_VKQ_sup = k_VKQ_max - k_VKQ_0; // k supremum, only smaller k values have valid KV data
 
-    float KQ_max_new[cpw];
-#pragma unroll
-    for (int jc0 = 0; jc0 < cpw; ++jc0) {
+    ਦਸ਼ਮਲਵ KQ_max_new[cpw];
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ jc0 = 0; jc0 < cpw; ++jc0) {
         KQ_max_new[jc0] = KQ_max[jc0];
     }
 
-    float KQ_acc[nbatch_fa/(np*warp_size) * cpw] = {0.0f}; // Accumulators for KQ matrix multiplication.
+    ਦਸ਼ਮਲਵ KQ_acc[nbatch_fa/(np*warp_ਮਾਪ) * cpw] = {0.0f}; // Accumulators for KQ matrix multiplication.
 
     // KQ = K @ Q matrix multiplication:
-    constexpr int nbatch_K_last = DKQ % nbatch_K;
-#pragma unroll
-    for (int k_KQ_0 = 0; k_KQ_0 < DKQ - nbatch_K_last; k_KQ_0 += nbatch_K) {
-        flash_attn_tile_iter_KQ<warp_size, nwarps, ncols1, ncols2, DKQ, nbatch_fa, nbatch_K, use_logit_softcap, oob_check>(
+    constexpr ਪੂਰਨ nbatch_K_ਆਖਰੀ = DKQ % nbatch_K;
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ k_KQ_0 = 0; k_KQ_0 < DKQ - nbatch_K_ਆਖਰੀ; k_KQ_0 += nbatch_K) {
+        flash_attn_tile_iter_KQ<warp_ਮਾਪ, nwarps, ncols1, ncols2, DKQ, nbatch_fa, nbatch_K, use_logit_softcap, oob_check>(
             Q_tmp, K_h2, KV_tmp, stride_K2, k_VKQ_0, k_VKQ_sup, k_KQ_0, KQ_acc);
     }
-    if (nbatch_K_last > 0) {
-        constexpr int k_KQ_0 = DKQ - nbatch_K_last;
-        flash_attn_tile_iter_KQ<warp_size, nwarps, ncols1, ncols2, DKQ, nbatch_fa, nbatch_K_last, use_logit_softcap, oob_check>(
+    ਜੇ (nbatch_K_ਆਖਰੀ > 0) {
+        constexpr ਪੂਰਨ k_KQ_0 = DKQ - nbatch_K_ਆਖਰੀ;
+        flash_attn_tile_iter_KQ<warp_ਮਾਪ, nwarps, ncols1, ncols2, DKQ, nbatch_fa, nbatch_K_ਆਖਰੀ, use_logit_softcap, oob_check>(
             Q_tmp, K_h2, KV_tmp, stride_K2, k_VKQ_0, k_VKQ_sup, k_KQ_0, KQ_acc);
     }
 
     // Apply logit softcap + mask, update KQ_max:
-#pragma unroll
-    for (int jc0 = 0; jc0 < cpw; ++jc0) {
-        const int j = fastmodulo(col_Q_0 + (jc0 + (item_ct1.get_local_id(1) / np) * cpw) / ncols2, ne01);
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ jc0 = 0; jc0 < cpw; ++jc0) {
+        ਅਚਲ ਪੂਰਨ j = fastmodulo(ਖਾਨਾ_Q_0 + (jc0 + (ਵਸਤੂ_ct1.get_local_id(1) / np) * cpw) / ncols2, ne01);
 
-#pragma unroll
-        for (int i_KQ_0 = 0; i_KQ_0 < nbatch_fa; i_KQ_0 += np*warp_size) {
-            const int i_KQ = i_KQ_0 + (item_ct1.get_local_id(1) % np) * warp_size + item_ct1.get_local_id(2);
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ i_KQ_0 = 0; i_KQ_0 < nbatch_fa; i_KQ_0 += np*warp_ਮਾਪ) {
+            ਅਚਲ ਪੂਰਨ i_KQ = i_KQ_0 + (ਵਸਤੂ_ct1.get_local_id(1) % np) * warp_ਮਾਪ + ਵਸਤੂ_ct1.get_local_id(2);
 
-#if defined(SYCL_FAST_FP16) && !defined(GGML_SYCL_F16)
+#ਜੇ defined(SYCL_FAST_FP16) && !defined(GGML_SYCL_F16)
             // Without the v_dot2_f32_f16 instruction there is a higher risk of numerical overflow in the KQ calculation.
             // Therefore, scale down Q values and apply the inverse scale the FP32 KQ values afterwards again.
-            KQ_acc[i_KQ_0/(np*warp_size)*cpw + jc0] *= 4.0f;
-#endif // defined(SYCL_FAST_FP16) && !defined(GGML_SYCL_F16)
+            KQ_acc[i_KQ_0/(np*warp_ਮਾਪ)*cpw + jc0] *= 4.0f;
+#ਜੇ_ਅੰਤ // defined(SYCL_FAST_FP16) && !defined(GGML_SYCL_F16)
 
-            if (use_logit_softcap) {
-                KQ_acc[(i_KQ_0 / (np * warp_size)) * cpw + jc0] =
-                    logit_softcap * sycl::tanh((float) KQ_acc[(i_KQ_0 / (np * warp_size)) * cpw + jc0]);
+            ਜੇ (use_logit_softcap) {
+                KQ_acc[(i_KQ_0 / (np * warp_ਮਾਪ)) * cpw + jc0] =
+                    logit_softcap * sycl::tanh((ਦਸ਼ਮਲਵ) KQ_acc[(i_KQ_0 / (np * warp_ਮਾਪ)) * cpw + jc0]);
             }
 
-            if (!oob_check || i_KQ < k_VKQ_sup) {
-                KQ_acc[(i_KQ_0 / (np * warp_size)) * cpw + jc0] +=
-                    (ncols2 > 1 || mask) ? slope * sycl::vec<sycl::half, 1>(mask[j * stride_mask + k_VKQ_0 + i_KQ])
-                                                       .convert<float, sycl::rounding_mode::automatic>()[0] :
+            ਜੇ (!oob_check || i_KQ < k_VKQ_sup) {
+                KQ_acc[(i_KQ_0 / (np * warp_ਮਾਪ)) * cpw + jc0] +=
+                    (ncols2 > 1 || ਨਕਾਬ) ? ਢਲਾਨ * sycl::vec<sycl::half, 1>(ਨਕਾਬ[j * stride_ਨਕਾਬ + k_VKQ_0 + i_KQ])
+                                                       .convert<ਦਸ਼ਮਲਵ, sycl::rounding_ਬਹੁਲਕ::automatic>()[0] :
                                            0.0f;
 
                 KQ_max_new[jc0] =
-                    sycl::fmax((float) KQ_max_new[jc0],
-                               (float) (KQ_acc[(i_KQ_0 / (np * warp_size)) * cpw + jc0] + FATTN_KQ_MAX_OFFSET));
+                    sycl::fmax((ਦਸ਼ਮਲਵ) KQ_max_new[jc0],
+                               (ਦਸ਼ਮਲਵ) (KQ_acc[(i_KQ_0 / (np * warp_ਮਾਪ)) * cpw + jc0] + FATTN_KQ_MAX_ਵਿੱਥ));
             }
         }
 
-        KQ_max_new[jc0] = warp_reduce_max<warp_size>(KQ_max_new[jc0]);
+        KQ_max_new[jc0] = warp_reduce_max<warp_ਮਾਪ>(KQ_max_new[jc0]);
     }
 
-    if constexpr (np == 1) {
-        item_ct1.barrier(sycl::access::fence_space::local_space);
-    } else {
+    ਜੇ constexpr (np == 1) {
+        ਵਸਤੂ_ct1.barrier(sycl::access::fence_space::local_space);
+    } ਨਹੀਂਤਾਂ {
         static_assert(cpw == 1, "bad cpw");
 
-        if (item_ct1.get_local_id(2) == 0) {
-            KQ_max_new_shared[item_ct1.get_local_id(1)] = KQ_max_new[0];
+        ਜੇ (ਵਸਤੂ_ct1.get_local_id(2) == 0) {
+            KQ_max_new_shared[ਵਸਤੂ_ct1.get_local_id(1)] = KQ_max_new[0];
         }
-        item_ct1.barrier(sycl::access::fence_space::local_space);
-        KQ_max_new[0] = KQ_max_new_shared[(item_ct1.get_local_id(1) & ~(np - 1)) + item_ct1.get_local_id(2) % np];
+        ਵਸਤੂ_ct1.barrier(sycl::access::fence_space::local_space);
+        KQ_max_new[0] = KQ_max_new_shared[(ਵਸਤੂ_ct1.get_local_id(1) & ~(np - 1)) + ਵਸਤੂ_ct1.get_local_id(2) % np];
         KQ_max_new[0] = warp_reduce_max<np>(KQ_max_new[0]);
     }
 
     // Calculate KQ softmax, write to shared KQ buffer, re-scale VKQ accumulators:
-#pragma unroll
-    for (int jc0 = 0; jc0 < cpw; jc0 += KQ_cs) {
-#ifdef SYCL_FAST_FP16
-        __dpct_align__(16) sycl::half tmp[nbatch_fa / (np * warp_size)][KQ_cs];
-#else
-        __dpct_align__(16) float tmp[nbatch_fa/(np*warp_size)][KQ_cs];
-#endif // SYCL_FAST_FP16
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ jc0 = 0; jc0 < cpw; jc0 += KQ_cs) {
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ SYCL_FAST_FP16
+        __dpct_align__(16) sycl::half tmp[nbatch_fa / (np * warp_ਮਾਪ)][KQ_cs];
+#ਨਹੀਂਤਾਂ
+        __dpct_align__(16) ਦਸ਼ਮਲਵ tmp[nbatch_fa/(np*warp_ਮਾਪ)][KQ_cs];
+#ਜੇ_ਅੰਤ // SYCL_FAST_FP16
 
-#pragma unroll
-        for (int jc1 = 0; jc1 < KQ_cs; ++jc1) {
-            const int jc = jc0 + jc1;
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ jc1 = 0; jc1 < KQ_cs; ++jc1) {
+            ਅਚਲ ਪੂਰਨ jc = jc0 + jc1;
 
-            const float KQ_max_scale = sycl::native::exp((float) (KQ_max[jc] - KQ_max_new[jc]));
+            ਅਚਲ ਦਸ਼ਮਲਵ KQ_max_scale = sycl::native::ਘਾਤਾਂਕ((ਦਸ਼ਮਲਵ) (KQ_max[jc] - KQ_max_new[jc]));
             KQ_max[jc] = KQ_max_new[jc];
 
-            float KQ_sum_add = 0.0f;
-#pragma unroll
-            for (int i0 = 0; i0 < nbatch_fa; i0 += np*warp_size) {
-                const float val =
-                    !oob_check || i0 + (item_ct1.get_local_id(1) % np) * warp_size + item_ct1.get_local_id(2) <
+            ਦਸ਼ਮਲਵ KQ_ਜੋੜ_ਜੋੜੋ = 0.0f;
+#ਹਦਾਇਤ unroll
+            ਲਈ (ਪੂਰਨ i0 = 0; i0 < nbatch_fa; i0 += np*warp_ਮਾਪ) {
+                ਅਚਲ ਦਸ਼ਮਲਵ val =
+                    !oob_check || i0 + (ਵਸਤੂ_ct1.get_local_id(1) % np) * warp_ਮਾਪ + ਵਸਤੂ_ct1.get_local_id(2) <
                                       static_cast<uint32_t>(k_VKQ_sup) ?
-                        sycl::native::exp((float) (KQ_acc[(i0 / (np * warp_size)) * cpw + jc] - KQ_max[jc])) :
+                        sycl::native::ਘਾਤਾਂਕ((ਦਸ਼ਮਲਵ) (KQ_acc[(i0 / (np * warp_ਮਾਪ)) * cpw + jc] - KQ_max[jc])) :
                         0.0f;
-                KQ_sum_add += val;
-                tmp[i0/(np*warp_size)][jc1] = val;
+                KQ_ਜੋੜ_ਜੋੜੋ += val;
+                tmp[i0/(np*warp_ਮਾਪ)][jc1] = val;
             }
-            KQ_sum[jc] = KQ_sum[jc]*KQ_max_scale + KQ_sum_add;
+            KQ_ਜੋੜ[jc] = KQ_ਜੋੜ[jc]*KQ_max_scale + KQ_ਜੋੜ_ਜੋੜੋ;
 
-#ifdef SYCL_FAST_FP16
-            const sycl::half2 KQ_max_scale_h2 = sycl::half2(KQ_max_scale, KQ_max_scale);
-#pragma unroll
-            for (int i0 = 0; i0 < DVp/2; i0 += warp_size) {
-                VKQ[jc*((DVp/2)/warp_size) + i0/warp_size].x() *= KQ_max_scale_h2.x();
-                VKQ[jc*((DVp/2)/warp_size) + i0/warp_size].y() *= KQ_max_scale_h2.y();
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ SYCL_FAST_FP16
+            ਅਚਲ sycl::half2 KQ_max_scale_h2 = sycl::half2(KQ_max_scale, KQ_max_scale);
+#ਹਦਾਇਤ unroll
+            ਲਈ (ਪੂਰਨ i0 = 0; i0 < DVp/2; i0 += warp_ਮਾਪ) {
+                VKQ[jc*((DVp/2)/warp_ਮਾਪ) + i0/warp_ਮਾਪ].x() *= KQ_max_scale_h2.x();
+                VKQ[jc*((DVp/2)/warp_ਮਾਪ) + i0/warp_ਮਾਪ].y() *= KQ_max_scale_h2.y();
             }
-#else
-#pragma unroll
-            for (int i0 = 0; i0 < DVp/2; i0 += warp_size) {
-                VKQ[jc*((DVp/2)/warp_size) + i0/warp_size].x() *= KQ_max_scale;
-                VKQ[jc*((DVp/2)/warp_size) + i0/warp_size].y() *= KQ_max_scale;
+#ਨਹੀਂਤਾਂ
+#ਹਦਾਇਤ unroll
+            ਲਈ (ਪੂਰਨ i0 = 0; i0 < DVp/2; i0 += warp_ਮਾਪ) {
+                VKQ[jc*((DVp/2)/warp_ਮਾਪ) + i0/warp_ਮਾਪ].x() *= KQ_max_scale;
+                VKQ[jc*((DVp/2)/warp_ਮਾਪ) + i0/warp_ਮਾਪ].y() *= KQ_max_scale;
             }
-#endif // SYCL_FAST_FP16
+#ਜੇ_ਅੰਤ // SYCL_FAST_FP16
         }
 
-#pragma unroll
-        for (int i0 = 0; i0 < nbatch_fa; i0 += np*warp_size) {
-            const int i = i0 + (item_ct1.get_local_id(1) % np) * warp_size + item_ct1.get_local_id(2);
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ i0 = 0; i0 < nbatch_fa; i0 += np*warp_ਮਾਪ) {
+            ਅਚਲ ਪੂਰਨ i = i0 + (ਵਸਤੂ_ct1.get_local_id(1) % np) * warp_ਮਾਪ + ਵਸਤੂ_ct1.get_local_id(2);
 
-            ggml_sycl_memcpy_1<sizeof(tmp[0])>(
-                KQ + (jc0 / KQ_cs + (item_ct1.get_local_id(1) / np) * (cpw / KQ_cs)) * (nbatch_fa * KQ_cs) + i * KQ_cs,
-                tmp[i0 / (np * warp_size)]);
+            ggml_sycl_memcpy_1<ਆਕਾਰ(tmp[0])>(
+                KQ + (jc0 / KQ_cs + (ਵਸਤੂ_ct1.get_local_id(1) / np) * (cpw / KQ_cs)) * (nbatch_fa * KQ_cs) + i * KQ_cs,
+                tmp[i0 / (np * warp_ਮਾਪ)]);
         }
     }
 
     // VKQ = V @ KQ matrix multiplication:
     static_assert(DV <= DKQ, "bad DV");
     static_assert(DV % nbatch_K == 0 || (nbatch_K % 3 == 0 && DV % (nbatch_K*2/3) == 0), "bad nbatch_K");
-    constexpr int nbatch_V = (DV % nbatch_K == 0 ? nbatch_K : nbatch_K*2/3) * nbatch_fa / DV; // Number of V columns that fit in SRAM for K.
+    constexpr ਪੂਰਨ nbatch_V = (DV % nbatch_K == 0 ? nbatch_K : nbatch_K*2/3) * nbatch_fa / DV; // Number of V columns that fit in SRAM for K.
     static_assert(nbatch_fa % nbatch_V == 0, "bad nbatch_V");
     static_assert(nbatch_V % np == 0, "bad nbatch_V");
-#pragma unroll
-    for (int k0 = 0; k0 < nbatch_fa; k0 += nbatch_V) {
-        flash_attn_tile_load_tile<warp_size, nwarps, nbatch_V, DV, 0, oob_check>
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ k0 = 0; k0 < nbatch_fa; k0 += nbatch_V) {
+        flash_attn_tile_ਲੱਦੋ_tile<warp_ਮਾਪ, nwarps, nbatch_V, DV, 0, oob_check>
             (V_h2 + int64_t(k_VKQ_0 + k0)*stride_V2, KV_tmp, stride_V2, k_VKQ_sup - k0);
-        item_ct1.barrier(sycl::access::fence_space::local_space);
+        ਵਸਤੂ_ct1.barrier(sycl::access::fence_space::local_space);
 
-#ifdef SYCL_FAST_FP16
-#pragma unroll
-        for (int k1 = 0; k1 < nbatch_V; k1 += np) {
-            __dpct_align__(16) sycl::half2 V_k[(DVp / 2) / warp_size];
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ SYCL_FAST_FP16
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ k1 = 0; k1 < nbatch_V; k1 += np) {
+            __dpct_align__(16) sycl::half2 V_k[(DVp / 2) / warp_ਮਾਪ];
             __dpct_align__(16) sycl::half2 KQ_k[cpw];
 
-            constexpr int cpy_ne_D = cpy_ne/2 < (DVp/2)/warp_size ? cpy_ne/2 : (DVp/2)/warp_size;
-#pragma unroll
-            for (int i0 = 0; i0 < DVp/2; i0 += warp_size*cpy_ne_D) {
-                ggml_sycl_memcpy_1<cpy_ne_D * 4>(&V_k[i0 / warp_size],
-                                                 &KV_tmp[(k1 + item_ct1.get_local_id(1) % np) * (DV / 2) + i0 +
-                                                         item_ct1.get_local_id(2) * cpy_ne_D]);
+            constexpr ਪੂਰਨ cpy_ne_D = cpy_ne/2 < (DVp/2)/warp_ਮਾਪ ? cpy_ne/2 : (DVp/2)/warp_ਮਾਪ;
+#ਹਦਾਇਤ unroll
+            ਲਈ (ਪੂਰਨ i0 = 0; i0 < DVp/2; i0 += warp_ਮਾਪ*cpy_ne_D) {
+                ggml_sycl_memcpy_1<cpy_ne_D * 4>(&V_k[i0 / warp_ਮਾਪ],
+                                                 &KV_tmp[(k1 + ਵਸਤੂ_ct1.get_local_id(1) % np) * (DV / 2) + i0 +
+                                                         ਵਸਤੂ_ct1.get_local_id(2) * cpy_ne_D]);
             }
-#pragma unroll
-            for (int jc_VKQ_0 = 0; jc_VKQ_0 < cpw; jc_VKQ_0 += KQ_cs) {
-                const int jc_KQ = jc_VKQ_0 / KQ_cs + (item_ct1.get_local_id(1) / np) * (cpw / KQ_cs);
+#ਹਦਾਇਤ unroll
+            ਲਈ (ਪੂਰਨ jc_VKQ_0 = 0; jc_VKQ_0 < cpw; jc_VKQ_0 += KQ_cs) {
+                ਅਚਲ ਪੂਰਨ jc_KQ = jc_VKQ_0 / KQ_cs + (ਵਸਤੂ_ct1.get_local_id(1) / np) * (cpw / KQ_cs);
 
                 __dpct_align__(16) sycl::half tmp[KQ_cs];
-                ggml_sycl_memcpy_1<KQ_cs * sizeof(sycl::half)>(
-                    &tmp, KQ + jc_KQ * (nbatch_fa * KQ_cs) + (k0 + k1 + item_ct1.get_local_id(1) % np) * KQ_cs);
-#pragma unroll
-                for (int jc_VKQ_1 = 0; jc_VKQ_1 < KQ_cs; ++jc_VKQ_1) {
+                ggml_sycl_memcpy_1<KQ_cs * ਆਕਾਰ(sycl::half)>(
+                    &tmp, KQ + jc_KQ * (nbatch_fa * KQ_cs) + (k0 + k1 + ਵਸਤੂ_ct1.get_local_id(1) % np) * KQ_cs);
+#ਹਦਾਇਤ unroll
+                ਲਈ (ਪੂਰਨ jc_VKQ_1 = 0; jc_VKQ_1 < KQ_cs; ++jc_VKQ_1) {
                     KQ_k[jc_VKQ_0 + jc_VKQ_1] = sycl::half2(tmp[jc_VKQ_1]);
                 }
             }
 
-#pragma unroll
-            for (int i0 = 0; i0 < DVp/2; i0 += warp_size) {
-#pragma unroll
-                for (int jc_VKQ_0 = 0; jc_VKQ_0 < cpw; ++jc_VKQ_0) {
-                    VKQ[jc_VKQ_0*((DVp/2)/warp_size) + i0/warp_size].x() +=
-                        V_k[i0/warp_size].x()*KQ_k[jc_VKQ_0].x();
-                    VKQ[jc_VKQ_0*((DVp/2)/warp_size) + i0/warp_size].y() +=
-                        V_k[i0/warp_size].y()*KQ_k[jc_VKQ_0].y();
+#ਹਦਾਇਤ unroll
+            ਲਈ (ਪੂਰਨ i0 = 0; i0 < DVp/2; i0 += warp_ਮਾਪ) {
+#ਹਦਾਇਤ unroll
+                ਲਈ (ਪੂਰਨ jc_VKQ_0 = 0; jc_VKQ_0 < cpw; ++jc_VKQ_0) {
+                    VKQ[jc_VKQ_0*((DVp/2)/warp_ਮਾਪ) + i0/warp_ਮਾਪ].x() +=
+                        V_k[i0/warp_ਮਾਪ].x()*KQ_k[jc_VKQ_0].x();
+                    VKQ[jc_VKQ_0*((DVp/2)/warp_ਮਾਪ) + i0/warp_ਮਾਪ].y() +=
+                        V_k[i0/warp_ਮਾਪ].y()*KQ_k[jc_VKQ_0].y();
                 }
             }
         }
-#else
-#pragma unroll
-        for (int k1 = 0; k1 < nbatch_V; k1 += np) {
-            __dpct_align__(16) sycl::float2 V_k[(DVp/2)/warp_size];
-            __dpct_align__(16) float  KQ_k[cpw];
+#ਨਹੀਂਤਾਂ
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ k1 = 0; k1 < nbatch_V; k1 += np) {
+            __dpct_align__(16) sycl::float2 V_k[(DVp/2)/warp_ਮਾਪ];
+            __dpct_align__(16) ਦਸ਼ਮਲਵ  KQ_k[cpw];
 
-            constexpr int cpy_ne_D = cpy_ne < DVp/warp_size ? cpy_ne : DVp/warp_size;
-#pragma unroll
-            for (int i0 = 0; i0 < DVp; i0 += warp_size*cpy_ne_D) {
-                ggml_sycl_memcpy_1<cpy_ne_D*4>(&V_k[i0/(2*warp_size)], &KV_tmp[(k1 + item_ct1.get_local_id(1) % np)*DV + i0 + item_ct1.get_local_id(2)*cpy_ne_D]);
+            constexpr ਪੂਰਨ cpy_ne_D = cpy_ne < DVp/warp_ਮਾਪ ? cpy_ne : DVp/warp_ਮਾਪ;
+#ਹਦਾਇਤ unroll
+            ਲਈ (ਪੂਰਨ i0 = 0; i0 < DVp; i0 += warp_ਮਾਪ*cpy_ne_D) {
+                ggml_sycl_memcpy_1<cpy_ne_D*4>(&V_k[i0/(2*warp_ਮਾਪ)], &KV_tmp[(k1 + ਵਸਤੂ_ct1.get_local_id(1) % np)*DV + i0 + ਵਸਤੂ_ct1.get_local_id(2)*cpy_ne_D]);
             }
-#pragma unroll
-            for (int jc_VKQ_0 = 0; jc_VKQ_0 < cpw; jc_VKQ_0 += KQ_cs) {
-                const int jc_KQ = jc_VKQ_0/KQ_cs + (item_ct1.get_local_id(1) / np)*(cpw/KQ_cs);
+#ਹਦਾਇਤ unroll
+            ਲਈ (ਪੂਰਨ jc_VKQ_0 = 0; jc_VKQ_0 < cpw; jc_VKQ_0 += KQ_cs) {
+                ਅਚਲ ਪੂਰਨ jc_KQ = jc_VKQ_0/KQ_cs + (ਵਸਤੂ_ct1.get_local_id(1) / np)*(cpw/KQ_cs);
 
-                ggml_sycl_memcpy_1<KQ_cs*sizeof(float)>(
-                    &KQ_k[jc_VKQ_0], KQ + jc_KQ*(nbatch_fa*KQ_cs) + (k0 + k1 + item_ct1.get_local_id(1) % np)*KQ_cs);
+                ggml_sycl_memcpy_1<KQ_cs*ਆਕਾਰ(ਦਸ਼ਮਲਵ)>(
+                    &KQ_k[jc_VKQ_0], KQ + jc_KQ*(nbatch_fa*KQ_cs) + (k0 + k1 + ਵਸਤੂ_ct1.get_local_id(1) % np)*KQ_cs);
             }
 
-#pragma unroll
-            for (int i0 = 0; i0 < DVp/2; i0 += warp_size) {
-#pragma unroll
-                for (int jc_VKQ_0 = 0; jc_VKQ_0 < cpw; ++jc_VKQ_0) {
-                    VKQ[jc_VKQ_0*((DVp/2)/warp_size) + i0/warp_size].x() += V_k[i0/warp_size].x()*KQ_k[jc_VKQ_0];
-                    VKQ[jc_VKQ_0*((DVp/2)/warp_size) + i0/warp_size].y() += V_k[i0/warp_size].y()*KQ_k[jc_VKQ_0];
+#ਹਦਾਇਤ unroll
+            ਲਈ (ਪੂਰਨ i0 = 0; i0 < DVp/2; i0 += warp_ਮਾਪ) {
+#ਹਦਾਇਤ unroll
+                ਲਈ (ਪੂਰਨ jc_VKQ_0 = 0; jc_VKQ_0 < cpw; ++jc_VKQ_0) {
+                    VKQ[jc_VKQ_0*((DVp/2)/warp_ਮਾਪ) + i0/warp_ਮਾਪ].x() += V_k[i0/warp_ਮਾਪ].x()*KQ_k[jc_VKQ_0];
+                    VKQ[jc_VKQ_0*((DVp/2)/warp_ਮਾਪ) + i0/warp_ਮਾਪ].y() += V_k[i0/warp_ਮਾਪ].y()*KQ_k[jc_VKQ_0];
                 }
             }
         }
-#endif // SYCL_FAST_FP16
-        item_ct1.barrier(sycl::access::fence_space::local_space);
+#ਜੇ_ਅੰਤ // SYCL_FAST_FP16
+        ਵਸਤੂ_ct1.barrier(sycl::access::fence_space::local_space);
     }
 }
 
-template <int DKQ, int DV, int ncols1, int ncols2, bool use_logit_softcap, int warp_size>  // D == head size
+ਸਾਂਚਾ <ਪੂਰਨ DKQ, ਪੂਰਨ DV, ਪੂਰਨ ncols1, ਪੂਰਨ ncols2, ਤਾਰਕਿਕ use_logit_softcap, ਪੂਰਨ warp_ਮਾਪ>  // D == head size
 /*
 The total declared local variable size in device function flash_attn_tile exceeds 128 bytes and may cause high register pressure. Consult with your hardware vendor to find the total register size available and adjust the code, or use smaller sub-group size to avoid high register pressure.
 */
-static void flash_attn_tile(const char *  Q,
-                            const char *  K,
-                            const char *  V,
-                            const char *  mask,
-                            const char *  sinks,
-                            const int *  KV_max,
-                            float *  dst,
+ਸਥਿਰ ਖਾਲੀ flash_attn_tile(ਅਚਲ ਅੱਖਰ *  Q,
+                            ਅਚਲ ਅੱਖਰ *  K,
+                            ਅਚਲ ਅੱਖਰ *  V,
+                            ਅਚਲ ਅੱਖਰ *  ਨਕਾਬ,
+                            ਅਚਲ ਅੱਖਰ *  sinks,
+                            ਅਚਲ ਪੂਰਨ *  KV_max,
+                            ਦਸ਼ਮਲਵ *  dst,
                             sycl::float2 *  dst_meta,
-                            const float          scale,
-                            const float          max_bias,
-                            const float          m0,
-                            const float          m1,
-                            const uint32_t       n_head_log2,
-                            const float          logit_softcap,
-                            const int32_t        ne00,
-                            const sycl::uint3    ne01,
-                            const int32_t        ne02,
-                            const int32_t        ne03,
-                            const int32_t        nb01,
-                            const int32_t        nb02,
-                            const int32_t        nb03,
-                            const int32_t        ne10,
-                            const int32_t        ne11,
-                            const int32_t        ne12,
-                            const int32_t        ne13,
-                            const int32_t        nb11,
-                            const int32_t        nb12,
-                            const int64_t        nb13,
-                            const int32_t        nb21,
-                            const int32_t        nb22,
-                            const int64_t        nb23,
-                            const int32_t        ne31,
-                            const int32_t        ne32,
-                            const int32_t        ne33,
-                            const int32_t        nb31,
-                            const int32_t        nb32,
-                            const int64_t        nb33) {
-#ifdef SYCL_FLASH_ATTN
+                            ਅਚਲ ਦਸ਼ਮਲਵ          scale,
+                            ਅਚਲ ਦਸ਼ਮਲਵ          max_bias,
+                            ਅਚਲ ਦਸ਼ਮਲਵ          m0,
+                            ਅਚਲ ਦਸ਼ਮਲਵ          m1,
+                            ਅਚਲ uint32_t       n_ਸਿਰ_log2,
+                            ਅਚਲ ਦਸ਼ਮਲਵ          logit_softcap,
+                            ਅਚਲ int32_t        ne00,
+                            ਅਚਲ sycl::uint3    ne01,
+                            ਅਚਲ int32_t        ne02,
+                            ਅਚਲ int32_t        ne03,
+                            ਅਚਲ int32_t        nb01,
+                            ਅਚਲ int32_t        nb02,
+                            ਅਚਲ int32_t        nb03,
+                            ਅਚਲ int32_t        ne10,
+                            ਅਚਲ int32_t        ne11,
+                            ਅਚਲ int32_t        ne12,
+                            ਅਚਲ int32_t        ne13,
+                            ਅਚਲ int32_t        nb11,
+                            ਅਚਲ int32_t        nb12,
+                            ਅਚਲ int64_t        nb13,
+                            ਅਚਲ int32_t        nb21,
+                            ਅਚਲ int32_t        nb22,
+                            ਅਚਲ int64_t        nb23,
+                            ਅਚਲ int32_t        ne31,
+                            ਅਚਲ int32_t        ne32,
+                            ਅਚਲ int32_t        ne33,
+                            ਅਚਲ int32_t        nb31,
+                            ਅਚਲ int32_t        nb32,
+                            ਅਚਲ int64_t        nb33) {
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ SYCL_FLASH_ATTN
     // Skip unused kernel variants for faster compilation:
-    auto item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    if ((use_logit_softcap && !(DV == 128 || DV == 256))) {
-        GGML_UNUSED_VARS(Q, K, V, mask, sinks, KV_max, dst, dst_meta, scale,
-            max_bias, m0, m1, n_head_log2, logit_softcap,
+    ਸਵੈਚਾਲਿਤ ਵਸਤੂ_ct1 = sycl::ext::oneapi::this_work_ਵਸਤੂ::get_nd_ਵਸਤੂ<3>();
+    ਜੇ ((use_logit_softcap && !(DV == 128 || DV == 256))) {
+        GGML_ਅਣਵਰਤਿਆ_VARS(Q, K, V, ਨਕਾਬ, sinks, KV_max, dst, dst_meta, scale,
+            max_bias, m0, m1, n_ਸਿਰ_log2, logit_softcap,
             ne00, ne01, ne02, ne03,
                   nb01, nb02, nb03,
             ne10, ne11, ne12, ne13,
@@ -708,48 +708,48 @@ static void flash_attn_tile(const char *  Q,
                   nb21, nb22, nb23,
                   ne31, ne32, ne33,
                   nb31, nb32, nb33);
-        return;
+        ਵਾਪਸ;
     }
 
     static_assert(ggml_sycl_fattn_tile_get_config(DKQ, DV, ncols1*ncols2) != 0, "kernel config not defined");
 
-    constexpr int ncols     = ncols1*ncols2;
+    constexpr ਪੂਰਨ ncols     = ncols1*ncols2;
 
-    constexpr int nwarps    = ggml_sycl_fattn_tile_get_nthreads (DKQ, DV, ncols1*ncols2) / warp_size;
-    constexpr int nbatch_fa = ggml_sycl_fattn_tile_get_nbatch_fa(DKQ, DV, ncols1*ncols2);
-    constexpr int nbatch_K  = ggml_sycl_fattn_tile_get_nbatch_K (DKQ, DV, ncols1*ncols2);
+    constexpr ਪੂਰਨ nwarps    = ggml_sycl_fattn_tile_get_nthreads (DKQ, DV, ncols1*ncols2) / warp_ਮਾਪ;
+    constexpr ਪੂਰਨ nbatch_fa = ggml_sycl_fattn_tile_get_nbatch_fa(DKQ, DV, ncols1*ncols2);
+    constexpr ਪੂਰਨ nbatch_K  = ggml_sycl_fattn_tile_get_nbatch_K (DKQ, DV, ncols1*ncols2);
 
     // In this kernel Q, K, V are matrices while i, j, k are matrix indices.
 
-    const int col_Q_0 = item_ct1.get_group(2) * ncols1;  // Index of the first Q column for this SYCL block to work on.
+    ਅਚਲ ਪੂਰਨ ਖਾਨਾ_Q_0 = ਵਸਤੂ_ct1.get_ਸਮੂਹ(2) * ncols1;  // Index of the first Q column for this SYCL block to work on.
 
-    const int           sequence  = item_ct1.get_group(0) / (ne02 / ncols2);
-    const int           head0     = item_ct1.get_group(0) * ncols2 - sequence * ne02;  // == item_ct1.get_group(0) % (ne02/ncols2)
-    const int gqa_ratio = ne02 / ne12; // With grouped query attention there are > 1 Q matrices per K, V matrix.
-    const float * Q_f  = (const float *) (Q + nb03*sequence + nb02* head0);
-    const sycl::half2 * K_h2      = (const sycl::half2 *) (K + nb13 * sequence + nb12 * (head0 / gqa_ratio));
-    const sycl::half2 * V_h2 =
-        (const sycl::half2 *) (V + nb23 * sequence + nb22 * (head0 / gqa_ratio));  // K and V have same shape
+    ਅਚਲ ਪੂਰਨ           sequence  = ਵਸਤੂ_ct1.get_ਸਮੂਹ(0) / (ne02 / ncols2);
+    ਅਚਲ ਪੂਰਨ           head0     = ਵਸਤੂ_ct1.get_ਸਮੂਹ(0) * ncols2 - sequence * ne02;  // == item_ct1.get_group(0) % (ne02/ncols2)
+    ਅਚਲ ਪੂਰਨ gqa_ਅਨੁਪਾਤ = ne02 / ne12; // With grouped query attention there are > 1 Q matrices per K, V matrix.
+    ਅਚਲ ਦਸ਼ਮਲਵ * Q_f  = (ਅਚਲ ਦਸ਼ਮਲਵ *) (Q + nb03*sequence + nb02* head0);
+    ਅਚਲ sycl::half2 * K_h2      = (ਅਚਲ sycl::half2 *) (K + nb13 * sequence + nb12 * (head0 / gqa_ਅਨੁਪਾਤ));
+    ਅਚਲ sycl::half2 * V_h2 =
+        (ਅਚਲ sycl::half2 *) (V + nb23 * sequence + nb22 * (head0 / gqa_ਅਨੁਪਾਤ));  // K and V have same shape
 
-    const sycl::half * maskh = mask ? (const sycl::half *) (mask + nb33 * (sequence % ne33)) : nullptr;
+    ਅਚਲ sycl::half * maskh = ਨਕਾਬ ? (ਅਚਲ sycl::half *) (ਨਕਾਬ + nb33 * (sequence % ne33)) : ਖਾਲੀ_ਸੂਚਕ;
 
-    const int stride_K2   = nb11 / sizeof(sycl::half2);
-    const int stride_V2   = nb21 / sizeof(sycl::half2);
-    const int stride_mask = nb31 / sizeof(sycl::half);
+    ਅਚਲ ਪੂਰਨ stride_K2   = nb11 / ਆਕਾਰ(sycl::half2);
+    ਅਚਲ ਪੂਰਨ stride_V2   = nb21 / ਆਕਾਰ(sycl::half2);
+    ਅਚਲ ਪੂਰਨ stride_ਨਕਾਬ = nb31 / ਆਕਾਰ(sycl::half);
 
-    const float slope = ncols2 == 1 ? get_alibi_slope(max_bias, head0, n_head_log2, m0, m1) : 1.0f;
+    ਅਚਲ ਦਸ਼ਮਲਵ ਢਲਾਨ = ncols2 == 1 ? get_alibi_ਢਲਾਨ(max_bias, head0, n_ਸਿਰ_log2, m0, m1) : 1.0f;
 
-    constexpr int cpy_nb = ggml_sycl_get_max_cpy_bytes();
-    constexpr int cpy_ne = cpy_nb / 4;
+    constexpr ਪੂਰਨ cpy_nb = ggml_sycl_get_max_cpy_ਬਾਈਟਾਂ();
+    constexpr ਪੂਰਨ cpy_ne = cpy_nb / 4;
 
-    constexpr int cpw = ncols > nwarps ? ncols/nwarps : 1; // Q columns per warp.
-    constexpr int np  = nwarps > ncols ? nwarps/ncols : 1; // Number of parallel warps per Q column.
+    constexpr ਪੂਰਨ cpw = ncols > nwarps ? ncols/nwarps : 1; // Q columns per warp.
+    constexpr ਪੂਰਨ np  = nwarps > ncols ? nwarps/ncols : 1; // Number of parallel warps per Q column.
 
     static_assert(cpw == 1 || np == 1, "bad cpw / np");
-    static_assert(nbatch_fa % (np*warp_size) == 0, "nbatch_fa % (np*warp_size) != 0");
+    static_assert(nbatch_fa % (np*warp_ਮਾਪ) == 0, "nbatch_fa % (np*warp_size) != 0");
 
-    constexpr int DKQp = (DKQ + 2*warp_size - 1) & ~(2*warp_size - 1); // DKQ padded to multiple of 2*warp_size.
-    constexpr int DVp  = (DV  + 2*warp_size - 1) & ~(2*warp_size - 1); // DV  padded to multiple of 2*warp_size.
+    constexpr ਪੂਰਨ DKQp = (DKQ + 2*warp_ਮਾਪ - 1) & ~(2*warp_ਮਾਪ - 1); // DKQ padded to multiple of 2*warp_size.
+    constexpr ਪੂਰਨ DVp  = (DV  + 2*warp_ਮਾਪ - 1) & ~(2*warp_ਮਾਪ - 1); // DV  padded to multiple of 2*warp_size.
 
     // Q_tmp == SRAM buffer to hold Q data for the entire lifetime of the kernel.
     // KV_tmp == SRAM buffer to hold fragments of K/V data while iterating over ne11.
@@ -758,306 +758,306 @@ static void flash_attn_tile(const char *  Q,
     // VKQ == Accumulators in registers for the final VKQ result.
 
 
-#ifdef SYCL_FAST_FP16
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ SYCL_FAST_FP16
     constexpr size_t lsm_size1 = ncols * DKQ/2 ;
     constexpr size_t lsm_size2 = nbatch_fa * (nbatch_K/2 + cpy_ne) + DVp-DV ;
     constexpr size_t lsm_size3 = ncols * nbatch_fa;
     constexpr size_t lsm_size4 = nwarps;
 
-    constexpr size_t local_share_mem_size = lsm_size1 * sizeof(sycl::half2) +
-                                            lsm_size2 * sizeof(sycl::half2) +
-                                            lsm_size3 * sizeof(sycl::half) +
-                                            lsm_size4 * sizeof(float);
+    constexpr size_t local_share_mem_ਮਾਪ = lsm_size1 * ਆਕਾਰ(sycl::half2) +
+                                            lsm_size2 * ਆਕਾਰ(sycl::half2) +
+                                            lsm_size3 * ਆਕਾਰ(sycl::half) +
+                                            lsm_size4 * ਆਕਾਰ(ਦਸ਼ਮਲਵ);
 
-    syclex::work_group_static<char[local_share_mem_size]> lsm;
+    syclex::work_ਸਮੂਹ_static<ਅੱਖਰ[local_share_mem_ਮਾਪ]> lsm;
 
     sycl::half2 *Q_tmp = (sycl::half2 *)&lsm;
     sycl::half2 *KV_tmp = (sycl::half2*)(Q_tmp +lsm_size1);
     sycl::half *KQ = (sycl::half *)(KV_tmp+lsm_size2);
-    float *KQ_max_new_shared = (float *)(KQ+lsm_size3);
+    ਦਸ਼ਮਲਵ *KQ_max_new_shared = (ਦਸ਼ਮਲਵ *)(KQ+lsm_size3);
 
-    __dpct_align__(16) sycl::half2 VKQ[cpw * ((DVp / 2) / warp_size)] = {
+    __dpct_align__(16) sycl::half2 VKQ[cpw * ((DVp / 2) / warp_ਮਾਪ)] = {
         { 0.0f, 0.0f }
     };
-#else
+#ਨਹੀਂਤਾਂ
     constexpr size_t lsm_size1 = ncols * DKQ ;
     constexpr size_t lsm_size2 = nbatch_fa * (nbatch_K + cpy_ne) + DVp-DV;
     constexpr size_t lsm_size3 = ncols * nbatch_fa;
     constexpr size_t lsm_size4 = nwarps;
 
-    constexpr size_t local_share_mem_size = (lsm_size1 + lsm_size2 +lsm_size3 + lsm_size4) * sizeof(float);
+    constexpr size_t local_share_mem_ਮਾਪ = (lsm_size1 + lsm_size2 +lsm_size3 + lsm_size4) * ਆਕਾਰ(ਦਸ਼ਮਲਵ);
 
-    syclex::work_group_static<char[local_share_mem_size]> lsm;
+    syclex::work_ਸਮੂਹ_static<ਅੱਖਰ[local_share_mem_ਮਾਪ]> lsm;
 
-    float *Q_tmp = (float *)&lsm;
-    float *KV_tmp = Q_tmp +lsm_size1;
-    float *KQ = KV_tmp+lsm_size2;
-    float *KQ_max_new_shared = KQ+lsm_size3;
+    ਦਸ਼ਮਲਵ *Q_tmp = (ਦਸ਼ਮਲਵ *)&lsm;
+    ਦਸ਼ਮਲਵ *KV_tmp = Q_tmp +lsm_size1;
+    ਦਸ਼ਮਲਵ *KQ = KV_tmp+lsm_size2;
+    ਦਸ਼ਮਲਵ *KQ_max_new_shared = KQ+lsm_size3;
 
-    __dpct_align__(16) sycl::float2 VKQ[cpw * ((DVp/2)/warp_size)] = {{0.0f, 0.0f}};
+    __dpct_align__(16) sycl::float2 VKQ[cpw * ((DVp/2)/warp_ਮਾਪ)] = {{0.0f, 0.0f}};
 
 
-#endif // SYCL_FAST_FP16
+#ਜੇ_ਅੰਤ // SYCL_FAST_FP16
 
-    float KQ_max[cpw] = {};
+    ਦਸ਼ਮਲਵ KQ_max[cpw] = {};
 
-#pragma unroll
-    for (int j0 = 0; j0 < ncols; j0 += nwarps) {
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ j0 = 0; j0 < ncols; j0 += nwarps) {
         KQ_max[j0/nwarps] = -FLT_MAX/2.0f;
     }
-    float KQ_sum[cpw] = {0.0f};
+    ਦਸ਼ਮਲਵ KQ_ਜੋੜ[cpw] = {0.0f};
 
     // Load Q data, convert to FP16 if fast:
-#pragma unroll
-    for (int jc0 = 0; jc0 < cpw; ++jc0) {
-        const int jc = jc0 + (item_ct1.get_local_id(1) / np) * cpw;
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ jc0 = 0; jc0 < cpw; ++jc0) {
+        ਅਚਲ ਪੂਰਨ jc = jc0 + (ਵਸਤੂ_ct1.get_local_id(1) / np) * cpw;
 
-        const int j = jc / ncols2;
-        const int c = jc % ncols2;
+        ਅਚਲ ਪੂਰਨ j = jc / ncols2;
+        ਅਚਲ ਪੂਰਨ c = jc % ncols2;
 
-        constexpr int cpy_ne_D = cpy_ne < DKQp/warp_size ? cpy_ne : DKQp/warp_size;
+        constexpr ਪੂਰਨ cpy_ne_D = cpy_ne < DKQp/warp_ਮਾਪ ? cpy_ne : DKQp/warp_ਮਾਪ;
 
-#pragma unroll
-        for (int i0 = 0; i0 < DKQp; i0 += np*warp_size*cpy_ne_D) {
-            if (i0 + np * warp_size * cpy_ne_D <= DKQ ||
-                i0 + (item_ct1.get_local_id(1) % np) * (warp_size * cpy_ne_D) + item_ct1.get_local_id(2) * cpy_ne_D <
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ i0 = 0; i0 < DKQp; i0 += np*warp_ਮਾਪ*cpy_ne_D) {
+            ਜੇ (i0 + np * warp_ਮਾਪ * cpy_ne_D <= DKQ ||
+                i0 + (ਵਸਤੂ_ct1.get_local_id(1) % np) * (warp_ਮਾਪ * cpy_ne_D) + ਵਸਤੂ_ct1.get_local_id(2) * cpy_ne_D <
                     DKQ) {
-                __dpct_align__(16) float tmp_f[cpy_ne_D] = { 0.0f };
-                ggml_sycl_memcpy_1<sizeof(tmp_f)>(
-                    tmp_f, &Q_f[c * (nb02 / sizeof(float)) + fastmodulo(col_Q_0 + j, ne01) * (nb01 / sizeof(float)) +
-                                i0 + (item_ct1.get_local_id(1) % np) * (warp_size * cpy_ne_D) +
-                                item_ct1.get_local_id(2) * cpy_ne_D]);
+                __dpct_align__(16) ਦਸ਼ਮਲਵ tmp_f[cpy_ne_D] = { 0.0f };
+                ggml_sycl_memcpy_1<ਆਕਾਰ(tmp_f)>(
+                    tmp_f, &Q_f[c * (nb02 / ਆਕਾਰ(ਦਸ਼ਮਲਵ)) + fastmodulo(ਖਾਨਾ_Q_0 + j, ne01) * (nb01 / ਆਕਾਰ(ਦਸ਼ਮਲਵ)) +
+                                i0 + (ਵਸਤੂ_ct1.get_local_id(1) % np) * (warp_ਮਾਪ * cpy_ne_D) +
+                                ਵਸਤੂ_ct1.get_local_id(2) * cpy_ne_D]);
 
-#pragma unroll
-                for (int i1 = 0; i1 < cpy_ne_D; ++i1) {
+#ਹਦਾਇਤ unroll
+                ਲਈ (ਪੂਰਨ i1 = 0; i1 < cpy_ne_D; ++i1) {
                     tmp_f[i1] *= scale;
                 }
 
-#ifdef SYCL_FAST_FP16
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ SYCL_FAST_FP16
                 __dpct_align__(16) sycl::half2 tmp_h2[cpy_ne_D / 2];
-#pragma unroll
-                for (int i1 = 0; i1 < cpy_ne_D; i1 += 2) {
+#ਹਦਾਇਤ unroll
+                ਲਈ (ਪੂਰਨ i1 = 0; i1 < cpy_ne_D; i1 += 2) {
                     tmp_h2[i1/2] = make_half2(tmp_f[i1 + 0], tmp_f[i1 + 1]);
-#if defined(SYCL_FAST_FP16) && !defined(GGML_SYCL_F16)
+#ਜੇ defined(SYCL_FAST_FP16) && !defined(GGML_SYCL_F16)
                     // Without the v_dot2_f32_f16 instruction there is a higher risk of numerical overflow in the KQ calculation.
                     // Therefore, scale down Q values and apply the inverse scale the FP32 KQ values afterwards again.
                     tmp_h2[i1 / 2] *= sycl::half2(0.25f, 0.25f);
-#endif // defined(SYCL_FAST_FP16) && !defined(GGML_SYCL_F16)
+#ਜੇ_ਅੰਤ // defined(SYCL_FAST_FP16) && !defined(GGML_SYCL_F16)
                 }
-                ggml_sycl_memcpy_1<sizeof(tmp_h2)>(
-                    &Q_tmp[jc * (DKQ / 2) + i0 / 2 + (item_ct1.get_local_id(1) % np) * (warp_size * cpy_ne_D / 2) +
-                           item_ct1.get_local_id(2) * (cpy_ne_D / 2)],
+                ggml_sycl_memcpy_1<ਆਕਾਰ(tmp_h2)>(
+                    &Q_tmp[jc * (DKQ / 2) + i0 / 2 + (ਵਸਤੂ_ct1.get_local_id(1) % np) * (warp_ਮਾਪ * cpy_ne_D / 2) +
+                           ਵਸਤੂ_ct1.get_local_id(2) * (cpy_ne_D / 2)],
                     tmp_h2);
-#else
-                ggml_sycl_memcpy_1<sizeof(tmp_f)>(
-                    &Q_tmp[jc* DKQ    + i0   + (item_ct1.get_local_id(1) % np)*(warp_size*cpy_ne_D)   + item_ct1.get_local_id(2)* cpy_ne_D],
+#ਨਹੀਂਤਾਂ
+                ggml_sycl_memcpy_1<ਆਕਾਰ(tmp_f)>(
+                    &Q_tmp[jc* DKQ    + i0   + (ਵਸਤੂ_ct1.get_local_id(1) % np)*(warp_ਮਾਪ*cpy_ne_D)   + ਵਸਤੂ_ct1.get_local_id(2)* cpy_ne_D],
                     tmp_f);
-#endif // SYCL_FAST_FP16
+#ਜੇ_ਅੰਤ // SYCL_FAST_FP16
             }
         }
     }
 
-    item_ct1.barrier(sycl::access::fence_space::local_space);
+    ਵਸਤੂ_ct1.barrier(sycl::access::fence_space::local_space);
 
     // Main loop over KV cache:
-    const int k_VKQ_max = KV_max ? KV_max[sequence * item_ct1.get_group_range(2) + item_ct1.get_group(2)] : ne11;
-    if (ncols2 == 1) {
+    ਅਚਲ ਪੂਰਨ k_VKQ_max = KV_max ? KV_max[sequence * ਵਸਤੂ_ct1.get_ਸਮੂਹ_range(2) + ਵਸਤੂ_ct1.get_ਸਮੂਹ(2)] : ne11;
+    ਜੇ (ncols2 == 1) {
         // Branch with out-of-bounds checks.
-        int k_VKQ_0 = item_ct1.get_group(1) * nbatch_fa;
-        while (k_VKQ_0 < k_VKQ_max - nbatch_fa) {
-            constexpr bool oob_check = false;
-            flash_attn_tile_iter<warp_size, nwarps, ncols1, ncols2, DKQ, DV, nbatch_fa, nbatch_K, use_logit_softcap,
-                                 oob_check>(Q_tmp, K_h2, V_h2, maskh, ne01, logit_softcap, slope, KQ, KV_tmp, stride_K2,
-                                            stride_V2, stride_mask, KQ_max, KQ_sum, VKQ, k_VKQ_0, k_VKQ_max, col_Q_0,
+        ਪੂਰਨ k_VKQ_0 = ਵਸਤੂ_ct1.get_ਸਮੂਹ(1) * nbatch_fa;
+        ਜਦੋਂ (k_VKQ_0 < k_VKQ_max - nbatch_fa) {
+            constexpr ਤਾਰਕਿਕ oob_check = ਝੂਠ;
+            flash_attn_tile_iter<warp_ਮਾਪ, nwarps, ncols1, ncols2, DKQ, DV, nbatch_fa, nbatch_K, use_logit_softcap,
+                                 oob_check>(Q_tmp, K_h2, V_h2, maskh, ne01, logit_softcap, ਢਲਾਨ, KQ, KV_tmp, stride_K2,
+                                            stride_V2, stride_ਨਕਾਬ, KQ_max, KQ_ਜੋੜ, VKQ, k_VKQ_0, k_VKQ_max, ਖਾਨਾ_Q_0,
                                             KQ_max_new_shared);
-            k_VKQ_0 += item_ct1.get_group_range(1) * nbatch_fa;
+            k_VKQ_0 += ਵਸਤੂ_ct1.get_ਸਮੂਹ_range(1) * nbatch_fa;
         }
-        if (k_VKQ_0 < k_VKQ_max) {
-            constexpr bool oob_check = true;
-            flash_attn_tile_iter<warp_size, nwarps, ncols1, ncols2, DKQ, DV, nbatch_fa, nbatch_K, use_logit_softcap,
-                                 oob_check>(Q_tmp, K_h2, V_h2, maskh, ne01, logit_softcap, slope, KQ, KV_tmp, stride_K2,
-                                            stride_V2, stride_mask, KQ_max, KQ_sum, VKQ, k_VKQ_0, k_VKQ_max, col_Q_0,
+        ਜੇ (k_VKQ_0 < k_VKQ_max) {
+            constexpr ਤਾਰਕਿਕ oob_check = ਸੱਚ;
+            flash_attn_tile_iter<warp_ਮਾਪ, nwarps, ncols1, ncols2, DKQ, DV, nbatch_fa, nbatch_K, use_logit_softcap,
+                                 oob_check>(Q_tmp, K_h2, V_h2, maskh, ne01, logit_softcap, ਢਲਾਨ, KQ, KV_tmp, stride_K2,
+                                            stride_V2, stride_ਨਕਾਬ, KQ_max, KQ_ਜੋੜ, VKQ, k_VKQ_0, k_VKQ_max, ਖਾਨਾ_Q_0,
                                             KQ_max_new_shared);
         }
-    } else {
+    } ਨਹੀਂਤਾਂ {
         // Branch without out-of-bounds checks.
-        for (int k_VKQ_0 = item_ct1.get_group(1) * nbatch_fa; k_VKQ_0 < k_VKQ_max;
-             k_VKQ_0 += item_ct1.get_group_range(1) * nbatch_fa) {
+        ਲਈ (ਪੂਰਨ k_VKQ_0 = ਵਸਤੂ_ct1.get_ਸਮੂਹ(1) * nbatch_fa; k_VKQ_0 < k_VKQ_max;
+             k_VKQ_0 += ਵਸਤੂ_ct1.get_ਸਮੂਹ_range(1) * nbatch_fa) {
 
-            constexpr bool oob_check = false;
-            flash_attn_tile_iter<warp_size, nwarps, ncols1, ncols2, DKQ, DV, nbatch_fa, nbatch_K, use_logit_softcap,
-                                 oob_check>(Q_tmp, K_h2, V_h2, maskh, ne01, logit_softcap, slope, KQ, KV_tmp, stride_K2,
-                                            stride_V2, stride_mask, KQ_max, KQ_sum, VKQ, k_VKQ_0, k_VKQ_max, col_Q_0,
+            constexpr ਤਾਰਕਿਕ oob_check = ਝੂਠ;
+            flash_attn_tile_iter<warp_ਮਾਪ, nwarps, ncols1, ncols2, DKQ, DV, nbatch_fa, nbatch_K, use_logit_softcap,
+                                 oob_check>(Q_tmp, K_h2, V_h2, maskh, ne01, logit_softcap, ਢਲਾਨ, KQ, KV_tmp, stride_K2,
+                                            stride_V2, stride_ਨਕਾਬ, KQ_max, KQ_ਜੋੜ, VKQ, k_VKQ_0, k_VKQ_max, ਖਾਨਾ_Q_0,
                                             KQ_max_new_shared);
         }
     }
 
-#pragma unroll
-    for (int jc0 = 0; jc0 < cpw; ++jc0) {
-        KQ_sum[jc0] = warp_reduce_sum<warp_size>(KQ_sum[jc0]);
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ jc0 = 0; jc0 < cpw; ++jc0) {
+        KQ_ਜੋੜ[jc0] = warp_reduce_ਜੋੜ<warp_ਮਾਪ>(KQ_ਜੋੜ[jc0]);
     }
 
-    if constexpr (np > 1) {
+    ਜੇ constexpr (np > 1) {
         static_assert(cpw == 1, "bad cpw");
         static_assert(nbatch_fa*nbatch_K >= nwarps*DVp, "KV_tmp too small");
 
-#ifdef SYCL_FAST_FP16
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ SYCL_FAST_FP16
         sycl::half2 * VKQ_combine = (sycl::half2 *) KV_tmp;
-#else
-        float * VKQ_combine    = (float *) KV_tmp;
-#endif // SYCL_FAST_FP16
+#ਨਹੀਂਤਾਂ
+        ਦਸ਼ਮਲਵ * VKQ_combine    = (ਦਸ਼ਮਲਵ *) KV_tmp;
+#ਜੇ_ਅੰਤ // SYCL_FAST_FP16
 
-        float * KQ_sum_combine = (float *) Q_tmp;
+        ਦਸ਼ਮਲਵ * KQ_ਜੋੜ_combine = (ਦਸ਼ਮਲਵ *) Q_tmp;
 
-        if (item_ct1.get_local_id(1) % np != 0) {
+        ਜੇ (ਵਸਤੂ_ct1.get_local_id(1) % np != 0) {
 
-#ifdef SYCL_FAST_FP16
-            constexpr int cpy_ne_D = cpy_ne < (DVp/2)/warp_size ? cpy_ne : (DVp/2)/warp_size;
-#pragma unroll
-            for (int i0 = 0; i0 < DVp/2; i0 += warp_size*cpy_ne_D) {
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ SYCL_FAST_FP16
+            constexpr ਪੂਰਨ cpy_ne_D = cpy_ne < (DVp/2)/warp_ਮਾਪ ? cpy_ne : (DVp/2)/warp_ਮਾਪ;
+#ਹਦਾਇਤ unroll
+            ਲਈ (ਪੂਰਨ i0 = 0; i0 < DVp/2; i0 += warp_ਮਾਪ*cpy_ne_D) {
                 ggml_sycl_memcpy_1<cpy_ne_D * 4>(
-                    &VKQ_combine[item_ct1.get_local_id(1) * (DVp / 2) + i0 + item_ct1.get_local_id(2) * cpy_ne_D],
-                    &VKQ[i0 / warp_size]);
+                    &VKQ_combine[ਵਸਤੂ_ct1.get_local_id(1) * (DVp / 2) + i0 + ਵਸਤੂ_ct1.get_local_id(2) * cpy_ne_D],
+                    &VKQ[i0 / warp_ਮਾਪ]);
             }
-#else
+#ਨਹੀਂਤਾਂ
 
-            constexpr int cpy_ne_D = cpy_ne < DVp/warp_size ? cpy_ne : DVp/warp_size;
+            constexpr ਪੂਰਨ cpy_ne_D = cpy_ne < DVp/warp_ਮਾਪ ? cpy_ne : DVp/warp_ਮਾਪ;
 
-#pragma unroll
-            for (int i0 = 0; i0 < DVp; i0 += warp_size*cpy_ne_D) {
+#ਹਦਾਇਤ unroll
+            ਲਈ (ਪੂਰਨ i0 = 0; i0 < DVp; i0 += warp_ਮਾਪ*cpy_ne_D) {
                 ggml_sycl_memcpy_1<cpy_ne_D*4>(
-                    &VKQ_combine[item_ct1.get_local_id(1)*DVp + i0 + item_ct1.get_local_id(2)*cpy_ne_D], ((const float *) VKQ) + i0/warp_size);
+                    &VKQ_combine[ਵਸਤੂ_ct1.get_local_id(1)*DVp + i0 + ਵਸਤੂ_ct1.get_local_id(2)*cpy_ne_D], ((ਅਚਲ ਦਸ਼ਮਲਵ *) VKQ) + i0/warp_ਮਾਪ);
             }
-#endif // SYCL_FAST_FP16
+#ਜੇ_ਅੰਤ // SYCL_FAST_FP16
 
-            if (item_ct1.get_local_id(2) == 0) {
-                KQ_sum_combine[item_ct1.get_local_id(1)] = KQ_sum[0];
+            ਜੇ (ਵਸਤੂ_ct1.get_local_id(2) == 0) {
+                KQ_ਜੋੜ_combine[ਵਸਤੂ_ct1.get_local_id(1)] = KQ_ਜੋੜ[0];
             }
-            return;
+            ਵਾਪਸ;
         }
 
-        item_ct1.barrier(sycl::access::fence_space::local_space);
+        ਵਸਤੂ_ct1.barrier(sycl::access::fence_space::local_space);
 
-#pragma unroll
-        for (int ip = 1; ip < np; ++ip) {
-#ifdef SYCL_FAST_FP16
-            constexpr int cpy_ne_D = cpy_ne < (DVp/2)/warp_size ? cpy_ne : (DVp/2)/warp_size;
-#pragma unroll
-            for (int i0 = 0; i0 < DVp/2; i0 += warp_size*cpy_ne_D) {
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ ip = 1; ip < np; ++ip) {
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ SYCL_FAST_FP16
+            constexpr ਪੂਰਨ cpy_ne_D = cpy_ne < (DVp/2)/warp_ਮਾਪ ? cpy_ne : (DVp/2)/warp_ਮਾਪ;
+#ਹਦਾਇਤ unroll
+            ਲਈ (ਪੂਰਨ i0 = 0; i0 < DVp/2; i0 += warp_ਮਾਪ*cpy_ne_D) {
                 __dpct_align__(16) sycl::half2 tmp[cpy_ne_D];
-                ggml_sycl_memcpy_1<cpy_ne_D * 4>(tmp, &VKQ_combine[(item_ct1.get_local_id(1) + ip) * (DVp / 2) + i0 +
-                                                                   item_ct1.get_local_id(2) * cpy_ne_D]);
-#pragma unroll
-                for (int i1 = 0; i1 < cpy_ne_D; ++i1) {
-                    VKQ[i0/warp_size + i1] += tmp[i1];
+                ggml_sycl_memcpy_1<cpy_ne_D * 4>(tmp, &VKQ_combine[(ਵਸਤੂ_ct1.get_local_id(1) + ip) * (DVp / 2) + i0 +
+                                                                   ਵਸਤੂ_ct1.get_local_id(2) * cpy_ne_D]);
+#ਹਦਾਇਤ unroll
+                ਲਈ (ਪੂਰਨ i1 = 0; i1 < cpy_ne_D; ++i1) {
+                    VKQ[i0/warp_ਮਾਪ + i1] += tmp[i1];
                 }
             }
-#else
-            constexpr int cpy_ne_D = cpy_ne < DVp/warp_size ? cpy_ne : DVp/warp_size;
-#pragma unroll
-            for (int i0 = 0; i0 < DVp; i0 += warp_size*cpy_ne_D) {
-                __dpct_align__(16) float tmp[cpy_ne_D];
-                ggml_sycl_memcpy_1<cpy_ne_D*4>(tmp, &VKQ_combine[(item_ct1.get_local_id(1) + ip)*DVp + i0 + item_ct1.get_local_id(2)*cpy_ne_D]);
-#pragma unroll
-                for (int i1 = 0; i1 < cpy_ne_D; ++i1) {
-                    ((float *)VKQ)[i0/warp_size + i1] += tmp[i1];
+#ਨਹੀਂਤਾਂ
+            constexpr ਪੂਰਨ cpy_ne_D = cpy_ne < DVp/warp_ਮਾਪ ? cpy_ne : DVp/warp_ਮਾਪ;
+#ਹਦਾਇਤ unroll
+            ਲਈ (ਪੂਰਨ i0 = 0; i0 < DVp; i0 += warp_ਮਾਪ*cpy_ne_D) {
+                __dpct_align__(16) ਦਸ਼ਮਲਵ tmp[cpy_ne_D];
+                ggml_sycl_memcpy_1<cpy_ne_D*4>(tmp, &VKQ_combine[(ਵਸਤੂ_ct1.get_local_id(1) + ip)*DVp + i0 + ਵਸਤੂ_ct1.get_local_id(2)*cpy_ne_D]);
+#ਹਦਾਇਤ unroll
+                ਲਈ (ਪੂਰਨ i1 = 0; i1 < cpy_ne_D; ++i1) {
+                    ((ਦਸ਼ਮਲਵ *)VKQ)[i0/warp_ਮਾਪ + i1] += tmp[i1];
                 }
             }
-#endif // SYCL_FAST_FP16
+#ਜੇ_ਅੰਤ // SYCL_FAST_FP16
 
-            KQ_sum[0] += KQ_sum_combine[item_ct1.get_local_id(1) + ip];
+            KQ_ਜੋੜ[0] += KQ_ਜੋੜ_combine[ਵਸਤੂ_ct1.get_local_id(1) + ip];
         }
     }
 
     // Attention sink: adjust KQ max and sum only for the first of all parallel blocks:
-    if (sinks && item_ct1.get_group(1) == 0) {
-#pragma unroll
-        for (int jc0 = 0; jc0 < cpw; ++jc0) {
-            const int   jc   = jc0 + (item_ct1.get_local_id(1) / np) * cpw;
-            const float sink = ((const float *) sinks)[head0 + jc % ncols2];
+    ਜੇ (sinks && ਵਸਤੂ_ct1.get_ਸਮੂਹ(1) == 0) {
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ jc0 = 0; jc0 < cpw; ++jc0) {
+            ਅਚਲ ਪੂਰਨ   jc   = jc0 + (ਵਸਤੂ_ct1.get_local_id(1) / np) * cpw;
+            ਅਚਲ ਦਸ਼ਮਲਵ sink = ((ਅਚਲ ਦਸ਼ਮਲਵ *) sinks)[head0 + jc % ncols2];
 
-            float       KQ_max_new_j = sycl::fmax((float) KQ_max[jc0], sink);
-            const float KQ_max_scale = sycl::native::exp((float) (KQ_max[jc0] - KQ_max_new_j));
+            ਦਸ਼ਮਲਵ       KQ_max_new_j = sycl::fmax((ਦਸ਼ਮਲਵ) KQ_max[jc0], sink);
+            ਅਚਲ ਦਸ਼ਮਲਵ KQ_max_scale = sycl::native::ਘਾਤਾਂਕ((ਦਸ਼ਮਲਵ) (KQ_max[jc0] - KQ_max_new_j));
             KQ_max[jc0] = KQ_max_new_j;
 
-            const float val = sycl::native::exp((float) (sink - KQ_max[jc0]));
-            KQ_sum[jc0] = KQ_sum[jc0]*KQ_max_scale + val;
+            ਅਚਲ ਦਸ਼ਮਲਵ val = sycl::native::ਘਾਤਾਂਕ((ਦਸ਼ਮਲਵ) (sink - KQ_max[jc0]));
+            KQ_ਜੋੜ[jc0] = KQ_ਜੋੜ[jc0]*KQ_max_scale + val;
 
-#ifdef SYCL_FAST_FP16
-            const sycl::half2 KQ_max_scale_h2 = sycl::half2(KQ_max_scale, KQ_max_scale);
-#pragma unroll
-            for (int i0 = 0; i0 < DVp/2; i0 += warp_size) {
-                VKQ[jc0*((DVp/2)/warp_size) + i0/warp_size] *= KQ_max_scale_h2;
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ SYCL_FAST_FP16
+            ਅਚਲ sycl::half2 KQ_max_scale_h2 = sycl::half2(KQ_max_scale, KQ_max_scale);
+#ਹਦਾਇਤ unroll
+            ਲਈ (ਪੂਰਨ i0 = 0; i0 < DVp/2; i0 += warp_ਮਾਪ) {
+                VKQ[jc0*((DVp/2)/warp_ਮਾਪ) + i0/warp_ਮਾਪ] *= KQ_max_scale_h2;
             }
-#else
-#pragma unroll
-            for (int i0 = 0; i0 < DVp/2; i0 += warp_size) {
-                VKQ[jc0*((DVp/2)/warp_size) + i0/warp_size].x() *= KQ_max_scale;
-                VKQ[jc0*((DVp/2)/warp_size) + i0/warp_size].y() *= KQ_max_scale;
+#ਨਹੀਂਤਾਂ
+#ਹਦਾਇਤ unroll
+            ਲਈ (ਪੂਰਨ i0 = 0; i0 < DVp/2; i0 += warp_ਮਾਪ) {
+                VKQ[jc0*((DVp/2)/warp_ਮਾਪ) + i0/warp_ਮਾਪ].x() *= KQ_max_scale;
+                VKQ[jc0*((DVp/2)/warp_ਮਾਪ) + i0/warp_ਮਾਪ].y() *= KQ_max_scale;
             }
-#endif // SYCL_FAST_FP16
+#ਜੇ_ਅੰਤ // SYCL_FAST_FP16
         }
     }
 
     // Write back results:
-#pragma unroll
-    for (int jc0 = 0; jc0 < cpw; ++jc0) {
-        const int jc = jc0 + (item_ct1.get_local_id(1) / np) * cpw;
+#ਹਦਾਇਤ unroll
+    ਲਈ (ਪੂਰਨ jc0 = 0; jc0 < cpw; ++jc0) {
+        ਅਚਲ ਪੂਰਨ jc = jc0 + (ਵਸਤੂ_ct1.get_local_id(1) / np) * cpw;
 
-        const int j = jc / ncols2;
-        const int c = jc % ncols2;
+        ਅਚਲ ਪੂਰਨ j = jc / ncols2;
+        ਅਚਲ ਪੂਰਨ c = jc % ncols2;
 
-        if (ncols1 > 1 && col_Q_0 + j >= int(ne01.z())) {
-            return;
+        ਜੇ (ncols1 > 1 && ਖਾਨਾ_Q_0 + j >= ਪੂਰਨ(ne01.z())) {
+            ਵਾਪਸ;
         }
 
-        const float scale = item_ct1.get_group_range(1) == 1 ? 1.0f / KQ_sum[jc0] : 1.0f;
+        ਅਚਲ ਦਸ਼ਮਲਵ scale = ਵਸਤੂ_ct1.get_ਸਮੂਹ_range(1) == 1 ? 1.0f / KQ_ਜੋੜ[jc0] : 1.0f;
 
-        const int j_dst_unrolled =
-            ((sequence * int(ne01.z()) + col_Q_0 + j) * ne02 + head0 + c) * item_ct1.get_group_range(1) +
-            item_ct1.get_group(1);
+        ਅਚਲ ਪੂਰਨ j_dst_unrolled =
+            ((sequence * ਪੂਰਨ(ne01.z()) + ਖਾਨਾ_Q_0 + j) * ne02 + head0 + c) * ਵਸਤੂ_ct1.get_ਸਮੂਹ_range(1) +
+            ਵਸਤੂ_ct1.get_ਸਮੂਹ(1);
 
-#ifdef SYCL_FAST_FP16
-        constexpr int cpy_ne_D = cpy_ne/2 < (DVp/2)/warp_size ? cpy_ne/2 : (DVp/2)/warp_size;
-#pragma unroll
-        for (int i0 = 0; i0 < DVp/2; i0 += warp_size*cpy_ne_D) {
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ SYCL_FAST_FP16
+        constexpr ਪੂਰਨ cpy_ne_D = cpy_ne/2 < (DVp/2)/warp_ਮਾਪ ? cpy_ne/2 : (DVp/2)/warp_ਮਾਪ;
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ i0 = 0; i0 < DVp/2; i0 += warp_ਮਾਪ*cpy_ne_D) {
             __dpct_align__(16) sycl::float2 tmp[cpy_ne_D];
-#pragma unroll
-            for (int i1 = 0; i1 < cpy_ne_D; ++i1) {
-                tmp[i1] = VKQ[jc0 * ((DVp / 2) / warp_size) + i0 / warp_size + i1]
-                              .template convert<float, sycl::rounding_mode::automatic>();
+#ਹਦਾਇਤ unroll
+            ਲਈ (ਪੂਰਨ i1 = 0; i1 < cpy_ne_D; ++i1) {
+                tmp[i1] = VKQ[jc0 * ((DVp / 2) / warp_ਮਾਪ) + i0 / warp_ਮਾਪ + i1]
+                              .ਸਾਂਚਾ convert<ਦਸ਼ਮਲਵ, sycl::rounding_ਬਹੁਲਕ::automatic>();
                 tmp[i1].x() *= scale;
                 tmp[i1].y() *= scale;
             }
-            if (i0 + warp_size * cpy_ne_D <= DV / 2 || i0 + item_ct1.get_local_id(2) * cpy_ne_D < DV / 2) {
-                ggml_sycl_memcpy_1<sizeof(tmp)>(
-                    &dst[j_dst_unrolled * DV + 2 * i0 + item_ct1.get_local_id(2) * (2 * cpy_ne_D)], tmp);
+            ਜੇ (i0 + warp_ਮਾਪ * cpy_ne_D <= DV / 2 || i0 + ਵਸਤੂ_ct1.get_local_id(2) * cpy_ne_D < DV / 2) {
+                ggml_sycl_memcpy_1<ਆਕਾਰ(tmp)>(
+                    &dst[j_dst_unrolled * DV + 2 * i0 + ਵਸਤੂ_ct1.get_local_id(2) * (2 * cpy_ne_D)], tmp);
             }
         }
-#else
-        constexpr int cpy_ne_D = cpy_ne < DVp/warp_size ? cpy_ne : DVp/warp_size;
-#pragma unroll
-        for (int i0 = 0; i0 < DVp; i0 += warp_size*cpy_ne_D) {
-            if (i0 + warp_size*cpy_ne_D <= DV || i0 + item_ct1.get_local_id(2)*cpy_ne_D < DV) {
-#pragma unroll
-                for (int i1 = 0; i1 < cpy_ne_D/2; ++i1) {
-                    VKQ[jc0*((DVp/2)/warp_size) + i0/(2*warp_size) + i1].x() *= scale;
-                    VKQ[jc0*((DVp/2)/warp_size) + i0/(2*warp_size) + i1].y() *= scale;
+#ਨਹੀਂਤਾਂ
+        constexpr ਪੂਰਨ cpy_ne_D = cpy_ne < DVp/warp_ਮਾਪ ? cpy_ne : DVp/warp_ਮਾਪ;
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ i0 = 0; i0 < DVp; i0 += warp_ਮਾਪ*cpy_ne_D) {
+            ਜੇ (i0 + warp_ਮਾਪ*cpy_ne_D <= DV || i0 + ਵਸਤੂ_ct1.get_local_id(2)*cpy_ne_D < DV) {
+#ਹਦਾਇਤ unroll
+                ਲਈ (ਪੂਰਨ i1 = 0; i1 < cpy_ne_D/2; ++i1) {
+                    VKQ[jc0*((DVp/2)/warp_ਮਾਪ) + i0/(2*warp_ਮਾਪ) + i1].x() *= scale;
+                    VKQ[jc0*((DVp/2)/warp_ਮਾਪ) + i0/(2*warp_ਮਾਪ) + i1].y() *= scale;
                 }
                 ggml_sycl_memcpy_1<cpy_ne_D*4>(
-                    &dst[j_dst_unrolled*DV + i0 + item_ct1.get_local_id(2)*cpy_ne_D],
-                    &VKQ[jc0*((DVp/2)/warp_size) + i0/(2*warp_size)]);
+                    &dst[j_dst_unrolled*DV + i0 + ਵਸਤੂ_ct1.get_local_id(2)*cpy_ne_D],
+                    &VKQ[jc0*((DVp/2)/warp_ਮਾਪ) + i0/(2*warp_ਮਾਪ)]);
             }
         }
-#endif // SYCL_FAST_FP16
+#ਜੇ_ਅੰਤ // SYCL_FAST_FP16
 
-        if (item_ct1.get_group_range(1) != 1 && item_ct1.get_local_id(2) == 0) {
-            dst_meta[j_dst_unrolled] = make_float2(KQ_max[jc0], KQ_sum[jc0]);
+        ਜੇ (ਵਸਤੂ_ct1.get_ਸਮੂਹ_range(1) != 1 && ਵਸਤੂ_ct1.get_local_id(2) == 0) {
+            dst_meta[j_dst_unrolled] = make_float2(KQ_max[jc0], KQ_ਜੋੜ[jc0]);
         }
     }
-#else
-    GGML_UNUSED_VARS(Q, K, V, mask, sinks, KV_max, dst, dst_meta, scale,
-        max_bias, m0, m1, n_head_log2, logit_softcap,
+#ਨਹੀਂਤਾਂ
+    GGML_ਅਣਵਰਤਿਆ_VARS(Q, K, V, ਨਕਾਬ, sinks, KV_max, dst, dst_meta, scale,
+        max_bias, m0, m1, n_ਸਿਰ_log2, logit_softcap,
         ne00, ne01, ne02, ne03,
               nb01, nb02, nb03,
         ne10, ne11, ne12, ne13,
@@ -1065,186 +1065,186 @@ static void flash_attn_tile(const char *  Q,
               nb21, nb22, nb23,
               ne31, ne32, ne33,
               nb31, nb32, nb33);
-#endif // SYCL_FLASH_ATTN
+#ਜੇ_ਅੰਤ // SYCL_FLASH_ATTN
 }
 
-template <int DKQ, int DV, int ncols2, bool use_logit_softcap>
-static void launch_fattn_tile_switch_ncols1(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    const ggml_tensor * Q = dst->src[0];
+ਸਾਂਚਾ <ਪੂਰਨ DKQ, ਪੂਰਨ DV, ਪੂਰਨ ncols2, ਤਾਰਕਿਕ use_logit_softcap>
+ਸਥਿਰ ਖਾਲੀ launch_fattn_tile_switch_ncols1(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ਅਚਲ ggml_tensor * Q = dst->src[0];
 
-    const int id        = ggml_sycl_get_device();
-    const int cc        = ggml_sycl_info().devices[id].cc;
-    const int warp_size = WARP_32_SIZE; //can't support WARP_16_SIZE
+    ਅਚਲ ਪੂਰਨ id        = ggml_sycl_get_device();
+    ਅਚਲ ਪੂਰਨ cc        = ggml_sycl_info().devices[id].cc;
+    ਅਚਲ ਪੂਰਨ warp_ਮਾਪ = WARP_32_ਮਾਪ; //can't support WARP_16_SIZE
 
     constexpr size_t nbytes_shared = 0;
 
-    if (DV < 512 && Q->ne[1] < 32) {
-        if constexpr (ncols2 <= 32) {
-            if (Q->ne[1] > 16/ncols2) {
-                constexpr int cols_per_block = 32;
-                const int nwarps    = ggml_sycl_fattn_tile_get_nthreads (DKQ, DV, cols_per_block, cc) / warp_size;
-                const int nbatch_fa = ggml_sycl_fattn_tile_get_nbatch_fa(DKQ, DV, cols_per_block, cc);
-                launch_fattn<DV, cols_per_block/ncols2, ncols2,
-                    flash_attn_tile<DKQ, DV, cols_per_block / ncols2, ncols2, use_logit_softcap, warp_size>, warp_size>
-                    (ctx, dst, nwarps, nbytes_shared, nbatch_fa, true, true, false);
-                return;
+    ਜੇ (DV < 512 && Q->ne[1] < 32) {
+        ਜੇ constexpr (ncols2 <= 32) {
+            ਜੇ (Q->ne[1] > 16/ncols2) {
+                constexpr ਪੂਰਨ ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_ਖੰਡ = 32;
+                ਅਚਲ ਪੂਰਨ nwarps    = ggml_sycl_fattn_tile_get_nthreads (DKQ, DV, ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_ਖੰਡ, cc) / warp_ਮਾਪ;
+                ਅਚਲ ਪੂਰਨ nbatch_fa = ggml_sycl_fattn_tile_get_nbatch_fa(DKQ, DV, ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_ਖੰਡ, cc);
+                launch_fattn<DV, ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_ਖੰਡ/ncols2, ncols2,
+                    flash_attn_tile<DKQ, DV, ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_ਖੰਡ / ncols2, ncols2, use_logit_softcap, warp_ਮਾਪ>, warp_ਮਾਪ>
+                    (ctx, dst, nwarps, nbytes_shared, nbatch_fa, ਸੱਚ, ਸੱਚ, ਝੂਠ);
+                ਵਾਪਸ;
             }
         }
-        if constexpr (ncols2 <= 16) {
-            if (Q->ne[1] > 8/ncols2) {
-                constexpr int cols_per_block = 16;
-                const int nwarps    = ggml_sycl_fattn_tile_get_nthreads (DKQ, DV, cols_per_block, cc) / warp_size;
-                const int nbatch_fa = ggml_sycl_fattn_tile_get_nbatch_fa(DKQ, DV, cols_per_block, cc);
-                launch_fattn<DV, cols_per_block/ncols2, ncols2,
-                    flash_attn_tile<DKQ, DV, cols_per_block / ncols2, ncols2, use_logit_softcap, warp_size>, warp_size>
-                    (ctx, dst, nwarps, nbytes_shared, nbatch_fa, true, true, false);
-                return;
+        ਜੇ constexpr (ncols2 <= 16) {
+            ਜੇ (Q->ne[1] > 8/ncols2) {
+                constexpr ਪੂਰਨ ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_ਖੰਡ = 16;
+                ਅਚਲ ਪੂਰਨ nwarps    = ggml_sycl_fattn_tile_get_nthreads (DKQ, DV, ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_ਖੰਡ, cc) / warp_ਮਾਪ;
+                ਅਚਲ ਪੂਰਨ nbatch_fa = ggml_sycl_fattn_tile_get_nbatch_fa(DKQ, DV, ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_ਖੰਡ, cc);
+                launch_fattn<DV, ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_ਖੰਡ/ncols2, ncols2,
+                    flash_attn_tile<DKQ, DV, ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_ਖੰਡ / ncols2, ncols2, use_logit_softcap, warp_ਮਾਪ>, warp_ਮਾਪ>
+                    (ctx, dst, nwarps, nbytes_shared, nbatch_fa, ਸੱਚ, ਸੱਚ, ਝੂਠ);
+                ਵਾਪਸ;
             }
         }
-        if constexpr (ncols2 <= 8) {
-            if (Q->ne[1] > 4/ncols2) {
-                constexpr int cols_per_block = 8;
-                const int nwarps    = ggml_sycl_fattn_tile_get_nthreads (DKQ, DV, cols_per_block, cc) / warp_size;
-                const int nbatch_fa = ggml_sycl_fattn_tile_get_nbatch_fa(DKQ, DV, cols_per_block, cc);
-                launch_fattn<DV, cols_per_block/ncols2, ncols2,
-                    flash_attn_tile<DKQ, DV, cols_per_block / ncols2, ncols2, use_logit_softcap, warp_size>, warp_size>
-                    (ctx, dst, nwarps, nbytes_shared, nbatch_fa, true, true, false);
-                return;
+        ਜੇ constexpr (ncols2 <= 8) {
+            ਜੇ (Q->ne[1] > 4/ncols2) {
+                constexpr ਪੂਰਨ ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_ਖੰਡ = 8;
+                ਅਚਲ ਪੂਰਨ nwarps    = ggml_sycl_fattn_tile_get_nthreads (DKQ, DV, ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_ਖੰਡ, cc) / warp_ਮਾਪ;
+                ਅਚਲ ਪੂਰਨ nbatch_fa = ggml_sycl_fattn_tile_get_nbatch_fa(DKQ, DV, ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_ਖੰਡ, cc);
+                launch_fattn<DV, ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_ਖੰਡ/ncols2, ncols2,
+                    flash_attn_tile<DKQ, DV, ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_ਖੰਡ / ncols2, ncols2, use_logit_softcap, warp_ਮਾਪ>, warp_ਮਾਪ>
+                    (ctx, dst, nwarps, nbytes_shared, nbatch_fa, ਸੱਚ, ਸੱਚ, ਝੂਠ);
+                ਵਾਪਸ;
             }
         }
     }
 
-    if constexpr (ncols2 <= 4) {
-        if (Q->ne[1] > 2/ncols2) {
-            constexpr int cols_per_block = 4;
-            const int nwarps    = ggml_sycl_fattn_tile_get_nthreads (DKQ, DV, cols_per_block, cc) / warp_size;
-            const int nbatch_fa = ggml_sycl_fattn_tile_get_nbatch_fa(DKQ, DV, cols_per_block, cc);
-            launch_fattn<DV, cols_per_block/ncols2, ncols2,
-                flash_attn_tile<DKQ, DV, cols_per_block / ncols2, ncols2, use_logit_softcap, warp_size>, warp_size>
-                (ctx, dst, nwarps, nbytes_shared, nbatch_fa, true, true, false);
-            return;
+    ਜੇ constexpr (ncols2 <= 4) {
+        ਜੇ (Q->ne[1] > 2/ncols2) {
+            constexpr ਪੂਰਨ ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_ਖੰਡ = 4;
+            ਅਚਲ ਪੂਰਨ nwarps    = ggml_sycl_fattn_tile_get_nthreads (DKQ, DV, ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_ਖੰਡ, cc) / warp_ਮਾਪ;
+            ਅਚਲ ਪੂਰਨ nbatch_fa = ggml_sycl_fattn_tile_get_nbatch_fa(DKQ, DV, ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_ਖੰਡ, cc);
+            launch_fattn<DV, ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_ਖੰਡ/ncols2, ncols2,
+                flash_attn_tile<DKQ, DV, ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_ਖੰਡ / ncols2, ncols2, use_logit_softcap, warp_ਮਾਪ>, warp_ਮਾਪ>
+                (ctx, dst, nwarps, nbytes_shared, nbatch_fa, ਸੱਚ, ਸੱਚ, ਝੂਠ);
+            ਵਾਪਸ;
         }
     }
 
-    if constexpr (ncols2 <= 2) {
-        constexpr int cols_per_block = 2;
-        const int nwarps    = ggml_sycl_fattn_tile_get_nthreads (DKQ, DV, cols_per_block, cc) / warp_size;
-        const int nbatch_fa = ggml_sycl_fattn_tile_get_nbatch_fa(DKQ, DV, cols_per_block, cc);
-        launch_fattn<DV, cols_per_block/ncols2, ncols2,
-            flash_attn_tile<DKQ, DV, cols_per_block / ncols2, ncols2, use_logit_softcap, warp_size>, warp_size>
-            (ctx, dst, nwarps, nbytes_shared, nbatch_fa, true, true, false);
-        return;
+    ਜੇ constexpr (ncols2 <= 2) {
+        constexpr ਪੂਰਨ ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_ਖੰਡ = 2;
+        ਅਚਲ ਪੂਰਨ nwarps    = ggml_sycl_fattn_tile_get_nthreads (DKQ, DV, ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_ਖੰਡ, cc) / warp_ਮਾਪ;
+        ਅਚਲ ਪੂਰਨ nbatch_fa = ggml_sycl_fattn_tile_get_nbatch_fa(DKQ, DV, ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_ਖੰਡ, cc);
+        launch_fattn<DV, ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_ਖੰਡ/ncols2, ncols2,
+            flash_attn_tile<DKQ, DV, ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_ਖੰਡ / ncols2, ncols2, use_logit_softcap, warp_ਮਾਪ>, warp_ਮਾਪ>
+            (ctx, dst, nwarps, nbytes_shared, nbatch_fa, ਸੱਚ, ਸੱਚ, ਝੂਠ);
+        ਵਾਪਸ;
     }
 
     {
-        constexpr int cols_per_block = ncols2*2;
-        const int nwarps    = ggml_sycl_fattn_tile_get_nthreads (DKQ, DV, cols_per_block, cc) / warp_size;
-        const int nbatch_fa = ggml_sycl_fattn_tile_get_nbatch_fa(DKQ, DV, cols_per_block, cc);
-        launch_fattn<DV, cols_per_block/ncols2, ncols2,
-            flash_attn_tile<DKQ, DV, cols_per_block / ncols2, ncols2, use_logit_softcap, warp_size>, warp_size>
-            (ctx, dst, nwarps, nbytes_shared, nbatch_fa, true, true, false);
-        return;
+        constexpr ਪੂਰਨ ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_ਖੰਡ = ncols2*2;
+        ਅਚਲ ਪੂਰਨ nwarps    = ggml_sycl_fattn_tile_get_nthreads (DKQ, DV, ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_ਖੰਡ, cc) / warp_ਮਾਪ;
+        ਅਚਲ ਪੂਰਨ nbatch_fa = ggml_sycl_fattn_tile_get_nbatch_fa(DKQ, DV, ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_ਖੰਡ, cc);
+        launch_fattn<DV, ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_ਖੰਡ/ncols2, ncols2,
+            flash_attn_tile<DKQ, DV, ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_ਖੰਡ / ncols2, ncols2, use_logit_softcap, warp_ਮਾਪ>, warp_ਮਾਪ>
+            (ctx, dst, nwarps, nbytes_shared, nbatch_fa, ਸੱਚ, ਸੱਚ, ਝੂਠ);
+        ਵਾਪਸ;
     }
 
     GGML_ABORT("fatal error");
 }
 
-template <int DKQ, int DV, bool use_logit_softcap>
-static void launch_fattn_tile_switch_ncols2(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    const ggml_tensor * KQV  = dst;
-    const ggml_tensor * Q    = dst->src[0];
-    const ggml_tensor * K    = dst->src[1];
-    const ggml_tensor * mask = dst->src[3];
+ਸਾਂਚਾ <ਪੂਰਨ DKQ, ਪੂਰਨ DV, ਤਾਰਕਿਕ use_logit_softcap>
+ਸਥਿਰ ਖਾਲੀ launch_fattn_tile_switch_ncols2(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ਅਚਲ ggml_tensor * KQV  = dst;
+    ਅਚਲ ggml_tensor * Q    = dst->src[0];
+    ਅਚਲ ggml_tensor * K    = dst->src[1];
+    ਅਚਲ ggml_tensor * ਨਕਾਬ = dst->src[3];
 
-    float max_bias = 0.0f;
-    memcpy(&max_bias, (const float *) KQV->op_params + 1, sizeof(float));
+    ਦਸ਼ਮਲਵ max_bias = 0.0f;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&max_bias, (ਅਚਲ ਦਸ਼ਮਲਵ *) KQV->op_params + 1, ਆਕਾਰ(ਦਸ਼ਮਲਵ));
 
     GGML_ASSERT(Q->ne[2] % K->ne[2] == 0);
-    const int gqa_ratio = Q->ne[2] / K->ne[2];
+    ਅਚਲ ਪੂਰਨ gqa_ਅਨੁਪਾਤ = Q->ne[2] / K->ne[2];
 
     // On NVIDIA (Pascal and older) the GQA optimizations seem to be detrimental in some cases.
     // However, for DKQ == 576, DV == 512 only the kernel variant with GQA optimizations is implemented.
     //const bool nvidia = GGML_SYCL_CC_IS_NVIDIA(ggml_sycl_info().devices[ggml_sycl_get_device()].cc);
-    const int gqa_limit = gqa_ratio <= 4 && DV <= 256 ? 16 : INT_MAX;
-    const bool use_gqa_opt = mask && max_bias == 0.0f && Q->ne[1] <= gqa_limit && K->ne[1] % FATTN_KQ_STRIDE == 0;
+    ਅਚਲ ਪੂਰਨ gqa_ਹੱਦਬੰਦੀ = gqa_ਅਨੁਪਾਤ <= 4 && DV <= 256 ? 16 : ਵੱਧ_ਤੋਂ_ਵੱਧ_ਅੰਕ;
+    ਅਚਲ ਤਾਰਕਿਕ use_gqa_opt = ਨਕਾਬ && max_bias == 0.0f && Q->ne[1] <= gqa_ਹੱਦਬੰਦੀ && K->ne[1] % FATTN_KQ_STRIDE == 0;
 
-    if constexpr (DV == 512) {
-        if (use_gqa_opt && gqa_ratio % 16 == 0) {
+    ਜੇ constexpr (DV == 512) {
+        ਜੇ (use_gqa_opt && gqa_ਅਨੁਪਾਤ % 16 == 0) {
             launch_fattn_tile_switch_ncols1<DKQ, DV, 16, use_logit_softcap>(ctx, dst);
-            return;
+            ਵਾਪਸ;
         }
-        if (use_gqa_opt && gqa_ratio % 8 == 0) {
+        ਜੇ (use_gqa_opt && gqa_ਅਨੁਪਾਤ % 8 == 0) {
             launch_fattn_tile_switch_ncols1<DKQ, DV, 8, use_logit_softcap>(ctx, dst);
-            return;
+            ਵਾਪਸ;
         }
-        if (use_gqa_opt && gqa_ratio % 4 == 0) {
+        ਜੇ (use_gqa_opt && gqa_ਅਨੁਪਾਤ % 4 == 0) {
             launch_fattn_tile_switch_ncols1<DKQ, DV, 4, use_logit_softcap>(ctx, dst);
-            return;
+            ਵਾਪਸ;
         }
         // ncols2=2 and ncols2=1 fallbacks only for cases where ncols=2 config exists (DKQ == DV).
         // For DKQ == 576, DV == 512 only GQA-optimized variants are implemented.
-        if constexpr (DKQ == DV) {
-            if (use_gqa_opt && gqa_ratio % 2 == 0) {
+        ਜੇ constexpr (DKQ == DV) {
+            ਜੇ (use_gqa_opt && gqa_ਅਨੁਪਾਤ % 2 == 0) {
                 launch_fattn_tile_switch_ncols1<DKQ, DV, 2, use_logit_softcap>(ctx, dst);
-                return;
+                ਵਾਪਸ;
             }
             launch_fattn_tile_switch_ncols1<DKQ, DV, 1, use_logit_softcap>(ctx, dst);
-            return;
+            ਵਾਪਸ;
         }
     }
 
-    if constexpr (DV <= 256) {
-        if (use_gqa_opt && gqa_ratio % 8 == 0) {
+    ਜੇ constexpr (DV <= 256) {
+        ਜੇ (use_gqa_opt && gqa_ਅਨੁਪਾਤ % 8 == 0) {
             launch_fattn_tile_switch_ncols1<DKQ, DV, 8, use_logit_softcap>(ctx, dst);
-            return;
+            ਵਾਪਸ;
         }
 
-        if (use_gqa_opt && gqa_ratio % 4 == 0) {
+        ਜੇ (use_gqa_opt && gqa_ਅਨੁਪਾਤ % 4 == 0) {
             launch_fattn_tile_switch_ncols1<DKQ, DV, 4, use_logit_softcap>(ctx, dst);
-            return;
+            ਵਾਪਸ;
         }
 
-        if (use_gqa_opt && gqa_ratio % 2 == 0) {
+        ਜੇ (use_gqa_opt && gqa_ਅਨੁਪਾਤ % 2 == 0) {
             launch_fattn_tile_switch_ncols1<DKQ, DV, 2, use_logit_softcap>(ctx, dst);
-            return;
+            ਵਾਪਸ;
         }
 
         launch_fattn_tile_switch_ncols1<DKQ, DV, 1, use_logit_softcap>(ctx, dst);
-        return;
+        ਵਾਪਸ;
     }
     GGML_ABORT("fatal error");
 }
 
-template <int DKQ, int DV>
-void ggml_sycl_flash_attn_ext_tile_case(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    const ggml_tensor * KQV = dst;
+ਸਾਂਚਾ <ਪੂਰਨ DKQ, ਪੂਰਨ DV>
+ਖਾਲੀ ggml_sycl_flash_attn_ext_tile_case(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ਅਚਲ ggml_tensor * KQV = dst;
 
-    float logit_softcap;
-    memcpy(&logit_softcap, (const float *) KQV->op_params + 2, sizeof(float));
+    ਦਸ਼ਮਲਵ logit_softcap;
+    ਸਮ੍ਰਿਤੀ_ਨਕਲ(&logit_softcap, (ਅਚਲ ਦਸ਼ਮਲਵ *) KQV->op_params + 2, ਆਕਾਰ(ਦਸ਼ਮਲਵ));
 
-    if (logit_softcap == 0.0f) {
-        constexpr bool use_logit_softcap = false;
+    ਜੇ (logit_softcap == 0.0f) {
+        constexpr ਤਾਰਕਿਕ use_logit_softcap = ਝੂਠ;
         launch_fattn_tile_switch_ncols2<DKQ, DV, use_logit_softcap>(ctx, dst);
-    } else {
-        constexpr bool use_logit_softcap = true;
+    } ਨਹੀਂਤਾਂ {
+        constexpr ਤਾਰਕਿਕ use_logit_softcap = ਸੱਚ;
         launch_fattn_tile_switch_ncols2<DKQ, DV, use_logit_softcap>(ctx, dst);
     }
 }
 
-void ggml_sycl_flash_attn_ext_tile(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+ਖਾਲੀ ggml_sycl_flash_attn_ext_tile(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-#define DECL_FATTN_TILE_CASE(DKQ, DV)                             \
-    template void ggml_sycl_flash_attn_ext_tile_case              \
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ DECL_FATTN_TILE_CASE(DKQ, DV)                             \
+    ਸਾਂਚਾ ਖਾਲੀ ggml_sycl_flash_attn_ext_tile_case              \
     <DKQ, DV>(ggml_backend_sycl_context & ctx, ggml_tensor * dst) \
 
-extern DECL_FATTN_TILE_CASE( 40,  40);
-extern DECL_FATTN_TILE_CASE( 64,  64);
-extern DECL_FATTN_TILE_CASE( 72,  72);
-extern DECL_FATTN_TILE_CASE( 80,  80);
-extern DECL_FATTN_TILE_CASE( 96,  96);
-extern DECL_FATTN_TILE_CASE(112, 112);
-extern DECL_FATTN_TILE_CASE(128, 128);
-extern DECL_FATTN_TILE_CASE(256, 256);
-extern DECL_FATTN_TILE_CASE(512, 512);
-extern DECL_FATTN_TILE_CASE(576, 512);
+ਬਾਹਰੀ DECL_FATTN_TILE_CASE( 40,  40);
+ਬਾਹਰੀ DECL_FATTN_TILE_CASE( 64,  64);
+ਬਾਹਰੀ DECL_FATTN_TILE_CASE( 72,  72);
+ਬਾਹਰੀ DECL_FATTN_TILE_CASE( 80,  80);
+ਬਾਹਰੀ DECL_FATTN_TILE_CASE( 96,  96);
+ਬਾਹਰੀ DECL_FATTN_TILE_CASE(112, 112);
+ਬਾਹਰੀ DECL_FATTN_TILE_CASE(128, 128);
+ਬਾਹਰੀ DECL_FATTN_TILE_CASE(256, 256);
+ਬਾਹਰੀ DECL_FATTN_TILE_CASE(512, 512);
+ਬਾਹਰੀ DECL_FATTN_TILE_CASE(576, 512);
 

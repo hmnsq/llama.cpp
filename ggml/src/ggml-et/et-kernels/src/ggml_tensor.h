@@ -1,44 +1,44 @@
 // ET kernel entry-point parameter structs and tensor helpers.
 
-#ifndef GGML_TENSOR_H
-#define GGML_TENSOR_H
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ GGML_TENSOR_H
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_TENSOR_H
 
-#include <stddef.h>
-#include <stdint.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stddef.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdint.h>
 
-#include "ggml.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml.h"
 
-struct ggml_et_binary_params {
-    struct ggml_tensor src0;
-    struct ggml_tensor src1;
-    struct ggml_tensor dst;
+ਬਣਤਰ ggml_et_ਦੁਆਧਾਰੀ_params {
+    ਬਣਤਰ ggml_tensor src0;
+    ਬਣਤਰ ggml_tensor src1;
+    ਬਣਤਰ ggml_tensor dst;
 };
 
 // bias.data == NULL -> unfused MUL_MAT; otherwise dst = mat_mul(...) + bias.
-struct ggml_et_mm_q8_params {
-    struct ggml_tensor src0;
-    struct ggml_tensor src1;
-    struct ggml_tensor dst;
-    struct ggml_tensor bias;
+ਬਣਤਰ ggml_et_mm_q8_params {
+    ਬਣਤਰ ggml_tensor src0;
+    ਬਣਤਰ ggml_tensor src1;
+    ਬਣਤਰ ggml_tensor dst;
+    ਬਣਤਰ ggml_tensor bias;
 };
 
-struct ggml_et_mul_mat_id_params {
-    struct ggml_tensor src0;  // [K, M, n_expert]
-    struct ggml_tensor src1;  // [K, n_expert_used, batch]
-    struct ggml_tensor src2;  // [n_expert_used, batch] (I32 expert indices)
-    struct ggml_tensor dst;   // [M, n_expert_used, batch, 1]
+ਬਣਤਰ ggml_et_mul_mat_id_params {
+    ਬਣਤਰ ggml_tensor src0;  // [K, M, n_expert]
+    ਬਣਤਰ ggml_tensor src1;  // [K, n_expert_used, batch]
+    ਬਣਤਰ ggml_tensor src2;  // [n_expert_used, batch] (I32 expert indices)
+    ਬਣਤਰ ggml_tensor dst;   // [M, n_expert_used, batch, 1]
 };
 
 // ne[i] == 1 axes are skipped: their stride is unobservable.
-static inline int ggml_tensor_is_contiguous(const struct ggml_tensor * t, int type_size) {
-    int64_t expected = type_size;
-    for (int i = 0; i < GGML_MAX_DIMS; i++) {
-        if (t->ne[i] > 1 && (int64_t) t->nb[i] != expected) {
-            return 0;
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਪੂਰਨ ggml_tensor_is_contiguous(ਅਚਲ ਬਣਤਰ ggml_tensor * t, ਪੂਰਨ type_ਮਾਪ) {
+    int64_t expected = type_ਮਾਪ;
+    ਲਈ (ਪੂਰਨ i = 0; i < GGML_MAX_DIMS; i++) {
+        ਜੇ (t->ne[i] > 1 && (int64_t) t->nb[i] != expected) {
+            ਵਾਪਸ 0;
         }
         expected *= t->ne[i];
     }
-    return 1;
+    ਵਾਪਸ 1;
 }
 
-#endif  // GGML_TENSOR_H
+#ਜੇ_ਅੰਤ  // GGML_TENSOR_H

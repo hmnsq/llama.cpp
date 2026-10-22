@@ -1,170 +1,170 @@
-#pragma clang diagnostic ignored "-Wunused-function"
+#ਹਦਾਇਤ clang diagnostic ignored "-Wunused-function"
 
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdbool.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdlib.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <string.h>
 
-#include <qurt_thread.h>
-#include <qurt_futex.h>
-#include <qurt_hvx.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <qurt_thread.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <qurt_futex.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <qurt_hvx.h>
 
-#include <HAP_compute_res.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <HAP_compute_res.h>
 
-#include "hmx-queue.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "hmx-queue.h"
 
-#define QURT_LOWEST_PRIO (254)
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ QURT_ਸਭ_ਤੋਂ_ਨੀਵਾਂ_PRIO (254)
 
-static inline void hmx_lock(hmx_queue_t q)
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ hmx_ਤਾਲਾ(hmx_ਕਤਾਰ_t q)
 {
-    if (!q->hmx_locked) {
-        HAP_compute_res_hmx_lock(q->hap_rctx);
+    ਜੇ (!q->hmx_locked) {
+        HAP_compute_res_hmx_ਤਾਲਾ(q->hap_rctx);
         q->hmx_locked = true;
     }
 }
 
-static inline void hmx_unlock(hmx_queue_t q)
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ hmx_unlock(hmx_ਕਤਾਰ_t q)
 {
-    if (q->hmx_locked) {
+    ਜੇ (q->hmx_locked) {
         HAP_compute_res_hmx_unlock(q->hap_rctx);
         q->hmx_locked = false;
     }
 }
 
-static inline void hmx_queue_process(hmx_queue_t q, bool* killed) {
-    unsigned int ir = atomic_load(&q->idx_read);
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ hmx_ਕਤਾਰ_process(hmx_ਕਤਾਰ_t q, bool* killed) {
+    ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ ir = atomic_ਲੱਦੋ(&q->idx_read);
 
-    while (ir != atomic_load(&q->idx_write)) {
-        struct hmx_queue_desc *d = &q->desc[ir];
-        if (!d->done) {
-            FARF(HIGH, "hmx-queue-process: ir %u func %p data %p", ir, d->func, d->data);
+    ਜਦੋਂ (ir != atomic_ਲੱਦੋ(&q->idx_write)) {
+        ਬਣਤਰ hmx_ਕਤਾਰ_desc *d = &q->desc[ir];
+        ਜੇ (!d->ਪੂਰਾ) {
+            FARF(ਉੱਚਾ_2, "hmx-queue-process: ir %u func %p data %p", ir, d->func, d->ਅੰਕੜੇ);
 
             uintptr_t sig = (uintptr_t) d->func;
-            switch (sig) {
-                case HMX_QUEUE_NOOP:    /* noop */;     break;
-                case HMX_QUEUE_KILL:    *killed = true; break;
-                case HMX_QUEUE_SUSPEND: hmx_unlock(q);  break;
-                case HMX_QUEUE_WAKEUP:  hmx_lock(q);    break;
-                default:
-                    hmx_lock(q);
-                    htp_trace_event_start(q->trace, HTP_TRACE_EVT_HMX_COMP, ir);
-                    d->func(d->data);
+            ਚੋਣ (sig) {
+                ਹਾਲਤ HMX_ਕਤਾਰ_NOOP:    /* noop */;     ਰੋਕੋ;
+                ਹਾਲਤ HMX_ਕਤਾਰ_KILL:    *killed = true; ਰੋਕੋ;
+                ਹਾਲਤ HMX_ਕਤਾਰ_SUSPEND: hmx_unlock(q);  ਰੋਕੋ;
+                ਹਾਲਤ HMX_ਕਤਾਰ_WAKEUP:  hmx_ਤਾਲਾ(q);    ਰੋਕੋ;
+                ਮੂਲ:
+                    hmx_ਤਾਲਾ(q);
+                    htp_trace_event_ਸ਼ੁਰੂ(q->trace, HTP_TRACE_EVT_HMX_COMP, ir);
+                    d->func(d->ਅੰਕੜੇ);
                     htp_trace_event_stop(q->trace, HTP_TRACE_EVT_HMX_COMP, ir);
-                    break;
+                    ਰੋਕੋ;
             }
 
-            atomic_fetch_add(&d->done, 1);
+            atomic_fetch_ਜੋੜੋ(&d->ਪੂਰਾ, 1);
         }
 
-        ir = (ir + 1) & q->idx_mask;
+        ir = (ir + 1) & q->idx_ਨਕਾਬ;
         atomic_store(&q->idx_read, ir);
     }
 }
 
-static void hmx_queue_thread(void * arg) {
-    hmx_queue_t q = (hmx_queue_t) arg;
+ਸਥਿਰ ਖਾਲੀ hmx_ਕਤਾਰ_thread(ਖਾਲੀ * arg) {
+    hmx_ਕਤਾਰ_t q = (hmx_ਕਤਾਰ_t) arg;
 
-    FARF(HIGH, "hmx-queue-thread: started");
+    FARF(ਉੱਚਾ_2, "hmx-queue-thread: started");
 
     bool killed = false;
 
-    unsigned int poll_cnt  = HMX_QUEUE_POLL_COUNT;
-    unsigned int prev_seqn = 0;
-    while (!killed) {
-        unsigned int seqn = atomic_load(&q->seqn);
-        if (seqn == prev_seqn) {
+    ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ poll_cnt  = HMX_ਕਤਾਰ_POLL_ਗਿਣਤੀ;
+    ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ prev_seqn = 0;
+    ਜਦੋਂ (!killed) {
+        ਬਿਨਾਨਿਸ਼ਾਨੀ ਪੂਰਨ seqn = atomic_ਲੱਦੋ(&q->seqn);
+        ਜੇ (seqn == prev_seqn) {
             // drop HVX context while spinning
-            if (poll_cnt > 1 && poll_cnt == HMX_QUEUE_POLL_COUNT) {
+            ਜੇ (poll_cnt > 1 && poll_cnt == HMX_ਕਤਾਰ_POLL_ਗਿਣਤੀ) {
                 qurt_hvx_unlock();
             }
-            if (--poll_cnt) { hex_pause(); continue; }
-            FARF(HIGH, "hmx-queue-thread: sleeping");
+            ਜੇ (--poll_cnt) { hex_pause(); ਜਾਰੀ; }
+            FARF(ਉੱਚਾ_2, "hmx-queue-thread: sleeping");
             qurt_futex_wait(&q->seqn, prev_seqn);
-            poll_cnt = HMX_QUEUE_POLL_COUNT;
-            continue;
+            poll_cnt = HMX_ਕਤਾਰ_POLL_ਗਿਣਤੀ;
+            ਜਾਰੀ;
         }
         prev_seqn = seqn;
-        poll_cnt  = HMX_QUEUE_POLL_COUNT;
+        poll_cnt  = HMX_ਕਤਾਰ_POLL_ਗਿਣਤੀ;
 
-        FARF(HIGH, "hmx-queue-thread: new work");
+        FARF(ਉੱਚਾ_2, "hmx-queue-thread: new work");
 
-        hmx_queue_process(q, &killed);
+        hmx_ਕਤਾਰ_process(q, &killed);
     }
 
-    FARF(HIGH, "hmx-queue-thread: stopped");
+    FARF(ਉੱਚਾ_2, "hmx-queue-thread: stopped");
 }
 
-size_t hmx_queue_sizeof(size_t capacity, uint32_t stack_size) {
-    capacity = hex_ceil_pow2(capacity);
-    size_t size_q = hex_align_up(sizeof(struct hmx_queue_s), HEX_L2_LINE_SIZE);
-    size_t size_desc = hex_align_up(capacity * sizeof(struct hmx_queue_desc), HEX_L2_LINE_SIZE);
-    size_t size_stack = stack_size;
-    return size_q + size_desc + size_stack;
+size_t hmx_ਕਤਾਰ_sizeof(size_t ਸਮਰੱਥਾ, uint32_t ਢੇਰ_ਮਾਪ) {
+    ਸਮਰੱਥਾ = hex_ceil_pow2(ਸਮਰੱਥਾ);
+    size_t ਮਾਪ_q = hex_align_ਉੱਪਰ(ਆਕਾਰ(ਬਣਤਰ hmx_ਕਤਾਰ_s), HEX_L2_ਸਤਰ_ਮਾਪ);
+    size_t ਮਾਪ_desc = hex_align_ਉੱਪਰ(ਸਮਰੱਥਾ * ਆਕਾਰ(ਬਣਤਰ hmx_ਕਤਾਰ_desc), HEX_L2_ਸਤਰ_ਮਾਪ);
+    size_t ਮਾਪ_ਢੇਰ = ਢੇਰ_ਮਾਪ;
+    ਵਾਪਸ ਮਾਪ_q + ਮਾਪ_desc + ਮਾਪ_ਢੇਰ;
 }
 
-size_t hmx_queue_alignof(void) {
-    return HEX_L2_LINE_SIZE;
+size_t hmx_ਕਤਾਰ_alignof(ਖਾਲੀ) {
+    ਵਾਪਸ HEX_L2_ਸਤਰ_ਮਾਪ;
 }
 
-hmx_queue_t hmx_queue_init(void * ptr, size_t capacity, uint32_t stack_size, uint32_t hap_rctx, struct htp_thread_trace * trace) {
-    capacity = hex_ceil_pow2(capacity);
-    size_t size_q = hex_align_up(sizeof(struct hmx_queue_s), HEX_L2_LINE_SIZE);
-    size_t size_desc = hex_align_up(capacity * sizeof(struct hmx_queue_desc), HEX_L2_LINE_SIZE);
+hmx_ਕਤਾਰ_t hmx_ਕਤਾਰ_init(ਖਾਲੀ * ptr, size_t ਸਮਰੱਥਾ, uint32_t ਢੇਰ_ਮਾਪ, uint32_t hap_rctx, ਬਣਤਰ htp_thread_trace * trace) {
+    ਸਮਰੱਥਾ = hex_ceil_pow2(ਸਮਰੱਥਾ);
+    size_t ਮਾਪ_q = hex_align_ਉੱਪਰ(ਆਕਾਰ(ਬਣਤਰ hmx_ਕਤਾਰ_s), HEX_L2_ਸਤਰ_ਮਾਪ);
+    size_t ਮਾਪ_desc = hex_align_ਉੱਪਰ(ਸਮਰੱਥਾ * ਆਕਾਰ(ਬਣਤਰ hmx_ਕਤਾਰ_desc), HEX_L2_ਸਤਰ_ਮਾਪ);
 
-    uint8_t * block = (uint8_t *) ptr;
+    uint8_t * ਖੰਡ = (uint8_t *) ptr;
 
-    hmx_queue_t q = (hmx_queue_t) block; block += size_q;
-    memset(q, 0, sizeof(struct hmx_queue_s));
+    hmx_ਕਤਾਰ_t q = (hmx_ਕਤਾਰ_t) ਖੰਡ; ਖੰਡ += ਮਾਪ_q;
+    memset(q, 0, ਆਕਾਰ(ਬਣਤਰ hmx_ਕਤਾਰ_s));
 
-    q->capacity = capacity;
-    q->idx_mask = capacity - 1;
+    q->ਸਮਰੱਥਾ = ਸਮਰੱਥਾ;
+    q->idx_ਨਕਾਬ = ਸਮਰੱਥਾ - 1;
     q->hap_rctx = hap_rctx;
     q->external_mem = true;
 
-    q->desc = (struct hmx_queue_desc *) block; block += size_desc;
-    memset(q->desc, 0, capacity * sizeof(struct hmx_queue_desc));
+    q->desc = (ਬਣਤਰ hmx_ਕਤਾਰ_desc *) ਖੰਡ; ਖੰਡ += ਮਾਪ_desc;
+    memset(q->desc, 0, ਸਮਰੱਥਾ * ਆਕਾਰ(ਬਣਤਰ hmx_ਕਤਾਰ_desc));
 
-    q->stack = block;
-    memset(q->stack, 0, stack_size);
+    q->ਢੇਰ = ਖੰਡ;
+    memset(q->ਢੇਰ, 0, ਢੇਰ_ਮਾਪ);
 
     q->trace = trace;
 
     // Match caller thread priority (same pattern as worker-pool.c).
-    int prio = qurt_thread_get_priority(qurt_thread_get_id());
-    if (prio < 1) {
+    ਪੂਰਨ prio = qurt_thread_get_ਤਰਜੀਹ(qurt_thread_get_id());
+    ਜੇ (prio < 1) {
         prio = 1;
     }
-    if (prio > QURT_LOWEST_PRIO) {
-        prio = QURT_LOWEST_PRIO;
+    ਜੇ (prio > QURT_ਸਭ_ਤੋਂ_ਨੀਵਾਂ_PRIO) {
+        prio = QURT_ਸਭ_ਤੋਂ_ਨੀਵਾਂ_PRIO;
     }
 
     qurt_thread_attr_t attr;
     qurt_thread_attr_init(&attr);
-    qurt_thread_attr_set_stack_addr(&attr, q->stack);
-    qurt_thread_attr_set_stack_size(&attr, stack_size);
-    qurt_thread_attr_set_priority(&attr, prio);
-    qurt_thread_attr_set_name(&attr, "hmx-queue");
+    qurt_thread_attr_ਸੈੱਟ_ਢੇਰ_addr(&attr, q->ਢੇਰ);
+    qurt_thread_attr_ਸੈੱਟ_ਢੇਰ_ਮਾਪ(&attr, ਢੇਰ_ਮਾਪ);
+    qurt_thread_attr_ਸੈੱਟ_ਤਰਜੀਹ(&attr, prio);
+    qurt_thread_attr_ਸੈੱਟ_name(&attr, "hmx-queue");
 
-    int err = qurt_thread_create(&q->thread, &attr, hmx_queue_thread, q);
-    if (err) {
+    ਪੂਰਨ err = qurt_thread_create(&q->thread, &attr, hmx_ਕਤਾਰ_thread, q);
+    ਜੇ (err) {
         FARF(ERROR, "hmx-worker: thread create failed (%d)", err);
-        return NULL;
+        ਵਾਪਸ ਨਿਰਾ;
     }
 
-    FARF(HIGH, "hmx-queue: capacity %u\n", capacity);
+    FARF(ਉੱਚਾ_2, "hmx-queue: capacity %u\n", ਸਮਰੱਥਾ);
 
-    return q;
+    ਵਾਪਸ q;
 }
 
-void hmx_queue_free(hmx_queue_t q) {
-    if (!q) {
-        return;
+ਖਾਲੀ hmx_ਕਤਾਰ_free(hmx_ਕਤਾਰ_t q) {
+    ਜੇ (!q) {
+        ਵਾਪਸ;
     }
 
     // Tell the worker to exit.
-    hmx_queue_flush(q);
-    hmx_queue_signal(q, HMX_QUEUE_KILL);
-    hmx_queue_flush(q);
+    hmx_ਕਤਾਰ_flush(q);
+    hmx_ਕਤਾਰ_signal(q, HMX_ਕਤਾਰ_KILL);
+    hmx_ਕਤਾਰ_flush(q);
 
-    int status;
-    qurt_thread_join(q->thread, &status);
+    ਪੂਰਨ ਸਥਿਤੀ;
+    qurt_thread_join(q->thread, &ਸਥਿਤੀ);
 }

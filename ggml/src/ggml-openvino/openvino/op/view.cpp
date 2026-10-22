@@ -1,29 +1,29 @@
-#include "../op_table.h"
-#include "../utils.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "../op_table.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "../utils.h"
 
-#include <openvino/op/concat.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/gather.hpp>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/shape_of.hpp>
-#include <openvino/op/slice.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/concat.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/constant.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/gather.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/reshape.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/shape_of.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <openvino/op/slice.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+ਨਾਮਾਕਾਸ਼ ov {
+ਨਾਮਾਕਾਸ਼ frontend {
+ਨਾਮਾਕਾਸ਼ ggml {
+ਨਾਮਾਕਾਸ਼ op {
 
-OutputVector translate_view(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+Output_ਸਦਿਸ਼ translate_view(ਅਚਲ ਗੰਢ_Context & context) {
+    ਅੰਕ_inputs_check(context, 1, 1);
 
-    if (context.get_op_case() == 1) {
+    ਜੇ (context.get_op_case() == 1) {
         // Static-mode identity pass-through for VIEWs over a GATED_DELTA_NET combined output or
         // the conv_input CONCAT; the consuming op (CPY/RMS_NORM) does its own runtime-correct
         // slicing on the full tensor (see ggml-decoder.cpp compute_op_case, GGML_OP_VIEW).
-        return {context.get_input(0)};
+        ਵਾਪਸ {context.get_ਨਿਵੇਸ਼(0)};
     }
 
-    if (!context.is_static()) {
+    ਜੇ (!context.is_static()) {
         // On the stateless/non-static path VIEW is normally a no-op (consumers re-slice).
         // EXCEPTION: the MoE expert aggregation slices each expert plane out of
         // ffn_moe_weighted [n_embd, n_expert_used, n_tokens] with ggml_view_2d and then
@@ -32,80 +32,80 @@ OutputVector translate_view(const NodeContext & context) {
         // makes every plane the full tensor and the expert sum collapses. Materialize the
         // single-expert slice here. Gated by name (ffn_moe_weighted...view) so it can't
         // affect any other view.
-        const std::string & vname = context.get_name();
-        if (vname.find("ffn_moe_weighted") != std::string::npos) {
-            auto src_ps = context.get_input_shape(0);
-            auto dst_ps = context.get_output_shape();
-            if (src_ps.rank().is_static() && dst_ps.rank().is_static() && src_ps.rank() == dst_ps.rank() &&
+        ਅਚਲ std::string & vname = context.get_name();
+        ਜੇ (vname.find("ffn_moe_weighted") != std::string::npos) {
+            ਸਵੈਚਾਲਿਤ src_ps = context.get_ਨਿਵੇਸ਼_shape(0);
+            ਸਵੈਚਾਲਿਤ dst_ps = context.get_output_shape();
+            ਜੇ (src_ps.rank().is_static() && dst_ps.rank().is_static() && src_ps.rank() == dst_ps.rank() &&
                 src_ps.is_static() && dst_ps.is_static()) {
-                auto sst = context.get_input_stride(0);
-                auto dst = context.get_output_stride();
-                size_t voff = context.get_output_op_offset();
-                auto ss = src_ps.to_shape();
-                auto dd = dst_ps.to_shape();
-                const size_t nd = ss.size();
+                ਸਵੈਚਾਲਿਤ sst = context.get_ਨਿਵੇਸ਼_stride(0);
+                ਸਵੈਚਾਲਿਤ dst = context.get_output_stride();
+                size_t voff = context.get_output_op_ਵਿੱਥ();
+                ਸਵੈਚਾਲਿਤ ss = src_ps.ਮੰਜ਼ਿਲ_shape();
+                ਸਵੈਚਾਲਿਤ dd = dst_ps.ਮੰਜ਼ਿਲ_shape();
+                ਅਚਲ size_t nd = ss.size();
                 // Stateful models drop the leading size-1 batch dim, so the real OV tensor can
                 // be one rank lower than the ggml shape metadata above. Axis indices derived
                 // from that metadata must be shifted down by the difference before they are
                 // used as OV axes. Bail out if the dims we would drop are not all 1.
-                const auto in_rank = context.get_input(0).get_partial_shape().rank();
-                const int axis_shift =
-                    in_rank.is_static() ? (int) nd - (int) in_rank.get_length() : 0;
-                bool shift_ok = axis_shift >= 0 && (size_t) axis_shift < nd;
-                for (int a = 0; a < axis_shift && shift_ok; ++a) {
-                    shift_ok = (ss[a] == 1 && dd[a] == 1);
+                ਅਚਲ ਸਵੈਚਾਲਿਤ ਵਿੱਚ_rank = context.get_ਨਿਵੇਸ਼(0).get_partial_shape().rank();
+                ਅਚਲ ਪੂਰਨ axis_ਖਿਸਕਾਓ =
+                    ਵਿੱਚ_rank.is_static() ? (ਪੂਰਨ) nd - (ਪੂਰਨ) ਵਿੱਚ_rank.get_ਲੰਮਾਈ() : 0;
+                ਤਾਰਕਿਕ ਖਿਸਕਾਓ_ok = axis_ਖਿਸਕਾਓ >= 0 && (size_t) axis_ਖਿਸਕਾਓ < nd;
+                ਲਈ (ਪੂਰਨ a = 0; a < axis_ਖਿਸਕਾਓ && ਖਿਸਕਾਓ_ok; ++a) {
+                    ਖਿਸਕਾਓ_ok = (ss[a] == 1 && dd[a] == 1);
                 }
-                if (shift_ok && sst.size() == nd && dst.size() == nd) {
+                ਜੇ (ਖਿਸਕਾਓ_ok && sst.size() == nd && dst.size() == nd) {
                     // Map each dst axis of size>1 to a src axis with equal (size,stride);
                     // the unmatched src axis of size>1 is the indexed expert axis.
                     // dst_to_src[d] records which src axis each dst axis came from, so we can
                     // later pull the dynamic (token) dim from the right source axis at runtime.
-                    std::vector<bool> used(nd, false);
-                    std::vector<int> dst_to_src(nd, -1);
-                    bool ok = true;
-                    for (size_t d = 0; d < nd; ++d) {
-                        if (dd[d] == 1) {
-                            continue;
+                    std::vector<ਤਾਰਕਿਕ> ਵਰਤਿਆ(nd, ਝੂਠ);
+                    std::vector<ਪੂਰਨ> dst_ਮੰਜ਼ਿਲ_src(nd, -1);
+                    ਤਾਰਕਿਕ ok = ਸੱਚ;
+                    ਲਈ (size_t d = 0; d < nd; ++d) {
+                        ਜੇ (dd[d] == 1) {
+                            ਜਾਰੀ;
                         }
-                        int found = -1;
-                        for (size_t s = 0; s < nd; ++s) {
-                            if (!used[s] && ss[s] == dd[d] && sst[s] == dst[d]) {
-                                found = (int) s;
-                                break;
+                        ਪੂਰਨ ਮਿਲਿਆ = -1;
+                        ਲਈ (size_t s = 0; s < nd; ++s) {
+                            ਜੇ (!ਵਰਤਿਆ[s] && ss[s] == dd[d] && sst[s] == dst[d]) {
+                                ਮਿਲਿਆ = (ਪੂਰਨ) s;
+                                ਰੋਕੋ;
                             }
                         }
-                        if (found < 0) {
-                            ok = false;
-                            break;
+                        ਜੇ (ਮਿਲਿਆ < 0) {
+                            ok = ਝੂਠ;
+                            ਰੋਕੋ;
                         }
-                        used[found] = true;
-                        dst_to_src[d] = found;
+                        ਵਰਤਿਆ[ਮਿਲਿਆ] = ਸੱਚ;
+                        dst_ਮੰਜ਼ਿਲ_src[d] = ਮਿਲਿਆ;
                     }
-                    int dropped = -1;
-                    if (ok) {
-                        for (size_t s = 0; s < nd; ++s) {
-                            if (!used[s] && ss[s] > 1) {
-                                if (dropped >= 0) {
-                                    ok = false;
-                                    break;
+                    ਪੂਰਨ dropped = -1;
+                    ਜੇ (ok) {
+                        ਲਈ (size_t s = 0; s < nd; ++s) {
+                            ਜੇ (!ਵਰਤਿਆ[s] && ss[s] > 1) {
+                                ਜੇ (dropped >= 0) {
+                                    ok = ਝੂਠ;
+                                    ਰੋਕੋ;
                                 }
-                                dropped = (int) s;
+                                dropped = (ਪੂਰਨ) s;
                             }
                         }
                     }
-                    if (ok && dropped >= 0) {
-                        const size_t dstr = sst[dropped];
-                        const int64_t dsz = (int64_t) ss[dropped];
-                        if (dstr > 0 && voff % dstr == 0) {
-                            const int64_t sel = (int64_t) (voff / dstr);
-                            if (sel >= 0 && sel < dsz) {
-                                ov::Output<ov::Node> sl = std::make_shared<ov::op::v8::Slice>(
-                                    context.get_input(0),
+                    ਜੇ (ok && dropped >= 0) {
+                        ਅਚਲ size_t dstr = sst[dropped];
+                        ਅਚਲ int64_t dsz = (int64_t) ss[dropped];
+                        ਜੇ (dstr > 0 && voff % dstr == 0) {
+                            ਅਚਲ int64_t sel = (int64_t) (voff / dstr);
+                            ਜੇ (sel >= 0 && sel < dsz) {
+                                ov::Output<ov::Node> sl = std::make_shared<ov::op::v8::ਟੁਕੜਾ>(
+                                    context.get_ਨਿਵੇਸ਼(0),
                                     ov::op::v0::Constant::create(ov::element::i64, {1}, {sel}),
                                     ov::op::v0::Constant::create(ov::element::i64, {1}, {sel + 1}),
                                     ov::op::v0::Constant::create(ov::element::i64, {1}, {1}),
                                     ov::op::v0::Constant::create(ov::element::i64, {1},
-                                                                 {dropped - axis_shift}));
+                                                                 {dropped - axis_ਖਿਸਕਾਓ}));
                                 // Build the reshape target from the (concrete) dst shape, but
                                 // keep the dynamic token axis dynamic instead of freezing it
                                 // to the captured n_tokens. Without this the constant dst
@@ -117,140 +117,140 @@ OutputVector translate_view(const NodeContext & context) {
                                 // (which copies the same-position dim) is not enough: pull the
                                 // dynamic dim from the correct SOURCE axis via ShapeOf+Gather
                                 // and place it at the dst token position.
-                                const int32_t dyn = context.get_op_dynamic_dim();  // output ggml axis, -1 if none
+                                ਅਚਲ int32_t dyn = context.get_op_dynamic_dim();  // output ggml axis, -1 if none
                                 // still in ggml metadata axis space; get_shape() reverses ggml order
-                                int dst_ov_axis = (dyn != -1) ? ((int) nd - 1 - (int) dyn) : -1;
-                                int src_ov_axis = (dst_ov_axis >= axis_shift && dst_ov_axis < (int) nd)
-                                                      ? dst_to_src[dst_ov_axis]
+                                ਪੂਰਨ dst_ov_axis = (dyn != -1) ? ((ਪੂਰਨ) nd - 1 - (ਪੂਰਨ) dyn) : -1;
+                                ਪੂਰਨ src_ov_axis = (dst_ov_axis >= axis_ਖਿਸਕਾਓ && dst_ov_axis < (ਪੂਰਨ) nd)
+                                                      ? dst_ਮੰਜ਼ਿਲ_src[dst_ov_axis]
                                                       : -1;
-                                if (dst_ov_axis >= 0 && src_ov_axis >= axis_shift) {
+                                ਜੇ (dst_ov_axis >= 0 && src_ov_axis >= axis_ਖਿਸਕਾਓ) {
                                     // target = concat of per-axis scalars; the token axis is a
                                     // runtime Gather of the slice's shape, the rest are constants.
-                                    auto sl_shape = std::make_shared<ov::op::v3::ShapeOf>(sl, ov::element::i64);
-                                    auto tok_dim = std::make_shared<ov::op::v8::Gather>(
+                                    ਸਵੈਚਾਲਿਤ sl_shape = std::make_shared<ov::op::v3::Shape_ਦਾ>(sl, ov::element::i64);
+                                    ਸਵੈਚਾਲਿਤ tok_dim = std::make_shared<ov::op::v8::Gather>(
                                         sl_shape,
                                         ov::op::v0::Constant::create(ov::element::i64, {1},
-                                                                     {src_ov_axis - axis_shift}),
+                                                                     {src_ov_axis - axis_ਖਿਸਕਾਓ}),
                                         ov::op::v0::Constant::create(ov::element::i64, {}, {0}));
-                                    ov::OutputVector parts;
-                                    for (int a = axis_shift; a < (int) nd; ++a) {
-                                        if (a == dst_ov_axis) {
+                                    ov::Output_ਸਦਿਸ਼ parts;
+                                    ਲਈ (ਪੂਰਨ a = axis_ਖਿਸਕਾਓ; a < (ਪੂਰਨ) nd; ++a) {
+                                        ਜੇ (a == dst_ov_axis) {
                                             parts.push_back(tok_dim);
-                                        } else {
+                                        } ਨਹੀਂਤਾਂ {
                                             parts.push_back(ov::op::v0::Constant::create(
                                                 ov::element::i64, {1}, {(int64_t) dd[a]}));
                                         }
                                     }
-                                    auto dc = std::make_shared<ov::op::v0::Concat>(parts, 0);
-                                    auto rs = std::make_shared<ov::op::v1::Reshape>(sl, dc, false);
-                                    return rename_outputs_with_suffix({rs}, context.get_name());
+                                    ਸਵੈਚਾਲਿਤ dc = std::make_shared<ov::op::v0::Concat>(parts, 0);
+                                    ਸਵੈਚਾਲਿਤ rs = std::make_shared<ov::op::v1::Reshape>(sl, dc, ਝੂਠ);
+                                    ਵਾਪਸ rename_outputs_with_suffix({rs}, context.get_name());
                                 }
-                                std::vector<int64_t> dd_ov(dd.begin() + axis_shift, dd.end());
-                                auto dc = ov::op::v0::Constant::create(ov::element::i64, {dd_ov.size()}, dd_ov);
-                                auto rs = std::make_shared<ov::op::v1::Reshape>(sl, dc, false);
-                                return rename_outputs_with_suffix({rs}, context.get_name());
+                                std::vector<int64_t> dd_ov(dd.begin() + axis_ਖਿਸਕਾਓ, dd.end());
+                                ਸਵੈਚਾਲਿਤ dc = ov::op::v0::Constant::create(ov::element::i64, {dd_ov.size()}, dd_ov);
+                                ਸਵੈਚਾਲਿਤ rs = std::make_shared<ov::op::v1::Reshape>(sl, dc, ਝੂਠ);
+                                ਵਾਪਸ rename_outputs_with_suffix({rs}, context.get_name());
                             }
                         }
                     }
                 }
             }
         }
-        return {context.get_input(0)};
+        ਵਾਪਸ {context.get_ਨਿਵੇਸ਼(0)};
     }
 
-    auto input = context.get_input(0);
-    auto src_shape = context.get_input_shape(0);
-    auto dst_shape = context.get_output_shape();
+    ਸਵੈਚਾਲਿਤ ਨਿਵੇਸ਼ = context.get_ਨਿਵੇਸ਼(0);
+    ਸਵੈਚਾਲਿਤ src_shape = context.get_ਨਿਵੇਸ਼_shape(0);
+    ਸਵੈਚਾਲਿਤ dst_shape = context.get_output_shape();
 
-    if (src_shape.rank().is_dynamic() || dst_shape.rank().is_dynamic()) {
-        return {input};
+    ਜੇ (src_shape.rank().is_dynamic() || dst_shape.rank().is_dynamic()) {
+        ਵਾਪਸ {ਨਿਵੇਸ਼};
     }
 
     int64_t src_elems = 1;
     int64_t dst_elems = 1;
-    for (int64_t i = 0; i < src_shape.rank().get_length(); ++i) {
-        if (src_shape[i].is_dynamic()) {
-            return {input};
+    ਲਈ (int64_t i = 0; i < src_shape.rank().get_ਲੰਮਾਈ(); ++i) {
+        ਜੇ (src_shape[i].is_dynamic()) {
+            ਵਾਪਸ {ਨਿਵੇਸ਼};
         }
-        src_elems *= src_shape[i].get_length();
+        src_elems *= src_shape[i].get_ਲੰਮਾਈ();
     }
-    for (int64_t i = 0; i < dst_shape.rank().get_length(); ++i) {
-        if (dst_shape[i].is_dynamic()) {
-            return {input};
+    ਲਈ (int64_t i = 0; i < dst_shape.rank().get_ਲੰਮਾਈ(); ++i) {
+        ਜੇ (dst_shape[i].is_dynamic()) {
+            ਵਾਪਸ {ਨਿਵੇਸ਼};
         }
-        dst_elems *= dst_shape[i].get_length();
+        dst_elems *= dst_shape[i].get_ਲੰਮਾਈ();
     }
 
-    if (dst_elems >= src_elems) {
-        return {input};
+    ਜੇ (dst_elems >= src_elems) {
+        ਵਾਪਸ {ਨਿਵੇਸ਼};
     }
 
-    auto src_stride = context.get_input_stride(0);
-    auto dst_stride = context.get_output_stride();
-    size_t view_offset = context.get_output_op_offset();
+    ਸਵੈਚਾਲਿਤ src_stride = context.get_ਨਿਵੇਸ਼_stride(0);
+    ਸਵੈਚਾਲਿਤ dst_stride = context.get_output_stride();
+    size_t view_ਵਿੱਥ = context.get_output_op_ਵਿੱਥ();
 
-    bool same_stride = (src_stride.size() == dst_stride.size());
-    if (same_stride) {
-        for (size_t i = 0; i < src_stride.size(); ++i) {
-            if (src_stride[i] != dst_stride[i]) {
-                same_stride = false;
-                break;
+    ਤਾਰਕਿਕ same_stride = (src_stride.size() == dst_stride.size());
+    ਜੇ (same_stride) {
+        ਲਈ (size_t i = 0; i < src_stride.size(); ++i) {
+            ਜੇ (src_stride[i] != dst_stride[i]) {
+                same_stride = ਝੂਠ;
+                ਰੋਕੋ;
             }
         }
     }
 
-    if (!same_stride) {
-        return {input};
+    ਜੇ (!same_stride) {
+        ਵਾਪਸ {ਨਿਵੇਸ਼};
     }
 
-    auto src_ov_shape = src_shape.to_shape();
-    auto dst_ov_shape = dst_shape.to_shape();
+    ਸਵੈਚਾਲਿਤ src_ov_shape = src_shape.ਮੰਜ਼ਿਲ_shape();
+    ਸਵੈਚਾਲਿਤ dst_ov_shape = dst_shape.ਮੰਜ਼ਿਲ_shape();
     size_t ndims = src_ov_shape.size();
-    if (dst_ov_shape.size() != ndims) {
-        return {input};
+    ਜੇ (dst_ov_shape.size() != ndims) {
+        ਵਾਪਸ {ਨਿਵੇਸ਼};
     }
 
-    std::vector<int> diff_dims;
-    for (size_t i = 0; i < ndims; ++i) {
-        if (src_ov_shape[i] != dst_ov_shape[i]) {
-            diff_dims.push_back(static_cast<int>(i));
+    std::vector<ਪੂਰਨ> diff_dims;
+    ਲਈ (size_t i = 0; i < ndims; ++i) {
+        ਜੇ (src_ov_shape[i] != dst_ov_shape[i]) {
+            diff_dims.push_back(static_cast<ਪੂਰਨ>(i));
         }
     }
 
-    if (diff_dims.size() != 1) {
-        return {input};
+    ਜੇ (diff_dims.size() != 1) {
+        ਵਾਪਸ {ਨਿਵੇਸ਼};
     }
 
-    int slice_dim = diff_dims[0];
-    int64_t dim_size = static_cast<int64_t>(src_ov_shape[slice_dim]);
+    ਪੂਰਨ ਟੁਕੜਾ_dim = diff_dims[0];
+    int64_t dim_ਮਾਪ = static_cast<int64_t>(src_ov_shape[ਟੁਕੜਾ_dim]);
 
     size_t ov_stride_for_dim = 1;
-    for (size_t i = slice_dim + 1; i < ndims; ++i) {
+    ਲਈ (size_t i = ਟੁਕੜਾ_dim + 1; i < ndims; ++i) {
         ov_stride_for_dim *= src_ov_shape[i];
     }
-    size_t elem_size = src_stride.back();
-    if (elem_size == 0) {
-        elem_size = 1;
+    size_t elem_ਮਾਪ = src_stride.back();
+    ਜੇ (elem_ਮਾਪ == 0) {
+        elem_ਮਾਪ = 1;
     }
 
     int64_t begin_val = 0;
-    if (ov_stride_for_dim > 0 && elem_size > 0) {
-        begin_val = static_cast<int64_t>((view_offset / elem_size) / ov_stride_for_dim);
+    ਜੇ (ov_stride_for_dim > 0 && elem_ਮਾਪ > 0) {
+        begin_val = static_cast<int64_t>((view_ਵਿੱਥ / elem_ਮਾਪ) / ov_stride_for_dim);
     }
-    int64_t end_val = begin_val + static_cast<int64_t>(dst_ov_shape[slice_dim]);
+    int64_t ਸਿਰਾ_val = begin_val + static_cast<int64_t>(dst_ov_shape[ਟੁਕੜਾ_dim]);
 
-    if (begin_val < 0 || end_val > dim_size) {
-        return {input};
+    ਜੇ (begin_val < 0 || ਸਿਰਾ_val > dim_ਮਾਪ) {
+        ਵਾਪਸ {ਨਿਵੇਸ਼};
     }
 
-    auto sliced =
-        std::make_shared<ov::op::v8::Slice>(input, ov::op::v0::Constant::create(ov::element::i64, {1}, {begin_val}),
-                                            ov::op::v0::Constant::create(ov::element::i64, {1}, {end_val}),
+    ਸਵੈਚਾਲਿਤ sliced =
+        std::make_shared<ov::op::v8::ਟੁਕੜਾ>(ਨਿਵੇਸ਼, ov::op::v0::Constant::create(ov::element::i64, {1}, {begin_val}),
+                                            ov::op::v0::Constant::create(ov::element::i64, {1}, {ਸਿਰਾ_val}),
                                             ov::op::v0::Constant::create(ov::element::i64, {1}, {1}),
-                                            ov::op::v0::Constant::create(ov::element::i64, {1}, {slice_dim}));
+                                            ov::op::v0::Constant::create(ov::element::i64, {1}, {ਟੁਕੜਾ_dim}));
 
-    sliced->set_friendly_name(context.get_output_name());
-    return {sliced->output(0)};
+    sliced->ਸੈੱਟ_friendly_name(context.get_output_name());
+    ਵਾਪਸ {sliced->output(0)};
 }
 
 }  // namespace op

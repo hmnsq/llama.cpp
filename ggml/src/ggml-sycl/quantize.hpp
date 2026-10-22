@@ -17,117 +17,117 @@
  *     Sycl backend specific quantization functions
  **************************************************************************/
 
-#pragma once
+#ਹਦਾਇਤ once
 
-#include <sycl/nd_item.hpp>
+#ਅਨ੍ਤਰ੍ਭਾਵ <sycl/nd_item.hpp>
 
-#include "ggml-sycl/dpct/helper.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-sycl/dpct/helper.hpp"
 
-template <int ElementsPerWI>
-__dpct_inline__ static void quantize_q8_1_impl(const float * __restrict__ x,
-                                               sycl::vec<int8_t, ElementsPerWI> & quantized_values, float & d,
-                                               float & sum, const sycl::nd_item<1> & it) {
-    auto subgroup_id = it.get_group(0);
-    auto wi_id       = it.get_local_id(0);
+ਸਾਂਚਾ <ਪੂਰਨ Elements_ਪ੍ਰਤੀ_WI>
+__dpct_inline__ ਸਥਿਰ ਖਾਲੀ quantize_q8_1_impl(ਅਚਲ ਦਸ਼ਮਲਵ * __restrict__ x,
+                                               sycl::vec<int8_t, Elements_ਪ੍ਰਤੀ_WI> & quantized_ਮੁੱਲਾਂ, ਦਸ਼ਮਲਵ & d,
+                                               ਦਸ਼ਮਲਵ & ਜੋੜ, ਅਚਲ sycl::nd_ਵਸਤੂ<1> & it) {
+    ਸਵੈਚਾਲਿਤ subgroup_id = it.get_ਸਮੂਹ(0);
+    ਸਵੈਚਾਲਿਤ wi_id       = it.get_local_id(0);
 
-    sycl::vec<float, ElementsPerWI> wi_f32_vals;
+    sycl::vec<ਦਸ਼ਮਲਵ, Elements_ਪ੍ਰਤੀ_WI> wi_f32_vals;
 
-    auto float_ptr_offset = subgroup_id * QK8_1 + ElementsPerWI * wi_id;
-    wi_f32_vals           = *reinterpret_cast<const sycl::vec<float, ElementsPerWI> *>(x + float_ptr_offset);
+    ਸਵੈਚਾਲਿਤ float_ptr_ਵਿੱਥ = subgroup_id * QK8_1 + Elements_ਪ੍ਰਤੀ_WI * wi_id;
+    wi_f32_vals           = *reinterpret_cast<ਅਚਲ sycl::vec<ਦਸ਼ਮਲਵ, Elements_ਪ੍ਰਤੀ_WI> *>(x + float_ptr_ਵਿੱਥ);
 
-    float amax = 0.0f;
+    ਦਸ਼ਮਲਵ amax = 0.0f;
 
-#pragma unroll(ElementsPerWI)
-    for (int i = 0; i < ElementsPerWI; i++) {
-        sum += wi_f32_vals[i];
+#ਹਦਾਇਤ unroll(Elements_ਪ੍ਰਤੀ_WI)
+    ਲਈ (ਪੂਰਨ i = 0; i < Elements_ਪ੍ਰਤੀ_WI; i++) {
+        ਜੋੜ += wi_f32_vals[i];
         amax                = sycl::fmax(amax, sycl::fabs(wi_f32_vals[i]));
-        quantized_values[i] = 0;
+        quantized_ਮੁੱਲਾਂ[i] = 0;
     }
-    sum  = sycl::reduce_over_group(it.get_sub_group(), sum, sycl::plus<float>());
-    amax = sycl::reduce_over_group(it.get_sub_group(), amax, sycl::maximum<float>());
+    ਜੋੜ  = sycl::reduce_over_ਸਮੂਹ(it.get_sub_ਸਮੂਹ(), ਜੋੜ, sycl::plus<ਦਸ਼ਮਲਵ>());
+    amax = sycl::reduce_over_ਸਮੂਹ(it.get_sub_ਸਮੂਹ(), amax, sycl::ਵੱਧ_ਤੋਂ_ਵੱਧ<ਦਸ਼ਮਲਵ>());
     d    = amax == 0 ? 1 : amax / 127;
 
-#pragma unroll(ElementsPerWI)
-    for (int i = 0; i < ElementsPerWI; i++) {
-        quantized_values[i] = sycl::round(wi_f32_vals[i] / d);
+#ਹਦਾਇਤ unroll(Elements_ਪ੍ਰਤੀ_WI)
+    ਲਈ (ਪੂਰਨ i = 0; i < Elements_ਪ੍ਰਤੀ_WI; i++) {
+        quantized_ਮੁੱਲਾਂ[i] = sycl::round(wi_f32_vals[i] / d);
     }
 
     d = amax == 0 ? 0 : d;
 }
 
 // No op to control codepath in ggml_sycl_op_mul_mat
-template <int ElementsPerWI> struct no_quantize_q8_1 {
-    void operator()(const float *, void *, int, int, const sycl::nd_item<1> &) const {}
+ਸਾਂਚਾ <ਪੂਰਨ Elements_ਪ੍ਰਤੀ_WI> ਬਣਤਰ no_quantize_q8_1 {
+    ਖਾਲੀ ਸੰਚਾਲਕ()(ਅਚਲ ਦਸ਼ਮਲਵ *, ਖਾਲੀ *, ਪੂਰਨ, ਪੂਰਨ, ਅਚਲ sycl::nd_ਵਸਤੂ<1> &) ਅਚਲ {}
 };
 
-template <int ElementsPerWI> struct quantize_and_reorder_q8_1_soa {
-    __dpct_inline__ void operator()(const float * __restrict__ x, void * reordered_q8_tensor, const int kx,
-                                    const int kx_padded, const sycl::nd_item<1> & it) const {
+ਸਾਂਚਾ <ਪੂਰਨ Elements_ਪ੍ਰਤੀ_WI> ਬਣਤਰ quantize_and_reorder_q8_1_soa {
+    __dpct_inline__ ਖਾਲੀ ਸੰਚਾਲਕ()(ਅਚਲ ਦਸ਼ਮਲਵ * __restrict__ x, ਖਾਲੀ * reordered_q8_tensor, ਅਚਲ ਪੂਰਨ kx,
+                                    ਅਚਲ ਪੂਰਨ kx_padded, ਅਚਲ sycl::nd_ਵਸਤੂ<1> & it) ਅਚਲ {
         /*
         Quantizes and reorders the resultant q8 tensor in a per row fashion
         Each sub-group calculates one quant block. i.e. QK8_1 quant values and the d and sum values
     */
-        auto subgroup_id = it.get_group(0);
-        auto wi_id       = it.get_local_id(0);
+        ਸਵੈਚਾਲਿਤ subgroup_id = it.get_ਸਮੂਹ(0);
+        ਸਵੈਚਾਲਿਤ wi_id       = it.get_local_id(0);
 
-        sycl::vec<int8_t, ElementsPerWI> quantized_values;
-        float                            d   = 0.0f;
-        float                            sum = 0.0f;
-        quantize_q8_1_impl<ElementsPerWI>(x, quantized_values, d, sum, it);
+        sycl::vec<int8_t, Elements_ਪ੍ਰਤੀ_WI> quantized_ਮੁੱਲਾਂ;
+        ਦਸ਼ਮਲਵ                            d   = 0.0f;
+        ਦਸ਼ਮਲਵ                            ਜੋੜ = 0.0f;
+        quantize_q8_1_impl<Elements_ਪ੍ਰਤੀ_WI>(x, quantized_ਮੁੱਲਾਂ, d, ਜੋੜ, it);
 
-        const int num_blocks_per_row = kx / QK8_1;
-        auto      row                = subgroup_id / num_blocks_per_row;
-        auto      col                = subgroup_id % num_blocks_per_row;
-        auto      row_offset         = row * (kx_padded / QK8_1) * sizeof(block_q8_1);
-        auto      col_offset         = QK8_1 * col + wi_id * ElementsPerWI;
+        ਅਚਲ ਪੂਰਨ ਅੰਕ_ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ = kx / QK8_1;
+        ਸਵੈਚਾਲਿਤ      ਪੰਕਤੀ                = subgroup_id / ਅੰਕ_ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+        ਸਵੈਚਾਲਿਤ      ਖਾਨਾ                = subgroup_id % ਅੰਕ_ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+        ਸਵੈਚਾਲਿਤ      ਪੰਕਤੀ_ਵਿੱਥ         = ਪੰਕਤੀ * (kx_padded / QK8_1) * ਆਕਾਰ(ਖੰਡ_q8_1);
+        ਸਵੈਚਾਲਿਤ      ਖਾਨਾ_ਵਿੱਥ         = QK8_1 * ਖਾਨਾ + wi_id * Elements_ਪ੍ਰਤੀ_WI;
 
-        auto quant_ptr = (int8_t *) ((char *) reordered_q8_tensor + row_offset + col_offset);
-        *reinterpret_cast<sycl::vec<int8_t, ElementsPerWI> *>(quant_ptr) = quantized_values;
+        ਸਵੈਚਾਲਿਤ quant_ptr = (int8_t *) ((ਅੱਖਰ *) reordered_q8_tensor + ਪੰਕਤੀ_ਵਿੱਥ + ਖਾਨਾ_ਵਿੱਥ);
+        *reinterpret_cast<sycl::vec<int8_t, Elements_ਪ੍ਰਤੀ_WI> *>(quant_ptr) = quantized_ਮੁੱਲਾਂ;
 
-        auto ds_ptr = (sycl::half2 *) ((char *) reordered_q8_tensor + row_offset + kx + col * sizeof(sycl::half2));
-        if (wi_id == 0) {
-            *ds_ptr = sycl::half2(sycl::half(d), sycl::half(sum));
+        ਸਵੈਚਾਲਿਤ ds_ptr = (sycl::half2 *) ((ਅੱਖਰ *) reordered_q8_tensor + ਪੰਕਤੀ_ਵਿੱਥ + kx + ਖਾਨਾ * ਆਕਾਰ(sycl::half2));
+        ਜੇ (wi_id == 0) {
+            *ds_ptr = sycl::half2(sycl::half(d), sycl::half(ਜੋੜ));
         }
     }
 };
 
-template <int ElementsPerWI> struct quantize_q8_1 {
-    __dpct_inline__ void operator()(const float * __restrict__ x, void * q8_tensor, const int kx, const int kx_padded,
-                                    const sycl::nd_item<1> & it) const {
-        auto subgroup_id = it.get_group(0);
-        auto wi_id       = it.get_local_id(0);
+ਸਾਂਚਾ <ਪੂਰਨ Elements_ਪ੍ਰਤੀ_WI> ਬਣਤਰ quantize_q8_1 {
+    __dpct_inline__ ਖਾਲੀ ਸੰਚਾਲਕ()(ਅਚਲ ਦਸ਼ਮਲਵ * __restrict__ x, ਖਾਲੀ * q8_tensor, ਅਚਲ ਪੂਰਨ kx, ਅਚਲ ਪੂਰਨ kx_padded,
+                                    ਅਚਲ sycl::nd_ਵਸਤੂ<1> & it) ਅਚਲ {
+        ਸਵੈਚਾਲਿਤ subgroup_id = it.get_ਸਮੂਹ(0);
+        ਸਵੈਚਾਲਿਤ wi_id       = it.get_local_id(0);
 
-        const int num_blocks_per_row = kx / QK8_1;
-        auto      row                = subgroup_id / num_blocks_per_row;
-        const int pitch              = kx_padded / QK8_1;
+        ਅਚਲ ਪੂਰਨ ਅੰਕ_ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ = kx / QK8_1;
+        ਸਵੈਚਾਲਿਤ      ਪੰਕਤੀ                = subgroup_id / ਅੰਕ_ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+        ਅਚਲ ਪੂਰਨ pitch              = kx_padded / QK8_1;
 
-        sycl::vec<int8_t, ElementsPerWI> quantized_values;
-        float                            d   = 0.0f;
-        float                            sum = 0.0f;
-        quantize_q8_1_impl<ElementsPerWI>(x, quantized_values, d, sum, it);
+        sycl::vec<int8_t, Elements_ਪ੍ਰਤੀ_WI> quantized_ਮੁੱਲਾਂ;
+        ਦਸ਼ਮਲਵ                            d   = 0.0f;
+        ਦਸ਼ਮਲਵ                            ਜੋੜ = 0.0f;
+        quantize_q8_1_impl<Elements_ਪ੍ਰਤੀ_WI>(x, quantized_ਮੁੱਲਾਂ, d, ਜੋੜ, it);
 
-        block_q8_1 * quant_ptr = (block_q8_1 *) q8_tensor;
-        auto         block_id  = subgroup_id % num_blocks_per_row + row * pitch;
+        ਖੰਡ_q8_1 * quant_ptr = (ਖੰਡ_q8_1 *) q8_tensor;
+        ਸਵੈਚਾਲਿਤ         ਖੰਡ_id  = subgroup_id % ਅੰਕ_ਖੰਡਾਂ_ਪ੍ਰਤੀ_ਪੰਕਤੀ + ਪੰਕਤੀ * pitch;
 
-        int8_t * qs                                               = &(quant_ptr[block_id].qs[wi_id * ElementsPerWI]);
-        *reinterpret_cast<sycl::vec<int8_t, ElementsPerWI> *>(qs) = quantized_values;
-        if (wi_id == 0) {
-            quant_ptr[block_id].ds = sycl::half2(sycl::half(d), sycl::half(sum));
+        int8_t * qs                                               = &(quant_ptr[ਖੰਡ_id].qs[wi_id * Elements_ਪ੍ਰਤੀ_WI]);
+        *reinterpret_cast<sycl::vec<int8_t, Elements_ਪ੍ਰਤੀ_WI> *>(qs) = quantized_ਮੁੱਲਾਂ;
+        ਜੇ (wi_id == 0) {
+            quant_ptr[ਖੰਡ_id].ds = sycl::half2(sycl::half(d), sycl::half(ਜੋੜ));
         }
     }
 };
 
-template <template <int> typename quantize_f>
-void quantize_row_q8_1_sycl(const float * x, void * vy, const int kx, const int ky, const int kx_padded,
-                            dpct::queue_ptr stream) {
-    static_assert(QK8_1 % WARP_SIZE == 0);
-    auto local_range      = std::size_t(WARP_SIZE);
-    auto num_quant_blocks = ky * (kx / QK8_1);
-    auto global_range     = num_quant_blocks * local_range;
+ਸਾਂਚਾ <ਸਾਂਚਾ <ਪੂਰਨ> ਕਿਸਮ_ਨਾਂ quantize_f>
+ਖਾਲੀ quantize_ਪੰਕਤੀ_q8_1_sycl(ਅਚਲ ਦਸ਼ਮਲਵ * x, ਖਾਲੀ * vy, ਅਚਲ ਪੂਰਨ kx, ਅਚਲ ਪੂਰਨ ky, ਅਚਲ ਪੂਰਨ kx_padded,
+                            dpct::ਕਤਾਰ_ptr stream) {
+    static_assert(QK8_1 % WARP_ਮਾਪ == 0);
+    ਸਵੈਚਾਲਿਤ local_range      = std::size_t(WARP_ਮਾਪ);
+    ਸਵੈਚਾਲਿਤ ਅੰਕ_quant_ਖੰਡਾਂ = ky * (kx / QK8_1);
+    ਸਵੈਚਾਲਿਤ global_range     = ਅੰਕ_quant_ਖੰਡਾਂ * local_range;
     dpct::has_capability_or_fail(stream->get_device(), { sycl::aspect::fp16 });
 
     stream->parallel_for(sycl::nd_range<1>({ global_range }, { local_range }),
-                         [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                             quantize_f<QK8_1 / WARP_SIZE>()(x, vy, kx, kx_padded, it);
+                         [=](sycl::nd_ਵਸਤੂ<1> it) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
+                             quantize_f<QK8_1 / WARP_ਮਾਪ>()(x, vy, kx, kx_padded, it);
                          });
 }

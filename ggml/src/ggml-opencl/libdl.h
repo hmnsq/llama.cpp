@@ -1,79 +1,79 @@
-#pragma once
+#ਹਦਾਇਤ once
 
-#ifdef _WIN32
-#   define WIN32_LEAN_AND_MEAN
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ _WIN32
+#   define WIN32_LEAN_AND_ਔਸਤ
 #   ifndef NOMINMAX
 #       define NOMINMAX
 #   endif
 #   include <windows.h>
 #   include <winevt.h>
-#else
+#ਨਹੀਂਤਾਂ
 #    include <dlfcn.h>
 #    include <unistd.h>
-#endif
-#include <filesystem>
+#ਜੇ_ਅੰਤ
+#ਅਨ੍ਤਰ੍ਭਾਵ <filesystem>
 
 namespace fs = std::filesystem;
 
-#ifdef _WIN32
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ _WIN32
 
-using dl_handle = std::remove_pointer_t<HMODULE>;
+using dl_handle = std::remove_ਸੂਚਕ_t<HMODULE>;
 
-struct dl_handle_deleter {
-    void operator()(HMODULE handle) {
+ਬਣਤਰ dl_handle_deleter {
+    ਖਾਲੀ ਸੰਚਾਲਕ()(HMODULE handle) {
         FreeLibrary(handle);
     }
 };
 
-static inline dl_handle * dl_load_library(const fs::path & path) {
+ਸਥਿਰ ਸਤਰਅੰਦਰ dl_handle * dl_ਲੱਦੋ_library(ਅਚਲ fs::ਰਸਤਾ & ਰਸਤਾ) {
     // suppress error dialogs for missing DLLs
-    DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
-    SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
+    DWORD old_ਬਹੁਲਕ = ਸੈੱਟ_Error_ਬਹੁਲਕ(SEM_FAILCRITICALERRORS);
+    ਸੈੱਟ_Error_ਬਹੁਲਕ(old_ਬਹੁਲਕ | SEM_FAILCRITICALERRORS);
 
-    HMODULE handle = LoadLibraryW(path.wstring().c_str());
+    HMODULE handle = ਲੱਦੋ_Library_W(ਰਸਤਾ.wstring().c_str());
 
-    SetErrorMode(old_mode);
+    ਸੈੱਟ_Error_ਬਹੁਲਕ(old_ਬਹੁਲਕ);
 
-    return handle;
+    ਵਾਪਸ handle;
 }
 
-static inline void * dl_get_sym(dl_handle * handle, const char * name) {
-    DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
-    SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ * dl_get_sym(dl_handle * handle, ਅਚਲ ਅੱਖਰ * name) {
+    DWORD old_ਬਹੁਲਕ = ਸੈੱਟ_Error_ਬਹੁਲਕ(SEM_FAILCRITICALERRORS);
+    ਸੈੱਟ_Error_ਬਹੁਲਕ(old_ਬਹੁਲਕ | SEM_FAILCRITICALERRORS);
 
-    void * p = (void *) GetProcAddress(handle, name);
+    ਖਾਲੀ * p = (ਖਾਲੀ *) Get_Proc_ਪਤਾ(handle, name);
 
-    SetErrorMode(old_mode);
+    ਸੈੱਟ_Error_ਬਹੁਲਕ(old_ਬਹੁਲਕ);
 
-    return p;
+    ਵਾਪਸ p;
 }
 
-static inline const char * dl_error() {
-    return "";
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਅਚਲ ਅੱਖਰ * dl_error() {
+    ਵਾਪਸ "";
 }
 
-#else
+#ਨਹੀਂਤਾਂ
 
-using dl_handle = void;
+using dl_handle = ਖਾਲੀ;
 
-struct dl_handle_deleter {
-    void operator()(void * handle) {
+ਬਣਤਰ dl_handle_deleter {
+    ਖਾਲੀ ਸੰਚਾਲਕ()(ਖਾਲੀ * handle) {
         dlclose(handle);
     }
 };
 
-static inline dl_handle * dl_load_library(const fs::path & path) {
-    dl_handle * handle = dlopen(path.string().c_str(), RTLD_NOW | RTLD_LOCAL);
-    return handle;
+ਸਥਿਰ ਸਤਰਅੰਦਰ dl_handle * dl_ਲੱਦੋ_library(ਅਚਲ fs::ਰਸਤਾ & ਰਸਤਾ) {
+    dl_handle * handle = dlopen(ਰਸਤਾ.string().c_str(), RTLD_NOW | RTLD_LOCAL);
+    ਵਾਪਸ handle;
 }
 
-static inline void * dl_get_sym(dl_handle * handle, const char * name) {
-    return dlsym(handle, name);
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ * dl_get_sym(dl_handle * handle, ਅਚਲ ਅੱਖਰ * name) {
+    ਵਾਪਸ dlsym(handle, name);
 }
 
-static inline const char * dl_error() {
-    const char *rslt = dlerror();
-    return rslt != nullptr ? rslt : "";
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਅਚਲ ਅੱਖਰ * dl_error() {
+    ਅਚਲ ਅੱਖਰ *rslt = dlerror();
+    ਵਾਪਸ rslt != nullptr ? rslt : "";
 }
 
-#endif
+#ਜੇ_ਅੰਤ

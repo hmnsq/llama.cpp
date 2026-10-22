@@ -1,204 +1,204 @@
-#define GGML_COMMON_IMPL_C
-#include "ggml-common.h"
-#include "ggml-quants.h"
-#include "ggml-impl.h"
-#include "ggml-cpu.h"
-#include "simd-mappings.h"
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_IMPL_C
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-common.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-quants.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-impl.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-cpu.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "simd-mappings.h"
 
-#include "../../quants.h"
-#include "../../ggml-cpu-impl.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "../../quants.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "../../ggml-cpu-impl.h"
 
-#include <math.h>
-#include <string.h>
-#include <assert.h>
-#include <float.h>
-#include <stdlib.h> // for qsort
-#include <stdio.h>  // for GGML_ASSERT
+#ਅਨ੍ਤਰ੍ਭਾਵ <math.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <string.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <assert.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <float.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdlib.h> // for qsort
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdio.h>  // for GGML_ASSERT
 
-#define GROUP_MAX_EPS 1e-15f
-#define GROUP_MAX_EPS_IQ3_XXS 1e-8f
-#define GROUP_MAX_EPS_IQ2_S 1e-8f
-#define GROUP_MAX_EPS_IQ1_M 1e-7f
-#define GROUP_MAX_EPS_IQ1_S 1e-12f
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ ਸਮੂਹ_MAX_EPS 1e-15f
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ ਸਮੂਹ_MAX_EPS_IQ3_XXS 1e-8f
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ ਸਮੂਹ_MAX_EPS_IQ2_S 1e-8f
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ ਸਮੂਹ_MAX_EPS_IQ1_M 1e-7f
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ ਸਮੂਹ_MAX_EPS_IQ1_S 1e-12f
 
-#define UNUSED GGML_UNUSED
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ ਅਣਵਰਤਿਆ GGML_ਅਣਵਰਤਿਆ
 
-#if defined(__VXE__) || defined(__VXE2__)
-#define B1(c,s,n)  0x ## n ## c ,  0x ## n ## s
-#define B2(c,s,n) B1(c,s,n ## c), B1(c,s,n ## s)
-#define B3(c,s,n) B2(c,s,n ## c), B2(c,s,n ## s)
-#define B4(c,s,n) B3(c,s,n ## c), B3(c,s,n ## s)
-#define B5(c,s,n) B4(c,s,n ## c), B4(c,s,n ## s)
-#define B6(c,s,n) B5(c,s,n ## c), B5(c,s,n ## s)
-#define B7(c,s,n) B6(c,s,n ## c), B6(c,s,n ## s)
-#define B8(c,s  ) B7(c,s,     c), B7(c,s,     s)
+#ਜੇ defined(__VXE__) || defined(__VXE2__)
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ B1(c,s,n)  0x ## n ## c ,  0x ## n ## s
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ B2(c,s,n) B1(c,s,n ## c), B1(c,s,n ## s)
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ B3(c,s,n) B2(c,s,n ## c), B2(c,s,n ## s)
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ B4(c,s,n) B3(c,s,n ## c), B3(c,s,n ## s)
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ B5(c,s,n) B4(c,s,n ## c), B4(c,s,n ## s)
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ B6(c,s,n) B5(c,s,n ## c), B5(c,s,n ## s)
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ B7(c,s,n) B6(c,s,n ## c), B6(c,s,n ## s)
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ B8(c,s  ) B7(c,s,     c), B7(c,s,     s)
 
 // precomputed tables for expanding 8bits to 8 bytes:
-static const __attribute__((aligned(16))) uint64_t table_b2b_0[1 << 8] = { B8(00, 10) }; // ( b ) << 4
-static const __attribute__((aligned(16))) uint64_t table_b2b_1[1 << 8] = { B8(10, 00) }; // (!b) << 4
+ਸਥਿਰ ਅਚਲ __attribute__((aligned(16))) uint64_t ਸਾਰਣੀ_b2b_0[1 << 8] = { B8(00, 10) }; // ( b ) << 4
+ਸਥਿਰ ਅਚਲ __attribute__((aligned(16))) uint64_t ਸਾਰਣੀ_b2b_1[1 << 8] = { B8(10, 00) }; // (!b) << 4
 
 // permute mask for byteswapping
-static const uint8x16_t v_kperm = (const uint8x16_t){
+ਸਥਿਰ ਅਚਲ uint8x16_t v_kperm = (ਅਚਲ uint8x16_t){
      7,  6,  5,  4,  3,  2, 1, 0,
     15, 14, 13, 12, 11, 10, 9, 8
 };
-#endif
+#ਜੇ_ਅੰਤ
 
-void quantize_row_q8_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
-    assert(QK8_0 == 32);
-    assert(k % QK8_0 == 0);
-    const int nb = k / QK8_0;
+ਖਾਲੀ quantize_ਪੰਕਤੀ_q8_0(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖਾਲੀ * GGML_RESTRICT vy, int64_t k) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(QK8_0 == 32);
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % QK8_0 == 0);
+    ਅਚਲ ਪੂਰਨ nb = k / QK8_0;
 
-    block_q8_0 * GGML_RESTRICT y = vy;
+    ਖੰਡ_q8_0 * GGML_RESTRICT y = vy;
 
-#if defined(__VXE__) || defined(__VXE2__)
-    for (int i = 0; i < nb; i++) {
+#ਜੇ defined(__VXE__) || defined(__VXE2__)
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
         float32x4_t srcv [8];
         float32x4_t asrcv[8];
         float32x4_t amaxv[8];
 
-        for (int j = 0; j < 8; j++) srcv[j] = vec_xl(0, x + i*32 + 4*j);
-        for (int j = 0; j < 8; j++) asrcv[j] = vec_abs(srcv[j]);
-        for (int j = 0; j < 4; j++) amaxv[2*j] = vec_max(asrcv[2*j], asrcv[2*j+1]);
-        for (int j = 0; j < 2; j++) amaxv[4*j] = vec_max(amaxv[4*j], amaxv[4*j+2]);
-        for (int j = 0; j < 1; j++) amaxv[8*j] = vec_max(amaxv[8*j], amaxv[8*j+4]);
+        ਲਈ (ਪੂਰਨ j = 0; j < 8; j++) srcv[j] = vec_xl(0, x + i*32 + 4*j);
+        ਲਈ (ਪੂਰਨ j = 0; j < 8; j++) asrcv[j] = vec_abs(srcv[j]);
+        ਲਈ (ਪੂਰਨ j = 0; j < 4; j++) amaxv[2*j] = vec_max(asrcv[2*j], asrcv[2*j+1]);
+        ਲਈ (ਪੂਰਨ j = 0; j < 2; j++) amaxv[4*j] = vec_max(amaxv[4*j], amaxv[4*j+2]);
+        ਲਈ (ਪੂਰਨ j = 0; j < 1; j++) amaxv[8*j] = vec_max(amaxv[8*j], amaxv[8*j+4]);
 
-        const float amax = MAX(MAX(vec_extract(amaxv[0], 0),
-                                   vec_extract(amaxv[0], 1)),
-                               MAX(vec_extract(amaxv[0], 2),
-                                   vec_extract(amaxv[0], 3)));
+        ਅਚਲ ਦਸ਼ਮਲਵ amax = MAX(MAX(vec_ਕੱਢੋ(amaxv[0], 0),
+                                   vec_ਕੱਢੋ(amaxv[0], 1)),
+                               MAX(vec_ਕੱਢੋ(amaxv[0], 2),
+                                   vec_ਕੱਢੋ(amaxv[0], 3)));
 
-        const float d = amax / ((1 << 7) - 1);
-        const float id = d ? 1.0f / d : 0.0f;
+        ਅਚਲ ਦਸ਼ਮਲਵ d = amax / ((1 << 7) - 1);
+        ਅਚਲ ਦਸ਼ਮਲਵ id = d ? 1.0f / d : 0.0f;
 
-        y[i].d = GGML_CPU_FP32_TO_FP16(d);
+        y[i].d = GGML_CPU_FP32_ਮੰਜ਼ਿਲ_FP16(d);
 
-        for (int j = 0; j < 8; j++) {
-            const float32x4_t v = vec_mul(srcv[j], vec_splats(id));
+        ਲਈ (ਪੂਰਨ j = 0; j < 8; j++) {
+            ਅਚਲ float32x4_t v = vec_mul(srcv[j], vec_splats(id));
             /* Uses non-default rounding for vec_signed or vec_round */
-            const int32x4_t vi = vec_signed(__builtin_s390_vfisb(v, 4, 1));
+            ਅਚਲ int32x4_t vi = vec_signed(__builtin_s390_vfisb(v, 4, 1));
 
-            y[i].qs[4*j + 0] = vec_extract(vi, 0);
-            y[i].qs[4*j + 1] = vec_extract(vi, 1);
-            y[i].qs[4*j + 2] = vec_extract(vi, 2);
-            y[i].qs[4*j + 3] = vec_extract(vi, 3);
+            y[i].qs[4*j + 0] = vec_ਕੱਢੋ(vi, 0);
+            y[i].qs[4*j + 1] = vec_ਕੱਢੋ(vi, 1);
+            y[i].qs[4*j + 2] = vec_ਕੱਢੋ(vi, 2);
+            y[i].qs[4*j + 3] = vec_ਕੱਢੋ(vi, 3);
         }
     }
-#else
-    GGML_UNUSED(nb);
+#ਨਹੀਂਤਾਂ
+    GGML_ਅਣਵਰਤਿਆ(nb);
     // scalar
-    quantize_row_q8_0_ref(x, y, k);
-#endif
+    quantize_ਪੰਕਤੀ_q8_0_ref(x, y, k);
+#ਜੇ_ਅੰਤ
 }
 
-void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
-    assert(k % QK8_1 == 0);
-    const int nb = k / QK8_1;
+ਖਾਲੀ quantize_ਪੰਕਤੀ_q8_1(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖਾਲੀ * GGML_RESTRICT vy, int64_t k) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % QK8_1 == 0);
+    ਅਚਲ ਪੂਰਨ nb = k / QK8_1;
 
-    block_q8_1 * GGML_RESTRICT y = vy;
+    ਖੰਡ_q8_1 * GGML_RESTRICT y = vy;
 
-#if defined(__VXE__) || defined(__VXE2__)
-    for (int i = 0; i < nb; i++) {
+#ਜੇ defined(__VXE__) || defined(__VXE2__)
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
         float32x4_t srcv [8];
         float32x4_t asrcv[8];
         float32x4_t amaxv[8];
 
-        for (int j = 0; j < 8; j++) srcv[j] = vec_xl(0, x + i*32 + 4*j);
-        for (int j = 0; j < 8; j++) asrcv[j] = vec_abs(srcv[j]);
-        for (int j = 0; j < 4; j++) amaxv[2*j] = vec_max(asrcv[2*j], asrcv[2*j+1]);
-        for (int j = 0; j < 2; j++) amaxv[4*j] = vec_max(amaxv[4*j], amaxv[4*j+2]);
-        for (int j = 0; j < 1; j++) amaxv[8*j] = vec_max(amaxv[8*j], amaxv[8*j+4]);
+        ਲਈ (ਪੂਰਨ j = 0; j < 8; j++) srcv[j] = vec_xl(0, x + i*32 + 4*j);
+        ਲਈ (ਪੂਰਨ j = 0; j < 8; j++) asrcv[j] = vec_abs(srcv[j]);
+        ਲਈ (ਪੂਰਨ j = 0; j < 4; j++) amaxv[2*j] = vec_max(asrcv[2*j], asrcv[2*j+1]);
+        ਲਈ (ਪੂਰਨ j = 0; j < 2; j++) amaxv[4*j] = vec_max(amaxv[4*j], amaxv[4*j+2]);
+        ਲਈ (ਪੂਰਨ j = 0; j < 1; j++) amaxv[8*j] = vec_max(amaxv[8*j], amaxv[8*j+4]);
 
-        const float amax = MAX(MAX(vec_extract(amaxv[0], 0),
-                                   vec_extract(amaxv[0], 1)),
-                               MAX(vec_extract(amaxv[0], 2),
-                                   vec_extract(amaxv[0], 3)));
+        ਅਚਲ ਦਸ਼ਮਲਵ amax = MAX(MAX(vec_ਕੱਢੋ(amaxv[0], 0),
+                                   vec_ਕੱਢੋ(amaxv[0], 1)),
+                               MAX(vec_ਕੱਢੋ(amaxv[0], 2),
+                                   vec_ਕੱਢੋ(amaxv[0], 3)));
 
-        const float d = amax / ((1 << 7) - 1);
-        const float id = d ? 1.0f / d : 0.0f;
+        ਅਚਲ ਦਸ਼ਮਲਵ d = amax / ((1 << 7) - 1);
+        ਅਚਲ ਦਸ਼ਮਲਵ id = d ? 1.0f / d : 0.0f;
 
-        y[i].d = GGML_CPU_FP32_TO_FP16(d);
+        y[i].d = GGML_CPU_FP32_ਮੰਜ਼ਿਲ_FP16(d);
 
         int32x4_t acc = vec_splats(0);
 
-        for (int j = 0; j < 8; j++) {
-            const float32x4_t v = vec_mul(srcv[j], vec_splats(id));
+        ਲਈ (ਪੂਰਨ j = 0; j < 8; j++) {
+            ਅਚਲ float32x4_t v = vec_mul(srcv[j], vec_splats(id));
             /* Uses non-default rounding for vec_signed or vec_round */
-            const int32x4_t vi = vec_signed(__builtin_s390_vfisb(v, 4, 1));
+            ਅਚਲ int32x4_t vi = vec_signed(__builtin_s390_vfisb(v, 4, 1));
 
-            y[i].qs[4*j + 0] = vec_extract(vi, 0);
-            y[i].qs[4*j + 1] = vec_extract(vi, 1);
-            y[i].qs[4*j + 2] = vec_extract(vi, 2);
-            y[i].qs[4*j + 3] = vec_extract(vi, 3);
+            y[i].qs[4*j + 0] = vec_ਕੱਢੋ(vi, 0);
+            y[i].qs[4*j + 1] = vec_ਕੱਢੋ(vi, 1);
+            y[i].qs[4*j + 2] = vec_ਕੱਢੋ(vi, 2);
+            y[i].qs[4*j + 3] = vec_ਕੱਢੋ(vi, 3);
 
-            acc = vec_add(acc, vi);
+            acc = vec_ਜੋੜੋ(acc, vi);
         }
 
-        y[i].s = GGML_CPU_FP32_TO_FP16(d * (acc[0] + acc[1] + acc[2] + acc[3]));
+        y[i].s = GGML_CPU_FP32_ਮੰਜ਼ਿਲ_FP16(d * (acc[0] + acc[1] + acc[2] + acc[3]));
     }
-#else
-    GGML_UNUSED(nb);
+#ਨਹੀਂਤਾਂ
+    GGML_ਅਣਵਰਤਿਆ(nb);
     // scalar
-    quantize_row_q8_1_ref(x, y, k);
-#endif
+    quantize_ਪੰਕਤੀ_q8_1_ref(x, y, k);
+#ਜੇ_ਅੰਤ
 }
 
 
 //===================================== Dot products =================================
 
-void ggml_vec_dot_q1_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    const int qk = QK1_0;  // 128
-    const int nb = n / qk;
+ਖਾਲੀ ggml_vec_dot_q1_0_q8_0(ਪੂਰਨ n, ਦਸ਼ਮਲਵ * GGML_RESTRICT s, size_t bs, ਅਚਲ ਖਾਲੀ * GGML_RESTRICT vx, size_t bx, ਅਚਲ ਖਾਲੀ * GGML_RESTRICT vy, size_t by, ਪੂਰਨ nrc) {
+    ਅਚਲ ਪੂਰਨ qk = QK1_0;  // 128
+    ਅਚਲ ਪੂਰਨ nb = n / qk;
 
-    assert(n % qk == 0);
-    assert(nrc == 1);
-    UNUSED(nrc);
-    UNUSED(bx);
-    UNUSED(by);
-    UNUSED(bs);
+    ਪ੍ਰਤਿਜ੍ਞਾ(n % qk == 0);
+    ਪ੍ਰਤਿਜ੍ਞਾ(nrc == 1);
+    ਅਣਵਰਤਿਆ(nrc);
+    ਅਣਵਰਤਿਆ(bx);
+    ਅਣਵਰਤਿਆ(by);
+    ਅਣਵਰਤਿਆ(bs);
 
-    const block_q1_0 * GGML_RESTRICT x = vx;
-    const block_q8_0 * GGML_RESTRICT y = vy;
+    ਅਚਲ ਖੰਡ_q1_0 * GGML_RESTRICT x = vx;
+    ਅਚਲ ਖੰਡ_q8_0 * GGML_RESTRICT y = vy;
 
-#if defined(__VXE__) || defined(__VXE2__)
+#ਜੇ defined(__VXE__) || defined(__VXE2__)
     float32x4_t v_sumf = vec_splats(0.0f);
 
-    const uint8x16_t v_zero = vec_splats((uint8_t)0x00);  // zero
-    const uint8x16_t v_bias = vec_splats((uint8_t)0x80);  // bias from signed to unsigned
+    ਅਚਲ uint8x16_t v_zero = vec_splats((uint8_t)0x00);  // zero
+    ਅਚਲ uint8x16_t v_bias = vec_splats((uint8_t)0x80);  // bias from signed to unsigned
                                                           // v ^ 0x80 == v + 128
 
-    const uint8x16_t v_idx = (const uint8x16_t){ 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1 };
-    const uint8x16_t v_bit = (const uint8x16_t){ 1, 2, 4, 8, 16, 32, 64, 128, 1, 2, 4, 8, 16, 32, 64, 128 };
+    ਅਚਲ uint8x16_t v_idx = (ਅਚਲ uint8x16_t){ 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1 };
+    ਅਚਲ uint8x16_t v_ਦੋਆਧਾਰੀ_ਅੰਕ = (ਅਚਲ uint8x16_t){ 1, 2, 4, 8, 16, 32, 64, 128, 1, 2, 4, 8, 16, 32, 64, 128 };
 
-    for (int i = 0; i < nb; ++i) {
-        const uint8x16_t  v_x  = vec_xl(0, (const uint8_t *)x[i].qs);
-        const float32x4_t v_xd = vec_splats(GGML_CPU_FP16_TO_FP32(x[i].d));
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; ++i) {
+        ਅਚਲ uint8x16_t  v_x  = vec_xl(0, (ਅਚਲ uint8_t *)x[i].qs);
+        ਅਚਲ float32x4_t v_xd = vec_splats(GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(x[i].d));
 
-        for (int k = 0; k < 4; ++k) {
+        ਲਈ (ਪੂਰਨ k = 0; k < 4; ++k) {
             // sub-block k holds elements 32k .. 32k+31
-            const block_q8_0 * GGML_RESTRICT yb = &y[i*4 + k];
-            const float32x4_t v_yd = vec_splats(GGML_CPU_FP16_TO_FP32(yb->d));
+            ਅਚਲ ਖੰਡ_q8_0 * GGML_RESTRICT yb = &y[i*4 + k];
+            ਅਚਲ float32x4_t v_yd = vec_splats(GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(yb->d));
 
-            const uint8x16_t v_xrl = vec_perm(v_x, v_x, vec_add(v_idx, vec_splats((uint8_t)(k*4 + 0))));
-            const uint8x16_t v_xrh = vec_perm(v_x, v_x, vec_add(v_idx, vec_splats((uint8_t)(k*4 + 2))));
+            ਅਚਲ uint8x16_t v_xrl = vec_perm(v_x, v_x, vec_ਜੋੜੋ(v_idx, vec_splats((uint8_t)(k*4 + 0))));
+            ਅਚਲ uint8x16_t v_xrh = vec_perm(v_x, v_x, vec_ਜੋੜੋ(v_idx, vec_splats((uint8_t)(k*4 + 2))));
 
             // isolate each lane's bit, then set all ones where that bit is clear, the -d case
-            const int8x16_t v_ml = (int8x16_t)vec_cmpeq(vec_and(v_xrl, v_bit), v_zero);
-            const int8x16_t v_mh = (int8x16_t)vec_cmpeq(vec_and(v_xrh, v_bit), v_zero);
+            ਅਚਲ int8x16_t v_ml = (int8x16_t)vec_cmpeq(vec_and(v_xrl, v_ਦੋਆਧਾਰੀ_ਅੰਕ), v_zero);
+            ਅਚਲ int8x16_t v_mh = (int8x16_t)vec_cmpeq(vec_and(v_xrh, v_ਦੋਆਧਾਰੀ_ਅੰਕ), v_zero);
 
-            const int8x16_t v_yl = vec_xl(0,       (const int8_t *)yb->qs);
-            const int8x16_t v_yh = vec_xl(QK8_0/2, (const int8_t *)yb->qs);
+            ਅਚਲ int8x16_t v_yl = vec_xl(0,       (ਅਚਲ int8_t *)yb->qs);
+            ਅਚਲ int8x16_t v_yh = vec_xl(QK8_0/2, (ਅਚਲ int8_t *)yb->qs);
 
             // weights are only +1 or -1, so negate y
-            const int8x16_t v_ysl = vec_sub(vec_xor(v_yl, v_ml), v_ml);
-            const int8x16_t v_ysh = vec_sub(vec_xor(v_yh, v_mh), v_mh);
+            ਅਚਲ int8x16_t v_ysl = vec_sub(vec_xor(v_yl, v_ml), v_ml);
+            ਅਚਲ int8x16_t v_ysh = vec_sub(vec_xor(v_yh, v_mh), v_mh);
 
             // bias to unsigned, then vec_sum4 adds each group of 4 bytes into one word
-            const uint32x4_t v_p = vec_add(vec_sum4(vec_xor((uint8x16_t)v_ysl, v_bias), v_zero),
+            ਅਚਲ uint32x4_t v_p = vec_ਜੋੜੋ(vec_sum4(vec_xor((uint8x16_t)v_ysl, v_bias), v_zero),
                                            vec_sum4(vec_xor((uint8x16_t)v_ysh, v_bias), v_zero));
 
             // each word summed 8 biased bytes, so take back 8 * 128
-            const int32x4_t v_xy = vec_sub((int32x4_t)v_p, vec_splats((int32_t)1024));
+            ਅਚਲ int32x4_t v_xy = vec_sub((int32x4_t)v_p, vec_splats((int32_t)1024));
 
             // apply both block scales and add into the running total
             v_sumf = vec_madd(vec_float(v_xy), vec_mul(v_xd, v_yd), v_sumf);
@@ -206,163 +206,163 @@ void ggml_vec_dot_q1_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     }
 
     *s = vec_hsum_f32x4(v_sumf);
-#else
-    UNUSED(nb);
-    UNUSED(x);
-    UNUSED(y);
+#ਨਹੀਂਤਾਂ
+    ਅਣਵਰਤਿਆ(nb);
+    ਅਣਵਰਤਿਆ(x);
+    ਅਣਵਰਤਿਆ(y);
     ggml_vec_dot_q1_0_q8_0_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#ਜੇ_ਅੰਤ
 }
 
-void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
+ਖਾਲੀ ggml_vec_dot_q4_0_q8_0(ਪੂਰਨ n, ਦਸ਼ਮਲਵ * GGML_RESTRICT s, size_t bs, ਅਚਲ ਖਾਲੀ * GGML_RESTRICT vx, size_t bx, ਅਚਲ ਖਾਲੀ * GGML_RESTRICT vy, size_t by, ਪੂਰਨ nrc) {
+    ਅਚਲ ਪੂਰਨ qk = QK8_0;
+    ਅਚਲ ਪੂਰਨ nb = n / qk;
 
-    assert(n % qk == 0);
-    assert(nrc == 1);
-    UNUSED(nrc);
-    UNUSED(bx);
-    UNUSED(by);
-    UNUSED(bs);
+    ਪ੍ਰਤਿਜ੍ਞਾ(n % qk == 0);
+    ਪ੍ਰਤਿਜ੍ਞਾ(nrc == 1);
+    ਅਣਵਰਤਿਆ(nrc);
+    ਅਣਵਰਤਿਆ(bx);
+    ਅਣਵਰਤਿਆ(by);
+    ਅਣਵਰਤਿਆ(bs);
 
-    const block_q4_0 * GGML_RESTRICT x = vx;
-    const block_q8_0 * GGML_RESTRICT y = vy;
+    ਅਚਲ ਖੰਡ_q4_0 * GGML_RESTRICT x = vx;
+    ਅਚਲ ਖੰਡ_q8_0 * GGML_RESTRICT y = vy;
 
-    int ib = 0;
-    float sumf = 0;
+    ਪੂਰਨ ib = 0;
+    ਦਸ਼ਮਲਵ sumf = 0;
 
-#if defined(__VXE__) || defined(__VXE2__)
+#ਜੇ defined(__VXE__) || defined(__VXE2__)
     float32x4_t acc = vec_splats(0.0f);
 
-    const uint8x16_t v_m = vec_splats((const uint8_t)0x0F);
-    const int8x16_t  v_s = vec_splats( (const int8_t)0x08);
+    ਅਚਲ uint8x16_t v_m = vec_splats((ਅਚਲ uint8_t)0x0F);
+    ਅਚਲ int8x16_t  v_s = vec_splats( (ਅਚਲ int8_t)0x08);
 
-    for (; ib < nb; ++ib) {
-        const uint8x16_t v_x = vec_xl(0, x[ib].qs);
-        const int8x16_t v_xl = (const int8x16_t)(v_x & v_m);
-        const int8x16_t v_xh = (const int8x16_t)(v_x >> 4);
+    ਲਈ (; ib < nb; ++ib) {
+        ਅਚਲ uint8x16_t v_x = vec_xl(0, x[ib].qs);
+        ਅਚਲ int8x16_t v_xl = (ਅਚਲ int8x16_t)(v_x & v_m);
+        ਅਚਲ int8x16_t v_xh = (ਅਚਲ int8x16_t)(v_x >> 4);
 
-        const int8x16_t v_xls = vec_sub(v_xl, v_s);
-        const int8x16_t v_xhs = vec_sub(v_xh, v_s);
+        ਅਚਲ int8x16_t v_xls = vec_sub(v_xl, v_s);
+        ਅਚਲ int8x16_t v_xhs = vec_sub(v_xh, v_s);
 
-        const int8x16_t v_yl = vec_xl(0      , y[ib].qs);
-        const int8x16_t v_yh = vec_xl(QK8_0/2, y[ib].qs);
+        ਅਚਲ int8x16_t v_yl = vec_xl(0      , y[ib].qs);
+        ਅਚਲ int8x16_t v_yh = vec_xl(QK8_0/2, y[ib].qs);
 
-        const int16x8_t v_xylso = vec_mulo(v_xls, v_yl);
-        const int16x8_t v_xyl = vec_meadd(v_xls, v_yl, v_xylso);
-        const int16x8_t v_xyhso = vec_mulo(v_xhs, v_yh);
-        const int16x8_t v_xyh = vec_meadd(v_xhs, v_yh, v_xyhso);
+        ਅਚਲ int16x8_t v_xylso = vec_mulo(v_xls, v_yl);
+        ਅਚਲ int16x8_t v_xyl = vec_meadd(v_xls, v_yl, v_xylso);
+        ਅਚਲ int16x8_t v_xyhso = vec_mulo(v_xhs, v_yh);
+        ਅਚਲ int16x8_t v_xyh = vec_meadd(v_xhs, v_yh, v_xyhso);
 
         int16x8_t v_xy_ = v_xyl + v_xyh; v_xy_ += vec_reve(v_xy_);
 
-        const float32x4_t v_xy = vec_float(vec_unpackh(v_xy_));
-        const float32x4_t v_d = vec_splats(GGML_CPU_FP16_TO_FP32(x[ib].d) * GGML_CPU_FP16_TO_FP32(y[ib].d));
+        ਅਚਲ float32x4_t v_xy = vec_float(vec_unpackh(v_xy_));
+        ਅਚਲ float32x4_t v_d = vec_splats(GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(x[ib].d) * GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(y[ib].d));
 
         acc = vec_madd(v_xy, v_d, acc);
     }
 
     sumf = vec_hsum_f32x4(acc);
     *s = sumf;
-#else
-    UNUSED(nb);
-    UNUSED(x);
-    UNUSED(y);
-    UNUSED(ib);
-    UNUSED(sumf);
+#ਨਹੀਂਤਾਂ
+    ਅਣਵਰਤਿਆ(nb);
+    ਅਣਵਰਤਿਆ(x);
+    ਅਣਵਰਤਿਆ(y);
+    ਅਣਵਰਤਿਆ(ib);
+    ਅਣਵਰਤਿਆ(sumf);
     ggml_vec_dot_q4_0_q8_0_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#ਜੇ_ਅੰਤ
 }
 
-void ggml_vec_dot_q4_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    const int qk = QK8_1;
-    const int nb = n / qk;
+ਖਾਲੀ ggml_vec_dot_q4_1_q8_1(ਪੂਰਨ n, ਦਸ਼ਮਲਵ * GGML_RESTRICT s, size_t bs, ਅਚਲ ਖਾਲੀ * GGML_RESTRICT vx, size_t bx, ਅਚਲ ਖਾਲੀ * GGML_RESTRICT vy, size_t by, ਪੂਰਨ nrc) {
+    ਅਚਲ ਪੂਰਨ qk = QK8_1;
+    ਅਚਲ ਪੂਰਨ nb = n / qk;
 
-    assert(n % qk == 0);
-    assert(nrc == 1);
-    UNUSED(nrc);
-    UNUSED(bx);
-    UNUSED(by);
-    UNUSED(bs);
+    ਪ੍ਰਤਿਜ੍ਞਾ(n % qk == 0);
+    ਪ੍ਰਤਿਜ੍ਞਾ(nrc == 1);
+    ਅਣਵਰਤਿਆ(nrc);
+    ਅਣਵਰਤਿਆ(bx);
+    ਅਣਵਰਤਿਆ(by);
+    ਅਣਵਰਤਿਆ(bs);
 
-    const block_q4_1 * GGML_RESTRICT x = vx;
-    const block_q8_1 * GGML_RESTRICT y = vy;
+    ਅਚਲ ਖੰਡ_q4_1 * GGML_RESTRICT x = vx;
+    ਅਚਲ ਖੰਡ_q8_1 * GGML_RESTRICT y = vy;
 
-    int ib = 0;
-    float sumf = 0;
+    ਪੂਰਨ ib = 0;
+    ਦਸ਼ਮਲਵ sumf = 0;
 
-#if defined(__VXE__) || defined(__VXE2__)
-    float summs = 0;
+#ਜੇ defined(__VXE__) || defined(__VXE2__)
+    ਦਸ਼ਮਲਵ summs = 0;
     float32x4_t acc = vec_splats(0.0f);
 
-    const uint8x16_t v_m = vec_splat_u8(0x0F);
+    ਅਚਲ uint8x16_t v_m = vec_splat_u8(0x0F);
 
-#pragma GCC unroll 4
-    for (; ib < nb; ++ib) {
+#ਹਦਾਇਤ GCC unroll 4
+    ਲਈ (; ib < nb; ++ib) {
         __builtin_prefetch(x[ib].qs, 0, 1);
         __builtin_prefetch(y[ib].qs, 0, 1);
 
-        summs += GGML_CPU_FP16_TO_FP32(x[ib].m) * GGML_CPU_FP16_TO_FP32(y[ib].s);
+        summs += GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(x[ib].m) * GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(y[ib].s);
 
-        const uint8x16_t v_x = vec_xl(0, x[ib].qs);
-        const int8x16_t v_xl = (const int8x16_t)(v_x & v_m);
-        const int8x16_t v_xh = (const int8x16_t)(v_x >> 4);
+        ਅਚਲ uint8x16_t v_x = vec_xl(0, x[ib].qs);
+        ਅਚਲ int8x16_t v_xl = (ਅਚਲ int8x16_t)(v_x & v_m);
+        ਅਚਲ int8x16_t v_xh = (ਅਚਲ int8x16_t)(v_x >> 4);
 
-        const int8x16_t v_yl = vec_xl(0      , y[ib].qs);
-        const int8x16_t v_yh = vec_xl(QK8_1/2, y[ib].qs);
+        ਅਚਲ int8x16_t v_yl = vec_xl(0      , y[ib].qs);
+        ਅਚਲ int8x16_t v_yh = vec_xl(QK8_1/2, y[ib].qs);
 
-        const int32x4_t v_xy_ = ggml_vec_dot_s32(ggml_vec_dot_s32(vec_splats(0), v_xl, v_yl), v_xh, v_yh);
-        const float32x4_t v_xy = vec_float(v_xy_);
+        ਅਚਲ int32x4_t v_xy_ = ggml_vec_dot_s32(ggml_vec_dot_s32(vec_splats(0), v_xl, v_yl), v_xh, v_yh);
+        ਅਚਲ float32x4_t v_xy = vec_float(v_xy_);
 
-        const float32x4_t v_d = vec_splats(GGML_CPU_FP16_TO_FP32(x[ib].d) * GGML_CPU_FP16_TO_FP32(y[ib].d));
+        ਅਚਲ float32x4_t v_d = vec_splats(GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(x[ib].d) * GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(y[ib].d));
 
         acc = vec_madd(v_xy, v_d, acc);
     }
 
     sumf = vec_hsum_f32x4(acc) + summs;
     *s = sumf;
-#else
-    UNUSED(nb);
-    UNUSED(x);
-    UNUSED(y);
-    UNUSED(ib);
-    UNUSED(sumf);
+#ਨਹੀਂਤਾਂ
+    ਅਣਵਰਤਿਆ(nb);
+    ਅਣਵਰਤਿਆ(x);
+    ਅਣਵਰਤਿਆ(y);
+    ਅਣਵਰਤਿਆ(ib);
+    ਅਣਵਰਤਿਆ(sumf);
     ggml_vec_dot_q4_1_q8_1_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#ਜੇ_ਅੰਤ
 }
 
-void ggml_vec_dot_mxfp4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(nrc == 1);
-    UNUSED(nrc);
-    UNUSED(bx);
-    UNUSED(by);
-    UNUSED(bs);
-    assert(n % QK_MXFP4 == 0);
+ਖਾਲੀ ggml_vec_dot_mxfp4_q8_0(ਪੂਰਨ n, ਦਸ਼ਮਲਵ * GGML_RESTRICT s, size_t bs, ਅਚਲ ਖਾਲੀ * GGML_RESTRICT vx, size_t bx, ਅਚਲ ਖਾਲੀ * GGML_RESTRICT vy, size_t by, ਪੂਰਨ nrc) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(nrc == 1);
+    ਅਣਵਰਤਿਆ(nrc);
+    ਅਣਵਰਤਿਆ(bx);
+    ਅਣਵਰਤਿਆ(by);
+    ਅਣਵਰਤਿਆ(bs);
+    ਪ੍ਰਤਿਜ੍ਞਾ(n % QK_MXFP4 == 0);
     static_assert(QK_MXFP4 == QK8_0, "QK_MXFP4 and QK8_0 must be the same");
 
-    const int qk = QK_MXFP4;
-    const int nb = n / qk;
+    ਅਚਲ ਪੂਰਨ qk = QK_MXFP4;
+    ਅਚਲ ਪੂਰਨ nb = n / qk;
 
-    const block_mxfp4 * GGML_RESTRICT x = vx;
-    const block_q8_0  * GGML_RESTRICT y = vy;
+    ਅਚਲ ਖੰਡ_mxfp4 * GGML_RESTRICT x = vx;
+    ਅਚਲ ਖੰਡ_q8_0  * GGML_RESTRICT y = vy;
 
-    int ib = 0;
-    float sumf = 0.0f;
+    ਪੂਰਨ ib = 0;
+    ਦਸ਼ਮਲਵ sumf = 0.0f;
 
-#if defined(__VXE__) || defined(__VXE2__)
-    const int8x16_t  v_k = vec_xl(0, kvalues_mxfp4);
-    const uint8x16_t v_m = vec_splats((const uint8_t)0x0F);
+#ਜੇ defined(__VXE__) || defined(__VXE2__)
+    ਅਚਲ int8x16_t  v_k = vec_xl(0, kvalues_mxfp4);
+    ਅਚਲ uint8x16_t v_m = vec_splats((ਅਚਲ uint8_t)0x0F);
 
     float32x4_t v_acc = vec_splats(0.0f);
 
-    #pragma GCC unroll 8
-    for (; ib + 1 < nb; ib += 2) {
-        const block_mxfp4 * GGML_RESTRICT x0 = &x[ib + 0];
-        const block_mxfp4 * GGML_RESTRICT x1 = &x[ib + 1];
-        const block_q8_0  * GGML_RESTRICT y0 = &y[ib + 0];
-        const block_q8_0  * GGML_RESTRICT y1 = &y[ib + 1];
+    #ਹਦਾਇਤ GCC unroll 8
+    ਲਈ (; ib + 1 < nb; ib += 2) {
+        ਅਚਲ ਖੰਡ_mxfp4 * GGML_RESTRICT x0 = &x[ib + 0];
+        ਅਚਲ ਖੰਡ_mxfp4 * GGML_RESTRICT x1 = &x[ib + 1];
+        ਅਚਲ ਖੰਡ_q8_0  * GGML_RESTRICT y0 = &y[ib + 0];
+        ਅਚਲ ਖੰਡ_q8_0  * GGML_RESTRICT y1 = &y[ib + 1];
 
-        const uint8x16_t v_x0 = vec_xl(0, x0->qs);
-        const uint8x16_t v_x1 = vec_xl(0, x1->qs);
+        ਅਚਲ uint8x16_t v_x0 = vec_xl(0, x0->qs);
+        ਅਚਲ uint8x16_t v_x1 = vec_xl(0, x1->qs);
 
         int8x16_t v_x0l = (int8x16_t)vec_and(v_x0, v_m);
         int8x16_t v_x0h = (int8x16_t)vec_sr(v_x0, 4);
@@ -374,29 +374,29 @@ void ggml_vec_dot_mxfp4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
         v_x1l = vec_perm(v_k, v_k, (uchar8x16_t)v_x1l);
         v_x1h = vec_perm(v_k, v_k, (uchar8x16_t)v_x1h);
 
-        const int8x16_t v_y0l = vec_xl(0,       y0->qs);
-        const int8x16_t v_y0h = vec_xl(QK8_0/2, y0->qs);
-        const int8x16_t v_y1l = vec_xl(0,       y1->qs);
-        const int8x16_t v_y1h = vec_xl(QK8_0/2, y1->qs);
+        ਅਚਲ int8x16_t v_y0l = vec_xl(0,       y0->qs);
+        ਅਚਲ int8x16_t v_y0h = vec_xl(QK8_0/2, y0->qs);
+        ਅਚਲ int8x16_t v_y1l = vec_xl(0,       y1->qs);
+        ਅਚਲ int8x16_t v_y1h = vec_xl(QK8_0/2, y1->qs);
 
-        const int32x4_t v_xy0 = ggml_vec_dot_s32(ggml_vec_dot_s32(vec_splats(0), v_x0l, v_y0l), v_x0h, v_y0h);
-        const int32x4_t v_xy1 = ggml_vec_dot_s32(ggml_vec_dot_s32(vec_splats(0), v_x1l, v_y1l), v_x1h, v_y1h);
+        ਅਚਲ int32x4_t v_xy0 = ggml_vec_dot_s32(ggml_vec_dot_s32(vec_splats(0), v_x0l, v_y0l), v_x0h, v_y0h);
+        ਅਚਲ int32x4_t v_xy1 = ggml_vec_dot_s32(ggml_vec_dot_s32(vec_splats(0), v_x1l, v_y1l), v_x1h, v_y1h);
 
-        const float32x4_t v_xy0f = vec_float(v_xy0);
-        const float32x4_t v_xy1f = vec_float(v_xy1);
+        ਅਚਲ float32x4_t v_xy0f = vec_float(v_xy0);
+        ਅਚਲ float32x4_t v_xy1f = vec_float(v_xy1);
 
-        const float32x4_t v_d0 = vec_splats(GGML_E8M0_TO_FP32_HALF(x0->e) * GGML_CPU_FP16_TO_FP32(y0->d));
-        const float32x4_t v_d1 = vec_splats(GGML_E8M0_TO_FP32_HALF(x1->e) * GGML_CPU_FP16_TO_FP32(y1->d));
+        ਅਚਲ float32x4_t v_d0 = vec_splats(GGML_E8_M0_ਮੰਜ਼ਿਲ_FP32_HALF(x0->e) * GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(y0->d));
+        ਅਚਲ float32x4_t v_d1 = vec_splats(GGML_E8_M0_ਮੰਜ਼ਿਲ_FP32_HALF(x1->e) * GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(y1->d));
 
         v_acc = vec_madd(v_xy0f, v_d0, v_acc);
         v_acc = vec_madd(v_xy1f, v_d1, v_acc);
     }
 
-    for (; ib < nb; ++ib) {
-        const block_mxfp4 * GGML_RESTRICT x0 = &x[ib + 0];
-        const block_q8_0  * GGML_RESTRICT y0 = &y[ib + 0];
+    ਲਈ (; ib < nb; ++ib) {
+        ਅਚਲ ਖੰਡ_mxfp4 * GGML_RESTRICT x0 = &x[ib + 0];
+        ਅਚਲ ਖੰਡ_q8_0  * GGML_RESTRICT y0 = &y[ib + 0];
 
-        const uint8x16_t v_x = vec_xl(0, x0->qs);
+        ਅਚਲ uint8x16_t v_x = vec_xl(0, x0->qs);
 
         int8x16_t v_xl = (int8x16_t)vec_and(v_x, v_m);
         int8x16_t v_xh = (int8x16_t)vec_sr(v_x, 4);
@@ -404,79 +404,79 @@ void ggml_vec_dot_mxfp4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
         v_xl = vec_perm(v_k, v_k, (uchar8x16_t)v_xl);
         v_xh = vec_perm(v_k, v_k, (uchar8x16_t)v_xh);
 
-        const int8x16_t v_yl = vec_xl(0,       y0->qs);
-        const int8x16_t v_yh = vec_xl(QK8_0/2, y0->qs);
+        ਅਚਲ int8x16_t v_yl = vec_xl(0,       y0->qs);
+        ਅਚਲ int8x16_t v_yh = vec_xl(QK8_0/2, y0->qs);
 
-        const int32x4_t v_xy = ggml_vec_dot_s32(ggml_vec_dot_s32(vec_splats(0), v_xl, v_yl), v_xh, v_yh);
-        const float32x4_t v_xyf = vec_float(v_xy);
+        ਅਚਲ int32x4_t v_xy = ggml_vec_dot_s32(ggml_vec_dot_s32(vec_splats(0), v_xl, v_yl), v_xh, v_yh);
+        ਅਚਲ float32x4_t v_xyf = vec_float(v_xy);
 
-        const float32x4_t v_d = vec_splats(GGML_E8M0_TO_FP32_HALF(x0->e) * GGML_CPU_FP16_TO_FP32(y0->d));
+        ਅਚਲ float32x4_t v_d = vec_splats(GGML_E8_M0_ਮੰਜ਼ਿਲ_FP32_HALF(x0->e) * GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(y0->d));
         v_acc = vec_madd(v_xyf, v_d, v_acc);
     }
 
     sumf = vec_hsum_f32x4(v_acc);
     *s = sumf;
-#else
-    UNUSED(nb);
-    UNUSED(x);
-    UNUSED(y);
-    UNUSED(ib);
-    UNUSED(sumf);
+#ਨਹੀਂਤਾਂ
+    ਅਣਵਰਤਿਆ(nb);
+    ਅਣਵਰਤਿਆ(x);
+    ਅਣਵਰਤਿਆ(y);
+    ਅਣਵਰਤਿਆ(ib);
+    ਅਣਵਰਤਿਆ(sumf);
     ggml_vec_dot_mxfp4_q8_0_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#ਜੇ_ਅੰਤ
 }
 
-void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
+ਖਾਲੀ ggml_vec_dot_q5_0_q8_0(ਪੂਰਨ n, ਦਸ਼ਮਲਵ * GGML_RESTRICT s, size_t bs, ਅਚਲ ਖਾਲੀ * GGML_RESTRICT vx, size_t bx, ਅਚਲ ਖਾਲੀ * GGML_RESTRICT vy, size_t by, ਪੂਰਨ nrc) {
+    ਅਚਲ ਪੂਰਨ qk = QK8_0;
+    ਅਚਲ ਪੂਰਨ nb = n / qk;
 
-    assert(n % qk == 0);
-    assert(qk == QK5_0);
-    assert(nrc == 1);
-    UNUSED(nrc);
-    UNUSED(bx);
-    UNUSED(by);
-    UNUSED(bs);
+    ਪ੍ਰਤਿਜ੍ਞਾ(n % qk == 0);
+    ਪ੍ਰਤਿਜ੍ਞਾ(qk == QK5_0);
+    ਪ੍ਰਤਿਜ੍ਞਾ(nrc == 1);
+    ਅਣਵਰਤਿਆ(nrc);
+    ਅਣਵਰਤਿਆ(bx);
+    ਅਣਵਰਤਿਆ(by);
+    ਅਣਵਰਤਿਆ(bs);
 
-    const block_q5_0 * GGML_RESTRICT x = vx;
-    const block_q8_0 * GGML_RESTRICT y = vy;
+    ਅਚਲ ਖੰਡ_q5_0 * GGML_RESTRICT x = vx;
+    ਅਚਲ ਖੰਡ_q8_0 * GGML_RESTRICT y = vy;
 
-    int ib = 0;
-    float sumf = 0.0f;
+    ਪੂਰਨ ib = 0;
+    ਦਸ਼ਮਲਵ sumf = 0.0f;
 
-#if defined(__VXE__) || defined(__VXE2__)
+#ਜੇ defined(__VXE__) || defined(__VXE2__)
     float32x4_t v_sum0 = vec_splats(0.0f);
     float32x4_t v_sum1 = vec_splats(0.0f);
 
     uint32_t qh0, qh1;
     uint64_t tmp0[4], tmp1[4];
 
-    const uint8x16_t v_m = vec_splats((uint8_t)0x0F);
+    ਅਚਲ uint8x16_t v_m = vec_splats((uint8_t)0x0F);
 
-    #pragma GCC unroll 4
-    for (; ib + 1 < nb; ib += 2) {
-        const block_q5_0 * GGML_RESTRICT x0 = &x[ib + 0];
-        const block_q5_0 * GGML_RESTRICT x1 = &x[ib + 1];
-        const block_q8_0 * GGML_RESTRICT y0 = &y[ib + 0];
-        const block_q8_0 * GGML_RESTRICT y1 = &y[ib + 1];
+    #ਹਦਾਇਤ GCC unroll 4
+    ਲਈ (; ib + 1 < nb; ib += 2) {
+        ਅਚਲ ਖੰਡ_q5_0 * GGML_RESTRICT x0 = &x[ib + 0];
+        ਅਚਲ ਖੰਡ_q5_0 * GGML_RESTRICT x1 = &x[ib + 1];
+        ਅਚਲ ਖੰਡ_q8_0 * GGML_RESTRICT y0 = &y[ib + 0];
+        ਅਚਲ ਖੰਡ_q8_0 * GGML_RESTRICT y1 = &y[ib + 1];
 
-        memcpy(&qh0, x0->qh, sizeof(qh0));
-        memcpy(&qh1, x1->qh, sizeof(qh1));
+        ਸਮ੍ਰਿਤੀ_ਨਕਲ(&qh0, x0->qh, ਆਕਾਰ(qh0));
+        ਸਮ੍ਰਿਤੀ_ਨਕਲ(&qh1, x1->qh, ਆਕਾਰ(qh1));
 
-        tmp0[0] = table_b2b_1[(qh0 >>  0) & 0xFF];
-        tmp0[1] = table_b2b_1[(qh0 >>  8) & 0xFF];
-        tmp0[2] = table_b2b_1[(qh0 >> 16) & 0xFF];
-        tmp0[3] = table_b2b_1[(qh0 >> 24)       ];
+        tmp0[0] = ਸਾਰਣੀ_b2b_1[(qh0 >>  0) & 0xFF];
+        tmp0[1] = ਸਾਰਣੀ_b2b_1[(qh0 >>  8) & 0xFF];
+        tmp0[2] = ਸਾਰਣੀ_b2b_1[(qh0 >> 16) & 0xFF];
+        tmp0[3] = ਸਾਰਣੀ_b2b_1[(qh0 >> 24)       ];
 
-        tmp1[0] = table_b2b_1[(qh1 >>  0) & 0xFF];
-        tmp1[1] = table_b2b_1[(qh1 >>  8) & 0xFF];
-        tmp1[2] = table_b2b_1[(qh1 >> 16) & 0xFF];
-        tmp1[3] = table_b2b_1[(qh1 >> 24)       ];
+        tmp1[0] = ਸਾਰਣੀ_b2b_1[(qh1 >>  0) & 0xFF];
+        tmp1[1] = ਸਾਰਣੀ_b2b_1[(qh1 >>  8) & 0xFF];
+        tmp1[2] = ਸਾਰਣੀ_b2b_1[(qh1 >> 16) & 0xFF];
+        tmp1[3] = ਸਾਰਣੀ_b2b_1[(qh1 >> 24)       ];
 
-        int8x16_t v_qh0l = vec_xl(0, (const int8_t *)(tmp0 + 0));
-        int8x16_t v_qh0h = vec_xl(0, (const int8_t *)(tmp0 + 2));
-        int8x16_t v_qh1l = vec_xl(0, (const int8_t *)(tmp1 + 0));
-        int8x16_t v_qh1h = vec_xl(0, (const int8_t *)(tmp1 + 2));
+        int8x16_t v_qh0l = vec_xl(0, (ਅਚਲ int8_t *)(tmp0 + 0));
+        int8x16_t v_qh0h = vec_xl(0, (ਅਚਲ int8_t *)(tmp0 + 2));
+        int8x16_t v_qh1l = vec_xl(0, (ਅਚਲ int8_t *)(tmp1 + 0));
+        int8x16_t v_qh1h = vec_xl(0, (ਅਚਲ int8_t *)(tmp1 + 2));
 
         // required for fixing the byteorder
         v_qh0l = vec_perm(v_qh0l, v_qh0l, v_kperm);
@@ -484,32 +484,32 @@ void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
         v_qh1l = vec_perm(v_qh1l, v_qh1l, v_kperm);
         v_qh1h = vec_perm(v_qh1h, v_qh1h, v_kperm);
 
-        const uint8x16_t v_x0 = vec_xl(0, (const uint8_t *)x0->qs);
-        const uint8x16_t v_x1 = vec_xl(0, (const uint8_t *)x1->qs);
+        ਅਚਲ uint8x16_t v_x0 = vec_xl(0, (ਅਚਲ uint8_t *)x0->qs);
+        ਅਚਲ uint8x16_t v_x1 = vec_xl(0, (ਅਚਲ uint8_t *)x1->qs);
 
         int8x16_t v_x0l = (int8x16_t)vec_and(v_x0, v_m);
         int8x16_t v_x0h = (int8x16_t)vec_sr(v_x0, 4);
         int8x16_t v_x1l = (int8x16_t)vec_and(v_x1, v_m);
         int8x16_t v_x1h = (int8x16_t)vec_sr(v_x1, 4);
 
-        const int8x16_t v_x0lf = vec_sub(v_x0l, v_qh0l);
-        const int8x16_t v_x0hf = vec_sub(v_x0h, v_qh0h);
-        const int8x16_t v_x1lf = vec_sub(v_x1l, v_qh1l);
-        const int8x16_t v_x1hf = vec_sub(v_x1h, v_qh1h);
+        ਅਚਲ int8x16_t v_x0lf = vec_sub(v_x0l, v_qh0l);
+        ਅਚਲ int8x16_t v_x0hf = vec_sub(v_x0h, v_qh0h);
+        ਅਚਲ int8x16_t v_x1lf = vec_sub(v_x1l, v_qh1l);
+        ਅਚਲ int8x16_t v_x1hf = vec_sub(v_x1h, v_qh1h);
 
-        const int8x16_t v_y0l = vec_xl(0,       (const int8_t *)y0->qs);
-        const int8x16_t v_y0h = vec_xl(QK8_0/2, (const int8_t *)y0->qs);
-        const int8x16_t v_y1l = vec_xl(0,       (const int8_t *)y1->qs);
-        const int8x16_t v_y1h = vec_xl(QK8_0/2, (const int8_t *)y1->qs);
+        ਅਚਲ int8x16_t v_y0l = vec_xl(0,       (ਅਚਲ int8_t *)y0->qs);
+        ਅਚਲ int8x16_t v_y0h = vec_xl(QK8_0/2, (ਅਚਲ int8_t *)y0->qs);
+        ਅਚਲ int8x16_t v_y1l = vec_xl(0,       (ਅਚਲ int8_t *)y1->qs);
+        ਅਚਲ int8x16_t v_y1h = vec_xl(QK8_0/2, (ਅਚਲ int8_t *)y1->qs);
 
-        const int32x4_t v_xy0 = ggml_vec_dot_s32(ggml_vec_dot_s32(vec_splats(0), v_x0lf, v_y0l), v_x0hf, v_y0h);
-        const int32x4_t v_xy1 = ggml_vec_dot_s32(ggml_vec_dot_s32(vec_splats(0), v_x1lf, v_y1l), v_x1hf, v_y1h);
+        ਅਚਲ int32x4_t v_xy0 = ggml_vec_dot_s32(ggml_vec_dot_s32(vec_splats(0), v_x0lf, v_y0l), v_x0hf, v_y0h);
+        ਅਚਲ int32x4_t v_xy1 = ggml_vec_dot_s32(ggml_vec_dot_s32(vec_splats(0), v_x1lf, v_y1l), v_x1hf, v_y1h);
 
-        const float32x4_t v_xy0f = vec_float(v_xy0);
-        const float32x4_t v_xy1f = vec_float(v_xy1);
+        ਅਚਲ float32x4_t v_xy0f = vec_float(v_xy0);
+        ਅਚਲ float32x4_t v_xy1f = vec_float(v_xy1);
 
-        const float32x4_t v_d0 = vec_splats(GGML_CPU_FP16_TO_FP32(x0->d) * GGML_CPU_FP16_TO_FP32(y0->d));
-        const float32x4_t v_d1 = vec_splats(GGML_CPU_FP16_TO_FP32(x1->d) * GGML_CPU_FP16_TO_FP32(y1->d));
+        ਅਚਲ float32x4_t v_d0 = vec_splats(GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(x0->d) * GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(y0->d));
+        ਅਚਲ float32x4_t v_d1 = vec_splats(GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(x1->d) * GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(y1->d));
 
         v_sum0 = vec_madd(v_xy0f, v_d0, v_sum0);
         v_sum1 = vec_madd(v_xy1f, v_d1, v_sum1);
@@ -517,81 +517,81 @@ void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     sumf += vec_hsum_f32x4(v_sum0) + vec_hsum_f32x4(v_sum1);
 
-    #pragma GCC unroll 4
-    for (; ib < nb; ++ib) {
-        const block_q5_0 * GGML_RESTRICT x0 = &x[ib];
-        const block_q8_0 * GGML_RESTRICT y0 = &y[ib];
+    #ਹਦਾਇਤ GCC unroll 4
+    ਲਈ (; ib < nb; ++ib) {
+        ਅਚਲ ਖੰਡ_q5_0 * GGML_RESTRICT x0 = &x[ib];
+        ਅਚਲ ਖੰਡ_q8_0 * GGML_RESTRICT y0 = &y[ib];
 
         uint32_t qh;
-        memcpy(&qh, x0->qh, sizeof(qh));
+        ਸਮ੍ਰਿਤੀ_ਨਕਲ(&qh, x0->qh, ਆਕਾਰ(qh));
 
         uint64_t tmp[4];
-        tmp[0] = table_b2b_1[(qh >>  0) & 0xFF];
-        tmp[1] = table_b2b_1[(qh >>  8) & 0xFF];
-        tmp[2] = table_b2b_1[(qh >> 16) & 0xFF];
-        tmp[3] = table_b2b_1[(qh >> 24)       ];
+        tmp[0] = ਸਾਰਣੀ_b2b_1[(qh >>  0) & 0xFF];
+        tmp[1] = ਸਾਰਣੀ_b2b_1[(qh >>  8) & 0xFF];
+        tmp[2] = ਸਾਰਣੀ_b2b_1[(qh >> 16) & 0xFF];
+        tmp[3] = ਸਾਰਣੀ_b2b_1[(qh >> 24)       ];
 
-        int8x16_t v_qhl = vec_xl(0, (const int8_t *)(tmp + 0));
-        int8x16_t v_qhh = vec_xl(0, (const int8_t *)(tmp + 2));
+        int8x16_t v_qhl = vec_xl(0, (ਅਚਲ int8_t *)(tmp + 0));
+        int8x16_t v_qhh = vec_xl(0, (ਅਚਲ int8_t *)(tmp + 2));
 
         // required for fixing the byteorder
         v_qhl = vec_perm(v_qhl, v_qhl, v_kperm);
         v_qhh = vec_perm(v_qhh, v_qhh, v_kperm);
 
-        const uint8x16_t v_x = vec_xl(0, (const uint8_t *)x0->qs);
+        ਅਚਲ uint8x16_t v_x = vec_xl(0, (ਅਚਲ uint8_t *)x0->qs);
         int8x16_t v_xl = (int8x16_t)vec_and(v_x, v_m);
         int8x16_t v_xh = (int8x16_t)vec_sr(v_x, 4);
 
-        const int8x16_t v_xlf = vec_sub(v_xl, v_qhl);
-        const int8x16_t v_xhf = vec_sub(v_xh, v_qhh);
+        ਅਚਲ int8x16_t v_xlf = vec_sub(v_xl, v_qhl);
+        ਅਚਲ int8x16_t v_xhf = vec_sub(v_xh, v_qhh);
 
-        const int8x16_t v_yl = vec_xl(0,       (const int8_t *)y0->qs);
-        const int8x16_t v_yh = vec_xl(QK8_0/2, (const int8_t *)y0->qs);
+        ਅਚਲ int8x16_t v_yl = vec_xl(0,       (ਅਚਲ int8_t *)y0->qs);
+        ਅਚਲ int8x16_t v_yh = vec_xl(QK8_0/2, (ਅਚਲ int8_t *)y0->qs);
 
-        const int32x4_t v_xy = ggml_vec_dot_s32(ggml_vec_dot_s32(vec_splats(0), v_xlf, v_yl), v_xhf, v_yh);
-        const float32x4_t v_xyf = vec_float(v_xy);
+        ਅਚਲ int32x4_t v_xy = ggml_vec_dot_s32(ggml_vec_dot_s32(vec_splats(0), v_xlf, v_yl), v_xhf, v_yh);
+        ਅਚਲ float32x4_t v_xyf = vec_float(v_xy);
 
-        const float32x4_t v_d = vec_splats(GGML_CPU_FP16_TO_FP32(x0->d) * GGML_CPU_FP16_TO_FP32(y0->d));
-        const float32x4_t v_acc = vec_madd(v_xyf, v_d, vec_splats(0.0f));
+        ਅਚਲ float32x4_t v_d = vec_splats(GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(x0->d) * GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(y0->d));
+        ਅਚਲ float32x4_t v_acc = vec_madd(v_xyf, v_d, vec_splats(0.0f));
 
         sumf += vec_hsum_f32x4(v_acc);
     }
 
     *s = sumf;
-#else
-    UNUSED(nb);
-    UNUSED(x);
-    UNUSED(y);
-    UNUSED(ib);
-    UNUSED(sumf);
+#ਨਹੀਂਤਾਂ
+    ਅਣਵਰਤਿਆ(nb);
+    ਅਣਵਰਤਿਆ(x);
+    ਅਣਵਰਤਿਆ(y);
+    ਅਣਵਰਤਿਆ(ib);
+    ਅਣਵਰਤਿਆ(sumf);
     ggml_vec_dot_q5_0_q8_0_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#ਜੇ_ਅੰਤ
 }
 
-void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    const int qk = QK8_1;
-    const int nb = n / qk;
+ਖਾਲੀ ggml_vec_dot_q5_1_q8_1(ਪੂਰਨ n, ਦਸ਼ਮਲਵ * GGML_RESTRICT s, size_t bs, ਅਚਲ ਖਾਲੀ * GGML_RESTRICT vx, size_t bx, ਅਚਲ ਖਾਲੀ * GGML_RESTRICT vy, size_t by, ਪੂਰਨ nrc) {
+    ਅਚਲ ਪੂਰਨ qk = QK8_1;
+    ਅਚਲ ਪੂਰਨ nb = n / qk;
 
-    assert(n % qk == 0);
-    assert(qk == QK5_1);
-    assert(nrc == 1);
-    UNUSED(nrc);
-    UNUSED(bx);
-    UNUSED(by);
-    UNUSED(bs);
+    ਪ੍ਰਤਿਜ੍ਞਾ(n % qk == 0);
+    ਪ੍ਰਤਿਜ੍ਞਾ(qk == QK5_1);
+    ਪ੍ਰਤਿਜ੍ਞਾ(nrc == 1);
+    ਅਣਵਰਤਿਆ(nrc);
+    ਅਣਵਰਤਿਆ(bx);
+    ਅਣਵਰਤਿਆ(by);
+    ਅਣਵਰਤਿਆ(bs);
 
-    const block_q5_1 * GGML_RESTRICT x = vx;
-    const block_q8_1 * GGML_RESTRICT y = vy;
+    ਅਚਲ ਖੰਡ_q5_1 * GGML_RESTRICT x = vx;
+    ਅਚਲ ਖੰਡ_q8_1 * GGML_RESTRICT y = vy;
 
-    int ib = 0;
-    float sumf = 0.0f;
+    ਪੂਰਨ ib = 0;
+    ਦਸ਼ਮਲਵ sumf = 0.0f;
 
-#if defined(__VXE__) || defined(__VXE2__)
+#ਜੇ defined(__VXE__) || defined(__VXE2__)
     float32x4_t v_sum0 = vec_splats(0.0f);
     float32x4_t v_sum1 = vec_splats(0.0f);
 
-    float summs0 = 0.0f;
-    float summs1 = 0.0f;
+    ਦਸ਼ਮਲਵ summs0 = 0.0f;
+    ਦਸ਼ਮਲਵ summs1 = 0.0f;
 
     uint32_t qh0;
     uint32_t qh1;
@@ -599,35 +599,35 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
     uint64_t tmp0[4];
     uint64_t tmp1[4];
 
-    const uint8x16_t v_m = vec_splats((uint8_t)0x0F);
+    ਅਚਲ uint8x16_t v_m = vec_splats((uint8_t)0x0F);
 
-    #pragma GCC unroll 4
-    for (; ib + 1 < nb; ib += 2) {
-        const block_q5_1 * GGML_RESTRICT x0 = &x[ib + 0];
-        const block_q5_1 * GGML_RESTRICT x1 = &x[ib + 1];
-        const block_q8_1 * GGML_RESTRICT y0 = &y[ib + 0];
-        const block_q8_1 * GGML_RESTRICT y1 = &y[ib + 1];
+    #ਹਦਾਇਤ GCC unroll 4
+    ਲਈ (; ib + 1 < nb; ib += 2) {
+        ਅਚਲ ਖੰਡ_q5_1 * GGML_RESTRICT x0 = &x[ib + 0];
+        ਅਚਲ ਖੰਡ_q5_1 * GGML_RESTRICT x1 = &x[ib + 1];
+        ਅਚਲ ਖੰਡ_q8_1 * GGML_RESTRICT y0 = &y[ib + 0];
+        ਅਚਲ ਖੰਡ_q8_1 * GGML_RESTRICT y1 = &y[ib + 1];
 
-        summs0 += GGML_CPU_FP16_TO_FP32(x0->m) * GGML_CPU_FP16_TO_FP32(y0->s);
-        summs1 += GGML_CPU_FP16_TO_FP32(x1->m) * GGML_CPU_FP16_TO_FP32(y1->s);
+        summs0 += GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(x0->m) * GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(y0->s);
+        summs1 += GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(x1->m) * GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(y1->s);
 
-        memcpy(&qh0, x0->qh, sizeof(qh0));
-        memcpy(&qh1, x1->qh, sizeof(qh1));
+        ਸਮ੍ਰਿਤੀ_ਨਕਲ(&qh0, x0->qh, ਆਕਾਰ(qh0));
+        ਸਮ੍ਰਿਤੀ_ਨਕਲ(&qh1, x1->qh, ਆਕਾਰ(qh1));
 
-        tmp0[0] = table_b2b_0[(qh0 >>  0) & 0xFF];
-        tmp0[1] = table_b2b_0[(qh0 >>  8) & 0xFF];
-        tmp0[2] = table_b2b_0[(qh0 >> 16) & 0xFF];
-        tmp0[3] = table_b2b_0[(qh0 >> 24)       ];
+        tmp0[0] = ਸਾਰਣੀ_b2b_0[(qh0 >>  0) & 0xFF];
+        tmp0[1] = ਸਾਰਣੀ_b2b_0[(qh0 >>  8) & 0xFF];
+        tmp0[2] = ਸਾਰਣੀ_b2b_0[(qh0 >> 16) & 0xFF];
+        tmp0[3] = ਸਾਰਣੀ_b2b_0[(qh0 >> 24)       ];
 
-        tmp1[0] = table_b2b_0[(qh1 >>  0) & 0xFF];
-        tmp1[1] = table_b2b_0[(qh1 >>  8) & 0xFF];
-        tmp1[2] = table_b2b_0[(qh1 >> 16) & 0xFF];
-        tmp1[3] = table_b2b_0[(qh1 >> 24)       ];
+        tmp1[0] = ਸਾਰਣੀ_b2b_0[(qh1 >>  0) & 0xFF];
+        tmp1[1] = ਸਾਰਣੀ_b2b_0[(qh1 >>  8) & 0xFF];
+        tmp1[2] = ਸਾਰਣੀ_b2b_0[(qh1 >> 16) & 0xFF];
+        tmp1[3] = ਸਾਰਣੀ_b2b_0[(qh1 >> 24)       ];
 
-        int8x16_t v_qh0l = vec_xl(0, (const int8_t *)(tmp0 + 0));
-        int8x16_t v_qh0h = vec_xl(0, (const int8_t *)(tmp0 + 2));
-        int8x16_t v_qh1l = vec_xl(0, (const int8_t *)(tmp1 + 0));
-        int8x16_t v_qh1h = vec_xl(0, (const int8_t *)(tmp1 + 2));
+        int8x16_t v_qh0l = vec_xl(0, (ਅਚਲ int8_t *)(tmp0 + 0));
+        int8x16_t v_qh0h = vec_xl(0, (ਅਚਲ int8_t *)(tmp0 + 2));
+        int8x16_t v_qh1l = vec_xl(0, (ਅਚਲ int8_t *)(tmp1 + 0));
+        int8x16_t v_qh1h = vec_xl(0, (ਅਚਲ int8_t *)(tmp1 + 2));
 
         // required for fixing the byteorder
         v_qh0l = vec_perm(v_qh0l, v_qh0l, v_kperm);
@@ -635,32 +635,32 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
         v_qh1l = vec_perm(v_qh1l, v_qh1l, v_kperm);
         v_qh1h = vec_perm(v_qh1h, v_qh1h, v_kperm);
 
-        const uint8x16_t v_x0 = vec_xl(0, x0->qs);
-        const uint8x16_t v_x1 = vec_xl(0, x1->qs);
+        ਅਚਲ uint8x16_t v_x0 = vec_xl(0, x0->qs);
+        ਅਚਲ uint8x16_t v_x1 = vec_xl(0, x1->qs);
 
-        const int8x16_t v_x0l = (int8x16_t)vec_and(v_x0, v_m);
-        const int8x16_t v_x0h = (int8x16_t)vec_sr(v_x0, 4);
-        const int8x16_t v_x1l = (int8x16_t)vec_and(v_x1, v_m);
-        const int8x16_t v_x1h = (int8x16_t)vec_sr(v_x1, 4);
+        ਅਚਲ int8x16_t v_x0l = (int8x16_t)vec_and(v_x0, v_m);
+        ਅਚਲ int8x16_t v_x0h = (int8x16_t)vec_sr(v_x0, 4);
+        ਅਚਲ int8x16_t v_x1l = (int8x16_t)vec_and(v_x1, v_m);
+        ਅਚਲ int8x16_t v_x1h = (int8x16_t)vec_sr(v_x1, 4);
 
-        const int8x16_t v_x0lf = vec_or(v_x0l, v_qh0l);
-        const int8x16_t v_x0hf = vec_or(v_x0h, v_qh0h);
-        const int8x16_t v_x1lf = vec_or(v_x1l, v_qh1l);
-        const int8x16_t v_x1hf = vec_or(v_x1h, v_qh1h);
+        ਅਚਲ int8x16_t v_x0lf = vec_or(v_x0l, v_qh0l);
+        ਅਚਲ int8x16_t v_x0hf = vec_or(v_x0h, v_qh0h);
+        ਅਚਲ int8x16_t v_x1lf = vec_or(v_x1l, v_qh1l);
+        ਅਚਲ int8x16_t v_x1hf = vec_or(v_x1h, v_qh1h);
 
-        const int8x16_t v_y0l = vec_xl(0      , y0->qs);
-        const int8x16_t v_y0h = vec_xl(QK8_1/2, y0->qs);
-        const int8x16_t v_y1l = vec_xl(0      , y1->qs);
-        const int8x16_t v_y1h = vec_xl(QK8_1/2, y1->qs);
+        ਅਚਲ int8x16_t v_y0l = vec_xl(0      , y0->qs);
+        ਅਚਲ int8x16_t v_y0h = vec_xl(QK8_1/2, y0->qs);
+        ਅਚਲ int8x16_t v_y1l = vec_xl(0      , y1->qs);
+        ਅਚਲ int8x16_t v_y1h = vec_xl(QK8_1/2, y1->qs);
 
-        const int32x4_t v_xy0 = ggml_vec_dot_s32(ggml_vec_dot_s32(vec_splats(0), v_x0lf, v_y0l), v_x0hf, v_y0h);
-        const int32x4_t v_xy1 = ggml_vec_dot_s32(ggml_vec_dot_s32(vec_splats(0), v_x1lf, v_y1l), v_x1hf, v_y1h);
+        ਅਚਲ int32x4_t v_xy0 = ggml_vec_dot_s32(ggml_vec_dot_s32(vec_splats(0), v_x0lf, v_y0l), v_x0hf, v_y0h);
+        ਅਚਲ int32x4_t v_xy1 = ggml_vec_dot_s32(ggml_vec_dot_s32(vec_splats(0), v_x1lf, v_y1l), v_x1hf, v_y1h);
 
-        const float32x4_t v_xy0f = vec_float(v_xy0);
-        const float32x4_t v_xy1f = vec_float(v_xy1);
+        ਅਚਲ float32x4_t v_xy0f = vec_float(v_xy0);
+        ਅਚਲ float32x4_t v_xy1f = vec_float(v_xy1);
 
-        const float32x4_t v_d0 = vec_splats(GGML_CPU_FP16_TO_FP32(x0->d) * GGML_CPU_FP16_TO_FP32(y0->d));
-        const float32x4_t v_d1 = vec_splats(GGML_CPU_FP16_TO_FP32(x1->d) * GGML_CPU_FP16_TO_FP32(y1->d));
+        ਅਚਲ float32x4_t v_d0 = vec_splats(GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(x0->d) * GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(y0->d));
+        ਅਚਲ float32x4_t v_d1 = vec_splats(GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(x1->d) * GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(y1->d));
 
         v_sum0 = vec_madd(v_xy0f, v_d0, v_sum0);
         v_sum1 = vec_madd(v_xy1f, v_d1, v_sum1);
@@ -668,92 +668,92 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     sumf += vec_hsum_f32x4(v_sum0) + vec_hsum_f32x4(v_sum1) + summs0 + summs1;
 
-    #pragma GCC unroll 4
-    for (; ib < nb; ++ib) {
-        const block_q5_1 * GGML_RESTRICT x0 = &x[ib];
-        const block_q8_1 * GGML_RESTRICT y0 = &y[ib];
+    #ਹਦਾਇਤ GCC unroll 4
+    ਲਈ (; ib < nb; ++ib) {
+        ਅਚਲ ਖੰਡ_q5_1 * GGML_RESTRICT x0 = &x[ib];
+        ਅਚਲ ਖੰਡ_q8_1 * GGML_RESTRICT y0 = &y[ib];
 
-        float summs = GGML_CPU_FP16_TO_FP32(x0->m) * GGML_CPU_FP16_TO_FP32(y0->s);
+        ਦਸ਼ਮਲਵ summs = GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(x0->m) * GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(y0->s);
 
         uint32_t qh;
-        memcpy(&qh, x0->qh, sizeof(qh));
+        ਸਮ੍ਰਿਤੀ_ਨਕਲ(&qh, x0->qh, ਆਕਾਰ(qh));
 
         uint64_t tmp[4];
-        tmp[0] = table_b2b_0[(qh >>  0) & 0xFF];
-        tmp[1] = table_b2b_0[(qh >>  8) & 0xFF];
-        tmp[2] = table_b2b_0[(qh >> 16) & 0xFF];
-        tmp[3] = table_b2b_0[(qh >> 24)       ];
+        tmp[0] = ਸਾਰਣੀ_b2b_0[(qh >>  0) & 0xFF];
+        tmp[1] = ਸਾਰਣੀ_b2b_0[(qh >>  8) & 0xFF];
+        tmp[2] = ਸਾਰਣੀ_b2b_0[(qh >> 16) & 0xFF];
+        tmp[3] = ਸਾਰਣੀ_b2b_0[(qh >> 24)       ];
 
-        int8x16_t v_qhl = vec_xl(0, (const int8_t *)(tmp + 0));
-        int8x16_t v_qhh = vec_xl(0, (const int8_t *)(tmp + 2));
+        int8x16_t v_qhl = vec_xl(0, (ਅਚਲ int8_t *)(tmp + 0));
+        int8x16_t v_qhh = vec_xl(0, (ਅਚਲ int8_t *)(tmp + 2));
 
         // required for fixing the byteorder
         v_qhl = vec_perm(v_qhl, v_qhl, v_kperm);
         v_qhh = vec_perm(v_qhh, v_qhh, v_kperm);
 
-        const uint8x16_t v_x = vec_xl(0, x0->qs);
-        const int8x16_t v_xl = (int8x16_t)vec_and(v_x, v_m);
-        const int8x16_t v_xh = (int8x16_t)vec_sr(v_x, 4);
+        ਅਚਲ uint8x16_t v_x = vec_xl(0, x0->qs);
+        ਅਚਲ int8x16_t v_xl = (int8x16_t)vec_and(v_x, v_m);
+        ਅਚਲ int8x16_t v_xh = (int8x16_t)vec_sr(v_x, 4);
 
-        const int8x16_t v_xlf = vec_or(v_xl, v_qhl);
-        const int8x16_t v_xhf = vec_or(v_xh, v_qhh);
+        ਅਚਲ int8x16_t v_xlf = vec_or(v_xl, v_qhl);
+        ਅਚਲ int8x16_t v_xhf = vec_or(v_xh, v_qhh);
 
-        const int8x16_t v_yl = vec_xl(0      , y0->qs);
-        const int8x16_t v_yh = vec_xl(QK8_1/2, y0->qs);
+        ਅਚਲ int8x16_t v_yl = vec_xl(0      , y0->qs);
+        ਅਚਲ int8x16_t v_yh = vec_xl(QK8_1/2, y0->qs);
 
-        const int32x4_t v_xy = ggml_vec_dot_s32(ggml_vec_dot_s32(vec_splats(0), v_xlf, v_yl), v_xhf, v_yh);
-        const float32x4_t v_xyf = vec_float(v_xy);
+        ਅਚਲ int32x4_t v_xy = ggml_vec_dot_s32(ggml_vec_dot_s32(vec_splats(0), v_xlf, v_yl), v_xhf, v_yh);
+        ਅਚਲ float32x4_t v_xyf = vec_float(v_xy);
 
-        const float32x4_t v_d = vec_splats(GGML_CPU_FP16_TO_FP32(x0->d) * GGML_CPU_FP16_TO_FP32(y0->d));
-        const float32x4_t v_acc = vec_madd(v_xyf, v_d, vec_splats(0.0f));
+        ਅਚਲ float32x4_t v_d = vec_splats(GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(x0->d) * GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(y0->d));
+        ਅਚਲ float32x4_t v_acc = vec_madd(v_xyf, v_d, vec_splats(0.0f));
 
         sumf += vec_hsum_f32x4(v_acc) + summs;
     }
 
     *s = sumf;
-#else
-    UNUSED(nb);
-    UNUSED(x);
-    UNUSED(y);
-    UNUSED(ib);
-    UNUSED(sumf);
+#ਨਹੀਂਤਾਂ
+    ਅਣਵਰਤਿਆ(nb);
+    ਅਣਵਰਤਿਆ(x);
+    ਅਣਵਰਤਿਆ(y);
+    ਅਣਵਰਤਿਆ(ib);
+    ਅਣਵਰਤਿਆ(sumf);
     ggml_vec_dot_q5_1_q8_1_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#ਜੇ_ਅੰਤ
 }
 
-void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
+ਖਾਲੀ ggml_vec_dot_q8_0_q8_0(ਪੂਰਨ n, ਦਸ਼ਮਲਵ * GGML_RESTRICT s, size_t bs, ਅਚਲ ਖਾਲੀ * GGML_RESTRICT vx, size_t bx, ਅਚਲ ਖਾਲੀ * GGML_RESTRICT vy, size_t by, ਪੂਰਨ nrc) {
+    ਅਚਲ ਪੂਰਨ qk = QK8_0;
+    ਅਚਲ ਪੂਰਨ nb = n / qk;
 
-    assert(n % qk == 0);
-    assert(nrc == 1);
-    UNUSED(nrc);
-    UNUSED(bx);
-    UNUSED(by);
-    UNUSED(bs);
+    ਪ੍ਰਤਿਜ੍ਞਾ(n % qk == 0);
+    ਪ੍ਰਤਿਜ੍ਞਾ(nrc == 1);
+    ਅਣਵਰਤਿਆ(nrc);
+    ਅਣਵਰਤਿਆ(bx);
+    ਅਣਵਰਤਿਆ(by);
+    ਅਣਵਰਤਿਆ(bs);
 
-    const block_q8_0 * GGML_RESTRICT x = vx;
-    const block_q8_0 * GGML_RESTRICT y = vy;
+    ਅਚਲ ਖੰਡ_q8_0 * GGML_RESTRICT x = vx;
+    ਅਚਲ ਖੰਡ_q8_0 * GGML_RESTRICT y = vy;
 
-    int ib = 0;
-    float sumf = 0;
+    ਪੂਰਨ ib = 0;
+    ਦਸ਼ਮਲਵ sumf = 0;
 
-#if defined(__VXE__) || defined(__VXE2__)
+#ਜੇ defined(__VXE__) || defined(__VXE2__)
     float32x4_t acc = vec_splats(0.0f);
 
-#pragma GCC unroll 8
-    for (; ib < nb; ++ib) {
+#ਹਦਾਇਤ GCC unroll 8
+    ਲਈ (; ib < nb; ++ib) {
         __builtin_prefetch(x[ib].qs, 0, 1);
         __builtin_prefetch(y[ib].qs, 0, 1);
 
-        const int8x16_t v_xl = vec_xl(0      , x[ib].qs);
-        const int8x16_t v_xh = vec_xl(QK8_0/2, x[ib].qs);
-        const int8x16_t v_yl = vec_xl(0      , y[ib].qs);
-        const int8x16_t v_yh = vec_xl(QK8_0/2, y[ib].qs);
+        ਅਚਲ int8x16_t v_xl = vec_xl(0      , x[ib].qs);
+        ਅਚਲ int8x16_t v_xh = vec_xl(QK8_0/2, x[ib].qs);
+        ਅਚਲ int8x16_t v_yl = vec_xl(0      , y[ib].qs);
+        ਅਚਲ int8x16_t v_yh = vec_xl(QK8_0/2, y[ib].qs);
 
-        const int32x4_t v_xy_ = ggml_vec_dot_s32(ggml_vec_dot_s32(vec_splats(0), v_xl, v_yl), v_xh, v_yh);
-        const float32x4_t v_xy = vec_float(v_xy_);
-        const float32x4_t v_d = vec_splats(GGML_CPU_FP16_TO_FP32(x[ib].d) * GGML_CPU_FP16_TO_FP32(y[ib].d));
+        ਅਚਲ int32x4_t v_xy_ = ggml_vec_dot_s32(ggml_vec_dot_s32(vec_splats(0), v_xl, v_yl), v_xh, v_yh);
+        ਅਚਲ float32x4_t v_xy = vec_float(v_xy_);
+        ਅਚਲ float32x4_t v_d = vec_splats(GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(x[ib].d) * GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(y[ib].d));
 
         acc = vec_madd(v_xy, v_d, acc);
     }
@@ -761,43 +761,43 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     sumf = vec_hsum_f32x4(acc);
 
     *s = sumf;
-#else
-    UNUSED(nb);
-    UNUSED(x);
-    UNUSED(y);
-    UNUSED(ib);
-    UNUSED(sumf);
+#ਨਹੀਂਤਾਂ
+    ਅਣਵਰਤਿਆ(nb);
+    ਅਣਵਰਤਿਆ(x);
+    ਅਣਵਰਤਿਆ(y);
+    ਅਣਵਰਤਿਆ(ib);
+    ਅਣਵਰਤਿਆ(sumf);
     ggml_vec_dot_q8_0_q8_0_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#ਜੇ_ਅੰਤ
 }
 
-void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
-    UNUSED(nrc);
-    UNUSED(bx);
-    UNUSED(by);
-    UNUSED(bs);
+ਖਾਲੀ ggml_vec_dot_q3_K_q8_K(ਪੂਰਨ n, ਦਸ਼ਮਲਵ * GGML_RESTRICT s, size_t bs, ਅਚਲ ਖਾਲੀ * GGML_RESTRICT vx, size_t bx, ਅਚਲ ਖਾਲੀ * GGML_RESTRICT vy, size_t by, ਪੂਰਨ nrc) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(n % QK_K == 0);
+    ਪ੍ਰਤਿਜ੍ਞਾ(nrc == 1);
+    ਅਣਵਰਤਿਆ(nrc);
+    ਅਣਵਰਤਿਆ(bx);
+    ਅਣਵਰਤਿਆ(by);
+    ਅਣਵਰਤਿਆ(bs);
 
-    const uint32_t kmask1 = 0x03030303;
-    const uint32_t kmask2 = 0x0f0f0f0f;
+    ਅਚਲ uint32_t kmask1 = 0x03030303;
+    ਅਚਲ uint32_t kmask2 = 0x0f0f0f0f;
 
-    const block_q3_K * GGML_RESTRICT x = vx;
-    const block_q8_K * GGML_RESTRICT y = vy;
+    ਅਚਲ ਖੰਡ_q3_K * GGML_RESTRICT x = vx;
+    ਅਚਲ ਖੰਡ_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ਅਚਲ ਪੂਰਨ nb = n / QK_K;
 
-#if defined(__VXE__) || defined(__VXE2__)
+#ਜੇ defined(__VXE__) || defined(__VXE2__)
     uint32_t aux[3];
     uint32_t utmp[4];
 
-    const int32x4_t v_z = vec_splat_s32(0);
-    const uint8x16_t v_3m = vec_splat_u8(0x03);
+    ਅਚਲ int32x4_t v_z = vec_splat_s32(0);
+    ਅਚਲ uint8x16_t v_3m = vec_splat_u8(0x03);
 
-    const uint8x16_t v_0c = vec_splat_u8(1);
-    const uint8x16_t v_1c = vec_sl(v_0c, 1);
-    const uint8x16_t v_2c = vec_sl(v_0c, 2);
-    const uint8x16_t v_3c = vec_sl(v_0c, 3);
+    ਅਚਲ uint8x16_t v_0c = vec_splat_u8(1);
+    ਅਚਲ uint8x16_t v_1c = vec_sl(v_0c, 1);
+    ਅਚਲ uint8x16_t v_2c = vec_sl(v_0c, 2);
+    ਅਚਲ uint8x16_t v_3c = vec_sl(v_0c, 3);
 
     uint8x16_t q3h[4];
     uint8x16_t q3b[2];
@@ -805,30 +805,30 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     int8x16_t q8bytes[8];
     uint8x16_t qhbits[2];
 
-    float sum = 0;
+    ਦਸ਼ਮਲਵ ਜੋੜ = 0;
 
-    for (int i = 0; i < nb; ++i) {
-        const float d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; ++i) {
+        ਅਚਲ ਦਸ਼ਮਲਵ d = y[i].d * GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(x[i].d);
 
-        const uint8_t * restrict x0l = x[i].qs;
-        const uint8_t * restrict x0h = x[i].hmask;
-        const int8_t  * restrict y0  = y[i].qs;
+        ਅਚਲ uint8_t * ਸੀਮਿਤ x0l = x[i].qs;
+        ਅਚਲ uint8_t * ਸੀਮਿਤ x0h = x[i].hmask;
+        ਅਚਲ int8_t  * ਸੀਮਿਤ y0  = y[i].qs;
 
         qhbits[0] = vec_xl(0 , x0h);
         qhbits[1] = vec_xl(16, x0h);
 
         int32_t isum = 0;
 
-        memcpy(aux, x[i].scales, 12);
+        ਸਮ੍ਰਿਤੀ_ਨਕਲ(aux, x[i].scales, 12);
         utmp[3] = ((aux[1] >> 4) & kmask2) | (((aux[2] >> 6) & kmask1) << 4);
         utmp[2] = ((aux[0] >> 4) & kmask2) | (((aux[2] >> 4) & kmask1) << 4);
         utmp[1] = (aux[1] & kmask2) | (((aux[2] >> 2) & kmask1) << 4);
         utmp[0] = (aux[0] & kmask2) | (((aux[2] >> 0) & kmask1) << 4);
 
         int8_t * scale = (int8_t *)utmp;
-        for (int j = 0; j < 16; ++j) scale[j] -= 32;
+        ਲਈ (ਪੂਰਨ j = 0; j < 16; ++j) scale[j] -= 32;
 
-        for (int j = 0; j < QK_K/128; ++j) {
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K/128; ++j) {
             int32x4_t isum0, isum1, isum2, isum3;
 
             q3b[0] = vec_xl(0 , x0l);
@@ -889,87 +889,87 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
             scale += 4;
 
-            if (j == 0) {
+            ਜੇ (j == 0) {
                 qhbits[0] = vec_sr(qhbits[0], 4);
                 qhbits[1] = vec_sr(qhbits[1], 4);
             }
         }
 
-        sum += d * isum;
+        ਜੋੜ += d * isum;
     }
 
-    *s = sum;
+    *s = ਜੋੜ;
 
-#else
-    UNUSED(kmask1);
-    UNUSED(kmask2);
-    UNUSED(x);
-    UNUSED(y);
-    UNUSED(nb);
+#ਨਹੀਂਤਾਂ
+    ਅਣਵਰਤਿਆ(kmask1);
+    ਅਣਵਰਤਿਆ(kmask2);
+    ਅਣਵਰਤਿਆ(x);
+    ਅਣਵਰਤਿਆ(y);
+    ਅਣਵਰਤਿਆ(nb);
     ggml_vec_dot_q3_K_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#ਜੇ_ਅੰਤ
 }
 
-void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
-    UNUSED(nrc);
-    UNUSED(bx);
-    UNUSED(by);
-    UNUSED(bs);
+ਖਾਲੀ ggml_vec_dot_q4_K_q8_K(ਪੂਰਨ n, ਦਸ਼ਮਲਵ * GGML_RESTRICT s, size_t bs, ਅਚਲ ਖਾਲੀ * GGML_RESTRICT vx, size_t bx, ਅਚਲ ਖਾਲੀ * GGML_RESTRICT vy, size_t by, ਪੂਰਨ nrc) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(n % QK_K == 0);
+    ਪ੍ਰਤਿਜ੍ਞਾ(nrc == 1);
+    ਅਣਵਰਤਿਆ(nrc);
+    ਅਣਵਰਤਿਆ(bx);
+    ਅਣਵਰਤਿਆ(by);
+    ਅਣਵਰਤਿਆ(bs);
 
-    const block_q4_K * GGML_RESTRICT x = vx;
-    const block_q8_K * GGML_RESTRICT y = vy;
+    ਅਚਲ ਖੰਡ_q4_K * GGML_RESTRICT x = vx;
+    ਅਚਲ ਖੰਡ_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ਅਚਲ ਪੂਰਨ nb = n / QK_K;
 
-    static const uint32_t kmask1 = 0x3f3f3f3f;
-    static const uint32_t kmask2 = 0x0f0f0f0f;
-    static const uint32_t kmask3 = 0x03030303;
+    ਸਥਿਰ ਅਚਲ uint32_t kmask1 = 0x3f3f3f3f;
+    ਸਥਿਰ ਅਚਲ uint32_t kmask2 = 0x0f0f0f0f;
+    ਸਥਿਰ ਅਚਲ uint32_t kmask3 = 0x03030303;
 
     uint32_t utmp[4];
 
-#if defined(__VXE__) || defined(__VXE2__)
-    const uint8x16_t v_lm = vec_splat_u8(0x0F);
-    const int32x4_t v_z = vec_splat_s32(0);
+#ਜੇ defined(__VXE__) || defined(__VXE2__)
+    ਅਚਲ uint8x16_t v_lm = vec_splat_u8(0x0F);
+    ਅਚਲ int32x4_t v_z = vec_splat_s32(0);
 
     uint8x16_t v_x[2];
     int8x16_t  v_xl[2];
     int8x16_t  v_y[2];
 
-    float sumf = 0;
+    ਦਸ਼ਮਲਵ sumf = 0;
 
-    for (int i = 0; i < nb; ++i) {
-        const float d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
-        const float dmin = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].dmin);
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; ++i) {
+        ਅਚਲ ਦਸ਼ਮਲਵ d = y[i].d * GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(x[i].d);
+        ਅਚਲ ਦਸ਼ਮਲਵ dmin = y[i].d * GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(x[i].dmin);
 
-        const int16x8_t v_ysumsl = vec_xl(0 , y[i].bsums);
-        const int16x8_t v_ysumsh = vec_xl(16, y[i].bsums);
-        const int16x8_t v_ysums = vec_padd_s16(v_ysumsl, v_ysumsh);
+        ਅਚਲ int16x8_t v_ysumsl = vec_xl(0 , y[i].bsums);
+        ਅਚਲ int16x8_t v_ysumsh = vec_xl(16, y[i].bsums);
+        ਅਚਲ int16x8_t v_ysums = vec_padd_s16(v_ysumsl, v_ysumsh);
 
-        memcpy(utmp, x[i].scales, 12);
+        ਸਮ੍ਰਿਤੀ_ਨਕਲ(utmp, x[i].scales, 12);
 
         uint32x4_t v_mins8 = { 0 };
-        v_mins8 = vec_insert(utmp[1] & kmask1, v_mins8, 0);
-        v_mins8 = vec_insert(((utmp[2] >> 4) & kmask2) | (((utmp[1] >> 6) & kmask3) << 4), v_mins8, 1);
+        v_mins8 = vec_ਪਾਓ(utmp[1] & kmask1, v_mins8, 0);
+        v_mins8 = vec_ਪਾਓ(((utmp[2] >> 4) & kmask2) | (((utmp[1] >> 6) & kmask3) << 4), v_mins8, 1);
 
         utmp[1] = (utmp[2] & kmask2) | (((utmp[0] >> 6) & kmask3) << 4);
         utmp[0] &= kmask1;
 
-        const int16x8_t v_minsh = (int16x8_t)vec_unpackh((uint8x16_t)v_mins8);
+        ਅਚਲ int16x8_t v_minsh = (int16x8_t)vec_unpackh((uint8x16_t)v_mins8);
 
-        const int32x4_t v_minso = vec_mulo(v_ysums, v_minsh);
-        const int32x4_t v_mins = vec_meadd(v_ysums, v_minsh, v_minso);
+        ਅਚਲ int32x4_t v_minso = vec_mulo(v_ysums, v_minsh);
+        ਅਚਲ int32x4_t v_mins = vec_meadd(v_ysums, v_minsh, v_minso);
         sumf -= dmin * (v_mins[0] + v_mins[1] + v_mins[2] + v_mins[3]);
 
-        const uint8_t * scales = (const uint8_t *)utmp;
-        const uint8_t * GGML_RESTRICT x0 = x[i].qs;
-        const int8_t  * GGML_RESTRICT y0 = y[i].qs;
+        ਅਚਲ uint8_t * scales = (ਅਚਲ uint8_t *)utmp;
+        ਅਚਲ uint8_t * GGML_RESTRICT x0 = x[i].qs;
+        ਅਚਲ int8_t  * GGML_RESTRICT y0 = y[i].qs;
 
         int32_t sumi1 = 0;
         int32_t sumi2 = 0;
 
-        for (int j = 0; j < QK_K/64; ++j) {
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K/64; ++j) {
             v_x[0] = vec_xl(0 , x0);
             v_x[1] = vec_xl(16, x0);
             x0 += 32;
@@ -981,7 +981,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
             v_xl[0] = (int8x16_t)vec_and(v_x[0], v_lm);
             v_xl[1] = (int8x16_t)vec_and(v_x[1], v_lm);
 
-            const int32x4_t p1 = ggml_vec_dot_s32(ggml_vec_dot_s32(v_z, v_xl[0], v_y[0]), v_xl[1], v_y[1]);
+            ਅਚਲ int32x4_t p1 = ggml_vec_dot_s32(ggml_vec_dot_s32(v_z, v_xl[0], v_y[0]), v_xl[1], v_y[1]);
             sumi1 += vec_hsum_i32x4(p1) * scales[2*j+0];
 
             v_y[0] = vec_xl(0 , y0);
@@ -991,7 +991,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
             v_xl[0] = (int8x16_t)vec_sr(v_x[0], 4);
             v_xl[1] = (int8x16_t)vec_sr(v_x[1], 4);
 
-            const int32x4_t p2 = ggml_vec_dot_s32(ggml_vec_dot_s32(v_z, v_xl[0], v_y[0]), v_xl[1], v_y[1]);
+            ਅਚਲ int32x4_t p2 = ggml_vec_dot_s32(ggml_vec_dot_s32(v_z, v_xl[0], v_y[0]), v_xl[1], v_y[1]);
             sumi2 += vec_hsum_i32x4(p2) * scales[2*j+1];
         }
 
@@ -1000,45 +1000,45 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = sumf;
 
-#else
-    UNUSED(x);
-    UNUSED(y);
-    UNUSED(nb);
-    UNUSED(kmask1);
-    UNUSED(kmask2);
-    UNUSED(kmask3);
-    UNUSED(utmp);
+#ਨਹੀਂਤਾਂ
+    ਅਣਵਰਤਿਆ(x);
+    ਅਣਵਰਤਿਆ(y);
+    ਅਣਵਰਤਿਆ(nb);
+    ਅਣਵਰਤਿਆ(kmask1);
+    ਅਣਵਰਤਿਆ(kmask2);
+    ਅਣਵਰਤਿਆ(kmask3);
+    ਅਣਵਰਤਿਆ(utmp);
     ggml_vec_dot_q4_K_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#ਜੇ_ਅੰਤ
 }
 
-void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy,  size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
-    UNUSED(nrc);
-    UNUSED(bx);
-    UNUSED(by);
-    UNUSED(bs);
+ਖਾਲੀ ggml_vec_dot_q5_K_q8_K(ਪੂਰਨ n, ਦਸ਼ਮਲਵ * GGML_RESTRICT s, size_t bs, ਅਚਲ ਖਾਲੀ * GGML_RESTRICT vx, size_t bx, ਅਚਲ ਖਾਲੀ * GGML_RESTRICT vy,  size_t by, ਪੂਰਨ nrc) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(n % QK_K == 0);
+    ਪ੍ਰਤਿਜ੍ਞਾ(nrc == 1);
+    ਅਣਵਰਤਿਆ(nrc);
+    ਅਣਵਰਤਿਆ(bx);
+    ਅਣਵਰਤਿਆ(by);
+    ਅਣਵਰਤਿਆ(bs);
 
-    const block_q5_K * GGML_RESTRICT x = vx;
-    const block_q8_K * GGML_RESTRICT y = vy;
+    ਅਚਲ ਖੰਡ_q5_K * GGML_RESTRICT x = vx;
+    ਅਚਲ ਖੰਡ_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ਅਚਲ ਪੂਰਨ nb = n / QK_K;
 
-    static const uint32_t kmask1 = 0x3f3f3f3f;
-    static const uint32_t kmask2 = 0x0f0f0f0f;
-    static const uint32_t kmask3 = 0x03030303;
+    ਸਥਿਰ ਅਚਲ uint32_t kmask1 = 0x3f3f3f3f;
+    ਸਥਿਰ ਅਚਲ uint32_t kmask2 = 0x0f0f0f0f;
+    ਸਥਿਰ ਅਚਲ uint32_t kmask3 = 0x03030303;
 
     uint32_t utmp[4];
 
-#if defined(__VXE__) || defined(__VXE2__)
-    const uint8x16_t v_lm = vec_splat_u8(0x0F);
-    const uint8x16_t v_1m = vec_splat_u8(0x01);
-    const uint8x16_t v_2m = vec_splat_u8(0x02);
+#ਜੇ defined(__VXE__) || defined(__VXE2__)
+    ਅਚਲ uint8x16_t v_lm = vec_splat_u8(0x0F);
+    ਅਚਲ uint8x16_t v_1m = vec_splat_u8(0x01);
+    ਅਚਲ uint8x16_t v_2m = vec_splat_u8(0x02);
 
-    const int32x4_t v_z = vec_splat_s32(0);
+    ਅਚਲ int32x4_t v_z = vec_splat_s32(0);
 
-    const uchar8x16_t v_minsm = {
+    ਅਚਲ uchar8x16_t v_minsm = {
         0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
         0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
     };
@@ -1050,41 +1050,41 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     uint8x16_t v_xh[2];
     int8x16_t  v_y[4];
 
-    float sumf = 0;
+    ਦਸ਼ਮਲਵ sumf = 0;
 
-    for (int i = 0; i < nb; ++i) {
-        const float d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
-        const float dmin = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].dmin);
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; ++i) {
+        ਅਚਲ ਦਸ਼ਮਲਵ d = y[i].d * GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(x[i].d);
+        ਅਚਲ ਦਸ਼ਮਲਵ dmin = y[i].d * GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(x[i].dmin);
 
-        const int16x8_t v_ysumsl = vec_xl(0 , y[i].bsums);
-        const int16x8_t v_ysumsh = vec_xl(16, y[i].bsums);
-        const int16x8_t v_ysums = vec_padd_s16(v_ysumsl, v_ysumsh);
+        ਅਚਲ int16x8_t v_ysumsl = vec_xl(0 , y[i].bsums);
+        ਅਚਲ int16x8_t v_ysumsh = vec_xl(16, y[i].bsums);
+        ਅਚਲ int16x8_t v_ysums = vec_padd_s16(v_ysumsl, v_ysumsh);
 
-        memcpy(utmp, x[i].scales, 12);
+        ਸਮ੍ਰਿਤੀ_ਨਕਲ(utmp, x[i].scales, 12);
         utmp[3] = ((utmp[2] >> 4) & kmask2) | (((utmp[1] >> 6) & kmask3) << 4);
-        const uint32_t uaux = utmp[1] & kmask1;
+        ਅਚਲ uint32_t uaux = utmp[1] & kmask1;
         utmp[1] = (utmp[2] & kmask2) | (((utmp[0] >> 6) & kmask3) << 4);
         utmp[2] = uaux;
         utmp[0] &= kmask1;
 
-        const uint8x16_t v_mins16 = vec_xl(0, (const uint8_t *)utmp);
-        const uint8x16_t v_mins8 = vec_perm(v_mins16, v_mins16, v_minsm);
-        const int16x8_t v_minsh = (int16x8_t)vec_unpackh(v_mins8);
+        ਅਚਲ uint8x16_t v_mins16 = vec_xl(0, (ਅਚਲ uint8_t *)utmp);
+        ਅਚਲ uint8x16_t v_mins8 = vec_perm(v_mins16, v_mins16, v_minsm);
+        ਅਚਲ int16x8_t v_minsh = (int16x8_t)vec_unpackh(v_mins8);
 
-        const int32x4_t v_minsho = vec_mulo(v_ysums, v_minsh);
-        const int32x4_t v_mins = vec_meadd(v_ysums, v_minsh, v_minsho);
-        const int32_t mins = vec_hsum_i32x4(v_mins);
+        ਅਚਲ int32x4_t v_minsho = vec_mulo(v_ysums, v_minsh);
+        ਅਚਲ int32x4_t v_mins = vec_meadd(v_ysums, v_minsh, v_minsho);
+        ਅਚਲ int32_t mins = vec_hsum_i32x4(v_mins);
 
-        const uint8_t * scales = (const uint8_t *)utmp;
-        const uint8_t * GGML_RESTRICT x0l = x[i].qs;
-        const uint8_t * GGML_RESTRICT x0h = x[i].qh;
-        const int8_t  * GGML_RESTRICT y0 = y[i].qs;
+        ਅਚਲ uint8_t * scales = (ਅਚਲ uint8_t *)utmp;
+        ਅਚਲ uint8_t * GGML_RESTRICT x0l = x[i].qs;
+        ਅਚਲ uint8_t * GGML_RESTRICT x0h = x[i].qh;
+        ਅਚਲ int8_t  * GGML_RESTRICT y0 = y[i].qs;
 
         v_xh[0] = vec_xl(0 , x0h);
         v_xh[1] = vec_xl(16, x0h);
 
         int32_t sumi = 0;
-        for (int j = 0; j < QK_K/64; ++j) {
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K/64; ++j) {
             v_xl[0] = vec_xl(0 , x0l);
             v_xl[1] = vec_xl(16, x0l);
             x0l += 32;
@@ -1119,39 +1119,39 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = sumf;
 
-#else
-    UNUSED(x);
-    UNUSED(y);
-    UNUSED(nb);
-    UNUSED(kmask1);
-    UNUSED(kmask2);
-    UNUSED(kmask3);
-    UNUSED(utmp);
+#ਨਹੀਂਤਾਂ
+    ਅਣਵਰਤਿਆ(x);
+    ਅਣਵਰਤਿਆ(y);
+    ਅਣਵਰਤਿਆ(nb);
+    ਅਣਵਰਤਿਆ(kmask1);
+    ਅਣਵਰਤਿਆ(kmask2);
+    ਅਣਵਰਤਿਆ(kmask3);
+    ਅਣਵਰਤਿਆ(utmp);
     ggml_vec_dot_q5_K_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#ਜੇ_ਅੰਤ
 }
 
-void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
-    UNUSED(nrc);
-    UNUSED(bx);
-    UNUSED(by);
-    UNUSED(bs);
+ਖਾਲੀ ggml_vec_dot_q6_K_q8_K(ਪੂਰਨ n, ਦਸ਼ਮਲਵ * GGML_RESTRICT s, size_t bs, ਅਚਲ ਖਾਲੀ * GGML_RESTRICT vx, size_t bx, ਅਚਲ ਖਾਲੀ * GGML_RESTRICT vy, size_t by, ਪੂਰਨ nrc) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(n % QK_K == 0);
+    ਪ੍ਰਤਿਜ੍ਞਾ(nrc == 1);
+    ਅਣਵਰਤਿਆ(nrc);
+    ਅਣਵਰਤਿਆ(bx);
+    ਅਣਵਰਤਿਆ(by);
+    ਅਣਵਰਤਿਆ(bs);
 
-    const block_q6_K * GGML_RESTRICT x = vx;
-    const block_q8_K * GGML_RESTRICT y = vy;
+    ਅਚਲ ਖੰਡ_q6_K * GGML_RESTRICT x = vx;
+    ਅਚਲ ਖੰਡ_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ਅਚਲ ਪੂਰਨ nb = n / QK_K;
 
-#if defined(__VXE__) || defined(__VXE2__)
-    float sum = 0;
+#ਜੇ defined(__VXE__) || defined(__VXE2__)
+    ਦਸ਼ਮਲਵ ਜੋੜ = 0;
 
     // Lower 4-bit and upper 2-bit masks
-    const uint8x16_t v_lm = vec_splat_u8(0x0F);
-    const uint8x16_t v_um = vec_splat_u8(0x03);
+    ਅਚਲ uint8x16_t v_lm = vec_splat_u8(0x0F);
+    ਅਚਲ uint8x16_t v_um = vec_splat_u8(0x03);
 
-    const int32x4_t v_z = vec_splat_s32(0);
+    ਅਚਲ int32x4_t v_z = vec_splat_s32(0);
 
     int8x16_t  q6b[4];
     uint8x16_t q6h[4];
@@ -1160,32 +1160,32 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     uint8x16_t v_xh[2];
     int8x16_t  v_y[4];
 
-    for (int i = 0; i < nb; ++i) {
-        const float d_all = GGML_CPU_FP16_TO_FP32(x[i].d);
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; ++i) {
+        ਅਚਲ ਦਸ਼ਮਲਵ d_all = GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(x[i].d);
 
-        const uint8_t * GGML_RESTRICT x0l = x[i].ql;
-        const uint8_t * GGML_RESTRICT x0h = x[i].qh;
-        const int8_t  * GGML_RESTRICT y0 = y[i].qs;
+        ਅਚਲ uint8_t * GGML_RESTRICT x0l = x[i].ql;
+        ਅਚਲ uint8_t * GGML_RESTRICT x0h = x[i].qh;
+        ਅਚਲ int8_t  * GGML_RESTRICT y0 = y[i].qs;
 
-        const int8_t  * GGML_RESTRICT scale = x[i].scales;
+        ਅਚਲ int8_t  * GGML_RESTRICT scale = x[i].scales;
 
-        const int16x8_t v_ysumsl = vec_xl(0 , y[i].bsums);
-        const int16x8_t v_ysumsh = vec_xl(16, y[i].bsums);
+        ਅਚਲ int16x8_t v_ysumsl = vec_xl(0 , y[i].bsums);
+        ਅਚਲ int16x8_t v_ysumsh = vec_xl(16, y[i].bsums);
 
-        const int8x16_t v_scale  = vec_xl(0, scale);
-        const int16x8_t v_scalel = vec_unpackh(v_scale);
-        const int16x8_t v_scaleh = vec_unpackl(v_scale);
+        ਅਚਲ int8x16_t v_scale  = vec_xl(0, scale);
+        ਅਚਲ int16x8_t v_scalel = vec_unpackh(v_scale);
+        ਅਚਲ int16x8_t v_scaleh = vec_unpackl(v_scale);
 
-        const int32x4_t v_minslo = vec_mulo(v_ysumsl, v_scalel);
-        const int32x4_t v_minsl = vec_meadd(v_ysumsl, v_scalel, v_minslo);
-        const int32x4_t v_minsho = vec_mulo(v_ysumsh, v_scaleh);
-        const int32x4_t v_minsh = vec_meadd(v_ysumsh, v_scaleh, v_minsho);
-        const int32x4_t v_mins = vec_add(v_minsl, v_minsh);
+        ਅਚਲ int32x4_t v_minslo = vec_mulo(v_ysumsl, v_scalel);
+        ਅਚਲ int32x4_t v_minsl = vec_meadd(v_ysumsl, v_scalel, v_minslo);
+        ਅਚਲ int32x4_t v_minsho = vec_mulo(v_ysumsh, v_scaleh);
+        ਅਚਲ int32x4_t v_minsh = vec_meadd(v_ysumsh, v_scaleh, v_minsho);
+        ਅਚਲ int32x4_t v_mins = vec_ਜੋੜੋ(v_minsl, v_minsh);
 
-        const int32_t mins = vec_hsum_i32x4(v_mins);
+        ਅਚਲ int32_t mins = vec_hsum_i32x4(v_mins);
 
         int32_t isum = 0;
-        for (int j = 0; j < QK_K/128; ++j) {
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K/128; ++j) {
             // Load model upper 2 bits
             v_xh[0] = vec_xl(0 , x0h);
             v_xh[1] = vec_xl(16, x0h);
@@ -1264,17 +1264,17 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
             scale += 4;
         }
 
-        sum += d_all * y[i].d * (isum - 32 * mins);
+        ਜੋੜ += d_all * y[i].d * (isum - 32 * mins);
     }
 
-    *s = sum;
+    *s = ਜੋੜ;
 
-#else
-    UNUSED(x);
-    UNUSED(y);
-    UNUSED(nb);
+#ਨਹੀਂਤਾਂ
+    ਅਣਵਰਤਿਆ(x);
+    ਅਣਵਰਤਿਆ(y);
+    ਅਣਵਰਤਿਆ(nb);
     ggml_vec_dot_q6_K_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#ਜੇ_ਅੰਤ
 }
 
 // #if defined(__VXE__) || defined(__VXE2__)
@@ -1411,85 +1411,85 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 // #endif
 // }
 
-void ggml_vec_dot_iq4_nl_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(nrc == 1);
-    UNUSED(nrc);
-    UNUSED(bx);
-    UNUSED(by);
-    UNUSED(bs);
-    assert(n % QK4_NL == 0);
+ਖਾਲੀ ggml_vec_dot_iq4_nl_q8_0(ਪੂਰਨ n, ਦਸ਼ਮਲਵ * GGML_RESTRICT s, size_t bs, ਅਚਲ ਖਾਲੀ * GGML_RESTRICT vx, size_t bx, ਅਚਲ ਖਾਲੀ * GGML_RESTRICT vy, size_t by, ਪੂਰਨ nrc) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(nrc == 1);
+    ਅਣਵਰਤਿਆ(nrc);
+    ਅਣਵਰਤਿਆ(bx);
+    ਅਣਵਰਤਿਆ(by);
+    ਅਣਵਰਤਿਆ(bs);
+    ਪ੍ਰਤਿਜ੍ਞਾ(n % QK4_NL == 0);
     static_assert(QK4_NL == QK8_0, "QK4_NL and QK8_0 must be the same");
 
-    const block_iq4_nl * GGML_RESTRICT x = vx;
-    const block_q8_0   * GGML_RESTRICT y = vy;
+    ਅਚਲ ਖੰਡ_iq4_nl * GGML_RESTRICT x = vx;
+    ਅਚਲ ਖੰਡ_q8_0   * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK4_NL;
+    ਅਚਲ ਪੂਰਨ nb = n / QK4_NL;
 
-    int ib = 0;
-    float sumf = 0;
+    ਪੂਰਨ ib = 0;
+    ਦਸ਼ਮਲਵ sumf = 0;
 
-#if defined(__VXE__) || defined(__VXE2__)
-    const int8x16_t v_k = vec_xl(0, kvalues_iq4nl);
-    const uint8x16_t v_m = vec_splat_u8(0x0F);
+#ਜੇ defined(__VXE__) || defined(__VXE2__)
+    ਅਚਲ int8x16_t v_k = vec_xl(0, kvalues_iq4nl);
+    ਅਚਲ uint8x16_t v_m = vec_splat_u8(0x0F);
 
-    for (; ib < nb; ++ib) {
-        const block_iq4_nl * GGML_RESTRICT x0 = &x[ib];
-        const block_q8_0   * GGML_RESTRICT y0 = &y[ib];
+    ਲਈ (; ib < nb; ++ib) {
+        ਅਚਲ ਖੰਡ_iq4_nl * GGML_RESTRICT x0 = &x[ib];
+        ਅਚਲ ਖੰਡ_q8_0   * GGML_RESTRICT y0 = &y[ib];
 
-        const uint8x16_t v_x = vec_xl(0, x0->qs);
+        ਅਚਲ uint8x16_t v_x = vec_xl(0, x0->qs);
         int8x16_t v_xl = (int8x16_t)vec_and(v_x, v_m);
         int8x16_t v_xh = (int8x16_t)vec_sr(v_x, 4);
 
         v_xl = vec_perm(v_k, v_k, (uchar8x16_t)v_xl);
         v_xh = vec_perm(v_k, v_k, (uchar8x16_t)v_xh);
 
-        const int8x16_t v_yl = vec_xl(0      , y0->qs);
-        const int8x16_t v_yh = vec_xl(QK8_0/2, y0->qs);
-        const int32x4_t v_xy = ggml_vec_dot_s32(ggml_vec_dot_s32(vec_splats(0), v_xl, v_yl), v_xh, v_yh);
+        ਅਚਲ int8x16_t v_yl = vec_xl(0      , y0->qs);
+        ਅਚਲ int8x16_t v_yh = vec_xl(QK8_0/2, y0->qs);
+        ਅਚਲ int32x4_t v_xy = ggml_vec_dot_s32(ggml_vec_dot_s32(vec_splats(0), v_xl, v_yl), v_xh, v_yh);
 
-        sumf += GGML_CPU_FP16_TO_FP32(x0->d) * GGML_CPU_FP16_TO_FP32(y0->d) * vec_hsum_i32x4(v_xy);
+        sumf += GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(x0->d) * GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(y0->d) * vec_hsum_i32x4(v_xy);
     }
 
     *s = sumf;
-#else
-    UNUSED(x);
-    UNUSED(y);
-    UNUSED(nb);
-    UNUSED(ib);
-    UNUSED(sumf);
+#ਨਹੀਂਤਾਂ
+    ਅਣਵਰਤਿਆ(x);
+    ਅਣਵਰਤਿਆ(y);
+    ਅਣਵਰਤਿਆ(nb);
+    ਅਣਵਰਤਿਆ(ib);
+    ਅਣਵਰਤਿਆ(sumf);
     ggml_vec_dot_iq4_nl_q8_0_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#ਜੇ_ਅੰਤ
 }
 
-void ggml_vec_dot_iq4_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(nrc == 1);
-    UNUSED(nrc);
-    UNUSED(bx);
-    UNUSED(by);
-    UNUSED(bs);
-    assert(n % QK_K == 0);
+ਖਾਲੀ ggml_vec_dot_iq4_xs_q8_K(ਪੂਰਨ n, ਦਸ਼ਮਲਵ * GGML_RESTRICT s, size_t bs, ਅਚਲ ਖਾਲੀ * GGML_RESTRICT vx, size_t bx, ਅਚਲ ਖਾਲੀ * GGML_RESTRICT vy, size_t by, ਪੂਰਨ nrc) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(nrc == 1);
+    ਅਣਵਰਤਿਆ(nrc);
+    ਅਣਵਰਤਿਆ(bx);
+    ਅਣਵਰਤਿਆ(by);
+    ਅਣਵਰਤਿਆ(bs);
+    ਪ੍ਰਤਿਜ੍ਞਾ(n % QK_K == 0);
 
-    const block_iq4_xs * GGML_RESTRICT x = vx;
-    const block_q8_K   * GGML_RESTRICT y = vy;
+    ਅਚਲ ਖੰਡ_iq4_xs * GGML_RESTRICT x = vx;
+    ਅਚਲ ਖੰਡ_q8_K   * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    ਅਚਲ ਪੂਰਨ nb = n / QK_K;
 
-#if defined(__VXE__) || defined(__VXE2__)
-    const int8x16_t v_k = vec_xl(0, kvalues_iq4nl);
-    const uint8x16_t v_m = vec_splat_u8(0x0F);
+#ਜੇ defined(__VXE__) || defined(__VXE2__)
+    ਅਚਲ int8x16_t v_k = vec_xl(0, kvalues_iq4nl);
+    ਅਚਲ uint8x16_t v_m = vec_splat_u8(0x0F);
 
-    float sumf = 0;
+    ਦਸ਼ਮਲਵ sumf = 0;
 
-    for (int ibl = 0; ibl < nb; ++ibl) {
-        const uint8_t * GGML_RESTRICT q4 = x[ibl].qs;
-        const int8_t  * GGML_RESTRICT q8 = y[ibl].qs;
+    ਲਈ (ਪੂਰਨ ibl = 0; ibl < nb; ++ibl) {
+        ਅਚਲ uint8_t * GGML_RESTRICT q4 = x[ibl].qs;
+        ਅਚਲ int8_t  * GGML_RESTRICT q8 = y[ibl].qs;
 
         uint16_t h = x[ibl].scales_h;
 
-        int sumi1 = 0, sumi2 = 0;
-        for (int ib = 0; ib < QK_K/64; ++ib) {
-            const uint8x16_t v_x0 = vec_xl(0       , q4);
-            const uint8x16_t v_x1 = vec_xl(QK4_NL/2, q4);
+        ਪੂਰਨ sumi1 = 0, sumi2 = 0;
+        ਲਈ (ਪੂਰਨ ib = 0; ib < QK_K/64; ++ib) {
+            ਅਚਲ uint8x16_t v_x0 = vec_xl(0       , q4);
+            ਅਚਲ uint8x16_t v_x1 = vec_xl(QK4_NL/2, q4);
             q4 += 32;
 
             int8x16_t v_x0l = (int8x16_t)vec_and(v_x0, v_m);
@@ -1502,17 +1502,17 @@ void ggml_vec_dot_iq4_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
             v_x1l = vec_perm(v_k, v_k, (uchar8x16_t)v_x1l);
             v_x1h = vec_perm(v_k, v_k, (uchar8x16_t)v_x1h);
 
-            const int8x16_t v_y0 = vec_xl( 0, q8);
-            const int8x16_t v_y1 = vec_xl(16, q8);
-            const int8x16_t v_y2 = vec_xl(32, q8);
-            const int8x16_t v_y3 = vec_xl(48, q8);
+            ਅਚਲ int8x16_t v_y0 = vec_xl( 0, q8);
+            ਅਚਲ int8x16_t v_y1 = vec_xl(16, q8);
+            ਅਚਲ int8x16_t v_y2 = vec_xl(32, q8);
+            ਅਚਲ int8x16_t v_y3 = vec_xl(48, q8);
             q8 += 64;
 
             int32x4_t vsumi0 = ggml_vec_dot_s32(ggml_vec_dot_s32(vec_splats(0), v_x0l, v_y0), v_x0h, v_y1);
             int32x4_t vsumi1 = ggml_vec_dot_s32(ggml_vec_dot_s32(vec_splats(0), v_x1l, v_y2), v_x1h, v_y3);
 
-            int ls1 = ((x[ibl].scales_l[ib] & 0xF) | ((h << 4) & 0x30)) - 32;
-            int ls2 = ((x[ibl].scales_l[ib] >>  4) | ((h << 2) & 0x30)) - 32;
+            ਪੂਰਨ ls1 = ((x[ibl].scales_l[ib] & 0xF) | ((h << 4) & 0x30)) - 32;
+            ਪੂਰਨ ls2 = ((x[ibl].scales_l[ib] >>  4) | ((h << 2) & 0x30)) - 32;
 
             h >>= 4;
 
@@ -1520,15 +1520,15 @@ void ggml_vec_dot_iq4_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
             sumi2 += vec_hsum_i32x4(vsumi1) * ls2;
         }
 
-        sumf += GGML_CPU_FP16_TO_FP32(x[ibl].d) * y[ibl].d * (sumi1 + sumi2);
+        sumf += GGML_CPU_FP16_ਮੰਜ਼ਿਲ_FP32(x[ibl].d) * y[ibl].d * (sumi1 + sumi2);
     }
 
     *s = sumf;
 
-#else
-    UNUSED(x);
-    UNUSED(y);
-    UNUSED(nb);
+#ਨਹੀਂਤਾਂ
+    ਅਣਵਰਤਿਆ(x);
+    ਅਣਵਰਤਿਆ(y);
+    ਅਣਵਰਤਿਆ(nb);
     ggml_vec_dot_iq4_xs_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
-#endif
+#ਜੇ_ਅੰਤ
 }

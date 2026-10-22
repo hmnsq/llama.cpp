@@ -1,8 +1,8 @@
-#ifndef GGML_SYCL_REPEAT_BACK_HPP
-#define GGML_SYCL_REPEAT_BACK_HPP
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ GGML_SYCL_REPEAT_ਪਿੱਠ_HPP
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_SYCL_REPEAT_ਪਿੱਠ_HPP
 
-#include "common.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "common.hpp"
 
-void ggml_sycl_op_repeat_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+ਖਾਲੀ ggml_sycl_op_repeat_ਪਿੱਠ(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-#endif  // GGML_SYCL_REPEAT_BACK_HPP
+#ਜੇ_ਅੰਤ  // GGML_SYCL_REPEAT_BACK_HPP

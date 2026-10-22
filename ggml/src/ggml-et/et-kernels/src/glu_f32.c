@@ -3,42 +3,42 @@
 // Gated Linear Unit: y[i] = silu(x[i]) * g[i] where silu(x) = x * sigmoid(x)
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "math_fp.h"
-#include "platform.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml_tensor.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "math_fp.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "platform.h"
 
-#include <stdint.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdint.h>
 
 // GLU kernel parameters structure (from ET backend ops)
-struct ggml_et_glu_params {
-    struct ggml_tensor src0;         // F32 input tensor A (or combined tensor if src1 is null)
-    struct ggml_tensor src1;         // F32 input tensor B (null for single tensor mode)
-    struct ggml_tensor dst;          // F32 output tensor (n/2 columns)
+ਬਣਤਰ ggml_et_glu_params {
+    ਬਣਤਰ ggml_tensor src0;         // F32 input tensor A (or combined tensor if src1 is null)
+    ਬਣਤਰ ggml_tensor src1;         // F32 input tensor B (null for single tensor mode)
+    ਬਣਤਰ ggml_tensor dst;          // F32 output tensor (n/2 columns)
     int32_t            glu_op_type;  // GLU operation type (REGLU=0, GEGLU=1, SWIGLU=2, etc.)
     int32_t            swapped;      // Whether gate and value are swapped
-    float              alpha;        // SWIGLU_OAI: sigmoid scaling factor
-    float              limit;        // GLU clamp limit
+    ਦਸ਼ਮਲਵ              alpha;        // SWIGLU_OAI: sigmoid scaling factor
+    ਦਸ਼ਮਲਵ              ਹੱਦਬੰਦੀ;        // GLU clamp limit
 };
 
 // SiLU activation function: silu(x) = x * sigmoid(x) = x / (1 + exp(-x))
-static inline float silu_f32(float x) {
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਦਸ਼ਮਲਵ silu_f32(ਦਸ਼ਮਲਵ x) {
     // For numerical stability, use the mathematically equivalent form:
     // silu(x) = x / (1 + exp(-x)) = x * sigmoid(x)
     // For large negative x, exp(-x) -> inf, so silu(x) -> 0
     // For large positive x, exp(-x) -> 0, so silu(x) -> x
 
-    if (x > 20.0f) {
+    ਜੇ (x > 20.0f) {
         // For x > 20, exp(-x) is negligible, silu(x) ~ x
-        return x;
-    } else if (x < -20.0f) {
+        ਵਾਪਸ x;
+    } ਨਹੀਂਤਾਂ ਜੇ (x < -20.0f) {
         // For x < -20, silu(x) ~ 0
-        return 0.0f;
-    } else {
+        ਵਾਪਸ 0.0f;
+    } ਨਹੀਂਤਾਂ {
         // Use standard formula: silu(x) = x / (1 + exp(-x))
         // Optimized using ET hardware division
-        float exp_neg_x   = et_expf(-x);
-        float denominator = 1.0f + exp_neg_x;
-        return et_fdiv(x, denominator);
+        ਦਸ਼ਮਲਵ exp_neg_x   = et_expf(-x);
+        ਦਸ਼ਮਲਵ denominator = 1.0f + exp_neg_x;
+        ਵਾਪਸ et_fdiv(x, denominator);
     }
 }
 
@@ -46,18 +46,18 @@ static inline float silu_f32(float x) {
 // gelu(x) = 0.5*x*(1 + tanh(z)) = x * (1 - 1/(exp(2z)+1))
 // where z = sqrt(2/pi) * x * (1 + 0.044715*x^2)
 // Reformulated to avoid inf*0 NaN: uses x * sigmoid(2z) identity
-static inline void block_geglu(float * dst_block, const float * x_block, const float * g_block, int elements) {
-    unsigned long temp_mask;
-    __asm__ volatile("mova.x.m %0" : "=r"(temp_mask));
-    __asm__ volatile("mov.m.x m0, x0, 0xFF");
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ ਖੰਡ_geglu(ਦਸ਼ਮਲਵ * dst_ਖੰਡ, ਅਚਲ ਦਸ਼ਮਲਵ * x_ਖੰਡ, ਅਚਲ ਦਸ਼ਮਲਵ * g_ਖੰਡ, ਪੂਰਨ elements) {
+    ਬਿਨਾਨਿਸ਼ਾਨੀ ਲੰਮਾ ਆਰਜ਼ੀ_ਨਕਾਬ;
+    __asm__ ਅਸਥਿਰ("mova.x.m %0" : "=r"(ਆਰਜ਼ੀ_ਨਕਾਬ));
+    __asm__ ਅਸਥਿਰ("mov.m.x m0, x0, 0xFF");
 
-    float one_const       = 1.0f;
-    float coef_a_const    = 0.044715f;
-    float sqrt2pi_const   = 0.79788456080286535587989211986876f;  // sqrt(2/pi)
-    float two_log2e_const = 2.8853900817779268f;                  // 2 * log2(e)
+    ਦਸ਼ਮਲਵ one_const       = 1.0f;
+    ਦਸ਼ਮਲਵ coef_a_const    = 0.044715f;
+    ਦਸ਼ਮਲਵ sqrt2pi_const   = 0.79788456080286535587989211986876f;  // sqrt(2/pi)
+    ਦਸ਼ਮਲਵ two_log2e_const = 2.8853900817779268f;                  // 2 * log2(e)
 
-    for (int32_t i = 0; i < elements; i += 8) {
-        __asm__ volatile(
+    ਲਈ (int32_t i = 0; i < elements; i += 8) {
+        __asm__ ਅਸਥਿਰ(
             // Load inputs
             "flw.ps f10, %[x_vec]\n"  // f10 = x
             "flw.ps f11, %[g_vec]\n"  // f11 = g
@@ -93,35 +93,35 @@ static inline void block_geglu(float * dst_block, const float * x_block, const f
 
             "fsw.ps f18, %[dst_out]\n"
 
-            : [dst_out] "=m"(*(float (*)[8]) & dst_block[i])
-            : [x_vec] "m"(*(const float (*)[8]) & x_block[i]), [g_vec] "m"(*(const float (*)[8]) & g_block[i]),
+            : [dst_ਬਾਹਰਲਾ] "=m"(*(ਦਸ਼ਮਲਵ (*)[8]) & dst_ਖੰਡ[i])
+            : [x_vec] "m"(*(ਅਚਲ ਦਸ਼ਮਲਵ (*)[8]) & x_ਖੰਡ[i]), [g_vec] "m"(*(ਅਚਲ ਦਸ਼ਮਲਵ (*)[8]) & g_ਖੰਡ[i]),
               [one_ptr] "m"(one_const), [coef_ptr] "m"(coef_a_const), [sqrt2pi_ptr] "m"(sqrt2pi_const),
               [two_log2e_ptr] "m"(two_log2e_const)
             : "f10", "f11", "f12", "f13", "f14", "f15", "f16", "f18", "f20", "f22", "f23", "f24");
     }
 
-    __asm__ volatile("mova.m.x %0" ::"r"(temp_mask));
+    __asm__ ਅਸਥਿਰ("mova.m.x %0" ::"r"(ਆਰਜ਼ੀ_ਨਕਾਬ));
 }
 
 // Vectorized SwiGLU block processing (16 elements = 1 cache line)
-static inline void block_swiglu(float * dst_block, const float * x_block, const float * g_block, int elements) {
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ ਖੰਡ_swiglu(ਦਸ਼ਮਲਵ * dst_ਖੰਡ, ਅਚਲ ਦਸ਼ਮਲਵ * x_ਖੰਡ, ਅਚਲ ਦਸ਼ਮਲਵ * g_ਖੰਡ, ਪੂਰਨ elements) {
     // Process 8 elements at a time using vector instructions
-    int32_t vec_end = (elements / 8) * 8;
+    int32_t vec_ਸਿਰਾ = (elements / 8) * 8;
 
     // Set mask register to enable all 8 vector elements
-    unsigned long temp_mask;
-    __asm__ volatile("mova.x.m %0" : "=r"(temp_mask));  // Save current mask
-    __asm__ volatile("mov.m.x m0, x0, 0xFF");           // Enable all 8 elements
+    ਬਿਨਾਨਿਸ਼ਾਨੀ ਲੰਮਾ ਆਰਜ਼ੀ_ਨਕਾਬ;
+    __asm__ ਅਸਥਿਰ("mova.x.m %0" : "=r"(ਆਰਜ਼ੀ_ਨਕਾਬ));  // Save current mask
+    __asm__ ਅਸਥਿਰ("mov.m.x m0, x0, 0xFF");           // Enable all 8 elements
 
     // Constants for broadcasting
-    float zero_const  = 0.0f;
-    float one_const   = 1.0f;
-    float log2e_const = 1.4426950408889634f;  // log2(e)
+    ਦਸ਼ਮਲਵ zero_const  = 0.0f;
+    ਦਸ਼ਮਲਵ one_const   = 1.0f;
+    ਦਸ਼ਮਲਵ log2e_const = 1.4426950408889634f;  // log2(e)
 
-    for (int32_t i = 0; i < vec_end; i += 8) {
+    ਲਈ (int32_t i = 0; i < vec_ਸਿਰਾ; i += 8) {
         // Vectorized SwiGLU: dst = silu(x) * g = (x / (1 + exp(-x))) * g
         // Using ET hardware: exp, reciprocal, multiply operations
-        __asm__ volatile(
+        __asm__ ਅਸਥਿਰ(
             // Load input vectors
             "flw.ps f10, %[x_vec]\n"  // f10 = x[0..7]
             "flw.ps f11, %[g_vec]\n"  // f11 = g[0..7]
@@ -156,8 +156,8 @@ static inline void block_swiglu(float * dst_block, const float * x_block, const 
             // Store result
             "fsw.ps f18, %[dst_out]\n"  // Store 8 results to destination
 
-            : [dst_out] "=m"(*(float (*)[8]) & dst_block[i])
-            : [x_vec] "m"(*(const float (*)[8]) & x_block[i]), [g_vec] "m"(*(const float (*)[8]) & g_block[i]),
+            : [dst_ਬਾਹਰਲਾ] "=m"(*(ਦਸ਼ਮਲਵ (*)[8]) & dst_ਖੰਡ[i])
+            : [x_vec] "m"(*(ਅਚਲ ਦਸ਼ਮਲਵ (*)[8]) & x_ਖੰਡ[i]), [g_vec] "m"(*(ਅਚਲ ਦਸ਼ਮਲਵ (*)[8]) & g_ਖੰਡ[i]),
               [zero_ptr] "m"(zero_const),   // Memory reference to 0.0f for broadcasting
               [one_ptr] "m"(one_const),     // Memory reference to 1.0f for broadcasting
               [log2e_ptr] "m"(log2e_const)  // Memory reference to log2(e) for broadcasting
@@ -165,62 +165,62 @@ static inline void block_swiglu(float * dst_block, const float * x_block, const 
     }
 
     // Restore original mask
-    __asm__ volatile("mova.m.x %0" ::"r"(temp_mask));
+    __asm__ ਅਸਥਿਰ("mova.m.x %0" ::"r"(ਆਰਜ਼ੀ_ਨਕਾਬ));
 
     // Handle remaining elements (< 8) with scalar operations
-    for (int32_t i = vec_end; i < elements; i++) {
-        dst_block[i] = silu_f32(x_block[i]) * g_block[i];
+    ਲਈ (int32_t i = vec_ਸਿਰਾ; i < elements; i++) {
+        dst_ਖੰਡ[i] = silu_f32(x_ਖੰਡ[i]) * g_ਖੰਡ[i];
     }
 }
 
 // Vectorized ReGLU block: dst = max(0, x) * g
-static inline void block_reglu(float * dst_block, const float * x_block, const float * g_block, int elements) {
-    int32_t vec_end = (elements / 8) * 8;
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ ਖੰਡ_reglu(ਦਸ਼ਮਲਵ * dst_ਖੰਡ, ਅਚਲ ਦਸ਼ਮਲਵ * x_ਖੰਡ, ਅਚਲ ਦਸ਼ਮਲਵ * g_ਖੰਡ, ਪੂਰਨ elements) {
+    int32_t vec_ਸਿਰਾ = (elements / 8) * 8;
 
-    unsigned long temp_mask;
-    __asm__ volatile("mova.x.m %0" : "=r"(temp_mask));
-    __asm__ volatile("mov.m.x m0, x0, 0xFF");
+    ਬਿਨਾਨਿਸ਼ਾਨੀ ਲੰਮਾ ਆਰਜ਼ੀ_ਨਕਾਬ;
+    __asm__ ਅਸਥਿਰ("mova.x.m %0" : "=r"(ਆਰਜ਼ੀ_ਨਕਾਬ));
+    __asm__ ਅਸਥਿਰ("mov.m.x m0, x0, 0xFF");
 
-    float zero_const = 0.0f;
+    ਦਸ਼ਮਲਵ zero_const = 0.0f;
 
-    for (int32_t i = 0; i < vec_end; i += 8) {
-        __asm__ volatile(
+    ਲਈ (int32_t i = 0; i < vec_ਸਿਰਾ; i += 8) {
+        __asm__ ਅਸਥਿਰ(
             "flw.ps  f10, %[x_vec]\n"     // f10 = x
             "flw.ps  f11, %[g_vec]\n"     // f11 = g
             "fbc.ps  f20, %[zero_ptr]\n"  // f20 = 0.0
             "fmax.ps f12, f10, f20\n"     // f12 = max(x, 0)
             "fmul.ps f13, f12, f11\n"     // f13 = relu(x) * g
             "fsw.ps  f13, %[dst_out]\n"
-            : [dst_out] "=m"(*(float (*)[8]) & dst_block[i])
-            : [x_vec] "m"(*(const float (*)[8]) & x_block[i]), [g_vec] "m"(*(const float (*)[8]) & g_block[i]),
+            : [dst_ਬਾਹਰਲਾ] "=m"(*(ਦਸ਼ਮਲਵ (*)[8]) & dst_ਖੰਡ[i])
+            : [x_vec] "m"(*(ਅਚਲ ਦਸ਼ਮਲਵ (*)[8]) & x_ਖੰਡ[i]), [g_vec] "m"(*(ਅਚਲ ਦਸ਼ਮਲਵ (*)[8]) & g_ਖੰਡ[i]),
               [zero_ptr] "m"(zero_const)
             : "f10", "f11", "f12", "f13", "f20");
     }
 
-    __asm__ volatile("mova.m.x %0" ::"r"(temp_mask));
+    __asm__ ਅਸਥਿਰ("mova.m.x %0" ::"r"(ਆਰਜ਼ੀ_ਨਕਾਬ));
 
-    for (int32_t i = vec_end; i < elements; i++) {
-        float xv     = x_block[i];
-        dst_block[i] = (xv > 0.0f) ? xv * g_block[i] : 0.0f;
+    ਲਈ (int32_t i = vec_ਸਿਰਾ; i < elements; i++) {
+        ਦਸ਼ਮਲਵ xv     = x_ਖੰਡ[i];
+        dst_ਖੰਡ[i] = (xv > 0.0f) ? xv * g_ਖੰਡ[i] : 0.0f;
     }
 }
 
 // Vectorized GeGLU-Quick block: dst = x * sigmoid(1.702 * x) * g
 // Using gelu_quick(x) = x / (1 + exp(-1.702*x))
-static inline void block_geglu_quick(float * dst_block, const float * x_block, const float * g_block, int elements) {
-    int32_t vec_end = (elements / 8) * 8;
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ ਖੰਡ_geglu_ਤੇਜ਼(ਦਸ਼ਮਲਵ * dst_ਖੰਡ, ਅਚਲ ਦਸ਼ਮਲਵ * x_ਖੰਡ, ਅਚਲ ਦਸ਼ਮਲਵ * g_ਖੰਡ, ਪੂਰਨ elements) {
+    int32_t vec_ਸਿਰਾ = (elements / 8) * 8;
 
-    unsigned long temp_mask;
-    __asm__ volatile("mova.x.m %0" : "=r"(temp_mask));
-    __asm__ volatile("mov.m.x m0, x0, 0xFF");
+    ਬਿਨਾਨਿਸ਼ਾਨੀ ਲੰਮਾ ਆਰਜ਼ੀ_ਨਕਾਬ;
+    __asm__ ਅਸਥਿਰ("mova.x.m %0" : "=r"(ਆਰਜ਼ੀ_ਨਕਾਬ));
+    __asm__ ਅਸਥਿਰ("mov.m.x m0, x0, 0xFF");
 
-    float zero_const        = 0.0f;
-    float one_const         = 1.0f;
+    ਦਸ਼ਮਲਵ zero_const        = 0.0f;
+    ਦਸ਼ਮਲਵ one_const         = 1.0f;
     // -1.702 * log2(e), so that fexp.ps(x * neg_k_log2e) = exp(-1.702*x)
-    float neg_k_log2e_const = -1.702f * 1.4426950408889634f;
+    ਦਸ਼ਮਲਵ neg_k_log2e_const = -1.702f * 1.4426950408889634f;
 
-    for (int32_t i = 0; i < vec_end; i += 8) {
-        __asm__ volatile(
+    ਲਈ (int32_t i = 0; i < vec_ਸਿਰਾ; i += 8) {
+        __asm__ ਅਸਥਿਰ(
             "flw.ps  f10, %[x_vec]\n"     // f10 = x
             "flw.ps  f11, %[g_vec]\n"     // f11 = g
             "fbc.ps  f20, %[zero_ptr]\n"  // f20 = 0
@@ -233,19 +233,19 @@ static inline void block_geglu_quick(float * dst_block, const float * x_block, c
             "fmul.ps f17, f10, f16\n"     // f17 = gelu_quick(x)
             "fmul.ps f18, f17, f11\n"     // f18 = gelu_quick(x) * g
             "fsw.ps  f18, %[dst_out]\n"
-            : [dst_out] "=m"(*(float (*)[8]) & dst_block[i])
-            : [x_vec] "m"(*(const float (*)[8]) & x_block[i]), [g_vec] "m"(*(const float (*)[8]) & g_block[i]),
+            : [dst_ਬਾਹਰਲਾ] "=m"(*(ਦਸ਼ਮਲਵ (*)[8]) & dst_ਖੰਡ[i])
+            : [x_vec] "m"(*(ਅਚਲ ਦਸ਼ਮਲਵ (*)[8]) & x_ਖੰਡ[i]), [g_vec] "m"(*(ਅਚਲ ਦਸ਼ਮਲਵ (*)[8]) & g_ਖੰਡ[i]),
               [zero_ptr] "m"(zero_const), [one_ptr] "m"(one_const), [k_ptr] "m"(neg_k_log2e_const)
             : "f10", "f11", "f13", "f14", "f15", "f16", "f17", "f18", "f20", "f21", "f22");
     }
 
-    __asm__ volatile("mova.m.x %0" ::"r"(temp_mask));
+    __asm__ ਅਸਥਿਰ("mova.m.x %0" ::"r"(ਆਰਜ਼ੀ_ਨਕਾਬ));
 
-    for (int32_t i = vec_end; i < elements; i++) {
-        float xv     = x_block[i];
+    ਲਈ (int32_t i = vec_ਸਿਰਾ; i < elements; i++) {
+        ਦਸ਼ਮਲਵ xv     = x_ਖੰਡ[i];
         // Reuse silu reciprocal path: sigmoid(1.702*x) = 1/(1+exp(-1.702*x))
-        float e      = et_expf(-1.702f * xv);
-        dst_block[i] = et_fdiv(xv, 1.0f + e) * g_block[i];
+        ਦਸ਼ਮਲਵ e      = et_expf(-1.702f * xv);
+        dst_ਖੰਡ[i] = et_fdiv(xv, 1.0f + e) * g_ਖੰਡ[i];
     }
 }
 
@@ -253,27 +253,27 @@ static inline void block_geglu_quick(float * dst_block, const float * x_block, c
 //   x_c = min(x, limit)
 //   y_c = clamp(g, -limit, limit)
 //   out = (x_c / (1 + exp(-alpha * x_c))) * (y_c + 1)
-static inline void block_swiglu_oai(float *       dst_block,
-                                    const float * x_block,
-                                    const float * g_block,
-                                    int           elements,
-                                    float         alpha,
-                                    float         limit) {
-    int32_t vec_end = (elements / 8) * 8;
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ ਖੰਡ_swiglu_oai(ਦਸ਼ਮਲਵ *       dst_ਖੰਡ,
+                                    ਅਚਲ ਦਸ਼ਮਲਵ * x_ਖੰਡ,
+                                    ਅਚਲ ਦਸ਼ਮਲਵ * g_ਖੰਡ,
+                                    ਪੂਰਨ           elements,
+                                    ਦਸ਼ਮਲਵ         alpha,
+                                    ਦਸ਼ਮਲਵ         ਹੱਦਬੰਦੀ) {
+    int32_t vec_ਸਿਰਾ = (elements / 8) * 8;
 
-    unsigned long temp_mask;
-    __asm__ volatile("mova.x.m %0" : "=r"(temp_mask));
-    __asm__ volatile("mov.m.x m0, x0, 0xFF");
+    ਬਿਨਾਨਿਸ਼ਾਨੀ ਲੰਮਾ ਆਰਜ਼ੀ_ਨਕਾਬ;
+    __asm__ ਅਸਥਿਰ("mova.x.m %0" : "=r"(ਆਰਜ਼ੀ_ਨਕਾਬ));
+    __asm__ ਅਸਥਿਰ("mov.m.x m0, x0, 0xFF");
 
-    float zero_const    = 0.0f;
-    float one_const     = 1.0f;
-    float limit_pos     = limit;
-    float limit_neg     = -limit;
+    ਦਸ਼ਮਲਵ zero_const    = 0.0f;
+    ਦਸ਼ਮਲਵ one_const     = 1.0f;
+    ਦਸ਼ਮਲਵ ਹੱਦਬੰਦੀ_pos     = ਹੱਦਬੰਦੀ;
+    ਦਸ਼ਮਲਵ ਹੱਦਬੰਦੀ_neg     = -ਹੱਦਬੰਦੀ;
     // -alpha * log2(e): feed (x * neg_alpha_log2e) into fexp.ps to get exp(-alpha*x)
-    float neg_alpha_l2e = -alpha * 1.4426950408889634f;
+    ਦਸ਼ਮਲਵ neg_alpha_l2e = -alpha * 1.4426950408889634f;
 
-    for (int32_t i = 0; i < vec_end; i += 8) {
-        __asm__ volatile(
+    ਲਈ (int32_t i = 0; i < vec_ਸਿਰਾ; i += 8) {
+        __asm__ ਅਸਥਿਰ(
             "flw.ps  f10, %[x_vec]\n"     // f10 = x raw
             "flw.ps  f11, %[g_vec]\n"     // f11 = g raw
 
@@ -304,52 +304,52 @@ static inline void block_swiglu_oai(float *       dst_block,
             "fmul.ps f19, f17, f18\n"  // f19 = final
             "fsw.ps  f19, %[dst_out]\n"
 
-            : [dst_out] "=m"(*(float (*)[8]) & dst_block[i])
-            : [x_vec] "m"(*(const float (*)[8]) & x_block[i]), [g_vec] "m"(*(const float (*)[8]) & g_block[i]),
-              [zero_ptr] "m"(zero_const), [one_ptr] "m"(one_const), [lim_pos] "m"(limit_pos), [lim_neg] "m"(limit_neg),
+            : [dst_ਬਾਹਰਲਾ] "=m"(*(ਦਸ਼ਮਲਵ (*)[8]) & dst_ਖੰਡ[i])
+            : [x_vec] "m"(*(ਅਚਲ ਦਸ਼ਮਲਵ (*)[8]) & x_ਖੰਡ[i]), [g_vec] "m"(*(ਅਚਲ ਦਸ਼ਮਲਵ (*)[8]) & g_ਖੰਡ[i]),
+              [zero_ptr] "m"(zero_const), [one_ptr] "m"(one_const), [lim_pos] "m"(ਹੱਦਬੰਦੀ_pos), [lim_neg] "m"(ਹੱਦਬੰਦੀ_neg),
               [k_ptr] "m"(neg_alpha_l2e)
             : "f10", "f11", "f12", "f13", "f14", "f15", "f16", "f17", "f18", "f19", "f20", "f21", "f23", "f24", "f25");
     }
 
-    __asm__ volatile("mova.m.x %0" ::"r"(temp_mask));
+    __asm__ ਅਸਥਿਰ("mova.m.x %0" ::"r"(ਆਰਜ਼ੀ_ਨਕਾਬ));
 
     // Scalar tail (mirrors CPU reference exactly)
-    for (int32_t i = vec_end; i < elements; i++) {
-        float xv = x_block[i];
-        float yv = g_block[i];
-        if (xv > limit) {
-            xv = limit;
+    ਲਈ (int32_t i = vec_ਸਿਰਾ; i < elements; i++) {
+        ਦਸ਼ਮਲਵ xv = x_ਖੰਡ[i];
+        ਦਸ਼ਮਲਵ yv = g_ਖੰਡ[i];
+        ਜੇ (xv > ਹੱਦਬੰਦੀ) {
+            xv = ਹੱਦਬੰਦੀ;
         }
-        if (yv > limit) {
-            yv = limit;
+        ਜੇ (yv > ਹੱਦਬੰਦੀ) {
+            yv = ਹੱਦਬੰਦੀ;
         }
-        if (yv < -limit) {
-            yv = -limit;
+        ਜੇ (yv < -ਹੱਦਬੰਦੀ) {
+            yv = -ਹੱਦਬੰਦੀ;
         }
-        float e       = et_expf(-alpha * xv);
-        float out_glu = et_fdiv(xv, 1.0f + e);
-        dst_block[i]  = out_glu * (yv + 1.0f);
+        ਦਸ਼ਮਲਵ e       = et_expf(-alpha * xv);
+        ਦਸ਼ਮਲਵ ਬਾਹਰਲਾ_glu = et_fdiv(xv, 1.0f + e);
+        dst_ਖੰਡ[i]  = ਬਾਹਰਲਾ_glu * (yv + 1.0f);
     }
 }
 
-static inline void block_swiglu_clamp(float *       dst_block,
-                                      const float * gate_block,
-                                      const float * up_block,
-                                      int           elements,
-                                      float         limit) {
-    int32_t vec_end = (elements / 8) * 8;
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ ਖੰਡ_swiglu_clamp(ਦਸ਼ਮਲਵ *       dst_ਖੰਡ,
+                                      ਅਚਲ ਦਸ਼ਮਲਵ * gate_ਖੰਡ,
+                                      ਅਚਲ ਦਸ਼ਮਲਵ * ਉੱਪਰ_ਖੰਡ,
+                                      ਪੂਰਨ           elements,
+                                      ਦਸ਼ਮਲਵ         ਹੱਦਬੰਦੀ) {
+    int32_t vec_ਸਿਰਾ = (elements / 8) * 8;
 
-    unsigned long temp_mask;
-    __asm__ volatile("mova.x.m %0" : "=r"(temp_mask));
-    __asm__ volatile("mov.m.x m0, x0, 0xFF");
+    ਬਿਨਾਨਿਸ਼ਾਨੀ ਲੰਮਾ ਆਰਜ਼ੀ_ਨਕਾਬ;
+    __asm__ ਅਸਥਿਰ("mova.x.m %0" : "=r"(ਆਰਜ਼ੀ_ਨਕਾਬ));
+    __asm__ ਅਸਥਿਰ("mov.m.x m0, x0, 0xFF");
 
-    float one_const = 1.0f;
-    float limit_pos = limit;
-    float limit_neg = -limit;
-    float neg_log2e = -1.4426950408889634f;
+    ਦਸ਼ਮਲਵ one_const = 1.0f;
+    ਦਸ਼ਮਲਵ ਹੱਦਬੰਦੀ_pos = ਹੱਦਬੰਦੀ;
+    ਦਸ਼ਮਲਵ ਹੱਦਬੰਦੀ_neg = -ਹੱਦਬੰਦੀ;
+    ਦਸ਼ਮਲਵ neg_log2e = -1.4426950408889634f;
 
-    for (int32_t i = 0; i < vec_end; i += 8) {
-        __asm__ volatile(
+    ਲਈ (int32_t i = 0; i < vec_ਸਿਰਾ; i += 8) {
+        __asm__ ਅਸਥਿਰ(
             "flw.ps  f10, %[gate_vec]\n"
             "flw.ps  f11, %[up_vec]\n"
             "fbc.ps  f21, %[one_ptr]\n"
@@ -366,241 +366,241 @@ static inline void block_swiglu_clamp(float *       dst_block,
             "fmul.ps f17, f12, f16\n"
             "fmul.ps f18, f17, f13\n"
             "fsw.ps  f18, %[dst_out]\n"
-            : [dst_out] "=m"(*(float (*)[8]) & dst_block[i])
-            : [gate_vec] "m"(*(const float (*)[8]) & gate_block[i]), [up_vec] "m"(*(const float (*)[8]) & up_block[i]),
-              [one_ptr] "m"(one_const), [lim_pos] "m"(limit_pos), [lim_neg] "m"(limit_neg), [k_ptr] "m"(neg_log2e)
+            : [dst_ਬਾਹਰਲਾ] "=m"(*(ਦਸ਼ਮਲਵ (*)[8]) & dst_ਖੰਡ[i])
+            : [gate_vec] "m"(*(ਅਚਲ ਦਸ਼ਮਲਵ (*)[8]) & gate_ਖੰਡ[i]), [ਉੱਪਰ_vec] "m"(*(ਅਚਲ ਦਸ਼ਮਲਵ (*)[8]) & ਉੱਪਰ_ਖੰਡ[i]),
+              [one_ptr] "m"(one_const), [lim_pos] "m"(ਹੱਦਬੰਦੀ_pos), [lim_neg] "m"(ਹੱਦਬੰਦੀ_neg), [k_ptr] "m"(neg_log2e)
             : "f10", "f11", "f12", "f13", "f14", "f15", "f16", "f17", "f18", "f21", "f23", "f24", "f25");
     }
 
-    __asm__ volatile("mova.m.x %0" :: "r"(temp_mask));
+    __asm__ ਅਸਥਿਰ("mova.m.x %0" :: "r"(ਆਰਜ਼ੀ_ਨਕਾਬ));
 
-    for (int32_t i = vec_end; i < elements; i++) {
-        float gate   = gate_block[i] > limit ? limit : gate_block[i];
-        float up     = up_block[i];
-        up           = up > limit ? limit : up;
-        up           = up < -limit ? -limit : up;
-        dst_block[i] = silu_f32(gate) * up;
+    ਲਈ (int32_t i = vec_ਸਿਰਾ; i < elements; i++) {
+        ਦਸ਼ਮਲਵ gate   = gate_ਖੰਡ[i] > ਹੱਦਬੰਦੀ ? ਹੱਦਬੰਦੀ : gate_ਖੰਡ[i];
+        ਦਸ਼ਮਲਵ ਉੱਪਰ     = ਉੱਪਰ_ਖੰਡ[i];
+        ਉੱਪਰ           = ਉੱਪਰ > ਹੱਦਬੰਦੀ ? ਹੱਦਬੰਦੀ : ਉੱਪਰ;
+        ਉੱਪਰ           = ਉੱਪਰ < -ਹੱਦਬੰਦੀ ? -ਹੱਦਬੰਦੀ : ਉੱਪਰ;
+        dst_ਖੰਡ[i] = silu_f32(gate) * ਉੱਪਰ;
     }
 }
 
 // Scalar erf approximation (Abramowitz & Stegun 7.1.26, max error ~1.5e-7)
-static inline float erf_approx(float x) {
-    const float a1 = 0.254829592f;
-    const float a2 = -0.284496736f;
-    const float a3 = 1.421413741f;
-    const float a4 = -1.453152027f;
-    const float a5 = 1.061405429f;
-    const float p  = 0.3275911f;
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਦਸ਼ਮਲਵ erf_approx(ਦਸ਼ਮਲਵ x) {
+    ਅਚਲ ਦਸ਼ਮਲਵ a1 = 0.254829592f;
+    ਅਚਲ ਦਸ਼ਮਲਵ a2 = -0.284496736f;
+    ਅਚਲ ਦਸ਼ਮਲਵ a3 = 1.421413741f;
+    ਅਚਲ ਦਸ਼ਮਲਵ a4 = -1.453152027f;
+    ਅਚਲ ਦਸ਼ਮਲਵ a5 = 1.061405429f;
+    ਅਚਲ ਦਸ਼ਮਲਵ p  = 0.3275911f;
 
-    float sign = (x < 0.0f) ? -1.0f : 1.0f;
-    float ax   = (x < 0.0f) ? -x : x;
-    float t    = et_fdiv(1.0f, 1.0f + p * ax);
-    float t2   = t * t;
-    float t3   = t2 * t;
-    float t4   = t3 * t;
-    float t5   = t4 * t;
-    float poly = a1 * t + a2 * t2 + a3 * t3 + a4 * t4 + a5 * t5;
-    float y    = 1.0f - poly * et_expf(-ax * ax);
-    return sign * y;
+    ਦਸ਼ਮਲਵ sign = (x < 0.0f) ? -1.0f : 1.0f;
+    ਦਸ਼ਮਲਵ ax   = (x < 0.0f) ? -x : x;
+    ਦਸ਼ਮਲਵ t    = et_fdiv(1.0f, 1.0f + p * ax);
+    ਦਸ਼ਮਲਵ t2   = t * t;
+    ਦਸ਼ਮਲਵ t3   = t2 * t;
+    ਦਸ਼ਮਲਵ t4   = t3 * t;
+    ਦਸ਼ਮਲਵ t5   = t4 * t;
+    ਦਸ਼ਮਲਵ poly = a1 * t + a2 * t2 + a3 * t3 + a4 * t4 + a5 * t5;
+    ਦਸ਼ਮਲਵ y    = 1.0f - poly * et_expf(-ax * ax);
+    ਵਾਪਸ sign * y;
 }
 
 // GeGLU-Erf block: dst = 0.5 * x * (1 + erf(x / sqrt(2))) * g
 // Scalar implementation — variant is rarely used so we keep complexity low.
-static inline void block_geglu_erf(float * dst_block, const float * x_block, const float * g_block, int elements) {
-    const float sqrt_2_inv = 0.70710678118654752440f;
-    for (int32_t i = 0; i < elements; i++) {
-        float xv     = x_block[i];
-        dst_block[i] = 0.5f * xv * (1.0f + erf_approx(xv * sqrt_2_inv)) * g_block[i];
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ ਖੰਡ_geglu_erf(ਦਸ਼ਮਲਵ * dst_ਖੰਡ, ਅਚਲ ਦਸ਼ਮਲਵ * x_ਖੰਡ, ਅਚਲ ਦਸ਼ਮਲਵ * g_ਖੰਡ, ਪੂਰਨ elements) {
+    ਅਚਲ ਦਸ਼ਮਲਵ sqrt_2_inv = 0.70710678118654752440f;
+    ਲਈ (int32_t i = 0; i < elements; i++) {
+        ਦਸ਼ਮਲਵ xv     = x_ਖੰਡ[i];
+        dst_ਖੰਡ[i] = 0.5f * xv * (1.0f + erf_approx(xv * sqrt_2_inv)) * g_ਖੰਡ[i];
     }
 }
 
 // Main entry point for GLU kernel
-int entry_point(struct ggml_et_glu_params * params, void * env) {
+ਪੂਰਨ ਇੰਦਰਾਜ_ਬਿੰਦੂ(ਬਣਤਰ ggml_et_glu_params * params, ਖਾਲੀ * env) {
     // Cast env to proper type
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
     // Validate environment pointer
-    if (!kernel_env) {
-        return -1;
+    ਜੇ (!kernel_env) {
+        ਵਾਪਸ -1;
     }
 
     // Get thread info using shire mask from environment
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    ਪੂਰਨ thread_id   = get_relative_thread_id(kernel_env->shire_ਨਕਾਬ);
+    ਪੂਰਨ ਅੰਕ_ਧਾਗੇ = get_ਅੰਕ_ਧਾਗੇ(kernel_env->shire_ਨਕਾਬ);
 
     // Basic safety check on params
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;  // Invalid pointer
+    ਜੇ (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        ਵਾਪਸ -1;  // Invalid pointer
     }
 
     // Supported variants: SwiGLU, SwiGLU-OAI, GeGLU, GeGLU-Erf, GeGLU-Quick, ReGLU
-    switch (params->glu_op_type) {
-        case GGML_GLU_OP_SWIGLU:
-        case GGML_GLU_OP_SWIGLU_OAI:
-        case GGML_GLU_OP_SWIGLU_CLAMP:
-        case GGML_GLU_OP_GEGLU:
-        case GGML_GLU_OP_GEGLU_ERF:
-        case GGML_GLU_OP_GEGLU_QUICK:
-        case GGML_GLU_OP_REGLU:
-            break;
-        default:
-            return -1;  // Unsupported GLU operation
+    ਚੋਣ (params->glu_op_type) {
+        ਹਾਲਤ GGML_GLU_OP_SWIGLU:
+        ਹਾਲਤ GGML_GLU_OP_SWIGLU_OAI:
+        ਹਾਲਤ GGML_GLU_OP_SWIGLU_CLAMP:
+        ਹਾਲਤ GGML_GLU_OP_GEGLU:
+        ਹਾਲਤ GGML_GLU_OP_GEGLU_ERF:
+        ਹਾਲਤ GGML_GLU_OP_GEGLU_ਤੇਜ਼:
+        ਹਾਲਤ GGML_GLU_OP_REGLU:
+            ਰੋਕੋ;
+        ਮੂਲ:
+            ਵਾਪਸ -1;  // Unsupported GLU operation
     }
 
     // Extract tensor references
-    struct ggml_tensor * src0    = &params->src0;
-    struct ggml_tensor * src1    = params->src1.data ? &params->src1 : 0;
-    struct ggml_tensor * dst     = &params->dst;
+    ਬਣਤਰ ggml_tensor * src0    = &params->src0;
+    ਬਣਤਰ ggml_tensor * src1    = params->src1.ਅੰਕੜੇ ? &params->src1 : 0;
+    ਬਣਤਰ ggml_tensor * dst     = &params->dst;
     int32_t              swapped = params->swapped;
 
     // Validate tensor types (F32 only)
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;  // Unsupported type combination
+    ਜੇ (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        ਵਾਪਸ -1;  // Unsupported type combination
     }
 
-    if (src1 && src1->type != GGML_TYPE_F32) {
-        return -1;  // Unsupported src1 type
+    ਜੇ (src1 && src1->type != GGML_TYPE_F32) {
+        ਵਾਪਸ -1;  // Unsupported src1 type
     }
 
     // Get data pointers
-    float * src0_data = (float *) src0->data;
-    float * src1_data = src1 ? (float *) src1->data : src0_data;
-    float * dst_data  = (float *) dst->data;
+    ਦਸ਼ਮਲਵ * src0_ਅੰਕੜੇ = (ਦਸ਼ਮਲਵ *) src0->ਅੰਕੜੇ;
+    ਦਸ਼ਮਲਵ * src1_ਅੰਕੜੇ = src1 ? (ਦਸ਼ਮਲਵ *) src1->ਅੰਕੜੇ : src0_ਅੰਕੜੇ;
+    ਦਸ਼ਮਲਵ * dst_ਅੰਕੜੇ  = (ਦਸ਼ਮਲਵ *) dst->ਅੰਕੜੇ;
 
     // Validate data pointers
-    if (!src0_data || !dst_data) {
-        return -1;  // Null data pointer
+    ਜੇ (!src0_ਅੰਕੜੇ || !dst_ਅੰਕੜੇ) {
+        ਵਾਪਸ -1;  // Null data pointer
     }
 
     // Get tensor dimensions
-    const int64_t nc = dst->ne[0];                            // Output columns (input columns / 2)
-    const int64_t nr = dst->ne[1] * dst->ne[2] * dst->ne[3];  // Total rows
+    ਅਚਲ int64_t nc = dst->ne[0];                            // Output columns (input columns / 2)
+    ਅਚਲ int64_t nr = dst->ne[1] * dst->ne[2] * dst->ne[3];  // Total rows
 
     // Get strides
-    const size_t src0_stride = src0->nb[1];                       // Stride between rows in src0
-    const size_t src1_stride = src1 ? src1->nb[1] : src0->nb[1];  // Stride between rows in src1
-    const size_t dst_stride  = dst->nb[1];                        // Stride between rows in dst
+    ਅਚਲ size_t src0_stride = src0->nb[1];                       // Stride between rows in src0
+    ਅਚਲ size_t src1_stride = src1 ? src1->nb[1] : src0->nb[1];  // Stride between rows in src1
+    ਅਚਲ size_t dst_stride  = dst->nb[1];                        // Stride between rows in dst
 
     // Validate dimensions for split SwiGLU
-    if (src1) {
+    ਜੇ (src1) {
         // Split tensor mode: src0 and src1 should have same shape as dst
-        if (src0->ne[0] != nc || src1->ne[0] != nc) {
-            return -1;  // Dimension mismatch in split mode
+        ਜੇ (src0->ne[0] != nc || src1->ne[0] != nc) {
+            ਵਾਪਸ -1;  // Dimension mismatch in split mode
         }
-    } else {
+    } ਨਹੀਂਤਾਂ {
         // Single tensor mode: src0 should have 2*nc columns
-        if (src0->ne[0] != 2 * nc) {
-            return -1;  // Dimension mismatch in single tensor mode
+        ਜੇ (src0->ne[0] != 2 * nc) {
+            ਵਾਪਸ -1;  // Dimension mismatch in single tensor mode
         }
     }
 
     // Calculate total elements for cache line distribution
-    const int64_t elements_per_cacheline = 16;  // 64 bytes / 4 bytes per float
-    const int64_t total_elements         = nr * nc;
-    const int64_t total_cachelines       = (total_elements + elements_per_cacheline - 1) / elements_per_cacheline;
+    ਅਚਲ int64_t elements_ਪ੍ਰਤੀ_cacheline = 16;  // 64 bytes / 4 bytes per float
+    ਅਚਲ int64_t ਕੁੱਲ_elements         = nr * nc;
+    ਅਚਲ int64_t ਕੁੱਲ_cachelines       = (ਕੁੱਲ_elements + elements_ਪ੍ਰਤੀ_cacheline - 1) / elements_ਪ੍ਰਤੀ_cacheline;
 
     // Distribute cache lines across threads
-    int64_t cachelines_per_thread = (total_cachelines + num_threads - 1) / num_threads;
-    int64_t start_cacheline       = thread_id * cachelines_per_thread;
-    int64_t end_cacheline         = start_cacheline + cachelines_per_thread;
+    int64_t cachelines_ਪ੍ਰਤੀ_thread = (ਕੁੱਲ_cachelines + ਅੰਕ_ਧਾਗੇ - 1) / ਅੰਕ_ਧਾਗੇ;
+    int64_t ਸ਼ੁਰੂ_cacheline       = thread_id * cachelines_ਪ੍ਰਤੀ_thread;
+    int64_t ਸਿਰਾ_cacheline         = ਸ਼ੁਰੂ_cacheline + cachelines_ਪ੍ਰਤੀ_thread;
 
     // Clamp end_cacheline to actual number of cache lines
-    if (end_cacheline > total_cachelines) {
-        end_cacheline = total_cachelines;
+    ਜੇ (ਸਿਰਾ_cacheline > ਕੁੱਲ_cachelines) {
+        ਸਿਰਾ_cacheline = ਕੁੱਲ_cachelines;
     }
 
     // Thread should return if no work to do
-    if (start_cacheline >= total_cachelines) {
-        return 0;
+    ਜੇ (ਸ਼ੁਰੂ_cacheline >= ਕੁੱਲ_cachelines) {
+        ਵਾਪਸ 0;
     }
 
     // Process cache lines assigned to this thread
-    for (int64_t cl = start_cacheline; cl < end_cacheline; cl++) {
+    ਲਈ (int64_t cl = ਸ਼ੁਰੂ_cacheline; cl < ਸਿਰਾ_cacheline; cl++) {
         // Map cache line back to element coordinates
-        int64_t global_element_start = cl * elements_per_cacheline;
-        int64_t row                  = global_element_start / nc;
-        int64_t col                  = global_element_start % nc;
+        int64_t global_element_ਸ਼ੁਰੂ = cl * elements_ਪ੍ਰਤੀ_cacheline;
+        int64_t ਪੰਕਤੀ                  = global_element_ਸ਼ੁਰੂ / nc;
+        int64_t ਖਾਨਾ                  = global_element_ਸ਼ੁਰੂ % nc;
 
         // Skip if we're past the end of data
-        if (global_element_start >= total_elements) {
-            break;
+        ਜੇ (global_element_ਸ਼ੁਰੂ >= ਕੁੱਲ_elements) {
+            ਰੋਕੋ;
         }
 
         // Calculate how many elements to process in this cache line
-        int64_t elements_remaining = total_elements - global_element_start;
-        int     elements_this_block =
-            (int) ((elements_remaining < elements_per_cacheline) ? elements_remaining : elements_per_cacheline);
+        int64_t elements_ਬਚਿਆ = ਕੁੱਲ_elements - global_element_ਸ਼ੁਰੂ;
+        ਪੂਰਨ     elements_this_ਖੰਡ =
+            (ਪੂਰਨ) ((elements_ਬਚਿਆ < elements_ਪ੍ਰਤੀ_cacheline) ? elements_ਬਚਿਆ : elements_ਪ੍ਰਤੀ_cacheline);
 
         // Process elements that span across rows
         int64_t elements_processed = 0;
-        while (elements_processed < elements_this_block && row < nr) {
+        ਜਦੋਂ (elements_processed < elements_this_ਖੰਡ && ਪੰਕਤੀ < nr) {
             // Calculate elements to process in current row
-            int64_t elements_in_row     = nc - col;
-            int64_t elements_to_process = elements_this_block - elements_processed;
-            if (elements_to_process > elements_in_row) {
-                elements_to_process = elements_in_row;
+            int64_t elements_ਵਿੱਚ_ਪੰਕਤੀ     = nc - ਖਾਨਾ;
+            int64_t elements_ਮੰਜ਼ਿਲ_process = elements_this_ਖੰਡ - elements_processed;
+            ਜੇ (elements_ਮੰਜ਼ਿਲ_process > elements_ਵਿੱਚ_ਪੰਕਤੀ) {
+                elements_ਮੰਜ਼ਿਲ_process = elements_ਵਿੱਚ_ਪੰਕਤੀ;
             }
 
             // Get pointers for current row and column range
-            float * dst_ptr = (float *) ((char *) dst_data + row * dst_stride) + col;
+            ਦਸ਼ਮਲਵ * dst_ptr = (ਦਸ਼ਮਲਵ *) ((ਅੱਖਰ *) dst_ਅੰਕੜੇ + ਪੰਕਤੀ * dst_stride) + ਖਾਨਾ;
 
-            float * x_ptr;
-            float * g_ptr;
+            ਦਸ਼ਮਲਵ * x_ptr;
+            ਦਸ਼ਮਲਵ * g_ptr;
 
-            if (src1) {
+            ਜੇ (src1) {
                 // Split tensor mode
-                x_ptr = (float *) ((char *) src0_data + row * src0_stride) + col;
-                g_ptr = (float *) ((char *) src1_data + row * src1_stride) + col;
-            } else {
+                x_ptr = (ਦਸ਼ਮਲਵ *) ((ਅੱਖਰ *) src0_ਅੰਕੜੇ + ਪੰਕਤੀ * src0_stride) + ਖਾਨਾ;
+                g_ptr = (ਦਸ਼ਮਲਵ *) ((ਅੱਖਰ *) src1_ਅੰਕੜੇ + ਪੰਕਤੀ * src1_stride) + ਖਾਨਾ;
+            } ਨਹੀਂਤਾਂ {
                 // Single tensor mode - src0 contains both x and g
-                float * src0_row = (float *) ((char *) src0_data + row * src0_stride);
-                if (swapped) {
-                    g_ptr = src0_row + col;       // First half is gate
-                    x_ptr = src0_row + nc + col;  // Second half is value
-                } else {
-                    x_ptr = src0_row + col;       // First half is value
-                    g_ptr = src0_row + nc + col;  // Second half is gate
+                ਦਸ਼ਮਲਵ * src0_ਪੰਕਤੀ = (ਦਸ਼ਮਲਵ *) ((ਅੱਖਰ *) src0_ਅੰਕੜੇ + ਪੰਕਤੀ * src0_stride);
+                ਜੇ (swapped) {
+                    g_ptr = src0_ਪੰਕਤੀ + ਖਾਨਾ;       // First half is gate
+                    x_ptr = src0_ਪੰਕਤੀ + nc + ਖਾਨਾ;  // Second half is value
+                } ਨਹੀਂਤਾਂ {
+                    x_ptr = src0_ਪੰਕਤੀ + ਖਾਨਾ;       // First half is value
+                    g_ptr = src0_ਪੰਕਤੀ + nc + ਖਾਨਾ;  // Second half is gate
                 }
             }
 
             // Process this segment
-            switch (params->glu_op_type) {
-                case GGML_GLU_OP_GEGLU:
-                    block_geglu(dst_ptr, x_ptr, g_ptr, (int) elements_to_process);
-                    break;
-                case GGML_GLU_OP_SWIGLU:
-                    block_swiglu(dst_ptr, x_ptr, g_ptr, (int) elements_to_process);
-                    break;
-                case GGML_GLU_OP_REGLU:
-                    block_reglu(dst_ptr, x_ptr, g_ptr, (int) elements_to_process);
-                    break;
-                case GGML_GLU_OP_GEGLU_QUICK:
-                    block_geglu_quick(dst_ptr, x_ptr, g_ptr, (int) elements_to_process);
-                    break;
-                case GGML_GLU_OP_GEGLU_ERF:
-                    block_geglu_erf(dst_ptr, x_ptr, g_ptr, (int) elements_to_process);
-                    break;
-                case GGML_GLU_OP_SWIGLU_OAI:
-                    block_swiglu_oai(dst_ptr, x_ptr, g_ptr, (int) elements_to_process, params->alpha, params->limit);
-                    break;
-                case GGML_GLU_OP_SWIGLU_CLAMP:
-                    block_swiglu_clamp(dst_ptr, x_ptr, g_ptr, (int) elements_to_process, params->limit);
-                    break;
-                default:
-                    return -1;
+            ਚੋਣ (params->glu_op_type) {
+                ਹਾਲਤ GGML_GLU_OP_GEGLU:
+                    ਖੰਡ_geglu(dst_ptr, x_ptr, g_ptr, (ਪੂਰਨ) elements_ਮੰਜ਼ਿਲ_process);
+                    ਰੋਕੋ;
+                ਹਾਲਤ GGML_GLU_OP_SWIGLU:
+                    ਖੰਡ_swiglu(dst_ptr, x_ptr, g_ptr, (ਪੂਰਨ) elements_ਮੰਜ਼ਿਲ_process);
+                    ਰੋਕੋ;
+                ਹਾਲਤ GGML_GLU_OP_REGLU:
+                    ਖੰਡ_reglu(dst_ptr, x_ptr, g_ptr, (ਪੂਰਨ) elements_ਮੰਜ਼ਿਲ_process);
+                    ਰੋਕੋ;
+                ਹਾਲਤ GGML_GLU_OP_GEGLU_ਤੇਜ਼:
+                    ਖੰਡ_geglu_ਤੇਜ਼(dst_ptr, x_ptr, g_ptr, (ਪੂਰਨ) elements_ਮੰਜ਼ਿਲ_process);
+                    ਰੋਕੋ;
+                ਹਾਲਤ GGML_GLU_OP_GEGLU_ERF:
+                    ਖੰਡ_geglu_erf(dst_ptr, x_ptr, g_ptr, (ਪੂਰਨ) elements_ਮੰਜ਼ਿਲ_process);
+                    ਰੋਕੋ;
+                ਹਾਲਤ GGML_GLU_OP_SWIGLU_OAI:
+                    ਖੰਡ_swiglu_oai(dst_ptr, x_ptr, g_ptr, (ਪੂਰਨ) elements_ਮੰਜ਼ਿਲ_process, params->alpha, params->ਹੱਦਬੰਦੀ);
+                    ਰੋਕੋ;
+                ਹਾਲਤ GGML_GLU_OP_SWIGLU_CLAMP:
+                    ਖੰਡ_swiglu_clamp(dst_ptr, x_ptr, g_ptr, (ਪੂਰਨ) elements_ਮੰਜ਼ਿਲ_process, params->ਹੱਦਬੰਦੀ);
+                    ਰੋਕੋ;
+                ਮੂਲ:
+                    ਵਾਪਸ -1;
             }
 
             // Update counters
-            elements_processed += elements_to_process;
-            col += elements_to_process;
+            elements_processed += elements_ਮੰਜ਼ਿਲ_process;
+            ਖਾਨਾ += elements_ਮੰਜ਼ਿਲ_process;
 
             // Move to next row if current row is complete
-            if (col >= nc) {
-                row++;
-                col = 0;
+            ਜੇ (ਖਾਨਾ >= nc) {
+                ਪੰਕਤੀ++;
+                ਖਾਨਾ = 0;
             }
         }
     }
 
-    return 0;
+    ਵਾਪਸ 0;
 }

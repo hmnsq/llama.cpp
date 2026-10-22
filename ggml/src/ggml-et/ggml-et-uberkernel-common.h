@@ -1,16 +1,16 @@
-#pragma once
+#ਹਦਾਇਤ once
 
-#include <stdint.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdint.h>
 
-struct ggml_et_uberkernel_inst {
+ਬਣਤਰ ggml_et_uberkernel_inst {
     uint16_t kernel_id;
     uint16_t flags;
-    uint32_t params_offset;
-    uint32_t params_size;
+    uint32_t params_ਵਿੱਥ;
+    uint32_t params_ਮਾਪ;
 };
 
-struct ggml_et_uberkernel_params {
-    uint32_t num_insts;
+ਬਣਤਰ ggml_et_uberkernel_params {
+    uint32_t ਅੰਕ_insts;
     uint32_t inst_stride;
     uint64_t insts;
     uint64_t params_blob;

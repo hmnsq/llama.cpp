@@ -1,148 +1,148 @@
-#include "cumsum.hpp"
-#include "common.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "cumsum.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "common.hpp"
 
-#include <algorithm>
+#ਅਨ੍ਤਰ੍ਭਾਵ <algorithm>
 
-#define SYCL_CUMSUM_BLOCK_SIZE 256
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ SYCL_CUMSUM_ਖੰਡ_ਮਾਪ 256
 
-static __dpct_inline__ float warp_prefix_inclusive_sum_f32(float x, const sycl::nd_item<3> & item) {
-    return sycl::inclusive_scan_over_group(item.get_sub_group(), x, sycl::plus<float>());
+ਸਥਿਰ __dpct_inline__ ਦਸ਼ਮਲਵ warp_ਅਗੇਤਰ_inclusive_ਜੋੜ_f32(ਦਸ਼ਮਲਵ x, ਅਚਲ sycl::nd_ਵਸਤੂ<3> & ਵਸਤੂ) {
+    ਵਾਪਸ sycl::inclusive_ਜਾਂਚ_over_ਸਮੂਹ(ਵਸਤੂ.get_sub_ਸਮੂਹ(), x, sycl::plus<ਦਸ਼ਮਲਵ>());
 }
 
-static void cumsum_f32_kernel(
-        const float * __restrict__ src, float * __restrict__ dst,
-        const int64_t ne00, const int64_t ne01, const int64_t ne02, const int64_t ne03,
-        const int64_t s01, const int64_t s02, const int64_t s03,
-        const int64_t  d1, const int64_t  d2, const int64_t  d3,
-        const sycl::nd_item<3> & item, float * smem) {
+ਸਥਿਰ ਖਾਲੀ cumsum_f32_kernel(
+        ਅਚਲ ਦਸ਼ਮਲਵ * __restrict__ src, ਦਸ਼ਮਲਵ * __restrict__ dst,
+        ਅਚਲ int64_t ne00, ਅਚਲ int64_t ne01, ਅਚਲ int64_t ne02, ਅਚਲ int64_t ne03,
+        ਅਚਲ int64_t s01, ਅਚਲ int64_t s02, ਅਚਲ int64_t s03,
+        ਅਚਲ int64_t  d1, ਅਚਲ int64_t  d2, ਅਚਲ int64_t  d3,
+        ਅਚਲ sycl::nd_ਵਸਤੂ<3> & ਵਸਤੂ, ਦਸ਼ਮਲਵ * smem) {
 
-    const int tid = item.get_local_id(2);
-    const int block_size = item.get_local_range(2);
-    const int lane = tid % WARP_SIZE;
-    const int warp = tid / WARP_SIZE;
-    const int warps_per_block = block_size / WARP_SIZE;
+    ਅਚਲ ਪੂਰਨ tid = ਵਸਤੂ.get_local_id(2);
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਮਾਪ_3 = ਵਸਤੂ.get_local_range(2);
+    ਅਚਲ ਪੂਰਨ lane = tid % WARP_ਮਾਪ;
+    ਅਚਲ ਪੂਰਨ warp = tid / WARP_ਮਾਪ;
+    ਅਚਲ ਪੂਰਨ warps_ਪ੍ਰਤੀ_ਖੰਡ = ਖੰਡ_ਮਾਪ_3 / WARP_ਮਾਪ;
 
-    float * s_vals      = smem;
-    float * s_warp_sums = smem + block_size;
-    float * s_carry     = smem + block_size + warps_per_block;
+    ਦਸ਼ਮਲਵ * s_vals      = smem;
+    ਦਸ਼ਮਲਵ * s_warp_sums = smem + ਖੰਡ_ਮਾਪ_3;
+    ਦਸ਼ਮਲਵ * s_ਹਾਸਲ     = smem + ਖੰਡ_ਮਾਪ_3 + warps_ਪ੍ਰਤੀ_ਖੰਡ;
 
-    if (tid == 0) {
-        s_carry[0] = 0.0f;
+    ਜੇ (tid == 0) {
+        s_ਹਾਸਲ[0] = 0.0f;
     }
-    item.barrier(sycl::access::fence_space::local_space);
+    ਵਸਤੂ.barrier(sycl::access::fence_space::local_space);
 
-    const int64_t i3 = item.get_group(0);
-    const int64_t i2 = item.get_group(1);
-    const int64_t i1 = item.get_group(2);
-    if (i3 >= ne03 || i2 >= ne02 || i1 >= ne01) {
-        return;
+    ਅਚਲ int64_t i3 = ਵਸਤੂ.get_ਸਮੂਹ(0);
+    ਅਚਲ int64_t i2 = ਵਸਤੂ.get_ਸਮੂਹ(1);
+    ਅਚਲ int64_t i1 = ਵਸਤੂ.get_ਸਮੂਹ(2);
+    ਜੇ (i3 >= ne03 || i2 >= ne02 || i1 >= ne01) {
+        ਵਾਪਸ;
     }
 
-    const float * src_row = src + i1 * s01 + i2 * s02 + i3 * s03;
-    float       * dst_row = dst + i1 * d1  + i2 * d2  + i3 * d3;
+    ਅਚਲ ਦਸ਼ਮਲਵ * src_ਪੰਕਤੀ = src + i1 * s01 + i2 * s02 + i3 * s03;
+    ਦਸ਼ਮਲਵ       * dst_ਪੰਕਤੀ = dst + i1 * d1  + i2 * d2  + i3 * d3;
 
-    constexpr int num_unroll = 4;
-    float temp[num_unroll];
+    constexpr ਪੂਰਨ ਅੰਕ_unroll = 4;
+    ਦਸ਼ਮਲਵ ਆਰਜ਼ੀ[ਅੰਕ_unroll];
 
-    for (int64_t i = 0; i < ne00; i += num_unroll * block_size) {
-        int64_t idx = i + tid * num_unroll;
+    ਲਈ (int64_t i = 0; i < ne00; i += ਅੰਕ_unroll * ਖੰਡ_ਮਾਪ_3) {
+        int64_t idx = i + tid * ਅੰਕ_unroll;
 
-        temp[0] = (idx < ne00 ? src_row[idx] : 0.0f);
-#pragma unroll
-        for (int j = 1; j < num_unroll; j++) {
-            temp[j] = temp[j - 1];
-            if (idx + j < ne00) {
-                temp[j] += src_row[idx + j];
+        ਆਰਜ਼ੀ[0] = (idx < ne00 ? src_ਪੰਕਤੀ[idx] : 0.0f);
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ j = 1; j < ਅੰਕ_unroll; j++) {
+            ਆਰਜ਼ੀ[j] = ਆਰਜ਼ੀ[j - 1];
+            ਜੇ (idx + j < ne00) {
+                ਆਰਜ਼ੀ[j] += src_ਪੰਕਤੀ[idx + j];
             }
         }
 
-        float val = (idx < ne00) ? temp[num_unroll - 1] : 0.0f;
+        ਦਸ਼ਮਲਵ val = (idx < ne00) ? ਆਰਜ਼ੀ[ਅੰਕ_unroll - 1] : 0.0f;
 
-        val = warp_prefix_inclusive_sum_f32(val, item);
+        val = warp_ਅਗੇਤਰ_inclusive_ਜੋੜ_f32(val, ਵਸਤੂ);
         s_vals[tid] = val;
 
-        if (lane == WARP_SIZE - 1) {
+        ਜੇ (lane == WARP_ਮਾਪ - 1) {
             s_warp_sums[warp] = val;
         }
-        item.barrier(sycl::access::fence_space::local_space);
+        ਵਸਤੂ.barrier(sycl::access::fence_space::local_space);
 
-        if (warp == 0) {
-            float w = (tid < warps_per_block) ? s_warp_sums[tid] : 0.0f;
-            float inc = warp_prefix_inclusive_sum_f32(w, item);
-            if (tid < warps_per_block) {
+        ਜੇ (warp == 0) {
+            ਦਸ਼ਮਲਵ w = (tid < warps_ਪ੍ਰਤੀ_ਖੰਡ) ? s_warp_sums[tid] : 0.0f;
+            ਦਸ਼ਮਲਵ inc = warp_ਅਗੇਤਰ_inclusive_ਜੋੜ_f32(w, ਵਸਤੂ);
+            ਜੇ (tid < warps_ਪ੍ਰਤੀ_ਖੰਡ) {
                 s_warp_sums[tid] = inc - w;
             }
-            if (tid == warps_per_block - 1) {
-                s_carry[1] = inc;
+            ਜੇ (tid == warps_ਪ੍ਰਤੀ_ਖੰਡ - 1) {
+                s_ਹਾਸਲ[1] = inc;
             }
         }
-        item.barrier(sycl::access::fence_space::local_space);
+        ਵਸਤੂ.barrier(sycl::access::fence_space::local_space);
 
-        float carry = s_carry[0];
-        float final_offset = s_vals[tid] + s_warp_sums[warp] + carry - temp[num_unroll - 1];
+        ਦਸ਼ਮਲਵ ਹਾਸਲ = s_ਹਾਸਲ[0];
+        ਦਸ਼ਮਲਵ final_ਵਿੱਥ = s_vals[tid] + s_warp_sums[warp] + ਹਾਸਲ - ਆਰਜ਼ੀ[ਅੰਕ_unroll - 1];
 
-#pragma unroll
-        for (int j = 0; j < num_unroll; j++) {
-            if (idx + j < ne00) {
-                dst_row[idx + j] = temp[j] + final_offset;
+#ਹਦਾਇਤ unroll
+        ਲਈ (ਪੂਰਨ j = 0; j < ਅੰਕ_unroll; j++) {
+            ਜੇ (idx + j < ne00) {
+                dst_ਪੰਕਤੀ[idx + j] = ਆਰਜ਼ੀ[j] + final_ਵਿੱਥ;
             }
         }
 
-        item.barrier(sycl::access::fence_space::local_space);
+        ਵਸਤੂ.barrier(sycl::access::fence_space::local_space);
 
-        if (tid == 0) {
-            s_carry[0] += s_carry[1];
+        ਜੇ (tid == 0) {
+            s_ਹਾਸਲ[0] += s_ਹਾਸਲ[1];
         }
     }
 }
 
-inline void ggml_sycl_op_cumsum(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    const ggml_tensor * src0 = dst->src[0];
+ਸਤਰਅੰਦਰ ਖਾਲੀ ggml_sycl_op_cumsum(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ਅਚਲ ggml_tensor * src0 = dst->src[0];
 
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
     GGML_ASSERT(dst->type == GGML_TYPE_F32);
 
-    dpct::queue_ptr stream = ctx.stream();
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
+    dpct::ਕਤਾਰ_ptr stream = ctx.stream();
+    SYCL_CHECK(ggml_sycl_ਸੈੱਟ_device(ctx.device));
 
-    const float * src_d = static_cast<const float *>(src0->data);
-    float       * dst_d = static_cast<float *>(dst->data);
+    ਅਚਲ ਦਸ਼ਮਲਵ * src_d = static_cast<ਅਚਲ ਦਸ਼ਮਲਵ *>(src0->ਅੰਕੜੇ);
+    ਦਸ਼ਮਲਵ       * dst_d = static_cast<ਦਸ਼ਮਲਵ *>(dst->ਅੰਕੜੇ);
 
-    const int64_t ne00 = src0->ne[0];
-    const int64_t ne01 = src0->ne[1];
-    const int64_t ne02 = src0->ne[2];
-    const int64_t ne03 = src0->ne[3];
+    ਅਚਲ int64_t ne00 = src0->ne[0];
+    ਅਚਲ int64_t ne01 = src0->ne[1];
+    ਅਚਲ int64_t ne02 = src0->ne[2];
+    ਅਚਲ int64_t ne03 = src0->ne[3];
 
-    const size_t ts = sizeof(float);
-    const int64_t s01 = src0->nb[1] / ts;
-    const int64_t s02 = src0->nb[2] / ts;
-    const int64_t s03 = src0->nb[3] / ts;
-    const int64_t d1  = dst->nb[1] / ts;
-    const int64_t d2  = dst->nb[2] / ts;
-    const int64_t d3  = dst->nb[3] / ts;
+    ਅਚਲ size_t ts = ਆਕਾਰ(ਦਸ਼ਮਲਵ);
+    ਅਚਲ int64_t s01 = src0->nb[1] / ts;
+    ਅਚਲ int64_t s02 = src0->nb[2] / ts;
+    ਅਚਲ int64_t s03 = src0->nb[3] / ts;
+    ਅਚਲ int64_t d1  = dst->nb[1] / ts;
+    ਅਚਲ int64_t d2  = dst->nb[2] / ts;
+    ਅਚਲ int64_t d3  = dst->nb[3] / ts;
 
-    const int num_warps = (ne00 + WARP_SIZE - 1) / WARP_SIZE;
-    int block_size = num_warps * WARP_SIZE;
-    block_size = std::min(block_size, SYCL_CUMSUM_BLOCK_SIZE);
-    const int warps_per_block = block_size / WARP_SIZE;
-    const int smem_size = block_size + warps_per_block + 2;
+    ਅਚਲ ਪੂਰਨ ਅੰਕ_warps = (ne00 + WARP_ਮਾਪ - 1) / WARP_ਮਾਪ;
+    ਪੂਰਨ ਖੰਡ_ਮਾਪ_3 = ਅੰਕ_warps * WARP_ਮਾਪ;
+    ਖੰਡ_ਮਾਪ_3 = std::min(ਖੰਡ_ਮਾਪ_3, SYCL_CUMSUM_ਖੰਡ_ਮਾਪ);
+    ਅਚਲ ਪੂਰਨ warps_ਪ੍ਰਤੀ_ਖੰਡ = ਖੰਡ_ਮਾਪ_3 / WARP_ਮਾਪ;
+    ਅਚਲ ਪੂਰਨ smem_ਮਾਪ = ਖੰਡ_ਮਾਪ_3 + warps_ਪ੍ਰਤੀ_ਖੰਡ + 2;
 
-    const sycl::range<3> grid(ne03, ne02, ne01);
-    const sycl::range<3> block(1, 1, block_size);
+    ਅਚਲ sycl::range<3> grid(ne03, ne02, ne01);
+    ਅਚਲ sycl::range<3> ਖੰਡ(1, 1, ਖੰਡ_ਮਾਪ_3);
 
     stream->submit([&](sycl::handler & cgh) {
-        sycl::local_accessor<float, 1> smem_acc(sycl::range<1>(smem_size), cgh);
+        sycl::local_accessor<ਦਸ਼ਮਲਵ, 1> smem_acc(sycl::range<1>(smem_ਮਾਪ), cgh);
         cgh.parallel_for(
-            sycl::nd_range<3>(grid * block, block),
-            [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+            sycl::nd_range<3>(grid * ਖੰਡ, ਖੰਡ),
+            [=](sycl::nd_ਵਸਤੂ<3> ਵਸਤੂ) [[sycl::reqd_sub_ਸਮੂਹ_ਮਾਪ(WARP_ਮਾਪ)]] {
                 cumsum_f32_kernel(src_d, dst_d, ne00, ne01, ne02, ne03,
                                   s01, s02, s03, d1, d2, d3,
-                                  item, get_pointer(smem_acc));
+                                  ਵਸਤੂ, get_ਸੂਚਕ(smem_acc));
             });
     });
 }
 
-void ggml_sycl_cumsum(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ਖਾਲੀ ggml_sycl_cumsum(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_cumsum(ctx, dst);
 }

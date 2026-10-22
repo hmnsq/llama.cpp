@@ -1,20 +1,20 @@
 // helper functions for ggml-metal that are too difficult to implement in Objective-C
 
-#pragma once
+#ਹਦਾਇਤ once
 
-#include "ggml.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml.h"
 
-#include <stdbool.h>
-#include <stddef.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdbool.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stddef.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ __cplusplus
+ਬਾਹਰੀ "C" {
+#ਜੇ_ਅੰਤ
 
-struct ggml_tensor;
-struct ggml_cgraph;
+ਬਣਤਰ ggml_tensor;
+ਬਣਤਰ ggml_cgraph;
 
-enum ggml_mem_range_type {
+ਗਿਣਤੀ ggml_mem_range_type {
     MEM_RANGE_TYPE_SRC = 0,
     MEM_RANGE_TYPE_DST = 1,
 };
@@ -28,46 +28,46 @@ enum ggml_mem_range_type {
 //   can be added to the set without violating the constraints (i.e. if it can be executed concurrently with the
 //   tasks already in the set)
 //
-typedef struct ggml_mem_ranges * ggml_mem_ranges_t;
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ ggml_mem_ranges * ggml_mem_ranges_t;
 
-ggml_mem_ranges_t ggml_mem_ranges_init(int debug);
-void ggml_mem_ranges_free(ggml_mem_ranges_t mrs);
+ggml_mem_ranges_t ggml_mem_ranges_init(ਪੂਰਨ debug);
+ਖਾਲੀ ggml_mem_ranges_free(ggml_mem_ranges_t mrs);
 
 // remove all ranges from the set
-void ggml_mem_ranges_reset(ggml_mem_ranges_t mrs);
+ਖਾਲੀ ggml_mem_ranges_reset(ggml_mem_ranges_t mrs);
 
 // add src or dst ranges to track
-bool ggml_mem_ranges_add(ggml_mem_ranges_t mrs, const struct ggml_tensor * tensor);
+bool ggml_mem_ranges_ਜੋੜੋ(ggml_mem_ranges_t mrs, ਅਚਲ ਬਣਤਰ ggml_tensor * tensor);
 
 // return false if:
 // - new src range overlaps with any existing dst range
 // - new dst range overlaps with any existing range (src or dst)
-bool ggml_mem_ranges_check(ggml_mem_ranges_t mrs, const struct ggml_tensor * tensor);
+bool ggml_mem_ranges_check(ggml_mem_ranges_t mrs, ਅਚਲ ਬਣਤਰ ggml_tensor * tensor);
 
 // reorder the nodes in the graph to improve concurrency, while respecting the fusions of a device with props
 //
 // note: this implementation is generic and not specific to metal
 //       if it proves to work well, we can start using it for other backends in the future
-void ggml_graph_optimize(struct ggml_cgraph * gf);
+ਖਾਲੀ ggml_ਗ੍ਰਾਫ_optimize(ਬਣਤਰ ggml_cgraph * gf);
 
 // mat-mat vs mat-vec dispatch; used by both supports_op and ggml_metal_op_mul_mat*
-bool ggml_metal_op_mul_mat_use_fwht (const struct ggml_tensor * op, size_t max_tg_mem);
-bool ggml_metal_op_mul_mat_use_mm   (const struct ggml_tensor * op, bool has_simdgroup_mm);
-bool ggml_metal_op_mul_mat_id_use_mm(const struct ggml_tensor * op, bool has_simdgroup_mm);
+bool ggml_metal_op_mul_mat_use_fwht (ਅਚਲ ਬਣਤਰ ggml_tensor * op, size_t max_tg_mem);
+bool ggml_metal_op_mul_mat_use_mm   (ਅਚਲ ਬਣਤਰ ggml_tensor * op, bool has_simdgroup_mm);
+bool ggml_metal_op_mul_mat_id_use_mm(ਅਚਲ ਬਣਤਰ ggml_tensor * op, bool has_simdgroup_mm);
 
-bool ggml_metal_op_mul_mat_use_mma    (const struct ggml_tensor * op);
-bool ggml_metal_op_mul_mat_may_use_mma(const struct ggml_tensor * op); // graph structure only
+bool ggml_metal_op_mul_mat_use_mma    (ਅਚਲ ਬਣਤਰ ggml_tensor * op);
+bool ggml_metal_op_mul_mat_may_use_mma(ਅਚਲ ਬਣਤਰ ggml_tensor * op); // graph structure only
 
 // the few-row MMA kernel for a src0 type and rt src1 tiles: per 32-weight block (q4_0, q8_0 with one tile), q5_K, or the generic 64-weight chunk kernel
-enum ggml_metal_mma_kind { GGML_METAL_MMA_KIND_BLK, GGML_METAL_MMA_KIND_Q5_K, GGML_METAL_MMA_KIND_GEN };
-enum ggml_metal_mma_kind ggml_metal_mul_mv_mma_kind(enum ggml_type type, int rt);
+ਗਿਣਤੀ ggml_metal_mma_ਕਿਸਮ { GGML_METAL_MMA_ਕਿਸਮ_BLK, GGML_METAL_MMA_ਕਿਸਮ_Q5_K, GGML_METAL_MMA_ਕਿਸਮ_GEN };
+ਗਿਣਤੀ ggml_metal_mma_ਕਿਸਮ ggml_metal_mul_mv_mma_ਕਿਸਮ(ਗਿਣਤੀ ggml_type type, ਪੂਰਨ rt);
 
 // the src1 tiles of the few-row MMA kernels for mat-mul op: one 8-row tile, or two above 8 rows
-int ggml_metal_mul_mv_mma_rt(const struct ggml_tensor * op);
+ਪੂਰਨ ggml_metal_mul_mv_mma_rt(ਅਚਲ ਬਣਤਰ ggml_tensor * op);
 
 // the weights of K per simdgroup step of the few-row MMA kernel for a src0 type and rt src1 tiles, 0 if none takes the type
-int64_t ggml_metal_mul_mv_mma_k_step(enum ggml_type type, int rt);
+int64_t ggml_metal_mul_mv_mma_k_ਕਦਮ(ਗਿਣਤੀ ggml_type type, ਪੂਰਨ rt);
 
-#ifdef __cplusplus
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ __cplusplus
 }
-#endif
+#ਜੇ_ਅੰਤ

@@ -1,5 +1,5 @@
-#ifndef HEX_FASTDIV_H
-#define HEX_FASTDIV_H
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ HEX_FASTDIV_H
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ HEX_FASTDIV_H
 
 // See https://gmplib.org/~tege/divcnst-pldi94.pdf figure 4.1.
 // Precompute mp (m' in the paper) and L such that division
@@ -7,31 +7,31 @@
 // and a shift:
 //
 // n/d = (mulhi(n, mp) + n) >> L;
-struct fastdiv_values {
+ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ {
     uint32_t mp;
     uint32_t l;
 };
 
-static inline struct fastdiv_values init_fastdiv_values(uint32_t d) {
-    struct fastdiv_values result = { 0, 0 };
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ init_fastdiv_ਮੁੱਲਾਂ(uint32_t d) {
+    ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ ਨਤੀਜਾ = { 0, 0 };
     // compute L = ceil(log2(d));
-    while (result.l < 32 && ((uint32_t) 1 << result.l) < d) {
-        ++(result.l);
+    ਜਦੋਂ (ਨਤੀਜਾ.l < 32 && ((uint32_t) 1 << ਨਤੀਜਾ.l) < d) {
+        ++(ਨਤੀਜਾ.l);
     }
 
-    result.mp = (uint32_t) (((uint64_t) 1 << 32) * (((uint64_t) 1 << result.l) - d) / d + 1);
-    return result;
+    ਨਤੀਜਾ.mp = (uint32_t) (((uint64_t) 1 << 32) * (((uint64_t) 1 << ਨਤੀਜਾ.l) - d) / d + 1);
+    ਵਾਪਸ ਨਤੀਜਾ;
 }
 
-static inline uint32_t fastdiv(uint32_t n, const struct fastdiv_values * vals) {
+ਸਥਿਰ ਸਤਰਅੰਦਰ uint32_t fastdiv(uint32_t n, ਅਚਲ ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ * vals) {
     // Compute high 32 bits of n * mp
-    const uint32_t hi = (uint32_t) (((uint64_t) n * vals->mp) >> 32);  // mulhi(n, mp)
+    ਅਚਲ uint32_t hi = (uint32_t) (((uint64_t) n * vals->mp) >> 32);  // mulhi(n, mp)
     // add n, apply bit shift
-    return (hi + n) >> vals->l;
+    ਵਾਪਸ (hi + n) >> vals->l;
 }
 
-static inline uint32_t fastmodulo(uint32_t n, uint32_t d, const struct fastdiv_values * vals) {
-    return n - fastdiv(n, vals) * d;
+ਸਥਿਰ ਸਤਰਅੰਦਰ uint32_t fastmodulo(uint32_t n, uint32_t d, ਅਚਲ ਬਣਤਰ fastdiv_ਮੁੱਲਾਂ * vals) {
+    ਵਾਪਸ n - fastdiv(n, vals) * d;
 }
 
-#endif /* HEX_FASTDIV_H */
+#ਜੇ_ਅੰਤ /* HEX_FASTDIV_H */

@@ -1,145 +1,145 @@
-#define GGML_COMMON_IMPL_C
-#include "ggml-common.h"
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_COMMON_IMPL_C
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-common.h"
 
-#include "ggml-quants.h"
-#include "ggml-impl.h"
-#include "ggml-cpu/ggml-cpu-impl.h"
-#include "ggml-cpu.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-quants.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-impl.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-cpu/ggml-cpu-impl.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml-cpu.h"
 
-#include <math.h>
-#include <string.h>
-#include <assert.h>
-#include <float.h>
-#include <stdlib.h> // for qsort
-#include <stdio.h>  // for GGML_ASSERT
+#ਅਨ੍ਤਰ੍ਭਾਵ <math.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <string.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <assert.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <float.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdlib.h> // for qsort
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdio.h>  // for GGML_ASSERT
 
-#ifdef GGML_USE_OPENMP
-#include <omp.h>
-#endif
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_USE_OPENMP
+#ਅਨ੍ਤਰ੍ਭਾਵ <omp.h>
+#ਜੇ_ਅੰਤ
 
-#define GROUP_MAX_EPS 1e-15f
-#define GROUP_MAX_EPS_IQ3_XXS 1e-8f
-#define GROUP_MAX_EPS_IQ2_S 1e-8f
-#define GROUP_MAX_EPS_IQ1_M 1e-7f
-#define GROUP_MAX_EPS_IQ1_S 1e-12f
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ ਸਮੂਹ_MAX_EPS 1e-15f
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ ਸਮੂਹ_MAX_EPS_IQ3_XXS 1e-8f
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ ਸਮੂਹ_MAX_EPS_IQ2_S 1e-8f
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ ਸਮੂਹ_MAX_EPS_IQ1_M 1e-7f
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ ਸਮੂਹ_MAX_EPS_IQ1_S 1e-12f
 
-#define UNUSED GGML_UNUSED
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ ਅਣਵਰਤਿਆ GGML_ਅਣਵਰਤਿਆ
 
-static inline int best_index_int8(int n, const int8_t * val, float x) {
-    if (x <= val[0]) return 0;
-    if (x >= val[n-1]) return n-1;
-    int ml = 0, mu = n-1;
-    while (mu-ml > 1) {
-        int mav = (ml+mu)/2;
-        if (x < val[mav]) mu = mav; else ml = mav;
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਪੂਰਨ ਉੱਤਮ_ਸੂਚਕਾਂਕ_int8(ਪੂਰਨ n, ਅਚਲ int8_t * val, ਦਸ਼ਮਲਵ x) {
+    ਜੇ (x <= val[0]) ਵਾਪਸ 0;
+    ਜੇ (x >= val[n-1]) ਵਾਪਸ n-1;
+    ਪੂਰਨ ml = 0, mu = n-1;
+    ਜਦੋਂ (mu-ml > 1) {
+        ਪੂਰਨ mav = (ml+mu)/2;
+        ਜੇ (x < val[mav]) mu = mav; ਨਹੀਂਤਾਂ ml = mav;
     }
-    return x - val[mu-1] < val[mu] - x ? mu-1 : mu;
+    ਵਾਪਸ x - val[mu-1] < val[mu] - x ? mu-1 : mu;
 }
 
 // reference implementation for deterministic creation of model files
-void quantize_row_q1_0_ref(const float * GGML_RESTRICT x, block_q1_0 * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK1_0;
+ਖਾਲੀ quantize_ਪੰਕਤੀ_q1_0_ref(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖੰਡ_q1_0 * GGML_RESTRICT y, int64_t k) {
+    ਸਥਿਰ ਅਚਲ ਪੂਰਨ qk = QK1_0;
 
-    assert(k % qk == 0);
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % qk == 0);
 
-    const int nb = k / qk;
+    ਅਚਲ ਪੂਰਨ nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
-        float sum_abs = 0.0f;
-        for (int j = 0; j < qk; j++) {
-            sum_abs += fabsf(x[i*qk + j]);
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
+        ਦਸ਼ਮਲਵ ਜੋੜ_abs = 0.0f;
+        ਲਈ (ਪੂਰਨ j = 0; j < qk; j++) {
+            ਜੋੜ_abs += fabsf(x[i*qk + j]);
         }
-        const float d = sum_abs / qk;
+        ਅਚਲ ਦਸ਼ਮਲਵ d = ਜੋੜ_abs / qk;
 
-        y[i].d = GGML_FP32_TO_FP16(d);
+        y[i].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(d);
 
         // Clear all bits first
-        for (int j = 0; j < qk / 8; ++j) {
+        ਲਈ (ਪੂਰਨ j = 0; j < qk / 8; ++j) {
             y[i].qs[j] = 0;
         }
 
         // Just store sign of each weight directly (no normalization)
-        for (int j = 0; j < qk; ++j) {
-            const int bit_index = j;
-            const int byte_index = bit_index / 8;
-            const int bit_offset = bit_index % 8;
+        ਲਈ (ਪੂਰਨ j = 0; j < qk; ++j) {
+            ਅਚਲ ਪੂਰਨ ਦੋਆਧਾਰੀ_ਅੰਕ_ਸੂਚਕਾਂਕ = j;
+            ਅਚਲ ਪੂਰਨ byte_ਸੂਚਕਾਂਕ = ਦੋਆਧਾਰੀ_ਅੰਕ_ਸੂਚਕਾਂਕ / 8;
+            ਅਚਲ ਪੂਰਨ ਦੋਆਧਾਰੀ_ਅੰਕ_ਵਿੱਥ = ਦੋਆਧਾਰੀ_ਅੰਕ_ਸੂਚਕਾਂਕ % 8;
 
-            if (x[i*qk + j] >= 0.0f) {
-                y[i].qs[byte_index] |= (1 << bit_offset);
+            ਜੇ (x[i*qk + j] >= 0.0f) {
+                y[i].qs[byte_ਸੂਚਕਾਂਕ] |= (1 << ਦੋਆਧਾਰੀ_ਅੰਕ_ਵਿੱਥ);
             }
         }
     }
 }
 
-void quantize_row_q2_0_ref(const float * GGML_RESTRICT x, block_q2_0 * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK2_0;
+ਖਾਲੀ quantize_ਪੰਕਤੀ_q2_0_ref(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖੰਡ_q2_0 * GGML_RESTRICT y, int64_t k) {
+    ਸਥਿਰ ਅਚਲ ਪੂਰਨ qk = QK2_0;
 
-    assert(k % qk == 0);
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % qk == 0);
 
-    const int nb = k / qk;
+    ਅਚਲ ਪੂਰਨ nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
         // Compute scale as max absolute value in the block
-        float amax = 0.0f;
-        for (int j = 0; j < qk; j++) {
-            const float a = fabsf(x[i*qk + j]);
-            if (a > amax) amax = a;
+        ਦਸ਼ਮਲਵ amax = 0.0f;
+        ਲਈ (ਪੂਰਨ j = 0; j < qk; j++) {
+            ਅਚਲ ਦਸ਼ਮਲਵ a = fabsf(x[i*qk + j]);
+            ਜੇ (a > amax) amax = a;
         }
-        const float d = amax;
-        const float id = d > 0.0f ? 1.0f / d : 0.0f;
+        ਅਚਲ ਦਸ਼ਮਲਵ d = amax;
+        ਅਚਲ ਦਸ਼ਮਲਵ id = d > 0.0f ? 1.0f / d : 0.0f;
 
-        y[i].d = GGML_FP32_TO_FP16(d);
+        y[i].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(d);
 
         // Clear quant bytes
-        for (int j = 0; j < qk / 4; ++j) {
+        ਲਈ (ਪੂਰਨ j = 0; j < qk / 4; ++j) {
             y[i].qs[j] = 0;
         }
 
         // Encode 2-bit values: round(w/d) clamped to [-1, 2], then add 1
         // 00 (-1) = -scale, 01 (0) = 0, 10 (+1) = +scale, 11 (+2) = 2*scale
-        for (int j = 0; j < qk; ++j) {
-            const float w = x[i*qk + j];
-            int q = (int)roundf(w * id) + 1;
-            if (q < 0) q = 0;
-            if (q > 3) q = 3;
-            const int byte_index = j / 4;
-            const int bit_offset = (j % 4) * 2;
-            y[i].qs[byte_index] |= ((uint8_t)q << bit_offset);
+        ਲਈ (ਪੂਰਨ j = 0; j < qk; ++j) {
+            ਅਚਲ ਦਸ਼ਮਲਵ w = x[i*qk + j];
+            ਪੂਰਨ q = (ਪੂਰਨ)roundf(w * id) + 1;
+            ਜੇ (q < 0) q = 0;
+            ਜੇ (q > 3) q = 3;
+            ਅਚਲ ਪੂਰਨ byte_ਸੂਚਕਾਂਕ = j / 4;
+            ਅਚਲ ਪੂਰਨ ਦੋਆਧਾਰੀ_ਅੰਕ_ਵਿੱਥ = (j % 4) * 2;
+            y[i].qs[byte_ਸੂਚਕਾਂਕ] |= ((uint8_t)q << ਦੋਆਧਾਰੀ_ਅੰਕ_ਵਿੱਥ);
         }
     }
 }
 
 // reference implementation for deterministic creation of model files
-void quantize_row_q4_0_ref(const float * GGML_RESTRICT x, block_q4_0 * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK4_0;
+ਖਾਲੀ quantize_ਪੰਕਤੀ_q4_0_ref(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖੰਡ_q4_0 * GGML_RESTRICT y, int64_t k) {
+    ਸਥਿਰ ਅਚਲ ਪੂਰਨ qk = QK4_0;
 
-    assert(k % qk == 0);
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % qk == 0);
 
-    const int nb = k / qk;
+    ਅਚਲ ਪੂਰਨ nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
-        float amax = 0.0f; // absolute max
-        float max  = 0.0f;
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
+        ਦਸ਼ਮਲਵ amax = 0.0f; // absolute max
+        ਦਸ਼ਮਲਵ max  = 0.0f;
 
-        for (int j = 0; j < qk; j++) {
-            const float v = x[i*qk + j];
-            if (amax < fabsf(v)) {
+        ਲਈ (ਪੂਰਨ j = 0; j < qk; j++) {
+            ਅਚਲ ਦਸ਼ਮਲਵ v = x[i*qk + j];
+            ਜੇ (amax < fabsf(v)) {
                 amax = fabsf(v);
                 max  = v;
             }
         }
 
-        const float d  = max / -8;
-        const float id = d ? 1.0f/d : 0.0f;
+        ਅਚਲ ਦਸ਼ਮਲਵ d  = max / -8;
+        ਅਚਲ ਦਸ਼ਮਲਵ id = d ? 1.0f/d : 0.0f;
 
-        y[i].d = GGML_FP32_TO_FP16(d);
+        y[i].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(d);
 
-        for (int j = 0; j < qk/2; ++j) {
-            const float x0 = x[i*qk + 0    + j]*id;
-            const float x1 = x[i*qk + qk/2 + j]*id;
+        ਲਈ (ਪੂਰਨ j = 0; j < qk/2; ++j) {
+            ਅਚਲ ਦਸ਼ਮਲਵ x0 = x[i*qk + 0    + j]*id;
+            ਅਚਲ ਦਸ਼ਮਲਵ x1 = x[i*qk + qk/2 + j]*id;
 
-            const uint8_t xi0 = MIN(15, (int8_t)(x0 + 8.5f));
-            const uint8_t xi1 = MIN(15, (int8_t)(x1 + 8.5f));
+            ਅਚਲ uint8_t xi0 = MIN(15, (int8_t)(x0 + 8.5f));
+            ਅਚਲ uint8_t xi1 = MIN(15, (int8_t)(x1 + 8.5f));
 
             y[i].qs[j]  = xi0;
             y[i].qs[j] |= xi1 << 4;
@@ -147,36 +147,36 @@ void quantize_row_q4_0_ref(const float * GGML_RESTRICT x, block_q4_0 * GGML_REST
     }
 }
 
-void quantize_row_q4_1_ref(const float * GGML_RESTRICT x, block_q4_1 * GGML_RESTRICT y, int64_t k) {
-    const int qk = QK4_1;
+ਖਾਲੀ quantize_ਪੰਕਤੀ_q4_1_ref(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖੰਡ_q4_1 * GGML_RESTRICT y, int64_t k) {
+    ਅਚਲ ਪੂਰਨ qk = QK4_1;
 
-    assert(k % qk == 0);
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % qk == 0);
 
-    const int nb = k / qk;
+    ਅਚਲ ਪੂਰਨ nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
-        float min = FLT_MAX;
-        float max = -FLT_MAX;
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
+        ਦਸ਼ਮਲਵ min = FLT_MAX;
+        ਦਸ਼ਮਲਵ max = -FLT_MAX;
 
-        for (int j = 0; j < qk; j++) {
-            const float v = x[i*qk + j];
+        ਲਈ (ਪੂਰਨ j = 0; j < qk; j++) {
+            ਅਚਲ ਦਸ਼ਮਲਵ v = x[i*qk + j];
 
-            if (v < min) min = v;
-            if (v > max) max = v;
+            ਜੇ (v < min) min = v;
+            ਜੇ (v > max) max = v;
         }
 
-        const float d  = (max - min) / ((1 << 4) - 1);
-        const float id = d ? 1.0f/d : 0.0f;
+        ਅਚਲ ਦਸ਼ਮਲਵ d  = (max - min) / ((1 << 4) - 1);
+        ਅਚਲ ਦਸ਼ਮਲਵ id = d ? 1.0f/d : 0.0f;
 
-        y[i].d = GGML_FP32_TO_FP16(d);
-        y[i].m = GGML_FP32_TO_FP16(min);
+        y[i].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(d);
+        y[i].m = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(min);
 
-        for (int j = 0; j < qk/2; ++j) {
-            const float x0 = (x[i*qk + 0    + j] - min)*id;
-            const float x1 = (x[i*qk + qk/2 + j] - min)*id;
+        ਲਈ (ਪੂਰਨ j = 0; j < qk/2; ++j) {
+            ਅਚਲ ਦਸ਼ਮਲਵ x0 = (x[i*qk + 0    + j] - min)*id;
+            ਅਚਲ ਦਸ਼ਮਲਵ x1 = (x[i*qk + qk/2 + j] - min)*id;
 
-            const uint8_t xi0 = MIN(15, (int8_t)(x0 + 0.5f));
-            const uint8_t xi1 = MIN(15, (int8_t)(x1 + 0.5f));
+            ਅਚਲ uint8_t xi0 = MIN(15, (int8_t)(x0 + 0.5f));
+            ਅਚਲ uint8_t xi1 = MIN(15, (int8_t)(x1 + 0.5f));
 
             y[i].qs[j]  = xi0;
             y[i].qs[j] |= xi1 << 4;
@@ -184,38 +184,38 @@ void quantize_row_q4_1_ref(const float * GGML_RESTRICT x, block_q4_1 * GGML_REST
     }
 }
 
-void quantize_row_q5_0_ref(const float * GGML_RESTRICT x, block_q5_0 * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK5_0;
+ਖਾਲੀ quantize_ਪੰਕਤੀ_q5_0_ref(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖੰਡ_q5_0 * GGML_RESTRICT y, int64_t k) {
+    ਸਥਿਰ ਅਚਲ ਪੂਰਨ qk = QK5_0;
 
-    assert(k % qk == 0);
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % qk == 0);
 
-    const int nb = k / qk;
+    ਅਚਲ ਪੂਰਨ nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
-        float amax = 0.0f; // absolute max
-        float max  = 0.0f;
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
+        ਦਸ਼ਮਲਵ amax = 0.0f; // absolute max
+        ਦਸ਼ਮਲਵ max  = 0.0f;
 
-        for (int j = 0; j < qk; j++) {
-            const float v = x[i*qk + j];
-            if (amax < fabsf(v)) {
+        ਲਈ (ਪੂਰਨ j = 0; j < qk; j++) {
+            ਅਚਲ ਦਸ਼ਮਲਵ v = x[i*qk + j];
+            ਜੇ (amax < fabsf(v)) {
                 amax = fabsf(v);
                 max  = v;
             }
         }
 
-        const float d  = max / -16;
-        const float id = d ? 1.0f/d : 0.0f;
+        ਅਚਲ ਦਸ਼ਮਲਵ d  = max / -16;
+        ਅਚਲ ਦਸ਼ਮਲਵ id = d ? 1.0f/d : 0.0f;
 
-        y[i].d = GGML_FP32_TO_FP16(d);
+        y[i].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(d);
 
         uint32_t qh = 0;
 
-        for (int j = 0; j < qk/2; ++j) {
-            const float x0 = x[i*qk + 0    + j]*id;
-            const float x1 = x[i*qk + qk/2 + j]*id;
+        ਲਈ (ਪੂਰਨ j = 0; j < qk/2; ++j) {
+            ਅਚਲ ਦਸ਼ਮਲਵ x0 = x[i*qk + 0    + j]*id;
+            ਅਚਲ ਦਸ਼ਮਲਵ x1 = x[i*qk + qk/2 + j]*id;
 
-            const uint8_t xi0 = MIN(31, (int8_t)(x0 + 16.5f));
-            const uint8_t xi1 = MIN(31, (int8_t)(x1 + 16.5f));
+            ਅਚਲ uint8_t xi0 = MIN(31, (int8_t)(x0 + 16.5f));
+            ਅਚਲ uint8_t xi1 = MIN(31, (int8_t)(x1 + 16.5f));
 
             y[i].qs[j] = (xi0 & 0x0F) | ((xi1 & 0x0F) << 4);
 
@@ -224,42 +224,42 @@ void quantize_row_q5_0_ref(const float * GGML_RESTRICT x, block_q5_0 * GGML_REST
             qh |= ((xi1 & 0x10u) >> 4) << (j + qk/2);
         }
 
-        memcpy(&y[i].qh, &qh, sizeof(qh));
+        ਸਮ੍ਰਿਤੀ_ਨਕਲ(&y[i].qh, &qh, ਆਕਾਰ(qh));
     }
 }
 
-void quantize_row_q5_1_ref(const float * GGML_RESTRICT x, block_q5_1 * GGML_RESTRICT y, int64_t k) {
-    const int qk = QK5_1;
+ਖਾਲੀ quantize_ਪੰਕਤੀ_q5_1_ref(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖੰਡ_q5_1 * GGML_RESTRICT y, int64_t k) {
+    ਅਚਲ ਪੂਰਨ qk = QK5_1;
 
-    assert(k % qk == 0);
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % qk == 0);
 
-    const int nb = k / qk;
+    ਅਚਲ ਪੂਰਨ nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
-        float min = FLT_MAX;
-        float max = -FLT_MAX;
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
+        ਦਸ਼ਮਲਵ min = FLT_MAX;
+        ਦਸ਼ਮਲਵ max = -FLT_MAX;
 
-        for (int j = 0; j < qk; j++) {
-            const float v = x[i*qk + j];
+        ਲਈ (ਪੂਰਨ j = 0; j < qk; j++) {
+            ਅਚਲ ਦਸ਼ਮਲਵ v = x[i*qk + j];
 
-            if (v < min) min = v;
-            if (v > max) max = v;
+            ਜੇ (v < min) min = v;
+            ਜੇ (v > max) max = v;
         }
 
-        const float d  = (max - min) / ((1 << 5) - 1);
-        const float id = d ? 1.0f/d : 0.0f;
+        ਅਚਲ ਦਸ਼ਮਲਵ d  = (max - min) / ((1 << 5) - 1);
+        ਅਚਲ ਦਸ਼ਮਲਵ id = d ? 1.0f/d : 0.0f;
 
-        y[i].d = GGML_FP32_TO_FP16(d);
-        y[i].m = GGML_FP32_TO_FP16(min);
+        y[i].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(d);
+        y[i].m = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(min);
 
         uint32_t qh = 0;
 
-        for (int j = 0; j < qk/2; ++j) {
-            const float x0 = (x[i*qk + 0    + j] - min)*id;
-            const float x1 = (x[i*qk + qk/2 + j] - min)*id;
+        ਲਈ (ਪੂਰਨ j = 0; j < qk/2; ++j) {
+            ਅਚਲ ਦਸ਼ਮਲਵ x0 = (x[i*qk + 0    + j] - min)*id;
+            ਅਚਲ ਦਸ਼ਮਲਵ x1 = (x[i*qk + qk/2 + j] - min)*id;
 
-            const uint8_t xi0 = (uint8_t)(x0 + 0.5f);
-            const uint8_t xi1 = (uint8_t)(x1 + 0.5f);
+            ਅਚਲ uint8_t xi0 = (uint8_t)(x0 + 0.5f);
+            ਅਚਲ uint8_t xi1 = (uint8_t)(x1 + 0.5f);
 
             y[i].qs[j] = (xi0 & 0x0F) | ((xi1 & 0x0F) << 4);
 
@@ -268,30 +268,30 @@ void quantize_row_q5_1_ref(const float * GGML_RESTRICT x, block_q5_1 * GGML_REST
             qh |= ((xi1 & 0x10u) >> 4) << (j + qk/2);
         }
 
-        memcpy(&y[i].qh, &qh, sizeof(y[i].qh));
+        ਸਮ੍ਰਿਤੀ_ਨਕਲ(&y[i].qh, &qh, ਆਕਾਰ(y[i].qh));
     }
 }
 
 // reference implementation for deterministic creation of model files
-void quantize_row_q8_0_ref(const float * GGML_RESTRICT x, block_q8_0 * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK8_0 == 0);
-    const int nb = k / QK8_0;
+ਖਾਲੀ quantize_ਪੰਕਤੀ_q8_0_ref(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖੰਡ_q8_0 * GGML_RESTRICT y, int64_t k) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % QK8_0 == 0);
+    ਅਚਲ ਪੂਰਨ nb = k / QK8_0;
 
-    for (int i = 0; i < nb; i++) {
-        float amax = 0.0f; // absolute max
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
+        ਦਸ਼ਮਲਵ amax = 0.0f; // absolute max
 
-        for (int j = 0; j < QK8_0; j++) {
-            const float v = x[i*QK8_0 + j];
+        ਲਈ (ਪੂਰਨ j = 0; j < QK8_0; j++) {
+            ਅਚਲ ਦਸ਼ਮਲਵ v = x[i*QK8_0 + j];
             amax = MAX(amax, fabsf(v));
         }
 
-        const float d = amax / ((1 << 7) - 1);
-        const float id = d ? 1.0f/d : 0.0f;
+        ਅਚਲ ਦਸ਼ਮਲਵ d = amax / ((1 << 7) - 1);
+        ਅਚਲ ਦਸ਼ਮਲਵ id = d ? 1.0f/d : 0.0f;
 
-        y[i].d = GGML_FP32_TO_FP16(d);
+        y[i].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(d);
 
-        for (int j = 0; j < QK8_0; ++j) {
-            const float x0 = x[i*QK8_0 + j]*id;
+        ਲਈ (ਪੂਰਨ j = 0; j < QK8_0; ++j) {
+            ਅਚਲ ਦਸ਼ਮਲਵ x0 = x[i*QK8_0 + j]*id;
 
             y[i].qs[j] = roundf(x0);
         }
@@ -299,81 +299,81 @@ void quantize_row_q8_0_ref(const float * GGML_RESTRICT x, block_q8_0 * GGML_REST
 }
 
 // reference implementation for deterministic creation of model files
-void quantize_row_q8_1_ref(const float * GGML_RESTRICT x, block_q8_1 * GGML_RESTRICT y, int64_t k) {
-    assert(QK8_1 == 32);
-    assert(k % QK8_1 == 0);
-    const int nb = k / QK8_1;
+ਖਾਲੀ quantize_ਪੰਕਤੀ_q8_1_ref(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖੰਡ_q8_1 * GGML_RESTRICT y, int64_t k) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(QK8_1 == 32);
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % QK8_1 == 0);
+    ਅਚਲ ਪੂਰਨ nb = k / QK8_1;
 
-    for (int i = 0; i < nb; i++) {
-        float amax = 0.0f; // absolute max
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
+        ਦਸ਼ਮਲਵ amax = 0.0f; // absolute max
 
-        for (int j = 0; j < QK8_1; j++) {
-            const float v = x[i*QK8_1 + j];
+        ਲਈ (ਪੂਰਨ j = 0; j < QK8_1; j++) {
+            ਅਚਲ ਦਸ਼ਮਲਵ v = x[i*QK8_1 + j];
             amax = MAX(amax, fabsf(v));
         }
 
-        const float d = amax / ((1 << 7) - 1);
-        const float id = d ? 1.0f/d : 0.0f;
+        ਅਚਲ ਦਸ਼ਮਲਵ d = amax / ((1 << 7) - 1);
+        ਅਚਲ ਦਸ਼ਮਲਵ id = d ? 1.0f/d : 0.0f;
 
-        y[i].d = GGML_FP32_TO_FP16(d);
+        y[i].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(d);
 
-        int sum = 0;
+        ਪੂਰਨ ਜੋੜ = 0;
 
-        for (int j = 0; j < QK8_1/2; ++j) {
-            const float v0 = x[i*QK8_1           + j]*id;
-            const float v1 = x[i*QK8_1 + QK8_1/2 + j]*id;
+        ਲਈ (ਪੂਰਨ j = 0; j < QK8_1/2; ++j) {
+            ਅਚਲ ਦਸ਼ਮਲਵ v0 = x[i*QK8_1           + j]*id;
+            ਅਚਲ ਦਸ਼ਮਲਵ v1 = x[i*QK8_1 + QK8_1/2 + j]*id;
 
             y[i].qs[          j] = roundf(v0);
             y[i].qs[QK8_1/2 + j] = roundf(v1);
 
-            sum += y[i].qs[          j];
-            sum += y[i].qs[QK8_1/2 + j];
+            ਜੋੜ += y[i].qs[          j];
+            ਜੋੜ += y[i].qs[QK8_1/2 + j];
         }
 
-        y[i].s = GGML_FP32_TO_FP16(sum*d);
+        y[i].s = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(ਜੋੜ*d);
     }
 }
 
-static inline int best_index_mxfp4(float x, float e) {
-    int best_index = 0;
-    float best_err = fabsf(kvalues_mxfp4[0]*e - x);
-    for (int i = 1; i < 16; i++) {
-        float err = fabsf(kvalues_mxfp4[i]*e - x);
-        if (err < best_err) {
-            best_index = i;
-            best_err = err;
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਪੂਰਨ ਉੱਤਮ_ਸੂਚਕਾਂਕ_mxfp4(ਦਸ਼ਮਲਵ x, ਦਸ਼ਮਲਵ e) {
+    ਪੂਰਨ ਉੱਤਮ_ਸੂਚਕਾਂਕ = 0;
+    ਦਸ਼ਮਲਵ ਉੱਤਮ_err = fabsf(kvalues_mxfp4[0]*e - x);
+    ਲਈ (ਪੂਰਨ i = 1; i < 16; i++) {
+        ਦਸ਼ਮਲਵ err = fabsf(kvalues_mxfp4[i]*e - x);
+        ਜੇ (err < ਉੱਤਮ_err) {
+            ਉੱਤਮ_ਸੂਚਕਾਂਕ = i;
+            ਉੱਤਮ_err = err;
         }
     }
-    return best_index;
+    ਵਾਪਸ ਉੱਤਮ_ਸੂਚਕਾਂਕ;
 }
 
-void quantize_row_mxfp4_ref(const float * GGML_RESTRICT x, block_mxfp4 * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK_MXFP4;
+ਖਾਲੀ quantize_ਪੰਕਤੀ_mxfp4_ref(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖੰਡ_mxfp4 * GGML_RESTRICT y, int64_t k) {
+    ਸਥਿਰ ਅਚਲ ਪੂਰਨ qk = QK_MXFP4;
 
-    assert(k % qk == 0);
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % qk == 0);
 
-    const int nb = k / qk;
+    ਅਚਲ ਪੂਰਨ nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
-        float amax = 0.0f; // absolute max
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
+        ਦਸ਼ਮਲਵ amax = 0.0f; // absolute max
 
-        for (int j = 0; j < qk; j++) {
-            const float v = x[i*qk + j];
+        ਲਈ (ਪੂਰਨ j = 0; j < qk; j++) {
+            ਅਚਲ ਦਸ਼ਮਲਵ v = x[i*qk + j];
 
-            if (amax < fabsf(v)) {
+            ਜੇ (amax < fabsf(v)) {
                 amax = fabsf(v);
             }
         }
 
-        const uint8_t e = amax > 0.0f ? (uint8_t) (floorf(log2f(amax)) - 2 + 127) : 0;
+        ਅਚਲ uint8_t e = amax > 0.0f ? (uint8_t) (floorf(log2f(amax)) - 2 + 127) : 0;
 
-        const float d = GGML_E8M0_TO_FP32_HALF(e);
+        ਅਚਲ ਦਸ਼ਮਲਵ d = GGML_E8_M0_ਮੰਜ਼ਿਲ_FP32_HALF(e);
 
         y[i].e = e;
 
-        for (int j = 0; j < qk/2; ++j) {
-            const uint8_t x0 = best_index_mxfp4(x[i*qk + 0    + j], d);
-            const uint8_t x1 = best_index_mxfp4(x[i*qk + qk/2 + j], d);
+        ਲਈ (ਪੂਰਨ j = 0; j < qk/2; ++j) {
+            ਅਚਲ uint8_t x0 = ਉੱਤਮ_ਸੂਚਕਾਂਕ_mxfp4(x[i*qk + 0    + j], d);
+            ਅਚਲ uint8_t x1 = ਉੱਤਮ_ਸੂਚਕਾਂਕ_mxfp4(x[i*qk + qk/2 + j], d);
 
             y[i].qs[j]  = x0;
             y[i].qs[j] |= x1 << 4;
@@ -381,34 +381,34 @@ void quantize_row_mxfp4_ref(const float * GGML_RESTRICT x, block_mxfp4 * GGML_RE
     }
 }
 
-void quantize_row_nvfp4_ref(const float * GGML_RESTRICT x, block_nvfp4 * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK_NVFP4;
-    static const int qk_sub = QK_NVFP4_SUB;
-    static const int n_sub = QK_NVFP4 / QK_NVFP4_SUB;
+ਖਾਲੀ quantize_ਪੰਕਤੀ_nvfp4_ref(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖੰਡ_nvfp4 * GGML_RESTRICT y, int64_t k) {
+    ਸਥਿਰ ਅਚਲ ਪੂਰਨ qk = QK_NVFP4;
+    ਸਥਿਰ ਅਚਲ ਪੂਰਨ qk_sub = QK_NVFP4_SUB;
+    ਸਥਿਰ ਅਚਲ ਪੂਰਨ n_sub = QK_NVFP4 / QK_NVFP4_SUB;
 
-    assert(k % qk == 0);
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % qk == 0);
 
-    const int nb = k / qk;
+    ਅਚਲ ਪੂਰਨ nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
-        for (int s = 0; s < n_sub; s++) {
-            const float * xb = x + i*qk + s*qk_sub;
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
+        ਲਈ (ਪੂਰਨ s = 0; s < n_sub; s++) {
+            ਅਚਲ ਦਸ਼ਮਲਵ * xb = x + i*qk + s*qk_sub;
 
-            float amax = 0.0f;
-            for (int j = 0; j < qk_sub; j++) {
-                if (amax < fabsf(xb[j])) {
+            ਦਸ਼ਮਲਵ amax = 0.0f;
+            ਲਈ (ਪੂਰਨ j = 0; j < qk_sub; j++) {
+                ਜੇ (amax < fabsf(xb[j])) {
                     amax = fabsf(xb[j]);
                 }
             }
 
             // UE4M3 scale: amax / 6.0 maps the max E2M1 value (6.0) to amax
-            const uint8_t ue = ggml_fp32_to_ue4m3(amax / 6.0f);
+            ਅਚਲ uint8_t ue = ggml_fp32_ਮੰਜ਼ਿਲ_ue4m3(amax / 6.0f);
             y[i].d[s] = ue;
-            const float d = ggml_ue4m3_to_fp32(ue);
+            ਅਚਲ ਦਸ਼ਮਲਵ d = ggml_ue4m3_ਮੰਜ਼ਿਲ_fp32(ue);
 
-            for (int j = 0; j < qk_sub/2; ++j) {
-                const uint8_t x0 = best_index_mxfp4(xb[0        + j], d);
-                const uint8_t x1 = best_index_mxfp4(xb[qk_sub/2 + j], d);
+            ਲਈ (ਪੂਰਨ j = 0; j < qk_sub/2; ++j) {
+                ਅਚਲ uint8_t x0 = ਉੱਤਮ_ਸੂਚਕਾਂਕ_mxfp4(xb[0        + j], d);
+                ਅਚਲ uint8_t x1 = ਉੱਤਮ_ਸੂਚਕਾਂਕ_mxfp4(xb[qk_sub/2 + j], d);
 
                 y[i].qs[s*(qk_sub/2) + j] = x0 | (x1 << 4);
             }
@@ -416,59 +416,59 @@ void quantize_row_nvfp4_ref(const float * GGML_RESTRICT x, block_nvfp4 * GGML_RE
     }
 }
 
-void dequantize_row_q1_0(const block_q1_0 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK1_0;
+ਖਾਲੀ dequantize_ਪੰਕਤੀ_q1_0(ਅਚਲ ਖੰਡ_q1_0 * GGML_RESTRICT x, ਦਸ਼ਮਲਵ * GGML_RESTRICT y, int64_t k) {
+    ਸਥਿਰ ਅਚਲ ਪੂਰਨ qk = QK1_0;
 
-    assert(k % qk == 0);
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % qk == 0);
 
-    const int nb = k / qk;
+    ਅਚਲ ਪੂਰਨ nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
-        const float d = GGML_FP16_TO_FP32(x[i].d);
-        const float neg_d = -d;
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
+        ਅਚਲ ਦਸ਼ਮਲਵ d = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(x[i].d);
+        ਅਚਲ ਦਸ਼ਮਲਵ neg_d = -d;
 
-        for (int j = 0; j < qk; ++j) {
-            const int byte_index = j / 8;
-            const int bit_offset = j % 8;
-            const uint8_t bit = (x[i].qs[byte_index] >> bit_offset) & 1;
-            y[i*qk + j] = bit ? d : neg_d;
+        ਲਈ (ਪੂਰਨ j = 0; j < qk; ++j) {
+            ਅਚਲ ਪੂਰਨ byte_ਸੂਚਕਾਂਕ = j / 8;
+            ਅਚਲ ਪੂਰਨ ਦੋਆਧਾਰੀ_ਅੰਕ_ਵਿੱਥ = j % 8;
+            ਅਚਲ uint8_t ਦੋਆਧਾਰੀ_ਅੰਕ = (x[i].qs[byte_ਸੂਚਕਾਂਕ] >> ਦੋਆਧਾਰੀ_ਅੰਕ_ਵਿੱਥ) & 1;
+            y[i*qk + j] = ਦੋਆਧਾਰੀ_ਅੰਕ ? d : neg_d;
         }
     }
 }
 
-void dequantize_row_q2_0(const block_q2_0 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK2_0;
+ਖਾਲੀ dequantize_ਪੰਕਤੀ_q2_0(ਅਚਲ ਖੰਡ_q2_0 * GGML_RESTRICT x, ਦਸ਼ਮਲਵ * GGML_RESTRICT y, int64_t k) {
+    ਸਥਿਰ ਅਚਲ ਪੂਰਨ qk = QK2_0;
 
-    assert(k % qk == 0);
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % qk == 0);
 
-    const int nb = k / qk;
+    ਅਚਲ ਪੂਰਨ nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
-        const float d = GGML_FP16_TO_FP32(x[i].d);
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
+        ਅਚਲ ਦਸ਼ਮਲਵ d = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(x[i].d);
 
-        for (int j = 0; j < qk; ++j) {
-            const int byte_index = j / 4;
-            const int bit_offset = (j % 4) * 2;
-            const uint8_t q = (x[i].qs[byte_index] >> bit_offset) & 0x03;
+        ਲਈ (ਪੂਰਨ j = 0; j < qk; ++j) {
+            ਅਚਲ ਪੂਰਨ byte_ਸੂਚਕਾਂਕ = j / 4;
+            ਅਚਲ ਪੂਰਨ ਦੋਆਧਾਰੀ_ਅੰਕ_ਵਿੱਥ = (j % 4) * 2;
+            ਅਚਲ uint8_t q = (x[i].qs[byte_ਸੂਚਕਾਂਕ] >> ਦੋਆਧਾਰੀ_ਅੰਕ_ਵਿੱਥ) & 0x03;
             // 00=-1, 01=0, 10=+1, 11=+2
-            y[i*qk + j] = ((int)q - 1) * d;
+            y[i*qk + j] = ((ਪੂਰਨ)q - 1) * d;
         }
     }
 }
 
-void dequantize_row_q4_0(const block_q4_0 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK4_0;
+ਖਾਲੀ dequantize_ਪੰਕਤੀ_q4_0(ਅਚਲ ਖੰਡ_q4_0 * GGML_RESTRICT x, ਦਸ਼ਮਲਵ * GGML_RESTRICT y, int64_t k) {
+    ਸਥਿਰ ਅਚਲ ਪੂਰਨ qk = QK4_0;
 
-    assert(k % qk == 0);
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % qk == 0);
 
-    const int nb = k / qk;
+    ਅਚਲ ਪੂਰਨ nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
-        const float d = GGML_FP16_TO_FP32(x[i].d);
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
+        ਅਚਲ ਦਸ਼ਮਲਵ d = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(x[i].d);
 
-        for (int j = 0; j < qk/2; ++j) {
-            const int x0 = (x[i].qs[j] & 0x0F) - 8;
-            const int x1 = (x[i].qs[j] >>   4) - 8;
+        ਲਈ (ਪੂਰਨ j = 0; j < qk/2; ++j) {
+            ਅਚਲ ਪੂਰਨ x0 = (x[i].qs[j] & 0x0F) - 8;
+            ਅਚਲ ਪੂਰਨ x1 = (x[i].qs[j] >>   4) - 8;
 
             y[i*qk + j + 0   ] = x0*d;
             y[i*qk + j + qk/2] = x1*d;
@@ -476,20 +476,20 @@ void dequantize_row_q4_0(const block_q4_0 * GGML_RESTRICT x, float * GGML_RESTRI
     }
 }
 
-void dequantize_row_q4_1(const block_q4_1 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK4_1;
+ਖਾਲੀ dequantize_ਪੰਕਤੀ_q4_1(ਅਚਲ ਖੰਡ_q4_1 * GGML_RESTRICT x, ਦਸ਼ਮਲਵ * GGML_RESTRICT y, int64_t k) {
+    ਸਥਿਰ ਅਚਲ ਪੂਰਨ qk = QK4_1;
 
-    assert(k % qk == 0);
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % qk == 0);
 
-    const int nb = k / qk;
+    ਅਚਲ ਪੂਰਨ nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
-        const float d = GGML_FP16_TO_FP32(x[i].d);
-        const float m = GGML_FP16_TO_FP32(x[i].m);
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
+        ਅਚਲ ਦਸ਼ਮਲਵ d = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(x[i].d);
+        ਅਚਲ ਦਸ਼ਮਲਵ m = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(x[i].m);
 
-        for (int j = 0; j < qk/2; ++j) {
-            const int x0 = (x[i].qs[j] & 0x0F);
-            const int x1 = (x[i].qs[j] >>   4);
+        ਲਈ (ਪੂਰਨ j = 0; j < qk/2; ++j) {
+            ਅਚਲ ਪੂਰਨ x0 = (x[i].qs[j] & 0x0F);
+            ਅਚਲ ਪੂਰਨ x1 = (x[i].qs[j] >>   4);
 
             y[i*qk + j + 0   ] = x0*d + m;
             y[i*qk + j + qk/2] = x1*d + m;
@@ -497,25 +497,25 @@ void dequantize_row_q4_1(const block_q4_1 * GGML_RESTRICT x, float * GGML_RESTRI
     }
 }
 
-void dequantize_row_q5_0(const block_q5_0 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK5_0;
+ਖਾਲੀ dequantize_ਪੰਕਤੀ_q5_0(ਅਚਲ ਖੰਡ_q5_0 * GGML_RESTRICT x, ਦਸ਼ਮਲਵ * GGML_RESTRICT y, int64_t k) {
+    ਸਥਿਰ ਅਚਲ ਪੂਰਨ qk = QK5_0;
 
-    assert(k % qk == 0);
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % qk == 0);
 
-    const int nb = k / qk;
+    ਅਚਲ ਪੂਰਨ nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
-        const float d = GGML_FP16_TO_FP32(x[i].d);
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
+        ਅਚਲ ਦਸ਼ਮਲਵ d = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(x[i].d);
 
         uint32_t qh;
-        memcpy(&qh, x[i].qh, sizeof(qh));
+        ਸਮ੍ਰਿਤੀ_ਨਕਲ(&qh, x[i].qh, ਆਕਾਰ(qh));
 
-        for (int j = 0; j < qk/2; ++j) {
-            const uint8_t xh_0 = ((qh >> (j +  0)) << 4) & 0x10;
-            const uint8_t xh_1 = ((qh >> (j + 12))     ) & 0x10;
+        ਲਈ (ਪੂਰਨ j = 0; j < qk/2; ++j) {
+            ਅਚਲ uint8_t xh_0 = ((qh >> (j +  0)) << 4) & 0x10;
+            ਅਚਲ uint8_t xh_1 = ((qh >> (j + 12))     ) & 0x10;
 
-            const int32_t x0 = ((x[i].qs[j] & 0x0F) | xh_0) - 16;
-            const int32_t x1 = ((x[i].qs[j] >>   4) | xh_1) - 16;
+            ਅਚਲ int32_t x0 = ((x[i].qs[j] & 0x0F) | xh_0) - 16;
+            ਅਚਲ int32_t x1 = ((x[i].qs[j] >>   4) | xh_1) - 16;
 
             y[i*qk + j + 0   ] = x0*d;
             y[i*qk + j + qk/2] = x1*d;
@@ -523,26 +523,26 @@ void dequantize_row_q5_0(const block_q5_0 * GGML_RESTRICT x, float * GGML_RESTRI
     }
 }
 
-void dequantize_row_q5_1(const block_q5_1 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK5_1;
+ਖਾਲੀ dequantize_ਪੰਕਤੀ_q5_1(ਅਚਲ ਖੰਡ_q5_1 * GGML_RESTRICT x, ਦਸ਼ਮਲਵ * GGML_RESTRICT y, int64_t k) {
+    ਸਥਿਰ ਅਚਲ ਪੂਰਨ qk = QK5_1;
 
-    assert(k % qk == 0);
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % qk == 0);
 
-    const int nb = k / qk;
+    ਅਚਲ ਪੂਰਨ nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
-        const float d = GGML_FP16_TO_FP32(x[i].d);
-        const float m = GGML_FP16_TO_FP32(x[i].m);
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
+        ਅਚਲ ਦਸ਼ਮਲਵ d = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(x[i].d);
+        ਅਚਲ ਦਸ਼ਮਲਵ m = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(x[i].m);
 
         uint32_t qh;
-        memcpy(&qh, x[i].qh, sizeof(qh));
+        ਸਮ੍ਰਿਤੀ_ਨਕਲ(&qh, x[i].qh, ਆਕਾਰ(qh));
 
-        for (int j = 0; j < qk/2; ++j) {
-            const uint8_t xh_0 = ((qh >> (j +  0)) << 4) & 0x10;
-            const uint8_t xh_1 = ((qh >> (j + 12))     ) & 0x10;
+        ਲਈ (ਪੂਰਨ j = 0; j < qk/2; ++j) {
+            ਅਚਲ uint8_t xh_0 = ((qh >> (j +  0)) << 4) & 0x10;
+            ਅਚਲ uint8_t xh_1 = ((qh >> (j + 12))     ) & 0x10;
 
-            const int x0 = (x[i].qs[j] & 0x0F) | xh_0;
-            const int x1 = (x[i].qs[j] >>   4) | xh_1;
+            ਅਚਲ ਪੂਰਨ x0 = (x[i].qs[j] & 0x0F) | xh_0;
+            ਅਚਲ ਪੂਰਨ x1 = (x[i].qs[j] >>   4) | xh_1;
 
             y[i*qk + j + 0   ] = x0*d + m;
             y[i*qk + j + qk/2] = x1*d + m;
@@ -550,35 +550,35 @@ void dequantize_row_q5_1(const block_q5_1 * GGML_RESTRICT x, float * GGML_RESTRI
     }
 }
 
-void dequantize_row_q8_0(const block_q8_0 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK8_0;
+ਖਾਲੀ dequantize_ਪੰਕਤੀ_q8_0(ਅਚਲ ਖੰਡ_q8_0 * GGML_RESTRICT x, ਦਸ਼ਮਲਵ * GGML_RESTRICT y, int64_t k) {
+    ਸਥਿਰ ਅਚਲ ਪੂਰਨ qk = QK8_0;
 
-    assert(k % qk == 0);
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % qk == 0);
 
-    const int nb = k / qk;
+    ਅਚਲ ਪੂਰਨ nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
-        const float d = GGML_FP16_TO_FP32(x[i].d);
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
+        ਅਚਲ ਦਸ਼ਮਲਵ d = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(x[i].d);
 
-        for (int j = 0; j < qk; ++j) {
+        ਲਈ (ਪੂਰਨ j = 0; j < qk; ++j) {
             y[i*qk + j] = x[i].qs[j]*d;
         }
     }
 }
 
-void dequantize_row_mxfp4(const block_mxfp4 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK_MXFP4;
+ਖਾਲੀ dequantize_ਪੰਕਤੀ_mxfp4(ਅਚਲ ਖੰਡ_mxfp4 * GGML_RESTRICT x, ਦਸ਼ਮਲਵ * GGML_RESTRICT y, int64_t k) {
+    ਸਥਿਰ ਅਚਲ ਪੂਰਨ qk = QK_MXFP4;
 
-    assert(k % qk == 0);
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % qk == 0);
 
-    const int nb = k / qk;
+    ਅਚਲ ਪੂਰਨ nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
-        const float d = GGML_E8M0_TO_FP32_HALF(x[i].e);
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
+        ਅਚਲ ਦਸ਼ਮਲਵ d = GGML_E8_M0_ਮੰਜ਼ਿਲ_FP32_HALF(x[i].e);
 
-        for (int j = 0; j < qk/2; ++j) {
-            const int8_t x0 = kvalues_mxfp4[x[i].qs[j] & 0x0F];
-            const int8_t x1 = kvalues_mxfp4[x[i].qs[j] >>   4];
+        ਲਈ (ਪੂਰਨ j = 0; j < qk/2; ++j) {
+            ਅਚਲ int8_t x0 = kvalues_mxfp4[x[i].qs[j] & 0x0F];
+            ਅਚਲ int8_t x1 = kvalues_mxfp4[x[i].qs[j] >>   4];
 
             y[i*qk + j + 0   ] = x0*d;
             y[i*qk + j + qk/2] = x1*d;
@@ -586,23 +586,23 @@ void dequantize_row_mxfp4(const block_mxfp4 * GGML_RESTRICT x, float * GGML_REST
     }
 }
 
-void dequantize_row_nvfp4(const block_nvfp4 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    static const int qk = QK_NVFP4;
-    static const int qk_sub = QK_NVFP4_SUB;
-    static const int n_sub = QK_NVFP4 / QK_NVFP4_SUB;
+ਖਾਲੀ dequantize_ਪੰਕਤੀ_nvfp4(ਅਚਲ ਖੰਡ_nvfp4 * GGML_RESTRICT x, ਦਸ਼ਮਲਵ * GGML_RESTRICT y, int64_t k) {
+    ਸਥਿਰ ਅਚਲ ਪੂਰਨ qk = QK_NVFP4;
+    ਸਥਿਰ ਅਚਲ ਪੂਰਨ qk_sub = QK_NVFP4_SUB;
+    ਸਥਿਰ ਅਚਲ ਪੂਰਨ n_sub = QK_NVFP4 / QK_NVFP4_SUB;
 
-    assert(k % qk == 0);
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % qk == 0);
 
-    const int nb = k / qk;
+    ਅਚਲ ਪੂਰਨ nb = k / qk;
 
-    for (int i = 0; i < nb; i++) {
-        for (int s = 0; s < n_sub; s++) {
-            const float d = ggml_ue4m3_to_fp32(x[i].d[s]);
-            float * yb = y + i*qk + s*qk_sub;
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
+        ਲਈ (ਪੂਰਨ s = 0; s < n_sub; s++) {
+            ਅਚਲ ਦਸ਼ਮਲਵ d = ggml_ue4m3_ਮੰਜ਼ਿਲ_fp32(x[i].d[s]);
+            ਦਸ਼ਮਲਵ * yb = y + i*qk + s*qk_sub;
 
-            for (int j = 0; j < qk_sub/2; ++j) {
-                const int8_t v0 = kvalues_mxfp4[x[i].qs[s*(qk_sub/2) + j] & 0x0F];
-                const int8_t v1 = kvalues_mxfp4[x[i].qs[s*(qk_sub/2) + j] >>   4];
+            ਲਈ (ਪੂਰਨ j = 0; j < qk_sub/2; ++j) {
+                ਅਚਲ int8_t v0 = kvalues_mxfp4[x[i].qs[s*(qk_sub/2) + j] & 0x0F];
+                ਅਚਲ int8_t v1 = kvalues_mxfp4[x[i].qs[s*(qk_sub/2) + j] >>   4];
 
                 yb[j + 0       ] = v0*d;
                 yb[j + qk_sub/2] = v1*d;
@@ -618,164 +618,164 @@ void dequantize_row_nvfp4(const block_nvfp4 * GGML_RESTRICT x, float * GGML_REST
 //
 // ===================== Helper functions
 //
-static inline int nearest_int(float fval) {
-    assert(fabsf(fval) <= 4194303.f);
-    float val = fval + 12582912.f;
-    int i; memcpy(&i, &val, sizeof(int));
-    return (i & 0x007fffff) - 0x00400000;
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਪੂਰਨ ਸਭ_ਤੋਂ_ਨੇੜੇ_int(ਦਸ਼ਮਲਵ fval) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(fabsf(fval) <= 4194303.f);
+    ਦਸ਼ਮਲਵ val = fval + 12582912.f;
+    ਪੂਰਨ i; ਸਮ੍ਰਿਤੀ_ਨਕਲ(&i, &val, ਆਕਾਰ(ਪੂਰਨ));
+    ਵਾਪਸ (i & 0x007fffff) - 0x00400000;
 }
 
-static float make_qx_quants(int n, int nmax, const float * GGML_RESTRICT x, int8_t * GGML_RESTRICT L, int rmse_type,
-        const float * GGML_RESTRICT qw) {
-    float max = 0;
-    float amax = 0;
-    for (int i = 0; i < n; ++i) {
-        float ax = fabsf(x[i]);
-        if (ax > amax) { amax = ax; max = x[i]; }
+ਸਥਿਰ ਦਸ਼ਮਲਵ make_qx_quants(ਪੂਰਨ n, ਪੂਰਨ nmax, ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, int8_t * GGML_RESTRICT L, ਪੂਰਨ rmse_type,
+        ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT qw) {
+    ਦਸ਼ਮਲਵ max = 0;
+    ਦਸ਼ਮਲਵ amax = 0;
+    ਲਈ (ਪੂਰਨ i = 0; i < n; ++i) {
+        ਦਸ਼ਮਲਵ ax = fabsf(x[i]);
+        ਜੇ (ax > amax) { amax = ax; max = x[i]; }
     }
-    if (amax < GROUP_MAX_EPS) { // all zero
-        for (int i = 0; i < n; ++i) {
+    ਜੇ (amax < ਸਮੂਹ_MAX_EPS) { // all zero
+        ਲਈ (ਪੂਰਨ i = 0; i < n; ++i) {
             L[i] = 0;
         }
-        return 0.f;
+        ਵਾਪਸ 0.f;
     }
-    float iscale = -nmax / max;
-    if (rmse_type == 0) {
-        for (int i = 0; i < n; ++i) {
-            int l = nearest_int(iscale * x[i]);
+    ਦਸ਼ਮਲਵ iscale = -nmax / max;
+    ਜੇ (rmse_type == 0) {
+        ਲਈ (ਪੂਰਨ i = 0; i < n; ++i) {
+            ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(iscale * x[i]);
             L[i] = nmax + MAX(-nmax, MIN(nmax-1, l));
         }
-        return 1/iscale;
+        ਵਾਪਸ 1/iscale;
     }
     bool return_early = false;
-    if (rmse_type < 0) {
+    ਜੇ (rmse_type < 0) {
         rmse_type = -rmse_type;
         return_early = true;
     }
-    float sumlx = 0;
-    float suml2 = 0;
-#ifdef HAVE_BUGGY_APPLE_LINKER
+    ਦਸ਼ਮਲਵ sumlx = 0;
+    ਦਸ਼ਮਲਵ suml2 = 0;
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ HAVE_BUGGY_APPLE_LINKER
     // use 'volatile' to prevent unroll and work around a bug in Apple ld64 1015.7
-    for (volatile int i = 0; i < n; ++i) {
-#else
-    for (int i = 0; i < n; ++i) {
-#endif
-        int l = nearest_int(iscale * x[i]);
+    ਲਈ (ਅਸਥਿਰ ਪੂਰਨ i = 0; i < n; ++i) {
+#ਨਹੀਂਤਾਂ
+    ਲਈ (ਪੂਰਨ i = 0; i < n; ++i) {
+#ਜੇ_ਅੰਤ
+        ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(iscale * x[i]);
         l = MAX(-nmax, MIN(nmax-1, l));
         L[i] = l + nmax;
-        float w = qw ? qw[i] : rmse_type == 1 ? x[i] * x[i] : rmse_type == 2 ? 1 : rmse_type == 3 ? fabsf(x[i]) : sqrtf(fabsf(x[i]));
+        ਦਸ਼ਮਲਵ w = qw ? qw[i] : rmse_type == 1 ? x[i] * x[i] : rmse_type == 2 ? 1 : rmse_type == 3 ? fabsf(x[i]) : sqrtf(fabsf(x[i]));
         sumlx += w*x[i]*l;
         suml2 += w*l*l;
     }
-    float scale = suml2 ? sumlx/suml2 : 0.0f;
-    if (return_early) return suml2 > 0 ? 0.5f*(scale + 1/iscale) : 1/iscale;
-    float best = scale * sumlx;
-    for (int is = -9; is <= 9; ++is) {
-        if (is == 0) {
-            continue;
+    ਦਸ਼ਮਲਵ scale = suml2 ? sumlx/suml2 : 0.0f;
+    ਜੇ (return_early) ਵਾਪਸ suml2 > 0 ? 0.5f*(scale + 1/iscale) : 1/iscale;
+    ਦਸ਼ਮਲਵ ਉੱਤਮ = scale * sumlx;
+    ਲਈ (ਪੂਰਨ is = -9; is <= 9; ++is) {
+        ਜੇ (is == 0) {
+            ਜਾਰੀ;
         }
         iscale = -(nmax + 0.1f*is) / max;
         sumlx = suml2 = 0;
-        for (int i = 0; i < n; ++i) {
-            int l = nearest_int(iscale * x[i]);
+        ਲਈ (ਪੂਰਨ i = 0; i < n; ++i) {
+            ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(iscale * x[i]);
             l = MAX(-nmax, MIN(nmax-1, l));
-            float w = qw ? qw[i] : rmse_type == 1 ? x[i] * x[i] : rmse_type == 2 ? 1 : rmse_type == 3 ? fabsf(x[i]) : sqrtf(fabsf(x[i]));
+            ਦਸ਼ਮਲਵ w = qw ? qw[i] : rmse_type == 1 ? x[i] * x[i] : rmse_type == 2 ? 1 : rmse_type == 3 ? fabsf(x[i]) : sqrtf(fabsf(x[i]));
             sumlx += w*x[i]*l;
             suml2 += w*l*l;
         }
-        if (suml2 > 0 && sumlx*sumlx > best*suml2) {
-            for (int i = 0; i < n; ++i) {
-                int l = nearest_int(iscale * x[i]);
+        ਜੇ (suml2 > 0 && sumlx*sumlx > ਉੱਤਮ*suml2) {
+            ਲਈ (ਪੂਰਨ i = 0; i < n; ++i) {
+                ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(iscale * x[i]);
                 L[i] = nmax + MAX(-nmax, MIN(nmax-1, l));
             }
-            scale = sumlx/suml2; best = scale*sumlx;
+            scale = sumlx/suml2; ਉੱਤਮ = scale*sumlx;
         }
     }
-    return scale;
+    ਵਾਪਸ scale;
 }
 
-static float make_q3_quants(int n, int nmax, const float * GGML_RESTRICT x, int8_t * GGML_RESTRICT L, bool do_rmse) {
-    float max = 0;
-    float amax = 0;
-    for (int i = 0; i < n; ++i) {
-        float ax = fabsf(x[i]);
-        if (ax > amax) { amax = ax; max = x[i]; }
+ਸਥਿਰ ਦਸ਼ਮਲਵ make_q3_quants(ਪੂਰਨ n, ਪੂਰਨ nmax, ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, int8_t * GGML_RESTRICT L, bool do_rmse) {
+    ਦਸ਼ਮਲਵ max = 0;
+    ਦਸ਼ਮਲਵ amax = 0;
+    ਲਈ (ਪੂਰਨ i = 0; i < n; ++i) {
+        ਦਸ਼ਮਲਵ ax = fabsf(x[i]);
+        ਜੇ (ax > amax) { amax = ax; max = x[i]; }
     }
-    if (amax < GROUP_MAX_EPS) { // all zero
-        for (int i = 0; i < n; ++i) { L[i] = 0; }
-        return 0.f;
+    ਜੇ (amax < ਸਮੂਹ_MAX_EPS) { // all zero
+        ਲਈ (ਪੂਰਨ i = 0; i < n; ++i) { L[i] = 0; }
+        ਵਾਪਸ 0.f;
     }
-    float iscale = -nmax / max;
-    if (do_rmse) {
-        float sumlx = 0;
-        float suml2 = 0;
-        for (int i = 0; i < n; ++i) {
-            int l = nearest_int(iscale * x[i]);
+    ਦਸ਼ਮਲਵ iscale = -nmax / max;
+    ਜੇ (do_rmse) {
+        ਦਸ਼ਮਲਵ sumlx = 0;
+        ਦਸ਼ਮਲਵ suml2 = 0;
+        ਲਈ (ਪੂਰਨ i = 0; i < n; ++i) {
+            ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(iscale * x[i]);
             l = MAX(-nmax, MIN(nmax-1, l));
             L[i] = l;
-            float w = x[i]*x[i];
+            ਦਸ਼ਮਲਵ w = x[i]*x[i];
             sumlx += w*x[i]*l;
             suml2 += w*l*l;
         }
-        for (int itry = 0; itry < 5; ++itry) {
-            int n_changed = 0;
-            for (int i = 0; i < n; ++i) {
-                float w = x[i]*x[i];
-                float slx = sumlx - w*x[i]*L[i];
-                if (slx > 0) {
-                    float sl2 = suml2 - w*L[i]*L[i];
-                    int new_l = nearest_int(x[i] * sl2 / slx);
+        ਲਈ (ਪੂਰਨ itry = 0; itry < 5; ++itry) {
+            ਪੂਰਨ n_ਬਦਲਿਆ = 0;
+            ਲਈ (ਪੂਰਨ i = 0; i < n; ++i) {
+                ਦਸ਼ਮਲਵ w = x[i]*x[i];
+                ਦਸ਼ਮਲਵ slx = sumlx - w*x[i]*L[i];
+                ਜੇ (slx > 0) {
+                    ਦਸ਼ਮਲਵ sl2 = suml2 - w*L[i]*L[i];
+                    ਪੂਰਨ new_l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(x[i] * sl2 / slx);
                     new_l = MAX(-nmax, MIN(nmax-1, new_l));
-                    if (new_l != L[i]) {
+                    ਜੇ (new_l != L[i]) {
                         slx += w*x[i]*new_l;
                         sl2 += w*new_l*new_l;
-                        if (sl2 > 0 && slx*slx*suml2 > sumlx*sumlx*sl2) {
+                        ਜੇ (sl2 > 0 && slx*slx*suml2 > sumlx*sumlx*sl2) {
                             L[i] = new_l; sumlx = slx; suml2 = sl2;
-                            ++n_changed;
+                            ++n_ਬਦਲਿਆ;
                         }
                     }
                 }
             }
-            if (!n_changed) {
-                break;
+            ਜੇ (!n_ਬਦਲਿਆ) {
+                ਰੋਕੋ;
             }
         }
-        for (int i = 0; i < n; ++i) {
+        ਲਈ (ਪੂਰਨ i = 0; i < n; ++i) {
             L[i] += nmax;
         }
-        return suml2 > 0.0f ? sumlx / suml2 : 0.0f;
+        ਵਾਪਸ suml2 > 0.0f ? sumlx / suml2 : 0.0f;
     }
-    for (int i = 0; i < n; ++i) {
-        int l = nearest_int(iscale * x[i]);
+    ਲਈ (ਪੂਰਨ i = 0; i < n; ++i) {
+        ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(iscale * x[i]);
         l = MAX(-nmax, MIN(nmax-1, l));
         L[i] = l + nmax;
     }
-    return 1/iscale;
+    ਵਾਪਸ 1/iscale;
 }
 
-static float make_qkx1_quants(int n, int nmax, const float * GGML_RESTRICT x, uint8_t * GGML_RESTRICT L, float * GGML_RESTRICT the_min,
-        int ntry, float alpha) {
-    float min = x[0];
-    float max = x[0];
-    for (int i = 1; i < n; ++i) {
-        if (x[i] < min) min = x[i];
-        if (x[i] > max) max = x[i];
+ਸਥਿਰ ਦਸ਼ਮਲਵ make_qkx1_quants(ਪੂਰਨ n, ਪੂਰਨ nmax, ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, uint8_t * GGML_RESTRICT L, ਦਸ਼ਮਲਵ * GGML_RESTRICT the_min,
+        ਪੂਰਨ ntry, ਦਸ਼ਮਲਵ alpha) {
+    ਦਸ਼ਮਲਵ min = x[0];
+    ਦਸ਼ਮਲਵ max = x[0];
+    ਲਈ (ਪੂਰਨ i = 1; i < n; ++i) {
+        ਜੇ (x[i] < min) min = x[i];
+        ਜੇ (x[i] > max) max = x[i];
     }
-    if (max == min) {
-        for (int i = 0; i < n; ++i) L[i] = 0;
+    ਜੇ (max == min) {
+        ਲਈ (ਪੂਰਨ i = 0; i < n; ++i) L[i] = 0;
         *the_min = 0;
-        return 0.f;
+        ਵਾਪਸ 0.f;
     }
-    if (min > 0) min = 0;
-    float iscale = nmax/(max - min);
-    float scale = 1/iscale;
-    for (int itry = 0; itry < ntry; ++itry) {
-        float sumlx = 0; int suml2 = 0;
+    ਜੇ (min > 0) min = 0;
+    ਦਸ਼ਮਲਵ iscale = nmax/(max - min);
+    ਦਸ਼ਮਲਵ scale = 1/iscale;
+    ਲਈ (ਪੂਰਨ itry = 0; itry < ntry; ++itry) {
+        ਦਸ਼ਮਲਵ sumlx = 0; ਪੂਰਨ suml2 = 0;
         bool did_change = false;
-        for (int i = 0; i < n; ++i) {
-            int l = nearest_int(iscale*(x[i] - min));
+        ਲਈ (ਪੂਰਨ i = 0; i < n; ++i) {
+            ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(iscale*(x[i] - min));
             l = MAX(0, MIN(nmax, l));
-            if (l != L[i]) {
+            ਜੇ (l != L[i]) {
                 L[i] = l;
                 did_change = true;
             }
@@ -783,104 +783,104 @@ static float make_qkx1_quants(int n, int nmax, const float * GGML_RESTRICT x, ui
             suml2 += l*l;
         }
         scale = sumlx/suml2;
-        float sum = 0;
-        for (int i = 0; i < n; ++i) {
-            sum += x[i] - scale*L[i];
+        ਦਸ਼ਮਲਵ ਜੋੜ = 0;
+        ਲਈ (ਪੂਰਨ i = 0; i < n; ++i) {
+            ਜੋੜ += x[i] - scale*L[i];
         }
-        min = alpha*min + (1 - alpha)*sum/n;
-        if (min > 0) min = 0;
+        min = alpha*min + (1 - alpha)*ਜੋੜ/n;
+        ਜੇ (min > 0) min = 0;
         iscale = 1/scale;
-        if (!did_change) break;
+        ਜੇ (!did_change) ਰੋਕੋ;
     }
     *the_min = -min;
-    return scale;
+    ਵਾਪਸ scale;
 }
 
-static float make_qkx2_quants(int n, int nmax, const float * GGML_RESTRICT x, const float * GGML_RESTRICT weights,
-        uint8_t * GGML_RESTRICT L, float * GGML_RESTRICT the_min, uint8_t * GGML_RESTRICT Laux,
-        float rmin, float rdelta, int nstep, bool use_mad) {
-    float min = x[0];
-    float max = x[0];
-    float sum_w = weights[0];
-    float sum_x = sum_w * x[0];
-#ifdef HAVE_BUGGY_APPLE_LINKER
+ਸਥਿਰ ਦਸ਼ਮਲਵ make_qkx2_quants(ਪੂਰਨ n, ਪੂਰਨ nmax, ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT weights,
+        uint8_t * GGML_RESTRICT L, ਦਸ਼ਮਲਵ * GGML_RESTRICT the_min, uint8_t * GGML_RESTRICT Laux,
+        ਦਸ਼ਮਲਵ rmin, ਦਸ਼ਮਲਵ rdelta, ਪੂਰਨ nstep, bool use_mad) {
+    ਦਸ਼ਮਲਵ min = x[0];
+    ਦਸ਼ਮਲਵ max = x[0];
+    ਦਸ਼ਮਲਵ ਜੋੜ_w = weights[0];
+    ਦਸ਼ਮਲਵ ਜੋੜ_x = ਜੋੜ_w * x[0];
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ HAVE_BUGGY_APPLE_LINKER
     // use 'volatile' to prevent unroll and work around a bug in Apple ld64 1015.7
-    for (volatile int i = 1; i < n; ++i) {
-#else
-    for (int i = 1; i < n; ++i) {
-#endif
-        if (x[i] < min) min = x[i];
-        if (x[i] > max) max = x[i];
-        float w = weights[i];
-        sum_w += w;
-        sum_x += w * x[i];
+    ਲਈ (ਅਸਥਿਰ ਪੂਰਨ i = 1; i < n; ++i) {
+#ਨਹੀਂਤਾਂ
+    ਲਈ (ਪੂਰਨ i = 1; i < n; ++i) {
+#ਜੇ_ਅੰਤ
+        ਜੇ (x[i] < min) min = x[i];
+        ਜੇ (x[i] > max) max = x[i];
+        ਦਸ਼ਮਲਵ w = weights[i];
+        ਜੋੜ_w += w;
+        ਜੋੜ_x += w * x[i];
     }
-    if (min > 0) min = 0;
-    if (max == min) {
-        for (int i = 0; i < n; ++i) L[i] = 0;
+    ਜੇ (min > 0) min = 0;
+    ਜੇ (max == min) {
+        ਲਈ (ਪੂਰਨ i = 0; i < n; ++i) L[i] = 0;
         *the_min = -min;
-        return 0.f;
+        ਵਾਪਸ 0.f;
     }
-    float iscale = nmax/(max - min);
-    float scale = 1/iscale;
-    float best_error = 0;
-    for (int i = 0; i < n; ++i) {
-        int l = nearest_int(iscale*(x[i] - min));
+    ਦਸ਼ਮਲਵ iscale = nmax/(max - min);
+    ਦਸ਼ਮਲਵ scale = 1/iscale;
+    ਦਸ਼ਮਲਵ ਉੱਤਮ_error = 0;
+    ਲਈ (ਪੂਰਨ i = 0; i < n; ++i) {
+        ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(iscale*(x[i] - min));
         L[i] = MAX(0, MIN(nmax, l));
-        float diff = scale * L[i] + min - x[i];
+        ਦਸ਼ਮਲਵ diff = scale * L[i] + min - x[i];
         diff = use_mad ? fabsf(diff) : diff * diff;
-        float w = weights[i];
-        best_error += w * diff;
+        ਦਸ਼ਮਲਵ w = weights[i];
+        ਉੱਤਮ_error += w * diff;
     }
-    if (nstep < 1) {
+    ਜੇ (nstep < 1) {
         *the_min = -min;
-        return scale;
+        ਵਾਪਸ scale;
     }
-    for (int is = 0; is <= nstep; ++is) {
+    ਲਈ (ਪੂਰਨ is = 0; is <= nstep; ++is) {
         iscale = (rmin + rdelta*is + nmax)/(max - min);
-        float sum_l = 0, sum_l2 = 0, sum_xl = 0;
-        for (int i = 0; i < n; ++i) {
-            int l = nearest_int(iscale*(x[i] - min));
+        ਦਸ਼ਮਲਵ ਜੋੜ_l = 0, ਜੋੜ_l2 = 0, ਜੋੜ_xl = 0;
+        ਲਈ (ਪੂਰਨ i = 0; i < n; ++i) {
+            ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(iscale*(x[i] - min));
             l = MAX(0, MIN(nmax, l));
             Laux[i] = l;
-            float w = weights[i];
-            sum_l += w*l;
-            sum_l2 += w*l*l;
-            sum_xl += w*l*x[i];
+            ਦਸ਼ਮਲਵ w = weights[i];
+            ਜੋੜ_l += w*l;
+            ਜੋੜ_l2 += w*l*l;
+            ਜੋੜ_xl += w*l*x[i];
         }
-        float D = sum_w * sum_l2 - sum_l * sum_l;
-        if (D > 0) {
-            float this_scale = (sum_w * sum_xl - sum_x * sum_l)/D;
-            float this_min   = (sum_l2 * sum_x - sum_l * sum_xl)/D;
-            if (this_min > 0) {
+        ਦਸ਼ਮਲਵ D = ਜੋੜ_w * ਜੋੜ_l2 - ਜੋੜ_l * ਜੋੜ_l;
+        ਜੇ (D > 0) {
+            ਦਸ਼ਮਲਵ this_scale = (ਜੋੜ_w * ਜੋੜ_xl - ਜੋੜ_x * ਜੋੜ_l)/D;
+            ਦਸ਼ਮਲਵ this_min   = (ਜੋੜ_l2 * ਜੋੜ_x - ਜੋੜ_l * ਜੋੜ_xl)/D;
+            ਜੇ (this_min > 0) {
                 this_min = 0;
-                this_scale = sum_xl / sum_l2;
+                this_scale = ਜੋੜ_xl / ਜੋੜ_l2;
             }
-            float cur_error = 0;
-            for (int i = 0; i < n; ++i) {
-                float diff = this_scale * Laux[i] + this_min - x[i];
+            ਦਸ਼ਮਲਵ cur_error = 0;
+            ਲਈ (ਪੂਰਨ i = 0; i < n; ++i) {
+                ਦਸ਼ਮਲਵ diff = this_scale * Laux[i] + this_min - x[i];
                 diff = use_mad ? fabsf(diff) : diff * diff;
-                float w = weights[i];
+                ਦਸ਼ਮਲਵ w = weights[i];
                 cur_error += w * diff;
             }
-            if (cur_error < best_error) {
-                for (int i = 0; i < n; ++i) {
+            ਜੇ (cur_error < ਉੱਤਮ_error) {
+                ਲਈ (ਪੂਰਨ i = 0; i < n; ++i) {
                     L[i] = Laux[i];
                 }
-                best_error = cur_error;
+                ਉੱਤਮ_error = cur_error;
                 scale = this_scale;
                 min = this_min;
             }
         }
     }
     *the_min = -min;
-    return scale;
+    ਵਾਪਸ scale;
 }
 
-static inline void get_scale_min_k4(int j, const uint8_t * GGML_RESTRICT q, uint8_t * GGML_RESTRICT d, uint8_t * GGML_RESTRICT m) {
-    if (j < 4) {
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਖਾਲੀ get_scale_min_k4(ਪੂਰਨ j, ਅਚਲ uint8_t * GGML_RESTRICT q, uint8_t * GGML_RESTRICT d, uint8_t * GGML_RESTRICT m) {
+    ਜੇ (j < 4) {
         *d = q[j] & 63; *m = q[j + 4] & 63;
-    } else {
+    } ਨਹੀਂਤਾਂ {
         *d = (q[j+4] & 0xF) | ((q[j-4] >> 6) << 4);
         *m = (q[j+4] >>  4) | ((q[j-0] >> 6) << 4);
     }
@@ -888,68 +888,68 @@ static inline void get_scale_min_k4(int j, const uint8_t * GGML_RESTRICT q, uint
 
 //========================- 2-bit (de)-quantization
 
-void quantize_row_q2_K_ref(const float * GGML_RESTRICT x, block_q2_K * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int nb = k / QK_K;
+ਖਾਲੀ quantize_ਪੰਕਤੀ_q2_K_ref(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖੰਡ_q2_K * GGML_RESTRICT y, int64_t k) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % QK_K == 0);
+    ਅਚਲ ਪੂਰਨ nb = k / QK_K;
 
     uint8_t L[QK_K];
     uint8_t Laux[16];
-    float   weights[16];
-    float mins[QK_K/16];
-    float scales[QK_K/16];
+    ਦਸ਼ਮਲਵ   weights[16];
+    ਦਸ਼ਮਲਵ mins[QK_K/16];
+    ਦਸ਼ਮਲਵ scales[QK_K/16];
 
-    const float q4scale = 15.f;
+    ਅਚਲ ਦਸ਼ਮਲਵ q4scale = 15.f;
 
-    for (int i = 0; i < nb; i++) {
-        float max_scale = 0; // as we are deducting the min, scales are always positive
-        float max_min = 0;
-        for (int j = 0; j < QK_K/16; ++j) {
-            for (int l = 0; l < 16; ++l) weights[l] = fabsf(x[16*j + l]);
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
+        ਦਸ਼ਮਲਵ max_scale = 0; // as we are deducting the min, scales are always positive
+        ਦਸ਼ਮਲਵ max_min = 0;
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K/16; ++j) {
+            ਲਈ (ਪੂਰਨ l = 0; l < 16; ++l) weights[l] = fabsf(x[16*j + l]);
             scales[j] = make_qkx2_quants(16, 3, x + 16*j, weights, L + 16*j, &mins[j], Laux, -0.5f, 0.1f, 15, true);
-            float scale = scales[j];
-            if (scale > max_scale) {
+            ਦਸ਼ਮਲਵ scale = scales[j];
+            ਜੇ (scale > max_scale) {
                 max_scale = scale;
             }
-            float min = mins[j];
-            if (min > max_min) {
+            ਦਸ਼ਮਲਵ min = mins[j];
+            ਜੇ (min > max_min) {
                 max_min = min;
             }
         }
 
-        if (max_scale > 0) {
-            float iscale = q4scale/max_scale;
-            for (int j = 0; j < QK_K/16; ++j) {
-                int l = nearest_int(iscale*scales[j]);
+        ਜੇ (max_scale > 0) {
+            ਦਸ਼ਮਲਵ iscale = q4scale/max_scale;
+            ਲਈ (ਪੂਰਨ j = 0; j < QK_K/16; ++j) {
+                ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(iscale*scales[j]);
                 y[i].scales[j] = l;
             }
-            y[i].d = GGML_FP32_TO_FP16(max_scale/q4scale);
-        } else {
-            for (int j = 0; j < QK_K/16; ++j) y[i].scales[j] = 0;
-            y[i].d = GGML_FP32_TO_FP16(0.f);
+            y[i].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(max_scale/q4scale);
+        } ਨਹੀਂਤਾਂ {
+            ਲਈ (ਪੂਰਨ j = 0; j < QK_K/16; ++j) y[i].scales[j] = 0;
+            y[i].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(0.f);
         }
-        if (max_min > 0) {
-            float iscale = q4scale/max_min;
-            for (int j = 0; j < QK_K/16; ++j) {
-                int l = nearest_int(iscale*mins[j]);
+        ਜੇ (max_min > 0) {
+            ਦਸ਼ਮਲਵ iscale = q4scale/max_min;
+            ਲਈ (ਪੂਰਨ j = 0; j < QK_K/16; ++j) {
+                ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(iscale*mins[j]);
                 y[i].scales[j] |= (l << 4);
             }
-            y[i].dmin = GGML_FP32_TO_FP16(max_min/q4scale);
-        } else {
-            y[i].dmin = GGML_FP32_TO_FP16(0.f);
+            y[i].dmin = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(max_min/q4scale);
+        } ਨਹੀਂਤਾਂ {
+            y[i].dmin = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(0.f);
         }
-        for (int j = 0; j < QK_K/16; ++j) {
-            const float d = GGML_FP16_TO_FP32(y[i].d) * (y[i].scales[j] & 0xF);
-            if (!d) continue;
-            const float dm = GGML_FP16_TO_FP32(y[i].dmin) * (y[i].scales[j] >> 4);
-            for (int ii = 0; ii < 16; ++ii) {
-                int l = nearest_int((x[16*j + ii] + dm)/d);
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K/16; ++j) {
+            ਅਚਲ ਦਸ਼ਮਲਵ d = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(y[i].d) * (y[i].scales[j] & 0xF);
+            ਜੇ (!d) ਜਾਰੀ;
+            ਅਚਲ ਦਸ਼ਮਲਵ dm = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(y[i].dmin) * (y[i].scales[j] >> 4);
+            ਲਈ (ਪੂਰਨ ii = 0; ii < 16; ++ii) {
+                ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int((x[16*j + ii] + dm)/d);
                 l = MAX(0, MIN(3, l));
                 L[16*j + ii] = l;
             }
         }
 
-        for (int j = 0; j < QK_K; j += 128) {
-            for (int l = 0; l < 32; ++l) {
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K; j += 128) {
+            ਲਈ (ਪੂਰਨ l = 0; l < 32; ++l) {
                 y[i].qs[j/4 + l] = L[j + l] | (L[j + l + 32] << 2) | (L[j + l + 64] << 4) | (L[j + l + 96] << 6);
             }
         }
@@ -958,249 +958,249 @@ void quantize_row_q2_K_ref(const float * GGML_RESTRICT x, block_q2_K * GGML_REST
     }
 }
 
-void dequantize_row_q2_K(const block_q2_K * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int nb = k / QK_K;
+ਖਾਲੀ dequantize_ਪੰਕਤੀ_q2_K(ਅਚਲ ਖੰਡ_q2_K * GGML_RESTRICT x, ਦਸ਼ਮਲਵ * GGML_RESTRICT y, int64_t k) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % QK_K == 0);
+    ਅਚਲ ਪੂਰਨ nb = k / QK_K;
 
-    for (int i = 0; i < nb; i++) {
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
 
-        const float d = GGML_FP16_TO_FP32(x[i].d);
-        const float min = GGML_FP16_TO_FP32(x[i].dmin);
+        ਅਚਲ ਦਸ਼ਮਲਵ d = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(x[i].d);
+        ਅਚਲ ਦਸ਼ਮਲਵ min = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(x[i].dmin);
 
-        const uint8_t * q = x[i].qs;
+        ਅਚਲ uint8_t * q = x[i].qs;
 
-        int is = 0;
-        float dl, ml;
-        for (int n = 0; n < QK_K; n += 128) {
-            int shift = 0;
-            for (int j = 0; j < 4; ++j) {
+        ਪੂਰਨ is = 0;
+        ਦਸ਼ਮਲਵ dl, ml;
+        ਲਈ (ਪੂਰਨ n = 0; n < QK_K; n += 128) {
+            ਪੂਰਨ ਖਿਸਕਾਓ = 0;
+            ਲਈ (ਪੂਰਨ j = 0; j < 4; ++j) {
 
                 uint8_t sc = x[i].scales[is++];
                 dl = d * (sc & 0xF); ml = min * (sc >> 4);
-                for (int l = 0; l < 16; ++l) *y++ = dl * ((int8_t)((q[l] >> shift) & 3)) - ml;
+                ਲਈ (ਪੂਰਨ l = 0; l < 16; ++l) *y++ = dl * ((int8_t)((q[l] >> ਖਿਸਕਾਓ) & 3)) - ml;
 
                 sc = x[i].scales[is++];
                 dl = d * (sc & 0xF); ml = min * (sc >> 4);
-                for (int l = 0; l < 16; ++l) *y++ = dl * ((int8_t)((q[l+16] >> shift) & 3)) - ml;
+                ਲਈ (ਪੂਰਨ l = 0; l < 16; ++l) *y++ = dl * ((int8_t)((q[l+16] >> ਖਿਸਕਾਓ) & 3)) - ml;
 
-                shift += 2;
+                ਖਿਸਕਾਓ += 2;
             }
             q += 32;
         }
     }
 }
 
-static float make_qkx3_quants(int n, int nmax, const float * GGML_RESTRICT x, const float * GGML_RESTRICT weights,
-        uint8_t * GGML_RESTRICT L, float * GGML_RESTRICT the_min, uint8_t * GGML_RESTRICT Laux,
-        float rmin, float rdelta, int nstep, bool use_mad) {
-    float min = x[0];
-    float max = x[0];
-    float sum_w = weights ? weights[0] : x[0]*x[0];
-    float sum_x = sum_w * x[0];
-#ifdef HAVE_BUGGY_APPLE_LINKER
+ਸਥਿਰ ਦਸ਼ਮਲਵ make_qkx3_quants(ਪੂਰਨ n, ਪੂਰਨ nmax, ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT weights,
+        uint8_t * GGML_RESTRICT L, ਦਸ਼ਮਲਵ * GGML_RESTRICT the_min, uint8_t * GGML_RESTRICT Laux,
+        ਦਸ਼ਮਲਵ rmin, ਦਸ਼ਮਲਵ rdelta, ਪੂਰਨ nstep, bool use_mad) {
+    ਦਸ਼ਮਲਵ min = x[0];
+    ਦਸ਼ਮਲਵ max = x[0];
+    ਦਸ਼ਮਲਵ ਜੋੜ_w = weights ? weights[0] : x[0]*x[0];
+    ਦਸ਼ਮਲਵ ਜੋੜ_x = ਜੋੜ_w * x[0];
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ HAVE_BUGGY_APPLE_LINKER
     // use 'volatile' to prevent unroll and work around a bug in Apple ld64 1015.7
-    for (volatile int i = 1; i < n; ++i) {
-#else
-    for (int i = 1; i < n; ++i) {
-#endif
-        if (x[i] < min) min = x[i];
-        if (x[i] > max) max = x[i];
-        float w = weights ? weights[i] : x[i]*x[i];
-        sum_w += w;
-        sum_x += w * x[i];
+    ਲਈ (ਅਸਥਿਰ ਪੂਰਨ i = 1; i < n; ++i) {
+#ਨਹੀਂਤਾਂ
+    ਲਈ (ਪੂਰਨ i = 1; i < n; ++i) {
+#ਜੇ_ਅੰਤ
+        ਜੇ (x[i] < min) min = x[i];
+        ਜੇ (x[i] > max) max = x[i];
+        ਦਸ਼ਮਲਵ w = weights ? weights[i] : x[i]*x[i];
+        ਜੋੜ_w += w;
+        ਜੋੜ_x += w * x[i];
     }
-    if (min > 0) {
+    ਜੇ (min > 0) {
         min = 0;
     }
-    if (max <= min) {
+    ਜੇ (max <= min) {
         memset(L, 0, n);
         *the_min = -min;
-        return 0.f;
+        ਵਾਪਸ 0.f;
     }
-    float iscale = nmax/(max - min);
-    float scale = 1/iscale;
-    float best_mad = 0;
-    for (int i = 0; i < n; ++i) {
-        int l = nearest_int(iscale*(x[i] - min));
+    ਦਸ਼ਮਲਵ iscale = nmax/(max - min);
+    ਦਸ਼ਮਲਵ scale = 1/iscale;
+    ਦਸ਼ਮਲਵ ਉੱਤਮ_mad = 0;
+    ਲਈ (ਪੂਰਨ i = 0; i < n; ++i) {
+        ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(iscale*(x[i] - min));
         L[i] = MAX(0, MIN(nmax, l));
-        float diff = scale * L[i] + min - x[i];
+        ਦਸ਼ਮਲਵ diff = scale * L[i] + min - x[i];
         diff = use_mad ? fabsf(diff) : diff*diff;
-        float w = weights ? weights[i] : x[i]*x[i];
-        best_mad += w * diff;
+        ਦਸ਼ਮਲਵ w = weights ? weights[i] : x[i]*x[i];
+        ਉੱਤਮ_mad += w * diff;
     }
-    if (nstep < 1) {
+    ਜੇ (nstep < 1) {
         *the_min = -min;
-        return scale;
+        ਵਾਪਸ scale;
     }
-    for (int is = 0; is <= nstep; ++is) {
+    ਲਈ (ਪੂਰਨ is = 0; is <= nstep; ++is) {
         iscale = (rmin + rdelta*is + nmax)/(max - min);
-        float sum_l = 0, sum_l2 = 0, sum_xl = 0;
-        for (int i = 0; i < n; ++i) {
+        ਦਸ਼ਮਲਵ ਜੋੜ_l = 0, ਜੋੜ_l2 = 0, ਜੋੜ_xl = 0;
+        ਲਈ (ਪੂਰਨ i = 0; i < n; ++i) {
             // min is the best fit so far and can be at or near max, so v can be inf, nan or out of range for nearest_int
-            const float v = iscale*(x[i] - min);
-            const int l = v > 0 ? nearest_int(MIN(v, nmax)) : 0;
+            ਅਚਲ ਦਸ਼ਮਲਵ v = iscale*(x[i] - min);
+            ਅਚਲ ਪੂਰਨ l = v > 0 ? ਸਭ_ਤੋਂ_ਨੇੜੇ_int(MIN(v, nmax)) : 0;
             Laux[i] = l;
-            float w = weights ? weights[i] : x[i]*x[i];
-            sum_l  += w*l;
-            sum_l2 += w*l*l;
-            sum_xl += w*l*x[i];
+            ਦਸ਼ਮਲਵ w = weights ? weights[i] : x[i]*x[i];
+            ਜੋੜ_l  += w*l;
+            ਜੋੜ_l2 += w*l*l;
+            ਜੋੜ_xl += w*l*x[i];
         }
-        float D = sum_w * sum_l2 - sum_l * sum_l;
-        if (D > 0) {
-            float this_scale = (sum_w * sum_xl - sum_x * sum_l)/D;
-            float this_min   = (sum_l2 * sum_x - sum_l * sum_xl)/D;
-            if (this_min > 0) {
+        ਦਸ਼ਮਲਵ D = ਜੋੜ_w * ਜੋੜ_l2 - ਜੋੜ_l * ਜੋੜ_l;
+        ਜੇ (D > 0) {
+            ਦਸ਼ਮਲਵ this_scale = (ਜੋੜ_w * ਜੋੜ_xl - ਜੋੜ_x * ਜੋੜ_l)/D;
+            ਦਸ਼ਮਲਵ this_min   = (ਜੋੜ_l2 * ਜੋੜ_x - ਜੋੜ_l * ਜੋੜ_xl)/D;
+            ਜੇ (this_min > 0) {
                 this_min = 0;
-                this_scale = sum_xl / sum_l2;
+                this_scale = ਜੋੜ_xl / ਜੋੜ_l2;
             }
-            float mad = 0;
-            for (int i = 0; i < n; ++i) {
-                float diff = this_scale * Laux[i] + this_min - x[i];
+            ਦਸ਼ਮਲਵ mad = 0;
+            ਲਈ (ਪੂਰਨ i = 0; i < n; ++i) {
+                ਦਸ਼ਮਲਵ diff = this_scale * Laux[i] + this_min - x[i];
                 diff = use_mad ? fabsf(diff) : diff*diff;
-                float w = weights ? weights[i] : x[i]*x[i];
+                ਦਸ਼ਮਲਵ w = weights ? weights[i] : x[i]*x[i];
                 mad += w * diff;
             }
-            if (mad < best_mad) {
-                for (int i = 0; i < n; ++i) {
+            ਜੇ (mad < ਉੱਤਮ_mad) {
+                ਲਈ (ਪੂਰਨ i = 0; i < n; ++i) {
                     L[i] = Laux[i];
                 }
-                best_mad = mad;
+                ਉੱਤਮ_mad = mad;
                 scale = this_scale;
                 min = this_min;
             }
         }
     }
     *the_min = -min;
-    return scale;
+    ਵਾਪਸ scale;
 }
 
-static float make_qp_quants(int n, int nmax, const float * GGML_RESTRICT x, uint8_t * GGML_RESTRICT L, const float * quant_weights) {
-    float max = 0;
-    for (int i = 0; i < n; ++i) {
+ਸਥਿਰ ਦਸ਼ਮਲਵ make_qp_quants(ਪੂਰਨ n, ਪੂਰਨ nmax, ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, uint8_t * GGML_RESTRICT L, ਅਚਲ ਦਸ਼ਮਲਵ * quant_weights) {
+    ਦਸ਼ਮਲਵ max = 0;
+    ਲਈ (ਪੂਰਨ i = 0; i < n; ++i) {
         max = MAX(max, x[i]);
     }
-    if (max < GROUP_MAX_EPS) { // all zero
-        for (int i = 0; i < n; ++i) { L[i] = 0; }
-        return 0.f;
+    ਜੇ (max < ਸਮੂਹ_MAX_EPS) { // all zero
+        ਲਈ (ਪੂਰਨ i = 0; i < n; ++i) { L[i] = 0; }
+        ਵਾਪਸ 0.f;
     }
-    float iscale = nmax / max;
-    for (int i = 0; i < n; ++i) {
-        L[i] = nearest_int(iscale * x[i]);
+    ਦਸ਼ਮਲਵ iscale = nmax / max;
+    ਲਈ (ਪੂਰਨ i = 0; i < n; ++i) {
+        L[i] = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(iscale * x[i]);
     }
-    float scale = 1/iscale;
-    float best_mse = 0;
-    for (int i = 0; i < n; ++i) {
-        float diff = x[i] - scale*L[i];
-        float w = quant_weights[i];
-        best_mse += w*diff*diff;
+    ਦਸ਼ਮਲਵ scale = 1/iscale;
+    ਦਸ਼ਮਲਵ ਉੱਤਮ_mse = 0;
+    ਲਈ (ਪੂਰਨ i = 0; i < n; ++i) {
+        ਦਸ਼ਮਲਵ diff = x[i] - scale*L[i];
+        ਦਸ਼ਮਲਵ w = quant_weights[i];
+        ਉੱਤਮ_mse += w*diff*diff;
     }
-    for (int is = -4; is <= 4; ++is) {
-        if (is == 0) continue;
-        float iscale_is = (0.1f*is + nmax)/max;
-        float scale_is = 1/iscale_is;
-        float mse = 0;
-        for (int i = 0; i < n; ++i) {
-            int l = nearest_int(iscale_is*x[i]);
+    ਲਈ (ਪੂਰਨ is = -4; is <= 4; ++is) {
+        ਜੇ (is == 0) ਜਾਰੀ;
+        ਦਸ਼ਮਲਵ iscale_is = (0.1f*is + nmax)/max;
+        ਦਸ਼ਮਲਵ scale_is = 1/iscale_is;
+        ਦਸ਼ਮਲਵ mse = 0;
+        ਲਈ (ਪੂਰਨ i = 0; i < n; ++i) {
+            ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(iscale_is*x[i]);
             l = MIN(nmax, l);
-            float diff = x[i] - scale_is*l;
-            float w = quant_weights[i];
+            ਦਸ਼ਮਲਵ diff = x[i] - scale_is*l;
+            ਦਸ਼ਮਲਵ w = quant_weights[i];
             mse += w*diff*diff;
         }
-        if (mse < best_mse) {
-            best_mse = mse;
+        ਜੇ (mse < ਉੱਤਮ_mse) {
+            ਉੱਤਮ_mse = mse;
             iscale = iscale_is;
         }
     }
-    float sumlx = 0;
-    float suml2 = 0;
-    for (int i = 0; i < n; ++i) {
-        int l = nearest_int(iscale * x[i]);
+    ਦਸ਼ਮਲਵ sumlx = 0;
+    ਦਸ਼ਮਲਵ suml2 = 0;
+    ਲਈ (ਪੂਰਨ i = 0; i < n; ++i) {
+        ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(iscale * x[i]);
         l = MIN(nmax, l);
         L[i] = l;
-        float w = quant_weights[i];
+        ਦਸ਼ਮਲਵ w = quant_weights[i];
         sumlx += w*x[i]*l;
         suml2 += w*l*l;
     }
-    for (int itry = 0; itry < 5; ++itry) {
-        int n_changed = 0;
-        for (int i = 0; i < n; ++i) {
-            float w = quant_weights[i];
-            float slx = sumlx - w*x[i]*L[i];
-            float sl2 = suml2 - w*L[i]*L[i];
-            if (slx > 0 && sl2 > 0) {
-                int new_l = nearest_int(x[i] * sl2 / slx);
+    ਲਈ (ਪੂਰਨ itry = 0; itry < 5; ++itry) {
+        ਪੂਰਨ n_ਬਦਲਿਆ = 0;
+        ਲਈ (ਪੂਰਨ i = 0; i < n; ++i) {
+            ਦਸ਼ਮਲਵ w = quant_weights[i];
+            ਦਸ਼ਮਲਵ slx = sumlx - w*x[i]*L[i];
+            ਦਸ਼ਮਲਵ sl2 = suml2 - w*L[i]*L[i];
+            ਜੇ (slx > 0 && sl2 > 0) {
+                ਪੂਰਨ new_l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(x[i] * sl2 / slx);
                 new_l = MIN(nmax, new_l);
-                if (new_l != L[i]) {
+                ਜੇ (new_l != L[i]) {
                     slx += w*x[i]*new_l;
                     sl2 += w*new_l*new_l;
-                    if (slx*slx*suml2 > sumlx*sumlx*sl2) {
+                    ਜੇ (slx*slx*suml2 > sumlx*sumlx*sl2) {
                         L[i] = new_l; sumlx = slx; suml2 = sl2;
-                        ++n_changed;
+                        ++n_ਬਦਲਿਆ;
                     }
                 }
             }
         }
-        if (!n_changed) {
-            break;
+        ਜੇ (!n_ਬਦਲਿਆ) {
+            ਰੋਕੋ;
         }
     }
-    return suml2 > 0.0f ? sumlx / suml2 : 0.0f;
+    ਵਾਪਸ suml2 > 0.0f ? sumlx / suml2 : 0.0f;
 }
 
-static void quantize_row_q2_K_impl(const float * GGML_RESTRICT x, block_q2_K * GGML_RESTRICT y, int k, const float * GGML_RESTRICT quant_weights) {
+ਸਥਿਰ ਖਾਲੀ quantize_ਪੰਕਤੀ_q2_K_impl(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖੰਡ_q2_K * GGML_RESTRICT y, ਪੂਰਨ k, ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT quant_weights) {
     GGML_ASSERT(quant_weights);
-    assert(k % QK_K == 0);
-    const int nb = k / QK_K;
-    const bool requantize = true;
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % QK_K == 0);
+    ਅਚਲ ਪੂਰਨ nb = k / QK_K;
+    ਅਚਲ bool requantize = true;
 
     uint8_t L[QK_K];
     uint8_t Laux[16];
-    float mins[QK_K/16];
-    float scales[QK_K/16];
-    float sw[QK_K/16];
-    float weight[16];
+    ਦਸ਼ਮਲਵ mins[QK_K/16];
+    ਦਸ਼ਮਲਵ scales[QK_K/16];
+    ਦਸ਼ਮਲਵ sw[QK_K/16];
+    ਦਸ਼ਮਲਵ ਭਾਰ[16];
     uint8_t Ls[QK_K/16], Lm[QK_K/16];
 
-    for (int i = 0; i < nb; i++) {
-        memset(sw, 0, QK_K/16*sizeof(float));
-        float sumx2 = 0;
-        for (int j = 0; j < QK_K; ++j) sumx2 += x[j]*x[j];
-        float sigma2 = sumx2/QK_K;
-        for (int j = 0; j < QK_K/16; ++j) {
-            const float * GGML_RESTRICT qw = quant_weights + QK_K * i + 16*j;
-            for (int l = 0; l < 16; ++l) weight[l] = qw[l] * sqrtf(sigma2 + x[16*j + l]*x[16*j + l]);
-            for (int l = 0; l < QK_K/16; ++l) sw[j] += weight[l];
-            scales[j] = make_qkx3_quants(16, 3, x + 16*j, weight, L + 16*j, &mins[j], Laux, -0.9f, 0.05f, 36, false);
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
+        memset(sw, 0, QK_K/16*ਆਕਾਰ(ਦਸ਼ਮਲਵ));
+        ਦਸ਼ਮਲਵ sumx2 = 0;
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K; ++j) sumx2 += x[j]*x[j];
+        ਦਸ਼ਮਲਵ sigma2 = sumx2/QK_K;
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K/16; ++j) {
+            ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT qw = quant_weights + QK_K * i + 16*j;
+            ਲਈ (ਪੂਰਨ l = 0; l < 16; ++l) ਭਾਰ[l] = qw[l] * sqrtf(sigma2 + x[16*j + l]*x[16*j + l]);
+            ਲਈ (ਪੂਰਨ l = 0; l < QK_K/16; ++l) sw[j] += ਭਾਰ[l];
+            scales[j] = make_qkx3_quants(16, 3, x + 16*j, ਭਾਰ, L + 16*j, &mins[j], Laux, -0.9f, 0.05f, 36, false);
         }
 
-        float dm, mm;
+        ਦਸ਼ਮਲਵ dm, mm;
         dm  = make_qp_quants(QK_K/16, 15, scales, Ls, sw);
         mm  = make_qp_quants(QK_K/16, 15, mins,   Lm, sw);
 
-        y[i].d    = GGML_FP32_TO_FP16(dm);
-        y[i].dmin = GGML_FP32_TO_FP16(mm);
-        dm        = GGML_FP16_TO_FP32(y[i].d);
-        mm        = GGML_FP16_TO_FP32(y[i].dmin);
+        y[i].d    = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(dm);
+        y[i].dmin = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(mm);
+        dm        = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(y[i].d);
+        mm        = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(y[i].dmin);
 
-        for (int j = 0; j < QK_K/16; ++j) {
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K/16; ++j) {
             y[i].scales[j] = Ls[j] | (Lm[j] << 4);
         }
 
-        if (requantize) {
-            for (int j = 0; j < QK_K/16; ++j) {
-                const float d = dm * (y[i].scales[j] & 0xF);
-                if (!d) continue;
-                const float m = mm * (y[i].scales[j] >> 4);
-                for (int ii = 0; ii < 16; ++ii) {
-                    int l = nearest_int((x[16*j + ii] + m)/d);
+        ਜੇ (requantize) {
+            ਲਈ (ਪੂਰਨ j = 0; j < QK_K/16; ++j) {
+                ਅਚਲ ਦਸ਼ਮਲਵ d = dm * (y[i].scales[j] & 0xF);
+                ਜੇ (!d) ਜਾਰੀ;
+                ਅਚਲ ਦਸ਼ਮਲਵ m = mm * (y[i].scales[j] >> 4);
+                ਲਈ (ਪੂਰਨ ii = 0; ii < 16; ++ii) {
+                    ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int((x[16*j + ii] + m)/d);
                     l = MAX(0, MIN(3, l));
                     L[16*j + ii] = l;
                 }
             }
         }
 
-        for (int j = 0; j < QK_K; j += 128) {
-            for (int l = 0; l < 32; ++l) {
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K; j += 128) {
+            ਲਈ (ਪੂਰਨ l = 0; l < 32; ++l) {
                 y[i].qs[j/4 + l] = L[j + l] | (L[j + l + 32] << 2) | (L[j + l + 64] << 4) | (L[j + l + 96] << 6);
             }
         }
@@ -1209,72 +1209,72 @@ static void quantize_row_q2_K_impl(const float * GGML_RESTRICT x, block_q2_K * G
     }
 }
 
-size_t quantize_q2_K(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    size_t row_size = ggml_row_size(GGML_TYPE_Q2_K, n_per_row);
-    if (!quant_weights) {
-        quantize_row_q2_K_ref(src, dst, (int64_t)nrow*n_per_row);
+size_t quantize_q2_K(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT src, ਖਾਲੀ * GGML_RESTRICT dst, int64_t nrow, int64_t n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, ਅਚਲ ਦਸ਼ਮਲਵ * quant_weights) {
+    size_t ਪੰਕਤੀ_ਮਾਪ = ggml_ਪੰਕਤੀ_ਮਾਪ(GGML_TYPE_Q2_K, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
+    ਜੇ (!quant_weights) {
+        quantize_ਪੰਕਤੀ_q2_K_ref(src, dst, (int64_t)nrow*n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
     }
-    else {
-        char * qrow = (char *)dst;
-        for (int64_t row = 0; row < nrow; ++row) {
-            quantize_row_q2_K_impl(src, (block_q2_K*)qrow, n_per_row, quant_weights);
-            src += n_per_row;
-            qrow += row_size;
+    ਨਹੀਂਤਾਂ {
+        ਅੱਖਰ * qrow = (ਅੱਖਰ *)dst;
+        ਲਈ (int64_t ਪੰਕਤੀ = 0; ਪੰਕਤੀ < nrow; ++ਪੰਕਤੀ) {
+            quantize_ਪੰਕਤੀ_q2_K_impl(src, (ਖੰਡ_q2_K*)qrow, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, quant_weights);
+            src += n_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+            qrow += ਪੰਕਤੀ_ਮਾਪ;
         }
     }
-    return nrow * row_size;
+    ਵਾਪਸ nrow * ਪੰਕਤੀ_ਮਾਪ;
 }
 
 //========================= 3-bit (de)-quantization
 
-void quantize_row_q3_K_ref(const float * GGML_RESTRICT x, block_q3_K * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int nb = k / QK_K;
+ਖਾਲੀ quantize_ਪੰਕਤੀ_q3_K_ref(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖੰਡ_q3_K * GGML_RESTRICT y, int64_t k) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % QK_K == 0);
+    ਅਚਲ ਪੂਰਨ nb = k / QK_K;
 
     int8_t L[QK_K];
-    float scales[QK_K / 16];
+    ਦਸ਼ਮਲਵ scales[QK_K / 16];
 
-    for (int i = 0; i < nb; i++) {
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
 
-        float max_scale = 0;
-        float amax = 0;
-        for (int j = 0; j < QK_K/16; ++j) {
+        ਦਸ਼ਮਲਵ max_scale = 0;
+        ਦਸ਼ਮਲਵ amax = 0;
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K/16; ++j) {
             scales[j] = make_q3_quants(16, 4, x + 16*j, L + 16*j, true);
-            float scale = fabsf(scales[j]);
-            if (scale > amax) {
+            ਦਸ਼ਮਲਵ scale = fabsf(scales[j]);
+            ਜੇ (scale > amax) {
                 amax = scale; max_scale = scales[j];
             }
         }
 
         memset(y[i].scales, 0, 12);
-        if (max_scale) {
-            float iscale = -32.f/max_scale;
-            for (int j = 0; j < QK_K/16; ++j) {
-                int8_t l = nearest_int(iscale*scales[j]);
+        ਜੇ (max_scale) {
+            ਦਸ਼ਮਲਵ iscale = -32.f/max_scale;
+            ਲਈ (ਪੂਰਨ j = 0; j < QK_K/16; ++j) {
+                int8_t l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(iscale*scales[j]);
                 l = MAX(-32, MIN(31, l)) + 32;
-                if (j < 8) {
+                ਜੇ (j < 8) {
                     y[i].scales[j] = l & 0xF;
-                } else {
+                } ਨਹੀਂਤਾਂ {
                     y[i].scales[j-8] |= ((l & 0xF) << 4);
                 }
                 l >>= 4;
                 y[i].scales[j%4 + 8] |= (l << (2*(j/4)));
             }
-            y[i].d = GGML_FP32_TO_FP16(1/iscale);
-        } else {
-            y[i].d = GGML_FP32_TO_FP16(0.f);
+            y[i].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(1/iscale);
+        } ਨਹੀਂਤਾਂ {
+            y[i].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(0.f);
         }
 
         int8_t sc;
-        for (int j = 0; j < QK_K/16; ++j) {
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K/16; ++j) {
             sc = j < 8 ? y[i].scales[j] & 0xF : y[i].scales[j-8] >> 4;
             sc = (sc | (((y[i].scales[8 + j%4] >> (2*(j/4))) & 3) << 4)) - 32;
-            float d = GGML_FP16_TO_FP32(y[i].d) * sc;
-            if (!d) {
-                continue;
+            ਦਸ਼ਮਲਵ d = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(y[i].d) * sc;
+            ਜੇ (!d) {
+                ਜਾਰੀ;
             }
-            for (int ii = 0; ii < 16; ++ii) {
-                int l = nearest_int(x[16*j + ii]/d);
+            ਲਈ (ਪੂਰਨ ii = 0; ii < 16; ++ii) {
+                ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(x[16*j + ii]/d);
                 l = MAX(-4, MIN(3, l));
                 L[16*j + ii] = l + 4;
             }
@@ -1282,19 +1282,19 @@ void quantize_row_q3_K_ref(const float * GGML_RESTRICT x, block_q3_K * GGML_REST
 
         memset(y[i].hmask, 0, QK_K/8);
         // We put the high-bit for the 1st 8 quants into bit 0, the next 8 into bit 1, etc.
-        int m = 0;
+        ਪੂਰਨ m = 0;
         uint8_t hm = 1;
-        for (int j = 0; j < QK_K; ++j) {
-            if (L[j] > 3) {
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K; ++j) {
+            ਜੇ (L[j] > 3) {
                 y[i].hmask[m] |= hm;
                 L[j] -= 4;
             }
-            if (++m == QK_K/8) {
+            ਜੇ (++m == QK_K/8) {
                 m = 0; hm <<= 1;
             }
         }
-        for (int j = 0; j < QK_K; j += 128) {
-            for (int l = 0; l < 32; ++l) {
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K; j += 128) {
+            ਲਈ (ਪੂਰਨ l = 0; l < 32; ++l) {
                 y[i].qs[j/4 + l] = L[j + l] | (L[j + l + 32] << 2) | (L[j + l + 64] << 4) | (L[j + l + 96] << 6);
             }
         }
@@ -1303,48 +1303,48 @@ void quantize_row_q3_K_ref(const float * GGML_RESTRICT x, block_q3_K * GGML_REST
     }
 }
 
-void dequantize_row_q3_K(const block_q3_K * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int nb = k / QK_K;
+ਖਾਲੀ dequantize_ਪੰਕਤੀ_q3_K(ਅਚਲ ਖੰਡ_q3_K * GGML_RESTRICT x, ਦਸ਼ਮਲਵ * GGML_RESTRICT y, int64_t k) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % QK_K == 0);
+    ਅਚਲ ਪੂਰਨ nb = k / QK_K;
 
-    const uint32_t kmask1 = 0x03030303;
-    const uint32_t kmask2 = 0x0f0f0f0f;
+    ਅਚਲ uint32_t kmask1 = 0x03030303;
+    ਅਚਲ uint32_t kmask2 = 0x0f0f0f0f;
 
     uint32_t aux[4];
-    const int8_t * scales = (const int8_t*)aux;
+    ਅਚਲ int8_t * scales = (ਅਚਲ int8_t*)aux;
 
-    for (int i = 0; i < nb; i++) {
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
 
-        const float d_all = GGML_FP16_TO_FP32(x[i].d);
+        ਅਚਲ ਦਸ਼ਮਲਵ d_all = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(x[i].d);
 
-        const uint8_t * GGML_RESTRICT q = x[i].qs;
-        const uint8_t * GGML_RESTRICT hm = x[i].hmask;
+        ਅਚਲ uint8_t * GGML_RESTRICT q = x[i].qs;
+        ਅਚਲ uint8_t * GGML_RESTRICT hm = x[i].hmask;
         uint8_t m = 1;
 
-        memcpy(aux, x[i].scales, 12);
+        ਸਮ੍ਰਿਤੀ_ਨਕਲ(aux, x[i].scales, 12);
         uint32_t tmp = aux[2];
         aux[2] = ((aux[0] >> 4) & kmask2) | (((tmp >> 4) & kmask1) << 4);
         aux[3] = ((aux[1] >> 4) & kmask2) | (((tmp >> 6) & kmask1) << 4);
         aux[0] = (aux[0] & kmask2) | (((tmp >> 0) & kmask1) << 4);
         aux[1] = (aux[1] & kmask2) | (((tmp >> 2) & kmask1) << 4);
 
-        int is = 0;
-        float dl;
-        for (int n = 0; n < QK_K; n += 128) {
-            int shift = 0;
-            for (int j = 0; j < 4; ++j) {
+        ਪੂਰਨ is = 0;
+        ਦਸ਼ਮਲਵ dl;
+        ਲਈ (ਪੂਰਨ n = 0; n < QK_K; n += 128) {
+            ਪੂਰਨ ਖਿਸਕਾਓ = 0;
+            ਲਈ (ਪੂਰਨ j = 0; j < 4; ++j) {
 
                 dl = d_all * (scales[is++] - 32);
-                for (int l = 0; l < 16; ++l) {
-                    *y++ = dl * ((int8_t)((q[l+ 0] >> shift) & 3) - ((hm[l+ 0] & m) ? 0 : 4));
+                ਲਈ (ਪੂਰਨ l = 0; l < 16; ++l) {
+                    *y++ = dl * ((int8_t)((q[l+ 0] >> ਖਿਸਕਾਓ) & 3) - ((hm[l+ 0] & m) ? 0 : 4));
                 }
 
                 dl = d_all * (scales[is++] - 32);
-                for (int l = 0; l < 16; ++l) {
-                    *y++ = dl * ((int8_t)((q[l+16] >> shift) & 3) - ((hm[l+16] & m) ? 0 : 4));
+                ਲਈ (ਪੂਰਨ l = 0; l < 16; ++l) {
+                    *y++ = dl * ((int8_t)((q[l+16] >> ਖਿਸਕਾਓ) & 3) - ((hm[l+16] & m) ? 0 : 4));
                 }
 
-                shift += 2;
+                ਖਿਸਕਾਓ += 2;
                 m <<= 1;
             }
             q += 32;
@@ -1353,62 +1353,62 @@ void dequantize_row_q3_K(const block_q3_K * GGML_RESTRICT x, float * GGML_RESTRI
     }
 }
 
-static void quantize_row_q3_K_impl(const float * GGML_RESTRICT x, block_q3_K * GGML_RESTRICT y, int64_t n_per_row, const float * GGML_RESTRICT quant_weights) {
-    assert(n_per_row % QK_K == 0);
-    const int nb = n_per_row / QK_K;
+ਸਥਿਰ ਖਾਲੀ quantize_ਪੰਕਤੀ_q3_K_impl(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖੰਡ_q3_K * GGML_RESTRICT y, int64_t n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT quant_weights) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(n_ਪ੍ਰਤੀ_ਪੰਕਤੀ % QK_K == 0);
+    ਅਚਲ ਪੂਰਨ nb = n_ਪ੍ਰਤੀ_ਪੰਕਤੀ / QK_K;
 
     int8_t L[QK_K];
-    float scales[QK_K / 16];
-    float weight[16];
-    float sw[QK_K / 16];
+    ਦਸ਼ਮਲਵ scales[QK_K / 16];
+    ਦਸ਼ਮਲਵ ਭਾਰ[16];
+    ਦਸ਼ਮਲਵ sw[QK_K / 16];
     int8_t Ls[QK_K / 16];
 
-    for (int i = 0; i < nb; i++) {
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
 
-        float sumx2 = 0;
-        for (int j = 0; j < QK_K; ++j) sumx2 += x[j]*x[j];
-        float sigma2 = 2*sumx2/QK_K;
+        ਦਸ਼ਮਲਵ sumx2 = 0;
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K; ++j) sumx2 += x[j]*x[j];
+        ਦਸ਼ਮਲਵ sigma2 = 2*sumx2/QK_K;
 
-        for (int j = 0; j < QK_K/16; ++j) {
-            if (quant_weights) {
-                const float * qw = quant_weights + QK_K * i + 16*j;
-                for (int l = 0; l < 16; ++l) weight[l] = qw[l] * sqrtf(sigma2 + x[16*j+l]*x[16*j+l]);
-            } else {
-                for (int l = 0; l < 16; ++l) weight[l] = x[16*j+l]*x[16*j+l];
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K/16; ++j) {
+            ਜੇ (quant_weights) {
+                ਅਚਲ ਦਸ਼ਮਲਵ * qw = quant_weights + QK_K * i + 16*j;
+                ਲਈ (ਪੂਰਨ l = 0; l < 16; ++l) ਭਾਰ[l] = qw[l] * sqrtf(sigma2 + x[16*j+l]*x[16*j+l]);
+            } ਨਹੀਂਤਾਂ {
+                ਲਈ (ਪੂਰਨ l = 0; l < 16; ++l) ਭਾਰ[l] = x[16*j+l]*x[16*j+l];
             }
-            float sumw = 0;
-            for (int l = 0; l < 16; ++l) sumw += weight[l];
+            ਦਸ਼ਮਲਵ sumw = 0;
+            ਲਈ (ਪੂਰਨ l = 0; l < 16; ++l) sumw += ਭਾਰ[l];
             sw[j] = sumw;
 
-            scales[j] = make_qx_quants(16, 4, x + 16*j, L + 16*j, 1, weight);
+            scales[j] = make_qx_quants(16, 4, x + 16*j, L + 16*j, 1, ਭਾਰ);
 
         }
 
         memset(y[i].scales, 0, 12);
 
-        float d_block = make_qx_quants(QK_K/16, 32, scales, Ls, 1, sw);
-        for (int j = 0; j < QK_K/16; ++j) {
-            int l = Ls[j];
-            if (j < 8) {
+        ਦਸ਼ਮਲਵ d_ਖੰਡ = make_qx_quants(QK_K/16, 32, scales, Ls, 1, sw);
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K/16; ++j) {
+            ਪੂਰਨ l = Ls[j];
+            ਜੇ (j < 8) {
                 y[i].scales[j] = l & 0xF;
-            } else {
+            } ਨਹੀਂਤਾਂ {
                 y[i].scales[j-8] |= ((l & 0xF) << 4);
             }
             l >>= 4;
             y[i].scales[j%4 + 8] |= (l << (2*(j/4)));
         }
-        y[i].d = GGML_FP32_TO_FP16(d_block);
+        y[i].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(d_ਖੰਡ);
 
         int8_t sc;
-        for (int j = 0; j < QK_K/16; ++j) {
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K/16; ++j) {
             sc = j < 8 ? y[i].scales[j] & 0xF : y[i].scales[j-8] >> 4;
             sc = (sc | (((y[i].scales[8 + j%4] >> (2*(j/4))) & 3) << 4)) - 32;
-            float d = GGML_FP16_TO_FP32(y[i].d) * sc;
-            if (!d) {
-                continue;
+            ਦਸ਼ਮਲਵ d = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(y[i].d) * sc;
+            ਜੇ (!d) {
+                ਜਾਰੀ;
             }
-            for (int ii = 0; ii < 16; ++ii) {
-                int l = nearest_int(x[16*j + ii]/d);
+            ਲਈ (ਪੂਰਨ ii = 0; ii < 16; ++ii) {
+                ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(x[16*j + ii]/d);
                 l = MAX(-4, MIN(3, l));
                 L[16*j + ii] = l + 4;
             }
@@ -1416,19 +1416,19 @@ static void quantize_row_q3_K_impl(const float * GGML_RESTRICT x, block_q3_K * G
 
         memset(y[i].hmask, 0, QK_K/8);
         // We put the high-bit for the 1st 8 quants into bit 0, the next 8 into bit 1, etc.
-        int m = 0;
+        ਪੂਰਨ m = 0;
         uint8_t hm = 1;
-        for (int j = 0; j < QK_K; ++j) {
-            if (L[j] > 3) {
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K; ++j) {
+            ਜੇ (L[j] > 3) {
                 y[i].hmask[m] |= hm;
                 L[j] -= 4;
             }
-            if (++m == QK_K/8) {
+            ਜੇ (++m == QK_K/8) {
                 m = 0; hm <<= 1;
             }
         }
-        for (int j = 0; j < QK_K; j += 128) {
-            for (int l = 0; l < 32; ++l) {
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K; j += 128) {
+            ਲਈ (ਪੂਰਨ l = 0; l < 32; ++l) {
                 y[i].qs[j/4 + l] = L[j + l] | (L[j + l + 32] << 2) | (L[j + l + 64] << 4) | (L[j + l + 96] << 6);
             }
         }
@@ -1437,89 +1437,89 @@ static void quantize_row_q3_K_impl(const float * GGML_RESTRICT x, block_q3_K * G
     }
 }
 
-size_t quantize_q3_K(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    size_t row_size = ggml_row_size(GGML_TYPE_Q3_K, n_per_row);
-    if (!quant_weights) {
-        quantize_row_q3_K_ref(src, dst, (int64_t)nrow*n_per_row);
+size_t quantize_q3_K(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT src, ਖਾਲੀ * GGML_RESTRICT dst, int64_t nrow, int64_t n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, ਅਚਲ ਦਸ਼ਮਲਵ * quant_weights) {
+    size_t ਪੰਕਤੀ_ਮਾਪ = ggml_ਪੰਕਤੀ_ਮਾਪ(GGML_TYPE_Q3_K, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
+    ਜੇ (!quant_weights) {
+        quantize_ਪੰਕਤੀ_q3_K_ref(src, dst, (int64_t)nrow*n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
     }
-    else {
-        char * qrow = (char *)dst;
-        for (int64_t row = 0; row < nrow; ++row) {
-            quantize_row_q3_K_impl(src, (block_q3_K*)qrow, n_per_row, quant_weights);
-            src += n_per_row;
-            qrow += row_size;
+    ਨਹੀਂਤਾਂ {
+        ਅੱਖਰ * qrow = (ਅੱਖਰ *)dst;
+        ਲਈ (int64_t ਪੰਕਤੀ = 0; ਪੰਕਤੀ < nrow; ++ਪੰਕਤੀ) {
+            quantize_ਪੰਕਤੀ_q3_K_impl(src, (ਖੰਡ_q3_K*)qrow, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, quant_weights);
+            src += n_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+            qrow += ਪੰਕਤੀ_ਮਾਪ;
         }
     }
-    return nrow * row_size;
+    ਵਾਪਸ nrow * ਪੰਕਤੀ_ਮਾਪ;
 }
 
 // ====================== 4-bit (de)-quantization
 
-void quantize_row_q4_K_ref(const float * GGML_RESTRICT x, block_q4_K * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int nb = k / QK_K;
+ਖਾਲੀ quantize_ਪੰਕਤੀ_q4_K_ref(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖੰਡ_q4_K * GGML_RESTRICT y, int64_t k) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % QK_K == 0);
+    ਅਚਲ ਪੂਰਨ nb = k / QK_K;
 
     uint8_t L[QK_K];
     uint8_t Laux[32];
-    float   weights[32];
-    float mins[QK_K/32];
-    float scales[QK_K/32];
+    ਦਸ਼ਮਲਵ   weights[32];
+    ਦਸ਼ਮਲਵ mins[QK_K/32];
+    ਦਸ਼ਮਲਵ scales[QK_K/32];
 
-    for (int i = 0; i < nb; i++) {
-        float max_scale = 0; // as we are deducting the min, scales are always positive
-        float max_min = 0;
-        for (int j = 0; j < QK_K/32; ++j) {
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
+        ਦਸ਼ਮਲਵ max_scale = 0; // as we are deducting the min, scales are always positive
+        ਦਸ਼ਮਲਵ max_min = 0;
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K/32; ++j) {
             //scales[j] = make_qkx1_quants(32, 15, x + 32*j, L + 32*j, &mins[j], 9, 0.5f);
-            float sum_x2 = 0;
-            for (int l = 0; l < 32; ++l) sum_x2 += x[32*j + l] * x[32*j + l];
-            float av_x = sqrtf(sum_x2/32);
-            for (int l = 0; l < 32; ++l) weights[l] = av_x + fabsf(x[32*j + l]);
+            ਦਸ਼ਮਲਵ ਜੋੜ_x2 = 0;
+            ਲਈ (ਪੂਰਨ l = 0; l < 32; ++l) ਜੋੜ_x2 += x[32*j + l] * x[32*j + l];
+            ਦਸ਼ਮਲਵ av_x = sqrtf(ਜੋੜ_x2/32);
+            ਲਈ (ਪੂਰਨ l = 0; l < 32; ++l) weights[l] = av_x + fabsf(x[32*j + l]);
             scales[j] = make_qkx2_quants(32, 15, x + 32*j, weights, L + 32*j, &mins[j], Laux, -1.f, 0.1f, 20, false);
-            float scale = scales[j];
-            if (scale > max_scale) {
+            ਦਸ਼ਮਲਵ scale = scales[j];
+            ਜੇ (scale > max_scale) {
                 max_scale = scale;
             }
-            float min = mins[j];
-            if (min > max_min) {
+            ਦਸ਼ਮਲਵ min = mins[j];
+            ਜੇ (min > max_min) {
                 max_min = min;
             }
         }
 
-        float inv_scale = max_scale > 0 ? 63.f/max_scale : 0.f;
-        float inv_min   = max_min   > 0 ? 63.f/max_min   : 0.f;
-        for (int j = 0; j < QK_K/32; ++j) {
-            uint8_t ls = nearest_int(inv_scale*scales[j]);
-            uint8_t lm = nearest_int(inv_min*mins[j]);
+        ਦਸ਼ਮਲਵ inv_scale = max_scale > 0 ? 63.f/max_scale : 0.f;
+        ਦਸ਼ਮਲਵ inv_min   = max_min   > 0 ? 63.f/max_min   : 0.f;
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K/32; ++j) {
+            uint8_t ls = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(inv_scale*scales[j]);
+            uint8_t lm = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(inv_min*mins[j]);
             ls = MIN(63, ls);
             lm = MIN(63, lm);
-            if (j < 4) {
+            ਜੇ (j < 4) {
                 y[i].scales[j] = ls;
                 y[i].scales[j+4] = lm;
-            } else {
+            } ਨਹੀਂਤਾਂ {
                 y[i].scales[j+4] = (ls & 0xF) | ((lm & 0xF) << 4);
                 y[i].scales[j-4] |= ((ls >> 4) << 6);
                 y[i].scales[j-0] |= ((lm >> 4) << 6);
             }
         }
-        y[i].d = GGML_FP32_TO_FP16(max_scale/63.f);
-        y[i].dmin = GGML_FP32_TO_FP16(max_min/63.f);
+        y[i].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(max_scale/63.f);
+        y[i].dmin = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(max_min/63.f);
 
         uint8_t sc, m;
-        for (int j = 0; j < QK_K/32; ++j) {
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K/32; ++j) {
             get_scale_min_k4(j, y[i].scales, &sc, &m);
-            const float d = GGML_FP16_TO_FP32(y[i].d) * sc;
-            if (!d) continue;
-            const float dm = GGML_FP16_TO_FP32(y[i].dmin) * m;
-            for (int ii = 0; ii < 32; ++ii) {
-                int l = nearest_int((x[32*j + ii] + dm)/d);
+            ਅਚਲ ਦਸ਼ਮਲਵ d = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(y[i].d) * sc;
+            ਜੇ (!d) ਜਾਰੀ;
+            ਅਚਲ ਦਸ਼ਮਲਵ dm = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(y[i].dmin) * m;
+            ਲਈ (ਪੂਰਨ ii = 0; ii < 32; ++ii) {
+                ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int((x[32*j + ii] + dm)/d);
                 l = MAX(0, MIN(15, l));
                 L[32*j + ii] = l;
             }
         }
 
         uint8_t * q = y[i].qs;
-        for (int j = 0; j < QK_K; j += 64) {
-            for (int l = 0; l < 32; ++l) q[l] = L[j + l] | (L[j + l + 32] << 4);
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K; j += 64) {
+            ਲਈ (ਪੂਰਨ l = 0; l < 32; ++l) q[l] = L[j + l] | (L[j + l + 32] << 4);
             q += 32;
         }
 
@@ -1527,95 +1527,95 @@ void quantize_row_q4_K_ref(const float * GGML_RESTRICT x, block_q4_K * GGML_REST
     }
 }
 
-void dequantize_row_q4_K(const block_q4_K * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int nb = k / QK_K;
+ਖਾਲੀ dequantize_ਪੰਕਤੀ_q4_K(ਅਚਲ ਖੰਡ_q4_K * GGML_RESTRICT x, ਦਸ਼ਮਲਵ * GGML_RESTRICT y, int64_t k) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % QK_K == 0);
+    ਅਚਲ ਪੂਰਨ nb = k / QK_K;
 
-    for (int i = 0; i < nb; i++) {
-        const uint8_t * q = x[i].qs;
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
+        ਅਚਲ uint8_t * q = x[i].qs;
 
-        const float d   = GGML_FP16_TO_FP32(x[i].d);
-        const float min = GGML_FP16_TO_FP32(x[i].dmin);
+        ਅਚਲ ਦਸ਼ਮਲਵ d   = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(x[i].d);
+        ਅਚਲ ਦਸ਼ਮਲਵ min = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(x[i].dmin);
 
-        int is = 0;
+        ਪੂਰਨ is = 0;
         uint8_t sc, m;
-        for (int j = 0; j < QK_K; j += 64) {
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K; j += 64) {
             get_scale_min_k4(is + 0, x[i].scales, &sc, &m);
-            const float d1 = d * sc; const float m1 = min * m;
+            ਅਚਲ ਦਸ਼ਮਲਵ d1 = d * sc; ਅਚਲ ਦਸ਼ਮਲਵ m1 = min * m;
             get_scale_min_k4(is + 1, x[i].scales, &sc, &m);
-            const float d2 = d * sc; const float m2 = min * m;
-            for (int l = 0; l < 32; ++l) *y++ = d1 * (q[l] & 0xF) - m1;
-            for (int l = 0; l < 32; ++l) *y++ = d2 * (q[l]  >> 4) - m2;
+            ਅਚਲ ਦਸ਼ਮਲਵ d2 = d * sc; ਅਚਲ ਦਸ਼ਮਲਵ m2 = min * m;
+            ਲਈ (ਪੂਰਨ l = 0; l < 32; ++l) *y++ = d1 * (q[l] & 0xF) - m1;
+            ਲਈ (ਪੂਰਨ l = 0; l < 32; ++l) *y++ = d2 * (q[l]  >> 4) - m2;
             q += 32; is += 2;
         }
     }
 }
 
-static void quantize_row_q4_K_impl(const float * GGML_RESTRICT x, block_q4_K * GGML_RESTRICT y, int64_t n_per_row, const float * quant_weights) {
-    assert(n_per_row % QK_K == 0);
-    const int64_t nb = n_per_row / QK_K;
+ਸਥਿਰ ਖਾਲੀ quantize_ਪੰਕਤੀ_q4_K_impl(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖੰਡ_q4_K * GGML_RESTRICT y, int64_t n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, ਅਚਲ ਦਸ਼ਮਲਵ * quant_weights) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(n_ਪ੍ਰਤੀ_ਪੰਕਤੀ % QK_K == 0);
+    ਅਚਲ int64_t nb = n_ਪ੍ਰਤੀ_ਪੰਕਤੀ / QK_K;
 
     uint8_t L[QK_K];
     uint8_t Laux[32];
     uint8_t Ls[QK_K/32];
     uint8_t Lm[QK_K/32];
-    float   weights[32];
-    float   sw[QK_K/32];
-    float   mins[QK_K/32];
-    float   scales[QK_K/32];
+    ਦਸ਼ਮਲਵ   weights[32];
+    ਦਸ਼ਮਲਵ   sw[QK_K/32];
+    ਦਸ਼ਮਲਵ   mins[QK_K/32];
+    ਦਸ਼ਮਲਵ   scales[QK_K/32];
 
-    for (int i = 0; i < nb; i++) {
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
 
-        float sum_x2 = 0;
-        for (int l = 0; l < QK_K; ++l) sum_x2 += x[l] * x[l];
-        float sigma2 = 2*sum_x2/QK_K;
-        float av_x = sqrtf(sigma2);
+        ਦਸ਼ਮਲਵ ਜੋੜ_x2 = 0;
+        ਲਈ (ਪੂਰਨ l = 0; l < QK_K; ++l) ਜੋੜ_x2 += x[l] * x[l];
+        ਦਸ਼ਮਲਵ sigma2 = 2*ਜੋੜ_x2/QK_K;
+        ਦਸ਼ਮਲਵ av_x = sqrtf(sigma2);
 
-        for (int j = 0; j < QK_K/32; ++j) {
-            if (quant_weights) {
-                const float * qw = quant_weights + QK_K*i + 32*j;
-                for (int l = 0; l < 32; ++l) weights[l] = qw[l] * sqrtf(sigma2 + x[32*j + l]*x[32*j + l]);
-            } else {
-                for (int l = 0; l < 32; ++l) weights[l] = av_x + fabsf(x[32*j + l]);
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K/32; ++j) {
+            ਜੇ (quant_weights) {
+                ਅਚਲ ਦਸ਼ਮਲਵ * qw = quant_weights + QK_K*i + 32*j;
+                ਲਈ (ਪੂਰਨ l = 0; l < 32; ++l) weights[l] = qw[l] * sqrtf(sigma2 + x[32*j + l]*x[32*j + l]);
+            } ਨਹੀਂਤਾਂ {
+                ਲਈ (ਪੂਰਨ l = 0; l < 32; ++l) weights[l] = av_x + fabsf(x[32*j + l]);
             }
-            float sumw = 0;
-            for (int l = 0; l < 32; ++l) sumw += weights[l];
+            ਦਸ਼ਮਲਵ sumw = 0;
+            ਲਈ (ਪੂਰਨ l = 0; l < 32; ++l) sumw += weights[l];
             sw[j] = sumw;
             scales[j] = make_qkx3_quants(32, 15, x + 32*j, weights, L + 32*j, &mins[j], Laux, -0.9f, 0.05f, 36, false);
         }
 
-        float d_block = make_qp_quants(QK_K/32, 63, scales, Ls, sw);
-        float m_block = make_qp_quants(QK_K/32, 63, mins,   Lm, sw);
-        for (int j = 0; j < QK_K/32; ++j) {
+        ਦਸ਼ਮਲਵ d_ਖੰਡ = make_qp_quants(QK_K/32, 63, scales, Ls, sw);
+        ਦਸ਼ਮਲਵ m_ਖੰਡ = make_qp_quants(QK_K/32, 63, mins,   Lm, sw);
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K/32; ++j) {
             uint8_t ls = Ls[j];
             uint8_t lm = Lm[j];
-            if (j < 4) {
+            ਜੇ (j < 4) {
                 y[i].scales[j] = ls;
                 y[i].scales[j+4] = lm;
-            } else {
+            } ਨਹੀਂਤਾਂ {
                 y[i].scales[j+4] = (ls & 0xF) | ((lm & 0xF) << 4);
                 y[i].scales[j-4] |= ((ls >> 4) << 6);
                 y[i].scales[j-0] |= ((lm >> 4) << 6);
             }
         }
-        y[i].d = GGML_FP32_TO_FP16(d_block);
-        y[i].dmin = GGML_FP32_TO_FP16(m_block);
+        y[i].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(d_ਖੰਡ);
+        y[i].dmin = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(m_ਖੰਡ);
 
         uint8_t sc, m;
-        for (int j = 0; j < QK_K/32; ++j) {
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K/32; ++j) {
             get_scale_min_k4(j, y[i].scales, &sc, &m);
-            const float d = GGML_FP16_TO_FP32(y[i].d) * sc;
-            if (!d) continue;
-            const float dm = GGML_FP16_TO_FP32(y[i].dmin) * m;
-            for (int ii = 0; ii < 32; ++ii) {
-                int l = nearest_int((x[32*j + ii] + dm)/d);
+            ਅਚਲ ਦਸ਼ਮਲਵ d = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(y[i].d) * sc;
+            ਜੇ (!d) ਜਾਰੀ;
+            ਅਚਲ ਦਸ਼ਮਲਵ dm = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(y[i].dmin) * m;
+            ਲਈ (ਪੂਰਨ ii = 0; ii < 32; ++ii) {
+                ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int((x[32*j + ii] + dm)/d);
                 l = MAX(0, MIN(15, l));
                 L[32*j + ii] = l;
             }
         }
         uint8_t * q = y[i].qs;
-        for (int j = 0; j < QK_K; j += 64) {
-            for (int l = 0; l < 32; ++l) q[l] = L[j + l] | (L[j + l + 32] << 4);
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K; j += 64) {
+            ਲਈ (ਪੂਰਨ l = 0; l < 32; ++l) q[l] = L[j + l] | (L[j + l + 32] << 4);
             q += 32;
         }
 
@@ -1624,81 +1624,81 @@ static void quantize_row_q4_K_impl(const float * GGML_RESTRICT x, block_q4_K * G
     }
 }
 
-size_t quantize_q4_K(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    size_t row_size = ggml_row_size(GGML_TYPE_Q4_K, n_per_row);
-    if (!quant_weights) {
-        quantize_row_q4_K_ref(src, dst, (int64_t)nrow*n_per_row);
+size_t quantize_q4_K(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT src, ਖਾਲੀ * GGML_RESTRICT dst, int64_t nrow, int64_t n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, ਅਚਲ ਦਸ਼ਮਲਵ * quant_weights) {
+    size_t ਪੰਕਤੀ_ਮਾਪ = ggml_ਪੰਕਤੀ_ਮਾਪ(GGML_TYPE_Q4_K, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
+    ਜੇ (!quant_weights) {
+        quantize_ਪੰਕਤੀ_q4_K_ref(src, dst, (int64_t)nrow*n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
     }
-    else {
-        char * qrow = (char *)dst;
-        for (int64_t row = 0; row < nrow; ++row) {
-            quantize_row_q4_K_impl(src, (block_q4_K*)qrow, n_per_row, quant_weights);
-            src += n_per_row;
-            qrow += row_size;
+    ਨਹੀਂਤਾਂ {
+        ਅੱਖਰ * qrow = (ਅੱਖਰ *)dst;
+        ਲਈ (int64_t ਪੰਕਤੀ = 0; ਪੰਕਤੀ < nrow; ++ਪੰਕਤੀ) {
+            quantize_ਪੰਕਤੀ_q4_K_impl(src, (ਖੰਡ_q4_K*)qrow, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, quant_weights);
+            src += n_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+            qrow += ਪੰਕਤੀ_ਮਾਪ;
         }
     }
-    return nrow * row_size;
+    ਵਾਪਸ nrow * ਪੰਕਤੀ_ਮਾਪ;
 }
 
 // ====================== 5-bit (de)-quantization
 
-void quantize_row_q5_K_ref(const float * GGML_RESTRICT x, block_q5_K * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+ਖਾਲੀ quantize_ਪੰਕਤੀ_q5_K_ref(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖੰਡ_q5_K * GGML_RESTRICT y, int64_t k) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % QK_K == 0);
+    ਅਚਲ int64_t nb = k / QK_K;
 
     uint8_t L[QK_K];
-    float mins[QK_K/32];
-    float scales[QK_K/32];
-    float weights[32];
+    ਦਸ਼ਮਲਵ mins[QK_K/32];
+    ਦਸ਼ਮਲਵ scales[QK_K/32];
+    ਦਸ਼ਮਲਵ weights[32];
     uint8_t Laux[32];
 
-    for (int i = 0; i < nb; i++) {
-        float max_scale = 0; // as we are deducting the min, scales are always positive
-        float max_min = 0;
-        for (int j = 0; j < QK_K/32; ++j) {
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
+        ਦਸ਼ਮਲਵ max_scale = 0; // as we are deducting the min, scales are always positive
+        ਦਸ਼ਮਲਵ max_min = 0;
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K/32; ++j) {
             //scales[j] = make_qkx1_quants(32, 31, x + 32*j, L + 32*j, &mins[j], 9, 0.5f);
-            float sum_x2 = 0;
-            for (int l = 0; l < 32; ++l) sum_x2 += x[32*j + l] * x[32*j + l];
-            float av_x = sqrtf(sum_x2/32);
-            for (int l = 0; l < 32; ++l) weights[l] = av_x + fabsf(x[32*j + l]);
+            ਦਸ਼ਮਲਵ ਜੋੜ_x2 = 0;
+            ਲਈ (ਪੂਰਨ l = 0; l < 32; ++l) ਜੋੜ_x2 += x[32*j + l] * x[32*j + l];
+            ਦਸ਼ਮਲਵ av_x = sqrtf(ਜੋੜ_x2/32);
+            ਲਈ (ਪੂਰਨ l = 0; l < 32; ++l) weights[l] = av_x + fabsf(x[32*j + l]);
             scales[j] = make_qkx2_quants(32, 31, x + 32*j, weights, L + 32*j, &mins[j], Laux, -0.5f, 0.1f, 15, false);
-            float scale = scales[j];
-            if (scale > max_scale) {
+            ਦਸ਼ਮਲਵ scale = scales[j];
+            ਜੇ (scale > max_scale) {
                 max_scale = scale;
             }
-            float min = mins[j];
-            if (min > max_min) {
+            ਦਸ਼ਮਲਵ min = mins[j];
+            ਜੇ (min > max_min) {
                 max_min = min;
             }
         }
 
-        float inv_scale = max_scale > 0 ? 63.f/max_scale : 0.f;
-        float inv_min   = max_min   > 0 ? 63.f/max_min   : 0.f;
-        for (int j = 0; j < QK_K/32; ++j) {
-            uint8_t ls = nearest_int(inv_scale*scales[j]);
-            uint8_t lm = nearest_int(inv_min*mins[j]);
+        ਦਸ਼ਮਲਵ inv_scale = max_scale > 0 ? 63.f/max_scale : 0.f;
+        ਦਸ਼ਮਲਵ inv_min   = max_min   > 0 ? 63.f/max_min   : 0.f;
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K/32; ++j) {
+            uint8_t ls = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(inv_scale*scales[j]);
+            uint8_t lm = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(inv_min*mins[j]);
             ls = MIN(63, ls);
             lm = MIN(63, lm);
-            if (j < 4) {
+            ਜੇ (j < 4) {
                 y[i].scales[j] = ls;
                 y[i].scales[j+4] = lm;
-            } else {
+            } ਨਹੀਂਤਾਂ {
                 y[i].scales[j+4] = (ls & 0xF) | ((lm & 0xF) << 4);
                 y[i].scales[j-4] |= ((ls >> 4) << 6);
                 y[i].scales[j-0] |= ((lm >> 4) << 6);
             }
         }
-        y[i].d = GGML_FP32_TO_FP16(max_scale/63.f);
-        y[i].dmin = GGML_FP32_TO_FP16(max_min/63.f);
+        y[i].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(max_scale/63.f);
+        y[i].dmin = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(max_min/63.f);
 
         uint8_t sc, m;
-        for (int j = 0; j < QK_K/32; ++j) {
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K/32; ++j) {
             get_scale_min_k4(j, y[i].scales, &sc, &m);
-            const float d = GGML_FP16_TO_FP32(y[i].d) * sc;
-            if (!d) continue;
-            const float dm = GGML_FP16_TO_FP32(y[i].dmin) * m;
-            for (int ii = 0; ii < 32; ++ii) {
-                int l = nearest_int((x[32*j + ii] + dm)/d);
+            ਅਚਲ ਦਸ਼ਮਲਵ d = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(y[i].d) * sc;
+            ਜੇ (!d) ਜਾਰੀ;
+            ਅਚਲ ਦਸ਼ਮਲਵ dm = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(y[i].dmin) * m;
+            ਲਈ (ਪੂਰਨ ii = 0; ii < 32; ++ii) {
+                ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int((x[32*j + ii] + dm)/d);
                 l = MAX(0, MIN(31, l));
                 L[32*j + ii] = l;
             }
@@ -1709,14 +1709,14 @@ void quantize_row_q5_K_ref(const float * GGML_RESTRICT x, block_q5_K * GGML_REST
         memset(qh, 0, QK_K/8);
 
         uint8_t m1 = 1, m2 = 2;
-        for (int n = 0; n < QK_K; n += 64) {
-            for (int j = 0; j < 32; ++j) {
-                int l1 = L[n + j];
-                if (l1 > 15) {
+        ਲਈ (ਪੂਰਨ n = 0; n < QK_K; n += 64) {
+            ਲਈ (ਪੂਰਨ j = 0; j < 32; ++j) {
+                ਪੂਰਨ l1 = L[n + j];
+                ਜੇ (l1 > 15) {
                     l1 -= 16; qh[j] |= m1;
                 }
-                int l2 = L[n + j + 32];
-                if (l2 > 15) {
+                ਪੂਰਨ l2 = L[n + j + 32];
+                ਜੇ (l2 > 15) {
                     l2 -= 16; qh[j] |= m2;
                 }
                 ql[j] = l1 | (l2 << 4);
@@ -1729,95 +1729,95 @@ void quantize_row_q5_K_ref(const float * GGML_RESTRICT x, block_q5_K * GGML_REST
     }
 }
 
-void dequantize_row_q5_K(const block_q5_K * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+ਖਾਲੀ dequantize_ਪੰਕਤੀ_q5_K(ਅਚਲ ਖੰਡ_q5_K * GGML_RESTRICT x, ਦਸ਼ਮਲਵ * GGML_RESTRICT y, int64_t k) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % QK_K == 0);
+    ਅਚਲ int64_t nb = k / QK_K;
 
-    for (int i = 0; i < nb; i++) {
-        const uint8_t * ql = x[i].qs;
-        const uint8_t * qh = x[i].qh;
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
+        ਅਚਲ uint8_t * ql = x[i].qs;
+        ਅਚਲ uint8_t * qh = x[i].qh;
 
-        const float d = GGML_FP16_TO_FP32(x[i].d);
-        const float min = GGML_FP16_TO_FP32(x[i].dmin);
+        ਅਚਲ ਦਸ਼ਮਲਵ d = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(x[i].d);
+        ਅਚਲ ਦਸ਼ਮਲਵ min = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(x[i].dmin);
 
-        int is = 0;
+        ਪੂਰਨ is = 0;
         uint8_t sc, m;
         uint8_t u1 = 1, u2 = 2;
-        for (int j = 0; j < QK_K; j += 64) {
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K; j += 64) {
             get_scale_min_k4(is + 0, x[i].scales, &sc, &m);
-            const float d1 = d * sc; const float m1 = min * m;
+            ਅਚਲ ਦਸ਼ਮਲਵ d1 = d * sc; ਅਚਲ ਦਸ਼ਮਲਵ m1 = min * m;
             get_scale_min_k4(is + 1, x[i].scales, &sc, &m);
-            const float d2 = d * sc; const float m2 = min * m;
-            for (int l = 0; l < 32; ++l) *y++ = d1 * ((ql[l] & 0xF) + (qh[l] & u1 ? 16 : 0)) - m1;
-            for (int l = 0; l < 32; ++l) *y++ = d2 * ((ql[l]  >> 4) + (qh[l] & u2 ? 16 : 0)) - m2;
+            ਅਚਲ ਦਸ਼ਮਲਵ d2 = d * sc; ਅਚਲ ਦਸ਼ਮਲਵ m2 = min * m;
+            ਲਈ (ਪੂਰਨ l = 0; l < 32; ++l) *y++ = d1 * ((ql[l] & 0xF) + (qh[l] & u1 ? 16 : 0)) - m1;
+            ਲਈ (ਪੂਰਨ l = 0; l < 32; ++l) *y++ = d2 * ((ql[l]  >> 4) + (qh[l] & u2 ? 16 : 0)) - m2;
             ql += 32; is += 2;
             u1 <<= 2; u2 <<= 2;
         }
     }
 }
 
-static void quantize_row_q5_K_impl(const float * GGML_RESTRICT x, block_q5_K * GGML_RESTRICT y, int64_t n_per_row, const float * quant_weights) {
-    assert(n_per_row % QK_K == 0);
-    const int64_t nb = n_per_row / QK_K;
+ਸਥਿਰ ਖਾਲੀ quantize_ਪੰਕਤੀ_q5_K_impl(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖੰਡ_q5_K * GGML_RESTRICT y, int64_t n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, ਅਚਲ ਦਸ਼ਮਲਵ * quant_weights) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(n_ਪ੍ਰਤੀ_ਪੰਕਤੀ % QK_K == 0);
+    ਅਚਲ int64_t nb = n_ਪ੍ਰਤੀ_ਪੰਕਤੀ / QK_K;
 
     uint8_t L[QK_K];
     uint8_t Laux[32];
     uint8_t Ls[QK_K/32];
     uint8_t Lm[QK_K/32];
-    float   mins[QK_K/32];
-    float   scales[QK_K/32];
-    float   sw[QK_K/32];
-    float   weights[32];
+    ਦਸ਼ਮਲਵ   mins[QK_K/32];
+    ਦਸ਼ਮਲਵ   scales[QK_K/32];
+    ਦਸ਼ਮਲਵ   sw[QK_K/32];
+    ਦਸ਼ਮਲਵ   weights[32];
 
-    for (int i = 0; i < nb; i++) {
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
 
-        float sum_x2 = 0;
-        for (int l = 0; l < QK_K; ++l) sum_x2 += x[l] * x[l];
-        float sigma2 = 2*sum_x2/QK_K;
-        float av_x = sqrtf(sigma2);
+        ਦਸ਼ਮਲਵ ਜੋੜ_x2 = 0;
+        ਲਈ (ਪੂਰਨ l = 0; l < QK_K; ++l) ਜੋੜ_x2 += x[l] * x[l];
+        ਦਸ਼ਮਲਵ sigma2 = 2*ਜੋੜ_x2/QK_K;
+        ਦਸ਼ਮਲਵ av_x = sqrtf(sigma2);
 
-        for (int j = 0; j < QK_K/32; ++j) {
-            if (quant_weights) {
-                const float * qw = quant_weights + QK_K*i + 32*j;
-                for (int l = 0; l < 32; ++l) weights[l] = qw[l] * sqrtf(sigma2 + x[32*j + l]*x[32*j + l]);
-            } else {
-                for (int l = 0; l < 32; ++l) weights[l] = av_x + fabsf(x[32*j + l]);
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K/32; ++j) {
+            ਜੇ (quant_weights) {
+                ਅਚਲ ਦਸ਼ਮਲਵ * qw = quant_weights + QK_K*i + 32*j;
+                ਲਈ (ਪੂਰਨ l = 0; l < 32; ++l) weights[l] = qw[l] * sqrtf(sigma2 + x[32*j + l]*x[32*j + l]);
+            } ਨਹੀਂਤਾਂ {
+                ਲਈ (ਪੂਰਨ l = 0; l < 32; ++l) weights[l] = av_x + fabsf(x[32*j + l]);
             }
-            float sumw = 0;
-            for (int l = 0; l < 32; ++l) sumw += weights[l];
+            ਦਸ਼ਮਲਵ sumw = 0;
+            ਲਈ (ਪੂਰਨ l = 0; l < 32; ++l) sumw += weights[l];
             sw[j] = sumw;
 
             scales[j] = make_qkx3_quants(32, 31, x + 32*j, weights, L + 32*j, &mins[j], Laux, -0.9f, 0.05f, 36, false);
         }
 
-        float d_block = make_qp_quants(QK_K/32, 63, scales, Ls, sw);
-        float m_block = make_qp_quants(QK_K/32, 63, mins,   Lm, sw);
+        ਦਸ਼ਮਲਵ d_ਖੰਡ = make_qp_quants(QK_K/32, 63, scales, Ls, sw);
+        ਦਸ਼ਮਲਵ m_ਖੰਡ = make_qp_quants(QK_K/32, 63, mins,   Lm, sw);
 
-        for (int j = 0; j < QK_K/32; ++j) {
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K/32; ++j) {
             uint8_t ls = Ls[j];
             uint8_t lm = Lm[j];
             ls = MIN(63, ls);
             lm = MIN(63, lm);
-            if (j < 4) {
+            ਜੇ (j < 4) {
                 y[i].scales[j] = ls;
                 y[i].scales[j+4] = lm;
-            } else {
+            } ਨਹੀਂਤਾਂ {
                 y[i].scales[j+4] = (ls & 0xF) | ((lm & 0xF) << 4);
                 y[i].scales[j-4] |= ((ls >> 4) << 6);
                 y[i].scales[j-0] |= ((lm >> 4) << 6);
             }
         }
-        y[i].d = GGML_FP32_TO_FP16(d_block);
-        y[i].dmin = GGML_FP32_TO_FP16(m_block);
+        y[i].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(d_ਖੰਡ);
+        y[i].dmin = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(m_ਖੰਡ);
 
         uint8_t sc, m;
-        for (int j = 0; j < QK_K/32; ++j) {
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K/32; ++j) {
             get_scale_min_k4(j, y[i].scales, &sc, &m);
-            const float d = GGML_FP16_TO_FP32(y[i].d) * sc;
-            if (!d) continue;
-            const float dm = GGML_FP16_TO_FP32(y[i].dmin) * m;
-            for (int ii = 0; ii < 32; ++ii) {
-                int l = nearest_int((x[32*j + ii] + dm)/d);
+            ਅਚਲ ਦਸ਼ਮਲਵ d = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(y[i].d) * sc;
+            ਜੇ (!d) ਜਾਰੀ;
+            ਅਚਲ ਦਸ਼ਮਲਵ dm = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(y[i].dmin) * m;
+            ਲਈ (ਪੂਰਨ ii = 0; ii < 32; ++ii) {
+                ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int((x[32*j + ii] + dm)/d);
                 l = MAX(0, MIN(31, l));
                 L[32*j + ii] = l;
             }
@@ -1828,14 +1828,14 @@ static void quantize_row_q5_K_impl(const float * GGML_RESTRICT x, block_q5_K * G
         memset(qh, 0, QK_K/8);
 
         uint8_t m1 = 1, m2 = 2;
-        for (int n = 0; n < QK_K; n += 64) {
-            for (int j = 0; j < 32; ++j) {
-                int l1 = L[n + j];
-                if (l1 > 15) {
+        ਲਈ (ਪੂਰਨ n = 0; n < QK_K; n += 64) {
+            ਲਈ (ਪੂਰਨ j = 0; j < 32; ++j) {
+                ਪੂਰਨ l1 = L[n + j];
+                ਜੇ (l1 > 15) {
                     l1 -= 16; qh[j] |= m1;
                 }
-                int l2 = L[n + j + 32];
-                if (l2 > 15) {
+                ਪੂਰਨ l2 = L[n + j + 32];
+                ਜੇ (l2 > 15) {
                     l2 -= 16; qh[j] |= m2;
                 }
                 ql[j] = l1 | (l2 << 4);
@@ -1849,69 +1849,69 @@ static void quantize_row_q5_K_impl(const float * GGML_RESTRICT x, block_q5_K * G
     }
 }
 
-size_t quantize_q5_K(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    size_t row_size = ggml_row_size(GGML_TYPE_Q5_K, n_per_row);
-    if (!quant_weights) {
-        quantize_row_q5_K_ref(src, dst, (int64_t)nrow*n_per_row);
+size_t quantize_q5_K(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT src, ਖਾਲੀ * GGML_RESTRICT dst, int64_t nrow, int64_t n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, ਅਚਲ ਦਸ਼ਮਲਵ * quant_weights) {
+    size_t ਪੰਕਤੀ_ਮਾਪ = ggml_ਪੰਕਤੀ_ਮਾਪ(GGML_TYPE_Q5_K, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
+    ਜੇ (!quant_weights) {
+        quantize_ਪੰਕਤੀ_q5_K_ref(src, dst, (int64_t)nrow*n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
     }
-    else {
-        char * qrow = (char *)dst;
-        for (int64_t row = 0; row < nrow; ++row) {
-            quantize_row_q5_K_impl(src, (block_q5_K*)qrow, n_per_row, quant_weights);
-            src += n_per_row;
-            qrow += row_size;
+    ਨਹੀਂਤਾਂ {
+        ਅੱਖਰ * qrow = (ਅੱਖਰ *)dst;
+        ਲਈ (int64_t ਪੰਕਤੀ = 0; ਪੰਕਤੀ < nrow; ++ਪੰਕਤੀ) {
+            quantize_ਪੰਕਤੀ_q5_K_impl(src, (ਖੰਡ_q5_K*)qrow, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, quant_weights);
+            src += n_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+            qrow += ਪੰਕਤੀ_ਮਾਪ;
         }
     }
-    return nrow * row_size;
+    ਵਾਪਸ nrow * ਪੰਕਤੀ_ਮਾਪ;
 }
 
 // ====================== 6-bit (de)-quantization
 
-void quantize_row_q6_K_ref(const float * GGML_RESTRICT x, block_q6_K * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+ਖਾਲੀ quantize_ਪੰਕਤੀ_q6_K_ref(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖੰਡ_q6_K * GGML_RESTRICT y, int64_t k) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % QK_K == 0);
+    ਅਚਲ int64_t nb = k / QK_K;
 
     int8_t L[QK_K];
-    float   scales[QK_K/16];
+    ਦਸ਼ਮਲਵ   scales[QK_K/16];
 
-    for (int i = 0; i < nb; i++) {
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
 
-        float max_scale = 0;
-        float max_abs_scale = 0;
+        ਦਸ਼ਮਲਵ max_scale = 0;
+        ਦਸ਼ਮਲਵ max_abs_scale = 0;
 
-        for (int ib = 0; ib < QK_K/16; ++ib) {
+        ਲਈ (ਪੂਰਨ ib = 0; ib < QK_K/16; ++ib) {
 
-            const float scale = make_qx_quants(16, 32, x + 16*ib, L + 16*ib, 1, NULL);
+            ਅਚਲ ਦਸ਼ਮਲਵ scale = make_qx_quants(16, 32, x + 16*ib, L + 16*ib, 1, ਨਿਰਾ);
             scales[ib] = scale;
 
-            const float abs_scale = fabsf(scale);
-            if (abs_scale > max_abs_scale) {
+            ਅਚਲ ਦਸ਼ਮਲਵ abs_scale = fabsf(scale);
+            ਜੇ (abs_scale > max_abs_scale) {
                 max_abs_scale = abs_scale;
                 max_scale = scale;
             }
 
         }
 
-        if (max_abs_scale < GROUP_MAX_EPS) {
-            memset(&y[i], 0, sizeof(block_q6_K));
-            y[i].d = GGML_FP32_TO_FP16(0.f);
+        ਜੇ (max_abs_scale < ਸਮੂਹ_MAX_EPS) {
+            memset(&y[i], 0, ਆਕਾਰ(ਖੰਡ_q6_K));
+            y[i].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(0.f);
             x += QK_K;
-            continue;
+            ਜਾਰੀ;
         }
 
-        float iscale = -128.f/max_scale;
-        y[i].d = GGML_FP32_TO_FP16(1/iscale);
-        for (int ib = 0; ib < QK_K/16; ++ib) {
-            y[i].scales[ib] = MIN(127, nearest_int(iscale*scales[ib]));
+        ਦਸ਼ਮਲਵ iscale = -128.f/max_scale;
+        y[i].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(1/iscale);
+        ਲਈ (ਪੂਰਨ ib = 0; ib < QK_K/16; ++ib) {
+            y[i].scales[ib] = MIN(127, ਸਭ_ਤੋਂ_ਨੇੜੇ_int(iscale*scales[ib]));
         }
 
-        for (int j = 0; j < QK_K/16; ++j) {
-            float d = GGML_FP16_TO_FP32(y[i].d) * y[i].scales[j];
-            if (!d) {
-                continue;
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K/16; ++j) {
+            ਦਸ਼ਮਲਵ d = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(y[i].d) * y[i].scales[j];
+            ਜੇ (!d) {
+                ਜਾਰੀ;
             }
-            for (int ii = 0; ii < 16; ++ii) {
-                int l = nearest_int(x[16*j + ii]/d);
+            ਲਈ (ਪੂਰਨ ii = 0; ii < 16; ++ii) {
+                ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(x[16*j + ii]/d);
                 l = MAX(-32, MIN(31, l));
                 L[16*j + ii] = l + 32;
             }
@@ -1919,12 +1919,12 @@ void quantize_row_q6_K_ref(const float * GGML_RESTRICT x, block_q6_K * GGML_REST
 
         uint8_t * GGML_RESTRICT ql = y[i].ql;
         uint8_t * GGML_RESTRICT qh = y[i].qh;
-        for (int j = 0; j < QK_K; j += 128) {
-            for (int l = 0; l < 32; ++l) {
-                const uint8_t q1 = L[j + l +  0] & 0xF;
-                const uint8_t q2 = L[j + l + 32] & 0xF;
-                const uint8_t q3 = L[j + l + 64] & 0xF;
-                const uint8_t q4 = L[j + l + 96] & 0xF;
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K; j += 128) {
+            ਲਈ (ਪੂਰਨ l = 0; l < 32; ++l) {
+                ਅਚਲ uint8_t q1 = L[j + l +  0] & 0xF;
+                ਅਚਲ uint8_t q2 = L[j + l + 32] & 0xF;
+                ਅਚਲ uint8_t q3 = L[j + l + 64] & 0xF;
+                ਅਚਲ uint8_t q4 = L[j + l + 96] & 0xF;
                 ql[l+ 0] = q1 | (q3 << 4);
                 ql[l+32] = q2 | (q4 << 4);
                 qh[l] = (L[j + l] >> 4) | ((L[j + l + 32] >> 4) << 2) | ((L[j + l + 64] >> 4) << 4) | ((L[j + l + 96] >> 4) << 6);
@@ -1937,24 +1937,24 @@ void quantize_row_q6_K_ref(const float * GGML_RESTRICT x, block_q6_K * GGML_REST
     }
 }
 
-void dequantize_row_q6_K(const block_q6_K * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+ਖਾਲੀ dequantize_ਪੰਕਤੀ_q6_K(ਅਚਲ ਖੰਡ_q6_K * GGML_RESTRICT x, ਦਸ਼ਮਲਵ * GGML_RESTRICT y, int64_t k) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % QK_K == 0);
+    ਅਚਲ int64_t nb = k / QK_K;
 
-    for (int i = 0; i < nb; i++) {
-        const float d = GGML_FP16_TO_FP32(x[i].d);
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
+        ਅਚਲ ਦਸ਼ਮਲਵ d = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(x[i].d);
 
-        const uint8_t * GGML_RESTRICT ql = x[i].ql;
-        const uint8_t * GGML_RESTRICT qh = x[i].qh;
-        const int8_t  * GGML_RESTRICT sc = x[i].scales;
+        ਅਚਲ uint8_t * GGML_RESTRICT ql = x[i].ql;
+        ਅਚਲ uint8_t * GGML_RESTRICT qh = x[i].qh;
+        ਅਚਲ int8_t  * GGML_RESTRICT sc = x[i].scales;
 
-        for (int n = 0; n < QK_K; n += 128) {
-            for (int l = 0; l < 32; ++l) {
-                int is = l/16;
-                const int8_t q1 = (int8_t)((ql[l +  0] & 0xF) | (((qh[l] >> 0) & 3) << 4)) - 32;
-                const int8_t q2 = (int8_t)((ql[l + 32] & 0xF) | (((qh[l] >> 2) & 3) << 4)) - 32;
-                const int8_t q3 = (int8_t)((ql[l +  0]  >> 4) | (((qh[l] >> 4) & 3) << 4)) - 32;
-                const int8_t q4 = (int8_t)((ql[l + 32]  >> 4) | (((qh[l] >> 6) & 3) << 4)) - 32;
+        ਲਈ (ਪੂਰਨ n = 0; n < QK_K; n += 128) {
+            ਲਈ (ਪੂਰਨ l = 0; l < 32; ++l) {
+                ਪੂਰਨ is = l/16;
+                ਅਚਲ int8_t q1 = (int8_t)((ql[l +  0] & 0xF) | (((qh[l] >> 0) & 3) << 4)) - 32;
+                ਅਚਲ int8_t q2 = (int8_t)((ql[l + 32] & 0xF) | (((qh[l] >> 2) & 3) << 4)) - 32;
+                ਅਚਲ int8_t q3 = (int8_t)((ql[l +  0]  >> 4) | (((qh[l] >> 4) & 3) << 4)) - 32;
+                ਅਚਲ int8_t q4 = (int8_t)((ql[l + 32]  >> 4) | (((qh[l] >> 6) & 3) << 4)) - 32;
                 y[l +  0] = d * sc[is + 0] * q1;
                 y[l + 32] = d * sc[is + 2] * q2;
                 y[l + 64] = d * sc[is + 4] * q3;
@@ -1968,64 +1968,64 @@ void dequantize_row_q6_K(const block_q6_K * GGML_RESTRICT x, float * GGML_RESTRI
     }
 }
 
-static void quantize_row_q6_K_impl(const float * GGML_RESTRICT x, block_q6_K * GGML_RESTRICT y, int64_t n_per_row, const float * quant_weights) {
-    assert(n_per_row % QK_K == 0);
-    const int64_t nb = n_per_row / QK_K;
+ਸਥਿਰ ਖਾਲੀ quantize_ਪੰਕਤੀ_q6_K_impl(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖੰਡ_q6_K * GGML_RESTRICT y, int64_t n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, ਅਚਲ ਦਸ਼ਮਲਵ * quant_weights) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(n_ਪ੍ਰਤੀ_ਪੰਕਤੀ % QK_K == 0);
+    ਅਚਲ int64_t nb = n_ਪ੍ਰਤੀ_ਪੰਕਤੀ / QK_K;
 
     int8_t L[QK_K];
-    float   scales[QK_K/16];
+    ਦਸ਼ਮਲਵ   scales[QK_K/16];
     //float   weights[16];
 
-    for (int i = 0; i < nb; i++) {
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
 
         //float sum_x2 = 0;
         //for (int j = 0; j < QK_K; ++j) sum_x2 += x[j]*x[j];
         //float sigma2 = sum_x2/QK_K;
 
-        float max_scale = 0;
-        float max_abs_scale = 0;
+        ਦਸ਼ਮਲਵ max_scale = 0;
+        ਦਸ਼ਮਲਵ max_abs_scale = 0;
 
-        for (int ib = 0; ib < QK_K/16; ++ib) {
+        ਲਈ (ਪੂਰਨ ib = 0; ib < QK_K/16; ++ib) {
 
-            float scale;
-            if (quant_weights) {
-                const float * qw = quant_weights + QK_K*i + 16*ib;
+            ਦਸ਼ਮਲਵ scale;
+            ਜੇ (quant_weights) {
+                ਅਚਲ ਦਸ਼ਮਲਵ * qw = quant_weights + QK_K*i + 16*ib;
                 //for (int j = 0; j < 16; ++j) weights[j] = qw[j] * sqrtf(sigma2 + x[16*ib + j]*x[16*ib + j]);
                 //scale = make_qx_quants(16, 32, x + 16*ib, L + 16*ib, 1, weights);
                 scale = make_qx_quants(16, 32, x + 16*ib, L + 16*ib, 1, qw);
-            } else {
-                scale = make_qx_quants(16, 32, x + 16*ib, L + 16*ib, 1, NULL);
+            } ਨਹੀਂਤਾਂ {
+                scale = make_qx_quants(16, 32, x + 16*ib, L + 16*ib, 1, ਨਿਰਾ);
             }
             scales[ib] = scale;
 
-            const float abs_scale = fabsf(scale);
-            if (abs_scale > max_abs_scale) {
+            ਅਚਲ ਦਸ਼ਮਲਵ abs_scale = fabsf(scale);
+            ਜੇ (abs_scale > max_abs_scale) {
                 max_abs_scale = abs_scale;
                 max_scale = scale;
             }
 
         }
 
-        if (max_abs_scale < GROUP_MAX_EPS) {
-            memset(&y[i], 0, sizeof(block_q6_K));
-            y[i].d = GGML_FP32_TO_FP16(0.f);
+        ਜੇ (max_abs_scale < ਸਮੂਹ_MAX_EPS) {
+            memset(&y[i], 0, ਆਕਾਰ(ਖੰਡ_q6_K));
+            y[i].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(0.f);
             x += QK_K;
-            continue;
+            ਜਾਰੀ;
         }
 
-        float iscale = -128.f/max_scale;
-        y[i].d = GGML_FP32_TO_FP16(1/iscale);
-        for (int ib = 0; ib < QK_K/16; ++ib) {
-            y[i].scales[ib] = MIN(127, nearest_int(iscale*scales[ib]));
+        ਦਸ਼ਮਲਵ iscale = -128.f/max_scale;
+        y[i].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(1/iscale);
+        ਲਈ (ਪੂਰਨ ib = 0; ib < QK_K/16; ++ib) {
+            y[i].scales[ib] = MIN(127, ਸਭ_ਤੋਂ_ਨੇੜੇ_int(iscale*scales[ib]));
         }
 
-        for (int j = 0; j < QK_K/16; ++j) {
-            float d = GGML_FP16_TO_FP32(y[i].d) * y[i].scales[j];
-            if (!d) {
-                continue;
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K/16; ++j) {
+            ਦਸ਼ਮਲਵ d = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(y[i].d) * y[i].scales[j];
+            ਜੇ (!d) {
+                ਜਾਰੀ;
             }
-            for (int ii = 0; ii < 16; ++ii) {
-                int l = nearest_int(x[16*j + ii]/d);
+            ਲਈ (ਪੂਰਨ ii = 0; ii < 16; ++ii) {
+                ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(x[16*j + ii]/d);
                 l = MAX(-32, MIN(31, l));
                 L[16*j + ii] = l + 32;
             }
@@ -2033,12 +2033,12 @@ static void quantize_row_q6_K_impl(const float * GGML_RESTRICT x, block_q6_K * G
 
         uint8_t * GGML_RESTRICT ql = y[i].ql;
         uint8_t * GGML_RESTRICT qh = y[i].qh;
-        for (int j = 0; j < QK_K; j += 128) {
-            for (int l = 0; l < 32; ++l) {
-                const uint8_t q1 = L[j + l +  0] & 0xF;
-                const uint8_t q2 = L[j + l + 32] & 0xF;
-                const uint8_t q3 = L[j + l + 64] & 0xF;
-                const uint8_t q4 = L[j + l + 96] & 0xF;
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K; j += 128) {
+            ਲਈ (ਪੂਰਨ l = 0; l < 32; ++l) {
+                ਅਚਲ uint8_t q1 = L[j + l +  0] & 0xF;
+                ਅਚਲ uint8_t q2 = L[j + l + 32] & 0xF;
+                ਅਚਲ uint8_t q3 = L[j + l + 64] & 0xF;
+                ਅਚਲ uint8_t q4 = L[j + l + 96] & 0xF;
                 ql[l+ 0] = q1 | (q3 << 4);
                 ql[l+32] = q2 | (q4 << 4);
                 qh[l] = (L[j + l] >> 4) | ((L[j + l + 32] >> 4) << 2) | ((L[j + l + 64] >> 4) << 4) | ((L[j + l + 96] >> 4) << 6);
@@ -2052,168 +2052,168 @@ static void quantize_row_q6_K_impl(const float * GGML_RESTRICT x, block_q6_K * G
     }
 }
 
-size_t quantize_q6_K(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    size_t row_size = ggml_row_size(GGML_TYPE_Q6_K, n_per_row);
-    if (!quant_weights) {
-        quantize_row_q6_K_ref(src, dst, (int64_t)nrow*n_per_row);
+size_t quantize_q6_K(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT src, ਖਾਲੀ * GGML_RESTRICT dst, int64_t nrow, int64_t n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, ਅਚਲ ਦਸ਼ਮਲਵ * quant_weights) {
+    size_t ਪੰਕਤੀ_ਮਾਪ = ggml_ਪੰਕਤੀ_ਮਾਪ(GGML_TYPE_Q6_K, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
+    ਜੇ (!quant_weights) {
+        quantize_ਪੰਕਤੀ_q6_K_ref(src, dst, (int64_t)nrow*n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
     }
-    else {
-        char * qrow = (char *)dst;
-        for (int64_t row = 0; row < nrow; ++row) {
-            quantize_row_q6_K_impl(src, (block_q6_K*)qrow, n_per_row, quant_weights);
-            src += n_per_row;
-            qrow += row_size;
+    ਨਹੀਂਤਾਂ {
+        ਅੱਖਰ * qrow = (ਅੱਖਰ *)dst;
+        ਲਈ (int64_t ਪੰਕਤੀ = 0; ਪੰਕਤੀ < nrow; ++ਪੰਕਤੀ) {
+            quantize_ਪੰਕਤੀ_q6_K_impl(src, (ਖੰਡ_q6_K*)qrow, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, quant_weights);
+            src += n_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+            qrow += ਪੰਕਤੀ_ਮਾਪ;
         }
     }
-    return nrow * row_size;
+    ਵਾਪਸ nrow * ਪੰਕਤੀ_ਮਾਪ;
 }
 
-static void quantize_row_q4_0_impl(const float * GGML_RESTRICT x, block_q4_0 * GGML_RESTRICT y, int64_t n_per_row, const float * quant_weights) {
+ਸਥਿਰ ਖਾਲੀ quantize_ਪੰਕਤੀ_q4_0_impl(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖੰਡ_q4_0 * GGML_RESTRICT y, int64_t n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, ਅਚਲ ਦਸ਼ਮਲਵ * quant_weights) {
     static_assert(QK4_0 == 32, "QK4_0 must be 32");
 
-    if (!quant_weights) {
-        quantize_row_q4_0_ref(x, y, n_per_row);
-        return;
+    ਜੇ (!quant_weights) {
+        quantize_ਪੰਕਤੀ_q4_0_ref(x, y, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
+        ਵਾਪਸ;
     }
 
-    float weight[QK4_0];
+    ਦਸ਼ਮਲਵ ਭਾਰ[QK4_0];
     int8_t L[QK4_0];
 
-    float sum_x2 = 0;
-    for (int j = 0; j < n_per_row; ++j) sum_x2 += x[j]*x[j];
-    float sigma2 = sum_x2/n_per_row;
+    ਦਸ਼ਮਲਵ ਜੋੜ_x2 = 0;
+    ਲਈ (ਪੂਰਨ j = 0; j < n_ਪ੍ਰਤੀ_ਪੰਕਤੀ; ++j) ਜੋੜ_x2 += x[j]*x[j];
+    ਦਸ਼ਮਲਵ sigma2 = ਜੋੜ_x2/n_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
 
-    const int64_t nb = n_per_row/QK4_0;
-    for (int ib = 0; ib < nb; ++ib) {
-        const float * xb = x + QK4_0 * ib;
-        const float * qw = quant_weights + QK4_0 * ib;
-        for (int j = 0; j < QK4_0; ++j) weight[j] = qw[j] * sqrtf(sigma2 + xb[j]*xb[j]);
-        float d = make_qx_quants(QK4_0, 8, xb, L, 1, weight);
-        y[ib].d = GGML_FP32_TO_FP16(d);
-        for (int j = 0; j < 16; ++j) {
+    ਅਚਲ int64_t nb = n_ਪ੍ਰਤੀ_ਪੰਕਤੀ/QK4_0;
+    ਲਈ (ਪੂਰਨ ib = 0; ib < nb; ++ib) {
+        ਅਚਲ ਦਸ਼ਮਲਵ * xb = x + QK4_0 * ib;
+        ਅਚਲ ਦਸ਼ਮਲਵ * qw = quant_weights + QK4_0 * ib;
+        ਲਈ (ਪੂਰਨ j = 0; j < QK4_0; ++j) ਭਾਰ[j] = qw[j] * sqrtf(sigma2 + xb[j]*xb[j]);
+        ਦਸ਼ਮਲਵ d = make_qx_quants(QK4_0, 8, xb, L, 1, ਭਾਰ);
+        y[ib].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(d);
+        ਲਈ (ਪੂਰਨ j = 0; j < 16; ++j) {
             y[ib].qs[j] = L[j] | (L[j+16] << 4);
         }
     }
 }
 
-size_t quantize_q1_0(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    if (!quant_weights) {
-        quantize_row_q1_0_ref(src, dst, (int64_t)nrow*n_per_row);
-        return nrow * ggml_row_size(GGML_TYPE_Q1_0, n_per_row);
+size_t quantize_q1_0(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT src, ਖਾਲੀ * GGML_RESTRICT dst, int64_t nrow, int64_t n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, ਅਚਲ ਦਸ਼ਮਲਵ * quant_weights) {
+    ਜੇ (!quant_weights) {
+        quantize_ਪੰਕਤੀ_q1_0_ref(src, dst, (int64_t)nrow*n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
+        ਵਾਪਸ nrow * ggml_ਪੰਕਤੀ_ਮਾਪ(GGML_TYPE_Q1_0, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
     }
-    size_t row_size = ggml_row_size(GGML_TYPE_Q1_0, n_per_row);
-    char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
-        quantize_row_q1_0_ref(src, (block_q1_0*)qrow, n_per_row);
-        src += n_per_row;
-        qrow += row_size;
+    size_t ਪੰਕਤੀ_ਮਾਪ = ggml_ਪੰਕਤੀ_ਮਾਪ(GGML_TYPE_Q1_0, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
+    ਅੱਖਰ * qrow = (ਅੱਖਰ *)dst;
+    ਲਈ (int64_t ਪੰਕਤੀ = 0; ਪੰਕਤੀ < nrow; ++ਪੰਕਤੀ) {
+        quantize_ਪੰਕਤੀ_q1_0_ref(src, (ਖੰਡ_q1_0*)qrow, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
+        src += n_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+        qrow += ਪੰਕਤੀ_ਮਾਪ;
     }
-    return nrow * row_size;
+    ਵਾਪਸ nrow * ਪੰਕਤੀ_ਮਾਪ;
 }
 
-size_t quantize_q2_0(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    if (!quant_weights) {
-        quantize_row_q2_0_ref(src, dst, (int64_t)nrow*n_per_row);
-        return nrow * ggml_row_size(GGML_TYPE_Q2_0, n_per_row);
+size_t quantize_q2_0(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT src, ਖਾਲੀ * GGML_RESTRICT dst, int64_t nrow, int64_t n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, ਅਚਲ ਦਸ਼ਮਲਵ * quant_weights) {
+    ਜੇ (!quant_weights) {
+        quantize_ਪੰਕਤੀ_q2_0_ref(src, dst, (int64_t)nrow*n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
+        ਵਾਪਸ nrow * ggml_ਪੰਕਤੀ_ਮਾਪ(GGML_TYPE_Q2_0, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
     }
-    size_t row_size = ggml_row_size(GGML_TYPE_Q2_0, n_per_row);
-    char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
-        quantize_row_q2_0_ref(src, (block_q2_0*)qrow, n_per_row);
-        src += n_per_row;
-        qrow += row_size;
+    size_t ਪੰਕਤੀ_ਮਾਪ = ggml_ਪੰਕਤੀ_ਮਾਪ(GGML_TYPE_Q2_0, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
+    ਅੱਖਰ * qrow = (ਅੱਖਰ *)dst;
+    ਲਈ (int64_t ਪੰਕਤੀ = 0; ਪੰਕਤੀ < nrow; ++ਪੰਕਤੀ) {
+        quantize_ਪੰਕਤੀ_q2_0_ref(src, (ਖੰਡ_q2_0*)qrow, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
+        src += n_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+        qrow += ਪੰਕਤੀ_ਮਾਪ;
     }
-    return nrow * row_size;
+    ਵਾਪਸ nrow * ਪੰਕਤੀ_ਮਾਪ;
 }
 
-size_t quantize_q4_0(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    if (!quant_weights) {
-        quantize_row_q4_0_ref(src, dst, (int64_t)nrow*n_per_row);
-        return nrow * ggml_row_size(GGML_TYPE_Q4_0, n_per_row);
+size_t quantize_q4_0(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT src, ਖਾਲੀ * GGML_RESTRICT dst, int64_t nrow, int64_t n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, ਅਚਲ ਦਸ਼ਮਲਵ * quant_weights) {
+    ਜੇ (!quant_weights) {
+        quantize_ਪੰਕਤੀ_q4_0_ref(src, dst, (int64_t)nrow*n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
+        ਵਾਪਸ nrow * ggml_ਪੰਕਤੀ_ਮਾਪ(GGML_TYPE_Q4_0, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
     }
-    size_t row_size = ggml_row_size(GGML_TYPE_Q4_0, n_per_row);
-    char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
-        quantize_row_q4_0_impl(src, (block_q4_0*)qrow, n_per_row, quant_weights);
-        src += n_per_row;
-        qrow += row_size;
+    size_t ਪੰਕਤੀ_ਮਾਪ = ggml_ਪੰਕਤੀ_ਮਾਪ(GGML_TYPE_Q4_0, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
+    ਅੱਖਰ * qrow = (ਅੱਖਰ *)dst;
+    ਲਈ (int64_t ਪੰਕਤੀ = 0; ਪੰਕਤੀ < nrow; ++ਪੰਕਤੀ) {
+        quantize_ਪੰਕਤੀ_q4_0_impl(src, (ਖੰਡ_q4_0*)qrow, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, quant_weights);
+        src += n_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+        qrow += ਪੰਕਤੀ_ਮਾਪ;
     }
-    return nrow * row_size;
+    ਵਾਪਸ nrow * ਪੰਕਤੀ_ਮਾਪ;
 }
 
-static void quantize_row_q4_1_impl(const float * GGML_RESTRICT x, block_q4_1 * GGML_RESTRICT y, int64_t n_per_row, const float * quant_weights) {
+ਸਥਿਰ ਖਾਲੀ quantize_ਪੰਕਤੀ_q4_1_impl(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖੰਡ_q4_1 * GGML_RESTRICT y, int64_t n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, ਅਚਲ ਦਸ਼ਮਲਵ * quant_weights) {
     static_assert(QK4_1 == 32, "QK4_1 must be 32");
 
-    if (!quant_weights) {
-        quantize_row_q4_1_ref(x, y, n_per_row);
-        return;
+    ਜੇ (!quant_weights) {
+        quantize_ਪੰਕਤੀ_q4_1_ref(x, y, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
+        ਵਾਪਸ;
     }
 
-    float weight[QK4_1];
+    ਦਸ਼ਮਲਵ ਭਾਰ[QK4_1];
     uint8_t L[QK4_1], Laux[QK4_1];
 
-    float sum_x2 = 0;
-    for (int j = 0; j < n_per_row; ++j) sum_x2 += x[j]*x[j];
-    float sigma2 = sum_x2/n_per_row;
+    ਦਸ਼ਮਲਵ ਜੋੜ_x2 = 0;
+    ਲਈ (ਪੂਰਨ j = 0; j < n_ਪ੍ਰਤੀ_ਪੰਕਤੀ; ++j) ਜੋੜ_x2 += x[j]*x[j];
+    ਦਸ਼ਮਲਵ sigma2 = ਜੋੜ_x2/n_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
 
-    const int64_t nb = n_per_row/QK4_1;
-    for (int ib = 0; ib < nb; ++ib) {
-        const float * xb = x + QK4_1 * ib;
-        const float * qw = quant_weights + QK4_1 * ib;
-        for (int j = 0; j < QK4_1; ++j) weight[j] = qw[j] * sqrtf(sigma2 + xb[j]*xb[j]);
-        float min;
-        float d = make_qkx3_quants(QK4_1, 15, xb, weight, L, &min, Laux, -0.9f, 0.05f, 36, false);
-        y[ib].d = GGML_FP32_TO_FP16(d);
-        y[ib].m = GGML_FP32_TO_FP16(-min);
-        for (int j = 0; j < 16; ++j) {
+    ਅਚਲ int64_t nb = n_ਪ੍ਰਤੀ_ਪੰਕਤੀ/QK4_1;
+    ਲਈ (ਪੂਰਨ ib = 0; ib < nb; ++ib) {
+        ਅਚਲ ਦਸ਼ਮਲਵ * xb = x + QK4_1 * ib;
+        ਅਚਲ ਦਸ਼ਮਲਵ * qw = quant_weights + QK4_1 * ib;
+        ਲਈ (ਪੂਰਨ j = 0; j < QK4_1; ++j) ਭਾਰ[j] = qw[j] * sqrtf(sigma2 + xb[j]*xb[j]);
+        ਦਸ਼ਮਲਵ min;
+        ਦਸ਼ਮਲਵ d = make_qkx3_quants(QK4_1, 15, xb, ਭਾਰ, L, &min, Laux, -0.9f, 0.05f, 36, false);
+        y[ib].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(d);
+        y[ib].m = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(-min);
+        ਲਈ (ਪੂਰਨ j = 0; j < 16; ++j) {
             y[ib].qs[j] = L[j] | (L[j+16] << 4);
         }
     }
 }
 
-size_t quantize_q4_1(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    if (!quant_weights) {
-        quantize_row_q4_1_ref(src, dst, (int64_t)nrow*n_per_row);
-        return nrow * ggml_row_size(GGML_TYPE_Q4_1, n_per_row);
+size_t quantize_q4_1(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT src, ਖਾਲੀ * GGML_RESTRICT dst, int64_t nrow, int64_t n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, ਅਚਲ ਦਸ਼ਮਲਵ * quant_weights) {
+    ਜੇ (!quant_weights) {
+        quantize_ਪੰਕਤੀ_q4_1_ref(src, dst, (int64_t)nrow*n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
+        ਵਾਪਸ nrow * ggml_ਪੰਕਤੀ_ਮਾਪ(GGML_TYPE_Q4_1, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
     }
-    size_t row_size = ggml_row_size(GGML_TYPE_Q4_1, n_per_row);
-    char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
-        quantize_row_q4_1_impl(src, (block_q4_1*)qrow, n_per_row, quant_weights);
-        src += n_per_row;
-        qrow += row_size;
+    size_t ਪੰਕਤੀ_ਮਾਪ = ggml_ਪੰਕਤੀ_ਮਾਪ(GGML_TYPE_Q4_1, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
+    ਅੱਖਰ * qrow = (ਅੱਖਰ *)dst;
+    ਲਈ (int64_t ਪੰਕਤੀ = 0; ਪੰਕਤੀ < nrow; ++ਪੰਕਤੀ) {
+        quantize_ਪੰਕਤੀ_q4_1_impl(src, (ਖੰਡ_q4_1*)qrow, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, quant_weights);
+        src += n_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+        qrow += ਪੰਕਤੀ_ਮਾਪ;
     }
-    return nrow * row_size;
+    ਵਾਪਸ nrow * ਪੰਕਤੀ_ਮਾਪ;
 }
 
-static void quantize_row_q5_0_impl(const float * GGML_RESTRICT x, block_q5_0 * GGML_RESTRICT y, int64_t n_per_row, const float * quant_weights) {
+ਸਥਿਰ ਖਾਲੀ quantize_ਪੰਕਤੀ_q5_0_impl(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖੰਡ_q5_0 * GGML_RESTRICT y, int64_t n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, ਅਚਲ ਦਸ਼ਮਲਵ * quant_weights) {
     static_assert(QK5_0 == 32, "QK5_0 must be 32");
 
-    if (!quant_weights) {
-        quantize_row_q5_0_ref(x, y, n_per_row);
-        return;
+    ਜੇ (!quant_weights) {
+        quantize_ਪੰਕਤੀ_q5_0_ref(x, y, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
+        ਵਾਪਸ;
     }
 
-    float weight[QK5_0];
+    ਦਸ਼ਮਲਵ ਭਾਰ[QK5_0];
     int8_t L[QK5_0];
 
-    float sum_x2 = 0;
-    for (int j = 0; j < n_per_row; ++j) sum_x2 += x[j]*x[j];
-    float sigma2 = sum_x2/n_per_row;
+    ਦਸ਼ਮਲਵ ਜੋੜ_x2 = 0;
+    ਲਈ (ਪੂਰਨ j = 0; j < n_ਪ੍ਰਤੀ_ਪੰਕਤੀ; ++j) ਜੋੜ_x2 += x[j]*x[j];
+    ਦਸ਼ਮਲਵ sigma2 = ਜੋੜ_x2/n_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
 
-    const int64_t nb = n_per_row/QK5_0;
-    for (int ib = 0; ib < nb; ++ib) {
-        const float * xb = x + QK5_0 * ib;
-        const float * qw = quant_weights + QK5_0 * ib;
-        for (int j = 0; j < QK5_0; ++j) weight[j] = qw[j] * sqrtf(sigma2 + xb[j]*xb[j]);
-        float d = make_qx_quants(QK5_0, 16, xb, L, 1, weight);
-        y[ib].d = GGML_FP32_TO_FP16(d);
+    ਅਚਲ int64_t nb = n_ਪ੍ਰਤੀ_ਪੰਕਤੀ/QK5_0;
+    ਲਈ (ਪੂਰਨ ib = 0; ib < nb; ++ib) {
+        ਅਚਲ ਦਸ਼ਮਲਵ * xb = x + QK5_0 * ib;
+        ਅਚਲ ਦਸ਼ਮਲਵ * qw = quant_weights + QK5_0 * ib;
+        ਲਈ (ਪੂਰਨ j = 0; j < QK5_0; ++j) ਭਾਰ[j] = qw[j] * sqrtf(sigma2 + xb[j]*xb[j]);
+        ਦਸ਼ਮਲਵ d = make_qx_quants(QK5_0, 16, xb, L, 1, ਭਾਰ);
+        y[ib].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(d);
 
         uint32_t qh = 0;
 
-        for (int j = 0; j < 16; ++j) {
-            const uint8_t xi0 = L[j];
-            const uint8_t xi1 = L[j+16];
+        ਲਈ (ਪੂਰਨ j = 0; j < 16; ++j) {
+            ਅਚਲ uint8_t xi0 = L[j];
+            ਅਚਲ uint8_t xi1 = L[j+16];
             y[ib].qs[j] = (xi0 & 0x0F) | ((xi1 & 0x0F) << 4);
 
             // get the 5-th bit and store it in qh at the right position
@@ -2221,122 +2221,122 @@ static void quantize_row_q5_0_impl(const float * GGML_RESTRICT x, block_q5_0 * G
             qh |= ((xi1 & 0x10u) >> 4) << (j + QK5_0/2);
         }
 
-        memcpy(&y[ib].qh, &qh, sizeof(qh));
+        ਸਮ੍ਰਿਤੀ_ਨਕਲ(&y[ib].qh, &qh, ਆਕਾਰ(qh));
     }
 }
 
-size_t quantize_q5_0(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    if (!quant_weights) {
-        quantize_row_q5_0_ref(src, dst, (int64_t)nrow*n_per_row);
-        return nrow * ggml_row_size(GGML_TYPE_Q5_0, n_per_row);
+size_t quantize_q5_0(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT src, ਖਾਲੀ * GGML_RESTRICT dst, int64_t nrow, int64_t n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, ਅਚਲ ਦਸ਼ਮਲਵ * quant_weights) {
+    ਜੇ (!quant_weights) {
+        quantize_ਪੰਕਤੀ_q5_0_ref(src, dst, (int64_t)nrow*n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
+        ਵਾਪਸ nrow * ggml_ਪੰਕਤੀ_ਮਾਪ(GGML_TYPE_Q5_0, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
     }
-    size_t row_size = ggml_row_size(GGML_TYPE_Q5_0, n_per_row);
-    char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
-        quantize_row_q5_0_impl(src, (block_q5_0*)qrow, n_per_row, quant_weights);
-        src += n_per_row;
-        qrow += row_size;
+    size_t ਪੰਕਤੀ_ਮਾਪ = ggml_ਪੰਕਤੀ_ਮਾਪ(GGML_TYPE_Q5_0, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
+    ਅੱਖਰ * qrow = (ਅੱਖਰ *)dst;
+    ਲਈ (int64_t ਪੰਕਤੀ = 0; ਪੰਕਤੀ < nrow; ++ਪੰਕਤੀ) {
+        quantize_ਪੰਕਤੀ_q5_0_impl(src, (ਖੰਡ_q5_0*)qrow, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, quant_weights);
+        src += n_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+        qrow += ਪੰਕਤੀ_ਮਾਪ;
     }
-    return nrow * row_size;
+    ਵਾਪਸ nrow * ਪੰਕਤੀ_ਮਾਪ;
 }
 
-static void quantize_row_q5_1_impl(const float * GGML_RESTRICT x, block_q5_1 * GGML_RESTRICT y, int64_t n_per_row, const float * quant_weights) {
+ਸਥਿਰ ਖਾਲੀ quantize_ਪੰਕਤੀ_q5_1_impl(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖੰਡ_q5_1 * GGML_RESTRICT y, int64_t n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, ਅਚਲ ਦਸ਼ਮਲਵ * quant_weights) {
     static_assert(QK5_1 == 32, "QK5_1 must be 32");
 
-    if (!quant_weights) {
-        quantize_row_q5_1_ref(x, y, n_per_row);
-        return;
+    ਜੇ (!quant_weights) {
+        quantize_ਪੰਕਤੀ_q5_1_ref(x, y, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
+        ਵਾਪਸ;
     }
 
-    float weight[QK5_1];
+    ਦਸ਼ਮਲਵ ਭਾਰ[QK5_1];
     uint8_t L[QK5_1], Laux[QK5_1];
 
-    float sum_x2 = 0;
-    for (int j = 0; j < n_per_row; ++j) sum_x2 += x[j]*x[j];
-    float sigma2 = sum_x2/n_per_row;
+    ਦਸ਼ਮਲਵ ਜੋੜ_x2 = 0;
+    ਲਈ (ਪੂਰਨ j = 0; j < n_ਪ੍ਰਤੀ_ਪੰਕਤੀ; ++j) ਜੋੜ_x2 += x[j]*x[j];
+    ਦਸ਼ਮਲਵ sigma2 = ਜੋੜ_x2/n_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
 
-    const int64_t nb = n_per_row/QK5_1;
-    for (int ib = 0; ib < nb; ++ib) {
-        const float * xb = x + QK5_1 * ib;
-        const float * qw = quant_weights + QK5_1 * ib;
-        for (int j = 0; j < QK5_1; ++j) weight[j] = qw[j] * sqrtf(sigma2 + xb[j]*xb[j]);
-        float min;
-        float d = make_qkx3_quants(QK5_1, 31, xb, weight, L, &min, Laux, -0.9f, 0.05f, 36, false);
-        y[ib].d = GGML_FP32_TO_FP16(d);
-        y[ib].m = GGML_FP32_TO_FP16(-min);
+    ਅਚਲ int64_t nb = n_ਪ੍ਰਤੀ_ਪੰਕਤੀ/QK5_1;
+    ਲਈ (ਪੂਰਨ ib = 0; ib < nb; ++ib) {
+        ਅਚਲ ਦਸ਼ਮਲਵ * xb = x + QK5_1 * ib;
+        ਅਚਲ ਦਸ਼ਮਲਵ * qw = quant_weights + QK5_1 * ib;
+        ਲਈ (ਪੂਰਨ j = 0; j < QK5_1; ++j) ਭਾਰ[j] = qw[j] * sqrtf(sigma2 + xb[j]*xb[j]);
+        ਦਸ਼ਮਲਵ min;
+        ਦਸ਼ਮਲਵ d = make_qkx3_quants(QK5_1, 31, xb, ਭਾਰ, L, &min, Laux, -0.9f, 0.05f, 36, false);
+        y[ib].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(d);
+        y[ib].m = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(-min);
 
         uint32_t qh = 0;
-        for (int j = 0; j < 16; ++j) {
-            const uint8_t xi0 = L[j];
-            const uint8_t xi1 = L[j+16];
+        ਲਈ (ਪੂਰਨ j = 0; j < 16; ++j) {
+            ਅਚਲ uint8_t xi0 = L[j];
+            ਅਚਲ uint8_t xi1 = L[j+16];
             y[ib].qs[j] = (xi0 & 0x0F) | ((xi1 & 0x0F) << 4);
             // get the 5-th bit and store it in qh at the right position
             qh |= ((xi0 & 0x10u) >> 4) << (j + 0);
             qh |= ((xi1 & 0x10u) >> 4) << (j + QK5_0/2);
         }
-        memcpy(&y[ib].qh, &qh, sizeof(qh));
+        ਸਮ੍ਰਿਤੀ_ਨਕਲ(&y[ib].qh, &qh, ਆਕਾਰ(qh));
     }
 }
 
-size_t quantize_q5_1(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    if (!quant_weights) {
-        quantize_row_q5_1_ref(src, dst, (int64_t)nrow*n_per_row);
-        return nrow * ggml_row_size(GGML_TYPE_Q5_1, n_per_row);
+size_t quantize_q5_1(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT src, ਖਾਲੀ * GGML_RESTRICT dst, int64_t nrow, int64_t n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, ਅਚਲ ਦਸ਼ਮਲਵ * quant_weights) {
+    ਜੇ (!quant_weights) {
+        quantize_ਪੰਕਤੀ_q5_1_ref(src, dst, (int64_t)nrow*n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
+        ਵਾਪਸ nrow * ggml_ਪੰਕਤੀ_ਮਾਪ(GGML_TYPE_Q5_1, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
     }
-    size_t row_size = ggml_row_size(GGML_TYPE_Q5_1, n_per_row);
-    char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
-        quantize_row_q5_1_impl(src, (block_q5_1*)qrow, n_per_row, quant_weights);
-        src += n_per_row;
-        qrow += row_size;
+    size_t ਪੰਕਤੀ_ਮਾਪ = ggml_ਪੰਕਤੀ_ਮਾਪ(GGML_TYPE_Q5_1, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
+    ਅੱਖਰ * qrow = (ਅੱਖਰ *)dst;
+    ਲਈ (int64_t ਪੰਕਤੀ = 0; ਪੰਕਤੀ < nrow; ++ਪੰਕਤੀ) {
+        quantize_ਪੰਕਤੀ_q5_1_impl(src, (ਖੰਡ_q5_1*)qrow, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, quant_weights);
+        src += n_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+        qrow += ਪੰਕਤੀ_ਮਾਪ;
     }
-    return nrow * row_size;
+    ਵਾਪਸ nrow * ਪੰਕਤੀ_ਮਾਪ;
 }
 
-size_t quantize_q8_0(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    (void)quant_weights; // not used
-    const size_t row_size = ggml_row_size(GGML_TYPE_Q8_0, n_per_row);
-    quantize_row_q8_0_ref(src, dst, (int64_t)nrow*n_per_row);
-    return nrow * row_size;
+size_t quantize_q8_0(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT src, ਖਾਲੀ * GGML_RESTRICT dst, int64_t nrow, int64_t n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, ਅਚਲ ਦਸ਼ਮਲਵ * quant_weights) {
+    (ਖਾਲੀ)quant_weights; // not used
+    ਅਚਲ size_t ਪੰਕਤੀ_ਮਾਪ = ggml_ਪੰਕਤੀ_ਮਾਪ(GGML_TYPE_Q8_0, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
+    quantize_ਪੰਕਤੀ_q8_0_ref(src, dst, (int64_t)nrow*n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
+    ਵਾਪਸ nrow * ਪੰਕਤੀ_ਮਾਪ;
 }
 
-size_t quantize_mxfp4(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    GGML_UNUSED(quant_weights);
-    quantize_row_mxfp4_ref(src, dst, (int64_t)nrow*n_per_row);
-    return nrow * ggml_row_size(GGML_TYPE_MXFP4, n_per_row);
+size_t quantize_mxfp4(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT src, ਖਾਲੀ * GGML_RESTRICT dst, int64_t nrow, int64_t n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, ਅਚਲ ਦਸ਼ਮਲਵ * quant_weights) {
+    GGML_ਅਣਵਰਤਿਆ(quant_weights);
+    quantize_ਪੰਕਤੀ_mxfp4_ref(src, dst, (int64_t)nrow*n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
+    ਵਾਪਸ nrow * ggml_ਪੰਕਤੀ_ਮਾਪ(GGML_TYPE_MXFP4, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
 }
 
-size_t quantize_nvfp4(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    GGML_UNUSED(quant_weights);
-    quantize_row_nvfp4_ref(src, dst, (int64_t)nrow*n_per_row);
-    return nrow * ggml_row_size(GGML_TYPE_NVFP4, n_per_row);
+size_t quantize_nvfp4(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT src, ਖਾਲੀ * GGML_RESTRICT dst, int64_t nrow, int64_t n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, ਅਚਲ ਦਸ਼ਮਲਵ * quant_weights) {
+    GGML_ਅਣਵਰਤਿਆ(quant_weights);
+    quantize_ਪੰਕਤੀ_nvfp4_ref(src, dst, (int64_t)nrow*n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
+    ਵਾਪਸ nrow * ggml_ਪੰਕਤੀ_ਮਾਪ(GGML_TYPE_NVFP4, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
 }
 
 // ====================== Ternary (de)-quantization (BitNet b1.58 and TriLMs)
 
-void quantize_row_tq1_0_ref(const float * GGML_RESTRICT x, block_tq1_0 * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+ਖਾਲੀ quantize_ਪੰਕਤੀ_tq1_0_ref(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖੰਡ_tq1_0 * GGML_RESTRICT y, int64_t k) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % QK_K == 0);
+    ਅਚਲ int64_t nb = k / QK_K;
 
-    for (int64_t i = 0; i < nb; i++) {
-        float amax = 0.0f; // absolute max
+    ਲਈ (int64_t i = 0; i < nb; i++) {
+        ਦਸ਼ਮਲਵ amax = 0.0f; // absolute max
 
-        for (int j = 0; j < QK_K; j++) {
-            const float v = x[j];
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K; j++) {
+            ਅਚਲ ਦਸ਼ਮਲਵ v = x[j];
             amax = MAX(amax, fabsf(v));
         }
 
-        const float d = amax;
-        const float id = d ? 1.0f/d : 0.0f;
+        ਅਚਲ ਦਸ਼ਮਲਵ d = amax;
+        ਅਚਲ ਦਸ਼ਮਲਵ id = d ? 1.0f/d : 0.0f;
 
-        y[i].d = GGML_FP32_TO_FP16(d);
+        y[i].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(d);
 
         // 5 elements per byte, along 32 bytes
-        for (size_t j = 0; j < sizeof(y->qs) - sizeof(y->qs) % 32; j += 32) {
-            for (size_t m = 0; m < 32; ++m) {
+        ਲਈ (size_t j = 0; j < ਆਕਾਰ(y->qs) - ਆਕਾਰ(y->qs) % 32; j += 32) {
+            ਲਈ (size_t m = 0; m < 32; ++m) {
                 uint8_t q = 0;
-                for (size_t n = 0; n < 5; ++n) {
-                    int xi = lroundf(x[m + n*32] * id) + 1; // -1, 0, 1 -> 0, 1, 2
+                ਲਈ (size_t n = 0; n < 5; ++n) {
+                    ਪੂਰਨ xi = lroundf(x[m + n*32] * id) + 1; // -1, 0, 1 -> 0, 1, 2
                     q *= 3;
                     q += xi;
                 }
@@ -2347,11 +2347,11 @@ void quantize_row_tq1_0_ref(const float * GGML_RESTRICT x, block_tq1_0 * GGML_RE
             x += 5*32;
         }
         // along 16 bytes
-        for (size_t j = sizeof(y->qs) - sizeof(y->qs) % 32; j < sizeof(y->qs); j += 16) {
-            for (size_t m = 0; m < 16; ++m) {
+        ਲਈ (size_t j = ਆਕਾਰ(y->qs) - ਆਕਾਰ(y->qs) % 32; j < ਆਕਾਰ(y->qs); j += 16) {
+            ਲਈ (size_t m = 0; m < 16; ++m) {
                 uint8_t q = 0;
-                for (size_t n = 0; n < 5; ++n) {
-                    int xi = lroundf(x[m + n*16] * id) + 1; // -1, 0, 1 -> 0, 1, 2
+                ਲਈ (size_t n = 0; n < 5; ++n) {
+                    ਪੂਰਨ xi = lroundf(x[m + n*16] * id) + 1; // -1, 0, 1 -> 0, 1, 2
                     q *= 3;
                     q += xi;
                 }
@@ -2362,11 +2362,11 @@ void quantize_row_tq1_0_ref(const float * GGML_RESTRICT x, block_tq1_0 * GGML_RE
             x += 5*16;
         }
         // 4 elements per byte
-        for (size_t j = 0; j < sizeof(y->qh); ++j) {
+        ਲਈ (size_t j = 0; j < ਆਕਾਰ(y->qh); ++j) {
             uint8_t q = 0;
-            for (size_t m = 0; m < 4; ++m) {
+            ਲਈ (size_t m = 0; m < 4; ++m) {
                 // -1, 0, 1 -> 0, 1, 2
-                int xi = lroundf(x[j + m*sizeof(y->qh)] * id) + 1;
+                ਪੂਰਨ xi = lroundf(x[j + m*ਆਕਾਰ(y->qh)] * id) + 1;
                 q *= 3;
                 q += xi;
             }
@@ -2376,33 +2376,33 @@ void quantize_row_tq1_0_ref(const float * GGML_RESTRICT x, block_tq1_0 * GGML_RE
             q = ((uint16_t)q * 256 + (243 - 1)) / 243;
             y[i].qh[j] = q;
         }
-        x += 4*sizeof(y->qh);
+        x += 4*ਆਕਾਰ(y->qh);
     }
 }
 
-void quantize_row_tq2_0_ref(const float * GGML_RESTRICT x, block_tq2_0 * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+ਖਾਲੀ quantize_ਪੰਕਤੀ_tq2_0_ref(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖੰਡ_tq2_0 * GGML_RESTRICT y, int64_t k) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % QK_K == 0);
+    ਅਚਲ int64_t nb = k / QK_K;
 
-    for (int64_t i = 0; i < nb; i++) {
-        float amax = 0.0f; // absolute max
+    ਲਈ (int64_t i = 0; i < nb; i++) {
+        ਦਸ਼ਮਲਵ amax = 0.0f; // absolute max
 
-        for (int j = 0; j < QK_K; j++) {
-            const float v = x[j];
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K; j++) {
+            ਅਚਲ ਦਸ਼ਮਲਵ v = x[j];
             amax = MAX(amax, fabsf(v));
         }
 
-        const float d = amax;
-        const float id = d ? 1.0f/d : 0.0f;
+        ਅਚਲ ਦਸ਼ਮਲਵ d = amax;
+        ਅਚਲ ਦਸ਼ਮਲਵ id = d ? 1.0f/d : 0.0f;
 
-        y[i].d = GGML_FP32_TO_FP16(d);
+        y[i].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(d);
 
-        for (size_t j = 0; j < sizeof(y->qs); j += 32) {
-            for (size_t m = 0; m < 32; ++m) {
+        ਲਈ (size_t j = 0; j < ਆਕਾਰ(y->qs); j += 32) {
+            ਲਈ (size_t m = 0; m < 32; ++m) {
                 uint8_t q = 0;
-                for (size_t n = 0; n < 4; ++n) {
+                ਲਈ (size_t n = 0; n < 4; ++n) {
                     // -1, 0, 1 -> 0, 1, 2
-                    int xi = lroundf(x[m + n*32] * id) + 1;
+                    ਪੂਰਨ xi = lroundf(x[m + n*32] * id) + 1;
                     q += (xi & 3) << (2*n);
                 }
                 y[i].qs[j + m] = q;
@@ -2412,72 +2412,72 @@ void quantize_row_tq2_0_ref(const float * GGML_RESTRICT x, block_tq2_0 * GGML_RE
     }
 }
 
-size_t quantize_tq1_0(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    (void)quant_weights; // not used
-    const size_t row_size = ggml_row_size(GGML_TYPE_TQ1_0, n_per_row);
-    quantize_row_tq1_0_ref(src, dst, (int64_t)nrow*n_per_row);
-    return nrow * row_size;
+size_t quantize_tq1_0(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT src, ਖਾਲੀ * GGML_RESTRICT dst, int64_t nrow, int64_t n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, ਅਚਲ ਦਸ਼ਮਲਵ * quant_weights) {
+    (ਖਾਲੀ)quant_weights; // not used
+    ਅਚਲ size_t ਪੰਕਤੀ_ਮਾਪ = ggml_ਪੰਕਤੀ_ਮਾਪ(GGML_TYPE_TQ1_0, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
+    quantize_ਪੰਕਤੀ_tq1_0_ref(src, dst, (int64_t)nrow*n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
+    ਵਾਪਸ nrow * ਪੰਕਤੀ_ਮਾਪ;
 }
 
-size_t quantize_tq2_0(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    (void)quant_weights; // not used
-    const size_t row_size = ggml_row_size(GGML_TYPE_TQ2_0, n_per_row);
-    quantize_row_tq2_0_ref(src, dst, (int64_t)nrow*n_per_row);
-    return nrow * row_size;
+size_t quantize_tq2_0(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT src, ਖਾਲੀ * GGML_RESTRICT dst, int64_t nrow, int64_t n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, ਅਚਲ ਦਸ਼ਮਲਵ * quant_weights) {
+    (ਖਾਲੀ)quant_weights; // not used
+    ਅਚਲ size_t ਪੰਕਤੀ_ਮਾਪ = ggml_ਪੰਕਤੀ_ਮਾਪ(GGML_TYPE_TQ2_0, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
+    quantize_ਪੰਕਤੀ_tq2_0_ref(src, dst, (int64_t)nrow*n_ਪ੍ਰਤੀ_ਪੰਕਤੀ);
+    ਵਾਪਸ nrow * ਪੰਕਤੀ_ਮਾਪ;
 }
 
-void dequantize_row_tq1_0(const block_tq1_0 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+ਖਾਲੀ dequantize_ਪੰਕਤੀ_tq1_0(ਅਚਲ ਖੰਡ_tq1_0 * GGML_RESTRICT x, ਦਸ਼ਮਲਵ * GGML_RESTRICT y, int64_t k) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % QK_K == 0);
+    ਅਚਲ int64_t nb = k / QK_K;
 
-    const uint8_t pow3[6] = {1, 3, 9, 27, 81, 243};
+    ਅਚਲ uint8_t pow3[6] = {1, 3, 9, 27, 81, 243};
 
-    for (int64_t i = 0; i < nb; ++i) {
+    ਲਈ (int64_t i = 0; i < nb; ++i) {
 
-        const float d = GGML_FP16_TO_FP32(x[i].d);
+        ਅਚਲ ਦਸ਼ਮਲਵ d = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(x[i].d);
 
-        for (size_t j = 0; j < sizeof(x->qs) - sizeof(x->qs) % 32; j += 32) {
-            for (size_t n = 0; n < 5; ++n) {
-                for (size_t m = 0; m < 32; ++m) {
+        ਲਈ (size_t j = 0; j < ਆਕਾਰ(x->qs) - ਆਕਾਰ(x->qs) % 32; j += 32) {
+            ਲਈ (size_t n = 0; n < 5; ++n) {
+                ਲਈ (size_t m = 0; m < 32; ++m) {
                     uint8_t q = x[i].qs[j + m] * pow3[n];
                     int16_t xi = ((uint16_t) q * 3) >> 8;
-                    *y++ = (float) (xi - 1) * d;
+                    *y++ = (ਦਸ਼ਮਲਵ) (xi - 1) * d;
                 }
             }
         }
-        for (size_t j = sizeof(x->qs) - sizeof(x->qs) % 32; j < sizeof(x->qs); j += 16) {
-            for (size_t n = 0; n < 5; ++n) {
-                for (size_t m = 0; m < 16; ++m) {
+        ਲਈ (size_t j = ਆਕਾਰ(x->qs) - ਆਕਾਰ(x->qs) % 32; j < ਆਕਾਰ(x->qs); j += 16) {
+            ਲਈ (size_t n = 0; n < 5; ++n) {
+                ਲਈ (size_t m = 0; m < 16; ++m) {
                     uint8_t q = x[i].qs[j + m] * pow3[n];
                     int16_t xi = ((uint16_t) q * 3) >> 8;
-                    *y++ = (float) (xi - 1) * d;
+                    *y++ = (ਦਸ਼ਮਲਵ) (xi - 1) * d;
                 }
             }
         }
 
-        for (size_t n = 0; n < 4; ++n) {
-            for (size_t j = 0; j < sizeof(x->qh); ++j) {
+        ਲਈ (size_t n = 0; n < 4; ++n) {
+            ਲਈ (size_t j = 0; j < ਆਕਾਰ(x->qh); ++j) {
                 uint8_t q = x[i].qh[j] * pow3[n];
                 int16_t xi = ((uint16_t) q * 3) >> 8;
-                *y++ = (float) (xi - 1) * d;
+                *y++ = (ਦਸ਼ਮਲਵ) (xi - 1) * d;
             }
         }
     }
 }
 
-void dequantize_row_tq2_0(const block_tq2_0 * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+ਖਾਲੀ dequantize_ਪੰਕਤੀ_tq2_0(ਅਚਲ ਖੰਡ_tq2_0 * GGML_RESTRICT x, ਦਸ਼ਮਲਵ * GGML_RESTRICT y, int64_t k) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % QK_K == 0);
+    ਅਚਲ int64_t nb = k / QK_K;
 
-    for (int64_t i = 0; i < nb; ++i) {
+    ਲਈ (int64_t i = 0; i < nb; ++i) {
 
-        const float d = GGML_FP16_TO_FP32(x[i].d);
+        ਅਚਲ ਦਸ਼ਮਲਵ d = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(x[i].d);
 
-        for (size_t j = 0; j < sizeof(x->qs); j += 32) {
-            for (size_t l = 0; l < 4; ++l) {
-                for (size_t m = 0; m < 32; ++m) {
+        ਲਈ (size_t j = 0; j < ਆਕਾਰ(x->qs); j += 32) {
+            ਲਈ (size_t l = 0; l < 4; ++l) {
+                ਲਈ (size_t m = 0; m < 32; ++m) {
                     int8_t q = (x[i].qs[j + m] >> (l*2)) & 3;
-                    *y++ = (float) (q - 1) * d;
+                    *y++ = (ਦਸ਼ਮਲਵ) (q - 1) * d;
                 }
             }
         }
@@ -2486,24 +2486,24 @@ void dequantize_row_tq2_0(const block_tq2_0 * GGML_RESTRICT x, float * GGML_REST
 
 // ====================== "True" 2-bit (de)-quantization
 
-void dequantize_row_iq2_xxs(const block_iq2_xxs * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+ਖਾਲੀ dequantize_ਪੰਕਤੀ_iq2_xxs(ਅਚਲ ਖੰਡ_iq2_xxs * GGML_RESTRICT x, ਦਸ਼ਮਲਵ * GGML_RESTRICT y, int64_t k) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % QK_K == 0);
+    ਅਚਲ int64_t nb = k / QK_K;
 
     uint32_t aux32[2];
-    const uint8_t * aux8 = (const uint8_t *)aux32;
+    ਅਚਲ uint8_t * aux8 = (ਅਚਲ uint8_t *)aux32;
 
-    for (int i = 0; i < nb; i++) {
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
 
-        const float d = GGML_FP16_TO_FP32(x[i].d);
+        ਅਚਲ ਦਸ਼ਮਲਵ d = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(x[i].d);
 
-        for (int ib32 = 0; ib32 < QK_K/32; ++ib32) {
-            memcpy(aux32, x[i].qs + 4*ib32, 2*sizeof(uint32_t));
-            const float db = d * (0.5f + (aux32[1] >> 28)) * 0.25f;
-            for (int l = 0; l < 4; ++l) {
-                const uint8_t * grid = (const uint8_t *)(iq2xxs_grid + aux8[l]);
-                const uint8_t  signs = ksigns_iq2xs[(aux32[1] >> 7*l) & 127];
-                for (int j = 0; j < 8; ++j) {
+        ਲਈ (ਪੂਰਨ ib32 = 0; ib32 < QK_K/32; ++ib32) {
+            ਸਮ੍ਰਿਤੀ_ਨਕਲ(aux32, x[i].qs + 4*ib32, 2*ਆਕਾਰ(uint32_t));
+            ਅਚਲ ਦਸ਼ਮਲਵ db = d * (0.5f + (aux32[1] >> 28)) * 0.25f;
+            ਲਈ (ਪੂਰਨ l = 0; l < 4; ++l) {
+                ਅਚਲ uint8_t * grid = (ਅਚਲ uint8_t *)(iq2xxs_grid + aux8[l]);
+                ਅਚਲ uint8_t  signs = ksigns_iq2xs[(aux32[1] >> 7*l) & 127];
+                ਲਈ (ਪੂਰਨ j = 0; j < 8; ++j) {
                     y[j] = db * grid[j] * (signs & kmask_iq2xs[j] ? -1.f : 1.f);
                 }
                 y += 8;
@@ -2514,23 +2514,23 @@ void dequantize_row_iq2_xxs(const block_iq2_xxs * GGML_RESTRICT x, float * GGML_
 
 // ====================== 2.3125 bpw (de)-quantization
 
-void dequantize_row_iq2_xs(const block_iq2_xs * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+ਖਾਲੀ dequantize_ਪੰਕਤੀ_iq2_xs(ਅਚਲ ਖੰਡ_iq2_xs * GGML_RESTRICT x, ਦਸ਼ਮਲਵ * GGML_RESTRICT y, int64_t k) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % QK_K == 0);
+    ਅਚਲ int64_t nb = k / QK_K;
 
-    float db[2];
+    ਦਸ਼ਮਲਵ db[2];
 
-    for (int i = 0; i < nb; i++) {
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
 
-        const float d = GGML_FP16_TO_FP32(x[i].d);
+        ਅਚਲ ਦਸ਼ਮਲਵ d = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(x[i].d);
 
-        for (int ib32 = 0; ib32 < QK_K/32; ++ib32) {
+        ਲਈ (ਪੂਰਨ ib32 = 0; ib32 < QK_K/32; ++ib32) {
             db[0] = d * (0.5f + (x[i].scales[ib32] & 0xf)) * 0.25f;
             db[1] = d * (0.5f + (x[i].scales[ib32] >>  4)) * 0.25f;
-            for (int l = 0; l < 4; ++l) {
-                const uint8_t * grid = (const uint8_t *)(iq2xs_grid + (x[i].qs[4*ib32 + l] & 511));
-                const uint8_t  signs = ksigns_iq2xs[x[i].qs[4*ib32 + l] >> 9];
-                for (int j = 0; j < 8; ++j) {
+            ਲਈ (ਪੂਰਨ l = 0; l < 4; ++l) {
+                ਅਚਲ uint8_t * grid = (ਅਚਲ uint8_t *)(iq2xs_grid + (x[i].qs[4*ib32 + l] & 511));
+                ਅਚਲ uint8_t  signs = ksigns_iq2xs[x[i].qs[4*ib32 + l] >> 9];
+                ਲਈ (ਪੂਰਨ j = 0; j < 8; ++j) {
                     y[j] = db[l/2] * grid[j] * (signs & kmask_iq2xs[j] ? -1.f : 1.f);
                 }
                 y += 8;
@@ -2541,26 +2541,26 @@ void dequantize_row_iq2_xs(const block_iq2_xs * GGML_RESTRICT x, float * GGML_RE
 
 // ====================== 2.5625 bpw (de)-quantization
 
-void dequantize_row_iq2_s(const block_iq2_s * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+ਖਾਲੀ dequantize_ਪੰਕਤੀ_iq2_s(ਅਚਲ ਖੰਡ_iq2_s * GGML_RESTRICT x, ਦਸ਼ਮਲਵ * GGML_RESTRICT y, int64_t k) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % QK_K == 0);
+    ਅਚਲ int64_t nb = k / QK_K;
 
-    float db[2];
+    ਦਸ਼ਮਲਵ db[2];
 
-    for (int i = 0; i < nb; i++) {
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
 
-        const float d = GGML_FP16_TO_FP32(x[i].d);
-        const uint8_t * qs = x[i].qs;
-        const uint8_t * qh = x[i].qh;
-        const uint8_t * signs = qs + QK_K/8;
+        ਅਚਲ ਦਸ਼ਮਲਵ d = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(x[i].d);
+        ਅਚਲ uint8_t * qs = x[i].qs;
+        ਅਚਲ uint8_t * qh = x[i].qh;
+        ਅਚਲ uint8_t * signs = qs + QK_K/8;
 
-        for (int ib32 = 0; ib32 < QK_K/32; ++ib32) {
+        ਲਈ (ਪੂਰਨ ib32 = 0; ib32 < QK_K/32; ++ib32) {
             db[0] = d * (0.5f + (x[i].scales[ib32] & 0xf)) * 0.25f;
             db[1] = d * (0.5f + (x[i].scales[ib32] >>  4)) * 0.25f;
-            for (int l = 0; l < 4; ++l) {
-                const float dl = db[l/2];
-                const uint8_t * grid = (const uint8_t *)(iq2s_grid + (qs[l] | (qh[ib32] << (8-2*l) & 0x300)));
-                for (int j = 0; j < 8; ++j) {
+            ਲਈ (ਪੂਰਨ l = 0; l < 4; ++l) {
+                ਅਚਲ ਦਸ਼ਮਲਵ dl = db[l/2];
+                ਅਚਲ uint8_t * grid = (ਅਚਲ uint8_t *)(iq2s_grid + (qs[l] | (qh[ib32] << (8-2*l) & 0x300)));
+                ਲਈ (ਪੂਰਨ j = 0; j < 8; ++j) {
                     y[j] = dl * grid[j] * (signs[l] & kmask_iq2xs[j] ? -1.f : 1.f);
                 }
                 y += 8;
@@ -2573,26 +2573,26 @@ void dequantize_row_iq2_s(const block_iq2_s * GGML_RESTRICT x, float * GGML_REST
 
 // ====================== 3.0625 bpw (de)-quantization
 
-void dequantize_row_iq3_xxs(const block_iq3_xxs * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+ਖਾਲੀ dequantize_ਪੰਕਤੀ_iq3_xxs(ਅਚਲ ਖੰਡ_iq3_xxs * GGML_RESTRICT x, ਦਸ਼ਮਲਵ * GGML_RESTRICT y, int64_t k) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % QK_K == 0);
+    ਅਚਲ int64_t nb = k / QK_K;
 
     uint32_t aux32;
 
-    for (int i = 0; i < nb; i++) {
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
 
-        const float d = GGML_FP16_TO_FP32(x[i].d);
-        const uint8_t * qs = x[i].qs;
-        const uint8_t * scales_and_signs = qs + QK_K/4;
+        ਅਚਲ ਦਸ਼ਮਲਵ d = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(x[i].d);
+        ਅਚਲ uint8_t * qs = x[i].qs;
+        ਅਚਲ uint8_t * scales_and_signs = qs + QK_K/4;
 
-        for (int ib32 = 0; ib32 < QK_K/32; ++ib32) {
-            memcpy(&aux32, scales_and_signs + 4*ib32, sizeof(uint32_t));
-            const float db = d * (0.5f + (aux32 >> 28)) * 0.5f;
-            for (int l = 0; l < 4; ++l) {
-                const uint8_t  signs = ksigns_iq2xs[(aux32 >> 7*l) & 127];
-                const uint8_t * grid1 = (const uint8_t *)(iq3xxs_grid + qs[2*l+0]);
-                const uint8_t * grid2 = (const uint8_t *)(iq3xxs_grid + qs[2*l+1]);
-                for (int j = 0; j < 4; ++j) {
+        ਲਈ (ਪੂਰਨ ib32 = 0; ib32 < QK_K/32; ++ib32) {
+            ਸਮ੍ਰਿਤੀ_ਨਕਲ(&aux32, scales_and_signs + 4*ib32, ਆਕਾਰ(uint32_t));
+            ਅਚਲ ਦਸ਼ਮਲਵ db = d * (0.5f + (aux32 >> 28)) * 0.5f;
+            ਲਈ (ਪੂਰਨ l = 0; l < 4; ++l) {
+                ਅਚਲ uint8_t  signs = ksigns_iq2xs[(aux32 >> 7*l) & 127];
+                ਅਚਲ uint8_t * grid1 = (ਅਚਲ uint8_t *)(iq3xxs_grid + qs[2*l+0]);
+                ਅਚਲ uint8_t * grid2 = (ਅਚਲ uint8_t *)(iq3xxs_grid + qs[2*l+1]);
+                ਲਈ (ਪੂਰਨ j = 0; j < 4; ++j) {
                     y[j+0] = db * grid1[j] * (signs & kmask_iq2xs[j+0] ? -1.f : 1.f);
                     y[j+4] = db * grid2[j] * (signs & kmask_iq2xs[j+4] ? -1.f : 1.f);
                 }
@@ -2605,24 +2605,24 @@ void dequantize_row_iq3_xxs(const block_iq3_xxs * GGML_RESTRICT x, float * GGML_
 
 // ====================== 3.3125 bpw (de)-quantization
 
-void dequantize_row_iq3_s(const block_iq3_s * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+ਖਾਲੀ dequantize_ਪੰਕਤੀ_iq3_s(ਅਚਲ ਖੰਡ_iq3_s * GGML_RESTRICT x, ਦਸ਼ਮਲਵ * GGML_RESTRICT y, int64_t k) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % QK_K == 0);
+    ਅਚਲ int64_t nb = k / QK_K;
 
-    for (int i = 0; i < nb; i++) {
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
 
-        const float d = GGML_FP16_TO_FP32(x[i].d);
-        const uint8_t * qs = x[i].qs;
-        const uint8_t * qh = x[i].qh;
-        const uint8_t * signs = x[i].signs;
+        ਅਚਲ ਦਸ਼ਮਲਵ d = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(x[i].d);
+        ਅਚਲ uint8_t * qs = x[i].qs;
+        ਅਚਲ uint8_t * qh = x[i].qh;
+        ਅਚਲ uint8_t * signs = x[i].signs;
 
-        for (int ib32 = 0; ib32 < QK_K/32; ib32 += 2) {
-            const float db1 = d * (1 + 2*(x[i].scales[ib32/2] & 0xf));
-            const float db2 = d * (1 + 2*(x[i].scales[ib32/2] >>  4));
-            for (int l = 0; l < 4; ++l) {
-                const uint8_t * grid1 = (const uint8_t *)(iq3s_grid + (qs[2*l+0] | ((qh[0] << (8-2*l)) & 256)));
-                const uint8_t * grid2 = (const uint8_t *)(iq3s_grid + (qs[2*l+1] | ((qh[0] << (7-2*l)) & 256)));
-                for (int j = 0; j < 4; ++j) {
+        ਲਈ (ਪੂਰਨ ib32 = 0; ib32 < QK_K/32; ib32 += 2) {
+            ਅਚਲ ਦਸ਼ਮਲਵ db1 = d * (1 + 2*(x[i].scales[ib32/2] & 0xf));
+            ਅਚਲ ਦਸ਼ਮਲਵ db2 = d * (1 + 2*(x[i].scales[ib32/2] >>  4));
+            ਲਈ (ਪੂਰਨ l = 0; l < 4; ++l) {
+                ਅਚਲ uint8_t * grid1 = (ਅਚਲ uint8_t *)(iq3s_grid + (qs[2*l+0] | ((qh[0] << (8-2*l)) & 256)));
+                ਅਚਲ uint8_t * grid2 = (ਅਚਲ uint8_t *)(iq3s_grid + (qs[2*l+1] | ((qh[0] << (7-2*l)) & 256)));
+                ਲਈ (ਪੂਰਨ j = 0; j < 4; ++j) {
                     y[j+0] = db1 * grid1[j] * (signs[l] & kmask_iq2xs[j+0] ? -1.f : 1.f);
                     y[j+4] = db1 * grid2[j] * (signs[l] & kmask_iq2xs[j+4] ? -1.f : 1.f);
                 }
@@ -2630,10 +2630,10 @@ void dequantize_row_iq3_s(const block_iq3_s * GGML_RESTRICT x, float * GGML_REST
             }
             qs += 8;
             signs += 4;
-            for (int l = 0; l < 4; ++l) {
-                const uint8_t * grid1 = (const uint8_t *)(iq3s_grid + (qs[2*l+0] | ((qh[1] << (8-2*l)) & 256)));
-                const uint8_t * grid2 = (const uint8_t *)(iq3s_grid + (qs[2*l+1] | ((qh[1] << (7-2*l)) & 256)));
-                for (int j = 0; j < 4; ++j) {
+            ਲਈ (ਪੂਰਨ l = 0; l < 4; ++l) {
+                ਅਚਲ uint8_t * grid1 = (ਅਚਲ uint8_t *)(iq3s_grid + (qs[2*l+0] | ((qh[1] << (8-2*l)) & 256)));
+                ਅਚਲ uint8_t * grid2 = (ਅਚਲ uint8_t *)(iq3s_grid + (qs[2*l+1] | ((qh[1] << (7-2*l)) & 256)));
+                ਲਈ (ਪੂਰਨ j = 0; j < 4; ++j) {
                     y[j+0] = db2 * grid1[j] * (signs[l] & kmask_iq2xs[j+0] ? -1.f : 1.f);
                     y[j+4] = db2 * grid2[j] * (signs[l] & kmask_iq2xs[j+4] ? -1.f : 1.f);
                 }
@@ -2648,22 +2648,22 @@ void dequantize_row_iq3_s(const block_iq3_s * GGML_RESTRICT x, float * GGML_REST
 
 // ====================== 1.5625 bpw (de)-quantization
 
-void dequantize_row_iq1_s(const block_iq1_s * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+ਖਾਲੀ dequantize_ਪੰਕਤੀ_iq1_s(ਅਚਲ ਖੰਡ_iq1_s * GGML_RESTRICT x, ਦਸ਼ਮਲਵ * GGML_RESTRICT y, int64_t k) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % QK_K == 0);
+    ਅਚਲ int64_t nb = k / QK_K;
 
-    for (int i = 0; i < nb; i++) {
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
 
-        const float d = GGML_FP16_TO_FP32(x[i].d);
-        const uint8_t  * qs = x[i].qs;
-        const uint16_t * qh = x[i].qh;
+        ਅਚਲ ਦਸ਼ਮਲਵ d = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(x[i].d);
+        ਅਚਲ uint8_t  * qs = x[i].qs;
+        ਅਚਲ uint16_t * qh = x[i].qh;
 
-        for (int ib = 0; ib < QK_K/32; ++ib) {
-            const float dl = d * (2*((qh[ib] >> 12) & 7) + 1);
-            const float delta = qh[ib] & 0x8000 ? -IQ1S_DELTA : IQ1S_DELTA;
-            for (int l = 0; l < 4; ++l) {
-                const int8_t * grid = (const int8_t *)(iq1s_grid + (qs[l] | (((qh[ib] >> 3*l) & 7) << 8)));
-                for (int j = 0; j < 8; ++j) {
+        ਲਈ (ਪੂਰਨ ib = 0; ib < QK_K/32; ++ib) {
+            ਅਚਲ ਦਸ਼ਮਲਵ dl = d * (2*((qh[ib] >> 12) & 7) + 1);
+            ਅਚਲ ਦਸ਼ਮਲਵ delta = qh[ib] & 0x8000 ? -IQ1S_DELTA : IQ1S_DELTA;
+            ਲਈ (ਪੂਰਨ l = 0; l < 4; ++l) {
+                ਅਚਲ int8_t * grid = (ਅਚਲ int8_t *)(iq1s_grid + (qs[l] | (((qh[ib] >> 3*l) & 7) << 8)));
+                ਲਈ (ਪੂਰਨ j = 0; j < 8; ++j) {
                     y[j] = dl * (grid[j] + delta);
                 }
                 y += 8;
@@ -2673,27 +2673,27 @@ void dequantize_row_iq1_s(const block_iq1_s * GGML_RESTRICT x, float * GGML_REST
     }
 }
 
-void dequantize_row_iq1_m(const block_iq1_m * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+ਖਾਲੀ dequantize_ਪੰਕਤੀ_iq1_m(ਅਚਲ ਖੰਡ_iq1_m * GGML_RESTRICT x, ਦਸ਼ਮਲਵ * GGML_RESTRICT y, int64_t k) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % QK_K == 0);
+    ਅਚਲ int64_t nb = k / QK_K;
 
-    float delta[4];
+    ਦਸ਼ਮਲਵ delta[4];
     uint16_t idx[4];
 
     iq1m_scale_t scale;
 
-    for (int i = 0; i < nb; i++) {
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
 
-        const uint16_t * sc = (const uint16_t *)x[i].scales;
+        ਅਚਲ uint16_t * sc = (ਅਚਲ uint16_t *)x[i].scales;
         scale.u16 = (sc[0] >> 12) | ((sc[1] >> 8) & 0x00f0) | ((sc[2] >> 4) & 0x0f00) | (sc[3] & 0xf000);
-        const float d = GGML_FP16_TO_FP32(scale.f16);
+        ਅਚਲ ਦਸ਼ਮਲਵ d = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(scale.f16);
 
-        const uint8_t * qs = x[i].qs;
-        const uint8_t * qh = x[i].qh;
+        ਅਚਲ uint8_t * qs = x[i].qs;
+        ਅਚਲ uint8_t * qh = x[i].qh;
 
-        for (int ib = 0; ib < QK_K/32; ++ib) {
-            const float dl1 = d * (2*((sc[ib/2] >> (6*(ib%2)+0)) & 0x7) + 1);
-            const float dl2 = d * (2*((sc[ib/2] >> (6*(ib%2)+3)) & 0x7) + 1);
+        ਲਈ (ਪੂਰਨ ib = 0; ib < QK_K/32; ++ib) {
+            ਅਚਲ ਦਸ਼ਮਲਵ dl1 = d * (2*((sc[ib/2] >> (6*(ib%2)+0)) & 0x7) + 1);
+            ਅਚਲ ਦਸ਼ਮਲਵ dl2 = d * (2*((sc[ib/2] >> (6*(ib%2)+3)) & 0x7) + 1);
 
             idx[0] = qs[0] | ((qh[0] << 8) & 0x700);
             idx[1] = qs[1] | ((qh[0] << 4) & 0x700);
@@ -2703,16 +2703,16 @@ void dequantize_row_iq1_m(const block_iq1_m * GGML_RESTRICT x, float * GGML_REST
             delta[1] = qh[0] & 0x80 ? -IQ1S_DELTA : IQ1S_DELTA;
             delta[2] = qh[1] & 0x08 ? -IQ1S_DELTA : IQ1S_DELTA;
             delta[3] = qh[1] & 0x80 ? -IQ1S_DELTA : IQ1S_DELTA;
-            for (int l = 0; l < 2; ++l) {
-                const int8_t * grid = (const int8_t *)(iq1s_grid + idx[l]);
-                for (int j = 0; j < 8; ++j) {
+            ਲਈ (ਪੂਰਨ l = 0; l < 2; ++l) {
+                ਅਚਲ int8_t * grid = (ਅਚਲ int8_t *)(iq1s_grid + idx[l]);
+                ਲਈ (ਪੂਰਨ j = 0; j < 8; ++j) {
                     y[j] = dl1 * (grid[j] + delta[l]);
                 }
                 y += 8;
             }
-            for (int l = 2; l < 4; ++l) {
-                const int8_t * grid = (const int8_t *)(iq1s_grid + idx[l]);
-                for (int j = 0; j < 8; ++j) {
+            ਲਈ (ਪੂਰਨ l = 2; l < 4; ++l) {
+                ਅਚਲ int8_t * grid = (ਅਚਲ int8_t *)(iq1s_grid + idx[l]);
+                ਲਈ (ਪੂਰਨ j = 0; j < 8; ++j) {
                     y[j] = dl2 * (grid[j] + delta[l]);
                 }
                 y += 8;
@@ -2723,16 +2723,16 @@ void dequantize_row_iq1_m(const block_iq1_m * GGML_RESTRICT x, float * GGML_REST
     }
 }
 
-void dequantize_row_iq4_nl(const block_iq4_nl * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK4_NL == 0);
-    const int64_t nb = k / QK4_NL;
+ਖਾਲੀ dequantize_ਪੰਕਤੀ_iq4_nl(ਅਚਲ ਖੰਡ_iq4_nl * GGML_RESTRICT x, ਦਸ਼ਮਲਵ * GGML_RESTRICT y, int64_t k) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % QK4_NL == 0);
+    ਅਚਲ int64_t nb = k / QK4_NL;
 
-    for (int i = 0; i < nb; i++) {
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
 
-        const uint8_t * qs = x[i].qs;
+        ਅਚਲ uint8_t * qs = x[i].qs;
 
-        const float d = GGML_FP16_TO_FP32(x[i].d);
-        for (int j = 0; j < QK4_NL/2; ++j) {
+        ਅਚਲ ਦਸ਼ਮਲਵ d = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(x[i].d);
+        ਲਈ (ਪੂਰਨ j = 0; j < QK4_NL/2; ++j) {
             y[j+       0] = d * kvalues_iq4nl[qs[j] & 0xf];
             y[j+QK4_NL/2] = d * kvalues_iq4nl[qs[j] >>  4];
         }
@@ -2741,20 +2741,20 @@ void dequantize_row_iq4_nl(const block_iq4_nl * GGML_RESTRICT x, float * GGML_RE
     }
 }
 
-void dequantize_row_iq4_xs(const block_iq4_xs * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+ਖਾਲੀ dequantize_ਪੰਕਤੀ_iq4_xs(ਅਚਲ ਖੰਡ_iq4_xs * GGML_RESTRICT x, ਦਸ਼ਮਲਵ * GGML_RESTRICT y, int64_t k) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % QK_K == 0);
+    ਅਚਲ int64_t nb = k / QK_K;
 
-    for (int i = 0; i < nb; i++) {
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
 
-        const uint8_t * qs = x[i].qs;
+        ਅਚਲ uint8_t * qs = x[i].qs;
 
-        const float d = GGML_FP16_TO_FP32(x[i].d);
+        ਅਚਲ ਦਸ਼ਮਲਵ d = GGML_FP16_ਮੰਜ਼ਿਲ_FP32(x[i].d);
 
-        for (int ib = 0; ib < QK_K/32; ++ib) {
-            const int ls = ((x[i].scales_l[ib/2] >> 4*(ib%2)) & 0xf) | (((x[i].scales_h >> 2*ib) & 3) << 4);
-            const float dl = d * (ls - 32);
-            for (int j = 0; j < 16; ++j) {
+        ਲਈ (ਪੂਰਨ ib = 0; ib < QK_K/32; ++ib) {
+            ਅਚਲ ਪੂਰਨ ls = ((x[i].scales_l[ib/2] >> 4*(ib%2)) & 0xf) | (((x[i].scales_h >> 2*ib) & 3) << 4);
+            ਅਚਲ ਦਸ਼ਮਲਵ dl = d * (ls - 32);
+            ਲਈ (ਪੂਰਨ j = 0; j < 16; ++j) {
                 y[j+ 0] = dl * kvalues_iq4nl[qs[j] & 0xf];
                 y[j+16] = dl * kvalues_iq4nl[qs[j] >>  4];
             }
@@ -2766,51 +2766,51 @@ void dequantize_row_iq4_xs(const block_iq4_xs * GGML_RESTRICT x, float * GGML_RE
 
 //===================================== Q8_K ==============================================
 
-void quantize_row_q8_K_ref(const float * GGML_RESTRICT x, block_q8_K * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+ਖਾਲੀ quantize_ਪੰਕਤੀ_q8_K_ref(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖੰਡ_q8_K * GGML_RESTRICT y, int64_t k) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % QK_K == 0);
+    ਅਚਲ int64_t nb = k / QK_K;
 
-    for (int i = 0; i < nb; i++) {
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
 
-        float max = 0;
-        float amax = 0;
-        for (int j = 0; j < QK_K; ++j) {
-            float ax = fabsf(x[j]);
-            if (ax > amax) {
+        ਦਸ਼ਮਲਵ max = 0;
+        ਦਸ਼ਮਲਵ amax = 0;
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K; ++j) {
+            ਦਸ਼ਮਲਵ ax = fabsf(x[j]);
+            ਜੇ (ax > amax) {
                 amax = ax; max = x[j];
             }
         }
-        if (!amax) {
+        ਜੇ (!amax) {
             y[i].d = 0;
             memset(y[i].qs, 0, QK_K);
             x += QK_K;
-            continue;
+            ਜਾਰੀ;
         }
         //const float iscale = -128.f/max;
         // We need this change for IQ2_XXS, else the AVX implementation becomes very awkward
-        const float iscale = -127.f/max;
-        for (int j = 0; j < QK_K; ++j) {
-            int v = nearest_int(iscale*x[j]);
+        ਅਚਲ ਦਸ਼ਮਲਵ iscale = -127.f/max;
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K; ++j) {
+            ਪੂਰਨ v = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(iscale*x[j]);
             y[i].qs[j] = MIN(127, v);
         }
-        for (int j = 0; j < QK_K/16; ++j) {
-            int sum = 0;
-            for (int ii = 0; ii < 16; ++ii) {
-                sum += y[i].qs[j*16 + ii];
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K/16; ++j) {
+            ਪੂਰਨ ਜੋੜ = 0;
+            ਲਈ (ਪੂਰਨ ii = 0; ii < 16; ++ii) {
+                ਜੋੜ += y[i].qs[j*16 + ii];
             }
-            y[i].bsums[j] = sum;
+            y[i].bsums[j] = ਜੋੜ;
         }
         y[i].d = 1/iscale;
         x += QK_K;
     }
 }
 
-void dequantize_row_q8_K(const block_q8_K * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    const int64_t nb = k / QK_K;
+ਖਾਲੀ dequantize_ਪੰਕਤੀ_q8_K(ਅਚਲ ਖੰਡ_q8_K * GGML_RESTRICT x, ਦਸ਼ਮਲਵ * GGML_RESTRICT y, int64_t k) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % QK_K == 0);
+    ਅਚਲ int64_t nb = k / QK_K;
 
-    for (int i = 0; i < nb; i++) {
-        for (int j = 0; j < QK_K; ++j) {
+    ਲਈ (ਪੂਰਨ i = 0; i < nb; i++) {
+        ਲਈ (ਪੂਰਨ j = 0; j < QK_K; ++j) {
             *y++ = x[i].d * x[i].qs[j];
         }
     }
@@ -2818,46 +2818,46 @@ void dequantize_row_q8_K(const block_q8_K * GGML_RESTRICT x, float * GGML_RESTRI
 
 // ================================ IQ2 quantization =============================================
 
-typedef struct {
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
     uint64_t * grid;
-    int      * map;
+    ਪੂਰਨ      * map;
     uint16_t * neighbours;
-} iq2_entry_t;
+} iq2_ਇੰਦਰਾਜ_t;
 
-static iq2_entry_t iq2_data[4] = {
-    {NULL, NULL, NULL},
-    {NULL, NULL, NULL},
-    {NULL, NULL, NULL},
-    {NULL, NULL, NULL},
+ਸਥਿਰ iq2_ਇੰਦਰਾਜ_t iq2_ਅੰਕੜੇ[4] = {
+    {ਨਿਰਾ, ਨਿਰਾ, ਨਿਰਾ},
+    {ਨਿਰਾ, ਨਿਰਾ, ਨਿਰਾ},
+    {ਨਿਰਾ, ਨਿਰਾ, ਨਿਰਾ},
+    {ਨਿਰਾ, ਨਿਰਾ, ਨਿਰਾ},
 };
 
-static inline int iq2_data_index(enum ggml_type type) {
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਪੂਰਨ iq2_ਅੰਕੜੇ_ਸੂਚਕਾਂਕ(ਗਿਣਤੀ ggml_type type) {
     GGML_ASSERT(type == GGML_TYPE_IQ2_XXS || type == GGML_TYPE_IQ2_XS || type == GGML_TYPE_IQ1_S || type == GGML_TYPE_IQ1_M || type == GGML_TYPE_IQ2_S);
-    return type == GGML_TYPE_IQ2_XXS ? 0 :
+    ਵਾਪਸ type == GGML_TYPE_IQ2_XXS ? 0 :
            type == GGML_TYPE_IQ2_XS  ? 1 :
            type == GGML_TYPE_IQ1_S || type == GGML_TYPE_IQ1_M ? 2 : 3;
 }
 
-static inline int iq2_grid_size(enum ggml_type type) {
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਪੂਰਨ iq2_grid_ਮਾਪ(ਗਿਣਤੀ ggml_type type) {
     GGML_ASSERT(type == GGML_TYPE_IQ2_XXS || type == GGML_TYPE_IQ2_XS || type == GGML_TYPE_IQ1_S || type == GGML_TYPE_IQ1_M || type == GGML_TYPE_IQ2_S);
-    return type == GGML_TYPE_IQ2_XXS ? 256 :
+    ਵਾਪਸ type == GGML_TYPE_IQ2_XXS ? 256 :
            type == GGML_TYPE_IQ2_XS  ? 512 :
            type == GGML_TYPE_IQ1_S || type == GGML_TYPE_IQ1_M ? NGRID_IQ1S : 1024;
 }
 
-static int iq2_compare_func(const void * left, const void * right) {
-    const int * l = (const int *)left;
-    const int * r = (const int *)right;
-    return l[0] < r[0] ? -1 : l[0] > r[0] ? 1 : l[1] < r[1] ? -1 : l[1] > r[1] ? 1 : 0;
+ਸਥਿਰ ਪੂਰਨ iq2_compare_func(ਅਚਲ ਖਾਲੀ * ਖੱਬਾ, ਅਚਲ ਖਾਲੀ * ਸੱਜਾ) {
+    ਅਚਲ ਪੂਰਨ * l = (ਅਚਲ ਪੂਰਨ *)ਖੱਬਾ;
+    ਅਚਲ ਪੂਰਨ * r = (ਅਚਲ ਪੂਰਨ *)ਸੱਜਾ;
+    ਵਾਪਸ l[0] < r[0] ? -1 : l[0] > r[0] ? 1 : l[1] < r[1] ? -1 : l[1] > r[1] ? 1 : 0;
 }
 
-void iq2xs_init_impl(enum ggml_type type) {
-    const int gindex = iq2_data_index(type);
-    const int grid_size = iq2_grid_size(type);
-    if (iq2_data[gindex].grid) {
-        return;
+ਖਾਲੀ iq2xs_init_impl(ਗਿਣਤੀ ggml_type type) {
+    ਅਚਲ ਪੂਰਨ gindex = iq2_ਅੰਕੜੇ_ਸੂਚਕਾਂਕ(type);
+    ਅਚਲ ਪੂਰਨ grid_ਮਾਪ = iq2_grid_ਮਾਪ(type);
+    ਜੇ (iq2_ਅੰਕੜੇ[gindex].grid) {
+        ਵਾਪਸ;
     }
-    static const uint16_t kgrid_2bit_256[256] = {
+    ਸਥਿਰ ਅਚਲ uint16_t kgrid_2bit_256[256] = {
             0,     2,     5,     8,    10,    17,    20,    32,    34,    40,    42,    65,    68,    80,    88,    97,
           100,   128,   130,   138,   162,   257,   260,   272,   277,   320,   388,   408,   512,   514,   546,   642,
          1025,  1028,  1040,  1057,  1060,  1088,  1090,  1096,  1120,  1153,  1156,  1168,  1188,  1280,  1282,  1288,
@@ -2875,7 +2875,7 @@ void iq2xs_init_impl(enum ggml_type type) {
         33888, 34048, 34118, 34196, 34313, 34368, 34400, 34818, 35076, 35345, 36868, 36880, 36900, 36928, 37025, 37142,
         37248, 37445, 37888, 37922, 37956, 38225, 39041, 39200, 40962, 41040, 41093, 41225, 41472, 42008, 43088, 43268,
     };
-    static const uint16_t kgrid_2bit_512[512] = {
+    ਸਥਿਰ ਅਚਲ uint16_t kgrid_2bit_512[512] = {
             0,     2,     5,     8,    10,    17,    20,    22,    25,    32,    34,    37,    40,    65,    68,    70,
            73,    80,    82,    85,    88,    97,   100,   128,   130,   133,   136,   145,   148,   153,   160,   257,
           260,   262,   265,   272,   274,   277,   280,   282,   289,   292,   320,   322,   325,   328,   337,   340,
@@ -2909,7 +2909,7 @@ void iq2xs_init_impl(enum ggml_type type) {
         40962, 40968, 40970, 40992, 41002, 41120, 41297, 41305, 41382, 41472, 41474, 41480, 41514, 41600, 41632, 42048,
         42133, 42597, 42648, 43018, 43040, 43042, 43048, 43168, 43176, 43268, 43396, 43398, 43560, 43562, 43665, 43690,
     };
-    static const uint16_t kgrid_1bit_2048[NGRID_IQ1S] = {
+    ਸਥਿਰ ਅਚਲ uint16_t kgrid_1bit_2048[NGRID_IQ1S] = {
             0,     2,     5,     8,    10,    17,    21,    32,    34,    40,    42,    69,    81,    84,    86,   101,
           128,   130,   136,   138,   149,   160,   162,   168,   170,   260,   261,   273,   276,   278,   281,   282,
           293,   321,   326,   329,   338,   341,   346,   353,   356,   358,   360,   389,   401,   404,   406,   421,
@@ -3039,7 +3039,7 @@ void iq2xs_init_impl(enum ggml_type type) {
         43289, 43297, 43301, 43329, 43344, 43349, 43354, 43361, 43366, 43369, 43408, 43414, 43520, 43522, 43528, 43530,
         43552, 43554, 43560, 43562, 43601, 43604, 43606, 43648, 43650, 43656, 43658, 43669, 43680, 43682, 43688, 43690,
     };
-    static const uint16_t kgrid_2bit_1024[1024] = {
+    ਸਥਿਰ ਅਚਲ uint16_t kgrid_2bit_1024[1024] = {
             0,     2,     5,     8,    10,    17,    20,    22,    25,    32,    34,    37,    40,    65,    68,    70,
            73,    80,    82,    85,    88,    97,   100,   102,   105,   128,   130,   133,   136,   145,   148,   160,
           165,   170,   257,   260,   262,   265,   272,   274,   277,   280,   289,   292,   320,   322,   325,   328,
@@ -3106,40 +3106,40 @@ void iq2xs_init_impl(enum ggml_type type) {
         42148, 42240, 42265, 42577, 43018, 43048, 43170, 43348, 43398, 43528, 43530, 43552, 43554, 43560, 43656, 43690,
     };
 
-    const int kmap_size = 43692;
+    ਅਚਲ ਪੂਰਨ kmap_ਮਾਪ = 43692;
     //const int nwant = type == GGML_TYPE_IQ1_S ? 3 : 2;
-    const int nwant = type == GGML_TYPE_IQ1_S || type == GGML_TYPE_IQ1_M ? 3 : type == GGML_TYPE_IQ2_S ? 1 : 2;
-    const uint16_t * kgrid = type == GGML_TYPE_IQ2_XXS ? kgrid_2bit_256 :
+    ਅਚਲ ਪੂਰਨ nwant = type == GGML_TYPE_IQ1_S || type == GGML_TYPE_IQ1_M ? 3 : type == GGML_TYPE_IQ2_S ? 1 : 2;
+    ਅਚਲ uint16_t * kgrid = type == GGML_TYPE_IQ2_XXS ? kgrid_2bit_256 :
                              type == GGML_TYPE_IQ2_XS  ? kgrid_2bit_512 :
                              type == GGML_TYPE_IQ1_S || type == GGML_TYPE_IQ1_M ? kgrid_1bit_2048 : kgrid_2bit_1024;
     uint64_t * kgrid_q2xs;
-    int      * kmap_q2xs;
+    ਪੂਰਨ      * kmap_q2xs;
     uint16_t * kneighbors_q2xs;
 
     //printf("================================================================= %s(grid_size = %d)\n", __func__, grid_size);
-    uint64_t * the_grid = (uint64_t *)malloc(grid_size*sizeof(uint64_t));
-    for (int k = 0; k < grid_size; ++k) {
+    uint64_t * the_grid = (uint64_t *)ਸਮ੍ਰਿਤੀ_ਦਿਓ(grid_ਮਾਪ*ਆਕਾਰ(uint64_t));
+    ਲਈ (ਪੂਰਨ k = 0; k < grid_ਮਾਪ; ++k) {
         int8_t * pos = (int8_t *)(the_grid + k);
-        for (int i = 0; i < 8; ++i) {
-            int l = (kgrid[k] >> 2*i) & 0x3;
+        ਲਈ (ਪੂਰਨ i = 0; i < 8; ++i) {
+            ਪੂਰਨ l = (kgrid[k] >> 2*i) & 0x3;
             pos[i] = 2*l + 1;
         }
     }
     kgrid_q2xs = the_grid;
-    iq2_data[gindex].grid = the_grid;
-    kmap_q2xs = (int *)malloc(kmap_size*sizeof(int));
-    iq2_data[gindex].map = kmap_q2xs;
-    for (int i = 0; i < kmap_size; ++i) kmap_q2xs[i] = -1;
+    iq2_ਅੰਕੜੇ[gindex].grid = the_grid;
+    kmap_q2xs = (ਪੂਰਨ *)ਸਮ੍ਰਿਤੀ_ਦਿਓ(kmap_ਮਾਪ*ਆਕਾਰ(ਪੂਰਨ));
+    iq2_ਅੰਕੜੇ[gindex].map = kmap_q2xs;
+    ਲਈ (ਪੂਰਨ i = 0; i < kmap_ਮਾਪ; ++i) kmap_q2xs[i] = -1;
     uint64_t aux64;
     uint8_t * aux8 = (uint8_t *)&aux64;
-    for (int i = 0; i < grid_size; ++i) {
+    ਲਈ (ਪੂਰਨ i = 0; i < grid_ਮਾਪ; ++i) {
         aux64 = kgrid_q2xs[i];
-        uint16_t index = 0;
-        for (int k=0; k<8; ++k) {
+        uint16_t ਸੂਚਕਾਂਕ = 0;
+        ਲਈ (ਪੂਰਨ k=0; k<8; ++k) {
             uint16_t q = (aux8[k] - 1)/2;
-            index |= (q << 2*k);
+            ਸੂਚਕਾਂਕ |= (q << 2*k);
         }
-        kmap_q2xs[index] = i;
+        kmap_q2xs[ਸੂਚਕਾਂਕ] = i;
     }
     // The neighbour search runs in three passes:
     //   1. Parallel: for each i, qsort and count its neighbours into n_per_i,
@@ -3148,157 +3148,157 @@ void iq2xs_init_impl(enum ggml_type type) {
     //      pre-assigned slice of kneighbors_q2xs to write into.
     //   3. Parallel: redo the qsort and write each i's neighbour list at
     //      offsets[i].
-    int * n_per_i = (int *)malloc(kmap_size*sizeof(int));
-    GGML_ASSERT(n_per_i);
-    int num_neighbors = 0, num_not_in_map = 0;
-#ifdef GGML_USE_OPENMP
-    #pragma omp parallel reduction(+:num_neighbors,num_not_in_map)
-#endif
+    ਪੂਰਨ * n_ਪ੍ਰਤੀ_i = (ਪੂਰਨ *)ਸਮ੍ਰਿਤੀ_ਦਿਓ(kmap_ਮਾਪ*ਆਕਾਰ(ਪੂਰਨ));
+    GGML_ASSERT(n_ਪ੍ਰਤੀ_i);
+    ਪੂਰਨ ਅੰਕ_neighbors = 0, ਅੰਕ_not_ਵਿੱਚ_map = 0;
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_USE_OPENMP
+    #ਹਦਾਇਤ omp parallel reduction(+:ਅੰਕ_neighbors,ਅੰਕ_not_ਵਿੱਚ_map)
+#ਜੇ_ਅੰਤ
     {
-        int * dist2 = (int *)malloc(2*grid_size*sizeof(int));
+        ਪੂਰਨ * dist2 = (ਪੂਰਨ *)ਸਮ੍ਰਿਤੀ_ਦਿਓ(2*grid_ਮਾਪ*ਆਕਾਰ(ਪੂਰਨ));
         GGML_ASSERT(dist2);
         int8_t pos[8];
-        int i;
-#ifdef GGML_USE_OPENMP
-        #pragma omp for schedule(dynamic, 64)
-#endif
-        for (i = 0; i < kmap_size; ++i) {
-            if (kmap_q2xs[i] >= 0) {
-                n_per_i[i] = 0;
-                continue;
+        ਪੂਰਨ i;
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_USE_OPENMP
+        #ਹਦਾਇਤ omp ਲਈ ਸਮਾਂ_ਸਾਰਣੀ(dynamic, 64)
+#ਜੇ_ਅੰਤ
+        ਲਈ (i = 0; i < kmap_ਮਾਪ; ++i) {
+            ਜੇ (kmap_q2xs[i] >= 0) {
+                n_ਪ੍ਰਤੀ_i[i] = 0;
+                ਜਾਰੀ;
             }
-            ++num_not_in_map;
-            for (int k = 0; k < 8; ++k) {
-                int l = (i >> 2*k) & 0x3;
+            ++ਅੰਕ_not_ਵਿੱਚ_map;
+            ਲਈ (ਪੂਰਨ k = 0; k < 8; ++k) {
+                ਪੂਰਨ l = (i >> 2*k) & 0x3;
                 pos[k] = 2*l + 1;
             }
-            for (int j = 0; j < grid_size; ++j) {
-                const int8_t * pg = (const int8_t *)(kgrid_q2xs + j);
-                int d2 = 0;
-                for (int k = 0; k < 8; ++k) d2 += (pg[k] - pos[k])*(pg[k] - pos[k]);
+            ਲਈ (ਪੂਰਨ j = 0; j < grid_ਮਾਪ; ++j) {
+                ਅਚਲ int8_t * pg = (ਅਚਲ int8_t *)(kgrid_q2xs + j);
+                ਪੂਰਨ d2 = 0;
+                ਲਈ (ਪੂਰਨ k = 0; k < 8; ++k) d2 += (pg[k] - pos[k])*(pg[k] - pos[k]);
                 dist2[2*j+0] = d2;
                 dist2[2*j+1] = j;
             }
-            qsort(dist2, grid_size, 2*sizeof(int), iq2_compare_func);
-            int n = 0; int d2 = dist2[0];
-            int nhave = 1;
-            for (int j = 0; j < grid_size; ++j) {
-                if (dist2[2*j] > d2) {
-                    if (nhave == nwant) break;
+            qsort(dist2, grid_ਮਾਪ, 2*ਆਕਾਰ(ਪੂਰਨ), iq2_compare_func);
+            ਪੂਰਨ n = 0; ਪੂਰਨ d2 = dist2[0];
+            ਪੂਰਨ nhave = 1;
+            ਲਈ (ਪੂਰਨ j = 0; j < grid_ਮਾਪ; ++j) {
+                ਜੇ (dist2[2*j] > d2) {
+                    ਜੇ (nhave == nwant) ਰੋਕੋ;
                     d2 = dist2[2*j];
                     ++nhave;
                 }
                 ++n;
             }
-            n_per_i[i] = n;
-            num_neighbors += n;
+            n_ਪ੍ਰਤੀ_i[i] = n;
+            ਅੰਕ_neighbors += n;
         }
-        free(dist2);
+        ਮੁਕਤ(dist2);
     }
     //printf("%s: %d neighbours in total\n", __func__, num_neighbors);
-    kneighbors_q2xs = (uint16_t *)malloc((num_neighbors + num_not_in_map)*sizeof(uint16_t));
-    iq2_data[gindex].neighbours = kneighbors_q2xs;
+    kneighbors_q2xs = (uint16_t *)ਸਮ੍ਰਿਤੀ_ਦਿਓ((ਅੰਕ_neighbors + ਅੰਕ_not_ਵਿੱਚ_map)*ਆਕਾਰ(uint16_t));
+    iq2_ਅੰਕੜੇ[gindex].neighbours = kneighbors_q2xs;
 
-    int * offsets = (int *)malloc(kmap_size*sizeof(int));
+    ਪੂਰਨ * offsets = (ਪੂਰਨ *)ਸਮ੍ਰਿਤੀ_ਦਿਓ(kmap_ਮਾਪ*ਆਕਾਰ(ਪੂਰਨ));
     GGML_ASSERT(offsets);
-    int counter = 0;
-    for (int i = 0; i < kmap_size; ++i) {
-        if (kmap_q2xs[i] >= 0) {
+    ਪੂਰਨ counter = 0;
+    ਲਈ (ਪੂਰਨ i = 0; i < kmap_ਮਾਪ; ++i) {
+        ਜੇ (kmap_q2xs[i] >= 0) {
             offsets[i] = -1;
-            continue;
+            ਜਾਰੀ;
         }
         offsets[i] = counter;
-        counter += 1 + n_per_i[i];
+        counter += 1 + n_ਪ੍ਰਤੀ_i[i];
     }
 
-#ifdef GGML_USE_OPENMP
-    #pragma omp parallel
-#endif
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_USE_OPENMP
+    #ਹਦਾਇਤ omp parallel
+#ਜੇ_ਅੰਤ
     {
-        int * dist2 = (int *)malloc(2*grid_size*sizeof(int));
+        ਪੂਰਨ * dist2 = (ਪੂਰਨ *)ਸਮ੍ਰਿਤੀ_ਦਿਓ(2*grid_ਮਾਪ*ਆਕਾਰ(ਪੂਰਨ));
         GGML_ASSERT(dist2);
         int8_t pos[8];
-        int i;
-#ifdef GGML_USE_OPENMP
-        #pragma omp for schedule(dynamic, 64)
-#endif
-        for (i = 0; i < kmap_size; ++i) {
-            if (kmap_q2xs[i] >= 0) continue;
-            for (int k = 0; k < 8; ++k) {
-                int l = (i >> 2*k) & 0x3;
+        ਪੂਰਨ i;
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_USE_OPENMP
+        #ਹਦਾਇਤ omp ਲਈ ਸਮਾਂ_ਸਾਰਣੀ(dynamic, 64)
+#ਜੇ_ਅੰਤ
+        ਲਈ (i = 0; i < kmap_ਮਾਪ; ++i) {
+            ਜੇ (kmap_q2xs[i] >= 0) ਜਾਰੀ;
+            ਲਈ (ਪੂਰਨ k = 0; k < 8; ++k) {
+                ਪੂਰਨ l = (i >> 2*k) & 0x3;
                 pos[k] = 2*l + 1;
             }
-            for (int j = 0; j < grid_size; ++j) {
-                const int8_t * pg = (const int8_t *)(kgrid_q2xs + j);
-                int d2 = 0;
-                for (int k = 0; k < 8; ++k) d2 += (pg[k] - pos[k])*(pg[k] - pos[k]);
+            ਲਈ (ਪੂਰਨ j = 0; j < grid_ਮਾਪ; ++j) {
+                ਅਚਲ int8_t * pg = (ਅਚਲ int8_t *)(kgrid_q2xs + j);
+                ਪੂਰਨ d2 = 0;
+                ਲਈ (ਪੂਰਨ k = 0; k < 8; ++k) d2 += (pg[k] - pos[k])*(pg[k] - pos[k]);
                 dist2[2*j+0] = d2;
                 dist2[2*j+1] = j;
             }
-            qsort(dist2, grid_size, 2*sizeof(int), iq2_compare_func);
-            int local_counter = offsets[i];
+            qsort(dist2, grid_ਮਾਪ, 2*ਆਕਾਰ(ਪੂਰਨ), iq2_compare_func);
+            ਪੂਰਨ local_counter = offsets[i];
             kmap_q2xs[i] = -(local_counter + 1);
-            int d2 = dist2[0];
-            uint16_t * start = &kneighbors_q2xs[local_counter++];
-            int n = 0, nhave = 1;
-            for (int j = 0; j < grid_size; ++j) {
-                if (dist2[2*j] > d2) {
-                    if (nhave == nwant) break;
+            ਪੂਰਨ d2 = dist2[0];
+            uint16_t * ਸ਼ੁਰੂ = &kneighbors_q2xs[local_counter++];
+            ਪੂਰਨ n = 0, nhave = 1;
+            ਲਈ (ਪੂਰਨ j = 0; j < grid_ਮਾਪ; ++j) {
+                ਜੇ (dist2[2*j] > d2) {
+                    ਜੇ (nhave == nwant) ਰੋਕੋ;
                     d2 = dist2[2*j];
                     ++nhave;
                 }
                 kneighbors_q2xs[local_counter++] = dist2[2*j+1];
                 ++n;
             }
-            *start = n;
+            *ਸ਼ੁਰੂ = n;
         }
-        free(dist2);
+        ਮੁਕਤ(dist2);
     }
-    free(offsets);
-    free(n_per_i);
+    ਮੁਕਤ(offsets);
+    ਮੁਕਤ(n_ਪ੍ਰਤੀ_i);
 }
 
-void iq2xs_free_impl(enum ggml_type type) {
+ਖਾਲੀ iq2xs_free_impl(ਗਿਣਤੀ ggml_type type) {
     GGML_ASSERT(type == GGML_TYPE_IQ2_XXS || type == GGML_TYPE_IQ2_XS || type == GGML_TYPE_IQ1_S || type == GGML_TYPE_IQ1_M || type == GGML_TYPE_IQ2_S);
-    const int gindex = iq2_data_index(type);
-    if (iq2_data[gindex].grid) {
-        free(iq2_data[gindex].grid);       iq2_data[gindex].grid = NULL;
-        free(iq2_data[gindex].map);        iq2_data[gindex].map  = NULL;
-        free(iq2_data[gindex].neighbours); iq2_data[gindex].neighbours = NULL;
+    ਅਚਲ ਪੂਰਨ gindex = iq2_ਅੰਕੜੇ_ਸੂਚਕਾਂਕ(type);
+    ਜੇ (iq2_ਅੰਕੜੇ[gindex].grid) {
+        ਮੁਕਤ(iq2_ਅੰਕੜੇ[gindex].grid);       iq2_ਅੰਕੜੇ[gindex].grid = ਨਿਰਾ;
+        ਮੁਕਤ(iq2_ਅੰਕੜੇ[gindex].map);        iq2_ਅੰਕੜੇ[gindex].map  = ਨਿਰਾ;
+        ਮੁਕਤ(iq2_ਅੰਕੜੇ[gindex].neighbours); iq2_ਅੰਕੜੇ[gindex].neighbours = ਨਿਰਾ;
     }
 }
 
-static int iq2_find_best_neighbour(const uint16_t * GGML_RESTRICT neighbours, const uint64_t * GGML_RESTRICT grid,
-        const float * GGML_RESTRICT xval, const float * GGML_RESTRICT weight, float scale, int8_t * GGML_RESTRICT L) {
-    int num_neighbors = neighbours[0];
-    GGML_ASSERT(num_neighbors > 0);
-    float best_d2 = FLT_MAX;
-    int grid_index = -1;
-    for (int j = 1; j <= num_neighbors; ++j) {
-        const int8_t * pg = (const int8_t *)(grid + neighbours[j]);
-        float d2 = 0;
-        for (int i = 0; i < 8; ++i) {
-            float q = pg[i];
-            float diff = scale*q - xval[i];
-            d2 += weight[i]*diff*diff;
+ਸਥਿਰ ਪੂਰਨ iq2_ਲੱਭੋ_ਉੱਤਮ_neighbour(ਅਚਲ uint16_t * GGML_RESTRICT neighbours, ਅਚਲ uint64_t * GGML_RESTRICT grid,
+        ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT xval, ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT ਭਾਰ, ਦਸ਼ਮਲਵ scale, int8_t * GGML_RESTRICT L) {
+    ਪੂਰਨ ਅੰਕ_neighbors = neighbours[0];
+    GGML_ASSERT(ਅੰਕ_neighbors > 0);
+    ਦਸ਼ਮਲਵ ਉੱਤਮ_d2 = FLT_MAX;
+    ਪੂਰਨ grid_ਸੂਚਕਾਂਕ = -1;
+    ਲਈ (ਪੂਰਨ j = 1; j <= ਅੰਕ_neighbors; ++j) {
+        ਅਚਲ int8_t * pg = (ਅਚਲ int8_t *)(grid + neighbours[j]);
+        ਦਸ਼ਮਲਵ d2 = 0;
+        ਲਈ (ਪੂਰਨ i = 0; i < 8; ++i) {
+            ਦਸ਼ਮਲਵ q = pg[i];
+            ਦਸ਼ਮਲਵ diff = scale*q - xval[i];
+            d2 += ਭਾਰ[i]*diff*diff;
         }
-        if (d2 < best_d2) {
-            best_d2 = d2; grid_index = neighbours[j];
+        ਜੇ (d2 < ਉੱਤਮ_d2) {
+            ਉੱਤਮ_d2 = d2; grid_ਸੂਚਕਾਂਕ = neighbours[j];
         }
     }
-    GGML_ASSERT(grid_index >= 0);
-    const int8_t * pg = (const int8_t *)(grid + grid_index);
-    for (int i = 0; i < 8; ++i) L[i] = (pg[i] - 1)/2;
-    return grid_index;
+    GGML_ASSERT(grid_ਸੂਚਕਾਂਕ >= 0);
+    ਅਚਲ int8_t * pg = (ਅਚਲ int8_t *)(grid + grid_ਸੂਚਕਾਂਕ);
+    ਲਈ (ਪੂਰਨ i = 0; i < 8; ++i) L[i] = (pg[i] - 1)/2;
+    ਵਾਪਸ grid_ਸੂਚਕਾਂਕ;
 }
 
-static void quantize_row_iq2_xxs_impl(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t n, const float * GGML_RESTRICT quant_weights) {
+ਸਥਿਰ ਖਾਲੀ quantize_ਪੰਕਤੀ_iq2_xxs_impl(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖਾਲੀ * GGML_RESTRICT vy, int64_t n, ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT quant_weights) {
 
-    const int gindex = iq2_data_index(GGML_TYPE_IQ2_XXS);
+    ਅਚਲ ਪੂਰਨ gindex = iq2_ਅੰਕੜੇ_ਸੂਚਕਾਂਕ(GGML_TYPE_IQ2_XXS);
 
-    const uint64_t * kgrid_q2xs      = iq2_data[gindex].grid;
-    const int      * kmap_q2xs       = iq2_data[gindex].map;
-    const uint16_t * kneighbors_q2xs = iq2_data[gindex].neighbours;
+    ਅਚਲ uint64_t * kgrid_q2xs      = iq2_ਅੰਕੜੇ[gindex].grid;
+    ਅਚਲ ਪੂਰਨ      * kmap_q2xs       = iq2_ਅੰਕੜੇ[gindex].map;
+    ਅਚਲ uint16_t * kneighbors_q2xs = iq2_ਅੰਕੜੇ[gindex].neighbours;
 
     GGML_ASSERT(quant_weights   && "missing quantization weights");
     GGML_ASSERT(kgrid_q2xs      && "forgot to call ggml_quantize_init()?");
@@ -3306,177 +3306,177 @@ static void quantize_row_iq2_xxs_impl(const float * GGML_RESTRICT x, void * GGML
     GGML_ASSERT(kneighbors_q2xs && "forgot to call ggml_quantize_init()?");
     GGML_ASSERT(n%QK_K == 0);
 
-    const int kMaxQ = 3;
+    ਅਚਲ ਪੂਰਨ kMaxQ = 3;
 
-    const int64_t nbl = n/QK_K;
+    ਅਚਲ int64_t nbl = n/QK_K;
 
-    block_iq2_xxs * y = vy;
+    ਖੰਡ_iq2_xxs * y = vy;
 
-    float scales[QK_K/32];
-    float weight[32];
-    float xval[32];
+    ਦਸ਼ਮਲਵ scales[QK_K/32];
+    ਦਸ਼ਮਲਵ ਭਾਰ[32];
+    ਦਸ਼ਮਲਵ xval[32];
     int8_t L[32];
     int8_t Laux[32];
-    float  waux[32];
-    uint8_t block_signs[4];
+    ਦਸ਼ਮਲਵ  waux[32];
+    uint8_t ਖੰਡ_signs[4];
     uint32_t q2[2*(QK_K/32)];
 
-    for (int ibl = 0; ibl < nbl; ++ibl) {
+    ਲਈ (ਪੂਰਨ ibl = 0; ibl < nbl; ++ibl) {
 
-        y[ibl].d = GGML_FP32_TO_FP16(0.f);
+        y[ibl].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(0.f);
         memset(q2, 0, QK_K/4);
 
-        float max_scale = 0;
+        ਦਸ਼ਮਲਵ max_scale = 0;
 
-        const float * xbl = x + QK_K*ibl;
-        float sumx2 = 0;
-        for (int i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
-        float sigma2 = sumx2/QK_K;
+        ਅਚਲ ਦਸ਼ਮਲਵ * xbl = x + QK_K*ibl;
+        ਦਸ਼ਮਲਵ sumx2 = 0;
+        ਲਈ (ਪੂਰਨ i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
+        ਦਸ਼ਮਲਵ sigma2 = sumx2/QK_K;
 
-        for (int ib = 0; ib < QK_K/32; ++ib) {
-            const float * xb = xbl + 32*ib;
-            const float * qw = quant_weights + QK_K*ibl + 32*ib;
-            for (int i = 0; i < 32; ++i) weight[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
-            for (int i = 0; i < 32; ++i) waux[i] = sqrtf(weight[i]);
-            for (int k = 0; k < 4; ++k) {
-                int nflip = 0;
+        ਲਈ (ਪੂਰਨ ib = 0; ib < QK_K/32; ++ib) {
+            ਅਚਲ ਦਸ਼ਮਲਵ * xb = xbl + 32*ib;
+            ਅਚਲ ਦਸ਼ਮਲਵ * qw = quant_weights + QK_K*ibl + 32*ib;
+            ਲਈ (ਪੂਰਨ i = 0; i < 32; ++i) ਭਾਰ[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
+            ਲਈ (ਪੂਰਨ i = 0; i < 32; ++i) waux[i] = sqrtf(ਭਾਰ[i]);
+            ਲਈ (ਪੂਰਨ k = 0; k < 4; ++k) {
+                ਪੂਰਨ nflip = 0;
                 uint8_t s = 0;
-                for (int i = 0; i < 8; ++i) {
-                    if (xb[8*k + i] >= 0) xval[8*k + i] = xb[8*k + i];
-                    else {
+                ਲਈ (ਪੂਰਨ i = 0; i < 8; ++i) {
+                    ਜੇ (xb[8*k + i] >= 0) xval[8*k + i] = xb[8*k + i];
+                    ਨਹੀਂਤਾਂ {
                         xval[8*k + i] = -xb[8*k + i]; ++nflip; s |= (1 << i);
                     }
                 }
-                if (nflip%2) {
-                    int imin = 0; float min = weight[8*k+imin]*xb[8*k+imin]*xb[8*k+imin];
-                    for (int i = 1; i < 8; ++i) {
-                        float ax = weight[8*k+i]*xb[8*k+i]*xb[8*k+i];
-                        if (ax < min) {
+                ਜੇ (nflip%2) {
+                    ਪੂਰਨ imin = 0; ਦਸ਼ਮਲਵ min = ਭਾਰ[8*k+imin]*xb[8*k+imin]*xb[8*k+imin];
+                    ਲਈ (ਪੂਰਨ i = 1; i < 8; ++i) {
+                        ਦਸ਼ਮਲਵ ax = ਭਾਰ[8*k+i]*xb[8*k+i]*xb[8*k+i];
+                        ਜੇ (ax < min) {
                             min = ax; imin = i;
                         }
                     }
                     xval[8*k+imin] = -xval[8*k+imin];
                     s ^= (1 << imin);
                 }
-                block_signs[k] = s & 127;
+                ਖੰਡ_signs[k] = s & 127;
             }
-            float max = xval[0];
-            for (int i = 1; i < 32; ++i) max = MAX(max, xval[i]);
-            if (max < GROUP_MAX_EPS) {
+            ਦਸ਼ਮਲਵ max = xval[0];
+            ਲਈ (ਪੂਰਨ i = 1; i < 32; ++i) max = MAX(max, xval[i]);
+            ਜੇ (max < ਸਮੂਹ_MAX_EPS) {
                 scales[ib] = 0;
                 memset(L, 0, 32);
-                continue;
+                ਜਾਰੀ;
             }
-            float scale = make_qp_quants(32, kMaxQ+1, xval, (uint8_t*)L, weight);
-            float eff_max = scale*kMaxQ;
-            if (eff_max <= 0) {
+            ਦਸ਼ਮਲਵ scale = make_qp_quants(32, kMaxQ+1, xval, (uint8_t*)L, ਭਾਰ);
+            ਦਸ਼ਮਲਵ eff_max = scale*kMaxQ;
+            ਜੇ (eff_max <= 0) {
                 scales[ib] = 0;
                 memset(L, 0, 32);
-                continue;
+                ਜਾਰੀ;
             }
-            float best = 0;
-            for (int is = -6; is <= 6; ++is) {
-                float id = (2*kMaxQ-1+is*0.1f)/eff_max;
-                float this_scale = 1/id;
-                for (int k = 0; k < 4; ++k) {
-                    for (int i = 0; i < 8; ++i) {
-                        int l = nearest_int(0.5f*(id*xval[8*k+i]-1));
+            ਦਸ਼ਮਲਵ ਉੱਤਮ = 0;
+            ਲਈ (ਪੂਰਨ is = -6; is <= 6; ++is) {
+                ਦਸ਼ਮਲਵ id = (2*kMaxQ-1+is*0.1f)/eff_max;
+                ਦਸ਼ਮਲਵ this_scale = 1/id;
+                ਲਈ (ਪੂਰਨ k = 0; k < 4; ++k) {
+                    ਲਈ (ਪੂਰਨ i = 0; i < 8; ++i) {
+                        ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(0.5f*(id*xval[8*k+i]-1));
                         Laux[8*k+i] = MAX(0, MIN(kMaxQ-1, l));
                     }
                     uint16_t u = 0;
-                    for (int i = 0; i < 8; ++i) u |= (Laux[8*k+i] << 2*i);
-                    int grid_index = kmap_q2xs[u];
-                    if (grid_index < 0) {
-                        const uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
-                        grid_index = iq2_find_best_neighbour(neighbours, kgrid_q2xs, xval + 8*k, waux + 8*k, this_scale, Laux + 8*k);
+                    ਲਈ (ਪੂਰਨ i = 0; i < 8; ++i) u |= (Laux[8*k+i] << 2*i);
+                    ਪੂਰਨ grid_ਸੂਚਕਾਂਕ = kmap_q2xs[u];
+                    ਜੇ (grid_ਸੂਚਕਾਂਕ < 0) {
+                        ਅਚਲ uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
+                        grid_ਸੂਚਕਾਂਕ = iq2_ਲੱਭੋ_ਉੱਤਮ_neighbour(neighbours, kgrid_q2xs, xval + 8*k, waux + 8*k, this_scale, Laux + 8*k);
                     }
                 }
-                float sumqx = 0, sumq2 = 0;
-                for (int i = 0; i < 32; ++i) {
-                    float w = weight[i];
-                    float q = 2*Laux[i] + 1;
+                ਦਸ਼ਮਲਵ sumqx = 0, sumq2 = 0;
+                ਲਈ (ਪੂਰਨ i = 0; i < 32; ++i) {
+                    ਦਸ਼ਮਲਵ w = ਭਾਰ[i];
+                    ਦਸ਼ਮਲਵ q = 2*Laux[i] + 1;
                     sumqx += w*xval[i]*q;
                     sumq2 += w*q*q;
                 }
-                if (sumq2 > 0 && sumqx*sumqx > best*sumq2) {
-                    scale = sumqx/sumq2; best = scale*sumqx;
-                    memcpy(L, Laux, 32);
+                ਜੇ (sumq2 > 0 && sumqx*sumqx > ਉੱਤਮ*sumq2) {
+                    scale = sumqx/sumq2; ਉੱਤਮ = scale*sumqx;
+                    ਸਮ੍ਰਿਤੀ_ਨਕਲ(L, Laux, 32);
                 }
             }
-            if (scale > 0) {
-                float id = 1/scale;
-                for (int k = 0; k < 4; ++k) {
+            ਜੇ (scale > 0) {
+                ਦਸ਼ਮਲਵ id = 1/scale;
+                ਲਈ (ਪੂਰਨ k = 0; k < 4; ++k) {
                     uint16_t u = 0;
-                    for (int i = 0; i < 8; ++i) {
-                        int l = nearest_int(0.5f*(id*xval[8*k+i]-1));
+                    ਲਈ (ਪੂਰਨ i = 0; i < 8; ++i) {
+                        ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(0.5f*(id*xval[8*k+i]-1));
                         l = MAX(0, MIN(kMaxQ-1, l));
                         u |= (l << 2*i);
                     }
-                    int grid_index = kmap_q2xs[u];
-                    if (grid_index < 0) {
-                        const uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
-                        grid_index = iq2_find_best_neighbour(neighbours, kgrid_q2xs, xval + 8*k, waux + 8*k, scale, L + 8*k);
+                    ਪੂਰਨ grid_ਸੂਚਕਾਂਕ = kmap_q2xs[u];
+                    ਜੇ (grid_ਸੂਚਕਾਂਕ < 0) {
+                        ਅਚਲ uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
+                        grid_ਸੂਚਕਾਂਕ = iq2_ਲੱਭੋ_ਉੱਤਮ_neighbour(neighbours, kgrid_q2xs, xval + 8*k, waux + 8*k, scale, L + 8*k);
                     }
-                    const int8_t * pg = (const int8_t *)(kgrid_q2xs + grid_index);
-                    for (int i = 0; i < 8; ++i) L[8*k+i] = (pg[i] - 1)/2;
+                    ਅਚਲ int8_t * pg = (ਅਚਲ int8_t *)(kgrid_q2xs + grid_ਸੂਚਕਾਂਕ);
+                    ਲਈ (ਪੂਰਨ i = 0; i < 8; ++i) L[8*k+i] = (pg[i] - 1)/2;
                 }
-                float sumqx = 0, sumq2 = 0;
-                for (int i = 0; i < 32; ++i) {
-                    float w = weight[i];
-                    float q = 2*L[i] + 1;
+                ਦਸ਼ਮਲਵ sumqx = 0, sumq2 = 0;
+                ਲਈ (ਪੂਰਨ i = 0; i < 32; ++i) {
+                    ਦਸ਼ਮਲਵ w = ਭਾਰ[i];
+                    ਦਸ਼ਮਲਵ q = 2*L[i] + 1;
                     sumqx += w*xval[i]*q;
                     sumq2 += w*q*q;
                 }
-                if (sumq2 > 0) scale = sumqx/sumq2;
+                ਜੇ (sumq2 > 0) scale = sumqx/sumq2;
             }
-            if (scale < 0) {
+            ਜੇ (scale < 0) {
                 // This should never happen, but just in case, flip scale so that it is positive (we use uint's to encode the scale)
                 // and correspondingly flip quant signs.
                 scale = -scale;
-                for (int k = 0; k < 4; ++k) block_signs[k] = (~block_signs[k]) & 127;
+                ਲਈ (ਪੂਰਨ k = 0; k < 4; ++k) ਖੰਡ_signs[k] = (~ਖੰਡ_signs[k]) & 127;
             }
-            for (int k = 0; k < 4; ++k) {
+            ਲਈ (ਪੂਰਨ k = 0; k < 4; ++k) {
                 uint16_t u = 0;
-                for (int i = 0; i < 8; ++i) u |= (L[8*k+i] << 2*i);
-                int grid_index = kmap_q2xs[u];
-                if (grid_index < 0) {
-                    printf("Oops: found point %u not on grid:", u);
-                    for (int i = 0; i < 8; ++i) printf(" %d", L[8*k+i]);
-                    printf("\n");
+                ਲਈ (ਪੂਰਨ i = 0; i < 8; ++i) u |= (L[8*k+i] << 2*i);
+                ਪੂਰਨ grid_ਸੂਚਕਾਂਕ = kmap_q2xs[u];
+                ਜੇ (grid_ਸੂਚਕਾਂਕ < 0) {
+                    ਲਿਖੋ("Oops: found point %u not on grid:", u);
+                    ਲਈ (ਪੂਰਨ i = 0; i < 8; ++i) ਲਿਖੋ(" %d", L[8*k+i]);
+                    ਲਿਖੋ("\n");
                     GGML_ABORT("fatal error");
                 }
-                q2[2*ib+0] |= ((uint32_t) grid_index << 8*k);
-                q2[2*ib+1] |= (block_signs[k] << 7*k);
+                q2[2*ib+0] |= ((uint32_t) grid_ਸੂਚਕਾਂਕ << 8*k);
+                q2[2*ib+1] |= (ਖੰਡ_signs[k] << 7*k);
             }
             GGML_ASSERT(scale >= 0);
             scales[ib] = scale;
             max_scale = MAX(max_scale, scale);
         }
 
-        if (!max_scale) {
+        ਜੇ (!max_scale) {
             memset(y[ibl].qs, 0, QK_K/4);
-            continue;
+            ਜਾਰੀ;
         }
 
-        float d = max_scale/31;
-        y[ibl].d = GGML_FP32_TO_FP16(d);
-        float id = 1/d;
-        for (int ib = 0; ib < QK_K/32; ++ib) {
-            int l = nearest_int(0.5f*(id*scales[ib]-1));
+        ਦਸ਼ਮਲਵ d = max_scale/31;
+        y[ibl].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(d);
+        ਦਸ਼ਮਲਵ id = 1/d;
+        ਲਈ (ਪੂਰਨ ib = 0; ib < QK_K/32; ++ib) {
+            ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(0.5f*(id*scales[ib]-1));
             l = MAX(0, MIN(15, l));
             q2[2*ib+1] |= ((uint32_t)l << 28);
         }
-        memcpy(y[ibl].qs, q2, QK_K/4);
+        ਸਮ੍ਰਿਤੀ_ਨਕਲ(y[ibl].qs, q2, QK_K/4);
     }
 }
 
-static void quantize_row_iq2_xs_impl(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t n, const float * GGML_RESTRICT quant_weights) {
+ਸਥਿਰ ਖਾਲੀ quantize_ਪੰਕਤੀ_iq2_xs_impl(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖਾਲੀ * GGML_RESTRICT vy, int64_t n, ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT quant_weights) {
 
-    const int gindex = iq2_data_index(GGML_TYPE_IQ2_XS);
+    ਅਚਲ ਪੂਰਨ gindex = iq2_ਅੰਕੜੇ_ਸੂਚਕਾਂਕ(GGML_TYPE_IQ2_XS);
 
-    const uint64_t * kgrid_q2xs      = iq2_data[gindex].grid;
-    const int      * kmap_q2xs       = iq2_data[gindex].map;
-    const uint16_t * kneighbors_q2xs = iq2_data[gindex].neighbours;
+    ਅਚਲ uint64_t * kgrid_q2xs      = iq2_ਅੰਕੜੇ[gindex].grid;
+    ਅਚਲ ਪੂਰਨ      * kmap_q2xs       = iq2_ਅੰਕੜੇ[gindex].map;
+    ਅਚਲ uint16_t * kneighbors_q2xs = iq2_ਅੰਕੜੇ[gindex].neighbours;
 
     GGML_ASSERT(quant_weights   && "missing quantization weights");
     GGML_ASSERT(kmap_q2xs       && "forgot to call ggml_quantize_init()?");
@@ -3484,229 +3484,229 @@ static void quantize_row_iq2_xs_impl(const float * GGML_RESTRICT x, void * GGML_
     GGML_ASSERT(kneighbors_q2xs && "forgot to call ggml_quantize_init()?");
     GGML_ASSERT(n%QK_K == 0);
 
-    const int kMaxQ = 3;
+    ਅਚਲ ਪੂਰਨ kMaxQ = 3;
 
-    const int64_t nbl = n/QK_K;
+    ਅਚਲ int64_t nbl = n/QK_K;
 
-    block_iq2_xs * y = vy;
+    ਖੰਡ_iq2_xs * y = vy;
 
-    float scales[QK_K/16];
-    float weight[16];
-    float xval[16];
+    ਦਸ਼ਮਲਵ scales[QK_K/16];
+    ਦਸ਼ਮਲਵ ਭਾਰ[16];
+    ਦਸ਼ਮਲਵ xval[16];
     int8_t L[16];
     int8_t Laux[16];
-    float  waux[16];
+    ਦਸ਼ਮਲਵ  waux[16];
     bool   is_on_grid[2];
     bool   is_on_grid_aux[2];
-    uint8_t block_signs[2];
+    uint8_t ਖੰਡ_signs[2];
     uint16_t q2[2*(QK_K/16)];
 
-    for (int ibl = 0; ibl < nbl; ++ibl) {
+    ਲਈ (ਪੂਰਨ ibl = 0; ibl < nbl; ++ibl) {
 
-        y[ibl].d = GGML_FP32_TO_FP16(0.f);
+        y[ibl].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(0.f);
         memset(q2, 0, QK_K/4);
         memset(y[ibl].scales, 0, QK_K/32);
 
-        float max_scale = 0;
+        ਦਸ਼ਮਲਵ max_scale = 0;
 
-        const float * xbl = x + QK_K*ibl;
-        float sumx2 = 0;
-        for (int i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
-        float sigma2 = sumx2/QK_K;
+        ਅਚਲ ਦਸ਼ਮਲਵ * xbl = x + QK_K*ibl;
+        ਦਸ਼ਮਲਵ sumx2 = 0;
+        ਲਈ (ਪੂਰਨ i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
+        ਦਸ਼ਮਲਵ sigma2 = sumx2/QK_K;
 
-        for (int ib = 0; ib < QK_K/16; ++ib) {
-            const float * xb = xbl + 16*ib;
-            const float * qw = quant_weights + QK_K*ibl + 16*ib;
-            for (int i = 0; i < 16; ++i) weight[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
-            for (int i = 0; i < 16; ++i) waux[i] = sqrtf(weight[i]);
-            for (int k = 0; k < 2; ++k) {
-                int nflip = 0;
+        ਲਈ (ਪੂਰਨ ib = 0; ib < QK_K/16; ++ib) {
+            ਅਚਲ ਦਸ਼ਮਲਵ * xb = xbl + 16*ib;
+            ਅਚਲ ਦਸ਼ਮਲਵ * qw = quant_weights + QK_K*ibl + 16*ib;
+            ਲਈ (ਪੂਰਨ i = 0; i < 16; ++i) ਭਾਰ[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
+            ਲਈ (ਪੂਰਨ i = 0; i < 16; ++i) waux[i] = sqrtf(ਭਾਰ[i]);
+            ਲਈ (ਪੂਰਨ k = 0; k < 2; ++k) {
+                ਪੂਰਨ nflip = 0;
                 uint8_t s = 0;
-                for (int i = 0; i < 8; ++i) {
-                    if (xb[8*k + i] >= 0) xval[8*k + i] = xb[8*k + i];
-                    else {
+                ਲਈ (ਪੂਰਨ i = 0; i < 8; ++i) {
+                    ਜੇ (xb[8*k + i] >= 0) xval[8*k + i] = xb[8*k + i];
+                    ਨਹੀਂਤਾਂ {
                         xval[8*k + i] = -xb[8*k + i]; ++nflip; s |= (1 << i);
                     }
                 }
-                if (nflip%2) {
-                    int imin = 0; float min = weight[8*k+imin]*xb[8*k+imin]*xb[8*k+imin];
-                    for (int i = 1; i < 8; ++i) {
-                        float ax = weight[8*k+i]*xb[8*k+i]*xb[8*k+i];
-                        if (ax < min) {
+                ਜੇ (nflip%2) {
+                    ਪੂਰਨ imin = 0; ਦਸ਼ਮਲਵ min = ਭਾਰ[8*k+imin]*xb[8*k+imin]*xb[8*k+imin];
+                    ਲਈ (ਪੂਰਨ i = 1; i < 8; ++i) {
+                        ਦਸ਼ਮਲਵ ax = ਭਾਰ[8*k+i]*xb[8*k+i]*xb[8*k+i];
+                        ਜੇ (ax < min) {
                             min = ax; imin = i;
                         }
                     }
                     xval[8*k+imin] = -xval[8*k+imin];
                     s ^= (1 << imin);
                 }
-                block_signs[k] = s & 127;
+                ਖੰਡ_signs[k] = s & 127;
             }
-            float max = xval[0];
-            for (int i = 1; i < 16; ++i) max = MAX(max, xval[i]);
+            ਦਸ਼ਮਲਵ max = xval[0];
+            ਲਈ (ਪੂਰਨ i = 1; i < 16; ++i) max = MAX(max, xval[i]);
             memset(L, 0, 16);
-            if (max < GROUP_MAX_EPS) {
+            ਜੇ (max < ਸਮੂਹ_MAX_EPS) {
                 scales[ib] = 0;
-                continue;
+                ਜਾਰੀ;
             }
-            float best = 0;
-            float scale = max/(2*kMaxQ-1);
+            ਦਸ਼ਮਲਵ ਉੱਤਮ = 0;
+            ਦਸ਼ਮਲਵ scale = max/(2*kMaxQ-1);
             is_on_grid[0] = is_on_grid[1] = true;
-            for (int is = -9; is <= 9; ++is) {
-                float id = (2*kMaxQ-1+is*0.1f)/max;
-                float this_scale = 1/id;
-                for (int k = 0; k < 2; ++k) {
-                    for (int i = 0; i < 8; ++i) {
-                        int l = nearest_int(0.5f*(id*xval[8*k+i]-1));
+            ਲਈ (ਪੂਰਨ is = -9; is <= 9; ++is) {
+                ਦਸ਼ਮਲਵ id = (2*kMaxQ-1+is*0.1f)/max;
+                ਦਸ਼ਮਲਵ this_scale = 1/id;
+                ਲਈ (ਪੂਰਨ k = 0; k < 2; ++k) {
+                    ਲਈ (ਪੂਰਨ i = 0; i < 8; ++i) {
+                        ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(0.5f*(id*xval[8*k+i]-1));
                         Laux[8*k+i] = MAX(0, MIN(kMaxQ-1, l));
                     }
                     uint16_t u = 0;
-                    for (int i = 0; i < 8; ++i) u |= (Laux[8*k+i] << 2*i);
-                    int grid_index = kmap_q2xs[u];
+                    ਲਈ (ਪੂਰਨ i = 0; i < 8; ++i) u |= (Laux[8*k+i] << 2*i);
+                    ਪੂਰਨ grid_ਸੂਚਕਾਂਕ = kmap_q2xs[u];
                     is_on_grid_aux[k] = true;
-                    if (grid_index < 0) {
+                    ਜੇ (grid_ਸੂਚਕਾਂਕ < 0) {
                         is_on_grid_aux[k] = false;
-                        const uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
-                        grid_index = iq2_find_best_neighbour(neighbours, kgrid_q2xs, xval + 8*k, waux + 8*k, this_scale, Laux + 8*k);
+                        ਅਚਲ uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
+                        grid_ਸੂਚਕਾਂਕ = iq2_ਲੱਭੋ_ਉੱਤਮ_neighbour(neighbours, kgrid_q2xs, xval + 8*k, waux + 8*k, this_scale, Laux + 8*k);
                     }
                 }
-                float sumqx = 0, sumq2 = 0;
-                for (int i = 0; i < 16; ++i) {
-                    float w = weight[i];
-                    float q = 2*Laux[i] + 1;
+                ਦਸ਼ਮਲਵ sumqx = 0, sumq2 = 0;
+                ਲਈ (ਪੂਰਨ i = 0; i < 16; ++i) {
+                    ਦਸ਼ਮਲਵ w = ਭਾਰ[i];
+                    ਦਸ਼ਮਲਵ q = 2*Laux[i] + 1;
                     sumqx += w*xval[i]*q;
                     sumq2 += w*q*q;
                 }
-                if (sumq2 > 0 && sumqx*sumqx > best*sumq2) {
-                    scale = sumqx/sumq2; best = scale*sumqx;
-                    for (int i = 0; i < 16; ++i) L[i] = Laux[i];
-                    for (int k = 0; k <  2; ++k) is_on_grid[k] = is_on_grid_aux[k];
+                ਜੇ (sumq2 > 0 && sumqx*sumqx > ਉੱਤਮ*sumq2) {
+                    scale = sumqx/sumq2; ਉੱਤਮ = scale*sumqx;
+                    ਲਈ (ਪੂਰਨ i = 0; i < 16; ++i) L[i] = Laux[i];
+                    ਲਈ (ਪੂਰਨ k = 0; k <  2; ++k) is_on_grid[k] = is_on_grid_aux[k];
                 }
             }
-            int n_not_ongrid = 0;
-            for (int k = 0; k < 2; ++k) if (!is_on_grid[k]) ++n_not_ongrid;
-            if (n_not_ongrid > 0 && scale > 0) {
-                float id = 1/scale;
-                for (int k = 0; k < 2; ++k) {
-                    if (is_on_grid[k]) continue;
+            ਪੂਰਨ n_not_ongrid = 0;
+            ਲਈ (ਪੂਰਨ k = 0; k < 2; ++k) ਜੇ (!is_on_grid[k]) ++n_not_ongrid;
+            ਜੇ (n_not_ongrid > 0 && scale > 0) {
+                ਦਸ਼ਮਲਵ id = 1/scale;
+                ਲਈ (ਪੂਰਨ k = 0; k < 2; ++k) {
+                    ਜੇ (is_on_grid[k]) ਜਾਰੀ;
                     uint16_t u = 0;
-                    for (int i = 0; i < 8; ++i) {
-                        int l = nearest_int(0.5f*(id*xval[8*k+i]-1));
+                    ਲਈ (ਪੂਰਨ i = 0; i < 8; ++i) {
+                        ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(0.5f*(id*xval[8*k+i]-1));
                         l = MAX(0, MIN(kMaxQ-1, l));
                         u |= (l << 2*i);
                         L[8*k + i] = l;
                     }
-                    int grid_index = kmap_q2xs[u];
-                    if (grid_index < 0) {
-                        const uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
-                        grid_index = iq2_find_best_neighbour(neighbours, kgrid_q2xs, xval + 8*k, waux + 8*k, scale, L + 8*k);
+                    ਪੂਰਨ grid_ਸੂਚਕਾਂਕ = kmap_q2xs[u];
+                    ਜੇ (grid_ਸੂਚਕਾਂਕ < 0) {
+                        ਅਚਲ uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
+                        grid_ਸੂਚਕਾਂਕ = iq2_ਲੱਭੋ_ਉੱਤਮ_neighbour(neighbours, kgrid_q2xs, xval + 8*k, waux + 8*k, scale, L + 8*k);
                     }
                 }
-                float sumqx = 0, sumq2 = 0;
-                for (int i = 0; i < 16; ++i) {
-                    float w = weight[i];
-                    float q = 2*L[i] + 1;
+                ਦਸ਼ਮਲਵ sumqx = 0, sumq2 = 0;
+                ਲਈ (ਪੂਰਨ i = 0; i < 16; ++i) {
+                    ਦਸ਼ਮਲਵ w = ਭਾਰ[i];
+                    ਦਸ਼ਮਲਵ q = 2*L[i] + 1;
                     sumqx += w*xval[i]*q;
                     sumq2 += w*q*q;
                 }
-                if (sumq2 > 0) scale = sumqx/sumq2;
+                ਜੇ (sumq2 > 0) scale = sumqx/sumq2;
             }
-            if (scale < 0) {
+            ਜੇ (scale < 0) {
                 scale = -scale;
-                for (int k = 0; k < 2; ++k) block_signs[k] = (~block_signs[k]) & 127;
+                ਲਈ (ਪੂਰਨ k = 0; k < 2; ++k) ਖੰਡ_signs[k] = (~ਖੰਡ_signs[k]) & 127;
             }
-            for (int k = 0; k < 2; ++k) {
+            ਲਈ (ਪੂਰਨ k = 0; k < 2; ++k) {
                 uint16_t u = 0;
-                for (int i = 0; i < 8; ++i) u |= (L[8*k+i] << 2*i);
-                int grid_index = kmap_q2xs[u];
-                if (grid_index < 0) {
-                    printf("Oops: found point %u not on grid:", u);
-                    for (int i = 0; i < 8; ++i) printf(" %d", L[8*k+i]);
-                    printf("\n");
+                ਲਈ (ਪੂਰਨ i = 0; i < 8; ++i) u |= (L[8*k+i] << 2*i);
+                ਪੂਰਨ grid_ਸੂਚਕਾਂਕ = kmap_q2xs[u];
+                ਜੇ (grid_ਸੂਚਕਾਂਕ < 0) {
+                    ਲਿਖੋ("Oops: found point %u not on grid:", u);
+                    ਲਈ (ਪੂਰਨ i = 0; i < 8; ++i) ਲਿਖੋ(" %d", L[8*k+i]);
+                    ਲਿਖੋ("\n");
                     GGML_ABORT("fatal error");
                 }
-                q2[2*ib+k] = grid_index | (block_signs[k] << 9);
+                q2[2*ib+k] = grid_ਸੂਚਕਾਂਕ | (ਖੰਡ_signs[k] << 9);
             }
             GGML_ASSERT(scale >= 0);
             scales[ib] = scale;
             max_scale = MAX(max_scale, scale);
         }
 
-        if (!max_scale) {
+        ਜੇ (!max_scale) {
             memset(y[ibl].qs, 0, QK_K/4);
-            continue;
+            ਜਾਰੀ;
         }
 
-        float d = max_scale/31;
-        y[ibl].d = GGML_FP32_TO_FP16(d);
-        float id = 1/d;
-        for (int ib = 0; ib < QK_K/16; ++ib) {
-            int l = nearest_int(0.5f*(id*scales[ib]-1));
+        ਦਸ਼ਮਲਵ d = max_scale/31;
+        y[ibl].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(d);
+        ਦਸ਼ਮਲਵ id = 1/d;
+        ਲਈ (ਪੂਰਨ ib = 0; ib < QK_K/16; ++ib) {
+            ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(0.5f*(id*scales[ib]-1));
             l = MAX(0, MIN(15, l));
-            if (ib%2 == 0) y[ibl].scales[ib/2] = l;
-            else y[ibl].scales[ib/2] |= (l << 4);
+            ਜੇ (ib%2 == 0) y[ibl].scales[ib/2] = l;
+            ਨਹੀਂਤਾਂ y[ibl].scales[ib/2] |= (l << 4);
         }
-        memcpy(y[ibl].qs, q2, QK_K/4);
+        ਸਮ੍ਰਿਤੀ_ਨਕਲ(y[ibl].qs, q2, QK_K/4);
 
     }
 }
 
-size_t quantize_iq2_xxs(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    GGML_ASSERT(n_per_row%QK_K == 0);
-    int64_t nblock = n_per_row/QK_K;
-    char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
-        quantize_row_iq2_xxs_impl(src, qrow, n_per_row, quant_weights);
-        src += n_per_row;
-        qrow += nblock*sizeof(block_iq2_xxs);
+size_t quantize_iq2_xxs(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT src, ਖਾਲੀ * GGML_RESTRICT dst, int64_t nrow, int64_t n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, ਅਚਲ ਦਸ਼ਮਲਵ * quant_weights) {
+    GGML_ASSERT(n_ਪ੍ਰਤੀ_ਪੰਕਤੀ%QK_K == 0);
+    int64_t nblock = n_ਪ੍ਰਤੀ_ਪੰਕਤੀ/QK_K;
+    ਅੱਖਰ * qrow = (ਅੱਖਰ *)dst;
+    ਲਈ (int64_t ਪੰਕਤੀ = 0; ਪੰਕਤੀ < nrow; ++ਪੰਕਤੀ) {
+        quantize_ਪੰਕਤੀ_iq2_xxs_impl(src, qrow, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, quant_weights);
+        src += n_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+        qrow += nblock*ਆਕਾਰ(ਖੰਡ_iq2_xxs);
     }
-    return nrow * nblock * sizeof(block_iq2_xxs);
+    ਵਾਪਸ nrow * nblock * ਆਕਾਰ(ਖੰਡ_iq2_xxs);
 }
 
-size_t quantize_iq2_xs(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    GGML_ASSERT(n_per_row%QK_K == 0);
-    int64_t nblock = n_per_row/QK_K;
-    char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
-        quantize_row_iq2_xs_impl(src, qrow, n_per_row, quant_weights);
-        src += n_per_row;
-        qrow += nblock*sizeof(block_iq2_xs);
+size_t quantize_iq2_xs(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT src, ਖਾਲੀ * GGML_RESTRICT dst, int64_t nrow, int64_t n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, ਅਚਲ ਦਸ਼ਮਲਵ * quant_weights) {
+    GGML_ASSERT(n_ਪ੍ਰਤੀ_ਪੰਕਤੀ%QK_K == 0);
+    int64_t nblock = n_ਪ੍ਰਤੀ_ਪੰਕਤੀ/QK_K;
+    ਅੱਖਰ * qrow = (ਅੱਖਰ *)dst;
+    ਲਈ (int64_t ਪੰਕਤੀ = 0; ਪੰਕਤੀ < nrow; ++ਪੰਕਤੀ) {
+        quantize_ਪੰਕਤੀ_iq2_xs_impl(src, qrow, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, quant_weights);
+        src += n_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+        qrow += nblock*ਆਕਾਰ(ਖੰਡ_iq2_xs);
     }
-    return nrow * nblock * sizeof(block_iq2_xs);
+    ਵਾਪਸ nrow * nblock * ਆਕਾਰ(ਖੰਡ_iq2_xs);
 }
 
 //
 // ============================================= 3-bit using D4 lattice
 //
 
-typedef struct {
+ਕਿਸਮਪਰਿਭਾਸ਼ਾ ਬਣਤਰ {
     uint32_t * grid;
-    int      * map;
+    ਪੂਰਨ      * map;
     uint16_t * neighbours;
-} iq3_entry_t;
+} iq3_ਇੰਦਰਾਜ_t;
 
-static iq3_entry_t iq3_data[2] = {
-    {NULL, NULL, NULL},
-    {NULL, NULL, NULL},
+ਸਥਿਰ iq3_ਇੰਦਰਾਜ_t iq3_ਅੰਕੜੇ[2] = {
+    {ਨਿਰਾ, ਨਿਰਾ, ਨਿਰਾ},
+    {ਨਿਰਾ, ਨਿਰਾ, ਨਿਰਾ},
 };
 
-static inline int iq3_data_index(int grid_size) {
-    (void)grid_size;
-    GGML_ASSERT(grid_size == 256 || grid_size == 512);
-    return grid_size == 256 ? 0 : 1;
+ਸਥਿਰ ਸਤਰਅੰਦਰ ਪੂਰਨ iq3_ਅੰਕੜੇ_ਸੂਚਕਾਂਕ(ਪੂਰਨ grid_ਮਾਪ) {
+    (ਖਾਲੀ)grid_ਮਾਪ;
+    GGML_ASSERT(grid_ਮਾਪ == 256 || grid_ਮਾਪ == 512);
+    ਵਾਪਸ grid_ਮਾਪ == 256 ? 0 : 1;
 }
 
-static int iq3_compare_func(const void * left, const void * right) {
-    const int * l = (const int *)left;
-    const int * r = (const int *)right;
-    return l[0] < r[0] ? -1 : l[0] > r[0] ? 1 : l[1] < r[1] ? -1 : l[1] > r[1] ? 1 : 0;
+ਸਥਿਰ ਪੂਰਨ iq3_compare_func(ਅਚਲ ਖਾਲੀ * ਖੱਬਾ, ਅਚਲ ਖਾਲੀ * ਸੱਜਾ) {
+    ਅਚਲ ਪੂਰਨ * l = (ਅਚਲ ਪੂਰਨ *)ਖੱਬਾ;
+    ਅਚਲ ਪੂਰਨ * r = (ਅਚਲ ਪੂਰਨ *)ਸੱਜਾ;
+    ਵਾਪਸ l[0] < r[0] ? -1 : l[0] > r[0] ? 1 : l[1] < r[1] ? -1 : l[1] > r[1] ? 1 : 0;
 }
 
-void iq3xs_init_impl(int grid_size) {
-    const int gindex = iq3_data_index(grid_size);
-    if (iq3_data[gindex].grid) {
-        return;
+ਖਾਲੀ iq3xs_init_impl(ਪੂਰਨ grid_ਮਾਪ) {
+    ਅਚਲ ਪੂਰਨ gindex = iq3_ਅੰਕੜੇ_ਸੂਚਕਾਂਕ(grid_ਮਾਪ);
+    ਜੇ (iq3_ਅੰਕੜੇ[gindex].grid) {
+        ਵਾਪਸ;
     }
-    static const uint16_t kgrid_256[256] = {
+    ਸਥਿਰ ਅਚਲ uint16_t kgrid_256[256] = {
             0,     2,     4,     9,    11,    15,    16,    18,    25,    34,    59,    61,    65,    67,    72,    74,
            81,    85,    88,    90,    97,   108,   120,   128,   130,   132,   137,   144,   146,   153,   155,   159,
           169,   175,   189,   193,   199,   200,   202,   213,   248,   267,   287,   292,   303,   315,   317,   321,
@@ -3724,7 +3724,7 @@ void iq3xs_init_impl(int grid_size) {
          3185,  3215,  3252,  3288,  3294,  3364,  3397,  3434,  3483,  3523,  3537,  3587,  3589,  3591,  3592,  3610,
          3626,  3670,  3680,  3722,  3749,  3754,  3776,  3789,  3803,  3824,  3857,  3873,  3904,  3906,  3924,  3992,
     };
-    static const uint16_t kgrid_512[512] = {
+    ਸਥਿਰ ਅਚਲ uint16_t kgrid_512[512] = {
             0,     1,     2,     5,     7,     8,     9,    10,    12,    14,    16,    17,    21,    27,    32,    34,
            37,    39,    41,    43,    48,    50,    57,    60,    63,    64,    65,    66,    68,    72,    73,    77,
            80,    83,    87,    89,    93,   100,   113,   117,   122,   128,   129,   133,   135,   136,   139,   142,
@@ -3759,191 +3759,191 @@ void iq3xs_init_impl(int grid_size) {
          3736,  3753,  3778,  3802,  3805,  3819,  3841,  3845,  3851,  3856,  3880,  3922,  3938,  3970,  3993,  4032,
     };
 
-    const int kmap_size = 4096;
-    const int nwant = grid_size == 256 ? 2 : 3;
-    const uint16_t * kgrid = grid_size == 256 ? kgrid_256 : kgrid_512;
+    ਅਚਲ ਪੂਰਨ kmap_ਮਾਪ = 4096;
+    ਅਚਲ ਪੂਰਨ nwant = grid_ਮਾਪ == 256 ? 2 : 3;
+    ਅਚਲ uint16_t * kgrid = grid_ਮਾਪ == 256 ? kgrid_256 : kgrid_512;
     uint32_t * kgrid_q3xs;
-    int      * kmap_q3xs;
+    ਪੂਰਨ      * kmap_q3xs;
     uint16_t * kneighbors_q3xs;
 
     //printf("================================================================= %s(grid_size = %d)\n", __func__, grid_size);
-    uint32_t * the_grid = (uint32_t *)malloc(grid_size*sizeof(uint32_t));
-    for (int k = 0; k < grid_size; ++k) {
+    uint32_t * the_grid = (uint32_t *)ਸਮ੍ਰਿਤੀ_ਦਿਓ(grid_ਮਾਪ*ਆਕਾਰ(uint32_t));
+    ਲਈ (ਪੂਰਨ k = 0; k < grid_ਮਾਪ; ++k) {
         int8_t * pos = (int8_t *)(the_grid + k);
-        for (int i = 0; i < 4; ++i) {
-            int l = (kgrid[k] >> 3*i) & 0x7;
+        ਲਈ (ਪੂਰਨ i = 0; i < 4; ++i) {
+            ਪੂਰਨ l = (kgrid[k] >> 3*i) & 0x7;
             pos[i] = 2*l + 1;
         }
     }
     kgrid_q3xs = the_grid;
-    iq3_data[gindex].grid = the_grid;
-    kmap_q3xs = (int *)malloc(kmap_size*sizeof(int));
-    iq3_data[gindex].map = kmap_q3xs;
-    for (int i = 0; i < kmap_size; ++i) kmap_q3xs[i] = -1;
+    iq3_ਅੰਕੜੇ[gindex].grid = the_grid;
+    kmap_q3xs = (ਪੂਰਨ *)ਸਮ੍ਰਿਤੀ_ਦਿਓ(kmap_ਮਾਪ*ਆਕਾਰ(ਪੂਰਨ));
+    iq3_ਅੰਕੜੇ[gindex].map = kmap_q3xs;
+    ਲਈ (ਪੂਰਨ i = 0; i < kmap_ਮਾਪ; ++i) kmap_q3xs[i] = -1;
     uint32_t aux32;
     uint8_t * aux8 = (uint8_t *)&aux32;
-    for (int i = 0; i < grid_size; ++i) {
+    ਲਈ (ਪੂਰਨ i = 0; i < grid_ਮਾਪ; ++i) {
         aux32 = kgrid_q3xs[i];
-        uint16_t index = 0;
-        for (int k=0; k<4; ++k) {
+        uint16_t ਸੂਚਕਾਂਕ = 0;
+        ਲਈ (ਪੂਰਨ k=0; k<4; ++k) {
             uint16_t q = (aux8[k] - 1)/2;
-            index |= (q << 3*k);
+            ਸੂਚਕਾਂਕ |= (q << 3*k);
         }
-        kmap_q3xs[index] = i;
+        kmap_q3xs[ਸੂਚਕਾਂਕ] = i;
     }
     // See explanation of parallelism in iq2xs_init_impl
-    int * n_per_i = (int *)malloc(kmap_size*sizeof(int));
-    GGML_ASSERT(n_per_i);
-    int num_neighbors = 0, num_not_in_map = 0;
-#ifdef GGML_USE_OPENMP
-    #pragma omp parallel reduction(+:num_neighbors,num_not_in_map)
-#endif
+    ਪੂਰਨ * n_ਪ੍ਰਤੀ_i = (ਪੂਰਨ *)ਸਮ੍ਰਿਤੀ_ਦਿਓ(kmap_ਮਾਪ*ਆਕਾਰ(ਪੂਰਨ));
+    GGML_ASSERT(n_ਪ੍ਰਤੀ_i);
+    ਪੂਰਨ ਅੰਕ_neighbors = 0, ਅੰਕ_not_ਵਿੱਚ_map = 0;
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_USE_OPENMP
+    #ਹਦਾਇਤ omp parallel reduction(+:ਅੰਕ_neighbors,ਅੰਕ_not_ਵਿੱਚ_map)
+#ਜੇ_ਅੰਤ
     {
-        int * dist2 = (int *)malloc(2*grid_size*sizeof(int));
+        ਪੂਰਨ * dist2 = (ਪੂਰਨ *)ਸਮ੍ਰਿਤੀ_ਦਿਓ(2*grid_ਮਾਪ*ਆਕਾਰ(ਪੂਰਨ));
         GGML_ASSERT(dist2);
         int8_t pos[4];
-        int i;
-#ifdef GGML_USE_OPENMP
-        #pragma omp for schedule(dynamic, 64)
-#endif
-        for (i = 0; i < kmap_size; ++i) {
-            if (kmap_q3xs[i] >= 0) {
-                n_per_i[i] = 0;
-                continue;
+        ਪੂਰਨ i;
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_USE_OPENMP
+        #ਹਦਾਇਤ omp ਲਈ ਸਮਾਂ_ਸਾਰਣੀ(dynamic, 64)
+#ਜੇ_ਅੰਤ
+        ਲਈ (i = 0; i < kmap_ਮਾਪ; ++i) {
+            ਜੇ (kmap_q3xs[i] >= 0) {
+                n_ਪ੍ਰਤੀ_i[i] = 0;
+                ਜਾਰੀ;
             }
-            ++num_not_in_map;
-            for (int k = 0; k < 4; ++k) {
-                int l = (i >> 3*k) & 0x7;
+            ++ਅੰਕ_not_ਵਿੱਚ_map;
+            ਲਈ (ਪੂਰਨ k = 0; k < 4; ++k) {
+                ਪੂਰਨ l = (i >> 3*k) & 0x7;
                 pos[k] = 2*l + 1;
             }
-            for (int j = 0; j < grid_size; ++j) {
-                const int8_t * pg = (const int8_t *)(kgrid_q3xs + j);
-                int d2 = 0;
-                for (int k = 0; k < 4; ++k) d2 += (pg[k] - pos[k])*(pg[k] - pos[k]);
+            ਲਈ (ਪੂਰਨ j = 0; j < grid_ਮਾਪ; ++j) {
+                ਅਚਲ int8_t * pg = (ਅਚਲ int8_t *)(kgrid_q3xs + j);
+                ਪੂਰਨ d2 = 0;
+                ਲਈ (ਪੂਰਨ k = 0; k < 4; ++k) d2 += (pg[k] - pos[k])*(pg[k] - pos[k]);
                 dist2[2*j+0] = d2;
                 dist2[2*j+1] = j;
             }
-            qsort(dist2, grid_size, 2*sizeof(int), iq3_compare_func);
-            int n = 0; int d2 = dist2[0];
-            int nhave = 1;
-            for (int j = 0; j < grid_size; ++j) {
-                if (dist2[2*j] > d2) {
-                    if (nhave == nwant) break;
+            qsort(dist2, grid_ਮਾਪ, 2*ਆਕਾਰ(ਪੂਰਨ), iq3_compare_func);
+            ਪੂਰਨ n = 0; ਪੂਰਨ d2 = dist2[0];
+            ਪੂਰਨ nhave = 1;
+            ਲਈ (ਪੂਰਨ j = 0; j < grid_ਮਾਪ; ++j) {
+                ਜੇ (dist2[2*j] > d2) {
+                    ਜੇ (nhave == nwant) ਰੋਕੋ;
                     d2 = dist2[2*j];
                     ++nhave;
                 }
                 ++n;
             }
-            n_per_i[i] = n;
-            num_neighbors += n;
+            n_ਪ੍ਰਤੀ_i[i] = n;
+            ਅੰਕ_neighbors += n;
         }
-        free(dist2);
+        ਮੁਕਤ(dist2);
     }
     //printf("%s: %d neighbours in total\n", __func__, num_neighbors);
-    kneighbors_q3xs = (uint16_t *)malloc((num_neighbors + num_not_in_map)*sizeof(uint16_t));
-    iq3_data[gindex].neighbours = kneighbors_q3xs;
+    kneighbors_q3xs = (uint16_t *)ਸਮ੍ਰਿਤੀ_ਦਿਓ((ਅੰਕ_neighbors + ਅੰਕ_not_ਵਿੱਚ_map)*ਆਕਾਰ(uint16_t));
+    iq3_ਅੰਕੜੇ[gindex].neighbours = kneighbors_q3xs;
 
-    int * offsets = (int *)malloc(kmap_size*sizeof(int));
+    ਪੂਰਨ * offsets = (ਪੂਰਨ *)ਸਮ੍ਰਿਤੀ_ਦਿਓ(kmap_ਮਾਪ*ਆਕਾਰ(ਪੂਰਨ));
     GGML_ASSERT(offsets);
-    int counter = 0;
-    for (int i = 0; i < kmap_size; ++i) {
-        if (kmap_q3xs[i] >= 0) {
+    ਪੂਰਨ counter = 0;
+    ਲਈ (ਪੂਰਨ i = 0; i < kmap_ਮਾਪ; ++i) {
+        ਜੇ (kmap_q3xs[i] >= 0) {
             offsets[i] = -1;
-            continue;
+            ਜਾਰੀ;
         }
         offsets[i] = counter;
-        counter += 1 + n_per_i[i];
+        counter += 1 + n_ਪ੍ਰਤੀ_i[i];
     }
 
-#ifdef GGML_USE_OPENMP
-    #pragma omp parallel
-#endif
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_USE_OPENMP
+    #ਹਦਾਇਤ omp parallel
+#ਜੇ_ਅੰਤ
     {
-        int * dist2 = (int *)malloc(2*grid_size*sizeof(int));
+        ਪੂਰਨ * dist2 = (ਪੂਰਨ *)ਸਮ੍ਰਿਤੀ_ਦਿਓ(2*grid_ਮਾਪ*ਆਕਾਰ(ਪੂਰਨ));
         GGML_ASSERT(dist2);
         int8_t pos[4];
-        int i;
-#ifdef GGML_USE_OPENMP
-        #pragma omp for schedule(dynamic, 64)
-#endif
-        for (i = 0; i < kmap_size; ++i) {
-            if (kmap_q3xs[i] >= 0) continue;
-            for (int k = 0; k < 4; ++k) {
-                int l = (i >> 3*k) & 0x7;
+        ਪੂਰਨ i;
+#ਜੇ_ਪਰਿਭਾਸ਼ਿਤ GGML_USE_OPENMP
+        #ਹਦਾਇਤ omp ਲਈ ਸਮਾਂ_ਸਾਰਣੀ(dynamic, 64)
+#ਜੇ_ਅੰਤ
+        ਲਈ (i = 0; i < kmap_ਮਾਪ; ++i) {
+            ਜੇ (kmap_q3xs[i] >= 0) ਜਾਰੀ;
+            ਲਈ (ਪੂਰਨ k = 0; k < 4; ++k) {
+                ਪੂਰਨ l = (i >> 3*k) & 0x7;
                 pos[k] = 2*l + 1;
             }
-            for (int j = 0; j < grid_size; ++j) {
-                const int8_t * pg = (const int8_t *)(kgrid_q3xs + j);
-                int d2 = 0;
-                for (int k = 0; k < 4; ++k) d2 += (pg[k] - pos[k])*(pg[k] - pos[k]);
+            ਲਈ (ਪੂਰਨ j = 0; j < grid_ਮਾਪ; ++j) {
+                ਅਚਲ int8_t * pg = (ਅਚਲ int8_t *)(kgrid_q3xs + j);
+                ਪੂਰਨ d2 = 0;
+                ਲਈ (ਪੂਰਨ k = 0; k < 4; ++k) d2 += (pg[k] - pos[k])*(pg[k] - pos[k]);
                 dist2[2*j+0] = d2;
                 dist2[2*j+1] = j;
             }
-            qsort(dist2, grid_size, 2*sizeof(int), iq3_compare_func);
-            int local_counter = offsets[i];
+            qsort(dist2, grid_ਮਾਪ, 2*ਆਕਾਰ(ਪੂਰਨ), iq3_compare_func);
+            ਪੂਰਨ local_counter = offsets[i];
             kmap_q3xs[i] = -(local_counter + 1);
-            int d2 = dist2[0];
-            uint16_t * start = &kneighbors_q3xs[local_counter++];
-            int n = 0, nhave = 1;
-            for (int j = 0; j < grid_size; ++j) {
-                if (dist2[2*j] > d2) {
-                    if (nhave == nwant) break;
+            ਪੂਰਨ d2 = dist2[0];
+            uint16_t * ਸ਼ੁਰੂ = &kneighbors_q3xs[local_counter++];
+            ਪੂਰਨ n = 0, nhave = 1;
+            ਲਈ (ਪੂਰਨ j = 0; j < grid_ਮਾਪ; ++j) {
+                ਜੇ (dist2[2*j] > d2) {
+                    ਜੇ (nhave == nwant) ਰੋਕੋ;
                     d2 = dist2[2*j];
                     ++nhave;
                 }
                 kneighbors_q3xs[local_counter++] = dist2[2*j+1];
                 ++n;
             }
-            *start = n;
+            *ਸ਼ੁਰੂ = n;
         }
-        free(dist2);
+        ਮੁਕਤ(dist2);
     }
-    free(offsets);
-    free(n_per_i);
+    ਮੁਕਤ(offsets);
+    ਮੁਕਤ(n_ਪ੍ਰਤੀ_i);
 }
 
-void iq3xs_free_impl(int grid_size) {
-    GGML_ASSERT(grid_size == 256 || grid_size == 512);
-    const int gindex = iq3_data_index(grid_size);
-    if (iq3_data[gindex].grid) {
-        free(iq3_data[gindex].grid);       iq3_data[gindex].grid = NULL;
-        free(iq3_data[gindex].map);        iq3_data[gindex].map  = NULL;
-        free(iq3_data[gindex].neighbours); iq3_data[gindex].neighbours = NULL;
+ਖਾਲੀ iq3xs_free_impl(ਪੂਰਨ grid_ਮਾਪ) {
+    GGML_ASSERT(grid_ਮਾਪ == 256 || grid_ਮਾਪ == 512);
+    ਅਚਲ ਪੂਰਨ gindex = iq3_ਅੰਕੜੇ_ਸੂਚਕਾਂਕ(grid_ਮਾਪ);
+    ਜੇ (iq3_ਅੰਕੜੇ[gindex].grid) {
+        ਮੁਕਤ(iq3_ਅੰਕੜੇ[gindex].grid);       iq3_ਅੰਕੜੇ[gindex].grid = ਨਿਰਾ;
+        ਮੁਕਤ(iq3_ਅੰਕੜੇ[gindex].map);        iq3_ਅੰਕੜੇ[gindex].map  = ਨਿਰਾ;
+        ਮੁਕਤ(iq3_ਅੰਕੜੇ[gindex].neighbours); iq3_ਅੰਕੜੇ[gindex].neighbours = ਨਿਰਾ;
     }
 }
 
-static int iq3_find_best_neighbour(const uint16_t * GGML_RESTRICT neighbours, const uint32_t * GGML_RESTRICT grid,
-        const float * GGML_RESTRICT xval, const float * GGML_RESTRICT weight, float scale, int8_t * GGML_RESTRICT L) {
-    int num_neighbors = neighbours[0];
-    GGML_ASSERT(num_neighbors > 0);
-    float best_d2 = FLT_MAX;
-    int grid_index = -1;
-    for (int j = 1; j <= num_neighbors; ++j) {
-        const int8_t * pg = (const int8_t *)(grid + neighbours[j]);
-        float d2 = 0;
-        for (int i = 0; i < 4; ++i) {
-            float q = pg[i];
-            float diff = scale*q - xval[i];
-            d2 += weight[i]*diff*diff;
+ਸਥਿਰ ਪੂਰਨ iq3_ਲੱਭੋ_ਉੱਤਮ_neighbour(ਅਚਲ uint16_t * GGML_RESTRICT neighbours, ਅਚਲ uint32_t * GGML_RESTRICT grid,
+        ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT xval, ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT ਭਾਰ, ਦਸ਼ਮਲਵ scale, int8_t * GGML_RESTRICT L) {
+    ਪੂਰਨ ਅੰਕ_neighbors = neighbours[0];
+    GGML_ASSERT(ਅੰਕ_neighbors > 0);
+    ਦਸ਼ਮਲਵ ਉੱਤਮ_d2 = FLT_MAX;
+    ਪੂਰਨ grid_ਸੂਚਕਾਂਕ = -1;
+    ਲਈ (ਪੂਰਨ j = 1; j <= ਅੰਕ_neighbors; ++j) {
+        ਅਚਲ int8_t * pg = (ਅਚਲ int8_t *)(grid + neighbours[j]);
+        ਦਸ਼ਮਲਵ d2 = 0;
+        ਲਈ (ਪੂਰਨ i = 0; i < 4; ++i) {
+            ਦਸ਼ਮਲਵ q = pg[i];
+            ਦਸ਼ਮਲਵ diff = scale*q - xval[i];
+            d2 += ਭਾਰ[i]*diff*diff;
         }
-        if (d2 < best_d2) {
-            best_d2 = d2; grid_index = neighbours[j];
+        ਜੇ (d2 < ਉੱਤਮ_d2) {
+            ਉੱਤਮ_d2 = d2; grid_ਸੂਚਕਾਂਕ = neighbours[j];
         }
     }
-    GGML_ASSERT(grid_index >= 0);
-    const int8_t * pg = (const int8_t *)(grid + grid_index);
-    for (int i = 0; i < 4; ++i) L[i] = (pg[i] - 1)/2;
-    return grid_index;
+    GGML_ASSERT(grid_ਸੂਚਕਾਂਕ >= 0);
+    ਅਚਲ int8_t * pg = (ਅਚਲ int8_t *)(grid + grid_ਸੂਚਕਾਂਕ);
+    ਲਈ (ਪੂਰਨ i = 0; i < 4; ++i) L[i] = (pg[i] - 1)/2;
+    ਵਾਪਸ grid_ਸੂਚਕਾਂਕ;
 }
 
-static void quantize_row_iq3_xxs_impl(int grid_size, const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t n,
-        const float * GGML_RESTRICT quant_weights) {
+ਸਥਿਰ ਖਾਲੀ quantize_ਪੰਕਤੀ_iq3_xxs_impl(ਪੂਰਨ grid_ਮਾਪ, ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖਾਲੀ * GGML_RESTRICT vy, int64_t n,
+        ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT quant_weights) {
 
-    const int gindex = iq3_data_index(grid_size);
+    ਅਚਲ ਪੂਰਨ gindex = iq3_ਅੰਕੜੇ_ਸੂਚਕਾਂਕ(grid_ਮਾਪ);
 
-    const uint32_t * kgrid_q3xs      = iq3_data[gindex].grid;
-    const int      * kmap_q3xs       = iq3_data[gindex].map;
-    const uint16_t * kneighbors_q3xs = iq3_data[gindex].neighbours;
+    ਅਚਲ uint32_t * kgrid_q3xs      = iq3_ਅੰਕੜੇ[gindex].grid;
+    ਅਚਲ ਪੂਰਨ      * kmap_q3xs       = iq3_ਅੰਕੜੇ[gindex].map;
+    ਅਚਲ uint16_t * kneighbors_q3xs = iq3_ਅੰਕੜੇ[gindex].neighbours;
 
     //GGML_ASSERT(quant_weights   && "missing quantization weights");
     GGML_ASSERT(kgrid_q3xs      && "forgot to call ggml_quantize_init()?");
@@ -3951,239 +3951,239 @@ static void quantize_row_iq3_xxs_impl(int grid_size, const float * GGML_RESTRICT
     GGML_ASSERT(kneighbors_q3xs && "forgot to call ggml_quantize_init()?");
     GGML_ASSERT(n%QK_K == 0);
 
-    const int kMaxQ = 8;
+    ਅਚਲ ਪੂਰਨ kMaxQ = 8;
 
-    const int64_t nbl = n/QK_K;
+    ਅਚਲ int64_t nbl = n/QK_K;
 
     ggml_fp16_t * dh;
     uint8_t * qs;
-    int block_size;
-    if (grid_size == 256) {
-        block_iq3_xxs * y = vy;
+    ਪੂਰਨ ਖੰਡ_ਮਾਪ_3;
+    ਜੇ (grid_ਮਾਪ == 256) {
+        ਖੰਡ_iq3_xxs * y = vy;
         dh = &y->d;
         qs = y->qs;
-        block_size = sizeof(block_iq3_xxs);
-    } else {
-        block_iq3_s * y = vy;
+        ਖੰਡ_ਮਾਪ_3 = ਆਕਾਰ(ਖੰਡ_iq3_xxs);
+    } ਨਹੀਂਤਾਂ {
+        ਖੰਡ_iq3_s * y = vy;
         dh = &y->d;
         qs = y->qs;
-        block_size = sizeof(block_iq3_s);
+        ਖੰਡ_ਮਾਪ_3 = ਆਕਾਰ(ਖੰਡ_iq3_s);
     }
-    int quant_size = block_size - sizeof(ggml_fp16_t);
+    ਪੂਰਨ quant_ਮਾਪ = ਖੰਡ_ਮਾਪ_3 - ਆਕਾਰ(ggml_fp16_t);
 
-    float scales[QK_K/32];
-    float weight[32];
-    float xval[32];
+    ਦਸ਼ਮਲਵ scales[QK_K/32];
+    ਦਸ਼ਮਲਵ ਭਾਰ[32];
+    ਦਸ਼ਮਲਵ xval[32];
     int8_t L[32];
     int8_t Laux[32];
-    float  waux[32];
+    ਦਸ਼ਮਲਵ  waux[32];
     bool   is_on_grid[8];
     bool   is_on_grid_aux[8];
-    uint8_t block_signs[8];
+    uint8_t ਖੰਡ_signs[8];
     uint8_t q3[3*(QK_K/8)+QK_K/32];
     uint32_t * scales_and_signs = (uint32_t *)(q3 + QK_K/4);
     uint8_t  * qh = q3 + 3*(QK_K/8);
 
-    for (int ibl = 0; ibl < nbl; ++ibl) {
+    ਲਈ (ਪੂਰਨ ibl = 0; ibl < nbl; ++ibl) {
 
-        dh[0] = GGML_FP32_TO_FP16(0.f);
+        dh[0] = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(0.f);
         memset(q3, 0, 3*QK_K/8+QK_K/32);
 
-        float max_scale = 0;
+        ਦਸ਼ਮਲਵ max_scale = 0;
 
-        const float * xbl = x + QK_K*ibl;
-        float sumx2 = 0;
-        for (int i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
-        float sigma2 = 2*sumx2/QK_K;
+        ਅਚਲ ਦਸ਼ਮਲਵ * xbl = x + QK_K*ibl;
+        ਦਸ਼ਮਲਵ sumx2 = 0;
+        ਲਈ (ਪੂਰਨ i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
+        ਦਸ਼ਮਲਵ sigma2 = 2*sumx2/QK_K;
 
-        for (int ib = 0; ib < QK_K/32; ++ib) {
-            const float * xb = xbl + 32*ib;
-            if (quant_weights) {
-                const float * qw = quant_weights + QK_K*ibl + 32*ib;
-                for (int i = 0; i < 32; ++i) weight[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
-            } else {
-                for (int i = 0; i < 32; ++i) weight[i] = xb[i]*xb[i];
+        ਲਈ (ਪੂਰਨ ib = 0; ib < QK_K/32; ++ib) {
+            ਅਚਲ ਦਸ਼ਮਲਵ * xb = xbl + 32*ib;
+            ਜੇ (quant_weights) {
+                ਅਚਲ ਦਸ਼ਮਲਵ * qw = quant_weights + QK_K*ibl + 32*ib;
+                ਲਈ (ਪੂਰਨ i = 0; i < 32; ++i) ਭਾਰ[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
+            } ਨਹੀਂਤਾਂ {
+                ਲਈ (ਪੂਰਨ i = 0; i < 32; ++i) ਭਾਰ[i] = xb[i]*xb[i];
             }
-            for (int i = 0; i < 32; ++i) waux[i] = sqrtf(weight[i]);
-            for (int k = 0; k < 4; ++k) {
-                int nflip = 0;
+            ਲਈ (ਪੂਰਨ i = 0; i < 32; ++i) waux[i] = sqrtf(ਭਾਰ[i]);
+            ਲਈ (ਪੂਰਨ k = 0; k < 4; ++k) {
+                ਪੂਰਨ nflip = 0;
                 uint8_t s = 0;
-                for (int i = 0; i < 8; ++i) {
-                    if (xb[8*k + i] >= 0) xval[8*k + i] = xb[8*k + i];
-                    else {
+                ਲਈ (ਪੂਰਨ i = 0; i < 8; ++i) {
+                    ਜੇ (xb[8*k + i] >= 0) xval[8*k + i] = xb[8*k + i];
+                    ਨਹੀਂਤਾਂ {
                         xval[8*k + i] = -xb[8*k + i]; ++nflip; s |= (1 << i);
                     }
                 }
-                if (nflip%2) {
-                    int imin = 0; float min = weight[8*k+imin]*xb[8*k+imin]*xb[8*k+imin];
-                    for (int i = 1; i < 8; ++i) {
-                        float ax = weight[8*k+i]*xb[8*k+i]*xb[8*k+i];
-                        if (ax < min) {
+                ਜੇ (nflip%2) {
+                    ਪੂਰਨ imin = 0; ਦਸ਼ਮਲਵ min = ਭਾਰ[8*k+imin]*xb[8*k+imin]*xb[8*k+imin];
+                    ਲਈ (ਪੂਰਨ i = 1; i < 8; ++i) {
+                        ਦਸ਼ਮਲਵ ax = ਭਾਰ[8*k+i]*xb[8*k+i]*xb[8*k+i];
+                        ਜੇ (ax < min) {
                             min = ax; imin = i;
                         }
                     }
                     xval[8*k+imin] = -xval[8*k+imin];
                     s ^= (1 << imin);
                 }
-                block_signs[k] = s & 127;
+                ਖੰਡ_signs[k] = s & 127;
             }
-            float max = xval[0];
-            for (int i = 1; i < 32; ++i) max = MAX(max, xval[i]);
+            ਦਸ਼ਮਲਵ max = xval[0];
+            ਲਈ (ਪੂਰਨ i = 1; i < 32; ++i) max = MAX(max, xval[i]);
             memset(L, 0, 32);
-            if (max < GROUP_MAX_EPS_IQ3_XXS) {
+            ਜੇ (max < ਸਮੂਹ_MAX_EPS_IQ3_XXS) {
                 scales[ib] = 0;
-                continue;
+                ਜਾਰੀ;
             }
-            float best = 0;
-            float scale = max/(2*kMaxQ-1);
-            for (int k = 0; k < 8; ++k) is_on_grid[k] = true;
-            for (int is = -15; is <= 15; ++is) {
-                float id = (2*kMaxQ-1+is*0.2f)/max;
-                float this_scale = 1/id;
-                for (int k = 0; k < 8; ++k) {
-                    for (int i = 0; i < 4; ++i) {
-                        int l = nearest_int(0.5f*(id*xval[4*k+i]-1));
+            ਦਸ਼ਮਲਵ ਉੱਤਮ = 0;
+            ਦਸ਼ਮਲਵ scale = max/(2*kMaxQ-1);
+            ਲਈ (ਪੂਰਨ k = 0; k < 8; ++k) is_on_grid[k] = true;
+            ਲਈ (ਪੂਰਨ is = -15; is <= 15; ++is) {
+                ਦਸ਼ਮਲਵ id = (2*kMaxQ-1+is*0.2f)/max;
+                ਦਸ਼ਮਲਵ this_scale = 1/id;
+                ਲਈ (ਪੂਰਨ k = 0; k < 8; ++k) {
+                    ਲਈ (ਪੂਰਨ i = 0; i < 4; ++i) {
+                        ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(0.5f*(id*xval[4*k+i]-1));
                         Laux[4*k+i] = MAX(0, MIN(kMaxQ-1, l));
                     }
                     uint16_t u = 0;
-                    for (int i = 0; i < 4; ++i) u |= (Laux[4*k+i] << 3*i);
-                    int grid_index = kmap_q3xs[u];
+                    ਲਈ (ਪੂਰਨ i = 0; i < 4; ++i) u |= (Laux[4*k+i] << 3*i);
+                    ਪੂਰਨ grid_ਸੂਚਕਾਂਕ = kmap_q3xs[u];
                     is_on_grid_aux[k] = true;
-                    if (grid_index < 0) {
+                    ਜੇ (grid_ਸੂਚਕਾਂਕ < 0) {
                         is_on_grid_aux[k] = false;
-                        const uint16_t * neighbours = kneighbors_q3xs - kmap_q3xs[u] - 1;
-                        grid_index = iq3_find_best_neighbour(neighbours, kgrid_q3xs, xval + 4*k, waux + 4*k, this_scale, Laux + 4*k);
+                        ਅਚਲ uint16_t * neighbours = kneighbors_q3xs - kmap_q3xs[u] - 1;
+                        grid_ਸੂਚਕਾਂਕ = iq3_ਲੱਭੋ_ਉੱਤਮ_neighbour(neighbours, kgrid_q3xs, xval + 4*k, waux + 4*k, this_scale, Laux + 4*k);
                     }
                 }
-                float sumqx = 0, sumq2 = 0;
-                for (int i = 0; i < 32; ++i) {
-                    float w = weight[i];
-                    float q = 2*Laux[i] + 1;
+                ਦਸ਼ਮਲਵ sumqx = 0, sumq2 = 0;
+                ਲਈ (ਪੂਰਨ i = 0; i < 32; ++i) {
+                    ਦਸ਼ਮਲਵ w = ਭਾਰ[i];
+                    ਦਸ਼ਮਲਵ q = 2*Laux[i] + 1;
                     sumqx += w*xval[i]*q;
                     sumq2 += w*q*q;
                 }
-                if (sumq2 > 0 && sumqx*sumqx > best*sumq2) {
-                    scale = sumqx/sumq2; best = scale*sumqx;
-                    for (int i = 0; i < 32; ++i) L[i] = Laux[i];
-                    for (int k = 0; k <  8; ++k) is_on_grid[k] = is_on_grid_aux[k];
+                ਜੇ (sumq2 > 0 && sumqx*sumqx > ਉੱਤਮ*sumq2) {
+                    scale = sumqx/sumq2; ਉੱਤਮ = scale*sumqx;
+                    ਲਈ (ਪੂਰਨ i = 0; i < 32; ++i) L[i] = Laux[i];
+                    ਲਈ (ਪੂਰਨ k = 0; k <  8; ++k) is_on_grid[k] = is_on_grid_aux[k];
                 }
             }
-            int n_not_ongrid = 0;
-            for (int k = 0; k < 8; ++k) if (!is_on_grid[k]) ++n_not_ongrid;
-            if (n_not_ongrid > 0 && scale > 0) {
-                float id = 1/scale;
-                for (int k = 0; k < 8; ++k) {
-                    if (is_on_grid[k]) continue;
+            ਪੂਰਨ n_not_ongrid = 0;
+            ਲਈ (ਪੂਰਨ k = 0; k < 8; ++k) ਜੇ (!is_on_grid[k]) ++n_not_ongrid;
+            ਜੇ (n_not_ongrid > 0 && scale > 0) {
+                ਦਸ਼ਮਲਵ id = 1/scale;
+                ਲਈ (ਪੂਰਨ k = 0; k < 8; ++k) {
+                    ਜੇ (is_on_grid[k]) ਜਾਰੀ;
                     uint16_t u = 0;
-                    for (int i = 0; i < 4; ++i) {
-                        int l = nearest_int(0.5f*(id*xval[4*k+i]-1));
+                    ਲਈ (ਪੂਰਨ i = 0; i < 4; ++i) {
+                        ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(0.5f*(id*xval[4*k+i]-1));
                         l = MAX(0, MIN(kMaxQ-1, l));
                         u |= (l << 3*i);
                     }
-                    int grid_index = kmap_q3xs[u];
-                    if (grid_index < 0) {
-                        const uint16_t * neighbours = kneighbors_q3xs - kmap_q3xs[u] - 1;
-                        grid_index = iq3_find_best_neighbour(neighbours, kgrid_q3xs, xval + 4*k, waux + 4*k, scale, L + 4*k);
+                    ਪੂਰਨ grid_ਸੂਚਕਾਂਕ = kmap_q3xs[u];
+                    ਜੇ (grid_ਸੂਚਕਾਂਕ < 0) {
+                        ਅਚਲ uint16_t * neighbours = kneighbors_q3xs - kmap_q3xs[u] - 1;
+                        grid_ਸੂਚਕਾਂਕ = iq3_ਲੱਭੋ_ਉੱਤਮ_neighbour(neighbours, kgrid_q3xs, xval + 4*k, waux + 4*k, scale, L + 4*k);
                     }
-                    const int8_t * pg = (const int8_t *)(kgrid_q3xs + grid_index);
-                    for (int i = 0; i < 4; ++i) L[4*k+i] = (pg[i] - 1)/2;
+                    ਅਚਲ int8_t * pg = (ਅਚਲ int8_t *)(kgrid_q3xs + grid_ਸੂਚਕਾਂਕ);
+                    ਲਈ (ਪੂਰਨ i = 0; i < 4; ++i) L[4*k+i] = (pg[i] - 1)/2;
                 }
-                float sumqx = 0, sumq2 = 0;
-                for (int i = 0; i < 32; ++i) {
-                    float w = weight[i];
-                    float q = 2*L[i] + 1;
+                ਦਸ਼ਮਲਵ sumqx = 0, sumq2 = 0;
+                ਲਈ (ਪੂਰਨ i = 0; i < 32; ++i) {
+                    ਦਸ਼ਮਲਵ w = ਭਾਰ[i];
+                    ਦਸ਼ਮਲਵ q = 2*L[i] + 1;
                     sumqx += w*xval[i]*q;
                     sumq2 += w*q*q;
                 }
-                if (sumq2 > 0) scale = sumqx/sumq2;
+                ਜੇ (sumq2 > 0) scale = sumqx/sumq2;
             }
-            if (scale < 0) {
+            ਜੇ (scale < 0) {
                 // This should never happen, but just in case, flip scale so that it is positive (we use uint's to encode the scale)
                 // and correspondingly flip quant signs.
                 scale = -scale;
-                for (int k = 0; k < 4; ++k) block_signs[k] = (~block_signs[k]) & 127;
+                ਲਈ (ਪੂਰਨ k = 0; k < 4; ++k) ਖੰਡ_signs[k] = (~ਖੰਡ_signs[k]) & 127;
             }
-            for (int k = 0; k < 8; ++k) {
+            ਲਈ (ਪੂਰਨ k = 0; k < 8; ++k) {
                 uint16_t u = 0;
-                for (int i = 0; i < 4; ++i) u |= (L[4*k+i] << 3*i);
-                int grid_index = kmap_q3xs[u];
-                if (grid_index < 0) {
-                    printf("Oops: found point %u not on grid:", u);
-                    for (int i = 0; i < 4; ++i) printf(" %d", L[4*k+i]);
-                    printf("\n");
+                ਲਈ (ਪੂਰਨ i = 0; i < 4; ++i) u |= (L[4*k+i] << 3*i);
+                ਪੂਰਨ grid_ਸੂਚਕਾਂਕ = kmap_q3xs[u];
+                ਜੇ (grid_ਸੂਚਕਾਂਕ < 0) {
+                    ਲਿਖੋ("Oops: found point %u not on grid:", u);
+                    ਲਈ (ਪੂਰਨ i = 0; i < 4; ++i) ਲਿਖੋ(" %d", L[4*k+i]);
+                    ਲਿਖੋ("\n");
                     GGML_ABORT("fatal error");
                 }
-                if (grid_size == 256) {
-                    q3[8*ib+k] = grid_index;
-                } else {
-                    q3[8*ib+k] = grid_index & 255;
-                    qh[ib] |= ((grid_index >> 8) << k);
+                ਜੇ (grid_ਮਾਪ == 256) {
+                    q3[8*ib+k] = grid_ਸੂਚਕਾਂਕ;
+                } ਨਹੀਂਤਾਂ {
+                    q3[8*ib+k] = grid_ਸੂਚਕਾਂਕ & 255;
+                    qh[ib] |= ((grid_ਸੂਚਕਾਂਕ >> 8) << k);
                 }
 
             }
-            scales_and_signs[ib] = block_signs[0] | (block_signs[1] << 7) | (block_signs[2] << 14) | (block_signs[3] << 21);
+            scales_and_signs[ib] = ਖੰਡ_signs[0] | (ਖੰਡ_signs[1] << 7) | (ਖੰਡ_signs[2] << 14) | (ਖੰਡ_signs[3] << 21);
             GGML_ASSERT(scale >= 0);
             scales[ib] = scale;
             max_scale = MAX(max_scale, scale);
         }
 
-        if (!max_scale) {
-            memset(qs, 0, quant_size);
-            dh += block_size/sizeof(ggml_fp16_t);
-            qs += block_size;
-            continue;
+        ਜੇ (!max_scale) {
+            memset(qs, 0, quant_ਮਾਪ);
+            dh += ਖੰਡ_ਮਾਪ_3/ਆਕਾਰ(ggml_fp16_t);
+            qs += ਖੰਡ_ਮਾਪ_3;
+            ਜਾਰੀ;
         }
 
-        float d = max_scale/31;
-        dh[0] = GGML_FP32_TO_FP16(d * 1.0125f);  // small improvement via this fudge factor
-        float id = 1/d;
-        for (int ib = 0; ib < QK_K/32; ++ib) {
-            int l = nearest_int(0.5f*(id*scales[ib]-1));
+        ਦਸ਼ਮਲਵ d = max_scale/31;
+        dh[0] = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(d * 1.0125f);  // small improvement via this fudge factor
+        ਦਸ਼ਮਲਵ id = 1/d;
+        ਲਈ (ਪੂਰਨ ib = 0; ib < QK_K/32; ++ib) {
+            ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(0.5f*(id*scales[ib]-1));
             l = MAX(0, MIN(15, l));
             scales_and_signs[ib] |= ((uint32_t)l << 28);
         }
-        memcpy(qs, q3, quant_size);
+        ਸਮ੍ਰਿਤੀ_ਨਕਲ(qs, q3, quant_ਮਾਪ);
 
-        dh += block_size/sizeof(ggml_fp16_t);
-        qs += block_size;
+        dh += ਖੰਡ_ਮਾਪ_3/ਆਕਾਰ(ggml_fp16_t);
+        qs += ਖੰਡ_ਮਾਪ_3;
 
     }
 }
 
-size_t quantize_iq3_xxs(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    GGML_ASSERT(n_per_row%QK_K == 0);
-    int64_t nblock = n_per_row/QK_K;
-    char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
-        quantize_row_iq3_xxs_impl(256, src, qrow, n_per_row, quant_weights);
-        src += n_per_row;
-        qrow += nblock*sizeof(block_iq3_xxs);
+size_t quantize_iq3_xxs(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT src, ਖਾਲੀ * GGML_RESTRICT dst, int64_t nrow, int64_t n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, ਅਚਲ ਦਸ਼ਮਲਵ * quant_weights) {
+    GGML_ASSERT(n_ਪ੍ਰਤੀ_ਪੰਕਤੀ%QK_K == 0);
+    int64_t nblock = n_ਪ੍ਰਤੀ_ਪੰਕਤੀ/QK_K;
+    ਅੱਖਰ * qrow = (ਅੱਖਰ *)dst;
+    ਲਈ (int64_t ਪੰਕਤੀ = 0; ਪੰਕਤੀ < nrow; ++ਪੰਕਤੀ) {
+        quantize_ਪੰਕਤੀ_iq3_xxs_impl(256, src, qrow, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, quant_weights);
+        src += n_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+        qrow += nblock*ਆਕਾਰ(ਖੰਡ_iq3_xxs);
     }
-    return nrow * nblock * sizeof(block_iq3_xxs);
+    ਵਾਪਸ nrow * nblock * ਆਕਾਰ(ਖੰਡ_iq3_xxs);
 }
 
-void quantize_row_iq3_xxs_ref(const float * GGML_RESTRICT x, block_iq3_xxs * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    quantize_row_iq3_xxs_impl(256, x, y, k, NULL);
+ਖਾਲੀ quantize_ਪੰਕਤੀ_iq3_xxs_ref(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖੰਡ_iq3_xxs * GGML_RESTRICT y, int64_t k) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % QK_K == 0);
+    quantize_ਪੰਕਤੀ_iq3_xxs_impl(256, x, y, k, ਨਿਰਾ);
 }
 
-static void quantize_row_iq3_s_impl(int block_size, const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int n,
-        const float * GGML_RESTRICT quant_weights,
-        float   * scales,
-        float   * weight,
-        float   * xval,
+ਸਥਿਰ ਖਾਲੀ quantize_ਪੰਕਤੀ_iq3_s_impl(ਪੂਰਨ ਖੰਡ_ਮਾਪ_3, ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖਾਲੀ * GGML_RESTRICT vy, ਪੂਰਨ n,
+        ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT quant_weights,
+        ਦਸ਼ਮਲਵ   * scales,
+        ਦਸ਼ਮਲਵ   * ਭਾਰ,
+        ਦਸ਼ਮਲਵ   * xval,
         int8_t  * L,
         int8_t  * Laux,
-        float   * waux,
+        ਦਸ਼ਮਲਵ   * waux,
         bool    * is_on_grid,
         bool    * is_on_grid_aux,
-        uint8_t * block_signs) {
+        uint8_t * ਖੰਡ_signs) {
 
-    const int gindex = iq3_data_index(512);
+    ਅਚਲ ਪੂਰਨ gindex = iq3_ਅੰਕੜੇ_ਸੂਚਕਾਂਕ(512);
 
-    const uint32_t * kgrid_q3xs      = iq3_data[gindex].grid;
-    const int      * kmap_q3xs       = iq3_data[gindex].map;
-    const uint16_t * kneighbors_q3xs = iq3_data[gindex].neighbours;
+    ਅਚਲ uint32_t * kgrid_q3xs      = iq3_ਅੰਕੜੇ[gindex].grid;
+    ਅਚਲ ਪੂਰਨ      * kmap_q3xs       = iq3_ਅੰਕੜੇ[gindex].map;
+    ਅਚਲ uint16_t * kneighbors_q3xs = iq3_ਅੰਕੜੇ[gindex].neighbours;
 
     //GGML_ASSERT(quant_weights   && "missing quantization weights");
     GGML_ASSERT(kgrid_q3xs      && "forgot to call ggml_quantize_init()?");
@@ -4191,158 +4191,158 @@ static void quantize_row_iq3_s_impl(int block_size, const float * GGML_RESTRICT 
     GGML_ASSERT(kneighbors_q3xs && "forgot to call ggml_quantize_init()?");
     GGML_ASSERT(n%QK_K == 0);
 
-    const int kMaxQ = 8;
+    ਅਚਲ ਪੂਰਨ kMaxQ = 8;
 
-    const int64_t nbl = n/QK_K;
+    ਅਚਲ int64_t nbl = n/QK_K;
 
-    block_iq3_s * y = vy;
+    ਖੰਡ_iq3_s * y = vy;
 
-    const int bs4 = block_size/4;
-    const int bs8 = block_size/8;
+    ਅਚਲ ਪੂਰਨ bs4 = ਖੰਡ_ਮਾਪ_3/4;
+    ਅਚਲ ਪੂਰਨ bs8 = ਖੰਡ_ਮਾਪ_3/8;
 
-    for (int ibl = 0; ibl < nbl; ++ibl) {
+    ਲਈ (ਪੂਰਨ ibl = 0; ibl < nbl; ++ibl) {
 
-        memset(&y[ibl], 0, sizeof(block_iq3_s));
-        y[ibl].d = GGML_FP32_TO_FP16(0.f);
+        memset(&y[ibl], 0, ਆਕਾਰ(ਖੰਡ_iq3_s));
+        y[ibl].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(0.f);
 
         uint8_t * qs = y[ibl].qs;
         uint8_t * qh = y[ibl].qh;
         uint8_t * signs = y[ibl].signs;
 
-        float max_scale = 0;
+        ਦਸ਼ਮਲਵ max_scale = 0;
 
-        const float * xbl = x + QK_K*ibl;
-        float sumx2 = 0;
-        for (int i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
-        float sigma2 = 2*sumx2/QK_K;
+        ਅਚਲ ਦਸ਼ਮਲਵ * xbl = x + QK_K*ibl;
+        ਦਸ਼ਮਲਵ sumx2 = 0;
+        ਲਈ (ਪੂਰਨ i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
+        ਦਸ਼ਮਲਵ sigma2 = 2*sumx2/QK_K;
 
-        for (int ib = 0; ib < QK_K/block_size; ++ib) {
-            const float * xb = xbl + block_size*ib;
-            if (quant_weights) {
-                const float * qw = quant_weights + QK_K*ibl + block_size*ib;
-                for (int i = 0; i < block_size; ++i) weight[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
-            } else {
-                for (int i = 0; i < block_size; ++i) weight[i] = xb[i]*xb[i];
+        ਲਈ (ਪੂਰਨ ib = 0; ib < QK_K/ਖੰਡ_ਮਾਪ_3; ++ib) {
+            ਅਚਲ ਦਸ਼ਮਲਵ * xb = xbl + ਖੰਡ_ਮਾਪ_3*ib;
+            ਜੇ (quant_weights) {
+                ਅਚਲ ਦਸ਼ਮਲਵ * qw = quant_weights + QK_K*ibl + ਖੰਡ_ਮਾਪ_3*ib;
+                ਲਈ (ਪੂਰਨ i = 0; i < ਖੰਡ_ਮਾਪ_3; ++i) ਭਾਰ[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
+            } ਨਹੀਂਤਾਂ {
+                ਲਈ (ਪੂਰਨ i = 0; i < ਖੰਡ_ਮਾਪ_3; ++i) ਭਾਰ[i] = xb[i]*xb[i];
             }
-            for (int i = 0; i < block_size; ++i) waux[i] = sqrtf(weight[i]);
-            for (int k = 0; k < bs8; ++k) {
+            ਲਈ (ਪੂਰਨ i = 0; i < ਖੰਡ_ਮਾਪ_3; ++i) waux[i] = sqrtf(ਭਾਰ[i]);
+            ਲਈ (ਪੂਰਨ k = 0; k < bs8; ++k) {
                 uint8_t s = 0;
-                for (int i = 0; i < 8; ++i) {
-                    if (xb[8*k + i] >= 0) xval[8*k + i] = xb[8*k + i];
-                    else {
+                ਲਈ (ਪੂਰਨ i = 0; i < 8; ++i) {
+                    ਜੇ (xb[8*k + i] >= 0) xval[8*k + i] = xb[8*k + i];
+                    ਨਹੀਂਤਾਂ {
                         xval[8*k + i] = -xb[8*k + i]; s |= (1 << i);
                     }
                 }
-                block_signs[k] = s;
+                ਖੰਡ_signs[k] = s;
             }
-            float max = xval[0];
-            for (int i = 1; i < block_size; ++i) max = MAX(max, xval[i]);
-            memset(L, 0, block_size);
-            if (!max) {
+            ਦਸ਼ਮਲਵ max = xval[0];
+            ਲਈ (ਪੂਰਨ i = 1; i < ਖੰਡ_ਮਾਪ_3; ++i) max = MAX(max, xval[i]);
+            memset(L, 0, ਖੰਡ_ਮਾਪ_3);
+            ਜੇ (!max) {
                 scales[ib] = 0;
-                continue;
+                ਜਾਰੀ;
             }
-            float best = 0;
-            float scale = max/(2*kMaxQ-1);
-            for (int k = 0; k < bs4; ++k) is_on_grid[k] = false;
-            for (int is = -9; is <= 9; ++is) {
-                float id = (2*kMaxQ-1+is*0.2f)/max;
-                float this_scale = 1/id;
-                for (int k = 0; k < bs4; ++k) {
-                    for (int i = 0; i < 4; ++i) {
-                        int l = nearest_int(0.5f*(id*xval[4*k+i]-1));
+            ਦਸ਼ਮਲਵ ਉੱਤਮ = 0;
+            ਦਸ਼ਮਲਵ scale = max/(2*kMaxQ-1);
+            ਲਈ (ਪੂਰਨ k = 0; k < bs4; ++k) is_on_grid[k] = false;
+            ਲਈ (ਪੂਰਨ is = -9; is <= 9; ++is) {
+                ਦਸ਼ਮਲਵ id = (2*kMaxQ-1+is*0.2f)/max;
+                ਦਸ਼ਮਲਵ this_scale = 1/id;
+                ਲਈ (ਪੂਰਨ k = 0; k < bs4; ++k) {
+                    ਲਈ (ਪੂਰਨ i = 0; i < 4; ++i) {
+                        ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(0.5f*(id*xval[4*k+i]-1));
                         Laux[4*k+i] = MAX(0, MIN(kMaxQ-1, l));
                     }
                     uint16_t u = 0;
-                    for (int i = 0; i < 4; ++i) u |= (Laux[4*k+i] << 3*i);
-                    int grid_index = kmap_q3xs[u];
+                    ਲਈ (ਪੂਰਨ i = 0; i < 4; ++i) u |= (Laux[4*k+i] << 3*i);
+                    ਪੂਰਨ grid_ਸੂਚਕਾਂਕ = kmap_q3xs[u];
                     is_on_grid_aux[k] = true;
-                    if (grid_index < 0) {
+                    ਜੇ (grid_ਸੂਚਕਾਂਕ < 0) {
                         is_on_grid_aux[k] = false;
-                        const uint16_t * neighbours = kneighbors_q3xs - kmap_q3xs[u] - 1;
-                        grid_index = iq3_find_best_neighbour(neighbours, kgrid_q3xs, xval + 4*k, waux + 4*k, this_scale, Laux + 4*k);
+                        ਅਚਲ uint16_t * neighbours = kneighbors_q3xs - kmap_q3xs[u] - 1;
+                        grid_ਸੂਚਕਾਂਕ = iq3_ਲੱਭੋ_ਉੱਤਮ_neighbour(neighbours, kgrid_q3xs, xval + 4*k, waux + 4*k, this_scale, Laux + 4*k);
                     }
                 }
-                float sumqx = 0, sumq2 = 0;
-                for (int i = 0; i < block_size; ++i) {
-                    float w = weight[i];
-                    float q = 2*Laux[i] + 1;
+                ਦਸ਼ਮਲਵ sumqx = 0, sumq2 = 0;
+                ਲਈ (ਪੂਰਨ i = 0; i < ਖੰਡ_ਮਾਪ_3; ++i) {
+                    ਦਸ਼ਮਲਵ w = ਭਾਰ[i];
+                    ਦਸ਼ਮਲਵ q = 2*Laux[i] + 1;
                     sumqx += w*xval[i]*q;
                     sumq2 += w*q*q;
                 }
-                if (sumq2 > 0 && sumqx*sumqx > best*sumq2) {
-                    scale = sumqx/sumq2; best = scale*sumqx;
-                    for (int i = 0; i < block_size; ++i) L[i] = Laux[i];
-                    for (int k = 0; k < bs4; ++k) is_on_grid[k] = is_on_grid_aux[k];
+                ਜੇ (sumq2 > 0 && sumqx*sumqx > ਉੱਤਮ*sumq2) {
+                    scale = sumqx/sumq2; ਉੱਤਮ = scale*sumqx;
+                    ਲਈ (ਪੂਰਨ i = 0; i < ਖੰਡ_ਮਾਪ_3; ++i) L[i] = Laux[i];
+                    ਲਈ (ਪੂਰਨ k = 0; k < bs4; ++k) is_on_grid[k] = is_on_grid_aux[k];
                 }
             }
-            int n_not_ongrid = 0;
-            for (int k = 0; k < bs4; ++k) if (!is_on_grid[k]) ++n_not_ongrid;
-            if (n_not_ongrid > 0 && scale > 0) {
-                float id = 1/scale;
-                for (int k = 0; k < bs4; ++k) {
+            ਪੂਰਨ n_not_ongrid = 0;
+            ਲਈ (ਪੂਰਨ k = 0; k < bs4; ++k) ਜੇ (!is_on_grid[k]) ++n_not_ongrid;
+            ਜੇ (n_not_ongrid > 0 && scale > 0) {
+                ਦਸ਼ਮਲਵ id = 1/scale;
+                ਲਈ (ਪੂਰਨ k = 0; k < bs4; ++k) {
                     //if (is_on_grid[k]) continue;
                     uint16_t u = 0;
-                    for (int i = 0; i < 4; ++i) {
-                        int l = nearest_int(0.5f*(id*xval[4*k+i]-1));
+                    ਲਈ (ਪੂਰਨ i = 0; i < 4; ++i) {
+                        ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(0.5f*(id*xval[4*k+i]-1));
                         l = MAX(0, MIN(kMaxQ-1, l));
                         u |= (l << 3*i);
                     }
-                    int grid_index = kmap_q3xs[u];
-                    if (grid_index < 0) {
-                        const uint16_t * neighbours = kneighbors_q3xs - kmap_q3xs[u] - 1;
-                        grid_index = iq3_find_best_neighbour(neighbours, kgrid_q3xs, xval + 4*k, waux + 4*k, scale, L + 4*k);
+                    ਪੂਰਨ grid_ਸੂਚਕਾਂਕ = kmap_q3xs[u];
+                    ਜੇ (grid_ਸੂਚਕਾਂਕ < 0) {
+                        ਅਚਲ uint16_t * neighbours = kneighbors_q3xs - kmap_q3xs[u] - 1;
+                        grid_ਸੂਚਕਾਂਕ = iq3_ਲੱਭੋ_ਉੱਤਮ_neighbour(neighbours, kgrid_q3xs, xval + 4*k, waux + 4*k, scale, L + 4*k);
                     }
-                    const int8_t * pg = (const int8_t *)(kgrid_q3xs + grid_index);
-                    for (int i = 0; i < 4; ++i) L[4*k+i] = (pg[i] - 1)/2;
+                    ਅਚਲ int8_t * pg = (ਅਚਲ int8_t *)(kgrid_q3xs + grid_ਸੂਚਕਾਂਕ);
+                    ਲਈ (ਪੂਰਨ i = 0; i < 4; ++i) L[4*k+i] = (pg[i] - 1)/2;
                 }
-                float sumqx = 0, sumq2 = 0;
-                for (int i = 0; i < block_size; ++i) {
-                    float w = weight[i];
-                    float q = 2*L[i] + 1;
+                ਦਸ਼ਮਲਵ sumqx = 0, sumq2 = 0;
+                ਲਈ (ਪੂਰਨ i = 0; i < ਖੰਡ_ਮਾਪ_3; ++i) {
+                    ਦਸ਼ਮਲਵ w = ਭਾਰ[i];
+                    ਦਸ਼ਮਲਵ q = 2*L[i] + 1;
                     sumqx += w*xval[i]*q;
                     sumq2 += w*q*q;
                 }
-                if (sumq2 > 0) scale = sumqx/sumq2;
+                ਜੇ (sumq2 > 0) scale = sumqx/sumq2;
             }
-            if (scale < 0) {
+            ਜੇ (scale < 0) {
                 // This should never happen, but just in case, flip scale so that it is positive (we use uint's to encode the scale)
                 // and correspondingly flip quant signs.
                 scale = -scale;
-                for (int k = 0; k < bs8; ++k) block_signs[k] = ~block_signs[k];
+                ਲਈ (ਪੂਰਨ k = 0; k < bs8; ++k) ਖੰਡ_signs[k] = ~ਖੰਡ_signs[k];
             }
-            for (int k = 0; k < bs4; ++k) {
+            ਲਈ (ਪੂਰਨ k = 0; k < bs4; ++k) {
                 uint16_t u = 0;
-                for (int i = 0; i < 4; ++i) u |= (L[4*k+i] << 3*i);
-                int grid_index = kmap_q3xs[u];
-                if (grid_index < 0) {
-                    printf("Oops: found point %u not on grid:", u);
-                    for (int i = 0; i < 4; ++i) printf(" %d", L[4*k+i]);
-                    printf("\n");
+                ਲਈ (ਪੂਰਨ i = 0; i < 4; ++i) u |= (L[4*k+i] << 3*i);
+                ਪੂਰਨ grid_ਸੂਚਕਾਂਕ = kmap_q3xs[u];
+                ਜੇ (grid_ਸੂਚਕਾਂਕ < 0) {
+                    ਲਿਖੋ("Oops: found point %u not on grid:", u);
+                    ਲਈ (ਪੂਰਨ i = 0; i < 4; ++i) ਲਿਖੋ(" %d", L[4*k+i]);
+                    ਲਿਖੋ("\n");
                     GGML_ABORT("fatal error");
                 }
-                qs[k] = grid_index & 255;
-                qh[(ib*bs4+k)/8] |= ((grid_index >> 8) << ((ib*bs4+k)%8));
+                qs[k] = grid_ਸੂਚਕਾਂਕ & 255;
+                qh[(ib*bs4+k)/8] |= ((grid_ਸੂਚਕਾਂਕ >> 8) << ((ib*bs4+k)%8));
             }
             qs += bs4;
-            for (int k = 0; k < bs8; ++k) signs[k] = block_signs[k];
+            ਲਈ (ਪੂਰਨ k = 0; k < bs8; ++k) signs[k] = ਖੰਡ_signs[k];
             signs += bs8;
             GGML_ASSERT(scale >= 0);
             scales[ib] = scale;
             max_scale = MAX(max_scale, scale);
         }
 
-        if (!max_scale) {
-            continue;
+        ਜੇ (!max_scale) {
+            ਜਾਰੀ;
         }
 
-        float d = max_scale/31;
-        y[ibl].d = GGML_FP32_TO_FP16(d * 1.033f);
-        float id = 1/d;
-        for (int ib = 0; ib < QK_K/block_size; ib += 2) {
-            int l1 = nearest_int(0.5f*(id*scales[ib+0]-1));
+        ਦਸ਼ਮਲਵ d = max_scale/31;
+        y[ibl].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(d * 1.033f);
+        ਦਸ਼ਮਲਵ id = 1/d;
+        ਲਈ (ਪੂਰਨ ib = 0; ib < QK_K/ਖੰਡ_ਮਾਪ_3; ib += 2) {
+            ਪੂਰਨ l1 = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(0.5f*(id*scales[ib+0]-1));
             l1 = MAX(0, MIN(15, l1));
-            int l2 = nearest_int(0.5f*(id*scales[ib+1]-1));
+            ਪੂਰਨ l2 = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(0.5f*(id*scales[ib+1]-1));
             l2 = MAX(0, MIN(15, l2));
             y[ibl].scales[ib/2] = l1 | (l2 << 4);
         }
@@ -4350,177 +4350,177 @@ static void quantize_row_iq3_s_impl(int block_size, const float * GGML_RESTRICT 
     }
 }
 
-#define IQ3S_BLOCK_SIZE 32
-size_t quantize_iq3_s(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    GGML_ASSERT(n_per_row%QK_K == 0);
-    int64_t nblock = n_per_row/QK_K;
-    float scales[QK_K/IQ3S_BLOCK_SIZE];
-    float weight[IQ3S_BLOCK_SIZE];
-    float xval[IQ3S_BLOCK_SIZE];
-    int8_t L[IQ3S_BLOCK_SIZE];
-    int8_t Laux[IQ3S_BLOCK_SIZE];
-    float  waux[IQ3S_BLOCK_SIZE];
-    bool   is_on_grid[IQ3S_BLOCK_SIZE/4];
-    bool   is_on_grid_aux[IQ3S_BLOCK_SIZE/4];
-    uint8_t block_signs[IQ3S_BLOCK_SIZE/8];
-    char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
-        quantize_row_iq3_s_impl(IQ3S_BLOCK_SIZE, src, qrow, n_per_row, quant_weights,
-                scales, weight, xval, L, Laux, waux, is_on_grid, is_on_grid_aux, block_signs);
-        src += n_per_row;
-        qrow += nblock*sizeof(block_iq3_s);
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ IQ3_S_ਖੰਡ_ਮਾਪ 32
+size_t quantize_iq3_s(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT src, ਖਾਲੀ * GGML_RESTRICT dst, int64_t nrow, int64_t n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, ਅਚਲ ਦਸ਼ਮਲਵ * quant_weights) {
+    GGML_ASSERT(n_ਪ੍ਰਤੀ_ਪੰਕਤੀ%QK_K == 0);
+    int64_t nblock = n_ਪ੍ਰਤੀ_ਪੰਕਤੀ/QK_K;
+    ਦਸ਼ਮਲਵ scales[QK_K/IQ3_S_ਖੰਡ_ਮਾਪ];
+    ਦਸ਼ਮਲਵ ਭਾਰ[IQ3_S_ਖੰਡ_ਮਾਪ];
+    ਦਸ਼ਮਲਵ xval[IQ3_S_ਖੰਡ_ਮਾਪ];
+    int8_t L[IQ3_S_ਖੰਡ_ਮਾਪ];
+    int8_t Laux[IQ3_S_ਖੰਡ_ਮਾਪ];
+    ਦਸ਼ਮਲਵ  waux[IQ3_S_ਖੰਡ_ਮਾਪ];
+    bool   is_on_grid[IQ3_S_ਖੰਡ_ਮਾਪ/4];
+    bool   is_on_grid_aux[IQ3_S_ਖੰਡ_ਮਾਪ/4];
+    uint8_t ਖੰਡ_signs[IQ3_S_ਖੰਡ_ਮਾਪ/8];
+    ਅੱਖਰ * qrow = (ਅੱਖਰ *)dst;
+    ਲਈ (int64_t ਪੰਕਤੀ = 0; ਪੰਕਤੀ < nrow; ++ਪੰਕਤੀ) {
+        quantize_ਪੰਕਤੀ_iq3_s_impl(IQ3_S_ਖੰਡ_ਮਾਪ, src, qrow, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, quant_weights,
+                scales, ਭਾਰ, xval, L, Laux, waux, is_on_grid, is_on_grid_aux, ਖੰਡ_signs);
+        src += n_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+        qrow += nblock*ਆਕਾਰ(ਖੰਡ_iq3_s);
     }
-    return nrow * nblock * sizeof(block_iq3_s);
+    ਵਾਪਸ nrow * nblock * ਆਕਾਰ(ਖੰਡ_iq3_s);
 }
 
-void quantize_row_iq3_s_ref(const float * GGML_RESTRICT x, block_iq3_s * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    quantize_iq3_s(x, y, 1, k, NULL);
+ਖਾਲੀ quantize_ਪੰਕਤੀ_iq3_s_ref(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖੰਡ_iq3_s * GGML_RESTRICT y, int64_t k) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % QK_K == 0);
+    quantize_iq3_s(x, y, 1, k, ਨਿਰਾ);
 }
 
 
 // =================================== 1.5 bpw ===================================================
 
-static int iq1_find_best_neighbour(const uint16_t * GGML_RESTRICT neighbours, const uint64_t * GGML_RESTRICT grid,
-        const float * GGML_RESTRICT xval, const float * GGML_RESTRICT weight, float * scale, int8_t * GGML_RESTRICT L, int ngrid) {
-    int num_neighbors = neighbours[0];
-    GGML_ASSERT(num_neighbors > 0);
-    float best_score = -FLT_MAX;
-    int grid_index = -1;
-    for (int j = 1; j <= num_neighbors; ++j) {
-        const int8_t * pg = (const int8_t *)(grid + neighbours[j]);
-        float sumqx = 0, sumq2 = 0;
-        for (int i = 0; i < 8; ++i) {
-            float q = (pg[i] - 3)/2;
-            float w = weight[i];
+ਸਥਿਰ ਪੂਰਨ iq1_ਲੱਭੋ_ਉੱਤਮ_neighbour(ਅਚਲ uint16_t * GGML_RESTRICT neighbours, ਅਚਲ uint64_t * GGML_RESTRICT grid,
+        ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT xval, ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT ਭਾਰ, ਦਸ਼ਮਲਵ * scale, int8_t * GGML_RESTRICT L, ਪੂਰਨ ngrid) {
+    ਪੂਰਨ ਅੰਕ_neighbors = neighbours[0];
+    GGML_ASSERT(ਅੰਕ_neighbors > 0);
+    ਦਸ਼ਮਲਵ ਉੱਤਮ_score = -FLT_MAX;
+    ਪੂਰਨ grid_ਸੂਚਕਾਂਕ = -1;
+    ਲਈ (ਪੂਰਨ j = 1; j <= ਅੰਕ_neighbors; ++j) {
+        ਅਚਲ int8_t * pg = (ਅਚਲ int8_t *)(grid + neighbours[j]);
+        ਦਸ਼ਮਲਵ sumqx = 0, sumq2 = 0;
+        ਲਈ (ਪੂਰਨ i = 0; i < 8; ++i) {
+            ਦਸ਼ਮਲਵ q = (pg[i] - 3)/2;
+            ਦਸ਼ਮਲਵ w = ਭਾਰ[i];
             sumqx += w*q*xval[i];
             sumq2 += w*q*q;
         }
-        if (sumqx > 0 && sumq2 > 0 && sumqx*sumqx > best_score*sumq2) {
-            *scale = sumqx/sumq2; best_score = *scale * sumqx;
-            grid_index = neighbours[j];
+        ਜੇ (sumqx > 0 && sumq2 > 0 && sumqx*sumqx > ਉੱਤਮ_score*sumq2) {
+            *scale = sumqx/sumq2; ਉੱਤਮ_score = *scale * sumqx;
+            grid_ਸੂਚਕਾਂਕ = neighbours[j];
         }
     }
-    if (grid_index < 0) {
-        for (int i = 0; i < ngrid; ++i) {
-            const int8_t * grid_i = (const int8_t *)(grid + i);
-            float sumqx = 0, sumq2 = 0;
-            for (int j = 0; j < 8; ++j) {
-                float w = weight[j];
-                float q = (grid_i[j] - 3)/2;
+    ਜੇ (grid_ਸੂਚਕਾਂਕ < 0) {
+        ਲਈ (ਪੂਰਨ i = 0; i < ngrid; ++i) {
+            ਅਚਲ int8_t * grid_i = (ਅਚਲ int8_t *)(grid + i);
+            ਦਸ਼ਮਲਵ sumqx = 0, sumq2 = 0;
+            ਲਈ (ਪੂਰਨ j = 0; j < 8; ++j) {
+                ਦਸ਼ਮਲਵ w = ਭਾਰ[j];
+                ਦਸ਼ਮਲਵ q = (grid_i[j] - 3)/2;
                 sumqx += w*q*xval[j];
                 sumq2 += w*q*q;
             }
-            if (sumqx > 0 && sumq2 > 0 && sumqx*sumqx > best_score*sumq2) {
-                *scale = sumqx/sumq2; best_score = *scale*sumqx;
-                grid_index = i;
+            ਜੇ (sumqx > 0 && sumq2 > 0 && sumqx*sumqx > ਉੱਤਮ_score*sumq2) {
+                *scale = sumqx/sumq2; ਉੱਤਮ_score = *scale*sumqx;
+                grid_ਸੂਚਕਾਂਕ = i;
             }
         }
     }
-    if (grid_index < 0) {
-        printf("Oops, did not find grid point\n");
-        printf("Have %d neighbours\n", num_neighbors);
-        for (int j = 1; j <= num_neighbors; ++j) {
-            const int8_t * pg = (const int8_t *)(grid + neighbours[j]);
-            float sumqx = 0, sumq2 = 0;
-            for (int i = 0; i < 8; ++i) {
-                float q = (pg[i] - 3)/2;
-                float w = weight[i];
+    ਜੇ (grid_ਸੂਚਕਾਂਕ < 0) {
+        ਲਿਖੋ("Oops, did not find grid point\n");
+        ਲਿਖੋ("Have %d neighbours\n", ਅੰਕ_neighbors);
+        ਲਈ (ਪੂਰਨ j = 1; j <= ਅੰਕ_neighbors; ++j) {
+            ਅਚਲ int8_t * pg = (ਅਚਲ int8_t *)(grid + neighbours[j]);
+            ਦਸ਼ਮਲਵ sumqx = 0, sumq2 = 0;
+            ਲਈ (ਪੂਰਨ i = 0; i < 8; ++i) {
+                ਦਸ਼ਮਲਵ q = (pg[i] - 3)/2;
+                ਦਸ਼ਮਲਵ w = ਭਾਰ[i];
                 sumqx += w*q*xval[i];
                 sumq2 += w*q*q;
             }
-            printf("    neighbour %d: sumqx = %g sumq2 = %g\n", j, (double)sumqx, (double)sumq2);
+            ਲਿਖੋ("    neighbour %d: sumqx = %g sumq2 = %g\n", j, (ਦੁੱਗਣਾ)sumqx, (ਦੁੱਗਣਾ)sumq2);
         }
     }
-    GGML_ASSERT(grid_index >= 0);
+    GGML_ASSERT(grid_ਸੂਚਕਾਂਕ >= 0);
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     *scale *= 1.05f;  // This is a fudge factor. Don't ask me why it improves the result.
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    const int8_t * pg = (const int8_t *)(grid + grid_index);
-    for (int i = 0; i < 8; ++i) L[i] = (pg[i] - 1)/2;
-    return grid_index;
+    ਅਚਲ int8_t * pg = (ਅਚਲ int8_t *)(grid + grid_ਸੂਚਕਾਂਕ);
+    ਲਈ (ਪੂਰਨ i = 0; i < 8; ++i) L[i] = (pg[i] - 1)/2;
+    ਵਾਪਸ grid_ਸੂਚਕਾਂਕ;
 }
 
-static int iq1_find_best_neighbour2(const uint16_t * GGML_RESTRICT neighbours, const uint64_t * GGML_RESTRICT grid,
-        const float * GGML_RESTRICT xval, const float * GGML_RESTRICT weight, float scale, const float * GGML_RESTRICT xg, int8_t * GGML_RESTRICT L, int ngrid) {
-    int num_neighbors = neighbours[0];
-    GGML_ASSERT(num_neighbors > 0);
-    float best_score = FLT_MAX;
-    int grid_index = -1;
-    for (int j = 1; j <= num_neighbors; ++j) {
-        const int8_t * pg = (const int8_t *)(grid + neighbours[j]);
-        float d2 = 0;
-        for (int i = 0; i < 8; ++i) {
-            float q = xg[(pg[i] - 1)/2];
-            float w = weight[i];
-            float diff = scale*q - xval[i];
+ਸਥਿਰ ਪੂਰਨ iq1_ਲੱਭੋ_ਉੱਤਮ_neighbour2(ਅਚਲ uint16_t * GGML_RESTRICT neighbours, ਅਚਲ uint64_t * GGML_RESTRICT grid,
+        ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT xval, ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT ਭਾਰ, ਦਸ਼ਮਲਵ scale, ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT xg, int8_t * GGML_RESTRICT L, ਪੂਰਨ ngrid) {
+    ਪੂਰਨ ਅੰਕ_neighbors = neighbours[0];
+    GGML_ASSERT(ਅੰਕ_neighbors > 0);
+    ਦਸ਼ਮਲਵ ਉੱਤਮ_score = FLT_MAX;
+    ਪੂਰਨ grid_ਸੂਚਕਾਂਕ = -1;
+    ਲਈ (ਪੂਰਨ j = 1; j <= ਅੰਕ_neighbors; ++j) {
+        ਅਚਲ int8_t * pg = (ਅਚਲ int8_t *)(grid + neighbours[j]);
+        ਦਸ਼ਮਲਵ d2 = 0;
+        ਲਈ (ਪੂਰਨ i = 0; i < 8; ++i) {
+            ਦਸ਼ਮਲਵ q = xg[(pg[i] - 1)/2];
+            ਦਸ਼ਮਲਵ w = ਭਾਰ[i];
+            ਦਸ਼ਮਲਵ diff = scale*q - xval[i];
             d2 += w*diff*diff;
         }
-        if (d2 < best_score) {
-            best_score = d2;
-            grid_index = neighbours[j];
+        ਜੇ (d2 < ਉੱਤਮ_score) {
+            ਉੱਤਮ_score = d2;
+            grid_ਸੂਚਕਾਂਕ = neighbours[j];
         }
     }
-    if (grid_index < 0) {
-        for (int i = 0; i < ngrid; ++i) {
-            const int8_t * grid_i = (const int8_t *)(grid + i);
-            float d2 = 0;
-            for (int j = 0; j < 8; ++j) {
-                float w = weight[j];
-                float q = xg[(grid_i[j] - 1)/2];
-                float diff = scale*q - xval[i];
+    ਜੇ (grid_ਸੂਚਕਾਂਕ < 0) {
+        ਲਈ (ਪੂਰਨ i = 0; i < ngrid; ++i) {
+            ਅਚਲ int8_t * grid_i = (ਅਚਲ int8_t *)(grid + i);
+            ਦਸ਼ਮਲਵ d2 = 0;
+            ਲਈ (ਪੂਰਨ j = 0; j < 8; ++j) {
+                ਦਸ਼ਮਲਵ w = ਭਾਰ[j];
+                ਦਸ਼ਮਲਵ q = xg[(grid_i[j] - 1)/2];
+                ਦਸ਼ਮਲਵ diff = scale*q - xval[i];
                 d2 += w*diff*diff;
             }
-            if (d2 < best_score) {
-                best_score = d2;
-                grid_index = i;
+            ਜੇ (d2 < ਉੱਤਮ_score) {
+                ਉੱਤਮ_score = d2;
+                grid_ਸੂਚਕਾਂਕ = i;
             }
         }
     }
-    if (grid_index < 0) {
-        printf("Oops, did not find grid point\n");
-        printf("Have %d neighbours\n", num_neighbors);
-        for (int j = 1; j <= num_neighbors; ++j) {
-            const int8_t * pg = (const int8_t *)(grid + neighbours[j]);
-            float sumqx = 0, sumq2 = 0;
-            for (int i = 0; i < 8; ++i) {
-                float q = xg[(pg[i] - 1)/2];
-                float w = weight[i];
+    ਜੇ (grid_ਸੂਚਕਾਂਕ < 0) {
+        ਲਿਖੋ("Oops, did not find grid point\n");
+        ਲਿਖੋ("Have %d neighbours\n", ਅੰਕ_neighbors);
+        ਲਈ (ਪੂਰਨ j = 1; j <= ਅੰਕ_neighbors; ++j) {
+            ਅਚਲ int8_t * pg = (ਅਚਲ int8_t *)(grid + neighbours[j]);
+            ਦਸ਼ਮਲਵ sumqx = 0, sumq2 = 0;
+            ਲਈ (ਪੂਰਨ i = 0; i < 8; ++i) {
+                ਦਸ਼ਮਲਵ q = xg[(pg[i] - 1)/2];
+                ਦਸ਼ਮਲਵ w = ਭਾਰ[i];
                 sumqx += w*q*xval[i];
                 sumq2 += w*q*q;
             }
-            printf("    neighbour %d: sumqx = %g sumq2 = %g\n", j, (double)sumqx, (double)sumq2);
+            ਲਿਖੋ("    neighbour %d: sumqx = %g sumq2 = %g\n", j, (ਦੁੱਗਣਾ)sumqx, (ਦੁੱਗਣਾ)sumq2);
         }
     }
-    GGML_ASSERT(grid_index >= 0);
-    const int8_t * pg = (const int8_t *)(grid + grid_index);
-    for (int i = 0; i < 8; ++i) L[i] = (pg[i] - 1)/2;
-    return grid_index;
+    GGML_ASSERT(grid_ਸੂਚਕਾਂਕ >= 0);
+    ਅਚਲ int8_t * pg = (ਅਚਲ int8_t *)(grid + grid_ਸੂਚਕਾਂਕ);
+    ਲਈ (ਪੂਰਨ i = 0; i < 8; ++i) L[i] = (pg[i] - 1)/2;
+    ਵਾਪਸ grid_ਸੂਚਕਾਂਕ;
 }
 
-static int iq1_sort_helper(const void * left, const void * right) {
-    const float * l = left;
-    const float * r = right;
-    return *l < *r ? -1 : *l > *r ? 1 : 0;
+ਸਥਿਰ ਪੂਰਨ iq1_ਛਾਂਟੋ_helper(ਅਚਲ ਖਾਲੀ * ਖੱਬਾ, ਅਚਲ ਖਾਲੀ * ਸੱਜਾ) {
+    ਅਚਲ ਦਸ਼ਮਲਵ * l = ਖੱਬਾ;
+    ਅਚਲ ਦਸ਼ਮਲਵ * r = ਸੱਜਾ;
+    ਵਾਪਸ *l < *r ? -1 : *l > *r ? 1 : 0;
 }
 
-#define IQ1S_BLOCK_SIZE 32
-#define IQ1M_BLOCK_SIZE 16
-static void quantize_row_iq1_s_impl(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t n, const float * GGML_RESTRICT quant_weights,
-        float    * scales,
-        float    * weight,
-        float    * sumx,
-        float    * sumw,
-        float    * pairs,
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ IQ1_S_ਖੰਡ_ਮਾਪ 32
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ IQ1_M_ਖੰਡ_ਮਾਪ 16
+ਸਥਿਰ ਖਾਲੀ quantize_ਪੰਕਤੀ_iq1_s_impl(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖਾਲੀ * GGML_RESTRICT vy, int64_t n, ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT quant_weights,
+        ਦਸ਼ਮਲਵ    * scales,
+        ਦਸ਼ਮਲਵ    * ਭਾਰ,
+        ਦਸ਼ਮਲਵ    * sumx,
+        ਦਸ਼ਮਲਵ    * sumw,
+        ਦਸ਼ਮਲਵ    * ਜੋੜੇ,
         int8_t   * L,
-        uint16_t * index,
+        uint16_t * ਸੂਚਕਾਂਕ,
         int8_t   * shifts) {
 
-    const int gindex = iq2_data_index(GGML_TYPE_IQ1_S);
+    ਅਚਲ ਪੂਰਨ gindex = iq2_ਅੰਕੜੇ_ਸੂਚਕਾਂਕ(GGML_TYPE_IQ1_S);
 
-    const uint64_t * kgrid_q2xs      = iq2_data[gindex].grid;
-    const int      * kmap_q2xs       = iq2_data[gindex].map;
-    const uint16_t * kneighbors_q2xs = iq2_data[gindex].neighbours;
+    ਅਚਲ uint64_t * kgrid_q2xs      = iq2_ਅੰਕੜੇ[gindex].grid;
+    ਅਚਲ ਪੂਰਨ      * kmap_q2xs       = iq2_ਅੰਕੜੇ[gindex].map;
+    ਅਚਲ uint16_t * kneighbors_q2xs = iq2_ਅੰਕੜੇ[gindex].neighbours;
 
     GGML_ASSERT(quant_weights   && "missing quantization weights");
     GGML_ASSERT(kgrid_q2xs      && "forgot to call ggml_quantize_init()?");
@@ -4528,42 +4528,42 @@ static void quantize_row_iq1_s_impl(const float * GGML_RESTRICT x, void * GGML_R
     GGML_ASSERT(kneighbors_q2xs && "forgot to call ggml_quantize_init()?");
     GGML_ASSERT(n%QK_K == 0);
 
-    block_iq1_s * y = vy;
+    ਖੰਡ_iq1_s * y = vy;
 
-    const int64_t nbl = n/QK_K;
+    ਅਚਲ int64_t nbl = n/QK_K;
 
-    const int block_size = IQ1S_BLOCK_SIZE;
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਮਾਪ_3 = IQ1_S_ਖੰਡ_ਮਾਪ;
 
-    const float x_p[3] = {-1 + IQ1S_DELTA,  IQ1S_DELTA, 1 + IQ1S_DELTA};
-    const float x_m[3] = {-1 - IQ1S_DELTA, -IQ1S_DELTA, 1 - IQ1S_DELTA};
+    ਅਚਲ ਦਸ਼ਮਲਵ x_p[3] = {-1 + IQ1S_DELTA,  IQ1S_DELTA, 1 + IQ1S_DELTA};
+    ਅਚਲ ਦਸ਼ਮਲਵ x_m[3] = {-1 - IQ1S_DELTA, -IQ1S_DELTA, 1 - IQ1S_DELTA};
 
 
-    int * idx = (int *)(pairs + 1);
+    ਪੂਰਨ * idx = (ਪੂਰਨ *)(ਜੋੜੇ + 1);
 
-    for (int ibl = 0; ibl < nbl; ++ibl) {
+    ਲਈ (ਪੂਰਨ ibl = 0; ibl < nbl; ++ibl) {
 
-        y[ibl].d = GGML_FP32_TO_FP16(0.f);
+        y[ibl].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(0.f);
         memset(y[ibl].qs, 0, QK_K/8);
         memset(y[ibl].qh, 0, QK_K/16);
 
-        float max_scale = 0;
+        ਦਸ਼ਮਲਵ max_scale = 0;
 
-        const float * xbl = x + QK_K*ibl;
-        float sumx2 = 0;
-        for (int i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
-        float sigma2 = 2*sumx2/QK_K;
+        ਅਚਲ ਦਸ਼ਮਲਵ * xbl = x + QK_K*ibl;
+        ਦਸ਼ਮਲਵ sumx2 = 0;
+        ਲਈ (ਪੂਰਨ i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
+        ਦਸ਼ਮਲਵ sigma2 = 2*sumx2/QK_K;
 
-        for (int ib = 0; ib < QK_K/block_size; ++ib) {
-            const float * xb = xbl + block_size*ib;
-            const float * qw = quant_weights + QK_K*ibl + block_size*ib;
-            for (int i = 0; i < block_size; ++i) weight[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
-            float max = fabsf(xb[0]);
-            for (int i = 1; i < block_size; ++i) max = MAX(max, fabsf(xb[i]));
-            if (max < GROUP_MAX_EPS_IQ1_S) {
+        ਲਈ (ਪੂਰਨ ib = 0; ib < QK_K/ਖੰਡ_ਮਾਪ_3; ++ib) {
+            ਅਚਲ ਦਸ਼ਮਲਵ * xb = xbl + ਖੰਡ_ਮਾਪ_3*ib;
+            ਅਚਲ ਦਸ਼ਮਲਵ * qw = quant_weights + QK_K*ibl + ਖੰਡ_ਮਾਪ_3*ib;
+            ਲਈ (ਪੂਰਨ i = 0; i < ਖੰਡ_ਮਾਪ_3; ++i) ਭਾਰ[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
+            ਦਸ਼ਮਲਵ max = fabsf(xb[0]);
+            ਲਈ (ਪੂਰਨ i = 1; i < ਖੰਡ_ਮਾਪ_3; ++i) max = MAX(max, fabsf(xb[i]));
+            ਜੇ (max < ਸਮੂਹ_MAX_EPS_IQ1_S) {
                 scales[ib] = 0;
                 shifts[ib] = 1;
-                memset(L, 1, block_size);
-                continue;
+                memset(L, 1, ਖੰਡ_ਮਾਪ_3);
+                ਜਾਰੀ;
             }
             // Here we solve exactly the sum of squared difference (SSD) weighted minimization problem.
             // With just 3 allowed quant values (-1, 0, 1), we can search exhaustively for the two
@@ -4571,138 +4571,138 @@ static void quantize_row_iq1_s_impl(const float * GGML_RESTRICT x, void * GGML_R
             // in ascending order, compute Si = sum[weight[j] xb[j], j = 0...i] and
             // Wi = sum[weight[j], j = 0...i], and use these to quckly get get the optimum scale
             // for each possible and score for each split.
-            for (int j = 0; j < block_size; ++j) {
-                pairs[2*j] = xb[j];
+            ਲਈ (ਪੂਰਨ j = 0; j < ਖੰਡ_ਮਾਪ_3; ++j) {
+                ਜੋੜੇ[2*j] = xb[j];
                 idx[2*j] = j;
             }
-            qsort(pairs, block_size, 2*sizeof(float), iq1_sort_helper);
+            qsort(ਜੋੜੇ, ਖੰਡ_ਮਾਪ_3, 2*ਆਕਾਰ(ਦਸ਼ਮਲਵ), iq1_ਛਾਂਟੋ_helper);
             {
                 sumx[0] = sumw[0] = 0;
-                for (int j = 0; j < block_size; ++j) {
-                    int i = idx[2*j];
-                    sumx[j+1] = sumx[j] + weight[i]*xb[i];
-                    sumw[j+1] = sumw[j] + weight[i];
+                ਲਈ (ਪੂਰਨ j = 0; j < ਖੰਡ_ਮਾਪ_3; ++j) {
+                    ਪੂਰਨ i = idx[2*j];
+                    sumx[j+1] = sumx[j] + ਭਾਰ[i]*xb[i];
+                    sumw[j+1] = sumw[j] + ਭਾਰ[i];
                 }
             }
-            float best_score = -FLT_MAX, scale = max;
-            int besti1 = -1, besti2 = -1, best_shift = 0;
-            for (int i1 = 0; i1 <= block_size; ++i1) {
-                for (int i2 = i1; i2 <= block_size; ++i2) {
-                    float sumqx = (sumx[i1] - sumx[0])*x_p[0] + (sumx[i2] - sumx[i1])*x_p[1] + (sumx[block_size] - sumx[i2])*x_p[2];
-                    float sumq2 = (sumw[i1] - sumw[0])*x_p[0]*x_p[0] + (sumw[i2] - sumw[i1])*x_p[1]*x_p[1] + (sumw[block_size] - sumw[i2])*x_p[2]*x_p[2];
-                    if (sumq2 > 0 && sumqx*sumqx > best_score*sumq2) {
-                        scale = sumqx/sumq2; best_score = scale*sumqx;
-                        besti1 = i1; besti2 = i2; best_shift = 1;
+            ਦਸ਼ਮਲਵ ਉੱਤਮ_score = -FLT_MAX, scale = max;
+            ਪੂਰਨ besti1 = -1, besti2 = -1, ਉੱਤਮ_ਖਿਸਕਾਓ = 0;
+            ਲਈ (ਪੂਰਨ i1 = 0; i1 <= ਖੰਡ_ਮਾਪ_3; ++i1) {
+                ਲਈ (ਪੂਰਨ i2 = i1; i2 <= ਖੰਡ_ਮਾਪ_3; ++i2) {
+                    ਦਸ਼ਮਲਵ sumqx = (sumx[i1] - sumx[0])*x_p[0] + (sumx[i2] - sumx[i1])*x_p[1] + (sumx[ਖੰਡ_ਮਾਪ_3] - sumx[i2])*x_p[2];
+                    ਦਸ਼ਮਲਵ sumq2 = (sumw[i1] - sumw[0])*x_p[0]*x_p[0] + (sumw[i2] - sumw[i1])*x_p[1]*x_p[1] + (sumw[ਖੰਡ_ਮਾਪ_3] - sumw[i2])*x_p[2]*x_p[2];
+                    ਜੇ (sumq2 > 0 && sumqx*sumqx > ਉੱਤਮ_score*sumq2) {
+                        scale = sumqx/sumq2; ਉੱਤਮ_score = scale*sumqx;
+                        besti1 = i1; besti2 = i2; ਉੱਤਮ_ਖਿਸਕਾਓ = 1;
                     }
-                    sumqx = (sumx[i1] - sumx[0])*x_m[0] + (sumx[i2] - sumx[i1])*x_m[1] + (sumx[block_size] - sumx[i2])*x_m[2];
-                    sumq2 = (sumw[i1] - sumw[0])*x_m[0]*x_m[0] + (sumw[i2] - sumw[i1])*x_m[1]*x_m[1] + (sumw[block_size] - sumw[i2])*x_m[2]*x_m[2];
-                    if (sumq2 > 0 && sumqx*sumqx > best_score*sumq2) {
-                        scale = sumqx/sumq2; best_score = scale*sumqx;
-                        besti1 = i1; besti2 = i2; best_shift = -1;
+                    sumqx = (sumx[i1] - sumx[0])*x_m[0] + (sumx[i2] - sumx[i1])*x_m[1] + (sumx[ਖੰਡ_ਮਾਪ_3] - sumx[i2])*x_m[2];
+                    sumq2 = (sumw[i1] - sumw[0])*x_m[0]*x_m[0] + (sumw[i2] - sumw[i1])*x_m[1]*x_m[1] + (sumw[ਖੰਡ_ਮਾਪ_3] - sumw[i2])*x_m[2]*x_m[2];
+                    ਜੇ (sumq2 > 0 && sumqx*sumqx > ਉੱਤਮ_score*sumq2) {
+                        scale = sumqx/sumq2; ਉੱਤਮ_score = scale*sumqx;
+                        besti1 = i1; besti2 = i2; ਉੱਤਮ_ਖਿਸਕਾਓ = -1;
                     }
                 }
             }
-            if (besti1 < 0 || besti2 < 0 || best_shift == 0) {
+            ਜੇ (besti1 < 0 || besti2 < 0 || ਉੱਤਮ_ਖਿਸਕਾਓ == 0) {
                 scales[ib] = 0;
                 shifts[ib] = 1;
-                memset(L, 1, block_size);
-                continue;
+                memset(L, 1, ਖੰਡ_ਮਾਪ_3);
+                ਜਾਰੀ;
             }
-            for (int j =      0; j < besti1; ++j) L[idx[2*j]] = 0;
-            for (int j = besti1; j < besti2; ++j) L[idx[2*j]] = 1;
-            for (int j = besti2; j < block_size; ++j) L[idx[2*j]] = 2;
-            if (scale < 0) {
-                for (int j = 0; j < block_size; ++j) L[j] = 2 - L[j];
-                scale = -scale; best_shift = -best_shift;
+            ਲਈ (ਪੂਰਨ j =      0; j < besti1; ++j) L[idx[2*j]] = 0;
+            ਲਈ (ਪੂਰਨ j = besti1; j < besti2; ++j) L[idx[2*j]] = 1;
+            ਲਈ (ਪੂਰਨ j = besti2; j < ਖੰਡ_ਮਾਪ_3; ++j) L[idx[2*j]] = 2;
+            ਜੇ (scale < 0) {
+                ਲਈ (ਪੂਰਨ j = 0; j < ਖੰਡ_ਮਾਪ_3; ++j) L[j] = 2 - L[j];
+                scale = -scale; ਉੱਤਮ_ਖਿਸਕਾਓ = -ਉੱਤਮ_ਖਿਸਕਾਓ;
             }
             bool all_on_grid = true;
-            const float * xx = best_shift == 1 ? x_p : x_m;
-            for (int k = 0; k < block_size/8; ++k) {
+            ਅਚਲ ਦਸ਼ਮਲਵ * xx = ਉੱਤਮ_ਖਿਸਕਾਓ == 1 ? x_p : x_m;
+            ਲਈ (ਪੂਰਨ k = 0; k < ਖੰਡ_ਮਾਪ_3/8; ++k) {
                 uint16_t u = 0;
-                for (int j = 0; j < 8; ++j) u |= (L[8*k+j] << 2*j);
-                int grid_index = kmap_q2xs[u];
-                if (grid_index < 0) {
+                ਲਈ (ਪੂਰਨ j = 0; j < 8; ++j) u |= (L[8*k+j] << 2*j);
+                ਪੂਰਨ grid_ਸੂਚਕਾਂਕ = kmap_q2xs[u];
+                ਜੇ (grid_ਸੂਚਕਾਂਕ < 0) {
                     all_on_grid = false;
-                    const uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
-                    grid_index = iq1_find_best_neighbour2(neighbours, kgrid_q2xs, xb + 8*k, weight + 8*k, scale, xx, L + 8*k, NGRID_IQ1S);
-                    GGML_ASSERT(grid_index >= 0);
+                    ਅਚਲ uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
+                    grid_ਸੂਚਕਾਂਕ = iq1_ਲੱਭੋ_ਉੱਤਮ_neighbour2(neighbours, kgrid_q2xs, xb + 8*k, ਭਾਰ + 8*k, scale, xx, L + 8*k, NGRID_IQ1S);
+                    GGML_ASSERT(grid_ਸੂਚਕਾਂਕ >= 0);
                 }
-                index[k] = grid_index;
+                ਸੂਚਕਾਂਕ[k] = grid_ਸੂਚਕਾਂਕ;
             }
-            if (!all_on_grid) {
-                float sumqx = 0, sumq2 = 0;
-                for (int k = 0; k < block_size/8; ++k) {
-                    const int8_t * pg = (const int8_t *)(kgrid_q2xs + index[k]);
-                    for (int j = 0; j < 8; ++j) {
-                        float w = weight[8*k + j];
-                        float q = xx[(pg[j] - 1)/2];
+            ਜੇ (!all_on_grid) {
+                ਦਸ਼ਮਲਵ sumqx = 0, sumq2 = 0;
+                ਲਈ (ਪੂਰਨ k = 0; k < ਖੰਡ_ਮਾਪ_3/8; ++k) {
+                    ਅਚਲ int8_t * pg = (ਅਚਲ int8_t *)(kgrid_q2xs + ਸੂਚਕਾਂਕ[k]);
+                    ਲਈ (ਪੂਰਨ j = 0; j < 8; ++j) {
+                        ਦਸ਼ਮਲਵ w = ਭਾਰ[8*k + j];
+                        ਦਸ਼ਮਲਵ q = xx[(pg[j] - 1)/2];
                         sumqx += w*q*xb[8*k+j];
                         sumq2 += w*q*q;
                     }
                 }
-                if (sumqx > 0 && sumq2 > 0) scale = sumqx/sumq2;
+                ਜੇ (sumqx > 0 && sumq2 > 0) scale = sumqx/sumq2;
             }
             uint16_t h = 0;
-            for (int k = 0; k < block_size/8; ++k) {
-                y[ibl].qs[(block_size/8)*ib + k] = index[k] & 255;
-                h |= (index[k] >> 8) << 3*k;
+            ਲਈ (ਪੂਰਨ k = 0; k < ਖੰਡ_ਮਾਪ_3/8; ++k) {
+                y[ibl].qs[(ਖੰਡ_ਮਾਪ_3/8)*ib + k] = ਸੂਚਕਾਂਕ[k] & 255;
+                h |= (ਸੂਚਕਾਂਕ[k] >> 8) << 3*k;
             }
             y[ibl].qh[ib] = h;
             GGML_ASSERT(scale >= 0);
             scales[ib] = scale;
-            shifts[ib] = best_shift;
+            shifts[ib] = ਉੱਤਮ_ਖਿਸਕਾਓ;
             max_scale = MAX(max_scale, scale);
         }
 
-        if (!max_scale) {
-            continue;
+        ਜੇ (!max_scale) {
+            ਜਾਰੀ;
         }
 
-        float d = max_scale/15;
-        y[ibl].d = GGML_FP32_TO_FP16(d*1.125f); // 1.125f is another fudge factor. Don't ask me why it is needed.
-        float id = 1/d;
-        for (int ib = 0; ib < QK_K/block_size; ++ib) {
-            int l = nearest_int(0.5f*(id*scales[ib]-1));
+        ਦਸ਼ਮਲਵ d = max_scale/15;
+        y[ibl].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(d*1.125f); // 1.125f is another fudge factor. Don't ask me why it is needed.
+        ਦਸ਼ਮਲਵ id = 1/d;
+        ਲਈ (ਪੂਰਨ ib = 0; ib < QK_K/ਖੰਡ_ਮਾਪ_3; ++ib) {
+            ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(0.5f*(id*scales[ib]-1));
             l = MAX(0, MIN(7, l));
-            if (shifts[ib] == -1) l |= 8;
+            ਜੇ (shifts[ib] == -1) l |= 8;
             y[ibl].qh[ib] |= (l << 12);
         }
     }
 }
 
-size_t quantize_iq1_s(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    GGML_ASSERT(n_per_row%QK_K == 0);
-    float  scales[QK_K/IQ1S_BLOCK_SIZE];
-    float  weight[IQ1S_BLOCK_SIZE];
-    int8_t L[IQ1S_BLOCK_SIZE];
-    float  sumx[IQ1S_BLOCK_SIZE+1];
-    float  sumw[IQ1S_BLOCK_SIZE+1];
-    float  pairs[2*IQ1S_BLOCK_SIZE];
-    uint16_t index[IQ1S_BLOCK_SIZE/8];
-    int8_t shifts[QK_K/IQ1S_BLOCK_SIZE];
-    int64_t nblock = n_per_row/QK_K;
-    char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
-        quantize_row_iq1_s_impl(src, qrow, n_per_row, quant_weights, scales, weight, sumx, sumw, pairs, L, index, shifts);
-        src += n_per_row;
-        qrow += nblock*sizeof(block_iq1_s);
+size_t quantize_iq1_s(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT src, ਖਾਲੀ * GGML_RESTRICT dst, int64_t nrow, int64_t n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, ਅਚਲ ਦਸ਼ਮਲਵ * quant_weights) {
+    GGML_ASSERT(n_ਪ੍ਰਤੀ_ਪੰਕਤੀ%QK_K == 0);
+    ਦਸ਼ਮਲਵ  scales[QK_K/IQ1_S_ਖੰਡ_ਮਾਪ];
+    ਦਸ਼ਮਲਵ  ਭਾਰ[IQ1_S_ਖੰਡ_ਮਾਪ];
+    int8_t L[IQ1_S_ਖੰਡ_ਮਾਪ];
+    ਦਸ਼ਮਲਵ  sumx[IQ1_S_ਖੰਡ_ਮਾਪ+1];
+    ਦਸ਼ਮਲਵ  sumw[IQ1_S_ਖੰਡ_ਮਾਪ+1];
+    ਦਸ਼ਮਲਵ  ਜੋੜੇ[2*IQ1_S_ਖੰਡ_ਮਾਪ];
+    uint16_t ਸੂਚਕਾਂਕ[IQ1_S_ਖੰਡ_ਮਾਪ/8];
+    int8_t shifts[QK_K/IQ1_S_ਖੰਡ_ਮਾਪ];
+    int64_t nblock = n_ਪ੍ਰਤੀ_ਪੰਕਤੀ/QK_K;
+    ਅੱਖਰ * qrow = (ਅੱਖਰ *)dst;
+    ਲਈ (int64_t ਪੰਕਤੀ = 0; ਪੰਕਤੀ < nrow; ++ਪੰਕਤੀ) {
+        quantize_ਪੰਕਤੀ_iq1_s_impl(src, qrow, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, quant_weights, scales, ਭਾਰ, sumx, sumw, ਜੋੜੇ, L, ਸੂਚਕਾਂਕ, shifts);
+        src += n_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+        qrow += nblock*ਆਕਾਰ(ਖੰਡ_iq1_s);
     }
-    return nrow * nblock * sizeof(block_iq1_s);
+    ਵਾਪਸ nrow * nblock * ਆਕਾਰ(ਖੰਡ_iq1_s);
 }
 
-static void quantize_row_iq1_m_impl(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t n, const float * GGML_RESTRICT quant_weights,
-        float    * scales,
-        float    * weight,
-        float    * pairs,
+ਸਥਿਰ ਖਾਲੀ quantize_ਪੰਕਤੀ_iq1_m_impl(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖਾਲੀ * GGML_RESTRICT vy, int64_t n, ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT quant_weights,
+        ਦਸ਼ਮਲਵ    * scales,
+        ਦਸ਼ਮਲਵ    * ਭਾਰ,
+        ਦਸ਼ਮਲਵ    * ਜੋੜੇ,
         int8_t   * L,
-        uint16_t * index,
+        uint16_t * ਸੂਚਕਾਂਕ,
         int8_t   * shifts) {
 
-    const int gindex = iq2_data_index(GGML_TYPE_IQ1_M);
+    ਅਚਲ ਪੂਰਨ gindex = iq2_ਅੰਕੜੇ_ਸੂਚਕਾਂਕ(GGML_TYPE_IQ1_M);
 
-    const uint64_t * kgrid_q2xs      = iq2_data[gindex].grid;
-    const int      * kmap_q2xs       = iq2_data[gindex].map;
-    const uint16_t * kneighbors_q2xs = iq2_data[gindex].neighbours;
+    ਅਚਲ uint64_t * kgrid_q2xs      = iq2_ਅੰਕੜੇ[gindex].grid;
+    ਅਚਲ ਪੂਰਨ      * kmap_q2xs       = iq2_ਅੰਕੜੇ[gindex].map;
+    ਅਚਲ uint16_t * kneighbors_q2xs = iq2_ਅੰਕੜੇ[gindex].neighbours;
 
     //GGML_ASSERT(quant_weights   && "missing quantization weights");
     GGML_ASSERT(kgrid_q2xs      && "forgot to call ggml_quantize_init()?");
@@ -4710,50 +4710,50 @@ static void quantize_row_iq1_m_impl(const float * GGML_RESTRICT x, void * GGML_R
     GGML_ASSERT(kneighbors_q2xs && "forgot to call ggml_quantize_init()?");
     GGML_ASSERT(n%QK_K == 0);
 
-    block_iq1_m * y = vy;
+    ਖੰਡ_iq1_m * y = vy;
 
-    const int64_t nbl = n/QK_K;
+    ਅਚਲ int64_t nbl = n/QK_K;
 
-    const int block_size = IQ1M_BLOCK_SIZE;
+    ਅਚਲ ਪੂਰਨ ਖੰਡ_ਮਾਪ_3 = IQ1_M_ਖੰਡ_ਮਾਪ;
 
-    const float x_p[3] = {-1 + IQ1M_DELTA,  IQ1M_DELTA, 1 + IQ1M_DELTA};
-    const float x_m[3] = {-1 - IQ1M_DELTA, -IQ1M_DELTA, 1 - IQ1M_DELTA};
-    const uint8_t masks[4] = {0x00, 0x80, 0x08, 0x88};
+    ਅਚਲ ਦਸ਼ਮਲਵ x_p[3] = {-1 + IQ1M_DELTA,  IQ1M_DELTA, 1 + IQ1M_DELTA};
+    ਅਚਲ ਦਸ਼ਮਲਵ x_m[3] = {-1 - IQ1M_DELTA, -IQ1M_DELTA, 1 - IQ1M_DELTA};
+    ਅਚਲ uint8_t masks[4] = {0x00, 0x80, 0x08, 0x88};
 
-    int * idx = (int *)(pairs + 1);
+    ਪੂਰਨ * idx = (ਪੂਰਨ *)(ਜੋੜੇ + 1);
 
-    float sumqx[4], sumq2[4];
+    ਦਸ਼ਮਲਵ sumqx[4], sumq2[4];
 
     iq1m_scale_t s;
-    const float * xx;
+    ਅਚਲ ਦਸ਼ਮਲਵ * xx;
 
-    for (int ibl = 0; ibl < nbl; ++ibl) {
+    ਲਈ (ਪੂਰਨ ibl = 0; ibl < nbl; ++ibl) {
         memset(y[ibl].qs, 0, QK_K/8);
         memset(y[ibl].qh, 0, QK_K/16);
         memset(y[ibl].scales, 0, QK_K/32);
 
-        float max_scale = 0;
+        ਦਸ਼ਮਲਵ max_scale = 0;
 
-        const float * xbl = x + QK_K*ibl;
-        float sumx2 = 0;
-        for (int i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
-        float sigma2 = 2*sumx2/QK_K;
+        ਅਚਲ ਦਸ਼ਮਲਵ * xbl = x + QK_K*ibl;
+        ਦਸ਼ਮਲਵ sumx2 = 0;
+        ਲਈ (ਪੂਰਨ i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
+        ਦਸ਼ਮਲਵ sigma2 = 2*sumx2/QK_K;
 
-        for (int ib = 0; ib < QK_K/block_size; ++ib) {
-            const float * xb = xbl + block_size*ib;
-            if (quant_weights) {
-                const float * qw = quant_weights + QK_K*ibl + block_size*ib;
-                for (int i = 0; i < block_size; ++i) weight[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
-            } else {
-                for (int i = 0; i < block_size; ++i) weight[i] = xb[i]*xb[i];
+        ਲਈ (ਪੂਰਨ ib = 0; ib < QK_K/ਖੰਡ_ਮਾਪ_3; ++ib) {
+            ਅਚਲ ਦਸ਼ਮਲਵ * xb = xbl + ਖੰਡ_ਮਾਪ_3*ib;
+            ਜੇ (quant_weights) {
+                ਅਚਲ ਦਸ਼ਮਲਵ * qw = quant_weights + QK_K*ibl + ਖੰਡ_ਮਾਪ_3*ib;
+                ਲਈ (ਪੂਰਨ i = 0; i < ਖੰਡ_ਮਾਪ_3; ++i) ਭਾਰ[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
+            } ਨਹੀਂਤਾਂ {
+                ਲਈ (ਪੂਰਨ i = 0; i < ਖੰਡ_ਮਾਪ_3; ++i) ਭਾਰ[i] = xb[i]*xb[i];
             }
-            float max = fabsf(xb[0]);
-            for (int i = 1; i < block_size; ++i) max = MAX(max, fabsf(xb[i]));
-            if (max < GROUP_MAX_EPS_IQ1_M) {
+            ਦਸ਼ਮਲਵ max = fabsf(xb[0]);
+            ਲਈ (ਪੂਰਨ i = 1; i < ਖੰਡ_ਮਾਪ_3; ++i) max = MAX(max, fabsf(xb[i]));
+            ਜੇ (max < ਸਮੂਹ_MAX_EPS_IQ1_M) {
                 scales[ib] = 0;
                 shifts[ib] = 0;
-                memset(L, 1, block_size);
-                continue;
+                memset(L, 1, ਖੰਡ_ਮਾਪ_3);
+                ਜਾਰੀ;
             }
             // Here we solve exactly the sum of squared difference (SSD) weighted minimization problem.
             // With just 3 allowed quant values (-1, 0, 1), we can search exhaustively for the two
@@ -4761,13 +4761,13 @@ static void quantize_row_iq1_m_impl(const float * GGML_RESTRICT x, void * GGML_R
             // in ascending order, compute Si = sum[weight[j] xb[j], j = 0...i] and
             // Wi = sum[weight[j], j = 0...i], and use these to quckly get get the optimum scale
             // for each possible and score for each split.
-            for (int j = 0; j < block_size; ++j) {
-                pairs[2*j] = xb[j];
+            ਲਈ (ਪੂਰਨ j = 0; j < ਖੰਡ_ਮਾਪ_3; ++j) {
+                ਜੋੜੇ[2*j] = xb[j];
                 idx[2*j] = j;
             }
-            qsort(pairs, block_size, 2*sizeof(float), iq1_sort_helper);
-            float best_score = -FLT_MAX, scale = max;
-            int besti1 = -1, besti2 = -1, best_k = -1;
+            qsort(ਜੋੜੇ, ਖੰਡ_ਮਾਪ_3, 2*ਆਕਾਰ(ਦਸ਼ਮਲਵ), iq1_ਛਾਂਟੋ_helper);
+            ਦਸ਼ਮਲਵ ਉੱਤਮ_score = -FLT_MAX, scale = max;
+            ਪੂਰਨ besti1 = -1, besti2 = -1, ਉੱਤਮ_k = -1;
             // 0: +, +
             // 1: +, -
             // 2: -, +
@@ -4775,30 +4775,30 @@ static void quantize_row_iq1_m_impl(const float * GGML_RESTRICT x, void * GGML_R
             // prefix sums are kept per half of the block because each half can use a different sign (x_p or x_m)
             // since v[0]-v[1] = v[1]-v[2] = -1 for both x_p and x_m, the 3-group sum for a split collapses to T*v[2] - px[i1] - px[i2]
             {
-                float px[2][IQ1M_BLOCK_SIZE+1];
-                float pw[2][IQ1M_BLOCK_SIZE+1];
+                ਦਸ਼ਮਲਵ px[2][IQ1_M_ਖੰਡ_ਮਾਪ+1];
+                ਦਸ਼ਮਲਵ pw[2][IQ1_M_ਖੰਡ_ਮਾਪ+1];
                 px[0][0] = px[1][0] = 0;
                 pw[0][0] = pw[1][0] = 0;
-                for (int j = 0; j < block_size; ++j) {
-                    const int i = idx[2*j];
-                    const int h = i < block_size/2 ? 0 : 1;
-                    px[h][j+1]   = px[h][j] + weight[i]*xb[i];
+                ਲਈ (ਪੂਰਨ j = 0; j < ਖੰਡ_ਮਾਪ_3; ++j) {
+                    ਅਚਲ ਪੂਰਨ i = idx[2*j];
+                    ਅਚਲ ਪੂਰਨ h = i < ਖੰਡ_ਮਾਪ_3/2 ? 0 : 1;
+                    px[h][j+1]   = px[h][j] + ਭਾਰ[i]*xb[i];
                     px[1-h][j+1] = px[1-h][j];
-                    pw[h][j+1]   = pw[h][j] + weight[i];
+                    pw[h][j+1]   = pw[h][j] + ਭਾਰ[i];
                     pw[1-h][j+1] = pw[1-h][j];
                 }
-                const float txs[2] = {px[0][block_size], px[1][block_size]}; // total weight*x per half
-                const float tws[2] = {pw[0][block_size], pw[1][block_size]}; // total weight per half
-                const float p2   = x_p[2], m2 = x_m[2];
-                const float cp1  = x_p[0]*x_p[0] - x_p[1]*x_p[1];
-                const float cp2  = x_p[1]*x_p[1] - x_p[2]*x_p[2];
-                const float cm1  = x_m[0]*x_m[0] - x_m[1]*x_m[1];
-                const float cm2  = x_m[1]*x_m[1] - x_m[2]*x_m[2];
-                for (int i1 = 0; i1 <= block_size; ++i1) {
-                    for (int i2 = i1; i2 <= block_size; ++i2) {
-                        float qx_p[2], qx_m[2], q2_p[2], q2_m[2];
-                        for (int h = 0; h < 2; ++h) {
-                            const float sx = px[h][i1] + px[h][i2];
+                ਅਚਲ ਦਸ਼ਮਲਵ txs[2] = {px[0][ਖੰਡ_ਮਾਪ_3], px[1][ਖੰਡ_ਮਾਪ_3]}; // total weight*x per half
+                ਅਚਲ ਦਸ਼ਮਲਵ tws[2] = {pw[0][ਖੰਡ_ਮਾਪ_3], pw[1][ਖੰਡ_ਮਾਪ_3]}; // total weight per half
+                ਅਚਲ ਦਸ਼ਮਲਵ p2   = x_p[2], m2 = x_m[2];
+                ਅਚਲ ਦਸ਼ਮਲਵ cp1  = x_p[0]*x_p[0] - x_p[1]*x_p[1];
+                ਅਚਲ ਦਸ਼ਮਲਵ cp2  = x_p[1]*x_p[1] - x_p[2]*x_p[2];
+                ਅਚਲ ਦਸ਼ਮਲਵ cm1  = x_m[0]*x_m[0] - x_m[1]*x_m[1];
+                ਅਚਲ ਦਸ਼ਮਲਵ cm2  = x_m[1]*x_m[1] - x_m[2]*x_m[2];
+                ਲਈ (ਪੂਰਨ i1 = 0; i1 <= ਖੰਡ_ਮਾਪ_3; ++i1) {
+                    ਲਈ (ਪੂਰਨ i2 = i1; i2 <= ਖੰਡ_ਮਾਪ_3; ++i2) {
+                        ਦਸ਼ਮਲਵ qx_p[2], qx_m[2], q2_p[2], q2_m[2];
+                        ਲਈ (ਪੂਰਨ h = 0; h < 2; ++h) {
+                            ਅਚਲ ਦਸ਼ਮਲਵ sx = px[h][i1] + px[h][i2];
                             qx_p[h] = txs[h]*p2 - sx;
                             qx_m[h] = txs[h]*m2 - sx;
                             q2_p[h] = tws[h]*p2*p2 + pw[h][i1]*cp1 + pw[h][i2]*cp2;
@@ -4812,102 +4812,102 @@ static void quantize_row_iq1_m_impl(const float * GGML_RESTRICT x, void * GGML_R
                         sumq2[1] = q2_p[0] + q2_m[1];
                         sumq2[2] = q2_m[0] + q2_p[1];
                         sumq2[3] = q2_m[0] + q2_m[1];
-                        for (int k = 0; k < 4; ++k) {
-                            if (sumq2[k] > 0 && sumqx[k]*sumqx[k] > best_score*sumq2[k]) {
-                                scale = sumqx[k]/sumq2[k]; best_score = scale*sumqx[k];
-                                besti1 = i1; besti2 = i2; best_k = k;
+                        ਲਈ (ਪੂਰਨ k = 0; k < 4; ++k) {
+                            ਜੇ (sumq2[k] > 0 && sumqx[k]*sumqx[k] > ਉੱਤਮ_score*sumq2[k]) {
+                                scale = sumqx[k]/sumq2[k]; ਉੱਤਮ_score = scale*sumqx[k];
+                                besti1 = i1; besti2 = i2; ਉੱਤਮ_k = k;
                             }
                         }
                     }
                 }
             }
-            if (besti1 < 0 || besti2 < 0 || best_k < 0) {
+            ਜੇ (besti1 < 0 || besti2 < 0 || ਉੱਤਮ_k < 0) {
                 scales[ib] = 0;
                 shifts[ib] = 0;
-                memset(L, 1, block_size);
-                continue;
+                memset(L, 1, ਖੰਡ_ਮਾਪ_3);
+                ਜਾਰੀ;
             }
-            for (int j =      0; j < besti1; ++j) L[idx[2*j]] = 0;
-            for (int j = besti1; j < besti2; ++j) L[idx[2*j]] = 1;
-            for (int j = besti2; j < block_size; ++j) L[idx[2*j]] = 2;
-            if (scale < 0) {
-                for (int j = 0; j < block_size; ++j) L[j] = 2 - L[j];
+            ਲਈ (ਪੂਰਨ j =      0; j < besti1; ++j) L[idx[2*j]] = 0;
+            ਲਈ (ਪੂਰਨ j = besti1; j < besti2; ++j) L[idx[2*j]] = 1;
+            ਲਈ (ਪੂਰਨ j = besti2; j < ਖੰਡ_ਮਾਪ_3; ++j) L[idx[2*j]] = 2;
+            ਜੇ (scale < 0) {
+                ਲਈ (ਪੂਰਨ j = 0; j < ਖੰਡ_ਮਾਪ_3; ++j) L[j] = 2 - L[j];
                 scale = -scale;
-                best_k = best_k == 0 ? 3 : best_k == 1 ? 2 : best_k == 2 ? 1 : 0;
+                ਉੱਤਮ_k = ਉੱਤਮ_k == 0 ? 3 : ਉੱਤਮ_k == 1 ? 2 : ਉੱਤਮ_k == 2 ? 1 : 0;
             }
             bool all_on_grid = true;
-            for (int k = 0; k < block_size/8; ++k) {
-                if (k == 0) xx = best_k < 2 ? x_p : x_m;
-                else xx = best_k%2 == 0 ? x_p : x_m;
+            ਲਈ (ਪੂਰਨ k = 0; k < ਖੰਡ_ਮਾਪ_3/8; ++k) {
+                ਜੇ (k == 0) xx = ਉੱਤਮ_k < 2 ? x_p : x_m;
+                ਨਹੀਂਤਾਂ xx = ਉੱਤਮ_k%2 == 0 ? x_p : x_m;
                 uint16_t u = 0;
-                for (int j = 0; j < 8; ++j) u |= (L[8*k+j] << 2*j);
-                int grid_index = kmap_q2xs[u];
-                if (grid_index < 0) {
+                ਲਈ (ਪੂਰਨ j = 0; j < 8; ++j) u |= (L[8*k+j] << 2*j);
+                ਪੂਰਨ grid_ਸੂਚਕਾਂਕ = kmap_q2xs[u];
+                ਜੇ (grid_ਸੂਚਕਾਂਕ < 0) {
                     all_on_grid = false;
-                    const uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
-                    grid_index = iq1_find_best_neighbour2(neighbours, kgrid_q2xs, xb + 8*k, weight + 8*k, scale, xx, L + 8*k, NGRID_IQ1S);
-                    GGML_ASSERT(grid_index >= 0);
+                    ਅਚਲ uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
+                    grid_ਸੂਚਕਾਂਕ = iq1_ਲੱਭੋ_ਉੱਤਮ_neighbour2(neighbours, kgrid_q2xs, xb + 8*k, ਭਾਰ + 8*k, scale, xx, L + 8*k, NGRID_IQ1S);
+                    GGML_ASSERT(grid_ਸੂਚਕਾਂਕ >= 0);
                 }
-                index[k] = grid_index;
+                ਸੂਚਕਾਂਕ[k] = grid_ਸੂਚਕਾਂਕ;
             }
-            if (!all_on_grid) {
-                float sumqx_f = 0, sumq2_f = 0;
-                for (int k = 0; k < block_size/8; ++k) {
-                    if (k == 0) xx = best_k < 2 ? x_p : x_m;
-                    else xx = best_k%2 == 0 ? x_p : x_m;
-                    const int8_t * pg = (const int8_t *)(kgrid_q2xs + index[k]);
-                    for (int j = 0; j < 8; ++j) {
-                        float w = weight[8*k + j];
-                        float q = xx[(pg[j] - 1)/2];
+            ਜੇ (!all_on_grid) {
+                ਦਸ਼ਮਲਵ sumqx_f = 0, sumq2_f = 0;
+                ਲਈ (ਪੂਰਨ k = 0; k < ਖੰਡ_ਮਾਪ_3/8; ++k) {
+                    ਜੇ (k == 0) xx = ਉੱਤਮ_k < 2 ? x_p : x_m;
+                    ਨਹੀਂਤਾਂ xx = ਉੱਤਮ_k%2 == 0 ? x_p : x_m;
+                    ਅਚਲ int8_t * pg = (ਅਚਲ int8_t *)(kgrid_q2xs + ਸੂਚਕਾਂਕ[k]);
+                    ਲਈ (ਪੂਰਨ j = 0; j < 8; ++j) {
+                        ਦਸ਼ਮਲਵ w = ਭਾਰ[8*k + j];
+                        ਦਸ਼ਮਲਵ q = xx[(pg[j] - 1)/2];
                         sumqx_f += w*q*xb[8*k+j];
                         sumq2_f += w*q*q;
                     }
                 }
-                if (sumqx_f > 0 && sumq2_f > 0) scale = sumqx_f/sumq2_f;
+                ਜੇ (sumqx_f > 0 && sumq2_f > 0) scale = sumqx_f/sumq2_f;
             }
-            y[ibl].qs[2*ib + 0] = index[0] & 255;
-            y[ibl].qs[2*ib + 1] = index[1] & 255;
-            y[ibl].qh[ib] = (index[0] >> 8) | ((index[1] >> 8) << 4);
+            y[ibl].qs[2*ib + 0] = ਸੂਚਕਾਂਕ[0] & 255;
+            y[ibl].qs[2*ib + 1] = ਸੂਚਕਾਂਕ[1] & 255;
+            y[ibl].qh[ib] = (ਸੂਚਕਾਂਕ[0] >> 8) | ((ਸੂਚਕਾਂਕ[1] >> 8) << 4);
             GGML_ASSERT(scale >= 0);
             scales[ib] = scale;
-            shifts[ib] = best_k;
+            shifts[ib] = ਉੱਤਮ_k;
             max_scale = MAX(max_scale, scale);
         }
 
-        if (!max_scale) {
-            continue;
+        ਜੇ (!max_scale) {
+            ਜਾਰੀ;
         }
 
         uint16_t * sc = (uint16_t *)y[ibl].scales;
-        float d = max_scale/15;
-        float id = 1/d;
-        float sumqx_f = 0, sumq2_f = 0;
-        for (int ib = 0; ib < QK_K/block_size; ++ib) {
-            int l = nearest_int(0.5f*(id*scales[ib+0]-1));
+        ਦਸ਼ਮਲਵ d = max_scale/15;
+        ਦਸ਼ਮਲਵ id = 1/d;
+        ਦਸ਼ਮਲਵ sumqx_f = 0, sumq2_f = 0;
+        ਲਈ (ਪੂਰਨ ib = 0; ib < QK_K/ਖੰਡ_ਮਾਪ_3; ++ib) {
+            ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(0.5f*(id*scales[ib+0]-1));
             l = MAX(0, MIN(7, l));
             sc[ib/4] |= (l << 3*(ib%4));
             y[ibl].qh[ib] |= masks[shifts[ib]];
-            const float * xb = xbl + block_size*ib;
-            if (quant_weights) {
-                const float * qw = quant_weights + QK_K*ibl + block_size*ib;
-                for (int i = 0; i < block_size; ++i) weight[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
-            } else {
-                for (int i = 0; i < block_size; ++i) weight[i] = xb[i]*xb[i];
+            ਅਚਲ ਦਸ਼ਮਲਵ * xb = xbl + ਖੰਡ_ਮਾਪ_3*ib;
+            ਜੇ (quant_weights) {
+                ਅਚਲ ਦਸ਼ਮਲਵ * qw = quant_weights + QK_K*ibl + ਖੰਡ_ਮਾਪ_3*ib;
+                ਲਈ (ਪੂਰਨ i = 0; i < ਖੰਡ_ਮਾਪ_3; ++i) ਭਾਰ[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
+            } ਨਹੀਂਤਾਂ {
+                ਲਈ (ਪੂਰਨ i = 0; i < ਖੰਡ_ਮਾਪ_3; ++i) ਭਾਰ[i] = xb[i]*xb[i];
             }
-            for (int k = 0; k < block_size/8; ++k) {
-                if (k == 0) xx = shifts[ib] < 2 ? x_p : x_m;
-                else xx = shifts[ib]%2 == 0 ? x_p : x_m;
-                const int8_t * pg = (const int8_t *)(kgrid_q2xs + y[ibl].qs[2*ib+k] + ((y[ibl].qh[ib] << (8 - 4*k)) & 0x700));
-                for (int j = 0; j < 8; ++j) {
-                    float w = weight[8*k + j];
-                    float q = xx[(pg[j] - 1)/2]*(2*l+1);
+            ਲਈ (ਪੂਰਨ k = 0; k < ਖੰਡ_ਮਾਪ_3/8; ++k) {
+                ਜੇ (k == 0) xx = shifts[ib] < 2 ? x_p : x_m;
+                ਨਹੀਂਤਾਂ xx = shifts[ib]%2 == 0 ? x_p : x_m;
+                ਅਚਲ int8_t * pg = (ਅਚਲ int8_t *)(kgrid_q2xs + y[ibl].qs[2*ib+k] + ((y[ibl].qh[ib] << (8 - 4*k)) & 0x700));
+                ਲਈ (ਪੂਰਨ j = 0; j < 8; ++j) {
+                    ਦਸ਼ਮਲਵ w = ਭਾਰ[8*k + j];
+                    ਦਸ਼ਮਲਵ q = xx[(pg[j] - 1)/2]*(2*l+1);
                     sumqx_f += w*q*xb[8*k+j];
                     sumq2_f += w*q*q;
                 }
             }
         }
-        if (sumq2_f > 0) d = sumqx_f/sumq2_f;
-        s.f16 = GGML_FP32_TO_FP16(d*1.1125f); // 1.1125f is another fudge factor. Don't ask me why it is needed.
+        ਜੇ (sumq2_f > 0) d = sumqx_f/sumq2_f;
+        s.f16 = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(d*1.1125f); // 1.1125f is another fudge factor. Don't ask me why it is needed.
         sc[0] |= ((s.u16 & 0x000f) << 12);
         sc[1] |= ((s.u16 & 0x00f0) <<  8);
         sc[2] |= ((s.u16 & 0x0f00) <<  4);
@@ -4915,725 +4915,725 @@ static void quantize_row_iq1_m_impl(const float * GGML_RESTRICT x, void * GGML_R
     }
 }
 
-size_t quantize_iq1_m(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    GGML_ASSERT(n_per_row%QK_K == 0);
-    float  scales[QK_K/IQ1M_BLOCK_SIZE];
-    float  weight[IQ1M_BLOCK_SIZE];
-    int8_t L[IQ1M_BLOCK_SIZE];
-    float  pairs[2*IQ1M_BLOCK_SIZE];
-    uint16_t index[IQ1M_BLOCK_SIZE/8];
-    int8_t shifts[QK_K/IQ1M_BLOCK_SIZE];
-    int64_t nblock = n_per_row/QK_K;
-    char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
-        quantize_row_iq1_m_impl(src, qrow, n_per_row, quant_weights, scales, weight, pairs, L, index, shifts);
-        src += n_per_row;
-        qrow += nblock*sizeof(block_iq1_m);
+size_t quantize_iq1_m(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT src, ਖਾਲੀ * GGML_RESTRICT dst, int64_t nrow, int64_t n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, ਅਚਲ ਦਸ਼ਮਲਵ * quant_weights) {
+    GGML_ASSERT(n_ਪ੍ਰਤੀ_ਪੰਕਤੀ%QK_K == 0);
+    ਦਸ਼ਮਲਵ  scales[QK_K/IQ1_M_ਖੰਡ_ਮਾਪ];
+    ਦਸ਼ਮਲਵ  ਭਾਰ[IQ1_M_ਖੰਡ_ਮਾਪ];
+    int8_t L[IQ1_M_ਖੰਡ_ਮਾਪ];
+    ਦਸ਼ਮਲਵ  ਜੋੜੇ[2*IQ1_M_ਖੰਡ_ਮਾਪ];
+    uint16_t ਸੂਚਕਾਂਕ[IQ1_M_ਖੰਡ_ਮਾਪ/8];
+    int8_t shifts[QK_K/IQ1_M_ਖੰਡ_ਮਾਪ];
+    int64_t nblock = n_ਪ੍ਰਤੀ_ਪੰਕਤੀ/QK_K;
+    ਅੱਖਰ * qrow = (ਅੱਖਰ *)dst;
+    ਲਈ (int64_t ਪੰਕਤੀ = 0; ਪੰਕਤੀ < nrow; ++ਪੰਕਤੀ) {
+        quantize_ਪੰਕਤੀ_iq1_m_impl(src, qrow, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, quant_weights, scales, ਭਾਰ, ਜੋੜੇ, L, ਸੂਚਕਾਂਕ, shifts);
+        src += n_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+        qrow += nblock*ਆਕਾਰ(ਖੰਡ_iq1_m);
     }
-    return nrow * nblock * sizeof(block_iq1_m);
+    ਵਾਪਸ nrow * nblock * ਆਕਾਰ(ਖੰਡ_iq1_m);
 }
 
 // ============================ 4-bit non-linear quants
 
-static void quantize_row_iq4_nl_impl(const int super_block_size, const int block_size, const float * GGML_RESTRICT x,
+ਸਥਿਰ ਖਾਲੀ quantize_ਪੰਕਤੀ_iq4_nl_impl(ਅਚਲ ਪੂਰਨ super_ਖੰਡ_ਮਾਪ, ਅਚਲ ਪੂਰਨ ਖੰਡ_ਮਾਪ_3, ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x,
         ggml_fp16_t * dh, uint8_t * q4, uint16_t * scales_h, uint8_t * scales_l,
-        float * scales, float * weight, uint8_t * L,
-        const int8_t * values,
-        const float * quant_weights,
-        const int ntry) {
+        ਦਸ਼ਮਲਵ * scales, ਦਸ਼ਮਲਵ * ਭਾਰ, uint8_t * L,
+        ਅਚਲ int8_t * ਮੁੱਲਾਂ,
+        ਅਚਲ ਦਸ਼ਮਲਵ * quant_weights,
+        ਅਚਲ ਪੂਰਨ ntry) {
 
-    float sigma2 = 0;
-    for (int j = 0; j < super_block_size; ++j) sigma2 += x[j]*x[j];
-    sigma2 *= 2.f/super_block_size;
+    ਦਸ਼ਮਲਵ sigma2 = 0;
+    ਲਈ (ਪੂਰਨ j = 0; j < super_ਖੰਡ_ਮਾਪ; ++j) sigma2 += x[j]*x[j];
+    sigma2 *= 2.f/super_ਖੰਡ_ਮਾਪ;
 
-    memset(q4, 0, super_block_size/2);
-    dh[0] = GGML_FP32_TO_FP16(0.f);
+    memset(q4, 0, super_ਖੰਡ_ਮਾਪ/2);
+    dh[0] = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(0.f);
 
-    float max_scale = 0, amax_scale = 0;
-    for (int ib = 0; ib < super_block_size/block_size; ++ib) {
-        const float * xb = x + ib*block_size;
-        uint8_t * Lb = L + ib*block_size;
-        if (quant_weights) {
-            const float * qw = quant_weights + ib*block_size;
-            for (int j = 0; j < block_size; ++j) weight[j] = qw[j] * sqrtf(sigma2 + xb[j]*xb[j]);
-        } else {
-            for (int j = 0; j < block_size; ++j) weight[j] = xb[j]*xb[j];
+    ਦਸ਼ਮਲਵ max_scale = 0, amax_scale = 0;
+    ਲਈ (ਪੂਰਨ ib = 0; ib < super_ਖੰਡ_ਮਾਪ/ਖੰਡ_ਮਾਪ_3; ++ib) {
+        ਅਚਲ ਦਸ਼ਮਲਵ * xb = x + ib*ਖੰਡ_ਮਾਪ_3;
+        uint8_t * Lb = L + ib*ਖੰਡ_ਮਾਪ_3;
+        ਜੇ (quant_weights) {
+            ਅਚਲ ਦਸ਼ਮਲਵ * qw = quant_weights + ib*ਖੰਡ_ਮਾਪ_3;
+            ਲਈ (ਪੂਰਨ j = 0; j < ਖੰਡ_ਮਾਪ_3; ++j) ਭਾਰ[j] = qw[j] * sqrtf(sigma2 + xb[j]*xb[j]);
+        } ਨਹੀਂਤਾਂ {
+            ਲਈ (ਪੂਰਨ j = 0; j < ਖੰਡ_ਮਾਪ_3; ++j) ਭਾਰ[j] = xb[j]*xb[j];
         }
-        float amax = 0, max = 0;
-        for (int j = 0; j < block_size; ++j) {
-            float ax = fabsf(xb[j]);
-            if (ax > amax) {
+        ਦਸ਼ਮਲਵ amax = 0, max = 0;
+        ਲਈ (ਪੂਰਨ j = 0; j < ਖੰਡ_ਮਾਪ_3; ++j) {
+            ਦਸ਼ਮਲਵ ax = fabsf(xb[j]);
+            ਜੇ (ax > amax) {
                 amax = ax; max = xb[j];
             }
         }
-        if (amax < GROUP_MAX_EPS) {
+        ਜੇ (amax < ਸਮੂਹ_MAX_EPS) {
             scales[ib] = 0;
-            continue;
+            ਜਾਰੀ;
         }
-        float d = ntry > 0 ? -max/values[0] : max/values[0];
-        float id = 1/d;
-        float sumqx = 0, sumq2 = 0;
-        for (int j = 0; j < block_size; ++j) {
-            float al = id*xb[j];
-            int l = best_index_int8(16, values, al);
+        ਦਸ਼ਮਲਵ d = ntry > 0 ? -max/ਮੁੱਲਾਂ[0] : max/ਮੁੱਲਾਂ[0];
+        ਦਸ਼ਮਲਵ id = 1/d;
+        ਦਸ਼ਮਲਵ sumqx = 0, sumq2 = 0;
+        ਲਈ (ਪੂਰਨ j = 0; j < ਖੰਡ_ਮਾਪ_3; ++j) {
+            ਦਸ਼ਮਲਵ al = id*xb[j];
+            ਪੂਰਨ l = ਉੱਤਮ_ਸੂਚਕਾਂਕ_int8(16, ਮੁੱਲਾਂ, al);
             Lb[j] = l;
-            float q = values[l];
-            float w = weight[j];
+            ਦਸ਼ਮਲਵ q = ਮੁੱਲਾਂ[l];
+            ਦਸ਼ਮਲਵ w = ਭਾਰ[j];
             sumqx += w*q*xb[j];
             sumq2 += w*q*q;
         }
         d = sumq2 > 0 ? sumqx/sumq2 : 0.f;
-        float best = d*sumqx;
-        for (int itry = -ntry; itry <= ntry; ++itry) {
-            id = (itry + values[0])/max;
+        ਦਸ਼ਮਲਵ ਉੱਤਮ = d*sumqx;
+        ਲਈ (ਪੂਰਨ itry = -ntry; itry <= ntry; ++itry) {
+            id = (itry + ਮੁੱਲਾਂ[0])/max;
             sumqx = sumq2 = 0;
-            for (int j = 0; j < block_size; ++j) {
-                float al = id*xb[j];
-                int l = best_index_int8(16, values, al);
-                float q = values[l];
-                float w = weight[j];
+            ਲਈ (ਪੂਰਨ j = 0; j < ਖੰਡ_ਮਾਪ_3; ++j) {
+                ਦਸ਼ਮਲਵ al = id*xb[j];
+                ਪੂਰਨ l = ਉੱਤਮ_ਸੂਚਕਾਂਕ_int8(16, ਮੁੱਲਾਂ, al);
+                ਦਸ਼ਮਲਵ q = ਮੁੱਲਾਂ[l];
+                ਦਸ਼ਮਲਵ w = ਭਾਰ[j];
                 sumqx += w*q*xb[j];
                 sumq2 += w*q*q;
             }
-            if (sumq2 > 0 && sumqx*sumqx > best*sumq2) {
-                d = sumqx/sumq2; best = d * sumqx;
+            ਜੇ (sumq2 > 0 && sumqx*sumqx > ਉੱਤਮ*sumq2) {
+                d = sumqx/sumq2; ਉੱਤਮ = d * sumqx;
             }
         }
         scales[ib] = d;
-        float abs_d = fabsf(d);
-        if (abs_d > amax_scale) {
+        ਦਸ਼ਮਲਵ abs_d = fabsf(d);
+        ਜੇ (abs_d > amax_scale) {
             amax_scale = abs_d; max_scale = d;
         }
     }
 
-    if (super_block_size/block_size > 1) {
-        int nb = super_block_size/block_size;
-        memset(scales_h, 0, ((nb+7)/8)*sizeof(uint16_t));
-        float d = -max_scale/32;
-        dh[0] = GGML_FP32_TO_FP16(d);
-        float id = d ? 1/d : 0.f;
-        for (int ib = 0; ib < super_block_size/block_size; ++ib) {
-            int l = nearest_int(id*scales[ib]);
+    ਜੇ (super_ਖੰਡ_ਮਾਪ/ਖੰਡ_ਮਾਪ_3 > 1) {
+        ਪੂਰਨ nb = super_ਖੰਡ_ਮਾਪ/ਖੰਡ_ਮਾਪ_3;
+        memset(scales_h, 0, ((nb+7)/8)*ਆਕਾਰ(uint16_t));
+        ਦਸ਼ਮਲਵ d = -max_scale/32;
+        dh[0] = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(d);
+        ਦਸ਼ਮਲਵ id = d ? 1/d : 0.f;
+        ਲਈ (ਪੂਰਨ ib = 0; ib < super_ਖੰਡ_ਮਾਪ/ਖੰਡ_ਮਾਪ_3; ++ib) {
+            ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(id*scales[ib]);
             l = MAX(-32, MIN(31, l));
-            float dl = d * l;
-            float idl = dl ? 1/dl : 0.f;
-            uint8_t * Lb = L + ib*block_size;
-            const float * xb = x + ib*block_size;
-            for (int j = 0; j < block_size; ++j) {
-                Lb[j] = best_index_int8(16, values, idl*xb[j]);
+            ਦਸ਼ਮਲਵ dl = d * l;
+            ਦਸ਼ਮਲਵ idl = dl ? 1/dl : 0.f;
+            uint8_t * Lb = L + ib*ਖੰਡ_ਮਾਪ_3;
+            ਅਚਲ ਦਸ਼ਮਲਵ * xb = x + ib*ਖੰਡ_ਮਾਪ_3;
+            ਲਈ (ਪੂਰਨ j = 0; j < ਖੰਡ_ਮਾਪ_3; ++j) {
+                Lb[j] = ਉੱਤਮ_ਸੂਚਕਾਂਕ_int8(16, ਮੁੱਲਾਂ, idl*xb[j]);
             }
             l += 32;
             uint8_t l_l = l & 0xf;
             uint8_t l_h = l >>  4;
-            if (ib%2 == 0) scales_l[ib/2] = l_l;
-            else scales_l[ib/2] |= (l_l << 4);
+            ਜੇ (ib%2 == 0) scales_l[ib/2] = l_l;
+            ਨਹੀਂਤਾਂ scales_l[ib/2] |= (l_l << 4);
             scales_h[ib/8] |= (l_h << 2*(ib%8));
         }
-    } else {
-        dh[0] = GGML_FP32_TO_FP16(scales[0]);
-        if (ntry > 0) {
-            float id = scales[0] ? 1/scales[0] : 0;
-            for (int j = 0; j < super_block_size; ++j) {
-                L[j] = best_index_int8(16, values, id*x[j]);
+    } ਨਹੀਂਤਾਂ {
+        dh[0] = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(scales[0]);
+        ਜੇ (ntry > 0) {
+            ਦਸ਼ਮਲਵ id = scales[0] ? 1/scales[0] : 0;
+            ਲਈ (ਪੂਰਨ j = 0; j < super_ਖੰਡ_ਮਾਪ; ++j) {
+                L[j] = ਉੱਤਮ_ਸੂਚਕਾਂਕ_int8(16, ਮੁੱਲਾਂ, id*x[j]);
             }
         }
     }
 
-    for (int i = 0; i < super_block_size/32; ++i) {
-        for (int j = 0; j < 16; ++j) {
+    ਲਈ (ਪੂਰਨ i = 0; i < super_ਖੰਡ_ਮਾਪ/32; ++i) {
+        ਲਈ (ਪੂਰਨ j = 0; j < 16; ++j) {
             q4[16*i + j] = L[32*i + j] | (L[32*i + 16 + j] << 4);
         }
     }
 }
 
-size_t quantize_iq4_nl(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    GGML_ASSERT(n_per_row%QK4_NL == 0);
-    int64_t nblock = n_per_row/QK4_NL;
-    char * qrow = (char *)dst;
+size_t quantize_iq4_nl(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT src, ਖਾਲੀ * GGML_RESTRICT dst, int64_t nrow, int64_t n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, ਅਚਲ ਦਸ਼ਮਲਵ * quant_weights) {
+    GGML_ASSERT(n_ਪ੍ਰਤੀ_ਪੰਕਤੀ%QK4_NL == 0);
+    int64_t nblock = n_ਪ੍ਰਤੀ_ਪੰਕਤੀ/QK4_NL;
+    ਅੱਖਰ * qrow = (ਅੱਖਰ *)dst;
     uint8_t L[QK4_NL];
-    float weight[QK4_NL];
-    uint16_t unused_h;
-    uint8_t * unused_l = NULL;
-    float scale;
-    for (int64_t row = 0; row < nrow; ++row) {
-        block_iq4_nl * iq4 = (block_iq4_nl *)qrow;
-        for (int ibl = 0; ibl < nblock; ++ibl) {
-            const float * qw = quant_weights ? quant_weights + QK4_NL*ibl : NULL;
-            quantize_row_iq4_nl_impl(QK4_NL, 32, src + QK4_NL*ibl, &iq4[ibl].d, iq4[ibl].qs, &unused_h, unused_l,
-                    &scale, weight, L, kvalues_iq4nl, qw, 7);
+    ਦਸ਼ਮਲਵ ਭਾਰ[QK4_NL];
+    uint16_t ਅਣਵਰਤਿਆ_h;
+    uint8_t * ਅਣਵਰਤਿਆ_l = ਨਿਰਾ;
+    ਦਸ਼ਮਲਵ scale;
+    ਲਈ (int64_t ਪੰਕਤੀ = 0; ਪੰਕਤੀ < nrow; ++ਪੰਕਤੀ) {
+        ਖੰਡ_iq4_nl * iq4 = (ਖੰਡ_iq4_nl *)qrow;
+        ਲਈ (ਪੂਰਨ ibl = 0; ibl < nblock; ++ibl) {
+            ਅਚਲ ਦਸ਼ਮਲਵ * qw = quant_weights ? quant_weights + QK4_NL*ibl : ਨਿਰਾ;
+            quantize_ਪੰਕਤੀ_iq4_nl_impl(QK4_NL, 32, src + QK4_NL*ibl, &iq4[ibl].d, iq4[ibl].qs, &ਅਣਵਰਤਿਆ_h, ਅਣਵਰਤਿਆ_l,
+                    &scale, ਭਾਰ, L, kvalues_iq4nl, qw, 7);
         }
-        src += n_per_row;
-        qrow += nblock*sizeof(block_iq4_nl);
+        src += n_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+        qrow += nblock*ਆਕਾਰ(ਖੰਡ_iq4_nl);
     }
-    return nrow * nblock * sizeof(block_iq4_nl);
+    ਵਾਪਸ nrow * nblock * ਆਕਾਰ(ਖੰਡ_iq4_nl);
 }
 
 //void quantize_row_iq4_nl_ref(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
-void quantize_row_iq4_nl_ref(const float * GGML_RESTRICT x, block_iq4_nl * GGML_RESTRICT y, int64_t k) {
+ਖਾਲੀ quantize_ਪੰਕਤੀ_iq4_nl_ref(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖੰਡ_iq4_nl * GGML_RESTRICT y, int64_t k) {
     GGML_ASSERT(k%QK4_NL == 0);
     int64_t nblock = k/QK4_NL;
     uint8_t L[QK4_NL];
-    float weight[QK4_NL];
-    uint16_t unused_h;
-    uint8_t * unused_l = NULL;
-    float scale;
-    block_iq4_nl * iq4 = y;
-    for (int ibl = 0; ibl < nblock; ++ibl) {
-        quantize_row_iq4_nl_impl(QK4_NL, 32, x + QK4_NL*ibl, &iq4[ibl].d, iq4[ibl].qs, &unused_h, unused_l,
-                &scale, weight, L, kvalues_iq4nl, NULL, -1);
+    ਦਸ਼ਮਲਵ ਭਾਰ[QK4_NL];
+    uint16_t ਅਣਵਰਤਿਆ_h;
+    uint8_t * ਅਣਵਰਤਿਆ_l = ਨਿਰਾ;
+    ਦਸ਼ਮਲਵ scale;
+    ਖੰਡ_iq4_nl * iq4 = y;
+    ਲਈ (ਪੂਰਨ ibl = 0; ibl < nblock; ++ibl) {
+        quantize_ਪੰਕਤੀ_iq4_nl_impl(QK4_NL, 32, x + QK4_NL*ibl, &iq4[ibl].d, iq4[ibl].qs, &ਅਣਵਰਤਿਆ_h, ਅਣਵਰਤਿਆ_l,
+                &scale, ਭਾਰ, L, kvalues_iq4nl, ਨਿਰਾ, -1);
     }
 }
 
-size_t quantize_iq4_xs(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    GGML_ASSERT(n_per_row%QK_K == 0);
-    int64_t nblock = n_per_row/QK_K;
-    char * qrow = (char *)dst;
+size_t quantize_iq4_xs(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT src, ਖਾਲੀ * GGML_RESTRICT dst, int64_t nrow, int64_t n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, ਅਚਲ ਦਸ਼ਮਲਵ * quant_weights) {
+    GGML_ASSERT(n_ਪ੍ਰਤੀ_ਪੰਕਤੀ%QK_K == 0);
+    int64_t nblock = n_ਪ੍ਰਤੀ_ਪੰਕਤੀ/QK_K;
+    ਅੱਖਰ * qrow = (ਅੱਖਰ *)dst;
     uint8_t L[QK_K];
-    float weight[32];
-    float scales[QK_K/32];
-    for (int64_t row = 0; row < nrow; ++row) {
-        block_iq4_xs * iq4 = (block_iq4_xs *)qrow;
-        for (int ibl = 0; ibl < nblock; ++ibl) {
-            const float * qw = quant_weights ? quant_weights + QK_K*ibl : NULL;
-            quantize_row_iq4_nl_impl(QK_K, 32, src + QK_K*ibl, &iq4[ibl].d, iq4[ibl].qs, &iq4[ibl].scales_h, iq4[ibl].scales_l,
-                    scales, weight, L, kvalues_iq4nl, qw, 7);
+    ਦਸ਼ਮਲਵ ਭਾਰ[32];
+    ਦਸ਼ਮਲਵ scales[QK_K/32];
+    ਲਈ (int64_t ਪੰਕਤੀ = 0; ਪੰਕਤੀ < nrow; ++ਪੰਕਤੀ) {
+        ਖੰਡ_iq4_xs * iq4 = (ਖੰਡ_iq4_xs *)qrow;
+        ਲਈ (ਪੂਰਨ ibl = 0; ibl < nblock; ++ibl) {
+            ਅਚਲ ਦਸ਼ਮਲਵ * qw = quant_weights ? quant_weights + QK_K*ibl : ਨਿਰਾ;
+            quantize_ਪੰਕਤੀ_iq4_nl_impl(QK_K, 32, src + QK_K*ibl, &iq4[ibl].d, iq4[ibl].qs, &iq4[ibl].scales_h, iq4[ibl].scales_l,
+                    scales, ਭਾਰ, L, kvalues_iq4nl, qw, 7);
         }
-        src += n_per_row;
-        qrow += nblock*sizeof(block_iq4_xs);
+        src += n_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+        qrow += nblock*ਆਕਾਰ(ਖੰਡ_iq4_xs);
     }
-    return nrow * nblock * sizeof(block_iq4_xs);
+    ਵਾਪਸ nrow * nblock * ਆਕਾਰ(ਖੰਡ_iq4_xs);
 }
 
-void quantize_row_iq4_xs_ref(const float * GGML_RESTRICT x, block_iq4_xs * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    quantize_iq4_xs(x, y, 1, k, NULL);
+ਖਾਲੀ quantize_ਪੰਕਤੀ_iq4_xs_ref(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖੰਡ_iq4_xs * GGML_RESTRICT y, int64_t k) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % QK_K == 0);
+    quantize_iq4_xs(x, y, 1, k, ਨਿਰਾ);
 }
 
 // =============================== 2.5625 bpw
 
-static void quantize_row_iq2_s_impl(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t n, const float * GGML_RESTRICT quant_weights) {
+ਸਥਿਰ ਖਾਲੀ quantize_ਪੰਕਤੀ_iq2_s_impl(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖਾਲੀ * GGML_RESTRICT vy, int64_t n, ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT quant_weights) {
 
-    const int gindex = iq2_data_index(GGML_TYPE_IQ2_S);
+    ਅਚਲ ਪੂਰਨ gindex = iq2_ਅੰਕੜੇ_ਸੂਚਕਾਂਕ(GGML_TYPE_IQ2_S);
 
-    const uint64_t * kgrid_q2xs      = iq2_data[gindex].grid;
-    const int      * kmap_q2xs       = iq2_data[gindex].map;
-    const uint16_t * kneighbors_q2xs = iq2_data[gindex].neighbours;
+    ਅਚਲ uint64_t * kgrid_q2xs      = iq2_ਅੰਕੜੇ[gindex].grid;
+    ਅਚਲ ਪੂਰਨ      * kmap_q2xs       = iq2_ਅੰਕੜੇ[gindex].map;
+    ਅਚਲ uint16_t * kneighbors_q2xs = iq2_ਅੰਕੜੇ[gindex].neighbours;
 
     GGML_ASSERT(kmap_q2xs       && "forgot to call ggml_quantize_init()?");
     GGML_ASSERT(kgrid_q2xs      && "forgot to call ggml_quantize_init()?");
     GGML_ASSERT(kneighbors_q2xs && "forgot to call ggml_quantize_init()?");
     GGML_ASSERT(n%QK_K == 0);
 
-    const int kMaxQ = 3;
+    ਅਚਲ ਪੂਰਨ kMaxQ = 3;
 
-    const int64_t nbl = n/QK_K;
+    ਅਚਲ int64_t nbl = n/QK_K;
 
-    block_iq2_s * y = vy;
+    ਖੰਡ_iq2_s * y = vy;
 
-    float scales[QK_K/16];
-    float weight[16];
-    float xval[16];
+    ਦਸ਼ਮਲਵ scales[QK_K/16];
+    ਦਸ਼ਮਲਵ ਭਾਰ[16];
+    ਦਸ਼ਮਲਵ xval[16];
     int8_t L[16];
     int8_t Laux[16];
-    float  waux[16];
+    ਦਸ਼ਮਲਵ  waux[16];
     bool   is_on_grid[2];
     bool   is_on_grid_aux[2];
-    uint8_t block_signs[2];
+    uint8_t ਖੰਡ_signs[2];
 
-    for (int ibl = 0; ibl < nbl; ++ibl) {
+    ਲਈ (ਪੂਰਨ ibl = 0; ibl < nbl; ++ibl) {
 
-        memset(&y[ibl], 0, sizeof(block_iq2_s));
-        y[ibl].d = GGML_FP32_TO_FP16(0.f);
+        memset(&y[ibl], 0, ਆਕਾਰ(ਖੰਡ_iq2_s));
+        y[ibl].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(0.f);
 
-        float max_scale = 0;
+        ਦਸ਼ਮਲਵ max_scale = 0;
 
-        const float * xbl = x + QK_K*ibl;
-        float sumx2 = 0;
-        for (int i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
-        float sigma2 = 2*sumx2/QK_K;
+        ਅਚਲ ਦਸ਼ਮਲਵ * xbl = x + QK_K*ibl;
+        ਦਸ਼ਮਲਵ sumx2 = 0;
+        ਲਈ (ਪੂਰਨ i = 0; i < QK_K; ++i) sumx2 += xbl[i]*xbl[i];
+        ਦਸ਼ਮਲਵ sigma2 = 2*sumx2/QK_K;
 
-        for (int ib = 0; ib < QK_K/16; ++ib) {
-            const float * xb = xbl + 16*ib;
-            if (quant_weights) {
-                const float * qw = quant_weights + QK_K*ibl + 16*ib;
-                for (int i = 0; i < 16; ++i) weight[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
-            } else {
-                for (int i = 0; i < 16; ++i) weight[i] = 0.25f*sigma2 + xb[i]*xb[i];
+        ਲਈ (ਪੂਰਨ ib = 0; ib < QK_K/16; ++ib) {
+            ਅਚਲ ਦਸ਼ਮਲਵ * xb = xbl + 16*ib;
+            ਜੇ (quant_weights) {
+                ਅਚਲ ਦਸ਼ਮਲਵ * qw = quant_weights + QK_K*ibl + 16*ib;
+                ਲਈ (ਪੂਰਨ i = 0; i < 16; ++i) ਭਾਰ[i] = qw[i] * sqrtf(sigma2 + xb[i]*xb[i]);
+            } ਨਹੀਂਤਾਂ {
+                ਲਈ (ਪੂਰਨ i = 0; i < 16; ++i) ਭਾਰ[i] = 0.25f*sigma2 + xb[i]*xb[i];
             }
-            for (int i = 0; i < 16; ++i) waux[i] = sqrtf(weight[i]);
-            for (int k = 0; k < 2; ++k) {
+            ਲਈ (ਪੂਰਨ i = 0; i < 16; ++i) waux[i] = sqrtf(ਭਾਰ[i]);
+            ਲਈ (ਪੂਰਨ k = 0; k < 2; ++k) {
                 uint8_t s = 0;
-                for (int i = 0; i < 8; ++i) {
-                    if (xb[8*k + i] >= 0) xval[8*k + i] = xb[8*k + i];
-                    else {
+                ਲਈ (ਪੂਰਨ i = 0; i < 8; ++i) {
+                    ਜੇ (xb[8*k + i] >= 0) xval[8*k + i] = xb[8*k + i];
+                    ਨਹੀਂਤਾਂ {
                         xval[8*k + i] = -xb[8*k + i]; s |= (1 << i);
                     }
                 }
-                block_signs[k] = s;
+                ਖੰਡ_signs[k] = s;
             }
-            float max = xval[0];
-            for (int i = 1; i < 16; ++i) max = MAX(max, xval[i]);
+            ਦਸ਼ਮਲਵ max = xval[0];
+            ਲਈ (ਪੂਰਨ i = 1; i < 16; ++i) max = MAX(max, xval[i]);
             memset(L, 0, 16);
-            if (max < GROUP_MAX_EPS_IQ2_S) {
+            ਜੇ (max < ਸਮੂਹ_MAX_EPS_IQ2_S) {
                 scales[ib] = 0;
-                continue;
+                ਜਾਰੀ;
             }
-            float best = 0;
-            float scale = max/(2*kMaxQ-1);
+            ਦਸ਼ਮਲਵ ਉੱਤਮ = 0;
+            ਦਸ਼ਮਲਵ scale = max/(2*kMaxQ-1);
             is_on_grid[0] = is_on_grid[1] = true;
-            for (int is = -9; is <= 9; ++is) {
-                float id = (2*kMaxQ-1+is*0.1f)/max;
-                float this_scale = 1/id;
-                for (int k = 0; k < 2; ++k) {
-                    for (int i = 0; i < 8; ++i) {
-                        int l = nearest_int(0.5f*(id*xval[8*k+i]-1));
+            ਲਈ (ਪੂਰਨ is = -9; is <= 9; ++is) {
+                ਦਸ਼ਮਲਵ id = (2*kMaxQ-1+is*0.1f)/max;
+                ਦਸ਼ਮਲਵ this_scale = 1/id;
+                ਲਈ (ਪੂਰਨ k = 0; k < 2; ++k) {
+                    ਲਈ (ਪੂਰਨ i = 0; i < 8; ++i) {
+                        ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(0.5f*(id*xval[8*k+i]-1));
                         Laux[8*k+i] = MAX(0, MIN(kMaxQ-1, l));
                     }
                     uint16_t u = 0;
-                    for (int i = 0; i < 8; ++i) u |= (Laux[8*k+i] << 2*i);
-                    int grid_index = kmap_q2xs[u];
+                    ਲਈ (ਪੂਰਨ i = 0; i < 8; ++i) u |= (Laux[8*k+i] << 2*i);
+                    ਪੂਰਨ grid_ਸੂਚਕਾਂਕ = kmap_q2xs[u];
                     is_on_grid_aux[k] = true;
-                    if (grid_index < 0) {
+                    ਜੇ (grid_ਸੂਚਕਾਂਕ < 0) {
                         is_on_grid_aux[k] = false;
-                        const uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
-                        grid_index = iq2_find_best_neighbour(neighbours, kgrid_q2xs, xval + 8*k, waux + 8*k, this_scale, Laux + 8*k);
+                        ਅਚਲ uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
+                        grid_ਸੂਚਕਾਂਕ = iq2_ਲੱਭੋ_ਉੱਤਮ_neighbour(neighbours, kgrid_q2xs, xval + 8*k, waux + 8*k, this_scale, Laux + 8*k);
                     }
                 }
-                float sumqx = 0, sumq2 = 0;
-                for (int i = 0; i < 16; ++i) {
-                    float w = weight[i];
-                    float q = 2*Laux[i] + 1;
+                ਦਸ਼ਮਲਵ sumqx = 0, sumq2 = 0;
+                ਲਈ (ਪੂਰਨ i = 0; i < 16; ++i) {
+                    ਦਸ਼ਮਲਵ w = ਭਾਰ[i];
+                    ਦਸ਼ਮਲਵ q = 2*Laux[i] + 1;
                     sumqx += w*xval[i]*q;
                     sumq2 += w*q*q;
                 }
-                if (sumq2 > 0 && sumqx*sumqx > best*sumq2) {
-                    scale = sumqx/sumq2; best = scale*sumqx;
-                    for (int i = 0; i < 16; ++i) L[i] = Laux[i];
-                    for (int k = 0; k <  2; ++k) is_on_grid[k] = is_on_grid_aux[k];
+                ਜੇ (sumq2 > 0 && sumqx*sumqx > ਉੱਤਮ*sumq2) {
+                    scale = sumqx/sumq2; ਉੱਤਮ = scale*sumqx;
+                    ਲਈ (ਪੂਰਨ i = 0; i < 16; ++i) L[i] = Laux[i];
+                    ਲਈ (ਪੂਰਨ k = 0; k <  2; ++k) is_on_grid[k] = is_on_grid_aux[k];
                 }
             }
-            int n_not_ongrid = 0;
-            for (int k = 0; k < 2; ++k) if (!is_on_grid[k]) ++n_not_ongrid;
-            if (n_not_ongrid > 0 && scale > 0) {
-                float id = 1/scale;
-                for (int k = 0; k < 2; ++k) {
-                    if (is_on_grid[k]) continue;
+            ਪੂਰਨ n_not_ongrid = 0;
+            ਲਈ (ਪੂਰਨ k = 0; k < 2; ++k) ਜੇ (!is_on_grid[k]) ++n_not_ongrid;
+            ਜੇ (n_not_ongrid > 0 && scale > 0) {
+                ਦਸ਼ਮਲਵ id = 1/scale;
+                ਲਈ (ਪੂਰਨ k = 0; k < 2; ++k) {
+                    ਜੇ (is_on_grid[k]) ਜਾਰੀ;
                     uint16_t u = 0;
-                    for (int i = 0; i < 8; ++i) {
-                        int l = nearest_int(0.5f*(id*xval[8*k+i]-1));
+                    ਲਈ (ਪੂਰਨ i = 0; i < 8; ++i) {
+                        ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(0.5f*(id*xval[8*k+i]-1));
                         l = MAX(0, MIN(kMaxQ-1, l));
                         u |= (l << 2*i);
                         L[8*k + i] = l;
                     }
-                    int grid_index = kmap_q2xs[u];
-                    if (grid_index < 0) {
-                        const uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
-                        grid_index = iq2_find_best_neighbour(neighbours, kgrid_q2xs, xval + 8*k, waux + 8*k, scale, L + 8*k);
+                    ਪੂਰਨ grid_ਸੂਚਕਾਂਕ = kmap_q2xs[u];
+                    ਜੇ (grid_ਸੂਚਕਾਂਕ < 0) {
+                        ਅਚਲ uint16_t * neighbours = kneighbors_q2xs - kmap_q2xs[u] - 1;
+                        grid_ਸੂਚਕਾਂਕ = iq2_ਲੱਭੋ_ਉੱਤਮ_neighbour(neighbours, kgrid_q2xs, xval + 8*k, waux + 8*k, scale, L + 8*k);
                     }
                 }
-                float sumqx = 0, sumq2 = 0;
-                for (int i = 0; i < 16; ++i) {
-                    float w = weight[i];
-                    float q = 2*L[i] + 1;
+                ਦਸ਼ਮਲਵ sumqx = 0, sumq2 = 0;
+                ਲਈ (ਪੂਰਨ i = 0; i < 16; ++i) {
+                    ਦਸ਼ਮਲਵ w = ਭਾਰ[i];
+                    ਦਸ਼ਮਲਵ q = 2*L[i] + 1;
                     sumqx += w*xval[i]*q;
                     sumq2 += w*q*q;
                 }
-                if (sumq2 > 0) scale = sumqx/sumq2;
+                ਜੇ (sumq2 > 0) scale = sumqx/sumq2;
             }
-            if (scale < 0) {
+            ਜੇ (scale < 0) {
                 scale = -scale;
-                for (int k = 0; k < 2; ++k) block_signs[k] = ~block_signs[k];
+                ਲਈ (ਪੂਰਨ k = 0; k < 2; ++k) ਖੰਡ_signs[k] = ~ਖੰਡ_signs[k];
             }
-            for (int k = 0; k < 2; ++k) {
+            ਲਈ (ਪੂਰਨ k = 0; k < 2; ++k) {
                 uint16_t u = 0;
-                for (int i = 0; i < 8; ++i) u |= (L[8*k+i] << 2*i);
-                int grid_index = kmap_q2xs[u];
-                if (grid_index < 0) {
-                    printf("Oops: found point %u not on grid:", u);
-                    for (int i = 0; i < 8; ++i) printf(" %d", L[8*k+i]);
-                    printf("\n");
+                ਲਈ (ਪੂਰਨ i = 0; i < 8; ++i) u |= (L[8*k+i] << 2*i);
+                ਪੂਰਨ grid_ਸੂਚਕਾਂਕ = kmap_q2xs[u];
+                ਜੇ (grid_ਸੂਚਕਾਂਕ < 0) {
+                    ਲਿਖੋ("Oops: found point %u not on grid:", u);
+                    ਲਈ (ਪੂਰਨ i = 0; i < 8; ++i) ਲਿਖੋ(" %d", L[8*k+i]);
+                    ਲਿਖੋ("\n");
                     GGML_ABORT("fatal error");
                 }
-                const int i8 = 2*ib + k;
-                y[ibl].qs[i8] = grid_index & 255;
-                y[ibl].qh[i8/4] |= ((grid_index >> 8) << 2*(i8%4));
-                y[ibl].qs[QK_K/8 + i8] = block_signs[k];
+                ਅਚਲ ਪੂਰਨ i8 = 2*ib + k;
+                y[ibl].qs[i8] = grid_ਸੂਚਕਾਂਕ & 255;
+                y[ibl].qh[i8/4] |= ((grid_ਸੂਚਕਾਂਕ >> 8) << 2*(i8%4));
+                y[ibl].qs[QK_K/8 + i8] = ਖੰਡ_signs[k];
             }
             GGML_ASSERT(scale >= 0);
             scales[ib] = scale;
             max_scale = MAX(max_scale, scale);
         }
 
-        if (!max_scale) {
-            continue;
+        ਜੇ (!max_scale) {
+            ਜਾਰੀ;
         }
 
-        float d = max_scale/31;
-        y[ibl].d = GGML_FP32_TO_FP16(d * 0.9875f);
-        float id = 1/d;
-        for (int ib = 0; ib < QK_K/16; ++ib) {
-            int l = nearest_int(0.5f*(id*scales[ib]-1));
+        ਦਸ਼ਮਲਵ d = max_scale/31;
+        y[ibl].d = GGML_FP32_ਮੰਜ਼ਿਲ_FP16(d * 0.9875f);
+        ਦਸ਼ਮਲਵ id = 1/d;
+        ਲਈ (ਪੂਰਨ ib = 0; ib < QK_K/16; ++ib) {
+            ਪੂਰਨ l = ਸਭ_ਤੋਂ_ਨੇੜੇ_int(0.5f*(id*scales[ib]-1));
             l = MAX(0, MIN(15, l));
-            if (ib%2 == 0) y[ibl].scales[ib/2] = l;
-            else y[ibl].scales[ib/2] |= (l << 4);
+            ਜੇ (ib%2 == 0) y[ibl].scales[ib/2] = l;
+            ਨਹੀਂਤਾਂ y[ibl].scales[ib/2] |= (l << 4);
         }
     }
 }
 
-size_t quantize_iq2_s(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrow, int64_t n_per_row, const float * quant_weights) {
-    GGML_ASSERT(n_per_row%QK_K == 0);
-    int64_t nblock = n_per_row/QK_K;
-    char * qrow = (char *)dst;
-    for (int64_t row = 0; row < nrow; ++row) {
-        quantize_row_iq2_s_impl(src, qrow, n_per_row, quant_weights);
-        src += n_per_row;
-        qrow += nblock*sizeof(block_iq2_s);
+size_t quantize_iq2_s(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT src, ਖਾਲੀ * GGML_RESTRICT dst, int64_t nrow, int64_t n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, ਅਚਲ ਦਸ਼ਮਲਵ * quant_weights) {
+    GGML_ASSERT(n_ਪ੍ਰਤੀ_ਪੰਕਤੀ%QK_K == 0);
+    int64_t nblock = n_ਪ੍ਰਤੀ_ਪੰਕਤੀ/QK_K;
+    ਅੱਖਰ * qrow = (ਅੱਖਰ *)dst;
+    ਲਈ (int64_t ਪੰਕਤੀ = 0; ਪੰਕਤੀ < nrow; ++ਪੰਕਤੀ) {
+        quantize_ਪੰਕਤੀ_iq2_s_impl(src, qrow, n_ਪ੍ਰਤੀ_ਪੰਕਤੀ, quant_weights);
+        src += n_ਪ੍ਰਤੀ_ਪੰਕਤੀ;
+        qrow += nblock*ਆਕਾਰ(ਖੰਡ_iq2_s);
     }
-    return nrow * nblock * sizeof(block_iq2_s);
+    ਵਾਪਸ nrow * nblock * ਆਕਾਰ(ਖੰਡ_iq2_s);
 }
 
-void quantize_row_iq2_s_ref(const float * GGML_RESTRICT x, block_iq2_s * GGML_RESTRICT y, int64_t k) {
-    assert(k % QK_K == 0);
-    quantize_iq2_s(x, y, 1, k, NULL);
+ਖਾਲੀ quantize_ਪੰਕਤੀ_iq2_s_ref(ਅਚਲ ਦਸ਼ਮਲਵ * GGML_RESTRICT x, ਖੰਡ_iq2_s * GGML_RESTRICT y, int64_t k) {
+    ਪ੍ਰਤਿਜ੍ਞਾ(k % QK_K == 0);
+    quantize_iq2_s(x, y, 1, k, ਨਿਰਾ);
 }
 
 // =============================== data validation
 
-static bool validate_float(float f, size_t i) {
-    if (isinf(f)) {
+ਸਥਿਰ bool validate_float(ਦਸ਼ਮਲਵ f, size_t i) {
+    ਜੇ (isinf(f)) {
         fprintf(stderr, "ggml_validate_row_data: found inf value at block %zu\n", i);
-        return false;
+        ਵਾਪਸ false;
     }
 
-    if (isnan(f)) {
+    ਜੇ (isnan(f)) {
         fprintf(stderr, "ggml_validate_row_data: found nan value at block %zu\n", i);
-        return false;
+        ਵਾਪਸ false;
     }
 
-    return true;
+    ਵਾਪਸ true;
 }
 
-static bool isinf_fp16(ggml_fp16_t f) {
-    return (f & 0x7c00) == 0x7c00 && (f & 0x03ff) == 0;
+ਸਥਿਰ bool isinf_fp16(ggml_fp16_t f) {
+    ਵਾਪਸ (f & 0x7c00) == 0x7c00 && (f & 0x03ff) == 0;
 }
 
-static bool isnan_fp16(ggml_fp16_t f) {
-    return (f & 0x7c00) == 0x7c00 && (f & 0x03ff) != 0;
+ਸਥਿਰ bool isnan_fp16(ggml_fp16_t f) {
+    ਵਾਪਸ (f & 0x7c00) == 0x7c00 && (f & 0x03ff) != 0;
 }
 
-static bool validate_fp16(ggml_fp16_t f, size_t i) {
-    if (isinf_fp16(f)) {
+ਸਥਿਰ bool validate_fp16(ggml_fp16_t f, size_t i) {
+    ਜੇ (isinf_fp16(f)) {
         fprintf(stderr, "ggml_validate_row_data: found inf value at block %zu\n", i);
-        return false;
+        ਵਾਪਸ false;
     }
 
-    if (isnan_fp16(f)) {
+    ਜੇ (isnan_fp16(f)) {
         fprintf(stderr, "ggml_validate_row_data: found nan value at block %zu\n", i);
-        return false;
+        ਵਾਪਸ false;
     }
 
-    return true;
+    ਵਾਪਸ true;
 }
 
-static bool validate_e_e8m0(uint8_t e, size_t i) {
-    if (e == 0xff) {
+ਸਥਿਰ bool validate_e_e8m0(uint8_t e, size_t i) {
+    ਜੇ (e == 0xff) {
         fprintf(stderr, "ggml_validate_row_data: found invalid e value %d at block %zu\n", e, i);
-        return false;
+        ਵਾਪਸ false;
     }
 
-    return true;
+    ਵਾਪਸ true;
 }
 
-#define VALIDATE_ROW_DATA_D_F16_IMPL(type, data, nb) \
-    const type * q = (const type *) (data); \
-    for (size_t i = 0; i < (nb); ++i) { \
-        if (!validate_fp16(q[i].d, i)) { \
-            return false; \
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ VALIDATE_ਪੰਕਤੀ_ਅੰਕੜੇ_D_F16_IMPL(type, ਅੰਕੜੇ, nb) \
+    ਅਚਲ type * q = (ਅਚਲ type *) (ਅੰਕੜੇ); \
+    ਲਈ (size_t i = 0; i < (nb); ++i) { \
+        ਜੇ (!validate_fp16(q[i].d, i)) { \
+            ਵਾਪਸ false; \
         } \
     }
 
-#define VALIDATE_ROW_DATA_DM_F16_IMPL(type, data, nb, d, m) \
-    const type * q = (const type *) (data); \
-    for (size_t i = 0; i < (nb); ++i) { \
-        if (!validate_fp16(q[i].d, i) || !validate_fp16(q[i].m, i)) { \
-            return false; \
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ VALIDATE_ਪੰਕਤੀ_ਅੰਕੜੇ_DM_F16_IMPL(type, ਅੰਕੜੇ, nb, d, m) \
+    ਅਚਲ type * q = (ਅਚਲ type *) (ਅੰਕੜੇ); \
+    ਲਈ (size_t i = 0; i < (nb); ++i) { \
+        ਜੇ (!validate_fp16(q[i].d, i) || !validate_fp16(q[i].m, i)) { \
+            ਵਾਪਸ false; \
         } \
     }
 
-#define VALIDATE_ROW_DATA_E_E8M0_IMPL(type, data, nb) \
-    const type * q = (const type *) (data); \
-    for (size_t i = 0; i < (nb); ++i) { \
-        if (!validate_e_e8m0(q[i].e, i)) { \
-            return false; \
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ VALIDATE_ਪੰਕਤੀ_ਅੰਕੜੇ_E_E8_M0_IMPL(type, ਅੰਕੜੇ, nb) \
+    ਅਚਲ type * q = (ਅਚਲ type *) (ਅੰਕੜੇ); \
+    ਲਈ (size_t i = 0; i < (nb); ++i) { \
+        ਜੇ (!validate_e_e8m0(q[i].e, i)) { \
+            ਵਾਪਸ false; \
         } \
     }
 
-#define VALIDATE_ROW_DATA_DVEC_F16_IMPL(type, data, nb, nr) \
-    const type * q = (const type *) (data); \
-    for (size_t i = 0; i < (nb); ++i) { \
-        for (size_t j = 0; j < (nr); ++j) { \
-            if (!validate_fp16(q[i].d[j], i)) { \
-                return false; \
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ VALIDATE_ਪੰਕਤੀ_ਅੰਕੜੇ_DVEC_F16_IMPL(type, ਅੰਕੜੇ, nb, nr) \
+    ਅਚਲ type * q = (ਅਚਲ type *) (ਅੰਕੜੇ); \
+    ਲਈ (size_t i = 0; i < (nb); ++i) { \
+        ਲਈ (size_t j = 0; j < (nr); ++j) { \
+            ਜੇ (!validate_fp16(q[i].d[j], i)) { \
+                ਵਾਪਸ false; \
             } \
         } \
     }
 
-bool ggml_validate_row_data(enum ggml_type type, const void * data, size_t nbytes) {
-    if (type < 0 || type >= GGML_TYPE_COUNT) {
+bool ggml_validate_ਪੰਕਤੀ_ਅੰਕੜੇ(ਗਿਣਤੀ ggml_type type, ਅਚਲ ਖਾਲੀ * ਅੰਕੜੇ, size_t nbytes) {
+    ਜੇ (type < 0 || type >= GGML_TYPE_ਗਿਣਤੀ) {
         fprintf(stderr, "%s: invalid type %d\n", __func__, type);
-        return false;
+        ਵਾਪਸ false;
     }
 
-    if (nbytes % ggml_type_size(type) != 0) {
-        fprintf(stderr, "%s: invalid size %zu for type %s (type size = %zu)\n", __func__, nbytes, ggml_type_name(type), ggml_type_size(type));
-        return false;
+    ਜੇ (nbytes % ggml_type_ਮਾਪ(type) != 0) {
+        fprintf(stderr, "%s: invalid size %zu for type %s (type size = %zu)\n", __func__, nbytes, ggml_type_name(type), ggml_type_ਮਾਪ(type));
+        ਵਾਪਸ false;
     }
 
-    const size_t nb = nbytes/ggml_type_size(type);
+    ਅਚਲ size_t nb = nbytes/ggml_type_ਮਾਪ(type);
 
-    switch (type) {
-        case GGML_TYPE_BF16:
+    ਚੋਣ (type) {
+        ਹਾਲਤ GGML_TYPE_BF16:
             {
-                int nans = 0;
-                int infs = 0;
-                const unsigned short * f = (const unsigned short *) data;
-                for (size_t i = 0; i < nb; ++i) {
+                ਪੂਰਨ nans = 0;
+                ਪੂਰਨ infs = 0;
+                ਅਚਲ ਬਿਨਾਨਿਸ਼ਾਨੀ ਛੋਟਾ * f = (ਅਚਲ ਬਿਨਾਨਿਸ਼ਾਨੀ ਛੋਟਾ *) ਅੰਕੜੇ;
+                ਲਈ (size_t i = 0; i < nb; ++i) {
                     nans += (f[i] & 0x7fff) > 0x7f80;
                     infs += (f[i] & 0x7fff) == 0x7f80;
                 }
-                if (nans) {
+                ਜੇ (nans) {
                     fprintf(stderr, "%s: found %d NaNs in row of %zu BF16 values\n", __func__, nans, nb);
-                    return false;
+                    ਵਾਪਸ false;
                 }
-                if (infs) {
+                ਜੇ (infs) {
                     fprintf(stderr, "%s: found %d infinities in row of %zu BF16 values\n", __func__, infs, nb);
-                    return false;
+                    ਵਾਪਸ false;
                 }
-            } break;
-        case GGML_TYPE_F16:
+            } ਰੋਕੋ;
+        ਹਾਲਤ GGML_TYPE_F16:
             {
-                const ggml_fp16_t * f = (const ggml_fp16_t *) data;
+                ਅਚਲ ggml_fp16_t * f = (ਅਚਲ ggml_fp16_t *) ਅੰਕੜੇ;
                 size_t i = 0;
-#if defined(__AVX2__)
-                for (; i + 15 < nb; i += 16) {
-                    __m256i v = _mm256_loadu_si256((const __m256i *)(f + i));
+#ਜੇ defined(__AVX2__)
+                ਲਈ (; i + 15 < nb; i += 16) {
+                    __m256i v = _mm256_loadu_si256((ਅਚਲ __m256i *)(f + i));
                     __m256i vexp = _mm256_and_si256(v, _mm256_set1_epi16(0x7c00));
                     __m256i cmp = _mm256_cmpeq_epi16(vexp, _mm256_set1_epi16(0x7c00));
-                    int mask = _mm256_movemask_epi8(cmp);
-                    if (mask) {
-                        for (size_t j = 0; j < 16; ++j) {
-                            if (!validate_fp16(f[i + j], i + j)) {
-                                return false;
+                    ਪੂਰਨ ਨਕਾਬ = _mm256_movemask_epi8(cmp);
+                    ਜੇ (ਨਕਾਬ) {
+                        ਲਈ (size_t j = 0; j < 16; ++j) {
+                            ਜੇ (!validate_fp16(f[i + j], i + j)) {
+                                ਵਾਪਸ false;
                             }
                         }
                         GGML_UNREACHABLE();
                     }
                 }
-#elif defined(__ARM_NEON)
-                for (; i + 7 < nb; i += 8) {
+#ਜਾਂਜੇ defined(__ARM_NEON)
+                ਲਈ (; i + 7 < nb; i += 8) {
                     uint16x8_t v = vld1q_u16(f + i);
                     uint16x8_t vexp = vandq_u16(v, vdupq_n_u16(0x7c00));
                     uint16x8_t cmp = vceqq_u16(vexp, vdupq_n_u16(0x7c00));
-                    uint64_t mask = vget_lane_u64(vreinterpret_u64_u8(vshrn_n_u16(cmp, 4)), 0);
-                    if (mask) {
-                        for (size_t j = 0; j < 8; ++j) {
-                            if (!validate_fp16(f[i + j], i + j)) {
-                                return false;
+                    uint64_t ਨਕਾਬ = vget_lane_u64(vreinterpret_u64_u8(vshrn_n_u16(cmp, 4)), 0);
+                    ਜੇ (ਨਕਾਬ) {
+                        ਲਈ (size_t j = 0; j < 8; ++j) {
+                            ਜੇ (!validate_fp16(f[i + j], i + j)) {
+                                ਵਾਪਸ false;
                             }
                         }
                         GGML_UNREACHABLE();
                     }
                 }
-#endif
-                for (; i < nb; ++i) {
-                    if (!validate_fp16(f[i], i)) {
-                        return false;
+#ਜੇ_ਅੰਤ
+                ਲਈ (; i < nb; ++i) {
+                    ਜੇ (!validate_fp16(f[i], i)) {
+                        ਵਾਪਸ false;
                     }
                 }
-            } break;
-        case GGML_TYPE_F32:
+            } ਰੋਕੋ;
+        ਹਾਲਤ GGML_TYPE_F32:
             {
-                const float * f = (const float *) data;
+                ਅਚਲ ਦਸ਼ਮਲਵ * f = (ਅਚਲ ਦਸ਼ਮਲਵ *) ਅੰਕੜੇ;
                 size_t i = 0;
-#if defined(__AVX2__)
-                for (; i + 7 < nb; i += 8) {
-                    __m256i v = _mm256_loadu_si256((const __m256i *)(f + i));
+#ਜੇ defined(__AVX2__)
+                ਲਈ (; i + 7 < nb; i += 8) {
+                    __m256i v = _mm256_loadu_si256((ਅਚਲ __m256i *)(f + i));
                     __m256i vexp = _mm256_and_si256(v, _mm256_set1_epi32(0x7f800000));
                     __m256i cmp = _mm256_cmpeq_epi32(vexp, _mm256_set1_epi32(0x7f800000));
-                    int mask = _mm256_movemask_epi8(cmp);
-                    if (mask) {
-                        for (size_t j = 0; j < 8; ++j) {
-                            if (!validate_float(f[i + j], i + j)) {
-                                return false;
+                    ਪੂਰਨ ਨਕਾਬ = _mm256_movemask_epi8(cmp);
+                    ਜੇ (ਨਕਾਬ) {
+                        ਲਈ (size_t j = 0; j < 8; ++j) {
+                            ਜੇ (!validate_float(f[i + j], i + j)) {
+                                ਵਾਪਸ false;
                             }
                         }
                         GGML_UNREACHABLE();
                     }
                 }
-#elif defined(__ARM_NEON)
-                for (; i + 3 < nb; i += 4) {
-                    uint32x4_t v = vld1q_u32((const uint32_t *)f + i);
+#ਜਾਂਜੇ defined(__ARM_NEON)
+                ਲਈ (; i + 3 < nb; i += 4) {
+                    uint32x4_t v = vld1q_u32((ਅਚਲ uint32_t *)f + i);
                     uint32x4_t vexp = vandq_u32(v, vdupq_n_u32(0x7f800000));
                     uint32x4_t cmp = vceqq_u32(vexp, vdupq_n_u32(0x7f800000));
-                    uint64_t mask = vget_lane_u64(vreinterpret_u64_u16(vshrn_n_u32(cmp, 8)), 0);
-                    if (mask) {
-                        for (size_t j = 0; j < 4; ++j) {
-                            if (!validate_float(f[i + j], i + j)) {
-                                return false;
+                    uint64_t ਨਕਾਬ = vget_lane_u64(vreinterpret_u64_u16(vshrn_n_u32(cmp, 8)), 0);
+                    ਜੇ (ਨਕਾਬ) {
+                        ਲਈ (size_t j = 0; j < 4; ++j) {
+                            ਜੇ (!validate_float(f[i + j], i + j)) {
+                                ਵਾਪਸ false;
                             }
                         }
                         GGML_UNREACHABLE();
                     }
                 }
-#endif
-                for (; i < nb; ++i) {
-                    if (!validate_float(f[i], i)) {
-                        return false;
+#ਜੇ_ਅੰਤ
+                ਲਈ (; i < nb; ++i) {
+                    ਜੇ (!validate_float(f[i], i)) {
+                        ਵਾਪਸ false;
                     }
                 }
-            } break;
-        case GGML_TYPE_F64:
+            } ਰੋਕੋ;
+        ਹਾਲਤ GGML_TYPE_F64:
             {
-                const double * f = (const double *) data;
-                for (size_t i = 0; i < nb; ++i) {
-                    if (!validate_float(f[i], i)) {
-                        return false;
+                ਅਚਲ ਦੁੱਗਣਾ * f = (ਅਚਲ ਦੁੱਗਣਾ *) ਅੰਕੜੇ;
+                ਲਈ (size_t i = 0; i < nb; ++i) {
+                    ਜੇ (!validate_float(f[i], i)) {
+                        ਵਾਪਸ false;
                     }
                 }
-            } break;
-        case GGML_TYPE_Q1_0:
+            } ਰੋਕੋ;
+        ਹਾਲਤ GGML_TYPE_Q1_0:
             {
-                VALIDATE_ROW_DATA_D_F16_IMPL(block_q1_0, data, nb);
-            } break;
-        case GGML_TYPE_Q2_0:
+                VALIDATE_ਪੰਕਤੀ_ਅੰਕੜੇ_D_F16_IMPL(ਖੰਡ_q1_0, ਅੰਕੜੇ, nb);
+            } ਰੋਕੋ;
+        ਹਾਲਤ GGML_TYPE_Q2_0:
             {
-                VALIDATE_ROW_DATA_D_F16_IMPL(block_q2_0, data, nb);
-            } break;
-        case GGML_TYPE_Q4_0:
+                VALIDATE_ਪੰਕਤੀ_ਅੰਕੜੇ_D_F16_IMPL(ਖੰਡ_q2_0, ਅੰਕੜੇ, nb);
+            } ਰੋਕੋ;
+        ਹਾਲਤ GGML_TYPE_Q4_0:
             {
-                VALIDATE_ROW_DATA_D_F16_IMPL(block_q4_0, data, nb);
-            } break;
-        case GGML_TYPE_Q4_1:
+                VALIDATE_ਪੰਕਤੀ_ਅੰਕੜੇ_D_F16_IMPL(ਖੰਡ_q4_0, ਅੰਕੜੇ, nb);
+            } ਰੋਕੋ;
+        ਹਾਲਤ GGML_TYPE_Q4_1:
             {
-                VALIDATE_ROW_DATA_DM_F16_IMPL(block_q4_1, data, nb, d, m);
-            } break;
-        case GGML_TYPE_Q5_0:
+                VALIDATE_ਪੰਕਤੀ_ਅੰਕੜੇ_DM_F16_IMPL(ਖੰਡ_q4_1, ਅੰਕੜੇ, nb, d, m);
+            } ਰੋਕੋ;
+        ਹਾਲਤ GGML_TYPE_Q5_0:
             {
-                VALIDATE_ROW_DATA_D_F16_IMPL(block_q5_0, data, nb);
-            } break;
-        case GGML_TYPE_Q5_1:
+                VALIDATE_ਪੰਕਤੀ_ਅੰਕੜੇ_D_F16_IMPL(ਖੰਡ_q5_0, ਅੰਕੜੇ, nb);
+            } ਰੋਕੋ;
+        ਹਾਲਤ GGML_TYPE_Q5_1:
             {
-                VALIDATE_ROW_DATA_DM_F16_IMPL(block_q5_1, data, nb, d, m);
-            } break;
-        case GGML_TYPE_Q8_0:
+                VALIDATE_ਪੰਕਤੀ_ਅੰਕੜੇ_DM_F16_IMPL(ਖੰਡ_q5_1, ਅੰਕੜੇ, nb, d, m);
+            } ਰੋਕੋ;
+        ਹਾਲਤ GGML_TYPE_Q8_0:
             {
-                VALIDATE_ROW_DATA_D_F16_IMPL(block_q8_0, data, nb);
-            } break;
-        case GGML_TYPE_MXFP4:
+                VALIDATE_ਪੰਕਤੀ_ਅੰਕੜੇ_D_F16_IMPL(ਖੰਡ_q8_0, ਅੰਕੜੇ, nb);
+            } ਰੋਕੋ;
+        ਹਾਲਤ GGML_TYPE_MXFP4:
             {
-                VALIDATE_ROW_DATA_E_E8M0_IMPL(block_mxfp4, data, nb);
-            } break;
-        case GGML_TYPE_NVFP4:
+                VALIDATE_ਪੰਕਤੀ_ਅੰਕੜੇ_E_E8_M0_IMPL(ਖੰਡ_mxfp4, ਅੰਕੜੇ, nb);
+            } ਰੋਕੋ;
+        ਹਾਲਤ GGML_TYPE_NVFP4:
             {
                 // UE4M3 scales are uint8_t — all byte values are valid
-                GGML_UNUSED(data);
-                GGML_UNUSED(nb);
-            } break;
-        case GGML_TYPE_Q2_K:
+                GGML_ਅਣਵਰਤਿਆ(ਅੰਕੜੇ);
+                GGML_ਅਣਵਰਤਿਆ(nb);
+            } ਰੋਕੋ;
+        ਹਾਲਤ GGML_TYPE_Q2_K:
             {
-                VALIDATE_ROW_DATA_DM_F16_IMPL(block_q2_K, data, nb, d, dmin);
-            } break;
-        case GGML_TYPE_Q3_K:
+                VALIDATE_ਪੰਕਤੀ_ਅੰਕੜੇ_DM_F16_IMPL(ਖੰਡ_q2_K, ਅੰਕੜੇ, nb, d, dmin);
+            } ਰੋਕੋ;
+        ਹਾਲਤ GGML_TYPE_Q3_K:
             {
-                VALIDATE_ROW_DATA_D_F16_IMPL(block_q3_K, data, nb);
-            } break;
-        case GGML_TYPE_Q4_K:
+                VALIDATE_ਪੰਕਤੀ_ਅੰਕੜੇ_D_F16_IMPL(ਖੰਡ_q3_K, ਅੰਕੜੇ, nb);
+            } ਰੋਕੋ;
+        ਹਾਲਤ GGML_TYPE_Q4_K:
             {
-                VALIDATE_ROW_DATA_DM_F16_IMPL(block_q4_K, data, nb, d, dmin);
-            } break;
-        case GGML_TYPE_Q5_K:
+                VALIDATE_ਪੰਕਤੀ_ਅੰਕੜੇ_DM_F16_IMPL(ਖੰਡ_q4_K, ਅੰਕੜੇ, nb, d, dmin);
+            } ਰੋਕੋ;
+        ਹਾਲਤ GGML_TYPE_Q5_K:
             {
-                VALIDATE_ROW_DATA_DM_F16_IMPL(block_q5_K, data, nb, d, dmin);
-            } break;
-        case GGML_TYPE_Q6_K:
+                VALIDATE_ਪੰਕਤੀ_ਅੰਕੜੇ_DM_F16_IMPL(ਖੰਡ_q5_K, ਅੰਕੜੇ, nb, d, dmin);
+            } ਰੋਕੋ;
+        ਹਾਲਤ GGML_TYPE_Q6_K:
             {
-                VALIDATE_ROW_DATA_D_F16_IMPL(block_q6_K, data, nb);
-            } break;
-        case GGML_TYPE_Q8_K:
+                VALIDATE_ਪੰਕਤੀ_ਅੰਕੜੇ_D_F16_IMPL(ਖੰਡ_q6_K, ਅੰਕੜੇ, nb);
+            } ਰੋਕੋ;
+        ਹਾਲਤ GGML_TYPE_Q8_K:
             {
-                const block_q8_K * q = (const block_q8_K *) data;
-                for (size_t i = 0; i < nb; ++i) {
-                    if (!validate_float(q[i].d, i)) {
-                        return false;
+                ਅਚਲ ਖੰਡ_q8_K * q = (ਅਚਲ ਖੰਡ_q8_K *) ਅੰਕੜੇ;
+                ਲਈ (size_t i = 0; i < nb; ++i) {
+                    ਜੇ (!validate_float(q[i].d, i)) {
+                        ਵਾਪਸ false;
                     }
                 }
-            } break;
-        case GGML_TYPE_TQ1_0:
+            } ਰੋਕੋ;
+        ਹਾਲਤ GGML_TYPE_TQ1_0:
             {
-                VALIDATE_ROW_DATA_D_F16_IMPL(block_tq1_0, data, nb);
-            } break;
-        case GGML_TYPE_TQ2_0:
+                VALIDATE_ਪੰਕਤੀ_ਅੰਕੜੇ_D_F16_IMPL(ਖੰਡ_tq1_0, ਅੰਕੜੇ, nb);
+            } ਰੋਕੋ;
+        ਹਾਲਤ GGML_TYPE_TQ2_0:
             {
-                VALIDATE_ROW_DATA_D_F16_IMPL(block_tq2_0, data, nb);
-            } break;
-        case GGML_TYPE_IQ1_S:
+                VALIDATE_ਪੰਕਤੀ_ਅੰਕੜੇ_D_F16_IMPL(ਖੰਡ_tq2_0, ਅੰਕੜੇ, nb);
+            } ਰੋਕੋ;
+        ਹਾਲਤ GGML_TYPE_IQ1_S:
             {
-                VALIDATE_ROW_DATA_D_F16_IMPL(block_iq1_s, data, nb);
-            } break;
-        case GGML_TYPE_IQ1_M:
+                VALIDATE_ਪੰਕਤੀ_ਅੰਕੜੇ_D_F16_IMPL(ਖੰਡ_iq1_s, ਅੰਕੜੇ, nb);
+            } ਰੋਕੋ;
+        ਹਾਲਤ GGML_TYPE_IQ1_M:
             {
-                const block_iq1_m * q = (const block_iq1_m *) data;
-                for (size_t i = 0; i < nb; ++i) {
+                ਅਚਲ ਖੰਡ_iq1_m * q = (ਅਚਲ ਖੰਡ_iq1_m *) ਅੰਕੜੇ;
+                ਲਈ (size_t i = 0; i < nb; ++i) {
                     iq1m_scale_t scale;
-                    const uint16_t * sc = (const uint16_t *)q[i].scales;
+                    ਅਚਲ uint16_t * sc = (ਅਚਲ uint16_t *)q[i].scales;
                     scale.u16 = (sc[0] >> 12) | ((sc[1] >> 8) & 0x00f0) | ((sc[2] >> 4) & 0x0f00) | (sc[3] & 0xf000);
-                    if (!validate_fp16(scale.f16, i)) {
-                        return false;
+                    ਜੇ (!validate_fp16(scale.f16, i)) {
+                        ਵਾਪਸ false;
                     }
                 }
-            } break;
-        case GGML_TYPE_IQ2_XXS:
+            } ਰੋਕੋ;
+        ਹਾਲਤ GGML_TYPE_IQ2_XXS:
             {
-                VALIDATE_ROW_DATA_D_F16_IMPL(block_iq2_xxs, data, nb);
-            } break;
-        case GGML_TYPE_IQ2_XS:
+                VALIDATE_ਪੰਕਤੀ_ਅੰਕੜੇ_D_F16_IMPL(ਖੰਡ_iq2_xxs, ਅੰਕੜੇ, nb);
+            } ਰੋਕੋ;
+        ਹਾਲਤ GGML_TYPE_IQ2_XS:
             {
-                VALIDATE_ROW_DATA_D_F16_IMPL(block_iq2_xs, data, nb);
-            } break;
-        case GGML_TYPE_IQ2_S:
+                VALIDATE_ਪੰਕਤੀ_ਅੰਕੜੇ_D_F16_IMPL(ਖੰਡ_iq2_xs, ਅੰਕੜੇ, nb);
+            } ਰੋਕੋ;
+        ਹਾਲਤ GGML_TYPE_IQ2_S:
             {
-                VALIDATE_ROW_DATA_D_F16_IMPL(block_iq2_s, data, nb);
-            } break;
-        case GGML_TYPE_IQ3_XXS:
+                VALIDATE_ਪੰਕਤੀ_ਅੰਕੜੇ_D_F16_IMPL(ਖੰਡ_iq2_s, ਅੰਕੜੇ, nb);
+            } ਰੋਕੋ;
+        ਹਾਲਤ GGML_TYPE_IQ3_XXS:
             {
-                VALIDATE_ROW_DATA_D_F16_IMPL(block_iq3_xxs, data, nb);
-            } break;
+                VALIDATE_ਪੰਕਤੀ_ਅੰਕੜੇ_D_F16_IMPL(ਖੰਡ_iq3_xxs, ਅੰਕੜੇ, nb);
+            } ਰੋਕੋ;
 
-        case GGML_TYPE_IQ3_S:
+        ਹਾਲਤ GGML_TYPE_IQ3_S:
             {
-                VALIDATE_ROW_DATA_D_F16_IMPL(block_iq3_s, data, nb);
-            } break;
-        case GGML_TYPE_IQ4_XS:
+                VALIDATE_ਪੰਕਤੀ_ਅੰਕੜੇ_D_F16_IMPL(ਖੰਡ_iq3_s, ਅੰਕੜੇ, nb);
+            } ਰੋਕੋ;
+        ਹਾਲਤ GGML_TYPE_IQ4_XS:
             {
-                VALIDATE_ROW_DATA_D_F16_IMPL(block_iq4_xs, data, nb);
-            } break;
-        case GGML_TYPE_IQ4_NL:
+                VALIDATE_ਪੰਕਤੀ_ਅੰਕੜੇ_D_F16_IMPL(ਖੰਡ_iq4_xs, ਅੰਕੜੇ, nb);
+            } ਰੋਕੋ;
+        ਹਾਲਤ GGML_TYPE_IQ4_NL:
             {
-                VALIDATE_ROW_DATA_D_F16_IMPL(block_iq4_nl, data, nb);
-            } break;
+                VALIDATE_ਪੰਕਤੀ_ਅੰਕੜੇ_D_F16_IMPL(ਖੰਡ_iq4_nl, ਅੰਕੜੇ, nb);
+            } ਰੋਕੋ;
 
-        case GGML_TYPE_I8:
-        case GGML_TYPE_I16:
-        case GGML_TYPE_I32:
-        case GGML_TYPE_I64:
+        ਹਾਲਤ GGML_TYPE_I8:
+        ਹਾਲਤ GGML_TYPE_I16:
+        ਹਾਲਤ GGML_TYPE_I32:
+        ਹਾਲਤ GGML_TYPE_I64:
             // nothing to validate
-            break;
-        default:
+            ਰੋਕੋ;
+        ਮੂਲ:
             {
                 fprintf(stderr, "%s: invalid type %d\n", __func__, type);
-                return false;
+                ਵਾਪਸ false;
             }
     }
 
-    return true;
+    ਵਾਪਸ true;
 }

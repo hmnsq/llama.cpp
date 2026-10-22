@@ -1,8 +1,8 @@
-#ifndef GGML_SYCL_ADD_ID_HPP
-#define GGML_SYCL_ADD_ID_HPP
+#ਜੇ_ਅਪਰਿਭਾਸ਼ਿਤ GGML_SYCL_ਜੋੜੋ_ID_HPP
+#ਪਰਿਭਾਸ਼ਿਤ_ਕਰੋ GGML_SYCL_ਜੋੜੋ_ID_HPP
 
-#include "common.hpp"
+#ਅਨ੍ਤਰ੍ਭਾਵ "common.hpp"
 
-void ggml_sycl_add_id(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+ਖਾਲੀ ggml_sycl_ਜੋੜੋ_id(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-#endif // GGML_SYCL_ADD_ID_HPP
+#ਜੇ_ਅੰਤ // GGML_SYCL_ADD_ID_HPP

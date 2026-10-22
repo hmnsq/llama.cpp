@@ -4,107 +4,107 @@
 // Source may have arbitrary strides; destination must be contiguous.
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "math_fp.h"
-#include "platform.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml_tensor.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "math_fp.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "platform.h"
 
-#include <stdbool.h>
-#include <stdint.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdbool.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdint.h>
 
-struct ggml_et_cont_params {
-    struct ggml_tensor src0;
-    struct ggml_tensor dst;
+ਬਣਤਰ ggml_et_cont_params {
+    ਬਣਤਰ ggml_tensor src0;
+    ਬਣਤਰ ggml_tensor dst;
 };
 
-int entry_point(struct ggml_et_cont_params * params, void * env) {
+ਪੂਰਨ ਇੰਦਰਾਜ_ਬਿੰਦੂ(ਬਣਤਰ ggml_et_cont_params * params, ਖਾਲੀ * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env || !params) {
-        return -1;
+    ਜੇ (!kernel_env || !params) {
+        ਵਾਪਸ -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    ਪੂਰਨ thread_id   = get_relative_thread_id(kernel_env->shire_ਨਕਾਬ);
+    ਪੂਰਨ ਅੰਕ_ਧਾਗੇ = get_ਅੰਕ_ਧਾਗੇ(kernel_env->shire_ਨਕਾਬ);
 
-    if (thread_id < 0) {
-        return 0;
+    ਜੇ (thread_id < 0) {
+        ਵਾਪਸ 0;
     }
 
-    struct ggml_tensor * src0 = &params->src0;
-    struct ggml_tensor * dst  = &params->dst;
+    ਬਣਤਰ ggml_tensor * src0 = &params->src0;
+    ਬਣਤਰ ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F16) {
-        return -1;
+    ਜੇ (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F16) {
+        ਵਾਪਸ -1;
     }
 
-    const char * src_data = (const char *) src0->data;
-    uint16_t *   dst_data = (uint16_t *) dst->data;
+    ਅਚਲ ਅੱਖਰ * src_ਅੰਕੜੇ = (ਅਚਲ ਅੱਖਰ *) src0->ਅੰਕੜੇ;
+    uint16_t *   dst_ਅੰਕੜੇ = (uint16_t *) dst->ਅੰਕੜੇ;
 
-    if (!src_data || !dst_data) {
-        return -1;
+    ਜੇ (!src_ਅੰਕੜੇ || !dst_ਅੰਕੜੇ) {
+        ਵਾਪਸ -1;
     }
 
-    const int64_t ne00 = src0->ne[0];
-    const int64_t ne01 = src0->ne[1];
-    const int64_t ne02 = src0->ne[2];
-    const int64_t ne03 = src0->ne[3];
+    ਅਚਲ int64_t ne00 = src0->ne[0];
+    ਅਚਲ int64_t ne01 = src0->ne[1];
+    ਅਚਲ int64_t ne02 = src0->ne[2];
+    ਅਚਲ int64_t ne03 = src0->ne[3];
 
-    const int64_t nb00 = src0->nb[0];
-    const int64_t nb01 = src0->nb[1];
-    const int64_t nb02 = src0->nb[2];
-    const int64_t nb03 = src0->nb[3];
+    ਅਚਲ int64_t nb00 = src0->nb[0];
+    ਅਚਲ int64_t nb01 = src0->nb[1];
+    ਅਚਲ int64_t nb02 = src0->nb[2];
+    ਅਚਲ int64_t nb03 = src0->nb[3];
 
-    const int64_t total_elements = ne00 * ne01 * ne02 * ne03;
+    ਅਚਲ int64_t ਕੁੱਲ_elements = ne00 * ne01 * ne02 * ne03;
 
-    if (total_elements == 0) {
-        return 0;
+    ਜੇ (ਕੁੱਲ_elements == 0) {
+        ਵਾਪਸ 0;
     }
 
     // Check if src is contiguous F32
-    const bool src_contiguous =
+    ਅਚਲ bool src_contiguous =
         (nb00 == 4 && nb01 == ne00 * 4 && nb02 == ne00 * ne01 * 4 && nb03 == ne00 * ne01 * ne02 * 4);
 
     // Distribute by cache lines (16 F16 elements = 32 bytes = half cache line)
     // Use 32 elements per chunk to keep output cache-line aligned
-    const int64_t elems_per_cl = 32;
-    const int64_t total_cl     = (total_elements + elems_per_cl - 1) / elems_per_cl;
+    ਅਚਲ int64_t elems_ਪ੍ਰਤੀ_cl = 32;
+    ਅਚਲ int64_t ਕੁੱਲ_cl     = (ਕੁੱਲ_elements + elems_ਪ੍ਰਤੀ_cl - 1) / elems_ਪ੍ਰਤੀ_cl;
 
-    const int64_t cl_per_thread = (total_cl + num_threads - 1) / num_threads;
-    const int64_t cl_start      = thread_id * cl_per_thread;
-    int64_t       cl_end        = cl_start + cl_per_thread;
-    if (cl_end > total_cl) {
-        cl_end = total_cl;
+    ਅਚਲ int64_t cl_ਪ੍ਰਤੀ_thread = (ਕੁੱਲ_cl + ਅੰਕ_ਧਾਗੇ - 1) / ਅੰਕ_ਧਾਗੇ;
+    ਅਚਲ int64_t cl_ਸ਼ੁਰੂ      = thread_id * cl_ਪ੍ਰਤੀ_thread;
+    int64_t       cl_ਸਿਰਾ        = cl_ਸ਼ੁਰੂ + cl_ਪ੍ਰਤੀ_thread;
+    ਜੇ (cl_ਸਿਰਾ > ਕੁੱਲ_cl) {
+        cl_ਸਿਰਾ = ਕੁੱਲ_cl;
     }
-    if (cl_start >= total_cl) {
-        return 0;
-    }
-
-    const int64_t es = cl_start * elems_per_cl;
-    int64_t       ee = cl_end * elems_per_cl;
-    if (ee > total_elements) {
-        ee = total_elements;
+    ਜੇ (cl_ਸ਼ੁਰੂ >= ਕੁੱਲ_cl) {
+        ਵਾਪਸ 0;
     }
 
-    if (src_contiguous) {
+    ਅਚਲ int64_t es = cl_ਸ਼ੁਰੂ * elems_ਪ੍ਰਤੀ_cl;
+    int64_t       ee = cl_ਸਿਰਾ * elems_ਪ੍ਰਤੀ_cl;
+    ਜੇ (ee > ਕੁੱਲ_elements) {
+        ee = ਕੁੱਲ_elements;
+    }
+
+    ਜੇ (src_contiguous) {
         // Fast path: src is contiguous F32
-        const float * src_f32 = (const float *) src_data;
-        for (int64_t i = es; i < ee; ++i) {
-            dst_data[i] = fp32_to_fp16(src_f32[i]);
+        ਅਚਲ ਦਸ਼ਮਲਵ * src_f32 = (ਅਚਲ ਦਸ਼ਮਲਵ *) src_ਅੰਕੜੇ;
+        ਲਈ (int64_t i = es; i < ee; ++i) {
+            dst_ਅੰਕੜੇ[i] = fp32_ਮੰਜ਼ਿਲ_fp16(src_f32[i]);
         }
-    } else {
+    } ਨਹੀਂਤਾਂ {
         // General path: stride-aware read
-        for (int64_t idx = es; idx < ee; ++idx) {
-            const int64_t i00  = idx % ne00;
-            const int64_t rem1 = idx / ne00;
-            const int64_t i01  = rem1 % ne01;
-            const int64_t rem2 = rem1 / ne01;
-            const int64_t i02  = rem2 % ne02;
-            const int64_t i03  = rem2 / ne02;
+        ਲਈ (int64_t idx = es; idx < ee; ++idx) {
+            ਅਚਲ int64_t i00  = idx % ne00;
+            ਅਚਲ int64_t rem1 = idx / ne00;
+            ਅਚਲ int64_t i01  = rem1 % ne01;
+            ਅਚਲ int64_t rem2 = rem1 / ne01;
+            ਅਚਲ int64_t i02  = rem2 % ne02;
+            ਅਚਲ int64_t i03  = rem2 / ne02;
 
-            const float val = *(const float *) (src_data + i00 * nb00 + i01 * nb01 + i02 * nb02 + i03 * nb03);
-            dst_data[idx]   = fp32_to_fp16(val);
+            ਅਚਲ ਦਸ਼ਮਲਵ val = *(ਅਚਲ ਦਸ਼ਮਲਵ *) (src_ਅੰਕੜੇ + i00 * nb00 + i01 * nb01 + i02 * nb02 + i03 * nb03);
+            dst_ਅੰਕੜੇ[idx]   = fp32_ਮੰਜ਼ਿਲ_fp16(val);
         }
     }
 
-    return 0;
+    ਵਾਪਸ 0;
 }

@@ -13,97 +13,97 @@
 // Lower-triangular, left-side, non-unit variant implemented.
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "math_fp.h"
-#include "platform.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "ggml_tensor.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "math_fp.h"
+#ਅਨ੍ਤਰ੍ਭਾਵ "platform.h"
 
-#include <stdint.h>
+#ਅਨ੍ਤਰ੍ਭਾਵ <stdint.h>
 
-struct ggml_et_solve_tri_params {
-    struct ggml_tensor src0;  // A: lower-triangular [n, n, B1, B2]
-    struct ggml_tensor src1;  // B: RHS [k, n, B1, B2]
-    struct ggml_tensor dst;   // X: solution [k, n, B1, B2]
+ਬਣਤਰ ggml_et_solve_tri_params {
+    ਬਣਤਰ ggml_tensor src0;  // A: lower-triangular [n, n, B1, B2]
+    ਬਣਤਰ ggml_tensor src1;  // B: RHS [k, n, B1, B2]
+    ਬਣਤਰ ggml_tensor dst;   // X: solution [k, n, B1, B2]
 };
 
-int entry_point(struct ggml_et_solve_tri_params * params, void * env) {
+ਪੂਰਨ ਇੰਦਰਾਜ_ਬਿੰਦੂ(ਬਣਤਰ ggml_et_solve_tri_params * params, ਖਾਲੀ * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    ਜੇ (!kernel_env) {
+        ਵਾਪਸ -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    ਪੂਰਨ thread_id   = get_relative_thread_id(kernel_env->shire_ਨਕਾਬ);
+    ਪੂਰਨ ਅੰਕ_ਧਾਗੇ = get_ਅੰਕ_ਧਾਗੇ(kernel_env->shire_ਨਕਾਬ);
 
-    if (thread_id < 0) {
-        return 0;
+    ਜੇ (thread_id < 0) {
+        ਵਾਪਸ 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    ਜੇ (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        ਵਾਪਸ -1;
     }
 
-    struct ggml_tensor * src0 = &params->src0;  // A
-    struct ggml_tensor * src1 = &params->src1;  // B
-    struct ggml_tensor * dst  = &params->dst;   // X
+    ਬਣਤਰ ggml_tensor * src0 = &params->src0;  // A
+    ਬਣਤਰ ggml_tensor * src1 = &params->src1;  // B
+    ਬਣਤਰ ggml_tensor * dst  = &params->dst;   // X
 
-    if (src0->type != GGML_TYPE_F32 || src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+    ਜੇ (src0->type != GGML_TYPE_F32 || src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        ਵਾਪਸ -1;
     }
 
-    const float * A_data = (const float *) src0->data;
-    const float * B_data = (const float *) src1->data;
-    float *       X_data = (float *) dst->data;
+    ਅਚਲ ਦਸ਼ਮਲਵ * A_ਅੰਕੜੇ = (ਅਚਲ ਦਸ਼ਮਲਵ *) src0->ਅੰਕੜੇ;
+    ਅਚਲ ਦਸ਼ਮਲਵ * B_ਅੰਕੜੇ = (ਅਚਲ ਦਸ਼ਮਲਵ *) src1->ਅੰਕੜੇ;
+    ਦਸ਼ਮਲਵ *       X_ਅੰਕੜੇ = (ਦਸ਼ਮਲਵ *) dst->ਅੰਕੜੇ;
 
-    if (!A_data || !B_data || !X_data) {
-        return -1;
+    ਜੇ (!A_ਅੰਕੜੇ || !B_ਅੰਕੜੇ || !X_ਅੰਕੜੇ) {
+        ਵਾਪਸ -1;
     }
 
-    const int64_t n   = src0->ne[1];  // A is n×n
-    const int64_t k   = src1->ne[0];  // number of RHS columns
-    const int64_t ne2 = src0->ne[2];
-    const int64_t ne3 = src0->ne[3];
+    ਅਚਲ int64_t n   = src0->ne[1];  // A is n×n
+    ਅਚਲ int64_t k   = src1->ne[0];  // number of RHS columns
+    ਅਚਲ int64_t ne2 = src0->ne[2];
+    ਅਚਲ int64_t ne3 = src0->ne[3];
 
     // Strides in bytes
-    const size_t nb01 = src0->nb[1], nb02 = src0->nb[2], nb03 = src0->nb[3];
-    const size_t nb11 = src1->nb[1], nb12 = src1->nb[2], nb13 = src1->nb[3];
-    const size_t nb1 = dst->nb[1], nb2 = dst->nb[2], nb3 = dst->nb[3];
+    ਅਚਲ size_t nb01 = src0->nb[1], nb02 = src0->nb[2], nb03 = src0->nb[3];
+    ਅਚਲ size_t nb11 = src1->nb[1], nb12 = src1->nb[2], nb13 = src1->nb[3];
+    ਅਚਲ size_t nb1 = dst->nb[1], nb2 = dst->nb[2], nb3 = dst->nb[3];
 
     // k % 16 == 0 guaranteed by supports_op. Rows are cache-line aligned,
     // so column groups of 16 map to exclusive cache lines.
     // TODO: Vectorize the thing
-    const int64_t cols_per_cl    = 16;
-    const int64_t num_col_groups = k / cols_per_cl;
-    const int64_t total_work     = num_col_groups * ne2 * ne3;
+    ਅਚਲ int64_t ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_cl    = 16;
+    ਅਚਲ int64_t ਅੰਕ_ਖਾਨਾ_groups = k / ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_cl;
+    ਅਚਲ int64_t ਕੁੱਲ_work     = ਅੰਕ_ਖਾਨਾ_groups * ne2 * ne3;
 
-    for (int64_t work = thread_id; work < total_work; work += num_threads) {
-        const int64_t cg = work % num_col_groups;
-        const int64_t i2 = (work / num_col_groups) % ne2;
-        const int64_t i3 = work / (num_col_groups * ne2);
+    ਲਈ (int64_t work = thread_id; work < ਕੁੱਲ_work; work += ਅੰਕ_ਧਾਗੇ) {
+        ਅਚਲ int64_t cg = work % ਅੰਕ_ਖਾਨਾ_groups;
+        ਅਚਲ int64_t i2 = (work / ਅੰਕ_ਖਾਨਾ_groups) % ne2;
+        ਅਚਲ int64_t i3 = work / (ਅੰਕ_ਖਾਨਾ_groups * ne2);
 
-        const int64_t j_start = cg * cols_per_cl;
-        const int64_t j_end   = j_start + cols_per_cl;
+        ਅਚਲ int64_t j_ਸ਼ੁਰੂ = cg * ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_cl;
+        ਅਚਲ int64_t j_ਸਿਰਾ   = j_ਸ਼ੁਰੂ + ਖਾਨੇ_ਗਿਣਤੀ_ਪ੍ਰਤੀ_cl;
 
-        const float * A_batch = (const float *) ((const char *) A_data + i2 * nb02 + i3 * nb03);
-        const float * B_batch = (const float *) ((const char *) B_data + i2 * nb12 + i3 * nb13);
-        float *       X_batch = (float *) ((char *) X_data + i2 * nb2 + i3 * nb3);
+        ਅਚਲ ਦਸ਼ਮਲਵ * A_batch = (ਅਚਲ ਦਸ਼ਮਲਵ *) ((ਅਚਲ ਅੱਖਰ *) A_ਅੰਕੜੇ + i2 * nb02 + i3 * nb03);
+        ਅਚਲ ਦਸ਼ਮਲਵ * B_batch = (ਅਚਲ ਦਸ਼ਮਲਵ *) ((ਅਚਲ ਅੱਖਰ *) B_ਅੰਕੜੇ + i2 * nb12 + i3 * nb13);
+        ਦਸ਼ਮਲਵ *       X_batch = (ਦਸ਼ਮਲਵ *) ((ਅੱਖਰ *) X_ਅੰਕੜੇ + i2 * nb2 + i3 * nb3);
 
-        for (int64_t j = j_start; j < j_end; j++) {
-            for (int64_t i = 0; i < n; i++) {
-                const float * A_row = (const float *) ((const char *) A_batch + i * nb01);
-                float *       X_row = (float *) ((char *) X_batch + i * nb1);
-                const float * B_row = (const float *) ((const char *) B_batch + i * nb11);
+        ਲਈ (int64_t j = j_ਸ਼ੁਰੂ; j < j_ਸਿਰਾ; j++) {
+            ਲਈ (int64_t i = 0; i < n; i++) {
+                ਅਚਲ ਦਸ਼ਮਲਵ * A_ਪੰਕਤੀ = (ਅਚਲ ਦਸ਼ਮਲਵ *) ((ਅਚਲ ਅੱਖਰ *) A_batch + i * nb01);
+                ਦਸ਼ਮਲਵ *       X_ਪੰਕਤੀ = (ਦਸ਼ਮਲਵ *) ((ਅੱਖਰ *) X_batch + i * nb1);
+                ਅਚਲ ਦਸ਼ਮਲਵ * B_ਪੰਕਤੀ = (ਅਚਲ ਦਸ਼ਮਲਵ *) ((ਅਚਲ ਅੱਖਰ *) B_batch + i * nb11);
 
-                float sum = 0.0f;
-                for (int64_t t = 0; t < i; t++) {
-                    const float * X_t = (const float *) ((const char *) X_batch + t * nb1);
-                    sum += A_row[t] * X_t[j];
+                ਦਸ਼ਮਲਵ ਜੋੜ = 0.0f;
+                ਲਈ (int64_t t = 0; t < i; t++) {
+                    ਅਚਲ ਦਸ਼ਮਲਵ * X_t = (ਅਚਲ ਦਸ਼ਮਲਵ *) ((ਅਚਲ ਅੱਖਰ *) X_batch + t * nb1);
+                    ਜੋੜ += A_ਪੰਕਤੀ[t] * X_t[j];
                 }
 
-                X_row[j] = et_fdiv(B_row[j] - sum, A_row[i]);
+                X_ਪੰਕਤੀ[j] = et_fdiv(B_ਪੰਕਤੀ[j] - ਜੋੜ, A_ਪੰਕਤੀ[i]);
             }
         }
     }
 
-    return 0;
+    ਵਾਪਸ 0;
 }
