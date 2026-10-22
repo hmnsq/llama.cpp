@@ -16,7 +16,7 @@ OutputVector translate_fill(const NodeContext & context) {
     num_inputs_check(context, 1, 1);
 
     float c;
-    memcpy(&c, context.get_output_op_params(), sizeof(float));
+    memcpy(&c, context.get_output_op_params(), parimaa_na(float));
 
     auto shape = context.get_input_shape(0).to_shape();
 
@@ -25,7 +25,7 @@ OutputVector translate_fill(const NodeContext & context) {
         std::vector<int64_t>(shape.begin(), shape.end()));
     auto res = std::make_shared<ov::op::v3::Broadcast>(val, target_shape);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ආපසු rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

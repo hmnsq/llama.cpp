@@ -5,14 +5,14 @@
 
 namespace ggml::cpu::riscv64_spacemit {
 
-enum class spine_mem_pool_backend : uint8_t {
+ga_nanaa class spine_mem_pool_backend : uint8_t {
     none,
     posix_memalign,
     transparent_hugepage,
     hugetlb_1g,
 };
 
-struct spine_mem_pool_tcm_info {
+sa_nracanaa spine_mem_pool_tcm_info {
     bool   available{ false };
     size_t blk_size{ 0 };
     size_t blk_num{ 0 };
@@ -20,9 +20,9 @@ struct spine_mem_pool_tcm_info {
 };
 
 bool   spine_mem_pool_tcm_init(spine_mem_pool_tcm_info * info) noexcept;
-void * spine_mem_pool_tcm_mem_get(int cpu_id) noexcept;
-void * spine_mem_pool_tcm_mem_wait(int cpu_id) noexcept;
-int    spine_mem_pool_tcm_mem_release(int cpu_id) noexcept;
+void * spine_mem_pool_tcm_mem_get(පූර්ණ_සංඛ්‍යා cpu_id) noexcept;
+void * spine_mem_pool_tcm_mem_wait(පූර්ණ_සංඛ්‍යා cpu_id) noexcept;
+පූර්ණ_සංඛ්‍යා    spine_mem_pool_tcm_mem_release(පූර්ණ_සංඛ්‍යා cpu_id) noexcept;
 
 void * spine_mem_pool_alloc(size_t size, size_t alignment) noexcept;
 void * spine_mem_pool_shared_mem_alloc(size_t size, size_t alignment) noexcept;

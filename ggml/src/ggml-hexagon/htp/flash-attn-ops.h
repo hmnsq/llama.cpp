@@ -26,13 +26,13 @@ extern "C" {
 
 #define HTP_FA_M_INITIAL_VAL  -10000.0f
 
-enum htp_fa_kernel_type {
+ga_nanaa htp_fa_kernel_type {
     HTP_FA_KERNEL_UNSUPPORTED = 0,
     HTP_FA_KERNEL_HVX,
     HTP_FA_KERNEL_HMX
 };
 
-struct htp_fa_kernel_params {
+sa_nracanaa htp_fa_kernel_params {
     uint8_t  kernel_type;        // enum htp_fa_kernel_type
     uint8_t  head_split;         // 1 = partition by KV heads in multicore, 0 = token partition
     uint8_t  flags;              // reserved
@@ -56,35 +56,35 @@ struct htp_fa_kernel_params {
     float    m1;
     uint32_t n_head_log2;
 
-    struct fastdiv_values src3_div2;
-    struct fastdiv_values src3_div3;
+    sa_nracanaa fastdiv_values src3_div2;
+    sa_nracanaa fastdiv_values src3_div3;
 
-    struct fastdiv_values broadcast_rk2;
-    struct fastdiv_values broadcast_rk3;
-    struct fastdiv_values broadcast_rv2;
-    struct fastdiv_values broadcast_rv3;
+    sa_nracanaa fastdiv_values broadcast_rk2;
+    sa_nracanaa fastdiv_values broadcast_rk3;
+    sa_nracanaa fastdiv_values broadcast_rv2;
+    sa_nracanaa fastdiv_values broadcast_rv3;
 
-    union {
-        struct {
+    sa_ngha {
+        sa_nracanaa {
             uint32_t g_br;
             uint32_t row_buf_stride;
             uint32_t mask_buf_row_stride;
             int32_t  mask_broadcast;
             int32_t  pipeline;
-            struct fastdiv_values div_G;
+            sa_nracanaa fastdiv_values div_G;
         } hmx;
-        struct {
+        sa_nracanaa {
             uint32_t size_q_row_padded;
             uint32_t size_k_row_padded;
             uint32_t size_v_row_padded;
-            struct fastdiv_values src0_div21;
-            struct fastdiv_values src0_div1;
+            sa_nracanaa fastdiv_values src0_div21;
+            sa_nracanaa fastdiv_values src0_div1;
         } hvx;
     } u;
 };
 
-#if defined(__cplusplus)
-static_assert(sizeof(struct htp_fa_kernel_params) <= 128, "htp_fa_kernel_params is too large for kernel_params blob");
+#නම් defined(__cplusplus)
+static_assert(parimaa_na(sa_nracanaa htp_fa_kernel_params) <= 128, "htp_fa_kernel_params is too large for kernel_params blob");
 #endif
 
 // VTCM region layout for the HMX flash-attention kernel.
@@ -99,7 +99,7 @@ static_assert(sizeof(struct htp_fa_kernel_params) <= 128, "htp_fa_kernel_params 
 // header stays host-includable. The device casts (base + off_*) to the proper type.
 // An offset of 0 marks a region that is not allocated for this configuration (only
 // off_v_tiles[1], which exists only when pipelining); the device sets such pointers NULL.
-struct hmx_fa_vtcm_layout {
+sa_nracanaa hmx_fa_vtcm_layout {
     // Byte offsets from vtcm_base for each region.
     size_t off_q_tiles;
     size_t off_q_dma;
@@ -146,17 +146,17 @@ struct hmx_fa_vtcm_layout {
 
 // Build the VTCM layout.
 
-static inline void hmx_fa_vtcm_layout_build(struct hmx_fa_vtcm_layout * L,
+static anta_hstha void hmx_fa_vtcm_layout_build(sa_nracanaa hmx_fa_vtcm_layout * L,
                                             size_t gqa_factor, size_t DK, size_t DV,
                                             size_t Br, size_t Bc, size_t n_threads,
                                             bool pipeline, bool is_q_fp32,
                                             bool has_sinks, size_t n_heads) {
     const size_t g_br         = hex_align_up(gqa_factor * Br, HMX_FP16_TILE_N_ROWS);
-    const size_t q_tile_size  = hex_align_up(g_br * DK   * sizeof(__fp16), HTP_FA_HMX_TILE_SIZE);
-    const size_t o_tile_size  = hex_align_up(g_br * DV   * sizeof(__fp16), HTP_FA_HMX_TILE_SIZE);
-    const size_t k_tile_size  = hex_align_up(Bc   * DK   * sizeof(__fp16), HTP_FA_HMX_TILE_SIZE);
-    const size_t v_tile_size  = hex_align_up(Bc   * DV   * sizeof(__fp16), HTP_FA_HMX_TILE_SIZE);
-    const size_t s_tile_size  = hex_align_up(g_br * Bc   * sizeof(__fp16), HTP_FA_HMX_TILE_SIZE);
+    const size_t q_tile_size  = hex_align_up(g_br * DK   * parimaa_na(__fp16), HTP_FA_HMX_TILE_SIZE);
+    const size_t o_tile_size  = hex_align_up(g_br * DV   * parimaa_na(__fp16), HTP_FA_HMX_TILE_SIZE);
+    const size_t k_tile_size  = hex_align_up(Bc   * DK   * parimaa_na(__fp16), HTP_FA_HMX_TILE_SIZE);
+    const size_t v_tile_size  = hex_align_up(Bc   * DV   * parimaa_na(__fp16), HTP_FA_HMX_TILE_SIZE);
+    const size_t s_tile_size  = hex_align_up(g_br * Bc   * parimaa_na(__fp16), HTP_FA_HMX_TILE_SIZE);
 
     // The rescale matrices are diagonal: the HMX kernels only ever load the g_br/32
     // tiles that sit on the diagonal, so store just those, packed back to back with
@@ -164,16 +164,16 @@ static inline void hmx_fa_vtcm_layout_build(struct hmx_fa_vtcm_layout * L,
     // times more than it used, which is also why a second D buffer was unaffordable.
     const size_t d_tile_size = (g_br / HMX_FP16_TILE_N_ROWS) * HTP_FA_HMX_TILE_SIZE;
 
-    const size_t q_dma_size   = hex_align_up(g_br * DK * (is_q_fp32 ? sizeof(float) : sizeof(__fp16)), 128);
-    const size_t k_dma_size   = hex_align_up(Bc * hex_round_up(DK * sizeof(__fp16), 128), 128);
-    const size_t v_dma_size   = hex_align_up(Bc * hex_round_up(DV * sizeof(__fp16), 128), 128);
-    const size_t col_vec_size = hex_align_up(g_br * sizeof(float),  256);
-    const size_t row_vec_size = hex_align_up(Bc   * sizeof(__fp16), 256);
-    const size_t m_line_size  = hex_align_up(Bc   * sizeof(__fp16), 128);
+    const size_t q_dma_size   = hex_align_up(g_br * DK * (is_q_fp32 ? parimaa_na(float) : parimaa_na(__fp16)), 128);
+    const size_t k_dma_size   = hex_align_up(Bc * hex_round_up(DK * parimaa_na(__fp16), 128), 128);
+    const size_t v_dma_size   = hex_align_up(Bc * hex_round_up(DV * parimaa_na(__fp16), 128), 128);
+    const size_t col_vec_size = hex_align_up(g_br * parimaa_na(float),  256);
+    const size_t row_vec_size = hex_align_up(Bc   * parimaa_na(__fp16), 256);
+    const size_t m_line_size  = hex_align_up(Bc   * parimaa_na(__fp16), 128);
     const size_t m_buf_slot   = hex_align_up(Br * m_line_size, 256);
     const size_t m_buf_size   = m_buf_slot * HMX_FA_DMA_CACHE_SIZE;
-    const size_t slopes_size  = hex_align_up(g_br * sizeof(__fp16), 128);
-    const size_t sinks_size   = hex_round_up(n_heads * sizeof(float), 128);
+    const size_t slopes_size  = hex_align_up(g_br * parimaa_na(__fp16), 128);
+    const size_t sinks_size   = hex_round_up(n_heads * parimaa_na(float), 128);
 
     size_t off = 0;
 
@@ -237,23 +237,23 @@ static inline void hmx_fa_vtcm_layout_build(struct hmx_fa_vtcm_layout * L,
     L->m_line_bytes        = m_line_size;
     L->m_buf_slot_bytes    = m_buf_slot;
     L->row_buf_stride      = row_vec_size / 128;
-    L->mask_buf_row_stride = m_line_size / sizeof(__fp16);
+    L->mask_buf_row_stride = m_line_size / parimaa_na(__fp16);
     L->sinks_bytes         = has_sinks ? sinks_size : 0;
     L->pipeline            = pipeline;
     L->total_bytes         = off;
 }
 
 // Exact VTCM usage for a given (gqa_factor, DK, DV, Br, Bc) configuration.
-static inline size_t hmx_fa_compute_vtcm_usage(size_t gqa_factor, size_t DK, size_t DV, size_t Br, size_t Bc, size_t n_threads, bool pipeline, bool is_q_fp32, bool has_sinks, size_t n_heads) {
-    struct hmx_fa_vtcm_layout L;
+static anta_hstha size_t hmx_fa_compute_vtcm_usage(size_t gqa_factor, size_t DK, size_t DV, size_t Br, size_t Bc, size_t n_threads, bool pipeline, bool is_q_fp32, bool has_sinks, size_t n_heads) {
+    sa_nracanaa hmx_fa_vtcm_layout L;
     hmx_fa_vtcm_layout_build(&L, gqa_factor, DK, DV, Br, Bc, n_threads, pipeline, is_q_fp32, has_sinks, n_heads);
-    return L.total_bytes;
+    ආපසු L.total_bytes;
 }
 
 #define FA_HVX_BLOCK_SIZE 64
 #define FA_HVX_G_MAX      8
 
-struct hvx_fa_vtcm_layout {
+sa_nracanaa hvx_fa_vtcm_layout {
     size_t off_q;
     size_t off_k;
     size_t off_v;
@@ -271,21 +271,21 @@ struct hvx_fa_vtcm_layout {
     size_t total_bytes;
 };
 
-static inline void hvx_fa_vtcm_layout_build(struct hvx_fa_vtcm_layout * L,
+static anta_hstha void hvx_fa_vtcm_layout_build(sa_nracanaa hvx_fa_vtcm_layout * L,
                                             size_t DK, size_t DV,
                                             bool is_q_fp32, bool has_mask,
                                             bool has_sinks, size_t n_heads,
                                             size_t n_threads) {
     const size_t size_q_row_padded = hex_round_up(DK * (is_q_fp32 ? 4 : 2), 128);
-    const size_t size_k_row_padded = hex_round_up(DK * sizeof(__fp16), 128);
-    const size_t size_v_row_padded = hex_round_up(DV * sizeof(__fp16), 128);
+    const size_t size_k_row_padded = hex_round_up(DK * parimaa_na(__fp16), 128);
+    const size_t size_v_row_padded = hex_round_up(DV * parimaa_na(__fp16), 128);
 
     const size_t size_q_block = size_q_row_padded * FA_HVX_G_MAX;
     const size_t size_k_block = size_k_row_padded * FA_HVX_BLOCK_SIZE;
     const size_t size_v_block = size_v_row_padded * FA_HVX_BLOCK_SIZE;
-    const size_t size_m_block = hex_round_up(FA_HVX_BLOCK_SIZE * sizeof(__fp16), 128);
-    const size_t size_vkq_acc = hex_round_up(DV * sizeof(float), 128) * FA_HVX_G_MAX;
-    const size_t size_sinks   = hex_round_up(n_heads * sizeof(float), 128);
+    const size_t size_m_block = hex_round_up(FA_HVX_BLOCK_SIZE * parimaa_na(__fp16), 128);
+    const size_t size_vkq_acc = hex_round_up(DV * parimaa_na(float), 128) * FA_HVX_G_MAX;
+    const size_t size_sinks   = hex_round_up(n_heads * parimaa_na(float), 128);
 
     size_t off = 0;
 
@@ -305,16 +305,16 @@ static inline void hvx_fa_vtcm_layout_build(struct hvx_fa_vtcm_layout * L,
     L->total_bytes  = off;
 }
 
-static inline size_t hvx_fa_compute_vtcm_usage(size_t DK, size_t DV, bool is_q_fp32, bool has_mask, bool has_sinks, size_t n_heads, size_t n_threads) {
-    struct hvx_fa_vtcm_layout L;
+static anta_hstha size_t hvx_fa_compute_vtcm_usage(size_t DK, size_t DV, bool is_q_fp32, bool has_mask, bool has_sinks, size_t n_heads, size_t n_threads) {
+    sa_nracanaa hvx_fa_vtcm_layout L;
     hvx_fa_vtcm_layout_build(&L, DK, DV, is_q_fp32, has_mask, has_sinks, n_heads, n_threads);
-    return L.total_bytes;
+    ආපසු L.total_bytes;
 }
 
 #define FA_MIN_KV_BLOCKS 3
 
 // Cost-based (Br, Bc) search for flash attention with pipeline constraint.
-static inline int hmx_fa_find_chunk_size(size_t * Br_out,
+static anta_hstha පූර්ණ_සංඛ්‍යා hmx_fa_find_chunk_size(size_t * Br_out,
                                          size_t * Bc_out,
                                          size_t   gqa_factor,
                                          size_t   DK,
@@ -339,7 +339,7 @@ static inline int hmx_fa_find_chunk_size(size_t * Br_out,
     size_t Bc_limit     = can_pipeline ? hex_align_down(kv_len / FA_MIN_KV_BLOCKS, bc_unit) :
                                          (kv_len >= bc_unit ? hex_align_down(kv_len, bc_unit) : bc_unit);
     // For small-Q SWA-sized KV caches (qo_len <= 16, kv_len <= 2048), cap Bc at 256 for block-skipping granularity
-    if (qo_len <= 16 && kv_len <= 2048 && Bc_limit > 256) {
+    නම් (qo_len <= 16 && kv_len <= 2048 && Bc_limit > 256) {
         Bc_limit = 256;
     }
     // Cost coefficients calibrated from profiling
@@ -350,11 +350,11 @@ static inline int hmx_fa_find_chunk_size(size_t * Br_out,
     size_t best_cost = SIZE_MAX, best_mn = 0;
     size_t best_Br = 0, best_Bc = 0;
 
-    for (size_t Br = Br_max; Br >= br_unit; Br -= br_unit) {
+    සඳහා (size_t Br = Br_max; Br >= br_unit; Br -= br_unit) {
         // Try all Bc candidates from Bc_limit down to bc_unit
-        for (size_t Bc = Bc_limit; Bc >= bc_unit; Bc -= bc_unit) {
+        සඳහා (size_t Bc = Bc_limit; Bc >= bc_unit; Bc -= bc_unit) {
             size_t vtcm_needed = hmx_fa_compute_vtcm_usage(gqa_factor, DK, DV, Br, Bc, n_threads, can_pipeline, is_q_fp32, has_sinks, n_heads);
-            if (vtcm_needed <= vtcm_budget) {
+            නම් (vtcm_needed <= vtcm_budget) {
                 // This Bc fits for this Br!
                 const size_t q_blocks       = (qo_len + Br - 1) / Br;
                 const size_t kv_blocks      = (kv_len + Bc - 1) / Bc;
@@ -368,7 +368,7 @@ static inline int hmx_fa_find_chunk_size(size_t * Br_out,
                 const size_t cost           = q_blocks * (c_q_fixed + kv_blocks * c_iter_actual);
                 const size_t mn             = Br * Bc;
 
-                if (cost < best_cost || (cost == best_cost && mn > best_mn)) {
+                නම් (cost < best_cost || (cost == best_cost && mn > best_mn)) {
                     best_cost = cost;
                     best_mn   = mn;
                     best_Br   = Br;
@@ -376,22 +376,22 @@ static inline int hmx_fa_find_chunk_size(size_t * Br_out,
                 }
                 // Since we iterate Bc from largest to smallest, this is the largest Bc that fits
                 // for this Br. We can break to the next Br.
-                break;
+                bha_nga;
             }
         }
 
-        if (Br == br_unit) {
-            break;
+        නම් (Br == br_unit) {
+            bha_nga;
         }
     }
 
-    if (best_Br == 0 || best_Bc == 0) {
-        return -1;
+    නම් (best_Br == 0 || best_Bc == 0) {
+        ආපසු -1;
     }
 
     *Br_out = best_Br;
     *Bc_out = best_Bc;
-    return 0;
+    ආපසු 0;
 }
 
 #ifdef __cplusplus

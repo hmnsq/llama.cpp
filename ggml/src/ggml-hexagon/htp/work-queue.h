@@ -5,10 +5,10 @@
 #include <stdint.h>
 #include <stddef.h>
 
-typedef void (*work_queue_func_t)(unsigned int n, unsigned int i, void *);
+typedef void (*work_queue_func_t)(unsigned පූර්ණ_සංඛ්‍යා n, unsigned පූර්ණ_සංඛ්‍යා i, void *);
 
-struct work_queue_s;
-typedef struct work_queue_s * work_queue_t;
+sa_nracanaa work_queue_s;
+typedef sa_nracanaa work_queue_s * work_queue_t;
 
 #define WORK_QUEUE_MAX_N_THREADS      10
 
@@ -20,14 +20,14 @@ void         work_queue_free(work_queue_t q);
 void work_queue_wakeup(work_queue_t q);
 void work_queue_suspend(work_queue_t q);
 
-bool work_queue_run_async(work_queue_t q, work_queue_func_t func, void * data, unsigned int n);
+bool work_queue_run_async(work_queue_t q, work_queue_func_t func, void * data, unsigned පූර්ණ_සංඛ්‍යා n);
 
-static inline bool work_queue_run(work_queue_t q, work_queue_func_t func, void * data, unsigned int n) {
-    if (n <= 1) {
+static anta_hstha bool work_queue_run(work_queue_t q, work_queue_func_t func, void * data, unsigned පූර්ණ_සංඛ්‍යා n) {
+    නම් (n <= 1) {
         func(n, 0, data);
-        return true;
+        ආපසු true;
     }
-    return work_queue_run_async(q, func, data, n);
+    ආපසු work_queue_run_async(q, func, data, n);
 }
 
 // Legacy compatibility

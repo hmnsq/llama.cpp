@@ -8,21 +8,21 @@
 static constexpr int64_t SPARSE_FA_PAD       = 256;
 static constexpr int64_t SPARSE_FA_MIN_RATIO = 2;
 
-extern int g_ggml_sycl_enable_sparse_fa;
-extern int g_ggml_sycl_debug_sparse_fa;
-extern int g_ggml_sycl_sparse_fa_margin;
+extern පූර්ණ_සංඛ්‍යා g_ggml_sycl_enable_sparse_fa;
+extern පූර්ණ_සංඛ්‍යා g_ggml_sycl_debug_sparse_fa;
+extern පූර්ණ_සංඛ්‍යා g_ggml_sycl_sparse_fa_margin;
 
-static int sparse_fa_enabled(void) {
-    return g_ggml_sycl_enable_sparse_fa;
+static පූර්ණ_සංඛ්‍යා sparse_fa_enabled(void) {
+    ආපසු g_ggml_sycl_enable_sparse_fa;
 }
 
-static int sparse_fa_debug(void) {
-    return g_ggml_sycl_debug_sparse_fa;
+static පූර්ණ_සංඛ්‍යා sparse_fa_debug(void) {
+    ආපසු g_ggml_sycl_debug_sparse_fa;
 }
 
 // slack above n_kv_max; callers may exceed the hint by a few always-attended positions
-static int sparse_fa_margin(void) {
-    return g_ggml_sycl_sparse_fa_margin;
+static පූර්ණ_සංඛ්‍යා sparse_fa_margin(void) {
+    ආපසු g_ggml_sycl_sparse_fa_margin;
 }
 
 // Unordered output is fine: softmax over the selected set is permutation invariant.
@@ -39,8 +39,8 @@ static void sparse_fa_compact_mask(sycl::queue * stream,
         sycl::nd_range<1>(sycl::range<1>(global), sycl::range<1>(WG)),
         [=](sycl::nd_item<1> item) {
             const int64_t i = (int64_t) item.get_global_id(0);
-            if (i >= n_kv || !sycl::isfinite((float) mask[i])) {
-                return;
+            නම් (i >= n_kv || !sycl::isfinite((float) mask[i])) {
+                ආපසු;
             }
 
             sycl::atomic_ref<int32_t,
@@ -49,7 +49,7 @@ static void sparse_fa_compact_mask(sycl::queue * stream,
                              sycl::access::address_space::global_space> ctr(*count);
 
             const int32_t pos = ctr.fetch_add(1);
-            if (pos < (int32_t) n_kv_g) {
+            නම් (pos < (int32_t) n_kv_g) {
                 indices[pos] = (int32_t) i;
             }
         });
@@ -67,8 +67,8 @@ static void sparse_fa_gather_rows(sycl::queue * stream,
                                   const size_t src_nb2,
                                   const int64_t n_kv_g,
                                   const int64_t n_head) {
-    GGML_ASSERT(row_size % sizeof(uint32_t) == 0);
-    const size_t words = row_size / sizeof(uint32_t);
+    GGML_ASSERT(row_size % parimaa_na(uint32_t) == 0);
+    const size_t words = row_size / parimaa_na(uint32_t);
 
     stream->parallel_for(
         sycl::range<3>((size_t) n_head, (size_t) n_kv_g, words),
@@ -80,9 +80,9 @@ static void sparse_fa_gather_rows(sycl::queue * stream,
             uint32_t * dst_row =
                 (uint32_t *) (dst + ((size_t) (h * n_kv_g + slot)) * row_size);
 
-            if (slot >= (int64_t) *count) {
+            නම් (slot >= (int64_t) *count) {
                 dst_row[w] = 0;
-                return;
+                ආපසු;
             }
 
             const uint32_t * src_row =
@@ -107,7 +107,7 @@ static void sparse_fa_gather_mask(sycl::queue * stream,
             const int64_t slot = (int64_t) id[1];
 
             sycl::half v = sycl::half(-INFINITY);
-            if (slot < (int64_t) *count) {
+            නම් (slot < (int64_t) *count) {
                 v = mask[(size_t) r * mask_s1 + (size_t) indices[slot]];
             }
             mask_g[(size_t) r * n_kv_g + slot] = v;
@@ -120,61 +120,61 @@ static bool sparse_fa_applicable(const ggml_tensor * dst, int64_t & n_kv_g_out) 
     const ggml_tensor * V    = dst->src[2];
     const ggml_tensor * mask = dst->src[3];
 
-    if (!Q || !K || !V || !mask) {
-        return false;
+    නම් (!Q || !K || !V || !mask) {
+        ආපසු false;
     }
 
     const int32_t n_kv_max = ggml_get_op_params_i32(dst, 4);
-    if (n_kv_max <= 0) {
-        return false;
+    නම් (n_kv_max <= 0) {
+        ආපසු false;
     }
 
     float max_bias      = 0.0f;
     float logit_softcap = 0.0f;
-    memcpy(&max_bias,      (const float *) dst->op_params + 1, sizeof(float));
-    memcpy(&logit_softcap, (const float *) dst->op_params + 2, sizeof(float));
-    if (max_bias != 0.0f || logit_softcap != 0.0f) {
-        return false;
+    memcpy(&max_bias,      (const float *) dst->op_params + 1, parimaa_na(float));
+    memcpy(&logit_softcap, (const float *) dst->op_params + 2, parimaa_na(float));
+    නම් (max_bias != 0.0f || logit_softcap != 0.0f) {
+        ආපසු false;
     }
 
     // single-token decode only; prefill amortises the scan already
-    if (Q->ne[1] != 1) {
-        return false;
+    නම් (Q->ne[1] != 1) {
+        ආපසු false;
     }
-    if (K->ne[3] != 1 || V->ne[3] != 1 || mask->ne[2] != 1 || mask->ne[3] != 1) {
-        return false;
+    නම් (K->ne[3] != 1 || V->ne[3] != 1 || mask->ne[2] != 1 || mask->ne[3] != 1) {
+        ආපසු false;
     }
-    if (mask->type != GGML_TYPE_F16 || mask->ne[0] < K->ne[1]) {
-        return false;
+    නම් (mask->type != GGML_TYPE_F16 || mask->ne[0] < K->ne[1]) {
+        ආපසු false;
     }
-    if (K->ne[2] != V->ne[2]) {
-        return false;
+    නම් (K->ne[2] != V->ne[2]) {
+        ආපසු false;
     }
 
     // nb[1] may stride over heads (interleaved cache); only ne[0] must be contiguous
-    if (K->nb[0] != ggml_type_size(K->type) || V->nb[0] != ggml_type_size(V->type)) {
-        return false;
+    නම් (K->nb[0] != ggml_type_size(K->type) || V->nb[0] != ggml_type_size(V->type)) {
+        ආපසු false;
     }
 
     const size_t k_row = ggml_row_size(K->type, K->ne[0]);
     const size_t v_row = ggml_row_size(V->type, V->ne[0]);
-    if (k_row % sizeof(uint32_t) || v_row % sizeof(uint32_t)) {
-        return false;
+    නම් (k_row % parimaa_na(uint32_t) || v_row % parimaa_na(uint32_t)) {
+        ආපසු false;
     }
 
     const int64_t n_kv_g = GGML_PAD((int64_t) n_kv_max + sparse_fa_margin(), SPARSE_FA_PAD);
-    if (n_kv_g * SPARSE_FA_MIN_RATIO > K->ne[1]) {
-        return false;
+    නම් (n_kv_g * SPARSE_FA_MIN_RATIO > K->ne[1]) {
+        ආපසු false;
     }
 
     n_kv_g_out = n_kv_g;
-    return true;
+    ආපසු true;
 }
 
 bool ggml_sycl_flash_attn_ext_sparse(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     int64_t n_kv_g = 0;
-    if (!sparse_fa_enabled() || !sparse_fa_applicable(dst, n_kv_g)) {
-        return false;
+    නම් (!sparse_fa_enabled() || !sparse_fa_applicable(dst, n_kv_g)) {
+        ආපසු false;
     }
 
     ggml_tensor * K    = dst->src[1];
@@ -216,15 +216,15 @@ bool ggml_sycl_flash_attn_ext_sparse(ggml_backend_sycl_context & ctx, ggml_tenso
 
     sparse_fa_gather_mask(stream, (const sycl::half *) mask->data, d_mask,
                           d_idx, d_cnt, n_kv_g, n_rows_m,
-                          mask->nb[1] / sizeof(sycl::half));
+                          mask->nb[1] / parimaa_na(sycl::half));
 
-    if (sparse_fa_debug()) {
+    නම් (sparse_fa_debug()) {
         int32_t h_cnt = 0;
-        SYCL_CHECK(CHECK_TRY_ERROR(stream->memcpy(&h_cnt, d_cnt, sizeof(int32_t))));
+        SYCL_CHECK(CHECK_TRY_ERROR(stream->memcpy(&h_cnt, d_cnt, parimaa_na(int32_t))));
         SYCL_CHECK(CHECK_TRY_ERROR(stream->wait()));
         fprintf(stderr, "[FA-SPARSE] n_kv=%lld n_kv_max=%d n_kv_g=%lld finite=%d%s\n",
                 (long long) n_kv, ggml_get_op_params_i32(dst, 4),
-                (long long) n_kv_g, (int) h_cnt,
+                (long long) n_kv_g, (පූර්ණ_සංඛ්‍යා) h_cnt,
                 h_cnt > (int32_t) n_kv_g ? "  OVERFLOW" : "");
     }
 
@@ -250,7 +250,7 @@ bool ggml_sycl_flash_attn_ext_sparse(ggml_backend_sycl_context & ctx, ggml_tenso
     ggml_tensor M_g = *mask;
     M_g.data      = d_mask;
     M_g.ne[0]     = n_kv_g;
-    M_g.nb[1]     = (size_t) n_kv_g * sizeof(sycl::half);
+    M_g.nb[1]     = (size_t) n_kv_g * parimaa_na(sycl::half);
     M_g.nb[2]     = M_g.nb[1] * mask->ne[1];
     M_g.nb[3]     = M_g.nb[2];
     M_g.view_src  = nullptr;
@@ -264,5 +264,5 @@ bool ggml_sycl_flash_attn_ext_sparse(ggml_backend_sycl_context & ctx, ggml_tenso
 
     ggml_sycl_flash_attn_ext(ctx, &dst_g);
 
-    return true;
+    ආපසු true;
 }

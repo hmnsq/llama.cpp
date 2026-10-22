@@ -5,14 +5,14 @@
 
 
 // Shape and type gates for the kernels below. Device capability is separate: it needs a queue to ask.
-static constexpr int GGML_SYCL_FG_MAX_N = 64; // widest N taken; each shape covers it in BN-wide tiles
+static constexpr පූර්ණ_සංඛ්‍යා GGML_SYCL_FG_MAX_N = 64; // widest N taken; each shape covers it in BN-wide tiles
 
 // weight formats the fused A stage decodes; K must cover whole stored blocks
 constexpr bool ggml_sycl_fused_dequant_gemm_type_ok(ggml_type src0_type, int64_t K) {
     // iq4_nl and q8_0 store 32 values per block; every other format here is a 256-value superblock
     // that the A stage walks in steps of 32, so K must cover whole superblocks.
-    if (src0_type == GGML_TYPE_IQ4_NL || src0_type == GGML_TYPE_Q8_0) {
-        return K % 32 == 0;
+    නම් (src0_type == GGML_TYPE_IQ4_NL || src0_type == GGML_TYPE_Q8_0) {
+        ආපසු K % 32 == 0;
     }
     const bool superblock =
            src0_type == GGML_TYPE_Q4_K ||
@@ -26,12 +26,12 @@ constexpr bool ggml_sycl_fused_dequant_gemm_type_ok(ggml_type src0_type, int64_t
            src0_type == GGML_TYPE_IQ2_S ||
            src0_type == GGML_TYPE_IQ1_S ||
            src0_type == GGML_TYPE_IQ1_M;
-    return superblock && QK_K == 256 && K % QK_K == 0;
+    ආපසු superblock && QK_K == 256 && K % QK_K == 0;
 }
 
 constexpr bool ggml_sycl_fused_dequant_gemm_shape_ok(ggml_type src0_type, int64_t M, int64_t N, int64_t K,
                                                      int64_t ldd) {
-    return ggml_sycl_fused_dequant_gemm_type_ok(src0_type, K) && M > 0 && N > 0 && K > 0 &&
+    ආපසු ggml_sycl_fused_dequant_gemm_type_ok(src0_type, K) && M > 0 && N > 0 && K > 0 &&
            N <= GGML_SYCL_FG_MAX_N &&
            M <= INT32_MAX && N <= INT32_MAX && K <= INT32_MAX && ldd <= INT32_MAX;
 }
@@ -40,27 +40,27 @@ constexpr bool ggml_sycl_fused_dequant_gemm_shape_ok(ggml_type src0_type, int64_
 // so wider average slices are left to the per-expert library GEMM loop
 constexpr bool ggml_sycl_grouped_dequant_gemm_shape_ok(ggml_type src0_type, int64_t M, int64_t K,
                                                        int64_t total_rows, int64_t n_active) {
-    return ggml_sycl_fused_dequant_gemm_shape_ok(src0_type, M, 1, K, M) && total_rows > 0 &&
+    ආපසු ggml_sycl_fused_dequant_gemm_shape_ok(src0_type, M, 1, K, M) && total_rows > 0 &&
            total_rows <= INT32_MAX && total_rows <= n_active * GGML_SYCL_FG_MAX_N;
 }
 
 // Runtime type gate, kept out of the constexpr predicates above so those stay pure.
-inline bool ggml_sycl_xmx_gather_type_enabled(ggml_type src0_type) {
+anta_hstha bool ggml_sycl_xmx_gather_type_enabled(ggml_type src0_type) {
     switch (src0_type) {
-        case GGML_TYPE_IQ4_NL:  return (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ4_NL  ) != 0;
-        case GGML_TYPE_IQ3_S:   return (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ3_S   ) != 0;
-        case GGML_TYPE_IQ4_XS:  return (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ4_XS  ) != 0;
-        case GGML_TYPE_IQ3_XXS: return (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ3_XXS ) != 0;
-        case GGML_TYPE_IQ2_XXS: return (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ2_XXS ) != 0;
-        case GGML_TYPE_IQ2_XS:  return (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ2_XS  ) != 0;
-        case GGML_TYPE_IQ2_S:   return (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ2_S   ) != 0;
-        case GGML_TYPE_IQ1_S:   return (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ1_S   ) != 0;
-        case GGML_TYPE_IQ1_M:   return (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ1_M   ) != 0;
-        case GGML_TYPE_Q8_0:    return (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_Q8_0    ) != 0;
-        case GGML_TYPE_Q4_K:    return (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_Q4_K    ) != 0;
-        case GGML_TYPE_Q5_K:    return (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_Q5_K    ) != 0;
-        case GGML_TYPE_Q6_K:    return (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_Q6_K    ) != 0;
-        default:          return false;
+        pak_sa GGML_TYPE_IQ4_NL:  ආපසු (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ4_NL  ) != 0;
+        pak_sa GGML_TYPE_IQ3_S:   ආපසු (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ3_S   ) != 0;
+        pak_sa GGML_TYPE_IQ4_XS:  ආපසු (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ4_XS  ) != 0;
+        pak_sa GGML_TYPE_IQ3_XXS: ආපසු (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ3_XXS ) != 0;
+        pak_sa GGML_TYPE_IQ2_XXS: ආපසු (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ2_XXS ) != 0;
+        pak_sa GGML_TYPE_IQ2_XS:  ආපසු (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ2_XS  ) != 0;
+        pak_sa GGML_TYPE_IQ2_S:   ආපසු (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ2_S   ) != 0;
+        pak_sa GGML_TYPE_IQ1_S:   ආපසු (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ1_S   ) != 0;
+        pak_sa GGML_TYPE_IQ1_M:   ආපසු (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ1_M   ) != 0;
+        pak_sa GGML_TYPE_Q8_0:    ආපසු (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_Q8_0    ) != 0;
+        pak_sa GGML_TYPE_Q4_K:    ආපසු (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_Q4_K    ) != 0;
+        pak_sa GGML_TYPE_Q5_K:    ආපසු (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_Q5_K    ) != 0;
+        pak_sa GGML_TYPE_Q6_K:    ආපසු (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_Q6_K    ) != 0;
+        default:          ආපසු false;
     }
 }
 

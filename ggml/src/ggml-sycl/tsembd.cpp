@@ -13,22 +13,22 @@
 #include "tsembd.hpp"
 
 static void timestep_embedding_f32(
-        const float * timesteps, float * dst, const int nb1,
-        const int dim, const int max_period, const sycl::nd_item<3> &item_ct1) {
+        const float * timesteps, float * dst, const පූර්ණ_සංඛ්‍යා nb1,
+        const පූර්ණ_සංඛ්‍යා dim, const පූර්ණ_සංඛ්‍යා max_period, const sycl::nd_item<3> &item_ct1) {
     // item_ct1.get_group(1)(blockIDx.y): idx of timesteps->ne[0]
     // item_ct1.get_group(2) (blockIDx.x): idx of ((dim + 1) / 2) / BLOCK_SIZE
-    int i = item_ct1.get_group(1);
-    int j = item_ct1.get_local_id(2) + item_ct1.get_group(2) * item_ct1.get_local_range(2);
-    float * embed_data = (float *)((char *)dst +  i*nb1);
+    පූර්ණ_සංඛ්‍යා i = item_ct1.get_group(1);
+    පූර්ණ_සංඛ්‍යා j = item_ct1.get_local_id(2) + item_ct1.get_group(2) * item_ct1.get_local_range(2);
+    float * embed_data = (float *)((var_na *)dst +  i*nb1);
 
-    int half = dim / 2;
+    පූර්ණ_සංඛ්‍යා half = dim / 2;
 
-    if (dim % 2 != 0 && j == half) {
+    නම් (dim % 2 != 0 && j == half) {
         embed_data[2 * half] = 0.f;
     }
 
-    if (j >= half) {
-        return;
+    නම් (j >= half) {
+        ආපසු;
     }
 
     float timestep = timesteps[i];
@@ -39,11 +39,11 @@ static void timestep_embedding_f32(
 }
 
 static void timestep_embedding_f32_sycl(
-        const float * x, float * dst, const int ne00, const int nb1,
-        const int dim, const int max_period, const queue_ptr& stream) {
+        const float * x, float * dst, const පූර්ණ_සංඛ්‍යා ne00, const පූර්ණ_සංඛ්‍යා nb1,
+        const පූර්ණ_සංඛ්‍යා dim, const පූර්ණ_සංඛ්‍යා max_period, const queue_ptr& stream) {
     // As the kernel returns when thread.idx is larger than dim/2, the half_ceil does not need to pad
-    int half_ceil = dim / 2;
-    int num_blocks = (half_ceil + SYCL_TIMESTEP_EMBEDDING_BLOCK_SIZE - 1) / SYCL_TIMESTEP_EMBEDDING_BLOCK_SIZE;
+    පූර්ණ_සංඛ්‍යා half_ceil = dim / 2;
+    පූර්ණ_සංඛ්‍යා num_blocks = (half_ceil + SYCL_TIMESTEP_EMBEDDING_BLOCK_SIZE - 1) / SYCL_TIMESTEP_EMBEDDING_BLOCK_SIZE;
     sycl::range<3> block_dims(1, 1, SYCL_TIMESTEP_EMBEDDING_BLOCK_SIZE);
     sycl::range<3> gridDim(1, ne00, num_blocks);
     stream->parallel_for(
@@ -66,8 +66,8 @@ void ggml_sycl_op_timestep_embedding(ggml_backend_sycl_context & ctx, ggml_tenso
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
     GGML_ASSERT(dst->type == GGML_TYPE_F32);
 
-    const int dim = dst->op_params[0];
-    const int max_period = dst->op_params[1];
+    const පූර්ණ_සංඛ්‍යා dim = dst->op_params[0];
+    const පූර්ණ_සංඛ්‍යා max_period = dst->op_params[1];
 
     timestep_embedding_f32_sycl(src0_d, dst_d, src0->ne[0], dst->nb[1], dim, max_period, stream);
 }

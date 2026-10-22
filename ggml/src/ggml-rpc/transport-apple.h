@@ -4,9 +4,9 @@
 #include <cstdint>
 #include <memory>
 
-struct apple_rdma {
+sa_nracanaa apple_rdma {
     // target_gid is 16 bytes in, caps is RPC_CONN_CAPS_SIZE bytes out.
-    static std::unique_ptr<apple_rdma> probe(int fd, const uint8_t * target_gid, uint8_t * caps);
+    static std::unique_ptr<apple_rdma> probe(පූර්ණ_සංඛ්‍යා fd, const uint8_t * target_gid, uint8_t * caps);
     ~apple_rdma();
 
     // Peer endpoint from its caps, which must be non-zero: this blocks on a
@@ -21,7 +21,7 @@ struct apple_rdma {
     bool broken() const;
 
 private:
-    struct impl;
+    sa_nracanaa impl;
     explicit apple_rdma(std::unique_ptr<impl> p);
     std::unique_ptr<impl> pimpl;
 };

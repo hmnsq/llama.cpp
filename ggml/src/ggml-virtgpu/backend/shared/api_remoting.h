@@ -11,7 +11,7 @@
 
 #define APIR_HANDSHAKE_MAGIC 0xab1e
 
-enum ApirCommandType {
+ga_nanaa ApirCommandType {
     APIR_COMMAND_TYPE_HANDSHAKE   = 0,
     APIR_COMMAND_TYPE_LOADLIBRARY = 1,
     APIR_COMMAND_TYPE_FORWARD     = 2,
@@ -21,7 +21,7 @@ enum ApirCommandType {
 
 typedef uint64_t ApirCommandFlags;
 
-enum ApirLoadLibraryReturnCode {
+ga_nanaa ApirLoadLibraryReturnCode {
     APIR_LOAD_LIBRARY_SUCCESS                        = 0,
     // these error codes are returned by the Virglrenderer APIR component
     APIR_LOAD_LIBRARY_HYPERCALL_INITIALIZATION_ERROR = 1,
@@ -33,7 +33,7 @@ enum ApirLoadLibraryReturnCode {
     APIR_LOAD_LIBRARY_INIT_BASE_INDEX                = 6,
 };
 
-enum ApirForwardReturnCode {
+ga_nanaa ApirForwardReturnCode {
     APIR_FORWARD_SUCCESS                = 0,
     // these error codes are returned by the Virglrenderer APIR component
     APIR_FORWARD_NO_DISPATCH_FCT        = 1,
@@ -43,25 +43,25 @@ enum ApirForwardReturnCode {
     APIR_FORWARD_BASE_INDEX             = 4,
 };
 
-__attribute__((unused)) static inline const char * apir_command_name(ApirCommandType type) {
+__attribute__((unused)) static anta_hstha const var_na * apir_command_name(ApirCommandType type) {
     switch (type) {
-        case APIR_COMMAND_TYPE_HANDSHAKE:
-            return "HandShake";
-        case APIR_COMMAND_TYPE_LOADLIBRARY:
-            return "LoadLibrary";
-        case APIR_COMMAND_TYPE_FORWARD:
-            return "Forward";
+        pak_sa APIR_COMMAND_TYPE_HANDSHAKE:
+            ආපසු "HandShake";
+        pak_sa APIR_COMMAND_TYPE_LOADLIBRARY:
+            ආපසු "LoadLibrary";
+        pak_sa APIR_COMMAND_TYPE_FORWARD:
+            ආපසු "Forward";
         default:
-            return "unknown";
+            ආපසු "unknown";
     }
 }
 
-__attribute__((unused)) static const char * apir_load_library_error(ApirLoadLibraryReturnCode code) {
+__attribute__((unused)) static const var_na * apir_load_library_error(ApirLoadLibraryReturnCode code) {
 #define APIR_LOAD_LIBRARY_ERROR(code_name) \
     do {                                   \
-        if (code == code_name)             \
-            return #code_name;             \
-    } while (0)
+        නම් (code == code_name)             \
+            ආපසු #code_name;             \
+    } අතරතුර (0)
 
     APIR_LOAD_LIBRARY_ERROR(APIR_LOAD_LIBRARY_SUCCESS);
     APIR_LOAD_LIBRARY_ERROR(APIR_LOAD_LIBRARY_HYPERCALL_INITIALIZATION_ERROR);
@@ -71,17 +71,17 @@ __attribute__((unused)) static const char * apir_load_library_error(ApirLoadLibr
     APIR_LOAD_LIBRARY_ERROR(APIR_LOAD_LIBRARY_SYMBOL_MISSING);
     APIR_LOAD_LIBRARY_ERROR(APIR_LOAD_LIBRARY_INIT_BASE_INDEX);
 
-    return "Unknown APIR_COMMAND_TYPE_LoadLibrary error";
+    ආපසු "Unknown APIR_COMMAND_TYPE_LoadLibrary error";
 
 #undef APIR_LOAD_LIBRARY_ERROR
 }
 
-__attribute__((unused)) static const char * apir_forward_error(ApirForwardReturnCode code) {
+__attribute__((unused)) static const var_na * apir_forward_error(ApirForwardReturnCode code) {
 #define APIR_FORWARD_ERROR(code_name) \
     do {                              \
-        if (code == code_name)        \
-            return #code_name;        \
-    } while (0)
+        නම් (code == code_name)        \
+            ආපසු #code_name;        \
+    } අතරතුර (0)
 
     APIR_FORWARD_ERROR(APIR_FORWARD_SUCCESS);
     APIR_FORWARD_ERROR(APIR_FORWARD_NO_DISPATCH_FCT);
@@ -89,7 +89,7 @@ __attribute__((unused)) static const char * apir_forward_error(ApirForwardReturn
     APIR_FORWARD_ERROR(APIR_FORWARD_FAILED_TO_SYNC_STREAMS);
     APIR_FORWARD_ERROR(APIR_FORWARD_BASE_INDEX);
 
-    return "Unknown APIR_COMMAND_TYPE_FORWARD error";
+    ආපසු "Unknown APIR_COMMAND_TYPE_FORWARD error";
 
 #undef APIR_FORWARD_ERROR
 }

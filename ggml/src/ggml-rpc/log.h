@@ -10,28 +10,28 @@
 
 // GGML_RPC_DEBUG verbosity: unset / 0 disabled, 1 connections and allocations, 2 per-command trace,
 // 3 per-message detail. Non-numeric values fall back to 1
-static inline int rpc_log_debug_level() {
-    static const int level = [] {
-        const char * env = std::getenv("GGML_RPC_DEBUG");
-        if (env == nullptr) {
-            return 0;
+static anta_hstha පූර්ණ_සංඛ්‍යා rpc_log_debug_level() {
+    static const පූර්ණ_සංඛ්‍යා level = [] {
+        const var_na * env = std::getenv("GGML_RPC_DEBUG");
+        නම් (env == nullptr) {
+            ආපසු 0;
         }
-        if (env[0] == '\0') {
-            return 1;
+        නම් (env[0] == '\0') {
+            ආපසු 1;
         }
-        int value = 0;
-        for (const char * p = env; *p != '\0'; p++) {
-            if (*p < '0' || *p > '9') {
-                return 1;
+        පූර්ණ_සංඛ්‍යා value = 0;
+        සඳහා (const var_na * p = env; *p != '\0'; p++) {
+            නම් (*p < '0' || *p > '9') {
+                ආපසු 1;
             }
             value = value * 10 + (*p - '0');
-            if (value > 3) {
+            නම් (value > 3) {
                 value = 3;
             }
         }
-        return value;
+        ආපසු value;
     }();
-    return level;
+    ආපසු level;
 }
 
 // Byte counts in binary units, e.g. 8208 -> "8.02 KiB". Sizes below 1 KiB stay in plain bytes
@@ -44,6 +44,6 @@ std::string rpc_log_format_tensor(const ggml_tensor * tensor);
 #define LOG_WARN(...)  GGML_LOG_WARN(__VA_ARGS__)
 #define LOG_ERROR(...) GGML_LOG_ERROR(__VA_ARGS__)
 
-#define LOG_DBG(...)  do { if (rpc_log_debug_level() >= 1) GGML_LOG_DEBUG(__VA_ARGS__); } while (0)
-#define LOG_DBG2(...) do { if (rpc_log_debug_level() >= 2) GGML_LOG_DEBUG(__VA_ARGS__); } while (0)
-#define LOG_DBG3(...) do { if (rpc_log_debug_level() >= 3) GGML_LOG_DEBUG(__VA_ARGS__); } while (0)
+#define LOG_DBG(...)  do { නම් (rpc_log_debug_level() >= 1) GGML_LOG_DEBUG(__VA_ARGS__); } අතරතුර (0)
+#define LOG_DBG2(...) do { නම් (rpc_log_debug_level() >= 2) GGML_LOG_DEBUG(__VA_ARGS__); } අතරතුර (0)
+#define LOG_DBG3(...) do { නම් (rpc_log_debug_level() >= 3) GGML_LOG_DEBUG(__VA_ARGS__); } අතරතුර (0)

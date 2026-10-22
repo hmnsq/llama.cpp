@@ -7,20 +7,20 @@
 
 zdnn_data_types ggml_zdnn_type_mapping(ggml_type type) {
     switch (type) {
-        case GGML_TYPE_F32:
-            return FP32;
-        case GGML_TYPE_F16:
-            return FP16;
-        case GGML_TYPE_BF16:
-            return BFLOAT;
-        case GGML_TYPE_I8:
-            return INT8;
-        case GGML_TYPE_I32:
-            return INT32;
+        pak_sa GGML_TYPE_F32:
+            ආපසු FP32;
+        pak_sa GGML_TYPE_F16:
+            ආපසු FP16;
+        pak_sa GGML_TYPE_BF16:
+            ආපසු BFLOAT;
+        pak_sa GGML_TYPE_I8:
+            ආපසු INT8;
+        pak_sa GGML_TYPE_I32:
+            ආපසු INT32;
         default:
             GGML_ABORT("%s: fatal: unable to determine zTensor data type",
                        __func__);
-            break;
+            bha_nga;
     }
 }
 
@@ -57,12 +57,12 @@ int64_t ggml_zdnn_q_group_size(const ggml_tensor * tensor) {
     const int64_t group_size_max = high_prec ? 1024 : 2048;
 
     const int64_t ne0 = tensor->ne[0];
-    if (ne0 <= group_size_max) {
-        return 0;
+    නම් (ne0 <= group_size_max) {
+        ආපසු 0;
     }
 
     const int64_t n_groups = (ne0 + group_size_max - 1) / group_size_max;
-    return GGML_PAD((ne0 + n_groups - 1) / n_groups, 128);
+    ආපසු GGML_PAD((ne0 + n_groups - 1) / n_groups, 128);
 }
 
 void ggml_zdnn_load_tensor_q(ggml_backend_zdnn_buffer * buffer, const ggml_tensor * tensor) {
@@ -91,35 +91,35 @@ void ggml_zdnn_load_tensor_q(ggml_backend_zdnn_buffer * buffer, const ggml_tenso
     // a few input channels with larger weights than the rest would set the scale of every group,
     // so divide each input channel by its RMS over the rows and multiply the inputs by it instead
     // with groups of 1024, this lowered the KL divergence to the CPU by 10-18% on Llama-3.2-1B and Qwen2.5-1.5B Q8_0 at the same speed
-    std::vector<double> sum_sq(ne0, 0.0);
-    for (int64_t i1 = 0; i1 < ne1; i1++) {
-        to_float((const char *)tensor->data + i1*tensor->nb[1], x.data(), ne0);
-        for (int64_t i0 = 0; i0 < ne0; i0++) {
-            sum_sq[i0] += (double)x[i0] * x[i0];
+    std::vector<dviguu_na> sum_sq(ne0, 0.0);
+    සඳහා (int64_t i1 = 0; i1 < ne1; i1++) {
+        to_float((const var_na *)tensor->data + i1*tensor->nb[1], x.data(), ne0);
+        සඳහා (int64_t i0 = 0; i0 < ne0; i0++) {
+            sum_sq[i0] += (dviguu_na)x[i0] * x[i0];
         }
     }
 
     std::vector<float> channel_id(ne0);
-    for (int64_t i0 = 0; i0 < ne0; i0++) {
+    සඳහා (int64_t i0 = 0; i0 < ne0; i0++) {
         const float c = (float)std::sqrt(sum_sq[i0] / ne1);
         buffer->channel_scales[i0] = c ? c : 1.0f;
         channel_id[i0] = 1.0f / buffer->channel_scales[i0];
     }
 
-    for (int64_t i1 = 0; i1 < ne1; i1 += n_tile) {
+    සඳහා (int64_t i1 = 0; i1 < ne1; i1 += n_tile) {
         const int64_t nt = std::min(n_tile, ne1 - i1);
 
-        for (int64_t t = 0; t < nt; t++) {
+        සඳහා (int64_t t = 0; t < nt; t++) {
             float * xt = x.data() + t*x_stride;
-            to_float((const char *)tensor->data + (i1 + t)*tensor->nb[1], xt, ne0);
+            to_float((const var_na *)tensor->data + (i1 + t)*tensor->nb[1], xt, ne0);
 
-            for (int64_t i0 = 0; i0 < ne0; i0++) {
+            සඳහා (int64_t i0 = 0; i0 < ne0; i0++) {
                 xt[i0] *= channel_id[i0];
             }
 
-            for (int64_t g = 0; g < n_groups; g++) {
+            සඳහා (int64_t g = 0; g < n_groups; g++) {
                 float amax = 0.0f;
-                for (int64_t i0 = g*gs; i0 < std::min((g + 1)*gs, ne0); i0++) {
+                සඳහා (int64_t i0 = g*gs; i0 < std::min((g + 1)*gs, ne0); i0++) {
                     amax = std::max(amax, fabsf(xt[i0]));
                 }
 
@@ -129,28 +129,28 @@ void ggml_zdnn_load_tensor_q(ggml_backend_zdnn_buffer * buffer, const ggml_tenso
             }
         }
 
-        for (int64_t i0 = 0; i0 < ne0; i0++) {
+        සඳහා (int64_t i0 = 0; i0 < ne0; i0++) {
             const int64_t g = i0 / gs;
             int8_t * qi = q.data() + i0*ne1 + i1;
-            for (int64_t t = 0; t < nt; t++) {
+            සඳහා (int64_t t = 0; t < nt; t++) {
                 qi[t] = (int8_t)roundf(x[t*x_stride + i0] * id[t*n_groups + g]);
             }
         }
     }
 
-    if (buffer->ztensor.is_transformed) {
+    නම් (buffer->ztensor.is_transformed) {
         zdnn_reset_ztensor(&buffer->ztensor);
     }
     ZDNN_CHECK(zdnn_transform_quantized_ztensor(&buffer->ztensor, false, -127, 127, q.data()));
 }
 
 void ggml_zdnn_init_tensor(ggml_backend_zdnn_buffer * buffer, const ggml_tensor * tensor) {
-    if (ggml_is_quantized(tensor->type)) {
+    නම් (ggml_is_quantized(tensor->type)) {
         GGML_ASSERT(ggml_is_matrix(tensor));
 
         const int64_t gs = ggml_zdnn_q_group_size(tensor);
 
-        if (gs > 0) {
+        නම් (gs > 0) {
             // stack the weights into groups along ne0, each group of each row gets its own scale
             const int64_t n_groups = (tensor->ne[0] + gs - 1) / gs;
 
@@ -162,7 +162,7 @@ void ggml_zdnn_init_tensor(ggml_backend_zdnn_buffer * buffer, const ggml_tensor 
             );
 
             buffer->scales.resize(n_groups * tensor->ne[1]);
-        } else {
+        } නැතහොත් {
             zdnn_init_pre_transformed_desc(
                 ZDNN_2D,
                 INT8,
@@ -177,11 +177,11 @@ void ggml_zdnn_init_tensor(ggml_backend_zdnn_buffer * buffer, const ggml_tensor 
 
         ZDNN_CHECK(zdnn_generate_quantized_transformed_desc(&buffer->pre_tfm_desc, QUANTIZED_WEIGHTS_INT8, &buffer->tfm_desc));
         ZDNN_CHECK(zdnn_init_quantized_ztensor_with_malloc(&buffer->pre_tfm_desc, &buffer->tfm_desc, 1.0f, 0.0f, &buffer->ztensor));
-        return;
+        ආපසු;
     }
 
     switch (tensor->op) {
-        case GGML_OP_MUL_MAT:
+        pak_sa GGML_OP_MUL_MAT:
             {
                 zdnn_init_pre_transformed_desc(
                     ZDNN_2D,
@@ -189,7 +189,7 @@ void ggml_zdnn_init_tensor(ggml_backend_zdnn_buffer * buffer, const ggml_tensor 
                     &buffer->pre_tfm_desc,
                     tensor->ne[1], tensor->ne[0]
                 );
-            } break;
+            } bha_nga;
 
         default:
             {
@@ -207,7 +207,7 @@ void ggml_zdnn_init_tensor(ggml_backend_zdnn_buffer * buffer, const ggml_tensor 
                 // TODO: Consider adding a ggml check.
                 // TODO: If tensor = 4D, use ZDNN_NCHW by default.
                 // TODO: If tensor = 2D, use ZDNN_NHWC by default.
-            } break;
+            } bha_nga;
     }
 
     ZDNN_CHECK(zdnn_generate_transformed_desc(&buffer->pre_tfm_desc, &buffer->tfm_desc));

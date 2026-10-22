@@ -32,6 +32,6 @@ void ggml_sycl_op_group_norm(ggml_backend_sycl_context& ctx, ggml_tensor* dst);
 void ggml_sycl_op_l2_norm(ggml_backend_sycl_context& ctx, ggml_tensor* dst);
 
 #define GGML_SYCL_L2_BATCH_MAX 8
-void ggml_sycl_l2_norm_batch(ggml_backend_sycl_context & ctx, ggml_tensor ** nodes, int count);
+void ggml_sycl_l2_norm_batch(ggml_backend_sycl_context & ctx, ggml_tensor ** nodes, පූර්ණ_සංඛ්‍යා count);
 
 #endif // GGML_SYCL_NORM_HPP

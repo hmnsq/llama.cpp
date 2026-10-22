@@ -1,51 +1,51 @@
 #include "ssm_scan.hpp"
 #include "common.hpp"
 
-template <int c_factor, int d_state>
+template <පූර්ණ_සංඛ්‍යා c_factor, පූර්ණ_සංඛ්‍යා d_state>
 static void ssm_scan_f32_group(
         const float * __restrict__ src0, const float * __restrict__ src1, const float * __restrict__ src2,
         const float * __restrict__ src3, const float * __restrict__ src4, const float * __restrict__ src5,
         const int32_t * __restrict__ src6, float * __restrict__ dst,
-        const int src0_nb2, const int src0_nb3, const int src1_nb2, const int src1_nb3,
-        const int src2_nb1, const int src2_nb2, const int src3_nb1,
-        const int src4_nb2, const int src4_nb3, const int src5_nb2, const int src5_nb3,
+        const පූර්ණ_සංඛ්‍යා src0_nb2, const පූර්ණ_සංඛ්‍යා src0_nb3, const පූර්ණ_සංඛ්‍යා src1_nb2, const පූර්ණ_සංඛ්‍යා src1_nb3,
+        const පූර්ණ_සංඛ්‍යා src2_nb1, const පූර්ණ_සංඛ්‍යා src2_nb2, const පූර්ණ_සංඛ්‍යා src3_nb1,
+        const පූර්ණ_සංඛ්‍යා src4_nb2, const පූර්ණ_සංඛ්‍යා src4_nb3, const පූර්ණ_සංඛ්‍යා src5_nb2, const පූර්ණ_සංඛ්‍යා src5_nb3,
         const int64_t s_off, const int64_t n_head, const int64_t d_head, const int64_t n_group, const int64_t n_tok,
         const int64_t K,
         const sycl::nd_item<2> & item) {
 
-    const int lane     = item.get_local_id(1) % WARP_SIZE;
-    const int warp     = item.get_local_id(1) / WARP_SIZE;
-    const int warp_idx = item.get_group(1) * c_factor + warp;
-    const int seq_idx  = item.get_group(0);
+    const පූර්ණ_සංඛ්‍යා lane     = item.get_local_id(1) % WARP_SIZE;
+    const පූර්ණ_සංඛ්‍යා warp     = item.get_local_id(1) / WARP_SIZE;
+    const පූර්ණ_සංඛ්‍යා warp_idx = item.get_group(1) * c_factor + warp;
+    const පූර්ණ_සංඛ්‍යා seq_idx  = item.get_group(0);
 
-    const int head_idx = warp_idx / d_head;
-    const int head_off = (warp_idx % d_head) * sizeof(float);
-    const int group_off = (head_idx / (n_head / n_group)) * d_state * sizeof(float);
+    const පූර්ණ_සංඛ්‍යා head_idx = warp_idx / d_head;
+    const පූර්ණ_සංඛ්‍යා head_off = (warp_idx % d_head) * parimaa_na(float);
+    const පූර්ණ_සංඛ්‍යා group_off = (head_idx / (n_head / n_group)) * d_state * parimaa_na(float);
 
-    const float * s0_warp = (const float *) ((const char *) src0 + src6[seq_idx] * src0_nb3 + head_idx * src0_nb2 + head_off * d_state);
-    const float * x_warp  = (const float *) ((const char *) src1 + (seq_idx * src1_nb3) + (warp_idx * sizeof(float)));
-    const float * dt_warp = (const float *) ((const char *) src2 + (seq_idx * src2_nb2) + head_idx * sizeof(float));
-    const float * A_warp  = (const float *) ((const char *) src3 + head_idx * src3_nb1);
-    const float * B_warp  = (const float *) ((const char *) src4 + (seq_idx * src4_nb3) + (group_off));
-    const float * C_warp  = (const float *) ((const char *) src5 + (seq_idx * src5_nb3) + (group_off));
+    const float * s0_warp = (const float *) ((const var_na *) src0 + src6[seq_idx] * src0_nb3 + head_idx * src0_nb2 + head_off * d_state);
+    const float * x_warp  = (const float *) ((const var_na *) src1 + (seq_idx * src1_nb3) + (warp_idx * parimaa_na(float)));
+    const float * dt_warp = (const float *) ((const var_na *) src2 + (seq_idx * src2_nb2) + head_idx * parimaa_na(float));
+    const float * A_warp  = (const float *) ((const var_na *) src3 + head_idx * src3_nb1);
+    const float * B_warp  = (const float *) ((const var_na *) src4 + (seq_idx * src4_nb3) + (group_off));
+    const float * C_warp  = (const float *) ((const var_na *) src5 + (seq_idx * src5_nb3) + (group_off));
     float *       y_warp  = dst + (seq_idx * n_tok * n_head * d_head) + warp_idx;
-    float *       s_warp  = (float *) ((char *) dst + s_off + seq_idx * src0_nb3 + head_idx * src0_nb2 + head_off * d_state);
+    float *       s_warp  = (float *) ((var_na *) dst + s_off + seq_idx * src0_nb3 + head_idx * src0_nb2 + head_off * d_state);
 
-    const int stride_x  = src1_nb2 / sizeof(float);
-    const int stride_dt = src2_nb1 / sizeof(float);
-    const int stride_B  = src4_nb2 / sizeof(float);
-    const int stride_C  = src5_nb2 / sizeof(float);
-    const int stride_y  = n_head * d_head;
+    const පූර්ණ_සංඛ්‍යා stride_x  = src1_nb2 / parimaa_na(float);
+    const පූර්ණ_සංඛ්‍යා stride_dt = src2_nb1 / parimaa_na(float);
+    const පූර්ණ_සංඛ්‍යා stride_B  = src4_nb2 / parimaa_na(float);
+    const පූර්ණ_සංඛ්‍යා stride_C  = src5_nb2 / parimaa_na(float);
+    const පූර්ණ_සංඛ්‍යා stride_y  = n_head * d_head;
 
     float state[c_factor];
     float state_sum = 0.0f;
 
 #pragma unroll
-    for (int j = 0; j < c_factor; j++) {
+    සඳහා (පූර්ණ_සංඛ්‍යා j = 0; j < c_factor; j++) {
         state[j] = s0_warp[WARP_SIZE * j + lane];
     }
 
-    for (int64_t i = 0; i < n_tok; i++) {
+    සඳහා (int64_t i = 0; i < n_tok; i++) {
         const float dt_val = dt_warp[i * stride_dt];
         const float dt_soft_plus = (dt_val <= 20.0f ? sycl::log1p(sycl::exp(dt_val)) : dt_val);
 
@@ -53,7 +53,7 @@ static void ssm_scan_f32_group(
         const float dA   = sycl::exp(dt_soft_plus * A_warp[0]);
         const float x_dt = x_warp[i * stride_x] * dt_soft_plus;
 #pragma unroll
-        for (int j = 0; j < c_factor; j++) {
+        සඳහා (පූර්ණ_සංඛ්‍යා j = 0; j < c_factor; j++) {
             const float B_val = B_warp[i * stride_B + WARP_SIZE * j + lane];
             const float C_val = C_warp[i * stride_C + WARP_SIZE * j + lane];
             state[j] = (state[j] * dA) + (B_val * x_dt);
@@ -62,22 +62,22 @@ static void ssm_scan_f32_group(
 
         state_sum = warp_reduce_sum<WARP_SIZE>(state_sum);
 
-        if (lane == 0) {
+        නම් (lane == 0) {
             y_warp[i * stride_y] = state_sum;
         }
 
         const int64_t slot = n_tok - 1 - i;
-        if (K > 1 && slot > 0 && slot < K) {
-            float * s_snapshot_warp = (float *) ((char *) dst + s_off + (slot * item.get_group_range(0) + seq_idx) * src0_nb3 + head_idx * src0_nb2 + head_off * d_state);
+        නම් (K > 1 && slot > 0 && slot < K) {
+            float * s_snapshot_warp = (float *) ((var_na *) dst + s_off + (slot * item.get_group_range(0) + seq_idx) * src0_nb3 + head_idx * src0_nb2 + head_off * d_state);
 #pragma unroll
-            for (int j = 0; j < c_factor; j++) {
+            සඳහා (පූර්ණ_සංඛ්‍යා j = 0; j < c_factor; j++) {
                 s_snapshot_warp[WARP_SIZE * j + lane] = state[j];
             }
         }
     }
 
 #pragma unroll
-    for (int j = 0; j < c_factor; j++) {
+    සඳහා (පූර්ණ_සංඛ්‍යා j = 0; j < c_factor; j++) {
         s_warp[WARP_SIZE * j + lane] = state[j];
     }
 }
@@ -85,18 +85,18 @@ static void ssm_scan_f32_group(
 static void ssm_scan_f32_sycl(
         const float * src0, const float * src1, const float * src2, const float * src3,
         const float * src4, const float * src5, const int32_t * src6, float * dst,
-        const int src0_nb2, const int src0_nb3, const int src1_nb2, const int src1_nb3, const int src2_nb1,
-        const int src2_nb2, const int src3_nb1, const int src4_nb2, const int src4_nb3, const int src5_nb2,
-        const int src5_nb3, const int64_t s_off, const int64_t d_state, const int64_t head_dim,
+        const පූර්ණ_සංඛ්‍යා src0_nb2, const පූර්ණ_සංඛ්‍යා src0_nb3, const පූර්ණ_සංඛ්‍යා src1_nb2, const පූර්ණ_සංඛ්‍යා src1_nb3, const පූර්ණ_සංඛ්‍යා src2_nb1,
+        const පූර්ණ_සංඛ්‍යා src2_nb2, const පූර්ණ_සංඛ්‍යා src3_nb1, const පූර්ණ_සංඛ්‍යා src4_nb2, const පූර්ණ_සංඛ්‍යා src4_nb3, const පූර්ණ_සංඛ්‍යා src5_nb2,
+        const පූර්ණ_සංඛ්‍යා src5_nb3, const int64_t s_off, const int64_t d_state, const int64_t head_dim,
         const int64_t n_head, const int64_t n_group, const int64_t n_tok, const int64_t n_seq,
         const int64_t K,
         dpct::queue_ptr stream) {
 
     // NOTE: if you change conditions here, be sure to update the corresponding supports_op condition!
-    GGML_ASSERT(src3_nb1 == sizeof(float));
-    if (d_state == 128) {
-        constexpr int threads   = 128;
-        constexpr int num_warps = threads / WARP_SIZE;
+    GGML_ASSERT(src3_nb1 == parimaa_na(float));
+    නම් (d_state == 128) {
+        constexpr පූර්ණ_සංඛ්‍යා threads   = 128;
+        constexpr පූර්ණ_සංඛ්‍යා num_warps = threads / WARP_SIZE;
         const sycl::range<2> grid(n_seq, (n_head * head_dim + num_warps - 1) / num_warps);
         const sycl::range<2> block(1, threads);
         stream->parallel_for(
@@ -107,9 +107,9 @@ static void ssm_scan_f32_sycl(
                     src0_nb2, src0_nb3, src1_nb2, src1_nb3, src2_nb1, src2_nb2, src3_nb1,
                     src4_nb2, src4_nb3, src5_nb2, src5_nb3, s_off, n_head, head_dim, n_group, n_tok, K, item);
             });
-    } else if (d_state == 256) {
-        constexpr int threads   = 256;
-        constexpr int num_warps = threads / WARP_SIZE;
+    } නැතහොත් නම් (d_state == 256) {
+        constexpr පූර්ණ_සංඛ්‍යා threads   = 256;
+        constexpr පූර්ණ_සංඛ්‍යා num_warps = threads / WARP_SIZE;
         const sycl::range<2> grid(n_seq, (n_head * head_dim + num_warps - 1) / num_warps);
         const sycl::range<2> block(1, threads);
         stream->parallel_for(
@@ -120,12 +120,12 @@ static void ssm_scan_f32_sycl(
                     src0_nb2, src0_nb3, src1_nb2, src1_nb3, src2_nb1, src2_nb2, src3_nb1,
                     src4_nb2, src4_nb3, src5_nb2, src5_nb3, s_off, n_head, head_dim, n_group, n_tok, K, item);
             });
-    } else {
+    } නැතහොත් {
         GGML_ABORT("ssm_scan: unsupported d_state (must be 128 or 256)");
     }
 }
 
-inline void ggml_sycl_op_ssm_scan(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+anta_hstha void ggml_sycl_op_ssm_scan(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     const ggml_tensor * src0 = dst->src[0];
     const ggml_tensor * src1 = dst->src[1];
     const ggml_tensor * src2 = dst->src[2];
@@ -145,7 +145,7 @@ inline void ggml_sycl_op_ssm_scan(ggml_backend_sycl_context & ctx, ggml_tensor *
     const int64_t n_t = src1->ne[2];
     const int64_t n_s = src1->ne[3];
     const int64_t K   = ggml_get_op_params_i32(dst, 0);
-    const int64_t s_off = ggml_nelements(src1) * sizeof(float);
+    const int64_t s_off = ggml_nelements(src1) * parimaa_na(float);
 
     GGML_ASSERT(K >= 1);
     GGML_ASSERT(ggml_nelements(src1) + K * nc * nr * nh * n_s == ggml_nelements(dst));
