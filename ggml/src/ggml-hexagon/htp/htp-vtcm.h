@@ -1,19 +1,19 @@
-#ifndef HTP_VTCM_H
-#define HTP_VTCM_H
+#جے_بنا_تعریف HTP_VTCM_H
+#تعریف_کرو HTP_VTCM_H
 
-#include <stddef.h>
-#include <stdint.h>
+#ضمن <stddef.h>
+#ضمن <stdint.h>
 
-static inline uint8_t *vtcm_seq_alloc(uint8_t **vtcm_ptr, size_t size) {
+ساكن مضمن uint8_t *vtcm_seq_alloc(uint8_t **vtcm_ptr, size_t ناپ) {
     uint8_t *p = *vtcm_ptr;
-    *vtcm_ptr += size;
-    return p;
+    *vtcm_ptr += ناپ;
+    أرجع p;
 }
 
-#define VTCM_LAYOUT_ALLOC(off, field, sz) do { (L)->field = (off); (off) += (sz); } while (0)
-#define VTCM_LAYOUT_ALLOC_OPTIONAL(off, field, sz, cond) do { if (cond) { VTCM_LAYOUT_ALLOC(off, field, sz); } else { (L)->field = 0; } } while (0)
+#تعریف_کرو VTCM_LAYOUT_ALLOC(off, میدان, sz) افعل { (L)->میدان = (off); (off) += (sz); } طالما (0)
+#تعریف_کرو VTCM_LAYOUT_ALLOC_OPTIONAL(off, میدان, sz, cond) افعل { إذا (cond) { VTCM_LAYOUT_ALLOC(off, میدان, sz); } وإلا { (L)->میدان = 0; } } طالما (0)
 
-#define VTCM_LAYOUT_PTR(type, base, offset) ((type *)((uint8_t *)(base) + (offset)))
-#define VTCM_LAYOUT_PTR_OPTIONAL(type, base, offset, cond) ((cond) ? VTCM_LAYOUT_PTR(type, base, offset) : NULL)
+#تعریف_کرو VTCM_LAYOUT_PTR(type, ادھار, وتھ) ((type *)((uint8_t *)(ادھار) + (وتھ)))
+#تعریف_کرو VTCM_LAYOUT_PTR_OPTIONAL(type, ادھار, وتھ, cond) ((cond) ? VTCM_LAYOUT_PTR(type, ادھار, وتھ) : عدم)
 
-#endif // HTP_VTCM_H
+#جے_انت // HTP_VTCM_H

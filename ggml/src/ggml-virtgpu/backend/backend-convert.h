@@ -1,13 +1,13 @@
-#include "shared/apir_backend.h"
+#ضمن "shared/apir_backend.h"
 
-#define BUFFER_TO_HOST_HANDLE(name) ggml_buffer_to_apir_handle(name)
+#تعریف_کرو بفر_منزل_HOST_HANDLE(name) ggml_بفر_منزل_apir_handle(name)
 
-static inline apir_buffer_host_handle_t ggml_buffer_to_apir_handle(ggml_backend_buffer_t buffer) {
+ساكن مضمن apir_بفر_host_handle_t ggml_بفر_منزل_apir_handle(ggml_backend_بفر_t بفر) {
     // in the backend, the buffer handle is the buffer pointer
-    return (apir_buffer_host_handle_t) buffer;
+    أرجع (apir_بفر_host_handle_t) بفر;
 }
 
-static inline apir_buffer_type_host_handle_t ggml_buffer_type_to_apir_handle(ggml_backend_buffer_type_t buft) {
+ساكن مضمن apir_بفر_type_host_handle_t ggml_بفر_type_منزل_apir_handle(ggml_backend_بفر_type_t buft) {
     // in the backend, the buffer handle is the buffer pointer
-    return (apir_buffer_type_host_handle_t) buft;
+    أرجع (apir_بفر_type_host_handle_t) buft;
 }

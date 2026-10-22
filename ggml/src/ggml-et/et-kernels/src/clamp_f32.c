@@ -3,118 +3,118 @@
 // Element-wise: dst[i] = min(max(src0[i], min_val), max_val)
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "platform.h"
+#ضمن "ggml_tensor.h"
+#ضمن "platform.h"
 
-#include <stdint.h>
+#ضمن <stdint.h>
 
-struct ggml_et_clamp_params {
-    struct ggml_tensor src0;  // F32 input  (contiguous)
-    struct ggml_tensor dst;   // F32 output (contiguous; may alias src0.data)
-    float              min_val;
-    float              max_val;
+بنية ggml_et_clamp_params {
+    بنية ggml_tensor src0;  // F32 input  (contiguous)
+    بنية ggml_tensor dst;   // F32 output (contiguous; may alias src0.data)
+    عائم              min_val;
+    عائم              max_val;
 };
 
 // Vectorized fmax/fmin clamp with scalar tail. n may be any non-negative int.
-static inline void clamp_block_f32(float * dst, const float * src, float min_val, float max_val, int32_t n) {
+ساكن مضمن فراغ clamp_بلاک_f32(عائم * dst, ثابت عائم * src, عائم min_val, عائم max_val, int32_t n) {
     int32_t       i       = 0;
-    const int32_t vec_end = (n / 8) * 8;
+    ثابت int32_t vec_سرا = (n / 8) * 8;
 
-    if (vec_end > 0) {
-        unsigned long temp_mask;
-        __asm__ volatile("mova.x.m %0" : "=r"(temp_mask));
-        __asm__ volatile("mov.m.x m0, x0, 0xFF");
+    إذا (vec_سرا > 0) {
+        بنانشانی لما عارضی_نقاب;
+        __asm__ متطاير("mova.x.m %0" : "=r"(عارضی_نقاب));
+        __asm__ متطاير("mov.m.x m0, x0, 0xFF");
 
-        for (; i < vec_end; i += 8) {
-            __asm__ volatile(
+        لكل (; i < vec_سرا; i += 8) {
+            __asm__ متطاير(
                 "flw.ps  f10, %[s]\n"
                 "fbc.ps  f11, %[mn]\n"
                 "fbc.ps  f12, %[mx]\n"
                 "fmax.ps f13, f10, f11\n"
                 "fmin.ps f13, f13, f12\n"
                 "fsw.ps  f13, %[d]\n"
-                : [d] "=m"(*(float (*)[8]) & dst[i])
-                : [s] "m"(*(const float (*)[8]) & src[i]), [mn] "m"(min_val), [mx] "m"(max_val)
+                : [d] "=m"(*(عائم (*)[8]) & dst[i])
+                : [s] "m"(*(ثابت عائم (*)[8]) & src[i]), [mn] "m"(min_val), [mx] "m"(max_val)
                 : "f10", "f11", "f12", "f13");
         }
 
-        __asm__ volatile("mova.m.x %0" ::"r"(temp_mask));
+        __asm__ متطاير("mova.m.x %0" ::"r"(عارضی_نقاب));
     }
 
-    for (; i < n; i++) {
-        float v = src[i];
-        if (v < min_val) {
+    لكل (; i < n; i++) {
+        عائم v = src[i];
+        إذا (v < min_val) {
             v = min_val;
         }
-        if (v > max_val) {
+        إذا (v > max_val) {
             v = max_val;
         }
         dst[i] = v;
     }
 }
 
-int entry_point(struct ggml_et_clamp_params * params, void * env) {
+صحيح اندراج_نقطہ(بنية ggml_et_clamp_params * params, فراغ * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    إذا (!kernel_env) {
+        أرجع -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    صحيح thread_id   = get_relative_thread_id(kernel_env->shire_نقاب);
+    صحيح عدد_دھاگے = get_عدد_دھاگے(kernel_env->shire_نقاب);
 
-    if (thread_id < 0) {
-        return 0;
+    إذا (thread_id < 0) {
+        أرجع 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    إذا (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        أرجع -1;
     }
 
-    struct ggml_tensor * src0 = &params->src0;
-    struct ggml_tensor * dst  = &params->dst;
+    بنية ggml_tensor * src0 = &params->src0;
+    بنية ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+    إذا (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        أرجع -1;
     }
 
-    float * src0_data = (float *) src0->data;
-    float * dst_data  = (float *) dst->data;
+    عائم * src0_انکڑے = (عائم *) src0->انکڑے;
+    عائم * dst_انکڑے  = (عائم *) dst->انکڑے;
 
-    if (!src0_data || !dst_data) {
-        return -1;
+    إذا (!src0_انکڑے || !dst_انکڑے) {
+        أرجع -1;
     }
 
-    const int64_t total_elements = src0->ne[0] * src0->ne[1] * src0->ne[2] * src0->ne[3];
-    if (total_elements <= 0) {
-        return 0;
+    ثابت int64_t کل_elements = src0->ne[0] * src0->ne[1] * src0->ne[2] * src0->ne[3];
+    إذا (کل_elements <= 0) {
+        أرجع 0;
     }
 
-    const float min_val = params->min_val;
-    const float max_val = params->max_val;
+    ثابت عائم min_val = params->min_val;
+    ثابت عائم max_val = params->max_val;
 
     // Distribute by cache lines (16 F32 elements). Each thread owns disjoint
     // cache lines, so a partial trailing line is written by exactly one
     // thread — safe under non-coherent caches.
-    const int64_t elems_per_cl = 16;
-    const int64_t total_cl     = (total_elements + elems_per_cl - 1) / elems_per_cl;
+    ثابت int64_t elems_فی_cl = 16;
+    ثابت int64_t کل_cl     = (کل_elements + elems_فی_cl - 1) / elems_فی_cl;
 
-    const int64_t cl_per_thread = (total_cl + num_threads - 1) / num_threads;
-    const int64_t cl_start      = (int64_t) thread_id * cl_per_thread;
-    int64_t       cl_end        = cl_start + cl_per_thread;
-    if (cl_end > total_cl) {
-        cl_end = total_cl;
+    ثابت int64_t cl_فی_thread = (کل_cl + عدد_دھاگے - 1) / عدد_دھاگے;
+    ثابت int64_t cl_شروع      = (int64_t) thread_id * cl_فی_thread;
+    int64_t       cl_سرا        = cl_شروع + cl_فی_thread;
+    إذا (cl_سرا > کل_cl) {
+        cl_سرا = کل_cl;
     }
-    if (cl_start >= total_cl) {
-        return 0;
-    }
-
-    const int64_t es = cl_start * elems_per_cl;
-    int64_t       ee = cl_end * elems_per_cl;
-    if (ee > total_elements) {
-        ee = total_elements;
+    إذا (cl_شروع >= کل_cl) {
+        أرجع 0;
     }
 
-    clamp_block_f32(dst_data + es, src0_data + es, min_val, max_val, (int32_t) (ee - es));
-    return 0;
+    ثابت int64_t es = cl_شروع * elems_فی_cl;
+    int64_t       ee = cl_سرا * elems_فی_cl;
+    إذا (ee > کل_elements) {
+        ee = کل_elements;
+    }
+
+    clamp_بلاک_f32(dst_انکڑے + es, src0_انکڑے + es, min_val, max_val, (int32_t) (ee - es));
+    أرجع 0;
 }

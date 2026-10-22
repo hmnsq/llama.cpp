@@ -20,32 +20,32 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef CANN_COMMON_H
-#define CANN_COMMON_H
+#جے_بنا_تعریف CANN_COMMON_H
+#تعریف_کرو CANN_COMMON_H
 
-#include "../ggml-impl.h"
-#include "../include/ggml-cann.h"
-#include "../include/ggml.h"
+#ضمن "../ggml-impl.h"
+#ضمن "../include/ggml-cann.h"
+#ضمن "../include/ggml.h"
 
-#include <acl/acl.h>
-#include <unistd.h>
+#ضمن <acl/acl.h>
+#ضمن <unistd.h>
 
-#include <atomic>
-#include <condition_variable>
-#include <cstdio>
-#include <functional>
-#include <iostream>
-#include <list>
-#include <map>
-#include <memory>
-#include <mutex>
-#include <optional>
-#include <string>
-#include <thread>
-#include <vector>
+#ضمن <atomic>
+#ضمن <condition_variable>
+#ضمن <cstdio>
+#ضمن <functional>
+#ضمن <iostream>
+#ضمن <list>
+#ضمن <map>
+#ضمن <memory>
+#ضمن <mutex>
+#ضمن <optional>
+#ضمن <string>
+#ضمن <thread>
+#ضمن <vector>
 
-#define MATRIX_ROW_PADDING    512
-#define GGML_CANN_MAX_STREAMS 8
+#تعریف_کرو میٹرکس_صف_PADDING    512
+#تعریف_کرو GGML_CANN_MAX_STREAMS 8
 
 /**
  * @brief Handles CANN-related errors by printing an error message and
@@ -56,7 +56,7 @@
  * @param line The line number at which the error occurred.
  * @param msg The error message.
  */
-[[noreturn]] void ggml_cann_error(const char * stmt, const char * func, const char * file, int line, const char * msg);
+[[noreturn]] فراغ ggml_cann_error(ثابت حرف * stmt, ثابت حرف * func, ثابت حرف * file, صحيح سطر, ثابت حرف * پیغام);
 
 /**
  * @brief Checks the result of a CANN function call and invokes the error
@@ -65,55 +65,55 @@
  * @param success The success code that indicates the call was successful.
  * @param error_fn The function to call to retrieve the error message.
  */
-#define ACL_CHECK_GEN(stmt, success, error_fn)                                \
-    do {                                                                      \
-        int err_code = (stmt);                                                \
-        if (err_code != (success)) {                                          \
+#تعریف_کرو ACL_CHECK_GEN(stmt, success, error_fn)                                \
+    افعل {                                                                      \
+        صحيح err_کوڈ = (stmt);                                                \
+        إذا (err_کوڈ != (success)) {                                          \
             ggml_cann_error(#stmt, __func__, __FILE__, __LINE__, error_fn()); \
         }                                                                     \
-    } while (0);
+    } طالما (0);
 
-#define ACL_CHECK(stmt) ACL_CHECK_GEN(stmt, 0, aclGetRecentErrMsg)
+#تعریف_کرو ACL_CHECK(stmt) ACL_CHECK_GEN(stmt, 0, acl_Get_Recent_Err_پیغام)
 
 /**
  * @brief Contains information about CANN devices.
  */
-struct ggml_cann_device_info {
+بنية ggml_cann_device_info {
     /**
      * @brief Number of CANN devices available.
      */
-    int32_t device_count;
+    int32_t device_گنتی;
 
     /**
      * @brief Information about a single CANN device.
      */
-    struct cann_device_info {
-        int    cc;              /**< Compute capability.                   */
+    بنية cann_device_info {
+        صحيح    cc;              /**< Compute capability.                   */
         size_t smpb;            /**< Maximum shared memory per block.      */
         bool   vmm;             /**< Virtual memory support.               */
         size_t vmm_granularity; /**< Granularity of virtual memory.        */
-        size_t total_vram;      /**< Total video RAM available on the device. */
+        size_t کل_vram;      /**< Total video RAM available on the device. */
     };
 
     cann_device_info devices[GGML_CANN_MAX_DEVICES] = {}; /**< Array of CANN device information. */
 };
 
-const ggml_cann_device_info & ggml_cann_info();
+ثابت ggml_cann_device_info & ggml_cann_info();
 
-void    ggml_cann_set_device(int32_t device);
+فراغ    ggml_cann_سیٹ_device(int32_t device);
 
-std::optional<std::string> get_env_as_lowercase(const std::string & name);
-bool                       parse_bool(const std::string & value);
-int                        parse_integer(const std::string & value);
+std::optional<std::string> get_env_as_lowercase(ثابت std::string & name);
+bool                       parse_bool(ثابت std::string & قدر);
+صحيح                        parse_integer(ثابت std::string & قدر);
 
 /**
  * @brief Abstract base class for memory pools used by CANN.
  */
-struct ggml_cann_pool {
+بنية ggml_cann_pool {
     /**
      * @brief Virtual destructor for the memory pool.
      */
-    virtual ~ggml_cann_pool() = default;
+    مجازی ~ggml_cann_pool() = افتراضي;
 
     /**
      * @brief Allocates memory from the pool.
@@ -123,7 +123,7 @@ struct ggml_cann_pool {
      *                     will be stored.
      * @return             Pointer to the allocated memory block.
      */
-    virtual void * alloc(size_t size, size_t * actual_size) = 0;
+    مجازی فراغ * alloc(size_t ناپ, size_t * actual_ناپ) = 0;
 
     /**
      * @brief Frees a previously allocated memory block.
@@ -133,21 +133,21 @@ struct ggml_cann_pool {
      * @note Note that all CANN opertors are running async. Make sure memory is
      *       still avaiable before this operator finished.
      */
-    virtual void free(void * ptr, size_t size) = 0;
+    مجازی فراغ حرر(فراغ * ptr, size_t ناپ) = 0;
 };
 
 /**
  * @brief RAII wrapper for managing memory allocations from a CANN memory pool.
  */
-struct ggml_cann_pool_alloc {
+بنية ggml_cann_pool_alloc {
     ggml_cann_pool * pool        = nullptr; /**< Pointer to the memory pool. */
-    void *           ptr         = nullptr; /**< Pointer to the allocated memory block. */
-    size_t           actual_size = 0;       /**< Actual size of the allocated memory block. */
+    فراغ *           ptr         = nullptr; /**< Pointer to the allocated memory block. */
+    size_t           actual_ناپ = 0;       /**< Actual size of the allocated memory block. */
 
     /**
      * @brief Default constructor.
      */
-    ggml_cann_pool_alloc() = default;
+    ggml_cann_pool_alloc() = افتراضي;
 
     /**
      * @brief Constructor that initializes the memory pool.
@@ -160,14 +160,14 @@ struct ggml_cann_pool_alloc {
      * @param pool Reference to the memory pool.
      * @param size Size of the memory block to allocate.
      */
-    ggml_cann_pool_alloc(ggml_cann_pool & pool, size_t size) : pool(&pool) { alloc(size); }
+    ggml_cann_pool_alloc(ggml_cann_pool & pool, size_t ناپ) : pool(&pool) { alloc(ناپ); }
 
     /**
      * @brief Destructor that frees the allocated memory block.
      */
     ~ggml_cann_pool_alloc() {
-        if (ptr != nullptr) {
-            pool->free(ptr, actual_size);
+        إذا (ptr != nullptr) {
+            pool->حرر(ptr, actual_ناپ);
         }
     }
 
@@ -176,11 +176,11 @@ struct ggml_cann_pool_alloc {
      * @param size Size of the memory block to allocate.
      * @return Pointer to the allocated memory block.
      */
-    void * alloc(size_t size) {
+    فراغ * alloc(size_t ناپ) {
         GGML_ASSERT(pool != nullptr);
         GGML_ASSERT(ptr == nullptr);
-        ptr = pool->alloc(size, &this->actual_size);
-        return ptr;
+        ptr = pool->alloc(ناپ, &this->actual_ناپ);
+        أرجع ptr;
     }
 
     /**
@@ -189,47 +189,47 @@ struct ggml_cann_pool_alloc {
      * @param size Size of the memory block to allocate.
      * @return Pointer to the allocated memory block.
      */
-    void * alloc(ggml_cann_pool & pool, size_t size) {
+    فراغ * alloc(ggml_cann_pool & pool, size_t ناپ) {
         this->pool = &pool;
-        return alloc(size);
+        أرجع alloc(ناپ);
     }
 
     /**
      * @brief Gets the pointer to the allocated memory block.
      * @return Pointer to the allocated memory block.
      */
-    void * get() { return ptr; }
+    فراغ * get() { أرجع ptr; }
 
     // Deleted copy constructor
-    ggml_cann_pool_alloc(const ggml_cann_pool_alloc &) = delete;
+    ggml_cann_pool_alloc(ثابت ggml_cann_pool_alloc &) = delete;
 
     // Deleted move constructor
     ggml_cann_pool_alloc(ggml_cann_pool_alloc &&) = delete;
 
     // Deleted copy assignment operator
-    ggml_cann_pool_alloc & operator=(const ggml_cann_pool_alloc &) = delete;
+    ggml_cann_pool_alloc & عامل=(ثابت ggml_cann_pool_alloc &) = delete;
 
     // Deleted move assignment operator
-    ggml_cann_pool_alloc & operator=(ggml_cann_pool_alloc &&) = delete;
+    ggml_cann_pool_alloc & عامل=(ggml_cann_pool_alloc &&) = delete;
 };
 
-#ifdef USE_ACL_GRAPH
-struct ggml_graph_node_properties {
+#جے_تعریف_شدہ USE_ACL_گراف
+بنية ggml_گراف_گرہ_properties {
     // dst tensor
-    void *    node_address;
-    ggml_type node_type;
+    فراغ *    گرہ_پتہ;
+    ggml_type گرہ_type;
     int64_t   ne[GGML_MAX_DIMS];
     size_t    nb[GGML_MAX_DIMS];
 
     // src tensor
-    void *    src_address[GGML_MAX_SRC];
+    فراغ *    src_پتہ[GGML_MAX_SRC];
     ggml_type src_type[GGML_MAX_SRC];
     int64_t   src_ne[GGML_MAX_SRC][GGML_MAX_DIMS];
     size_t    src_nb[GGML_MAX_SRC][GGML_MAX_DIMS];
 
     // op
-    ggml_op node_op;
-    int32_t op_params[GGML_MAX_OP_PARAMS / sizeof(int32_t)];
+    ggml_op گرہ_op;
+    int32_t op_params[GGML_MAX_OP_PARAMS / حجم(int32_t)];
 
     /**
      * @brief Check if a ggml tensor node matches this property set.
@@ -240,67 +240,67 @@ struct ggml_graph_node_properties {
      * @param node The current ggml tensor node.
      * @return true if all fields match (excluding GGML_OP_VIEW); false otherwise.
      */
-    bool has_matching_properties(ggml_tensor * node) {
-        if (node->data != this->node_address && node->op != GGML_OP_VIEW) {
-            return false;
+    bool has_matching_properties(ggml_tensor * گرہ) {
+        إذا (گرہ->انکڑے != this->گرہ_پتہ && گرہ->op != GGML_OP_VIEW) {
+            أرجع false;
         }
 
-        if (node->op != this->node_op) {
-            return false;
+        إذا (گرہ->op != this->گرہ_op) {
+            أرجع false;
         }
 
-        if (node->type != this->node_type) {
-            return false;
+        إذا (گرہ->type != this->گرہ_type) {
+            أرجع false;
         }
 
-        for (int i = 0; i < GGML_MAX_DIMS; i++) {
-            if (node->ne[i] != this->ne[i]) {
-                return false;
+        لكل (صحيح i = 0; i < GGML_MAX_DIMS; i++) {
+            إذا (گرہ->ne[i] != this->ne[i]) {
+                أرجع false;
             }
-            if (node->nb[i] != this->nb[i]) {
-                return false;
+            إذا (گرہ->nb[i] != this->nb[i]) {
+                أرجع false;
             }
         }
 
-        for (int i = 0; i < GGML_MAX_SRC; i++) {
-            if (node->src[i]) {
-                if (node->src[i]->data != this->src_address[i] && node->op != GGML_OP_VIEW) {
-                    return false;
+        لكل (صحيح i = 0; i < GGML_MAX_SRC; i++) {
+            إذا (گرہ->src[i]) {
+                إذا (گرہ->src[i]->انکڑے != this->src_پتہ[i] && گرہ->op != GGML_OP_VIEW) {
+                    أرجع false;
                 }
 
-                if (node->src[i]->type != this->src_type[i]) {
-                    return false;
+                إذا (گرہ->src[i]->type != this->src_type[i]) {
+                    أرجع false;
                 }
 
-                for (int d = 0; d < GGML_MAX_DIMS; d++) {
-                    if (node->src[i]->ne[d] != this->src_ne[i][d]) {
-                        return false;
+                لكل (صحيح d = 0; d < GGML_MAX_DIMS; d++) {
+                    إذا (گرہ->src[i]->ne[d] != this->src_ne[i][d]) {
+                        أرجع false;
                     }
-                    if (node->src[i]->nb[d] != this->src_nb[i][d]) {
-                        return false;
+                    إذا (گرہ->src[i]->nb[d] != this->src_nb[i][d]) {
+                        أرجع false;
                     }
                 }
-            } else {
-                if (this->src_address[i] != nullptr) {
-                    return false;
+            } وإلا {
+                إذا (this->src_پتہ[i] != nullptr) {
+                    أرجع false;
                 }
             }
         }
 
-        return memcmp(this->op_params, node->op_params, GGML_MAX_OP_PARAMS) == 0;
+        أرجع memcmp(this->op_params, گرہ->op_params, GGML_MAX_OP_PARAMS) == 0;
     }
 };
 
-struct ggml_cann_graph {
-    ~ggml_cann_graph() {
-        if (graph != nullptr) {
-            ACL_CHECK(aclmdlRIDestroy(graph));
+بنية ggml_cann_گراف {
+    ~ggml_cann_گراف() {
+        إذا (گراف != nullptr) {
+            ACL_CHECK(aclmdlRIDestroy(گراف));
         }
     }
 
-    aclmdlRI graph = nullptr;
+    aclmdlRI گراف = nullptr;
 
-    std::vector<ggml_graph_node_properties> ggml_graph_properties;
+    std::سمتیہ<ggml_گراف_گرہ_properties> ggml_گراف_properties;
 
     /**
      * @brief Create a new CANN graph from a ggml computation graph.
@@ -319,39 +319,39 @@ struct ggml_cann_graph {
      * @param cgraph The current ggml computation graph.
      * @return Pointer to the newly created ggml_cann_graph object.
      */
-    static ggml_cann_graph * create_from_cgraph(ggml_cgraph * cgraph) {
-        ggml_cann_graph * new_graph = new ggml_cann_graph();
-        new_graph->ggml_graph_properties.resize(cgraph->n_nodes);
+    ساكن ggml_cann_گراف * create_from_cgraph(ggml_cgraph * cgraph) {
+        ggml_cann_گراف * new_گراف = new ggml_cann_گراف();
+        new_گراف->ggml_گراف_properties.resize(cgraph->n_nodes);
 
-        for (int node_idx = 0; node_idx < cgraph->n_nodes; ++node_idx) {
-            ggml_tensor * node = cgraph->nodes[node_idx];
-            auto &        prop = new_graph->ggml_graph_properties[node_idx];
+        لكل (صحيح گرہ_idx = 0; گرہ_idx < cgraph->n_nodes; ++گرہ_idx) {
+            ggml_tensor * گرہ = cgraph->nodes[گرہ_idx];
+            خودکار &        prop = new_گراف->ggml_گراف_properties[گرہ_idx];
 
-            prop.node_address = node->data;
-            prop.node_op      = node->op;
-            prop.node_type    = node->type;
+            prop.گرہ_پتہ = گرہ->انکڑے;
+            prop.گرہ_op      = گرہ->op;
+            prop.گرہ_type    = گرہ->type;
 
-            std::copy_n(node->ne, GGML_MAX_DIMS, prop.ne);
-            std::copy_n(node->nb, GGML_MAX_DIMS, prop.nb);
+            std::copy_n(گرہ->ne, GGML_MAX_DIMS, prop.ne);
+            std::copy_n(گرہ->nb, GGML_MAX_DIMS, prop.nb);
 
-            for (int src = 0; src < GGML_MAX_SRC; ++src) {
-                if (node->src[src]) {
-                    prop.src_address[src] = node->src[src]->data;
-                    prop.src_type[src]    = node->src[src]->type;
-                    std::copy_n(node->src[src]->ne, GGML_MAX_DIMS, prop.src_ne[src]);
-                    std::copy_n(node->src[src]->nb, GGML_MAX_DIMS, prop.src_nb[src]);
-                } else {
-                    prop.src_address[src] = nullptr;
-                    prop.src_type[src]    = GGML_TYPE_COUNT;
+            لكل (صحيح src = 0; src < GGML_MAX_SRC; ++src) {
+                إذا (گرہ->src[src]) {
+                    prop.src_پتہ[src] = گرہ->src[src]->انکڑے;
+                    prop.src_type[src]    = گرہ->src[src]->type;
+                    std::copy_n(گرہ->src[src]->ne, GGML_MAX_DIMS, prop.src_ne[src]);
+                    std::copy_n(گرہ->src[src]->nb, GGML_MAX_DIMS, prop.src_nb[src]);
+                } وإلا {
+                    prop.src_پتہ[src] = nullptr;
+                    prop.src_type[src]    = GGML_TYPE_گنتی;
                     std::fill_n(prop.src_ne[src], GGML_MAX_DIMS, 0);
                     std::fill_n(prop.src_nb[src], GGML_MAX_DIMS, 0);
                 }
             }
 
-            memcpy(prop.op_params, node->op_params, GGML_MAX_OP_PARAMS);
+            حافظہ_نقل(prop.op_params, گرہ->op_params, GGML_MAX_OP_PARAMS);
         }
 
-        return new_graph;
+        أرجع new_گراف;
     }
 
     /**
@@ -365,17 +365,17 @@ struct ggml_cann_graph {
      * @return true if this CANN graph matches the ggml graph; false otherwise.
      */
     bool matches_cgraph(ggml_cgraph * cgraph) {
-        if (this->ggml_graph_properties.size() != static_cast<size_t>(cgraph->n_nodes)) {
-            return false;
+        إذا (this->ggml_گراف_properties.ناپ() != static_cast<size_t>(cgraph->n_nodes)) {
+            أرجع false;
         }
 
-        for (int i = 0; i < cgraph->n_nodes; ++i) {
-            if (!this->ggml_graph_properties[i].has_matching_properties(cgraph->nodes[i])) {
-                return false;
+        لكل (صحيح i = 0; i < cgraph->n_nodes; ++i) {
+            إذا (!this->ggml_گراف_properties[i].has_matching_properties(cgraph->nodes[i])) {
+                أرجع false;
             }
         }
 
-        return true;
+        أرجع true;
     }
 };
 
@@ -386,12 +386,12 @@ struct ggml_cann_graph {
  * and enforces a maximum capacity. It provides methods to push new graphs,
  * move existing graphs to the front (most recently used), and clear the cache.
  */
-struct ggml_cann_graph_lru_cache {
-    size_t capacity;                         /**< Maximum number of graphs in the cache. */
+بنية ggml_cann_گراف_lru_cache {
+    size_t سمرتھا;                         /**< Maximum number of graphs in the cache. */
 
-    std::list<ggml_cann_graph *> cache_list; /**< List storing cached graphs as raw pointers. */
+    std::list<ggml_cann_گراف *> cache_list; /**< List storing cached graphs as raw pointers. */
 
-    ggml_cann_graph_lru_cache() { capacity = parse_integer(get_env_as_lowercase("GGML_CANN_GRAPH_CACHE_CAPACITY").value_or("12")); }
+    ggml_cann_گراف_lru_cache() { سمرتھا = parse_integer(get_env_as_lowercase("GGML_CANN_GRAPH_CACHE_CAPACITY").قدر_or("12")); }
 
     /**
      * @brief Push a new graph to the front of the cache.
@@ -399,20 +399,20 @@ struct ggml_cann_graph_lru_cache {
      * @param new_node Pointer to the new ggml_cann_graph to cache.
      *        Ownership is transferred to the cache (cache will delete it).
      */
-    void push(ggml_cann_graph * new_node) {
-        if (cache_list.size() >= capacity) {
-            ggml_cann_graph * old = cache_list.back();
-            cache_list.pop_back();
+    فراغ ڈالو(ggml_cann_گراف * new_گرہ) {
+        إذا (cache_list.ناپ() >= سمرتھا) {
+            ggml_cann_گراف * old = cache_list.پٹھ();
+            cache_list.نکالو_پٹھ();
             delete old;  // free the old graph
         }
-        cache_list.push_front(new_node);
+        cache_list.ڈالو_front(new_گرہ);
     }
 
     /**
      * @brief Clear all graphs from the cache (also frees memory).
      */
-    void clear() {
-        for (auto ptr : cache_list) {
+    فراغ clear() {
+        لكل (خودکار ptr : cache_list) {
             delete ptr;
         }
         cache_list.clear();
@@ -421,7 +421,7 @@ struct ggml_cann_graph_lru_cache {
     /**
      * @brief Destructor that clears the cache and frees all cached graphs.
      */
-    ~ggml_cann_graph_lru_cache() { clear(); }
+    ~ggml_cann_گراف_lru_cache() { clear(); }
 
     /**
      * @brief Find a cached CANN graph that matches the given ggml graph and move it to front.
@@ -434,82 +434,82 @@ struct ggml_cann_graph_lru_cache {
      * @param cgraph The current ggml computation graph.
      * @return true if found; false otherwise.
      */
-    bool find_and_move_to_front(ggml_cgraph * cgraph) {
-        for (auto & graph_ptr : this->cache_list) {
-            if (graph_ptr->matches_cgraph(cgraph)) {
-                cache_list.remove(graph_ptr);
-                cache_list.push_front(graph_ptr);
-                return true;
+    bool لبھو_and_move_منزل_front(ggml_cgraph * cgraph) {
+        لكل (خودکار & گراف_ptr : this->cache_list) {
+            إذا (گراف_ptr->matches_cgraph(cgraph)) {
+                cache_list.remove(گراف_ptr);
+                cache_list.ڈالو_front(گراف_ptr);
+                أرجع true;
             }
         }
-        return false;
+        أرجع false;
     }
 };
-#endif  // USE_ACL_GRAPH
+#جے_انت  // USE_ACL_GRAPH
 
-struct ggml_cann_rope_cache {
+بنية ggml_cann_rope_cache {
     ~ggml_cann_rope_cache() {
-        if (theta_scale_cache) {
+        إذا (theta_scale_cache) {
             ACL_CHECK(aclrtFree(theta_scale_cache));
         }
-        if (sin_cache) {
+        إذا (sin_cache) {
             ACL_CHECK(aclrtFree(sin_cache));
         }
-        if (cos_cache) {
+        إذا (cos_cache) {
             ACL_CHECK(aclrtFree(cos_cache));
         }
-        if (position_select_index) {
-            ACL_CHECK(aclrtFree(position_select_index));
+        إذا (position_select_اشاریہ) {
+            ACL_CHECK(aclrtFree(position_select_اشاریہ));
         }
-        if (theta_scale_exp_host) {
-            free(theta_scale_exp_host);
+        إذا (theta_scale_exp_host) {
+            حرر(theta_scale_exp_host);
         }
-        if (position_select_index_host) {
-            free(position_select_index_host);
+        إذا (position_select_اشاریہ_host) {
+            حرر(position_select_اشاریہ_host);
         }
-        if (yarn_ramp_cache) {
+        إذا (yarn_ramp_cache) {
             ACL_CHECK(aclrtFree(yarn_ramp_cache));
         }
     }
 
-    bool equal(int64_t theta_scale_length,
-               int64_t position_length,
-               float   ext_factor,
-               float   theta_scale,
-               float   freq_scale,
-               float   attn_factor,
+    bool equal(int64_t theta_scale_لمائی,
+               int64_t position_لمائی,
+               عائم   ext_ضارب,
+               عائم   theta_scale,
+               عائم   freq_scale,
+               عائم   attn_ضارب,
                bool    is_neox,
                bool    indep_sects,
-               bool    mrope_used,
+               bool    mrope_ورتیا,
                bool    is_imrope,
-               int     sections[4]) {
-        return this->theta_scale_length == theta_scale_length && this->position_length == position_length &&
-               this->ext_factor == ext_factor && this->theta_scale == theta_scale && this->freq_scale == freq_scale &&
-               this->attn_factor == attn_factor && this->is_neox == is_neox && this->indep_sects == indep_sects &&
-               this->mrope_used == mrope_used && this->is_imrope == is_imrope && this->sections[0] == sections[0] &&
+               صحيح     sections[4]) {
+        أرجع this->theta_scale_لمائی == theta_scale_لمائی && this->position_لمائی == position_لمائی &&
+               this->ext_ضارب == ext_ضارب && this->theta_scale == theta_scale && this->freq_scale == freq_scale &&
+               this->attn_ضارب == attn_ضارب && this->is_neox == is_neox && this->indep_sects == indep_sects &&
+               this->mrope_ورتیا == mrope_ورتیا && this->is_imrope == is_imrope && this->sections[0] == sections[0] &&
                this->sections[1] == sections[1] && this->sections[2] == sections[2] && this->sections[3] == sections[3];
     }
 
-    void set(int64_t theta_scale_length,
-             int64_t position_length,
-             float   ext_factor,
-             float   theta_scale,
-             float   freq_scale,
-             float   attn_factor,
+    فراغ سیٹ(int64_t theta_scale_لمائی,
+             int64_t position_لمائی,
+             عائم   ext_ضارب,
+             عائم   theta_scale,
+             عائم   freq_scale,
+             عائم   attn_ضارب,
              bool    is_neox,
              bool    indep_sects,
-             bool    mrope_used,
+             bool    mrope_ورتیا,
              bool    is_imrope,
-             int     sections[4]) {
-        this->theta_scale_length = theta_scale_length;
-        this->position_length    = position_length;
-        this->ext_factor         = ext_factor;
+             صحيح     sections[4]) {
+        this->theta_scale_لمائی = theta_scale_لمائی;
+        this->position_لمائی    = position_لمائی;
+        this->ext_ضارب         = ext_ضارب;
         this->theta_scale        = theta_scale;
         this->freq_scale         = freq_scale;
-        this->attn_factor        = attn_factor;
+        this->attn_ضارب        = attn_ضارب;
         this->is_neox            = is_neox;
         this->indep_sects        = indep_sects;
-        this->mrope_used         = mrope_used;
+        this->mrope_ورتیا         = mrope_ورتیا;
         this->is_imrope          = is_imrope;
         this->sections[0]        = sections[0];
         this->sections[1]        = sections[1];
@@ -518,88 +518,88 @@ struct ggml_cann_rope_cache {
     }
 
     // memory cache, prepare before inferencing.
-    void *  theta_scale_cache          = nullptr;
-    float * theta_scale_exp_host       = nullptr;
-    int *   position_select_index_host = nullptr;
-    void *  position_select_index      = nullptr;
-    void *  yarn_ramp_cache            = nullptr;
+    فراغ *  theta_scale_cache          = nullptr;
+    عائم * theta_scale_exp_host       = nullptr;
+    صحيح *   position_select_اشاریہ_host = nullptr;
+    فراغ *  position_select_اشاریہ      = nullptr;
+    فراغ *  yarn_ramp_cache            = nullptr;
     // sin/cos cache, used only to accelerate first layer on each device
-    void *  sin_cache                  = nullptr;
-    void *  cos_cache                  = nullptr;
+    فراغ *  sin_cache                  = nullptr;
+    فراغ *  cos_cache                  = nullptr;
     // Properties to check before reusing the sincos cache
-    int64_t theta_scale_length         = 0;
-    int64_t position_length            = 0;
+    int64_t theta_scale_لمائی         = 0;
+    int64_t position_لمائی            = 0;
     bool    cached                     = false;
-    float   ext_factor                 = 0.0f;
-    float   theta_scale                = 0.0f;
-    float   freq_scale                 = 0.0f;
-    float   attn_factor                = 0.0f;
+    عائم   ext_ضارب                 = 0.0f;
+    عائم   theta_scale                = 0.0f;
+    عائم   freq_scale                 = 0.0f;
+    عائم   attn_ضارب                = 0.0f;
     bool    is_neox                    = false;
     bool    indep_sects                = false;
-    bool    mrope_used                 = false;
-    int     sections[4]                = { 0, 0, 0, 0 };
+    bool    mrope_ورتیا                 = false;
+    صحيح     sections[4]                = { 0, 0, 0, 0 };
     bool    is_imrope                  = false;
 };
 
-struct ggml_cann_tensor_cache {
+بنية ggml_cann_tensor_cache {
     ~ggml_cann_tensor_cache() {
-        if (cache != nullptr) {
+        إذا (cache != nullptr) {
             ACL_CHECK(aclrtFree(cache));
         }
     }
 
-    void *  cache = nullptr;
-    int64_t size  = 0;
+    فراغ *  cache = nullptr;
+    int64_t ناپ  = 0;
 };
 
 /**
  * @brief Context for managing CANN backend operations.
  */
-struct ggml_backend_cann_context {
+بنية ggml_backend_cann_context {
     int32_t     device;               /**< Device ID. */
     std::string name;                 /**< Name of the device. */
     std::string description;          /**< Description of the device. */
     aclrtEvent  copy_event = nullptr; /**< Event for managing copy operations. */
-#ifdef USE_ACL_GRAPH
+#جے_تعریف_شدہ USE_ACL_گراف
     /// Cached CANN ACL graph used for executing the current ggml computation graph.
-    ggml_cann_graph_lru_cache graph_lru_cache;
-    bool                      acl_graph_mode = true;
-#endif
-    bool                   async_mode;
+    ggml_cann_گراف_lru_cache گراف_lru_cache;
+    bool                      acl_گراف_منوال = true;
+#جے_انت
+    bool                   async_منوال;
     // Rope Cache
     ggml_cann_rope_cache   rope_cache;
     // Constant Pool
     ggml_cann_tensor_cache rms_norm_one_tensor_cache;
     ggml_cann_tensor_cache rms_norm_zero_tensor_cache;
 
-    aclrtStream streams[GGML_CANN_MAX_STREAMS] = { nullptr }; /**< Array of streams for the device. */
+    aclrt_دھارا streams[GGML_CANN_MAX_STREAMS] = { nullptr }; /**< Array of streams for the device. */
 
     /**
      * @brief Constructor for initializing the context with a given device.
      * @param device Device ID.
      */
-    explicit ggml_backend_cann_context(int device) : device(device), name("CANN" + std::to_string(device)) {
-        ggml_cann_set_device(device);
+    explicit ggml_backend_cann_context(صحيح device) : device(device), name("CANN" + std::منزل_string(device)) {
+        ggml_cann_سیٹ_device(device);
         description = aclrtGetSocName();
 
-#ifdef USE_ACL_GRAPH
-        acl_graph_mode = parse_bool(get_env_as_lowercase("GGML_CANN_ACL_GRAPH").value_or("on"));
-        GGML_LOG_INFO("%s: device %d execution mode is %s (%s)\n", __func__, device, acl_graph_mode ? "GRAPH" : "EAGER",
-                      acl_graph_mode ? "acl graph enabled" : "acl graph disabled");
-#endif
+#جے_تعریف_شدہ USE_ACL_گراف
+        acl_گراف_منوال = parse_bool(get_env_as_lowercase("GGML_CANN_ACL_GRAPH").قدر_or("on"));
+        GGML_LOG_INFO("%s: device %d execution mode is %s (%s)\n", __func__, device, acl_گراف_منوال ? "GRAPH" : "EAGER",
+                      acl_گراف_منوال ? "acl graph enabled" : "acl graph disabled");
+#جے_انت
     }
 
     /**
      * @brief Destructor for cleaning up resources.
      */
     ~ggml_backend_cann_context() {
-        ggml_cann_set_device(device);
-        if (copy_event != nullptr) {
+        ggml_cann_سیٹ_device(device);
+        إذا (copy_event != nullptr) {
             ACL_CHECK(aclrtDestroyEvent(copy_event));
         }
-        for (int i = 0; i < GGML_CANN_MAX_STREAMS; ++i) {
-            if (streams[i] != nullptr) {
-                ACL_CHECK(aclrtDestroyStream(streams[i]));
+        لكل (صحيح i = 0; i < GGML_CANN_MAX_STREAMS; ++i) {
+            إذا (streams[i] != nullptr) {
+                ACL_CHECK(aclrt_Destroy_دھارا(streams[i]));
             }
         }
     }
@@ -609,22 +609,22 @@ struct ggml_backend_cann_context {
      * @param stream Index of the stream.
      * @return The stream corresponding to the given index.
      */
-    aclrtStream stream(int stream) {
-        if (streams[stream] == nullptr) {
+    aclrt_دھارا دھارا(صحيح دھارا) {
+        إذا (streams[دھارا] == nullptr) {
             // If the device is not set here, destroying the stream later may cause a mismatch
             // between the thread contexts where the stream was created and destroyed.
             // However, I printed the device_id, thread_id, and stream, and they are all consistent.
-            ACL_CHECK(aclrtSetDevice(device));
-            ACL_CHECK(aclrtCreateStream(&streams[stream]));
+            ACL_CHECK(aclrt_سیٹ_Device(device));
+            ACL_CHECK(aclrt_Create_دھارا(&streams[دھارا]));
         }
-        return streams[stream];
+        أرجع streams[دھارا];
     }
 
     /**
      * @brief Get or create the default stream (index 0).
      * @return The default stream.
      */
-    aclrtStream stream() { return stream(0); }
+    aclrt_دھارا دھارا() { أرجع دھارا(0); }
 
     // TODO: each stream should have a memory pool.
     std::unique_ptr<ggml_cann_pool> mem_pool; /**< Memory pool for the device. */
@@ -634,18 +634,18 @@ struct ggml_backend_cann_context {
      * @param device Device ID.
      * @return A unique pointer to the new memory pool.
      */
-    static std::unique_ptr<ggml_cann_pool> new_pool_for_device(int device);
+    ساكن std::unique_ptr<ggml_cann_pool> new_pool_for_device(صحيح device);
 
     /**
      * @brief Get or create the memory pool for the context.
      * @return Reference to the memory pool.
      */
     ggml_cann_pool & pool() {
-        if (mem_pool == nullptr) {
+        إذا (mem_pool == nullptr) {
             mem_pool = new_pool_for_device(device);
         }
-        return *mem_pool;
+        أرجع *mem_pool;
     }
 };
 
-#endif  // CANN_COMMON_H
+#جے_انت  // CANN_COMMON_H

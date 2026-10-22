@@ -1,151 +1,151 @@
-#include <sycl/ext/oneapi/backend/level_zero.hpp>
-#include <sycl/sycl.hpp>
+#ضمن <sycl/ext/oneapi/backend/level_zero.hpp>
+#ضمن <sycl/sycl.hpp>
 
-#ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
-#include <level_zero/ze_api.h>
-#include <level_zero/zes_api.h>
-#endif
+#جے_تعریف_شدہ GGML_SYCL_SUPPORT_LEVEL_ZERO_API
+#ضمن <level_zero/ze_api.h>
+#ضمن <level_zero/zes_api.h>
+#جے_انت
 
-#include <cstdint>
-#include <iostream>
-#include <vector>
+#ضمن <cstdint>
+#ضمن <iostream>
+#ضمن <vector>
 
-#include "base.hpp"
-#include "mem.hpp"
+#ضمن "base.hpp"
+#ضمن "mem.hpp"
 
-const char * mem_api_int2str(int mem_api) {
-    if (mem_api == MEMORY_API_TYPE_SYCL) {
-        return "SYCL API";
-    } else if (mem_api == MEMORY_API_TYPE_LEVEL_ZERO) {
-        return "Level Zero API";
-    } else {
-        return "Unknown";
+ثابت حرف * mem_api_int2str(صحيح mem_api) {
+    إذا (mem_api == حافظہ_API_TYPE_SYCL) {
+        أرجع "SYCL API";
+    } وإلا إذا (mem_api == حافظہ_API_TYPE_LEVEL_ZERO) {
+        أرجع "Level Zero API";
+    } وإلا {
+        أرجع "Unknown";
     }
 }
 
-#ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
+#جے_تعریف_شدہ GGML_SYCL_SUPPORT_LEVEL_ZERO_API
 /*
 * Depend on to call zesInit(0) before any other Level Zero API calls, otherwise the Level Zero API calls may fail.
 */
-static bool query_free_memory_by_ze(sycl::device dev, size_t & free_bytes, size_t & total_bytes) {
+ساكن منطقي query_free_حافظہ_by_ze(sycl::device dev, size_t & free_بائٹاں, size_t & کل_بائٹاں) {
     GGML_SYCL_DEBUG("[SYCL] call %s: Querying free memory using Level Zero API.\n", __func__);
 
-    free_bytes  = 0;
-    total_bytes = 0;
+    free_بائٹاں  = 0;
+    کل_بائٹاں = 0;
 
-    uint32_t module_count = 0;
+    uint32_t module_گنتی = 0;
 
-#if defined(SYCL_EXT_ONEAPI_BACKEND_LEVEL_ZERO)
+#إذا defined(SYCL_EXT_ONEAPI_BACKEND_LEVEL_ZERO)
     constexpr sycl::backend kL0Backend = sycl::backend::ext_oneapi_level_zero;
-#else
+#وإلا
     constexpr sycl::backend kL0Backend = sycl::backend::level_zero;
-#endif
+#جے_انت
 
-    try {
+    حاول {
 
-        if (dev.get_platform().get_backend() != kL0Backend) {
+        إذا (dev.get_platform().get_backend() != kL0Backend) {
             GGML_SYCL_DEBUG("Device backend is not Level Zero.\n");
-            return false;
+            أرجع خطأ;
         }
 
         ze_device_handle_t ze_dev = sycl::get_native<kL0Backend>(dev);
-        if (ze_dev == nullptr) {
+        إذا (ze_dev == خالی_سوچک) {
             GGML_SYCL_DEBUG("Level Zero device handle is null.\n");
-            return false;
+            أرجع خطأ;
         }
 
-        ze_result_t r = zesDeviceEnumMemoryModules(ze_dev, &module_count, nullptr);
-        if (r != ZE_RESULT_SUCCESS || module_count == 0) {
+        ze_نتیجہ_t r = zes_Device_Enum_حافظہ_Modules(ze_dev, &module_گنتی, خالی_سوچک);
+        إذا (r != ZE_نتیجہ_SUCCESS || module_گنتی == 0) {
             GGML_SYCL_DEBUG("Failed to enumerate Level Zero memory modules.\n");
-            return false;
+            أرجع خطأ;
         }
 
-        std::vector<zes_mem_handle_t> modules(module_count);
-        r = zesDeviceEnumMemoryModules(ze_dev, &module_count, modules.data());
-        if (r != ZE_RESULT_SUCCESS || module_count == 0) {
+        std::vector<zes_mem_handle_t> modules(module_گنتی);
+        r = zes_Device_Enum_حافظہ_Modules(ze_dev, &module_گنتی, modules.انکڑے());
+        إذا (r != ZE_نتیجہ_SUCCESS || module_گنتی == 0) {
             GGML_SYCL_DEBUG("Failed to enumerate Level Zero memory modules.\n");
-            return false;
+            أرجع خطأ;
         }
 
-        for (uint32_t i = 0; i < module_count; ++i) {
+        لكل (uint32_t i = 0; i < module_گنتی; ++i) {
             zes_mem_state_t state = {};
             state.stype           = ZES_STRUCTURE_TYPE_MEM_STATE;
-            state.pNext           = nullptr;
+            state.p_اگلا           = خالی_سوچک;
 
-            r = zesMemoryGetState(modules[i], &state);
-            if (r != ZE_RESULT_SUCCESS) {
-                continue;
+            r = zes_حافظہ_Get_State(modules[i], &state);
+            إذا (r != ZE_نتیجہ_SUCCESS) {
+                استمر;
             }
 
-            free_bytes += state.free;
-            total_bytes += state.size;
+            free_بائٹاں += state.حرر;
+            کل_بائٹاں += state.size;
         }
 
-        if (total_bytes == 0) {
+        إذا (کل_بائٹاں == 0) {
             GGML_SYCL_DEBUG("Level Zero memory query returned zero total bytes.\n");
-            return false;
+            أرجع خطأ;
         }
-        return total_bytes >= free_bytes;
+        أرجع کل_بائٹاں >= free_بائٹاں;
 
-    } catch (const sycl::exception & e) {
+    } امسك (ثابت sycl::exception & e) {
         GGML_SYCL_DEBUG("Level Zero memory query failed: %s\n", e.what());
-        return false;
+        أرجع خطأ;
     }
 }
-#endif
+#جے_انت
 
-static bool get_memory_size_by_sycl_api(sycl::device dev, size_t & free_bytes, size_t & total_bytes) {
+ساكن منطقي get_حافظہ_ناپ_by_sycl_api(sycl::device dev, size_t & free_بائٹاں, size_t & کل_بائٹاں) {
     GGML_SYCL_DEBUG("[SYCL] call %s: Querying free memory using SYCL API.\n", __func__);
-    total_bytes = dev.get_info<sycl::info::device::global_mem_size>();
+    کل_بائٹاں = dev.get_info<sycl::info::device::global_mem_ناپ>();
 
-#if (defined(__SYCL_COMPILER_VERSION) && __SYCL_COMPILER_VERSION >= 20221105)
-    if (dev.has(sycl::aspect::ext_intel_free_memory)) {
-        try {
+#إذا (defined(__SYCL_COMPILER_VERSION) && __SYCL_COMPILER_VERSION >= 20221105)
+    إذا (dev.has(sycl::aspect::ext_intel_free_حافظہ)) {
+        حاول {
             GGML_SYCL_DEBUG("Querying free memory using SYCL aspect::ext_intel_free_memory.\n");
-            free_bytes = dev.get_info<sycl::ext::intel::info::device::free_memory>();
-            return true;
-        } catch (const sycl::exception &) {
+            free_بائٹاں = dev.get_info<sycl::ext::intel::info::device::free_حافظہ>();
+            أرجع سچ;
+        } امسك (ثابت sycl::exception &) {
             GGML_SYCL_DEBUG(
                 "Failed to query free memory using SYCL aspect::ext_intel_free_memory.\n");
-            return false;
+            أرجع خطأ;
         }
-    } else {
+    } وإلا {
         GGML_SYCL_DEBUG(
             "Device does not support SYCL aspect::ext_intel_free_memory.\n");
     }
-#else
+#وإلا
     GGML_SYCL_DEBUG("SYCL Compiler version is older than 20221105.\n");
-#endif
-    return false;
+#جے_انت
+    أرجع خطأ;
 }
 
-bool get_memory_size(sycl::device dev, size_t & free_bytes, size_t & total_bytes, MemoryAPIType api_type) {
+منطقي get_حافظہ_ناپ(sycl::device dev, size_t & free_بائٹاں, size_t & کل_بائٹاں, حافظہ_APIType api_type) {
 
     GGML_SYCL_DEBUG("[%s]GPU Name:          %s\n", __func__,
         dev.get_info<sycl::info::device::name>().c_str());
     GGML_SYCL_DEBUG("[%s]GPU Vendor:        %s\n", __func__,
         dev.get_info<sycl::info::device::vendor>().c_str());
 
-    if (api_type == MEMORY_API_TYPE_LEVEL_ZERO) {
-#ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
+    إذا (api_type == حافظہ_API_TYPE_LEVEL_ZERO) {
+#جے_تعریف_شدہ GGML_SYCL_SUPPORT_LEVEL_ZERO_API
         GGML_SYCL_DEBUG("[%s] Querying free memory using Level Zero API.\n", __func__);
-        if (query_free_memory_by_ze(dev, free_bytes, total_bytes)) {
-            return true;
+        إذا (query_free_حافظہ_by_ze(dev, free_بائٹاں, کل_بائٹاں)) {
+            أرجع سچ;
         }
         //fallback to SYCL API if Level Zero API fails
         GGML_SYCL_DEBUG("[%s] Falling back to SYCL API for memory query.\n", __func__);
-#endif
+#جے_انت
     }
 
     //MEMORY_API_TYPE_SYCL
-    if(get_memory_size_by_sycl_api(dev, free_bytes, total_bytes)){
-        return true;
+    إذا(get_حافظہ_ناپ_by_sycl_api(dev, free_بائٹاں, کل_بائٹاں)){
+        أرجع سچ;
     }
 
     //Todo, fallback to other methods to get free memory size, such as using OS-specific APIs (e.g., /proc/meminfo on Linux, GlobalMemoryStatusEx on Windows, etc.)
     GGML_SYCL_DEBUG(
         "[%s] Can't get free mem size by Level Zero and SYCL API. Using total memory as free memory.\n", __func__);
-    free_bytes = total_bytes;
+    free_بائٹاں = کل_بائٹاں;
 
-    return true;
+    أرجع سچ;
 }

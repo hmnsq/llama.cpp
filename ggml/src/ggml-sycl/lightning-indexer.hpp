@@ -1,8 +1,8 @@
-#ifndef GGML_SYCL_LIGHTNING_INDEXER_HPP
-#define GGML_SYCL_LIGHTNING_INDEXER_HPP
+#جے_بنا_تعریف GGML_SYCL_LIGHTNING_INDEXER_HPP
+#تعریف_کرو GGML_SYCL_LIGHTNING_INDEXER_HPP
 
-#include "common.hpp"
+#ضمن "common.hpp"
 
-void ggml_sycl_op_lightning_indexer(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+فراغ ggml_sycl_op_lightning_indexer(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-#endif // GGML_SYCL_LIGHTNING_INDEXER_HPP
+#جے_انت // GGML_SYCL_LIGHTNING_INDEXER_HPP

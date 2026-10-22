@@ -1,10 +1,10 @@
-#ifndef GGML_SYCL_OUTPROD_HPP
-#define GGML_SYCL_OUTPROD_HPP
+#جے_بنا_تعریف GGML_SYCL_OUTPROD_HPP
+#تعریف_کرو GGML_SYCL_OUTPROD_HPP
 
-#include "common.hpp"
+#ضمن "common.hpp"
 
-void ggml_sycl_op_out_prod(ggml_backend_sycl_context& ctx, ggml_tensor* dst);
+فراغ ggml_sycl_op_باہرلا_prod(ggml_backend_sycl_context& ctx, ggml_tensor* dst);
 
 
-#endif // GGML_SYCL_OUTPROD_HPP
+#جے_انت // GGML_SYCL_OUTPROD_HPP
 

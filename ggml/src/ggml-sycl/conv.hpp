@@ -10,11 +10,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#ifndef GGML_SYCL_CONV_HPP
-#define GGML_SYCL_CONV_HPP
+#جے_بنا_تعریف GGML_SYCL_CONV_HPP
+#تعریف_کرو GGML_SYCL_CONV_HPP
 
-#include "common.hpp"
+#ضمن "common.hpp"
 
-void ggml_sycl_op_conv_transpose_1d(ggml_backend_sycl_context & ctx, ggml_tensor *dst);
+فراغ ggml_sycl_op_conv_transpose_1d(ggml_backend_sycl_context & ctx, ggml_tensor *dst);
 
-#endif // GGML_SYCL_CONV_HPP
+#جے_انت // GGML_SYCL_CONV_HPP

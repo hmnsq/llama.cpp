@@ -1,134 +1,134 @@
 // SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 // SPDX-License-Identifier: MIT
 //
-#include <arm_neon.h>
-#include <cassert>
-#include <cstdio>
-#include <cstdlib>
-#include <atomic>
-#include <cfloat>
-#include <cctype>
-#include <algorithm>
-#include <cmath>
-#include <stdexcept>
-#include <stdint.h>
-#include <string.h>
-#include <string>
-#include <vector>
-#include <array>
-#include <cstddef>
-#include <cstdint>
-#include <fstream>
-#include <map>
-#include <iostream>
-#include <climits>
-#include <charconv>
-#include <system_error>
-#if defined(__linux__)
-#include <asm/hwcap.h>
-#include <dirent.h>
-#include <sys/auxv.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#elif defined(__APPLE__)
-#include <sys/sysctl.h>
-#include <sys/types.h>
-#endif
+#ضمن <arm_neon.h>
+#ضمن <cassert>
+#ضمن <cstdio>
+#ضمن <cstdlib>
+#ضمن <atomic>
+#ضمن <cfloat>
+#ضمن <cctype>
+#ضمن <algorithm>
+#ضمن <cmath>
+#ضمن <stdexcept>
+#ضمن <stdint.h>
+#ضمن <string.h>
+#ضمن <string>
+#ضمن <vector>
+#ضمن <array>
+#ضمن <cstddef>
+#ضمن <cstdint>
+#ضمن <fstream>
+#ضمن <map>
+#ضمن <iostream>
+#ضمن <climits>
+#ضمن <charconv>
+#ضمن <system_error>
+#إذا defined(__linux__)
+#ضمن <asm/hwcap.h>
+#ضمن <dirent.h>
+#ضمن <sys/auxv.h>
+#ضمن <sys/types.h>
+#ضمن <sys/stat.h>
+#ضمن <unistd.h>
+#وإلاإذا defined(__APPLE__)
+#ضمن <sys/sysctl.h>
+#ضمن <sys/types.h>
+#جے_انت
 
-#include "kleidiai.h"
+#ضمن "kleidiai.h"
 
-#include "ggml-cpu.h"
-#include "ggml-cpu-impl.h"
-#include "ggml-impl.h"
-#include "ggml-feats.h"
-#include "ggml-backend-impl.h"
-#include "ggml-quants.h"
-#include "ggml-threading.h"
-#include "traits.h"
+#ضمن "ggml-cpu.h"
+#ضمن "ggml-cpu-impl.h"
+#ضمن "ggml-impl.h"
+#ضمن "ggml-feats.h"
+#ضمن "ggml-backend-impl.h"
+#ضمن "ggml-quants.h"
+#ضمن "ggml-threading.h"
+#ضمن "traits.h"
 
-#include "kernels.h"
+#ضمن "kernels.h"
 
-#include "kai/kai_common.h"
+#ضمن "kai/kai_common.h"
 
-#define GGML_COMMON_DECL_CPP
-#include "ggml-common.h"
+#تعریف_کرو GGML_COMMON_DECL_CPP
+#ضمن "ggml-common.h"
 
-static constexpr int      GGML_KLEIDIAI_MAX_KERNEL_SLOTS = 2;
-static constexpr uint32_t GGML_KLEIDIAI_PACK_MAGIC       = 0x4b4c4149; // "KLAI"
-static constexpr uint16_t GGML_KLEIDIAI_PACK_VERSION     = 1;
-static constexpr size_t   GGML_KLEIDIAI_PACK_ALIGN       = 64;
-static constexpr size_t   GGML_KLEIDIAI_Q4_K_BL          = QK_K / 8;
+ساكن constexpr صحيح      GGML_KLEIDIAI_MAX_KERNEL_SLOTS = 2;
+ساكن constexpr uint32_t GGML_KLEIDIAI_PACK_MAGIC       = 0x4b4c4149; // "KLAI"
+ساكن constexpr uint16_t GGML_KLEIDIAI_PACK_نسخہ     = 1;
+ساكن constexpr size_t   GGML_KLEIDIAI_PACK_ALIGN       = 64;
+ساكن constexpr size_t   GGML_KLEIDIAI_Q4_K_BL          = QK_K / 8;
 
 static_assert(QK_K == 256, "KleidiAI Q4_K kernels require 256-value super-blocks");
 
-struct ggml_kleidiai_context {
+بنية ggml_kleidiai_context {
     cpu_feature features;
     ggml_kleidiai_kernels * kernels_q4;
     ggml_kleidiai_kernels * kernels_q4k;
     ggml_kleidiai_kernels * kernels_q8;
     ggml_kleidiai_kernels * kernels_f32;
-    int sme_thread_cap; // <= 0 means "SME disabled/unknown"
-    int thread_hint;    // <= 0 means "no hint"
-    int chunk_multiplier;
-} static ctx = { CPU_FEATURE_NONE, nullptr, nullptr, nullptr, nullptr, 0, -1, 4 };
+    صحيح sme_thread_cap; // <= 0 means "SME disabled/unknown"
+    صحيح thread_hint;    // <= 0 means "no hint"
+    صحيح chunk_multiplier;
+} ساكن ctx = { CPU_FEATURE_NONE, خالی_سوچک, خالی_سوچک, خالی_سوچک, خالی_سوچک, 0, -1, 4 };
 
-static inline bool is_sme_family(cpu_feature f) {
-    return (f & (CPU_FEATURE_SME | CPU_FEATURE_SME2)) != CPU_FEATURE_NONE;
+ساكن مضمن منطقي is_sme_family(cpu_feature f) {
+    أرجع (f & (CPU_FEATURE_SME | CPU_FEATURE_SME2)) != CPU_FEATURE_NONE;
 }
 
-static const char* cpu_feature_to_string(cpu_feature f) {
-    if (f == CPU_FEATURE_NONE) {
-        return "NONE";
-    } else if ((f & CPU_FEATURE_SME2) == CPU_FEATURE_SME2) {
-        return "SME2";
-    } else if ((f & CPU_FEATURE_SME) == CPU_FEATURE_SME) {
-        return "SME";
-    } else if ((f & CPU_FEATURE_SVE) == CPU_FEATURE_SVE) {
-        return "SVE";
+ساكن ثابت حرف* cpu_feature_منزل_string(cpu_feature f) {
+    إذا (f == CPU_FEATURE_NONE) {
+        أرجع "NONE";
+    } وإلا إذا ((f & CPU_FEATURE_SME2) == CPU_FEATURE_SME2) {
+        أرجع "SME2";
+    } وإلا إذا ((f & CPU_FEATURE_SME) == CPU_FEATURE_SME) {
+        أرجع "SME";
+    } وإلا إذا ((f & CPU_FEATURE_SVE) == CPU_FEATURE_SVE) {
+        أرجع "SVE";
     }
-    else if ((f & CPU_FEATURE_I8MM) == CPU_FEATURE_I8MM) {
-        return "I8MM";
-    } else if ((f & CPU_FEATURE_DOTPROD) == CPU_FEATURE_DOTPROD) {
-        return "DOTPROD";
+    وإلا إذا ((f & CPU_FEATURE_I8MM) == CPU_FEATURE_I8MM) {
+        أرجع "I8MM";
+    } وإلا إذا ((f & CPU_FEATURE_DOTPROD) == CPU_FEATURE_DOTPROD) {
+        أرجع "DOTPROD";
     }
-    else {
-        return "UNKNOWN";
+    وإلا {
+        أرجع "UNKNOWN";
     }
 }
 
-#if defined(__linux__) && defined(__aarch64__)
-static bool parse_cpu_dir_name(const char* name, size_t* cpu) {
-    if (strncmp(name, "cpu", 3) != 0 ||
+#إذا defined(__linux__) && defined(__aarch64__)
+ساكن منطقي parse_cpu_dir_name(ثابت حرف* name, size_t* cpu) {
+    إذا (لڑی_مقابلہ(name, "cpu", 3) != 0 ||
         name[3] < '0' || name[3] > '9') {
-        return false;
+        أرجع خطأ;
     }
 
-    const char* first = name + 3;
-    const char* last = name + strlen(name);
+    ثابت حرف* پہلا = name + 3;
+    ثابت حرف* آخری = name + لڑی_لمبائی(name);
 
     size_t value = 0;
-    const auto [end, ec] = std::from_chars(first, last, value, 10);
+    ثابت خودکار [end, ec] = std::from_chars(پہلا, آخری, value, 10);
 
-    if (ec != std::errc{} || end != last) {
-        return false;
+    إذا (ec != std::errc{} || end != آخری) {
+        أرجع خطأ;
     }
 
     *cpu = value;
-    return true;
+    أرجع سچ;
 }
 
-static std::vector<size_t> detect_cpu_ids() {
+ساكن std::vector<size_t> detect_cpu_ids() {
     std::vector<size_t> cpus;
 
     DIR * dir = opendir("/sys/devices/system/cpu");
-    if (dir == nullptr) {
-        return cpus;
+    إذا (dir == خالی_سوچک) {
+        أرجع cpus;
     }
 
-    while (dirent * entry = readdir(dir)) {
+    طالما (dirent * اندراج = readdir(dir)) {
         size_t cpu = 0;
-        if (parse_cpu_dir_name(entry->d_name, &cpu)) {
+        إذا (parse_cpu_dir_name(اندراج->d_name, &cpu)) {
             cpus.push_back(cpu);
         }
     }
@@ -136,186 +136,186 @@ static std::vector<size_t> detect_cpu_ids() {
 
     std::sort(cpus.begin(), cpus.end());
     cpus.erase(std::unique(cpus.begin(), cpus.end()), cpus.end());
-    return cpus;
+    أرجع cpus;
 }
-#endif
+#جے_انت
 
-#if defined(__APPLE__) && defined(__aarch64__)
-static bool apple_sme_counted_perf_level(std::string name) {
-    for (std::string::size_type i = 0; i < name.size(); ++i) {
-        name[i] = (char) std::tolower((unsigned char) name[i]);
+#إذا defined(__APPLE__) && defined(__aarch64__)
+ساكن منطقي apple_sme_counted_perf_level(std::string name) {
+    لكل (std::string::size_type i = 0; i < name.size(); ++i) {
+        name[i] = (حرف) std::tolower((بنانشانی حرف) name[i]);
     }
 
     // Conservative ceiling: only count perf-level names observed to provide full SME throughput.
     // Future names should be calibrated here before they raise the automatic SME thread cap.
-    return name.find("super") != std::string::npos ||
+    أرجع name.find("super") != std::string::npos ||
            name.find("performance") != std::string::npos;
 }
-#endif
+#جے_انت
 
-static void add_smcus_from_smidr(uint64_t smidr, size_t & num_private, std::map<uint32_t, size_t> & shared_counts) {
+ساكن فراغ جوڑو_smcus_from_smidr(uint64_t smidr, size_t & عدد_نجی, std::map<uint32_t, size_t> & shared_counts) {
     // Arm ARM: SMIDR_EL1. SH==0 is implementation-defined; keep the existing
     // conservative policy and only treat zero affinity as private.
-    const uint32_t sh = (uint32_t)((smidr >> 13) & 0x3);
-    const uint32_t nsmc = (uint32_t)((smidr >> 56) & 0xF);
-    const size_t shared_count = nsmc == 0xF ? 1 : (size_t)nsmc + 1;
-    const uint32_t affinity = (uint32_t)(smidr & 0xFFFu);
-    const uint32_t affinity2 = (uint32_t)((smidr >> 32) & 0xFFFFFu);
-    const uint32_t id = (affinity2 << 12) | affinity;
+    ثابت uint32_t sh = (uint32_t)((smidr >> 13) & 0x3);
+    ثابت uint32_t nsmc = (uint32_t)((smidr >> 56) & 0xF);
+    ثابت size_t shared_گنتی = nsmc == 0xF ? 1 : (size_t)nsmc + 1;
+    ثابت uint32_t affinity = (uint32_t)(smidr & 0xFFFu);
+    ثابت uint32_t affinity2 = (uint32_t)((smidr >> 32) & 0xFFFFFu);
+    ثابت uint32_t id = (affinity2 << 12) | affinity;
 
-    if (nsmc == 0xF) {
+    إذا (nsmc == 0xF) {
         GGML_LOG_WARN("kleidiai: NSMC detected as 0xF indicating reseved value, setting min safe shared SMCU count to 1");
     }
 
-    switch (sh) {
-        case 2: // private SMCU
-            ++num_private;
-            break;
-        case 3: // shared SMCU
-            if (shared_counts[id] < shared_count) {
-                shared_counts[id] = shared_count;
+    بدل (sh) {
+        حالة 2: // private SMCU
+            ++عدد_نجی;
+            اكسر;
+        حالة 3: // shared SMCU
+            إذا (shared_counts[id] < shared_گنتی) {
+                shared_counts[id] = shared_گنتی;
             }
-            break;
-        case 0:
-            if (id == 0) {
-                ++num_private;
-            } else if (shared_counts[id] < shared_count) {
-                shared_counts[id] = shared_count;
+            اكسر;
+        حالة 0:
+            إذا (id == 0) {
+                ++عدد_نجی;
+            } وإلا إذا (shared_counts[id] < shared_گنتی) {
+                shared_counts[id] = shared_گنتی;
             }
-            break;
-        default:
-            break;
+            اكسر;
+        افتراضي:
+            اكسر;
     }
 }
 
-static size_t detect_num_smcus() {
-    const auto runtime_feat = ggml_feats_get_arch64_runtime();
-    if (!runtime_feat.has_sme) {
-        return 0;
+ساكن size_t detect_عدد_smcus() {
+    ثابت خودکار runtime_feat = ggml_feats_get_arch64_runtime();
+    إذا (!runtime_feat.has_sme) {
+        أرجع 0;
     }
 
-#if defined(__linux__) && defined(__aarch64__)
+#إذا defined(__linux__) && defined(__aarch64__)
     // Linux/aarch64: Best-effort count of Streaming Mode Compute Units (SMCUs) via SMIDR_EL1 sysfs.
-    size_t num_private = 0;
+    size_t عدد_نجی = 0;
     std::map<uint32_t, size_t> shared_counts;
 
-    const std::vector<size_t> cpus = detect_cpu_ids();
-    for (const size_t cpu : cpus) {
-        const std::string path =
+    ثابت std::vector<size_t> cpus = detect_cpu_ids();
+    لكل (ثابت size_t cpu : cpus) {
+        ثابت std::string path =
             "/sys/devices/system/cpu/cpu" + std::to_string(cpu) +
             "/regs/identification/smidr_el1";
 
         std::ifstream file(path);
-        if (!file.is_open()) {
-            continue;
+        إذا (!file.is_open()) {
+            استمر;
         }
 
         uint64_t smidr = 0;
-        if (!(file >> std::hex >> smidr)) {
-            continue;
+        إذا (!(file >> std::hex >> smidr)) {
+            استمر;
         }
 
-        add_smcus_from_smidr(smidr, num_private, shared_counts);
+        جوڑو_smcus_from_smidr(smidr, عدد_نجی, shared_counts);
     }
 
-    size_t total = num_private;
-    for (const auto & entry : shared_counts) {
-        total += entry.second;
+    size_t کل = عدد_نجی;
+    لكل (ثابت خودکار & اندراج : shared_counts) {
+        کل += اندراج.second;
     }
-    return total;
+    أرجع کل;
 
-#elif defined(__APPLE__) && defined(__aarch64__)
-    int perf_levels = 0;
-    size_t size = sizeof(perf_levels);
-    if (sysctlbyname("hw.nperflevels", &perf_levels, &size, nullptr, 0) != 0 ||
-        size != sizeof(perf_levels) || perf_levels <= 0) {
-        return 0;
+#وإلاإذا defined(__APPLE__) && defined(__aarch64__)
+    صحيح perf_پدھراں = 0;
+    size_t size = حجم(perf_پدھراں);
+    إذا (sysctlbyname("hw.nperflevels", &perf_پدھراں, &size, خالی_سوچک, 0) != 0 ||
+        size != حجم(perf_پدھراں) || perf_پدھراں <= 0) {
+        أرجع 0;
     }
 
     size_t units = 0;
-    for (int i = 0; i < perf_levels; ++i) {
-        char key[64] = {};
-        int physical_cpus = 0;
-        int cpus_per_l2 = 0;
+    لكل (صحيح i = 0; i < perf_پدھراں; ++i) {
+        حرف کلید[64] = {};
+        صحيح physical_cpus = 0;
+        صحيح cpus_فی_l2 = 0;
 
-        snprintf(key, sizeof(key), "hw.perflevel%d.physicalcpu", i);
-        size = sizeof(physical_cpus);
-        if (sysctlbyname(key, &physical_cpus, &size, nullptr, 0) != 0 ||
-            size != sizeof(physical_cpus) || physical_cpus <= 0) {
-            continue;
+        snprintf(کلید, حجم(کلید), "hw.perflevel%d.physicalcpu", i);
+        size = حجم(physical_cpus);
+        إذا (sysctlbyname(کلید, &physical_cpus, &size, خالی_سوچک, 0) != 0 ||
+            size != حجم(physical_cpus) || physical_cpus <= 0) {
+            استمر;
         }
 
-        snprintf(key, sizeof(key), "hw.perflevel%d.cpusperl2", i);
-        size = sizeof(cpus_per_l2);
-        if (sysctlbyname(key, &cpus_per_l2, &size, nullptr, 0) != 0 ||
-            size != sizeof(cpus_per_l2) || cpus_per_l2 <= 0) {
-            continue;
+        snprintf(کلید, حجم(کلید), "hw.perflevel%d.cpusperl2", i);
+        size = حجم(cpus_فی_l2);
+        إذا (sysctlbyname(کلید, &cpus_فی_l2, &size, خالی_سوچک, 0) != 0 ||
+            size != حجم(cpus_فی_l2) || cpus_فی_l2 <= 0) {
+            استمر;
         }
 
-        snprintf(key, sizeof(key), "hw.perflevel%d.name", i);
+        snprintf(کلید, حجم(کلید), "hw.perflevel%d.name", i);
         size = 0;
-        if (sysctlbyname(key, nullptr, &size, nullptr, 0) != 0 || size == 0) {
-            continue;
+        إذا (sysctlbyname(کلید, خالی_سوچک, &size, خالی_سوچک, 0) != 0 || size == 0) {
+            استمر;
         }
 
         std::string name(size, '\0');
-        if (sysctlbyname(key, &name[0], &size, nullptr, 0) != 0) {
-            continue;
+        إذا (sysctlbyname(کلید, &name[0], &size, خالی_سوچک, 0) != 0) {
+            استمر;
         }
         name.resize(size);
-        while (!name.empty() && name.back() == '\0') {
+        طالما (!name.خالی_تھاواں() && name.back() == '\0') {
             name.pop_back();
         }
 
-        if (apple_sme_counted_perf_level(name)) {
-            units += (size_t) ((physical_cpus + cpus_per_l2 - 1) / cpus_per_l2);
+        إذا (apple_sme_counted_perf_level(name)) {
+            units += (size_t) ((physical_cpus + cpus_فی_l2 - 1) / cpus_فی_l2);
         }
     }
 
-    return units;
+    أرجع units;
 
-#elif defined(_WIN32) && (defined(_M_ARM64) || defined(__aarch64__))
+#وإلاإذا defined(_WIN32) && (defined(_M_ARM64) || defined(__aarch64__))
     // No verified Windows arm64 SMCU detection path yet. Return unknown and use
     // GGML_KLEIDIAI_SME=N as a diagnostics/debug override for SME thread cap
     // calibration until a detection mechanism is verified on real hardware.
-    return 0;
+    أرجع 0;
 
-#else
-    return 0;
-#endif
+#وإلا
+    أرجع 0;
+#جے_انت
 }
 
-static int parse_uint_env(const char *s, const char *name, bool *ok) {
-    if (!s) { *ok = false; return 0; }
-    char *end = nullptr;
-    long v = strtol(s, &end, 10);
-    if (end == s || *end != '\0') {
+ساكن صحيح parse_uint_env(ثابت حرف *s, ثابت حرف *name, منطقي *ok) {
+    إذا (!s) { *ok = خطأ; أرجع 0; }
+    حرف *end = خالی_سوچک;
+    لما v = strtol(s, &end, 10);
+    إذا (end == s || *end != '\0') {
         GGML_LOG_WARN("kleidiai: invalid %s='%s' (expected integer)\n", name, s);
-        *ok = false;
-        return 0;
+        *ok = خطأ;
+        أرجع 0;
     }
-    if (v < 0 || v > INT_MAX) {
+    إذا (v < 0 || v > ودھ_توں_ودھ_عدد) {
         GGML_LOG_WARN("kleidiai: out-of-range %s='%s'\n", name, s);
-        *ok = false;
-        return 0;
+        *ok = خطأ;
+        أرجع 0;
     }
-    *ok = true;
-    return (int)v;
+    *ok = سچ;
+    أرجع (صحيح)v;
 }
 
-static void init_kleidiai_context(void) {
-    ggml_critical_section_start();
-    static bool initialized = false;
+ساكن فراغ init_kleidiai_context(فراغ) {
+    ggml_critical_section_شروع();
+    ساكن منطقي initialized = خطأ;
 
-    if (!initialized) {
-        initialized = true;
+    إذا (!initialized) {
+        initialized = سچ;
 
         // Optional diagnostics/debug overrides; production defaults come from runtime detection.
-        const char *env_sme         = getenv("GGML_KLEIDIAI_SME");
-        const char *env_threads     = getenv("GGML_TOTAL_THREADS");
-        const char *env_chunk_mult  = getenv("GGML_KLEIDIAI_CHUNK_MULTIPLIER");
+        ثابت حرف *env_sme         = getenv("GGML_KLEIDIAI_SME");
+        ثابت حرف *env_دھاگے     = getenv("GGML_TOTAL_THREADS");
+        ثابت حرف *env_chunk_mult  = getenv("GGML_KLEIDIAI_CHUNK_MULTIPLIER");
 
-        const auto runtime_feat = ggml_feats_get_arch64_runtime();
+        ثابت خودکار runtime_feat = ggml_feats_get_arch64_runtime();
 
         size_t detected_smcus = 0;
 
@@ -326,37 +326,37 @@ static void init_kleidiai_context(void) {
                         (runtime_feat.has_fp16     ? CPU_FEATURE_FP16    : CPU_FEATURE_NONE) |
                         (runtime_feat.sve_cnt == QK8_0 ? CPU_FEATURE_SVE : CPU_FEATURE_NONE);
 
-        if (env_threads) {
-            bool ok = false;
-            int hint = parse_uint_env(env_threads, "GGML_TOTAL_THREADS", &ok);
-            if (ok && hint > 0) {
+        إذا (env_دھاگے) {
+            منطقي ok = خطأ;
+            صحيح hint = parse_uint_env(env_دھاگے, "GGML_TOTAL_THREADS", &ok);
+            إذا (ok && hint > 0) {
                 ctx.thread_hint = hint;
             }
         }
 
-        if (env_chunk_mult) {
-            bool ok = false;
-            int multiplier = parse_uint_env(env_chunk_mult, "GGML_KLEIDIAI_CHUNK_MULTIPLIER", &ok);
-            if (ok && multiplier > 0) {
+        إذا (env_chunk_mult) {
+            منطقي ok = خطأ;
+            صحيح multiplier = parse_uint_env(env_chunk_mult, "GGML_KLEIDIAI_CHUNK_MULTIPLIER", &ok);
+            إذا (ok && multiplier > 0) {
                 ctx.chunk_multiplier = multiplier;
             }
         }
 
-        int sme_cores = 0;
-        bool sme_env_ok = false;
-        bool sme_env_set = (env_sme != nullptr);
+        صحيح sme_cores = 0;
+        منطقي sme_env_ok = خطأ;
+        منطقي sme_env_سیٹ = (env_sme != خالی_سوچک);
 
-        const bool has_supported_sme_family = runtime_feat.has_sme;
-        bool sme_cap_detected = false;
+        ثابت منطقي has_supported_sme_family = runtime_feat.has_sme;
+        منطقي sme_cap_detected = خطأ;
 
-        if (has_supported_sme_family) {
-            detected_smcus = detect_num_smcus();
+        إذا (has_supported_sme_family) {
+            detected_smcus = detect_عدد_smcus();
             sme_cap_detected = detected_smcus > 0;
             // Some platforms expose SME without exposing a calibrated SMCU count.
             // Use one SME thread as the conservative default; add platform SMCU detection to raise it.
-            sme_cores = sme_cap_detected ? (int)detected_smcus : 1;
+            sme_cores = sme_cap_detected ? (صحيح)detected_smcus : 1;
 
-            if (!sme_env_set && !sme_cap_detected) {
+            إذا (!sme_env_سیٹ && !sme_cap_detected) {
                 GGML_LOG_INFO("kleidiai: SME detected; SMCU count unavailable, using conservative SME thread cap=1\n");
             }
         }
@@ -366,28 +366,28 @@ static void init_kleidiai_context(void) {
         //   - unset: use runtime detection.
         //   - 0:     disable SME-family kernels.
         //   - N > 0: use N as the SME thread cap, if an SME-family kernel is selectable.
-        if (sme_env_set) {
-            bool ok = false;
-            int v = parse_uint_env(env_sme, "GGML_KLEIDIAI_SME", &ok);
+        إذا (sme_env_سیٹ) {
+            منطقي ok = خطأ;
+            صحيح v = parse_uint_env(env_sme, "GGML_KLEIDIAI_SME", &ok);
             sme_env_ok = ok;
 
-            if (ok) {
-                if (has_supported_sme_family) {
+            إذا (ok) {
+                إذا (has_supported_sme_family) {
                     sme_cores = v;
-                } else {
-                    if (v > 0) {
+                } وإلا {
+                    إذا (v > 0) {
                         GGML_LOG_WARN("kleidiai: GGML_KLEIDIAI_SME=%d but SME is not supported on this CPU; disabling SME-family kernels\n", v);
                     }
                     sme_cores = 0;
                 }
-            } else {
+            } وإلا {
                 GGML_LOG_WARN("kleidiai: GGML_KLEIDIAI_SME set but parsing failed; using automatic SME thread cap\n");
             }
         }
 
-        if (sme_cores > 0 && has_supported_sme_family) {
+        إذا (sme_cores > 0 && has_supported_sme_family) {
             ctx.features |= CPU_FEATURE_SME;
-            if (runtime_feat.has_sme2) {
+            إذا (runtime_feat.has_sme2) {
                 ctx.features |= CPU_FEATURE_SME2;
             }
         }
@@ -398,778 +398,778 @@ static void init_kleidiai_context(void) {
         ctx.kernels_q8  = ggml_kleidiai_select_kernels_q8_0(ctx.features);
         ctx.kernels_f32 = ggml_kleidiai_select_kernels_f32(ctx.features);
 
-        if (!ctx.kernels_q4) {
-            GGML_LOG_INFO("kleidiai: no compatible q4 kernels found for CPU features mask %d\n", (int)ctx.features);
-        } else {
-            GGML_LOG_INFO("kleidiai: primary q4 kernel feature %s\n", cpu_feature_to_string(ctx.kernels_q4->required_cpu));
+        إذا (!ctx.kernels_q4) {
+            GGML_LOG_INFO("kleidiai: no compatible q4 kernels found for CPU features mask %d\n", (صحيح)ctx.features);
+        } وإلا {
+            GGML_LOG_INFO("kleidiai: primary q4 kernel feature %s\n", cpu_feature_منزل_string(ctx.kernels_q4->required_cpu));
         }
 
-        if (!ctx.kernels_q8) {
-            GGML_LOG_INFO("kleidiai: no compatible q8 kernels found for CPU features mask %d\n", (int)ctx.features);
-        } else {
-            GGML_LOG_INFO("kleidiai: primary q8 kernel feature %s\n", cpu_feature_to_string(ctx.kernels_q8->required_cpu));
+        إذا (!ctx.kernels_q8) {
+            GGML_LOG_INFO("kleidiai: no compatible q8 kernels found for CPU features mask %d\n", (صحيح)ctx.features);
+        } وإلا {
+            GGML_LOG_INFO("kleidiai: primary q8 kernel feature %s\n", cpu_feature_منزل_string(ctx.kernels_q8->required_cpu));
         }
 
-        if (!ctx.kernels_q4k) {
-            GGML_LOG_INFO("kleidiai: no compatible q4_k kernels found for CPU features mask %d\n", (int) ctx.features);
-        } else {
-            GGML_LOG_INFO("kleidiai: primary q4_k kernel feature %s\n", cpu_feature_to_string(ctx.kernels_q4k->required_cpu));
+        إذا (!ctx.kernels_q4k) {
+            GGML_LOG_INFO("kleidiai: no compatible q4_k kernels found for CPU features mask %d\n", (صحيح) ctx.features);
+        } وإلا {
+            GGML_LOG_INFO("kleidiai: primary q4_k kernel feature %s\n", cpu_feature_منزل_string(ctx.kernels_q4k->required_cpu));
         }
 
-        if (!ctx.kernels_f32) {
-            GGML_LOG_INFO("kleidiai: no compatible f32 kernels found for CPU features mask %d\n", (int)ctx.features);
-        } else {
-            GGML_LOG_INFO("kleidiai: primary f32 kernel feature %s\n", cpu_feature_to_string(ctx.kernels_f32->required_cpu));
+        إذا (!ctx.kernels_f32) {
+            GGML_LOG_INFO("kleidiai: no compatible f32 kernels found for CPU features mask %d\n", (صحيح)ctx.features);
+        } وإلا {
+            GGML_LOG_INFO("kleidiai: primary f32 kernel feature %s\n", cpu_feature_منزل_string(ctx.kernels_f32->required_cpu));
         }
 
-        const bool has_selected_sme_family_kernel =
+        ثابت منطقي has_selected_sme_family_kernel =
             (ctx.kernels_q4  && is_sme_family(ctx.kernels_q4->required_cpu)) ||
             (ctx.kernels_q4k && is_sme_family(ctx.kernels_q4k->required_cpu)) ||
             (ctx.kernels_q8  && is_sme_family(ctx.kernels_q8->required_cpu)) ||
             (ctx.kernels_f32 && is_sme_family(ctx.kernels_f32->required_cpu));
         ctx.sme_thread_cap = has_selected_sme_family_kernel ? sme_cores : 0;
 
-        if (has_selected_sme_family_kernel) {
-            if (sme_env_set && sme_env_ok && sme_cores > 0) {
+        إذا (has_selected_sme_family_kernel) {
+            إذا (sme_env_سیٹ && sme_env_ok && sme_cores > 0) {
                 GGML_LOG_INFO("kleidiai: SME enabled (GGML_KLEIDIAI_SME=%d debug override)\n", sme_cores);
-            } else if (sme_cap_detected) {
+            } وإلا إذا (sme_cap_detected) {
                 GGML_LOG_INFO("kleidiai: SME enabled (runtime-detected SME thread cap=%d)\n", sme_cores);
-            } else {
+            } وإلا {
                 GGML_LOG_INFO("kleidiai: SME enabled (runtime SME detected, conservative thread cap=%d)\n", sme_cores);
             }
-        } else {
+        } وإلا {
             GGML_LOG_INFO("kleidiai: SME disabled\n");
         }
     }
 
-    ggml_critical_section_end();
+    ggml_critical_section_سرا();
 }
 
-static inline int kleidiai_sme_thread_cap() {
-    return ctx.sme_thread_cap;
+ساكن مضمن صحيح kleidiai_sme_thread_cap() {
+    أرجع ctx.sme_thread_cap;
 }
 
-static inline size_t align_up(size_t value, size_t alignment) {
-    if (alignment == 0) {
-        return value;
+ساكن مضمن size_t align_اتے(size_t value, size_t alignment) {
+    إذا (alignment == 0) {
+        أرجع value;
     }
-    const size_t remainder = value % alignment;
-    return remainder == 0 ? value : value + (alignment - remainder);
+    ثابت size_t remainder = value % alignment;
+    أرجع remainder == 0 ? value : value + (alignment - remainder);
 }
 
-static inline size_t gcd_size(size_t a, size_t b) {
-    while (b != 0) {
-        const size_t t = a % b;
+ساكن مضمن size_t عاد_اعظم_ناپ(size_t a, size_t b) {
+    طالما (b != 0) {
+        ثابت size_t t = a % b;
         a = b;
         b = t;
     }
-    return a;
+    أرجع a;
 }
 
-static inline bool lcm_size(size_t a, size_t b, size_t & result) {
-    if (a == 0 || b == 0) {
-        result = 0;
-        return false;
+ساكن مضمن منطقي lcm_ناپ(size_t a, size_t b, size_t & نتیجہ) {
+    إذا (a == 0 || b == 0) {
+        نتیجہ = 0;
+        أرجع خطأ;
     }
-    const size_t g = gcd_size(a, b);
-    const size_t q = a / g;
-    if (q > SIZE_MAX / b) {
-        return false;
+    ثابت size_t g = عاد_اعظم_ناپ(a, b);
+    ثابت size_t q = a / g;
+    إذا (q > SIZE_MAX / b) {
+        أرجع خطأ;
     }
-    result = q * b;
-    return true;
+    نتیجہ = q * b;
+    أرجع سچ;
 }
 
-static inline size_t ceil_div_size(size_t a, size_t b) {
-    return b == 0 ? 0 : (a + b - 1) / b;
+ساكن مضمن size_t ceil_div_ناپ(size_t a, size_t b) {
+    أرجع b == 0 ? 0 : (a + b - 1) / b;
 }
 
-static inline size_t kleidiai_chunk_cols(size_t n, int nth_total, bool disable_chunking, size_t n_step) {
-    const size_t multiplier = (nth_total == 1 || disable_chunking) ? 1 : std::max<size_t>(1, (size_t) ctx.chunk_multiplier);
-    const size_t divisor = std::max<size_t>(1, (size_t) nth_total * multiplier);
-    const size_t chunk_cols = align_up(std::max<size_t>(1, ceil_div_size(n, divisor)), n_step);
-    return chunk_cols ? chunk_cols : n_step;
+ساكن مضمن size_t kleidiai_chunk_خانے_گنتی(size_t n, صحيح nth_کل, منطقي disable_chunking, size_t n_قدم) {
+    ثابت size_t multiplier = (nth_کل == 1 || disable_chunking) ? 1 : std::max<size_t>(1, (size_t) ctx.chunk_multiplier);
+    ثابت size_t مقسوم_علیہ = std::max<size_t>(1, (size_t) nth_کل * multiplier);
+    ثابت size_t chunk_خانے_گنتی = align_اتے(std::max<size_t>(1, ceil_div_ناپ(n, مقسوم_علیہ)), n_قدم);
+    أرجع chunk_خانے_گنتی ? chunk_خانے_گنتی : n_قدم;
 }
 
-struct kleidiai_block_args {
+بنية kleidiai_بلاک_دلیلاں {
     size_t lhs_bl;
     size_t rhs_bl;
     size_t pack_bl;
 };
 
-static inline kleidiai_block_args kleidiai_get_block_args(ggml_type rhs_type) {
-    switch (rhs_type) {
-        case GGML_TYPE_Q4_0:
-            return { QK4_0, QK4_0, QK4_0 };
-        case GGML_TYPE_Q4_K:
-            return { GGML_KLEIDIAI_Q4_K_BL, GGML_KLEIDIAI_Q4_K_BL, GGML_KLEIDIAI_Q4_K_BL };
-        case GGML_TYPE_Q8_0:
-            return { 0, 0, QK8_0 };
-        default:
-            return { 0, 0, 0 };
+ساكن مضمن kleidiai_بلاک_دلیلاں kleidiai_get_بلاک_دلیلاں(ggml_type rhs_type) {
+    بدل (rhs_type) {
+        حالة GGML_TYPE_Q4_0:
+            أرجع { QK4_0, QK4_0, QK4_0 };
+        حالة GGML_TYPE_Q4_K:
+            أرجع { GGML_KLEIDIAI_Q4_K_BL, GGML_KLEIDIAI_Q4_K_BL, GGML_KLEIDIAI_Q4_K_BL };
+        حالة GGML_TYPE_Q8_0:
+            أرجع { 0, 0, QK8_0 };
+        افتراضي:
+            أرجع { 0, 0, 0 };
     }
 }
 
-static inline bool kleidiai_pack_fallback_allowed() {
-    if (ctx.sme_thread_cap <= 0) {
-        return false;
+ساكن مضمن منطقي kleidiai_pack_fallback_allowed() {
+    إذا (ctx.sme_thread_cap <= 0) {
+        أرجع خطأ;
     }
-    if (ctx.thread_hint <= 0) {
-        return true;
+    إذا (ctx.thread_hint <= 0) {
+        أرجع سچ;
     }
-    return ctx.thread_hint > ctx.sme_thread_cap;
+    أرجع ctx.thread_hint > ctx.sme_thread_cap;
 }
 
-struct kleidiai_weight_header {
+بنية kleidiai_بھار_سرخی {
     uint32_t magic;
-    uint16_t version;
-    uint16_t slot_count;
+    uint16_t نسخہ_2;
+    uint16_t تھاں_گنتی;
     uint64_t offsets[GGML_KLEIDIAI_MAX_KERNEL_SLOTS];
     uint64_t sizes[GGML_KLEIDIAI_MAX_KERNEL_SLOTS];
 };
 
-static inline kleidiai_weight_header * kleidiai_weight_header_from_ptr(void * data) {
-    return reinterpret_cast<kleidiai_weight_header *>(data);
+ساكن مضمن kleidiai_بھار_سرخی * kleidiai_بھار_سرخی_from_ptr(فراغ * انکڑے) {
+    أرجع reinterpret_cast<kleidiai_بھار_سرخی *>(انکڑے);
 }
 
-static inline const kleidiai_weight_header * kleidiai_weight_header_from_ptr(const void * data) {
-    return reinterpret_cast<const kleidiai_weight_header *>(data);
+ساكن مضمن ثابت kleidiai_بھار_سرخی * kleidiai_بھار_سرخی_from_ptr(ثابت فراغ * انکڑے) {
+    أرجع reinterpret_cast<ثابت kleidiai_بھار_سرخی *>(انکڑے);
 }
 
-static inline bool kleidiai_is_weight_header_valid(const kleidiai_weight_header * header) {
-    if (!header) {
-        return false;
+ساكن مضمن منطقي kleidiai_is_بھار_سرخی_valid(ثابت kleidiai_بھار_سرخی * سرخی) {
+    إذا (!سرخی) {
+        أرجع خطأ;
     }
-    if (header->magic != GGML_KLEIDIAI_PACK_MAGIC || header->version != GGML_KLEIDIAI_PACK_VERSION) {
-        return false;
+    إذا (سرخی->magic != GGML_KLEIDIAI_PACK_MAGIC || سرخی->نسخہ_2 != GGML_KLEIDIAI_PACK_نسخہ) {
+        أرجع خطأ;
     }
-    if (header->slot_count == 0 || header->slot_count > GGML_KLEIDIAI_MAX_KERNEL_SLOTS) {
-        return false;
+    إذا (سرخی->تھاں_گنتی == 0 || سرخی->تھاں_گنتی > GGML_KLEIDIAI_MAX_KERNEL_SLOTS) {
+        أرجع خطأ;
     }
-    return true;
+    أرجع سچ;
 }
 
-static inline uint8_t * kleidiai_weight_slot_ptr(kleidiai_weight_header * header, int slot) {
-    if (!kleidiai_is_weight_header_valid(header)) {
-        return nullptr;
+ساكن مضمن uint8_t * kleidiai_بھار_تھاں_ptr(kleidiai_بھار_سرخی * سرخی, صحيح تھاں) {
+    إذا (!kleidiai_is_بھار_سرخی_valid(سرخی)) {
+        أرجع خالی_سوچک;
     }
-    if (slot < 0 || slot >= header->slot_count) {
-        return nullptr;
+    إذا (تھاں < 0 || تھاں >= سرخی->تھاں_گنتی) {
+        أرجع خالی_سوچک;
     }
-    return reinterpret_cast<uint8_t *>(header) + header->offsets[slot];
+    أرجع reinterpret_cast<uint8_t *>(سرخی) + سرخی->offsets[تھاں];
 }
 
-static inline const uint8_t * kleidiai_weight_slot_ptr(const kleidiai_weight_header * header, int slot) {
-    if (!kleidiai_is_weight_header_valid(header)) {
-        return nullptr;
+ساكن مضمن ثابت uint8_t * kleidiai_بھار_تھاں_ptr(ثابت kleidiai_بھار_سرخی * سرخی, صحيح تھاں) {
+    إذا (!kleidiai_is_بھار_سرخی_valid(سرخی)) {
+        أرجع خالی_سوچک;
     }
-    if (slot < 0 || slot >= header->slot_count) {
-        return nullptr;
+    إذا (تھاں < 0 || تھاں >= سرخی->تھاں_گنتی) {
+        أرجع خالی_سوچک;
     }
-    return reinterpret_cast<const uint8_t *>(header) + header->offsets[slot];
+    أرجع reinterpret_cast<ثابت uint8_t *>(سرخی) + سرخی->offsets[تھاں];
 }
 
-static inline ggml_kleidiai_kernels * kleidiai_primary_kernel_q4() {
-    return ctx.kernels_q4;
+ساكن مضمن ggml_kleidiai_kernels * kleidiai_primary_kernel_q4() {
+    أرجع ctx.kernels_q4;
 }
 
-static inline ggml_kleidiai_kernels * kleidiai_primary_kernel_q4k() {
-    return ctx.kernels_q4k;
+ساكن مضمن ggml_kleidiai_kernels * kleidiai_primary_kernel_q4k() {
+    أرجع ctx.kernels_q4k;
 }
 
-static inline ggml_kleidiai_kernels * kleidiai_primary_kernel_q8() {
-    return ctx.kernels_q8;
+ساكن مضمن ggml_kleidiai_kernels * kleidiai_primary_kernel_q8() {
+    أرجع ctx.kernels_q8;
 }
 
-static inline ggml_kleidiai_kernels * kleidiai_primary_kernel_f32() {
-    return ctx.kernels_f32;
+ساكن مضمن ggml_kleidiai_kernels * kleidiai_primary_kernel_f32() {
+    أرجع ctx.kernels_f32;
 }
 
-template <typename SelectFallback>
-static int kleidiai_collect_kernel_chain_common(
+سانچا <قسم_ناں SelectFallback>
+ساكن صحيح kleidiai_collect_kernel_chain_common(
         ggml_kleidiai_kernels * primary,
         cpu_feature features,
-        std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & out,
+        std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & باہرلا,
         SelectFallback select_fallback) {
-    int count = 0;
-    if (!primary) {
-        return 0;
+    صحيح count = 0;
+    إذا (!primary) {
+        أرجع 0;
     }
-    out[count++] = primary;
+    باہرلا[count++] = primary;
 
-    if (primary->rhs_info.repack_mode == RHS_REPACK_SINGLE_ONLY) {
-        return count;
+    إذا (primary->rhs_info.repack_منوال == RHS_REPACK_SINGLE_ONLY) {
+        أرجع count;
     }
 
-    if (is_sme_family(primary->required_cpu)) {
-        const cpu_feature fallback_mask = static_cast<cpu_feature>(features & ~(CPU_FEATURE_SME | CPU_FEATURE_SME2));
-        if (fallback_mask != CPU_FEATURE_NONE) {
-            ggml_kleidiai_kernels * fallback = select_fallback(fallback_mask);
-            if (fallback && fallback != primary &&
-                fallback->rhs_info.repack_mode != RHS_REPACK_SINGLE_ONLY &&
+    إذا (is_sme_family(primary->required_cpu)) {
+        ثابت cpu_feature fallback_نقاب = static_cast<cpu_feature>(features & ~(CPU_FEATURE_SME | CPU_FEATURE_SME2));
+        إذا (fallback_نقاب != CPU_FEATURE_NONE) {
+            ggml_kleidiai_kernels * fallback = select_fallback(fallback_نقاب);
+            إذا (fallback && fallback != primary &&
+                fallback->rhs_info.repack_منوال != RHS_REPACK_SINGLE_ONLY &&
                 fallback->lhs_type == primary->lhs_type &&
                 fallback->rhs_type == primary->rhs_type &&
                 fallback->op_type  == primary->op_type) {
-                out[count++] = fallback;
+                باہرلا[count++] = fallback;
             }
         }
     }
 
-    return count;
+    أرجع count;
 }
 
-static int kleidiai_collect_kernel_chain(const struct ggml_tensor * op,
-        std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & out) {
+ساكن صحيح kleidiai_collect_kernel_chain(ثابت بنية ggml_tensor * op,
+        std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & باہرلا) {
     ggml_kleidiai_kernels * primary = ggml_kleidiai_select_kernels(ctx.features, op);
-    return kleidiai_collect_kernel_chain_common(primary, ctx.features, out,
-        [&](cpu_feature mask) { return ggml_kleidiai_select_kernels(mask, op); });
+    أرجع kleidiai_collect_kernel_chain_common(primary, ctx.features, باہرلا,
+        [&](cpu_feature نقاب) { أرجع ggml_kleidiai_select_kernels(نقاب, op); });
 }
 
-static int kleidiai_collect_q4_chain(std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & out) {
+ساكن صحيح kleidiai_collect_q4_chain(std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & باہرلا) {
     ggml_kleidiai_kernels * primary = kleidiai_primary_kernel_q4();
-    return kleidiai_collect_kernel_chain_common(primary, ctx.features, out,
-        [&](cpu_feature mask) { return ggml_kleidiai_select_kernels_q4_0(mask); });
+    أرجع kleidiai_collect_kernel_chain_common(primary, ctx.features, باہرلا,
+        [&](cpu_feature نقاب) { أرجع ggml_kleidiai_select_kernels_q4_0(نقاب); });
 }
 
-static int kleidiai_collect_q4k_chain(std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & out) {
+ساكن صحيح kleidiai_collect_q4k_chain(std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & باہرلا) {
     ggml_kleidiai_kernels * primary = kleidiai_primary_kernel_q4k();
-    return kleidiai_collect_kernel_chain_common(primary, ctx.features, out,
-        [&](cpu_feature mask) { return ggml_kleidiai_select_kernels_q4_k(mask); });
+    أرجع kleidiai_collect_kernel_chain_common(primary, ctx.features, باہرلا,
+        [&](cpu_feature نقاب) { أرجع ggml_kleidiai_select_kernels_q4_k(نقاب); });
 }
 
-static int kleidiai_collect_q8_chain(std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & out) {
+ساكن صحيح kleidiai_collect_q8_chain(std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & باہرلا) {
     ggml_kleidiai_kernels * primary = kleidiai_primary_kernel_q8();
-    return kleidiai_collect_kernel_chain_common(primary, ctx.features, out,
-        [&](cpu_feature mask) { return ggml_kleidiai_select_kernels_q8_0(mask); });
+    أرجع kleidiai_collect_kernel_chain_common(primary, ctx.features, باہرلا,
+        [&](cpu_feature نقاب) { أرجع ggml_kleidiai_select_kernels_q8_0(نقاب); });
 }
 
-static int kleidiai_collect_f32_chain(std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & out) {
+ساكن صحيح kleidiai_collect_f32_chain(std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & باہرلا) {
     ggml_kleidiai_kernels * primary = kleidiai_primary_kernel_f32();
-    return kleidiai_collect_kernel_chain_common(primary, ctx.features, out,
-        [&](cpu_feature mask) { return ggml_kleidiai_select_kernels_f32(mask); });
+    أرجع kleidiai_collect_kernel_chain_common(primary, ctx.features, باہرلا,
+        [&](cpu_feature نقاب) { أرجع ggml_kleidiai_select_kernels_f32(نقاب); });
 }
 
-static inline int64_t ggml_ne(const ggml_tensor * tensor, int dim) {
+ساكن مضمن int64_t ggml_ne(ثابت ggml_tensor * tensor, صحيح dim) {
     GGML_ASSERT(dim >= 0 && dim < GGML_MAX_DIMS);
-    return tensor->ne[dim];
+    أرجع tensor->ne[dim];
 }
 
-namespace ggml::cpu::kleidiai {
+نطاق ggml::cpu::kleidiai {
 
-static size_t round_down(size_t x, size_t y) {
-    return y == 0 ? x : x - (x % y);
+ساكن size_t گیڑا_تھلے(size_t x, size_t y) {
+    أرجع y == 0 ? x : x - (x % y);
 }
 
-static void transpose_f32kxn_f16nxk(size_t n, size_t k, float * dst, const uint16_t * src, size_t rhs_stride) {
-    size_t src_stride = rhs_stride / sizeof(uint16_t);
+ساكن فراغ transpose_f32kxn_f16nxk(size_t n, size_t k, عائم * dst, ثابت uint16_t * src, size_t rhs_stride) {
+    size_t src_stride = rhs_stride / حجم(uint16_t);
     size_t dst_stride = n;
 
-    for (size_t k_idx = 0; k_idx < k; ++k_idx) {
-        for (size_t n_idx = 0; n_idx < n; ++n_idx) {
+    لكل (size_t k_idx = 0; k_idx < k; ++k_idx) {
+        لكل (size_t n_idx = 0; n_idx < n; ++n_idx) {
             uint16_t v = *(src + k_idx + n_idx * src_stride);
             *(dst + n_idx + k_idx * dst_stride) = kai_cast_f32_f16(v);
         }
     }
 }
 
-class tensor_traits : public ggml::cpu::tensor_traits {
-    bool work_size(int /* n_threads */, const struct ggml_tensor * op, size_t & size) override {
-        if (op->op != GGML_OP_MUL_MAT) {
-            return false;
+صنف tensor_traits : عام ggml::cpu::tensor_traits {
+    منطقي work_ناپ(صحيح /* n_threads */, ثابت بنية ggml_tensor * op, size_t & size) override {
+        إذا (op->op != GGML_OP_MUL_MAT) {
+            أرجع خطأ;
         }
 
         std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> kernel_chain;
-        const int slot_count = kleidiai_collect_kernel_chain(op, kernel_chain);
-        if (slot_count == 0) {
-            return false;
+        ثابت صحيح تھاں_گنتی = kleidiai_collect_kernel_chain(op, kernel_chain);
+        إذا (تھاں_گنتی == 0) {
+            أرجع خطأ;
         }
 
-        const bool is_gemv = op->src[1]->ne[1] == 1;
-        const size_t k = op->src[0]->ne[0];
-        const size_t n = op->src[0]->ne[1];
-        const size_t m = op->src[1]->ne[1];
+        ثابت منطقي is_gemv = op->src[1]->ne[1] == 1;
+        ثابت size_t k = op->src[0]->ne[0];
+        ثابت size_t n = op->src[0]->ne[1];
+        ثابت size_t m = op->src[1]->ne[1];
 
-        if (op->src[0]->type == GGML_TYPE_Q4_0 || op->src[0]->type == GGML_TYPE_Q4_K ||
+        إذا (op->src[0]->type == GGML_TYPE_Q4_0 || op->src[0]->type == GGML_TYPE_Q4_K ||
             op->src[0]->type == GGML_TYPE_Q8_0 || op->src[0]->type == GGML_TYPE_Q6_K) {
-            const kleidiai_block_args block_args = kleidiai_get_block_args(kernel_chain[0]->rhs_type);
-            const size_t qk = block_args.pack_bl;
+            ثابت kleidiai_بلاک_دلیلاں بلاک_دلیلاں = kleidiai_get_بلاک_دلیلاں(kernel_chain[0]->rhs_type);
+            ثابت size_t qk = بلاک_دلیلاں.pack_bl;
 
             size_t cursor = 0;
-            bool any_slot = false;
+            منطقي any_تھاں = خطأ;
 
-            for (int slot = 0; slot < slot_count; ++slot) {
-                ggml_kleidiai_kernels * kernels = kernel_chain[slot];
+            لكل (صحيح تھاں = 0; تھاں < تھاں_گنتی; ++تھاں) {
+                ggml_kleidiai_kernels * kernels = kernel_chain[تھاں];
                 lhs_packing_info * lhs_info = is_gemv ? &kernels->gemv_lhs_info : &kernels->gemm_lhs_info;
                 kernel_info * kernel        = is_gemv ? &kernels->gemv : &kernels->gemm;
 
-                if (!lhs_info || !lhs_info->packed_size_ex || !kernel) {
-                    return false;
+                إذا (!lhs_info || !lhs_info->packed_ناپ_ex || !kernel) {
+                    أرجع خطأ;
                 }
 
-                const size_t mr = kernel->get_mr();
-                const size_t kr = kernel->get_kr();
-                const size_t sr = kernel->get_sr();
+                ثابت size_t mr = kernel->get_mr();
+                ثابت size_t kr = kernel->get_kr();
+                ثابت size_t sr = kernel->get_sr();
 
-                const size_t packed = lhs_info->packed_size_ex(m, k, qk, mr, kr, sr);
+                ثابت size_t packed = lhs_info->packed_ناپ_ex(m, k, qk, mr, kr, sr);
 
-                cursor = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
+                cursor = align_اتے(cursor, GGML_KLEIDIAI_PACK_ALIGN);
                 cursor += packed;
-                any_slot = true;
+                any_تھاں = سچ;
             }
 
-            if (!any_slot) {
-                return false;
+            إذا (!any_تھاں) {
+                أرجع خطأ;
             }
 
             size = cursor;
-            return true;
+            أرجع سچ;
         }
 
-        if (op->src[0]->type == GGML_TYPE_F32) {
+        إذا (op->src[0]->type == GGML_TYPE_F32) {
             ggml_kleidiai_kernels * primary     = kernel_chain[0];
-            kernel_info *           gemv_kernel = primary ? &primary->gemv : nullptr;
-            if (is_gemv && op->src[1]->nb[0] == (int64_t) sizeof(float) && gemv_kernel &&
-                gemv_kernel->get_lhs_offset_ex && gemv_kernel->get_rhs_packed_offset_ex &&
-                gemv_kernel->run_kernel_ex && gemv_kernel->get_dst_offset) {
+            kernel_info *           gemv_kernel = primary ? &primary->gemv : خالی_سوچک;
+            إذا (is_gemv && op->src[1]->nb[0] == (int64_t) حجم(عائم) && gemv_kernel &&
+                gemv_kernel->get_lhs_وتھ_ex && gemv_kernel->get_rhs_packed_وتھ_ex &&
+                gemv_kernel->لگاتار_kernel_ex && gemv_kernel->get_dst_وتھ) {
                 size = 0;
-                return true;
+                أرجع سچ;
             }
 
             size_t cursor = 0;
-            bool any_slot = false;
+            منطقي any_تھاں = خطأ;
 
-            for (int slot = 0; slot < slot_count; ++slot) {
-                ggml_kleidiai_kernels * kernels = kernel_chain[slot];
+            لكل (صحيح تھاں = 0; تھاں < تھاں_گنتی; ++تھاں) {
+                ggml_kleidiai_kernels * kernels = kernel_chain[تھاں];
                 lhs_packing_info * lhs_info = &kernels->gemm_lhs_info;
                 kernel_info * kernel        = &kernels->gemm;
 
-                if (!lhs_info || !lhs_info->packed_size_ex || !kernel) {
-                    return false;
+                إذا (!lhs_info || !lhs_info->packed_ناپ_ex || !kernel) {
+                    أرجع خطأ;
                 }
 
-                const size_t mr = kernel->get_mr();
-                const size_t kr = kernel->get_kr();
-                const size_t sr = kernel->get_sr();
+                ثابت size_t mr = kernel->get_mr();
+                ثابت size_t kr = kernel->get_kr();
+                ثابت size_t sr = kernel->get_sr();
 
-                cursor  = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
-                cursor += lhs_info->packed_size_ex(m, k, 0, mr, kr, sr);
-                any_slot = true;
+                cursor  = align_اتے(cursor, GGML_KLEIDIAI_PACK_ALIGN);
+                cursor += lhs_info->packed_ناپ_ex(m, k, 0, mr, kr, sr);
+                any_تھاں = سچ;
             }
 
-            if (!any_slot) {
-                return false;
+            إذا (!any_تھاں) {
+                أرجع خطأ;
             }
 
             size = cursor;
-            return true;
+            أرجع سچ;
         }
 
-        if (op->src[0]->type == GGML_TYPE_F16) {
-            const int64_t lhs_batch_size0 = op->src[1]->ne[2];
-            const int64_t rhs_batch_size0 = op->src[0]->ne[2];
+        إذا (op->src[0]->type == GGML_TYPE_F16) {
+            ثابت int64_t lhs_batch_size0 = op->src[1]->ne[2];
+            ثابت int64_t rhs_batch_size0 = op->src[0]->ne[2];
             GGML_ASSERT(rhs_batch_size0 > 0);
-            const int64_t r = lhs_batch_size0 / rhs_batch_size0;
+            ثابت int64_t r = lhs_batch_size0 / rhs_batch_size0;
 
             size_t cursor = 0;
-            bool any_slot = false;
+            منطقي any_تھاں = خطأ;
 
-            for (int slot = 0; slot < slot_count; ++slot) {
-                ggml_kleidiai_kernels * kernels = kernel_chain[slot];
+            لكل (صحيح تھاں = 0; تھاں < تھاں_گنتی; ++تھاں) {
+                ggml_kleidiai_kernels * kernels = kernel_chain[تھاں];
                 lhs_packing_info * lhs_info = is_gemv ? &kernels->gemv_lhs_info : &kernels->gemm_lhs_info;
                 kernel_info * kernel        = is_gemv ? &kernels->gemv : &kernels->gemm;
-                if (!lhs_info || !lhs_info->packed_size_ex || !kernels->rhs_info.packed_size_ex || !kernel) {
-                    return false;
+                إذا (!lhs_info || !lhs_info->packed_ناپ_ex || !kernels->rhs_info.packed_ناپ_ex || !kernel) {
+                    أرجع خطأ;
                 }
 
-                const size_t mr = kernel->get_mr();
-                const size_t kr = kernel->get_kr();
-                const size_t sr = kernel->get_sr();
+                ثابت size_t mr = kernel->get_mr();
+                ثابت size_t kr = kernel->get_kr();
+                ثابت size_t sr = kernel->get_sr();
 
-                cursor  = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
-                cursor += lhs_info->packed_size_ex(m * r, k, 0, mr, kr, sr);
-                any_slot = true;
+                cursor  = align_اتے(cursor, GGML_KLEIDIAI_PACK_ALIGN);
+                cursor += lhs_info->packed_ناپ_ex(m * r, k, 0, mr, kr, sr);
+                any_تھاں = سچ;
             }
 
-            for (int slot = 0; slot < slot_count; ++slot) {
-                ggml_kleidiai_kernels * kernels = kernel_chain[slot];
+            لكل (صحيح تھاں = 0; تھاں < تھاں_گنتی; ++تھاں) {
+                ggml_kleidiai_kernels * kernels = kernel_chain[تھاں];
                 kernel_info * kernel = is_gemv ? &kernels->gemv : &kernels->gemm;
-                if (!kernel || !kernels->rhs_info.packed_size_ex) {
-                    return false;
+                إذا (!kernel || !kernels->rhs_info.packed_ناپ_ex) {
+                    أرجع خطأ;
                 }
-                cursor  = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
-                cursor += kernels->rhs_info.packed_size_ex(n, k, kernel->get_nr(), kernel->get_kr(), 0);
+                cursor  = align_اتے(cursor, GGML_KLEIDIAI_PACK_ALIGN);
+                cursor += kernels->rhs_info.packed_ناپ_ex(n, k, kernel->get_nr(), kernel->get_kr(), 0);
             }
 
-            cursor  = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
-            cursor += k * n * sizeof(float);
-            cursor  = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
-            cursor += n * sizeof(float);
+            cursor  = align_اتے(cursor, GGML_KLEIDIAI_PACK_ALIGN);
+            cursor += k * n * حجم(عائم);
+            cursor  = align_اتے(cursor, GGML_KLEIDIAI_PACK_ALIGN);
+            cursor += n * حجم(عائم);
 
-            if (!any_slot) {
-                return false;
+            إذا (!any_تھاں) {
+                أرجع خطأ;
             }
 
             size = cursor;
-            return true;
+            أرجع سچ;
         }
 
-        return false;
+        أرجع خطأ;
     }
 
-    bool compute_forward(struct ggml_compute_params * params, struct ggml_tensor * dst) override {
-        if (dst->op == GGML_OP_MUL_MAT) {
-            if (dst->src[0]->type == GGML_TYPE_Q4_0 || dst->src[0]->type == GGML_TYPE_Q4_K ||
+    منطقي compute_forward(بنية ggml_compute_params * params, بنية ggml_tensor * dst) override {
+        إذا (dst->op == GGML_OP_MUL_MAT) {
+            إذا (dst->src[0]->type == GGML_TYPE_Q4_0 || dst->src[0]->type == GGML_TYPE_Q4_K ||
                 dst->src[0]->type == GGML_TYPE_Q8_0 || dst->src[0]->type == GGML_TYPE_Q6_K) {
-                return compute_forward_qx(params, dst);
-            } else if (dst->src[0]->type == GGML_TYPE_F32) {
-                return compute_forward_f32(params, dst);
-            } else if (dst->src[0]->type == GGML_TYPE_F16) {
-                return compute_forward_fp16(params, dst);
+                أرجع compute_forward_qx(params, dst);
+            } وإلا إذا (dst->src[0]->type == GGML_TYPE_F32) {
+                أرجع compute_forward_f32(params, dst);
+            } وإلا إذا (dst->src[0]->type == GGML_TYPE_F16) {
+                أرجع compute_forward_fp16(params, dst);
             }
         }
-        return false;
+        أرجع خطأ;
     }
 
-    bool compute_forward_f32(ggml_compute_params * params, struct ggml_tensor * dst) {
+    منطقي compute_forward_f32(ggml_compute_params * params, بنية ggml_tensor * dst) {
         GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32);
 
-        const ggml_tensor * src0 = dst->src[0];
-        const ggml_tensor * src1 = dst->src[1];
+        ثابت ggml_tensor * src0 = dst->src[0];
+        ثابت ggml_tensor * src1 = dst->src[1];
 
-        GGML_TENSOR_BINARY_OP_LOCALS
+        GGML_TENSOR_ثنائی_OP_LOCALS
 
-        if (src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-            return false;
+        إذا (src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+            أرجع خطأ;
         }
 
         ggml_kleidiai_kernels * kernels = kleidiai_primary_kernel_f32();
-        if (!kernels) {
-            return false;
+        إذا (!kernels) {
+            أرجع خطأ;
         }
 
-        const size_t k = ne00;
-        const size_t m = ne11;
-        const size_t n = ne01;
-        const bool use_gemv = m == 1 && src1->nb[0] == (int64_t) sizeof(float) &&
-                              kernels->gemv.get_lhs_offset_ex &&
-                              kernels->gemv.get_rhs_packed_offset_ex &&
-                              kernels->gemv.run_kernel_ex &&
-                              kernels->gemv.get_dst_offset;
+        ثابت size_t k = ne00;
+        ثابت size_t m = ne11;
+        ثابت size_t n = ne01;
+        ثابت منطقي use_gemv = m == 1 && src1->nb[0] == (int64_t) حجم(عائم) &&
+                              kernels->gemv.get_lhs_وتھ_ex &&
+                              kernels->gemv.get_rhs_packed_وتھ_ex &&
+                              kernels->gemv.لگاتار_kernel_ex &&
+                              kernels->gemv.get_dst_وتھ;
 
         kernel_info * kernel        = use_gemv ? &kernels->gemv : &kernels->gemm;
         lhs_packing_info * lhs_info = &kernels->gemm_lhs_info;
 
-        if (!kernel || !kernel->get_lhs_offset_ex ||
-            !kernel->get_rhs_packed_offset_ex || !kernel->run_kernel_ex || !kernel->get_dst_offset) {
-            return false;
+        إذا (!kernel || !kernel->get_lhs_وتھ_ex ||
+            !kernel->get_rhs_packed_وتھ_ex || !kernel->لگاتار_kernel_ex || !kernel->get_dst_وتھ) {
+            أرجع خطأ;
         }
 
-        if (!use_gemv && (!lhs_info || !lhs_info->get_offset || !lhs_info->get_packed_offset_ex ||
-                          !lhs_info->packed_size_ex || !lhs_info->pack_func_ex)) {
-            return false;
+        إذا (!use_gemv && (!lhs_info || !lhs_info->get_وتھ || !lhs_info->get_packed_وتھ_ex ||
+                          !lhs_info->packed_ناپ_ex || !lhs_info->pack_func_ex)) {
+            أرجع خطأ;
         }
 
-        const kleidiai_weight_header * header = kleidiai_weight_header_from_ptr(src0->data);
-        const bool has_header = kleidiai_is_weight_header_valid(header);
+        ثابت kleidiai_بھار_سرخی * سرخی = kleidiai_بھار_سرخی_from_ptr(src0->انکڑے);
+        ثابت منطقي has_سرخی = kleidiai_is_بھار_سرخی_valid(سرخی);
 
-        const uint8_t * rhs_base = has_header ? kleidiai_weight_slot_ptr(header, 0)
-                                              : static_cast<const uint8_t *>(src0->data);
-        if (!rhs_base) {
-            return false;
+        ثابت uint8_t * rhs_ادھار = has_سرخی ? kleidiai_بھار_تھاں_ptr(سرخی, 0)
+                                              : static_cast<ثابت uint8_t *>(src0->انکڑے);
+        إذا (!rhs_ادھار) {
+            أرجع خطأ;
         }
 
-        const int nth = params->nth > 0 ? params->nth : 1;
-        const int ith = params->ith;
+        ثابت صحيح nth = params->nth > 0 ? params->nth : 1;
+        ثابت صحيح ith = params->ith;
 
-        const size_t mr = kernel->get_mr();
-        const size_t kr = kernel->get_kr();
-        const size_t sr = kernel->get_sr();
+        ثابت size_t mr = kernel->get_mr();
+        ثابت size_t kr = kernel->get_kr();
+        ثابت size_t sr = kernel->get_sr();
 
-        const size_t lhs_packed_size = use_gemv ? 0 : lhs_info->packed_size_ex(m, k, 0, mr, kr, sr);
-        if (!use_gemv) {
-            GGML_ASSERT(lhs_packed_size <= params->wsize);
+        ثابت size_t lhs_packed_ناپ = use_gemv ? 0 : lhs_info->packed_ناپ_ex(m, k, 0, mr, kr, sr);
+        إذا (!use_gemv) {
+            GGML_ASSERT(lhs_packed_ناپ <= params->wsize);
         }
 
         uint8_t * lhs_packed   = static_cast<uint8_t *>(params->wdata);
-        const size_t dst_stride = dst->nb[1];
-        const size_t n_step = kernel->get_n_step() ? kernel->get_n_step() : 1;
-        const bool disable_chunking = ggml_is_numa();
-        GGML_ASSERT(n <= (size_t) INT_MAX);
+        ثابت size_t dst_stride = dst->nb[1];
+        ثابت size_t n_قدم = kernel->get_n_قدم() ? kernel->get_n_قدم() : 1;
+        ثابت منطقي disable_chunking = ggml_is_numa();
+        GGML_ASSERT(n <= (size_t) ودھ_توں_ودھ_عدد);
 
-        const int64_t batch_size = ne12 * ne13;
-        for (int64_t batch_idx = 0; batch_idx < batch_size; ++batch_idx) {
-            const int64_t i12 = batch_idx % ne12;
-            const int64_t i13 = batch_idx / ne12;
-            const uint8_t * lhs_batch_base = static_cast<const uint8_t *>(src1->data) + i12 * src1->nb[2] + i13 * src1->nb[3];
-            uint8_t * dst_batch_base = static_cast<uint8_t *>(dst->data) + i12 * dst->nb[2] + i13 * dst->nb[3];
+        ثابت int64_t batch_ناپ = ne12 * ne13;
+        لكل (int64_t batch_idx = 0; batch_idx < batch_ناپ; ++batch_idx) {
+            ثابت int64_t i12 = batch_idx % ne12;
+            ثابت int64_t i13 = batch_idx / ne12;
+            ثابت uint8_t * lhs_batch_ادھار = static_cast<ثابت uint8_t *>(src1->انکڑے) + i12 * src1->nb[2] + i13 * src1->nb[3];
+            uint8_t * dst_batch_ادھار = static_cast<uint8_t *>(dst->انکڑے) + i12 * dst->nb[2] + i13 * dst->nb[3];
 
-            if (!use_gemv) {
-                const int64_t m_roundup_mr = kai_roundup((int64_t)m, (int64_t)mr);
-                int64_t max_threads = mr ? (m_roundup_mr / (int64_t)mr) : nth;
-                max_threads = std::max<int64_t>(1, max_threads);
-                const int64_t use_threads = std::min<int64_t>(nth, max_threads);
+            إذا (!use_gemv) {
+                ثابت int64_t m_roundup_mr = kai_roundup((int64_t)m, (int64_t)mr);
+                int64_t max_دھاگے = mr ? (m_roundup_mr / (int64_t)mr) : nth;
+                max_دھاگے = std::max<int64_t>(1, max_دھاگے);
+                ثابت int64_t use_دھاگے = std::min<int64_t>(nth, max_دھاگے);
 
-                if (ith < use_threads) {
-                    const int64_t num_m_per_thread0   = round_down((size_t)(m_roundup_mr / use_threads), mr);
-                    const int64_t num_m_per_threadN_1 = (int64_t)m - (use_threads - 1) * num_m_per_thread0;
+                إذا (ith < use_دھاگے) {
+                    ثابت int64_t عدد_m_فی_thread0   = گیڑا_تھلے((size_t)(m_roundup_mr / use_دھاگے), mr);
+                    ثابت int64_t عدد_m_فی_thread_N_1 = (int64_t)m - (use_دھاگے - 1) * عدد_m_فی_thread0;
 
-                    const int64_t m_start = (int64_t)ith * num_m_per_thread0;
-                    const int64_t m_count = (ith == use_threads - 1) ? num_m_per_threadN_1 : num_m_per_thread0;
+                    ثابت int64_t m_شروع = (int64_t)ith * عدد_m_فی_thread0;
+                    ثابت int64_t m_گنتی = (ith == use_دھاگے - 1) ? عدد_m_فی_thread_N_1 : عدد_m_فی_thread0;
 
-                    const size_t base_packed_off  = lhs_info->get_packed_offset_ex(m_start, k, 0, mr, kr, sr);
-                    const size_t next_block_off   = lhs_info->get_packed_offset_ex(m_start + mr, k, 0, mr, kr, sr);
-                    const size_t row_stride_bytes = mr ? (next_block_off - base_packed_off) / mr : 0;
+                    ثابت size_t ادھار_packed_off  = lhs_info->get_packed_وتھ_ex(m_شروع, k, 0, mr, kr, sr);
+                    ثابت size_t اگلا_بلاک_off   = lhs_info->get_packed_وتھ_ex(m_شروع + mr, k, 0, mr, kr, sr);
+                    ثابت size_t صف_stride_بائٹاں = mr ? (اگلا_بلاک_off - ادھار_packed_off) / mr : 0;
 
-                    int64_t remaining = m_count;
-                    int64_t cur       = m_start;
+                    int64_t بچیا = m_گنتی;
+                    int64_t cur       = m_شروع;
 
-                    while (remaining > 0) {
-                        const int64_t take = std::min<int64_t>((int64_t)m - cur, remaining);
-                        const size_t src_off = lhs_info->get_offset(cur, src1->nb[1]);
-                        const void * src_ptr = lhs_batch_base + src_off;
-                        const size_t dst_off = base_packed_off + (size_t)(cur - m_start) * row_stride_bytes;
-                        void * dst_ptr       = lhs_packed + dst_off;
+                    طالما (بچیا > 0) {
+                        ثابت int64_t take = std::min<int64_t>((int64_t)m - cur, بچیا);
+                        ثابت size_t src_off = lhs_info->get_وتھ(cur, src1->nb[1]);
+                        ثابت فراغ * src_ptr = lhs_batch_ادھار + src_off;
+                        ثابت size_t dst_off = ادھار_packed_off + (size_t)(cur - m_شروع) * صف_stride_بائٹاں;
+                        فراغ * dst_ptr       = lhs_packed + dst_off;
 
                         lhs_info->pack_func_ex(take, k, 0, mr, kr, sr, 0, src_ptr, src1->nb[1], dst_ptr);
 
                         cur       += take;
-                        remaining -= take;
+                        بچیا -= take;
                     }
                 }
             }
 
-            if (ith == 0) {
-                ggml_threadpool_chunk_set(params->threadpool, 0);
+            إذا (ith == 0) {
+                ggml_threadpool_chunk_سیٹ(params->threadpool, 0);
             }
 
             ggml_barrier(params->threadpool);
 
-            const size_t chunk_cols = kleidiai_chunk_cols(n, nth, disable_chunking, n_step);
-            GGML_ASSERT(chunk_cols <= (size_t) INT_MAX);
+            ثابت size_t chunk_خانے_گنتی = kleidiai_chunk_خانے_گنتی(n, nth, disable_chunking, n_قدم);
+            GGML_ASSERT(chunk_خانے_گنتی <= (size_t) ودھ_توں_ودھ_عدد);
 
-            int current_col = ggml_threadpool_chunk_add(params->threadpool, (int) chunk_cols);
-            while ((size_t) current_col < n) {
-                const size_t n_start = (size_t) current_col;
-                const size_t n_to_process = std::min(chunk_cols, n - n_start);
+            صحيح current_خانہ = ggml_threadpool_chunk_جوڑو(params->threadpool, (صحيح) chunk_خانے_گنتی);
+            طالما ((size_t) current_خانہ < n) {
+                ثابت size_t n_شروع = (size_t) current_خانہ;
+                ثابت size_t n_منزل_process = std::min(chunk_خانے_گنتی, n - n_شروع);
 
-                if (n_to_process > 0) {
-                    const size_t lhs_offset = use_gemv ? kernel->get_lhs_offset_ex(0, k, 0)
-                                                       : lhs_info->get_packed_offset_ex(0, k, 0, mr, kr, sr);
-                    const size_t rhs_packed_offset = kernel->get_rhs_packed_offset_ex(n_start, k, 0);
-                    const size_t dst_offset        = kernel->get_dst_offset(0, n_start, dst_stride);
+                إذا (n_منزل_process > 0) {
+                    ثابت size_t lhs_وتھ = use_gemv ? kernel->get_lhs_وتھ_ex(0, k, 0)
+                                                       : lhs_info->get_packed_وتھ_ex(0, k, 0, mr, kr, sr);
+                    ثابت size_t rhs_packed_وتھ = kernel->get_rhs_packed_وتھ_ex(n_شروع, k, 0);
+                    ثابت size_t dst_وتھ        = kernel->get_dst_وتھ(0, n_شروع, dst_stride);
 
-                    const void * lhs_ptr = use_gemv ? lhs_batch_base + lhs_offset
-                                                    : lhs_packed + lhs_offset;
-                    const void * rhs_ptr = rhs_base + rhs_packed_offset;
-                    float * dst_ptr      = reinterpret_cast<float *>(dst_batch_base + dst_offset);
+                    ثابت فراغ * lhs_ptr = use_gemv ? lhs_batch_ادھار + lhs_وتھ
+                                                    : lhs_packed + lhs_وتھ;
+                    ثابت فراغ * rhs_ptr = rhs_ادھار + rhs_packed_وتھ;
+                    عائم * dst_ptr      = reinterpret_cast<عائم *>(dst_batch_ادھار + dst_وتھ);
 
-                    kernel->run_kernel_ex(m, n_to_process, k, use_gemv ? src1->nb[1] : 0,
+                    kernel->لگاتار_kernel_ex(m, n_منزل_process, k, use_gemv ? src1->nb[1] : 0,
                                           lhs_ptr,
                                           rhs_ptr,
                                           dst_ptr,
                                           dst_stride,
-                                          sizeof(float),
+                                          حجم(عائم),
                                           -FLT_MAX,
                                           FLT_MAX);
                 }
 
-                current_col = ggml_threadpool_chunk_add(params->threadpool, (int) chunk_cols);
+                current_خانہ = ggml_threadpool_chunk_جوڑو(params->threadpool, (صحيح) chunk_خانے_گنتی);
             }
 
-            if (batch_idx != batch_size - 1) {
+            إذا (batch_idx != batch_ناپ - 1) {
                 ggml_barrier(params->threadpool);
             }
         }
 
-        return true;
+        أرجع سچ;
     }
 
-    bool compute_forward_fp16(ggml_compute_params * params, struct ggml_tensor * dst) {
-        const ggml_tensor * src0 = dst->src[0];
-        const ggml_tensor * src1 = dst->src[1];
+    منطقي compute_forward_fp16(ggml_compute_params * params, بنية ggml_tensor * dst) {
+        ثابت ggml_tensor * src0 = dst->src[0];
+        ثابت ggml_tensor * src1 = dst->src[1];
 
-        GGML_TENSOR_BINARY_OP_LOCALS
+        GGML_TENSOR_ثنائی_OP_LOCALS
 
         ggml_kleidiai_kernels *kernels = ggml_kleidiai_select_kernels(ctx.features, dst);
-        if (!kernels) {
-            return false;
+        إذا (!kernels) {
+            أرجع خطأ;
         }
 
-        const bool is_gemv = src1->ne[1] == 1;
+        ثابت منطقي is_gemv = src1->ne[1] == 1;
         kernel_info * kernel = is_gemv ? &kernels->gemv : &kernels->gemm;
         lhs_packing_info * lhs_info = is_gemv ? &kernels->gemv_lhs_info : &kernels->gemm_lhs_info;
         GGML_ASSERT(kernel);
-        if (!kernels->rhs_info.pack_func_ex ||
-            !kernel->get_lhs_offset_ex || !kernel->get_rhs_packed_offset_ex || !kernel->run_kernel_ex) {
-            return false;
+        إذا (!kernels->rhs_info.pack_func_ex ||
+            !kernel->get_lhs_وتھ_ex || !kernel->get_rhs_packed_وتھ_ex || !kernel->لگاتار_kernel_ex) {
+            أرجع خطأ;
         }
 
-        const int nth = params->nth;
-        const int ith = params->ith;
+        ثابت صحيح nth = params->nth;
+        ثابت صحيح ith = params->ith;
 
-        const int64_t lhs_batch_size0 = ne12;
-        const int64_t rhs_batch_size0 = ne02;
-        const int64_t batch_size      = lhs_batch_size0;
+        ثابت int64_t lhs_batch_size0 = ne12;
+        ثابت int64_t rhs_batch_size0 = ne02;
+        ثابت int64_t batch_ناپ      = lhs_batch_size0;
 
         GGML_ASSERT(rhs_batch_size0 > 0);
         GGML_ASSERT(lhs_batch_size0 % rhs_batch_size0 == 0);
-        const int64_t r = lhs_batch_size0 / rhs_batch_size0;
+        ثابت int64_t r = lhs_batch_size0 / rhs_batch_size0;
 
-        const int64_t m_group = ne11;
-        const int64_t m       = m_group;
-        const int64_t n       = ne01;
-        const int64_t k       = ne00;
+        ثابت int64_t m_گروہ = ne11;
+        ثابت int64_t m       = m_گروہ;
+        ثابت int64_t n       = ne01;
+        ثابت int64_t k       = ne00;
 
-        const size_t lhs_stride = src1->nb[1];
-        const size_t rhs_stride = src0->nb[1];
-        const size_t dst_stride = dst->nb[1];
+        ثابت size_t lhs_stride = src1->nb[1];
+        ثابت size_t rhs_stride = src0->nb[1];
+        ثابت size_t dst_stride = dst->nb[1];
 
-        const int64_t mr = (int64_t) kernel->get_mr();
-        const int64_t nr = (int64_t) kernel->get_nr();
-        const int64_t kr = (int64_t) kernel->get_kr();
-        const int64_t sr = (int64_t) kernel->get_sr();
+        ثابت int64_t mr = (int64_t) kernel->get_mr();
+        ثابت int64_t nr = (int64_t) kernel->get_nr();
+        ثابت int64_t kr = (int64_t) kernel->get_kr();
+        ثابت int64_t sr = (int64_t) kernel->get_sr();
 
-        const size_t lhs_packed_size = lhs_info->packed_size_ex(m, k, 0, mr, kr, sr);
-        const size_t rhs_packed_size = kernels->rhs_info.packed_size_ex(n, k, nr, kr, 0);
-        const size_t kxn_size        = k * n * sizeof(float);
-        const size_t bias_size       = n * sizeof(float);
+        ثابت size_t lhs_packed_ناپ = lhs_info->packed_ناپ_ex(m, k, 0, mr, kr, sr);
+        ثابت size_t rhs_packed_ناپ = kernels->rhs_info.packed_ناپ_ex(n, k, nr, kr, 0);
+        ثابت size_t kxn_ناپ        = k * n * حجم(عائم);
+        ثابت size_t bias_ناپ       = n * حجم(عائم);
 
-        const size_t wsize_required = lhs_packed_size + rhs_packed_size + kxn_size + bias_size;
+        ثابت size_t wsize_required = lhs_packed_ناپ + rhs_packed_ناپ + kxn_ناپ + bias_ناپ;
         GGML_ASSERT(wsize_required <= params->wsize);
 
         uint8_t * lhs_packed = static_cast<uint8_t *>(params->wdata);
-        uint8_t * rhs_packed = lhs_packed + lhs_packed_size;
-        uint8_t * rhs_kxn    = rhs_packed + rhs_packed_size;
-        uint8_t * bias       = rhs_kxn + kxn_size;
+        uint8_t * rhs_packed = lhs_packed + lhs_packed_ناپ;
+        uint8_t * rhs_kxn    = rhs_packed + rhs_packed_ناپ;
+        uint8_t * bias       = rhs_kxn + kxn_ناپ;
 
-        for (int64_t batch_idx = 0; batch_idx < batch_size; ++batch_idx) {
-            const int64_t rhs_batch_idx = batch_idx / r;
-            const uint8_t * rhs_batch_base = static_cast<const uint8_t *>(src0->data) + rhs_batch_idx * src0->nb[2];
-            uint8_t * dst_batch_base = static_cast<uint8_t *>(dst->data) + batch_idx * dst->nb[2];
+        لكل (int64_t batch_idx = 0; batch_idx < batch_ناپ; ++batch_idx) {
+            ثابت int64_t rhs_batch_idx = batch_idx / r;
+            ثابت uint8_t * rhs_batch_ادھار = static_cast<ثابت uint8_t *>(src0->انکڑے) + rhs_batch_idx * src0->nb[2];
+            uint8_t * dst_batch_ادھار = static_cast<uint8_t *>(dst->انکڑے) + batch_idx * dst->nb[2];
 
             // LHS packing (threaded over m, honoring mr alignment and KV groups)
             {
-                const int64_t m_roundup_mr = kai_roundup(m, mr);
-                const int64_t num_threads  = KAI_MIN(m_roundup_mr / mr, nth);
+                ثابت int64_t m_roundup_mr = kai_roundup(m, mr);
+                ثابت int64_t عدد_دھاگے  = KAI_MIN(m_roundup_mr / mr, nth);
 
-                if (ith < num_threads) {
-                    const int64_t num_m_per_thread0   = round_down((size_t)(m_roundup_mr / num_threads), (size_t)mr);
-                    const int64_t num_m_per_threadN_1 = m - (num_threads - 1) * num_m_per_thread0;
+                إذا (ith < عدد_دھاگے) {
+                    ثابت int64_t عدد_m_فی_thread0   = گیڑا_تھلے((size_t)(m_roundup_mr / عدد_دھاگے), (size_t)mr);
+                    ثابت int64_t عدد_m_فی_thread_N_1 = m - (عدد_دھاگے - 1) * عدد_m_فی_thread0;
 
-                    const int64_t m_start = ith * num_m_per_thread0;
-                    const int64_t m_count = (ith == num_threads - 1) ? num_m_per_threadN_1 : num_m_per_thread0;
+                    ثابت int64_t m_شروع = ith * عدد_m_فی_thread0;
+                    ثابت int64_t m_گنتی = (ith == عدد_دھاگے - 1) ? عدد_m_فی_thread_N_1 : عدد_m_فی_thread0;
 
                     // Base packed offset (aligned) and per-row stride in bytes
-                    const size_t base_packed_off  = lhs_info->get_packed_offset_ex(m_start, k, 0, mr, kr, sr);
-                    const size_t next_block_off   = lhs_info->get_packed_offset_ex(m_start + mr, k, 0, mr, kr, sr);
-                    const size_t row_stride_bytes = (next_block_off - base_packed_off) / (size_t)mr;
+                    ثابت size_t ادھار_packed_off  = lhs_info->get_packed_وتھ_ex(m_شروع, k, 0, mr, kr, sr);
+                    ثابت size_t اگلا_بلاک_off   = lhs_info->get_packed_وتھ_ex(m_شروع + mr, k, 0, mr, kr, sr);
+                    ثابت size_t صف_stride_بائٹاں = (اگلا_بلاک_off - ادھار_packed_off) / (size_t)mr;
 
-                    int64_t remaining = m_count;
-                    int64_t cur       = m_start;
+                    int64_t بچیا = m_گنتی;
+                    int64_t cur       = m_شروع;
 
-                    while (remaining > 0) {
-                        const int64_t row_in_group = cur;
-                        const int64_t avail        = m_group - row_in_group;
-                        const int64_t take         = std::min(avail, remaining);
+                    طالما (بچیا > 0) {
+                        ثابت int64_t صف_وچ_گروہ = cur;
+                        ثابت int64_t avail        = m_گروہ - صف_وچ_گروہ;
+                        ثابت int64_t take         = std::min(avail, بچیا);
 
-                        const uint8_t * lhs_batch_base = static_cast<const uint8_t *>(src1->data) + batch_idx * src1->nb[2];
-                        const void * src_ptr = lhs_batch_base + (size_t)row_in_group * lhs_stride;
-                        const size_t dst_off = base_packed_off + (size_t)(cur - m_start) * row_stride_bytes;
-                        void * dst_ptr       = lhs_packed + dst_off;
+                        ثابت uint8_t * lhs_batch_ادھار = static_cast<ثابت uint8_t *>(src1->انکڑے) + batch_idx * src1->nb[2];
+                        ثابت فراغ * src_ptr = lhs_batch_ادھار + (size_t)صف_وچ_گروہ * lhs_stride;
+                        ثابت size_t dst_off = ادھار_packed_off + (size_t)(cur - m_شروع) * صف_stride_بائٹاں;
+                        فراغ * dst_ptr       = lhs_packed + dst_off;
 
                         lhs_info->pack_func_ex(take, k, 0, mr, kr, sr, 0, src_ptr, lhs_stride, dst_ptr);
 
                         cur       += take;
-                        remaining -= take;
+                        بچیا -= take;
                     }
                 }
             }
 
             // RHS packing (single thread), then synchronize
-            if (ith == 0) {
-                memset(bias, 0, (size_t)n * sizeof(float));
+            إذا (ith == 0) {
+                memset(bias, 0, (size_t)n * حجم(عائم));
                 transpose_f32kxn_f16nxk((size_t)n, (size_t)k,
-                                        reinterpret_cast<float *>(rhs_kxn),
-                                        reinterpret_cast<const uint16_t *>(rhs_batch_base),
+                                        reinterpret_cast<عائم *>(rhs_kxn),
+                                        reinterpret_cast<ثابت uint16_t *>(rhs_batch_ادھار),
                                         rhs_stride);
 
-                kernels->rhs_info.pack_func_ex(1, n, k, nr, kr, sr, 0, n * sizeof(float),
-                             rhs_kxn, bias, nullptr, rhs_packed, 0, nullptr);
+                kernels->rhs_info.pack_func_ex(1, n, k, nr, kr, sr, 0, n * حجم(عائم),
+                             rhs_kxn, bias, خالی_سوچک, rhs_packed, 0, خالی_سوچک);
             }
 
             ggml_barrier(params->threadpool);
 
             // Matmul (threaded over n)
             {
-                const int64_t n_step  = (int64_t) kernel->get_n_step();
-                int64_t num_threads_n = KAI_MIN(n / n_step, nth);
-                if (num_threads_n <= 0) {
-                    num_threads_n = 1;
+                ثابت int64_t n_قدم  = (int64_t) kernel->get_n_قدم();
+                int64_t عدد_دھاگے_n = KAI_MIN(n / n_قدم, nth);
+                إذا (عدد_دھاگے_n <= 0) {
+                    عدد_دھاگے_n = 1;
                 }
 
-                if (ith < num_threads_n) {
-                    const int64_t num_n_per_thread0   = round_down((size_t)(n / num_threads_n), (size_t)n_step);
-                    const int64_t num_n_per_threadN_1 = n - (num_threads_n - 1) * num_n_per_thread0;
+                إذا (ith < عدد_دھاگے_n) {
+                    ثابت int64_t عدد_n_فی_thread0   = گیڑا_تھلے((size_t)(n / عدد_دھاگے_n), (size_t)n_قدم);
+                    ثابت int64_t عدد_n_فی_thread_N_1 = n - (عدد_دھاگے_n - 1) * عدد_n_فی_thread0;
 
-                    const int64_t n_start      = ith * num_n_per_thread0;
-                    const int64_t n_to_process = (ith == num_threads_n - 1) ? num_n_per_threadN_1 : num_n_per_thread0;
+                    ثابت int64_t n_شروع      = ith * عدد_n_فی_thread0;
+                    ثابت int64_t n_منزل_process = (ith == عدد_دھاگے_n - 1) ? عدد_n_فی_thread_N_1 : عدد_n_فی_thread0;
 
                     // LHS packed base at row 0 (consistent with packing above)
-                    const size_t lhs_packed_offset0 = lhs_info->get_packed_offset_ex(0, k, 0, mr, kr, sr);
-                    const size_t rhs_packed_offset  = kernel->get_rhs_packed_offset_ex(n_start, k, 0);
-                    const size_t dst_offset         = kernel->get_dst_offset((size_t)0, (size_t)n_start, dst_stride);
+                    ثابت size_t lhs_packed_offset0 = lhs_info->get_packed_وتھ_ex(0, k, 0, mr, kr, sr);
+                    ثابت size_t rhs_packed_وتھ  = kernel->get_rhs_packed_وتھ_ex(n_شروع, k, 0);
+                    ثابت size_t dst_وتھ         = kernel->get_dst_وتھ((size_t)0, (size_t)n_شروع, dst_stride);
 
-                    const void * lhs_ptr = lhs_packed + lhs_packed_offset0;
-                    const void * rhs_ptr = rhs_packed + rhs_packed_offset;
-                    float * dst_ptr      = reinterpret_cast<float *>(dst_batch_base + dst_offset);
+                    ثابت فراغ * lhs_ptr = lhs_packed + lhs_packed_offset0;
+                    ثابت فراغ * rhs_ptr = rhs_packed + rhs_packed_وتھ;
+                    عائم * dst_ptr      = reinterpret_cast<عائم *>(dst_batch_ادھار + dst_وتھ);
 
-                    kernel->run_kernel_ex(m, n_to_process, k, 0, lhs_ptr, rhs_ptr, dst_ptr, dst_stride, sizeof(float), -FLT_MAX, FLT_MAX);
+                    kernel->لگاتار_kernel_ex(m, n_منزل_process, k, 0, lhs_ptr, rhs_ptr, dst_ptr, dst_stride, حجم(عائم), -FLT_MAX, FLT_MAX);
                 }
             }
 
-            if (batch_idx != batch_size - 1) {
+            إذا (batch_idx != batch_ناپ - 1) {
                 ggml_barrier(params->threadpool);
             }
         }
 
-        return true;
+        أرجع سچ;
     }
 
-    bool compute_forward_qx(struct ggml_compute_params * params, struct ggml_tensor * dst) {
+    منطقي compute_forward_qx(بنية ggml_compute_params * params, بنية ggml_tensor * dst) {
         GGML_ASSERT(dst->src[0]->type == GGML_TYPE_Q4_0 || dst->src[0]->type == GGML_TYPE_Q4_K ||
                     dst->src[0]->type == GGML_TYPE_Q8_0 || dst->src[0]->type == GGML_TYPE_Q6_K);
 
-        const ggml_tensor * src0 = dst->src[0];
-        const ggml_tensor * src1 = dst->src[1];
+        ثابت ggml_tensor * src0 = dst->src[0];
+        ثابت ggml_tensor * src1 = dst->src[1];
 
-        GGML_TENSOR_BINARY_OP_LOCALS
+        GGML_TENSOR_ثنائی_OP_LOCALS
 
-        const kleidiai_weight_header * header = kleidiai_weight_header_from_ptr(src0->data);
-        const bool has_header = kleidiai_is_weight_header_valid(header);
-        const bool is_gemv = src1->ne[1] == 1;
+        ثابت kleidiai_بھار_سرخی * سرخی = kleidiai_بھار_سرخی_from_ptr(src0->انکڑے);
+        ثابت منطقي has_سرخی = kleidiai_is_بھار_سرخی_valid(سرخی);
+        ثابت منطقي is_gemv = src1->ne[1] == 1;
         std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> kernel_chain;
-        const int slot_total = kleidiai_collect_kernel_chain(dst, kernel_chain);
+        ثابت صحيح تھاں_کل = kleidiai_collect_kernel_chain(dst, kernel_chain);
 
-        auto weight_for_slot = [&](int slot_index, size_t & size_out) -> const uint8_t * {
-            if (slot_index < 0 || slot_index >= slot_total) {
-                return nullptr;
+        خودکار بھار_for_تھاں = [&](صحيح تھاں_اشاریہ, size_t & ناپ_باہرلا) -> ثابت uint8_t * {
+            إذا (تھاں_اشاریہ < 0 || تھاں_اشاریہ >= تھاں_کل) {
+                أرجع خالی_سوچک;
             }
-            if (has_header) {
-                if (slot_index < header->slot_count) {
-                    size_out = static_cast<size_t>(header->sizes[slot_index]);
-                    return kleidiai_weight_slot_ptr(header, slot_index);
+            إذا (has_سرخی) {
+                إذا (تھاں_اشاریہ < سرخی->تھاں_گنتی) {
+                    ناپ_باہرلا = static_cast<size_t>(سرخی->sizes[تھاں_اشاریہ]);
+                    أرجع kleidiai_بھار_تھاں_ptr(سرخی, تھاں_اشاریہ);
                 }
-                return nullptr;
+                أرجع خالی_سوچک;
             }
-            if (slot_index == 0) {
-                size_out = ggml_nbytes(src0);
-                return static_cast<const uint8_t *>(src0->data);
+            إذا (تھاں_اشاریہ == 0) {
+                ناپ_باہرلا = ggml_nbytes(src0);
+                أرجع static_cast<ثابت uint8_t *>(src0->انکڑے);
             }
-            return nullptr;
+            أرجع خالی_سوچک;
         };
 
-        struct runtime_slot {
-            int slot_index;
+        بنية runtime_تھاں {
+            صحيح تھاں_اشاریہ;
             ggml_kleidiai_kernels * kernels;
             kernel_info * kernel;
             lhs_packing_info * lhs_info;
@@ -1177,41 +1177,41 @@ class tensor_traits : public ggml::cpu::tensor_traits {
             size_t nr;
             size_t kr;
             size_t sr;
-            size_t n_step;
-            size_t lhs_packed_size;
-            size_t lhs_offset;
+            size_t n_قدم;
+            size_t lhs_packed_ناپ;
+            size_t lhs_وتھ;
             size_t lhs_bl;
             size_t rhs_bl;
             size_t pack_bl;
             size_t lhs_packed_offset0;
-            int assigned_threads;
-            int thread_begin;
-            int thread_end;
-            const uint8_t * rhs_base;
+            صحيح assigned_دھاگے;
+            صحيح thread_begin;
+            صحيح thread_سرا;
+            ثابت uint8_t * rhs_ادھار;
         };
 
-        std::array<runtime_slot, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> runtime{};
-        int runtime_count = 0;
+        std::array<runtime_تھاں, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> runtime{};
+        صحيح runtime_گنتی = 0;
 
-        for (int slot = 0; slot < slot_total && runtime_count < GGML_KLEIDIAI_MAX_KERNEL_SLOTS; ++slot) {
-            ggml_kleidiai_kernels * kernels = kernel_chain[slot];
+        لكل (صحيح تھاں = 0; تھاں < تھاں_کل && runtime_گنتی < GGML_KLEIDIAI_MAX_KERNEL_SLOTS; ++تھاں) {
+            ggml_kleidiai_kernels * kernels = kernel_chain[تھاں];
             kernel_info * kinfo      = is_gemv ? &kernels->gemv : &kernels->gemm;
             lhs_packing_info * linfo = is_gemv ? &kernels->gemv_lhs_info : &kernels->gemm_lhs_info;
-            if (!kinfo || !linfo || !linfo->packed_size_ex || !linfo->pack_func_ex || !linfo->get_offset ||
-                !kinfo->get_rhs_packed_offset_ex || !kinfo->run_kernel_ex || !kinfo->get_dst_offset) {
-                continue;
+            إذا (!kinfo || !linfo || !linfo->packed_ناپ_ex || !linfo->pack_func_ex || !linfo->get_وتھ ||
+                !kinfo->get_rhs_packed_وتھ_ex || !kinfo->لگاتار_kernel_ex || !kinfo->get_dst_وتھ) {
+                استمر;
             }
 
-            size_t rhs_size = 0;
-            const uint8_t * rhs_ptr = weight_for_slot(slot, rhs_size);
-            if (!rhs_ptr || rhs_size == 0) {
-                continue;
+            size_t rhs_ناپ = 0;
+            ثابت uint8_t * rhs_ptr = بھار_for_تھاں(تھاں, rhs_ناپ);
+            إذا (!rhs_ptr || rhs_ناپ == 0) {
+                استمر;
             }
 
-            const kleidiai_block_args block_args = kleidiai_get_block_args(kernels->rhs_type);
+            ثابت kleidiai_بلاک_دلیلاں بلاک_دلیلاں = kleidiai_get_بلاک_دلیلاں(kernels->rhs_type);
 
-            runtime[runtime_count] = {
-                slot,
+            runtime[runtime_گنتی] = {
+                تھاں,
                 kernels,
                 kinfo,
                 linfo,
@@ -1219,693 +1219,693 @@ class tensor_traits : public ggml::cpu::tensor_traits {
                 kinfo->get_nr(),
                 kinfo->get_kr(),
                 kinfo->get_sr(),
-                kinfo->get_n_step(),
+                kinfo->get_n_قدم(),
                 0,
                 0,
-                block_args.lhs_bl,
-                block_args.rhs_bl,
-                block_args.pack_bl,
+                بلاک_دلیلاں.lhs_bl,
+                بلاک_دلیلاں.rhs_bl,
+                بلاک_دلیلاں.pack_bl,
                 0,
                 0,
                 0,
                 0,
                 rhs_ptr
             };
-            ++runtime_count;
+            ++runtime_گنتی;
         }
 
-        if (runtime_count == 0) {
+        إذا (runtime_گنتی == 0) {
             GGML_LOG_WARN("kleidiai: no runtime kernel slot available for supported op %s\n", dst->name);
-            return false;
+            أرجع خطأ;
         }
 
-        const int nth_total = params->nth > 0 ? params->nth : 1;
-        const int ith_total = params->ith;
+        ثابت صحيح nth_کل = params->nth > 0 ? params->nth : 1;
+        ثابت صحيح ith_کل = params->ith;
 
-        int sme_slot = -1;
-        int non_sme_slot = -1;
-        for (int i = 0; i < runtime_count; ++i) {
-            if (is_sme_family(runtime[i].kernels->required_cpu)) {
-                sme_slot = i;
-                break;
+        صحيح sme_تھاں = -1;
+        صحيح non_sme_تھاں = -1;
+        لكل (صحيح i = 0; i < runtime_گنتی; ++i) {
+            إذا (is_sme_family(runtime[i].kernels->required_cpu)) {
+                sme_تھاں = i;
+                اكسر;
             }
         }
 
-        for (int i = 0; i < runtime_count; ++i) {
-            if (!is_sme_family(runtime[i].kernels->required_cpu)) {
-                non_sme_slot = i;
-                break;
+        لكل (صحيح i = 0; i < runtime_گنتی; ++i) {
+            إذا (!is_sme_family(runtime[i].kernels->required_cpu)) {
+                non_sme_تھاں = i;
+                اكسر;
             }
         }
 
-        const int sme_cap_limit = ctx.sme_thread_cap;
-        const bool use_hybrid = sme_cap_limit > 0 &&
-                                 runtime_count > 1 &&
-                                 nth_total > sme_cap_limit;
+        ثابت صحيح sme_cap_حد_بندی = ctx.sme_thread_cap;
+        ثابت منطقي use_hybrid = sme_cap_حد_بندی > 0 &&
+                                 runtime_گنتی > 1 &&
+                                 nth_کل > sme_cap_حد_بندی;
         // Heuristic: disable hybrid for very small workloads where per-slot overhead dominates.
         // If rows are small or average columns per thread are small, keep single-slot.
-        size_t min_cols_per_thread = 0;
-        if (runtime_count > 0 && nth_total > 0) {
-            min_cols_per_thread = (size_t) std::max<int64_t>(1, (int64_t)ne01 / (int64_t)nth_total);
+        size_t min_خانے_گنتی_فی_thread = 0;
+        إذا (runtime_گنتی > 0 && nth_کل > 0) {
+            min_خانے_گنتی_فی_thread = (size_t) std::max<int64_t>(1, (int64_t)ne01 / (int64_t)nth_کل);
         }
-        const bool too_small_for_hybrid = (min_cols_per_thread < 2) || (ne11 < 128);
+        ثابت منطقي too_small_for_hybrid = (min_خانے_گنتی_فی_thread < 2) || (ne11 < 128);
 
-        const bool hybrid_enabled = use_hybrid && !too_small_for_hybrid;
+        ثابت منطقي hybrid_enabled = use_hybrid && !too_small_for_hybrid;
 
-        if (!hybrid_enabled) {
-            int chosen_slot = 0;
-            if (too_small_for_hybrid && sme_slot != -1) {
-                chosen_slot = nth_total > sme_cap_limit && non_sme_slot != -1 ? non_sme_slot : sme_slot;
-            } else if (runtime_count > 1 && ctx.sme_thread_cap > 0 && nth_total > ctx.sme_thread_cap) {
-                chosen_slot = 1;
+        إذا (!hybrid_enabled) {
+            صحيح chosen_تھاں = 0;
+            إذا (too_small_for_hybrid && sme_تھاں != -1) {
+                chosen_تھاں = nth_کل > sme_cap_حد_بندی && non_sme_تھاں != -1 ? non_sme_تھاں : sme_تھاں;
+            } وإلا إذا (runtime_گنتی > 1 && ctx.sme_thread_cap > 0 && nth_کل > ctx.sme_thread_cap) {
+                chosen_تھاں = 1;
             }
-            if (chosen_slot != 0 && chosen_slot < runtime_count) {
-                runtime[0] = runtime[chosen_slot];
-                runtime[0].assigned_threads = 0;
+            إذا (chosen_تھاں != 0 && chosen_تھاں < runtime_گنتی) {
+                runtime[0] = runtime[chosen_تھاں];
+                runtime[0].assigned_دھاگے = 0;
                 runtime[0].thread_begin = 0;
-                runtime[0].thread_end = 0;
+                runtime[0].thread_سرا = 0;
             }
-            runtime_count = runtime_count > 0 ? 1 : 0;
+            runtime_گنتی = runtime_گنتی > 0 ? 1 : 0;
 
             // Recompute SME slot based on the collapsed runtime[0]
-            sme_slot = -1;
-            if (runtime_count > 0 &&
+            sme_تھاں = -1;
+            إذا (runtime_گنتی > 0 &&
                 is_sme_family(runtime[0].kernels->required_cpu)) {
-                sme_slot = 0;
+                sme_تھاں = 0;
             }
         }
 
-        const bool sme_single_only = sme_slot != -1 &&
-                                     runtime[sme_slot].kernels->rhs_info.repack_mode == RHS_REPACK_SINGLE_ONLY;
-        int sme_cap = sme_single_only ? nth_total : kleidiai_sme_thread_cap();
-        if (sme_cap < 0) {
-            sme_cap = nth_total;
+        ثابت منطقي sme_single_only = sme_تھاں != -1 &&
+                                     runtime[sme_تھاں].kernels->rhs_info.repack_منوال == RHS_REPACK_SINGLE_ONLY;
+        صحيح sme_cap = sme_single_only ? nth_کل : kleidiai_sme_thread_cap();
+        إذا (sme_cap < 0) {
+            sme_cap = nth_کل;
         }
-        sme_cap = std::min(sme_cap, nth_total);
+        sme_cap = std::min(sme_cap, nth_کل);
 
-        int threads_remaining = nth_total;
-        if (sme_slot != -1) {
-            int sme_threads = std::min(std::max(sme_cap, 0), threads_remaining);
-            runtime[sme_slot].assigned_threads = sme_threads;
-            threads_remaining -= sme_threads;
+        صحيح دھاگے_بچیا = nth_کل;
+        إذا (sme_تھاں != -1) {
+            صحيح sme_دھاگے = std::min(std::max(sme_cap, 0), دھاگے_بچیا);
+            runtime[sme_تھاں].assigned_دھاگے = sme_دھاگے;
+            دھاگے_بچیا -= sme_دھاگے;
         }
 
-        int fallback_indices[GGML_KLEIDIAI_MAX_KERNEL_SLOTS];
-        int fallback_count = 0;
+        صحيح fallback_indices[GGML_KLEIDIAI_MAX_KERNEL_SLOTS];
+        صحيح fallback_گنتی = 0;
         // The current hybrid chain is bounded to SME + one non-SME fallback slot.
         GGML_ASSERT(GGML_KLEIDIAI_MAX_KERNEL_SLOTS == 2);
-        for (int i = 0; i < runtime_count; ++i) {
-            if (i == sme_slot) {
-                continue;
+        لكل (صحيح i = 0; i < runtime_گنتی; ++i) {
+            إذا (i == sme_تھاں) {
+                استمر;
             }
-            fallback_indices[fallback_count++] = i;
+            fallback_indices[fallback_گنتی++] = i;
         }
 
-        for (int fi = 0; fi < fallback_count; ++fi) {
-            if (threads_remaining <= 0) {
-                break;
+        لكل (صحيح fi = 0; fi < fallback_گنتی; ++fi) {
+            إذا (دھاگے_بچیا <= 0) {
+                اكسر;
             }
-            const int slot_index = fallback_indices[fi];
-            const int slots_left = fallback_count - fi;
-            int share = (threads_remaining + slots_left - 1) / slots_left;
-            share     = std::min(share, threads_remaining);
-            runtime[slot_index].assigned_threads = share;
-            threads_remaining -= share;
+            ثابت صحيح تھاں_اشاریہ = fallback_indices[fi];
+            ثابت صحيح slots_بایاں = fallback_گنتی - fi;
+            صحيح share = (دھاگے_بچیا + slots_بایاں - 1) / slots_بایاں;
+            share     = std::min(share, دھاگے_بچیا);
+            runtime[تھاں_اشاریہ].assigned_دھاگے = share;
+            دھاگے_بچیا -= share;
         }
 
-        int thread_cursor = 0;
-        for (int i = 0; i < runtime_count; ++i) {
+        صحيح thread_cursor = 0;
+        لكل (صحيح i = 0; i < runtime_گنتی; ++i) {
             runtime[i].thread_begin = thread_cursor;
-            thread_cursor += runtime[i].assigned_threads;
-            runtime[i].thread_end = thread_cursor;
+            thread_cursor += runtime[i].assigned_دھاگے;
+            runtime[i].thread_سرا = thread_cursor;
         }
         GGML_ASSERT(thread_cursor > 0);
-        const int active_threads = thread_cursor;
+        ثابت صحيح سرگرم_دھاگے = thread_cursor;
 
-        int local_slot = -1;
-        int local_ith  = 0;
-        for (int i = 0; i < runtime_count; ++i) {
-            if (ith_total >= runtime[i].thread_begin && ith_total < runtime[i].thread_end) {
-                local_slot = i;
-                local_ith  = ith_total - runtime[i].thread_begin;
-                break;
+        صحيح local_تھاں = -1;
+        صحيح local_ith  = 0;
+        لكل (صحيح i = 0; i < runtime_گنتی; ++i) {
+            إذا (ith_کل >= runtime[i].thread_begin && ith_کل < runtime[i].thread_سرا) {
+                local_تھاں = i;
+                local_ith  = ith_کل - runtime[i].thread_begin;
+                اكسر;
             }
         }
-        const size_t k = ne00;
-        const size_t m = ne11;
-        const size_t n = ne01;
+        ثابت size_t k = ne00;
+        ثابت size_t m = ne11;
+        ثابت size_t n = ne01;
 
         size_t cursor = 0;
-        for (int i = 0; i < runtime_count; ++i) {
-            runtime[i].lhs_packed_size = runtime[i].lhs_info->packed_size_ex(m, k, runtime[i].pack_bl, runtime[i].mr, runtime[i].kr, runtime[i].sr);
-            cursor = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
-            runtime[i].lhs_offset = cursor;
-            runtime[i].lhs_packed_offset0 = runtime[i].lhs_info->get_packed_offset_ex(0, k, runtime[i].lhs_bl, runtime[i].mr, runtime[i].kr, runtime[i].sr);
-            cursor += runtime[i].lhs_packed_size;
+        لكل (صحيح i = 0; i < runtime_گنتی; ++i) {
+            runtime[i].lhs_packed_ناپ = runtime[i].lhs_info->packed_ناپ_ex(m, k, runtime[i].pack_bl, runtime[i].mr, runtime[i].kr, runtime[i].sr);
+            cursor = align_اتے(cursor, GGML_KLEIDIAI_PACK_ALIGN);
+            runtime[i].lhs_وتھ = cursor;
+            runtime[i].lhs_packed_offset0 = runtime[i].lhs_info->get_packed_وتھ_ex(0, k, runtime[i].lhs_bl, runtime[i].mr, runtime[i].kr, runtime[i].sr);
+            cursor += runtime[i].lhs_packed_ناپ;
         }
 
         GGML_ASSERT(cursor <= params->wsize);
         uint8_t * scratch = static_cast<uint8_t *>(params->wdata);
 
-        size_t common_step = 1;
-        for (int i = 0; i < runtime_count; ++i) {
-            if (runtime[i].assigned_threads == 0) {
-                continue;
+        size_t common_قدم = 1;
+        لكل (صحيح i = 0; i < runtime_گنتی; ++i) {
+            إذا (runtime[i].assigned_دھاگے == 0) {
+                استمر;
             }
-            size_t next_step = 0;
-            if (!lcm_size(common_step, runtime[i].n_step ? runtime[i].n_step : 1, next_step)) {
-                return false;
+            size_t اگلا_قدم = 0;
+            إذا (!lcm_ناپ(common_قدم, runtime[i].n_قدم ? runtime[i].n_قدم : 1, اگلا_قدم)) {
+                أرجع خطأ;
             }
-            common_step = next_step;
+            common_قدم = اگلا_قدم;
         }
-        GGML_ASSERT(common_step > 0);
+        GGML_ASSERT(common_قدم > 0);
 
-        const bool disable_chunking = ggml_is_numa();
-        const size_t chunk_multiplier = std::max(1, ctx.chunk_multiplier);
-        const size_t chunk_divisor = (active_threads == 1 || disable_chunking) ? (size_t) active_threads : (size_t) active_threads * chunk_multiplier;
-        size_t chunk_cols = align_up(std::max<size_t>(1, ceil_div_size(n, chunk_divisor)), common_step);
-        if (chunk_cols == 0) {
-            chunk_cols = common_step;
+        ثابت منطقي disable_chunking = ggml_is_numa();
+        ثابت size_t chunk_multiplier = std::max(1, ctx.chunk_multiplier);
+        ثابت size_t chunk_مقسوم_علیہ = (سرگرم_دھاگے == 1 || disable_chunking) ? (size_t) سرگرم_دھاگے : (size_t) سرگرم_دھاگے * chunk_multiplier;
+        size_t chunk_خانے_گنتی = align_اتے(std::max<size_t>(1, ceil_div_ناپ(n, chunk_مقسوم_علیہ)), common_قدم);
+        إذا (chunk_خانے_گنتی == 0) {
+            chunk_خانے_گنتی = common_قدم;
         }
         // If common_step is larger than n, the loop below runs one valid tail chunk
         // with cols == n.
-        const size_t nchunk_size = std::max<size_t>(1, ceil_div_size(n, chunk_cols));
-        GGML_ASSERT(nchunk_size <= (size_t)INT_MAX);
-        const int nchunk = (int)nchunk_size;
-        const size_t dst_stride = dst->nb[1];
+        ثابت size_t nchunk_ناپ = std::max<size_t>(1, ceil_div_ناپ(n, chunk_خانے_گنتی));
+        GGML_ASSERT(nchunk_ناپ <= (size_t)ودھ_توں_ودھ_عدد);
+        ثابت صحيح nchunk = (صحيح)nchunk_ناپ;
+        ثابت size_t dst_stride = dst->nb[1];
 
-        auto run_chunk = [&](runtime_slot & slot, size_t global_start, size_t cols, uint8_t * dst_batch_base) {
-            const size_t rhs_packed_offset = slot.kernel->get_rhs_packed_offset_ex(global_start, k, slot.rhs_bl);
-            const size_t dst_offset        = slot.kernel->get_dst_offset(0, global_start, dst_stride);
+        خودکار لگاتار_chunk = [&](runtime_تھاں & تھاں, size_t global_شروع, size_t خانے_گنتی_2, uint8_t * dst_batch_ادھار) {
+            ثابت size_t rhs_packed_وتھ = تھاں.kernel->get_rhs_packed_وتھ_ex(global_شروع, k, تھاں.rhs_bl);
+            ثابت size_t dst_وتھ        = تھاں.kernel->get_dst_وتھ(0, global_شروع, dst_stride);
 
-            const uint8_t * lhs_ptr = scratch + slot.lhs_offset + slot.lhs_packed_offset0;
-            const uint8_t * rhs_ptr = slot.rhs_base + rhs_packed_offset;
-            float * dst_ptr         = reinterpret_cast<float *>(dst_batch_base + dst_offset);
+            ثابت uint8_t * lhs_ptr = scratch + تھاں.lhs_وتھ + تھاں.lhs_packed_offset0;
+            ثابت uint8_t * rhs_ptr = تھاں.rhs_ادھار + rhs_packed_وتھ;
+            عائم * dst_ptr         = reinterpret_cast<عائم *>(dst_batch_ادھار + dst_وتھ);
 
-            slot.kernel->run_kernel_ex(m, cols, k, slot.rhs_bl,
+            تھاں.kernel->لگاتار_kernel_ex(m, خانے_گنتی_2, k, تھاں.rhs_bl,
                                        lhs_ptr,
                                        rhs_ptr,
                                        dst_ptr,
                                        dst_stride,
-                                       sizeof(float),
+                                       حجم(عائم),
                                        -FLT_MAX,
                                        FLT_MAX);
         };
 
-        for (int64_t batch_idx = 0; batch_idx < ne12; ++batch_idx) {
-            const uint8_t * lhs_batch_base = static_cast<const uint8_t *>(src1->data) + batch_idx * src1->nb[2];
-            uint8_t * dst_batch_base = static_cast<uint8_t *>(dst->data) + batch_idx * dst->nb[2];
+        لكل (int64_t batch_idx = 0; batch_idx < ne12; ++batch_idx) {
+            ثابت uint8_t * lhs_batch_ادھار = static_cast<ثابت uint8_t *>(src1->انکڑے) + batch_idx * src1->nb[2];
+            uint8_t * dst_batch_ادھار = static_cast<uint8_t *>(dst->انکڑے) + batch_idx * dst->nb[2];
 
-            if (local_slot != -1) {
-                runtime_slot & slot = runtime[local_slot];
-                const int64_t m_roundup_mr = kai_roundup((int64_t)m, (int64_t)slot.mr);
-                int64_t max_threads = slot.mr ? (m_roundup_mr / (int64_t)slot.mr) : slot.assigned_threads;
-                max_threads = std::max<int64_t>(1, max_threads);
-                const int64_t use_threads = std::min<int64_t>(slot.assigned_threads, max_threads);
+            إذا (local_تھاں != -1) {
+                runtime_تھاں & تھاں = runtime[local_تھاں];
+                ثابت int64_t m_roundup_mr = kai_roundup((int64_t)m, (int64_t)تھاں.mr);
+                int64_t max_دھاگے = تھاں.mr ? (m_roundup_mr / (int64_t)تھاں.mr) : تھاں.assigned_دھاگے;
+                max_دھاگے = std::max<int64_t>(1, max_دھاگے);
+                ثابت int64_t use_دھاگے = std::min<int64_t>(تھاں.assigned_دھاگے, max_دھاگے);
 
-                if (local_ith < use_threads) {
-                    const int64_t num_m_per_thread0   = round_down((size_t)(m_roundup_mr / use_threads), slot.mr);
-                    const int64_t num_m_per_threadN_1 = (int64_t)m - (use_threads - 1) * num_m_per_thread0;
+                إذا (local_ith < use_دھاگے) {
+                    ثابت int64_t عدد_m_فی_thread0   = گیڑا_تھلے((size_t)(m_roundup_mr / use_دھاگے), تھاں.mr);
+                    ثابت int64_t عدد_m_فی_thread_N_1 = (int64_t)m - (use_دھاگے - 1) * عدد_m_فی_thread0;
 
-                    const int64_t m_start = (int64_t)local_ith * num_m_per_thread0;
-                    const int64_t m_count = (local_ith == use_threads - 1) ? num_m_per_threadN_1 : num_m_per_thread0;
+                    ثابت int64_t m_شروع = (int64_t)local_ith * عدد_m_فی_thread0;
+                    ثابت int64_t m_گنتی = (local_ith == use_دھاگے - 1) ? عدد_m_فی_thread_N_1 : عدد_m_فی_thread0;
 
-                    const size_t base_packed_off  = slot.lhs_info->get_packed_offset_ex(m_start, k, slot.lhs_bl, slot.mr, slot.kr, slot.sr);
-                    const size_t next_block_off   = slot.lhs_info->get_packed_offset_ex(m_start + slot.mr, k, slot.lhs_bl, slot.mr, slot.kr, slot.sr);
-                    const size_t row_stride_bytes = slot.mr ? (next_block_off - base_packed_off) / slot.mr : 0;
+                    ثابت size_t ادھار_packed_off  = تھاں.lhs_info->get_packed_وتھ_ex(m_شروع, k, تھاں.lhs_bl, تھاں.mr, تھاں.kr, تھاں.sr);
+                    ثابت size_t اگلا_بلاک_off   = تھاں.lhs_info->get_packed_وتھ_ex(m_شروع + تھاں.mr, k, تھاں.lhs_bl, تھاں.mr, تھاں.kr, تھاں.sr);
+                    ثابت size_t صف_stride_بائٹاں = تھاں.mr ? (اگلا_بلاک_off - ادھار_packed_off) / تھاں.mr : 0;
 
-                    int64_t remaining = m_count;
-                    int64_t cur       = m_start;
+                    int64_t بچیا = m_گنتی;
+                    int64_t cur       = m_شروع;
 
-                    uint8_t * lhs_packed = scratch + slot.lhs_offset;
-                    while (remaining > 0) {
-                        const int64_t row_in_group = cur;
-                        const int64_t avail        = (int64_t)m - row_in_group;
-                        const int64_t take         = std::min(avail, remaining);
+                    uint8_t * lhs_packed = scratch + تھاں.lhs_وتھ;
+                    طالما (بچیا > 0) {
+                        ثابت int64_t صف_وچ_گروہ = cur;
+                        ثابت int64_t avail        = (int64_t)m - صف_وچ_گروہ;
+                        ثابت int64_t take         = std::min(avail, بچیا);
 
-                        const size_t src_off = slot.lhs_info->get_offset(row_in_group, src1->nb[1]);
-                        const void * src_ptr = lhs_batch_base + src_off;
-                        const size_t dst_off = base_packed_off + (size_t)(cur - m_start) * row_stride_bytes;
-                        void * dst_ptr       = lhs_packed + dst_off;
+                        ثابت size_t src_off = تھاں.lhs_info->get_وتھ(صف_وچ_گروہ, src1->nb[1]);
+                        ثابت فراغ * src_ptr = lhs_batch_ادھار + src_off;
+                        ثابت size_t dst_off = ادھار_packed_off + (size_t)(cur - m_شروع) * صف_stride_بائٹاں;
+                        فراغ * dst_ptr       = lhs_packed + dst_off;
 
-                        slot.lhs_info->pack_func_ex(take, k, slot.lhs_bl, slot.mr, slot.kr, slot.sr, 0, src_ptr, src1->nb[1], dst_ptr);
+                        تھاں.lhs_info->pack_func_ex(take, k, تھاں.lhs_bl, تھاں.mr, تھاں.kr, تھاں.sr, 0, src_ptr, src1->nb[1], dst_ptr);
 
                         cur       += take;
-                        remaining -= take;
+                        بچیا -= take;
                     }
                 }
             }
 
-            if (ith_total == 0) {
-                ggml_threadpool_chunk_set(params->threadpool, active_threads);
+            إذا (ith_کل == 0) {
+                ggml_threadpool_chunk_سیٹ(params->threadpool, سرگرم_دھاگے);
             }
 
             // Publishes both LHS packing and the initialized dynamic chunk queue.
             ggml_barrier(params->threadpool);
 
-            if (local_slot != -1) {
-                runtime_slot & slot = runtime[local_slot];
-                int current_chunk = ith_total;
-                while (current_chunk < nchunk) {
-                    const size_t global_start = (size_t)current_chunk * chunk_cols;
-                    if (global_start >= n) {
-                        break;
+            إذا (local_تھاں != -1) {
+                runtime_تھاں & تھاں = runtime[local_تھاں];
+                صحيح current_chunk = ith_کل;
+                طالما (current_chunk < nchunk) {
+                    ثابت size_t global_شروع = (size_t)current_chunk * chunk_خانے_گنتی;
+                    إذا (global_شروع >= n) {
+                        اكسر;
                     }
 
-                    const size_t cols = std::min(chunk_cols, n - global_start);
-                    if (cols > 0) {
+                    ثابت size_t خانے_گنتی_2 = std::min(chunk_خانے_گنتی, n - global_شروع);
+                    إذا (خانے_گنتی_2 > 0) {
                         // KleidiAI GEMM/GEMV kernels accept arbitrary final tail widths;
                         // only non-tail chunks are guaranteed to be n_step-aligned.
-                        run_chunk(slot, global_start, cols, dst_batch_base);
+                        لگاتار_chunk(تھاں, global_شروع, خانے_گنتی_2, dst_batch_ادھار);
                     }
 
-                    current_chunk = ggml_threadpool_chunk_add(params->threadpool, 1);
+                    current_chunk = ggml_threadpool_chunk_جوڑو(params->threadpool, 1);
                 }
             }
 
-            if (batch_idx != ne12 - 1) {
+            إذا (batch_idx != ne12 - 1) {
                 ggml_barrier(params->threadpool);
             }
         }
 
-        return true;
+        أرجع سچ;
     }
 
-public:
-    int repack(struct ggml_tensor * tensor, const void * data, size_t data_size) {
+عام:
+    صحيح repack(بنية ggml_tensor * tensor, ثابت فراغ * انکڑے, size_t انکڑے_ناپ) {
         GGML_ASSERT(tensor->type == GGML_TYPE_Q4_0 || tensor->type == GGML_TYPE_Q4_K ||
                     tensor->type == GGML_TYPE_Q8_0 || tensor->type == GGML_TYPE_Q6_K ||
                     tensor->type == GGML_TYPE_F32);
-        const size_t n = tensor->ne[1];
-        const size_t k = tensor->ne[0];
+        ثابت size_t n = tensor->ne[1];
+        ثابت size_t k = tensor->ne[0];
 
-        kleidiai_weight_header * header = kleidiai_weight_header_from_ptr(tensor->data);
-        if (!header) {
-            return -1;
+        kleidiai_بھار_سرخی * سرخی = kleidiai_بھار_سرخی_from_ptr(tensor->انکڑے);
+        إذا (!سرخی) {
+            أرجع -1;
         }
 
-        header->magic      = GGML_KLEIDIAI_PACK_MAGIC;
-        header->version    = GGML_KLEIDIAI_PACK_VERSION;
-        header->slot_count = 0;
+        سرخی->magic      = GGML_KLEIDIAI_PACK_MAGIC;
+        سرخی->نسخہ_2    = GGML_KLEIDIAI_PACK_نسخہ;
+        سرخی->تھاں_گنتی = 0;
 
-        uint8_t * base_ptr = static_cast<uint8_t *>(tensor->data);
-        size_t cursor = sizeof(kleidiai_weight_header);
-        cursor = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
+        uint8_t * ادھار_ptr = static_cast<uint8_t *>(tensor->انکڑے);
+        size_t cursor = حجم(kleidiai_بھار_سرخی);
+        cursor = align_اتے(cursor, GGML_KLEIDIAI_PACK_ALIGN);
 
         std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> kernel_chain;
-        const bool want_q4k = tensor->type == GGML_TYPE_Q4_K;
-        const bool want_q8 = tensor->type == GGML_TYPE_Q8_0 || tensor->type == GGML_TYPE_Q6_K;
-        const bool want_f32 = tensor->type == GGML_TYPE_F32;
-        const int slot_total = want_f32 ? kleidiai_collect_f32_chain(kernel_chain)
+        ثابت منطقي want_q4k = tensor->type == GGML_TYPE_Q4_K;
+        ثابت منطقي want_q8 = tensor->type == GGML_TYPE_Q8_0 || tensor->type == GGML_TYPE_Q6_K;
+        ثابت منطقي want_f32 = tensor->type == GGML_TYPE_F32;
+        ثابت صحيح تھاں_کل = want_f32 ? kleidiai_collect_f32_chain(kernel_chain)
                                         : want_q8 ? kleidiai_collect_q8_chain(kernel_chain)
                                         : want_q4k ? kleidiai_collect_q4k_chain(kernel_chain)
                                                    : kleidiai_collect_q4_chain(kernel_chain);
-        const bool allow_fallback = kleidiai_pack_fallback_allowed();
+        ثابت منطقي allow_fallback = kleidiai_pack_fallback_allowed();
 
         std::vector<int8_t> qdata;
-        std::vector<float>  scales;
-        std::vector<float>  bias;
-        std::vector<float> row_f32;
+        std::vector<عائم>  scales;
+        std::vector<عائم>  bias;
+        std::vector<عائم> صف_f32;
 
-        if (want_q8 && slot_total > 0) {
+        إذا (want_q8 && تھاں_کل > 0) {
             qdata.resize(n * k, 0);
             scales.resize(n, 0.0f);
 
-            const size_t row_stride = tensor->nb[1];
-            const size_t k_blocks   = (k + QK8_0 - 1) / QK8_0;
+            ثابت size_t صف_stride = tensor->nb[1];
+            ثابت size_t k_بلاکاں   = (k + QK8_0 - 1) / QK8_0;
 
-            if (tensor->type == GGML_TYPE_Q6_K) {
-                if (k % QK_K != 0 || k % QK8_0 != 0) {
-                    return -1;
+            إذا (tensor->type == GGML_TYPE_Q6_K) {
+                إذا (k % QK_K != 0 || k % QK8_0 != 0) {
+                    أرجع -1;
                 }
-                row_f32.resize(k);
+                صف_f32.resize(k);
             }
 
-            for (size_t row = 0; row < n; ++row) {
-                const uint8_t * row_data = static_cast<const uint8_t *>(data) + row * row_stride;
+            لكل (size_t صف = 0; صف < n; ++صف) {
+                ثابت uint8_t * صف_انکڑے = static_cast<ثابت uint8_t *>(انکڑے) + صف * صف_stride;
 
-                if (tensor->type == GGML_TYPE_Q6_K) {
-                    dequantize_row_q6_K(reinterpret_cast<const block_q6_K *>(row_data), row_f32.data(), k);
+                إذا (tensor->type == GGML_TYPE_Q6_K) {
+                    dequantize_صف_q6_K(reinterpret_cast<ثابت بلاک_q6_K *>(صف_انکڑے), صف_f32.انکڑے(), k);
                 }
 
-                float max_abs = 0.0f;
-                if (tensor->type == GGML_TYPE_Q6_K) {
-                    for (size_t linear_idx = 0; linear_idx < k; ++linear_idx) {
-                        max_abs = std::max(max_abs, std::fabs(row_f32[linear_idx]));
+                عائم max_abs = 0.0f;
+                إذا (tensor->type == GGML_TYPE_Q6_K) {
+                    لكل (size_t خطی_idx = 0; خطی_idx < k; ++خطی_idx) {
+                        max_abs = std::max(max_abs, std::fabs(صف_f32[خطی_idx]));
                     }
-                } else {
-                    const block_q8_0 * row_blocks = reinterpret_cast<const block_q8_0 *>(row_data);
-                    for (size_t block = 0; block < k_blocks; ++block) {
-                        const block_q8_0 & blk = row_blocks[block];
-                        const float d = GGML_FP16_TO_FP32(blk.d);
-                        for (size_t l = 0; l < QK8_0; ++l) {
-                            const size_t linear_idx = block * QK8_0 + l;
-                            if (linear_idx >= k) {
-                                break;
+                } وإلا {
+                    ثابت بلاک_q8_0 * صف_بلاکاں = reinterpret_cast<ثابت بلاک_q8_0 *>(صف_انکڑے);
+                    لكل (size_t بلاک = 0; بلاک < k_بلاکاں; ++بلاک) {
+                        ثابت بلاک_q8_0 & blk = صف_بلاکاں[بلاک];
+                        ثابت عائم d = GGML_FP16_منزل_FP32(blk.d);
+                        لكل (size_t l = 0; l < QK8_0; ++l) {
+                            ثابت size_t خطی_idx = بلاک * QK8_0 + l;
+                            إذا (خطی_idx >= k) {
+                                اكسر;
                             }
-                            const float value = d * static_cast<float>(blk.qs[l]);
+                            ثابت عائم value = d * static_cast<عائم>(blk.qs[l]);
                             max_abs = std::max(max_abs, std::fabs(value));
                         }
                     }
                 }
 
-                float scale = max_abs > 0.0f ? max_abs / 127.0f : 0.0f;
-                scales[row] = scale;
-                const float inv_scale = scale > 0.0f ? 1.0f / scale : 0.0f;
+                عائم scale = max_abs > 0.0f ? max_abs / 127.0f : 0.0f;
+                scales[صف] = scale;
+                ثابت عائم inv_scale = scale > 0.0f ? 1.0f / scale : 0.0f;
 
-                if (tensor->type == GGML_TYPE_Q6_K) {
-                    for (size_t linear_idx = 0; linear_idx < k; ++linear_idx) {
-                        int32_t q = scale > 0.0f ? static_cast<int32_t>(std::lround(row_f32[linear_idx] * inv_scale)) : 0;
+                إذا (tensor->type == GGML_TYPE_Q6_K) {
+                    لكل (size_t خطی_idx = 0; خطی_idx < k; ++خطی_idx) {
+                        int32_t q = scale > 0.0f ? static_cast<int32_t>(std::lround(صف_f32[خطی_idx] * inv_scale)) : 0;
                         q = std::clamp(q, -127, 127);
-                        qdata[row * k + linear_idx] = static_cast<int8_t>(q);
+                        qdata[صف * k + خطی_idx] = static_cast<int8_t>(q);
                     }
-                } else {
-                    const block_q8_0 * row_blocks = reinterpret_cast<const block_q8_0 *>(row_data);
-                    for (size_t block = 0; block < k_blocks; ++block) {
-                        const block_q8_0 & blk = row_blocks[block];
-                        const float d = GGML_FP16_TO_FP32(blk.d);
-                        for (size_t l = 0; l < QK8_0; ++l) {
-                            const size_t linear_idx = block * QK8_0 + l;
-                            if (linear_idx >= k) {
-                                break;
+                } وإلا {
+                    ثابت بلاک_q8_0 * صف_بلاکاں = reinterpret_cast<ثابت بلاک_q8_0 *>(صف_انکڑے);
+                    لكل (size_t بلاک = 0; بلاک < k_بلاکاں; ++بلاک) {
+                        ثابت بلاک_q8_0 & blk = صف_بلاکاں[بلاک];
+                        ثابت عائم d = GGML_FP16_منزل_FP32(blk.d);
+                        لكل (size_t l = 0; l < QK8_0; ++l) {
+                            ثابت size_t خطی_idx = بلاک * QK8_0 + l;
+                            إذا (خطی_idx >= k) {
+                                اكسر;
                             }
-                            const float value = d * static_cast<float>(blk.qs[l]);
+                            ثابت عائم value = d * static_cast<عائم>(blk.qs[l]);
                             int32_t q = scale > 0.0f ? static_cast<int32_t>(std::lround(value * inv_scale)) : 0;
                             q = std::clamp(q, -127, 127);
-                            qdata[row * k + linear_idx] = static_cast<int8_t>(q);
+                            qdata[صف * k + خطی_idx] = static_cast<int8_t>(q);
                         }
                     }
                 }
             }
         }
 
-        if (want_f32 && slot_total > 0) {
+        إذا (want_f32 && تھاں_کل > 0) {
             bias.resize(n, 0.0f);
         }
 
-        for (int slot = 0; slot < slot_total && slot < GGML_KLEIDIAI_MAX_KERNEL_SLOTS; ++slot) {
-            if (!allow_fallback && slot > 0) {
-                break;
+        لكل (صحيح تھاں = 0; تھاں < تھاں_کل && تھاں < GGML_KLEIDIAI_MAX_KERNEL_SLOTS; ++تھاں) {
+            إذا (!allow_fallback && تھاں > 0) {
+                اكسر;
             }
-            ggml_kleidiai_kernels * kernels = kernel_chain[slot];
+            ggml_kleidiai_kernels * kernels = kernel_chain[تھاں];
             kernel_info * kernel = &kernels->gemm;
             rhs_packing_info * rhs_info = &kernels->rhs_info;
-            if (!rhs_info || !rhs_info->pack_func_ex || !rhs_info->packed_size_ex || !kernel) {
-                continue;
+            إذا (!rhs_info || !rhs_info->pack_func_ex || !rhs_info->packed_ناپ_ex || !kernel) {
+                استمر;
             }
 
-            const size_t nr = kernel->get_nr();
-            const size_t kr = kernel->get_kr();
-            const size_t sr = kernel->get_sr();
-            const ggml_type rhs_type = kernels->rhs_type;
-            if (rhs_type == GGML_TYPE_Q8_0 && (kernels->required_cpu & CPU_FEATURE_SVE)) {
+            ثابت size_t nr = kernel->get_nr();
+            ثابت size_t kr = kernel->get_kr();
+            ثابت size_t sr = kernel->get_sr();
+            ثابت ggml_type rhs_type = kernels->rhs_type;
+            إذا (rhs_type == GGML_TYPE_Q8_0 && (kernels->required_cpu & CPU_FEATURE_SVE)) {
                 GGML_ASSERT(nr == kernels->gemv.get_nr());
                 GGML_ASSERT(kr == kernels->gemv.get_kr());
                 GGML_ASSERT(sr == kernels->gemv.get_sr());
             }
-            const size_t block_len = rhs_type == GGML_TYPE_Q8_0 ? QK8_0 :
+            ثابت size_t بلاک_len = rhs_type == GGML_TYPE_Q8_0 ? QK8_0 :
                                      rhs_type == GGML_TYPE_Q4_0 ? QK4_0 :
                                      rhs_type == GGML_TYPE_Q4_K ? GGML_KLEIDIAI_Q4_K_BL :
                                      rhs_type == GGML_TYPE_F32 ? 0 : SIZE_MAX;
-            if (block_len == SIZE_MAX) {
-                continue;
+            إذا (بلاک_len == SIZE_MAX) {
+                استمر;
             }
 
-            const size_t packed_size = rhs_info->packed_size_ex(n, k, nr, kr, block_len);
-            const size_t aligned_cursor = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
+            ثابت size_t packed_ناپ = rhs_info->packed_ناپ_ex(n, k, nr, kr, بلاک_len);
+            ثابت size_t aligned_cursor = align_اتے(cursor, GGML_KLEIDIAI_PACK_ALIGN);
 
-            uint8_t * dst_ptr = base_ptr + aligned_cursor;
+            uint8_t * dst_ptr = ادھار_ptr + aligned_cursor;
 
-            if (rhs_type == GGML_TYPE_Q4_0) {
-                struct kai_rhs_pack_qs4cxs1s0_param params;
-                params.lhs_zero_point = 1;
-                params.rhs_zero_point = 8;
+            إذا (rhs_type == GGML_TYPE_Q4_0) {
+                بنية kai_rhs_pack_qs4cxs1s0_param params;
+                params.lhs_zero_نقطہ = 1;
+                params.rhs_zero_نقطہ = 8;
                 rhs_info->pack_func_ex(1, n, k, nr, kr, sr, QK4_0, 0,
-                                       static_cast<const uint8_t *>(data), nullptr, nullptr,
+                                       static_cast<ثابت uint8_t *>(انکڑے), خالی_سوچک, خالی_سوچک,
                                        dst_ptr, 0, &params);
-            } else if (rhs_type == GGML_TYPE_Q4_K) {
+            } وإلا إذا (rhs_type == GGML_TYPE_Q4_K) {
                 rhs_info->pack_func_ex(1, n, k, nr, kr, sr, GGML_KLEIDIAI_Q4_K_BL, tensor->nb[1],
-                                       data, nullptr, nullptr, dst_ptr, 0, nullptr);
-            } else if (rhs_type == GGML_TYPE_Q8_0) {
-                struct kai_rhs_pack_qsi8cx_params params;
-                params.lhs_zero_point = 1;
+                                       انکڑے, خالی_سوچک, خالی_سوچک, dst_ptr, 0, خالی_سوچک);
+            } وإلا إذا (rhs_type == GGML_TYPE_Q8_0) {
+                بنية kai_rhs_pack_qsi8cx_params params;
+                params.lhs_zero_نقطہ = 1;
                 params.scale_multiplier = 1.0f;
                 rhs_info->pack_func_ex(1, n, k, nr, kr, sr, 0, 0,
-                                       qdata.data(), nullptr, scales.data(),
+                                       qdata.انکڑے(), خالی_سوچک, scales.انکڑے(),
                                        dst_ptr, 0, &params);
-            } else if (rhs_type == GGML_TYPE_F32) {
+            } وإلا إذا (rhs_type == GGML_TYPE_F32) {
                 rhs_info->pack_func_ex(1, n, k, nr, kr, sr, 0, tensor->nb[1],
-                                       data, bias.data(), nullptr,
-                                       dst_ptr, 0, nullptr);
-            } else {
-                continue;
+                                       انکڑے, bias.انکڑے(), خالی_سوچک,
+                                       dst_ptr, 0, خالی_سوچک);
+            } وإلا {
+                استمر;
             }
 
-            header->offsets[header->slot_count] = aligned_cursor;
-            header->sizes[header->slot_count]   = packed_size;
-            ++header->slot_count;
+            سرخی->offsets[سرخی->تھاں_گنتی] = aligned_cursor;
+            سرخی->sizes[سرخی->تھاں_گنتی]   = packed_ناپ;
+            ++سرخی->تھاں_گنتی;
 
-            cursor = aligned_cursor + packed_size;
+            cursor = aligned_cursor + packed_ناپ;
         }
 
-        if (header->slot_count == 0) {
-            header->magic   = 0;
-            header->version = 0;
-            memcpy(tensor->data, data, data_size);
+        إذا (سرخی->تھاں_گنتی == 0) {
+            سرخی->magic   = 0;
+            سرخی->نسخہ_2 = 0;
+            حافظہ_نقل(tensor->انکڑے, انکڑے, انکڑے_ناپ);
         }
 
-        return 0;
+        أرجع 0;
     }
 };
 
-static ggml::cpu::tensor_traits * get_tensor_traits(ggml_backend_buffer_t, struct ggml_tensor *) {
-    static tensor_traits traits;
-    return &traits;
+ساكن ggml::cpu::tensor_traits * get_tensor_traits(ggml_backend_بفر_t, بنية ggml_tensor *) {
+    ساكن tensor_traits traits;
+    أرجع &traits;
 }
 }  // namespace ggml::cpu::kleidiai
 
-static enum ggml_status ggml_backend_cpu_kleidiai_buffer_init_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor) {
-    tensor->extra = (void *) ggml::cpu::kleidiai::get_tensor_traits(buffer, tensor);
+ساكن تعداد ggml_حالت ggml_backend_cpu_kleidiai_بفر_init_tensor(ggml_backend_بفر_t بفر, بنية ggml_tensor * tensor) {
+    tensor->extra = (فراغ *) ggml::cpu::kleidiai::get_tensor_traits(بفر, tensor);
 
-    return GGML_STATUS_SUCCESS;
+    أرجع GGML_حالت_SUCCESS;
 }
 
-static void ggml_backend_cpu_kleidiai_buffer_set_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor,
-                                                       const void * data, size_t offset, size_t size) {
-    GGML_ASSERT(offset == 0);
+ساكن فراغ ggml_backend_cpu_kleidiai_بفر_سیٹ_tensor(ggml_backend_بفر_t بفر, بنية ggml_tensor * tensor,
+                                                       ثابت فراغ * انکڑے, size_t وتھ, size_t size) {
+    GGML_ASSERT(وتھ == 0);
     GGML_ASSERT(size == ggml_nbytes(tensor));
 
-    auto tensor_traits = (ggml::cpu::kleidiai::tensor_traits *) tensor->extra;
-    auto OK            = tensor_traits->repack(tensor, data, size);
+    خودکار tensor_traits = (ggml::cpu::kleidiai::tensor_traits *) tensor->extra;
+    خودکار OK            = tensor_traits->repack(tensor, انکڑے, size);
 
     GGML_ASSERT(OK == 0);
-    GGML_UNUSED(buffer);
+    GGML_بن_ورتیا(بفر);
 }
 
-static const char * ggml_backend_cpu_kleidiai_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
-    GGML_UNUSED(buft);
-    return "CPU_KLEIDIAI";
+ساكن ثابت حرف * ggml_backend_cpu_kleidiai_بفر_type_get_name(ggml_backend_بفر_type_t buft) {
+    GGML_بن_ورتیا(buft);
+    أرجع "CPU_KLEIDIAI";
 }
 
-static ggml_backend_buffer_t ggml_backend_cpu_kleidiai_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
-    ggml_backend_buffer_t buffer = ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(), size);
+ساكن ggml_backend_بفر_t ggml_backend_cpu_kleidiai_بفر_type_alloc_بفر(ggml_backend_بفر_type_t buft, size_t size) {
+    ggml_backend_بفر_t بفر = ggml_backend_buft_alloc_بفر(ggml_backend_cpu_بفر_type(), size);
 
-    if (buffer == nullptr) {
-        return nullptr;
+    إذا (بفر == خالی_سوچک) {
+        أرجع خالی_سوچک;
     }
 
-    buffer->buft              = buft;
-    buffer->iface.init_tensor = ggml_backend_cpu_kleidiai_buffer_init_tensor;
-    buffer->iface.set_tensor  = ggml_backend_cpu_kleidiai_buffer_set_tensor;
-    buffer->iface.get_tensor  = nullptr;
-    buffer->iface.cpy_tensor  = nullptr;
-    return buffer;
+    بفر->buft              = buft;
+    بفر->iface.init_tensor = ggml_backend_cpu_kleidiai_بفر_init_tensor;
+    بفر->iface.سیٹ_tensor  = ggml_backend_cpu_kleidiai_بفر_سیٹ_tensor;
+    بفر->iface.get_tensor  = خالی_سوچک;
+    بفر->iface.cpy_tensor  = خالی_سوچک;
+    أرجع بفر;
 }
 
-static size_t ggml_backend_cpu_kleidiai_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
-    GGML_UNUSED(buft);
-    return TENSOR_ALIGNMENT;
+ساكن size_t ggml_backend_cpu_kleidiai_بفر_type_get_alignment(ggml_backend_بفر_type_t buft) {
+    GGML_بن_ورتیا(buft);
+    أرجع TENSOR_ALIGNMENT;
 }
 
-static size_t ggml_backend_cpu_kleidiai_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft, const struct ggml_tensor * tensor) {
-    GGML_UNUSED(buft);
+ساكن size_t ggml_backend_cpu_kleidiai_بفر_type_get_alloc_ناپ(ggml_backend_بفر_type_t buft, ثابت بنية ggml_tensor * tensor) {
+    GGML_بن_ورتیا(buft);
 
-    if (tensor->type != GGML_TYPE_Q4_0 && tensor->type != GGML_TYPE_Q4_K &&
+    إذا (tensor->type != GGML_TYPE_Q4_0 && tensor->type != GGML_TYPE_Q4_K &&
         tensor->type != GGML_TYPE_Q8_0 && tensor->type != GGML_TYPE_Q6_K &&
         tensor->type != GGML_TYPE_F32) {
-        return ggml_nbytes(tensor);
+        أرجع ggml_nbytes(tensor);
     }
 
-    const size_t n = tensor->ne[1];
-    const size_t k = tensor->ne[0];
+    ثابت size_t n = tensor->ne[1];
+    ثابت size_t k = tensor->ne[0];
 
-    size_t cursor = sizeof(kleidiai_weight_header);
-    cursor = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
+    size_t cursor = حجم(kleidiai_بھار_سرخی);
+    cursor = align_اتے(cursor, GGML_KLEIDIAI_PACK_ALIGN);
 
     std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> kernel_chain;
-    const bool want_q4k = tensor->type == GGML_TYPE_Q4_K;
-    const bool want_q8 = tensor->type == GGML_TYPE_Q8_0 || tensor->type == GGML_TYPE_Q6_K;
-    const bool want_f32 = tensor->type == GGML_TYPE_F32;
-    const int slot_total = want_f32 ? kleidiai_collect_f32_chain(kernel_chain)
+    ثابت منطقي want_q4k = tensor->type == GGML_TYPE_Q4_K;
+    ثابت منطقي want_q8 = tensor->type == GGML_TYPE_Q8_0 || tensor->type == GGML_TYPE_Q6_K;
+    ثابت منطقي want_f32 = tensor->type == GGML_TYPE_F32;
+    ثابت صحيح تھاں_کل = want_f32 ? kleidiai_collect_f32_chain(kernel_chain)
                                     : want_q8 ? kleidiai_collect_q8_chain(kernel_chain)
                                     : want_q4k ? kleidiai_collect_q4k_chain(kernel_chain)
                                                : kleidiai_collect_q4_chain(kernel_chain);
-    const bool allow_fallback = kleidiai_pack_fallback_allowed();
+    ثابت منطقي allow_fallback = kleidiai_pack_fallback_allowed();
 
-    size_t slot_count = 0;
-    for (int slot = 0; slot < slot_total; ++slot) {
-        if (!allow_fallback && slot > 0) {
-            break;
+    size_t تھاں_گنتی = 0;
+    لكل (صحيح تھاں = 0; تھاں < تھاں_کل; ++تھاں) {
+        إذا (!allow_fallback && تھاں > 0) {
+            اكسر;
         }
-        ggml_kleidiai_kernels * kernels = kernel_chain[slot];
-        if (!kernels) {
-            continue;
+        ggml_kleidiai_kernels * kernels = kernel_chain[تھاں];
+        إذا (!kernels) {
+            استمر;
         }
         kernel_info * kernel = &kernels->gemm;
         rhs_packing_info * rhs_info = &kernels->rhs_info;
-        if (!kernel || !rhs_info || !rhs_info->packed_size_ex) {
-            continue;
+        إذا (!kernel || !rhs_info || !rhs_info->packed_ناپ_ex) {
+            استمر;
         }
 
-        const ggml_type rhs_type = kernels->rhs_type;
-        const size_t block_len = rhs_type == GGML_TYPE_Q4_0 ? QK4_0 :
+        ثابت ggml_type rhs_type = kernels->rhs_type;
+        ثابت size_t بلاک_len = rhs_type == GGML_TYPE_Q4_0 ? QK4_0 :
                                  rhs_type == GGML_TYPE_Q4_K ? GGML_KLEIDIAI_Q4_K_BL :
                                  rhs_type == GGML_TYPE_Q8_0 ? QK8_0 :
                                  rhs_type == GGML_TYPE_F32 ? 0 : SIZE_MAX;
-        if (block_len == SIZE_MAX) {
-            continue;
+        إذا (بلاک_len == SIZE_MAX) {
+            استمر;
         }
 
-        cursor = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
-        cursor += rhs_info->packed_size_ex(n, k, kernel->get_nr(), kernel->get_kr(), block_len);
-        ++slot_count;
+        cursor = align_اتے(cursor, GGML_KLEIDIAI_PACK_ALIGN);
+        cursor += rhs_info->packed_ناپ_ex(n, k, kernel->get_nr(), kernel->get_kr(), بلاک_len);
+        ++تھاں_گنتی;
     }
 
-    if (slot_count == 0) {
-        return ggml_nbytes(tensor);
+    إذا (تھاں_گنتی == 0) {
+        أرجع ggml_nbytes(tensor);
     }
 
-    return std::max(cursor, ggml_nbytes(tensor));
+    أرجع std::max(cursor, ggml_nbytes(tensor));
 }
 
-namespace ggml::cpu::kleidiai {
-class extra_buffer_type : ggml::cpu::extra_buffer_type {
-    bool supports_op(ggml_backend_dev_t, const struct ggml_tensor * op) override {
+نطاق ggml::cpu::kleidiai {
+صنف extra_بفر_type : ggml::cpu::extra_بفر_type {
+    منطقي supports_op(ggml_backend_dev_t, ثابت بنية ggml_tensor * op) override {
         // GET_ROWS needs the original weights in a native buffer.
-        if (op->op != GGML_OP_MUL_MAT) {
-            return false;
+        إذا (op->op != GGML_OP_MUL_MAT) {
+            أرجع خطأ;
         }
 
         std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> kernel_chain;
-        const int slot_total = kleidiai_collect_kernel_chain(op, kernel_chain);
-        const bool src0_is_kleidiai =
-            op->src[0]->buffer &&
+        ثابت صحيح تھاں_کل = kleidiai_collect_kernel_chain(op, kernel_chain);
+        ثابت منطقي src0_is_kleidiai =
+            op->src[0]->بفر &&
             (ggml_n_dims(op->src[0]) == 2) &&
-            op->src[0]->buffer->buft->context == this &&
-            slot_total > 0;
+            op->src[0]->بفر->buft->context == هذا &&
+            تھاں_کل > 0;
 
-        if ((op->src[0]->type == GGML_TYPE_Q4_0 || op->src[0]->type == GGML_TYPE_Q4_K ||
+        إذا ((op->src[0]->type == GGML_TYPE_Q4_0 || op->src[0]->type == GGML_TYPE_Q4_K ||
              op->src[0]->type == GGML_TYPE_Q8_0 || op->src[0]->type == GGML_TYPE_Q6_K ||
              op->src[0]->type == GGML_TYPE_F32) &&
             src0_is_kleidiai) {
-            if (op->src[0]->type == GGML_TYPE_Q4_0 && ctx.kernels_q4 == nullptr) {
-                return false;
+            إذا (op->src[0]->type == GGML_TYPE_Q4_0 && ctx.kernels_q4 == خالی_سوچک) {
+                أرجع خطأ;
             }
-            if (op->src[0]->type == GGML_TYPE_Q8_0 && ctx.kernels_q8 == nullptr) {
-                return false;
+            إذا (op->src[0]->type == GGML_TYPE_Q8_0 && ctx.kernels_q8 == خالی_سوچک) {
+                أرجع خطأ;
             }
-            if (op->src[0]->type == GGML_TYPE_Q6_K && ctx.kernels_q8 == nullptr) {
-                return false;
+            إذا (op->src[0]->type == GGML_TYPE_Q6_K && ctx.kernels_q8 == خالی_سوچک) {
+                أرجع خطأ;
             }
-            if (op->src[0]->type == GGML_TYPE_Q4_K && ctx.kernels_q4k == nullptr) {
-                return false;
+            إذا (op->src[0]->type == GGML_TYPE_Q4_K && ctx.kernels_q4k == خالی_سوچک) {
+                أرجع خطأ;
             }
-            if (op->src[0]->type == GGML_TYPE_F32 && ctx.kernels_f32 == nullptr) {
-                return false;
+            إذا (op->src[0]->type == GGML_TYPE_F32 && ctx.kernels_f32 == خالی_سوچک) {
+                أرجع خطأ;
             }
-            if (op->src[1]->buffer && !ggml_backend_buft_is_host(op->src[1]->buffer->buft)) {
-                return false;
+            إذا (op->src[1]->بفر && !ggml_backend_buft_is_host(op->src[1]->بفر->buft)) {
+                أرجع خطأ;
             }
 
-            if (op->src[0]->type == GGML_TYPE_Q4_K) {
-                if (op->op != GGML_OP_MUL_MAT || op->src[1]->type != GGML_TYPE_F32 || op->type != GGML_TYPE_F32) {
-                    return false;
+            إذا (op->src[0]->type == GGML_TYPE_Q4_K) {
+                إذا (op->op != GGML_OP_MUL_MAT || op->src[1]->type != GGML_TYPE_F32 || op->type != GGML_TYPE_F32) {
+                    أرجع خطأ;
                 }
-                return ggml_ne(op->src[1], 2) == 1 && ggml_ne(op->src[1], 3) == 1 &&
-                       op->src[1]->nb[0] == sizeof(float) &&
-                       (op->src[1]->ne[1] == 1 || op->src[1]->nb[1] == op->src[1]->ne[0] * sizeof(float));
+                أرجع ggml_ne(op->src[1], 2) == 1 && ggml_ne(op->src[1], 3) == 1 &&
+                       op->src[1]->nb[0] == حجم(عائم) &&
+                       (op->src[1]->ne[1] == 1 || op->src[1]->nb[1] == op->src[1]->ne[0] * حجم(عائم));
             }
 
-            if (op->src[0]->type == GGML_TYPE_Q4_0 || op->src[0]->type == GGML_TYPE_Q8_0 ||
+            إذا (op->src[0]->type == GGML_TYPE_Q4_0 || op->src[0]->type == GGML_TYPE_Q8_0 ||
                 op->src[0]->type == GGML_TYPE_Q6_K) {
-                if (op->src[1]->type == GGML_TYPE_F32 &&
+                إذا (op->src[1]->type == GGML_TYPE_F32 &&
                     ggml_ne(op->src[1], 3) == 1) {
-                    return true;
+                    أرجع سچ;
                 }
-                return false;
+                أرجع خطأ;
             }
 
-            if (op->op != GGML_OP_MUL_MAT || op->src[1]->type != GGML_TYPE_F32 || op->type != GGML_TYPE_F32) {
-                return false;
+            إذا (op->op != GGML_OP_MUL_MAT || op->src[1]->type != GGML_TYPE_F32 || op->type != GGML_TYPE_F32) {
+                أرجع خطأ;
             }
 
-            return true;
+            أرجع سچ;
         }
 
-        return false;
+        أرجع خطأ;
     }
 
-    ggml::cpu::tensor_traits * get_tensor_traits(const struct ggml_tensor * op) override {
-        if (op->op == GGML_OP_MUL_MAT) {
-            if (op->src[0]->buffer && op->src[0]->buffer->buft->context == this) {
-                return (ggml::cpu::tensor_traits *) op->src[0]->extra;
-            } else {
+    ggml::cpu::tensor_traits * get_tensor_traits(ثابت بنية ggml_tensor * op) override {
+        إذا (op->op == GGML_OP_MUL_MAT) {
+            إذا (op->src[0]->بفر && op->src[0]->بفر->buft->context == هذا) {
+                أرجع (ggml::cpu::tensor_traits *) op->src[0]->extra;
+            } وإلا {
                 // KleidiAI only has kernels for Q4_0, Q4_K, Q8_0 and Q6_K. For a quantized weight of any
                 // other type (K-quants, IQ) it declines the op and returns nullptr below, so
                 // KleidiAI does not accelerate it. Another CPU backend may still take the op,
                 // and this can run during graph planning, so the message says what KleidiAI
                 // did rather than what ends up executing. Warn once per process.
-                if (ggml_is_quantized(op->src[0]->type) &&
+                إذا (ggml_is_quantized(op->src[0]->type) &&
                     op->src[0]->type != GGML_TYPE_Q4_0 && op->src[0]->type != GGML_TYPE_Q4_K &&
                     op->src[0]->type != GGML_TYPE_Q8_0 && op->src[0]->type != GGML_TYPE_Q6_K) {
-                    static std::atomic<bool> warned(false);
-                    if (!warned.exchange(true)) {
+                    ساكن std::atomic<منطقي> warned(خطأ);
+                    إذا (!warned.exchange(سچ)) {
                         GGML_LOG_WARN("kleidiai: no kernel for tensor type %s, not accelerated by KleidiAI "
                                       "(kernels available for Q4_0, Q4_K, Q8_0 and Q6_K)\n",
                                       ggml_type_name(op->src[0]->type));
                     }
                 }
-                if (op->src[0]->type != GGML_TYPE_F16) {
-                    return nullptr;
+                إذا (op->src[0]->type != GGML_TYPE_F16) {
+                    أرجع خالی_سوچک;
                 }
                 std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> kernel_chain;
-                const int slot_total = kleidiai_collect_kernel_chain(op, kernel_chain);
-                if (slot_total > 0 && op->src[1]->ne[1] > 1) {
-                    if ((op->src[0]->nb[1] * op->src[0]->ne[1] != op->src[0]->nb[2]) ||
+                ثابت صحيح تھاں_کل = kleidiai_collect_kernel_chain(op, kernel_chain);
+                إذا (تھاں_کل > 0 && op->src[1]->ne[1] > 1) {
+                    إذا ((op->src[0]->nb[1] * op->src[0]->ne[1] != op->src[0]->nb[2]) ||
                         (op->src[1]->nb[1] * op->src[1]->ne[1] != op->src[1]->nb[2])) {
-                        return nullptr;
+                        أرجع خالی_سوچک;
                     }
-                    return ggml::cpu::kleidiai::get_tensor_traits(NULL, NULL);
+                    أرجع ggml::cpu::kleidiai::get_tensor_traits(عدم, عدم);
                 }
             }
         }
-        return nullptr;
+        أرجع خالی_سوچک;
     }
 };
 }  // namespace ggml::cpu::kleidiai
 
-ggml_backend_buffer_type_t ggml_backend_cpu_kleidiai_buffer_type(void) {
-    static ggml::cpu::kleidiai::extra_buffer_type ctx;
-    static struct ggml_backend_buffer_type ggml_backend_cpu_buffer_type_kleidiai = {
+ggml_backend_بفر_type_t ggml_backend_cpu_kleidiai_بفر_type(فراغ) {
+    ساكن ggml::cpu::kleidiai::extra_بفر_type ctx;
+    ساكن بنية ggml_backend_بفر_type ggml_backend_cpu_بفر_type_kleidiai = {
         /* .iface    = */ {
-                           /* .get_name             = */ ggml_backend_cpu_kleidiai_buffer_type_get_name,
-                           /* .alloc_buffer         = */ ggml_backend_cpu_kleidiai_buffer_type_alloc_buffer,
-                           /* .alloc_buffer_n       = */ nullptr,
-                           /* .get_alignment        = */ ggml_backend_cpu_kleidiai_buffer_type_get_alignment,
-                           /* .get_max_size         = */ nullptr,  // defaults to SIZE_MAX
-                           /* .get_alloc_size       = */ ggml_backend_cpu_kleidiai_buffer_type_get_alloc_size,
-                           /* .get_alloc_size_n     = */ NULL,
-                           /* .is_host              = */ nullptr,
+                           /* .get_name             = */ ggml_backend_cpu_kleidiai_بفر_type_get_name,
+                           /* .alloc_buffer         = */ ggml_backend_cpu_kleidiai_بفر_type_alloc_بفر,
+                           /* .alloc_buffer_n       = */ خالی_سوچک,
+                           /* .get_alignment        = */ ggml_backend_cpu_kleidiai_بفر_type_get_alignment,
+                           /* .get_max_size         = */ خالی_سوچک,  // defaults to SIZE_MAX
+                           /* .get_alloc_size       = */ ggml_backend_cpu_kleidiai_بفر_type_get_alloc_ناپ,
+                           /* .get_alloc_size_n     = */ عدم,
+                           /* .is_host              = */ خالی_سوچک,
                            },
         /* .device  = */ ggml_backend_reg_dev_get(ggml_backend_cpu_reg(), 0),
         /* .context = */ &ctx,
@@ -1913,5 +1913,5 @@ ggml_backend_buffer_type_t ggml_backend_cpu_kleidiai_buffer_type(void) {
 
     init_kleidiai_context();
 
-    return &ggml_backend_cpu_buffer_type_kleidiai;
+    أرجع &ggml_backend_cpu_بفر_type_kleidiai;
 }

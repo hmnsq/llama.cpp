@@ -1,18 +1,18 @@
-#pragma once
+#ہدایت once
 
-#include "mark_decompression_convert_constant_folding.h"
-#include "openvino/core/visibility.hpp"
-#include "openvino/pass/matcher_pass.hpp"
+#ضمن "mark_decompression_convert_constant_folding.h"
+#ضمن "openvino/core/visibility.hpp"
+#ضمن "openvino/pass/matcher_pass.hpp"
 
-#ifdef OPENVINO_STATIC_LIBRARY
+#جے_تعریف_شدہ OPENVINO_STATIC_LIBRARY
 #    define TRANSFORMATIONS_API
-#else
+#وإلا
 #    ifdef IMPLEMENT_OPENVINO_API
 #        define TRANSFORMATIONS_API OPENVINO_CORE_EXPORTS
-#    else
+#    وإلا
 #        define TRANSFORMATIONS_API OPENVINO_CORE_IMPORTS
 #    endif  // IMPLEMENT_OPENVINO_API
-#endif      // OPENVINO_STATIC_LIBRARY
+#جے_انت      // OPENVINO_STATIC_LIBRARY
 
 namespace ov {
 namespace pass {
@@ -22,8 +22,8 @@ class TRANSFORMATIONS_API MarkCompressedFloatConstants;
 }  // namespace pass
 }  // namespace ov
 
-class ov::pass::MarkCompressedFloatConstants : public MatcherPass {
-public:
+class ov::pass::MarkCompressedFloatConstants : عام MatcherPass {
+عام:
     OPENVINO_MATCHER_PASS_RTTI("MarkCompressedFloatConstants")
     MarkCompressedFloatConstants();
 };

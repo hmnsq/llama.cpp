@@ -1,147 +1,147 @@
-#include "cross_entropy_loss.hpp"
+#ضمن "cross_entropy_loss.hpp"
 
-#include <cstdint>
-#include <cmath>
+#ضمن <cstdint>
+#ضمن <cmath>
 
-template <bool has_shared>
-static __dpct_inline__ void cross_entropy_loss_f32_kernel(
-        const float * __restrict__ logits,
-        const float * __restrict__ labels,
-        float * __restrict__ row_loss,
-        const int nclasses,
-        const int nrows,
-        float * __restrict__ smem,
-        const sycl::nd_item<3> & item) {
+سانچا <منطقي has_shared>
+ساكن __dpct_inline__ فراغ cross_entropy_loss_f32_kernel(
+        ثابت عائم * __restrict__ logits,
+        ثابت عائم * __restrict__ labels,
+        عائم * __restrict__ صف_loss,
+        ثابت صحيح nclasses,
+        ثابت صحيح nrows,
+        عائم * __restrict__ smem,
+        ثابت sycl::nd_شے<3> & شے) {
 
-    const int row = item.get_group(2);
-    const int tid = item.get_local_id(2);
+    ثابت صحيح صف = شے.get_گروہ(2);
+    ثابت صحيح tid = شے.get_local_id(2);
 
-    logits += (int64_t) row * nclasses;
-    labels += (int64_t) row * nclasses;
+    logits += (int64_t) صف * nclasses;
+    labels += (int64_t) صف * nclasses;
 
-    float max_logit = -INFINITY;
-    for (int i = tid; i < nclasses; i += WARP_SIZE) {
-        const float v = logits[i];
+    عائم max_logit = -INFINITY;
+    لكل (صحيح i = tid; i < nclasses; i += WARP_ناپ) {
+        ثابت عائم v = logits[i];
         max_logit = sycl::fmax(max_logit, v);
-        if (has_shared) {
+        إذا (has_shared) {
             smem[i] = v;
         }
     }
-    max_logit = warp_reduce_max<WARP_SIZE>(max_logit);
+    max_logit = warp_reduce_max<WARP_ناپ>(max_logit);
 
-    float sum_exp = 0.0f;
-    for (int i = tid; i < nclasses; i += WARP_SIZE) {
-        const float v = has_shared ? smem[i] : logits[i];
-        sum_exp += sycl::exp(v - max_logit);
+    عائم جوڑ_exp = 0.0f;
+    لكل (صحيح i = tid; i < nclasses; i += WARP_ناپ) {
+        ثابت عائم v = has_shared ? smem[i] : logits[i];
+        جوڑ_exp += sycl::قوت_نما(v - max_logit);
     }
-    sum_exp = warp_reduce_sum<WARP_SIZE>(sum_exp);
-    const float log_sum = sycl::log(sum_exp);
+    جوڑ_exp = warp_reduce_جوڑ<WARP_ناپ>(جوڑ_exp);
+    ثابت عائم log_جوڑ = sycl::لوگارتھم(جوڑ_exp);
 
-    float loss = 0.0f;
-    for (int i = tid; i < nclasses; i += WARP_SIZE) {
-        const float v = has_shared ? smem[i] : logits[i];
-        loss += (v - max_logit - log_sum) * labels[i];
+    عائم loss = 0.0f;
+    لكل (صحيح i = tid; i < nclasses; i += WARP_ناپ) {
+        ثابت عائم v = has_shared ? smem[i] : logits[i];
+        loss += (v - max_logit - log_جوڑ) * labels[i];
     }
-    loss = -warp_reduce_sum<WARP_SIZE>(loss) / (float) nrows;
+    loss = -warp_reduce_جوڑ<WARP_ناپ>(loss) / (عائم) nrows;
 
-    if (tid == 0) {
-        row_loss[row] = loss;
+    إذا (tid == 0) {
+        صف_loss[صف] = loss;
     }
 }
 
-template <bool has_shared>
-static __dpct_inline__ void cross_entropy_loss_back_f32_kernel(
-        const float * __restrict__ grad,
-        const float * __restrict__ logits,
-        const float * __restrict__ labels,
-        float * __restrict__ dst,
-        const int nclasses,
-        const int nrows,
-        float * __restrict__ smem,
-        const sycl::nd_item<3> & item) {
+سانچا <منطقي has_shared>
+ساكن __dpct_inline__ فراغ cross_entropy_loss_پٹھ_f32_kernel(
+        ثابت عائم * __restrict__ grad,
+        ثابت عائم * __restrict__ logits,
+        ثابت عائم * __restrict__ labels,
+        عائم * __restrict__ dst,
+        ثابت صحيح nclasses,
+        ثابت صحيح nrows,
+        عائم * __restrict__ smem,
+        ثابت sycl::nd_شے<3> & شے) {
 
-    const int row = item.get_group(2);
-    const int tid = item.get_local_id(2);
+    ثابت صحيح صف = شے.get_گروہ(2);
+    ثابت صحيح tid = شے.get_local_id(2);
 
-    logits += (int64_t) row * nclasses;
-    labels += (int64_t) row * nclasses;
-    dst    += (int64_t) row * nclasses;
+    logits += (int64_t) صف * nclasses;
+    labels += (int64_t) صف * nclasses;
+    dst    += (int64_t) صف * nclasses;
 
-    float max_logit = -INFINITY;
-    for (int i = tid; i < nclasses; i += WARP_SIZE) {
-        const float v = logits[i];
+    عائم max_logit = -INFINITY;
+    لكل (صحيح i = tid; i < nclasses; i += WARP_ناپ) {
+        ثابت عائم v = logits[i];
         max_logit = sycl::fmax(max_logit, v);
-        if (has_shared) {
+        إذا (has_shared) {
             smem[i] = v;
         }
     }
-    max_logit = warp_reduce_max<WARP_SIZE>(max_logit);
+    max_logit = warp_reduce_max<WARP_ناپ>(max_logit);
 
-    float sum_exp = 0.0f;
-    for (int i = tid; i < nclasses; i += WARP_SIZE) {
-        const float v = sycl::exp((has_shared ? smem[i] : logits[i]) - max_logit);
-        sum_exp += v;
-        if (has_shared) {
+    عائم جوڑ_exp = 0.0f;
+    لكل (صحيح i = tid; i < nclasses; i += WARP_ناپ) {
+        ثابت عائم v = sycl::قوت_نما((has_shared ? smem[i] : logits[i]) - max_logit);
+        جوڑ_exp += v;
+        إذا (has_shared) {
             smem[i] = v;
-        } else {
+        } وإلا {
             dst[i] = v;
         }
     }
-    sum_exp = warp_reduce_sum<WARP_SIZE>(sum_exp);
-    const float inv_sum = 1.0f / sum_exp;
+    جوڑ_exp = warp_reduce_جوڑ<WARP_ناپ>(جوڑ_exp);
+    ثابت عائم inv_جوڑ = 1.0f / جوڑ_exp;
 
-    const float d_by_nrows = grad[0] / (float) nrows;
-    for (int i = tid; i < nclasses; i += WARP_SIZE) {
-        const float sm_num = has_shared ? smem[i] : dst[i];
-        dst[i] = (sm_num * inv_sum - labels[i]) * d_by_nrows;
+    ثابت عائم d_by_nrows = grad[0] / (عائم) nrows;
+    لكل (صحيح i = tid; i < nclasses; i += WARP_ناپ) {
+        ثابت عائم sm_عدد = has_shared ? smem[i] : dst[i];
+        dst[i] = (sm_عدد * inv_جوڑ - labels[i]) * d_by_nrows;
     }
 }
 
-static void cross_entropy_reduce_rows(
+ساكن فراغ cross_entropy_reduce_صفاں(
         ggml_backend_sycl_context & ctx,
-        const float * row_loss,
-        float * dst,
-        const int64_t nrows) {
-    if (nrows == 1) {
+        ثابت عائم * صف_loss,
+        عائم * dst,
+        ثابت int64_t nrows) {
+    إذا (nrows == 1) {
         SYCL_CHECK(CHECK_TRY_ERROR(
-            ctx.stream()->memcpy(dst, row_loss, sizeof(float))));
-        return;
+            ctx.stream()->حافظہ_نقل(dst, صف_loss, حجم(عائم))));
+        أرجع;
     }
 
-    ggml_sycl_pool_alloc<float> tmp_alloc(ctx.pool(), nrows);
-    float * tmp = tmp_alloc.get();
+    ggml_sycl_pool_alloc<عائم> tmp_alloc(ctx.pool(), nrows);
+    عائم * tmp = tmp_alloc.get();
     SYCL_CHECK(CHECK_TRY_ERROR(
-        ctx.stream()->memcpy(tmp, row_loss, nrows * sizeof(float))));
+        ctx.stream()->حافظہ_نقل(tmp, صف_loss, nrows * حجم(عائم))));
 
     int64_t cur = nrows;
-    while (cur > 1) {
-        const int64_t out = (cur + WARP_SIZE - 1) / WARP_SIZE;
-        const sycl::range<3> block(1, 1, WARP_SIZE);
-        const sycl::range<3> grid(1, 1, out);
+    طالما (cur > 1) {
+        ثابت int64_t باہرلا = (cur + WARP_ناپ - 1) / WARP_ناپ;
+        ثابت sycl::range<3> بلاک(1, 1, WARP_ناپ);
+        ثابت sycl::range<3> grid(1, 1, باہرلا);
         ctx.stream()->parallel_for(
-            sycl::nd_range<3>(grid * block, block),
-            [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                const int row = item.get_group(2);
-                const int tid = item.get_local_id(2);
-                const int64_t i = (int64_t) row * WARP_SIZE + tid;
-                float v = i < cur ? tmp[i] : 0.0f;
-                v = warp_reduce_sum<WARP_SIZE>(v);
-                if (tid == 0) {
-                    tmp[row] = v;
+            sycl::nd_range<3>(grid * بلاک, بلاک),
+            [=](sycl::nd_شے<3> شے) [[sycl::reqd_sub_گروہ_ناپ(WARP_ناپ)]] {
+                ثابت صحيح صف = شے.get_گروہ(2);
+                ثابت صحيح tid = شے.get_local_id(2);
+                ثابت int64_t i = (int64_t) صف * WARP_ناپ + tid;
+                عائم v = i < cur ? tmp[i] : 0.0f;
+                v = warp_reduce_جوڑ<WARP_ناپ>(v);
+                إذا (tid == 0) {
+                    tmp[صف] = v;
                 }
             });
-        cur = out;
+        cur = باہرلا;
     }
 
     SYCL_CHECK(CHECK_TRY_ERROR(
-        ctx.stream()->memcpy(dst, tmp, sizeof(float))));
+        ctx.stream()->حافظہ_نقل(dst, tmp, حجم(عائم))));
 }
 
-void ggml_sycl_cross_entropy_loss(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+فراغ ggml_sycl_cross_entropy_loss(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    ثابت ggml_tensor * src0 = dst->src[0];
+    ثابت ggml_tensor * src1 = dst->src[1];
 
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
@@ -152,55 +152,55 @@ void ggml_sycl_cross_entropy_loss(ggml_backend_sycl_context & ctx, ggml_tensor *
     GGML_ASSERT(ggml_are_same_shape(src0, src1));
     GGML_ASSERT(ggml_is_scalar(dst));
 
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
+    SYCL_CHECK(ggml_sycl_سیٹ_device(ctx.device));
 
-    const int64_t nclasses = src0->ne[0];
-    const int64_t nrows = ggml_nrows(src0);
+    ثابت int64_t nclasses = src0->ne[0];
+    ثابت int64_t nrows = ggml_nrows(src0);
 
-    const float * logits_d = (const float *) src0->data;
-    const float * labels_d = (const float *) src1->data;
-    float * dst_d = (float *) dst->data;
+    ثابت عائم * logits_d = (ثابت عائم *) src0->انکڑے;
+    ثابت عائم * labels_d = (ثابت عائم *) src1->انکڑے;
+    عائم * dst_d = (عائم *) dst->انکڑے;
 
-    ggml_sycl_pool_alloc<float> row_loss_alloc(ctx.pool(), nrows);
-    float * row_loss = row_loss_alloc.get();
+    ggml_sycl_pool_alloc<عائم> صف_loss_alloc(ctx.pool(), nrows);
+    عائم * صف_loss = صف_loss_alloc.get();
 
-    const sycl::range<3> block(1, 1, WARP_SIZE);
-    const sycl::range<3> grid(1, 1, nrows);
-    const size_t nbytes_shared = (size_t) nclasses * sizeof(float);
-    const size_t smpbo = ggml_sycl_info().devices[ctx.device].smpbo;
+    ثابت sycl::range<3> بلاک(1, 1, WARP_ناپ);
+    ثابت sycl::range<3> grid(1, 1, nrows);
+    ثابت size_t nbytes_shared = (size_t) nclasses * حجم(عائم);
+    ثابت size_t smpbo = ggml_sycl_info().devices[ctx.device].smpbo;
 
-    if (nbytes_shared <= smpbo) {
+    إذا (nbytes_shared <= smpbo) {
         ctx.stream()->submit([&](sycl::handler & cgh) {
-            sycl::local_accessor<float, 1> smem(sycl::range<1>(nclasses), cgh);
+            sycl::local_accessor<عائم, 1> smem(sycl::range<1>(nclasses), cgh);
             cgh.parallel_for(
-                sycl::nd_range<3>(grid * block, block),
-                [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    cross_entropy_loss_f32_kernel<true>(
-                        logits_d, labels_d, row_loss,
-                        (int) nclasses, (int) nrows,
-                        get_pointer(smem), item);
+                sycl::nd_range<3>(grid * بلاک, بلاک),
+                [=](sycl::nd_شے<3> شے) [[sycl::reqd_sub_گروہ_ناپ(WARP_ناپ)]] {
+                    cross_entropy_loss_f32_kernel<سچ>(
+                        logits_d, labels_d, صف_loss,
+                        (صحيح) nclasses, (صحيح) nrows,
+                        get_اشارہ_گر(smem), شے);
                 });
         });
-    } else {
+    } وإلا {
         ctx.stream()->parallel_for(
-            sycl::nd_range<3>(grid * block, block),
-            [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                cross_entropy_loss_f32_kernel<false>(
-                    logits_d, labels_d, row_loss,
-                    (int) nclasses, (int) nrows,
-                    nullptr, item);
+            sycl::nd_range<3>(grid * بلاک, بلاک),
+            [=](sycl::nd_شے<3> شے) [[sycl::reqd_sub_گروہ_ناپ(WARP_ناپ)]] {
+                cross_entropy_loss_f32_kernel<خطأ>(
+                    logits_d, labels_d, صف_loss,
+                    (صحيح) nclasses, (صحيح) nrows,
+                    خالی_سوچک, شے);
             });
     }
 
-    cross_entropy_reduce_rows(ctx, row_loss, dst_d, nrows);
+    cross_entropy_reduce_صفاں(ctx, صف_loss, dst_d, nrows);
 }
 
-void ggml_sycl_cross_entropy_loss_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+فراغ ggml_sycl_cross_entropy_loss_پٹھ(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/3);
 
-    const ggml_tensor * grad  = dst->src[0];
-    const ggml_tensor * src0f = dst->src[1];
-    const ggml_tensor * src1f = dst->src[2];
+    ثابت ggml_tensor * grad  = dst->src[0];
+    ثابت ggml_tensor * src0f = dst->src[1];
+    ثابت ggml_tensor * src1f = dst->src[2];
 
     GGML_ASSERT(grad->type == GGML_TYPE_F32);
     GGML_ASSERT(src0f->type == GGML_TYPE_F32);
@@ -215,41 +215,41 @@ void ggml_sycl_cross_entropy_loss_back(ggml_backend_sycl_context & ctx, ggml_ten
     GGML_ASSERT(ggml_are_same_shape(src0f, src1f));
     GGML_ASSERT(ggml_are_same_shape(src0f, dst));
 
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
+    SYCL_CHECK(ggml_sycl_سیٹ_device(ctx.device));
 
-    const int64_t nclasses = src0f->ne[0];
-    const int64_t nrows = ggml_nrows(src0f);
+    ثابت int64_t nclasses = src0f->ne[0];
+    ثابت int64_t nrows = ggml_nrows(src0f);
 
-    const float * grad_d  = (const float *) grad->data;
-    const float * logits_d = (const float *) src0f->data;
-    const float * labels_d = (const float *) src1f->data;
-    float * dst_d = (float *) dst->data;
+    ثابت عائم * grad_d  = (ثابت عائم *) grad->انکڑے;
+    ثابت عائم * logits_d = (ثابت عائم *) src0f->انکڑے;
+    ثابت عائم * labels_d = (ثابت عائم *) src1f->انکڑے;
+    عائم * dst_d = (عائم *) dst->انکڑے;
 
-    const sycl::range<3> block(1, 1, WARP_SIZE);
-    const sycl::range<3> grid(1, 1, nrows);
-    const size_t nbytes_shared = (size_t) nclasses * sizeof(float);
-    const size_t smpbo = ggml_sycl_info().devices[ctx.device].smpbo;
+    ثابت sycl::range<3> بلاک(1, 1, WARP_ناپ);
+    ثابت sycl::range<3> grid(1, 1, nrows);
+    ثابت size_t nbytes_shared = (size_t) nclasses * حجم(عائم);
+    ثابت size_t smpbo = ggml_sycl_info().devices[ctx.device].smpbo;
 
-    if (nbytes_shared <= smpbo) {
+    إذا (nbytes_shared <= smpbo) {
         ctx.stream()->submit([&](sycl::handler & cgh) {
-            sycl::local_accessor<float, 1> smem(sycl::range<1>(nclasses), cgh);
+            sycl::local_accessor<عائم, 1> smem(sycl::range<1>(nclasses), cgh);
             cgh.parallel_for(
-                sycl::nd_range<3>(grid * block, block),
-                [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    cross_entropy_loss_back_f32_kernel<true>(
+                sycl::nd_range<3>(grid * بلاک, بلاک),
+                [=](sycl::nd_شے<3> شے) [[sycl::reqd_sub_گروہ_ناپ(WARP_ناپ)]] {
+                    cross_entropy_loss_پٹھ_f32_kernel<سچ>(
                         grad_d, logits_d, labels_d, dst_d,
-                        (int) nclasses, (int) nrows,
-                        get_pointer(smem), item);
+                        (صحيح) nclasses, (صحيح) nrows,
+                        get_اشارہ_گر(smem), شے);
                 });
         });
-    } else {
+    } وإلا {
         ctx.stream()->parallel_for(
-            sycl::nd_range<3>(grid * block, block),
-            [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                cross_entropy_loss_back_f32_kernel<false>(
+            sycl::nd_range<3>(grid * بلاک, بلاک),
+            [=](sycl::nd_شے<3> شے) [[sycl::reqd_sub_گروہ_ناپ(WARP_ناپ)]] {
+                cross_entropy_loss_پٹھ_f32_kernel<خطأ>(
                     grad_d, logits_d, labels_d, dst_d,
-                    (int) nclasses, (int) nrows,
-                    nullptr, item);
+                    (صحيح) nclasses, (صحيح) nrows,
+                    خالی_سوچک, شے);
             });
     }
 }

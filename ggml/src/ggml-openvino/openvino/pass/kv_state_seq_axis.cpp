@@ -1,25 +1,25 @@
-#include "kv_state_seq_axis.h"
+#ضمن "kv_state_seq_axis.h"
 
-#include <memory>
-#include <openvino/core/graph_util.hpp>
-#include <openvino/op/assign.hpp>
-#include <openvino/op/concat.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/read_value.hpp>
-#include <openvino/op/transpose.hpp>
-#include <vector>
+#ضمن <memory>
+#ضمن <openvino/core/graph_util.hpp>
+#ضمن <openvino/op/assign.hpp>
+#ضمن <openvino/op/concat.hpp>
+#ضمن <openvino/op/constant.hpp>
+#ضمن <openvino/op/read_value.hpp>
+#ضمن <openvino/op/transpose.hpp>
+#ضمن <vector>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace pass {
+نطاق ov {
+نطاق frontend {
+نطاق ggml {
+نطاق pass {
 
-namespace {
+نطاق {
 
-const std::vector<int64_t> & seq_axis_perm() {
+ثابت std::vector<int64_t> & seq_axis_perm() {
     // [1, seq, n_heads_kv, head_size] <-> [1, n_heads_kv, seq, head_size]
-    static const std::vector<int64_t> perm{0, 2, 1, 3};
-    return perm;
+    ساكن ثابت std::vector<int64_t> perm{0, 2, 1, 3};
+    أرجع perm;
 }
 
 // True when the state still has the frontend's stateful KV layout, so the sequence axis
@@ -28,84 +28,84 @@ const std::vector<int64_t> & seq_axis_perm() {
 // ([1, seq, 1, head] and [1, 1, seq, head] are the same memory); with several heads it
 // also drops the reader-side transpose of the whole accumulated state, which is where
 // most of the gain comes from at depth.
-bool can_move_seq_axis(const ov::PartialShape & shape) {
-    return shape.rank().is_static() && shape.rank().get_length() == 4 && shape[0].is_static() &&
+منطقي can_move_seq_axis(ثابت ov::PartialShape & shape) {
+    أرجع shape.rank().is_static() && shape.rank().get_لمائی() == 4 && shape[0].is_static() &&
            shape[1].is_dynamic() && shape[2].is_static() && shape[3].is_static();
 }
 
-std::shared_ptr<ov::op::v0::Concat> match_kv_append(const std::shared_ptr<ov::op::v6::Assign> & assign) {
-    auto concat = ov::as_type_ptr<ov::op::v0::Concat>(assign->get_input_node_shared_ptr(0));
-    if (!concat || concat->get_input_size() != 2 || concat->get_axis() != 1) {
-        return nullptr;
+std::shared_ptr<ov::op::v0::Concat> میل_kv_append(ثابت std::shared_ptr<ov::op::v6::سونپو_2> & سونپو) {
+    خودکار concat = ov::as_type_ptr<ov::op::v0::Concat>(سونپو->get_داخلہ_گرہ_shared_ptr(0));
+    إذا (!concat || concat->get_داخلہ_ناپ() != 2 || concat->get_axis() != 1) {
+        أرجع خالی_سوچک;
     }
-    auto read_value = ov::as_type_ptr<ov::op::v6::ReadValue>(concat->get_input_node_shared_ptr(0));
-    if (!read_value || read_value->get_variable() != assign->get_variable()) {
-        return nullptr;
+    خودکار read_قدر = ov::as_type_ptr<ov::op::v6::Read_قدر>(concat->get_داخلہ_گرہ_shared_ptr(0));
+    إذا (!read_قدر || read_قدر->get_variable() != سونپو->get_variable()) {
+        أرجع خالی_سوچک;
     }
-    if (!can_move_seq_axis(read_value->get_output_partial_shape(0))) {
-        return nullptr;
+    إذا (!can_move_seq_axis(read_قدر->get_output_partial_shape(0))) {
+        أرجع خالی_سوچک;
     }
-    return concat;
+    أرجع concat;
 }
 
 }  // namespace
 
-bool KVStateSeqAxis::run_on_model(const std::shared_ptr<ov::Model> & model) {
-    std::vector<std::shared_ptr<ov::op::v6::Assign>> assigns;
-    for (const auto & op : model->get_ops()) {
-        if (auto assign = ov::as_type_ptr<ov::op::v6::Assign>(op)) {
-            assigns.push_back(assign);
+منطقي KVStateSeqAxis::لگاتار_on_model(ثابت std::shared_ptr<ov::Model> & model) {
+    std::vector<std::shared_ptr<ov::op::v6::سونپو_2>> assigns;
+    لكل (ثابت خودکار & op : model->get_ops()) {
+        إذا (خودکار سونپو = ov::as_type_ptr<ov::op::v6::سونپو_2>(op)) {
+            assigns.push_back(سونپو);
         }
     }
 
-    bool changed = false;
-    for (const auto & assign : assigns) {
-        auto concat = match_kv_append(assign);
-        if (!concat) {
-            continue;
+    منطقي بدلیا = خطأ;
+    لكل (ثابت خودکار & سونپو : assigns) {
+        خودکار concat = میل_kv_append(سونپو);
+        إذا (!concat) {
+            استمر;
         }
-        auto read_value = ov::as_type_ptr<ov::op::v6::ReadValue>(concat->get_input_node_shared_ptr(0));
+        خودکار read_قدر = ov::as_type_ptr<ov::op::v6::Read_قدر>(concat->get_داخلہ_گرہ_shared_ptr(0));
 
-        auto variable = read_value->get_variable();
-        auto info = variable->get_info();
-        const auto & shape = info.data_shape;
-        info.data_shape = ov::PartialShape{shape[0], shape[2], shape[1], shape[3]};
+        خودکار variable = read_قدر->get_variable();
+        خودکار info = variable->get_info();
+        ثابت خودکار & shape = info.انکڑے_shape;
+        info.انکڑے_shape = ov::PartialShape{shape[0], shape[2], shape[1], shape[3]};
         variable->update(info);
-        read_value->validate_and_infer_types();
+        read_قدر->validate_and_infer_types();
 
-        auto readers = concat->output(0).get_target_inputs();
+        خودکار readers = concat->output(0).get_نشانہ_inputs();
 
-        auto new_rows = concat->input_value(1);
-        auto perm_in = ov::op::v0::Constant::create(ov::element::i64, {4}, seq_axis_perm());
-        concat->set_argument(1, std::make_shared<ov::op::v1::Transpose>(new_rows, perm_in));
-        concat->set_axis(2);
+        خودکار new_صفاں = concat->داخلہ_قدر(1);
+        خودکار perm_وچ = ov::op::v0::Constant::create(ov::element::i64, {4}, seq_axis_perm());
+        concat->سیٹ_دلیل(1, std::make_shared<ov::op::v1::Transpose>(new_صفاں, perm_وچ));
+        concat->سیٹ_axis(2);
         concat->validate_and_infer_types();
 
         // Readers still expect seq at dim 1. A reader that is itself the inverse
         // Transpose wanted seq at dim 2 all along, so drop it; give anything else the
         // inverse Transpose so its input is unchanged.
-        for (const auto & reader : readers) {
-            auto * node = reader.get_node();
-            if (ov::is_type<ov::op::v6::Assign>(node)) {
-                continue;
+        لكل (ثابت خودکار & reader : readers) {
+            خودکار * گرہ = reader.get_گرہ();
+            إذا (ov::is_type<ov::op::v6::سونپو_2>(گرہ)) {
+                استمر;
             }
-            bool dropped = false;
-            if (auto * transpose = ov::as_type<ov::op::v1::Transpose>(node)) {
-                auto order = ov::as_type_ptr<ov::op::v0::Constant>(transpose->get_input_node_shared_ptr(1));
-                if (order && order->cast_vector<int64_t>() == seq_axis_perm()) {
+            منطقي dropped = خطأ;
+            إذا (خودکار * transpose = ov::as_type<ov::op::v1::Transpose>(گرہ)) {
+                خودکار ترتیب = ov::as_type_ptr<ov::op::v0::Constant>(transpose->get_داخلہ_گرہ_shared_ptr(1));
+                إذا (ترتیب && ترتیب->cast_سمتیہ<int64_t>() == seq_axis_perm()) {
                     ov::replace_output_update_name(transpose->output(0), concat->output(0));
-                    dropped = true;
+                    dropped = سچ;
                 }
             }
-            if (!dropped) {
-                auto perm_out = ov::op::v0::Constant::create(ov::element::i64, {4}, seq_axis_perm());
-                reader.replace_source_output(std::make_shared<ov::op::v1::Transpose>(concat->output(0), perm_out));
+            إذا (!dropped) {
+                خودکار perm_باہرلا = ov::op::v0::Constant::create(ov::element::i64, {4}, seq_axis_perm());
+                reader.replace_سروت_output(std::make_shared<ov::op::v1::Transpose>(concat->output(0), perm_باہرلا));
             }
         }
-        changed = true;
+        بدلیا = سچ;
     }
 
-    return changed;
+    أرجع بدلیا;
 }
 
 }  // namespace pass

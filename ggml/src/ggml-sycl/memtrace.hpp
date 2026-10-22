@@ -1,27 +1,27 @@
-#ifndef GGML_SYCL_MEMTRACE_HPP
-#define GGML_SYCL_MEMTRACE_HPP
+#جے_بنا_تعریف GGML_SYCL_MEMTRACE_HPP
+#تعریف_کرو GGML_SYCL_MEMTRACE_HPP
 
-#include <cstddef>
+#ضمن <cstddef>
 
-#define GGML_SYCL_MEMTRACE_TAG "[SYCL-MEMTRACE]"
+#تعریف_کرو GGML_SYCL_MEMTRACE_ٹیگ "[SYCL-MEMTRACE]"
 
-enum ggml_sycl_mem_type {
-    GGML_SYCL_MEM_BUFFER = 0,
+تعداد ggml_sycl_mem_type {
+    GGML_SYCL_MEM_بفر = 0,
     GGML_SYCL_MEM_POOL_LEG,
     GGML_SYCL_MEM_POOL_VMM,
     GGML_SYCL_MEM_ASYNC,
-    GGML_SYCL_MEM_DIRECT,
+    GGML_SYCL_MEM_سدھا,
 
-    GGML_SYCL_MEM_TYPE_COUNT,
+    GGML_SYCL_MEM_TYPE_گنتی,
 };
 
-bool ggml_sycl_memtrace_enabled();
+منطقي ggml_sycl_memtrace_enabled();
 
-void ggml_sycl_memtrace_add(ggml_sycl_mem_type type, const void * ptr, size_t bytes);
-void ggml_sycl_memtrace_del(const void * ptr);
+فراغ ggml_sycl_memtrace_جوڑو(ggml_sycl_mem_type type, ثابت فراغ * ptr, size_t بائٹاں);
+فراغ ggml_sycl_memtrace_del(ثابت فراغ * ptr);
 
-void ggml_sycl_memtrace_report(const char * tag);
-void ggml_sycl_memtrace_report_device(const char * tag, int device, size_t dev_free, size_t dev_total);
-void ggml_sycl_memtrace_fail(ggml_sycl_mem_type type, size_t bytes);
+فراغ ggml_sycl_memtrace_report(ثابت حرف * ٹیگ);
+فراغ ggml_sycl_memtrace_report_device(ثابت حرف * ٹیگ, صحيح device, size_t dev_free, size_t dev_کل);
+فراغ ggml_sycl_memtrace_fail(ggml_sycl_mem_type type, size_t بائٹاں);
 
-#endif  // GGML_SYCL_MEMTRACE_HPP
+#جے_انت  // GGML_SYCL_MEMTRACE_HPP

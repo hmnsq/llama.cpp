@@ -1,89 +1,89 @@
-#ifndef HEX_COMMON_H
-#define HEX_COMMON_H
+#جے_بنا_تعریف HEX_COMMON_H
+#تعریف_کرو HEX_COMMON_H
 
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
+#ضمن <stdint.h>
+#ضمن <stddef.h>
+#ضمن <stdbool.h>
 
-#ifndef SIZE_MAX
-#define SIZE_MAX ((size_t)-1)
-#endif
+#جے_بنا_تعریف SIZE_MAX
+#تعریف_کرو SIZE_MAX ((size_t)-1)
+#جے_انت
 
-#ifndef MAX
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#endif
+#جے_بنا_تعریف MAX
+#تعریف_کرو MAX(a, b) ((a) > (b) ? (a) : (b))
+#جے_انت
 
-#ifndef MIN
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#endif
+#جے_بنا_تعریف MIN
+#تعریف_کرو MIN(a, b) ((a) < (b) ? (a) : (b))
+#جے_انت
 
-static inline uint32_t hex_ceil_pow2(uint32_t x) {
-    if (x <= 1) { return 1; }
-    int p = 2;
+ساكن مضمن uint32_t hex_ceil_pow2(uint32_t x) {
+    إذا (x <= 1) { أرجع 1; }
+    صحيح p = 2;
     x--;
-    while (x >>= 1) { p <<= 1; }
-    return p;
+    طالما (x >>= 1) { p <<= 1; }
+    أرجع p;
 }
 
-static inline size_t hmx_ceil_div(size_t num, size_t den) {
-    return (num + den - 1) / den;
+ساكن مضمن size_t hmx_ceil_div(size_t عدد, size_t den) {
+    أرجع (عدد + den - 1) / den;
 }
 
-static inline int32_t hex_is_aligned(const void * addr, uint32_t align) {
-    return ((size_t) addr & (align - 1)) == 0;
+ساكن مضمن int32_t hex_is_aligned(ثابت فراغ * addr, uint32_t align) {
+    أرجع ((size_t) addr & (align - 1)) == 0;
 }
 
-static inline size_t hex_align_up(size_t v, size_t align) {
-    return hmx_ceil_div(v, align) * align;
+ساكن مضمن size_t hex_align_اتے(size_t v, size_t align) {
+    أرجع hmx_ceil_div(v, align) * align;
 }
 
-static inline size_t hex_align_down(size_t v, size_t align) {
-    return (v / align) * align;
+ساكن مضمن size_t hex_align_تھلے(size_t v, size_t align) {
+    أرجع (v / align) * align;
 }
 
-static inline int32_t hex_is_one_chunk(void * addr, uint32_t n, uint32_t chunk_size) {
-    uint32_t left_off  = (size_t) addr & (chunk_size - 1);
-    uint32_t right_off = left_off + n;
-    return right_off <= chunk_size;
+ساكن مضمن int32_t hex_is_one_chunk(فراغ * addr, uint32_t n, uint32_t chunk_ناپ) {
+    uint32_t بایاں_off  = (size_t) addr & (chunk_ناپ - 1);
+    uint32_t دایاں_off = بایاں_off + n;
+    أرجع دایاں_off <= chunk_ناپ;
 }
 
-static inline uint32_t hex_round_up(uint32_t n, uint32_t m) {
-    return m * ((n + m - 1) / m);
+ساكن مضمن uint32_t hex_گیڑا_اتے(uint32_t n, uint32_t m) {
+    أرجع m * ((n + m - 1) / m);
 }
 
-static inline size_t hex_smin(size_t a, size_t b) {
-    return a < b ? a : b;
+ساكن مضمن size_t hex_smin(size_t a, size_t b) {
+    أرجع a < b ? a : b;
 }
 
-static inline size_t hex_smax(size_t a, size_t b) {
-    return a > b ? a : b;
+ساكن مضمن size_t hex_smax(size_t a, size_t b) {
+    أرجع a > b ? a : b;
 }
 
-static inline void hex_swap_ptr(void ** p1, void ** p2) {
-    void * t = *p1;
+ساكن مضمن فراغ hex_وٹاندرا_ptr(فراغ ** p1, فراغ ** p2) {
+    فراغ * t = *p1;
     *p1      = *p2;
     *p2      = t;
 }
 
-static inline bool hex_mul_overflow(size_t a, size_t b, size_t *out) {
-    if (a != 0 && b > SIZE_MAX / a) return true;
-    *out = a * b;
-    return false;
+ساكن مضمن bool hex_mul_حد_توں_ودھ(size_t a, size_t b, size_t *باہرلا) {
+    إذا (a != 0 && b > SIZE_MAX / a) أرجع true;
+    *باہرلا = a * b;
+    أرجع false;
 }
 
-static inline bool hex_add_overflow(size_t a, size_t b, size_t *out) {
-    if (a > SIZE_MAX - b) return true;
-    *out = a + b;
-    return false;
+ساكن مضمن bool hex_جوڑو_حد_توں_ودھ(size_t a, size_t b, size_t *باہرلا) {
+    إذا (a > SIZE_MAX - b) أرجع true;
+    *باہرلا = a + b;
+    أرجع false;
 }
 
-static inline uint32_t hex_gcd_u32(uint32_t a, uint32_t b) {
-    while (b != 0) {
+ساكن مضمن uint32_t hex_عاد_اعظم_u32(uint32_t a, uint32_t b) {
+    طالما (b != 0) {
         uint32_t t = b;
         b = a % b;
         a = t;
     }
-    return a;
+    أرجع a;
 }
 
-#endif // HEX_COMMON_H
+#جے_انت // HEX_COMMON_H

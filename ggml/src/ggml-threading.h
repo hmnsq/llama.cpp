@@ -1,14 +1,14 @@
-#pragma once
+#ہدایت once
 
-#include "ggml.h"
+#ضمن "ggml.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#جے_تعریف_شدہ __cplusplus
+خارجي "C" {
+#جے_انت
 
-GGML_API void ggml_critical_section_start(void);
-GGML_API void ggml_critical_section_end(void);
+GGML_API فراغ ggml_critical_section_شروع(فراغ);
+GGML_API فراغ ggml_critical_section_سرا(فراغ);
 
-#ifdef __cplusplus
+#جے_تعریف_شدہ __cplusplus
 }
-#endif
+#جے_انت
