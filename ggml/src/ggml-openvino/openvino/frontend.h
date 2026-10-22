@@ -4,17 +4,17 @@
 
 #pragma once
 
-#include <openvino/frontend/frontend.hpp>
+#અન્તર્ભાવ <openvino/frontend/frontend.hpp>
 
 namespace ov {
 namespace frontend {
 namespace ggml {
 
 class FrontEnd {
-public:
+જાહેર:
     FrontEnd();
 
-    static std::shared_ptr<Model> convert(const InputModel::Ptr & model, bool naive = false);
+    સ્થિર std::shared_ptr<Model> convert(અચલ આગત_Model::Ptr & model, bool naive = false);
 };
 
 }  // namespace ggml

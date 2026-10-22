@@ -1,13 +1,13 @@
 #pragma once
 
-#include "node_context.h"
+#અન્તર્ભાવ "node_context.h"
 
-#include <memory>
-#include <openvino/core/node.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/shape_of.hpp>
-#include <openvino/op/slice.hpp>
-#include <utility>
+#અન્તર્ભાવ <memory>
+#અન્તર્ભાવ <openvino/core/node.hpp>
+#અન્તર્ભાવ <openvino/op/convert.hpp>
+#અન્તર્ભાવ <openvino/op/shape_of.hpp>
+#અન્તર્ભાવ <openvino/op/slice.hpp>
+#અન્તર્ભાવ <utility>
 
 namespace ov {
 namespace frontend {
@@ -15,85 +15,85 @@ namespace ggml {
 
 std::string getCurrentTime();
 
-void num_inputs_check(const NodeContext & context, size_t min_inputs, size_t max_inputs);
+શૂન્ય અંક_inputs_check(અચલ ગાંઠ_Context & context, size_t min_inputs, size_t max_inputs);
 
-int non_cont_dim(std::vector<size_t> ne, std::vector<size_t> nb);
+પૂર્ણાંક non_cont_dim(std::vector<size_t> ne, std::vector<size_t> nb);
 
-template <typename T> std::vector<int> argsort_descend(const std::vector<T> & v) {
-    std::vector<int> idx(v.size());
+template <typename T> std::vector<પૂર્ણાંક> argsort_descend(અચલ std::vector<T> & v) {
+    std::vector<પૂર્ણાંક> idx(v.size());
     std::iota(idx.begin(), idx.end(), 0);
-    std::sort(idx.begin(), idx.end(), [&v](int i1, int i2) { return v[i1] > v[i2]; });
-    return idx;
+    std::sort(idx.begin(), idx.end(), [&v](પૂર્ણાંક i1, પૂર્ણાંક i2) { પાછા v[i1] > v[i2]; });
+    પાછા idx;
 }
 
 template <typename T> std::vector<T> sorted_descend(std::vector<T> v) {
-    std::sort(v.begin(), v.end(), [](T a, T b) { return a > b; });
-    return v;
+    std::sort(v.begin(), v.end(), [](T a, T b) { પાછા a > b; });
+    પાછા v;
 }
 
-template <typename T> bool is_permuted(const std::vector<T> & strides) {
-    for (size_t i = 0; i < strides.size() - 1; ++i) {
-        if (strides[i] < strides[i + 1]) {
-            return true;
+template <typename T> bool is_permuted(અચલ std::vector<T> & strides) {
+    માટે (size_t i = 0; i < strides.size() - 1; ++i) {
+        જો (strides[i] < strides[i + 1]) {
+            પાછા true;
         }
     }
-    return false;
+    પાછા false;
 }
 
-template <typename T> std::vector<T> permute(const std::vector<T> & x, const std::vector<int> & perm) {
+template <typename T> std::vector<T> permute(અચલ std::vector<T> & x, અચલ std::vector<પૂર્ણાંક> & perm) {
     std::vector<T> result;
     result.reserve(perm.size());
-    for (int i : perm) {
-        result.push_back(x[i]);
+    માટે (પૂર્ણાંક i : perm) {
+        result.ધકેલો_back(x[i]);
     }
-    return result;
+    પાછા result;
 }
 
-std::shared_ptr<ov::Node> get_dimensions(const std::shared_ptr<ov::op::v3::ShapeOf> & shape,
-                                         const std::vector<int> & dims);
-std::shared_ptr<ov::Node> get_dimensions(const std::shared_ptr<ov::Node> & node, const std::vector<int> & dims);
+std::shared_ptr<ov::ગાંઠ_2> get_dimensions(અચલ std::shared_ptr<ov::op::v3::ShapeOf> & shape,
+                                         અચલ std::vector<પૂર્ણાંક> & dims);
+std::shared_ptr<ov::ગાંઠ_2> get_dimensions(અચલ std::shared_ptr<ov::ગાંઠ_2> & ગાંઠ, અચલ std::vector<પૂર્ણાંક> & dims);
 
-OutputVector rename_outputs_with_suffix(const OutputVector & outputs, const std::string & suffix);
+OutputVector rename_outputs_with_suffix(અચલ OutputVector & outputs, અચલ std::string & suffix);
 
-std::pair<ov::Output<Node>, ov::Output<Node>> make_sin_cos(int32_t * rope_params,
-                                                           std::shared_ptr<ov::Node> inp_pos,
-                                                           std::shared_ptr<ov::Node> rope_freqs_weight = nullptr,
-                                                           int mode = 0,
+std::pair<ov::Output<ગાંઠ_2>, ov::Output<ગાંઠ_2>> make_sin_cos(int32_t * rope_params,
+                                                           std::shared_ptr<ov::ગાંઠ_2> inp_pos,
+                                                           std::shared_ptr<ov::ગાંઠ_2> rope_freqs_weight = nullptr,
+                                                           પૂર્ણાંક mode = 0,
                                                            bool stateful = false,
                                                            int64_t head_dim = 0);
 
-ov::Output<ov::Node> process_view_input(const NodeContext & context, int input_index, int slice_len = 0, int axis = -1);
+ov::Output<ov::ગાંઠ_2> process_view_આગત(અચલ ગાંઠ_Context & context, પૂર્ણાંક આગત_index, પૂર્ણાંક slice_len = 0, પૂર્ણાંક axis = -1);
 
-ov::Output<ov::Node> process_view_input_new(const NodeContext & context, int input_index);
+ov::Output<ov::ગાંઠ_2> process_view_આગત_new(અચલ ગાંઠ_Context & context, પૂર્ણાંક આગત_index);
 
 namespace op {
-template <typename T> OutputVector translate_1to1_match_2_inputs(const NodeContext & context) {
-    num_inputs_check(context, 2, 2);
-    auto input_0 = process_view_input_new(context, 0);
-    auto input_1 = process_view_input_new(context, 1);
+template <typename T> OutputVector translate_1to1_match_2_inputs(અચલ ગાંઠ_Context & context) {
+    અંક_inputs_check(context, 2, 2);
+    auto આગત_0 = process_view_આગત_new(context, 0);
+    auto આગત_1 = process_view_આગત_new(context, 1);
 
     auto output_type = context.get_output_type();
-    if (input_0.get_element_type() != input_1.get_element_type()) {
-        if (input_0.get_element_type() != ov::element::f32) {
-            input_0 = std::make_shared<ov::op::v0::Convert>(input_0, ov::element::f32);
+    જો (આગત_0.get_element_type() != આગત_1.get_element_type()) {
+        જો (આગત_0.get_element_type() != ov::element::f32) {
+            આગત_0 = std::make_shared<ov::op::v0::Convert>(આગત_0, ov::element::f32);
         }
-        if (input_1.get_element_type() != ov::element::f32) {
-            input_1 = std::make_shared<ov::op::v0::Convert>(input_1, ov::element::f32);
+        જો (આગત_1.get_element_type() != ov::element::f32) {
+            આગત_1 = std::make_shared<ov::op::v0::Convert>(આગત_1, ov::element::f32);
         }
     }
 
-    ov::Output<ov::Node> res = std::make_shared<T>(input_0, input_1);
-    if (res.get_element_type() != output_type) {
+    ov::Output<ov::ગાંઠ_2> res = std::make_shared<T>(આગત_0, આગત_1);
+    જો (res.get_element_type() != output_type) {
         res = std::make_shared<ov::op::v0::Convert>(res, output_type);
     }
-    return rename_outputs_with_suffix({res}, context.get_name());
+    પાછા rename_outputs_with_suffix({res}, context.get_name());
 }
 
-template <typename T> OutputVector translate_1to1_match_1_input(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
-    auto input = process_view_input_new(context, 0);
-    auto res = std::make_shared<T>(input);
-    return rename_outputs_with_suffix({res}, context.get_name());
+template <typename T> OutputVector translate_1to1_match_1_આગત(અચલ ગાંઠ_Context & context) {
+    અંક_inputs_check(context, 1, 1);
+    auto આગત = process_view_આગત_new(context, 0);
+    auto res = std::make_shared<T>(આગત);
+    પાછા rename_outputs_with_suffix({res}, context.get_name());
 }
 }  // namespace op
 

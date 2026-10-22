@@ -1,87 +1,87 @@
-#include "backend/shared/apir_cs_rpc.h"
-#include "ggml-backend-impl.h"
-#include "ggml-impl.h"
-#include "ggml-remoting.h"
+#અન્તર્ભાવ "backend/shared/apir_cs_rpc.h"
+#અન્તર્ભાવ "ggml-backend-impl.h"
+#અન્તર્ભાવ "ggml-impl.h"
+#અન્તર્ભાવ "ggml-remoting.h"
 
-#include <cinttypes>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
+#અન્તર્ભાવ <cinttypes>
+#અન્તર્ભાવ <unordered_map>
+#અન્તર્ભાવ <unordered_set>
+#અન્તર્ભાવ <vector>
 
-apir_rpc_tensor apir_serialize_tensor(const ggml_tensor * tensor) {
+apir_rpc_tensor apir_serialize_tensor(અચલ ggml_tensor * tensor) {
     apir_rpc_tensor result;
     result.id   = reinterpret_cast<uint64_t>(tensor);
     result.type = tensor->type;
-    if (tensor->buffer) {
+    જો (tensor->buffer) {
         ggml_backend_buffer_t buffer = tensor->buffer;
 
         result.buffer = BUFFER_TO_HOST_HANDLE(buffer);
-    } else {
+    } નહીંતર {
         result.buffer = 0;
     }
-    for (uint32_t i = 0; i < GGML_MAX_DIMS; i++) {
+    માટે (uint32_t i = 0; i < GGML_MAX_DIMS; i++) {
         result.ne[i] = tensor->ne[i];
         result.nb[i] = tensor->nb[i];
     }
     result.op = tensor->op;
-    for (uint32_t i = 0; i < GGML_MAX_OP_PARAMS / sizeof(int32_t); i++) {
+    માટે (uint32_t i = 0; i < GGML_MAX_OP_PARAMS / કદ(int32_t); i++) {
         result.op_params[i] = tensor->op_params[i];
     }
     result.flags = tensor->flags;
-    for (uint32_t i = 0; i < GGML_MAX_SRC; i++) {
+    માટે (uint32_t i = 0; i < GGML_MAX_SRC; i++) {
         result.src[i] = reinterpret_cast<uint64_t>(tensor->src[i]);
     }
     result.view_src  = reinterpret_cast<uint64_t>(tensor->view_src);
     result.view_offs = tensor->view_offs;
     result.data      = reinterpret_cast<uint64_t>(tensor->data);
-    if (tensor->data) {
-        if (!tensor->buffer) {
+    જો (tensor->data) {
+        જો (!tensor->buffer) {
             GGML_ABORT("%s: tensor has data but not buffer", __func__);
         }
         // tensor->data is serialized as an offset to the buffer base address
         result.data -= reinterpret_cast<uint64_t>(BUFFER_TO_GGML_CONTEXT(tensor->buffer)->base);
     }
     snprintf(result.name, GGML_MAX_NAME, "%s", tensor->name);
-    return result;
+    પાછા result;
 }
 
-void apir_add_tensor(ggml_tensor *                       tensor,
+શૂન્ય apir_add_tensor(ggml_tensor *                       tensor,
                      std::vector<apir_rpc_tensor> &      tensors,
                      std::unordered_set<ggml_tensor *> & visited) {
-    if (tensor == nullptr) {
-        return;
+    જો (tensor == nullptr) {
+        પાછા;
     }
-    if (visited.find(tensor) != visited.end()) {
-        return;
+    જો (visited.find(tensor) != visited.end()) {
+        પાછા;
     }
     visited.insert(tensor);
-    for (int i = 0; i < GGML_MAX_SRC; i++) {
+    માટે (પૂર્ણાંક i = 0; i < GGML_MAX_SRC; i++) {
         apir_add_tensor(tensor->src[i], tensors, visited);
     }
     apir_add_tensor(tensor->view_src, tensors, visited);
     tensors.push_back(apir_serialize_tensor(tensor));
 }
 
-void apir_serialize_graph(const ggml_cgraph * cgraph, std::vector<uint8_t> & output) {
+શૂન્ય apir_serialize_graph(અચલ ggml_cgraph * cgraph, std::vector<uint8_t> & output) {
     uint32_t                          n_nodes = cgraph->n_nodes;
     std::vector<apir_rpc_tensor>      tensors;
     std::unordered_set<ggml_tensor *> visited;
-    for (uint32_t i = 0; i < n_nodes; i++) {
+    માટે (uint32_t i = 0; i < n_nodes; i++) {
         apir_add_tensor(cgraph->nodes[i], tensors, visited);
     }
     // serialization format:
     // | n_nodes (4 bytes) | nodes (n_nodes * sizeof(uint64_t) | n_tensors (4 bytes) | tensors (n_tensors * sizeof(apir_rpc_tensor)) |
     uint32_t n_tensors = tensors.size();
-    int      output_size =
-        sizeof(uint32_t) + n_nodes * sizeof(uint64_t) + sizeof(uint32_t) + n_tensors * sizeof(apir_rpc_tensor);
+    પૂર્ણાંક      output_size =
+        કદ(uint32_t) + n_nodes * કદ(uint64_t) + કદ(uint32_t) + n_tensors * કદ(apir_rpc_tensor);
     output.resize(output_size, 0);
-    memcpy(output.data(), &n_nodes, sizeof(n_nodes));
-    for (uint32_t i = 0; i < n_nodes; i++) {
-        memcpy(output.data() + sizeof(n_nodes) + i * sizeof(uint64_t), &cgraph->nodes[i], sizeof(uint64_t));
+    memcpy(output.data(), &n_nodes, કદ(n_nodes));
+    માટે (uint32_t i = 0; i < n_nodes; i++) {
+        memcpy(output.data() + કદ(n_nodes) + i * કદ(uint64_t), &cgraph->nodes[i], કદ(uint64_t));
     }
-    uint32_t * out_ntensors = (uint32_t *) (output.data() + sizeof(n_nodes) + n_nodes * sizeof(uint64_t));
+    uint32_t * out_ntensors = (uint32_t *) (output.data() + કદ(n_nodes) + n_nodes * કદ(uint64_t));
     *out_ntensors           = n_tensors;
     apir_rpc_tensor * out_tensors =
-        (apir_rpc_tensor *) (output.data() + sizeof(n_nodes) + n_nodes * sizeof(uint64_t) + sizeof(uint32_t));
-    memcpy(out_tensors, tensors.data(), n_tensors * sizeof(apir_rpc_tensor));
+        (apir_rpc_tensor *) (output.data() + કદ(n_nodes) + n_nodes * કદ(uint64_t) + કદ(uint32_t));
+    memcpy(out_tensors, tensors.data(), n_tensors * કદ(apir_rpc_tensor));
 }

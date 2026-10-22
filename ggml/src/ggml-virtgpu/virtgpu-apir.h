@@ -1,15 +1,15 @@
-#include "backend/shared/apir_backend.h"
-#include "ggml-alloc.h"
-#include "ggml-impl.h"
-#include "ggml.h"
-#include "virtgpu-shm.h"
-#include "virtgpu-utils.h"
+#અન્તર્ભાવ "backend/shared/apir_backend.h"
+#અન્તર્ભાવ "ggml-alloc.h"
+#અન્તર્ભાવ "ggml-impl.h"
+#અન્તર્ભાવ "ggml.h"
+#અન્તર્ભાવ "virtgpu-shm.h"
+#અન્તર્ભાવ "virtgpu-utils.h"
 
-struct apir_buffer_context_t {
+સંરચના apir_buffer_context_t {
     apir_buffer_host_handle_t host_handle;
 
-    struct virtgpu_shmem           shmem;
+    સંરચના virtgpu_shmem           shmem;
     apir_buffer_type_host_handle_t buft_host_handle;
 };
 
-#include "virtgpu-forward.gen.h"
+#અન્તર્ભાવ "virtgpu-forward.gen.h"

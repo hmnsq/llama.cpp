@@ -1,15 +1,15 @@
 #pragma once
 
-#include "common.h"
+#અન્તર્ભાવ "common.h"
 
 #ifdef __cplusplus
-extern "C" {
+બાહ્ય "C" {
 #endif
 
-void ggml_compute_forward_add_non_quantized(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_sub(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_mul(const struct ggml_compute_params * params, struct ggml_tensor * dst);
-void ggml_compute_forward_div(const struct ggml_compute_params * params, struct ggml_tensor * dst);
+શૂન્ય ggml_compute_forward_add_non_quantized(અચલ સંરચના ggml_compute_params * params, સંરચના ggml_tensor * dst);
+શૂન્ય ggml_compute_forward_sub(અચલ સંરચના ggml_compute_params * params, સંરચના ggml_tensor * dst);
+શૂન્ય ggml_compute_forward_mul(અચલ સંરચના ggml_compute_params * params, સંરચના ggml_tensor * dst);
+શૂન્ય ggml_compute_forward_div(અચલ સંરચના ggml_compute_params * params, સંરચના ggml_tensor * dst);
 
 #ifdef __cplusplus
 }

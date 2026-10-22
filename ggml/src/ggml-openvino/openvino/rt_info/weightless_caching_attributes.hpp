@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include <openvino/core/core_visibility.hpp>
-#include <openvino/core/node.hpp>
-#include <openvino/core/runtime_attribute.hpp>
+#અન્તર્ભાવ <openvino/core/core_visibility.hpp>
+#અન્તર્ભાવ <openvino/core/node.hpp>
+#અન્તર્ભાવ <openvino/core/runtime_attribute.hpp>
 
-namespace ov {
+નામાકાશ ov {
 
 /**
  * @brief Holds weightless caching attributes of a single constant.
@@ -20,8 +20,8 @@ namespace ov {
  * one produced during the tranformation pipeline) - in that case weightless caching
  * can't be used for that constant.
  */
-class OPENVINO_API WeightlessCacheAttribute : public RuntimeAttribute {
-public:
+વર્ગ OPENVINO_API WeightlessCacheAttribute : જાહેર RuntimeAttribute {
+જાહેર:
     OPENVINO_RTTI("WeightlessCacheAttribute", "0", RuntimeAttribute)
 
     WeightlessCacheAttribute() = delete;
@@ -31,7 +31,7 @@ public:
           bin_offset(bin_offset),
           original_dtype(original_dtype) {}
 
-    bool is_copyable() const override;
+    તાર્કિક is_copyable() અચલ override;
 
     size_t original_size;
     size_t bin_offset;

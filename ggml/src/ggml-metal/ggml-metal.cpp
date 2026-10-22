@@ -1,26 +1,26 @@
-#include "ggml-metal.h"
+#અન્તર્ભાવ "ggml-metal.h"
 
-#include "ggml-impl.h"
-#include "ggml-backend-impl.h"
+#અન્તર્ભાવ "ggml-impl.h"
+#અન્તર્ભાવ "ggml-backend-impl.h"
 
-#include "ggml-metal-device.h"
-#include "ggml-metal-fusion.h"
-#include "ggml-metal-context.h"
-#include "ggml-metal-ops.h"
-#include "ggml-metal-tuning.h"
+#અન્તર્ભાવ "ggml-metal-device.h"
+#અન્તર્ભાવ "ggml-metal-fusion.h"
+#અન્તર્ભાવ "ggml-metal-context.h"
+#અન્તર્ભાવ "ggml-metal-ops.h"
+#અન્તર્ભાવ "ggml-metal-tuning.h"
 
-#include <mutex>
-#include <string>
+#અન્તર્ભાવ <mutex>
+#અન્તર્ભાવ <string>
 
 #define GGML_METAL_NAME "MTL"
 #define GGML_METAL_MAX_DEVICES 16
 
 // number of Metal devices
 // note: can be overridden with GGML_METAL_DEVICES env to simulate virtual devices
-static int g_devices = 1;
+સ્થિર પૂર્ણાંક g_devices = 1;
 
 // forward declaration
-static bool ggml_backend_buffer_is_metal(ggml_backend_buffer_t buffer);
+સ્થિર તાર્કિક ggml_backend_buffer_is_metal(ggml_backend_buffer_t buffer);
 
 ////////////////////////////////////////////////////////////////////////////////
 // backend interface
@@ -28,7 +28,7 @@ static bool ggml_backend_buffer_is_metal(ggml_backend_buffer_t buffer);
 
 // shared buffer
 
-static void ggml_backend_metal_buffer_shared_free_buffer(ggml_backend_buffer_t buffer) {
+સ્થિર શૂન્ય ggml_backend_metal_buffer_shared_free_buffer(ggml_backend_buffer_t buffer) {
     ggml_metal_buffer_t ctx = (ggml_metal_buffer_t)buffer->context;
 
     GGML_ASSERT(ggml_metal_buffer_is_shared(ctx));
@@ -36,15 +36,15 @@ static void ggml_backend_metal_buffer_shared_free_buffer(ggml_backend_buffer_t b
     ggml_metal_buffer_free(ctx);
 }
 
-static void * ggml_backend_metal_buffer_shared_get_base(ggml_backend_buffer_t buffer) {
+સ્થિર શૂન્ય * ggml_backend_metal_buffer_shared_get_base(ggml_backend_buffer_t buffer) {
     ggml_metal_buffer_t ctx = (ggml_metal_buffer_t)buffer->context;
 
     GGML_ASSERT(ggml_metal_buffer_is_shared(ctx));
 
-    return ggml_metal_buffer_get_base(ctx);
+    પાછા ggml_metal_buffer_get_base(ctx);
 }
 
-static void ggml_backend_metal_buffer_shared_memset_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor, uint8_t value, size_t offset, size_t size) {
+સ્થિર શૂન્ય ggml_backend_metal_buffer_shared_memset_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor, uint8_t value, size_t offset, size_t size) {
     ggml_metal_buffer_t ctx = (ggml_metal_buffer_t)buffer->context;
 
     GGML_ASSERT(ggml_metal_buffer_is_shared(ctx));
@@ -52,7 +52,7 @@ static void ggml_backend_metal_buffer_shared_memset_tensor(ggml_backend_buffer_t
     ggml_metal_buffer_memset_tensor(ctx, tensor, value, offset, size);
 }
 
-static void ggml_backend_metal_buffer_shared_set_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor, const void * data, size_t offset, size_t size) {
+સ્થિર શૂન્ય ggml_backend_metal_buffer_shared_set_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor, અચલ શૂન્ય * data, size_t offset, size_t size) {
     ggml_metal_buffer_t ctx = (ggml_metal_buffer_t)buffer->context;
 
     GGML_ASSERT(ggml_metal_buffer_is_shared(ctx));
@@ -60,7 +60,7 @@ static void ggml_backend_metal_buffer_shared_set_tensor(ggml_backend_buffer_t bu
     ggml_metal_buffer_set_tensor(ctx, tensor, data, offset, size);
 }
 
-static void ggml_backend_metal_buffer_shared_get_tensor(ggml_backend_buffer_t buffer, const ggml_tensor * tensor, void * data, size_t offset, size_t size) {
+સ્થિર શૂન્ય ggml_backend_metal_buffer_shared_get_tensor(ggml_backend_buffer_t buffer, અચલ ggml_tensor * tensor, શૂન્ય * data, size_t offset, size_t size) {
     ggml_metal_buffer_t ctx = (ggml_metal_buffer_t)buffer->context;
 
     GGML_ASSERT(ggml_metal_buffer_is_shared(ctx));
@@ -68,19 +68,19 @@ static void ggml_backend_metal_buffer_shared_get_tensor(ggml_backend_buffer_t bu
     ggml_metal_buffer_get_tensor(ctx, tensor, data, offset, size);
 }
 
-static bool ggml_backend_metal_buffer_shared_cpy_tensor(ggml_backend_buffer_t buffer, const ggml_tensor * src, ggml_tensor * dst) {
+સ્થિર તાર્કિક ggml_backend_metal_buffer_shared_cpy_tensor(ggml_backend_buffer_t buffer, અચલ ggml_tensor * src, ggml_tensor * dst) {
     ggml_metal_buffer_t ctx = (ggml_metal_buffer_t)buffer->context;
 
     GGML_ASSERT(ggml_metal_buffer_is_shared(ctx));
 
-    if (!ggml_backend_buffer_is_metal(src->buffer)) {
-        return false;
+    જો (!ggml_backend_buffer_is_metal(src->buffer)) {
+        પાછા ખોટું;
     }
 
-    return ggml_metal_buffer_cpy_tensor(ctx, src, dst);
+    પાછા ggml_metal_buffer_cpy_tensor(ctx, src, dst);
 }
 
-static void ggml_backend_metal_buffer_shared_clear(ggml_backend_buffer_t buffer, uint8_t value) {
+સ્થિર શૂન્ય ggml_backend_metal_buffer_shared_clear(ggml_backend_buffer_t buffer, uint8_t value) {
     ggml_metal_buffer_t ctx = (ggml_metal_buffer_t)buffer->context;
 
     GGML_ASSERT(ggml_metal_buffer_is_shared(ctx));
@@ -88,23 +88,23 @@ static void ggml_backend_metal_buffer_shared_clear(ggml_backend_buffer_t buffer,
     ggml_metal_buffer_clear(ctx, value);
 }
 
-static ggml_backend_buffer_i ggml_backend_metal_buffer_shared_i = {
+સ્થિર ggml_backend_buffer_i ggml_backend_metal_buffer_shared_i = {
     /* .free_buffer   = */ ggml_backend_metal_buffer_shared_free_buffer,
     /* .get_base      = */ ggml_backend_metal_buffer_shared_get_base,
-    /* .init_tensor   = */ NULL,
+    /* .init_tensor   = */ ખાલી,
     /* .memset_tensor = */ ggml_backend_metal_buffer_shared_memset_tensor,
     /* .set_tensor    = */ ggml_backend_metal_buffer_shared_set_tensor,
     /* .get_tensor    = */ ggml_backend_metal_buffer_shared_get_tensor,
-    /* .set_tensor_2d = */ NULL,
-    /* .get_tensor_2d = */ NULL,
+    /* .set_tensor_2d = */ ખાલી,
+    /* .get_tensor_2d = */ ખાલી,
     /* .cpy_tensor    = */ ggml_backend_metal_buffer_shared_cpy_tensor,
     /* .clear         = */ ggml_backend_metal_buffer_shared_clear,
-    /* .reset         = */ NULL,
+    /* .reset         = */ ખાલી,
 };
 
 // private buffer
 
-static void ggml_backend_metal_buffer_private_free_buffer(ggml_backend_buffer_t buffer) {
+સ્થિર શૂન્ય ggml_backend_metal_buffer_private_free_buffer(ggml_backend_buffer_t buffer) {
     ggml_metal_buffer_t ctx = (ggml_metal_buffer_t)buffer->context;
 
     GGML_ASSERT(!ggml_metal_buffer_is_shared(ctx));
@@ -112,15 +112,15 @@ static void ggml_backend_metal_buffer_private_free_buffer(ggml_backend_buffer_t 
     ggml_metal_buffer_free(ctx);
 }
 
-static void * ggml_backend_metal_buffer_private_get_base(ggml_backend_buffer_t buffer) {
+સ્થિર શૂન્ય * ggml_backend_metal_buffer_private_get_base(ggml_backend_buffer_t buffer) {
     ggml_metal_buffer_t ctx = (ggml_metal_buffer_t)buffer->context;
 
     GGML_ASSERT(!ggml_metal_buffer_is_shared(ctx));
 
-    return ggml_metal_buffer_get_base(ctx);
+    પાછા ggml_metal_buffer_get_base(ctx);
 }
 
-static void ggml_backend_metal_buffer_private_memset_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor, uint8_t value, size_t offset, size_t size) {
+સ્થિર શૂન્ય ggml_backend_metal_buffer_private_memset_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor, uint8_t value, size_t offset, size_t size) {
     ggml_metal_buffer_t ctx = (ggml_metal_buffer_t)buffer->context;
 
     GGML_ASSERT(!ggml_metal_buffer_is_shared(ctx));
@@ -128,7 +128,7 @@ static void ggml_backend_metal_buffer_private_memset_tensor(ggml_backend_buffer_
     ggml_metal_buffer_memset_tensor(ctx, tensor, value, offset, size);
 }
 
-static void ggml_backend_metal_buffer_private_set_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor, const void * data, size_t offset, size_t size) {
+સ્થિર શૂન્ય ggml_backend_metal_buffer_private_set_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor, અચલ શૂન્ય * data, size_t offset, size_t size) {
     ggml_metal_buffer_t ctx = (ggml_metal_buffer_t)buffer->context;
 
     GGML_ASSERT(!ggml_metal_buffer_is_shared(ctx));
@@ -136,7 +136,7 @@ static void ggml_backend_metal_buffer_private_set_tensor(ggml_backend_buffer_t b
     ggml_metal_buffer_set_tensor(ctx, tensor, data, offset, size);
 }
 
-static void ggml_backend_metal_buffer_private_get_tensor(ggml_backend_buffer_t buffer, const ggml_tensor * tensor, void * data, size_t offset, size_t size) {
+સ્થિર શૂન્ય ggml_backend_metal_buffer_private_get_tensor(ggml_backend_buffer_t buffer, અચલ ggml_tensor * tensor, શૂન્ય * data, size_t offset, size_t size) {
     ggml_metal_buffer_t ctx = (ggml_metal_buffer_t)buffer->context;
 
     GGML_ASSERT(!ggml_metal_buffer_is_shared(ctx));
@@ -144,19 +144,19 @@ static void ggml_backend_metal_buffer_private_get_tensor(ggml_backend_buffer_t b
     ggml_metal_buffer_get_tensor(ctx, tensor, data, offset, size);
 }
 
-static bool ggml_backend_metal_buffer_private_cpy_tensor(ggml_backend_buffer_t buffer, const ggml_tensor * src, ggml_tensor * dst) {
+સ્થિર તાર્કિક ggml_backend_metal_buffer_private_cpy_tensor(ggml_backend_buffer_t buffer, અચલ ggml_tensor * src, ggml_tensor * dst) {
     ggml_metal_buffer_t ctx = (ggml_metal_buffer_t)buffer->context;
 
     GGML_ASSERT(!ggml_metal_buffer_is_shared(ctx));
 
-    if (!ggml_backend_buffer_is_metal(src->buffer)) {
-        return false;
+    જો (!ggml_backend_buffer_is_metal(src->buffer)) {
+        પાછા ખોટું;
     }
 
-    return ggml_metal_buffer_cpy_tensor(ctx, src, dst);
+    પાછા ggml_metal_buffer_cpy_tensor(ctx, src, dst);
 }
 
-static void ggml_backend_metal_buffer_private_clear(ggml_backend_buffer_t buffer, uint8_t value) {
+સ્થિર શૂન્ય ggml_backend_metal_buffer_private_clear(ggml_backend_buffer_t buffer, uint8_t value) {
     ggml_metal_buffer_t ctx = (ggml_metal_buffer_t)buffer->context;
 
     GGML_ASSERT(!ggml_metal_buffer_is_shared(ctx));
@@ -164,22 +164,22 @@ static void ggml_backend_metal_buffer_private_clear(ggml_backend_buffer_t buffer
     ggml_metal_buffer_clear(ctx, value);
 }
 
-static ggml_backend_buffer_i ggml_backend_metal_buffer_private_i = {
+સ્થિર ggml_backend_buffer_i ggml_backend_metal_buffer_private_i = {
     /* .free_buffer   = */ ggml_backend_metal_buffer_private_free_buffer,
     /* .get_base      = */ ggml_backend_metal_buffer_private_get_base,
-    /* .init_tensor   = */ NULL,
+    /* .init_tensor   = */ ખાલી,
     /* .memset_tensor = */ ggml_backend_metal_buffer_private_memset_tensor,
     /* .set_tensor    = */ ggml_backend_metal_buffer_private_set_tensor,
     /* .get_tensor    = */ ggml_backend_metal_buffer_private_get_tensor,
-    /* .set_tensor_2d = */ NULL,
-    /* .get_tensor_2d = */ NULL,
+    /* .set_tensor_2d = */ ખાલી,
+    /* .get_tensor_2d = */ ખાલી,
     /* .cpy_tensor    = */ ggml_backend_metal_buffer_private_cpy_tensor,
     /* .clear         = */ ggml_backend_metal_buffer_private_clear,
-    /* .reset         = */ NULL,
+    /* .reset         = */ ખાલી,
 };
 
-static bool ggml_backend_buffer_is_metal(ggml_backend_buffer_t buffer) {
-    return buffer->iface.free_buffer == ggml_backend_metal_buffer_shared_free_buffer ||
+સ્થિર તાર્કિક ggml_backend_buffer_is_metal(ggml_backend_buffer_t buffer) {
+    પાછા buffer->iface.free_buffer == ggml_backend_metal_buffer_shared_free_buffer ||
            buffer->iface.free_buffer == ggml_backend_metal_buffer_private_free_buffer;
 }
 
@@ -187,126 +187,126 @@ static bool ggml_backend_buffer_is_metal(ggml_backend_buffer_t buffer) {
 // buffer types
 //
 
-struct ggml_backend_metal_buffer_type {
-    int device;
+સંરચના ggml_backend_metal_buffer_type {
+    પૂર્ણાંક device;
     std::string name;
 };
 
-struct ggml_backend_metal_buffer_type_deleter {
-    void operator()(ggml_backend_metal_buffer_type * ctx) const {
+સંરચના ggml_backend_metal_buffer_type_deleter {
+    શૂન્ય operator()(ggml_backend_metal_buffer_type * ctx) અચલ {
         delete ctx;
     }
 };
 
-typedef std::unique_ptr<ggml_backend_metal_buffer_type, ggml_backend_metal_buffer_type_deleter> ggml_backend_metal_buffer_type_ptr;
+પ્રકારવ્યાખ્યા std::unique_ptr<ggml_backend_metal_buffer_type, ggml_backend_metal_buffer_type_deleter> ggml_backend_metal_buffer_type_ptr;
 
 // common method for allocating shread or private Metal buffers
-static ggml_backend_buffer_t ggml_backend_metal_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size, bool shared) {
+સ્થિર ggml_backend_buffer_t ggml_backend_metal_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size, તાર્કિક shared) {
     ggml_metal_device_t ctx_dev = (ggml_metal_device_t)buft->device->context;
     ggml_metal_buffer_t res = ggml_metal_buffer_init(ctx_dev, size, shared);
 
-    if (res == NULL) {
+    જો (res == ખાલી) {
         GGML_LOG_ERROR("%s: failed to allocate Metal buffer of %zu bytes (out of memory)\n", __func__, size);
-        return NULL;
+        પાછા ખાલી;
     }
 
     ggml_backend_buffer_i buf_i = ggml_metal_buffer_is_shared(res)
         ? ggml_backend_metal_buffer_shared_i
         : ggml_backend_metal_buffer_private_i;
 
-    return ggml_backend_buffer_init(buft, buf_i, res, size);
+    પાછા ggml_backend_buffer_init(buft, buf_i, res, size);
 }
 
-static size_t ggml_backend_metal_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft, const ggml_tensor * tensor) {
+સ્થિર size_t ggml_backend_metal_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft, અચલ ggml_tensor * tensor) {
     size_t res = ggml_nbytes(tensor);
 
     // some operations require additional memory for fleeting data:
-    switch (tensor->op) {
-        case GGML_OP_MUL_MAT_ID:
+    પસંદગી (tensor->op) {
+        સ્થિતિ GGML_OP_MUL_MAT_ID:
             {
                 res += ggml_metal_op_mul_mat_id_extra_tpe(tensor);
                 res += ggml_metal_op_mul_mat_id_extra_ids(tensor);
                 res += ggml_metal_op_mul_mat_id_extra_amax(tensor);
-            } break;
-        case GGML_OP_FLASH_ATTN_EXT:
+            } તોડો;
+        સ્થિતિ GGML_OP_FLASH_ATTN_EXT:
             {
                 res += ggml_metal_op_flash_attn_ext_extra_pad(tensor);
                 res += ggml_metal_op_flash_attn_ext_extra_blk(tensor);
                 res += ggml_metal_op_flash_attn_ext_extra_tmp(tensor);
                 res += ggml_metal_op_flash_attn_ext_extra_kv_f16(tensor);
                 res += ggml_metal_op_flash_attn_ext_extra_idx(tensor);
-            } break;
-        case GGML_OP_CUMSUM:
-        case GGML_OP_ARGSORT:
+            } તોડો;
+        સ્થિતિ GGML_OP_CUMSUM:
+        સ્થિતિ GGML_OP_ARGSORT:
             {
                 res *= 2;
-            } break;
-        case GGML_OP_TOP_K:
+            } તોડો;
+        સ્થિતિ GGML_OP_ટોચ_K:
             {
-                res = 2*sizeof(int32_t)*ggml_nelements(tensor->src[0]);
-            } break;
-        case GGML_OP_ARGMAX:
+                res = 2*કદ(int32_t)*ggml_nelements(tensor->src[0]);
+            } તોડો;
+        સ્થિતિ GGML_OP_ARGMAX:
             {
                 res += ggml_metal_op_argmax_extra(tensor);
-            } break;
-        default:
-            break;
+            } તોડો;
+        મૂળભૂત:
+            તોડો;
     }
 
-    return res;
+    પાછા res;
 
     GGML_UNUSED(buft);
 }
 
 // default (shared) buffer type
 
-static const char * ggml_backend_metal_buffer_type_shared_get_name(ggml_backend_buffer_type_t buft) {
+સ્થિર અચલ અક્ષર * ggml_backend_metal_buffer_type_shared_get_name(ggml_backend_buffer_type_t buft) {
     ggml_backend_metal_buffer_type * ctx = (ggml_backend_metal_buffer_type *)buft->context;
 
-    return ctx->name.c_str();
+    પાછા ctx->name.c_str();
 }
 
-static ggml_backend_buffer_t ggml_backend_metal_buffer_type_shared_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
-    return ggml_backend_metal_buffer_type_alloc_buffer(buft, size, true);
+સ્થિર ggml_backend_buffer_t ggml_backend_metal_buffer_type_shared_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
+    પાછા ggml_backend_metal_buffer_type_alloc_buffer(buft, size, સાચું);
 }
 
-static size_t ggml_backend_metal_buffer_type_shared_get_alignment(ggml_backend_buffer_type_t buft) {
-    return 32;
+સ્થિર size_t ggml_backend_metal_buffer_type_shared_get_alignment(ggml_backend_buffer_type_t buft) {
+    પાછા 32;
 
     GGML_UNUSED(buft);
 }
 
-static size_t ggml_backend_metal_buffer_type_shared_get_max_size(ggml_backend_buffer_type_t buft) {
+સ્થિર size_t ggml_backend_metal_buffer_type_shared_get_max_size(ggml_backend_buffer_type_t buft) {
     ggml_metal_device_t ctx_dev = (ggml_metal_device_t)buft->device->context;
 
-    return ggml_metal_device_get_props(ctx_dev)->max_buffer_size;
+    પાછા ggml_metal_device_get_props(ctx_dev)->max_buffer_size;
 }
 
-static size_t ggml_backend_metal_buffer_type_shared_get_alloc_size(ggml_backend_buffer_type_t buft, const ggml_tensor * tensor) {
-    return ggml_backend_metal_buffer_type_get_alloc_size(buft, tensor);
+સ્થિર size_t ggml_backend_metal_buffer_type_shared_get_alloc_size(ggml_backend_buffer_type_t buft, અચલ ggml_tensor * tensor) {
+    પાછા ggml_backend_metal_buffer_type_get_alloc_size(buft, tensor);
 }
 
-static bool ggml_backend_metal_buffer_type_shared_is_host(ggml_backend_buffer_type_t buft) {
-    return false;
+સ્થિર તાર્કિક ggml_backend_metal_buffer_type_shared_is_host(ggml_backend_buffer_type_t buft) {
+    પાછા ખોટું;
 
     GGML_UNUSED(buft);
 }
 
-static ggml_backend_buffer_type_t ggml_backend_metal_buffer_type_shared(int device) {
-    static std::mutex mutex;
+સ્થિર ggml_backend_buffer_type_t ggml_backend_metal_buffer_type_shared(પૂર્ણાંક device) {
+    સ્થિર std::mutex mutex;
     std::lock_guard<std::mutex> lock(mutex);
 
-    static std::vector<ggml_backend_buffer_type> bufts;
-    static std::vector<ggml_backend_metal_buffer_type_ptr> ctxs;
+    સ્થિર std::vector<ggml_backend_buffer_type> bufts;
+    સ્થિર std::vector<ggml_backend_metal_buffer_type_ptr> ctxs;
 
-    static bool initialized = false;
-    if (!initialized) {
+    સ્થિર તાર્કિક initialized = ખોટું;
+    જો (!initialized) {
         bufts.reserve(g_devices);
         ctxs.reserve(g_devices);
 
-        for (int i = 0; i < g_devices; ++i) {
+        માટે (પૂર્ણાંક i = 0; i < g_devices; ++i) {
             ggml_backend_metal_buffer_type * raw_ctx =
-                new ggml_backend_metal_buffer_type {
+                નવું ggml_backend_metal_buffer_type {
                     /* .device = */ i,
                     /* .name   = */ GGML_METAL_NAME + std::to_string(i),
                 };
@@ -316,11 +316,11 @@ static ggml_backend_buffer_type_t ggml_backend_metal_buffer_type_shared(int devi
                 /* .iface = */ {
                     /* .get_name            = */ ggml_backend_metal_buffer_type_shared_get_name,
                     /* .alloc_buffer        = */ ggml_backend_metal_buffer_type_shared_alloc_buffer,
-                    /* .alloc_buffer_n      = */ NULL,
+                    /* .alloc_buffer_n      = */ ખાલી,
                     /* .get_alignment       = */ ggml_backend_metal_buffer_type_shared_get_alignment,
                     /* .get_max_size        = */ ggml_backend_metal_buffer_type_shared_get_max_size,
                     /* .get_alloc_size      = */ ggml_backend_metal_buffer_type_shared_get_alloc_size,
-                    /* .get_alloc_size_n    = */ NULL,
+                    /* .get_alloc_size_n    = */ ખાલી,
                     /* .is_host             = */ ggml_backend_metal_buffer_type_shared_is_host,
                 },
                 /* .device  = */ ggml_backend_reg_dev_get(ggml_backend_metal_reg(), i),
@@ -330,60 +330,60 @@ static ggml_backend_buffer_type_t ggml_backend_metal_buffer_type_shared(int devi
             bufts.emplace_back(buft);
         }
 
-        initialized = true;
+        initialized = સાચું;
     }
 
-    return &bufts[device];
+    પાછા &bufts[device];
 }
 
 // default (private) buffer type
 
-static const char * ggml_backend_metal_buffer_type_private_get_name(ggml_backend_buffer_type_t buft) {
+સ્થિર અચલ અક્ષર * ggml_backend_metal_buffer_type_private_get_name(ggml_backend_buffer_type_t buft) {
     ggml_backend_metal_buffer_type * ctx = (ggml_backend_metal_buffer_type *)buft->context;
 
-    return ctx->name.c_str();
+    પાછા ctx->name.c_str();
 }
 
-static ggml_backend_buffer_t ggml_backend_metal_buffer_type_private_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
-    return ggml_backend_metal_buffer_type_alloc_buffer(buft, size, false);
+સ્થિર ggml_backend_buffer_t ggml_backend_metal_buffer_type_private_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
+    પાછા ggml_backend_metal_buffer_type_alloc_buffer(buft, size, ખોટું);
 }
 
-static size_t ggml_backend_metal_buffer_type_private_get_alignment(ggml_backend_buffer_type_t buft) {
-    return 32;
+સ્થિર size_t ggml_backend_metal_buffer_type_private_get_alignment(ggml_backend_buffer_type_t buft) {
+    પાછા 32;
 
     GGML_UNUSED(buft);
 }
 
-static size_t ggml_backend_metal_buffer_type_private_get_max_size(ggml_backend_buffer_type_t buft) {
+સ્થિર size_t ggml_backend_metal_buffer_type_private_get_max_size(ggml_backend_buffer_type_t buft) {
     ggml_metal_device_t ctx_dev = (ggml_metal_device_t)buft->device->context;
 
-    return ggml_metal_device_get_props(ctx_dev)->max_buffer_size;
+    પાછા ggml_metal_device_get_props(ctx_dev)->max_buffer_size;
 }
 
-static size_t ggml_backend_metal_buffer_type_private_get_alloc_size(ggml_backend_buffer_type_t buft, const ggml_tensor * tensor) {
-    return ggml_backend_metal_buffer_type_get_alloc_size(buft, tensor);
+સ્થિર size_t ggml_backend_metal_buffer_type_private_get_alloc_size(ggml_backend_buffer_type_t buft, અચલ ggml_tensor * tensor) {
+    પાછા ggml_backend_metal_buffer_type_get_alloc_size(buft, tensor);
 }
 
-static bool ggml_backend_metal_buffer_type_private_is_host(ggml_backend_buffer_type_t buft) {
-    return false;
+સ્થિર તાર્કિક ggml_backend_metal_buffer_type_private_is_host(ggml_backend_buffer_type_t buft) {
+    પાછા ખોટું;
 
     GGML_UNUSED(buft);
 }
 
-static ggml_backend_buffer_type_t ggml_backend_metal_buffer_type_private(int device) {
-    static std::mutex mutex;
+સ્થિર ggml_backend_buffer_type_t ggml_backend_metal_buffer_type_private(પૂર્ણાંક device) {
+    સ્થિર std::mutex mutex;
     std::lock_guard<std::mutex> lock(mutex);
 
-    static std::vector<ggml_backend_buffer_type> bufts;
-    static std::vector<ggml_backend_metal_buffer_type_ptr> ctxs;
+    સ્થિર std::vector<ggml_backend_buffer_type> bufts;
+    સ્થિર std::vector<ggml_backend_metal_buffer_type_ptr> ctxs;
 
-    static bool initialized = false;
-    if (!initialized) {
+    સ્થિર તાર્કિક initialized = ખોટું;
+    જો (!initialized) {
         bufts.reserve(g_devices);
         ctxs.reserve(g_devices);
 
-        for (int i = 0; i < g_devices; ++i) {
-            ggml_backend_metal_buffer_type * raw_ctx = new ggml_backend_metal_buffer_type{
+        માટે (પૂર્ણાંક i = 0; i < g_devices; ++i) {
+            ggml_backend_metal_buffer_type * raw_ctx = નવું ggml_backend_metal_buffer_type{
                 /* .device = */ i,
                 /* .name   = */ GGML_METAL_NAME + std::to_string(i) + "_Private"
             };
@@ -393,11 +393,11 @@ static ggml_backend_buffer_type_t ggml_backend_metal_buffer_type_private(int dev
                 /* .iface = */ {
                     /* .get_name            = */ ggml_backend_metal_buffer_type_private_get_name,
                     /* .alloc_buffer        = */ ggml_backend_metal_buffer_type_private_alloc_buffer,
-                    /* .alloc_buffer_n      = */ NULL,
+                    /* .alloc_buffer_n      = */ ખાલી,
                     /* .get_alignment       = */ ggml_backend_metal_buffer_type_private_get_alignment,
                     /* .get_max_size        = */ ggml_backend_metal_buffer_type_private_get_max_size,
                     /* .get_alloc_size      = */ ggml_backend_metal_buffer_type_private_get_alloc_size,
-                    /* .get_alloc_size_n    = */ NULL,
+                    /* .get_alloc_size_n    = */ ખાલી,
                     /* .is_host             = */ ggml_backend_metal_buffer_type_private_is_host,
                 },
                 /* .device  = */ ggml_backend_reg_dev_get(ggml_backend_metal_reg(), i),
@@ -407,61 +407,61 @@ static ggml_backend_buffer_type_t ggml_backend_metal_buffer_type_private(int dev
             bufts.emplace_back(buft);
         }
 
-        initialized = true;
+        initialized = સાચું;
     }
 
-    return &bufts[device];
+    પાછા &bufts[device];
 }
 
 // mapped buffer type
 
-static const char * ggml_backend_metal_buffer_type_mapped_get_name(ggml_backend_buffer_type_t buft) {
+સ્થિર અચલ અક્ષર * ggml_backend_metal_buffer_type_mapped_get_name(ggml_backend_buffer_type_t buft) {
     ggml_backend_metal_buffer_type * ctx = (ggml_backend_metal_buffer_type *)buft->context;
 
-    return ctx->name.c_str();
+    પાછા ctx->name.c_str();
 }
 
-static ggml_backend_buffer_t ggml_backend_metal_buffer_type_mapped_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
+સ્થિર ggml_backend_buffer_t ggml_backend_metal_buffer_type_mapped_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
     // for mapped buffers, prefer shared memory
-    return ggml_backend_metal_buffer_type_alloc_buffer(buft, size, true);
+    પાછા ggml_backend_metal_buffer_type_alloc_buffer(buft, size, સાચું);
 }
 
-static size_t ggml_backend_metal_buffer_type_mapped_get_alignment(ggml_backend_buffer_type_t buft) {
-    return 32;
+સ્થિર size_t ggml_backend_metal_buffer_type_mapped_get_alignment(ggml_backend_buffer_type_t buft) {
+    પાછા 32;
 
     GGML_UNUSED(buft);
 }
 
-static size_t ggml_backend_metal_buffer_type_mapped_get_max_size(ggml_backend_buffer_type_t buft) {
+સ્થિર size_t ggml_backend_metal_buffer_type_mapped_get_max_size(ggml_backend_buffer_type_t buft) {
     ggml_metal_device_t ctx_dev = (ggml_metal_device_t)buft->device->context;
 
-    return ggml_metal_device_get_props(ctx_dev)->max_buffer_size;
+    પાછા ggml_metal_device_get_props(ctx_dev)->max_buffer_size;
 }
 
-static size_t ggml_backend_metal_buffer_type_mapped_get_alloc_size(ggml_backend_buffer_type_t buft, const ggml_tensor * tensor) {
-    return ggml_backend_metal_buffer_type_get_alloc_size(buft, tensor);
+સ્થિર size_t ggml_backend_metal_buffer_type_mapped_get_alloc_size(ggml_backend_buffer_type_t buft, અચલ ggml_tensor * tensor) {
+    પાછા ggml_backend_metal_buffer_type_get_alloc_size(buft, tensor);
 }
 
-static bool ggml_backend_metal_buffer_type_mapped_is_host(ggml_backend_buffer_type_t buft) {
-    return false;
+સ્થિર તાર્કિક ggml_backend_metal_buffer_type_mapped_is_host(ggml_backend_buffer_type_t buft) {
+    પાછા ખોટું;
 
     GGML_UNUSED(buft);
 }
 
-static ggml_backend_buffer_type_t ggml_backend_metal_buffer_type_mapped(int device) {
-    static std::mutex mutex;
+સ્થિર ggml_backend_buffer_type_t ggml_backend_metal_buffer_type_mapped(પૂર્ણાંક device) {
+    સ્થિર std::mutex mutex;
     std::lock_guard<std::mutex> lock(mutex);
 
-    static std::vector<ggml_backend_buffer_type> bufts;
-    static std::vector<ggml_backend_metal_buffer_type_ptr> ctxs;
+    સ્થિર std::vector<ggml_backend_buffer_type> bufts;
+    સ્થિર std::vector<ggml_backend_metal_buffer_type_ptr> ctxs;
 
-    static bool initialized = false;
-    if (!initialized) {
+    સ્થિર તાર્કિક initialized = ખોટું;
+    જો (!initialized) {
         bufts.reserve(g_devices);
         ctxs.reserve(g_devices);
 
-        for (int i = 0; i < g_devices; ++i) {
-            ggml_backend_metal_buffer_type * raw_ctx = new ggml_backend_metal_buffer_type{
+        માટે (પૂર્ણાંક i = 0; i < g_devices; ++i) {
+            ggml_backend_metal_buffer_type * raw_ctx = નવું ggml_backend_metal_buffer_type{
                 /* .device = */ i,
                 /* .name   = */ GGML_METAL_NAME + std::to_string(i) + "_Mapped"
             };
@@ -473,11 +473,11 @@ static ggml_backend_buffer_type_t ggml_backend_metal_buffer_type_mapped(int devi
                 /* .iface = */ {
                     /* .get_name            = */ ggml_backend_metal_buffer_type_mapped_get_name,
                     /* .alloc_buffer        = */ ggml_backend_metal_buffer_type_mapped_alloc_buffer,
-                    /* .alloc_buffer_n      = */ NULL,
+                    /* .alloc_buffer_n      = */ ખાલી,
                     /* .get_alignment       = */ ggml_backend_metal_buffer_type_mapped_get_alignment,
                     /* .get_max_size        = */ ggml_backend_metal_buffer_type_mapped_get_max_size,
                     /* .get_alloc_size      = */ ggml_backend_metal_buffer_type_mapped_get_alloc_size,
-                    /* .get_alloc_size_n    = */ NULL,
+                    /* .get_alloc_size_n    = */ ખાલી,
                     /* .is_host             = */ ggml_backend_metal_buffer_type_mapped_is_host,
                 },
                 /* .device  = */ ggml_backend_reg_dev_get(ggml_backend_metal_reg(), i),
@@ -487,21 +487,21 @@ static ggml_backend_buffer_type_t ggml_backend_metal_buffer_type_mapped(int devi
             bufts.emplace_back(buft);
         }
 
-        initialized = true;
+        initialized = સાચું;
     }
 
-    return &bufts[device];
+    પાછા &bufts[device];
 }
 
 // backend
 
-static const char * ggml_backend_metal_name(ggml_backend_t backend) {
+સ્થિર અચલ અક્ષર * ggml_backend_metal_name(ggml_backend_t backend) {
     ggml_metal_t ctx = (ggml_metal_t)backend->context;
 
-    return ggml_metal_get_name(ctx);
+    પાછા ggml_metal_get_name(ctx);
 }
 
-static void ggml_backend_metal_free(ggml_backend_t backend) {
+સ્થિર શૂન્ય ggml_backend_metal_free(ggml_backend_t backend) {
     ggml_metal_t ctx = (ggml_metal_t)backend->context;
 
     // wait for any ongoing async operations to finish
@@ -509,34 +509,34 @@ static void ggml_backend_metal_free(ggml_backend_t backend) {
 
     ggml_metal_free(ctx);
 
-    free(backend);
+    મુક્ત(backend);
 }
 
-static void ggml_backend_metal_synchronize(ggml_backend_t backend) {
+સ્થિર શૂન્ય ggml_backend_metal_synchronize(ggml_backend_t backend) {
     ggml_metal_t ctx = (ggml_metal_t)backend->context;
 
     ggml_metal_synchronize(ctx);
 }
 
-static void ggml_backend_metal_set_tensor_async(ggml_backend_t backend, ggml_tensor * tensor, const void * data, size_t offset, size_t size) {
+સ્થિર શૂન્ય ggml_backend_metal_set_tensor_async(ggml_backend_t backend, ggml_tensor * tensor, અચલ શૂન્ય * data, size_t offset, size_t size) {
     ggml_metal_t ctx = (ggml_metal_t)backend->context;
 
     ggml_metal_set_tensor_async(ctx, tensor, data, offset, size);
 }
 
-static void ggml_backend_metal_get_tensor_async(ggml_backend_t backend, const ggml_tensor * tensor, void * data, size_t offset, size_t size) {
+સ્થિર શૂન્ય ggml_backend_metal_get_tensor_async(ggml_backend_t backend, અચલ ggml_tensor * tensor, શૂન્ય * data, size_t offset, size_t size) {
     ggml_metal_t ctx = (ggml_metal_t)backend->context;
 
     ggml_metal_get_tensor_async(ctx, tensor, data, offset, size);
 }
 
-static bool ggml_backend_metal_cpy_tensor_async(ggml_backend_t backend_src, ggml_backend_t backend_dst, const ggml_tensor * src, ggml_tensor * dst) {
-    if (!ggml_backend_is_metal(backend_src) || !ggml_backend_is_metal(backend_dst)) {
-        return false;
+સ્થિર તાર્કિક ggml_backend_metal_cpy_tensor_async(ggml_backend_t backend_src, ggml_backend_t backend_dst, અચલ ggml_tensor * src, ggml_tensor * dst) {
+    જો (!ggml_backend_is_metal(backend_src) || !ggml_backend_is_metal(backend_dst)) {
+        પાછા ખોટું;
     }
 
-    if (!ggml_backend_buffer_is_metal(src->buffer) || !ggml_backend_buffer_is_metal(dst->buffer)) {
-        return false;
+    જો (!ggml_backend_buffer_is_metal(src->buffer) || !ggml_backend_buffer_is_metal(dst->buffer)) {
+        પાછા ખોટું;
     }
 
     ggml_metal_t ctx_src = (ggml_metal_t)backend_src->context;
@@ -548,30 +548,30 @@ static bool ggml_backend_metal_cpy_tensor_async(ggml_backend_t backend_src, ggml
     //ggml_metal_buffer_t buf_ctx_src = (ggml_metal_buffer_t)buf_src->context;
     //ggml_metal_buffer_t buf_ctx_dst = (ggml_metal_buffer_t)buf_dst->context;
 
-    return ggml_metal_cpy_tensor_async(ctx_src, ctx_dst, src, dst);
+    પાછા ggml_metal_cpy_tensor_async(ctx_src, ctx_dst, src, dst);
 }
 
-static enum ggml_status ggml_backend_metal_graph_compute(ggml_backend_t backend, ggml_cgraph * cgraph) {
+સ્થિર ગણના ggml_status ggml_backend_metal_graph_compute(ggml_backend_t backend, ggml_cgraph * cgraph) {
     ggml_metal_t ctx = (ggml_metal_t)backend->context;
 
-    return ggml_metal_graph_compute(ctx, cgraph);
+    પાછા ggml_metal_graph_compute(ctx, cgraph);
 }
 
-static void ggml_backend_metal_event_record(ggml_backend_t backend, ggml_backend_event_t event) {
+સ્થિર શૂન્ય ggml_backend_metal_event_record(ggml_backend_t backend, ggml_backend_event_t event) {
     ggml_metal_t ctx = (ggml_metal_t)backend->context;
     ggml_metal_event_t ev = (ggml_metal_event_t)event->context;
 
     ggml_metal_event_record(ctx, ev);
 }
 
-static void ggml_backend_metal_event_wait(ggml_backend_t backend, ggml_backend_event_t event) {
+સ્થિર શૂન્ય ggml_backend_metal_event_wait(ggml_backend_t backend, ggml_backend_event_t event) {
     ggml_metal_t ctx = (ggml_metal_t)backend->context;
     ggml_metal_event_t ev = (ggml_metal_event_t)event->context;
 
     ggml_metal_event_wait(ctx, ev);
 }
 
-static void ggml_backend_metal_graph_optimize(ggml_backend_t backend, ggml_cgraph * cgraph, ggml_backend_graph_optimize_params * params) {
+સ્થિર શૂન્ય ggml_backend_metal_graph_optimize(ggml_backend_t backend, ggml_cgraph * cgraph, ggml_backend_graph_optimize_params * params) {
     GGML_ASSERT(params && params->add_alloc_dep);
 
     // keep the MoE weighted-reduction inputs alive until the fused output so the
@@ -583,7 +583,7 @@ static void ggml_backend_metal_graph_optimize(ggml_backend_t backend, ggml_cgrap
     ggml_metal_graph_optimize(ctx, cgraph);
 }
 
-static void ggml_backend_metal_set_n_cb(ggml_backend_t backend, int n_cb) {
+સ્થિર શૂન્ય ggml_backend_metal_set_n_cb(ggml_backend_t backend, પૂર્ણાંક n_cb) {
     GGML_ASSERT(ggml_backend_is_metal(backend));
 
     ggml_metal_t ctx = (ggml_metal_t)backend->context;
@@ -591,41 +591,41 @@ static void ggml_backend_metal_set_n_cb(ggml_backend_t backend, int n_cb) {
     ggml_metal_set_n_cb(ctx, n_cb);
 }
 
-static ggml_backend_i ggml_backend_metal_i = {
+સ્થિર ggml_backend_i ggml_backend_metal_i = {
     /* .get_name                = */ ggml_backend_metal_name,
     /* .free                    = */ ggml_backend_metal_free,
     /* .set_tensor_async        = */ ggml_backend_metal_set_tensor_async,
     /* .get_tensor_async        = */ ggml_backend_metal_get_tensor_async,
-    /* .set_tensor_2d_async     = */ NULL,
-    /* .get_tensor_2d_async     = */ NULL,
+    /* .set_tensor_2d_async     = */ ખાલી,
+    /* .get_tensor_2d_async     = */ ખાલી,
     /* .cpy_tensor_async        = */ ggml_backend_metal_cpy_tensor_async, // only needed for multi-GPU setups
     /* .synchronize             = */ ggml_backend_metal_synchronize,
-    /* .graph_plan_create       = */ NULL,
-    /* .graph_plan_free         = */ NULL,
-    /* .graph_plan_update       = */ NULL,
-    /* .graph_plan_compute      = */ NULL,
+    /* .graph_plan_create       = */ ખાલી,
+    /* .graph_plan_free         = */ ખાલી,
+    /* .graph_plan_update       = */ ખાલી,
+    /* .graph_plan_compute      = */ ખાલી,
     /* .graph_compute           = */ ggml_backend_metal_graph_compute,
     /* .event_record            = */ ggml_backend_metal_event_record,
     /* .event_wait              = */ ggml_backend_metal_event_wait,
     /* .graph_optimize          = */ ggml_backend_metal_graph_optimize,
 };
 
-static ggml_guid_t ggml_backend_metal_guid(void) {
-    static ggml_guid guid = { 0x81, 0xa1, 0x8b, 0x1e, 0x71, 0xec, 0x79, 0xed, 0x2b, 0x85, 0xdc, 0x8a, 0x61, 0x98, 0x30, 0xe6 };
-    return &guid;
+સ્થિર ggml_guid_t ggml_backend_metal_guid(શૂન્ય) {
+    સ્થિર ggml_guid guid = { 0x81, 0xa1, 0x8b, 0x1e, 0x71, 0xec, 0x79, 0xed, 0x2b, 0x85, 0xdc, 0x8a, 0x61, 0x98, 0x30, 0xe6 };
+    પાછા &guid;
 }
 
-ggml_backend_t ggml_backend_metal_init(void) {
+ggml_backend_t ggml_backend_metal_init(શૂન્ય) {
     ggml_backend_dev_t dev = ggml_backend_reg_dev_get(ggml_backend_metal_reg(), 0);
     ggml_metal_device_t ctx_dev = (ggml_metal_device_t)dev->context;
 
     ggml_metal_t ctx = ggml_metal_init(ctx_dev);
-    if (ctx == NULL) {
+    જો (ctx == ખાલી) {
         GGML_LOG_ERROR("%s: error: failed to allocate context\n", __func__);
-        return NULL;
+        પાછા ખાલી;
     }
 
-    ggml_backend_t backend = (ggml_backend_t) malloc(sizeof(ggml_backend));
+    ggml_backend_t backend = (ggml_backend_t) malloc(કદ(ggml_backend));
 
     *backend = {
         /* .guid      = */ ggml_backend_metal_guid(),
@@ -636,14 +636,14 @@ ggml_backend_t ggml_backend_metal_init(void) {
 
     ggml_backend_metal_set_n_cb(backend, 1);
 
-    return backend;
+    પાછા backend;
 }
 
-bool ggml_backend_is_metal(ggml_backend_t backend) {
-    return backend != NULL && ggml_guid_matches(backend->guid, ggml_backend_metal_guid());
+તાર્કિક ggml_backend_is_metal(ggml_backend_t backend) {
+    પાછા backend != ખાલી && ggml_guid_matches(backend->guid, ggml_backend_metal_guid());
 }
 
-void ggml_backend_metal_set_abort_callback(ggml_backend_t backend, ggml_abort_callback abort_callback, void * user_data) {
+શૂન્ય ggml_backend_metal_set_abort_callback(ggml_backend_t backend, ggml_abort_callback abort_callback, શૂન્ય * user_data) {
     GGML_ASSERT(ggml_backend_is_metal(backend));
 
     ggml_metal_t ctx = (ggml_metal_t)backend->context;
@@ -651,15 +651,15 @@ void ggml_backend_metal_set_abort_callback(ggml_backend_t backend, ggml_abort_ca
     ggml_metal_set_abort_callback(ctx, abort_callback, user_data);
 }
 
-bool ggml_backend_metal_supports_family(ggml_backend_t backend, int family) {
+તાર્કિક ggml_backend_metal_supports_family(ggml_backend_t backend, પૂર્ણાંક family) {
     GGML_ASSERT(ggml_backend_is_metal(backend));
 
     ggml_metal_t ctx = (ggml_metal_t)backend->context;
 
-    return ggml_metal_supports_family(ctx, family);
+    પાછા ggml_metal_supports_family(ctx, family);
 }
 
-void ggml_backend_metal_capture_next_compute(ggml_backend_t backend) {
+શૂન્ય ggml_backend_metal_capture_next_compute(ggml_backend_t backend) {
     GGML_ASSERT(ggml_backend_is_metal(backend));
 
     ggml_metal_t ctx = (ggml_metal_t)backend->context;
@@ -669,33 +669,33 @@ void ggml_backend_metal_capture_next_compute(ggml_backend_t backend) {
 
 // backend device
 
-static const char * ggml_backend_metal_device_get_name(ggml_backend_dev_t dev) {
+સ્થિર અચલ અક્ષર * ggml_backend_metal_device_get_name(ggml_backend_dev_t dev) {
     ggml_metal_device_t ctx_dev = (ggml_metal_device_t)dev->context;
 
-    const ggml_metal_device_props * props_dev = ggml_metal_device_get_props(ctx_dev);
+    અચલ ggml_metal_device_props * props_dev = ggml_metal_device_get_props(ctx_dev);
 
-    return props_dev->name;
+    પાછા props_dev->name;
 }
 
-static const char * ggml_backend_metal_device_get_description(ggml_backend_dev_t dev) {
+સ્થિર અચલ અક્ષર * ggml_backend_metal_device_get_description(ggml_backend_dev_t dev) {
     ggml_metal_device_t ctx_dev = (ggml_metal_device_t)dev->context;
 
-    return ggml_metal_device_get_props(ctx_dev)->desc;
+    પાછા ggml_metal_device_get_props(ctx_dev)->desc;
 }
 
-static void ggml_backend_metal_device_get_memory(ggml_backend_dev_t dev, size_t * free, size_t * total) {
+સ્થિર શૂન્ય ggml_backend_metal_device_get_memory(ggml_backend_dev_t dev, size_t * મુક્ત, size_t * total) {
     ggml_metal_device_t ctx_dev = (ggml_metal_device_t)dev->context;
 
-    ggml_metal_device_get_memory(ctx_dev, free, total);
+    ggml_metal_device_get_memory(ctx_dev, મુક્ત, total);
 }
 
-static enum ggml_backend_dev_type ggml_backend_metal_device_get_type(ggml_backend_dev_t dev) {
-    return GGML_BACKEND_DEVICE_TYPE_GPU;
+સ્થિર ગણના ggml_backend_dev_type ggml_backend_metal_device_get_type(ggml_backend_dev_t dev) {
+    પાછા GGML_BACKEND_DEVICE_TYPE_GPU;
 
     GGML_UNUSED(dev);
 }
 
-static void ggml_backend_metal_device_get_props(ggml_backend_dev_t dev, ggml_backend_dev_props * props) {
+સ્થિર શૂન્ય ggml_backend_metal_device_get_props(ggml_backend_dev_t dev, ggml_backend_dev_props * props) {
     props->name        = ggml_backend_metal_device_get_name(dev);
     props->description = ggml_backend_metal_device_get_description(dev);
     props->type        = ggml_backend_metal_device_get_type(dev);
@@ -703,24 +703,24 @@ static void ggml_backend_metal_device_get_props(ggml_backend_dev_t dev, ggml_bac
     ggml_backend_metal_device_get_memory(dev, &props->memory_free, &props->memory_total);
 
     props->caps = {
-        /* .async                = */ true,
-        /* .host_buffer          = */ false,
-        /* .buffer_from_host_ptr = */ true,
-        /* .events               = */ true,
-        /* .mmap_support         = */ true,
+        /* .async                = */ સાચું,
+        /* .host_buffer          = */ ખોટું,
+        /* .buffer_from_host_ptr = */ સાચું,
+        /* .events               = */ સાચું,
+        /* .mmap_support         = */ સાચું,
     };
 }
 
-static ggml_backend_t ggml_backend_metal_device_init_backend(ggml_backend_dev_t dev, const char * params) {
+સ્થિર ggml_backend_t ggml_backend_metal_device_init_backend(ggml_backend_dev_t dev, અચલ અક્ષર * params) {
     ggml_metal_device_t ctx_dev = (ggml_metal_device_t)dev->context;
 
     ggml_metal_t ctx = ggml_metal_init(ctx_dev);
-    if (ctx == NULL) {
+    જો (ctx == ખાલી) {
         GGML_LOG_ERROR("%s: error: failed to allocate context\n", __func__);
-        return NULL;
+        પાછા ખાલી;
     }
 
-    ggml_backend_t backend = (ggml_backend_t) malloc(sizeof(ggml_backend));
+    ggml_backend_t backend = (ggml_backend_t) malloc(કદ(ggml_backend));
 
     *backend = {
         /* .guid      = */ ggml_backend_metal_guid(),
@@ -731,37 +731,37 @@ static ggml_backend_t ggml_backend_metal_device_init_backend(ggml_backend_dev_t 
 
     ggml_backend_metal_set_n_cb(backend, 1);
 
-    return backend;
+    પાછા backend;
 
     GGML_UNUSED(params);
 }
 
-static ggml_backend_buffer_type_t ggml_backend_metal_device_get_buffer_type(ggml_backend_dev_t dev) {
+સ્થિર ggml_backend_buffer_type_t ggml_backend_metal_device_get_buffer_type(ggml_backend_dev_t dev) {
     ggml_metal_device_t ctx_dev = (ggml_metal_device_t)dev->context;
 
-    const ggml_metal_device_props * props_dev = ggml_metal_device_get_props(ctx_dev);
+    અચલ ggml_metal_device_props * props_dev = ggml_metal_device_get_props(ctx_dev);
 
-    return props_dev->use_shared_buffers ? ggml_backend_metal_buffer_type_shared(props_dev->device) : ggml_backend_metal_buffer_type_private(props_dev->device);
+    પાછા props_dev->use_shared_buffers ? ggml_backend_metal_buffer_type_shared(props_dev->device) : ggml_backend_metal_buffer_type_private(props_dev->device);
 }
 
-static ggml_backend_buffer_t ggml_backend_metal_device_buffer_mapped(ggml_backend_dev_t dev, void * ptr, size_t size, size_t max_tensor_size) {
+સ્થિર ggml_backend_buffer_t ggml_backend_metal_device_buffer_mapped(ggml_backend_dev_t dev, શૂન્ય * ptr, size_t size, size_t max_tensor_size) {
     ggml_metal_device_t ctx_dev = (ggml_metal_device_t)dev->context;
 
     ggml_metal_buffer_t res = ggml_metal_buffer_map(ctx_dev, ptr, size, max_tensor_size);
 
-    const ggml_metal_device_props * props_dev = ggml_metal_device_get_props(ctx_dev);
+    અચલ ggml_metal_device_props * props_dev = ggml_metal_device_get_props(ctx_dev);
 
-    return ggml_backend_buffer_init(ggml_backend_metal_buffer_type_mapped(props_dev->device), ggml_backend_metal_buffer_shared_i, res, size);
+    પાછા ggml_backend_buffer_init(ggml_backend_metal_buffer_type_mapped(props_dev->device), ggml_backend_metal_buffer_shared_i, res, size);
 }
 
-static bool ggml_backend_metal_device_supports_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
+સ્થિર તાર્કિક ggml_backend_metal_device_supports_op(ggml_backend_dev_t dev, અચલ ggml_tensor * op) {
     ggml_metal_device_t ctx_dev = (ggml_metal_device_t)dev->context;
 
-    return ggml_metal_device_supports_op(ctx_dev, op);
+    પાછા ggml_metal_device_supports_op(ctx_dev, op);
 }
 
-static bool ggml_backend_metal_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
-    return
+સ્થિર તાર્કિક ggml_backend_metal_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
+    પાછા
         buft->device == dev && (
         buft->iface.get_name == ggml_backend_metal_buffer_type_shared_get_name ||
         buft->iface.get_name == ggml_backend_metal_buffer_type_private_get_name ||
@@ -770,40 +770,40 @@ static bool ggml_backend_metal_device_supports_buft(ggml_backend_dev_t dev, ggml
     GGML_UNUSED(dev);
 }
 
-static int64_t get_op_batch_size(const ggml_tensor * op) {
-    switch (op->op) {
-        case GGML_OP_MUL_MAT:
-            return op->ne[1];
-        case GGML_OP_MUL_MAT_ID:
-            return op->ne[2];
-        default:
-            return ggml_nrows(op);
+સ્થિર int64_t get_op_batch_size(અચલ ggml_tensor * op) {
+    પસંદગી (op->op) {
+        સ્થિતિ GGML_OP_MUL_MAT:
+            પાછા op->ne[1];
+        સ્થિતિ GGML_OP_MUL_MAT_ID:
+            પાછા op->ne[2];
+        મૂળભૂત:
+            પાછા ggml_nrows(op);
     }
 }
 
-static bool ggml_backend_metal_device_offload_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
+સ્થિર તાર્કિક ggml_backend_metal_device_offload_op(ggml_backend_dev_t dev, અચલ ggml_tensor * op) {
     ggml_metal_device_t ctx_dev = (ggml_metal_device_t)dev->context;
 
-    return (op->op == GGML_OP_MUL_MAT ||
+    પાછા (op->op == GGML_OP_MUL_MAT ||
             op->op == GGML_OP_MUL_MAT_ID) &&
             get_op_batch_size(op) >= ggml_metal_device_get_props(ctx_dev)->op_offload_min_batch_size;
 }
 
-static ggml_backend_event_t ggml_backend_metal_device_event_new(ggml_backend_dev_t dev) {
+સ્થિર ggml_backend_event_t ggml_backend_metal_device_event_new(ggml_backend_dev_t dev) {
     ggml_metal_device_t ctx_dev = (ggml_metal_device_t)dev->context;
 
     ggml_metal_event_t event = ggml_metal_device_event_init(ctx_dev);
     GGML_ASSERT(event);
 
-    ggml_backend_event_t ev = new ggml_backend_event {
+    ggml_backend_event_t ev = નવું ggml_backend_event {
         /* .device  = */ dev,
         /* .context = */ event,
     };
 
-    return ev;
+    પાછા ev;
 }
 
-static void ggml_backend_metal_device_event_free(ggml_backend_dev_t dev, ggml_backend_event_t event) {
+સ્થિર શૂન્ય ggml_backend_metal_device_event_free(ggml_backend_dev_t dev, ggml_backend_event_t event) {
     ggml_metal_device_t ctx_dev = (ggml_metal_device_t)dev->context;
 
     ggml_metal_event_t ev = (ggml_metal_event_t)event->context;
@@ -813,7 +813,7 @@ static void ggml_backend_metal_device_event_free(ggml_backend_dev_t dev, ggml_ba
     delete event;
 }
 
-static void ggml_backend_metal_device_event_synchronize(ggml_backend_dev_t dev, ggml_backend_event_t event) {
+સ્થિર શૂન્ય ggml_backend_metal_device_event_synchronize(ggml_backend_dev_t dev, ggml_backend_event_t event) {
     ggml_metal_device_t ctx_dev = (ggml_metal_device_t)dev->context;
 
     ggml_metal_event_t evt = (ggml_metal_event_t)event->context;
@@ -821,7 +821,7 @@ static void ggml_backend_metal_device_event_synchronize(ggml_backend_dev_t dev, 
     ggml_metal_device_event_synchronize(ctx_dev, evt);
 }
 
-static ggml_backend_device_i ggml_backend_metal_device_i = {
+સ્થિર ggml_backend_device_i ggml_backend_metal_device_i = {
     /* .get_name             = */ ggml_backend_metal_device_get_name,
     /* .get_description      = */ ggml_backend_metal_device_get_description,
     /* .get_memory           = */ ggml_backend_metal_device_get_memory,
@@ -829,7 +829,7 @@ static ggml_backend_device_i ggml_backend_metal_device_i = {
     /* .get_props            = */ ggml_backend_metal_device_get_props,
     /* .init_backend         = */ ggml_backend_metal_device_init_backend,
     /* .get_buffer_type      = */ ggml_backend_metal_device_get_buffer_type,
-    /* .get_host_buffer_type = */ NULL,
+    /* .get_host_buffer_type = */ ખાલી,
     /* .buffer_from_host_ptr = */ ggml_backend_metal_device_buffer_mapped,
     /* .supports_op          = */ ggml_backend_metal_device_supports_op,
     /* .supports_buft        = */ ggml_backend_metal_device_supports_buft,
@@ -841,206 +841,206 @@ static ggml_backend_device_i ggml_backend_metal_device_i = {
 
 // backend registry
 
-struct ggml_backend_metal_reg {
+સંરચના ggml_backend_metal_reg {
     std::vector<ggml_backend_dev_t> devices;
 };
 
-typedef struct ggml_backend_metal_reg * ggml_backend_metal_reg_t;
+પ્રકારવ્યાખ્યા સંરચના ggml_backend_metal_reg * ggml_backend_metal_reg_t;
 
-static ggml_backend_metal_reg_t ggml_backend_metal_reg_init(void) {
-    ggml_backend_metal_reg_t ctx = new struct ggml_backend_metal_reg;
+સ્થિર ggml_backend_metal_reg_t ggml_backend_metal_reg_init(શૂન્ય) {
+    ggml_backend_metal_reg_t ctx = નવું સંરચના ggml_backend_metal_reg;
 
-    return ctx;
+    પાછા ctx;
 }
 
-static void ggml_backend_metal_reg_free(ggml_backend_metal_reg_t ctx) {
+સ્થિર શૂન્ય ggml_backend_metal_reg_free(ggml_backend_metal_reg_t ctx) {
     delete ctx;
 }
 
-struct ggml_backend_metal_reg_deleter {
-    void operator()(ggml_backend_metal_reg_t ctx) {
+સંરચના ggml_backend_metal_reg_deleter {
+    શૂન્ય operator()(ggml_backend_metal_reg_t ctx) {
         ggml_backend_metal_reg_free(ctx);
     }
 };
 
-typedef std::unique_ptr<struct ggml_backend_metal_reg, ggml_backend_metal_reg_deleter> ggml_backend_metal_reg_ptr;
+પ્રકારવ્યાખ્યા std::unique_ptr<સંરચના ggml_backend_metal_reg, ggml_backend_metal_reg_deleter> ggml_backend_metal_reg_ptr;
 
-static const char * ggml_backend_metal_reg_get_name(ggml_backend_reg_t reg) {
-    return GGML_METAL_NAME;
+સ્થિર અચલ અક્ષર * ggml_backend_metal_reg_get_name(ggml_backend_reg_t reg) {
+    પાછા GGML_METAL_NAME;
 
     GGML_UNUSED(reg);
 }
 
-static size_t ggml_backend_metal_reg_device_count(ggml_backend_reg_t reg) {
+સ્થિર size_t ggml_backend_metal_reg_device_ગણતરી(ggml_backend_reg_t reg) {
     ggml_backend_metal_reg_t ctx = (ggml_backend_metal_reg_t)reg->context;
-    return ctx->devices.size();
+    પાછા ctx->devices.size();
 }
 
-static ggml_backend_dev_t ggml_backend_metal_reg_device_get(ggml_backend_reg_t reg, size_t index) {
+સ્થિર ggml_backend_dev_t ggml_backend_metal_reg_device_get(ggml_backend_reg_t reg, size_t index) {
     ggml_backend_metal_reg_t ctx = (ggml_backend_metal_reg_t)reg->context;
     GGML_ASSERT(index < ctx->devices.size());
-    return ctx->devices[index];
+    પાછા ctx->devices[index];
 }
 
-static ggml_backend_feature g_ggml_backend_metal_features[] = {
-#if defined(GGML_METAL_EMBED_LIBRARY)
+સ્થિર ggml_backend_feature g_ggml_backend_metal_features[] = {
+#જો defined(GGML_METAL_EMBED_LIBRARY)
     { "EMBED_LIBRARY", "1" },
 #endif
-    { NULL, NULL },
+    { ખાલી, ખાલી },
 };
 
-static ggml_backend_feature * ggml_backend_metal_get_features(ggml_backend_reg_t reg) {
-    return g_ggml_backend_metal_features;
+સ્થિર ggml_backend_feature * ggml_backend_metal_get_features(ggml_backend_reg_t reg) {
+    પાછા g_ggml_backend_metal_features;
 
     GGML_UNUSED(reg);
 }
 
 // test/tune-only override for the FA vec (Q, NE) selection, reached via proc_address.
-static void ggml_backend_metal_tuning_set_fa_vec_override(int Q, int NE) {
+સ્થિર શૂન્ય ggml_backend_metal_tuning_set_fa_vec_override(પૂર્ણાંક Q, પૂર્ણાંક NE) {
     ggml_metal_tuning::fa_vec_set_override({ (int8_t) Q, (int8_t) NE });
 }
 
-static void ggml_backend_metal_tuning_clear_fa_vec_override(void) {
+સ્થિર શૂન્ય ggml_backend_metal_tuning_clear_fa_vec_override(શૂન્ય) {
     ggml_metal_tuning::fa_vec_clear_override();
 }
 
-static int ggml_backend_metal_tuning_fa_vec_ne11_bucket(int64_t ne11) {
-    return ggml_metal_tuning::fa_vec_ne11_bucket(ne11);
+સ્થિર પૂર્ણાંક ggml_backend_metal_tuning_fa_vec_ne11_bucket(int64_t ne11) {
+    પાછા ggml_metal_tuning::fa_vec_ne11_bucket(ne11);
 }
 
-static int ggml_backend_metal_tuning_fa_vec_ne01_bucket(int64_t ne01) {
-    return ggml_metal_tuning::fa_vec_ne01_bucket(ne01);
+સ્થિર પૂર્ણાંક ggml_backend_metal_tuning_fa_vec_ne01_bucket(int64_t ne01) {
+    પાછા ggml_metal_tuning::fa_vec_ne01_bucket(ne01);
 }
 
-static int ggml_backend_metal_tuning_fa_vec_baseline_ne(int dk, int dv) {
-    return ggml_metal_tuning::fa_vec_baseline_ne(dk, dv);
+સ્થિર પૂર્ણાંક ggml_backend_metal_tuning_fa_vec_baseline_ne(પૂર્ણાંક dk, પૂર્ણાંક dv) {
+    પાછા ggml_metal_tuning::fa_vec_baseline_ne(dk, dv);
 }
 
-static const char * ggml_backend_metal_tuning_device_token(ggml_backend_dev_t dev) {
+સ્થિર અચલ અક્ષર * ggml_backend_metal_tuning_device_token(ggml_backend_dev_t dev) {
     ggml_metal_device_t ctx_dev = (ggml_metal_device_t)dev->context;
 
-    return ggml_metal_device_id_token(ggml_metal_device_get_props(ctx_dev)->device_id);
+    પાછા ggml_metal_device_id_token(ggml_metal_device_get_props(ctx_dev)->device_id);
 }
 
 // generic fusion debugging API (ad-hoc proc-address mechanism): the test resolves the device
 // fusion context once and passes that opaque handle to the rest of the functions
-typedef void * ggml_backend_fusion_t;
+પ્રકારવ્યાખ્યા શૂન્ય * ggml_backend_fusion_t;
 
-static ggml_backend_fusion_t ggml_backend_metal_fusion_get(ggml_backend_dev_t dev) {
-    return ggml_metal_device_get_fusion_info((ggml_metal_device_t)dev->context);
+સ્થિર ggml_backend_fusion_t ggml_backend_metal_fusion_get(ggml_backend_dev_t dev) {
+    પાછા ggml_metal_device_get_fusion_info((ggml_metal_device_t)dev->context);
 }
 
-static void ggml_backend_metal_fusion_stats_init(ggml_backend_fusion_t finfo) {
-    ggml_metal_fusion_info_stats_init((struct ggml_metal_fusion_info *) finfo);
+સ્થિર શૂન્ય ggml_backend_metal_fusion_stats_init(ggml_backend_fusion_t finfo) {
+    ggml_metal_fusion_info_stats_init((સંરચના ggml_metal_fusion_info *) finfo);
 }
 
-static void ggml_backend_metal_fusion_stats_reset(ggml_backend_fusion_t finfo) {
-    ggml_metal_fusion_info_stats_reset((struct ggml_metal_fusion_info *) finfo);
+સ્થિર શૂન્ય ggml_backend_metal_fusion_stats_reset(ggml_backend_fusion_t finfo) {
+    ggml_metal_fusion_info_stats_reset((સંરચના ggml_metal_fusion_info *) finfo);
 }
 
-static int ggml_backend_metal_fusion_stats_get(ggml_backend_fusion_t finfo, const char ** labels, uint64_t * counts, int n) {
-    return ggml_metal_fusion_info_stats_get((struct ggml_metal_fusion_info *) finfo, labels, counts, n);
+સ્થિર પૂર્ણાંક ggml_backend_metal_fusion_stats_get(ggml_backend_fusion_t finfo, અચલ અક્ષર ** labels, uint64_t * counts, પૂર્ણાંક n) {
+    પાછા ggml_metal_fusion_info_stats_get((સંરચના ggml_metal_fusion_info *) finfo, labels, counts, n);
 }
 
-static void ggml_backend_metal_fusion_set_enabled(ggml_backend_fusion_t finfo, bool enabled) {
-    ggml_metal_fusion_info_set_enabled((struct ggml_metal_fusion_info *) finfo, enabled);
+સ્થિર શૂન્ય ggml_backend_metal_fusion_set_enabled(ggml_backend_fusion_t finfo, તાર્કિક enabled) {
+    ggml_metal_fusion_info_set_enabled((સંરચના ggml_metal_fusion_info *) finfo, enabled);
 }
 
-static void * ggml_backend_metal_get_proc_address(ggml_backend_reg_t reg, const char * name) {
-    if (strcmp(name, "ggml_backend_get_features") == 0) {
-        return (void *)ggml_backend_metal_get_features;
+સ્થિર શૂન્ય * ggml_backend_metal_get_proc_address(ggml_backend_reg_t reg, અચલ અક્ષર * name) {
+    જો (strcmp(name, "ggml_backend_get_features") == 0) {
+        પાછા (શૂન્ય *)ggml_backend_metal_get_features;
     }
-    if (strcmp(name, "ggml_backend_metal_tuning_set_fa_vec_override") == 0) {
-        return (void *)ggml_backend_metal_tuning_set_fa_vec_override;
+    જો (strcmp(name, "ggml_backend_metal_tuning_set_fa_vec_override") == 0) {
+        પાછા (શૂન્ય *)ggml_backend_metal_tuning_set_fa_vec_override;
     }
-    if (strcmp(name, "ggml_backend_metal_tuning_clear_fa_vec_override") == 0) {
-        return (void *)ggml_backend_metal_tuning_clear_fa_vec_override;
+    જો (strcmp(name, "ggml_backend_metal_tuning_clear_fa_vec_override") == 0) {
+        પાછા (શૂન્ય *)ggml_backend_metal_tuning_clear_fa_vec_override;
     }
-    if (strcmp(name, "ggml_backend_metal_tuning_fa_vec_ne11_bucket") == 0) {
-        return (void *)ggml_backend_metal_tuning_fa_vec_ne11_bucket;
+    જો (strcmp(name, "ggml_backend_metal_tuning_fa_vec_ne11_bucket") == 0) {
+        પાછા (શૂન્ય *)ggml_backend_metal_tuning_fa_vec_ne11_bucket;
     }
-    if (strcmp(name, "ggml_backend_metal_tuning_fa_vec_ne01_bucket") == 0) {
-        return (void *)ggml_backend_metal_tuning_fa_vec_ne01_bucket;
+    જો (strcmp(name, "ggml_backend_metal_tuning_fa_vec_ne01_bucket") == 0) {
+        પાછા (શૂન્ય *)ggml_backend_metal_tuning_fa_vec_ne01_bucket;
     }
-    if (strcmp(name, "ggml_backend_metal_tuning_fa_vec_baseline_ne") == 0) {
-        return (void *)ggml_backend_metal_tuning_fa_vec_baseline_ne;
+    જો (strcmp(name, "ggml_backend_metal_tuning_fa_vec_baseline_ne") == 0) {
+        પાછા (શૂન્ય *)ggml_backend_metal_tuning_fa_vec_baseline_ne;
     }
-    if (strcmp(name, "ggml_backend_metal_tuning_device_token") == 0) {
-        return (void *)ggml_backend_metal_tuning_device_token;
+    જો (strcmp(name, "ggml_backend_metal_tuning_device_token") == 0) {
+        પાછા (શૂન્ય *)ggml_backend_metal_tuning_device_token;
     }
     // generic fusion debugging API (ad-hoc proc-address mechanism, not part of the official
     // ggml backend interface yet; a backend that adopts it exports these exact names)
-    if (strcmp(name, "ggml_backend_fusion_get") == 0) {
-        return (void *)ggml_backend_metal_fusion_get;
+    જો (strcmp(name, "ggml_backend_fusion_get") == 0) {
+        પાછા (શૂન્ય *)ggml_backend_metal_fusion_get;
     }
-    if (strcmp(name, "ggml_backend_fusion_stats_init") == 0) {
-        return (void *)ggml_backend_metal_fusion_stats_init;
+    જો (strcmp(name, "ggml_backend_fusion_stats_init") == 0) {
+        પાછા (શૂન્ય *)ggml_backend_metal_fusion_stats_init;
     }
-    if (strcmp(name, "ggml_backend_fusion_stats_reset") == 0) {
-        return (void *)ggml_backend_metal_fusion_stats_reset;
+    જો (strcmp(name, "ggml_backend_fusion_stats_reset") == 0) {
+        પાછા (શૂન્ય *)ggml_backend_metal_fusion_stats_reset;
     }
-    if (strcmp(name, "ggml_backend_fusion_stats_get") == 0) {
-        return (void *)ggml_backend_metal_fusion_stats_get;
+    જો (strcmp(name, "ggml_backend_fusion_stats_get") == 0) {
+        પાછા (શૂન્ય *)ggml_backend_metal_fusion_stats_get;
     }
-    if (strcmp(name, "ggml_backend_fusion_set_enabled") == 0) {
-        return (void *)ggml_backend_metal_fusion_set_enabled;
+    જો (strcmp(name, "ggml_backend_fusion_set_enabled") == 0) {
+        પાછા (શૂન્ય *)ggml_backend_metal_fusion_set_enabled;
     }
 
-    return NULL;
+    પાછા ખાલી;
 
     GGML_UNUSED(reg);
 }
 
-static ggml_backend_reg_i ggml_backend_metal_reg_i = {
+સ્થિર ggml_backend_reg_i ggml_backend_metal_reg_i = {
     /* .get_name         = */ ggml_backend_metal_reg_get_name,
-    /* .get_device_count = */ ggml_backend_metal_reg_device_count,
+    /* .get_device_count = */ ggml_backend_metal_reg_device_ગણતરી,
     /* .get_device       = */ ggml_backend_metal_reg_device_get,
     /* .get_proc_address = */ ggml_backend_metal_get_proc_address,
 };
 
-static ggml_backend_dev_t ggml_backend_metal_device_init(ggml_backend_reg_t reg, int device) {
-    return new ggml_backend_device {
+સ્થિર ggml_backend_dev_t ggml_backend_metal_device_init(ggml_backend_reg_t reg, પૂર્ણાંક device) {
+    પાછા નવું ggml_backend_device {
         /* .iface   = */ ggml_backend_metal_device_i,
         /* .reg     = */ reg,
         /* .context = */ ggml_metal_device_get(device, g_devices),
     };
 }
 
-static void ggml_backend_metal_device_free(ggml_backend_dev_t dev) {
+સ્થિર શૂન્ય ggml_backend_metal_device_free(ggml_backend_dev_t dev) {
     delete dev;
 }
 
-struct ggml_backend_device_deleter {
-    void operator()(ggml_backend_dev_t ctx) {
+સંરચના ggml_backend_device_deleter {
+    શૂન્ય operator()(ggml_backend_dev_t ctx) {
         ggml_backend_metal_device_free(ctx);
     }
 };
 
-typedef std::unique_ptr<ggml_backend_device, ggml_backend_device_deleter> ggml_backend_device_ptr;
+પ્રકારવ્યાખ્યા std::unique_ptr<ggml_backend_device, ggml_backend_device_deleter> ggml_backend_device_ptr;
 
-ggml_backend_reg_t ggml_backend_metal_reg(void) {
-    static ggml_backend_reg reg;
-    static bool initialized = false;
+ggml_backend_reg_t ggml_backend_metal_reg(શૂન્ય) {
+    સ્થિર ggml_backend_reg reg;
+    સ્થિર તાર્કિક initialized = ખોટું;
 
     {
-        static std::mutex mutex;
+        સ્થિર std::mutex mutex;
         std::lock_guard<std::mutex> lock(mutex);
 
-        const char * env = getenv("GGML_METAL_DEVICES");
-        if (env) {
+        અચલ અક્ષર * env = getenv("GGML_METAL_DEVICES");
+        જો (env) {
             g_devices = atoi(env);
         }
 
-        static std::vector<ggml_backend_device_ptr> devs;
+        સ્થિર std::vector<ggml_backend_device_ptr> devs;
 
-        if (!initialized) {
+        જો (!initialized) {
             // workaround macOS limitation (kIOGPUCommandBufferCallbackErrorImpactingInteractivity) until proper fix becomes possible
             // ref: https://github.com/ggml-org/llama.cpp/issues/20141#issuecomment-4272947703
-            setenv("AGX_RELAX_CDM_CTXSTORE_TIMEOUT", "1", true);
+            setenv("AGX_RELAX_CDM_CTXSTORE_TIMEOUT", "1", સાચું);
 
-            static ggml_backend_metal_reg_ptr reg_ctx(ggml_backend_metal_reg_init());
+            સ્થિર ggml_backend_metal_reg_ptr reg_ctx(ggml_backend_metal_reg_init());
 
-            for (int i = 0; i < g_devices; ++i) {
+            માટે (પૂર્ણાંક i = 0; i < g_devices; ++i) {
                 auto * dev = ggml_backend_metal_device_init(&reg, i);
                 devs.emplace_back(dev);
 
@@ -1054,10 +1054,10 @@ ggml_backend_reg_t ggml_backend_metal_reg(void) {
             };
         }
 
-        initialized = true;
+        initialized = સાચું;
     }
 
-    return &reg;
+    પાછા &reg;
 }
 
 GGML_BACKEND_DL_IMPL(ggml_backend_metal_reg)

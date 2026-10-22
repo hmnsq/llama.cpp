@@ -1,12 +1,12 @@
 #ifndef GGML_ZDNN_MMQ_HPP
 #define GGML_ZDNN_MMQ_HPP
 
-#include "common.hpp"
+#અન્તર્ભાવ "common.hpp"
 
-void ggml_zdnn_mul_mat_q(
+શૂન્ય ggml_zdnn_mul_mat_q(
           ggml_backend_zdnn_context * ctx,
-    const               ggml_tensor * src0,
-    const               ggml_tensor * src1,
+    અચલ               ggml_tensor * src0,
+    અચલ               ggml_tensor * src1,
                         ggml_tensor * dst);
 
 #endif  // GGML_ZDNN_MMQ_HPP

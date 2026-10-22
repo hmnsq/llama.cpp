@@ -1,123 +1,123 @@
-#include "dma-queue.h"
+#અન્તર્ભાવ "dma-queue.h"
 
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
+#અન્તર્ભાવ <stdbool.h>
+#અન્તર્ભાવ <stdlib.h>
+#અન્તર્ભાવ <string.h>
 
 #pragma clang diagnostic ignored "-Wunused-function"
 
-static inline uint32_t pow2_ceil(uint32_t x) {
-    if (x <= 1) {
-        return 1;
+સ્થિર અંતઃરેખ uint32_t pow2_ceil(uint32_t x) {
+    જો (x <= 1) {
+        પાછા 1;
     }
-    int p = 2;
+    પૂર્ણાંક p = 2;
     x--;
-    while (x >>= 1) {
+    જ્યારે (x >>= 1) {
         p <<= 1;
     }
-    return p;
+    પાછા p;
 }
 
-static inline uintptr_t align_up(uintptr_t addr, size_t align) {
-    return (addr + align - 1) & ~(align - 1);
+સ્થિર અંતઃરેખ uintptr_t align_up(uintptr_t addr, size_t align) {
+    પાછા (addr + align - 1) & ~(align - 1);
 }
 
-static inline size_t dma_ring_sizeof(size_t capacity) {
+સ્થિર અંતઃરેખ size_t dma_ring_sizeof(size_t capacity) {
     capacity = pow2_ceil(capacity);
 
-    size_t size_r      = sizeof(dma_ring);
-    size_t offset_desc = align_up(size_r, HEX_L2_LINE_SIZE);
-    size_t size_desc   = capacity * sizeof(dma_descriptor_2d);
-    size_t offset_data = align_up(offset_desc + size_desc, HEX_L2_LINE_SIZE);
-    size_t size_data   = capacity * sizeof(dma_data);
+    size_t size_r      = કદ(dma_ring);
+    size_t offset_desc = align_up(size_r, HEX_L2_લીટી_SIZE);
+    size_t size_desc   = capacity * કદ(dma_descriptor_2d);
+    size_t offset_data = align_up(offset_desc + size_desc, HEX_L2_લીટી_SIZE);
+    size_t size_data   = capacity * કદ(dma_data);
 
-    return offset_data + size_data;
+    પાછા offset_data + size_data;
 }
 
-static inline dma_ring * dma_ring_init(void * ptr, size_t capacity, struct htp_thread_trace * trace) {
+સ્થિર અંતઃરેખ dma_ring * dma_ring_init(શૂન્ય * ptr, size_t capacity, સંરચના htp_thread_trace * trace) {
     capacity = pow2_ceil(capacity);
 
-    size_t size_r      = sizeof(dma_ring);
-    size_t offset_desc = align_up(size_r, HEX_L2_LINE_SIZE);
-    size_t size_desc   = capacity * sizeof(dma_descriptor_2d);
-    size_t offset_data = align_up(offset_desc + size_desc, HEX_L2_LINE_SIZE);
+    size_t size_r      = કદ(dma_ring);
+    size_t offset_desc = align_up(size_r, HEX_L2_લીટી_SIZE);
+    size_t size_desc   = capacity * કદ(dma_descriptor_2d);
+    size_t offset_data = align_up(offset_desc + size_desc, HEX_L2_લીટી_SIZE);
 
     dma_ring * r = (dma_ring *) ptr;
     r->trace     = trace;
     r->capacity  = capacity;
     r->idx_mask  = capacity - 1;
-    r->push_idx  = 0;
-    r->pop_idx   = 0;
+    r->ધકેલો_idx  = 0;
+    r->કાઢો_idx   = 0;
     r->desc      = (dma_descriptor_2d *) ((uintptr_t) ptr + offset_desc);
     r->data      = (dma_data *) ((uintptr_t) ptr + offset_data);
     r->tail      = &r->desc[capacity - 1];
 
-    return r;
+    પાછા r;
 }
 
 size_t dma_queue_sizeof(size_t capacity) {
-    size_t size_q    = sizeof(dma_queue);
-    size_t offset_r0 = align_up(size_q, HEX_L2_LINE_SIZE);
+    size_t size_q    = કદ(dma_queue);
+    size_t offset_r0 = align_up(size_q, HEX_L2_લીટી_SIZE);
     size_t size_r0   = dma_ring_sizeof(capacity);
-    size_t offset_r1 = align_up(offset_r0 + size_r0, HEX_L2_LINE_SIZE);
+    size_t offset_r1 = align_up(offset_r0 + size_r0, HEX_L2_લીટી_SIZE);
     size_t size_r1   = dma_ring_sizeof(DMA_FALLBACK_CAPACITY);
 
-    return offset_r1 + size_r1;
+    પાછા offset_r1 + size_r1;
 }
 
-size_t dma_queue_alignof(void) {
-    return HEX_L2_LINE_SIZE;
+size_t dma_queue_alignof(શૂન્ય) {
+    પાછા HEX_L2_લીટી_SIZE;
 }
 
-dma_queue_t dma_queue_init(void * ptr, size_t capacity, struct htp_thread_trace * trace) {
+dma_queue_t dma_queue_init(શૂન્ય * ptr, size_t capacity, સંરચના htp_thread_trace * trace) {
     size_t total_size = dma_queue_sizeof(capacity);
     memset(ptr, 0, total_size);
 
     dma_queue * q = (dma_queue *) ptr;
 
-    size_t size_q    = sizeof(dma_queue);
-    size_t offset_r0 = align_up(size_q, HEX_L2_LINE_SIZE);
+    size_t size_q    = કદ(dma_queue);
+    size_t offset_r0 = align_up(size_q, HEX_L2_લીટી_SIZE);
     size_t size_r0   = dma_ring_sizeof(capacity);
-    size_t offset_r1 = align_up(offset_r0 + size_r0, HEX_L2_LINE_SIZE);
+    size_t offset_r1 = align_up(offset_r0 + size_r0, HEX_L2_લીટી_SIZE);
 
-    q->ring0 = dma_ring_init((void *) ((uintptr_t) ptr + offset_r0), capacity, trace);
-    q->ring1 = dma_ring_init((void *) ((uintptr_t) ptr + offset_r1), DMA_FALLBACK_CAPACITY, trace);
+    q->ring0 = dma_ring_init((શૂન્ય *) ((uintptr_t) ptr + offset_r0), capacity, trace);
+    q->ring1 = dma_ring_init((શૂન્ય *) ((uintptr_t) ptr + offset_r1), DMA_FALLBACK_CAPACITY, trace);
     q->alias = false;
 
-    FARF(HIGH, "dma-queue: capacity %u, unified memory size %zu\n", (unsigned) capacity, total_size);
+    FARF(ઉપલું_2, "dma-queue: capacity %u, unified memory size %zu\n", (unsigned) capacity, total_size);
 
-    return q;
+    પાછા q;
 }
 
-void dma_queue_free(dma_queue_t q) {
-    (void) q;
+શૂન્ય dma_queue_free(dma_queue_t q) {
+    (શૂન્ય) q;
 }
 
-size_t dma_queue_alias_sizeof(void) {
-    return sizeof(dma_queue);
+size_t dma_queue_alias_sizeof(શૂન્ય) {
+    પાછા કદ(dma_queue);
 }
 
-dma_queue_t dma_queue_alias_init(void * ptr, dma_queue_t main_q) {
+dma_queue_t dma_queue_alias_init(શૂન્ય * ptr, dma_queue_t main_q) {
     dma_queue * q = (dma_queue *) ptr;
-    memset(q, 0, sizeof(dma_queue));
+    memset(q, 0, કદ(dma_queue));
 
     q->ring0 = main_q->ring0;
     q->ring1 = main_q->ring1;
     q->alias = true;
 
-    return q;
+    પાછા q;
 }
 
-void dma_queue_alias_free(dma_queue_t q) {
-    (void) q;
+શૂન્ય dma_queue_alias_free(dma_queue_t q) {
+    (શૂન્ય) q;
 }
 
-bool dma_queue_push_fallback_2d(dma_queue * q, dma_data ddata, size_t dst_stride, size_t src_stride, size_t row_size, size_t nrows) {
+bool dma_queue_ધકેલો_fallback_2d(dma_queue * q, dma_data ddata, size_t dst_stride, size_t src_stride, size_t row_size, size_t nrows) {
     dma_ring * r0 = q->ring0;
     dma_ring * r1 = q->ring1;
 
-    if (((r0->push_idx + 1) & r0->idx_mask) == r0->pop_idx) {
-        return false;
+    જો (((r0->ધકેલો_idx + 1) & r0->idx_mask) == r0->કાઢો_idx) {
+        પાછા false;
     }
 
     r1->tail = r0->tail;
@@ -126,12 +126,12 @@ bool dma_queue_push_fallback_2d(dma_queue * q, dma_data ddata, size_t dst_stride
     dma_addr_t cur_dst = ddata.dst;
     dma_addr_t cur_src = ddata.src;
 
-    while (rem_rows > 0) {
-        const uint32_t cur_rows = MIN(rem_rows, DMA_MAX_NROWS);
+    જ્યારે (rem_rows > 0) {
+        અચલ uint32_t cur_rows = MIN(rem_rows, DMA_MAX_NROWS);
         dma_data cur_data = dma_make_data(cur_dst, cur_src);
-        if (!dma_ring_push_single_2d(r1, cur_data, dst_stride, src_stride, row_size, cur_rows)) {
+        જો (!dma_ring_ધકેલો_single_2d(r1, cur_data, dst_stride, src_stride, row_size, cur_rows)) {
             dma_ring_flush(r1);
-            dma_ring_push_single_2d(r1, cur_data, dst_stride, src_stride, row_size, cur_rows);
+            dma_ring_ધકેલો_single_2d(r1, cur_data, dst_stride, src_stride, row_size, cur_rows);
         }
         cur_dst  += cur_rows * dst_stride;
         cur_src  += cur_rows * src_stride;
@@ -141,15 +141,15 @@ bool dma_queue_push_fallback_2d(dma_queue * q, dma_data ddata, size_t dst_stride
     dma_ring_flush(r1);
     r0->tail = r1->tail;
 
-    return dma_ring_push_single_2d(r0, ddata, 0, 0, 0, /*nrows=*/ 0);
+    પાછા dma_ring_ધકેલો_single_2d(r0, ddata, 0, 0, 0, /*nrows=*/ 0);
 }
 
-bool dma_queue_push_fallback_contig(dma_queue * q, dma_data ddata, size_t total) {
+bool dma_queue_ધકેલો_fallback_contig(dma_queue * q, dma_data ddata, size_t total) {
     dma_ring * r0 = q->ring0;
     dma_ring * r1 = q->ring1;
 
-    if (((r0->push_idx + 1) & r0->idx_mask) == r0->pop_idx) {
-        return false;
+    જો (((r0->ધકેલો_idx + 1) & r0->idx_mask) == r0->કાઢો_idx) {
+        પાછા false;
     }
 
     r1->tail = r0->tail;
@@ -158,12 +158,12 @@ bool dma_queue_push_fallback_contig(dma_queue * q, dma_data ddata, size_t total)
     dma_addr_t cur_dst = ddata.dst;
     dma_addr_t cur_src = ddata.src;
 
-    while (rem_bytes > 0) {
-        const uint32_t cur_bytes = MIN(rem_bytes, DMA_SAFE_CHUNK_SIZE);
+    જ્યારે (rem_bytes > 0) {
+        અચલ uint32_t cur_bytes = MIN(rem_bytes, DMA_SAFE_CHUNK_SIZE);
         dma_data cur_data = dma_make_data(cur_dst, cur_src);
-        if (!dma_ring_push_single_contig(r1, cur_data, cur_bytes)) {
+        જો (!dma_ring_ધકેલો_single_contig(r1, cur_data, cur_bytes)) {
             dma_ring_flush(r1);
-            dma_ring_push_single_contig(r1, cur_data, cur_bytes);
+            dma_ring_ધકેલો_single_contig(r1, cur_data, cur_bytes);
         }
         cur_dst   += cur_bytes;
         cur_src   += cur_bytes;
@@ -173,17 +173,17 @@ bool dma_queue_push_fallback_contig(dma_queue * q, dma_data ddata, size_t total)
     dma_ring_flush(r1);
     r0->tail = r1->tail;
 
-    return dma_ring_push_single_1d(r0, ddata, /*size=*/ 0);
+    પાછા dma_ring_ધકેલો_single_1d(r0, ddata, /*size=*/ 0);
 }
 
-#if __HVX_ARCH__ < 75
+#જો __HVX_ARCH__ < 75
 
-bool dma_queue_push_fallback_1d(dma_queue * q, dma_data ddata, size_t dst_stride, size_t src_stride, size_t row_size, size_t nrows) {
+bool dma_queue_ધકેલો_fallback_1d(dma_queue * q, dma_data ddata, size_t dst_stride, size_t src_stride, size_t row_size, size_t nrows) {
     dma_ring * r0 = q->ring0;
     dma_ring * r1 = q->ring1;
 
-    if (((r0->push_idx + 1) & r0->idx_mask) == r0->pop_idx) {
-        return false;
+    જો (((r0->ધકેલો_idx + 1) & r0->idx_mask) == r0->કાઢો_idx) {
+        પાછા false;
     }
 
     r1->tail = r0->tail;
@@ -192,11 +192,11 @@ bool dma_queue_push_fallback_1d(dma_queue * q, dma_data ddata, size_t dst_stride
     dma_addr_t cur_dst = ddata.dst;
     dma_addr_t cur_src = ddata.src;
 
-    while (rem_rows > 0) {
+    જ્યારે (rem_rows > 0) {
         dma_data cur_data = dma_make_data(cur_dst, cur_src);
-        if (!dma_ring_push_single_1d(r1, cur_data, row_size)) {
+        જો (!dma_ring_ધકેલો_single_1d(r1, cur_data, row_size)) {
             dma_ring_flush(r1);
-            dma_ring_push_single_1d(r1, cur_data, row_size);
+            dma_ring_ધકેલો_single_1d(r1, cur_data, row_size);
         }
         cur_dst  += dst_stride;
         cur_src  += src_stride;
@@ -206,7 +206,7 @@ bool dma_queue_push_fallback_1d(dma_queue * q, dma_data ddata, size_t dst_stride
     dma_ring_flush(r1);
     r0->tail = r1->tail;
 
-    return dma_ring_push_single_1d(r0, ddata, /*size=*/ 0);
+    પાછા dma_ring_ધકેલો_single_1d(r0, ddata, /*size=*/ 0);
 }
 
 #endif

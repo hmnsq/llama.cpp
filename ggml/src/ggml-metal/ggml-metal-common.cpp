@@ -1,165 +1,165 @@
-#include "ggml-metal-common.h"
-#include "ggml-metal-fusion.h"
+#અન્તર્ભાવ "ggml-metal-common.h"
+#અન્તર્ભાવ "ggml-metal-fusion.h"
 
-#include "ggml.h"
-#include "ggml-impl.h"
-#include "ggml-backend-impl.h"
+#અન્તર્ભાવ "ggml.h"
+#અન્તર્ભાવ "ggml-impl.h"
+#અન્તર્ભાવ "ggml-backend-impl.h"
 
-#include <vector>
+#અન્તર્ભાવ <vector>
 
 // must stay in sync with the kernel_fwht_<type>_<N> templates in misc.metal. Widths up to
 // 512 run on the simdgroup kernel and need no threadgroup memory. The wider ones allocate
 // float[N] per threadgroup, so they are only available where that fits.
-static bool ggml_metal_fwht_supported_size(int64_t n, size_t max_tg_mem) {
-    if (n == 64 || n == 128 || n == 256 || n == 512) {
-        return true;
+સ્થિર તાર્કિક ggml_metal_fwht_supported_size(int64_t n, size_t max_tg_mem) {
+    જો (n == 64 || n == 128 || n == 256 || n == 512) {
+        પાછા સાચું;
     }
 
-    if (n == 1024 || n == 2048 || n == 4096 || n == 8192) {
-        return (size_t) n * sizeof(float) <= max_tg_mem;
+    જો (n == 1024 || n == 2048 || n == 4096 || n == 8192) {
+        પાછા (size_t) n * કદ(દશાંશ) <= max_tg_mem;
     }
 
-    return false;
+    પાછા ખોટું;
 }
 
 // the FWHT kernels handle a Hadamard-hinted MUL_MAT only under these conditions. supports_op
 // and the dispatch must ask the same question: an F16 src1 that is admitted but then falls
 // through reaches the generic path, which has no F32 src0 by F16 src1 kernel.
-bool ggml_metal_op_mul_mat_use_fwht(const struct ggml_tensor * op, size_t max_tg_mem) {
-    return ggml_get_op_params_i32(op, 1) == GGML_HINT_SRC0_IS_HADAMARD && op->type == GGML_TYPE_F32 &&
+તાર્કિક ggml_metal_op_mul_mat_use_fwht(અચલ સંરચના ggml_tensor * op, size_t max_tg_mem) {
+    પાછા ggml_get_op_params_i32(op, 1) == GGML_HINT_SRC0_IS_HADAMARD && op->type == GGML_TYPE_F32 &&
            (op->src[1]->type == GGML_TYPE_F32 || op->src[1]->type == GGML_TYPE_F16) && ggml_is_contiguous(op->src[1]) &&
            ggml_is_contiguous(op) && ggml_are_same_shape(op->src[1], op) &&
            ggml_metal_fwht_supported_size(op->src[1]->ne[0], max_tg_mem);
 }
 
-bool ggml_metal_op_mul_mat_use_mm(const struct ggml_tensor * op, bool has_simdgroup_mm) {
-    const int64_t ne00 = op->src[0]->ne[0];
-    const int64_t ne11 = op->src[1]->ne[1];
+તાર્કિક ggml_metal_op_mul_mat_use_mm(અચલ સંરચના ggml_tensor * op, તાર્કિક has_simdgroup_mm) {
+    અચલ int64_t ne00 = op->src[0]->ne[0];
+    અચલ int64_t ne11 = op->src[1]->ne[1];
 
-    return !ggml_is_transposed(op->src[0]) &&
+    પાછા !ggml_is_transposed(op->src[0]) &&
            !ggml_is_transposed(op->src[1]) &&
            has_simdgroup_mm && ne00 >= 64 && ne11 > 8;
 }
 
-bool ggml_metal_op_mul_mat_id_use_mm(const struct ggml_tensor * op, bool has_simdgroup_mm) {
-    const int64_t ne00 = op->src[0]->ne[0];
-    const int64_t ne02 = op->src[0]->ne[2];
-    const int64_t ne21 = op->src[2]->ne[1];
+તાર્કિક ggml_metal_op_mul_mat_id_use_mm(અચલ સંરચના ggml_tensor * op, તાર્કિક has_simdgroup_mm) {
+    અચલ int64_t ne00 = op->src[0]->ne[0];
+    અચલ int64_t ne02 = op->src[0]->ne[2];
+    અચલ int64_t ne21 = op->src[2]->ne[1];
 
-    return has_simdgroup_mm && ne00 >= 64 && ne02 <= 1024 && ne21 >= 32;
+    પાછા has_simdgroup_mm && ne00 >= 64 && ne02 <= 1024 && ne21 >= 32;
 }
 
 // the most src1 rows of the few-row MMA kernels
-static constexpr int64_t GGML_METAL_MMA_ROWS_MAX = 16;
+સ્થિર constexpr int64_t GGML_METAL_MMA_ROWS_MAX = 16;
 
 // src1 rows per 8x8 simdgroup matrix tile of the few-row MMA kernels
-static constexpr int64_t GGML_METAL_MMA_TILE_ROWS = 8;
+સ્થિર constexpr int64_t GGML_METAL_MMA_TILE_ROWS = 8;
 
 // weights per K step of the q5_K and generic few-row MMA kernels
-static constexpr int64_t GGML_METAL_MMA_K_CHUNK = 64;
+સ્થિર constexpr int64_t GGML_METAL_MMA_K_CHUNK = 64;
 
-enum ggml_metal_mma_kind ggml_metal_mul_mv_mma_kind(enum ggml_type type, int rt) {
-    if (type == GGML_TYPE_Q4_0 || (type == GGML_TYPE_Q8_0 && rt == 1)) {
-        return GGML_METAL_MMA_KIND_BLK;
+ગણના ggml_metal_mma_kind ggml_metal_mul_mv_mma_kind(ગણના ggml_type type, પૂર્ણાંક rt) {
+    જો (type == GGML_TYPE_Q4_0 || (type == GGML_TYPE_Q8_0 && rt == 1)) {
+        પાછા GGML_METAL_MMA_KIND_BLK;
     }
-    return type == GGML_TYPE_Q5_K ? GGML_METAL_MMA_KIND_Q5_K : GGML_METAL_MMA_KIND_GEN;
+    પાછા type == GGML_TYPE_Q5_K ? GGML_METAL_MMA_KIND_Q5_K : GGML_METAL_MMA_KIND_GEN;
 }
 
-int ggml_metal_mul_mv_mma_rt(const struct ggml_tensor * op) {
-    return op->src[1]->ne[1] > GGML_METAL_MMA_TILE_ROWS ? 2 : 1;
+પૂર્ણાંક ggml_metal_mul_mv_mma_rt(અચલ સંરચના ggml_tensor * op) {
+    પાછા op->src[1]->ne[1] > GGML_METAL_MMA_TILE_ROWS ? 2 : 1;
 }
 
-static bool ggml_metal_mul_mv_mma_type_supported(enum ggml_type type) {
-    switch (type) {
-        case GGML_TYPE_F32:
-        case GGML_TYPE_F16:
-        case GGML_TYPE_Q4_0:
-        case GGML_TYPE_Q4_1:
-        case GGML_TYPE_Q5_0:
-        case GGML_TYPE_Q5_1:
-        case GGML_TYPE_Q8_0:
-        case GGML_TYPE_Q4_K:
-        case GGML_TYPE_Q5_K:
-        case GGML_TYPE_Q6_K:
-        case GGML_TYPE_BF16:
-        case GGML_TYPE_Q1_0:
-        case GGML_TYPE_Q2_0:
-        case GGML_TYPE_MXFP4:
-        case GGML_TYPE_Q2_K:
-        case GGML_TYPE_Q3_K:
-        case GGML_TYPE_IQ2_XXS:
-        case GGML_TYPE_IQ2_XS:
-        case GGML_TYPE_IQ2_S:
-        case GGML_TYPE_IQ3_XXS:
-        case GGML_TYPE_IQ3_S:
-        case GGML_TYPE_IQ1_S:
-        case GGML_TYPE_IQ1_M:
-        case GGML_TYPE_IQ4_NL:
-        case GGML_TYPE_IQ4_XS:
-        case GGML_TYPE_TQ2_0:
-            return true;
-        default:
-            return false;
+સ્થિર તાર્કિક ggml_metal_mul_mv_mma_type_supported(ગણના ggml_type type) {
+    પસંદગી (type) {
+        સ્થિતિ GGML_TYPE_F32:
+        સ્થિતિ GGML_TYPE_F16:
+        સ્થિતિ GGML_TYPE_Q4_0:
+        સ્થિતિ GGML_TYPE_Q4_1:
+        સ્થિતિ GGML_TYPE_Q5_0:
+        સ્થિતિ GGML_TYPE_Q5_1:
+        સ્થિતિ GGML_TYPE_Q8_0:
+        સ્થિતિ GGML_TYPE_Q4_K:
+        સ્થિતિ GGML_TYPE_Q5_K:
+        સ્થિતિ GGML_TYPE_Q6_K:
+        સ્થિતિ GGML_TYPE_BF16:
+        સ્થિતિ GGML_TYPE_Q1_0:
+        સ્થિતિ GGML_TYPE_Q2_0:
+        સ્થિતિ GGML_TYPE_MXFP4:
+        સ્થિતિ GGML_TYPE_Q2_K:
+        સ્થિતિ GGML_TYPE_Q3_K:
+        સ્થિતિ GGML_TYPE_IQ2_XXS:
+        સ્થિતિ GGML_TYPE_IQ2_XS:
+        સ્થિતિ GGML_TYPE_IQ2_S:
+        સ્થિતિ GGML_TYPE_IQ3_XXS:
+        સ્થિતિ GGML_TYPE_IQ3_S:
+        સ્થિતિ GGML_TYPE_IQ1_S:
+        સ્થિતિ GGML_TYPE_IQ1_M:
+        સ્થિતિ GGML_TYPE_IQ4_NL:
+        સ્થિતિ GGML_TYPE_IQ4_XS:
+        સ્થિતિ GGML_TYPE_TQ2_0:
+            પાછા સાચું;
+        મૂળભૂત:
+            પાછા ખોટું;
     }
 }
 
-int64_t ggml_metal_mul_mv_mma_k_step(enum ggml_type type, int rt) {
-    if (!ggml_metal_mul_mv_mma_type_supported(type)) {
-        return 0;
+int64_t ggml_metal_mul_mv_mma_k_step(ગણના ggml_type type, પૂર્ણાંક rt) {
+    જો (!ggml_metal_mul_mv_mma_type_supported(type)) {
+        પાછા 0;
     }
-    return ggml_metal_mul_mv_mma_kind(type, rt) == GGML_METAL_MMA_KIND_BLK ? ggml_blck_size(type) : GGML_METAL_MMA_K_CHUNK;
+    પાછા ggml_metal_mul_mv_mma_kind(type, rt) == GGML_METAL_MMA_KIND_BLK ? ggml_blck_size(type) : GGML_METAL_MMA_K_CHUNK;
 }
 
-static bool ggml_metal_mul_mat_mma_type_ok(const struct ggml_tensor * op) {
-    const ggml_tensor * src0 = op->src[0];
-    const int64_t step = ggml_metal_mul_mv_mma_k_step(src0->type, ggml_metal_mul_mv_mma_rt(op));
+સ્થિર તાર્કિક ggml_metal_mul_mat_mma_type_ok(અચલ સંરચના ggml_tensor * op) {
+    અચલ ggml_tensor * src0 = op->src[0];
+    અચલ int64_t step = ggml_metal_mul_mv_mma_k_step(src0->type, ggml_metal_mul_mv_mma_rt(op));
 
-    return step > 0 && src0->ne[0] % step == 0 && src0->nb[0] == ggml_type_size(src0->type);
+    પાછા step > 0 && src0->ne[0] % step == 0 && src0->nb[0] == ggml_type_size(src0->type);
 }
 
 // the fewest src1 rows at which the few-row MMA kernels beat the mat-vec kernels (measured on an M3 Ultra)
-static int64_t ggml_metal_mul_mv_mma_rows_min(enum ggml_type type) {
-    switch (type) {
-        case GGML_TYPE_F32:
-            return 6;
-        case GGML_TYPE_TQ2_0:
-            return 5;
-        case GGML_TYPE_BF16:
-            return 4;
-        case GGML_TYPE_F16:
-        case GGML_TYPE_Q2_0:
-        case GGML_TYPE_Q4_K:
-        case GGML_TYPE_Q5_0:
-        case GGML_TYPE_Q5_1:
-        case GGML_TYPE_Q2_K:
-        case GGML_TYPE_IQ4_NL:
-        case GGML_TYPE_MXFP4:
-            return 3;
-        default:
-            return 2;
+સ્થિર int64_t ggml_metal_mul_mv_mma_rows_min(ગણના ggml_type type) {
+    પસંદગી (type) {
+        સ્થિતિ GGML_TYPE_F32:
+            પાછા 6;
+        સ્થિતિ GGML_TYPE_TQ2_0:
+            પાછા 5;
+        સ્થિતિ GGML_TYPE_BF16:
+            પાછા 4;
+        સ્થિતિ GGML_TYPE_F16:
+        સ્થિતિ GGML_TYPE_Q2_0:
+        સ્થિતિ GGML_TYPE_Q4_K:
+        સ્થિતિ GGML_TYPE_Q5_0:
+        સ્થિતિ GGML_TYPE_Q5_1:
+        સ્થિતિ GGML_TYPE_Q2_K:
+        સ્થિતિ GGML_TYPE_IQ4_NL:
+        સ્થિતિ GGML_TYPE_MXFP4:
+            પાછા 3;
+        મૂળભૂત:
+            પાછા 2;
     }
 }
 
-bool ggml_metal_op_mul_mat_use_mma(const struct ggml_tensor * op) {
-    const ggml_tensor * src0 = op->src[0];
-    const ggml_tensor * src1 = op->src[1];
+તાર્કિક ggml_metal_op_mul_mat_use_mma(અચલ સંરચના ggml_tensor * op) {
+    અચલ ggml_tensor * src0 = op->src[0];
+    અચલ ggml_tensor * src1 = op->src[1];
 
     // the batch shape goes into int16 function constants
-    const bool batch_ok = src1->ne[2] <= INT16_MAX && src1->ne[2]/src0->ne[2] <= INT16_MAX && src1->ne[3]/src0->ne[3] <= INT16_MAX;
+    અચલ તાર્કિક batch_ok = src1->ne[2] <= INT16_MAX && src1->ne[2]/src0->ne[2] <= INT16_MAX && src1->ne[3]/src0->ne[3] <= INT16_MAX;
 
-    return ggml_metal_mul_mat_mma_type_ok(op) && batch_ok &&
+    પાછા ggml_metal_mul_mat_mma_type_ok(op) && batch_ok &&
         src1->type == GGML_TYPE_F32 && src1->ne[1] >= ggml_metal_mul_mv_mma_rows_min(src0->type) && src1->ne[1] <= GGML_METAL_MMA_ROWS_MAX &&
         !ggml_is_transposed(src0) && !ggml_is_transposed(src1) &&
-        src1->nb[0] == sizeof(float) && src1->nb[1] % 16 == 0 && src1->nb[2] % 16 == 0 && src1->nb[3] % 16 == 0;
+        src1->nb[0] == કદ(દશાંશ) && src1->nb[1] % 16 == 0 && src1->nb[2] % 16 == 0 && src1->nb[3] % 16 == 0;
 }
 
-bool ggml_metal_op_mul_mat_may_use_mma(const struct ggml_tensor * op) {
-    return ggml_metal_mul_mv_mma_type_supported(op->src[0]->type) && op->src[1]->type == GGML_TYPE_F32;
+તાર્કિક ggml_metal_op_mul_mat_may_use_mma(અચલ સંરચના ggml_tensor * op) {
+    પાછા ggml_metal_mul_mv_mma_type_supported(op->src[0]->type) && op->src[1]->type == GGML_TYPE_F32;
 }
 
 // represents a memory range (i.e. an interval from a starting address p0 to an ending address p1 in a given buffer pb)
 // the type indicates whether it is a source range (i.e. ops read data from it) or a destination range (i.e. ops write data to it)
-struct ggml_mem_range {
+સંરચના ggml_mem_range {
     uint64_t pb; // buffer id
 
     uint64_t p0; // begin
@@ -168,36 +168,36 @@ struct ggml_mem_range {
     ggml_mem_range_type pt;
 };
 
-struct ggml_mem_ranges {
+સંરચના ggml_mem_ranges {
     std::vector<ggml_mem_range> ranges;
 
-    int debug = 0;
+    પૂર્ણાંક debug = 0;
 };
 
-ggml_mem_ranges_t ggml_mem_ranges_init(int debug) {
-    auto * res = new ggml_mem_ranges;
+ggml_mem_ranges_t ggml_mem_ranges_init(પૂર્ણાંક debug) {
+    auto * res = નવું ggml_mem_ranges;
 
     res->ranges.reserve(256);
     res->debug = debug;
 
-    return res;
+    પાછા res;
 }
 
-void ggml_mem_ranges_free(ggml_mem_ranges_t mrs) {
+શૂન્ય ggml_mem_ranges_free(ggml_mem_ranges_t mrs) {
     delete mrs;
 }
 
-void ggml_mem_ranges_reset(ggml_mem_ranges_t mrs) {
+શૂન્ય ggml_mem_ranges_reset(ggml_mem_ranges_t mrs) {
     mrs->ranges.clear();
 }
 
-static bool ggml_mem_ranges_add(ggml_mem_ranges_t mrs, ggml_mem_range mr) {
+સ્થિર તાર્કિક ggml_mem_ranges_add(ggml_mem_ranges_t mrs, ggml_mem_range mr) {
     mrs->ranges.push_back(mr);
 
-    return true;
+    પાછા સાચું;
 }
 
-static ggml_mem_range ggml_mem_range_from_tensor(const ggml_tensor * tensor, ggml_mem_range_type pt) {
+સ્થિર ggml_mem_range ggml_mem_range_from_tensor(અચલ ggml_tensor * tensor, ggml_mem_range_type pt) {
     // always use the base tensor
     tensor = tensor->view_src ? tensor->view_src : tensor;
 
@@ -205,7 +205,7 @@ static ggml_mem_range ggml_mem_range_from_tensor(const ggml_tensor * tensor, ggm
 
     ggml_mem_range mr;
 
-    if (tensor->buffer) {
+    જો (tensor->buffer) {
         // when the tensor is allocated, use the actual memory address range in the buffer
         //
         // take the actual allocated size with ggml_backend_buft_get_alloc_size()
@@ -217,7 +217,7 @@ static ggml_mem_range ggml_mem_range_from_tensor(const ggml_tensor * tensor, ggm
             /*.p1 =*/ (uint64_t) tensor->data + ggml_backend_buft_get_alloc_size(tensor->buffer->buft, tensor),
             /*.pt =*/ pt,
         };
-    } else {
+    } નહીંતર {
         // otherwise, the pointer address is used as an unique id of the memory ranges
         //   that the tensor will be using when it is allocated
         mr = {
@@ -228,67 +228,67 @@ static ggml_mem_range ggml_mem_range_from_tensor(const ggml_tensor * tensor, ggm
         };
     };
 
-    return mr;
+    પાછા mr;
 }
 
-static ggml_mem_range ggml_mem_range_from_tensor_src(const ggml_tensor * tensor) {
-    return ggml_mem_range_from_tensor(tensor, MEM_RANGE_TYPE_SRC);
+સ્થિર ggml_mem_range ggml_mem_range_from_tensor_src(અચલ ggml_tensor * tensor) {
+    પાછા ggml_mem_range_from_tensor(tensor, MEM_RANGE_TYPE_SRC);
 }
 
-static ggml_mem_range ggml_mem_range_from_tensor_dst(const ggml_tensor * tensor) {
-    return ggml_mem_range_from_tensor(tensor, MEM_RANGE_TYPE_DST);
+સ્થિર ggml_mem_range ggml_mem_range_from_tensor_dst(અચલ ggml_tensor * tensor) {
+    પાછા ggml_mem_range_from_tensor(tensor, MEM_RANGE_TYPE_DST);
 }
 
-static bool ggml_mem_ranges_add_src(ggml_mem_ranges_t mrs, const ggml_tensor * tensor) {
+સ્થિર તાર્કિક ggml_mem_ranges_add_src(ggml_mem_ranges_t mrs, અચલ ggml_tensor * tensor) {
     GGML_ASSERT(tensor);
 
     ggml_mem_range mr = ggml_mem_range_from_tensor_src(tensor);
 
-    if (mrs->debug > 2) {
+    જો (mrs->debug > 2) {
         GGML_LOG_DEBUG("%s: add src range buf=%lld, [%lld, %lld)\n", __func__, mr.pb, mr.p0, mr.p1);
     }
 
-    return ggml_mem_ranges_add(mrs, mr);
+    પાછા ggml_mem_ranges_add(mrs, mr);
 }
 
-static bool ggml_mem_ranges_add_dst(ggml_mem_ranges_t mrs, const ggml_tensor * tensor) {
+સ્થિર તાર્કિક ggml_mem_ranges_add_dst(ggml_mem_ranges_t mrs, અચલ ggml_tensor * tensor) {
     GGML_ASSERT(tensor);
 
     ggml_mem_range mr = ggml_mem_range_from_tensor_dst(tensor);
 
-    if (mrs->debug > 2) {
+    જો (mrs->debug > 2) {
         GGML_LOG_DEBUG("%s: add dst range buf=%lld, [%lld, %lld)\n", __func__, mr.pb, mr.p0, mr.p1);
     }
 
-    return ggml_mem_ranges_add(mrs, mr);
+    પાછા ggml_mem_ranges_add(mrs, mr);
 }
 
-bool ggml_mem_ranges_add(ggml_mem_ranges_t mrs, const ggml_tensor * tensor) {
-    for (int i = 0; i < GGML_MAX_SRC; i++) {
-        if (tensor->src[i]) {
+તાર્કિક ggml_mem_ranges_add(ggml_mem_ranges_t mrs, અચલ ggml_tensor * tensor) {
+    માટે (પૂર્ણાંક i = 0; i < GGML_MAX_SRC; i++) {
+        જો (tensor->src[i]) {
             ggml_mem_ranges_add_src(mrs, tensor->src[i]);
         }
     }
 
-    return ggml_mem_ranges_add_dst(mrs, tensor);
+    પાછા ggml_mem_ranges_add_dst(mrs, tensor);
 }
 
-static bool ggml_mem_ranges_check(ggml_mem_ranges_t mrs, ggml_mem_range mr) {
-    for (size_t i = 0; i < mrs->ranges.size(); i++) {
-        const auto & cmp = mrs->ranges[i];
+સ્થિર તાર્કિક ggml_mem_ranges_check(ggml_mem_ranges_t mrs, ggml_mem_range mr) {
+    માટે (size_t i = 0; i < mrs->ranges.size(); i++) {
+        અચલ auto & cmp = mrs->ranges[i];
 
         // two memory ranges cannot intersect if they are in different buffers
-        if (mr.pb != cmp.pb) {
-            continue;
+        જો (mr.pb != cmp.pb) {
+            ચાલુ;
         }
 
         // intersecting source ranges are allowed
-        if (mr.pt == MEM_RANGE_TYPE_SRC && cmp.pt == MEM_RANGE_TYPE_SRC) {
-            continue;
+        જો (mr.pt == MEM_RANGE_TYPE_SRC && cmp.pt == MEM_RANGE_TYPE_SRC) {
+            ચાલુ;
         }
 
-        if (mr.p0 < cmp.p1 && mr.p1 >= cmp.p0) {
-            if (mrs->debug > 2) {
+        જો (mr.p0 < cmp.p1 && mr.p1 >= cmp.p0) {
+            જો (mrs->debug > 2) {
                 GGML_LOG_DEBUG("%s: the %s range buf=%lld, [%lld, %lld) overlaps with a previous %s range buf=%lld, [%lld, %lld)\n",
                         __func__,
                         mr.pt == MEM_RANGE_TYPE_SRC ? "src" : "dst",
@@ -297,192 +297,192 @@ static bool ggml_mem_ranges_check(ggml_mem_ranges_t mrs, ggml_mem_range mr) {
                         cmp.pb, cmp.p0, cmp.p1);
             }
 
-            return false;
+            પાછા ખોટું;
         }
     }
 
-    return true;
+    પાછા સાચું;
 }
 
-static bool ggml_mem_ranges_check_src(ggml_mem_ranges_t mrs, const ggml_tensor * tensor) {
+સ્થિર તાર્કિક ggml_mem_ranges_check_src(ggml_mem_ranges_t mrs, અચલ ggml_tensor * tensor) {
     GGML_ASSERT(tensor);
 
     ggml_mem_range mr = ggml_mem_range_from_tensor_src(tensor);
 
-    const bool res = ggml_mem_ranges_check(mrs, mr);
+    અચલ તાર્કિક res = ggml_mem_ranges_check(mrs, mr);
 
-    return res;
+    પાછા res;
 }
 
-static bool ggml_mem_ranges_check_dst(ggml_mem_ranges_t mrs, const ggml_tensor * tensor) {
+સ્થિર તાર્કિક ggml_mem_ranges_check_dst(ggml_mem_ranges_t mrs, અચલ ggml_tensor * tensor) {
     GGML_ASSERT(tensor);
 
     ggml_mem_range mr = ggml_mem_range_from_tensor_dst(tensor);
 
-    const bool res = ggml_mem_ranges_check(mrs, mr);
+    અચલ તાર્કિક res = ggml_mem_ranges_check(mrs, mr);
 
-    return res;
+    પાછા res;
 }
 
-bool ggml_mem_ranges_check(ggml_mem_ranges_t mrs, const ggml_tensor * tensor) {
-    for (int i = 0; i < GGML_MAX_SRC; i++) {
-        if (tensor->src[i]) {
-            if (!ggml_mem_ranges_check_src(mrs, tensor->src[i])) {
-                return false;
+તાર્કિક ggml_mem_ranges_check(ggml_mem_ranges_t mrs, અચલ ggml_tensor * tensor) {
+    માટે (પૂર્ણાંક i = 0; i < GGML_MAX_SRC; i++) {
+        જો (tensor->src[i]) {
+            જો (!ggml_mem_ranges_check_src(mrs, tensor->src[i])) {
+                પાછા ખોટું;
             }
         }
     }
 
-    return ggml_mem_ranges_check_dst(mrs, tensor);
+    પાછા ggml_mem_ranges_check_dst(mrs, tensor);
 }
 
-struct node_info {
-    ggml_tensor * node;
+સંરચના ગાંઠ_info {
+    ggml_tensor * ગાંઠ;
 
     std::vector<ggml_tensor *> fused;
 
-    ggml_op op() const {
-        return node->op;
+    ggml_op op() અચલ {
+        પાછા ગાંઠ->op;
     }
 
-    const ggml_tensor * dst() const {
-        return fused.empty() ? node : fused.back();
+    અચલ ggml_tensor * dst() અચલ {
+        પાછા fused.empty() ? ગાંઠ : fused.back();
     }
 
-    bool is_empty() const {
-        return ggml_op_is_empty(node->op);
+    તાર્કિક is_empty() અચલ {
+        પાછા ggml_op_is_empty(ગાંઠ->op);
     }
 
-    void add_fused(ggml_tensor * t) {
+    શૂન્ય add_fused(ggml_tensor * t) {
         fused.push_back(t);
     }
 
-    bool is_output(const ggml_tensor * t) const {
-        if (t == node) {
-            return true;
+    તાર્કિક is_output(અચલ ggml_tensor * t) અચલ {
+        જો (t == ગાંઠ) {
+            પાછા સાચું;
         }
-        for (const auto * f : fused) {
-            if (t == f) {
-                return true;
+        માટે (અચલ auto * f : fused) {
+            જો (t == f) {
+                પાછા સાચું;
             }
         }
-        return false;
+        પાછા ખોટું;
     }
 };
 
-static std::vector<int> ggml_metal_graph_optimize_reorder(const std::vector<node_info> & nodes) {
+સ્થિર std::vector<પૂર્ણાંક> ggml_metal_graph_optimize_reorder(અચલ std::vector<ગાંઠ_info> & nodes) {
     // helper to add node src and dst ranges
-    const auto & h_add = [](ggml_mem_ranges_t mrs, const node_info & node) {
+    અચલ auto & h_add = [](ggml_mem_ranges_t mrs, અચલ ગાંઠ_info & ગાંઠ) {
         // only external sources matter: sources produced by the fused group are internal
-        for (int i = 0; i < GGML_MAX_SRC; i++) {
-            const ggml_tensor * src = node.node->src[i];
-            if (src && !node.is_output(src)) {
-                if (!ggml_mem_ranges_add_src(mrs, src)) {
-                    return false;
+        માટે (પૂર્ણાંક i = 0; i < GGML_MAX_SRC; i++) {
+            અચલ ggml_tensor * src = ગાંઠ.ગાંઠ->src[i];
+            જો (src && !ગાંઠ.is_output(src)) {
+                જો (!ggml_mem_ranges_add_src(mrs, src)) {
+                    પાછા ખોટું;
                 }
             }
         }
 
-        for (const auto * fused : node.fused) {
-            for (int i = 0; i < GGML_MAX_SRC; i++) {
-                const ggml_tensor * src = fused->src[i];
-                if (src && !node.is_output(src)) {
-                    if (!ggml_mem_ranges_add_src(mrs, src)) {
-                        return false;
+        માટે (અચલ auto * fused : ગાંઠ.fused) {
+            માટે (પૂર્ણાંક i = 0; i < GGML_MAX_SRC; i++) {
+                અચલ ggml_tensor * src = fused->src[i];
+                જો (src && !ગાંઠ.is_output(src)) {
+                    જો (!ggml_mem_ranges_add_src(mrs, src)) {
+                        પાછા ખોટું;
                     }
                 }
             }
         }
 
         // all fused tensors are produced by the fused kernel
-        if (!ggml_mem_ranges_add_dst(mrs, node.node)) {
-            return false;
+        જો (!ggml_mem_ranges_add_dst(mrs, ગાંઠ.ગાંઠ)) {
+            પાછા ખોટું;
         }
-        for (const auto * fused : node.fused) {
-            if (!ggml_mem_ranges_add_dst(mrs, fused)) {
-                return false;
+        માટે (અચલ auto * fused : ગાંઠ.fused) {
+            જો (!ggml_mem_ranges_add_dst(mrs, fused)) {
+                પાછા ખોટું;
             }
         }
 
-        return true;
+        પાછા સાચું;
     };
 
     // helper to check if a node can run concurrently with the existing set of nodes
-    const auto & h_check = [](ggml_mem_ranges_t mrs, const node_info & node) {
-        for (int i = 0; i < GGML_MAX_SRC; i++) {
-            const ggml_tensor * src = node.node->src[i];
-            if (src && !node.is_output(src)) {
-                if (!ggml_mem_ranges_check_src(mrs, src)) {
-                    return false;
+    અચલ auto & h_check = [](ggml_mem_ranges_t mrs, અચલ ગાંઠ_info & ગાંઠ) {
+        માટે (પૂર્ણાંક i = 0; i < GGML_MAX_SRC; i++) {
+            અચલ ggml_tensor * src = ગાંઠ.ગાંઠ->src[i];
+            જો (src && !ગાંઠ.is_output(src)) {
+                જો (!ggml_mem_ranges_check_src(mrs, src)) {
+                    પાછા ખોટું;
                 }
             }
         }
 
-        for (const auto * fused : node.fused) {
-            for (int i = 0; i < GGML_MAX_SRC; i++) {
-                const ggml_tensor * src = fused->src[i];
-                if (src && !node.is_output(src)) {
-                    if (!ggml_mem_ranges_check_src(mrs, src)) {
-                        return false;
+        માટે (અચલ auto * fused : ગાંઠ.fused) {
+            માટે (પૂર્ણાંક i = 0; i < GGML_MAX_SRC; i++) {
+                અચલ ggml_tensor * src = fused->src[i];
+                જો (src && !ગાંઠ.is_output(src)) {
+                    જો (!ggml_mem_ranges_check_src(mrs, src)) {
+                        પાછા ખોટું;
                     }
                 }
             }
         }
 
-        if (!ggml_mem_ranges_check_dst(mrs, node.node)) {
-            return false;
+        જો (!ggml_mem_ranges_check_dst(mrs, ગાંઠ.ગાંઠ)) {
+            પાછા ખોટું;
         }
-        for (const auto * fused : node.fused) {
-            if (!ggml_mem_ranges_check_dst(mrs, fused)) {
-                return false;
+        માટે (અચલ auto * fused : ગાંઠ.fused) {
+            જો (!ggml_mem_ranges_check_dst(mrs, fused)) {
+                પાછા ખોટું;
             }
         }
 
-        return true;
+        પાછા સાચું;
     };
 
     // perform reorders only across these types of ops
     // can be expanded when needed
-    const auto & h_safe = [](ggml_op op) {
-        switch (op) {
-            case GGML_OP_MUL_MAT:
-            case GGML_OP_MUL_MAT_ID:
-            case GGML_OP_ROPE:
-            case GGML_OP_NORM:
-            case GGML_OP_RMS_NORM:
-            case GGML_OP_GROUP_NORM:
-            case GGML_OP_L2_NORM:
-            case GGML_OP_SUM_ROWS:
-            case GGML_OP_SSM_CONV:
-            case GGML_OP_SSM_SCAN:
-            case GGML_OP_CLAMP:
-            case GGML_OP_TRI:
-            case GGML_OP_DIAG:
-            case GGML_OP_MUL:
-            case GGML_OP_ADD:
-            case GGML_OP_SUB:
-            case GGML_OP_DIV:
-            case GGML_OP_GLU:
-            case GGML_OP_SCALE:
-            case GGML_OP_UNARY:
-            case GGML_OP_GET_ROWS:
-            case GGML_OP_SET_ROWS:
-            case GGML_OP_SET:
-            case GGML_OP_CPY:
-            case GGML_OP_CONT:
-            case GGML_OP_REPEAT:
-                return true;
-            default:
-                return ggml_op_is_empty(op);
+    અચલ auto & h_safe = [](ggml_op op) {
+        પસંદગી (op) {
+            સ્થિતિ GGML_OP_MUL_MAT:
+            સ્થિતિ GGML_OP_MUL_MAT_ID:
+            સ્થિતિ GGML_OP_ROPE:
+            સ્થિતિ GGML_OP_NORM:
+            સ્થિતિ GGML_OP_RMS_NORM:
+            સ્થિતિ GGML_OP_GROUP_NORM:
+            સ્થિતિ GGML_OP_L2_NORM:
+            સ્થિતિ GGML_OP_SUM_ROWS:
+            સ્થિતિ GGML_OP_SSM_CONV:
+            સ્થિતિ GGML_OP_SSM_SCAN:
+            સ્થિતિ GGML_OP_CLAMP:
+            સ્થિતિ GGML_OP_TRI:
+            સ્થિતિ GGML_OP_DIAG:
+            સ્થિતિ GGML_OP_MUL:
+            સ્થિતિ GGML_OP_ADD:
+            સ્થિતિ GGML_OP_SUB:
+            સ્થિતિ GGML_OP_DIV:
+            સ્થિતિ GGML_OP_GLU:
+            સ્થિતિ GGML_OP_SCALE:
+            સ્થિતિ GGML_OP_UNARY:
+            સ્થિતિ GGML_OP_GET_ROWS:
+            સ્થિતિ GGML_OP_SET_ROWS:
+            સ્થિતિ GGML_OP_SET:
+            સ્થિતિ GGML_OP_CPY:
+            સ્થિતિ GGML_OP_CONT:
+            સ્થિતિ GGML_OP_REPEAT:
+                પાછા સાચું;
+            મૂળભૂત:
+                પાછા ggml_op_is_empty(op);
         }
     };
 
-    const int n = nodes.size();
+    અચલ પૂર્ણાંક n = nodes.size();
 
-    std::vector<int> res;
+    std::vector<પૂર્ણાંક> res;
     res.reserve(n);
 
-    std::vector<bool> used(n, false);
+    std::vector<તાર્કિક> used(n, ખોટું);
 
     // the memory ranges for the set of currently concurrent nodes
     ggml_mem_ranges_t mrs0 = ggml_mem_ranges_init(0);
@@ -490,18 +490,18 @@ static std::vector<int> ggml_metal_graph_optimize_reorder(const std::vector<node
     // the memory ranges for the set of nodes that haven't been processed yet, when looking forward for a node to reorder
     ggml_mem_ranges_t mrs1 = ggml_mem_ranges_init(0);
 
-    for (int i0 = 0; i0 < n; i0++) {
-        if (used[i0]) {
-            continue;
+    માટે (પૂર્ણાંક i0 = 0; i0 < n; i0++) {
+        જો (used[i0]) {
+            ચાલુ;
         }
 
-        const auto & node0 = nodes[i0];
+        અચલ auto & node0 = nodes[i0];
 
         // the node is not concurrent with the existing concurrent set, so we have to "put a barrier" (i.e reset mrs0)
         // but before we do that, look forward for some other nodes that can be added to the concurrent set mrs0
         //
         // note: we can always add empty nodes to the concurrent set as they don't read nor write anything
-        if (!node0.is_empty() && !h_check(mrs0, node0)) {
+        જો (!node0.is_empty() && !h_check(mrs0, node0)) {
             // this will hold the set of memory ranges from the nodes that haven't been processed yet
             // if a node is not concurrent with this set, we cannot reorder it
             ggml_mem_ranges_reset(mrs1);
@@ -510,33 +510,33 @@ static std::vector<int> ggml_metal_graph_optimize_reorder(const std::vector<node
             h_add(mrs1, node0);
 
             // that many nodes forward to search for a concurrent node
-            constexpr int N_FORWARD = 64;
+            constexpr પૂર્ણાંક N_FORWARD = 64;
 
-            for (int i1 = i0 + 1; i1 < i0 + N_FORWARD && i1 < n; i1++) {
-                if (used[i1]) {
-                    continue;
+            માટે (પૂર્ણાંક i1 = i0 + 1; i1 < i0 + N_FORWARD && i1 < n; i1++) {
+                જો (used[i1]) {
+                    ચાલુ;
                 }
 
-                const auto & node1 = nodes[i1];
+                અચલ auto & node1 = nodes[i1];
 
                 // disallow reordering of certain ops
-                if (!h_safe(node1.op())) {
-                    break;
+                જો (!h_safe(node1.op())) {
+                    તોડો;
                 }
 
-                const bool is_empty = node1.is_empty();
+                અચલ તાર્કિક is_empty = node1.is_empty();
 
                 // to reorder a node and add it to the concurrent set, it has to be:
                 //   + empty or concurrent with all nodes in the existing concurrent set (mrs0)
                 //   + concurrent with all nodes prior to it that haven't been processed yet (mrs1)
-                if ((is_empty || h_check(mrs0, node1)) && h_check(mrs1, node1)) {
+                જો ((is_empty || h_check(mrs0, node1)) && h_check(mrs1, node1)) {
                     // add the node to the existing concurrent set (i.e. reorder it for early execution)
                     h_add(mrs0, node1);
                     res.push_back(i1);
 
                     // mark as used, so we skip re-processing it later
-                    used[i1] = true;
-                } else {
+                    used[i1] = સાચું;
+                } નહીંતર {
                     // expand the set of nodes that haven't been processed yet
                     h_add(mrs1, node1);
                 }
@@ -556,13 +556,13 @@ static std::vector<int> ggml_metal_graph_optimize_reorder(const std::vector<node
     ggml_mem_ranges_free(mrs0);
     ggml_mem_ranges_free(mrs1);
 
-    return res;
+    પાછા res;
 }
 
-void ggml_graph_optimize(ggml_cgraph * gf) {
-    const int n = gf->n_nodes;
+શૂન્ય ggml_graph_optimize(ggml_cgraph * gf) {
+    અચલ પૂર્ણાંક n = gf->n_nodes;
 
-    std::vector<node_info> nodes;
+    std::vector<ગાંઠ_info> nodes;
     nodes.reserve(gf->n_nodes);
 
     // fuse nodes:
@@ -571,44 +571,44 @@ void ggml_graph_optimize(ggml_cgraph * gf) {
     //
     // the fusable sequences are declared in the fusion table (ggml-metal-fuse.cpp), so the
     // packing here is driven by the same patterns that the op encoders will later use
-    for (int i = 0; i < n; i++) {
-        node_info node = {
+    માટે (પૂર્ણાંક i = 0; i < n; i++) {
+        ગાંઠ_info ગાંઠ = {
             /*.node =*/ gf->nodes[i],
             /*.fused =*/ {},
         };
 
-        const int f = ggml_metal_fusion_max(gf, i);
+        અચલ પૂર્ણાંક f = ggml_metal_fusion_max(gf, i);
 
         // add the fused tensors into the node info so we can unfuse them later
-        for (int k = 1; k < f; k++) {
+        માટે (પૂર્ણાંક k = 1; k < f; k++) {
             ++i;
 
             // the .dst() becomes the last fused tensor
-            node.add_fused(gf->nodes[i]);
+            ગાંઠ.add_fused(gf->nodes[i]);
         }
 
-        nodes.push_back(std::move(node));
+        nodes.push_back(std::move(ગાંઠ));
     }
 
-#if 1
+#જો 1
     // reorder to improve concurrency
-    const auto order = ggml_metal_graph_optimize_reorder(nodes);
-#else
-    std::vector<int> order(nodes.size());
-    for (size_t i = 0; i < nodes.size(); i++) {
+    અચલ auto order = ggml_metal_graph_optimize_reorder(nodes);
+#નહીંતર
+    std::vector<પૂર્ણાંક> order(nodes.size());
+    માટે (size_t i = 0; i < nodes.size(); i++) {
         order[i] = i;
     }
 #endif
 
     // unfuse
     {
-        int j = 0;
-        for (const auto i : order) {
-            const auto & node = nodes[i];
+        પૂર્ણાંક j = 0;
+        માટે (અચલ auto i : order) {
+            અચલ auto & ગાંઠ = nodes[i];
 
-            gf->nodes[j++] = node.node;
+            gf->nodes[j++] = ગાંઠ.ગાંઠ;
 
-            for (auto * fused : node.fused) {
+            માટે (auto * fused : ગાંઠ.fused) {
                 gf->nodes[j++] = fused;
             }
         }

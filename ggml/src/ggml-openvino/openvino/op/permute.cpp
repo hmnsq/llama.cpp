@@ -1,28 +1,28 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#અન્તર્ભાવ "../node_context.h"
+#અન્તર્ભાવ "../op_table.h"
+#અન્તર્ભાવ "../utils.h"
 
-#include <climits>
-#include <cstdint>
-#include <memory>
-#include <openvino/core/node.hpp>
-#include <openvino/op/add.hpp>
-#include <openvino/op/concat.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/slice.hpp>
-#include <openvino/op/transpose.hpp>
-#include <vector>
+#અન્તર્ભાવ <climits>
+#અન્તર્ભાવ <cstdint>
+#અન્તર્ભાવ <memory>
+#અન્તર્ભાવ <openvino/core/node.hpp>
+#અન્તર્ભાવ <openvino/op/add.hpp>
+#અન્તર્ભાવ <openvino/op/concat.hpp>
+#અન્તર્ભાવ <openvino/op/constant.hpp>
+#અન્તર્ભાવ <openvino/op/reshape.hpp>
+#અન્તર્ભાવ <openvino/op/slice.hpp>
+#અન્તર્ભાવ <openvino/op/transpose.hpp>
+#અન્તર્ભાવ <vector>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+નામાકાશ ov {
+નામાકાશ frontend {
+નામાકાશ ggml {
+નામાકાશ op {
 
-OutputVector translate_permute(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+OutputVector translate_permute(અચલ ગાંઠ_Context & context) {
+    અંક_inputs_check(context, 1, 1);
 
-    int op_case = context.get_op_case();
+    પૂર્ણાંક op_case = context.get_op_case();
     FRONT_END_CHECK_IMPLEMENTED(op_case != 0, "Unsupported PERMUTE case");
     // op_case 1 is trivial permute
     // op_case 2 is to permute Q. It has a preceding VIEW that reshapes Q to restore the sequqence dimension
@@ -31,41 +31,41 @@ OutputVector translate_permute(const NodeContext & context) {
 
     ov::Output<Node> res;
     ov::Output<Node> src;
-    if (op_case == 3 || op_case == 4 || op_case == 5 || op_case == 6) {
-        src = context.get_input(0);
-    } else {
-        src = process_view_input_new(context, 0);
+    જો (op_case == 3 || op_case == 4 || op_case == 5 || op_case == 6) {
+        src = context.get_આગત(0);
+    } નહીંતર {
+        src = process_view_આગત_new(context, 0);
     }
-    std::vector<int64_t> perm_values{0, 2, 1, 3};
-    const int32_t * op_params = context.get_output_op_params();
-    if (op_params != nullptr) {
-        for (size_t input_axis = 0; input_axis < perm_values.size(); ++input_axis) {
-            const size_t output_axis = static_cast<size_t>(op_params[input_axis]);
-            perm_values[perm_values.size() - 1 - output_axis] =
-                static_cast<int64_t>(perm_values.size() - 1 - input_axis);
+    std::vector<int64_t> perm_કિંમતો{0, 2, 1, 3};
+    અચલ int32_t * op_params = context.get_output_op_params();
+    જો (op_params != nullptr) {
+        માટે (size_t આગત_axis = 0; આગત_axis < perm_કિંમતો.size(); ++આગત_axis) {
+            અચલ size_t output_axis = static_cast<size_t>(op_params[આગત_axis]);
+            perm_કિંમતો[perm_કિંમતો.size() - 1 - output_axis] =
+                static_cast<int64_t>(perm_કિંમતો.size() - 1 - આગત_axis);
         }
     }
-    if (op_case == 1 || context.is_stateful()) {
+    જો (op_case == 1 || context.is_stateful()) {
         // The stateful path carries hidden-state tensors in a rank-3 layout (the
         // leading batch dim is dropped, e.g. Gemma4's per-layer-embedding path). The
         // perm above is rank-4; when the actual input is rank-3, drop the batch axis
         // (perm[0], which is always the identity 0 here) and shift the rest down by 1
         // so the transpose order matches the input rank.
-        std::vector<int64_t> perm_used = perm_values;
-        const auto & src_ps = src.get_partial_shape();
-        if (src_ps.rank().is_static() && src_ps.rank().get_length() == 3 && perm_values.size() == 4 &&
-            perm_values[0] == 0) {
-            perm_used = {perm_values[1] - 1, perm_values[2] - 1, perm_values[3] - 1};
+        std::vector<int64_t> perm_used = perm_કિંમતો;
+        અચલ auto & src_ps = src.get_partial_shape();
+        જો (src_ps.rank().is_static() && src_ps.rank().get_length() == 3 && perm_કિંમતો.size() == 4 &&
+            perm_કિંમતો[0] == 0) {
+            perm_used = {perm_કિંમતો[1] - 1, perm_કિંમતો[2] - 1, perm_કિંમતો[3] - 1};
         }
         auto perm = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{perm_used.size()}, perm_used);
         res = std::make_shared<ov::op::v1::Transpose>(src, perm);
-    } else if (op_case == 2) {
-        auto perm = ov::op::v0::Constant::create(ov::element::i64, {4}, perm_values);
+    } નહીંતર જો (op_case == 2) {
+        auto perm = ov::op::v0::Constant::create(ov::element::i64, {4}, perm_કિંમતો);
         auto output_shape = context.get_output_shape().to_shape();
         auto n_heads = ov::op::v0::Constant::create(ov::element::i64, {1}, {output_shape[1]});
         auto head_size = ov::op::v0::Constant::create(ov::element::i64, {1}, {output_shape[3]});
-        auto n_seq_active = context.has_input("n_seq_active") ?
-                                context.get_input("n_seq_active") :
+        auto n_seq_active = context.has_આગત("n_seq_active") ?
+                                context.get_આગત("n_seq_active") :
                                 ov::op::v0::Constant::create(ov::element::i64, {1}, {output_shape[0]});
         auto neg_one = ov::op::v0::Constant::create(ov::element::i64, {1}, {-1});
 
@@ -76,15 +76,15 @@ OutputVector translate_permute(const NodeContext & context) {
         // auto zero = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
         // auto new_shape = std::make_shared<ov::op::v0::Concat>(ov::OutputVector{n_seq_active, neg_one, zero, zero}, 0);
 
-        auto reshaped = std::make_shared<ov::op::v1::Reshape>(src, new_shape, true);
+        auto reshaped = std::make_shared<ov::op::v1::Reshape>(src, new_shape, સાચું);
         res = std::make_shared<ov::op::v1::Transpose>(reshaped, perm);
-    } else {
-        auto perm = ov::op::v0::Constant::create(ov::element::i64, {4}, perm_values);
+    } નહીંતર {
+        auto perm = ov::op::v0::Constant::create(ov::element::i64, {4}, perm_કિંમતો);
         auto cache_shape = src.get_partial_shape();
         auto output_shape = context.get_output_shape().to_shape();
         int64_t head_size = output_shape[3];
         int64_t n_heads = output_shape[1];
-        if (op_case == 5 || op_case == 6) {
+        જો (op_case == 5 || op_case == 6) {
             head_size = output_shape[2];
             n_heads = output_shape[1];
         }
@@ -92,23 +92,23 @@ OutputVector translate_permute(const NodeContext & context) {
         int64_t n_seq = cache_shape[1].get_length();
 
         Output<Node> attention_size;
-        if (!context.has_input("attention_size")) {
+        જો (!context.has_આગત("attention_size")) {
             attention_size = ov::op::v0::Constant::create(ov::element::i64, {1}, {output_shape[2]});
-        } else if (op_case == 3 || op_case == 5) {
-            attention_size = context.get_input("attention_size");
-        } else {
-            attention_size = context.get_input("attention_size_swa");
+        } નહીંતર જો (op_case == 3 || op_case == 5) {
+            attention_size = context.get_આગત("attention_size");
+        } નહીંતર {
+            attention_size = context.get_આગત("attention_size_swa");
         }
 
         Output<Node> seq_active_start;
         Output<Node> seq_active_end;
-        if (context.has_input("seq_active_start")) {
-            seq_active_start = context.get_input("seq_active_start");
-            seq_active_end = context.get_input("seq_active_end");
-        } else {
+        જો (context.has_આગત("seq_active_start")) {
+            seq_active_start = context.get_આગત("seq_active_start");
+            seq_active_end = context.get_આગત("seq_active_end");
+        } નહીંતર {
             int64_t n_seq_active = output_shape[0];
-            size_t offset = *((size_t *) context.get_input_op_params(0));
-            int64_t seq_active_start_val = offset / context.get_input_stride(0)[0];
+            size_t offset = *((size_t *) context.get_આગત_op_params(0));
+            int64_t seq_active_start_val = offset / context.get_આગત_stride(0)[0];
             int64_t seq_active_end_val = seq_active_start_val + n_seq_active;
             seq_active_start = ov::op::v0::Constant::create(ov::element::i64, {1}, {seq_active_start_val});
             seq_active_end = ov::op::v0::Constant::create(ov::element::i64, {1}, {seq_active_end_val});
@@ -121,28 +121,28 @@ OutputVector translate_permute(const NodeContext & context) {
         auto zero = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
         auto one = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
 
-        if (op_case == 3 || op_case == 4) {
+        જો (op_case == 3 || op_case == 4) {
             auto src_reshaped = std::make_shared<ov::op::v1::Reshape>(
                 src, ov::op::v0::Constant::create(ov::element::i64, {4}, {n_seq, ctx_per_seq, n_heads, head_size}),
-                false);
+                ખોટું);
             ov::Output<ov::Node> after_seq_slice;
-            if (n_seq == 1) {
+            જો (n_seq == 1) {
                 after_seq_slice = src_reshaped;
-            } else {
+            } નહીંતર {
                 after_seq_slice =
                     std::make_shared<ov::op::v8::Slice>(src_reshaped, seq_active_start, seq_active_end, one, zero);
             }
             auto slice2 = std::make_shared<ov::op::v8::Slice>(after_seq_slice, zero, attention_size, one, one);
             res = std::make_shared<ov::op::v1::Transpose>(slice2, perm);
-        } else {
+        } નહીંતર {
             auto three = ov::op::v0::Constant::create(ov::element::i64, {1}, {3});
             auto src_reshaped = std::make_shared<ov::op::v1::Reshape>(
                 src, ov::op::v0::Constant::create(ov::element::i64, {4}, {n_seq, n_heads, head_size, ctx_per_seq}),
-                false);
+                ખોટું);
             ov::Output<ov::Node> after_seq_slice;
-            if (n_seq == 1) {
+            જો (n_seq == 1) {
                 after_seq_slice = src_reshaped;
-            } else {
+            } નહીંતર {
                 after_seq_slice =
                     std::make_shared<ov::op::v8::Slice>(src_reshaped, seq_active_start, seq_active_end, one, zero);
             }
@@ -150,7 +150,7 @@ OutputVector translate_permute(const NodeContext & context) {
             res = slice2;
         }
     }
-    return rename_outputs_with_suffix({res}, context.get_name());
+    પાછા rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

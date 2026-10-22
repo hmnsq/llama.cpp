@@ -4,13 +4,13 @@
 
 #pragma once
 
-#include "ggml-alloc.h"
+#અન્તર્ભાવ "ggml-alloc.h"
 
 #ifdef  __cplusplus
-extern "C" {
+બાહ્ય "C" {
 #endif
 
-ggml_backend_buffer_type_t ggml_backend_cpu_kleidiai_buffer_type(void);
+ggml_backend_buffer_type_t ggml_backend_cpu_kleidiai_buffer_type(શૂન્ય);
 
 #ifdef  __cplusplus
 }

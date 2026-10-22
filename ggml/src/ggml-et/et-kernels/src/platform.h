@@ -7,19 +7,19 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
-#include "etsoc/common/utils.h"
-#include "etsoc/isa/barriers.h"
-#include "etsoc/isa/cacheops-umode.h"
-#include "etsoc/isa/hart.h"
+#અન્તર્ભાવ "etsoc/common/utils.h"
+#અન્તર્ભાવ "etsoc/isa/barriers.h"
+#અન્તર્ભાવ "etsoc/isa/cacheops-umode.h"
+#અન્તર્ભાવ "etsoc/isa/hart.h"
 
-#include <stdint.h>
+#અન્તર્ભાવ <stdint.h>
 
 #define SOC_MINIONS_PER_SHIRE    32
-#define NUM_HARTS_PER_MINION     2
-#define ET_CACHE_LINE_SIZE_BYTES 64
+#define અંક_HARTS_PER_MINION     2
+#define ET_CACHE_લીટી_SIZE_BYTES 64
 
 // Environment structure definition
-typedef struct {
+પ્રકારવ્યાખ્યા સંરચના {
     uint32_t version;     // Version of the ABI (offset 0)
     uint32_t padding1;    // Padding to align shire_mask to offset 8
     uint64_t shire_mask;  // Bitmask of active compute shires (offset 8)
@@ -31,74 +31,74 @@ typedef struct {
 // NOTE: This simple loop-based implementation is used for portability.
 // Production implementations (like libgcc's __ctzdi2) use optimized bit manipulation
 // algorithms with lookup tables and parallel bit operations for O(log n) performance.
-static inline int manual_ctzll(uint64_t x) {
-    if (x == 0) return 64;
-    int count = 0;
-    while ((x & 1) == 0) {
+સ્થિર અંતઃરેખ પૂર્ણાંક manual_ctzll(uint64_t x) {
+    જો (x == 0) પાછા 64;
+    પૂર્ણાંક ગણતરી = 0;
+    જ્યારે ((x & 1) == 0) {
         x >>= 1;
-        count++;
+        ગણતરી++;
     }
-    return count;
+    પાછા ગણતરી;
 }
 
 // Manual implementation of population count for bare metal environment
 // NOTE: This simple loop-based implementation is used for portability.
 // Production implementations (like libgcc's __popcountdi2) use optimized bit-parallel
 // algorithms with magic constants and bit manipulation tricks for O(1) performance.
-static inline int manual_popcountll(uint64_t x) {
-    int count = 0;
-    while (x) {
-        count += x & 1;
+સ્થિર અંતઃરેખ પૂર્ણાંક manual_popcountll(uint64_t x) {
+    પૂર્ણાંક ગણતરી = 0;
+    જ્યારે (x) {
+        ગણતરી += x & 1;
         x >>= 1;
     }
-    return count;
+    પાછા ગણતરી;
 }
 
 // Binary GCD (Stein's algorithm) — avoids expensive 64-bit division/remainder.
 // Uses only shifts, subtraction, and comparison (all single-cycle on ET cores).
-static inline int64_t et_gcd_i64(int64_t a, int64_t b) {
-    while (b) {
-        const int64_t t = b;
+સ્થિર અંતઃરેખ int64_t et_gcd_i64(int64_t a, int64_t b) {
+    જ્યારે (b) {
+        અચલ int64_t t = b;
         b               = a % b;
         a               = t;
     }
-    return a;
+    પાછા a;
 }
 
 // Return the number of consecutive rows of width row_elems needed so the
 // combined write footprint spans an integer number of cache lines.
-static inline int64_t et_rows_per_cacheline_group(int64_t row_elems, int64_t elem_size_bytes) {
-    if (row_elems <= 0 || elem_size_bytes <= 0) {
-        return 1;
+સ્થિર અંતઃરેખ int64_t et_rows_per_cacheline_group(int64_t row_elems, int64_t elem_size_bytes) {
+    જો (row_elems <= 0 || elem_size_bytes <= 0) {
+        પાછા 1;
     }
 
-    const int64_t row_bytes = row_elems * elem_size_bytes;
-    const int64_t gcd       = et_gcd_i64(ET_CACHE_LINE_SIZE_BYTES, row_bytes);
-    return ET_CACHE_LINE_SIZE_BYTES / gcd;
+    અચલ int64_t row_bytes = row_elems * elem_size_bytes;
+    અચલ int64_t gcd       = et_gcd_i64(ET_CACHE_લીટી_SIZE_BYTES, row_bytes);
+    પાછા ET_CACHE_લીટી_SIZE_BYTES / gcd;
 }
 
 // Calculate relative thread ID from absolute hart ID using shire mask
 // Returns -1 if this hart is not active (not in shire mask)
-static inline int get_relative_thread_id(uint64_t shire_mask) {
-    int hart_id = (int) get_hart_id();
+સ્થિર અંતઃરેખ પૂર્ણાંક get_relative_thread_id(uint64_t shire_mask) {
+    પૂર્ણાંક hart_id = (પૂર્ણાંક) get_hart_id();
 
     // Find starting hart offset from lowest active shire
-    int starting_hart = manual_ctzll(shire_mask) * SOC_MINIONS_PER_SHIRE * NUM_HARTS_PER_MINION;
+    પૂર્ણાંક starting_hart = manual_ctzll(shire_mask) * SOC_MINIONS_PER_SHIRE * અંક_HARTS_PER_MINION;
 
     // Return -1 if not an active thread
-    if (hart_id < starting_hart) {
-        return -1;
+    જો (hart_id < starting_hart) {
+        પાછા -1;
     }
 
     // Calculate relative thread ID
-    int thread_id = hart_id - starting_hart;
-    return thread_id;
+    પૂર્ણાંક thread_id = hart_id - starting_hart;
+    પાછા thread_id;
 }
 
 // Calculate total number of threads from shire mask
-static inline int get_num_threads(uint64_t shire_mask) {
+સ્થિર અંતઃરેખ પૂર્ણાંક get_અંક_threads(uint64_t shire_mask) {
     // Count active shires using popcount, multiply by minions per shire and harts per minion
-    return manual_popcountll(shire_mask) * SOC_MINIONS_PER_SHIRE * NUM_HARTS_PER_MINION;
+    પાછા manual_popcountll(shire_mask) * SOC_MINIONS_PER_SHIRE * અંક_HARTS_PER_MINION;
 }
 
 //******************************************************************************
@@ -117,35 +117,35 @@ static inline int get_num_threads(uint64_t shire_mask) {
 // the NoC coherence fabric for chip-wide atomicity.
 
 // Atomic swap (word), returns previous value.
-static inline uint32_t __attribute__((always_inline)) et_global_swap_w(volatile void * addr, uint32_t val) {
+સ્થિર અંતઃરેખ uint32_t __attribute__((always_inline)) et_global_swap_w(અસ્થિર શૂન્ય * addr, uint32_t val) {
     uint32_t ret;
     __asm__ __volatile__("amoswapg.w %0, %1, (%2)" : "=r"(ret) : "r"(val), "r"(addr) : "memory");
-    return ret;
+    પાછા ret;
 }
 
 // Atomic add (word), returns previous value.
-static inline uint32_t __attribute__((always_inline)) et_global_add_w(volatile void * addr, uint32_t val) {
+સ્થિર અંતઃરેખ uint32_t __attribute__((always_inline)) et_global_add_w(અસ્થિર શૂન્ય * addr, uint32_t val) {
     uint32_t ret;
     __asm__ __volatile__("amoaddg.w %0, %1, (%2)" : "=r"(ret) : "r"(val), "r"(addr) : "memory");
-    return ret;
+    પાછા ret;
 }
 
 // Atomic store (halfword, global). Address must be 16-bit aligned.
-static inline void __attribute__((always_inline)) et_global_store_hw(volatile void * addr, uint16_t val) {
+સ્થિર અંતઃરેખ શૂન્ય __attribute__((always_inline)) et_global_store_hw(અસ્થિર શૂન્ય * addr, uint16_t val) {
     __asm__ __volatile__("shg %0, (%1)" : : "r"(val), "r"(addr) : "memory");
 }
 
 // Convenience wrappers — float types, fire-and-forget (old value discarded).
-static inline void atomic_store_f32(volatile float * addr, float value) {
-    et_global_swap_w(addr, *(uint32_t *) &value);
+સ્થિર અંતઃરેખ શૂન્ય atomic_store_f32(અસ્થિર દશાંશ * addr, દશાંશ કિંમત) {
+    et_global_swap_w(addr, *(uint32_t *) &કિંમત);
 }
 
-static inline void atomic_add_f32(volatile float * addr, float value) {
-    et_global_add_w(addr, *(uint32_t *) &value);
+સ્થિર અંતઃરેખ શૂન્ય atomic_add_f32(અસ્થિર દશાંશ * addr, દશાંશ કિંમત) {
+    et_global_add_w(addr, *(uint32_t *) &કિંમત);
 }
 
-static inline void atomic_store_f16(volatile uint16_t * addr, uint16_t value) {
-    et_global_store_hw(addr, value);
+સ્થિર અંતઃરેખ શૂન્ય atomic_store_f16(અસ્થિર uint16_t * addr, uint16_t કિંમત) {
+    et_global_store_hw(addr, કિંમત);
 }
 
 //******************************************************************************
@@ -172,7 +172,7 @@ static inline void atomic_store_f16(volatile uint16_t * addr, uint16_t value) {
 
 #define ET_DEFAULT_SHIRE_MASK 0xFFFFFFFFULL
 
-typedef enum {
+પ્રકારવ્યાખ્યા ગણના {
     ET_BARRIER_MINION,  // sync both harts within each minion (FLB=minion_id, FCC 0)
     ET_BARRIER_SHIRE,   // sync all harts across the shire   (FLB=0, FCC 1)
     ET_BARRIER_GLOBAL,  // sync all harts across all active shires (FLB+global AMO+FCC)
@@ -195,33 +195,33 @@ typedef enum {
 
 // Barrier counter cache-line aligned to avoid coherency problems
 // Must be zero-initialized (BSS).
-static uint32_t __attribute__((aligned(64))) et_global_barrier_count[64 / sizeof(uint32_t)] = { 0 };
+સ્થિર uint32_t __attribute__((aligned(64))) et_global_barrier_ગણતરી[64 / કદ(uint32_t)] = { 0 };
 
 // Cross-shire barrier: all harts in num_active_shires shires synchronize.
 // Returns 1 if this hart was the globally-last to arrive, 0 otherwise.
 //
 //   num_active_shires - number of shires participating
 //                       (typically popcount(shire_mask) from kernel_environment_t)
-static inline uint64_t __attribute__((always_inline)) et_barrier_global(uint64_t num_active_shires) {
+સ્થિર અંતઃરેખ uint64_t __attribute__((always_inline)) et_barrier_global(uint64_t અંક_active_shires) {
     uint64_t last_global = 0;
 
     // FLB within this shire. Elect one hart per shire.
     // Master shire has only 16 minions (32 harts), others have 32 (64 harts).
     uint64_t shire_id       = get_shire_id();
-    uint32_t harts_in_shire = (shire_id == SHIRE_MASTER) ? (SOC_MINIONS_PER_SHIRE / 2) * NUM_HARTS_PER_MINION :
-                                                           SOC_MINIONS_PER_SHIRE * NUM_HARTS_PER_MINION;
+    uint32_t harts_in_shire = (shire_id == SHIRE_MASTER) ? (SOC_MINIONS_PER_SHIRE / 2) * અંક_HARTS_PER_MINION :
+                                                           SOC_MINIONS_PER_SHIRE * અંક_HARTS_PER_MINION;
     uint64_t last_in_shire  = flbarrier(0, harts_in_shire - 1);
 
-    if (last_in_shire) {
+    જો (last_in_shire) {
         // Global atomic increment. Count arriving shires
-        uint32_t prev = et_global_add_w(et_global_barrier_count, 1);
+        uint32_t prev = et_global_add_w(et_global_barrier_ગણતરી, 1);
 
-        if (prev == num_active_shires - 1) {
+        જો (prev == અંક_active_shires - 1) {
             // Last shire. reset counter and fan out FCC to all shires
             last_global = 1;
-            et_global_swap_w(et_global_barrier_count, 0);
+            et_global_swap_w(et_global_barrier_ગણતરી, 0);
 
-            for (uint64_t sid = 0; sid < 33; sid++) {
+            માટે (uint64_t sid = 0; sid < 33; sid++) {
                 // Send FCC 1 credit to all harts (both threads) in each shire
                 fcc_send(sid, THREAD_0, FCC_1, 0xFFFFFFFF);
                 fcc_send(sid, THREAD_1, FCC_1, 0xFFFFFFFF);
@@ -231,7 +231,7 @@ static inline uint64_t __attribute__((always_inline)) et_barrier_global(uint64_t
 
     // All harts wait for the FCC credit from the last shire
     fcc_consume(FCC_1);
-    return last_global;
+    પાછા last_global;
 }
 
 // Barrier with scope-derived parameters.
@@ -239,18 +239,18 @@ static inline uint64_t __attribute__((always_inline)) et_barrier_global(uint64_t
 //
 // ET_BARRIER_GLOBAL uses ET_DEFAULT_SHIRE_MASK (32 shires). For a different
 // shire count, use et_barrier_global(n) directly.
-static inline uint64_t __attribute__((always_inline)) et_barrier(et_barrier_scope_t scope) {
-    if (scope == ET_BARRIER_MINION) {
+સ્થિર અંતઃરેખ uint64_t __attribute__((always_inline)) et_barrier(et_barrier_scope_t scope) {
+    જો (scope == ET_BARRIER_MINION) {
         uint32_t local_minion = (get_hart_id() >> 1) & 0x1F;
         uint32_t mask         = 1u << local_minion;
-        return shire_barrier(local_minion, 0, 2, mask, mask);
-    } else if (scope == ET_BARRIER_SHIRE) {
+        પાછા shire_barrier(local_minion, 0, 2, mask, mask);
+    } નહીંતર જો (scope == ET_BARRIER_SHIRE) {
         uint64_t shire_id     = get_shire_id();
-        uint32_t thread_count = (shire_id == SHIRE_MASTER) ? 32 : 64;
+        uint32_t thread_ગણતરી = (shire_id == SHIRE_MASTER) ? 32 : 64;
         uint32_t mask         = (shire_id == SHIRE_MASTER) ? 0xFFFF0000U : 0xFFFFFFFFU;
-        return shire_barrier(0, 1, thread_count, mask, mask);
-    } else { /* ET_BARRIER_GLOBAL */
-        return et_barrier_global(manual_popcountll(ET_DEFAULT_SHIRE_MASK));
+        પાછા shire_barrier(0, 1, thread_ગણતરી, mask, mask);
+    } નહીંતર { /* ET_BARRIER_GLOBAL */
+        પાછા et_barrier_global(manual_popcountll(ET_DEFAULT_SHIRE_MASK));
     }
 }
 
@@ -263,12 +263,12 @@ static inline uint64_t __attribute__((always_inline)) et_barrier(et_barrier_scop
 //   thread_count - number of harts that will call this barrier
 //   mask_t0      - CREDINC bitmask: which minions' hart 0 gets a credit
 //   mask_t1      - CREDINC bitmask: which minions' hart 1 gets a credit
-static inline uint64_t __attribute__((always_inline)) et_barrier_raw(uint32_t flb,
+સ્થિર અંતઃરેખ uint64_t __attribute__((always_inline)) et_barrier_raw(uint32_t flb,
                                                                      uint32_t fcc,
-                                                                     uint32_t thread_count,
+                                                                     uint32_t thread_ગણતરી,
                                                                      uint32_t mask_t0,
                                                                      uint32_t mask_t1) {
-    return shire_barrier(flb, fcc, thread_count, mask_t0, mask_t1);
+    પાછા shire_barrier(flb, fcc, thread_ગણતરી, mask_t0, mask_t1);
 }
 
 // One-way semaphore between harts (non-blocking post, blocking wait).
@@ -284,17 +284,17 @@ static inline uint64_t __attribute__((always_inline)) et_barrier_raw(uint32_t fl
 //
 // Must not be mixed with et_barrier() of the same scope in the
 // same kernel (shared FCC channel).
-static inline void __attribute__((always_inline)) et_sem_post(et_barrier_scope_t scope) {
-    if (scope == ET_BARRIER_MINION) {
+સ્થિર અંતઃરેખ શૂન્ય __attribute__((always_inline)) et_sem_post(et_barrier_scope_t scope) {
+    જો (scope == ET_BARRIER_MINION) {
         uint64_t hart_id      = get_hart_id();
         uint32_t local_minion = (hart_id >> 1) & 0x1F;
         uint32_t mask         = 1u << local_minion;
         uint64_t shire_id     = get_shire_id();
 
-        if (hart_id & 1) {
+        જો (hart_id & 1) {
             // Hart 1 → hart 0
             fcc_send(shire_id, THREAD_0, FCC_0, mask);
-        } else {
+        } નહીંતર {
             // Hart 0 → hart 1
             fcc_send(shire_id, THREAD_1, FCC_0, mask);
         }
@@ -302,8 +302,8 @@ static inline void __attribute__((always_inline)) et_sem_post(et_barrier_scope_t
 }
 
 // Block until a post from et_sem_post() is available, then consume it.
-static inline void __attribute__((always_inline)) et_sem_wait(et_barrier_scope_t scope) {
-    if (scope == ET_BARRIER_MINION) {
+સ્થિર અંતઃરેખ શૂન્ય __attribute__((always_inline)) et_sem_wait(et_barrier_scope_t scope) {
+    જો (scope == ET_BARRIER_MINION) {
         fcc_consume(FCC_0);
     }
 }
@@ -363,7 +363,7 @@ static inline void __attribute__((always_inline)) et_sem_wait(et_barrier_scope_t
 //   scp_en       — 1 to enable SCP mode (requires D1Split already set)
 //   cacheop_rate — cache-op replay rate (0–7; 0 = no delay)
 //   cacheop_max  — max outstanding cache ops (0–31; 0 = unlimited)
-static inline void __attribute__((always_inline)) ucache_control(uint64_t scp_en,
+સ્થિર અંતઃરેખ શૂન્ય __attribute__((always_inline)) ucache_control(uint64_t scp_en,
                                                                  uint64_t cacheop_rate,
                                                                  uint64_t cacheop_max) {
     uint64_t csr_enc = ((cacheop_max & 0x1F) << 6) | ((cacheop_rate & 0x7) << 2) | ((scp_en & 0x1) << 1);
@@ -378,7 +378,7 @@ static inline void __attribute__((always_inline)) ucache_control(uint64_t scp_en
 //   - D1Split must already be 1 (set by M-mode firmware at boot).
 //   - Only even harts (hart 0 per minion) should call this, as only they
 //     can issue tensor instructions.
-static inline void setup_cache_scp(void) {
+સ્થિર અંતઃરેખ શૂન્ય setup_cache_scp(શૂન્ય) {
     FENCE;                    // drain pending stores before reconfiguring cache
     ucache_control(1, 0, 0);  // ScpEnable=1
     WAIT_CACHEOPS;            // wait for SCP mode transition + zeroing
@@ -415,21 +415,21 @@ static inline void setup_cache_scp(void) {
 // Format 0: direct address into a specific shire's L2 SCP.
 //   shire: 0–33 for explicit shire, L2SCP_SHIRE_LOCAL (0x7F) for local
 //   offset: byte offset within the shire's scratchpad
-static inline void * __attribute__((always_inline)) et_shire_l2scp(uint64_t shire, uint64_t offset) {
-    return (void *) (L2SCP_BASE | ((shire & 0x7F) << 23) | (offset & 0x7FFFFF));
+સ્થિર અંતઃરેખ શૂન્ય * __attribute__((always_inline)) et_shire_l2scp(uint64_t shire, uint64_t offset) {
+    પાછા (શૂન્ય *) (L2SCP_BASE | ((shire & 0x7F) << 23) | (offset & 0x7FFFFF));
 }
 
 // Format 0: local shire shorthand — no cross-shire traffic.
-static inline void * __attribute__((always_inline)) et_shire_l2scp_local(uint64_t offset) {
-    return (void *) (L2SCP_BASE | (L2SCP_SHIRE_LOCAL << 23) | (offset & 0x7FFFFF));
+સ્થિર અંતઃરેખ શૂન્ય * __attribute__((always_inline)) et_shire_l2scp_local(uint64_t offset) {
+    પાછા (શૂન્ય *) (L2SCP_BASE | (L2SCP_SHIRE_LOCAL << 23) | (offset & 0x7FFFFF));
 }
 
 // Format 1: flat offset into a hardware-striped global address space.
 // Consecutive 64-byte cache lines automatically land on different shires,
 // distributing bandwidth across the mesh.  No shire parameter — the
 // hardware derives the target shire from the address bits.
-static inline void * __attribute__((always_inline)) et_global_l2scp(uint64_t offset) {
-    return (void *) (L2SCP_BASE | (1ULL << 30) | (offset & 0x3FFFFFFF));
+સ્થિર અંતઃરેખ શૂન્ય * __attribute__((always_inline)) et_global_l2scp(uint64_t offset) {
+    પાછા (શૂન્ય *) (L2SCP_BASE | (1ULL << 30) | (offset & 0x3FFFFFFF));
 }
 
 //******************************************************************************
@@ -446,7 +446,7 @@ static inline void * __attribute__((always_inline)) et_global_l2scp(uint64_t off
 //
 // NOTE: nlines is encoded in a 4-bit field (max 16). Passing nlines > 16
 // silently truncates. DO NOT pass nlines > 16.
-static inline void __attribute__((always_inline)) l2_prefetch(const void * addr, uint64_t nlines, uint64_t stride) {
+સ્થિર અંતઃરેખ શૂન્ય __attribute__((always_inline)) l2_prefetch(અચલ શૂન્ય * addr, uint64_t nlines, uint64_t stride) {
     uint64_t csr_val = (0x1ULL << 58) | ((uint64_t) addr & 0xFFFFFFFFFFC0ULL) | ((nlines - 1) & 0xF);
 
     __asm__ __volatile__(
@@ -463,7 +463,7 @@ static inline void __attribute__((always_inline)) l2_prefetch(const void * addr,
 //
 // NOTE: nlines is encoded in a 4-bit field (max 16). Passing nlines > 16
 // silently truncates. DO NOT pass nlines > 16.
-static inline void __attribute__((always_inline)) flush_to_l2(const void * addr, uint64_t nlines, uint64_t stride) {
+સ્થિર અંતઃરેખ શૂન્ય __attribute__((always_inline)) flush_to_l2(અચલ શૂન્ય * addr, uint64_t nlines, uint64_t stride) {
     // dest=01 (L2) in bits 59:58, VA in bits 47:6, numlines-1 in bits 3:0
     uint64_t csr_val = (0x1ULL << 58) | ((uint64_t) addr & 0xFFFFFFFFFFC0ULL) | ((nlines - 1) & 0xF);
     uint64_t x31_val = stride & 0xFFFFFFFFFFC0ULL;
@@ -482,7 +482,7 @@ static inline void __attribute__((always_inline)) flush_to_l2(const void * addr,
 // to L2/SCP. Caller must FENCE before and WAIT_CACHEOPS after.
 //
 // NOTE: nlines is encoded in a 4-bit field (max 16). DO NOT pass nlines > 16.
-static inline void __attribute__((always_inline)) evict_to_l2(const void * addr, uint64_t nlines, uint64_t stride) {
+સ્થિર અંતઃરેખ શૂન્ય __attribute__((always_inline)) evict_to_l2(અચલ શૂન્ય * addr, uint64_t nlines, uint64_t stride) {
     // dest=01 (L2) in bits 59:58, VA in bits 47:6, numlines-1 in bits 3:0
     uint64_t csr_val = (0x1ULL << 58) | ((uint64_t) addr & 0xFFFFFFFFFFC0ULL) | ((nlines - 1) & 0xF);
     uint64_t x31_val = stride & 0xFFFFFFFFFFC0ULL;
@@ -503,7 +503,7 @@ static inline void __attribute__((always_inline)) evict_to_l2(const void * addr,
 // Caller must FENCE before and WAIT_CACHEOPS after.
 //
 // NOTE: nlines is encoded in a 4-bit field (max 16). DO NOT pass nlines > 16.
-static inline void __attribute__((always_inline)) evict_past_l2(const void * addr, uint64_t nlines, uint64_t stride) {
+સ્થિર અંતઃરેખ શૂન્ય __attribute__((always_inline)) evict_past_l2(અચલ શૂન્ય * addr, uint64_t nlines, uint64_t stride) {
     // dest=10 in bits 59:58, VA in bits 47:6, numlines-1 in bits 3:0
     uint64_t csr_val = (0x2ULL << 58) | ((uint64_t) addr & 0xFFFFFFFFFFC0ULL) | ((nlines - 1) & 0xF);
     uint64_t x31_val = stride & 0xFFFFFFFFFFC0ULL;
@@ -523,22 +523,22 @@ static inline void __attribute__((always_inline)) evict_past_l2(const void * add
 //
 // Handles regions larger than the 16-line hardware limit by issuing multiple
 // evict_past_l2 calls.
-static void evict_region_past_l2(const void * addr, size_t bytes) {
-    if (!addr || bytes == 0) {
-        return;
+સ્થિર શૂન્ય evict_region_past_l2(અચલ શૂન્ય * addr, size_t bytes) {
+    જો (!addr || bytes == 0) {
+        પાછા;
     }
 
-    const uint64_t CL     = 64;
+    અચલ uint64_t CL     = 64;
     uint64_t       base   = (uint64_t) addr & ~(CL - 1);
     uint64_t       end    = ((uint64_t) addr + bytes + CL - 1) & ~(CL - 1);
     uint64_t       nlines = (end - base) / CL;
     // FENCE;
-    for (uint64_t off = 0; off < nlines; off += 16) {
+    માટે (uint64_t off = 0; off < nlines; off += 16) {
         uint64_t batch = nlines - off;
-        if (batch > 16) {
+        જો (batch > 16) {
             batch = 16;
         }
-        evict_past_l2((const void *) (base + off * CL), batch, CL);
+        evict_past_l2((અચલ શૂન્ય *) (base + off * CL), batch, CL);
     }
 }
 

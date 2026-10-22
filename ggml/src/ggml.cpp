@@ -1,26 +1,26 @@
-#include "ggml-impl.h"
+#અન્તર્ભાવ "ggml-impl.h"
 
-#include <cstdlib>
-#include <exception>
+#અન્તર્ભાવ <cstdlib>
+#અન્તર્ભાવ <exception>
 
-static std::terminate_handler previous_terminate_handler;
+સ્થિર std::terminate_handler previous_terminate_handler;
 
-GGML_NORETURN static void ggml_uncaught_exception() {
+GGML_NORETURN સ્થિર શૂન્ય ggml_uncaught_exception() {
     ggml_print_backtrace();
-    if (previous_terminate_handler) {
+    જો (previous_terminate_handler) {
         previous_terminate_handler();
     }
     abort(); // unreachable unless previous_terminate_handler was nullptr
 }
 
-static bool ggml_uncaught_exception_init = []{
-    const char * GGML_NO_BACKTRACE = getenv("GGML_NO_BACKTRACE");
-    if (GGML_NO_BACKTRACE) {
-        return false;
+સ્થિર તાર્કિક ggml_uncaught_exception_init = []{
+    અચલ અક્ષર * GGML_NO_BACKTRACE = getenv("GGML_NO_BACKTRACE");
+    જો (GGML_NO_BACKTRACE) {
+        પાછા ખોટું;
     }
-    const auto prev{std::get_terminate()};
+    અચલ auto prev{std::get_terminate()};
     GGML_ASSERT(prev != ggml_uncaught_exception);
     previous_terminate_handler = prev;
     std::set_terminate(ggml_uncaught_exception);
-    return true;
+    પાછા સાચું;
 }();

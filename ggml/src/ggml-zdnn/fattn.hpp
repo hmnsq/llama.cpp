@@ -1,10 +1,10 @@
 #ifndef GGML_ZDNN_FATTN_HPP
 #define GGML_ZDNN_FATTN_HPP
 
-#include "common.hpp"
+#અન્તર્ભાવ "common.hpp"
 
-bool ggml_zdnn_supports_flash_attn_ext(const ggml_backend_zdnn_device_context * ctx_dev, const ggml_tensor * op);
+તાર્કિક ggml_zdnn_supports_flash_attn_ext(અચલ ggml_backend_zdnn_device_context * ctx_dev, અચલ ggml_tensor * op);
 
-void ggml_zdnn_flash_attn_ext(ggml_backend_zdnn_context * ctx, ggml_tensor * dst);
+શૂન્ય ggml_zdnn_flash_attn_ext(ggml_backend_zdnn_context * ctx, ggml_tensor * dst);
 
 #endif  // GGML_ZDNN_FATTN_HPP

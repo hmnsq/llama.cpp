@@ -1,6 +1,6 @@
 #pragma once
 
-#include "node_context.h"
+#અન્તર્ભાવ "node_context.h"
 
 namespace ov {
 namespace frontend {
@@ -8,7 +8,7 @@ namespace ggml {
 
 namespace op {
 
-#define GGML_OP_CONVERTER(op) OutputVector op(const NodeContext & context)
+#define GGML_OP_CONVERTER(op) OutputVector op(અચલ ગાંઠ_Context & context)
 
 GGML_OP_CONVERTER(translate_add);
 GGML_OP_CONVERTER(translate_cont);

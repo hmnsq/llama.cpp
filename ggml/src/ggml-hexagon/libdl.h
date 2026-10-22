@@ -7,11 +7,11 @@
 #   endif
 #   include <windows.h>
 #   include <winevt.h>
-#else
+#નહીંતર
 #    include <dlfcn.h>
 #    include <unistd.h>
 #endif
-#include <filesystem>
+#અન્તર્ભાવ <filesystem>
 
 namespace fs = std::filesystem;
 
@@ -19,13 +19,13 @@ namespace fs = std::filesystem;
 
 using dl_handle = std::remove_pointer_t<HMODULE>;
 
-struct dl_handle_deleter {
-    void operator()(HMODULE handle) {
+સંરચના dl_handle_deleter {
+    શૂન્ય operator()(HMODULE handle) {
         FreeLibrary(handle);
     }
 };
 
-static inline dl_handle * dl_load_library(const fs::path & path) {
+સ્થિર અંતઃરેખ dl_handle * dl_load_library(અચલ fs::path & path) {
     // suppress error dialogs for missing DLLs
     DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
     SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
@@ -34,46 +34,46 @@ static inline dl_handle * dl_load_library(const fs::path & path) {
 
     SetErrorMode(old_mode);
 
-    return handle;
+    પાછા handle;
 }
 
-static inline void * dl_get_sym(dl_handle * handle, const char * name) {
+સ્થિર અંતઃરેખ શૂન્ય * dl_get_sym(dl_handle * handle, અચલ અક્ષર * name) {
     DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
     SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
 
-    void * p = (void *) GetProcAddress(handle, name);
+    શૂન્ય * p = (શૂન્ય *) GetProcAddress(handle, name);
 
     SetErrorMode(old_mode);
 
-    return p;
+    પાછા p;
 }
 
-static inline const char * dl_error() {
-    return "";
+સ્થિર અંતઃરેખ અચલ અક્ષર * dl_error() {
+    પાછા "";
 }
 
-#else
+#નહીંતર
 
-using dl_handle = void;
+using dl_handle = શૂન્ય;
 
-struct dl_handle_deleter {
-    void operator()(void * handle) {
+સંરચના dl_handle_deleter {
+    શૂન્ય operator()(શૂન્ય * handle) {
         dlclose(handle);
     }
 };
 
-static inline dl_handle * dl_load_library(const fs::path & path) {
+સ્થિર અંતઃરેખ dl_handle * dl_load_library(અચલ fs::path & path) {
     dl_handle * handle = dlopen(path.string().c_str(), RTLD_NOW | RTLD_LOCAL);
-    return handle;
+    પાછા handle;
 }
 
-static inline void * dl_get_sym(dl_handle * handle, const char * name) {
-    return dlsym(handle, name);
+સ્થિર અંતઃરેખ શૂન્ય * dl_get_sym(dl_handle * handle, અચલ અક્ષર * name) {
+    પાછા dlsym(handle, name);
 }
 
-static inline const char * dl_error() {
-    const char *rslt = dlerror();
-    return rslt != nullptr ? rslt : "";
+સ્થિર અંતઃરેખ અચલ અક્ષર * dl_error() {
+    અચલ અક્ષર *rslt = dlerror();
+    પાછા rslt != nullptr ? rslt : "";
 }
 
 #endif

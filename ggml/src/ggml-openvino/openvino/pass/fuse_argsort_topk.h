@@ -1,16 +1,16 @@
 #pragma once
 
-#include <openvino/pass/matcher_pass.hpp>
+#અન્તર્ભાવ <openvino/pass/matcher_pass.hpp>
 
 namespace ov {
 namespace frontend {
 namespace ggml {
 namespace pass {
 
-class FuseArgsortTopK : public ov::pass::MatcherPass {
-public:
+class Fuse_Argsort_ટોચ_K : જાહેર ov::pass::MatcherPass {
+જાહેર:
     OPENVINO_MATCHER_PASS_RTTI("ov::frontend::ggml::pass::FuseArgsortTopK")
-    FuseArgsortTopK();
+    Fuse_Argsort_ટોચ_K();
 };
 
 }  // namespace pass

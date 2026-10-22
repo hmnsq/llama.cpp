@@ -17,26 +17,26 @@ The script will:
 4. Show a summary of what was generated
 """
 
-import yaml
-from typing import Dict, List, Any
-from pathlib import Path
-import os
-import subprocess
-import shutil
-import logging
+આયાત yaml
+તઃ typing આયાત Dict, List, Any
+તઃ pathlib આયાત Path
+આયાત os
+આયાત subprocess
+આયાત shutil
+આયાત logging
 
 NL = '\n' # can't have f"{'\n'}" in f-strings
 
 
-class RemotingCodebaseGenerator:
+વર્ગ RemotingCodebaseGenerator:
     def __init__(self, yaml_path: str = "ggmlremoting_functions.yaml"):
         """Initialize the generator with the YAML configuration."""
         self.yaml_path = yaml_path
 
-        if not Path(yaml_path).exists():
-            raise FileNotFoundError(f"Configuration file {yaml_path} not found")
+        જો નહીં Path(yaml_path).exists():
+            ઉઠાવો FileNotFoundError(f"Configuration file {yaml_path} not found")
 
-        with open(yaml_path, 'r') as f:
+        with open(yaml_path, 'r') ઇવ f:
             self.config = yaml.safe_load(f)
 
         self.functions = self.config['functions']
@@ -48,163 +48,163 @@ class RemotingCodebaseGenerator:
 
     def _check_clang_format_available(self) -> bool:
         """Check if clang-format is available in the system PATH."""
-        return shutil.which("clang-format") is not None
+        પાછા shutil.which("clang-format") is નહીં None
 
     def _format_file_with_clang_format(self, file_path: Path) -> bool:
         """Format a file with clang-format -i. Returns True if successful, False otherwise."""
-        if not self.clang_format_available:
-            return False
+        જો નહીં self.clang_format_available:
+            પાછા ખોટું
 
-        try:
+        પ્રયાસ:
             subprocess.run(
                 ["clang-format", "-i", str(file_path)],
-                check=True,
-                capture_output=True,
-                text=True
+                check=સાચું,
+                capture_output=સાચું,
+                text=સાચું
             )
-            return True
-        except subprocess.CalledProcessError:
+            પાછા સાચું
+        અપવાદ subprocess.CalledProcessError:
             logging.exception(f"   ⚠️  clang-format failed for {file_path}")
-            return False
-        except Exception as e:
+            પાછા ખોટું
+        અપવાદ Exception ઇવ e:
             logging.exception(f"   ⚠️  Unexpected error formatting {file_path}: {e}")
-            return False
+            પાછા ખોટું
 
     def generate_enum_name(self, group_name: str, function_name: str) -> str:
         """Generate the APIR_COMMAND_TYPE enum name for a function."""
         prefix = self.naming_patterns['enum_prefix']
-        return f"{prefix}{group_name.upper()}_{function_name.upper()}"
+        પાછા f"{prefix}{group_name.upper()}_{function_name.upper()}"
 
     def generate_backend_function_name(self, group_name: str, function_name: str) -> str:
         """Generate the backend function name."""
-        function_key = f"{group_name}_{function_name}"
+        function_ચાવી = f"{group_name}_{function_name}"
         overrides = self.naming_patterns.get('backend_function_overrides', {})
 
-        if function_key in overrides:
-            return overrides[function_key]
+        જો function_ચાવી માં overrides:
+            પાછા overrides[function_ચાવી]
 
         prefix = self.naming_patterns['backend_function_prefix']
-        return f"{prefix}{group_name}_{function_name}"
+        પાછા f"{prefix}{group_name}_{function_name}"
 
     def generate_frontend_function_name(self, group_name: str, function_name: str) -> str:
         """Generate the frontend function name."""
         prefix = self.naming_patterns['frontend_function_prefix']
-        return f"{prefix}{group_name}_{function_name}"
+        પાછા f"{prefix}{group_name}_{function_name}"
 
     def get_enabled_functions(self) -> List[Dict[str, Any]]:
         """Get all enabled functions with their metadata."""
         functions = []
-        enum_value = 0
+        enum_કિંમત = 0
 
-        for group_name, group_data in self.functions.items():
+        માટે group_name, group_data માં self.functions.વસ્તુઓ():
             group_description = group_data['group_description']
 
-            for function_name, func_metadata in group_data['functions'].items():
+            માટે function_name, func_metadata માં group_data['functions'].વસ્તુઓ():
                 # Handle case where func_metadata is None or empty (functions with only comments)
-                if func_metadata is None:
+                જો func_metadata is None:
                     func_metadata = {}
 
                 # Functions are enabled by default unless explicitly disabled
-                if func_metadata.get('enabled', True):
+                જો func_metadata.get('enabled', સાચું):
                     functions.append({
                         'group_name': group_name,
                         'function_name': function_name,
                         'enum_name': self.generate_enum_name(group_name, function_name),
-                        'enum_value': enum_value,
+                        'enum_value': enum_કિંમત,
                         'backend_function': self.generate_backend_function_name(group_name, function_name),
                         'frontend_function': self.generate_frontend_function_name(group_name, function_name),
                         'frontend_return': func_metadata.get('frontend_return', 'void'),
                         'frontend_extra_params': func_metadata.get('frontend_extra_params', []),
                         'group_description': group_description,
-                        'deprecated': func_metadata.get('deprecated', False),
+                        'deprecated': func_metadata.get('deprecated', ખોટું),
                     })
-                    enum_value += 1
+                    enum_કિંમત += 1
 
-        return functions
+        પાછા functions
 
     def generate_apir_backend_header(self) -> str:
         """Generate the complete apir_backend.h file."""
         functions = self.get_enabled_functions()
 
         # Generate the enum section
-        enum_lines = ["typedef enum ApirBackendCommandType {"]
+        enum_લીટીઓ = ["typedef enum ApirBackendCommandType {"]
         current_group = None
 
-        for func in functions:
+        માટે func માં functions:
             # Add comment for new group
-            if func['group_name'] != current_group:
-                enum_lines.append("")
-                enum_lines.append(f"  /* {func['group_description']} */")
+            જો func['group_name'] != current_group:
+                enum_લીટીઓ.append("")
+                enum_લીટીઓ.append(f"  /* {func['group_description']} */")
                 current_group = func['group_name']
 
-            enum_lines.append(f"  {func['enum_name']} = {func['enum_value']},")
+            enum_લીટીઓ.append(f"  {func['enum_name']} = {func['enum_value']},")
 
         # Add the count
-        total_count = len(functions)
-        enum_lines.append("\n  // last command_type index + 1")
-        enum_lines.append(f"  APIR_BACKEND_DISPATCH_TABLE_COUNT = {total_count},")
-        enum_lines.append("} ApirBackendCommandType;")
+        total_ગણતરી = len(functions)
+        enum_લીટીઓ.append("\n  // last command_type index + 1")
+        enum_લીટીઓ.append(f"  APIR_BACKEND_DISPATCH_TABLE_COUNT = {total_count},")
+        enum_લીટીઓ.append("} ApirBackendCommandType;")
 
         # Generate function name mapping
-        func_lines = []
-        func_lines.append("static inline const char * apir_dispatch_command_name(ApirBackendCommandType type) {")
-        func_lines.append("    switch (type) {")
+        func_લીટીઓ = []
+        func_લીટીઓ.append("static inline const char * apir_dispatch_command_name(ApirBackendCommandType type) {")
+        func_લીટીઓ.append("    switch (type) {")
 
         current_group = None
-        for func in functions:
+        માટે func માં functions:
             # Add comment for new group
-            if func['group_name'] != current_group:
-                func_lines.append(f"        /* {func['group_description']} */")
+            જો func['group_name'] != current_group:
+                func_લીટીઓ.append(f"        /* {func['group_description']} */")
                 current_group = func['group_name']
 
             # Generate clean function name without backend_ prefix
             clean_name = f"{func['group_name']}_{func['function_name']}"
-            func_lines.append(f"        case {func['enum_name']}:")
-            func_lines.append(f"            return \"{clean_name}\";")
+            func_લીટીઓ.append(f"        case {func['enum_name']}:")
+            func_લીટીઓ.append(f"            return \"{clean_name}\";")
 
-        func_lines.append("")
-        func_lines.append("        default:")
-        func_lines.append("            return \"unknown\";")
-        func_lines.append("    }")
-        func_lines.append("}")
+        func_લીટીઓ.append("")
+        func_લીટીઓ.append("        default:")
+        func_લીટીઓ.append("            return \"unknown\";")
+        func_લીટીઓ.append("    }")
+        func_લીટીઓ.append("}")
 
         # Full header template
-        header_content = NL.join(enum_lines) + "\n\n" + NL.join(func_lines) + "\n"
+        header_content = NL.join(enum_લીટીઓ) + "\n\n" + NL.join(func_લીટીઓ) + "\n"
 
-        return header_content
+        પાછા header_content
 
     def generate_backend_dispatched_header(self) -> str:
         """Generate the complete backend-dispatched.h file."""
         functions = self.get_enabled_functions()
 
         # Function declarations
-        decl_lines = []
+        decl_લીટીઓ = []
         current_group = None
 
-        for func in functions:
-            if func['group_name'] != current_group:
-                decl_lines.append(f"\n/* {func['group_description']} */")
+        માટે func માં functions:
+            જો func['group_name'] != current_group:
+                decl_લીટીઓ.append(f"\n/* {func['group_description']} */")
                 current_group = func['group_name']
 
             signature = "uint32_t"
             params = "apir_encoder *enc, apir_decoder *dec, virgl_apir_context *ctx"
-            if func['deprecated']:
-                decl_lines.append(f"/* {func['enum_name']} is deprecated. Keeping the handler for backward compatibility. */")
+            જો func['deprecated']:
+                decl_લીટીઓ.append(f"/* {func['enum_name']} is deprecated. Keeping the handler for backward compatibility. */")
 
-            decl_lines.append(f"{signature} {func['backend_function']}({params});")
+            decl_લીટીઓ.append(f"{signature} {func['backend_function']}({params});")
 
         # Dispatch table
-        table_lines = []
+        table_લીટીઓ = []
         current_group = None
 
-        for func in functions:
-            if func['group_name'] != current_group:
-                table_lines.append(f"\n  /* {func['group_description']} */")
-                table_lines.append("")
+        માટે func માં functions:
+            જો func['group_name'] != current_group:
+                table_લીટીઓ.append(f"\n  /* {func['group_description']} */")
+                table_લીટીઓ.append("")
                 current_group = func['group_name']
 
-            deprecated = " /* DEPRECATED */" if func['deprecated'] else ""
-            table_lines.append(f"  /* {func['enum_name']}  = */ {func['backend_function']}{deprecated},")
+            deprecated = " /* DEPRECATED */" જો func['deprecated'] નહીંતર ""
+            table_લીટીઓ.append(f"  /* {func['enum_name']}  = */ {func['backend_function']}{deprecated},")
 
         header_content = f'''\
 #pragma once
@@ -217,37 +217,37 @@ static const backend_dispatch_t apir_backend_dispatch_table[APIR_BACKEND_DISPATC
 }};
 }}
 '''
-        return header_content
+        પાછા header_content
 
     def generate_virtgpu_forward_header(self) -> str:
         """Generate the complete virtgpu-forward.gen.h file."""
         functions = self.get_enabled_functions()
 
-        decl_lines = []
+        decl_લીટીઓ = []
         current_group = None
 
-        for func in functions:
-            if func['group_name'] != current_group:
-                decl_lines.append("")
-                decl_lines.append(f"/* {func['group_description']} */")
+        માટે func માં functions:
+            જો func['group_name'] != current_group:
+                decl_લીટીઓ.append("")
+                decl_લીટીઓ.append(f"/* {func['group_description']} */")
                 current_group = func['group_name']
 
-            if func['deprecated']:
-                decl_lines.append(f"/* {func['frontend_function']} is deprecated. */")
-                continue
+            જો func['deprecated']:
+                decl_લીટીઓ.append(f"/* {func['frontend_function']} is deprecated. */")
+                ચાલુ
 
             # Build parameter list
             params = [self.naming_patterns['frontend_base_param']]
             params.extend(func['frontend_extra_params'])
             param_str = ', '.join(params)
 
-            decl_lines.append(f"{func['frontend_return']} {func['frontend_function']}({param_str});")
+            decl_લીટીઓ.append(f"{func['frontend_return']} {func['frontend_function']}({param_str});")
 
         header_content = f'''\
 #pragma once
 {NL.join(decl_lines)}
 '''
-        return header_content
+        પાછા header_content
 
     def regenerate_codebase(self) -> None:
         """Regenerate the entire remoting codebase."""
@@ -258,11 +258,11 @@ static const backend_dispatch_t apir_backend_dispatch_table[APIR_BACKEND_DISPATC
         current_dir = os.getcwd()
         is_frontend_dir = current_dir.endswith('ggml-virtgpu')
 
-        if is_frontend_dir:
+        જો is_frontend_dir:
             # Running from ggml/src/ggml-virtgpu-apir
             logging.info("📍 Detected frontend directory execution")
             frontend_base = Path(".")
-        else:
+        નહીંતર:
             # Running from project root (fallback to original behavior)
             logging.info("📍 Detected project root execution")
             base_path = self.config_data.get('base_path', 'ggml/src')
@@ -275,9 +275,9 @@ static const backend_dispatch_t apir_backend_dispatch_table[APIR_BACKEND_DISPATC
         virtgpu_forward_path = frontend_base / "virtgpu-forward.gen.h"
 
         # Create output directories for each file
-        apir_backend_path.parent.mkdir(parents=True, exist_ok=True)
-        backend_dispatched_path.parent.mkdir(parents=True, exist_ok=True)
-        virtgpu_forward_path.parent.mkdir(parents=True, exist_ok=True)
+        apir_backend_path.parent.mkdir(parents=સાચું, exist_ok=સાચું)
+        backend_dispatched_path.parent.mkdir(parents=સાચું, exist_ok=સાચું)
+        virtgpu_forward_path.parent.mkdir(parents=સાચું, exist_ok=સાચું)
 
         # Generate header files
         logging.info("📁 Generating header files...")
@@ -297,15 +297,15 @@ static const backend_dispatch_t apir_backend_dispatch_table[APIR_BACKEND_DISPATC
         # Format generated files with clang-format
         generated_files = [apir_backend_path, backend_dispatched_path, virtgpu_forward_path]
 
-        if not self.clang_format_available:
+        જો નહીં self.clang_format_available:
             logging.warning("\n⚠️clang-format not found in PATH. Generated files will not be formatted.\n"
                             "   Install clang-format to enable automatic code formatting.")
-        else:
+        નહીંતર:
             logging.info("\n🎨 Formatting files with clang-format...")
-            for file_path in generated_files:
-                if self._format_file_with_clang_format(file_path):
+            માટે file_path માં generated_files:
+                જો self._format_file_with_clang_format(file_path):
                     logging.info(f"   ✅ Formatted {file_path.name}")
-                else:
+                નહીંતર:
                     logging.warning(f"   ❌ Failed to format {file_path.name}")
 
         # Generate summary
@@ -320,14 +320,14 @@ static const backend_dispatch_t apir_backend_dispatch_table[APIR_BACKEND_DISPATC
         logging.info(f"   Working directory: {current_dir}")
 
 
-def main():
-    try:
+def મુખ્ય():
+    પ્રયાસ:
         generator = RemotingCodebaseGenerator()
         generator.regenerate_codebase()
-    except Exception as e:
+    અપવાદ Exception ઇવ e:
         logging.exception(f"❌ Error: {e}")
         exit(1)
 
 
-if __name__ == "__main__":
-    main()
+જો __name__ == "__main__":
+    મુખ્ય()

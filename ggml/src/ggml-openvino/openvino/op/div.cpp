@@ -1,135 +1,135 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
-#include "ggml.h"
+#અન્તર્ભાવ "../node_context.h"
+#અન્તર્ભાવ "../op_table.h"
+#અન્તર્ભાવ "../utils.h"
+#અન્તર્ભાવ "ggml.h"
 
-#include <memory>
-#include <openvino/core/type.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/divide.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/shape_of.hpp>
-#include <openvino/op/sigmoid.hpp>
-#include <openvino/op/swish.hpp>
-#include <openvino/op/tile.hpp>
-#include <openvino/op/util/precision_sensitive_attribute.hpp>
-#include <vector>
+#અન્તર્ભાવ <memory>
+#અન્તર્ભાવ <openvino/core/type.hpp>
+#અન્તર્ભાવ <openvino/op/constant.hpp>
+#અન્તર્ભાવ <openvino/op/convert.hpp>
+#અન્તર્ભાવ <openvino/op/divide.hpp>
+#અન્તર્ભાવ <openvino/op/multiply.hpp>
+#અન્તર્ભાવ <openvino/op/shape_of.hpp>
+#અન્તર્ભાવ <openvino/op/sigmoid.hpp>
+#અન્તર્ભાવ <openvino/op/swish.hpp>
+#અન્તર્ભાવ <openvino/op/tile.hpp>
+#અન્તર્ભાવ <openvino/op/util/precision_sensitive_attribute.hpp>
+#અન્તર્ભાવ <vector>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+નામાકાશ ov {
+નામાકાશ frontend {
+નામાકાશ ggml {
+નામાકાશ op {
 
-namespace {
+નામાકાશ {
 
-bool is_silu_div_pattern(const ov::Output<ov::Node> & numerator,
-                         const ov::Output<ov::Node> & denominator,
-                         const NodeContext & context) {
-    if (context.get_input_size() != 2) {
-        return false;
+તાર્કિક is_silu_div_pattern(અચલ ov::Output<ov::Node> & numerator,
+                         અચલ ov::Output<ov::Node> & denominator,
+                         અચલ ગાંઠ_Context & context) {
+    જો (context.get_આગત_size() != 2) {
+        પાછા ખોટું;
     }
 
-    const auto * unary_op = reinterpret_cast<const ggml_unary_op *>(context.get_input_op_params(0));
-    if (unary_op == nullptr || *unary_op != GGML_UNARY_OP_SILU) {
-        return false;
+    અચલ auto * unary_op = reinterpret_cast<અચલ ggml_unary_op *>(context.get_આગત_op_params(0));
+    જો (unary_op == nullptr || *unary_op != GGML_UNARY_OP_SILU) {
+        પાછા ખોટું;
     }
 
-    const auto denom_node = denominator.get_node_shared_ptr();
+    અચલ auto denom_ગાંઠ = denominator.get_ગાંઠ_shared_ptr();
 
-    if (auto swish = ov::as_type_ptr<ov::op::v4::Swish>(numerator.get_node_shared_ptr())) {
-        return swish->input_value(0).get_node_shared_ptr() == denom_node;
+    જો (auto swish = ov::as_type_ptr<ov::op::v4::Swish>(numerator.get_ગાંઠ_shared_ptr())) {
+        પાછા swish->આગત_કિંમત(0).get_ગાંઠ_shared_ptr() == denom_ગાંઠ;
     }
-    return false;
+    પાછા ખોટું;
 }
 
-ov::Output<ov::Node> repeat_input_to_match(const NodeContext & context,
-                                           const ov::Output<ov::Node> & input,
-                                           const ov::Output<ov::Node> & target,
-                                           size_t input_index) {
-    const auto input_shape = context.get_input_shape(input_index);
-    const auto target_shape = context.get_input_shape(0);
+ov::Output<ov::Node> repeat_આગત_to_match(અચલ ગાંઠ_Context & context,
+                                           અચલ ov::Output<ov::Node> & આગત,
+                                           અચલ ov::Output<ov::Node> & target,
+                                           size_t આગત_index) {
+    અચલ auto આગત_shape = context.get_આગત_shape(આગત_index);
+    અચલ auto target_shape = context.get_આગત_shape(0);
 
-    if (input_shape == target_shape) {
-        return input;
+    જો (આગત_shape == target_shape) {
+        પાછા આગત;
     }
 
-    if (input_shape.rank().is_static() && target_shape.rank().is_static()) {
-        const auto rank = static_cast<size_t>(input_shape.rank().get_length());
+    જો (આગત_shape.rank().is_static() && target_shape.rank().is_static()) {
+        અચલ auto rank = static_cast<size_t>(આગત_shape.rank().get_length());
         std::vector<int64_t> repeats(rank, 1);
-        bool needs_repeat = false;
+        તાર્કિક needs_repeat = ખોટું;
 
-        for (size_t axis = 0; axis < rank; ++axis) {
-            FRONT_END_OP_CONVERSION_CHECK(input_shape[axis].is_static() && target_shape[axis].is_static(),
+        માટે (size_t axis = 0; axis < rank; ++axis) {
+            FRONT_END_OP_CONVERSION_CHECK(આગત_shape[axis].is_static() && target_shape[axis].is_static(),
                                           "DIV repeat requires static dimensions on both inputs");
 
-            const int64_t input_dim = input_shape[axis].get_length();
-            const int64_t target_dim = target_shape[axis].get_length();
+            અચલ int64_t આગત_dim = આગત_shape[axis].get_length();
+            અચલ int64_t target_dim = target_shape[axis].get_length();
 
-            FRONT_END_OP_CONVERSION_CHECK(input_dim > 0 && target_dim > 0 && target_dim % input_dim == 0,
-                                          "DIV input shape ", input_shape, " cannot repeat to match ", target_shape);
+            FRONT_END_OP_CONVERSION_CHECK(આગત_dim > 0 && target_dim > 0 && target_dim % આગત_dim == 0,
+                                          "DIV input shape ", આગત_shape, " cannot repeat to match ", target_shape);
 
-            repeats[axis] = target_dim / input_dim;
+            repeats[axis] = target_dim / આગત_dim;
             needs_repeat = needs_repeat || repeats[axis] != 1;
         }
 
-        if (!needs_repeat) {
-            return input;
+        જો (!needs_repeat) {
+            પાછા આગત;
         }
 
-        auto repeats_node = ov::op::v0::Constant::create(ov::element::i64, {repeats.size()}, repeats);
-        return std::make_shared<ov::op::v0::Tile>(input, repeats_node);
+        auto repeats_ગાંઠ = ov::op::v0::Constant::create(ov::element::i64, {repeats.size()}, repeats);
+        પાછા std::make_shared<ov::op::v0::Tile>(આગત, repeats_ગાંઠ);
     }
 
-    auto input_shape_node = std::make_shared<ov::op::v3::ShapeOf>(input, ov::element::i64);
-    auto target_shape_node = std::make_shared<ov::op::v3::ShapeOf>(target, ov::element::i64);
-    auto repeats_node = std::make_shared<ov::op::v1::Divide>(target_shape_node, input_shape_node);
-    return std::make_shared<ov::op::v0::Tile>(input, repeats_node);
+    auto આગત_shape_ગાંઠ = std::make_shared<ov::op::v3::ShapeOf>(આગત, ov::element::i64);
+    auto target_shape_ગાંઠ = std::make_shared<ov::op::v3::ShapeOf>(target, ov::element::i64);
+    auto repeats_ગાંઠ = std::make_shared<ov::op::v1::Divide>(target_shape_ગાંઠ, આગત_shape_ગાંઠ);
+    પાછા std::make_shared<ov::op::v0::Tile>(આગત, repeats_ગાંઠ);
 }
 
 }  // namespace
 
-OutputVector translate_div(const NodeContext & context) {
-    num_inputs_check(context, 2, 2);
+OutputVector translate_div(અચલ ગાંઠ_Context & context) {
+    અંક_inputs_check(context, 2, 2);
 
-    auto input_0 = process_view_input_new(context, 0);
-    auto input_1 = process_view_input_new(context, 1);
+    auto આગત_0 = process_view_આગત_new(context, 0);
+    auto આગત_1 = process_view_આગત_new(context, 1);
 
-    if (is_silu_div_pattern(input_0, input_1, context)) {
-        ov::Output<ov::Node> res = std::make_shared<ov::op::v0::Sigmoid>(input_1);
-        if (res.get_element_type() != context.get_output_type()) {
+    જો (is_silu_div_pattern(આગત_0, આગત_1, context)) {
+        ov::Output<ov::Node> res = std::make_shared<ov::op::v0::Sigmoid>(આગત_1);
+        જો (res.get_element_type() != context.get_output_type()) {
             res = std::make_shared<ov::op::v0::Convert>(res, context.get_output_type());
         }
-        return rename_outputs_with_suffix({res}, context.get_name());
+        પાછા rename_outputs_with_suffix({res}, context.get_name());
     }
 
-    input_1 = repeat_input_to_match(context, input_1, input_0, 1);
+    આગત_1 = repeat_આગત_to_match(context, આગત_1, આગત_0, 1);
 
-    const auto output_type = context.get_output_type();
-    const bool use_f32_compute = input_0.get_element_type() != ov::element::f32 ||
-                                 input_1.get_element_type() != ov::element::f32 || output_type != ov::element::f32;
+    અચલ auto output_type = context.get_output_type();
+    અચલ તાર્કિક use_f32_compute = આગત_0.get_element_type() != ov::element::f32 ||
+                                 આગત_1.get_element_type() != ov::element::f32 || output_type != ov::element::f32;
 
-    if (use_f32_compute) {
-        input_0 = std::make_shared<ov::op::v0::Convert>(input_0, ov::element::f32);
-        input_1 = std::make_shared<ov::op::v0::Convert>(input_1, ov::element::f32);
+    જો (use_f32_compute) {
+        આગત_0 = std::make_shared<ov::op::v0::Convert>(આગત_0, ov::element::f32);
+        આગત_1 = std::make_shared<ov::op::v0::Convert>(આગત_1, ov::element::f32);
     }
 
-    ov::Output<ov::Node> res = std::make_shared<ov::op::v1::Divide>(input_0, input_1);
-    if (use_f32_compute) {
+    ov::Output<ov::Node> res = std::make_shared<ov::op::v1::Divide>(આગત_0, આગત_1);
+    જો (use_f32_compute) {
         // Keep the reciprocal/divide path in FP32. Without this hint, the GPU
         // plugin can still compress the subgraph back to FP16 and overflow on
         // small shexp gate values (e.g. silu(x) / x in qwen2moe).
-        ov::mark_as_precision_sensitive(res.get_node_shared_ptr()->input(0));
-        ov::mark_as_precision_sensitive(res.get_node_shared_ptr()->input(1));
+        ov::mark_as_precision_sensitive(res.get_ગાંઠ_shared_ptr()->આગત(0));
+        ov::mark_as_precision_sensitive(res.get_ગાંઠ_shared_ptr()->આગત(1));
     }
-    if (res.get_element_type() != output_type) {
+    જો (res.get_element_type() != output_type) {
         auto output_convert = std::make_shared<ov::op::v0::Convert>(res, output_type);
-        if (use_f32_compute) {
-            ov::mark_as_precision_sensitive(output_convert->input(0));
+        જો (use_f32_compute) {
+            ov::mark_as_precision_sensitive(output_convert->આગત(0));
         }
         res = output_convert;
     }
-    return rename_outputs_with_suffix({res}, context.get_name());
+    પાછા rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

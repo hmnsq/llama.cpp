@@ -1,20 +1,20 @@
 #ifndef GGML_SYCL_FUSED_GEMM_HPP
 #define GGML_SYCL_FUSED_GEMM_HPP
 
-#include "common.hpp"
+#અન્તર્ભાવ "common.hpp"
 
 
 // Shape and type gates for the kernels below. Device capability is separate: it needs a queue to ask.
-static constexpr int GGML_SYCL_FG_MAX_N = 64; // widest N taken; each shape covers it in BN-wide tiles
+સ્થિર constexpr પૂર્ણાંક GGML_SYCL_FG_MAX_N = 64; // widest N taken; each shape covers it in BN-wide tiles
 
 // weight formats the fused A stage decodes; K must cover whole stored blocks
-constexpr bool ggml_sycl_fused_dequant_gemm_type_ok(ggml_type src0_type, int64_t K) {
+constexpr તાર્કિક ggml_sycl_fused_dequant_gemm_type_ok(ggml_type src0_type, int64_t K) {
     // iq4_nl and q8_0 store 32 values per block; every other format here is a 256-value superblock
     // that the A stage walks in steps of 32, so K must cover whole superblocks.
-    if (src0_type == GGML_TYPE_IQ4_NL || src0_type == GGML_TYPE_Q8_0) {
-        return K % 32 == 0;
+    જો (src0_type == GGML_TYPE_IQ4_NL || src0_type == GGML_TYPE_Q8_0) {
+        પાછા K % 32 == 0;
     }
-    const bool superblock =
+    અચલ તાર્કિક superblock =
            src0_type == GGML_TYPE_Q4_K ||
            src0_type == GGML_TYPE_Q5_K ||
            src0_type == GGML_TYPE_Q6_K ||
@@ -26,41 +26,41 @@ constexpr bool ggml_sycl_fused_dequant_gemm_type_ok(ggml_type src0_type, int64_t
            src0_type == GGML_TYPE_IQ2_S ||
            src0_type == GGML_TYPE_IQ1_S ||
            src0_type == GGML_TYPE_IQ1_M;
-    return superblock && QK_K == 256 && K % QK_K == 0;
+    પાછા superblock && QK_K == 256 && K % QK_K == 0;
 }
 
-constexpr bool ggml_sycl_fused_dequant_gemm_shape_ok(ggml_type src0_type, int64_t M, int64_t N, int64_t K,
+constexpr તાર્કિક ggml_sycl_fused_dequant_gemm_shape_ok(ggml_type src0_type, int64_t M, int64_t N, int64_t K,
                                                      int64_t ldd) {
-    return ggml_sycl_fused_dequant_gemm_type_ok(src0_type, K) && M > 0 && N > 0 && K > 0 &&
+    પાછા ggml_sycl_fused_dequant_gemm_type_ok(src0_type, K) && M > 0 && N > 0 && K > 0 &&
            N <= GGML_SYCL_FG_MAX_N &&
            M <= INT32_MAX && N <= INT32_MAX && K <= INT32_MAX && ldd <= INT32_MAX;
 }
 
 // grouped variant: the per-expert fused kernel is only worth it while each expert is narrow,
 // so wider average slices are left to the per-expert library GEMM loop
-constexpr bool ggml_sycl_grouped_dequant_gemm_shape_ok(ggml_type src0_type, int64_t M, int64_t K,
+constexpr તાર્કિક ggml_sycl_grouped_dequant_gemm_shape_ok(ggml_type src0_type, int64_t M, int64_t K,
                                                        int64_t total_rows, int64_t n_active) {
-    return ggml_sycl_fused_dequant_gemm_shape_ok(src0_type, M, 1, K, M) && total_rows > 0 &&
+    પાછા ggml_sycl_fused_dequant_gemm_shape_ok(src0_type, M, 1, K, M) && total_rows > 0 &&
            total_rows <= INT32_MAX && total_rows <= n_active * GGML_SYCL_FG_MAX_N;
 }
 
 // Runtime type gate, kept out of the constexpr predicates above so those stay pure.
-inline bool ggml_sycl_xmx_gather_type_enabled(ggml_type src0_type) {
-    switch (src0_type) {
-        case GGML_TYPE_IQ4_NL:  return (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ4_NL  ) != 0;
-        case GGML_TYPE_IQ3_S:   return (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ3_S   ) != 0;
-        case GGML_TYPE_IQ4_XS:  return (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ4_XS  ) != 0;
-        case GGML_TYPE_IQ3_XXS: return (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ3_XXS ) != 0;
-        case GGML_TYPE_IQ2_XXS: return (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ2_XXS ) != 0;
-        case GGML_TYPE_IQ2_XS:  return (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ2_XS  ) != 0;
-        case GGML_TYPE_IQ2_S:   return (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ2_S   ) != 0;
-        case GGML_TYPE_IQ1_S:   return (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ1_S   ) != 0;
-        case GGML_TYPE_IQ1_M:   return (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ1_M   ) != 0;
-        case GGML_TYPE_Q8_0:    return (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_Q8_0    ) != 0;
-        case GGML_TYPE_Q4_K:    return (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_Q4_K    ) != 0;
-        case GGML_TYPE_Q5_K:    return (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_Q5_K    ) != 0;
-        case GGML_TYPE_Q6_K:    return (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_Q6_K    ) != 0;
-        default:          return false;
+અંતઃરેખ તાર્કિક ggml_sycl_xmx_gather_type_enabled(ggml_type src0_type) {
+    પસંદગી (src0_type) {
+        સ્થિતિ GGML_TYPE_IQ4_NL:  પાછા (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ4_NL  ) != 0;
+        સ્થિતિ GGML_TYPE_IQ3_S:   પાછા (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ3_S   ) != 0;
+        સ્થિતિ GGML_TYPE_IQ4_XS:  પાછા (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ4_XS  ) != 0;
+        સ્થિતિ GGML_TYPE_IQ3_XXS: પાછા (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ3_XXS ) != 0;
+        સ્થિતિ GGML_TYPE_IQ2_XXS: પાછા (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ2_XXS ) != 0;
+        સ્થિતિ GGML_TYPE_IQ2_XS:  પાછા (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ2_XS  ) != 0;
+        સ્થિતિ GGML_TYPE_IQ2_S:   પાછા (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ2_S   ) != 0;
+        સ્થિતિ GGML_TYPE_IQ1_S:   પાછા (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ1_S   ) != 0;
+        સ્થિતિ GGML_TYPE_IQ1_M:   પાછા (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_IQ1_M   ) != 0;
+        સ્થિતિ GGML_TYPE_Q8_0:    પાછા (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_Q8_0    ) != 0;
+        સ્થિતિ GGML_TYPE_Q4_K:    પાછા (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_Q4_K    ) != 0;
+        સ્થિતિ GGML_TYPE_Q5_K:    પાછા (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_Q5_K    ) != 0;
+        સ્થિતિ GGML_TYPE_Q6_K:    પાછા (g_ggml_sycl_xmx_gather_types & GGML_SYCL_XMX_GATHER_Q6_K    ) != 0;
+        મૂળભૂત:          પાછા ખોટું;
     }
 }
 
@@ -69,8 +69,8 @@ inline bool ggml_sycl_xmx_gather_type_enabled(ggml_type src0_type) {
 // (op_params[3], [TAG_GGML_PREC]); the accumulator is f32, which meets any request.
 // q8_0 and the k-quants are not handled here, only in the grouped path below.
 // Returns false when the case is not handled (type, device, precision, or shape).
-bool ggml_sycl_fused_dequant_gemm(ggml_type src0_type, bool src0_reordered, const void * src0, const void * src1, ggml_type src1_type,
-                                  int32_t src1_prec, float * dst, int64_t M, int64_t N, int64_t K, int64_t ldd,
+તાર્કિક ggml_sycl_fused_dequant_gemm(ggml_type src0_type, તાર્કિક src0_reordered, અચલ શૂન્ય * src0, અચલ શૂન્ય * src1, ggml_type src1_type,
+                                  int32_t src1_prec, દશાંશ * dst, int64_t M, int64_t N, int64_t K, int64_t ldd,
                                   ggml_sycl_pool & pool, dpct::queue_ptr stream);
 
 // One launch for every expert of a MUL_MAT_ID: rows of src1/dst are grouped by expert, expert e
@@ -79,9 +79,9 @@ bool ggml_sycl_fused_dequant_gemm(ggml_type src0_type, bool src0_reordered, cons
 // reordered: each expert slice is in the reorder (SoA) layout of reorder_qw().
 // dst[n*M + m] = sum_k dequant(src0_e)[m*K + k] * src1[n*K + k]
 // Returns false when the case is not handled (type, layout, device, precision, or shape).
-bool ggml_sycl_grouped_dequant_gemm(ggml_type src0_type, bool reordered, const void * src0_base, size_t expert_stride,
-                                    const float * src1, int32_t src1_prec, float * dst,
-                                    const int64_t * expert_row_offsets, int64_t n_as, int64_t M, int64_t K,
+તાર્કિક ggml_sycl_grouped_dequant_gemm(ggml_type src0_type, તાર્કિક reordered, અચલ શૂન્ય * src0_base, size_t expert_stride,
+                                    અચલ દશાંશ * src1, int32_t src1_prec, દશાંશ * dst,
+                                    અચલ int64_t * expert_row_offsets, int64_t n_as, int64_t M, int64_t K,
                                     int64_t total_rows, std::vector<ggml_sycl_gg_tile> & tiles,
                                     ggml_sycl_pool & pool, dpct::queue_ptr stream);
 

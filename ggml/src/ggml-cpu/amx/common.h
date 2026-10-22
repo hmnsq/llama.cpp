@@ -1,16 +1,16 @@
 #pragma once
 
-#include "ggml.h"
-#include "ggml-cpu-impl.h"
+#અન્તર્ભાવ "ggml.h"
+#અન્તર્ભાવ "ggml-cpu-impl.h"
 
-#include <algorithm>
-#include <memory>
-#include <type_traits>
+#અન્તર્ભાવ <algorithm>
+#અન્તર્ભાવ <memory>
+#અન્તર્ભાવ <type_traits>
 
-#if defined(GGML_USE_OPENMP)
-#include <omp.h>
-#else
-#include <thread>
+#જો defined(GGML_USE_OPENMP)
+#અન્તર્ભાવ <omp.h>
+#નહીંતર
+#અન્તર્ભાવ <thread>
 #endif
 
 #define TILE_M 16
@@ -30,18 +30,18 @@
 #define TMM7 7
 
 // parallel routines
-template <typename T, typename std::enable_if<std::is_integral<T>::value, int>::type = 0>
-inline T div_up(T x, T y) { return (x + y - 1) / y; }
+template <typename T, typename std::enable_if<std::is_integral<T>::કિંમત, પૂર્ણાંક>::type = 0>
+અંતઃરેખ T div_up(T x, T y) { પાછા (x + y - 1) / y; }
 
 template <typename T>
-inline void balance211(T n, T nth, T ith, T& n_start, T& n_end) {
-#if 0
+અંતઃરેખ શૂન્ય balance211(T n, T nth, T ith, T& n_start, T& n_end) {
+#જો 0
     // onednn partition pattern
     T& n_my = n_end;
-    if (nth <= 1 || n == 0) {
+    જો (nth <= 1 || n == 0) {
         n_start = 0;
         n_my = n;
-    } else {
+    } નહીંતર {
         T n1 = div_up(n, nth);
         T n2 = n1 - 1;
         T T1 = n - n2 * nth;
@@ -49,7 +49,7 @@ inline void balance211(T n, T nth, T ith, T& n_start, T& n_end) {
         n_start = ith <= T1 ? ith*n1 : T1 * n1 + (ith - T1) * n2;
     }
     n_end += n_start;
-#else
+#નહીંતર
     // pytorch aten partition pattern
     T n_my = div_up(n, nth);
     n_start = ith * n_my;
@@ -58,54 +58,54 @@ inline void balance211(T n, T nth, T ith, T& n_start, T& n_end) {
 }
 
 template <typename func_t>
-inline void parallel_for(int n, const func_t & f) {
-    if (n <= 0) {
-        return;
+અંતઃરેખ શૂન્ય parallel_for(પૂર્ણાંક n, અચલ func_t & f) {
+    જો (n <= 0) {
+        પાછા;
     }
-#if defined(GGML_USE_OPENMP)
+#જો defined(GGML_USE_OPENMP)
     #pragma omp parallel
     {
-        int nth = omp_get_num_threads();
-        int ith = omp_get_thread_num();
-        int tbegin, tend;
+        પૂર્ણાંક nth = omp_get_અંક_threads();
+        પૂર્ણાંક ith = omp_get_thread_અંક();
+        પૂર્ણાંક tbegin, tend;
         balance211(n, nth, ith, tbegin, tend);
         f(tbegin, tend);
     }
-#else
-    int nth = std::thread::hardware_concurrency();
-    if (nth <= 1) {
+#નહીંતર
+    પૂર્ણાંક nth = std::thread::hardware_concurrency();
+    જો (nth <= 1) {
         f(0, n);
-        return;
+        પાછા;
     }
-    if (nth > n) {
+    જો (nth > n) {
         nth = n;
     }
     std::vector<std::thread> threads;
     threads.reserve(nth);
-    for (int ith = 0; ith < nth; ++ith) {
+    માટે (પૂર્ણાંક ith = 0; ith < nth; ++ith) {
         threads.emplace_back([&f, n, ith, nth] {
-            int tbegin, tend;
+            પૂર્ણાંક tbegin, tend;
             balance211(n, nth, ith, tbegin, tend);
             f(tbegin, tend);
         });
     }
-    for (auto & t : threads) {
+    માટે (auto & t : threads) {
         t.join();
     }
 #endif
 }
 
 template <typename func_t>
-inline void parallel_for_ggml(const ggml_compute_params * params, int n, const func_t & f) {
-    int tbegin, tend;
+અંતઃરેખ શૂન્ય parallel_for_ggml(અચલ ggml_compute_params * params, પૂર્ણાંક n, અચલ func_t & f) {
+    પૂર્ણાંક tbegin, tend;
     balance211(n, params->nth, params->ith, tbegin, tend);
     f(tbegin, tend);
 }
 
 // quantized types that have AMX support
-inline bool qtype_has_amx_kernels(const enum ggml_type type) {
+અંતઃરેખ bool qtype_has_amx_kernels(અચલ ગણના ggml_type type) {
     // TODO: fix padding for vnni format
-    return (type == GGML_TYPE_Q4_0) ||
+    પાછા (type == GGML_TYPE_Q4_0) ||
         (type == GGML_TYPE_Q4_1) ||
         (type == GGML_TYPE_Q8_0) ||
         (type == GGML_TYPE_Q4_K) ||
