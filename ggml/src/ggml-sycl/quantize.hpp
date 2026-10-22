@@ -19,50 +19,50 @@
 
 #pragma once
 
-#include <sycl/nd_item.hpp>
+#অন্তর্ভাব <sycl/nd_item.hpp>
 
-#include "ggml-sycl/dpct/helper.hpp"
+#অন্তর্ভাব "ggml-sycl/dpct/helper.hpp"
 
-template <int ElementsPerWI>
-__dpct_inline__ static void quantize_q8_1_impl(const float * __restrict__ x,
-                                               sycl::vec<int8_t, ElementsPerWI> & quantized_values, float & d,
-                                               float & sum, const sycl::nd_item<1> & it) {
+template <পূর্ণসংখ্যা ElementsPerWI>
+__dpct_inline__ স্থির শূন্য quantize_q8_1_impl(ধ্রুবক দশমিক * __restrict__ x,
+                                               sycl::vec<int8_t, ElementsPerWI> & quantized_মানসমূহ, দশমিক & d,
+                                               দশমিক & যোগ_2, ধ্রুবক sycl::nd_item<1> & it) {
     auto subgroup_id = it.get_group(0);
     auto wi_id       = it.get_local_id(0);
 
-    sycl::vec<float, ElementsPerWI> wi_f32_vals;
+    sycl::vec<দশমিক, ElementsPerWI> wi_f32_vals;
 
     auto float_ptr_offset = subgroup_id * QK8_1 + ElementsPerWI * wi_id;
-    wi_f32_vals           = *reinterpret_cast<const sycl::vec<float, ElementsPerWI> *>(x + float_ptr_offset);
+    wi_f32_vals           = *reinterpret_cast<ধ্রুবক sycl::vec<দশমিক, ElementsPerWI> *>(x + float_ptr_offset);
 
-    float amax = 0.0f;
+    দশমিক amax = 0.0f;
 
 #pragma unroll(ElementsPerWI)
-    for (int i = 0; i < ElementsPerWI; i++) {
-        sum += wi_f32_vals[i];
+    জন্য (পূর্ণসংখ্যা i = 0; i < ElementsPerWI; i++) {
+        যোগ_2 += wi_f32_vals[i];
         amax                = sycl::fmax(amax, sycl::fabs(wi_f32_vals[i]));
-        quantized_values[i] = 0;
+        quantized_মানসমূহ[i] = 0;
     }
-    sum  = sycl::reduce_over_group(it.get_sub_group(), sum, sycl::plus<float>());
-    amax = sycl::reduce_over_group(it.get_sub_group(), amax, sycl::maximum<float>());
+    যোগ_2  = sycl::reduce_over_group(it.get_sub_group(), যোগ_2, sycl::plus<দশমিক>());
+    amax = sycl::reduce_over_group(it.get_sub_group(), amax, sycl::maximum<দশমিক>());
     d    = amax == 0 ? 1 : amax / 127;
 
 #pragma unroll(ElementsPerWI)
-    for (int i = 0; i < ElementsPerWI; i++) {
-        quantized_values[i] = sycl::round(wi_f32_vals[i] / d);
+    জন্য (পূর্ণসংখ্যা i = 0; i < ElementsPerWI; i++) {
+        quantized_মানসমূহ[i] = sycl::round(wi_f32_vals[i] / d);
     }
 
     d = amax == 0 ? 0 : d;
 }
 
 // No op to control codepath in ggml_sycl_op_mul_mat
-template <int ElementsPerWI> struct no_quantize_q8_1 {
-    void operator()(const float *, void *, int, int, const sycl::nd_item<1> &) const {}
+template <পূর্ণসংখ্যা ElementsPerWI> কাঠামো no_quantize_q8_1 {
+    শূন্য operator()(ধ্রুবক দশমিক *, শূন্য *, পূর্ণসংখ্যা, পূর্ণসংখ্যা, ধ্রুবক sycl::nd_item<1> &) ধ্রুবক {}
 };
 
-template <int ElementsPerWI> struct quantize_and_reorder_q8_1_soa {
-    __dpct_inline__ void operator()(const float * __restrict__ x, void * reordered_q8_tensor, const int kx,
-                                    const int kx_padded, const sycl::nd_item<1> & it) const {
+template <পূর্ণসংখ্যা ElementsPerWI> কাঠামো quantize_and_reorder_q8_1_soa {
+    __dpct_inline__ শূন্য operator()(ধ্রুবক দশমিক * __restrict__ x, শূন্য * reordered_q8_tensor, ধ্রুবক পূর্ণসংখ্যা kx,
+                                    ধ্রুবক পূর্ণসংখ্যা kx_padded, ধ্রুবক sycl::nd_item<1> & it) ধ্রুবক {
         /*
         Quantizes and reorders the resultant q8 tensor in a per row fashion
         Each sub-group calculates one quant block. i.e. QK8_1 quant values and the d and sum values
@@ -70,64 +70,64 @@ template <int ElementsPerWI> struct quantize_and_reorder_q8_1_soa {
         auto subgroup_id = it.get_group(0);
         auto wi_id       = it.get_local_id(0);
 
-        sycl::vec<int8_t, ElementsPerWI> quantized_values;
-        float                            d   = 0.0f;
-        float                            sum = 0.0f;
-        quantize_q8_1_impl<ElementsPerWI>(x, quantized_values, d, sum, it);
+        sycl::vec<int8_t, ElementsPerWI> quantized_মানসমূহ;
+        দশমিক                            d   = 0.0f;
+        দশমিক                            যোগ_2 = 0.0f;
+        quantize_q8_1_impl<ElementsPerWI>(x, quantized_মানসমূহ, d, যোগ_2, it);
 
-        const int num_blocks_per_row = kx / QK8_1;
-        auto      row                = subgroup_id / num_blocks_per_row;
-        auto      col                = subgroup_id % num_blocks_per_row;
-        auto      row_offset         = row * (kx_padded / QK8_1) * sizeof(block_q8_1);
+        ধ্রুবক পূর্ণসংখ্যা অঙ্ক_blocks_per_row = kx / QK8_1;
+        auto      row                = subgroup_id / অঙ্ক_blocks_per_row;
+        auto      col                = subgroup_id % অঙ্ক_blocks_per_row;
+        auto      row_offset         = row * (kx_padded / QK8_1) * আকার(block_q8_1);
         auto      col_offset         = QK8_1 * col + wi_id * ElementsPerWI;
 
-        auto quant_ptr = (int8_t *) ((char *) reordered_q8_tensor + row_offset + col_offset);
-        *reinterpret_cast<sycl::vec<int8_t, ElementsPerWI> *>(quant_ptr) = quantized_values;
+        auto quant_ptr = (int8_t *) ((অক্ষর *) reordered_q8_tensor + row_offset + col_offset);
+        *reinterpret_cast<sycl::vec<int8_t, ElementsPerWI> *>(quant_ptr) = quantized_মানসমূহ;
 
-        auto ds_ptr = (sycl::half2 *) ((char *) reordered_q8_tensor + row_offset + kx + col * sizeof(sycl::half2));
-        if (wi_id == 0) {
-            *ds_ptr = sycl::half2(sycl::half(d), sycl::half(sum));
+        auto ds_ptr = (sycl::half2 *) ((অক্ষর *) reordered_q8_tensor + row_offset + kx + col * আকার(sycl::half2));
+        যদি (wi_id == 0) {
+            *ds_ptr = sycl::half2(sycl::half(d), sycl::half(যোগ_2));
         }
     }
 };
 
-template <int ElementsPerWI> struct quantize_q8_1 {
-    __dpct_inline__ void operator()(const float * __restrict__ x, void * q8_tensor, const int kx, const int kx_padded,
-                                    const sycl::nd_item<1> & it) const {
+template <পূর্ণসংখ্যা ElementsPerWI> কাঠামো quantize_q8_1 {
+    __dpct_inline__ শূন্য operator()(ধ্রুবক দশমিক * __restrict__ x, শূন্য * q8_tensor, ধ্রুবক পূর্ণসংখ্যা kx, ধ্রুবক পূর্ণসংখ্যা kx_padded,
+                                    ধ্রুবক sycl::nd_item<1> & it) ধ্রুবক {
         auto subgroup_id = it.get_group(0);
         auto wi_id       = it.get_local_id(0);
 
-        const int num_blocks_per_row = kx / QK8_1;
-        auto      row                = subgroup_id / num_blocks_per_row;
-        const int pitch              = kx_padded / QK8_1;
+        ধ্রুবক পূর্ণসংখ্যা অঙ্ক_blocks_per_row = kx / QK8_1;
+        auto      row                = subgroup_id / অঙ্ক_blocks_per_row;
+        ধ্রুবক পূর্ণসংখ্যা pitch              = kx_padded / QK8_1;
 
-        sycl::vec<int8_t, ElementsPerWI> quantized_values;
-        float                            d   = 0.0f;
-        float                            sum = 0.0f;
-        quantize_q8_1_impl<ElementsPerWI>(x, quantized_values, d, sum, it);
+        sycl::vec<int8_t, ElementsPerWI> quantized_মানসমূহ;
+        দশমিক                            d   = 0.0f;
+        দশমিক                            যোগ_2 = 0.0f;
+        quantize_q8_1_impl<ElementsPerWI>(x, quantized_মানসমূহ, d, যোগ_2, it);
 
         block_q8_1 * quant_ptr = (block_q8_1 *) q8_tensor;
-        auto         block_id  = subgroup_id % num_blocks_per_row + row * pitch;
+        auto         block_id  = subgroup_id % অঙ্ক_blocks_per_row + row * pitch;
 
         int8_t * qs                                               = &(quant_ptr[block_id].qs[wi_id * ElementsPerWI]);
-        *reinterpret_cast<sycl::vec<int8_t, ElementsPerWI> *>(qs) = quantized_values;
-        if (wi_id == 0) {
-            quant_ptr[block_id].ds = sycl::half2(sycl::half(d), sycl::half(sum));
+        *reinterpret_cast<sycl::vec<int8_t, ElementsPerWI> *>(qs) = quantized_মানসমূহ;
+        যদি (wi_id == 0) {
+            quant_ptr[block_id].ds = sycl::half2(sycl::half(d), sycl::half(যোগ_2));
         }
     }
 };
 
-template <template <int> typename quantize_f>
-void quantize_row_q8_1_sycl(const float * x, void * vy, const int kx, const int ky, const int kx_padded,
+template <template <পূর্ণসংখ্যা> typename quantize_f>
+শূন্য quantize_row_q8_1_sycl(ধ্রুবক দশমিক * x, শূন্য * vy, ধ্রুবক পূর্ণসংখ্যা kx, ধ্রুবক পূর্ণসংখ্যা ky, ধ্রুবক পূর্ণসংখ্যা kx_padded,
                             dpct::queue_ptr stream) {
-    static_assert(QK8_1 % WARP_SIZE == 0);
-    auto local_range      = std::size_t(WARP_SIZE);
-    auto num_quant_blocks = ky * (kx / QK8_1);
-    auto global_range     = num_quant_blocks * local_range;
+    static_assert(QK8_1 % WARP_আকার == 0);
+    auto local_range      = std::size_t(WARP_আকার);
+    auto অঙ্ক_quant_blocks = ky * (kx / QK8_1);
+    auto global_range     = অঙ্ক_quant_blocks * local_range;
     dpct::has_capability_or_fail(stream->get_device(), { sycl::aspect::fp16 });
 
     stream->parallel_for(sycl::nd_range<1>({ global_range }, { local_range }),
-                         [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                             quantize_f<QK8_1 / WARP_SIZE>()(x, vy, kx, kx_padded, it);
+                         [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_আকার(WARP_আকার)]] {
+                             quantize_f<QK8_1 / WARP_আকার>()(x, vy, kx, kx_padded, it);
                          });
 }

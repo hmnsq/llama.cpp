@@ -13,31 +13,31 @@
 
 #pragma once
 
-#include "openvino/op/op.hpp"
+#অন্তর্ভাব "openvino/op/op.hpp"
 
-namespace ov::op::internal {
+নামাকাশ ov::op::internal {
 
-class OPENVINO_API GatherMatmul : public ov::op::Op {
-public:
+শ্রেণী OPENVINO_API GatherMatmul : সর্বজনীন ov::op::Op {
+সর্বজনীন:
     OPENVINO_OP("GatherMatmul")
 
-    GatherMatmul() = default;
+    GatherMatmul() = পূর্বনির্ধারিত;
 
-    GatherMatmul(const ov::Output<Node>& A,
-                 const ov::Output<Node>& B,
-                 const ov::Output<Node>& indices,
-                 const ov::Output<Node>& bias);
+    GatherMatmul(ধ্রুবক ov::Output<Node>& A,
+                 ধ্রুবক ov::Output<Node>& B,
+                 ধ্রুবক ov::Output<Node>& indices,
+                 ধ্রুবক ov::Output<Node>& bias);
 
-    GatherMatmul(const ov::Output<Node>& A, const ov::Output<Node>& B, const ov::Output<Node>& indices);
+    GatherMatmul(ধ্রুবক ov::Output<Node>& A, ধ্রুবক ov::Output<Node>& B, ধ্রুবক ov::Output<Node>& indices);
 
-    std::shared_ptr<Node> clone_with_new_inputs(const ov::OutputVector& new_args) const override;
+    std::shared_ptr<Node> clone_with_new_inputs(ধ্রুবক ov::OutputVector& new_args) ধ্রুবক override;
 
-    void validate_and_infer_types() override;
+    শূন্য validate_and_infer_types() override;
 
-private:
+ব্যক্তিগত:
     // the weights matrix B is expected to have the transposed form [group, N, K]
-    static constexpr bool transp_a = false;
-    static constexpr bool transp_b = true;
+    স্থির constexpr যৌক্তিক transp_a = মিথ্যা;
+    স্থির constexpr যৌক্তিক transp_b = সত্য;
 };
 
 }  // namespace ov::op::internal

@@ -1,48 +1,48 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
-#include "ggml.h"
+#অন্তর্ভাব "../node_context.h"
+#অন্তর্ভাব "../op_table.h"
+#অন্তর্ভাব "../utils.h"
+#অন্তর্ভাব "ggml.h"
 
-#include <openvino/frontend/exception.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/squeeze.hpp>
-#include <openvino/op/topk.hpp>
+#অন্তর্ভাব <openvino/frontend/exception.hpp>
+#অন্তর্ভাব <openvino/op/constant.hpp>
+#অন্তর্ভাব <openvino/op/squeeze.hpp>
+#অন্তর্ভাব <openvino/op/topk.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+নামাকাশ ov {
+নামাকাশ frontend {
+নামাকাশ ggml {
+নামাকাশ op {
 
-OutputVector translate_argsort(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+OutputVector translate_argsort(ধ্রুবক গ্রন্থি_Context & context) {
+    অঙ্ক_inputs_check(context, 1, 1);
 
-    auto input = process_view_input_new(context, 0);
+    auto প্রবেশ = process_view_প্রবেশ_new(context, 0);
 
-    const int32_t order = context.get_output_op_params()[0];
+    ধ্রুবক int32_t order = context.get_output_op_params()[0];
 
-    ov::op::v11::TopK::Mode mode;
-    switch (order) {
-    case GGML_SORT_ORDER_ASC:
-        mode = ov::op::v11::TopK::Mode::MIN;
-        break;
-    case GGML_SORT_ORDER_DESC:
-        mode = ov::op::v11::TopK::Mode::MAX;
-        break;
-    default:
-        FRONT_END_OP_CONVERSION_CHECK(false, "Unsupported GGML_OP_ARGSORT order: ", order);
+    ov::op::v11::শীর্ষ_K::Mode mode;
+    নির্বাচন (order) {
+    ক্ষেত্র GGML_SORT_ORDER_ASC:
+        mode = ov::op::v11::শীর্ষ_K::Mode::MIN;
+        বিরতি;
+    ক্ষেত্র GGML_SORT_ORDER_DESC:
+        mode = ov::op::v11::শীর্ষ_K::Mode::MAX;
+        বিরতি;
+    পূর্বনির্ধারিত:
+        FRONT_END_OP_CONVERSION_CHECK(মিথ্যা, "Unsupported GGML_OP_ARGSORT order: ", order);
     }
 
     // Stateful models drop the leading size-1 batch dim, so the expert axis is 2 there
     // instead of 3 (same rank-3-vs-rank-4 split as get_rows.cpp / process_view_input).
-    const int axis = (context.is_stateful() && input.get_partial_shape().rank() == 3) ? 2 : 3;
+    ধ্রুবক পূর্ণসংখ্যা axis = (context.is_stateful() && প্রবেশ.get_partial_shape().rank() == 3) ? 2 : 3;
 
-    auto k = std::make_shared<ov::op::v0::Squeeze>(get_dimensions(input.get_node_shared_ptr(), {axis}),
+    auto k = std::make_shared<ov::op::v0::Squeeze>(get_dimensions(প্রবেশ.get_গ্রন্থি_shared_ptr(), {axis}),
                                                    ov::op::v0::Constant::create(ov::element::i64, {1}, {0}));
 
-    auto topk = std::make_shared<ov::op::v11::TopK>(input, k, axis, mode, ov::op::v11::TopK::SortType::SORT_VALUES,
-                                                    context.get_output_type(), false);
+    auto topk = std::make_shared<ov::op::v11::শীর্ষ_K>(প্রবেশ, k, axis, mode, ov::op::v11::শীর্ষ_K::SortType::SORT_মানসমূহ,
+                                                    context.get_output_type(), মিথ্যা);
 
-    return rename_outputs_with_suffix({topk->output(1)}, context.get_name());
+    ফেরত rename_outputs_with_suffix({topk->output(1)}, context.get_name());
 }
 
 }  // namespace op

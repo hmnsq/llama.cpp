@@ -1,132 +1,132 @@
-#include "cross_entropy_loss.hpp"
+#অন্তর্ভাব "cross_entropy_loss.hpp"
 
-#include <cstdint>
-#include <cmath>
+#অন্তর্ভাব <cstdint>
+#অন্তর্ভাব <cmath>
 
-template <bool has_shared>
-static __dpct_inline__ void cross_entropy_loss_f32_kernel(
-        const float * __restrict__ logits,
-        const float * __restrict__ labels,
-        float * __restrict__ row_loss,
-        const int nclasses,
-        const int nrows,
-        float * __restrict__ smem,
-        const sycl::nd_item<3> & item) {
+template <যৌক্তিক has_shared>
+স্থির __dpct_inline__ শূন্য cross_entropy_loss_f32_kernel(
+        ধ্রুবক দশমিক * __restrict__ logits,
+        ধ্রুবক দশমিক * __restrict__ labels,
+        দশমিক * __restrict__ row_loss,
+        ধ্রুবক পূর্ণসংখ্যা nclasses,
+        ধ্রুবক পূর্ণসংখ্যা nrows,
+        দশমিক * __restrict__ smem,
+        ধ্রুবক sycl::nd_item<3> & item) {
 
-    const int row = item.get_group(2);
-    const int tid = item.get_local_id(2);
+    ধ্রুবক পূর্ণসংখ্যা row = item.get_group(2);
+    ধ্রুবক পূর্ণসংখ্যা tid = item.get_local_id(2);
 
     logits += (int64_t) row * nclasses;
     labels += (int64_t) row * nclasses;
 
-    float max_logit = -INFINITY;
-    for (int i = tid; i < nclasses; i += WARP_SIZE) {
-        const float v = logits[i];
+    দশমিক max_logit = -INFINITY;
+    জন্য (পূর্ণসংখ্যা i = tid; i < nclasses; i += WARP_আকার) {
+        ধ্রুবক দশমিক v = logits[i];
         max_logit = sycl::fmax(max_logit, v);
-        if (has_shared) {
+        যদি (has_shared) {
             smem[i] = v;
         }
     }
-    max_logit = warp_reduce_max<WARP_SIZE>(max_logit);
+    max_logit = warp_reduce_max<WARP_আকার>(max_logit);
 
-    float sum_exp = 0.0f;
-    for (int i = tid; i < nclasses; i += WARP_SIZE) {
-        const float v = has_shared ? smem[i] : logits[i];
-        sum_exp += sycl::exp(v - max_logit);
+    দশমিক যোগ_exp = 0.0f;
+    জন্য (পূর্ণসংখ্যা i = tid; i < nclasses; i += WARP_আকার) {
+        ধ্রুবক দশমিক v = has_shared ? smem[i] : logits[i];
+        যোগ_exp += sycl::exp(v - max_logit);
     }
-    sum_exp = warp_reduce_sum<WARP_SIZE>(sum_exp);
-    const float log_sum = sycl::log(sum_exp);
+    যোগ_exp = warp_reduce_যোগ<WARP_আকার>(যোগ_exp);
+    ধ্রুবক দশমিক log_যোগ = sycl::log(যোগ_exp);
 
-    float loss = 0.0f;
-    for (int i = tid; i < nclasses; i += WARP_SIZE) {
-        const float v = has_shared ? smem[i] : logits[i];
-        loss += (v - max_logit - log_sum) * labels[i];
+    দশমিক loss = 0.0f;
+    জন্য (পূর্ণসংখ্যা i = tid; i < nclasses; i += WARP_আকার) {
+        ধ্রুবক দশমিক v = has_shared ? smem[i] : logits[i];
+        loss += (v - max_logit - log_যোগ) * labels[i];
     }
-    loss = -warp_reduce_sum<WARP_SIZE>(loss) / (float) nrows;
+    loss = -warp_reduce_যোগ<WARP_আকার>(loss) / (দশমিক) nrows;
 
-    if (tid == 0) {
+    যদি (tid == 0) {
         row_loss[row] = loss;
     }
 }
 
-template <bool has_shared>
-static __dpct_inline__ void cross_entropy_loss_back_f32_kernel(
-        const float * __restrict__ grad,
-        const float * __restrict__ logits,
-        const float * __restrict__ labels,
-        float * __restrict__ dst,
-        const int nclasses,
-        const int nrows,
-        float * __restrict__ smem,
-        const sycl::nd_item<3> & item) {
+template <যৌক্তিক has_shared>
+স্থির __dpct_inline__ শূন্য cross_entropy_loss_back_f32_kernel(
+        ধ্রুবক দশমিক * __restrict__ grad,
+        ধ্রুবক দশমিক * __restrict__ logits,
+        ধ্রুবক দশমিক * __restrict__ labels,
+        দশমিক * __restrict__ dst,
+        ধ্রুবক পূর্ণসংখ্যা nclasses,
+        ধ্রুবক পূর্ণসংখ্যা nrows,
+        দশমিক * __restrict__ smem,
+        ধ্রুবক sycl::nd_item<3> & item) {
 
-    const int row = item.get_group(2);
-    const int tid = item.get_local_id(2);
+    ধ্রুবক পূর্ণসংখ্যা row = item.get_group(2);
+    ধ্রুবক পূর্ণসংখ্যা tid = item.get_local_id(2);
 
     logits += (int64_t) row * nclasses;
     labels += (int64_t) row * nclasses;
     dst    += (int64_t) row * nclasses;
 
-    float max_logit = -INFINITY;
-    for (int i = tid; i < nclasses; i += WARP_SIZE) {
-        const float v = logits[i];
+    দশমিক max_logit = -INFINITY;
+    জন্য (পূর্ণসংখ্যা i = tid; i < nclasses; i += WARP_আকার) {
+        ধ্রুবক দশমিক v = logits[i];
         max_logit = sycl::fmax(max_logit, v);
-        if (has_shared) {
+        যদি (has_shared) {
             smem[i] = v;
         }
     }
-    max_logit = warp_reduce_max<WARP_SIZE>(max_logit);
+    max_logit = warp_reduce_max<WARP_আকার>(max_logit);
 
-    float sum_exp = 0.0f;
-    for (int i = tid; i < nclasses; i += WARP_SIZE) {
-        const float v = sycl::exp((has_shared ? smem[i] : logits[i]) - max_logit);
-        sum_exp += v;
-        if (has_shared) {
+    দশমিক যোগ_exp = 0.0f;
+    জন্য (পূর্ণসংখ্যা i = tid; i < nclasses; i += WARP_আকার) {
+        ধ্রুবক দশমিক v = sycl::exp((has_shared ? smem[i] : logits[i]) - max_logit);
+        যোগ_exp += v;
+        যদি (has_shared) {
             smem[i] = v;
-        } else {
+        } অন্যথা {
             dst[i] = v;
         }
     }
-    sum_exp = warp_reduce_sum<WARP_SIZE>(sum_exp);
-    const float inv_sum = 1.0f / sum_exp;
+    যোগ_exp = warp_reduce_যোগ<WARP_আকার>(যোগ_exp);
+    ধ্রুবক দশমিক inv_যোগ = 1.0f / যোগ_exp;
 
-    const float d_by_nrows = grad[0] / (float) nrows;
-    for (int i = tid; i < nclasses; i += WARP_SIZE) {
-        const float sm_num = has_shared ? smem[i] : dst[i];
-        dst[i] = (sm_num * inv_sum - labels[i]) * d_by_nrows;
+    ধ্রুবক দশমিক d_by_nrows = grad[0] / (দশমিক) nrows;
+    জন্য (পূর্ণসংখ্যা i = tid; i < nclasses; i += WARP_আকার) {
+        ধ্রুবক দশমিক sm_অঙ্ক = has_shared ? smem[i] : dst[i];
+        dst[i] = (sm_অঙ্ক * inv_যোগ - labels[i]) * d_by_nrows;
     }
 }
 
-static void cross_entropy_reduce_rows(
+স্থির শূন্য cross_entropy_reduce_rows(
         ggml_backend_sycl_context & ctx,
-        const float * row_loss,
-        float * dst,
-        const int64_t nrows) {
-    if (nrows == 1) {
+        ধ্রুবক দশমিক * row_loss,
+        দশমিক * dst,
+        ধ্রুবক int64_t nrows) {
+    যদি (nrows == 1) {
         SYCL_CHECK(CHECK_TRY_ERROR(
-            ctx.stream()->memcpy(dst, row_loss, sizeof(float))));
-        return;
+            ctx.stream()->memcpy(dst, row_loss, আকার(দশমিক))));
+        ফেরত;
     }
 
-    ggml_sycl_pool_alloc<float> tmp_alloc(ctx.pool(), nrows);
-    float * tmp = tmp_alloc.get();
+    ggml_sycl_pool_alloc<দশমিক> tmp_alloc(ctx.pool(), nrows);
+    দশমিক * tmp = tmp_alloc.get();
     SYCL_CHECK(CHECK_TRY_ERROR(
-        ctx.stream()->memcpy(tmp, row_loss, nrows * sizeof(float))));
+        ctx.stream()->memcpy(tmp, row_loss, nrows * আকার(দশমিক))));
 
     int64_t cur = nrows;
-    while (cur > 1) {
-        const int64_t out = (cur + WARP_SIZE - 1) / WARP_SIZE;
-        const sycl::range<3> block(1, 1, WARP_SIZE);
-        const sycl::range<3> grid(1, 1, out);
+    যখন (cur > 1) {
+        ধ্রুবক int64_t out = (cur + WARP_আকার - 1) / WARP_আকার;
+        ধ্রুবক sycl::range<3> block(1, 1, WARP_আকার);
+        ধ্রুবক sycl::range<3> grid(1, 1, out);
         ctx.stream()->parallel_for(
             sycl::nd_range<3>(grid * block, block),
-            [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                const int row = item.get_group(2);
-                const int tid = item.get_local_id(2);
-                const int64_t i = (int64_t) row * WARP_SIZE + tid;
-                float v = i < cur ? tmp[i] : 0.0f;
-                v = warp_reduce_sum<WARP_SIZE>(v);
-                if (tid == 0) {
+            [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_আকার(WARP_আকার)]] {
+                ধ্রুবক পূর্ণসংখ্যা row = item.get_group(2);
+                ধ্রুবক পূর্ণসংখ্যা tid = item.get_local_id(2);
+                ধ্রুবক int64_t i = (int64_t) row * WARP_আকার + tid;
+                দশমিক v = i < cur ? tmp[i] : 0.0f;
+                v = warp_reduce_যোগ<WARP_আকার>(v);
+                যদি (tid == 0) {
                     tmp[row] = v;
                 }
             });
@@ -134,14 +134,14 @@ static void cross_entropy_reduce_rows(
     }
 
     SYCL_CHECK(CHECK_TRY_ERROR(
-        ctx.stream()->memcpy(dst, tmp, sizeof(float))));
+        ctx.stream()->memcpy(dst, tmp, আকার(দশমিক))));
 }
 
-void ggml_sycl_cross_entropy_loss(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+শূন্য ggml_sycl_cross_entropy_loss(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    ধ্রুবক ggml_tensor * src0 = dst->src[0];
+    ধ্রুবক ggml_tensor * src1 = dst->src[1];
 
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
@@ -154,40 +154,40 @@ void ggml_sycl_cross_entropy_loss(ggml_backend_sycl_context & ctx, ggml_tensor *
 
     SYCL_CHECK(ggml_sycl_set_device(ctx.device));
 
-    const int64_t nclasses = src0->ne[0];
-    const int64_t nrows = ggml_nrows(src0);
+    ধ্রুবক int64_t nclasses = src0->ne[0];
+    ধ্রুবক int64_t nrows = ggml_nrows(src0);
 
-    const float * logits_d = (const float *) src0->data;
-    const float * labels_d = (const float *) src1->data;
-    float * dst_d = (float *) dst->data;
+    ধ্রুবক দশমিক * logits_d = (ধ্রুবক দশমিক *) src0->তথ্য;
+    ধ্রুবক দশমিক * labels_d = (ধ্রুবক দশমিক *) src1->তথ্য;
+    দশমিক * dst_d = (দশমিক *) dst->তথ্য;
 
-    ggml_sycl_pool_alloc<float> row_loss_alloc(ctx.pool(), nrows);
-    float * row_loss = row_loss_alloc.get();
+    ggml_sycl_pool_alloc<দশমিক> row_loss_alloc(ctx.pool(), nrows);
+    দশমিক * row_loss = row_loss_alloc.get();
 
-    const sycl::range<3> block(1, 1, WARP_SIZE);
-    const sycl::range<3> grid(1, 1, nrows);
-    const size_t nbytes_shared = (size_t) nclasses * sizeof(float);
-    const size_t smpbo = ggml_sycl_info().devices[ctx.device].smpbo;
+    ধ্রুবক sycl::range<3> block(1, 1, WARP_আকার);
+    ধ্রুবক sycl::range<3> grid(1, 1, nrows);
+    ধ্রুবক size_t nbytes_shared = (size_t) nclasses * আকার(দশমিক);
+    ধ্রুবক size_t smpbo = ggml_sycl_info().devices[ctx.device].smpbo;
 
-    if (nbytes_shared <= smpbo) {
+    যদি (nbytes_shared <= smpbo) {
         ctx.stream()->submit([&](sycl::handler & cgh) {
-            sycl::local_accessor<float, 1> smem(sycl::range<1>(nclasses), cgh);
+            sycl::local_accessor<দশমিক, 1> smem(sycl::range<1>(nclasses), cgh);
             cgh.parallel_for(
                 sycl::nd_range<3>(grid * block, block),
-                [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    cross_entropy_loss_f32_kernel<true>(
+                [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_আকার(WARP_আকার)]] {
+                    cross_entropy_loss_f32_kernel<সত্য>(
                         logits_d, labels_d, row_loss,
-                        (int) nclasses, (int) nrows,
+                        (পূর্ণসংখ্যা) nclasses, (পূর্ণসংখ্যা) nrows,
                         get_pointer(smem), item);
                 });
         });
-    } else {
+    } অন্যথা {
         ctx.stream()->parallel_for(
             sycl::nd_range<3>(grid * block, block),
-            [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                cross_entropy_loss_f32_kernel<false>(
+            [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_আকার(WARP_আকার)]] {
+                cross_entropy_loss_f32_kernel<মিথ্যা>(
                     logits_d, labels_d, row_loss,
-                    (int) nclasses, (int) nrows,
+                    (পূর্ণসংখ্যা) nclasses, (পূর্ণসংখ্যা) nrows,
                     nullptr, item);
             });
     }
@@ -195,12 +195,12 @@ void ggml_sycl_cross_entropy_loss(ggml_backend_sycl_context & ctx, ggml_tensor *
     cross_entropy_reduce_rows(ctx, row_loss, dst_d, nrows);
 }
 
-void ggml_sycl_cross_entropy_loss_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+শূন্য ggml_sycl_cross_entropy_loss_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/3);
 
-    const ggml_tensor * grad  = dst->src[0];
-    const ggml_tensor * src0f = dst->src[1];
-    const ggml_tensor * src1f = dst->src[2];
+    ধ্রুবক ggml_tensor * grad  = dst->src[0];
+    ধ্রুবক ggml_tensor * src0f = dst->src[1];
+    ধ্রুবক ggml_tensor * src1f = dst->src[2];
 
     GGML_ASSERT(grad->type == GGML_TYPE_F32);
     GGML_ASSERT(src0f->type == GGML_TYPE_F32);
@@ -217,38 +217,38 @@ void ggml_sycl_cross_entropy_loss_back(ggml_backend_sycl_context & ctx, ggml_ten
 
     SYCL_CHECK(ggml_sycl_set_device(ctx.device));
 
-    const int64_t nclasses = src0f->ne[0];
-    const int64_t nrows = ggml_nrows(src0f);
+    ধ্রুবক int64_t nclasses = src0f->ne[0];
+    ধ্রুবক int64_t nrows = ggml_nrows(src0f);
 
-    const float * grad_d  = (const float *) grad->data;
-    const float * logits_d = (const float *) src0f->data;
-    const float * labels_d = (const float *) src1f->data;
-    float * dst_d = (float *) dst->data;
+    ধ্রুবক দশমিক * grad_d  = (ধ্রুবক দশমিক *) grad->তথ্য;
+    ধ্রুবক দশমিক * logits_d = (ধ্রুবক দশমিক *) src0f->তথ্য;
+    ধ্রুবক দশমিক * labels_d = (ধ্রুবক দশমিক *) src1f->তথ্য;
+    দশমিক * dst_d = (দশমিক *) dst->তথ্য;
 
-    const sycl::range<3> block(1, 1, WARP_SIZE);
-    const sycl::range<3> grid(1, 1, nrows);
-    const size_t nbytes_shared = (size_t) nclasses * sizeof(float);
-    const size_t smpbo = ggml_sycl_info().devices[ctx.device].smpbo;
+    ধ্রুবক sycl::range<3> block(1, 1, WARP_আকার);
+    ধ্রুবক sycl::range<3> grid(1, 1, nrows);
+    ধ্রুবক size_t nbytes_shared = (size_t) nclasses * আকার(দশমিক);
+    ধ্রুবক size_t smpbo = ggml_sycl_info().devices[ctx.device].smpbo;
 
-    if (nbytes_shared <= smpbo) {
+    যদি (nbytes_shared <= smpbo) {
         ctx.stream()->submit([&](sycl::handler & cgh) {
-            sycl::local_accessor<float, 1> smem(sycl::range<1>(nclasses), cgh);
+            sycl::local_accessor<দশমিক, 1> smem(sycl::range<1>(nclasses), cgh);
             cgh.parallel_for(
                 sycl::nd_range<3>(grid * block, block),
-                [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    cross_entropy_loss_back_f32_kernel<true>(
+                [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_আকার(WARP_আকার)]] {
+                    cross_entropy_loss_back_f32_kernel<সত্য>(
                         grad_d, logits_d, labels_d, dst_d,
-                        (int) nclasses, (int) nrows,
+                        (পূর্ণসংখ্যা) nclasses, (পূর্ণসংখ্যা) nrows,
                         get_pointer(smem), item);
                 });
         });
-    } else {
+    } অন্যথা {
         ctx.stream()->parallel_for(
             sycl::nd_range<3>(grid * block, block),
-            [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                cross_entropy_loss_back_f32_kernel<false>(
+            [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_আকার(WARP_আকার)]] {
+                cross_entropy_loss_back_f32_kernel<মিথ্যা>(
                     grad_d, logits_d, labels_d, dst_d,
-                    (int) nclasses, (int) nrows,
+                    (পূর্ণসংখ্যা) nclasses, (পূর্ণসংখ্যা) nrows,
                     nullptr, item);
             });
     }

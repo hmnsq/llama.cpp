@@ -1,109 +1,109 @@
-#include "binbcast.hpp"
+#অন্তর্ভাব "binbcast.hpp"
 
-#include <algorithm>
-#include <cstddef>
-#include <cstdint>
-#include <sycl/sycl.hpp>
+#অন্তর্ভাব <algorithm>
+#অন্তর্ভাব <cstddef>
+#অন্তর্ভাব <cstdint>
+#অন্তর্ভাব <sycl/sycl.hpp>
 
-#include "ggml.h"
+#অন্তর্ভাব "ggml.h"
 
-template<float (*bin_op)(const float, const float), typename src0_t, typename src1_t, typename dst_t>
-static void k_bin_bcast(const src0_t * src0, const src1_t * src1, dst_t * dst,
-        int ne0, int ne1, int ne2, int ne3,
-        int ne10, int ne11, int ne12, int ne13,
-        /*int s0, */ int s1,  int s2,  int s3,
-        int s00, int s01, int s02, int s03,
-        int s10, int s11, int s12, int s13,
-        const sycl::nd_item<3> &item_ct1) {
-    const int i0s = item_ct1.get_local_range(2) * item_ct1.get_group(2) +
+template<দশমিক (*bin_op)(ধ্রুবক দশমিক, ধ্রুবক দশমিক), typename src0_t, typename src1_t, typename dst_t>
+স্থির শূন্য k_bin_bcast(ধ্রুবক src0_t * src0, ধ্রুবক src1_t * src1, dst_t * dst,
+        পূর্ণসংখ্যা ne0, পূর্ণসংখ্যা ne1, পূর্ণসংখ্যা ne2, পূর্ণসংখ্যা ne3,
+        পূর্ণসংখ্যা ne10, পূর্ণসংখ্যা ne11, পূর্ণসংখ্যা ne12, পূর্ণসংখ্যা ne13,
+        /*int s0, */ পূর্ণসংখ্যা s1,  পূর্ণসংখ্যা s2,  পূর্ণসংখ্যা s3,
+        পূর্ণসংখ্যা s00, পূর্ণসংখ্যা s01, পূর্ণসংখ্যা s02, পূর্ণসংখ্যা s03,
+        পূর্ণসংখ্যা s10, পূর্ণসংখ্যা s11, পূর্ণসংখ্যা s12, পূর্ণসংখ্যা s13,
+        ধ্রুবক sycl::nd_item<3> &item_ct1) {
+    ধ্রুবক পূর্ণসংখ্যা i0s = item_ct1.get_local_range(2) * item_ct1.get_group(2) +
                     item_ct1.get_local_id(2);
-    const int i1 = (item_ct1.get_local_range(1) * item_ct1.get_group(1) +
+    ধ্রুবক পূর্ণসংখ্যা i1 = (item_ct1.get_local_range(1) * item_ct1.get_group(1) +
                     item_ct1.get_local_id(1));
-    const int i2 = (item_ct1.get_local_range(0) * item_ct1.get_group(0) +
+    ধ্রুবক পূর্ণসংখ্যা i2 = (item_ct1.get_local_range(0) * item_ct1.get_group(0) +
                     item_ct1.get_local_id(0)) /
                    ne3;
-    const int i3 = (item_ct1.get_local_range(0) * item_ct1.get_group(0) +
+    ধ্রুবক পূর্ণসংখ্যা i3 = (item_ct1.get_local_range(0) * item_ct1.get_group(0) +
                     item_ct1.get_local_id(0)) %
                    ne3;
 
-    if (i0s >= ne0 || i1 >= ne1 || i2 >= ne2 || i3 >= ne3) {
-        return;
+    যদি (i0s >= ne0 || i1 >= ne1 || i2 >= ne2 || i3 >= ne3) {
+        ফেরত;
     }
 
-    const int i11 = i1 % ne11;
-    const int i12 = i2 % ne12;
-    const int i13 = i3 % ne13;
+    ধ্রুবক পূর্ণসংখ্যা i11 = i1 % ne11;
+    ধ্রুবক পূর্ণসংখ্যা i12 = i2 % ne12;
+    ধ্রুবক পূর্ণসংখ্যা i13 = i3 % ne13;
 
-    const size_t i_src0 =  i3*s03 +  i2*s02 +  i1*s01;
-    const size_t i_src1 = i13*s13 + i12*s12 + i11*s11;
-    const size_t i_dst  =  i3*s3  +  i2*s2  +  i1*s1;
+    ধ্রুবক size_t i_src0 =  i3*s03 +  i2*s02 +  i1*s01;
+    ধ্রুবক size_t i_src1 = i13*s13 + i12*s12 + i11*s11;
+    ধ্রুবক size_t i_dst  =  i3*s3  +  i2*s2  +  i1*s1;
 
-    const src0_t * src0_row = src0 + i_src0;
-    const src1_t * src1_row = src1 + i_src1;
+    ধ্রুবক src0_t * src0_row = src0 + i_src0;
+    ধ্রুবক src1_t * src1_row = src1 + i_src1;
     dst_t * dst_row = dst + i_dst;
 
-    for (int i0 = i0s; i0 < ne0;
+    জন্য (পূর্ণসংখ্যা i0 = i0s; i0 < ne0;
          i0 += item_ct1.get_local_range(2) * item_ct1.get_group_range(2)) {
-        const int i10 = i0 % ne10;
-        dst_row[i0] = (dst_t)bin_op(src0 ? (float)src0_row[i0*s00] : 0.0f, (float)src1_row[i10*s10]);
+        ধ্রুবক পূর্ণসংখ্যা i10 = i0 % ne10;
+        dst_row[i0] = (dst_t)bin_op(src0 ? (দশমিক)src0_row[i0*s00] : 0.0f, (দশমিক)src1_row[i10*s10]);
     }
 }
 
-template<float (*bin_op)(const float, const float), typename src0_t, typename src1_t, typename dst_t>
-static void k_bin_bcast_unravel(const src0_t * src0, const src1_t * src1, dst_t * dst,
-        int ne0, int ne1, int ne2, int ne3,
-        int ne10, int ne11, int ne12, int ne13,
-        /*int s0, */ int s1,  int s2,  int s3,
-        int s00, int s01, int s02, int s03,
-        int s10, int s11, int s12, int s13,
-        const sycl::nd_item<3> &item_ct1) {
+template<দশমিক (*bin_op)(ধ্রুবক দশমিক, ধ্রুবক দশমিক), typename src0_t, typename src1_t, typename dst_t>
+স্থির শূন্য k_bin_bcast_unravel(ধ্রুবক src0_t * src0, ধ্রুবক src1_t * src1, dst_t * dst,
+        পূর্ণসংখ্যা ne0, পূর্ণসংখ্যা ne1, পূর্ণসংখ্যা ne2, পূর্ণসংখ্যা ne3,
+        পূর্ণসংখ্যা ne10, পূর্ণসংখ্যা ne11, পূর্ণসংখ্যা ne12, পূর্ণসংখ্যা ne13,
+        /*int s0, */ পূর্ণসংখ্যা s1,  পূর্ণসংখ্যা s2,  পূর্ণসংখ্যা s3,
+        পূর্ণসংখ্যা s00, পূর্ণসংখ্যা s01, পূর্ণসংখ্যা s02, পূর্ণসংখ্যা s03,
+        পূর্ণসংখ্যা s10, পূর্ণসংখ্যা s11, পূর্ণসংখ্যা s12, পূর্ণসংখ্যা s13,
+        ধ্রুবক sycl::nd_item<3> &item_ct1) {
 
-    const int i = item_ct1.get_local_range(2) * item_ct1.get_group(2) +
+    ধ্রুবক পূর্ণসংখ্যা i = item_ct1.get_local_range(2) * item_ct1.get_group(2) +
                   item_ct1.get_local_id(2);
 
-    const int i3 = i/(ne2*ne1*ne0);
-    const int i2 = (i/(ne1*ne0)) % ne2;
-    const int i1 = (i/ne0) % ne1;
-    const int i0 = i % ne0;
+    ধ্রুবক পূর্ণসংখ্যা i3 = i/(ne2*ne1*ne0);
+    ধ্রুবক পূর্ণসংখ্যা i2 = (i/(ne1*ne0)) % ne2;
+    ধ্রুবক পূর্ণসংখ্যা i1 = (i/ne0) % ne1;
+    ধ্রুবক পূর্ণসংখ্যা i0 = i % ne0;
 
-    if (i0 >= ne0 || i1 >= ne1 || i2 >= ne2 || i3 >= ne3) {
-        return;
+    যদি (i0 >= ne0 || i1 >= ne1 || i2 >= ne2 || i3 >= ne3) {
+        ফেরত;
     }
 
-    const int i11 = i1 % ne11;
-    const int i12 = i2 % ne12;
-    const int i13 = i3 % ne13;
+    ধ্রুবক পূর্ণসংখ্যা i11 = i1 % ne11;
+    ধ্রুবক পূর্ণসংখ্যা i12 = i2 % ne12;
+    ধ্রুবক পূর্ণসংখ্যা i13 = i3 % ne13;
 
-    const size_t i_src0 =  i3*s03 +  i2*s02 +  i1*s01;
-    const size_t i_src1 = i13*s13 + i12*s12 + i11*s11;
-    const size_t i_dst  =  i3*s3  +  i2*s2  +  i1*s1;
+    ধ্রুবক size_t i_src0 =  i3*s03 +  i2*s02 +  i1*s01;
+    ধ্রুবক size_t i_src1 = i13*s13 + i12*s12 + i11*s11;
+    ধ্রুবক size_t i_dst  =  i3*s3  +  i2*s2  +  i1*s1;
 
-    const src0_t * src0_row = src0 + i_src0;
-    const src1_t * src1_row = src1 + i_src1;
+    ধ্রুবক src0_t * src0_row = src0 + i_src0;
+    ধ্রুবক src1_t * src1_row = src1 + i_src1;
     dst_t * dst_row = dst + i_dst;
 
-    const int i10 = i0 % ne10;
-    dst_row[i0] = (dst_t)bin_op(src0 ? (float)src0_row[i0*s00] : 0.0f, (float)src1_row[i10*s10]);
+    ধ্রুবক পূর্ণসংখ্যা i10 = i0 % ne10;
+    dst_row[i0] = (dst_t)bin_op(src0 ? (দশমিক)src0_row[i0*s00] : 0.0f, (দশমিক)src1_row[i10*s10]);
 }
 
 
-template<float (*bin_op)(const float, const float)>
-struct bin_bcast_sycl {
+template<দশমিক (*bin_op)(ধ্রুবক দশমিক, ধ্রুবক দশমিক)>
+কাঠামো bin_bcast_sycl {
     template <typename src0_t, typename src1_t, typename dst_t>
-    void operator()(const src0_t * src0_dd, const src1_t * src1_dd, dst_t * dst_dd, const int64_t ne00,
-                    const int64_t ne01, const int64_t ne02, const int64_t ne03, const int64_t ne10, const int64_t ne11,
-                    const int64_t ne12, const int64_t ne13, const int64_t ne0, const int64_t ne1, const int64_t ne2,
-                    const int64_t ne3, const size_t nb00, const size_t nb01, const size_t nb02, const size_t nb03,
-                    const size_t nb10, const size_t nb11, const size_t nb12, const size_t nb13, const size_t nb0,
-                    const size_t nb1, const size_t nb2, const size_t nb3, const bool src0_is_contiguous,
-                    const bool src1_is_contiguous, const bool src0_is_permuted, const bool src1_is_permuted,
+    শূন্য operator()(ধ্রুবক src0_t * src0_dd, ধ্রুবক src1_t * src1_dd, dst_t * dst_dd, ধ্রুবক int64_t ne00,
+                    ধ্রুবক int64_t ne01, ধ্রুবক int64_t ne02, ধ্রুবক int64_t ne03, ধ্রুবক int64_t ne10, ধ্রুবক int64_t ne11,
+                    ধ্রুবক int64_t ne12, ধ্রুবক int64_t ne13, ধ্রুবক int64_t ne0, ধ্রুবক int64_t ne1, ধ্রুবক int64_t ne2,
+                    ধ্রুবক int64_t ne3, ধ্রুবক size_t nb00, ধ্রুবক size_t nb01, ধ্রুবক size_t nb02, ধ্রুবক size_t nb03,
+                    ধ্রুবক size_t nb10, ধ্রুবক size_t nb11, ধ্রুবক size_t nb12, ধ্রুবক size_t nb13, ধ্রুবক size_t nb0,
+                    ধ্রুবক size_t nb1, ধ্রুবক size_t nb2, ধ্রুবক size_t nb3, ধ্রুবক যৌক্তিক src0_is_contiguous,
+                    ধ্রুবক যৌক্তিক src1_is_contiguous, ধ্রুবক যৌক্তিক src0_is_permuted, ধ্রুবক যৌক্তিক src1_is_permuted,
                     queue_ptr stream) {
-        int nr0 = ne10 / ne0;
-        int nr1 = ne11/ne1;
-        int nr2 = ne12/ne2;
-        int nr3 = ne13/ne3;
+        পূর্ণসংখ্যা nr0 = ne10 / ne0;
+        পূর্ণসংখ্যা nr1 = ne11/ne1;
+        পূর্ণসংখ্যা nr2 = ne12/ne2;
+        পূর্ণসংখ্যা nr3 = ne13/ne3;
 
-        int nr[4] = { nr0, nr1, nr2, nr3 };
+        পূর্ণসংখ্যা nr[4] = { nr0, nr1, nr2, nr3 };
 
         // collapse dimensions until first broadcast dimension
         int64_t cne[] = {ne0, ne1, ne2, ne3};
@@ -125,12 +125,12 @@ struct bin_bcast_sycl {
             cnb[3] *= cne[3];
         };
 
-        if (src0_is_contiguous && src1_is_contiguous && !src0_is_permuted && !src1_is_permuted) {
-            for (int i = 0; i < 4; i++) {
-                if (nr[i] != 1) {
-                    break;
+        যদি (src0_is_contiguous && src1_is_contiguous && !src0_is_permuted && !src1_is_permuted) {
+            জন্য (পূর্ণসংখ্যা i = 0; i < 4; i++) {
+                যদি (nr[i] != 1) {
+                    বিরতি;
                 }
-                if (i > 0) {
+                যদি (i > 0) {
                     collapse_nb(cnb, cne);
                     collapse_nb(cnb0, cne0);
                     collapse_nb(cnb1, cne1);
@@ -167,49 +167,49 @@ struct bin_bcast_sycl {
             size_t nb13 = cnb1[3];
 
             // size_t s0 = nb0 / sizeof(dst_t);
-            size_t s1 = nb1 / sizeof(dst_t);
-            size_t s2 = nb2 / sizeof(dst_t);
-            size_t s3 = nb3 / sizeof(dst_t);
+            size_t s1 = nb1 / আকার(dst_t);
+            size_t s2 = nb2 / আকার(dst_t);
+            size_t s3 = nb3 / আকার(dst_t);
 
-            size_t s10 = nb10 / sizeof(src1_t);
-            size_t s11 = nb11 / sizeof(src1_t);
-            size_t s12 = nb12 / sizeof(src1_t);
-            size_t s13 = nb13 / sizeof(src1_t);
+            size_t s10 = nb10 / আকার(src1_t);
+            size_t s11 = nb11 / আকার(src1_t);
+            size_t s12 = nb12 / আকার(src1_t);
+            size_t s13 = nb13 / আকার(src1_t);
 
-            size_t s00 = nb00 / sizeof(src0_t);
-            size_t s01 = nb01 / sizeof(src0_t);
-            size_t s02 = nb02 / sizeof(src0_t);
-            size_t s03 = nb03 / sizeof(src0_t);
+            size_t s00 = nb00 / আকার(src0_t);
+            size_t s01 = nb01 / আকার(src0_t);
+            size_t s02 = nb02 / আকার(src0_t);
+            size_t s03 = nb03 / আকার(src0_t);
 
             GGML_UNUSED(s00);
 
-            GGML_ASSERT(nb0 % sizeof(dst_t) == 0);
-            GGML_ASSERT(nb1 % sizeof(dst_t) == 0);
-            GGML_ASSERT(nb2 % sizeof(dst_t) == 0);
-            GGML_ASSERT(nb3 % sizeof(dst_t) == 0);
+            GGML_ASSERT(nb0 % আকার(dst_t) == 0);
+            GGML_ASSERT(nb1 % আকার(dst_t) == 0);
+            GGML_ASSERT(nb2 % আকার(dst_t) == 0);
+            GGML_ASSERT(nb3 % আকার(dst_t) == 0);
 
-            GGML_ASSERT(nb00 % sizeof(src0_t) == 0);
-            GGML_ASSERT(nb01 % sizeof(src0_t) == 0);
-            GGML_ASSERT(nb02 % sizeof(src0_t) == 0);
-            GGML_ASSERT(nb03 % sizeof(src0_t) == 0);
+            GGML_ASSERT(nb00 % আকার(src0_t) == 0);
+            GGML_ASSERT(nb01 % আকার(src0_t) == 0);
+            GGML_ASSERT(nb02 % আকার(src0_t) == 0);
+            GGML_ASSERT(nb03 % আকার(src0_t) == 0);
 
-            GGML_ASSERT(nb10 % sizeof(src1_t) == 0);
-            GGML_ASSERT(nb11 % sizeof(src1_t) == 0);
-            GGML_ASSERT(nb12 % sizeof(src1_t) == 0);
-            GGML_ASSERT(nb13 % sizeof(src1_t) == 0);
+            GGML_ASSERT(nb10 % আকার(src1_t) == 0);
+            GGML_ASSERT(nb11 % আকার(src1_t) == 0);
+            GGML_ASSERT(nb12 % আকার(src1_t) == 0);
+            GGML_ASSERT(nb13 % আকার(src1_t) == 0);
 
-            const int block_size = 128;
+            ধ্রুবক পূর্ণসংখ্যা block_আকার_2 = 128;
 
             int64_t hne0 = std::max(ne0/2LL, 1LL);
 
             sycl::range<3> block_dims(1, 1, 1);
-            block_dims[2] = std::min<unsigned int>(hne0, block_size);
-            block_dims[1] = std::min<unsigned int>(
-                ne1, block_size / (unsigned int)block_dims[2]);
+            block_dims[2] = std::min<unsigned পূর্ণসংখ্যা>(hne0, block_আকার_2);
+            block_dims[1] = std::min<unsigned পূর্ণসংখ্যা>(
+                ne1, block_আকার_2 / (unsigned পূর্ণসংখ্যা)block_dims[2]);
             block_dims[0] = std::min(
-                std::min<unsigned int>(
-                    ne2 * ne3, block_size / (unsigned int)block_dims[2] /
-                                   (unsigned int)block_dims[1]),
+                std::min<unsigned পূর্ণসংখ্যা>(
+                    ne2 * ne3, block_আকার_2 / (unsigned পূর্ণসংখ্যা)block_dims[2] /
+                                   (unsigned পূর্ণসংখ্যা)block_dims[1]),
                 64U);
 
             sycl::range<3> block_nums(
@@ -217,17 +217,17 @@ struct bin_bcast_sycl {
                 (ne1 + block_dims[1] - 1) / block_dims[1],
                 (hne0 + block_dims[2] - 1) / block_dims[2]);
 
-            if (block_nums[0] > 65535) {
+            যদি (block_nums[0] > 65535) {
                 // this is the maximum number of blocks in z direction, fallback to 1D grid kernel
-                int block_num = (ne0*ne1*ne2*ne3 + block_size - 1) / block_size;
+                পূর্ণসংখ্যা block_অঙ্ক = (ne0*ne1*ne2*ne3 + block_আকার_2 - 1) / block_আকার_2;
                 {
                     dpct::has_capability_or_fail(stream->get_device(),
                                                  {sycl::aspect::fp16});
 
                     stream->parallel_for(
-                        sycl::nd_range<3>(sycl::range<3>(1, 1, block_num) *
-                                              sycl::range<3>(1, 1, block_size),
-                                          sycl::range<3>(1, 1, block_size)),
+                        sycl::nd_range<3>(sycl::range<3>(1, 1, block_অঙ্ক) *
+                                              sycl::range<3>(1, 1, block_আকার_2),
+                                          sycl::range<3>(1, 1, block_আকার_2)),
                         [=](sycl::nd_item<3> item_ct1) {
                             k_bin_bcast_unravel<bin_op>(
                                 src0_dd, src1_dd, dst_dd, ne0, ne1, ne2, ne3,
@@ -235,7 +235,7 @@ struct bin_bcast_sycl {
                                 s03, s10, s11, s12, s13, item_ct1);
                         });
                 }
-            } else {
+            } অন্যথা {
                 /*
                 DPCT1049:16: The work-group size passed to the SYCL kernel may
                 exceed the limit. To get the device limit, query
@@ -258,208 +258,208 @@ struct bin_bcast_sycl {
     }
 };
 
-template <class op>
-inline void ggml_sycl_op_bin_bcast(ggml_backend_sycl_context & ctx, const ggml_tensor * src0, const ggml_tensor * src1,
+template <শ্রেণী op>
+অন্তঃরেখ শূন্য ggml_sycl_op_bin_bcast(ggml_backend_sycl_context & ctx, ধ্রুবক ggml_tensor * src0, ধ্রুবক ggml_tensor * src1,
                                    ggml_tensor * dst) {
     dpct::queue_ptr main_stream = ctx.stream();
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_দ্বিমিক_OP_LOCALS
 
-    if (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
-        op()((const float *) src0->data, (const float *) src1->data, (float *) dst->data, ne00, ne01, ne02, ne03, ne10,
+    যদি (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32) {
+        op()((ধ্রুবক দশমিক *) src0->তথ্য, (ধ্রুবক দশমিক *) src1->তথ্য, (দশমিক *) dst->তথ্য, ne00, ne01, ne02, ne03, ne10,
              ne11, ne12, ne13, ne0, ne1, ne2, ne3, nb00, nb01, nb02, nb03, nb10, nb11, nb12, nb13, nb0, nb1, nb2, nb3,
              ggml_is_contiguous(src0), ggml_is_contiguous(src1), ggml_is_permuted(src0), ggml_is_permuted(src1), main_stream);
-    } else if (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_F16 && dst->type == GGML_TYPE_F16) {
-        op()((const sycl::half *) src0->data, (const sycl::half *) src1->data, (sycl::half *) dst->data, ne00, ne01,
+    } অন্যথা যদি (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_F16 && dst->type == GGML_TYPE_F16) {
+        op()((ধ্রুবক sycl::half *) src0->তথ্য, (ধ্রুবক sycl::half *) src1->তথ্য, (sycl::half *) dst->তথ্য, ne00, ne01,
              ne02, ne03, ne10, ne11, ne12, ne13, ne0, ne1, ne2, ne3, nb00, nb01, nb02, nb03, nb10, nb11, nb12, nb13,
              nb0, nb1, nb2, nb3, ggml_is_contiguous(src0), ggml_is_contiguous(src1), ggml_is_permuted(src0), ggml_is_permuted(src1),
              main_stream);
-    } else if (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F16) {
-        op()((const sycl::half *) src0->data, (const float *) src1->data, (sycl::half *) dst->data, ne00, ne01, ne02,
+    } অন্যথা যদি (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F16) {
+        op()((ধ্রুবক sycl::half *) src0->তথ্য, (ধ্রুবক দশমিক *) src1->তথ্য, (sycl::half *) dst->তথ্য, ne00, ne01, ne02,
              ne03, ne10, ne11, ne12, ne13, ne0, ne1, ne2, ne3, nb00, nb01, nb02, nb03, nb10, nb11, nb12, nb13, nb0, nb1,
              nb2, nb3, ggml_is_contiguous(src0), ggml_is_contiguous(src1), ggml_is_permuted(src0), ggml_is_permuted(src1),
              main_stream);
-    } else if (src0->type == GGML_TYPE_I32 && src1->type == GGML_TYPE_I32 && dst->type == GGML_TYPE_I32) {
-        op()((const int32_t *) src0->data, (const int32_t *) src1->data, (int32_t *) dst->data, ne00, ne01, ne02, ne03,
+    } অন্যথা যদি (src0->type == GGML_TYPE_I32 && src1->type == GGML_TYPE_I32 && dst->type == GGML_TYPE_I32) {
+        op()((ধ্রুবক int32_t *) src0->তথ্য, (ধ্রুবক int32_t *) src1->তথ্য, (int32_t *) dst->তথ্য, ne00, ne01, ne02, ne03,
              ne10, ne11, ne12, ne13, ne0, ne1, ne2, ne3, nb00, nb01, nb02, nb03, nb10, nb11, nb12, nb13, nb0, nb1, nb2,
              nb3, ggml_is_contiguous(src0), ggml_is_contiguous(src1), ggml_is_permuted(src0), ggml_is_permuted(src1),
              main_stream);
-    } else if (src0->type == GGML_TYPE_I16 && src1->type == GGML_TYPE_I16 && dst->type == GGML_TYPE_I16) {
-        op()((const int16_t *) src0->data, (const int16_t *) src1->data, (int16_t *) dst->data, ne00, ne01, ne02, ne03,
+    } অন্যথা যদি (src0->type == GGML_TYPE_I16 && src1->type == GGML_TYPE_I16 && dst->type == GGML_TYPE_I16) {
+        op()((ধ্রুবক int16_t *) src0->তথ্য, (ধ্রুবক int16_t *) src1->তথ্য, (int16_t *) dst->তথ্য, ne00, ne01, ne02, ne03,
              ne10, ne11, ne12, ne13, ne0, ne1, ne2, ne3, nb00, nb01, nb02, nb03, nb10, nb11, nb12, nb13, nb0, nb1, nb2,
              nb3, ggml_is_contiguous(src0), ggml_is_contiguous(src1), ggml_is_permuted(src0), ggml_is_permuted(src1),
              main_stream);
 #ifdef GGML_SYCL_HAS_BF16
-    } else if (src0->type == GGML_TYPE_BF16 && src1->type == GGML_TYPE_BF16 && dst->type == GGML_TYPE_BF16) {
-        op()((const sycl::ext::oneapi::bfloat16 *) src0->data, (const sycl::ext::oneapi::bfloat16 *) src1->data,
-             (sycl::ext::oneapi::bfloat16 *) dst->data, ne00, ne01, ne02, ne03, ne10, ne11, ne12, ne13, ne0, ne1, ne2,
+    } অন্যথা যদি (src0->type == GGML_TYPE_BF16 && src1->type == GGML_TYPE_BF16 && dst->type == GGML_TYPE_BF16) {
+        op()((ধ্রুবক sycl::ext::oneapi::bfloat16 *) src0->তথ্য, (ধ্রুবক sycl::ext::oneapi::bfloat16 *) src1->তথ্য,
+             (sycl::ext::oneapi::bfloat16 *) dst->তথ্য, ne00, ne01, ne02, ne03, ne10, ne11, ne12, ne13, ne0, ne1, ne2,
              ne3, nb00, nb01, nb02, nb03, nb10, nb11, nb12, nb13, nb0, nb1, nb2, nb3, ggml_is_contiguous(src0),
              ggml_is_contiguous(src1), ggml_is_permuted(src0), ggml_is_permuted(src1), main_stream);
-    } else if (src0->type == GGML_TYPE_BF16 && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_BF16) {
-        op()((const sycl::ext::oneapi::bfloat16 *) src0->data, (const float *) src1->data,
-             (sycl::ext::oneapi::bfloat16 *) dst->data, ne00, ne01, ne02, ne03, ne10, ne11, ne12, ne13, ne0, ne1, ne2,
+    } অন্যথা যদি (src0->type == GGML_TYPE_BF16 && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_BF16) {
+        op()((ধ্রুবক sycl::ext::oneapi::bfloat16 *) src0->তথ্য, (ধ্রুবক দশমিক *) src1->তথ্য,
+             (sycl::ext::oneapi::bfloat16 *) dst->তথ্য, ne00, ne01, ne02, ne03, ne10, ne11, ne12, ne13, ne0, ne1, ne2,
              ne3, nb00, nb01, nb02, nb03, nb10, nb11, nb12, nb13, nb0, nb1, nb2, nb3, ggml_is_contiguous(src0),
              ggml_is_contiguous(src1), ggml_is_permuted(src0), ggml_is_permuted(src1), main_stream);
 #endif
-    } else {
+    } অন্যথা {
         fprintf(stderr, "%s: unsupported types: dst: %s, src0: %s, src1: %s\n", __func__, ggml_type_name(dst->type),
                 ggml_type_name(src0->type), ggml_type_name(src1->type));
         GGML_ABORT("fatal error");
     }
 }
 
-inline void ggml_sycl_op_add(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
+অন্তঃরেখ শূন্য ggml_sycl_op_add(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
 
     ggml_sycl_op_bin_bcast<bin_bcast_sycl<op_add>>(ctx, dst->src[0], dst->src[1], dst);
 }
 
-inline void ggml_sycl_op_sub(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
+অন্তঃরেখ শূন্য ggml_sycl_op_sub(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
 
     ggml_sycl_op_bin_bcast<bin_bcast_sycl<op_sub>>(ctx, dst->src[0], dst->src[1], dst);
 }
 
-inline void ggml_sycl_op_mul(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
+অন্তঃরেখ শূন্য ggml_sycl_op_mul(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
 
     ggml_sycl_op_bin_bcast<bin_bcast_sycl<op_mul>>(ctx, dst->src[0], dst->src[1], dst);
 }
 
-inline void ggml_sycl_op_div(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
+অন্তঃরেখ শূন্য ggml_sycl_op_div(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
 
     ggml_sycl_op_bin_bcast<bin_bcast_sycl<op_div>>(ctx, dst->src[0], dst->src[1], dst);
 }
 
-inline void ggml_sycl_op_repeat(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
+অন্তঃরেখ শূন্য ggml_sycl_op_repeat(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
     ggml_sycl_op_bin_bcast<bin_bcast_sycl<op_repeat>>(ctx, dst, dst->src[0], dst);
 }
 
 
-void ggml_sycl_add(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+শূন্য ggml_sycl_add(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
     ggml_sycl_op_add(ctx, dst);
 }
 
-void ggml_sycl_sub(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+শূন্য ggml_sycl_sub(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
     ggml_sycl_op_sub(ctx, dst);
 }
 
-void ggml_sycl_mul(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+শূন্য ggml_sycl_mul(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
     ggml_sycl_op_mul(ctx, dst);
 }
 
-void ggml_sycl_div(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+শূন্য ggml_sycl_div(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
     ggml_sycl_op_div(ctx, dst);
 }
 
-void ggml_sycl_repeat(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+শূন্য ggml_sycl_repeat(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_repeat(ctx, dst);
 }
 
 // fused ADD+ADD: dst = (src0 + src1) + src2. Same indexing as k_bin_bcast, so mixed
 // types, broadcast, and non-contiguous layouts that add() already handles also fuse.
-template<float (*bin_op)(const float, const float), typename src0_t, typename src1_t, typename src2_t, typename dst_t>
-static void k_bin_bcast3(const src0_t * src0, const src1_t * src1, const src2_t * src2, dst_t * dst,
-        int ne0, int ne1, int ne2, int ne3,
-        int ne10, int ne11, int ne12, int ne13,
-        int ne20, int ne21, int ne22, int ne23,
-        int s1, int s2, int s3,
-        int s00, int s01, int s02, int s03,
-        int s10, int s11, int s12, int s13,
-        int s20, int s21, int s22, int s23,
-        const sycl::nd_item<3> & item_ct1) {
-    const int i0s = item_ct1.get_local_range(2) * item_ct1.get_group(2) +
+template<দশমিক (*bin_op)(ধ্রুবক দশমিক, ধ্রুবক দশমিক), typename src0_t, typename src1_t, typename src2_t, typename dst_t>
+স্থির শূন্য k_bin_bcast3(ধ্রুবক src0_t * src0, ধ্রুবক src1_t * src1, ধ্রুবক src2_t * src2, dst_t * dst,
+        পূর্ণসংখ্যা ne0, পূর্ণসংখ্যা ne1, পূর্ণসংখ্যা ne2, পূর্ণসংখ্যা ne3,
+        পূর্ণসংখ্যা ne10, পূর্ণসংখ্যা ne11, পূর্ণসংখ্যা ne12, পূর্ণসংখ্যা ne13,
+        পূর্ণসংখ্যা ne20, পূর্ণসংখ্যা ne21, পূর্ণসংখ্যা ne22, পূর্ণসংখ্যা ne23,
+        পূর্ণসংখ্যা s1, পূর্ণসংখ্যা s2, পূর্ণসংখ্যা s3,
+        পূর্ণসংখ্যা s00, পূর্ণসংখ্যা s01, পূর্ণসংখ্যা s02, পূর্ণসংখ্যা s03,
+        পূর্ণসংখ্যা s10, পূর্ণসংখ্যা s11, পূর্ণসংখ্যা s12, পূর্ণসংখ্যা s13,
+        পূর্ণসংখ্যা s20, পূর্ণসংখ্যা s21, পূর্ণসংখ্যা s22, পূর্ণসংখ্যা s23,
+        ধ্রুবক sycl::nd_item<3> & item_ct1) {
+    ধ্রুবক পূর্ণসংখ্যা i0s = item_ct1.get_local_range(2) * item_ct1.get_group(2) +
                     item_ct1.get_local_id(2);
-    const int i1 = (item_ct1.get_local_range(1) * item_ct1.get_group(1) +
+    ধ্রুবক পূর্ণসংখ্যা i1 = (item_ct1.get_local_range(1) * item_ct1.get_group(1) +
                     item_ct1.get_local_id(1));
-    const int i2 = (item_ct1.get_local_range(0) * item_ct1.get_group(0) +
+    ধ্রুবক পূর্ণসংখ্যা i2 = (item_ct1.get_local_range(0) * item_ct1.get_group(0) +
                     item_ct1.get_local_id(0)) /
                    ne3;
-    const int i3 = (item_ct1.get_local_range(0) * item_ct1.get_group(0) +
+    ধ্রুবক পূর্ণসংখ্যা i3 = (item_ct1.get_local_range(0) * item_ct1.get_group(0) +
                     item_ct1.get_local_id(0)) %
                    ne3;
 
-    if (i0s >= ne0 || i1 >= ne1 || i2 >= ne2 || i3 >= ne3) {
-        return;
+    যদি (i0s >= ne0 || i1 >= ne1 || i2 >= ne2 || i3 >= ne3) {
+        ফেরত;
     }
 
-    const int i11 = i1 % ne11;
-    const int i12 = i2 % ne12;
-    const int i13 = i3 % ne13;
-    const int i21 = i1 % ne21;
-    const int i22 = i2 % ne22;
-    const int i23 = i3 % ne23;
+    ধ্রুবক পূর্ণসংখ্যা i11 = i1 % ne11;
+    ধ্রুবক পূর্ণসংখ্যা i12 = i2 % ne12;
+    ধ্রুবক পূর্ণসংখ্যা i13 = i3 % ne13;
+    ধ্রুবক পূর্ণসংখ্যা i21 = i1 % ne21;
+    ধ্রুবক পূর্ণসংখ্যা i22 = i2 % ne22;
+    ধ্রুবক পূর্ণসংখ্যা i23 = i3 % ne23;
 
-    const size_t i_src0 = i3 * s03 + i2 * s02 + i1 * s01;
-    const size_t i_src1 = i13 * s13 + i12 * s12 + i11 * s11;
-    const size_t i_src2 = i23 * s23 + i22 * s22 + i21 * s21;
-    const size_t i_dst  = i3 * s3 + i2 * s2 + i1 * s1;
+    ধ্রুবক size_t i_src0 = i3 * s03 + i2 * s02 + i1 * s01;
+    ধ্রুবক size_t i_src1 = i13 * s13 + i12 * s12 + i11 * s11;
+    ধ্রুবক size_t i_src2 = i23 * s23 + i22 * s22 + i21 * s21;
+    ধ্রুবক size_t i_dst  = i3 * s3 + i2 * s2 + i1 * s1;
 
-    const src0_t * src0_row = src0 + i_src0;
-    const src1_t * src1_row = src1 + i_src1;
-    const src2_t * src2_row = src2 + i_src2;
+    ধ্রুবক src0_t * src0_row = src0 + i_src0;
+    ধ্রুবক src1_t * src1_row = src1 + i_src1;
+    ধ্রুবক src2_t * src2_row = src2 + i_src2;
     dst_t *        dst_row  = dst + i_dst;
 
-    for (int i0 = i0s; i0 < ne0;
+    জন্য (পূর্ণসংখ্যা i0 = i0s; i0 < ne0;
          i0 += item_ct1.get_local_range(2) * item_ct1.get_group_range(2)) {
-        const int   i10 = i0 % ne10;
-        const int   i20 = i0 % ne20;
-        const float acc = bin_op((float) src0_row[i0 * s00], (float) src1_row[i10 * s10]);
-        dst_row[i0]     = (dst_t) bin_op(acc, (float) src2_row[i20 * s20]);
+        ধ্রুবক পূর্ণসংখ্যা   i10 = i0 % ne10;
+        ধ্রুবক পূর্ণসংখ্যা   i20 = i0 % ne20;
+        ধ্রুবক দশমিক acc = bin_op((দশমিক) src0_row[i0 * s00], (দশমিক) src1_row[i10 * s10]);
+        dst_row[i0]     = (dst_t) bin_op(acc, (দশমিক) src2_row[i20 * s20]);
     }
 }
 
-template<float (*bin_op)(const float, const float), typename src0_t, typename src1_t, typename src2_t, typename dst_t>
-static void k_bin_bcast3_unravel(const src0_t * src0, const src1_t * src1, const src2_t * src2, dst_t * dst,
-        int ne0, int ne1, int ne2, int ne3,
-        int ne10, int ne11, int ne12, int ne13,
-        int ne20, int ne21, int ne22, int ne23,
-        int s1, int s2, int s3,
-        int s00, int s01, int s02, int s03,
-        int s10, int s11, int s12, int s13,
-        int s20, int s21, int s22, int s23,
-        const sycl::nd_item<3> & item_ct1) {
-    const int i = item_ct1.get_local_range(2) * item_ct1.get_group(2) +
+template<দশমিক (*bin_op)(ধ্রুবক দশমিক, ধ্রুবক দশমিক), typename src0_t, typename src1_t, typename src2_t, typename dst_t>
+স্থির শূন্য k_bin_bcast3_unravel(ধ্রুবক src0_t * src0, ধ্রুবক src1_t * src1, ধ্রুবক src2_t * src2, dst_t * dst,
+        পূর্ণসংখ্যা ne0, পূর্ণসংখ্যা ne1, পূর্ণসংখ্যা ne2, পূর্ণসংখ্যা ne3,
+        পূর্ণসংখ্যা ne10, পূর্ণসংখ্যা ne11, পূর্ণসংখ্যা ne12, পূর্ণসংখ্যা ne13,
+        পূর্ণসংখ্যা ne20, পূর্ণসংখ্যা ne21, পূর্ণসংখ্যা ne22, পূর্ণসংখ্যা ne23,
+        পূর্ণসংখ্যা s1, পূর্ণসংখ্যা s2, পূর্ণসংখ্যা s3,
+        পূর্ণসংখ্যা s00, পূর্ণসংখ্যা s01, পূর্ণসংখ্যা s02, পূর্ণসংখ্যা s03,
+        পূর্ণসংখ্যা s10, পূর্ণসংখ্যা s11, পূর্ণসংখ্যা s12, পূর্ণসংখ্যা s13,
+        পূর্ণসংখ্যা s20, পূর্ণসংখ্যা s21, পূর্ণসংখ্যা s22, পূর্ণসংখ্যা s23,
+        ধ্রুবক sycl::nd_item<3> & item_ct1) {
+    ধ্রুবক পূর্ণসংখ্যা i = item_ct1.get_local_range(2) * item_ct1.get_group(2) +
                   item_ct1.get_local_id(2);
 
-    const int i3 = i / (ne2 * ne1 * ne0);
-    const int i2 = (i / (ne1 * ne0)) % ne2;
-    const int i1 = (i / ne0) % ne1;
-    const int i0 = i % ne0;
+    ধ্রুবক পূর্ণসংখ্যা i3 = i / (ne2 * ne1 * ne0);
+    ধ্রুবক পূর্ণসংখ্যা i2 = (i / (ne1 * ne0)) % ne2;
+    ধ্রুবক পূর্ণসংখ্যা i1 = (i / ne0) % ne1;
+    ধ্রুবক পূর্ণসংখ্যা i0 = i % ne0;
 
-    if (i0 >= ne0 || i1 >= ne1 || i2 >= ne2 || i3 >= ne3) {
-        return;
+    যদি (i0 >= ne0 || i1 >= ne1 || i2 >= ne2 || i3 >= ne3) {
+        ফেরত;
     }
 
-    const int i11 = i1 % ne11;
-    const int i12 = i2 % ne12;
-    const int i13 = i3 % ne13;
-    const int i21 = i1 % ne21;
-    const int i22 = i2 % ne22;
-    const int i23 = i3 % ne23;
+    ধ্রুবক পূর্ণসংখ্যা i11 = i1 % ne11;
+    ধ্রুবক পূর্ণসংখ্যা i12 = i2 % ne12;
+    ধ্রুবক পূর্ণসংখ্যা i13 = i3 % ne13;
+    ধ্রুবক পূর্ণসংখ্যা i21 = i1 % ne21;
+    ধ্রুবক পূর্ণসংখ্যা i22 = i2 % ne22;
+    ধ্রুবক পূর্ণসংখ্যা i23 = i3 % ne23;
 
-    const size_t i_src0 = i3 * s03 + i2 * s02 + i1 * s01;
-    const size_t i_src1 = i13 * s13 + i12 * s12 + i11 * s11;
-    const size_t i_src2 = i23 * s23 + i22 * s22 + i21 * s21;
-    const size_t i_dst  = i3 * s3 + i2 * s2 + i1 * s1;
+    ধ্রুবক size_t i_src0 = i3 * s03 + i2 * s02 + i1 * s01;
+    ধ্রুবক size_t i_src1 = i13 * s13 + i12 * s12 + i11 * s11;
+    ধ্রুবক size_t i_src2 = i23 * s23 + i22 * s22 + i21 * s21;
+    ধ্রুবক size_t i_dst  = i3 * s3 + i2 * s2 + i1 * s1;
 
-    const int   i10 = i0 % ne10;
-    const int   i20 = i0 % ne20;
-    const float acc = bin_op((float) src0[i_src0 + i0 * s00], (float) src1[i_src1 + i10 * s10]);
-    dst[i_dst + i0] = (dst_t) bin_op(acc, (float) src2[i_src2 + i20 * s20]);
+    ধ্রুবক পূর্ণসংখ্যা   i10 = i0 % ne10;
+    ধ্রুবক পূর্ণসংখ্যা   i20 = i0 % ne20;
+    ধ্রুবক দশমিক acc = bin_op((দশমিক) src0[i_src0 + i0 * s00], (দশমিক) src1[i_src1 + i10 * s10]);
+    dst[i_dst + i0] = (dst_t) bin_op(acc, (দশমিক) src2[i_src2 + i20 * s20]);
 }
 
-template<float (*bin_op)(const float, const float), typename src0_t, typename src1_t, typename src2_t, typename dst_t>
-static void launch_bin_bcast3(ggml_backend_sycl_context & ctx, const ggml_tensor * src0, const ggml_tensor * src1,
-                              const ggml_tensor * src2, ggml_tensor * dst) {
+template<দশমিক (*bin_op)(ধ্রুবক দশমিক, ধ্রুবক দশমিক), typename src0_t, typename src1_t, typename src2_t, typename dst_t>
+স্থির শূন্য launch_bin_bcast3(ggml_backend_sycl_context & ctx, ধ্রুবক ggml_tensor * src0, ধ্রুবক ggml_tensor * src1,
+                              ধ্রুবক ggml_tensor * src2, ggml_tensor * dst) {
     dpct::queue_ptr stream = ctx.stream();
     SYCL_CHECK(ggml_sycl_set_device(ctx.device));
 
     GGML_TENSOR_TERNARY_OP_LOCALS
 
-    int nr1[4] = { (int) (ne10 / ne0), (int) (ne11 / ne1), (int) (ne12 / ne2), (int) (ne13 / ne3) };
-    int nr2[4] = { (int) (ne20 / ne0), (int) (ne21 / ne1), (int) (ne22 / ne2), (int) (ne23 / ne3) };
+    পূর্ণসংখ্যা nr1[4] = { (পূর্ণসংখ্যা) (ne10 / ne0), (পূর্ণসংখ্যা) (ne11 / ne1), (পূর্ণসংখ্যা) (ne12 / ne2), (পূর্ণসংখ্যা) (ne13 / ne3) };
+    পূর্ণসংখ্যা nr2[4] = { (পূর্ণসংখ্যা) (ne20 / ne0), (পূর্ণসংখ্যা) (ne21 / ne1), (পূর্ণসংখ্যা) (ne22 / ne2), (পূর্ণসংখ্যা) (ne23 / ne3) };
 
     int64_t cne[]  = { ne0, ne1, ne2, ne3 };
     int64_t cne0[] = { ne00, ne01, ne02, ne03 };
@@ -483,14 +483,14 @@ static void launch_bin_bcast3(ggml_backend_sycl_context & ctx, const ggml_tensor
         cnb[3] *= cne[3];
     };
 
-    const bool can_collapse = ggml_is_contiguous(src0) && ggml_is_contiguous(src1) && ggml_is_contiguous(src2) &&
+    ধ্রুবক যৌক্তিক can_collapse = ggml_is_contiguous(src0) && ggml_is_contiguous(src1) && ggml_is_contiguous(src2) &&
                               !ggml_is_permuted(src0) && !ggml_is_permuted(src1) && !ggml_is_permuted(src2);
-    if (can_collapse) {
-        for (int i = 0; i < 4; i++) {
-            if (nr1[i] != 1 || nr2[i] != 1) {
-                break;
+    যদি (can_collapse) {
+        জন্য (পূর্ণসংখ্যা i = 0; i < 4; i++) {
+            যদি (nr1[i] != 1 || nr2[i] != 1) {
+                বিরতি;
             }
-            if (i > 0) {
+            যদি (i > 0) {
                 collapse_nb(cnb, cne);
                 collapse_nb(cnb0, cne0);
                 collapse_nb(cnb1, cne1);
@@ -519,48 +519,48 @@ static void launch_bin_bcast3(ggml_backend_sycl_context & ctx, const ggml_tensor
         int64_t ne22 = cne2[2];
         int64_t ne23 = cne2[3];
 
-        size_t s1 = cnb[1] / sizeof(dst_t);
-        size_t s2 = cnb[2] / sizeof(dst_t);
-        size_t s3 = cnb[3] / sizeof(dst_t);
+        size_t s1 = cnb[1] / আকার(dst_t);
+        size_t s2 = cnb[2] / আকার(dst_t);
+        size_t s3 = cnb[3] / আকার(dst_t);
 
-        size_t s00 = cnb0[0] / sizeof(src0_t);
-        size_t s01 = cnb0[1] / sizeof(src0_t);
-        size_t s02 = cnb0[2] / sizeof(src0_t);
-        size_t s03 = cnb0[3] / sizeof(src0_t);
+        size_t s00 = cnb0[0] / আকার(src0_t);
+        size_t s01 = cnb0[1] / আকার(src0_t);
+        size_t s02 = cnb0[2] / আকার(src0_t);
+        size_t s03 = cnb0[3] / আকার(src0_t);
 
-        size_t s10 = cnb1[0] / sizeof(src1_t);
-        size_t s11 = cnb1[1] / sizeof(src1_t);
-        size_t s12 = cnb1[2] / sizeof(src1_t);
-        size_t s13 = cnb1[3] / sizeof(src1_t);
+        size_t s10 = cnb1[0] / আকার(src1_t);
+        size_t s11 = cnb1[1] / আকার(src1_t);
+        size_t s12 = cnb1[2] / আকার(src1_t);
+        size_t s13 = cnb1[3] / আকার(src1_t);
 
-        size_t s20 = cnb2[0] / sizeof(src2_t);
-        size_t s21 = cnb2[1] / sizeof(src2_t);
-        size_t s22 = cnb2[2] / sizeof(src2_t);
-        size_t s23 = cnb2[3] / sizeof(src2_t);
+        size_t s20 = cnb2[0] / আকার(src2_t);
+        size_t s21 = cnb2[1] / আকার(src2_t);
+        size_t s22 = cnb2[2] / আকার(src2_t);
+        size_t s23 = cnb2[3] / আকার(src2_t);
 
-        GGML_ASSERT(cnb[0] % sizeof(dst_t) == 0 && cnb[1] % sizeof(dst_t) == 0 && cnb[2] % sizeof(dst_t) == 0 &&
-                    cnb[3] % sizeof(dst_t) == 0);
-        GGML_ASSERT(cnb0[0] % sizeof(src0_t) == 0 && cnb0[1] % sizeof(src0_t) == 0 && cnb0[2] % sizeof(src0_t) == 0 &&
-                    cnb0[3] % sizeof(src0_t) == 0);
-        GGML_ASSERT(cnb1[0] % sizeof(src1_t) == 0 && cnb1[1] % sizeof(src1_t) == 0 && cnb1[2] % sizeof(src1_t) == 0 &&
-                    cnb1[3] % sizeof(src1_t) == 0);
-        GGML_ASSERT(cnb2[0] % sizeof(src2_t) == 0 && cnb2[1] % sizeof(src2_t) == 0 && cnb2[2] % sizeof(src2_t) == 0 &&
-                    cnb2[3] % sizeof(src2_t) == 0);
+        GGML_ASSERT(cnb[0] % আকার(dst_t) == 0 && cnb[1] % আকার(dst_t) == 0 && cnb[2] % আকার(dst_t) == 0 &&
+                    cnb[3] % আকার(dst_t) == 0);
+        GGML_ASSERT(cnb0[0] % আকার(src0_t) == 0 && cnb0[1] % আকার(src0_t) == 0 && cnb0[2] % আকার(src0_t) == 0 &&
+                    cnb0[3] % আকার(src0_t) == 0);
+        GGML_ASSERT(cnb1[0] % আকার(src1_t) == 0 && cnb1[1] % আকার(src1_t) == 0 && cnb1[2] % আকার(src1_t) == 0 &&
+                    cnb1[3] % আকার(src1_t) == 0);
+        GGML_ASSERT(cnb2[0] % আকার(src2_t) == 0 && cnb2[1] % আকার(src2_t) == 0 && cnb2[2] % আকার(src2_t) == 0 &&
+                    cnb2[3] % আকার(src2_t) == 0);
 
-        const src0_t * src0_dd = (const src0_t *) src0->data;
-        const src1_t * src1_dd = (const src1_t *) src1->data;
-        const src2_t * src2_dd = (const src2_t *) src2->data;
-        dst_t *        dst_dd  = (dst_t *) dst->data;
+        ধ্রুবক src0_t * src0_dd = (ধ্রুবক src0_t *) src0->তথ্য;
+        ধ্রুবক src1_t * src1_dd = (ধ্রুবক src1_t *) src1->তথ্য;
+        ধ্রুবক src2_t * src2_dd = (ধ্রুবক src2_t *) src2->তথ্য;
+        dst_t *        dst_dd  = (dst_t *) dst->তথ্য;
 
-        const int block_size = 128;
+        ধ্রুবক পূর্ণসংখ্যা block_আকার_2 = 128;
         int64_t   hne0       = std::max(ne0 / 2LL, 1LL);
 
         sycl::range<3> block_dims(1, 1, 1);
-        block_dims[2] = std::min<unsigned int>(hne0, block_size);
-        block_dims[1] = std::min<unsigned int>(ne1, block_size / (unsigned int) block_dims[2]);
-        block_dims[0] = std::min(std::min<unsigned int>(ne2 * ne3,
-                                                        block_size / (unsigned int) block_dims[2] /
-                                                            (unsigned int) block_dims[1]),
+        block_dims[2] = std::min<unsigned পূর্ণসংখ্যা>(hne0, block_আকার_2);
+        block_dims[1] = std::min<unsigned পূর্ণসংখ্যা>(ne1, block_আকার_2 / (unsigned পূর্ণসংখ্যা) block_dims[2]);
+        block_dims[0] = std::min(std::min<unsigned পূর্ণসংখ্যা>(ne2 * ne3,
+                                                        block_আকার_2 / (unsigned পূর্ণসংখ্যা) block_dims[2] /
+                                                            (unsigned পূর্ণসংখ্যা) block_dims[1]),
                                  64U);
 
         sycl::range<3> block_nums((ne2 * ne3 + block_dims[0] - 1) / block_dims[0],
@@ -569,17 +569,17 @@ static void launch_bin_bcast3(ggml_backend_sycl_context & ctx, const ggml_tensor
 
         dpct::has_capability_or_fail(stream->get_device(), { sycl::aspect::fp16 });
 
-        if (block_nums[0] > 65535) {
-            int block_num = (ne0 * ne1 * ne2 * ne3 + block_size - 1) / block_size;
+        যদি (block_nums[0] > 65535) {
+            পূর্ণসংখ্যা block_অঙ্ক = (ne0 * ne1 * ne2 * ne3 + block_আকার_2 - 1) / block_আকার_2;
             stream->parallel_for(
-                sycl::nd_range<3>(sycl::range<3>(1, 1, block_num) * sycl::range<3>(1, 1, block_size),
-                                  sycl::range<3>(1, 1, block_size)),
+                sycl::nd_range<3>(sycl::range<3>(1, 1, block_অঙ্ক) * sycl::range<3>(1, 1, block_আকার_2),
+                                  sycl::range<3>(1, 1, block_আকার_2)),
                 [=](sycl::nd_item<3> item_ct1) {
                     k_bin_bcast3_unravel<bin_op>(src0_dd, src1_dd, src2_dd, dst_dd, ne0, ne1, ne2, ne3, ne10, ne11,
                                                  ne12, ne13, ne20, ne21, ne22, ne23, s1, s2, s3, s00, s01, s02, s03,
                                                  s10, s11, s12, s13, s20, s21, s22, s23, item_ct1);
                 });
-        } else {
+        } অন্যথা {
             stream->parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
                                  [=](sycl::nd_item<3> item_ct1) {
                                      k_bin_bcast3<bin_op>(src0_dd, src1_dd, src2_dd, dst_dd, ne0, ne1, ne2, ne3, ne10,
@@ -591,56 +591,56 @@ static void launch_bin_bcast3(ggml_backend_sycl_context & ctx, const ggml_tensor
     }
 }
 
-void ggml_sycl_op_add_add_fused(ggml_backend_sycl_context & ctx, ggml_tensor * add0, ggml_tensor * add1) {
-    const ggml_tensor * src0 = add0->src[0];
-    const ggml_tensor * src1 = add0->src[1];
-    const ggml_tensor * src2 = add1->src[1];
+শূন্য ggml_sycl_op_add_add_fused(ggml_backend_sycl_context & ctx, ggml_tensor * add0, ggml_tensor * add1) {
+    ধ্রুবক ggml_tensor * src0 = add0->src[0];
+    ধ্রুবক ggml_tensor * src1 = add0->src[1];
+    ধ্রুবক ggml_tensor * src2 = add1->src[1];
     ggml_tensor *       dst  = add1;
 
     GGML_ASSERT(add1->src[0] == add0);
     GGML_ASSERT(ggml_sycl_add_kernel_supports(src0->type, src1->type, add0->type));
     GGML_ASSERT(ggml_sycl_add_kernel_supports(add0->type, src2->type, dst->type));
 
-    if (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_F32 && src2->type == GGML_TYPE_F32 &&
+    যদি (src0->type == GGML_TYPE_F32 && src1->type == GGML_TYPE_F32 && src2->type == GGML_TYPE_F32 &&
         dst->type == GGML_TYPE_F32) {
-        launch_bin_bcast3<op_add, float, float, float, float>(ctx, src0, src1, src2, dst);
-    } else if (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_F16 && src2->type == GGML_TYPE_F16 &&
+        launch_bin_bcast3<op_add, দশমিক, দশমিক, দশমিক, দশমিক>(ctx, src0, src1, src2, dst);
+    } অন্যথা যদি (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_F16 && src2->type == GGML_TYPE_F16 &&
                dst->type == GGML_TYPE_F16) {
         launch_bin_bcast3<op_add, sycl::half, sycl::half, sycl::half, sycl::half>(ctx, src0, src1, src2, dst);
-    } else if (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_F32 && src2->type == GGML_TYPE_F32 &&
+    } অন্যথা যদি (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_F32 && src2->type == GGML_TYPE_F32 &&
                dst->type == GGML_TYPE_F16) {
-        launch_bin_bcast3<op_add, sycl::half, float, float, sycl::half>(ctx, src0, src1, src2, dst);
-    } else if (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_F16 && src2->type == GGML_TYPE_F32 &&
+        launch_bin_bcast3<op_add, sycl::half, দশমিক, দশমিক, sycl::half>(ctx, src0, src1, src2, dst);
+    } অন্যথা যদি (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_F16 && src2->type == GGML_TYPE_F32 &&
                dst->type == GGML_TYPE_F16) {
-        launch_bin_bcast3<op_add, sycl::half, sycl::half, float, sycl::half>(ctx, src0, src1, src2, dst);
-    } else if (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_F32 && src2->type == GGML_TYPE_F16 &&
+        launch_bin_bcast3<op_add, sycl::half, sycl::half, দশমিক, sycl::half>(ctx, src0, src1, src2, dst);
+    } অন্যথা যদি (src0->type == GGML_TYPE_F16 && src1->type == GGML_TYPE_F32 && src2->type == GGML_TYPE_F16 &&
                dst->type == GGML_TYPE_F16) {
-        launch_bin_bcast3<op_add, sycl::half, float, sycl::half, sycl::half>(ctx, src0, src1, src2, dst);
-    } else if (src0->type == GGML_TYPE_I32 && src1->type == GGML_TYPE_I32 && src2->type == GGML_TYPE_I32 &&
+        launch_bin_bcast3<op_add, sycl::half, দশমিক, sycl::half, sycl::half>(ctx, src0, src1, src2, dst);
+    } অন্যথা যদি (src0->type == GGML_TYPE_I32 && src1->type == GGML_TYPE_I32 && src2->type == GGML_TYPE_I32 &&
                dst->type == GGML_TYPE_I32) {
         launch_bin_bcast3<op_add, int32_t, int32_t, int32_t, int32_t>(ctx, src0, src1, src2, dst);
-    } else if (src0->type == GGML_TYPE_I16 && src1->type == GGML_TYPE_I16 && src2->type == GGML_TYPE_I16 &&
+    } অন্যথা যদি (src0->type == GGML_TYPE_I16 && src1->type == GGML_TYPE_I16 && src2->type == GGML_TYPE_I16 &&
                dst->type == GGML_TYPE_I16) {
         launch_bin_bcast3<op_add, int16_t, int16_t, int16_t, int16_t>(ctx, src0, src1, src2, dst);
 #ifdef GGML_SYCL_HAS_BF16
-    } else if (src0->type == GGML_TYPE_BF16 && src1->type == GGML_TYPE_BF16 && src2->type == GGML_TYPE_BF16 &&
+    } অন্যথা যদি (src0->type == GGML_TYPE_BF16 && src1->type == GGML_TYPE_BF16 && src2->type == GGML_TYPE_BF16 &&
                dst->type == GGML_TYPE_BF16) {
         launch_bin_bcast3<op_add, sycl::ext::oneapi::bfloat16, sycl::ext::oneapi::bfloat16,
                           sycl::ext::oneapi::bfloat16, sycl::ext::oneapi::bfloat16>(ctx, src0, src1, src2, dst);
-    } else if (src0->type == GGML_TYPE_BF16 && src1->type == GGML_TYPE_F32 && src2->type == GGML_TYPE_F32 &&
+    } অন্যথা যদি (src0->type == GGML_TYPE_BF16 && src1->type == GGML_TYPE_F32 && src2->type == GGML_TYPE_F32 &&
                dst->type == GGML_TYPE_BF16) {
-        launch_bin_bcast3<op_add, sycl::ext::oneapi::bfloat16, float, float, sycl::ext::oneapi::bfloat16>(
+        launch_bin_bcast3<op_add, sycl::ext::oneapi::bfloat16, দশমিক, দশমিক, sycl::ext::oneapi::bfloat16>(
             ctx, src0, src1, src2, dst);
-    } else if (src0->type == GGML_TYPE_BF16 && src1->type == GGML_TYPE_BF16 && src2->type == GGML_TYPE_F32 &&
+    } অন্যথা যদি (src0->type == GGML_TYPE_BF16 && src1->type == GGML_TYPE_BF16 && src2->type == GGML_TYPE_F32 &&
                dst->type == GGML_TYPE_BF16) {
-        launch_bin_bcast3<op_add, sycl::ext::oneapi::bfloat16, sycl::ext::oneapi::bfloat16, float,
+        launch_bin_bcast3<op_add, sycl::ext::oneapi::bfloat16, sycl::ext::oneapi::bfloat16, দশমিক,
                           sycl::ext::oneapi::bfloat16>(ctx, src0, src1, src2, dst);
-    } else if (src0->type == GGML_TYPE_BF16 && src1->type == GGML_TYPE_F32 && src2->type == GGML_TYPE_BF16 &&
+    } অন্যথা যদি (src0->type == GGML_TYPE_BF16 && src1->type == GGML_TYPE_F32 && src2->type == GGML_TYPE_BF16 &&
                dst->type == GGML_TYPE_BF16) {
-        launch_bin_bcast3<op_add, sycl::ext::oneapi::bfloat16, float, sycl::ext::oneapi::bfloat16,
+        launch_bin_bcast3<op_add, sycl::ext::oneapi::bfloat16, দশমিক, sycl::ext::oneapi::bfloat16,
                           sycl::ext::oneapi::bfloat16>(ctx, src0, src1, src2, dst);
 #endif
-    } else {
+    } অন্যথা {
         fprintf(stderr, "%s: unsupported types: dst: %s, src0: %s, src1: %s, src2: %s\n", __func__,
                 ggml_type_name(dst->type), ggml_type_name(src0->type), ggml_type_name(src1->type),
                 ggml_type_name(src2->type));

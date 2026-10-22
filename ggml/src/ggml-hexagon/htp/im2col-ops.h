@@ -1,25 +1,25 @@
 #ifndef HTP_IM2COL_OPS_H
 #define HTP_IM2COL_OPS_H
 
-#include "hex-common.h"
-#include <stdint.h>
+#অন্তর্ভাব "hex-common.h"
+#অন্তর্ভাব <stdint.h>
 
-enum htp_im2col_kernel_type {
+গণনা htp_im2col_kernel_type {
     HTP_IM2COL_KERNEL_UNSUPPORTED    = 0,
     HTP_IM2COL_KERNEL_PATCHEMBED_DMA = 1,
     HTP_IM2COL_KERNEL_BLOCKED_DMA    = 2,
 };
 
-struct htp_im2col_vtcm_layout {
+কাঠামো htp_im2col_vtcm_layout {
     uint32_t off_src;
     uint32_t off_dst;
     uint32_t src_bytes_per_thread;
     uint32_t dst_bytes_per_thread;
-    uint32_t total_bytes;
+    uint32_t যোগ_bytes;
 };
 
-static inline void htp_im2col_vtcm_layout_build(
-    struct htp_im2col_vtcm_layout * layout,
+স্থির অন্তঃরেখ শূন্য htp_im2col_vtcm_layout_build(
+    কাঠামো htp_im2col_vtcm_layout * layout,
     uint32_t src_row_bytes,
     uint32_t dst_row_bytes,
     uint32_t n_threads) {
@@ -29,16 +29,16 @@ static inline void htp_im2col_vtcm_layout_build(
 
     layout->off_src     = 0;
     layout->off_dst     = layout->off_src + layout->src_bytes_per_thread * n_threads;
-    layout->total_bytes = layout->off_dst + layout->dst_bytes_per_thread * n_threads;
+    layout->যোগ_bytes = layout->off_dst + layout->dst_bytes_per_thread * n_threads;
 }
 
-struct htp_im2col_kernel_params {
+কাঠামো htp_im2col_kernel_params {
     uint8_t  kernel_type;
     uint8_t  is_2d;
     uint8_t  is_3d;
     uint8_t  n_threads;
 
-    uint32_t vtcm_size;
+    uint32_t vtcm_আকার;
     uint32_t off_src;
     uint32_t off_dst;
     uint32_t src_bytes_per_thread;
@@ -56,13 +56,13 @@ struct htp_im2col_kernel_params {
     uint32_t KD, KH, KW;
     uint32_t OD, OH, OW;
     uint32_t patch_stride;
-    uint32_t total_rows;
+    uint32_t যোগ_rows;
 };
 
-#if defined(__cplusplus)
-static_assert(sizeof(struct htp_im2col_kernel_params) <= 128, "htp_im2col_kernel_params is too large for kernel_params blob");
-#else
-_Static_assert(sizeof(struct htp_im2col_kernel_params) <= 128, "htp_im2col_kernel_params is too large for kernel_params blob");
+#যদি defined(__cplusplus)
+static_assert(আকার(কাঠামো htp_im2col_kernel_params) <= 128, "htp_im2col_kernel_params is too large for kernel_params blob");
+#অন্যথা
+_Static_assert(আকার(কাঠামো htp_im2col_kernel_params) <= 128, "htp_im2col_kernel_params is too large for kernel_params blob");
 #endif
 
 #endif // HTP_IM2COL_OPS_H

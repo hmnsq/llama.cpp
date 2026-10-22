@@ -1,85 +1,85 @@
 #ifndef HEX_DUMP_H
 #define HEX_DUMP_H
 
-#include <HAP_farf.h>
+#অন্তর্ভাব <HAP_farf.h>
 
-static inline void hex_dump_int8_line(char * pref, const int8_t * x, int n) {
-    char str[1024], *p = str, *p_end = str + sizeof(str);
+স্থির অন্তঃরেখ শূন্য hex_dump_int8_সারি(অক্ষর * pref, ধ্রুবক int8_t * x, পূর্ণসংখ্যা n) {
+    অক্ষর str[1024], *p = str, *p_end = str + আকার(str);
     p += snprintf(p, p_end - p, "%s: ", pref);
-    for (int i = 0; i < n && p < p_end; i++) {
+    জন্য (পূর্ণসংখ্যা i = 0; i < n && p < p_end; i++) {
         p += snprintf(p, p_end - p, "%d, ", x[i]);
     }
-    FARF(HIGH, "%s\n", str);
+    FARF(উপরের_2, "%s\n", str);
 }
 
-static inline void hex_dump_uint8_line(char * pref, const uint8_t * x, uint32_t n) {
-    char str[1024], *p = str, *p_end = str + sizeof(str);
+স্থির অন্তঃরেখ শূন্য hex_dump_uint8_সারি(অক্ষর * pref, ধ্রুবক uint8_t * x, uint32_t n) {
+    অক্ষর str[1024], *p = str, *p_end = str + আকার(str);
     p += snprintf(p, p_end - p, "%s: ", pref);
-    for (int i = 0; i < n && p < p_end; i++) {
+    জন্য (পূর্ণসংখ্যা i = 0; i < n && p < p_end; i++) {
         p += snprintf(p, p_end - p, "%d, ", x[i]);
     }
-    FARF(HIGH, "%s\n", str);
+    FARF(উপরের_2, "%s\n", str);
 }
 
-static inline void hex_dump_uint32_line(char * pref, const uint32_t * x, uint32_t n) {
-    char str[1024], *p = str, *p_end = str + sizeof(str);
+স্থির অন্তঃরেখ শূন্য hex_dump_uint32_সারি(অক্ষর * pref, ধ্রুবক uint32_t * x, uint32_t n) {
+    অক্ষর str[1024], *p = str, *p_end = str + আকার(str);
     p += snprintf(p, p_end - p, "%s: ", pref);
-    for (int i = 0; i < n; i++) {
-        p += snprintf(p, p_end - p, "%u, ", (unsigned int) x[i]);
+    জন্য (পূর্ণসংখ্যা i = 0; i < n; i++) {
+        p += snprintf(p, p_end - p, "%u, ", (unsigned পূর্ণসংখ্যা) x[i]);
     }
-    FARF(HIGH, "%s\n", str);
+    FARF(উপরের_2, "%s\n", str);
 }
 
-static inline void hex_dump_int32_line(char * pref, const int32_t * x, uint32_t n) {
-    char str[1024], *p = str, *p_end = str + sizeof(str);
+স্থির অন্তঃরেখ শূন্য hex_dump_int32_সারি(অক্ষর * pref, ধ্রুবক int32_t * x, uint32_t n) {
+    অক্ষর str[1024], *p = str, *p_end = str + আকার(str);
     p += snprintf(p, p_end - p, "%s: ", pref);
-    for (int i = 0; i < n; i++) {
-        p += snprintf(p, p_end - p, "%d, ", (int) x[i]);
+    জন্য (পূর্ণসংখ্যা i = 0; i < n; i++) {
+        p += snprintf(p, p_end - p, "%d, ", (পূর্ণসংখ্যা) x[i]);
     }
-    FARF(HIGH, "%s\n", str);
+    FARF(উপরের_2, "%s\n", str);
 }
 
-static inline void hex_dump_f16_line(char * pref, const __fp16 * x, uint32_t n) {
-    char str[1024], *p = str, *p_end = str + sizeof(str);
+স্থির অন্তঃরেখ শূন্য hex_dump_f16_সারি(অক্ষর * pref, ধ্রুবক __fp16 * x, uint32_t n) {
+    অক্ষর str[1024], *p = str, *p_end = str + আকার(str);
     p += snprintf(p, p_end - p, "%s: ", pref);
-    for (int i = 0; i < n; i++) {
-        p += snprintf(p, p_end - p, "%.6f, ", (float) x[i]);
+    জন্য (পূর্ণসংখ্যা i = 0; i < n; i++) {
+        p += snprintf(p, p_end - p, "%.6f, ", (দশমিক) x[i]);
     }
-    FARF(HIGH, "%s\n", str);
+    FARF(উপরের_2, "%s\n", str);
 }
 
-static inline void hex_dump_f32_line(char * pref, const float * x, uint32_t n) {
-    char str[1024], *p = str, *p_end = str + sizeof(str);
+স্থির অন্তঃরেখ শূন্য hex_dump_f32_সারি(অক্ষর * pref, ধ্রুবক দশমিক * x, uint32_t n) {
+    অক্ষর str[1024], *p = str, *p_end = str + আকার(str);
     p += snprintf(p, p_end - p, "%s: ", pref);
-    for (int i = 0; i < n; i++) {
+    জন্য (পূর্ণসংখ্যা i = 0; i < n; i++) {
         p += snprintf(p, p_end - p, "%.6f, ", x[i]);
     }
-    FARF(HIGH, "%s\n", str);
+    FARF(উপরের_2, "%s\n", str);
 }
 
-static inline void hex_dump_f32(char * pref, const float * x, uint32_t n) {
+স্থির অন্তঃরেখ শূন্য hex_dump_f32(অক্ষর * pref, ধ্রুবক দশমিক * x, uint32_t n) {
     uint32_t n0 = n / 16;
     uint32_t n1 = n % 16;
 
     uint32_t i = 0;
-    for (; i < n0; i++) {
-        hex_dump_f32_line(pref, x + (16 * i), 16);
+    জন্য (; i < n0; i++) {
+        hex_dump_f32_সারি(pref, x + (16 * i), 16);
     }
-    if (n1) {
-        hex_dump_f32_line(pref, x + (16 * i), n1);
+    যদি (n1) {
+        hex_dump_f32_সারি(pref, x + (16 * i), n1);
     }
 }
 
-static inline void hex_dump_f16(char * pref, const __fp16 * x, uint32_t n) {
+স্থির অন্তঃরেখ শূন্য hex_dump_f16(অক্ষর * pref, ধ্রুবক __fp16 * x, uint32_t n) {
     uint32_t n0 = n / 16;
     uint32_t n1 = n % 16;
 
     uint32_t i = 0;
-    for (; i < n0; i++) {
-        hex_dump_f16_line(pref, x + (16 * i), 16);
+    জন্য (; i < n0; i++) {
+        hex_dump_f16_সারি(pref, x + (16 * i), 16);
     }
-    if (n1) {
-        hex_dump_f16_line(pref, x + (16 * i), n1);
+    যদি (n1) {
+        hex_dump_f16_সারি(pref, x + (16 * i), n1);
     }
 }
 

@@ -1,39 +1,39 @@
-#include <sycl/sycl.hpp>
+#অন্তর্ভাব <sycl/sycl.hpp>
 
-#include "common.hpp"
-#include "gla.hpp"
+#অন্তর্ভাব "common.hpp"
+#অন্তর্ভাব "gla.hpp"
 
-template <u_int HEAD_SIZE>
-static void gated_linear_attn_f32_kernel(const dpct::queue_ptr stream, u_int B, u_int T, u_int C, u_int H, float scale,
-                                         const float * k, const float * v, const float * r, const float * td,
-                                         const float * s, float * dst) {
-    const u_int head_size    = HEAD_SIZE;
-    const u_int state_size   = C * head_size;
-    const u_int n_seq_tokens = T / B;
+template <u_int শীর্ষ_আকার_2>
+স্থির শূন্য gated_linear_attn_f32_kernel(ধ্রুবক dpct::queue_ptr stream, u_int B, u_int T, u_int C, u_int H, দশমিক scale,
+                                         ধ্রুবক দশমিক * k, ধ্রুবক দশমিক * v, ধ্রুবক দশমিক * r, ধ্রুবক দশমিক * td,
+                                         ধ্রুবক দশমিক * s, দশমিক * dst) {
+    ধ্রুবক u_int শীর্ষ_আকার    = শীর্ষ_আকার_2;
+    ধ্রুবক u_int state_আকার   = C * শীর্ষ_আকার;
+    ধ্রুবক u_int n_seq_tokens = T / B;
     sycl::range<1> block_dims((C / H));
     sycl::range<1> grid_dims((B * H));
     stream->submit([&](sycl::handler & cgh) {
         /* local memory accessors*/
-        auto _k  = sycl::local_accessor<float, 1>(sycl::range<1>(head_size), cgh);
-        auto _r  = sycl::local_accessor<float, 1>(sycl::range<1>(head_size), cgh);
-        auto _td = sycl::local_accessor<float, 1>(sycl::range<1>(head_size), cgh);
+        auto _k  = sycl::local_accessor<দশমিক, 1>(sycl::range<1>(শীর্ষ_আকার), cgh);
+        auto _r  = sycl::local_accessor<দশমিক, 1>(sycl::range<1>(শীর্ষ_আকার), cgh);
+        auto _td = sycl::local_accessor<দশমিক, 1>(sycl::range<1>(শীর্ষ_আকার), cgh);
 
         cgh.parallel_for(sycl::nd_range<1>(grid_dims * block_dims, block_dims), [=](sycl::nd_item<1> item) {
             u_int tid = item.get_local_id(0);
             u_int bid = item.get_group(0);
 
             u_int batch_i = bid / H;
-            u_int head_i  = bid % H;
+            u_int শীর্ষ_i  = bid % H;
 
-            float state[head_size];
+            দশমিক state[শীর্ষ_আকার];
 
 #pragma unroll
-            for (u_int i = 0; i < head_size; i++) {
-                state[i] = s[batch_i * state_size + head_i * head_size * head_size + i * head_size + tid];
+            জন্য (u_int i = 0; i < শীর্ষ_আকার; i++) {
+                state[i] = s[batch_i * state_আকার + শীর্ষ_i * শীর্ষ_আকার * শীর্ষ_আকার + i * শীর্ষ_আকার + tid];
             }
 
-            for (u_int t = batch_i * n_seq_tokens * C + head_i * head_size + tid;
-                 t < (batch_i + 1) * n_seq_tokens * C + head_i * head_size + tid; t += C) {
+            জন্য (u_int t = batch_i * n_seq_tokens * C + শীর্ষ_i * শীর্ষ_আকার + tid;
+                 t < (batch_i + 1) * n_seq_tokens * C + শীর্ষ_i * শীর্ষ_আকার + tid; t += C) {
 
                 item.barrier(sycl::access::fence_space::local_space);  //sync threads
                 _k[tid]  = k[t];
@@ -41,13 +41,13 @@ static void gated_linear_attn_f32_kernel(const dpct::queue_ptr stream, u_int B, 
                 _td[tid] = td[t];
                 item.barrier(sycl::access::fence_space::local_space);  //sync threads
 
-                const float _v = v[t];
-                float       y  = 0;
+                ধ্রুবক দশমিক _v = v[t];
+                দশমিক       y  = 0;
 
-                for (u_int j = 0; j < head_size; j += 4) {
-                    const sycl::float4 & k  = (sycl::float4 &) (_k[j]);
-                    const sycl::float4 & r  = (sycl::float4 &) (_r[j]);
-                    const sycl::float4 & td = (sycl::float4 &) (_td[j]);
+                জন্য (u_int j = 0; j < শীর্ষ_আকার; j += 4) {
+                    ধ্রুবক sycl::float4 & k  = (sycl::float4 &) (_k[j]);
+                    ধ্রুবক sycl::float4 & r  = (sycl::float4 &) (_r[j]);
+                    ধ্রুবক sycl::float4 & td = (sycl::float4 &) (_td[j]);
                     sycl::float4 &       s  = (sycl::float4 &) (state[j]);
                     sycl::float4         kv;
 
@@ -69,39 +69,39 @@ static void gated_linear_attn_f32_kernel(const dpct::queue_ptr stream, u_int B, 
                 dst[t] = y * scale;
             }
 #pragma unroll
-            for (u_int i = 0; i < head_size; i++) {
-                dst[T * C + batch_i * state_size + head_i * head_size * head_size + i * head_size + tid] = state[i];
+            জন্য (u_int i = 0; i < শীর্ষ_আকার; i++) {
+                dst[T * C + batch_i * state_আকার + শীর্ষ_i * শীর্ষ_আকার * শীর্ষ_আকার + i * শীর্ষ_আকার + tid] = state[i];
             }
         });
     });
 }
 
-void ggml_sycl_op_gated_linear_attn(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+শূন্য ggml_sycl_op_gated_linear_attn(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/5);
-    const float * k_d  = static_cast<const float *>(dst->src[0]->data);
-    const float * v_d  = static_cast<const float *>(dst->src[1]->data);
-    const float * r_d  = static_cast<const float *>(dst->src[2]->data);
-    const float * td_d = static_cast<const float *>(dst->src[3]->data);
-    const float * s_d  = static_cast<const float *>(dst->src[4]->data);
+    ধ্রুবক দশমিক * k_d  = static_cast<ধ্রুবক দশমিক *>(dst->src[0]->তথ্য);
+    ধ্রুবক দশমিক * v_d  = static_cast<ধ্রুবক দশমিক *>(dst->src[1]->তথ্য);
+    ধ্রুবক দশমিক * r_d  = static_cast<ধ্রুবক দশমিক *>(dst->src[2]->তথ্য);
+    ধ্রুবক দশমিক * td_d = static_cast<ধ্রুবক দশমিক *>(dst->src[3]->তথ্য);
+    ধ্রুবক দশমিক * s_d  = static_cast<ধ্রুবক দশমিক *>(dst->src[4]->তথ্য);
 
-    const int64_t B = dst->src[4]->ne[1];
-    const int64_t T = dst->src[0]->ne[2];
-    const int64_t C = dst->ne[0];
-    const int64_t H = dst->src[0]->ne[1];
+    ধ্রুবক int64_t B = dst->src[4]->ne[1];
+    ধ্রুবক int64_t T = dst->src[0]->ne[2];
+    ধ্রুবক int64_t C = dst->ne[0];
+    ধ্রুবক int64_t H = dst->src[0]->ne[1];
 
     dpct::queue_ptr stream = ctx.stream();
     GGML_ASSERT(dst->src[4]->type == GGML_TYPE_F32);
     GGML_ASSERT(C % H == 0);
     GGML_ASSERT(C / H == 64 || C / H == 128);
 
-    float scale;
-    memcpy(&scale, dst->op_params, sizeof(float));
+    দশমিক scale;
+    memcpy(&scale, dst->op_params, আকার(দশমিক));
 
-    float * dst_d = (float *) dst->data;
+    দশমিক * dst_d = (দশমিক *) dst->তথ্য;
 
-    if (C / H == 64) {
+    যদি (C / H == 64) {
         gated_linear_attn_f32_kernel<64>(stream, B, T, C, H, scale, k_d, v_d, r_d, td_d, s_d, dst_d);
-    } else {
+    } অন্যথা {
         gated_linear_attn_f32_kernel<128>(stream, B, T, C, H, scale, k_d, v_d, r_d, td_d, s_d, dst_d);
     }
 }

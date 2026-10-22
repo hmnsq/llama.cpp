@@ -1,23 +1,23 @@
 #pragma once
 
-#include "ggml-impl.h"
+#অন্তর্ভাব "ggml-impl.h"
 
-#include <cassert>
-#include <cstring>
+#অন্তর্ভাব <cassert>
+#অন্তর্ভাব <cstring>
 
 #define likely(x)   __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
 
-struct apir_encoder {
-    char *       cur;
-    const char * start;
-    const char * end;
+কাঠামো apir_encoder {
+    অক্ষর *       cur;
+    ধ্রুবক অক্ষর * start;
+    ধ্রুবক অক্ষর * end;
     bool         fatal;
 };
 
-struct apir_decoder {
-    const char * cur;
-    const char * end;
+কাঠামো apir_decoder {
+    ধ্রুবক অক্ষর * cur;
+    ধ্রুবক অক্ষর * end;
     bool         fatal;
 };
 
@@ -25,124 +25,124 @@ struct apir_decoder {
  * new encoder and decoder
  */
 
-static apir_decoder apir_new_decoder(const char * ptr, size_t size) {
+স্থির apir_decoder apir_new_decoder(ধ্রুবক অক্ষর * ptr, size_t আকার_2) {
     apir_decoder dec = {
         .cur   = ptr,
-        .end   = ptr + size,
+        .end   = ptr + আকার_2,
         .fatal = false,
     };
 
-    return dec;
+    ফেরত dec;
 }
 
-static apir_encoder apir_new_encoder(char * ptr, size_t size) {
+স্থির apir_encoder apir_new_encoder(অক্ষর * ptr, size_t আকার_2) {
     apir_encoder enc = {
         .cur   = ptr,
         .start = ptr,
-        .end   = ptr + size,
+        .end   = ptr + আকার_2,
         .fatal = false,
     };
 
-    return enc;
+    ফেরত enc;
 }
 
 /*
  * fatal flag handling
  */
 
-static inline void apir_encoder_reset_fatal(apir_encoder * enc) {
+স্থির অন্তঃরেখ শূন্য apir_encoder_reset_fatal(apir_encoder * enc) {
     enc->fatal = false;
 }
 
-static inline void apir_encoder_set_fatal(apir_encoder * enc) {
+স্থির অন্তঃরেখ শূন্য apir_encoder_set_fatal(apir_encoder * enc) {
     enc->fatal = true;
 }
 
-static inline bool apir_encoder_get_fatal(const apir_encoder * enc) {
-    return enc->fatal;
+স্থির অন্তঃরেখ bool apir_encoder_get_fatal(ধ্রুবক apir_encoder * enc) {
+    ফেরত enc->fatal;
 }
 
-static inline void apir_decoder_reset_fatal(apir_decoder * dec) {
+স্থির অন্তঃরেখ শূন্য apir_decoder_reset_fatal(apir_decoder * dec) {
     dec->fatal = false;
 }
 
-static inline void apir_decoder_set_fatal(apir_decoder * dec) {
+স্থির অন্তঃরেখ শূন্য apir_decoder_set_fatal(apir_decoder * dec) {
     dec->fatal = true;
 }
 
-static inline bool apir_decoder_get_fatal(const apir_decoder * dec) {
-    return dec->fatal;
+স্থির অন্তঃরেখ bool apir_decoder_get_fatal(ধ্রুবক apir_decoder * dec) {
+    ফেরত dec->fatal;
 }
 
 /*
  * encode peek
  */
 
-static inline bool apir_decoder_peek_internal(apir_decoder * dec, size_t size, void * val, size_t val_size) {
-    assert(val_size <= size);
+স্থির অন্তঃরেখ bool apir_decoder_peek_internal(apir_decoder * dec, size_t আকার_2, শূন্য * val, size_t val_আকার) {
+    প্রতিজ্ঞা(val_আকার <= আকার_2);
 
-    if (unlikely(size > (size_t) (dec->end - dec->cur))) {
+    যদি (unlikely(আকার_2 > (size_t) (dec->end - dec->cur))) {
         GGML_LOG_ERROR("%s: reading too much from the decoder ...\n", __func__);
         apir_decoder_set_fatal(dec);
-        memset(val, 0, val_size);
-        return false;
+        memset(val, 0, val_আকার);
+        ফেরত false;
     }
 
     /* we should not rely on the compiler to optimize away memcpy... */
-    memcpy(val, dec->cur, val_size);
-    return true;
+    memcpy(val, dec->cur, val_আকার);
+    ফেরত true;
 }
 
-static inline void apir_decoder_peek(apir_decoder * dec, size_t size, void * val, size_t val_size) {
-    apir_decoder_peek_internal(dec, size, val, val_size);
+স্থির অন্তঃরেখ শূন্য apir_decoder_peek(apir_decoder * dec, size_t আকার_2, শূন্য * val, size_t val_আকার) {
+    apir_decoder_peek_internal(dec, আকার_2, val, val_আকার);
 }
 
-static inline const void * apir_decoder_use_inplace(apir_decoder * dec, size_t size) {
-    if (unlikely(size > (size_t) (dec->end - dec->cur))) {
+স্থির অন্তঃরেখ ধ্রুবক শূন্য * apir_decoder_use_inplace(apir_decoder * dec, size_t আকার_2) {
+    যদি (unlikely(আকার_2 > (size_t) (dec->end - dec->cur))) {
         GGML_LOG_ERROR("%s: reading too much from the decoder ...\n", __func__);
         apir_decoder_set_fatal(dec);
-        return NULL;
+        ফেরত ফাঁকা;
     }
-    const void * addr = dec->cur;
-    dec->cur += size;
+    ধ্রুবক শূন্য * addr = dec->cur;
+    dec->cur += আকার_2;
 
-    return addr;
+    ফেরত addr;
 }
 
 /*
  * read/write
  */
 
-static inline void apir_decoder_read(apir_decoder * dec, size_t size, void * val, size_t val_size) {
-    if (apir_decoder_peek_internal(dec, size, val, val_size)) {
-        dec->cur += size;
+স্থির অন্তঃরেখ শূন্য apir_decoder_read(apir_decoder * dec, size_t আকার_2, শূন্য * val, size_t val_আকার) {
+    যদি (apir_decoder_peek_internal(dec, আকার_2, val, val_আকার)) {
+        dec->cur += আকার_2;
     }
 }
 
-static inline char * apir_encoder_write(apir_encoder * enc, size_t size, const void * val, size_t val_size) {
-    assert(val_size <= size);
-    assert(size <= ((size_t) (enc->end - enc->cur)));
+স্থির অন্তঃরেখ অক্ষর * apir_encoder_write(apir_encoder * enc, size_t আকার_2, ধ্রুবক শূন্য * val, size_t val_আকার) {
+    প্রতিজ্ঞা(val_আকার <= আকার_2);
+    প্রতিজ্ঞা(আকার_2 <= ((size_t) (enc->end - enc->cur)));
 
-    char * write_addr = enc->cur;
+    অক্ষর * write_addr = enc->cur;
     /* we should not rely on the compiler to optimize away memcpy... */
-    memcpy(write_addr, val, val_size);
-    enc->cur += size;
+    memcpy(write_addr, val, val_আকার);
+    enc->cur += আকার_2;
 
-    return write_addr;
+    ফেরত write_addr;
 }
 
 /*
  * encode/decode
  */
 
-static inline void apir_decode(apir_decoder * dec, size_t size, void * data, size_t data_size) {
-    assert(size % 4 == 0);
-    apir_decoder_read(dec, size, data, data_size);
+স্থির অন্তঃরেখ শূন্য apir_decode(apir_decoder * dec, size_t আকার_2, শূন্য * তথ্য, size_t তথ্য_আকার) {
+    প্রতিজ্ঞা(আকার_2 % 4 == 0);
+    apir_decoder_read(dec, আকার_2, তথ্য, তথ্য_আকার);
 }
 
-static inline void apir_encode(apir_encoder * enc, size_t size, const void * data, size_t data_size) {
-    assert(size % 4 == 0);
-    apir_encoder_write(enc, size, data, data_size);
+স্থির অন্তঃরেখ শূন্য apir_encode(apir_encoder * enc, size_t আকার_2, ধ্রুবক শূন্য * তথ্য, size_t তথ্য_আকার) {
+    প্রতিজ্ঞা(আকার_2 % 4 == 0);
+    apir_encoder_write(enc, আকার_2, তথ্য, তথ্য_আকার);
 }
 
 /*
@@ -151,173 +151,173 @@ static inline void apir_encode(apir_encoder * enc, size_t size, const void * dat
 
 /* uint8_t */
 
-static inline void apir_encode_uint8_t(apir_encoder * enc, const uint8_t * val) {
-    apir_encode(enc, sizeof(int), val, sizeof(*val));
+স্থির অন্তঃরেখ শূন্য apir_encode_uint8_t(apir_encoder * enc, ধ্রুবক uint8_t * val) {
+    apir_encode(enc, আকার(পূর্ণসংখ্যা), val, আকার(*val));
 }
 
-static inline void apir_decode_uint8_t(apir_decoder * dec, uint8_t * val) {
-    apir_decode(dec, sizeof(int), val, sizeof(*val));
+স্থির অন্তঃরেখ শূন্য apir_decode_uint8_t(apir_decoder * dec, uint8_t * val) {
+    apir_decode(dec, আকার(পূর্ণসংখ্যা), val, আকার(*val));
 }
 
 /* uint64_t */
 
-static inline void apir_encode_uint64_t(apir_encoder * enc, const uint64_t * val) {
-    apir_encode(enc, 8, val, sizeof(*val));
+স্থির অন্তঃরেখ শূন্য apir_encode_uint64_t(apir_encoder * enc, ধ্রুবক uint64_t * val) {
+    apir_encode(enc, 8, val, আকার(*val));
 }
 
-static inline void apir_decode_uint64_t(apir_decoder * dec, uint64_t * val) {
-    apir_decode(dec, 8, val, sizeof(*val));
+স্থির অন্তঃরেখ শূন্য apir_decode_uint64_t(apir_decoder * dec, uint64_t * val) {
+    apir_decode(dec, 8, val, আকার(*val));
 }
 
-static inline void apir_encode_uint64_t_array(apir_encoder * enc, const uint64_t * val, uint32_t count) {
-    const size_t size = sizeof(*val) * count;
-    assert(size >= count);
-    apir_encode(enc, size, val, size);
+স্থির অন্তঃরেখ শূন্য apir_encode_uint64_t_array(apir_encoder * enc, ধ্রুবক uint64_t * val, uint32_t গুনতি) {
+    ধ্রুবক size_t আকার_2 = আকার(*val) * গুনতি;
+    প্রতিজ্ঞা(আকার_2 >= গুনতি);
+    apir_encode(enc, আকার_2, val, আকার_2);
 }
 
-static inline void apir_decode_uint64_t_array(apir_decoder * dec, uint64_t * val, uint32_t count) {
-    const size_t size = sizeof(*val) * count;
-    assert(size >= count);
-    apir_decode(dec, size, val, size);
+স্থির অন্তঃরেখ শূন্য apir_decode_uint64_t_array(apir_decoder * dec, uint64_t * val, uint32_t গুনতি) {
+    ধ্রুবক size_t আকার_2 = আকার(*val) * গুনতি;
+    প্রতিজ্ঞা(আকার_2 >= গুনতি);
+    apir_decode(dec, আকার_2, val, আকার_2);
 }
 
-static inline const uint64_t * apir_decode_uint64_t_array_inplace(apir_decoder * dec, uint32_t count) {
-    return (uint64_t *) (uintptr_t) apir_decoder_use_inplace(dec, count * sizeof(uint64_t));
+স্থির অন্তঃরেখ ধ্রুবক uint64_t * apir_decode_uint64_t_array_inplace(apir_decoder * dec, uint32_t গুনতি) {
+    ফেরত (uint64_t *) (uintptr_t) apir_decoder_use_inplace(dec, গুনতি * আকার(uint64_t));
 }
 
 /* int32_t */
 
-static inline void apir_encode_int32_t(apir_encoder * enc, const int32_t * val) {
-    apir_encode(enc, 4, val, sizeof(*val));
+স্থির অন্তঃরেখ শূন্য apir_encode_int32_t(apir_encoder * enc, ধ্রুবক int32_t * val) {
+    apir_encode(enc, 4, val, আকার(*val));
 }
 
-static inline void apir_decode_int32_t(apir_decoder * dec, int32_t * val) {
-    apir_decode(dec, 4, val, sizeof(*val));
+স্থির অন্তঃরেখ শূন্য apir_decode_int32_t(apir_decoder * dec, int32_t * val) {
+    apir_decode(dec, 4, val, আকার(*val));
 }
 
-static inline void apir_encode_int32_t_array(apir_encoder * enc, const int32_t * val, uint32_t count) {
-    const size_t size = sizeof(*val) * count;
-    assert(size >= count);
-    apir_encode(enc, size, val, size);
+স্থির অন্তঃরেখ শূন্য apir_encode_int32_t_array(apir_encoder * enc, ধ্রুবক int32_t * val, uint32_t গুনতি) {
+    ধ্রুবক size_t আকার_2 = আকার(*val) * গুনতি;
+    প্রতিজ্ঞা(আকার_2 >= গুনতি);
+    apir_encode(enc, আকার_2, val, আকার_2);
 }
 
-static inline void apir_decode_int32_t_array(apir_decoder * dec, int32_t * val, uint32_t count) {
-    const size_t size = sizeof(*val) * count;
-    assert(size >= count);
-    apir_decode(dec, size, val, size);
+স্থির অন্তঃরেখ শূন্য apir_decode_int32_t_array(apir_decoder * dec, int32_t * val, uint32_t গুনতি) {
+    ধ্রুবক size_t আকার_2 = আকার(*val) * গুনতি;
+    প্রতিজ্ঞা(আকার_2 >= গুনতি);
+    apir_decode(dec, আকার_2, val, আকার_2);
 }
 
 /* array size (uint64_t) */
 
-static inline void apir_encode_array_size(apir_encoder * enc, uint64_t size) {
-    apir_encode_uint64_t(enc, &size);
+স্থির অন্তঃরেখ শূন্য apir_encode_array_আকার(apir_encoder * enc, uint64_t আকার_2) {
+    apir_encode_uint64_t(enc, &আকার_2);
 }
 
-static inline uint64_t apir_decode_array_size(apir_decoder * dec, uint64_t expected_size) {
-    uint64_t size;
-    apir_decode_uint64_t(dec, &size);
-    if (size != expected_size) {
+স্থির অন্তঃরেখ uint64_t apir_decode_array_আকার(apir_decoder * dec, uint64_t expected_আকার) {
+    uint64_t আকার_2;
+    apir_decode_uint64_t(dec, &আকার_2);
+    যদি (আকার_2 != expected_আকার) {
         GGML_LOG_ERROR("%s: Couldn't decode array from the decoder\n", __func__);
         apir_decoder_set_fatal(dec);
-        size = 0;
+        আকার_2 = 0;
     }
-    return size;
+    ফেরত আকার_2;
 }
 
-static inline uint64_t apir_decode_array_size_unchecked(apir_decoder * dec) {
-    uint64_t size;
-    apir_decode_uint64_t(dec, &size);
-    return size;
+স্থির অন্তঃরেখ uint64_t apir_decode_array_আকার_unchecked(apir_decoder * dec) {
+    uint64_t আকার_2;
+    apir_decode_uint64_t(dec, &আকার_2);
+    ফেরত আকার_2;
 }
 
 /* non-array pointer */
 
-static inline bool apir_encode_simple_pointer(apir_encoder * enc, const void * val) {
-    apir_encode_array_size(enc, val ? 1 : 0);
-    return val;
+স্থির অন্তঃরেখ bool apir_encode_simple_pointer(apir_encoder * enc, ধ্রুবক শূন্য * val) {
+    apir_encode_array_আকার(enc, val ? 1 : 0);
+    ফেরত val;
 }
 
-static inline bool apir_decode_simple_pointer(apir_decoder * dec) {
-    return apir_decode_array_size_unchecked(dec);
+স্থির অন্তঃরেখ bool apir_decode_simple_pointer(apir_decoder * dec) {
+    ফেরত apir_decode_array_আকার_unchecked(dec);
 }
 
 /* uint32_t */
 
-static inline void apir_encode_uint32_t(apir_encoder * enc, const uint32_t * val) {
-    apir_encode(enc, 4, val, sizeof(*val));
+স্থির অন্তঃরেখ শূন্য apir_encode_uint32_t(apir_encoder * enc, ধ্রুবক uint32_t * val) {
+    apir_encode(enc, 4, val, আকার(*val));
 }
 
-static inline void apir_decode_uint32_t(apir_decoder * dec, uint32_t * val) {
-    apir_decode(dec, 4, val, sizeof(*val));
+স্থির অন্তঃরেখ শূন্য apir_decode_uint32_t(apir_decoder * dec, uint32_t * val) {
+    apir_decode(dec, 4, val, আকার(*val));
 }
 
-static inline void apir_encode_uint32_t_array(apir_encoder * enc, const uint32_t * val, uint32_t count) {
-    const size_t size = sizeof(*val) * count;
-    assert(size >= count);
-    apir_encode(enc, size, val, size);
+স্থির অন্তঃরেখ শূন্য apir_encode_uint32_t_array(apir_encoder * enc, ধ্রুবক uint32_t * val, uint32_t গুনতি) {
+    ধ্রুবক size_t আকার_2 = আকার(*val) * গুনতি;
+    প্রতিজ্ঞা(আকার_2 >= গুনতি);
+    apir_encode(enc, আকার_2, val, আকার_2);
 }
 
-static inline void apir_decode_uint32_t_array(apir_decoder * dec, uint32_t * val, uint32_t count) {
-    const size_t size = sizeof(*val) * count;
-    assert(size >= count);
-    apir_decode(dec, size, val, size);
+স্থির অন্তঃরেখ শূন্য apir_decode_uint32_t_array(apir_decoder * dec, uint32_t * val, uint32_t গুনতি) {
+    ধ্রুবক size_t আকার_2 = আকার(*val) * গুনতি;
+    প্রতিজ্ঞা(আকার_2 >= গুনতি);
+    apir_decode(dec, আকার_2, val, আকার_2);
 }
 
 /* size_t */
 
-static inline void apir_encode_size_t(apir_encoder * enc, const size_t * val) {
-    const uint64_t tmp = *val;
+স্থির অন্তঃরেখ শূন্য apir_encode_আকার_t(apir_encoder * enc, ধ্রুবক size_t * val) {
+    ধ্রুবক uint64_t tmp = *val;
     apir_encode_uint64_t(enc, &tmp);
 }
 
-static inline void apir_decode_size_t(apir_decoder * dec, size_t * val) {
+স্থির অন্তঃরেখ শূন্য apir_decode_আকার_t(apir_decoder * dec, size_t * val) {
     uint64_t tmp;
     apir_decode_uint64_t(dec, &tmp);
     *val = tmp;
 }
 
-static inline void apir_encode_size_t_array(apir_encoder * enc, const size_t * val, uint32_t count) {
-    if (sizeof(size_t) == sizeof(uint64_t)) {
-        apir_encode_uint64_t_array(enc, (const uint64_t *) val, count);
-    } else {
-        for (uint32_t i = 0; i < count; i++) {
-            apir_encode_size_t(enc, &val[i]);
+স্থির অন্তঃরেখ শূন্য apir_encode_আকার_t_array(apir_encoder * enc, ধ্রুবক size_t * val, uint32_t গুনতি) {
+    যদি (আকার(size_t) == আকার(uint64_t)) {
+        apir_encode_uint64_t_array(enc, (ধ্রুবক uint64_t *) val, গুনতি);
+    } অন্যথা {
+        জন্য (uint32_t i = 0; i < গুনতি; i++) {
+            apir_encode_আকার_t(enc, &val[i]);
         }
     }
 }
 
-static inline void apir_decode_size_t_array(apir_decoder * dec, size_t * val, uint32_t count) {
-    if (sizeof(size_t) == sizeof(uint64_t)) {
-        apir_decode_uint64_t_array(dec, (uint64_t *) val, count);
-    } else {
-        for (uint32_t i = 0; i < count; i++) {
-            apir_decode_size_t(dec, &val[i]);
+স্থির অন্তঃরেখ শূন্য apir_decode_আকার_t_array(apir_decoder * dec, size_t * val, uint32_t গুনতি) {
+    যদি (আকার(size_t) == আকার(uint64_t)) {
+        apir_decode_uint64_t_array(dec, (uint64_t *) val, গুনতি);
+    } অন্যথা {
+        জন্য (uint32_t i = 0; i < গুনতি; i++) {
+            apir_decode_আকার_t(dec, &val[i]);
         }
     }
 }
 
 /* opaque blob */
 
-static inline void apir_encode_blob_array(apir_encoder * enc, const void * val, size_t size) {
-    apir_encode(enc, (size + 3) & ~3, val, size);
+স্থির অন্তঃরেখ শূন্য apir_encode_blob_array(apir_encoder * enc, ধ্রুবক শূন্য * val, size_t আকার_2) {
+    apir_encode(enc, (আকার_2 + 3) & ~3, val, আকার_2);
 }
 
-static inline void apir_decode_blob_array(apir_decoder * dec, void * val, size_t size) {
-    apir_decode(dec, (size + 3) & ~3, val, size);
+স্থির অন্তঃরেখ শূন্য apir_decode_blob_array(apir_decoder * dec, শূন্য * val, size_t আকার_2) {
+    apir_decode(dec, (আকার_2 + 3) & ~3, val, আকার_2);
 }
 
 /* string */
 
-static inline void apir_encode_char_array(apir_encoder * enc, const char * val, size_t size) {
-    assert(size && strlen(val) < size);
-    apir_encode_blob_array(enc, val, size);
+স্থির অন্তঃরেখ শূন্য apir_encode_char_array(apir_encoder * enc, ধ্রুবক অক্ষর * val, size_t আকার_2) {
+    প্রতিজ্ঞা(আকার_2 && strlen(val) < আকার_2);
+    apir_encode_blob_array(enc, val, আকার_2);
 }
 
-static inline void apir_decode_char_array(apir_decoder * dec, char * val, size_t size) {
-    apir_decode_blob_array(dec, val, size);
-    if (size) {
-        val[size - 1] = '\0';
-    } else {
+স্থির অন্তঃরেখ শূন্য apir_decode_char_array(apir_decoder * dec, অক্ষর * val, size_t আকার_2) {
+    apir_decode_blob_array(dec, val, আকার_2);
+    যদি (আকার_2) {
+        val[আকার_2 - 1] = '\0';
+    } অন্যথা {
         GGML_LOG_ERROR("%s: Couldn't decode the blog array\n", __func__);
         apir_decoder_set_fatal(dec);
     }
@@ -325,54 +325,54 @@ static inline void apir_decode_char_array(apir_decoder * dec, char * val, size_t
 
 /* (temp) buffer allocation */
 
-static inline void * apir_decoder_alloc_array(size_t size, size_t count) {
-    size_t alloc_size;
-    if (unlikely(__builtin_mul_overflow(size, count, &alloc_size))) {
-        GGML_LOG_ERROR("%s: overflow in array allocation of %zu * %zu bytes\n", __func__, size, count);
-        return NULL;
+স্থির অন্তঃরেখ শূন্য * apir_decoder_alloc_array(size_t আকার_2, size_t গুনতি) {
+    size_t alloc_আকার;
+    যদি (unlikely(__builtin_mul_overflow(আকার_2, গুনতি, &alloc_আকার))) {
+        GGML_LOG_ERROR("%s: overflow in array allocation of %zu * %zu bytes\n", __func__, আকার_2, গুনতি);
+        ফেরত ফাঁকা;
     }
 
-    return malloc(alloc_size);
+    ফেরত malloc(alloc_আকার);
 }
 
 /* bool */
 
-static inline void apir_encode_bool_t(apir_encoder * enc, const bool * val) {
-    apir_encode(enc, sizeof(int), val, sizeof(bool));
+স্থির অন্তঃরেখ শূন্য apir_encode_bool_t(apir_encoder * enc, ধ্রুবক bool * val) {
+    apir_encode(enc, আকার(পূর্ণসংখ্যা), val, আকার(bool));
 }
 
-static inline void apir_decode_bool_t(apir_decoder * dec, bool * val) {
-    apir_decode(dec, sizeof(int), val, sizeof(bool));
+স্থির অন্তঃরেখ শূন্য apir_decode_bool_t(apir_decoder * dec, bool * val) {
+    apir_decode(dec, আকার(পূর্ণসংখ্যা), val, আকার(bool));
 }
 
 /* apir_buffer_type_host_handle_t */
 
-static inline void apir_encode_apir_buffer_type_host_handle_t(apir_encoder *                         enc,
-                                                              const apir_buffer_type_host_handle_t * val) {
-    apir_encode(enc, sizeof(apir_buffer_type_host_handle_t), val, sizeof(apir_buffer_type_host_handle_t));
+স্থির অন্তঃরেখ শূন্য apir_encode_apir_বাফার_type_host_handle_t(apir_encoder *                         enc,
+                                                              ধ্রুবক apir_বাফার_type_host_handle_t * val) {
+    apir_encode(enc, আকার(apir_বাফার_type_host_handle_t), val, আকার(apir_বাফার_type_host_handle_t));
 }
 
-static inline void apir_decode_apir_buffer_type_host_handle_t(apir_decoder *                   dec,
-                                                              apir_buffer_type_host_handle_t * val) {
-    apir_decode(dec, sizeof(apir_buffer_type_host_handle_t), val, sizeof(apir_buffer_type_host_handle_t));
+স্থির অন্তঃরেখ শূন্য apir_decode_apir_বাফার_type_host_handle_t(apir_decoder *                   dec,
+                                                              apir_বাফার_type_host_handle_t * val) {
+    apir_decode(dec, আকার(apir_বাফার_type_host_handle_t), val, আকার(apir_বাফার_type_host_handle_t));
 }
 
 /* apir_buffer_host_handle_t */
 
-static inline void apir_encode_apir_buffer_host_handle_t(apir_encoder * enc, const apir_buffer_host_handle_t * val) {
-    apir_encode(enc, sizeof(apir_buffer_host_handle_t), val, sizeof(apir_buffer_host_handle_t));
+স্থির অন্তঃরেখ শূন্য apir_encode_apir_বাফার_host_handle_t(apir_encoder * enc, ধ্রুবক apir_বাফার_host_handle_t * val) {
+    apir_encode(enc, আকার(apir_বাফার_host_handle_t), val, আকার(apir_বাফার_host_handle_t));
 }
 
-static inline void apir_decode_apir_buffer_host_handle_t(apir_decoder * dec, apir_buffer_host_handle_t * val) {
-    apir_decode(dec, sizeof(apir_buffer_host_handle_t), val, sizeof(apir_buffer_host_handle_t));
+স্থির অন্তঃরেখ শূন্য apir_decode_apir_বাফার_host_handle_t(apir_decoder * dec, apir_বাফার_host_handle_t * val) {
+    apir_decode(dec, আকার(apir_বাফার_host_handle_t), val, আকার(apir_বাফার_host_handle_t));
 }
 
 /* uintptr_t */
 
-static inline void apir_encode_uintptr_t(apir_encoder * enc, const uintptr_t * val) {
-    apir_encode(enc, sizeof(*val), val, sizeof(*val));
+স্থির অন্তঃরেখ শূন্য apir_encode_uintptr_t(apir_encoder * enc, ধ্রুবক uintptr_t * val) {
+    apir_encode(enc, আকার(*val), val, আকার(*val));
 }
 
-static inline void apir_decode_uintptr_t(apir_decoder * dec, uintptr_t * val) {
-    apir_decode(dec, sizeof(*val), val, sizeof(*val));
+স্থির অন্তঃরেখ শূন্য apir_decode_uintptr_t(apir_decoder * dec, uintptr_t * val) {
+    apir_decode(dec, আকার(*val), val, আকার(*val));
 }

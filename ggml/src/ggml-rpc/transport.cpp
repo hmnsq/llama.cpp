@@ -1,5 +1,5 @@
-#include "transport.h"
-#include "log.h"
+#অন্তর্ভাব "transport.h"
+#অন্তর্ভাব "log.h"
 
 #ifdef _WIN32
 #  define WIN32_LEAN_AND_MEAN
@@ -8,7 +8,7 @@
 #  endif
 #  include <windows.h>
 #  include <winsock2.h>
-#else
+#অন্যথা
 #  include <arpa/inet.h>
 #  include <sys/socket.h>
 #  include <sys/types.h>
@@ -17,10 +17,10 @@
 #  include <netdb.h>
 #  include <unistd.h>
 #endif
-#include <cstdlib>
-#include <cstring>
-#include <mutex>
-#include <optional>
+#অন্তর্ভাব <cstdlib>
+#অন্তর্ভাব <cstring>
+#অন্তর্ভাব <mutex>
+#অন্তর্ভাব <optional>
 
 #ifdef GGML_RPC_RDMA
 #  include <infiniband/verbs.h>
@@ -37,121 +37,121 @@
 #endif // GGML_RPC_RDMA
 
 #ifdef _WIN32
-typedef SOCKET sockfd_t;
+প্রকারলেখ SOCKET sockfd_t;
 using ssize_t = __int64;
-#else
-typedef int sockfd_t;
+#অন্যথা
+প্রকারলেখ পূর্ণসংখ্যা sockfd_t;
 #endif
 
 #ifdef GGML_RPC_RDMA
-static constexpr size_t RDMA_GID_SIZE = 16;            // RoCE GID / IB GID is always 16 bytes
-using rdma_gid_t = std::array<uint8_t, RDMA_GID_SIZE>;
+স্থির constexpr size_t RDMA_GID_আকার = 16;            // RoCE GID / IB GID is always 16 bytes
+using rdma_gid_t = std::array<uint8_t, RDMA_GID_আকার>;
 #endif // GGML_RPC_RDMA
 
-#if defined(GGML_RPC_RDMA) && !defined(GGML_RPC_RDMA_APPLE)
-static constexpr size_t RDMA_CHUNK    = 256 * 1024;   // 256 KiB per send/recv (fits default 8 MiB memlock)
-static constexpr int    RDMA_RX_DEPTH = 24;            // pre-posted recv ring: 24 × 256 KiB = 6 MiB
+#যদি defined(GGML_RPC_RDMA) && !defined(GGML_RPC_RDMA_APPLE)
+স্থির constexpr size_t RDMA_CHUNK    = 256 * 1024;   // 256 KiB per send/recv (fits default 8 MiB memlock)
+স্থির constexpr পূর্ণসংখ্যা    RDMA_RX_DEPTH = 24;            // pre-posted recv ring: 24 × 256 KiB = 6 MiB
 // keep polling the CQ for this long after the last activity, then sleep until the next completion
-static constexpr auto   RDMA_SPIN_TIME = std::chrono::milliseconds(100);
+স্থির constexpr auto   RDMA_SPIN_TIME = std::chrono::milliseconds(100);
 
-struct rdma_conn {
-    struct ibv_context * ctx = nullptr;
-    struct ibv_pd * pd  = nullptr;
-    struct ibv_cq * scq = nullptr;   // send completions
-    struct ibv_cq * rcq = nullptr;   // recv completions
-    struct ibv_qp * qp  = nullptr;
-    struct ibv_comp_channel * ch = nullptr; // CQ events, so an idle connection can sleep instead of spinning
+কাঠামো rdma_conn {
+    কাঠামো ibv_context * ctx = nullptr;
+    কাঠামো ibv_pd * pd  = nullptr;
+    কাঠামো ibv_cq * scq = nullptr;   // send completions
+    কাঠামো ibv_cq * rcq = nullptr;   // recv completions
+    কাঠামো ibv_qp * qp  = nullptr;
+    কাঠামো ibv_comp_channel * ch = nullptr; // CQ events, so an idle connection can sleep instead of spinning
 
     std::chrono::steady_clock::time_point last_active; // last completion or posted send
 
-    void          * tx_buf = nullptr;
-    struct ibv_mr * tx_mr  = nullptr;
+    শূন্য          * tx_buf = nullptr;
+    কাঠামো ibv_mr * tx_mr  = nullptr;
 
-    void          * rx_buf = nullptr; // RDMA_RX_DEPTH × RDMA_CHUNK contiguous
-    struct ibv_mr * rx_mr  = nullptr;
-    int             rx_head = 0;
+    শূন্য          * rx_buf = nullptr; // RDMA_RX_DEPTH × RDMA_CHUNK contiguous
+    কাঠামো ibv_mr * rx_mr  = nullptr;
+    পূর্ণসংখ্যা             rx_শীর্ষ = 0;
 
     uint32_t        max_inline = 0;
 
-    uint8_t * rx_slot(int i) const {
-        return static_cast<uint8_t *>(rx_buf) + static_cast<size_t>(i) * RDMA_CHUNK;
+    uint8_t * rx_slot(পূর্ণসংখ্যা i) ধ্রুবক {
+        ফেরত static_cast<uint8_t *>(rx_buf) + static_cast<size_t>(i) * RDMA_CHUNK;
     }
 
-    bool post_rx(int i) {
-        struct ibv_sge sge = {};
+    যৌক্তিক post_rx(পূর্ণসংখ্যা i) {
+        কাঠামো ibv_sge sge = {};
         sge.addr   = (uintptr_t)rx_slot(i);
-        sge.length = RDMA_CHUNK;
+        sge.দৈর্ঘ্য = RDMA_CHUNK;
         sge.lkey   = rx_mr->lkey;
-        struct ibv_recv_wr wr = {}, * bad = nullptr;
+        কাঠামো ibv_recv_wr wr = {}, * bad = nullptr;
         wr.wr_id   = (uint64_t)i;
         wr.sg_list = &sge;
-        wr.num_sge = 1;
-        return ibv_post_recv(qp, &wr, &bad) == 0;
+        wr.অঙ্ক_sge = 1;
+        ফেরত ibv_post_recv(qp, &wr, &bad) == 0;
     }
 
     ~rdma_conn() {
-        if (tx_mr) ibv_dereg_mr(tx_mr);
-        if (rx_mr) ibv_dereg_mr(rx_mr);
-        free(tx_buf);
-        free(rx_buf);
-        if (qp)  ibv_destroy_qp(qp);
-        if (scq) ibv_destroy_cq(scq);
-        if (rcq) ibv_destroy_cq(rcq);
-        if (ch)  ibv_destroy_comp_channel(ch);
-        if (pd)  ibv_dealloc_pd(pd);
-        if (ctx) ibv_close_device(ctx);
+        যদি (tx_mr) ibv_dereg_mr(tx_mr);
+        যদি (rx_mr) ibv_dereg_mr(rx_mr);
+        মুক্ত(tx_buf);
+        মুক্ত(rx_buf);
+        যদি (qp)  ibv_destroy_qp(qp);
+        যদি (scq) ibv_destroy_cq(scq);
+        যদি (rcq) ibv_destroy_cq(rcq);
+        যদি (ch)  ibv_destroy_comp_channel(ch);
+        যদি (pd)  ibv_dealloc_pd(pd);
+        যদি (ctx) ibv_close_device(ctx);
     }
 };
 
 // Local RDMA parameters captured during the probe phase and later consumed
 // by rdma_activate() after the remote side's caps arrive via HELLO.
-struct rdma_local_info {
+কাঠামো rdma_local_info {
     uint32_t qpn     = 0;
     uint32_t psn     = 0;
-    uint8_t  gid[RDMA_GID_SIZE] = {};
+    uint8_t  gid[RDMA_GID_আকার] = {};
     uint8_t  ib_port = 0;
-    int      gid_idx = 0;
-    enum ibv_mtu path_mtu = IBV_MTU_1024;
+    পূর্ণসংখ্যা      gid_idx = 0;
+    গণনা ibv_mtu path_mtu = IBV_MTU_1024;
 };
 
-struct rdma_caps {
+কাঠামো rdma_caps {
     uint32_t qpn;
     uint32_t psn;
-    uint8_t  gid[RDMA_GID_SIZE];
+    uint8_t  gid[RDMA_GID_আকার];
 };
 
-static_assert(sizeof(rdma_caps) == RPC_CONN_CAPS_SIZE, "rdma_caps must match conn_caps size");
+static_assert(আকার(rdma_caps) == RPC_CONN_CAPS_আকার, "rdma_caps must match conn_caps size");
 
 #endif // GGML_RPC_RDMA && !GGML_RPC_RDMA_APPLE
 
-struct socket_t::impl {
-    impl(sockfd_t fd) : use_rdma(false), fd(fd) {}
+কাঠামো socket_t::impl {
+    impl(sockfd_t fd) : use_rdma(মিথ্যা), fd(fd) {}
     ~impl();
-    bool send_data(const void * data, size_t size);
-    bool recv_data(void * data, size_t size);
-    bool flush();
-    void get_caps(uint8_t * local_caps);
-    void update_caps(const uint8_t * remote_caps);
+    যৌক্তিক send_তথ্য(ধ্রুবক শূন্য * তথ্য, size_t size);
+    যৌক্তিক recv_তথ্য(শূন্য * তথ্য, size_t size);
+    যৌক্তিক flush();
+    শূন্য get_caps(uint8_t * local_caps);
+    শূন্য update_caps(ধ্রুবক uint8_t * remote_caps);
 
 #ifdef GGML_RPC_RDMA
     std::optional<rdma_gid_t> rdma_build_target_gid();
 
 #  ifdef GGML_RPC_RDMA_APPLE
     std::unique_ptr<apple_rdma> rdma;
-#  else
-    bool rdma_probe();
-    bool rdma_send(const void * data, size_t size);
-    bool rdma_recv(void * data, size_t size);
-    bool tcp_peer_closed();
-    bool rdma_activate(uint32_t remote_qpn, uint32_t remote_psn, const uint8_t * remote_gid);
-    bool rdma_poll(struct ibv_cq * cq, struct ibv_wc * wc);
-    bool rdma_wait_event();
+#  অন্যথা
+    যৌক্তিক rdma_probe();
+    যৌক্তিক rdma_send(ধ্রুবক শূন্য * তথ্য, size_t size);
+    যৌক্তিক rdma_recv(শূন্য * তথ্য, size_t size);
+    যৌক্তিক tcp_peer_closed();
+    যৌক্তিক rdma_activate(uint32_t remote_qpn, uint32_t remote_psn, ধ্রুবক uint8_t * remote_gid);
+    যৌক্তিক rdma_poll(কাঠামো ibv_cq * cq, কাঠামো ibv_wc * wc);
+    যৌক্তিক rdma_wait_event();
 
     std::unique_ptr<rdma_conn> rdma;
     rdma_local_info            rdma_local = {};
 #  endif
 #endif // GGML_RPC_RDMA
-    bool     use_rdma;
+    যৌক্তিক     use_rdma;
     sockfd_t fd;
 };
 
@@ -159,11 +159,11 @@ socket_t::impl::~impl() {
 #ifdef GGML_RPC_RDMA
     rdma.reset();
 #endif // GGML_RPC_RDMA
-    LOG_DBG("[%s] closing socket %d\n", __func__, this->fd);
+    LOG_DBG("[%s] closing socket %d\n", __func__, এই->fd);
 #ifdef _WIN32
-    if (fd != INVALID_SOCKET) closesocket(this->fd);
-#else
-    if (fd >= 0) close(this->fd);
+    যদি (fd != INVALID_SOCKET) closesocket(এই->fd);
+#অন্যথা
+    যদি (fd >= 0) close(এই->fd);
 #endif
 }
 
@@ -178,113 +178,113 @@ socket_t::impl::~impl() {
 // Returns std::nullopt on unsupported family or getsockname failure.
 std::optional<rdma_gid_t> socket_t::impl::rdma_build_target_gid() {
     sockaddr_storage addr = {};
-    socklen_t addr_len = sizeof(addr);
-    if (getsockname(fd, reinterpret_cast<sockaddr *>(&addr), &addr_len) != 0) {
-        return std::nullopt;
+    socklen_t addr_len = আকার(addr);
+    যদি (getsockname(fd, reinterpret_cast<sockaddr *>(&addr), &addr_len) != 0) {
+        ফেরত std::nullopt;
     }
     rdma_gid_t target = {};
-    if (addr.ss_family == AF_INET) {
-        const auto * a = reinterpret_cast<const sockaddr_in *>(&addr);
+    যদি (addr.ss_family == AF_INET) {
+        ধ্রুবক auto * a = reinterpret_cast<ধ্রুবক sockaddr_in *>(&addr);
         target[10] = 0xff;
         target[11] = 0xff;
         memcpy(&target[12], &a->sin_addr, 4);
-        return target;
+        ফেরত target;
     }
-    if (addr.ss_family == AF_INET6) {
-        const auto * a = reinterpret_cast<const sockaddr_in6 *>(&addr);
-        memcpy(target.data(), &a->sin6_addr, RDMA_GID_SIZE);
-        return target;
+    যদি (addr.ss_family == AF_INET6) {
+        ধ্রুবক auto * a = reinterpret_cast<ধ্রুবক sockaddr_in6 *>(&addr);
+        memcpy(target.তথ্য(), &a->sin6_addr, RDMA_GID_আকার);
+        ফেরত target;
     }
-    return std::nullopt;
+    ফেরত std::nullopt;
 }
 
 #ifndef GGML_RPC_RDMA_APPLE
 
-bool socket_t::impl::tcp_peer_closed() {
-    if (fd < 0) return false;
+যৌক্তিক socket_t::impl::tcp_peer_closed() {
+    যদি (fd < 0) ফেরত মিথ্যা;
 #ifndef _WIN32
-    struct pollfd pfd = { fd, POLLIN | POLLRDHUP, 0 };
-    int r = poll(&pfd, 1, 0);
-    return r > 0 && (pfd.revents & (POLLHUP | POLLERR | POLLRDHUP));
-#else
-    return false;
+    কাঠামো pollfd pfd = { fd, POLLIN | POLLRDHUP, 0 };
+    পূর্ণসংখ্যা r = poll(&pfd, 1, 0);
+    ফেরত r > 0 && (pfd.revents & (POLLHUP | POLLERR | POLLRDHUP));
+#অন্যথা
+    ফেরত মিথ্যা;
 #endif
 }
 
-bool socket_t::impl::rdma_probe() {
-    const char * dev_env = std::getenv("GGML_RDMA_DEV");
-    const char * gid_env = std::getenv("GGML_RDMA_GID");
+যৌক্তিক socket_t::impl::rdma_probe() {
+    ধ্রুবক অক্ষর * dev_env = std::getenv("GGML_RDMA_DEV");
+    ধ্রুবক অক্ষর * gid_env = std::getenv("GGML_RDMA_GID");
 
     auto target_gid = rdma_build_target_gid();
-    if (!target_gid) {
-        return false;
+    যদি (!target_gid) {
+        ফেরত মিথ্যা;
     }
 
-    const uint8_t ib_port = 1;
-    int num_devs = 0;
-    ibv_device ** devs = ibv_get_device_list(&num_devs);
-    if (!devs || num_devs == 0) return false;
+    ধ্রুবক uint8_t ib_port = 1;
+    পূর্ণসংখ্যা অঙ্ক_devs = 0;
+    ibv_device ** devs = ibv_get_device_list(&অঙ্ক_devs);
+    যদি (!devs || অঙ্ক_devs == 0) ফেরত মিথ্যা;
 
     ibv_context * ibctx = nullptr;
-    const char * matched_dev = nullptr;
-    int gid_idx = gid_env ? atoi(gid_env) : -1;
-    int gid_version = IBV_GID_TYPE_IB;  // 0 = unknown/IB
+    ধ্রুবক অক্ষর * matched_dev = nullptr;
+    পূর্ণসংখ্যা gid_idx = gid_env ? atoi(gid_env) : -1;
+    পূর্ণসংখ্যা gid_version = IBV_GID_TYPE_IB;  // 0 = unknown/IB
 
-    for (int d = 0; d < num_devs; d++) {
-        const char * dn = ibv_get_device_name(devs[d]);
-        if (dev_env && strcmp(dev_env, dn) != 0) continue;
+    জন্য (পূর্ণসংখ্যা d = 0; d < অঙ্ক_devs; d++) {
+        ধ্রুবক অক্ষর * dn = ibv_get_device_name(devs[d]);
+        যদি (dev_env && strcmp(dev_env, dn) != 0) চালু;
 
         ibv_context * ctx = ibv_open_device(devs[d]);
-        if (!ctx) continue;
+        যদি (!ctx) চালু;
 
         ibv_port_attr pa;
-        if (ibv_query_port(ctx, ib_port, &pa) != 0) { ibv_close_device(ctx); continue; }
+        যদি (ibv_query_port(ctx, ib_port, &pa) != 0) { ibv_close_device(ctx); চালু; }
 
-        int found_gid = gid_idx;
-        int found_version = IBV_GID_TYPE_IB;
-        if (found_gid < 0) {
+        পূর্ণসংখ্যা found_gid = gid_idx;
+        পূর্ণসংখ্যা found_version = IBV_GID_TYPE_IB;
+        যদি (found_gid < 0) {
             // Find a GID on this port whose bytes equal the local TCP address
             // (IPv4 or IPv6). Prefer RoCE v2 (UDP/IP, L3-routable) over v1
             // (raw Ethernet, same-L2 only) so silent hangs on L3-routed paths
             // are avoided. ibv_query_gid_ex returns gid+type in one call.
-            int v2_idx = -1;
-            int v1_idx = -1;
-            for (int i = 0; i < pa.gid_tbl_len; i++) {
+            পূর্ণসংখ্যা v2_idx = -1;
+            পূর্ণসংখ্যা v1_idx = -1;
+            জন্য (পূর্ণসংখ্যা i = 0; i < pa.gid_tbl_len; i++) {
                 ibv_gid_entry entry = {};
-                if (ibv_query_gid_ex(ctx, ib_port, i, &entry, 0) != 0) continue;
-                if (memcmp(entry.gid.raw, target_gid->data(), RDMA_GID_SIZE) != 0) continue;
-                if (entry.gid_type == IBV_GID_TYPE_ROCE_V2 && v2_idx < 0) {
+                যদি (ibv_query_gid_ex(ctx, ib_port, i, &entry, 0) != 0) চালু;
+                যদি (memcmp(entry.gid.raw, target_gid->তথ্য(), RDMA_GID_আকার) != 0) চালু;
+                যদি (entry.gid_type == IBV_GID_TYPE_ROCE_V2 && v2_idx < 0) {
                     v2_idx = i;
-                } else if (entry.gid_type == IBV_GID_TYPE_ROCE_V1 && v1_idx < 0) {
+                } অন্যথা যদি (entry.gid_type == IBV_GID_TYPE_ROCE_V1 && v1_idx < 0) {
                     v1_idx = i;
                 }
             }
-            if (v2_idx >= 0) {
+            যদি (v2_idx >= 0) {
                 found_gid = v2_idx;
                 found_version = IBV_GID_TYPE_ROCE_V2;
-            } else if (v1_idx >= 0) {
+            } অন্যথা যদি (v1_idx >= 0) {
                 found_gid = v1_idx;
                 found_version = IBV_GID_TYPE_ROCE_V1;
             }
-        } else {
+        } অন্যথা {
             // Explicit GID index from GGML_RDMA_GID — fetch its type for logging.
             ibv_gid_entry entry = {};
-            if (ibv_query_gid_ex(ctx, ib_port, found_gid, &entry, 0) == 0) {
+            যদি (ibv_query_gid_ex(ctx, ib_port, found_gid, &entry, 0) == 0) {
                 found_version = entry.gid_type;
             }
         }
-        if (found_gid >= 0) {
+        যদি (found_gid >= 0) {
             ibctx = ctx;
             gid_idx = found_gid;
             gid_version = found_version;
             matched_dev = dn;
             rdma_local.path_mtu = pa.active_mtu;
-            break;
+            বিরতি;
         }
         ibv_close_device(ctx);
     }
     ibv_free_device_list(devs);
-    if (!ibctx) return false;
+    যদি (!ibctx) ফেরত মিথ্যা;
 
     rdma_local.ib_port = ib_port;
     rdma_local.gid_idx = gid_idx;
@@ -293,13 +293,13 @@ bool socket_t::impl::rdma_probe() {
     rdma->ctx = ibctx;
 
     rdma->pd = ibv_alloc_pd(ibctx);
-    if (!rdma->pd) return false;
+    যদি (!rdma->pd) ফেরত মিথ্যা;
 
     // without a completion channel rdma_poll() spins all the time, as before
     rdma->ch  = ibv_create_comp_channel(ibctx);
     rdma->scq = ibv_create_cq(ibctx, 16, nullptr, rdma->ch, 0);
     rdma->rcq = ibv_create_cq(ibctx, RDMA_RX_DEPTH + 4, nullptr, rdma->ch, 0);
-    if (!rdma->scq || !rdma->rcq) return false;
+    যদি (!rdma->scq || !rdma->rcq) ফেরত মিথ্যা;
 
     ibv_qp_init_attr qia = {};
     qia.send_cq = rdma->scq;
@@ -309,94 +309,94 @@ bool socket_t::impl::rdma_probe() {
     qia.cap.max_recv_wr     = RDMA_RX_DEPTH + 4;
     qia.cap.max_send_sge    = 1;
     qia.cap.max_recv_sge    = 1;
-    qia.cap.max_inline_data = 256;
+    qia.cap.max_inline_তথ্য = 256;
 
     rdma->qp = ibv_create_qp(rdma->pd, &qia);
-    if (!rdma->qp) return false;
-    rdma->max_inline = qia.cap.max_inline_data;
+    যদি (!rdma->qp) ফেরত মিথ্যা;
+    rdma->max_inline = qia.cap.max_inline_তথ্য;
 
     rdma->tx_buf = aligned_alloc(4096, RDMA_CHUNK);
     rdma->rx_buf = aligned_alloc(4096, static_cast<size_t>(RDMA_RX_DEPTH) * RDMA_CHUNK);
-    if (!rdma->tx_buf || !rdma->rx_buf) return false;
+    যদি (!rdma->tx_buf || !rdma->rx_buf) ফেরত মিথ্যা;
 
     rdma->tx_mr = ibv_reg_mr(rdma->pd, rdma->tx_buf, RDMA_CHUNK, IBV_ACCESS_LOCAL_WRITE);
     rdma->rx_mr = ibv_reg_mr(rdma->pd, rdma->rx_buf, static_cast<size_t>(RDMA_RX_DEPTH) * RDMA_CHUNK,
                            IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE);
-    if (!rdma->tx_mr || !rdma->rx_mr) return false;
+    যদি (!rdma->tx_mr || !rdma->rx_mr) ফেরত মিথ্যা;
 
     ibv_gid local_gid;
-    if (ibv_query_gid(ibctx, ib_port, gid_idx, &local_gid) != 0) return false;
+    যদি (ibv_query_gid(ibctx, ib_port, gid_idx, &local_gid) != 0) ফেরত মিথ্যা;
 
-    rdma_local.qpn = rdma->qp->qp_num;
-    rdma_local.psn = rdma->qp->qp_num & 0xffffff;
-    memcpy(&rdma_local.gid, &local_gid, RDMA_GID_SIZE);
+    rdma_local.qpn = rdma->qp->qp_অঙ্ক;
+    rdma_local.psn = rdma->qp->qp_অঙ্ক & 0xffffff;
+    memcpy(&rdma_local.gid, &local_gid, RDMA_GID_আকার);
 
-    const char * ver_str = "";
-    if (gid_version == IBV_GID_TYPE_ROCE_V2) {
+    ধ্রুবক অক্ষর * ver_str = "";
+    যদি (gid_version == IBV_GID_TYPE_ROCE_V2) {
         ver_str = " RoCEv2";
-    } else if (gid_version == IBV_GID_TYPE_ROCE_V1) {
+    } অন্যথা যদি (gid_version == IBV_GID_TYPE_ROCE_V1) {
         ver_str = " RoCEv1";
     }
     LOG_INFO("RDMA probed: dev=%s gid=%d%s qpn=%u inline=%u\n",
                   matched_dev, gid_idx, ver_str, rdma_local.qpn, rdma->max_inline);
-    return true;
+    ফেরত সত্য;
 }
 
 // Phase 2: Given remote QPN/PSN/GID, transition QP: RESET->INIT->pre-post->RTR->RTS.
 // On success, the connection is live and ready for rdma_send/rdma_recv.
-bool socket_t::impl::rdma_activate(uint32_t remote_qpn, uint32_t remote_psn, const uint8_t * remote_gid) {
+যৌক্তিক socket_t::impl::rdma_activate(uint32_t remote_qpn, uint32_t remote_psn, ধ্রুবক uint8_t * remote_gid) {
     // RESET -> INIT
     {
-        struct ibv_qp_attr a = {};
+        কাঠামো ibv_qp_attr a = {};
         a.qp_state        = IBV_QPS_INIT;
-        a.port_num        = rdma_local.ib_port;
-        a.pkey_index      = 0;
+        a.port_অঙ্ক        = rdma_local.ib_port;
+        a.pkey_সূচক      = 0;
         a.qp_access_flags = IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_LOCAL_WRITE;
-        if (ibv_modify_qp(rdma->qp, &a,
-                IBV_QP_STATE | IBV_QP_PKEY_INDEX | IBV_QP_PORT | IBV_QP_ACCESS_FLAGS) != 0) {
-            return false;
+        যদি (ibv_modify_qp(rdma->qp, &a,
+                IBV_QP_STATE | IBV_QP_PKEY_সূচক | IBV_QP_PORT | IBV_QP_ACCESS_FLAGS) != 0) {
+            ফেরত মিথ্যা;
         }
     }
 
-    for (int i = 0; i < RDMA_RX_DEPTH; i++) {
-        if (!rdma->post_rx(i)) return false;
+    জন্য (পূর্ণসংখ্যা i = 0; i < RDMA_RX_DEPTH; i++) {
+        যদি (!rdma->post_rx(i)) ফেরত মিথ্যা;
     }
 
     // INIT -> RTR
     {
-        struct ibv_qp_attr a = {};
+        কাঠামো ibv_qp_attr a = {};
         a.qp_state           = IBV_QPS_RTR;
         a.path_mtu           = rdma_local.path_mtu;
-        a.dest_qp_num        = remote_qpn;
+        a.dest_qp_অঙ্ক        = remote_qpn;
         a.rq_psn             = remote_psn;
         a.max_dest_rd_atomic = 1;
         a.min_rnr_timer      = 1;
         a.ah_attr.is_global  = 1;
-        memcpy(&a.ah_attr.grh.dgid, remote_gid, RDMA_GID_SIZE);
+        memcpy(&a.ah_attr.grh.dgid, remote_gid, RDMA_GID_আকার);
         a.ah_attr.grh.hop_limit  = 1;
-        a.ah_attr.grh.sgid_index = rdma_local.gid_idx;
+        a.ah_attr.grh.sgid_সূচক = rdma_local.gid_idx;
         a.ah_attr.dlid       = 0;
-        a.ah_attr.port_num   = rdma_local.ib_port;
-        if (ibv_modify_qp(rdma->qp, &a,
+        a.ah_attr.port_অঙ্ক   = rdma_local.ib_port;
+        যদি (ibv_modify_qp(rdma->qp, &a,
                 IBV_QP_STATE | IBV_QP_AV | IBV_QP_PATH_MTU | IBV_QP_DEST_QPN |
                 IBV_QP_RQ_PSN | IBV_QP_MAX_DEST_RD_ATOMIC | IBV_QP_MIN_RNR_TIMER) != 0) {
-            return false;
+            ফেরত মিথ্যা;
         }
     }
 
     // RTR -> RTS
     {
-        struct ibv_qp_attr a = {};
+        কাঠামো ibv_qp_attr a = {};
         a.qp_state     = IBV_QPS_RTS;
         a.timeout      = 14;
         a.retry_cnt    = 7;
         a.rnr_retry    = 7;
         a.sq_psn       = rdma_local.psn;
         a.max_rd_atomic = 1;
-        if (ibv_modify_qp(rdma->qp, &a,
+        যদি (ibv_modify_qp(rdma->qp, &a,
                 IBV_QP_STATE | IBV_QP_TIMEOUT | IBV_QP_RETRY_CNT | IBV_QP_RNR_RETRY |
                 IBV_QP_SQ_PSN | IBV_QP_MAX_QP_RD_ATOMIC) != 0) {
-            return false;
+            ফেরত মিথ্যা;
         }
     }
 
@@ -404,210 +404,210 @@ bool socket_t::impl::rdma_activate(uint32_t remote_qpn, uint32_t remote_psn, con
 
     LOG_INFO("RDMA activated: qpn=%u->%u mtu=%d rx_depth=%d\n",
                   rdma_local.qpn, remote_qpn, 128 << rdma_local.path_mtu, RDMA_RX_DEPTH);
-    return true;
+    ফেরত সত্য;
 }
 
 // Sleep until the completion channel has an event or the TCP peer closes.
-bool socket_t::impl::rdma_wait_event() {
+যৌক্তিক socket_t::impl::rdma_wait_event() {
     rdma_conn * c = rdma.get();
     // POLLHUP and POLLERR are always reported, the TCP socket carries no data after the RDMA upgrade
-    struct pollfd pfds[2] = {
+    কাঠামো pollfd pfds[2] = {
         { c->ch->fd, POLLIN,    0 },
         { fd,        POLLRDHUP, 0 },
     };
-    if (poll(pfds, 2, -1) < 0) {
-        return errno == EINTR;
+    যদি (poll(pfds, 2, -1) < 0) {
+        ফেরত errno == EINTR;
     }
-    if (pfds[1].revents & (POLLHUP | POLLERR | POLLRDHUP)) {
-        return false;
+    যদি (pfds[1].revents & (POLLHUP | POLLERR | POLLRDHUP)) {
+        ফেরত মিথ্যা;
     }
-    if (pfds[0].revents & POLLIN) {
-        struct ibv_cq * ev_cq  = nullptr;
-        void          * ev_ctx = nullptr;
-        if (ibv_get_cq_event(c->ch, &ev_cq, &ev_ctx) != 0) {
-            return false;
+    যদি (pfds[0].revents & POLLIN) {
+        কাঠামো ibv_cq * ev_cq  = nullptr;
+        শূন্য          * ev_ctx = nullptr;
+        যদি (ibv_get_cq_event(c->ch, &ev_cq, &ev_ctx) != 0) {
+            ফেরত মিথ্যা;
         }
         ibv_ack_cq_events(ev_cq, 1);
     }
-    return true;
+    ফেরত সত্য;
 }
 
-bool socket_t::impl::rdma_poll(struct ibv_cq * cq, struct ibv_wc * wc) {
+যৌক্তিক socket_t::impl::rdma_poll(কাঠামো ibv_cq * cq, কাঠামো ibv_wc * wc) {
     rdma_conn * c = rdma.get();
-    bool armed = false;
-    for (uint64_t s = 1; ; s++) {
-        int n = ibv_poll_cq(cq, 1, wc);
-        if (n > 0) {
+    যৌক্তিক armed = মিথ্যা;
+    জন্য (uint64_t s = 1; ; s++) {
+        পূর্ণসংখ্যা n = ibv_poll_cq(cq, 1, wc);
+        যদি (n > 0) {
             c->last_active = std::chrono::steady_clock::now();
-            if (wc->status != IBV_WC_SUCCESS) {
+            যদি (wc->status != IBV_WC_SUCCESS) {
                 LOG_ERROR("RDMA CQ wc error: status=%d (%s) vendor_err=0x%x\n",
                     wc->status, ibv_wc_status_str(wc->status), wc->vendor_err);
             }
-            return wc->status == IBV_WC_SUCCESS;
+            ফেরত wc->status == IBV_WC_SUCCESS;
         }
-        if (n < 0) return false;
-        if (armed) {
+        যদি (n < 0) ফেরত মিথ্যা;
+        যদি (armed) {
             // armed and still empty: sleep until the next completion
-            if (!rdma_wait_event()) {
-                return false;
+            যদি (!rdma_wait_event()) {
+                ফেরত মিথ্যা;
             }
-            armed = false;
-            continue;
+            armed = মিথ্যা;
+            চালু;
         }
         // spin while the connection is busy, arm the CQ once it has been idle for RDMA_SPIN_TIME
         // a completion that arrives before arming raises no event, so poll once more after arming
-        if (c->ch && (s & 0x3FF) == 0 && std::chrono::steady_clock::now() - c->last_active > RDMA_SPIN_TIME) {
-            if (ibv_req_notify_cq(cq, 0) != 0) {
-                return false;
+        যদি (c->ch && (s & 0x3FF) == 0 && std::chrono::steady_clock::now() - c->last_active > RDMA_SPIN_TIME) {
+            যদি (ibv_req_notify_cq(cq, 0) != 0) {
+                ফেরত মিথ্যা;
             }
-            armed = true;
-            continue;
+            armed = সত্য;
+            চালু;
         }
-        if ((s & 0xFFFFF) == 0) {
-            if (tcp_peer_closed()) {
-                return false;
+        যদি ((s & 0xFFFFF) == 0) {
+            যদি (tcp_peer_closed()) {
+                ফেরত মিথ্যা;
             }
         }
     }
 }
 
-bool socket_t::impl::rdma_send(const void * data, size_t size) {
+যৌক্তিক socket_t::impl::rdma_send(ধ্রুবক শূন্য * তথ্য, size_t size) {
     rdma_conn * c = rdma.get();
-    const uint8_t * src = (const uint8_t *)data;
+    ধ্রুবক uint8_t * src = (ধ্রুবক uint8_t *)তথ্য;
     size_t rem = size;
-    while (rem > 0) {
+    যখন (rem > 0) {
         size_t chunk = std::min(rem, RDMA_CHUNK);
 
-        struct ibv_sge sge = {};
-        struct ibv_send_wr wr = {}, * bad = nullptr;
+        কাঠামো ibv_sge sge = {};
+        কাঠামো ibv_send_wr wr = {}, * bad = nullptr;
         wr.opcode  = IBV_WR_SEND;
         wr.sg_list = &sge;
-        wr.num_sge = 1;
+        wr.অঙ্ক_sge = 1;
 
-        if (chunk <= c->max_inline) {
+        যদি (chunk <= c->max_inline) {
             sge.addr   = (uintptr_t)src;
-            sge.length = chunk;
+            sge.দৈর্ঘ্য = chunk;
             wr.send_flags = IBV_SEND_SIGNALED | IBV_SEND_INLINE;
-        } else {
+        } অন্যথা {
             memcpy(c->tx_buf, src, chunk);
             sge.addr   = (uintptr_t)c->tx_buf;
-            sge.length = chunk;
+            sge.দৈর্ঘ্য = chunk;
             sge.lkey   = c->tx_mr->lkey;
             wr.send_flags = IBV_SEND_SIGNALED;
         }
 
-        if (ibv_post_send(c->qp, &wr, &bad) != 0) return false;
+        যদি (ibv_post_send(c->qp, &wr, &bad) != 0) ফেরত মিথ্যা;
         c->last_active = std::chrono::steady_clock::now();
-        struct ibv_wc wc;
-        if (!rdma_poll(c->scq, &wc)) return false;
+        কাঠামো ibv_wc wc;
+        যদি (!rdma_poll(c->scq, &wc)) ফেরত মিথ্যা;
 
         src += chunk;
         rem -= chunk;
     }
-    return true;
+    ফেরত সত্য;
 }
 
-bool socket_t::impl::rdma_recv(void * data, size_t size) {
+যৌক্তিক socket_t::impl::rdma_recv(শূন্য * তথ্য, size_t size) {
     rdma_conn * c = rdma.get();
-    uint8_t * dst = (uint8_t *)data;
+    uint8_t * dst = (uint8_t *)তথ্য;
     size_t rem = size;
-    while (rem > 0) {
-        struct ibv_wc wc;
-        if (!rdma_poll(c->rcq, &wc)) return false;
+    যখন (rem > 0) {
+        কাঠামো ibv_wc wc;
+        যদি (!rdma_poll(c->rcq, &wc)) ফেরত মিথ্যা;
 
-        int slot = (int)wc.wr_id;
+        পূর্ণসংখ্যা slot = (পূর্ণসংখ্যা)wc.wr_id;
         size_t got = wc.byte_len;
         memcpy(dst, c->rx_slot(slot), got);
 
-        if (!c->post_rx(slot)) return false;
+        যদি (!c->post_rx(slot)) ফেরত মিথ্যা;
 
         dst += got;
         rem -= got;
     }
-    return true;
+    ফেরত সত্য;
 }
 
 #endif // !GGML_RPC_RDMA_APPLE (Linux RC transport)
 
 #endif // GGML_RPC_RDMA
 
-bool socket_t::impl::send_data(const void * data, size_t size) {
-    LOG_DBG3("[%s] transport: %s, size: %s\n", __func__, use_rdma ? "RDMA" : "TCP", rpc_log_format_size(size).c_str());
+যৌক্তিক socket_t::impl::send_তথ্য(ধ্রুবক শূন্য * তথ্য, size_t size) {
+    LOG_DBG3("[%s] transport: %s, size: %s\n", __func__, use_rdma ? "RDMA" : "TCP", rpc_log_format_আকার(size).c_str());
 #ifdef GGML_RPC_RDMA_APPLE
-    if (use_rdma) {
-        return rdma->send(data, size);
+    যদি (use_rdma) {
+        ফেরত rdma->send(তথ্য, size);
     }
-#elif defined(GGML_RPC_RDMA)
-    if (use_rdma) {
-        return rdma_send(data, size);
+#নতুবা_যদি defined(GGML_RPC_RDMA)
+    যদি (use_rdma) {
+        ফেরত rdma_send(তথ্য, size);
     }
 #endif
     size_t bytes_sent = 0;
-    while (bytes_sent < size) {
-        size_t size_to_send = std::min(size - bytes_sent, MAX_CHUNK_SIZE);
-        ssize_t n = send(fd, (const char *)data + bytes_sent, size_to_send, 0);
-        if (n < 0) {
+    যখন (bytes_sent < size) {
+        size_t আকার_to_send = std::min(size - bytes_sent, MAX_CHUNK_আকার);
+        ssize_t n = send(fd, (ধ্রুবক অক্ষর *)তথ্য + bytes_sent, আকার_to_send, 0);
+        যদি (n < 0) {
             LOG_ERROR("send failed (bytes_sent=%zu, size_to_send=%zu)\n",
-                           bytes_sent, size_to_send);
-            return false;
+                           bytes_sent, আকার_to_send);
+            ফেরত মিথ্যা;
         }
         bytes_sent += (size_t)n;
     }
-    return true;
+    ফেরত সত্য;
 }
 
-bool socket_t::impl::recv_data(void * data, size_t size) {
-    LOG_DBG3("[%s] transport: %s, size: %s\n", __func__, use_rdma ? "RDMA" : "TCP", rpc_log_format_size(size).c_str());
+যৌক্তিক socket_t::impl::recv_তথ্য(শূন্য * তথ্য, size_t size) {
+    LOG_DBG3("[%s] transport: %s, size: %s\n", __func__, use_rdma ? "RDMA" : "TCP", rpc_log_format_আকার(size).c_str());
 #ifdef GGML_RPC_RDMA_APPLE
-    if (use_rdma) {
-        return rdma->recv(data, size);
+    যদি (use_rdma) {
+        ফেরত rdma->recv(তথ্য, size);
     }
-#elif defined(GGML_RPC_RDMA)
-    if (use_rdma) {
-        return rdma_recv(data, size);
+#নতুবা_যদি defined(GGML_RPC_RDMA)
+    যদি (use_rdma) {
+        ফেরত rdma_recv(তথ্য, size);
     }
 #endif
     size_t bytes_recv = 0;
-    while (bytes_recv < size) {
-        size_t size_to_recv = std::min(size - bytes_recv, MAX_CHUNK_SIZE);
-        ssize_t n = recv(fd, (char *)data + bytes_recv, size_to_recv, 0);
-        if (n < 0) {
+    যখন (bytes_recv < size) {
+        size_t আকার_to_recv = std::min(size - bytes_recv, MAX_CHUNK_আকার);
+        ssize_t n = recv(fd, (অক্ষর *)তথ্য + bytes_recv, আকার_to_recv, 0);
+        যদি (n < 0) {
             LOG_ERROR("recv failed (bytes_recv=%zu, size_to_recv=%zu)\n",
-                           bytes_recv, size_to_recv);
-            return false;
+                           bytes_recv, আকার_to_recv);
+            ফেরত মিথ্যা;
         }
-        if (n == 0) {
+        যদি (n == 0) {
             LOG_WARN("recv returned 0 (peer closed?)\n");
-            return false;
+            ফেরত মিথ্যা;
         }
         bytes_recv += (size_t)n;
     }
-    return true;
+    ফেরত সত্য;
 }
 
-void socket_t::impl::get_caps(uint8_t * local_caps) {
-    memset(local_caps, 0, RPC_CONN_CAPS_SIZE);
+শূন্য socket_t::impl::get_caps(uint8_t * local_caps) {
+    memset(local_caps, 0, RPC_CONN_CAPS_আকার);
 #ifdef GGML_RPC_RDMA
-    if (std::getenv("GGML_RPC_NO_RDMA")) {
-        return;
+    যদি (std::getenv("GGML_RPC_NO_RDMA")) {
+        ফেরত;
     }
 #  ifdef GGML_RPC_RDMA_APPLE
     auto target_gid = rdma_build_target_gid();
-    if (target_gid) {
-        rdma = apple_rdma::probe(fd, target_gid->data(), local_caps);
+    যদি (target_gid) {
+        rdma = apple_rdma::probe(fd, target_gid->তথ্য(), local_caps);
     }
-    if (!rdma) {
+    যদি (!rdma) {
         LOG_DBG2("[%s] RDMA probe failed, continuing with TCP\n", __func__);
     }
-#  else
+#  অন্যথা
     rdma_local = {};
-    if (rdma_probe()) {
+    যদি (rdma_probe()) {
         rdma_caps rc = {};
         rc.qpn = rdma_local.qpn;
         rc.psn = rdma_local.psn;
-        memcpy(rc.gid, rdma_local.gid, RDMA_GID_SIZE);
-        memcpy(local_caps, &rc, sizeof(rc));
-    } else {
+        memcpy(rc.gid, rdma_local.gid, RDMA_GID_আকার);
+        memcpy(local_caps, &rc, আকার(rc));
+    } অন্যথা {
         rdma.reset();
         LOG_DBG2("[%s] RDMA probe failed, continuing with TCP\n", __func__);
     }
@@ -615,195 +615,195 @@ void socket_t::impl::get_caps(uint8_t * local_caps) {
 #endif // GGML_RPC_RDMA
 }
 
-void socket_t::impl::update_caps(const uint8_t * remote_caps) {
+শূন্য socket_t::impl::update_caps(ধ্রুবক uint8_t * remote_caps) {
 #ifdef GGML_RPC_RDMA
     // a peer that has no RDMA advertises all-zero caps and takes no further part
     // in the negotiation, so drop to TCP without reporting a failure
-    bool remote_rdma = false;
-    for (size_t i = 0; i < RPC_CONN_CAPS_SIZE; i++) {
+    যৌক্তিক remote_rdma = মিথ্যা;
+    জন্য (size_t i = 0; i < RPC_CONN_CAPS_আকার; i++) {
         remote_rdma |= remote_caps[i] != 0;
     }
-    if (!rdma || !remote_rdma) {
-        if (rdma && !remote_rdma) {
+    যদি (!rdma || !remote_rdma) {
+        যদি (rdma && !remote_rdma) {
             LOG_WARN("[%s] peer does not support RDMA, continuing with TCP\n", __func__);
         }
         rdma.reset();
-        return;
+        ফেরত;
     }
 #  ifdef GGML_RPC_RDMA_APPLE
-    bool activated = rdma->activate(remote_caps);
-#  else
+    যৌক্তিক activated = rdma->activate(remote_caps);
+#  অন্যথা
     rdma_caps rc = {};
-    memcpy(&rc, remote_caps, sizeof(rc));
-    bool activated = rdma_activate(rc.qpn, rc.psn, rc.gid);
+    memcpy(&rc, remote_caps, আকার(rc));
+    যৌক্তিক activated = rdma_activate(rc.qpn, rc.psn, rc.gid);
 #  endif
-    if (activated) {
-        use_rdma = true;
-    } else {
+    যদি (activated) {
+        use_rdma = সত্য;
+    } অন্যথা {
         LOG_WARN("RDMA activate failed, staying on TCP\n");
         rdma.reset();
     }
-#else
-    (void)remote_caps;
+#অন্যথা
+    (শূন্য)remote_caps;
 #endif // GGML_RPC_RDMA
 }
 
-bool socket_t::impl::flush() {
+যৌক্তিক socket_t::impl::flush() {
 #ifdef GGML_RPC_RDMA_APPLE
-    if (use_rdma) {
-        return rdma->flush();
+    যদি (use_rdma) {
+        ফেরত rdma->flush();
     }
 #endif
-    return true;
+    ফেরত সত্য;
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
 socket_t::socket_t(std::unique_ptr<impl> p) : pimpl(std::move(p)) {}
 
-socket_t::~socket_t() = default;
+socket_t::~socket_t() = পূর্বনির্ধারিত;
 
-bool socket_t::send_data(const void * data, size_t size) {
-    return pimpl->send_data(data, size);
+যৌক্তিক socket_t::send_তথ্য(ধ্রুবক শূন্য * তথ্য, size_t size) {
+    ফেরত pimpl->send_তথ্য(তথ্য, size);
 }
 
-bool socket_t::recv_data(void * data, size_t size) {
-    return pimpl->recv_data(data, size);
+যৌক্তিক socket_t::recv_তথ্য(শূন্য * তথ্য, size_t size) {
+    ফেরত pimpl->recv_তথ্য(তথ্য, size);
 }
 
-bool socket_t::flush() {
-    return pimpl->flush();
+যৌক্তিক socket_t::flush() {
+    ফেরত pimpl->flush();
 }
 
-void socket_t::get_caps(uint8_t * local_caps) {
-    return pimpl->get_caps(local_caps);
+শূন্য socket_t::get_caps(uint8_t * local_caps) {
+    ফেরত pimpl->get_caps(local_caps);
 }
 
-void socket_t::update_caps(const uint8_t * remote_caps) {
-    return pimpl->update_caps(remote_caps);
+শূন্য socket_t::update_caps(ধ্রুবক uint8_t * remote_caps) {
+    ফেরত pimpl->update_caps(remote_caps);
 }
 
-const char * socket_t::transport_name() const {
-    return pimpl->use_rdma ? "RDMA" : "TCP";
+ধ্রুবক অক্ষর * socket_t::transport_name() ধ্রুবক {
+    ফেরত pimpl->use_rdma ? "RDMA" : "TCP";
 }
 
-static bool is_valid_fd(sockfd_t sockfd) {
+স্থির যৌক্তিক is_valid_fd(sockfd_t sockfd) {
 #ifdef _WIN32
-    return sockfd != INVALID_SOCKET;
-#else
-    return sockfd >= 0;
+    ফেরত sockfd != INVALID_SOCKET;
+#অন্যথা
+    ফেরত sockfd >= 0;
 #endif
 }
 
-static bool set_no_delay(sockfd_t sockfd) {
-    int flag = 1;
+স্থির যৌক্তিক set_no_delay(sockfd_t sockfd) {
+    পূর্ণসংখ্যা flag = 1;
     // set TCP_NODELAY to disable Nagle's algorithm
-    int ret = setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(int));
-    return ret == 0;
+    পূর্ণসংখ্যা ret = setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (অক্ষর *)&flag, আকার(পূর্ণসংখ্যা));
+    ফেরত ret == 0;
 }
 
-static bool set_reuse_addr(sockfd_t sockfd) {
-    int flag = 1;
-    int ret = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (char *)&flag, sizeof(int));
-    return ret == 0;
+স্থির যৌক্তিক set_reuse_addr(sockfd_t sockfd) {
+    পূর্ণসংখ্যা flag = 1;
+    পূর্ণসংখ্যা ret = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (অক্ষর *)&flag, আকার(পূর্ণসংখ্যা));
+    ফেরত ret == 0;
 }
 
 socket_ptr socket_t::accept() {
-    auto client_socket_fd = ::accept(pimpl->fd, NULL, NULL);
-    if (!is_valid_fd(client_socket_fd)) {
-        return nullptr;
+    auto client_socket_fd = ::accept(pimpl->fd, ফাঁকা, ফাঁকা);
+    যদি (!is_valid_fd(client_socket_fd)) {
+        ফেরত nullptr;
     }
-    if (!set_no_delay(client_socket_fd)) {
+    যদি (!set_no_delay(client_socket_fd)) {
         LOG_ERROR("Failed to set TCP_NODELAY\n");
-        return nullptr;
+        ফেরত nullptr;
     }
     LOG_DBG("[%s] accepted client connection\n", __func__);
-    return socket_ptr(new socket_t(std::make_unique<impl>(client_socket_fd)));
+    ফেরত socket_ptr(নতুন socket_t(std::make_unique<impl>(client_socket_fd)));
 }
 
-socket_ptr socket_t::create_server(const char * host, int port) {
+socket_ptr socket_t::create_server(ধ্রুবক অক্ষর * host, পূর্ণসংখ্যা port) {
     auto sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (!is_valid_fd(sockfd)) {
-        return nullptr;
+    যদি (!is_valid_fd(sockfd)) {
+        ফেরত nullptr;
     }
-    if (!set_reuse_addr(sockfd)) {
+    যদি (!set_reuse_addr(sockfd)) {
         LOG_ERROR("Failed to set SO_REUSEADDR\n");
-        return nullptr;
+        ফেরত nullptr;
     }
-    if (inet_addr(host) == INADDR_NONE) {
+    যদি (inet_addr(host) == INADDR_NONE) {
         LOG_ERROR("Invalid host address: %s\n", host);
-        return nullptr;
+        ফেরত nullptr;
     }
-    struct sockaddr_in serv_addr;
+    কাঠামো sockaddr_in serv_addr;
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = inet_addr(host);
     serv_addr.sin_port = htons(port);
 
-    if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
-        return nullptr;
+    যদি (bind(sockfd, (কাঠামো sockaddr *) &serv_addr, আকার(serv_addr)) < 0) {
+        ফেরত nullptr;
     }
-    if (listen(sockfd, 1) < 0) {
-        return nullptr;
+    যদি (listen(sockfd, 1) < 0) {
+        ফেরত nullptr;
     }
     LOG_DBG("[%s] listening on %s:%d\n", __func__, host, port);
-    return socket_ptr(new socket_t(std::make_unique<impl>(sockfd)));
+    ফেরত socket_ptr(নতুন socket_t(std::make_unique<impl>(sockfd)));
 }
 
-socket_ptr socket_t::connect(const char * host, int port) {
+socket_ptr socket_t::connect(ধ্রুবক অক্ষর * host, পূর্ণসংখ্যা port) {
     auto sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (!is_valid_fd(sockfd)) {
-        return nullptr;
+    যদি (!is_valid_fd(sockfd)) {
+        ফেরত nullptr;
     }
-    if (!set_no_delay(sockfd)) {
+    যদি (!set_no_delay(sockfd)) {
         LOG_ERROR("Failed to set TCP_NODELAY\n");
-        return nullptr;
+        ফেরত nullptr;
     }
-    struct sockaddr_in addr;
+    কাঠামো sockaddr_in addr;
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
-    struct hostent * server = gethostbyname(host);
-    if (server == NULL) {
+    কাঠামো hostent * server = gethostbyname(host);
+    যদি (server == ফাঁকা) {
         LOG_ERROR("Cannot resolve host '%s'\n", host);
-        return nullptr;
+        ফেরত nullptr;
     }
-    memcpy(&addr.sin_addr.s_addr, server->h_addr, server->h_length);
-    if (::connect(sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-        return nullptr;
+    memcpy(&addr.sin_addr.s_addr, server->h_addr, server->h_দৈর্ঘ্য);
+    যদি (::connect(sockfd, (কাঠামো sockaddr *)&addr, আকার(addr)) < 0) {
+        ফেরত nullptr;
     }
     LOG_DBG("[%s] connected to %s:%d\n", __func__, host, port);
-    return socket_ptr(new socket_t(std::make_unique<impl>(sockfd)));
+    ফেরত socket_ptr(নতুন socket_t(std::make_unique<impl>(sockfd)));
 }
 
 #ifdef _WIN32
-static std::mutex g_rpc_transport_mu;
-static bool g_rpc_transport_wsa_started = false;
+স্থির std::mutex g_rpc_transport_mu;
+স্থির যৌক্তিক g_rpc_transport_wsa_started = মিথ্যা;
 #endif
 
-bool rpc_transport_init() {
+যৌক্তিক rpc_transport_init() {
 #ifdef _WIN32
     std::lock_guard<std::mutex> lock(g_rpc_transport_mu);
-    if (g_rpc_transport_wsa_started) {
-        return true;
+    যদি (g_rpc_transport_wsa_started) {
+        ফেরত সত্য;
     }
-    WSADATA wsaData;
-    int res = WSAStartup(MAKEWORD(2, 2), &wsaData);
-    if (res != 0) {
-        return false;
+    WSADATA wsa_তথ্য;
+    পূর্ণসংখ্যা res = WSAStartup(MAKEWORD(2, 2), &wsa_তথ্য);
+    যদি (res != 0) {
+        ফেরত মিথ্যা;
     }
-    g_rpc_transport_wsa_started = true;
-    return true;
-#else
-    return true;
+    g_rpc_transport_wsa_started = সত্য;
+    ফেরত সত্য;
+#অন্যথা
+    ফেরত সত্য;
 #endif
 }
 
-void rpc_transport_shutdown() {
+শূন্য rpc_transport_shutdown() {
 #ifdef _WIN32
     std::lock_guard<std::mutex> lock(g_rpc_transport_mu);
-    if (!g_rpc_transport_wsa_started) {
-        return;
+    যদি (!g_rpc_transport_wsa_started) {
+        ফেরত;
     }
     WSACleanup();
-    g_rpc_transport_wsa_started = false;
+    g_rpc_transport_wsa_started = মিথ্যা;
 #endif
 }

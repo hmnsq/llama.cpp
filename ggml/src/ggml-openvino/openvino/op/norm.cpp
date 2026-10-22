@@ -1,28 +1,28 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#অন্তর্ভাব "../node_context.h"
+#অন্তর্ভাব "../op_table.h"
+#অন্তর্ভাব "../utils.h"
 
-#include <cstring>
-#include <memory>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/mvn.hpp>
+#অন্তর্ভাব <cstring>
+#অন্তর্ভাব <memory>
+#অন্তর্ভাব <openvino/op/constant.hpp>
+#অন্তর্ভাব <openvino/op/mvn.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+নামাকাশ ov {
+নামাকাশ frontend {
+নামাকাশ ggml {
+নামাকাশ op {
 
-OutputVector translate_norm(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+OutputVector translate_norm(ধ্রুবক গ্রন্থি_Context & context) {
+    অঙ্ক_inputs_check(context, 1, 1);
 
-    auto input_node = process_view_input_new(context, 0);
-    float eps;
-    memcpy(&eps, context.get_output_op_params(), sizeof(float));
+    auto প্রবেশ_গ্রন্থি = process_view_প্রবেশ_new(context, 0);
+    দশমিক eps;
+    memcpy(&eps, context.get_output_op_params(), আকার(দশমিক));
 
     auto axes = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{1}, {-1});
-    auto res = std::make_shared<ov::op::v6::MVN>(input_node, axes, true, eps, ov::op::MVNEpsMode::INSIDE_SQRT);
+    auto res = std::make_shared<ov::op::v6::MVN>(প্রবেশ_গ্রন্থি, axes, সত্য, eps, ov::op::MVNEpsMode::INSIDE_SQRT);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ফেরত rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

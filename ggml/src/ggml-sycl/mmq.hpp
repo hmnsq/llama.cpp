@@ -13,21 +13,21 @@
 #ifndef GGML_SYCL_MMQ_HPP
 #define GGML_SYCL_MMQ_HPP
 
-#include "common.hpp"
+#অন্তর্ভাব "common.hpp"
 
-void ggml_sycl_op_mul_mat_q(
+শূন্য ggml_sycl_op_mul_mat_q(
     ggml_backend_sycl_context & ctx,
-    const ggml_tensor* src0,
-    const ggml_tensor* src1,
+    ধ্রুবক ggml_tensor* src0,
+    ধ্রুবক ggml_tensor* src1,
     ggml_tensor* dst,
-    const char* src0_dd_i,
-    const float* src1_ddf_i,
-    const char* src1_ddq_i,
-    float* dst_dd_i,
-    const int64_t row_low,
-    const int64_t row_high,
-    const int64_t src1_ncols,
-    const int64_t src1_padded_row_size,
-    const dpct::queue_ptr& stream);
+    ধ্রুবক অক্ষর* src0_dd_i,
+    ধ্রুবক দশমিক* src1_ddf_i,
+    ধ্রুবক অক্ষর* src1_ddq_i,
+    দশমিক* dst_dd_i,
+    ধ্রুবক int64_t row_নিচের,
+    ধ্রুবক int64_t row_উপরের,
+    ধ্রুবক int64_t src1_ncols,
+    ধ্রুবক int64_t src1_padded_row_আকার,
+    ধ্রুবক dpct::queue_ptr& stream);
 
 #endif // GGML_SYCL_MMQ_HPP

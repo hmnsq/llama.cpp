@@ -1,9 +1,9 @@
 #pragma once
 
-#include "apir_backend.gen.h"
+#অন্তর্ভাব "apir_backend.gen.h"
 
-#include <stdint.h>  // for uintptr_t
-#include <time.h>    // for timespec, clock_gettime
+#অন্তর্ভাব <stdint.h>  // for uintptr_t
+#অন্তর্ভাব <time.h>    // for timespec, clock_gettime
 
 #define APIR_BACKEND_INITIALIZE_SUCCESS                     0
 #define APIR_BACKEND_INITIALIZE_CANNOT_OPEN_BACKEND_LIBRARY 1
@@ -18,20 +18,20 @@
 
 // new entries here need to be added to the apir_backend_initialize_error function below
 
-#define APIR_BACKEND_FORWARD_INDEX_INVALID 6
+#define APIR_BACKEND_FORWARD_সূচক_INVALID 6
 
 // 0 is fast, 1 avoids the backend to crash if an unsupported tensor is received
 #define APIR_BACKEND_CHECK_SUPPORTS_OP 0
 
-typedef uintptr_t apir_buffer_type_host_handle_t;
-typedef uintptr_t apir_buffer_host_handle_t;
+প্রকারলেখ uintptr_t apir_বাফার_type_host_handle_t;
+প্রকারলেখ uintptr_t apir_বাফার_host_handle_t;
 
-static const char * apir_backend_initialize_error(int code) {
+স্থির ধ্রুবক অক্ষর * apir_backend_initialize_error(পূর্ণসংখ্যা code) {
 #define APIR_BACKEND_INITIALIZE_ERROR(code_name) \
-    do {                                         \
-        if (code == code_name)                   \
-            return #code_name;                   \
-    } while (0)
+    করো {                                         \
+        যদি (code == code_name)                   \
+            ফেরত #code_name;                   \
+    } যখন (0)
 
     APIR_BACKEND_INITIALIZE_ERROR(APIR_BACKEND_INITIALIZE_SUCCESS);
     APIR_BACKEND_INITIALIZE_ERROR(APIR_BACKEND_INITIALIZE_CANNOT_OPEN_BACKEND_LIBRARY);
@@ -44,7 +44,7 @@ static const char * apir_backend_initialize_error(int code) {
     APIR_BACKEND_INITIALIZE_ERROR(APIR_BACKEND_INITIALIZE_NO_DEVICE);
     APIR_BACKEND_INITIALIZE_ERROR(APIR_BACKEND_INITIALIZE_BACKEND_INIT_FAILED);
 
-    return "Unknown APIR_BACKEND_INITIALIZE error:/";
+    ফেরত "Unknown APIR_BACKEND_INITIALIZE error:/";
 
 #undef APIR_BACKEND_INITIALIZE_ERROR
 }

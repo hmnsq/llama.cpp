@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
-from glob import glob
-import os
+তঃ glob আমদানি glob
+আমদানি os
 
-HEAD_SIZES_KQ = [40, 64, 72, 80, 96, 112, 128, 192, 256, 320, 512, 576]
+শীর্ষ_SIZES_KQ = [40, 64, 72, 80, 96, 112, 128, 192, 256, 320, 512, 576]
 
 # DKQ -> DV override for asymmetric head dims.
-HEAD_SIZES_V_OVERRIDE = {576: 512, 320: 256, 192: 128}
+শীর্ষ_SIZES_V_OVERRIDE = {576: 512, 320: 256, 192: 128}
 
 TYPES_KV = ["GGML_TYPE_F16", "GGML_TYPE_Q4_0", "GGML_TYPE_Q4_1", "GGML_TYPE_Q5_0", "GGML_TYPE_Q5_1", "GGML_TYPE_Q8_0", "GGML_TYPE_BF16"]
 
@@ -65,55 +65,55 @@ DECL_MMF_CASE({type});
 
 
 def get_short_name(long_quant_name):
-    return long_quant_name.replace("GGML_TYPE_", "").lower()
+    ফেরত long_quant_name.replace("GGML_TYPE_", "").lower()
 
 
-for filename in glob("*.cu"):
+জন্য filename মধ্যে glob("*.cu"):
     os.remove(filename)
 
-for head_size_kq in HEAD_SIZES_KQ:
-    head_size_v = HEAD_SIZES_V_OVERRIDE.get(head_size_kq, head_size_kq)
-    with open(f"fattn-tile-instance-dkq{head_size_kq}-dv{head_size_v}.cu", "w") as f:
-        f.write(SOURCE_FATTN_TILE.format(head_size_kq=head_size_kq, head_size_v=head_size_v))
+জন্য শীর্ষ_আকার_kq মধ্যে শীর্ষ_SIZES_KQ:
+    শীর্ষ_আকার_v = শীর্ষ_SIZES_V_OVERRIDE.get(শীর্ষ_আকার_kq, শীর্ষ_আকার_kq)
+    with open(f"fattn-tile-instance-dkq{head_size_kq}-dv{head_size_v}.cu", "w") ইব f:
+        f.লিখ(SOURCE_FATTN_TILE.format(শীর্ষ_আকার_kq=শীর্ষ_আকার_kq, শীর্ষ_আকার_v=শীর্ষ_আকার_v))
 
-for type_k in TYPES_KV:
-    for type_v in TYPES_KV:
-        with open(f"fattn-vec-instance-{get_short_name(type_k)}-{get_short_name(type_v)}.cu", "w") as f:
-            f.write(SOURCE_FATTN_VEC.format(type_k=type_k, type_v=type_v))
+জন্য type_k মধ্যে TYPES_KV:
+    জন্য type_v মধ্যে TYPES_KV:
+        with open(f"fattn-vec-instance-{get_short_name(type_k)}-{get_short_name(type_v)}.cu", "w") ইব f:
+            f.লিখ(SOURCE_FATTN_VEC.format(type_k=type_k, type_v=type_v))
 
-for ncols in [8, 16, 32, 64]:
-    for ncols2 in [1, 2, 4, 8, 16, 32]:
-        if ncols2 > ncols:
-            continue
+জন্য ncols মধ্যে [8, 16, 32, 64]:
+    জন্য ncols2 মধ্যে [1, 2, 4, 8, 16, 32]:
+        যদি ncols2 > ncols:
+            চালু
         ncols1 = ncols // ncols2
-        with open(f"fattn-mma-f16-instance-ncols1_{ncols1}-ncols2_{ncols2}.cu", "w") as f:
-            f.write(SOURCE_FATTN_MMA_START)
+        with open(f"fattn-mma-f16-instance-ncols1_{ncols1}-ncols2_{ncols2}.cu", "w") ইব f:
+            f.লিখ(SOURCE_FATTN_MMA_START)
 
-            for head_size_kq in HEAD_SIZES_KQ:
-                if head_size_kq == 40:
-                    continue
-                if head_size_kq == 72:
-                    continue
+            জন্য শীর্ষ_আকার_kq মধ্যে শীর্ষ_SIZES_KQ:
+                যদি শীর্ষ_আকার_kq == 40:
+                    চালু
+                যদি শীর্ষ_আকার_kq == 72:
+                    চালু
                 # Skip compilation of unused ncols2 values for niche head sizes:
-                if head_size_kq == 192 and ncols2 not in (8, 16): # MiMo-V2.5
-                    continue
-                if head_size_kq == 320 and ncols2 != 32: # Mistral Small 4
-                    continue
-                if head_size_kq == 512 and ncols2 not in (2, 4, 8): # Gemma 4 (+ MTP)
-                    continue
-                if head_size_kq == 576 and ncols2 not in (4, 16, 32): # Deepseek, GLM 4.7 Flash
-                    continue
-                if head_size_kq not in (192, 320, 576) and ncols2 in (16, 32):
-                    continue
-                head_size_v = HEAD_SIZES_V_OVERRIDE.get(head_size_kq, head_size_kq)
-                f.write(SOURCE_FATTN_MMA_CASE.format(ncols1=ncols1, ncols2=ncols2, head_size_kq=head_size_kq, head_size_v=head_size_v))
+                যদি শীর্ষ_আকার_kq == 192 এবং ncols2 নয় মধ্যে (8, 16): # MiMo-V2.5
+                    চালু
+                যদি শীর্ষ_আকার_kq == 320 এবং ncols2 != 32: # Mistral Small 4
+                    চালু
+                যদি শীর্ষ_আকার_kq == 512 এবং ncols2 নয় মধ্যে (2, 4, 8): # Gemma 4 (+ MTP)
+                    চালু
+                যদি শীর্ষ_আকার_kq == 576 এবং ncols2 নয় মধ্যে (4, 16, 32): # Deepseek, GLM 4.7 Flash
+                    চালু
+                যদি শীর্ষ_আকার_kq নয় মধ্যে (192, 320, 576) এবং ncols2 মধ্যে (16, 32):
+                    চালু
+                শীর্ষ_আকার_v = শীর্ষ_SIZES_V_OVERRIDE.get(শীর্ষ_আকার_kq, শীর্ষ_আকার_kq)
+                f.লিখ(SOURCE_FATTN_MMA_CASE.format(ncols1=ncols1, ncols2=ncols2, শীর্ষ_আকার_kq=শীর্ষ_আকার_kq, শীর্ষ_আকার_v=শীর্ষ_আকার_v))
 
-for type in TYPES_MMQ:
-    with open(f"mmq-instance-{get_short_name(type)}.cu", "w") as f:
-        f.write(SOURCE_MMQ.format(type=type))
-        if type in TYPES_MMQ_W4A4:
-            f.write(SOURCE_MMQ_W4A4.format(type=type))
+জন্য type মধ্যে TYPES_MMQ:
+    with open(f"mmq-instance-{get_short_name(type)}.cu", "w") ইব f:
+        f.লিখ(SOURCE_MMQ.format(type=type))
+        যদি type মধ্যে TYPES_MMQ_W4A4:
+            f.লিখ(SOURCE_MMQ_W4A4.format(type=type))
 
-for type in range(1, 17):
-    with open(f"mmf-instance-ncols_{type}.cu", "w") as f:
-        f.write(SOURCE_MMF.format(type=type))
+জন্য type মধ্যে range(1, 17):
+    with open(f"mmf-instance-ncols_{type}.cu", "w") ইব f:
+        f.লিখ(SOURCE_MMF.format(type=type))

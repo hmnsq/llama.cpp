@@ -13,16 +13,16 @@
 
 #pragma once
 
-#include "openvino/core/type/element_type.hpp"
-#include "openvino/core/visibility.hpp"
-#include "openvino/pass/matcher_pass.hpp"
+#অন্তর্ভাব "openvino/core/type/element_type.hpp"
+#অন্তর্ভাব "openvino/core/visibility.hpp"
+#অন্তর্ভাব "openvino/pass/matcher_pass.hpp"
 
 #ifdef OPENVINO_STATIC_LIBRARY
 #    define TRANSFORMATIONS_API
-#else
+#অন্যথা
 #    ifdef IMPLEMENT_OPENVINO_API
 #        define TRANSFORMATIONS_API OPENVINO_CORE_EXPORTS
-#    else
+#    অন্যথা
 #        define TRANSFORMATIONS_API OPENVINO_CORE_IMPORTS
 #    endif  // IMPLEMENT_OPENVINO_API
 #endif      // OPENVINO_STATIC_LIBRARY
@@ -35,10 +35,10 @@ class TRANSFORMATIONS_API MarkDequantization;
 }  // namespace pass
 }  // namespace ov
 
-class ov::pass::MarkDequantization : public MatcherPass {
-public:
+class ov::pass::MarkDequantization : সর্বজনীন MatcherPass {
+সর্বজনীন:
     OPENVINO_MATCHER_PASS_RTTI("MarkDequantization")
-    explicit MarkDequantization(const element::TypeVector & precisions,
+    explicit MarkDequantization(ধ্রুবক element::TypeVector & precisions,
                                 bool fold_subtract_const = false,
                                 bool fold_multiply_const = true);
 };

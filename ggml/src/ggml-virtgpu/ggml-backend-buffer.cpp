@@ -1,123 +1,123 @@
-#include "ggml-remoting.h"
+#অন্তর্ভাব "ggml-remoting.h"
 
-#define BUFFER_TO_GPU(name) ((ggml_backend_remoting_buffer_context *) (name)->context)->gpu
+#define বাফার_TO_GPU(name) ((ggml_backend_remoting_বাফার_context *) (name)->context)->gpu
 
-static void * ggml_backend_remoting_buffer_get_base(ggml_backend_buffer_t buffer) {
-    ggml_backend_remoting_buffer_context * context = (ggml_backend_remoting_buffer_context *) buffer->context;
-    if (context->base) {
-        return context->base;
+স্থির শূন্য * ggml_backend_remoting_বাফার_get_base(ggml_backend_বাফার_t বাফার) {
+    ggml_backend_remoting_বাফার_context * context = (ggml_backend_remoting_বাফার_context *) বাফার->context;
+    যদি (context->base) {
+        ফেরত context->base;
     }
 
-    context->base = apir_buffer_get_base(BUFFER_TO_GPU(buffer), BUFFER_TO_APIR_CONTEXT(buffer));
+    context->base = apir_বাফার_get_base(বাফার_TO_GPU(বাফার), বাফার_TO_APIR_CONTEXT(বাফার));
 
-    return context->base;
+    ফেরত context->base;
 }
 
-static void ggml_backend_remoting_buffer_set_tensor(ggml_backend_buffer_t buffer,
+স্থির শূন্য ggml_backend_remoting_বাফার_set_tensor(ggml_backend_বাফার_t বাফার,
                                                     ggml_tensor *         tensor,
-                                                    const void *          data,
+                                                    ধ্রুবক শূন্য *          তথ্য,
                                                     size_t                offset,
                                                     size_t                size) {
-    virtgpu * gpu = BUFFER_TO_GPU(buffer);
+    virtgpu * gpu = বাফার_TO_GPU(বাফার);
 
-    ggml_backend_remoting_buffer_context * context = BUFFER_TO_GGML_CONTEXT(buffer);
-    if (context->is_from_ptr) {
-        memcpy((char *) tensor->data + offset, data, size);
-    } else {
-        apir_buffer_set_tensor(gpu, BUFFER_TO_APIR_CONTEXT(buffer), tensor, data, offset, size);
+    ggml_backend_remoting_বাফার_context * context = বাফার_TO_GGML_CONTEXT(বাফার);
+    যদি (context->is_from_ptr) {
+        memcpy((অক্ষর *) tensor->তথ্য + offset, তথ্য, size);
+    } অন্যথা {
+        apir_বাফার_set_tensor(gpu, বাফার_TO_APIR_CONTEXT(বাফার), tensor, তথ্য, offset, size);
     }
 
-    return;
+    ফেরত;
 }
 
-static void ggml_backend_remoting_buffer_get_tensor(ggml_backend_buffer_t buffer,
-                                                    const ggml_tensor *   tensor,
-                                                    void *                data,
+স্থির শূন্য ggml_backend_remoting_বাফার_get_tensor(ggml_backend_বাফার_t বাফার,
+                                                    ধ্রুবক ggml_tensor *   tensor,
+                                                    শূন্য *                তথ্য,
                                                     size_t                offset,
                                                     size_t                size) {
-    virtgpu *                              gpu     = BUFFER_TO_GPU(buffer);
-    ggml_backend_remoting_buffer_context * context = BUFFER_TO_GGML_CONTEXT(buffer);
-    if (context->is_from_ptr) {
-        memcpy(data, (const char *) tensor->data + offset, size);
-    } else {
-        apir_buffer_get_tensor(gpu, BUFFER_TO_APIR_CONTEXT(buffer), tensor, data, offset, size);
+    virtgpu *                              gpu     = বাফার_TO_GPU(বাফার);
+    ggml_backend_remoting_বাফার_context * context = বাফার_TO_GGML_CONTEXT(বাফার);
+    যদি (context->is_from_ptr) {
+        memcpy(তথ্য, (ধ্রুবক অক্ষর *) tensor->তথ্য + offset, size);
+    } অন্যথা {
+        apir_বাফার_get_tensor(gpu, বাফার_TO_APIR_CONTEXT(বাফার), tensor, তথ্য, offset, size);
     }
 }
 
-static void ggml_backend_remoting_buffer_set_tensor_from_ptr(ggml_backend_buffer_t buffer,
+স্থির শূন্য ggml_backend_remoting_বাফার_set_tensor_from_ptr(ggml_backend_বাফার_t বাফার,
                                                              ggml_tensor *         tensor,
-                                                             const void *          data,
+                                                             ধ্রুবক শূন্য *          তথ্য,
                                                              size_t                offset,
                                                              size_t                size) {
-    UNUSED(buffer);
+    UNUSED(বাফার);
 
-    memcpy((char *) tensor->data + offset, data, size);
+    memcpy((অক্ষর *) tensor->তথ্য + offset, তথ্য, size);
 
-    return;
+    ফেরত;
 }
 
-static void ggml_backend_remoting_buffer_get_tensor_from_ptr(ggml_backend_buffer_t buffer,
-                                                             const ggml_tensor *   tensor,
-                                                             void *                data,
+স্থির শূন্য ggml_backend_remoting_বাফার_get_tensor_from_ptr(ggml_backend_বাফার_t বাফার,
+                                                             ধ্রুবক ggml_tensor *   tensor,
+                                                             শূন্য *                তথ্য,
                                                              size_t                offset,
                                                              size_t                size) {
-    UNUSED(buffer);
+    UNUSED(বাফার);
 
-    memcpy(data, (const char *) tensor->data + offset, size);
+    memcpy(তথ্য, (ধ্রুবক অক্ষর *) tensor->তথ্য + offset, size);
 }
 
-static bool ggml_backend_remoting_buffer_cpy_tensor(ggml_backend_buffer_t buffer,
-                                                    const ggml_tensor *   src,
+স্থির যৌক্তিক ggml_backend_remoting_বাফার_cpy_tensor(ggml_backend_বাফার_t বাফার,
+                                                    ধ্রুবক ggml_tensor *   src,
                                                     ggml_tensor *         dst) {
-    virtgpu * gpu = BUFFER_TO_GPU(buffer);
+    virtgpu * gpu = বাফার_TO_GPU(বাফার);
 
-    bool ret = apir_buffer_cpy_tensor(gpu, BUFFER_TO_APIR_CONTEXT(buffer), src, dst);
+    যৌক্তিক ret = apir_বাফার_cpy_tensor(gpu, বাফার_TO_APIR_CONTEXT(বাফার), src, dst);
 
-    return ret;
+    ফেরত ret;
 }
 
-static void ggml_backend_remoting_buffer_clear(ggml_backend_buffer_t buffer, uint8_t value) {
-    virtgpu * gpu = BUFFER_TO_GPU(buffer);
+স্থির শূন্য ggml_backend_remoting_বাফার_clear(ggml_backend_বাফার_t বাফার, uint8_t value) {
+    virtgpu * gpu = বাফার_TO_GPU(বাফার);
 
-    apir_buffer_clear(gpu, BUFFER_TO_APIR_CONTEXT(buffer), value);
+    apir_বাফার_clear(gpu, বাফার_TO_APIR_CONTEXT(বাফার), value);
 
-    return;
+    ফেরত;
 }
 
-static void ggml_backend_remoting_buffer_free_buffer(ggml_backend_buffer_t buffer) {
-    virtgpu * gpu = BUFFER_TO_GPU(buffer);
+স্থির শূন্য ggml_backend_remoting_বাফার_free_বাফার(ggml_backend_বাফার_t বাফার) {
+    virtgpu * gpu = বাফার_TO_GPU(বাফার);
 
-    apir_buffer_free_buffer(gpu, BUFFER_TO_APIR_CONTEXT(buffer));
+    apir_বাফার_free_বাফার(gpu, বাফার_TO_APIR_CONTEXT(বাফার));
 
-    ggml_backend_remoting_buffer_context * context = BUFFER_TO_GGML_CONTEXT(buffer);
-    free(context);
-    buffer->context = NULL;
+    ggml_backend_remoting_বাফার_context * context = বাফার_TO_GGML_CONTEXT(বাফার);
+    মুক্ত(context);
+    বাফার->context = ফাঁকা;
 }
 
-const ggml_backend_buffer_i ggml_backend_remoting_buffer_interface = {
-    /* .free_buffer     = */ ggml_backend_remoting_buffer_free_buffer,
-    /* .get_base        = */ ggml_backend_remoting_buffer_get_base,
-    /* .init_tensor     = */ NULL,
-    /* .memset_tensor   = */ NULL,
-    /* .set_tensor      = */ ggml_backend_remoting_buffer_set_tensor,
-    /* .get_tensor      = */ ggml_backend_remoting_buffer_get_tensor,
-    /* .set_tensor_2d   = */ NULL,
-    /* .get_tensor_2d   = */ NULL,
-    /* .cpy_tensor      = */ ggml_backend_remoting_buffer_cpy_tensor,
-    /* .clear           = */ ggml_backend_remoting_buffer_clear,
-    /* .reset           = */ NULL,
+ধ্রুবক ggml_backend_বাফার_i ggml_backend_remoting_বাফার_interface = {
+    /* .free_buffer     = */ ggml_backend_remoting_বাফার_free_বাফার,
+    /* .get_base        = */ ggml_backend_remoting_বাফার_get_base,
+    /* .init_tensor     = */ ফাঁকা,
+    /* .memset_tensor   = */ ফাঁকা,
+    /* .set_tensor      = */ ggml_backend_remoting_বাফার_set_tensor,
+    /* .get_tensor      = */ ggml_backend_remoting_বাফার_get_tensor,
+    /* .set_tensor_2d   = */ ফাঁকা,
+    /* .get_tensor_2d   = */ ফাঁকা,
+    /* .cpy_tensor      = */ ggml_backend_remoting_বাফার_cpy_tensor,
+    /* .clear           = */ ggml_backend_remoting_বাফার_clear,
+    /* .reset           = */ ফাঁকা,
 };
 
-const ggml_backend_buffer_i ggml_backend_remoting_buffer_from_ptr_interface = {
-    /* .free_buffer     = */ ggml_backend_remoting_buffer_free_buffer,
-    /* .get_base        = */ ggml_backend_remoting_buffer_get_base,
-    /* .init_tensor     = */ NULL,
-    /* .memset_tensor   = */ NULL,
-    /* .set_tensor      = */ ggml_backend_remoting_buffer_set_tensor_from_ptr,
-    /* .get_tensor      = */ ggml_backend_remoting_buffer_get_tensor_from_ptr,
-    /* .set_tensor_2d   = */ NULL,
-    /* .get_tensor_2d   = */ NULL,
-    /* .cpy_tensor      = */ ggml_backend_remoting_buffer_cpy_tensor,
-    /* .clear           = */ ggml_backend_remoting_buffer_clear,
-    /* .reset           = */ NULL,
+ধ্রুবক ggml_backend_বাফার_i ggml_backend_remoting_বাফার_from_ptr_interface = {
+    /* .free_buffer     = */ ggml_backend_remoting_বাফার_free_বাফার,
+    /* .get_base        = */ ggml_backend_remoting_বাফার_get_base,
+    /* .init_tensor     = */ ফাঁকা,
+    /* .memset_tensor   = */ ফাঁকা,
+    /* .set_tensor      = */ ggml_backend_remoting_বাফার_set_tensor_from_ptr,
+    /* .get_tensor      = */ ggml_backend_remoting_বাফার_get_tensor_from_ptr,
+    /* .set_tensor_2d   = */ ফাঁকা,
+    /* .get_tensor_2d   = */ ফাঁকা,
+    /* .cpy_tensor      = */ ggml_backend_remoting_বাফার_cpy_tensor,
+    /* .clear           = */ ggml_backend_remoting_বাফার_clear,
+    /* .reset           = */ ফাঁকা,
 };

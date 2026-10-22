@@ -1,152 +1,152 @@
-#include "virtgpu-utils.h"
+#অন্তর্ভাব "virtgpu-utils.h"
 
-#include <malloc.h>
-#include <stdlib.h>
+#অন্তর্ভাব <malloc.h>
+#অন্তর্ভাব <stdlib.h>
 
-#include <cstring>
+#অন্তর্ভাব <cstring>
 
-#define NODE_ALLOC_ALIGN 64
-#define NODE_PTR_MASK    (~((uintptr_t) NODE_ALLOC_ALIGN - 1))
-#define NODE_LEVEL_MASK  ((uintptr_t) NODE_ALLOC_ALIGN - 1)
-#define NULL_NODE        0
+#define গ্রন্থি_ALLOC_ALIGN 64
+#define গ্রন্থি_PTR_MASK    (~((uintptr_t) গ্রন্থি_ALLOC_ALIGN - 1))
+#define গ্রন্থি_LEVEL_MASK  ((uintptr_t) গ্রন্থি_ALLOC_ALIGN - 1)
+#define NULL_গ্রন্থি        0
 
-#define os_malloc_aligned(_size, _align) _aligned_malloc(_size, _align)
-#define os_free_aligned(_ptr)            free(_ptr)
+#define os_malloc_aligned(আকার_3, _align) _aligned_malloc(আকার_3, _align)
+#define os_free_aligned(_ptr)            মুক্ত(_ptr)
 #define p_atomic_cmpxchg(v, old, _new)   __sync_val_compare_and_swap((v), (old), (_new))
 
-static inline uint64_t util_logbase2_64(uint64_t n) {
-#if defined(HAVE___BUILTIN_CLZLL)
-    return ((sizeof(uint64_t) * 8 - 1) - __builtin_clzll(n | 1));
-#else
+স্থির অন্তঃরেখ uint64_t util_logbase2_64(uint64_t n) {
+#যদি defined(HAVE___BUILTIN_CLZLL)
+    ফেরত ((আকার(uint64_t) * 8 - 1) - __builtin_clzll(n | 1));
+#অন্যথা
     uint64_t pos = 0ull;
-    if (n >= 1ull << 32) {
+    যদি (n >= 1ull << 32) {
         n >>= 32;
         pos += 32;
     }
-    if (n >= 1ull << 16) {
+    যদি (n >= 1ull << 16) {
         n >>= 16;
         pos += 16;
     }
-    if (n >= 1ull << 8) {
+    যদি (n >= 1ull << 8) {
         n >>= 8;
         pos += 8;
     }
-    if (n >= 1ull << 4) {
+    যদি (n >= 1ull << 4) {
         n >>= 4;
         pos += 4;
     }
-    if (n >= 1ull << 2) {
+    যদি (n >= 1ull << 2) {
         n >>= 2;
         pos += 2;
     }
-    if (n >= 1ull << 1) {
+    যদি (n >= 1ull << 1) {
         pos += 1;
     }
-    return pos;
+    ফেরত pos;
 #endif
 }
 
-void util_sparse_array_init(util_sparse_array * arr, size_t elem_size, size_t node_size) {
-    memset(arr, 0, sizeof(*arr));
-    arr->elem_size      = elem_size;
-    arr->node_size_log2 = util_logbase2_64(node_size);
-    assert(node_size >= 2 && node_size == (1ull << arr->node_size_log2));
+শূন্য util_sparse_array_init(util_sparse_array * arr, size_t elem_আকার, size_t গ্রন্থি_আকার) {
+    memset(arr, 0, আকার(*arr));
+    arr->elem_আকার      = elem_আকার;
+    arr->গ্রন্থি_আকার_log2 = util_logbase2_64(গ্রন্থি_আকার);
+    প্রতিজ্ঞা(গ্রন্থি_আকার >= 2 && গ্রন্থি_আকার == (1ull << arr->গ্রন্থি_আকার_log2));
 }
 
-static inline void * os_malloc_aligned(size_t size, size_t alignment) {
-    void * ptr;
-    alignment = (alignment + sizeof(void *) - 1) & ~(sizeof(void *) - 1);
-    if (posix_memalign(&ptr, alignment, size) != 0) {
-        return NULL;
+স্থির অন্তঃরেখ শূন্য * os_malloc_aligned(size_t size, size_t alignment) {
+    শূন্য * ptr;
+    alignment = (alignment + আকার(শূন্য *) - 1) & ~(আকার(শূন্য *) - 1);
+    যদি (posix_memalign(&ptr, alignment, size) != 0) {
+        ফেরত ফাঁকা;
     }
-    return ptr;
+    ফেরত ptr;
 }
 
-static inline void * _util_sparse_array_node_data(uintptr_t handle) {
-    return (void *) (handle & NODE_PTR_MASK);
+স্থির অন্তঃরেখ শূন্য * util_sparse_array_গ্রন্থি_তথ্য(uintptr_t handle) {
+    ফেরত (শূন্য *) (handle & গ্রন্থি_PTR_MASK);
 }
 
-static inline unsigned _util_sparse_array_node_level(uintptr_t handle) {
-    return handle & NODE_LEVEL_MASK;
+স্থির অন্তঃরেখ unsigned util_sparse_array_গ্রন্থি_level(uintptr_t handle) {
+    ফেরত handle & গ্রন্থি_LEVEL_MASK;
 }
 
-static inline void _util_sparse_array_node_finish(util_sparse_array * arr, uintptr_t node) {
-    if (_util_sparse_array_node_level(node) > 0) {
-        uintptr_t * children  = (uintptr_t *) _util_sparse_array_node_data(node);
-        size_t      node_size = 1ull << arr->node_size_log2;
-        for (size_t i = 0; i < node_size; i++) {
-            if (children[i]) {
-                _util_sparse_array_node_finish(arr, children[i]);
+স্থির অন্তঃরেখ শূন্য util_sparse_array_গ্রন্থি_finish(util_sparse_array * arr, uintptr_t গ্রন্থি) {
+    যদি (util_sparse_array_গ্রন্থি_level(গ্রন্থি) > 0) {
+        uintptr_t * children  = (uintptr_t *) util_sparse_array_গ্রন্থি_তথ্য(গ্রন্থি);
+        size_t      গ্রন্থি_আকার = 1ull << arr->গ্রন্থি_আকার_log2;
+        জন্য (size_t i = 0; i < গ্রন্থি_আকার; i++) {
+            যদি (children[i]) {
+                util_sparse_array_গ্রন্থি_finish(arr, children[i]);
             }
         }
     }
 
-    os_free_aligned(_util_sparse_array_node_data(node));
+    os_free_aligned(util_sparse_array_গ্রন্থি_তথ্য(গ্রন্থি));
 }
 
-static inline uintptr_t _util_sparse_array_node(void * data, unsigned level) {
-    assert(data != NULL);
-    assert(((uintptr_t) data & NODE_LEVEL_MASK) == 0);
-    assert((level & NODE_PTR_MASK) == 0);
-    return (uintptr_t) data | level;
+স্থির অন্তঃরেখ uintptr_t util_sparse_array_গ্রন্থি(শূন্য * তথ্য, unsigned level) {
+    প্রতিজ্ঞা(তথ্য != ফাঁকা);
+    প্রতিজ্ঞা(((uintptr_t) তথ্য & গ্রন্থি_LEVEL_MASK) == 0);
+    প্রতিজ্ঞা((level & গ্রন্থি_PTR_MASK) == 0);
+    ফেরত (uintptr_t) তথ্য | level;
 }
 
-inline uintptr_t _util_sparse_array_node_alloc(util_sparse_array * arr, unsigned level) {
+অন্তঃরেখ uintptr_t util_sparse_array_গ্রন্থি_alloc(util_sparse_array * arr, unsigned level) {
     size_t size;
-    if (level == 0) {
-        size = arr->elem_size << arr->node_size_log2;
-    } else {
-        size = sizeof(uintptr_t) << arr->node_size_log2;
+    যদি (level == 0) {
+        size = arr->elem_আকার << arr->গ্রন্থি_আকার_log2;
+    } অন্যথা {
+        size = আকার(uintptr_t) << arr->গ্রন্থি_আকার_log2;
     }
 
-    void * data = os_malloc_aligned(size, NODE_ALLOC_ALIGN);
-    memset(data, 0, size);
+    শূন্য * তথ্য = os_malloc_aligned(size, গ্রন্থি_ALLOC_ALIGN);
+    memset(তথ্য, 0, size);
 
-    return _util_sparse_array_node(data, level);
+    ফেরত util_sparse_array_গ্রন্থি(তথ্য, level);
 }
 
-static inline uintptr_t _util_sparse_array_set_or_free_node(uintptr_t * node_ptr, uintptr_t cmp_node, uintptr_t node) {
-    uintptr_t prev_node = p_atomic_cmpxchg(node_ptr, cmp_node, node);
+স্থির অন্তঃরেখ uintptr_t util_sparse_array_set_or_free_গ্রন্থি(uintptr_t * গ্রন্থি_ptr, uintptr_t cmp_গ্রন্থি, uintptr_t গ্রন্থি) {
+    uintptr_t পূর্ব_গ্রন্থি = p_atomic_cmpxchg(গ্রন্থি_ptr, cmp_গ্রন্থি, গ্রন্থি);
 
-    if (prev_node != cmp_node) {
+    যদি (পূর্ব_গ্রন্থি != cmp_গ্রন্থি) {
         /* We lost the race.  Free this one and return the one that was already
        * allocated.
        */
-        os_free_aligned(_util_sparse_array_node_data(node));
-        return prev_node;
-    } else {
-        return node;
+        os_free_aligned(util_sparse_array_গ্রন্থি_তথ্য(গ্রন্থি));
+        ফেরত পূর্ব_গ্রন্থি;
+    } অন্যথা {
+        ফেরত গ্রন্থি;
     }
 }
 
-void * util_sparse_array_get(util_sparse_array * arr, uint64_t idx) {
-    const unsigned node_size_log2 = arr->node_size_log2;
-    uintptr_t      root           = p_atomic_read(&arr->root);
-    if (unlikely(!root)) {
-        unsigned root_level = 0;
-        uint64_t idx_iter   = idx >> node_size_log2;
-        while (idx_iter) {
-            idx_iter >>= node_size_log2;
-            root_level++;
+শূন্য * util_sparse_array_get(util_sparse_array * arr, uint64_t idx) {
+    ধ্রুবক unsigned গ্রন্থি_আকার_log2 = arr->গ্রন্থি_আকার_log2;
+    uintptr_t      মূল           = p_atomic_read(&arr->মূল);
+    যদি (unlikely(!মূল)) {
+        unsigned মূল_level = 0;
+        uint64_t idx_iter   = idx >> গ্রন্থি_আকার_log2;
+        যখন (idx_iter) {
+            idx_iter >>= গ্রন্থি_আকার_log2;
+            মূল_level++;
         }
-        uintptr_t new_root = _util_sparse_array_node_alloc(arr, root_level);
-        root               = _util_sparse_array_set_or_free_node(&arr->root, NULL_NODE, new_root);
+        uintptr_t new_মূল = util_sparse_array_গ্রন্থি_alloc(arr, মূল_level);
+        মূল               = util_sparse_array_set_or_free_গ্রন্থি(&arr->মূল, NULL_গ্রন্থি, new_মূল);
     }
 
-    while (1) {
-        unsigned root_level = _util_sparse_array_node_level(root);
-        uint64_t root_idx   = idx >> (root_level * node_size_log2);
-        if (likely(root_idx < (1ull << node_size_log2))) {
-            break;
+    যখন (1) {
+        unsigned মূল_level = util_sparse_array_গ্রন্থি_level(মূল);
+        uint64_t মূল_idx   = idx >> (মূল_level * গ্রন্থি_আকার_log2);
+        যদি (likely(মূল_idx < (1ull << গ্রন্থি_আকার_log2))) {
+            বিরতি;
         }
 
         /* In this case, we have a root but its level is low enough that the
        * requested index is out-of-bounds.
        */
-        uintptr_t new_root = _util_sparse_array_node_alloc(arr, root_level + 1);
+        uintptr_t new_মূল = util_sparse_array_গ্রন্থি_alloc(arr, মূল_level + 1);
 
-        uintptr_t * new_root_children = (uintptr_t *) _util_sparse_array_node_data(new_root);
-        new_root_children[0]          = root;
+        uintptr_t * new_মূল_children = (uintptr_t *) util_sparse_array_গ্রন্থি_তথ্য(new_মূল);
+        new_মূল_children[0]          = মূল;
 
         /* We only add one at a time instead of the whole tree because it's
        * easier to ensure correctness of both the tree building and the
@@ -154,26 +154,26 @@ void * util_sparse_array_get(util_sparse_array * arr, uint64_t idx) {
        * worry about trying to free multiple things without freeing the old
        * things.
        */
-        root = _util_sparse_array_set_or_free_node(&arr->root, root, new_root);
+        মূল = util_sparse_array_set_or_free_গ্রন্থি(&arr->মূল, মূল, new_মূল);
     }
 
-    void *   node_data  = _util_sparse_array_node_data(root);
-    unsigned node_level = _util_sparse_array_node_level(root);
-    while (node_level > 0) {
-        uint64_t child_idx = (idx >> (node_level * node_size_log2)) & ((1ull << node_size_log2) - 1);
+    শূন্য *   গ্রন্থি_তথ্য  = util_sparse_array_গ্রন্থি_তথ্য(মূল);
+    unsigned গ্রন্থি_level = util_sparse_array_গ্রন্থি_level(মূল);
+    যখন (গ্রন্থি_level > 0) {
+        uint64_t child_idx = (idx >> (গ্রন্থি_level * গ্রন্থি_আকার_log2)) & ((1ull << গ্রন্থি_আকার_log2) - 1);
 
-        uintptr_t * children = (uintptr_t *) node_data;
+        uintptr_t * children = (uintptr_t *) গ্রন্থি_তথ্য;
         uintptr_t   child    = p_atomic_read(&children[child_idx]);
 
-        if (unlikely(!child)) {
-            child = _util_sparse_array_node_alloc(arr, node_level - 1);
-            child = _util_sparse_array_set_or_free_node(&children[child_idx], NULL_NODE, child);
+        যদি (unlikely(!child)) {
+            child = util_sparse_array_গ্রন্থি_alloc(arr, গ্রন্থি_level - 1);
+            child = util_sparse_array_set_or_free_গ্রন্থি(&children[child_idx], NULL_গ্রন্থি, child);
         }
 
-        node_data  = _util_sparse_array_node_data(child);
-        node_level = _util_sparse_array_node_level(child);
+        গ্রন্থি_তথ্য  = util_sparse_array_গ্রন্থি_তথ্য(child);
+        গ্রন্থি_level = util_sparse_array_গ্রন্থি_level(child);
     }
 
-    uint64_t elem_idx = idx & ((1ull << node_size_log2) - 1);
-    return (void *) ((char *) node_data + (elem_idx * arr->elem_size));
+    uint64_t elem_idx = idx & ((1ull << গ্রন্থি_আকার_log2) - 1);
+    ফেরত (শূন্য *) ((অক্ষর *) গ্রন্থি_তথ্য + (elem_idx * arr->elem_আকার));
 }

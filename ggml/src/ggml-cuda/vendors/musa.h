@@ -1,10 +1,10 @@
 #pragma once
 
-#include <musa_runtime.h>
-#include <musa.h>
-#include <mublas.h>
-#include <musa_bf16.h>
-#include <musa_fp16.h>
+#অন্তর্ভাব <musa_runtime.h>
+#অন্তর্ভাব <musa.h>
+#অন্তর্ভাব <mublas.h>
+#অন্তর্ভাব <musa_bf16.h>
+#অন্তর্ভাব <musa_fp16.h>
 
 #ifdef __MUSA_ARCH__
 #define __CUDA_ARCH__ 1300 // GGML_CUDA_CC_RUBIN
@@ -18,7 +18,7 @@
 #define CUBLAS_OP_N MUBLAS_OP_N
 #define CUBLAS_OP_T MUBLAS_OP_T
 #define CUBLAS_DEFAULT_MATH MUBLAS_DEFAULT_MATH
-#define CUBLAS_SIDE_RIGHT MUBLAS_SIDE_RIGHT
+#define CUBLAS_SIDE_ডান MUBLAS_SIDE_ডান
 #define CUBLAS_FILL_MODE_UPPER MUBLAS_FILL_MODE_UPPER
 #define CUBLAS_DIAG_NON_UNIT MUBLAS_DIAG_NON_UNIT
 #define CUBLAS_STATUS_SUCCESS MUBLAS_STATUS_SUCCESS
@@ -27,7 +27,7 @@
 #define CUDA_R_16BF MUSA_R_16BF
 #define CUDA_R_32F  MUSA_R_32F
 #define cublasStrsmBatched mublasStrsmBatched
-#define cublasComputeType_t cudaDataType_t
+#define cublasComputeType_t cuda_তথ্য_Type_t
 #define cublasCreate mublasCreate
 #define cublasDestroy mublasDestroy
 #define cublasGemmEx mublasGemmEx
@@ -42,7 +42,7 @@
 #define cublasStatus_t mublasStatus_t
 #define cublasOperation_t mublasOperation_t
 #define cublasGetStatusString mublasGetStatusString
-#define cudaDataType_t musaDataType_t
+#define cuda_তথ্য_Type_t musa_তথ্য_Type_t
 #define cudaDeviceCanAccessPeer musaDeviceCanAccessPeer
 #define cudaDeviceDisablePeerAccess musaDeviceDisablePeerAccess
 #define cudaDeviceEnablePeerAccess musaDeviceEnablePeerAccess
@@ -63,7 +63,7 @@
 #define cudaFree musaFree
 #define cudaFreeHost musaFreeHost
 #define cudaGetDevice musaGetDevice
-#define cudaGetDeviceCount musaGetDeviceCount
+#define cuda_Get_Device_গুনতি musa_Get_Device_গুনতি
 #define cudaGetDeviceProperties musaGetDeviceProperties
 #define cudaGetErrorString musaGetErrorString
 #define cudaGetLastError musaGetLastError
@@ -87,7 +87,7 @@
 #define cudaMemset musaMemset
 #define cudaMemsetAsync musaMemsetAsync
 #define cudaMemGetInfo musaMemGetInfo
-#define cudaOccupancyMaxPotentialBlockSize musaOccupancyMaxPotentialBlockSize
+#define cuda_Occupancy_Max_Potential_Block_আকার musa_Occupancy_Max_Potential_Block_আকার
 #define cudaSetDevice musaSetDevice
 #define cudaStreamCreateWithFlags musaStreamCreateWithFlags
 #define cudaStreamDestroy musaStreamDestroy
@@ -121,7 +121,7 @@
 #define cuMemSetAccess muMemSetAccess
 #define cuMemUnmap muMemUnmap
 #define cudaDevAttrCooperativeLaunch musaDevAttrCooperativeLaunch
-#define cudaFuncAttributeMaxDynamicSharedMemorySize musaFuncAttributeMaxDynamicSharedMemorySize
+#define cuda_Func_Attribute_Max_Dynamic_Shared_Memory_আকার musa_Func_Attribute_Max_Dynamic_Shared_Memory_আকার
 #define cudaFuncSetAttribute musaFuncSetAttribute
 #define cudaMemcpy3DPeerParms musaMemcpy3DPeerParms
 #define make_cudaExtent make_musaExtent
@@ -137,18 +137,18 @@
 #define cudaGraphExecDestroy musaGraphExecDestroy
 #define cudaGraphExec_t musaGraphExec_t
 #define cudaGraphExecUpdate musaGraphExecUpdate
-#define cudaGraphExecUpdateResult musaGraphExecUpdateResult
+#define cuda_Graph_Exec_Update_ফলাফল musa_Graph_Exec_Update_ফলাফল
 #define cudaGraphGetNodes musaGraphGetNodes
 #define cudaGraphInstantiate musaGraphInstantiate
-#define cudaGraphKernelNodeGetParams musaGraphKernelNodeGetParams
-#define cudaGraphKernelNodeSetParams musaGraphKernelNodeSetParams
+#define cuda_Graph_Kernel_গ্রন্থি_Get_Params musa_Graph_Kernel_গ্রন্থি_Get_Params
+#define cuda_Graph_Kernel_গ্রন্থি_Set_Params musa_Graph_Kernel_গ্রন্থি_Set_Params
 #define cudaGraphLaunch musaGraphLaunch
-#define cudaGraphNodeGetType musaGraphNodeGetType
-#define cudaGraphNode_t musaGraphNode_t
-#define cudaGraphNodeType musaGraphNodeType
-#define cudaGraphNodeTypeKernel musaGraphNodeTypeKernel
+#define cuda_Graph_গ্রন্থি_Get_Type musa_Graph_গ্রন্থি_Get_Type
+#define cuda_Graph_গ্রন্থি_t musa_Graph_গ্রন্থি_t
+#define cuda_Graph_গ্রন্থি_Type musa_Graph_গ্রন্থি_Type
+#define cuda_Graph_গ্রন্থি_Type_Kernel musa_Graph_গ্রন্থি_Type_Kernel
 #define cudaGraph_t musaGraph_t
-#define cudaKernelNodeParams musaKernelNodeParams
+#define cuda_Kernel_গ্রন্থি_Params musa_Kernel_গ্রন্থি_Params
 #define cudaStreamCaptureModeRelaxed musaStreamCaptureModeRelaxed
 #define cudaStreamBeginCapture musaStreamBeginCapture
 #define cudaStreamEndCapture musaStreamEndCapture
@@ -157,5 +157,5 @@
 #define cudaStreamIsCapturing musaStreamIsCapturing
 #define cudaOccupancyMaxActiveBlocksPerMultiprocessor musaOccupancyMaxActiveBlocksPerMultiprocessor
 
-typedef __mt_bfloat16 nv_bfloat16;
-typedef __mt_bfloat162 nv_bfloat162;
+প্রকারলেখ __mt_bfloat16 nv_bfloat16;
+প্রকারলেখ __mt_bfloat162 nv_bfloat162;

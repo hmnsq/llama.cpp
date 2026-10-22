@@ -7,31 +7,31 @@
 // and a shift:
 //
 // n/d = (mulhi(n, mp) + n) >> L;
-struct fastdiv_values {
+কাঠামো fastdiv_মানসমূহ {
     uint32_t mp;
     uint32_t l;
 };
 
-static inline struct fastdiv_values init_fastdiv_values(uint32_t d) {
-    struct fastdiv_values result = { 0, 0 };
+স্থির অন্তঃরেখ কাঠামো fastdiv_মানসমূহ init_fastdiv_মানসমূহ(uint32_t d) {
+    কাঠামো fastdiv_মানসমূহ ফলাফল = { 0, 0 };
     // compute L = ceil(log2(d));
-    while (result.l < 32 && ((uint32_t) 1 << result.l) < d) {
-        ++(result.l);
+    যখন (ফলাফল.l < 32 && ((uint32_t) 1 << ফলাফল.l) < d) {
+        ++(ফলাফল.l);
     }
 
-    result.mp = (uint32_t) (((uint64_t) 1 << 32) * (((uint64_t) 1 << result.l) - d) / d + 1);
-    return result;
+    ফলাফল.mp = (uint32_t) (((uint64_t) 1 << 32) * (((uint64_t) 1 << ফলাফল.l) - d) / d + 1);
+    ফেরত ফলাফল;
 }
 
-static inline uint32_t fastdiv(uint32_t n, const struct fastdiv_values * vals) {
+স্থির অন্তঃরেখ uint32_t fastdiv(uint32_t n, ধ্রুবক কাঠামো fastdiv_মানসমূহ * vals) {
     // Compute high 32 bits of n * mp
-    const uint32_t hi = (uint32_t) (((uint64_t) n * vals->mp) >> 32);  // mulhi(n, mp)
+    ধ্রুবক uint32_t hi = (uint32_t) (((uint64_t) n * vals->mp) >> 32);  // mulhi(n, mp)
     // add n, apply bit shift
-    return (hi + n) >> vals->l;
+    ফেরত (hi + n) >> vals->l;
 }
 
-static inline uint32_t fastmodulo(uint32_t n, uint32_t d, const struct fastdiv_values * vals) {
-    return n - fastdiv(n, vals) * d;
+স্থির অন্তঃরেখ uint32_t fastmodulo(uint32_t n, uint32_t d, ধ্রুবক কাঠামো fastdiv_মানসমূহ * vals) {
+    ফেরত n - fastdiv(n, vals) * d;
 }
 
 #endif /* HEX_FASTDIV_H */

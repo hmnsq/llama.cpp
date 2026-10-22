@@ -1,15 +1,15 @@
 #pragma once
 
-#include "mark_decompression_convert_constant_folding.h"
-#include "openvino/core/visibility.hpp"
-#include "openvino/pass/matcher_pass.hpp"
+#অন্তর্ভাব "mark_decompression_convert_constant_folding.h"
+#অন্তর্ভাব "openvino/core/visibility.hpp"
+#অন্তর্ভাব "openvino/pass/matcher_pass.hpp"
 
 #ifdef OPENVINO_STATIC_LIBRARY
 #    define TRANSFORMATIONS_API
-#else
+#অন্যথা
 #    ifdef IMPLEMENT_OPENVINO_API
 #        define TRANSFORMATIONS_API OPENVINO_CORE_EXPORTS
-#    else
+#    অন্যথা
 #        define TRANSFORMATIONS_API OPENVINO_CORE_IMPORTS
 #    endif  // IMPLEMENT_OPENVINO_API
 #endif      // OPENVINO_STATIC_LIBRARY
@@ -22,8 +22,8 @@ class TRANSFORMATIONS_API MarkCompressedFloatConstants;
 }  // namespace pass
 }  // namespace ov
 
-class ov::pass::MarkCompressedFloatConstants : public MatcherPass {
-public:
+class ov::pass::MarkCompressedFloatConstants : সর্বজনীন MatcherPass {
+সর্বজনীন:
     OPENVINO_MATCHER_PASS_RTTI("MarkCompressedFloatConstants")
     MarkCompressedFloatConstants();
 };

@@ -1,25 +1,25 @@
-#include <sycl/ext/oneapi/backend/level_zero.hpp>
-#include <sycl/sycl.hpp>
+#অন্তর্ভাব <sycl/ext/oneapi/backend/level_zero.hpp>
+#অন্তর্ভাব <sycl/sycl.hpp>
 
 #ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
-#include <level_zero/ze_api.h>
-#include <level_zero/zes_api.h>
+#অন্তর্ভাব <level_zero/ze_api.h>
+#অন্তর্ভাব <level_zero/zes_api.h>
 #endif
 
-#include <cstdint>
-#include <iostream>
-#include <vector>
+#অন্তর্ভাব <cstdint>
+#অন্তর্ভাব <iostream>
+#অন্তর্ভাব <vector>
 
-#include "base.hpp"
-#include "mem.hpp"
+#অন্তর্ভাব "base.hpp"
+#অন্তর্ভাব "mem.hpp"
 
-const char * mem_api_int2str(int mem_api) {
-    if (mem_api == MEMORY_API_TYPE_SYCL) {
-        return "SYCL API";
-    } else if (mem_api == MEMORY_API_TYPE_LEVEL_ZERO) {
-        return "Level Zero API";
-    } else {
-        return "Unknown";
+ধ্রুবক অক্ষর * mem_api_int2str(পূর্ণসংখ্যা mem_api) {
+    যদি (mem_api == MEMORY_API_TYPE_SYCL) {
+        ফেরত "SYCL API";
+    } অন্যথা যদি (mem_api == MEMORY_API_TYPE_LEVEL_ZERO) {
+        ফেরত "Level Zero API";
+    } অন্যথা {
+        ফেরত "Unknown";
     }
 }
 
@@ -27,110 +27,110 @@ const char * mem_api_int2str(int mem_api) {
 /*
 * Depend on to call zesInit(0) before any other Level Zero API calls, otherwise the Level Zero API calls may fail.
 */
-static bool query_free_memory_by_ze(sycl::device dev, size_t & free_bytes, size_t & total_bytes) {
+স্থির যৌক্তিক query_free_memory_by_ze(sycl::device dev, size_t & free_bytes, size_t & যোগ_bytes) {
     GGML_SYCL_DEBUG("[SYCL] call %s: Querying free memory using Level Zero API.\n", __func__);
 
     free_bytes  = 0;
-    total_bytes = 0;
+    যোগ_bytes = 0;
 
-    uint32_t module_count = 0;
+    uint32_t module_গুনতি = 0;
 
-#if defined(SYCL_EXT_ONEAPI_BACKEND_LEVEL_ZERO)
+#যদি defined(SYCL_EXT_ONEAPI_BACKEND_LEVEL_ZERO)
     constexpr sycl::backend kL0Backend = sycl::backend::ext_oneapi_level_zero;
-#else
+#অন্যথা
     constexpr sycl::backend kL0Backend = sycl::backend::level_zero;
 #endif
 
-    try {
+    চেষ্টা {
 
-        if (dev.get_platform().get_backend() != kL0Backend) {
+        যদি (dev.get_platform().get_backend() != kL0Backend) {
             GGML_SYCL_DEBUG("Device backend is not Level Zero.\n");
-            return false;
+            ফেরত মিথ্যা;
         }
 
         ze_device_handle_t ze_dev = sycl::get_native<kL0Backend>(dev);
-        if (ze_dev == nullptr) {
+        যদি (ze_dev == nullptr) {
             GGML_SYCL_DEBUG("Level Zero device handle is null.\n");
-            return false;
+            ফেরত মিথ্যা;
         }
 
-        ze_result_t r = zesDeviceEnumMemoryModules(ze_dev, &module_count, nullptr);
-        if (r != ZE_RESULT_SUCCESS || module_count == 0) {
+        ze_ফলাফল_t r = zesDeviceEnumMemoryModules(ze_dev, &module_গুনতি, nullptr);
+        যদি (r != ZE_ফলাফল_SUCCESS || module_গুনতি == 0) {
             GGML_SYCL_DEBUG("Failed to enumerate Level Zero memory modules.\n");
-            return false;
+            ফেরত মিথ্যা;
         }
 
-        std::vector<zes_mem_handle_t> modules(module_count);
-        r = zesDeviceEnumMemoryModules(ze_dev, &module_count, modules.data());
-        if (r != ZE_RESULT_SUCCESS || module_count == 0) {
+        std::vector<zes_mem_handle_t> modules(module_গুনতি);
+        r = zesDeviceEnumMemoryModules(ze_dev, &module_গুনতি, modules.তথ্য());
+        যদি (r != ZE_ফলাফল_SUCCESS || module_গুনতি == 0) {
             GGML_SYCL_DEBUG("Failed to enumerate Level Zero memory modules.\n");
-            return false;
+            ফেরত মিথ্যা;
         }
 
-        for (uint32_t i = 0; i < module_count; ++i) {
+        জন্য (uint32_t i = 0; i < module_গুনতি; ++i) {
             zes_mem_state_t state = {};
             state.stype           = ZES_STRUCTURE_TYPE_MEM_STATE;
-            state.pNext           = nullptr;
+            state.p_পরবর্তী           = nullptr;
 
             r = zesMemoryGetState(modules[i], &state);
-            if (r != ZE_RESULT_SUCCESS) {
-                continue;
+            যদি (r != ZE_ফলাফল_SUCCESS) {
+                চালু;
             }
 
-            free_bytes += state.free;
-            total_bytes += state.size;
+            free_bytes += state.মুক্ত;
+            যোগ_bytes += state.size;
         }
 
-        if (total_bytes == 0) {
+        যদি (যোগ_bytes == 0) {
             GGML_SYCL_DEBUG("Level Zero memory query returned zero total bytes.\n");
-            return false;
+            ফেরত মিথ্যা;
         }
-        return total_bytes >= free_bytes;
+        ফেরত যোগ_bytes >= free_bytes;
 
-    } catch (const sycl::exception & e) {
+    } ধরো (ধ্রুবক sycl::exception & e) {
         GGML_SYCL_DEBUG("Level Zero memory query failed: %s\n", e.what());
-        return false;
+        ফেরত মিথ্যা;
     }
 }
 #endif
 
-static bool get_memory_size_by_sycl_api(sycl::device dev, size_t & free_bytes, size_t & total_bytes) {
+স্থির যৌক্তিক get_memory_আকার_by_sycl_api(sycl::device dev, size_t & free_bytes, size_t & যোগ_bytes) {
     GGML_SYCL_DEBUG("[SYCL] call %s: Querying free memory using SYCL API.\n", __func__);
-    total_bytes = dev.get_info<sycl::info::device::global_mem_size>();
+    যোগ_bytes = dev.get_info<sycl::info::device::global_mem_আকার>();
 
-#if (defined(__SYCL_COMPILER_VERSION) && __SYCL_COMPILER_VERSION >= 20221105)
-    if (dev.has(sycl::aspect::ext_intel_free_memory)) {
-        try {
+#যদি (defined(__SYCL_COMPILER_VERSION) && __SYCL_COMPILER_VERSION >= 20221105)
+    যদি (dev.has(sycl::aspect::ext_intel_free_memory)) {
+        চেষ্টা {
             GGML_SYCL_DEBUG("Querying free memory using SYCL aspect::ext_intel_free_memory.\n");
             free_bytes = dev.get_info<sycl::ext::intel::info::device::free_memory>();
-            return true;
-        } catch (const sycl::exception &) {
+            ফেরত সত্য;
+        } ধরো (ধ্রুবক sycl::exception &) {
             GGML_SYCL_DEBUG(
                 "Failed to query free memory using SYCL aspect::ext_intel_free_memory.\n");
-            return false;
+            ফেরত মিথ্যা;
         }
-    } else {
+    } অন্যথা {
         GGML_SYCL_DEBUG(
             "Device does not support SYCL aspect::ext_intel_free_memory.\n");
     }
-#else
+#অন্যথা
     GGML_SYCL_DEBUG("SYCL Compiler version is older than 20221105.\n");
 #endif
-    return false;
+    ফেরত মিথ্যা;
 }
 
-bool get_memory_size(sycl::device dev, size_t & free_bytes, size_t & total_bytes, MemoryAPIType api_type) {
+যৌক্তিক get_memory_আকার(sycl::device dev, size_t & free_bytes, size_t & যোগ_bytes, MemoryAPIType api_type) {
 
     GGML_SYCL_DEBUG("[%s]GPU Name:          %s\n", __func__,
         dev.get_info<sycl::info::device::name>().c_str());
     GGML_SYCL_DEBUG("[%s]GPU Vendor:        %s\n", __func__,
         dev.get_info<sycl::info::device::vendor>().c_str());
 
-    if (api_type == MEMORY_API_TYPE_LEVEL_ZERO) {
+    যদি (api_type == MEMORY_API_TYPE_LEVEL_ZERO) {
 #ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
         GGML_SYCL_DEBUG("[%s] Querying free memory using Level Zero API.\n", __func__);
-        if (query_free_memory_by_ze(dev, free_bytes, total_bytes)) {
-            return true;
+        যদি (query_free_memory_by_ze(dev, free_bytes, যোগ_bytes)) {
+            ফেরত সত্য;
         }
         //fallback to SYCL API if Level Zero API fails
         GGML_SYCL_DEBUG("[%s] Falling back to SYCL API for memory query.\n", __func__);
@@ -138,14 +138,14 @@ bool get_memory_size(sycl::device dev, size_t & free_bytes, size_t & total_bytes
     }
 
     //MEMORY_API_TYPE_SYCL
-    if(get_memory_size_by_sycl_api(dev, free_bytes, total_bytes)){
-        return true;
+    যদি(get_memory_আকার_by_sycl_api(dev, free_bytes, যোগ_bytes)){
+        ফেরত সত্য;
     }
 
     //Todo, fallback to other methods to get free memory size, such as using OS-specific APIs (e.g., /proc/meminfo on Linux, GlobalMemoryStatusEx on Windows, etc.)
     GGML_SYCL_DEBUG(
         "[%s] Can't get free mem size by Level Zero and SYCL API. Using total memory as free memory.\n", __func__);
-    free_bytes = total_bytes;
+    free_bytes = যোগ_bytes;
 
-    return true;
+    ফেরত সত্য;
 }

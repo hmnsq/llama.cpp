@@ -1,5 +1,5 @@
 #pragma once
-#include "backend.hpp"
-#include "ggml.h"
+#অন্তর্ভাব "backend.hpp"
+#অন্তর্ভাব "ggml.h"
 
-void ggml_sycl_op_set(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+শূন্য ggml_sycl_op_set(ggml_backend_sycl_context & ctx, ggml_tensor * dst);

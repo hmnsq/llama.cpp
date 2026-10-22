@@ -52,13 +52,13 @@
 //   boundaries up-front by zero-padding the input in L2SCP.
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "platform.h"
-#include "tensor.h"
+#অন্তর্ভাব "ggml_tensor.h"
+#অন্তর্ভাব "platform.h"
+#অন্তর্ভাব "tensor.h"
 
-#include <etsoc/common/utils.h>
-#include <stdbool.h>
-#include <stdint.h>
+#অন্তর্ভাব <etsoc/common/utils.h>
+#অন্তর্ভাব <stdbool.h>
+#অন্তর্ভাব <stdint.h>
 
 #define TILE               16 /* matrix engine native tile in M, K, N */
 /* L1 SCP layout: A double-buffered, B single-buffered. Per the SDK doc
@@ -88,69 +88,69 @@
    shire-local — no NoC fanout. */
 #define LOCAL_FILTER_CAP (1024 * 1024)                      /* 1 MB / shire ceiling */
 
-#define SLAB_BYTES ((uint64_t) TILE * TILE * sizeof(float)) /* 1024 */
-#define SLAB_LINES ((SLAB_BYTES + 63) / 64)                 /* 16   */
+#define SLAB_BYTES ((uint64_t) TILE * TILE * আকার(দশমিক)) /* 1024 */
+#define SLAB_সারিগুলি ((SLAB_BYTES + 63) / 64)                 /* 16   */
 
 /* Upper bound on the number of distinct mt values a single shire may pack.
    This keeps the mt list stack-resident. Shapes that need more should fall
    back until the filter-slice bookkeeping is made dynamic. */
 #define MAX_MY_MT (N_MIN_PER_SHIRE * MAX_TILES_PER_HART)
 
-typedef struct {
-    int mt;
-    int mt_idx;
-    int oh;
-    int ow_base;
+প্রকারলেখ কাঠামো {
+    পূর্ণসংখ্যা mt;
+    পূর্ণসংখ্যা mt_idx;
+    পূর্ণসংখ্যা oh;
+    পূর্ণসংখ্যা ow_base;
 } conv_tile_t;
 
-static inline int ceil_div_i32(int x, int y) {
-    return (x + y - 1) / y;
+স্থির অন্তঃরেখ পূর্ণসংখ্যা ceil_div_i32(পূর্ণসংখ্যা x, পূর্ণসংখ্যা y) {
+    ফেরত (x + y - 1) / y;
 }
 
-static inline int round_up_tile_i32(int x) {
-    return (x + TILE - 1) & ~(TILE - 1);
+স্থির অন্তঃরেখ পূর্ণসংখ্যা round_up_tile_i32(পূর্ণসংখ্যা x) {
+    ফেরত (x + TILE - 1) & ~(TILE - 1);
 }
 
-static inline int min_i32(int a, int b) {
-    return a < b ? a : b;
+স্থির অন্তঃরেখ পূর্ণসংখ্যা min_i32(পূর্ণসংখ্যা a, পূর্ণসংখ্যা b) {
+    ফেরত a < b ? a : b;
 }
 
-static inline uint64_t min_u64(uint64_t a, uint64_t b) {
-    return a < b ? a : b;
+স্থির অন্তঃরেখ uint64_t min_u64(uint64_t a, uint64_t b) {
+    ফেরত a < b ? a : b;
 }
 
 /* ===== Vector helpers for hart-1 pack ============================
    Both assume dst (and src for copy) are 32-byte aligned; n is in floats.
    The 8-element tail is handled scalar. f30/f31 are scratch — clobbered
    per-call via the asm clobber list. */
-static inline void vec_zero_aligned(float * dst, int n) {
-    int       i  = 0;
-    const int n8 = n & ~7;
-    for (; i < n8; i += 8) {
-        __asm__ volatile(
+স্থির অন্তঃরেখ শূন্য vec_zero_aligned(দশমিক * dst, পূর্ণসংখ্যা n) {
+    পূর্ণসংখ্যা       i  = 0;
+    ধ্রুবক পূর্ণসংখ্যা n8 = n & ~7;
+    জন্য (; i < n8; i += 8) {
+        __asm__ অস্থির(
             "fsub.ps f31, f31, f31\n"
             "fsw.ps  f31, %[d]\n"
-            : [d] "=m"(*(float (*)[8]) & dst[i])
+            : [d] "=m"(*(দশমিক (*)[8]) & dst[i])
             :
             : "f31");
     }
-    for (; i < n; ++i) {
+    জন্য (; i < n; ++i) {
         dst[i] = 0.0f;
     }
 }
 
-static inline void vec_copy_aligned(float * dst, const float * src, int n) {
-    int       i  = 0;
-    const int n8 = n & ~7;
-    for (; i < n8; i += 8) {
-        __asm__ volatile(
+স্থির অন্তঃরেখ শূন্য vec_copy_aligned(দশমিক * dst, ধ্রুবক দশমিক * src, পূর্ণসংখ্যা n) {
+    পূর্ণসংখ্যা       i  = 0;
+    ধ্রুবক পূর্ণসংখ্যা n8 = n & ~7;
+    জন্য (; i < n8; i += 8) {
+        __asm__ অস্থির(
             "flw.ps f30, %[s]\n"
             "fsw.ps f30, %[d]\n"
-            : [d] "=m"(*(float (*)[8]) & dst[i])
-            : [s] "m"(*(const float (*)[8]) & src[i])
+            : [d] "=m"(*(দশমিক (*)[8]) & dst[i])
+            : [s] "m"(*(ধ্রুবক দশমিক (*)[8]) & src[i])
             : "f30");
     }
-    for (; i < n; ++i) {
+    জন্য (; i < n; ++i) {
         dst[i] = src[i];
     }
 }
@@ -161,11 +161,11 @@ static inline void vec_copy_aligned(float * dst, const float * src, int n) {
    tensor_store-ing TILE rows × 64 bytes, and restore via 32 flw.ps after
    forcing L1D to refetch from the L2SCP backing (tensor_store bypasses L1D
    so the backing is always current). See feedback_tenc_save_restore.md. */
-static inline void tenc_restore_from_scratch(uint64_t scr) {
+স্থির অন্তঃরেখ শূন্য tenc_restore_from_scratch(uint64_t scr) {
     FENCE;
-    evict_to_l2((const void *) scr, TILE, 64);
+    evict_to_l2((ধ্রুবক শূন্য *) scr, TILE, 64);
     WAIT_CACHEOPS;
-    __asm__ volatile(
+    __asm__ অস্থির(
         "flw.ps f0,    0(%0)\n"
         "flw.ps f1,   32(%0)\n"
         "flw.ps f2,   64(%0)\n"
@@ -210,130 +210,130 @@ static inline void tenc_restore_from_scratch(uint64_t scr) {
    pin (Kw shifted, padded copies of input rows) into local L2 SCP. The
    filter is not touched in this struct; it is packed into the per-shire
    local slice before the per-chunk loop begins. */
-typedef struct {
-    const float * in_base;  /* DRAM input base [Cin][H][W]         */
-    int           Kw;
-    int           chunk_KT; /* number of K_TILES (=16-wide) per chunk */
-    int           H, W, Hp, Wp_a;
-    int           pad_h, pad_w, s0;
-    int           minion;          /* this hart's minion id (0..31) */
+প্রকারলেখ কাঠামো {
+    ধ্রুবক দশমিক * in_base;  /* DRAM input base [Cin][H][W]         */
+    পূর্ণসংখ্যা           Kw;
+    পূর্ণসংখ্যা           chunk_KT; /* number of K_TILES (=16-wide) per chunk */
+    পূর্ণসংখ্যা           H, W, Hp, Wp_a;
+    পূর্ণসংখ্যা           pad_h, pad_w, s0;
+    পূর্ণসংখ্যা           minion;          /* this hart's minion id (0..31) */
     uint64_t      pin_copy_floats; /* per-_s pin plane size in floats */
     uint64_t      l2_pad_in_buf[MAX_DBL_BUFS];
     uint64_t      pin_chunk_bytes; /* one chunk pin buffer's total size */
 } pin_ctx_t;
 
-static inline int find_mt_idx(const int * my_mt, int n_my_mt, int mt) {
-    for (int j = 0; j < n_my_mt; ++j) {
-        if (my_mt[j] == mt) {
-            return j;
+স্থির অন্তঃরেখ পূর্ণসংখ্যা find_mt_idx(ধ্রুবক পূর্ণসংখ্যা * my_mt, পূর্ণসংখ্যা n_my_mt, পূর্ণসংখ্যা mt) {
+    জন্য (পূর্ণসংখ্যা j = 0; j < n_my_mt; ++j) {
+        যদি (my_mt[j] == mt) {
+            ফেরত j;
         }
     }
-    return 0;
+    ফেরত 0;
 }
 
-static inline conv_tile_t decode_tile(int t, int M_TILES, int w_tiles, const int * my_mt, int n_my_mt) {
+স্থির অন্তঃরেখ conv_tile_t decode_tile(পূর্ণসংখ্যা t, পূর্ণসংখ্যা M_TILES, পূর্ণসংখ্যা w_tiles, ধ্রুবক পূর্ণসংখ্যা * my_mt, পূর্ণসংখ্যা n_my_mt) {
     conv_tile_t tile;
     tile.mt = t % M_TILES;
     t /= M_TILES;
-    const int wt = t % w_tiles;
+    ধ্রুবক পূর্ণসংখ্যা wt = t % w_tiles;
     t /= w_tiles;
     tile.oh      = t;
     tile.ow_base = wt * TILE;
     tile.mt_idx  = find_mt_idx(my_mt, n_my_mt, tile.mt);
-    return tile;
+    ফেরত tile;
 }
 
-static inline uint64_t
-filter_slab_addr(uint64_t l2_filter, int Kw, int K_TILES, int n_my_mt, int mt_idx, int kh, int kw, int kt_global) {
-    return l2_filter + (uint64_t) ((((kh * Kw + kw) * n_my_mt + mt_idx) * K_TILES + kt_global)) * SLAB_BYTES;
+স্থির অন্তঃরেখ uint64_t
+filter_slab_addr(uint64_t l2_filter, পূর্ণসংখ্যা Kw, পূর্ণসংখ্যা K_TILES, পূর্ণসংখ্যা n_my_mt, পূর্ণসংখ্যা mt_idx, পূর্ণসংখ্যা kh, পূর্ণসংখ্যা kw, পূর্ণসংখ্যা kt_global) {
+    ফেরত l2_filter + (uint64_t) ((((kh * Kw + kw) * n_my_mt + mt_idx) * K_TILES + kt_global)) * SLAB_BYTES;
 }
 
-static inline uint64_t pin_tile_addr(uint64_t l2_pad_in,
+স্থির অন্তঃরেখ uint64_t pin_tile_addr(uint64_t l2_pad_in,
                                      uint64_t pin_copy_bytes,
-                                     int      ktc,
-                                     int      kw,
-                                     int      Hp,
-                                     int      Wp_a,
-                                     int      oh,
-                                     int      ow_base,
-                                     int      s1,
-                                     int      kh) {
-    const int ir_pad = oh * s1 + kh;
-    return l2_pad_in + (uint64_t) kw * pin_copy_bytes +
-           (((uint64_t) (ktc * TILE) * Hp + ir_pad) * Wp_a + ow_base) * sizeof(float);
+                                     পূর্ণসংখ্যা      ktc,
+                                     পূর্ণসংখ্যা      kw,
+                                     পূর্ণসংখ্যা      Hp,
+                                     পূর্ণসংখ্যা      Wp_a,
+                                     পূর্ণসংখ্যা      oh,
+                                     পূর্ণসংখ্যা      ow_base,
+                                     পূর্ণসংখ্যা      s1,
+                                     পূর্ণসংখ্যা      kh) {
+    ধ্রুবক পূর্ণসংখ্যা ir_pad = oh * s1 + kh;
+    ফেরত l2_pad_in + (uint64_t) kw * pin_copy_bytes +
+           (((uint64_t) (ktc * TILE) * Hp + ir_pad) * Wp_a + ow_base) * আকার(দশমিক);
 }
 
-static inline char * output_tile_addr(char *              out_base,
-                                      const conv_tile_t * tile,
+স্থির অন্তঃরেখ অক্ষর * output_tile_addr(অক্ষর *              out_base,
+                                      ধ্রুবক conv_tile_t * tile,
                                       uint64_t            out_chan_stride,
                                       uint64_t            out_row_stride) {
-    return out_base + (size_t) (tile->mt * TILE) * out_chan_stride + (size_t) tile->oh * out_row_stride +
-           (size_t) tile->ow_base * sizeof(float);
+    ফেরত out_base + (size_t) (tile->mt * TILE) * out_chan_stride + (size_t) tile->oh * out_row_stride +
+           (size_t) tile->ow_base * আকার(দশমিক);
 }
 
-static inline void flush_range_to_l2(const void * addr, uint64_t n_bytes) {
-    const uint64_t total_lines = (n_bytes + 63) / 64;
-    const char *   fl_addr     = (const char *) addr;
-    for (uint64_t done = 0; done < total_lines;) {
-        const uint64_t batch = min_u64(total_lines - done, 16);
-        flush_to_l2((const void *) (fl_addr + done * 64), batch, 64);
+স্থির অন্তঃরেখ শূন্য flush_range_to_l2(ধ্রুবক শূন্য * addr, uint64_t n_bytes) {
+    ধ্রুবক uint64_t যোগ_সারিগুলি = (n_bytes + 63) / 64;
+    ধ্রুবক অক্ষর *   fl_addr     = (ধ্রুবক অক্ষর *) addr;
+    জন্য (uint64_t done = 0; done < যোগ_সারিগুলি;) {
+        ধ্রুবক uint64_t batch = min_u64(যোগ_সারিগুলি - done, 16);
+        flush_to_l2((ধ্রুবক শূন্য *) (fl_addr + done * 64), batch, 64);
         done += batch;
     }
 }
 
-static inline void evict_range_past_l2(const void * addr, uint64_t n_bytes) {
-    const uint64_t total_lines = (n_bytes + 63) / 64;
-    const char *   fl_addr     = (const char *) addr;
-    for (uint64_t done = 0; done < total_lines;) {
-        const uint64_t batch = min_u64(total_lines - done, 16);
-        evict_past_l2((const void *) (fl_addr + done * 64), batch, 64);
+স্থির অন্তঃরেখ শূন্য evict_range_past_l2(ধ্রুবক শূন্য * addr, uint64_t n_bytes) {
+    ধ্রুবক uint64_t যোগ_সারিগুলি = (n_bytes + 63) / 64;
+    ধ্রুবক অক্ষর *   fl_addr     = (ধ্রুবক অক্ষর *) addr;
+    জন্য (uint64_t done = 0; done < যোগ_সারিগুলি;) {
+        ধ্রুবক uint64_t batch = min_u64(যোগ_সারিগুলি - done, 16);
+        evict_past_l2((ধ্রুবক শূন্য *) (fl_addr + done * 64), batch, 64);
         done += batch;
     }
 }
 
 /* One matrix-engine tile for one Cin chunk. This is the main optimization
    surface: A is double-buffered, B is single-buffered due to L1 SCP space. */
-static inline void compute_tile_chunk(uint64_t            l2_filter,
+স্থির অন্তঃরেখ শূন্য compute_tile_chunk(uint64_t            l2_filter,
                                       uint64_t            l2_pad_in,
                                       uint64_t            pin_copy_bytes,
-                                      int                 Kh,
-                                      int                 Kw,
-                                      int                 K_TILES,
-                                      int                 chunk_KT,
-                                      int                 kt_base,
-                                      int                 n_my_mt,
-                                      int                 Hp,
-                                      int                 Wp_a,
-                                      int                 s1,
+                                      পূর্ণসংখ্যা                 Kh,
+                                      পূর্ণসংখ্যা                 Kw,
+                                      পূর্ণসংখ্যা                 K_TILES,
+                                      পূর্ণসংখ্যা                 chunk_KT,
+                                      পূর্ণসংখ্যা                 kt_base,
+                                      পূর্ণসংখ্যা                 n_my_mt,
+                                      পূর্ণসংখ্যা                 Hp,
+                                      পূর্ণসংখ্যা                 Wp_a,
+                                      পূর্ণসংখ্যা                 s1,
                                       uint64_t            a_row_stride,
                                       uint64_t            b_row_stride,
-                                      const conv_tile_t * tile,
+                                      ধ্রুবক conv_tile_t * tile,
                                       bool                first_fma_clears_tenc) {
-    const int      n_iters   = Kh * Kw * chunk_KT;
-    const uint64_t A_BUFS[2] = { LSCP_A_0, LSCP_A_1 };
+    ধ্রুবক পূর্ণসংখ্যা      n_iters   = Kh * Kw * chunk_KT;
+    ধ্রুবক uint64_t A_BUFS[2] = { LSCP_A_0, LSCP_A_1 };
 
-    const uint64_t a_addr0 = filter_slab_addr(l2_filter, Kw, K_TILES, n_my_mt, tile->mt_idx, 0, 0, kt_base);
+    ধ্রুবক uint64_t a_addr0 = filter_slab_addr(l2_filter, Kw, K_TILES, n_my_mt, tile->mt_idx, 0, 0, kt_base);
     tensor_load(false, false, A_BUFS[0], 0, 0, a_addr0, 0, (uint64_t) (TILE - 1), a_row_stride, 0);
 
-    for (int iter = 0; iter < n_iters; ++iter) {
-        const int ktc = iter % chunk_KT;
-        const int rem = iter / chunk_KT;
-        const int kw  = rem % Kw;
-        const int kh  = rem / Kw;
+    জন্য (পূর্ণসংখ্যা iter = 0; iter < n_iters; ++iter) {
+        ধ্রুবক পূর্ণসংখ্যা ktc = iter % chunk_KT;
+        ধ্রুবক পূর্ণসংখ্যা rem = iter / chunk_KT;
+        ধ্রুবক পূর্ণসংখ্যা kw  = rem % Kw;
+        ধ্রুবক পূর্ণসংখ্যা kh  = rem / Kw;
 
-        const uint64_t b_addr =
+        ধ্রুবক uint64_t b_addr =
             pin_tile_addr(l2_pad_in, pin_copy_bytes, ktc, kw, Hp, Wp_a, tile->oh, tile->ow_base, s1, kh);
         tensor_load(false, false, LSCP_B, 0, 0, b_addr, 0, (uint64_t) (TILE - 1), b_row_stride, 1);
 
         tensor_wait(TENSOR_LOAD_WAIT_0);
         tensor_wait(TENSOR_LOAD_WAIT_1);
 
-        if (iter + 1 < n_iters) {
-            const int      ktc_n = (iter + 1) % chunk_KT;
-            const int      rem_n = (iter + 1) / chunk_KT;
-            const int      kw_n  = rem_n % Kw;
-            const int      kh_n  = rem_n / Kw;
-            const uint64_t a_addr_n =
+        যদি (iter + 1 < n_iters) {
+            ধ্রুবক পূর্ণসংখ্যা      ktc_n = (iter + 1) % chunk_KT;
+            ধ্রুবক পূর্ণসংখ্যা      rem_n = (iter + 1) / chunk_KT;
+            ধ্রুবক পূর্ণসংখ্যা      kw_n  = rem_n % Kw;
+            ধ্রুবক পূর্ণসংখ্যা      kh_n  = rem_n / Kw;
+            ধ্রুবক uint64_t a_addr_n =
                 filter_slab_addr(l2_filter, Kw, K_TILES, n_my_mt, tile->mt_idx, kh_n, kw_n, kt_base + ktc_n);
             tensor_load(false, false, A_BUFS[(iter + 1) & 1], 0, 0, a_addr_n, 0, (uint64_t) (TILE - 1), a_row_stride,
                         0);
@@ -353,38 +353,38 @@ static inline void compute_tile_chunk(uint64_t            l2_filter,
    This deliberately favors local inner-loop reads over global filter fanout.
    Depending on tile shape, two shires may pack the same mt value; keep that
    tradeoff visible when experimenting with shared-filter layouts. */
-static void pack_filter_local_mt(const float * flt_base,
-                                 int           Kh,
-                                 int           Kw,
-                                 int           Cin,
-                                 int           K_TILES,
-                                 const int *   my_mt,
-                                 int           n_my_mt,
-                                 int           minion,
+স্থির শূন্য pack_filter_local_mt(ধ্রুবক দশমিক * flt_base,
+                                 পূর্ণসংখ্যা           Kh,
+                                 পূর্ণসংখ্যা           Kw,
+                                 পূর্ণসংখ্যা           Cin,
+                                 পূর্ণসংখ্যা           K_TILES,
+                                 ধ্রুবক পূর্ণসংখ্যা *   my_mt,
+                                 পূর্ণসংখ্যা           n_my_mt,
+                                 পূর্ণসংখ্যা           minion,
                                  uint64_t      l2_filter_base) {
-    const int    n_slabs = Kh * Kw * n_my_mt * K_TILES;
-    const size_t kstep   = (size_t) Kh * Kw; /* Cin stride in floats */
+    ধ্রুবক পূর্ণসংখ্যা    n_slabs = Kh * Kw * n_my_mt * K_TILES;
+    ধ্রুবক size_t kstep   = (size_t) Kh * Kw; /* Cin stride in floats */
 
-    for (int slab = minion; slab < n_slabs; slab += N_MIN_PER_SHIRE) {
-        int       t  = slab;
-        const int kt = t % K_TILES;
+    জন্য (পূর্ণসংখ্যা slab = minion; slab < n_slabs; slab += N_MIN_PER_SHIRE) {
+        পূর্ণসংখ্যা       t  = slab;
+        ধ্রুবক পূর্ণসংখ্যা kt = t % K_TILES;
         t /= K_TILES;
-        const int mt_idx = t % n_my_mt;
+        ধ্রুবক পূর্ণসংখ্যা mt_idx = t % n_my_mt;
         t /= n_my_mt;
-        const int kw = t % Kw;
+        ধ্রুবক পূর্ণসংখ্যা kw = t % Kw;
         t /= Kw;
-        const int kh = t;
-        const int mt = my_mt[mt_idx];
+        ধ্রুবক পূর্ণসংখ্যা kh = t;
+        ধ্রুবক পূর্ণসংখ্যা mt = my_mt[mt_idx];
 
-        const uint64_t slab_offset = (uint64_t) slab * SLAB_BYTES;
-        float *        cell        = (float *) (l2_filter_base + slab_offset);
+        ধ্রুবক uint64_t slab_offset = (uint64_t) slab * SLAB_BYTES;
+        দশমিক *        cell        = (দশমিক *) (l2_filter_base + slab_offset);
 
-        for (int oc_in = 0; oc_in < TILE; ++oc_in) {
-            const int     oc  = mt * TILE + oc_in;
-            const float * src = flt_base + (((size_t) oc * Cin + (size_t) kt * TILE) * Kh + kh) * Kw + kw;
-            float *       row = cell + (size_t) oc_in * TILE;
-            float         scratch[TILE] __attribute__((aligned(32)));
-            for (int ic_in = 0; ic_in < TILE; ++ic_in) {
+        জন্য (পূর্ণসংখ্যা oc_in = 0; oc_in < TILE; ++oc_in) {
+            ধ্রুবক পূর্ণসংখ্যা     oc  = mt * TILE + oc_in;
+            ধ্রুবক দশমিক * src = flt_base + (((size_t) oc * Cin + (size_t) kt * TILE) * Kh + kh) * Kw + kw;
+            দশমিক *       row = cell + (size_t) oc_in * TILE;
+            দশমিক         scratch[TILE] __attribute__((aligned(32)));
+            জন্য (পূর্ণসংখ্যা ic_in = 0; ic_in < TILE; ++ic_in) {
                 scratch[ic_in] = src[(size_t) ic_in * kstep];
             }
             vec_copy_aligned(row, scratch, TILE);
@@ -393,9 +393,9 @@ static void pack_filter_local_mt(const float * flt_base,
 
     /* Flush this hart's dirty L1D lines for the slabs it wrote. */
     FENCE;
-    for (int slab = minion; slab < n_slabs; slab += N_MIN_PER_SHIRE) {
-        const uint64_t slab_offset = (uint64_t) slab * SLAB_BYTES;
-        flush_to_l2((const void *) (l2_filter_base + slab_offset), SLAB_LINES, 64);
+    জন্য (পূর্ণসংখ্যা slab = minion; slab < n_slabs; slab += N_MIN_PER_SHIRE) {
+        ধ্রুবক uint64_t slab_offset = (uint64_t) slab * SLAB_BYTES;
+        flush_to_l2((ধ্রুবক শূন্য *) (l2_filter_base + slab_offset), SLAB_সারিগুলি, 64);
     }
     WAIT_CACHEOPS;
 }
@@ -404,65 +404,65 @@ static void pack_filter_local_mt(const float * flt_base,
    buf_idx side of local L2SCP. Work distributed across the 32 hart-1's in
    the shire by `plane % 32 == minion`. The final flush_to_l2 forces L1D
    write-back so hart-0's tensor_load sees the freshly written bytes. */
-static void pack_pin_chunk(const pin_ctx_t * ctx, int chunk_id, int buf_idx) {
-    const int kt_base  = chunk_id * ctx->chunk_KT;
-    const int Kw       = ctx->Kw;
-    const int chunk_KT = ctx->chunk_KT;
-    const int H = ctx->H, W = ctx->W, Hp = ctx->Hp, Wp_a = ctx->Wp_a;
-    const int pad_h = ctx->pad_h, pad_w = ctx->pad_w, s0 = ctx->s0;
-    const int minion = ctx->minion;
+স্থির শূন্য pack_pin_chunk(ধ্রুবক pin_ctx_t * ctx, পূর্ণসংখ্যা chunk_id, পূর্ণসংখ্যা buf_idx) {
+    ধ্রুবক পূর্ণসংখ্যা kt_base  = chunk_id * ctx->chunk_KT;
+    ধ্রুবক পূর্ণসংখ্যা Kw       = ctx->Kw;
+    ধ্রুবক পূর্ণসংখ্যা chunk_KT = ctx->chunk_KT;
+    ধ্রুবক পূর্ণসংখ্যা H = ctx->H, W = ctx->W, Hp = ctx->Hp, Wp_a = ctx->Wp_a;
+    ধ্রুবক পূর্ণসংখ্যা pad_h = ctx->pad_h, pad_w = ctx->pad_w, s0 = ctx->s0;
+    ধ্রুবক পূর্ণসংখ্যা minion = ctx->minion;
 
     /* Pin pack: Kw shifted, padded copies of input rows. Bounds [vlo, vhi)
        hoisted outside the row loop so the inner loop is three regions
        (zero-prefix | bulk-copy | zero-suffix) with no per-element predicate. */
-    float *   pin0         = (float *) ctx->l2_pad_in_buf[buf_idx];
-    const int chunk_Cin    = chunk_KT * TILE;
-    const int n_pin_planes = Kw * chunk_Cin;
-    for (int p = minion; p < n_pin_planes; p += N_MIN_PER_SHIRE) {
-        const int s     = p / chunk_Cin;
-        const int icc   = p % chunk_Cin;
-        const int ic    = kt_base * TILE + icc;
-        float *   pin_s = pin0 + (size_t) s * ctx->pin_copy_floats;
+    দশমিক *   pin0         = (দশমিক *) ctx->l2_pad_in_buf[buf_idx];
+    ধ্রুবক পূর্ণসংখ্যা chunk_Cin    = chunk_KT * TILE;
+    ধ্রুবক পূর্ণসংখ্যা n_pin_planes = Kw * chunk_Cin;
+    জন্য (পূর্ণসংখ্যা p = minion; p < n_pin_planes; p += N_MIN_PER_SHIRE) {
+        ধ্রুবক পূর্ণসংখ্যা s     = p / chunk_Cin;
+        ধ্রুবক পূর্ণসংখ্যা icc   = p % chunk_Cin;
+        ধ্রুবক পূর্ণসংখ্যা ic    = kt_base * TILE + icc;
+        দশমিক *   pin_s = pin0 + (size_t) s * ctx->pin_copy_floats;
 
-        const int offset = s - pad_w;
-        int       vlo    = 0;
-        while (vlo < Wp_a && (s0 * vlo + offset) < 0) {
+        ধ্রুবক পূর্ণসংখ্যা offset = s - pad_w;
+        পূর্ণসংখ্যা       vlo    = 0;
+        যখন (vlo < Wp_a && (s0 * vlo + offset) < 0) {
             vlo++;
         }
-        int vhi = Wp_a;
-        while (vhi > vlo && (s0 * (vhi - 1) + offset) >= W) {
+        পূর্ণসংখ্যা vhi = Wp_a;
+        যখন (vhi > vlo && (s0 * (vhi - 1) + offset) >= W) {
             vhi--;
         }
-        const bool aligned = (s0 == 1) && ((vlo & 7) == 0) && (((vlo + offset) & 7) == 0);
+        ধ্রুবক bool aligned = (s0 == 1) && ((vlo & 7) == 0) && (((vlo + offset) & 7) == 0);
 
-        for (int r = 0; r < Hp; ++r) {
-            float *   row    = pin_s + ((size_t) icc * Hp + r) * Wp_a;
-            const int real_h = r - pad_h;
-            if (real_h < 0 || real_h >= H) {
+        জন্য (পূর্ণসংখ্যা r = 0; r < Hp; ++r) {
+            দশমিক *   row    = pin_s + ((size_t) icc * Hp + r) * Wp_a;
+            ধ্রুবক পূর্ণসংখ্যা real_h = r - pad_h;
+            যদি (real_h < 0 || real_h >= H) {
                 vec_zero_aligned(row, Wp_a);
-                continue;
+                চালু;
             }
-            const float * src_row = ctx->in_base + ((size_t) ic * H + real_h) * W;
+            ধ্রুবক দশমিক * src_row = ctx->in_base + ((size_t) ic * H + real_h) * W;
 
-            for (int cc = 0; cc < vlo; ++cc) {
+            জন্য (পূর্ণসংখ্যা cc = 0; cc < vlo; ++cc) {
                 row[cc] = 0.0f;
             }
 
-            if (aligned) {
+            যদি (aligned) {
                 vec_copy_aligned(row + vlo, src_row + vlo + offset, vhi - vlo);
-            } else if (s0 == 1) {
-                const float * csrc = src_row + vlo + offset;
-                const int     n    = vhi - vlo;
-                for (int cc = 0; cc < n; ++cc) {
+            } অন্যথা যদি (s0 == 1) {
+                ধ্রুবক দশমিক * csrc = src_row + vlo + offset;
+                ধ্রুবক পূর্ণসংখ্যা     n    = vhi - vlo;
+                জন্য (পূর্ণসংখ্যা cc = 0; cc < n; ++cc) {
                     row[vlo + cc] = csrc[cc];
                 }
-            } else {
-                for (int cc = vlo; cc < vhi; ++cc) {
+            } অন্যথা {
+                জন্য (পূর্ণসংখ্যা cc = vlo; cc < vhi; ++cc) {
                     row[cc] = src_row[s0 * cc + offset];
                 }
             }
 
-            for (int cc = vhi; cc < Wp_a; ++cc) {
+            জন্য (পূর্ণসংখ্যা cc = vhi; cc < Wp_a; ++cc) {
                 row[cc] = 0.0f;
             }
         }
@@ -470,80 +470,80 @@ static void pack_pin_chunk(const pin_ctx_t * ctx, int chunk_id, int buf_idx) {
 
     /* Flush this buffer's L1D-dirty lines down to L2SCP backing. */
     FENCE;
-    flush_range_to_l2((const void *) ctx->l2_pad_in_buf[buf_idx], ctx->pin_chunk_bytes);
+    flush_range_to_l2((ধ্রুবক শূন্য *) ctx->l2_pad_in_buf[buf_idx], ctx->pin_chunk_bytes);
     WAIT_CACHEOPS;
 }
 
-int entry_point(struct ggml_et_binary_params * params, void * env) {
-    (void) env;
+পূর্ণসংখ্যা entry_point(কাঠামো ggml_et_দ্বিমিক_params * params, শূন্য * env) {
+    (শূন্য) env;
 
-    const int shire   = get_shire_id();
-    const int hart_id = get_hart_id();
-    const int minion  = (hart_id >> 1) & 0x1F;
-    const int hart1   = hart_id & 1;
+    ধ্রুবক পূর্ণসংখ্যা shire   = get_shire_id();
+    ধ্রুবক পূর্ণসংখ্যা hart_id = get_hart_id();
+    ধ্রুবক পূর্ণসংখ্যা minion  = (hart_id >> 1) & 0x1F;
+    ধ্রুবক পূর্ণসংখ্যা hart1   = hart_id & 1;
 
-    const struct ggml_tensor * flt = &params->src0; /* [Kw,Kh,Cin,Cout] */
-    const struct ggml_tensor * in  = &params->src1; /* [W, H, Cin,N=1 ] */
-    struct ggml_tensor *       out = &params->dst;  /* [W, H, Cout,N=1] */
+    ধ্রুবক কাঠামো ggml_tensor * flt = &params->src0; /* [Kw,Kh,Cin,Cout] */
+    ধ্রুবক কাঠামো ggml_tensor * in  = &params->src1; /* [W, H, Cin,N=1 ] */
+    কাঠামো ggml_tensor *       out = &params->dst;  /* [W, H, Cout,N=1] */
 
-    const int Kw   = (int) flt->ne[0];
-    const int Kh   = (int) flt->ne[1];
-    const int Cin  = (int) flt->ne[2];
-    const int Cout = (int) flt->ne[3];
+    ধ্রুবক পূর্ণসংখ্যা Kw   = (পূর্ণসংখ্যা) flt->ne[0];
+    ধ্রুবক পূর্ণসংখ্যা Kh   = (পূর্ণসংখ্যা) flt->ne[1];
+    ধ্রুবক পূর্ণসংখ্যা Cin  = (পূর্ণসংখ্যা) flt->ne[2];
+    ধ্রুবক পূর্ণসংখ্যা Cout = (পূর্ণসংখ্যা) flt->ne[3];
 
-    const int W  = (int) in->ne[0];
-    const int H  = (int) in->ne[1];
-    const int OW = (int) out->ne[0];
-    const int OH = (int) out->ne[1];
+    ধ্রুবক পূর্ণসংখ্যা W  = (পূর্ণসংখ্যা) in->ne[0];
+    ধ্রুবক পূর্ণসংখ্যা H  = (পূর্ণসংখ্যা) in->ne[1];
+    ধ্রুবক পূর্ণসংখ্যা OW = (পূর্ণসংখ্যা) out->ne[0];
+    ধ্রুবক পূর্ণসংখ্যা OH = (পূর্ণসংখ্যা) out->ne[1];
 
     /* op_params layout (set by ggml_conv_2d):
          [0]=s0  [1]=s1  [2]=p0  [3]=p1  [4]=d0  [5]=d1   */
-    const int s0    = out->op_params[0];
-    const int s1    = out->op_params[1];
-    const int pad_w = out->op_params[2];
-    const int pad_h = out->op_params[3];
+    ধ্রুবক পূর্ণসংখ্যা s0    = out->op_params[0];
+    ধ্রুবক পূর্ণসংখ্যা s1    = out->op_params[1];
+    ধ্রুবক পূর্ণসংখ্যা pad_w = out->op_params[2];
+    ধ্রুবক পূর্ণসংখ্যা pad_h = out->op_params[3];
 
-    if (Cin <= 0 || Cout <= 0) {
-        return -1;
+    যদি (Cin <= 0 || Cout <= 0) {
+        ফেরত -1;
     }
-    if (Cin % TILE != 0 || Cout % TILE != 0) {
-        return -1;
+    যদি (Cin % TILE != 0 || Cout % TILE != 0) {
+        ফেরত -1;
     }
-    if (W <= 0 || H <= 0) {
-        return -1;
+    যদি (W <= 0 || H <= 0) {
+        ফেরত -1;
     }
-    if (s0 <= 0 || s1 <= 0) {
-        return -1;
+    যদি (s0 <= 0 || s1 <= 0) {
+        ফেরত -1;
     }
-    if (in->ne[2] != Cin || in->ne[3] != 1) {
-        return -1;
+    যদি (in->ne[2] != Cin || in->ne[3] != 1) {
+        ফেরত -1;
     }
-    if (out->ne[2] != Cout || out->ne[3] != 1) {
-        return -1;
+    যদি (out->ne[2] != Cout || out->ne[3] != 1) {
+        ফেরত -1;
     }
-    if (!flt->data || !in->data || !out->data) {
-        return -1;
+    যদি (!flt->তথ্য || !in->তথ্য || !out->তথ্য) {
+        ফেরত -1;
     }
 
-    const int K_TILES = Cin / TILE;
-    const int M_TILES = Cout / TILE;
+    ধ্রুবক পূর্ণসংখ্যা K_TILES = Cin / TILE;
+    ধ্রুবক পূর্ণসংখ্যা M_TILES = Cout / TILE;
 
-    const int  Hp         = H + 2 * pad_h;
-    const int  Wp_a       = round_up_tile_i32(OW);
-    const int  OW_pad     = Wp_a;
-    const bool need_stage = (OW % TILE != 0);
+    ধ্রুবক পূর্ণসংখ্যা  Hp         = H + 2 * pad_h;
+    ধ্রুবক পূর্ণসংখ্যা  Wp_a       = round_up_tile_i32(OW);
+    ধ্রুবক পূর্ণসংখ্যা  OW_pad     = Wp_a;
+    ধ্রুবক bool need_stage = (OW % TILE != 0);
 
     /* ===================== Tile assignment & active-shire selection =====
        Computed up front because the per-shire mt set (and thus filter
        region size) depends on n_active_shires. */
-    const int w_tiles         = ceil_div_i32(OW, TILE);
-    const int total_tiles     = OH * w_tiles * M_TILES;
-    const int n_active_shires = need_stage ? 1 : min_i32(total_tiles, N_SHIRES);
+    ধ্রুবক পূর্ণসংখ্যা w_tiles         = ceil_div_i32(OW, TILE);
+    ধ্রুবক পূর্ণসংখ্যা যোগ_tiles     = OH * w_tiles * M_TILES;
+    ধ্রুবক পূর্ণসংখ্যা n_active_shires = need_stage ? 1 : min_i32(যোগ_tiles, N_SHIRES);
 
     /* Inactive shires exit immediately. No global barrier — pack and
        barriers are now per-shire, so unused shires don't need to vote. */
-    if (shire >= n_active_shires) {
-        return 0;
+    যদি (shire >= n_active_shires) {
+        ফেরত 0;
     }
 
     /* ===================== Determine this shire's mt set ================
@@ -555,107 +555,107 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
        (t % M_TILES) for all t this shire owns. Enumerate all shire-owned
        tiles, not just the first MAX_TILES_PER_HART slots; the one-chunk
        path can process more tiles serially. */
-    int my_mt[MAX_MY_MT];
-    int n_my_mt = 0;
-    for (int t = shire; t < total_tiles; t += n_active_shires) {
-        const int mt    = t % M_TILES;
+    পূর্ণসংখ্যা my_mt[MAX_MY_MT];
+    পূর্ণসংখ্যা n_my_mt = 0;
+    জন্য (পূর্ণসংখ্যা t = shire; t < যোগ_tiles; t += n_active_shires) {
+        ধ্রুবক পূর্ণসংখ্যা mt    = t % M_TILES;
         bool      found = false;
-        for (int j = 0; j < n_my_mt; ++j) {
-            if (my_mt[j] == mt) {
+        জন্য (পূর্ণসংখ্যা j = 0; j < n_my_mt; ++j) {
+            যদি (my_mt[j] == mt) {
                 found = true;
-                break;
+                বিরতি;
             }
         }
-        if (!found) {
-            if (n_my_mt >= MAX_MY_MT) {
-                return -1;
+        যদি (!found) {
+            যদি (n_my_mt >= MAX_MY_MT) {
+                ফেরত -1;
             }
             my_mt[n_my_mt++] = mt;
         }
     }
-    if (n_my_mt == 0) {
-        return 0; /* no tiles for this shire */
+    যদি (n_my_mt == 0) {
+        ফেরত 0; /* no tiles for this shire */
     }
 
-    const uint64_t filter_local_bytes = (uint64_t) Kh * Kw * n_my_mt * K_TILES * SLAB_BYTES;
-    if (filter_local_bytes > LOCAL_FILTER_CAP) {
-        return -1;
+    ধ্রুবক uint64_t filter_local_bytes = (uint64_t) Kh * Kw * n_my_mt * K_TILES * SLAB_BYTES;
+    যদি (filter_local_bytes > LOCAL_FILTER_CAP) {
+        ফেরত -1;
     }
 
     /* ===================== L2 SCP local layout =========================
        filter (this shire's mt slice) | pin_buf[0] | pin_buf[1]?
                                       | output_stage? | scratch (streaming) */
-    const uint64_t l2_base   = (uint64_t) et_shire_l2scp_local(0);
-    const uint64_t l2_filter = l2_base;
+    ধ্রুবক uint64_t l2_base   = (uint64_t) et_shire_l2scp_local(0);
+    ধ্রুবক uint64_t l2_filter = l2_base;
 
     /* Sizing for pin: budget = LOCAL_BUDGET - filter - output_stage.    */
-    const int64_t output_stage_bytes_full = need_stage ? (int64_t) Cout * OH * OW_pad * (int64_t) sizeof(float) : 0;
-    const int64_t budget_for_chunks = (int64_t) LOCAL_BUDGET - (int64_t) filter_local_bytes - output_stage_bytes_full;
-    if (budget_for_chunks <= 0) {
-        return -1;
+    ধ্রুবক int64_t output_stage_bytes_full = need_stage ? (int64_t) Cout * OH * OW_pad * (int64_t) আকার(দশমিক) : 0;
+    ধ্রুবক int64_t budget_for_chunks = (int64_t) LOCAL_BUDGET - (int64_t) filter_local_bytes - output_stage_bytes_full;
+    যদি (budget_for_chunks <= 0) {
+        ফেরত -1;
     }
-    const int64_t per_KT_pin_bytes = (int64_t) Kw * TILE * Hp * Wp_a * (int64_t) sizeof(float);
+    ধ্রুবক int64_t per_KT_pin_bytes = (int64_t) Kw * TILE * Hp * Wp_a * (int64_t) আকার(দশমিক);
 
-    int chunk_KT;
-    int n_buffers;
-    if ((int64_t) K_TILES * per_KT_pin_bytes <= budget_for_chunks) {
+    পূর্ণসংখ্যা chunk_KT;
+    পূর্ণসংখ্যা n_buffers;
+    যদি ((int64_t) K_TILES * per_KT_pin_bytes <= budget_for_chunks) {
         chunk_KT  = K_TILES;
         n_buffers = 1;
-    } else {
+    } অন্যথা {
         chunk_KT = K_TILES;
-        while (chunk_KT > 1 && 2 * (int64_t) chunk_KT * per_KT_pin_bytes > budget_for_chunks) {
+        যখন (chunk_KT > 1 && 2 * (int64_t) chunk_KT * per_KT_pin_bytes > budget_for_chunks) {
             chunk_KT--;
         }
-        while (chunk_KT > 1 && K_TILES % chunk_KT != 0) {
+        যখন (chunk_KT > 1 && K_TILES % chunk_KT != 0) {
             chunk_KT--;
         }
         n_buffers = (chunk_KT < K_TILES) ? 2 : 1;
-        if (chunk_KT < 1) {
-            return -1;
+        যদি (chunk_KT < 1) {
+            ফেরত -1;
         }
     }
-    const int n_chunks = K_TILES / chunk_KT;
+    ধ্রুবক পূর্ণসংখ্যা n_chunks = K_TILES / chunk_KT;
 
     /* Streaming keeps partial sums in MAX_TILES_PER_HART scratch slots per
        hart. The one-chunk path does not need scratch and can stream a longer
        tile list serially, but multi-chunk shapes must fit this fixed slot
        count until scratch scheduling is made more general. */
-    const int shire_tile_capacity = shire + MAX_TILES_PER_HART * n_active_shires * N_MIN_PER_SHIRE;
-    if (n_chunks > 1 && shire_tile_capacity < total_tiles) {
-        return -1;
+    ধ্রুবক পূর্ণসংখ্যা shire_tile_capacity = shire + MAX_TILES_PER_HART * n_active_shires * N_MIN_PER_SHIRE;
+    যদি (n_chunks > 1 && shire_tile_capacity < যোগ_tiles) {
+        ফেরত -1;
     }
 
-    const uint64_t pin_copy_floats = (uint64_t) chunk_KT * TILE * Hp * Wp_a;
-    const uint64_t pin_copy_bytes  = pin_copy_floats * sizeof(float);
-    const uint64_t pin_chunk_bytes = (uint64_t) Kw * pin_copy_bytes;
+    ধ্রুবক uint64_t pin_copy_floats = (uint64_t) chunk_KT * TILE * Hp * Wp_a;
+    ধ্রুবক uint64_t pin_copy_bytes  = pin_copy_floats * আকার(দশমিক);
+    ধ্রুবক uint64_t pin_chunk_bytes = (uint64_t) Kw * pin_copy_bytes;
 
-    const uint64_t l2_pin_base              = l2_filter + filter_local_bytes;
-    const uint64_t l2_pin_buf[MAX_DBL_BUFS] = {
+    ধ্রুবক uint64_t l2_pin_base              = l2_filter + filter_local_bytes;
+    ধ্রুবক uint64_t l2_pin_buf[MAX_DBL_BUFS] = {
         l2_pin_base,
         l2_pin_base + pin_chunk_bytes,
     };
 
-    const uint64_t l2_output_stage = need_stage ? l2_pin_base + (uint64_t) n_buffers * pin_chunk_bytes : 0;
+    ধ্রুবক uint64_t l2_output_stage = need_stage ? l2_pin_base + (uint64_t) n_buffers * pin_chunk_bytes : 0;
 
-    const uint64_t scratch_per_hart = (uint64_t) MAX_TILES_PER_HART * (uint64_t) TILE * TILE * sizeof(float);
-    const uint64_t l2_scratch_base  = need_stage ? l2_output_stage + (uint64_t) output_stage_bytes_full :
+    ধ্রুবক uint64_t scratch_per_hart = (uint64_t) MAX_TILES_PER_HART * (uint64_t) TILE * TILE * আকার(দশমিক);
+    ধ্রুবক uint64_t l2_scratch_base  = need_stage ? l2_output_stage + (uint64_t) output_stage_bytes_full :
                                                    l2_pin_base + (uint64_t) n_buffers * pin_chunk_bytes;
 
     /* ===================== PHASE 1: Filter pack (per-shire mt slice) ====
        Hart-1's pack only this shire's mt slabs into local L2 SCP. The
        SHIRE barrier below ensures the filter is in L2 SCP backing before
        hart-0's first tensor_load. */
-    if (hart1) {
-        pack_filter_local_mt((const float *) flt->data, Kh, Kw, Cin, K_TILES, my_mt, n_my_mt, minion, l2_filter);
+    যদি (hart1) {
+        pack_filter_local_mt((ধ্রুবক দশমিক *) flt->তথ্য, Kh, Kw, Cin, K_TILES, my_mt, n_my_mt, minion, l2_filter);
     }
 
     /* ===================== Hart 1: pin packer (per chunk) ==============
        Double-buffered prefetch: pack chunk 0 synchronously, then per chunk c
        signal "buf c ready", pack chunk c+1 into the alternate buffer
        (overlaps hart-0's compute on c), signal "buf c done". */
-    if (hart1) {
-        const pin_ctx_t ctx = {
-            .in_base         = (const float *) in->data,
+    যদি (hart1) {
+        ধ্রুবক pin_ctx_t ctx = {
+            .in_base         = (ধ্রুবক দশমিক *) in->তথ্য,
             .Kw              = Kw,
             .chunk_KT        = chunk_KT,
             .H               = H,
@@ -673,18 +673,18 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
 
         pack_pin_chunk(&ctx, 0, 0); /* prologue */
 
-        for (int c = 0; c < n_chunks; ++c) {
+        জন্য (পূর্ণসংখ্যা c = 0; c < n_chunks; ++c) {
             et_barrier(ET_BARRIER_SHIRE); /* signal "buf c ready" */
-            if (n_buffers > 1 && c + 1 < n_chunks) {
+            যদি (n_buffers > 1 && c + 1 < n_chunks) {
                 pack_pin_chunk(&ctx, c + 1, (c + 1) & 1);
             }
             et_barrier(ET_BARRIER_SHIRE); /* wait "buf c done" */
         }
 
-        if (need_stage) {
+        যদি (need_stage) {
             et_barrier(ET_BARRIER_SHIRE);
         }
-        return 0;
+        ফেরত 0;
     }
 
     /* ===================== Hart 0: matrix engine ======================
@@ -698,76 +698,76 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
     setup_cache_scp();
     CLEAR_TENSOR_ERROR;
 
-    char * const   out_base        = need_stage ? (char *) l2_output_stage : (char *) out->data;
-    const int      compute_OW      = need_stage ? OW_pad : OW;
-    const uint64_t out_chan_stride = (uint64_t) OH * (uint64_t) compute_OW * sizeof(float);
-    const uint64_t out_row_stride  = (uint64_t) compute_OW * sizeof(float);
+    অক্ষর * ধ্রুবক   out_base        = need_stage ? (অক্ষর *) l2_output_stage : (অক্ষর *) out->তথ্য;
+    ধ্রুবক পূর্ণসংখ্যা      compute_OW      = need_stage ? OW_pad : OW;
+    ধ্রুবক uint64_t out_chan_stride = (uint64_t) OH * (uint64_t) compute_OW * আকার(দশমিক);
+    ধ্রুবক uint64_t out_row_stride  = (uint64_t) compute_OW * আকার(দশমিক);
 
-    const uint64_t a_row_stride = (uint64_t) TILE * sizeof(float); /* 64 */
-    const uint64_t b_row_stride = (uint64_t) Hp * (uint64_t) Wp_a * sizeof(float);
+    ধ্রুবক uint64_t a_row_stride = (uint64_t) TILE * আকার(দশমিক); /* 64 */
+    ধ্রুবক uint64_t b_row_stride = (uint64_t) Hp * (uint64_t) Wp_a * আকার(দশমিক);
 
     /* Tile assignment: shire-strided so small workloads spread across
        shires before stacking minions in one shire. */
-    const int t_start  = shire + minion * n_active_shires;
-    const int t_stride = n_active_shires * N_MIN_PER_SHIRE;
+    ধ্রুবক পূর্ণসংখ্যা t_start  = shire + minion * n_active_shires;
+    ধ্রুবক পূর্ণসংখ্যা t_stride = n_active_shires * N_MIN_PER_SHIRE;
 
-    if (n_chunks == 1) {
+    যদি (n_chunks == 1) {
         et_barrier(ET_BARRIER_SHIRE); /* wait for the (only) pin chunk */
 
-        const uint64_t l2_pad_in = l2_pin_buf[0];
-        for (int t = t_start; t < total_tiles; t += t_stride) {
-            const conv_tile_t tile = decode_tile(t, M_TILES, w_tiles, my_mt, n_my_mt);
+        ধ্রুবক uint64_t l2_pad_in = l2_pin_buf[0];
+        জন্য (পূর্ণসংখ্যা t = t_start; t < যোগ_tiles; t += t_stride) {
+            ধ্রুবক conv_tile_t tile = decode_tile(t, M_TILES, w_tiles, my_mt, n_my_mt);
             compute_tile_chunk(l2_filter, l2_pad_in, pin_copy_bytes, Kh, Kw, K_TILES, chunk_KT, 0, n_my_mt, Hp, Wp_a,
                                s1, a_row_stride, b_row_stride, &tile, /*first_fma_clears_tenc=*/true);
 
-            char * dst_addr = output_tile_addr(out_base, &tile, out_chan_stride, out_row_stride);
+            অক্ষর * dst_addr = output_tile_addr(out_base, &tile, out_chan_stride, out_row_stride);
             tensor_store(0, 0, 3, (uint64_t) (TILE - 1), (uint64_t) dst_addr, 0, out_chan_stride);
             tensor_wait(TENSOR_STORE_WAIT);
         }
 
         et_barrier(ET_BARRIER_SHIRE); /* matches hart-1's second barrier */
 
-    } else {
+    } অন্যথা {
         /* Streaming path: each hart owns up to MAX_TILES_PER_HART tiles. */
-        int my_tiles[MAX_TILES_PER_HART];
-        int n_my_tiles = 0;
-        for (int slot = 0; slot < MAX_TILES_PER_HART; ++slot) {
-            const int t = t_start + slot * t_stride;
-            if (t < total_tiles) {
+        পূর্ণসংখ্যা my_tiles[MAX_TILES_PER_HART];
+        পূর্ণসংখ্যা n_my_tiles = 0;
+        জন্য (পূর্ণসংখ্যা slot = 0; slot < MAX_TILES_PER_HART; ++slot) {
+            ধ্রুবক পূর্ণসংখ্যা t = t_start + slot * t_stride;
+            যদি (t < যোগ_tiles) {
                 my_tiles[n_my_tiles++] = t;
             }
         }
 
         conv_tile_t tiles[MAX_TILES_PER_HART];
-        for (int k = 0; k < n_my_tiles; ++k) {
+        জন্য (পূর্ণসংখ্যা k = 0; k < n_my_tiles; ++k) {
             tiles[k] = decode_tile(my_tiles[k], M_TILES, w_tiles, my_mt, n_my_mt);
         }
 
-        const uint64_t my_scratch_base = l2_scratch_base + (uint64_t) minion * scratch_per_hart;
+        ধ্রুবক uint64_t my_scratch_base = l2_scratch_base + (uint64_t) minion * scratch_per_hart;
 
-        for (int c = 0; c < n_chunks; ++c) {
+        জন্য (পূর্ণসংখ্যা c = 0; c < n_chunks; ++c) {
             et_barrier(ET_BARRIER_SHIRE); /* pin chunk c packed */
 
-            const int      buf       = c & 1;
-            const uint64_t l2_pad_in = l2_pin_buf[buf];
-            const int      kt_base   = c * chunk_KT;
+            ধ্রুবক পূর্ণসংখ্যা      buf       = c & 1;
+            ধ্রুবক uint64_t l2_pad_in = l2_pin_buf[buf];
+            ধ্রুবক পূর্ণসংখ্যা      kt_base   = c * chunk_KT;
 
-            for (int k = 0; k < n_my_tiles; ++k) {
-                const conv_tile_t * tile = &tiles[k];
-                const uint64_t      scr  = my_scratch_base + (uint64_t) k * (TILE * TILE * sizeof(float));
+            জন্য (পূর্ণসংখ্যা k = 0; k < n_my_tiles; ++k) {
+                ধ্রুবক conv_tile_t * tile = &tiles[k];
+                ধ্রুবক uint64_t      scr  = my_scratch_base + (uint64_t) k * (TILE * TILE * আকার(দশমিক));
 
-                const bool first_pass_chunk = (c == 0);
-                if (!first_pass_chunk) {
+                ধ্রুবক bool first_pass_chunk = (c == 0);
+                যদি (!first_pass_chunk) {
                     tenc_restore_from_scratch(scr);
                 }
 
                 compute_tile_chunk(l2_filter, l2_pad_in, pin_copy_bytes, Kh, Kw, K_TILES, chunk_KT, kt_base, n_my_mt,
                                    Hp, Wp_a, s1, a_row_stride, b_row_stride, tile, first_pass_chunk);
 
-                if (c == n_chunks - 1) {
-                    char * dst_addr = output_tile_addr(out_base, tile, out_chan_stride, out_row_stride);
+                যদি (c == n_chunks - 1) {
+                    অক্ষর * dst_addr = output_tile_addr(out_base, tile, out_chan_stride, out_row_stride);
                     tensor_store(0, 0, 3, (uint64_t) (TILE - 1), (uint64_t) dst_addr, 0, out_chan_stride);
-                } else {
+                } অন্যথা {
                     tensor_store(0, 0, 3, (uint64_t) (TILE - 1), (uint64_t) scr, 0, 64);
                 }
                 tensor_wait(TENSOR_STORE_WAIT);
@@ -781,27 +781,27 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
 
     /* ----------------------- DRAM emit phase ---------------------------
        Only relevant when we staged into L2SCP because OW % 16 != 0. */
-    if (need_stage) {
+    যদি (need_stage) {
         et_barrier(ET_BARRIER_SHIRE);
 
-        if (minion == 0) {
-            const float * stage = (const float *) l2_output_stage;
-            float *       dram  = (float *) out->data;
-            for (int oc = 0; oc < Cout; ++oc) {
-                for (int oh2 = 0; oh2 < OH; ++oh2) {
-                    const float * src = stage + ((size_t) oc * OH + oh2) * OW_pad;
-                    float *       dst = dram + ((size_t) oc * OH + oh2) * OW;
-                    for (int ow2 = 0; ow2 < OW; ++ow2) {
+        যদি (minion == 0) {
+            ধ্রুবক দশমিক * stage = (ধ্রুবক দশমিক *) l2_output_stage;
+            দশমিক *       dram  = (দশমিক *) out->তথ্য;
+            জন্য (পূর্ণসংখ্যা oc = 0; oc < Cout; ++oc) {
+                জন্য (পূর্ণসংখ্যা oh2 = 0; oh2 < OH; ++oh2) {
+                    ধ্রুবক দশমিক * src = stage + ((size_t) oc * OH + oh2) * OW_pad;
+                    দশমিক *       dst = dram + ((size_t) oc * OH + oh2) * OW;
+                    জন্য (পূর্ণসংখ্যা ow2 = 0; ow2 < OW; ++ow2) {
                         dst[ow2] = src[ow2];
                     }
                 }
             }
             FENCE;
-            const uint64_t total_bytes = (uint64_t) Cout * OH * OW * sizeof(float);
-            evict_range_past_l2((const void *) dram, total_bytes);
+            ধ্রুবক uint64_t যোগ_bytes = (uint64_t) Cout * OH * OW * আকার(দশমিক);
+            evict_range_past_l2((ধ্রুবক শূন্য *) dram, যোগ_bytes);
             WAIT_CACHEOPS;
         }
     }
 
-    return 0;
+    ফেরত 0;
 }

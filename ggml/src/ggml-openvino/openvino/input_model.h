@@ -1,8 +1,8 @@
 #pragma once
 
-#include "decoder.h"
+#অন্তর্ভাব "decoder.h"
 
-#include <openvino/frontend/input_model.hpp>
+#অন্তর্ভাব <openvino/frontend/input_model.hpp>
 
 namespace ov {
 namespace frontend {
@@ -12,15 +12,15 @@ class FrontEnd;
 class GgmlDecoder;
 using ov::frontend::ggml::GgmlDecoder;
 
-class InputModel : public ov::frontend::InputModel {
+class প্রবেশ_Model : সর্বজনীন ov::frontend::প্রবেশ_Model {
     friend class ::ov::frontend::ggml::FrontEnd;
 
-public:
-    explicit InputModel(const std::shared_ptr<GgmlDecoder> & gdecoder);
+সর্বজনীন:
+    explicit প্রবেশ_Model(ধ্রুবক std::shared_ptr<GgmlDecoder> & gdecoder);
 
-    const std::shared_ptr<GgmlDecoder> & get_model_decoder() const;
+    ধ্রুবক std::shared_ptr<GgmlDecoder> & get_model_decoder() ধ্রুবক;
 
-private:
+ব্যক্তিগত:
     std::shared_ptr<GgmlDecoder> m_decoder;
 };
 

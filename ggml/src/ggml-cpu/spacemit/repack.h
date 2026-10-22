@@ -1,14 +1,14 @@
 #pragma once
 
-#include "ggml-common.h"
-#include "ggml.h"
+#অন্তর্ভাব "ggml-common.h"
+#অন্তর্ভাব "ggml.h"
 
-#include <cstddef>
-#include <cstdint>
+#অন্তর্ভাব <cstddef>
+#অন্তর্ভাব <cstdint>
 
 namespace ggml::cpu::riscv64_spacemit {
 
-template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS>
-int repack(ggml_tensor * t, const void * data, size_t data_size);
+template <typename BLOC_TYPE, int64_t INTER_আকার, int64_t NB_COLS>
+পূর্ণসংখ্যা repack(ggml_tensor * t, ধ্রুবক শূন্য * তথ্য, size_t তথ্য_আকার);
 
 }  // namespace ggml::cpu::riscv64_spacemit

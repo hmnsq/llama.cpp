@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common.hpp"
+#অন্তর্ভাব "common.hpp"
 
 // The legacy implementation uses SLM to implement sorting and top_k selection.
 // SLM is limited to 128KB on Xe, which limits how much can be sorted to k<32.
@@ -10,15 +10,15 @@
 // (columns and rows) may also be a driving factor.
 // We select the legacy implementation for k below this constant because the overhead of radix select
 // exceeds the benefit for very small problems
-constexpr int SYCL_TOP_K_SCAN_MERGE_MAX_K = 8;
+constexpr পূর্ণসংখ্যা SYCL_শীর্ষ_K_SCAN_MERGE_MAX_K = 8;
 
 // Top-k of every row of src, k indices per row into dst_indices, in no particular order.
 // Picks between the one-group-per-row and the split-row kernel from the shape and the device.
-void ggml_sycl_top_k_radix(
+শূন্য ggml_sycl_শীর্ষ_k_radix(
     ggml_backend_sycl_context & ctx,
-    const float *   src,
+    ধ্রুবক দশমিক *   src,
     int32_t *       dst_indices,
-    const int64_t   ncols,
-    const int64_t   nrows,
-    const int       k,
+    ধ্রুবক int64_t   ncols,
+    ধ্রুবক int64_t   nrows,
+    ধ্রুবক পূর্ণসংখ্যা       k,
     dpct::queue_ptr main_stream);
