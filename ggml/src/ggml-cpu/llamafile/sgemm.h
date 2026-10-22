@@ -1,24 +1,24 @@
 #pragma once
-#include <stdint.h>
-#include <stdbool.h>
+#अन्तर्भाव <stdint.h>
+#अन्तर्भाव <stdbool.h>
 
-#if defined(__VXE__) || defined(__VXE2__)
-#include <vecintrin.h>
+#जर defined(__VXE__) || defined(__VXE2__)
+#अन्तर्भाव <vecintrin.h>
 #endif
 
 #ifdef _MSC_VER
 #define NOINLINE __declspec(noinline)
-#else
+#अन्यथा
 #define NOINLINE __attribute__((__noinline__))
 #endif
 
 #ifdef __cplusplus
-extern "C" {
+बाह्य "C" {
 #endif
 
-bool llamafile_sgemm(const struct ggml_compute_params * params, int64_t, int64_t, int64_t,
-                     const void *, int64_t, const void *, int64_t, void *, int64_t,
-                     int, int, int);
+bool llamafile_sgemm(स्थिरांक संरचना ggml_compute_params * params, int64_t, int64_t, int64_t,
+                     स्थिरांक शून्य *, int64_t, स्थिरांक शून्य *, int64_t, शून्य *, int64_t,
+                     पूर्णांक, पूर्णांक, पूर्णांक);
 
 #ifdef __cplusplus
 }

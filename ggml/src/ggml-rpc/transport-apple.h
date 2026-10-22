@@ -1,27 +1,27 @@
 #pragma once
 
-#include <cstddef>
-#include <cstdint>
-#include <memory>
+#अन्तर्भाव <cstddef>
+#अन्तर्भाव <cstdint>
+#अन्तर्भाव <memory>
 
-struct apple_rdma {
+संरचना apple_rdma {
     // target_gid is 16 bytes in, caps is RPC_CONN_CAPS_SIZE bytes out.
-    static std::unique_ptr<apple_rdma> probe(int fd, const uint8_t * target_gid, uint8_t * caps);
+    स्थिर std::unique_ptr<apple_rdma> probe(पूर्णांक fd, स्थिरांक uint8_t * target_gid, uint8_t * caps);
     ~apple_rdma();
 
     // Peer endpoint from its caps, which must be non-zero: this blocks on a
     // readiness handshake over fd that the peer only joins if it also has RDMA.
-    bool activate(const uint8_t * caps);
+    bool activate(स्थिरांक uint8_t * caps);
 
-    bool send(const void * data, size_t size);
-    bool recv(void * data, size_t size);
+    bool send(स्थिरांक शून्य * data, माप_प्रकार size);
+    bool recv(शून्य * data, माप_प्रकार size);
     // Post the trailing partial frame; must be called at every message boundary.
     bool flush();
     // True once the connection has failed; the caller should drop the socket.
-    bool broken() const;
+    bool broken() स्थिरांक;
 
-private:
-    struct impl;
+खाजगी:
+    संरचना impl;
     explicit apple_rdma(std::unique_ptr<impl> p);
     std::unique_ptr<impl> pimpl;
 };

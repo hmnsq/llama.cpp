@@ -4,84 +4,84 @@
 // dst[i] = c  for all elements
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "platform.h"
+#अन्तर्भाव "ggml_tensor.h"
+#अन्तर्भाव "platform.h"
 
-#include <stdint.h>
+#अन्तर्भाव <stdint.h>
 
-struct ggml_et_fill_params {
-    struct ggml_tensor dst;  // F32 output tensor (contiguous)
-    float              c;    // Constant value to fill
+संरचना ggml_et_fill_params {
+    संरचना ggml_tensor dst;  // F32 output tensor (contiguous)
+    दशांश              c;    // Constant value to fill
 };
 
-int entry_point(struct ggml_et_fill_params * params, void * env) {
+पूर्णांक entry_point(संरचना ggml_et_fill_params * params, शून्य * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    जर (!kernel_env) {
+        परत -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    पूर्णांक thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    पूर्णांक अंक_threads = get_अंक_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return 0;
+    जर (thread_id < 0) {
+        परत 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    जर (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        परत -1;
     }
 
-    struct ggml_tensor * dst = &params->dst;
+    संरचना ggml_tensor * dst = &params->dst;
 
-    if (dst->type != GGML_TYPE_F32) {
-        return -1;
+    जर (dst->type != GGML_TYPE_F32) {
+        परत -1;
     }
 
-    float * dst_data = (float *) dst->data;
-    if (!dst_data) {
-        return -1;
+    दशांश * dst_data = (दशांश *) dst->data;
+    जर (!dst_data) {
+        परत -1;
     }
 
-    const int64_t total_elements = dst->ne[0] * dst->ne[1] * dst->ne[2] * dst->ne[3];
+    स्थिरांक int64_t total_elements = dst->ne[0] * dst->ne[1] * dst->ne[2] * dst->ne[3];
 
-    if (total_elements == 0) {
-        return 0;
+    जर (total_elements == 0) {
+        परत 0;
     }
 
     // Distribute by cache lines (16 floats = 64 bytes)
-    const int64_t elems_per_cl  = 16;
-    const int64_t total_cl      = (total_elements + elems_per_cl - 1) / elems_per_cl;
-    const int64_t cl_per_thread = (total_cl + num_threads - 1) / num_threads;
-    const int64_t cl_start      = thread_id * cl_per_thread;
+    स्थिरांक int64_t elems_per_cl  = 16;
+    स्थिरांक int64_t total_cl      = (total_elements + elems_per_cl - 1) / elems_per_cl;
+    स्थिरांक int64_t cl_per_thread = (total_cl + अंक_threads - 1) / अंक_threads;
+    स्थिरांक int64_t cl_start      = thread_id * cl_per_thread;
     int64_t       cl_end        = cl_start + cl_per_thread;
-    if (cl_end > total_cl) {
+    जर (cl_end > total_cl) {
         cl_end = total_cl;
     }
-    if (cl_start >= total_cl) {
-        return 0;
+    जर (cl_start >= total_cl) {
+        परत 0;
     }
 
-    const int64_t es = cl_start * elems_per_cl;
+    स्थिरांक int64_t es = cl_start * elems_per_cl;
     int64_t       ee = cl_end * elems_per_cl;
-    if (ee > total_elements) {
+    जर (ee > total_elements) {
         ee = total_elements;
     }
 
     // Broadcast constant to all SIMD lanes
-    float c = params->c;
-    __asm__ volatile("fbc.ps f10, %[v]\n" : : [v] "m"(c) : "f10");
+    दशांश c = params->c;
+    __asm__ अस्थिर("fbc.ps f10, %[v]\n" : : [v] "m"(c) : "f10");
 
     // Vector fill (8-wide)
     int64_t       i       = es;
-    const int64_t vec_end = es + ((ee - es) / 8) * 8;
-    for (; i < vec_end; i += 8) {
-        __asm__ volatile("fsw.ps f10, %[d]\n" : [d] "=m"(*(float (*)[8]) & dst_data[i])::"f10");
+    स्थिरांक int64_t vec_end = es + ((ee - es) / 8) * 8;
+    साठी (; i < vec_end; i += 8) {
+        __asm__ अस्थिर("fsw.ps f10, %[d]\n" : [d] "=m"(*(दशांश (*)[8]) & dst_data[i])::"f10");
     }
     // Scalar tail
-    for (; i < ee; i++) {
+    साठी (; i < ee; i++) {
         dst_data[i] = c;
     }
 
-    return 0;
+    परत 0;
 }

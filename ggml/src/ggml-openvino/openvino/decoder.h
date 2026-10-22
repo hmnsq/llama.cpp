@@ -1,131 +1,131 @@
 #pragma once
 
-#include <cstdint>
-#include <map>
-#include <openvino/core/node.hpp>
-#include <openvino/core/partial_shape.hpp>
-#include <openvino/core/shape.hpp>
-#include <openvino/frontend/decoder.hpp>
-#include <set>
-#include <string>
+#अन्तर्भाव <cstdint>
+#अन्तर्भाव <map>
+#अन्तर्भाव <openvino/core/node.hpp>
+#अन्तर्भाव <openvino/core/partial_shape.hpp>
+#अन्तर्भाव <openvino/core/shape.hpp>
+#अन्तर्भाव <openvino/frontend/decoder.hpp>
+#अन्तर्भाव <set>
+#अन्तर्भाव <string>
 
 namespace ov {
 namespace frontend {
 namespace ggml {
 
-struct ModelInputInfo {
+संरचना Model_आदान_Info {
     element::Type type;
     PartialShape shape;
 };
 
-struct ModelExtraInputInfo {
+संरचना Model_Extra_आदान_Info {
     element::Type type;
     Shape shape;
-    int64_t value;
+    int64_t मूल्य;
     bool is_parameter;
 };
 
-class GgmlDecoder : public DecoderBase {
-public:
-    virtual ov::Any get_attribute(const std::string & name) const = 0;
+class GgmlDecoder : सार्वजनिक DecoderBase {
+सार्वजनिक:
+    आभासी ov::Any get_attribute(स्थिरांक std::string & name) स्थिरांक = 0;
 
-    virtual PartialShape get_input_shape(int node_idx, const std::string & name) const = 0;
+    आभासी PartialShape get_आदान_shape(पूर्णांक गाठ_idx, स्थिरांक std::string & name) स्थिरांक = 0;
 
-    virtual std::vector<size_t> get_input_stride(int node_idx, const std::string & name) const = 0;
+    आभासी std::vector<माप_प्रकार> get_आदान_stride(पूर्णांक गाठ_idx, स्थिरांक std::string & name) स्थिरांक = 0;
 
-    virtual size_t get_view_input_size(int node_idx, const std::string & name) const = 0;
+    आभासी माप_प्रकार get_view_आदान_size(पूर्णांक गाठ_idx, स्थिरांक std::string & name) स्थिरांक = 0;
 
-    virtual size_t get_view_input_offset(int node_idx, const std::string & name, size_t view_index) const = 0;
+    आभासी माप_प्रकार get_view_आदान_offset(पूर्णांक गाठ_idx, स्थिरांक std::string & name, माप_प्रकार view_index) स्थिरांक = 0;
 
-    virtual size_t get_view_input_src_offset(int node_idx, const std::string & name, size_t view_index) const = 0;
+    आभासी माप_प्रकार get_view_आदान_src_offset(पूर्णांक गाठ_idx, स्थिरांक std::string & name, माप_प्रकार view_index) स्थिरांक = 0;
 
-    virtual std::vector<size_t> get_view_input_stride(int node_idx,
-                                                      const std::string & name,
-                                                      size_t view_index) const = 0;
+    आभासी std::vector<माप_प्रकार> get_view_आदान_stride(पूर्णांक गाठ_idx,
+                                                      स्थिरांक std::string & name,
+                                                      माप_प्रकार view_index) स्थिरांक = 0;
 
-    virtual std::vector<size_t> get_view_input_src_stride(int node_idx,
-                                                          const std::string & name,
-                                                          size_t view_index) const = 0;
+    आभासी std::vector<माप_प्रकार> get_view_आदान_src_stride(पूर्णांक गाठ_idx,
+                                                          स्थिरांक std::string & name,
+                                                          माप_प्रकार view_index) स्थिरांक = 0;
 
-    virtual Shape get_view_input_ggml_shape(int node_idx, const std::string & name, size_t view_index) const = 0;
+    आभासी Shape get_view_आदान_ggml_shape(पूर्णांक गाठ_idx, स्थिरांक std::string & name, माप_प्रकार view_index) स्थिरांक = 0;
 
-    virtual Shape get_view_input_src_ggml_shape(int node_idx, const std::string & name, size_t view_index) const = 0;
+    आभासी Shape get_view_आदान_src_ggml_shape(पूर्णांक गाठ_idx, स्थिरांक std::string & name, माप_प्रकार view_index) स्थिरांक = 0;
 
-    virtual PartialShape get_view_input_ov_shape(int node_idx, const std::string & name, size_t view_index) const = 0;
+    आभासी PartialShape get_view_आदान_ov_shape(पूर्णांक गाठ_idx, स्थिरांक std::string & name, माप_प्रकार view_index) स्थिरांक = 0;
 
-    virtual PartialShape get_view_input_src_ov_shape(int node_idx,
-                                                     const std::string & name,
-                                                     size_t view_index) const = 0;
+    आभासी PartialShape get_view_आदान_src_ov_shape(पूर्णांक गाठ_idx,
+                                                     स्थिरांक std::string & name,
+                                                     माप_प्रकार view_index) स्थिरांक = 0;
 
-    virtual std::string get_view_input_name(int node_idx, const std::string & name, size_t view_index) const = 0;
+    आभासी std::string get_view_आदान_name(पूर्णांक गाठ_idx, स्थिरांक std::string & name, माप_प्रकार view_index) स्थिरांक = 0;
 
-    virtual std::string get_view_input_src_name(int node_idx, const std::string & name, size_t view_index) const = 0;
+    आभासी std::string get_view_आदान_src_name(पूर्णांक गाठ_idx, स्थिरांक std::string & name, माप_प्रकार view_index) स्थिरांक = 0;
 
-    virtual element::Type get_input_type(int node_idx, const std::string & name) const = 0;
+    आभासी element::Type get_आदान_type(पूर्णांक गाठ_idx, स्थिरांक std::string & name) स्थिरांक = 0;
 
-    virtual size_t get_input_size() const = 0;
+    आभासी माप_प्रकार get_आदान_size() स्थिरांक = 0;
 
-    virtual size_t get_input_size(int node_idx) const = 0;
+    आभासी माप_प्रकार get_आदान_size(पूर्णांक गाठ_idx) स्थिरांक = 0;
 
-    virtual void get_input_node(size_t input_port_idx,
+    आभासी शून्य get_आदान_गाठ(माप_प्रकार आदान_port_idx,
                                 std::string & producer_name,
                                 std::string & producer_output_port_name,
-                                size_t & producer_output_port_index) const = 0;
+                                माप_प्रकार & producer_output_port_index) स्थिरांक = 0;
 
-    virtual std::vector<std::string> get_input_names(int node_idx) const = 0;
+    आभासी std::vector<std::string> get_आदान_names(पूर्णांक गाठ_idx) स्थिरांक = 0;
 
-    virtual PartialShape get_output_shape(int node_idx) const = 0;
+    आभासी PartialShape get_output_shape(पूर्णांक गाठ_idx) स्थिरांक = 0;
 
-    virtual element::Type get_output_type(const int node_idx) const = 0;
+    आभासी element::Type get_output_type(स्थिरांक पूर्णांक गाठ_idx) स्थिरांक = 0;
 
-    virtual std::vector<size_t> get_output_stride(int node_idx) const = 0;
+    आभासी std::vector<माप_प्रकार> get_output_stride(पूर्णांक गाठ_idx) स्थिरांक = 0;
 
-    virtual int32_t * get_input_op_params(int node_idx, const std::string & name) const = 0;
+    आभासी int32_t * get_आदान_op_params(पूर्णांक गाठ_idx, स्थिरांक std::string & name) स्थिरांक = 0;
 
-    virtual int32_t * get_output_op_params(int node_idx) const = 0;
+    आभासी int32_t * get_output_op_params(पूर्णांक गाठ_idx) स्थिरांक = 0;
 
-    virtual size_t get_output_op_offset(int node_idx) const = 0;
+    आभासी माप_प्रकार get_output_op_offset(पूर्णांक गाठ_idx) स्थिरांक = 0;
 
-    virtual std::vector<std::string> get_output_names(int node_idx) const = 0;
+    आभासी std::vector<std::string> get_output_names(पूर्णांक गाठ_idx) स्थिरांक = 0;
 
-    virtual std::string get_inplace_op_src(int node_idx) const = 0;
+    आभासी std::string get_inplace_op_src(पूर्णांक गाठ_idx) स्थिरांक = 0;
 
-    virtual bool is_view_like_alias_of(int node_idx, const std::string & view_src_name) const = 0;
+    आभासी bool is_view_like_alias_of(पूर्णांक गाठ_idx, स्थिरांक std::string & view_src_name) स्थिरांक = 0;
 
-    virtual const std::string & get_op_type() const = 0;
+    आभासी स्थिरांक std::string & get_op_type() स्थिरांक = 0;
 
-    virtual const std::string & get_op_type(int node_idx) const = 0;
+    आभासी स्थिरांक std::string & get_op_type(पूर्णांक गाठ_idx) स्थिरांक = 0;
 
-    virtual const std::string & get_op_name() const = 0;
+    आभासी स्थिरांक std::string & get_op_name() स्थिरांक = 0;
 
-    virtual const std::string & get_op_name(int node_idx) const = 0;
+    आभासी स्थिरांक std::string & get_op_name(पूर्णांक गाठ_idx) स्थिरांक = 0;
 
-    virtual void visit_subgraph(std::function<void(std::shared_ptr<GgmlDecoder>, int node_idx)> node_visitor) const = 0;
+    आभासी शून्य visit_subgraph(std::function<शून्य(std::shared_ptr<GgmlDecoder>, पूर्णांक गाठ_idx)> गाठ_visitor) स्थिरांक = 0;
 
-    virtual int get_op_case(int node_idx) const = 0;
+    आभासी पूर्णांक get_op_case(पूर्णांक गाठ_idx) स्थिरांक = 0;
 
-    virtual const std::map<std::string, ModelInputInfo> & get_model_inputs() const = 0;
-    virtual const std::map<std::string, ModelExtraInputInfo> & get_model_extra_inputs() const = 0;
-    virtual const std::map<std::string, std::shared_ptr<ov::Node>> & get_model_weights() const = 0;
-    virtual std::set<std::string> get_model_output_names() const = 0;
+    आभासी स्थिरांक std::map<std::string, Model_आदान_Info> & get_model_inputs() स्थिरांक = 0;
+    आभासी स्थिरांक std::map<std::string, Model_Extra_आदान_Info> & get_model_extra_inputs() स्थिरांक = 0;
+    आभासी स्थिरांक std::map<std::string, std::shared_ptr<ov::गाठ_2>> & get_model_weights() स्थिरांक = 0;
+    आभासी std::set<std::string> get_model_output_names() स्थिरांक = 0;
 
-    virtual int32_t * get_rope_params() const = 0;
+    आभासी int32_t * get_rope_params() स्थिरांक = 0;
 
-    virtual bool has_mixed_rope_params() const = 0;
+    आभासी bool has_mixed_rope_params() स्थिरांक = 0;
 
-    virtual int get_ssm_state_size() const = 0;
+    आभासी पूर्णांक get_ssm_state_size() स्थिरांक = 0;
 
-    virtual std::map<std::string, std::string> get_kv_param_res_names() const = 0;
+    आभासी std::map<std::string, std::string> get_kv_param_res_names() स्थिरांक = 0;
 
-    virtual bool is_static() const = 0;
+    आभासी bool is_static() स्थिरांक = 0;
 
-    virtual bool is_stateful() const = 0;
+    आभासी bool is_stateful() स्थिरांक = 0;
 
-    virtual bool is_splited_model() const = 0;
+    आभासी bool is_splited_model() स्थिरांक = 0;
 
-    virtual int is_swa_layer(int layer) const = 0;
+    आभासी पूर्णांक is_swa_layer(पूर्णांक layer) स्थिरांक = 0;
 
-    virtual int32_t get_op_dynamic_dim(int node_idx) const = 0;
+    आभासी int32_t get_op_dynamic_dim(पूर्णांक गाठ_idx) स्थिरांक = 0;
 };
 
 }  // namespace ggml

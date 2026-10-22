@@ -1,51 +1,51 @@
-#include "backend-dispatched.h"
+#अन्तर्भाव "backend-dispatched.h"
 
-#include "backend-virgl-apir.h"
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
-#include "ggml-impl.h"
+#अन्तर्भाव "backend-virgl-apir.h"
+#अन्तर्भाव "ggml-backend-impl.h"
+#अन्तर्भाव "ggml-backend.h"
+#अन्तर्भाव "ggml-impl.h"
 
-#include <cstdint>
+#अन्तर्भाव <cstdint>
 
-ggml_backend_reg_t reg = NULL;
-ggml_backend_dev_t dev = NULL;
-ggml_backend_t     bck = NULL;
+ggml_backend_reg_t reg = रिक्त;
+ggml_backend_dev_t dev = रिक्त;
+ggml_backend_t     bck = रिक्त;
 
 uint64_t timer_start = 0;
 uint64_t timer_total = 0;
-uint64_t timer_count = 0;
+uint64_t timer_मोजणी = 0;
 
-uint32_t backend_dispatch_initialize(void * ggml_backend_reg_fct_p) {
-    if (reg != NULL) {
+uint32_t backend_dispatch_initialize(शून्य * ggml_backend_reg_fct_p) {
+    जर (reg != रिक्त) {
         GGML_LOG_WARN(GGML_VIRTGPU_BCK "%s: already initialized\n", __func__);
-        return APIR_BACKEND_INITIALIZE_ALREADY_INITED;
+        परत APIR_BACKEND_INITIALIZE_ALREADY_INITED;
     }
-    ggml_backend_reg_t (*ggml_backend_reg_fct)(void) = (ggml_backend_reg_t (*)()) ggml_backend_reg_fct_p;
+    ggml_backend_reg_t (*ggml_backend_reg_fct)(शून्य) = (ggml_backend_reg_t (*)()) ggml_backend_reg_fct_p;
 
     reg = ggml_backend_reg_fct();
-    if (reg == NULL) {
+    जर (reg == रिक्त) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: backend registration failed\n", __func__);
-        return APIR_BACKEND_INITIALIZE_BACKEND_REG_FAILED;
+        परत APIR_BACKEND_INITIALIZE_BACKEND_REG_FAILED;
     }
 
-    size_t device_count = reg->iface.get_device_count(reg);
-    if (!device_count) {
+    माप_प्रकार device_मोजणी = reg->iface.get_device_मोजणी(reg);
+    जर (!device_मोजणी) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: no device found\n", __func__);
-        return APIR_BACKEND_INITIALIZE_NO_DEVICE;
+        परत APIR_BACKEND_INITIALIZE_NO_DEVICE;
     }
 
     dev = reg->iface.get_device(reg, 0);
 
-    if (!dev) {
+    जर (!dev) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: failed to get device\n", __func__);
-        return APIR_BACKEND_INITIALIZE_NO_DEVICE;
+        परत APIR_BACKEND_INITIALIZE_NO_DEVICE;
     }
 
-    bck = dev->iface.init_backend(dev, NULL);
-    if (!bck) {
+    bck = dev->iface.init_backend(dev, रिक्त);
+    जर (!bck) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: backend initialization failed\n", __func__);
-        return APIR_BACKEND_INITIALIZE_BACKEND_INIT_FAILED;
+        परत APIR_BACKEND_INITIALIZE_BACKEND_INIT_FAILED;
     }
 
-    return APIR_BACKEND_INITIALIZE_SUCCESS;
+    परत APIR_BACKEND_INITIALIZE_SUCCESS;
 }

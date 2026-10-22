@@ -1,19 +1,19 @@
 #ifndef HTP_VTCM_H
 #define HTP_VTCM_H
 
-#include <stddef.h>
-#include <stdint.h>
+#अन्तर्भाव <stddef.h>
+#अन्तर्भाव <stdint.h>
 
-static inline uint8_t *vtcm_seq_alloc(uint8_t **vtcm_ptr, size_t size) {
+स्थिर ओळीत uint8_t *vtcm_seq_alloc(uint8_t **vtcm_ptr, माप_प्रकार size) {
     uint8_t *p = *vtcm_ptr;
     *vtcm_ptr += size;
-    return p;
+    परत p;
 }
 
-#define VTCM_LAYOUT_ALLOC(off, field, sz) do { (L)->field = (off); (off) += (sz); } while (0)
-#define VTCM_LAYOUT_ALLOC_OPTIONAL(off, field, sz, cond) do { if (cond) { VTCM_LAYOUT_ALLOC(off, field, sz); } else { (L)->field = 0; } } while (0)
+#define VTCM_LAYOUT_ALLOC(off, field, sz) करा { (L)->field = (off); (off) += (sz); } पर्यंत (0)
+#define VTCM_LAYOUT_ALLOC_OPTIONAL(off, field, sz, cond) करा { जर (cond) { VTCM_LAYOUT_ALLOC(off, field, sz); } अन्यथा { (L)->field = 0; } } पर्यंत (0)
 
 #define VTCM_LAYOUT_PTR(type, base, offset) ((type *)((uint8_t *)(base) + (offset)))
-#define VTCM_LAYOUT_PTR_OPTIONAL(type, base, offset, cond) ((cond) ? VTCM_LAYOUT_PTR(type, base, offset) : NULL)
+#define VTCM_LAYOUT_PTR_OPTIONAL(type, base, offset, cond) ((cond) ? VTCM_LAYOUT_PTR(type, base, offset) : रिक्त)
 
 #endif // HTP_VTCM_H

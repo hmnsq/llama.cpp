@@ -1,12 +1,12 @@
 #ifndef HEX_COMMON_H
 #define HEX_COMMON_H
 
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
+#अन्तर्भाव <stdint.h>
+#अन्तर्भाव <stddef.h>
+#अन्तर्भाव <stdbool.h>
 
 #ifndef SIZE_MAX
-#define SIZE_MAX ((size_t)-1)
+#define SIZE_MAX ((माप_प्रकार)-1)
 #endif
 
 #ifndef MAX
@@ -17,73 +17,73 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #endif
 
-static inline uint32_t hex_ceil_pow2(uint32_t x) {
-    if (x <= 1) { return 1; }
-    int p = 2;
+स्थिर ओळीत uint32_t hex_ceil_pow2(uint32_t x) {
+    जर (x <= 1) { परत 1; }
+    पूर्णांक p = 2;
     x--;
-    while (x >>= 1) { p <<= 1; }
-    return p;
+    पर्यंत (x >>= 1) { p <<= 1; }
+    परत p;
 }
 
-static inline size_t hmx_ceil_div(size_t num, size_t den) {
-    return (num + den - 1) / den;
+स्थिर ओळीत माप_प्रकार hmx_ceil_div(माप_प्रकार अंक, माप_प्रकार den) {
+    परत (अंक + den - 1) / den;
 }
 
-static inline int32_t hex_is_aligned(const void * addr, uint32_t align) {
-    return ((size_t) addr & (align - 1)) == 0;
+स्थिर ओळीत int32_t hex_is_aligned(स्थिरांक शून्य * addr, uint32_t align) {
+    परत ((माप_प्रकार) addr & (align - 1)) == 0;
 }
 
-static inline size_t hex_align_up(size_t v, size_t align) {
-    return hmx_ceil_div(v, align) * align;
+स्थिर ओळीत माप_प्रकार hex_align_up(माप_प्रकार v, माप_प्रकार align) {
+    परत hmx_ceil_div(v, align) * align;
 }
 
-static inline size_t hex_align_down(size_t v, size_t align) {
-    return (v / align) * align;
+स्थिर ओळीत माप_प्रकार hex_align_down(माप_प्रकार v, माप_प्रकार align) {
+    परत (v / align) * align;
 }
 
-static inline int32_t hex_is_one_chunk(void * addr, uint32_t n, uint32_t chunk_size) {
-    uint32_t left_off  = (size_t) addr & (chunk_size - 1);
-    uint32_t right_off = left_off + n;
-    return right_off <= chunk_size;
+स्थिर ओळीत int32_t hex_is_one_chunk(शून्य * addr, uint32_t n, uint32_t chunk_size) {
+    uint32_t डावा_off  = (माप_प्रकार) addr & (chunk_size - 1);
+    uint32_t उजवा_off = डावा_off + n;
+    परत उजवा_off <= chunk_size;
 }
 
-static inline uint32_t hex_round_up(uint32_t n, uint32_t m) {
-    return m * ((n + m - 1) / m);
+स्थिर ओळीत uint32_t hex_round_up(uint32_t n, uint32_t m) {
+    परत m * ((n + m - 1) / m);
 }
 
-static inline size_t hex_smin(size_t a, size_t b) {
-    return a < b ? a : b;
+स्थिर ओळीत माप_प्रकार hex_smin(माप_प्रकार a, माप_प्रकार b) {
+    परत a < b ? a : b;
 }
 
-static inline size_t hex_smax(size_t a, size_t b) {
-    return a > b ? a : b;
+स्थिर ओळीत माप_प्रकार hex_smax(माप_प्रकार a, माप_प्रकार b) {
+    परत a > b ? a : b;
 }
 
-static inline void hex_swap_ptr(void ** p1, void ** p2) {
-    void * t = *p1;
+स्थिर ओळीत शून्य hex_swap_ptr(शून्य ** p1, शून्य ** p2) {
+    शून्य * t = *p1;
     *p1      = *p2;
     *p2      = t;
 }
 
-static inline bool hex_mul_overflow(size_t a, size_t b, size_t *out) {
-    if (a != 0 && b > SIZE_MAX / a) return true;
+स्थिर ओळीत bool hex_mul_overflow(माप_प्रकार a, माप_प्रकार b, माप_प्रकार *out) {
+    जर (a != 0 && b > SIZE_MAX / a) परत true;
     *out = a * b;
-    return false;
+    परत false;
 }
 
-static inline bool hex_add_overflow(size_t a, size_t b, size_t *out) {
-    if (a > SIZE_MAX - b) return true;
+स्थिर ओळीत bool hex_add_overflow(माप_प्रकार a, माप_प्रकार b, माप_प्रकार *out) {
+    जर (a > SIZE_MAX - b) परत true;
     *out = a + b;
-    return false;
+    परत false;
 }
 
-static inline uint32_t hex_gcd_u32(uint32_t a, uint32_t b) {
-    while (b != 0) {
+स्थिर ओळीत uint32_t hex_gcd_u32(uint32_t a, uint32_t b) {
+    पर्यंत (b != 0) {
         uint32_t t = b;
         b = a % b;
         a = t;
     }
-    return a;
+    परत a;
 }
 
 #endif // HEX_COMMON_H

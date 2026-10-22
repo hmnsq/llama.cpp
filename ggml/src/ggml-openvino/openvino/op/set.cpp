@@ -1,73 +1,73 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#अन्तर्भाव "../node_context.h"
+#अन्तर्भाव "../op_table.h"
+#अन्तर्भाव "../utils.h"
 
-#include <cstdint>
-#include <openvino/frontend/exception.hpp>
-#include <openvino/op/add.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/range.hpp>
-#include <openvino/op/reduce_prod.hpp>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/scatter_update.hpp>
-#include <openvino/op/shape_of.hpp>
+#अन्तर्भाव <cstdint>
+#अन्तर्भाव <openvino/frontend/exception.hpp>
+#अन्तर्भाव <openvino/op/add.hpp>
+#अन्तर्भाव <openvino/op/constant.hpp>
+#अन्तर्भाव <openvino/op/convert.hpp>
+#अन्तर्भाव <openvino/op/range.hpp>
+#अन्तर्भाव <openvino/op/reduce_prod.hpp>
+#अन्तर्भाव <openvino/op/reshape.hpp>
+#अन्तर्भाव <openvino/op/scatter_update.hpp>
+#अन्तर्भाव <openvino/op/shape_of.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+नामाकाश ov {
+नामाकाश frontend {
+नामाकाश ggml {
+नामाकाश op {
 
 // GGML SET writes src1 into a view of src0 and returns the updated tensor.
-OutputVector translate_set(const NodeContext & context) {
-    num_inputs_check(context, 2, 2);
+OutputVector translate_set(स्थिरांक गाठ_Context & context) {
+    अंक_inputs_check(context, 2, 2);
 
-    auto dst = process_view_input_new(context, 0);
-    auto src = process_view_input_new(context, 1);
+    स्वतः dst = process_view_आदान_new(context, 0);
+    स्वतः src = process_view_आदान_new(context, 1);
 
     src = std::make_shared<ov::op::v0::Convert>(src, context.get_output_type());
 
-    const auto dst_stride = context.get_input_stride(0);
+    स्थिरांक स्वतः dst_stride = context.get_आदान_stride(0);
     FRONT_END_OP_CONVERSION_CHECK(dst_stride.size() >= 4, "SET requires 4D destination strides");
 
-    const auto * op_params = reinterpret_cast<const uint32_t *>(context.get_output_op_params());
-    const size_t offset = static_cast<size_t>(op_params[3]);
+    स्थिरांक स्वतः * op_params = reinterpret_cast<स्थिरांक uint32_t *>(context.get_output_op_params());
+    स्थिरांक माप_प्रकार offset = static_cast<माप_प्रकार>(op_params[3]);
 
-    const size_t elem_size = dst_stride.back();
+    स्थिरांक माप_प्रकार elem_size = dst_stride.back();
     FRONT_END_OP_CONVERSION_CHECK(elem_size != 0 && offset % elem_size == 0,
                                   "SET offset must be aligned to destination element size");
 
-    const int64_t offset_elems = static_cast<int64_t>(offset / elem_size);
+    स्थिरांक int64_t offset_elems = static_cast<int64_t>(offset / elem_size);
 
-    auto dst_flat = std::make_shared<ov::op::v1::Reshape>(
+    स्वतः dst_flat = std::make_shared<ov::op::v1::Reshape>(
         dst,
         ov::op::v0::Constant::create(ov::element::i64, {1}, {-1}),
-        false);
+        असत्य);
 
-    auto src_flat = std::make_shared<ov::op::v1::Reshape>(
+    स्वतः src_flat = std::make_shared<ov::op::v1::Reshape>(
         src,
         ov::op::v0::Constant::create(ov::element::i64, {1}, {-1}),
-        false);
+        असत्य);
 
-    auto src_shape = std::make_shared<ov::op::v3::ShapeOf>(src_flat, ov::element::i64);
-    auto src_len = std::make_shared<ov::op::v1::ReduceProd>(
+    स्वतः src_shape = std::make_shared<ov::op::v3::ShapeOf>(src_flat, ov::element::i64);
+    स्वतः src_len = std::make_shared<ov::op::v1::ReduceProd>(
         src_shape,
         ov::op::v0::Constant::create(ov::element::i64, {1}, {0}),
-        false);
+        असत्य);
 
-    auto start = ov::op::v0::Constant::create(ov::element::i64, {}, {offset_elems});
-    auto stop = std::make_shared<ov::op::v1::Add>(start, src_len);
-    auto step = ov::op::v0::Constant::create(ov::element::i64, {}, {1});
+    स्वतः start = ov::op::v0::Constant::create(ov::element::i64, {}, {offset_elems});
+    स्वतः stop = std::make_shared<ov::op::v1::Add>(start, src_len);
+    स्वतः step = ov::op::v0::Constant::create(ov::element::i64, {}, {1});
 
-    auto indices = std::make_shared<ov::op::v4::Range>(start, stop, step, ov::element::i64);
-    auto axis = ov::op::v0::Constant::create(ov::element::i64, {}, {0});
+    स्वतः indices = std::make_shared<ov::op::v4::Range>(start, stop, step, ov::element::i64);
+    स्वतः axis = ov::op::v0::Constant::create(ov::element::i64, {}, {0});
 
-    auto updated_flat = std::make_shared<ov::op::v3::ScatterUpdate>(dst_flat, indices, src_flat, axis);
+    स्वतः updated_flat = std::make_shared<ov::op::v3::ScatterUpdate>(dst_flat, indices, src_flat, axis);
 
-    auto dst_shape = std::make_shared<ov::op::v3::ShapeOf>(dst, ov::element::i64);
-    auto res = std::make_shared<ov::op::v1::Reshape>(updated_flat, dst_shape, false);
+    स्वतः dst_shape = std::make_shared<ov::op::v3::ShapeOf>(dst, ov::element::i64);
+    स्वतः res = std::make_shared<ov::op::v1::Reshape>(updated_flat, dst_shape, असत्य);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    परत rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

@@ -1,10 +1,10 @@
 #pragma once
 
-#include "decoder.h"
+#अन्तर्भाव "decoder.h"
 
-#include <cstdint>
-#include <openvino/frontend/node_context.hpp>
-#include <string>
+#अन्तर्भाव <cstdint>
+#अन्तर्भाव <openvino/frontend/node_context.hpp>
+#अन्तर्भाव <string>
 
 namespace ov {
 namespace frontend {
@@ -12,168 +12,168 @@ namespace ggml {
 
 class TranslateSession;
 
-typedef std::map<std::string, Output<Node>> TensorMap;
+प्रकारव्याख्या std::map<std::string, Output<गाठ_2>> TensorMap;
 
-class NodeContext : public frontend::NodeContext {
-public:
-    NodeContext(const std::shared_ptr<GgmlDecoder> & decoder,
+class गाठ_Context : सार्वजनिक frontend::गाठ_Context {
+सार्वजनिक:
+    गाठ_Context(स्थिरांक std::shared_ptr<GgmlDecoder> & decoder,
                 std::shared_ptr<TensorMap> & tensor_map,
-                int node_idx,
+                पूर्णांक गाठ_idx,
                 TranslateSession * translate_session = nullptr) :
-        ov::frontend::NodeContext(decoder->get_op_type(node_idx)),
+        ov::frontend::गाठ_Context(decoder->get_op_type(गाठ_idx)),
         m_decoder(decoder),
         m_tensor_map(tensor_map),
-        m_node_idx(node_idx),
+        m_गाठ_idx(गाठ_idx),
         m_translate_session(translate_session) {
-        m_input_names = decoder->get_input_names(m_node_idx);
-        m_output_names = decoder->get_output_names(m_node_idx);
+        m_आदान_names = decoder->get_आदान_names(m_गाठ_idx);
+        m_output_names = decoder->get_output_names(m_गाठ_idx);
     }
 
-    TranslateSession * get_translate_session() const { return m_translate_session; }
+    TranslateSession * get_translate_session() स्थिरांक { परत m_translate_session; }
 
-    const std::vector<std::string> & get_input_names() const { return m_input_names; }
+    स्थिरांक std::vector<std::string> & get_आदान_names() स्थिरांक { परत m_आदान_names; }
 
-    const std::vector<std::string> & get_output_names() const { return m_output_names; }
+    स्थिरांक std::vector<std::string> & get_output_names() स्थिरांक { परत m_output_names; }
 
-    size_t get_input_size() const override { return m_decoder->get_input_size(m_node_idx); }
+    माप_प्रकार get_आदान_size() स्थिरांक override { परत m_decoder->get_आदान_size(m_गाठ_idx); }
 
-    ov::element::Type get_input_type(size_t index) const {
-        return m_decoder->get_input_type(m_node_idx, m_input_names[index]);
+    ov::element::Type get_आदान_type(माप_प्रकार index) स्थिरांक {
+        परत m_decoder->get_आदान_type(m_गाठ_idx, m_आदान_names[index]);
     }
 
-    PartialShape get_input_shape(size_t input_index) const {
-        return m_decoder->get_input_shape(m_node_idx, m_input_names[input_index]);
+    PartialShape get_आदान_shape(माप_प्रकार आदान_index) स्थिरांक {
+        परत m_decoder->get_आदान_shape(m_गाठ_idx, m_आदान_names[आदान_index]);
     }
 
-    std::vector<size_t> get_input_stride(size_t index) const {
-        return m_decoder->get_input_stride(m_node_idx, m_input_names[index]);
+    std::vector<माप_प्रकार> get_आदान_stride(माप_प्रकार index) स्थिरांक {
+        परत m_decoder->get_आदान_stride(m_गाठ_idx, m_आदान_names[index]);
     }
 
-    std::string get_output_name() const { return m_output_names[0]; }
+    std::string get_output_name() स्थिरांक { परत m_output_names[0]; }
 
-    PartialShape get_output_shape() const { return m_decoder->get_output_shape(m_node_idx); }
+    PartialShape get_output_shape() स्थिरांक { परत m_decoder->get_output_shape(m_गाठ_idx); }
 
-    int32_t * get_input_op_params(size_t index) const {
-        return m_decoder->get_input_op_params(m_node_idx, m_input_names[index]);
+    int32_t * get_आदान_op_params(माप_प्रकार index) स्थिरांक {
+        परत m_decoder->get_आदान_op_params(m_गाठ_idx, m_आदान_names[index]);
     }
 
-    size_t get_view_input_size(size_t index) const {
-        return m_decoder->get_view_input_size(m_node_idx, m_input_names[index]);
+    माप_प्रकार get_view_आदान_size(माप_प्रकार index) स्थिरांक {
+        परत m_decoder->get_view_आदान_size(m_गाठ_idx, m_आदान_names[index]);
     }
 
-    size_t get_view_input_offset(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_offset(m_node_idx, m_input_names[index], view_index);
+    माप_प्रकार get_view_आदान_offset(माप_प्रकार index, माप_प्रकार view_index) स्थिरांक {
+        परत m_decoder->get_view_आदान_offset(m_गाठ_idx, m_आदान_names[index], view_index);
     }
 
-    size_t get_view_input_src_offset(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_src_offset(m_node_idx, m_input_names[index], view_index);
+    माप_प्रकार get_view_आदान_src_offset(माप_प्रकार index, माप_प्रकार view_index) स्थिरांक {
+        परत m_decoder->get_view_आदान_src_offset(m_गाठ_idx, m_आदान_names[index], view_index);
     }
 
-    std::vector<size_t> get_view_input_stride(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_stride(m_node_idx, m_input_names[index], view_index);
+    std::vector<माप_प्रकार> get_view_आदान_stride(माप_प्रकार index, माप_प्रकार view_index) स्थिरांक {
+        परत m_decoder->get_view_आदान_stride(m_गाठ_idx, m_आदान_names[index], view_index);
     }
 
-    std::vector<size_t> get_view_input_src_stride(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_src_stride(m_node_idx, m_input_names[index], view_index);
+    std::vector<माप_प्रकार> get_view_आदान_src_stride(माप_प्रकार index, माप_प्रकार view_index) स्थिरांक {
+        परत m_decoder->get_view_आदान_src_stride(m_गाठ_idx, m_आदान_names[index], view_index);
     }
 
-    ov::Shape get_view_input_ggml_shape(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_ggml_shape(m_node_idx, m_input_names[index], view_index);
+    ov::Shape get_view_आदान_ggml_shape(माप_प्रकार index, माप_प्रकार view_index) स्थिरांक {
+        परत m_decoder->get_view_आदान_ggml_shape(m_गाठ_idx, m_आदान_names[index], view_index);
     }
 
-    ov::Shape get_view_input_src_ggml_shape(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_src_ggml_shape(m_node_idx, m_input_names[index], view_index);
+    ov::Shape get_view_आदान_src_ggml_shape(माप_प्रकार index, माप_प्रकार view_index) स्थिरांक {
+        परत m_decoder->get_view_आदान_src_ggml_shape(m_गाठ_idx, m_आदान_names[index], view_index);
     }
 
-    ov::PartialShape get_view_input_ov_shape(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_ov_shape(m_node_idx, m_input_names[index], view_index);
+    ov::PartialShape get_view_आदान_ov_shape(माप_प्रकार index, माप_प्रकार view_index) स्थिरांक {
+        परत m_decoder->get_view_आदान_ov_shape(m_गाठ_idx, m_आदान_names[index], view_index);
     }
 
-    ov::PartialShape get_view_input_src_ov_shape(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_src_ov_shape(m_node_idx, m_input_names[index], view_index);
+    ov::PartialShape get_view_आदान_src_ov_shape(माप_प्रकार index, माप_प्रकार view_index) स्थिरांक {
+        परत m_decoder->get_view_आदान_src_ov_shape(m_गाठ_idx, m_आदान_names[index], view_index);
     }
 
-    std::string get_view_input_name(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_name(m_node_idx, m_input_names[index], view_index);
+    std::string get_view_आदान_name(माप_प्रकार index, माप_प्रकार view_index) स्थिरांक {
+        परत m_decoder->get_view_आदान_name(m_गाठ_idx, m_आदान_names[index], view_index);
     }
 
-    std::string get_view_input_src_name(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_src_name(m_node_idx, m_input_names[index], view_index);
+    std::string get_view_आदान_src_name(माप_प्रकार index, माप_प्रकार view_index) स्थिरांक {
+        परत m_decoder->get_view_आदान_src_name(m_गाठ_idx, m_आदान_names[index], view_index);
     }
 
-    int32_t get_op_dynamic_dim() const { return m_decoder->get_op_dynamic_dim(m_node_idx); }
+    int32_t get_op_dynamic_dim() स्थिरांक { परत m_decoder->get_op_dynamic_dim(m_गाठ_idx); }
 
-    int32_t * get_output_op_params() const { return m_decoder->get_output_op_params(m_node_idx); }
+    int32_t * get_output_op_params() स्थिरांक { परत m_decoder->get_output_op_params(m_गाठ_idx); }
 
-    size_t get_output_op_offset() const { return m_decoder->get_output_op_offset(m_node_idx); }
+    माप_प्रकार get_output_op_offset() स्थिरांक { परत m_decoder->get_output_op_offset(m_गाठ_idx); }
 
-    ov::element::Type get_output_type() const { return m_decoder->get_output_type(m_node_idx); }
+    ov::element::Type get_output_type() स्थिरांक { परत m_decoder->get_output_type(m_गाठ_idx); }
 
-    std::vector<size_t> get_output_stride() const { return m_decoder->get_output_stride(m_node_idx); }
+    std::vector<माप_प्रकार> get_output_stride() स्थिरांक { परत m_decoder->get_output_stride(m_गाठ_idx); }
 
-    Output<Node> get_input(int idx) const override {
+    Output<गाठ_2> get_आदान(पूर्णांक idx) स्थिरांक override {
         // Check if this input is a VIEW
-        size_t view_input_size = m_decoder->get_view_input_size(m_node_idx, m_input_names[idx]);
-        if (view_input_size > 0) {
+        माप_प्रकार view_आदान_size = m_decoder->get_view_आदान_size(m_गाठ_idx, m_आदान_names[idx]);
+        जर (view_आदान_size > 0) {
             // This is a VIEW input, get the base tensor name (last element in the chain)
             std::string base_name =
-                m_decoder->get_view_input_src_name(m_node_idx, m_input_names[idx], view_input_size - 1);
+                m_decoder->get_view_आदान_src_name(m_गाठ_idx, m_आदान_names[idx], view_आदान_size - 1);
             // Check if the VIEW has been resolved (translate_view produced a Slice)
-            auto view_it = m_tensor_map->find(m_input_names[idx]);
-            if (!base_name.empty() && view_it != m_tensor_map->end()) {
-                auto base_it = m_tensor_map->find(base_name);
+            स्वतः view_it = m_tensor_map->find(m_आदान_names[idx]);
+            जर (!base_name.empty() && view_it != m_tensor_map->end()) {
+                स्वतः base_it = m_tensor_map->find(base_name);
                 // A multi-output translator can publish a VIEW directly without materializing
                 // its packed parent (GatedDeltaNet attention/state). In that case the VIEW is the
                 // authoritative value. The node comparison retains the existing resolved-VIEW path.
-                if (base_it == m_tensor_map->end() ||
-                    view_it->second.get_node_shared_ptr() != base_it->second.get_node_shared_ptr()) {
-                    return view_it->second;
+                जर (base_it == m_tensor_map->end() ||
+                    view_it->second.get_गाठ_shared_ptr() != base_it->second.get_गाठ_shared_ptr()) {
+                    परत view_it->second;
                 }
-                return base_it->second;
+                परत base_it->second;
             }
-            if (!base_name.empty()) {
-                return m_tensor_map->at(base_name);
+            जर (!base_name.empty()) {
+                परत m_tensor_map->at(base_name);
             }
         }
         // Not a VIEW or failed to get base name, use the original logic
-        return m_tensor_map->at(m_input_names[idx]);
+        परत m_tensor_map->at(m_आदान_names[idx]);
     }
 
-    Output<Node> get_input(const std::string & name) const override {
-        if (m_tensor_map->find(name) == m_tensor_map->end()) {
+    Output<गाठ_2> get_आदान(स्थिरांक std::string & name) स्थिरांक override {
+        जर (m_tensor_map->find(name) == m_tensor_map->end()) {
             throw std::runtime_error("'" + name + "' not found in tensor map.");
         }
-        return m_tensor_map->at(name);
+        परत m_tensor_map->at(name);
     }
 
-    bool has_input(const std::string & name) const { return m_tensor_map->find(name) != m_tensor_map->end(); }
+    bool has_आदान(स्थिरांक std::string & name) स्थिरांक { परत m_tensor_map->find(name) != m_tensor_map->end(); }
 
-    void put_shared(const std::string & name, const Output<Node> & value) const {
-        m_tensor_map->insert({name, value});
+    शून्य put_shared(स्थिरांक std::string & name, स्थिरांक Output<गाठ_2> & मूल्य) स्थिरांक {
+        m_tensor_map->घाला({name, मूल्य});
     }
 
-    const std::string & get_name() const override { return m_decoder->get_op_name(m_node_idx); }
+    स्थिरांक std::string & get_name() स्थिरांक override { परत m_decoder->get_op_name(m_गाठ_idx); }
 
-    ov::Any get_attribute_as_any(const std::string & name) const override { return m_decoder->get_attribute(name); }
+    ov::Any get_attribute_as_any(स्थिरांक std::string & name) स्थिरांक override { परत m_decoder->get_attribute(name); }
 
-    int get_op_case() const { return m_decoder->get_op_case(m_node_idx); }
+    पूर्णांक get_op_case() स्थिरांक { परत m_decoder->get_op_case(m_गाठ_idx); }
 
-    bool is_static() const { return m_decoder->is_static(); }
+    bool is_static() स्थिरांक { परत m_decoder->is_static(); }
 
-    bool is_stateful() const { return m_decoder->is_stateful(); }
+    bool is_stateful() स्थिरांक { परत m_decoder->is_stateful(); }
 
-    int get_ssm_state_size() const { return m_decoder->get_ssm_state_size(); }
+    पूर्णांक get_ssm_state_size() स्थिरांक { परत m_decoder->get_ssm_state_size(); }
 
-private:
+खाजगी:
     std::shared_ptr<GgmlDecoder> m_decoder;
     std::shared_ptr<TensorMap> & m_tensor_map;
-    int m_node_idx;
+    पूर्णांक m_गाठ_idx;
     TranslateSession * m_translate_session;
-    std::vector<std::string> m_input_names;
+    std::vector<std::string> m_आदान_names;
     std::vector<std::string> m_output_names;
 };
 
-using CreatorFunction = std::function<ov::OutputVector(const ov::frontend::ggml::NodeContext &)>;
+using CreatorFunction = std::function<ov::OutputVector(स्थिरांक ov::frontend::ggml::गाठ_Context &)>;
 
 }  // namespace ggml
 }  // namespace frontend

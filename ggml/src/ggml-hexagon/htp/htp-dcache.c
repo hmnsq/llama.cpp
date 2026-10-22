@@ -1,88 +1,88 @@
-#include "htp-dcache.h"
+#अन्तर्भाव "htp-dcache.h"
 
-#include <qurt.h>
-#include <qurt_memory.h>
-#include <HAP_farf.h>
+#अन्तर्भाव <qurt.h>
+#अन्तर्भाव <qurt_memory.h>
+#अन्तर्भाव <HAP_farf.h>
 
-#include "hex-common.h"
-#include "hex-utils.h"
-#include "hex-fastdiv.h"
-#include "hex-profile.h"
-#include "htp-ctx.h"
-#include "work-queue.h"
+#अन्तर्भाव "hex-common.h"
+#अन्तर्भाव "hex-utils.h"
+#अन्तर्भाव "hex-fastdiv.h"
+#अन्तर्भाव "hex-profile.h"
+#अन्तर्भाव "htp-ctx.h"
+#अन्तर्भाव "work-queue.h"
 
-struct l2flush_range {
+संरचना l2flush_range {
     uint32_t start;       // line-aligned start address
     uint32_t end;         // line-aligned end address
     uint32_t block_first; // global block index of this range's first block
     uint32_t n_blocks;    // number of HEX_L2_BLOCK_SIZE chunks (last may be partial)
 };
 
-struct l2flush_multi_task {
-    struct htp_thread_trace * trace;
-    struct l2flush_range      ranges[HTP_MAX_DIRTY_RANGES];
+संरचना l2flush_multi_task {
+    संरचना htp_thread_trace * trace;
+    संरचना l2flush_range      ranges[HTP_MAX_DIRTY_RANGES];
     uint32_t                  n_ranges;
     uint32_t                  total_blocks;
     uint32_t                  blocks_per_thread;
 };
 
-static void flush_all_dcache(struct htp_context * ctx) {
-    struct htp_thread_trace * tr = &ctx->trace[0];
+स्थिर शून्य flush_all_dcache(संरचना htp_context * ctx) {
+    संरचना htp_thread_trace * tr = &ctx->trace[0];
     htp_trace_event_start(tr, HTP_TRACE_EVT_L2FLUSH, 0);
     qurt_mem_cache_clean((qurt_addr_t) 0, 0, QURT_MEM_CACHE_FLUSH_INVALIDATE_ALL, QURT_MEM_DCACHE);
     hex_l2fetch_block(ctx, ctx->footprint);
     htp_trace_event_stop(tr, HTP_TRACE_EVT_L2FLUSH, 0);
-    memset(ctx->dirty_ranges, 0, sizeof(ctx->dirty_ranges));
+    स_रखो(ctx->dirty_ranges, 0, आकार(ctx->dirty_ranges));
 }
 
-static void l2flush_multi_worker(unsigned int n, unsigned int i, void * data) {
-    struct l2flush_multi_task * task = (struct l2flush_multi_task *) data;
-    (void) n;
+स्थिर शून्य l2flush_multi_worker(अचिन्हित पूर्णांक n, अचिन्हित पूर्णांक i, शून्य * data) {
+    संरचना l2flush_multi_task * task = (संरचना l2flush_multi_task *) data;
+    (शून्य) n;
 
-    const uint32_t gb_first = i * task->blocks_per_thread;
+    स्थिरांक uint32_t gb_first = i * task->blocks_per_thread;
     uint32_t       gb_last  = gb_first + task->blocks_per_thread;
-    if (gb_last > task->total_blocks) {
+    जर (gb_last > task->total_blocks) {
         gb_last = task->total_blocks;
     }
-    if (gb_first >= gb_last) {
-        return;
+    जर (gb_first >= gb_last) {
+        परत;
     }
 
-    struct htp_thread_trace * tr = &task->trace[i];
+    संरचना htp_thread_trace * tr = &task->trace[i];
     htp_trace_event_start(tr, HTP_TRACE_EVT_L2FLUSH, gb_first);
 
-    for (uint32_t r = 0; r < task->n_ranges; r++) {
-        const struct l2flush_range * rg = &task->ranges[r];
-        const uint32_t rb_first = rg->block_first;
-        const uint32_t rb_last  = rg->block_first + rg->n_blocks;
+    साठी (uint32_t r = 0; r < task->n_ranges; r++) {
+        स्थिरांक संरचना l2flush_range * rg = &task->ranges[r];
+        स्थिरांक uint32_t rb_first = rg->block_first;
+        स्थिरांक uint32_t rb_last  = rg->block_first + rg->n_blocks;
 
-        const uint32_t lo = gb_first > rb_first ? gb_first : rb_first;
-        const uint32_t hi = gb_last  < rb_last  ? gb_last  : rb_last;
-        if (lo >= hi) {
-            continue;
+        स्थिरांक uint32_t lo = gb_first > rb_first ? gb_first : rb_first;
+        स्थिरांक uint32_t hi = gb_last  < rb_last  ? gb_last  : rb_last;
+        जर (lo >= hi) {
+            सुरूठेवा;
         }
 
-        const uint32_t s = rg->start + (lo - rb_first) * HEX_L2_BLOCK_SIZE;
+        स्थिरांक uint32_t s = rg->start + (lo - rb_first) * HEX_L2_BLOCK_SIZE;
         uint32_t       e = rg->start + (hi - rb_first) * HEX_L2_BLOCK_SIZE;
-        if (e > rg->end) {
+        जर (e > rg->end) {
             e = rg->end;
         }
-        hex_l2flush((void *) (uintptr_t) s, e - s);
+        hex_l2flush((शून्य *) (uintptr_t) s, e - s);
     }
 
     htp_trace_event_stop(tr, HTP_TRACE_EVT_L2FLUSH, gb_first);
 }
 
-static void merge_dirty_ranges(struct htp_context * ctx) {
-    for (uint32_t i = 0; i < HTP_MAX_DIRTY_RANGES; i++) {
-        struct htp_dirty_range * r = &ctx->dirty_ranges[i];
-        if (!r->start) continue;
+स्थिर शून्य merge_dirty_ranges(संरचना htp_context * ctx) {
+    साठी (uint32_t i = 0; i < HTP_MAX_DIRTY_RANGES; i++) {
+        संरचना htp_dirty_range * r = &ctx->dirty_ranges[i];
+        जर (!r->start) सुरूठेवा;
 
-        for (uint32_t j = 0; j < HTP_MAX_DIRTY_RANGES;) {
-            struct htp_dirty_range * s = &ctx->dirty_ranges[j];
-            if (i == j || !s->start || r->end < s->start || s->end < r->start) {
+        साठी (uint32_t j = 0; j < HTP_MAX_DIRTY_RANGES;) {
+            संरचना htp_dirty_range * s = &ctx->dirty_ranges[j];
+            जर (i == j || !s->start || r->end < s->start || s->end < r->start) {
                 j++;
-                continue;
+                सुरूठेवा;
             }
 
             r->start = MIN(r->start, s->start);
@@ -94,25 +94,25 @@ static void merge_dirty_ranges(struct htp_context * ctx) {
     }
 }
 
-void htp_dcache_mark_dirty_tensors(struct htp_context * ctx, const struct htp_tensor * const * tensors, uint32_t n) {
-    const struct htp_tensor * pending[HTP_OP_MAX_OUTPUTS];
+शून्य htp_dcache_mark_dirty_tensors(संरचना htp_context * ctx, स्थिरांक संरचना htp_tensor * स्थिरांक * tensors, uint32_t n) {
+    स्थिरांक संरचना htp_tensor * pending[HTP_OP_MAX_OUTPUTS];
     uint32_t n_pending = 0;
 
-    for (uint32_t i = 0; i < n; i++) {
-        const struct htp_tensor * t = tensors[i];
-        if (!t || (t->flags & (HTP_TENSOR_WEIGHT | HTP_TENSOR_FENCE))) {
-            continue;
+    साठी (uint32_t i = 0; i < n; i++) {
+        स्थिरांक संरचना htp_tensor * t = tensors[i];
+        जर (!t || (t->flags & (HTP_TENSOR_WEIGHT | HTP_TENSOR_FENCE))) {
+            सुरूठेवा;
         }
 
         uint32_t t_start = t->data;
         uint32_t t_end   = t_start + t->size;
 
         bool merged = false;
-        for (uint32_t j = 0; j < HTP_MAX_DIRTY_RANGES; j++) {
-            struct htp_dirty_range * r = &ctx->dirty_ranges[j];
-            if (!r->start) continue;
+        साठी (uint32_t j = 0; j < HTP_MAX_DIRTY_RANGES; j++) {
+            संरचना htp_dirty_range * r = &ctx->dirty_ranges[j];
+            जर (!r->start) सुरूठेवा;
 
-            if (r->start <= t_end && t_start <= r->end) {
+            जर (r->start <= t_end && t_start <= r->end) {
                 uint32_t new_start = (t_start < r->start) ? t_start : r->start;
                 uint32_t new_end   = (t_end > r->end)     ? t_end   : r->end;
                 r->start = new_start;
@@ -121,72 +121,72 @@ void htp_dcache_mark_dirty_tensors(struct htp_context * ctx, const struct htp_te
             }
         }
 
-        if (!merged) {
+        जर (!merged) {
             pending[n_pending++] = t;
         }
     }
 
     merge_dirty_ranges(ctx);
 
-    if (n_pending == 0) {
-        return;
+    जर (n_pending == 0) {
+        परत;
     }
 
     uint32_t empty_indices[HTP_MAX_DIRTY_RANGES];
     uint32_t active_indices[HTP_MAX_DIRTY_RANGES];
     uint32_t n_active = 0;
     uint32_t n_empty  = 0;
-    for (uint32_t j = 0; j < HTP_MAX_DIRTY_RANGES; j++) {
-        if (ctx->dirty_ranges[j].start) {
+    साठी (uint32_t j = 0; j < HTP_MAX_DIRTY_RANGES; j++) {
+        जर (ctx->dirty_ranges[j].start) {
             active_indices[n_active++] = j;
-        } else {
+        } अन्यथा {
             empty_indices[n_empty++]   = j;
         }
     }
 
-    if (n_pending <= n_empty) {
-        for (uint32_t i = 0; i < n_pending; i++) {
+    जर (n_pending <= n_empty) {
+        साठी (uint32_t i = 0; i < n_pending; i++) {
             uint32_t idx = empty_indices[i];
-            struct htp_dirty_range * r = &ctx->dirty_ranges[idx];
+            संरचना htp_dirty_range * r = &ctx->dirty_ranges[idx];
             r->start = pending[i]->data;
             r->end   = pending[i]->data + pending[i]->size;
         }
         merge_dirty_ranges(ctx);
-        return;
+        परत;
     }
 
     uint32_t n_evict = n_pending - n_empty;
     uint32_t total_evict_size = 0;
-    for (uint32_t i = 0; i < n_evict; i++) {
+    साठी (uint32_t i = 0; i < n_evict; i++) {
         uint32_t idx = active_indices[i];
-        struct htp_dirty_range * r = &ctx->dirty_ranges[idx];
+        संरचना htp_dirty_range * r = &ctx->dirty_ranges[idx];
         total_evict_size += r->end - r->start;
     }
 
-    if (total_evict_size > HEX_L2_FLUSH_ALL_THRESHOLD) {
+    जर (total_evict_size > HEX_L2_FLUSH_ALL_THRESHOLD) {
         flush_all_dcache(ctx);
-        for (uint32_t i = 0; i < n_pending; i++) {
-            struct htp_dirty_range * r = &ctx->dirty_ranges[i];
+        साठी (uint32_t i = 0; i < n_pending; i++) {
+            संरचना htp_dirty_range * r = &ctx->dirty_ranges[i];
             r->start = pending[i]->data;
             r->end   = pending[i]->data + pending[i]->size;
         }
         merge_dirty_ranges(ctx);
-        return;
+        परत;
     }
 
-    if (total_evict_size > HEX_L2_FLUSH_WQ_THRESHOLD && ctx->n_threads > 1 && n_evict <= HTP_MAX_DIRTY_RANGES) {
-        struct l2flush_multi_task task;
+    जर (total_evict_size > HEX_L2_FLUSH_WQ_THRESHOLD && ctx->n_threads > 1 && n_evict <= HTP_MAX_DIRTY_RANGES) {
+        संरचना l2flush_multi_task task;
         task.trace    = ctx->trace;
         task.n_ranges = n_evict;
 
         uint32_t block_acc = 0;
-        for (uint32_t i = 0; i < n_evict; i++) {
+        साठी (uint32_t i = 0; i < n_evict; i++) {
             uint32_t idx = active_indices[i];
-            struct htp_dirty_range * r = &ctx->dirty_ranges[idx];
+            संरचना htp_dirty_range * r = &ctx->dirty_ranges[idx];
 
-            struct l2flush_range * rg = &task.ranges[i];
-            rg->start = hex_align_down((size_t) r->start, HEX_L2_LINE_SIZE);
-            rg->end   = hex_align_up((size_t) r->end, HEX_L2_LINE_SIZE);
+            संरचना l2flush_range * rg = &task.ranges[i];
+            rg->start = hex_align_down((माप_प्रकार) r->start, HEX_L2_ओळ_SIZE);
+            rg->end   = hex_align_up((माप_प्रकार) r->end, HEX_L2_ओळ_SIZE);
             rg->block_first = block_acc;
             rg->n_blocks = (rg->end - rg->start + HEX_L2_BLOCK_SIZE - 1) / HEX_L2_BLOCK_SIZE;
             block_acc += rg->n_blocks;
@@ -196,28 +196,28 @@ void htp_dcache_mark_dirty_tensors(struct htp_context * ctx, const struct htp_te
         task.blocks_per_thread = fastdiv(block_acc + ctx->n_threads - 1, &ctx->n_threads_div);
 
         work_queue_run(ctx->work_queue, l2flush_multi_worker, &task, ctx->n_threads);
-    } else {
-        struct htp_thread_trace * tr = &ctx->trace[0];
+    } अन्यथा {
+        संरचना htp_thread_trace * tr = &ctx->trace[0];
         htp_trace_event_start(tr, HTP_TRACE_EVT_L2FLUSH, 0);
-        for (uint32_t i = 0; i < n_evict; i++) {
+        साठी (uint32_t i = 0; i < n_evict; i++) {
             uint32_t idx = active_indices[i];
-            struct htp_dirty_range * r = &ctx->dirty_ranges[idx];
+            संरचना htp_dirty_range * r = &ctx->dirty_ranges[idx];
             uint32_t size = r->end - r->start;
-            hex_l2flush((void *) (uintptr_t) r->start, size);
+            hex_l2flush((शून्य *) (uintptr_t) r->start, size);
         }
         htp_trace_event_stop(tr, HTP_TRACE_EVT_L2FLUSH, 0);
     }
 
-    for (uint32_t i = 0; i < n_evict; i++) {
+    साठी (uint32_t i = 0; i < n_evict; i++) {
         uint32_t idx = active_indices[i];
-        struct htp_dirty_range * r = &ctx->dirty_ranges[idx];
+        संरचना htp_dirty_range * r = &ctx->dirty_ranges[idx];
         r->start = pending[i]->data;
         r->end   = pending[i]->data + pending[i]->size;
     }
 
-    for (uint32_t i = 0; i < n_empty; i++) {
+    साठी (uint32_t i = 0; i < n_empty; i++) {
         uint32_t idx = empty_indices[i];
-        struct htp_dirty_range * r = &ctx->dirty_ranges[idx];
+        संरचना htp_dirty_range * r = &ctx->dirty_ranges[idx];
         r->start = pending[n_evict + i]->data;
         r->end   = pending[n_evict + i]->data + pending[n_evict + i]->size;
     }
@@ -225,62 +225,62 @@ void htp_dcache_mark_dirty_tensors(struct htp_context * ctx, const struct htp_te
     merge_dirty_ranges(ctx);
 }
 
-static void make_tensor_clean(struct htp_context * ctx, const struct htp_tensor * t) {
-    if (!t || (t->flags & (HTP_TENSOR_WEIGHT | HTP_TENSOR_FENCE))) {
-        return;
+स्थिर शून्य make_tensor_clean(संरचना htp_context * ctx, स्थिरांक संरचना htp_tensor * t) {
+    जर (!t || (t->flags & (HTP_TENSOR_WEIGHT | HTP_TENSOR_FENCE))) {
+        परत;
     }
 
     uint32_t t_start = t->data;
     uint32_t t_end   = t_start + t->size;
 
-    for (uint32_t i = 0; i < HTP_MAX_DIRTY_RANGES; i++) {
-        struct htp_dirty_range * r = &ctx->dirty_ranges[i];
-        if (!r->start) continue;
+    साठी (uint32_t i = 0; i < HTP_MAX_DIRTY_RANGES; i++) {
+        संरचना htp_dirty_range * r = &ctx->dirty_ranges[i];
+        जर (!r->start) सुरूठेवा;
 
-        if (r->start < t_end && t_start < r->end) {
-            if (t_start <= r->start && r->end <= t_end) {
+        जर (r->start < t_end && t_start < r->end) {
+            जर (t_start <= r->start && r->end <= t_end) {
                 r->start = 0;
                 r->end   = 0;
-            } else if (t_start <= r->start) {
+            } अन्यथा जर (t_start <= r->start) {
                 r->start = t_end;
-            } else if (r->end <= t_end) {
+            } अन्यथा जर (r->end <= t_end) {
                 r->end = t_start;
             }
         }
     }
 }
 
-static inline bool is_tensor_dirty(struct htp_context * ctx, const struct htp_tensor * t) {
-    if (!t || (t->flags & (HTP_TENSOR_WEIGHT | HTP_TENSOR_FENCE))) {
-        return false;
+स्थिर ओळीत bool is_tensor_dirty(संरचना htp_context * ctx, स्थिरांक संरचना htp_tensor * t) {
+    जर (!t || (t->flags & (HTP_TENSOR_WEIGHT | HTP_TENSOR_FENCE))) {
+        परत false;
     }
 
     uint32_t t_start = t->data;
     uint32_t t_end   = t_start + t->size;
 
-    for (uint32_t i = 0; i < HTP_MAX_DIRTY_RANGES; i++) {
-        struct htp_dirty_range * r = &ctx->dirty_ranges[i];
-        if (!r->start) continue;
+    साठी (uint32_t i = 0; i < HTP_MAX_DIRTY_RANGES; i++) {
+        संरचना htp_dirty_range * r = &ctx->dirty_ranges[i];
+        जर (!r->start) सुरूठेवा;
 
-        if (r->start < t_end && t_start < r->end) {
-            return true;
+        जर (r->start < t_end && t_start < r->end) {
+            परत true;
         }
     }
-    return false;
+    परत false;
 }
 
-static void flush_dirty_ranges(struct htp_context * ctx, const struct htp_dirty_range * ranges, uint32_t n_ranges, uint64_t total_dirty) {
-    if (total_dirty >= HEX_L2_FLUSH_WQ_THRESHOLD && ctx->n_threads > 1) {
-        struct l2flush_multi_task task;
+स्थिर शून्य flush_dirty_ranges(संरचना htp_context * ctx, स्थिरांक संरचना htp_dirty_range * ranges, uint32_t n_ranges, uint64_t total_dirty) {
+    जर (total_dirty >= HEX_L2_FLUSH_WQ_THRESHOLD && ctx->n_threads > 1) {
+        संरचना l2flush_multi_task task;
         task.trace    = ctx->trace;
         task.n_ranges = n_ranges;
 
         uint32_t block_acc = 0;
-        for (uint32_t i = 0; i < n_ranges; i++) {
-            const struct htp_dirty_range * r = &ranges[i];
-            struct l2flush_range * rg = &task.ranges[i];
-            rg->start = hex_align_down((size_t) r->start, HEX_L2_LINE_SIZE);
-            rg->end   = hex_align_up((size_t) r->end, HEX_L2_LINE_SIZE);
+        साठी (uint32_t i = 0; i < n_ranges; i++) {
+            स्थिरांक संरचना htp_dirty_range * r = &ranges[i];
+            संरचना l2flush_range * rg = &task.ranges[i];
+            rg->start = hex_align_down((माप_प्रकार) r->start, HEX_L2_ओळ_SIZE);
+            rg->end   = hex_align_up((माप_प्रकार) r->end, HEX_L2_ओळ_SIZE);
             rg->block_first = block_acc;
             rg->n_blocks = (rg->end - rg->start + HEX_L2_BLOCK_SIZE - 1) / HEX_L2_BLOCK_SIZE;
             block_acc += rg->n_blocks;
@@ -290,53 +290,53 @@ static void flush_dirty_ranges(struct htp_context * ctx, const struct htp_dirty_
         task.blocks_per_thread = fastdiv(block_acc + ctx->n_threads - 1, &ctx->n_threads_div);
 
         work_queue_run(ctx->work_queue, l2flush_multi_worker, &task, ctx->n_threads);
-    } else {
-        struct htp_thread_trace * tr = &ctx->trace[0];
+    } अन्यथा {
+        संरचना htp_thread_trace * tr = &ctx->trace[0];
         htp_trace_event_start(tr, HTP_TRACE_EVT_L2FLUSH, 0);
-        for (uint32_t i = 0; i < n_ranges; i++) {
-            const struct htp_dirty_range * r = &ranges[i];
-            hex_l2flush((void *) (uintptr_t) r->start, r->end - r->start);
+        साठी (uint32_t i = 0; i < n_ranges; i++) {
+            स्थिरांक संरचना htp_dirty_range * r = &ranges[i];
+            hex_l2flush((शून्य *) (uintptr_t) r->start, r->end - r->start);
         }
         htp_trace_event_stop(tr, HTP_TRACE_EVT_L2FLUSH, 0);
     }
 }
 
-void htp_dcache_flush_dirty_ranges(struct htp_context * ctx) {
-    struct htp_dirty_range ranges[HTP_MAX_DIRTY_RANGES];
+शून्य htp_dcache_flush_dirty_ranges(संरचना htp_context * ctx) {
+    संरचना htp_dirty_range ranges[HTP_MAX_DIRTY_RANGES];
     uint32_t n_ranges = 0;
     uint64_t total_dirty = 0;
 
-    for (uint32_t i = 0; i < HTP_MAX_DIRTY_RANGES; i++) {
-        const struct htp_dirty_range * r = &ctx->dirty_ranges[i];
-        if (!r->start) {
-            continue;
+    साठी (uint32_t i = 0; i < HTP_MAX_DIRTY_RANGES; i++) {
+        स्थिरांक संरचना htp_dirty_range * r = &ctx->dirty_ranges[i];
+        जर (!r->start) {
+            सुरूठेवा;
         }
         ranges[n_ranges++] = *r;
         total_dirty += r->end - r->start;
     }
 
-    if (total_dirty == 0) {
-        return;
+    जर (total_dirty == 0) {
+        परत;
     }
 
-    if (total_dirty > HEX_L2_FLUSH_ALL_THRESHOLD) {
+    जर (total_dirty > HEX_L2_FLUSH_ALL_THRESHOLD) {
         flush_all_dcache(ctx);
-        return;
+        परत;
     }
 
     flush_dirty_ranges(ctx, ranges, n_ranges, total_dirty);
-    memset(ctx->dirty_ranges, 0, sizeof(ctx->dirty_ranges));
+    स_रखो(ctx->dirty_ranges, 0, आकार(ctx->dirty_ranges));
 }
 
-void htp_dcache_flush_dirty_tensors(struct htp_context * ctx, const struct htp_tensor * const * tensors, uint32_t n) {
-    const struct htp_tensor * dirty_tensors[HTP_OP_MAX_INPUTS];
-    struct htp_dirty_range ranges[HTP_OP_MAX_INPUTS];
+शून्य htp_dcache_flush_dirty_tensors(संरचना htp_context * ctx, स्थिरांक संरचना htp_tensor * स्थिरांक * tensors, uint32_t n) {
+    स्थिरांक संरचना htp_tensor * dirty_tensors[HTP_OP_MAX_INPUTS];
+    संरचना htp_dirty_range ranges[HTP_OP_MAX_INPUTS];
     uint32_t n_dirty = 0;
     uint64_t total_dirty = 0;
 
-    for (uint32_t i = 0; i < n; i++) {
-        const struct htp_tensor * t = tensors[i];
-        if (is_tensor_dirty(ctx, t)) {
+    साठी (uint32_t i = 0; i < n; i++) {
+        स्थिरांक संरचना htp_tensor * t = tensors[i];
+        जर (is_tensor_dirty(ctx, t)) {
             dirty_tensors[n_dirty++] = t;
             ranges[n_dirty - 1].start = t->data;
             ranges[n_dirty - 1].end   = t->data + t->size;
@@ -344,17 +344,17 @@ void htp_dcache_flush_dirty_tensors(struct htp_context * ctx, const struct htp_t
         }
     }
 
-    if (total_dirty == 0) {
-        return;
+    जर (total_dirty == 0) {
+        परत;
     }
 
-    if (total_dirty > HEX_L2_FLUSH_ALL_THRESHOLD) {
+    जर (total_dirty > HEX_L2_FLUSH_ALL_THRESHOLD) {
         flush_all_dcache(ctx);
-        return;
+        परत;
     }
 
     flush_dirty_ranges(ctx, ranges, n_dirty, total_dirty);
-    for (uint32_t i = 0; i < n_dirty; i++) {
+    साठी (uint32_t i = 0; i < n_dirty; i++) {
         make_tensor_clean(ctx, dirty_tensors[i]);
     }
 }

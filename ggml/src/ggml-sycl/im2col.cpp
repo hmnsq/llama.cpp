@@ -10,42 +10,42 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#include "im2col.hpp"
+#अन्तर्भाव "im2col.hpp"
 
 #define MAX_GRIDDIM_Z 65535
 
-template <typename T>
-static  void im2col_kernel(
-        const float * x, T * dst,
+ढाँचा <typename T>
+स्थिर  शून्य im2col_kernel(
+        स्थिरांक दशांश * x, T * dst,
         int64_t IC, int64_t IW, int64_t IH, int64_t OH, int64_t OW, int64_t KW, int64_t KH,
         int64_t IC_IH_IW, int64_t IH_IW, int64_t N_OH, int64_t KH_KW, int64_t IC_KH_KW,
-        int s0, int s1, int p0, int p1, int d0, int d1) {
-    auto          item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    const int64_t i        = item_ct1.get_local_id(2) + item_ct1.get_group(2) * item_ct1.get_local_range(2);
-    if (i >= IC_KH_KW) {
-        return;
+        पूर्णांक s0, पूर्णांक s1, पूर्णांक p0, पूर्णांक p1, पूर्णांक d0, पूर्णांक d1) {
+    स्वतः          item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
+    स्थिरांक int64_t i        = item_ct1.get_local_id(2) + item_ct1.get_group(2) * item_ct1.get_local_range(2);
+    जर (i >= IC_KH_KW) {
+        परत;
     }
 
-    const int64_t iic = i / (KH_KW);
-    const int64_t rem = i - iic * KH_KW;
-    const int64_t ikh = rem / KW;
-    const int64_t ikw = rem - ikh * KW;
+    स्थिरांक int64_t iic = i / (KH_KW);
+    स्थिरांक int64_t rem = i - iic * KH_KW;
+    स्थिरांक int64_t ikh = rem / KW;
+    स्थिरांक int64_t ikw = rem - ikh * KW;
 
-    const int64_t iow = item_ct1.get_group(1);
-    for (int64_t iz = item_ct1.get_group(0); iz < N_OH; iz += MAX_GRIDDIM_Z) {
-        const int64_t  in = iz / OH;
-        const int64_t  ioh = iz - in * OH;
+    स्थिरांक int64_t iow = item_ct1.get_group(1);
+    साठी (int64_t iz = item_ct1.get_group(0); iz < N_OH; iz += MAX_GRIDDIM_Z) {
+        स्थिरांक int64_t  in = iz / OH;
+        स्थिरांक int64_t  ioh = iz - in * OH;
 
-        const int64_t iiw = iow * s0 + ikw * d0 - p0;
-        const int64_t iih = ioh * s1 + ikh * d1 - p1;
+        स्थिरांक int64_t iiw = iow * s0 + ikw * d0 - p0;
+        स्थिरांक int64_t iih = ioh * s1 + ikh * d1 - p1;
 
-        const int64_t offset_dst =
+        स्थिरांक int64_t offset_dst =
             ((in * OH + ioh) * OW + iow) * IC_KH_KW + iic * KH_KW + ikh * KW + ikw;
 
-        if (iih < 0 || iih >= IH || iiw < 0 || iiw >= IW) {
+        जर (iih < 0 || iih >= IH || iiw < 0 || iiw >= IW) {
             dst[offset_dst] = 0.0f;
-        } else {
-            const int64_t offset_src = iic * IC_IH_IW + in * IH_IW;
+        } अन्यथा {
+            स्थिरांक int64_t offset_src = iic * IC_IH_IW + in * IH_IW;
             dst[offset_dst] = x[offset_src + iih * IW + iiw];
         }
     }
@@ -55,8 +55,8 @@ static  void im2col_kernel(
 }
 
 // im2col: [N, IC, IH, IW] => [N, OH, OW, IC*KH*KW]
-template <typename T>
-static void im2col_sycl(const float *   x,
+ढाँचा <typename T>
+स्थिर शून्य im2col_sycl(स्थिरांक दशांश *   x,
                         T *             dst,
                         int64_t         IW,
                         int64_t         IH,
@@ -68,18 +68,18 @@ static void im2col_sycl(const float *   x,
                         int64_t         N,
                         int64_t         IC_IH_IW,
                         int64_t         IH_IW,
-                        int             s0,
-                        int             s1,
-                        int             p0,
-                        int             p1,
-                        int             d0,
-                        int             d1,
+                        पूर्णांक             s0,
+                        पूर्णांक             s1,
+                        पूर्णांक             p0,
+                        पूर्णांक             p1,
+                        पूर्णांक             d0,
+                        पूर्णांक             d1,
                         dpct::queue_ptr stream) {
-    const int64_t IC_KH_KW = IC * KH * KW;
-    const int64_t num_blocks = (IC_KH_KW + SYCL_IM2COL_BLOCK_SIZE - 1) / SYCL_IM2COL_BLOCK_SIZE;
-    const int64_t N_OH = N * OH;
-    const int64_t KH_KW = KW*KH;
-    dpct::dim3    block_nums(num_blocks, OW, MIN(N_OH, MAX_GRIDDIM_Z));
+    स्थिरांक int64_t IC_KH_KW = IC * KH * KW;
+    स्थिरांक int64_t अंक_blocks = (IC_KH_KW + SYCL_IM2COL_BLOCK_SIZE - 1) / SYCL_IM2COL_BLOCK_SIZE;
+    स्थिरांक int64_t N_OH = N * OH;
+    स्थिरांक int64_t KH_KW = KW*KH;
+    dpct::dim3    block_nums(अंक_blocks, OW, MIN(N_OH, MAX_GRIDDIM_Z));
     /*
     DPCT1049:73: The work-group size passed to the SYCL kernel may exceed the limit. To get the device limit, query info::device::max_work_group_size. Adjust the work-group size if needed.
     */
@@ -91,7 +91,7 @@ static void im2col_sycl(const float *   x,
                          });
 }
 
-static void im2col_sycl_f16(const float *   x,
+स्थिर शून्य im2col_sycl_f16(स्थिरांक दशांश *   x,
                             sycl::half *    dst,
                             int64_t         IW,
                             int64_t         IH,
@@ -103,18 +103,18 @@ static void im2col_sycl_f16(const float *   x,
                             int64_t         N,
                             int64_t         IC_IH_IW,
                             int64_t         IH_IW,
-                            int             s0,
-                            int             s1,
-                            int             p0,
-                            int             p1,
-                            int             d0,
-                            int             d1,
+                            पूर्णांक             s0,
+                            पूर्णांक             s1,
+                            पूर्णांक             p0,
+                            पूर्णांक             p1,
+                            पूर्णांक             d0,
+                            पूर्णांक             d1,
                             dpct::queue_ptr stream) {
     im2col_sycl<sycl::half>(x, dst, IW, IH, OW, OH, KW, KH, IC, N, IC_IH_IW, IH_IW, s0, s1, p0, p1, d0, d1, stream);
 }
 
-static void im2col_sycl_f32(const float *   x,
-                            float *         dst,
+स्थिर शून्य im2col_sycl_f32(स्थिरांक दशांश *   x,
+                            दशांश *         dst,
                             int64_t         IW,
                             int64_t         IH,
                             int64_t         OW,
@@ -125,105 +125,105 @@ static void im2col_sycl_f32(const float *   x,
                             int64_t         N,
                             int64_t         IC_IH_IW,
                             int64_t         IH_IW,
-                            int             s0,
-                            int             s1,
-                            int             p0,
-                            int             p1,
-                            int             d0,
-                            int             d1,
+                            पूर्णांक             s0,
+                            पूर्णांक             s1,
+                            पूर्णांक             p0,
+                            पूर्णांक             p1,
+                            पूर्णांक             d0,
+                            पूर्णांक             d1,
                             dpct::queue_ptr stream) {
-    im2col_sycl<float>(x, dst, IW, IH, OW, OH, KW, KH, IC, N, IC_IH_IW, IH_IW, s0, s1, p0, p1, d0, d1, stream);
+    im2col_sycl<दशांश>(x, dst, IW, IH, OW, OH, KW, KH, IC, N, IC_IH_IW, IH_IW, s0, s1, p0, p1, d0, d1, stream);
 }
 
-void ggml_sycl_op_im2col(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
-    const float * src1_d = (const float *)src1->data;
-    float * dst_d = (float *)dst->data;
+शून्य ggml_sycl_op_im2col(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    स्थिरांक ggml_tensor * src0 = dst->src[0];
+    स्थिरांक ggml_tensor * src1 = dst->src[1];
+    स्थिरांक दशांश * src1_d = (स्थिरांक दशांश *)src1->data;
+    दशांश * dst_d = (दशांश *)dst->data;
     dpct::queue_ptr     stream = ctx.stream();
 
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F16 || dst->type == GGML_TYPE_F32);
 
-    const int32_t s0 = ((const int32_t*)(dst->op_params))[0];
-    const int32_t s1 = ((const int32_t*)(dst->op_params))[1];
-    const int32_t p0 = ((const int32_t*)(dst->op_params))[2];
-    const int32_t p1 = ((const int32_t*)(dst->op_params))[3];
-    const int32_t d0 = ((const int32_t*)(dst->op_params))[4];
-    const int32_t d1 = ((const int32_t*)(dst->op_params))[5];
+    स्थिरांक int32_t s0 = ((स्थिरांक int32_t*)(dst->op_params))[0];
+    स्थिरांक int32_t s1 = ((स्थिरांक int32_t*)(dst->op_params))[1];
+    स्थिरांक int32_t p0 = ((स्थिरांक int32_t*)(dst->op_params))[2];
+    स्थिरांक int32_t p1 = ((स्थिरांक int32_t*)(dst->op_params))[3];
+    स्थिरांक int32_t d0 = ((स्थिरांक int32_t*)(dst->op_params))[4];
+    स्थिरांक int32_t d1 = ((स्थिरांक int32_t*)(dst->op_params))[5];
 
-    const bool is_2D = ((const int32_t*)(dst->op_params))[6] == 1;
+    स्थिरांक तार्किक is_2D = ((स्थिरांक int32_t*)(dst->op_params))[6] == 1;
 
-    const int64_t IC = src1->ne[is_2D ? 2 : 1];
-    const int64_t IH = is_2D ? src1->ne[1] : 1;
-    const int64_t IW =         src1->ne[0];
+    स्थिरांक int64_t IC = src1->ne[is_2D ? 2 : 1];
+    स्थिरांक int64_t IH = is_2D ? src1->ne[1] : 1;
+    स्थिरांक int64_t IW =         src1->ne[0];
 
-    const int64_t KH = is_2D ? src0->ne[1] : 1;
-    const int64_t KW =         src0->ne[0];
+    स्थिरांक int64_t KH = is_2D ? src0->ne[1] : 1;
+    स्थिरांक int64_t KW =         src0->ne[0];
 
-    const int64_t OH = is_2D ? dst->ne[2] : 1;
-    const int64_t OW =         dst->ne[1];
+    स्थिरांक int64_t OH = is_2D ? dst->ne[2] : 1;
+    स्थिरांक int64_t OW =         dst->ne[1];
 
-    const int64_t IC_IH_IW = src1->nb[is_2D ? 2 : 1] / 4; // nb is byte offset, src is type float32
-    const int64_t N        = src1->ne[is_2D ? 3 : 2];
-    const int64_t IH_IW    = src1->nb[is_2D ? 3 : 2] / 4; // nb is byte offset, src is type float32
+    स्थिरांक int64_t IC_IH_IW = src1->nb[is_2D ? 2 : 1] / 4; // nb is byte offset, src is type float32
+    स्थिरांक int64_t N        = src1->ne[is_2D ? 3 : 2];
+    स्थिरांक int64_t IH_IW    = src1->nb[is_2D ? 3 : 2] / 4; // nb is byte offset, src is type float32
 
-    if(dst->type == GGML_TYPE_F16) {
+    जर(dst->type == GGML_TYPE_F16) {
         im2col_sycl_f16(src1_d, (sycl::half *) dst_d, IW, IH, OW, OH, KW, KH, IC, N, IC_IH_IW, IH_IW, s0, s1, p0, p1,
                         d0, d1, stream);
-    } else {
-        im2col_sycl_f32(src1_d, (float *) dst_d, IW, IH, OW, OH, KW, KH, IC, N, IC_IH_IW, IH_IW, s0, s1, p0, p1, d0, d1, stream);
+    } अन्यथा {
+        im2col_sycl_f32(src1_d, (दशांश *) dst_d, IW, IH, OW, OH, KW, KH, IC, N, IC_IH_IW, IH_IW, s0, s1, p0, p1, d0, d1, stream);
     }
 }
 
 // [N*IC, ID, IH, IW] => [N*OD, OH, OW, IC * KD * KH * KW]
-template <typename T>
-static  void im2col_3d_kernel(
-        const float * src, T * dst,
+ढाँचा <typename T>
+स्थिर  शून्य im2col_3d_kernel(
+        स्थिरांक दशांश * src, T * dst,
         int64_t N, int64_t IC, int64_t ID, int64_t IH, int64_t IW, int64_t OC,
         int64_t KD, int64_t KH, int64_t KW, int64_t OD, int64_t OH, int64_t OW,
         int64_t OH_OW, int64_t KD_KH_KW, int64_t ID_IH_IW, int64_t KH_KW, int64_t IH_IW, int64_t IC_ID_IH_IW,
         int64_t IC_KD_KH_KW, int64_t OW_KD_KH_KW, int64_t OD_OH_OW_IC_KD_KH_KW, int64_t OH_OW_IC_KD_KH_KW,
         int64_t OW_IC_KD_KH_KW, int64_t N_OD_OH, int64_t OD_OH,
         int64_t stride_q, int64_t stride_z, int64_t stride_y, int64_t stride_x,
-        int s0, int s1, int s2, int p0, int p1, int p2, int d0, int d1, int d2) {
-    auto          item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    const int64_t i        = item_ct1.get_local_id(2) + item_ct1.get_group(2) * item_ct1.get_local_range(2);
-    if (i >= IC_KD_KH_KW) {
-        return;
+        पूर्णांक s0, पूर्णांक s1, पूर्णांक s2, पूर्णांक p0, पूर्णांक p1, पूर्णांक p2, पूर्णांक d0, पूर्णांक d1, पूर्णांक d2) {
+    स्वतः          item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
+    स्थिरांक int64_t i        = item_ct1.get_local_id(2) + item_ct1.get_group(2) * item_ct1.get_local_range(2);
+    जर (i >= IC_KD_KH_KW) {
+        परत;
     }
     GGML_UNUSED(N); GGML_UNUSED(OC); GGML_UNUSED(OH_OW); GGML_UNUSED(OD); GGML_UNUSED(OW); GGML_UNUSED(KD); GGML_UNUSED(KH);
     GGML_UNUSED(ID_IH_IW); GGML_UNUSED(IH_IW); GGML_UNUSED(IC_ID_IH_IW); GGML_UNUSED(OW_KD_KH_KW);
 
-    const int64_t iic = i / KD_KH_KW;
-    const int64_t ikd = (i - iic * KD_KH_KW) / KH_KW;
-    const int64_t ikh = (i - iic * KD_KH_KW - ikd * KH_KW) / KW;
-    const int64_t ikw = i % KW;
+    स्थिरांक int64_t iic = i / KD_KH_KW;
+    स्थिरांक int64_t ikd = (i - iic * KD_KH_KW) / KH_KW;
+    स्थिरांक int64_t ikh = (i - iic * KD_KH_KW - ikd * KH_KW) / KW;
+    स्थिरांक int64_t ikw = i % KW;
 
-    const int64_t iow = item_ct1.get_group(1);
-    for (int64_t iz = item_ct1.get_group(0); iz < N_OD_OH; iz += MAX_GRIDDIM_Z) {
-        const int64_t in  = iz / OD_OH;
-        const int64_t iod = (iz - in*OD_OH) / OH;
-        const int64_t ioh = iz % OH;
+    स्थिरांक int64_t iow = item_ct1.get_group(1);
+    साठी (int64_t iz = item_ct1.get_group(0); iz < N_OD_OH; iz += MAX_GRIDDIM_Z) {
+        स्थिरांक int64_t in  = iz / OD_OH;
+        स्थिरांक int64_t iod = (iz - in*OD_OH) / OH;
+        स्थिरांक int64_t ioh = iz % OH;
 
-        const int64_t iiw = iow * s0 + ikw * d0 - p0;
-        const int64_t iih = ioh * s1 + ikh * d1 - p1;
-        const int64_t iid = iod * s2 + ikd * d2 - p2;
+        स्थिरांक int64_t iiw = iow * s0 + ikw * d0 - p0;
+        स्थिरांक int64_t iih = ioh * s1 + ikh * d1 - p1;
+        स्थिरांक int64_t iid = iod * s2 + ikd * d2 - p2;
 
-        const int64_t offset_dst = in*OD_OH_OW_IC_KD_KH_KW + iod*OH_OW_IC_KD_KH_KW + ioh*OW_IC_KD_KH_KW + iow*IC_KD_KH_KW + iic*KD_KH_KW + ikd * KH_KW + ikh*KW + ikw;
+        स्थिरांक int64_t offset_dst = in*OD_OH_OW_IC_KD_KH_KW + iod*OH_OW_IC_KD_KH_KW + ioh*OW_IC_KD_KH_KW + iow*IC_KD_KH_KW + iic*KD_KH_KW + ikd * KH_KW + ikh*KW + ikw;
 
-        if (iih < 0 || iih >= IH || iiw < 0 || iiw >= IW || iid < 0 || iid >= ID) {
+        जर (iih < 0 || iih >= IH || iiw < 0 || iiw >= IW || iid < 0 || iid >= ID) {
             dst[offset_dst] = 0.0f;
-        } else {
-            const int64_t offset_src = ((in * IC + iic) * stride_q) + (iid * stride_z) + (iih * stride_y) + (iiw * stride_x);
+        } अन्यथा {
+            स्थिरांक int64_t offset_src = ((in * IC + iic) * stride_q) + (iid * stride_z) + (iih * stride_y) + (iiw * stride_x);
             dst[offset_dst] = src[offset_src];
         }
     }
 }
 
 // [N*IC, ID, IH, IW] => [N*OD, OH, OW, IC * KD * KH * KW]
-template <typename T>
-static void im2col_3d_sycl(const float *   src,
+ढाँचा <typename T>
+स्थिर शून्य im2col_3d_sycl(स्थिरांक दशांश *   src,
                            T *             dst,
                            int64_t         N,
                            int64_t         IC,
@@ -241,31 +241,31 @@ static void im2col_3d_sycl(const float *   src,
                            int64_t         stride_z,
                            int64_t         stride_y,
                            int64_t         stride_x,
-                           int             s0,
-                           int             s1,
-                           int             s2,
-                           int             p0,
-                           int             p1,
-                           int             p2,
-                           int             d0,
-                           int             d1,
-                           int             d2,
+                           पूर्णांक             s0,
+                           पूर्णांक             s1,
+                           पूर्णांक             s2,
+                           पूर्णांक             p0,
+                           पूर्णांक             p1,
+                           पूर्णांक             p2,
+                           पूर्णांक             d0,
+                           पूर्णांक             d1,
+                           पूर्णांक             d2,
                            dpct::queue_ptr stream) {
-    const int64_t OH_OW = OH*OW;
-    const int64_t KD_KH_KW = KD*KH*KW;
-    const int64_t ID_IH_IW = ID*IH*IW;
-    const int64_t KH_KW = KH*KW;
-    const int64_t IH_IW = IH*IW;
-    const int64_t IC_KD_KH_KW = IC*KD*KH*KW;
-    const int64_t OW_KD_KH_KW = OW*KD*KH*KW;
-    const int64_t N_OD_OH = N*OD*OH;
-    const int64_t OD_OH = OD*OH;
-    const int64_t IC_ID_IH_IW = IC*ID*IH*IW;
-    const int64_t OD_OH_OW_IC_KD_KH_KW = OD*OH*OW*IC*KD*KH*KW;
-    const int64_t OH_OW_IC_KD_KH_KW = OH*OW*IC*KD*KH*KW;
-    const int64_t OW_IC_KD_KH_KW = OW*IC*KD*KH*KW;
-    const int64_t num_blocks = (IC_KD_KH_KW + SYCL_IM2COL_BLOCK_SIZE - 1) / SYCL_IM2COL_BLOCK_SIZE;
-    dpct::dim3    block_nums(num_blocks, OW, MIN(N_OD_OH, MAX_GRIDDIM_Z));
+    स्थिरांक int64_t OH_OW = OH*OW;
+    स्थिरांक int64_t KD_KH_KW = KD*KH*KW;
+    स्थिरांक int64_t ID_IH_IW = ID*IH*IW;
+    स्थिरांक int64_t KH_KW = KH*KW;
+    स्थिरांक int64_t IH_IW = IH*IW;
+    स्थिरांक int64_t IC_KD_KH_KW = IC*KD*KH*KW;
+    स्थिरांक int64_t OW_KD_KH_KW = OW*KD*KH*KW;
+    स्थिरांक int64_t N_OD_OH = N*OD*OH;
+    स्थिरांक int64_t OD_OH = OD*OH;
+    स्थिरांक int64_t IC_ID_IH_IW = IC*ID*IH*IW;
+    स्थिरांक int64_t OD_OH_OW_IC_KD_KH_KW = OD*OH*OW*IC*KD*KH*KW;
+    स्थिरांक int64_t OH_OW_IC_KD_KH_KW = OH*OW*IC*KD*KH*KW;
+    स्थिरांक int64_t OW_IC_KD_KH_KW = OW*IC*KD*KH*KW;
+    स्थिरांक int64_t अंक_blocks = (IC_KD_KH_KW + SYCL_IM2COL_BLOCK_SIZE - 1) / SYCL_IM2COL_BLOCK_SIZE;
+    dpct::dim3    block_nums(अंक_blocks, OW, MIN(N_OD_OH, MAX_GRIDDIM_Z));
     /*
     DPCT1049:74: The work-group size passed to the SYCL kernel may exceed the limit. To get the device limit, query info::device::max_work_group_size. Adjust the work-group size if needed.
     */
@@ -280,7 +280,7 @@ static void im2col_3d_sycl(const float *   src,
                          });
 }
 
-static void im2col_3d_sycl_f16(const float *   src,
+स्थिर शून्य im2col_3d_sycl_f16(स्थिरांक दशांश *   src,
                                sycl::half *    dst,
                                int64_t         N,
                                int64_t         IC,
@@ -298,22 +298,22 @@ static void im2col_3d_sycl_f16(const float *   src,
                                int64_t         stride_z,
                                int64_t         stride_y,
                                int64_t         stride_x,
-                               int             s0,
-                               int             s1,
-                               int             s2,
-                               int             p0,
-                               int             p1,
-                               int             p2,
-                               int             d0,
-                               int             d1,
-                               int             d2,
+                               पूर्णांक             s0,
+                               पूर्णांक             s1,
+                               पूर्णांक             s2,
+                               पूर्णांक             p0,
+                               पूर्णांक             p1,
+                               पूर्णांक             p2,
+                               पूर्णांक             d0,
+                               पूर्णांक             d1,
+                               पूर्णांक             d2,
                                dpct::queue_ptr stream) {
     im2col_3d_sycl<sycl::half>(src, dst, N, IC, ID, IH, IW, OC, KD, KH, KW, OD, OH, OW, stride_q, stride_z, stride_y,
                                stride_x, s0, s1, s2, p0, p1, p2, d0, d1, d2, stream);
 }
 
-static void im2col_3d_sycl_f32(const float *   src,
-                               float *         dst,
+स्थिर शून्य im2col_3d_sycl_f32(स्थिरांक दशांश *   src,
+                               दशांश *         dst,
                                int64_t         N,
                                int64_t         IC,
                                int64_t         ID,
@@ -330,70 +330,70 @@ static void im2col_3d_sycl_f32(const float *   src,
                                int64_t         stride_z,
                                int64_t         stride_y,
                                int64_t         stride_x,
-                               int             s0,
-                               int             s1,
-                               int             s2,
-                               int             p0,
-                               int             p1,
-                               int             p2,
-                               int             d0,
-                               int             d1,
-                               int             d2,
+                               पूर्णांक             s0,
+                               पूर्णांक             s1,
+                               पूर्णांक             s2,
+                               पूर्णांक             p0,
+                               पूर्णांक             p1,
+                               पूर्णांक             p2,
+                               पूर्णांक             d0,
+                               पूर्णांक             d1,
+                               पूर्णांक             d2,
                                dpct::queue_ptr stream) {
-    im2col_3d_sycl<float>(src, dst, N, IC, ID, IH, IW, OC, KD, KH, KW, OD, OH, OW,
+    im2col_3d_sycl<दशांश>(src, dst, N, IC, ID, IH, IW, OC, KD, KH, KW, OD, OH, OW,
                           stride_q, stride_z, stride_y, stride_x,
                           s0, s1, s2, p0, p1, p2, d0, d1, d2, stream);
 }
 
-void ggml_sycl_op_im2col_3d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
-    const float * src1_d = (const float *)src1->data;
-    float * dst_d = (float *)dst->data;
+शून्य ggml_sycl_op_im2col_3d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    स्थिरांक ggml_tensor * src0 = dst->src[0];
+    स्थिरांक ggml_tensor * src1 = dst->src[1];
+    स्थिरांक दशांश * src1_d = (स्थिरांक दशांश *)src1->data;
+    दशांश * dst_d = (दशांश *)dst->data;
     dpct::queue_ptr     stream = ctx.stream();
 
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F16 || dst->type == GGML_TYPE_F32);
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_द्विमान_OP_LOCALS
 
-    const int32_t s0 = ((const int32_t *)(dst->op_params))[0];
-    const int32_t s1 = ((const int32_t *)(dst->op_params))[1];
-    const int32_t s2 = ((const int32_t *)(dst->op_params))[2];
-    const int32_t p0 = ((const int32_t *)(dst->op_params))[3];
-    const int32_t p1 = ((const int32_t *)(dst->op_params))[4];
-    const int32_t p2 = ((const int32_t *)(dst->op_params))[5];
-    const int32_t d0 = ((const int32_t *)(dst->op_params))[6];
-    const int32_t d1 = ((const int32_t *)(dst->op_params))[7];
-    const int32_t d2 = ((const int32_t *)(dst->op_params))[8];
-    const int32_t IC = ((const int32_t *)(dst->op_params))[9];
+    स्थिरांक int32_t s0 = ((स्थिरांक int32_t *)(dst->op_params))[0];
+    स्थिरांक int32_t s1 = ((स्थिरांक int32_t *)(dst->op_params))[1];
+    स्थिरांक int32_t s2 = ((स्थिरांक int32_t *)(dst->op_params))[2];
+    स्थिरांक int32_t p0 = ((स्थिरांक int32_t *)(dst->op_params))[3];
+    स्थिरांक int32_t p1 = ((स्थिरांक int32_t *)(dst->op_params))[4];
+    स्थिरांक int32_t p2 = ((स्थिरांक int32_t *)(dst->op_params))[5];
+    स्थिरांक int32_t d0 = ((स्थिरांक int32_t *)(dst->op_params))[6];
+    स्थिरांक int32_t d1 = ((स्थिरांक int32_t *)(dst->op_params))[7];
+    स्थिरांक int32_t d2 = ((स्थिरांक int32_t *)(dst->op_params))[8];
+    स्थिरांक int32_t IC = ((स्थिरांक int32_t *)(dst->op_params))[9];
 
-    const int64_t N  = ne13 / IC;
-    const int64_t ID = ne12;
-    const int64_t IH = ne11;
-    const int64_t IW = ne10;
+    स्थिरांक int64_t N  = ne13 / IC;
+    स्थिरांक int64_t ID = ne12;
+    स्थिरांक int64_t IH = ne11;
+    स्थिरांक int64_t IW = ne10;
 
-    const int64_t OC = ne03 / IC;
-    const int64_t KD = ne02;
-    const int64_t KH = ne01;
-    const int64_t KW = ne00;
+    स्थिरांक int64_t OC = ne03 / IC;
+    स्थिरांक int64_t KD = ne02;
+    स्थिरांक int64_t KH = ne01;
+    स्थिरांक int64_t KW = ne00;
 
-    const int64_t OD = ne3 / N;
-    const int64_t OH = ne2;
-    const int64_t OW = ne1;
+    स्थिरांक int64_t OD = ne3 / N;
+    स्थिरांक int64_t OH = ne2;
+    स्थिरांक int64_t OW = ne1;
 
-    const size_t  es       = ggml_element_size(src1);
-    const int64_t stride_x = src1->nb[0] / es;
-    const int64_t stride_y = src1->nb[1] / es;
-    const int64_t stride_z = src1->nb[2] / es;
-    const int64_t stride_q = src1->nb[3] / es;
+    स्थिरांक माप_प्रकार  es       = ggml_element_size(src1);
+    स्थिरांक int64_t stride_x = src1->nb[0] / es;
+    स्थिरांक int64_t stride_y = src1->nb[1] / es;
+    स्थिरांक int64_t stride_z = src1->nb[2] / es;
+    स्थिरांक int64_t stride_q = src1->nb[3] / es;
 
-    if(dst->type == GGML_TYPE_F16) {
+    जर(dst->type == GGML_TYPE_F16) {
         im2col_3d_sycl_f16(src1_d, (sycl::half *) dst_d, N, IC, ID, IH, IW, OC, KD, KH, KW, OD, OH, OW,
                            stride_q, stride_z, stride_y, stride_x,
                            s0, s1, s2, p0, p1, p2, d0, d1, d2, stream);
-    } else {
-        im2col_3d_sycl_f32(src1_d, (float *) dst_d, N, IC, ID, IH, IW, OC, KD, KH, KW, OD, OH, OW,
+    } अन्यथा {
+        im2col_3d_sycl_f32(src1_d, (दशांश *) dst_d, N, IC, ID, IH, IW, OC, KD, KH, KW, OD, OH, OW,
                            stride_q, stride_z, stride_y, stride_x,
                            s0, s1, s2, p0, p1, p2, d0, d1, d2, stream);
     }

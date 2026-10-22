@@ -1,40 +1,40 @@
-#include "ggml.h"
-#include "ggml-impl.h"
-#include "ggml-blas.h"
-#include "ggml-backend-impl.h"
+#अन्तर्भाव "ggml.h"
+#अन्तर्भाव "ggml-impl.h"
+#अन्तर्भाव "ggml-blas.h"
+#अन्तर्भाव "ggml-backend-impl.h"
 
-#include <future>
-#include <vector>
-#include <cstring>
+#अन्तर्भाव <future>
+#अन्तर्भाव <vector>
+#अन्तर्भाव <cstring>
 
-#if defined(GGML_BLAS_USE_ACCELERATE)
+#जर defined(GGML_BLAS_USE_ACCELERATE)
 #   include <Accelerate/Accelerate.h>
-#elif defined(GGML_BLAS_USE_MKL)
+#किंवाजर defined(GGML_BLAS_USE_MKL)
 #   include <mkl.h>
-#elif defined(GGML_BLAS_USE_BLIS)
+#किंवाजर defined(GGML_BLAS_USE_BLIS)
 #   include <blis.h>
-#elif defined(GGML_BLAS_USE_NVPL)
+#किंवाजर defined(GGML_BLAS_USE_NVPL)
 #   include <nvpl_blas.h>
-#else
+#अन्यथा
 #   include <cblas.h>
 #endif
 
-struct ggml_backend_blas_context {
-    int n_threads = GGML_DEFAULT_N_THREADS;
-    std::unique_ptr<char[]> work_data;
-    size_t work_size = 0;
+संरचना ggml_backend_blas_context {
+    पूर्णांक n_threads = GGML_DEFAULT_N_THREADS;
+    std::unique_ptr<अक्षर[]> work_data;
+    माप_प्रकार work_size = 0;
 #ifndef GGML_USE_OPENMP
-    std::vector<std::future<void>> tasks;
+    std::vector<std::future<शून्य>> tasks;
 #endif
 };
 
-static void ggml_backend_blas_mul_mat(ggml_backend_blas_context * ctx, struct ggml_tensor * dst) {
-    const struct ggml_tensor * src0 = dst->src[0];
-    const struct ggml_tensor * src1 = dst->src[1];
+स्थिर शून्य ggml_backend_blas_mul_mat(ggml_backend_blas_context * ctx, संरचना ggml_tensor * dst) {
+    स्थिरांक संरचना ggml_tensor * src0 = dst->src[0];
+    स्थिरांक संरचना ggml_tensor * src1 = dst->src[1];
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_द्विमान_OP_LOCALS
 
-    const enum ggml_type type = src0->type;
+    स्थिरांक गणना ggml_type type = src0->type;
 
     GGML_ASSERT(ne0 == ne01);
     GGML_ASSERT(ne1 == ne11);
@@ -46,61 +46,61 @@ static void ggml_backend_blas_mul_mat(ggml_backend_blas_context * ctx, struct gg
     GGML_ASSERT(nb10 == ggml_type_size(src1->type));
 
     // dst cannot be transposed or permuted
-    GGML_ASSERT(nb0 == sizeof(float));
+    GGML_ASSERT(nb0 == आकार(दशांश));
     GGML_ASSERT(nb0 <= nb1);
     GGML_ASSERT(nb1 <= nb2);
     GGML_ASSERT(nb2 <= nb3);
 
     // broadcast factors
-    const int64_t r2 = ne12/ne02;
-    const int64_t r3 = ne13/ne03;
+    स्थिरांक int64_t r2 = ne12/ne02;
+    स्थिरांक int64_t r3 = ne13/ne03;
 
-    const int64_t ne_plane      = ne01*ne00;
-    const size_t  desired_wsize = type == GGML_TYPE_F32 ? 0 : ne03*ne02*ne_plane*sizeof(float);
+    स्थिरांक int64_t ne_plane      = ne01*ne00;
+    स्थिरांक माप_प्रकार  desired_wsize = type == GGML_TYPE_F32 ? 0 : ne03*ne02*ne_plane*आकार(दशांश);
 
-    if (ctx->work_size < desired_wsize) {
-        ctx->work_data.reset(new char[desired_wsize]);
+    जर (ctx->work_size < desired_wsize) {
+        ctx->work_data.reset(नवीन अक्षर[desired_wsize]);
         ctx->work_size = desired_wsize;
     }
-    void * wdata = ctx->work_data.get();
+    शून्य * wdata = ctx->work_data.get();
 
     // convert src0 to float
-    if (type != GGML_TYPE_F32) {
-        const auto * type_traits = ggml_get_type_traits(type);
-        ggml_to_float_t const to_float = type_traits->to_float;
+    जर (type != GGML_TYPE_F32) {
+        स्थिरांक स्वतः * type_traits = ggml_get_type_traits(type);
+        ggml_to_float_t स्थिरांक to_float = type_traits->to_float;
 
-        for (int64_t i03 = 0; i03 < ne03; i03++) {
-            for (int64_t i02 = 0; i02 < ne02; i02++) {
-                const void  *       x      = (char *)  src0->data + i02*nb02          + i03*nb03;
-                      float * const wplane = (float *) wdata      + i02*ne_plane      + i03*ne02*ne_plane;
+        साठी (int64_t i03 = 0; i03 < ne03; i03++) {
+            साठी (int64_t i02 = 0; i02 < ne02; i02++) {
+                स्थिरांक शून्य  *       x      = (अक्षर *)  src0->data + i02*nb02          + i03*nb03;
+                      दशांश * स्थिरांक wplane = (दशांश *) wdata      + i02*ne_plane      + i03*ne02*ne_plane;
 
-                const int min_cols_per_thread = 4096;
-                const int min_rows_per_thread = std::max((int)(min_cols_per_thread/ne00), 1);
-                const int n_threads = std::max(std::min(ctx->n_threads, (int)(ne01/min_rows_per_thread)), 1);
+                स्थिरांक पूर्णांक min_cols_per_thread = 4096;
+                स्थिरांक पूर्णांक min_rows_per_thread = std::max((पूर्णांक)(min_cols_per_thread/ne00), 1);
+                स्थिरांक पूर्णांक n_threads = std::max(std::min(ctx->n_threads, (पूर्णांक)(ne01/min_rows_per_thread)), 1);
 
 #ifdef GGML_USE_OPENMP
-                #pragma omp parallel for num_threads(n_threads)
-                for (int64_t i01 = 0; i01 < ne01; i01++) {
-                    to_float((const char *) x + i01*nb01, wplane + i01*ne00, ne00);
+                #pragma omp parallel साठी अंक_threads(n_threads)
+                साठी (int64_t i01 = 0; i01 < ne01; i01++) {
+                    to_float((स्थिरांक अक्षर *) x + i01*nb01, wplane + i01*ne00, ne00);
                 }
-#else
-                for (int i = 1; i < n_threads; i++) {
-                    const int64_t start =       i*ne01/n_threads;
-                    const int64_t end   = (i + 1)*ne01/n_threads;
-                    if (start < end) {
+#अन्यथा
+                साठी (पूर्णांक i = 1; i < n_threads; i++) {
+                    स्थिरांक int64_t start =       i*ne01/n_threads;
+                    स्थिरांक int64_t end   = (i + 1)*ne01/n_threads;
+                    जर (start < end) {
                         ctx->tasks.push_back(std::async(std::launch::async, [=]() {
-                            for (int64_t i01 = start; i01 < end; i01++) {
-                                to_float((const char *) x + i01*nb01, wplane + i01*ne00, ne00);
+                            साठी (int64_t i01 = start; i01 < end; i01++) {
+                                to_float((स्थिरांक अक्षर *) x + i01*nb01, wplane + i01*ne00, ne00);
                             }
                         }));
                     }
                 }
                 {
                     // reuse the current thread for the first task
-                    const int64_t start = 0;
-                    const int64_t end   = ne01/n_threads;
-                    for (int64_t i01 = start; i01 < end; i01++) {
-                        to_float((const char *) x + i01*nb01, wplane + i01*ne00, ne00);
+                    स्थिरांक int64_t start = 0;
+                    स्थिरांक int64_t end   = ne01/n_threads;
+                    साठी (int64_t i01 = start; i01 < end; i01++) {
+                        to_float((स्थिरांक अक्षर *) x + i01*nb01, wplane + i01*ne00, ne00);
                     }
                 }
 #endif
@@ -109,34 +109,34 @@ static void ggml_backend_blas_mul_mat(ggml_backend_blas_context * ctx, struct gg
 
 #ifndef GGML_USE_OPENMP
         // wait for all tasks to finish
-        for (auto & task : ctx->tasks) {
+        साठी (स्वतः & task : ctx->tasks) {
             task.get();
         }
         ctx->tasks.clear();
 #endif
     }
 
-#if defined(GGML_BLAS_USE_OPENBLAS)
-    openblas_set_num_threads(ctx->n_threads);
-#elif defined(GGML_BLAS_USE_BLIS)
-    bli_thread_set_num_threads(ctx->n_threads);
-#elif defined(GGML_BLAS_USE_NVPL)
-    nvpl_blas_set_num_threads(ctx->n_threads);
-#elif defined(GGML_BLAS_USE_MKL)
-    mkl_set_num_threads(ctx->n_threads);
+#जर defined(GGML_BLAS_USE_OPENBLAS)
+    openblas_set_अंक_threads(ctx->n_threads);
+#किंवाजर defined(GGML_BLAS_USE_BLIS)
+    bli_thread_set_अंक_threads(ctx->n_threads);
+#किंवाजर defined(GGML_BLAS_USE_NVPL)
+    nvpl_blas_set_अंक_threads(ctx->n_threads);
+#किंवाजर defined(GGML_BLAS_USE_MKL)
+    mkl_set_अंक_threads(ctx->n_threads);
 #endif
 
-    for (int64_t i13 = 0; i13 < ne13; i13++) {
-        for (int64_t i12 = 0; i12 < ne12; i12++) {
-            const int64_t i03 = i13/r3;
-            const int64_t i02 = i12/r2;
+    साठी (int64_t i13 = 0; i13 < ne13; i13++) {
+        साठी (int64_t i12 = 0; i12 < ne12; i12++) {
+            स्थिरांक int64_t i03 = i13/r3;
+            स्थिरांक int64_t i02 = i12/r2;
 
-            const float * x = (float *) ((char *) src0->data + i02*nb02 + i03*nb03);
-            const float * y = (float *) ((char *) src1->data + i12*nb12 + i13*nb13);
-                  float * d = (float *) ((char *)  dst->data + i12*nb2  + i13*nb3);
+            स्थिरांक दशांश * x = (दशांश *) ((अक्षर *) src0->data + i02*nb02 + i03*nb03);
+            स्थिरांक दशांश * y = (दशांश *) ((अक्षर *) src1->data + i12*nb12 + i13*nb13);
+                  दशांश * d = (दशांश *) ((अक्षर *)  dst->data + i12*nb2  + i13*nb3);
 
-            if (type != GGML_TYPE_F32) {
-                x = (float *) wdata + i02*ne_plane + i03*ne02*ne_plane;
+            जर (type != GGML_TYPE_F32) {
+                x = (दशांश *) wdata + i02*ne_plane + i03*ne02*ne_plane;
             }
 
             cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
@@ -148,11 +148,11 @@ static void ggml_backend_blas_mul_mat(ggml_backend_blas_context * ctx, struct gg
     }
 }
 
-static void ggml_backend_blas_out_prod(ggml_backend_blas_context * ctx, struct ggml_tensor * dst) {
-    const struct ggml_tensor * src0 = dst->src[0];
-    const struct ggml_tensor * src1 = dst->src[1];
+स्थिर शून्य ggml_backend_blas_out_prod(ggml_backend_blas_context * ctx, संरचना ggml_tensor * dst) {
+    स्थिरांक संरचना ggml_tensor * src0 = dst->src[0];
+    स्थिरांक संरचना ggml_tensor * src1 = dst->src[1];
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_द्विमान_OP_LOCALS
 
     GGML_ASSERT(ne0  == ne00);
     GGML_ASSERT(ne1  == ne10);
@@ -162,10 +162,10 @@ static void ggml_backend_blas_out_prod(ggml_backend_blas_context * ctx, struct g
     GGML_ASSERT(ne03 == ne13);
 
     // we don't support permuted src0 or src1
-    GGML_ASSERT(nb00 == sizeof(float));
+    GGML_ASSERT(nb00 == आकार(दशांश));
 
     // dst cannot be transposed or permuted
-    GGML_ASSERT(nb0 == sizeof(float));
+    GGML_ASSERT(nb0 == आकार(दशांश));
     // GGML_ASSERT(nb0 <= nb1);
     // GGML_ASSERT(nb1 <= nb2);
     // GGML_ASSERT(nb2 <= nb3);
@@ -185,24 +185,24 @@ static void ggml_backend_blas_out_prod(ggml_backend_blas_context * ctx, struct g
     // src1->data already contains a transposed version, so sgemm mustn't
     // transpose it further.
 
-    int n = src0->ne[0];
-    int k = src0->ne[1];
-    int m = src1->ne[0];
+    पूर्णांक n = src0->ne[0];
+    पूर्णांक k = src0->ne[1];
+    पूर्णांक m = src1->ne[0];
 
     CBLAS_TRANSPOSE transposeA;
-    int lda;
+    पूर्णांक lda;
 
-    if (!ggml_is_transposed(src1)) {
+    जर (!ggml_is_transposed(src1)) {
         transposeA = CblasTrans;
         lda = m;
-    } else {
+    } अन्यथा {
         transposeA = CblasNoTrans;
         lda = k;
     }
 
-    float * a = (float *) ((char *) src1->data);
-    float * b = (float *) ((char *) src0->data);
-    float * c = (float *) ((char *) dst->data);
+    दशांश * a = (दशांश *) ((अक्षर *) src1->data);
+    दशांश * b = (दशांश *) ((अक्षर *) src0->data);
+    दशांश * c = (दशांश *) ((अक्षर *) dst->data);
 
     cblas_sgemm(CblasRowMajor, transposeA, CblasNoTrans, m, n, k, 1.0, a, lda, b, n, 0.0, c, n);
 
@@ -211,106 +211,106 @@ static void ggml_backend_blas_out_prod(ggml_backend_blas_context * ctx, struct g
 
 // backend interface
 
-static const char * ggml_backend_blas_get_name(ggml_backend_t backend) {
-    return "BLAS";
+स्थिर स्थिरांक अक्षर * ggml_backend_blas_get_name(ggml_backend_t backend) {
+    परत "BLAS";
 
     GGML_UNUSED(backend);
 }
 
-static void ggml_backend_blas_free(ggml_backend_t backend) {
+स्थिर शून्य ggml_backend_blas_free(ggml_backend_t backend) {
     ggml_backend_blas_context * ctx = (ggml_backend_blas_context *)backend->context;
     delete ctx;
     delete backend;
 }
 
-static enum ggml_status ggml_backend_blas_graph_compute(ggml_backend_t backend, struct ggml_cgraph * cgraph) {
+स्थिर गणना ggml_status ggml_backend_blas_graph_compute(ggml_backend_t backend, संरचना ggml_cgraph * cgraph) {
     ggml_backend_blas_context * ctx = (ggml_backend_blas_context *)backend->context;
 
-    for (int i = 0; i < cgraph->n_nodes; i++) {
-        struct ggml_tensor * node = cgraph->nodes[i];
+    साठी (पूर्णांक i = 0; i < cgraph->n_nodes; i++) {
+        संरचना ggml_tensor * गाठ = cgraph->nodes[i];
 
-        if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
-            continue;
+        जर ((गाठ->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+            सुरूठेवा;
         }
 
-        switch (node->op) {
-            case GGML_OP_MUL_MAT:
-                ggml_backend_blas_mul_mat(ctx, node);
-                break;
+        निवड (गाठ->op) {
+            स्थिती GGML_OP_MUL_MAT:
+                ggml_backend_blas_mul_mat(ctx, गाठ);
+                थांबा;
 
-            case GGML_OP_OUT_PROD:
-                ggml_backend_blas_out_prod(ctx, node);
-                break;
+            स्थिती GGML_OP_OUT_PROD:
+                ggml_backend_blas_out_prod(ctx, गाठ);
+                थांबा;
 
-            case GGML_OP_NONE:
-            case GGML_OP_RESHAPE:
-            case GGML_OP_VIEW:
-            case GGML_OP_PERMUTE:
-            case GGML_OP_TRANSPOSE:
-                break;
+            स्थिती GGML_OP_NONE:
+            स्थिती GGML_OP_RESHAPE:
+            स्थिती GGML_OP_VIEW:
+            स्थिती GGML_OP_PERMUTE:
+            स्थिती GGML_OP_TRANSPOSE:
+                थांबा;
 
-            default:
-                GGML_ABORT("%s: unsupported op %s\n", __func__, ggml_op_desc(node));
+            पूर्वनिर्धारित:
+                GGML_ABORT("%s: unsupported op %s\n", __func__, ggml_op_desc(गाठ));
         }
     }
 
-    return GGML_STATUS_SUCCESS;
+    परत GGML_STATUS_SUCCESS;
 
     GGML_UNUSED(backend);
 }
 
-static struct ggml_backend_i blas_backend_i = {
+स्थिर संरचना ggml_backend_i blas_backend_i = {
     /* .get_name                = */ ggml_backend_blas_get_name,
     /* .free                    = */ ggml_backend_blas_free,
-    /* .set_tensor_async        = */ NULL,
-    /* .get_tensor_async        = */ NULL,
-    /* .set_tensor_2d_async     = */ NULL,
-    /* .get_tensor_2d_async     = */ NULL,
-    /* .cpy_tensor_async        = */ NULL,
-    /* .synchronize             = */ NULL,
-    /* .graph_plan_create       = */ NULL,
-    /* .graph_plan_free         = */ NULL,
-    /* .graph_plan_update       = */ NULL,
-    /* .graph_plan_compute      = */ NULL,
+    /* .set_tensor_async        = */ रिक्त,
+    /* .get_tensor_async        = */ रिक्त,
+    /* .set_tensor_2d_async     = */ रिक्त,
+    /* .get_tensor_2d_async     = */ रिक्त,
+    /* .cpy_tensor_async        = */ रिक्त,
+    /* .synchronize             = */ रिक्त,
+    /* .graph_plan_create       = */ रिक्त,
+    /* .graph_plan_free         = */ रिक्त,
+    /* .graph_plan_update       = */ रिक्त,
+    /* .graph_plan_compute      = */ रिक्त,
     /* .graph_compute           = */ ggml_backend_blas_graph_compute,
-    /* .event_record            = */ NULL,
-    /* .event_wait              = */ NULL,
-    /* .graph_optimize          = */ NULL,
+    /* .event_record            = */ रिक्त,
+    /* .event_wait              = */ रिक्त,
+    /* .graph_optimize          = */ रिक्त,
 };
 
-static ggml_guid_t ggml_backend_blas_guid(void) {
-    static ggml_guid guid = { 0x12, 0xa8, 0xae, 0xf4, 0xc0, 0x1e, 0x61, 0x97, 0x8f, 0xeb, 0x33, 0x04, 0xa1, 0x33, 0x51, 0x2d };
-    return &guid;
+स्थिर ggml_guid_t ggml_backend_blas_guid(शून्य) {
+    स्थिर ggml_guid guid = { 0x12, 0xa8, 0xae, 0xf4, 0xc0, 0x1e, 0x61, 0x97, 0x8f, 0xeb, 0x33, 0x04, 0xa1, 0x33, 0x51, 0x2d };
+    परत &guid;
 }
 
-ggml_backend_t ggml_backend_blas_init(void) {
-    ggml_backend_blas_context * ctx = new ggml_backend_blas_context;
+ggml_backend_t ggml_backend_blas_init(शून्य) {
+    ggml_backend_blas_context * ctx = नवीन ggml_backend_blas_context;
 
-    ggml_backend_t backend = new ggml_backend {
+    ggml_backend_t backend = नवीन ggml_backend {
         /* .guid    = */ ggml_backend_blas_guid(),
         /* .iface   = */ blas_backend_i,
         /* .device  = */ ggml_backend_reg_dev_get(ggml_backend_blas_reg(), 0),
         /* .context = */ ctx,
     };
 
-#if defined(GGML_BLAS_USE_OPENBLAS) && defined(GGML_USE_OPENMP)
-    if (openblas_get_parallel() != OPENBLAS_OPENMP) {
+#जर defined(GGML_BLAS_USE_OPENBLAS) && defined(GGML_USE_OPENMP)
+    जर (openblas_get_parallel() != OPENBLAS_OPENMP) {
         GGML_LOG_DEBUG("%s: warning: ggml is using OpenMP, but OpenBLAS was compiled without OpenMP support\n", __func__);
     }
 #endif
 
-#if defined(BLIS_ENABLE_CBLAS) && defined(GGML_USE_OPENMP) && !defined(BLIS_ENABLE_OPENMP)
+#जर defined(BLIS_ENABLE_CBLAS) && defined(GGML_USE_OPENMP) && !defined(BLIS_ENABLE_OPENMP)
     GGML_LOG_DEBUG("%s: warning: ggml is using OpenMP, but BLIS was compiled without OpenMP support\n", __func__);
 #endif
 
-    return backend;
+    परत backend;
 }
 
-bool ggml_backend_is_blas(ggml_backend_t backend) {
-    return backend != NULL && ggml_guid_matches(backend->guid, ggml_backend_blas_guid());
+तार्किक ggml_backend_is_blas(ggml_backend_t backend) {
+    परत backend != रिक्त && ggml_guid_matches(backend->guid, ggml_backend_blas_guid());
 }
 
-void ggml_backend_blas_set_n_threads(ggml_backend_t backend_blas, int n_threads) {
+शून्य ggml_backend_blas_set_n_threads(ggml_backend_t backend_blas, पूर्णांक n_threads) {
     GGML_ASSERT(ggml_backend_is_blas(backend_blas));
 
     ggml_backend_blas_context * ctx = (ggml_backend_blas_context *)backend_blas->context;
@@ -319,143 +319,143 @@ void ggml_backend_blas_set_n_threads(ggml_backend_t backend_blas, int n_threads)
 
 // device interface
 
-static const char * ggml_backend_blas_device_get_name(ggml_backend_dev_t dev) {
-    return "BLAS";
+स्थिर स्थिरांक अक्षर * ggml_backend_blas_device_get_name(ggml_backend_dev_t dev) {
+    परत "BLAS";
 
     GGML_UNUSED(dev);
 }
 
-static const char * ggml_backend_blas_device_get_description(ggml_backend_dev_t dev) {
-    #if defined(GGML_BLAS_USE_ACCELERATE)
-        return "Accelerate";
-    #elif defined(GGML_BLAS_USE_MKL)
-        return "MKL";
-    #elif defined(GGML_BLAS_USE_AOCL)
-        return "AOCL-BLAS";
-    #elif defined(GGML_BLAS_USE_BLIS)
-        return "BLIS";
-    #elif defined(GGML_BLAS_USE_NVPL)
-        return "NVPL";
-    #elif defined(GGML_BLAS_USE_OPENBLAS)
-        return "OpenBLAS";
-    #else
-        return "BLAS";
+स्थिर स्थिरांक अक्षर * ggml_backend_blas_device_get_description(ggml_backend_dev_t dev) {
+    #जर defined(GGML_BLAS_USE_ACCELERATE)
+        परत "Accelerate";
+    #किंवाजर defined(GGML_BLAS_USE_MKL)
+        परत "MKL";
+    #किंवाजर defined(GGML_BLAS_USE_AOCL)
+        परत "AOCL-BLAS";
+    #किंवाजर defined(GGML_BLAS_USE_BLIS)
+        परत "BLIS";
+    #किंवाजर defined(GGML_BLAS_USE_NVPL)
+        परत "NVPL";
+    #किंवाजर defined(GGML_BLAS_USE_OPENBLAS)
+        परत "OpenBLAS";
+    #अन्यथा
+        परत "BLAS";
     #endif
 
     GGML_UNUSED(dev);
 }
 
-static void ggml_backend_blas_device_get_memory(ggml_backend_dev_t dev, size_t * free, size_t * total) {
+स्थिर शून्य ggml_backend_blas_device_get_memory(ggml_backend_dev_t dev, माप_प्रकार * मुक्त, माप_प्रकार * total) {
     // no memory to report
-    *free  = 0;
+    *मुक्त  = 0;
     *total = 0;
 
     GGML_UNUSED(dev);
 }
 
-static enum ggml_backend_dev_type ggml_backend_blas_device_get_type(ggml_backend_dev_t dev) {
-    return GGML_BACKEND_DEVICE_TYPE_ACCEL;
+स्थिर गणना ggml_backend_dev_type ggml_backend_blas_device_get_type(ggml_backend_dev_t dev) {
+    परत GGML_BACKEND_DEVICE_TYPE_ACCEL;
 
     GGML_UNUSED(dev);
 }
 
-static void ggml_backend_blas_device_get_props(ggml_backend_dev_t dev, struct ggml_backend_dev_props * props) {
+स्थिर शून्य ggml_backend_blas_device_get_props(ggml_backend_dev_t dev, संरचना ggml_backend_dev_props * props) {
     props->name        = ggml_backend_blas_device_get_name(dev);
     props->description = ggml_backend_blas_device_get_description(dev);
     props->type        = ggml_backend_blas_device_get_type(dev);
     ggml_backend_blas_device_get_memory(dev, &props->memory_free, &props->memory_total);
     props->caps = {
-        /* .async                 = */ false,
-        /* .host_buffer           = */ false,
-        /* .buffer_from_host_ptr  = */ true,
-        /* .events                = */ false,
-        /* .mmap_support          = */ true,
+        /* .async                 = */ असत्य,
+        /* .host_buffer           = */ असत्य,
+        /* .buffer_from_host_ptr  = */ सत्य,
+        /* .events                = */ असत्य,
+        /* .mmap_support          = */ सत्य,
     };
 }
 
-static ggml_backend_t ggml_backend_blas_device_init_backend(ggml_backend_dev_t dev, const char * params) {
-    return ggml_backend_blas_init();
+स्थिर ggml_backend_t ggml_backend_blas_device_init_backend(ggml_backend_dev_t dev, स्थिरांक अक्षर * params) {
+    परत ggml_backend_blas_init();
 
     GGML_UNUSED(dev);
     GGML_UNUSED(params);
 }
 
-static ggml_backend_buffer_type_t ggml_backend_blas_device_get_buffer_type(ggml_backend_dev_t dev) {
-    return ggml_backend_cpu_buffer_type();
+स्थिर ggml_backend_buffer_type_t ggml_backend_blas_device_get_buffer_type(ggml_backend_dev_t dev) {
+    परत ggml_backend_cpu_buffer_type();
 
     GGML_UNUSED(dev);
 }
 
-static ggml_backend_buffer_t ggml_backend_blas_device_buffer_from_host_ptr(ggml_backend_dev_t dev, void * ptr, size_t size, size_t max_tensor_size) {
-    return ggml_backend_cpu_buffer_from_ptr(ptr, size);
+स्थिर ggml_backend_buffer_t ggml_backend_blas_device_buffer_from_host_ptr(ggml_backend_dev_t dev, शून्य * ptr, माप_प्रकार size, माप_प्रकार max_tensor_size) {
+    परत ggml_backend_cpu_buffer_from_ptr(ptr, size);
 
     GGML_UNUSED(dev);
     GGML_UNUSED(max_tensor_size);
 }
 
-static bool ggml_backend_blas_device_supports_op(ggml_backend_dev_t dev, const struct ggml_tensor * op) {
-    const struct ggml_tensor * src0 = op->src[0];
-    const struct ggml_tensor * src1 = op->src[1];
+स्थिर तार्किक ggml_backend_blas_device_supports_op(ggml_backend_dev_t dev, स्थिरांक संरचना ggml_tensor * op) {
+    स्थिरांक संरचना ggml_tensor * src0 = op->src[0];
+    स्थिरांक संरचना ggml_tensor * src1 = op->src[1];
 
-    switch (op->op) {
-        case GGML_OP_NONE:
-        case GGML_OP_RESHAPE:
-        case GGML_OP_VIEW:
-        case GGML_OP_PERMUTE:
-        case GGML_OP_TRANSPOSE:
-            return true;
+    निवड (op->op) {
+        स्थिती GGML_OP_NONE:
+        स्थिती GGML_OP_RESHAPE:
+        स्थिती GGML_OP_VIEW:
+        स्थिती GGML_OP_PERMUTE:
+        स्थिती GGML_OP_TRANSPOSE:
+            परत सत्य;
 
-        case GGML_OP_MUL_MAT:
+        स्थिती GGML_OP_MUL_MAT:
         {
             // BLAS usually is only faster for large matrices
-            const struct ggml_tensor * src0 = op->src[0];
-            const struct ggml_tensor * src1 = op->src[1];
+            स्थिरांक संरचना ggml_tensor * src0 = op->src[0];
+            स्थिरांक संरचना ggml_tensor * src1 = op->src[1];
 
-            const int64_t ne10 = src1->ne[0];
+            स्थिरांक int64_t ne10 = src1->ne[0];
 
-            const int64_t ne0 = op->ne[0];
-            const int64_t ne1 = op->ne[1];
+            स्थिरांक int64_t ne0 = op->ne[0];
+            स्थिरांक int64_t ne1 = op->ne[1];
 
             // TODO: find the optimal value
-            const int64_t min_batch = 32;
+            स्थिरांक int64_t min_batch = 32;
 
             // default back to CPU fast path
             // see: https://github.com/ggml-org/llama.cpp/issues/25565
-            if (ggml_get_op_params_i32(op, 1) == GGML_HINT_SRC0_IS_HADAMARD) {
-                return false;
+            जर (ggml_get_op_params_i32(op, 1) == GGML_HINT_SRC0_IS_HADAMARD) {
+                परत असत्य;
             }
 
-            return ggml_is_contiguous(src0) &&
+            परत ggml_is_contiguous(src0) &&
                    ggml_is_contiguous(src1) &&
                    src1->type == GGML_TYPE_F32 &&
                    (ne0 >= min_batch && ne1 >= min_batch && ne10 >= min_batch) &&
-                   (src0->type == GGML_TYPE_F32 || ggml_get_type_traits(src0->type)->to_float != NULL);
+                   (src0->type == GGML_TYPE_F32 || ggml_get_type_traits(src0->type)->to_float != रिक्त);
         }
 
-        case GGML_OP_OUT_PROD:
-            return op->src[0]->type == GGML_TYPE_F32 &&
+        स्थिती GGML_OP_OUT_PROD:
+            परत op->src[0]->type == GGML_TYPE_F32 &&
                    op->src[1]->type == GGML_TYPE_F32 &&
                    ggml_is_matrix(src0) &&
                    ggml_is_matrix(src1) &&
                    ggml_is_contiguous(src0) &&
                    (ggml_is_contiguous(src1) || ggml_is_transposed(src1)) &&
-                   (src0->type == GGML_TYPE_F32 || ggml_get_type_traits(src0->type)->to_float != NULL);
+                   (src0->type == GGML_TYPE_F32 || ggml_get_type_traits(src0->type)->to_float != रिक्त);
 
-        default:
-            return false;
+        पूर्वनिर्धारित:
+            परत असत्य;
 
     }
 
     GGML_UNUSED(dev);
 }
 
-static bool ggml_backend_blas_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
-    return ggml_backend_buft_is_host(buft);
+स्थिर तार्किक ggml_backend_blas_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
+    परत ggml_backend_buft_is_host(buft);
 
     GGML_UNUSED(dev);
 }
 
-static const struct ggml_backend_device_i ggml_backend_blas_device_i = {
+स्थिर स्थिरांक संरचना ggml_backend_device_i ggml_backend_blas_device_i = {
     /* .get_name             = */ ggml_backend_blas_device_get_name,
     /* .get_description      = */ ggml_backend_blas_device_get_description,
     /* .get_memory           = */ ggml_backend_blas_device_get_memory,
@@ -463,70 +463,70 @@ static const struct ggml_backend_device_i ggml_backend_blas_device_i = {
     /* .get_props            = */ ggml_backend_blas_device_get_props,
     /* .init_backend         = */ ggml_backend_blas_device_init_backend,
     /* .get_buffer_type      = */ ggml_backend_blas_device_get_buffer_type,
-    /* .get_host_buffer_type = */ NULL,
+    /* .get_host_buffer_type = */ रिक्त,
     /* .buffer_from_host_ptr = */ ggml_backend_blas_device_buffer_from_host_ptr,
     /* .supports_op          = */ ggml_backend_blas_device_supports_op,
     /* .supports_buft        = */ ggml_backend_blas_device_supports_buft,
-    /* .offload_op           = */ NULL,
-    /* .event_new            = */ NULL,
-    /* .event_free           = */ NULL,
-    /* .event_synchronize    = */ NULL,
+    /* .offload_op           = */ रिक्त,
+    /* .event_new            = */ रिक्त,
+    /* .event_free           = */ रिक्त,
+    /* .event_synchronize    = */ रिक्त,
 };
 
 // backend reg interface
 
-static const char * ggml_backend_blas_reg_get_name(ggml_backend_reg_t reg) {
-    return "BLAS";
+स्थिर स्थिरांक अक्षर * ggml_backend_blas_reg_get_name(ggml_backend_reg_t reg) {
+    परत "BLAS";
 
     GGML_UNUSED(reg);
 }
 
-static size_t ggml_backend_blas_reg_get_device_count(ggml_backend_reg_t reg) {
-    return 1;
+स्थिर माप_प्रकार ggml_backend_blas_reg_get_device_मोजणी(ggml_backend_reg_t reg) {
+    परत 1;
 
     GGML_UNUSED(reg);
 }
 
-static ggml_backend_dev_t ggml_backend_blas_reg_get_device(ggml_backend_reg_t reg, size_t index) {
+स्थिर ggml_backend_dev_t ggml_backend_blas_reg_get_device(ggml_backend_reg_t reg, माप_प्रकार index) {
     GGML_ASSERT(index == 0);
 
-    static ggml_backend_device ggml_backend_blas_device = {
+    स्थिर ggml_backend_device ggml_backend_blas_device = {
         /* .iface   = */ ggml_backend_blas_device_i,
         /* .reg     = */ reg,
         /* .context = */ nullptr,
     };
 
-    return &ggml_backend_blas_device;
+    परत &ggml_backend_blas_device;
 
     GGML_UNUSED(reg);
     GGML_UNUSED(index);
 }
 
-static void * ggml_backend_blas_get_proc_address(ggml_backend_reg_t reg, const char * name) {
-    if (std::strcmp(name, "ggml_backend_set_n_threads") == 0) {
-        return (void *)ggml_backend_blas_set_n_threads;
+स्थिर शून्य * ggml_backend_blas_get_proc_address(ggml_backend_reg_t reg, स्थिरांक अक्षर * name) {
+    जर (std::म_भेद(name, "ggml_backend_set_n_threads") == 0) {
+        परत (शून्य *)ggml_backend_blas_set_n_threads;
     }
-    return NULL;
+    परत रिक्त;
 
     GGML_UNUSED(reg);
     GGML_UNUSED(name);
 }
 
-static const struct ggml_backend_reg_i ggml_backend_blas_reg_i = {
+स्थिर स्थिरांक संरचना ggml_backend_reg_i ggml_backend_blas_reg_i = {
     /* .get_name         = */ ggml_backend_blas_reg_get_name,
-    /* .get_device_count = */ ggml_backend_blas_reg_get_device_count,
+    /* .get_device_count = */ ggml_backend_blas_reg_get_device_मोजणी,
     /* .get_device       = */ ggml_backend_blas_reg_get_device,
     /* .get_proc_address = */ ggml_backend_blas_get_proc_address,
 };
 
-ggml_backend_reg_t ggml_backend_blas_reg(void) {
-    static struct ggml_backend_reg ggml_backend_blas_reg = {
+ggml_backend_reg_t ggml_backend_blas_reg(शून्य) {
+    स्थिर संरचना ggml_backend_reg ggml_backend_blas_reg = {
         /* .api_version = */ GGML_BACKEND_API_VERSION,
         /* .iface       = */ ggml_backend_blas_reg_i,
-        /* .context     = */ NULL,
+        /* .context     = */ रिक्त,
     };
 
-    return &ggml_backend_blas_reg;
+    परत &ggml_backend_blas_reg;
 }
 
 GGML_BACKEND_DL_IMPL(ggml_backend_blas_reg)

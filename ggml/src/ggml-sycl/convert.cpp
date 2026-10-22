@@ -1,21 +1,21 @@
-#include "convert.hpp"
-#include "dequantize.hpp"
-#include "presets.hpp"
+#अन्तर्भाव "convert.hpp"
+#अन्तर्भाव "dequantize.hpp"
+#अन्तर्भाव "presets.hpp"
 
-template <int qk, int qr, dequantize_kernel_t dequantize_kernel, typename dst_t>
-static void dequantize_block(const void * __restrict__ vx, dst_t * __restrict__ y, const int64_t k,
-                             const sycl::nd_item<3> &item_ct1) {
-    const int64_t i = 2 * (item_ct1.get_local_range(2) * item_ct1.get_group(2) +
+ढाँचा <पूर्णांक qk, पूर्णांक qr, dequantize_kernel_t dequantize_kernel, typename dst_t>
+स्थिर शून्य dequantize_block(स्थिरांक शून्य * __restrict__ vx, dst_t * __restrict__ y, स्थिरांक int64_t k,
+                             स्थिरांक sycl::nd_item<3> &item_ct1) {
+    स्थिरांक int64_t i = 2 * (item_ct1.get_local_range(2) * item_ct1.get_group(2) +
                        item_ct1.get_local_id(2));
 
-    if (i >= k) {
-        return;
+    जर (i >= k) {
+        परत;
     }
 
-    const int64_t ib = i/qk; // block index
-    const int64_t iqs = (i%qk)/qr; // quant index
-    const int64_t iybs = i - i%qk; // y block start index
-    const int64_t y_offset = qr == 1 ? 1 : qk/2;
+    स्थिरांक int64_t ib = i/qk; // block index
+    स्थिरांक int64_t iqs = (i%qk)/qr; // quant index
+    स्थिरांक int64_t iybs = i - i%qk; // y block start index
+    स्थिरांक int64_t y_offset = qr == 1 ? 1 : qk/2;
 
     // dequantize
     dfloat2 v;
@@ -25,17 +25,17 @@ static void dequantize_block(const void * __restrict__ vx, dst_t * __restrict__ 
     y[iybs + iqs + y_offset] = v.y();
 }
 
-template <int qk, int qr, dequantize_kernel_t dequantize_kernel, typename dst_t>
-static void dequantize_block_sycl(const void *__restrict__ vx,
-                                  dst_t *__restrict__ y, const int64_t k,
+ढाँचा <पूर्णांक qk, पूर्णांक qr, dequantize_kernel_t dequantize_kernel, typename dst_t>
+स्थिर शून्य dequantize_block_sycl(स्थिरांक शून्य *__restrict__ vx,
+                                  dst_t *__restrict__ y, स्थिरांक int64_t k,
                                   dpct::queue_ptr stream) {
-    const int64_t num_blocks = (k + 2*SYCL_DEQUANTIZE_BLOCK_SIZE - 1) / (2*SYCL_DEQUANTIZE_BLOCK_SIZE);
+    स्थिरांक int64_t अंक_blocks = (k + 2*SYCL_DEQUANTIZE_BLOCK_SIZE - 1) / (2*SYCL_DEQUANTIZE_BLOCK_SIZE);
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
         stream->parallel_for(
             sycl::nd_range<3>(
-                sycl::range<3>(1, 1, num_blocks) *
+                sycl::range<3>(1, 1, अंक_blocks) *
                     sycl::range<3>(1, 1, SYCL_DEQUANTIZE_BLOCK_SIZE),
                 sycl::range<3>(1, 1, SYCL_DEQUANTIZE_BLOCK_SIZE)),
             [=](sycl::nd_item<3> item_ct1) {
@@ -44,11 +44,11 @@ static void dequantize_block_sycl(const void *__restrict__ vx,
     }
 }
 
-template <typename dst_t>
-static void dequantize_row_q2_K_sycl(const void *vx, dst_t *y, const int64_t k,
+ढाँचा <typename dst_t>
+स्थिर शून्य dequantize_row_q2_K_sycl(स्थिरांक शून्य *vx, dst_t *y, स्थिरांक int64_t k,
                                      dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
-#if QK_K == 256
+    स्थिरांक int64_t nb = k / QK_K;
+#जर QK_K == 256
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -60,7 +60,7 @@ static void dequantize_row_q2_K_sycl(const void *vx, dst_t *y, const int64_t k,
                                  dequantize_block_q2_K(vx, y, item_ct1);
                              });
     }
-#else
+#अन्यथा
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -76,10 +76,10 @@ static void dequantize_row_q2_K_sycl(const void *vx, dst_t *y, const int64_t k,
 #endif
 }
 
-template <typename dst_t>
-static void dequantize_row_q2_K_sycl_reorder(const void *vx, dst_t *y, const int64_t k,
+ढाँचा <typename dst_t>
+स्थिर शून्य dequantize_row_q2_K_sycl_reorder(स्थिरांक शून्य *vx, dst_t *y, स्थिरांक int64_t k,
                                              dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
+    स्थिरांक int64_t nb = k / QK_K;
 
     dpct::has_capability_or_fail(stream->get_device(), { sycl::aspect::fp16 });
     stream->parallel_for(
@@ -89,11 +89,11 @@ static void dequantize_row_q2_K_sycl_reorder(const void *vx, dst_t *y, const int
         });
 }
 
-template <typename dst_t>
-static void dequantize_row_q3_K_sycl(const void *vx, dst_t *y, const int64_t k,
+ढाँचा <typename dst_t>
+स्थिर शून्य dequantize_row_q3_K_sycl(स्थिरांक शून्य *vx, dst_t *y, स्थिरांक int64_t k,
                                      dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
-#if QK_K == 256
+    स्थिरांक int64_t nb = k / QK_K;
+#जर QK_K == 256
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -105,7 +105,7 @@ static void dequantize_row_q3_K_sycl(const void *vx, dst_t *y, const int64_t k,
                                  dequantize_block_q3_K(vx, y, item_ct1);
                              });
     }
-#else
+#अन्यथा
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -120,10 +120,10 @@ static void dequantize_row_q3_K_sycl(const void *vx, dst_t *y, const int64_t k,
 #endif
 }
 
-template <typename dst_t>
-static void dequantize_row_q3_K_sycl_reorder(const void *vx, dst_t *y, const int64_t k,
+ढाँचा <typename dst_t>
+स्थिर शून्य dequantize_row_q3_K_sycl_reorder(स्थिरांक शून्य *vx, dst_t *y, स्थिरांक int64_t k,
                                              dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
+    स्थिरांक int64_t nb = k / QK_K;
 
     dpct::has_capability_or_fail(stream->get_device(), { sycl::aspect::fp16 });
     stream->parallel_for(
@@ -133,11 +133,11 @@ static void dequantize_row_q3_K_sycl_reorder(const void *vx, dst_t *y, const int
         });
 }
 
-template <typename dst_t>
-static void dequantize_row_q4_0_sycl(const void *vx, dst_t *y, const int64_t k,
+ढाँचा <typename dst_t>
+स्थिर शून्य dequantize_row_q4_0_sycl(स्थिरांक शून्य *vx, dst_t *y, स्थिरांक int64_t k,
                                      dpct::queue_ptr stream) {
-    const int64_t nb32 = k / 32;
-    const int64_t nb = (k + 255) / 256;
+    स्थिरांक int64_t nb32 = k / 32;
+    स्थिरांक int64_t nb = (k + 255) / 256;
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -151,17 +151,17 @@ static void dequantize_row_q4_0_sycl(const void *vx, dst_t *y, const int64_t k,
     }
 }
 
-template <typename dst_t>
-static void dequantize_row_q4_0_sycl_reorder(const void *vx, dst_t *y, const int64_t k,
+ढाँचा <typename dst_t>
+स्थिर शून्य dequantize_row_q4_0_sycl_reorder(स्थिरांक शून्य *vx, dst_t *y, स्थिरांक int64_t k,
                                      dpct::queue_ptr stream) {
 
     dpct::has_capability_or_fail(stream->get_device(),
                                     {sycl::aspect::fp16});
 
     GGML_ASSERT(k % QK4_0 == 0);
-    const int64_t n_groups = ceil_div(k / 2, SYCL_DEQUANTIZE_BLOCK_SIZE);
+    स्थिरांक int64_t n_groups = ceil_div(k / 2, SYCL_DEQUANTIZE_BLOCK_SIZE);
     // decrease global range when it exceeds the max int; the kernel loops to cover the rest
-    const int64_t wg_size  = downsample_sycl_global_range(n_groups, SYCL_DEQUANTIZE_BLOCK_SIZE);
+    स्थिरांक int64_t wg_size  = downsample_sycl_global_range(n_groups, SYCL_DEQUANTIZE_BLOCK_SIZE);
     stream->parallel_for(sycl::nd_range<3>(sycl::range<3>(1, 1, n_groups) *
         sycl::range<3>(1, 1, wg_size),
         sycl::range<3>(1, 1, wg_size)),
@@ -170,8 +170,8 @@ static void dequantize_row_q4_0_sycl_reorder(const void *vx, dst_t *y, const int
         });
 }
 
-template <typename dst_t>
-static void dequantize_row_q8_0_sycl_reorder(const void *vx, dst_t *y, const int64_t k,
+ढाँचा <typename dst_t>
+स्थिर शून्य dequantize_row_q8_0_sycl_reorder(स्थिरांक शून्य *vx, dst_t *y, स्थिरांक int64_t k,
                                      dpct::queue_ptr stream) {
 
     dpct::has_capability_or_fail(stream->get_device(),
@@ -180,17 +180,17 @@ static void dequantize_row_q8_0_sycl_reorder(const void *vx, dst_t *y, const int
     // flat range<1>, two pairs (4 elements) per item: no nd_range/group math, one vectorized store.
     // k % QK8_0 == 0 implies k % 4 == 0, so the wide launch covers the row exactly (no tail).
     GGML_ASSERT(k % QK8_0 == 0);
-    stream->parallel_for(sycl::range<1>((size_t) (k / 4)),
+    stream->parallel_for(sycl::range<1>((माप_प्रकार) (k / 4)),
         [=](sycl::id<1> idx) {
             dequantize_block_q8_0_reorder_wide(vx, y, k, idx);
         });
 }
 
-template <typename dst_t>
-static void dequantize_row_q4_1_sycl(const void *vx, dst_t *y, const int64_t k,
+ढाँचा <typename dst_t>
+स्थिर शून्य dequantize_row_q4_1_sycl(स्थिरांक शून्य *vx, dst_t *y, स्थिरांक int64_t k,
                                      dpct::queue_ptr stream) {
-    const int64_t nb32 = k / 32;
-    const int64_t nb = (k + 255) / 256;
+    स्थिरांक int64_t nb32 = k / 32;
+    स्थिरांक int64_t nb = (k + 255) / 256;
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -205,21 +205,21 @@ static void dequantize_row_q4_1_sycl(const void *vx, dst_t *y, const int64_t k,
 }
 
 
-template <typename dst_t>
-static void dequantize_row_q4_K_sycl(const void *vx, dst_t *y, const int64_t k,
+ढाँचा <typename dst_t>
+स्थिर शून्य dequantize_row_q4_K_sycl(स्थिरांक शून्य *vx, dst_t *y, स्थिरांक int64_t k,
                                      dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
+    स्थिरांक int64_t nb = k / QK_K;
     dpct::has_capability_or_fail(stream->get_device(), { sycl::aspect::fp16 });
-    stream->parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t) nb * SYCL_DEQK_WI_PER_BLOCK),
-                                           sycl::range<1>((size_t) SYCL_DEQK_WI_PER_BLOCK)),
+    stream->parallel_for(sycl::nd_range<1>(sycl::range<1>((माप_प्रकार) nb * SYCL_DEQK_WI_PER_BLOCK),
+                                           sycl::range<1>((माप_प्रकार) SYCL_DEQK_WI_PER_BLOCK)),
                          [=](sycl::nd_item<1> it) { dequantize_block_q4_K_wide(vx, y, nb, it); });
 }
 
-template <typename dst_t>
-static void dequantize_row_q4_K_sycl_reorder(const void * vx, dst_t * y, const int64_t k, dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
-    const size_t  local_size  = 32;
-    const size_t  global_size = nb * local_size;
+ढाँचा <typename dst_t>
+स्थिर शून्य dequantize_row_q4_K_sycl_reorder(स्थिरांक शून्य * vx, dst_t * y, स्थिरांक int64_t k, dpct::queue_ptr stream) {
+    स्थिरांक int64_t nb = k / QK_K;
+    स्थिरांक माप_प्रकार  local_size  = 32;
+    स्थिरांक माप_प्रकार  global_size = nb * local_size;
 
     dpct::has_capability_or_fail(stream->get_device(), { sycl::aspect::fp16 });
 
@@ -233,19 +233,19 @@ static void dequantize_row_q4_K_sycl_reorder(const void * vx, dst_t * y, const i
     });
 }
 
-template <typename dst_t>
-static void dequantize_row_q5_K_sycl(const void *vx, dst_t *y, const int64_t k,
+ढाँचा <typename dst_t>
+स्थिर शून्य dequantize_row_q5_K_sycl(स्थिरांक शून्य *vx, dst_t *y, स्थिरांक int64_t k,
                                      dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
+    स्थिरांक int64_t nb = k / QK_K;
     dpct::has_capability_or_fail(stream->get_device(), { sycl::aspect::fp16 });
-    stream->parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t) nb * SYCL_DEQK_WI_PER_BLOCK),
-                                           sycl::range<1>((size_t) SYCL_DEQK_WI_PER_BLOCK)),
+    stream->parallel_for(sycl::nd_range<1>(sycl::range<1>((माप_प्रकार) nb * SYCL_DEQK_WI_PER_BLOCK),
+                                           sycl::range<1>((माप_प्रकार) SYCL_DEQK_WI_PER_BLOCK)),
                          [=](sycl::nd_item<1> it) { dequantize_block_q5_K_wide(vx, y, nb, it); });
 }
 
-template <typename dst_t>
-static void dequantize_row_q5_K_sycl_reorder(const void * vx, dst_t * y, const int64_t k, dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
+ढाँचा <typename dst_t>
+स्थिर शून्य dequantize_row_q5_K_sycl_reorder(स्थिरांक शून्य * vx, dst_t * y, स्थिरांक int64_t k, dpct::queue_ptr stream) {
+    स्थिरांक int64_t nb = k / QK_K;
 
     dpct::has_capability_or_fail(stream->get_device(), { sycl::aspect::fp16 });
 
@@ -260,11 +260,11 @@ static void dequantize_row_q5_K_sycl_reorder(const void * vx, dst_t * y, const i
     });
 }
 
-template <typename dst_t>
-static void dequantize_row_q6_K_sycl(const void *vx, dst_t *y, const int64_t k,
+ढाँचा <typename dst_t>
+स्थिर शून्य dequantize_row_q6_K_sycl(स्थिरांक शून्य *vx, dst_t *y, स्थिरांक int64_t k,
                                      dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
-#if QK_K == 256
+    स्थिरांक int64_t nb = k / QK_K;
+#जर QK_K == 256
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -276,7 +276,7 @@ static void dequantize_row_q6_K_sycl(const void *vx, dst_t *y, const int64_t k,
                                  dequantize_block_q6_K(vx, y, item_ct1);
                              });
     }
-#else
+#अन्यथा
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -292,9 +292,9 @@ static void dequantize_row_q6_K_sycl(const void *vx, dst_t *y, const int64_t k,
 #endif
 }
 
-template <typename dst_t>
-static void dequantize_row_q6_K_sycl_reorder(const void * vx, dst_t * y, const int64_t k, dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
+ढाँचा <typename dst_t>
+स्थिर शून्य dequantize_row_q6_K_sycl_reorder(स्थिरांक शून्य * vx, dst_t * y, स्थिरांक int64_t k, dpct::queue_ptr stream) {
+    स्थिरांक int64_t nb = k / QK_K;
 
     dpct::has_capability_or_fail(stream->get_device(), { sycl::aspect::fp16 });
 
@@ -303,10 +303,10 @@ static void dequantize_row_q6_K_sycl_reorder(const void * vx, dst_t * y, const i
         [=](sycl::nd_item<3> item_ct1) { dequantize_block_q6_K_reorder(vx, y + item_ct1.get_group(2) * QK_K, item_ct1.get_group(2), item_ct1, nb); });
 }
 
-template <typename dst_t>
-static void dequantize_row_iq1_s_sycl(const void *vx, dst_t *y, const int64_t k,
+ढाँचा <typename dst_t>
+स्थिर शून्य dequantize_row_iq1_s_sycl(स्थिरांक शून्य *vx, dst_t *y, स्थिरांक int64_t k,
                                         dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
+    स्थिरांक int64_t nb = k / QK_K;
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -324,10 +324,10 @@ static void dequantize_row_iq1_s_sycl(const void *vx, dst_t *y, const int64_t k,
     }
 }
 
-template <typename dst_t>
-static void dequantize_row_iq1_m_sycl(const void *vx, dst_t *y, const int64_t k,
+ढाँचा <typename dst_t>
+स्थिर शून्य dequantize_row_iq1_m_sycl(स्थिरांक शून्य *vx, dst_t *y, स्थिरांक int64_t k,
                                         dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
+    स्थिरांक int64_t nb = k / QK_K;
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -345,10 +345,10 @@ static void dequantize_row_iq1_m_sycl(const void *vx, dst_t *y, const int64_t k,
     }
 }
 
-template <typename dst_t>
-static void dequantize_row_iq2_xxs_sycl(const void *vx, dst_t *y, const int64_t k,
+ढाँचा <typename dst_t>
+स्थिर शून्य dequantize_row_iq2_xxs_sycl(स्थिरांक शून्य *vx, dst_t *y, स्थिरांक int64_t k,
                                         dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
+    स्थिरांक int64_t nb = k / QK_K;
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -366,10 +366,10 @@ static void dequantize_row_iq2_xxs_sycl(const void *vx, dst_t *y, const int64_t 
     }
 }
 
-template <typename dst_t>
-static void dequantize_row_iq2_xs_sycl(const void *vx, dst_t *y, const int64_t k,
+ढाँचा <typename dst_t>
+स्थिर शून्य dequantize_row_iq2_xs_sycl(स्थिरांक शून्य *vx, dst_t *y, स्थिरांक int64_t k,
                                        dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
+    स्थिरांक int64_t nb = k / QK_K;
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -387,10 +387,10 @@ static void dequantize_row_iq2_xs_sycl(const void *vx, dst_t *y, const int64_t k
     }
 }
 
-template <typename dst_t>
-static void dequantize_row_iq2_s_sycl(const void *vx, dst_t *y, const int64_t k,
+ढाँचा <typename dst_t>
+स्थिर शून्य dequantize_row_iq2_s_sycl(स्थिरांक शून्य *vx, dst_t *y, स्थिरांक int64_t k,
                                       dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
+    स्थिरांक int64_t nb = k / QK_K;
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -407,10 +407,10 @@ static void dequantize_row_iq2_s_sycl(const void *vx, dst_t *y, const int64_t k,
 }
 
 
-template <typename dst_t>
-static void dequantize_row_iq3_xxs_sycl(const void *vx, dst_t *y, const int64_t k,
+ढाँचा <typename dst_t>
+स्थिर शून्य dequantize_row_iq3_xxs_sycl(स्थिरांक शून्य *vx, dst_t *y, स्थिरांक int64_t k,
                                         dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
+    स्थिरांक int64_t nb = k / QK_K;
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -428,10 +428,10 @@ static void dequantize_row_iq3_xxs_sycl(const void *vx, dst_t *y, const int64_t 
     }
 }
 
-template <typename dst_t>
-static void dequantize_row_iq3_xxs_sycl_reorder(const void * vx, dst_t * y, const int64_t k,
+ढाँचा <typename dst_t>
+स्थिर शून्य dequantize_row_iq3_xxs_sycl_reorder(स्थिरांक शून्य * vx, dst_t * y, स्थिरांक int64_t k,
                                                 dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
+    स्थिरांक int64_t nb = k / QK_K;
     dpct::has_capability_or_fail(stream->get_device(), { sycl::aspect::fp16 });
     stream->parallel_for(
         sycl::nd_range<3>(sycl::range<3>(1, 1, nb) * sycl::range<3>(1, 1, 32), sycl::range<3>(1, 1, 32)),
@@ -442,10 +442,10 @@ static void dequantize_row_iq3_xxs_sycl_reorder(const void * vx, dst_t * y, cons
         });
 }
 
-template <typename dst_t>
-static void dequantize_row_iq3_s_sycl(const void *vx, dst_t *y, const int64_t k,
+ढाँचा <typename dst_t>
+स्थिर शून्य dequantize_row_iq3_s_sycl(स्थिरांक शून्य *vx, dst_t *y, स्थिरांक int64_t k,
                                         dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
+    स्थिरांक int64_t nb = k / QK_K;
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
@@ -462,10 +462,10 @@ static void dequantize_row_iq3_s_sycl(const void *vx, dst_t *y, const int64_t k,
     }
 }
 
-template <typename dst_t>
-static void dequantize_row_iq3_s_sycl_reorder(const void * vx, dst_t * y, const int64_t k,
+ढाँचा <typename dst_t>
+स्थिर शून्य dequantize_row_iq3_s_sycl_reorder(स्थिरांक शून्य * vx, dst_t * y, स्थिरांक int64_t k,
                                               dpct::queue_ptr stream) {
-    const int64_t nb = k / QK_K;
+    स्थिरांक int64_t nb = k / QK_K;
     dpct::has_capability_or_fail(stream->get_device(), { sycl::aspect::fp16 });
     stream->parallel_for(
         sycl::nd_range<3>(sycl::range<3>(1, 1, nb) * sycl::range<3>(1, 1, 32), sycl::range<3>(1, 1, 32)),
@@ -475,13 +475,13 @@ static void dequantize_row_iq3_s_sycl_reorder(const void * vx, dst_t * y, const 
         });
 }
 
-template <typename dst_t>
-static void dequantize_row_iq4_xs_sycl(const void *vx, dst_t *y, const int64_t k,
+ढाँचा <typename dst_t>
+स्थिर शून्य dequantize_row_iq4_xs_sycl(स्थिरांक शून्य *vx, dst_t *y, स्थिरांक int64_t k,
                                        dpct::queue_ptr stream) {
-    const int64_t nb = (k + QK_K - 1) / QK_K;
-#if QK_K == 64
+    स्थिरांक int64_t nb = (k + QK_K - 1) / QK_K;
+#जर QK_K == 64
     dequantize_row_iq4_nl_sycl(vx, y, k, stream);
-#else
+#अन्यथा
       {
             dpct::has_capability_or_fail(stream->get_device(),
                                          {sycl::aspect::fp16});
@@ -499,10 +499,10 @@ static void dequantize_row_iq4_xs_sycl(const void *vx, dst_t *y, const int64_t k
 #endif
 }
 
-template <typename dst_t>
-static void dequantize_row_iq4_nl_sycl(const void *vx, dst_t *y, const int64_t k,
+ढाँचा <typename dst_t>
+स्थिर शून्य dequantize_row_iq4_nl_sycl(स्थिरांक शून्य *vx, dst_t *y, स्थिरांक int64_t k,
                                        dpct::queue_ptr stream) {
-    const int64_t nb = (k + QK_K - 1) / QK_K;
+    स्थिरांक int64_t nb = (k + QK_K - 1) / QK_K;
       {
             dpct::has_capability_or_fail(stream->get_device(),
                                          {sycl::aspect::fp16});
@@ -519,9 +519,9 @@ static void dequantize_row_iq4_nl_sycl(const void *vx, dst_t *y, const int64_t k
       }
 }
 
-template <typename dst_t>
-static void dequantize_row_mxfp4_sycl(const void * vx, dst_t * y, const int64_t k, dpct::queue_ptr stream) {
-    const int nb = (k + QK_K - 1) / QK_K;
+ढाँचा <typename dst_t>
+स्थिर शून्य dequantize_row_mxfp4_sycl(स्थिरांक शून्य * vx, dst_t * y, स्थिरांक int64_t k, dpct::queue_ptr stream) {
+    स्थिरांक पूर्णांक nb = (k + QK_K - 1) / QK_K;
     stream->parallel_for(
         sycl::nd_range<3>(sycl::range<3>(1, 1, nb) * sycl::range<3>(1, 1, 32), sycl::range<3>(1, 1, 32)),
         [=](sycl::nd_item<3> item_ct1) {
@@ -529,10 +529,10 @@ static void dequantize_row_mxfp4_sycl(const void * vx, dst_t * y, const int64_t 
         });
 }
 
-template <typename dst_t>
-static void dequantize_row_mxfp4_sycl_reorder(const void * vx, dst_t * y, const int64_t k, dpct::queue_ptr stream) {
+ढाँचा <typename dst_t>
+स्थिर शून्य dequantize_row_mxfp4_sycl_reorder(स्थिरांक शून्य * vx, dst_t * y, स्थिरांक int64_t k, dpct::queue_ptr stream) {
     GGML_ASSERT(k % QK_MXFP4 == 0);
-    const int n_warp = (k / QK_MXFP4 + WARP_SIZE - 1) / WARP_SIZE;
+    स्थिरांक पूर्णांक n_warp = (k / QK_MXFP4 + WARP_SIZE - 1) / WARP_SIZE;
     stream->parallel_for(
         sycl::nd_range<3>(sycl::range<3>(1, 1, n_warp) * sycl::range<3>(1, 1, WARP_SIZE),
                           sycl::range<3>(1, 1, WARP_SIZE)),
@@ -541,10 +541,10 @@ static void dequantize_row_mxfp4_sycl_reorder(const void * vx, dst_t * y, const 
         });
 }
 
-template <typename dst_t>
-static void dequantize_row_nvfp4_sycl(const void * vx, dst_t * y, const int64_t k, dpct::queue_ptr stream) {
+ढाँचा <typename dst_t>
+स्थिर शून्य dequantize_row_nvfp4_sycl(स्थिरांक शून्य * vx, dst_t * y, स्थिरांक int64_t k, dpct::queue_ptr stream) {
     GGML_ASSERT(k % QK_NVFP4 == 0);
-    const int nb = k / QK_NVFP4;
+    स्थिरांक पूर्णांक nb = k / QK_NVFP4;
     stream->parallel_for(
         sycl::nd_range<3>(sycl::range<3>(1, 1, nb) * sycl::range<3>(1, 1, 32), sycl::range<3>(1, 1, 32)),
         [=](sycl::nd_item<3> /*item_ct1*/) {
@@ -553,90 +553,90 @@ static void dequantize_row_nvfp4_sycl(const void * vx, dst_t * y, const int64_t 
 }
 
 
-template <int qk, int qr, dequantize_kernel_t dequantize_kernel, typename dst_t>
-static void dequantize_block_nc(const void * __restrict__ vx, dst_t * __restrict__ y,
-        const int64_t ne00, const int64_t ne01, const int64_t ne02,
-        const int64_t s01, const int64_t s02, const int64_t s03) {
-    auto          item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    const int64_t i00 = 2 * (int64_t(item_ct1.get_local_range(2)) * item_ct1.get_group(2) + item_ct1.get_local_id(2));
+ढाँचा <पूर्णांक qk, पूर्णांक qr, dequantize_kernel_t dequantize_kernel, typename dst_t>
+स्थिर शून्य dequantize_block_nc(स्थिरांक शून्य * __restrict__ vx, dst_t * __restrict__ y,
+        स्थिरांक int64_t ne00, स्थिरांक int64_t ne01, स्थिरांक int64_t ne02,
+        स्थिरांक int64_t s01, स्थिरांक int64_t s02, स्थिरांक int64_t s03) {
+    स्वतः          item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
+    स्थिरांक int64_t i00 = 2 * (int64_t(item_ct1.get_local_range(2)) * item_ct1.get_group(2) + item_ct1.get_local_id(2));
 
-    if (i00 >= ne00) {
-        return;
+    जर (i00 >= ne00) {
+        परत;
     }
 
-    const int64_t i01 = item_ct1.get_group(1);
-    const int64_t i02 = item_ct1.get_group(0) % ne02;
-    const int64_t i03 = item_ct1.get_group(0) / ne02;
+    स्थिरांक int64_t i01 = item_ct1.get_group(1);
+    स्थिरांक int64_t i02 = item_ct1.get_group(0) % ne02;
+    स्थिरांक int64_t i03 = item_ct1.get_group(0) / ne02;
 
-    const int64_t ibx0 = i03*s03 + i02*s02 + i01*s01;
+    स्थिरांक int64_t ibx0 = i03*s03 + i02*s02 + i01*s01;
 
-    const int64_t ib = ibx0 + i00/qk; // block index
-    const int64_t iqs = (i00%qk)/qr; // quant index
-    const int64_t iybs = i00 - i00%qk; // y block start index
-    const int64_t y_offset = qr == 1 ? 1 : qk/2;
+    स्थिरांक int64_t ib = ibx0 + i00/qk; // block index
+    स्थिरांक int64_t iqs = (i00%qk)/qr; // quant index
+    स्थिरांक int64_t iybs = i00 - i00%qk; // y block start index
+    स्थिरांक int64_t y_offset = qr == 1 ? 1 : qk/2;
 
     // dequantize
     #ifdef GGML_SYCL_F16
         sycl::half2 v;
-    #else
+    #अन्यथा
         sycl::float2 v;
     #endif
 
     dequantize_kernel(vx, ib, iqs, v);
 
-    const int64_t iy0 = ((i03*ne02 + i02)*ne01 + i01)*ne00 + iybs + iqs;
+    स्थिरांक int64_t iy0 = ((i03*ne02 + i02)*ne01 + i01)*ne00 + iybs + iqs;
     y[iy0 + 0]        = ggml_sycl_cast<dst_t>(v.x());
     y[iy0 + y_offset] = ggml_sycl_cast<dst_t>(v.y());
 }
 
 
-template <int qk, int qr, dequantize_kernel_t dequantize_kernel, typename dst_t>
-static void dequantize_block_nc_sycl(const void *    vx,
+ढाँचा <पूर्णांक qk, पूर्णांक qr, dequantize_kernel_t dequantize_kernel, typename dst_t>
+स्थिर शून्य dequantize_block_nc_sycl(स्थिरांक शून्य *    vx,
                                   dst_t *         y,
-                                  const int64_t   ne00,
-                                  const int64_t   ne01,
-                                  const int64_t   ne02,
-                                  const int64_t   ne03,
-                                  const int64_t   s01,
-                                  const int64_t   s02,
-                                  const int64_t   s03,
+                                  स्थिरांक int64_t   ne00,
+                                  स्थिरांक int64_t   ne01,
+                                  स्थिरांक int64_t   ne02,
+                                  स्थिरांक int64_t   ne03,
+                                  स्थिरांक int64_t   s01,
+                                  स्थिरांक int64_t   s02,
+                                  स्थिरांक int64_t   s03,
                                   dpct::queue_ptr stream) {
-    const dpct::dim3 num_blocks((ne00 + 2 * SYCL_DEQUANTIZE_BLOCK_SIZE - 1) / (2 * SYCL_DEQUANTIZE_BLOCK_SIZE), ne01,
+    स्थिरांक dpct::dim3 अंक_blocks((ne00 + 2 * SYCL_DEQUANTIZE_BLOCK_SIZE - 1) / (2 * SYCL_DEQUANTIZE_BLOCK_SIZE), ne01,
                                 ne02 * ne03);
-    stream->parallel_for(sycl::nd_range<3>(num_blocks * sycl::range<3>(1, 1, SYCL_DEQUANTIZE_BLOCK_SIZE),
+    stream->parallel_for(sycl::nd_range<3>(अंक_blocks * sycl::range<3>(1, 1, SYCL_DEQUANTIZE_BLOCK_SIZE),
                                            sycl::range<3>(1, 1, SYCL_DEQUANTIZE_BLOCK_SIZE)),
                          [=](sycl::nd_item<3> item_ct1) {
                              GGML_UNUSED(item_ct1);
                              dequantize_block_nc<qk, qr, dequantize_kernel>(vx, y, ne00, ne01, ne02, s01, s02, s03);
                          });
 }
-template <typename src_t, typename dst_t>
-static void convert_unary_nc(const void * __restrict__ vx, dst_t * __restrict__ y, const int64_t ne00, const int64_t ne01,
-                          const int64_t ne02, const int64_t s01, const int64_t s02, const int64_t s03,
-                          const sycl::nd_item<3> & item_ct1) {
+ढाँचा <typename src_t, typename dst_t>
+स्थिर शून्य convert_unary_nc(स्थिरांक शून्य * __restrict__ vx, dst_t * __restrict__ y, स्थिरांक int64_t ne00, स्थिरांक int64_t ne01,
+                          स्थिरांक int64_t ne02, स्थिरांक int64_t s01, स्थिरांक int64_t s02, स्थिरांक int64_t s03,
+                          स्थिरांक sycl::nd_item<3> & item_ct1) {
 
-    const int64_t work_group_size = item_ct1.get_local_range(2);
-    const int64_t global_id       = item_ct1.get_local_id(2) + work_group_size * item_ct1.get_group(2);
+    स्थिरांक int64_t work_group_size = item_ct1.get_local_range(2);
+    स्थिरांक int64_t global_id       = item_ct1.get_local_id(2) + work_group_size * item_ct1.get_group(2);
 
-    const int64_t i01 = item_ct1.get_group(1);
-    const int64_t i02 = item_ct1.get_group(0) % ne02;
-    const int64_t i03 = item_ct1.get_group(0) / ne02;
+    स्थिरांक int64_t i01 = item_ct1.get_group(1);
+    स्थिरांक int64_t i02 = item_ct1.get_group(0) % ne02;
+    स्थिरांक int64_t i03 = item_ct1.get_group(0) / ne02;
 
     // make each work-item deal with more elements since sycl global range can not exceed max int
-    const src_t * x = static_cast<const src_t *>(vx);
-    const int64_t ix = i03 * s03 + i02 * s02 + i01 * s01;
-    const int64_t iy = ((i03 * ne02 + i02) * ne01 + i01) * ne00;
+    स्थिरांक src_t * x = static_cast<स्थिरांक src_t *>(vx);
+    स्थिरांक int64_t ix = i03 * s03 + i02 * s02 + i01 * s01;
+    स्थिरांक int64_t iy = ((i03 * ne02 + i02) * ne01 + i01) * ne00;
 
 #pragma unroll
-    for (int64_t i00 = global_id; i00 < ne00; i00 += work_group_size * item_ct1.get_group_range(2)) {
+    साठी (int64_t i00 = global_id; i00 < ne00; i00 += work_group_size * item_ct1.get_group_range(2)) {
         y[iy + i00] = static_cast<dst_t>(x[ix + i00]);
     }
 }
 
-template <typename src_t, typename dst_t>
-static void convert_unary_nc_sycl(const void * __restrict__ vx, dst_t * __restrict__ y,
-                                  const int64_t ne00, const int64_t ne01, const int64_t ne02, const int64_t ne03,
-                                  const int64_t s01, const int64_t s02, const int64_t s03, dpct::queue_ptr queue) {
+ढाँचा <typename src_t, typename dst_t>
+स्थिर शून्य convert_unary_nc_sycl(स्थिरांक शून्य * __restrict__ vx, dst_t * __restrict__ y,
+                                  स्थिरांक int64_t ne00, स्थिरांक int64_t ne01, स्थिरांक int64_t ne02, स्थिरांक int64_t ne03,
+                                  स्थिरांक int64_t s01, स्थिरांक int64_t s02, स्थिरांक int64_t s03, dpct::queue_ptr queue) {
     dpct::has_capability_or_fail(queue->get_device(), { sycl::aspect::fp16 });
 
     sycl::range<3> global_size(ne02 * ne03, ne01, ceil_div(ne00, SYCL_DEQUANTIZE_BLOCK_SIZE));
@@ -651,176 +651,176 @@ static void convert_unary_nc_sycl(const void * __restrict__ vx, dst_t * __restri
     });
 }
 
-template <typename src_t, typename dst_t>
-static void convert_unary_sycl(const void * vx, dst_t * y, const int64_t k, dpct::queue_ptr queue) {
+ढाँचा <typename src_t, typename dst_t>
+स्थिर शून्य convert_unary_sycl(स्थिरांक शून्य * vx, dst_t * y, स्थिरांक int64_t k, dpct::queue_ptr queue) {
     convert_unary_nc_sycl<src_t>(vx, y, k, 1, 1, 1, k, k, k, queue);
 }
 
 
-static bool is_reordered_src0(const ggml_tensor * dst) {
-    return dst->src[0]->extra &&
+स्थिर तार्किक is_reordered_src0(स्थिरांक ggml_tensor * dst) {
+    परत dst->src[0]->extra &&
            ((ggml_tensor_extra_gpu *) dst->src[0]->extra)->optimized_feature.reorder;
 }
 
-template <typename dst_t>
-static to_t_sycl_t<dst_t> ggml_get_dequant_sycl(ggml_type type, ggml_tensor * dst) {
-    switch (type) {
-        case GGML_TYPE_Q1_0:
-            return dequantize_block_sycl<QK1_0, QR1_0, dequantize_q1_0, dst_t>;
-        case GGML_TYPE_Q2_0:
-            return dequantize_block_sycl<QK2_0, QR2_0, dequantize_q2_0, dst_t>;
-        case GGML_TYPE_Q4_0:
-            if (is_reordered_src0(dst)) {
-                return dequantize_row_q4_0_sycl_reorder;
-            } else if constexpr (std::is_same_v<dst_t, float>) {
-                return dequantize_row_q4_0_sycl;
-            } else {
-                return dequantize_block_sycl<QK4_0, QR4_0, dequantize_q4_0, dst_t>;
+ढाँचा <typename dst_t>
+स्थिर to_t_sycl_t<dst_t> ggml_get_dequant_sycl(ggml_type type, ggml_tensor * dst) {
+    निवड (type) {
+        स्थिती GGML_TYPE_Q1_0:
+            परत dequantize_block_sycl<QK1_0, QR1_0, dequantize_q1_0, dst_t>;
+        स्थिती GGML_TYPE_Q2_0:
+            परत dequantize_block_sycl<QK2_0, QR2_0, dequantize_q2_0, dst_t>;
+        स्थिती GGML_TYPE_Q4_0:
+            जर (is_reordered_src0(dst)) {
+                परत dequantize_row_q4_0_sycl_reorder;
+            } अन्यथा जर constexpr (std::is_same_v<dst_t, दशांश>) {
+                परत dequantize_row_q4_0_sycl;
+            } अन्यथा {
+                परत dequantize_block_sycl<QK4_0, QR4_0, dequantize_q4_0, dst_t>;
             }
-        case GGML_TYPE_Q4_1:
-            if constexpr (std::is_same_v<dst_t, float>) {
-                return dequantize_row_q4_1_sycl;
-            } else {
-                return dequantize_block_sycl<QK4_1, QR4_1, dequantize_q4_1, dst_t>;
+        स्थिती GGML_TYPE_Q4_1:
+            जर constexpr (std::is_same_v<dst_t, दशांश>) {
+                परत dequantize_row_q4_1_sycl;
+            } अन्यथा {
+                परत dequantize_block_sycl<QK4_1, QR4_1, dequantize_q4_1, dst_t>;
             }
-        case GGML_TYPE_Q5_0:
-            return dequantize_block_sycl<QK5_0, QR5_0, dequantize_q5_0, dst_t>;
-        case GGML_TYPE_Q5_1:
-            return dequantize_block_sycl<QK5_1, QR5_1, dequantize_q5_1, dst_t>;
-        case GGML_TYPE_Q8_0:
-            if (is_reordered_src0(dst)) {
-                return dequantize_row_q8_0_sycl_reorder;
-            } else {
-                return dequantize_block_sycl<QK8_0, QR8_0, dequantize_q8_0, dst_t>;
+        स्थिती GGML_TYPE_Q5_0:
+            परत dequantize_block_sycl<QK5_0, QR5_0, dequantize_q5_0, dst_t>;
+        स्थिती GGML_TYPE_Q5_1:
+            परत dequantize_block_sycl<QK5_1, QR5_1, dequantize_q5_1, dst_t>;
+        स्थिती GGML_TYPE_Q8_0:
+            जर (is_reordered_src0(dst)) {
+                परत dequantize_row_q8_0_sycl_reorder;
+            } अन्यथा {
+                परत dequantize_block_sycl<QK8_0, QR8_0, dequantize_q8_0, dst_t>;
             }
-        case GGML_TYPE_Q2_K:
-            if (is_reordered_src0(dst)) {
-                return dequantize_row_q2_K_sycl_reorder;
-            } else {
-                return dequantize_row_q2_K_sycl;
+        स्थिती GGML_TYPE_Q2_K:
+            जर (is_reordered_src0(dst)) {
+                परत dequantize_row_q2_K_sycl_reorder;
+            } अन्यथा {
+                परत dequantize_row_q2_K_sycl;
             }
-        case GGML_TYPE_Q3_K:
-            if (is_reordered_src0(dst)) {
-                return dequantize_row_q3_K_sycl_reorder;
-            } else {
-                return dequantize_row_q3_K_sycl;
+        स्थिती GGML_TYPE_Q3_K:
+            जर (is_reordered_src0(dst)) {
+                परत dequantize_row_q3_K_sycl_reorder;
+            } अन्यथा {
+                परत dequantize_row_q3_K_sycl;
             }
-        case GGML_TYPE_Q4_K:
-            if (is_reordered_src0(dst)) {
-                return dequantize_row_q4_K_sycl_reorder;
-            } else {
-                return dequantize_row_q4_K_sycl;
+        स्थिती GGML_TYPE_Q4_K:
+            जर (is_reordered_src0(dst)) {
+                परत dequantize_row_q4_K_sycl_reorder;
+            } अन्यथा {
+                परत dequantize_row_q4_K_sycl;
             }
-        case GGML_TYPE_Q5_K:
-            if (is_reordered_src0(dst)) {
-                return dequantize_row_q5_K_sycl_reorder;
-            } else {
-                return dequantize_row_q5_K_sycl;
+        स्थिती GGML_TYPE_Q5_K:
+            जर (is_reordered_src0(dst)) {
+                परत dequantize_row_q5_K_sycl_reorder;
+            } अन्यथा {
+                परत dequantize_row_q5_K_sycl;
             }
-        case GGML_TYPE_Q6_K:
-            if (is_reordered_src0(dst)) {
-                return dequantize_row_q6_K_sycl_reorder;
-            } else {
-                return dequantize_row_q6_K_sycl;
+        स्थिती GGML_TYPE_Q6_K:
+            जर (is_reordered_src0(dst)) {
+                परत dequantize_row_q6_K_sycl_reorder;
+            } अन्यथा {
+                परत dequantize_row_q6_K_sycl;
             }
-        case GGML_TYPE_IQ1_S:
-            return dequantize_row_iq1_s_sycl;
-        case GGML_TYPE_IQ1_M:
-            return dequantize_row_iq1_m_sycl;
-        case GGML_TYPE_IQ2_XXS:
-            return dequantize_row_iq2_xxs_sycl;
-        case GGML_TYPE_IQ2_XS:
-            return dequantize_row_iq2_xs_sycl;
-        case GGML_TYPE_IQ2_S:
-            return dequantize_row_iq2_s_sycl;
-        case GGML_TYPE_IQ3_XXS:
-            if (is_reordered_src0(dst)) {
-                return dequantize_row_iq3_xxs_sycl_reorder;
-            } else {
-                return dequantize_row_iq3_xxs_sycl;
+        स्थिती GGML_TYPE_IQ1_S:
+            परत dequantize_row_iq1_s_sycl;
+        स्थिती GGML_TYPE_IQ1_M:
+            परत dequantize_row_iq1_m_sycl;
+        स्थिती GGML_TYPE_IQ2_XXS:
+            परत dequantize_row_iq2_xxs_sycl;
+        स्थिती GGML_TYPE_IQ2_XS:
+            परत dequantize_row_iq2_xs_sycl;
+        स्थिती GGML_TYPE_IQ2_S:
+            परत dequantize_row_iq2_s_sycl;
+        स्थिती GGML_TYPE_IQ3_XXS:
+            जर (is_reordered_src0(dst)) {
+                परत dequantize_row_iq3_xxs_sycl_reorder;
+            } अन्यथा {
+                परत dequantize_row_iq3_xxs_sycl;
             }
-        case GGML_TYPE_IQ3_S:
-            if (is_reordered_src0(dst)) {
-                return dequantize_row_iq3_s_sycl_reorder;
-            } else {
-                return dequantize_row_iq3_s_sycl;
+        स्थिती GGML_TYPE_IQ3_S:
+            जर (is_reordered_src0(dst)) {
+                परत dequantize_row_iq3_s_sycl_reorder;
+            } अन्यथा {
+                परत dequantize_row_iq3_s_sycl;
             }
-        case GGML_TYPE_IQ4_XS:
-            return dequantize_row_iq4_xs_sycl;
-        case GGML_TYPE_IQ4_NL:
-            return dequantize_row_iq4_nl_sycl;
-        case GGML_TYPE_MXFP4:
-            if (is_reordered_src0(dst)) {
-                return dequantize_row_mxfp4_sycl_reorder;
+        स्थिती GGML_TYPE_IQ4_XS:
+            परत dequantize_row_iq4_xs_sycl;
+        स्थिती GGML_TYPE_IQ4_NL:
+            परत dequantize_row_iq4_nl_sycl;
+        स्थिती GGML_TYPE_MXFP4:
+            जर (is_reordered_src0(dst)) {
+                परत dequantize_row_mxfp4_sycl_reorder;
             }
-            return dequantize_row_mxfp4_sycl;
-        case GGML_TYPE_NVFP4:
-            return dequantize_row_nvfp4_sycl;
-        case GGML_TYPE_F32:
-            if constexpr (std::is_same_v<dst_t, sycl::half>) {
-                return convert_unary_sycl<float>;
+            परत dequantize_row_mxfp4_sycl;
+        स्थिती GGML_TYPE_NVFP4:
+            परत dequantize_row_nvfp4_sycl;
+        स्थिती GGML_TYPE_F32:
+            जर constexpr (std::is_same_v<dst_t, sycl::half>) {
+                परत convert_unary_sycl<दशांश>;
             }
-            break;
-        case GGML_TYPE_F16:
-            if constexpr (std::is_same_v<dst_t, float>) {
-                return convert_unary_sycl<sycl::half>;
+            थांबा;
+        स्थिती GGML_TYPE_F16:
+            जर constexpr (std::is_same_v<dst_t, दशांश>) {
+                परत convert_unary_sycl<sycl::half>;
             }
-            break;
+            थांबा;
 #ifdef GGML_SYCL_HAS_BF16
-        case GGML_TYPE_BF16:
-            return convert_unary_sycl<sycl::ext::oneapi::bfloat16>;
+        स्थिती GGML_TYPE_BF16:
+            परत convert_unary_sycl<sycl::ext::oneapi::bfloat16>;
 #endif
-        default:
-            break;
+        पूर्वनिर्धारित:
+            थांबा;
     }
     GGML_ABORT("fatal error: unsupport data type=%s\n", ggml_type_name(type));
 }
 
 to_fp16_sycl_t ggml_get_to_fp16_sycl(ggml_type type, ggml_tensor * dst) {
-    return ggml_get_dequant_sycl<sycl::half>(type, dst);
+    परत ggml_get_dequant_sycl<sycl::half>(type, dst);
 }
 
 to_fp32_sycl_t ggml_get_to_fp32_sycl(ggml_type type, ggml_tensor *dst) {
-    return ggml_get_dequant_sycl<float>(type, dst);
+    परत ggml_get_dequant_sycl<दशांश>(type, dst);
 }
 
 
 #ifdef GGML_SYCL_HAS_BF16
 to_bf16_sycl_t ggml_get_to_bf16_sycl(ggml_type type, ggml_tensor * /*dst*/) {
-    switch (type) {
-        case GGML_TYPE_F32:
-            return convert_unary_sycl<float>;
-        case GGML_TYPE_F16:
-            return convert_unary_sycl<sycl::half>;
-        case GGML_TYPE_BF16:
-            return convert_unary_sycl<sycl::ext::oneapi::bfloat16>;
-        default:
+    निवड (type) {
+        स्थिती GGML_TYPE_F32:
+            परत convert_unary_sycl<दशांश>;
+        स्थिती GGML_TYPE_F16:
+            परत convert_unary_sycl<sycl::half>;
+        स्थिती GGML_TYPE_BF16:
+            परत convert_unary_sycl<sycl::ext::oneapi::bfloat16>;
+        पूर्वनिर्धारित:
             GGML_ABORT("fatal error: unsupport data type=%s\n", ggml_type_name(type));
     }
 }
 #endif
 
 to_fp16_nc_sycl_t ggml_get_to_fp16_nc_sycl(ggml_type type) {
-    switch (type) {
-        case GGML_TYPE_F32:
-            return convert_unary_nc_sycl<float>;
+    निवड (type) {
+        स्थिती GGML_TYPE_F32:
+            परत convert_unary_nc_sycl<दशांश>;
 #ifdef GGML_SYCL_HAS_BF16
-        case GGML_TYPE_BF16:
-            return convert_unary_nc_sycl<sycl::ext::oneapi::bfloat16>;
+        स्थिती GGML_TYPE_BF16:
+            परत convert_unary_nc_sycl<sycl::ext::oneapi::bfloat16>;
 #endif
-        case GGML_TYPE_Q1_0:
-            return dequantize_block_nc_sycl<QK1_0, QR1_0, dequantize_q1_0>;
-        case GGML_TYPE_Q4_0:
-            return dequantize_block_nc_sycl<QK4_0, QR4_0, dequantize_q4_0>;
-        case GGML_TYPE_Q4_1:
-            return dequantize_block_nc_sycl<QK4_1, QR4_1, dequantize_q4_1>;
-        case GGML_TYPE_Q5_0:
-            return dequantize_block_nc_sycl<QK5_0, QR5_0, dequantize_q5_0>;
-        case GGML_TYPE_Q5_1:
-            return dequantize_block_nc_sycl<QK5_1, QR5_1, dequantize_q5_1>;
-        case GGML_TYPE_Q8_0:
-            return dequantize_block_nc_sycl<QK8_0, QR8_0, dequantize_q8_0>;
-        default:
-            return nullptr;
+        स्थिती GGML_TYPE_Q1_0:
+            परत dequantize_block_nc_sycl<QK1_0, QR1_0, dequantize_q1_0>;
+        स्थिती GGML_TYPE_Q4_0:
+            परत dequantize_block_nc_sycl<QK4_0, QR4_0, dequantize_q4_0>;
+        स्थिती GGML_TYPE_Q4_1:
+            परत dequantize_block_nc_sycl<QK4_1, QR4_1, dequantize_q4_1>;
+        स्थिती GGML_TYPE_Q5_0:
+            परत dequantize_block_nc_sycl<QK5_0, QR5_0, dequantize_q5_0>;
+        स्थिती GGML_TYPE_Q5_1:
+            परत dequantize_block_nc_sycl<QK5_1, QR5_1, dequantize_q5_1>;
+        स्थिती GGML_TYPE_Q8_0:
+            परत dequantize_block_nc_sycl<QK8_0, QR8_0, dequantize_q8_0>;
+        पूर्वनिर्धारित:
+            परत nullptr;
     }
 }

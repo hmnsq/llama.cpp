@@ -1,152 +1,152 @@
-#include "virtgpu-utils.h"
+#अन्तर्भाव "virtgpu-utils.h"
 
-#include <malloc.h>
-#include <stdlib.h>
+#अन्तर्भाव <malloc.h>
+#अन्तर्भाव <stdlib.h>
 
-#include <cstring>
+#अन्तर्भाव <cstring>
 
-#define NODE_ALLOC_ALIGN 64
-#define NODE_PTR_MASK    (~((uintptr_t) NODE_ALLOC_ALIGN - 1))
-#define NODE_LEVEL_MASK  ((uintptr_t) NODE_ALLOC_ALIGN - 1)
-#define NULL_NODE        0
+#define गाठ_ALLOC_ALIGN 64
+#define गाठ_PTR_MASK    (~((uintptr_t) गाठ_ALLOC_ALIGN - 1))
+#define गाठ_LEVEL_MASK  ((uintptr_t) गाठ_ALLOC_ALIGN - 1)
+#define NULL_गाठ        0
 
 #define os_malloc_aligned(_size, _align) _aligned_malloc(_size, _align)
-#define os_free_aligned(_ptr)            free(_ptr)
+#define os_free_aligned(_ptr)            मुक्त(_ptr)
 #define p_atomic_cmpxchg(v, old, _new)   __sync_val_compare_and_swap((v), (old), (_new))
 
-static inline uint64_t util_logbase2_64(uint64_t n) {
-#if defined(HAVE___BUILTIN_CLZLL)
-    return ((sizeof(uint64_t) * 8 - 1) - __builtin_clzll(n | 1));
-#else
+स्थिर ओळीत uint64_t util_logbase2_64(uint64_t n) {
+#जर defined(HAVE___BUILTIN_CLZLL)
+    परत ((आकार(uint64_t) * 8 - 1) - __builtin_clzll(n | 1));
+#अन्यथा
     uint64_t pos = 0ull;
-    if (n >= 1ull << 32) {
+    जर (n >= 1ull << 32) {
         n >>= 32;
         pos += 32;
     }
-    if (n >= 1ull << 16) {
+    जर (n >= 1ull << 16) {
         n >>= 16;
         pos += 16;
     }
-    if (n >= 1ull << 8) {
+    जर (n >= 1ull << 8) {
         n >>= 8;
         pos += 8;
     }
-    if (n >= 1ull << 4) {
+    जर (n >= 1ull << 4) {
         n >>= 4;
         pos += 4;
     }
-    if (n >= 1ull << 2) {
+    जर (n >= 1ull << 2) {
         n >>= 2;
         pos += 2;
     }
-    if (n >= 1ull << 1) {
+    जर (n >= 1ull << 1) {
         pos += 1;
     }
-    return pos;
+    परत pos;
 #endif
 }
 
-void util_sparse_array_init(util_sparse_array * arr, size_t elem_size, size_t node_size) {
-    memset(arr, 0, sizeof(*arr));
+शून्य util_sparse_array_init(util_sparse_array * arr, माप_प्रकार elem_size, माप_प्रकार गाठ_size) {
+    स_रखो(arr, 0, आकार(*arr));
     arr->elem_size      = elem_size;
-    arr->node_size_log2 = util_logbase2_64(node_size);
-    assert(node_size >= 2 && node_size == (1ull << arr->node_size_log2));
+    arr->गाठ_size_log2 = util_logbase2_64(गाठ_size);
+    प्रतिज्ञा(गाठ_size >= 2 && गाठ_size == (1ull << arr->गाठ_size_log2));
 }
 
-static inline void * os_malloc_aligned(size_t size, size_t alignment) {
-    void * ptr;
-    alignment = (alignment + sizeof(void *) - 1) & ~(sizeof(void *) - 1);
-    if (posix_memalign(&ptr, alignment, size) != 0) {
-        return NULL;
+स्थिर ओळीत शून्य * os_malloc_aligned(माप_प्रकार size, माप_प्रकार alignment) {
+    शून्य * ptr;
+    alignment = (alignment + आकार(शून्य *) - 1) & ~(आकार(शून्य *) - 1);
+    जर (posix_memalign(&ptr, alignment, size) != 0) {
+        परत रिक्त;
     }
-    return ptr;
+    परत ptr;
 }
 
-static inline void * _util_sparse_array_node_data(uintptr_t handle) {
-    return (void *) (handle & NODE_PTR_MASK);
+स्थिर ओळीत शून्य * util_sparse_array_गाठ_data(uintptr_t handle) {
+    परत (शून्य *) (handle & गाठ_PTR_MASK);
 }
 
-static inline unsigned _util_sparse_array_node_level(uintptr_t handle) {
-    return handle & NODE_LEVEL_MASK;
+स्थिर ओळीत अचिन्हित util_sparse_array_गाठ_level(uintptr_t handle) {
+    परत handle & गाठ_LEVEL_MASK;
 }
 
-static inline void _util_sparse_array_node_finish(util_sparse_array * arr, uintptr_t node) {
-    if (_util_sparse_array_node_level(node) > 0) {
-        uintptr_t * children  = (uintptr_t *) _util_sparse_array_node_data(node);
-        size_t      node_size = 1ull << arr->node_size_log2;
-        for (size_t i = 0; i < node_size; i++) {
-            if (children[i]) {
-                _util_sparse_array_node_finish(arr, children[i]);
+स्थिर ओळीत शून्य util_sparse_array_गाठ_finish(util_sparse_array * arr, uintptr_t गाठ) {
+    जर (util_sparse_array_गाठ_level(गाठ) > 0) {
+        uintptr_t * children  = (uintptr_t *) util_sparse_array_गाठ_data(गाठ);
+        माप_प्रकार      गाठ_size = 1ull << arr->गाठ_size_log2;
+        साठी (माप_प्रकार i = 0; i < गाठ_size; i++) {
+            जर (children[i]) {
+                util_sparse_array_गाठ_finish(arr, children[i]);
             }
         }
     }
 
-    os_free_aligned(_util_sparse_array_node_data(node));
+    os_free_aligned(util_sparse_array_गाठ_data(गाठ));
 }
 
-static inline uintptr_t _util_sparse_array_node(void * data, unsigned level) {
-    assert(data != NULL);
-    assert(((uintptr_t) data & NODE_LEVEL_MASK) == 0);
-    assert((level & NODE_PTR_MASK) == 0);
-    return (uintptr_t) data | level;
+स्थिर ओळीत uintptr_t util_sparse_array_गाठ(शून्य * data, अचिन्हित level) {
+    प्रतिज्ञा(data != रिक्त);
+    प्रतिज्ञा(((uintptr_t) data & गाठ_LEVEL_MASK) == 0);
+    प्रतिज्ञा((level & गाठ_PTR_MASK) == 0);
+    परत (uintptr_t) data | level;
 }
 
-inline uintptr_t _util_sparse_array_node_alloc(util_sparse_array * arr, unsigned level) {
-    size_t size;
-    if (level == 0) {
-        size = arr->elem_size << arr->node_size_log2;
-    } else {
-        size = sizeof(uintptr_t) << arr->node_size_log2;
+ओळीत uintptr_t util_sparse_array_गाठ_alloc(util_sparse_array * arr, अचिन्हित level) {
+    माप_प्रकार size;
+    जर (level == 0) {
+        size = arr->elem_size << arr->गाठ_size_log2;
+    } अन्यथा {
+        size = आकार(uintptr_t) << arr->गाठ_size_log2;
     }
 
-    void * data = os_malloc_aligned(size, NODE_ALLOC_ALIGN);
-    memset(data, 0, size);
+    शून्य * data = os_malloc_aligned(size, गाठ_ALLOC_ALIGN);
+    स_रखो(data, 0, size);
 
-    return _util_sparse_array_node(data, level);
+    परत util_sparse_array_गाठ(data, level);
 }
 
-static inline uintptr_t _util_sparse_array_set_or_free_node(uintptr_t * node_ptr, uintptr_t cmp_node, uintptr_t node) {
-    uintptr_t prev_node = p_atomic_cmpxchg(node_ptr, cmp_node, node);
+स्थिर ओळीत uintptr_t util_sparse_array_set_or_free_गाठ(uintptr_t * गाठ_ptr, uintptr_t cmp_गाठ, uintptr_t गाठ) {
+    uintptr_t prev_गाठ = p_atomic_cmpxchg(गाठ_ptr, cmp_गाठ, गाठ);
 
-    if (prev_node != cmp_node) {
+    जर (prev_गाठ != cmp_गाठ) {
         /* We lost the race.  Free this one and return the one that was already
        * allocated.
        */
-        os_free_aligned(_util_sparse_array_node_data(node));
-        return prev_node;
-    } else {
-        return node;
+        os_free_aligned(util_sparse_array_गाठ_data(गाठ));
+        परत prev_गाठ;
+    } अन्यथा {
+        परत गाठ;
     }
 }
 
-void * util_sparse_array_get(util_sparse_array * arr, uint64_t idx) {
-    const unsigned node_size_log2 = arr->node_size_log2;
-    uintptr_t      root           = p_atomic_read(&arr->root);
-    if (unlikely(!root)) {
-        unsigned root_level = 0;
-        uint64_t idx_iter   = idx >> node_size_log2;
-        while (idx_iter) {
-            idx_iter >>= node_size_log2;
-            root_level++;
+शून्य * util_sparse_array_get(util_sparse_array * arr, uint64_t idx) {
+    स्थिरांक अचिन्हित गाठ_size_log2 = arr->गाठ_size_log2;
+    uintptr_t      मूळ           = p_atomic_read(&arr->मूळ);
+    जर (unlikely(!मूळ)) {
+        अचिन्हित मूळ_level = 0;
+        uint64_t idx_iter   = idx >> गाठ_size_log2;
+        पर्यंत (idx_iter) {
+            idx_iter >>= गाठ_size_log2;
+            मूळ_level++;
         }
-        uintptr_t new_root = _util_sparse_array_node_alloc(arr, root_level);
-        root               = _util_sparse_array_set_or_free_node(&arr->root, NULL_NODE, new_root);
+        uintptr_t new_मूळ = util_sparse_array_गाठ_alloc(arr, मूळ_level);
+        मूळ               = util_sparse_array_set_or_free_गाठ(&arr->मूळ, NULL_गाठ, new_मूळ);
     }
 
-    while (1) {
-        unsigned root_level = _util_sparse_array_node_level(root);
-        uint64_t root_idx   = idx >> (root_level * node_size_log2);
-        if (likely(root_idx < (1ull << node_size_log2))) {
-            break;
+    पर्यंत (1) {
+        अचिन्हित मूळ_level = util_sparse_array_गाठ_level(मूळ);
+        uint64_t मूळ_idx   = idx >> (मूळ_level * गाठ_size_log2);
+        जर (likely(मूळ_idx < (1ull << गाठ_size_log2))) {
+            थांबा;
         }
 
         /* In this case, we have a root but its level is low enough that the
        * requested index is out-of-bounds.
        */
-        uintptr_t new_root = _util_sparse_array_node_alloc(arr, root_level + 1);
+        uintptr_t new_मूळ = util_sparse_array_गाठ_alloc(arr, मूळ_level + 1);
 
-        uintptr_t * new_root_children = (uintptr_t *) _util_sparse_array_node_data(new_root);
-        new_root_children[0]          = root;
+        uintptr_t * new_मूळ_children = (uintptr_t *) util_sparse_array_गाठ_data(new_मूळ);
+        new_मूळ_children[0]          = मूळ;
 
         /* We only add one at a time instead of the whole tree because it's
        * easier to ensure correctness of both the tree building and the
@@ -154,26 +154,26 @@ void * util_sparse_array_get(util_sparse_array * arr, uint64_t idx) {
        * worry about trying to free multiple things without freeing the old
        * things.
        */
-        root = _util_sparse_array_set_or_free_node(&arr->root, root, new_root);
+        मूळ = util_sparse_array_set_or_free_गाठ(&arr->मूळ, मूळ, new_मूळ);
     }
 
-    void *   node_data  = _util_sparse_array_node_data(root);
-    unsigned node_level = _util_sparse_array_node_level(root);
-    while (node_level > 0) {
-        uint64_t child_idx = (idx >> (node_level * node_size_log2)) & ((1ull << node_size_log2) - 1);
+    शून्य *   गाठ_data  = util_sparse_array_गाठ_data(मूळ);
+    अचिन्हित गाठ_level = util_sparse_array_गाठ_level(मूळ);
+    पर्यंत (गाठ_level > 0) {
+        uint64_t child_idx = (idx >> (गाठ_level * गाठ_size_log2)) & ((1ull << गाठ_size_log2) - 1);
 
-        uintptr_t * children = (uintptr_t *) node_data;
+        uintptr_t * children = (uintptr_t *) गाठ_data;
         uintptr_t   child    = p_atomic_read(&children[child_idx]);
 
-        if (unlikely(!child)) {
-            child = _util_sparse_array_node_alloc(arr, node_level - 1);
-            child = _util_sparse_array_set_or_free_node(&children[child_idx], NULL_NODE, child);
+        जर (unlikely(!child)) {
+            child = util_sparse_array_गाठ_alloc(arr, गाठ_level - 1);
+            child = util_sparse_array_set_or_free_गाठ(&children[child_idx], NULL_गाठ, child);
         }
 
-        node_data  = _util_sparse_array_node_data(child);
-        node_level = _util_sparse_array_node_level(child);
+        गाठ_data  = util_sparse_array_गाठ_data(child);
+        गाठ_level = util_sparse_array_गाठ_level(child);
     }
 
-    uint64_t elem_idx = idx & ((1ull << node_size_log2) - 1);
-    return (void *) ((char *) node_data + (elem_idx * arr->elem_size));
+    uint64_t elem_idx = idx & ((1ull << गाठ_size_log2) - 1);
+    परत (शून्य *) ((अक्षर *) गाठ_data + (elem_idx * arr->elem_size));
 }
