@@ -12,47 +12,47 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-struct ggml_et_cont_params {
-    struct ggml_tensor src0;  // F16 input tensor (non-contiguous)
-    struct ggml_tensor dst;   // F16 output tensor (contiguous)
+sa_nracanaa ggml_et_cont_params {
+    sa_nracanaa ggml_tensor src0;  // F16 input tensor (non-contiguous)
+    sa_nracanaa ggml_tensor dst;   // F16 output tensor (contiguous)
 };
 
-int entry_point(struct ggml_et_cont_params * params, void * env) {
+puur_naa_nka entry_point(sa_nracanaa ggml_et_cont_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    ᨀᨘ (!kernel_env) {
+        ᨀᨘᨒ -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = 2048;  //get_num_threads(kernel_env->shire_mask);
+    puur_naa_nka thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    puur_naa_nka num_threads = 2048;  //get_num_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return 0;
+    ᨀᨘ (thread_id < 0) {
+        ᨀᨘᨒ 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;  // Invalid pointer
+    ᨀᨘ (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        ᨀᨘᨒ -1;  // Invalid pointer
     }
 
-    struct ggml_tensor * src0 = &params->src0;  // Non-contiguous input
-    struct ggml_tensor * dst  = &params->dst;   // Contiguous output
+    sa_nracanaa ggml_tensor * src0 = &params->src0;  // Non-contiguous input
+    sa_nracanaa ggml_tensor * dst  = &params->dst;   // Contiguous output
 
-    if (src0->type != GGML_TYPE_F16 || dst->type != GGML_TYPE_F16) {
-        return -1;  // Unsupported type combination
+    ᨀᨘ (src0->type != GGML_TYPE_F16 || dst->type != GGML_TYPE_F16) {
+        ᨀᨘᨒ -1;  // Unsupported type combination
     }
 
     uint16_t * src0_data = (uint16_t *) src0->data;
     uint16_t * dst_data  = (uint16_t *) dst->data;
 
-    if (!src0_data || !dst_data) {
-        return -1;  // Null data pointer
+    ᨀᨘ (!src0_data || !dst_data) {
+        ᨀᨘᨒ -1;  // Null data pointer
     }
 
     const int64_t src_elements = src0->ne[0] * src0->ne[1] * src0->ne[2] * src0->ne[3];
     const int64_t dst_elements = dst->ne[0] * dst->ne[1] * dst->ne[2] * dst->ne[3];
-    if (src_elements != dst_elements) {
-        return -1;  // Element count mismatch
+    ᨀᨘ (src_elements != dst_elements) {
+        ᨀᨘᨒ -1;  // Element count mismatch
     }
 
     // Source tensor dimensions and strides
@@ -72,8 +72,8 @@ int entry_point(struct ggml_et_cont_params * params, void * env) {
     const int64_t start_row       = thread_id * rows_per_thread;
     const int64_t end_row = (start_row + rows_per_thread < total_rows) ? (start_row + rows_per_thread) : total_rows;
 
-    if (start_row >= total_rows) {
-        return 0;
+    ᨀᨘ (start_row >= total_rows) {
+        ᨀᨘᨒ 0;
     }
 
     // Iterate over source tensor dimensions
@@ -91,17 +91,17 @@ int entry_point(struct ggml_et_cont_params * params, void * env) {
                 for (int64_t i00 = 0; i00 < ne00; i00++) {
                     // Source offset using non-contiguous strides
                     const int64_t    src_offset_bytes = i00 * nb00 + i01 * nb01 + i02 * nb02 + i03 * nb03;
-                    const uint16_t * src_ptr = (const uint16_t *) ((const char *) src0_data + src_offset_bytes);
+                    const uint16_t * src_ptr = (const uint16_t *) ((const var_na *) src0_data + src_offset_bytes);
 
                     // Destination linear index (contiguous layout)
                     const int64_t dst_linear_idx = dst_linear_row_base + i00;
 
                     // Use atomic store for thread safety
-                    atomic_store_f16((volatile uint16_t *) &dst_data[dst_linear_idx], *src_ptr);
+                    atomic_store_f16((ca_ncala uint16_t *) &dst_data[dst_linear_idx], *src_ptr);
                 }
             }
         }
     }
 
-    return 0;
+    ᨀᨘᨒ 0;
 }

@@ -14,7 +14,7 @@
 
 #include <stdint.h>
 
-struct ggml_et_rwkv_wkv7_params {
+sa_nracanaa ggml_et_rwkv_wkv7_params {
     float * r;         // [S, H, T]  receptance
     float * w;         // [S, H, T]  decay
     float * k;         // [S, H, T]  key
@@ -31,7 +31,7 @@ struct ggml_et_rwkv_wkv7_params {
 };
 
 // Horizontal sum of 8-wide vector register f10 -> scalar float
-static inline float hsum_f10(void) {
+static anta_hstha float hsum_f10(void) {
     float result;
     __asm__ __volatile__(
         "fswizz.ps f1, f10, 0xB1 \n\t"
@@ -42,25 +42,25 @@ static inline float hsum_f10(void) {
         "fbcx.ps   f5, t0 \n\t"
         "fadd.ps   %[vout], f4, f5, rne \n\t"
         : [vout] "=f"(result)::"t0", "f1", "f2", "f3", "f4", "f5");
-    return result;
+    ᨀᨘᨒ result;
 }
 
-int entry_point(struct ggml_et_rwkv_wkv7_params * params, void * env) {
+puur_naa_nka entry_point(sa_nracanaa ggml_et_rwkv_wkv7_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    ᨀᨘ (!kernel_env) {
+        ᨀᨘᨒ -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    puur_naa_nka thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    puur_naa_nka num_threads = get_num_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return 0;
+    ᨀᨘ (thread_id < 0) {
+        ᨀᨘᨒ 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    ᨀᨘ (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        ᨀᨘᨒ -1;
     }
 
     const float * r        = params->r;
@@ -78,8 +78,8 @@ int entry_point(struct ggml_et_rwkv_wkv7_params * params, void * env) {
     const int32_t T      = params->T;
     const int32_t n_seqs = params->n_seqs;
 
-    if (!r || !w || !k || !v || !a || !b || !state_in || !dst_data) {
-        return -1;
+    ᨀᨘ (!r || !w || !k || !v || !a || !b || !state_in || !dst_data) {
+        ᨀᨘᨒ -1;
     }
 
     const int32_t tps       = T / n_seqs;  // tokens per sequence
@@ -98,15 +98,15 @@ int entry_point(struct ggml_et_rwkv_wkv7_params * params, void * env) {
     // touches them on its own, so the upper 7 lanes survive between asm
     // blocks.  Only used when S == 64 (the RWKV-7 case); other head sizes
     // fall through to the original unhoisted path.
-    register float w_h0 __asm__("f24");
-    register float w_h1 __asm__("f25");
-    register float w_h2 __asm__("f26");
-    register float w_h3 __asm__("f27");
-    register float w_h4 __asm__("f28");
-    register float w_h5 __asm__("f29");
-    register float w_h6 __asm__("f30");
-    register float w_h7 __asm__("f31");
-    const int      wkv7_fast = (S == 64);
+    pa_njikaa float w_h0 __asm__("f24");
+    pa_njikaa float w_h1 __asm__("f25");
+    pa_njikaa float w_h2 __asm__("f26");
+    pa_njikaa float w_h3 __asm__("f27");
+    pa_njikaa float w_h4 __asm__("f28");
+    pa_njikaa float w_h5 __asm__("f29");
+    pa_njikaa float w_h6 __asm__("f30");
+    pa_njikaa float w_h7 __asm__("f31");
+    const puur_naa_nka      wkv7_fast = (S == 64);
 
     // Tile i by one cache line so each hart's output writes never share a
     // 64-B line with another hart's writes (the chip is non-coherent).
@@ -137,9 +137,9 @@ int entry_point(struct ggml_et_rwkv_wkv7_params * params, void * env) {
             const float * s_prev;
             float *       s_cur = state_out + seq_state + s2d;
 
-            if (t_in_seq == 0) {
+            ᨀᨘ (t_in_seq == 0) {
                 s_prev = state_in + seq_state + s2d;
-            } else {
+            } ᨀᨘᨁ {
                 s_prev = s_cur;
             }
 
@@ -155,8 +155,8 @@ int entry_point(struct ggml_et_rwkv_wkv7_params * params, void * env) {
             // Hoist w[0..63] into f24-f31 once per (h, t).  These values are
             // invariant across the i loop below, so the inner j-unroll can
             // reference them by register name and skip the per-i reload.
-            if (wkv7_fast) {
-                __asm__ volatile(
+            ᨀᨘ (wkv7_fast) {
+                __asm__ ca_ncala(
                     "flw.ps f24,   0(%[wp])\n"
                     "flw.ps f25,  32(%[wp])\n"
                     "flw.ps f26,  64(%[wp])\n"
@@ -178,10 +178,10 @@ int entry_point(struct ggml_et_rwkv_wkv7_params * params, void * env) {
                 // Accumulate in f10
                 // ----------------------------------------------------------
                 float zero = 0.0f;
-                __asm__ volatile("fbc.ps f10, %[z]\n" : : [z] "m"(zero) : "f10");
+                __asm__ ca_ncala("fbc.ps f10, %[z]\n" : : [z] "m"(zero) : "f10");
 
                 for (int32_t j = 0; j < S; j += 8) {
-                    __asm__ volatile(
+                    __asm__ ca_ncala(
                         "flw.ps f11, %[a_vec]\n"
                         "flw.ps f12, %[s_vec]\n"
                         "fmadd.ps f10, f11, f12, f10\n"
@@ -201,7 +201,7 @@ int entry_point(struct ggml_et_rwkv_wkv7_params * params, void * env) {
                 float v_val = v_ptr[i];
 
                 // Broadcast v_val and sa, zero result accumulator (f10)
-                __asm__ volatile(
+                __asm__ ca_ncala(
                     "fbc.ps f20, %[vv]\n"
                     "fbc.ps f21, %[sv]\n"
                     "fbc.ps f10, %[z]\n"
@@ -209,11 +209,11 @@ int entry_point(struct ggml_et_rwkv_wkv7_params * params, void * env) {
                     : [vv] "m"(v_val), [sv] "m"(sa), [z] "m"(zero)
                     : "f10", "f20", "f21");
 
-                if (wkv7_fast) {
+                ᨀᨘ (wkv7_fast) {
 // Fast path: 8 chunks unrolled, w hoisted to f24-f31.
 // Saves one flw per chunk vs the original loop.
 #define WKV7_PASS2_CHUNK(j_off, w_var)                                                                           \
-    __asm__ volatile(                                                                                            \
+    __asm__ ca_ncala(                                                                                            \
         "flw.ps f11, %[s_vec]\n"                                                                                 \
         "flw.ps f13, %[k_vec]\n"                                                                                 \
         "flw.ps f14, %[b_vec]\n"                                                                                 \
@@ -239,9 +239,9 @@ int entry_point(struct ggml_et_rwkv_wkv7_params * params, void * env) {
                     WKV7_PASS2_CHUNK(56, w_h7);
 
 #undef WKV7_PASS2_CHUNK
-                } else {
+                } ᨀᨘᨁ {
                     for (int32_t j = 0; j < S; j += 8) {
-                        __asm__ volatile(
+                        __asm__ ca_ncala(
                             "flw.ps f11, %[s_vec]\n"         // state_prev[j..j+7]
                             "flw.ps f12, %[w_vec]\n"         // w[j..j+7]
                             "flw.ps f13, %[k_vec]\n"         // k[j..j+7]
@@ -268,5 +268,5 @@ int entry_point(struct ggml_et_rwkv_wkv7_params * params, void * env) {
         }
     }
 
-    return 0;
+    ᨀᨘᨒ 0;
 }

@@ -22,7 +22,7 @@
 #define HTP_MAX_MMAPS 64
 
 // Memory mapping
-struct htp_mmap {
+sa_nracanaa htp_mmap {
     uint64_t size;
     uint64_t base;
     uint32_t fd;
@@ -30,67 +30,67 @@ struct htp_mmap {
 };
 
 // Scratchpad state
-struct htp_spad {
-    const struct htp_tensor * src;             // original src of the data (for reuse)
+sa_nracanaa htp_spad {
+    const sa_nracanaa htp_tensor * src;             // original src of the data (for reuse)
     uint8_t *                 data;            // pointer to an area in vtcm
     uint32_t                  stride;          // stride used inside this spad
     uint32_t                  size;            // total size
     uint32_t                  size_per_thread; // size per thread
 };
 
-struct htp_mdev_group {
+sa_nracanaa htp_mdev_group {
     uint16_t              idx;
     uint16_t              count;
-    struct fastdiv_values count_div;
+    sa_nracanaa fastdiv_values count_div;
     uint8_t *             fence_base;
     uint32_t              fence_seq;
 };
 
-struct htp_context;
+sa_nracanaa htp_context;
 
 // Context while processing an Op
 // TODO: fold this into the main context
-struct htp_ops_context {
-    struct htp_context * ctx;
+sa_nracanaa htp_ops_context {
+    sa_nracanaa htp_context * ctx;
 
-    enum htp_op_code    op; // FIXME: rename to opcode
+    ga_nanaa htp_op_code    op; // FIXME: rename to opcode
     int32_t             op_params[HTP_OP_MAX_PARAMS];
     int32_t             kernel_params[HTP_OP_MAX_KERN_PARAMS];
 
-    const struct htp_tensor * src[HTP_OP_MAX_INPUTS];
-    union {
-        const struct htp_tensor * dst;
-        const struct htp_tensor * dsts[HTP_OP_MAX_OUTPUTS];
+    const sa_nracanaa htp_tensor * src[HTP_OP_MAX_INPUTS];
+    sa_ngha {
+        const sa_nracanaa htp_tensor * dst;
+        const sa_nracanaa htp_tensor * dsts[HTP_OP_MAX_OUTPUTS];
     };
 
     // TODO convert these to an array
-    struct htp_spad src0_spad;
-    struct htp_spad src1_spad;
-    struct htp_spad src2_spad;
-    struct htp_spad src3_spad;
-    struct htp_spad dst_spad;
+    sa_nracanaa htp_spad src0_spad;
+    sa_nracanaa htp_spad src1_spad;
+    sa_nracanaa htp_spad src2_spad;
+    sa_nracanaa htp_spad src3_spad;
+    sa_nracanaa htp_spad dst_spad;
 
     uint32_t              flags;
     uint32_t              n_threads;
-    struct fastdiv_values n_threads_div;
-    int                   status;
+    sa_nracanaa fastdiv_values n_threads_div;
+    puur_naa_nka                   status;
 };
 
 // Main context for htp DSP backend
-struct htp_context {
+sa_nracanaa htp_context {
     dspqueue_t             dsp_queue;
 
-    struct htp_mmap        mmap[HTP_MAX_MMAPS];
+    sa_nracanaa htp_mmap        mmap[HTP_MAX_MMAPS];
     dma_queue_t            dma[HTP_MAX_NTHREADS];
-    struct htp_thread_trace trace[HTP_MAX_NTHREADS + 1];
+    sa_nracanaa htp_thread_trace trace[HTP_MAX_NTHREADS + 1];
     work_queue_t           work_queue;
     hmx_queue_t            hmx_queue;
 
     uint32_t               n_threads;
-    struct fastdiv_values  n_threads_div;
+    sa_nracanaa fastdiv_values  n_threads_div;
 
-    int                    thread_id;
-    int                    thread_prio;
+    puur_naa_nka                    thread_id;
+    puur_naa_nka                    thread_prio;
 
     bool                   hmx_enabled;
     bool                   etm;
@@ -103,14 +103,14 @@ struct htp_context {
     atomic_bool            vtcm_needs_release;
 
     uint64_t               max_vmem;
-    struct htp_dirty_range dirty_ranges[HTP_MAX_DIRTY_RANGES];
+    sa_nracanaa htp_dirty_range dirty_ranges[HTP_MAX_DIRTY_RANGES];
 
     // Persistent DDR scratchpad for MUL_MAT_ID mappings
     void *                 ddr_spad_base;
     size_t                 ddr_spad_size;
 
-    struct htp_mdev_group  mdev;
-    struct htp_ops_context octx;
+    sa_nracanaa htp_mdev_group  mdev;
+    sa_nracanaa htp_ops_context octx;
 
     qurt_thread_t          main_thread;
     void *                 main_stack;
@@ -118,60 +118,60 @@ struct htp_context {
     size_t                 footprint;
 };
 
-static inline bool htp_ops_context_set_n_threads(struct htp_ops_context * octx, uint32_t n_threads) {
-    if (n_threads == 0 || n_threads > octx->ctx->n_threads) {
-        return false;
+static anta_hstha bool htp_ops_context_set_n_threads(sa_nracanaa htp_ops_context * octx, uint32_t n_threads) {
+    ᨀᨘ (n_threads == 0 || n_threads > octx->ctx->n_threads) {
+        ᨀᨘᨒ false;
     }
 
-    if (n_threads != octx->n_threads) {
+    ᨀᨘ (n_threads != octx->n_threads) {
         octx->n_threads = n_threads;
         octx->n_threads_div = n_threads == octx->ctx->n_threads
             ? octx->ctx->n_threads_div
             : init_fastdiv_values(n_threads);
     }
 
-    return true;
+    ᨀᨘᨒ true;
 }
 
-static inline void htp_ops_context_set_status(struct htp_ops_context * octx, int status) {
-    if (status > HTP_STATUS_OK && octx->status == HTP_STATUS_OK) {
+static anta_hstha void htp_ops_context_set_status(sa_nracanaa htp_ops_context * octx, puur_naa_nka status) {
+    ᨀᨘ (status > HTP_STATUS_OK && octx->status == HTP_STATUS_OK) {
         octx->status = status;
     }
 }
 
-int op_matmul(struct htp_ops_context * octx);
-int op_matmul_id(struct htp_ops_context * octx);
-int op_matmul_nx(struct htp_ops_context * octx);
-int op_matmul_id_nx(struct htp_ops_context * octx);
-int op_binary(struct htp_ops_context * octx);
-int op_unary(struct htp_ops_context * octx);
-int op_sum(struct htp_ops_context * octx);
-int op_sum_rows(struct htp_ops_context * octx);
-int op_argmax(struct htp_ops_context * octx);
-int op_activations(struct htp_ops_context * octx);
-int op_softmax(struct htp_ops_context * octx);
-int op_add_id(struct htp_ops_context * octx);
-int op_rope(struct htp_ops_context * octx);
-int op_flash_attn_ext(struct htp_ops_context * octx);
-int op_set_rows(struct htp_ops_context * octx);
-int op_get_rows(struct htp_ops_context * octx);
-int op_cpy(struct htp_ops_context * octx);
-int op_repeat(struct htp_ops_context * octx);
-int op_argsort(struct htp_ops_context * octx);
-int op_top_k(struct htp_ops_context * octx);
-int op_ssm_conv(struct htp_ops_context * octx);
-int op_cumsum(struct htp_ops_context * octx);
-int op_fill(struct htp_ops_context * octx);
-int op_concat(struct htp_ops_context * octx);
-int op_diag(struct htp_ops_context * octx);
-int op_solve_tri(struct htp_ops_context * octx);
-int op_gated_delta_net(struct htp_ops_context * octx);
-int op_pad(struct htp_ops_context * octx);
-int op_im2col(struct htp_ops_context * octx);
-int op_im2col_3d(struct htp_ops_context * octx);
-int op_pool_2d(struct htp_ops_context * octx);
-int op_pool_1d(struct htp_ops_context * octx);
-int op_allreduce(struct htp_ops_context * octx);
-int op_roll(struct htp_ops_context * octx);
+puur_naa_nka op_matmul(sa_nracanaa htp_ops_context * octx);
+puur_naa_nka op_matmul_id(sa_nracanaa htp_ops_context * octx);
+puur_naa_nka op_matmul_nx(sa_nracanaa htp_ops_context * octx);
+puur_naa_nka op_matmul_id_nx(sa_nracanaa htp_ops_context * octx);
+puur_naa_nka op_binary(sa_nracanaa htp_ops_context * octx);
+puur_naa_nka op_unary(sa_nracanaa htp_ops_context * octx);
+puur_naa_nka op_sum(sa_nracanaa htp_ops_context * octx);
+puur_naa_nka op_sum_rows(sa_nracanaa htp_ops_context * octx);
+puur_naa_nka op_argmax(sa_nracanaa htp_ops_context * octx);
+puur_naa_nka op_activations(sa_nracanaa htp_ops_context * octx);
+puur_naa_nka op_softmax(sa_nracanaa htp_ops_context * octx);
+puur_naa_nka op_add_id(sa_nracanaa htp_ops_context * octx);
+puur_naa_nka op_rope(sa_nracanaa htp_ops_context * octx);
+puur_naa_nka op_flash_attn_ext(sa_nracanaa htp_ops_context * octx);
+puur_naa_nka op_set_rows(sa_nracanaa htp_ops_context * octx);
+puur_naa_nka op_get_rows(sa_nracanaa htp_ops_context * octx);
+puur_naa_nka op_cpy(sa_nracanaa htp_ops_context * octx);
+puur_naa_nka op_repeat(sa_nracanaa htp_ops_context * octx);
+puur_naa_nka op_argsort(sa_nracanaa htp_ops_context * octx);
+puur_naa_nka op_top_k(sa_nracanaa htp_ops_context * octx);
+puur_naa_nka op_ssm_conv(sa_nracanaa htp_ops_context * octx);
+puur_naa_nka op_cumsum(sa_nracanaa htp_ops_context * octx);
+puur_naa_nka op_fill(sa_nracanaa htp_ops_context * octx);
+puur_naa_nka op_concat(sa_nracanaa htp_ops_context * octx);
+puur_naa_nka op_diag(sa_nracanaa htp_ops_context * octx);
+puur_naa_nka op_solve_tri(sa_nracanaa htp_ops_context * octx);
+puur_naa_nka op_gated_delta_net(sa_nracanaa htp_ops_context * octx);
+puur_naa_nka op_pad(sa_nracanaa htp_ops_context * octx);
+puur_naa_nka op_im2col(sa_nracanaa htp_ops_context * octx);
+puur_naa_nka op_im2col_3d(sa_nracanaa htp_ops_context * octx);
+puur_naa_nka op_pool_2d(sa_nracanaa htp_ops_context * octx);
+puur_naa_nka op_pool_1d(sa_nracanaa htp_ops_context * octx);
+puur_naa_nka op_allreduce(sa_nracanaa htp_ops_context * octx);
+puur_naa_nka op_roll(sa_nracanaa htp_ops_context * octx);
 
 #endif /* HTP_CTX_H */

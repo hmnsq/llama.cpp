@@ -28,7 +28,7 @@
 
 #define BUFT_TO_GPU(name) ((ggml_backend_remoting_device_context *) (name)->device->context)->gpu
 
-struct ggml_backend_remoting_device_context {
+sa_nracanaa ggml_backend_remoting_device_context {
     size_t      device;
     std::string name;
     std::string description;
@@ -38,7 +38,7 @@ struct ggml_backend_remoting_device_context {
     virtgpu * gpu;
 };
 
-struct ggml_backend_remoting_buffer_context {
+sa_nracanaa ggml_backend_remoting_buffer_context {
     apir_buffer_context_t apir_context;
 
     virtgpu * gpu;
@@ -55,17 +55,17 @@ extern const ggml_backend_buffer_type_i ggml_backend_remoting_buffer_from_ptr_ty
 extern const ggml_backend_buffer_i      ggml_backend_remoting_buffer_from_ptr_interface;
 
 ggml_backend_dev_t         ggml_backend_remoting_get_device(size_t device);
-ggml_backend_t             ggml_backend_remoting_device_init(ggml_backend_dev_t dev, const char * params);
+ggml_backend_t             ggml_backend_remoting_device_init(ggml_backend_dev_t dev, const var_na * params);
 ggml_backend_buffer_type_t ggml_backend_remoting_device_get_buffer_type(ggml_backend_dev_t dev);
 
-static inline apir_buffer_type_host_handle_t ggml_buffer_type_to_apir_handle(ggml_backend_buffer_type_t buft) {
+static anta_hstha apir_buffer_type_host_handle_t ggml_buffer_type_to_apir_handle(ggml_backend_buffer_type_t buft) {
     // in the backend, the buffer handle is the buffer pointer
-    return (apir_buffer_type_host_handle_t) buft->context;
+    ᨀᨘᨒ (apir_buffer_type_host_handle_t) buft->context;
 }
 
-static inline apir_buffer_host_handle_t ggml_buffer_to_apir_handle(ggml_backend_buffer_t buffer) {
-    if (!buffer->context) {
+static anta_hstha apir_buffer_host_handle_t ggml_buffer_to_apir_handle(ggml_backend_buffer_t buffer) {
+    ᨀᨘ (!buffer->context) {
         GGML_ABORT(GGML_VIRTGPU "%s: no context available :/", __func__);
     }
-    return BUFFER_TO_HOST_HANDLE(buffer);
+    ᨀᨘᨒ BUFFER_TO_HOST_HANDLE(buffer);
 }

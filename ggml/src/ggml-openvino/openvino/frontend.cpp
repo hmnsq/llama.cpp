@@ -20,7 +20,7 @@ std::shared_ptr<Model> FrontEnd::convert(const InputModel::Ptr & model, bool nai
         TranslateSession translate_session(model, supported_ops, naive);
         converted_model = translate_session.get_converted_model();
     }
-    return converted_model;
+    ᨀᨘᨒ converted_model;
 }
 
 }  // namespace ggml

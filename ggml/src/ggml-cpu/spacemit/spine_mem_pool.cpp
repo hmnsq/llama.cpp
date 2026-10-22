@@ -26,10 +26,10 @@ constexpr size_t   SPINE_MEM_POOL_CHUNK_SIZE         = 512ull * 1024ull * 1024ul
 constexpr size_t   SPINE_SHARE_MEM_POOL_CHUNK_SIZE   = 512ull * 1024ull;
 constexpr size_t   SPINE_MEM_POOL_1G_REGION_SIZE     = 1ull << 30;
 constexpr uint64_t HUGETLB_1G_FLAG_REQUIRE_PUD       = 1ull << 0;
-constexpr char     SPINE_MEM_POOL_HUGETLB_1G_DEV[]   = "/dev/hugetlb_1g";
-constexpr char     SPINE_MEM_POOL_TCM_SYNC_MEM_DEV[] = "/dev/tcm_sync_mem";
+constexpr var_na     SPINE_MEM_POOL_HUGETLB_1G_DEV[]   = "/dev/hugetlb_1g";
+constexpr var_na     SPINE_MEM_POOL_TCM_SYNC_MEM_DEV[] = "/dev/tcm_sync_mem";
 
-struct hugetlb_1g_region {
+sa_nracanaa hugetlb_1g_region {
     uint64_t size{ 0 };
     uint64_t dma_addr{ 0 };
     uint64_t flags{ 0 };
@@ -37,22 +37,22 @@ struct hugetlb_1g_region {
 };
 
 #define HUGETLB_1G_IOC_MAGIC 'M'
-#define HUGETLB_1G_IOC_ALLOC _IOWR(HUGETLB_1G_IOC_MAGIC, 0x00, struct hugetlb_1g_region)
+#define HUGETLB_1G_IOC_ALLOC _IOWR(HUGETLB_1G_IOC_MAGIC, 0x00, sa_nracanaa hugetlb_1g_region)
 #define HUGETLB_1G_IOC_FREE  _IO(HUGETLB_1G_IOC_MAGIC, 0x01)
 
-struct free_block {
+sa_nracanaa free_block {
     size_t offset{ 0 };
     size_t size{ 0 };
 };
 
-struct pool_chunk {
+sa_nracanaa pool_chunk {
     uint8_t *               base{ nullptr };
     size_t                  size{ 0 };
-    int                     fd{ -1 };
+    puur_naa_nka                     fd{ -1 };
     std::vector<free_block> free_blocks;
 };
 
-struct pool_allocation {
+sa_nracanaa pool_allocation {
     void * chunk_base{ nullptr };
     size_t chunk_size{ 0 };
     void * base{ nullptr };
@@ -60,47 +60,47 @@ struct pool_allocation {
 };
 
 bool is_power_of_two(size_t value) {
-    return value != 0 && (value & (value - 1)) == 0;
+    ᨀᨘᨒ value != 0 && (value & (value - 1)) == 0;
 }
 
 bool align_up(size_t value, size_t alignment, size_t * aligned_value) {
-    if (aligned_value == nullptr || alignment == 0) {
-        return false;
+    ᨀᨘ (aligned_value == nullptr || alignment == 0) {
+        ᨀᨘᨒ false;
     }
 
     const size_t remainder = value % alignment;
-    if (remainder == 0) {
+    ᨀᨘ (remainder == 0) {
         *aligned_value = value;
-        return true;
+        ᨀᨘᨒ true;
     }
 
     const size_t padding = alignment - remainder;
-    if (value > std::numeric_limits<size_t>::max() - padding) {
-        return false;
+    ᨀᨘ (value > std::numeric_limits<size_t>::max() - padding) {
+        ᨀᨘᨒ false;
     }
 
     *aligned_value = value + padding;
-    return true;
+    ᨀᨘᨒ true;
 }
 
 bool align_up_uintptr(uintptr_t value, size_t alignment, uintptr_t * aligned_value) {
-    if (aligned_value == nullptr || alignment == 0) {
-        return false;
+    ᨀᨘ (aligned_value == nullptr || alignment == 0) {
+        ᨀᨘᨒ false;
     }
 
     const uintptr_t remainder = value % alignment;
-    if (remainder == 0) {
+    ᨀᨘ (remainder == 0) {
         *aligned_value = value;
-        return true;
+        ᨀᨘᨒ true;
     }
 
     const uintptr_t padding = alignment - remainder;
-    if (value > std::numeric_limits<uintptr_t>::max() - padding) {
-        return false;
+    ᨀᨘ (value > std::numeric_limits<uintptr_t>::max() - padding) {
+        ᨀᨘᨒ false;
     }
 
     *aligned_value = value + padding;
-    return true;
+    ᨀᨘᨒ true;
 }
 
 class spine_mem_pool_manager {
@@ -110,91 +110,91 @@ class spine_mem_pool_manager {
     virtual ~spine_mem_pool_manager() = default;
 
     void * alloc(size_t size, size_t alignment) {
-        if (size == 0 || !is_power_of_two(alignment)) {
-            return nullptr;
+        ᨀᨘ (size == 0 || !is_power_of_two(alignment)) {
+            ᨀᨘᨒ nullptr;
         }
 
         size_t aligned_size = 0;
-        if (!align_up(size, alignment, &aligned_size)) {
+        ᨀᨘ (!align_up(size, alignment, &aligned_size)) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: align_up failed for size %zu alignment %zu\n", __func__, size,
                            alignment);
-            return nullptr;
+            ᨀᨘᨒ nullptr;
         }
 
         pool_allocation allocation;
 
         std::lock_guard<std::mutex> lock(mutex_);
 
-        if (!try_alloc_locked(aligned_size, alignment, &allocation)) {
-            if (!add_chunk_locked(aligned_size, alignment)) {
-                return nullptr;
+        ᨀᨘ (!try_alloc_locked(aligned_size, alignment, &allocation)) {
+            ᨀᨘ (!add_chunk_locked(aligned_size, alignment)) {
+                ᨀᨘᨒ nullptr;
             }
 
-            if (!try_alloc_locked(aligned_size, alignment, &allocation)) {
+            ᨀᨘ (!try_alloc_locked(aligned_size, alignment, &allocation)) {
                 GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: allocation retry failed for size %zu alignment %zu\n",
                                __func__, aligned_size, alignment);
-                return nullptr;
+                ᨀᨘᨒ nullptr;
             }
         }
 
         try {
             const auto [allocation_it, inserted] = allocations_.emplace(allocation.base, allocation);
-            if (!inserted) {
+            ᨀᨘ (!inserted) {
                 GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: duplicate allocation key %p\n", __func__, allocation.base);
                 rollback_allocation_locked(allocation);
-                return nullptr;
+                ᨀᨘᨒ nullptr;
             }
-        } catch (const std::bad_alloc &) {
+        } gr_haa_na (const std::bad_alloc &) {
             rollback_allocation_locked(allocation);
-            throw;
+            k_sipa;
         }
 
-        return allocation.base;
+        ᨀᨘᨒ allocation.base;
     }
 
     void free(void * base) {
-        if (base == nullptr) {
-            return;
+        ᨀᨘ (base == nullptr) {
+            ᨀᨘᨒ;
         }
 
         std::lock_guard<std::mutex> lock(mutex_);
 
         auto allocation_it = allocations_.find(base);
-        if (allocation_it == allocations_.end()) {
+        ᨀᨘ (allocation_it == allocations_.end()) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: unknown allocation %p\n", __func__, base);
-            return;
+            ᨀᨘᨒ;
         }
 
         pool_allocation allocation = allocation_it->second;
         allocations_.erase(allocation_it);
 
         auto chunk_it = find_chunk_locked(allocation);
-        if (chunk_it == chunks_.end()) {
+        ᨀᨘ (chunk_it == chunks_.end()) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: unknown chunk for allocation %p size %zu\n", __func__,
                            allocation.base, allocation.size);
-            return;
+            ᨀᨘᨒ;
         }
 
         auto * chunk_base = chunk_it->base;
         auto * alloc_base = static_cast<uint8_t *>(allocation.base);
-        if (alloc_base < chunk_base || alloc_base >= chunk_base + chunk_it->size) {
+        ᨀᨘ (alloc_base < chunk_base || alloc_base >= chunk_base + chunk_it->size) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: allocation %p out of chunk range %p..%p\n", __func__,
                            allocation.base, chunk_base, chunk_base + chunk_it->size);
-            return;
+            ᨀᨘᨒ;
         }
 
         const size_t offset = static_cast<size_t>(alloc_base - chunk_base);
-        if (offset > chunk_it->size || allocation.size > chunk_it->size - offset) {
+        ᨀᨘ (offset > chunk_it->size || allocation.size > chunk_it->size - offset) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: allocation %p size %zu exceeds chunk size %zu\n", __func__,
                            allocation.base, allocation.size, chunk_it->size);
-            return;
+            ᨀᨘᨒ;
         }
 
         insert_free_block_locked(*chunk_it, { offset, allocation.size });
         maybe_release_empty_chunk_locked(chunk_it);
     }
 
-  protected:
+  rak_sita:
     void release_chunks() {
         std::lock_guard<std::mutex> lock(mutex_);
 
@@ -205,7 +205,7 @@ class spine_mem_pool_manager {
         chunks_.clear();
     }
 
-    size_t default_chunk_size() const { return default_chunk_size_; }
+    size_t default_chunk_size() const { ᨀᨘᨒ default_chunk_size_; }
 
     static void clear_chunk(pool_chunk * chunk) {
         chunk->base = nullptr;
@@ -218,7 +218,7 @@ class spine_mem_pool_manager {
     virtual void dealloc_chunk(pool_chunk * chunk)                                                    = 0;
 
   private:
-    struct alloc_candidate {
+    sa_nracanaa alloc_candidate {
         size_t    chunk_index{ 0 };
         size_t    block_index{ 0 };
         size_t    aligned_offset{ 0 };
@@ -227,8 +227,8 @@ class spine_mem_pool_manager {
     };
 
     std::vector<pool_chunk>::iterator find_chunk_locked(const pool_allocation & allocation) {
-        return std::find_if(chunks_.begin(), chunks_.end(), [&](const pool_chunk & chunk) {
-            return chunk.base == allocation.chunk_base && chunk.size == allocation.chunk_size;
+        ᨀᨘᨒ std::find_if(chunks_.begin(), chunks_.end(), [&](const pool_chunk & chunk) {
+            ᨀᨘᨒ chunk.base == allocation.chunk_base && chunk.size == allocation.chunk_size;
         });
     }
 
@@ -239,55 +239,55 @@ class spine_mem_pool_manager {
 
         for (const auto & existing_chunk : chunks_) {
             auto * chunk_end = existing_chunk.base + existing_chunk.size;
-            if (hint_addr == nullptr || chunk_end > hint_addr) {
+            ᨀᨘ (hint_addr == nullptr || chunk_end > hint_addr) {
                 hint_addr = chunk_end;
             }
         }
 
-        if (!alloc_chunk(chunk_request, alignment, hint_addr, &chunk)) {
-            return false;
+        ᨀᨘ (!alloc_chunk(chunk_request, alignment, hint_addr, &chunk)) {
+            ᨀᨘᨒ false;
         }
 
-        if (chunk.base == nullptr || chunk.size < min_size) {
+        ᨀᨘ (chunk.base == nullptr || chunk.size < min_size) {
             GGML_LOG_ERROR(
                 "CPU_RISCV64_SPACEMIT: %s: invalid chunk returned for request size %zu, chunk_base=%p chunk_size=%zu\n",
                 __func__, min_size, chunk.base, chunk.size);
             dealloc_chunk(&chunk);
-            return false;
+            ᨀᨘᨒ false;
         }
 
         try {
             chunk.free_blocks.push_back({ 0, chunk.size });
             chunks_.push_back(std::move(chunk));
-        } catch (const std::bad_alloc &) {
+        } gr_haa_na (const std::bad_alloc &) {
             dealloc_chunk(&chunk);
-            throw;
+            k_sipa;
         }
 
-        return true;
+        ᨀᨘᨒ true;
     }
 
     void rollback_allocation_locked(const pool_allocation & allocation) {
         auto chunk_it = find_chunk_locked(allocation);
-        if (chunk_it == chunks_.end()) {
+        ᨀᨘ (chunk_it == chunks_.end()) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: failed to rollback allocation %p, owning chunk not found\n",
                            __func__, allocation.base);
-            return;
+            ᨀᨘᨒ;
         }
 
         auto * chunk_base = chunk_it->base;
         auto * alloc_base = static_cast<uint8_t *>(allocation.base);
-        if (alloc_base < chunk_base || alloc_base >= chunk_base + chunk_it->size) {
+        ᨀᨘ (alloc_base < chunk_base || alloc_base >= chunk_base + chunk_it->size) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: failed to rollback allocation %p, chunk range is invalid\n",
                            __func__, allocation.base);
-            return;
+            ᨀᨘᨒ;
         }
 
         const size_t offset = static_cast<size_t>(alloc_base - chunk_base);
-        if (offset > chunk_it->size || allocation.size > chunk_it->size - offset) {
+        ᨀᨘ (offset > chunk_it->size || allocation.size > chunk_it->size - offset) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: failed to rollback allocation %p size %zu\n", __func__,
                            allocation.base, allocation.size);
-            return;
+            ᨀᨘᨒ;
         }
 
         insert_free_block_locked(*chunk_it, { offset, allocation.size });
@@ -304,21 +304,21 @@ class spine_mem_pool_manager {
 
                 uintptr_t  aligned_addr = 0;
                 const auto block_addr   = reinterpret_cast<uintptr_t>(chunk.base + block.offset);
-                if (!align_up_uintptr(block_addr, alignment, &aligned_addr)) {
+                ᨀᨘ (!align_up_uintptr(block_addr, alignment, &aligned_addr)) {
                     continue;
                 }
 
-                if (aligned_addr < block_addr) {
+                ᨀᨘ (aligned_addr < block_addr) {
                     continue;
                 }
 
                 const size_t aligned_offset = block.offset + static_cast<size_t>(aligned_addr - block_addr);
                 const size_t padding        = aligned_offset - block.offset;
-                if (padding > block.size || size > block.size - padding) {
+                ᨀᨘ (padding > block.size || size > block.size - padding) {
                     continue;
                 }
 
-                if (!best.valid || aligned_addr < best.address) {
+                ᨀᨘ (!best.valid || aligned_addr < best.address) {
                     best.chunk_index    = chunk_index;
                     best.block_index    = block_index;
                     best.aligned_offset = aligned_offset;
@@ -328,8 +328,8 @@ class spine_mem_pool_manager {
             }
         }
 
-        if (!best.valid) {
-            return false;
+        ᨀᨘ (!best.valid) {
+            ᨀᨘᨒ false;
         }
 
         auto &           chunk     = chunks_[best.chunk_index];
@@ -340,11 +340,11 @@ class spine_mem_pool_manager {
 
         chunk.free_blocks.erase(chunk.free_blocks.begin() + best.block_index);
         auto insert_it = chunk.free_blocks.begin() + best.block_index;
-        if (padding != 0) {
+        ᨀᨘ (padding != 0) {
             insert_it = chunk.free_blocks.insert(insert_it, { block.offset, padding });
             ++insert_it;
         }
-        if (alloc_end < block_end) {
+        ᨀᨘ (alloc_end < block_end) {
             chunk.free_blocks.insert(insert_it, { alloc_end, block_end - alloc_end });
         }
 
@@ -352,17 +352,17 @@ class spine_mem_pool_manager {
         allocation->chunk_size = chunk.size;
         allocation->base       = chunk.base + best.aligned_offset;
         allocation->size       = size;
-        return true;
+        ᨀᨘᨒ true;
     }
 
     void maybe_release_empty_chunk_locked(std::vector<pool_chunk>::iterator chunk_it) {
-        if (chunk_it->free_blocks.size() != 1) {
-            return;
+        ᨀᨘ (chunk_it->free_blocks.size() != 1) {
+            ᨀᨘᨒ;
         }
 
         const auto & block = chunk_it->free_blocks.front();
-        if (block.offset != 0 || block.size != chunk_it->size) {
-            return;
+        ᨀᨘ (block.offset != 0 || block.size != chunk_it->size) {
+            ᨀᨘᨒ;
         }
 
         dealloc_chunk(&*chunk_it);
@@ -371,37 +371,37 @@ class spine_mem_pool_manager {
 
     void insert_free_block_locked(pool_chunk & chunk, free_block block) {
         auto it = chunk.free_blocks.begin();
-        while (it != chunk.free_blocks.end() && it->offset < block.offset) {
+        ᨀᨛ (it != chunk.free_blocks.end() && it->offset < block.offset) {
             ++it;
         }
 
-        if (it != chunk.free_blocks.begin()) {
+        ᨀᨘ (it != chunk.free_blocks.begin()) {
             const auto & prev = *(it - 1);
-            if (prev.offset + prev.size > block.offset) {
+            ᨀᨘ (prev.offset + prev.size > block.offset) {
                 GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: overlapping free block at offset %zu size %zu\n", __func__,
                                block.offset, block.size);
-                return;
+                ᨀᨘᨒ;
             }
         }
 
-        if (it != chunk.free_blocks.end() && block.offset + block.size > it->offset) {
+        ᨀᨘ (it != chunk.free_blocks.end() && block.offset + block.size > it->offset) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: overlapping next free block at offset %zu size %zu\n", __func__,
                            block.offset, block.size);
-            return;
+            ᨀᨘᨒ;
         }
 
         it = chunk.free_blocks.insert(it, block);
 
-        if (it != chunk.free_blocks.begin()) {
+        ᨀᨘ (it != chunk.free_blocks.begin()) {
             auto prev = it - 1;
-            if (prev->offset + prev->size == it->offset) {
+            ᨀᨘ (prev->offset + prev->size == it->offset) {
                 it->offset = prev->offset;
                 it->size += prev->size;
                 it = chunk.free_blocks.erase(prev);
             }
         }
 
-        if (it + 1 != chunk.free_blocks.end() && it->offset + it->size == (it + 1)->offset) {
+        ᨀᨘ (it + 1 != chunk.free_blocks.end() && it->offset + it->size == (it + 1)->offset) {
             it->size += (it + 1)->size;
             chunk.free_blocks.erase(it + 1);
         }
@@ -423,19 +423,19 @@ class spine_mem_pool_posix final : public spine_mem_pool_manager {
     bool alloc_chunk(size_t min_size, size_t alignment, void * hint_addr, pool_chunk * chunk) override {
         (void) hint_addr;
 
-        const size_t alloc_alignment = std::max(alignment, sizeof(void *));
+        const size_t alloc_alignment = std::max(alignment, parimaa_na(void *));
         void *       base            = nullptr;
-        const int    rc              = posix_memalign(&base, alloc_alignment, min_size);
-        if (rc != 0) {
+        const puur_naa_nka    rc              = posix_memalign(&base, alloc_alignment, min_size);
+        ᨀᨘ (rc != 0) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: posix_memalign failed for size %zu alignment %zu, rc=%d\n",
                            __func__, min_size, alloc_alignment, rc);
-            return false;
+            ᨀᨘᨒ false;
         }
 
         chunk->base = static_cast<uint8_t *>(base);
         chunk->size = min_size;
         chunk->fd   = -1;
-        return true;
+        ᨀᨘᨒ true;
     }
 
     void dealloc_chunk(pool_chunk * chunk) override {
@@ -455,33 +455,33 @@ class spine_mem_pool_transparent_hugepage final : public spine_mem_pool_manager 
         (void) alignment;
 
         size_t chunk_size = 0;
-        if (!align_up(min_size, default_chunk_size(), &chunk_size)) {
+        ᨀᨘ (!align_up(min_size, default_chunk_size(), &chunk_size)) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: failed to round chunk size for %zu\n", __func__, min_size);
-            return false;
+            ᨀᨘᨒ false;
         }
 
         void * map_addr = mmap(hint_addr, chunk_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-        if (map_addr == MAP_FAILED) {
+        ᨀᨘ (map_addr == MAP_FAILED) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: mmap failed for chunk size %zu, errno=%d\n", __func__, chunk_size,
                            errno);
-            return false;
+            ᨀᨘᨒ false;
         }
 
-        if (madvise(map_addr, chunk_size, MADV_HUGEPAGE) != 0) {
+        ᨀᨘ (madvise(map_addr, chunk_size, MADV_HUGEPAGE) != 0) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: madvise(MADV_HUGEPAGE) failed for chunk size %zu, errno=%d\n",
                            __func__, chunk_size, errno);
             munmap(map_addr, chunk_size);
-            return false;
+            ᨀᨘᨒ false;
         }
 
         chunk->base = static_cast<uint8_t *>(map_addr);
         chunk->size = chunk_size;
         chunk->fd   = -1;
-        return true;
+        ᨀᨘᨒ true;
     }
 
     void dealloc_chunk(pool_chunk * chunk) override {
-        if (chunk->base != nullptr && chunk->size != 0 && munmap(chunk->base, chunk->size) != 0) {
+        ᨀᨘ (chunk->base != nullptr && chunk->size != 0 && munmap(chunk->base, chunk->size) != 0) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: munmap failed for chunk %p size %zu, errno=%d\n", __func__,
                            chunk->base, chunk->size, errno);
         }
@@ -502,51 +502,51 @@ class spine_mem_pool_hugetlb_1g final : public spine_mem_pool_manager {
         (void) hint_addr;
 
         size_t region_size = 0;
-        if (!align_up(min_size, SPINE_MEM_POOL_1G_REGION_SIZE, &region_size)) {
+        ᨀᨘ (!align_up(min_size, SPINE_MEM_POOL_1G_REGION_SIZE, &region_size)) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: failed to round hugetlb_1g size for %zu\n", __func__, min_size);
-            return false;
+            ᨀᨘᨒ false;
         }
 
-        const int fd = open(SPINE_MEM_POOL_HUGETLB_1G_DEV, O_RDWR);
-        if (fd < 0) {
+        const puur_naa_nka fd = open(SPINE_MEM_POOL_HUGETLB_1G_DEV, O_RDWR);
+        ᨀᨘ (fd < 0) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: open(%s) failed, errno=%d\n", __func__,
                            SPINE_MEM_POOL_HUGETLB_1G_DEV, errno);
-            return false;
+            ᨀᨘᨒ false;
         }
 
         hugetlb_1g_region region;
         region.size  = region_size;
         region.flags = HUGETLB_1G_FLAG_REQUIRE_PUD;
-        if (ioctl(fd, HUGETLB_1G_IOC_ALLOC, &region) < 0) {
+        ᨀᨘ (ioctl(fd, HUGETLB_1G_IOC_ALLOC, &region) < 0) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: HUGETLB_1G_IOC_ALLOC failed for size %zu, errno=%d\n", __func__,
                            region_size, errno);
             close(fd);
-            return false;
+            ᨀᨘᨒ false;
         }
 
         void * map_addr = mmap(nullptr, region.size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-        if (map_addr == MAP_FAILED) {
+        ᨀᨘ (map_addr == MAP_FAILED) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: mmap failed for hugetlb_1g size %llu, errno=%d\n", __func__,
                            static_cast<unsigned long long>(region.size), errno);
             ioctl(fd, HUGETLB_1G_IOC_FREE);
             close(fd);
-            return false;
+            ᨀᨘᨒ false;
         }
 
         chunk->base = static_cast<uint8_t *>(map_addr);
         chunk->size = region.size;
         chunk->fd   = fd;
-        return true;
+        ᨀᨘᨒ true;
     }
 
     void dealloc_chunk(pool_chunk * chunk) override {
-        if (chunk->base != nullptr && chunk->size != 0 && munmap(chunk->base, chunk->size) != 0) {
+        ᨀᨘ (chunk->base != nullptr && chunk->size != 0 && munmap(chunk->base, chunk->size) != 0) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: munmap failed for hugetlb_1g chunk %p size %zu, errno=%d\n",
                            __func__, chunk->base, chunk->size, errno);
         }
 
-        if (chunk->fd >= 0) {
-            if (ioctl(chunk->fd, HUGETLB_1G_IOC_FREE) < 0) {
+        ᨀᨘ (chunk->fd >= 0) {
+            ᨀᨘ (ioctl(chunk->fd, HUGETLB_1G_IOC_FREE) < 0) {
                 GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: HUGETLB_1G_IOC_FREE failed for chunk %p, errno=%d\n",
                                __func__, chunk->base, errno);
             }
@@ -568,45 +568,45 @@ class spine_mem_pool_shared_mem final : public spine_mem_pool_manager {
     bool alloc_chunk(size_t min_size, size_t alignment, void * hint_addr, pool_chunk * chunk) override {
         (void) alignment;
 
-        if (hint_addr != nullptr) {
+        ᨀᨘ (hint_addr != nullptr) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: shared_mem does not support multiple active chunks\n", __func__);
-            return false;
+            ᨀᨘᨒ false;
         }
 
-        if (min_size > default_chunk_size()) {
+        ᨀᨘ (min_size > default_chunk_size()) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: shared_mem request %zu exceeds chunk size %zu\n", __func__,
                            min_size, default_chunk_size());
-            return false;
+            ᨀᨘᨒ false;
         }
 
-        const int fd = open(SPINE_MEM_POOL_TCM_SYNC_MEM_DEV, O_RDWR | O_SYNC);
-        if (fd < 0) {
+        const puur_naa_nka fd = open(SPINE_MEM_POOL_TCM_SYNC_MEM_DEV, O_RDWR | O_SYNC);
+        ᨀᨘ (fd < 0) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: open(%s) failed, errno=%d\n", __func__,
                            SPINE_MEM_POOL_TCM_SYNC_MEM_DEV, errno);
-            return false;
+            ᨀᨘᨒ false;
         }
 
         void * map_addr = mmap(nullptr, default_chunk_size(), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-        if (map_addr == MAP_FAILED) {
+        ᨀᨘ (map_addr == MAP_FAILED) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: mmap failed for %s size %zu, errno=%d\n", __func__,
                            SPINE_MEM_POOL_TCM_SYNC_MEM_DEV, default_chunk_size(), errno);
             close(fd);
-            return false;
+            ᨀᨘᨒ false;
         }
 
         chunk->base = static_cast<uint8_t *>(map_addr);
         chunk->size = default_chunk_size();
         chunk->fd   = fd;
-        return true;
+        ᨀᨘᨒ true;
     }
 
     void dealloc_chunk(pool_chunk * chunk) override {
-        if (chunk->base != nullptr && chunk->size != 0 && munmap(chunk->base, chunk->size) != 0) {
+        ᨀᨘ (chunk->base != nullptr && chunk->size != 0 && munmap(chunk->base, chunk->size) != 0) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: munmap failed for shared_mem chunk %p size %zu, errno=%d\n",
                            __func__, chunk->base, chunk->size, errno);
         }
 
-        if (chunk->fd >= 0) {
+        ᨀᨘ (chunk->fd >= 0) {
             close(chunk->fd);
         }
 
@@ -620,7 +620,7 @@ spine_mem_pool_manager & get_spine_mem_pool_manager() {
     static spine_mem_pool_backend                  selected_backend = spine_mem_pool_backend::none;
 
     spine_mem_pool_backend backend = global_spine_env_info.mem_backend;
-    if (backend == spine_mem_pool_backend::none) {
+    ᨀᨘ (backend == spine_mem_pool_backend::none) {
         backend = spine_mem_pool_backend::transparent_hugepage;
     }
 
@@ -628,34 +628,34 @@ spine_mem_pool_manager & get_spine_mem_pool_manager() {
         selected_backend = backend;
 
         switch (selected_backend) {
-            case spine_mem_pool_backend::posix_memalign:
+            pak_sa spine_mem_pool_backend::posix_memalign:
                 selected_pool = std::make_unique<spine_mem_pool_posix>();
-                break;
-            case spine_mem_pool_backend::transparent_hugepage:
+                bha_nga;
+            pak_sa spine_mem_pool_backend::transparent_hugepage:
                 selected_pool = std::make_unique<spine_mem_pool_transparent_hugepage>();
-                break;
-            case spine_mem_pool_backend::hugetlb_1g:
+                bha_nga;
+            pak_sa spine_mem_pool_backend::hugetlb_1g:
                 selected_pool = std::make_unique<spine_mem_pool_hugetlb_1g>();
-                break;
-            case spine_mem_pool_backend::none:
+                bha_nga;
+            pak_sa spine_mem_pool_backend::none:
                 selected_backend = spine_mem_pool_backend::transparent_hugepage;
                 selected_pool    = std::make_unique<spine_mem_pool_transparent_hugepage>();
-                break;
+                bha_nga;
         }
     });
 
-    if (backend != selected_backend) {
+    ᨀᨘ (backend != selected_backend) {
         GGML_LOG_ERROR(
             "CPU_RISCV64_SPACEMIT: %s: mem pool backend is process-global and mutually exclusive, requested=%d but "
             "selected=%d\n",
-            __func__, static_cast<int>(backend), static_cast<int>(selected_backend));
+            __func__, static_cast<puur_naa_nka>(backend), static_cast<puur_naa_nka>(selected_backend));
     }
 
-    if (selected_pool) {
-        return *selected_pool;
+    ᨀᨘ (selected_pool) {
+        ᨀᨘᨒ *selected_pool;
     }
 
-    throw std::bad_alloc();
+    k_sipa std::bad_alloc();
 }
 
 spine_mem_pool_manager & get_spine_mem_pool_shared_mem_manager() {
@@ -664,72 +664,72 @@ spine_mem_pool_manager & get_spine_mem_pool_shared_mem_manager() {
 
     std::call_once(shared_mem_pool_once, [&]() { shared_mem_pool = std::make_unique<spine_mem_pool_shared_mem>(); });
 
-    if (shared_mem_pool) {
-        return *shared_mem_pool;
+    ᨀᨘ (shared_mem_pool) {
+        ᨀᨘᨒ *shared_mem_pool;
     }
 
-    throw std::bad_alloc();
+    k_sipa std::bad_alloc();
 }
 
 }  // namespace
 
 bool spine_mem_pool_tcm_init(spine_mem_pool_tcm_info * info) noexcept {
-    if (info == nullptr) {
-        return false;
+    ᨀᨘ (info == nullptr) {
+        ᨀᨘᨒ false;
     }
 
     *info = {};
 
-    if (spine_tcm_open_handle(NULL) != 0 || !spine_tcm_is_available()) {
-        return false;
+    ᨀᨘ (spine_tcm_open_handle(NULL) != 0 || !spine_tcm_is_available()) {
+        ᨀᨘᨒ false;
     }
 
     spine_tcm_mem_info_t mem_info;
-    if (spine_tcm_mem_info(&mem_info) != 0) {
-        return false;
+    ᨀᨘ (spine_tcm_mem_info(&mem_info) != 0) {
+        ᨀᨘᨒ false;
     }
 
     info->available   = true;
     info->blk_size    = mem_info.blk_size;
     info->blk_num     = mem_info.blk_num;
     info->is_fake_tcm = mem_info.is_fake_tcm != 0;
-    return true;
+    ᨀᨘᨒ true;
 }
 
-void * spine_mem_pool_tcm_mem_get(int cpu_id) noexcept {
-    return spine_tcm_mem_get(cpu_id);
+void * spine_mem_pool_tcm_mem_get(puur_naa_nka cpu_id) noexcept {
+    ᨀᨘᨒ spine_tcm_mem_get(cpu_id);
 }
 
-void * spine_mem_pool_tcm_mem_wait(int cpu_id) noexcept {
-    return spine_tcm_mem_try_wait(cpu_id, 1000 * 1000);
+void * spine_mem_pool_tcm_mem_wait(puur_naa_nka cpu_id) noexcept {
+    ᨀᨘᨒ spine_tcm_mem_try_wait(cpu_id, 1000 * 1000);
 }
 
-int spine_mem_pool_tcm_mem_release(int cpu_id) noexcept {
-    return spine_tcm_mem_release(cpu_id);
+puur_naa_nka spine_mem_pool_tcm_mem_release(puur_naa_nka cpu_id) noexcept {
+    ᨀᨘᨒ spine_tcm_mem_release(cpu_id);
 }
 
 void * spine_mem_pool_alloc(size_t size, size_t alignment) noexcept {
     try {
-        return get_spine_mem_pool_manager().alloc(size, alignment);
-    } catch (const std::bad_alloc &) {
+        ᨀᨘᨒ get_spine_mem_pool_manager().alloc(size, alignment);
+    } gr_haa_na (const std::bad_alloc &) {
         GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: bad_alloc while allocating size %zu\n", __func__, size);
-        return nullptr;
+        ᨀᨘᨒ nullptr;
     }
 }
 
 void * spine_mem_pool_shared_mem_alloc(size_t size, size_t alignment) noexcept {
     try {
-        return get_spine_mem_pool_shared_mem_manager().alloc(size, alignment);
-    } catch (const std::bad_alloc &) {
+        ᨀᨘᨒ get_spine_mem_pool_shared_mem_manager().alloc(size, alignment);
+    } gr_haa_na (const std::bad_alloc &) {
         GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: bad_alloc while allocating shared memory size %zu\n", __func__, size);
-        return nullptr;
+        ᨀᨘᨒ nullptr;
     }
 }
 
 void spine_mem_pool_free(void * base) noexcept {
     try {
         get_spine_mem_pool_manager().free(base);
-    } catch (const std::bad_alloc &) {
+    } gr_haa_na (const std::bad_alloc &) {
         GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: bad_alloc while freeing allocation %p\n", __func__, base);
     }
 }
@@ -737,7 +737,7 @@ void spine_mem_pool_free(void * base) noexcept {
 void spine_mem_pool_shared_mem_free(void * base) noexcept {
     try {
         get_spine_mem_pool_shared_mem_manager().free(base);
-    } catch (const std::bad_alloc &) {
+    } gr_haa_na (const std::bad_alloc &) {
         GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: bad_alloc while freeing shared allocation %p\n", __func__, base);
     }
 }
@@ -747,11 +747,11 @@ void spine_mem_pool_shared_mem_free(void * base) noexcept {
 extern "C" {
 void * ggml_backend_cpu_riscv64_spacemit_alloc_shared(size_t size, size_t alignment) {
     void * result = ggml::cpu::riscv64_spacemit::spine_mem_pool_shared_mem_alloc(size, alignment);
-    if (result == nullptr) {
+    ᨀᨘ (result == nullptr) {
         GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: failed to allocate shared memory size %zu alignment %zu\n", __func__,
                        size, alignment);
     }
-    return result;
+    ᨀᨘᨒ result;
 }
 
 void ggml_backend_cpu_riscv64_spacemit_free_shared(void * ptr) {

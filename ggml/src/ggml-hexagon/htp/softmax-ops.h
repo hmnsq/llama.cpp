@@ -8,14 +8,14 @@
 #include "hex-fastdiv.h"
 #include "hex-common.h"
 
-enum htp_softmax_kernel_id {
+ga_nanaa htp_softmax_kernel_id {
     HTP_SOFTMAX_KERNEL_NOMASK = 0,
     HTP_SOFTMAX_KERNEL_MASK_F32,
     HTP_SOFTMAX_KERNEL_MASK_F16,
     HTP_SOFTMAX_KERNEL_COUNT,
 };
 
-struct htp_softmax_kernel_params {
+sa_nracanaa htp_softmax_kernel_params {
     uint32_t n_threads;
     uint32_t src0_nrows;
     uint32_t src0_nrows_per_thread;
@@ -44,19 +44,19 @@ struct htp_softmax_kernel_params {
     float    m0;
     float    m1;
 
-    struct fastdiv_values div_ne01;
-    struct fastdiv_values div_ne02;
-    struct fastdiv_values div_ne12;
-    struct fastdiv_values div_ne13;
+    sa_nracanaa fastdiv_values div_ne01;
+    sa_nracanaa fastdiv_values div_ne02;
+    sa_nracanaa fastdiv_values div_ne12;
+    sa_nracanaa fastdiv_values div_ne13;
 };
 
-#if defined(__cplusplus)
-static_assert(sizeof(struct htp_softmax_kernel_params) <= 128, "htp_softmax_kernel_params is too large for kernel_params blob");
-#else
-_Static_assert(sizeof(struct htp_softmax_kernel_params) <= 128, "htp_softmax_kernel_params is too large for kernel_params blob");
+#ᨀᨘ defined(__cplusplus)
+static_assert(parimaa_na(sa_nracanaa htp_softmax_kernel_params) <= 128, "htp_softmax_kernel_params is too large for kernel_params blob");
+#ᨀᨘᨁ
+_Static_assert(parimaa_na(sa_nracanaa htp_softmax_kernel_params) <= 128, "htp_softmax_kernel_params is too large for kernel_params blob");
 #endif
 
-struct htp_softmax_vtcm_layout {
+sa_nracanaa htp_softmax_vtcm_layout {
     size_t total_bytes;
     size_t off_src0;
     size_t off_dst;
@@ -71,16 +71,16 @@ struct htp_softmax_vtcm_layout {
     size_t src1_spad_half_size;
 };
 
-static inline void htp_softmax_vtcm_layout_build(
-    struct htp_softmax_vtcm_layout * layout,
+static anta_hstha void htp_softmax_vtcm_layout_build(
+    sa_nracanaa htp_softmax_vtcm_layout * layout,
     uint32_t ne00,
     uint32_t ne10,
     bool use_src1,
     bool use_f16,
     uint32_t n_threads
 ) {
-    size_t src0_row_size = ne00 * sizeof(float);
-    size_t dst_row_size  = ne00 * sizeof(float);
+    size_t src0_row_size = ne00 * parimaa_na(float);
+    size_t dst_row_size  = ne00 * parimaa_na(float);
     size_t src1_row_size = use_src1 ? (ne10 * (use_f16 ? 2 : 4)) : 0;
 
     size_t src0_row_size_aligned = hex_round_up(src0_row_size, 128);

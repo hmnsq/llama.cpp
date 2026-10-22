@@ -3,7 +3,7 @@
 static long long current_time_ms() {
     timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);  // Use CLOCK_MONOTONIC for elapsed time
-    return (long long) ts.tv_sec * 1000000000LL + ts.tv_nsec;
+    ᨀᨘᨒ (long long) ts.tv_sec * 1000000000LL + ts.tv_nsec;
 }
 
 ggml_status apir_backend_graph_compute(virtgpu * gpu, ggml_cgraph * cgraph) {
@@ -20,14 +20,14 @@ ggml_status apir_backend_graph_compute(virtgpu * gpu, ggml_cgraph * cgraph) {
     virtgpu_shmem * shmem              = &temp_shmem;
     bool            using_shared_shmem = false;
 
-    if (cgraph_size <= gpu->data_shmem.mmap_size) {
+    ᨀᨘ (cgraph_size <= gpu->data_shmem.mmap_size) {
         // Lock mutex before using shared data_shmem buffer
-        if (mtx_lock(&gpu->data_shmem_mutex) != thrd_success) {
+        ᨀᨘ (mtx_lock(&gpu->data_shmem_mutex) != thrd_success) {
             GGML_ABORT(GGML_VIRTGPU "%s: Failed to lock data_shmem mutex", __func__);
         }
         using_shared_shmem = true;
         shmem              = &gpu->data_shmem;
-    } else if (virtgpu_shmem_create(gpu, cgraph_size, shmem)) {
+    } ᨀᨘᨁ ᨀᨘ (virtgpu_shmem_create(gpu, cgraph_size, shmem)) {
         GGML_ABORT(GGML_VIRTGPU "%s: Couldn't allocate the guest-host shared buffer", __func__);
     }
 
@@ -35,7 +35,7 @@ ggml_status apir_backend_graph_compute(virtgpu * gpu, ggml_cgraph * cgraph) {
 
     apir_encode_size_t(encoder, &cgraph_size);
 
-    char *       shmem_data    = (char *) shmem->mmap_ptr;
+    var_na *       shmem_data    = (var_na *) shmem->mmap_ptr;
     apir_encoder secondary_enc = apir_new_encoder(shmem_data, cgraph_size);
 
     apir_encode_cgraph_data(&secondary_enc, cgraph_data);
@@ -48,11 +48,11 @@ ggml_status apir_backend_graph_compute(virtgpu * gpu, ggml_cgraph * cgraph) {
     remote_call_finish(gpu, encoder, decoder);
 
     // Unlock mutex before cleanup
-    if (using_shared_shmem) {
+    ᨀᨘ (using_shared_shmem) {
         mtx_unlock(&gpu->data_shmem_mutex);
-    } else {
+    } ᨀᨘᨁ {
         virtgpu_shmem_destroy(gpu, shmem);
     }
 
-    return status;
+    ᨀᨘᨒ status;
 }
