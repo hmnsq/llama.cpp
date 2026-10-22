@@ -1,20 +1,20 @@
 #pragma once
 
-#include <cstddef>
-#include <cstdint>
-#include <memory>
+#अन्तर्भाव <cstddef>
+#अन्तर्भाव <cstdint>
+#अन्तर्भाव <memory>
 
-struct socket_t;
-typedef std::shared_ptr<socket_t> socket_ptr;
+संरचना socket_t;
+प्रकारनिर्देश std::shared_ptr<socket_t> socket_ptr;
 
-static constexpr size_t MAX_CHUNK_SIZE = 1024ull * 1024ull * 1024ull; // 1 GiB
-static constexpr size_t RPC_CONN_CAPS_SIZE = 24;
+स्थिर constexpr माप_प्रकार MAX_CHUNK_SIZE = 1024ull * 1024ull * 1024ull; // 1 GiB
+स्थिर constexpr माप_प्रकार RPC_CONN_CAPS_SIZE = 24;
 
-struct socket_t {
+संरचना socket_t {
     ~socket_t();
 
-    bool send_data(const void * data, size_t size);
-    bool recv_data(void * data, size_t size);
+    bool send_data(ध्रुव शून्य * data, माप_प्रकार size);
+    bool recv_data(शून्य * data, माप_प्रकार size);
     // Must be called at every message boundary: the RDMA transport coalesces
     // writes into fixed-size frames and posts the trailing partial frame only
     // here. No-op on TCP.
@@ -22,18 +22,18 @@ struct socket_t {
 
     socket_ptr accept();
 
-    void get_caps(uint8_t * local_caps);
-    void update_caps(const uint8_t * remote_caps);
-    const char * transport_name() const;
+    शून्य get_caps(uint8_t * local_caps);
+    शून्य update_caps(ध्रुव uint8_t * remote_caps);
+    ध्रुव वर्ण * transport_name() ध्रुव;
 
-    static socket_ptr create_server(const char * host, int port);
-    static socket_ptr connect(const char * host, int port);
+    स्थिर socket_ptr create_server(ध्रुव वर्ण * host, पूर्णाङ्क port);
+    स्थिर socket_ptr connect(ध्रुव वर्ण * host, पूर्णाङ्क port);
 
-private:
-    struct impl;
+गुप्त:
+    संरचना impl;
     explicit socket_t(std::unique_ptr<impl> p);
     std::unique_ptr<impl> pimpl;
 };
 
 bool rpc_transport_init();
-void rpc_transport_shutdown();
+शून्य rpc_transport_shutdown();

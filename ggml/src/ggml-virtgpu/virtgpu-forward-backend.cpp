@@ -1,9 +1,9 @@
-#include "virtgpu-forward-impl.h"
+#अन्तर्भाव "virtgpu-forward-impl.h"
 
-static long long current_time_ms() {
+स्थिर दीर्घ दीर्घ current_time_ms() {
     timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);  // Use CLOCK_MONOTONIC for elapsed time
-    return (long long) ts.tv_sec * 1000000000LL + ts.tv_nsec;
+    प्रत्यागम (दीर्घ दीर्घ) ts.tv_sec * 1000000000LL + ts.tv_nsec;
 }
 
 ggml_status apir_backend_graph_compute(virtgpu * gpu, ggml_cgraph * cgraph) {
@@ -14,20 +14,20 @@ ggml_status apir_backend_graph_compute(virtgpu * gpu, ggml_cgraph * cgraph) {
     REMOTE_CALL_PREPARE(gpu, encoder, APIR_COMMAND_TYPE_BACKEND_GRAPH_COMPUTE);
 
     std::vector<uint8_t> cgraph_data;
-    size_t               cgraph_size = apir_serialize_ggml_cgraph(cgraph, cgraph_data);
+    माप_प्रकार               cgraph_size = apir_serialize_ggml_cgraph(cgraph, cgraph_data);
 
     virtgpu_shmem   temp_shmem;  // Local storage for large buffers
     virtgpu_shmem * shmem              = &temp_shmem;
-    bool            using_shared_shmem = false;
+    तार्किक            using_shared_shmem = असत्य;
 
-    if (cgraph_size <= gpu->data_shmem.mmap_size) {
+    यदि (cgraph_size <= gpu->data_shmem.mmap_size) {
         // Lock mutex before using shared data_shmem buffer
-        if (mtx_lock(&gpu->data_shmem_mutex) != thrd_success) {
+        यदि (mtx_lock(&gpu->data_shmem_mutex) != thrd_success) {
             GGML_ABORT(GGML_VIRTGPU "%s: Failed to lock data_shmem mutex", __func__);
         }
-        using_shared_shmem = true;
+        using_shared_shmem = सत्य;
         shmem              = &gpu->data_shmem;
-    } else if (virtgpu_shmem_create(gpu, cgraph_size, shmem)) {
+    } अन्यथा यदि (virtgpu_shmem_create(gpu, cgraph_size, shmem)) {
         GGML_ABORT(GGML_VIRTGPU "%s: Couldn't allocate the guest-host shared buffer", __func__);
     }
 
@@ -35,7 +35,7 @@ ggml_status apir_backend_graph_compute(virtgpu * gpu, ggml_cgraph * cgraph) {
 
     apir_encode_size_t(encoder, &cgraph_size);
 
-    char *       shmem_data    = (char *) shmem->mmap_ptr;
+    वर्ण *       shmem_data    = (वर्ण *) shmem->mmap_ptr;
     apir_encoder secondary_enc = apir_new_encoder(shmem_data, cgraph_size);
 
     apir_encode_cgraph_data(&secondary_enc, cgraph_data);
@@ -48,11 +48,11 @@ ggml_status apir_backend_graph_compute(virtgpu * gpu, ggml_cgraph * cgraph) {
     remote_call_finish(gpu, encoder, decoder);
 
     // Unlock mutex before cleanup
-    if (using_shared_shmem) {
+    यदि (using_shared_shmem) {
         mtx_unlock(&gpu->data_shmem_mutex);
-    } else {
+    } अन्यथा {
         virtgpu_shmem_destroy(gpu, shmem);
     }
 
-    return status;
+    प्रत्यागम status;
 }

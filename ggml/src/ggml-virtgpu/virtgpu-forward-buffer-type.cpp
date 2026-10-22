@@ -1,6 +1,6 @@
-#include "virtgpu-forward-impl.h"
+#अन्तर्भाव "virtgpu-forward-impl.h"
 
-char * apir_buffer_type_get_name(virtgpu * gpu, apir_buffer_type_host_handle_t host_handle) {
+वर्ण * apir_buffer_type_get_name(virtgpu * gpu, apir_buffer_type_host_handle_t host_handle) {
     apir_encoder *        encoder;
     apir_decoder *        decoder;
     ApirForwardReturnCode ret;
@@ -11,9 +11,9 @@ char * apir_buffer_type_get_name(virtgpu * gpu, apir_buffer_type_host_handle_t h
 
     REMOTE_CALL(gpu, encoder, decoder, ret);
 
-    const size_t string_size = apir_decode_array_size_unchecked(decoder);
-    char *       string      = (char *) apir_decoder_alloc_array(sizeof(char), string_size);
-    if (!string) {
+    ध्रुव माप_प्रकार string_size = apir_decode_array_size_unchecked(decoder);
+    वर्ण *       string      = (वर्ण *) apir_decoder_alloc_array(परिमाण(वर्ण), string_size);
+    यदि (!string) {
         GGML_LOG_ERROR(GGML_VIRTGPU "%s: Could not allocate the device name buffer\n", __func__);
         apir_decoder_set_fatal(decoder);
     }
@@ -21,10 +21,10 @@ char * apir_buffer_type_get_name(virtgpu * gpu, apir_buffer_type_host_handle_t h
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return string;
+    प्रत्यागम string;
 }
 
-size_t apir_buffer_type_get_alignment(virtgpu * gpu, apir_buffer_type_host_handle_t host_handle) {
+माप_प्रकार apir_buffer_type_get_alignment(virtgpu * gpu, apir_buffer_type_host_handle_t host_handle) {
     apir_encoder *        encoder;
     apir_decoder *        decoder;
     ApirForwardReturnCode ret;
@@ -35,15 +35,15 @@ size_t apir_buffer_type_get_alignment(virtgpu * gpu, apir_buffer_type_host_handl
 
     REMOTE_CALL(gpu, encoder, decoder, ret);
 
-    size_t alignment;
+    माप_प्रकार alignment;
     apir_decode_size_t(decoder, &alignment);
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return alignment;
+    प्रत्यागम alignment;
 }
 
-size_t apir_buffer_type_get_max_size(virtgpu * gpu, apir_buffer_type_host_handle_t host_handle) {
+माप_प्रकार apir_buffer_type_get_max_size(virtgpu * gpu, apir_buffer_type_host_handle_t host_handle) {
     apir_encoder *        encoder;
     apir_decoder *        decoder;
     ApirForwardReturnCode ret;
@@ -54,17 +54,17 @@ size_t apir_buffer_type_get_max_size(virtgpu * gpu, apir_buffer_type_host_handle
 
     REMOTE_CALL(gpu, encoder, decoder, ret);
 
-    size_t max_size;
+    माप_प्रकार max_size;
     apir_decode_size_t(decoder, &max_size);
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return max_size;
+    प्रत्यागम max_size;
 }
 
 apir_buffer_context_t apir_buffer_type_alloc_buffer(virtgpu *                      gpu,
                                                     apir_buffer_type_host_handle_t host_handle,
-                                                    size_t                         size) {
+                                                    माप_प्रकार                         size) {
     apir_encoder *        encoder;
     apir_decoder *        decoder;
     ApirForwardReturnCode ret;
@@ -83,12 +83,12 @@ apir_buffer_context_t apir_buffer_type_alloc_buffer(virtgpu *                   
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return buffer_context;
+    प्रत्यागम buffer_context;
 }
 
-size_t apir_buffer_type_get_alloc_size(virtgpu *                      gpu,
+माप_प्रकार apir_buffer_type_get_alloc_size(virtgpu *                      gpu,
                                        apir_buffer_type_host_handle_t host_handle,
-                                       const ggml_tensor *            op) {
+                                       ध्रुव ggml_tensor *            op) {
     apir_encoder *        encoder;
     apir_decoder *        decoder;
     ApirForwardReturnCode ret;
@@ -101,10 +101,10 @@ size_t apir_buffer_type_get_alloc_size(virtgpu *                      gpu,
 
     REMOTE_CALL(gpu, encoder, decoder, ret);
 
-    size_t alloc_size;
+    माप_प्रकार alloc_size;
     apir_decode_size_t(decoder, &alloc_size);
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return alloc_size;
+    प्रत्यागम alloc_size;
 }
